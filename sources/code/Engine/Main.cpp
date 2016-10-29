@@ -6,6 +6,7 @@
 #include <cstring>
 #include <Graphics.h>
 #include <Window.h>
+#include "Engine.h"
 
 int main(int argc, char *argv[]) {
 	std::cout << "Grind Engine Start" << std::endl;
@@ -30,25 +31,26 @@ int main(int argc, char *argv[]) {
 	dlclose(lib_handle);
 	
 	lib_handle = dlopen("./bin/window.so", RTLD_LAZY);
+	
 	if (!lib_handle) {
 		fprintf(stderr, "%s\n", dlerror());
 		return 1;
 	}
-   
-	tempFn = dlsym(lib_handle, "createWindow");
-	std::memcpy(&fptr, &tempFn, sizeof fptr);
-	
-	if ((error = dlerror()) != NULL) {
-		fprintf(stderr, "%s\n", error);
-		return 1;
-	}
-	fptr();
-	
-	dlclose(lib_handle);
+	GameWindow* (*createWindow)();
+	void (*destroyObject)(GameWindow*);
+
+	createWindow = (GameWindow* (*)())dlsym(lib_handle, "createWindow");
+	destroyObject = (void (*)(GameWindow*))dlsym(lib_handle, "destroyObject");
 #else
 	CreateGraphics();
-	createWindow();
 #endif
 
+	GameWindow* myClass = (GameWindow*)createWindow();
+	myClass->Initialize();
+	destroyObject( myClass );
+
+#ifdef _MSC_VER
+	system("pause");
+#endif
 	return 0;
 }
