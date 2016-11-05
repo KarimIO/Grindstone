@@ -1,16 +1,29 @@
 #ifndef _ENGINE_H
+#define _ENGINE_H
 
-class Engine {
+#include "BaseClass.h"
+#include "InputInterface.h"
+#include <Window.h>
+
+class Engine : public BaseClass {
+private:
+	GameWindow *window;
+	bool InitializeWindow();
 public:
+	InputInterface *inputInterface;
+	//InputSystem *inputSystem;
 #ifdef UseClassInstance
 	static Engine *GetInstance();
 #else
 	static Engine &GetInstance();
 #endif
-	Engine();
+	bool Initialize();
+	void Run();
+	void Shutdown();
+
+	bool isRunning;
+
 	~Engine();
-	
-	int i;
 };
 
 #ifdef UseClassInstance

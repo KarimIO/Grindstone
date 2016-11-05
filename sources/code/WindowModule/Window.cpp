@@ -1,9 +1,9 @@
 #include "Window.h"
 
-WINDOW_EXPORT GameWindow* createWindow() {
-  return new GameWindow;
+void GameWindow::SetInputPointer(InputInterface *inputInterface) {
+	input = inputInterface;
 }
 
-WINDOW_EXPORT void destroyObject( GameWindow* object ) {
-  delete object;
+WINDOW_EXPORT GameWindow* createWindow() {
+	return new GameWindow;
 }

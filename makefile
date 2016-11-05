@@ -8,7 +8,7 @@ CFLAGS=-c
 CPP_ENGINE_FILES := $(wildcard sources/code/Engine/*.cpp)
 OBJ_ENGINE_FILES := $(addprefix sources/obj/Engine/,$(notdir $(CPP_ENGINE_FILES:.cpp=.o)))
 
-INCLUDE_PATHS := -I sources/code/GraphicsModule/ -I sources/code/WindowModule/
+INCLUDE_PATHS := -I sources/code/Engine/ -I sources/code/GraphicsModule/ -I sources/code/WindowModule/
 
 all: build
 
@@ -44,12 +44,14 @@ GraphicsModule: $(OBJ_GRAPHICS_FILES)
 CPP_WINDOW_FILES := $(wildcard sources/code/WindowModule/*.cpp)
 OBJ_WINDOW_FILES := $(addprefix sources/obj/WindowModule/,$(notdir $(CPP_WINDOW_FILES:.cpp=.o)))
 
+INCLUDE_WINDOW_PATHS := -I sources/code/Engine/
+
 # WindowModule code
 Window: WindowModule
 
 sources/obj/WindowModule/%.o: sources/code/WindowModule/%.cpp
 	@mkdir -p sources/obj/WindowModule
-	@$(CC) -c -fPIC $< -o $@ -lX11 -lGL
+	@$(CC) $(INCLUDE_WINDOW_PATHS) -c -fPIC $< -o $@ -lX11 -lGL
 
 WindowModule: $(OBJ_WINDOW_FILES)
 	@$(CC) -shared $^ -o bin/window.so -lX11

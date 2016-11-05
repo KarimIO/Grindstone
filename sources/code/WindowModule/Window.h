@@ -1,4 +1,10 @@
+#ifndef _WINDOW_H
+#define _WINDOW_H
+
 #include <iostream>
+#if defined(WINDOW_DLL) || defined(__linux__)
+#include <InputInterface.h>
+#endif
 
 #ifdef _MSC_VER
 	#include <Windows.h>
@@ -19,6 +25,8 @@
 	#define WINDOW_EXPORT extern "C"
 #endif
 
+class InputInterface;
+
 class WINDOW_EXPORT_CLASS GameWindow {
 private:
 	#ifdef __linux__
@@ -26,10 +34,28 @@ private:
 		Window window;
 		Screen *screen;
 	#endif
+	#ifdef _WIN32
+		static LRESULT CALLBACK sWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+		LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+		HWND	window_handle;
+	#endif
+	
+	InputInterface *input;
+
+	int resX;
+	int resY;
 public:
 	~GameWindow();
-	virtual bool Initialize();
+	virtual bool Initialize(const char *, int, int);
+	virtual void SetInputPointer(InputInterface *);
+	virtual void HandleEvents();
+	
+	virtual void ResetCursor();
+	virtual void SetCursor(int x, int y);
+	virtual void GetCursor(int &x, int &y);
+	virtual void Shutdown();
 };
 
 WINDOW_EXPORT GameWindow* createWindow();
-WINDOW_EXPORT void destroyObject( GameWindow* object );
+
+#endif
