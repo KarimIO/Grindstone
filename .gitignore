@@ -44,3 +44,4 @@ Sources/lib/
 Sources/Obj/
 
 bin/*
+.vscode/

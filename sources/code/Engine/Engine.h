@@ -4,13 +4,14 @@
 #include "BaseClass.h"
 #include "InputInterface.h"
 #include <Window.h>
+#include <Graphics.h>
 
 class Engine : public BaseClass {
 private:
 	GameWindow *window;
 	bool InitializeWindow();
 public:
-	InputInterface *inputInterface;
+	InputInterface inputInterface;
 	//InputSystem *inputSystem;
 #ifdef UseClassInstance
 	static Engine *GetInstance();

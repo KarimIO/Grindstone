@@ -6,7 +6,7 @@
 #include <InputInterface.h>
 #endif
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 	#include <Windows.h>
 	
 	#ifdef WINDOW_DLL
@@ -56,6 +56,8 @@ public:
 	virtual void Shutdown();
 };
 
-WINDOW_EXPORT GameWindow* createWindow();
+extern "C" {
+	WINDOW_EXPORT GameWindow* createWindow();
+};
 
 #endif

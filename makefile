@@ -8,13 +8,13 @@ CFLAGS=-c
 CPP_ENGINE_FILES := $(wildcard sources/code/Engine/*.cpp)
 OBJ_ENGINE_FILES := $(addprefix sources/obj/Engine/,$(notdir $(CPP_ENGINE_FILES:.cpp=.o)))
 
-INCLUDE_PATHS := -I sources/code/Engine/ -I sources/code/GraphicsModule/ -I sources/code/WindowModule/
+INCLUDE_PATHS := -I sources/code/Engine/ -I sources/code/GraphicsOpenGL/ -I sources/code/WindowModule/
 
 all: build
 
 rebuild: clean build
 
-build: Engine GraphicsModule WindowModule
+build: Engine OpenGLModule WindowModule
 
 # Engine code
 sources/obj/Engine/%.o: sources/code/Engine/%.cpp
@@ -26,19 +26,20 @@ Engine: $(OBJ_ENGINE_FILES)
 	@echo "Grindstone successfully built."
 
 # Object Definitions
-CPP_GRAPHICS_FILES := $(wildcard sources/code/GraphicsModule/*.cpp)
-OBJ_GRAPHICS_FILES := $(addprefix sources/obj/GraphicsModule/,$(notdir $(CPP_GRAPHICS_FILES:.cpp=.o)))
+CPP_OPENGL_FILES := $(wildcard sources/code/GraphicsOpenGL/*.cpp)
+OBJ_OPENGL_FILES := $(addprefix sources/obj/GraphicsOpenGL/,$(notdir $(CPP_OPENGL_FILES:.cpp=.o)))
 
 # GraphicsModule code
-Graphics: GraphicsModule
+Graphics: OpenGLModule
+opengl: OpenGLModule
 
-sources/obj/GraphicsModule/%.o: sources/code/GraphicsModule/%.cpp
-	@mkdir -p sources/obj/GraphicsModule
+sources/obj/GraphicsOpenGL/%.o: sources/code/GraphicsOpenGL/%.cpp
+	@mkdir -p sources/obj/GraphicsOpenGL
 	@$(CC) -c -fPIC $< -o $@ -lX11 -lGL
 
-GraphicsModule: $(OBJ_GRAPHICS_FILES)
-	@$(CC) -shared $^ -o bin/graphics.so -lX11
-	@echo "graphics.so successfully built."
+OpenGLModule: $(OBJ_GRAPHICS_FILES)
+	@$(CC) -shared $^ -o bin/opengl.so -lX11
+	@echo "opengl.so successfully built."
 
 # Object Definitions
 CPP_WINDOW_FILES := $(wildcard sources/code/WindowModule/*.cpp)
@@ -60,5 +61,5 @@ WindowModule: $(OBJ_WINDOW_FILES)
 clean:
 	@rm -rf sources/obj/
 	@rm bin/Grindstone
-	@rm bin/graphics.so
+	@rm bin/opengl.so
 	@rm bin/window.so
