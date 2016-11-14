@@ -1,6 +1,6 @@
 #ifdef _WIN32
 //#include "wglext.h"
-#include "Graphics.h"
+#include "OpenGLGraphics.h"
 
 bool GraphicsWrapper::InitializeWindowContext() {
 	static	PIXELFORMATDESCRIPTOR pfd =				// pfd Tells Windows How We Want Things To Be
@@ -46,6 +46,11 @@ bool GraphicsWrapper::InitializeWindowContext() {
 
 void GraphicsWrapper::SetWindowContext(HWND hwnd) {
 	window_handle = hwnd;
+}
+
+
+void GraphicsWrapper::SwapBuffer() {
+	SwapBuffers(hDC);
 }
 
 #endif

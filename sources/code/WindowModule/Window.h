@@ -49,7 +49,11 @@ public:
 	virtual bool Initialize(const char *, int, int);
 	virtual void SetInputPointer(InputInterface *);
 	virtual void HandleEvents();
-	
+
+#ifdef _WIN32
+	virtual HWND GetHandle();
+#endif
+
 	virtual void ResetCursor();
 	virtual void SetCursor(int x, int y);
 	virtual void GetCursor(int &x, int &y);

@@ -1,6 +1,6 @@
 #include "Engine.h"
 #include <stdio.h>
-#ifndef _MSC_VER
+#ifndef _WIN32
 #include <dlfcn.h>
 #endif
 
@@ -9,9 +9,10 @@
 #endif
 
 bool Engine::Initialize() {
-	if (!InitializeWindow())
-		return false;
+	if (!InitializeWindow())	return false;
+	if (!InitializeGraphics())	return false;
 
+	graphicsWrapper->SwapBuffer();
 
 	isRunning = true;
 	return true;
@@ -43,9 +44,45 @@ bool Engine::InitializeWindow() {
 	window = (GameWindow*)pfnCreateWindow();
 	if (!window->Initialize("The Grind Engine", 1024, 768))
 		return false;
-	
+
 	window->SetInputPointer(&inputInterface);
+
+	return true;
+}
+
+bool Engine::InitializeGraphics() {
+#if defined (__linux__)
+	void *lib_handle = dlopen("./bin/opengl.so", RTLD_LAZY);
+
+	if (!lib_handle) {
+		fprintf(stderr, "%s\n", dlerror());
+		return false;
+	}
+
+	GameWindow* (*pfnCreateWindow)();
+	pfnCreateWindow = (GameWindow* (*)())dlsym(lib_handle, "createWindow");
+#elif defined (_WIN32)
+	HMODULE dllHandle = LoadLibrary("bin/opengl.dll");
+
+	if (!dllHandle) {
+		fprintf(stderr, "Failed to load window.dll!\n");
+		return false;
+	}
+
+	GraphicsWrapper* (*pfnCreateWindow)();
+	pfnCreateWindow = (GraphicsWrapper* (*)())GetProcAddress(dllHandle, "createGraphics");
+
+	HWND handle = window->GetHandle();
+#endif
 	
+	graphicsWrapper = (GraphicsWrapper*)pfnCreateWindow();
+	graphicsWrapper->SetWindowContext(handle);
+
+	if (!graphicsWrapper->InitializeWindowContext())
+		return false;
+
+	if (!graphicsWrapper->InitializeGraphics())
+		return false;
 	return true;
 }
 

@@ -309,4 +309,8 @@ void GameWindow::Shutdown() {
 	delete this;
 }
 
+HWND GameWindow::GetHandle() {
+	return window_handle;
+}
+
 #endif
