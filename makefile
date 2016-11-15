@@ -19,7 +19,7 @@ build: Engine OpenGLModule WindowModule
 # Engine code
 sources/obj/Engine/%.o: sources/code/Engine/%.cpp
 	@mkdir -p sources/obj/Engine
-	@$(CC) $(INCLUDE_PATHS) $(CFLAGS) -o $@ $< -lX11 -lGL
+	@$(CC) $(INCLUDE_PATHS) $(CFLAGS) -o $@ $< -lX11 -lGL -std=c++11
 	
 Engine: $(OBJ_ENGINE_FILES)
 	@$(CC) $^ -ldl -o bin/Grindstone
@@ -35,10 +35,10 @@ opengl: OpenGLModule
 
 sources/obj/GraphicsOpenGL/%.o: sources/code/GraphicsOpenGL/%.cpp
 	@mkdir -p sources/obj/GraphicsOpenGL
-	@$(CC) -c -fPIC $< -o $@ -lX11 -lGL
+	@$(CC) -std=c++11 -c -fPIC $< -o $@ -lX11 -lGL
 
-OpenGLModule: $(OBJ_GRAPHICS_FILES)
-	@$(CC) -shared $^ -o bin/opengl.so -lX11
+OpenGLModule: $(OBJ_OPENGL_FILES)
+	@$(CC) -shared $^ -o bin/opengl.so -lX11 -lGL
 	@echo "opengl.so successfully built."
 
 # Object Definitions
@@ -52,10 +52,10 @@ Window: WindowModule
 
 sources/obj/WindowModule/%.o: sources/code/WindowModule/%.cpp
 	@mkdir -p sources/obj/WindowModule
-	@$(CC) $(INCLUDE_WINDOW_PATHS) -c -fPIC $< -o $@ -lX11 -lGL
+	@$(CC) $(INCLUDE_WINDOW_PATHS) -std=c++11 -c -fPIC $< -o $@ -lX11 -lGL
 
 WindowModule: $(OBJ_WINDOW_FILES)
-	@$(CC) -shared $^ -o bin/window.so -lX11
+	@$(CC) -shared $^ -o bin/window.so -lX11 -lGL
 	@echo "window.so successfully built."
 
 clean:

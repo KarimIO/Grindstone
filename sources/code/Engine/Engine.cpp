@@ -1,5 +1,6 @@
 #include "Engine.h"
 #include <stdio.h>
+#include <chrono>
 #ifndef _WIN32
 #include <dlfcn.h>
 #endif
@@ -29,6 +30,10 @@ bool Engine::InitializeWindow() {
 
 	GameWindow* (*pfnCreateWindow)();
 	pfnCreateWindow = (GameWindow* (*)())dlsym(lib_handle, "createWindow");
+	if (!pfnCreateWindow) {
+		fprintf(stderr, "%s\n", dlerror());
+		return false;
+	}
 #elif defined (_WIN32)
 	HMODULE dllHandle = LoadLibrary("bin/window.dll");
 
@@ -39,6 +44,11 @@ bool Engine::InitializeWindow() {
 
 	GameWindow* (*pfnCreateWindow)();
 	pfnCreateWindow = (GameWindow* (*)())GetProcAddress(dllHandle, "createWindow");
+
+	if (!pfnCreateWindow) {
+		fprintf(stderr, "Cannot get createWindow function!\n");
+		return false;
+	}
 #endif
 
 	window = (GameWindow*)pfnCreateWindow();
@@ -59,8 +69,21 @@ bool Engine::InitializeGraphics() {
 		return false;
 	}
 
-	GameWindow* (*pfnCreateWindow)();
-	pfnCreateWindow = (GameWindow* (*)())dlsym(lib_handle, "createWindow");
+	GraphicsWrapper* (*pfnCreateGraphics)();
+	pfnCreateGraphics = (GraphicsWrapper* (*)())dlsym(lib_handle, "createGraphics");
+
+	if (!pfnCreateGraphics) {
+		fprintf(stderr, "%s\n", dlerror());
+		return false;
+	}
+
+	Display* display;
+	Window *win_handle;
+	Screen *screen;
+	int screenID;
+	std::cout << "Getting Handles\n";
+	window->GetHandles(display, win_handle, screen, screenID);
+	std::cout << "Handles gotten\n";
 #elif defined (_WIN32)
 	HMODULE dllHandle = LoadLibrary("bin/opengl.dll");
 
@@ -69,20 +92,36 @@ bool Engine::InitializeGraphics() {
 		return false;
 	}
 
-	GraphicsWrapper* (*pfnCreateWindow)();
-	pfnCreateWindow = (GraphicsWrapper* (*)())GetProcAddress(dllHandle, "createGraphics");
+	GraphicsWrapper* (*pfnCreateGraphics)();
+	pfnCreateGraphics = (GraphicsWrapper* (*)())GetProcAddress(dllHandle, "createGraphics");
 
-	HWND handle = window->GetHandle();
+	if (!pfnCreateGraphics) {
+		fprintf(stderr, "Cannot get createGraphics function!\n");
+		return false;
+	}
+
+	HWND win_handle = window->GetHandle();
 #endif
 	
-	graphicsWrapper = (GraphicsWrapper*)pfnCreateWindow();
-	graphicsWrapper->SetWindowContext(handle);
+	std::cout << "Creating GraphicsWrapper\n";
+	std::cout << pfnCreateGraphics << "\n";
+	graphicsWrapper = (GraphicsWrapper*)pfnCreateGraphics();
+	std::cout << "Passing Context\n";
+#if defined (__linux__)
+	graphicsWrapper->SetWindowContext(display, win_handle, screen, screenID);
+#elif defined (_WIN32)
+	graphicsWrapper->SetWindowContext(win_handle);
+#endif
+	std::cout << "Context Passed\n";
 
 	if (!graphicsWrapper->InitializeWindowContext())
 		return false;
 
+	std::cout << "WindowContext Initialized\n";
+
 	if (!graphicsWrapper->InitializeGraphics())
 		return false;
+	std::cout << "Graphics Initialized\n";
 	return true;
 }
 
@@ -100,7 +139,16 @@ Engine &Engine::GetInstance() {
 #endif
 
 void Engine::Run() {
+	std::chrono::time_point<std::chrono::high_resolution_clock> currentTime, prevTime;
+	prevTime = std::chrono::high_resolution_clock::now();
+
+	std::chrono::microseconds delta;
 	while (isRunning) {
+		currentTime = std::chrono::high_resolution_clock::now();
+		delta = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - prevTime);
+		//std::cout << 1000000.0/delta.count() << "\n";
+		prevTime = currentTime;
+
 		window->HandleEvents();
 	}
 }
@@ -110,7 +158,7 @@ void Engine::Shutdown() {
 }
 
 Engine::~Engine() {
-	std::cout << "Shutting Down" << std::endl;
+	std::cout << "Shutting Down\n";
 	window->Shutdown();
-	std::cout << "Window Down Down" << std::endl;
+	std::cout << "Window Down Down\n";
 }

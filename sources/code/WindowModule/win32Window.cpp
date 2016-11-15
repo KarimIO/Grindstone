@@ -98,7 +98,7 @@ LRESULT CALLBACK GameWindow::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 }
 
 GameWindow::~GameWindow() {
-	std::cout << "Shut Down" << std::endl;
+	std::cout << "Shut Down\n";
 }
 
 bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY) {

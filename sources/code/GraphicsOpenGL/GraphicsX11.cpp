@@ -1,7 +1,50 @@
-//#ifdef __linux__
-#include "OpenGLGraphics.h"
+#ifdef __linux__
+//#include "gl3w.h"
 
-bool GraphicsWrapper::SetWindowContext() { // Check GLX version
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/keysymdef.h>
+#include <GL/glx.h>
+
+#include "OpenGLGraphics.h"
+#include <cstring>
+
+typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
+typedef const GLubyte *(APIENTRYP PFNGLGETSTRINGPROC) (GLenum name);
+typedef void *(APIENTRYP PFNGLCLEAR) (int n);
+typedef void *(APIENTRYP PFNGLCLEARCOLOR) (double r, double g, double b, double a);
+
+static bool isExtensionSupported(const char *extList, const char *extension) {
+    const char *start;
+    const char *where, *terminator;
+
+    where = strchr(extension, ' ');
+    if (where || *extension == '\0') {
+        return false;
+    }
+
+    for (start=extList;;) {
+        where = strstr(start, extension);
+
+        if (!where) {
+            break;
+        }
+
+        terminator = where + strlen(extension);
+
+        if ( where == start || *(where - 1) == ' ' ) {
+            if ( *terminator == ' ' || *terminator == '\0' ) {
+                return true;
+            }
+        }   
+
+        start = terminator;
+    }
+
+    return false;
+}
+
+bool GraphicsWrapper::InitializeWindowContext() { // Check GLX version
 	int majorGLX, minorGLX = 0;
 	glXQueryVersion(display, &majorGLX, &minorGLX);
 	if (majorGLX <= 1 && minorGLX < 2) {
@@ -26,7 +69,7 @@ bool GraphicsWrapper::SetWindowContext() { // Check GLX version
 	};
 
 	int fbcount;
-	GLXFBConfig* fbc = glXChooseFBConfig(display, screenId, glxAttribs, &fbcount);
+	GLXFBConfig* fbc = glXChooseFBConfig(display, screenID, glxAttribs, &fbcount);
 	if (fbc == 0) {
 		std::cout << "Failed to retrieve framebuffer.\n";
 		XCloseDisplay(display);
@@ -36,31 +79,31 @@ bool GraphicsWrapper::SetWindowContext() { // Check GLX version
 
 	// Pick the FB config/visual with the most samples per pixel
 	//std::cout << "Getting best XVisualInfo\n";
-	int best_fbc = -1, worst_fbc = -1, best_num_samp = -1, worst_num_samp = INT_MAXS;
+	int best_fbc = -1, worst_fbc = -1, best_num_samp = -1, worst_num_samp = 999;
 	for (int i = 0; i < fbcount; ++i) {
-		XVisualInfo *vi = glXGetVisualFromFBConfig(display, fbc[i]);
-		if (vi != 0) {
+		XVisualInfo *vi = glXGetVisualFromFBConfig( display, fbc[i] );
+		if ( vi != 0) {
 			int samp_buf, samples;
-			glXGetFBConfigAttrib(display, fbc[i], GLX_SAMPLE_BUFFERS, &samp_buf);
-			glXGetFBConfigAttrib(display, fbc[i], GLX_SAMPLES, &samples);
+			glXGetFBConfigAttrib( display, fbc[i], GLX_SAMPLE_BUFFERS, &samp_buf );
+			glXGetFBConfigAttrib( display, fbc[i], GLX_SAMPLES       , &samples  );
 			//std::cout << "  Matching fbconfig " << i << ", SAMPLE_BUFFERS = " << samp_buf << ", SAMPLES = " << samples << ".\n";
 
-			if (best_fbc < 0 || (samp_buf && samples > best_num_samp)) {
+			if ( best_fbc < 0 || (samp_buf && samples > best_num_samp) ) {
 				best_fbc = i;
 				best_num_samp = samples;
 			}
-			if (worst_fbc < 0 || !samp_buf || samples < worst_num_samp)
+			if ( worst_fbc < 0 || !samp_buf || samples < worst_num_samp )
 				worst_fbc = i;
 			worst_num_samp = samples;
 		}
-		XFree(vi);
+		XFree( vi );
 	}
 
 	//std::cout << "Best visual info index: " << best_fbc << "\n";
-	GLXFBConfig bestFbc = fbc[best_fbc];
-	XFree(fbc); // Make sure to free this!
+	GLXFBConfig bestFbc = fbc[ best_fbc ];
+	XFree( fbc ); // Make sure to free this!
 
-	XVisualInfo* visual = glXGetVisualFromFBConfig(display, bestFbc);
+	XVisualInfo* visual = glXGetVisualFromFBConfig( display, bestFbc );
 
 	if (visual == 0) {
 		std::cout << "Could not create correct visual window.\n";
@@ -68,30 +111,17 @@ bool GraphicsWrapper::SetWindowContext() { // Check GLX version
 		return 0;
 	}
 
-	if (screenId != visual->screen) {
-		std::cout << "screenId(" << screenId << ") does not match visual->screen(" << visual->screen << ").\n";
+	if (screenID != visual->screen) {
+		std::cout << "screenId(" << screenID << ") does not match visual->screen(" << visual->screen << ").\n";
 		XCloseDisplay(display);
 		return 0;
 	}
-
-	// Open the window
-	XSetWindowAttributes windowAttribs;
-	windowAttribs.border_pixel = BlackPixel(display, screenId);
-	windowAttribs.background_pixel = WhitePixel(display, screenId);
-	windowAttribs.override_redirect = True;
-	windowAttribs.colormap = XCreateColormap(display, RootWindow(display, screenId), visual->visual, AllocNone);
-	windowAttribs.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask | KeymapStateMask | PointerMotionMask | ButtonPressMask | ButtonReleaseMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask;
-
-	window = XCreateWindow(display, RootWindow(display, screenId), 0, 0, game.settings.resolution.x, game.settings.resolution.y, 0, visual->depth, InputOutput, visual->visual, CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, &windowAttribs);
-
-	// Name the window
-	XStoreName(display, *window, "Named Window");
-
+	
 	// Create GLX OpenGL context
 	glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
 	glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddressARB((const GLubyte *) "glXCreateContextAttribsARB");
 
-	const char *glxExts = glXQueryExtensionsString(display, screenId);
+	const char *glxExts = glXQueryExtensionsString(display, screenID);
 #if 0
 	std::cout << "Late extensions:\n\t" << glxExts << "\n\n";
 	if (glXCreateContextAttribsARB == 0) {
@@ -100,8 +130,8 @@ bool GraphicsWrapper::SetWindowContext() { // Check GLX version
 #endif
 
 	int context_attribs[] = {
-		GLX_CONTEXT_MAJOR_VERSION_ARB,	(int)game.settings.glMajor,
-		GLX_CONTEXT_MINOR_VERSION_ARB,	(int)game.settings.glMinor,
+		GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
+		GLX_CONTEXT_MINOR_VERSION_ARB, 3,
 		GLX_CONTEXT_FLAGS_ARB,		0,
 		GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
 		None
@@ -150,7 +180,7 @@ void GraphicsWrapper::SetWindowContext(Display* dpy, Window *wnd, Screen* scrn, 
 	display = dpy;
 	window = wnd;
 	screen = scrn;
-	sreenID = id;
+	screenID = id;
 }
 
 
@@ -158,4 +188,4 @@ void GraphicsWrapper::SwapBuffer() {
 	glXSwapBuffers(display, *window);
 }
 
-//#endif
+#endif

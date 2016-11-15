@@ -20,6 +20,7 @@
 	#include <X11/Xlib.h>
 	#include <X11/Xutil.h>
 	#include <X11/keysymdef.h>
+	#include <GL/glx.h>
 
 	#define WINDOW_EXPORT_CLASS
 	#define WINDOW_EXPORT extern "C"
@@ -33,6 +34,7 @@ private:
 		Display* display;
 		Window window;
 		Screen *screen;
+		int screenID;
 	#endif
 	#ifdef _WIN32
 		static LRESULT CALLBACK sWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -50,7 +52,9 @@ public:
 	virtual void SetInputPointer(InputInterface *);
 	virtual void HandleEvents();
 
-#ifdef _WIN32
+#if defined(__linux__)
+	virtual void GetHandles(Display*, Window *, Screen*, int);
+#elif defined(_WIN32)
 	virtual HWND GetHandle();
 #endif
 

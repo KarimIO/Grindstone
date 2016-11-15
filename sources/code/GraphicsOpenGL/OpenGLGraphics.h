@@ -22,7 +22,6 @@
 	#include <X11/Xlib.h>
 	#include <X11/Xutil.h>
 	#include <X11/keysymdef.h>
-	#include <GL/glx.h>
 #endif
 
 class InputInterface;
@@ -33,11 +32,12 @@ private:
 	HWND	window_handle;
 	HGLRC	hRC;
 	HDC		hDC;
-#elif __linux__
+#endif
+#ifdef __linux__
 	Display* display;
 	Window *window;
 	Screen* screen;
-	int screenId;
+	int screenID;
 #endif
 public:
 	virtual bool InitializeWindowContext();
@@ -45,13 +45,12 @@ public:
 	virtual void SwapBuffer();
 #ifdef _WIN32
 	virtual void SetWindowContext(HWND);
-#elif __linux__
-	virtual void SetWindowContext(Display*, Window *window, Screen* screen, int screenId);
+#endif
+#ifdef __linux__
+	virtual void SetWindowContext(Display*, Window *, Screen* screen, int);
 #endif
 };
 
-extern "C" {
-	GRAPHICS_EXPORT GraphicsWrapper* createGraphics();
-};
+extern "C" GRAPHICS_EXPORT GraphicsWrapper* createGraphics();
 
 #endif

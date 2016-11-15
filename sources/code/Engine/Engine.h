@@ -4,9 +4,7 @@
 #include "BaseClass.h"
 #include "InputInterface.h"
 #include <Window.h>
-#ifdef _WIN32
 #include <OpenGLGraphics.h>
-#endif
 
 class Engine : public BaseClass {
 private:

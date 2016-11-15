@@ -5,9 +5,9 @@ void InputInterface::ResizeEvent(int, int) {}
 void InputInterface::SetMousePosition(int, int) {}
 void InputInterface::SetMouseButton(int mb, bool state) {
     if (state)
-	    std::cout << "Mouse Button pressed: " << mb << std::endl;
+	    std::cout << "Mouse Button pressed: " << mb << "\n";
     else
-	    std::cout << "Mouse Button released: " << mb << std::endl;
+	    std::cout << "Mouse Button released: " << mb << "\n";
 }
 
 void InputInterface::SetMouseInWindow(bool) {}
@@ -21,9 +21,9 @@ bool InputInterface::IsFocused() {
 
 void InputInterface::SetKey(int key, bool state) {
     if (state)
-    	std::cout << "Key pressed: " << key << std::endl;
+    	std::cout << "Key pressed: " << key << "\n";
     else
-    	std::cout << "Key released: " << key << std::endl;
+    	std::cout << "Key released: " << key << "\n";
 
     if (key == KEY_ESCAPE)
         ForceQuit();

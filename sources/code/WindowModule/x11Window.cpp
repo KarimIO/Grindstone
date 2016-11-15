@@ -9,11 +9,10 @@ GameWindow::~GameWindow() {
 }
 
 bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY) {	
-    XEvent event;
-    int screenSize;
-	
-	resX = resolutionX;
+    resX = resolutionX;
 	resY = resolutionY;
+
+	XInitThreads();
 
     display = XOpenDisplay(NULL);
     if(display == NULL)
@@ -23,11 +22,84 @@ bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY)
     }
 
 	screen = DefaultScreenOfDisplay(display);
-    screenSize = DefaultScreen(display);
-    window = XCreateSimpleWindow(display, RootWindow(display, screenSize), 10, 10, resX, resY, 1, BlackPixel(display, screenSize), WhitePixel(display, screenSize));
-    XSelectInput(display, window, ExposureMask | KeyPressMask | KeyReleaseMask | KeymapStateMask | PointerMotionMask | ButtonPressMask | ButtonReleaseMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask);
-    XMapWindow(display, window);
-	XFlush(display);
+    screenID = DefaultScreen(display);
+
+		GLint glxAttribs[] = {
+		GLX_X_RENDERABLE    , True,
+		GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+		GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+		GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+		GLX_RED_SIZE        , 8,
+		GLX_GREEN_SIZE      , 8,
+		GLX_BLUE_SIZE       , 8,
+		GLX_ALPHA_SIZE      , 8,
+		GLX_DEPTH_SIZE      , 24,
+		GLX_STENCIL_SIZE    , 8,
+		GLX_DOUBLEBUFFER    , True,
+		None
+	};
+
+	int fbcount;
+	GLXFBConfig* fbc = glXChooseFBConfig(display, screenID, glxAttribs, &fbcount);
+	if (fbc == 0) {
+		std::cout << "Failed to retrieve framebuffer.\n";
+		XCloseDisplay(display);
+		return 0;
+	}
+	//std::cout << "Found " << fbcount << " matching framebuffers.\n";
+
+	// Pick the FB config/visual with the most samples per pixel
+	//std::cout << "Getting best XVisualInfo\n";
+	int best_fbc = -1, worst_fbc = -1, best_num_samp = -1, worst_num_samp = 999;
+	for (int i = 0; i < fbcount; ++i) {
+		XVisualInfo *vi = glXGetVisualFromFBConfig( display, fbc[i] );
+		if ( vi != 0) {
+			int samp_buf, samples;
+			glXGetFBConfigAttrib( display, fbc[i], GLX_SAMPLE_BUFFERS, &samp_buf );
+			glXGetFBConfigAttrib( display, fbc[i], GLX_SAMPLES       , &samples  );
+			//std::cout << "  Matching fbconfig " << i << ", SAMPLE_BUFFERS = " << samp_buf << ", SAMPLES = " << samples << ".\n";
+
+			if ( best_fbc < 0 || (samp_buf && samples > best_num_samp) ) {
+				best_fbc = i;
+				best_num_samp = samples;
+			}
+			if ( worst_fbc < 0 || !samp_buf || samples < worst_num_samp )
+				worst_fbc = i;
+			worst_num_samp = samples;
+		}
+		XFree( vi );
+	}
+
+	//std::cout << "Best visual info index: " << best_fbc << "\n";
+	GLXFBConfig bestFbc = fbc[ best_fbc ];
+	XFree( fbc ); // Make sure to free this!
+
+	XVisualInfo* visual = glXGetVisualFromFBConfig( display, bestFbc );
+
+	if (visual == 0) {
+		std::cout << "Could not create correct visual window.\n";
+		XCloseDisplay(display);
+		return 0;
+	}
+
+	if (screenID != visual->screen) {
+		std::cout << "screenId(" << screenID << ") does not match visual->screen(" << visual->screen << ").\n";
+		XCloseDisplay(display);
+		return 0;
+	}
+	
+
+	XSetWindowAttributes windowAttribs;
+	windowAttribs.border_pixel = BlackPixel(display, screenID);
+	windowAttribs.background_pixel = WhitePixel(display, screenID);
+	windowAttribs.override_redirect = True;
+	windowAttribs.colormap = XCreateColormap(display, RootWindow(display, screenID), visual->visual, AllocNone);
+	windowAttribs.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask | KeymapStateMask | PointerMotionMask | ButtonPressMask | ButtonReleaseMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask;
+
+   // window = XCreateSimpleWindow(display, RootWindow(display, screenID), 10, 10, resX, resY, 1, BlackPixel(display, screenID), WhitePixel(display, screenID));
+	window = XCreateWindow(display, RootWindow(display, screenID), 0, 0, 1024, 768, 0, visual->depth, InputOutput, visual->visual, CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, &windowAttribs);
+	XStoreName(display, window, "Grindstone Engine");
+
 
 	return true;
 }
@@ -232,6 +304,13 @@ void GameWindow::HandleEvents() {
 				break;*/
 		}
 	}
+}
+
+void GameWindow::GetHandles(Display* dpy, Window *win, Screen* scrn, int id) {
+		Display* display;
+		Window window;
+		Screen *screen;
+		id = screenID;
 }
 
 void GameWindow::Shutdown() {
