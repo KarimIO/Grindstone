@@ -4,24 +4,24 @@
 #include <iostream>
 
 #ifdef _WIN32
-	#include <Windows.h>
+#include <Windows.h>
 
-	#ifdef GRAPHICS_DLL
-		#define GRAPHICS_EXPORT_CLASS __declspec(dllexport) 
-		#define GRAPHICS_EXPORT __declspec(dllexport) 
-	#else
-		#define GRAPHICS_EXPORT_CLASS __declspec(dllimport) 
-		#define GRAPHICS_EXPORT __declspec(dllimport) 
-	#endif
+#ifdef GRAPHICS_DLL
+#define GRAPHICS_EXPORT_CLASS __declspec(dllexport) 
+#define GRAPHICS_EXPORT __declspec(dllexport) 
 #else
-	#define GRAPHICS_EXPORT_CLASS
-	#define GRAPHICS_EXPORT extern "C"
+#define GRAPHICS_EXPORT_CLASS __declspec(dllimport) 
+#define GRAPHICS_EXPORT __declspec(dllimport) 
+#endif
+#else
+#define GRAPHICS_EXPORT_CLASS
+#define GRAPHICS_EXPORT extern "C"
 #endif
 
 #ifdef __linux__
-	#include <X11/Xlib.h>
-	#include <X11/Xutil.h>
-	#include <X11/keysymdef.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/keysymdef.h>
 #endif
 
 class InputInterface;

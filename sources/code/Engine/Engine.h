@@ -4,7 +4,7 @@
 #include "BaseClass.h"
 #include "InputInterface.h"
 #include <Window.h>
-#include <OpenGLGraphics.h>
+#include <OGLGraphicsWrapper.h>
 
 class Engine : public BaseClass {
 private:

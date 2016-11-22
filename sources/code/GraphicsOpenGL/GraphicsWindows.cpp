@@ -1,6 +1,6 @@
 #ifdef _WIN32
 //#include "wglext.h"
-#include "OpenGLGraphics.h"
+#include "OGLGraphicsWrapper.h"
 #include "gl3w.h"
 
 bool GraphicsWrapper::InitializeWindowContext() {

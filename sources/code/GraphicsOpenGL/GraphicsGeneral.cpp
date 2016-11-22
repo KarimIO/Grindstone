@@ -1,5 +1,8 @@
 #include "gl3w.h"
-#include "OpenGLGraphics.h"
+#include "OGLGraphicsWrapper.h"
+
+#include "GLVertexArrayObject.h"
+#include "GLVertexBufferObject.h"
 
 GRAPHICS_EXPORT GraphicsWrapper* createGraphics() {
 	std::cout << "Creating the graphics (dll-side)\n";
@@ -27,39 +30,55 @@ bool GraphicsWrapper::InitializeGraphics()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// An array of 3 vectors which represents 3 vertices
-	const GLfloat g_vertex_buffer_data[] = {
+	GLfloat g_vertex_buffer_data[] = {
 		-1.0f, -1.0f, 0.0f,
 		1.0f, -1.0f, 0.0f,
 		0.0f,  1.0f, 0.0f,
 	};
 
-	GLuint VertexArrayID;
-	glGenVertexArrays(1, &VertexArrayID);
-	glBindVertexArray(VertexArrayID);
+	/*GLVertexArrayObject vao;
+	vao.Initialize();
 
-	// This will identify our vertex buffer
-	GLuint vertexbuffer;
-	// Generate 1 buffer, put the resulting identifier in vertexbuffer
-	glGenBuffers(1, &vertexbuffer);
-	// The following commands will talk about our 'vertexbuffer' buffer
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	// Give our vertices to OpenGL.
-	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+	GLVertexBufferObject vbo;
+	vbo.Initialize(1);
+	vbo.AddVBO(g_vertex_buffer_data, (uint64_t)sizeof(g_vertex_buffer_data), (uint8_t)0, (uint8_t)0);
 
-	// 1rst attribute buffer : vertices
+	vao.BindVBO(&vbo);*/
+
+	GLVertexArrayObject vao;
+	vao.Initialize();
+	vao.Bind();
+
+	GLVertexBufferObject vbo;
+	vbo.Initialize(1);
+	vbo.AddVBO(g_vertex_buffer_data, (uint64_t)sizeof(g_vertex_buffer_data), (uint8_t)0, (uint8_t)0);
+	vbo.Bind(0);
+	//vao.BindVBO(&vbo);
+
+	/*glBindVertexArray(VertexArrayID);
 	glEnableVertexAttribArray(0);
+
+	GLuint vertexbuffer;
+	glGenBuffers(1, &vertexbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	glVertexAttribPointer(
-		0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-		3,                  // size
-		GL_FLOAT,           // type
-		GL_FALSE,           // normalized?
-		0,                  // stride
-		(void*)0            // array buffer offset
+	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+	glVertexAttribPointer(0,
+		3,
+		GL_FLOAT,
+		GL_FALSE,
+		0,
+		(void*)0
 		);
-	// Draw the triangle !
+	glBindVertexArray(0);
+	glDisableVertexAttribArray(0);*/
+	vao.Unbind();
+
+	vao.Bind();
+	//glBindVertexArray(VertexArrayID);
 	glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
-	glDisableVertexAttribArray(0);
+	//glBindVertexArray(0);
+	vao.Unbind();
+	//vao.Unbind();
 
 	return true;
 }
