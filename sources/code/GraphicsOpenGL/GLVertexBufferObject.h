@@ -9,15 +9,15 @@
 class GLVertexBufferObject : public VertexBufferObject {
 public:
 	unsigned int *vboHandle;
-	uint8_t numBuffers;
 	uint8_t size;
-	unsigned int strideSize;
+	unsigned int elementSize;
+	dataSize dataSizeType;
 public:
 	// Initialize
 	virtual void Initialize(uint8_t size);
 
 	// Pass VBO
-	virtual void AddVBO(void *data, uint64_t size, uint8_t strideSize, uint8_t dataSize);
+	virtual void AddVBO(void *data, uint64_t size, uint8_t strideSize, dataSize dataSize, drawType drawType);
 	virtual void AddVBO(VertexBufferObjectInitializer);
 	virtual void AddVBO(std::vector<VertexBufferObjectInitializer>);
 
@@ -26,7 +26,7 @@ public:
 
 	// Bind VBO
 	virtual uint8_t Bind(uint8_t bindTo);
-	virtual void Bind(uint8_t bindTo, uint8_t id);
+	virtual void Bind(uint8_t bindTo, uint8_t id, bool normalize, uint32_t stride, uint32_t offset);
 
 	// Unbind
 	virtual void Unbind();

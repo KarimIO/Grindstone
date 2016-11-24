@@ -2,6 +2,7 @@
 #define _GRAPHICS_H
 
 #include <iostream>
+#include "GLVertexArrayObject.h"
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -42,6 +43,8 @@ private:
 public:
 	virtual bool InitializeWindowContext();
 	virtual bool InitializeGraphics();
+	virtual void DrawArrays(VertexArrayObject *vao, int start, unsigned int length);
+	virtual void Clear();
 	virtual void SwapBuffer();
 #ifdef _WIN32
 	virtual void SetWindowContext(HWND);
@@ -52,5 +55,7 @@ public:
 };
 
 extern "C" GRAPHICS_EXPORT GraphicsWrapper* createGraphics();
+extern "C" GRAPHICS_EXPORT VertexArrayObject* createVAO();
+extern "C" GRAPHICS_EXPORT VertexBufferObject* createVBO();
 
 #endif

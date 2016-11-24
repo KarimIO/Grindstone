@@ -9,11 +9,12 @@
 	Engine *Engine::_instance=0;
 #endif
 
+VertexArrayObject* (*pfnCreateVAO)();
+VertexBufferObject* (*pfnCreateVBO)();
+
 bool Engine::Initialize() {
 	if (!InitializeWindow())	return false;
 	if (!InitializeGraphics())	return false;
-
-	graphicsWrapper->SwapBuffer();
 
 	isRunning = true;
 	return true;
@@ -100,9 +101,23 @@ bool Engine::InitializeGraphics() {
 		return false;
 	}
 
+	pfnCreateVAO = (VertexArrayObject* (*)())GetProcAddress(dllHandle, "createVAO");
+
+	if (!pfnCreateVAO) {
+		fprintf(stderr, "Cannot get createVAO function!\n");
+		return false;
+	}
+
+	pfnCreateVBO = (VertexBufferObject* (*)())GetProcAddress(dllHandle, "createVBO");
+
+	if (!pfnCreateVBO) {
+		fprintf(stderr, "Cannot get createVBO function!\n");
+		return false;
+	}
+
 	HWND win_handle = window->GetHandle();
 #endif
-	
+
 	std::cout << "Creating GraphicsWrapper\n";
 	std::cout << pfnCreateGraphics << "\n";
 	graphicsWrapper = (GraphicsWrapper*)pfnCreateGraphics();
@@ -143,11 +158,34 @@ void Engine::Run() {
 	prevTime = std::chrono::high_resolution_clock::now();
 
 	std::chrono::microseconds delta;
+
+
+
+	// An array of 3 vectors which represents 3 vertices
+	float g_vertex_buffer_data[] = {
+		-1.0f, -1.0f, 0.0f,
+		1.0f, -1.0f, 0.0f,
+		0.0f,  1.0f, 0.0f,
+	};
+
+	VertexArrayObject *vao = pfnCreateVAO();
+	vao->Initialize();
+	vao->Bind();
+
+	VertexBufferObject *vbo = pfnCreateVBO();
+	vbo->Initialize(1);
+	vbo->AddVBO(g_vertex_buffer_data, (uint64_t)sizeof(g_vertex_buffer_data), 3, SIZE_FLOAT, DRAW_STATIC);
+	vbo->Bind(0);
+
 	while (isRunning) {
 		currentTime = std::chrono::high_resolution_clock::now();
 		delta = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - prevTime);
 		//std::cout << 1000000.0/delta.count() << "\n";
 		prevTime = currentTime;
+
+		graphicsWrapper->Clear();
+		graphicsWrapper->DrawArrays(vao, 0, 3);
+		graphicsWrapper->SwapBuffer();
 
 		window->HandleEvents();
 	}
