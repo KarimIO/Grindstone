@@ -1,6 +1,7 @@
 #ifndef _GL_VERTEX_BUFFER_OBJECT_H
 #define _GL_VERTEX_BUFFER_OBJECT_H
 
+#include "../GraphicsCommon/GLDefDLL.h"
 #include <stdint.h>
 #include "../GraphicsCommon/VertexBufferObject.h"
 #include "gl3w.h"
@@ -35,5 +36,7 @@ public:
 	// Cleanup
 	virtual void Cleanup();
 };
+
+extern "C" GRAPHICS_EXPORT VertexBufferObject* createVBO();
 
 #endif

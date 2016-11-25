@@ -9,16 +9,6 @@ GRAPHICS_EXPORT GraphicsWrapper* createGraphics() {
 	return new GraphicsWrapper;
 }
 
-GRAPHICS_EXPORT VertexArrayObject* createVAO() {
-	std::cout << "Creating the VAO\n";
-	return new GLVertexArrayObject;
-}
-
-GRAPHICS_EXPORT VertexBufferObject* createVBO() {
-	std::cout << "Creating the VBO\n";
-	return new GLVertexBufferObject;
-}
-
 bool GraphicsWrapper::InitializeGraphics()
 {
 	//Initializing GL3W
@@ -42,14 +32,23 @@ bool GraphicsWrapper::InitializeGraphics()
 	return true;
 }
 
-void GraphicsWrapper::DrawArrays(VertexArrayObject *vao, int start, unsigned int length)
-{
+void GraphicsWrapper::DrawBaseVertex(VertexArrayObject *vao, uint32_t baseIndex, uint32_t baseVertex, uint32_t numIndices) {
+	vao->Bind();
+	glDrawElementsBaseVertex(
+		GL_TRIANGLES,
+		numIndices,
+		GL_UNSIGNED_INT,
+		(void*)(sizeof(unsigned int) * baseIndex),
+		baseVertex);
+	vao->Unbind();
+}
+
+void GraphicsWrapper::DrawArrays(VertexArrayObject *vao, int start, unsigned int length) {
 	vao->Bind();
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 	vao->Unbind();
 }
 
-void GraphicsWrapper::Clear()
-{
+void GraphicsWrapper::Clear() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }

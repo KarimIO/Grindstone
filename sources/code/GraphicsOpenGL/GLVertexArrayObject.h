@@ -1,6 +1,7 @@
 #ifndef _GL_VERTEX_ARRAY_OBJECT_H
 #define _GL_VERTEX_ARRAY_OBJECT_H
 
+#include "../GraphicsCommon/GLDefDLL.h"
 #include "../GraphicsCommon/VertexArrayObject.h"
 #include "GLVertexBufferObject.h"
 
@@ -27,5 +28,7 @@ public:
 	virtual void Cleanup();
 	virtual void CleanupVBOs();
 };
+
+extern "C" GRAPHICS_EXPORT VertexArrayObject* createVAO();
 
 #endif

@@ -45,3 +45,5 @@ Sources/Obj/
 
 bin/*
 .vscode/*
+models/*
+scenes/*

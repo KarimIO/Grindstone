@@ -1,6 +1,7 @@
 #include "Engine.h"
+#include "Utilities.h"
+#include "GraphicsDLLPointer.h"
 #include <stdio.h>
-#include <chrono>
 #ifndef _WIN32
 #include <dlfcn.h>
 #endif
@@ -9,14 +10,13 @@
 	Engine *Engine::_instance=0;
 #endif
 
-VertexArrayObject* (*pfnCreateVAO)();
-VertexBufferObject* (*pfnCreateVBO)();
-
 bool Engine::Initialize() {
-	if (!InitializeWindow())	return false;
-	if (!InitializeGraphics())	return false;
+	if (!InitializeWindow())					return false;
+	if (!InitializeGraphics())					return false;
+	if (!InitializeScene("scenes/startup.gmf"))	return false;
 
 	isRunning = true;
+	prevTime = std::chrono::high_resolution_clock::now();
 	return true;
 }
 
@@ -115,6 +115,13 @@ bool Engine::InitializeGraphics() {
 		return false;
 	}
 
+	pfnCreateShader = (ShaderProgram* (*)())GetProcAddress(dllHandle, "createShader");
+
+	if (!pfnCreateShader) {
+		fprintf(stderr, "Cannot get createShader function!\n");
+		return false;
+	}
+
 	HWND win_handle = window->GetHandle();
 #endif
 
@@ -154,13 +161,6 @@ Engine &Engine::GetInstance() {
 #endif
 
 void Engine::Run() {
-	std::chrono::time_point<std::chrono::high_resolution_clock> currentTime, prevTime;
-	prevTime = std::chrono::high_resolution_clock::now();
-
-	std::chrono::microseconds delta;
-
-
-
 	// An array of 3 vectors which represents 3 vertices
 	float g_vertex_buffer_data[] = {
 		-1.0f, -1.0f, 0.0f,
@@ -168,22 +168,36 @@ void Engine::Run() {
 		0.0f,  1.0f, 0.0f,
 	};
 
+	std::string vsPath = "shaders/objects/main.glvs"; // GetShaderExt()
+	std::string fsPath = "shaders/objects/main.glfs";
+
+	std::string vsContent;
+	if (!ReadFile(vsPath, vsContent))
+		return;
+
+	std::string fsContent;
+	if (!ReadFile(fsPath, fsContent))
+		return;
+
+	ShaderProgram *shader = pfnCreateShader();
+	shader->AddShader(vsPath, vsContent, SHADER_VERTEX);
+	shader->AddShader(fsPath, fsContent, SHADER_FRAGMENT);
+	shader->Compile();
+
 	VertexArrayObject *vao = pfnCreateVAO();
 	vao->Initialize();
 	vao->Bind();
 
 	VertexBufferObject *vbo = pfnCreateVBO();
 	vbo->Initialize(1);
-	vbo->AddVBO(g_vertex_buffer_data, (uint64_t)sizeof(g_vertex_buffer_data), 3, SIZE_FLOAT, DRAW_STATIC);
+	vbo->AddVBO(g_vertex_buffer_data, sizeof(g_vertex_buffer_data), 3, SIZE_FLOAT, DRAW_STATIC);
 	vbo->Bind(0);
 
 	while (isRunning) {
-		currentTime = std::chrono::high_resolution_clock::now();
-		delta = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - prevTime);
-		//std::cout << 1000000.0/delta.count() << "\n";
-		prevTime = currentTime;
+		CalculateTime();
 
 		graphicsWrapper->Clear();
+		shader->Use();
 		graphicsWrapper->DrawArrays(vao, 0, 3);
 		graphicsWrapper->SwapBuffer();
 
@@ -191,12 +205,40 @@ void Engine::Run() {
 	}
 }
 
+// Find available path from include paths
+std::string Engine::GetAvailablePath(std::string szString) {
+	// Check Mods Directory
+	// Check Total Conversion Directory
+	// Check Game Directory
+	// Check Engine Directory
+	if (FileExists(szString))
+		return szString;
+
+	// Return Empty String
+	return "";
+}
+
+// Initialize and Load a game scene
+bool Engine::InitializeScene(std::string szScenePath) {
+	szScenePath = GetAvailablePath(szScenePath);
+	if (szScenePath == "") {
+		printf("Scene path %s not found.\n", szScenePath.c_str());
+		return false;
+	}
+
+	return true;
+}
+
+void Engine::CalculateTime() {
+	currentTime = std::chrono::high_resolution_clock::now();
+	deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - prevTime);
+	prevTime = currentTime;
+}
+
 void Engine::Shutdown() {
 	isRunning = false;
 }
 
 Engine::~Engine() {
-	std::cout << "Shutting Down\n";
 	window->Shutdown();
-	std::cout << "Window Down Down\n";
 }

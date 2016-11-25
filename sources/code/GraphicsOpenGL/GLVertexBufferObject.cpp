@@ -17,6 +17,7 @@ uint8_t GLVertexBufferObject::Bind(uint8_t bindTo)
 
 void GLVertexBufferObject::Bind(uint8_t bindTo, uint8_t id, bool normalize, uint32_t stride, uint32_t offset)
 {
+	GLvoid const* pointer = static_cast<char const*>(0) + offset;
 	glEnableVertexAttribArray(bindTo);
 	glBindBuffer(GL_ARRAY_BUFFER, vboHandle[0]);
 	glVertexAttribPointer(
@@ -25,7 +26,7 @@ void GLVertexBufferObject::Bind(uint8_t bindTo, uint8_t id, bool normalize, uint
 		GL_UNSIGNED_BYTE + dataSizeType - 1,           // type
 		normalize,           // normalized?
 		stride,                  // stride
-		(void*)offset            // array buffer offset
+		pointer            // array buffer offset
 	);
 }
 
@@ -78,4 +79,8 @@ void GLVertexBufferObject::AddVBO(std::vector<VertexBufferObjectInitializer> vbo
 	for (size_t i = 0; i < vbos.size(); i++) {
 		AddVBO(vbos[i].data, vbos[i].size, vbos[i].strideSize, vbos[i].dataSize, vbos[i].drawType);
 	}
+}
+
+GRAPHICS_EXPORT VertexBufferObject* createVBO() {
+	return new GLVertexBufferObject;
 }

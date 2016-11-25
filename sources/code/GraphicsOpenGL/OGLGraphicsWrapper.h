@@ -3,20 +3,10 @@
 
 #include <iostream>
 #include "GLVertexArrayObject.h"
+#include "../GraphicsCommon/GLDefDLL.h"
 
 #ifdef _WIN32
 #include <Windows.h>
-
-#ifdef GRAPHICS_DLL
-#define GRAPHICS_EXPORT_CLASS __declspec(dllexport) 
-#define GRAPHICS_EXPORT __declspec(dllexport) 
-#else
-#define GRAPHICS_EXPORT_CLASS __declspec(dllimport) 
-#define GRAPHICS_EXPORT __declspec(dllimport) 
-#endif
-#else
-#define GRAPHICS_EXPORT_CLASS
-#define GRAPHICS_EXPORT extern "C"
 #endif
 
 #ifdef __linux__
@@ -44,6 +34,7 @@ public:
 	virtual bool InitializeWindowContext();
 	virtual bool InitializeGraphics();
 	virtual void DrawArrays(VertexArrayObject *vao, int start, unsigned int length);
+	virtual void DrawBaseVertex(VertexArrayObject *vao, uint32_t baseIndex, uint32_t baseVertex, uint32_t numIndices);
 	virtual void Clear();
 	virtual void SwapBuffer();
 #ifdef _WIN32
@@ -55,7 +46,5 @@ public:
 };
 
 extern "C" GRAPHICS_EXPORT GraphicsWrapper* createGraphics();
-extern "C" GRAPHICS_EXPORT VertexArrayObject* createVAO();
-extern "C" GRAPHICS_EXPORT VertexBufferObject* createVBO();
 
 #endif

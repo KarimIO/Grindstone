@@ -1,5 +1,6 @@
 #include "GLVertexArrayObject.h"
 #include "gl3w.h"
+#include <iostream>
 
 void GLVertexArrayObject::Initialize()
 {
@@ -33,4 +34,8 @@ void GLVertexArrayObject::Cleanup()
 void GLVertexArrayObject::CleanupVBOs()
 {
 	glDeleteVertexArrays(1, &vao);
+}
+
+GRAPHICS_EXPORT VertexArrayObject* createVAO() {
+	return new GLVertexArrayObject;
 }
