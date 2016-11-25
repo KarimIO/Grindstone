@@ -1,5 +1,7 @@
 #include "GLShader.h"
 #include <vector>
+#include <iostream>
+#include <glm/glm.hpp>
 
 GLShaderProgram::GLShaderProgram()
 {
@@ -85,6 +87,25 @@ bool GLShaderProgram::Compile() {
 
 void GLShaderProgram::Use() {
 	glUseProgram(program);
+}
+
+void GLShaderProgram::SetNumUniforms(int num) {
+	uniforms = new int[num];
+	uniformCounter = 0;
+	dataOffset = 0;
+}
+
+void GLShaderProgram::CreateUniform(const char *name) {
+	uniforms[uniformCounter++] = glGetUniformLocation(program, name);
+}
+
+void GLShaderProgram::PassData(void *ptr) {
+	dataPtr = ptr;
+}
+
+void GLShaderProgram::SetUniform4m() {
+	glm::mat4 data = *(glm::mat4 *)(dataPtr);
+	glUniformMatrix4fv(uniforms[0], 1, GL_FALSE, &data[0][0]);
 }
 
 void GLShaderProgram::Cleanup() {

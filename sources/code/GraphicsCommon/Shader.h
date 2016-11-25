@@ -16,6 +16,11 @@ public:
 	virtual bool Compile() = 0;
 	virtual void Use() = 0;
 
+	virtual void SetNumUniforms(int) = 0;
+	virtual void CreateUniform(const char *) = 0;
+	virtual void PassData(void *) = 0;
+	virtual void SetUniform4m() = 0;
+
 	virtual void Cleanup() = 0;
 };
 

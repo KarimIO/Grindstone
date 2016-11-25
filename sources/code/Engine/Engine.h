@@ -17,6 +17,11 @@ private:
 	bool InitializeWindow();
 	bool InitializeGraphics();
 
+	// Remove this ASAP
+	ShaderProgram *shader;
+	VertexArrayObject *vao;
+	VertexBufferObject *vbo;
+
 	// Time Data
 	std::chrono::time_point<std::chrono::high_resolution_clock> currentTime, prevTime;
 
