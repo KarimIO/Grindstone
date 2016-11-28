@@ -1,5 +1,23 @@
 #if 0
+#include "Engine.h"
 #include "Input.h"
+
+char charToLower(char letter) {
+	int charNum = (int)letter;
+	if (charNum >= 65 && charNum <= 90)
+		charNum += 32;
+
+	return (char)charNum;
+}
+
+std::string strToLower(std::string phrase) {
+	std::string out = "";
+	for (size_t i = 0; i < (size_t)phrase.size(); i++) {
+		out += charToLower(phrase[i]);
+	}
+	return out;
+}
+
 
 // Simply sets the modifier to 1.0f so that the default speed is set.
 InputSystem::InputSystem() {
@@ -364,14 +382,14 @@ void InputSystem::SetKey(int key, bool state) {
 	bool keypressed = false;
 
 	if (state && keyPressDuration[key] <= 0) {
-		time = game.currentTime + keyPressDuration[key];
-		keyPressDuration[key] = game.currentTime;
+		time = engine.GetTimeCurrent() + keyPressDuration[key];
+		keyPressDuration[key] = engine.GetTimeCurrent();
 		isEvent = true;
 		keypressed = true;
 	}
 	else if (!state && keyPressDuration[key] >= 0) {
-		time = game.currentTime - keyPressDuration[key];
-		keyPressDuration[key] = -game.currentTime;
+		time = engine.GetTimeCurrent() - keyPressDuration[key];
+		keyPressDuration[key] = -engine.GetTimeCurrent();
 		isEvent = true;
 	}
 
@@ -436,14 +454,14 @@ void InputSystem::SetMouseButton(int button, bool state) {
 	KEY_STATUS keyStatus;
 
 	if (state && mousePressDuration[button] <= 0) {
-		time = game.currentTime + mousePressDuration[button];
-		mousePressDuration[button] = game.currentTime;
+		time = engine.GetTimeCurrent() + mousePressDuration[button];
+		mousePressDuration[button] = engine.GetTimeCurrent();
 		isEvent = true;
 		keyStatus = KEY_PRESSED;
 	}
 	else if (!state && mousePressDuration[button] >= 0) {
-		time = game.currentTime - mousePressDuration[button];
-		mousePressDuration[button] = -game.currentTime;
+		time = engine.GetTimeCurrent() - mousePressDuration[button];
+		mousePressDuration[button] = -engine.GetTimeCurrent();
 		isEvent = true;
 		keyStatus = KEY_RELEASED;
 	}
@@ -468,7 +486,7 @@ void InputSystem::SetMouseButton(int button, bool state) {
 }
 
 void InputSystem::ResetCursor() {
-	game.window->ResetCursor();
+	engine.window->ResetCursor();
 }
 
 float InputSystem::GetKeyDuration(int key)
@@ -485,7 +503,7 @@ void InputSystem::LoopControls(double deltaTime) {
 	if (!IsFocused())
 		return;
 
-	game.window->GetCursor(xpos, ypos);
+	engine.window->GetCursor(xpos, ypos);
 
 	for (size_t i = 0; i < MOUSE_MOUSE5; i++) {
 		if (mousePressDuration[i] > 0) { // Key is Pressed
@@ -539,7 +557,7 @@ void InputSystem::LoopControls(double deltaTime) {
 	game.window->ResetCursor();
 }
 
-InputComponent::InputComponent(std::string cfgFilePath, InputSystem *sys, EBaseEntity * e, System *s) :SuperComponent(e, s) {
+InputComponent::InputComponent(std::string cfgFilePath, InputSystem *sys, EBaseEntity * e, InputSystem *s) :SuperComponent(e, s) {
 	system = sys;
 	componentType = COMPONENT_INPUT;
 

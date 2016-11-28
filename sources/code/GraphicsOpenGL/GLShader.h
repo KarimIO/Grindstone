@@ -1,9 +1,7 @@
 #ifndef _GL_SHADER_H
 #define _GL_SHADER_H
 
-#include "../GraphicsCommon/GLDefDLL.h"
 #include "../GraphicsCommon/Shader.h"
-#include "gl3w.h"
 
 class GLShaderProgram : public ShaderProgram {
 public:
@@ -28,7 +26,5 @@ public:
 
 	virtual void Cleanup();
 };
-
-extern "C" GRAPHICS_EXPORT ShaderProgram* createShader();
 
 #endif

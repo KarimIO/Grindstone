@@ -1,3 +1,4 @@
+#include "gl3w.h"
 #include "GLVertexBufferObject.h"
 #include <iostream>
 
@@ -17,6 +18,7 @@ uint8_t GLVertexBufferObject::Bind(uint8_t bindTo)
 
 void GLVertexBufferObject::Bind(uint8_t bindTo, uint8_t id, bool normalize, uint32_t stride, uint32_t offset)
 {
+	printf("%i - %i\n", GL_UNSIGNED_BYTE + dataSizeType - 1, GL_FLOAT);
 	GLvoid const* pointer = static_cast<char const*>(0) + offset;
 	glEnableVertexAttribArray(bindTo);
 	glBindBuffer(GL_ARRAY_BUFFER, vboHandle[0]);
@@ -52,32 +54,46 @@ void GLVertexBufferObject::Initialize(uint8_t size)
 	vboHandle = new unsigned int[size];
 	glGenBuffers(size, vboHandle);
 	this->size = size;
+	numBuffers = 0;
 }
 
-void GLVertexBufferObject::AddVBO(void * data, uint64_t size, uint8_t elementSize, dataSize dataSize, drawType drawType)
+void GLVertexBufferObject::AddVBO(void * data, uint64_t bufferSize, uint8_t elementSize, dataSize dataSz, drawType drawTyp)
 {
 	int drawGL = GL_STATIC_DRAW;
-	if (drawType == DRAW_STREAM)
+	if (drawTyp == DRAW_STREAM)
 		drawGL = GL_STREAM_DRAW;
-	else if (drawType == DRAW_DYNAMIC)
+	else if (drawTyp == DRAW_DYNAMIC)
 		drawGL = GL_DYNAMIC_DRAW;
 
-	glBindBuffer(GL_ARRAY_BUFFER, vboHandle[0]);
-	glBufferData(GL_ARRAY_BUFFER, size, data, drawGL);
+	glBindBuffer(GL_ARRAY_BUFFER, vboHandle[numBuffers++]);
+	glBufferData(GL_ARRAY_BUFFER, bufferSize, data, drawGL);
 
 	this->elementSize = elementSize;
-	dataSizeType = dataSize;
+	dataSizeType = dataSz;
+}
+
+void GLVertexBufferObject::AddIBO(void *data, uint64_t bufferSize, drawType drawTyp) {
+	int drawGL = GL_STATIC_DRAW;
+	if (drawTyp == DRAW_STREAM)
+		drawGL = GL_STREAM_DRAW;
+	else if (drawTyp == DRAW_DYNAMIC)
+		drawGL = GL_DYNAMIC_DRAW;
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboHandle[numBuffers++]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, bufferSize, data, drawGL);
+
+	this->elementSize = elementSize;
 }
 
 void GLVertexBufferObject::AddVBO(VertexBufferObjectInitializer vbo)
 {
-	AddVBO(vbo.data, vbo.size, vbo.strideSize, vbo.dataSize, vbo.drawType);
+	AddVBO(vbo.data, vbo.size, vbo.strideSize, vbo.dataSz, vbo.drawTp);
 }
 
 void GLVertexBufferObject::AddVBO(std::vector<VertexBufferObjectInitializer> vbos)
 {
 	for (size_t i = 0; i < vbos.size(); i++) {
-		AddVBO(vbos[i].data, vbos[i].size, vbos[i].strideSize, vbos[i].dataSize, vbos[i].drawType);
+		AddVBO(vbos[i].data, vbos[i].size, vbos[i].strideSize, vbos[i].dataSz, vbos[i].drawTp);
 	}
 }
 

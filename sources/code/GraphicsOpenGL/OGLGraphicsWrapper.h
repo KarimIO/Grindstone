@@ -34,7 +34,7 @@ public:
 	virtual bool InitializeWindowContext();
 	virtual bool InitializeGraphics();
 	virtual void DrawArrays(VertexArrayObject *vao, int start, unsigned int length);
-	virtual void DrawBaseVertex(VertexArrayObject *vao, uint32_t baseIndex, uint32_t baseVertex, uint32_t numIndices);
+	virtual void DrawBaseVertex(const void *baseIndex, uint32_t baseVertex, uint32_t numIndices);
 	virtual void Clear();
 	virtual void SwapBuffer();
 #ifdef _WIN32

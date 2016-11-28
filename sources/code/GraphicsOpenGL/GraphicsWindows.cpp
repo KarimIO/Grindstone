@@ -1,7 +1,7 @@
 #ifdef _WIN32
 //#include "wglext.h"
-#include "OGLGraphicsWrapper.h"
 #include "gl3w.h"
+#include "OGLGraphicsWrapper.h"
 
 bool GraphicsWrapper::InitializeWindowContext() {
 	static	PIXELFORMATDESCRIPTOR pfd =				// pfd Tells Windows How We Want Things To Be

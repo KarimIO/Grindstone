@@ -4,12 +4,12 @@
 #include "../GraphicsCommon/GLDefDLL.h"
 #include <stdint.h>
 #include "../GraphicsCommon/VertexBufferObject.h"
-#include "gl3w.h"
 
 
 class GLVertexBufferObject : public VertexBufferObject {
 public:
 	unsigned int *vboHandle;
+	unsigned int numBuffers;
 	uint8_t size;
 	unsigned int elementSize;
 	dataSize dataSizeType;
@@ -18,7 +18,8 @@ public:
 	virtual void Initialize(uint8_t size);
 
 	// Pass VBO
-	virtual void AddVBO(void *data, uint64_t size, uint8_t strideSize, dataSize dataSize, drawType drawType);
+	virtual void AddVBO(void *data, uint64_t size, uint8_t strideSize, dataSize, drawType);
+	virtual void AddIBO(void *data, uint64_t size, drawType);
 	virtual void AddVBO(VertexBufferObjectInitializer);
 	virtual void AddVBO(std::vector<VertexBufferObjectInitializer>);
 
@@ -36,7 +37,5 @@ public:
 	// Cleanup
 	virtual void Cleanup();
 };
-
-extern "C" GRAPHICS_EXPORT VertexBufferObject* createVBO();
 
 #endif

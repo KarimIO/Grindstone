@@ -4,8 +4,8 @@
 #include <OGLGraphicsWrapper.h>
 #include <GLShader.h>
 
-VertexArrayObject* (*pfnCreateVAO)();
-VertexBufferObject* (*pfnCreateVBO)();
-ShaderProgram* (*pfnCreateShader)();
+extern VertexArrayObject*	(*pfnCreateVAO)();
+extern VertexBufferObject*	(*pfnCreateVBO)();
+extern ShaderProgram*		(*pfnCreateShader)();
 
 #endif

@@ -1,6 +1,7 @@
 #ifdef _WIN32
 #include "Window.h"
 #include "Input.h"
+#include <Windowsx.h>
 
 int TranslateKey(int key);
 
@@ -36,6 +37,9 @@ LRESULT CALLBACK GameWindow::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 	switch (msg) {
 	case WM_SIZE:
 		input->ResizeEvent(LOWORD(lParam), HIWORD(lParam));
+		break;
+	case WM_MOUSEMOVE:
+		input->SetMousePosition(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		break;
 	case WM_SETFOCUS:
 		input->SetFocused(true);

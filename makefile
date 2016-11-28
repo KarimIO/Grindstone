@@ -19,7 +19,7 @@ build: Engine OpenGLModule WindowModule
 # Engine code
 sources/obj/Engine/%.o: sources/code/Engine/%.cpp
 	@mkdir -p sources/obj/Engine
-	@$(CC) $(INCLUDE_PATHS) $(CFLAGS) -o $@ $< -lX11 -lGL -std=c++11
+	@$(CC) $(INCLUDE_PATHS) $(CFLAGS) -fPIC -o $@ $< -lX11 -lGL -std=c++11
 	
 Engine: $(OBJ_ENGINE_FILES)
 	@$(CC) $^ -ldl -o bin/Grindstone

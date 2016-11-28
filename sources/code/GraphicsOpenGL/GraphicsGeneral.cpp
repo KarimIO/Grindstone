@@ -32,15 +32,13 @@ bool GraphicsWrapper::InitializeGraphics()
 	return true;
 }
 
-void GraphicsWrapper::DrawBaseVertex(VertexArrayObject *vao, uint32_t baseIndex, uint32_t baseVertex, uint32_t numIndices) {
-	vao->Bind();
+void GraphicsWrapper::DrawBaseVertex(const void *baseIndex, uint32_t baseVertex, uint32_t numIndices) {
 	glDrawElementsBaseVertex(
 		GL_TRIANGLES,
 		numIndices,
 		GL_UNSIGNED_INT,
-		(void*)(sizeof(unsigned int) * baseIndex),
+		baseIndex,
 		baseVertex);
-	vao->Unbind();
 }
 
 void GraphicsWrapper::DrawArrays(VertexArrayObject *vao, int start, unsigned int length) {

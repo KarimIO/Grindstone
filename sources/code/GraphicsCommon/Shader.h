@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <string>
+#include "../GraphicsCommon/GLDefDLL.h"
 
 enum ShaderType : uint8_t {
 	SHADER_VERTEX = 0u,
@@ -23,5 +24,7 @@ public:
 
 	virtual void Cleanup() = 0;
 };
+
+extern "C" GRAPHICS_EXPORT ShaderProgram* createShader();
 
 #endif

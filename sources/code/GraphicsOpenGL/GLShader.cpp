@@ -1,3 +1,4 @@
+#include "gl3w.h"
 #include "GLShader.h"
 #include <vector>
 #include <iostream>
@@ -34,7 +35,7 @@ bool GLShaderProgram::AddShader(std::string path, std::string content, ShaderTyp
 	glGetShaderiv(shaders[shaderNum], GL_INFO_LOG_LENGTH, &infoLength);
 	glGetShaderiv(shaders[shaderNum], GL_COMPILE_STATUS, &isCompiled);
 	if (!isCompiled) {
-		printf("Error Report Vertex Shader %s\n", path);
+		printf("Error Report Vertex Shader %s\n", path.c_str());
 		std::vector<char> VertexShaderErrorMessage(infoLength + 1);
 		glGetShaderInfoLog(shaders[shaderNum], infoLength, NULL, &VertexShaderErrorMessage[0]);
 		printf("%s\n", &VertexShaderErrorMessage[0]);

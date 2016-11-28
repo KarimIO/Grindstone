@@ -34,6 +34,7 @@ private:
 		Display* display;
 		Window window;
 		Screen *screen;
+		GLXContext	glc;
 		int screenID;
 	#endif
 	#ifdef _WIN32

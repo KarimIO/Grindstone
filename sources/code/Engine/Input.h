@@ -3,6 +3,9 @@
 #define _INPUT_H
 
 #include "InputInterface.h"
+#include <vector>
+#include <string>
+#include <functional>
 
 // Structs
 class BaseControl {
@@ -136,8 +139,8 @@ private:
 
 	// Action Arrays
 	std::vector<ActionControl *>	actionList;
-	std::vector<AxisControl *>	axisList;
-	std::vector<StateControl *>	stateList;
+	std::vector<AxisControl *>		axisList;
+	std::vector<StateControl *>		stateList;
 
 
 	void AddCommand(const char *, ControlContainer **, int, float);

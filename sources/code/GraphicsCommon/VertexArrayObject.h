@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "VertexBufferObject.h"
+#include "GLDefDLL.h"
 
 class VertexArrayObject {
 public:
@@ -22,5 +23,7 @@ public:
 	virtual void Cleanup() = 0;
 	virtual void CleanupVBOs() = 0;
 };
+
+extern "C" GRAPHICS_EXPORT VertexArrayObject* createVAO();
 
 #endif

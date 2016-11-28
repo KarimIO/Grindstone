@@ -1,5 +1,5 @@
-#include "GLVertexArrayObject.h"
 #include "gl3w.h"
+#include "GLVertexArrayObject.h"
 #include <iostream>
 
 void GLVertexArrayObject::Initialize()

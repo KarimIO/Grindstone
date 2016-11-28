@@ -3,103 +3,194 @@
 #include "Window.h"
 #include <stdio.h>
 
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/keysymdef.h>
+#include <GL/glx.h>
+
+#include <cstring>
+
+typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
+typedef const GLubyte *(APIENTRYP PFNGLGETSTRINGPROC) (GLenum name);
+typedef void *(APIENTRYP PFNGLCLEAR) (int n);
+typedef void *(APIENTRYP PFNGLCLEARCOLOR) (double r, double g, double b, double a);
+
 GameWindow::~GameWindow() {
+	glXMakeCurrent(display, None, NULL);
+	glXDestroyContext(display, glc);
 	XDestroyWindow(display, window);
 	XCloseDisplay(display);
 }
 
-bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY) {	
-    resX = resolutionX;
-	resY = resolutionY;
+static bool isExtensionSupported(const char *extList, const char *extension) {
+    const char *start;
+    const char *where, *terminator;
 
-	XInitThreads();
-
-    display = XOpenDisplay(NULL);
-    if(display == NULL)
-    {
-        fprintf(stderr, "Cannot open display\n");
-        return 1;
+    where = strchr(extension, ' ');
+    if (where || *extension == '\0') {
+        return false;
     }
 
-	screen = DefaultScreenOfDisplay(display);
+    for (start=extList;;) {
+        where = strstr(start, extension);
+
+        if (!where) {
+            break;
+        }
+
+        terminator = where + strlen(extension);
+
+        if ( where == start || *(where - 1) == ' ' ) {
+            if ( *terminator == ' ' || *terminator == '\0' ) {
+                return true;
+            }
+        }   
+
+        start = terminator;
+    }
+
+    return false;
+}
+
+bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY) {	
+    // Open the display
+    display = XOpenDisplay(NULL);
+    if (display == NULL) {
+        std::cout << "Could not open display\n";
+        return 0;
+    }
+    screen = DefaultScreenOfDisplay(display);
     screenID = DefaultScreen(display);
 
-		GLint glxAttribs[] = {
-		GLX_X_RENDERABLE    , True,
-		GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
-		GLX_RENDER_TYPE     , GLX_RGBA_BIT,
-		GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
-		GLX_RED_SIZE        , 8,
-		GLX_GREEN_SIZE      , 8,
-		GLX_BLUE_SIZE       , 8,
-		GLX_ALPHA_SIZE      , 8,
-		GLX_DEPTH_SIZE      , 24,
-		GLX_STENCIL_SIZE    , 8,
-		GLX_DOUBLEBUFFER    , True,
-		None
-	};
+    // Check GLX version
+    GLint majorGLX, minorGLX = 0;
+    glXQueryVersion(display, &majorGLX, &minorGLX);
+    if (majorGLX <= 1 && minorGLX < 2) {
+        std::cout << "GLX 1.2 or greater is required.\n";
+        XCloseDisplay(display);
+        return 0;
+    }
 
-	int fbcount;
-	GLXFBConfig* fbc = glXChooseFBConfig(display, screenID, glxAttribs, &fbcount);
-	if (fbc == 0) {
-		std::cout << "Failed to retrieve framebuffer.\n";
-		XCloseDisplay(display);
-		return 0;
-	}
-	//std::cout << "Found " << fbcount << " matching framebuffers.\n";
+    GLint glxAttribs[] = {
+        GLX_X_RENDERABLE    , True,
+        GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+        GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+        GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+        GLX_RED_SIZE        , 8,
+        GLX_GREEN_SIZE      , 8,
+        GLX_BLUE_SIZE       , 8,
+        GLX_ALPHA_SIZE      , 8,
+        GLX_DEPTH_SIZE      , 24,
+        GLX_STENCIL_SIZE    , 8,
+        GLX_DOUBLEBUFFER    , True,
+        None
+    };
 
-	// Pick the FB config/visual with the most samples per pixel
-	//std::cout << "Getting best XVisualInfo\n";
-	int best_fbc = -1, worst_fbc = -1, best_num_samp = -1, worst_num_samp = 999;
-	for (int i = 0; i < fbcount; ++i) {
-		XVisualInfo *vi = glXGetVisualFromFBConfig( display, fbc[i] );
-		if ( vi != 0) {
-			int samp_buf, samples;
-			glXGetFBConfigAttrib( display, fbc[i], GLX_SAMPLE_BUFFERS, &samp_buf );
-			glXGetFBConfigAttrib( display, fbc[i], GLX_SAMPLES       , &samples  );
-			//std::cout << "  Matching fbconfig " << i << ", SAMPLE_BUFFERS = " << samp_buf << ", SAMPLES = " << samples << ".\n";
+    int fbcount;
+    GLXFBConfig* fbc = glXChooseFBConfig(display, screenID, glxAttribs, &fbcount);
+    if (fbc == 0) {
+        std::cout << "Failed to retrieve framebuffer.\n";
+        XCloseDisplay(display);
+        return 0;
+    }
 
-			if ( best_fbc < 0 || (samp_buf && samples > best_num_samp) ) {
-				best_fbc = i;
-				best_num_samp = samples;
-			}
-			if ( worst_fbc < 0 || !samp_buf || samples < worst_num_samp )
-				worst_fbc = i;
-			worst_num_samp = samples;
-		}
-		XFree( vi );
-	}
+    // Pick the FB config/visual with the most samples per pixel
+    int best_fbc = -1, worst_fbc = -1, best_num_samp = -1, worst_num_samp = 999;
+    for (int i = 0; i < fbcount; ++i) {
+        XVisualInfo *vi = glXGetVisualFromFBConfig( display, fbc[i] );
+        if ( vi != 0) {
+            int samp_buf, samples;
+            glXGetFBConfigAttrib( display, fbc[i], GLX_SAMPLE_BUFFERS, &samp_buf );
+            glXGetFBConfigAttrib( display, fbc[i], GLX_SAMPLES       , &samples  );
 
-	//std::cout << "Best visual info index: " << best_fbc << "\n";
-	GLXFBConfig bestFbc = fbc[ best_fbc ];
-	XFree( fbc ); // Make sure to free this!
+            if ( best_fbc < 0 || (samp_buf && samples > best_num_samp) ) {
+                best_fbc = i;
+                best_num_samp = samples;
+            }
+            if ( worst_fbc < 0 || !samp_buf || samples < worst_num_samp )
+                worst_fbc = i;
+            worst_num_samp = samples;
+        }
+        XFree( vi );
+    }
+    GLXFBConfig bestFbc = fbc[ best_fbc ];
+    XFree( fbc ); // Make sure to free this!
 
-	XVisualInfo* visual = glXGetVisualFromFBConfig( display, bestFbc );
 
-	if (visual == 0) {
-		std::cout << "Could not create correct visual window.\n";
-		XCloseDisplay(display);
-		return 0;
-	}
+    XVisualInfo* visual = glXGetVisualFromFBConfig( display, bestFbc );
+    if (visual == 0) {
+        std::cout << "Could not create correct visual window.\n";
+        XCloseDisplay(display);
+        return 0;
+    }
 
-	if (screenID != visual->screen) {
-		std::cout << "screenId(" << screenID << ") does not match visual->screen(" << visual->screen << ").\n";
-		XCloseDisplay(display);
-		return 0;
-	}
-	
+    if (screenID != visual->screen) {
+        std::cout << "screenID(" << screenID << ") does not match visual->screen(" << visual->screen << ").\n";
+        XCloseDisplay(display);
+        return 0;
 
-	XSetWindowAttributes windowAttribs;
-	windowAttribs.border_pixel = BlackPixel(display, screenID);
-	windowAttribs.background_pixel = WhitePixel(display, screenID);
-	windowAttribs.override_redirect = True;
-	windowAttribs.colormap = XCreateColormap(display, RootWindow(display, screenID), visual->visual, AllocNone);
-	windowAttribs.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask | KeymapStateMask | PointerMotionMask | ButtonPressMask | ButtonReleaseMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask;
+    }
 
-   // window = XCreateSimpleWindow(display, RootWindow(display, screenID), 10, 10, resX, resY, 1, BlackPixel(display, screenID), WhitePixel(display, screenID));
-	window = XCreateWindow(display, RootWindow(display, screenID), 0, 0, 1024, 768, 0, visual->depth, InputOutput, visual->visual, CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, &windowAttribs);
-	XStoreName(display, window, "Grindstone Engine");
+    // Open the window
+    XSetWindowAttributes windowAttribs;
+    windowAttribs.border_pixel = BlackPixel(display, screenID);
+    windowAttribs.background_pixel = WhitePixel(display, screenID);
+    windowAttribs.override_redirect = True;
+    windowAttribs.colormap = XCreateColormap(display, RootWindow(display, screenID), visual->visual, AllocNone);
+    windowAttribs.event_mask = ExposureMask;
+    window = XCreateWindow(display, RootWindow(display, screenID), 0, 0, resolutionX, resolutionY, 0, visual->depth, InputOutput, visual->visual, CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, &windowAttribs);
 
+    // Redirect Close
+    Atom atomWmDeleteWindow = XInternAtom(display, "WM_DELETE_WINDOW", False);
+    XSetWMProtocols(display, window, &atomWmDeleteWindow, 1);
+
+    // Create GLX OpenGL context
+    glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
+    glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc) glXGetProcAddressARB( (const GLubyte *) "glXCreateContextAttribsARB" );
+
+    int context_attribs[] = {
+        GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
+        GLX_CONTEXT_MINOR_VERSION_ARB, 3,
+        GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+        None
+    };
+
+    GLXContext context = 0;
+    const char *glxExts = glXQueryExtensionsString( display,  screenID );
+    if (!isExtensionSupported( glxExts, "GLX_ARB_create_context")) {
+        std::cout << "GLX_ARB_create_context not supported\n";
+        context = glXCreateNewContext( display, bestFbc, GLX_RGBA_TYPE, 0, True );
+    }
+    else {
+        context = glXCreateContextAttribsARB( display, bestFbc, 0, true, context_attribs );
+    }
+    XSync( display, False );
+
+    // Verifying that context is a direct context
+    if (!glXIsDirect (display, context)) {
+        std::cout << "Indirect GLX rendering context obtained\n";
+    }
+    else {
+        std::cout << "Direct GLX rendering context obtained\n";
+    }
+    glXMakeCurrent(display, window, context);
+
+    std::cout << "GL Renderer: " << glGetString(GL_RENDERER) << "\n";
+    std::cout << "GL Version: " << glGetString(GL_VERSION) << "\n";
+    std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << "\n";
+
+    /*if (!Initialize(WINDOW_WIDTH, WINDOW_HEIGHT)) {
+        glXDestroyContext(display, context);
+        XFree(visual);
+        XFreeColormap(display, windowAttribs.colormap);
+        XDestroyWindow(display, window);
+        XCloseDisplay(display);
+        return 1;
+    }*/
+
+    // Show the window
+    XClearWindow(display, window);
+    XMapRaised(display, window);
 
 	return true;
 }
