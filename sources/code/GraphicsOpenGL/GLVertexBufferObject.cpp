@@ -18,10 +18,9 @@ uint8_t GLVertexBufferObject::Bind(uint8_t bindTo)
 
 void GLVertexBufferObject::Bind(uint8_t bindTo, uint8_t id, bool normalize, uint32_t stride, uint32_t offset)
 {
-	printf("%i - %i\n", GL_UNSIGNED_BYTE + dataSizeType - 1, GL_FLOAT);
 	GLvoid const* pointer = static_cast<char const*>(0) + offset;
 	glEnableVertexAttribArray(bindTo);
-	glBindBuffer(GL_ARRAY_BUFFER, vboHandle[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, vboHandle[id]);
 	glVertexAttribPointer(
 		bindTo,	
 		elementSize,

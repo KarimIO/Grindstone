@@ -4,12 +4,12 @@
 void InputInterface::ResizeEvent(int, int) {}
 void InputInterface::SetMousePosition(int x, int y) {
 	float sensitivity = 0.01f;
-	float scale = 768 / 2 - y;
+	float scale = (768.0f / 2.0f) - y;
 	engine.angles.x += sensitivity * scale;
 
 	if (engine.angles.x < -2.4f / 2)	engine.angles.x = -2.4f / 2;
 	if (engine.angles.x > 3.14f / 2)	engine.angles.x = 3.14f / 2;
-	scale = 1024 / 2 - x;
+	scale = (1024.0f / 2.0f) - x;
 
 	engine.angles.y += sensitivity * scale;
 }

@@ -2,13 +2,13 @@
 
 #include "SGeometry.h"
 #include "GraphicsDLLPointer.h"
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
 
 #include <glm/glm.hpp>
 
 #include "gl3w.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 std::string CModel::getName() {
 	return name;
@@ -98,6 +98,42 @@ void InitMesh(const aiMesh *paiMesh,
 	}
 }
 
+Texture *LoadTexture(std::string path) {
+	Texture *t = pfnCreateTexture();
+	int texWidth, texHeight, texChannels;
+	stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	t->CreateTexture(pixels, COLOR_RGBA, texWidth, texHeight);
+
+	if (!pixels)
+		printf("Texture failed to load!: %s \n", path.c_str());
+
+	return t;
+}
+
+void SModel::InitMaterials(const aiScene* scene, std::string Dir, CModel *model)
+{
+	std::string finalDir = Dir;
+	//SwitchSlashes(finalDir);
+	finalDir = finalDir.substr(0, finalDir.find_last_of('/'));
+
+	aiMaterial *pMaterial;
+	aiString Path;
+	for (size_t i = 0; i < scene->mNumMaterials; i++) {
+		Material *newMat = new Material();
+		pMaterial = scene->mMaterials[i];
+		
+		if (pMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+			if (pMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+				std::string FullPath = finalDir + "/" + Path.data;
+				//SwitchSlashes(FullPath);
+				newMat->tex = LoadTexture(FullPath);
+			}
+		}
+		model->materials[i] = newMat;
+	}
+}
+
+
 void SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 	// Create an instance of the Importer class
 	Assimp::Importer importer;
@@ -118,7 +154,7 @@ void SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 	unsigned int NumIndices = 0;
 
 	model->meshes.resize(pScene->mNumMeshes);
-	//materials.resize(pScene->mNumMaterials);
+	model->materials.resize(pScene->mNumMaterials);
 	for (unsigned int i = 0; i < pScene->mNumMeshes; i++) {
 		model->meshes[i].MaterialIndex = pScene->mMeshes[i]->mMaterialIndex;
 		model->meshes[i].NumIndices = pScene->mMeshes[i]->mNumFaces * 3;
@@ -131,7 +167,7 @@ void SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 
 
 	//std::cout << "Mesh Materials: " << path << "\n";
-	//InitMaterials(pScene, pFile, materialType);
+	InitMaterials(pScene, szPath, model);
 
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec3> normals;
@@ -145,7 +181,7 @@ void SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 	uvs.reserve(NumVertices);
 	indices.reserve(NumIndices);
 
-	std::cout << "Mesh Data: " << szPath << "\n";
+	std::cout << "Loading Mesh: " << szPath << "\n";
 
 	for (size_t i = 0; i < pScene->mNumMeshes; i++) {
 		InitMesh(pScene->mMeshes[i], vertices, normals, tangents, uvs, indices);
@@ -159,46 +195,15 @@ void SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 	vbo->Initialize(2);
 	vbo->AddVBO(&vertices[0],	vertices.size() * sizeof(vertices[0]),	3, SIZE_FLOAT, DRAW_STATIC);
 	vbo->Bind(0, 0, false, 0, 0);
-	/*vbo->AddVBO(false, &uvs[0],			uvs.size() * sizeof(uvs[0]),			2, SIZE_FLOAT, DRAW_STATIC);
+	vbo->AddVBO(&uvs[0],		uvs.size() * sizeof(uvs[0]),			2, SIZE_FLOAT, DRAW_STATIC);
 	vbo->Bind(1, 1, false, 0, 0);
-	vbo->AddVBO(false, &normals[0],		normals.size() * sizeof(normals[0]),	3, SIZE_FLOAT, DRAW_STATIC);
+	vbo->AddVBO(&normals[0],	normals.size() * sizeof(normals[0]),	3, SIZE_FLOAT, DRAW_STATIC);
 	vbo->Bind(2, 2, false, 0, 0);
-	vbo->AddVBO(false, &tangents[0],	tangents.size() * sizeof(vertices[0]),	3, SIZE_FLOAT, DRAW_STATIC);
-	vbo->Bind(3, 3, false, 0, 0);*/
+	vbo->AddVBO(&tangents[0],	tangents.size() * sizeof(tangents[0]),	3, SIZE_FLOAT, DRAW_STATIC);
+	vbo->Bind(3, 3, false, 0, 0);
 	vbo->AddIBO(&indices[0],		indices.size() * sizeof(unsigned int), DRAW_STATIC); // 3 and SIZE_FLOAT are arbitrary
 
 	model->vao->Unbind();
-
-#if 0
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-
-	glGenBuffers(NUM_VBs, m_Buffers);
-
-	glBindBuffer(GL_ARRAY_BUFFER, m_Buffers[VERTEX_VB]);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vertices[0]), &vertices[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(VERTEX_VB_LOCATION);
-	glVertexAttribPointer(VERTEX_VB_LOCATION, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, m_Buffers[UV_VB]);
-	glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(uvs[0]), &uvs[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(UV_VB_LOCATION);
-	glVertexAttribPointer(UV_VB_LOCATION, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, m_Buffers[NORMAL_VB]);
-	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(normals[0]), &normals[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(NORMAL_VB_LOCATION);
-	glVertexAttribPointer(NORMAL_VB_LOCATION, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, m_Buffers[TANGENT_VB]);
-	glBufferData(GL_ARRAY_BUFFER, tangents.size() * sizeof(tangents[0]), &tangents[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(TANGENT_VB_LOCATION);
-	glVertexAttribPointer(TANGENT_VB_LOCATION, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Buffers[INDEX_VB]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
-	glBindVertexArray(0);
-#endif
 
 	vertices.clear();
 	normals.clear();
@@ -207,11 +212,6 @@ void SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 	indices.clear();
 
 	importer.FreeScene();
-
-	/*GLenum err;
-	while ((err = glGetError()) != GL_NO_ERROR) {
-		std::cerr << "OpenGL error: " << err << std::endl;
-	}*/
 }
 
 void SModel::LoadPreparedModel3Ds() {
@@ -224,10 +224,9 @@ void SModel::Draw() {
 
 void SModel::DrawModel3D(CModel *model) {
 	model->vao->Bind();
-	//for (size_t i = 0; i < model->references.size(); i++) {
 	for (size_t i = 0; i < model->meshes.size(); i++) {
+		model->materials[model->meshes[i].MaterialIndex]->tex->Bind();
 		engine.graphicsWrapper->DrawBaseVertex((void*)(sizeof(unsigned int) * model->meshes[i].BaseIndex), model->meshes[i].BaseVertex, model->meshes[i].NumIndices);
-		//engine.graphicsWrapper->DrawBaseVertex(model->meshes[i].BaseIndex, model->meshes[i].BaseVertex, model->meshes[i].NumIndices);
 	}
 	model->vao->Unbind();
 }

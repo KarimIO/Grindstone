@@ -1,9 +1,24 @@
 #version 330
 
 layout (location = 0) in vec3 vertexPos;
+layout (location = 1) in vec2 TexCoord;
+layout (location = 2) in vec3 vertexNormal;
+layout (location = 3) in vec3 vertexTangent;
 
-uniform mat4 MVP;
+uniform mat4 pvmMatrix;
+uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
+out vec3 Position;
+out vec2 TexCoord0;
+out vec3 Normal;
+out vec3 Tangent;
 
 void main() {
-	gl_Position = MVP * vec4(vertexPos/1000, 1.0);                               
+    mat3 normalMatrix = transpose(inverse(mat3(modelMatrix)));
+
+    gl_Position = pvmMatrix * vec4(vertexPos, 1.0);
+    TexCoord0   = vec2(TexCoord.x, -TexCoord.y);
+    Position    = (modelMatrix * vec4(vertexPos, 1.0)).xyz;
+    Normal      = normalize((modelMatrix * vec4(vertexNormal,0.0)).xyz);
+    Tangent     = normalize((modelMatrix * vec4(vertexTangent,0.0)).xyz);
 }

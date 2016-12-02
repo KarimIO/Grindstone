@@ -13,6 +13,7 @@
 VertexArrayObject*	(*pfnCreateVAO)();
 VertexBufferObject*	(*pfnCreateVBO)();
 ShaderProgram*		(*pfnCreateShader)();
+Texture*			(*pfnCreateTexture)();
 
 bool Engine::Initialize() {
 	if (!InitializeWindow())					return false;
@@ -43,8 +44,11 @@ bool Engine::Initialize() {
 	shader->AddShader(fsPath, fsContent, SHADER_FRAGMENT);
 	shader->Compile();
 
-	shader->SetNumUniforms(1);
-	shader->CreateUniform("MVP");
+	shader->SetNumUniforms(4);
+	shader->CreateUniform("pvmMatrix");
+	shader->CreateUniform("modelMatrix");
+	shader->CreateUniform("viewMatrix");
+	shader->CreateUniform("tex");
 
 	vsContent.clear();
 	fsContent.clear();
@@ -58,7 +62,7 @@ bool Engine::Initialize() {
 	vbo->AddVBO(g_vertex_buffer_data, sizeof(g_vertex_buffer_data), 3, SIZE_FLOAT, DRAW_STATIC);
 	vbo->Bind(0);
 
-	model = geometryCache.LoadModel3D("models/crytek-sponza/sponza.obj");
+	geometryCache.LoadModel3D("models/crytek-sponza/sponza.obj");
 
 	isRunning = true;
 	prevTime = std::chrono::high_resolution_clock::now();
@@ -116,9 +120,33 @@ bool Engine::InitializeGraphics() {
 	}
 
 	GraphicsWrapper* (*pfnCreateGraphics)();
-	pfnCreateGraphics = (GraphicsWrapper* (*)())dlsym(lib_handle, "createGraphics");
 
+	pfnCreateGraphics = (GraphicsWrapper* (*)())dlsym(lib_handle, "createGraphics");
 	if (!pfnCreateGraphics) {
+		fprintf(stderr, "%s\n", dlerror());
+		return false;
+	}
+
+	pfnCreateVAO = (GraphicsWrapper* (*)())dlsym(lib_handle, "createVAO");
+	if (!pfnCreateVAO) {
+		fprintf(stderr, "%s\n", dlerror());
+		return false;
+	}
+
+	pfnCreateVBO = (GraphicsWrapper* (*)())dlsym(lib_handle, "createVBO");
+	if (!pfnCreateVBO) {
+		fprintf(stderr, "%s\n", dlerror());
+		return false;
+	}
+
+	pfnCreateShader = (GraphicsWrapper* (*)())dlsym(lib_handle, "createShader");
+	if (!pfnCreateGraphics) {
+		fprintf(stderr, "%s\n", dlerror());
+		return false;
+	}
+
+	pfnCreateTexture = (GraphicsWrapper* (*)())dlsym(lib_handle, "createTexture");
+	if (!pfnCreateTexture) {
 		fprintf(stderr, "%s\n", dlerror());
 		return false;
 	}
@@ -147,23 +175,26 @@ bool Engine::InitializeGraphics() {
 	}
 
 	pfnCreateVAO = (VertexArrayObject* (*)())GetProcAddress(dllHandle, "createVAO");
-
 	if (!pfnCreateVAO) {
 		fprintf(stderr, "Cannot get createVAO function!\n");
 		return false;
 	}
 
 	pfnCreateVBO = (VertexBufferObject* (*)())GetProcAddress(dllHandle, "createVBO");
-
 	if (!pfnCreateVBO) {
 		fprintf(stderr, "Cannot get createVBO function!\n");
 		return false;
 	}
 
 	pfnCreateShader = (ShaderProgram* (*)())GetProcAddress(dllHandle, "createShader");
-
 	if (!pfnCreateShader) {
 		fprintf(stderr, "Cannot get createShader function!\n");
+		return false;
+	}
+
+	pfnCreateTexture = (Texture* (*)())GetProcAddress(dllHandle, "createTexture");
+	if (!pfnCreateTexture) {
+		fprintf(stderr, "Cannot get createTexture function!\n");
 		return false;
 	}
 
@@ -205,11 +236,21 @@ Engine &Engine::GetInstance() {
 }
 #endif
 
+struct UniformBuffer {
+	glm::mat4 pvmMatrix;
+	glm::mat4 modelMatrix;
+	glm::mat4 viewMatrix;
+	int textureLocation;
+} ubo;
+
 void Engine::Run() {
 
 	shader->Use();
 
-	glm::mat4 model = glm::mat4(1.0f);
+	glm::mat4x4 model = glm::mat4(1);
+	//model = glm::translate(model,glm::vec3(0,0,0));
+	model = glm::scale(model, glm::vec3(0.01f));
+	//model = glm::rotate(model, 0.0f, glm::vec3(0));
 
 	glm::mat4 projection = glm::perspective(
 		45.0f,         // The horizontal Field of View, in degrees : the amount of "zoom". Think "camera lens". Usually between 90° (extra wide) and 30° (quite zoomed in)
@@ -218,10 +259,11 @@ void Engine::Run() {
 		100.0f       // Far clipping plane. Keep as little as possible.
 		);
 
-	glm::mat4 mat;
 	window->ResetCursor();
 
-	position = glm::vec3(0, 0, -4);
+	ubo.textureLocation = 0;
+
+	position = glm::vec3(0, 1, -1);
 
 	while (isRunning) {
 		CalculateTime();
@@ -232,12 +274,16 @@ void Engine::Run() {
 			getUp()					// probably glm::vec3(0,1,0), but (0,-1,0) would make you looking upside-down, which can be great too
 		);
 
-		mat = projection * view * model;
-		shader->PassData(&mat);
+		ubo.pvmMatrix = projection * view * model;
+		ubo.viewMatrix = view;
+		ubo.modelMatrix = model;
+		shader->PassData(&ubo);
 		shader->SetUniform4m();
+		shader->SetUniform4m();
+		shader->SetUniform4m();
+		shader->SetInteger();
 
 		graphicsWrapper->Clear();
-		//graphicsWrapper->DrawArrays(vao, 0, 3);
 		geometryCache.Draw();
 		graphicsWrapper->SwapBuffer();
 
@@ -281,7 +327,7 @@ double Engine::GetTimeCurrent() {
 }
 
 double Engine::GetTimeDelta() {
-	return deltaTime.count();
+	return (double)deltaTime.count();
 }
 
 void Engine::Shutdown() {

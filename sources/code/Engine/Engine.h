@@ -32,7 +32,6 @@ private:
 
 	std::chrono::microseconds deltaTime;
 public:
-	CModel *model;
 	GameWindow *window;
 	SModel geometryCache;
 	//InputSystem inputSystem;

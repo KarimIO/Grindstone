@@ -101,12 +101,21 @@ void GLShaderProgram::CreateUniform(const char *name) {
 }
 
 void GLShaderProgram::PassData(void *ptr) {
-	dataPtr = ptr;
+	dataPtr = (char*)ptr;
+	uniformCounter = 0;
+	dataOffset = 0;
 }
 
 void GLShaderProgram::SetUniform4m() {
 	glm::mat4 data = *(glm::mat4 *)(dataPtr);
-	glUniformMatrix4fv(uniforms[0], 1, GL_FALSE, &data[0][0]);
+	glUniformMatrix4fv(uniforms[uniformCounter++], 1, GL_FALSE, &data[0][0]);
+	dataPtr += sizeof(glm::mat4);
+}
+
+void GLShaderProgram::SetInteger() {
+	int data = *(int *)(dataPtr);
+	glUniform1i(uniforms[uniformCounter++], data);
+	dataPtr += sizeof(int);
 }
 
 void GLShaderProgram::Cleanup() {

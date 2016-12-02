@@ -9,7 +9,7 @@ public:
 	uint32_t shaders[2];
 	uint8_t shaderNum;
 
-	void *dataPtr;
+	char *dataPtr;
 	int *uniforms;
 	uint8_t dataOffset;
 	uint8_t uniformCounter;
@@ -23,6 +23,7 @@ public:
 	virtual void CreateUniform(const char *);
 	virtual void PassData(void *);
 	virtual void SetUniform4m();
+	virtual void SetInteger();
 
 	virtual void Cleanup();
 };

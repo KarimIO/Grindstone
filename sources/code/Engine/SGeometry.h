@@ -2,8 +2,12 @@
 #define _SGEOMETRY_H
 
 #include "../GraphicsCommon/Shader.h"
-//#include "../GraphicsCommon/Texture.h"
+#include "../GraphicsCommon/Texture.h"
 #include "../GraphicsCommon/VertexArrayObject.h"
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 enum {
 	VERTEX_VB = 0,
@@ -31,7 +35,8 @@ struct Mesh {
 
 class Material {
 public:
-	ShaderProgram *shader;
+	//ShaderProgram *shader;
+	Texture *tex;
 };
 
 class CRender {
@@ -67,6 +72,8 @@ public:
 	// Don't attach to CRender
 	CModel *PrepareModel3D(const char *szPath);
 	CModel *LoadModel3D(const char *szPath);
+
+	void InitMaterials(const aiScene* scene, std::string Dir, CModel *model);
 
 	// Attach to CRender
 	CModel *PrepareModel3D(const char *szPath, CRender *);
