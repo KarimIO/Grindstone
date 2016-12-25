@@ -11,9 +11,20 @@ GRAPHICS_EXPORT GraphicsWrapper* createGraphics() {
 
 bool GraphicsWrapper::InitializeGraphics()
 {
+	std::cout << "poop \n";
+
 	//Initializing GL3W
-	if (gl3wInit() != 0) {
-		printf("Failed to initialize GL3W. Returning...\n");
+	int vermaj;
+	int vermin;
+	glGetIntegerv(GL_MAJOR_VERSION, &vermaj);
+	glGetIntegerv(GL_MINOR_VERSION, &vermin);
+
+	std::cout << vermaj << " - " << vermin << "\n";
+	std::cout << "poop \n";
+
+	int gl3wres = gl3wInit();
+	if (gl3wres) {
+		printf("Failed to initialize GL3W. Returning %i...\n", gl3wres);
 		return false;
 	}
 

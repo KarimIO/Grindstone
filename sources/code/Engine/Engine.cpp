@@ -127,25 +127,25 @@ bool Engine::InitializeGraphics() {
 		return false;
 	}
 
-	pfnCreateVAO = (GraphicsWrapper* (*)())dlsym(lib_handle, "createVAO");
+	pfnCreateVAO = (VertexArrayObject* (*)())dlsym(lib_handle, "createVAO");
 	if (!pfnCreateVAO) {
 		fprintf(stderr, "%s\n", dlerror());
 		return false;
 	}
 
-	pfnCreateVBO = (GraphicsWrapper* (*)())dlsym(lib_handle, "createVBO");
+	pfnCreateVBO = (VertexBufferObject* (*)())dlsym(lib_handle, "createVBO");
 	if (!pfnCreateVBO) {
 		fprintf(stderr, "%s\n", dlerror());
 		return false;
 	}
 
-	pfnCreateShader = (GraphicsWrapper* (*)())dlsym(lib_handle, "createShader");
+	pfnCreateShader = (ShaderProgram* (*)())dlsym(lib_handle, "createShader");
 	if (!pfnCreateGraphics) {
 		fprintf(stderr, "%s\n", dlerror());
 		return false;
 	}
 
-	pfnCreateTexture = (GraphicsWrapper* (*)())dlsym(lib_handle, "createTexture");
+	pfnCreateTexture = (Texture* (*)())dlsym(lib_handle, "createTexture");
 	if (!pfnCreateTexture) {
 		fprintf(stderr, "%s\n", dlerror());
 		return false;
