@@ -6,7 +6,12 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
-#include <OGLGraphicsWrapper.h>
+#include <GraphicsWrapper.h>
+
+#include "Pipeline.h"
+#include "PipelineDeferred.h"
+#include "PipelineForward.h"
+
 #include "BaseClass.h"
 #include "InputInterface.h"
 #include <Window.h>
@@ -17,6 +22,11 @@
 #include <chrono>
 #include <string>
 
+enum PipelineType {
+	PIPELINE_FORWARD = 0,
+	PIPELINE_DEFERRED,
+}; // Also, F+, TileBased, etc
+
 class Engine : public BaseClass {
 private:
 	bool InitializeWindow();
@@ -26,6 +36,9 @@ private:
 	ShaderProgram *shader;
 	VertexArrayObject *vao;
 	VertexBufferObject *vbo;
+
+	PipelineType pipelineType;
+	Pipeline *pipeline;
 
 	// Time Data
 	std::chrono::time_point<std::chrono::high_resolution_clock> currentTime, prevTime;

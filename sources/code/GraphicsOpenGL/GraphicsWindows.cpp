@@ -46,7 +46,9 @@ bool GraphicsWrapper::InitializeWindowContext() {
 }
 
 void GraphicsWrapper::SetWindowContext(HWND hwnd) {
+	std::cout << "Start Handle Pass to Graphics\n";
 	window_handle = hwnd;
+	std::cout << "End Handle Pass to Graphics\n";
 }
 
 

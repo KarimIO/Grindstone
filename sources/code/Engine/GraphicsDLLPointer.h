@@ -1,7 +1,7 @@
 #ifndef _GRAPHICS_DLL_POINTER_H
 #define _GRAPHICS_DLL_POINTER_H
 
-#include <OGLGraphicsWrapper.h>
+#include <GraphicsWrapper.h>
 #include <GLShader.h>
 #include <GLTexture.h>
 

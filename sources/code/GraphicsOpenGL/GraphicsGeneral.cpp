@@ -11,20 +11,8 @@ GRAPHICS_EXPORT GraphicsWrapper* createGraphics() {
 
 bool GraphicsWrapper::InitializeGraphics()
 {
-	std::cout << "poop \n";
-
-	//Initializing GL3W
-	int vermaj;
-	int vermin;
-	glGetIntegerv(GL_MAJOR_VERSION, &vermaj);
-	glGetIntegerv(GL_MINOR_VERSION, &vermin);
-
-	std::cout << vermaj << " - " << vermin << "\n";
-	std::cout << "poop \n";
-
-	int gl3wres = gl3wInit();
-	if (gl3wres) {
-		printf("Failed to initialize GL3W. Returning %i...\n", gl3wres);
+	if (gl3wInit()) {
+		printf("Failed to initialize GL3W. Returning...\n");
 		return false;
 	}
 
@@ -50,12 +38,7 @@ void GraphicsWrapper::DrawBaseVertex(const void *baseIndex, uint32_t baseVertex,
 		GL_UNSIGNED_INT,
 		baseIndex,
 		baseVertex);
-}
-
-void GraphicsWrapper::DrawArrays(VertexArrayObject *vao, int start, unsigned int length) {
-	vao->Bind();
-	glDrawArrays(GL_TRIANGLES, 0, 3);
-	vao->Unbind();
+	
 }
 
 void GraphicsWrapper::Clear() {

@@ -96,6 +96,22 @@ void InitMesh(const aiMesh *paiMesh,
 	}
 }
 
+
+void SwitchSlashes(std::string &path) {
+	size_t index = 0;
+	while (true) {
+		/* Locate the substring to replace. */
+		index = path.find("\\", index);
+		if (index == std::string::npos) break;
+
+		/* Make the replacement. */
+		path.replace(index, 1, "/");
+
+		/* Advance index forward so the next iteration doesn't pick it up as well. */
+		index += 1;
+	}
+}
+
 Texture *LoadTexture(std::string path) {
 	Texture *t = pfnCreateTexture();
 	int texWidth, texHeight, texChannels;
@@ -111,7 +127,6 @@ Texture *LoadTexture(std::string path) {
 void SModel::InitMaterials(const aiScene* scene, std::string Dir, CModel *model)
 {
 	std::string finalDir = Dir;
-	//SwitchSlashes(finalDir);
 	finalDir = finalDir.substr(0, finalDir.find_last_of('/'));
 
 	aiMaterial *pMaterial;
@@ -123,7 +138,7 @@ void SModel::InitMaterials(const aiScene* scene, std::string Dir, CModel *model)
 		if (pMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
 			if (pMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 				std::string FullPath = finalDir + "/" + Path.data;
-				//SwitchSlashes(FullPath);
+				SwitchSlashes(FullPath);
 				newMat->tex = LoadTexture(FullPath);
 			}
 		}

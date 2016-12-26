@@ -63,8 +63,7 @@ bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY)
 	screenID = DefaultScreen(display);
 
 	GLint glxAttribs[] = {
-		GLX_RGBA,
-		GLX_DOUBLEBUFFER,
+		/*GLX_DOUBLEBUFFER,
 		GLX_DEPTH_SIZE,     24,
 		GLX_STENCIL_SIZE,   8,
 		GLX_RED_SIZE,       8,
@@ -72,7 +71,22 @@ bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY)
 		GLX_BLUE_SIZE,      8,
 		GLX_SAMPLE_BUFFERS, 0,
 		GLX_SAMPLES,        0,
-		None
+		None*/
+
+      GLX_X_RENDERABLE    , True,
+      GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+      GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+      GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+      GLX_RED_SIZE        , 8,
+      GLX_GREEN_SIZE      , 8,
+      GLX_BLUE_SIZE       , 8,
+      GLX_ALPHA_SIZE      , 8,
+      GLX_DEPTH_SIZE      , 24,
+      GLX_STENCIL_SIZE    , 8,
+      GLX_DOUBLEBUFFER    , True,
+      //GLX_SAMPLE_BUFFERS  , 1,
+      //GLX_SAMPLES         , 4,
+      None
 	};
 
 	int fbcount;
@@ -223,6 +237,10 @@ bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY)
 	values.height = game.settings.resolution.y;
 	XConfigureWindow(display, window, change_values, &values);*/
 	return true;
+}
+
+void GameWindow::SwapBuffer() {
+        glXSwapBuffers(display, window);
 }
 
 void GameWindow::ResetCursor() {

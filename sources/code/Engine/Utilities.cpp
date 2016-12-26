@@ -1,5 +1,6 @@
 #include "Utilities.h"
 #include <fstream>
+#include <string>
 
 bool ReadFile(std::string pFileName, std::string& output)
 {

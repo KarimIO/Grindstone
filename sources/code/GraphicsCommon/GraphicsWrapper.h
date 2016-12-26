@@ -1,6 +1,8 @@
 #ifndef _COMMON_GRAPHICS_WRAPPER_H
 #define _COMMON_GRAPHICS_WRAPPER_H
 
+#include <iostream>
+
 #ifdef _WIN32
 #include <Windows.h>
 
@@ -40,7 +42,10 @@ private:
 public:
 	virtual bool InitializeWindowContext();
 	virtual bool InitializeGraphics();
+	virtual void DrawBaseVertex(const void *baseIndex, uint32_t baseVertex, uint32_t numIndices);
 	virtual void SwapBuffer();
+	virtual void Clear();
+
 #ifdef _WIN32
 	virtual void SetWindowContext(HWND);
 #endif
