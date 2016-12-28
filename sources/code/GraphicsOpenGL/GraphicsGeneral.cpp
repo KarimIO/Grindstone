@@ -27,9 +27,9 @@ bool GraphicsWrapper::InitializeGraphics()
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 	glEnable(GL_CULL_FACE);
-
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glViewport(0, 0, 1024, 768);
 
 	return true;
 }
@@ -48,6 +48,11 @@ void GraphicsWrapper::DrawBaseVertex(const void *baseIndex, uint32_t baseVertex,
 	
 }
 
-void GraphicsWrapper::Clear() {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+void GraphicsWrapper::Clear(unsigned int clearTarget) {
+	if (clearTarget == CLEAR_COLOR)
+		glClear(GL_COLOR_BUFFER_BIT);
+	else if (clearTarget == CLEAR_DEPTH)
+		glClear(GL_DEPTH_BUFFER_BIT);
+	else
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }

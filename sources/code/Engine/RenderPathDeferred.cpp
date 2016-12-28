@@ -4,26 +4,21 @@
 #include "gl3w.h"
 
 void RenderPathDeferred::GeometryPass() {
-	graphicsWrapper->Clear();
+	graphicsWrapper->Clear(CLEAR_ALL);
 	fbo->WriteBind();
 	geometryCache->Draw();
 }
 
 void RenderPathDeferred::DeferredPass() {
+	//fbo->ReadBind();
 	fbo->Unbind();
-	graphicsWrapper->Clear();
-	fbo->ReadBind();
 
 	fbo->BindTexture(0);
 	fbo->BindTexture(1);
 	fbo->BindTexture(2);
 
-	/*fbo->BindTexture(0);
-	fbo->BindTexture(1);
-	fbo->BindTexture(2);
-	fbo->Unbind();
+	graphicsWrapper->Clear(CLEAR_COLOR);
 
-	graphicsWrapper->Clear();
 	shader->Use();
 
 	int val[3] = { 0,1,2 };
@@ -35,7 +30,7 @@ void RenderPathDeferred::DeferredPass() {
 
 	vaoQuad->Bind();
 	graphicsWrapper->DrawVertexArray(4);
-	vaoQuad->Unbind();*/
+	vaoQuad->Unbind();
 }
 
 void RenderPathDeferred::PostPass() {
@@ -44,8 +39,8 @@ void RenderPathDeferred::PostPass() {
 RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	float tempVerts[8] = {
 		-1,-1,
-		-1, 1,
 		1,-1,
+		-1, 1,
 		1, 1,
 	};
 
@@ -67,6 +62,8 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	fbo->AddBuffer(GL_RGB32F, GL_RGB, GL_FLOAT, 1024, 768);
 	fbo->AddBuffer(GL_RGB32F, GL_RGB, GL_FLOAT, 1024, 768);
 	fbo->AddBuffer(GL_RGB32F, GL_RGB, GL_FLOAT, 1024, 768);
+	// Depth Buffer Issue:
+	//fbo->AddDepthBuffer(1024, 768);
 	fbo->Generate();
 
 	std::string vsPath = "shaders/deferred.glvs";

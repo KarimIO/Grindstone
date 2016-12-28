@@ -16,7 +16,6 @@ class RenderPathDeferred : public RenderPath {
 	ShaderProgram *shader;
 	VertexArrayObject *vaoQuad;
 	VertexBufferObject *vboQuad;
-	Texture *tex;
 public:
 	virtual void Draw();
 	RenderPathDeferred(GraphicsWrapper *gw, SModel *gc);

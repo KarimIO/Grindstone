@@ -262,7 +262,7 @@ void Engine::Run() {
 	glm::mat4 projection = glm::perspective(
 		45.0f,         // The horizontal Field of View, in degrees : the amount of "zoom". Think "camera lens". Usually between 90� (extra wide) and 30� (quite zoomed in)
 		4.0f / 3.0f, // Aspect Ratio. Depends on the size of your window. Notice that 4/3 == 800/600 == 1280/960, sounds familiar ?
-		0.1f,        // Near clipping plane. Keep as big as possible, or you'll get precision issues.
+		1.0f,        // Near clipping plane. Keep as big as possible, or you'll get precision issues.
 		100.0f       // Far clipping plane. Keep as little as possible.
 		);
 

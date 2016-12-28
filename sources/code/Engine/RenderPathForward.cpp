@@ -1,7 +1,7 @@
 #include "RenderPathForward.h"
 
 void RenderPathForward::PrePass() {
-	graphicsWrapper->Clear();
+	graphicsWrapper->Clear(CLEAR_ALL);
 }
 
 void RenderPathForward::GeometryPass() {
