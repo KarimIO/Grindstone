@@ -236,7 +236,7 @@ void SModel::Draw() {
 void SModel::DrawModel3D(CModel *model) {
 	model->vao->Bind();
 	for (size_t i = 0; i < model->meshes.size(); i++) {
-		model->materials[model->meshes[i].MaterialIndex]->tex->Bind();
+		model->materials[model->meshes[i].MaterialIndex]->tex->Bind(0);
 		engine.graphicsWrapper->DrawBaseVertex((void*)(sizeof(unsigned int) * model->meshes[i].BaseIndex), model->meshes[i].BaseVertex, model->meshes[i].NumIndices);
 	}
 	model->vao->Unbind();

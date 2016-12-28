@@ -10,7 +10,7 @@ public:
 	virtual void CreateTexture(unsigned char *pixels,		PixelScheme scheme, uint32_t width, uint32_t height);
 	virtual void CreateCubemap(unsigned char* pixels[],	PixelScheme scheme, uint32_t width, uint32_t height);
 
-	virtual void Bind();
+	virtual void Bind(int bindTo);
 	virtual int GetTextureLocation();
 
 	virtual void Cleanup();

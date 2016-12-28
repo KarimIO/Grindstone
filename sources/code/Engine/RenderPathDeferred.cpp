@@ -4,29 +4,28 @@
 #include "gl3w.h"
 
 void RenderPathDeferred::GeometryPass() {
-	graphicsWrapper->Clear(CLEAR_ALL);
 	fbo->WriteBind();
+	graphicsWrapper->Clear(CLEAR_ALL);
 	geometryCache->Draw();
 }
 
 void RenderPathDeferred::DeferredPass() {
 	//fbo->ReadBind();
+
+	int val[3] = { 0,1,2 };
 	fbo->Unbind();
+	shader->Use();
 
 	fbo->BindTexture(0);
 	fbo->BindTexture(1);
 	fbo->BindTexture(2);
 
-	graphicsWrapper->Clear(CLEAR_COLOR);
-
-	shader->Use();
-
-	int val[3] = { 0,1,2 };
-
 	shader->PassData(&val);
 	shader->SetInteger();
 	shader->SetInteger();
 	shader->SetInteger();
+
+	graphicsWrapper->Clear(CLEAR_COLOR);
 
 	vaoQuad->Bind();
 	graphicsWrapper->DrawVertexArray(4);
@@ -63,7 +62,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	fbo->AddBuffer(GL_RGB32F, GL_RGB, GL_FLOAT, 1024, 768);
 	fbo->AddBuffer(GL_RGB32F, GL_RGB, GL_FLOAT, 1024, 768);
 	// Depth Buffer Issue:
-	//fbo->AddDepthBuffer(1024, 768);
+	fbo->AddDepthBuffer(1024, 768);
 	fbo->Generate();
 
 	std::string vsPath = "shaders/deferred.glvs";

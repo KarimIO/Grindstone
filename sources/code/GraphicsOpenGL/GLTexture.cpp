@@ -36,8 +36,8 @@ int GLTexture::GetTextureLocation() {
 	return textureID;
 }
 
-void GLTexture::Bind() {
-	glActiveTexture(GL_TEXTURE0);
+void GLTexture::Bind(int bindTo) {
+	glActiveTexture(GL_TEXTURE0 + bindTo);
 	glBindTexture(GL_TEXTURE_2D, textureID);
 }
 

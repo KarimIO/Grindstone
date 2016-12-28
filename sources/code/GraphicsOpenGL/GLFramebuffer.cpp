@@ -75,6 +75,8 @@ void GLFramebuffer::BindTexture(unsigned int fboLoc) {
 
 void GLFramebuffer::WriteBind() {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
+	glDepthFunc(GL_LEQUAL);
+	glEnable(GL_DEPTH_TEST);
 }
 
 void GLFramebuffer::ReadBind() {
@@ -83,4 +85,5 @@ void GLFramebuffer::ReadBind() {
 
 void GLFramebuffer::Unbind() {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	glDisable(GL_DEPTH_TEST);
 }
