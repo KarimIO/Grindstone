@@ -45,11 +45,14 @@ bool Engine::Initialize() {
 	shader->AddShader(fsPath, fsContent, SHADER_FRAGMENT);
 	shader->Compile();
 
-	shader->SetNumUniforms(4);
+	shader->SetNumUniforms(7);
 	shader->CreateUniform("pvmMatrix");
 	shader->CreateUniform("modelMatrix");
 	shader->CreateUniform("viewMatrix");
-	shader->CreateUniform("tex");
+	shader->CreateUniform("tex0");
+	shader->CreateUniform("tex1");
+	shader->CreateUniform("tex2");
+	shader->CreateUniform("tex3");
 
 	vsContent.clear();
 	fsContent.clear();
@@ -248,7 +251,10 @@ struct UniformBuffer {
 	glm::mat4 pvmMatrix;
 	glm::mat4 modelMatrix;
 	glm::mat4 viewMatrix;
-	int textureLocation;
+	int texLoc0;
+	int texLoc1;
+	int texLoc2;
+	int texLoc3;
 } ubo;
 
 void Engine::Run() {
@@ -262,13 +268,16 @@ void Engine::Run() {
 	glm::mat4 projection = glm::perspective(
 		45.0f,         // The horizontal Field of View, in degrees : the amount of "zoom". Think "camera lens". Usually between 90� (extra wide) and 30� (quite zoomed in)
 		4.0f / 3.0f, // Aspect Ratio. Depends on the size of your window. Notice that 4/3 == 800/600 == 1280/960, sounds familiar ?
-		1.0f,        // Near clipping plane. Keep as big as possible, or you'll get precision issues.
+		0.1f,        // Near clipping plane. Keep as big as possible, or you'll get precision issues.
 		100.0f       // Far clipping plane. Keep as little as possible.
 		);
 
 	window->ResetCursor();
 
-	ubo.textureLocation = 0;
+	ubo.texLoc0 = 0;
+	ubo.texLoc1 = 1;
+	ubo.texLoc2 = 2;
+	ubo.texLoc3 = 3;
 
 	position = glm::vec3(0, 1, -1);
 
@@ -289,6 +298,9 @@ void Engine::Run() {
 		shader->SetUniform4m();
 		shader->SetUniform4m();
 		shader->SetUniform4m();
+		shader->SetInteger();
+		shader->SetInteger();
+		shader->SetInteger();
 		shader->SetInteger();
 
 		renderPath->Draw();

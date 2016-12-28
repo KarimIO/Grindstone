@@ -131,13 +131,35 @@ void SModel::InitMaterials(const aiScene* scene, std::string Dir, CModel *model)
 	aiString Path;
 	for (size_t i = 0; i < scene->mNumMaterials; i++) {
 		Material *newMat = new Material();
+		newMat->tex.resize(4);
 		pMaterial = scene->mMaterials[i];
-		
+
 		if (pMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
 			if (pMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 				std::string FullPath = finalDir + "/" + Path.data;
 				SwitchSlashes(FullPath);
-				newMat->tex = LoadTexture(FullPath);
+				newMat->tex[0] = LoadTexture(FullPath);
+			}
+		}
+		if (pMaterial->GetTextureCount(aiTextureType_HEIGHT) > 0) {
+			if (pMaterial->GetTexture(aiTextureType_HEIGHT, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+				std::string FullPath = finalDir + "/" + Path.data;
+				SwitchSlashes(FullPath);
+				newMat->tex[1] = LoadTexture(FullPath);
+			}
+		}
+		if (pMaterial->GetTextureCount(aiTextureType_SPECULAR) > 0) {
+			if (pMaterial->GetTexture(aiTextureType_SPECULAR, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+				std::string FullPath = finalDir + "/" + Path.data;
+				SwitchSlashes(FullPath);
+				newMat->tex[2] = LoadTexture(FullPath);
+			}
+		}
+		if (pMaterial->GetTextureCount(aiTextureType_SHININESS) > 0) {
+			if (pMaterial->GetTexture(aiTextureType_SHININESS, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+				std::string FullPath = finalDir + "/" + Path.data;
+				SwitchSlashes(FullPath);
+				newMat->tex[3] = LoadTexture(FullPath);
 			}
 		}
 		model->materials[i] = newMat;
@@ -192,8 +214,6 @@ void SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 	uvs.reserve(NumVertices);
 	indices.reserve(NumIndices);
 
-	std::cout << "Loading Mesh: " << szPath << "\n";
-
 	for (size_t i = 0; i < pScene->mNumMeshes; i++) {
 		InitMesh(pScene->mMeshes[i], vertices, normals, tangents, uvs, indices);
 	}
@@ -203,16 +223,16 @@ void SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 	model->vao->Bind();
 
 	VertexBufferObject *vbo = pfnCreateVBO();
-	vbo->Initialize(2);
-	vbo->AddVBO(&vertices[0],	vertices.size() * sizeof(vertices[0]),	3, SIZE_FLOAT, DRAW_STATIC);
+	vbo->Initialize(4);
+	vbo->AddVBO(&vertices[0],	vertices.size()	* sizeof(vertices[0]),	3, SIZE_FLOAT, DRAW_STATIC);
 	vbo->Bind(0, 0, false, 0, 0);
-	vbo->AddVBO(&uvs[0],		uvs.size() * sizeof(uvs[0]),			2, SIZE_FLOAT, DRAW_STATIC);
+	vbo->AddVBO(&uvs[0],		uvs.size()		* sizeof(uvs[0]),		2, SIZE_FLOAT, DRAW_STATIC);
 	vbo->Bind(1, 1, false, 0, 0);
-	vbo->AddVBO(&normals[0],	normals.size() * sizeof(normals[0]),	3, SIZE_FLOAT, DRAW_STATIC);
+	vbo->AddVBO(&normals[0],	normals.size()	* sizeof(normals[0]),	3, SIZE_FLOAT, DRAW_STATIC);
 	vbo->Bind(2, 2, false, 0, 0);
-	vbo->AddVBO(&tangents[0],	tangents.size() * sizeof(tangents[0]),	3, SIZE_FLOAT, DRAW_STATIC);
+	vbo->AddVBO(&tangents[0],	tangents.size()	* sizeof(tangents[0]),	3, SIZE_FLOAT, DRAW_STATIC);
 	vbo->Bind(3, 3, false, 0, 0);
-	vbo->AddIBO(&indices[0],		indices.size() * sizeof(unsigned int), DRAW_STATIC); // 3 and SIZE_FLOAT are arbitrary
+	vbo->AddIBO(&indices[0],	indices.size()	* sizeof(unsigned int), DRAW_STATIC); // 3 and SIZE_FLOAT are arbitrary
 
 	model->vao->Unbind();
 
@@ -236,7 +256,11 @@ void SModel::Draw() {
 void SModel::DrawModel3D(CModel *model) {
 	model->vao->Bind();
 	for (size_t i = 0; i < model->meshes.size(); i++) {
-		model->materials[model->meshes[i].MaterialIndex]->tex->Bind(0);
+		for (size_t j = 0; j < 4; j++) {
+			Texture *temp = model->materials[model->meshes[i].MaterialIndex]->tex[j];
+			if (temp != nullptr)
+				temp->Bind(j);
+		}
 		engine.graphicsWrapper->DrawBaseVertex((void*)(sizeof(unsigned int) * model->meshes[i].BaseIndex), model->meshes[i].BaseVertex, model->meshes[i].NumIndices);
 	}
 	model->vao->Unbind();

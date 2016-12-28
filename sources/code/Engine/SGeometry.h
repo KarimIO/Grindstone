@@ -39,7 +39,7 @@ struct Mesh {
 class Material {
 public:
 	//ShaderProgram *shader;
-	Texture *tex;
+	std::vector<Texture *> tex;
 };
 
 class CRender {

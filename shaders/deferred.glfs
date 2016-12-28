@@ -9,16 +9,15 @@ uniform sampler2D texAlbedo;
 in vec2 UV;
 
 void main() {
-  //color = vec3(UV,0)*0.5 + texture2D(texAlbedo, UV).rgb*0.5;
-
   vec3 Position = texture(texPos, UV).rgb;
   vec3 Normal = texture(texNormal, UV).rgb;
   vec3 Albedo = texture(texAlbedo, UV).rgb;
 
-  vec3 LightPos = vec3(0,1,0);
+  vec3 LightPos = vec3(0,1.5,0);
   vec3 LightDir = LightPos-Position;
   float Distance = length(LightDir);
   LightDir = normalize(LightDir);
-  float lum =  max(dot(Normal,LightDir), 0) / Distance * Distance;
-  color = lum * Albedo;
+  vec4 lightColor = vec4(1,0.99,0.9, 3);
+  float lum = lightColor.w * max(dot(Normal,LightDir), 0) / (Distance * Distance + 1);
+  color = lightColor.rgb * lum * Albedo;
 }

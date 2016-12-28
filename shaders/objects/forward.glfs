@@ -2,7 +2,10 @@
 
 out vec3 color;
 
-uniform sampler2D tex;
+uniform sampler2D tex0;
+uniform sampler2D tex1;
+uniform sampler2D tex2;
+uniform sampler2D tex3;
 
 in vec2 TexCoord0;
 in vec3 Position;
@@ -15,5 +18,5 @@ void main() {
   float Distance = length(LightDir);
   LightDir = normalize(LightDir);
   float lum =  max(dot(Normal,LightDir), 0) / Distance;
-  color = lum * texture2D(tex, TexCoord0).rgb;
+  color = lum * texture2D(tex0, TexCoord0).rgb;
 }

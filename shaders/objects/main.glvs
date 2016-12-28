@@ -19,6 +19,6 @@ void main() {
     gl_Position = pvmMatrix * vec4(vertexPos, 1.0);
     TexCoord0   = vec2(TexCoord.x, -TexCoord.y);
     Position    = (modelMatrix * vec4(vertexPos, 1.0)).xyz;
-    Normal      = normalize((modelMatrix * vec4(vertexNormal,0.0)).xyz);
+    Normal      = normalize((modelMatrix * vec4(vertexNormal ,0.0)).xyz);
     Tangent     = normalize((modelMatrix * vec4(vertexTangent,0.0)).xyz);
 }
