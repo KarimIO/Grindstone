@@ -8,9 +8,9 @@
 
 #include <GraphicsWrapper.h>
 
-#include "Pipeline.h"
-#include "PipelineDeferred.h"
-#include "PipelineForward.h"
+#include "RenderPath.h"
+#include "RenderPathDeferred.h"
+#include "RenderPathForward.h"
 
 #include "BaseClass.h"
 #include "InputInterface.h"
@@ -22,9 +22,9 @@
 #include <chrono>
 #include <string>
 
-enum PipelineType {
-	PIPELINE_FORWARD = 0,
-	PIPELINE_DEFERRED,
+enum RenderPathType {
+	RENDERPATH_FORWARD = 0,
+	RENDERPATH_DEFERRED,
 }; // Also, F+, TileBased, etc
 
 class Engine : public BaseClass {
@@ -37,8 +37,8 @@ private:
 	VertexArrayObject *vao;
 	VertexBufferObject *vbo;
 
-	PipelineType pipelineType;
-	Pipeline *pipeline;
+	RenderPathType renderPathType;
+	RenderPath *renderPath;
 
 	// Time Data
 	std::chrono::time_point<std::chrono::high_resolution_clock> currentTime, prevTime;

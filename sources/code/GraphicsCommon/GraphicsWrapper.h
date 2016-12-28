@@ -42,6 +42,7 @@ private:
 public:
 	virtual bool InitializeWindowContext();
 	virtual bool InitializeGraphics();
+	virtual void DrawVertexArray(uint32_t numIndices);
 	virtual void DrawBaseVertex(const void *baseIndex, uint32_t baseVertex, uint32_t numIndices);
 	virtual void SwapBuffer();
 	virtual void Clear();

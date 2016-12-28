@@ -14,6 +14,7 @@ VertexArrayObject*	(*pfnCreateVAO)();
 VertexBufferObject*	(*pfnCreateVBO)();
 ShaderProgram*		(*pfnCreateShader)();
 Texture*			(*pfnCreateTexture)();
+Framebuffer*		(*pfnCreateFramebuffer)();
 
 bool Engine::Initialize() {
 	if (!InitializeWindow())					return false;
@@ -53,13 +54,13 @@ bool Engine::Initialize() {
 	vsContent.clear();
 	fsContent.clear();
 
-	pipelineType = PIPELINE_DEFERRED;
-	switch (pipelineType) {
+	renderPathType = RENDERPATH_DEFERRED;
+	switch (renderPathType) {
 	default:
-		pipeline = (Pipeline *)new PipelineForward(graphicsWrapper, &geometryCache);
+		renderPath = (RenderPath *)new RenderPathForward(graphicsWrapper, &geometryCache);
 		break;
-	case PIPELINE_DEFERRED:
-		pipeline = (Pipeline *)new PipelineDeferred(graphicsWrapper, &geometryCache);
+	case RENDERPATH_DEFERRED:
+		renderPath = (RenderPath *)new RenderPathDeferred(graphicsWrapper, &geometryCache);
 		break;
 	};
 
@@ -197,6 +198,12 @@ bool Engine::InitializeGraphics() {
 		return false;
 	}
 
+	pfnCreateFramebuffer = (Framebuffer* (*)())GetProcAddress(dllHandle, "createFramebuffer");
+	if (!pfnCreateFramebuffer) {
+		fprintf(stderr, "Cannot get createFramebuffer function!\n");
+		return false;
+	}
+
 	HWND win_handle = window->GetHandle();
 #endif
 
@@ -246,7 +253,6 @@ struct UniformBuffer {
 
 void Engine::Run() {
 
-	shader->Use();
 
 	glm::mat4x4 model = glm::mat4(1);
 	//model = glm::translate(model,glm::vec3(0,0,0));
@@ -275,6 +281,7 @@ void Engine::Run() {
 			getUp()					// probably glm::vec3(0,1,0), but (0,-1,0) would make you looking upside-down, which can be great too
 		);
 
+		shader->Use();
 		ubo.pvmMatrix = projection * view * model;
 		ubo.viewMatrix = view;
 		ubo.modelMatrix = model;
@@ -284,7 +291,7 @@ void Engine::Run() {
 		shader->SetUniform4m();
 		shader->SetInteger();
 
-		pipeline->Draw();
+		renderPath->Draw();
 #ifdef _WIN32
 		graphicsWrapper->SwapBuffer();
 #else

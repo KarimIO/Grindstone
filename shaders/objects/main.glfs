@@ -1,6 +1,8 @@
 #version 330 core
 
-out vec3 color;
+layout(location = 0) out vec3 position; // X Y Z MaterialType
+layout(location = 1) out vec3 normal;	// X Y Z AO
+layout(location = 2) out vec3 color; // R G B Metalness
 
 uniform sampler2D tex;
 
@@ -10,10 +12,7 @@ in vec3 Normal;
 in vec3 Tangent;
 
 void main() {
-  vec3 LightPos = vec3(0,1,0);
-  vec3 LightDir = LightPos-Position;
-  float Distance = length(LightDir);
-  LightDir = normalize(LightDir);
-  float lum =  max(dot(Normal,LightDir), 0) / Distance;
-  color = lum * texture2D(tex, TexCoord0).rgb;
+  position = Position;
+  normal = Normal;
+  color = texture2D(tex, TexCoord0).rgb;
 }

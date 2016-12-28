@@ -9,6 +9,9 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+
+Texture *LoadTexture(std::string path);
+
 enum {
 	VERTEX_VB = 0,
 	UV_VB,

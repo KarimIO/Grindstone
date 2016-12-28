@@ -4,10 +4,12 @@
 #include <GraphicsWrapper.h>
 #include <GLShader.h>
 #include <GLTexture.h>
+#include <GLFramebuffer.h>
 
 extern VertexArrayObject*	(*pfnCreateVAO)();
 extern VertexBufferObject*	(*pfnCreateVBO)();
 extern ShaderProgram*		(*pfnCreateShader)();
 extern Texture*				(*pfnCreateTexture)();
+extern Framebuffer*			(*pfnCreateFramebuffer)();
 
 #endif

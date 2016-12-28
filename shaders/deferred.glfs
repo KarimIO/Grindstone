@@ -1,0 +1,13 @@
+#version 330 core
+
+layout(location = 0) out vec3 color; // X Y Z MaterialType
+
+uniform sampler2D texPos;
+uniform sampler2D texNormal;
+uniform sampler2D texAlbedo;
+
+in vec2 UV;
+
+void main() {
+  color = vec3(UV,0)*0.5 + texture2D(texPos, UV).rgb*0.5;
+}

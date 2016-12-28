@@ -1,10 +1,10 @@
-#ifndef _PIPELINE_H
-#define _PIPELINE_H
+#ifndef _RENDERPATH_H
+#define _RENDERPATH_H
 
 #include <GraphicsWrapper.h>
 #include "SGeometry.h"
 
-class Pipeline {
+class RenderPath {
 public:
 	virtual void Draw() = 0;
 };
