@@ -118,6 +118,12 @@ void GLShaderProgram::SetInteger() {
 	dataPtr += sizeof(int);
 }
 
+void GLShaderProgram::SetVec3() {
+	glm::vec3 data = *(glm::vec3 *)(dataPtr);
+	glUniform3f(uniforms[uniformCounter++], data.x, data.y, data.z);
+	dataPtr += sizeof(glm::vec3);
+}
+
 void GLShaderProgram::Cleanup() {
 	glUseProgram(0);
 	glDeleteProgram(program);

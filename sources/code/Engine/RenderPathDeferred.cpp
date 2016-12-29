@@ -3,24 +3,40 @@
 #include "Utilities.h"
 #include "gl3w.h"
 
+struct UniformBufferDef {
+	glm::vec3 eyePos;
+	int texLoc0;
+	int texLoc1;
+	int texLoc2;
+	int texLoc3;
+} defUBO;
+
 void RenderPathDeferred::GeometryPass() {
 	fbo->WriteBind();
 	graphicsWrapper->Clear(CLEAR_ALL);
 	geometryCache->Draw();
 }
 
-void RenderPathDeferred::DeferredPass() {
+void RenderPathDeferred::DeferredPass(glm::vec3 eyePos) {
 	//fbo->ReadBind();
 
-	int val[3] = { 0,1,2 };
+	defUBO.eyePos = eyePos;
+	defUBO.texLoc0 = 0;
+	defUBO.texLoc1 = 1;
+	defUBO.texLoc2 = 2;
+	defUBO.texLoc3 = 3;
+
 	fbo->Unbind();
 	shader->Use();
 
 	fbo->BindTexture(0);
 	fbo->BindTexture(1);
 	fbo->BindTexture(2);
+	fbo->BindTexture(3);
 
-	shader->PassData(&val);
+	shader->PassData(&defUBO);
+	shader->SetVec3();
+	shader->SetInteger();
 	shader->SetInteger();
 	shader->SetInteger();
 	shader->SetInteger();
@@ -57,10 +73,11 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	vaoQuad->Unbind();
 
 	fbo = pfnCreateFramebuffer();
-	fbo->Initialize(3);
-	fbo->AddBuffer(GL_RGB32F, GL_RGB, GL_FLOAT, 1024, 768);
-	fbo->AddBuffer(GL_RGB32F, GL_RGB, GL_FLOAT, 1024, 768);
-	fbo->AddBuffer(GL_RGB32F, GL_RGB, GL_FLOAT, 1024, 768);
+	fbo->Initialize(4);
+	fbo->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, 1024, 768);
+	fbo->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, 1024, 768);
+	fbo->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, 1024, 768);
+	fbo->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, 1024, 768);
 	// Depth Buffer Issue:
 	fbo->AddDepthBuffer(1024, 768);
 	fbo->Generate();
@@ -81,14 +98,16 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	shader->AddShader(fsPath, fsContent, SHADER_FRAGMENT);
 	shader->Compile();
 
-	shader->SetNumUniforms(3);
+	shader->SetNumUniforms(5);
+	shader->CreateUniform("eyePos");
 	shader->CreateUniform("texPos");
 	shader->CreateUniform("texNormal");
 	shader->CreateUniform("texAlbedo");
+	shader->CreateUniform("texSpecular");
 }
 
-void RenderPathDeferred::Draw() {
+void RenderPathDeferred::Draw(glm::vec3 eyePos) {
 	GeometryPass();
-	DeferredPass();
+	DeferredPass(eyePos);
 	PostPass();
 }

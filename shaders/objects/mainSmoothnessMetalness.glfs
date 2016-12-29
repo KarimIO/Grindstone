@@ -32,11 +32,11 @@ vec3 CalcBumpedNormal(vec3 Ng, vec3 Nt, vec3 Tan) {
 void main() {
   vec3 Albedo = texture2D(tex0, TexCoord0).rgb;
   vec3 NormalTex = texture2D(tex1, TexCoord0).rgb;
-  vec3 Specular = texture2D(tex2, TexCoord0).rgb; // Specular
-  float Roughness = texture2D(tex3, TexCoord0).r; // Roughness
+  float Metalness = texture2D(tex2, TexCoord0).r;
+  float Smoothness = texture2D(tex3, TexCoord0).r;
   
   position = vec4(Position,0);
   normal = vec4(CalcBumpedNormal(Normal, NormalTex, Tangent), 0);
-  albedo = vec4(Albedo, 0);
-  specular = vec4(Specular, Roughness);
+  albedo = vec4(mix(Albedo, vec3(0), Metalness), 0);
+  specular = vec4(mix(vec3(0.4), Albedo, Metalness), 1-Smoothness);
 }

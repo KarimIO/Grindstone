@@ -22,8 +22,10 @@ public:
 	virtual void SetNumUniforms(int);
 	virtual void CreateUniform(const char *);
 	virtual void PassData(void *);
+
 	virtual void SetUniform4m();
 	virtual void SetInteger();
+	virtual void SetVec3();
 
 	virtual void Cleanup();
 };

@@ -30,7 +30,7 @@ bool Engine::Initialize() {
 	};
 
 	std::string vsPath = "shaders/objects/main.glvs"; // GetShaderExt()
-	std::string fsPath = "shaders/objects/main.glfs";
+	std::string fsPath = "shaders/objects/mainSmoothnessMetalness.glfs";
 
 	std::string vsContent;
 	if (!ReadFile(vsPath, vsContent))
@@ -303,7 +303,7 @@ void Engine::Run() {
 		shader->SetInteger();
 		shader->SetInteger();
 
-		renderPath->Draw();
+		renderPath->Draw(position);
 #ifdef _WIN32
 		graphicsWrapper->SwapBuffer();
 #else

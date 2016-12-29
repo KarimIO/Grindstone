@@ -5,19 +5,104 @@ out vec3 color; // X Y Z MaterialType
 uniform sampler2D texPos;
 uniform sampler2D texNormal;
 uniform sampler2D texAlbedo;
+uniform sampler2D texSpecular;
+
+uniform vec3 eyePos;
 
 in vec2 UV;
 
-void main() {
-  vec3 Position = texture(texPos, UV).rgb;
-  vec3 Normal = texture(texNormal, UV).rgb;
-  vec3 Albedo = texture(texAlbedo, UV).rgb;
+const float pi = 3.14159;
 
-  vec3 LightPos = vec3(0,1.5,0);
-  vec3 LightDir = LightPos-Position;
-  float Distance = length(LightDir);
-  LightDir = normalize(LightDir);
-  vec4 lightColor = vec4(1,0.99,0.9, 3);
-  float lum = lightColor.w * max(dot(Normal,LightDir), 0) / (Distance * Distance + 1);
-  color = lightColor.rgb * lum * Albedo;
+vec3 Light_F(in vec3 f0, in float f90, in float VH) {
+	return f0 + (f90-f0) * pow(1-VH, 5.0f);
+}
+
+float Light_D(in float alpha, in float NH) {
+	float alphaSqr = alpha*alpha;
+	float denom = NH * NH * (alphaSqr - 1) + 1;
+
+	return alphaSqr / (pi * denom * denom);
+}
+
+float Light_V( in float NL, in float NV, in float alpha ) {
+	float Lambda_GGXV = NL * sqrt (( - NV * alpha + NV ) * NV + alpha );
+	float Lambda_GGXL = NV * sqrt (( - NL * alpha + NL ) * NL + alpha );
+
+	return 0.5f / ( Lambda_GGXV + Lambda_GGXL );
+}
+
+float Diff_Disney( float NdotV, float NdotL, float LdotH ,float linearRoughness ) {
+	float energyBias = 0*(1-linearRoughness) + 0.5*linearRoughness;
+	float energyFactor = 1.0*(1-linearRoughness) + linearRoughness / 1.51;
+	float fd90 = energyBias + 2.0 * LdotH * LdotH * linearRoughness ;
+	vec3 f0 = vec3(1.0f , 1.0f , 1.0f);
+	float lightScatter = Light_F( f0 , fd90 , NdotL ) .r;
+	float viewScatter = Light_F(f0 , fd90 , NdotV ).r;
+
+	return lightScatter * viewScatter * energyFactor ;
+}
+
+vec3 BSDF(in vec3 Albedo, in vec3 Specular, in vec3 Normal, in vec3 lightDir, in float linearRoughness, in vec3 eyeDir) {	
+	float Roughness = linearRoughness*linearRoughness;
+	float alpha = Roughness * Roughness;
+	
+	vec3 H = normalize(eyeDir + lightDir);
+	
+	float NL = clamp(dot(Normal, lightDir), 0, 1);
+	float NV = abs(dot(Normal, eyeDir));
+	float NH = clamp(dot(Normal, H), 0, 1);
+	float LH = clamp(dot(lightDir, H), 0, 1);
+	float VH = clamp(dot(eyeDir, H), 0, 1);
+	
+	vec3 f0 = 0.32*Specular.rgb*Specular.rgb;
+	float f90 = clamp(50 * f0.r * 0.33, 0, 1);
+	
+	float D = Light_D(alpha, NH);
+	vec3 F = Light_F(f0, f90, LH);
+	float Vis = Light_V(NL, NV, alpha);
+	vec3 Spec = (D * F * Vis);
+	
+  vec3 Diffuse = Albedo.rgb*vec3(Diff_Disney(NV ,NL , LH, linearRoughness))/pi;
+	
+	return (Spec + Diffuse);
+}
+
+vec3 LightCalc(in vec3 Albedo, in vec3 WorldPos, in vec4 Specular, in vec3 Normal, in vec3 lightPos, in float lightAtten, in vec4 lightColor, in vec3 eyePos) {
+	vec3 lightDir	= WorldPos - lightPos;
+	vec3 eyeDir		= normalize(eyePos - WorldPos);
+	vec3 eyeReflect = reflect(-eyeDir, Normal);
+	
+	float Distance	= length(lightDir);
+	lightDir		= -normalize(lightDir);
+	
+	float linRoughness = Specular.a;
+	
+	float NL = clamp(dot(Normal, lightDir), 0, 1);
+	
+	float Attenuation = clamp(1 - pow(Distance / lightAtten, 4), 0, 1);
+	Attenuation = Attenuation*Attenuation/(Distance*Distance+1);
+	
+	vec3 lightModifier = lightColor.xyz*lightColor.w * Attenuation;
+	vec3 BSDFValue = BSDF(Albedo, Specular.rgb, Normal, lightDir, linRoughness, eyeDir);
+	return NL * BSDFValue * lightModifier;
+}
+
+vec3 LightPointCalc(in vec3 Albedo, in vec3 WorldPos, in vec4 Specular, in vec3 Normal, in vec3 lightPos, in float lightAtten, in vec4 lightColor, in vec3 eyePos) {
+	vec3 lightDir	= WorldPos - lightPos;
+	float Distance	= length(lightDir);
+	
+	return LightCalc(Albedo, WorldPos, Specular, Normal, lightPos, lightAtten, lightColor, eyePos);
+}
+
+void main() {
+  vec4 Position = texture(texPos, UV);
+  vec4 Normal = texture(texNormal, UV);
+  vec4 Albedo = texture(texAlbedo, UV);
+  vec4 Specular = texture(texSpecular, UV);
+
+  vec3 lightPos = vec3(0,1.5,0);
+  float lightAtten = 200;
+  vec4 lightColor = vec4(1,1,1,10);
+  
+  color = LightPointCalc(Albedo.rgb, Position.xyz, Specular, Normal.xyz, lightPos, lightAtten, lightColor, eyePos);
 }

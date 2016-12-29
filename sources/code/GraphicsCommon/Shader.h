@@ -22,6 +22,7 @@ public:
 	virtual void PassData(void *) = 0;
 	virtual void SetUniform4m() = 0;
 	virtual void SetInteger() = 0;
+	virtual void SetVec3() = 0;
 
 	virtual void Cleanup() = 0;
 };

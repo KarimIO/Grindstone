@@ -11,13 +11,13 @@ class RenderPathDeferred : public RenderPath {
 	Framebuffer *fbo;
 
 	void GeometryPass();
-	void DeferredPass();
+	void DeferredPass(glm::vec3 eyePos);
 	void PostPass();
 	ShaderProgram *shader;
 	VertexArrayObject *vaoQuad;
 	VertexBufferObject *vboQuad;
 public:
-	virtual void Draw();
+	virtual void Draw(glm::vec3 eyePos);
 	RenderPathDeferred(GraphicsWrapper *gw, SModel *gc);
 };
 

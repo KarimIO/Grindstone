@@ -3,10 +3,11 @@
 
 #include <GraphicsWrapper.h>
 #include "SGeometry.h"
+#include <glm\glm.hpp>
 
 class RenderPath {
 public:
-	virtual void Draw() = 0;
+	virtual void Draw(glm::vec3 eyePos) = 0;
 };
 
 #endif
