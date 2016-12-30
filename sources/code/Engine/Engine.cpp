@@ -17,6 +17,10 @@ Texture*			(*pfnCreateTexture)();
 Framebuffer*		(*pfnCreateFramebuffer)();
 
 bool Engine::Initialize() {
+	// Get Settings here:
+	settings.resolutionX = 1024;
+	settings.resolutionY = 768;
+
 	if (!InitializeWindow())					return false;
 	if (!InitializeGraphics())					return false;
 	if (!InitializeScene("scenes/startup.gmf"))	return false;
@@ -30,7 +34,7 @@ bool Engine::Initialize() {
 	};
 
 	std::string vsPath = "shaders/objects/main.glvs"; // GetShaderExt()
-	std::string fsPath = "shaders/objects/mainSmoothnessMetalness.glfs";
+	std::string fsPath = "shaders/objects/mainMetalness.glfs";
 
 	std::string vsContent;
 	if (!ReadFile(vsPath, vsContent))
@@ -69,6 +73,7 @@ bool Engine::Initialize() {
 
 	isRunning = true;
 	prevTime = std::chrono::high_resolution_clock::now();
+	startTime = std::chrono::high_resolution_clock::now();
 	return true;
 }
 
@@ -108,7 +113,7 @@ bool Engine::InitializeWindow() {
 	if (!window->Initialize("The Grind Engine", 1024, 768))
 		return false;
 
-	window->SetInputPointer(&inputInterface);
+	window->SetInputPointer(&inputSystem);
 
 	return true;
 }
@@ -258,19 +263,12 @@ struct UniformBuffer {
 } ubo;
 
 void Engine::Run() {
-
-
 	glm::mat4x4 model = glm::mat4(1);
-	//model = glm::translate(model,glm::vec3(0,0,0));
+	model = glm::translate(model, glm::vec3(6, 0, 0));
 	model = glm::scale(model, glm::vec3(0.01f));
 	//model = glm::rotate(model, 0.0f, glm::vec3(0));
 
-	glm::mat4 projection = glm::perspective(
-		45.0f,         // The horizontal Field of View, in degrees : the amount of "zoom". Think "camera lens". Usually between 90� (extra wide) and 30� (quite zoomed in)
-		4.0f / 3.0f, // Aspect Ratio. Depends on the size of your window. Notice that 4/3 == 800/600 == 1280/960, sounds familiar ?
-		0.1f,        // Near clipping plane. Keep as big as possible, or you'll get precision issues.
-		100.0f       // Far clipping plane. Keep as little as possible.
-		);
+	glm::mat4 projection = glm::perspective( 45.0f, 4.0f / 3.0f, 0.1f, 100.0f );
 
 	window->ResetCursor();
 
@@ -279,15 +277,14 @@ void Engine::Run() {
 	ubo.texLoc2 = 2;
 	ubo.texLoc3 = 3;
 
-	position = glm::vec3(0, 1, -1);
-
 	while (isRunning) {
 		CalculateTime();
+		inputSystem.LoopControls();
 
 		glm::mat4 view = glm::lookAt(
-			position,				// the position of your camera, in world space
-			position+getForward(),	// where you want to look at, in world space
-			getUp()					// probably glm::vec3(0,1,0), but (0,-1,0) would make you looking upside-down, which can be great too
+			player->getPosition(),
+			player->getPosition() + player->getForward(),
+			player->getUp()
 		);
 
 		shader->Use();
@@ -303,7 +300,7 @@ void Engine::Run() {
 		shader->SetInteger();
 		shader->SetInteger();
 
-		renderPath->Draw(position);
+		renderPath->Draw(player->getPosition());
 #ifdef _WIN32
 		graphicsWrapper->SwapBuffer();
 #else
@@ -311,7 +308,6 @@ void Engine::Run() {
 #endif
 
 		window->HandleEvents();
-		window->ResetCursor();
 	}
 }
 
@@ -336,6 +332,11 @@ bool Engine::InitializeScene(std::string szScenePath) {
 		return false;
 	}
 
+	player = new EBasePlayer();
+
+	// Eventually do all spawning after all initializing is complete.
+	player->Spawn();
+
 	geometryCache.LoadModel3D("models/crytek-sponza/sponza.obj");
 
 	return true;
@@ -343,16 +344,16 @@ bool Engine::InitializeScene(std::string szScenePath) {
 
 void Engine::CalculateTime() {
 	currentTime = std::chrono::high_resolution_clock::now();
-	deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - prevTime);
+	deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - prevTime);
 	prevTime = currentTime;
 }
 
 double Engine::GetTimeCurrent() {
-	return 0;
+	return (double)std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count()/1000.0;
 }
 
 double Engine::GetTimeDelta() {
-	return (double)deltaTime.count();
+	return (double)deltaTime.count() / 1000.0;
 }
 
 void Engine::Shutdown() {
@@ -361,27 +362,4 @@ void Engine::Shutdown() {
 
 Engine::~Engine() {
 	window->Shutdown();
-}
-
-
-glm::vec3 Engine::getForward() {
-	glm::vec3 ang = angles;
-	return glm::vec3(
-		glm::cos(ang.x) * glm::sin(ang.y),
-		glm::sin(ang.x),
-		glm::cos(ang.x) * glm::cos(ang.y)
-	);
-}
-
-glm::vec3 Engine::getUp() {
-	return glm::cross(getRight(), getForward());
-}
-
-glm::vec3 Engine::getRight() {
-	glm::vec3 ang = angles;
-	return glm::vec3(
-		glm::sin(ang.y - 3.14159f / 2.0f),
-		0,
-		glm::cos(ang.y - 3.14159f / 2.0f)
-	);
 }

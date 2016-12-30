@@ -2,6 +2,7 @@
 #define _INPUT_INTERFACE_H
 // This file is used to get the inputs from the windows module. Is there a better way to do this??
 
+
 enum {
 	MOUSE_LEFT = 0,
 	MOUSE_MIDDLE,
@@ -149,23 +150,42 @@ enum {
 	KEY_LAST
 };
 
+enum {
+	WINDOW_CLOSE = 0,
+	WINDOW_FORCECLOSE,
+	WINDOW_RESIZEX,
+	WINDOW_RESIZEY,
+	WINDOW_MOVEX,
+	WINDOW_MOVEY,
+	WINDOW_FOCUS,
+	WINDOW_MINIMIZE,
+	WINDOW_LAST
+};
+
+enum {
+	DEVICE_WINDOW = 0,
+	DEVICE_KEYBOARD,
+	DEVICE_MOUSE
+};
+
 enum KEY_STATUS {
 	KEY_PRESSED = 0,
 	KEY_RELEASED
 };
 
+// This exists only to pass a smaller pointer and have fewer requirements to the other DLLs
 class InputInterface {
 public:
-    virtual void ResizeEvent(int, int);
-    virtual void SetMouseButton(int, bool);
-    virtual void SetMouseInWindow(bool);
-	virtual void SetMousePosition(int, int);
-	virtual bool IsMouseInWindow();
-	virtual void SetFocused(bool);
-	virtual bool IsFocused();
-    virtual void SetKey(int, bool);
-    virtual void Quit();
-    virtual void ForceQuit();
+    virtual void ResizeEvent(int, int) = 0;
+    virtual void SetMouseButton(int, bool) = 0;
+    virtual void SetMouseInWindow(bool) = 0;
+	virtual void SetMousePosition(int, int) = 0;
+	virtual bool IsMouseInWindow() = 0;
+	virtual void SetFocused(bool) = 0;
+	virtual bool IsFocused() = 0;
+    virtual void SetKey(int, bool) = 0;
+    virtual void Quit() = 0;
+    virtual void ForceQuit() = 0;
 };
 
 #endif

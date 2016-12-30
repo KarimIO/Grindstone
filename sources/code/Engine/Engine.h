@@ -13,11 +13,11 @@
 #include "RenderPathForward.h"
 
 #include "BaseClass.h"
-#include "InputInterface.h"
 #include <Window.h>
 #include <GLShader.h>
 #include "SGeometry.h"
 #include "Input.h"
+#include "EBasePlayer.h"
 
 #include <chrono>
 #include <string>
@@ -40,25 +40,23 @@ private:
 	RenderPathType renderPathType;
 	RenderPath *renderPath;
 
-	// Time Data
-	std::chrono::time_point<std::chrono::high_resolution_clock> currentTime, prevTime;
+	EBasePlayer *player;
 
-	std::chrono::microseconds deltaTime;
+	// Time Data
+	std::chrono::time_point<std::chrono::high_resolution_clock> currentTime, prevTime, startTime;
+
+	std::chrono::milliseconds deltaTime;
 public:
+	struct Settings {
+		int resolutionX;
+		int resolutionY;
+	} settings;
+
 	GameWindow *window;
 	SModel geometryCache;
-	//InputSystem inputSystem;
 
-	// Input
-	glm::vec3 position;
-	glm::vec3 angles;
-	glm::vec3 getForward();
-	glm::vec3 getRight();
-	glm::vec3 getUp();
-
-	InputInterface inputInterface;
+	InputSystem inputSystem;
 	GraphicsWrapper *graphicsWrapper;
-	//InputSystem *inputSystem;
 #ifdef UseClassInstance
 	static Engine *GetInstance();
 #else

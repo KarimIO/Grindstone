@@ -26,3 +26,35 @@ bool FileExists(std::string fileName) {
 	std::ifstream infile(fileName.c_str());
 	return infile.good();
 }
+
+char charToLower(char letter) {
+	int charNum = (int)letter;
+	if (charNum >= 65 && charNum <= 90)
+		charNum += 32;
+
+	return (char)charNum;
+}
+
+std::string strToLower(std::string phrase) {
+	std::string out = "";
+	for (size_t i = 0; i < phrase.size(); i++) {
+		out += charToLower(phrase[i]);
+	}
+	return out;
+}
+
+char charToUpper(char letter) {
+	int charNum = (int)letter;
+	if (charNum >= 97 && charNum <= 122)
+		charNum -= 32;
+
+	return (char)charNum;
+}
+
+std::string strToUpper(std::string phrase) {
+	std::string out = "";
+	for (size_t i = 0; i < phrase.size(); i++) {
+		out += charToUpper(phrase[i]);
+	}
+	return out;
+}

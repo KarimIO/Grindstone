@@ -1,179 +1,108 @@
-#if 0
-//#ifndef _INPUT_H
+#ifndef _INPUT_H
 #define _INPUT_H
 
 #include "InputInterface.h"
-#include <vector>
-#include <string>
 #include <functional>
-
-// Structs
-class BaseControl {
-public:
-	const char *control;
-	BaseClass *targetEntity;
-	std::function<void(float)> function;
-	int type;
-	virtual void Invoke(float time);
-	BaseControl(const char *Control, BaseClass *Target, std::function<void(float)> function);
-};
-
-class ActionControl : public BaseControl {
-public:
-	KEY_STATUS status;
-	ActionControl(const char *Control, BaseClass *TargetEntity, std::function<void(float)> function, KEY_STATUS keyStatus);
-};
-
-class AxisControl : public BaseControl {
-public:
-	float minimum;
-	float maximum;
-	AxisControl(const char *Control, BaseClass *TargetEntity, std::function<void(float)> function, float Minimum, float Maximum);
-};
-
-class StateControl : public BaseControl {
-public:
-	StateControl(const char *Control, BaseClass *TargetEntity, std::function<void(float)> function);
-};
-
-struct ControlContainer {
-	std::string command;
-	BaseControl *control;
-	ControlContainer *next;
-	// Represents the amount of time a button has been pressed or the scale of the axis
-	float data;
-
-	ControlContainer() {
-		command = "";
-		control = nullptr;
-		next = nullptr;
-		data = 0;
-	};
-
-	ControlContainer(std::string cmd, BaseControl *ctrl) {
-		command = cmd;
-		control = ctrl;
-		next = nullptr;
-		data = 0;
-	};
-};
+#include <vector>
 
 class InputComponent;
 
-class InputSystem {
-private:
-	ControlContainer *keyPress[KEY_LAST];
-	ControlContainer *mousePress[MOUSE_LAST];
-	ControlContainer *windowFocus;
+enum COMMAND_TYPE {
+	COMMAND_BASE = 0,
+	COMMAND_ACTION,
+	COMMAND_AXIS
+};
 
-	// Represents the amount of time a button has been pressed. 
-	//    +ve represents press, -ve represents release. 
-	float keyPressDuration[KEY_LAST];
-	float mousePressDuration[MOUSE_MOUSE5];
-
-	bool focused;
-	bool mouseInWindow;
-
-	// Action Arrays
-	std::vector<ActionControl *>	actionList;
-	std::vector<AxisControl *>		axisList;
-	std::vector<StateControl *>		stateList;
-
-	std::vector<InputComponent *> componentList;
-
-	void AddCommand(const char *, ControlContainer **, int, float);
-	void LinkCommand(BaseControl *);
+// Structs
+class BaseCommand {
 public:
-	InputSystem();
-	std::string getKeyString(int key);
+	void *targetEntity;
+	std::function<void(double)> function;
+	COMMAND_TYPE type;
+	virtual void Invoke(double value);
+	BaseCommand(void *Target, std::function<void(double)> function);
+};
+
+class ActionCommand : public BaseCommand {
+public:
+	KEY_STATUS status;
+	ActionCommand(void *TargetEntity, std::function<void(double)> function, KEY_STATUS keyStatus);
+};
+
+class AxisCommand : public BaseCommand {
+public:
+	AxisCommand(void *TargetEntity, std::function<void(double)> function);
+};
+
+struct ControlHandler {
+	BaseCommand *command;
+
+	std::string control;
+	InputComponent *component;
+
+	double value;
+
+	ControlHandler *nextControl;
+	ControlHandler *prevControl;
+	ControlHandler(std::string controlCode, InputComponent *componentPtr, ControlHandler *prev, double val);
+};
+
+class InputSystem : public InputInterface {
+protected:
+	std::vector<ControlHandler *> keyboardControls;
+	std::vector<ControlHandler *> mouseControls;
+	std::vector<ControlHandler *> windowControls;
+	std::vector<ControlHandler *> allControls;
+	std::vector<double> keyboardData;
+	std::vector<double> mouseData;
+	std::vector<double> windowData;
+	bool useKeyboard;
+	bool useMouse;
+	bool useWindow;
+public:
+	void ResizeEvent(int, int);
 	void SetMouseButton(int, bool);
-	void SetKey(int, bool);
-	void ResetCursor();
-
-	float GetKeyDuration(int key);
-	float GetMouseDuration(int key);
-	bool CheckKey(int key);
-	bool CheckMouseButton(int button);
-	int GetKeyIDByName(std::string Control);
-	int GetMouseIDByName(std::string Control);
-	void CreateNewComponent(std::string, EBaseEntity *);
-
-	void LoopControls(double);
-
 	void SetMouseInWindow(bool);
+	void SetMousePosition(int, int);
 	bool IsMouseInWindow();
 	void SetFocused(bool);
 	bool IsFocused();
-	void ReadFile(std::string);
+	void SetKey(int, bool);
+	void Quit();
+	void ForceQuit();
 
-	int xpos, ypos;
+	InputSystem();
+	void LoopControls();
 
-	// Bind Functions
+	int GetKeyboardKeyByName(std::string key);
+	int GetMouseKeyByName(std::string key);
+	int GetWindowKeyByName(std::string key);
+	int TranslateKey(std::string key, int &device, ControlHandler *&handler);
+	bool AddControl(std::string key, std::string control, InputComponent *component, double val);
+	ControlHandler *GetControl(std::string control, InputComponent *component);
+
 	template <typename T>
-	void BindAction(const char *control, T *targetEntity, void (T::*methodPointer)(float), KEY_STATUS status = KEY_PRESSED) {
-		std::function<void(float)> a = [=](float in) { (targetEntity->*methodPointer)(in); };
-		actionList.push_back(new ActionControl(control, targetEntity, a, status));
-		LinkCommand(actionList[actionList.size() - 1]);
+	void BindAction(std::string control, InputComponent *component, T *targetEntity, void (T::*methodPointer)(double), KEY_STATUS status = KEY_PRESSED) {
+		std::function<void(double)> a = [=](double in) { (targetEntity->*methodPointer)(in); };
+
+		for (size_t i = 0; i < allControls.size(); i++) {
+			if (allControls[i]->component == component && allControls[i]->control == control)
+				std::function<void(double)> a = [=](double in) { (targetEntity->*methodPointer)(in); };
+					allControls[i]->command = new ActionCommand(targetEntity, a, status);
+		}
 	}
 
 	template <typename T>
-	void BindAxis(const char *control, T *targetEntity, void(T::*methodPointer)(float), float minimum = -1, float maximum = 1) {
-		std::function<void(float)> a = [=](float in) { (targetEntity->*methodPointer)(in); };
-		axisList.push_back(new AxisControl(control, targetEntity, a, minimum, maximum));
-		LinkCommand(axisList[axisList.size() - 1]);
-	}
-
-	template <typename T>
-	void BindState(const char *control, T *targetEntity, void (T::*methodPointer)(float)) {
-		std::function<void(float)> a = [=](float in) { (targetEntity->*methodPointer)(in); };
-		stateList.push_back(new StateControl(control, targetEntity, a));
-		LinkCommand(stateList[stateList.size() - 1]);
+	void BindAxis(std::string control, InputComponent *component, T *targetEntity, void (T::*methodPointer)(double)) {
+		std::function<void(double)> a = [=](double in) { (targetEntity->*methodPointer)(in); };
+		for (size_t i = 0; i < allControls.size(); i++) {
+			if (allControls[i]->component == component && allControls[i]->control == control)
+				allControls[i]->command = new AxisCommand(targetEntity, a);
+		}
 	}
 };
 
 class InputComponent {
-private:
-	InputSystem *system;
-	ControlContainer *keyPress[KEY_LAST];
-	ControlContainer *mousePress[MOUSE_LAST];
-
-	// Action Arrays
-	std::vector<ActionControl *>	actionList;
-	std::vector<AxisControl *>		axisList;
-	std::vector<StateControl *>		stateList;
-
-
-	void AddCommand(const char *, ControlContainer **, int, float);
-	void LinkCommand(BaseControl *);
-	void ReadFile(std::string);
-	std::string cfgPath;
-public:
-	InputComponent(std::string, InputSystem *, EBaseEntity *, System *);
-	void CallKeyEvent(int key);
-	void CallMouseEvent(int key);
-	void LoopControls(double);
-
-	// Bind Functions
-	template <typename T>
-	void BindAction(const char *control, T *targetEntity, void (T::*methodPointer)(float), KEY_STATUS status = KEY_PRESSED) {
-		std::function<void(float)> a = [=](float in) { (targetEntity->*methodPointer)(in); };
-		actionList.push_back(new ActionControl(control, targetEntity, a, status));
-		LinkCommand(actionList[actionList.size() - 1]);
-	}
-
-	template <typename T>
-	void BindAxis(const char *control, T *targetEntity, void(T::*methodPointer)(float), float minimum = -1, float maximum = 1) {
-		std::function<void(float)> a = [=](float in) { (targetEntity->*methodPointer)(in); };
-		axisList.push_back(new AxisControl(control, targetEntity, a, minimum, maximum));
-		LinkCommand(axisList[axisList.size() - 1]);
-	}
-
-	template <typename T>
-	void BindState(const char *control, T *targetEntity, void (T::*methodPointer)(float)) {
-		std::function<void(float)> a = [=](float in) { (targetEntity->*methodPointer)(in); };
-		stateList.push_back(new StateControl(control, targetEntity, a));
-		LinkCommand(stateList[stateList.size() - 1]);
-	}
 };
 
 #endif

@@ -13,22 +13,23 @@ in vec2 UV;
 
 const float pi = 3.14159;
 
+// Schlick
 vec3 Light_F(in vec3 f0, in float f90, in float VH) {
 	return f0 + (f90-f0) * pow(1-VH, 5.0f);
 }
 
-float Light_D(in float alpha, in float NH) {
-	float alphaSqr = alpha*alpha;
+// GGX
+float Light_D(in float alphaSqr, in float NH) {
 	float denom = NH * NH * (alphaSqr - 1) + 1;
 
 	return alphaSqr / (pi * denom * denom);
 }
 
-float Light_V( in float NL, in float NV, in float alpha ) {
-	float Lambda_GGXV = NL * sqrt (( - NV * alpha + NV ) * NV + alpha );
-	float Lambda_GGXL = NV * sqrt (( - NL * alpha + NL ) * NL + alpha );
+float Light_V( in float NL, in float NV, in float alphaSqr ) {
+	float Lambda_GGXV = NL * sqrt (( - NV * alphaSqr + NV ) * NV + alphaSqr );
+	float Lambda_GGXL = NV * sqrt (( - NL * alphaSqr + NL ) * NL + alphaSqr );
 
-	return 0.5f / ( Lambda_GGXV + Lambda_GGXL );
+	return 0.25f / ( Lambda_GGXV + Lambda_GGXL );
 }
 
 float Diff_Disney( float NdotV, float NdotL, float LdotH ,float linearRoughness ) {
@@ -43,8 +44,9 @@ float Diff_Disney( float NdotV, float NdotL, float LdotH ,float linearRoughness 
 }
 
 vec3 BSDF(in vec3 Albedo, in vec3 Specular, in vec3 Normal, in vec3 lightDir, in float linearRoughness, in vec3 eyeDir) {	
-	float Roughness = linearRoughness*linearRoughness;
+	float Roughness = linearRoughness * linearRoughness;
 	float alpha = Roughness * Roughness;
+	float alphaSqr = alpha*alpha;
 	
 	vec3 H = normalize(eyeDir + lightDir);
 	
@@ -62,9 +64,9 @@ vec3 BSDF(in vec3 Albedo, in vec3 Specular, in vec3 Normal, in vec3 lightDir, in
 	float Vis = Light_V(NL, NV, alpha);
 	vec3 Spec = (D * F * Vis);
 	
-  vec3 Diffuse = Albedo.rgb*vec3(Diff_Disney(NV ,NL , LH, linearRoughness))/pi;
+	vec3 Diffuse = Albedo.rgb*vec3(Diff_Disney(NV ,NL , LH, linearRoughness))/pi;
 	
-	return (Spec + Diffuse);
+	return (Diffuse + Spec);
 }
 
 vec3 LightCalc(in vec3 Albedo, in vec3 WorldPos, in vec4 Specular, in vec3 Normal, in vec3 lightPos, in float lightAtten, in vec4 lightColor, in vec3 eyePos) {
