@@ -59,6 +59,7 @@ public:
 	virtual HWND GetHandle();
 #endif
 
+	virtual void SetCursorShown(bool);
 	virtual void ResetCursor();
 	virtual void SetCursor(int x, int y);
 	virtual void GetCursor(int &x, int &y);

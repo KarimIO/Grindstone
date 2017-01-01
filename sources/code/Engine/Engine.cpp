@@ -23,7 +23,7 @@ bool Engine::Initialize() {
 
 	if (!InitializeWindow())					return false;
 	if (!InitializeGraphics())					return false;
-	if (!InitializeScene("scenes/startup.gmf"))	return false;
+	if (!InitializeScene("../scenes/startup.gmf"))	return false;
 
 
 	// An array of 3 vectors which represents 3 vertices
@@ -33,8 +33,8 @@ bool Engine::Initialize() {
 		0.0f,  1.0f, 0.0f,
 	};
 
-	std::string vsPath = "shaders/objects/main.glvs"; // GetShaderExt()
-	std::string fsPath = "shaders/objects/mainMetalness.glfs";
+	std::string vsPath = "../shaders/objects/main.glvs"; // GetShaderExt()
+	std::string fsPath = "../shaders/objects/mainMetalness.glfs";
 
 	std::string vsContent;
 	if (!ReadFile(vsPath, vsContent))
@@ -45,8 +45,8 @@ bool Engine::Initialize() {
 		return false;
 	
 	shader = pfnCreateShader();
-	shader->AddShader(vsPath, vsContent, SHADER_VERTEX);
-	shader->AddShader(fsPath, fsContent, SHADER_FRAGMENT);
+	shader->AddShader(&vsPath, &vsContent, SHADER_VERTEX);
+	shader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT);
 	shader->Compile();
 
 	shader->SetNumUniforms(7);
@@ -71,6 +71,9 @@ bool Engine::Initialize() {
 		break;
 	};
 
+	engine.inputSystem.AddControl("escape", "Shutdown", NULL, 1);
+	engine.inputSystem.BindAction("Shutdown", NULL, &engine, &Engine::ShutdownControl);
+
 	isRunning = true;
 	prevTime = std::chrono::high_resolution_clock::now();
 	startTime = std::chrono::high_resolution_clock::now();
@@ -79,7 +82,7 @@ bool Engine::Initialize() {
 
 bool Engine::InitializeWindow() {
 #if defined (__linux__)
-	void *lib_handle = dlopen("./bin/window.so", RTLD_LAZY);
+	void *lib_handle = dlopen("./window.so", RTLD_LAZY);
 
 	if (!lib_handle) {
 		fprintf(stderr, "%s\n", dlerror());
@@ -93,7 +96,7 @@ bool Engine::InitializeWindow() {
 		return false;
 	}
 #elif defined (_WIN32)
-	HMODULE dllHandle = LoadLibrary("bin/window.dll");
+	HMODULE dllHandle = LoadLibrary("window.dll");
 
 	if (!dllHandle) {
 		fprintf(stderr, "Failed to load window.dll!\n");
@@ -114,13 +117,14 @@ bool Engine::InitializeWindow() {
 		return false;
 
 	window->SetInputPointer(&inputSystem);
+	window->SetCursorShown(false);
 
 	return true;
 }
 
 bool Engine::InitializeGraphics() {
 #if defined (__linux__)
-	void *lib_handle = dlopen("./bin/opengl.so", RTLD_LAZY);
+	void *lib_handle = dlopen("./opengl.so", RTLD_LAZY);
 
 	if (!lib_handle) {
 		fprintf(stderr, "%s\n", dlerror());
@@ -167,7 +171,7 @@ bool Engine::InitializeGraphics() {
 	window->GetHandles(display, win_handle, screen, screenID);
 	std::cout << "Handles gotten\n";
 #elif defined (_WIN32)
-	HMODULE dllHandle = LoadLibrary("bin/opengl.dll");
+	HMODULE dllHandle = LoadLibrary("opengl.dll");
 
 	if (!dllHandle) {
 		fprintf(stderr, "Failed to load window.dll!\n");
@@ -279,6 +283,7 @@ void Engine::Run() {
 
 	while (isRunning) {
 		CalculateTime();
+		window->HandleEvents();
 		inputSystem.LoopControls();
 
 		glm::mat4 view = glm::lookAt(
@@ -306,8 +311,6 @@ void Engine::Run() {
 #else
 		window->SwapBuffer();
 #endif
-
-		window->HandleEvents();
 	}
 }
 
@@ -337,7 +340,7 @@ bool Engine::InitializeScene(std::string szScenePath) {
 	// Eventually do all spawning after all initializing is complete.
 	player->Spawn();
 
-	geometryCache.LoadModel3D("models/crytek-sponza/sponza.obj");
+	geometryCache.LoadModel3D("../models/crytek-sponza/sponza.obj");
 
 	return true;
 }
@@ -358,6 +361,10 @@ double Engine::GetTimeDelta() {
 
 void Engine::Shutdown() {
 	isRunning = false;
+}
+
+void Engine::ShutdownControl(double) {
+	Shutdown();
 }
 
 Engine::~Engine() {

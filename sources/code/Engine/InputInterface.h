@@ -8,13 +8,13 @@ enum {
 	MOUSE_MIDDLE,
 	MOUSE_RIGHT,
 
+	MOUSE_MOUSE4,
+	MOUSE_MOUSE5,
+
 	MOUSE_WHEEL_UP,
 	MOUSE_WHEEL_DOWN,
 	MOUSE_WHEEL_LEFT,
 	MOUSE_WHEEL_RIGHT,
-
-	MOUSE_MOUSE4,
-	MOUSE_MOUSE5,
 
 	// X and Y Position
 	MOUSE_XCOORD,
@@ -146,6 +146,8 @@ enum {
 	KEY_BACKSPACE,
 	KEY_TILDE,
 
+	KEY_WINDOW,
+
 	KEY_SPACE,
 	KEY_LAST
 };
@@ -178,9 +180,7 @@ class InputInterface {
 public:
     virtual void ResizeEvent(int, int) = 0;
     virtual void SetMouseButton(int, bool) = 0;
-    virtual void SetMouseInWindow(bool) = 0;
 	virtual void SetMousePosition(int, int) = 0;
-	virtual bool IsMouseInWindow() = 0;
 	virtual void SetFocused(bool) = 0;
 	virtual bool IsFocused() = 0;
     virtual void SetKey(int, bool) = 0;

@@ -10,7 +10,7 @@ GLShaderProgram::GLShaderProgram()
 	shaderNum = 0;
 }
 
-bool GLShaderProgram::AddShader(std::string path, std::string content, ShaderType type) {
+bool GLShaderProgram::AddShader(std::string *path, std::string *content, ShaderType type) {
 
 	// Compile Vertex Shader
 	int shaderType = GL_VERTEX_SHADER;
@@ -20,8 +20,8 @@ bool GLShaderProgram::AddShader(std::string path, std::string content, ShaderTyp
 	shaders[shaderNum] = glCreateShader(shaderType);
 
 	const GLchar* str[1];
-	str[0] = content.c_str();
-	GLint length[1] = { (GLint)content.size() };
+	str[0] = (*content).c_str();
+	GLint length[1] = { (GLint)(*content).size() };
 
 	glShaderSource(shaders[shaderNum], 1, str, length);
 	glCompileShader(shaders[shaderNum]);
@@ -35,7 +35,7 @@ bool GLShaderProgram::AddShader(std::string path, std::string content, ShaderTyp
 	glGetShaderiv(shaders[shaderNum], GL_INFO_LOG_LENGTH, &infoLength);
 	glGetShaderiv(shaders[shaderNum], GL_COMPILE_STATUS, &isCompiled);
 	if (!isCompiled) {
-		printf("Error Report Vertex Shader %s\n", path.c_str());
+		printf("Error Report Vertex Shader %s\n", (*path).c_str());
 		std::vector<char> VertexShaderErrorMessage(infoLength + 1);
 		glGetShaderInfoLog(shaders[shaderNum], infoLength, NULL, &VertexShaderErrorMessage[0]);
 		printf("%s\n", &VertexShaderErrorMessage[0]);

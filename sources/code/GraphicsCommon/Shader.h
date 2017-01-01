@@ -13,7 +13,7 @@ enum ShaderType : uint8_t {
 
 class ShaderProgram {
 public:
-	virtual bool AddShader(std::string path, std::string content, ShaderType) = 0;
+	virtual bool AddShader(std::string *path, std::string *content, ShaderType) = 0;
 	virtual bool Compile() = 0;
 	virtual void Use() = 0;
 

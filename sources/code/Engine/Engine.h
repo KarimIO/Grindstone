@@ -46,6 +46,7 @@ private:
 	std::chrono::time_point<std::chrono::high_resolution_clock> currentTime, prevTime, startTime;
 
 	std::chrono::milliseconds deltaTime;
+	InputComponent input;
 public:
 	struct Settings {
 		int resolutionX;
@@ -77,6 +78,7 @@ public:
 	bool isRunning;
 
 	~Engine();
+	void ShutdownControl(double);
 };
 
 #ifdef UseClassInstance

@@ -62,9 +62,7 @@ protected:
 public:
 	void ResizeEvent(int, int);
 	void SetMouseButton(int, bool);
-	void SetMouseInWindow(bool);
 	void SetMousePosition(int, int);
-	bool IsMouseInWindow();
 	void SetFocused(bool);
 	bool IsFocused();
 	void SetKey(int, bool);
@@ -81,14 +79,18 @@ public:
 	bool AddControl(std::string key, std::string control, InputComponent *component, double val);
 	ControlHandler *GetControl(std::string control, InputComponent *component);
 
+	void SetInputControlFile(std::string path);
+	void SetInputControlFile(std::string path, InputComponent *component);
+
+	void Cleanup();
+	void Cleanup(InputComponent *component);
+
 	template <typename T>
 	void BindAction(std::string control, InputComponent *component, T *targetEntity, void (T::*methodPointer)(double), KEY_STATUS status = KEY_PRESSED) {
 		std::function<void(double)> a = [=](double in) { (targetEntity->*methodPointer)(in); };
-
 		for (size_t i = 0; i < allControls.size(); i++) {
 			if (allControls[i]->component == component && allControls[i]->control == control)
-				std::function<void(double)> a = [=](double in) { (targetEntity->*methodPointer)(in); };
-					allControls[i]->command = new ActionCommand(targetEntity, a, status);
+				allControls[i]->command = new ActionCommand(targetEntity, a, status);
 		}
 	}
 
@@ -103,6 +105,22 @@ public:
 };
 
 class InputComponent {
+private:
+	InputSystem *system;
+public:
+	void SetInputControlFile(std::string path);
+	void Cleanup();
+	template <typename T>
+	void BindAction(std::string control, T *targetEntity, void (T::*methodPointer)(double), KEY_STATUS status = KEY_PRESSED) {
+		if (system != NULL)
+			system->BindAction(control, this, targetEntity, methodPointer, status);
+	}
+
+	template <typename T>
+	void BindAxis(std::string control, T *targetEntity, void (T::*methodPointer)(double)) {
+		if (system != NULL)
+			system->BindAxis(control, this, targetEntity, methodPointer);
+	}
 };
 
 #endif

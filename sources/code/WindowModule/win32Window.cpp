@@ -84,7 +84,10 @@ LRESULT CALLBACK GameWindow::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 		input->SetMouseButton(MOUSE_MOUSE4, false);
 		break;
 	case WM_KEYDOWN:
-		input->SetKey(TranslateKey(int(wParam)), true);
+		// Repeat Count
+		if ((HIWORD(lParam) & KF_REPEAT) == 0) {
+			input->SetKey(TranslateKey(int(wParam)), true);
+		}
 		break;
 	case WM_KEYUP:
 		input->SetKey(TranslateKey(int(wParam)), false);
@@ -99,6 +102,10 @@ LRESULT CALLBACK GameWindow::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
 	return 0;
+}
+
+void GameWindow::SetCursorShown(bool shown) {
+	ShowCursor(shown);
 }
 
 GameWindow::~GameWindow() {
@@ -275,17 +282,19 @@ int TranslateKey(int key) {
 
 	case VK_OEM_COMMA:		return KEY_COMMA;
 	case VK_OEM_PERIOD:		return KEY_PERIOD;
-	case VK_OEM_2:		return KEY_FORWARD_SLASH;
-	case VK_OEM_5:	return KEY_BACK_SLASH;
-	case VK_OEM_1:	return KEY_SEMICOLON;
-	case VK_OEM_7:	return KEY_APOSTROPHE;
-	case VK_OEM_4:	return KEY_LBRACKET;
-	case VK_OEM_6:	return KEY_RBRACKET;
+	case VK_OEM_2:			return KEY_FORWARD_SLASH;
+	case VK_OEM_5:			return KEY_BACK_SLASH;
+	case VK_OEM_1:			return KEY_SEMICOLON;
+	case VK_OEM_7:			return KEY_APOSTROPHE;
+	case VK_OEM_4:			return KEY_LBRACKET;
+	case VK_OEM_6:			return KEY_RBRACKET;
 
-	case VK_RETURN:		return KEY_ENTER;
-	case VK_BACK:		return KEY_BACKSPACE;
-	case VK_OEM_3:		return KEY_TILDE;
-	default: return -1;
+	case VK_RETURN:			return KEY_ENTER;
+	case VK_BACK:			return KEY_BACKSPACE;
+	case VK_OEM_3:			return KEY_TILDE;
+	case VK_LWIN:			return KEY_WINDOW;
+	case VK_RWIN:			return KEY_WINDOW;
+	default:				return -1;
 	}
 }
 

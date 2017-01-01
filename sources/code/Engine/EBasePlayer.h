@@ -2,6 +2,7 @@
 #define _EBASE_PLAYER_H
 
 #include "EBase.h"
+#include "Input.h"
 
 class EBasePlayer : public EBase {
 public:
@@ -14,6 +15,7 @@ public:
 	void SpeedUp(double scale);
 	void SpeedDown(double scale);
 private:
+	InputComponent input;
 	double speedModifier;
 	double sensitivity;
 };

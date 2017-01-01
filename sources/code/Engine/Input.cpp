@@ -1,6 +1,7 @@
 #include "Input.h"
-#include "Utilities.h"
 #include "Engine.h"
+#include "Utilities.h"
+#include <fstream>
 
 InputSystem::InputSystem() {
 	// These should be set elsewhere
@@ -223,8 +224,10 @@ bool InputSystem::AddControl(std::string keyCode, std::string controlCode, Input
 	int device, key;
 	// Get Key and device from string
 	key = TranslateKey(keyCode, device, handler);
-	if (key == -1)
+	if (key == -1) {
+		fprintf(stderr, "INPUT: %s is not a supported keycode!\n", keyCode.c_str());
 		return false;
+	}
 
 	// If we have no controls, add one.
 	if (handler == NULL) {
@@ -271,6 +274,37 @@ ControlHandler * InputSystem::GetControl(std::string control, InputComponent *co
 	return NULL;
 }
 
+void InputSystem::SetInputControlFile(std::string path) {
+	SetInputControlFile(path, NULL);
+}
+
+void InputSystem::SetInputControlFile(std::string path, InputComponent * component) {
+	std::ifstream file;
+	file.open("../"+path);
+	if (file.fail()) {
+		fprintf(stderr, "INPUT: File load failed: %s\n", path.c_str());
+		return;
+	}
+
+	std::string command, key;
+	double num;
+	while (!file.eof()) {
+		file >> key;
+		file >> command;
+		file >> num;
+		AddControl(key, command, component, num);
+	}
+}
+
+void InputSystem::Cleanup(InputComponent * component) {
+	/*if (useKeyboard) {
+		for (size_t i = 0; i < KEY_LAST; i++) {
+			ControlHandler *handler = keyboardControls[i];
+			while (keyboardControls[i])
+		}
+	}*/
+}
+
 void InputSystem::ResizeEvent(int x, int y) {
 	std::cout << "Resized to : " << x << " - " << y << "\n";
 }
@@ -278,24 +312,24 @@ void InputSystem::ResizeEvent(int x, int y) {
 void InputSystem::SetMousePosition(int x, int y) {
 	double xOrg, yOrg;
 	xOrg = mouseData[MOUSE_XCOORD];
-	yOrg = mouseData[MOUSE_XCOORD];
+	yOrg = mouseData[MOUSE_YCOORD];
 
 	if ((xOrg - x) != 0) {
 		mouseData[MOUSE_XCOORD] = x;
 		ControlHandler *container = mouseControls[MOUSE_XCOORD];
 		while (container != NULL) {
-			if (container->command != NULL)
-				container->command->Invoke(engine.GetTimeDelta()*(engine.settings.resolutionX / 2 - x));
+			if (container->command != NULL && container->command->type == COMMAND_AXIS)
+				container->command->Invoke(engine.settings.resolutionX / 2 - x);
 			container = container->nextControl;
 		}
 	}
 
 	if ((yOrg - y) != 0) {
-		mouseData[MOUSE_YCOORD] = x;
+		mouseData[MOUSE_YCOORD] = y;
 		ControlHandler *container = mouseControls[MOUSE_YCOORD];
 		while (container != NULL) {
-			if (container->command != NULL)
-				container->command->Invoke(engine.GetTimeDelta()*(engine.settings.resolutionY / 2 - y));
+			if (container->command != NULL && container->command->type == COMMAND_AXIS)
+				container->command->Invoke(engine.settings.resolutionY / 2 - y);
 			container = container->nextControl;
 		}
 	}
@@ -306,20 +340,69 @@ void InputSystem::SetMouseButton(int mb, bool state) {
 	double time;
 	bool buttonpressed = false;
 
-	if (state && mouseData[mb] < 0) {
-		time = engine.GetTimeCurrent() + mouseData[mb];
-		mouseData[mb] = engine.GetTimeCurrent();
+	if (mb >= MOUSE_LEFT && mb <= MOUSE_MOUSE5) {
+		if (state && mouseData[mb] <= 0) {
+			time = engine.GetTimeCurrent() + mouseData[mb];
+			mouseData[mb] = engine.GetTimeCurrent();
+			isEvent = true;
+			buttonpressed = true;
+		}
+		else if (!state && mouseData[mb] >= 0) {
+			time = engine.GetTimeCurrent() - mouseData[mb];
+			mouseData[mb] = -engine.GetTimeCurrent();
+			isEvent = true;
+		}
+
+		if (isEvent) {
+			ControlHandler *container = mouseControls[mb];
+			while (container != NULL) {
+				// This only works for actions. States and Axes are done in LoopControls
+				if (container->command != NULL && container->command->type == COMMAND_ACTION) {
+					ActionCommand *control = (ActionCommand *)container->command;
+					// Key Pressed
+					if (buttonpressed && control->status == KEY_PRESSED)
+						control->Invoke(time);
+					// Key Released
+					else if (!buttonpressed && control->status == KEY_RELEASED)
+						control->Invoke(time);
+				}
+
+				container = container->nextControl;
+			}
+		}
+	}
+
+	if (mb >= MOUSE_WHEEL_UP && mb <= MOUSE_WHEEL_RIGHT) {
+		ControlHandler *container = mouseControls[mb];
+		while (container != NULL) {
+			if (container->command != NULL) {
+				BaseCommand *control = (BaseCommand *)container->command;
+				control->Invoke(engine.GetTimeCurrent());
+				container = container->nextControl;
+			}
+		}
+	}
+}
+
+void InputSystem::SetFocused(bool state) {
+	bool isEvent = false;
+	double time;
+	bool buttonpressed = false;
+
+	if (state && windowData[WINDOW_FOCUS] <= 0) {
+		time = engine.GetTimeCurrent() + mouseData[WINDOW_FOCUS];
+		windowData[WINDOW_FOCUS] = engine.GetTimeCurrent();
 		isEvent = true;
 		buttonpressed = true;
 	}
-	else if (!state && mouseData[mb] >= 0) {
-		time = engine.GetTimeCurrent() - mouseData[mb];
-		mouseData[mb] = -engine.GetTimeCurrent();
+	else if (!state && windowData[WINDOW_FOCUS] >= 0) {
+		time = engine.GetTimeCurrent() - windowData[WINDOW_FOCUS];
+		windowData[WINDOW_FOCUS] = -engine.GetTimeCurrent();
 		isEvent = true;
 	}
 
 	if (isEvent) {
-		ControlHandler *container = mouseControls[mb];
+		ControlHandler *container = windowControls[WINDOW_FOCUS];
 		while (container != NULL) {
 			// This only works for actions. States and Axes are done in LoopControls
 			if (container->command != NULL && container->command->type == COMMAND_ACTION) {
@@ -337,17 +420,8 @@ void InputSystem::SetMouseButton(int mb, bool state) {
 	}
 }
 
-void InputSystem::SetMouseInWindow(bool) {
-}
-
-bool InputSystem::IsMouseInWindow() {
-	return true;
-}
-void InputSystem::SetFocused(bool) {
-}
-
 bool InputSystem::IsFocused() {
-	return true;
+	return windowData[WINDOW_FOCUS] > 0;
 }
 
 void InputSystem::SetKey(int key, bool state) {
@@ -355,7 +429,10 @@ void InputSystem::SetKey(int key, bool state) {
 	double time;
 	bool keypressed = false;
 
-	if (state && keyboardData[key] < 0) {
+	if (key < 0 || key >= KEY_LAST)
+		return;
+
+	if (state && keyboardData[key] <= 0) {
 		time = engine.GetTimeCurrent() + keyboardData[key];
 		keyboardData[key] = engine.GetTimeCurrent();
 		isEvent = true;
@@ -404,11 +481,8 @@ void InputSystem::LoopControls() {
 		if (mouseData[i] > 0) { // Key is Pressed
 			ControlHandler *container = mouseControls[i];
 			while (container != NULL) {
-				if (container->command != NULL) {
-					// Axis
-					if (container->command->type == COMMAND_AXIS)
-						container->command->Invoke(deltaTime * container->value);
-				}
+				if (container->command != NULL && container->command->type == COMMAND_AXIS)
+					container->command->Invoke(deltaTime * container->value);
 
 				container = container->nextControl;
 			}
@@ -419,12 +493,8 @@ void InputSystem::LoopControls() {
 		if (keyboardData[i] > 0) { // Key is Pressed
 			ControlHandler *container = keyboardControls[i];
 			while (container != NULL) {
-				if (container->command != NULL) {
-					// Axis
-					if (container->command->type == COMMAND_AXIS) {
-						container->command->Invoke(deltaTime * container->value);
-					}
-				}
+				if (container->command != NULL && container->command->type == COMMAND_AXIS)
+					container->command->Invoke(deltaTime * container->value);
 
 				container = container->nextControl;
 			}
@@ -461,4 +531,14 @@ ActionCommand::ActionCommand(void * TargetEntity, std::function<void(double)> fu
 void BaseCommand::Invoke(double value) {
 	if (function != NULL)
 		function(value);
+}
+
+void InputComponent::SetInputControlFile(std::string path) {
+	system = &engine.inputSystem;
+	system->SetInputControlFile(path, this);
+}
+
+void InputComponent::Cleanup() {
+	if (system != NULL)
+		system->Cleanup(this);
 }

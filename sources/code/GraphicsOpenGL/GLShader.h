@@ -15,7 +15,7 @@ public:
 	uint8_t uniformCounter;
 public:
 	GLShaderProgram();
-	virtual bool AddShader(std::string path, std::string content, ShaderType);
+	virtual bool AddShader(std::string *path, std::string *content, ShaderType);
 	virtual bool Compile();
 	virtual void Use();
 

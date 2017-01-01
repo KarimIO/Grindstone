@@ -82,8 +82,8 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	fbo->AddDepthBuffer(1024, 768);
 	fbo->Generate();
 
-	std::string vsPath = "shaders/deferred.glvs";
-	std::string fsPath = "shaders/deferred.glfs";
+	std::string vsPath = "../shaders/deferred.glvs";
+	std::string fsPath = "../shaders/deferred.glfs";
 
 	std::string vsContent;
 	if (!ReadFile(vsPath, vsContent))
@@ -94,8 +94,8 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 		fprintf(stderr, "Failed To Read File.\n");
 
 	shader = pfnCreateShader();
-	shader->AddShader(vsPath, vsContent, SHADER_VERTEX);
-	shader->AddShader(fsPath, fsContent, SHADER_FRAGMENT);
+	shader->AddShader(&vsPath, &vsContent, SHADER_VERTEX);
+	shader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT);
 	shader->Compile();
 
 	shader->SetNumUniforms(5);

@@ -259,7 +259,7 @@ void SModel::DrawModel3D(CModel *model) {
 		for (size_t j = 0; j < 4; j++) {
 			Texture *temp = model->materials[model->meshes[i].MaterialIndex]->tex[j];
 			if (temp != nullptr)
-				temp->Bind(j);
+				temp->Bind(int(j));
 		}
 		engine.graphicsWrapper->DrawBaseVertex((void*)(sizeof(unsigned int) * model->meshes[i].BaseIndex), model->meshes[i].BaseVertex, model->meshes[i].NumIndices);
 	}
