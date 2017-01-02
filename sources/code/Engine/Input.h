@@ -83,7 +83,9 @@ public:
 	void SetInputControlFile(std::string path, InputComponent *component);
 
 	void Cleanup();
+	void Shutdown();
 	void Cleanup(InputComponent *component);
+	void CleanupSystem(InputComponent * component, bool use, std::vector<ControlHandler *> &list);
 
 	template <typename T>
 	void BindAction(std::string control, InputComponent *component, T *targetEntity, void (T::*methodPointer)(double), KEY_STATUS status = KEY_PRESSED) {

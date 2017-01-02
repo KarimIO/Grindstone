@@ -296,13 +296,77 @@ void InputSystem::SetInputControlFile(std::string path, InputComponent * compone
 	}
 }
 
-void InputSystem::Cleanup(InputComponent * component) {
-	/*if (useKeyboard) {
-		for (size_t i = 0; i < KEY_LAST; i++) {
-			ControlHandler *handler = keyboardControls[i];
-			while (keyboardControls[i])
+void InputSystem::CleanupSystem(InputComponent * component, bool use, std::vector<ControlHandler *> &list) {
+	if (use) {
+		for (size_t i = 0; i < list.size(); i++) {
+			ControlHandler *handler = list[i];
+			if (handler != nullptr) {
+				ControlHandler *first = nullptr;
+				while (handler != nullptr) {
+					if (handler->component == component) {
+						ControlHandler *nextTemp = handler->nextControl;
+						ControlHandler *prevTemp = handler->prevControl;
+						if (nextTemp != NULL && prevTemp != NULL) {
+							nextTemp->prevControl = prevTemp;
+							prevTemp->nextControl = nextTemp;
+						}
+						delete handler;
+						handler = nextTemp;
+					}
+					else {
+						if (first == nullptr)
+							first = handler;
+						handler = handler->nextControl;
+					}
+				}
+				list[i] = first;
+			}
 		}
-	}*/
+	}
+}
+
+void InputSystem::Cleanup() {
+	for (size_t i = 0; i < allControls.size(); i++) {
+		delete allControls[i];
+	}
+
+	// Only do if we're going to rebind the keys.
+	if (useKeyboard) {
+		for (size_t i = 0; i < keyboardControls.size(); i++) {
+			keyboardControls[i] = NULL;
+		}
+	}
+
+	if (useMouse) {
+		for (size_t i = 0; i < mouseControls.size(); i++) {
+			mouseControls[i] = NULL;
+		}
+	}
+
+	if (useWindow) {
+		for (size_t i = 0; i < windowControls.size(); i++) {
+			windowControls[i] = NULL;
+		}
+	}
+}
+
+void InputSystem::Shutdown() {
+	for (size_t i = 0; i < allControls.size(); i++) {
+		delete allControls[i];
+	}
+}
+
+void InputSystem::Cleanup(InputComponent * component) {
+	// Dereference from allcontrols first
+	for (size_t i = 0; i < allControls.size(); i++) {
+		if (allControls[i]->component == component)
+			allControls.erase(allControls.begin() + i);
+	}
+
+	// Sort out linked lists
+	CleanupSystem(component, useKeyboard,	keyboardControls);
+	CleanupSystem(component, useMouse,		mouseControls);
+	CleanupSystem(component, useWindow,		windowControls);
 }
 
 void InputSystem::ResizeEvent(int x, int y) {
@@ -310,6 +374,9 @@ void InputSystem::ResizeEvent(int x, int y) {
 }
 
 void InputSystem::SetMousePosition(int x, int y) {
+	if (!IsFocused())
+		return;
+
 	double xOrg, yOrg;
 	xOrg = mouseData[MOUSE_XCOORD];
 	yOrg = mouseData[MOUSE_YCOORD];
@@ -336,6 +403,9 @@ void InputSystem::SetMousePosition(int x, int y) {
 }
 
 void InputSystem::SetMouseButton(int mb, bool state) {
+	if (!IsFocused())
+		return;
+
 	bool isEvent = false;
 	double time;
 	bool buttonpressed = false;
