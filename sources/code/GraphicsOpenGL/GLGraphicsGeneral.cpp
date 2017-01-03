@@ -28,10 +28,13 @@ bool GraphicsWrapper::InitializeGraphics()
 	glDepthFunc(GL_LESS);
 	glEnable(GL_CULL_FACE);
 	glClearColor(0, 0, 0, 1);
-	glViewport(0, 0, 1024, 768);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	return true;
+}
+
+void GraphicsWrapper::SetResolution(int x, int y, uint32_t width, uint32_t height) {
+	glViewport(x, y, width, height);
 }
 
 void GraphicsWrapper::DrawVertexArray(uint32_t numVertices) {

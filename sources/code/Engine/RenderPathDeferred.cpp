@@ -2,6 +2,7 @@
 #include "GraphicsDLLPointer.h"
 #include "Utilities.h"
 #include "gl3w.h"
+#include "Engine.h"
 
 struct UniformBufferDef {
 	glm::vec3 eyePos;
@@ -72,14 +73,15 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	vboQuad->Bind(0);
 	vaoQuad->Unbind();
 
+	glm::vec2 res = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
 	fbo = pfnCreateFramebuffer();
 	fbo->Initialize(4);
-	fbo->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, 1024, 768);
-	fbo->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, 1024, 768);
-	fbo->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, 1024, 768);
-	fbo->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, 1024, 768);
+	fbo->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, res.x, res.y);
+	fbo->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, res.x, res.y);
+	fbo->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, res.x, res.y);
+	fbo->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, res.x, res.y);
 	// Depth Buffer Issue:
-	fbo->AddDepthBuffer(1024, 768);
+	fbo->AddDepthBuffer(res.x, res.y);
 	fbo->Generate();
 
 	std::string vsPath = "../shaders/deferred.glvs";

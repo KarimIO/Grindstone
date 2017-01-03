@@ -1,12 +1,12 @@
-#ifndef _GRAPHICS_H
-#define _GRAPHICS_H
+#ifndef _VULKAN_GRAPHICS_H
+#define _VULKAN_GRAPHICS_H
 
 #include <iostream>
-#include "GLVertexArrayObject.h"
 #include "../GraphicsCommon/GLDefDLL.h"
 
 #ifdef _WIN32
 #include <Windows.h>
+#define VK_USE_PLATFORM_WIN32_KHR
 #endif
 
 #ifdef __linux__
@@ -15,11 +15,9 @@
 #include <X11/keysymdef.h>
 #endif
 
-class InputInterface;
+#include <vulkan/vulkan.h>
 
-#define CLEAR_ALL 0
-#define CLEAR_COLOR 1
-#define CLEAR_DEPTH 2
+class InputInterface;
 
 class GRAPHICS_EXPORT_CLASS GraphicsWrapper {
 private:
@@ -34,6 +32,16 @@ private:
 	Screen* screen;
 	int screenID;
 #endif
+	VkInstance vkInstance;
+	VkSurfaceKHR vkSurface;
+	bool vkInitializeHandleResult(VkResult result);
+	void vkInitialize();
+	bool vkCheckValidation();
+	void vkCreateValidation();
+
+	VkDebugReportCallbackEXT debugCallbackHandler;
+	bool debug = true;
+	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj, size_t location, int32_t code, const char* layerPrefix, const char* msg, void* userData);
 public:
 	virtual bool InitializeWindowContext();
 	virtual bool InitializeGraphics();

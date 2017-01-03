@@ -27,10 +27,18 @@ enum RenderPathType {
 	RENDERPATH_DEFERRED,
 }; // Also, F+, TileBased, etc
 
+enum GraphicsLanguage {
+	GRAPHICS_OPENGL = 0,
+	GRAPHICS_VULKAN,
+	GRAPHICS_DIRECTX,
+	GRAPHICS_METAL
+};
+
 class Engine : public BaseClass {
 private:
 	bool InitializeWindow();
-	bool InitializeGraphics();
+	bool InitializeGraphics(GraphicsLanguage);
+	void InitializeSettings();
 
 	// Remove this ASAP
 	ShaderProgram *shader;
@@ -51,6 +59,8 @@ public:
 	struct Settings {
 		int resolutionX;
 		int resolutionY;
+		float fov;
+		GraphicsLanguage graphicsLanguage;
 	} settings;
 
 	GameWindow *window;

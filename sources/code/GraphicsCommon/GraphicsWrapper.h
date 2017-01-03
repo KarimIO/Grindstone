@@ -49,6 +49,7 @@ public:
 	virtual void DrawVertexArray(uint32_t numIndices);
 	virtual void DrawBaseVertex(const void *baseIndex, uint32_t baseVertex, uint32_t numIndices);
 	virtual void SwapBuffer();
+	virtual void SetResolution(int x, int y, uint32_t width, uint32_t height);
 	virtual void Clear(unsigned int clearTarget);
 
 #ifdef _WIN32

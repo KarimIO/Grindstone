@@ -1,6 +1,7 @@
 #include "Engine.h"
 #include "Utilities.h"
 #include "GraphicsDLLPointer.h"
+#include "iniHandler.h"
 #include <stdio.h>
 #ifndef _WIN32
 #include <dlfcn.h>
@@ -18,11 +19,9 @@ Framebuffer*		(*pfnCreateFramebuffer)();
 
 bool Engine::Initialize() {
 	// Get Settings here:
-	settings.resolutionX = 1024;
-	settings.resolutionY = 768;
-
-	if (!InitializeWindow())					return false;
-	if (!InitializeGraphics())					return false;
+	InitializeSettings();
+	if (!InitializeWindow())						return false;
+	if (!InitializeGraphics(GRAPHICS_OPENGL))		return false;
 	if (!InitializeScene("../scenes/startup.gmf"))	return false;
 
 
@@ -80,6 +79,41 @@ bool Engine::Initialize() {
 	return true;
 }
 
+void Engine::InitializeSettings() {
+	INIConfigFile cfile;
+	
+	if (cfile.Initialize("../settings.ini")) {
+		cfile.GetInteger("Window", "resx",	1024,	settings.resolutionX);
+		cfile.GetInteger("Window", "resy",	768,	settings.resolutionY);
+		cfile.GetFloat("Window", "fov",	45,			settings.fov);
+		std::string graphics;
+		cfile.GetString("Renderer", "graphics", "OpenGL", graphics);
+
+		graphics = strToLower(graphics);
+		if (graphics == "directx")
+			settings.graphicsLanguage = GRAPHICS_DIRECTX;
+		else if (graphics == "vulkan")
+			settings.graphicsLanguage = GRAPHICS_VULKAN;
+		else if (graphics == "metal")
+			settings.graphicsLanguage = GRAPHICS_METAL;
+		else if (graphics == "opengl")
+			settings.graphicsLanguage = GRAPHICS_OPENGL;
+		else {
+			fprintf(stderr, "SETTINGS.INI: Invalid value for graphics library (%s), using Opengl instead.\n", graphics.c_str());
+			settings.graphicsLanguage = GRAPHICS_OPENGL;
+			cfile.SetString("Renderer", "graphics", "OpenGL");
+		}
+		fprintf(stderr, "SETTINGS.INI: File loaded successfully.\n");
+	}
+	else {
+		fprintf(stderr, "SETTINGS.INI: File not found.\n");
+		settings.resolutionX = 1024;
+		settings.resolutionY = 768;
+		settings.graphicsLanguage = GRAPHICS_OPENGL;
+	}
+
+}
+
 bool Engine::InitializeWindow() {
 #if defined (__linux__)
 	void *lib_handle = dlopen("./window.so", RTLD_LAZY);
@@ -113,7 +147,7 @@ bool Engine::InitializeWindow() {
 #endif
 
 	window = (GameWindow*)pfnCreateWindow();
-	if (!window->Initialize("The Grind Engine", 1024, 768))
+	if (!window->Initialize("The Grind Engine", settings.resolutionX, settings.resolutionY))
 		return false;
 
 	window->SetInputPointer(&inputSystem);
@@ -122,9 +156,31 @@ bool Engine::InitializeWindow() {
 	return true;
 }
 
-bool Engine::InitializeGraphics() {
+bool Engine::InitializeGraphics(GraphicsLanguage gl) {
+	std::string library;
+	switch (gl) {
+	default:
+		library = "opengl";
+		break;
+#ifndef __APPLE__
+	case GRAPHICS_VULKAN:
+		library = "vulkan";
+		break;
+#endif
+#ifdef _WIN32
+	case GRAPHICS_DIRECTX:
+		library = "directx";
+		break;
+#endif
+#ifdef __APPLE__
+	case GRAPHICS_METAL:
+		library = "metal";
+		break;
+#endif
+	};
+	
 #if defined (__linux__)
-	void *lib_handle = dlopen("./opengl.so", RTLD_LAZY);
+	void *lib_handle = dlopen(("./"+ library +".so").c_str(), RTLD_LAZY);
 
 	if (!lib_handle) {
 		fprintf(stderr, "%s\n", dlerror());
@@ -177,10 +233,10 @@ bool Engine::InitializeGraphics() {
 	window->GetHandles(display, win_handle, screen, screenID);
 	std::cout << "Handles gotten\n";
 #elif defined (_WIN32)
-	HMODULE dllHandle = LoadLibrary("opengl.dll");
+	HMODULE dllHandle = LoadLibrary((library + ".dll").c_str());
 
 	if (!dllHandle) {
-		fprintf(stderr, "Failed to load window.dll!\n");
+		fprintf(stderr, "Failed to load %s!\n", (library + ".dll").c_str());
 		return false;
 	}
 
@@ -245,6 +301,8 @@ bool Engine::InitializeGraphics() {
 
 	if (!graphicsWrapper->InitializeGraphics())
 		return false;
+
+	graphicsWrapper->SetResolution(0, 0, settings.resolutionX, settings.resolutionY);
 	std::cout << "Graphics Initialized\n";
 	return true;
 }
@@ -278,7 +336,8 @@ void Engine::Run() {
 	model = glm::scale(model, glm::vec3(0.01f));
 	//model = glm::rotate(model, 0.0f, glm::vec3(0));
 
-	glm::mat4 projection = glm::perspective( 45.0f, 4.0f / 3.0f, 0.1f, 100.0f );
+	float aspectRatio = ((float)settings.resolutionX) / ((float)settings.resolutionY);
+	glm::mat4 projection = glm::perspective( settings.fov, aspectRatio, 0.1f, 100.0f );
 
 	window->ResetCursor();
 
