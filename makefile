@@ -8,7 +8,7 @@ CFLAGS=-c
 CPP_ENGINE_FILES := $(wildcard sources/code/Engine/*.cpp)
 OBJ_ENGINE_FILES := $(addprefix sources/obj/Engine/,$(notdir $(CPP_ENGINE_FILES:.cpp=.o)))
 
-INCLUDE_PATHS := -I sources/include/ -I sources/code/Engine/ -I sources/code/GraphicsOpenGL/ -I sources/code/WindowModule/
+INCLUDE_PATHS := -I sources/include/ -I sources/code/Engine/ -I sources/code/GraphicsOpenGL/ -I sources/code/WindowModule/  -I sources/code/GraphicsCommon/
 
 all: build
 
@@ -47,7 +47,7 @@ OpenGLModule: $(OBJ_OPENGL_FILES)
 CPP_WINDOW_FILES := $(wildcard sources/code/WindowModule/*.cpp)
 OBJ_WINDOW_FILES := $(addprefix sources/obj/WindowModule/,$(notdir $(CPP_WINDOW_FILES:.cpp=.o)))
 
-INCLUDE_WINDOW_PATHS := -I sources/code/Engine/
+INCLUDE_WINDOW_PATHS := -I sources/code/Engine/ -I sources/code/GraphicsCommon/
 
 # WindowModule code
 Window: WindowModule

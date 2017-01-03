@@ -3,7 +3,7 @@
 
 #include <GraphicsWrapper.h>
 #include "SGeometry.h"
-#include <glm\glm.hpp>
+#include <glm/glm.hpp>
 
 class RenderPath {
 public:

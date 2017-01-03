@@ -55,6 +55,7 @@ public:
 
 #if defined(__linux__)
 	virtual void GetHandles(Display*, Window *, Screen*, int);
+	virtual void SwapBuffer();
 #elif defined(_WIN32)
 	virtual HWND GetHandle();
 #endif

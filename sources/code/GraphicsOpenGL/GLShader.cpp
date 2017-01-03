@@ -2,6 +2,7 @@
 #include "GLShader.h"
 #include <vector>
 #include <iostream>
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 
 GLShaderProgram::GLShaderProgram()

@@ -144,7 +144,7 @@ bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY)
 	windowAttribs.background_pixel = WhitePixel(display, screenID);
 	windowAttribs.override_redirect = True;
 	windowAttribs.colormap = XCreateColormap(display, RootWindow(display, screenID), visual->visual, AllocNone);
-	windowAttribs.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask | KeymapStateMask | PointerMotionMask | ButtonPressMask | ButtonReleaseMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask;
+	windowAttribs.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask | KeymapStateMask | PointerMotionMask | ButtonPressMask | ButtonReleaseMask | FocusChangeMask;
 
 	window = XCreateWindow(display, RootWindow(display, screenID), 0, 0, 1024, 768, 0, visual->depth, InputOutput, visual->visual, CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, &windowAttribs);
 
@@ -241,6 +241,10 @@ bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY)
 
 void GameWindow::SwapBuffer() {
         glXSwapBuffers(display, window);
+}
+
+void GameWindow::SetCursorShown(bool) {
+	XDefineCursor(display, window, None);
 }
 
 void GameWindow::ResetCursor() {
@@ -418,12 +422,6 @@ void GameWindow::HandleEvents() {
 				break;
 			case MotionNotify:
 				input->SetMousePosition(ev.xmotion.x, ev.xmotion.y);
-				break;
-			case EnterNotify:
-				input->SetMouseInWindow(true);
-				break;
-			case LeaveNotify:
-				input->SetMouseInWindow(false);
 				break;
            	case FocusIn:
 				input->SetFocused(true);

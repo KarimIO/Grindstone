@@ -1,7 +1,7 @@
 #ifndef _EBASE_H
 #define _EBASE_H
-
-#include <glm\glm.hpp>
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
 
 class EBase {
 protected:

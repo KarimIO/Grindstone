@@ -163,6 +163,12 @@ bool Engine::InitializeGraphics() {
 		return false;
 	}
 
+	pfnCreateFramebuffer = (Framebuffer* (*)())dlsym(lib_handle, "createFramebuffer");
+	if (!pfnCreateFramebuffer) {
+		fprintf(stderr, "%s\n", dlerror());
+		return false;
+	}
+
 	Display* display;
 	Window *win_handle;
 	Screen *screen;
