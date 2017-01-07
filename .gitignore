@@ -48,3 +48,4 @@ bin/*
 models/*
 scenes/*
 sources/include/*
+cubemaps/*

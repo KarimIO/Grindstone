@@ -1,8 +1,8 @@
 #include "EBase.h"
 #include <glm/gtx/transform.hpp>
 
-glm::vec3 EBase::getForward() {
-	glm::vec3 ang = getAngles();
+glm::vec3 EBase::GetForward() {
+	glm::vec3 ang = GetAngles();
 	return glm::vec3(
 		glm::cos(ang.x) * glm::sin(ang.y),
 		glm::sin(ang.x),
@@ -10,12 +10,12 @@ glm::vec3 EBase::getForward() {
 	);
 }
 
-glm::vec3 EBase::getUp() {
-	return glm::cross(getRight(), getForward());
+glm::vec3 EBase::GetUp() {
+	return glm::cross(GetRight(), GetForward());
 }
 
-glm::vec3 EBase::getRight() {
-	glm::vec3 ang = getAngles();
+glm::vec3 EBase::GetRight() {
+	glm::vec3 ang = GetAngles();
 	return glm::vec3(
 		glm::sin(ang.y - 3.14159f / 2.0f),
 		0,
@@ -23,24 +23,24 @@ glm::vec3 EBase::getRight() {
 	);
 }
 
-glm::vec3 EBase::getPosition() {
+glm::vec3 EBase::GetPosition() {
 	return position;
 }
 
-glm::vec3 EBase::getAngles() {
+glm::vec3 EBase::GetAngles() {
 	return angles;
 }
 
-glm::vec3 EBase::getScale() {
+glm::vec3 EBase::GetScale() {
 	return scale;
 }
 
-glm::mat4x4 EBase::getModelMatrix() {
+glm::mat4x4 EBase::GetModelMatrix() {
 	glm::mat4x4 Model = glm::mat4(1);
 	Model = glm::translate(
 		Model,
 		position);
-	Model = glm::scale(Model, getScale());
+	Model = glm::scale(Model, GetScale());
 	float maxRot = (glm::max(glm::max(angles.x, angles.y), angles.z));
 	if (maxRot > 0)
 		Model = glm::rotate(Model, maxRot, angles / maxRot);

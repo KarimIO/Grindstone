@@ -11,6 +11,7 @@ public:
 	virtual void CreateCubemap(unsigned char* pixels[],	PixelScheme scheme, uint32_t width, uint32_t height);
 
 	virtual void Bind(int bindTo);
+	virtual void BindCubemap(int bindTo);
 	virtual int GetTextureLocation();
 
 	virtual void Cleanup();

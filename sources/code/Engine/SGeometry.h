@@ -9,9 +9,6 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-
-Texture *LoadTexture(std::string path);
-
 enum {
 	VERTEX_VB = 0,
 	UV_VB,
@@ -68,9 +65,6 @@ public:
 	std::vector<CModel*> unloadedModels;
 	void LoadModel3DFile(const char *szPath, CModel *model);
 public:
-
-	unsigned int vao;
-	unsigned int m_Buffers[NUM_VBs];
 
 	// Don't attach to CRender
 	CModel *PrepareModel3D(const char *szPath);

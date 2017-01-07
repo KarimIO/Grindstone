@@ -4,28 +4,33 @@
 #include "gl3w.h"
 #include "Engine.h"
 
+#include "TextureManager.h"
+
 struct UniformBufferDef {
 	glm::vec3 eyePos;
 	int texLoc0;
 	int texLoc1;
 	int texLoc2;
 	int texLoc3;
+	int texLoc4;
 } defUBO;
 
 void RenderPathDeferred::GeometryPass() {
+	// Uses screen resolution due to framebuffer size
+	engine.graphicsWrapper->SetResolution(0, 0, engine.settings.resolutionX, engine.settings.resolutionY);
 	fbo->WriteBind();
 	graphicsWrapper->Clear(CLEAR_ALL);
 	geometryCache->Draw();
 }
 
-void RenderPathDeferred::DeferredPass(glm::vec3 eyePos) {
-	//fbo->ReadBind();
-
+void RenderPathDeferred::DeferredPass(glm::vec3 eyePos, glm::vec2 res) {
+	engine.graphicsWrapper->SetResolution(0, 0, res.x, res.y);
 	defUBO.eyePos = eyePos;
 	defUBO.texLoc0 = 0;
 	defUBO.texLoc1 = 1;
 	defUBO.texLoc2 = 2;
 	defUBO.texLoc3 = 3;
+	defUBO.texLoc4 = 4;
 
 	fbo->Unbind();
 	shader->Use();
@@ -34,9 +39,17 @@ void RenderPathDeferred::DeferredPass(glm::vec3 eyePos) {
 	fbo->BindTexture(1);
 	fbo->BindTexture(2);
 	fbo->BindTexture(3);
+	//envMap->BindCubemap(4);
+	CubemapComponent *comp = engine.cubemapSystem.GetClosestCubemap(eyePos);
+	if (comp != NULL) {
+		Texture *cube = engine.cubemapSystem.GetClosestCubemap(eyePos)->cubemap;
+		if (cube != NULL)
+			cube->BindCubemap(4);
+	}
 
 	shader->PassData(&defUBO);
 	shader->SetVec3();
+	shader->SetInteger();
 	shader->SetInteger();
 	shader->SetInteger();
 	shader->SetInteger();
@@ -100,16 +113,19 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	shader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT);
 	shader->Compile();
 
-	shader->SetNumUniforms(5);
+	shader->SetNumUniforms(6);
 	shader->CreateUniform("eyePos");
 	shader->CreateUniform("texPos");
 	shader->CreateUniform("texNormal");
 	shader->CreateUniform("texAlbedo");
 	shader->CreateUniform("texSpecular");
+	shader->CreateUniform("texRefl");
+
+	envMap = LoadCubemap("../materials/skybox/Cliff", ".tga", COLOR_SRGB);
 }
 
-void RenderPathDeferred::Draw(glm::vec3 eyePos) {
+void RenderPathDeferred::Draw(glm::vec3 eyePos, glm::vec2 res) {
 	GeometryPass();
-	DeferredPass(eyePos);
+	DeferredPass(eyePos, res);
 	PostPass();
 }

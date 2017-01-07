@@ -23,6 +23,7 @@ bool Engine::Initialize() {
 	if (!InitializeWindow())						return false;
 	if (!InitializeGraphics(GRAPHICS_OPENGL))		return false;
 	if (!InitializeScene("../scenes/startup.gmf"))	return false;
+	cubemapSystem.LoadCubemaps();
 
 
 	// An array of 3 vectors which represents 3 vertices
@@ -73,6 +74,9 @@ bool Engine::Initialize() {
 	engine.inputSystem.AddControl("escape", "Shutdown", NULL, 1);
 	engine.inputSystem.BindAction("Shutdown", NULL, &engine, &Engine::ShutdownControl);
 
+	engine.inputSystem.AddControl("q", "CaptureCubemaps", NULL, 1);
+	engine.inputSystem.BindAction("CaptureCubemaps", NULL, &(engine.cubemapSystem), &CubemapSystem::CaptureCubemaps);
+
 	isRunning = true;
 	prevTime = std::chrono::high_resolution_clock::now();
 	startTime = std::chrono::high_resolution_clock::now();
@@ -86,6 +90,7 @@ void Engine::InitializeSettings() {
 		cfile.GetInteger("Window", "resx",	1024,	settings.resolutionX);
 		cfile.GetInteger("Window", "resy",	768,	settings.resolutionY);
 		cfile.GetFloat("Window", "fov",	45,			settings.fov);
+		settings.fov *= 3.14159f / 360.0f; // Convert to rad, /2 for full fovY.
 		std::string graphics;
 		cfile.GetString("Renderer", "graphics", "OpenGL", graphics);
 
@@ -99,11 +104,10 @@ void Engine::InitializeSettings() {
 		else if (graphics == "opengl")
 			settings.graphicsLanguage = GRAPHICS_OPENGL;
 		else {
-			fprintf(stderr, "SETTINGS.INI: Invalid value for graphics library (%s), using Opengl instead.\n", graphics.c_str());
+			fprintf(stderr, "SETTINGS.INI: Invalid value for graphics language (%s), using Opengl instead.\n", graphics.c_str());
 			settings.graphicsLanguage = GRAPHICS_OPENGL;
 			cfile.SetString("Renderer", "graphics", "OpenGL");
 		}
-		fprintf(stderr, "SETTINGS.INI: File loaded successfully.\n");
 	}
 	else {
 		fprintf(stderr, "SETTINGS.INI: File not found.\n");
@@ -147,7 +151,7 @@ bool Engine::InitializeWindow() {
 #endif
 
 	window = (GameWindow*)pfnCreateWindow();
-	if (!window->Initialize("The Grind Engine", settings.resolutionX, settings.resolutionY))
+	if (!window->Initialize("The Grindstone Engine", settings.resolutionX, settings.resolutionY))
 		return false;
 
 	window->SetInputPointer(&inputSystem);
@@ -229,9 +233,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	Window *win_handle;
 	Screen *screen;
 	int screenID;
-	std::cout << "Getting Handles\n";
 	window->GetHandles(display, win_handle, screen, screenID);
-	std::cout << "Handles gotten\n";
 #elif defined (_WIN32)
 	HMODULE dllHandle = LoadLibrary((library + ".dll").c_str());
 
@@ -281,29 +283,20 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	HWND win_handle = window->GetHandle();
 #endif
 
-	std::cout << "Creating GraphicsWrapper\n";
-	std::cout << pfnCreateGraphics << "\n";
 	graphicsWrapper = (GraphicsWrapper*)pfnCreateGraphics();
 #if defined (__linux__)
-	std::cout << "Passing Context\n";
 	graphicsWrapper->SetWindowContext(display, win_handle, screen, screenID);
-	std::cout << "Context Passed\n";
 #elif defined (_WIN32)
-	std::cout << "Passing Context\n";
 	graphicsWrapper->SetWindowContext(win_handle);
-	std::cout << "Context Passed\n";
 #endif
 
 	if (!graphicsWrapper->InitializeWindowContext())
 		return false;
-
-	std::cout << "WindowContext Initialized\n";
-
+	
 	if (!graphicsWrapper->InitializeGraphics())
 		return false;
 
 	graphicsWrapper->SetResolution(0, 0, settings.resolutionX, settings.resolutionY);
-	std::cout << "Graphics Initialized\n";
 	return true;
 }
 
@@ -330,14 +323,37 @@ struct UniformBuffer {
 	int texLoc3;
 } ubo;
 
-void Engine::Run() {
+void Engine::Render(glm::mat4 projection, glm::mat4 view, glm::vec2 res) {
 	glm::mat4x4 model = glm::mat4(1);
-	model = glm::translate(model, glm::vec3(6, 0, 0));
+	model = glm::translate(model, glm::vec3(0, 0, 0));
 	model = glm::scale(model, glm::vec3(0.01f));
+
+	shader->Use();
+	ubo.pvmMatrix = projection * view * model;
+	ubo.viewMatrix = view;
+	ubo.modelMatrix = model;
+	shader->PassData(&ubo);
+	shader->SetUniform4m();
+	shader->SetUniform4m();
+	shader->SetUniform4m();
+	shader->SetInteger();
+	shader->SetInteger();
+	shader->SetInteger();
+	shader->SetInteger();
+
+	renderPath->Draw(player->GetPosition(), res);
+#ifdef _WIN32
+	graphicsWrapper->SwapBuffer();
+#else
+	window->SwapBuffer();
+#endif
+}
+
+void Engine::Run() {
 	//model = glm::rotate(model, 0.0f, glm::vec3(0));
 
 	float aspectRatio = ((float)settings.resolutionX) / ((float)settings.resolutionY);
-	glm::mat4 projection = glm::perspective( settings.fov, aspectRatio, 0.1f, 100.0f );
+	glm::mat4 projection = glm::perspective(settings.fov, aspectRatio, 0.1f, 100.0f );
 
 	window->ResetCursor();
 
@@ -350,32 +366,14 @@ void Engine::Run() {
 		CalculateTime();
 		window->HandleEvents();
 		inputSystem.LoopControls();
-
+		projection = glm::perspective(settings.fov, aspectRatio, 0.1f, 100.0f);
 		glm::mat4 view = glm::lookAt(
-			player->getPosition(),
-			player->getPosition() + player->getForward(),
-			player->getUp()
+			player->GetPosition(),
+			player->GetPosition() + player->GetForward(),
+			player->GetUp()
 		);
 
-		shader->Use();
-		ubo.pvmMatrix = projection * view * model;
-		ubo.viewMatrix = view;
-		ubo.modelMatrix = model;
-		shader->PassData(&ubo);
-		shader->SetUniform4m();
-		shader->SetUniform4m();
-		shader->SetUniform4m();
-		shader->SetInteger();
-		shader->SetInteger();
-		shader->SetInteger();
-		shader->SetInteger();
-
-		renderPath->Draw(player->getPosition());
-#ifdef _WIN32
-		graphicsWrapper->SwapBuffer();
-#else
-		window->SwapBuffer();
-#endif
+		Render(projection, view, glm::vec2(settings.resolutionX, settings.resolutionY));
 	}
 }
 
@@ -406,6 +404,10 @@ bool Engine::InitializeScene(std::string szScenePath) {
 	player->Spawn();
 
 	geometryCache.LoadModel3D("../models/crytek-sponza/sponza.obj");
+
+	for (int i=-1; i <= 1; i++)
+		for (int j=-1; j <= 1; j++)
+			cubemapSystem.AddCubemap(glm::vec3(i*10, 1.5, j * 4.5));
 
 	return true;
 }

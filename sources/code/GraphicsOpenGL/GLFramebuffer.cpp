@@ -13,6 +13,7 @@ void GLFramebuffer::Initialize(unsigned short numBuffer) {
 	targetBuffer = 0;
 	textures = new unsigned int[numBuffers];
 	glGenTextures(numBuffers, textures);
+	glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
 // Eventually have the following two only use one type parameter, or organize it better.
@@ -86,4 +87,5 @@ void GLFramebuffer::ReadBind() {
 void GLFramebuffer::Unbind() {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_FRAMEBUFFER_SRGB);
 }

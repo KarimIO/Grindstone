@@ -11,13 +11,13 @@ protected:
 public:
 	//static void *CreateNew();
 
-	glm::vec3 getForward();
-	glm::vec3 getRight();
-	glm::vec3 getUp();
-	glm::vec3 getAngles();
-	glm::vec3 getPosition();
-	glm::vec3 getScale();
-	glm::mat4x4 getModelMatrix();
+	glm::vec3 GetForward();
+	glm::vec3 GetRight();
+	glm::vec3 GetUp();
+	glm::vec3 GetAngles();
+	glm::vec3 GetPosition();
+	glm::vec3 GetScale();
+	glm::mat4x4 GetModelMatrix();
 };
 
 #endif

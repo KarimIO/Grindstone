@@ -12,23 +12,26 @@ void EBasePlayer::Spawn() {
 	input.BindAxis("TurnPitch", this, &EBasePlayer::TurnPitch);
 	input.BindAxis("TurnYaw", this, &EBasePlayer::TurnYaw);
 
-	input.BindAction("SpeedUp", this, &EBasePlayer::SpeedUp);
-	input.BindAction("SpeedDown", this, &EBasePlayer::SpeedDown);
+	input.BindAction("ZoomIn", this, &EBasePlayer::ZoomIn);
+	input.BindAction("ZoomOut", this, &EBasePlayer::ZoomOut);
+
+	input.BindAction("Run", this, &EBasePlayer::RunStart, KEY_PRESSED);
+	input.BindAction("Run", this, &EBasePlayer::RunStop, KEY_RELEASED);
 	
 	speedModifier = 1;
 	sensitivity = 0.6;
 }
 
 void EBasePlayer::MoveForwardBack(double scale) {
-	position += 5.0f * float(scale * speedModifier) * getForward();
+	position += 5.0f * float(scale * speedModifier) * GetForward();
 }
 
 void EBasePlayer::MoveSide(double scale) {
-	position += 5.0f * float(scale * speedModifier) * getRight();
+	position += 5.0f * float(scale * speedModifier) * GetRight();
 }
 
 void EBasePlayer::MoveVertical(double scale) {
-	position += 5.0f * float(scale * speedModifier) * getUp();
+	position += 5.0f * float(scale * speedModifier) * GetUp();
 }
 
 void EBasePlayer::TurnPitch(double scale) {
@@ -42,18 +45,22 @@ void EBasePlayer::TurnYaw(double scale) {
 	angles.y += float(sensitivity * engine.GetTimeDelta() * scale);
 }
 
-void EBasePlayer::SpeedUp(double scale) {
-	if (speedModifier >= 2.4f)
-		speedModifier = 2.6f;
-	else
-		speedModifier += 0.2f;
+void EBasePlayer::ZoomIn(double scale) {
+	engine.settings.fov -= 0.05f;
+	if (engine.settings.fov < 0.4f)
+		engine.settings.fov = 0.4f;
 }
 
-void EBasePlayer::SpeedDown(double scale) {
-	if (speedModifier <= 0.4f)
-		speedModifier = 0.2f;
-	else if (speedModifier <= 0.8f)
-		speedModifier -= 0.1f;
-	else
-		speedModifier -= 0.2f;
+void EBasePlayer::ZoomOut(double scale) {
+	engine.settings.fov += 0.05f;
+	if (engine.settings.fov > 1.57f)
+		engine.settings.fov = 1.57f;
+}
+
+void EBasePlayer::RunStart(double scale) {
+	speedModifier = 2.5;
+}
+
+void EBasePlayer::RunStop(double scale) {
+	speedModifier = 1.0;
 }

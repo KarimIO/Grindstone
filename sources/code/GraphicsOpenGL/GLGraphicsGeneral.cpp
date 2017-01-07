@@ -5,23 +5,21 @@
 #include "GLVertexBufferObject.h"
 
 GRAPHICS_EXPORT GraphicsWrapper* createGraphics() {
-	std::cout << "Creating the graphics (dll-side)\n";
 	return new GraphicsWrapper;
 }
 
-bool GraphicsWrapper::InitializeGraphics()
-{
+bool GraphicsWrapper::InitializeGraphics() {
 	if (gl3wInit()) {
 		printf("Failed to initialize GL3W. Returning...\n");
 		return false;
 	}
 
 	if (!gl3wIsSupported(3, 3)) {
-		printf("OpenGL %i.%i=< required for Grind Engine. Returning...\n", 3, 3);
+		printf("OpenGL %i.%i=< required for Grindstone Engine. Returning...\n", 3, 3);
 		return false;
 	}
 
-	printf("Windowing and GL3W initialized.\nOpenGL %s, GLSL %s.\n\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
+	printf("OpenGL %s initialized using GLSL %s.\n\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 
 	// Depth Testing
 	glEnable(GL_DEPTH_TEST);
@@ -49,6 +47,14 @@ void GraphicsWrapper::DrawBaseVertex(const void *baseIndex, uint32_t baseVertex,
 		baseIndex,
 		baseVertex);
 	
+}
+
+unsigned char * GraphicsWrapper::ReadScreen(uint32_t width, uint32_t height) {
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	unsigned char *data = new unsigned char[width * height * 3];
+	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glReadBuffer(GL_BACK);
+	return data;
 }
 
 void GraphicsWrapper::Clear(unsigned int clearTarget) {

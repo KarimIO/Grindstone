@@ -115,6 +115,7 @@ GameWindow::~GameWindow() {
 bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY) {
 	resX = resolutionX;
 	resY = resolutionY;
+	int fullscreen = 2;
 
 	WNDCLASSEX wc;
 
@@ -140,13 +141,35 @@ bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY)
 		return false;
 	}
 
+	DWORD style, styleEx;
+	switch (fullscreen) {
+	case 0: // Windowed
+		style = WS_OVERLAPPEDWINDOW;
+		styleEx = WS_EX_CLIENTEDGE;
+		break;
+	case 1: // Borderless Windowed
+		style = WS_OVERLAPPEDWINDOW;
+		styleEx = WS_EX_CLIENTEDGE | WS_EX_TOPMOST;
+		break;
+	case 2: // Fullscreen
+		style = WS_OVERLAPPEDWINDOW;
+		styleEx = WS_EX_CLIENTEDGE;
+		break;
+	}
+
 	window_handle = CreateWindowEx(
-		WS_EX_CLIENTEDGE,
+		styleEx,
 		className,
 		title,
-		WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, CW_USEDEFAULT, resX, resY,
-		NULL, NULL, GetModuleHandle(NULL), this);
+		style,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		resolutionX,
+		resolutionY,
+		NULL,
+		NULL,
+		GetModuleHandle(NULL),
+		this);
 
 	if (window_handle == NULL)
 	{

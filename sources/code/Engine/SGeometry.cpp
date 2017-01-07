@@ -1,10 +1,8 @@
 #include "Engine.h"
 
 #include "SGeometry.h"
+#include "TextureManager.h"
 #include "GraphicsDLLPointer.h"
-
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
 
 std::string CModel::getName() {
 	return name;
@@ -110,18 +108,6 @@ void SwitchSlashes(std::string &path) {
 	}
 }
 
-Texture *LoadTexture(std::string path) {
-	Texture *t = pfnCreateTexture();
-	int texWidth, texHeight, texChannels;
-	stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-	t->CreateTexture(pixels, COLOR_RGBA, texWidth, texHeight);
-
-	if (!pixels)
-		printf("Texture failed to load!: %s \n", path.c_str());
-
-	return t;
-}
-
 void SModel::InitMaterials(const aiScene* scene, std::string Dir, CModel *model)
 {
 	std::string finalDir = Dir;
@@ -138,28 +124,28 @@ void SModel::InitMaterials(const aiScene* scene, std::string Dir, CModel *model)
 			if (pMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 				std::string FullPath = finalDir + "/" + Path.data;
 				SwitchSlashes(FullPath);
-				newMat->tex[0] = LoadTexture(FullPath);
+				newMat->tex[0] = LoadTexture(FullPath, COLOR_SRGB);
 			}
 		}
 		if (pMaterial->GetTextureCount(aiTextureType_HEIGHT) > 0) {
 			if (pMaterial->GetTexture(aiTextureType_HEIGHT, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 				std::string FullPath = finalDir + "/" + Path.data;
 				SwitchSlashes(FullPath);
-				newMat->tex[1] = LoadTexture(FullPath);
+				newMat->tex[1] = LoadTexture(FullPath, COLOR_RGBA);
 			}
 		}
 		if (pMaterial->GetTextureCount(aiTextureType_SPECULAR) > 0) {
 			if (pMaterial->GetTexture(aiTextureType_SPECULAR, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 				std::string FullPath = finalDir + "/" + Path.data;
 				SwitchSlashes(FullPath);
-				newMat->tex[2] = LoadTexture(FullPath);
+				newMat->tex[2] = LoadTexture(FullPath, COLOR_RGBA);
 			}
 		}
 		if (pMaterial->GetTextureCount(aiTextureType_SHININESS) > 0) {
 			if (pMaterial->GetTexture(aiTextureType_SHININESS, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 				std::string FullPath = finalDir + "/" + Path.data;
 				SwitchSlashes(FullPath);
-				newMat->tex[3] = LoadTexture(FullPath);
+				newMat->tex[3] = LoadTexture(FullPath, COLOR_RGBA);
 			}
 		}
 		model->materials[i] = newMat;

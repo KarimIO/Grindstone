@@ -12,8 +12,10 @@ public:
 	void MoveVertical(double scale);
 	void TurnPitch(double scale);
 	void TurnYaw(double scale);
-	void SpeedUp(double scale);
-	void SpeedDown(double scale);
+	void ZoomIn(double scale);
+	void ZoomOut(double scale);
+	void RunStart(double scale);
+	void RunStop(double scale);
 private:
 	InputComponent input;
 	double speedModifier;

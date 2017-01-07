@@ -12,7 +12,7 @@ class RenderPathForward : public RenderPath {
 	void PostPass();
 public:
 	RenderPathForward(GraphicsWrapper *gw, SModel *gc);
-	virtual void Draw(glm::vec3 eyePos);
+	virtual void Draw(glm::vec3 eyePos, glm::vec2 res);
 };
 
 #endif

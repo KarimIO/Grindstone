@@ -2,6 +2,8 @@
 #define _GRAPHICS_DLL_POINTER_H
 
 #include <GraphicsWrapper.h>
+#include <VertexArrayObject.h>
+#include <VertexBufferObject.h>
 #include <GLShader.h>
 #include <GLTexture.h>
 #include <GLFramebuffer.h>

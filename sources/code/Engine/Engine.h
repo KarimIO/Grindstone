@@ -19,6 +19,8 @@
 #include "Input.h"
 #include "EBasePlayer.h"
 
+#include "SCubemap.h"
+
 #include <chrono>
 #include <string>
 
@@ -42,19 +44,17 @@ private:
 
 	// Remove this ASAP
 	ShaderProgram *shader;
-	VertexArrayObject *vao;
-	VertexBufferObject *vbo;
 
 	RenderPathType renderPathType;
 	RenderPath *renderPath;
 
 	EBasePlayer *player;
 
+
 	// Time Data
 	std::chrono::time_point<std::chrono::high_resolution_clock> currentTime, prevTime, startTime;
 
 	std::chrono::milliseconds deltaTime;
-	InputComponent input;
 public:
 	struct Settings {
 		int resolutionX;
@@ -62,6 +62,9 @@ public:
 		float fov;
 		GraphicsLanguage graphicsLanguage;
 	} settings;
+
+	CubemapSystem cubemapSystem;
+	InputComponent input;
 
 	GameWindow *window;
 	SModel geometryCache;
@@ -82,6 +85,7 @@ public:
 	void CalculateTime();
 	double GetTimeCurrent();
 	double GetTimeDelta();
+	void Render(glm::mat4 projection, glm::mat4 views, glm::vec2 res);
 
 	void Shutdown();
 

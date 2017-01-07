@@ -6,7 +6,7 @@
 #include "Engine.h"
 
 int main(int argc, char *argv[]) {
-	std::cout << "Grind Engine Start\n";
+	std::cout << "The Grindstone Engine is Initializing.\n";
 
 	if (!engine.Initialize()) {
 #ifdef _WIN32

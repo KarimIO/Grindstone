@@ -9,7 +9,8 @@ enum PixelScheme {
 	COLOR_R,
 	COLOR_RG,
 	COLOR_RGB,
-	COLOR_RGBA
+	COLOR_RGBA,
+	COLOR_SRGB
 };
 
 class Texture {
@@ -18,6 +19,7 @@ public:
 	virtual void CreateCubemap(unsigned char* pixels[6],	PixelScheme scheme, uint32_t width, uint32_t height) = 0;
 
 	virtual void Bind(int bindTo) = 0;
+	virtual void BindCubemap(int bindTo) = 0;
 	virtual int GetTextureLocation() = 0;
 
 	virtual void Cleanup() = 0;
