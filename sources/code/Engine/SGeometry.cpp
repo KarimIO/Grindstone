@@ -20,19 +20,19 @@ std::string CModel::getName() {
 
 void SModel::LoadModel3D(const char * szPath, size_t entityID, size_t &modelID, size_t &renderID) {
 	for (size_t i = 0; i < models.size(); i++) {
-		if (models[i]->getName() == szPath) {
+		if (models[i].getName() == szPath) {
 			modelID = i;
-			renderID = models[i]->references.size();
-			models[i]->references.push_back(CRender());
-			models[i]->references.back().entityID = entityID;
+			renderID = models[i].references.size();
+			models[i].references.push_back(CRender());
+			models[i].references.back().entityID = entityID;
 			return;
 		}
 	}
 
 	modelID = models.size();
 	renderID = 0;
-	models.push_back(new CModel());
-	CModel *model = models.back();
+	models.push_back(CModel());
+	CModel *model = &models.back();
 	model->references.push_back(CRender());
 	model->references.back().entityID = entityID;
 	model->name = szPath;
@@ -211,7 +211,7 @@ void SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 
 void SModel::Draw(glm::mat4 projection, glm::mat4 view) {
 	for (size_t i = 0; i < models.size(); i++)
-		DrawModel3D(projection, view, models[i]);
+		DrawModel3D(projection, view, &models[i]);
 }
 
 void SModel::DrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *model) {

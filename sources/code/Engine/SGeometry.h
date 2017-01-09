@@ -64,7 +64,7 @@ public:
 
 class SModel {
 public:
-	std::vector<CModel*> models;
+	std::vector<CModel> models;
 	std::vector<CModel*> unloadedModels;
 	void LoadModel3DFile(const char *szPath, CModel *model);
 public:
