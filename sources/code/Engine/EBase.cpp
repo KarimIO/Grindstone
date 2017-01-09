@@ -1,5 +1,11 @@
 #include "EBase.h"
+#include "Engine.h"
 #include <glm/gtx/transform.hpp>
+
+EBase::EBase() {
+	id = engine.entities.size();
+	scale = glm::vec3(1, 1, 1);
+}
 
 glm::vec3 EBase::GetForward() {
 	glm::vec3 ang = GetAngles();
@@ -41,7 +47,7 @@ glm::mat4x4 EBase::GetModelMatrix() {
 		Model,
 		position);
 	Model = glm::scale(Model, GetScale());
-	float maxRot = (glm::max(glm::max(angles.x, angles.y), angles.z));
+	float maxRot = (max(max(angles.x, angles.y), angles.z));
 	if (maxRot > 0)
 		Model = glm::rotate(Model, maxRot, angles / maxRot);
 

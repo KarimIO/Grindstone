@@ -22,8 +22,6 @@ bool Engine::Initialize() {
 	InitializeSettings();
 	if (!InitializeWindow())						return false;
 	if (!InitializeGraphics(GRAPHICS_OPENGL))		return false;
-	if (!InitializeScene("../scenes/startup.gmf"))	return false;
-	cubemapSystem.LoadCubemaps();
 
 
 	// An array of 3 vectors which represents 3 vertices
@@ -61,6 +59,10 @@ bool Engine::Initialize() {
 	vsContent.clear();
 	fsContent.clear();
 
+
+	if (!InitializeScene("../scenes/startup.gmf"))	return false;
+	cubemapSystem.LoadCubemaps();
+
 	renderPathType = RENDERPATH_DEFERRED;
 	switch (renderPathType) {
 	default:
@@ -89,7 +91,7 @@ void Engine::InitializeSettings() {
 	if (cfile.Initialize("../settings.ini")) {
 		cfile.GetInteger("Window", "resx",	1024,	settings.resolutionX);
 		cfile.GetInteger("Window", "resy",	768,	settings.resolutionY);
-		cfile.GetFloat("Window", "fov",	45,			settings.fov);
+		cfile.GetFloat(  "Window", "fov",	90,		settings.fov);
 		settings.fov *= 3.14159f / 360.0f; // Convert to rad, /2 for full fovY.
 		std::string graphics;
 		cfile.GetString("Renderer", "graphics", "OpenGL", graphics);
@@ -313,35 +315,8 @@ Engine &Engine::GetInstance() {
 }
 #endif
 
-struct UniformBuffer {
-	glm::mat4 pvmMatrix;
-	glm::mat4 modelMatrix;
-	glm::mat4 viewMatrix;
-	int texLoc0;
-	int texLoc1;
-	int texLoc2;
-	int texLoc3;
-} ubo;
-
 void Engine::Render(glm::mat4 projection, glm::mat4 view, glm::vec2 res) {
-	glm::mat4x4 model = glm::mat4(1);
-	model = glm::translate(model, glm::vec3(0, 0, 0));
-	model = glm::scale(model, glm::vec3(0.01f));
-
-	shader->Use();
-	ubo.pvmMatrix = projection * view * model;
-	ubo.viewMatrix = view;
-	ubo.modelMatrix = model;
-	shader->PassData(&ubo);
-	shader->SetUniform4m();
-	shader->SetUniform4m();
-	shader->SetUniform4m();
-	shader->SetInteger();
-	shader->SetInteger();
-	shader->SetInteger();
-	shader->SetInteger();
-
-	renderPath->Draw(player->GetPosition(), res);
+	renderPath->Draw(projection, view, player->GetPosition(), res);
 #ifdef _WIN32
 	graphicsWrapper->SwapBuffer();
 #else
@@ -353,20 +328,21 @@ void Engine::Run() {
 	//model = glm::rotate(model, 0.0f, glm::vec3(0));
 
 	float aspectRatio = ((float)settings.resolutionX) / ((float)settings.resolutionY);
-	glm::mat4 projection = glm::perspective(settings.fov, aspectRatio, 0.1f, 100.0f );
-
 	window->ResetCursor();
 
-	ubo.texLoc0 = 0;
-	ubo.texLoc1 = 1;
-	ubo.texLoc2 = 2;
-	ubo.texLoc3 = 3;
+	//double lag = 0.0;
+	//double MS_PER_UPDATE = GetUpdateTimeDelta();
 
 	while (isRunning) {
 		CalculateTime();
+		//lag += GetRenderTimeDelta();
 		window->HandleEvents();
 		inputSystem.LoopControls();
-		projection = glm::perspective(settings.fov, aspectRatio, 0.1f, 100.0f);
+		/*while (lag >= MS_PER_UPDATE)
+		{
+			lag -= MS_PER_UPDATE;
+		}*/
+		glm::mat4 projection = glm::perspective(settings.fov, aspectRatio, 0.1f, 100.0f);
 		glm::mat4 view = glm::lookAt(
 			player->GetPosition(),
 			player->GetPosition() + player->GetForward(),
@@ -403,7 +379,23 @@ bool Engine::InitializeScene(std::string szScenePath) {
 	// Eventually do all spawning after all initializing is complete.
 	player->Spawn();
 
-	geometryCache.LoadModel3D("../models/crytek-sponza/sponza.obj");
+	// Battletoads/Battletoad_posed.obj
+	// crytek-sponza/sponza.obj
+	entities.push_back(EBase());
+	geometryCache.LoadModel3D("../models/Battletoads/Battletoad_posed.obj", entities.size() - 1, entities.back().components[COMPONENT_MODEL], entities.back().components[COMPONENT_RENDER]);
+	entities.back().scale = glm::vec3(0.1f, 0.1f, 0.1f);
+	entities.push_back(EBase());
+	geometryCache.LoadModel3D("../models/Battletoads/Battletoad_posed.obj", entities.size() - 1, entities.back().components[COMPONENT_MODEL], entities.back().components[COMPONENT_RENDER]);
+	entities.back().position = glm::vec3(2.0f, 0.0f, 0.0f);
+	entities.back().scale = glm::vec3(0.1f, 0.1f, 0.1f);
+	entities.push_back(EBase());
+	geometryCache.LoadModel3D("../models/Battletoads/Battletoad_posed.obj", entities.size() - 1, entities.back().components[COMPONENT_MODEL], entities.back().components[COMPONENT_RENDER]);
+	entities.back().position = glm::vec3(-2.0f, 0.0f, 0.0f);
+	entities.back().scale = glm::vec3(0.1f, 0.1f, 0.1f);
+
+	engine.entities.push_back(EBase());
+	engine.geometryCache.LoadModel3D("../models/crytek-sponza/sponza.obj", engine.entities.size() - 1, engine.entities.back().components[COMPONENT_MODEL], engine.entities.back().components[COMPONENT_RENDER]);
+	engine.entities.back().scale = glm::vec3(0.01f, 0.01f, 0.01f);
 
 	for (int i=-1; i <= 1; i++)
 		for (int j=-1; j <= 1; j++)
@@ -414,16 +406,20 @@ bool Engine::InitializeScene(std::string szScenePath) {
 
 void Engine::CalculateTime() {
 	currentTime = std::chrono::high_resolution_clock::now();
-	deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - prevTime);
+	deltaTime = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - prevTime);
 	prevTime = currentTime;
 }
 
 double Engine::GetTimeCurrent() {
-	return (double)std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count()/1000.0;
+	return (double)std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - startTime).count()/1000000000.0;
 }
 
-double Engine::GetTimeDelta() {
-	return (double)deltaTime.count() / 1000.0;
+double Engine::GetUpdateTimeDelta() {
+	return (double)deltaTime.count() / 1000000000.0;
+}
+
+double Engine::GetRenderTimeDelta() {
+	return (double)deltaTime.count() / 1000000000.0;
 }
 
 void Engine::Shutdown() {

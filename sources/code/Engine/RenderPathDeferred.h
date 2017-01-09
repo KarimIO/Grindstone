@@ -12,14 +12,14 @@ class RenderPathDeferred : public RenderPath {
 
 	Texture *envMap;
 
-	void GeometryPass();
+	void GeometryPass(glm::mat4 projection, glm::mat4 view);
 	void DeferredPass(glm::vec3 eyePos, glm::vec2 res);
 	void PostPass();
 	ShaderProgram *shader;
 	VertexArrayObject *vaoQuad;
 	VertexBufferObject *vboQuad;
 public:
-	virtual void Draw(glm::vec3 eyePos, glm::vec2 res);
+	virtual void Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, glm::vec2 res);
 	RenderPathDeferred(GraphicsWrapper *gw, SModel *gc);
 };
 

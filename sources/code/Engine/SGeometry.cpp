@@ -4,62 +4,39 @@
 #include "TextureManager.h"
 #include "GraphicsDLLPointer.h"
 
+struct UniformBuffer {
+	glm::mat4 pvmMatrix;
+	glm::mat4 modelMatrix;
+	glm::mat4 viewMatrix;
+	int texLoc0;
+	int texLoc1;
+	int texLoc2;
+	int texLoc3;
+} ubo;
+
 std::string CModel::getName() {
 	return name;
 }
 
-CModel * SModel::PrepareModel3D(const char * szPath) {
-	for (size_t i = 0; i < models.size(); i++)
-		if (models[i].getName() == szPath)
-			return &models[i];
+void SModel::LoadModel3D(const char * szPath, size_t entityID, size_t &modelID, size_t &renderID) {
+	for (size_t i = 0; i < models.size(); i++) {
+		if (models[i]->getName() == szPath) {
+			modelID = i;
+			renderID = models[i]->references.size();
+			models[i]->references.push_back(CRender());
+			models[i]->references.back().entityID = entityID;
+			return;
+		}
+	}
 
-	models.push_back(CModel());
-	CModel *model = &models.back();
+	modelID = models.size();
+	renderID = 0;
+	models.push_back(new CModel());
+	CModel *model = models.back();
+	model->references.push_back(CRender());
+	model->references.back().entityID = entityID;
 	model->name = szPath;
-
-	return model;
-}
-
-CModel * SModel::LoadModel3D(const char * szPath) {
-	for (size_t i = 0; i < models.size(); i++)
-		if (models[i].getName() == szPath)
-			return &models[i];
-
-	models.push_back(CModel());
-	CModel *model = &models.back();
-	model->name = szPath;
-
 	LoadModel3DFile(szPath, model);
-
-	return model;
-}
-
-CModel * SModel::PrepareModel3D(const char * szPath, CRender *cRef) {
-	for (size_t i = 0; i < models.size(); i++)
-		if (models[i].getName() == szPath)
-			return &models[i];
-
-	models.push_back(CModel());
-	CModel *model = &models.back();
-	model->name = szPath;
-	model->references.push_back(cRef);
-
-	return model;
-}
-
-CModel * SModel::LoadModel3D(const char * szPath, CRender *cRef) {
-	for (size_t i = 0; i < models.size(); i++)
-		if (models[i].getName() == szPath)
-			return &models[i];
-
-	models.push_back(CModel());
-	CModel *model = &models.back();
-	model->name = szPath;
-	model->references.push_back(cRef);
-
-	LoadModel3DFile(szPath, model);
-
-	return model;
 }
 
 void InitMesh(const aiMesh *paiMesh,
@@ -117,6 +94,7 @@ void SModel::InitMaterials(const aiScene* scene, std::string Dir, CModel *model)
 	aiString Path;
 	for (size_t i = 0; i < scene->mNumMaterials; i++) {
 		Material *newMat = new Material();
+		newMat->shader = engine.shader;
 		newMat->tex.resize(4);
 		pMaterial = scene->mMaterials[i];
 
@@ -209,7 +187,7 @@ void SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 	model->vao->Bind();
 
 	VertexBufferObject *vbo = pfnCreateVBO();
-	vbo->Initialize(4);
+	vbo->Initialize(5);
 	vbo->AddVBO(&vertices[0],	vertices.size()	* sizeof(vertices[0]),	3, SIZE_FLOAT, DRAW_STATIC);
 	vbo->Bind(0, 0, false, 0, 0);
 	vbo->AddVBO(&uvs[0],		uvs.size()		* sizeof(uvs[0]),		2, SIZE_FLOAT, DRAW_STATIC);
@@ -231,23 +209,58 @@ void SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 	importer.FreeScene();
 }
 
-void SModel::LoadPreparedModel3Ds() {
-}
-
-void SModel::Draw() {
+void SModel::Draw(glm::mat4 projection, glm::mat4 view) {
 	for (size_t i = 0; i < models.size(); i++)
-		DrawModel3D(&models[i]);
+		DrawModel3D(projection, view, models[i]);
 }
 
-void SModel::DrawModel3D(CModel *model) {
+void SModel::DrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *model) {
+
+	ubo.viewMatrix = view;
+	ubo.texLoc0 = 0;
+	ubo.texLoc1 = 1;
+	ubo.texLoc2 = 2;
+	ubo.texLoc3 = 3;
+
 	model->vao->Bind();
-	for (size_t i = 0; i < model->meshes.size(); i++) {
-		for (size_t j = 0; j < 4; j++) {
-			Texture *temp = model->materials[model->meshes[i].MaterialIndex]->tex[j];
-			if (temp != nullptr)
-				temp->Bind(int(j));
+	for (size_t i = 0; i < model->references.size(); i++) {
+		CRender *renderComponent = &model->references[i];
+
+		for (size_t j = 0; j < model->meshes.size(); j++) {
+			unsigned char matID = model->meshes[j].MaterialIndex;
+			Material *material;
+			if (renderComponent->materials.size() > matID && renderComponent->materials[matID] != nullptr)
+				material = renderComponent->materials[matID];
+			else
+				material = model->materials[matID];
+
+			for (size_t t = 0; t < 4; t++) {
+				Texture *temp = material->tex[t];
+				if (temp != nullptr)
+					temp->Bind(int(t));
+			}
+
+			size_t entID = renderComponent->entityID;
+			glm::mat4 modelMatrix = engine.entities[entID].GetModelMatrix();
+			ubo.pvmMatrix = projection * view * modelMatrix;
+			ubo.modelMatrix = modelMatrix;
+			ShaderProgram *shader = material->shader;
+			if (shader != NULL) {
+				shader->Use();
+				shader->PassData(&ubo);
+				shader->SetUniform4m();
+				shader->SetUniform4m();
+				shader->SetUniform4m();
+				shader->SetInteger();
+				shader->SetInteger();
+				shader->SetInteger();
+				shader->SetInteger();
+			}
+			else
+				std::cout << "Shader fail: " << renderComponent->entityID << " - " << i << " - " << j << "\n";
+
+			engine.graphicsWrapper->DrawBaseVertex((void*)(sizeof(unsigned int) * model->meshes[j].BaseIndex), model->meshes[j].BaseVertex, model->meshes[j].NumIndices);
 		}
-		engine.graphicsWrapper->DrawBaseVertex((void*)(sizeof(unsigned int) * model->meshes[i].BaseIndex), model->meshes[i].BaseVertex, model->meshes[i].NumIndices);
 	}
 	model->vao->Unbind();
 }

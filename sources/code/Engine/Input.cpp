@@ -545,7 +545,7 @@ void InputSystem::LoopControls() {
 	if (!IsFocused())
 		return;
 
-	double deltaTime = engine.GetTimeDelta();
+	double deltaTime = engine.GetUpdateTimeDelta();
 	
 	for (size_t i = 0; i <= MOUSE_MOUSE5; i++) {
 		if (mouseData[i] > 0) { // Key is Pressed

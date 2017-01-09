@@ -42,26 +42,28 @@ private:
 	bool InitializeGraphics(GraphicsLanguage);
 	void InitializeSettings();
 
-	// Remove this ASAP
-	ShaderProgram *shader;
-
 	RenderPathType renderPathType;
 	RenderPath *renderPath;
 
 	EBasePlayer *player;
 
-
 	// Time Data
 	std::chrono::time_point<std::chrono::high_resolution_clock> currentTime, prevTime, startTime;
+	double accumulator = 0.0;
 
-	std::chrono::milliseconds deltaTime;
+	std::chrono::nanoseconds deltaTime;
 public:
+	// Remove this ASAP
+	ShaderProgram *shader;
+
 	struct Settings {
 		int resolutionX;
 		int resolutionY;
 		float fov;
 		GraphicsLanguage graphicsLanguage;
 	} settings;
+
+	std::vector<EBase> entities;
 
 	CubemapSystem cubemapSystem;
 	InputComponent input;
@@ -84,7 +86,8 @@ public:
 	bool InitializeScene(std::string);
 	void CalculateTime();
 	double GetTimeCurrent();
-	double GetTimeDelta();
+	double GetUpdateTimeDelta();
+	double GetRenderTimeDelta();
 	void Render(glm::mat4 projection, glm::mat4 views, glm::vec2 res);
 
 	void Shutdown();

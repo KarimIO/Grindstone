@@ -9,6 +9,8 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include <glm/glm.hpp>
+
 enum {
 	VERTEX_VB = 0,
 	UV_VB,
@@ -35,13 +37,14 @@ struct Mesh {
 
 class Material {
 public:
-	//ShaderProgram *shader;
+	ShaderProgram *shader;
 	std::vector<Texture *> tex;
 };
 
 class CRender {
 private:
 public:
+	size_t entityID;
 	std::vector<Material *> materials;
 };
 
@@ -50,7 +53,7 @@ class SModel;
 class CModel {
 	friend class SModel;
 private:
-	std::vector<CRender *> references;
+	std::vector<CRender> references;
 	std::vector<Material *> materials;
 	std::vector<Mesh> meshes;
 	VertexArrayObject *vao;
@@ -61,24 +64,17 @@ public:
 
 class SModel {
 public:
-	std::vector<CModel> models;
+	std::vector<CModel*> models;
 	std::vector<CModel*> unloadedModels;
 	void LoadModel3DFile(const char *szPath, CModel *model);
 public:
 
-	// Don't attach to CRender
-	CModel *PrepareModel3D(const char *szPath);
-	CModel *LoadModel3D(const char *szPath);
+	void LoadModel3D(const char *szPath, size_t entityID, size_t &modelID, size_t &renderID);
 
 	void InitMaterials(const aiScene* scene, std::string Dir, CModel *model);
 
-	// Attach to CRender
-	CModel *PrepareModel3D(const char *szPath, CRender *);
-	CModel *LoadModel3D(const char *szPath, CRender *);
-	void LoadPreparedModel3Ds();
-
-	void Draw();
-	void DrawModel3D(CModel *);
+	void Draw(glm::mat4 projection, glm::mat4 view);
+	void DrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *);
 };
 
 #endif

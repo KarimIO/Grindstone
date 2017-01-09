@@ -35,14 +35,14 @@ void EBasePlayer::MoveVertical(double scale) {
 }
 
 void EBasePlayer::TurnPitch(double scale) {
-	angles.x += float(sensitivity * engine.GetTimeDelta() * scale);
+	angles.x += float(sensitivity * engine.GetUpdateTimeDelta() * scale);
 
 	if (angles.x < -2.4f / 2)	angles.x = -2.4f / 2;
 	if (angles.x > 3.14f / 2)	angles.x = 3.14f / 2;
 }
 
 void EBasePlayer::TurnYaw(double scale) {
-	angles.y += float(sensitivity * engine.GetTimeDelta() * scale);
+	angles.y += float(sensitivity * engine.GetUpdateTimeDelta() * scale);
 }
 
 void EBasePlayer::ZoomIn(double scale) {
@@ -58,6 +58,7 @@ void EBasePlayer::ZoomOut(double scale) {
 }
 
 void EBasePlayer::RunStart(double scale) {
+
 	speedModifier = 2.5;
 }
 

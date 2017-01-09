@@ -15,12 +15,12 @@ struct UniformBufferDef {
 	int texLoc4;
 } defUBO;
 
-void RenderPathDeferred::GeometryPass() {
+void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view) {
 	// Uses screen resolution due to framebuffer size
 	engine.graphicsWrapper->SetResolution(0, 0, engine.settings.resolutionX, engine.settings.resolutionY);
 	fbo->WriteBind();
 	graphicsWrapper->Clear(CLEAR_ALL);
-	geometryCache->Draw();
+	geometryCache->Draw(projection, view);
 }
 
 void RenderPathDeferred::DeferredPass(glm::vec3 eyePos, glm::vec2 res) {
@@ -124,8 +124,8 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	envMap = LoadCubemap("../materials/skybox/Cliff", ".tga", COLOR_SRGB);
 }
 
-void RenderPathDeferred::Draw(glm::vec3 eyePos, glm::vec2 res) {
-	GeometryPass();
+void RenderPathDeferred::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, glm::vec2 res) {
+	GeometryPass(projection, view);
 	DeferredPass(eyePos, res);
 	PostPass();
 }
