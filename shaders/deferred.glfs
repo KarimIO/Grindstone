@@ -1,4 +1,4 @@
-#version 330 core
+#version 410 core
 
 out vec3 color; // X Y Z MaterialType
 
@@ -9,6 +9,7 @@ uniform sampler2D texSpecular;
 uniform samplerCube texRefl;
 
 uniform vec3 eyePos;
+uniform float time;
 
 in vec2 UV;
 
@@ -44,46 +45,19 @@ float Diff_Disney( float NdotV, float NdotL, float LdotH ,float linearRoughness 
 	return lightScatter * viewScatter * energyFactor ;
 }
 
-vec3 BSDF(in vec3 Albedo, in vec3 Specular, in vec3 Normal, in vec3 lightDir, in float linearRoughness, in vec3 eyeDir) {	
-	float Roughness = linearRoughness * linearRoughness;
-	float alpha = Roughness * Roughness;
-	float alphaSqr = alpha*alpha;
-	
-	vec3 H = normalize(eyeDir + lightDir);
-	
-	float NL = clamp(dot(Normal, lightDir), 0, 1);
-	float NV = abs(dot(Normal, eyeDir));
-	float NH = clamp(dot(Normal, H), 0, 1);
-	float LH = clamp(dot(lightDir, H), 0, 1);
-	float VH = clamp(dot(eyeDir, H), 0, 1);
-	
-	vec3 f0 = 0.32*Specular.rgb*Specular.rgb;
-	float f90 = clamp(50 * f0.r * 0.33, 0, 1);
-	
-	float D = Light_D(alpha, NH);
-	vec3 F = Light_F(f0, f90, LH);
-	float Vis = Light_V(NL, NV, alpha);
-	
-	vec3 eyeReflect = reflect(-eyeDir, Normal.xyz);
-	vec3 reflColor =  texture(texRefl, eyeReflect).rgb;
-
-	vec3 Spec = (D * F * Vis) * reflColor;
-	
-	vec3 Diffuse = Albedo.rgb*vec3(Diff_Disney(NV ,NL , LH, linearRoughness))/pi;
-	
-	return (Diffuse + Spec);
-}
-
-vec3 LightCalc(in vec3 Albedo, in vec3 WorldPos, in vec4 Specular, in vec3 Normal, in vec3 lightPos, in float lightRadius, in vec4 lightColor, in vec3 eyePos) {
+vec3 LightPointCalc(in vec3 Albedo, in vec3 WorldPos, in vec4 Specular, in vec3 Normal, in vec3 lightPos, in float lightRadius, in vec3 lightColor, in vec3 eyePos) {
 	vec3 lightDir	= WorldPos - lightPos;
+	float Distance	= length(lightDir);
+
 	vec3 eyeDir		= normalize(eyePos - WorldPos);
 	vec3 eyeReflect = reflect(-eyeDir, Normal);
 	
-	float Distance	= length(lightDir);
 	lightDir		= -normalize(lightDir);
 	
-	float linRoughness = Specular.a;
-	
+	float Roughness = Specular.a;
+	float alpha = Roughness * Roughness;
+	float alphaSqr = alpha*alpha;
+
 	float NL = clamp(dot(Normal, lightDir), 0, 1);
 	
 	float Dist2 = Distance * Distance;
@@ -91,38 +65,45 @@ vec3 LightCalc(in vec3 Albedo, in vec3 WorldPos, in vec4 Specular, in vec3 Norma
 	float factor = Dist2 / lrad2;
 	float Attenuation = clamp(1 - factor * factor, 0, 1); 
 	Attenuation = Attenuation*Attenuation/(Dist2+0.001);
+
+	vec3 H = normalize(eyeDir + lightDir);
 	
-	vec3 lightModifier = lightColor.xyz*lightColor.w * Attenuation;
-	vec3 BSDFValue = BSDF(Albedo, Specular.rgb, Normal, lightDir, linRoughness, eyeDir);
-	return NL * BSDFValue * lightModifier; // vec3(1-Distance/lightRadius); //
+	float NV = abs(dot(Normal, eyeDir)) + 0.00001;
+	float NH = clamp(dot(Normal, H), 0, 1);
+	float LH = clamp(dot(lightDir, H), 0, 1);
+	float VH = clamp(dot(eyeDir, H), 0, 1);
+	
+	vec3 f0 = 0.32*Specular.rgb*Specular.rgb;
+	float f90 = clamp(50 * dot(f0, vec3(0.33)), 0, 1);
+	
+	vec3 F = Light_F(f0, f90, LH);
+	float D = Light_D(alpha, NH);
+	float Vis = Light_V(NL, NV, alpha);
+	
+	//vec3 reflColor =  texture(texRefl, eyeReflect).rgb;
+
+	vec3 Spec = (F * D * Vis); // * reflColor;
+	
+	vec3 Diffuse = Albedo.rgb*vec3(Diff_Disney(NV ,NL , LH, Roughness))/pi;
+
+	vec3 lightModifier = lightColor.xyz * Attenuation;
+	vec3 BSDFValue = Diffuse + Spec;
+	return NL * BSDFValue * lightModifier;
 }
 
-vec3 LightPointCalc(in vec3 Albedo, in vec3 WorldPos, in vec4 Specular, in vec3 Normal, in vec3 lightPos, in float lightRadius, in vec4 lightColor, in vec3 eyePos) {
-	vec3 lightDir	= WorldPos - lightPos;
-	float Distance	= length(lightDir);
-
-	return LightCalc(Albedo, WorldPos, Specular, Normal, lightPos, lightRadius, lightColor, eyePos);
-}
-
-vec3 pow3(vec3 a, float b) {
-	return vec3(pow(a.x, b), pow(a.y, b), pow(a.z, b));
-}
-
-vec3 accurateLinearToSRGB (vec3 linearCol ) {
-	vec3 sRGBLo = linearCol * 12.92;
-	vec3 sRGBHi = ( pow3( abs ( linearCol ) , 1.0/2.4) * 1.055) - 0.055;
-	vec3 sRGB;
-	sRGB.r = ( linearCol.r <= 0.0031308) ? sRGBLo.r : sRGBHi.r ;
-	sRGB.g = ( linearCol.g <= 0.0031308) ? sRGBLo.g : sRGBHi.g ;
-	sRGB.b = ( linearCol.b <= 0.0031308) ? sRGBLo.b : sRGBHi.b ;
-	return sRGB;
+vec3 linearToSRGB(vec3 inColor) {
+    vec3 outColor;
+	outColor.r = inColor.r <= 0.0031308 ? 12.92 * inColor.r : 1.055 * pow(inColor.r, 1.0/2.4) - 0.055;
+	outColor.g = inColor.g <= 0.0031308 ? 12.92 * inColor.g : 1.055 * pow(inColor.g, 1.0/2.4) - 0.055;
+	outColor.b = inColor.b <= 0.0031308 ? 12.92 * inColor.b : 1.055 * pow(inColor.b, 1.0/2.4) - 0.055;
+	return outColor;
 }
 
 vec3 CalculateIBL(vec3 WorldPos, vec3 Normal, vec4 Specular) {
 	vec3 eyeDir		= normalize(eyePos - WorldPos.xyz);
 	vec3 eyeReflect = reflect(-eyeDir, Normal);
 	
-	float Roughness = pow(Specular.a, 2);
+	float Roughness = Specular.a;
 	float alpha = Roughness * Roughness;
 	
 	float NV = abs(dot(Normal, eyeDir));
@@ -130,7 +111,9 @@ vec3 CalculateIBL(vec3 WorldPos, vec3 Normal, vec4 Specular) {
 	vec3 reflectDir = normalize(eyeReflect);
 	vec3 reflectPix = texture(texRefl, reflectDir).rgb;
 		
-	vec3 F = Light_F(Specular.rgb, 1, NV);
+	vec3 f0 = 0.32*Specular.rgb*Specular.rgb;
+	float f90 = clamp(50 * dot(f0, vec3(0.33)), 0, 1);
+	vec3 F = Light_F(f0, f90, NV);
 	float Vis = Light_V(1, NV, alpha);
 	return F * Vis * reflectPix;
 }
@@ -141,30 +124,29 @@ void main() {
 	vec4 Albedo = texture(texAlbedo, UV);
 	vec4 Specular = texture(texSpecular, UV);
 
+	/*vec3 lightDir = normalize(vec3(0,1,1)); //normalize(vec3(0,sin(time),cos(time)));
+	float SunNL = clamp(dot(lightDir, Normal.xyz), 0, 1);
+	float MoonNL = clamp(dot(-lightDir, Normal.xyz), 0, 1);
+	color = vec3((SunNL+MoonNL*0.2)*0.9+0.1) * Albedo.rgb;
+	color = linearToSRGB(color);
+	return;*/
+
 	float lightRadius = 24;
 	float lightPow = 5;
 	color = CalculateIBL(Position.xyz, Normal.xyz, Specular);
 	float sideDist = 4.5;
 	for (int i=-1; i <=1; i++) {
 		vec3 lightPos = vec3(10,1.5,i * sideDist);
-		vec4 lightColor = vec4(0.83, 0.92, 1, lightPow);
-		color += LightPointCalc(Albedo.rgb, Position.xyz, Specular, Normal.xyz, lightPos, lightRadius, lightColor, eyePos);
-
-		lightPos = vec3(5,1.5,i * sideDist);
-		lightColor = vec4(1, 0.95, 0.89, lightPow);
+		vec3 lightColor = vec3(124, 138, 150)/16;
 		color += LightPointCalc(Albedo.rgb, Position.xyz, Specular, Normal.xyz, lightPos, lightRadius, lightColor, eyePos);
 
 		lightPos = vec3(0,1.5,i * sideDist);
-		lightColor = vec4(0.95, 1, 0.98, lightPow);
-		color += LightPointCalc(Albedo.rgb, Position.xyz, Specular, Normal.xyz, lightPos, lightRadius, lightColor, eyePos);
-
-		lightPos = vec3(-5,1.5,i * sideDist);
-		lightColor = vec4(0.83, 0.92, 1, lightPow);
+		lightColor = vec3(142.5, 150, 147)/16;
 		color += LightPointCalc(Albedo.rgb, Position.xyz, Specular, Normal.xyz, lightPos, lightRadius, lightColor, eyePos);
 
 		lightPos = vec3(-10,1.5,i * sideDist);
-		lightColor = vec4(1, 0.95, 0.89, lightPow);
+		lightColor = vec3(150, 142, 133)/16;
 		color += LightPointCalc(Albedo.rgb, Position.xyz, Specular, Normal.xyz, lightPos, lightRadius, lightColor, eyePos);
 	}
-	color = accurateLinearToSRGB(color);
+	color = linearToSRGB(color);
 }

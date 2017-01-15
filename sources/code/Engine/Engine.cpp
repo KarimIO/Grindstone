@@ -23,7 +23,6 @@ bool Engine::Initialize() {
 	if (!InitializeWindow())						return false;
 	if (!InitializeGraphics(GRAPHICS_OPENGL))		return false;
 
-
 	// An array of 3 vectors which represents 3 vertices
 	float g_vertex_buffer_data[] = {
 		-1.0f, -1.0f, 0.0f,
@@ -33,18 +32,21 @@ bool Engine::Initialize() {
 
 	std::string vsPath = "../shaders/objects/main.glvs"; // GetShaderExt()
 	std::string fsPath = "../shaders/objects/mainMetalness.glfs";
-
+		
 	std::string vsContent;
 	if (!ReadFile(vsPath, vsContent))
-		return false;
+		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
 
 	std::string fsContent;
 	if (!ReadFile(fsPath, fsContent))
-		return false;
-	
+		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
+
 	shader = pfnCreateShader();
-	shader->AddShader(&vsPath, &vsContent, SHADER_VERTEX);
-	shader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT);
+	shader->Initialize(2);
+	if (!shader->AddShader(&vsPath, &vsContent, SHADER_VERTEX))
+		fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
+	if (!shader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
+		fprintf(stderr, "Failed to add fragment shader %s.\n", vsPath.c_str());
 	shader->Compile();
 
 	shader->SetNumUniforms(7);
@@ -375,15 +377,18 @@ bool Engine::InitializeScene(std::string szScenePath) {
 	}
 
 	player = new EBasePlayer();
-
+	player->position.y = 2;
 	// Eventually do all spawning after all initializing is complete.
 	player->Spawn();
 
 	// Battletoads/Battletoad_posed.obj
 	// crytek-sponza/sponza.obj
+	/*
 	entities.push_back(EBase());
-	geometryCache.LoadModel3D("../models/Battletoads/Battletoad_posed.obj", entities.size() - 1, entities.back().components[COMPONENT_MODEL], entities.back().components[COMPONENT_RENDER]);
-	entities.back().scale = glm::vec3(0.1f, 0.1f, 0.1f);
+	geometryCache.LoadModel3D("../models/materialTest/materialTest.obj", entities.size() - 1, entities.back().components[COMPONENT_MODEL], entities.back().components[COMPONENT_RENDER]);
+
+	entities.back().position = glm::vec3(0.0f, 0.5f, 0.0f);
+	entities.back().scale = glm::vec3(0.4f, 0.4f, 0.4f);
 	entities.push_back(EBase());
 	geometryCache.LoadModel3D("../models/Battletoads/Battletoad_posed.obj", entities.size() - 1, entities.back().components[COMPONENT_MODEL], entities.back().components[COMPONENT_RENDER]);
 	entities.back().position = glm::vec3(2.0f, 0.0f, 0.0f);
@@ -391,7 +396,8 @@ bool Engine::InitializeScene(std::string szScenePath) {
 	entities.push_back(EBase());
 	geometryCache.LoadModel3D("../models/Battletoads/Battletoad_posed.obj", entities.size() - 1, entities.back().components[COMPONENT_MODEL], entities.back().components[COMPONENT_RENDER]);
 	entities.back().position = glm::vec3(-2.0f, 0.0f, 0.0f);
-	entities.back().scale = glm::vec3(0.1f, 0.1f, 0.1f);
+	entities.back().scale = glm::vec3(0.1f, 0.1f, 0.1f);*/
+	
 
 	engine.entities.push_back(EBase());
 	engine.geometryCache.LoadModel3D("../models/crytek-sponza/sponza.obj", engine.entities.size() - 1, engine.entities.back().components[COMPONENT_MODEL], engine.entities.back().components[COMPONENT_RENDER]);

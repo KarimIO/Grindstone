@@ -179,11 +179,14 @@ bool GraphicsWrapper::InitializeGraphics() {
 void GraphicsWrapper::DrawVertexArray(uint32_t numVertices) {
 }
 
-void GraphicsWrapper::DrawBaseVertex(const void *baseIndex, uint32_t baseVertex, uint32_t numIndices) {	
+void GraphicsWrapper::DrawBaseVertex(ShapeType type, const void *baseIndex, uint32_t baseVertex, uint32_t numIndices) {	
 }
 
 void GraphicsWrapper::Clear(unsigned int clearTarget) {
 }
 
 void GraphicsWrapper::SetResolution(int x, int y, uint32_t w, uint32_t h) {
+}
+
+void GraphicsWrapper::SetTesselation(int verts) {
 }

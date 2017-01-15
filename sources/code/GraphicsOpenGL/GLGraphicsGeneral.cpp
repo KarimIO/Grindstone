@@ -36,12 +36,13 @@ void GraphicsWrapper::SetResolution(int x, int y, uint32_t width, uint32_t heigh
 }
 
 void GraphicsWrapper::DrawVertexArray(uint32_t numVertices) {
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, numVertices);
 }
 
-void GraphicsWrapper::DrawBaseVertex(const void *baseIndex, uint32_t baseVertex, uint32_t numIndices) {
+void GraphicsWrapper::DrawBaseVertex(ShapeType type, const void *baseIndex, uint32_t baseVertex, uint32_t numIndices) {
+	int t = (type == SHAPE_PATCHES)?GL_PATCHES:type;
 	glDrawElementsBaseVertex(
-		GL_TRIANGLES,
+		t,
 		numIndices,
 		GL_UNSIGNED_INT,
 		baseIndex,
@@ -64,4 +65,24 @@ void GraphicsWrapper::Clear(unsigned int clearTarget) {
 		glClear(GL_DEPTH_BUFFER_BIT);
 	else
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void GraphicsWrapper::SetDepth(int state) {
+	if (state == 1) {
+		glDepthFunc(GL_LEQUAL);
+		glEnable(GL_DEPTH_TEST);
+	}
+	else if (state == 2) {
+		glDepthFunc(GL_GEQUAL);
+		glEnable(GL_DEPTH_TEST);
+	}
+	else
+		glDisable(GL_DEPTH_TEST);
+}
+
+void GraphicsWrapper::SetTesselation(int verts) {
+	GLint MaxPatchVertices = 0;
+	glGetIntegerv(GL_MAX_PATCH_VERTICES, &MaxPatchVertices);
+	printf("Max supported patch vertices %d\n", MaxPatchVertices);
+	glPatchParameteri(GL_PATCH_VERTICES, verts);
 }

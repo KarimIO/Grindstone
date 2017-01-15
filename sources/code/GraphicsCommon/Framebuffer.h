@@ -72,6 +72,8 @@ public:
 	virtual void WriteBind() = 0;
 	virtual void ReadBind() = 0;
 	virtual void Unbind() = 0;
+
+	virtual void TestBlit() = 0;
 };
 
 extern "C" GRAPHICS_EXPORT Framebuffer* createFramebuffer();

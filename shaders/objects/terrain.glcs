@@ -1,0 +1,39 @@
+#version 410 core
+
+// define the number of CPs in the output patch
+layout (vertices = 3) out;
+
+in vec2  TexCoord0_CS[];
+out vec2 TexCoord0_ES[];
+
+uniform vec3 eyePos;
+
+float lodLevel(vec3 pos){
+	float dist=distance(pos, eyePos);
+
+    float s = clamp((dist - 16.0f) / (512.0f - 16.0f), 0, 1);
+    return pow(2, (mix(64, 0, s)));
+}
+
+void main() {
+    TexCoord0_ES[gl_InvocationID] = TexCoord0_CS[gl_InvocationID];
+
+    if (gl_InvocationID == 0) {
+        
+        vec3 d1=gl_in[1].gl_Position.xyz+(gl_in[2].gl_Position.xyz-gl_in[1].gl_Position.xyz)/2;
+        vec3 d2=gl_in[0].gl_Position.xyz+(gl_in[2].gl_Position.xyz-gl_in[0].gl_Position.xyz)/2;
+        vec3 d3=gl_in[0].gl_Position.xyz+(gl_in[1].gl_Position.xyz-gl_in[0].gl_Position.xyz)/2;
+
+        float e0=lodLevel(d1);
+        float e1=lodLevel(d2);
+        float e2=lodLevel(d3);
+        float m=min(e0,min(e1,e2));
+
+        gl_TessLevelInner[0] = floor((min(e0,min(e1,e2))+max(e0,max(e1,e2)))/2);
+        gl_TessLevelOuter[0] = e0;
+        gl_TessLevelOuter[1] = e1;
+        gl_TessLevelOuter[2] = e2;
+    }
+    
+    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+}

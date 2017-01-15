@@ -15,6 +15,7 @@ public:
 	virtual void WriteBind();
 	virtual void ReadBind();
 	virtual void Unbind();
+	virtual void TestBlit();
 private:
 	unsigned int fbo;
 	unsigned int *textures;

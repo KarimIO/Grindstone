@@ -1,18 +1,20 @@
-#include "TextureManager.h"
-
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image.h>
-#include <stb_image_write.h>
 
+#include "TextureManager.h"
 Texture *LoadTexture(std::string path, PixelScheme scheme) {
 	Texture *t = pfnCreateTexture();
 	int texWidth, texHeight, texChannels;
 	stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+
+	if (!pixels) {
+		printf("Texture failed to load!: %s \n", path.c_str());
+		return NULL;
+	}
+
 	t->CreateTexture(pixels, scheme, texWidth, texHeight);
 
-	if (!pixels)
-		printf("Texture failed to load!: %s \n", path.c_str());
+	stbi_image_free(pixels);
 
 	return t;
 }
@@ -30,6 +32,13 @@ Texture *LoadCubemap(std::string path, std::string extension, PixelScheme scheme
 	stbi_uc* pixels[6];
 	for (int i = 0; i < 6; i++) {
 		pixels[i] = stbi_load(facePaths[i].c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+		if (!pixels[i]) {
+			printf("Texture failed to load!: %s \n", facePaths[i].c_str());
+			for (int j = 0; j < i; i++) {
+				stbi_image_free(pixels);
+			}
+			return NULL;
+		}
 	}
 	Texture *t = pfnCreateTexture();
 	t->CreateCubemap(pixels, scheme, texWidth, texHeight);

@@ -47,7 +47,7 @@ void GLFramebuffer::AddCubeBuffer(unsigned int colorType, unsigned int colorForm
 void GLFramebuffer::AddDepthBuffer(unsigned int width, unsigned int height) {
 	glGenTextures(1, &renderBuffer);
 	glBindTexture(GL_TEXTURE_2D, renderBuffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
 	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, renderBuffer, 0);
 }
@@ -76,8 +76,6 @@ void GLFramebuffer::BindTexture(unsigned int fboLoc) {
 
 void GLFramebuffer::WriteBind() {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
-	glDepthFunc(GL_LEQUAL);
-	glEnable(GL_DEPTH_TEST);
 }
 
 void GLFramebuffer::ReadBind() {
@@ -86,6 +84,35 @@ void GLFramebuffer::ReadBind() {
 
 void GLFramebuffer::Unbind() {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_FRAMEBUFFER_SRGB);
+}
+
+void GLFramebuffer::TestBlit() {
+	glEnable(GL_DEPTH_TEST);
+
+	for (GLenum err; (err = glGetError()) != GL_NO_ERROR;)
+	{
+		std::cout << err << " - 0\n";
+	}
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+	for (GLenum err; (err = glGetError()) != GL_NO_ERROR;)
+	{
+		std::cout << err << " - 1\n";
+	}
+	glBlitFramebuffer(0, 0, 1366, 768, 0, 0, 1366, 768, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+	for (GLenum err; (err = glGetError()) != GL_NO_ERROR;)
+	{
+		std::cout << err << " - 2\n";
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glDepthFunc(GL_LEQUAL);
+
+	for (GLenum err; (err = glGetError()) != GL_NO_ERROR;)
+	{
+		std::cout << err << " - 3\n";
+	}
 }

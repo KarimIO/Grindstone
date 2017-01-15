@@ -5,18 +5,33 @@
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 
-GLShaderProgram::GLShaderProgram()
-{
+void GLShaderProgram::Initialize(int numShaders) {
 	program = glCreateProgram();
 	shaderNum = 0;
+	shaders = new uint32_t[numShaders];
 }
 
 bool GLShaderProgram::AddShader(std::string *path, std::string *content, ShaderType type) {
 
 	// Compile Vertex Shader
 	int shaderType = GL_VERTEX_SHADER;
-	if (type == SHADER_FRAGMENT)
+	switch (type) {
+	case SHADER_FRAGMENT:
 		shaderType = GL_FRAGMENT_SHADER;
+		break;
+	case SHADER_TESS_EVALUATION:
+		shaderType = GL_TESS_EVALUATION_SHADER;
+		break;
+	case SHADER_TESS_CONTROL:
+		shaderType = GL_TESS_CONTROL_SHADER;
+		break;
+	case SHADER_GEOMETRY:
+		shaderType = GL_GEOMETRY_SHADER;
+		break;
+	case SHADER_VERTEX:
+		shaderType = GL_VERTEX_SHADER;
+		break;
+	}
 
 	shaders[shaderNum] = glCreateShader(shaderType);
 
@@ -59,7 +74,7 @@ bool GLShaderProgram::Compile() {
 		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
 		std::vector<GLchar> infoLog(maxLength);
 		glGetProgramInfoLog(program, maxLength, &maxLength, &infoLog[0]);
-		fprintf(stderr, "Error linking shader program: '%s'\n", ErrorLog);
+		fprintf(stderr, "Error linking shader program: '%s'\n", &infoLog[0]);
 		return false;
 	}
 
@@ -70,19 +85,15 @@ bool GLShaderProgram::Compile() {
 		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
 		std::vector<GLchar> infoLog(maxLength);
 		glGetProgramInfoLog(program, maxLength, &maxLength, &infoLog[0]);
-
-		glGetProgramInfoLog(program, sizeof(ErrorLog), NULL, ErrorLog);
-		fprintf(stderr, "Invalid shader program: '%s'\n", ErrorLog);
+		fprintf(stderr, "Invalid shader program: '%s'\n", &infoLog[0]);
 		return false;
 	}
 
 	// Detach Shaders (Remove their references)
-	glDetachShader(program, shaders[0]);
-	glDetachShader(program, shaders[1]);
-
-	// Cleanup
-	glDeleteShader(shaders[0]);
-	glDeleteShader(shaders[1]);
+	for (size_t i = 0; i < shaderNum; i++) {
+		glDetachShader(program, shaders[i]);
+		glDeleteShader(shaders[i]);
+	}
 
 	return true;
 }
@@ -111,6 +122,12 @@ void GLShaderProgram::SetUniform4m() {
 	glm::mat4 data = *(glm::mat4 *)(dataPtr);
 	glUniformMatrix4fv(uniforms[uniformCounter++], 1, GL_FALSE, &data[0][0]);
 	dataPtr += sizeof(glm::mat4);
+}
+
+void GLShaderProgram::SetUniformFloat() {
+	float data = *(float *)(dataPtr);
+	glUniform1f(uniforms[uniformCounter++], data);
+	dataPtr += sizeof(float);
 }
 
 void GLShaderProgram::SetInteger() {

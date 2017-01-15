@@ -7,6 +7,7 @@
 #include "TextureManager.h"
 
 struct UniformBufferDef {
+	float time;
 	glm::vec3 eyePos;
 	int texLoc0;
 	int texLoc1;
@@ -15,16 +16,24 @@ struct UniformBufferDef {
 	int texLoc4;
 } defUBO;
 
-void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view) {
+struct SkyUniformBufferDef {
+	glm::mat4 gWVP;
+	float time;
+} skydefUBO;
+
+void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
 	// Uses screen resolution due to framebuffer size
 	engine.graphicsWrapper->SetResolution(0, 0, engine.settings.resolutionX, engine.settings.resolutionY);
 	fbo->WriteBind();
+	graphicsWrapper->SetDepth(1);
 	graphicsWrapper->Clear(CLEAR_ALL);
 	geometryCache->Draw(projection, view);
+	//terrain.Draw(projection, view, eyePos);
 }
 
 void RenderPathDeferred::DeferredPass(glm::vec3 eyePos, glm::vec2 res) {
 	engine.graphicsWrapper->SetResolution(0, 0, res.x, res.y);
+	defUBO.time = (float)engine.GetTimeCurrent();
 	defUBO.eyePos = eyePos;
 	defUBO.texLoc0 = 0;
 	defUBO.texLoc1 = 1;
@@ -33,13 +42,13 @@ void RenderPathDeferred::DeferredPass(glm::vec3 eyePos, glm::vec2 res) {
 	defUBO.texLoc4 = 4;
 
 	fbo->Unbind();
-	shader->Use();
+	graphicsWrapper->SetDepth(0);
+	quadShader->Use();
 
 	fbo->BindTexture(0);
 	fbo->BindTexture(1);
 	fbo->BindTexture(2);
 	fbo->BindTexture(3);
-	//envMap->BindCubemap(4);
 	CubemapComponent *comp = engine.cubemapSystem.GetClosestCubemap(eyePos);
 	if (comp != NULL) {
 		Texture *cube = engine.cubemapSystem.GetClosestCubemap(eyePos)->cubemap;
@@ -47,13 +56,14 @@ void RenderPathDeferred::DeferredPass(glm::vec3 eyePos, glm::vec2 res) {
 			cube->BindCubemap(4);
 	}
 
-	shader->PassData(&defUBO);
-	shader->SetVec3();
-	shader->SetInteger();
-	shader->SetInteger();
-	shader->SetInteger();
-	shader->SetInteger();
-	shader->SetInteger();
+	quadShader->PassData(&defUBO);
+	quadShader->SetUniformFloat();
+	quadShader->SetVec3();
+	quadShader->SetInteger();
+	quadShader->SetInteger();
+	quadShader->SetInteger();
+	quadShader->SetInteger();
+	quadShader->SetInteger();
 
 	graphicsWrapper->Clear(CLEAR_COLOR);
 
@@ -62,7 +72,21 @@ void RenderPathDeferred::DeferredPass(glm::vec3 eyePos, glm::vec2 res) {
 	vaoQuad->Unbind();
 }
 
-void RenderPathDeferred::PostPass() {
+void RenderPathDeferred::PostPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
+	return;
+	//fbo->TestBlit();
+
+	engine.graphicsWrapper->SetResolution(0, 0, engine.settings.resolutionX, engine.settings.resolutionY);
+	skyShader->Use();
+	skydefUBO.gWVP = projection * view * glm::translate(eyePos);
+	skydefUBO.time = (float)engine.GetTimeCurrent();
+	skyShader->PassData(&skydefUBO);
+	skyShader->SetUniform4m();
+	skyShader->SetUniformFloat();
+
+	vaoSphere->Bind();
+	graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(sizeof(unsigned int) * 0), 0, numSkyIndices);
+	vaoSphere->Unbind();
 }
 
 RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
@@ -86,6 +110,50 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	vboQuad->Bind(0);
 	vaoQuad->Unbind();
 
+	Assimp::Importer importer;
+	const aiScene* pScene = importer.ReadFile("../models/sphere12.obj",
+		aiProcess_Triangulate |
+		aiProcess_GenSmoothNormals |
+		aiProcess_JoinIdenticalVertices |
+		aiProcess_SortByPType);
+
+	// If the import failed, report it
+	if (!pScene) {
+		printf("%s", importer.GetErrorString());
+		return;
+	}
+
+	std::vector<glm::vec3> vertices;
+	std::vector<unsigned int> indices;
+	vertices.reserve(pScene->mMeshes[0]->mNumVertices);
+	indices.reserve(pScene->mMeshes[0]->mNumFaces * 3);
+	for (unsigned int i = 0; i < pScene->mMeshes[0]->mNumVertices; i++) {
+		const aiVector3D* pPos = &(pScene->mMeshes[0]->mVertices[i]);
+		vertices.push_back(glm::vec3(pPos->x, pPos->y, pPos->z));
+	}
+
+	for (unsigned int i = 0; i < pScene->mMeshes[0]->mNumFaces; i++) {
+		const aiFace& Face = pScene->mMeshes[0]->mFaces[i];
+		assert(Face.mNumIndices == 3);
+		indices.push_back(Face.mIndices[0]);
+		indices.push_back(Face.mIndices[1]);
+		indices.push_back(Face.mIndices[2]);
+	}
+
+	numSkyIndices = indices.size();
+
+	vaoSphere= pfnCreateVAO();
+	vaoSphere->Initialize();
+	vaoSphere->Bind();
+
+	vboSphere = pfnCreateVBO();
+	vboSphere->Initialize(1);
+	vboSphere->AddVBO(&vertices[0], vertices.size() * sizeof(vertices[0]), 3, SIZE_FLOAT, DRAW_STATIC);
+	vboSphere->Bind(0, 0, false, 0, 0);
+	vboSphere->AddIBO(&indices[0], indices.size() * sizeof(unsigned int), DRAW_STATIC);
+
+	vaoSphere->Unbind();
+
 	glm::vec2 res = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
 	fbo = pfnCreateFramebuffer();
 	fbo->Initialize(4);
@@ -102,30 +170,70 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 
 	std::string vsContent;
 	if (!ReadFile(vsPath, vsContent))
-		fprintf(stderr, "Failed To Read File.\n");
+		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
 
 	std::string fsContent;
 	if (!ReadFile(fsPath, fsContent))
-		fprintf(stderr, "Failed To Read File.\n");
+		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
 
-	shader = pfnCreateShader();
-	shader->AddShader(&vsPath, &vsContent, SHADER_VERTEX);
-	shader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT);
-	shader->Compile();
+	quadShader = pfnCreateShader();
+	quadShader->Initialize(2);
+	if (!quadShader->AddShader(&vsPath, &vsContent, SHADER_VERTEX))
+		fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
+	if (!quadShader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
+		fprintf(stderr, "Failed to add fragment shader %s.\n", fsPath.c_str());
+	if (!quadShader->Compile())
+		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
 
-	shader->SetNumUniforms(6);
-	shader->CreateUniform("eyePos");
-	shader->CreateUniform("texPos");
-	shader->CreateUniform("texNormal");
-	shader->CreateUniform("texAlbedo");
-	shader->CreateUniform("texSpecular");
-	shader->CreateUniform("texRefl");
+	quadShader->SetNumUniforms(7);
+	quadShader->CreateUniform("time");
+	quadShader->CreateUniform("eyePos");
+	quadShader->CreateUniform("texPos");
+	quadShader->CreateUniform("texNormal");
+	quadShader->CreateUniform("texAlbedo");
+	quadShader->CreateUniform("texSpecular");
+	quadShader->CreateUniform("texRefl");
+
+	vsContent.clear();
+	fsContent.clear();
+	vsPath.clear();
+	fsPath.clear();
+
+	vsPath = "../shaders/objects/sky.glvs";
+	fsPath = "../shaders/objects/sky.glfs";
+
+	if (!ReadFile(vsPath, vsContent))
+		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
+
+	if (!ReadFile(fsPath, fsContent))
+		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
+
+	skyShader = pfnCreateShader();
+	skyShader->Initialize(2);
+	if (!skyShader->AddShader(&vsPath, &vsContent, SHADER_VERTEX))
+		fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
+	if (!skyShader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
+		fprintf(stderr, "Failed to add fragment shader %s.\n", fsPath.c_str());
+	if (!skyShader->Compile())
+		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
+
+	skyShader->SetNumUniforms(2);
+	skyShader->CreateUniform("gWVP");
+	skyShader->CreateUniform("time");
+
+	vsContent.clear();
+	fsContent.clear();
+	vsPath.clear();
+	fsPath.clear();
+
+	//terrain.Initialize();
+	//terrain.LoadTerrain("../materials/height.png", 32, 32, 8, 8);
 
 	envMap = LoadCubemap("../materials/skybox/Cliff", ".tga", COLOR_SRGB);
 }
 
 void RenderPathDeferred::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, glm::vec2 res) {
-	GeometryPass(projection, view);
+	GeometryPass(projection, view, eyePos);
 	DeferredPass(eyePos, res);
-	PostPass();
+	PostPass(projection, view, eyePos);
 }

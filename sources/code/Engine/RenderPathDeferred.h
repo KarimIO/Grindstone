@@ -4,6 +4,7 @@
 #include "RenderPath.h"
 #include <Framebuffer.h>
 #include <Shader.h>
+#include "Terrain.h"
 
 class RenderPathDeferred : public RenderPath {
 	GraphicsWrapper *graphicsWrapper;
@@ -12,12 +13,19 @@ class RenderPathDeferred : public RenderPath {
 
 	Texture *envMap;
 
-	void GeometryPass(glm::mat4 projection, glm::mat4 view);
+	int numSkyIndices;
+
+	void GeometryPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos);
 	void DeferredPass(glm::vec3 eyePos, glm::vec2 res);
-	void PostPass();
-	ShaderProgram *shader;
+	void PostPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos);
+	ShaderProgram *quadShader;
+	ShaderProgram *skyShader;
 	VertexArrayObject *vaoQuad;
 	VertexBufferObject *vboQuad;
+	VertexArrayObject *vaoSphere;
+	VertexBufferObject *vboSphere;
+
+	STerrain terrain;
 public:
 	virtual void Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, glm::vec2 res);
 	RenderPathDeferred(GraphicsWrapper *gw, SModel *gc);

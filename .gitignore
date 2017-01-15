@@ -49,3 +49,5 @@ models/*
 scenes/*
 sources/include/*
 cubemaps/*
+materials/*
+shaders/objects/backup/*

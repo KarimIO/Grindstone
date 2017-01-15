@@ -6,7 +6,7 @@
 class GLShaderProgram : public ShaderProgram {
 public:
 	uint32_t program;
-	uint32_t shaders[2];
+	uint32_t *shaders;
 	uint8_t shaderNum;
 
 	char *dataPtr;
@@ -14,7 +14,7 @@ public:
 	uint8_t dataOffset;
 	uint8_t uniformCounter;
 public:
-	GLShaderProgram();
+	virtual void Initialize(int numShaders);
 	virtual bool AddShader(std::string *path, std::string *content, ShaderType);
 	virtual bool Compile();
 	virtual void Use();
@@ -24,6 +24,7 @@ public:
 	virtual void PassData(void *);
 
 	virtual void SetUniform4m();
+	virtual void SetUniformFloat();
 	virtual void SetInteger();
 	virtual void SetVec3();
 

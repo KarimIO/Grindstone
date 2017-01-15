@@ -17,6 +17,22 @@
 
 #include <vulkan/vulkan.h>
 
+#define CLEAR_ALL 0
+#define CLEAR_COLOR 1
+#define CLEAR_DEPTH 2
+
+enum ShapeType {
+	SHAPE_POINTS = 0,
+	SHAPE_LINES,
+	SHAPE_LINE_LOOP,
+	SHAPE_LINE_STRIP,
+	SHAPE_TRIANGLES,
+	SHAPE_TRIANGLE_STRIP,
+	SHAPE_TRIANGLE_FAN,
+	SHAPE_QUADS,
+	SHAPE_PATCHES
+};
+
 class InputInterface;
 
 class GRAPHICS_EXPORT_CLASS GraphicsWrapper {
@@ -46,10 +62,11 @@ public:
 	virtual bool InitializeWindowContext();
 	virtual bool InitializeGraphics();
 	virtual void DrawVertexArray(uint32_t numIndices);
-	virtual void DrawBaseVertex(const void *baseIndex, uint32_t baseVertex, uint32_t numIndices);
+	virtual void DrawBaseVertex(ShapeType type, const void *baseIndex, uint32_t baseVertex, uint32_t numIndices);
 	virtual void SwapBuffer();
 	virtual void SetResolution(int x, int y, uint32_t width, uint32_t height);
 	virtual void Clear(unsigned int clearTarget);
+	virtual void SetTesselation(int verts);
 #ifdef _WIN32
 	virtual void SetWindowContext(HWND);
 #endif

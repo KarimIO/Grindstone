@@ -259,7 +259,7 @@ void SModel::DrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *model) {
 			else
 				std::cout << "Shader fail: " << renderComponent->entityID << " - " << i << " - " << j << "\n";
 
-			engine.graphicsWrapper->DrawBaseVertex((void*)(sizeof(unsigned int) * model->meshes[j].BaseIndex), model->meshes[j].BaseVertex, model->meshes[j].NumIndices);
+			engine.graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(sizeof(unsigned int) * model->meshes[j].BaseIndex), model->meshes[j].BaseVertex, model->meshes[j].NumIndices);
 		}
 	}
 	model->vao->Unbind();

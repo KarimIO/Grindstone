@@ -1,6 +1,8 @@
 #ifndef _TEXTURE_MANAGER_H
 
 #include "GraphicsDLLPointer.h"
+#include <stb_image.h>
+#include <stb_image_write.h>
 
 Texture *LoadTexture(std::string path, PixelScheme scheme);
 Texture *LoadCubemap(std::string path, std::string extension, PixelScheme scheme);

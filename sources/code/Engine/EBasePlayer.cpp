@@ -18,8 +18,8 @@ void EBasePlayer::Spawn() {
 	input.BindAction("Run", this, &EBasePlayer::RunStart, KEY_PRESSED);
 	input.BindAction("Run", this, &EBasePlayer::RunStop, KEY_RELEASED);
 	
-	speedModifier = 1;
-	sensitivity = 0.6;
+	speedModifier = 4;
+	sensitivity = 2.0;
 }
 
 void EBasePlayer::MoveForwardBack(double scale) {
@@ -31,7 +31,7 @@ void EBasePlayer::MoveSide(double scale) {
 }
 
 void EBasePlayer::MoveVertical(double scale) {
-	position += 5.0f * float(scale * speedModifier) * GetUp();
+	position.y += 5.0f * float(scale * speedModifier);
 }
 
 void EBasePlayer::TurnPitch(double scale) {
@@ -59,9 +59,9 @@ void EBasePlayer::ZoomOut(double scale) {
 
 void EBasePlayer::RunStart(double scale) {
 
-	speedModifier = 2.5;
+	speedModifier = 8.5;
 }
 
 void EBasePlayer::RunStop(double scale) {
-	speedModifier = 1.0;
+	speedModifier = 4.0;
 }
