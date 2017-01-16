@@ -188,5 +188,9 @@ void GraphicsWrapper::Clear(unsigned int clearTarget) {
 void GraphicsWrapper::SetResolution(int x, int y, uint32_t w, uint32_t h) {
 }
 
+void GraphicsWrapper::SetCull(CullType state) {
+
+}
+
 void GraphicsWrapper::SetTesselation(int verts) {
 }

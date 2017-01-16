@@ -19,6 +19,8 @@
 #include "Input.h"
 #include "EBasePlayer.h"
 
+#include <btBulletDynamicsCommon.h>
+
 #include "SCubemap.h"
 
 #include <chrono>

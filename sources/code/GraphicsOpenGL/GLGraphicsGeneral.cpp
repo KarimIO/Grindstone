@@ -86,3 +86,20 @@ void GraphicsWrapper::SetTesselation(int verts) {
 	printf("Max supported patch vertices %d\n", MaxPatchVertices);
 	glPatchParameteri(GL_PATCH_VERTICES, verts);
 }
+
+void GraphicsWrapper::SetCull(CullType state) {
+	int cullState;
+	switch (state) {
+	case CULL_NONE:
+		cullState = GL_FRONT_AND_BACK;
+		break;
+	case CULL_FRONT:
+		cullState = GL_FRONT;
+		break;
+	default:
+	case CULL_BACK:
+		cullState = GL_BACK;
+		break;
+	}
+	glCullFace(cullState);
+}

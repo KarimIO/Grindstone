@@ -19,7 +19,7 @@ void EBasePlayer::Spawn() {
 	input.BindAction("Run", this, &EBasePlayer::RunStop, KEY_RELEASED);
 	
 	speedModifier = 4;
-	sensitivity = 2.0;
+	sensitivity = 0.2;
 }
 
 void EBasePlayer::MoveForwardBack(double scale) {

@@ -10,10 +10,12 @@ void GLFramebuffer::Initialize(unsigned short numBuffer) {
 	glGenFramebuffers(1, &fbo);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
 	numBuffers = numBuffer;
-	targetBuffer = 0;
-	textures = new unsigned int[numBuffers];
-	glGenTextures(numBuffers, textures);
-	glEnable(GL_FRAMEBUFFER_SRGB);
+	if (numBuffer > 0) {
+		targetBuffer = 0;
+		textures = new unsigned int[numBuffers];
+		glGenTextures(numBuffers, textures);
+		glEnable(GL_FRAMEBUFFER_SRGB);
+	}
 }
 
 // Eventually have the following two only use one type parameter, or organize it better.
@@ -45,11 +47,17 @@ void GLFramebuffer::AddCubeBuffer(unsigned int colorType, unsigned int colorForm
 }
 
 void GLFramebuffer::AddDepthBuffer(unsigned int width, unsigned int height) {
-	glGenTextures(1, &renderBuffer);
-	glBindTexture(GL_TEXTURE_2D, renderBuffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glGenTextures(1, &depthBuffer);
+	glBindTexture(GL_TEXTURE_2D, depthBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, renderBuffer, 0);
+	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthBuffer, 0);
 }
 
 void GLFramebuffer::Generate() {
@@ -72,6 +80,12 @@ void GLFramebuffer::Generate() {
 void GLFramebuffer::BindTexture(unsigned int fboLoc) {
 	glActiveTexture(GL_TEXTURE0 + fboLoc);
 	glBindTexture(GL_TEXTURE_2D, textures[fboLoc]);
+}
+
+
+void GLFramebuffer::BindDepth(unsigned int loc) {
+	glActiveTexture(GL_TEXTURE0 + loc);
+	glBindTexture(GL_TEXTURE_2D, depthBuffer);
 }
 
 void GLFramebuffer::WriteBind() {

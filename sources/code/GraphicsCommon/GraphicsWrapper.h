@@ -42,6 +42,12 @@ enum ShapeType {
 	SHAPE_PATCHES
 };
 
+enum CullType {
+	CULL_NONE = 0,
+	CULL_FRONT,
+	CULL_BACK,
+};
+
 class GRAPHICS_EXPORT_CLASS GraphicsWrapper {
 private:
 #ifdef _WIN32
@@ -65,6 +71,7 @@ public:
 	virtual void SetResolution(int x, int y, uint32_t width, uint32_t height);
 	virtual void Clear(unsigned int clearTarget);
 	virtual void SetDepth(bool state);
+	virtual void SetCull(CullType state);
 	virtual void SetTesselation(int verts);
 
 #ifdef _WIN32

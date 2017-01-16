@@ -8,6 +8,9 @@ uniform sampler2D texAlbedo;
 uniform sampler2D texSpecular;
 uniform samplerCube texRefl;
 
+uniform sampler2D sunShadow;
+uniform mat4 directionalShadowMatrix;
+
 uniform vec3 eyePos;
 uniform float time;
 
@@ -124,9 +127,9 @@ void main() {
 	vec4 Albedo = texture(texAlbedo, UV);
 	vec4 Specular = texture(texSpecular, UV);
 
-	/*vec3 lightDir = normalize(vec3(0,1,1)); //normalize(vec3(0,sin(time),cos(time)));
+	vec3 lightDir = normalize(vec3(0,sin(time/4.0f),cos(time/4.0f)));
 	float SunNL = clamp(dot(lightDir, Normal.xyz), 0, 1);
-	float MoonNL = clamp(dot(-lightDir, Normal.xyz), 0, 1);
+	/*float MoonNL = clamp(dot(-lightDir, Normal.xyz), 0, 1);
 	color = vec3((SunNL+MoonNL*0.2)*0.9+0.1) * Albedo.rgb;
 	color = linearToSRGB(color);
 	return;*/
@@ -134,6 +137,15 @@ void main() {
 	float lightRadius = 24;
 	float lightPow = 5;
 	color = CalculateIBL(Position.xyz, Normal.xyz, Specular);
+
+	vec3 depthmapPos = (directionalShadowMatrix * vec4(Position.xyz,1)).xyz;
+	float bias = 0.005;
+	float visibility = 1.0;
+	if ( texture( sunShadow, depthmapPos.xy ).z  <  (depthmapPos.z - bias)) {
+		visibility = 0;
+	}
+	color += Albedo.rgb * SunNL; // * visibility;
+
 	float sideDist = 4.5;
 	for (int i=-1; i <=1; i++) {
 		vec3 lightPos = vec3(10,1.5,i * sideDist);
@@ -148,5 +160,6 @@ void main() {
 		lightColor = vec3(150, 142, 133)/16;
 		color += LightPointCalc(Albedo.rgb, Position.xyz, Specular, Normal.xyz, lightPos, lightRadius, lightColor, eyePos);
 	}
+
 	color = linearToSRGB(color);
 }

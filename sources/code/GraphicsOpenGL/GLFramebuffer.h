@@ -12,6 +12,7 @@ public:
 	virtual void AddDepthBuffer(unsigned int width, unsigned int height);
 	virtual void Generate();
 	virtual void BindTexture(unsigned int fboLoc);
+	virtual void BindDepth(unsigned int loc);
 	virtual void WriteBind();
 	virtual void ReadBind();
 	virtual void Unbind();
@@ -19,7 +20,7 @@ public:
 private:
 	unsigned int fbo;
 	unsigned int *textures;
-	unsigned int renderBuffer;
+	unsigned int depthBuffer;
 	unsigned int numBuffers;
 	unsigned int targetBuffer;
 };

@@ -33,6 +33,12 @@ enum ShapeType {
 	SHAPE_PATCHES
 };
 
+enum CullType {
+	CULL_NONE = 0,
+	CULL_FRONT,
+	CULL_BACK,
+};
+
 class InputInterface;
 
 class GRAPHICS_EXPORT_CLASS GraphicsWrapper {
@@ -66,6 +72,7 @@ public:
 	virtual void SwapBuffer();
 	virtual void SetResolution(int x, int y, uint32_t width, uint32_t height);
 	virtual void Clear(unsigned int clearTarget);
+	virtual void SetCull(CullType state);
 	virtual void SetTesselation(int verts);
 #ifdef _WIN32
 	virtual void SetWindowContext(HWND);

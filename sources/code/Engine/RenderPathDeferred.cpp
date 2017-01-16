@@ -6,6 +6,8 @@
 
 #include "TextureManager.h"
 
+#include <glm/gtx/transform.hpp>
+
 struct UniformBufferDef {
 	float time;
 	glm::vec3 eyePos;
@@ -14,6 +16,8 @@ struct UniformBufferDef {
 	int texLoc2;
 	int texLoc3;
 	int texLoc4;
+	int sunShadow;
+	glm::mat4 directionalShadowMatrix;
 } defUBO;
 
 struct SkyUniformBufferDef {
@@ -21,14 +25,39 @@ struct SkyUniformBufferDef {
 	float time;
 } skydefUBO;
 
+void RenderPathDeferred::ShadowPass() {
+	DirectionalShadowShader();
+}
+
+void RenderPathDeferred::DirectionalShadowShader() {
+	float t = (float)engine.GetTimeCurrent() / 4.0f;
+	glm::vec3 pos = glm::vec3(0, sin(t), cos(t))*20.0f;
+	glm::mat4 proj = glm::ortho<float>(-64, 64, -64, 64, -8, 64);
+	glm::mat4 view = glm::lookAt(
+		pos,
+		glm::vec3(0, 0, 0),
+		glm::cross(pos, glm::vec3(1,0,0))
+	);
+
+	engine.graphicsWrapper->SetResolution(0, 0, 1024, 1024);
+	directionalLight->WriteBind();
+	graphicsWrapper->SetDepth(1);
+	graphicsWrapper->SetCull(CULL_FRONT);
+	graphicsWrapper->Clear(CLEAR_ALL);
+	geometryCache->Draw(proj, view);
+	directionalLight->Unbind();
+}
+
 void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
 	// Uses screen resolution due to framebuffer size
 	engine.graphicsWrapper->SetResolution(0, 0, engine.settings.resolutionX, engine.settings.resolutionY);
 	fbo->WriteBind();
 	graphicsWrapper->SetDepth(1);
+	graphicsWrapper->SetCull(CULL_BACK);
 	graphicsWrapper->Clear(CLEAR_ALL);
 	geometryCache->Draw(projection, view);
 	//terrain.Draw(projection, view, eyePos);
+	fbo->Unbind();
 }
 
 void RenderPathDeferred::DeferredPass(glm::vec3 eyePos, glm::vec2 res) {
@@ -40,8 +69,9 @@ void RenderPathDeferred::DeferredPass(glm::vec3 eyePos, glm::vec2 res) {
 	defUBO.texLoc2 = 2;
 	defUBO.texLoc3 = 3;
 	defUBO.texLoc4 = 4;
+	defUBO.sunShadow = 5;
 
-	fbo->Unbind();
+	fbo->ReadBind();
 	graphicsWrapper->SetDepth(0);
 	quadShader->Use();
 
@@ -55,6 +85,27 @@ void RenderPathDeferred::DeferredPass(glm::vec3 eyePos, glm::vec2 res) {
 		if (cube != NULL)
 			cube->BindCubemap(4);
 	}
+	directionalLight->ReadBind();
+	directionalLight->BindDepth(5);
+
+
+	float t = (float)engine.GetTimeCurrent() / 4.0f;
+	glm::vec3 pos = glm::vec3(0, sin(t), cos(t))*20.0f;
+	glm::mat4 proj = glm::ortho<float>(-64, 64, -64, 64, -8, 64);
+	glm::mat4 view = glm::lookAt(
+		pos,
+		glm::vec3(0, 0, 0),
+		glm::cross(pos, glm::vec3(1, 0, 0))
+	);
+
+	glm::mat4 biasMatrix(
+		0.5, 0.0, 0.0, 0.0,
+		0.0, 0.5, 0.0, 0.0,
+		0.0, 0.0, 0.5, 0.0,
+		0.5, 0.5, 0.5, 1.0
+	);
+
+	defUBO.directionalShadowMatrix = biasMatrix * proj * view * glm::mat4(1.0f);
 
 	quadShader->PassData(&defUBO);
 	quadShader->SetUniformFloat();
@@ -64,6 +115,8 @@ void RenderPathDeferred::DeferredPass(glm::vec3 eyePos, glm::vec2 res) {
 	quadShader->SetInteger();
 	quadShader->SetInteger();
 	quadShader->SetInteger();
+	quadShader->SetInteger();
+	quadShader->SetUniform4m();
 
 	graphicsWrapper->Clear(CLEAR_COLOR);
 
@@ -165,6 +218,11 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	fbo->AddDepthBuffer(res.x, res.y);
 	fbo->Generate();
 
+	directionalLight = pfnCreateFramebuffer();
+	directionalLight->Initialize(0);
+	directionalLight->AddDepthBuffer(1024, 1024);
+	directionalLight->Generate();
+
 	std::string vsPath = "../shaders/deferred.glvs";
 	std::string fsPath = "../shaders/deferred.glfs";
 
@@ -185,7 +243,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	if (!quadShader->Compile())
 		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
 
-	quadShader->SetNumUniforms(7);
+	quadShader->SetNumUniforms(9);
 	quadShader->CreateUniform("time");
 	quadShader->CreateUniform("eyePos");
 	quadShader->CreateUniform("texPos");
@@ -193,7 +251,9 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	quadShader->CreateUniform("texAlbedo");
 	quadShader->CreateUniform("texSpecular");
 	quadShader->CreateUniform("texRefl");
-
+	quadShader->CreateUniform("sunShadow");
+	quadShader->CreateUniform("directionalShadowMatrix");
+	
 	vsContent.clear();
 	fsContent.clear();
 	vsPath.clear();
@@ -233,7 +293,8 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 }
 
 void RenderPathDeferred::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, glm::vec2 res) {
+	ShadowPass();
 	GeometryPass(projection, view, eyePos);
 	DeferredPass(eyePos, res);
-	PostPass(projection, view, eyePos);
+	//PostPass(projection, view, eyePos);
 }
