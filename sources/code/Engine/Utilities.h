@@ -4,6 +4,7 @@
 #include <string>
 
 bool ReadFile(std::string path, std::string &output);
+bool ReadFileIncludable(std::string path, std::string &output);
 
 bool FileExists(std::string fileName);
 

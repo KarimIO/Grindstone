@@ -63,6 +63,7 @@ public:
 	virtual void Clear(unsigned int clearTarget);
 	virtual void SetDepth(int state);
 	virtual void SetCull(CullType state);
+	virtual void SetBlending(bool state);
 	virtual void SetTesselation(int verts);
 #ifdef _WIN32
 	virtual void SetWindowContext(HWND);

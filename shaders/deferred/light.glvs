@@ -1,0 +1,10 @@
+#version 410 core
+
+layout (location = 0) in vec3 vertexPos;
+
+uniform mat4 gWVP;
+uniform float lightAttenuationRadius;
+
+void main() {
+    gl_Position = gWVP * vec4(lightAttenuationRadius * vertexPos, 1.0);
+}

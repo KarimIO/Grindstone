@@ -1,0 +1,33 @@
+#version 410 core
+
+//layout(location = 0) out vec4 colorOut;
+out vec4 colorOut;
+
+uniform sampler2D gbuffer0;
+uniform sampler2D gbuffer1;
+uniform sampler2D gbuffer2;
+uniform sampler2D gbuffer3;
+uniform vec3 lightColor;
+uniform float lightIntensity;
+uniform float lightAttenuationRadius;
+uniform vec3 lightPosition;
+uniform vec3 eyePos;
+
+#include ../shaders/light.is
+
+void main() {
+	vec2 UV			=  gl_FragCoord.xy.xy/vec2(1366, 768);
+
+	vec4 Position	= texture(gbuffer0, UV);
+	vec4 Normal		= texture(gbuffer1, UV);
+	vec4 Albedo		= texture(gbuffer2, UV);
+	vec4 Specular	= texture(gbuffer3, UV);
+
+	float lightRadius = 24;
+	vec3 lightPow = lightColor * lightIntensity;
+	float strength = length(Position.xyz-lightPosition);
+	strength = strength/lightAttenuationRadius;
+	strength = max(0, 1-strength);
+	colorOut = vec4(LightPointCalc(Albedo.rgb, Position.xyz, Specular, Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, eyePos), 1);
+	colorOut = vec4(linearToSRGB(colorOut.rgb), colorOut.a);
+}

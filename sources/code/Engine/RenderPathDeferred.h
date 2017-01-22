@@ -10,23 +10,22 @@ class RenderPathDeferred : public RenderPath {
 	GraphicsWrapper *graphicsWrapper;
 	SModel *geometryCache;
 	Framebuffer *fbo;
-	Framebuffer *directionalLight;
+	Framebuffer *postFBO;
 
 	Texture *envMap;
 
-	int numSkyIndices;
-
-	void ShadowPass();
-	void DirectionalShadowShader();
+	unsigned int numSkyIndices;
 
 	void GeometryPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos);
-	void DeferredPass(glm::vec3 eyePos, glm::vec2 res);
+	void DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, glm::vec2 res);
 	void PostPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos);
-	ShaderProgram *quadShader;
+	ShaderProgram *directionalLightShader;
+	ShaderProgram *spotLightShader;
+	ShaderProgram *pointLightShader;
 	ShaderProgram *skyShader;
+	ShaderProgram *postShader;
 
 	ShaderProgram *directionalShadowShader;
-	
 
 	VertexArrayObject *vaoQuad;
 	VertexBufferObject *vboQuad;

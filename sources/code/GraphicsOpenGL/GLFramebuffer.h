@@ -10,9 +10,11 @@ public:
 	virtual void AddBuffer(unsigned int colorType, unsigned int colorFormat, unsigned int colorDataType, unsigned int width, unsigned int height);
 	virtual void AddCubeBuffer(unsigned int colorType, unsigned int colorFormat, unsigned int colorDataType, unsigned int width, unsigned int height);
 	virtual void AddDepthBuffer(unsigned int width, unsigned int height);
+	virtual void AddDepthCubeBuffer(unsigned int width, unsigned int height);
 	virtual void Generate();
 	virtual void BindTexture(unsigned int fboLoc);
 	virtual void BindDepth(unsigned int loc);
+	virtual void BindTexture(unsigned int fboLoc, unsigned int bindLoc);
 	virtual void WriteBind();
 	virtual void ReadBind();
 	virtual void Unbind();

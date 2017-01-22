@@ -9,12 +9,7 @@
 #include <vector>
 #include "Texture.h"
 
-struct CubemapDirection
-{
-	char name[3];
-	glm::vec3 Target;
-	glm::vec3 Up;
-};
+#include "CubeInfo.h"
 
 class CubemapComponent;
 class CubemapSystem {

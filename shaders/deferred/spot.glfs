@@ -1,0 +1,61 @@
+#version 410 core
+
+//layout(location = 0) out vec4 colorOut;
+out vec4 colorOut;
+
+uniform sampler2D gbuffer0;
+uniform sampler2D gbuffer1;
+uniform sampler2D gbuffer2;
+uniform sampler2D gbuffer3;
+uniform vec3 lightColor;
+uniform float lightIntensity;
+uniform float lightAttenuationRadius;
+uniform vec3 lightPosition;
+uniform vec3 eyePos;
+
+uniform float lightInnerAngle;
+uniform float lightOuterAngle;
+uniform vec3 lightDirection;
+
+uniform sampler2D lightShadow;
+uniform mat4 shadowMatrix;
+
+#include ../shaders/light.is
+
+void main() {
+	vec2 UV			=  gl_FragCoord.xy.xy/vec2(1366, 768);
+
+	vec4 Position	= texture(gbuffer0, UV);
+	vec4 Normal		= texture(gbuffer1, UV);
+	vec4 Albedo		= texture(gbuffer2, UV);
+	vec4 Specular	= texture(gbuffer3, UV);
+
+	float lightRadius = 24;
+	vec3 lightPow = lightColor * lightIntensity;
+	float strength = length(Position.xyz-lightPosition);
+	strength = strength/lightAttenuationRadius;
+	strength = max(0, 1-strength);
+	colorOut = vec4(LightPointCalc(Albedo.rgb, Position.xyz, Specular, Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, eyePos), 1);
+	
+	vec4 depthmapPos = (shadowMatrix * vec4(Position.xyz,1));
+	float bias = 0.005;
+	float visibility = 0;
+	vec2 ShadowCoord = depthmapPos.xy/depthmapPos.w;
+	if (ShadowCoord.x >= 0 && ShadowCoord.x <= 1 && ShadowCoord.y >= 0 && ShadowCoord.y <= 1) {
+		if ( texture( lightShadow, ShadowCoord ).z  >=  (depthmapPos.z - bias)/depthmapPos.w) {
+			visibility = 1.0;
+		}
+	}
+
+	vec3 lightDir = normalize(Position.xyz-lightPosition);
+	float maxDot = cos(lightInnerAngle);
+	float minDot = cos(lightOuterAngle);
+	float dotPR = dot(lightDir, lightDirection);
+	dotPR = clamp((dotPR-minDot)/(maxDot-minDot), 0, 1);
+	if (dotPR > 0) {
+		colorOut = vec4(linearToSRGB(visibility*colorOut.rgb), colorOut.a)*dotPR;
+	}
+	else {
+		colorOut = vec4(0,0,0,0);
+	}
+}

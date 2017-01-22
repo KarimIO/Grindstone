@@ -67,8 +67,10 @@ public:
 	virtual void AddBuffer(unsigned int colorType, unsigned int colorFormat, unsigned int colorDataType, unsigned int width, unsigned int height) = 0;
 	virtual void AddCubeBuffer(unsigned int colorType, unsigned int colorFormat, unsigned int colorDataType, unsigned int width, unsigned int height) = 0;
 	virtual void AddDepthBuffer(unsigned int width, unsigned int height) = 0;
+	virtual void AddDepthCubeBuffer(unsigned int width, unsigned int height) = 0;
 	virtual void Generate() = 0;
 	virtual void BindTexture(unsigned int fboLoc) = 0;
+	virtual void BindTexture(unsigned int fboLoc, unsigned int bindLoc) = 0;
 	virtual void BindDepth(unsigned int loc) = 0;
 	virtual void WriteBind() = 0;
 	virtual void ReadBind() = 0;

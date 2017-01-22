@@ -103,3 +103,14 @@ void GraphicsWrapper::SetCull(CullType state) {
 	}
 	glCullFace(cullState);
 }
+
+void GraphicsWrapper::SetBlending(bool state) {
+	if (state) {
+		glEnable(GL_BLEND);
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendFunc(GL_ONE, GL_ONE);
+	}
+	else {
+		glDisable(GL_BLEND);
+	}
+}

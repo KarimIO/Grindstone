@@ -19,9 +19,8 @@
 #include "Input.h"
 #include "EBasePlayer.h"
 
-#include <btBulletDynamicsCommon.h>
-
 #include "SCubemap.h"
+#include "SLight.h"
 
 #include <chrono>
 #include <string>
@@ -72,6 +71,7 @@ public:
 
 	GameWindow *window;
 	SModel geometryCache;
+	SLight lightSystem;
 
 	InputSystem inputSystem;
 	GraphicsWrapper *graphicsWrapper;

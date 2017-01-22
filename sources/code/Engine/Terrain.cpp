@@ -97,12 +97,12 @@ void STerrain::LoadTerrain(std::string path, float width, float length, float he
 
 	for (size_t i = 0; i < patches; i++) {
 		for (size_t j = 0; j < patches; j++) {
-			indices.push_back(i*numVerts + j);
-			indices.push_back((i + 1)*numVerts + j);
-			indices.push_back((i + 1)*numVerts + j + 1);
-			indices.push_back((i + 1)*numVerts + j + 1);
-			indices.push_back(i*numVerts + j + 1);
-			indices.push_back(i*numVerts + j);
+			indices.push_back((unsigned int)(i*numVerts + j));
+			indices.push_back((unsigned int)((i + 1)*numVerts + j));
+			indices.push_back((unsigned int)((i + 1)*numVerts + j + 1));
+			indices.push_back((unsigned int)((i + 1)*numVerts + j + 1));
+			indices.push_back((unsigned int)(i*numVerts + j + 1));
+			indices.push_back((unsigned int)(i*numVerts + j));
 		}
 	}
 

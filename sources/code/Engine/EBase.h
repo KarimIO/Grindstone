@@ -2,12 +2,7 @@
 #define _EBASE_H
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
-
-enum {
-	COMPONENT_MODEL = 0,
-	COMPONENT_RENDER,
-	COMPONENT_SIZE
-};
+#include "CBase.h"
 
 class EBase {
 protected:
@@ -17,7 +12,7 @@ public:
 	glm::vec3 angles;
 	glm::vec3 scale;
 	EBase();
-	size_t components[COMPONENT_SIZE];
+	size_t components[NUM_COMPONENTS];
 	glm::vec3 GetForward();
 	glm::vec3 GetRight();
 	glm::vec3 GetUp();

@@ -2,6 +2,35 @@
 #include <fstream>
 #include <string>
 
+bool ReadFileIncludable(std::string pFileName, std::string& output)
+{
+	std::ifstream file;
+	file.open(pFileName);
+
+	if (!file.fail()) {
+		std::string line;
+		while (getline(file, line)) {
+			if (line.substr(0, 8) == "#include") {
+				// Load the Include
+				std::string outTemp;
+				ReadFileIncludable((line.substr(9)).c_str(), outTemp);
+				output += outTemp;
+			}
+			else {
+				output += line + "\n";
+			}
+		}
+
+		file.close();
+		return true;
+	}
+	else {
+		printf("Unable to open file %s", pFileName.c_str());
+	}
+
+	return false;
+}
+
 bool ReadFile(std::string pFileName, std::string& output)
 {
 	std::ifstream file;
@@ -18,7 +47,7 @@ bool ReadFile(std::string pFileName, std::string& output)
 	else {
 		printf("Unable to open file %s", pFileName.c_str());
 	}
-	
+
 	return false;
 }
 

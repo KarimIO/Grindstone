@@ -75,6 +75,8 @@ bool Engine::Initialize() {
 		break;
 	};
 
+	lightSystem.SetPointers(graphicsWrapper, &geometryCache);
+
 	engine.inputSystem.AddControl("escape", "Shutdown", NULL, 1);
 	engine.inputSystem.BindAction("Shutdown", NULL, &engine, &Engine::ShutdownControl);
 
@@ -318,6 +320,7 @@ Engine &Engine::GetInstance() {
 #endif
 
 void Engine::Render(glm::mat4 projection, glm::mat4 view, glm::vec2 res) {
+	lightSystem.DrawShadows();
 	renderPath->Draw(projection, view, player->GetPosition(), res);
 #ifdef _WIN32
 	graphicsWrapper->SwapBuffer();
@@ -340,6 +343,13 @@ void Engine::Run() {
 		//lag += GetRenderTimeDelta();
 		window->HandleEvents();
 		inputSystem.LoopControls();
+		if (lightSystem.directionalLights.size() > 0) {
+			unsigned int eID = lightSystem.directionalLights[0].entityID;
+			float time = GetTimeCurrent();
+			entities[eID].position = glm::vec3(0, glm::sin(time / 4.0f), glm::cos(time / 4.0f)) * 40.0f;
+			float ang = std::fmod(time, 360);
+			entities[eID].angles = glm::vec3(-3.14159f / 2, 0, 0);
+		}
 		/*while (lag >= MS_PER_UPDATE)
 		{
 			lag -= MS_PER_UPDATE;
@@ -397,7 +407,46 @@ bool Engine::InitializeScene(std::string szScenePath) {
 	geometryCache.LoadModel3D("../models/Battletoads/Battletoad_posed.obj", entities.size() - 1, entities.back().components[COMPONENT_MODEL], entities.back().components[COMPONENT_RENDER]);
 	entities.back().position = glm::vec3(-2.0f, 0.0f, 0.0f);
 	entities.back().scale = glm::vec3(0.1f, 0.1f, 0.1f);*/
+
+	entities.push_back(EBase());
+	entities.back().position = glm::vec3(-10, 1.5, -4.5);
+	entities.back().angles = glm::vec3(0, 3.14159f / 4, 0);
+	lightSystem.AddSpotLight((unsigned int)entities.size() - 1, glm::vec3(1, 0.5, 0.5), 400.0f, true, 16, 45, 89);
+	entities.push_back(EBase());
+	entities.back().position = glm::vec3( 10, 1.5, -4.5);
+	entities.back().angles = glm::vec3(-3.14159f / 2, 0, 0);
+	lightSystem.AddSpotLight((unsigned int)entities.size() - 1, glm::vec3(0.5, 0.5, 1), 10.0f, false, 16, 20, 45);
 	
+	entities.push_back(EBase());
+	entities.back().position = glm::vec3(-10, 1.5, 4.5);
+	entities.back().angles = glm::vec3(0, -3.14159f / 2, 0);
+	lightSystem.AddSpotLight((unsigned int)entities.size() - 1, glm::vec3(0.5, 0.5, 1), 15.0f, true, 16, 40, 80);
+	entities.push_back(EBase());
+	entities.back().position = glm::vec3( 10, 1.5, 4.5);
+	entities.back().angles = glm::vec3(-3.14159f / 2, 0, 0);
+	lightSystem.AddSpotLight((unsigned int)entities.size() - 1, glm::vec3(1, 1, 1), 5.0f, false, 16, 30, 60);
+
+	/*entities.push_back(EBase());
+	entities.back().position = glm::vec3(0, 1.5, -4.5);
+	lightSystem.AddPointLight((unsigned int)entities.size() - 1, glm::vec3(0.5, 1, 0.5), 40.0f, true, 16);
+	entities.push_back(EBase());
+	entities.back().position = glm::vec3(-10, 1.5, 0);
+	lightSystem.AddPointLight((unsigned int)entities.size() - 1, glm::vec3(1, 1, 1), 30.0f, true, 16);
+	
+	entities.push_back(EBase());
+	entities.back().position = glm::vec3(10, 1.5, 0);
+	lightSystem.AddPointLight((unsigned int)entities.size() - 1, glm::vec3(0.5, 1, 0.5), 25.0f, true, 16);
+	entities.push_back(EBase());
+	entities.back().position = glm::vec3(0, 1.5, 4.5);
+	lightSystem.AddPointLight((unsigned int)entities.size() - 1, glm::vec3(1, 1, 1), 22.0f, true, 16);
+
+	entities.push_back(EBase());
+	entities.back().position = glm::vec3(0, 1.5, 0);
+	lightSystem.AddPointLight((unsigned int)entities.size() - 1, glm::vec3(1, 0.5, 0.5), 100, true, 4);*/
+
+	entities.push_back(EBase());
+	entities.back().position = glm::vec3(10, 1.5, 4.5);
+	lightSystem.AddDirectionalLight((unsigned int)entities.size() - 1, glm::vec3(1, 1, 1), 200.0f, true, 32.0f);
 
 	engine.entities.push_back(EBase());
 	engine.geometryCache.LoadModel3D("../models/crytek-sponza/sponza.obj", engine.entities.size() - 1, engine.entities.back().components[COMPONENT_MODEL], engine.entities.back().components[COMPONENT_RENDER]);
