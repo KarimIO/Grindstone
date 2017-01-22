@@ -20,6 +20,8 @@ public:
 	void AddSpotLight(unsigned int entityID, glm::vec3 lightColor, float intensity, bool castShadow, float lightRadius, float innerRadius, float outerRadius);
 	void AddDirectionalLight(unsigned int entityID, glm::vec3 lightColor, float intensity, bool castShadow, float sunRadius);
 	void DrawShadows();
+
+	unsigned int iteration;
 };
 
 #endif

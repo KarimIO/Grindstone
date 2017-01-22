@@ -19,6 +19,7 @@ void SLight::AddDirectionalLight(unsigned int entityID, glm::vec3 lightColor, fl
 void SLight::SetPointers(GraphicsWrapper *gw, SModel *gc) {
 	graphicsWrapper = gw;
 	geometryCache = gc;
+	iteration = 0;
 }
 
 void SLight::DrawShadows() {
@@ -29,7 +30,10 @@ void SLight::DrawShadows() {
 		0.0, 0.0, 0.5, 0.0,
 		0.5, 0.5, 0.5, 1.0
 	);
-	for (size_t i = 0; i < 0; i++) {
+
+	unsigned int i = iteration;
+	if (i < pointLights.size()) {
+	//for (size_t i = 0; i < 0; i++) {
 		CPointLight *light = &pointLights[i];
 		if (light->castShadow) {
 			unsigned int entityID = light->entityID;
@@ -53,7 +57,9 @@ void SLight::DrawShadows() {
 		}
 	}
 
-	for (size_t i = 0; i < spotLights.size(); i++) {
+	else if (i < spotLights.size() + pointLights.size()) {
+		i -= pointLights.size();
+	//for (size_t i = 0; i < spotLights.size(); i++) {
 		CSpotLight *light = &spotLights[i];
 		if (light->castShadow) {
 			unsigned int entityID = light->entityID;
@@ -77,8 +83,8 @@ void SLight::DrawShadows() {
 		}
 	}
 
-	for (size_t i = 0; i < directionalLights.size(); i++) {
-		CDirectionalLight *light = &directionalLights[i];
+	for (size_t j = 0; j < directionalLights.size(); j++) {
+		CDirectionalLight *light = &directionalLights[j];
 		if (light->castShadow) {
 			unsigned int entityID = light->entityID;
 			EBase *entity = &engine.entities[entityID];
@@ -100,4 +106,9 @@ void SLight::DrawShadows() {
 			light->fbo->Unbind();
 		}
 	}
+
+	if (iteration >= spotLights.size() + pointLights.size())
+		iteration++;
+	else
+		iteration = 0;
 }
