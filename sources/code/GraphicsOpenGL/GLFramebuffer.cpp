@@ -63,25 +63,29 @@ void GLFramebuffer::AddDepthBuffer(unsigned int width, unsigned int height) {
 void GLFramebuffer::AddDepthCubeBuffer(unsigned int width, unsigned int height) {
 	glGenTextures(1, &depthBuffer);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, depthBuffer);
-	for (size_t i = 0; i < 6; i++) {
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + (GLenum)i, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	}
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthBuffer, 0);
+	for (size_t i = 0; i < 6; i++) {
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + (GLenum)i, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	}
+	
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthBuffer, 0);
+	//glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
 void GLFramebuffer::Generate() {
-	GLenum *DrawBuffers = new GLenum[numBuffers];
-	for (size_t i = 0; i < numBuffers; i++)
-		DrawBuffers[i] = GL_COLOR_ATTACHMENT0 + (GLenum)i;
+	if (numBuffers > 0) {
+		GLenum *DrawBuffers = new GLenum[numBuffers];
+		for (size_t i = 0; i < numBuffers; i++)
+			DrawBuffers[i] = GL_COLOR_ATTACHMENT0 + (GLenum)i;
 
-	glDrawBuffers(numBuffers, DrawBuffers);
+		glDrawBuffers(numBuffers, DrawBuffers);
+	}
 
 	// Report errors
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -109,8 +113,24 @@ void GLFramebuffer::BindDepth(unsigned int loc) {
 	glBindTexture(GL_TEXTURE_2D, depthBuffer);
 }
 
+
+void GLFramebuffer::BindDepthCube(unsigned int loc) {
+	glActiveTexture(GL_TEXTURE0 + loc);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, depthBuffer);
+}
+
 void GLFramebuffer::WriteBind() {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
+}
+
+void GLFramebuffer::WriteBindFace(unsigned int attachment, unsigned int face) {
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, face, depthBuffer, 0);
+	
+	// All is fine.
+	GLenum status = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		std::cout << "Shadow FBO is broken with code " << status << std::endl;
+	}
 }
 
 void GLFramebuffer::ReadBind() {

@@ -72,7 +72,9 @@ public:
 	virtual void BindTexture(unsigned int fboLoc) = 0;
 	virtual void BindTexture(unsigned int fboLoc, unsigned int bindLoc) = 0;
 	virtual void BindDepth(unsigned int loc) = 0;
+	virtual void BindDepthCube(unsigned int loc) = 0;
 	virtual void WriteBind() = 0;
+	virtual void WriteBindFace(unsigned int attachment, unsigned int face) = 0;
 	virtual void ReadBind() = 0;
 	virtual void Unbind() = 0;
 

@@ -8,6 +8,8 @@
 
 #include <GraphicsWrapper.h>
 
+#include <AudioCommon.h>
+
 #include "RenderPath.h"
 #include "RenderPathDeferred.h"
 #include "RenderPathForward.h"
@@ -40,6 +42,7 @@ enum GraphicsLanguage {
 class Engine : public BaseClass {
 private:
 	bool InitializeWindow();
+	bool InitializeAudio();
 	bool InitializeGraphics(GraphicsLanguage);
 	void InitializeSettings();
 
@@ -47,6 +50,8 @@ private:
 	RenderPath *renderPath;
 
 	EBasePlayer *player;
+
+	AudioSystem *audioSystem;
 
 	// Time Data
 	std::chrono::time_point<std::chrono::high_resolution_clock> currentTime, prevTime, startTime;
@@ -91,6 +96,8 @@ public:
 	double GetUpdateTimeDelta();
 	double GetRenderTimeDelta();
 	void Render(glm::mat4 projection, glm::mat4 views, glm::vec2 res);
+	void PlayEngineSound(double sound);
+	void PlayEngineSound2(double sound);
 
 	void Shutdown();
 

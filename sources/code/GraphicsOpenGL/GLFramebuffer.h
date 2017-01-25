@@ -14,8 +14,10 @@ public:
 	virtual void Generate();
 	virtual void BindTexture(unsigned int fboLoc);
 	virtual void BindDepth(unsigned int loc);
+	virtual void BindDepthCube(unsigned int loc);
 	virtual void BindTexture(unsigned int fboLoc, unsigned int bindLoc);
 	virtual void WriteBind();
+	virtual void WriteBindFace(unsigned int attachment, unsigned int face);
 	virtual void ReadBind();
 	virtual void Unbind();
 	virtual void TestBlit();

@@ -18,6 +18,9 @@ Texture*			(*pfnCreateTexture)();
 Framebuffer*		(*pfnCreateFramebuffer)();
 
 bool Engine::Initialize() {
+	srand(time(NULL));
+
+	InitializeAudio();
 	// Get Settings here:
 	InitializeSettings();
 	if (!InitializeWindow())						return false;
@@ -79,6 +82,12 @@ bool Engine::Initialize() {
 
 	engine.inputSystem.AddControl("escape", "Shutdown", NULL, 1);
 	engine.inputSystem.BindAction("Shutdown", NULL, &engine, &Engine::ShutdownControl);
+
+	engine.inputSystem.AddControl("e", "PlaySound", NULL, 1);
+	engine.inputSystem.BindAction("PlaySound", NULL, &engine, &Engine::PlayEngineSound);
+
+	engine.inputSystem.AddControl("r", "PlaySound2", NULL, 1);
+	engine.inputSystem.BindAction("PlaySound2", NULL, &engine, &Engine::PlayEngineSound2);
 
 	engine.inputSystem.AddControl("q", "CaptureCubemaps", NULL, 1);
 	engine.inputSystem.BindAction("CaptureCubemaps", NULL, &(engine.cubemapSystem), &CubemapSystem::CaptureCubemaps);
@@ -162,6 +171,44 @@ bool Engine::InitializeWindow() {
 
 	window->SetInputPointer(&inputSystem);
 	window->SetCursorShown(false);
+
+	return true;
+}
+
+bool Engine::InitializeAudio() {
+#if defined (__linux__)
+	void *lib_handle = dlopen("./audio.so", RTLD_LAZY);
+
+	if (!lib_handle) {
+		fprintf(stderr, "%s\n", dlerror());
+		return false;
+	}
+
+	AudioSystem* (*pfnCreateAudio)();
+	pfnCreateAudio = (AudioSystem* (*)())dlsym(lib_handle, "createAudio");
+	if (!pfnCreateAudio) {
+		fprintf(stderr, "%s\n", dlerror());
+		return false;
+	}
+#elif defined (_WIN32)
+	HMODULE dllHandle = LoadLibrary("audio.dll");
+
+	if (!dllHandle) {
+		fprintf(stderr, "Failed to load audio.dll!\n");
+		return false;
+	}
+
+	AudioSystem *(*pfnCreateAudio)();
+	pfnCreateAudio = (AudioSystem *(*)())GetProcAddress(dllHandle, "createAudio");
+
+	if (!pfnCreateAudio) {
+		fprintf(stderr, "Cannot get createAudio function!\n");
+		return false;
+	}
+#endif
+
+	audioSystem = pfnCreateAudio();
+	audioSystem->Initialize();
 
 	return true;
 }
@@ -329,6 +376,14 @@ void Engine::Render(glm::mat4 projection, glm::mat4 view, glm::vec2 res) {
 #endif
 }
 
+void Engine::PlayEngineSound(double sound) {
+	audioSystem->Play(0);
+}
+
+void Engine::PlayEngineSound2(double sound) {
+	audioSystem->Play(1);
+}
+
 void Engine::Run() {
 	//model = glm::rotate(model, 0.0f, glm::vec3(0));
 
@@ -412,23 +467,25 @@ bool Engine::InitializeScene(std::string szScenePath) {
 	entities.back().position = glm::vec3(-10, 1.5, -4.5);
 	entities.back().angles = glm::vec3(0, 3.14159f / 4, 0);
 	lightSystem.AddSpotLight((unsigned int)entities.size() - 1, glm::vec3(1, 0.5, 0.5), 400.0f, true, 16, 45, 89);
+
 	entities.push_back(EBase());
 	entities.back().position = glm::vec3( 10, 1.5, -4.5);
 	entities.back().angles = glm::vec3(-3.14159f / 2, 0, 0);
-	lightSystem.AddSpotLight((unsigned int)entities.size() - 1, glm::vec3(0.5, 0.5, 1), 10.0f, false, 16, 20, 45);
+	lightSystem.AddSpotLight((unsigned int)entities.size() - 1, glm::vec3(1, 1, 1), 10.0f, false, 16, 20, 45);
 	
 	entities.push_back(EBase());
 	entities.back().position = glm::vec3(-10, 1.5, 4.5);
 	entities.back().angles = glm::vec3(0, -3.14159f / 2, 0);
-	lightSystem.AddSpotLight((unsigned int)entities.size() - 1, glm::vec3(0.5, 0.5, 1), 15.0f, true, 16, 40, 80);
+	lightSystem.AddSpotLight((unsigned int)entities.size() - 1, glm::vec3(1, 1, 1), 15.0f, true, 16, 40, 80);
 	entities.push_back(EBase());
 	entities.back().position = glm::vec3( 10, 1.5, 4.5);
 	entities.back().angles = glm::vec3(-3.14159f / 2, 0, 0);
 	lightSystem.AddSpotLight((unsigned int)entities.size() - 1, glm::vec3(1, 1, 1), 5.0f, false, 16, 30, 60);
 
-	/*entities.push_back(EBase());
+	entities.push_back(EBase());
 	entities.back().position = glm::vec3(0, 1.5, -4.5);
 	lightSystem.AddPointLight((unsigned int)entities.size() - 1, glm::vec3(0.5, 1, 0.5), 40.0f, true, 16);
+
 	entities.push_back(EBase());
 	entities.back().position = glm::vec3(-10, 1.5, 0);
 	lightSystem.AddPointLight((unsigned int)entities.size() - 1, glm::vec3(1, 1, 1), 30.0f, true, 16);
@@ -442,7 +499,7 @@ bool Engine::InitializeScene(std::string szScenePath) {
 
 	entities.push_back(EBase());
 	entities.back().position = glm::vec3(0, 1.5, 0);
-	lightSystem.AddPointLight((unsigned int)entities.size() - 1, glm::vec3(1, 0.5, 0.5), 100, true, 4);*/
+	lightSystem.AddPointLight((unsigned int)entities.size() - 1, glm::vec3(1, 0.5, 0.5), 100, true, 4);
 
 	entities.push_back(EBase());
 	entities.back().position = glm::vec3(10, 1.5, 4.5);
@@ -486,5 +543,6 @@ void Engine::ShutdownControl(double) {
 }
 
 Engine::~Engine() {
+	audioSystem->Shutdown();
 	window->Shutdown();
 }

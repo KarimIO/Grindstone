@@ -31,35 +31,38 @@ void SLight::DrawShadows() {
 		0.5, 0.5, 0.5, 1.0
 	);
 
-	unsigned int i = iteration;
-	if (i < pointLights.size()) {
-	//for (size_t i = 0; i < 0; i++) {
+	//unsigned int i = iteration;
+	//if (i < pointLights.size()) {
+	for (size_t i = 0; i < 0; i++) {
 		CPointLight *light = &pointLights[i];
 		if (light->castShadow) {
 			unsigned int entityID = light->entityID;
 			EBase *entity = &engine.entities[entityID];
 			glm::mat4 proj = glm::perspective(1.5708f, 1.0f, 0.1f, light->lightRadius);
-			glm::mat4 view = glm::lookAt(
-				entity->GetPosition(),
-				entity->GetPosition() + entity->GetForward(),
-				entity->GetUp()
-			);
 
-			light->projection = biasMatrix * proj * view * glm::mat4(1.0f);
 			engine.graphicsWrapper->SetResolution(0, 0, 256, 256);
 			light->fbo->WriteBind();
 			graphicsWrapper->SetDepth(1);
 			graphicsWrapper->SetCull(CULL_FRONT);
 			graphicsWrapper->SetBlending(false);
-			graphicsWrapper->Clear(CLEAR_ALL);
-			geometryCache->Draw(proj, view);
+			for (size_t j = 0; j < 6; j++) {
+				light->fbo->WriteBindFace(0, j);
+				graphicsWrapper->Clear(CLEAR_ALL);
+				glm::mat4 view = glm::lookAt(
+					entity->GetPosition(),
+					entity->GetPosition() + gCubeDirections[j].Target,
+					gCubeDirections[j].Up
+				);
+
+				geometryCache->Draw(proj, view);
+			}
 			light->fbo->Unbind();
 		}
 	}
 
-	else if (i < spotLights.size() + pointLights.size()) {
-		i -= pointLights.size();
-	//for (size_t i = 0; i < spotLights.size(); i++) {
+	//else if (i < spotLights.size() + pointLights.size()) {
+	//	i -= pointLights.size();
+	for (size_t i = 0; i < spotLights.size(); i++) {
 		CSpotLight *light = &spotLights[i];
 		if (light->castShadow) {
 			unsigned int entityID = light->entityID;
@@ -107,8 +110,8 @@ void SLight::DrawShadows() {
 		}
 	}
 
-	if (iteration >= spotLights.size() + pointLights.size())
+	/*if (iteration >= spotLights.size() + pointLights.size())
 		iteration++;
 	else
-		iteration = 0;
+		iteration = 0;*/
 }

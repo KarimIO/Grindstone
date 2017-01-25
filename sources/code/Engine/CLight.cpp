@@ -12,9 +12,9 @@ CBaseLight::CBaseLight(unsigned int entID, glm::vec3 color, float strength, bool
 CPointLight::CPointLight(unsigned int entID, glm::vec3 color, float strength, bool cast, float radius) : CBaseLight(entID, color, strength, cast) {
 	lightRadius = radius;
 
-	//fbo->Initialize(0);
-	//fbo->AddDepthCubeBuffer(256, 256);
-	//fbo->Generate();
+	fbo->Initialize(0);
+	fbo->AddDepthCubeBuffer(256, 256);
+	fbo->Generate();
 }
 
 CSpotLight::CSpotLight(unsigned int entID, glm::vec3 color, float strength, bool cast, float radius, float ia, float oa) : CPointLight(entID, color, strength, cast, radius) {

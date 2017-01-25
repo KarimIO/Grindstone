@@ -113,7 +113,7 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		pointLightUBO.lightShadow = 4;
 
 		engine.lightSystem.pointLights[i].fbo->ReadBind();
-		engine.lightSystem.pointLights[i].fbo->BindDepth(4);
+		engine.lightSystem.pointLights[i].fbo->BindDepthCube(4);
 		engine.lightSystem.pointLights[i].fbo->Unbind();
 
 		pointLightShader->PassData(&pointLightUBO);
