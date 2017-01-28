@@ -4,6 +4,8 @@
 #ifdef _WIN32
 #include <Windows.h>
 
+#include "SoundFile.h"
+
 #ifdef AUDIO_DLL
 #define AUDIO_EXPORT_CLASS __declspec(dllexport) 
 #define AUDIO_EXPORT __declspec(dllexport) 
@@ -19,7 +21,7 @@
 class AudioSystem {
 public:
 	virtual bool Initialize();
-	virtual void Play(int id);
+	virtual SoundFile *LoadSound(const char *);
 	virtual void Shutdown();
 };
 

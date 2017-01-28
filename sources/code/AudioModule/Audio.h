@@ -1,8 +1,8 @@
 #ifndef _AUDIO_H
 #define _AUDIO_H
 
-#include <SDL.h>
-#include <SDL_mixer.h>
+#include "SoundFileSDL.h"
+#include <vector>
 
 #ifdef _WIN32
 	#include <Windows.h>
@@ -21,10 +21,10 @@
 
 class AudioSystem {
 private:
-	Mix_Chunk* _sample[2];
+	std::vector<SoundFileSDL *> soundFiles;
 public:
 	virtual bool Initialize();
-	virtual void Play(int id);
+	virtual SoundFile *LoadSound(const char *);
 	virtual void Shutdown();
 };
 

@@ -51,3 +51,4 @@ sources/include/*
 cubemaps/*
 materials/*
 shaders/objects/backup/*
+sounds/music/*

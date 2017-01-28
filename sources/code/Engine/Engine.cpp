@@ -20,10 +20,10 @@ Framebuffer*		(*pfnCreateFramebuffer)();
 bool Engine::Initialize() {
 	srand(time(NULL));
 
-	InitializeAudio();
 	// Get Settings here:
 	InitializeSettings();
 	if (!InitializeWindow())						return false;
+	if (!InitializeAudio())							return false;
 	if (!InitializeGraphics(GRAPHICS_OPENGL))		return false;
 
 	// An array of 3 vectors which represents 3 vertices
@@ -80,17 +80,17 @@ bool Engine::Initialize() {
 
 	lightSystem.SetPointers(graphicsWrapper, &geometryCache);
 
-	engine.inputSystem.AddControl("escape", "Shutdown", NULL, 1);
-	engine.inputSystem.BindAction("Shutdown", NULL, &engine, &Engine::ShutdownControl);
+	inputSystem.AddControl("escape", "Shutdown", NULL, 1);
+	inputSystem.BindAction("Shutdown", NULL, this, &Engine::ShutdownControl);
 
-	engine.inputSystem.AddControl("e", "PlaySound", NULL, 1);
-	engine.inputSystem.BindAction("PlaySound", NULL, &engine, &Engine::PlayEngineSound);
+	inputSystem.AddControl("e", "PlaySound", NULL, 1);
+	inputSystem.BindAction("PlaySound", NULL, this, &Engine::PlayEngineSound);
 
-	engine.inputSystem.AddControl("r", "PlaySound2", NULL, 1);
-	engine.inputSystem.BindAction("PlaySound2", NULL, &engine, &Engine::PlayEngineSound2);
+	inputSystem.AddControl("r", "PlaySound2", NULL, 1);
+	inputSystem.BindAction("PlaySound2", NULL, this, &Engine::PlayEngineSound2);
 
-	engine.inputSystem.AddControl("q", "CaptureCubemaps", NULL, 1);
-	engine.inputSystem.BindAction("CaptureCubemaps", NULL, &(engine.cubemapSystem), &CubemapSystem::CaptureCubemaps);
+	inputSystem.AddControl("q", "CaptureCubemaps", NULL, 1);
+	inputSystem.BindAction("CaptureCubemaps", NULL, &(engine.cubemapSystem), &CubemapSystem::CaptureCubemaps);
 
 	isRunning = true;
 	prevTime = std::chrono::high_resolution_clock::now();
@@ -209,6 +209,11 @@ bool Engine::InitializeAudio() {
 
 	audioSystem = pfnCreateAudio();
 	audioSystem->Initialize();
+	sounds.push_back(audioSystem->LoadSound("../sounds/snaredrum.wav"));
+	sounds.push_back(audioSystem->LoadSound("../sounds/kickdrum.wav"));
+	sounds.push_back(audioSystem->LoadSound("../sounds/music/music0.ogg"));
+	sounds.push_back(audioSystem->LoadSound("../sounds/music/music1.ogg"));
+	sounds.push_back(audioSystem->LoadSound("../sounds/music/music2.ogg"));
 
 	return true;
 }
@@ -377,11 +382,13 @@ void Engine::Render(glm::mat4 projection, glm::mat4 view, glm::vec2 res) {
 }
 
 void Engine::PlayEngineSound(double sound) {
-	audioSystem->Play(0);
+	int v = rand() % 5;
+	if (v < sounds.size())
+		sounds[v]->Play();
 }
 
 void Engine::PlayEngineSound2(double sound) {
-	audioSystem->Play(1);
+	sounds[0]->Stop();
 }
 
 void Engine::Run() {

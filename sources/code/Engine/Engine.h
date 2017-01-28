@@ -27,6 +27,8 @@
 #include <chrono>
 #include <string>
 
+#include <SoundFile.h>
+
 enum RenderPathType {
 	RENDERPATH_FORWARD = 0,
 	RENDERPATH_DEFERRED,
@@ -52,6 +54,7 @@ private:
 	EBasePlayer *player;
 
 	AudioSystem *audioSystem;
+	std::vector<SoundFile *> sounds;
 
 	// Time Data
 	std::chrono::time_point<std::chrono::high_resolution_clock> currentTime, prevTime, startTime;
