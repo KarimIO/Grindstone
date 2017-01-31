@@ -412,6 +412,9 @@ void Engine::Run() {
 			float ang = std::fmod(time, 360);
 			entities[eID].angles = glm::vec3(-3.14159f / 2, 0, 0);
 		}
+		int volume = int(sin(GetTimeCurrent())*128.0)+128;
+		//std::cout << volume << "\n";
+		audioSystem->SetChannelVolume(0, 255-volume, volume);
 		/*while (lag >= MS_PER_UPDATE)
 		{
 			lag -= MS_PER_UPDATE;

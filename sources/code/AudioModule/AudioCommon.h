@@ -22,6 +22,7 @@ class AudioSystem {
 public:
 	virtual bool Initialize();
 	virtual SoundFile *LoadSound(const char *);
+	virtual void SetChannelVolume(int channel, int dist, int ang);
 	virtual void Shutdown();
 };
 

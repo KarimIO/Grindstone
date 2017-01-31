@@ -13,7 +13,7 @@ const char* _waveFileNames[] =
 // Initializes the application data
 bool AudioSystem::Initialize() {
 	// Set up the audio stream
-	int result = Mix_OpenAudio(44100, AUDIO_S16SYS, 1, 512); // 44100
+	int result = Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1024); // 44100
 	if (result < 0) {
 		fprintf(stderr, "Unable to open audio: %s\n", SDL_GetError());
 		return nullptr;
@@ -40,6 +40,10 @@ SoundFile *AudioSystem::LoadSound(const char *path) {
 	soundFiles.back()->sound = _sample;
 
 	return (SoundFile *)soundFiles.back();
+}
+
+void AudioSystem::SetChannelVolume(int channel, int dist, int ang) {
+	Mix_SetPanning(MIX_CHANNEL_POST, dist, ang);
 }
 
 void AudioSystem::Shutdown() {
