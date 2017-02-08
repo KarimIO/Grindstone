@@ -1,7 +1,7 @@
 #include "EBasePlayer.h"
-#include "Engine.h"
+#include "../Core/Engine.h"
 
-//LINK_ENTITY_TO_CLASS("BasePlayer", EBasePlayer)
+LINK_ENTITY_TO_CLASS("BasePlayer", EBasePlayer)
 
 void EBasePlayer::Spawn() {
 	input.SetInputControlFile("cfgs/player.cfg");

@@ -1,10 +1,10 @@
 #include "RenderPathDeferred.h"
-#include "GraphicsDLLPointer.h"
-#include "Utilities.h"
+#include "../Core/GraphicsDLLPointer.h"
+#include "../Core/Utilities.h"
+#include "../Core/Engine.h"
 #include "gl3w.h"
-#include "Engine.h"
 
-#include "TextureManager.h"
+#include "../Core/TextureManager.h"
 
 #include <glm/gtx/transform.hpp>
 

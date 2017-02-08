@@ -1,8 +1,8 @@
-#include "Engine.h"
+#include "../Core/Engine.h"
 
 #include "SGeometry.h"
-#include "TextureManager.h"
-#include "GraphicsDLLPointer.h"
+#include "../Core/TextureManager.h"
+#include "../Core/GraphicsDLLPointer.h"
 
 struct UniformBuffer {
 	glm::mat4 pvmMatrix;

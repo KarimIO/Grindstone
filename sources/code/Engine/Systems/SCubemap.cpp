@@ -1,9 +1,9 @@
 #include "SCubemap.h"
 #include <iostream>
 
-#include "TextureManager.h"
+#include "../Core/TextureManager.h"
 
-#include "Engine.h"
+#include "../Core/Engine.h"
 
 #include <Windows.h>
 

@@ -2,7 +2,7 @@
 #define _RENDERPATH_H
 
 #include <GraphicsWrapper.h>
-#include "SGeometry.h"
+#include "../Systems/SGeometry.h"
 #include <glm/glm.hpp>
 
 class RenderPath {

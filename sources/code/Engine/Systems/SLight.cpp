@@ -1,5 +1,5 @@
 #include "SLight.h"
-#include "Engine.h"
+#include "../Core/Engine.h"
 
 void SLight::AddPointLight(unsigned int entityID, glm::vec3 lightColor, float intensity, bool castShadow, float lightRadius) {
 	engine.entities[entityID].components[COMPONENT_LIGHT_POINT] = pointLights.size();
@@ -19,7 +19,6 @@ void SLight::AddDirectionalLight(unsigned int entityID, glm::vec3 lightColor, fl
 void SLight::SetPointers(GraphicsWrapper *gw, SModel *gc) {
 	graphicsWrapper = gw;
 	geometryCache = gc;
-	iteration = 0;
 }
 
 void SLight::DrawShadows() {

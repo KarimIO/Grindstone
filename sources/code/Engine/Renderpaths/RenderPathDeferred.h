@@ -4,7 +4,7 @@
 #include "RenderPath.h"
 #include <Framebuffer.h>
 #include <Shader.h>
-#include "Terrain.h"
+#include "../Systems/Terrain.h"
 
 class RenderPathDeferred : public RenderPath {
 	GraphicsWrapper *graphicsWrapper;

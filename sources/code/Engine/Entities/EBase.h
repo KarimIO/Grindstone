@@ -2,12 +2,16 @@
 #define _EBASE_H
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
-#include "CBase.h"
+#include "../Systems/CBase.h"
+
+#define DECLARE_ENTITY static void CreateNew
 
 class EBase {
 protected:
 	size_t id;
 public:
+	DECLARE_ENTITY();
+	virtual void Spawn();
 	glm::vec3 position;
 	glm::vec3 angles;
 	glm::vec3 scale;

@@ -4,7 +4,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
-#include "BaseClass.h"
 #include <string>
 #include <vector>
 #include "Texture.h"

@@ -1,5 +1,5 @@
 #include "CLight.h"
-#include "GraphicsDLLPointer.h"
+#include "../Core/GraphicsDLLPointer.h"
 
 CBaseLight::CBaseLight(unsigned int entID, glm::vec3 color, float strength, bool cast) {
 	lightColor = color;

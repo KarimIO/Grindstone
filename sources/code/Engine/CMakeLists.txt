@@ -1,0 +1,64 @@
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+set(ENGINE_CORE_HEADERS Core/Engine.h Core/GraphicsDLLPointer.h Core/iniHandler.h Core/Input.h Core/InputInterface.h Core/TextureManager.h  Core/Space.h Core/Utilities.h)
+source_group("Core\\Header Files" FILES ${ENGINE_CORE_HEADERS})
+set(ENGINE_ENTITES_HEADERS Entities/EBase.h Entities/EBasePlayer.h)
+source_group("Entities\\Header Files" FILES ${ENGINE_ENTITES_HEADERS})
+set(ENGINE_RENDERPATHS_HEADERS RenderPaths/RenderPath.h  RenderPaths/RenderPathDeferred.h RenderPaths/RenderPathForward.h)
+source_group("Render Paths\\Header Files" FILES ${ENGINE_RENDERPATHS_HEADERS})
+set(ENGINE_SYSTEMS_HEADERS Systems/CAudio.h Systems/CBase.h Systems/CCamera.h Systems/CLight.h Systems/Physics.h Systems/SAudio.h Systems/SCubemap.h Systems/SGeometry.h Systems/SLight.h Systems/Terrain.h)
+source_group("Systems\\Header Files" FILES ${ENGINE_SYSTEMS_HEADERS})
+set(ENGINE_HEADERS ${ENGINE_CORE_HEADERS} ${ENGINE_ENTITES_HEADERS} ${ENGINE_RENDERPATHS_HEADERS} ${ENGINE_SYSTEMS_HEADERS})
+
+set(ENGINE_CORE_SOURCES Core/Main.cpp Core/Engine.cpp Core/iniHandler.cpp Core/Input.cpp Core/TextureManager.cpp Core/Space.cpp Core/Utilities.cpp)
+source_group("Core\\Source Files" FILES ${ENGINE_CORE_SOURCES})
+set(ENGINE_ENTITES_SOURCES Entities/EBase.cpp Entities/EBasePlayer.cpp)
+source_group("Entities\\Source Files" FILES ${ENGINE_ENTITES_SOURCES})
+set(ENGINE_RENDERPATHS_SOURCES RenderPaths/RenderPathDeferred.cpp RenderPaths/RenderPathForward.cpp)
+source_group("Render Paths\\Source Files" FILES ${ENGINE_RENDERPATHS_SOURCES})
+set(ENGINE_SYSTEMS_SOURCES Systems/CAudio.cpp Systems/CBase.cpp Systems/CCamera.cpp Systems/CLight.cpp Systems/Physics.cpp Systems/SAudio.cpp Systems/SCubemap.cpp Systems/SGeometry.cpp Systems/SLight.cpp Systems/Terrain.cpp)
+source_group("Systems\\Source Files" FILES ${ENGINE_SYSTEMS_SOURCES})
+set(ENGINE_SOURCES ${ENGINE_CORE_SOURCES} ${ENGINE_ENTITES_SOURCES} ${ENGINE_RENDERPATHS_SOURCES} ${ENGINE_SYSTEMS_SOURCES})
+
+#ASSIMP
+set(ASSIMP_DIR "D:/Libraries/Assimp" CACHE PATH "Location of Assimp Library")
+include_directories(${ASSIMP_DIR}/includes)
+link_directories(${ASSIMP_DIR}/lib64)
+
+#BULLET
+set(BULLET_DIR "D:/Libraries/Bullet" CACHE PATH "Location of Bullet Library")
+include_directories(${BULLET_DIR}/src)
+link_directories(${BULLET_DIR}/bin)
+
+include_directories(${GLM_DIR})
+include_directories(${CMAKE_SOURCE_DIRECTORY}/sources/code/Engine/)
+
+
+set(STB_DIR "D:/Libraries/STB" CACHE PATH "Location of STB Image Library")
+include_directories(${STB_DIR})
+
+add_executable(engine ${ENGINE_SOURCES} ${ENGINE_HEADERS})
+set_target_properties(engine PROPERTIES OUTPUT_NAME "Grindstone")
+
+if (MSVC)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+    set_target_properties(engine PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY_DEBUG "${OUTPUT_DIR}")
+endif()
+
+include_directories(${OUTPUT_DIR}/../sources/code/AudioModule/)
+include_directories(${OUTPUT_DIR}/../sources/code/WindowModule/)
+include_directories(${OUTPUT_DIR}/../sources/code/GraphicsCommon/)
+include_directories(${OUTPUT_DIR}/../sources/code/GraphicsOpenGL/)
+
+target_compile_definitions(engine PRIVATE _CRT_SECURE_NO_WARNINGS)
+
+target_link_libraries(engine assimp)
+if(WIN32)
+    target_link_libraries(engine BulletCollision_x64)
+    target_link_libraries(engine BulletDynamics_x64)
+    target_link_libraries(engine LinearMath_x64)
+else()
+    target_link_libraries(engine libBulletCollision)
+    target_link_libraries(engine libBulletDynamics)
+    target_link_libraries(maenginein libLinearMath)
+endif()

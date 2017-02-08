@@ -1,0 +1,23 @@
+cmake_minimum_required (VERSION 2.6)
+PROJECT(Grindstone C CXX)
+
+set(OUTPUT_DIR "${CMAKE_SOURCE_DIRECTORY}/bin/" CACHE PATH "Output Location")
+SET(GLM_DIR "D:/Libraries/GL3W" CACHE PATH "Location of GL3W Library")
+
+# First for the generic no-config case (e.g. with mingw)
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR} )
+set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIR} )
+set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_DIR} )
+# Second, for multi-config builds (e.g. msvc)
+foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
+    string( TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG )
+    set( CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${OUTPUT_DIR} )
+    set( CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${OUTPUT_DIR} )
+    set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${OUTPUT_DIR} )
+endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )
+
+add_subdirectory(sources/code/Engine)
+add_subdirectory(sources/code/AudioModule)
+add_subdirectory(sources/code/GraphicsOpenGL)
+add_subdirectory(sources/code/GraphicsVulkan)
+add_subdirectory(sources/code/WindowModule)

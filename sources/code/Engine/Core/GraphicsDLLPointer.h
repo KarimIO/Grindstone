@@ -4,9 +4,9 @@
 #include <GraphicsWrapper.h>
 #include <VertexArrayObject.h>
 #include <VertexBufferObject.h>
-#include <GLShader.h>
-#include <GLTexture.h>
-#include <GLFramebuffer.h>
+#include <Shader.h>
+#include <Texture.h>
+#include <Framebuffer.h>
 
 extern VertexArrayObject*	(*pfnCreateVAO)();
 extern VertexBufferObject*	(*pfnCreateVBO)();

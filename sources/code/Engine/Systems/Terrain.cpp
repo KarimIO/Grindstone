@@ -1,7 +1,7 @@
 #include "Terrain.h"
-#include "Utilities.h"
-#include "Engine.h"
-#include "TextureManager.h"
+#include "../Core/Utilities.h"
+#include "../Core/Engine.h"
+#include "../Core/TextureManager.h"
 
 void STerrain::Initialize() {
 	std::string vsPath = "../shaders/objects/terrain.glvs";

@@ -1,7 +1,7 @@
 #ifndef _C_BASE_H
 #define _C_BASE_H
 
-enum {
+enum ComponentType {
 	COMPONENT_BASE = 0,
 	COMPONENT_MODEL,
 	COMPONENT_RENDER,

@@ -1,6 +1,6 @@
 #ifdef _WIN32
 #include "Window.h"
-#include "Input.h"
+#include "Core\Input.h"
 #include <Windowsx.h>
 
 int TranslateKey(int key);

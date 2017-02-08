@@ -10,20 +10,21 @@ Install all the following dependencies regardless of OS
  * [GL3W](https://github.com/skaslev/gl3w)
  * [stb_image.h](https://github.com/nothings/stb)
 
-### Windows
+### Windows - Visual Studio
 Install the following Windows dependencies.
  * [Assimp](http://www.assimp.org/)
- * [Windows SDK for DirectX](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk)
+ * [Bullet](http://bulletphysics.org/)
+ * [CMake](https://cmake.org/)
+ * [GLM](http://glm.g-truc.net/)
+ * [SDL](https://www.libsdl.org/)
+ * [STB](https://github.com/nothings/stb/)
+Optional Graphics-Specific dependencies:
+ * [OPENGL: GL3W](https://github.com/skaslev/gl3w)
+ * [VULKAN: Lunar API](https://vulkan.lunarg.com/sdk/home)
+ * [DIRECTX: Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk) (Currently unused)
 
-Build using the following libs:
-> assimp-vcxxx-mtd.lib, opengl32.lib 
+All you need to do is run CMake and build the projects. Change the working directory of the engine project to [PROJECT_DIRECTORY]/bin/ if you wanna debug it. 
 
-To build on windows, create a solution outside of the main folder with three projects. Ensure all three export to ```/Grindstone/bin/```.
-
-Make sure that two projects are of type .dll, and compile to ```window.dll``` and ```graphics.dll```.
-
-Make the final project use ```graphics.lib;window.lib``` as well as include the source folders in the additional include directory input. This should compile to ```Grindstone.exe```
- 
 ### Debian
 You must first update and get all the following dependencies:
 ```

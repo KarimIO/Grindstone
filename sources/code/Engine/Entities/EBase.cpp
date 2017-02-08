@@ -1,6 +1,11 @@
 #include "EBase.h"
-#include "Engine.h"
+#include "../Core/Engine.h"
 #include <glm/gtx/transform.hpp>
+
+LINK_ENTITY_TO_CLASS("BaseEntity", EBase)
+
+void EBase::Spawn() {
+}
 
 EBase::EBase() {
 	id = engine.entities.size();
