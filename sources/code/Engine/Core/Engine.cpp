@@ -26,7 +26,7 @@ bool Engine::Initialize() {
 	// Get Settings here:
 	InitializeSettings();
 	if (!InitializeWindow())						return false;
-	if (!InitializeAudio())							return false;
+	//if (!InitializeAudio())							return false;
 	if (!InitializeGraphics(GRAPHICS_OPENGL))		return false;
 	if (!InitializeScene("../scenes/startup.gmf"))	return false;
 	cubemapSystem.LoadCubemaps();
@@ -195,7 +195,7 @@ bool Engine::InitializeAudio() {
 	HMODULE dllHandle = LoadLibrary("audiosdl.dll");
 
 	if (!dllHandle) {
-		fprintf(stderr, "Failed to load audio.dll!\n");
+		fprintf(stderr, "Failed to load audiosdl.dll!\n");
 		return false;
 	}
 
@@ -554,6 +554,6 @@ void Engine::ShutdownControl(double) {
 }
 
 Engine::~Engine() {
-	audioSystem->Shutdown();
+	//audioSystem->Shutdown();
 	window->Shutdown();
 }
