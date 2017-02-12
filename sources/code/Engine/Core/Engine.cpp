@@ -28,18 +28,6 @@ bool Engine::Initialize() {
 	if (!InitializeWindow())						return false;
 	//if (!InitializeAudio())							return false;
 	if (!InitializeGraphics(GRAPHICS_OPENGL))		return false;
-	if (!InitializeScene("../scenes/startup.gmf"))	return false;
-	cubemapSystem.LoadCubemaps();
-
-	renderPathType = RENDERPATH_DEFERRED;
-	switch (renderPathType) {
-	default:
-		renderPath = (RenderPath *)new RenderPathForward(graphicsWrapper, &geometryCache);
-		break;
-	case RENDERPATH_DEFERRED:
-		renderPath = (RenderPath *)new RenderPathDeferred(graphicsWrapper, &geometryCache);
-		break;
-	};
 
 	std::string vsPath = "../shaders/objects/main.glvs"; // GetShaderExt()
 	std::string fsPath = "../shaders/objects/mainMetalness.glfs";
@@ -70,6 +58,19 @@ bool Engine::Initialize() {
 
 	vsContent.clear();
 	fsContent.clear();
+
+	if (!InitializeScene("../scenes/startup.gmf"))	return false;
+	cubemapSystem.LoadCubemaps();
+
+	renderPathType = RENDERPATH_DEFERRED;
+	switch (renderPathType) {
+	default:
+		renderPath = (RenderPath *)new RenderPathForward(graphicsWrapper, &geometryCache);
+		break;
+	case RENDERPATH_DEFERRED:
+		renderPath = (RenderPath *)new RenderPathDeferred(graphicsWrapper, &geometryCache);
+		break;
+	};
 
 	lightSystem.SetPointers(graphicsWrapper, &geometryCache);
 
