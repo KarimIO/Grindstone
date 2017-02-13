@@ -22,6 +22,7 @@ void SLight::SetPointers(GraphicsWrapper *gw, SModel *gc) {
 }
 
 void SLight::DrawShadows() {
+	return;
 
 	glm::mat4 biasMatrix(
 		0.5, 0.0, 0.0, 0.0,

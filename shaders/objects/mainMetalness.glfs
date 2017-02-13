@@ -1,9 +1,13 @@
-#version 410 core
+#version 140
 
-layout(location = 0) out vec4 position; // X Y Z MaterialType
-layout(location = 1) out vec4 normal;	// X Y Z AO
-layout(location = 2) out vec4 albedo; // R G B Metalness
-layout(location = 3) out vec4 specular; // R G B Metalness
+//layout(location = 0) out vec4 position; // X Y Z MaterialType
+//layout(location = 1) out vec4 normal;	// X Y Z AO
+//layout(location = 2) out vec4 albedo; // R G B Metalness
+//layout(location = 3) out vec4 specular; // R G B Metalness
+out vec4 position; // X Y Z MaterialType
+out vec4 normal;	// X Y Z AO
+out vec4 albedo; // R G B Metalness
+out vec4 specular; // R G B Metalness
 
 uniform sampler2D tex0;
 uniform sampler2D tex1;

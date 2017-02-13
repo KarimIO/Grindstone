@@ -20,6 +20,9 @@ public:
 	virtual bool Compile() = 0;
 	virtual void Use() = 0;
 
+	virtual void BindAttribLocation(uint32_t, const char *) = 0;
+	virtual void BindOutputLocation(uint32_t, const char *) = 0;
+
 	virtual void SetNumUniforms(int) = 0;
 	virtual void CreateUniform(const char *) = 0;
 	virtual void PassData(void *) = 0;

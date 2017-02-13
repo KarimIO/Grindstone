@@ -22,7 +22,7 @@ set(ENGINE_SOURCES ${ENGINE_CORE_SOURCES} ${ENGINE_ENTITES_SOURCES} ${ENGINE_REN
 
 #ASSIMP
 set(ASSIMP_DIR "D:/Libraries/Assimp" CACHE PATH "Location of Assimp Library")
-include_directories(${ASSIMP_DIR}/includes)
+include_directories(${ASSIMP_DIR}/include)
 link_directories(${ASSIMP_DIR}/lib64)
 
 #BULLET
@@ -54,11 +54,15 @@ target_compile_definitions(engine PRIVATE _CRT_SECURE_NO_WARNINGS)
 
 target_link_libraries(engine assimp)
 if(WIN32)
-    target_link_libraries(engine BulletCollision_x64)
-    target_link_libraries(engine BulletDynamics_x64)
-    target_link_libraries(engine LinearMath_x64)
+    target_link_libraries(engine debug BulletCollision_x64_debug)
+    target_link_libraries(engine debug BulletDynamics_x64_debug)
+    target_link_libraries(engine debug LinearMath_x64_debug)
+
+    target_link_libraries(engine optimized BulletCollision_x64_release)
+    target_link_libraries(engine optimized BulletDynamics_x64_release)
+    target_link_libraries(engine optimized LinearMath_x64_release)
 else()
     target_link_libraries(engine libBulletCollision)
     target_link_libraries(engine libBulletDynamics)
-    target_link_libraries(maenginein libLinearMath)
+    target_link_libraries(engine libLinearMath)
 endif()

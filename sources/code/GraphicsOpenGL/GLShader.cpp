@@ -12,7 +12,6 @@ void GLShaderProgram::Initialize(int numShaders) {
 }
 
 bool GLShaderProgram::AddShader(std::string *path, std::string *content, ShaderType type) {
-
 	// Compile Vertex Shader
 	int shaderType = GL_VERTEX_SHADER;
 	switch (type) {
@@ -100,6 +99,24 @@ bool GLShaderProgram::Compile() {
 
 void GLShaderProgram::Use() {
 	glUseProgram(program);
+}
+
+void GLShaderProgram::BindAttribLocation(uint32_t index, const char *name) {
+	glBindAttribLocation(program, index, name);
+
+	GLenum err;
+	while ((err = glGetError()) != GL_NO_ERROR) {
+		std::cerr << "OpenGL error: " << err << std::endl;
+	}
+}
+
+void GLShaderProgram::BindOutputLocation(uint32_t index, const char *name) {
+	glBindFragDataLocation(program, index, name);
+
+	GLenum err;
+	while ((err = glGetError()) != GL_NO_ERROR) {
+		std::cerr << "OpenGL error: " << err << std::endl;
+	}
 }
 
 void GLShaderProgram::SetNumUniforms(int num) {

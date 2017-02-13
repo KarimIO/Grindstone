@@ -80,6 +80,7 @@ void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view, glm:
 }
 
 void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, glm::vec2 res) {
+	
 	engine.graphicsWrapper->SetResolution(0, 0, (uint32_t)res.x, (uint32_t)res.y);
 	dirLightUBO.eyePos = spotLightUBO.eyePos = pointLightUBO.eyePos = eyePos;
 	dirLightUBO.gbuffer0 = spotLightUBO.gbuffer0 = pointLightUBO.gbuffer0 = 0;
@@ -112,9 +113,9 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		pointLightUBO.lightPosition = entity->GetPosition();
 		pointLightUBO.lightShadow = 4;
 
-		engine.lightSystem.pointLights[i].fbo->ReadBind();
+		/*engine.lightSystem.pointLights[i].fbo->ReadBind();
 		engine.lightSystem.pointLights[i].fbo->BindDepthCube(4);
-		engine.lightSystem.pointLights[i].fbo->Unbind();
+		engine.lightSystem.pointLights[i].fbo->Unbind();*/
 
 		pointLightShader->PassData(&pointLightUBO);
 		pointLightShader->SetVec3();
@@ -135,7 +136,7 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		vaoSphere->Unbind();
 	}
 
-	spotLightShader->Use();
+	/*spotLightShader->Use();
 	for (size_t i = 0; i < engine.lightSystem.spotLights.size(); i++) {
 		unsigned int entityID = engine.lightSystem.spotLights[i].entityID;
 		CSpotLight *light = &engine.lightSystem.spotLights[i];
@@ -208,7 +209,7 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		vaoQuad->Bind();
 		graphicsWrapper->DrawVertexArray(4);
 		vaoQuad->Unbind();
-	}
+	}*/
 	
 	/*CubemapComponent *comp = engine.cubemapSystem.GetClosestCubemap(eyePos);
 	if (comp != NULL) {
@@ -355,7 +356,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	fbo->AddDepthBuffer(resx, resy);
 	fbo->Generate();
 
-	std::string vsPath = "../shaders/overlay.glvs";
+	/*std::string vsPath = "../shaders/overlay.glvs";
 	std::string fsPath = "../shaders/deferred/directional.glfs";
 
 	std::string vsContent;
@@ -391,10 +392,11 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	vsContent.clear();
 	fsContent.clear();
 	vsPath.clear();
-	fsPath.clear();
+	fsPath.clear();*/
 
-	vsPath = "../shaders/deferred/light.glvs";
-	fsPath = "../shaders/deferred/point.glfs";
+	std::string vsContent, fsContent;
+	std::string vsPath = "../shaders/deferred/light.glvs";
+	std::string fsPath = "../shaders/deferred/point.glfs";
 
 	if (!ReadFileIncludable(vsPath, vsContent))
 		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
@@ -428,7 +430,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	fsContent.clear();
 	fsPath.clear();
 
-	fsPath = "../shaders/deferred/spot.glfs";
+	/*fsPath = "../shaders/deferred/spot.glfs";
 	if (!ReadFileIncludable(fsPath, fsContent))
 		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
 
@@ -462,9 +464,9 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	fsPath.clear();
 
 	vsContent.clear();
-	vsPath.clear();
+	vsPath.clear();*/
 
-	vsPath = "../shaders/objects/sky.glvs";
+	/*vsPath = "../shaders/objects/sky.glvs";
 	fsPath = "../shaders/objects/sky.glfs";
 
 	if (!ReadFileIncludable(vsPath, vsContent))
@@ -517,7 +519,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	vsContent.clear();
 	fsContent.clear();
 	vsPath.clear();
-	fsPath.clear();
+	fsPath.clear();*/
 		
 	postFBO = pfnCreateFramebuffer();
 	postFBO->Initialize(1);

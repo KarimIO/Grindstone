@@ -25,7 +25,7 @@ bool ReadFileIncludable(std::string pFileName, std::string& output)
 		return true;
 	}
 	else {
-		printf("Unable to open file %s", pFileName.c_str());
+		printf("Unable to open file %s\n", pFileName.c_str());
 	}
 
 	return false;
@@ -34,6 +34,7 @@ bool ReadFileIncludable(std::string pFileName, std::string& output)
 bool ReadFile(std::string pFileName, std::string& output)
 {
 	std::ifstream file;
+	printf("Opening file %s\n", pFileName.c_str());
 	file.open(pFileName);
 
 	if (!file.fail()) {

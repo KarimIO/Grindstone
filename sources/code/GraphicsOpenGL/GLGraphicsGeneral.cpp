@@ -14,11 +14,11 @@ bool GraphicsWrapper::InitializeGraphics() {
 		return false;
 	}
 
-	if (!gl3wIsSupported(3, 3)) {
+	/*if (!gl3wIsSupported(3, 3)) {
 		printf("OpenGL %i.%i=< required for Grindstone Engine.\n", 3, 3);
 		printf("Your Graphics Card only supports version %s. Quitting...\n\n", glGetString(GL_VERSION));
 		return false;
-	}
+	}*/
 
 	printf("OpenGL %s initialized using GLSL %s.\n\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 

@@ -46,6 +46,15 @@ bool Engine::Initialize() {
 	if (!shader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
 		fprintf(stderr, "Failed to add fragment shader %s.\n", vsPath.c_str());
 	shader->Compile();
+	shader->BindAttribLocation(0, "vertexPos");
+	shader->BindAttribLocation(1, "TexCoord");
+	shader->BindAttribLocation(2, "vertexNormal");
+	shader->BindAttribLocation(3, "vertexTangent");
+
+	shader->BindOutputLocation(0, "position");
+	shader->BindOutputLocation(1, "normal");
+	shader->BindOutputLocation(2, "albedo");
+	shader->BindOutputLocation(3, "specular");
 
 	shader->SetNumUniforms(7);
 	shader->CreateUniform("pvmMatrix");
@@ -475,7 +484,7 @@ bool Engine::InitializeScene(std::string szScenePath) {
 	entities.back().position = glm::vec3(-2.0f, 0.0f, 0.0f);
 	entities.back().scale = glm::vec3(0.1f, 0.1f, 0.1f);*/
 
-	entities.push_back(EBase());
+	/*entities.push_back(EBase());
 	entities.back().position = glm::vec3(-10, 1.5, -4.5);
 	entities.back().angles = glm::vec3(0, 3.14159f / 4, 0);
 	lightSystem.AddSpotLight((unsigned int)entities.size() - 1, glm::vec3(1, 0.5, 0.5), 400.0f, true, 16, 45, 89);
@@ -492,7 +501,7 @@ bool Engine::InitializeScene(std::string szScenePath) {
 	entities.push_back(EBase());
 	entities.back().position = glm::vec3( 10, 1.5, 4.5);
 	entities.back().angles = glm::vec3(-3.14159f / 2, 0, 0);
-	lightSystem.AddSpotLight((unsigned int)entities.size() - 1, glm::vec3(1, 1, 1), 5.0f, false, 16, 30, 60);
+	lightSystem.AddSpotLight((unsigned int)entities.size() - 1, glm::vec3(1, 1, 1), 5.0f, false, 16, 30, 60);*/
 
 	entities.push_back(EBase());
 	entities.back().position = glm::vec3(0, 1.5, -4.5);
@@ -513,9 +522,9 @@ bool Engine::InitializeScene(std::string szScenePath) {
 	entities.back().position = glm::vec3(0, 1.5, 0);
 	lightSystem.AddPointLight((unsigned int)entities.size() - 1, glm::vec3(1, 0.5, 0.5), 100, true, 4);
 
-	entities.push_back(EBase());
+	/*entities.push_back(EBase());
 	entities.back().position = glm::vec3(10, 1.5, 4.5);
-	lightSystem.AddDirectionalLight((unsigned int)entities.size() - 1, glm::vec3(1, 1, 1), 200.0f, true, 32.0f);
+	lightSystem.AddDirectionalLight((unsigned int)entities.size() - 1, glm::vec3(1, 1, 1), 200.0f, true, 32.0f);*/
 
 	engine.entities.push_back(EBase());
 	engine.geometryCache.LoadModel3D("../models/crytek-sponza/sponza.obj", engine.entities.size() - 1, engine.entities.back().components[COMPONENT_MODEL], engine.entities.back().components[COMPONENT_RENDER]);

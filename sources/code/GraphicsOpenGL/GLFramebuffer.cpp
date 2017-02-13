@@ -14,7 +14,7 @@ void GLFramebuffer::Initialize(unsigned short numBuffer) {
 		targetBuffer = 0;
 		textures = new unsigned int[numBuffers];
 		glGenTextures(numBuffers, textures);
-		glEnable(GL_FRAMEBUFFER_SRGB);
+		//glEnable(GL_FRAMEBUFFER_SRGB);
 	}
 }
 
@@ -100,11 +100,21 @@ void GLFramebuffer::Generate() {
 void GLFramebuffer::BindTexture(unsigned int fboLoc) {
 	glActiveTexture(GL_TEXTURE0 + fboLoc);
 	glBindTexture(GL_TEXTURE_2D, textures[fboLoc]);
+
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		fprintf(stderr, "Framebuffer Error. Status 0x%x\n", status);
+	}
 }
 
 void GLFramebuffer::BindTexture(unsigned int fboLoc, unsigned int bindLoc) {
 	glActiveTexture(GL_TEXTURE0 + bindLoc);
 	glBindTexture(GL_TEXTURE_2D, textures[fboLoc]);
+
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		fprintf(stderr, "Framebuffer Error. Status 0x%x\n", status);
+	}
 }
 
 
@@ -139,35 +149,20 @@ void GLFramebuffer::ReadBind() {
 
 void GLFramebuffer::Unbind() {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glDisable(GL_FRAMEBUFFER_SRGB);
+	//glDisable(GL_FRAMEBUFFER_SRGB);
 }
 
 void GLFramebuffer::TestBlit() {
-	glEnable(GL_DEPTH_TEST);
-
-	for (GLenum err; (err = glGetError()) != GL_NO_ERROR;)
-	{
-		std::cout << err << " - 0\n";
-	}
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-	for (GLenum err; (err = glGetError()) != GL_NO_ERROR;)
-	{
-		std::cout << err << " - 1\n";
-	}
-	glBlitFramebuffer(0, 0, 1366, 768, 0, 0, 1366, 768, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-
-	for (GLenum err; (err = glGetError()) != GL_NO_ERROR;)
-	{
-		std::cout << err << " - 2\n";
-	}
-
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glDepthFunc(GL_LEQUAL);
-
-	for (GLenum err; (err = glGetError()) != GL_NO_ERROR;)
-	{
-		std::cout << err << " - 3\n";
-	}
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
+	glReadBuffer(GL_COLOR_ATTACHMENT0);
+	glBlitFramebuffer(0, 0, 1366, 768, 0, 0, 1366/2, 768/2, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glReadBuffer(GL_COLOR_ATTACHMENT1);
+	glBlitFramebuffer(0, 0, 1366, 768, 1366 / 2, 0, 1366, 768/2, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glReadBuffer(GL_COLOR_ATTACHMENT2);
+	glBlitFramebuffer(0, 0, 1366, 768, 0, 768/2, 1366 / 2, 768, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glReadBuffer(GL_COLOR_ATTACHMENT3);
+	glBlitFramebuffer(0, 0, 1366, 768, 1366 / 2, 768/2, 1366, 768, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
