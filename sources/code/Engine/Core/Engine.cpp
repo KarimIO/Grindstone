@@ -26,7 +26,7 @@ bool Engine::Initialize() {
 	// Get Settings here:
 	InitializeSettings();
 	if (!InitializeWindow())						return false;
-	//if (!InitializeAudio())							return false;
+	if (!InitializeAudio())							return false;
 	if (!InitializeGraphics(GRAPHICS_OPENGL))		return false;
 
 	std::string vsPath = "../shaders/objects/main.glvs"; // GetShaderExt()
@@ -84,7 +84,7 @@ bool Engine::Initialize() {
 	lightSystem.SetPointers(graphicsWrapper, &geometryCache);
 
 	inputSystem.AddControl("escape", "Shutdown", NULL, 1);
-	inputSystem.BindAction("Shutdown", NULL, this, &Engine::ShutdownControl);
+	inputSystem.BindAction("Shutdown", NULL, this, &Engine::ShutdownControl, KEY_RELEASED);
 
 	inputSystem.AddControl("e", "PlaySound", NULL, 1);
 	inputSystem.BindAction("PlaySound", NULL, this, &Engine::PlayEngineSound);
@@ -505,7 +505,7 @@ bool Engine::InitializeScene(std::string szScenePath) {
 
 	entities.push_back(EBase());
 	entities.back().position = glm::vec3(0, 1.5, -4.5);
-	lightSystem.AddPointLight((unsigned int)entities.size() - 1, glm::vec3(0.5, 1, 0.5), 40.0f, true, 16);
+	lightSystem.AddPointLight((unsigned int)entities.size() - 1, glm::vec3(1.0, 0.9, 0.8), 40.0f, true, 16);
 
 	entities.push_back(EBase());
 	entities.back().position = glm::vec3(-10, 1.5, 0);
@@ -513,14 +513,14 @@ bool Engine::InitializeScene(std::string szScenePath) {
 	
 	entities.push_back(EBase());
 	entities.back().position = glm::vec3(10, 1.5, 0);
-	lightSystem.AddPointLight((unsigned int)entities.size() - 1, glm::vec3(0.5, 1, 0.5), 25.0f, true, 16);
+	lightSystem.AddPointLight((unsigned int)entities.size() - 1, glm::vec3(1.0, 0.9, 0.8), 25.0f, true, 16);
 	entities.push_back(EBase());
 	entities.back().position = glm::vec3(0, 1.5, 4.5);
 	lightSystem.AddPointLight((unsigned int)entities.size() - 1, glm::vec3(1, 1, 1), 22.0f, true, 16);
 
 	entities.push_back(EBase());
 	entities.back().position = glm::vec3(0, 1.5, 0);
-	lightSystem.AddPointLight((unsigned int)entities.size() - 1, glm::vec3(1, 0.5, 0.5), 100, true, 4);
+	lightSystem.AddPointLight((unsigned int)entities.size() - 1, glm::vec3(1, 0.5, 0.5), 22.0f, true, 16);
 
 	/*entities.push_back(EBase());
 	entities.back().position = glm::vec3(10, 1.5, 4.5);

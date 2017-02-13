@@ -596,6 +596,7 @@ AxisCommand::AxisCommand(void * TargetEntity, std::function<void(double)> functi
 
 ActionCommand::ActionCommand(void * TargetEntity, std::function<void(double)> function, KEY_STATUS keyStatus) : BaseCommand(TargetEntity, function) {
 	type = COMMAND_ACTION;
+	this->status = keyStatus;
 }
 
 void BaseCommand::Invoke(double value) {
