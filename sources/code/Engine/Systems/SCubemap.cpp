@@ -21,14 +21,16 @@ void CubemapSystem::CaptureCubemaps(double) {
 			path = "../cubemaps/level" + std::to_string(i) + (gCubeDirections[j].name) + ".png";
 			View = glm::lookAt(components[i].position, components[i].position + gCubeDirections[j].Target, gCubeDirections[j].Up);
 
-			engine.Render(Proj, View, glm::vec2(512, 512));
+			engine.Render(Proj, View, false);
 			engine.graphicsWrapper->SwapBuffer();
 			unsigned char *data = engine.graphicsWrapper->ReadScreen(512, 512);
 			WriteTexture(path.c_str(), 512, 512, 3, data);
 			free(data);
 		}
-		LoadCubemaps();
+		engine.graphicsWrapper->SetResolution(0, 0, engine.settings.resolutionX, engine.settings.resolutionY);
 	}
+
+	LoadCubemaps();
 	writing = false;
 	engine.graphicsWrapper->SetResolution(0, 0, engine.settings.resolutionX, engine.settings.resolutionY);
 }

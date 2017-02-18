@@ -53,7 +53,7 @@ void main() {
 	float dotPR = dot(lightDir, lightDirection);
 	dotPR = clamp((dotPR-minDot)/(maxDot-minDot), 0, 1);
 	if (dotPR > 0) {
-		colorOut = vec4(linearToSRGB(visibility*colorOut.rgb), colorOut.a)*dotPR;
+		colorOut = vec4(hdrGammaTransform(visibility*colorOut.rgb), colorOut.a)*dotPR;
 	}
 	else {
 		colorOut = vec4(0,0,0,0);

@@ -148,6 +148,7 @@ void GLFramebuffer::ReadBind() {
 }
 
 void GLFramebuffer::Unbind() {
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 	//glDisable(GL_FRAMEBUFFER_SRGB);
 }

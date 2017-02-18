@@ -98,6 +98,8 @@ public:
 		int resolutionX;
 		int resolutionY;
 		float fov;
+		bool enableReflections;
+		bool enableShadows;
 		GraphicsLanguage graphicsLanguage;
 	} settings;
 
@@ -132,7 +134,7 @@ public:
 	double GetTimeCurrent();
 	double GetUpdateTimeDelta();
 	double GetRenderTimeDelta();
-	void Render(glm::mat4 projection, glm::mat4 views, glm::vec2 res);
+	void Render(glm::mat4 projection, glm::mat4 views, bool usePost);
 	void PlayEngineSound(double sound);
 	void PlayEngineSound2(double sound);
 

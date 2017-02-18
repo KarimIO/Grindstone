@@ -52,3 +52,4 @@ cubemaps/*
 materials/*
 shaders/objects/backup/*
 sounds/music/*
+settings.ini

@@ -24,7 +24,7 @@ RenderPathForward::RenderPathForward(GraphicsWrapper * gw, SModel * gc) {
 	geometryCache = gc;
 }
 
-void RenderPathForward::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, glm::vec2 res) {
+void RenderPathForward::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {
 	PrePass();
 	GeometryPass(projection, view);
 	PostPass();

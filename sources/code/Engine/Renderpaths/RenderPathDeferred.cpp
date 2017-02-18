@@ -8,6 +8,14 @@
 
 #include <glm/gtx/transform.hpp>
 
+struct IBLBufferDef {
+	glm::vec3 eyePos;
+	int gbuffer0;
+	int gbuffer1;
+	int gbuffer3;
+	int cubemap;
+} iblUBO;
+
 struct DirectionalLightBufferDef {
 	glm::vec3 eyePos;
 	int gbuffer0;
@@ -68,7 +76,6 @@ struct PostUniformBufferDef {
 
 void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
 	// Uses screen resolution due to framebuffer size
-	engine.graphicsWrapper->SetResolution(0, 0, engine.settings.resolutionX, engine.settings.resolutionY);
 	fbo->WriteBind();
 	graphicsWrapper->SetDepth(1);
 	graphicsWrapper->SetCull(CULL_BACK);
@@ -79,9 +86,7 @@ void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view, glm:
 	fbo->Unbind();
 }
 
-void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, glm::vec2 res) {
-	
-	engine.graphicsWrapper->SetResolution(0, 0, (uint32_t)res.x, (uint32_t)res.y);
+void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {
 	dirLightUBO.eyePos = spotLightUBO.eyePos = pointLightUBO.eyePos = eyePos;
 	dirLightUBO.gbuffer0 = spotLightUBO.gbuffer0 = pointLightUBO.gbuffer0 = 0;
 	dirLightUBO.gbuffer1 = spotLightUBO.gbuffer1 = pointLightUBO.gbuffer1 = 1;
@@ -113,9 +118,12 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		pointLightUBO.lightPosition = entity->GetPosition();
 		pointLightUBO.lightShadow = 4;
 
-		/*engine.lightSystem.pointLights[i].fbo->ReadBind();
-		engine.lightSystem.pointLights[i].fbo->BindDepthCube(4);
-		engine.lightSystem.pointLights[i].fbo->Unbind();*/
+		// Temporary disable pointlight shadows until we get them working
+		if (false && light->castShadow) {
+			light->fbo->ReadBind();
+			light->fbo->BindDepthCube(4);
+			light->fbo->Unbind();
+		}
 
 		pointLightShader->PassData(&pointLightUBO);
 		pointLightShader->SetVec3();
@@ -136,7 +144,7 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		vaoSphere->Unbind();
 	}
 
-	/*spotLightShader->Use();
+	spotLightShader->Use();
 	for (size_t i = 0; i < engine.lightSystem.spotLights.size(); i++) {
 		unsigned int entityID = engine.lightSystem.spotLights[i].entityID;
 		CSpotLight *light = &engine.lightSystem.spotLights[i];
@@ -151,10 +159,12 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		spotLightUBO.lightDirection = entity->GetForward();
 		spotLightUBO.lightShadow = 4;
 		spotLightUBO.shadowMatrix = light->projection;
-		
-		engine.lightSystem.spotLights[i].fbo->ReadBind();
-		engine.lightSystem.spotLights[i].fbo->BindDepth(4);
-		engine.lightSystem.spotLights[i].fbo->Unbind();
+
+		if (light->castShadow) {
+			light->fbo->ReadBind();
+			light->fbo->BindDepth(4);
+			light->fbo->Unbind();
+		}
 
 		spotLightShader->PassData(&spotLightUBO);
 		spotLightShader->SetVec3();
@@ -189,9 +199,11 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		dirLightUBO.shadowMatrix = light->projection;
 		dirLightUBO.lightDirection = entity->GetForward();
 
-		engine.lightSystem.directionalLights[i].fbo->ReadBind();
-		engine.lightSystem.directionalLights[i].fbo->BindDepth(4);
-		engine.lightSystem.directionalLights[i].fbo->Unbind();
+		if (light->castShadow) {
+			light->fbo->ReadBind();
+			light->fbo->BindDepth(4);
+			light->fbo->Unbind();
+		}
 
 		directionalLightShader->PassData(&dirLightUBO);
 		directionalLightShader->SetVec3();
@@ -209,7 +221,35 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		vaoQuad->Bind();
 		graphicsWrapper->DrawVertexArray(4);
 		vaoQuad->Unbind();
-	}*/
+	}
+
+	if (usePost) {
+		iblUBO.eyePos = eyePos;
+		iblUBO.gbuffer0 = 0;
+		iblUBO.gbuffer1 = 1;
+		iblUBO.gbuffer3 = 3;
+		iblUBO.cubemap = 4;
+
+		CubemapComponent *comp = engine.cubemapSystem.GetClosestCubemap(eyePos);
+		if (comp != NULL) {
+			Texture *cube = engine.cubemapSystem.GetClosestCubemap(eyePos)->cubemap;
+			if (cube != NULL)
+				cube->BindCubemap(4);
+		}
+
+		iblShader->Use();
+
+		iblShader->PassData(&iblUBO);
+		iblShader->SetVec3();
+		iblShader->SetInteger();
+		iblShader->SetInteger();
+		iblShader->SetInteger();
+		iblShader->SetInteger();
+
+		vaoQuad->Bind();
+		graphicsWrapper->DrawVertexArray(4);
+		vaoQuad->Unbind();
+	}
 	
 	/*CubemapComponent *comp = engine.cubemapSystem.GetClosestCubemap(eyePos);
 	if (comp != NULL) {
@@ -276,6 +316,7 @@ void RenderPathDeferred::PostPass(glm::mat4 projection, glm::mat4 view, glm::vec
 	vaoQuad->Bind();
 	graphicsWrapper->DrawVertexArray(4);
 	vaoQuad->Unbind();
+	fbo->Unbind();
 }
 
 RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
@@ -348,15 +389,15 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	fbo->Initialize(4);
 	unsigned int resx = (unsigned int)res.x;
 	unsigned int resy = (unsigned int)res.y;
-	fbo->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, resx, resy);
-	fbo->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, resx, resy);
-	fbo->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, resx, resy);
-	fbo->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, resx, resy);
+	fbo->AddBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, resx, resy);
+	fbo->AddBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, resx, resy);
+	fbo->AddBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, resx, resy);
+	fbo->AddBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, resx, resy);
 	// Depth Buffer Issue:
 	fbo->AddDepthBuffer(resx, resy);
 	fbo->Generate();
 
-	/*std::string vsPath = "../shaders/overlay.glvs";
+	std::string vsPath = "../shaders/overlay.glvs";
 	std::string fsPath = "../shaders/deferred/directional.glfs";
 
 	std::string vsContent;
@@ -389,14 +430,37 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	directionalLightShader->CreateUniform("lightIntensity");
 	directionalLightShader->CreateUniform("lightDirection");
 
-	vsContent.clear();
 	fsContent.clear();
-	vsPath.clear();
-	fsPath.clear();*/
+	fsPath.clear();
 
-	std::string vsContent, fsContent;
-	std::string vsPath = "../shaders/deferred/light.glvs";
-	std::string fsPath = "../shaders/deferred/point.glfs";
+	fsPath = "../shaders/deferred/ibl.glfs";
+
+	if (!ReadFileIncludable(fsPath, fsContent))
+		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
+
+	iblShader = pfnCreateShader();
+	iblShader->Initialize(2);
+	if (!iblShader->AddShader(&vsPath, &vsContent, SHADER_VERTEX))
+		fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
+	if (!iblShader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
+		fprintf(stderr, "Failed to add fragment shader %s.\n", fsPath.c_str());
+	if (!iblShader->Compile())
+		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
+
+	iblShader->SetNumUniforms(5);
+	iblShader->CreateUniform("eyePos");
+	iblShader->CreateUniform("gbuffer0");
+	iblShader->CreateUniform("gbuffer1");
+	iblShader->CreateUniform("gbuffer3");
+	iblShader->CreateUniform("texRefl");
+
+	fsContent.clear();
+	fsPath.clear();
+	vsContent.clear();
+	vsPath.clear();
+
+	vsPath = "../shaders/deferred/light.glvs";
+	fsPath = "../shaders/deferred/point.glfs";
 
 	if (!ReadFileIncludable(vsPath, vsContent))
 		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
@@ -430,7 +494,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	fsContent.clear();
 	fsPath.clear();
 
-	/*fsPath = "../shaders/deferred/spot.glfs";
+	fsPath = "../shaders/deferred/spot.glfs";
 	if (!ReadFileIncludable(fsPath, fsContent))
 		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
 
@@ -462,9 +526,8 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 
 	fsContent.clear();
 	fsPath.clear();
-
 	vsContent.clear();
-	vsPath.clear();*/
+	vsPath.clear();
 
 	/*vsPath = "../shaders/objects/sky.glvs";
 	fsPath = "../shaders/objects/sky.glfs";
@@ -533,8 +596,8 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	envMap = LoadCubemap("../materials/skybox/Cliff", ".tga", COLOR_SRGB);
 }
 
-void RenderPathDeferred::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, glm::vec2 res) {
+void RenderPathDeferred::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {
 	GeometryPass(projection, view, eyePos);
-	DeferredPass(projection, view, eyePos, res);
+	DeferredPass(projection, view, eyePos, usePost);
 	//PostPass(projection, view, eyePos);
 }

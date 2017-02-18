@@ -52,6 +52,7 @@ void GraphicsWrapper::DrawBaseVertex(ShapeType type, const void *baseIndex, uint
 }
 
 unsigned char * GraphicsWrapper::ReadScreen(uint32_t width, uint32_t height) {
+	glReadBuffer(GL_COLOR_ATTACHMENT0);
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	unsigned char *data = new unsigned char[width * height * 3];
 	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);

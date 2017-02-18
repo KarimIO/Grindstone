@@ -1,4 +1,4 @@
-#version 140 core
+#version 140
 
 //layout(location = 0) out vec4 colorOut;
 out vec4 colorOut;
@@ -58,5 +58,5 @@ void main() {
 	vec3 illuminance = BSDF(NV, NL, LH, NH, alpha, Specular.rgb);
 	illuminance *= sunIlluminanceInLux * NL; // illuminance
 	colorOut = vec4(visibility * Albedo.rgb, 1);
-	colorOut = vec4(linearToSRGB(colorOut.rgb), colorOut.a);
+	colorOut = vec4(hdrGammaTransform(colorOut.rgb), colorOut.a);
 }

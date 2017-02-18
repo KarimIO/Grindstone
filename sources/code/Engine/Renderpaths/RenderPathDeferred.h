@@ -17,8 +17,9 @@ class RenderPathDeferred : public RenderPath {
 	unsigned int numSkyIndices;
 
 	void GeometryPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos);
-	void DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, glm::vec2 res);
+	void DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost);
 	void PostPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos);
+	ShaderProgram *iblShader;
 	ShaderProgram *directionalLightShader;
 	ShaderProgram *spotLightShader;
 	ShaderProgram *pointLightShader;
@@ -34,7 +35,7 @@ class RenderPathDeferred : public RenderPath {
 
 	STerrain terrain;
 public:
-	virtual void Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, glm::vec2 res);
+	virtual void Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost);
 	RenderPathDeferred(GraphicsWrapper *gw, SModel *gc);
 };
 

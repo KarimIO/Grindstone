@@ -1,0 +1,43 @@
+#version 140
+
+out vec4 colorOut;
+
+uniform sampler2D gbuffer0;
+uniform sampler2D gbuffer1;
+uniform sampler2D gbuffer2;
+uniform sampler2D gbuffer3;
+uniform samplerCube texRefl;
+
+uniform vec3 eyePos;
+
+in vec2 UV;
+
+#include ../shaders/light.is
+
+vec3 CalculateIBL(vec3 WorldPos, vec3 Normal, vec4 Specular) {
+	vec3 eyeDir		= normalize(eyePos - WorldPos.xyz);
+	vec3 eyeReflect = reflect(-eyeDir, Normal);
+	
+	float Roughness = Specular.a;
+	float alpha = Roughness * Roughness;
+	
+	float NV = abs(dot(Normal, eyeDir));
+	
+	vec3 reflectDir = normalize(eyeReflect);
+	vec3 reflectPix = texture(texRefl, reflectDir).rgb;
+		
+	vec3 f0 = 0.32*Specular.rgb*Specular.rgb;
+	float f90 = clamp(50 * dot(f0, vec3(0.33)), 0, 1);
+	vec3 F = Light_F(f0, f90, NV);
+	float Vis = Light_V(1, NV, alpha);
+	return F * Vis * reflectPix;
+}
+
+void main() {
+
+	vec4 Position	= texture(gbuffer0, UV);
+	vec4 Normal		= texture(gbuffer1, UV);
+	vec4 Specular	= texture(gbuffer3, UV);
+
+    colorOut = vec4(CalculateIBL(Position.xyz, Normal.xyz, Specular), 1);
+}

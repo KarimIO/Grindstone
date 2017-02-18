@@ -88,21 +88,29 @@ vec3 linearToSRGB(vec3 inColor) {
 	return outColor;
 }
 
-vec3 CalculateIBL(vec3 WorldPos, vec3 Normal, vec4 Specular) {
-	vec3 eyeDir		= normalize(eyePos - WorldPos.xyz);
-	vec3 eyeReflect = reflect(-eyeDir, Normal);
-	
-	float Roughness = Specular.a;
-	float alpha = Roughness * Roughness;
-	
-	float NV = abs(dot(Normal, eyeDir));
-	
-	vec3 reflectDir = normalize(eyeReflect);
-	vec3 reflectPix = vec3(1); //texture(texRefl, reflectDir).rgb;
-		
-	vec3 f0 = 0.32*Specular.rgb*Specular.rgb;
-	float f90 = clamp(50 * dot(f0, vec3(0.33)), 0, 1);
-	vec3 F = Light_F(f0, f90, NV);
-	float Vis = Light_V(1, NV, alpha);
-	return F * Vis * reflectPix;
+vec3 hdrTransform(vec3 color) {
+    float a = 2.51f;
+    float b = 0.03f;
+    float c = 2.43f;
+    float d = 0.59f;
+    float e = 0.14f;
+
+	return clamp((color*(a*color+b))/(color*(c*color+d)+e), 0, 1);
+}
+
+vec3 hdrTransformB(vec3 color) {
+    float a = 2.51f;
+    float b = 0.03f;
+    float c = 2.43f;
+    float d = 0.59f;
+    float e = 0.14f;
+
+	return clamp((color*(a*color+b))/(color*(c*color+d)+e), 0, 1);
+}
+
+vec3 hdrGammaTransform(vec3 color) {
+	if (false && gl_FragCoord.x > 1366/2)
+		return linearToSRGB(color);
+	else
+		return linearToSRGB(hdrTransform(color));
 }

@@ -3,17 +3,17 @@
 
 void SLight::AddPointLight(unsigned int entityID, glm::vec3 lightColor, float intensity, bool castShadow, float lightRadius) {
 	engine.entities[entityID].components[COMPONENT_LIGHT_POINT] = pointLights.size();
-	pointLights.push_back(CPointLight(entityID, lightColor, intensity, castShadow, lightRadius));
+	pointLights.push_back(CPointLight(entityID, lightColor, intensity, engine.settings.enableShadows && castShadow, lightRadius));
 }
 
 void SLight::AddSpotLight(unsigned int entityID, glm::vec3 lightColor, float intensity, bool castShadow, float lightRadius, float innerSpotAngle, float outerSpotAngle) {
 	engine.entities[entityID].components[COMPONENT_LIGHT_SPOT] = spotLights.size();
-	spotLights.push_back(CSpotLight(entityID, lightColor, intensity, castShadow, lightRadius, innerSpotAngle, outerSpotAngle));
+	spotLights.push_back(CSpotLight(entityID, lightColor, intensity, engine.settings.enableShadows && castShadow, lightRadius, innerSpotAngle, outerSpotAngle));
 }
 
 void SLight::AddDirectionalLight(unsigned int entityID, glm::vec3 lightColor, float intensity, bool castShadow, float sunRadius) {
 	engine.entities[entityID].components[COMPONENT_LIGHT_DIRECTIONAL] = directionalLights.size();
-	directionalLights.push_back(CDirectionalLight(entityID, lightColor, intensity, castShadow, sunRadius));
+	directionalLights.push_back(CDirectionalLight(entityID, lightColor, intensity, engine.settings.enableShadows && castShadow, sunRadius));
 }
 
 void SLight::SetPointers(GraphicsWrapper *gw, SModel *gc) {
@@ -22,7 +22,6 @@ void SLight::SetPointers(GraphicsWrapper *gw, SModel *gc) {
 }
 
 void SLight::DrawShadows() {
-	return;
 
 	glm::mat4 biasMatrix(
 		0.5, 0.0, 0.0, 0.0,
@@ -84,6 +83,15 @@ void SLight::DrawShadows() {
 			geometryCache->Draw(proj, view);
 			light->fbo->Unbind();
 		}
+	}
+
+
+	if (directionalLights.size() > 0) {
+		unsigned int eID = directionalLights[0].entityID;
+		float time = engine.GetTimeCurrent();
+		engine.entities[eID].position = glm::vec3(0, glm::sin(time / 4.0f), glm::cos(time / 4.0f)) * 40.0f;
+		float ang = std::fmod(time, 360);
+		engine.entities[eID].angles = glm::vec3(-3.14159f / 2, 0, 0);
 	}
 
 	for (size_t j = 0; j < directionalLights.size(); j++) {
