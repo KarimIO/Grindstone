@@ -464,10 +464,10 @@ void Engine::registerClass(const char * szEntityName, std::function<void*()> fn)
 // Initialize and Load a game scene
 bool Engine::InitializeScene(std::string szScenePath) {
 	szScenePath = GetAvailablePath(szScenePath);
-	if (szScenePath == "") {
+	/*if (szScenePath == "") {
 		printf("Scene path %s not found.\n", szScenePath.c_str());
 		return false;
-	}
+	}*/
 
 	player = new EBasePlayer();
 	player->position.y = 2;
