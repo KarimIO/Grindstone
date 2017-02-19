@@ -77,7 +77,18 @@ bool GLShaderProgram::Compile() {
 		return false;
 	}
 
+	// Detach Shaders (Remove their references)
+	for (size_t i = 0; i < shaderNum; i++) {
+		glDetachShader(program, shaders[i]);
+		glDeleteShader(shaders[i]);
+	}
+
+	return true;
+}
+
+bool GLShaderProgram::Validate() {
 	glValidateProgram(program);
+	GLint result = 0;
 	glGetProgramiv(program, GL_VALIDATE_STATUS, &result);
 	if (!result) {
 		int maxLength;
@@ -86,12 +97,6 @@ bool GLShaderProgram::Compile() {
 		glGetProgramInfoLog(program, maxLength, &maxLength, &infoLog[0]);
 		fprintf(stderr, "Invalid shader program: '%s'\n", &infoLog[0]);
 		return false;
-	}
-
-	// Detach Shaders (Remove their references)
-	for (size_t i = 0; i < shaderNum; i++) {
-		glDetachShader(program, shaders[i]);
-		glDeleteShader(shaders[i]);
 	}
 
 	return true;

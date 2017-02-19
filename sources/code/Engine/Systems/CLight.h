@@ -22,8 +22,9 @@ public:
 	CPointLight(unsigned int entityID, glm::vec3 color, float strength, bool cast, float radius);
 };
 
-class CSpotLight : public CPointLight {
+class CSpotLight : public CBaseLight {
 public:
+	float lightRadius;
 	float innerSpotAngle;
 	float outerSpotAngle;
 	CSpotLight(unsigned int entityID, glm::vec3 color, float strength, bool cast, float radius, float ia, float oa);

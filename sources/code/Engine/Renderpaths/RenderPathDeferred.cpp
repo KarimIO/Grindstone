@@ -445,7 +445,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	if (!iblShader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
 		fprintf(stderr, "Failed to add fragment shader %s.\n", fsPath.c_str());
 	if (!iblShader->Compile())
-		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
+		fprintf(stderr, "Failed to compile IBL Program");
 
 	iblShader->SetNumUniforms(5);
 	iblShader->CreateUniform("eyePos");

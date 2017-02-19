@@ -18,6 +18,7 @@ public:
 	virtual void Initialize(int numShaders) = 0;
 	virtual bool AddShader(std::string *path, std::string *content, ShaderType) = 0;
 	virtual bool Compile() = 0;
+	virtual bool Validate() = 0;
 	virtual void Use() = 0;
 
 	virtual void BindAttribLocation(uint32_t, const char *) = 0;

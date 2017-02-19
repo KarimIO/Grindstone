@@ -8,13 +8,17 @@ GRAPHICS_EXPORT Framebuffer* createFramebuffer() {
 
 void GLFramebuffer::Initialize(unsigned short numBuffer) {
 	glGenFramebuffers(1, &fbo);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	numBuffers = numBuffer;
 	if (numBuffer > 0) {
 		targetBuffer = 0;
 		textures = new unsigned int[numBuffers];
 		glGenTextures(numBuffers, textures);
 		//glEnable(GL_FRAMEBUFFER_SRGB);
+	}
+	else {
+		glDrawBuffer(GL_NONE);
+		glReadBuffer(GL_NONE);
 	}
 }
 
@@ -59,7 +63,7 @@ void GLFramebuffer::AddDepthBuffer(unsigned int width, unsigned int height) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthBuffer, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthBuffer, 0);
 }
 
 void GLFramebuffer::AddDepthCubeBuffer(unsigned int width, unsigned int height) {
@@ -102,21 +106,11 @@ void GLFramebuffer::Generate() {
 void GLFramebuffer::BindTexture(unsigned int fboLoc) {
 	glActiveTexture(GL_TEXTURE0 + fboLoc);
 	glBindTexture(GL_TEXTURE_2D, textures[fboLoc]);
-
-	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	if (status != GL_FRAMEBUFFER_COMPLETE) {
-		fprintf(stderr, "Framebuffer Error. Status 0x%x\n", status);
-	}
 }
 
 void GLFramebuffer::BindTexture(unsigned int fboLoc, unsigned int bindLoc) {
 	glActiveTexture(GL_TEXTURE0 + bindLoc);
 	glBindTexture(GL_TEXTURE_2D, textures[fboLoc]);
-
-	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	if (status != GL_FRAMEBUFFER_COMPLETE) {
-		fprintf(stderr, "Framebuffer Error. Status 0x%x\n", status);
-	}
 }
 
 

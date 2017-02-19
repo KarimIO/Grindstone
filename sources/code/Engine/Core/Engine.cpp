@@ -136,13 +136,25 @@ void Engine::InitializeSettings() {
 			settings.graphicsLanguage = GRAPHICS_OPENGL;
 			cfile.SetString("Renderer", "graphics", "OpenGL");
 		}
+
+		cfile.SaveFile();
+		cfile.CloseFile();
 	}
 	else {
 		fprintf(stderr, "SETTINGS.INI: File not found.\n");
+
+		cfile.SetInteger("Window", "resx", 1024);
+		cfile.SetInteger("Window", "resy", 768);
+		cfile.SetFloat("Window", "fov", 90);
+		cfile.SetString("Renderer", "graphics", "OpenGL");
+		cfile.SetBool("Renderer", "reflections", true);
+		cfile.SetBool("Renderer", "shadows", true);
+
 		settings.resolutionX = 1024;
 		settings.resolutionY = 768;
 		settings.graphicsLanguage = GRAPHICS_OPENGL;
 		settings.fov = 90;
+		settings.fov *= 3.14159f / 360.0f; // Convert to rad, /2 for full fovY.
 		settings.enableReflections = true;
 		settings.enableShadows = false;
 	}
