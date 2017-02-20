@@ -28,6 +28,8 @@
 
 #include <SoundFile.h>
 
+#include "TextureManager.h"
+
 #include <Shader.h>
 
 #include "../Entities/EBase.h"
@@ -89,6 +91,7 @@ private:
 
 	std::chrono::nanoseconds deltaTime;
 public:
+	TextureManager textureManager;
 	// Class Registry
 	std::vector<classRegister *> classRegistry;
 	EBase *createEntity(const char *szEntityName);

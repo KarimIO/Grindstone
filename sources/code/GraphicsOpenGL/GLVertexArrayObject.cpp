@@ -33,6 +33,9 @@ void GLVertexArrayObject::Cleanup()
 
 void GLVertexArrayObject::CleanupVBOs()
 {
+	for (size_t i = 0; i < boundVBOs; i++)
+		vbos[i]->Cleanup();
+
 	glDeleteVertexArrays(1, &vao);
 }
 

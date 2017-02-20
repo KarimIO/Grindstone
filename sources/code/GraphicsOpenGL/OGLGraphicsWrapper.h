@@ -65,6 +65,7 @@ public:
 	virtual void SetCull(CullType state);
 	virtual void SetBlending(bool state);
 	virtual void SetTesselation(int verts);
+	virtual void DeletePointer(void *ptr);
 #ifdef _WIN32
 	virtual void SetWindowContext(HWND);
 #endif

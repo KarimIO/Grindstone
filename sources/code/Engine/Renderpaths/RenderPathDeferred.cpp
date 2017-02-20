@@ -593,7 +593,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	//terrain.Initialize();
 	//terrain.LoadTerrain("../materials/height.png", 32, 32, 8, 8);
 
-	envMap = LoadCubemap("../materials/skybox/Cliff", ".tga", COLOR_SRGB);
+	envMap = engine.textureManager.LoadCubemap("../materials/skybox/Cliff", ".tga", COLOR_SRGB);
 }
 
 void RenderPathDeferred::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {

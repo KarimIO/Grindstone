@@ -60,11 +60,11 @@ void STerrain::Initialize() {
 	terrainShader->CreateUniform("rockAlbedo");
 	terrainShader->CreateUniform("rockGeometry");
 
-	grassAlbedo = LoadTexture("../materials/terrain/grass/albedo.png", COLOR_SRGB);
-	grassGeometry = LoadTexture("../materials/terrain/grass/geometry.png", COLOR_RGBA);
+	grassAlbedo = engine.textureManager.LoadTexture("../materials/terrain/grass/albedo.png", COLOR_SRGB);
+	grassGeometry = engine.textureManager.LoadTexture("../materials/terrain/grass/geometry.png", COLOR_RGBA);
 
-	rockAlbedo = LoadTexture("../materials/terrain/rock/albedo.png", COLOR_SRGB);
-	rockGeometry = LoadTexture("../materials/terrain/rock/geometry.png", COLOR_RGBA);
+	rockAlbedo = engine.textureManager.LoadTexture("../materials/terrain/rock/albedo.png", COLOR_SRGB);
+	rockGeometry = engine.textureManager.LoadTexture("../materials/terrain/rock/geometry.png", COLOR_RGBA);
 }
 
 void STerrain::LoadTerrain(std::string path, float width, float length, float height, unsigned int patches) {
@@ -73,7 +73,7 @@ void STerrain::LoadTerrain(std::string path, float width, float length, float he
 
 	components.push_back(CTerrain());
 	CTerrain *terrain = &components.back();
-	terrain->texture = LoadTexture(path, COLOR_RGBA);
+	terrain->texture = engine.textureManager.LoadTexture(path, COLOR_RGBA);
 	std::vector<glm::vec2> vertices;
 	std::vector<glm::vec2> texCoords;
 	std::vector<unsigned int> indices;

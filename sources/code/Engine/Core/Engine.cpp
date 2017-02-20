@@ -68,9 +68,6 @@ bool Engine::Initialize() {
 	vsContent.clear();
 	fsContent.clear();
 
-	if (!InitializeScene("../scenes/startup.gmf"))	return false;
-	cubemapSystem.LoadCubemaps();
-
 	renderPathType = RENDERPATH_DEFERRED;
 	switch (renderPathType) {
 	default:
@@ -94,6 +91,11 @@ bool Engine::Initialize() {
 
 	inputSystem.AddControl("q", "CaptureCubemaps", NULL, 1);
 	inputSystem.BindAction("CaptureCubemaps", NULL, &(engine.cubemapSystem), &CubemapSystem::CaptureCubemaps);
+
+	if (!InitializeScene("../scenes/startup.gmf"))	return false;
+	
+	if (settings.enableReflections)
+		cubemapSystem.LoadCubemaps();
 
 	isRunning = true;
 	prevTime = std::chrono::high_resolution_clock::now();
@@ -548,9 +550,9 @@ bool Engine::InitializeScene(std::string szScenePath) {
 		lightSystem.AddDirectionalLight((unsigned int)entities.size() - 1, glm::vec3(1, 1, 1), 200.0f, true, 32.0f);
 	}
 
-	engine.entities.push_back(EBase());
+	/*engine.entities.push_back(EBase());
 	engine.geometryCache.LoadModel3D("../models/crytek-sponza/sponza.obj", engine.entities.size() - 1, engine.entities.back().components[COMPONENT_MODEL], engine.entities.back().components[COMPONENT_RENDER]);
-	engine.entities.back().scale = glm::vec3(0.01f, 0.01f, 0.01f);
+	engine.entities.back().scale = glm::vec3(0.01f, 0.01f, 0.01f);*/
 
 	for (int i=-1; i <= 1; i++)
 		for (int j=-1; j <= 1; j++)
@@ -586,6 +588,11 @@ void Engine::ShutdownControl(double) {
 }
 
 Engine::~Engine() {
-	//audioSystem->Shutdown();
-	window->Shutdown();
+	geometryCache.Shutdown();
+
+	if (audioSystem)
+		audioSystem->Shutdown();
+	
+	if (window)
+		window->Shutdown();
 }

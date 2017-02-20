@@ -102,28 +102,28 @@ void SModel::InitMaterials(const aiScene* scene, std::string Dir, CModel *model)
 			if (pMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 				std::string FullPath = finalDir + "/" + Path.data;
 				SwitchSlashes(FullPath);
-				newMat->tex[0] = LoadTexture(FullPath, COLOR_SRGB);
+				newMat->tex[0] = engine.textureManager.LoadTexture(FullPath, COLOR_SRGB);
 			}
 		}
 		if (pMaterial->GetTextureCount(aiTextureType_HEIGHT) > 0) {
 			if (pMaterial->GetTexture(aiTextureType_HEIGHT, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 				std::string FullPath = finalDir + "/" + Path.data;
 				SwitchSlashes(FullPath);
-				newMat->tex[1] = LoadTexture(FullPath, COLOR_RGBA);
+				newMat->tex[1] = engine.textureManager.LoadTexture(FullPath, COLOR_RGBA);
 			}
 		}
 		if (pMaterial->GetTextureCount(aiTextureType_SPECULAR) > 0) {
 			if (pMaterial->GetTexture(aiTextureType_SPECULAR, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 				std::string FullPath = finalDir + "/" + Path.data;
 				SwitchSlashes(FullPath);
-				newMat->tex[2] = LoadTexture(FullPath, COLOR_RGBA);
+				newMat->tex[2] = engine.textureManager.LoadTexture(FullPath, COLOR_RGBA);
 			}
 		}
 		if (pMaterial->GetTextureCount(aiTextureType_SHININESS) > 0) {
 			if (pMaterial->GetTexture(aiTextureType_SHININESS, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 				std::string FullPath = finalDir + "/" + Path.data;
 				SwitchSlashes(FullPath);
-				newMat->tex[3] = LoadTexture(FullPath, COLOR_RGBA);
+				newMat->tex[3] = engine.textureManager.LoadTexture(FullPath, COLOR_RGBA);
 			}
 		}
 		model->materials[i] = newMat;
@@ -263,4 +263,11 @@ void SModel::DrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *model) {
 		}
 	}
 	model->vao->Unbind();
+}
+
+void SModel::Shutdown() {
+	for (size_t i = 0; i < models.size(); i++) {
+		models[i].vao->CleanupVBOs();
+		delete models[i].vao;
+	}
 }

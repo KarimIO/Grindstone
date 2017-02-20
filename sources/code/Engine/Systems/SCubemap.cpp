@@ -9,28 +9,33 @@
 
 void CubemapSystem::CaptureCubemaps(double) {
 	std::cout << "Capture Cubemaps" << "\n";
+
+	glm::mat4 Proj = glm::perspective(1.5708f, 1.0f, 1.0f, 1000.0f);
+	glm::mat4 View;
+
+	engine.graphicsWrapper->SetResolution(0, 0, 512, 512);
+
 	writing = true;
 	for (size_t i = 0; i < components.size(); i++) {
 
-		glm::mat4 Proj = glm::perspective(1.5708f, 1.0f, 1.0f, 1000.0f);
-		glm::mat4 View;
-
-		engine.graphicsWrapper->SetResolution(0, 0, 512, 512);
-		std::string path = "";
+		std::string path = "../cubemaps/level" + std::to_string(i);
+		unsigned char *data[6];
 		for (size_t j = 0; j < 6; j++) {
-			path = "../cubemaps/level" + std::to_string(i) + (gCubeDirections[j].name) + ".png";
 			View = glm::lookAt(components[i].position, components[i].position + gCubeDirections[j].Target, gCubeDirections[j].Up);
 
 			engine.Render(Proj, View, false);
 			engine.graphicsWrapper->SwapBuffer();
-			unsigned char *data = engine.graphicsWrapper->ReadScreen(512, 512);
-			WriteTexture(path.c_str(), 512, 512, 3, data);
-			free(data);
+			data[j] = engine.graphicsWrapper->ReadScreen(512, 512);
 		}
-		engine.graphicsWrapper->SetResolution(0, 0, engine.settings.resolutionX, engine.settings.resolutionY);
+		
+		engine.textureManager.WriteCubemap(path.c_str(), ".png", 512, 512, 3, data);
+
+		for (size_t j = 0; j < 6; j++)
+			engine.graphicsWrapper->DeletePointer(data[j]);
 	}
 
 	LoadCubemaps();
+
 	writing = false;
 	engine.graphicsWrapper->SetResolution(0, 0, engine.settings.resolutionX, engine.settings.resolutionY);
 }
@@ -38,7 +43,7 @@ void CubemapSystem::CaptureCubemaps(double) {
 void CubemapSystem::LoadCubemaps() {
 	writing = false;
 	for (size_t i = 0; i < components.size(); i++) {
-		components[i].cubemap = LoadCubemap("../cubemaps/level" + std::to_string(i), ".png", COLOR_SRGB);
+		components[i].cubemap = engine.textureManager.LoadCubemap("../cubemaps/level" + std::to_string(i), ".png", COLOR_SRGB);
 	}
 }
 

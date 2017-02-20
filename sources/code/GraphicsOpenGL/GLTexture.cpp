@@ -21,7 +21,7 @@ void GLTexture::CreateTexture(unsigned char *pixels, PixelScheme scheme, uint32_
 	glGenerateMipmap(GL_TEXTURE_2D);
 }
 
-void GLTexture::CreateCubemap(unsigned char * pixels[], PixelScheme scheme, uint32_t width, uint32_t height) {
+void GLTexture::CreateCubemap(unsigned char *pixels[6], PixelScheme scheme, uint32_t width, uint32_t height) {
 	glGenTextures(1, &textureID);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
