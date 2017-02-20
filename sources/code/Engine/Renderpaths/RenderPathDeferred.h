@@ -12,8 +12,6 @@ class RenderPathDeferred : public RenderPath {
 	Framebuffer *fbo;
 	Framebuffer *postFBO;
 
-	Texture *envMap;
-
 	unsigned int numSkyIndices;
 
 	void GeometryPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos);
@@ -32,8 +30,6 @@ class RenderPathDeferred : public RenderPath {
 	VertexBufferObject *vboQuad;
 	VertexArrayObject *vaoSphere;
 	VertexBufferObject *vboSphere;
-
-	STerrain terrain;
 public:
 	virtual void Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost);
 	RenderPathDeferred(GraphicsWrapper *gw, SModel *gc);

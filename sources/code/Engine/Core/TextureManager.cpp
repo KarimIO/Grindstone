@@ -114,3 +114,15 @@ void TextureManager::WriteCubemap(std::string path, std::string extension, uint3
 	for (int i = 0; i < 6; i++)
 		stbi_write_png(facePaths[i].c_str(), width, height, channels, data[i], width * channels);
 }
+
+void TextureManager::Shutdown() {
+	for (const auto& n : textureCache) {
+		n.second->Cleanup();
+		pfnDeleteGraphicsPointer(n.second);
+	}
+
+	for (const auto& n : cubemapCache) {
+		n.second->Cleanup();
+		pfnDeleteGraphicsPointer(n.second);
+	}
+}

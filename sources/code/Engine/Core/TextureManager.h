@@ -22,6 +22,8 @@ public:
 	Texture *MakeCubemap(std::string identifier, uint32_t width, uint32_t height, uint32_t channels, PixelScheme scheme, unsigned char *data[6]);
 	Texture *MakeWriteCubemap(std::string path, std::string extension, uint32_t width, uint32_t height, uint32_t channels, PixelScheme scheme, unsigned char *data[6]);
 	void WriteCubemap(std::string path, std::string extension, uint32_t width, uint32_t height, uint32_t channels, unsigned char *data[6]);
+
+	void Shutdown();
 };
 
 #endif

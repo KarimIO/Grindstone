@@ -31,7 +31,7 @@ void CubemapSystem::CaptureCubemaps(double) {
 		engine.textureManager.WriteCubemap(path.c_str(), ".png", 512, 512, 3, data);
 
 		for (size_t j = 0; j < 6; j++)
-			engine.graphicsWrapper->DeletePointer(data[j]);
+			pfnDeleteGraphicsPointer(data[j]);
 	}
 
 	LoadCubemaps();

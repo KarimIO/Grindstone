@@ -370,6 +370,8 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 		indices.push_back(Face.mIndices[2]);
 	}
 
+	importer.FreeScene();
+
 	numSkyIndices = (unsigned int) indices.size();
 
 	vaoSphere= pfnCreateVAO();
@@ -383,6 +385,9 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 	vboSphere->AddIBO(&indices[0], indices.size() * sizeof(unsigned int), DRAW_STATIC);
 
 	vaoSphere->Unbind();
+
+	vertices.clear();
+	indices.clear();
 
 	glm::vec2 res = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
 	fbo = pfnCreateFramebuffer();
@@ -592,8 +597,6 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 
 	//terrain.Initialize();
 	//terrain.LoadTerrain("../materials/height.png", 32, 32, 8, 8);
-
-	envMap = engine.textureManager.LoadCubemap("../materials/skybox/Cliff", ".tga", COLOR_SRGB);
 }
 
 void RenderPathDeferred::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {

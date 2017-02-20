@@ -268,6 +268,6 @@ void SModel::DrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *model) {
 void SModel::Shutdown() {
 	for (size_t i = 0; i < models.size(); i++) {
 		models[i].vao->CleanupVBOs();
-		delete models[i].vao;
+		pfnDeleteGraphicsPointer(models[i].vao);
 	}
 }

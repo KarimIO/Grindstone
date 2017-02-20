@@ -8,6 +8,10 @@ GRAPHICS_EXPORT GraphicsWrapper* createGraphics() {
 	return new GraphicsWrapper;
 }
 
+GRAPHICS_EXPORT void deletePointer(void * ptr) {
+	free(ptr);
+}
+
 bool GraphicsWrapper::InitializeGraphics() {
 	if (gl3wInit()) {
 		printf("Failed to initialize GL3W. Returning...\n");
@@ -87,10 +91,6 @@ void GraphicsWrapper::SetTesselation(int verts) {
 	glGetIntegerv(GL_MAX_PATCH_VERTICES, &MaxPatchVertices);
 	printf("Max supported patch vertices %d\n", MaxPatchVertices);
 	glPatchParameteri(GL_PATCH_VERTICES, verts);
-}
-
-void GraphicsWrapper::DeletePointer(void * ptr) {
-	free(ptr);
 }
 
 void GraphicsWrapper::SetCull(CullType state) {

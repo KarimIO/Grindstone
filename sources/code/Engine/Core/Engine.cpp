@@ -16,6 +16,7 @@ VertexBufferObject*	(*pfnCreateVBO)();
 ShaderProgram*		(*pfnCreateShader)();
 Texture*			(*pfnCreateTexture)();
 Framebuffer*		(*pfnCreateFramebuffer)();
+void				(*pfnDeleteGraphicsPointer)(void *ptr);
 
 bool Engine::Initialize() {
 	//physics.Initialize();
@@ -317,6 +318,12 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 		return false;
 	}
 
+	pfnDeleteGraphicsPointer = (void (*)(void*))dlsym(lib_handle, "deletePointer");
+	if (!pfnDeleteGraphicsPointer) {
+		fprintf(stderr, "%s\n", dlerror());
+		return false;
+	}
+
 	Display* display;
 	Window *win_handle;
 	Screen *screen;
@@ -365,6 +372,12 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	pfnCreateFramebuffer = (Framebuffer* (*)())GetProcAddress(dllHandle, "createFramebuffer");
 	if (!pfnCreateFramebuffer) {
 		fprintf(stderr, "Cannot get createFramebuffer function!\n");
+		return false;
+	}
+
+	pfnDeleteGraphicsPointer = (void (*)(void *))GetProcAddress(dllHandle, "deletePointer");
+	if (!pfnDeleteGraphicsPointer) {
+		fprintf(stderr, "Cannot get deletePointer graphics function!\n");
 		return false;
 	}
 
@@ -491,6 +504,10 @@ bool Engine::InitializeScene(std::string szScenePath) {
 	// Battletoads/Battletoad_posed.obj
 	// crytek-sponza/sponza.obj
 
+	entities.push_back(EBase());
+	geometryCache.LoadModel3D("../models/crytek-sponza/sponza.obj", entities.size() - 1, entities.back().components[COMPONENT_MODEL], entities.back().components[COMPONENT_RENDER]);
+	entities.back().scale = glm::vec3(0.01f, 0.01f, 0.01f);
+	
 	/*entities.push_back(EBase());
 	geometryCache.LoadModel3D("../models/materialTest/materialTest.obj", entities.size() - 1, entities.back().components[COMPONENT_MODEL], entities.back().components[COMPONENT_RENDER]);
 	entities.back().position = glm::vec3(0.0f, 0.5f, 0.0f);
@@ -549,10 +566,6 @@ bool Engine::InitializeScene(std::string szScenePath) {
 		entities.back().position = glm::vec3(10, 1.5, 4.5);
 		lightSystem.AddDirectionalLight((unsigned int)entities.size() - 1, glm::vec3(1, 1, 1), 200.0f, true, 32.0f);
 	}
-
-	/*engine.entities.push_back(EBase());
-	engine.geometryCache.LoadModel3D("../models/crytek-sponza/sponza.obj", engine.entities.size() - 1, engine.entities.back().components[COMPONENT_MODEL], engine.entities.back().components[COMPONENT_RENDER]);
-	engine.entities.back().scale = glm::vec3(0.01f, 0.01f, 0.01f);*/
 
 	for (int i=-1; i <= 1; i++)
 		for (int j=-1; j <= 1; j++)

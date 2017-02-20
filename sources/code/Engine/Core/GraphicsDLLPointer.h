@@ -13,5 +13,6 @@ extern VertexBufferObject*	(*pfnCreateVBO)();
 extern ShaderProgram*		(*pfnCreateShader)();
 extern Texture*				(*pfnCreateTexture)();
 extern Framebuffer*			(*pfnCreateFramebuffer)();
+extern void					(*pfnDeleteGraphicsPointer)(void *);
 
 #endif
