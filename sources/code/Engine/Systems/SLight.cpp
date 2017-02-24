@@ -11,6 +11,21 @@ void SLight::AddSpotLight(unsigned int entityID, glm::vec3 lightColor, float int
 	spotLights.push_back(CSpotLight(entityID, lightColor, intensity, engine.settings.enableShadows && castShadow, lightRadius, innerSpotAngle, outerSpotAngle));
 }
 
+void SLight::AddDirectionalLight(unsigned int entityID) {
+	engine.entities[entityID].components[COMPONENT_LIGHT_DIRECTIONAL] = directionalLights.size();
+	directionalLights.push_back(CDirectionalLight(entityID));
+}
+
+void SLight::AddPointLight(unsigned int entityID) {
+	engine.entities[entityID].components[COMPONENT_LIGHT_POINT] = pointLights.size();
+	pointLights.push_back(CPointLight(entityID));
+}
+
+void SLight::AddSpotLight(unsigned int entityID) {
+	engine.entities[entityID].components[COMPONENT_LIGHT_SPOT] = spotLights.size();
+	spotLights.push_back(CSpotLight(entityID));
+}
+
 void SLight::AddDirectionalLight(unsigned int entityID, glm::vec3 lightColor, float intensity, bool castShadow, float sunRadius) {
 	engine.entities[entityID].components[COMPONENT_LIGHT_DIRECTIONAL] = directionalLights.size();
 	directionalLights.push_back(CDirectionalLight(entityID, lightColor, intensity, engine.settings.enableShadows && castShadow, sunRadius));
@@ -74,7 +89,7 @@ void SLight::DrawShadows() {
 			);
 
 			light->projection = biasMatrix * proj * view * glm::mat4(1.0f);
-			engine.graphicsWrapper->SetResolution(0, 0, 256, 256);
+			engine.graphicsWrapper->SetResolution(0, 0, 128, 128);
 			light->fbo->WriteBind();
 			graphicsWrapper->SetDepth(1);
 			graphicsWrapper->SetCull(CULL_FRONT);

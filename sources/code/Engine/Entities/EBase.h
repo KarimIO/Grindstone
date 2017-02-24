@@ -16,7 +16,7 @@ public:
 	glm::vec3 angles;
 	glm::vec3 scale;
 	EBase();
-	size_t components[NUM_COMPONENTS];
+	unsigned int components[NUM_COMPONENTS];
 	glm::vec3 GetForward();
 	glm::vec3 GetRight();
 	glm::vec3 GetUp();

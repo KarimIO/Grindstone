@@ -3,6 +3,7 @@
 #include "GraphicsDLLPointer.h"
 #include "iniHandler.h"
 #include <stdio.h>
+#include "LevelLoader.h"
 #ifndef _WIN32
 #include <dlfcn.h>
 #endif
@@ -93,7 +94,7 @@ bool Engine::Initialize() {
 	inputSystem.AddControl("q", "CaptureCubemaps", NULL, 1);
 	inputSystem.BindAction("CaptureCubemaps", NULL, &(engine.cubemapSystem), &CubemapSystem::CaptureCubemaps);
 
-	if (!InitializeScene("../scenes/startup.gmf"))	return false;
+	if (!InitializeScene("../scenes/level0.json"))	return false;
 	
 	if (settings.enableReflections)
 		cubemapSystem.LoadCubemaps();
@@ -491,21 +492,30 @@ void Engine::registerClass(const char * szEntityName, std::function<void*()> fn)
 // Initialize and Load a game scene
 bool Engine::InitializeScene(std::string szScenePath) {
 	szScenePath = GetAvailablePath(szScenePath);
-	/*if (szScenePath == "") {
+#if true
+	if (szScenePath == "") {
 		printf("Scene path %s not found.\n", szScenePath.c_str());
 		return false;
-	}*/
+	}
+
+	LoadLevel(szScenePath);
+	geometryCache.LoadPreloaded();
 
 	player = new EBasePlayer();
 	player->position.y = 2;
-	// Eventually do all spawning after all initializing is complete.
+	player->Spawn();
+
+#else
+	player = new EBasePlayer();
+	player->position.y = 2;
 	player->Spawn();
 
 	// Battletoads/Battletoad_posed.obj
 	// crytek-sponza/sponza.obj
 
 	entities.push_back(EBase());
-	geometryCache.LoadModel3D("../models/crytek-sponza/sponza.obj", entities.size() - 1, entities.back().components[COMPONENT_MODEL], entities.back().components[COMPONENT_RENDER]);
+	geometryCache.AddComponent(entities.back().components[COMPONENT_RENDER]);
+	geometryCache.LoadModel3D("../models/crytek-sponza/sponza.obj", entities.back().components[COMPONENT_RENDER]);
 	entities.back().scale = glm::vec3(0.01f, 0.01f, 0.01f);
 	
 	/*entities.push_back(EBase());
@@ -566,11 +576,11 @@ bool Engine::InitializeScene(std::string szScenePath) {
 		entities.back().position = glm::vec3(10, 1.5, 4.5);
 		lightSystem.AddDirectionalLight((unsigned int)entities.size() - 1, glm::vec3(1, 1, 1), 200.0f, true, 32.0f);
 	}
+#endif
 
 	for (int i=-1; i <= 1; i++)
 		for (int j=-1; j <= 1; j++)
 			cubemapSystem.AddCubemap(glm::vec3(i*10, 1.5, j * 4.5));
-
 	return true;
 }
 

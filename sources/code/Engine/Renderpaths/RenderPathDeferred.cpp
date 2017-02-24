@@ -119,7 +119,7 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		pointLightUBO.lightShadow = 4;
 
 		// Temporary disable pointlight shadows until we get them working
-		if (false && light->castShadow) {
+		if (light->castShadow) {
 			light->fbo->ReadBind();
 			light->fbo->BindDepthCube(4);
 			light->fbo->Unbind();

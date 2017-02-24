@@ -53,7 +53,7 @@ class SModel;
 class CModel {
 	friend class SModel;
 private:
-	std::vector<CRender> references;
+	std::vector<unsigned int> references;
 	std::vector<Material *> materials;
 	std::vector<Mesh> meshes;
 	VertexArrayObject *vao;
@@ -65,11 +65,16 @@ public:
 class SModel {
 public:
 	std::vector<CModel> models;
-	std::vector<CModel*> unloadedModels;
+	std::vector<CRender> renderComponents;
+	std::vector<unsigned int> unloadedModelIDs;
 	void LoadModel3DFile(const char *szPath, CModel *model);
 public:
+	void AddComponent(unsigned int &target);
 
-	void LoadModel3D(const char *szPath, size_t entityID, size_t &modelID, size_t &renderID);
+	void LoadModel3D(const char *szPath, size_t entityID);
+	void PreloadModel3D(const char * szPath, size_t renderID);
+
+	void LoadPreloaded();
 
 	void InitMaterials(const aiScene* scene, std::string Dir, CModel *model);
 

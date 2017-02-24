@@ -18,23 +18,42 @@ std::string CModel::getName() {
 	return name;
 }
 
-void SModel::LoadModel3D(const char * szPath, size_t entityID, size_t &modelID, size_t &renderID) {
+void SModel::PreloadModel3D(const char * szPath, size_t renderID) {
 	for (size_t i = 0; i < models.size(); i++) {
 		if (models[i].getName() == szPath) {
-			modelID = i;
-			renderID = models[i].references.size();
-			models[i].references.push_back(CRender());
-			models[i].references.back().entityID = entityID;
+			models[i].references.push_back(renderID);
 			return;
 		}
 	}
 
-	modelID = models.size();
 	renderID = 0;
 	models.push_back(CModel());
 	CModel *model = &models.back();
-	model->references.push_back(CRender());
-	model->references.back().entityID = entityID;
+	model->references.push_back(renderID);
+	model->name = szPath;
+	unloadedModelIDs.push_back(models.size() - 1);
+}
+
+void SModel::LoadPreloaded() {
+	for (size_t i = 0; i < unloadedModelIDs.size(); i++) {
+		CModel *model = &models[unloadedModelIDs[i]];
+		LoadModel3DFile(model->getName().c_str(), model);
+	}
+}
+
+void SModel::LoadModel3D(const char * szPath, size_t renderID) {
+	for (size_t i = 0; i < models.size(); i++) {
+		if (models[i].getName() == szPath) {
+			renderID = models[i].references.size();
+			models[i].references.push_back(renderID);
+			return;
+		}
+	}
+
+	renderID = 0;
+	models.push_back(CModel());
+	CModel *model = &models.back();
+	model->references.push_back(renderID);
 	model->name = szPath;
 	LoadModel3DFile(szPath, model);
 }
@@ -209,6 +228,11 @@ void SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 	importer.FreeScene();
 }
 
+void SModel::AddComponent(unsigned int &target) {
+	renderComponents.push_back(CRender());
+	target = renderComponents.size()-1;
+}
+
 void SModel::Draw(glm::mat4 projection, glm::mat4 view) {
 	for (size_t i = 0; i < models.size(); i++)
 		DrawModel3D(projection, view, &models[i]);
@@ -224,7 +248,7 @@ void SModel::DrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *model) {
 
 	model->vao->Bind();
 	for (size_t i = 0; i < model->references.size(); i++) {
-		CRender *renderComponent = &model->references[i];
+		CRender *renderComponent = &renderComponents[model->references[i]];
 
 		for (size_t j = 0; j < model->meshes.size(); j++) {
 			unsigned char matID = model->meshes[j].MaterialIndex;

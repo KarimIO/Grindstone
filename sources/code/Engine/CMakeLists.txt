@@ -1,6 +1,6 @@
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-set(ENGINE_CORE_HEADERS Core/Engine.h Core/GraphicsDLLPointer.h Core/iniHandler.h Core/Input.h Core/InputInterface.h Core/TextureManager.h  Core/Space.h Core/Utilities.h)
+set(ENGINE_CORE_HEADERS Core/Engine.h Core/GraphicsDLLPointer.h Core/iniHandler.h Core/Input.h Core/InputInterface.h Core/TextureManager.h  Core/Space.h Core/Utilities.h Core/LevelLoader.h)
 source_group("Core\\Header Files" FILES ${ENGINE_CORE_HEADERS})
 set(ENGINE_ENTITES_HEADERS Entities/EBase.h Entities/EBasePlayer.h)
 source_group("Entities\\Header Files" FILES ${ENGINE_ENTITES_HEADERS})
@@ -10,7 +10,7 @@ set(ENGINE_SYSTEMS_HEADERS Systems/CAudio.h Systems/CBase.h Systems/CCamera.h Sy
 source_group("Systems\\Header Files" FILES ${ENGINE_SYSTEMS_HEADERS})
 set(ENGINE_HEADERS ${ENGINE_CORE_HEADERS} ${ENGINE_ENTITES_HEADERS} ${ENGINE_RENDERPATHS_HEADERS} ${ENGINE_SYSTEMS_HEADERS})
 
-set(ENGINE_CORE_SOURCES Core/Main.cpp Core/Engine.cpp Core/iniHandler.cpp Core/Input.cpp Core/TextureManager.cpp Core/Space.cpp Core/Utilities.cpp)
+set(ENGINE_CORE_SOURCES Core/Main.cpp Core/Engine.cpp Core/iniHandler.cpp Core/Input.cpp Core/TextureManager.cpp Core/Space.cpp Core/Utilities.cpp Core/LevelLoader.cpp)
 source_group("Core\\Source Files" FILES ${ENGINE_CORE_SOURCES})
 set(ENGINE_ENTITES_SOURCES Entities/EBase.cpp Entities/EBasePlayer.cpp)
 source_group("Entities\\Source Files" FILES ${ENGINE_ENTITES_SOURCES})
@@ -29,6 +29,10 @@ link_directories(${ASSIMP_DIR}/lib64)
 set(BULLET_DIR "D:/Libraries/Bullet" CACHE PATH "Location of Bullet Library")
 include_directories(${BULLET_DIR}/src)
 link_directories(${BULLET_DIR}/bin)
+
+#rapidJSON
+set(RAPIDJSON_DIR "D:/Libraries/rapidjson-master/include/" CACHE PATH "Location of rapidJSON Includes folder")
+include_directories(${RAPIDJSON_DIR})
 
 include_directories(${GLM_DIR})
 include_directories(${CMAKE_SOURCE_DIRECTORY}/sources/code/Engine/)
