@@ -87,7 +87,7 @@ public:
 			ent->position[subIterator++] = d;
 		}
 		else if (keyType == KEY_ENTITY_ANGLES) {
-			ent->angles[subIterator++] = d;
+			ent->angles[subIterator++] = d*3.14159/180.0;
 		}
 		else if (keyType == KEY_ENTITY_SCALE) {
 			ent->scale[subIterator++] = d;
@@ -105,9 +105,9 @@ public:
 					else if (keyType == KEY_COMPONENT_RADIUS)
 						engine.lightSystem.spotLights[componentID].lightRadius = d;
 					else if (keyType == KEY_COMPONENT_INNERANGLE)
-						engine.lightSystem.spotLights[componentID].innerSpotAngle = d;
+						engine.lightSystem.spotLights[componentID].innerSpotAngle = d*3.14159 / 180.0;
 					else if (keyType == KEY_COMPONENT_OUTERANGLE)
-						engine.lightSystem.spotLights[componentID].outerSpotAngle = d;
+						engine.lightSystem.spotLights[componentID].outerSpotAngle = d*3.14159 / 180.0;
 				}
 				else if (componentType == COMPONENT_LIGHT_POINT) {
 					if (keyType == KEY_COMPONENT_COLOR)

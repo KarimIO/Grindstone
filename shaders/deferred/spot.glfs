@@ -45,15 +45,8 @@ void main() {
 	float shadow = 0;
 	vec2 ShadowCoord = depthmapPos.xy/depthmapPos.w;
 	vec2 texelSize = 1.0 / textureSize(lightShadow, 0);
-	for(int x = -1; x <= 1; ++x)
-	{
-		for(int y = -1; y <= 1; ++y)
-		{
-			float pcfDepth = texture(lightShadow, ShadowCoord.xy + vec2(x, y) * texelSize).r; 
-			shadow += (depthmapPos.z - bias)/depthmapPos.w > pcfDepth ? 1.0 : 0.0;        
-		}    
-	}
-	shadow /= 9.0;
+	float pcfDepth = texture(lightShadow, ShadowCoord.xy).r; 
+	shadow = (depthmapPos.z - bias)/depthmapPos.w > pcfDepth ? 1.0 : 0.0;  
 
 	float maxDot = cos(lightInnerAngle);
 	float minDot = cos(lightOuterAngle);
