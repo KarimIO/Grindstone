@@ -94,11 +94,8 @@ bool Engine::Initialize() {
 	inputSystem.AddControl("q", "CaptureCubemaps", NULL, 1);
 	inputSystem.BindAction("CaptureCubemaps", NULL, &(engine.cubemapSystem), &CubemapSystem::CaptureCubemaps);
 
-	inputSystem.AddControl("1", "DebugNone", NULL, 1);
-	inputSystem.BindAction("DebugNone", NULL, this, &Engine::DebugNone);
-
-	inputSystem.AddControl("2", "DebugBlit", NULL, 1);
-	inputSystem.BindAction("DebugBlit", NULL, this, &Engine::DebugBlit);
+	inputSystem.AddControl("1", "SwitchDebug", NULL, 1);
+	inputSystem.BindAction("SwitchDebug", NULL, this, &Engine::SwitchDebug);
 
 	terrainSystem.Initialize();
 	if (!InitializeScene(defaultMap))	return false;
@@ -109,6 +106,7 @@ bool Engine::Initialize() {
 	isRunning = true;
 	prevTime = std::chrono::high_resolution_clock::now();
 	startTime = std::chrono::high_resolution_clock::now();
+	printf("Initialization Complete! Starting:\n==================================\n");
 	return true;
 }
 
@@ -124,7 +122,7 @@ void Engine::InitializeSettings() {
 	INIConfigFile cfile;
 	
 	if (cfile.Initialize("../settings.ini")) {
-		cfile.GetInteger("Window", "resx",	1024,	settings.resolutionX);
+		cfile.GetInteger("Window", "resx",	1366,	settings.resolutionX);
 		cfile.GetInteger("Window", "resy",	768,	settings.resolutionY);
 		cfile.GetFloat(  "Window", "fov",	90,		settings.fov);
 		settings.fov *= 3.14159f / 360.0f; // Convert to rad, /2 for full fovY.
@@ -132,7 +130,7 @@ void Engine::InitializeSettings() {
 		cfile.GetString("Renderer", "graphics", "OpenGL", graphics);
 		cfile.GetBool("Renderer", "reflections", true, settings.enableReflections);
 		cfile.GetBool("Renderer", "shadows", true, settings.enableShadows);
-		cfile.GetString("Game", "defaultmap", "../scenes/level0.json", defaultMap);
+		cfile.GetString("Game", "defaultmap", "../scenes/terrain.json", defaultMap);
 
 		graphics = strToLower(graphics);
 		if (graphics == "directx")
@@ -155,22 +153,22 @@ void Engine::InitializeSettings() {
 	else {
 		fprintf(stderr, "SETTINGS.INI: File not found.\n");
 
-		cfile.SetInteger("Window", "resx", 1024);
+		cfile.SetInteger("Window", "resx", 1366);
 		cfile.SetInteger("Window", "resy", 768);
 		cfile.SetFloat("Window", "fov", 90);
 		cfile.SetString("Renderer", "graphics", "OpenGL");
 		cfile.SetBool("Renderer", "reflections", true);
 		cfile.SetBool("Renderer", "shadows", true);
-		cfile.SetString("Game", "defaultmap", "../scenes/level0.json");
+		cfile.SetString("Game", "defaultmap", "../scenes/terrain.json");
 
-		settings.resolutionX = 1024;
+		settings.resolutionX = 1366;
 		settings.resolutionY = 768;
 		settings.graphicsLanguage = GRAPHICS_OPENGL;
 		settings.fov = 90;
 		settings.fov *= 3.14159f / 360.0f; // Convert to rad, /2 for full fovY.
 		settings.enableReflections = true;
 		settings.enableShadows = false;
-		defaultMap = "../scenes/level0.json";
+		defaultMap = "../scenes/terrain.json";
 	}
 
 }
@@ -253,9 +251,6 @@ bool Engine::InitializeAudio() {
 	audioSystem->Initialize();
 	sounds.push_back(audioSystem->LoadSound("../sounds/snaredrum.wav"));
 	sounds.push_back(audioSystem->LoadSound("../sounds/kickdrum.wav"));
-	sounds.push_back(audioSystem->LoadSound("../sounds/music/music0.ogg"));
-	sounds.push_back(audioSystem->LoadSound("../sounds/music/music1.ogg"));
-	sounds.push_back(audioSystem->LoadSound("../sounds/music/music2.ogg"));
 
 	return true;
 }
@@ -435,7 +430,7 @@ void Engine::Render(glm::mat4 projection, glm::mat4 view, bool usePost) {
 }
 
 void Engine::PlayEngineSound(double sound) {
-	int v = rand() % 5;
+	int v = rand() % sounds.size();
 	if (v < sounds.size())
 		sounds[v]->Play();
 }
@@ -486,12 +481,10 @@ std::string Engine::GetAvailablePath(std::string szString) {
 	return "";
 }
 
-void Engine::DebugNone(double) {
-	debugMode = DEBUG_NONE;
-}
-
-void Engine::DebugBlit(double) {
-	debugMode = DEBUG_BLIT;
+void Engine::SwitchDebug(double) {
+	debugMode++;
+	if (debugMode == NUM_DEBUG)
+		debugMode = DEBUG_NONE;
 }
 
 EBase *Engine::createEntity(const char * szEntityName) {
@@ -509,14 +502,14 @@ void Engine::registerClass(const char * szEntityName, std::function<void*()> fn)
 
 // Initialize and Load a game scene
 bool Engine::InitializeScene(std::string szScenePath) {
-	szScenePath = GetAvailablePath(szScenePath);
+	std::string szSceneNewPath = GetAvailablePath(szScenePath);
 
-	if (szScenePath == "") {
+	if (szSceneNewPath == "") {
 		printf("Scene path %s not found.\n", szScenePath.c_str());
 		return false;
 	}
 
-	LoadLevel(szScenePath);
+	LoadLevel(szSceneNewPath);
 	geometryCache.LoadPreloaded();
 	terrainSystem.GenerateComponents();
 

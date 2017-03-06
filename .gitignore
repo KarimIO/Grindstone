@@ -46,10 +46,14 @@ Sources/Obj/
 bin/*
 .vscode/*
 models/*
+!models/sphere.obj
 scenes/*
+!scenes/terrain.json
+!scenes/sponza.json
 sources/include/*
 cubemaps/*
 materials/*
+!materials/heightmaps/height.png
 shaders/objects/backup/*
 sounds/music/*
 settings.ini

@@ -78,7 +78,7 @@ public:
 	virtual void ReadBind() = 0;
 	virtual void Unbind() = 0;
 
-	virtual void TestBlit() = 0;
+	virtual void TestBlit(int width, int height) = 0;
 };
 
 extern "C" GRAPHICS_EXPORT Framebuffer* createFramebuffer();

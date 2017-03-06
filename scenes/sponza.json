@@ -1,0 +1,42 @@
+{
+    "name": "Sponza Test",
+    "numentities": 2,
+    "entities": [
+        {
+            "scale": [0.01, 0.01, 0.01],
+            "components": [{
+                "componentType": "COMPONENT_RENDER",
+                "path": "crytek-sponza/sponza.obj"
+            }]
+        },
+        {
+            "components": [{
+                "componentType": "COMPONENT_LIGHT_DIRECTIONAL",
+                "castshadow": true,
+                "color": [1.0,1.0,1.0],
+                "brightness": 200.0,
+                "sunradius": 32.0
+            }]
+        },
+        {
+            "position": [0.0,1.5,0.0],
+            "components": [{
+                "componentType": "COMPONENT_LIGHT_POINT",
+                "castshadow": false,
+                "color": [1.0,0.9,0.8],
+                "brightness": 32.0,
+                "lightradius": 16.0
+            }]
+        }
+    ],
+    "numcubemaps": 9,
+    "cubemaps":[[-10.0, 1.5, -4.5],
+                [-10.0, 1.5,  0.0],
+                [-10.0, 1.5,  4.5],
+                [  0.0, 1.5, -4.5],
+                [  0.0, 1.5,  0.0],
+                [  0.0, 1.5,  4.5],
+                [ 10.0, 1.5, -4.5],
+                [ 10.0, 1.5,  0.0],
+                [ 10.0, 1.5,  4.5]]
+}

@@ -150,17 +150,17 @@ void GLFramebuffer::Unbind() {
 	//glDisable(GL_FRAMEBUFFER_SRGB);
 }
 
-void GLFramebuffer::TestBlit() {
+void GLFramebuffer::TestBlit(int width, int height) {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
 	glReadBuffer(GL_COLOR_ATTACHMENT0);
-	glBlitFramebuffer(0, 0, 1366, 768, 0, 0, 1366/2, 768/2, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glBlitFramebuffer(0, 0, width, height, 0, 0, width /2, height /2, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	glReadBuffer(GL_COLOR_ATTACHMENT1);
-	glBlitFramebuffer(0, 0, 1366, 768, 1366 / 2, 0, 1366, 768/2, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glBlitFramebuffer(0, 0, width, height, width / 2, 0, width, height /2, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	glReadBuffer(GL_COLOR_ATTACHMENT2);
-	glBlitFramebuffer(0, 0, 1366, 768, 0, 768/2, 1366 / 2, 768, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glBlitFramebuffer(0, 0, width, height, 0, height /2, width / 2, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	glReadBuffer(GL_COLOR_ATTACHMENT3);
-	glBlitFramebuffer(0, 0, 1366, 768, 1366 / 2, 768/2, 1366, 768, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glBlitFramebuffer(0, 0, width, height, width / 2, height /2, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

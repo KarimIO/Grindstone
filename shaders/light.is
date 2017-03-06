@@ -109,8 +109,5 @@ vec3 hdrTransformB(vec3 color) {
 }
 
 vec3 hdrGammaTransform(vec3 color) {
-	if (false && gl_FragCoord.x > 1366/2)
-		return linearToSRGB(color);
-	else
-		return linearToSRGB(hdrTransform(color));
+	return linearToSRGB(hdrTransform(color));
 }

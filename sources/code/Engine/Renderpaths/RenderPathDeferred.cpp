@@ -44,6 +44,7 @@ struct PointLightBufferDef {
 	glm::vec3 lightColor;
 	float lightIntensity;
 	glm::vec3 lightPosition;
+	glm::vec2 resolution;
 } pointLightUBO;
 
 struct SpotLightBufferDef {
@@ -62,6 +63,7 @@ struct SpotLightBufferDef {
 	float lightIntensity;
 	glm::vec3 lightPosition;
 	glm::vec3 lightDirection;
+	glm::vec2 resolution;
 } spotLightUBO;
 
 struct SkyUniformBufferDef {
@@ -90,7 +92,7 @@ void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view, glm:
 void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {
 	if (engine.debugMode == DEBUG_BLIT) {
 		fbo->ReadBind();
-		fbo->TestBlit();
+		fbo->TestBlit(engine.settings.resolutionX, engine.settings.resolutionY);
 		fbo->Unbind();
 		return;
 	}
@@ -100,6 +102,7 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 	dirLightUBO.gbuffer1 = spotLightUBO.gbuffer1 = pointLightUBO.gbuffer1 = 1;
 	dirLightUBO.gbuffer2 = spotLightUBO.gbuffer2 = pointLightUBO.gbuffer2 = 2;
 	dirLightUBO.gbuffer3 = spotLightUBO.gbuffer3 = pointLightUBO.gbuffer3 = 3;
+	spotLightUBO.resolution = pointLightUBO.resolution = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
 
 	fbo->ReadBind();
 	graphicsWrapper->SetDepth(0);
@@ -146,6 +149,7 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		pointLightShader->SetVec3();
 		pointLightShader->SetUniformFloat();
 		pointLightShader->SetVec3();
+		pointLightShader->SetVec2();
 
 		vaoSphere->Bind();
 		graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(sizeof(unsigned int) * 0), 0, numSkyIndices);
@@ -190,6 +194,7 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		spotLightShader->SetUniformFloat();
 		spotLightShader->SetVec3();
 		spotLightShader->SetVec3();
+		spotLightShader->SetVec2();
 
 		vaoSphere->Bind();
 		graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(sizeof(unsigned int) * 0), 0, numSkyIndices);
@@ -350,7 +355,8 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	vaoQuad->Unbind();
 
 	Assimp::Importer importer;
-	const aiScene* pScene = importer.ReadFile("../models/sphere12.obj",
+	const aiScene* pScene = importer.ReadFile("../models/sphere.obj",
+		aiProcess_FlipWindingOrder |
 		aiProcess_Triangulate |
 		aiProcess_GenSmoothNormals |
 		aiProcess_JoinIdenticalVertices |
@@ -491,7 +497,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	if (!pointLightShader->Compile())
 		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
 
-	pointLightShader->SetNumUniforms(12);
+	pointLightShader->SetNumUniforms(13);
 	pointLightShader->CreateUniform("eyePos");
 	pointLightShader->CreateUniform("gbuffer0");
 	pointLightShader->CreateUniform("gbuffer1");
@@ -504,6 +510,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	pointLightShader->CreateUniform("lightColor");
 	pointLightShader->CreateUniform("lightIntensity");
 	pointLightShader->CreateUniform("lightPosition");
+	pointLightShader->CreateUniform("resolution");
 
 	fsContent.clear();
 	fsPath.clear();
@@ -521,7 +528,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	if (!spotLightShader->Compile())
 		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
 
-	spotLightShader->SetNumUniforms(15);
+	spotLightShader->SetNumUniforms(16);
 	spotLightShader->CreateUniform("eyePos");
 	spotLightShader->CreateUniform("gbuffer0");
 	spotLightShader->CreateUniform("gbuffer1");
@@ -537,6 +544,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	spotLightShader->CreateUniform("lightIntensity");
 	spotLightShader->CreateUniform("lightPosition");
 	spotLightShader->CreateUniform("lightDirection");
+	spotLightShader->CreateUniform("resolution");
 
 	fsContent.clear();
 	fsPath.clear();

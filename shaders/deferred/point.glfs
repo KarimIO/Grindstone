@@ -12,11 +12,12 @@ uniform float lightIntensity;
 uniform float lightAttenuationRadius;
 uniform vec3 lightPosition;
 uniform vec3 eyePos;
+uniform vec2 resolution;
 
 #include ../shaders/light.is
 
 void main() {
-	vec2 UV			=  gl_FragCoord.xy.xy/vec2(1366, 768);
+	vec2 UV			=  gl_FragCoord.xy/vec2(resolution.x, resolution.y);
 
 	vec4 Position	= texture(gbuffer0, UV);
 	vec4 Normal		= texture(gbuffer1, UV);

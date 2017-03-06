@@ -70,6 +70,7 @@ enum GraphicsLanguage {
 enum {
 	DEBUG_NONE = 0,
 	DEBUG_BLIT,
+	NUM_DEBUG
 };
 
 class EBase;
@@ -141,8 +142,7 @@ public:
 
 	std::string GetAvailablePath(std::string);
 
-	void DebugNone(double);
-	void DebugBlit(double);
+	void SwitchDebug(double);
 
 	bool InitializeScene(std::string);
 	void CalculateTime();

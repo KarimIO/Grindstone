@@ -30,7 +30,9 @@ public:
 	virtual void SetUniform4m();
 	virtual void SetUniformFloat();
 	virtual void SetInteger();
+	virtual void SetVec4();
 	virtual void SetVec3();
+	virtual void SetVec2();
 
 	virtual void Cleanup();
 };

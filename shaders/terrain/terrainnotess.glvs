@@ -16,9 +16,9 @@ out vec3 Tangent_FS;
 
 void main() {
     vec4 terrainSample = texture(terrainMap, texCoord);
-    WorldPos_FS = vec3(vertexPos.x, 0, vertexPos.y);
+    WorldPos_FS = vec3(vertexPos.x, terrainSample.a*height, vertexPos.y);
     gl_Position = gVP * gWorld * vec4(WorldPos_FS.xyz, 1);
     TexCoord0_FS = texCoord;
-    Normal_FS = vec3(0,1,0);
+    Normal_FS = normalize(terrainSample.rbg);
     Tangent_FS = vec3(1,0,0);
 }

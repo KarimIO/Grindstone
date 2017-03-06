@@ -100,11 +100,11 @@ void STerrain::Initialize() {
 	terrainShader->CreateUniform("rockAlbedo");
 	terrainShader->CreateUniform("rockGeometry");
 
-	grassAlbedo = engine.textureManager.LoadTexture("../materials/terrain/grass/albedo.png", COLOR_SRGB);
-	grassGeometry = engine.textureManager.LoadTexture("../materials/terrain/grass/geometry.png", COLOR_RGBA);
+	//grassAlbedo = engine.textureManager.LoadTexture("../materials/terrain/grass/albedo.png", COLOR_SRGB);
+	//grassGeometry = engine.textureManager.LoadTexture("../materials/terrain/grass/geometry.png", COLOR_RGBA);
 
-	rockAlbedo = engine.textureManager.LoadTexture("../materials/terrain/rock/albedo.png", COLOR_SRGB);
-	rockGeometry = engine.textureManager.LoadTexture("../materials/terrain/rock/geometry.png", COLOR_RGBA);
+	//rockAlbedo = engine.textureManager.LoadTexture("../materials/terrain/rock/albedo.png", COLOR_SRGB);
+	//rockGeometry = engine.textureManager.LoadTexture("../materials/terrain/rock/geometry.png", COLOR_RGBA);
 }
 
 void STerrain::AddComponent(unsigned int &componentID) {
@@ -257,10 +257,14 @@ void STerrain::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
 	terrainContainer.rockGeometry = 4;
 	terrainContainer.time = (float)engine.GetTimeCurrent();
 	terrainShader->Use();
-	grassAlbedo->Bind(1);
-	grassGeometry->Bind(2);
-	rockAlbedo->Bind(3);
-	rockGeometry->Bind(4);
+	if (grassAlbedo)
+		grassAlbedo->Bind(1);
+	if (grassGeometry)
+		grassGeometry->Bind(2);
+	if (rockAlbedo)
+		rockAlbedo->Bind(3);
+	if (rockGeometry)
+		rockGeometry->Bind(4);
 
 	for (size_t i = 0; i < components.size(); i++) {
 		terrainContainer.height = components[i].height;

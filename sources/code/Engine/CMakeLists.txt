@@ -21,9 +21,11 @@ source_group("Systems\\Source Files" FILES ${ENGINE_SYSTEMS_SOURCES})
 set(ENGINE_SOURCES ${ENGINE_CORE_SOURCES} ${ENGINE_ENTITES_SOURCES} ${ENGINE_RENDERPATHS_SOURCES} ${ENGINE_SYSTEMS_SOURCES})
 
 #ASSIMP
-set(ASSIMP_DIR "D:/Libraries/Assimp" CACHE PATH "Location of Assimp Library")
-include_directories(${ASSIMP_DIR}/include)
-link_directories(${ASSIMP_DIR}/lib64)
+set(ASSIMP_INC "D:/Libraries/Assimp/include" CACHE PATH "Location of Assimp Include")
+include_directories(${ASSIMP_INC})
+
+set(ASSIMP_LIB "D:/Libraries/Assimp/lib64" CACHE PATH "Location of Assimp Library")
+link_directories(${ASSIMP_LIB})
 
 #BULLET
 set(BULLET_DIR "D:/Libraries/Bullet" CACHE PATH "Location of Bullet Library")

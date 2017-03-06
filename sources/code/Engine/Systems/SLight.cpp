@@ -57,7 +57,7 @@ void SLight::DrawShadows() {
 			engine.graphicsWrapper->SetResolution(0, 0, 256, 256);
 			light->fbo->WriteBind();
 			graphicsWrapper->SetDepth(1);
-			graphicsWrapper->SetCull(CULL_FRONT);
+			graphicsWrapper->SetCull(CULL_BACK);
 			graphicsWrapper->SetBlending(false);
 			for (size_t j = 0; j < 6; j++) {
 				light->fbo->WriteBindFace(0, j);
@@ -92,7 +92,7 @@ void SLight::DrawShadows() {
 			engine.graphicsWrapper->SetResolution(0, 0, 128, 128);
 			light->fbo->WriteBind();
 			graphicsWrapper->SetDepth(1);
-			graphicsWrapper->SetCull(CULL_FRONT);
+			graphicsWrapper->SetCull(CULL_BACK);
 			graphicsWrapper->SetBlending(false);
 			graphicsWrapper->Clear(CLEAR_ALL);
 			geometryCache->Draw(proj, view);
@@ -104,9 +104,9 @@ void SLight::DrawShadows() {
 	if (directionalLights.size() > 0) {
 		unsigned int eID = directionalLights[0].entityID;
 		float time = engine.GetTimeCurrent();
-		engine.entities[eID].position = glm::vec3(0, glm::sin(time / 4.0f), glm::cos(time / 4.0f)) * 40.0f;
+		engine.entities[eID].position = glm::vec3(0, 2.0 + glm::sin(time / 4.0f) * 32.0f, glm::cos(time / 4.0f) * 32.0f);
 		float ang = std::fmod(time, 360);
-		engine.entities[eID].angles = glm::vec3(-3.14159f / 2, 0, 0);
+		engine.entities[eID].angles = glm::vec3(-time / 4.0f, 0, 0);
 	}
 
 	for (size_t j = 0; j < directionalLights.size(); j++) {
@@ -117,7 +117,7 @@ void SLight::DrawShadows() {
 			glm::mat4 proj = glm::ortho<float>(-64, 64, -64, 64, -8, 64);
 			glm::mat4 view = glm::lookAt(
 				entity->GetPosition(),
-				glm::vec3(0), //entity->GetPosition()+entity->GetForward(),
+				entity->GetPosition()+entity->GetForward(),
 				entity->GetUp()
 			);
 
@@ -125,7 +125,7 @@ void SLight::DrawShadows() {
 			engine.graphicsWrapper->SetResolution(0, 0, 1024, 1024);
 			light->fbo->WriteBind();
 			graphicsWrapper->SetDepth(1);
-			graphicsWrapper->SetCull(CULL_FRONT);
+			graphicsWrapper->SetCull(CULL_BACK);
 			graphicsWrapper->SetBlending(false);
 			graphicsWrapper->Clear(CLEAR_ALL);
 			geometryCache->Draw(proj, view);

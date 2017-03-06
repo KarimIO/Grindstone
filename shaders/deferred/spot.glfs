@@ -16,6 +16,7 @@ uniform vec3 eyePos;
 uniform float lightInnerAngle;
 uniform float lightOuterAngle;
 uniform vec3 lightDirection;
+uniform vec2 resolution;
 
 uniform sampler2D lightShadow;
 uniform mat4 shadowMatrix;
@@ -23,7 +24,7 @@ uniform mat4 shadowMatrix;
 #include ../shaders/light.is
 
 void main() {
-	vec2 UV			=  gl_FragCoord.xy.xy/vec2(1366, 768);
+	vec2 UV			=  gl_FragCoord.xy/vec2(resolution.x, resolution.y);
 
 	vec4 Position	= texture(gbuffer0, UV);
 	vec4 Normal		= texture(gbuffer1, UV);

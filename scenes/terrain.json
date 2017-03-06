@@ -1,0 +1,25 @@
+{
+    "name": "Terrain Test",
+    "numentities": 2,
+    "entities": [
+        {
+            "components": [{
+                "componentType": "COMPONENT_TERRAIN",
+                "width": 32.0,
+                "height": 8.0,
+                "length": 32.0,
+                "patches": 32,
+                "heightmap": "heightmaps/height.png"
+            }]
+        },
+        {
+            "components": [{
+                "componentType": "COMPONENT_LIGHT_DIRECTIONAL",
+                "castshadow": true,
+                "color": [1.0,1.0,1.0],
+                "brightness": 200.0,
+                "sunradius": 32.0
+            }]
+        }
+    ]
+}

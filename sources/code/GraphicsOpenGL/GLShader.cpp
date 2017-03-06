@@ -158,10 +158,22 @@ void GLShaderProgram::SetInteger() {
 	dataPtr += sizeof(int);
 }
 
+void GLShaderProgram::SetVec4() {
+	glm::vec4 data = *(glm::vec4 *)(dataPtr);
+	glUniform4f(uniforms[uniformCounter++], data.x, data.y, data.z, data.w);
+	dataPtr += sizeof(glm::vec4);
+}
+
 void GLShaderProgram::SetVec3() {
 	glm::vec3 data = *(glm::vec3 *)(dataPtr);
 	glUniform3f(uniforms[uniformCounter++], data.x, data.y, data.z);
 	dataPtr += sizeof(glm::vec3);
+}
+
+void GLShaderProgram::SetVec2() {
+	glm::vec2 data = *(glm::vec2 *)(dataPtr);
+	glUniform2f(uniforms[uniformCounter++], data.x, data.y);
+	dataPtr += sizeof(glm::vec2);
 }
 
 void GLShaderProgram::Cleanup() {

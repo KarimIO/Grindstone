@@ -1,10 +1,10 @@
 #include "Physics.h"
 #include <iostream>
 
-#include <btBulletDynamicsCommon.h>
+//#include <btBulletDynamicsCommon.h>
 
 void PhysicsSystem::Initialize() {
-	btBroadphaseInterface* broadphase = new btDbvtBroadphase();
+	/*btBroadphaseInterface* broadphase = new btDbvtBroadphase();
 
 	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
 	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
@@ -65,5 +65,5 @@ void PhysicsSystem::Initialize() {
 	delete solver;
 	delete collisionConfiguration;
 	delete dispatcher;
-	delete broadphase;
+	delete broadphase;*/
 }

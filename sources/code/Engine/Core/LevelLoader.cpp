@@ -147,11 +147,6 @@ public:
 				engine.geometryCache.AddComponent(ent->components[COMPONENT_RENDER]);
 				componentID = ent->components[COMPONENT_RENDER];
 			}
-			else if (std::string(str) == "COMPONENT_RENDER") {
-				componentType = COMPONENT_RENDER;
-				engine.geometryCache.AddComponent(ent->components[COMPONENT_RENDER]);
-				componentID = ent->components[COMPONENT_RENDER];
-			}
 			else if (std::string(str) == "COMPONENT_LIGHT_POINT") {
 				componentType = COMPONENT_LIGHT_POINT;
 				engine.lightSystem.AddPointLight(entityID);
