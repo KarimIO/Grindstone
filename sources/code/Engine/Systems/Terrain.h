@@ -12,9 +12,12 @@ class CTerrain {
 public:
 	Texture *texture;
 	VertexArrayObject *vao;
-	unsigned int numPatches;
 	unsigned int numIndices;
+	unsigned int numPatches;
 	float height;
+	float width;
+	float length;
+	std::string heightmapPath;
 };
 
 class STerrain {
@@ -28,6 +31,8 @@ private:
 public:
 	std::vector<CTerrain> components;
 	virtual void Initialize();
+	virtual void AddComponent(unsigned int &componentID);
+	virtual void GenerateComponents();
 	virtual void LoadTerrain(std::string path, float width, float length, float height, unsigned int patches);
 	virtual void Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos);
 };

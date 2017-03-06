@@ -67,6 +67,11 @@ enum GraphicsLanguage {
 	GRAPHICS_METAL
 };
 
+enum {
+	DEBUG_NONE = 0,
+	DEBUG_BLIT,
+};
+
 class EBase;
 
 class Engine {
@@ -91,7 +96,9 @@ private:
 
 	std::chrono::nanoseconds deltaTime;
 public:
+	int debugMode;
 	TextureManager textureManager;
+	STerrain terrainSystem;
 	// Class Registry
 	std::vector<classRegister *> classRegistry;
 	EBase *createEntity(const char *szEntityName);
@@ -105,6 +112,8 @@ public:
 		bool enableShadows;
 		GraphicsLanguage graphicsLanguage;
 	} settings;
+
+	std::string defaultMap;
 
 	std::vector<EBase> entities;
 
@@ -131,6 +140,9 @@ public:
 	//void AddSpace(Space *newSpace);
 
 	std::string GetAvailablePath(std::string);
+
+	void DebugNone(double);
+	void DebugBlit(double);
 
 	bool InitializeScene(std::string);
 	void CalculateTime();

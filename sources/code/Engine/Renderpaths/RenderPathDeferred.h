@@ -2,6 +2,7 @@
 #define _RENDERPATH_DEFERRED_H
 
 #include "RenderPath.h"
+#include "../Systems/Terrain.h"
 #include <Framebuffer.h>
 #include <Shader.h>
 #include "../Systems/Terrain.h"
@@ -9,6 +10,7 @@
 class RenderPathDeferred : public RenderPath {
 	GraphicsWrapper *graphicsWrapper;
 	SModel *geometryCache;
+	STerrain *terrainSystem;
 	Framebuffer *fbo;
 	Framebuffer *postFBO;
 
@@ -32,7 +34,7 @@ class RenderPathDeferred : public RenderPath {
 	VertexBufferObject *vboSphere;
 public:
 	virtual void Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost);
-	RenderPathDeferred(GraphicsWrapper *gw, SModel *gc);
+	RenderPathDeferred(GraphicsWrapper *gw, SModel *gc, STerrain *terrainSystem);
 };
 
 #endif

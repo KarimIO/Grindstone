@@ -18,6 +18,7 @@ private:
 public:
 	void CaptureCubemaps(double);
 	void LoadCubemaps();
+	void Reserve(int n);
 	CubemapComponent *GetClosestCubemap(glm::vec3);
 	CubemapComponent *AddCubemap(glm::vec3);
 };

@@ -4,6 +4,7 @@
 #include "../Core/Engine.h"
 #include "gl3w.h"
 
+#include "../Systems/Terrain.h"
 #include "../Core/TextureManager.h"
 
 #include <glm/gtx/transform.hpp>
@@ -82,11 +83,18 @@ void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view, glm:
 	graphicsWrapper->Clear(CLEAR_ALL);
 	graphicsWrapper->SetBlending(false);
 	geometryCache->Draw(projection, view);
-	//terrain.Draw(projection, view, eyePos);
+	terrainSystem->Draw(projection, view, eyePos);
 	fbo->Unbind();
 }
 
 void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {
+	if (engine.debugMode == DEBUG_BLIT) {
+		fbo->ReadBind();
+		fbo->TestBlit();
+		fbo->Unbind();
+		return;
+	}
+
 	dirLightUBO.eyePos = spotLightUBO.eyePos = pointLightUBO.eyePos = eyePos;
 	dirLightUBO.gbuffer0 = spotLightUBO.gbuffer0 = pointLightUBO.gbuffer0 = 0;
 	dirLightUBO.gbuffer1 = spotLightUBO.gbuffer1 = pointLightUBO.gbuffer1 = 1;
@@ -319,7 +327,7 @@ void RenderPathDeferred::PostPass(glm::mat4 projection, glm::mat4 view, glm::vec
 	fbo->Unbind();
 }
 
-RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
+RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerrain *ts) {
 	float tempVerts[8] = {
 		-1,-1,
 		1,-1,
@@ -329,6 +337,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc) {
 
 	graphicsWrapper = gw;
 	geometryCache = gc;
+	terrainSystem = ts;
 
 	vaoQuad = pfnCreateVAO();
 	vaoQuad->Initialize();

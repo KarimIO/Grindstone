@@ -1,0 +1,24 @@
+#version 140
+
+in vec2 vertexPos;
+in vec2 texCoord;
+
+uniform sampler2D terrainMap;
+
+uniform mat4 gWorld;
+uniform mat4 gVP;
+uniform float height;
+
+out vec3 WorldPos_FS;
+out vec2 TexCoord0_FS;
+out vec3 Normal_FS;
+out vec3 Tangent_FS;
+
+void main() {
+    vec4 terrainSample = texture(terrainMap, texCoord);
+    WorldPos_FS = vec3(vertexPos.x, 0, vertexPos.y);
+    gl_Position = gVP * gWorld * vec4(WorldPos_FS.xyz, 1);
+    TexCoord0_FS = texCoord;
+    Normal_FS = vec3(0,1,0);
+    Tangent_FS = vec3(1,0,0);
+}

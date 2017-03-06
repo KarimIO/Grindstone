@@ -47,6 +47,10 @@ void CubemapSystem::LoadCubemaps() {
 	}
 }
 
+void CubemapSystem::Reserve(int n) {
+	components.reserve(n);
+}
+
 CubemapComponent *CubemapSystem::GetClosestCubemap(glm::vec3 point) {
 	if (writing)
 		return NULL;

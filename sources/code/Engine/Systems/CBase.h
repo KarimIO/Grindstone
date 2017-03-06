@@ -4,6 +4,7 @@
 enum ComponentType {
 	COMPONENT_POSITION = 0,
 	COMPONENT_MODEL,
+	COMPONENT_TERRAIN,
 	COMPONENT_RENDER,
 	COMPONENT_LIGHT_POINT,
 	COMPONENT_LIGHT_SPOT,
@@ -14,6 +15,7 @@ enum ComponentType {
 	COMPONENT_SCRIPT,
 	COMPONENT_GAME_LOGIC,
 	NUM_COMPONENTS,
+	// Keeping this after, as it has to have an ID but shouldn't affect NUM_COMPONENTS
 	COMPONENT_BASE
 };
 

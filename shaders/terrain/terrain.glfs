@@ -1,9 +1,13 @@
-#version 410 core
+#version 140
 
-layout(location = 0) out vec4 position;
-layout(location = 1) out vec4 normal;
-layout(location = 2) out vec4 albedo;
-layout(location = 3) out vec4 specular;
+//layout(location = 0) out vec4 position; // X Y Z MaterialType
+//layout(location = 1) out vec4 normal;	// X Y Z AO
+//layout(location = 2) out vec4 albedo; // R G B Metalness
+//layout(location = 3) out vec4 specular; // R G B Metalness
+out vec4 position; // X Y Z MaterialType
+out vec4 normal;	// X Y Z AO
+out vec4 albedo; // R G B Metalness
+out vec4 specular; // R G B Metalness
 
 in vec3 WorldPos_FS;
 in vec2 TexCoord0_FS;
@@ -16,7 +20,7 @@ uniform float time;
 uniform sampler2D grassAlbedo;
 uniform sampler2D grassGeometry;
 
-vec4 TriNormalMapping(sampler2D texIn, vec3 blending) {
+/*vec4 TriNormalMapping(sampler2D texIn, vec3 blending) {
     float scale = 2;
     vec4 xaxis = texture( texIn, WorldPos_FS.yz * scale);
     vec4 yaxis = texture( texIn, WorldPos_FS.xz * scale);
@@ -36,7 +40,7 @@ vec3 CalcBumpedNormal(vec3 Ng, vec3 Nt, vec3 Tan) {
   BumpMapNormal = vec3(-BumpMapNormal.xy, BumpMapNormal.z);
   mat3 TBN = mat3(NewTangent, Bitangent, NewNormal);
   return normalize(TBN * BumpMapNormal);
-}
+}*/
 
 void main() {
     /*vec3 blending = abs( Normal_FS );
@@ -47,7 +51,7 @@ void main() {
     vec4 texAlbedo = TriNormalMapping(grassAlbedo, blending);
     vec4 texGeometry = TriNormalMapping(grassGeometry, blending);*/
 
-    vec3 Normal = Normal_FS; // CalcBumpedNormal(Normal_FS, texGeometry.xyz, Tangent_FS)
+    /*vec3 Normal = Normal_FS; // CalcBumpedNormal(Normal_FS, texGeometry.xyz, Tangent_FS)
     vec3 Albedo = vec3(1,1,1);
     float Roughness = 0.8;
     
@@ -76,5 +80,10 @@ void main() {
     position = vec4(WorldPos_FS, 1);
     albedo = vec4(Albedo,1);
     normal = vec4(Normal, 1);
-    specular = vec4(0.04, 0.04, 0.04, Roughness);
+    specular = vec4(0.04, 0.04, 0.04, Roughness);*/
+
+    position = vec4(WorldPos_FS, 1);
+    albedo = vec4(TexCoord0_FS, 0, 1);
+    normal = vec4(Normal_FS, 1);
+    specular = vec4(0.04, 0.04, 0.04, 0.5);
 }

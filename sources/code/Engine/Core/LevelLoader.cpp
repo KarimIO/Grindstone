@@ -12,13 +12,16 @@ enum {
 	LEVEL_ROOT = 0,
 	LEVEL_MAP,
 	LEVEL_ENTITY,
-	LEVEL_COMPONENT
+	LEVEL_COMPONENT,
+	LEVEL_CUBEMAP
 };
 
 enum {
 	KEY_MAP_NAME = 0,
 	KEY_MAP_VERSION,
 	KEY_MAP_NUMENTS,
+	KEY_MAP_NUMCUBE,
+	KEY_MAP_CUBEMAPS,
 	KEY_ENTITY_NAME,
 	KEY_ENTITY_POSITION,
 	KEY_ENTITY_SCALE,
@@ -30,7 +33,12 @@ enum {
 	KEY_COMPONENT_SHADOW,
 	KEY_COMPONENT_RADIUS,
 	KEY_COMPONENT_INNERANGLE,
-	KEY_COMPONENT_OUTERANGLE
+	KEY_COMPONENT_OUTERANGLE,
+	KEY_COMPONENT_WIDTH,
+	KEY_COMPONENT_HEIGHT,
+	KEY_COMPONENT_LENGTH,
+	KEY_COMPONENT_PATCHES,
+	KEY_COMPONENT_HEIGHTMAP
 };
 
 struct MyHandler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>, MyHandler> {
@@ -38,14 +46,14 @@ private:
 	unsigned char *byteArray;
 	unsigned char level = 0;
 	unsigned char keyType;
-	unsigned int numEnts;
 	unsigned int componentID;
 	unsigned char componentType;
 	EBase *ent;
 	unsigned int entityID;
 	unsigned char subIterator;
+	glm::vec3 position;
 public:
-	bool Null() { std::cout << "Null()\n"; return true; }
+	bool Null() { return true; }
 	bool Bool(bool b) {
 		if (keyType == KEY_COMPONENT_SHADOW) {
 			if (componentType == COMPONENT_LIGHT_SPOT) {
@@ -64,6 +72,11 @@ public:
 	bool Int(int i) {
 		if (keyType == KEY_MAP_NUMENTS)
 			engine.entities.reserve(i);
+		else if (keyType == KEY_MAP_NUMCUBE)
+			engine.cubemapSystem.Reserve(i);
+		else if (componentType == COMPONENT_TERRAIN)
+			if (keyType == KEY_COMPONENT_PATCHES)
+				engine.terrainSystem.components[componentID].numPatches = i;
 		return true;
 	}
 	bool Uint(unsigned u) { Int((int)u); return true; }
@@ -78,6 +91,9 @@ public:
 		}
 		else if (keyType == KEY_ENTITY_SCALE) {
 			ent->scale[subIterator++] = d;
+		}
+		else if (keyType == KEY_MAP_CUBEMAPS) {
+			position[subIterator++] = d;
 		}
 		else {
 			if (level == LEVEL_COMPONENT) {
@@ -109,15 +125,27 @@ public:
 					else if (keyType == KEY_COMPONENT_RADIUS)
 						engine.lightSystem.directionalLights[componentID].sunRadius = d;
 				}
+				else if (componentType == COMPONENT_TERRAIN) {
+					if (keyType == KEY_COMPONENT_WIDTH)
+						engine.terrainSystem.components[componentID].width = d;
+					if (keyType == KEY_COMPONENT_HEIGHT)
+						engine.terrainSystem.components[componentID].height = d;
+					if (keyType == KEY_COMPONENT_LENGTH)
+						engine.terrainSystem.components[componentID].length = d;
+				}
 			}
 		}
 		return true;
 	}
 	bool String(const char* str, rapidjson::SizeType length, bool copy) {
-		std::cout << "String(" << str << ", " << length << ", " << std::boolalpha << copy << ")\n";
 		if (keyType == KEY_COMPONENT_TYPE) {
 			if (std::string(str) == "COMPONENT_POSITION") {
 				componentType = COMPONENT_POSITION;
+			}
+			else if (std::string(str) == "COMPONENT_RENDER") {
+				componentType = COMPONENT_RENDER;
+				engine.geometryCache.AddComponent(ent->components[COMPONENT_RENDER]);
+				componentID = ent->components[COMPONENT_RENDER];
 			}
 			else if (std::string(str) == "COMPONENT_RENDER") {
 				componentType = COMPONENT_RENDER;
@@ -142,6 +170,11 @@ public:
 			else if (std::string(str) == "COMPONENT_PHYSICS") {
 				componentType = COMPONENT_PHYSICS;
 			}
+			else if (std::string(str) == "COMPONENT_TERRAIN") {
+				componentType = COMPONENT_TERRAIN;
+				engine.terrainSystem.AddComponent(ent->components[COMPONENT_TERRAIN]);
+				componentID = ent->components[COMPONENT_TERRAIN];
+			}
 			else if (std::string(str) == "COMPONENT_INPUT") {
 				componentType = COMPONENT_INPUT;
 			}
@@ -158,6 +191,10 @@ public:
 		else if (keyType == KEY_COMPONENT_PATH) {
 			engine.geometryCache.PreloadModel3D(("../models/" + std::string(str)).c_str(), ent->components[componentType]);
 		}
+
+		else if (componentType == COMPONENT_TERRAIN)
+			if (keyType == KEY_COMPONENT_HEIGHTMAP)
+				engine.terrainSystem.components[componentID].heightmapPath = "../materials/" + std::string(str);
 
 		return true;
 	}
@@ -183,6 +220,12 @@ public:
 			}
 			else if (std::string(str) == "entities") {
 				// Ignored for now
+			}
+			else if (std::string(str) == "numcubemaps") {
+				keyType = KEY_MAP_NUMCUBE;
+			}
+			else if (std::string(str) == "cubemaps") {
+				keyType = KEY_MAP_CUBEMAPS;
 			}
 		}
 		else if (level == LEVEL_ENTITY) {
@@ -227,15 +270,44 @@ public:
 			else if (std::string(str) == "outerangle") {
 				keyType = KEY_COMPONENT_OUTERANGLE;
 			}
+			else if (std::string(str) == "width") {
+				keyType = KEY_COMPONENT_WIDTH;
+			}
+			else if (std::string(str) == "height") {
+				keyType = KEY_COMPONENT_HEIGHT;
+			}
+			else if (std::string(str) == "length") {
+				keyType = KEY_COMPONENT_LENGTH;
+			}
+			else if (std::string(str) == "patches") {
+				keyType = KEY_COMPONENT_PATCHES;
+			}
+			else if (std::string(str) == "heightmap") {
+				keyType = KEY_COMPONENT_HEIGHTMAP;
+			}
 		}
 		return true;
 	}
-	bool EndObject(rapidjson::SizeType memberCount) { std::cout << "EndObject(" << memberCount << ")\n"; level--; return true; }
-	bool StartArray() { std::cout << "StartArray()\n"; subIterator = 0; return true; }
-	bool EndArray(rapidjson::SizeType elementCount) { std::cout << "EndArray(" << elementCount << ")\n"; return true; }
+	bool EndObject(rapidjson::SizeType memberCount) { level--; return true; }
+	bool StartArray() {
+		if (keyType == KEY_MAP_CUBEMAPS)
+			level = LEVEL_CUBEMAP;
+
+		subIterator = 0;
+		return true;
+	}
+	bool EndArray(rapidjson::SizeType elementCount) {
+		if (keyType == KEY_MAP_CUBEMAPS && level == LEVEL_CUBEMAP) {
+			engine.cubemapSystem.AddCubemap(position);
+			level = LEVEL_MAP;
+		}
+
+		return true;
+	}
 };
 
 bool LoadLevel(std::string path) {
+	printf("Loading level: %s\n", path.c_str());
 	rapidjson::Reader reader;
 	MyHandler handler;
 	std::ifstream input(path.c_str());
