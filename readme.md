@@ -45,7 +45,8 @@ Use an alternate OS, or pitch in and suggest changes!
 
 ## Settings
 You can create a settings.ini file by running the program once. Then you can simply change the relevant data. Alternatively, copy this one:
-```[Window]
+```
+[Window]
 resx=1366
 resy=768
 fov=90.000000
@@ -54,7 +55,8 @@ graphics=OpenGL
 reflections=1
 shadows=1
 [Game]
-defaultmap=../scenes/sponza.json```
+defaultmap=../scenes/sponza.json
+```
 
 ## Assets
 ### Maps
