@@ -1,6 +1,6 @@
 {
     "name": "Sponza Test",
-    "numentities": 2,
+    "numentities": 6,
     "entities": [
         {
             "scale": [0.01, 0.01, 0.01],

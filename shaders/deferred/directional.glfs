@@ -1,7 +1,7 @@
 #version 140
 
 //layout(location = 0) out vec4 colorOut;
-out vec4 colorOut;
+out vec3 colorOut;
 
 uniform sampler2D gbuffer0;
 uniform sampler2D gbuffer1;
@@ -58,6 +58,6 @@ void main() {
 	vec3 L = (DdotR < d) ? normalize(d * lightDirection + normalize(S) * r) : eyeReflect;
 	vec3 illuminance = BSDF(NV, NL, LH, NH, alpha, Specular.rgb);
 	illuminance *= sunIlluminanceInLux * NL; // illuminance
-	colorOut = vec4(visibility * Albedo.rgb, 1);
-	colorOut = vec4(hdrGammaTransform(colorOut.rgb), colorOut.a);
+	colorOut = visibility * Albedo.rgb;
+	colorOut = hdrGammaTransform(colorOut.rgb);
 }

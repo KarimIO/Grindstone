@@ -1,6 +1,6 @@
-#version 410 core
+#version 140
 
-layout (location = 0) in vec3 Position;
+in vec3 Position;
 
 uniform mat4 gWVP;
 

@@ -78,7 +78,8 @@ public:
 	virtual void ReadBind() = 0;
 	virtual void Unbind() = 0;
 
-	virtual void TestBlit(int width, int height) = 0;
+	virtual void TestBlit(unsigned int x, unsigned int y, unsigned int srcWidth, unsigned int srcHeight, unsigned int width, unsigned int height, bool depth) = 0;
+	virtual void SetAttachment(unsigned int a) = 0;
 };
 
 extern "C" GRAPHICS_EXPORT Framebuffer* createFramebuffer();

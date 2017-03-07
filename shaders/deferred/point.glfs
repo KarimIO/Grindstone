@@ -1,7 +1,7 @@
 #version 140
 
 //layout(location = 0) out vec4 colorOut;
-out vec4 colorOut;
+out vec3 colorOut;
 
 uniform sampler2D gbuffer0;
 uniform sampler2D gbuffer1;
@@ -27,6 +27,6 @@ void main() {
 	float lightRadius = 24;
 	vec3 lightPow = lightColor * lightIntensity;
 	vec3 lightDir = normalize(Position.xyz-lightPosition);
-	colorOut = vec4(LightPointCalc(Albedo.rgb, Position.xyz, Specular, Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, eyePos), 1);
-	colorOut = vec4(hdrGammaTransform(colorOut.rgb), colorOut.a);
+	colorOut = LightPointCalc(Albedo.rgb, Position.xyz, Specular, Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, eyePos);
+	colorOut = hdrGammaTransform(colorOut.rgb);
 }

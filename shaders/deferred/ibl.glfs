@@ -1,6 +1,6 @@
 #version 140
 
-out vec4 colorOut;
+out vec3 colorOut;
 
 uniform sampler2D gbuffer0;
 uniform sampler2D gbuffer1;
@@ -39,5 +39,5 @@ void main() {
 	vec4 Normal		= texture(gbuffer1, UV);
 	vec4 Specular	= texture(gbuffer3, UV);
 
-    colorOut = vec4(CalculateIBL(Position.xyz, Normal.xyz, Specular), 1);
+    colorOut = CalculateIBL(Position.xyz, Normal.xyz, Specular);
 }

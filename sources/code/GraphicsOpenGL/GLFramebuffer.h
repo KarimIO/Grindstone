@@ -20,7 +20,8 @@ public:
 	virtual void WriteBindFace(unsigned int attachment, unsigned int face);
 	virtual void ReadBind();
 	virtual void Unbind();
-	virtual void TestBlit(int width, int height);
+	virtual void TestBlit(unsigned int x, unsigned int y, unsigned int srcWidth, unsigned int srcHeight, unsigned int width, unsigned int height, bool depth);
+	virtual void SetAttachment(unsigned int a);
 private:
 	unsigned int fbo;
 	unsigned int *textures;

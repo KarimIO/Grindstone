@@ -75,11 +75,11 @@ void GraphicsWrapper::Clear(unsigned int clearTarget) {
 
 void GraphicsWrapper::SetDepth(int state) {
 	if (state == 1) {
-		glDepthFunc(GL_LEQUAL);
+		glDepthFunc(GL_LESS);
 		glEnable(GL_DEPTH_TEST);
 	}
 	else if (state == 2) {
-		glDepthFunc(GL_GEQUAL);
+		glDepthFunc(GL_LEQUAL);
 		glEnable(GL_DEPTH_TEST);
 	}
 	else

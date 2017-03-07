@@ -1,7 +1,7 @@
 #version 140
 
 //layout(location = 0) out vec4 colorOut;
-out vec4 colorOut;
+out vec3 colorOut;
 
 uniform sampler2D gbuffer0;
 uniform sampler2D gbuffer1;
@@ -36,7 +36,7 @@ void main() {
 	float strength = length(Position.xyz-lightPosition);
 	strength = strength/lightAttenuationRadius;
 	strength = max(0, 1-strength);
-	colorOut = vec4(LightPointCalc(Albedo.rgb, Position.xyz, Specular, Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, eyePos), 1);
+	colorOut = LightPointCalc(Albedo.rgb, Position.xyz, Specular, Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, eyePos);
 	
 	vec3 lightDir = normalize(Position.xyz-lightPosition);
 
@@ -53,9 +53,9 @@ void main() {
 	float dotPR = dot(lightDir, lightDirection);
 	dotPR = clamp((dotPR-minDot)/(maxDot-minDot), 0, 1);
 	if (dotPR > 0) {
-		colorOut = vec4(hdrGammaTransform((1-shadow)*colorOut.rgb), colorOut.a)*dotPR;
+		colorOut = hdrGammaTransform((1-shadow)*colorOut.rgb)*dotPR;
 	}
 	else {
-		colorOut = vec4(0,0,0,0);
+		colorOut = vec3(0,0,0);
 	}
 }

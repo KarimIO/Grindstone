@@ -91,8 +91,19 @@ void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view, glm:
 
 void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {
 	if (engine.debugMode == DEBUG_BLIT) {
+		unsigned int halfX = engine.settings.resolutionX / 2;
+		unsigned int halfY = engine.settings.resolutionY / 2;
+		fbo->Unbind();
+		graphicsWrapper->Clear(CLEAR_ALL);
 		fbo->ReadBind();
-		fbo->TestBlit(engine.settings.resolutionX, engine.settings.resolutionY);
+		fbo->SetAttachment(0);
+		fbo->TestBlit(0, 0, engine.settings.resolutionX, engine.settings.resolutionY, halfX, halfY, false);
+		fbo->SetAttachment(1);
+		fbo->TestBlit(halfX, 0, engine.settings.resolutionX, engine.settings.resolutionY, halfX, halfY, false);
+		fbo->SetAttachment(2);
+		fbo->TestBlit(0, halfY, engine.settings.resolutionX, engine.settings.resolutionY, halfX, halfY, false);
+		fbo->SetAttachment(3);
+		fbo->TestBlit(halfX, halfY, engine.settings.resolutionX, engine.settings.resolutionY, halfX, halfY, false);
 		fbo->Unbind();
 		return;
 	}
@@ -263,7 +274,31 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		graphicsWrapper->DrawVertexArray(4);
 		vaoQuad->Unbind();
 	}
-	
+
+	bool drawSky = false;
+	if (drawSky) {
+		skyShader->Use();
+		skydefUBO.gWVP = projection * glm::mat4(glm::mat3(view));
+		skydefUBO.time = (float)engine.GetTimeCurrent();
+		skyShader->PassData(&skydefUBO);
+		skyShader->SetUniform4m();
+		skyShader->SetUniformFloat();
+
+		graphicsWrapper->SetDepth(2);
+		graphicsWrapper->SetBlending(false);
+
+		vaoSphere->Bind();
+		graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(sizeof(unsigned int) * 0), 0, numSkyIndices);
+		vaoSphere->Unbind();
+		graphicsWrapper->SetDepth(1);
+	}
+
+	/*graphicsWrapper->Clear(CLEAR_DEPTH);
+	fbo->Unbind(); // To bind Draw to 0
+	fbo->ReadBind();
+	fbo->TestBlit(0, 0, engine.settings.resolutionX, engine.settings.resolutionX, engine.settings.resolutionX, engine.settings.resolutionY, false);
+	fbo->Unbind();*/
+
 	/*CubemapComponent *comp = engine.cubemapSystem.GetClosestCubemap(eyePos);
 	if (comp != NULL) {
 		Texture *cube = engine.cubemapSystem.GetClosestCubemap(eyePos)->cubemap;
@@ -293,21 +328,9 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 }
 
 void RenderPathDeferred::PostPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
-	return;
-	engine.graphicsWrapper->SetResolution(0, 0, engine.settings.resolutionX, engine.settings.resolutionY);
-	/*//fbo->TestBlit();
-	skyShader->Use();
-	skydefUBO.gWVP = projection * view * glm::translate(eyePos);
-	skydefUBO.time = (float)engine.GetTimeCurrent();
-	skyShader->PassData(&skydefUBO);
-	skyShader->SetUniform4m();
-	skyShader->SetUniformFloat();
-
-	vaoSphere->Bind();
-	graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(sizeof(unsigned int) * 0), 0, numSkyIndices);
-	vaoSphere->Unbind();*/
-
-	postUBO.texLoc0 = 0;
+	//return;
+	
+	/*postUBO.texLoc0 = 0;
 	postUBO.texLoc1 = 1;
 	postUBO.texLoc2 = 2;
 
@@ -329,7 +352,7 @@ void RenderPathDeferred::PostPass(glm::mat4 projection, glm::mat4 view, glm::vec
 	vaoQuad->Bind();
 	graphicsWrapper->DrawVertexArray(4);
 	vaoQuad->Unbind();
-	fbo->Unbind();
+	fbo->Unbind();*/
 }
 
 RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerrain *ts) {
@@ -551,7 +574,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	vsContent.clear();
 	vsPath.clear();
 
-	/*vsPath = "../shaders/objects/sky.glvs";
+	vsPath = "../shaders/objects/sky.glvs";
 	fsPath = "../shaders/objects/sky.glfs";
 
 	if (!ReadFileIncludable(vsPath, vsContent))
@@ -578,7 +601,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	vsPath.clear();
 	fsPath.clear();
 
-	vsPath = "../shaders/overlay.glvs";
+	/*vsPath = "../shaders/overlay.glvs";
 	fsPath = "../shaders/post.glfs";
 
 	if (!ReadFileIncludable(vsPath, vsContent))
@@ -619,5 +642,5 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 void RenderPathDeferred::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {
 	GeometryPass(projection, view, eyePos);
 	DeferredPass(projection, view, eyePos, usePost);
-	//PostPass(projection, view, eyePos);
+	PostPass(projection, view, eyePos);
 }
