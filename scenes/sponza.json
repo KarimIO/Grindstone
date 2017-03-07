@@ -24,7 +24,7 @@
                 "componentType": "COMPONENT_LIGHT_POINT",
                 "castshadow": false,
                 "color": [0.2,1.0,0.3],
-                "brightness": 32.0,
+                "brightness": 8.0,
                 "lightradius": 16.0
             }]
         },
@@ -34,7 +34,7 @@
                 "componentType": "COMPONENT_LIGHT_POINT",
                 "castshadow": false,
                 "color": [0.2,0.1,1.0],
-                "brightness": 12.0,
+                "brightness": 8.0,
                 "lightradius": 16.0
             }]
         },
@@ -44,7 +44,7 @@
                 "componentType": "COMPONENT_LIGHT_POINT",
                 "castshadow": false,
                 "color": [1.0,0.9,0.8],
-                "brightness": 32.0,
+                "brightness": 12.0,
                 "lightradius": 16.0
             }]
         },
@@ -54,7 +54,7 @@
                 "componentType": "COMPONENT_LIGHT_POINT",
                 "castshadow": false,
                 "color": [1.0,1.0,1.0],
-                "brightness": 16.0,
+                "brightness": 8.0,
                 "lightradius": 16.0
             }]
         },
@@ -66,7 +66,7 @@
                 "castshadow": true,
                 "color": [1.0,0.9,0.8],
                 "brightness": 16.0,
-                "lightradius": 16.0,
+                "lightradius": 8.0,
                 "innerangle": 20.0,
                 "outerangle": 45.0
             }]

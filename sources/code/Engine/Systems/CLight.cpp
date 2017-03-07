@@ -48,7 +48,7 @@ void CSpotLight::SetShadow(bool state) {
 	if (state) {
 		fbo = pfnCreateFramebuffer();
 		fbo->Initialize(0);
-		fbo->AddDepthBuffer(256, 256);
+		fbo->AddDepthBuffer(128, 128);
 		fbo->Generate();
 	}
 }
@@ -58,7 +58,7 @@ CDirectionalLight::CDirectionalLight(unsigned int entID, glm::vec3 color, float 
 
 	if (cast) {
 		fbo->Initialize(0);
-		fbo->AddDepthBuffer(1024, 1024);
+		fbo->AddDepthBuffer(128, 128);
 		fbo->Generate();
 	}
 }
@@ -68,7 +68,7 @@ void CDirectionalLight::SetShadow(bool state) {
 	if (state) {
 		fbo = pfnCreateFramebuffer();
 		fbo->Initialize(0);
-		fbo->AddDepthBuffer(1024, 1024);
+		fbo->AddDepthBuffer(2048, 2048);
 		fbo->Generate();
 	}
 }

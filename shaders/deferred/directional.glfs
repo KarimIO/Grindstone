@@ -46,10 +46,10 @@ void main() {
 	
 	vec3 depthmapPos = (shadowMatrix * vec4(Position.xyz,1)).xyz;
 	float bias = 0.005;
-	float visibility = 0.0;
-	if (lightDirection.x > 0 && depthmapPos.x >= 0 && depthmapPos.x <= 1 && depthmapPos.y >= 0 && depthmapPos.y <= 1) {
-		if ( texture( lightShadow, depthmapPos.xy ).z  >= (depthmapPos.z - bias)) {
-			visibility = 1.0;
+	float visibility = 1.0; 
+	if (depthmapPos.x >= 0 && depthmapPos.x <= 1 && depthmapPos.y >= 0 && depthmapPos.y <= 1) { 
+		if ( texture( lightShadow, depthmapPos.xy ).z  <  (depthmapPos.z - bias)) { 
+			visibility = 0.0f;
 		}
 	}
 
@@ -58,6 +58,6 @@ void main() {
 	vec3 L = (DdotR < d) ? normalize(d * lightDirection + normalize(S) * r) : eyeReflect;
 	vec3 illuminance = BSDF(NV, NL, LH, NH, alpha, Specular.rgb);
 	illuminance *= sunIlluminanceInLux * NL; // illuminance
-	colorOut = vec4(illuminance * visibility * Albedo.rgb, 1);
+	colorOut = vec4(visibility * Albedo.rgb, 1);
 	colorOut = vec4(hdrGammaTransform(colorOut.rgb), colorOut.a);
 }

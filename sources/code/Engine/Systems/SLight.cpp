@@ -104,9 +104,9 @@ void SLight::DrawShadows() {
 	if (directionalLights.size() > 0) {
 		unsigned int eID = directionalLights[0].entityID;
 		float time = engine.GetTimeCurrent();
-		engine.entities[eID].position = glm::vec3(0, 2.0 + glm::sin(time / 4.0f) * 32.0f, glm::cos(time / 4.0f) * 32.0f);
-		float ang = std::fmod(time, 360);
-		engine.entities[eID].angles = glm::vec3(-time / 4.0f, 0, 0);
+		float ang = std::fmod(time / 4.0f, 360.0f);
+		engine.entities[eID].position = glm::vec3(0, 2.0 + glm::sin(ang) * 32.0f, glm::cos(ang) * 32.0f);
+		engine.entities[eID].angles = glm::vec3((ang+3.14159f), 0, 0);
 	}
 
 	for (size_t j = 0; j < directionalLights.size(); j++) {
@@ -114,7 +114,7 @@ void SLight::DrawShadows() {
 		if (light->castShadow) {
 			unsigned int entityID = light->entityID;
 			EBase *entity = &engine.entities[entityID];
-			glm::mat4 proj = glm::ortho<float>(-64, 64, -64, 64, -8, 64);
+			glm::mat4 proj = glm::ortho<float>(-64, 64, -64, 64, 0.1f, 64);
 			glm::mat4 view = glm::lookAt(
 				entity->GetPosition(),
 				entity->GetPosition()+entity->GetForward(),
@@ -122,13 +122,14 @@ void SLight::DrawShadows() {
 			);
 
 			light->projection = biasMatrix * proj * view * glm::mat4(1.0f);
-			engine.graphicsWrapper->SetResolution(0, 0, 1024, 1024);
+			engine.graphicsWrapper->SetResolution(0, 0, 2048, 2048);
 			light->fbo->WriteBind();
 			graphicsWrapper->SetDepth(1);
 			graphicsWrapper->SetCull(CULL_BACK);
 			graphicsWrapper->SetBlending(false);
 			graphicsWrapper->Clear(CLEAR_ALL);
 			geometryCache->Draw(proj, view);
+			engine.terrainSystem.Draw(proj, view, entity->position);
 			light->fbo->Unbind();
 		}
 	}
