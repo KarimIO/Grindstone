@@ -25,6 +25,7 @@ class RenderPathDeferred : public RenderPath {
 	ShaderProgram *pointLightShader;
 	ShaderProgram *skyShader;
 	ShaderProgram *postShader;
+	ShaderProgram *debugShader;
 
 	ShaderProgram *directionalShadowShader;
 

@@ -1,0 +1,40 @@
+#version 140
+
+out vec4 colorOut;
+
+uniform sampler2D gbuffer0;
+uniform sampler2D gbuffer1;
+uniform sampler2D gbuffer2;
+uniform sampler2D gbuffer3;
+uniform samplerCube texRefl;
+uniform int debugMode;
+
+in vec2 UV;
+
+void main() {
+    if (debugMode == 1) {
+        if (UV.x < 0.5 && UV.y < 0.5)
+            colorOut = texture(gbuffer3, UV*2).aaaa;
+        else if (UV.x < 0.5 && UV.y >= 0.5)
+            colorOut = texture(gbuffer1, UV*2);
+        else if (UV.x >= 0.5 && UV.y < 0.5)
+            colorOut = texture(gbuffer2, UV*2);
+        else
+            colorOut = texture(gbuffer3, UV*2);
+    }
+    else if (debugMode == 2) {
+        colorOut = texture(gbuffer0, UV);
+    }
+    else if (debugMode == 3) {
+        colorOut = texture(gbuffer1, UV);
+    }
+    else if (debugMode == 4) {
+        colorOut = texture(gbuffer2, UV);
+    }
+    else if (debugMode == 5) {
+        colorOut = texture(gbuffer3, UV);
+    }
+    else if (debugMode == 6) {
+        colorOut = texture(gbuffer3, UV).aaaa;
+    }
+}

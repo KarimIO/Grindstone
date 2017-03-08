@@ -77,6 +77,15 @@ struct PostUniformBufferDef {
 	int texLoc2;
 } postUBO;
 
+struct DebugUniformBufferDef {
+	int gbuffer0;
+	int gbuffer1;
+	int gbuffer2;
+	int gbuffer3;
+	int texRefl;
+	int debugMode;
+} debugUBO;
+
 void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
 	// Uses screen resolution due to framebuffer size
 	fbo->WriteBind();
@@ -90,30 +99,11 @@ void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view, glm:
 }
 
 void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {
-	if (engine.debugMode == DEBUG_BLIT) {
-		unsigned int halfX = engine.settings.resolutionX / 2;
-		unsigned int halfY = engine.settings.resolutionY / 2;
-		fbo->Unbind();
-		graphicsWrapper->Clear(CLEAR_ALL);
-		fbo->ReadBind();
-		fbo->SetAttachment(0);
-		fbo->TestBlit(0, 0, engine.settings.resolutionX, engine.settings.resolutionY, halfX, halfY, false);
-		fbo->SetAttachment(1);
-		fbo->TestBlit(halfX, 0, engine.settings.resolutionX, engine.settings.resolutionY, halfX, halfY, false);
-		fbo->SetAttachment(2);
-		fbo->TestBlit(0, halfY, engine.settings.resolutionX, engine.settings.resolutionY, halfX, halfY, false);
-		fbo->SetAttachment(3);
-		fbo->TestBlit(halfX, halfY, engine.settings.resolutionX, engine.settings.resolutionY, halfX, halfY, false);
-		fbo->Unbind();
-		return;
-	}
 
-	dirLightUBO.eyePos = spotLightUBO.eyePos = pointLightUBO.eyePos = eyePos;
-	dirLightUBO.gbuffer0 = spotLightUBO.gbuffer0 = pointLightUBO.gbuffer0 = 0;
-	dirLightUBO.gbuffer1 = spotLightUBO.gbuffer1 = pointLightUBO.gbuffer1 = 1;
-	dirLightUBO.gbuffer2 = spotLightUBO.gbuffer2 = pointLightUBO.gbuffer2 = 2;
-	dirLightUBO.gbuffer3 = spotLightUBO.gbuffer3 = pointLightUBO.gbuffer3 = 3;
-	spotLightUBO.resolution = pointLightUBO.resolution = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
+	debugUBO.gbuffer0 = dirLightUBO.gbuffer0 = spotLightUBO.gbuffer0 = pointLightUBO.gbuffer0 = 0;
+	debugUBO.gbuffer1 = dirLightUBO.gbuffer1 = spotLightUBO.gbuffer1 = pointLightUBO.gbuffer1 = 1;
+	debugUBO.gbuffer2 = dirLightUBO.gbuffer2 = spotLightUBO.gbuffer2 = pointLightUBO.gbuffer2 = 2;
+	debugUBO.gbuffer3 = dirLightUBO.gbuffer3 = spotLightUBO.gbuffer3 = pointLightUBO.gbuffer3 = 3;
 
 	fbo->ReadBind();
 	graphicsWrapper->SetDepth(0);
@@ -124,7 +114,60 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 	fbo->BindTexture(3);
 	fbo->Unbind();
 
-	graphicsWrapper->Clear(CLEAR_COLOR);
+	graphicsWrapper->Clear(CLEAR_ALL);
+	if (engine.debugMode != DEBUG_NONE) {
+		debugUBO.debugMode = engine.debugMode;
+		debugUBO.texRefl = 4;
+
+		CubemapComponent *comp = engine.cubemapSystem.GetClosestCubemap(eyePos);
+		if (comp != NULL) {
+			Texture *cube = engine.cubemapSystem.GetClosestCubemap(eyePos)->cubemap;
+			if (cube != NULL)
+				cube->BindCubemap(4);
+		}
+
+		debugShader->Use();
+		debugShader->PassData(&debugUBO);
+		debugShader->SetInteger();
+		debugShader->SetInteger();
+		debugShader->SetInteger();
+		debugShader->SetInteger();
+		debugShader->SetInteger();
+		debugShader->SetInteger();
+
+		vaoQuad->Bind();
+		graphicsWrapper->DrawVertexArray(4);
+		vaoQuad->Unbind();
+		return;
+	}
+
+	/*fbo->Unbind(); // To bind Draw to 0
+	fbo->ReadBind();
+	fbo->TestBlit(0, 0, engine.settings.resolutionX, engine.settings.resolutionX, engine.settings.resolutionX, engine.settings.resolutionY, false);
+	fbo->Unbind();*/
+
+	bool drawSky = false;
+	if (drawSky) {
+		skyShader->Use();
+		skydefUBO.gWVP = projection * glm::mat4(glm::mat3(view));
+		skydefUBO.time = (float)engine.GetTimeCurrent();
+		skyShader->PassData(&skydefUBO);
+		skyShader->SetUniform4m();
+		skyShader->SetUniformFloat();
+
+		graphicsWrapper->SetDepth(2);
+		graphicsWrapper->SetBlending(false);
+
+		vaoSphere->Bind();
+		graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(sizeof(unsigned int) * 0), 0, numSkyIndices);
+		vaoSphere->Unbind();
+		graphicsWrapper->SetDepth(1);
+	}
+
+	dirLightUBO.eyePos = spotLightUBO.eyePos = pointLightUBO.eyePos = eyePos;
+	spotLightUBO.resolution = pointLightUBO.resolution = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
+
+
 	graphicsWrapper->SetBlending(true);
 
 	pointLightShader->Use();
@@ -274,30 +317,6 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		graphicsWrapper->DrawVertexArray(4);
 		vaoQuad->Unbind();
 	}
-
-	bool drawSky = false;
-	if (drawSky) {
-		skyShader->Use();
-		skydefUBO.gWVP = projection * glm::mat4(glm::mat3(view));
-		skydefUBO.time = (float)engine.GetTimeCurrent();
-		skyShader->PassData(&skydefUBO);
-		skyShader->SetUniform4m();
-		skyShader->SetUniformFloat();
-
-		graphicsWrapper->SetDepth(2);
-		graphicsWrapper->SetBlending(false);
-
-		vaoSphere->Bind();
-		graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(sizeof(unsigned int) * 0), 0, numSkyIndices);
-		vaoSphere->Unbind();
-		graphicsWrapper->SetDepth(1);
-	}
-
-	/*graphicsWrapper->Clear(CLEAR_DEPTH);
-	fbo->Unbind(); // To bind Draw to 0
-	fbo->ReadBind();
-	fbo->TestBlit(0, 0, engine.settings.resolutionX, engine.settings.resolutionX, engine.settings.resolutionX, engine.settings.resolutionY, false);
-	fbo->Unbind();*/
 
 	/*CubemapComponent *comp = engine.cubemapSystem.GetClosestCubemap(eyePos);
 	if (comp != NULL) {
@@ -595,6 +614,37 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	skyShader->SetNumUniforms(2);
 	skyShader->CreateUniform("gWVP");
 	skyShader->CreateUniform("time");
+
+	vsContent.clear();
+	fsContent.clear();
+	vsPath.clear();
+	fsPath.clear();
+
+	vsPath = "../shaders/overlay.glvs";
+	fsPath = "../shaders/debug/debug.glfs";
+
+	if (!ReadFileIncludable(vsPath, vsContent))
+		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
+
+	if (!ReadFileIncludable(fsPath, fsContent))
+		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
+
+	debugShader = pfnCreateShader();
+	debugShader->Initialize(2);
+	if (!debugShader->AddShader(&vsPath, &vsContent, SHADER_VERTEX))
+		fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
+	if (!debugShader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
+		fprintf(stderr, "Failed to add fragment shader %s.\n", fsPath.c_str());
+	if (!debugShader->Compile())
+		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
+
+	debugShader->SetNumUniforms(6);
+	debugShader->CreateUniform("gbuffer0");
+	debugShader->CreateUniform("gbuffer1");
+	debugShader->CreateUniform("gbuffer2");
+	debugShader->CreateUniform("gbuffer3");
+	debugShader->CreateUniform("texRefl");
+	debugShader->CreateUniform("debugMode");
 
 	vsContent.clear();
 	fsContent.clear();

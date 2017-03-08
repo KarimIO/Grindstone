@@ -75,15 +75,19 @@ void GraphicsWrapper::Clear(unsigned int clearTarget) {
 
 void GraphicsWrapper::SetDepth(int state) {
 	if (state == 1) {
-		glDepthFunc(GL_LESS);
 		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS);
 	}
 	else if (state == 2) {
-		glDepthFunc(GL_LEQUAL);
 		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
 	}
 	else
 		glDisable(GL_DEPTH_TEST);
+}
+
+void GraphicsWrapper::SetDepthMask(bool state) {
+	glDepthMask(state);
 }
 
 void GraphicsWrapper::SetTesselation(int verts) {
