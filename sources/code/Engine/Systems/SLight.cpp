@@ -69,6 +69,7 @@ void SLight::DrawShadows() {
 				);
 
 				geometryCache->Draw(proj, view);
+				engine.terrainSystem.Draw(proj, view, entity->position);
 			}
 			light->fbo->Unbind();
 		}
@@ -96,6 +97,7 @@ void SLight::DrawShadows() {
 			graphicsWrapper->SetBlending(false);
 			graphicsWrapper->Clear(CLEAR_ALL);
 			geometryCache->Draw(proj, view);
+			engine.terrainSystem.Draw(proj, view, entity->position);
 			light->fbo->Unbind();
 		}
 	}
