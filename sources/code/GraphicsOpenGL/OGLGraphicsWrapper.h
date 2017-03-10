@@ -66,6 +66,7 @@ public:
 	virtual void SetBlending(bool state);
 	virtual void SetTesselation(int verts);
 	virtual void SetDepthMask(bool state);
+	virtual bool SupportsTesselation();
 #ifdef _WIN32
 	virtual void SetWindowContext(HWND);
 #endif

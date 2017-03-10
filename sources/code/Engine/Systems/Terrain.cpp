@@ -4,12 +4,8 @@
 #include "../Core/TextureManager.h"
 
 void STerrain::Initialize() {
-
-	// TODO: Put this elsewhere. Maybe contained in graphicscontainer in the DLLs?
-	bool supportsTesselation = false;
-
 	// Load terrain shaders, depending on tessellation support.
-	if (supportsTesselation) {
+	if (engine.graphicsWrapper->SupportsTesselation()) {
 		std::string vsPath = "../shaders/terrain/terrain.glvs";
 		std::string fsPath = "../shaders/terrain/terrain.glfs";
 		std::string csPath = "../shaders/terrain/terrain.glcs";
@@ -71,6 +67,17 @@ void STerrain::Initialize() {
 			fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
 		if (!terrainShader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
 			fprintf(stderr, "Failed to add fragment shader %s.\n", fsPath.c_str());
+
+		terrainShader->BindAttribLocation(0, "vertexPos");
+		terrainShader->BindAttribLocation(1, "texCoord");
+		terrainShader->BindAttribLocation(2, "vertexNormals");
+		terrainShader->BindAttribLocation(3, "vertexTangents");
+
+		terrainShader->BindOutputLocation(0, "position");
+		terrainShader->BindOutputLocation(1, "normal");
+		terrainShader->BindOutputLocation(2, "albedo");
+		terrainShader->BindOutputLocation(3, "specular");
+
 		if (!terrainShader->Compile())
 			fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
 
@@ -78,13 +85,6 @@ void STerrain::Initialize() {
 		fsContent.clear();
 		vsPath.clear();
 		fsPath.clear();
-		terrainShader->BindAttribLocation(0, "vertexPos");
-		terrainShader->BindAttribLocation(1, "texCoord");
-
-		terrainShader->BindOutputLocation(0, "position");
-		terrainShader->BindOutputLocation(1, "normal");
-		terrainShader->BindOutputLocation(2, "albedo");
-		terrainShader->BindOutputLocation(3, "specular");
 	}
 
 	terrainShader->SetNumUniforms(11);
@@ -113,60 +113,135 @@ void STerrain::AddComponent(unsigned int &componentID) {
 }
 
 void STerrain::GenerateComponents() {
-	for (size_t ci = 0; ci < components.size(); ci++) {
-		CTerrain *terrain = &components[ci];
-
-		int numVerts = terrain->numPatches + 1;
-		int numVertsArea = numVerts * numVerts;
-
-		terrain->texture = engine.textureManager.LoadTexture(terrain->heightmapPath, COLOR_RGBA);
+	if (engine.graphicsWrapper->SupportsTesselation()) {
 		std::vector<glm::vec2> vertices;
 		std::vector<glm::vec2> texCoords;
 		std::vector<unsigned int> indices;
-		vertices.reserve(numVertsArea);
-		texCoords.reserve(numVertsArea);
-		indices.reserve(terrain->numPatches * terrain->numPatches * 6);
-		terrain->numIndices = terrain->numPatches * terrain->numPatches * 6;
-		float patchWidth = terrain->width / (float)terrain->numPatches;
-		float patchLength = terrain->length / (float)terrain->numPatches;
-		float widthStart = -terrain->width / 2.0f;
-		float lengthStart = -terrain->length / 2.0f;
+		for (size_t ci = 0; ci < components.size(); ci++) {
+			CTerrain *terrain = &components[ci];
 
-		for (size_t i = 0; i <= terrain->numPatches; i++) {
-			for (size_t j = 0; j <= terrain->numPatches; j++) {
-				vertices.push_back(glm::vec2(widthStart + patchWidth * j, lengthStart + patchLength * i));
-				texCoords.push_back(glm::vec2((float)j / (float)terrain->numPatches, (float)i / (float)terrain->numPatches));
+			int numVerts = terrain->numPatches + 1;
+			int numVertsArea = numVerts * numVerts;
+
+			terrain->texture = engine.textureManager.LoadTexture(terrain->heightmapPath, COLOR_RGBA);
+			vertices.reserve(numVertsArea);
+			texCoords.reserve(numVertsArea);
+			indices.reserve(terrain->numPatches * terrain->numPatches * 6);
+			terrain->numIndices = terrain->numPatches * terrain->numPatches * 6;
+			float patchWidth = terrain->width / (float)terrain->numPatches;
+			float patchLength = terrain->length / (float)terrain->numPatches;
+			float widthStart = -terrain->width / 2.0f;
+			float lengthStart = -terrain->length / 2.0f;
+
+			for (size_t i = 0; i <= terrain->numPatches; i++) {
+				for (size_t j = 0; j <= terrain->numPatches; j++) {
+					vertices.push_back(glm::vec2(widthStart + patchWidth * j, lengthStart + patchLength * i));
+					texCoords.push_back(glm::vec2((float)j / (float)terrain->numPatches, (float)i / (float)terrain->numPatches));
+				}
 			}
-		}
 
-		for (size_t i = 0; i < terrain->numPatches; i++) {
-			for (size_t j = 0; j < terrain->numPatches; j++) {
-				indices.push_back((unsigned int)(i*numVerts + j));
-				indices.push_back((unsigned int)((i + 1)*numVerts + j));
-				indices.push_back((unsigned int)((i + 1)*numVerts + j + 1));
-				indices.push_back((unsigned int)((i + 1)*numVerts + j + 1));
-				indices.push_back((unsigned int)(i*numVerts + j + 1));
-				indices.push_back((unsigned int)(i*numVerts + j));
+			for (size_t i = 0; i < terrain->numPatches; i++) {
+				for (size_t j = 0; j < terrain->numPatches; j++) {
+					indices.push_back((unsigned int)(i*numVerts + j));
+					indices.push_back((unsigned int)((i + 1)*numVerts + j));
+					indices.push_back((unsigned int)((i + 1)*numVerts + j + 1));
+					indices.push_back((unsigned int)((i + 1)*numVerts + j + 1));
+					indices.push_back((unsigned int)(i*numVerts + j + 1));
+					indices.push_back((unsigned int)(i*numVerts + j));
+				}
 			}
+
+			terrain->vao = pfnCreateVAO();
+			terrain->vao->Initialize();
+			terrain->vao->Bind();
+
+			VertexBufferObject *vbo = pfnCreateVBO();
+			vbo->Initialize(3);
+			vbo->AddVBO(&vertices[0], vertices.size() * sizeof(vertices[0]), 2, SIZE_FLOAT, DRAW_STATIC);
+			vbo->Bind(0, 0, false, 0, 0);
+			vbo->AddVBO(&texCoords[0], texCoords.size() * sizeof(texCoords[0]), 2, SIZE_FLOAT, DRAW_STATIC);
+			vbo->Bind(1, 1, false, 0, 0);
+			vbo->AddIBO(&indices[0], indices.size() * sizeof(unsigned int), DRAW_STATIC); // 3 and SIZE_FLOAT are arbitrary
+
+			terrain->vao->Unbind();
+
+			vertices.clear();
+			texCoords.clear();
+			indices.clear();
 		}
+	}
+	else {
+		std::vector<glm::vec3> vertices;
+		std::vector<glm::vec3> normals;
+		std::vector<glm::vec3> tangents;
+		std::vector<glm::vec2> texCoords;
+		std::vector<unsigned int> indices;
+		for (size_t ci = 0; ci < components.size(); ci++) {
+			CTerrain *terrain = &components[ci];
 
-		terrain->vao = pfnCreateVAO();
-		terrain->vao->Initialize();
-		terrain->vao->Bind();
+			int numVerts = terrain->numPatches + 1;
+			int numVertsArea = numVerts * numVerts;
 
-		VertexBufferObject *vbo = pfnCreateVBO();
-		vbo->Initialize(3);
-		vbo->AddVBO(&vertices[0], vertices.size() * sizeof(vertices[0]), 2, SIZE_FLOAT, DRAW_STATIC);
-		vbo->Bind(0, 0, false, 0, 0);
-		vbo->AddVBO(&texCoords[0], texCoords.size() * sizeof(texCoords[0]), 2, SIZE_FLOAT, DRAW_STATIC);
-		vbo->Bind(1, 1, false, 0, 0);
-		vbo->AddIBO(&indices[0], indices.size() * sizeof(unsigned int), DRAW_STATIC); // 3 and SIZE_FLOAT are arbitrary
+			int texWidth, texHeight;
+			terrain->texture = engine.textureManager.LoadTexture(terrain->heightmapPath, COLOR_RGBA);
+			unsigned char *pixels = engine.textureManager.LoadTextureData(terrain->heightmapPath, COLOR_RGBA, texWidth, texHeight);
+			vertices.reserve(numVertsArea);
+			texCoords.reserve(numVertsArea);
+			indices.reserve(terrain->numPatches * terrain->numPatches * 6);
+			terrain->numIndices = terrain->numPatches * terrain->numPatches * 6;
+			float patchWidth = terrain->width / (float)terrain->numPatches;
+			float patchLength = terrain->length / (float)terrain->numPatches;
+			float widthStart = -terrain->width / 2.0f;
+			float lengthStart = -terrain->length / 2.0f;
+			int texUnitX = texWidth / terrain->numPatches;
+			int texUnitY = texHeight / terrain->numPatches;
 
-		terrain->vao->Unbind();
+			for (size_t i = 0; i <= terrain->numPatches; i++) {
+				for (size_t j = 0; j <= terrain->numPatches; j++) {
+					size_t sample = (i * texUnitY + j * texUnitX * texHeight) * 4 + 3;
+					float heightSample = (pixels[sample] / 255.0f)*terrain->height;
+					vertices.push_back(glm::vec3(widthStart + patchWidth * j, heightSample, lengthStart + patchLength * i));
+					normals.push_back(glm::vec3(widthStart + patchWidth * j, heightSample, lengthStart + patchLength * i));
+					tangents.push_back(glm::vec3(widthStart + patchWidth * j, heightSample, lengthStart + patchLength * i));
+					texCoords.push_back(glm::vec2((float)j / (float)terrain->numPatches, (float)i / (float)terrain->numPatches));
+				}
+			}
 
-		vertices.clear();
-		texCoords.clear();
-		indices.clear();
+			for (size_t i = 0; i < terrain->numPatches; i++) {
+				for (size_t j = 0; j < terrain->numPatches; j++) {
+					indices.push_back((unsigned int)(i*numVerts + j));
+					indices.push_back((unsigned int)((i + 1)*numVerts + j));
+					indices.push_back((unsigned int)((i + 1)*numVerts + j + 1));
+					indices.push_back((unsigned int)((i + 1)*numVerts + j + 1));
+					indices.push_back((unsigned int)(i*numVerts + j + 1));
+					indices.push_back((unsigned int)(i*numVerts + j));
+				}
+			}
+
+			terrain->vao = pfnCreateVAO();
+			terrain->vao->Initialize();
+			terrain->vao->Bind();
+
+			VertexBufferObject *vbo = pfnCreateVBO();
+			vbo->Initialize(5);
+			vbo->AddVBO(&vertices[0], vertices.size() * sizeof(vertices[0]), 3, SIZE_FLOAT, DRAW_STATIC);
+			vbo->Bind(0, 0, false, 0, 0);
+			vbo->AddVBO(&texCoords[0], texCoords.size() * sizeof(texCoords[0]), 2, SIZE_FLOAT, DRAW_STATIC);
+			vbo->Bind(1, 1, false, 0, 0);
+			vbo->AddVBO(&normals[0], normals.size() * sizeof(normals[0]), 3, SIZE_FLOAT, DRAW_STATIC);
+			vbo->Bind(2, 2, false, 0, 0);
+			vbo->AddVBO(&tangents[0], tangents.size() * sizeof(tangents[0]), 3, SIZE_FLOAT, DRAW_STATIC);
+			vbo->Bind(3, 3, false, 0, 0);
+			vbo->AddIBO(&indices[0], indices.size() * sizeof(unsigned int), DRAW_STATIC); // 3 and SIZE_FLOAT are arbitrary
+
+			terrain->vao->Unbind();
+
+			vertices.clear();
+			texCoords.clear();
+			normals.clear();
+			tangents.clear();
+			indices.clear();
+		}
 	}
 }
 
@@ -282,9 +357,11 @@ void STerrain::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
 		terrainShader->SetInteger();
 		terrainShader->SetInteger();
 		terrainShader->SetInteger();
+		// engine.graphicsWrapper->SupportsTesselation() && 
+		if (components[i].texture)
+			components[i].texture->Bind(0);
 
 		components[i].vao->Bind();
-		components[i].texture->Bind(0);
 		if (false)
 			engine.graphicsWrapper->DrawBaseVertex(SHAPE_PATCHES, (void*)(0), 0, components[i].numIndices);
 		else

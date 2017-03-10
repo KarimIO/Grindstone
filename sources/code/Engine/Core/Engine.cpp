@@ -47,7 +47,7 @@ bool Engine::Initialize() {
 		fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
 	if (!shader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
 		fprintf(stderr, "Failed to add fragment shader %s.\n", vsPath.c_str());
-	shader->Compile();
+
 	shader->BindAttribLocation(0, "vertexPos");
 	shader->BindAttribLocation(1, "TexCoord");
 	shader->BindAttribLocation(2, "vertexNormal");
@@ -57,6 +57,8 @@ bool Engine::Initialize() {
 	shader->BindOutputLocation(1, "normal");
 	shader->BindOutputLocation(2, "albedo");
 	shader->BindOutputLocation(3, "specular");
+	if (!shader->Compile())
+		fprintf(stderr, "Failed to compile main metalness shader %s.\n", vsPath.c_str());
 
 	shader->SetNumUniforms(7);
 	shader->CreateUniform("pvmMatrix");

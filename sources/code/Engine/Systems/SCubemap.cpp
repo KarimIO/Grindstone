@@ -57,7 +57,7 @@ CubemapComponent *CubemapSystem::GetClosestCubemap(glm::vec3 point) {
 
 	float closestLength = FLT_MAX;
 	float length;
-	int j = 0;
+	size_t j = 0;
 	if (components.size() > 0) {
 		for (size_t i = 0; i < components.size(); i++) {
 			glm::vec3 p2 = point - components[i].position;

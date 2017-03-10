@@ -13,6 +13,7 @@ public:
 	void ReserveTextures(int n);
 	void ReserveCubemaps(int n);
 
+	unsigned char *LoadTextureData(std::string path, PixelScheme scheme, int &texWidth, int &texHeight);
 	Texture *LoadTexture(std::string path, PixelScheme scheme);
 	Texture *MakeTexture(std::string identifier, uint32_t width, uint32_t height, uint32_t channels, PixelScheme scheme, unsigned char *data);
 	Texture *MakeWriteTexture(std::string path, uint32_t width, uint32_t height, uint32_t channels, PixelScheme scheme, unsigned char *data);

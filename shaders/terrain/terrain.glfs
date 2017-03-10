@@ -17,6 +17,8 @@ in vec3 Tangent_FS;
 uniform float height;
 uniform float time;
 
+uniform sampler2D terrainMap;
+
 uniform sampler2D grassAlbedo;
 uniform sampler2D grassGeometry;
 
@@ -83,7 +85,7 @@ void main() {
     specular = vec4(0.04, 0.04, 0.04, Roughness);*/
 
     position = vec4(WorldPos_FS, 1);
-    albedo = vec4(TexCoord0_FS, 0, 1);
+    albedo = vec4(texture(terrainMap, TexCoord0_FS).aaa, 1);
     normal = vec4(Normal_FS, 1);
     specular = vec4(0.04, 0.04, 0.04, 0.5);
 }

@@ -141,32 +141,8 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		return;
 	}
 
-	/*fbo->Unbind(); // To bind Draw to 0
-	fbo->ReadBind();
-	fbo->TestBlit(0, 0, engine.settings.resolutionX, engine.settings.resolutionX, engine.settings.resolutionX, engine.settings.resolutionY, false);
-	fbo->Unbind();*/
-
-	bool drawSky = false;
-	if (drawSky) {
-		skyShader->Use();
-		skydefUBO.gWVP = projection * glm::mat4(glm::mat3(view));
-		skydefUBO.time = (float)engine.GetTimeCurrent();
-		skyShader->PassData(&skydefUBO);
-		skyShader->SetUniform4m();
-		skyShader->SetUniformFloat();
-
-		graphicsWrapper->SetDepth(2);
-		graphicsWrapper->SetBlending(false);
-
-		vaoSphere->Bind();
-		graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(sizeof(unsigned int) * 0), 0, numSkyIndices);
-		vaoSphere->Unbind();
-		graphicsWrapper->SetDepth(1);
-	}
-
 	dirLightUBO.eyePos = spotLightUBO.eyePos = pointLightUBO.eyePos = eyePos;
 	spotLightUBO.resolution = pointLightUBO.resolution = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
-
 
 	graphicsWrapper->SetBlending(true);
 
@@ -343,7 +319,30 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 
 	defUBO.directionalShadowMatrix = biasMatrix * proj * viewb * glm::mat4(1.0f);*/
 
-	//postFBO->WriteBind();
+	//postFBO->WriteBind();	
+
+	fbo->Unbind(); // To bind Draw to 0
+	fbo->ReadBind();
+	fbo->TestBlit(0, 0, engine.settings.resolutionX, engine.settings.resolutionX, engine.settings.resolutionX, engine.settings.resolutionY, true);
+	fbo->Unbind();
+
+	bool drawSky = false;
+	if (drawSky) {
+		skyShader->Use();
+		skydefUBO.gWVP = projection * glm::mat4(glm::mat3(view));
+		skydefUBO.time = (float)engine.GetTimeCurrent();
+		skyShader->PassData(&skydefUBO);
+		skyShader->SetUniform4m();
+		skyShader->SetUniformFloat();
+
+		graphicsWrapper->SetDepth(2);
+		graphicsWrapper->SetBlending(false);
+
+		vaoSphere->Bind();
+		graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(sizeof(unsigned int) * 0), 0, numSkyIndices);
+		vaoSphere->Unbind();
+		graphicsWrapper->SetDepth(1);
+	}
 }
 
 void RenderPathDeferred::PostPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
@@ -681,7 +680,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 		
 	postFBO = pfnCreateFramebuffer();
 	postFBO->Initialize(1);
-	postFBO->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, res.x, res.y);
+	postFBO->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, (unsigned int) res.x, (unsigned int)res.y);
 	postFBO->Generate();
 
 

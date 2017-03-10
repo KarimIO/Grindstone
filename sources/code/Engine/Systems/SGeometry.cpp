@@ -21,7 +21,7 @@ std::string CModel::getName() {
 void SModel::PreloadModel3D(const char * szPath, size_t renderID) {
 	for (size_t i = 0; i < models.size(); i++) {
 		if (models[i].getName() == szPath) {
-			models[i].references.push_back(renderID);
+			models[i].references.push_back((unsigned int)renderID);
 			return;
 		}
 	}

@@ -10,6 +10,19 @@ void TextureManager::ReserveCubemaps(int n) {
 	cubemapCache.reserve(n);
 }
 
+unsigned char *TextureManager::LoadTextureData(std::string path, PixelScheme scheme, int &texWidth, int &texHeight) {
+	Texture *t = pfnCreateTexture();
+	int texChannels;
+	stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+
+	if (!pixels) {
+		printf("Texture failed to load!: %s \n", path.c_str());
+		return NULL;
+	}
+
+	return (unsigned char *)pixels;
+}
+
 Texture *TextureManager::LoadTexture(std::string path, PixelScheme scheme) {
 	std::unordered_map<std::string, Texture *>::const_iterator got = textureCache.find(path);
 	if (got != textureCache.end())

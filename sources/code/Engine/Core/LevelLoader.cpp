@@ -84,54 +84,54 @@ public:
 	bool Uint64(uint64_t u) { Int((int)u); return true; }
 	bool Double(double d) {
 		if (keyType == KEY_ENTITY_POSITION) {
-			ent->position[subIterator++] = d;
+			ent->position[subIterator++] = (float)d;
 		}
 		else if (keyType == KEY_ENTITY_ANGLES) {
-			ent->angles[subIterator++] = d*3.14159/180.0;
+			ent->angles[subIterator++] = (float)d*3.14159f/180.0f;
 		}
 		else if (keyType == KEY_ENTITY_SCALE) {
-			ent->scale[subIterator++] = d;
+			ent->scale[subIterator++] = (float)d;
 		}
 		else if (keyType == KEY_MAP_CUBEMAPS) {
-			position[subIterator++] = d;
+			position[subIterator++] = (float)d;
 		}
 		else {
 			if (level == LEVEL_COMPONENT) {
 				if (componentType == COMPONENT_LIGHT_SPOT) {
 					if (keyType == KEY_COMPONENT_COLOR)
-						engine.lightSystem.spotLights[componentID].lightColor[subIterator++] = d;
+						engine.lightSystem.spotLights[componentID].lightColor[subIterator++] = (float)d;
 					else if (keyType == KEY_COMPONENT_BRIGHTNESS)
-						engine.lightSystem.spotLights[componentID].intensity = d;
+						engine.lightSystem.spotLights[componentID].intensity = (float)d;
 					else if (keyType == KEY_COMPONENT_RADIUS)
-						engine.lightSystem.spotLights[componentID].lightRadius = d;
+						engine.lightSystem.spotLights[componentID].lightRadius = (float)d;
 					else if (keyType == KEY_COMPONENT_INNERANGLE)
-						engine.lightSystem.spotLights[componentID].innerSpotAngle = d*3.14159 / 180.0;
+						engine.lightSystem.spotLights[componentID].innerSpotAngle = (float)d*3.14159f / 180.0f;
 					else if (keyType == KEY_COMPONENT_OUTERANGLE)
-						engine.lightSystem.spotLights[componentID].outerSpotAngle = d*3.14159 / 180.0;
+						engine.lightSystem.spotLights[componentID].outerSpotAngle = (float)d*3.14159f / 180.0f;
 				}
 				else if (componentType == COMPONENT_LIGHT_POINT) {
 					if (keyType == KEY_COMPONENT_COLOR)
-						engine.lightSystem.pointLights[componentID].lightColor[subIterator++] = d;
+						engine.lightSystem.pointLights[componentID].lightColor[subIterator++] = (float)d;
 					else if (keyType == KEY_COMPONENT_BRIGHTNESS)
-						engine.lightSystem.pointLights[componentID].intensity = d;
+						engine.lightSystem.pointLights[componentID].intensity = (float)d;
 					else if (keyType == KEY_COMPONENT_RADIUS)
-						engine.lightSystem.pointLights[componentID].lightRadius = d;
+						engine.lightSystem.pointLights[componentID].lightRadius = (float)d;
 				}
 				else if (componentType == COMPONENT_LIGHT_DIRECTIONAL) {
 					if (keyType == KEY_COMPONENT_COLOR)
-						engine.lightSystem.directionalLights[componentID].lightColor[subIterator++] = d;
+						engine.lightSystem.directionalLights[componentID].lightColor[subIterator++] = (float)d;
 					else if (keyType == KEY_COMPONENT_BRIGHTNESS)
-						engine.lightSystem.directionalLights[componentID].intensity = d;
+						engine.lightSystem.directionalLights[componentID].intensity = (float)d;
 					else if (keyType == KEY_COMPONENT_RADIUS)
-						engine.lightSystem.directionalLights[componentID].sunRadius = d;
+						engine.lightSystem.directionalLights[componentID].sunRadius = (float)d;
 				}
 				else if (componentType == COMPONENT_TERRAIN) {
 					if (keyType == KEY_COMPONENT_WIDTH)
-						engine.terrainSystem.components[componentID].width = d;
+						engine.terrainSystem.components[componentID].width = (float)d;
 					if (keyType == KEY_COMPONENT_HEIGHT)
-						engine.terrainSystem.components[componentID].height = d;
+						engine.terrainSystem.components[componentID].height = (float)d;
 					if (keyType == KEY_COMPONENT_LENGTH)
-						engine.terrainSystem.components[componentID].length = d;
+						engine.terrainSystem.components[componentID].length = (float)d;
 				}
 			}
 		}
@@ -196,7 +196,7 @@ public:
 	bool StartObject() {
 		level++;
 		if (level == LEVEL_ENTITY) {
-			entityID = engine.entities.size();
+			entityID = (unsigned int)engine.entities.size();
 			engine.entities.push_back(EBase());
 			ent = &engine.entities.back();
 		}

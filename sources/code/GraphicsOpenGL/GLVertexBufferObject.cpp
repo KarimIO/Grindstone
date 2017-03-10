@@ -24,7 +24,7 @@ void GLVertexBufferObject::Bind(uint8_t bindTo, uint8_t id, bool normalize, uint
 	glVertexAttribPointer(
 		bindTo,	
 		elementSize,
-		GL_UNSIGNED_BYTE + dataSizeType - 1,           // type
+		GL_BYTE + dataSizeType,           // type
 		normalize,           // normalized?
 		stride,                  // stride
 		pointer            // array buffer offset

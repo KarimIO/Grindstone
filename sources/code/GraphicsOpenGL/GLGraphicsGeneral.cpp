@@ -90,6 +90,10 @@ void GraphicsWrapper::SetDepthMask(bool state) {
 	glDepthMask(state);
 }
 
+bool GraphicsWrapper::SupportsTesselation() {
+	return gl3wIsSupported(4, 0);
+}
+
 void GraphicsWrapper::SetTesselation(int verts) {
 	GLint MaxPatchVertices = 0;
 	glGetIntegerv(GL_MAX_PATCH_VERTICES, &MaxPatchVertices);

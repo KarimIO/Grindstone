@@ -70,11 +70,12 @@ public:
 	virtual void SwapBuffer();
 	virtual void SetResolution(int x, int y, uint32_t width, uint32_t height);
 	virtual void Clear(unsigned int clearTarget);
-	virtual void SetDepth(bool state);
+	virtual void SetDepth(int state);
 	virtual void SetCull(CullType state);
 	virtual void SetBlending(bool state);
 	virtual void SetTesselation(int verts);
 	virtual void SetDepthMask(bool state);
+	virtual bool SupportsTesselation();
 #ifdef _WIN32
 	virtual void SetWindowContext(HWND);
 #endif
