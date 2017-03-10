@@ -16,7 +16,7 @@ out vec3 Tangent_FS;
 void main() {
     WorldPos_FS = vec4(gWorld * vec4(vertexPos, 1.0)).xyz;
     gl_Position = gVP * gWorld * vec4(vertexPos, 1.0);
-    TexCoord0_FS = texCoord;
+    TexCoord0_FS = vec2(-texCoord.x, -texCoord.y);
     Normal_FS = vertexNormals;
     Tangent_FS = vertexTangents;
 }

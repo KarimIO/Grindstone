@@ -28,7 +28,6 @@ void main() {
 	vec4 Specular	= texture(gbuffer3, UV);
 	float alpha = Specular.a * Specular.a;
 	
-	vec3 lightDir = vec3(0,1,0);
 	vec3 eyeDir = normalize(eyePos - Position.xyz);
 	vec3 eyeReflect = reflect(-eyeDir, Normal.xyz);
 	

@@ -8,7 +8,7 @@
                 "width": 32.0,
                 "height": 8.0,
                 "length": 32.0,
-                "patches": 256,
+                "patches": 32,
                 "heightmap": "heightmaps/height.png"
             }]
         },

@@ -123,6 +123,7 @@ void STerrain::GenerateComponents() {
 			int numVerts = terrain->numPatches + 1;
 			int numVertsArea = numVerts * numVerts;
 
+			int texWidth, texHeight;
 			terrain->texture = engine.textureManager.LoadTexture(terrain->heightmapPath, COLOR_RGBA);
 			vertices.reserve(numVertsArea);
 			texCoords.reserve(numVertsArea);
@@ -156,7 +157,7 @@ void STerrain::GenerateComponents() {
 			terrain->vao->Bind();
 
 			VertexBufferObject *vbo = pfnCreateVBO();
-			vbo->Initialize(3);
+			vbo->Initialize(5);
 			vbo->AddVBO(&vertices[0], vertices.size() * sizeof(vertices[0]), 2, SIZE_FLOAT, DRAW_STATIC);
 			vbo->Bind(0, 0, false, 0, 0);
 			vbo->AddVBO(&texCoords[0], texCoords.size() * sizeof(texCoords[0]), 2, SIZE_FLOAT, DRAW_STATIC);
@@ -193,8 +194,8 @@ void STerrain::GenerateComponents() {
 			float patchLength = terrain->length / (float)terrain->numPatches;
 			float widthStart = -terrain->width / 2.0f;
 			float lengthStart = -terrain->length / 2.0f;
-			int texUnitX = texWidth / terrain->numPatches;
-			int texUnitY = texHeight / terrain->numPatches;
+			int texUnitX = (texWidth - 1) / terrain->numPatches;
+			int texUnitY = (texHeight - 1) / terrain->numPatches;
 
 			for (size_t i = 0; i <= terrain->numPatches; i++) {
 				for (size_t j = 0; j <= terrain->numPatches; j++) {
@@ -362,7 +363,7 @@ void STerrain::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
 			components[i].texture->Bind(0);
 
 		components[i].vao->Bind();
-		if (false)
+		if (engine.graphicsWrapper->SupportsTesselation())
 			engine.graphicsWrapper->DrawBaseVertex(SHAPE_PATCHES, (void*)(0), 0, components[i].numIndices);
 		else
 			engine.graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(0), 0, components[i].numIndices);
