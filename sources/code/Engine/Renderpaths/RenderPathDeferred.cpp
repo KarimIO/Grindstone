@@ -459,6 +459,9 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	fbo->Initialize(4);
 	unsigned int resx = (unsigned int)res.x;
 	unsigned int resy = (unsigned int)res.y;
+	const int GL_RGBA16F = 0x881A;
+	const int GL_RGBA = 0x1908;
+	const int GL_FLOAT = 0x1406;
 	fbo->AddBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, resx, resy);
 	fbo->AddBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, resx, resy);
 	fbo->AddBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, resx, resy);
@@ -689,6 +692,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 		
 	postFBO = pfnCreateFramebuffer();
 	postFBO->Initialize(1);
+	const int GL_RGBA32F = 0x8814;
 	postFBO->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, (unsigned int) res.x, (unsigned int)res.y);
 	postFBO->Generate();
 
