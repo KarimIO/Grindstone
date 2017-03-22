@@ -435,16 +435,13 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 		indices.push_back(Face.mIndices[2]);
 	}
 
-	importer.FreeScene();
-
 	numSkyIndices = (unsigned int) indices.size();
-
 	vaoSphere= pfnCreateVAO();
 	vaoSphere->Initialize();
 	vaoSphere->Bind();
 
 	vboSphere = pfnCreateVBO();
-	vboSphere->Initialize(1);
+	vboSphere->Initialize(2);
 	vboSphere->AddVBO(&vertices[0], vertices.size() * sizeof(vertices[0]), 3, SIZE_FLOAT, DRAW_STATIC);
 	vboSphere->Bind(0, 0, false, 0, 0);
 	vboSphere->AddIBO(&indices[0], indices.size() * sizeof(unsigned int), DRAW_STATIC);
@@ -454,14 +451,19 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	vertices.clear();
 	indices.clear();
 
+	importer.FreeScene();
+
 	glm::vec2 res = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
 	fbo = pfnCreateFramebuffer();
 	fbo->Initialize(4);
 	unsigned int resx = (unsigned int)res.x;
 	unsigned int resy = (unsigned int)res.y;
+#ifdef _WIN32 // Remove this ASAP
 	const int GL_RGBA16F = 0x881A;
 	const int GL_RGBA = 0x1908;
 	const int GL_FLOAT = 0x1406;
+	const int GL_RGBA32F = 0x8814;
+#endif
 	fbo->AddBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, resx, resy);
 	fbo->AddBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, resx, resy);
 	fbo->AddBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, resx, resy);
@@ -692,7 +694,6 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 		
 	postFBO = pfnCreateFramebuffer();
 	postFBO->Initialize(1);
-	const int GL_RGBA32F = 0x8814;
 	postFBO->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, (unsigned int) res.x, (unsigned int)res.y);
 	postFBO->Generate();
 
