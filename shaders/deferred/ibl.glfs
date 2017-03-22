@@ -4,7 +4,7 @@ out vec3 colorOut;
 
 uniform sampler2D gbuffer0;
 uniform sampler2D gbuffer1;
-//uniform sampler2D gbuffer2; We don't need this for IBL
+uniform sampler2D gbuffer2;
 uniform sampler2D gbuffer3;
 uniform samplerCube texRefl;
 

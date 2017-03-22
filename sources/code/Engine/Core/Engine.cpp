@@ -22,13 +22,12 @@ void				(*pfnDeleteGraphicsPointer)(void *ptr);
 bool Engine::Initialize() {
 	//physics.Initialize();
 	//return false;
-
 	srand((unsigned int)time(NULL));
 
 	// Get Settings here:
 	InitializeSettings();
 	if (!InitializeWindow())						return false;
-	if (!InitializeAudio())							return false;
+	//if (!InitializeAudio())							return false;
 	if (!InitializeGraphics(GRAPHICS_OPENGL))		return false;
 
 	std::string vsPath = "../shaders/objects/main.glvs"; // GetShaderExt()
@@ -150,7 +149,6 @@ void Engine::InitializeSettings() {
 		}
 
 		cfile.SaveFile();
-		cfile.CloseFile();
 	}
 	else {
 		fprintf(stderr, "SETTINGS.INI: File not found.\n");

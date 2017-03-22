@@ -52,7 +52,7 @@ glm::mat4x4 EBase::GetModelMatrix() {
 		Model,
 		position);
 	Model = glm::scale(Model, GetScale());
-	float maxRot = (max(max(angles.x, angles.y), angles.z));
+	float maxRot = (std::fmax(std::fmax(angles.x, angles.y), angles.z));
 	if (maxRot > 0)
 		Model = glm::rotate(Model, maxRot, angles / maxRot);
 

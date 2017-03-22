@@ -5,8 +5,6 @@
 
 #include "../Core/Engine.h"
 
-#include <Windows.h>
-
 void CubemapSystem::CaptureCubemaps(double) {
 	std::cout << "Capture Cubemaps" << "\n";
 

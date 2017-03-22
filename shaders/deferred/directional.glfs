@@ -36,6 +36,7 @@ void main() {
 	float d = cos( sunAngularRadius );
 
 	float NL = clamp(dot(Normal.xyz, lightDirection), 0, 1);
+	if (NL < 0.8) NL = 0;
 	vec3 H = normalize(eyeDir + lightDirection);
 	float NV = abs(dot(Normal.xyz, eyeDir)) + 0.00001;
 	float NH = clamp(dot(Normal.xyz, H), 0, 1);
@@ -57,6 +58,6 @@ void main() {
 	vec3 L = (DdotR < d) ? normalize(d * lightDirection + normalize(S) * r) : eyeReflect;
 	vec3 illuminance = BSDF(NV, NL, LH, NH, alpha, Specular.rgb);
 	illuminance *= sunIlluminanceInLux * NL; // illuminance
-	colorOut = visibility * Albedo.rgb;
+	colorOut = vec3(NL) * visibility; //illuminance * visibility * Albedo.rgb;
 	colorOut = hdrGammaTransform(colorOut.rgb);
 }

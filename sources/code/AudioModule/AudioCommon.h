@@ -1,10 +1,10 @@
 #ifndef _AUDIO_H
 #define _AUDIO_H
 
+#include "SoundFile.h"
+
 #ifdef _WIN32
 #include <Windows.h>
-
-#include "SoundFile.h"
 
 #ifdef AUDIO_DLL
 #define AUDIO_EXPORT_CLASS __declspec(dllexport) 

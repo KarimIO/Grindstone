@@ -86,6 +86,6 @@ void main() {
 
     position = vec4(WorldPos_FS, 1);
     albedo = vec4(texture(terrainMap, TexCoord0_FS).aaa, 1);
-    normal = vec4(Normal_FS, 1);
+    normal = vec4(0, 1, 0, 1);
     specular = vec4(0.04, 0.04, 0.04, 0.5);
 }

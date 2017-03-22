@@ -157,7 +157,7 @@ void STerrain::GenerateComponents() {
 			terrain->vao->Bind();
 
 			VertexBufferObject *vbo = pfnCreateVBO();
-			vbo->Initialize(5);
+			vbo->Initialize(2);
 			vbo->AddVBO(&vertices[0], vertices.size() * sizeof(vertices[0]), 2, SIZE_FLOAT, DRAW_STATIC);
 			vbo->Bind(0, 0, false, 0, 0);
 			vbo->AddVBO(&texCoords[0], texCoords.size() * sizeof(texCoords[0]), 2, SIZE_FLOAT, DRAW_STATIC);
@@ -172,9 +172,7 @@ void STerrain::GenerateComponents() {
 		}
 	}
 	else {
-		std::vector<glm::vec3> vertices;
-		std::vector<glm::vec3> normals;
-		std::vector<glm::vec3> tangents;
+		std::vector<glm::vec2> vertices;
 		std::vector<glm::vec2> texCoords;
 		std::vector<unsigned int> indices;
 		for (size_t ci = 0; ci < components.size(); ci++) {
@@ -199,11 +197,7 @@ void STerrain::GenerateComponents() {
 
 			for (size_t i = 0; i <= terrain->numPatches; i++) {
 				for (size_t j = 0; j <= terrain->numPatches; j++) {
-					size_t sample = (i * texUnitY + j * texUnitX * texHeight) * 4 + 3;
-					float heightSample = (pixels[sample] / 255.0f)*terrain->height;
-					vertices.push_back(glm::vec3(widthStart + patchWidth * j, heightSample, lengthStart + patchLength * i));
-					normals.push_back(glm::vec3(widthStart + patchWidth * j, heightSample, lengthStart + patchLength * i));
-					tangents.push_back(glm::vec3(widthStart + patchWidth * j, heightSample, lengthStart + patchLength * i));
+					vertices.push_back(glm::vec2(widthStart + patchWidth * j, lengthStart + patchLength * i));
 					texCoords.push_back(glm::vec2((float)j / (float)terrain->numPatches, (float)i / (float)terrain->numPatches));
 				}
 			}
@@ -224,23 +218,17 @@ void STerrain::GenerateComponents() {
 			terrain->vao->Bind();
 
 			VertexBufferObject *vbo = pfnCreateVBO();
-			vbo->Initialize(5);
-			vbo->AddVBO(&vertices[0], vertices.size() * sizeof(vertices[0]), 3, SIZE_FLOAT, DRAW_STATIC);
+			vbo->Initialize(2);
+			vbo->AddVBO(&vertices[0], vertices.size() * sizeof(vertices[0]), 2, SIZE_FLOAT, DRAW_STATIC);
 			vbo->Bind(0, 0, false, 0, 0);
 			vbo->AddVBO(&texCoords[0], texCoords.size() * sizeof(texCoords[0]), 2, SIZE_FLOAT, DRAW_STATIC);
 			vbo->Bind(1, 1, false, 0, 0);
-			vbo->AddVBO(&normals[0], normals.size() * sizeof(normals[0]), 3, SIZE_FLOAT, DRAW_STATIC);
-			vbo->Bind(2, 2, false, 0, 0);
-			vbo->AddVBO(&tangents[0], tangents.size() * sizeof(tangents[0]), 3, SIZE_FLOAT, DRAW_STATIC);
-			vbo->Bind(3, 3, false, 0, 0);
 			vbo->AddIBO(&indices[0], indices.size() * sizeof(unsigned int), DRAW_STATIC); // 3 and SIZE_FLOAT are arbitrary
 
 			terrain->vao->Unbind();
 
 			vertices.clear();
 			texCoords.clear();
-			normals.clear();
-			tangents.clear();
 			indices.clear();
 		}
 	}

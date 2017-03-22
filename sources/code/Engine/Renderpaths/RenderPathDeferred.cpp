@@ -2,7 +2,6 @@
 #include "../Core/GraphicsDLLPointer.h"
 #include "../Core/Utilities.h"
 #include "../Core/Engine.h"
-#include "gl3w.h"
 
 #include "../Systems/Terrain.h"
 #include "../Core/TextureManager.h"
@@ -119,15 +118,25 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		debugUBO.debugMode = engine.debugMode;
 		debugUBO.texRefl = 4;
 
-		CubemapComponent *comp = engine.cubemapSystem.GetClosestCubemap(eyePos);
+		/*CubemapComponent *comp = engine.cubemapSystem.GetClosestCubemap(eyePos);
 		if (comp != NULL) {
 			Texture *cube = engine.cubemapSystem.GetClosestCubemap(eyePos)->cubemap;
 			if (cube != NULL)
 				cube->BindCubemap(4);
+		}*/
+
+		if (engine.lightSystem.directionalLights.size() > 0) {
+			CDirectionalLight *light = &engine.lightSystem.directionalLights[0];
+			if (light->castShadow) {
+				light->fbo->ReadBind();
+				light->fbo->BindDepth(4);
+				light->fbo->Unbind();
+			}
 		}
 
 		debugShader->Use();
 		debugShader->PassData(&debugUBO);
+		debugShader->SetInteger();
 		debugShader->SetInteger();
 		debugShader->SetInteger();
 		debugShader->SetInteger();

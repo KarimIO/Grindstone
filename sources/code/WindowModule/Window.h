@@ -3,7 +3,7 @@
 
 #include <iostream>
 #if defined(WINDOW_DLL) || defined(__linux__)
-#include "Core\InputInterface.h"
+#include "Core/InputInterface.h"
 #endif
 
 #ifdef _WIN32

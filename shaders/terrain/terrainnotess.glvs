@@ -1,12 +1,13 @@
 #version 140
 
-in vec3 vertexPos;
+in vec2 vertexPos;
 in vec2 texCoord;
-in vec3 vertexNormals;
-in vec3 vertexTangents;
 
 uniform mat4 gWorld;
 uniform mat4 gVP;
+
+uniform sampler2D terrainMap;
+uniform float height;
 
 out vec3 WorldPos_FS;
 out vec2 TexCoord0_FS;
@@ -14,9 +15,11 @@ out vec3 Normal_FS;
 out vec3 Tangent_FS;
 
 void main() {
-    WorldPos_FS = vec4(gWorld * vec4(vertexPos, 1.0)).xyz;
-    gl_Position = gVP * gWorld * vec4(vertexPos, 1.0);
-    TexCoord0_FS = vec2(-texCoord.x, -texCoord.y);
-    Normal_FS = vertexNormals;
-    Tangent_FS = vertexTangents;
+    TexCoord0_FS = texCoord;
+    vec4 heightSample = texture(terrainMap, texCoord);
+    vec3 pos = vec3(vertexPos.x, heightSample.a * height, vertexPos.y);
+    WorldPos_FS = vec4(gWorld * vec4(pos, 1.0)).xyz;
+    gl_Position = gVP * gWorld * vec4(pos, 1.0);
+    Normal_FS = normalize(heightSample.rbg);
+    Tangent_FS = vec3(1,0,0);
 }

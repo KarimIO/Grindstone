@@ -6,7 +6,7 @@ uniform sampler2D gbuffer0;
 uniform sampler2D gbuffer1;
 uniform sampler2D gbuffer2;
 uniform sampler2D gbuffer3;
-uniform samplerCube texRefl;
+uniform sampler2D texRefl;
 uniform int debugMode;
 
 in vec2 UV;
@@ -36,5 +36,8 @@ void main() {
     }
     else if (debugMode == 6) {
         colorOut = texture(gbuffer3, UV).aaaa;
+    }
+    else if (debugMode == 7) {
+        colorOut = texture(texRefl, UV).rgba;
     }
 }

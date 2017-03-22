@@ -8,17 +8,19 @@
                 "width": 32.0,
                 "height": 8.0,
                 "length": 32.0,
-                "patches": 32,
-                "heightmap": "heightmaps/height.png"
+                "patches": 128,
+                "heightmap": "heightmaps/height.png",
+                "numDetails": 3
             }]
         },
         {
+            "position": [0.0,3.0,0.0],
             "components": [{
-                "componentType": "COMPONENT_LIGHT_DIRECTIONAL",
-                "castshadow": true,
-                "color": [1.0,1.0,1.0],
-                "brightness": 200.0,
-                "sunradius": 32.0
+                "componentType": "COMPONENT_LIGHT_POINT",
+                "castshadow": false,
+                "color": [0.2,1.0,0.3],
+                "brightness": 8.0,
+                "lightradius": 16.0
             }]
         }
     ]

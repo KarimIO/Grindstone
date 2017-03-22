@@ -41,6 +41,8 @@ enum {
 	KEY_COMPONENT_HEIGHTMAP
 };
 
+#undef Bool
+
 struct MyHandler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>, MyHandler> {
 private:
 	unsigned char *byteArray;
