@@ -63,7 +63,7 @@ sources/obj/GraphicsOpenGL/%.o: sources/code/GraphicsOpenGL/%.cpp
 
 OpenGLModule: $(OBJ_OPENGL_FILES)
 	@$(CC) -shared $^ -o bin/graphicsgl.so -lX11 -lGL
-	@echo "opengl.so successfully built."
+	@echo "graphicsgl.so successfully built."
 
 # Object Definitions
 CPP_WINDOW_FILES := $(wildcard sources/code/WindowModule/*.cpp)

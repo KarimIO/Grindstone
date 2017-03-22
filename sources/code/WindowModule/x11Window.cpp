@@ -1,5 +1,5 @@
 #ifdef __linux__
-#include "Input.h"
+#include "Core/Input.h"
 #include "Window.h"
 #include <stdio.h>
 
@@ -53,6 +53,8 @@ static bool isExtensionSupported(const char *extList, const char *extension) {
 }
 
 bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY) {
+	resX = resolutionX;
+	resY = resolutionY;
 	
 	display = XOpenDisplay(NULL);
 	if (display == NULL) {
@@ -146,10 +148,10 @@ bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY)
 	windowAttribs.colormap = XCreateColormap(display, RootWindow(display, screenID), visual->visual, AllocNone);
 	windowAttribs.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask | KeymapStateMask | PointerMotionMask | ButtonPressMask | ButtonReleaseMask | FocusChangeMask;
 
-	window = XCreateWindow(display, RootWindow(display, screenID), 0, 0, 1024, 768, 0, visual->depth, InputOutput, visual->visual, CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, &windowAttribs);
+	window = XCreateWindow(display, RootWindow(display, screenID), 0, 0, resolutionX, resolutionY, 0, visual->depth, InputOutput, visual->visual, CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, &windowAttribs);
 
 	// Name the window
-	XStoreName(display, window, "Named Window");
+	XStoreName(display, window, title);
 
 	// Create GLX OpenGL context
 	glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
@@ -253,7 +255,7 @@ void GameWindow::ResetCursor() {
 
 void GameWindow::SetCursor(int x, int y) {
 	XWarpPointer(display, None, window, 0, 0, 0, 0, x, y);
-	XFlush(display); 
+	XFlush(display);
 }
 
 void GameWindow::GetCursor(int &x, int &y) {
