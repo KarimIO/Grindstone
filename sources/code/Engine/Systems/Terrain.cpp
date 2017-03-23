@@ -157,7 +157,7 @@ void STerrain::GenerateComponents() {
 			terrain->vao->Bind();
 
 			VertexBufferObject *vbo = pfnCreateVBO();
-			vbo->Initialize(2);
+			vbo->Initialize(3);
 			vbo->AddVBO(&vertices[0], vertices.size() * sizeof(vertices[0]), 2, SIZE_FLOAT, DRAW_STATIC);
 			vbo->Bind(0, 0, false, 0, 0);
 			vbo->AddVBO(&texCoords[0], texCoords.size() * sizeof(texCoords[0]), 2, SIZE_FLOAT, DRAW_STATIC);
@@ -218,7 +218,7 @@ void STerrain::GenerateComponents() {
 			terrain->vao->Bind();
 
 			VertexBufferObject *vbo = pfnCreateVBO();
-			vbo->Initialize(2);
+			vbo->Initialize(3);
 			vbo->AddVBO(&vertices[0], vertices.size() * sizeof(vertices[0]), 2, SIZE_FLOAT, DRAW_STATIC);
 			vbo->Bind(0, 0, false, 0, 0);
 			vbo->AddVBO(&texCoords[0], texCoords.size() * sizeof(texCoords[0]), 2, SIZE_FLOAT, DRAW_STATIC);

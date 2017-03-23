@@ -243,7 +243,22 @@ void GameWindow::SwapBuffer() {
 }
 
 void GameWindow::SetCursorShown(bool) {
-	XDefineCursor(display, window, None);
+	// Create blank cursor
+	static char data[1] = {0};
+	Cursor cursor;
+	Pixmap blank;
+	XColor dummy;
+
+	blank = XCreateBitmapFromData(display, window, data, 1, 1);
+	if (blank == None) {
+		std::cout << "Can't create blank cursor.\n";
+		return;
+	}
+	cursor = XCreatePixmapCursor(display, blank, blank,
+	&dummy, &dummy, 0, 0);
+	XFreePixmap(display, blank);
+
+	XDefineCursor(display, window, cursor);
 }
 
 void GameWindow::ResetCursor() {
