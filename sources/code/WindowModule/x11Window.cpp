@@ -181,9 +181,6 @@ bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY)
 		XCloseDisplay(display);
 		return false;
 	}
-	else {
-		printf("GLX %i.%i supported.\n", majorGLX, minorGLX);
-	}
 
 	if (context == NULL) {
 		std::cout << "Null Context!" << "\n";
@@ -262,7 +259,8 @@ void GameWindow::GetCursor(int &x, int &y) {
 	Window root, child;
 	int rootX, rootY;
 	unsigned int mask;
-	XQueryPointer(display,window,&root,&child,&x,&y,&x,&y,&mask); 
+	if (!XQueryPointer(display,window,&root,&child,&x,&y,&x,&y,&mask))
+		std::cout << "Could not get cursor position\n";
 }
 
 int TranslateKey(int key) {

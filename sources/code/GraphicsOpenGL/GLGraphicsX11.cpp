@@ -45,7 +45,6 @@ static bool isExtensionSupported(const char *extList, const char *extension) {
 }
 
 bool GraphicsWrapper::InitializeWindowContext() {
-	std::cout << "X11 Return True\n";
     return true;
 #if 0
 	// Check GLX version

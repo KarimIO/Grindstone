@@ -49,7 +49,7 @@ void main() {
 	float bias = 0.005;
 	float visibility = 1.0; 
 	if (depthmapPos.x >= 0 && depthmapPos.x <= 1 && depthmapPos.y >= 0 && depthmapPos.y <= 1) { 
-		if ( texture( lightShadow, depthmapPos.xy ).z  <  (depthmapPos.z - bias)) { 
+		if ( texture( lightShadow, depthmapPos.xy ).r  <  (depthmapPos.z - bias)) { 
 			visibility = 0.0f;
 		}
 	}
