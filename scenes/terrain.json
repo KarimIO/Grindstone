@@ -24,7 +24,7 @@
         {
             "components": [{
                 "componentType": "COMPONENT_TRANSFORM",
-                "position": [0.0,3.0,0.0],
+                "position": [0.0,3.0,0.0]
             }, {
                 "componentType": "COMPONENT_LIGHT_POINT",
                 "castshadow": false,

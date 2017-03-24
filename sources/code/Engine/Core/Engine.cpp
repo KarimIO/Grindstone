@@ -461,6 +461,7 @@ void Engine::Run() {
 			EBase *entity = &engine.entities[entityID];
 			unsigned int transID = entity->components[COMPONENT_TRANSFORM];
 			CTransform *trans = &engine.transformSystem.components[transID];
+			
 			glm::mat4 projection = cam->GetProjection(); // glm::perspective(settings.fov, aspectRatio, 0.1f, 100.0f);
 			glm::mat4 view = cam->GetView(); /*glm::lookAt(
 				trans->GetPosition(),

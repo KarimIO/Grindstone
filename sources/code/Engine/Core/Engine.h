@@ -37,6 +37,7 @@
 
 #include "../Systems/CTransform.h"
 #include "../Systems/CCamera.h"
+#include "../Systems/CController.h"
 
 enum RenderPathType {
 	RENDERPATH_FORWARD = 0,
@@ -91,6 +92,7 @@ public:
 	STerrain terrainSystem;
 	STransform transformSystem;
 	SCamera cameraSystem;
+	SController controllerSystem;
 	struct Settings {
 		int resolutionX;
 		int resolutionY;

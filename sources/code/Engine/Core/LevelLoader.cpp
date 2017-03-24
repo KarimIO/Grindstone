@@ -148,6 +148,11 @@ public:
 				engine.transformSystem.AddComponent(entityID, ent->components[COMPONENT_TRANSFORM]);
 				componentID = ent->components[COMPONENT_TRANSFORM];
 			}
+			else if (std::string(str) == "COMPONENT_CONTROLLER") {
+				componentType = COMPONENT_CONTROLLER;
+				engine.controllerSystem.AddComponent(entityID, ent->components[COMPONENT_CONTROLLER]);
+				componentID = ent->components[COMPONENT_CONTROLLER];
+			}
 			else if (std::string(str) == "COMPONENT_CAMERA") {
 				componentType = COMPONENT_CAMERA;
 				engine.cameraSystem.AddComponent(entityID, ent->components[COMPONENT_CAMERA]);
