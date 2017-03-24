@@ -2,17 +2,19 @@
 #define _C_CAMERA_H
 
 #include "CBase.h"
+#include <vector>
+#include "CTransform.h"
 
 #include <glm/glm.hpp>
 
 #define PROJECTION_ORTHOGRAPHIC false;
 #define PROJECTION_PERSPECTIVE  true;
 
-class CCamera {
+class CCamera : public CBase {
 private:
 	float fov;
 	float x, y, width, height;
-	float near, far, aspectRatio;
+	float camNear, camFar, aspectRatio;
 	bool projection;
 public:
 	void SetSize(float x, float y, float width, float height);
@@ -28,6 +30,15 @@ public:
 
 	void SetFocalLength(float focalLength);
 	void SetFOV(float fov);
+
+	glm::mat4 GetProjection();
+	glm::mat4 GetView();
+};
+
+class SCamera {
+public:
+	std::vector<CCamera> components;
+	void AddComponent(unsigned int entID, unsigned int &target);
 };
 
 #endif

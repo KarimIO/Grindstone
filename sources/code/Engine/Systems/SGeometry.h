@@ -69,7 +69,7 @@ public:
 	std::vector<unsigned int> unloadedModelIDs;
 	void LoadModel3DFile(const char *szPath, CModel *model);
 public:
-	void AddComponent(unsigned int &target);
+	void AddComponent(unsigned int entID, unsigned int &target);
 
 	void LoadModel3D(const char *szPath, size_t entityID);
 	void PreloadModel3D(const char * szPath, size_t renderID);

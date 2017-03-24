@@ -109,7 +109,7 @@ void STerrain::Initialize() {
 
 void STerrain::AddComponent(unsigned int &componentID) {
 	components.push_back(CTerrain());
-	componentID = components.size() - 1;
+	componentID = (unsigned int)components.size() - 1;
 }
 
 void STerrain::GenerateComponents() {
@@ -123,7 +123,6 @@ void STerrain::GenerateComponents() {
 			int numVerts = terrain->numPatches + 1;
 			int numVertsArea = numVerts * numVerts;
 
-			int texWidth, texHeight;
 			terrain->texture = engine.textureManager.LoadTexture(terrain->heightmapPath, COLOR_RGBA);
 			vertices.reserve(numVertsArea);
 			texCoords.reserve(numVertsArea);

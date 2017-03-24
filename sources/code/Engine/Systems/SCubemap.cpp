@@ -21,7 +21,7 @@ void CubemapSystem::CaptureCubemaps(double) {
 		for (size_t j = 0; j < 6; j++) {
 			View = glm::lookAt(components[i].position, components[i].position + gCubeDirections[j].Target, gCubeDirections[j].Up);
 
-			engine.Render(Proj, View, false);
+			engine.Render(Proj, View, components[i].position, false);
 			engine.graphicsWrapper->SwapBuffer();
 			data[j] = engine.graphicsWrapper->ReadScreen(512, 512);
 		}

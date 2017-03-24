@@ -29,9 +29,9 @@ void SModel::PreloadModel3D(const char * szPath, size_t renderID) {
 	renderID = 0;
 	models.push_back(CModel());
 	CModel *model = &models.back();
-	model->references.push_back(renderID);
+	model->references.push_back((unsigned int)renderID);
 	model->name = szPath;
-	unloadedModelIDs.push_back(models.size() - 1);
+	unloadedModelIDs.push_back((unsigned int)(models.size() - 1));
 }
 
 void SModel::LoadPreloaded() {
@@ -45,7 +45,7 @@ void SModel::LoadModel3D(const char * szPath, size_t renderID) {
 	for (size_t i = 0; i < models.size(); i++) {
 		if (models[i].getName() == szPath) {
 			renderID = models[i].references.size();
-			models[i].references.push_back(renderID);
+			models[i].references.push_back((unsigned int)renderID);
 			return;
 		}
 	}
@@ -53,7 +53,7 @@ void SModel::LoadModel3D(const char * szPath, size_t renderID) {
 	renderID = 0;
 	models.push_back(CModel());
 	CModel *model = &models.back();
-	model->references.push_back(renderID);
+	model->references.push_back((unsigned int)renderID);
 	model->name = szPath;
 	LoadModel3DFile(szPath, model);
 }
@@ -228,9 +228,10 @@ void SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 	importer.FreeScene();
 }
 
-void SModel::AddComponent(unsigned int &target) {
+void SModel::AddComponent(unsigned int entID, unsigned int &target) {
 	renderComponents.push_back(CRender());
-	target = renderComponents.size()-1;
+	renderComponents[renderComponents.size() - 1].entityID = entID;
+	target = (unsigned int)(renderComponents.size()-1);
 }
 
 void SModel::Draw(glm::mat4 projection, glm::mat4 view) {
@@ -265,7 +266,8 @@ void SModel::DrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *model) {
 			}
 
 			size_t entID = renderComponent->entityID;
-			glm::mat4 modelMatrix = engine.entities[entID].GetModelMatrix();
+			CTransform *transform = &engine.transformSystem.components[engine.entities[entID].components[COMPONENT_TRANSFORM]];
+			glm::mat4 modelMatrix = transform->GetModelMatrix();
 			ubo.pvmMatrix = projection * view * modelMatrix;
 			ubo.modelMatrix = modelMatrix;
 			ShaderProgram *shader = material->shader;

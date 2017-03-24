@@ -18,7 +18,6 @@
 #include "Shader.h"
 #include "../Systems/SGeometry.h"
 #include "Input.h"
-#include "../Entities/EBasePlayer.h"
 
 #include "../Systems/SCubemap.h"
 #include "../Systems/SLight.h"
@@ -32,28 +31,12 @@
 
 #include <Shader.h>
 
-#include "../Entities/EBase.h"
+#include "../Core/EBase.h"
 
 #include "../Systems/Physics.h"
 
-struct classRegister {
-	std::string entityName;
-	std::function<void *()> function;
-	classRegister(std::string str, std::function<void *()> fn) : entityName(str), function(fn) {}
-};
-
-
-#define LINK_ENTITY_TO_CLASS(NAME, CLASS) \
-class __Register_##CLASS { \
-public: \
-	static void *CreateNew() { \
-		return new CLASS(); \
-	} \
-	__Register_##CLASS() { \
-		engine.classRegistry.push_back(new classRegister(NAME, &__Register_##CLASS::CreateNew)); \
-	} \
-}; \
-__Register_##CLASS __register_##CLASS;
+#include "../Systems/CTransform.h"
+#include "../Systems/CCamera.h"
 
 enum RenderPathType {
 	RENDERPATH_FORWARD = 0,
@@ -106,11 +89,8 @@ public:
 	int debugMode;
 	TextureManager textureManager;
 	STerrain terrainSystem;
-	// Class Registry
-	std::vector<classRegister *> classRegistry;
-	EBase *createEntity(const char *szEntityName);
-	void registerClass(const char *szEntityName, std::function<void *()> fn);
-	EBasePlayer *player;
+	STransform transformSystem;
+	SCamera cameraSystem;
 	struct Settings {
 		int resolutionX;
 		int resolutionY;
@@ -155,7 +135,7 @@ public:
 	double GetTimeCurrent();
 	double GetUpdateTimeDelta();
 	double GetRenderTimeDelta();
-	void Render(glm::mat4 projection, glm::mat4 views, bool usePost);
+	void Render(glm::mat4, glm::mat4, glm::vec3, bool);
 	void PlayEngineSound(double sound);
 	void PlayEngineSound2(double sound);
 

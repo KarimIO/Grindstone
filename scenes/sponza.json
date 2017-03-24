@@ -1,16 +1,28 @@
 {
     "name": "Sponza Test",
-    "numentities": 6,
+    "numentities": 7,
     "entities": [
         {
-            "scale": [0.01, 0.01, 0.01],
             "components": [{
+                "componentType": "COMPONENT_TRANSFORM",
+                "position": [0.0, 2.0, 0.0]
+            }, {
+                "componentType": "COMPONENT_CAMERA"
+            }]
+        },
+        {
+            "components": [{
+                "componentType": "COMPONENT_TRANSFORM",
+                "scale": [0.01, 0.01, 0.01]
+            }, {
                 "componentType": "COMPONENT_RENDER",
                 "path": "crytek-sponza/sponza.obj"
             }]
         },
         {
             "components": [{
+                "componentType": "COMPONENT_TRANSFORM"
+            }, {
                 "componentType": "COMPONENT_LIGHT_DIRECTIONAL",
                 "castshadow": true,
                 "color": [1.0,1.0,1.0],
@@ -19,8 +31,10 @@
             }]
         },
         {
-            "position": [-10.0,1.5,-4.5],
             "components": [{
+                "componentType": "COMPONENT_TRANSFORM",
+                "position": [-10.0,1.5,-4.5]
+            }, {
                 "componentType": "COMPONENT_LIGHT_POINT",
                 "castshadow": false,
                 "color": [0.2,1.0,0.3],
@@ -29,8 +43,10 @@
             }]
         },
         {
-            "position": [-10.0,1.5,4.5],
             "components": [{
+                "componentType": "COMPONENT_TRANSFORM",
+                "position": [-10.0,1.5,4.5]
+            }, {
                 "componentType": "COMPONENT_LIGHT_POINT",
                 "castshadow": false,
                 "color": [0.2,0.1,1.0],
@@ -39,8 +55,10 @@
             }]
         },
         {
-            "position": [0.0,1.5,0.0],
             "components": [{
+                "componentType": "COMPONENT_TRANSFORM",
+                "position": [0.0,1.5,0.0]
+            }, {
                 "componentType": "COMPONENT_LIGHT_POINT",
                 "castshadow": false,
                 "color": [1.0,0.9,0.8],
@@ -49,8 +67,10 @@
             }]
         },
         {
-            "position": [10.0,1.5,-4.5],
             "components": [{
+                "componentType": "COMPONENT_TRANSFORM",
+                "position": [10.0,1.5,-4.5]
+            }, {
                 "componentType": "COMPONENT_LIGHT_POINT",
                 "castshadow": false,
                 "color": [1.0,1.0,1.0],
@@ -59,9 +79,11 @@
             }]
         },
         {
-            "position": [9.0,1.5,3.5],
-            "angles": [0.0, 225.0, 0.0],
             "components": [{
+                "componentType": "COMPONENT_TRANSFORM",
+                "position": [9.0,1.5,3.5],
+                "angles": [0.0, 225.0, 0.0]
+            }, {
                 "componentType": "COMPONENT_LIGHT_SPOT",
                 "castshadow": true,
                 "color": [1.0,0.9,0.8],

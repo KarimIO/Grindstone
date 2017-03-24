@@ -160,12 +160,13 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 	for (size_t i = 0; i < engine.lightSystem.pointLights.size(); i++) {
 		unsigned int entityID = engine.lightSystem.pointLights[i].entityID;
 		EBase *entity = &engine.entities[entityID];
+		CTransform *transform = &engine.transformSystem.components[entity->components[COMPONENT_TRANSFORM]];
 		CPointLight *light = &engine.lightSystem.pointLights[i];
-		pointLightUBO.gWVP = pv * entity->GetModelMatrix();
+		pointLightUBO.gWVP = pv * transform->GetModelMatrix();
 		pointLightUBO.lightAttenuationRadius = light->lightRadius;
 		pointLightUBO.lightColor = light->lightColor;
 		pointLightUBO.lightIntensity = light->intensity;
-		pointLightUBO.lightPosition = entity->GetPosition();
+		pointLightUBO.lightPosition = transform->GetPosition();
 		pointLightUBO.lightShadow = 4;
 
 		// Temporary disable pointlight shadows until we get them working
@@ -200,14 +201,15 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		unsigned int entityID = engine.lightSystem.spotLights[i].entityID;
 		CSpotLight *light = &engine.lightSystem.spotLights[i];
 		EBase *entity = &engine.entities[entityID];
-		spotLightUBO.gWVP = pv * entity->GetModelMatrix();
+		CTransform *transform = &engine.transformSystem.components[entity->components[COMPONENT_TRANSFORM]];
+		spotLightUBO.gWVP = pv * transform->GetModelMatrix();
 		spotLightUBO.lightAttenuationRadius = light->lightRadius;
 		spotLightUBO.lightInnerAngle = light->innerSpotAngle;
 		spotLightUBO.lightOuterAngle = light->outerSpotAngle;
 		spotLightUBO.lightColor = light->lightColor;
 		spotLightUBO.lightIntensity = light->intensity;
-		spotLightUBO.lightPosition = entity->GetPosition();
-		spotLightUBO.lightDirection = entity->GetForward();
+		spotLightUBO.lightPosition = transform->GetPosition();
+		spotLightUBO.lightDirection = transform->GetForward();
 		spotLightUBO.lightShadow = 4;
 		spotLightUBO.shadowMatrix = light->projection;
 
@@ -245,11 +247,12 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		unsigned int entityID = engine.lightSystem.directionalLights[i].entityID;
 		CDirectionalLight *light = &engine.lightSystem.directionalLights[i];
 		EBase *entity = &engine.entities[entityID];
+		CTransform *transform = &engine.transformSystem.components[entity->components[COMPONENT_TRANSFORM]];
 		dirLightUBO.lightColor = light->lightColor;
 		dirLightUBO.lightIntensity = light->intensity;
 		dirLightUBO.lightShadow = 4;
 		dirLightUBO.shadowMatrix = light->projection;
-		dirLightUBO.lightDirection = entity->GetForward();
+		dirLightUBO.lightDirection = transform->GetForward();
 
 		if (light->castShadow) {
 			light->fbo->ReadBind();

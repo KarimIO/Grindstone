@@ -420,8 +420,8 @@ Engine &Engine::GetInstance() {
 }
 #endif
 
-void Engine::Render(glm::mat4 projection, glm::mat4 view, bool usePost) {
-	renderPath->Draw(projection, view, player->GetPosition(), settings.enableReflections && usePost);
+void Engine::Render(glm::mat4 _projMat, glm::mat4 _viewMat, glm::vec3 eyePos, bool usePost) {
+	renderPath->Draw(_projMat, _viewMat, eyePos, settings.enableReflections && usePost);
 #ifdef _WIN32
 	graphicsWrapper->SwapBuffer();
 #else
@@ -454,17 +454,25 @@ void Engine::Run() {
 		window->HandleEvents();
 		inputSystem.LoopControls();
 
-		glm::mat4 projection = glm::perspective(settings.fov, aspectRatio, 0.1f, 100.0f);
-		glm::mat4 view = glm::lookAt(
-			player->GetPosition(),
-			player->GetPosition() + player->GetForward(),
-			player->GetUp()
-		);
+		if (cameraSystem.components.size() > 0) {
+			CCamera *cam = &cameraSystem.components[0];
+			cam->SetAspectRatio(aspectRatio);
+			unsigned int entityID = cam->entityID;
+			EBase *entity = &engine.entities[entityID];
+			unsigned int transID = entity->components[COMPONENT_TRANSFORM];
+			CTransform *trans = &engine.transformSystem.components[transID];
+			glm::mat4 projection = cam->GetProjection(); // glm::perspective(settings.fov, aspectRatio, 0.1f, 100.0f);
+			glm::mat4 view = cam->GetView(); /*glm::lookAt(
+				trans->GetPosition(),
+				trans->GetPosition() + trans->GetForward(),
+				trans->GetUp()
+			);*/
 
-		if (settings.enableShadows)
-			lightSystem.DrawShadows();
-		graphicsWrapper->SetResolution(0, 0, settings.resolutionX, settings.resolutionY);
-		Render(projection, view, true);
+			if (settings.enableShadows)
+				lightSystem.DrawShadows();
+			graphicsWrapper->SetResolution(0, 0, settings.resolutionX, settings.resolutionY);
+			Render(projection, view, trans->GetPosition(), true);
+		}
 	}
 }
 
@@ -487,19 +495,6 @@ void Engine::SwitchDebug(double) {
 		debugMode = DEBUG_NONE;
 }
 
-EBase *Engine::createEntity(const char * szEntityName) {
-	for (size_t i = 0; i < classRegistry.size(); i++) {
-		if (szEntityName == classRegistry[i]->entityName)
-			if (classRegistry[i]->function)
-				return (EBase *)classRegistry[i]->function();
-	}
-	return nullptr;
-}
-
-void Engine::registerClass(const char * szEntityName, std::function<void*()> fn) {
-	classRegistry.push_back(new classRegister(szEntityName, fn));
-}
-
 // Initialize and Load a game scene
 bool Engine::InitializeScene(std::string szScenePath) {
 	std::string szSceneNewPath = GetAvailablePath(szScenePath);
@@ -512,10 +507,6 @@ bool Engine::InitializeScene(std::string szScenePath) {
 	LoadLevel(szSceneNewPath);
 	geometryCache.LoadPreloaded();
 	terrainSystem.GenerateComponents();
-
-	player = new EBasePlayer();
-	player->position.y = 2;
-	player->Spawn();
 
 	return true;
 }

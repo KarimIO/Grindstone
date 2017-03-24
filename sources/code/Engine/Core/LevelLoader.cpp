@@ -23,9 +23,9 @@ enum {
 	KEY_MAP_NUMCUBE,
 	KEY_MAP_CUBEMAPS,
 	KEY_ENTITY_NAME,
-	KEY_ENTITY_POSITION,
-	KEY_ENTITY_SCALE,
-	KEY_ENTITY_ANGLES,
+	KEY_COMPONENT_POSITION,
+	KEY_COMPONENT_SCALE,
+	KEY_COMPONENT_ANGLES,
 	KEY_COMPONENT_TYPE,
 	KEY_COMPONENT_PATH,
 	KEY_COMPONENT_COLOR,
@@ -85,21 +85,23 @@ public:
 	bool Int64(int64_t i) { Int((int)i); return true; }
 	bool Uint64(uint64_t u) { Int((int)u); return true; }
 	bool Double(double d) {
-		if (keyType == KEY_ENTITY_POSITION) {
-			ent->position[subIterator++] = (float)d;
-		}
-		else if (keyType == KEY_ENTITY_ANGLES) {
-			ent->angles[subIterator++] = (float)d*3.14159f/180.0f;
-		}
-		else if (keyType == KEY_ENTITY_SCALE) {
-			ent->scale[subIterator++] = (float)d;
-		}
-		else if (keyType == KEY_MAP_CUBEMAPS) {
+		if (keyType == KEY_MAP_CUBEMAPS) {
 			position[subIterator++] = (float)d;
 		}
 		else {
 			if (level == LEVEL_COMPONENT) {
-				if (componentType == COMPONENT_LIGHT_SPOT) {
+				if (componentType == COMPONENT_TRANSFORM) {
+					if (keyType == KEY_COMPONENT_POSITION) {
+						engine.transformSystem.components[componentID].position[subIterator++] = (float)d;
+					}
+					else if (keyType == KEY_COMPONENT_ANGLES) {
+						engine.transformSystem.components[componentID].angles[subIterator++] = (float)d*3.14159f / 180.0f;
+					}
+					else if (keyType == KEY_COMPONENT_SCALE) {
+						engine.transformSystem.components[componentID].scale[subIterator++] = (float)d;
+					}
+				}
+				else if (componentType == COMPONENT_LIGHT_SPOT) {
 					if (keyType == KEY_COMPONENT_COLOR)
 						engine.lightSystem.spotLights[componentID].lightColor[subIterator++] = (float)d;
 					else if (keyType == KEY_COMPONENT_BRIGHTNESS)
@@ -141,12 +143,19 @@ public:
 	}
 	bool String(const char* str, rapidjson::SizeType length, bool copy) {
 		if (keyType == KEY_COMPONENT_TYPE) {
-			if (std::string(str) == "COMPONENT_POSITION") {
-				componentType = COMPONENT_POSITION;
+			if (std::string(str) == "COMPONENT_TRANSFORM") {
+				componentType = COMPONENT_TRANSFORM;
+				engine.transformSystem.AddComponent(entityID, ent->components[COMPONENT_TRANSFORM]);
+				componentID = ent->components[COMPONENT_TRANSFORM];
+			}
+			else if (std::string(str) == "COMPONENT_CAMERA") {
+				componentType = COMPONENT_CAMERA;
+				engine.cameraSystem.AddComponent(entityID, ent->components[COMPONENT_CAMERA]);
+				componentID = ent->components[COMPONENT_CAMERA];
 			}
 			else if (std::string(str) == "COMPONENT_RENDER") {
 				componentType = COMPONENT_RENDER;
-				engine.geometryCache.AddComponent(ent->components[COMPONENT_RENDER]);
+				engine.geometryCache.AddComponent(entityID, ent->components[COMPONENT_RENDER]);
 				componentID = ent->components[COMPONENT_RENDER];
 			}
 			else if (std::string(str) == "COMPONENT_LIGHT_POINT") {
@@ -229,19 +238,19 @@ public:
 			if (std::string(str) == "name") {
 				keyType = KEY_ENTITY_NAME;
 			}
-			else if (std::string(str) == "position") {
-				keyType = KEY_ENTITY_POSITION;
-			}
-			else if (std::string(str) == "angles") {
-				keyType = KEY_ENTITY_ANGLES;
-			}
-			else if (std::string(str) == "scale") {
-				keyType = KEY_ENTITY_SCALE;
-			}
 		}
 		else if (level == LEVEL_COMPONENT) {
 			if (std::string(str) == "componentType") {
 				keyType = KEY_COMPONENT_TYPE;
+			}
+			else if (std::string(str) == "position") {
+				keyType = KEY_COMPONENT_POSITION;
+			}
+			else if (std::string(str) == "angles") {
+				keyType = KEY_COMPONENT_ANGLES;
+			}
+			else if (std::string(str) == "scale") {
+				keyType = KEY_COMPONENT_SCALE;
 			}
 			else if (std::string(str) == "path") {
 				keyType = KEY_COMPONENT_PATH;
