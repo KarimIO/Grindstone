@@ -8,6 +8,8 @@
                 "position": [0.0, 2.0, 0.0]
             }, {
                 "componentType": "COMPONENT_CAMERA"
+            }, {
+                "componentType": "COMPONENT_CONTROLLER"
             }]
         },
         {
