@@ -4,7 +4,7 @@
 
 class EBase {
 protected:
-	size_t id;
+	unsigned id;
 public:
 	EBase();
 	unsigned int components[NUM_COMPONENTS];

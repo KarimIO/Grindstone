@@ -214,7 +214,7 @@ public:
 		if (level == LEVEL_ENTITY) {
 			entityID = (unsigned int)engine.entities.size();
 			engine.entities.push_back(EBase());
-			ent = &engine.entities.back();
+			ent = &engine.entities[entityID];
 		}
 		return true;
 	}
