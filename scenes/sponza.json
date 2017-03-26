@@ -15,8 +15,26 @@
         {
             "components": [{
                 "componentType": "COMPONENT_TRANSFORM",
+                "position": [0.0, 20.0, 0.0]
+            }, {
+                "componentType": "COMPONENT_PHYSICS",
+                "shapeSphere": 1.0,
+                "mass": 1.0,
+                "inertia": [0.0,0.0,0.0]
+            }, {
+                "componentType": "COMPONENT_RENDER",
+                "path": "sphere.obj"
+            }]
+        },
+        {
+            "components": [{
+                "componentType": "COMPONENT_TRANSFORM",
                 "scale": [0.01, 0.01, 0.01]
             }, {
+                "componentType": "COMPONENT_PHYSICS",
+                "shapePlane": [0.0, 1.0, 0.0, 0.0],
+                "mass": 0.0
+            },  {
                 "componentType": "COMPONENT_RENDER",
                 "path": "crytek-sponza/sponza.obj"
             }]

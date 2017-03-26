@@ -26,7 +26,6 @@ void SModel::PreloadModel3D(const char * szPath, size_t renderID) {
 		}
 	}
 
-	renderID = 0;
 	models.push_back(CModel());
 	CModel *model = &models.back();
 	model->references.push_back((unsigned int)renderID);
@@ -266,7 +265,8 @@ void SModel::DrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *model) {
 			}
 
 			size_t entID = renderComponent->entityID;
-			CTransform *transform = &engine.transformSystem.components[engine.entities[entID].components[COMPONENT_TRANSFORM]];
+			unsigned int transID =  engine.entities[entID].components[COMPONENT_TRANSFORM];
+			CTransform *transform = &engine.transformSystem.components[transID];
 			glm::mat4 modelMatrix = transform->GetModelMatrix();
 			ubo.pvmMatrix = projection * view * modelMatrix;
 			ubo.modelMatrix = modelMatrix;

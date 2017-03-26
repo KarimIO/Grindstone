@@ -20,8 +20,6 @@ Framebuffer*		(*pfnCreateFramebuffer)();
 void				(*pfnDeleteGraphicsPointer)(void *ptr);
 
 bool Engine::Initialize() {
-	//physics.Initialize();
-	//return false;
 	srand((unsigned int)time(NULL));
 
 	// Get Settings here:
@@ -29,6 +27,7 @@ bool Engine::Initialize() {
 	if (!InitializeWindow())						return false;
 	//if (!InitializeAudio())							return false;
 	if (!InitializeGraphics(GRAPHICS_OPENGL))		return false;
+	physicsSystem.Initialize();
 
 	std::string vsPath = "../shaders/objects/main.glvs"; // GetShaderExt()
 	std::string fsPath = "../shaders/objects/mainMetalness.glfs";
@@ -100,6 +99,8 @@ bool Engine::Initialize() {
 
 	terrainSystem.Initialize();
 	if (!InitializeScene(defaultMap))	return false;
+
+	cameraSystem.components[0].SetAspectRatio((float)engine.settings.resolutionX/engine.settings.resolutionY);
 	
 	if (settings.enableReflections)
 		cubemapSystem.LoadCubemaps();
@@ -440,9 +441,6 @@ void Engine::PlayEngineSound2(double sound) {
 }
 
 void Engine::Run() {
-	//model = glm::rotate(model, 0.0f, glm::vec3(0));
-
-	float aspectRatio = ((float)settings.resolutionX) / ((float)settings.resolutionY);
 	window->ResetCursor();
 
 	//double lag = 0.0;
@@ -453,21 +451,18 @@ void Engine::Run() {
 		//lag += GetRenderTimeDelta();
 		window->HandleEvents();
 		inputSystem.LoopControls();
+		physicsSystem.StepSimulation(GetUpdateTimeDelta());
+		physicsSystem.SetTransforms();
 
 		if (cameraSystem.components.size() > 0) {
 			CCamera *cam = &cameraSystem.components[0];
-			cam->SetAspectRatio(aspectRatio);
 			unsigned int entityID = cam->entityID;
 			EBase *entity = &engine.entities[entityID];
 			unsigned int transID = entity->components[COMPONENT_TRANSFORM];
 			CTransform *trans = &engine.transformSystem.components[transID];
 			
-			glm::mat4 projection = cam->GetProjection(); // glm::perspective(settings.fov, aspectRatio, 0.1f, 100.0f);
-			glm::mat4 view = cam->GetView(); /*glm::lookAt(
-				trans->GetPosition(),
-				trans->GetPosition() + trans->GetForward(),
-				trans->GetUp()
-			);*/
+			glm::mat4 projection = cam->GetProjection();
+			glm::mat4 view = cam->GetView();
 
 			if (settings.enableShadows)
 				lightSystem.DrawShadows();
@@ -540,6 +535,7 @@ void Engine::ShutdownControl(double) {
 
 Engine::~Engine() {
 	geometryCache.Shutdown();
+	physicsSystem.Cleanup();
 
 	if (audioSystem)
 		audioSystem->Shutdown();

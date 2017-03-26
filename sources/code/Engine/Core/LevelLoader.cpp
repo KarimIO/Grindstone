@@ -38,7 +38,11 @@ enum {
 	KEY_COMPONENT_HEIGHT,
 	KEY_COMPONENT_LENGTH,
 	KEY_COMPONENT_PATCHES,
-	KEY_COMPONENT_HEIGHTMAP
+	KEY_COMPONENT_HEIGHTMAP,
+	KEY_COMPONENT_PHYSICS_SPHERE,
+	KEY_COMPONENT_PHYSICS_PLANE,
+	KEY_COMPONENT_PHYSICS_MASS,
+	KEY_COMPONENT_PHYSICS_INERTIA
 };
 
 #undef Bool
@@ -54,6 +58,7 @@ private:
 	unsigned int entityID;
 	unsigned char subIterator;
 	glm::vec3 position;
+	glm::vec4 v4;
 public:
 	bool Null() { return true; }
 	bool Bool(bool b) {
@@ -129,6 +134,20 @@ public:
 					else if (keyType == KEY_COMPONENT_RADIUS)
 						engine.lightSystem.directionalLights[componentID].sunRadius = (float)d;
 				}
+				else if (componentType == COMPONENT_PHYSICS) {
+					if (keyType == KEY_COMPONENT_PHYSICS_PLANE) {
+						v4[subIterator++] = (float)d;
+					}
+					else if (keyType == KEY_COMPONENT_PHYSICS_SPHERE) {
+						engine.physicsSystem.Get(componentID)->SetShapeSphere((float)d);
+					}
+					else if (keyType == KEY_COMPONENT_PHYSICS_INERTIA) {
+						position[subIterator++] = (float)d;
+					}
+					else if (keyType == KEY_COMPONENT_PHYSICS_MASS) {
+						engine.physicsSystem.Get(componentID)->SetMass((float)d);
+					}
+				}
 				else if (componentType == COMPONENT_TERRAIN) {
 					if (keyType == KEY_COMPONENT_WIDTH)
 						engine.terrainSystem.components[componentID].width = (float)d;
@@ -180,6 +199,8 @@ public:
 			}
 			else if (std::string(str) == "COMPONENT_PHYSICS") {
 				componentType = COMPONENT_PHYSICS;
+				engine.physicsSystem.AddComponent(entityID, ent->components[COMPONENT_PHYSICS]);
+				componentID = ent->components[COMPONENT_PHYSICS];
 			}
 			else if (std::string(str) == "COMPONENT_TERRAIN") {
 				componentType = COMPONENT_TERRAIN;
@@ -200,7 +221,7 @@ public:
 			}
 		}
 		else if (keyType == KEY_COMPONENT_PATH) {
-			engine.geometryCache.PreloadModel3D(("../models/" + std::string(str)).c_str(), ent->components[componentType]);
+			engine.geometryCache.PreloadModel3D(("../models/" + std::string(str)).c_str(), ent->components[COMPONENT_RENDER]);
 		}
 
 		else if (componentType == COMPONENT_TERRAIN)
@@ -296,10 +317,28 @@ public:
 			else if (std::string(str) == "heightmap") {
 				keyType = KEY_COMPONENT_HEIGHTMAP;
 			}
+			else if (std::string(str) == "shapePlane") {
+				keyType = KEY_COMPONENT_PHYSICS_PLANE;
+			}
+			else if (std::string(str) == "shapeSphere") {
+				keyType = KEY_COMPONENT_PHYSICS_SPHERE;
+			}
+			else if (std::string(str) == "mass") {
+				keyType = KEY_COMPONENT_PHYSICS_MASS;
+			}
+			else if (std::string(str) == "inertia") {
+				keyType = KEY_COMPONENT_PHYSICS_INERTIA;
+			}
 		}
 		return true;
 	}
-	bool EndObject(rapidjson::SizeType memberCount) { level--; return true; }
+	bool EndObject(rapidjson::SizeType memberCount) {
+		if (componentType == COMPONENT_PHYSICS && level == LEVEL_COMPONENT)
+			engine.physicsSystem.Get(componentID)->Create();
+
+		level--;
+		return true;
+	}
 	bool StartArray() {
 		if (keyType == KEY_MAP_CUBEMAPS)
 			level = LEVEL_CUBEMAP;
@@ -311,6 +350,12 @@ public:
 		if (keyType == KEY_MAP_CUBEMAPS && level == LEVEL_CUBEMAP) {
 			engine.cubemapSystem.AddCubemap(position);
 			level = LEVEL_MAP;
+		}
+		else if (keyType == KEY_COMPONENT_PHYSICS_PLANE && level == LEVEL_COMPONENT) {
+			engine.physicsSystem.Get(componentID)->SetShapePlane(v4.x, v4.y, v4.z, v4.w);
+		}
+		else if (keyType == KEY_COMPONENT_PHYSICS_INERTIA && level == LEVEL_COMPONENT) {
+			engine.physicsSystem.Get(componentID)->SetIntertia(position.x, position.y, position.z);
 		}
 
 		return true;

@@ -75,7 +75,6 @@ private:
 	RenderPathType renderPathType;
 	RenderPath *renderPath;
 
-	PhysicsSystem physics;
 	std::vector<System *> systems;
 
 	AudioSystem *audioSystem;
@@ -93,6 +92,7 @@ public:
 	STransform transformSystem;
 	SCamera cameraSystem;
 	SController controllerSystem;
+	SPhysics physicsSystem;
 	struct Settings {
 		int resolutionX;
 		int resolutionY;

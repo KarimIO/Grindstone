@@ -24,9 +24,9 @@ set(ASSIMP_LIB "D:/Libraries/Assimp/lib64" CACHE PATH "Location of Assimp Librar
 link_directories(${ASSIMP_LIB})
 
 #BULLET
-#set(BULLET_DIR "D:/Libraries/Bullet" CACHE PATH "Location of Bullet Library")
-#include_directories(${BULLET_DIR}/src)
-#link_directories(${BULLET_DIR}/bin)
+set(BULLET_DIR "D:/Libraries/Bullet" CACHE PATH "Location of Bullet Library")
+include_directories(${BULLET_DIR}/src)
+link_directories(${BULLET_DIR}/bin)
 
 #rapidJSON
 set(RAPIDJSON_DIR "D:/Libraries/rapidjson-master/include/" CACHE PATH "Location of rapidJSON Includes folder")
@@ -55,7 +55,7 @@ include_directories(${OUTPUT_DIR}/../sources/code/GraphicsOpenGL/)
 target_compile_definitions(engine PRIVATE _CRT_SECURE_NO_WARNINGS)
 
 target_link_libraries(engine assimp)
-if(false) #WIN32)
+if(WIN32)
     target_link_libraries(engine debug BulletCollision_x64_debug)
     target_link_libraries(engine debug BulletDynamics_x64_debug)
     target_link_libraries(engine debug LinearMath_x64_debug)
@@ -64,7 +64,7 @@ if(false) #WIN32)
     target_link_libraries(engine optimized BulletDynamics_x64_release)
     target_link_libraries(engine optimized LinearMath_x64_release)
 else()
-    #target_link_libraries(engine libBulletCollision)
-    #target_link_libraries(engine libBulletDynamics)
-    #target_link_libraries(engine libLinearMath)
+    target_link_libraries(engine libBulletCollision)
+    target_link_libraries(engine libBulletDynamics)
+    target_link_libraries(engine libLinearMath)
 endif()
