@@ -42,7 +42,10 @@ enum {
 	KEY_COMPONENT_PHYSICS_SPHERE,
 	KEY_COMPONENT_PHYSICS_PLANE,
 	KEY_COMPONENT_PHYSICS_MASS,
-	KEY_COMPONENT_PHYSICS_INERTIA
+	KEY_COMPONENT_PHYSICS_INERTIA,
+	KEY_COMPONENT_PHYSICS_FRICTION,
+	KEY_COMPONENT_PHYSICS_RESTITUTION,
+	KEY_COMPONENT_PHYSICS_DAMPING
 };
 
 #undef Bool
@@ -146,6 +149,20 @@ public:
 					}
 					else if (keyType == KEY_COMPONENT_PHYSICS_MASS) {
 						engine.physicsSystem.Get(componentID)->SetMass((float)d);
+					}
+					else if (keyType == KEY_COMPONENT_PHYSICS_FRICTION) {
+						engine.physicsSystem.Get(componentID)->SetFriction((float)d);
+					}
+					else if (keyType == KEY_COMPONENT_PHYSICS_RESTITUTION) {
+						engine.physicsSystem.Get(componentID)->SetRestitution((float)d);
+					}
+					else if (keyType == KEY_COMPONENT_PHYSICS_DAMPING) {
+						if (subIterator++ == 0) {
+							position.x == (float)d;
+						}
+						else {
+							engine.physicsSystem.Get(componentID)->SetDamping(position.x, (float)d);
+						}
 					}
 				}
 				else if (componentType == COMPONENT_TERRAIN) {
@@ -317,6 +334,9 @@ public:
 			else if (std::string(str) == "heightmap") {
 				keyType = KEY_COMPONENT_HEIGHTMAP;
 			}
+			else if (std::string(str) == "create") {
+				engine.physicsSystem.Get(componentID)->Create();
+			}
 			else if (std::string(str) == "shapePlane") {
 				keyType = KEY_COMPONENT_PHYSICS_PLANE;
 			}
@@ -329,13 +349,19 @@ public:
 			else if (std::string(str) == "inertia") {
 				keyType = KEY_COMPONENT_PHYSICS_INERTIA;
 			}
+			else if (std::string(str) == "friction") {
+				keyType = KEY_COMPONENT_PHYSICS_FRICTION;
+			}
+			else if (std::string(str) == "restitution") {
+				keyType = KEY_COMPONENT_PHYSICS_RESTITUTION;
+			}
+			else if (std::string(str) == "damping") {
+				keyType = KEY_COMPONENT_PHYSICS_DAMPING;
+			}				
 		}
 		return true;
 	}
 	bool EndObject(rapidjson::SizeType memberCount) {
-		if (componentType == COMPONENT_PHYSICS && level == LEVEL_COMPONENT)
-			engine.physicsSystem.Get(componentID)->Create();
-
 		level--;
 		return true;
 	}

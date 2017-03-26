@@ -15,6 +15,15 @@ public:
 	void SetShapePlane(float Nx, float Ny, float Nz, float c);
 	void SetShapeSphere(float radius);
 
+	void SetFriction(float f);
+	void SetRestitution(float r);
+	void SetDamping(float linear, float rotational);
+
+	void ApplyForce(glm::vec3 pos, glm::vec3 force);
+	void ApplyCentralForce(glm::vec3 force);
+	void ApplyImpulse(glm::vec3 pos, glm::vec3 force);
+	void ApplyCentralImpulse(glm::vec3 force);
+
 	void SetMass(float _mass);
 	void SetIntertia(float x, float y, float z);
 	void Create();

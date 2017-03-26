@@ -13,7 +13,7 @@ void SPhysics::Initialize() {
 
 	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
 
-	dynamicsWorld->setGravity(btVector3(0, -10, 0));
+	dynamicsWorld->setGravity(btVector3(0, -9.81, 0));
 }
 
 void CPhysics::SetShapePlane(float Nx, float Ny, float Nz, float c) {
@@ -34,6 +34,34 @@ void CPhysics::SetIntertia(float x, float y, float z) {
 	btVector3 fallInertia(x, y, z);
 	if (mass != 0.0f)
 		shape->calculateLocalInertia(mass, fallInertia);
+}
+
+void CPhysics::SetFriction(float f) {
+	rigidBody->setFriction(f);
+}
+
+void CPhysics::SetRestitution(float r) {
+	rigidBody->setRestitution(r);
+}
+
+void CPhysics::SetDamping(float linear, float rotational) {
+	rigidBody->setDamping(linear, rotational);
+}
+
+void CPhysics::ApplyForce(glm::vec3 pos, glm::vec3 force) {
+	rigidBody->applyForce(btVector3(pos.x(), pos.y(), pos.z()), btVector3(force.x(), force.y(), force.z()));
+}
+
+void CPhysics::ApplyCentralForce(glm::vec3 force) {
+	rigidBody->applyCentralForce(btVector3(force.x(), force.y(), force.z()));
+}
+
+void CPhysics::ApplyImpulse(glm::vec3 pos, glm::vec3 force) {
+	rigidBody->applyForce(btVector3(pos.x(), pos.y(), pos.z()), btVector3(force.x(), force.y(), force.z()));
+}
+
+void CPhysics::ApplyCentralImpulse(glm::vec3 force) {
+	rigidBody->applyCentralForce(btVector3(force.x(), force.y(), force.z()));
 }
 
 void CPhysics::Create() {
@@ -89,6 +117,26 @@ void SPhysics::SetTransforms() {
 		unsigned int transformID = engine.entities[entityID].components[COMPONENT_TRANSFORM];
 		CTransform *transComponent = &engine.transformSystem.components[transformID];
 		transComponent->position = glm::vec3(pos.getX(), pos.getY(), pos.getZ());
+		btQuaternion q = transform.getRotation();
+		std::cout << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << "\n";
+
+		double ysqr = q.y() * q.y();
+
+		// roll (x-axis rotation)
+		double t0 = +2.0 * (q.w() * q.x() + q.y() * q.z());
+		double t1 = +1.0 - 2.0 * (q.x() * q.x() + ysqr);
+		transComponent->angles.z = std::atan2(t0, t1);
+
+		// pitch (y-axis rotation)
+		double t2 = +2.0 * (q.w() * q.y() - q.z() * q.x());
+		t2 = t2 > 1.0 ? 1.0 : t2;
+		t2 = t2 < -1.0 ? -1.0 : t2;
+		transComponent->angles.x = std::asin(t2);
+
+		// yaw (z-axis rotation)
+		double t3 = +2.0 * (q.w() * q.z() + q.x() * q.y());
+		double t4 = +1.0 - 2.0 * (ysqr + q.z() * q.z());
+		transComponent->angles.y = std::atan2(t3, t4);
 	}
 }
 

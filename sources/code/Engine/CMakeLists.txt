@@ -12,7 +12,7 @@ set(ENGINE_CORE_SOURCES Core/Main.cpp Core/EBase.cpp Core/Engine.cpp Core/iniHan
 source_group("Core\\Source Files" FILES ${ENGINE_CORE_SOURCES})
 set(ENGINE_RENDERPATHS_SOURCES RenderPaths/RenderPathDeferred.cpp RenderPaths/RenderPathForward.cpp)
 source_group("Render Paths\\Source Files" FILES ${ENGINE_RENDERPATHS_SOURCES})
-set(ENGINE_SYSTEMS_SOURCES Systems/CController.cpp Systems/CTransform.cpp Systems/CAudio.cpp Systems/CBase.cpp Systems/CCamera.cpp Systems/CLight.cpp Systems/Physics.cpp Systems/SAudio.cpp Systems/SCubemap.cpp Systems/SGeometry.cpp Systems/SLight.cpp Systems/Terrain.cpp)
+set(ENGINE_SYSTEMS_SOURCES Systems/CController.cpp Systems/CTransform.cpp Systems/CAudio.cpp Systems/CCamera.cpp Systems/CLight.cpp Systems/Physics.cpp Systems/SAudio.cpp Systems/SCubemap.cpp Systems/SGeometry.cpp Systems/SLight.cpp Systems/Terrain.cpp)
 source_group("Systems\\Source Files" FILES ${ENGINE_SYSTEMS_SOURCES})
 set(ENGINE_SOURCES ${ENGINE_CORE_SOURCES} ${ENGINE_ENTITES_SOURCES} ${ENGINE_RENDERPATHS_SOURCES} ${ENGINE_SYSTEMS_SOURCES})
 
