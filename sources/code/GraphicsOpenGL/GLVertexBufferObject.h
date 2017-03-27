@@ -29,6 +29,7 @@ public:
 	// Bind VBO
 	virtual uint8_t Bind(uint8_t bindTo);
 	virtual void Bind(uint8_t bindTo, uint8_t id, bool normalize, uint32_t stride, uint32_t offset);
+	virtual void IBind(uint8_t bindTo, uint8_t id, uint32_t stride, uint32_t offset);
 
 	// Unbind
 	virtual void Unbind();

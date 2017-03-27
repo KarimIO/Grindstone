@@ -57,7 +57,7 @@ void SModel::LoadModel3D(const char * szPath, size_t renderID) {
 	LoadModel3DFile(szPath, model);
 }
 
-void InitMesh(const aiMesh *paiMesh,
+void SModel::InitMesh(const aiMesh *paiMesh,
 	std::vector<glm::vec3>& vertices,
 	std::vector<glm::vec3>& normals,
 	std::vector<glm::vec3>& tangents,
@@ -87,7 +87,6 @@ void InitMesh(const aiMesh *paiMesh,
 	}
 }
 
-
 void SwitchSlashes(std::string &path) {
 	size_t index = 0;
 	while (true) {
@@ -103,7 +102,7 @@ void SwitchSlashes(std::string &path) {
 	}
 }
 
-void SModel::InitMaterials(const aiScene* scene, std::string Dir, CModel *model)
+void SModel::InitMaterials(const aiScene* scene, std::string Dir, std::vector<Material *> &materials)
 {
 	std::string finalDir = Dir;
 	finalDir = finalDir.substr(0, finalDir.find_last_of('/'));
@@ -144,10 +143,9 @@ void SModel::InitMaterials(const aiScene* scene, std::string Dir, CModel *model)
 				newMat->tex[3] = engine.textureManager.LoadTexture(FullPath, COLOR_RGBA);
 			}
 		}
-		model->materials[i] = newMat;
+		materials[i] = newMat;
 	}
 }
-
 
 void SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 	// Create an instance of the Importer class
@@ -182,7 +180,7 @@ void SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 
 
 	//std::cout << "Mesh Materials: " << path << "\n";
-	InitMaterials(pScene, szPath, model);
+	InitMaterials(pScene, szPath, model->materials);
 
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec3> normals;
@@ -211,9 +209,9 @@ void SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 	vbo->AddVBO(&uvs[0],		uvs.size()		* sizeof(uvs[0]),		2, SIZE_FLOAT, DRAW_STATIC);
 	vbo->Bind(1, 1, false, 0, 0);
 	vbo->AddVBO(&normals[0],	normals.size()	* sizeof(normals[0]),	3, SIZE_FLOAT, DRAW_STATIC);
-	vbo->Bind(2, 2, false, 0, 0);
+	vbo->Bind(2, 2, true, 0, 0);
 	vbo->AddVBO(&tangents[0],	tangents.size()	* sizeof(tangents[0]),	3, SIZE_FLOAT, DRAW_STATIC);
-	vbo->Bind(3, 3, false, 0, 0);
+	vbo->Bind(3, 3, true, 0, 0);
 	vbo->AddIBO(&indices[0],	indices.size()	* sizeof(unsigned int), DRAW_STATIC); // 3 and SIZE_FLOAT are arbitrary
 
 	model->vao->Unbind();

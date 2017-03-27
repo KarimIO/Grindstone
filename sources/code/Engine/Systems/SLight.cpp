@@ -47,7 +47,7 @@ void SLight::DrawShadows() {
 
 	//unsigned int i = iteration;
 	//if (i < pointLights.size()) {
-	for (size_t i = 0; i < 0; i++) {
+	for (size_t i = 0; i < pointLights.size(); i++) {
 		CPointLight *light = &pointLights[i];
 		if (light->castShadow) {
 			unsigned int entityID = light->entityID;

@@ -26,10 +26,31 @@ void GLVertexBufferObject::Bind(uint8_t bindTo, uint8_t id, bool normalize, uint
 	glEnableVertexAttribArray(bindTo);
 	glBindBuffer(GL_ARRAY_BUFFER, vboHandle[id]);
 	glVertexAttribPointer(
-		bindTo,	
+		bindTo,
 		elementSize,
 		GL_BYTE + dataSizeType,           // type
 		normalize,           // normalized?
+		stride,                  // stride
+		pointer            // array buffer offset
+	);
+	while ((err = glGetError()) != GL_NO_ERROR) {
+		std::cerr << "OpenGL error Bind VBO End: " << err << std::endl;
+	}
+}
+
+void GLVertexBufferObject::IBind(uint8_t bindTo, uint8_t id, uint32_t stride, uint32_t offset)
+{
+	GLuint err;
+	while ((err = glGetError()) != GL_NO_ERROR) {
+		std::cerr << "OpenGL error Bind VBO Start: " << err << std::endl;
+	}
+	GLvoid const* pointer = static_cast<char const*>(0) + offset;
+	glEnableVertexAttribArray(bindTo);
+	glBindBuffer(GL_ARRAY_BUFFER, vboHandle[id]);
+	glVertexAttribIPointer(
+		bindTo,
+		elementSize,
+		GL_BYTE + dataSizeType,           // type
 		stride,                  // stride
 		pointer            // array buffer offset
 	);

@@ -28,6 +28,8 @@ enum {
 	TANGENT_VB_LOCATION,
 };
 
+void SwitchSlashes(std::string &path);
+
 struct Mesh {
 	unsigned int NumIndices = 0;
 	unsigned int BaseVertex = 0;
@@ -68,6 +70,12 @@ public:
 	std::vector<CRender> renderComponents;
 	std::vector<unsigned int> unloadedModelIDs;
 	void LoadModel3DFile(const char *szPath, CModel *model);
+	void InitMesh(const aiMesh *paiMesh,
+		std::vector<glm::vec3>& vertices,
+		std::vector<glm::vec3>& normals,
+		std::vector<glm::vec3>& tangents,
+		std::vector<glm::vec2>& uvs,
+		std::vector<unsigned int>& indices);
 public:
 	void AddComponent(unsigned int entID, unsigned int &target);
 
@@ -76,7 +84,7 @@ public:
 
 	void LoadPreloaded();
 
-	void InitMaterials(const aiScene* scene, std::string Dir, CModel *model);
+	void InitMaterials(const aiScene* scene, std::string Dir, std::vector<Material *> &model);
 
 	void Draw(glm::mat4 projection, glm::mat4 view);
 	void DrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *);

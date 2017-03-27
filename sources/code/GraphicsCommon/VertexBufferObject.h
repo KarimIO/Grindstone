@@ -45,6 +45,7 @@ public:
 	// Bind VBO - returns next location
 	virtual uint8_t Bind(uint8_t bindTo) = 0;
 	virtual void Bind(uint8_t bindTo, uint8_t id, bool normalize, uint32_t stride, uint32_t offset) = 0;
+	virtual void IBind(uint8_t bindTo, uint8_t id, uint32_t stride, uint32_t offset) = 0;
 
 	// Unbind
 	virtual void Unbind() = 0;

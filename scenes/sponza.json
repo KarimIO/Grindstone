@@ -79,7 +79,7 @@
                 "position": [-10.0,1.5,-4.5]
             }, {
                 "componentType": "COMPONENT_LIGHT_POINT",
-                "castshadow": false,
+                "castshadow": true,
                 "color": [0.2,1.0,0.3],
                 "brightness": 8.0,
                 "lightradius": 16.0

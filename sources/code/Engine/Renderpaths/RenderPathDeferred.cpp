@@ -118,13 +118,6 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		debugUBO.debugMode = engine.debugMode;
 		debugUBO.texRefl = 4;
 
-		/*CubemapComponent *comp = engine.cubemapSystem.GetClosestCubemap(eyePos);
-		if (comp != NULL) {
-			Texture *cube = engine.cubemapSystem.GetClosestCubemap(eyePos)->cubemap;
-			if (cube != NULL)
-				cube->BindCubemap(4);
-		}*/
-
 		if (engine.lightSystem.directionalLights.size() > 0) {
 			CDirectionalLight *light = &engine.lightSystem.directionalLights[0];
 			if (light->castShadow) {
@@ -169,7 +162,6 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		pointLightUBO.lightPosition = transform->GetPosition();
 		pointLightUBO.lightShadow = 4;
 
-		// Temporary disable pointlight shadows until we get them working
 		if (light->castShadow) {
 			light->fbo->ReadBind();
 			light->fbo->BindDepthCube(4);
@@ -306,33 +298,6 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		vaoQuad->Unbind();
 	}
 
-	/*CubemapComponent *comp = engine.cubemapSystem.GetClosestCubemap(eyePos);
-	if (comp != NULL) {
-		Texture *cube = engine.cubemapSystem.GetClosestCubemap(eyePos)->cubemap;
-		if (cube != NULL)
-			cube->BindCubemap(4);
-	}*/
-
-	/*float t = (float)engine.GetTimeCurrent() / 4.0f;
-	glm::vec3 pos = glm::vec3(0, sin(t), cos(t))*20.0f;
-	glm::mat4 proj = glm::ortho<float>(-64, 64, -64, 64, -8, 64);
-	glm::mat4 viewb = glm::lookAt(
-		pos,
-		glm::vec3(0, 0, 0),
-		glm::cross(pos, glm::vec3(1, 0, 0))
-	);
-
-	glm::mat4 biasMatrix(
-		0.5, 0.0, 0.0, 0.0,
-		0.0, 0.5, 0.0, 0.0,
-		0.0, 0.0, 0.5, 0.0,
-		0.5, 0.5, 0.5, 1.0
-	);
-
-	defUBO.directionalShadowMatrix = biasMatrix * proj * viewb * glm::mat4(1.0f);*/
-
-	//postFBO->WriteBind();	
-
 	fbo->Unbind(); // To bind Draw to 0
 	fbo->ReadBind();
 	fbo->TestBlit(0, 0, engine.settings.resolutionX, engine.settings.resolutionX, engine.settings.resolutionX, engine.settings.resolutionY, true);
@@ -386,16 +351,37 @@ void RenderPathDeferred::PostPass(glm::mat4 projection, glm::mat4 view, glm::vec
 }
 
 RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerrain *ts) {
+	graphicsWrapper = gw;
+	geometryCache = gc;
+	terrainSystem = ts;
+
+	BuildQuad();
+	BuildSphere();
+	SetupDeferredFBO();
+
+	std::string vsPath, vsContent;
+	CompileDirectionalShader(vsPath, vsContent);
+	CompileIBLShader(vsPath, vsContent);
+
+	CompilePointShader(vsPath, vsContent);
+	CompileSpotShader(vsPath, vsContent);
+
+	CompileSkyShader();
+	CompileDebugShader();
+
+	//CompilePostShader();
+
+	BuildPostFBO();
+
+}
+
+inline void RenderPathDeferred::BuildQuad() {
 	float tempVerts[8] = {
 		-1,-1,
 		1,-1,
 		-1, 1,
 		1, 1,
 	};
-
-	graphicsWrapper = gw;
-	geometryCache = gc;
-	terrainSystem = ts;
 
 	vaoQuad = pfnCreateVAO();
 	vaoQuad->Initialize();
@@ -406,7 +392,9 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	vboQuad->AddVBO(tempVerts, sizeof(tempVerts), 2, SIZE_FLOAT, DRAW_STATIC);
 	vboQuad->Bind(0);
 	vaoQuad->Unbind();
+}
 
+inline void RenderPathDeferred::BuildSphere() {
 	Assimp::Importer importer;
 	const aiScene* pScene = importer.ReadFile("../models/sphere.obj",
 		aiProcess_FlipWindingOrder |
@@ -438,8 +426,8 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 		indices.push_back(Face.mIndices[2]);
 	}
 
-	numSkyIndices = (unsigned int) indices.size();
-	vaoSphere= pfnCreateVAO();
+	numSkyIndices = (unsigned int)indices.size();
+	vaoSphere = pfnCreateVAO();
 	vaoSphere->Initialize();
 	vaoSphere->Bind();
 
@@ -455,7 +443,9 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	indices.clear();
 
 	importer.FreeScene();
+}
 
+inline void RenderPathDeferred::SetupDeferredFBO() {
 	glm::vec2 res = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
 	fbo = pfnCreateFramebuffer();
 	fbo->Initialize(4);
@@ -474,11 +464,12 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	// Depth Buffer Issue:
 	fbo->AddDepthBuffer(resx, resy);
 	fbo->Generate();
+}
 
-	std::string vsPath = "../shaders/overlay.glvs";
+inline void RenderPathDeferred::CompileDirectionalShader(std::string &vsPath, std::string &vsContent) {
+	vsPath = "../shaders/overlay.glvs";
 	std::string fsPath = "../shaders/deferred/directional.glfs";
 
-	std::string vsContent;
 	if (!ReadFileIncludable(vsPath, vsContent))
 		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
 
@@ -510,8 +501,10 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 
 	fsContent.clear();
 	fsPath.clear();
+}
 
-	fsPath = "../shaders/deferred/ibl.glfs";
+inline void RenderPathDeferred::CompileIBLShader(std::string vsPath, std::string vsContent) {
+	std::string fsContent, fsPath = "../shaders/deferred/ibl.glfs";
 
 	if (!ReadFileIncludable(fsPath, fsContent))
 		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
@@ -534,11 +527,14 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 
 	fsContent.clear();
 	fsPath.clear();
+}
+
+inline void RenderPathDeferred::CompilePointShader(std::string &vsPath, std::string &vsContent) {
 	vsContent.clear();
 	vsPath.clear();
-
+	
 	vsPath = "../shaders/deferred/light.glvs";
-	fsPath = "../shaders/deferred/point.glfs";
+	std::string fsContent, fsPath = "../shaders/deferred/point.glfs";
 
 	if (!ReadFileIncludable(vsPath, vsContent))
 		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
@@ -572,8 +568,10 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 
 	fsContent.clear();
 	fsPath.clear();
+}
 
-	fsPath = "../shaders/deferred/spot.glfs";
+inline void RenderPathDeferred::CompileSpotShader(std::string vsPath, std::string vsContent) {
+	std::string fsContent, fsPath = "../shaders/deferred/spot.glfs";
 	if (!ReadFileIncludable(fsPath, fsContent))
 		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
 
@@ -608,10 +606,13 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	fsPath.clear();
 	vsContent.clear();
 	vsPath.clear();
+}
 
-	vsPath = "../shaders/objects/sky.glvs";
-	fsPath = "../shaders/objects/sky.glfs";
+inline void RenderPathDeferred::CompileSkyShader() {
+	std::string vsPath = "../shaders/objects/sky.glvs";
+	std::string fsPath = "../shaders/objects/sky.glfs";
 
+	std::string vsContent, fsContent;
 	if (!ReadFileIncludable(vsPath, vsContent))
 		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
 
@@ -635,10 +636,13 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	fsContent.clear();
 	vsPath.clear();
 	fsPath.clear();
+}
 
-	vsPath = "../shaders/overlay.glvs";
-	fsPath = "../shaders/debug/debug.glfs";
+inline void RenderPathDeferred::CompileDebugShader() {
+	std::string vsPath = "../shaders/overlay.glvs";
+	std::string fsPath = "../shaders/debug/debug.glfs";
 
+	std::string vsContent, fsContent;
 	if (!ReadFileIncludable(vsPath, vsContent))
 		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
 
@@ -666,10 +670,13 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	fsContent.clear();
 	vsPath.clear();
 	fsPath.clear();
+}
 
-	/*vsPath = "../shaders/overlay.glvs";
-	fsPath = "../shaders/post.glfs";
-
+inline void RenderPathDeferred::CompilePostShader() {
+	std::string vsPath = "../shaders/overlay.glvs";
+	std::string fsPath = "../shaders/post.glfs";
+	
+	std::string vsContent, fsContent;
 	if (!ReadFileIncludable(vsPath, vsContent))
 		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
 
@@ -693,16 +700,23 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	vsContent.clear();
 	fsContent.clear();
 	vsPath.clear();
-	fsPath.clear();*/
-		
+	fsPath.clear();
+}
+
+inline void RenderPathDeferred::BuildPostFBO() {
+	glm::vec2 res = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
+	unsigned int resx = (unsigned int)res.x;
+	unsigned int resy = (unsigned int)res.y;
+#ifdef _WIN32 // Remove this ASAP
+	const int GL_RGBA = 0x1908;
+	const int GL_FLOAT = 0x1406;
+	const int GL_RGBA32F = 0x8814;
+#endif
+
 	postFBO = pfnCreateFramebuffer();
 	postFBO->Initialize(1);
-	postFBO->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, (unsigned int) res.x, (unsigned int)res.y);
+	postFBO->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, (unsigned int)res.x, (unsigned int)res.y);
 	postFBO->Generate();
-
-
-	//terrain.Initialize();
-	//terrain.LoadTerrain("../materials/height.png", 32, 32, 8, 8);
 }
 
 void RenderPathDeferred::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {

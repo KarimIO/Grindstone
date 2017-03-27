@@ -3,6 +3,7 @@
 
 #include "CBase.h"
 #include <btBulletDynamicsCommon.h>
+#include "glm/glm.hpp"
 #include <vector>
 
 class CPhysics : public CBase {

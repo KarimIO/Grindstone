@@ -49,19 +49,19 @@ void CPhysics::SetDamping(float linear, float rotational) {
 }
 
 void CPhysics::ApplyForce(glm::vec3 pos, glm::vec3 force) {
-	rigidBody->applyForce(btVector3(pos.x(), pos.y(), pos.z()), btVector3(force.x(), force.y(), force.z()));
+	rigidBody->applyForce(btVector3(pos.x, pos.y, pos.z), btVector3(force.x, force.y, force.z));
 }
 
 void CPhysics::ApplyCentralForce(glm::vec3 force) {
-	rigidBody->applyCentralForce(btVector3(force.x(), force.y(), force.z()));
+	rigidBody->applyCentralForce(btVector3(force.x, force.y, force.z));
 }
 
 void CPhysics::ApplyImpulse(glm::vec3 pos, glm::vec3 force) {
-	rigidBody->applyForce(btVector3(pos.x(), pos.y(), pos.z()), btVector3(force.x(), force.y(), force.z()));
+	rigidBody->applyForce(btVector3(pos.x, pos.y, pos.z), btVector3(force.x, force.y, force.z));
 }
 
 void CPhysics::ApplyCentralImpulse(glm::vec3 force) {
-	rigidBody->applyCentralForce(btVector3(force.x(), force.y(), force.z()));
+	rigidBody->applyCentralForce(btVector3(force.x, force.y, force.z));
 }
 
 void CPhysics::Create() {
@@ -118,7 +118,6 @@ void SPhysics::SetTransforms() {
 		CTransform *transComponent = &engine.transformSystem.components[transformID];
 		transComponent->position = glm::vec3(pos.getX(), pos.getY(), pos.getZ());
 		btQuaternion q = transform.getRotation();
-		std::cout << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << "\n";
 
 		double ysqr = q.y() * q.y();
 

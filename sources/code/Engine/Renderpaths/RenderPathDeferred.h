@@ -33,6 +33,20 @@ class RenderPathDeferred : public RenderPath {
 	VertexBufferObject *vboQuad;
 	VertexArrayObject *vaoSphere;
 	VertexBufferObject *vboSphere;
+	inline void BuildQuad();
+	inline void BuildSphere();
+	inline void SetupDeferredFBO();
+	inline void CompileDirectionalShader(std::string &vsPath, std::string &vsContent);
+	inline void CompileIBLShader(std::string vsPath, std::string vsContent);
+
+	inline void CompilePointShader(std::string &vsPath, std::string &vsContent);
+	inline void CompileSpotShader(std::string vsPath, std::string vsContent);
+
+	inline void CompileSkyShader();
+	inline void CompileDebugShader();
+
+	inline void CompilePostShader();
+	inline void BuildPostFBO();
 public:
 	virtual void Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost);
 	RenderPathDeferred(GraphicsWrapper *gw, SModel *gc, STerrain *terrainSystem);

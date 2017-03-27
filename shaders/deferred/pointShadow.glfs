@@ -12,11 +12,10 @@ uniform float lightIntensity;
 uniform float lightAttenuationRadius;
 uniform vec3 lightPosition;
 uniform vec3 eyePos;
-
-uniform float lightInnerAngle;
-uniform float lightOuterAngle;
-uniform vec3 lightDirection;
 uniform vec2 resolution;
+
+uniform samplerCube lightShadow;
+uniform mat4 shadowMatrix;
 
 #include ../shaders/light.is
 
@@ -30,21 +29,8 @@ void main() {
 
 	float lightRadius = 24;
 	vec3 lightPow = lightColor * lightIntensity;
-	float strength = length(Position.xyz-lightPosition);
-	strength = strength/lightAttenuationRadius;
-	strength = max(0, 1-strength);
-	colorOut = LightPointCalc(Albedo.rgb, Position.xyz, Specular, Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, eyePos);
-	
 	vec3 lightDir = normalize(Position.xyz-lightPosition);
-
-	float maxDot = cos(lightInnerAngle);
-	float minDot = cos(lightOuterAngle);
-	float dotPR = dot(lightDir, lightDirection);
-	dotPR = clamp((dotPR-minDot)/(maxDot-minDot), 0, 1);
-	if (dotPR > 0) {
-		colorOut = hdrGammaTransform(colorOut.rgb)*dotPR;
-	}
-	else {
-		colorOut = vec3(0,0,0);
-	}
+	colorOut = LightPointCalc(Albedo.rgb, Position.xyz, Specular, Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, eyePos);
+	colorOut = hdrGammaTransform(colorOut.rgb);
+	//colorOut = texture(lightShadow, lightDir).rgb;
 }
