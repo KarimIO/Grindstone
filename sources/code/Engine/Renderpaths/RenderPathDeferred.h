@@ -14,6 +14,8 @@ class RenderPathDeferred : public RenderPath {
 	Framebuffer *fbo;
 	Framebuffer *postFBO;
 
+	Texture *ssaoNoiseTex;
+
 	unsigned int numSkyIndices;
 
 	void GeometryPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos);
@@ -51,6 +53,8 @@ class RenderPathDeferred : public RenderPath {
 
 	inline void CompilePostShader();
 	inline void BuildPostFBO();
+
+	inline void CompileSSAO();
 public:
 	virtual void Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost);
 	RenderPathDeferred(GraphicsWrapper *gw, SModel *gc, STerrain *terrainSystem);

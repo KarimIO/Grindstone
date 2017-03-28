@@ -459,6 +459,8 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	CompileSkyShader();
 	CompileDebugShader();
 
+	CompileSSAO();
+
 	//CompilePostShader();
 
 	BuildPostFBO();
@@ -873,6 +875,33 @@ inline void RenderPathDeferred::BuildPostFBO() {
 	postFBO->Initialize(1);
 	postFBO->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, (unsigned int)res.x, (unsigned int)res.y);
 	postFBO->Generate();
+}
+
+inline void RenderPathDeferred::CompileSSAO() {
+	std::vector<glm::vec3> kernels;
+	kernels.reserve(64);
+	for (int i = 0; i < 64; i++) {
+		glm::vec3 sample;
+		float angleX = 6.28318f * (float)(rand()) / (float)(RAND_MAX);
+		sample.x = glm::cos(angleX);
+		sample.y = glm::sin(angleX);
+		float angleY = 3.14159f * (float)(rand()) / (float)(RAND_MAX);
+		sample.z = glm::sin(angleY);
+		float distance = (float)(rand()) / (float)(RAND_MAX);
+		sample /= distance;
+		kernels.push_back(sample);
+	}
+
+	std::vector<glm::vec2> ssaoNoise;
+	ssaoNoise.reserve(4);
+	for (int i = 0; i < 16; i++) {
+		ssaoNoise.push_back(glm::vec2(
+			2.0f * (float)(rand()) / (float)(RAND_MAX) - 1.0f,
+			2.0f * (float)(rand()) / (float)(RAND_MAX) - 1.0f));
+	}
+
+	ssaoNoiseTex = pfnCreateTexture();
+	ssaoNoiseTex->CreateTexture((unsigned char *)&ssaoNoise[0], COLOR_RG, 4, 4);
 }
 
 void RenderPathDeferred::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {
