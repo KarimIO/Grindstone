@@ -8,6 +8,8 @@
 
 #include <glm/gtx/transform.hpp>
 
+#define shad 
+
 struct IBLBufferDef {
 	glm::vec3 eyePos;
 	int gbuffer0;
@@ -36,6 +38,20 @@ struct PointLightBufferDef {
 	int gbuffer1;
 	int gbuffer2;
 	int gbuffer3;
+	float lightAttenuationRadius;
+	glm::mat4 gWVP;
+	glm::vec3 lightColor;
+	float lightIntensity;
+	glm::vec3 lightPosition;
+	glm::vec2 resolution;
+} pointLightUBO;
+
+struct PointLightShadowBufferDef {
+	glm::vec3 eyePos;
+	int gbuffer0;
+	int gbuffer1;
+	int gbuffer2;
+	int gbuffer3;
 	int lightShadow;
 	float lightAttenuationRadius;
 	glm::mat4 shadowMatrix;
@@ -44,9 +60,26 @@ struct PointLightBufferDef {
 	float lightIntensity;
 	glm::vec3 lightPosition;
 	glm::vec2 resolution;
-} pointLightUBO;
+} pointLightShadowUBO;
 
 struct SpotLightBufferDef {
+	glm::vec3 eyePos;
+	int gbuffer0;
+	int gbuffer1;
+	int gbuffer2;
+	int gbuffer3;
+	float lightAttenuationRadius;
+	float lightInnerAngle;
+	float lightOuterAngle;
+	glm::mat4 gWVP;
+	glm::vec3 lightColor;
+	float lightIntensity;
+	glm::vec3 lightPosition;
+	glm::vec3 lightDirection;
+	glm::vec2 resolution;
+} spotLightUBO;
+
+struct SpotLightShadowBufferDef {
 	glm::vec3 eyePos;
 	int gbuffer0;
 	int gbuffer1;
@@ -63,7 +96,7 @@ struct SpotLightBufferDef {
 	glm::vec3 lightPosition;
 	glm::vec3 lightDirection;
 	glm::vec2 resolution;
-} spotLightUBO;
+} spotLightShadowUBO;
 
 struct SkyUniformBufferDef {
 	glm::mat4 gWVP;
@@ -99,10 +132,10 @@ void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view, glm:
 
 void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {
 
-	debugUBO.gbuffer0 = dirLightUBO.gbuffer0 = spotLightUBO.gbuffer0 = pointLightUBO.gbuffer0 = 0;
-	debugUBO.gbuffer1 = dirLightUBO.gbuffer1 = spotLightUBO.gbuffer1 = pointLightUBO.gbuffer1 = 1;
-	debugUBO.gbuffer2 = dirLightUBO.gbuffer2 = spotLightUBO.gbuffer2 = pointLightUBO.gbuffer2 = 2;
-	debugUBO.gbuffer3 = dirLightUBO.gbuffer3 = spotLightUBO.gbuffer3 = pointLightUBO.gbuffer3 = 3;
+	debugUBO.gbuffer0 = dirLightUBO.gbuffer0 = spotLightShadowUBO.gbuffer0 = spotLightUBO.gbuffer0 = pointLightShadowUBO.gbuffer0 = pointLightUBO.gbuffer0 = 0;
+	debugUBO.gbuffer1 = dirLightUBO.gbuffer1 = spotLightShadowUBO.gbuffer1 = spotLightUBO.gbuffer1 = pointLightShadowUBO.gbuffer1 = pointLightUBO.gbuffer1 = 1;
+	debugUBO.gbuffer2 = dirLightUBO.gbuffer2 = spotLightShadowUBO.gbuffer2 = spotLightUBO.gbuffer2 = pointLightShadowUBO.gbuffer2 = pointLightUBO.gbuffer2 = 2;
+	debugUBO.gbuffer3 = dirLightUBO.gbuffer3 = spotLightShadowUBO.gbuffer3 = spotLightUBO.gbuffer3 = pointLightShadowUBO.gbuffer3 = pointLightUBO.gbuffer3 = 3;
 
 	fbo->ReadBind();
 	graphicsWrapper->SetDepth(0);
@@ -143,91 +176,145 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		return;
 	}
 
-	dirLightUBO.eyePos = spotLightUBO.eyePos = pointLightUBO.eyePos = eyePos;
-	spotLightUBO.resolution = pointLightUBO.resolution = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
+	dirLightUBO.eyePos = spotLightUBO.eyePos = spotLightShadowUBO.eyePos = pointLightShadowUBO.eyePos = pointLightUBO.eyePos = eyePos;
+	spotLightUBO.resolution = spotLightShadowUBO.resolution = pointLightShadowUBO.resolution = pointLightUBO.resolution = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
 
 	graphicsWrapper->SetBlending(true);
 
-	pointLightShader->Use();
 	glm::mat4 pv = projection * view;
 	for (size_t i = 0; i < engine.lightSystem.pointLights.size(); i++) {
 		unsigned int entityID = engine.lightSystem.pointLights[i].entityID;
 		EBase *entity = &engine.entities[entityID];
 		CTransform *transform = &engine.transformSystem.components[entity->components[COMPONENT_TRANSFORM]];
 		CPointLight *light = &engine.lightSystem.pointLights[i];
-		pointLightUBO.gWVP = pv * transform->GetModelMatrix();
-		pointLightUBO.lightAttenuationRadius = light->lightRadius;
-		pointLightUBO.lightColor = light->lightColor;
-		pointLightUBO.lightIntensity = light->intensity;
-		pointLightUBO.lightPosition = transform->GetPosition();
-		pointLightUBO.lightShadow = 4;
+		
 
 		if (light->castShadow) {
+			pointLightShadowShader->Use();
+			pointLightShadowUBO.gWVP = pv * transform->GetModelMatrix();
+			pointLightShadowUBO.lightAttenuationRadius = light->lightRadius;
+			pointLightShadowUBO.lightColor = light->lightColor;
+			pointLightShadowUBO.lightIntensity = light->intensity;
+			pointLightShadowUBO.lightPosition = transform->GetPosition();
+			pointLightShadowUBO.lightShadow = 4; 
+			
 			light->fbo->ReadBind();
 			light->fbo->BindDepthCube(4);
 			light->fbo->Unbind();
-		}
 
-		pointLightShader->PassData(&pointLightUBO);
-		pointLightShader->SetVec3();
-		pointLightShader->SetInteger();
-		pointLightShader->SetInteger();
-		pointLightShader->SetInteger();
-		pointLightShader->SetInteger();
-		pointLightShader->SetInteger();
-		pointLightShader->SetUniformFloat();
-		pointLightShader->SetUniform4m();
-		pointLightShader->SetUniform4m();
-		pointLightShader->SetVec3();
-		pointLightShader->SetUniformFloat();
-		pointLightShader->SetVec3();
-		pointLightShader->SetVec2();
+			pointLightShadowShader->PassData(&pointLightShadowUBO);
+			pointLightShadowShader->SetVec3();
+			pointLightShadowShader->SetInteger();
+			pointLightShadowShader->SetInteger();
+			pointLightShadowShader->SetInteger();
+			pointLightShadowShader->SetInteger();
+			pointLightShadowShader->SetInteger();
+			pointLightShadowShader->SetUniformFloat();
+			pointLightShadowShader->SetUniform4m();
+			pointLightShadowShader->SetUniform4m();
+			pointLightShadowShader->SetVec3();
+			pointLightShadowShader->SetUniformFloat();
+			pointLightShadowShader->SetVec3();
+			pointLightShadowShader->SetVec2();
+		}
+		else {
+			pointLightShader->Use();
+			pointLightUBO.gWVP = pv * transform->GetModelMatrix();
+			pointLightUBO.lightAttenuationRadius = light->lightRadius;
+			pointLightUBO.lightColor = light->lightColor;
+			pointLightUBO.lightIntensity = light->intensity;
+			pointLightUBO.lightPosition = transform->GetPosition();
+
+			pointLightShader->PassData(&pointLightUBO);
+			pointLightShader->SetVec3();
+			pointLightShader->SetInteger();
+			pointLightShader->SetInteger();
+			pointLightShader->SetInteger();
+			pointLightShader->SetInteger();
+			pointLightShader->SetUniformFloat();
+			pointLightShader->SetUniform4m();
+			pointLightShader->SetVec3();
+			pointLightShader->SetUniformFloat();
+			pointLightShader->SetVec3();
+			pointLightShader->SetVec2();
+		}
 
 		vaoSphere->Bind();
 		graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(sizeof(unsigned int) * 0), 0, numSkyIndices);
 		vaoSphere->Unbind();
 	}
 
-	spotLightShader->Use();
 	for (size_t i = 0; i < engine.lightSystem.spotLights.size(); i++) {
 		unsigned int entityID = engine.lightSystem.spotLights[i].entityID;
 		CSpotLight *light = &engine.lightSystem.spotLights[i];
 		EBase *entity = &engine.entities[entityID];
 		CTransform *transform = &engine.transformSystem.components[entity->components[COMPONENT_TRANSFORM]];
-		spotLightUBO.gWVP = pv * transform->GetModelMatrix();
-		spotLightUBO.lightAttenuationRadius = light->lightRadius;
-		spotLightUBO.lightInnerAngle = light->innerSpotAngle;
-		spotLightUBO.lightOuterAngle = light->outerSpotAngle;
-		spotLightUBO.lightColor = light->lightColor;
-		spotLightUBO.lightIntensity = light->intensity;
-		spotLightUBO.lightPosition = transform->GetPosition();
-		spotLightUBO.lightDirection = transform->GetForward();
-		spotLightUBO.lightShadow = 4;
-		spotLightUBO.shadowMatrix = light->projection;
 
 		if (light->castShadow) {
+			spotLightShadowShader->Use();
+
+			spotLightShadowUBO.gWVP = pv * transform->GetModelMatrix();
+			spotLightShadowUBO.lightAttenuationRadius = light->lightRadius;
+			spotLightShadowUBO.lightInnerAngle = light->innerSpotAngle;
+			spotLightShadowUBO.lightOuterAngle = light->outerSpotAngle;
+			spotLightShadowUBO.lightColor = light->lightColor;
+			spotLightShadowUBO.lightIntensity = light->intensity;
+			spotLightShadowUBO.lightPosition = transform->GetPosition();
+			spotLightShadowUBO.lightDirection = transform->GetForward();
+			spotLightShadowUBO.lightShadow = 4;
+			spotLightShadowUBO.shadowMatrix = light->projection;
+
 			light->fbo->ReadBind();
 			light->fbo->BindDepth(4);
 			light->fbo->Unbind();
+
+			spotLightShadowShader->PassData(&spotLightShadowUBO);
+			spotLightShadowShader->SetVec3();
+			spotLightShadowShader->SetInteger();
+			spotLightShadowShader->SetInteger();
+			spotLightShadowShader->SetInteger();
+			spotLightShadowShader->SetInteger();
+			spotLightShadowShader->SetInteger();
+			spotLightShadowShader->SetUniformFloat();
+			spotLightShadowShader->SetUniformFloat();
+			spotLightShadowShader->SetUniformFloat();
+			spotLightShadowShader->SetUniform4m();
+			spotLightShadowShader->SetUniform4m();
+			spotLightShadowShader->SetVec3();
+			spotLightShadowShader->SetUniformFloat();
+			spotLightShadowShader->SetVec3();
+			spotLightShadowShader->SetVec3();
+			spotLightShadowShader->SetVec2();
+		}
+		else {
+			spotLightShader->Use();
+
+			spotLightUBO.gWVP = pv * transform->GetModelMatrix();
+			spotLightUBO.lightAttenuationRadius = light->lightRadius;
+			spotLightUBO.lightInnerAngle = light->innerSpotAngle;
+			spotLightUBO.lightOuterAngle = light->outerSpotAngle;
+			spotLightUBO.lightColor = light->lightColor;
+			spotLightUBO.lightIntensity = light->intensity;
+			spotLightUBO.lightPosition = transform->GetPosition();
+			spotLightUBO.lightDirection = transform->GetForward();
+
+			spotLightShader->PassData(&spotLightUBO);
+			spotLightShader->SetVec3();
+			spotLightShader->SetInteger();
+			spotLightShader->SetInteger();
+			spotLightShader->SetInteger();
+			spotLightShader->SetInteger();
+			spotLightShader->SetUniformFloat();
+			spotLightShader->SetUniformFloat();
+			spotLightShader->SetUniformFloat();
+			spotLightShader->SetUniform4m();
+			spotLightShader->SetVec3();
+			spotLightShader->SetUniformFloat();
+			spotLightShader->SetVec3();
+			spotLightShader->SetVec3();
+			spotLightShader->SetVec2();
 		}
 
-		spotLightShader->PassData(&spotLightUBO);
-		spotLightShader->SetVec3();
-		spotLightShader->SetInteger();
-		spotLightShader->SetInteger();
-		spotLightShader->SetInteger();
-		spotLightShader->SetInteger();
-		spotLightShader->SetInteger();
-		spotLightShader->SetUniformFloat();
-		spotLightShader->SetUniformFloat();
-		spotLightShader->SetUniformFloat();
-		spotLightShader->SetUniform4m();
-		spotLightShader->SetUniform4m();
-		spotLightShader->SetVec3();
-		spotLightShader->SetUniformFloat();
-		spotLightShader->SetVec3();
-		spotLightShader->SetVec3();
-		spotLightShader->SetVec2();
 
 		vaoSphere->Bind();
 		graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(sizeof(unsigned int) * 0), 0, numSkyIndices);
@@ -365,6 +452,9 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 
 	CompilePointShader(vsPath, vsContent);
 	CompileSpotShader(vsPath, vsContent);
+
+	CompilePointShadowShader(vsPath, vsContent);
+	CompileSpotShadowShader(vsPath, vsContent);
 
 	CompileSkyShader();
 	CompileDebugShader();
@@ -551,20 +641,52 @@ inline void RenderPathDeferred::CompilePointShader(std::string &vsPath, std::str
 	if (!pointLightShader->Compile())
 		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
 
-	pointLightShader->SetNumUniforms(13);
+	pointLightShader->SetNumUniforms(11);
 	pointLightShader->CreateUniform("eyePos");
 	pointLightShader->CreateUniform("gbuffer0");
 	pointLightShader->CreateUniform("gbuffer1");
 	pointLightShader->CreateUniform("gbuffer2");
 	pointLightShader->CreateUniform("gbuffer3");
-	pointLightShader->CreateUniform("lightShadow");
 	pointLightShader->CreateUniform("lightAttenuationRadius");
-	pointLightShader->CreateUniform("shadowMatrix");
 	pointLightShader->CreateUniform("gWVP");
 	pointLightShader->CreateUniform("lightColor");
 	pointLightShader->CreateUniform("lightIntensity");
 	pointLightShader->CreateUniform("lightPosition");
 	pointLightShader->CreateUniform("resolution");
+
+	fsContent.clear();
+	fsPath.clear();
+}
+
+inline void RenderPathDeferred::CompilePointShadowShader(std::string vsPath, std::string vsContent) {
+	std::string fsContent, fsPath = "../shaders/deferred/pointShadow.glfs";
+
+	if (!ReadFileIncludable(fsPath, fsContent))
+		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
+
+	pointLightShadowShader = pfnCreateShader();
+	pointLightShadowShader->Initialize(2);
+	if (!pointLightShadowShader->AddShader(&vsPath, &vsContent, SHADER_VERTEX))
+		fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
+	if (!pointLightShadowShader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
+		fprintf(stderr, "Failed to add fragment shader %s.\n", fsPath.c_str());
+	if (!pointLightShadowShader->Compile())
+		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
+
+	pointLightShadowShader->SetNumUniforms(13);
+	pointLightShadowShader->CreateUniform("eyePos");
+	pointLightShadowShader->CreateUniform("gbuffer0");
+	pointLightShadowShader->CreateUniform("gbuffer1");
+	pointLightShadowShader->CreateUniform("gbuffer2");
+	pointLightShadowShader->CreateUniform("gbuffer3");
+	pointLightShadowShader->CreateUniform("lightShadow");
+	pointLightShadowShader->CreateUniform("lightAttenuationRadius");
+	pointLightShadowShader->CreateUniform("shadowMatrix");
+	pointLightShadowShader->CreateUniform("gWVP");
+	pointLightShadowShader->CreateUniform("lightColor");
+	pointLightShadowShader->CreateUniform("lightIntensity");
+	pointLightShadowShader->CreateUniform("lightPosition");
+	pointLightShadowShader->CreateUniform("resolution");
 
 	fsContent.clear();
 	fsPath.clear();
@@ -584,23 +706,57 @@ inline void RenderPathDeferred::CompileSpotShader(std::string vsPath, std::strin
 	if (!spotLightShader->Compile())
 		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
 
-	spotLightShader->SetNumUniforms(16);
+	spotLightShader->SetNumUniforms(14);
 	spotLightShader->CreateUniform("eyePos");
 	spotLightShader->CreateUniform("gbuffer0");
 	spotLightShader->CreateUniform("gbuffer1");
 	spotLightShader->CreateUniform("gbuffer2");
 	spotLightShader->CreateUniform("gbuffer3");
-	spotLightShader->CreateUniform("lightShadow");
 	spotLightShader->CreateUniform("lightAttenuationRadius");
 	spotLightShader->CreateUniform("lightInnerAngle");
 	spotLightShader->CreateUniform("lightOuterAngle");
-	spotLightShader->CreateUniform("shadowMatrix");
 	spotLightShader->CreateUniform("gWVP");
 	spotLightShader->CreateUniform("lightColor");
 	spotLightShader->CreateUniform("lightIntensity");
 	spotLightShader->CreateUniform("lightPosition");
 	spotLightShader->CreateUniform("lightDirection");
 	spotLightShader->CreateUniform("resolution");
+
+	fsContent.clear();
+	fsPath.clear();
+}
+
+inline void RenderPathDeferred::CompileSpotShadowShader(std::string vsPath, std::string vsContent) {
+	std::string fsContent, fsPath = "../shaders/deferred/spotShadow.glfs";
+	if (!ReadFileIncludable(fsPath, fsContent))
+		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
+
+	spotLightShadowShader = pfnCreateShader();
+	spotLightShadowShader->Initialize(2);
+	if (!spotLightShadowShader->AddShader(&vsPath, &vsContent, SHADER_VERTEX))
+		fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
+	if (!spotLightShadowShader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
+		fprintf(stderr, "Failed to add fragment shader %s.\n", fsPath.c_str());
+	if (!spotLightShadowShader->Compile())
+		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
+
+	spotLightShadowShader->SetNumUniforms(16);
+	spotLightShadowShader->CreateUniform("eyePos");
+	spotLightShadowShader->CreateUniform("gbuffer0");
+	spotLightShadowShader->CreateUniform("gbuffer1");
+	spotLightShadowShader->CreateUniform("gbuffer2");
+	spotLightShadowShader->CreateUniform("gbuffer3");
+	spotLightShadowShader->CreateUniform("lightShadow");
+	spotLightShadowShader->CreateUniform("lightAttenuationRadius");
+	spotLightShadowShader->CreateUniform("lightInnerAngle");
+	spotLightShadowShader->CreateUniform("lightOuterAngle");
+	spotLightShadowShader->CreateUniform("shadowMatrix");
+	spotLightShadowShader->CreateUniform("gWVP");
+	spotLightShadowShader->CreateUniform("lightColor");
+	spotLightShadowShader->CreateUniform("lightIntensity");
+	spotLightShadowShader->CreateUniform("lightPosition");
+	spotLightShadowShader->CreateUniform("lightDirection");
+	spotLightShadowShader->CreateUniform("resolution");
 
 	fsContent.clear();
 	fsPath.clear();

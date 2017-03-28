@@ -23,6 +23,8 @@ class RenderPathDeferred : public RenderPath {
 	ShaderProgram *directionalLightShader;
 	ShaderProgram *spotLightShader;
 	ShaderProgram *pointLightShader;
+	ShaderProgram *spotLightShadowShader;
+	ShaderProgram *pointLightShadowShader;
 	ShaderProgram *skyShader;
 	ShaderProgram *postShader;
 	ShaderProgram *debugShader;
@@ -40,7 +42,9 @@ class RenderPathDeferred : public RenderPath {
 	inline void CompileIBLShader(std::string vsPath, std::string vsContent);
 
 	inline void CompilePointShader(std::string &vsPath, std::string &vsContent);
+	inline void CompilePointShadowShader(std::string vsPath, std::string vsContent);
 	inline void CompileSpotShader(std::string vsPath, std::string vsContent);
+	inline void CompileSpotShadowShader(std::string vsPath, std::string vsContent);
 
 	inline void CompileSkyShader();
 	inline void CompileDebugShader();
