@@ -16,6 +16,8 @@ struct IBLBufferDef {
 	int gbuffer1;
 	int gbuffer3;
 	int cubemap;
+	glm::mat4 invProjMat;
+	glm::mat4 invViewMat;
 } iblUBO;
 
 struct DirectionalLightBufferDef {
@@ -156,8 +158,8 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 	debugUBO.gbuffer2 = dirLightUBO.gbuffer2 = spotLightShadowUBO.gbuffer2 = spotLightUBO.gbuffer2 = pointLightShadowUBO.gbuffer2 = pointLightUBO.gbuffer2 = 2;
 	debugUBO.gbuffer3 = dirLightUBO.gbuffer3 = spotLightShadowUBO.gbuffer3 = spotLightUBO.gbuffer3 = pointLightShadowUBO.gbuffer3 = pointLightUBO.gbuffer3 = 3;
 
-	debugUBO.invProjMat = dirLightUBO.invProjMat = spotLightShadowUBO.invProjMat = spotLightUBO.invProjMat = pointLightShadowUBO.invProjMat = pointLightUBO.invProjMat = glm::inverse(projection);
-	debugUBO.invViewMat = dirLightUBO.invViewMat = spotLightShadowUBO.invViewMat = spotLightUBO.invViewMat = pointLightShadowUBO.invViewMat = pointLightUBO.invViewMat = glm::inverse(view);
+	iblUBO.invProjMat = debugUBO.invProjMat = dirLightUBO.invProjMat = spotLightShadowUBO.invProjMat = spotLightUBO.invProjMat = pointLightShadowUBO.invProjMat = pointLightUBO.invProjMat = glm::inverse(projection);
+	iblUBO.invViewMat = debugUBO.invViewMat = dirLightUBO.invViewMat = spotLightShadowUBO.invViewMat = spotLightUBO.invViewMat = pointLightShadowUBO.invViewMat = pointLightUBO.invViewMat = glm::inverse(view);
 
 	fbo->ReadBind();
 	graphicsWrapper->SetDepth(0);
