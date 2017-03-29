@@ -23,7 +23,7 @@ void CController::Initialize(unsigned int _entityID) {
 	input.BindAction("Run", this, &CController::RunStart, KEY_PRESSED);
 	input.BindAction("Run", this, &CController::RunStop, KEY_RELEASED);
 	
-	speedModifier = 4.0;
+	speedModifier = 2.0;
 	sensitivity = 0.2;
 }
 
@@ -77,9 +77,9 @@ void CController::ZoomOut(double scale) {
 }
 
 void CController::RunStart(double scale) {
-	speedModifier = 8.5;
+	speedModifier = 4.5;
 }
 
 void CController::RunStop(double scale) {
-	speedModifier = 4.0;
+	speedModifier = 2.0;
 }

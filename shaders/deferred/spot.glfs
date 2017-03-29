@@ -19,15 +19,20 @@ uniform vec3 lightDirection;
 uniform vec2 resolution;
 
 #include ../shaders/light.is
-#include ../shaders/depthToPos.is
+#include ../shaders/decode.is
 
 void main() {
 	vec2 UV			=  gl_FragCoord.xy/vec2(resolution.x, resolution.y);
 
-	vec3 Position	= WorldPosFromDepth(texture(gbuffer0, UV).r, UV);
-	vec4 Normal		= texture(gbuffer1, UV);
-	vec4 Albedo		= texture(gbuffer2, UV);
-	vec4 Specular	= texture(gbuffer3, UV);
+	vec4 gbuffer0Val = texture(gbuffer0, UV);
+	vec4 gbuffer1Val = texture(gbuffer1, UV);
+	vec4 gbuffer2Val = texture(gbuffer2, UV);
+	vec4 gbuffer3Val = texture(gbuffer3, UV);
+
+	vec3 Position	= WorldPosFromDepth(gbuffer0Val.r, UV);
+	vec3 Normal		= decodeNormal(gbuffer1Val.rg);
+	vec4 Albedo		= gbuffer2Val;
+	vec4 Specular	= gbuffer3Val;
 
 	float lightRadius = 24;
 	vec3 lightPow = lightColor * lightIntensity;

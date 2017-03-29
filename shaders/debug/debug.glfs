@@ -11,7 +11,7 @@ uniform int debugMode;
 
 in vec2 UV;
 
-#include ../shaders/depthToPos.is
+#include ../shaders/decode.is
 
 void main() {
     if (debugMode == 1) {
@@ -25,21 +25,28 @@ void main() {
             colorOut = texture(gbuffer3, UV*2);
     }
     else if (debugMode == 2) {
-        colorOut = vec4(WorldPosFromDepth(texture(gbuffer0, UV).r, UV), 1);
+        colorOut = vec4(texture(gbuffer0, UV).r, 0, 0, 1);
     }
     else if (debugMode == 3) {
-        colorOut = texture(gbuffer1, UV);
+        colorOut = vec4(WorldPosFromDepth(texture(gbuffer0, UV).r, UV), 1);
     }
     else if (debugMode == 4) {
-        colorOut = texture(gbuffer2, UV);
+        colorOut = vec4(texture(gbuffer1, UV).rg, 0, 1);
     }
     else if (debugMode == 5) {
-        colorOut = texture(gbuffer3, UV);
+        vec2 n = texture(gbuffer1, UV).rg;
+        colorOut = vec4(decodeNormal(n), 1);
     }
     else if (debugMode == 6) {
-        colorOut = texture(gbuffer3, UV).aaaa;
+        colorOut = texture(gbuffer2, UV);
     }
     else if (debugMode == 7) {
+        colorOut = texture(gbuffer3, UV);
+    }
+    else if (debugMode == 8) {
+        colorOut = texture(gbuffer3, UV).aaaa;
+    }
+    else if (debugMode == 9) {
         colorOut = texture(texRefl, UV).rgba;
     }
 }

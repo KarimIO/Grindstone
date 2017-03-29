@@ -51,6 +51,15 @@
         {
             "components": [{
                 "componentType": "COMPONENT_TRANSFORM",
+                "position": [0.0, 1.0, 0.0]
+            }, {
+                "componentType": "COMPONENT_RENDER",
+                "path": "materialTest/materialTest.obj"
+            }]
+        },
+        {
+            "components": [{
+                "componentType": "COMPONENT_TRANSFORM",
                 "scale": [0.01, 0.01, 0.01]
             }, {
                 "componentType": "COMPONENT_PHYSICS",
