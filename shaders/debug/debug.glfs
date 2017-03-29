@@ -11,6 +11,8 @@ uniform int debugMode;
 
 in vec2 UV;
 
+#include ../shaders/depthToPos.is
+
 void main() {
     if (debugMode == 1) {
         if (UV.x < 0.5 && UV.y < 0.5)
@@ -23,7 +25,7 @@ void main() {
             colorOut = texture(gbuffer3, UV*2);
     }
     else if (debugMode == 2) {
-        colorOut = texture(gbuffer0, UV);
+        colorOut = vec4(WorldPosFromDepth(texture(gbuffer0, UV).r, UV), 1);
     }
     else if (debugMode == 3) {
         colorOut = texture(gbuffer1, UV);

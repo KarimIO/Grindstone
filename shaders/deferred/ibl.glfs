@@ -13,6 +13,7 @@ uniform vec3 eyePos;
 in vec2 UV;
 
 #include ../shaders/light.is
+#include ../shaders/depthToPos.is
 
 vec3 CalculateIBL(vec3 WorldPos, vec3 Normal, vec4 Specular) {
 	vec3 eyeDir		= normalize(eyePos - WorldPos.xyz);
@@ -35,7 +36,7 @@ vec3 CalculateIBL(vec3 WorldPos, vec3 Normal, vec4 Specular) {
 
 void main() {
 
-	vec4 Position	= texture(gbuffer0, UV);
+	vec3 Position	= WorldPosFromDepth(texture(gbuffer0, UV).r, UV);
 	vec4 Normal		= texture(gbuffer1, UV);
 	vec4 Specular	= texture(gbuffer3, UV);
 

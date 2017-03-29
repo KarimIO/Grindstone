@@ -30,6 +30,8 @@ struct DirectionalLightBufferDef {
 	glm::vec3 lightColor;
 	float lightIntensity;
 	glm::vec3 lightDirection;
+	glm::mat4 invProjMat;
+	glm::mat4 invViewMat;
 } dirLightUBO;
 
 struct PointLightBufferDef {
@@ -44,6 +46,8 @@ struct PointLightBufferDef {
 	float lightIntensity;
 	glm::vec3 lightPosition;
 	glm::vec2 resolution;
+	glm::mat4 invProjMat;
+	glm::mat4 invViewMat;
 } pointLightUBO;
 
 struct PointLightShadowBufferDef {
@@ -60,6 +64,8 @@ struct PointLightShadowBufferDef {
 	float lightIntensity;
 	glm::vec3 lightPosition;
 	glm::vec2 resolution;
+	glm::mat4 invProjMat;
+	glm::mat4 invViewMat;
 } pointLightShadowUBO;
 
 struct SpotLightBufferDef {
@@ -77,6 +83,8 @@ struct SpotLightBufferDef {
 	glm::vec3 lightPosition;
 	glm::vec3 lightDirection;
 	glm::vec2 resolution;
+	glm::mat4 invProjMat;
+	glm::mat4 invViewMat;
 } spotLightUBO;
 
 struct SpotLightShadowBufferDef {
@@ -96,6 +104,8 @@ struct SpotLightShadowBufferDef {
 	glm::vec3 lightPosition;
 	glm::vec3 lightDirection;
 	glm::vec2 resolution;
+	glm::mat4 invProjMat;
+	glm::mat4 invViewMat;
 } spotLightShadowUBO;
 
 struct SkyUniformBufferDef {
@@ -116,7 +126,17 @@ struct DebugUniformBufferDef {
 	int gbuffer3;
 	int texRefl;
 	int debugMode;
+	glm::mat4 invProjMat;
+	glm::mat4 invViewMat;
 } debugUBO;
+
+struct SSAOUniformBufferDef {
+	int gbuffer0;
+	int gbuffer1;
+	int gbuffer3;
+	glm::vec3 *kernels;
+	int texNormals;
+} ssaoUBO;
 
 void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
 	// Uses screen resolution due to framebuffer size
@@ -131,16 +151,17 @@ void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view, glm:
 }
 
 void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {
-
 	debugUBO.gbuffer0 = dirLightUBO.gbuffer0 = spotLightShadowUBO.gbuffer0 = spotLightUBO.gbuffer0 = pointLightShadowUBO.gbuffer0 = pointLightUBO.gbuffer0 = 0;
 	debugUBO.gbuffer1 = dirLightUBO.gbuffer1 = spotLightShadowUBO.gbuffer1 = spotLightUBO.gbuffer1 = pointLightShadowUBO.gbuffer1 = pointLightUBO.gbuffer1 = 1;
 	debugUBO.gbuffer2 = dirLightUBO.gbuffer2 = spotLightShadowUBO.gbuffer2 = spotLightUBO.gbuffer2 = pointLightShadowUBO.gbuffer2 = pointLightUBO.gbuffer2 = 2;
 	debugUBO.gbuffer3 = dirLightUBO.gbuffer3 = spotLightShadowUBO.gbuffer3 = spotLightUBO.gbuffer3 = pointLightShadowUBO.gbuffer3 = pointLightUBO.gbuffer3 = 3;
 
+	debugUBO.invProjMat = dirLightUBO.invProjMat = spotLightShadowUBO.invProjMat = spotLightUBO.invProjMat = pointLightShadowUBO.invProjMat = pointLightUBO.invProjMat = glm::inverse(projection);
+	debugUBO.invViewMat = dirLightUBO.invViewMat = spotLightShadowUBO.invViewMat = spotLightUBO.invViewMat = pointLightShadowUBO.invViewMat = pointLightUBO.invViewMat = glm::inverse(view);
+
 	fbo->ReadBind();
 	graphicsWrapper->SetDepth(0);
-
-	fbo->BindTexture(0);
+	fbo->BindDepth(0);
 	fbo->BindTexture(1);
 	fbo->BindTexture(2);
 	fbo->BindTexture(3);
@@ -168,7 +189,8 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		debugShader->SetInteger();
 		debugShader->SetInteger();
 		debugShader->SetInteger();
-		debugShader->SetInteger();
+		debugShader->SetUniform4m();
+		debugShader->SetUniform4m();
 
 		vaoQuad->Bind();
 		graphicsWrapper->DrawVertexArray(4);
@@ -216,6 +238,8 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 			pointLightShadowShader->SetUniformFloat();
 			pointLightShadowShader->SetVec3();
 			pointLightShadowShader->SetVec2();
+			pointLightShadowShader->SetUniform4m();
+			pointLightShadowShader->SetUniform4m();
 		}
 		else {
 			pointLightShader->Use();
@@ -237,6 +261,8 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 			pointLightShader->SetUniformFloat();
 			pointLightShader->SetVec3();
 			pointLightShader->SetVec2();
+			pointLightShader->SetUniform4m();
+			pointLightShader->SetUniform4m();
 		}
 
 		vaoSphere->Bind();
@@ -285,6 +311,8 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 			spotLightShadowShader->SetVec3();
 			spotLightShadowShader->SetVec3();
 			spotLightShadowShader->SetVec2();
+			spotLightShadowShader->SetUniform4m();
+			spotLightShadowShader->SetUniform4m();
 		}
 		else {
 			spotLightShader->Use();
@@ -313,6 +341,8 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 			spotLightShader->SetVec3();
 			spotLightShader->SetVec3();
 			spotLightShader->SetVec2();
+			spotLightShader->SetUniform4m();
+			spotLightShader->SetUniform4m();
 		}
 
 
@@ -351,6 +381,8 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		directionalLightShader->SetVec3();
 		directionalLightShader->SetUniformFloat();
 		directionalLightShader->SetVec3();
+		directionalLightShader->SetUniform4m();
+		directionalLightShader->SetUniform4m();
 
 		vaoQuad->Bind();
 		graphicsWrapper->DrawVertexArray(4);
@@ -379,6 +411,8 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		iblShader->SetInteger();
 		iblShader->SetInteger();
 		iblShader->SetInteger();
+		iblShader->SetUniform4m();
+		iblShader->SetUniform4m();
 
 		vaoQuad->Bind();
 		graphicsWrapper->DrawVertexArray(4);
@@ -449,6 +483,12 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	std::string vsPath, vsContent;
 	CompileDirectionalShader(vsPath, vsContent);
 	CompileIBLShader(vsPath, vsContent);
+	CompileDebugShader(vsPath, vsContent);
+	//CompileSSAO(vsPath, vsContent);
+	//CompilePostShader(vsPath, vsContent);
+
+	vsPath.clear();
+	vsContent.clear();
 
 	CompilePointShader(vsPath, vsContent);
 	CompileSpotShader(vsPath, vsContent);
@@ -457,11 +497,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	CompileSpotShadowShader(vsPath, vsContent);
 
 	CompileSkyShader();
-	CompileDebugShader();
 
-	CompileSSAO();
-
-	//CompilePostShader();
 
 	BuildPostFBO();
 
@@ -578,7 +614,7 @@ inline void RenderPathDeferred::CompileDirectionalShader(std::string &vsPath, st
 	if (!directionalLightShader->Compile())
 		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
 
-	directionalLightShader->SetNumUniforms(11);
+	directionalLightShader->SetNumUniforms(13);
 	directionalLightShader->CreateUniform("eyePos");
 	directionalLightShader->CreateUniform("gbuffer0");
 	directionalLightShader->CreateUniform("gbuffer1");
@@ -590,6 +626,8 @@ inline void RenderPathDeferred::CompileDirectionalShader(std::string &vsPath, st
 	directionalLightShader->CreateUniform("lightColor");
 	directionalLightShader->CreateUniform("lightIntensity");
 	directionalLightShader->CreateUniform("lightDirection");
+	directionalLightShader->CreateUniform("invProjMat");
+	directionalLightShader->CreateUniform("invViewMat");
 
 	fsContent.clear();
 	fsPath.clear();
@@ -608,23 +646,22 @@ inline void RenderPathDeferred::CompileIBLShader(std::string vsPath, std::string
 	if (!iblShader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
 		fprintf(stderr, "Failed to add fragment shader %s.\n", fsPath.c_str());
 	if (!iblShader->Compile())
-		fprintf(stderr, "Failed to compile IBL Program");
+		fprintf(stderr, "Failed to compile IBL Program\n");
 
-	iblShader->SetNumUniforms(5);
+	iblShader->SetNumUniforms(7);
 	iblShader->CreateUniform("eyePos");
 	iblShader->CreateUniform("gbuffer0");
 	iblShader->CreateUniform("gbuffer1");
 	iblShader->CreateUniform("gbuffer3");
 	iblShader->CreateUniform("texRefl");
+	iblShader->CreateUniform("invProjMat");
+	iblShader->CreateUniform("invViewMat");
 
 	fsContent.clear();
 	fsPath.clear();
 }
 
 inline void RenderPathDeferred::CompilePointShader(std::string &vsPath, std::string &vsContent) {
-	vsContent.clear();
-	vsPath.clear();
-	
 	vsPath = "../shaders/deferred/light.glvs";
 	std::string fsContent, fsPath = "../shaders/deferred/point.glfs";
 
@@ -643,7 +680,7 @@ inline void RenderPathDeferred::CompilePointShader(std::string &vsPath, std::str
 	if (!pointLightShader->Compile())
 		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
 
-	pointLightShader->SetNumUniforms(11);
+	pointLightShader->SetNumUniforms(13);
 	pointLightShader->CreateUniform("eyePos");
 	pointLightShader->CreateUniform("gbuffer0");
 	pointLightShader->CreateUniform("gbuffer1");
@@ -655,6 +692,8 @@ inline void RenderPathDeferred::CompilePointShader(std::string &vsPath, std::str
 	pointLightShader->CreateUniform("lightIntensity");
 	pointLightShader->CreateUniform("lightPosition");
 	pointLightShader->CreateUniform("resolution");
+	pointLightShader->CreateUniform("invProjMat");
+	pointLightShader->CreateUniform("invViewMat");
 
 	fsContent.clear();
 	fsPath.clear();
@@ -675,7 +714,7 @@ inline void RenderPathDeferred::CompilePointShadowShader(std::string vsPath, std
 	if (!pointLightShadowShader->Compile())
 		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
 
-	pointLightShadowShader->SetNumUniforms(13);
+	pointLightShadowShader->SetNumUniforms(15);
 	pointLightShadowShader->CreateUniform("eyePos");
 	pointLightShadowShader->CreateUniform("gbuffer0");
 	pointLightShadowShader->CreateUniform("gbuffer1");
@@ -689,6 +728,8 @@ inline void RenderPathDeferred::CompilePointShadowShader(std::string vsPath, std
 	pointLightShadowShader->CreateUniform("lightIntensity");
 	pointLightShadowShader->CreateUniform("lightPosition");
 	pointLightShadowShader->CreateUniform("resolution");
+	pointLightShadowShader->CreateUniform("invProjMat");
+	pointLightShadowShader->CreateUniform("invViewMat");
 
 	fsContent.clear();
 	fsPath.clear();
@@ -708,7 +749,7 @@ inline void RenderPathDeferred::CompileSpotShader(std::string vsPath, std::strin
 	if (!spotLightShader->Compile())
 		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
 
-	spotLightShader->SetNumUniforms(14);
+	spotLightShader->SetNumUniforms(16);
 	spotLightShader->CreateUniform("eyePos");
 	spotLightShader->CreateUniform("gbuffer0");
 	spotLightShader->CreateUniform("gbuffer1");
@@ -723,6 +764,8 @@ inline void RenderPathDeferred::CompileSpotShader(std::string vsPath, std::strin
 	spotLightShader->CreateUniform("lightPosition");
 	spotLightShader->CreateUniform("lightDirection");
 	spotLightShader->CreateUniform("resolution");
+	spotLightShader->CreateUniform("invProjMat");
+	spotLightShader->CreateUniform("invViewMat");
 
 	fsContent.clear();
 	fsPath.clear();
@@ -742,7 +785,7 @@ inline void RenderPathDeferred::CompileSpotShadowShader(std::string vsPath, std:
 	if (!spotLightShadowShader->Compile())
 		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
 
-	spotLightShadowShader->SetNumUniforms(16);
+	spotLightShadowShader->SetNumUniforms(18);
 	spotLightShadowShader->CreateUniform("eyePos");
 	spotLightShadowShader->CreateUniform("gbuffer0");
 	spotLightShadowShader->CreateUniform("gbuffer1");
@@ -759,6 +802,8 @@ inline void RenderPathDeferred::CompileSpotShadowShader(std::string vsPath, std:
 	spotLightShadowShader->CreateUniform("lightPosition");
 	spotLightShadowShader->CreateUniform("lightDirection");
 	spotLightShadowShader->CreateUniform("resolution");
+	spotLightShadowShader->CreateUniform("invProjMat");
+	spotLightShadowShader->CreateUniform("invViewMat");
 
 	fsContent.clear();
 	fsPath.clear();
@@ -796,14 +841,9 @@ inline void RenderPathDeferred::CompileSkyShader() {
 	fsPath.clear();
 }
 
-inline void RenderPathDeferred::CompileDebugShader() {
-	std::string vsPath = "../shaders/overlay.glvs";
+inline void RenderPathDeferred::CompileDebugShader(std::string vsPath, std::string vsContent) {
 	std::string fsPath = "../shaders/debug/debug.glfs";
-
-	std::string vsContent, fsContent;
-	if (!ReadFileIncludable(vsPath, vsContent))
-		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
-
+	std::string fsContent;
 	if (!ReadFileIncludable(fsPath, fsContent))
 		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
 
@@ -816,13 +856,15 @@ inline void RenderPathDeferred::CompileDebugShader() {
 	if (!debugShader->Compile())
 		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
 
-	debugShader->SetNumUniforms(6);
+	debugShader->SetNumUniforms(8);
 	debugShader->CreateUniform("gbuffer0");
 	debugShader->CreateUniform("gbuffer1");
 	debugShader->CreateUniform("gbuffer2");
 	debugShader->CreateUniform("gbuffer3");
 	debugShader->CreateUniform("texRefl");
 	debugShader->CreateUniform("debugMode");
+	debugShader->CreateUniform("invProjMat");
+	debugShader->CreateUniform("invViewMat");
 
 	vsContent.clear();
 	fsContent.clear();
@@ -830,14 +872,9 @@ inline void RenderPathDeferred::CompileDebugShader() {
 	fsPath.clear();
 }
 
-inline void RenderPathDeferred::CompilePostShader() {
-	std::string vsPath = "../shaders/overlay.glvs";
+inline void RenderPathDeferred::CompilePostShader(std::string vsPath, std::string vsContent) {
 	std::string fsPath = "../shaders/post.glfs";
-	
-	std::string vsContent, fsContent;
-	if (!ReadFileIncludable(vsPath, vsContent))
-		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
-
+	std::string fsContent;
 	if (!ReadFileIncludable(fsPath, fsContent))
 		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
 
@@ -877,8 +914,7 @@ inline void RenderPathDeferred::BuildPostFBO() {
 	postFBO->Generate();
 }
 
-inline void RenderPathDeferred::CompileSSAO() {
-	std::vector<glm::vec3> kernels;
+inline void RenderPathDeferred::CompileSSAO(std::string vsPath, std::string vsContent) {
 	kernels.reserve(64);
 	for (int i = 0; i < 64; i++) {
 		glm::vec3 sample;
@@ -900,8 +936,31 @@ inline void RenderPathDeferred::CompileSSAO() {
 			2.0f * (float)(rand()) / (float)(RAND_MAX) - 1.0f));
 	}
 
-	ssaoNoiseTex = pfnCreateTexture();
-	ssaoNoiseTex->CreateTexture((unsigned char *)&ssaoNoise[0], COLOR_RG, 4, 4);
+	ssaoNoiseTex = engine.textureManager.LoadTexture("../materials/ssaoNoise.png", COLOR_RGBA);
+
+	std::string fsContent, fsPath = "../shaders/ssao.glfs";
+
+	if (!ReadFileIncludable(fsPath, fsContent))
+		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
+
+	ssaoShader = pfnCreateShader();
+	ssaoShader->Initialize(2);
+	if (!ssaoShader->AddShader(&vsPath, &vsContent, SHADER_VERTEX))
+		fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
+	if (!ssaoShader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
+		fprintf(stderr, "Failed to add fragment shader %s.\n", fsPath.c_str());
+	if (!ssaoShader->Compile())
+		fprintf(stderr, "Failed to compile SSAO Program\n");
+
+	ssaoShader->SetNumUniforms(5);
+	ssaoShader->CreateUniform("gbuffer0");
+	ssaoShader->CreateUniform("gbuffer1");
+	ssaoShader->CreateUniform("gbuffer3");
+	ssaoShader->CreateUniform("noiseTex");
+	ssaoShader->CreateUniform("kernels");
+
+	fsContent.clear();
+	fsPath.clear();
 }
 
 void RenderPathDeferred::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {

@@ -22,11 +22,12 @@ uniform sampler2D lightShadow;
 uniform mat4 shadowMatrix;
 
 #include ../shaders/light.is
+#include ../shaders/depthToPos.is
 
 void main() {
 	vec2 UV			=  gl_FragCoord.xy/vec2(resolution.x, resolution.y);
 
-	vec4 Position	= texture(gbuffer0, UV);
+	vec3 Position	= WorldPosFromDepth(texture(gbuffer0, UV).r, UV);
 	vec4 Normal		= texture(gbuffer1, UV);
 	vec4 Albedo		= texture(gbuffer2, UV);
 	vec4 Specular	= texture(gbuffer3, UV);

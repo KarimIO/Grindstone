@@ -30,6 +30,8 @@ class RenderPathDeferred : public RenderPath {
 	ShaderProgram *skyShader;
 	ShaderProgram *postShader;
 	ShaderProgram *debugShader;
+	ShaderProgram *ssaoShader;
+	std::vector<glm::vec3> kernels;
 
 	ShaderProgram *directionalShadowShader;
 
@@ -49,12 +51,12 @@ class RenderPathDeferred : public RenderPath {
 	inline void CompileSpotShadowShader(std::string vsPath, std::string vsContent);
 
 	inline void CompileSkyShader();
-	inline void CompileDebugShader();
+	inline void CompileDebugShader(std::string vsPath, std::string vsContent);
+	inline void CompileSSAO(std::string vsPath, std::string vsContent);
 
-	inline void CompilePostShader();
+	inline void CompilePostShader(std::string vsPath, std::string vsContent);
 	inline void BuildPostFBO();
 
-	inline void CompileSSAO();
 public:
 	virtual void Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost);
 	RenderPathDeferred(GraphicsWrapper *gw, SModel *gc, STerrain *terrainSystem);
