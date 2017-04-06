@@ -395,6 +395,7 @@ bool LoadLevel(std::string path) {
 	std::ifstream input(path.c_str());
 	rapidjson::IStreamWrapper isw(input);
 	reader.Parse(isw, handler);
+	input.close();
 
 	return true;
 }

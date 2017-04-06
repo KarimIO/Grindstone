@@ -4,6 +4,8 @@
 #include "../Core/TextureManager.h"
 #include "../Core/GraphicsDLLPointer.h"
 
+#include <fstream>
+
 struct UniformBuffer {
 	glm::mat4 pvmMatrix;
 	glm::mat4 modelMatrix;
@@ -102,8 +104,7 @@ void SwitchSlashes(std::string &path) {
 	}
 }
 
-void SModel::InitMaterials(const aiScene* scene, std::string Dir, std::vector<Material *> &materials)
-{
+void SModel::InitMaterials(const aiScene* scene, std::string Dir, std::vector<Material *> &materials) {
 	std::string finalDir = Dir;
 	finalDir = finalDir.substr(0, finalDir.find_last_of('/'));
 

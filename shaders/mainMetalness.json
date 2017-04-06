@@ -1,0 +1,44 @@
+{
+    "name": "Main Shader (Metalness + Roughness Worflow)",
+    "shaders": {
+        "vertex": "main.glvs",
+        "fragment": "mainMetalness.glfs"
+    },
+    "properties": {
+        "albedoTexture": {
+            "name": "Albedo Texture",
+            "type": "texture",
+            "default": ""
+        },
+        "normalTexture": {
+            "name": "Normal Texture",
+            "type": "texture",
+            "default": ""
+        },
+        "roughnessTexture": {
+            "name": "Roughness Texture",
+            "type": "texture",
+            "default": ""
+        },
+        "metalnessTexture": {
+            "name": "Metalness Texture",
+            "type": "texture",
+            "default": ""
+        },
+        "albedoConstant": {
+            "name": "Albedo Color",
+            "type": "color",
+            "default": [1.0, 1.0, 1.0]
+        },
+        "metalnessConstant": {
+            "name": "Metalness",
+            "type": "constant",
+            "default": 0.0
+        },
+        "roughnessConstant": {
+            "name": "Roughness",
+            "type": "constant",
+            "default": 0.5
+        }
+    }
+}
