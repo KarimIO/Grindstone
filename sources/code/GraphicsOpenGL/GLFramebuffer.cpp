@@ -28,8 +28,8 @@ void GLFramebuffer::AddBuffer(unsigned int colorType, unsigned int colorFormat, 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexImage2D(GL_TEXTURE_2D, 0, colorType, width, height, 0, colorFormat, colorDataType, NULL);
-	//glGenerateMipmap(GL_TEXTURE_2D);
 	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + targetBuffer, GL_TEXTURE_2D, textures[targetBuffer], 0);
+	glGenerateMipmap(GL_TEXTURE_2D);
 	targetBuffer++;
 }
 
@@ -83,6 +83,12 @@ void GLFramebuffer::AddDepthCubeBuffer(unsigned int width, unsigned int height) 
 
 	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthBuffer, 0);
 	//glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+}
+
+void GLFramebuffer::GenerateMipmap(int i) {
+	glBindTexture(GL_TEXTURE_2D, textures[i]);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void GLFramebuffer::Generate() {

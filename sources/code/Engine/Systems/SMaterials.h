@@ -16,7 +16,7 @@ class MaterialSystem {
 	void SetParameter(unsigned index, void *dataPtr);
 public:
 	void ParseMaterialFile(const char *path);
-	void ParseMaterialManifest(const char *path);
+	//void ParseMaterialManifest(const char *path);
 };
 
 #endif

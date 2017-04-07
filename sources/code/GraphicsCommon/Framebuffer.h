@@ -80,6 +80,7 @@ public:
 
 	virtual void TestBlit(unsigned int x, unsigned int y, unsigned int srcWidth, unsigned int srcHeight, unsigned int width, unsigned int height, bool depth) = 0;
 	virtual void SetAttachment(unsigned int a) = 0;
+	virtual void GenerateMipmap(int i) = 0;
 };
 
 extern "C" GRAPHICS_EXPORT Framebuffer* createFramebuffer();

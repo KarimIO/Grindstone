@@ -34,6 +34,8 @@ struct ParameterDescriptor {
 	std::string description;
 	PARAM_TYPE paramType;
 	void *dataPtr;
+	ParameterDescriptor(std::string _desc, PARAM_TYPE _type, void *_ptr);
+	ParameterDescriptor();
 };
 
 struct ShaderFile {
@@ -43,9 +45,10 @@ struct ShaderFile {
 
 class ShaderManager {
 	//std::vector<Shader *> shaders;
-	std::vector<ShaderFile> shaderFiles;
+	std::map<std::string, ShaderFile> shaderFiles;
 public:
-	void ParseShaderFile(const char *path);
+	ShaderProgram *ParseShaderFile(const char *path);
+	ShaderProgram *CreateShaderFromPaths(const char * name, const char * vsPath, const char * fsPath, const char * gsPath, const char * csPath, const char * tesPath, const char * tcsPath);
 };
 
 #endif

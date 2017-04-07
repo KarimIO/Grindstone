@@ -149,6 +149,10 @@ void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view, glm:
 	graphicsWrapper->SetBlending(false);
 	geometryCache->Draw(projection, view);
 	terrainSystem->Draw(projection, view, eyePos);
+	fbo->GenerateMipmap(0);
+	fbo->GenerateMipmap(1);
+	fbo->GenerateMipmap(2);
+	fbo->GenerateMipmap(3);
 	fbo->Unbind();
 }
 

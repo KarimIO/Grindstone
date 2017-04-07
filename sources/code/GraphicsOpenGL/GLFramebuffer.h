@@ -22,6 +22,7 @@ public:
 	virtual void Unbind();
 	virtual void TestBlit(unsigned int x, unsigned int y, unsigned int srcWidth, unsigned int srcHeight, unsigned int width, unsigned int height, bool depth);
 	virtual void SetAttachment(unsigned int a);
+	virtual void GenerateMipmap(int i);
 private:
 	unsigned int fbo;
 	unsigned int *textures;
