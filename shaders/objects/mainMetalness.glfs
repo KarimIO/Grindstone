@@ -51,5 +51,5 @@ void main() {
   position = vec4(Position,0);
   normal = vec4(encodeNormals(CalcBumpedNormal(Normal, NormalTex, Tangent)), 0, 0);
   albedo = vec4(mix(Albedo, vec3(0), Metalness), 0);
-  specular = vec4(mix(vec3(0.4), Albedo, Metalness), Roughness);
+  specular = vec4(mix(vec3(0.04), Albedo, Metalness), Roughness);
 }

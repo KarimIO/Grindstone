@@ -2,6 +2,7 @@
 #define _GL_SHADER_H
 
 #include "../GraphicsCommon/Shader.h"
+#include "../GraphicsCommon/UniformBuffer.h"
 
 class GLShaderProgram : public ShaderProgram {
 public:
@@ -27,12 +28,15 @@ public:
 	virtual void CreateUniform(const char *);
 	virtual void PassData(void *);
 
+	void PrepareBuffer(const char *name, UniformBuffer *buffer, unsigned int location);
+
 	virtual void SetUniform4m();
 	virtual void SetUniformFloat();
 	virtual void SetInteger();
 	virtual void SetVec4();
 	virtual void SetVec3();
 	virtual void SetVec2();
+	virtual void SetFloatArray(unsigned int size);
 
 	virtual void Cleanup();
 };

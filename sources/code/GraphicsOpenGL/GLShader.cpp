@@ -1,5 +1,6 @@
 #include "gl3w.h"
 #include "GLShader.h"
+#include "GLUniformBuffer.h"
 #include <vector>
 #include <iostream>
 #define GLM_FORCE_RADIANS
@@ -86,6 +87,14 @@ bool GLShaderProgram::Compile() {
 	return true;
 }
 
+void GLShaderProgram::PrepareBuffer(const char *name, UniformBuffer *buffer, unsigned int location) {
+	GLuint index = glGetUniformBlockIndex(program, name);
+	glUniformBlockBinding(program, index, 2);
+
+	GLUniformBuffer *glBuffer = (GLUniformBuffer *)buffer;
+	glBindBufferBase(GL_UNIFORM_BUFFER, 2, glBuffer->block);
+}
+
 bool GLShaderProgram::Validate() {
 	glValidateProgram(program);
 	GLint result = 0;
@@ -156,6 +165,11 @@ void GLShaderProgram::SetInteger() {
 	int data = *(int *)(dataPtr);
 	glUniform1i(uniforms[uniformCounter++], data);
 	dataPtr += sizeof(int);
+}
+
+void GLShaderProgram::SetFloatArray(unsigned int size) {
+	glUniform3fv(uniforms[uniformCounter++], size, (GLfloat *)dataPtr);
+	dataPtr += sizeof(GLfloat)*size;
 }
 
 void GLShaderProgram::SetVec4() {

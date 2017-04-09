@@ -34,6 +34,7 @@ public:
 	virtual void SetVec4() = 0;
 	virtual void SetVec3() = 0;
 	virtual void SetVec2() = 0;
+	virtual void SetFloatArray(unsigned int size) = 0;
 
 	virtual void Cleanup() = 0;
 };

@@ -15,6 +15,7 @@ class RenderPathDeferred : public RenderPath {
 	Framebuffer *postFBO;
 
 	Texture *ssaoNoiseTex;
+	Texture *cube;
 
 	unsigned int numSkyIndices;
 
@@ -31,7 +32,6 @@ class RenderPathDeferred : public RenderPath {
 	ShaderProgram *postShader;
 	ShaderProgram *debugShader;
 	ShaderProgram *ssaoShader;
-	std::vector<glm::vec3> kernels;
 
 	ShaderProgram *directionalShadowShader;
 

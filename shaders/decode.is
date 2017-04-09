@@ -1,6 +1,14 @@
 uniform mat4 invProjMat;
 uniform mat4 invViewMat;
 
+const float near = 0.1; // projection matrix's near plane
+const float far = 100.0; // projection matrix's far plane
+float LinearizeDepth(float z)
+{
+    //float z = depth * 2.0 - 1.0; // back to NDC 
+    return (2.0 * near * far) / (far + near - z * (far - near));    
+}
+
 vec4 ViewPosFromDepth(float depth, vec2 TexCoord) {
     float z = depth * 2.0 - 1.0;
 

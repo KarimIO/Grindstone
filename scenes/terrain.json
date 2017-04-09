@@ -31,8 +31,19 @@
                 "componentType": "COMPONENT_LIGHT_POINT",
                 "castshadow": false,
                 "color": [0.2,1.0,0.3],
-                "brightness": 8.0,
-                "lightradius": 16.0
+                "brightness": 16.0,
+                "lightradius": 64.0
+            }]
+        },
+        {
+            "components": [{
+                "componentType": "COMPONENT_TRANSFORM"
+            }, {
+                "componentType": "COMPONENT_LIGHT_DIRECTIONAL",
+                "castshadow": true,
+                "color": [1.0,1.0,1.0],
+                "brightness": 200.0,
+                "sunradius": 32.0
             }]
         }
     ]

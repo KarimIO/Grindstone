@@ -14,6 +14,7 @@ struct IBLBufferDef {
 	glm::vec3 eyePos;
 	int gbuffer0;
 	int gbuffer1;
+	int gbuffer2;
 	int gbuffer3;
 	int cubemap;
 	glm::mat4 invProjMat;
@@ -135,9 +136,14 @@ struct DebugUniformBufferDef {
 struct SSAOUniformBufferDef {
 	int gbuffer0;
 	int gbuffer1;
+	int gbuffer2;
 	int gbuffer3;
-	glm::vec3 *kernels;
 	int texNormals;
+	glm::mat4 invProjMat;
+	glm::mat4 invViewMat;
+	glm::mat4 projection;
+	glm::vec3 eyePos;
+	float kernels[64*3];
 } ssaoUBO;
 
 void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
@@ -162,8 +168,10 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 	debugUBO.gbuffer2 = dirLightUBO.gbuffer2 = spotLightShadowUBO.gbuffer2 = spotLightUBO.gbuffer2 = pointLightShadowUBO.gbuffer2 = pointLightUBO.gbuffer2 = 2;
 	debugUBO.gbuffer3 = dirLightUBO.gbuffer3 = spotLightShadowUBO.gbuffer3 = spotLightUBO.gbuffer3 = pointLightShadowUBO.gbuffer3 = pointLightUBO.gbuffer3 = 3;
 
-	iblUBO.invProjMat = debugUBO.invProjMat = dirLightUBO.invProjMat = spotLightShadowUBO.invProjMat = spotLightUBO.invProjMat = pointLightShadowUBO.invProjMat = pointLightUBO.invProjMat = glm::inverse(projection);
-	iblUBO.invViewMat = debugUBO.invViewMat = dirLightUBO.invViewMat = spotLightShadowUBO.invViewMat = spotLightUBO.invViewMat = pointLightShadowUBO.invViewMat = pointLightUBO.invViewMat = glm::inverse(view);
+	ssaoUBO.invProjMat = iblUBO.invProjMat = debugUBO.invProjMat = dirLightUBO.invProjMat = spotLightShadowUBO.invProjMat = spotLightUBO.invProjMat = pointLightShadowUBO.invProjMat = pointLightUBO.invProjMat = glm::inverse(projection);
+	ssaoUBO.invViewMat = iblUBO.invViewMat = debugUBO.invViewMat = dirLightUBO.invViewMat = spotLightShadowUBO.invViewMat = spotLightUBO.invViewMat = pointLightShadowUBO.invViewMat = pointLightUBO.invViewMat = glm::inverse(view);
+
+	ssaoUBO.projection = projection;
 
 	fbo->ReadBind();
 	graphicsWrapper->SetDepth(0);
@@ -204,7 +212,7 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		return;
 	}
 
-	dirLightUBO.eyePos = spotLightUBO.eyePos = spotLightShadowUBO.eyePos = pointLightShadowUBO.eyePos = pointLightUBO.eyePos = eyePos;
+	ssaoUBO.eyePos = dirLightUBO.eyePos = spotLightUBO.eyePos = spotLightShadowUBO.eyePos = pointLightShadowUBO.eyePos = pointLightUBO.eyePos = eyePos;
 	spotLightUBO.resolution = spotLightShadowUBO.resolution = pointLightShadowUBO.resolution = pointLightUBO.resolution = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
 
 	graphicsWrapper->SetBlending(true);
@@ -228,7 +236,6 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 			
 			light->fbo->ReadBind();
 			light->fbo->BindDepthCube(4);
-			light->fbo->Unbind();
 
 			pointLightShadowShader->PassData(&pointLightShadowUBO);
 			pointLightShadowShader->SetVec3();
@@ -298,7 +305,6 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 
 			light->fbo->ReadBind();
 			light->fbo->BindDepth(4);
-			light->fbo->Unbind();
 
 			spotLightShadowShader->PassData(&spotLightShadowUBO);
 			spotLightShadowShader->SetVec3();
@@ -372,7 +378,6 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		if (light->castShadow) {
 			light->fbo->ReadBind();
 			light->fbo->BindDepth(4);
-			light->fbo->Unbind();
 		}
 
 		directionalLightShader->PassData(&dirLightUBO);
@@ -399,6 +404,7 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		iblUBO.eyePos = eyePos;
 		iblUBO.gbuffer0 = 0;
 		iblUBO.gbuffer1 = 1;
+		iblUBO.gbuffer2 = 2;
 		iblUBO.gbuffer3 = 3;
 		iblUBO.cubemap = 4;
 
@@ -417,6 +423,7 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		iblShader->SetInteger();
 		iblShader->SetInteger();
 		iblShader->SetInteger();
+		iblShader->SetInteger();
 		iblShader->SetUniform4m();
 		iblShader->SetUniform4m();
 
@@ -425,39 +432,68 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		vaoQuad->Unbind();
 	}
 
-	fbo->Unbind(); // To bind Draw to 0
+	/*bool useSSAO = true;
+	if (useSSAO) {
+		graphicsWrapper->Clear(CLEAR_ALL);
+		graphicsWrapper->SetBlending(false);
+
+		ssaoUBO.gbuffer0 = 0;
+		ssaoUBO.gbuffer1 = 1;
+		ssaoUBO.gbuffer2 = 2;
+		ssaoUBO.gbuffer3 = 3;
+		ssaoUBO.texNormals = 4;
+
+		ssaoNoiseTex->Bind(4);
+		
+		ssaoShader->Use();
+
+		ssaoShader->PassData(&ssaoUBO);
+		ssaoShader->SetInteger();
+		ssaoShader->SetInteger();
+		ssaoShader->SetInteger();
+		ssaoShader->SetInteger();
+		ssaoShader->SetInteger();
+		ssaoShader->SetUniform4m();
+		ssaoShader->SetUniform4m();
+		ssaoShader->SetUniform4m();
+		ssaoShader->SetVec3();
+		ssaoShader->SetFloatArray(64);
+
+		vaoQuad->Bind();
+		graphicsWrapper->DrawVertexArray(4);
+		vaoQuad->Unbind();
+	}*/
+
+	graphicsWrapper->SetBlending(false);
+
 	fbo->ReadBind();
-	fbo->TestBlit(0, 0, engine.settings.resolutionX, engine.settings.resolutionX, engine.settings.resolutionX, engine.settings.resolutionY, true);
+	fbo->TestBlit(0, 0, engine.settings.resolutionX, engine.settings.resolutionY, engine.settings.resolutionX, engine.settings.resolutionY, true);
 	fbo->Unbind();
 
-	bool drawSky = false;
+	bool drawSky = true;
 	if (drawSky) {
 		skyShader->Use();
-		skydefUBO.gWVP = projection * glm::mat4(glm::mat3(view));
+		skydefUBO.gWVP = projection * view; // glm::mat4(glm::mat3(view));
 		skydefUBO.time = (float)engine.GetTimeCurrent();
 		skyShader->PassData(&skydefUBO);
 		skyShader->SetUniform4m();
 		skyShader->SetUniformFloat();
 
 		graphicsWrapper->SetDepth(2);
-		graphicsWrapper->SetBlending(false);
-
 		vaoSphere->Bind();
-		graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(sizeof(unsigned int) * 0), 0, numSkyIndices);
+		graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, 0, 0, numSkyIndices);
 		vaoSphere->Unbind();
 		graphicsWrapper->SetDepth(1);
 	}
 }
 
 void RenderPathDeferred::PostPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
-	//return;
-	
-	/*postUBO.texLoc0 = 0;
+	return;
+	postUBO.texLoc0 = 0;
 	postUBO.texLoc1 = 1;
 	postUBO.texLoc2 = 2;
 
 	fbo->ReadBind();
-	graphicsWrapper->SetDepth(0);
 	postShader->Use();
 
 	fbo->BindTexture(0);
@@ -474,7 +510,7 @@ void RenderPathDeferred::PostPass(glm::mat4 projection, glm::mat4 view, glm::vec
 	vaoQuad->Bind();
 	graphicsWrapper->DrawVertexArray(4);
 	vaoQuad->Unbind();
-	fbo->Unbind();*/
+	fbo->Unbind();
 }
 
 RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerrain *ts) {
@@ -490,8 +526,8 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 	CompileDirectionalShader(vsPath, vsContent);
 	CompileIBLShader(vsPath, vsContent);
 	CompileDebugShader(vsPath, vsContent);
-	//CompileSSAO(vsPath, vsContent);
-	//CompilePostShader(vsPath, vsContent);
+	CompileSSAO(vsPath, vsContent);
+	CompilePostShader(vsPath, vsContent);
 
 	vsPath.clear();
 	vsContent.clear();
@@ -507,6 +543,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerra
 
 	BuildPostFBO();
 
+	cube = engine.textureManager.LoadCubemap("../materials/skybox/Cliff", ".tga", COLOR_RGB);
 }
 
 inline void RenderPathDeferred::BuildQuad() {
@@ -654,10 +691,11 @@ inline void RenderPathDeferred::CompileIBLShader(std::string vsPath, std::string
 	if (!iblShader->Compile())
 		fprintf(stderr, "Failed to compile IBL Program\n");
 
-	iblShader->SetNumUniforms(7);
+	iblShader->SetNumUniforms(8);
 	iblShader->CreateUniform("eyePos");
 	iblShader->CreateUniform("gbuffer0");
 	iblShader->CreateUniform("gbuffer1");
+	iblShader->CreateUniform("gbuffer2");
 	iblShader->CreateUniform("gbuffer3");
 	iblShader->CreateUniform("texRefl");
 	iblShader->CreateUniform("invProjMat");
@@ -894,9 +932,9 @@ inline void RenderPathDeferred::CompilePostShader(std::string vsPath, std::strin
 		fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
 
 	postShader->SetNumUniforms(3);
-	postShader->CreateUniform("texPosition");
-	postShader->CreateUniform("texNormals");
-	postShader->CreateUniform("texDeferLit");
+	postShader->CreateUniform("gbuffer0");
+	postShader->CreateUniform("gbuffer1");
+	postShader->CreateUniform("gbuffer2");
 
 	vsContent.clear();
 	fsContent.clear();
@@ -921,7 +959,7 @@ inline void RenderPathDeferred::BuildPostFBO() {
 }
 
 inline void RenderPathDeferred::CompileSSAO(std::string vsPath, std::string vsContent) {
-	kernels.reserve(64);
+
 	for (int i = 0; i < 64; i++) {
 		glm::vec3 sample;
 		float angleX = 6.28318f * (float)(rand()) / (float)(RAND_MAX);
@@ -930,8 +968,10 @@ inline void RenderPathDeferred::CompileSSAO(std::string vsPath, std::string vsCo
 		float angleY = 3.14159f * (float)(rand()) / (float)(RAND_MAX);
 		sample.z = glm::sin(angleY);
 		float distance = (float)(rand()) / (float)(RAND_MAX);
-		sample /= distance;
-		kernels.push_back(sample);
+		sample *= glm::clamp(distance*distance, 0.1f, 1.0f);
+		ssaoUBO.kernels[i * 3  ] = sample.x;
+		ssaoUBO.kernels[i * 3+1] = sample.y;
+		ssaoUBO.kernels[i * 3+2] = sample.z;
 	}
 
 	std::vector<glm::vec2> ssaoNoise;
@@ -958,12 +998,23 @@ inline void RenderPathDeferred::CompileSSAO(std::string vsPath, std::string vsCo
 	if (!ssaoShader->Compile())
 		fprintf(stderr, "Failed to compile SSAO Program\n");
 
-	ssaoShader->SetNumUniforms(5);
+	ssaoShader->SetNumUniforms(10);
 	ssaoShader->CreateUniform("gbuffer0");
 	ssaoShader->CreateUniform("gbuffer1");
+	ssaoShader->CreateUniform("gbuffer2");
 	ssaoShader->CreateUniform("gbuffer3");
 	ssaoShader->CreateUniform("noiseTex");
+	ssaoShader->CreateUniform("invProjMat");
+	ssaoShader->CreateUniform("invViewMat");
+	ssaoShader->CreateUniform("projection");
+	ssaoShader->CreateUniform("eyePos");
 	ssaoShader->CreateUniform("kernels");
+
+	ssaoUBO.gbuffer0 = 0;
+	ssaoUBO.gbuffer1 = 1;
+	ssaoUBO.gbuffer2 = 2;
+	ssaoUBO.gbuffer3 = 3;
+	ssaoUBO.texNormals = 4;
 
 	fsContent.clear();
 	fsPath.clear();

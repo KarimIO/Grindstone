@@ -21,7 +21,7 @@ uniform mat4 shadowMatrix;
 #include ../shaders/decode.is
 
 void main() {
-	vec2 UV			=  gl_FragCoord.xy/vec2(resolution.x, resolution.y);
+	vec2 UV			 =  gl_FragCoord.xy/vec2(resolution.x, resolution.y);
 
 	vec4 gbuffer0Val = texture(gbuffer0, UV);
 	vec4 gbuffer1Val = texture(gbuffer1, UV);

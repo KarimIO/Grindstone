@@ -6,7 +6,7 @@
 
 #include <fstream>
 
-struct UniformBuffer {
+struct ModelUBO {
 	glm::mat4 pvmMatrix;
 	glm::mat4 modelMatrix;
 	glm::mat4 viewMatrix;

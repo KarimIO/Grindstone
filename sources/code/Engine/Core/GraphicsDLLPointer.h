@@ -7,12 +7,14 @@
 #include <Shader.h>
 #include <Texture.h>
 #include <Framebuffer.h>
+#include <UniformBuffer.h>
 
 extern VertexArrayObject*	(*pfnCreateVAO)();
 extern VertexBufferObject*	(*pfnCreateVBO)();
 extern ShaderProgram*		(*pfnCreateShader)();
 extern Texture*				(*pfnCreateTexture)();
 extern Framebuffer*			(*pfnCreateFramebuffer)();
+extern UniformBuffer*		(*pfnCreateUniformBuffer)();
 extern void					(*pfnDeleteGraphicsPointer)(void *);
 
 #endif

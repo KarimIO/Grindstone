@@ -17,6 +17,7 @@ VertexBufferObject*	(*pfnCreateVBO)();
 ShaderProgram*		(*pfnCreateShader)();
 Texture*			(*pfnCreateTexture)();
 Framebuffer*		(*pfnCreateFramebuffer)();
+UniformBuffer*		(*pfnCreateUniformBuffer)();
 void				(*pfnDeleteGraphicsPointer)(void *ptr);
 
 bool Engine::Initialize() {
@@ -325,6 +326,12 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 		return false;
 	}
 
+	pfnCreateUniformBuffer = (UniformBuffer* (*)())dlsym(lib_handle, "createUniformBuffer");
+	if (!pfnCreateUniformBuffer) {
+		fprintf(stderr, "%s\n", dlerror());
+		return false;
+	}
+
 	pfnDeleteGraphicsPointer = (void (*)(void*))dlsym(lib_handle, "deletePointer");
 	if (!pfnDeleteGraphicsPointer) {
 		fprintf(stderr, "%s\n", dlerror());
@@ -379,6 +386,12 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	pfnCreateFramebuffer = (Framebuffer* (*)())GetProcAddress(dllHandle, "createFramebuffer");
 	if (!pfnCreateFramebuffer) {
 		fprintf(stderr, "Cannot get createFramebuffer function!\n");
+		return false;
+	}
+
+	pfnCreateUniformBuffer = (UniformBuffer* (*)())GetProcAddress(dllHandle, "createUniformBuffer");
+	if (!pfnCreateUniformBuffer) {
+		fprintf(stderr, "Cannot get createUniformBuffer function!\n");
 		return false;
 	}
 
