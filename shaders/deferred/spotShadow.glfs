@@ -24,6 +24,27 @@ uniform mat4 shadowMatrix;
 #include ../shaders/light.is
 #include ../shaders/decode.is
 
+float ShadowCalculation(vec4 fragPosLightSpace, float NL) {
+	float bias = 0.005; //max(0.05 * (1.0 - NL), 0.005);
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    float currentDepth = projCoords.z;
+
+	float shadow = 0.0;
+	vec2 texelSize = 1.0 / textureSize(lightShadow, 0);
+	for(int x = -1; x <= 1; ++x)
+	{
+		for(int y = -1; y <= 1; ++y)
+		{
+			float pcfDepth = texture(lightShadow, projCoords.xy + vec2(x, y) * texelSize).r; 
+			shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
+		}    
+	}
+	
+	shadow = (projCoords.z > 1.0) ? (0.0) : (shadow/9.0);
+
+    return shadow;
+}
+
 void main() {
 	vec2 UV			=  gl_FragCoord.xy/vec2(resolution.x, resolution.y);
 
@@ -33,7 +54,7 @@ void main() {
 	vec4 gbuffer3Val = texture(gbuffer3, UV);
 
 	vec3 Position	= WorldPosFromDepth(gbuffer0Val.r, UV);
-	vec3 Normal		= decodeNormal(gbuffer1Val.rg);
+	vec3 Normal		= decodeNormal(gbuffer1Val.rgb);
 	vec4 Albedo		= gbuffer2Val;
 	vec4 Specular	= gbuffer3Val;
 
@@ -47,19 +68,14 @@ void main() {
 	vec3 lightDir = normalize(Position.xyz-lightPosition);
 
 	vec4 depthmapPos = (shadowMatrix * vec4(Position.xyz,1));
-	float bias = max(0.05 * (1.0 - dot(Normal.xyz, lightDir)), 0.005);  
-	float shadow = 0;
-	vec2 ShadowCoord = depthmapPos.xy/depthmapPos.w;
-	vec2 texelSize = 1.0 / textureSize(lightShadow, 0);
-	float pcfDepth = texture(lightShadow, ShadowCoord.xy).r; 
-	shadow = (depthmapPos.z - bias)/depthmapPos.w > pcfDepth ? 1.0 : 0.0;  
+	float shadow = ShadowCalculation(depthmapPos, dot(Normal, lightDirection));
 
 	float maxDot = cos(lightInnerAngle);
 	float minDot = cos(lightOuterAngle);
 	float dotPR = dot(lightDir, lightDirection);
 	dotPR = clamp((dotPR-minDot)/(maxDot-minDot), 0, 1);
 	if (dotPR > 0) {
-		colorOut = hdrGammaTransform((1-shadow)*colorOut.rgb)*dotPR;
+		colorOut = hdrGammaTransform((1.0-shadow)*colorOut.rgb)*dotPR;
 	}
 	else {
 		colorOut = vec3(0,0,0);

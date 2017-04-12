@@ -30,6 +30,12 @@ class InputInterface;
 #define CLEAR_COLOR 1
 #define CLEAR_DEPTH 2
 
+#define COLOR_MASK_RED 0x1
+#define COLOR_MASK_GREEN 0x2
+#define COLOR_MASK_BLUE 0x4
+#define COLOR_MASK_ALPHA 0x8
+#define COLOR_MASK_ALL COLOR_MASK_RED | COLOR_MASK_GREEN | COLOR_MASK_BLUE | COLOR_MASK_ALPHA
+
 enum ShapeType {
 	SHAPE_POINTS = 0,
 	SHAPE_LINES,
@@ -70,6 +76,7 @@ public:
 	virtual void SwapBuffer();
 	virtual void SetResolution(int x, int y, uint32_t width, uint32_t height);
 	virtual void Clear(unsigned int clearTarget);
+	virtual void SetColorMask(unsigned char mask);
 	virtual void SetDepth(int state);
 	virtual void SetCull(CullType state);
 	virtual void SetBlending(bool state);

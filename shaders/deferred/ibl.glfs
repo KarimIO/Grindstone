@@ -77,7 +77,7 @@ void main() {
 
 	vec3 Position	= WorldPosFromDepth(gbuffer0Val.r, UV);
 	vec3 CamPos		= ViewPosFromDepth(gbuffer0Val.r, UV).xyz;
-	vec3 Normal		= decodeNormal(gbuffer1Val.rg);
+	vec3 Normal		= decodeNormal(gbuffer1Val.rgb);
 	vec3 Albedo		= gbuffer2Val.rgb;
 	vec4 Specular	= gbuffer3Val;
 
@@ -97,4 +97,6 @@ void main() {
 
 		colorOut = Kdiff + Kspec; //CalculateIBL(Position.xyz, Normal.xyz, Specular);
 	}
+
+	colorOut = gbuffer2Val.w * vec3(1,0,0);
 }

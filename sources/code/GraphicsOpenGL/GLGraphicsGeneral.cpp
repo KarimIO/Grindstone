@@ -73,6 +73,10 @@ void GraphicsWrapper::Clear(unsigned int clearTarget) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
+void GraphicsWrapper::SetColorMask(unsigned char mask) {
+	glColorMask(COLOR_MASK_RED & mask, COLOR_MASK_GREEN & mask, COLOR_MASK_BLUE & mask, COLOR_MASK_ALPHA & mask);
+}
+
 void GraphicsWrapper::SetDepth(int state) {
 	if (state == 1) {
 		glEnable(GL_DEPTH_TEST);

@@ -111,8 +111,8 @@ void SLight::DrawShadows() {
 		CTransform *transform = &engine.transformSystem.components[entity->components[COMPONENT_TRANSFORM]];
 		float time = (float)engine.GetTimeCurrent();
 		float ang = std::fmod(time / 4.0f, 360.0f);
-		transform->position = glm::vec3(0, 2.0 + glm::sin(ang) * 32.0f, glm::cos(ang) * 32.0f);
-		transform->angles = glm::vec3((ang+3.14159f), 0, 0);
+		transform->position = glm::vec3(0,0,0);
+		transform->angles = glm::vec3(ang, 0, 0);
 	}
 
 	for (size_t j = 0; j < directionalLights.size(); j++) {
@@ -121,10 +121,10 @@ void SLight::DrawShadows() {
 			unsigned int entityID = light->entityID;
 			EBase *entity = &engine.entities[entityID];
 			CTransform *transform = &engine.transformSystem.components[entity->components[COMPONENT_TRANSFORM]];
-			glm::mat4 proj = glm::ortho<float>(-64, 64, -64, 64, 0.1f, 64);
+			glm::mat4 proj = glm::ortho<float>(-32, 32, -32, 32, 0.1f, 64);
 			glm::mat4 view = glm::lookAt(
-				transform->GetPosition(),
-				transform->GetPosition()+ transform->GetForward(),
+				transform->GetForward()*32.0f,
+				glm::vec3(0),
 				transform->GetUp()
 			);
 

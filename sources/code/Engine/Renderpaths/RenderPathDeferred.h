@@ -20,6 +20,7 @@ class RenderPathDeferred : public RenderPath {
 	unsigned int numSkyIndices;
 
 	void GeometryPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos);
+	void SSAOPrepass(glm::mat4 projection);
 	void DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost);
 	void PostPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos);
 	ShaderProgram *iblShader;
@@ -32,6 +33,7 @@ class RenderPathDeferred : public RenderPath {
 	ShaderProgram *postShader;
 	ShaderProgram *debugShader;
 	ShaderProgram *ssaoShader;
+	ShaderProgram *ssaoBlurShader;
 
 	ShaderProgram *directionalShadowShader;
 

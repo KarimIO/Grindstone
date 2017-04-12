@@ -34,7 +34,7 @@ void main() {
         colorOut = vec4(texture(gbuffer1, UV).rg, 0, 1);
     }
     else if (debugMode == 5) {
-        vec2 n = texture(gbuffer1, UV).rg;
+        vec3 n = texture(gbuffer1, UV).rgb;
         colorOut = vec4(decodeNormal(n), 1);
     }
     else if (debugMode == 6) {
