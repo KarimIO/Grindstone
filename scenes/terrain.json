@@ -42,7 +42,7 @@
                 "componentType": "COMPONENT_LIGHT_DIRECTIONAL",
                 "castshadow": true,
                 "color": [1.0,1.0,1.0],
-                "brightness": 200.0,
+                "brightness": 20.0,
                 "sunradius": 32.0
             }]
         }

@@ -1,4 +1,4 @@
-#version 420 core
+#version 140
 
 out vec3 colorOut;
 
@@ -21,7 +21,8 @@ float computeLod(float roughness, uint numSamples, float NH) {
 }
 
 vec2 Hammersley(uint i, uint N) {
-	return vec2(float(i) / float(N), float(bitfieldReverse(i)) * 2.328306436538693e-10);
+	float bitRev = float(i); //bitfieldReverse(i);
+	return vec2(float(i) / float(N), bitRev * 2.328306436538693e-10);
 }
 
 vec3 MakeSample(vec2 E) {
@@ -45,7 +46,7 @@ vec3 radiance(vec3 N, vec3 V, vec4 Specular) {
 
 	vec3 fColor = vec3(0);
 	const uint NumSamples = uint(20);
-	for (uint i = 0; i < NumSamples; i++) {
+	for (uint i = uint(0); i < NumSamples; i++) {
 		vec2 Xi = Hammersley(i, NumSamples);
 		vec3 Li = MakeSample(Xi);
 		vec3 H = normalize(Li.x * TangentX + Li.y * TangentY + Li.z * N);

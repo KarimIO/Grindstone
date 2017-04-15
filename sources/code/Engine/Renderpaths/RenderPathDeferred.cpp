@@ -8,8 +8,6 @@
 
 #include <glm/gtx/transform.hpp>
 
-#define shad 
-
 struct IBLBufferDef {
 	glm::vec3 eyePos;
 	int gbuffer0;
@@ -153,17 +151,47 @@ struct SSAOBlurUniformBufferDef {
 void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
 	// Uses screen resolution due to framebuffer size
 	fbo->WriteBind();
+
+	if (graphicsWrapper->CheckForErrors())
+		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
+
+	graphicsWrapper->SetDepthMask(true);
+
+	if (graphicsWrapper->CheckForErrors())
+		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
+
 	graphicsWrapper->SetDepth(1);
+
+	if (graphicsWrapper->CheckForErrors())
+		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
+
 	graphicsWrapper->SetCull(CULL_BACK);
+
+	if (graphicsWrapper->CheckForErrors())
+		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
+
 	graphicsWrapper->Clear(CLEAR_ALL);
 	graphicsWrapper->SetBlending(false);
 	geometryCache->Draw(projection, view);
 	terrainSystem->Draw(projection, view, eyePos);
+
+	if (graphicsWrapper->CheckForErrors())
+		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
+
 	fbo->GenerateMipmap(0);
 	fbo->GenerateMipmap(1);
 	fbo->GenerateMipmap(2);
 	fbo->GenerateMipmap(3);
 	fbo->Unbind();
+
+	if (graphicsWrapper->CheckForErrors())
+		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
+
+	graphicsWrapper->SetDepthMask(false);
+	graphicsWrapper->SetDepth(0);
+
+	if (graphicsWrapper->CheckForErrors())
+		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
 }
 
 void RenderPathDeferred::SSAOPrepass(glm::mat4 projection) {
@@ -216,7 +244,7 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 	iblUBO.invProjMat = debugUBO.invProjMat = dirLightUBO.invProjMat = spotLightShadowUBO.invProjMat = spotLightUBO.invProjMat = pointLightShadowUBO.invProjMat = pointLightUBO.invProjMat = glm::inverse(projection);
 	ssaoUBO.invViewMat = iblUBO.invViewMat = debugUBO.invViewMat = dirLightUBO.invViewMat = spotLightShadowUBO.invViewMat = spotLightUBO.invViewMat = pointLightShadowUBO.invViewMat = pointLightUBO.invViewMat = glm::inverse(view);
 
-	graphicsWrapper->Clear(CLEAR_ALL);
+	graphicsWrapper->Clear(CLEAR_COLOR);
 
 	if (engine.debugMode != DEBUG_NONE) {
 		debugUBO.debugMode = engine.debugMode;
@@ -248,10 +276,17 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		return;
 	}
 
+	if (graphicsWrapper->CheckForErrors())
+		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
+
 	ssaoUBO.eyePos = dirLightUBO.eyePos = spotLightUBO.eyePos = spotLightShadowUBO.eyePos = pointLightShadowUBO.eyePos = pointLightUBO.eyePos = eyePos;
 	spotLightUBO.resolution = spotLightShadowUBO.resolution = pointLightShadowUBO.resolution = pointLightUBO.resolution = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
 
 	graphicsWrapper->SetBlending(true);
+	graphicsWrapper->SetDepthMask(false);
+
+	if (graphicsWrapper->CheckForErrors())
+		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
 
 	glm::mat4 pv = projection * view;
 	for (size_t i = 0; i < engine.lightSystem.pointLights.size(); i++) {
@@ -318,6 +353,9 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(sizeof(unsigned int) * 0), 0, numSkyIndices);
 		vaoSphere->Unbind();
 	}
+
+	if (graphicsWrapper->CheckForErrors())
+		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
 
 	for (size_t i = 0; i < engine.lightSystem.spotLights.size(); i++) {
 		unsigned int entityID = engine.lightSystem.spotLights[i].entityID;
@@ -399,6 +437,9 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		vaoSphere->Unbind();
 	}
 
+	if (graphicsWrapper->CheckForErrors())
+		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
+
 	directionalLightShader->Use();
 	for (size_t i = 0; i < engine.lightSystem.directionalLights.size(); i++) {
 		unsigned int entityID = engine.lightSystem.directionalLights[i].entityID;
@@ -436,8 +477,11 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		vaoQuad->Unbind();
 	}
 
+	if (graphicsWrapper->CheckForErrors())
+		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
+
 	if (usePost) {
-		graphicsWrapper->SetBlending(false);
+		//graphicsWrapper->SetBlending(false);
 
 		iblUBO.eyePos = eyePos;
 		iblUBO.gbuffer0 = 0;
@@ -470,27 +514,33 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		vaoQuad->Unbind();
 	}
 
-	/*graphicsWrapper->SetBlending(false);
+	graphicsWrapper->SetBlending(false);
+	graphicsWrapper->SetDepthMask(true);
+	graphicsWrapper->SetDepth(2);
 
+	fbo->Unbind();
 	fbo->ReadBind();
 	fbo->TestBlit(0, 0, engine.settings.resolutionX, engine.settings.resolutionY, engine.settings.resolutionX, engine.settings.resolutionY, true);
 	fbo->Unbind();
 
-	bool drawSky = false;
-	if (drawSky) {
-		skyShader->Use();
-		skydefUBO.gWVP = projection * view; // glm::mat4(glm::mat3(view));
-		skydefUBO.time = (float)engine.GetTimeCurrent();
-		skyShader->PassData(&skydefUBO);
-		skyShader->SetUniform4m();
-		skyShader->SetUniformFloat();
+	if (graphicsWrapper->CheckForErrors())
+		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
 
-		graphicsWrapper->SetDepth(2);
-		vaoSphere->Bind();
-		graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, 0, 0, numSkyIndices);
-		vaoSphere->Unbind();
-		graphicsWrapper->SetDepth(1);
-	}*/
+	skyShader->Use();
+	skydefUBO.gWVP = projection * glm::mat4(glm::mat3(view));
+	skydefUBO.time = (float)engine.GetTimeCurrent();
+	skyShader->PassData(&skydefUBO);
+	skyShader->SetUniform4m();
+	skyShader->SetUniformFloat();
+
+	vaoSphere->Bind();
+	graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, 0, 0, numSkyIndices);
+	vaoSphere->Unbind();
+
+	graphicsWrapper->SetDepth(1);
+
+	if (graphicsWrapper->CheckForErrors())
+		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
 }
 
 void RenderPathDeferred::PostPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
@@ -1075,7 +1125,7 @@ void RenderPathDeferred::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 ey
 	fbo->BindTexture(3);
 	fbo->Unbind();
 
-	SSAOPrepass(projection);
+	//SSAOPrepass(projection);
 	DeferredPass(projection, view, eyePos, usePost);
 	PostPass(projection, view, eyePos);
 }

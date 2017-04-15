@@ -83,6 +83,7 @@ public:
 	virtual void SetTesselation(int verts);
 	virtual void SetDepthMask(bool state);
 	virtual bool SupportsTesselation();
+	virtual bool CheckForErrors();
 #ifdef _WIN32
 	virtual void SetWindowContext(HWND);
 #endif

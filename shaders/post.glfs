@@ -1,4 +1,4 @@
-#version 410 core
+#version 140
 
 out vec3 color; 
 

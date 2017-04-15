@@ -157,15 +157,22 @@ bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY)
 		break;
 	}
 
+	RECT rect;
+	rect.left = 0;
+	rect.top = 0;
+	rect.right = resolutionX;
+	rect.bottom = resolutionX;
+	AdjustWindowRectEx(&rect, style, FALSE, styleEx);
+
 	window_handle = CreateWindowEx(
 		styleEx,
 		className,
 		title,
 		style,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		resolutionX,
-		resolutionY,
+		0,
+		0,
+		rect.right - rect.left,
+		rect.bottom - rect.top,
 		NULL,
 		NULL,
 		GetModuleHandle(NULL),

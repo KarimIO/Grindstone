@@ -132,7 +132,7 @@ void SLight::DrawShadows() {
 			engine.graphicsWrapper->SetResolution(0, 0, 2048, 2048);
 			light->fbo->WriteBind();
 			graphicsWrapper->SetDepth(1);
-			graphicsWrapper->SetCull(CULL_BACK);
+			graphicsWrapper->SetCull(CULL_FRONT);
 			graphicsWrapper->SetBlending(false);
 			graphicsWrapper->Clear(CLEAR_ALL);
 			geometryCache->Draw(proj, view);

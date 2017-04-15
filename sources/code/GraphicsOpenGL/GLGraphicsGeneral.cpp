@@ -95,7 +95,18 @@ void GraphicsWrapper::SetDepthMask(bool state) {
 }
 
 bool GraphicsWrapper::SupportsTesselation() {
-	return gl3wIsSupported(4, 0);
+	return gl3wIsSupported(4, 0)?true:false;
+}
+
+bool GraphicsWrapper::CheckForErrors() {
+	bool hadErrors = false;
+	GLenum err;
+	while ((err = glGetError()) != GL_NO_ERROR) {
+		std::cerr << "OpenGL error: " << err << std::endl;
+		hadErrors = true;
+	}
+
+	return hadErrors;
 }
 
 void GraphicsWrapper::SetTesselation(int verts) {

@@ -1,23 +1,23 @@
 #version 140
 
-uniform sampler2D input;
+uniform sampler2D SSAOin;
 
 const int uBlurSize = 4;
 
 in vec2 UV;
 
-out vec4 output;
+out vec4 SSAOout;
 
 void main() {
-   vec2 texelSize = 1.0 / vec2(textureSize(input, 0));
+   vec2 texelSize = 1.0 / vec2(textureSize(SSAOin, 0));
    float result = 0.0;
    vec2 hlim = vec2(float(-uBlurSize) * 0.5 + 0.5);
    for (int i = 0; i < uBlurSize; ++i) {
       for (int j = 0; j < uBlurSize; ++j) {
          vec2 offset = (hlim + vec2(float(i), float(j))) * texelSize;
-         result += texture(input, UV + offset).w;
+         result += texture(SSAOin, UV + offset).w;
       }
    }
  
-   output = vec4(texture(input, UV).rgb, result / float(uBlurSize * uBlurSize));
+   SSAOout = vec4(texture(SSAOin, UV).rgb, result / float(uBlurSize * uBlurSize));
 }

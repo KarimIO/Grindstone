@@ -1,8 +1,8 @@
-#version 410 core
+#version 140
 
 in vec2 UV;
 in vec4 vRay;
-out float output;
+out float SSAOout;
 
 const int kernelSize = 64;
 
@@ -61,5 +61,5 @@ void main() {
     }
 
     occlusion = 1.0 - (occlusion / kernelSize);
-    output = occlusion;
+    SSAOout = occlusion;
 }

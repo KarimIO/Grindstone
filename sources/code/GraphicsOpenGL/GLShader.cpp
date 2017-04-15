@@ -169,7 +169,7 @@ void GLShaderProgram::SetInteger() {
 
 void GLShaderProgram::SetFloatArray(unsigned int size) {
 	glUniform3fv(uniforms[uniformCounter++], size, (GLfloat *)dataPtr);
-	dataPtr += sizeof(GLfloat)*size;
+	dataPtr += sizeof(GLfloat) * 3 * size;
 }
 
 void GLShaderProgram::SetVec4() {

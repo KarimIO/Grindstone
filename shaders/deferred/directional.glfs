@@ -79,7 +79,7 @@ void main() {
 	vec3 L = (DdotR < d) ? normalize(d * lightDirection + normalize(S) * r) : eyeReflect;
 	vec3 illuminance = BSDF(NV, NL, LH, NH, alpha, Specular.rgb);
 	illuminance += Albedo.rgb*vec3(Diff_Disney(NV, NL, LH, alpha))/pi;
-	illuminance *= sunIlluminanceInLux * NL; // illuminance
+	illuminance *= NL; // illuminance
 	colorOut = (1.0 - shadow) * illuminance;
 	colorOut = hdrGammaTransform(colorOut.rgb);
 }
