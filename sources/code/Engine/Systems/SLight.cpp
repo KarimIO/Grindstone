@@ -47,6 +47,7 @@ void SLight::DrawShadows() {
 
 	//unsigned int i = iteration;
 	//if (i < pointLights.size()) {
+#if 0
 	for (size_t i = 0; i < pointLights.size(); i++) {
 		CPointLight *light = &pointLights[i];
 		if (light->castShadow) {
@@ -75,6 +76,7 @@ void SLight::DrawShadows() {
 			light->fbo->Unbind();
 		}
 	}
+#endif
 
 	//else if (i < spotLights.size() + pointLights.size()) {
 	//	i -= pointLights.size();

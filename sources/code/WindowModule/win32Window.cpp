@@ -161,7 +161,7 @@ bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY)
 	rect.left = 0;
 	rect.top = 0;
 	rect.right = resolutionX;
-	rect.bottom = resolutionX;
+	rect.bottom = resolutionY;
 	AdjustWindowRectEx(&rect, style, FALSE, styleEx);
 
 	window_handle = CreateWindowEx(
