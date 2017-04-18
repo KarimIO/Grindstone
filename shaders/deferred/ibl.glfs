@@ -98,6 +98,4 @@ void main() {
 
 		colorOut = Kdiff + Kspec; //CalculateIBL(Position.xyz, Normal.xyz, Specular);
 	}
-
-	colorOut = gbuffer2Val.w * vec3(1,0,0);
 }

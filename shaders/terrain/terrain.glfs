@@ -53,7 +53,7 @@ void main() {
     vec4 texAlbedo = TriNormalMapping(grassAlbedo, blending);
     vec4 texGeometry = TriNormalMapping(grassGeometry, blending);*/
 
-    /*vec3 Normal = Normal_FS; // CalcBumpedNormal(Normal_FS, texGeometry.xyz, Tangent_FS)
+    vec3 Normal = Normal_FS; // CalcBumpedNormal(Normal_FS, texGeometry.xyz, Tangent_FS)
     vec3 Albedo = vec3(1,1,1);
     float Roughness = 0.8;
     
@@ -82,10 +82,5 @@ void main() {
     position = vec4(WorldPos_FS, 1);
     albedo = vec4(Albedo,1);
     normal = vec4(Normal, 1);
-    specular = vec4(0.04, 0.04, 0.04, Roughness);*/
-
-    position = vec4(WorldPos_FS, 1);
-    albedo = vec4(0,1,0, 1);
-    normal = vec4(Normal_FS, 1);
-    specular = vec4(0.04, 0.04, 0.04, 0.5);
+    specular = vec4(0.04, 0.04, 0.04, Roughness);
 }

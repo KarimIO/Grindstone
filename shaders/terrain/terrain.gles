@@ -37,7 +37,7 @@ void main(void) {
     gl_Position = gVP * position;
 
     WorldPos_FS = position.xyz;
-    Normal_FS = terrainSample.rbg;
+    Normal_FS = normalize(terrainSample.rbg);
     Tangent_FS = GenerateTangent(Normal_FS);
     TexCoord0_FS = flatTexCoord;
 }
