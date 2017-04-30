@@ -2,6 +2,8 @@
 
 #include <fstream>
 
+#undef Bool
+
 #include "rapidjson/reader.h"
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/istreamwrapper.h"
@@ -28,7 +30,6 @@ enum SHADER_JSON_STATE {
 	SHADER_JSON_TESSCTRL
 };
 
-#undef Bool
 struct ShaderJSONHandler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>, ShaderJSONHandler> {
 private:
 	unsigned char subIterator;
@@ -310,23 +311,23 @@ public:
 	bool EndArray(rapidjson::SizeType elementCount) {return true;}
 };
 
-ShaderProgram *ShaderManager::CreateShaderFromPaths(const char * name, const char * vsPath, const char * fsPath, const char * gsPath, const char * csPath, const char * tesPath, const char * tcsPath) {
+ShaderProgram *ShaderManager::CreateShaderFromPaths(std::string name, std::string vsPath, std::string fsPath, std::string gsPath, std::string csPath, std::string tesPath, std::string tcsPath) {
 	std::string vsContent, fsContent, gsContent, csContent, tesContent, tcsContent;
 	int iterator = 2; // Must have at least a vertex and fragment shader.
 
 	if (!ReadFileIncludable(vsPath, vsContent)) {
-		fprintf(stderr, "Failed to read vertex shader %s of %s.\n", vsPath, name);
+		fprintf(stderr, "Failed to read vertex shader %s of %s.\n", vsPath.c_str(), name.c_str());
 		return NULL;
 	}
 
 	if (!ReadFileIncludable(fsPath, fsContent)) {
-		fprintf(stderr, "Failed to read fragment shader %s of %s.\n", fsPath, name);
+		fprintf(stderr, "Failed to read fragment shader %s of %s.\n", fsPath.c_str(), name.c_str());
 		return NULL;
 	}
 
 	if (gsPath != "") {
 		if (!ReadFileIncludable(gsPath, gsContent)) {
-			fprintf(stderr, "Failed to read geometry shader %s of %s.\n", gsPath, name);
+			fprintf(stderr, "Failed to read geometry shader %s of %s.\n", gsPath.c_str(), name.c_str());
 			return NULL;
 		}
 		iterator++;
@@ -334,7 +335,7 @@ ShaderProgram *ShaderManager::CreateShaderFromPaths(const char * name, const cha
 
 	if (csPath != "") {
 		if (!ReadFileIncludable(csPath, csContent)) {
-			fprintf(stderr, "Failed to read compute shader %s of %s.\n", csPath, name);
+			fprintf(stderr, "Failed to read compute shader %s of %s.\n", csPath.c_str(), name.c_str());
 			return NULL;
 		}
 		iterator++;
@@ -342,7 +343,7 @@ ShaderProgram *ShaderManager::CreateShaderFromPaths(const char * name, const cha
 
 	if (tesPath != "") {
 		if (!ReadFileIncludable(tesPath, tesContent)) {
-			fprintf(stderr, "Failed to read tesselation evaluation shader %s of %s.\n", tesPath, name);
+			fprintf(stderr, "Failed to read tesselation evaluation shader %s of %s.\n", tesPath.c_str(), name.c_str());
 			return NULL;
 		}
 		iterator++;
@@ -350,7 +351,7 @@ ShaderProgram *ShaderManager::CreateShaderFromPaths(const char * name, const cha
 
 	if (tcsPath != "") {
 		if (!ReadFileIncludable(tcsPath, tcsContent)) {
-			fprintf(stderr, "Failed to read tesselation control shader %s of %s.\n", tcsPath, name);
+			fprintf(stderr, "Failed to read tesselation control shader %s of %s.\n", tcsPath.c_str(), name.c_str());
 			return NULL;
 		}
 		iterator++;
@@ -358,54 +359,54 @@ ShaderProgram *ShaderManager::CreateShaderFromPaths(const char * name, const cha
 
 	ShaderProgram *program = pfnCreateShader();
 	program->Initialize(iterator);
-	if (!program->AddShader(&std::string(vsPath), &vsContent, SHADER_VERTEX)) {
-		fprintf(stderr, "Failed to add vertex shader %s of %s.\n", vsPath, name);
+	if (!program->AddShader(&vsPath, &vsContent, SHADER_VERTEX)) {
+		fprintf(stderr, "Failed to add vertex shader %s of %s.\n", vsPath.c_str(), name.c_str());
 		return NULL;
 	}
-	if (!program->AddShader(&std::string(fsPath), &fsContent, SHADER_FRAGMENT)) {
-		fprintf(stderr, "Failed to add fragment shader %s of %s.\n", fsPath, name);
+	if (!program->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT)) {
+		fprintf(stderr, "Failed to add fragment shader %s of %s.\n", fsPath.c_str(), name.c_str());
 		return NULL;
 	}
 	if (gsContent.size() > 0) {
-		if (!program->AddShader(&std::string(gsPath), &gsContent, SHADER_GEOMETRY)) {
-			fprintf(stderr, "Failed to add geometry shader %s of %s.\n", gsPath, name);
+		if (!program->AddShader(&gsPath, &gsContent, SHADER_GEOMETRY)) {
+			fprintf(stderr, "Failed to add geometry shader %s of %s.\n", gsPath.c_str(), name.c_str());
 			return NULL;
 		}
 	}
 	if (gsContent.size() > 0) {
-		if (!program->AddShader(&std::string(csPath), &csContent, SHADER_COMPUTE)) {
-			fprintf(stderr, "Failed to add control shader %s of %s.\n", csPath, name);
+		if (!program->AddShader(&csPath, &csContent, SHADER_COMPUTE)) {
+			fprintf(stderr, "Failed to add control shader %s of %s.\n", csPath.c_str(), name.c_str());
 			return NULL;
 		}
 	}
 	if (gsContent.size() > 0) {
-		if (!program->AddShader(&std::string(tesPath), &tesContent, SHADER_TESS_EVALUATION)) {
-			fprintf(stderr, "Failed to add tesselation evaluation shader %s of %s.\n", tesPath, name);
+		if (!program->AddShader(&tesPath, &tesContent, SHADER_TESS_EVALUATION)) {
+			fprintf(stderr, "Failed to add tesselation evaluation shader %s of %s.\n", tesPath.c_str(), name.c_str());
 			return NULL;
 		}
 	}
 	if (gsContent.size() > 0) {
-		if (!program->AddShader(&std::string(tcsPath), &tcsContent, SHADER_TESS_CONTROL)) {
-			fprintf(stderr, "Failed to add tesselation control shader %s of %s.\n", tcsPath, name);
+		if (!program->AddShader(&tcsPath, &tcsContent, SHADER_TESS_CONTROL)) {
+			fprintf(stderr, "Failed to add tesselation control shader %s of %s.\n", tcsPath.c_str(), name.c_str());
 			return NULL;
 		}
 	}
 	if (!program->Compile()) {
-		fprintf(stderr, "Failed to compile shader program: %s.\n", name);
+		fprintf(stderr, "Failed to compile shader program: %s.\n", name.c_str());
 		return NULL;
 	}
 
 	return program;
 }
 
-ShaderProgram *ShaderManager::ParseShaderFile(const char * path) {
+ShaderProgram *ShaderManager::ParseShaderFile(std::string path) {
 	rapidjson::Reader reader;
 	ShaderJSONHandler handler;
 	handler.fileMap = &shaderFiles;
 	std::ifstream input(path);
 	rapidjson::IStreamWrapper isw(input);
 	reader.Parse(isw, handler);
-	ShaderProgram *program = CreateShaderFromPaths(handler.szName.c_str(), handler.vertexShader.c_str(), handler.fragmentShader.c_str(), handler.geometryShader.c_str(), handler.computeShader.c_str(), handler.eTessShader.c_str(), handler.cTessShader.c_str());
+	ShaderProgram *program = CreateShaderFromPaths(handler.szName, handler.vertexShader, handler.fragmentShader, handler.geometryShader, handler.computeShader, handler.eTessShader, handler.cTessShader);
 	handler.file->program = program;
 	input.close();
 	return program;

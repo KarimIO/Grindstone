@@ -47,8 +47,8 @@ class ShaderManager {
 	//std::vector<Shader *> shaders;
 	std::map<std::string, ShaderFile> shaderFiles;
 public:
-	ShaderProgram *ParseShaderFile(const char *path);
-	ShaderProgram *CreateShaderFromPaths(const char * name, const char * vsPath, const char * fsPath, const char * gsPath, const char * csPath, const char * tesPath, const char * tcsPath);
+	ShaderProgram *ParseShaderFile(std::string path);
+	ShaderProgram *CreateShaderFromPaths(std::string name, std::string vsPath, std::string fsPath, std::string gsPath, std::string csPath, std::string tesPath, std::string tcsPath);
 };
 
 #endif

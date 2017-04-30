@@ -17,7 +17,9 @@ OBJ_SYSTEMS_FILES := $(addprefix sources/obj/Engine/Systems/,$(notdir $(CPP_SYST
 CPP_ENGINE_FILES := $(CPP_CORE_FILES) $(CPP_ENTS_FILES) $(CPP_RENDER_FILES) $(CPP_SYSTEMS_FILES)
 OBJ_ENGINE_FILES := $(OBJ_CORE_FILES) $(OBJ_ENTS_FILES) $(OBJ_RENDER_FILES) $(OBJ_SYSTEMS_FILES)
 
-INCLUDE_PATHS := -I sources/include/ -I sources/code/Engine/ -I sources/code/Engine/Core -I sources/code/Engine/Entities -I sources/code/Engine/Renderpaths -I sources/code/Engine/Systems -I sources/code/GraphicsOpenGL/ -I sources/code/WindowModule/  -I sources/code/GraphicsCommon/ -I sources/code/AudioModule/ -I sources/include/STB/ -I sources/include/rapidjson/include/
+INCLUDE_PATHS := -I sources/include/ -I sources/code/Engine/ -I sources/code/Engine/Core -I sources/code/Engine/Entities -I sources/code/Engine/Renderpaths -I sources/code/Engine/Systems -I sources/code/GraphicsOpenGL/ -I sources/code/WindowModule/  -I sources/code/GraphicsCommon/ -I sources/code/AudioModule/ -I sources/include/STB/ -I sources/include/rapidjson/include/ -I ../bullet/src/
+
+BULLET_LIBS := -L ../bullet/bin/libBulletCollision.a -L ../bullet/bin/libBulletDynamics.a -L ../bullet/bin/libLinearMath.a
 
 all: build
 
@@ -40,11 +42,11 @@ sources/obj/Engine/Renderpaths/%.o: sources/code/Engine/Renderpaths/%.cpp
 	
 sources/obj/Engine/Systems/%.o: sources/code/Engine/Systems/%.cpp
 	@mkdir -p sources/obj/Engine/Systems
-	@$(CC) $(INCLUDE_PATHS) $(CFLAGS) -fPIC -o $@ $< -ldl -lX11 -lassimp -lGL -std=c++11
+	@$(CC) $(INCLUDE_PATHS) $(CFLAGS) -fPIC -o $@ $< -ldl $(BULLET_LIBS) -lX11 -lassimp -lGL -std=c++11
 	
 Engine: $(OBJ_ENGINE_FILES)
 	@mkdir -p sources/obj/Engine
-	@$(CC) $^ -ldl -lassimp -o bin/Grindstone
+	@$(CC) $^ -ldl -lassimp $(BULLET_LIBS) -o bin/Grindstone
 	@echo "Grindstone successfully built."
 
 # Object Definitions
