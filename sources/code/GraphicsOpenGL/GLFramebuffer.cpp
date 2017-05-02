@@ -150,6 +150,14 @@ void GLFramebuffer::ReadBind() {
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
 }
 
+void GLFramebuffer::UnbindWrite() {
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+}
+
+void GLFramebuffer::UnbindRead() {
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+}
+
 void GLFramebuffer::Unbind() {
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);

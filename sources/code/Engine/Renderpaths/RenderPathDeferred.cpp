@@ -221,9 +221,9 @@ void RenderPathDeferred::SSAOPrepass(glm::mat4 projection) {
 	ssaoShader->SetFloatArray(64);
 
 	fbo->WriteBind();
-	vaoQuad->Bind();
+	engine.engine.vaoQuad->Bind();
 	graphicsWrapper->DrawVertexArray(4);
-	vaoQuad->Unbind();
+	engine.vaoQuad->Unbind();
 	fbo->Unbind();
 	graphicsWrapper->SetColorMask(COLOR_MASK_ALL);
 
@@ -234,15 +234,17 @@ void RenderPathDeferred::SSAOPrepass(glm::mat4 projection) {
 	ssaoBlurShader->PassData(&ssaoBlurUBO);
 	ssaoBlurShader->SetInteger();
 
-	vaoQuad->Bind();
+	engine.vaoQuad->Bind();
 	graphicsWrapper->DrawVertexArray(4);
-	vaoQuad->Unbind();*/
+	engine.vaoQuad->Unbind();*/
 	
 }
 
 void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {
 	iblUBO.invProjMat = debugUBO.invProjMat = dirLightUBO.invProjMat = spotLightShadowUBO.invProjMat = spotLightUBO.invProjMat = pointLightShadowUBO.invProjMat = pointLightUBO.invProjMat = glm::inverse(projection);
 	ssaoUBO.invViewMat = iblUBO.invViewMat = debugUBO.invViewMat = dirLightUBO.invViewMat = spotLightShadowUBO.invViewMat = spotLightUBO.invViewMat = pointLightShadowUBO.invViewMat = pointLightUBO.invViewMat = glm::inverse(view);
+
+	postFBO->WriteBind();
 
 	graphicsWrapper->Clear(CLEAR_COLOR);
 
@@ -255,7 +257,7 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 			if (light->castShadow) {
 				light->fbo->ReadBind();
 				light->fbo->BindDepth(4);
-				light->fbo->Unbind();
+				light->fbo->UnbindRead();
 			}
 		}
 
@@ -270,9 +272,9 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		debugShader->SetUniform4m();
 		debugShader->SetUniform4m();
 
-		vaoQuad->Bind();
+		engine.vaoQuad->Bind();
 		graphicsWrapper->DrawVertexArray(4);
-		vaoQuad->Unbind();
+		engine.vaoQuad->Unbind();
 		return;
 	}
 
@@ -307,6 +309,7 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 			
 			light->fbo->ReadBind();
 			light->fbo->BindDepthCube(4);
+			light->fbo->UnbindRead();
 
 			pointLightShadowShader->PassData(&pointLightShadowUBO);
 			pointLightShadowShader->SetVec3();
@@ -379,6 +382,7 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 
 			light->fbo->ReadBind();
 			light->fbo->BindDepth(4);
+			light->fbo->UnbindRead();
 
 			spotLightShadowShader->PassData(&spotLightShadowUBO);
 			spotLightShadowShader->SetVec3();
@@ -455,6 +459,7 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		if (light->castShadow) {
 			light->fbo->ReadBind();
 			light->fbo->BindDepth(4);
+			light->fbo->UnbindRead();
 		}
 
 		directionalLightShader->PassData(&dirLightUBO);
@@ -472,9 +477,9 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		directionalLightShader->SetUniform4m();
 		directionalLightShader->SetUniform4m();
 
-		vaoQuad->Bind();
+		engine.vaoQuad->Bind();
 		graphicsWrapper->DrawVertexArray(4);
-		vaoQuad->Unbind();
+		engine.vaoQuad->Unbind();
 	}
 
 	if (graphicsWrapper->CheckForErrors())
@@ -509,19 +514,20 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		iblShader->SetUniform4m();
 		iblShader->SetUniform4m();
 
-		vaoQuad->Bind();
+		engine.vaoQuad->Bind();
 		graphicsWrapper->DrawVertexArray(4);
-		vaoQuad->Unbind();
+		engine.vaoQuad->Unbind();
 	}
+
+	return; // Hide Sky for now
 
 	graphicsWrapper->SetBlending(false);
 	graphicsWrapper->SetDepthMask(true);
 	graphicsWrapper->SetDepth(2);
-
-	fbo->Unbind();
+	
 	fbo->ReadBind();
 	fbo->TestBlit(0, 0, engine.settings.resolutionX, engine.settings.resolutionY, engine.settings.resolutionX, engine.settings.resolutionY, true);
-	fbo->Unbind();
+	fbo->UnbindRead();
 
 	if (graphicsWrapper->CheckForErrors())
 		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
@@ -538,6 +544,8 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 	vaoSphere->Unbind();
 
 	graphicsWrapper->SetDepth(1);
+
+	postFBO->Unbind();
 
 	if (graphicsWrapper->CheckForErrors())
 		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
@@ -563,9 +571,9 @@ void RenderPathDeferred::PostPass(glm::mat4 projection, glm::mat4 view, glm::vec
 
 	graphicsWrapper->Clear(CLEAR_COLOR);
 
-	vaoQuad->Bind();
+	engine.vaoQuad->Bind();
 	graphicsWrapper->DrawVertexArray(4);
-	vaoQuad->Unbind();
+	engine.vaoQuad->Unbind();
 	fbo->Unbind();
 }
 
@@ -615,15 +623,15 @@ inline void RenderPathDeferred::BuildQuad() {
 		1, 1,
 	};
 
-	vaoQuad = pfnCreateVAO();
-	vaoQuad->Initialize();
-	vaoQuad->Bind();
+	engine.vaoQuad = pfnCreateVAO();
+	engine.vaoQuad->Initialize();
+	engine.vaoQuad->Bind();
 
-	vboQuad = pfnCreateVBO();
-	vboQuad->Initialize(1);
-	vboQuad->AddVBO(tempVerts, sizeof(tempVerts), 2, SIZE_FLOAT, DRAW_STATIC);
-	vboQuad->Bind(0);
-	vaoQuad->Unbind();
+	engine.vboQuad = pfnCreateVBO();
+	engine.vboQuad->Initialize(1);
+	engine.vboQuad->AddVBO(tempVerts, sizeof(tempVerts), 2, SIZE_FLOAT, DRAW_STATIC);
+	engine.vboQuad->Bind(0);
+	engine.vaoQuad->Unbind();
 }
 
 inline void RenderPathDeferred::BuildSphere() {
@@ -1128,4 +1136,8 @@ void RenderPathDeferred::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 ey
 	//SSAOPrepass(projection);
 	DeferredPass(projection, view, eyePos, usePost);
 	PostPass(projection, view, eyePos);
+}
+
+Framebuffer *RenderPathDeferred::GetFramebuffer() {
+	return postFBO;
 }

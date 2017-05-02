@@ -64,7 +64,7 @@ enum {
 	DEBUG_SHADOW,
 	NUM_DEBUG
 };
-
+#include "PostProcess/PostPipeline.h"
 class EBase;
 
 class Engine {
@@ -76,6 +76,7 @@ private:
 
 	RenderPathType renderPathType;
 	RenderPath *renderPath;
+	PostPipeline postPipeline;
 
 	std::vector<System *> systems;
 
@@ -88,6 +89,9 @@ private:
 
 	std::chrono::nanoseconds deltaTime;
 public:
+	VertexArrayObject	*vaoQuad;
+	VertexBufferObject	*vboQuad;
+
 	int debugMode;
 	TextureManager textureManager;
 	STerrain terrainSystem;

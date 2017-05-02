@@ -76,6 +76,8 @@ public:
 	virtual void WriteBind() = 0;
 	virtual void WriteBindFace(unsigned int attachment, unsigned int face) = 0;
 	virtual void ReadBind() = 0;
+	virtual void UnbindWrite() = 0;
+	virtual void UnbindRead() = 0;
 	virtual void Unbind() = 0;
 
 	virtual void TestBlit(unsigned int x, unsigned int y, unsigned int srcWidth, unsigned int srcHeight, unsigned int width, unsigned int height, bool depth) = 0;

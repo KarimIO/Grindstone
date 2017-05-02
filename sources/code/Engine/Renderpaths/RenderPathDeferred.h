@@ -37,8 +37,6 @@ class RenderPathDeferred : public RenderPath {
 
 	ShaderProgram *directionalShadowShader;
 
-	VertexArrayObject *vaoQuad;
-	VertexBufferObject *vboQuad;
 	VertexArrayObject *vaoSphere;
 	VertexBufferObject *vboSphere;
 	inline void BuildQuad();
@@ -61,6 +59,7 @@ class RenderPathDeferred : public RenderPath {
 
 public:
 	virtual void Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost);
+	virtual Framebuffer *GetFramebuffer();
 	RenderPathDeferred(GraphicsWrapper *gw, SModel *gc, STerrain *terrainSystem);
 };
 

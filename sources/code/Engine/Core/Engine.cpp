@@ -80,6 +80,7 @@ bool Engine::Initialize() {
 		renderPath = (RenderPath *)new RenderPathDeferred(graphicsWrapper, &geometryCache, &terrainSystem);
 		break;
 	};
+	postPipeline.Initialize();
 
 	lightSystem.SetPointers(graphicsWrapper, &geometryCache);
 
@@ -436,6 +437,13 @@ Engine &Engine::GetInstance() {
 
 void Engine::Render(glm::mat4 _projMat, glm::mat4 _viewMat, glm::vec3 eyePos, bool usePost) {
 	renderPath->Draw(_projMat, _viewMat, eyePos, settings.enableReflections && usePost);
+
+	cameraSystem.components[0].PostProcessing(renderPath->GetFramebuffer());
+
+	if (usePost && debugMode == 0) {
+		postPipeline.ProcessScene(cameraSystem.components[0].GetFramebuffer());
+	}
+
 #ifdef _WIN32
 	graphicsWrapper->SwapBuffer();
 #else

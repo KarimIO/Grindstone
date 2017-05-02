@@ -29,3 +29,8 @@ void RenderPathForward::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eye
 	GeometryPass(projection, view);
 	PostPass();
 }
+
+Framebuffer * RenderPathForward::GetFramebuffer()
+{
+	return nullptr;
+}
