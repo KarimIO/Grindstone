@@ -74,6 +74,9 @@ private:
 	bool InitializeGraphics(GraphicsLanguage);
 	void InitializeSettings();
 
+	void LoadShadowShader();
+	void LoadMainShader();
+
 	RenderPathType renderPathType;
 	RenderPath *renderPath;
 	PostPipeline postPipeline;
@@ -120,6 +123,7 @@ public:
 	SLight lightSystem;
 
 	ShaderProgram *shader;
+	ShaderProgram *shadowShader;
 
 	InputSystem inputSystem;
 	GraphicsWrapper *graphicsWrapper;

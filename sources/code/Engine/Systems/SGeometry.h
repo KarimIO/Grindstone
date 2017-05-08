@@ -89,6 +89,9 @@ public:
 	void Draw(glm::mat4 projection, glm::mat4 view);
 	void DrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *);
 
+	void ShadowDraw(glm::mat4 projection, glm::mat4 view);
+	void ShadowDrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *);
+
 	void Shutdown();
 };
 

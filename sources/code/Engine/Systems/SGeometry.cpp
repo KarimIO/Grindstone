@@ -264,7 +264,7 @@ void SModel::DrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *model) {
 			}
 
 			size_t entID = renderComponent->entityID;
-			unsigned int transID =  engine.entities[entID].components[COMPONENT_TRANSFORM];
+			unsigned int transID = engine.entities[entID].components[COMPONENT_TRANSFORM];
 			CTransform *transform = &engine.transformSystem.components[transID];
 			glm::mat4 modelMatrix = transform->GetModelMatrix();
 			ubo.pvmMatrix = projection * view * modelMatrix;
@@ -280,6 +280,45 @@ void SModel::DrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *model) {
 				shader->SetInteger();
 				shader->SetInteger();
 				shader->SetInteger();
+			}
+			else
+				std::cout << "Shader fail: " << renderComponent->entityID << " - " << i << " - " << j << "\n";
+
+			engine.graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(sizeof(unsigned int) * model->meshes[j].BaseIndex), model->meshes[j].BaseVertex, model->meshes[j].NumIndices);
+		}
+	}
+	model->vao->Unbind();
+}
+
+void SModel::ShadowDraw(glm::mat4 projection, glm::mat4 view) {
+	for (size_t i = 0; i < models.size(); i++)
+		ShadowDrawModel3D(projection, view, &models[i]);
+}
+
+void SModel::ShadowDrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *model) {
+
+	model->vao->Bind();
+	for (size_t i = 0; i < model->references.size(); i++) {
+		CRender *renderComponent = &renderComponents[model->references[i]];
+
+		for (size_t j = 0; j < model->meshes.size(); j++) {
+			unsigned char matID = model->meshes[j].MaterialIndex;
+			Material *material;
+			if (renderComponent->materials.size() > matID && renderComponent->materials[matID] != nullptr)
+				material = renderComponent->materials[matID];
+			else
+				material = model->materials[matID];
+
+			size_t entID = renderComponent->entityID;
+			unsigned int transID = engine.entities[entID].components[COMPONENT_TRANSFORM];
+			CTransform *transform = &engine.transformSystem.components[transID];
+			glm::mat4 modelMatrix = transform->GetModelMatrix();
+			glm::mat4 finalMatrix = projection * view * modelMatrix;
+			ShaderProgram *shader = engine.shadowShader;
+			if (shader != NULL) {
+				shader->Use();
+				shader->PassData(&finalMatrix);
+				shader->SetUniform4m();
 			}
 			else
 				std::cout << "Shader fail: " << renderComponent->entityID << " - " << i << " - " << j << "\n";

@@ -70,7 +70,7 @@ void SLight::DrawShadows() {
 					gCubeDirections[j].Up
 				);
 
-				geometryCache->Draw(proj, view);
+				geometryCache->ShadowDraw(proj, view);
 				engine.terrainSystem.Draw(proj, view, transform->position);
 			}
 			light->fbo->Unbind();
@@ -100,7 +100,7 @@ void SLight::DrawShadows() {
 			graphicsWrapper->SetCull(CULL_BACK);
 			graphicsWrapper->SetBlending(false);
 			graphicsWrapper->Clear(CLEAR_ALL);
-			geometryCache->Draw(proj, view);
+			geometryCache->ShadowDraw(proj, view);
 			engine.terrainSystem.Draw(proj, view, transform->position);
 			light->fbo->Unbind();
 		}
@@ -137,7 +137,7 @@ void SLight::DrawShadows() {
 			graphicsWrapper->SetCull(CULL_FRONT);
 			graphicsWrapper->SetBlending(false);
 			graphicsWrapper->Clear(CLEAR_ALL);
-			geometryCache->Draw(proj, view);
+			geometryCache->ShadowDraw(proj, view);
 			engine.terrainSystem.Draw(proj, view, transform->position);
 			light->fbo->Unbind();
 		}

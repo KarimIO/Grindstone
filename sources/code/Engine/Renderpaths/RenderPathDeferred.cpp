@@ -244,11 +244,10 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 	iblUBO.invProjMat = debugUBO.invProjMat = dirLightUBO.invProjMat = spotLightShadowUBO.invProjMat = spotLightUBO.invProjMat = pointLightShadowUBO.invProjMat = pointLightUBO.invProjMat = glm::inverse(projection);
 	ssaoUBO.invViewMat = iblUBO.invViewMat = debugUBO.invViewMat = dirLightUBO.invViewMat = spotLightShadowUBO.invViewMat = spotLightUBO.invViewMat = pointLightShadowUBO.invViewMat = pointLightUBO.invViewMat = glm::inverse(view);
 
-	postFBO->WriteBind();
-
-	graphicsWrapper->Clear(CLEAR_COLOR);
-
 	if (engine.debugMode != DEBUG_NONE) {
+		postFBO->Unbind();
+		graphicsWrapper->Clear(CLEAR_COLOR);
+
 		debugUBO.debugMode = engine.debugMode;
 		debugUBO.texRefl = 4;
 
@@ -277,6 +276,9 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		engine.vaoQuad->Unbind();
 		return;
 	}
+
+	postFBO->WriteBind();
+	graphicsWrapper->Clear(CLEAR_COLOR);
 
 	if (graphicsWrapper->CheckForErrors())
 		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";

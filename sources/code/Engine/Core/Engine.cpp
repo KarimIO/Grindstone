@@ -30,46 +30,8 @@ bool Engine::Initialize() {
 	if (!InitializeGraphics(GRAPHICS_OPENGL))		return false;
 	physicsSystem.Initialize();
 
-	std::string vsPath = "../shaders/objects/main.glvs"; // GetShaderExt()
-	std::string fsPath = "../shaders/objects/mainMetalness.glfs";
-
-	std::string vsContent;
-	if (!ReadFile(vsPath, vsContent))
-		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
-
-	std::string fsContent;
-	if (!ReadFile(fsPath, fsContent))
-		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
-	shader = pfnCreateShader();
-	shader->Initialize(2);
-	if (!shader->AddShader(&vsPath, &vsContent, SHADER_VERTEX))
-		fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
-	if (!shader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
-		fprintf(stderr, "Failed to add fragment shader %s.\n", vsPath.c_str());
-
-	shader->BindAttribLocation(0, "vertexPos");
-	shader->BindAttribLocation(1, "TexCoord");
-	shader->BindAttribLocation(2, "vertexNormal");
-	shader->BindAttribLocation(3, "vertexTangent");
-
-	shader->BindOutputLocation(0, "position");
-	shader->BindOutputLocation(1, "normal");
-	shader->BindOutputLocation(2, "albedo");
-	shader->BindOutputLocation(3, "specular");
-	if (!shader->Compile())
-		fprintf(stderr, "Failed to compile main metalness shader %s.\n", vsPath.c_str());
-
-	shader->SetNumUniforms(7);
-	shader->CreateUniform("pvmMatrix");
-	shader->CreateUniform("modelMatrix");
-	shader->CreateUniform("viewMatrix");
-	shader->CreateUniform("tex0");
-	shader->CreateUniform("tex1");
-	shader->CreateUniform("tex2");
-	shader->CreateUniform("tex3");
-
-	vsContent.clear();
-	fsContent.clear();
+	LoadShadowShader();
+	LoadMainShader();
 
 	renderPathType = RENDERPATH_DEFERRED;
 	switch (renderPathType) {
@@ -112,6 +74,73 @@ bool Engine::Initialize() {
 	startTime = std::chrono::high_resolution_clock::now();
 	printf("Initialization Complete! Starting:\n==================================\n");
 	return true;
+}
+
+void Engine::LoadShadowShader() {
+	std::string vsPath = "../shaders/objects/shadow.glvs"; // GetShaderExt()
+	std::string fsPath = "../shaders/objects/shadow.glfs";
+
+	std::string vsContent;
+	if (!ReadFile(vsPath, vsContent))
+		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
+
+	std::string fsContent;
+	if (!ReadFile(fsPath, fsContent))
+		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
+	shadowShader = pfnCreateShader();
+	shadowShader->Initialize(2);
+	if (!shadowShader->AddShader(&vsPath, &vsContent, SHADER_VERTEX))
+		fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
+	if (!shadowShader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
+		fprintf(stderr, "Failed to add fragment shader %s.\n", vsPath.c_str());
+	if (!shadowShader->Compile())
+		fprintf(stderr, "Failed to compile main metalness shader %s.\n", vsPath.c_str());
+
+	shadowShader->SetNumUniforms(1);
+	shadowShader->CreateUniform("pvmMatrix");
+}
+
+void Engine::LoadMainShader() {
+	std::string vsPath = "../shaders/objects/main.glvs"; // GetShaderExt()
+	std::string fsPath = "../shaders/objects/mainMetalness.glfs";
+
+	std::string vsContent;
+	if (!ReadFile(vsPath, vsContent))
+		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
+
+	std::string fsContent;
+	if (!ReadFile(fsPath, fsContent))
+		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
+	shader = pfnCreateShader();
+	shader->Initialize(2);
+	if (!shader->AddShader(&vsPath, &vsContent, SHADER_VERTEX))
+		fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
+	if (!shader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
+		fprintf(stderr, "Failed to add fragment shader %s.\n", vsPath.c_str());
+
+	shader->BindAttribLocation(0, "vertexPos");
+	shader->BindAttribLocation(1, "TexCoord");
+	shader->BindAttribLocation(2, "vertexNormal");
+	shader->BindAttribLocation(3, "vertexTangent");
+
+	shader->BindOutputLocation(0, "position");
+	shader->BindOutputLocation(1, "normal");
+	shader->BindOutputLocation(2, "albedo");
+	shader->BindOutputLocation(3, "specular");
+	if (!shader->Compile())
+		fprintf(stderr, "Failed to compile main metalness shader %s.\n", vsPath.c_str());
+
+	shader->SetNumUniforms(7);
+	shader->CreateUniform("pvmMatrix");
+	shader->CreateUniform("modelMatrix");
+	shader->CreateUniform("viewMatrix");
+	shader->CreateUniform("tex0");
+	shader->CreateUniform("tex1");
+	shader->CreateUniform("tex2");
+	shader->CreateUniform("tex3");
+
+	vsContent.clear();
+	fsContent.clear();
 }
 
 /*void Engine::AddSystem(System *newSystem) {
@@ -438,9 +467,8 @@ Engine &Engine::GetInstance() {
 void Engine::Render(glm::mat4 _projMat, glm::mat4 _viewMat, glm::vec3 eyePos, bool usePost) {
 	renderPath->Draw(_projMat, _viewMat, eyePos, settings.enableReflections && usePost);
 
-	cameraSystem.components[0].PostProcessing(renderPath->GetFramebuffer());
-
 	if (usePost && debugMode == 0) {
+		cameraSystem.components[0].PostProcessing(renderPath->GetFramebuffer());
 		postPipeline.ProcessScene(cameraSystem.components[0].GetFramebuffer());
 	}
 
