@@ -27,6 +27,13 @@ include_directories(${ASSIMP_INC})
 set(ASSIMP_LIB "D:/Libraries/Assimp/lib64" CACHE PATH "Location of Assimp Library")
 link_directories(${ASSIMP_LIB})
 
+#ASSIMP
+set(LIBROCKET_INC "D:/Libraries/LibRocket/Include" CACHE PATH "Location of LibRocket Include")
+include_directories(${LIBROCKET_INC})
+
+set(LIBROCKET_LIB "D:/Libraries/LibRocket/lib" CACHE PATH "Location of LibRocket Library")
+link_directories(${LIBROCKET_LIB})
+
 #BULLET
 set(BULLET_DIR "D:/Libraries/Bullet" CACHE PATH "Location of Bullet Library")
 include_directories(${BULLET_DIR}/src)

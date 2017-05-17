@@ -1,0 +1,10 @@
+{
+    "title": "Official Test Mod",
+    "author": "InOrdinate Studios",
+    "description": "I am a real person. This is a real mod.\nHARDOCRE!",
+    "website": "https://reddit.com/r/prequelmemes",
+    "tags": "campaign",
+    "version": "1.0.0",
+    "minversion": "0",
+    "restartrequired": true
+}

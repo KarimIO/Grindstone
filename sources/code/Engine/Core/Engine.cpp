@@ -42,7 +42,12 @@ bool Engine::Initialize() {
 		renderPath = (RenderPath *)new RenderPathDeferred(graphicsWrapper, &geometryCache, &terrainSystem);
 		break;
 	};
+
 	postPipeline.Initialize();
+
+	CheckModPaths();
+
+	//sUi.LoadDocument("test.rml");
 
 	lightSystem.SetPointers(graphicsWrapper, &geometryCache);
 
@@ -518,17 +523,44 @@ void Engine::Run() {
 			graphicsWrapper->SetResolution(0, 0, settings.resolutionX, settings.resolutionY);
 			Render(projection, view, trans->GetPosition(), true);
 		}
+
+		//sUi.Update();
+		//sUi.Render();
+	}
+}
+
+void Engine::CheckModPaths() {
+	std::ifstream file;
+	file.open("/mods/activemods.txt");
+
+	if (!file.fail()) {
+		std::string line;
+		while (std::getline(file, line)) {
+#ifdef __APPLE__
+			modPaths.push_back(getResourcePath()+line);
+#else
+			modPaths.push_back(line);
+#endif
+		}
 	}
 }
 
 // Find available path from include paths
 std::string Engine::GetAvailablePath(std::string szString) {
 	// Check Mods Directory
-	// Check Total Conversion Directory
-	// Check Game Directory
-	// Check Engine Directory
+	for (int i = 0; i < modPaths.size(); i++) {
+		std::string modPath = modPaths[i] + szString;
+		FileExists(modPaths[i] + szString);
+		return modPath;
+	}
+
+#ifdef __APPLE__
+	if (FileExists(szString))
+		return getResourcePath()+szString;
+#else
 	if (FileExists(szString))
 		return szString;
+#endif
 
 	// Return Empty String
 	return "";

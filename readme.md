@@ -16,6 +16,7 @@ Install the following Windows dependencies.
  * [Bullet](http://bulletphysics.org/)
  * [CMake](https://cmake.org/)
  * [GLM](http://glm.g-truc.net/)
+ * [libRocket](http://librocket.com/)
  * [SDL](https://www.libsdl.org/)
  * [STB](https://github.com/nothings/stb/)
 Optional Graphics-Specific dependencies:

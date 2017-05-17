@@ -39,6 +39,8 @@
 #include "../Systems/CCamera.h"
 #include "../Systems/CController.h"
 
+#include "Systems/SUI.h"
+
 enum RenderPathType {
 	RENDERPATH_FORWARD = 0,
 	RENDERPATH_DEFERRED,
@@ -77,9 +79,13 @@ private:
 	void LoadShadowShader();
 	void LoadMainShader();
 
+	void CheckModPaths();
+
 	RenderPathType renderPathType;
 	RenderPath *renderPath;
 	PostPipeline postPipeline;
+
+	//SUI sUi;
 
 	std::vector<System *> systems;
 
@@ -89,6 +95,8 @@ private:
 	// Time Data
 	std::chrono::time_point<std::chrono::high_resolution_clock> currentTime, prevTime, startTime;
 	double accumulator = 0.0;
+
+	std::vector<std::string> modPaths;
 
 	std::chrono::nanoseconds deltaTime;
 public:
