@@ -1,13 +1,13 @@
 #Engine Roadmap:
 
+This is likely outdated by the time you read this. For a more updated roadmap, check the [Trello Page](https://trello.com/b/hUDxCqfw/grindstone)
+
 ##Modules:
 
 ###Windowing
  - Win32
  - X11
- - Cocoa?
- 
-No one on the project has a Mac so Cocoa has been postponed, but will likely be similar to X11.
+ - Cocoa
 
 ###Graphics
  - OpenGL 3.3+
@@ -15,22 +15,19 @@ No one on the project has a Mac so Cocoa has been postponed, but will likely be 
  - DirectX 12
  - Vulkan
  - Metal
- 
-No one on the project has a Mac so Metal has been postponed. It is also the least important Graphics Language to us, as the target audience is PC/Linux (fewer gamers on Mac, OGL works on Mac anyways).
 
 ###Audio
-Audio should use [SDL Audio](http://libsdl.org/) simply because while Windows Audio is easy, Linux audio is a huge pain, and all solutions are buggy. Originally, streaming and playing audio, as well as handling microphone input and audio modifiers are all that are required.
+Audio should use [SDL Audio](http://libsdl.org/) simply because while Windows Audio is easy, Linux audio is a huge pain, and all solutions are buggy. Eventually, FMOD and WWise should be provided as alternate solutions for developers.
+
+Originally, streaming and playing audio, as well as handling microphone input and audio modifiers are all that are required.
 
 Eventually, another library will be created to include audio synthesis and editing software. This will be importable using an advanced audio DLL.
 
 ###User Interface
-We need to decide whether to use Awesomium or other *ML parsers, or resort to making our own library.
+We will be using LibRocket as a User Interface.
 
 ###Physics Library
-Implement Physics library wrapper information here. We're planning on using Bullet Physics unless a better option comes along.
-
-###Geometry
-A geometry DLL should be created to not distract the user with the details of importing models, etc.
+Currently using bullet physics, but we need to work a lot more on integrating it properly.
 
 ###Artificial Intelligence and Pathfinding
 Behavior Trees and dynamic AI should be implemented and transfered between entities simply. It should also be easy to access the system using "sense" inputs - could these be components? Finally, multiple modes of pathfinding should be implemented here, as strategy games might be better off with hex systems, and some may opt for the simpler node path approach. Crowd simulation should also be easily implemented for the user by allowing either inputs or direct access to other AI. Squads and other inter-ai systems should also be implemented, including relationship trees. We should probably have a tool for these ultimately.
@@ -64,7 +61,7 @@ Implement multiple Graphics Pipelines for a range of uses, as different games wi
  - Cluster-Based Deferred
  
 ###Reflections
-Reflections will be integrated with both SSR and Parallax-Based Cubemaps. Some Cubemaps may be deferred, but this is option-added. Cubemap sizes should be optional, and geometry should have options for conditions to be rendered at.
+Reflections will be integrated with both SSR and Parallax-Based Cubemaps. Some Cubemaps may be generated and runtime, but this is option-added. Cubemap sizes should be optional, and geometry should have options for conditions to be rendered at.
 
 ###Alpha Stippling for Deferred
 On far away objects, transparent objects should be alpha-masked.
@@ -83,14 +80,3 @@ Should we use a GLFX sort of system, or have many prepared techniques? Either wa
 
 ###Customizeable G-Buffer
 Many games won't need motion blur, and many other techniques used in fully "realistic" games.
-
-###Support for many versions of Graphics Languages
-
-###Depth of Field
-What's the best way to implement this? Gaussian blur or dowscaled and combination in a seperate stage as DOOM does?
-
-###Components-Based Engine
-Using a Component and Entity based system allows for flexibility and extension we couldn't really manage otherwise, as well as memory access improvements.
-
-###Flexible Input System
-Using similar bind-function techniques to Unreal, we can implement a very flexible system.

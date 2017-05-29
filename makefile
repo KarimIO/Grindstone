@@ -11,15 +11,17 @@ CPP_ENTS_FILES := $(wildcard sources/code/Engine/Entities/*.cpp)
 OBJ_ENTS_FILES := $(addprefix sources/obj/Engine/Entities/,$(notdir $(CPP_ENTS_FILES:.cpp=.o)))
 CPP_RENDER_FILES := $(wildcard sources/code/Engine/Renderpaths/*.cpp)
 OBJ_RENDER_FILES := $(addprefix sources/obj/Engine/Renderpaths/,$(notdir $(CPP_RENDER_FILES:.cpp=.o)))
+CPP_POST_FILES := $(wildcard sources/code/Engine/PostProcess/*.cpp)
+OBJ_POST_FILES := $(addprefix sources/obj/Engine/PostProcess/,$(notdir $(CPP_POST_FILES:.cpp=.o)))
 CPP_SYSTEMS_FILES := $(wildcard sources/code/Engine/Systems/*.cpp)
 OBJ_SYSTEMS_FILES := $(addprefix sources/obj/Engine/Systems/,$(notdir $(CPP_SYSTEMS_FILES:.cpp=.o)))
 
-CPP_ENGINE_FILES := $(CPP_CORE_FILES) $(CPP_ENTS_FILES) $(CPP_RENDER_FILES) $(CPP_SYSTEMS_FILES)
-OBJ_ENGINE_FILES := $(OBJ_CORE_FILES) $(OBJ_ENTS_FILES) $(OBJ_RENDER_FILES) $(OBJ_SYSTEMS_FILES)
+CPP_ENGINE_FILES := $(CPP_CORE_FILES) $(CPP_ENTS_FILES) $(CPP_RENDER_FILES) $(CPP_SYSTEMS_FILES) $(CPP_POST_FILES)
+OBJ_ENGINE_FILES := $(OBJ_CORE_FILES) $(OBJ_ENTS_FILES) $(OBJ_RENDER_FILES) $(OBJ_SYSTEMS_FILES) $(OBJ_POST_FILES)
 
 INCLUDE_PATHS := -I sources/include/ -I sources/code/Engine/ -I sources/code/Engine/Core -I sources/code/Engine/Entities -I sources/code/Engine/Renderpaths -I sources/code/Engine/Systems -I sources/code/GraphicsOpenGL/ -I sources/code/WindowModule/  -I sources/code/GraphicsCommon/ -I sources/code/AudioModule/ -I sources/include/STB/ -I sources/include/rapidjson/include/ -I /usr/local/include/bullet/ -I ~/local/include/
 
-BULLET_LIBS := -L/usr/local/lib/bullet/libBulletCollision -L/usr/local/lib/bullet/libBulletDynamics -L/usr/local/lib/bullet/libLinearMath
+BULLET_LIBS := /usr/local/lib/libBulletDynamics.a /usr/local/lib/libBulletCollision.a /usr/local/lib/libLinearMath.a
 LIBROCKET_LIBS := -L~/local/include/libRocketCore -L~/local/include/libRocketControls-L~/local/include/libRocketDebugger
 ALL_LIBS := $(BULLET_LIBS) $(LIBROCKET_LIBS)
 
@@ -40,6 +42,10 @@ sources/obj/Engine/Entities/%.o: sources/code/Engine/Entities/%.cpp
 	
 sources/obj/Engine/Renderpaths/%.o: sources/code/Engine/Renderpaths/%.cpp
 	@mkdir -p sources/obj/Engine/Renderpaths
+	@$(CC) $(INCLUDE_PATHS) $(CFLAGS) -fPIC -o $@ $< -ldl -lX11 -lassimp -lGL -std=c++11
+
+sources/obj/Engine/PostProcess/%.o: sources/code/Engine/PostProcess/%.cpp
+	@mkdir -p sources/obj/Engine/PostProcess
 	@$(CC) $(INCLUDE_PATHS) $(CFLAGS) -fPIC -o $@ $< -ldl -lX11 -lassimp -lGL -std=c++11
 	
 sources/obj/Engine/Systems/%.o: sources/code/Engine/Systems/%.cpp

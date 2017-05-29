@@ -30,18 +30,32 @@ All you need to do is run CMake and build the projects. Change the working direc
 You must first update and get all the following dependencies:
 ```
 $ sudo apt update 
-$ sudo apt install g++ clang make libglm-dev libassimp-dev libgl1-mesa-dev xorg xorg-dev cmake python python-dev
+$ sudo apt install g++ clang make libglm-dev libassimp-dev libgl1-mesa-dev xorg xorg-dev cmake python python-dev libfreetype6-dev
 ```
 
-To build libRocket, download the repository, enter the ```Build``` folder, cmake, then make, and make install.
+To build libRocket, download the repository, enter the ```Build``` folder, and call the following:
+```
+cmake -DBUILD_SAMPLES=off -DBUILD_LUA_BINDINGS=off -DCMAKE_BUILD_TYPE=Debug -DROCKET_DEBUG=on -DCMAKE_VERBOSE_MAKEFILE=1 -DCMAKE_INSTALL_PREFIX=$HOME/local
+make
+make install
+```.
 
-To build, use the makefile. To compile all files, just run ```$ make```
+To build bullet, download the repository, enter the main folder, and call the following:
+```
+mkdir bullet-build
+cd bullet-build
+cmake .. -G "Unix Makefiles" -DINSTALL_LIBS=ON
+make -j4
+install
+```
 
-To compile just the game engine: ```$ make Engine```
+To build the actual project, use the makefile. To compile all files, just run ```make```
 
-To clean output: ``` $ make clean```
+To compile just the game engine: ```make Engine```
 
-To run, use ``` $ ./bin/Grindstone```
+To clean output: ``` make clean```
+
+To run, go to the ```./bin``` folder, and use ``` ./Grindstone```
 
 ### Other OSs
 Use an alternate OS, or pitch in and suggest changes!
