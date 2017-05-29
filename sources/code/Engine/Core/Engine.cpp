@@ -21,6 +21,8 @@ UniformBuffer*		(*pfnCreateUniformBuffer)();
 void				(*pfnDeleteGraphicsPointer)(void *ptr);
 
 bool Engine::Initialize() {
+	int iterator = 0;
+
 	srand((unsigned int)time(NULL));
 
 	// Get Settings here:
@@ -319,9 +321,11 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	void *lib_handle = dlopen(("./"+ library +".so").c_str(), RTLD_LAZY);
 
 	if (!lib_handle) {
-		fprintf(stderr, "%s\n", dlerror());
+		fprintf(stderr, "Failed to load %s: %s\n", ("./" + library + ".so").c_str(), dlerror());
 		return false;
 	}
+	else
+		printf("Loading Library: %s\n", ("./" + library + ".so").c_str());
 
 	GraphicsWrapper* (*pfnCreateGraphics)();
 
@@ -344,7 +348,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	}
 
 	pfnCreateShader = (ShaderProgram* (*)())dlsym(lib_handle, "createShader");
-	if (!pfnCreateGraphics) {
+	if (!pfnCreateShader) {
 		fprintf(stderr, "%s\n", dlerror());
 		return false;
 	}

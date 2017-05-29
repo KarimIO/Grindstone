@@ -54,7 +54,7 @@ sources/obj/Engine/Systems/%.o: sources/code/Engine/Systems/%.cpp
 	
 Engine: $(OBJ_ENGINE_FILES)
 	@mkdir -p sources/obj/Engine
-	@$(CC) $^ -ldl -lassimp $(ALL_LIBS) -o bin/Grindstone
+	@$(CC) -g $^ -ldl -lassimp $(ALL_LIBS) -o bin/Grindstone
 	@echo "Grindstone successfully built."
 
 # Object Definitions

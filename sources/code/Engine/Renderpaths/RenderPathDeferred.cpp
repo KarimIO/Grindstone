@@ -1098,7 +1098,7 @@ inline void RenderPathDeferred::CompileSSAO(std::string vsPath, std::string vsCo
 	fsContent.clear();
 	fsPath.clear();
 
-	fsPath = "../shaders/ssaoBlur.glfs";
+	fsPath = "../shaders/ssaoblur.glfs";
 
 	if (!ReadFileIncludable(fsPath, fsContent))
 		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());

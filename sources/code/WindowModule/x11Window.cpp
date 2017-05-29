@@ -459,10 +459,10 @@ void GameWindow::HandleEvents() {
 }
 
 void GameWindow::GetHandles(Display* dpy, Window *win, Screen* scrn, int id) {
-		Display* display;
-		Window window;
-		Screen *screen;
-		id = screenID;
+	dpy = display;
+	win = &window;
+	scrn = screen;
+	id = screenID;
 }
 
 void GameWindow::Shutdown() {
