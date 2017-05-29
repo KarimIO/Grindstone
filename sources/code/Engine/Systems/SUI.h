@@ -1,3 +1,4 @@
+#if 0
 #ifndef _S_UI_H
 #define _S_UI_H
 
@@ -63,4 +64,5 @@ public:
 	~SUI();
 };
 
+#endif
 #endif

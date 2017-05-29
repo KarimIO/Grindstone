@@ -51,6 +51,8 @@ scenes/*
 !scenes/terrain.json
 !scenes/sponza.json
 sources/include/*
+~sources/include/stb_image_write.h
+~sources/include/stb_image.h
 cubemaps/*
 materials/*
 !materials/heightmaps/height.png

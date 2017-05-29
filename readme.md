@@ -30,8 +30,10 @@ All you need to do is run CMake and build the projects. Change the working direc
 You must first update and get all the following dependencies:
 ```
 $ sudo apt update 
-$ sudo apt install g++ clang make libglm-dev libassimp-dev libgl1-mesa-dev xorg xorg-dev
+$ sudo apt install g++ clang make libglm-dev libassimp-dev libgl1-mesa-dev xorg xorg-dev cmake python python-dev
 ```
+
+To build libRocket, download the repository, enter the ```Build``` folder, cmake, then make, and make install.
 
 To build, use the makefile. To compile all files, just run ```$ make```
 

@@ -1,3 +1,4 @@
+#if 0
 #include "SUI.h"
 #include "Core/Engine.h"
 
@@ -272,3 +273,4 @@ SUI::~SUI() {
 }
 
 #include "../GraphicsOpenGL/gl3w.cpp"
+#endif

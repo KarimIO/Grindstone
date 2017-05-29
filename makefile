@@ -17,9 +17,11 @@ OBJ_SYSTEMS_FILES := $(addprefix sources/obj/Engine/Systems/,$(notdir $(CPP_SYST
 CPP_ENGINE_FILES := $(CPP_CORE_FILES) $(CPP_ENTS_FILES) $(CPP_RENDER_FILES) $(CPP_SYSTEMS_FILES)
 OBJ_ENGINE_FILES := $(OBJ_CORE_FILES) $(OBJ_ENTS_FILES) $(OBJ_RENDER_FILES) $(OBJ_SYSTEMS_FILES)
 
-INCLUDE_PATHS := -I sources/include/ -I sources/code/Engine/ -I sources/code/Engine/Core -I sources/code/Engine/Entities -I sources/code/Engine/Renderpaths -I sources/code/Engine/Systems -I sources/code/GraphicsOpenGL/ -I sources/code/WindowModule/  -I sources/code/GraphicsCommon/ -I sources/code/AudioModule/ -I sources/include/STB/ -I sources/include/rapidjson/include/ -I ../bullet/src/
+INCLUDE_PATHS := -I sources/include/ -I sources/code/Engine/ -I sources/code/Engine/Core -I sources/code/Engine/Entities -I sources/code/Engine/Renderpaths -I sources/code/Engine/Systems -I sources/code/GraphicsOpenGL/ -I sources/code/WindowModule/  -I sources/code/GraphicsCommon/ -I sources/code/AudioModule/ -I sources/include/STB/ -I sources/include/rapidjson/include/ -I /usr/local/include/bullet/ -I ~/local/include/
 
-BULLET_LIBS := -L ../bullet/bin/libBulletCollision.a -L ../bullet/bin/libBulletDynamics.a -L ../bullet/bin/libLinearMath.a
+BULLET_LIBS := -L/usr/local/lib/bullet/libBulletCollision -L/usr/local/lib/bullet/libBulletDynamics -L/usr/local/lib/bullet/libLinearMath
+LIBROCKET_LIBS := -L~/local/include/libRocketCore -L~/local/include/libRocketControls-L~/local/include/libRocketDebugger
+ALL_LIBS := $(BULLET_LIBS) $(LIBROCKET_LIBS)
 
 all: build
 
@@ -46,7 +48,7 @@ sources/obj/Engine/Systems/%.o: sources/code/Engine/Systems/%.cpp
 	
 Engine: $(OBJ_ENGINE_FILES)
 	@mkdir -p sources/obj/Engine
-	@$(CC) $^ -ldl -lassimp $(BULLET_LIBS) -o bin/Grindstone
+	@$(CC) $^ -ldl -lassimp $(ALL_LIBS) -o bin/Grindstone
 	@echo "Grindstone successfully built."
 
 # Object Definitions
