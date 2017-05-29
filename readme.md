@@ -38,7 +38,7 @@ To build libRocket, download the repository, enter the ```Build``` folder, and c
 cmake -DBUILD_SAMPLES=off -DBUILD_LUA_BINDINGS=off -DCMAKE_BUILD_TYPE=Debug -DROCKET_DEBUG=on -DCMAKE_VERBOSE_MAKEFILE=1 -DCMAKE_INSTALL_PREFIX=$HOME/local
 make
 make install
-```.
+```
 
 To build bullet, download the repository, enter the main folder, and call the following:
 ```
