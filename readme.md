@@ -57,6 +57,46 @@ To clean output: ``` make clean```
 
 To run, go to the ```./bin``` folder, and use ``` ./Grindstone```
 
+### MacOS
+You need to install the [Homebrew](https://brew.sh/) macOS package manager using Terminal:
+```
+ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null
+```
+
+To install all the required dependencies using Homebrew:
+```
+brew install gcc48 glm glfw3 glew cmake assimp python freetype rapidjson
+```
+
+To install the X.Org window system on macOS, install [XQuartz](https://www.xquartz.org/releases/XQuartz-2.7.11.html), and create the following symlinks using Terminal:
+```
+ln -s /opt/X11/include/X11 /usr/local/include/X11
+ln -s /opt/X11/include/GL /usr/local/include/GL
+```
+
+To install bullet:
+```
+brew install bullet
+```
+
+To install and build libRocket:
+```
+git clone https://github.com/libRocket/libRocket.git
+cd libRocket
+cd Build
+cmake -DBUILD_SAMPLES=off -DBUILD_LUA_BINDINGS=off -DCMAKE_BUILD_TYPE=Debug -DROCKET_DEBUG=on -DCMAKE_VERBOSE_MAKEFILE=1 -DCMAKE_INSTALL_PREFIX=$HOME/local
+make
+make install
+``` 
+
+To build the actual project, use the makefile. To compile all files, just run: ```make```
+
+To compile just the game engine: ```make Engine```
+
+To clean output: ``` make clean```
+
+To run, go to the ```./bin``` folder, and use ``` ./Grindstone```
+
 ### Other OSs
 Use an alternate OS, or pitch in and suggest changes!
 
