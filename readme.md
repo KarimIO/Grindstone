@@ -42,11 +42,11 @@ make install
 
 To build bullet, download the repository, enter the main folder, and call the following:
 ```
-mkdir bullet-build
-cd bullet-build
+mkdir Build
+cd Build
 cmake .. -G "Unix Makefiles" -DINSTALL_LIBS=ON
 make -j4
-install
+sudo make install
 ```
 
 To build the actual project, use the makefile. To compile all files, just run ```make```
