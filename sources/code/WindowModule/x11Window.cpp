@@ -1,4 +1,4 @@
-#ifdef __linux__
+#if (defined(__linux__) || defined(__APPLE__))
 #include "Core/Input.h"
 #include "Window.h"
 #include <stdio.h>

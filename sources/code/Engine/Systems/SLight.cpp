@@ -45,6 +45,11 @@ void SLight::DrawShadows() {
 		0.5, 0.5, 0.5, 1.0
 	);
 
+	graphicsWrapper->SetDepthMask(true);
+	graphicsWrapper->SetDepth(1);
+	graphicsWrapper->SetCull(CULL_FRONT);
+	graphicsWrapper->SetBlending(false);
+
 	//unsigned int i = iteration;
 	//if (i < pointLights.size()) {
 #if 0
@@ -95,6 +100,7 @@ void SLight::DrawShadows() {
 
 			light->projection = biasMatrix * proj * view * glm::mat4(1.0f);
 			engine.graphicsWrapper->SetResolution(0, 0, 128, 128);
+			light->fbo->Unbind();
 			light->fbo->WriteBind();
 			graphicsWrapper->SetDepth(1);
 			graphicsWrapper->SetCull(CULL_BACK);
@@ -132,10 +138,8 @@ void SLight::DrawShadows() {
 
 			light->projection = biasMatrix * proj * view * glm::mat4(1.0f);
 			engine.graphicsWrapper->SetResolution(0, 0, 2048, 2048);
+			light->fbo->Unbind();
 			light->fbo->WriteBind();
-			graphicsWrapper->SetDepth(1);
-			graphicsWrapper->SetCull(CULL_FRONT);
-			graphicsWrapper->SetBlending(false);
 			graphicsWrapper->Clear(CLEAR_ALL);
 			geometryCache->ShadowDraw(proj, view);
 			engine.terrainSystem.Draw(proj, view, transform->position);

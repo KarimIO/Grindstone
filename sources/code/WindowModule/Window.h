@@ -29,18 +29,17 @@
 class InputInterface;
 
 class WINDOW_EXPORT_CLASS GameWindow {
-private:
-	#ifdef __linux__
+private:		
+	#ifdef _WIN32
+		static LRESULT CALLBACK sWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+		LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+		HWND	window_handle;
+	#else
 		Display* display;
 		Window window;
 		Screen *screen;
 		GLXContext	glc;
 		int screenID;
-	#endif
-	#ifdef _WIN32
-		static LRESULT CALLBACK sWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-		LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-		HWND	window_handle;
 	#endif
 	
 	InputInterface *input;
@@ -53,11 +52,11 @@ public:
 	virtual void SetInputPointer(InputInterface *);
 	virtual void HandleEvents();
 
-#if defined(__linux__)
+#if defined(_WIN32)
+	virtual HWND GetHandle();
+#else
 	virtual void GetHandles(Display*, Window *, Screen*, int);
 	virtual void SwapBuffer();
-#elif defined(_WIN32)
-	virtual HWND GetHandle();
 #endif
 
 	virtual void SetCursorShown(bool);

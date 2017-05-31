@@ -26,7 +26,7 @@ Optional Graphics-Specific dependencies:
 
 All you need to do is run CMake and build the projects. Change the working directory of the engine project to [PROJECT_DIRECTORY]/bin/ if you wanna debug it. 
 
-### Debian
+### Ubuntu / Debian
 You must first update and get all the following dependencies:
 ```
 $ sudo apt update 

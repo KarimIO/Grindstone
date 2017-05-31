@@ -213,7 +213,22 @@ void Engine::InitializeSettings() {
 }
 
 bool Engine::InitializeWindow() {
-#if defined (__linux__)
+#ifdef _WIN32
+	HMODULE dllHandle = LoadLibrary("window.dll");
+
+	if (!dllHandle) {
+		fprintf(stderr, "Failed to load window.dll!\n");
+		return false;
+	}
+
+	GameWindow* (*pfnCreateWindow)();
+	pfnCreateWindow = (GameWindow* (*)())GetProcAddress(dllHandle, "createWindow");
+
+	if (!pfnCreateWindow) {
+		fprintf(stderr, "Cannot get createWindow function!\n");
+		return false;
+	}
+#elif __APPLE__
 	void *lib_handle = dlopen("./window.so", RTLD_LAZY);
 
 	if (!lib_handle) {
@@ -227,19 +242,18 @@ bool Engine::InitializeWindow() {
 		fprintf(stderr, "%s\n", dlerror());
 		return false;
 	}
-#elif defined (_WIN32)
-	HMODULE dllHandle = LoadLibrary("window.dll");
+#else // Linux, etc
+	void *lib_handle = dlopen("./window.so", RTLD_LAZY);
 
-	if (!dllHandle) {
-		fprintf(stderr, "Failed to load window.dll!\n");
+	if (!lib_handle) {
+		fprintf(stderr, "%s\n", dlerror());
 		return false;
 	}
 
 	GameWindow* (*pfnCreateWindow)();
-	pfnCreateWindow = (GameWindow* (*)())GetProcAddress(dllHandle, "createWindow");
-
+	pfnCreateWindow = (GameWindow* (*)())dlsym(lib_handle, "createWindow");
 	if (!pfnCreateWindow) {
-		fprintf(stderr, "Cannot get createWindow function!\n");
+		fprintf(stderr, "%s\n", dlerror());
 		return false;
 	}
 #endif
@@ -255,21 +269,7 @@ bool Engine::InitializeWindow() {
 }
 
 bool Engine::InitializeAudio() {
-#if defined (__linux__)
-	void *lib_handle = dlopen("./audiosdl.so", RTLD_LAZY);
-
-	if (!lib_handle) {
-		fprintf(stderr, "%s\n", dlerror());
-		return false;
-	}
-
-	AudioSystem* (*pfnCreateAudio)();
-	pfnCreateAudio = (AudioSystem* (*)())dlsym(lib_handle, "createAudio");
-	if (!pfnCreateAudio) {
-		fprintf(stderr, "%s\n", dlerror());
-		return false;
-	}
-#elif defined (_WIN32)
+#ifdef _WIN32
 	HMODULE dllHandle = LoadLibrary("audiosdl.dll");
 
 	if (!dllHandle) {
@@ -282,6 +282,20 @@ bool Engine::InitializeAudio() {
 
 	if (!pfnCreateAudio) {
 		fprintf(stderr, "Cannot get createAudio function!\n");
+		return false;
+	}
+#else // Linux + Apple
+	void *lib_handle = dlopen("./audiosdl.so", RTLD_LAZY);
+
+	if (!lib_handle) {
+		fprintf(stderr, "%s\n", dlerror());
+		return false;
+	}
+
+	AudioSystem* (*pfnCreateAudio)();
+	pfnCreateAudio = (AudioSystem* (*)())dlsym(lib_handle, "createAudio");
+	if (!pfnCreateAudio) {
+		fprintf(stderr, "%s\n", dlerror());
 		return false;
 	}
 #endif
@@ -317,7 +331,66 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 #endif
 	};
 	
-#if defined (__linux__)
+#ifdef _WIN32
+	HMODULE dllHandle = LoadLibrary((library + ".dll").c_str());
+
+	if (!dllHandle) {
+		fprintf(stderr, "Failed to load %s!\n", (library + ".dll").c_str());
+		return false;
+	}
+
+	GraphicsWrapper* (*pfnCreateGraphics)();
+	pfnCreateGraphics = (GraphicsWrapper* (*)())GetProcAddress(dllHandle, "createGraphics");
+
+	if (!pfnCreateGraphics) {
+		fprintf(stderr, "Cannot get createGraphics function!\n");
+		return false;
+	}
+
+	pfnCreateVAO = (VertexArrayObject* (*)())GetProcAddress(dllHandle, "createVAO");
+	if (!pfnCreateVAO) {
+		fprintf(stderr, "Cannot get createVAO function!\n");
+		return false;
+	}
+
+	pfnCreateVBO = (VertexBufferObject* (*)())GetProcAddress(dllHandle, "createVBO");
+	if (!pfnCreateVBO) {
+		fprintf(stderr, "Cannot get createVBO function!\n");
+		return false;
+	}
+
+	pfnCreateShader = (ShaderProgram* (*)())GetProcAddress(dllHandle, "createShader");
+	if (!pfnCreateShader) {
+		fprintf(stderr, "Cannot get createShader function!\n");
+		return false;
+	}
+
+	pfnCreateTexture = (Texture* (*)())GetProcAddress(dllHandle, "createTexture");
+	if (!pfnCreateTexture) {
+		fprintf(stderr, "Cannot get createTexture function!\n");
+		return false;
+	}
+
+	pfnCreateFramebuffer = (Framebuffer* (*)())GetProcAddress(dllHandle, "createFramebuffer");
+	if (!pfnCreateFramebuffer) {
+		fprintf(stderr, "Cannot get createFramebuffer function!\n");
+		return false;
+	}
+
+	pfnCreateUniformBuffer = (UniformBuffer* (*)())GetProcAddress(dllHandle, "createUniformBuffer");
+	if (!pfnCreateUniformBuffer) {
+		fprintf(stderr, "Cannot get createUniformBuffer function!\n");
+		return false;
+	}
+
+	pfnDeleteGraphicsPointer = (void(*)(void *))GetProcAddress(dllHandle, "deletePointer");
+	if (!pfnDeleteGraphicsPointer) {
+		fprintf(stderr, "Cannot get deletePointer graphics function!\n");
+		return false;
+	}
+
+	HWND win_handle = window->GetHandle();
+#else // Apple + Linux
 	void *lib_handle = dlopen(("./"+ library +".so").c_str(), RTLD_LAZY);
 
 	if (!lib_handle) {
@@ -382,72 +455,13 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	Screen *screen;
 	int screenID;
 	window->GetHandles(display, win_handle, screen, screenID);
-#elif defined (_WIN32)
-	HMODULE dllHandle = LoadLibrary((library + ".dll").c_str());
-
-	if (!dllHandle) {
-		fprintf(stderr, "Failed to load %s!\n", (library + ".dll").c_str());
-		return false;
-	}
-
-	GraphicsWrapper* (*pfnCreateGraphics)();
-	pfnCreateGraphics = (GraphicsWrapper* (*)())GetProcAddress(dllHandle, "createGraphics");
-
-	if (!pfnCreateGraphics) {
-		fprintf(stderr, "Cannot get createGraphics function!\n");
-		return false;
-	}
-
-	pfnCreateVAO = (VertexArrayObject* (*)())GetProcAddress(dllHandle, "createVAO");
-	if (!pfnCreateVAO) {
-		fprintf(stderr, "Cannot get createVAO function!\n");
-		return false;
-	}
-
-	pfnCreateVBO = (VertexBufferObject* (*)())GetProcAddress(dllHandle, "createVBO");
-	if (!pfnCreateVBO) {
-		fprintf(stderr, "Cannot get createVBO function!\n");
-		return false;
-	}
-
-	pfnCreateShader = (ShaderProgram* (*)())GetProcAddress(dllHandle, "createShader");
-	if (!pfnCreateShader) {
-		fprintf(stderr, "Cannot get createShader function!\n");
-		return false;
-	}
-
-	pfnCreateTexture = (Texture* (*)())GetProcAddress(dllHandle, "createTexture");
-	if (!pfnCreateTexture) {
-		fprintf(stderr, "Cannot get createTexture function!\n");
-		return false;
-	}
-
-	pfnCreateFramebuffer = (Framebuffer* (*)())GetProcAddress(dllHandle, "createFramebuffer");
-	if (!pfnCreateFramebuffer) {
-		fprintf(stderr, "Cannot get createFramebuffer function!\n");
-		return false;
-	}
-
-	pfnCreateUniformBuffer = (UniformBuffer* (*)())GetProcAddress(dllHandle, "createUniformBuffer");
-	if (!pfnCreateUniformBuffer) {
-		fprintf(stderr, "Cannot get createUniformBuffer function!\n");
-		return false;
-	}
-
-	pfnDeleteGraphicsPointer = (void (*)(void *))GetProcAddress(dllHandle, "deletePointer");
-	if (!pfnDeleteGraphicsPointer) {
-		fprintf(stderr, "Cannot get deletePointer graphics function!\n");
-		return false;
-	}
-
-	HWND win_handle = window->GetHandle();
 #endif
 
 	graphicsWrapper = (GraphicsWrapper*)pfnCreateGraphics();
-#if defined (__linux__)
-	graphicsWrapper->SetWindowContext(display, win_handle, screen, screenID);
-#elif defined (_WIN32)
+#ifdef _WIN32
 	graphicsWrapper->SetWindowContext(win_handle);
+#else
+	graphicsWrapper->SetWindowContext(display, win_handle, screen, screenID);
 #endif
 
 	if (!graphicsWrapper->InitializeWindowContext())

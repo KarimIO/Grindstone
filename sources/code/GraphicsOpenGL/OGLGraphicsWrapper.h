@@ -7,9 +7,7 @@
 
 #ifdef _WIN32
 #include <Windows.h>
-#endif
-
-#ifdef __linux__
+#else
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysymdef.h>
@@ -51,8 +49,7 @@ private:
 	HWND	window_handle;
 	HGLRC	hRC;
 	HDC		hDC;
-#endif
-#ifdef __linux__
+#else
 	Display* display;
 	Window *window;
 	Screen* screen;
@@ -77,8 +74,7 @@ public:
 	virtual bool CheckForErrors();
 #ifdef _WIN32
 	virtual void SetWindowContext(HWND);
-#endif
-#ifdef __linux__
+#else
 	virtual void SetWindowContext(Display*, Window *, Screen* screen, int);
 #endif
 };

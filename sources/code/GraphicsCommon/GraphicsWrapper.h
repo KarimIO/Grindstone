@@ -18,7 +18,7 @@
 #define GRAPHICS_EXPORT extern "C"
 #endif
 
-#ifdef __linux__
+#if (defined(__linux__) || defined(__APPLE__))
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysymdef.h>
@@ -61,7 +61,7 @@ private:
 	HGLRC	hRC;
 	HDC		hDC;
 #endif
-#ifdef __linux__
+#if (defined(__linux__) || defined(__APPLE__))
 	Display* display;
 	Window *window;
 	Screen* screen;
@@ -86,8 +86,7 @@ public:
 	virtual bool CheckForErrors();
 #ifdef _WIN32
 	virtual void SetWindowContext(HWND);
-#endif
-#ifdef __linux__
+#else // Apple + Linux
 	virtual void SetWindowContext(Display*, Window *, Screen* screen, int);
 #endif
 };
