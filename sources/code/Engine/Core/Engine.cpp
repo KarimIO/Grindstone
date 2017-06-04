@@ -492,7 +492,7 @@ void Engine::Render(glm::mat4 _projMat, glm::mat4 _viewMat, glm::vec3 eyePos, bo
 
 	if (usePost && debugMode == 0) {
 		cameraSystem.components[0].PostProcessing(renderPath->GetFramebuffer());
-		postPipeline.ProcessScene(cameraSystem.components[0].GetFramebuffer());
+		postPipeline.ProcessScene(renderPath->GetGBuffer(), cameraSystem.components[0].GetFramebuffer());
 	}
 
 #ifdef _WIN32

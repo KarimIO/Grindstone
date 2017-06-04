@@ -12,7 +12,7 @@ public:
 	void Start();
 	void End();
 
-	void ProcessScene(Framebuffer *fbo);
+	void ProcessScene(Framebuffer *inputFbo, Framebuffer *fbo);
 	//void ProcessSceneAndSecondary();
 	//void ProcessSceneAndSecondaryAndGUI();
 };

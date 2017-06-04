@@ -194,15 +194,34 @@ void RenderPathDeferred::GeometryPass(glm::mat4 projection, glm::mat4 view, glm:
 		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
 }
 
-void RenderPathDeferred::SSAOPrepass(glm::mat4 projection) {
+void RenderPathDeferred::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {
+	GeometryPass(projection, view, eyePos);
+
+	fbo->ReadBind();
+	graphicsWrapper->SetDepth(0);
+	fbo->BindDepth(0);
+	fbo->BindTexture(1);
+	fbo->BindTexture(2);
+	fbo->BindTexture(3);
+	fbo->Unbind();
+
+
+	if (engine.debugMode == DEBUG_NONE) {
+		SSAOPrepass(projection, view);
+		DeferredPass(projection, view, eyePos, usePost);
+	}
+	else {
+		DebugPass(projection, view);
+	}
+}
+
+void RenderPathDeferred::SSAOPrepass(glm::mat4 projection, glm::mat4 view) {
+	ssaoFBO->UnbindRead();
+	ssaoFBO->WriteBind();
 
 	ssaoUBO.projection = projection;
-
-	graphicsWrapper->Clear(CLEAR_DEPTH);
-	graphicsWrapper->SetDepth(0);
-
-	graphicsWrapper->SetColorMask(COLOR_MASK_ALPHA);
-	graphicsWrapper->SetBlending(false);
+	ssaoUBO.invProjMat = glm::inverse(projection);
+	ssaoUBO.invViewMat = glm::inverse(view);
 
 	ssaoNoiseTex->Bind(4);
 
@@ -219,16 +238,20 @@ void RenderPathDeferred::SSAOPrepass(glm::mat4 projection) {
 	ssaoShader->SetUniform4m();
 	ssaoShader->SetVec3();
 	ssaoShader->SetFloatArray(64);
-
-	fbo->WriteBind();
-	engine.engine.vaoQuad->Bind();
+	
+	engine.vaoQuad->Bind();
 	graphicsWrapper->DrawVertexArray(4);
 	engine.vaoQuad->Unbind();
-	fbo->Unbind();
-	graphicsWrapper->SetColorMask(COLOR_MASK_ALL);
 
-	/*graphicsWrapper->Clear(CLEAR_ALL);
-	graphicsWrapper->SetBlending(false);
+	// =========================
+
+	postFBO->WriteBind();
+	graphicsWrapper->Clear(CLEAR_COLOR);
+
+	ssaoFBO->ReadBind();
+	ssaoFBO->BindTexture(0);
+	postFBO->UnbindRead();
+
 	ssaoBlurShader->Use();
 
 	ssaoBlurShader->PassData(&ssaoBlurUBO);
@@ -236,54 +259,60 @@ void RenderPathDeferred::SSAOPrepass(glm::mat4 projection) {
 
 	engine.vaoQuad->Bind();
 	graphicsWrapper->DrawVertexArray(4);
-	engine.vaoQuad->Unbind();*/
+	engine.vaoQuad->Unbind();
+
+	// Reset Geometry FBO
+	//graphicsWrapper->SetDepth(0);
+	fbo->ReadBind();
+	fbo->BindDepth(0);
+	fbo->UnbindRead();
 	
 }
 
-void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {
-	iblUBO.invProjMat = debugUBO.invProjMat = dirLightUBO.invProjMat = spotLightShadowUBO.invProjMat = spotLightUBO.invProjMat = pointLightShadowUBO.invProjMat = pointLightUBO.invProjMat = glm::inverse(projection);
-	ssaoUBO.invViewMat = iblUBO.invViewMat = debugUBO.invViewMat = dirLightUBO.invViewMat = spotLightShadowUBO.invViewMat = spotLightUBO.invViewMat = pointLightShadowUBO.invViewMat = pointLightUBO.invViewMat = glm::inverse(view);
+void RenderPathDeferred::DebugPass(glm::mat4 projection, glm::mat4 view) {
+	debugUBO.invProjMat = glm::inverse(projection);
+	debugUBO.invViewMat = glm::inverse(view);
 
-	if (engine.debugMode != DEBUG_NONE) {
-		postFBO->Unbind();
-		graphicsWrapper->Clear(CLEAR_COLOR);
+	graphicsWrapper->Clear(CLEAR_COLOR);
 
-		debugUBO.debugMode = engine.debugMode;
-		debugUBO.texRefl = 4;
+	debugUBO.debugMode = engine.debugMode;
+	debugUBO.texRefl = 4;
 
-		if (engine.lightSystem.directionalLights.size() > 0) {
-			CDirectionalLight *light = &engine.lightSystem.directionalLights[0];
-			if (light->castShadow) {
-				light->fbo->ReadBind();
-				light->fbo->BindDepth(4);
-				light->fbo->UnbindRead();
-			}
+	 if (engine.lightSystem.directionalLights.size() > 0) {
+		CDirectionalLight *light = &engine.lightSystem.directionalLights[0];
+		if (light->castShadow) {
+			light->fbo->ReadBind();
+			light->fbo->BindDepth(4);
+			light->fbo->UnbindRead();
 		}
-
-		debugShader->Use();
-		debugShader->PassData(&debugUBO);
-		debugShader->SetInteger();
-		debugShader->SetInteger();
-		debugShader->SetInteger();
-		debugShader->SetInteger();
-		debugShader->SetInteger();
-		debugShader->SetInteger();
-		debugShader->SetUniform4m();
-		debugShader->SetUniform4m();
-
-		engine.vaoQuad->Bind();
-		graphicsWrapper->DrawVertexArray(4);
-		engine.vaoQuad->Unbind();
-		return;
 	}
 
-	postFBO->WriteBind();
-	graphicsWrapper->Clear(CLEAR_COLOR);
+	debugShader->Use();
+	debugShader->PassData(&debugUBO);
+	debugShader->SetInteger();
+	debugShader->SetInteger();
+	debugShader->SetInteger();
+	debugShader->SetInteger();
+	debugShader->SetInteger();
+	debugShader->SetInteger();
+	debugShader->SetUniform4m();
+	debugShader->SetUniform4m();
+
+	engine.vaoQuad->Bind();
+	graphicsWrapper->DrawVertexArray(4);
+	engine.vaoQuad->Unbind();
+
+	postFBO->Unbind();
+}
+
+void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {
+	iblUBO.invProjMat = dirLightUBO.invProjMat = spotLightShadowUBO.invProjMat = spotLightUBO.invProjMat = pointLightShadowUBO.invProjMat = pointLightUBO.invProjMat = glm::inverse(projection);
+	iblUBO.invViewMat = dirLightUBO.invViewMat = spotLightShadowUBO.invViewMat = spotLightUBO.invViewMat = pointLightShadowUBO.invViewMat = pointLightUBO.invViewMat = glm::inverse(view);
 
 	if (graphicsWrapper->CheckForErrors())
 		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
 
-	ssaoUBO.eyePos = dirLightUBO.eyePos = spotLightUBO.eyePos = spotLightShadowUBO.eyePos = pointLightShadowUBO.eyePos = pointLightUBO.eyePos = eyePos;
+	dirLightUBO.eyePos = spotLightUBO.eyePos = spotLightShadowUBO.eyePos = pointLightShadowUBO.eyePos = pointLightUBO.eyePos = eyePos;
 	spotLightUBO.resolution = spotLightShadowUBO.resolution = pointLightShadowUBO.resolution = pointLightUBO.resolution = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
 
 	graphicsWrapper->SetBlending(true);
@@ -1035,16 +1064,28 @@ inline void RenderPathDeferred::BuildPostFBO() {
 }
 
 inline void RenderPathDeferred::CompileSSAO(std::string vsPath, std::string vsContent) {
+	glm::vec2 res = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
+	unsigned int resx = (unsigned int)res.x;
+	unsigned int resy = (unsigned int)res.y;
+#ifdef _WIN32 // Remove this ASAP
+	const int GL_RED = 0x1903;
+	const int GL_FLOAT = 0x1406;
+	const int GL_R16F = 0x822D;
+#endif
+
+	ssaoFBO = pfnCreateFramebuffer();
+	ssaoFBO->Initialize(1);
+	ssaoFBO->AddBuffer(GL_R16F, GL_RED, GL_FLOAT, (unsigned int)res.x, (unsigned int)res.y);
+	ssaoFBO->Generate();
 
 	for (int i = 0; i < 64; i++) {
 		glm::vec3 sample;
 		float angleX = 6.28318f * (float)(rand()) / (float)(RAND_MAX);
-		sample.x = glm::cos(angleX);
-		sample.y = glm::sin(angleX);
-		float angleY = 3.14159f * (float)(rand()) / (float)(RAND_MAX);
-		sample.z = glm::sin(angleY);
 		float distance = (float)(rand()) / (float)(RAND_MAX);
-		sample *= glm::clamp(distance*distance, 0.1f, 1.0f);
+		distance = glm::clamp(distance*distance, 0.1f, 1.0f);
+		sample.x = distance * glm::cos(angleX);
+		sample.y = distance * glm::sin(angleX);
+		sample.z = glm::sqrt(1 - distance);
 		ssaoUBO.kernels[i * 3  ] = sample.x;
 		ssaoUBO.kernels[i * 3+1] = sample.y;
 		ssaoUBO.kernels[i * 3+2] = sample.z;
@@ -1071,8 +1112,6 @@ inline void RenderPathDeferred::CompileSSAO(std::string vsPath, std::string vsCo
 		fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
 	if (!ssaoShader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
 		fprintf(stderr, "Failed to add fragment shader %s.\n", fsPath.c_str());
-
-	ssaoShader->BindOutputLocation(2, "output");
 
 	if (!ssaoShader->Compile())
 		fprintf(stderr, "Failed to compile SSAO Program\n");
@@ -1110,36 +1149,19 @@ inline void RenderPathDeferred::CompileSSAO(std::string vsPath, std::string vsCo
 	if (!ssaoBlurShader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
 		fprintf(stderr, "Failed to add fragment shader %s.\n", fsPath.c_str());
 
-	ssaoBlurShader->BindOutputLocation(2, "output");
-
 	if (!ssaoBlurShader->Compile())
 		fprintf(stderr, "Failed to compile SSAO Program\n");
 
 	ssaoBlurShader->SetNumUniforms(1);
-	ssaoBlurShader->CreateUniform("input");
+	ssaoBlurShader->CreateUniform("SSAOin");
 
-	ssaoBlurUBO.input = 2;
-
-	fsContent.clear();
-	fsPath.clear();
-}
-
-void RenderPathDeferred::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost) {
-	GeometryPass(projection, view, eyePos);
-
-	fbo->ReadBind();
-	graphicsWrapper->SetDepth(0);
-	fbo->BindDepth(0);
-	fbo->BindTexture(1);
-	fbo->BindTexture(2);
-	fbo->BindTexture(3);
-	fbo->Unbind();
-
-	//SSAOPrepass(projection);
-	DeferredPass(projection, view, eyePos, usePost);
-	PostPass(projection, view, eyePos);
+	ssaoBlurUBO.input = 0;
 }
 
 Framebuffer *RenderPathDeferred::GetFramebuffer() {
 	return postFBO;
+}
+
+Framebuffer *RenderPathDeferred::GetGBuffer() {
+	return fbo;
 }

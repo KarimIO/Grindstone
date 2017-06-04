@@ -22,7 +22,7 @@ OBJ_ENGINE_FILES := $(OBJ_CORE_FILES) $(OBJ_ENTS_FILES) $(OBJ_RENDER_FILES) $(OB
 INCLUDE_PATHS := -I sources/include/ -I sources/code/Engine/ -I sources/code/Engine/Core -I sources/code/Engine/Entities -I sources/code/Engine/Renderpaths -I sources/code/Engine/Systems -I sources/code/GraphicsOpenGL/ -I sources/code/WindowModule/  -I sources/code/GraphicsCommon/ -I sources/code/AudioModule/ -I sources/include/STB/ -I sources/include/rapidjson/include/ -I /usr/local/include/bullet/ -I ~/local/include/
 
 BULLET_LIBS := /usr/local/lib/libBulletDynamics.a /usr/local/lib/libBulletCollision.a /usr/local/lib/libLinearMath.a
-LIBROCKET_LIBS := -L~/local/include/libRocketCore -L~/local/include/libRocketControls-L~/local/include/libRocketDebugger
+LIBROCKET_LIBS := -L~/local/include/libRocketCore -L~/local/include/libRocketControls -L~/local/include/libRocketDebugger
 ALL_LIBS := $(BULLET_LIBS) $(LIBROCKET_LIBS)
 
 all: build

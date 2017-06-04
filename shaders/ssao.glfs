@@ -1,7 +1,6 @@
 #version 140
 
 in vec2 UV;
-in vec4 vRay;
 out float SSAOout;
 
 const int kernelSize = 64;
@@ -27,24 +26,41 @@ float LinearizeDepth(float depth)
     return (2.0 * near * far) / (far + near - z * (far - near));    
 }
 
-void main() {
-	vec4 gbuffer0Val = texture(gbuffer0, UV);
-	vec4 gbuffer1Val = texture(gbuffer1, UV);
-	vec4 gbuffer2Val = texture(gbuffer2, UV);
-	vec4 gbuffer3Val = texture(gbuffer3, UV);
+vec3 ViewNormal(vec3 inNorm) {
+    return (transpose(invViewMat) * normalize(vec4(inNorm, 1.0))).rgb;
+}
 
-	vec3 fragPos	= ViewPosFromDepth(gbuffer0Val.r, UV).rgb;
-    fragPos.z       = LinearizeDepth(gbuffer0Val.r);
-	vec3 normal		= gbuffer1Val.rgb;
-    vec3 randomVec  = vec3(2 * texture(noiseTex, UV * noiseScale).xy - 1, 0); 
+vec3 viewPositionFromDepth(vec2 vTexCoord)
+{
+    float z = texture2D(gbuffer0, vTexCoord).r;
+    
+    float x = vTexCoord.x * 2.0 - 1.0;
+    float y = vTexCoord.y * 2.0 - 1.0;
+    vec4 vProjectedPos = vec4(x, y, z, 1.0f);
+    
+    vec4 vPositionVS = invProjMat*vProjectedPos;
+    
+    return vPositionVS.xyz / vPositionVS.w;
+}
+
+void main() {
+    vec4 gbuffer0Val = texture(gbuffer0, UV);
+    vec4 gbuffer1Val = texture(gbuffer1, UV);
+    vec4 gbuffer2Val = texture(gbuffer2, UV);
+    vec4 gbuffer3Val = texture(gbuffer3, UV);
+
+    vec3 fragPos    = viewPositionFromDepth(UV);
+    vec3 normal     = ViewNormal(decodeNormal(gbuffer1Val.rgb));
+    vec3 randomVec  = vec3(2 * texture(noiseTex, UV * noiseScale).rg - 1, 0); 
 
     vec3 tangent   = normalize(randomVec - normal * dot(randomVec, normal));
     vec3 bitangent = cross(normal, tangent);
     mat3 TBN       = mat3(tangent, bitangent, normal);
-    
+
     float bias = 0.025;
     float radius = 0.6;
     float occlusion = 0.0;
+
     for(int i = 0; i < kernelSize; i++) {
         vec3 sampleKernel = TBN * kernels[i];
         sampleKernel = fragPos + sampleKernel * radius;
@@ -52,12 +68,11 @@ void main() {
         vec4 offset = vec4(sampleKernel, 1.0);
         offset      = projection * offset;    // from view to clip-space
         offset.xyz /= offset.w;               // perspective divide
-        offset.xyz  = offset.xyz * 0.5 + 0.5; // transform to range 0.0 - 1.0 
+        offset.xyz  = offset.xyz * 0.5 + 0.5; // transform to range 0.0 - 1.0
 
-        float sampleDepth = texture(gbuffer0, 1 - offset.xy).r;
-        sampleDepth = LinearizeDepth(sampleDepth);
-        float rangeCheck = (abs(fragPos.z - sampleDepth) < radius) ? 1.0 : 0.0;
-        occlusion += (sampleDepth <= sampleKernel.z ? 1.0 : 0.0) * rangeCheck;
+        float sampleDepth = viewPositionFromDepth(offset.xy).z;
+        float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
+        occlusion += (sampleDepth >= sampleKernel.z + bias ? 1.0 : 0.0) * rangeCheck;
     }
 
     occlusion = 1.0 - (occlusion / kernelSize);

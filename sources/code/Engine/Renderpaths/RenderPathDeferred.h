@@ -12,6 +12,7 @@ class RenderPathDeferred : public RenderPath {
 	SModel *geometryCache;
 	STerrain *terrainSystem;
 	Framebuffer *fbo;
+	Framebuffer *ssaoFBO;
 	Framebuffer *postFBO;
 
 	Texture *ssaoNoiseTex;
@@ -20,8 +21,9 @@ class RenderPathDeferred : public RenderPath {
 	unsigned int numSkyIndices;
 
 	void GeometryPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos);
-	void SSAOPrepass(glm::mat4 projection);
+	void SSAOPrepass(glm::mat4 projection, glm::mat4 view);
 	void DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost);
+	void DebugPass(glm::mat4 projection, glm::mat4 view);
 	void PostPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos);
 	ShaderProgram *iblShader;
 	ShaderProgram *directionalLightShader;
@@ -59,6 +61,7 @@ class RenderPathDeferred : public RenderPath {
 
 public:
 	virtual void Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost);
+	virtual Framebuffer *GetGBuffer();
 	virtual Framebuffer *GetFramebuffer();
 	RenderPathDeferred(GraphicsWrapper *gw, SModel *gc, STerrain *terrainSystem);
 };

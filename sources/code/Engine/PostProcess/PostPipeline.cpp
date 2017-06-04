@@ -10,7 +10,7 @@ void PostPipeline::Start() {
 void PostPipeline::End() {
 }
 
-void PostPipeline::ProcessScene(Framebuffer *fbo) {
+void PostPipeline::ProcessScene(Framebuffer *inputFbo, Framebuffer *fbo) {
 	Start();
 
 	colorGrading.Process(fbo);
