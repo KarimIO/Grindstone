@@ -4,12 +4,11 @@ in vec2 UV;
 out float SSAOout;
 
 const int kernelSize = 64;
+const float radius = 1.2;
 
 uniform mat4 projection;
 uniform sampler2D gbuffer0;
 uniform sampler2D gbuffer1;
-uniform sampler2D gbuffer2;
-uniform sampler2D gbuffer3;
 uniform sampler2D noiseTex;
 uniform vec3 kernels[kernelSize];
 
@@ -44,10 +43,7 @@ vec3 viewPositionFromDepth(vec2 vTexCoord)
 }
 
 void main() {
-    vec4 gbuffer0Val = texture(gbuffer0, UV);
     vec4 gbuffer1Val = texture(gbuffer1, UV);
-    vec4 gbuffer2Val = texture(gbuffer2, UV);
-    vec4 gbuffer3Val = texture(gbuffer3, UV);
 
     vec3 fragPos    = viewPositionFromDepth(UV);
     vec3 normal     = ViewNormal(decodeNormal(gbuffer1Val.rgb));
@@ -58,7 +54,6 @@ void main() {
     mat3 TBN       = mat3(tangent, bitangent, normal);
 
     float bias = 0.025;
-    float radius = 0.6;
     float occlusion = 0.0;
 
     for(int i = 0; i < kernelSize; i++) {

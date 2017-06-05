@@ -1,6 +1,7 @@
 #version 140
 
 uniform sampler2D SSAOin;
+uniform sampler2D texAlbedo;
 
 const int uBlurSize = 4;
 
@@ -19,5 +20,5 @@ void main() {
     }
 
     float strength = result / float(uBlurSize * uBlurSize);
-    SSAOout = vec3(0.52, 0.82, 0.98) * 0.1 * strength;
+    SSAOout = texture(texAlbedo, UV).rgb * strength * strength * vec3(0.052, 0.082, 0.098);
 }

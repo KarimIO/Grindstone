@@ -132,19 +132,18 @@ struct DebugUniformBufferDef {
 } debugUBO;
 
 struct SSAOUniformBufferDef {
+	float radius;
 	int gbuffer0;
 	int gbuffer1;
-	int gbuffer2;
-	int gbuffer3;
 	int texNormals;
 	glm::mat4 invProjMat;
 	glm::mat4 invViewMat;
 	glm::mat4 projection;
-	glm::vec3 eyePos;
 	float kernels[64*3];
 } ssaoUBO;
 
 struct SSAOBlurUniformBufferDef {
+	int albedo;
 	int input;
 } ssaoBlurUBO;
 
@@ -228,15 +227,13 @@ void RenderPathDeferred::SSAOPrepass(glm::mat4 projection, glm::mat4 view) {
 	ssaoShader->Use();
 
 	ssaoShader->PassData(&ssaoUBO);
-	ssaoShader->SetInteger();
-	ssaoShader->SetInteger();
+	ssaoShader->SetUniformFloat();
 	ssaoShader->SetInteger();
 	ssaoShader->SetInteger();
 	ssaoShader->SetInteger();
 	ssaoShader->SetUniform4m();
 	ssaoShader->SetUniform4m();
 	ssaoShader->SetUniform4m();
-	ssaoShader->SetVec3();
 	ssaoShader->SetFloatArray(64);
 	
 	engine.vaoQuad->Bind();
@@ -261,8 +258,6 @@ void RenderPathDeferred::SSAOPrepass(glm::mat4 projection, glm::mat4 view) {
 	graphicsWrapper->DrawVertexArray(4);
 	engine.vaoQuad->Unbind();
 
-	// Reset Geometry FBO
-	//graphicsWrapper->SetDepth(0);
 	fbo->ReadBind();
 	fbo->BindDepth(0);
 	fbo->UnbindRead();
@@ -1093,22 +1088,19 @@ inline void RenderPathDeferred::CompileSSAO(std::string vsPath, std::string vsCo
 	if (!ssaoShader->Compile())
 		fprintf(stderr, "Failed to compile SSAO Program\n");
 
-	ssaoShader->SetNumUniforms(10);
+	ssaoShader->SetNumUniforms(8);
+	ssaoShader->CreateUniform("radius");
 	ssaoShader->CreateUniform("gbuffer0");
 	ssaoShader->CreateUniform("gbuffer1");
-	ssaoShader->CreateUniform("gbuffer2");
-	ssaoShader->CreateUniform("gbuffer3");
 	ssaoShader->CreateUniform("noiseTex");
 	ssaoShader->CreateUniform("invProjMat");
 	ssaoShader->CreateUniform("invViewMat");
 	ssaoShader->CreateUniform("projection");
-	ssaoShader->CreateUniform("eyePos");
 	ssaoShader->CreateUniform("kernels");
 
+	ssaoUBO.radius = 2.0;
 	ssaoUBO.gbuffer0 = 0;
 	ssaoUBO.gbuffer1 = 1;
-	ssaoUBO.gbuffer2 = 2;
-	ssaoUBO.gbuffer3 = 3;
 	ssaoUBO.texNormals = 4;
 
 	fsContent.clear();
@@ -1129,10 +1121,12 @@ inline void RenderPathDeferred::CompileSSAO(std::string vsPath, std::string vsCo
 	if (!ssaoBlurShader->Compile())
 		fprintf(stderr, "Failed to compile SSAO Program\n");
 
-	ssaoBlurShader->SetNumUniforms(1);
+	ssaoBlurShader->SetNumUniforms(2);
+	ssaoBlurShader->CreateUniform("texAlbedo");
 	ssaoBlurShader->CreateUniform("SSAOin");
 
 	ssaoBlurUBO.input = 0;
+	ssaoBlurUBO.albedo = 2;
 }
 
 Framebuffer *RenderPathDeferred::GetFramebuffer() {
