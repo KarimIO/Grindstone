@@ -24,7 +24,6 @@ class RenderPathDeferred : public RenderPath {
 	void SSAOPrepass(glm::mat4 projection, glm::mat4 view);
 	void DeferredPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos, bool usePost);
 	void DebugPass(glm::mat4 projection, glm::mat4 view);
-	void PostPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos);
 	ShaderProgram *iblShader;
 	ShaderProgram *directionalLightShader;
 	ShaderProgram *spotLightShader;

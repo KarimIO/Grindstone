@@ -550,12 +550,14 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		engine.vaoQuad->Unbind();
 	}
 
-	return; // Hide Sky for now
+	postFBO->WriteBind();
+	graphicsWrapper->Clear(CLEAR_DEPTH);
 
 	graphicsWrapper->SetBlending(false);
-	graphicsWrapper->SetDepthMask(true);
 	graphicsWrapper->SetDepth(2);
-	
+	graphicsWrapper->SetDepthMask(true);
+
+
 	fbo->ReadBind();
 	fbo->TestBlit(0, 0, engine.settings.resolutionX, engine.settings.resolutionY, engine.settings.resolutionX, engine.settings.resolutionY, true);
 	fbo->UnbindRead();
@@ -582,33 +584,7 @@ void RenderPathDeferred::DeferredPass(glm::mat4 projection, glm::mat4 view, glm:
 		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
 }
 
-void RenderPathDeferred::PostPass(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
-	return;
-	postUBO.texLoc0 = 0;
-	postUBO.texLoc1 = 1;
-	postUBO.texLoc2 = 2;
-
-	fbo->ReadBind();
-	postShader->Use();
-
-	fbo->BindTexture(0);
-	fbo->BindTexture(1);
-	fbo->BindTexture(2);
-	
-	postShader->PassData(&postUBO);
-	postShader->SetInteger();
-	postShader->SetInteger();
-	postShader->SetInteger();
-
-	graphicsWrapper->Clear(CLEAR_COLOR);
-
-	engine.vaoQuad->Bind();
-	graphicsWrapper->DrawVertexArray(4);
-	engine.vaoQuad->Unbind();
-	fbo->Unbind();
-}
-
-RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * gw, SModel * gc, STerrain *ts) {
+RenderPathDeferred::RenderPathDeferred(GraphicsWrapper *gw, SModel *gc, STerrain *ts) {
 	graphicsWrapper = gw;
 	geometryCache = gc;
 	terrainSystem = ts;
@@ -735,6 +711,23 @@ inline void RenderPathDeferred::SetupDeferredFBO() {
 	// Depth Buffer Issue:
 	fbo->AddDepthBuffer(resx, resy);
 	fbo->Generate();
+}
+
+inline void RenderPathDeferred::BuildPostFBO() {
+	glm::vec2 res = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
+	unsigned int resx = (unsigned int)res.x;
+	unsigned int resy = (unsigned int)res.y;
+#ifdef _WIN32 // Remove this ASAP
+	const int GL_RGBA = 0x1908;
+	const int GL_FLOAT = 0x1406;
+	const int GL_RGBA32F = 0x8814;
+#endif
+
+	postFBO = pfnCreateFramebuffer();
+	postFBO->Initialize(1);
+	postFBO->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, resx, resy);
+	postFBO->AddDepthBuffer(resx, resy);
+	postFBO->Generate();
 }
 
 inline void RenderPathDeferred::CompileDirectionalShader(std::string &vsPath, std::string &vsContent) {
@@ -1045,22 +1038,6 @@ inline void RenderPathDeferred::CompilePostShader(std::string vsPath, std::strin
 	fsContent.clear();
 	vsPath.clear();
 	fsPath.clear();
-}
-
-inline void RenderPathDeferred::BuildPostFBO() {
-	glm::vec2 res = glm::vec2(engine.settings.resolutionX, engine.settings.resolutionY);
-	unsigned int resx = (unsigned int)res.x;
-	unsigned int resy = (unsigned int)res.y;
-#ifdef _WIN32 // Remove this ASAP
-	const int GL_RGBA = 0x1908;
-	const int GL_FLOAT = 0x1406;
-	const int GL_RGBA32F = 0x8814;
-#endif
-
-	postFBO = pfnCreateFramebuffer();
-	postFBO->Initialize(1);
-	postFBO->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, (unsigned int)res.x, (unsigned int)res.y);
-	postFBO->Generate();
 }
 
 inline void RenderPathDeferred::CompileSSAO(std::string vsPath, std::string vsContent) {
