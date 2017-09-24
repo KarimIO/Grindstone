@@ -3,17 +3,26 @@
 
 #include "../GraphicsCommon/UniformBuffer.h"
 
-class GLUniformBuffer : public UniformBuffer {
+class GLUniformBufferBinding : public UniformBufferBinding {
+	const char *uniformName;
+	GLuint bindingLocation;
 public:
-	virtual void Initialize(int size);
-	virtual unsigned int GetSize();
-	virtual void Bind();
-	virtual void Setdata(unsigned int offset, unsigned int size, void *value);
-	virtual void Unbind();
+	GLUniformBufferBinding(UniformBufferBindingCreateInfo);
+	const char *GetUniformName();
+	GLuint GetBindingLocation();
+};
 
-// DATA
-	GLuint block;
-	unsigned int size;
+class GLUniformBuffer : public UniformBuffer {
+private:
+	GLuint ubo;
+	GLuint bindingLocation;
+	uint32_t size;
+public:
+	GLUniformBuffer(UniformBufferCreateInfo ci);
+	void Bind();
+	~GLUniformBuffer();
+
+	void UpdateUniformBuffer(void * content);
 };
 
 #endif

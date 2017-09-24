@@ -44,19 +44,25 @@ Sources/lib/
 Sources/Obj/
 
 bin/*
+!bin/readme.md
 .vscode/*
-models/*
-!models/sphere.obj
-scenes/*
-!scenes/terrain.json
-!scenes/sponza.json
+assets/*
+!assets/models/sphere.obj
+!assets/scenes/terrain.json
+!assets/scenes/sponza.json
+!assets/shaders/
 sources/include/*
 ~sources/include/stb_image_write.h
 ~sources/include/stb_image.h
-cubemaps/*
-materials/*
-!materials/heightmaps/height.png
-!materials/ssaoNoise.png
-shaders/objects/backup/*
-sounds/music/*
+!assets/materials/heightmaps/height.png
+!assets/materials/ssaoNoise.png
+assets/shaders/objects/backup/*
 settings.ini
+
+# Cmake
+*CMakeCache.txt
+*cmake_install.cmake
+*CTestTestfile.cmake
+*CMakeFiles*
+*Makefile
+*makefile

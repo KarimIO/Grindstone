@@ -1,3 +1,4 @@
+#if 0
 #ifndef _S_SKELETAL_H
 #define _S_SKELETAL_H
 
@@ -79,4 +80,5 @@ public:
 	void Shutdown();
 };
 
+#endif
 #endif

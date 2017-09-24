@@ -13,7 +13,7 @@ CCamera::CCamera() {
 	shutterSpeed = 1.0f / 200.0f;
 	iso = 200.0f;
 
-	std::string vsPath = "../shaders/overlay.glvs";
+	/*std::string vsPath = "../shaders/overlay.glvs";
 	std::string fsPath = "../shaders/post/ManualExposure.glfs";
 
 	std::string vsContent, fsContent;
@@ -52,7 +52,7 @@ CCamera::CCamera() {
 	fbo = pfnCreateFramebuffer();
 	fbo->Initialize(1);
 	fbo->AddBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, (unsigned int)res.x, (unsigned int)res.y);
-	fbo->Generate();
+	fbo->Generate();*/
 }
 
 void CCamera::SetSize(float X, float Y, float Width, float Height) {
@@ -100,7 +100,7 @@ void CCamera::SetFOV(float _fov) {
 }
 
 void CCamera::PostProcessing(Framebuffer *target) {
-	target->ReadBind();
+	/*target->ReadBind();
 	target->BindTexture(0);
 	target->Unbind();
 	shader->Use();
@@ -119,7 +119,7 @@ void CCamera::PostProcessing(Framebuffer *target) {
 	fbo->Unbind();
 
 	if (engine.graphicsWrapper->CheckForErrors())
-		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
+		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";*/
 }
 
 Framebuffer *CCamera::GetFramebuffer() {
@@ -133,6 +133,16 @@ float CCamera::CalculateExposure(float middleVal) {
 
 glm::mat4 CCamera::GetProjection() {
 	glm::mat4 projection = glm::perspective(engine.settings.fov, aspectRatio, 0.1f, 100.0f);
+	if (engine.settings.graphicsLanguage == GRAPHICS_VULKAN)
+		projection[1][1] *= -1;
+	
+	const glm::mat4 scale = glm::mat4(1.0f,0,0,0,
+									0,1.0f,0,0,
+									0,0,0.5f,0,
+									0,0,0.25f,1.0f);
+
+	if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX)
+		projection = scale * projection;
 
 	return projection;
 }

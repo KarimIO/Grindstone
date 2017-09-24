@@ -1,145 +1,305 @@
-#include "gl3w.h"
-#include "OGLGraphicsWrapper.h"
+#include <GL/gl3w.h>
+#include "GLGraphicsWrapper.h"
 
 #include "GLVertexArrayObject.h"
-#include "GLVertexBufferObject.h"
+#include "GLVertexBuffer.h"
+#include "GLIndexBuffer.h"
+#include "GLGraphicsPipeline.h"
+#include <iostream>
+#include <cstdio>
 
-GRAPHICS_EXPORT GraphicsWrapper* createGraphics() {
-	return new GraphicsWrapper;
+#ifdef __linux__
+	#include <GL/glx.h>
+#endif
+
+void APIENTRY glDebugOutput(GLenum source,
+	GLenum type,
+	GLuint id,
+	GLenum severity,
+	GLsizei length,
+	const GLchar *message,
+	void *userParam)
+{
+	// ignore non-significant error/warning codes
+	if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
+
+	std::cout << "--------------- \nDebug message (" << id << "): " << message << "\n";
+
+	switch (source)
+	{
+		case GL_DEBUG_SOURCE_API:             std::cout << "Source: API"; break;
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   std::cout << "Source: Window System"; break;
+		case GL_DEBUG_SOURCE_SHADER_COMPILER: std::cout << "Source: Shader Compiler"; break;
+		case GL_DEBUG_SOURCE_THIRD_PARTY:     std::cout << "Source: Third Party"; break;
+		case GL_DEBUG_SOURCE_APPLICATION:     std::cout << "Source: Application"; break;
+		case GL_DEBUG_SOURCE_OTHER:           std::cout << "Source: Other"; break;
+	} std::cout << "\n";
+
+	switch (type)
+	{
+		case GL_DEBUG_TYPE_ERROR:               std::cout << "Type: Error"; break;
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: std::cout << "Type: Deprecated Behaviour"; break;
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  std::cout << "Type: Undefined Behaviour"; break;
+		case GL_DEBUG_TYPE_PORTABILITY:         std::cout << "Type: Portability"; break;
+		case GL_DEBUG_TYPE_PERFORMANCE:         std::cout << "Type: Performance"; break;
+		case GL_DEBUG_TYPE_MARKER:              std::cout << "Type: Marker"; break;
+		case GL_DEBUG_TYPE_PUSH_GROUP:          std::cout << "Type: Push Group"; break;
+		case GL_DEBUG_TYPE_POP_GROUP:           std::cout << "Type: Pop Group"; break;
+		case GL_DEBUG_TYPE_OTHER:               std::cout << "Type: Other"; break;
+	} std::cout << "\n";
+
+	switch (severity)
+	{
+		case GL_DEBUG_SEVERITY_HIGH:         std::cout << "Severity: high"; break;
+		case GL_DEBUG_SEVERITY_MEDIUM:       std::cout << "Severity: medium"; break;
+		case GL_DEBUG_SEVERITY_LOW:          std::cout << "Severity: low"; break;
+		case GL_DEBUG_SEVERITY_NOTIFICATION: std::cout << "Severity: notification"; break;
+	} std::cout << "\n\n";
 }
 
-GRAPHICS_EXPORT void deletePointer(void * ptr) {
-	free(ptr);
-}
+GLGraphicsWrapper::GLGraphicsWrapper(InstanceCreateInfo createInfo) {
+	debug = createInfo.debug;
+	vsync = createInfo.vsync;
+	width = createInfo.width;
+	height = createInfo.height;
+	title = createInfo.title;
+	input = createInfo.inputInterface;
 
-bool GraphicsWrapper::InitializeGraphics() {
+	std::cout << "About to initialize context...\n";
+	if (!InitializeWindowContext())
+		return;
+
 	if (gl3wInit()) {
 		printf("Failed to initialize GL3W. Returning...\n");
-		return false;
+		return;
 	}
 
-	/*if (!gl3wIsSupported(3, 3)) {
-		printf("OpenGL %i.%i=< required for Grindstone Engine.\n", 3, 3);
+	if (!gl3wIsSupported(3, 1)) {
+		printf("OpenGL %i.%i or more required for Grindstone Engine.\n", 3, 1);
 		printf("Your Graphics Card only supports version %s. Quitting...\n\n", glGetString(GL_VERSION));
-		return false;
-	}*/
+		return;
+	}
 
 	printf("OpenGL %s initialized using GLSL %s.\n\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-	// Depth Testing
+	if (debug) {
+		GLint flags;
+		glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+		if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
+			glEnable(GL_DEBUG_OUTPUT);
+			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+			glDebugMessageCallback((GLDEBUGPROC)glDebugOutput, nullptr);
+			glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+		}
+	}
+
+	glDepthMask(GL_TRUE);
+	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
-	glEnable(GL_CULL_FACE);
-	glClearColor(0, 0, 0, 1);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	return true;
+	glDepthFunc(GL_LEQUAL);
+	printf("OpenGL Initialized!\n===================================\n");
 }
 
-void GraphicsWrapper::SetResolution(int x, int y, uint32_t width, uint32_t height) {
-	glViewport(x, y, width, height);
+void GLGraphicsWrapper::Clear() {
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
-void GraphicsWrapper::DrawVertexArray(uint32_t numVertices) {
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, numVertices);
+void GLGraphicsWrapper::SwapBuffer() {
+#if defined(GLFW_WINDOW)
+	glfwSwapBuffers(window);
+#elif defined(_WIN32)
+	SwapBuffers(hDC);
+#else
+	glXSwapBuffers(xDisplay, xWindow);
+#endif
 }
 
-void GraphicsWrapper::DrawBaseVertex(ShapeType type, const void *baseIndex, uint32_t baseVertex, uint32_t numIndices) {
-	int t = (type == SHAPE_PATCHES)?GL_PATCHES:type;
-	glDrawElementsBaseVertex(
-		t,
-		numIndices,
-		GL_UNSIGNED_INT,
-		baseIndex,
-		baseVertex);
-	
+void GLGraphicsWrapper::CreateDefaultStructures() {
+
 }
 
-unsigned char * GraphicsWrapper::ReadScreen(uint32_t width, uint32_t height) {
-	glReadBuffer(GL_COLOR_ATTACHMENT0);
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	unsigned char *data = (unsigned char *)malloc(width * height * 3);
-	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
-	glReadBuffer(GL_BACK);
-	return data;
+void GLGraphicsWrapper::Cleanup() {
+#if defined(GLFW_WINDOW)
+	glfwTerminate();
+#elif defined(_WIN32)
+	ReleaseDC(window_handle, hDC);
+	wglDeleteContext(hRC);
+#else
+	CleanX11();
+#endif
 }
 
-void GraphicsWrapper::Clear(unsigned int clearTarget) {
-	if (clearTarget == CLEAR_COLOR)
-		glClear(GL_COLOR_BUFFER_BIT);
-	else if (clearTarget == CLEAR_DEPTH)
-		glClear(GL_DEPTH_BUFFER_BIT);
-	else
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+void GLGraphicsWrapper::DeleteFramebuffer(Framebuffer *ptr) {
+	delete (GLFramebuffer *)ptr;
 }
 
-void GraphicsWrapper::SetColorMask(unsigned char mask) {
-	glColorMask(COLOR_MASK_RED & mask, COLOR_MASK_GREEN & mask, COLOR_MASK_BLUE & mask, COLOR_MASK_ALPHA & mask);
+void GLGraphicsWrapper::DeleteVertexBuffer(VertexBuffer *ptr) {
+	delete (GLVertexBuffer *)ptr;
 }
 
-void GraphicsWrapper::SetDepth(int state) {
-	if (state == 1) {
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LESS);
-	}
-	else if (state == 2) {
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LEQUAL);
-	}
-	else
-		glDisable(GL_DEPTH_TEST);
+void GLGraphicsWrapper::DeleteIndexBuffer(IndexBuffer *ptr) {
+	delete (GLIndexBuffer *)ptr;
 }
 
-void GraphicsWrapper::SetDepthMask(bool state) {
-	glDepthMask(state);
+void GLGraphicsWrapper::DeleteUniformBuffer(UniformBuffer * ptr) {
+	delete (GLUniformBuffer *)ptr;
 }
 
-bool GraphicsWrapper::SupportsTesselation() {
-	return gl3wIsSupported(4, 0)?true:false;
+void GLGraphicsWrapper::DeleteUniformBufferBinding(UniformBufferBinding * ptr) {
+	delete (GLUniformBufferBinding *)ptr;
 }
 
-bool GraphicsWrapper::CheckForErrors() {
-	bool hadErrors = false;
-	GLenum err;
-	while ((err = glGetError()) != GL_NO_ERROR) {
-		std::cerr << "OpenGL error: " << err << std::endl;
-		hadErrors = true;
-	}
-
-	return hadErrors;
+void GLGraphicsWrapper::DeleteGraphicsPipeline(GraphicsPipeline *ptr) {
+	delete (GLGraphicsPipeline *)ptr;
 }
 
-void GraphicsWrapper::SetTesselation(int verts) {
-	GLint MaxPatchVertices = 0;
-	glGetIntegerv(GL_MAX_PATCH_VERTICES, &MaxPatchVertices);
-	printf("Max supported patch vertices %d\n", MaxPatchVertices);
-	glPatchParameteri(GL_PATCH_VERTICES, verts);
+void GLGraphicsWrapper::DeleteRenderPass(RenderPass *ptr) {
+	//delete (GLRenderPass *)ptr;
 }
 
-void GraphicsWrapper::SetCull(CullType state) {
-	int cullState;
-	switch (state) {
-	case CULL_NONE:
-		cullState = GL_FRONT_AND_BACK;
-		break;
-	case CULL_FRONT:
-		cullState = GL_FRONT;
-		break;
-	default:
-	case CULL_BACK:
-		cullState = GL_BACK;
-		break;
-	}
-	glCullFace(cullState);
+void GLGraphicsWrapper::DeleteTexture(Texture *ptr) {
+	delete (GLTexture *)ptr;
 }
 
-void GraphicsWrapper::SetBlending(bool state) {
-	if (state) {
+TextureBinding * GLGraphicsWrapper::CreateTextureBinding(TextureBindingCreateInfo createInfo) {
+	return static_cast<TextureBinding *>(new GLTextureBinding(createInfo));
+}
+
+TextureBindingLayout * GLGraphicsWrapper::CreateTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo) {
+	return static_cast<TextureBindingLayout *>(new GLTextureBindingLayout(createInfo));
+}
+
+void GLGraphicsWrapper::DeleteCommandBuffer(CommandBuffer * ptr) {
+}
+
+void GLGraphicsWrapper::DeleteVertexArrayObject(VertexArrayObject * ptr) {
+	delete (GLVertexArrayObject *)ptr;
+}
+
+
+Framebuffer * GLGraphicsWrapper::CreateFramebuffer(FramebufferCreateInfo ci) {
+	return static_cast<Framebuffer *>(new GLFramebuffer(ci));
+}
+
+RenderPass *GLGraphicsWrapper::CreateRenderPass(RenderPassCreateInfo ci) {
+	return 0;
+}
+
+GraphicsPipeline *GLGraphicsWrapper::CreateGraphicsPipeline(GraphicsPipelineCreateInfo ci) {
+	return static_cast<GraphicsPipeline *>(new GLGraphicsPipeline(ci));
+}
+
+void GLGraphicsWrapper::CreateDefaultFramebuffers(DefaultFramebufferCreateInfo ci, Framebuffer **&framebuffers, uint32_t &framebufferCount) {
+	framebuffers = nullptr;
+	framebufferCount = 0;
+}
+
+VertexArrayObject *GLGraphicsWrapper::CreateVertexArrayObject(VertexArrayObjectCreateInfo ci) {
+	return static_cast<VertexArrayObject *>(new GLVertexArrayObject(ci));
+}
+
+CommandBuffer *GLGraphicsWrapper::CreateCommandBuffer(CommandBufferCreateInfo ci) {
+	return 0;
+}
+
+VertexBuffer *GLGraphicsWrapper::CreateVertexBuffer(VertexBufferCreateInfo ci) {
+	return static_cast<VertexBuffer *>(new GLVertexBuffer(ci));
+}
+
+IndexBuffer *GLGraphicsWrapper::CreateIndexBuffer(IndexBufferCreateInfo ci) {
+	return static_cast<IndexBuffer *>(new GLIndexBuffer(ci));
+}
+
+UniformBuffer *GLGraphicsWrapper::CreateUniformBuffer(UniformBufferCreateInfo ci) {
+	return static_cast<UniformBuffer *>(new GLUniformBuffer(ci));
+}
+
+UniformBufferBinding *GLGraphicsWrapper::CreateUniformBufferBinding(UniformBufferBindingCreateInfo ci) {
+	return static_cast<UniformBufferBinding *>(new GLUniformBufferBinding(ci));
+}
+
+Texture * GLGraphicsWrapper::CreateCubemap(CubemapCreateInfo ci) {
+	return static_cast<Texture *>(new GLTexture(ci));
+}
+
+Texture *GLGraphicsWrapper::CreateTexture(TextureCreateInfo ci) {
+	return static_cast<Texture *>(new GLTexture(ci));
+}
+
+uint32_t GLGraphicsWrapper::GetImageIndex() {
+	return 0;
+}
+
+bool GLGraphicsWrapper::SupportsCommandBuffers() {
+	return false;
+}
+
+bool GLGraphicsWrapper::SupportsTesselation() {
+	return gl3wIsSupported(4, 0) ? true : false;
+}
+
+bool GLGraphicsWrapper::SupportsGeometryShader() {
+	return gl3wIsSupported(3, 2) ? true : false;
+}
+
+bool GLGraphicsWrapper::SupportsComputeShader() {
+	return gl3wIsSupported(4, 3) ? true : false;
+}
+
+bool GLGraphicsWrapper::SupportsMultiDrawIndirect() {
+	return gl3wIsSupported(4, 3) ? true : false;
+}
+
+void GLGraphicsWrapper::WaitUntilIdle() {
+
+}
+
+void GLGraphicsWrapper::DrawCommandBuffers(uint32_t imageIndex, CommandBuffer ** commandBuffers, uint32_t commandBufferCount) {
+
+}
+
+void GLGraphicsWrapper::BindTextureBinding(TextureBinding *binding) {
+	GLTextureBinding *b = (GLTextureBinding *)binding;
+	b->Bind();
+}
+
+void GLGraphicsWrapper::BindVertexArrayObject(VertexArrayObject *vao) {
+	vao->Bind();
+}
+
+void GLGraphicsWrapper::DrawImmediateIndexed(bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
+	uint32_t size = largeBuffer ? sizeof(uint32_t) : sizeof(uint16_t);
+	glDrawElementsBaseVertex(GL_TRIANGLES, indexCount, largeBuffer ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, (void *)(indexOffsetPtr * size), baseVertex);
+}
+
+void GLGraphicsWrapper::DrawImmediateVertices(uint32_t base, uint32_t count) {
+	glDrawArrays(GL_TRIANGLE_STRIP, base, count);
+}
+
+void GLGraphicsWrapper::SetImmediateBlending(bool en) {
+	if (en) {
 		glEnable(GL_BLEND);
 		glBlendEquation(GL_FUNC_ADD);
 		glBlendFunc(GL_ONE, GL_ONE);
+
 	}
-	else {
+	else
 		glDisable(GL_BLEND);
-	}
+}
+
+void GLGraphicsWrapper::BindDefaultFramebuffer()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+ColorFormat GLGraphicsWrapper::GetDeviceColorFormat() {
+	return FORMAT_COLOR_R8G8B8A8;
+}
+
+GRAPHICS_EXPORT GraphicsWrapper* createGraphics(InstanceCreateInfo createInfo) {
+	return new GLGraphicsWrapper(createInfo);
+}
+
+GRAPHICS_EXPORT void deleteGraphics(void * ptr) {
+	free(ptr);
 }

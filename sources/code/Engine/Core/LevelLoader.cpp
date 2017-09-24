@@ -84,9 +84,9 @@ public:
 			engine.entities.reserve(i);
 		else if (keyType == KEY_MAP_NUMCUBE)
 			engine.cubemapSystem.Reserve(i);
-		else if (componentType == COMPONENT_TERRAIN)
-			if (keyType == KEY_COMPONENT_PATCHES)
-				engine.terrainSystem.components[componentID].numPatches = i;
+		//else if (componentType == COMPONENT_TERRAIN)
+			//if (keyType == KEY_COMPONENT_PATCHES)
+				//engine.terrainSystem.components[componentID].numPatches = i;
 		return true;
 	}
 	bool Uint(unsigned u) { Int((int)u); return true; }
@@ -111,31 +111,31 @@ public:
 				}
 				else if (componentType == COMPONENT_LIGHT_SPOT) {
 					if (keyType == KEY_COMPONENT_COLOR)
-						engine.lightSystem.spotLights[componentID].lightColor[subIterator++] = (float)d;
+						engine.lightSystem.spotLights[componentID].lightUBOBuffer.color[subIterator++] = (float)d;
 					else if (keyType == KEY_COMPONENT_BRIGHTNESS)
-						engine.lightSystem.spotLights[componentID].intensity = (float)d;
+						engine.lightSystem.spotLights[componentID].lightUBOBuffer.power = (float)d;
 					else if (keyType == KEY_COMPONENT_RADIUS)
-						engine.lightSystem.spotLights[componentID].lightRadius = (float)d;
+						engine.lightSystem.spotLights[componentID].lightUBOBuffer.attenuationRadius = (float)d;
 					else if (keyType == KEY_COMPONENT_INNERANGLE)
-						engine.lightSystem.spotLights[componentID].innerSpotAngle = (float)d*3.14159f / 180.0f;
+						engine.lightSystem.spotLights[componentID].lightUBOBuffer.innerAngle = (float)d*3.14159f / 180.0f;
 					else if (keyType == KEY_COMPONENT_OUTERANGLE)
-						engine.lightSystem.spotLights[componentID].outerSpotAngle = (float)d*3.14159f / 180.0f;
+						engine.lightSystem.spotLights[componentID].lightUBOBuffer.outerAngle = (float)d*3.14159f / 180.0f;
 				}
 				else if (componentType == COMPONENT_LIGHT_POINT) {
 					if (keyType == KEY_COMPONENT_COLOR)
-						engine.lightSystem.pointLights[componentID].lightColor[subIterator++] = (float)d;
+						engine.lightSystem.pointLights[componentID].lightUBOBuffer.color[subIterator++] = (float)d;
 					else if (keyType == KEY_COMPONENT_BRIGHTNESS)
-						engine.lightSystem.pointLights[componentID].intensity = (float)d;
+						engine.lightSystem.pointLights[componentID].lightUBOBuffer.power = (float)d;
 					else if (keyType == KEY_COMPONENT_RADIUS)
-						engine.lightSystem.pointLights[componentID].lightRadius = (float)d;
+						engine.lightSystem.pointLights[componentID].lightUBOBuffer.attenuationRadius = (float)d;
 				}
 				else if (componentType == COMPONENT_LIGHT_DIRECTIONAL) {
 					if (keyType == KEY_COMPONENT_COLOR)
-						engine.lightSystem.directionalLights[componentID].lightColor[subIterator++] = (float)d;
+						engine.lightSystem.directionalLights[componentID].lightUBOBuffer.color[subIterator++] = (float)d;
 					else if (keyType == KEY_COMPONENT_BRIGHTNESS)
-						engine.lightSystem.directionalLights[componentID].intensity = (float)d;
+						engine.lightSystem.directionalLights[componentID].lightUBOBuffer.power = (float)d;
 					else if (keyType == KEY_COMPONENT_RADIUS)
-						engine.lightSystem.directionalLights[componentID].sunRadius = (float)d;
+						engine.lightSystem.directionalLights[componentID].lightUBOBuffer.sourceRadius = (float)d;
 				}
 				else if (componentType == COMPONENT_PHYSICS) {
 					if (keyType == KEY_COMPONENT_PHYSICS_PLANE) {
@@ -158,21 +158,21 @@ public:
 					}
 					else if (keyType == KEY_COMPONENT_PHYSICS_DAMPING) {
 						if (subIterator++ == 0) {
-							position.x == (float)d;
+							position.x = (float)d;
 						}
 						else {
 							engine.physicsSystem.Get(componentID)->SetDamping(position.x, (float)d);
 						}
 					}
 				}
-				else if (componentType == COMPONENT_TERRAIN) {
+				/*else if (componentType == COMPONENT_TERRAIN) {
 					if (keyType == KEY_COMPONENT_WIDTH)
 						engine.terrainSystem.components[componentID].width = (float)d;
 					if (keyType == KEY_COMPONENT_HEIGHT)
 						engine.terrainSystem.components[componentID].height = (float)d;
 					if (keyType == KEY_COMPONENT_LENGTH)
 						engine.terrainSystem.components[componentID].length = (float)d;
-				}
+				}*/
 			}
 		}
 		return true;
@@ -219,11 +219,11 @@ public:
 				engine.physicsSystem.AddComponent(entityID, ent->components[COMPONENT_PHYSICS]);
 				componentID = ent->components[COMPONENT_PHYSICS];
 			}
-			else if (std::string(str) == "COMPONENT_TERRAIN") {
+			/*else if (std::string(str) == "COMPONENT_TERRAIN") {
 				componentType = COMPONENT_TERRAIN;
 				engine.terrainSystem.AddComponent(ent->components[COMPONENT_TERRAIN]);
 				componentID = ent->components[COMPONENT_TERRAIN];
-			}
+			}*/
 			else if (std::string(str) == "COMPONENT_INPUT") {
 				componentType = COMPONENT_INPUT;
 			}
@@ -238,13 +238,13 @@ public:
 			}
 		}
 		else if (keyType == KEY_COMPONENT_PATH) {
-			engine.geometryCache.PreloadModel3D(("../models/" + std::string(str)).c_str(), ent->components[COMPONENT_RENDER]);
+			engine.geometryCache.PreloadModel3D(("../assets/" + std::string(str)).c_str(), ent->components[COMPONENT_RENDER]);
 		}
 
-		else if (componentType == COMPONENT_TERRAIN)
+		/*else if (componentType == COMPONENT_TERRAIN)
 			if (keyType == KEY_COMPONENT_HEIGHTMAP)
 				engine.terrainSystem.components[componentID].heightmapPath = "../materials/" + std::string(str);
-
+		*/
 		return true;
 	}
 	bool StartObject() {

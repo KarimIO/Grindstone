@@ -7,6 +7,14 @@
 #include "SGeometry.h"
 #include "../Core/System.h"
 
+struct DefferedUBO {
+	glm::mat4 view;
+	glm::mat4 invProj;
+	glm::vec4 eyePos;
+	glm::vec4 resolution;
+};
+
+
 class LightComponentList : public SpaceComponentList {
 public:
 };
@@ -15,6 +23,10 @@ class SLight : public System {
 public:
 	GraphicsWrapper *graphicsWrapper;
 	SModel *geometryCache;
+
+	GraphicsPipeline *m_pointLightPipeline;
+	GraphicsPipeline *m_spotLightPipeline;
+
 	std::vector<CPointLight>		pointLights;
 	std::vector<CSpotLight>			spotLights;
 	std::vector<CDirectionalLight>	directionalLights;

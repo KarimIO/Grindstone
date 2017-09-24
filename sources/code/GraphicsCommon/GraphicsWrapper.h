@@ -1,97 +1,118 @@
-#ifndef _COMMON_GRAPHICS_WRAPPER_H
-#define _COMMON_GRAPHICS_WRAPPER_H
+#pragma once
 
-#include <iostream>
+#include "IndexBuffer.h"
+#include "RenderPass.h"
+#include "Framebuffer.h"
+#include "VertexBuffer.h"
+#include "UniformBuffer.h"
+#include "GraphicsPipeline.h"
+#include "CommandBuffer.h"
+#include "VertexArrayObject.h"
 
 #ifdef _WIN32
-#include <Windows.h>
-
-#ifdef GRAPHICS_DLL
-#define GRAPHICS_EXPORT_CLASS __declspec(dllexport) 
-#define GRAPHICS_EXPORT __declspec(dllexport) 
+	#include <Windows.h>
+	#include <Windowsx.h>
 #else
-#define GRAPHICS_EXPORT_CLASS __declspec(dllimport) 
-#define GRAPHICS_EXPORT __declspec(dllimport) 
-#endif
-#else
-#define GRAPHICS_EXPORT_CLASS
-#define GRAPHICS_EXPORT extern "C"
-#endif
-
-#if (defined(__linux__) || defined(__APPLE__))
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/keysymdef.h>
+	#include <X11/Xlib.h>
+	#include <X11/Xutil.h>
+	#include <X11/keysymdef.h>
 #endif
 
 class InputInterface;
 
-#define CLEAR_ALL 0
-#define CLEAR_COLOR 1
-#define CLEAR_DEPTH 2
-
-#define COLOR_MASK_RED 0x1
-#define COLOR_MASK_GREEN 0x2
-#define COLOR_MASK_BLUE 0x4
-#define COLOR_MASK_ALPHA 0x8
-#define COLOR_MASK_ALL COLOR_MASK_RED | COLOR_MASK_GREEN | COLOR_MASK_BLUE | COLOR_MASK_ALPHA
-
-enum ShapeType {
-	SHAPE_POINTS = 0,
-	SHAPE_LINES,
-	SHAPE_LINE_LOOP,
-	SHAPE_LINE_STRIP,
-	SHAPE_TRIANGLES,
-	SHAPE_TRIANGLE_STRIP,
-	SHAPE_TRIANGLE_FAN,
-	SHAPE_QUADS,
-	SHAPE_PATCHES
+struct InstanceCreateInfo {
+	InputInterface *inputInterface;
+	uint32_t width;
+	uint32_t height;
+	const char *title;
+	bool debug;
+	bool vsync;
 };
 
-enum CullType {
-	CULL_NONE = 0,
-	CULL_FRONT,
-	CULL_BACK,
-};
+#ifdef __APPLE__
+#define GLFW_WINDOW
+#endif
 
-class GRAPHICS_EXPORT_CLASS GraphicsWrapper {
-private:
-#ifdef _WIN32
-	HWND	window_handle;
-	HGLRC	hRC;
-	HDC		hDC;
+#if defined(GLFW_WINDOW)
+#include <GLFW/glfw3.h>
 #endif
-#if (defined(__linux__) || defined(__APPLE__))
-	Display* display;
-	Window *window;
-	Screen* screen;
-	int screenID;
-#endif
+
+class GraphicsWrapper {
 public:
-	virtual bool InitializeWindowContext();
-	virtual bool InitializeGraphics();
-	virtual void DrawVertexArray(uint32_t numIndices);
-	virtual void DrawBaseVertex(ShapeType type, const void *baseIndex, uint32_t baseVertex, uint32_t numIndices);
-	virtual unsigned char *ReadScreen(uint32_t width, uint32_t height);
-	virtual void SwapBuffer();
-	virtual void SetResolution(int x, int y, uint32_t width, uint32_t height);
-	virtual void Clear(unsigned int clearTarget);
-	virtual void SetColorMask(unsigned char mask);
-	virtual void SetDepth(int state);
-	virtual void SetCull(CullType state);
-	virtual void SetBlending(bool state);
-	virtual void SetTesselation(int verts);
-	virtual void SetDepthMask(bool state);
-	virtual bool SupportsTesselation();
-	virtual bool CheckForErrors();
-#ifdef _WIN32
-	virtual void SetWindowContext(HWND);
-#else // Apple + Linux
-	virtual void SetWindowContext(Display*, Window *, Screen* screen, int);
+
+#if defined(GLFW_WINDOW)
+	GLFWwindow* window;
+	bool InitializeWindowContext();
+#elif defined(_WIN32)
+	static LRESULT CALLBACK sWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	LRESULT	CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	HWND	window_handle;
+
+	bool InitializeWin32Window();
+#else
+	Display *xDisplay;
+	Window xWindow;
 #endif
+	InputInterface *input;
+	const char *title;
+	uint32_t width;
+	uint32_t height;
+public:
+	virtual void HandleEvents();
+	virtual void SetCursorShown(bool);
+	virtual void ResetCursor();
+	virtual void SetCursor(int x, int y);
+	virtual void GetCursor(int &x, int &y);
+
+	virtual void CreateDefaultStructures() = 0;
+	virtual void Cleanup() = 0;
+
+	virtual void Clear() = 0;
+	virtual void DeleteFramebuffer(Framebuffer *ptr) = 0;
+	virtual void DeleteVertexBuffer(VertexBuffer *ptr) = 0;
+	virtual void DeleteIndexBuffer(IndexBuffer *ptr) = 0;
+	virtual void DeleteUniformBuffer(UniformBuffer * ptr) = 0;
+	virtual void DeleteUniformBufferBinding(UniformBufferBinding * ptr) = 0;
+	virtual void DeleteGraphicsPipeline(GraphicsPipeline *ptr) = 0;
+	virtual void DeleteRenderPass(RenderPass *ptr) = 0;
+	virtual void DeleteTexture(Texture *ptr) = 0;
+	virtual void DeleteCommandBuffer(CommandBuffer *ptr) = 0;
+	virtual void DeleteVertexArrayObject(VertexArrayObject *ptr) = 0;
+
+	virtual Framebuffer *CreateFramebuffer(FramebufferCreateInfo ci) = 0;
+	virtual RenderPass *CreateRenderPass(RenderPassCreateInfo ci) = 0;
+	virtual GraphicsPipeline *CreateGraphicsPipeline(GraphicsPipelineCreateInfo ci) = 0;
+	virtual void CreateDefaultFramebuffers(DefaultFramebufferCreateInfo ci, Framebuffer **&framebuffers, uint32_t &framebufferCount) = 0;
+	virtual CommandBuffer *CreateCommandBuffer(CommandBufferCreateInfo ci) = 0;
+	virtual VertexArrayObject *CreateVertexArrayObject(VertexArrayObjectCreateInfo ci) = 0;
+	virtual VertexBuffer *CreateVertexBuffer(VertexBufferCreateInfo ci) = 0;
+	virtual IndexBuffer *CreateIndexBuffer(IndexBufferCreateInfo ci) = 0;
+	virtual UniformBuffer *CreateUniformBuffer(UniformBufferCreateInfo ci) = 0;
+	virtual UniformBufferBinding *CreateUniformBufferBinding(UniformBufferBindingCreateInfo ci) = 0;
+	virtual Texture *CreateCubemap(CubemapCreateInfo createInfo) = 0;
+	virtual Texture *CreateTexture(TextureCreateInfo createInfo) = 0;
+	virtual TextureBinding *CreateTextureBinding(TextureBindingCreateInfo ci) = 0;
+	virtual TextureBindingLayout *CreateTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo) = 0;
+
+	virtual bool SupportsCommandBuffers() = 0;
+	virtual bool SupportsTesselation() = 0;
+	virtual bool SupportsGeometryShader() = 0;
+	virtual bool SupportsComputeShader() = 0;
+	virtual bool SupportsMultiDrawIndirect() = 0;
+	virtual void BindDefaultFramebuffer() = 0;
+
+	virtual uint32_t GetImageIndex() = 0;
+
+	virtual void WaitUntilIdle() = 0;
+	virtual void DrawCommandBuffers(uint32_t imageIndex, CommandBuffer ** commandBuffers, uint32_t commandBufferCount) = 0;
+
+	virtual void BindTextureBinding(TextureBinding *) = 0;
+	virtual void BindVertexArrayObject(VertexArrayObject *) = 0;
+	virtual	void DrawImmediateIndexed(bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) = 0;
+	virtual void DrawImmediateVertices(uint32_t base, uint32_t count) = 0;
+	virtual void SetImmediateBlending(bool) = 0;
+
+	virtual ColorFormat GetDeviceColorFormat() = 0;
+
+	virtual void SwapBuffer() = 0;
 };
-
-extern "C" GRAPHICS_EXPORT GraphicsWrapper* createGraphics();
-extern "C" GRAPHICS_EXPORT void deletePointer(void *ptr);
-
-#endif

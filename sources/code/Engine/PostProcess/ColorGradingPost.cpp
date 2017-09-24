@@ -5,7 +5,7 @@
 #include "../Core/Engine.h"
 
 void ColorGradingPost::Initialize() {
-	std::string vsPath = "../shaders/overlay.glvs";
+	/*std::string vsPath = "../shaders/overlay.glvs";
 	std::string fsPath = "../shaders/post/ColorGrading.glfs";
 
 	std::string vsContent, fsContent;
@@ -29,11 +29,11 @@ void ColorGradingPost::Initialize() {
 	shader->CreateUniform("tex");
 
 	fsContent.clear();
-	fsPath.clear();
+	fsPath.clear();*/
 }
 
 void ColorGradingPost::Process(Framebuffer *target) {
-	target->ReadBind();
+	/*target->ReadBind();
 	target->BindTexture(0);
 	target->Unbind();
 	shader->Use();
@@ -50,7 +50,7 @@ void ColorGradingPost::Process(Framebuffer *target) {
 	//fbo->Unbind();
 
 	if (engine.graphicsWrapper->CheckForErrors())
-		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
+		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";*/
 }
 
 Framebuffer *ColorGradingPost::GetFramebuffer() {
@@ -58,8 +58,8 @@ Framebuffer *ColorGradingPost::GetFramebuffer() {
 }
 
 void ColorGradingPost::Cleanup() {
-	shader->Cleanup();
+	/*shader->Cleanup();
 	//fbo->Cleanup();
 	pfnDeleteGraphicsPointer(shader);
-	pfnDeleteGraphicsPointer(fbo);
+	pfnDeleteGraphicsPointer(fbo);*/
 }

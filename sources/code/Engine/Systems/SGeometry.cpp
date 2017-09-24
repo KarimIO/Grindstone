@@ -59,171 +59,126 @@ void SModel::LoadModel3D(const char * szPath, size_t renderID) {
 	LoadModel3DFile(szPath, model);
 }
 
-void SModel::InitMesh(const aiMesh *paiMesh,
-	std::vector<glm::vec3>& vertices,
-	std::vector<glm::vec3>& normals,
-	std::vector<glm::vec3>& tangents,
-	std::vector<glm::vec2>& uvs,
-	std::vector<unsigned int>& indices)
-{
-	const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
-
-	for (unsigned int i = 0; i < paiMesh->mNumVertices; i++) {
-		const aiVector3D* pPos = &(paiMesh->mVertices[i]);
-		const aiVector3D* pNormal = paiMesh->HasNormals() ? &(paiMesh->mNormals[i]) : &Zero3D;
-		const aiVector3D* pTangent = paiMesh->HasTangentsAndBitangents() ? &(paiMesh->mTangents[i]) : &Zero3D;
-		const aiVector3D* pTexCoord = paiMesh->HasTextureCoords(0) ? &(paiMesh->mTextureCoords[0][i]) : &Zero3D;
-
-		vertices.push_back(glm::vec3(pPos->x, pPos->y, pPos->z));
-		uvs.push_back(glm::vec2(pTexCoord->x, pTexCoord->y));
-		normals.push_back(glm::vec3(pNormal->x, pNormal->y, pNormal->z));
-		tangents.push_back(glm::vec3(-pTangent->x, -pTangent->y, -pTangent->z));
+std::vector<CommandBuffer*> SModel::GetCommandBuffers() {
+	std::vector<CommandBuffer*> buffers;
+	buffers.reserve(models.size());
+	for (CModel model : models) {
+		buffers.push_back(model.commandBuffer);
 	}
 
-	for (unsigned int i = 0; i < paiMesh->mNumFaces; i++) {
-		const aiFace& Face = paiMesh->mFaces[i];
-		assert(Face.mNumIndices == 3);
-		indices.push_back(Face.mIndices[0]);
-		indices.push_back(Face.mIndices[1]);
-		indices.push_back(Face.mIndices[2]);
-	}
+	return buffers;
 }
 
-void SwitchSlashes(std::string &path) {
-	size_t index = 0;
-	while (true) {
-		/* Locate the substring to replace. */
-		index = path.find("\\", index);
-		if (index == std::string::npos) break;
+/*void Mesh::Draw() {
+	vertexArrayObject->Bind();
+	engine.graphicsWrapper->DrawVertexArrayObject(true, BaseVertex, BaseIndex, NumIndices);
+}*/
 
-		/* Make the replacement. */
-		path.replace(index, 1, "/");
+bool SModel::LoadModel3DFile(const char *szPath, CModel *model) {
+	std::string path = std::string(szPath);
+	std::ifstream input(path, std::ios::ate | std::ios::binary);
 
-		/* Advance index forward so the next iteration doesn't pick it up as well. */
-		index += 1;
-	}
-}
-
-void SModel::InitMaterials(const aiScene* scene, std::string Dir, std::vector<Material *> &materials) {
-	std::string finalDir = Dir;
-	finalDir = finalDir.substr(0, finalDir.find_last_of('/'));
-
-	aiMaterial *pMaterial;
-	aiString Path;
-	for (size_t i = 0; i < scene->mNumMaterials; i++) {
-		Material *newMat = new Material();
-		newMat->shader = engine.shader;
-		newMat->tex.resize(4);
-		pMaterial = scene->mMaterials[i];
-
-		if (pMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
-			if (pMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
-				std::string FullPath = finalDir + "/" + Path.data;
-				SwitchSlashes(FullPath);
-				newMat->tex[0] = engine.textureManager.LoadTexture(FullPath, COLOR_SRGB);
-			}
-		}
-		if (pMaterial->GetTextureCount(aiTextureType_HEIGHT) > 0) {
-			if (pMaterial->GetTexture(aiTextureType_HEIGHT, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
-				std::string FullPath = finalDir + "/" + Path.data;
-				SwitchSlashes(FullPath);
-				newMat->tex[1] = engine.textureManager.LoadTexture(FullPath, COLOR_RGBA);
-			}
-		}
-		if (pMaterial->GetTextureCount(aiTextureType_SPECULAR) > 0) {
-			if (pMaterial->GetTexture(aiTextureType_SPECULAR, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
-				std::string FullPath = finalDir + "/" + Path.data;
-				SwitchSlashes(FullPath);
-				newMat->tex[2] = engine.textureManager.LoadTexture(FullPath, COLOR_RGBA);
-			}
-		}
-		if (pMaterial->GetTextureCount(aiTextureType_SHININESS) > 0) {
-			if (pMaterial->GetTexture(aiTextureType_SHININESS, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
-				std::string FullPath = finalDir + "/" + Path.data;
-				SwitchSlashes(FullPath);
-				newMat->tex[3] = engine.textureManager.LoadTexture(FullPath, COLOR_RGBA);
-			}
-		}
-		materials[i] = newMat;
-	}
-}
-
-void SModel::LoadModel3DFile(const char *szPath, CModel *model) {
-	// Create an instance of the Importer class
-	Assimp::Importer importer;
-	const aiScene* pScene = importer.ReadFile(szPath,
-		aiProcess_CalcTangentSpace |
-		aiProcess_Triangulate |
-		aiProcess_GenSmoothNormals |
-		aiProcess_JoinIdenticalVertices |
-		aiProcess_SortByPType);
-
-	// If the import failed, report it
-	if (!pScene) {
-		printf("%s", importer.GetErrorString());
-		return;
+	if (!input.is_open()) {
+		std::cerr << "Failed to open file: " << path << "!\n";
+		return false;
 	}
 
-	unsigned int NumVertices = 0;
-	unsigned int NumIndices = 0;
+	std::cout << "Model reading from: " << path << "!\n";
 
-	model->meshes.resize(pScene->mNumMeshes);
-	model->materials.resize(pScene->mNumMaterials);
-	for (unsigned int i = 0; i < pScene->mNumMeshes; i++) {
-		model->meshes[i].MaterialIndex = pScene->mMeshes[i]->mMaterialIndex;
-		model->meshes[i].NumIndices = pScene->mMeshes[i]->mNumFaces * 3;
-		model->meshes[i].BaseVertex = NumVertices;
-		model->meshes[i].BaseIndex = NumIndices;
+	size_t fileSize = (size_t)input.tellg();
+	std::vector<char> buffer(fileSize);
 
-		NumVertices += pScene->mMeshes[i]->mNumVertices;
-		NumIndices += model->meshes[i].NumIndices;
-	}
+	input.seekg(0);
+	input.read(buffer.data(), fileSize);
 
+	ModelFormatHeader inFormat;
+	void *offset = buffer.data();
+	memcpy(&inFormat, offset, sizeof(ModelFormatHeader));
 
-	//std::cout << "Mesh Materials: " << path << "\n";
-	InitMaterials(pScene, szPath, model->materials);
-
-	std::vector<glm::vec3> vertices;
-	std::vector<glm::vec3> normals;
-	std::vector<glm::vec3> tangents;
-	std::vector<glm::vec2> uvs;
+	model->meshes.resize(inFormat.numMeshes);
+	std::vector<Vertex> vertices;
+	vertices.resize(inFormat.numVertices);
 	std::vector<unsigned int> indices;
+	indices.resize(inFormat.numIndices);
 
-	vertices.reserve(NumVertices);
-	normals.reserve(NumVertices);
-	tangents.reserve(NumVertices);
-	uvs.reserve(NumVertices);
-	indices.reserve(NumIndices);
+	offset = static_cast<char*>(offset) + sizeof(ModelFormatHeader);
+	uint32_t size = inFormat.numMeshes * sizeof(Mesh);
+	memcpy(&model->meshes[0], offset, size);
+	offset = static_cast<char*>(offset) + size;
+	size = inFormat.numVertices * sizeof(Vertex);
+	memcpy(&vertices[0], offset, size);
+	offset = static_cast<char*>(offset) + size;
+	size = inFormat.numIndices * sizeof(unsigned int);
+	memcpy(&indices[0], offset, size);
+	offset = static_cast<char*>(offset) + size;
+	
+	std::vector<MaterialReference> materialReferences;
+	materialReferences.resize(inFormat.numMaterials);
 
-	for (size_t i = 0; i < pScene->mNumMeshes; i++) {
-		InitMesh(pScene->mMeshes[i], vertices, normals, tangents, uvs, indices);
+	std::vector<Material *> materials;
+	materials.resize(inFormat.numMaterials);
+	char *words = (char *)offset;
+	for (unsigned int i = 0; i < inFormat.numMaterials; i++) {
+		materialReferences[i] = materialManager->CreateMaterial(words);
+		words = strchr(words, '\0') + 1;
 	}
 
-	model->vao = pfnCreateVAO();
-	model->vao->Initialize();
-	model->vao->Bind();
+	for (unsigned int i = 0; i < inFormat.numMaterials; i++) {
+		materials[i] = materialManager->GetMaterial(materialReferences[i]);
+	}
 
-	VertexBufferObject *vbo = pfnCreateVBO();
-	vbo->Initialize(5);
-	vbo->AddVBO(&vertices[0],	vertices.size()	* sizeof(vertices[0]),	3, SIZE_FLOAT, DRAW_STATIC);
-	vbo->Bind(0, 0, false, 0, 0);
-	vbo->AddVBO(&uvs[0],		uvs.size()		* sizeof(uvs[0]),		2, SIZE_FLOAT, DRAW_STATIC);
-	vbo->Bind(1, 1, false, 0, 0);
-	vbo->AddVBO(&normals[0],	normals.size()	* sizeof(normals[0]),	3, SIZE_FLOAT, DRAW_STATIC);
-	vbo->Bind(2, 2, true, 0, 0);
-	vbo->AddVBO(&tangents[0],	tangents.size()	* sizeof(tangents[0]),	3, SIZE_FLOAT, DRAW_STATIC);
-	vbo->Bind(3, 3, true, 0, 0);
-	vbo->AddIBO(&indices[0],	indices.size()	* sizeof(unsigned int), DRAW_STATIC); // 3 and SIZE_FLOAT are arbitrary
+	input.close();
 
-	model->vao->Unbind();
+	VertexBufferCreateInfo vbci;
+	vbci.attribute = vads.data();
+	vbci.attributeCount = (uint32_t)vads.size();
+	vbci.binding = &vbd;
+	vbci.bindingCount = 1;
+	vbci.content = static_cast<const void *>(vertices.data());
+	vbci.count = static_cast<uint32_t>(vertices.size());
+	vbci.size = static_cast<uint32_t>(sizeof(Vertex) * vertices.size());
 
-	vertices.clear();
-	normals.clear();
-	tangents.clear();
-	uvs.clear();
-	indices.clear();
+	IndexBufferCreateInfo ibci;
+	ibci.content = static_cast<const void *>(indices.data());
+	ibci.count = static_cast<uint32_t>(indices.size());
+	ibci.size = static_cast<uint32_t>(sizeof(uint32_t) * indices.size());
 
-	importer.FreeScene();
+	if (graphicsWrapper->SupportsCommandBuffers()) {
+		model->vertexBuffer = graphicsWrapper->CreateVertexBuffer(vbci);
+		model->indexBuffer = graphicsWrapper->CreateIndexBuffer(ibci);
+	}
+	else {
+		VertexArrayObjectCreateInfo vaci;
+		vaci.vertexBuffer = model->vertexBuffer;
+		vaci.indexBuffer = model->indexBuffer;
+		model->vertexArrayObject = graphicsWrapper->CreateVertexArrayObject(vaci);
+		model->vertexBuffer = graphicsWrapper->CreateVertexBuffer(vbci);
+		model->indexBuffer = graphicsWrapper->CreateIndexBuffer(ibci);
+
+		vaci.vertexBuffer = model->vertexBuffer;
+		vaci.indexBuffer = model->indexBuffer;
+		model->vertexArrayObject->BindResources(vaci);
+		model->vertexArrayObject->Unbind();
+	}
+
+	for (unsigned int i = 0; i < inFormat.numMeshes; i++) {
+		// Use the temporarily uint32_t material as an ID for the actual material.
+		Mesh *currentMesh = &model->meshes[i];
+		uint16_t matID = currentMesh->material.material;
+		currentMesh->material = materialReferences[matID];
+		currentMesh->model = model;
+		Material *mat = materials[matID];
+		mat->m_meshes.push_back(currentMesh);
+	}
+
+	return true;
+}
+
+void SModel::Initialize(GraphicsWrapper * _graphicsWrapper, VertexBindingDescription _vbd, std::vector<VertexAttributeDescription> _vads, MaterialManager *_materialSystem) {
+	graphicsWrapper = _graphicsWrapper;
+	vbd = _vbd;
+	vads = _vads;
+	materialManager = _materialSystem;
 }
 
 void SModel::AddComponent(unsigned int entID, unsigned int &target) {
@@ -232,106 +187,42 @@ void SModel::AddComponent(unsigned int entID, unsigned int &target) {
 	target = (unsigned int)(renderComponents.size()-1);
 }
 
-void SModel::Draw(glm::mat4 projection, glm::mat4 view) {
-	for (size_t i = 0; i < models.size(); i++)
-		DrawModel3D(projection, view, &models[i]);
-}
-
-void SModel::DrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *model) {
-
-	ubo.viewMatrix = view;
-	ubo.texLoc0 = 0;
-	ubo.texLoc1 = 1;
-	ubo.texLoc2 = 2;
-	ubo.texLoc3 = 3;
-
-	model->vao->Bind();
-	for (size_t i = 0; i < model->references.size(); i++) {
-		CRender *renderComponent = &renderComponents[model->references[i]];
-
-		for (size_t j = 0; j < model->meshes.size(); j++) {
-			unsigned char matID = model->meshes[j].MaterialIndex;
-			Material *material;
-			if (renderComponent->materials.size() > matID && renderComponent->materials[matID] != nullptr)
-				material = renderComponent->materials[matID];
-			else
-				material = model->materials[matID];
-
-			for (size_t t = 0; t < 4; t++) {
-				Texture *temp = material->tex[t];
-				if (temp != nullptr)
-					temp->Bind(int(t));
-			}
-
-			size_t entID = renderComponent->entityID;
-			unsigned int transID = engine.entities[entID].components[COMPONENT_TRANSFORM];
-			CTransform *transform = &engine.transformSystem.components[transID];
-			glm::mat4 modelMatrix = transform->GetModelMatrix();
-			ubo.pvmMatrix = projection * view * modelMatrix;
-			ubo.modelMatrix = modelMatrix;
-			ShaderProgram *shader = material->shader;
-			if (shader != NULL) {
-				shader->Use();
-				shader->PassData(&ubo);
-				shader->SetUniform4m();
-				shader->SetUniform4m();
-				shader->SetUniform4m();
-				shader->SetInteger();
-				shader->SetInteger();
-				shader->SetInteger();
-				shader->SetInteger();
-			}
-			else
-				std::cout << "Shader fail: " << renderComponent->entityID << " - " << i << " - " << j << "\n";
-
-			engine.graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(sizeof(unsigned int) * model->meshes[j].BaseIndex), model->meshes[j].BaseVertex, model->meshes[j].NumIndices);
-		}
-	}
-	model->vao->Unbind();
-}
-
-void SModel::ShadowDraw(glm::mat4 projection, glm::mat4 view) {
-	for (size_t i = 0; i < models.size(); i++)
-		ShadowDrawModel3D(projection, view, &models[i]);
-}
-
-void SModel::ShadowDrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *model) {
-
-	model->vao->Bind();
-	for (size_t i = 0; i < model->references.size(); i++) {
-		CRender *renderComponent = &renderComponents[model->references[i]];
-
-		for (size_t j = 0; j < model->meshes.size(); j++) {
-			unsigned char matID = model->meshes[j].MaterialIndex;
-			Material *material;
-			if (renderComponent->materials.size() > matID && renderComponent->materials[matID] != nullptr)
-				material = renderComponent->materials[matID];
-			else
-				material = model->materials[matID];
-
-			size_t entID = renderComponent->entityID;
-			unsigned int transID = engine.entities[entID].components[COMPONENT_TRANSFORM];
-			CTransform *transform = &engine.transformSystem.components[transID];
-			glm::mat4 modelMatrix = transform->GetModelMatrix();
-			glm::mat4 finalMatrix = projection * view * modelMatrix;
-			ShaderProgram *shader = engine.shadowShader;
-			if (shader != NULL) {
-				shader->Use();
-				shader->PassData(&finalMatrix);
-				shader->SetUniform4m();
-			}
-			else
-				std::cout << "Shader fail: " << renderComponent->entityID << " - " << i << " - " << j << "\n";
-
-			engine.graphicsWrapper->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(sizeof(unsigned int) * model->meshes[j].BaseIndex), model->meshes[j].BaseVertex, model->meshes[j].NumIndices);
-		}
-	}
-	model->vao->Unbind();
-}
-
 void SModel::Shutdown() {
-	for (size_t i = 0; i < models.size(); i++) {
-		models[i].vao->CleanupVBOs();
-		pfnDeleteGraphicsPointer(models[i].vao);
+	if (graphicsWrapper) {
+		if (graphicsWrapper->SupportsCommandBuffers()) {
+			for (size_t i = 0; i < models.size(); i++) {
+				graphicsWrapper->DeleteCommandBuffer(models[i].commandBuffer);
+				graphicsWrapper->DeleteVertexBuffer(models[i].vertexBuffer);
+				graphicsWrapper->DeleteIndexBuffer(models[i].indexBuffer);
+			}
+		}
+		else {
+			for (size_t i = 0; i < models.size(); i++) {
+				graphicsWrapper->DeleteVertexArrayObject(models[i].vertexArrayObject);
+				graphicsWrapper->DeleteVertexBuffer(models[i].vertexBuffer);
+				graphicsWrapper->DeleteIndexBuffer(models[i].indexBuffer);
+			}
+		}
 	}
+}
+
+void Mesh::Draw() {
+	for (auto &reference : model->references) {
+		auto renderComponent = engine.geometryCache.renderComponents[reference];
+		auto entityID = renderComponent.entityID;
+		auto transform = engine.transformSystem.components[entityID];
+		glm::mat4 modelMatrix = transform.GetModelMatrix();
+
+		engine.modelUBO.model = modelMatrix;
+		engine.ubo2->UpdateUniformBuffer(&engine.modelUBO);
+		engine.ubo2->Bind();
+
+		engine.graphicsWrapper->BindVertexArrayObject(model->vertexArrayObject);
+		engine.graphicsWrapper->DrawImmediateIndexed(true, BaseVertex, BaseIndex, NumIndices);
+	}
+}
+
+void Mesh::DrawDeferred(CommandBuffer *cmd) {
+	cmd->BindBufferObjects(model->vertexBuffer, model->indexBuffer, model->useLargeBuffer);
+	cmd->DrawIndexed(BaseVertex, BaseIndex, NumIndices, 1);
 }

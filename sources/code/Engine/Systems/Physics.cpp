@@ -13,7 +13,8 @@ void SPhysics::Initialize() {
 
 	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
 
-	dynamicsWorld->setGravity(btVector3(0, -9.81, 0));
+	btScalar gravity = (btScalar)-9.81f;
+	dynamicsWorld->setGravity(btVector3(0, gravity, 0));
 }
 
 void CPhysics::SetShapePlane(float Nx, float Ny, float Nz, float c) {
@@ -105,7 +106,7 @@ CPhysics *SPhysics::GetComponent(unsigned int componentID){
 }
 
 void SPhysics::StepSimulation(double dt) {
-	dynamicsWorld->stepSimulation(dt, 10);
+	dynamicsWorld->stepSimulation((btScalar)dt, 10);
 }
 
 void SPhysics::SetTransforms() {
@@ -119,22 +120,22 @@ void SPhysics::SetTransforms() {
 		transComponent->position = glm::vec3(pos.getX(), pos.getY(), pos.getZ());
 		btQuaternion q = transform.getRotation();
 
-		double ysqr = q.y() * q.y();
+		float ysqr = q.y() * q.y();
 
 		// roll (x-axis rotation)
-		double t0 = +2.0 * (q.w() * q.x() + q.y() * q.z());
-		double t1 = +1.0 - 2.0 * (q.x() * q.x() + ysqr);
+		float t0 = +2.0f * (q.w() * q.x() + q.y() * q.z());
+		float t1 = +1.0f - 2.0f * (q.x() * q.x() + ysqr);
 		transComponent->angles.z = std::atan2(t0, t1);
 
 		// pitch (y-axis rotation)
-		double t2 = +2.0 * (q.w() * q.y() - q.z() * q.x());
-		t2 = t2 > 1.0 ? 1.0 : t2;
-		t2 = t2 < -1.0 ? -1.0 : t2;
+		float t2 = +2.0f * (q.w() * q.y() - q.z() * q.x());
+		t2 = t2 > 1.0f ? 1.0f : t2;
+		t2 = t2 < -1.0f ? -1.0f : t2;
 		transComponent->angles.x = std::asin(t2);
 
 		// yaw (z-axis rotation)
-		double t3 = +2.0 * (q.w() * q.z() + q.x() * q.y());
-		double t4 = +1.0 - 2.0 * (ysqr + q.z() * q.z());
+		float t3 = +2.0f * (q.w() * q.z() + q.x() * q.y());
+		float t4 = +1.0f - 2.0f * (ysqr + q.z() * q.z());
 		transComponent->angles.y = std::atan2(t3, t4);
 	}
 }

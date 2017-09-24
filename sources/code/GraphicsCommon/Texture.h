@@ -1,30 +1,60 @@
-#ifndef _TEXTURE_H
-#define _TEXTURE_H
+#pragma once
 
 #include <stdint.h>
-#include <string>
-#include "../GraphicsCommon/GLDefDLL.h"
+#include "Formats.h"
 
-enum PixelScheme {
-	COLOR_R,
-	COLOR_RG,
-	COLOR_RGB,
-	COLOR_RGBA,
-	COLOR_SRGB
+struct TextureSubBinding {
+	const char *shaderLocation;
+	uint8_t textureLocation;
+	TextureSubBinding() { shaderLocation = ""; textureLocation = 0; };
+	TextureSubBinding(const char *_location, uint8_t _target) : shaderLocation(_location), textureLocation(_target) {};
+};
+
+struct TextureBindingLayoutCreateInfo {
+	uint32_t bindingLocation;
+	uint32_t stages;
+	TextureSubBinding *bindings;
+	uint32_t bindingCount;
+};
+
+class TextureBindingLayout {
+public:
+};
+
+struct TextureMipMapCreateInfo {
+	unsigned char *data;
+	uint32_t size;
+	uint32_t width, height;
+};
+
+struct TextureCreateInfo {
+	unsigned char *data;
+	uint32_t width, height;
+	uint16_t mipmaps;
+	ColorFormat format;
+};
+
+struct CubemapCreateInfo {
+	unsigned char *data[6];
+	uint32_t width, height;
+	uint16_t mipmaps;
+	ColorFormat format;
 };
 
 class Texture {
 public:
-	virtual void CreateTexture(unsigned char *pixels,		PixelScheme scheme, uint32_t width, uint32_t height) = 0;
-	virtual void CreateCubemap(unsigned char* pixels[6],	PixelScheme scheme, uint32_t width, uint32_t height) = 0;
-
-	virtual void Bind(int bindTo) = 0;
-	virtual void BindCubemap(int bindTo) = 0;
-	virtual int GetTextureLocation() = 0;
-
-	virtual void Cleanup() = 0;
 };
 
-extern "C" GRAPHICS_EXPORT Texture* createTexture();
+struct SingleTextureBind {
+	Texture *texture;
+	uint8_t address;
+};
 
-#endif
+struct TextureBindingCreateInfo {
+	SingleTextureBind *textures;
+	uint32_t textureCount;
+};
+
+class TextureBinding {
+public:
+};

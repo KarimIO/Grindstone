@@ -1,3 +1,4 @@
+#if 0
 #include "Terrain.h"
 #include "../Core/Utilities.h"
 #include "../Core/Engine.h"
@@ -357,3 +358,4 @@ void STerrain::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
 		components[i].vao->Unbind();
 	}
 }
+#endif

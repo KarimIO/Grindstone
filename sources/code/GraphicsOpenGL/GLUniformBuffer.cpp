@@ -1,31 +1,46 @@
-#include "gl3w.h"
+#include <GL/gl3w.h>
 #include "GLUniformBuffer.h"
 
-GRAPHICS_EXPORT UniformBuffer* createUniformBuffer() {
-	return new GLUniformBuffer;
-}
 
-void GLUniformBuffer::Initialize(int _size) {
-	size = _size;
 
-	glGenBuffers(1, &block);
-	glBindBuffer(GL_UNIFORM_BUFFER, block);
-	glBufferData(GL_UNIFORM_BUFFER, size, NULL, GL_STATIC_DRAW);
+GLUniformBuffer::GLUniformBuffer(UniformBufferCreateInfo ci) {
+	size = ci.size;
+
+	glGenBuffers(1, &ubo);
+	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+	glBufferData(GL_UNIFORM_BUFFER, size, nullptr, ci.isDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-}
 
-unsigned int GLUniformBuffer::GetSize() {
-	return size;
+	GLUniformBufferBinding *ubb = (GLUniformBufferBinding *)ci.binding;
+	bindingLocation = ubb->GetBindingLocation();
+	glBindBufferBase(GL_UNIFORM_BUFFER, bindingLocation, ubo);
 }
 
 void GLUniformBuffer::Bind() {
-	glBindBuffer(GL_UNIFORM_BUFFER, block);
+	glBindBufferBase(GL_UNIFORM_BUFFER, bindingLocation, ubo);
 }
 
-void GLUniformBuffer::Setdata(unsigned int offset, unsigned int size, void *value) {
-	glBufferSubData(GL_UNIFORM_BUFFER, offset, size, value);
+GLUniformBuffer::~GLUniformBuffer() {
+	glDeleteBuffers(1, &ubo);
 }
 
-void GLUniformBuffer::Unbind() {
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+void GLUniformBuffer::UpdateUniformBuffer(void * content) {
+	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+	glBufferData(GL_UNIFORM_BUFFER, size, content, GL_DYNAMIC_DRAW);
+	//GLvoid* p = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
+	//memcpy(p, content, size);
+	//glUnmapBuffer(GL_UNIFORM_BUFFER);
+}
+
+GLUniformBufferBinding::GLUniformBufferBinding(UniformBufferBindingCreateInfo createInfo) {
+	bindingLocation = createInfo.binding;
+	uniformName = createInfo.shaderLocation;
+}
+
+const char * GLUniformBufferBinding::GetUniformName() {
+	return uniformName;
+}
+
+GLuint GLUniformBufferBinding::GetBindingLocation() {
+	return bindingLocation;
 }

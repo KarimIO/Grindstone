@@ -2,19 +2,35 @@
 #define _GL_TEXTURE_H
 
 #include "../GraphicsCommon/Texture.h"
-#include "../GraphicsCommon/GLDefDLL.h"
+#include <vector>
+
+void TranslateFormats(ColorFormat inFormat, GLenum &format, GLint &internalFormat);
 
 class GLTexture : public Texture {
+	GLuint handle;
+	bool isCubemap;
 public:
-	unsigned int textureID;
-	virtual void CreateTexture(unsigned char *pixels,		PixelScheme scheme, uint32_t width, uint32_t height);
-	virtual void CreateCubemap(unsigned char* pixels[],	PixelScheme scheme, uint32_t width, uint32_t height);
+	GLTexture(TextureCreateInfo ci);
+	GLTexture(CubemapCreateInfo ci);
+	void Bind(int i);
+	~GLTexture();
+};
 
-	virtual void Bind(int bindTo);
-	virtual void BindCubemap(int bindTo);
-	virtual int GetTextureLocation();
+class GLTextureBinding : public TextureBinding {
+	std::vector<GLTexture *> textures;
+	std::vector<uint32_t> targets;
+public:
+	GLTextureBinding(TextureBindingCreateInfo ci);
+	void Bind();
+};
 
-	virtual void Cleanup();
+class GLTextureBindingLayout : public TextureBindingLayout {
+public:
+	TextureSubBinding *subbindings;
+	uint32_t subbindingCount;
+	GLTextureBindingLayout(TextureBindingLayoutCreateInfo);
+	TextureSubBinding GetSubBinding(uint32_t i);
+	uint32_t GetNumSubBindings();
 };
 
 #endif
