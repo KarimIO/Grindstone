@@ -2,11 +2,11 @@
 #define _COLOR_GRADING_POST_H
 
 #include "Framebuffer.h"
-#include "Shader.h"
+#include "GraphicsPipeline.h"
 
 class ColorGradingPost {
 	Framebuffer *fbo;
-	ShaderProgram *shader;
+	GraphicsPipeline *shader;
 public:
 	void Initialize();
 	void Process(Framebuffer *target);

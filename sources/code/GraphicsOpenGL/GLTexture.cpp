@@ -1,61 +1,154 @@
-#include "gl3w.h"
+#include <GL/gl3w.h>
 #include "GLTexture.h"
 #include <iostream>
 
-void GLTexture::CreateTexture(unsigned char *pixels, PixelScheme scheme, uint32_t width, uint32_t height) {
-	glGenTextures(1, &textureID);
+#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT                   0x83F0
+#define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT                  0x83F1
+#define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT                  0x83F2
+#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT                  0x83F3
+#define GL_COMPRESSED_SRGB_S3TC_DXT1_EXT                  0x8C4C
+#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT            0x8C4D
+#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT            0x8C4E
+#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT            0x8C4F
 
-	glBindTexture(GL_TEXTURE_2D, textureID);
+GLTexture::GLTexture(TextureCreateInfo ci) {
+	isCubemap = false;
+	glGenTextures(1, &handle);
 
-	if (scheme == COLOR_SRGB)
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-	else
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	glBindTexture(GL_TEXTURE_2D, handle);
 
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	if (ci.mipmaps == 0) {
+		GLint internalFormat;
+		GLenum format;
+		TranslateFormats(ci.format, format, internalFormat);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, ci.width, ci.height, 0, format, GL_UNSIGNED_BYTE, ci.data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		unsigned int blockSize = (ci.format == FORMAT_COLOR_RGBA_DXT1) ? 8 : 16;
+
+		uint32_t width = ci.width;
+		uint32_t height = ci.height;
+
+		unsigned char *buffer = ci.data;
+
+		gl3wGetProcAddress("GL_COMPRESSED_RGBA_S3TC_DXT1_EXT");
+
+		unsigned int format;
+		switch (ci.format) {
+		case FORMAT_COLOR_RGBA_DXT1:
+			format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+			break;
+		case FORMAT_COLOR_RGBA_DXT3:
+			format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+			break;
+		case FORMAT_COLOR_RGBA_DXT5:
+			format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+			break;
+		default:
+			free(buffer);
+			return;
+		}
+
+		for (uint32_t i = 0; i < ci.mipmaps; i++) {
+			unsigned int size = ((width + 3) / 4)*((height + 3) / 4)*blockSize;
+			glCompressedTexImage2D(GL_TEXTURE_2D, i, format, width, height,
+				0, size, buffer);
+
+			buffer += size;
+			width /= 2;
+			height /= 2;
+		}
+	}
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glGenerateMipmap(GL_TEXTURE_2D);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void GLTexture::CreateCubemap(unsigned char *pixels[6], PixelScheme scheme, uint32_t width, uint32_t height) {
-	glGenTextures(1, &textureID);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+GLTexture::GLTexture(CubemapCreateInfo ci) {
+	isCubemap = true;
+	glGenTextures(1, &handle);
+
+	glBindTexture(GL_TEXTURE_CUBE_MAP, handle);
+
+	GLint internalFormat;
+	GLenum format;
+	TranslateFormats(ci.format, format, internalFormat);
+
+	for (size_t i = 0; i < 6; i++) {
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, ci.width, ci.height, 0, format, GL_UNSIGNED_BYTE, ci.data[i]);
+	}
+
+	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	for (size_t i = 0; i < 6; i++) {
-		if (scheme == COLOR_SRGB)
-			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_SRGB8_ALPHA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels[i]);
-		else
-			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels[i]);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+}
+
+void GLTexture::Bind(int i) {
+	glActiveTexture(GL_TEXTURE0 + i);
+	glBindTexture(isCubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D, handle);
+}
+
+GLTexture::~GLTexture() {
+	glDeleteTextures(1, &handle);
+}
+
+GLTextureBinding::GLTextureBinding(TextureBindingCreateInfo ci) {
+	textures.reserve(ci.textureCount);
+	targets.reserve(ci.textureCount);
+	for (int i = 0; i < ci.textureCount; i++) {
+		textures.push_back(reinterpret_cast<GLTexture *>(ci.textures[i].texture));
+		targets.push_back(ci.textures[i].address);
 	}
-	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 }
 
-int GLTexture::GetTextureLocation() {
-	return textureID;
+void GLTextureBinding::Bind() {
+	for (int i = 0; i < textures.size(); i++) {
+		textures[i]->Bind(targets[i]);
+	}
 }
 
-void GLTexture::Bind(int bindTo) {
-	glActiveTexture(GL_TEXTURE0 + bindTo);
-	glBindTexture(GL_TEXTURE_2D, textureID);
+GLTextureBindingLayout::GLTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo) {
+	subbindings = createInfo.bindings;
+	subbindingCount = createInfo.bindingCount;
 }
 
-void GLTexture::BindCubemap(int bindTo) {
-	glActiveTexture(GL_TEXTURE0 + bindTo);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+TextureSubBinding GLTextureBindingLayout::GetSubBinding(uint32_t i) {
+	return subbindings[i];
 }
 
-void GLTexture::Cleanup() {
-	glDeleteTextures(1, &textureID);
+uint32_t GLTextureBindingLayout::GetNumSubBindings() {
+	return subbindingCount;
 }
 
-GRAPHICS_EXPORT Texture* createTexture() {
-	return new GLTexture;
+void TranslateFormats(ColorFormat inFormat, GLenum &format, GLint &internalFormat) {
+	switch (inFormat) {
+	case FORMAT_COLOR_R8:
+		internalFormat = GL_RED;
+		format = GL_RED;
+		break;
+	case FORMAT_COLOR_R8G8:
+		internalFormat = GL_RG;
+		format = GL_RG;
+		break;
+	case FORMAT_COLOR_R8G8B8:
+		internalFormat = GL_RGB;
+		format = GL_RGB;
+		break;
+	case FORMAT_COLOR_R8G8B8A8:
+		internalFormat = GL_RGBA32F;
+		format = GL_RGBA;
+		break;
+	}
 }

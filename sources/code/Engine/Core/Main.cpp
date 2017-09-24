@@ -1,22 +1,25 @@
 #include <iostream>
 #include <stdio.h>
 #include <cstring>
-#include <Window.h>
-#include "Core/Input.h"
 #include "Engine.h"
 
 int main(int argc, char *argv[]) {
 	std::cout << "The Grindstone Engine is Initializing.\n";
-
-	if (!engine.Initialize()) {
+	try {
+		if (!engine.Initialize()) {
 #ifdef _WIN32
-		system("pause");
+			system("pause");
 #endif
-		return -1;
-	}
+			return -1;
+		}
 		
-	engine.Run();
-	engine.Shutdown();
+		engine.Run();
+		engine.Shutdown();
+	}
+	catch (const std::runtime_error& e) {
+		std::cerr << e.what() << std::endl;
+		return EXIT_FAILURE;
+	}
 
 	return 0;
 }

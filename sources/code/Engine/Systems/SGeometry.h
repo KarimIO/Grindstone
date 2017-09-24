@@ -1,15 +1,22 @@
 #ifndef _SGEOMETRY_H
 #define _SGEOMETRY_H
 
-#include "../GraphicsCommon/Shader.h"
+#include "../GraphicsCommon/GraphicsWrapper.h"
 #include "../GraphicsCommon/Texture.h"
+#include "../GraphicsCommon/CommandBuffer.h"
 #include "../GraphicsCommon/VertexArrayObject.h"
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-
 #include <glm/glm.hpp>
+#include <vector>
+
+#include "SShader.h"
+
+struct Vertex {
+	glm::vec3 positions;
+	glm::vec3 normal;
+	glm::vec3 tangent;
+	glm::vec2 texCoord;
+};
 
 enum {
 	VERTEX_VB = 0,
@@ -28,20 +35,17 @@ enum {
 	TANGENT_VB_LOCATION,
 };
 
-void SwitchSlashes(std::string &path);
-
-struct Mesh {
-	unsigned int NumIndices = 0;
-	unsigned int BaseVertex = 0;
-	unsigned int BaseIndex = 0;
-	unsigned char MaterialIndex = 255;
+struct ModelFormatHeader {
+	uint32_t version;
+	uint32_t numMeshes;
+	uint64_t numVertices;
+	uint64_t numIndices;
+	uint32_t numMaterials;
+	uint8_t numBones;
+	bool largeIndex;
 };
 
-class Material {
-public:
-	ShaderProgram *shader;
-	std::vector<Texture *> tex;
-};
+class Material;
 
 class CRender {
 private:
@@ -50,33 +54,35 @@ public:
 	std::vector<Material *> materials;
 };
 
-class SModel;
-
 class CModel {
 	friend class SModel;
-private:
-	std::vector<unsigned int> references;
-	std::vector<Material *> materials;
-	std::vector<Mesh> meshes;
-	VertexArrayObject *vao;
-	std::string name;
 public:
+	bool useLargeBuffer = true;
+	std::vector<unsigned int> references;
+	std::vector<Mesh> meshes;
+	VertexBuffer *vertexBuffer;
+	IndexBuffer *indexBuffer;
+	VertexArrayObject *vertexArrayObject;
+	CommandBuffer *commandBuffer;
+	std::string name;
+
 	std::string getName();
 };
 
 class SModel {
 public:
+	GraphicsWrapper *graphicsWrapper;
+	MaterialManager *materialManager;
+
+	VertexBindingDescription vbd;
+	std::vector<VertexAttributeDescription> vads;
+
 	std::vector<CModel> models;
 	std::vector<CRender> renderComponents;
 	std::vector<unsigned int> unloadedModelIDs;
-	void LoadModel3DFile(const char *szPath, CModel *model);
-	void InitMesh(const aiMesh *paiMesh,
-		std::vector<glm::vec3>& vertices,
-		std::vector<glm::vec3>& normals,
-		std::vector<glm::vec3>& tangents,
-		std::vector<glm::vec2>& uvs,
-		std::vector<unsigned int>& indices);
+	bool LoadModel3DFile(const char *szPath, CModel *model);
 public:
+	void Initialize(GraphicsWrapper *graphicsWrapper, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads, MaterialManager *materialManager);
 	void AddComponent(unsigned int entID, unsigned int &target);
 
 	void LoadModel3D(const char *szPath, size_t entityID);
@@ -84,13 +90,7 @@ public:
 
 	void LoadPreloaded();
 
-	void InitMaterials(const aiScene* scene, std::string Dir, std::vector<Material *> &model);
-
-	void Draw(glm::mat4 projection, glm::mat4 view);
-	void DrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *);
-
-	void ShadowDraw(glm::mat4 projection, glm::mat4 view);
-	void ShadowDrawModel3D(glm::mat4 projection, glm::mat4 view, CModel *);
+	std::vector<CommandBuffer *> GetCommandBuffers();
 
 	void Shutdown();
 };

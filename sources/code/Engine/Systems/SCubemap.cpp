@@ -6,7 +6,7 @@
 #include "../Core/Engine.h"
 
 void CubemapSystem::CaptureCubemaps(double) {
-	std::cout << "Capture Cubemaps" << "\n";
+	/*std::cout << "Capture Cubemaps" << "\n";
 
 	glm::mat4 Proj = glm::perspective(1.5708f, 1.0f, 1.0f, 1000.0f);
 	glm::mat4 View;
@@ -35,14 +35,14 @@ void CubemapSystem::CaptureCubemaps(double) {
 	LoadCubemaps();
 
 	writing = false;
-	engine.graphicsWrapper->SetResolution(0, 0, engine.settings.resolutionX, engine.settings.resolutionY);
+	engine.graphicsWrapper->SetResolution(0, 0, engine.settings.resolutionX, engine.settings.resolutionY);*/
 }
 
 void CubemapSystem::LoadCubemaps() {
-	writing = false;
+	/*writing = false;
 	for (size_t i = 0; i < components.size(); i++) {
-		components[i].cubemap = engine.textureManager.LoadCubemap("../cubemaps/level" + std::to_string(i), ".png", COLOR_SRGB);
-	}
+		components[i].cubemap = engine.textureManager.LoadCubemap("../assets/cubemaps/level" + std::to_string(i), ".png", COLOR_SRGB);
+	}*/
 }
 
 void CubemapSystem::Reserve(int n) {

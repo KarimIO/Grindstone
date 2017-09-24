@@ -1,3 +1,4 @@
+#if 0
 #ifndef _TERRAIN_H
 #define _TERRAIN_H
 
@@ -37,4 +38,5 @@ public:
 	virtual void Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos);
 };
 
+#endif
 #endif

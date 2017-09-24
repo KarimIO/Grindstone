@@ -24,7 +24,7 @@ void CController::Initialize(unsigned int _entityID) {
 	input.BindAction("Run", this, &CController::RunStop, KEY_RELEASED);
 	
 	speedModifier = 2.0;
-	sensitivity = 0.2;
+	sensitivity = 2.0;
 }
 
 void CController::MoveForwardBack(double scale) {

@@ -1,4 +1,4 @@
-#The Grindstone Engine
+# The Grindstone Engine
 _A complete game engine and toolkit._
 
 ## Synopsis
@@ -6,7 +6,7 @@ The Grindstone Engine is an afforadable, extensible engine that contains all too
 
 ## Building
 ### All OSs
-Install all the following dependencies regardless of OS
+The following dependencies are already included in sources/deps/:
  * [GL3W](https://github.com/skaslev/gl3w)
  * [stb_image.h](https://github.com/nothings/stb)
 
@@ -22,15 +22,22 @@ Install the following Windows dependencies.
 Optional Graphics-Specific dependencies:
  * [OPENGL: GL3W](https://github.com/skaslev/gl3w)
  * [VULKAN: Lunar API](https://vulkan.lunarg.com/sdk/home)
- * [DIRECTX: Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk) (Currently unused)
+ * [DIRECTX: Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk)
 
-All you need to do is run CMake and build the projects. Change the working directory of the engine project to [PROJECT_DIRECTORY]/bin/ if you wanna debug it. 
+All you need to do is run CMake and build the projects. Change the working directory of the engine project to [PROJECT_DIRECTORY]/bin/ if you want to debug it. 
+
+### Fedora / OpenSUSE / Red Hat
+You must first update and get all the following dependencies:
+```
+$ sudo dnf update 
+$ sudo dnf install gcc-c++ make glm-devel assimp-devel xorg-x11-apps mesa-libGL-devel cmake rapidjson-devel
+```
 
 ### Ubuntu / Debian
 You must first update and get all the following dependencies:
 ```
 $ sudo apt update 
-$ sudo apt install g++ clang make libglm-dev libassimp-dev libgl1-mesa-dev xorg xorg-dev cmake python python-dev libfreetype6-dev
+$ sudo apt install g++ make libglm-dev libassimp-dev libgl1-mesa-dev xorg xorg-dev cmake rapidjson-dev
 ```
 
 To build libRocket, download the repository, enter the ```Build``` folder, and call the following:
@@ -116,19 +123,8 @@ defaultmap=../scenes/sponza.json
 ```
 
 ## Assets
-### Maps
-To add new maps, simply create a new JSON file. You can change map files from settings.ini, under ```[GAME]```, just set the path of the ```defaultmap```. We have a few samples for you to choose from but you can make your own. Later, binary files will automatically be created.
-
-To author your own, you need a root component. This needs an array of objects called ```entities```. For optimization, please create a field before it  called ```numentities```. The same can be said for ```cubemaps``` and ```numcubemaps``` for cubemap probe reflections, though cubemaps simply are a list of positions.
-
-Entities for now take a ```name``` string (unused for now), and a ```components``` array of objects. ```scale```, ```position```, and ```angles``` are all temporarily used in them but they should eventually be put in a seperate ```COMPONENT_POSITION``` component.
-
-Each component has an componentType string property. It also has more features depending on the type.
- * ```COMPONENT_RENDER``` takes a ```path``` string path to the model (.obj, .fbx, etc) file.
- * ```COMPONENT_LIGHT_DIRECTIONAL``` takes ```castshadow``` boolean, ```color``` 3-array of floats, ```brightness``` float, and ```sunradius``` float.
- * ```COMPONENT_LIGHT_POINT``` takes ```castshadow``` boolean, ```color``` 3-array of floats, ```brightness``` float, and ```lightradius``` float.
- * ```COMPONENT_LIGHT_SPOT``` takes ```castshadow``` boolean, ```color``` 3-array of floats, and ```brightness```, ```lightradius```, ```innerangle```, and ```outerangle``` floats.
- * ```COMPONENT_LIGHT_TERRAIN``` takes ```width```,  ```height```,  ```length``` floats, a  ```patches``` int for the number of patches in each axis, and  ```heightmap``` for the path to the heightmap.
+### File Formats
+All file formats are discussed [here.](formats.md)
 
 ### Sponza
 You can download the Sponza assets at:

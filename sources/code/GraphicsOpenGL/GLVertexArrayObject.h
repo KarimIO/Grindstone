@@ -2,30 +2,19 @@
 #define _GL_VERTEX_ARRAY_OBJECT_H
 
 #include "../GraphicsCommon/VertexArrayObject.h"
-#include "GLVertexBufferObject.h"
+#include "GLVertexBuffer.h"
+#include "GLIndexBuffer.h"
 
 class GLVertexArrayObject : public VertexArrayObject {
 public:
-	unsigned int vao;
-
-	uint8_t boundVBOs;
-	std::vector <VertexBufferObject *> vbos;
+	GLuint vao;
 public:
-	// Initialize
-	virtual void Initialize();
+	GLVertexArrayObject(VertexArrayObjectCreateInfo createInfo);
+	~GLVertexArrayObject();
 
-	// Pass VBO
-	virtual void BindVBO(VertexBufferObject *vbo);
-
-	// Bind VAO
-	virtual void Bind();
-
-	// Unbind
-	virtual void Unbind();
-
-	// Cleanup
-	virtual void Cleanup();
-	virtual void CleanupVBOs();
+	void Bind();
+	void BindResources(VertexArrayObjectCreateInfo createInfo);
+	void Unbind();
 };
 
 #endif

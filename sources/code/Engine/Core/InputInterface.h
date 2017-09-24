@@ -149,7 +149,8 @@ enum {
 	KEY_WINDOW,
 
 	KEY_SPACE,
-	KEY_LAST
+	KEY_LAST,
+	KEY_NONE = KEY_LAST
 };
 
 enum {

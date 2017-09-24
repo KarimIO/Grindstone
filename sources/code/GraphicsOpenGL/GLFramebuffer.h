@@ -2,35 +2,24 @@
 #define _GL_FRAMEBUFFER_H
 
 #include "../GraphicsCommon/Framebuffer.h"
-#include "../GraphicsCommon/GLDefDLL.h"
+#include "../GraphicsCommon/DLLDefs.h"
 
 class GLFramebuffer : public Framebuffer {
+	GLuint m_fbo;
+	GLuint *m_textures;
+	GLuint m_numTextures;
+	GLuint m_depthTexture;
+
+	uint32_t m_width, m_height;
 public:
-	virtual void Initialize(unsigned short numBuffers);
-	virtual void AddBuffer(unsigned int colorType, unsigned int colorFormat, unsigned int colorDataType, unsigned int width, unsigned int height);
-	virtual void AddCubeBuffer(unsigned int colorType, unsigned int colorFormat, unsigned int colorDataType, unsigned int width, unsigned int height);
-	virtual void AddDepthBuffer(unsigned int width, unsigned int height);
-	virtual void AddDepthCubeBuffer(unsigned int width, unsigned int height);
-	virtual void Generate();
-	virtual void BindTexture(unsigned int fboLoc);
-	virtual void BindDepth(unsigned int loc);
-	virtual void BindDepthCube(unsigned int loc);
-	virtual void BindTexture(unsigned int fboLoc, unsigned int bindLoc);
-	virtual void WriteBind();
-	virtual void WriteBindFace(unsigned int attachment, unsigned int face);
-	virtual void ReadBind();
-	virtual void UnbindWrite();
-	virtual void UnbindRead();
-	virtual void Unbind();
-	virtual void TestBlit(unsigned int x, unsigned int y, unsigned int srcWidth, unsigned int srcHeight, unsigned int width, unsigned int height, bool depth);
-	virtual void SetAttachment(unsigned int a);
-	virtual void GenerateMipmap(int i);
-private:
-	unsigned int fbo;
-	unsigned int *textures;
-	unsigned int depthBuffer;
-	unsigned int numBuffers;
-	unsigned int targetBuffer;
+	GLFramebuffer(FramebufferCreateInfo);
+	~GLFramebuffer();
+	void Clear();
+	void Blit(int i, int x, int y, int w, int h);
+	void BindWrite();
+	void BindRead();
+	void BindTextures();
+	void Unbind();
 };
 
 #endif

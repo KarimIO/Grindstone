@@ -7,7 +7,7 @@
 
 #include <glm/glm.hpp>
 #include "Framebuffer.h"
-#include "Shader.h"
+#include "GraphicsPipeline.h"
 
 #define PROJECTION_ORTHOGRAPHIC false;
 #define PROJECTION_PERSPECTIVE  true;
@@ -22,7 +22,7 @@ private:
 	bool projection;
 
 	Framebuffer *fbo;
-	ShaderProgram *shader;
+	GraphicsPipeline *shader;
 
 	float CalculateExposure(float middleVal = 0.18f);
 public:

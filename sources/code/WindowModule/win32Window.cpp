@@ -1,26 +1,26 @@
-#ifdef _WIN32
-#include "Window.h"
-#include "Core\Input.h"
-#include <Windowsx.h>
+#include "../GraphicsCommon/GraphicsWrapper.h"
+
+#if defined(_WIN32) && !defined(GLFW_WINDOW)
+#include "../Engine/Core/Input.h"
 
 int TranslateKey(int key);
 
-LRESULT CALLBACK GameWindow::sWndProc(
+LRESULT CALLBACK GraphicsWrapper::sWndProc(
 	HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	GameWindow *pThis;
+	GraphicsWrapper *pThis;
 
 	if (uMsg == WM_NCCREATE) {
 		// Recover the "this" pointer which was passed as a parameter to CreateWindow(Ex).
 		LPCREATESTRUCT lpcs = reinterpret_cast<LPCREATESTRUCT>(lParam);
-		pThis = static_cast<GameWindow*>(lpcs->lpCreateParams);
+		pThis = static_cast<GraphicsWrapper*>(lpcs->lpCreateParams);
 		// Put the value in a safe place for future use
 		SetWindowLongPtr(hwnd, GWLP_USERDATA,
 			reinterpret_cast<LONG_PTR>(pThis));
 	}
 	else {
 		// Recover the "this" pointer from where our WM_NCCREATE handler stashed it.
-		pThis = reinterpret_cast<GameWindow*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+		pThis = reinterpret_cast<GraphicsWrapper*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
 	}
 
 	if (pThis) {
@@ -30,7 +30,7 @@ LRESULT CALLBACK GameWindow::sWndProc(
 	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-LRESULT CALLBACK GameWindow::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK GraphicsWrapper::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	if (!input)
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 	
@@ -104,17 +104,11 @@ LRESULT CALLBACK GameWindow::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 	return 0;
 }
 
-void GameWindow::SetCursorShown(bool shown) {
+void GraphicsWrapper::SetCursorShown(bool shown) {
 	ShowCursor(shown);
 }
 
-GameWindow::~GameWindow() {
-	std::cout << "Shut Down\n";
-}
-
-bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY) {
-	resX = resolutionX;
-	resY = resolutionY;
+bool GraphicsWrapper::InitializeWin32Window() {
 	int fullscreen = 2;
 
 	WNDCLASSEX wc;
@@ -123,7 +117,7 @@ bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY)
 
 	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.style = 0;
-	wc.lpfnWndProc = GameWindow::sWndProc;
+	wc.lpfnWndProc = GraphicsWrapper::sWndProc;
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
 	wc.hInstance = GetModuleHandle(NULL);
@@ -160,8 +154,8 @@ bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY)
 	RECT rect;
 	rect.left = 0;
 	rect.top = 0;
-	rect.right = resolutionX;
-	rect.bottom = resolutionY;
+	rect.right = width;
+	rect.bottom = height;
 	AdjustWindowRectEx(&rect, style, FALSE, styleEx);
 
 	window_handle = CreateWindowEx(
@@ -178,8 +172,7 @@ bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY)
 		GetModuleHandle(NULL),
 		this);
 
-	if (window_handle == NULL)
-	{
+	if (window_handle == NULL) {
 		MessageBox(NULL, "Window Creation Failed!", "Error!",
 			MB_ICONEXCLAMATION | MB_OK);
 		return false;
@@ -191,7 +184,7 @@ bool GameWindow::Initialize(const char *title, int resolutionX, int resolutionY)
 	return true;
 }
 
-void GameWindow::HandleEvents() {
+void GraphicsWrapper::HandleEvents() {
 	MSG msg;
 	if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&msg);
@@ -200,6 +193,7 @@ void GameWindow::HandleEvents() {
 }
 
 int TranslateKey(int key) {
+	//static int keyCodes[] = { KEY_BACKSPACE, KEY_TAB, KEY_NONE, KEY_NONE, KEY_ENTER, KEY_NONE, KEY_NONE, KEY_SHIFT, KEY_CONTROL, KEY_ALT, KEY_PAUSE, KEY_CAPSLOCK, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_ESCAPE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_SPACE, KEY_PG_UP, KEY_PG_DOWN, KEY_END, KEY_HOME, KEY_LEFT, KEY_UP, KEY_RIGHT, KEY_DOWN, KEY_SELECT, KEY_PRINT, KEY_EXECUTE, KEY_PRINTSCR, KEY_DELETE, KEY_HELP, KEY_0, KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9, KEY_NONE, KEY_NONE, KEY_A, KEY_B, KEY_C, KEY_D, KEY_E, KEY_F, KEY_G, KEY_H, KEY_I, KEY_J, KEY_K, KEY_L, KEY_M, KEY_N, KEY_O, KEY_P, KEY_Q, KEY_R, KEY_S, KEY_T, KEY_U, KEY_V, KEY_W, KEY_X, KEY_Y, KEY_Z, KEY_LWINDOW, KEY_WINDOW, KEY_APPS, KEY_NONE, KEY_NONE, KEY_NUMPAD_0, KEY_NUMPAD_1, KEY_NUMPAD_2, KEY_NUMPAD_3, KEY_NUMPAD_4, KEY_NUMPAD_5, KEY_NUMPAD_6, KEY_NUMPAD_7, KEY_NUMPAD_8, KEY_NUMPAD_9, KEY_NUMPAD_MULTIPLY, KEY_NUMPAD_ADD, KEY_NUMPAD_ENTER, KEY_NUMPAD_SUBTRACT, KEY_NUMPAD_DOT, KEY_NUMPAD_DIVIDE, KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5, KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10, KEY_F11, KEY_F12, KEY_F13, KEY_F14, KEY_F15, KEY_F16, KEY_F17, KEY_F18, KEY_F19, KEY_F20, KEY_F21, KEY_F22, KEY_F23, KEY_F24, KEY_NONE, KEY_NUMPAD_NUMLOCK, KEY_SCROLL_LOCK, KEY_NONE, KEY_LSHIFT, KEY_LCONTROL, KEY_CONTROL, KEY_LALT, KEY_ALT, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE };
 	switch (key) {
 	case 0x41: return KEY_A;
 	case 0x42: return KEY_B;
@@ -328,11 +322,11 @@ int TranslateKey(int key) {
 	}
 }
 
-void GameWindow::ResetCursor() {
-	SetCursor(resX / 2, resY / 2);
+void GraphicsWrapper::ResetCursor() {
+	SetCursor(width / 2, height / 2);
 }
 
-void GameWindow::SetCursor(int x, int y) {
+void GraphicsWrapper::SetCursor(int x, int y) {
 	POINT pt;
 	pt.x = (LONG)x;
 	pt.y = (LONG)y;
@@ -340,7 +334,7 @@ void GameWindow::SetCursor(int x, int y) {
 	SetCursorPos(pt.x, pt.y);
 }
 
-void GameWindow::GetCursor(int &x, int &y) {
+void GraphicsWrapper::GetCursor(int &x, int &y) {
 	POINT p;
 	GetCursorPos(&p);
 	ScreenToClient(window_handle, &p);
@@ -348,12 +342,24 @@ void GameWindow::GetCursor(int &x, int &y) {
 	y = p.y;
 }
 
-void GameWindow::Shutdown() {
-	delete this;
-}
+//Returns the last Win32 error, in string format. Returns an empty string if there is no error.
+std::string GetLastErrorAsString()
+{
+	//Get the error message, if any.
+	DWORD errorMessageID = ::GetLastError();
+	if (errorMessageID == 0)
+		return std::string(); //No error message has been recorded
 
-HWND GameWindow::GetHandle() {
-	return window_handle;
+	LPSTR messageBuffer = nullptr;
+	size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+
+	std::string message(messageBuffer, size);
+
+	//Free the buffer.
+	LocalFree(messageBuffer);
+
+	return message;
 }
 
 #endif

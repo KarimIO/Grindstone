@@ -2,5 +2,5 @@
 #include "../Core/Engine.h"
 
 EBase::EBase() {
-	id = engine.entities.size();
+	id = (uint32_t)engine.entities.size();
 }

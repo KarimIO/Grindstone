@@ -1,7 +1,7 @@
 #ifndef _S_SHADER_H
 #define _S_SHADER_H
 
-#include "Core/GraphicsDLLPointer.h"
+#include "GraphicsWrapper.h"
 #include <map>
 #include <vector>
 
@@ -30,6 +30,8 @@ enum PARAM_TYPE {
 	PARAM_CUBEMAP
 };
 
+bool readFile(const std::string& filename, std::vector<char>& outputfile);
+
 struct ParameterDescriptor {
 	std::string description;
 	PARAM_TYPE paramType;
@@ -38,17 +40,84 @@ struct ParameterDescriptor {
 	ParameterDescriptor();
 };
 
-struct ShaderFile {
-	ShaderProgram *program;
-	std::map<std::string, ParameterDescriptor> parameterDescriptorTable;
+class Material;
+
+struct PipelineReference {
+	uint8_t renderpass = 0;
+	uint8_t pipeline = 0;
 };
 
-class ShaderManager {
-	//std::vector<Shader *> shaders;
-	std::map<std::string, ShaderFile> shaderFiles;
+struct MaterialReference {
+	PipelineReference pipelineReference;
+	uint16_t material = 0;
+};
+
+class CModel;
+
+struct Mesh {
+	uint32_t NumIndices = 0;
+	uint32_t BaseVertex = 0;
+	uint32_t BaseIndex = 0;
+	MaterialReference material;
+	CModel *model = nullptr;
+
+	void Draw();
+	void DrawDeferred(CommandBuffer *);
+};
+
+class Material {
 public:
-	ShaderProgram *ParseShaderFile(std::string path);
-	ShaderProgram *CreateShaderFromPaths(std::string name, std::string vsPath, std::string fsPath, std::string gsPath, std::string csPath, std::string tesPath, std::string tcsPath);
+	TextureBinding *m_textureBinding;
+	std::vector<Mesh *> m_meshes;
+	Material() {
+		m_textureBinding = 0;
+		m_meshes.clear();
+	}
+	Material(TextureBinding *textureBinding);
+};
+
+struct PipelineContainer {
+	GraphicsPipeline *program;
+	CommandBuffer *commandBuffer;
+	std::map<std::string, ParameterDescriptor> parameterDescriptorTable;
+	std::vector<Material> materials;
+};
+
+struct RenderPassContainer {
+public:
+	RenderPass *renderPass;
+	CommandBuffer *commandBuffer;
+	std::vector<Framebuffer *> framebuffers;
+	std::vector<PipelineContainer> pipelines;
+};
+
+class MaterialManager {
+	std::vector<RenderPassContainer> m_renderPasses;
+	std::map<std::string, PipelineReference> m_pipelineMap;
+	std::map<std::string, MaterialReference> m_materialMap;
+	std::map<std::string, Texture *> m_textureMap;
+
+	GraphicsWrapper *m_graphicsWrapper;
+public:
+	RenderPassContainer *Initialize(GraphicsWrapper *gw, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads, UniformBufferBinding *ubb);
+	PipelineReference CreatePipeline(std::string pipelineName);
+	MaterialReference CreateMaterial(std::string shaderName);
+
+	RenderPassContainer *GetRenderPass(uint8_t);
+	PipelineContainer *GetPipeline(PipelineReference);
+	Material *GetMaterial(MaterialReference);
+
+	void RemoveRenderPass(uint8_t i);
+	void RemovePipeline(PipelineReference);
+	void RemoveMaterial(MaterialReference);
+	void RemoveMeshFromMaterial(MaterialReference, Mesh *);
+
+	Texture *LoadTexture(std::string path);
+	//GraphicsPipeline *ParseShaderFile(std::string path);
+	//GraphicsPipeline *CreateShaderFromPaths(std::string name, std::string vsPath, std::string fsPath, std::string gsPath, std::string csPath, std::string tesPath, std::string tcsPath);
+	void DrawImmediate();
+	void DrawDeferred();
+	void Shutdown();
 };
 
 #endif

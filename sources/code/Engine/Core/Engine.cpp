@@ -4,44 +4,48 @@
 #include "iniHandler.h"
 #include <stdio.h>
 #include "LevelLoader.h"
-#ifndef _WIN32
-#include <dlfcn.h>
+#if defined(_WIN32)
+	#define LoadDLL(path) HMODULE dllHandle = LoadLibrary((path+".dll").c_str()); \
+	if (!dllHandle) { \
+		fprintf(stderr, "Failed to load %s!\n", path.c_str()); \
+		return false; \
+	}
+
+	#define LoadDLLFunction(string) GetProcAddress(dllHandle, string);
+#elif defined(__linux__)
+	#include <dlfcn.h>
+
+	#define LoadDLL(path) void *lib_handle = dlopen(("./"+path+".so").c_str(), RTLD_LAZY);\
+	if (!lib_handle) {\
+		fprintf(stderr, "Failed to load %s: %s\n", path.c_str(), dlerror());\
+		return false;\
+	}
+
+	#define LoadDLLFunction(string) dlsym(lib_handle, string);
 #endif
 
 #ifdef UseClassInstance
 	Engine *Engine::_instance=0;
 #endif
 
-VertexArrayObject*	(*pfnCreateVAO)();
-VertexBufferObject*	(*pfnCreateVBO)();
-ShaderProgram*		(*pfnCreateShader)();
-Texture*			(*pfnCreateTexture)();
-Framebuffer*		(*pfnCreateFramebuffer)();
-UniformBuffer*		(*pfnCreateUniformBuffer)();
-void				(*pfnDeleteGraphicsPointer)(void *ptr);
-
 bool Engine::Initialize() {
-	int iterator = 0;
-
 	srand((unsigned int)time(NULL));
 
 	// Get Settings here:
 	InitializeSettings();
-	if (!InitializeWindow())						return false;
-	//if (!InitializeAudio())							return false;
-	if (!InitializeGraphics(GRAPHICS_OPENGL))		return false;
+	//if (!InitializeAudio())										return false;
+	if (!InitializeGraphics(engine.settings.graphicsLanguage))		return false;
 	physicsSystem.Initialize();
 
-	LoadShadowShader();
-	LoadMainShader();
+	lightSystem.SetPointers(graphicsWrapper, &geometryCache);
 
 	renderPathType = RENDERPATH_DEFERRED;
 	switch (renderPathType) {
 	default:
-		renderPath = (RenderPath *)new RenderPathForward(graphicsWrapper, &geometryCache);
+		//renderPath = (RenderPath *)new RenderPathForward(graphicsWrapper, &geometryCache);
 		break;
 	case RENDERPATH_DEFERRED:
-		renderPath = (RenderPath *)new RenderPathDeferred(graphicsWrapper, &geometryCache, &terrainSystem);
+		renderPath = (RenderPath *)new RenderPathDeferred(graphicsWrapper);
 		break;
 	};
 
@@ -50,8 +54,6 @@ bool Engine::Initialize() {
 	CheckModPaths();
 
 	//sUi.LoadDocument("test.rml");
-
-	lightSystem.SetPointers(graphicsWrapper, &geometryCache);
 
 	inputSystem.AddControl("escape", "Shutdown", NULL, 1);
 	inputSystem.BindAction("Shutdown", NULL, this, &Engine::ShutdownControl, KEY_RELEASED);
@@ -68,7 +70,7 @@ bool Engine::Initialize() {
 	inputSystem.AddControl("1", "SwitchDebug", NULL, 1);
 	inputSystem.BindAction("SwitchDebug", NULL, this, &Engine::SwitchDebug);
 
-	terrainSystem.Initialize();
+	//terrainSystem.Initialize();
 	if (!InitializeScene(defaultMap))	return false;
 
 	cameraSystem.components[0].SetAspectRatio((float)engine.settings.resolutionX/engine.settings.resolutionY);
@@ -83,85 +85,11 @@ bool Engine::Initialize() {
 	return true;
 }
 
-void Engine::LoadShadowShader() {
-	std::string vsPath = "../shaders/objects/shadow.glvs"; // GetShaderExt()
-	std::string fsPath = "../shaders/objects/shadow.glfs";
-
-	std::string vsContent;
-	if (!ReadFile(vsPath, vsContent))
-		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
-
-	std::string fsContent;
-	if (!ReadFile(fsPath, fsContent))
-		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
-	shadowShader = pfnCreateShader();
-	shadowShader->Initialize(2);
-	if (!shadowShader->AddShader(&vsPath, &vsContent, SHADER_VERTEX))
-		fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
-	if (!shadowShader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
-		fprintf(stderr, "Failed to add fragment shader %s.\n", vsPath.c_str());
-	if (!shadowShader->Compile())
-		fprintf(stderr, "Failed to compile main metalness shader %s.\n", vsPath.c_str());
-
-	shadowShader->SetNumUniforms(1);
-	shadowShader->CreateUniform("pvmMatrix");
-}
-
-void Engine::LoadMainShader() {
-	std::string vsPath = "../shaders/objects/main.glvs"; // GetShaderExt()
-	std::string fsPath = "../shaders/objects/mainMetalness.glfs";
-
-	std::string vsContent;
-	if (!ReadFile(vsPath, vsContent))
-		fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
-
-	std::string fsContent;
-	if (!ReadFile(fsPath, fsContent))
-		fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
-	shader = pfnCreateShader();
-	shader->Initialize(2);
-	if (!shader->AddShader(&vsPath, &vsContent, SHADER_VERTEX))
-		fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
-	if (!shader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
-		fprintf(stderr, "Failed to add fragment shader %s.\n", vsPath.c_str());
-
-	shader->BindAttribLocation(0, "vertexPos");
-	shader->BindAttribLocation(1, "TexCoord");
-	shader->BindAttribLocation(2, "vertexNormal");
-	shader->BindAttribLocation(3, "vertexTangent");
-
-	shader->BindOutputLocation(0, "position");
-	shader->BindOutputLocation(1, "normal");
-	shader->BindOutputLocation(2, "albedo");
-	shader->BindOutputLocation(3, "specular");
-	if (!shader->Compile())
-		fprintf(stderr, "Failed to compile main metalness shader %s.\n", vsPath.c_str());
-
-	shader->SetNumUniforms(7);
-	shader->CreateUniform("pvmMatrix");
-	shader->CreateUniform("modelMatrix");
-	shader->CreateUniform("viewMatrix");
-	shader->CreateUniform("tex0");
-	shader->CreateUniform("tex1");
-	shader->CreateUniform("tex2");
-	shader->CreateUniform("tex3");
-
-	vsContent.clear();
-	fsContent.clear();
-}
-
-/*void Engine::AddSystem(System *newSystem) {
-	systems.push_back(newSystem);
-}
-
-void Engine::AddSpace(Space *newSpace) {
-	space.push_back(newSpace);
-}*/
-
 void Engine::InitializeSettings() {
 	INIConfigFile cfile;
 	
 	if (cfile.Initialize("../settings.ini")) {
+		cfile.GetBool("Window", "vsync", true, settings.vsync);
 		cfile.GetInteger("Window", "resx",	1366,	settings.resolutionX);
 		cfile.GetInteger("Window", "resy",	768,	settings.resolutionY);
 		cfile.GetFloat(  "Window", "fov",	90,		settings.fov);
@@ -170,7 +98,8 @@ void Engine::InitializeSettings() {
 		cfile.GetString("Renderer", "graphics", "OpenGL", graphics);
 		cfile.GetBool("Renderer", "reflections", true, settings.enableReflections);
 		cfile.GetBool("Renderer", "shadows", true, settings.enableShadows);
-		cfile.GetString("Game", "defaultmap", "../scenes/terrain.json", defaultMap);
+		cfile.GetBool("Renderer", "debugNoLighting", false, settings.debugNoLighting);
+		cfile.GetString("Game", "defaultmap", "../assets/scenes/sponza.json", defaultMap);
 
 		graphics = strToLower(graphics);
 		if (graphics == "directx")
@@ -192,118 +121,42 @@ void Engine::InitializeSettings() {
 	else {
 		fprintf(stderr, "SETTINGS.INI: File not found.\n");
 
+		cfile.SetBool("Window", "vsync", true);
 		cfile.SetInteger("Window", "resx", 1366);
 		cfile.SetInteger("Window", "resy", 768);
 		cfile.SetFloat("Window", "fov", 90);
 		cfile.SetString("Renderer", "graphics", "OpenGL");
 		cfile.SetBool("Renderer", "reflections", true);
 		cfile.SetBool("Renderer", "shadows", true);
-		cfile.SetString("Game", "defaultmap", "../scenes/terrain.json");
+		cfile.SetBool("Renderer", "debugNoLighting", false);
+		cfile.SetString("Game", "defaultmap", "../assets/scenes/sponza.json");
 
 		settings.resolutionX = 1366;
 		settings.resolutionY = 768;
 		settings.graphicsLanguage = GRAPHICS_OPENGL;
-		settings.fov = 90;
-		settings.fov *= 3.14159f / 360.0f; // Convert to rad, /2 for full fovY.
+		settings.fov = 90.0f * (3.14159f / 360.0f); // Convert to rad, /2 for full fovY.
 		settings.enableReflections = true;
 		settings.enableShadows = false;
-		defaultMap = "../scenes/terrain.json";
+		settings.debugNoLighting = false;
+		settings.vsync = true;
+		defaultMap = "../assets/scenes/sponza.json";
 	}
 
-}
-
-bool Engine::InitializeWindow() {
-#ifdef _WIN32
-	HMODULE dllHandle = LoadLibrary("window.dll");
-
-	if (!dllHandle) {
-		fprintf(stderr, "Failed to load window.dll!\n");
-		return false;
-	}
-
-	GameWindow* (*pfnCreateWindow)();
-	pfnCreateWindow = (GameWindow* (*)())GetProcAddress(dllHandle, "createWindow");
-
-	if (!pfnCreateWindow) {
-		fprintf(stderr, "Cannot get createWindow function!\n");
-		return false;
-	}
-#elif __APPLE__
-	void *lib_handle = dlopen("./window.so", RTLD_LAZY);
-
-	if (!lib_handle) {
-		fprintf(stderr, "%s\n", dlerror());
-		return false;
-	}
-
-	GameWindow* (*pfnCreateWindow)();
-	pfnCreateWindow = (GameWindow* (*)())dlsym(lib_handle, "createWindow");
-	if (!pfnCreateWindow) {
-		fprintf(stderr, "%s\n", dlerror());
-		return false;
-	}
-#else // Linux, etc
-	void *lib_handle = dlopen("./window.so", RTLD_LAZY);
-
-	if (!lib_handle) {
-		fprintf(stderr, "%s\n", dlerror());
-		return false;
-	}
-
-	GameWindow* (*pfnCreateWindow)();
-	pfnCreateWindow = (GameWindow* (*)())dlsym(lib_handle, "createWindow");
-	if (!pfnCreateWindow) {
-		fprintf(stderr, "%s\n", dlerror());
-		return false;
-	}
-#endif
-
-	window = (GameWindow*)pfnCreateWindow();
-	window->SetInputPointer(&inputSystem);
-	if (!window->Initialize("The Grindstone Engine", settings.resolutionX, settings.resolutionY))
-		return false;
-
-	window->SetCursorShown(false);
-
-	return true;
 }
 
 bool Engine::InitializeAudio() {
-#ifdef _WIN32
-	HMODULE dllHandle = LoadLibrary("audiosdl.dll");
+	LoadDLL(std::string("../audiosdl"));
 
-	if (!dllHandle) {
-		fprintf(stderr, "Failed to load audiosdl.dll!\n");
-		return false;
-	}
-
-	AudioSystem *(*pfnCreateAudio)();
-	pfnCreateAudio = (AudioSystem *(*)())GetProcAddress(dllHandle, "createAudio");
-
+	AudioSystem *(*pfnCreateAudio)() = (AudioSystem *(*)())LoadDLLFunction("createAudio");
 	if (!pfnCreateAudio) {
 		fprintf(stderr, "Cannot get createAudio function!\n");
 		return false;
 	}
-#else // Linux + Apple
-	void *lib_handle = dlopen("./audiosdl.so", RTLD_LAZY);
-
-	if (!lib_handle) {
-		fprintf(stderr, "%s\n", dlerror());
-		return false;
-	}
-
-	AudioSystem* (*pfnCreateAudio)();
-	pfnCreateAudio = (AudioSystem* (*)())dlsym(lib_handle, "createAudio");
-	if (!pfnCreateAudio) {
-		fprintf(stderr, "%s\n", dlerror());
-		return false;
-	}
-#endif
 
 	audioSystem = pfnCreateAudio();
 	audioSystem->Initialize();
-	sounds.push_back(audioSystem->LoadSound("../sounds/snaredrum.wav"));
-	sounds.push_back(audioSystem->LoadSound("../sounds/kickdrum.wav"));
+	sounds.push_back(audioSystem->LoadSound("../assets/sounds/snaredrum.wav"));
+	sounds.push_back(audioSystem->LoadSound("../assets/sounds/kickdrum.wav"));
 
 	return true;
 }
@@ -331,175 +184,162 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 #endif
 	};
 	
-#ifdef _WIN32
-	HMODULE dllHandle = LoadLibrary((library + ".dll").c_str());
+	LoadDLL(library);
 
-	if (!dllHandle) {
-		fprintf(stderr, "Failed to load %s!\n", (library + ".dll").c_str());
-		return false;
-	}
-
-	GraphicsWrapper* (*pfnCreateGraphics)();
-	pfnCreateGraphics = (GraphicsWrapper* (*)())GetProcAddress(dllHandle, "createGraphics");
-
+	GraphicsWrapper* (*pfnCreateGraphics)(InstanceCreateInfo) = (GraphicsWrapper* (*)(InstanceCreateInfo))LoadDLLFunction("createGraphics");
 	if (!pfnCreateGraphics) {
 		fprintf(stderr, "Cannot get createGraphics function!\n");
 		return false;
 	}
 
-	pfnCreateVAO = (VertexArrayObject* (*)())GetProcAddress(dllHandle, "createVAO");
-	if (!pfnCreateVAO) {
-		fprintf(stderr, "Cannot get createVAO function!\n");
+	void (*pfnDeleteGraphics)(void*) = (void (*)(void*))LoadDLLFunction("deleteGraphics");
+	if (!pfnDeleteGraphics) {
+		fprintf(stderr, "Cannot get deleteGraphics function!\n");
 		return false;
 	}
 
-	pfnCreateVBO = (VertexBufferObject* (*)())GetProcAddress(dllHandle, "createVBO");
-	if (!pfnCreateVBO) {
-		fprintf(stderr, "Cannot get createVBO function!\n");
-		return false;
-	}
-
-	pfnCreateShader = (ShaderProgram* (*)())GetProcAddress(dllHandle, "createShader");
-	if (!pfnCreateShader) {
-		fprintf(stderr, "Cannot get createShader function!\n");
-		return false;
-	}
-
-	pfnCreateTexture = (Texture* (*)())GetProcAddress(dllHandle, "createTexture");
-	if (!pfnCreateTexture) {
-		fprintf(stderr, "Cannot get createTexture function!\n");
-		return false;
-	}
-
-	pfnCreateFramebuffer = (Framebuffer* (*)())GetProcAddress(dllHandle, "createFramebuffer");
-	if (!pfnCreateFramebuffer) {
-		fprintf(stderr, "Cannot get createFramebuffer function!\n");
-		return false;
-	}
-
-	pfnCreateUniformBuffer = (UniformBuffer* (*)())GetProcAddress(dllHandle, "createUniformBuffer");
-	if (!pfnCreateUniformBuffer) {
-		fprintf(stderr, "Cannot get createUniformBuffer function!\n");
-		return false;
-	}
-
-	pfnDeleteGraphicsPointer = (void(*)(void *))GetProcAddress(dllHandle, "deletePointer");
-	if (!pfnDeleteGraphicsPointer) {
-		fprintf(stderr, "Cannot get deletePointer graphics function!\n");
-		return false;
-	}
-
-	HWND win_handle = window->GetHandle();
-#else // Apple + Linux
-	void *lib_handle = dlopen(("./"+ library +".so").c_str(), RTLD_LAZY);
-
-	if (!lib_handle) {
-		fprintf(stderr, "Failed to load %s: %s\n", ("./" + library + ".so").c_str(), dlerror());
-		return false;
-	}
-	else
-		printf("Loading Library: %s\n", ("./" + library + ".so").c_str());
-
-	GraphicsWrapper* (*pfnCreateGraphics)();
-
-	pfnCreateGraphics = (GraphicsWrapper* (*)())dlsym(lib_handle, "createGraphics");
-	if (!pfnCreateGraphics) {
-		fprintf(stderr, "%s\n", dlerror());
-		return false;
-	}
-
-	pfnCreateVAO = (VertexArrayObject* (*)())dlsym(lib_handle, "createVAO");
-	if (!pfnCreateVAO) {
-		fprintf(stderr, "%s\n", dlerror());
-		return false;
-	}
-
-	pfnCreateVBO = (VertexBufferObject* (*)())dlsym(lib_handle, "createVBO");
-	if (!pfnCreateVBO) {
-		fprintf(stderr, "%s\n", dlerror());
-		return false;
-	}
-
-	pfnCreateShader = (ShaderProgram* (*)())dlsym(lib_handle, "createShader");
-	if (!pfnCreateShader) {
-		fprintf(stderr, "%s\n", dlerror());
-		return false;
-	}
-
-	pfnCreateTexture = (Texture* (*)())dlsym(lib_handle, "createTexture");
-	if (!pfnCreateTexture) {
-		fprintf(stderr, "%s\n", dlerror());
-		return false;
-	}
-
-	pfnCreateFramebuffer = (Framebuffer* (*)())dlsym(lib_handle, "createFramebuffer");
-	if (!pfnCreateFramebuffer) {
-		fprintf(stderr, "%s\n", dlerror());
-		return false;
-	}
-
-	pfnCreateUniformBuffer = (UniformBuffer* (*)())dlsym(lib_handle, "createUniformBuffer");
-	if (!pfnCreateUniformBuffer) {
-		fprintf(stderr, "%s\n", dlerror());
-		return false;
-	}
-
-	pfnDeleteGraphicsPointer = (void (*)(void*))dlsym(lib_handle, "deletePointer");
-	if (!pfnDeleteGraphicsPointer) {
-		fprintf(stderr, "%s\n", dlerror());
-		return false;
-	}
-
-	Display* display;
-	Window *win_handle;
-	Screen *screen;
-	int screenID;
-	window->GetHandles(display, win_handle, screen, screenID);
-#endif
-
-	graphicsWrapper = (GraphicsWrapper*)pfnCreateGraphics();
-#ifdef _WIN32
-	graphicsWrapper->SetWindowContext(win_handle);
+	InstanceCreateInfo createInfo;
+	createInfo.width = engine.settings.resolutionX;
+	createInfo.height = engine.settings.resolutionY;
+	createInfo.vsync = engine.settings.vsync;
+	createInfo.inputInterface = &inputSystem;
+	createInfo.title = "Grindstone";
+#ifdef NDEBUG
+	createInfo.debug = false;
 #else
-	graphicsWrapper->SetWindowContext(display, win_handle, screen, screenID);
+	createInfo.debug = true;
 #endif
+	graphicsWrapper = (GraphicsWrapper*)pfnCreateGraphics(createInfo);
 
-	if (!graphicsWrapper->InitializeWindowContext())
-		return false;
+
+	graphicsWrapper->CreateDefaultStructures();
+
+	VertexBindingDescription vbd;
+	vbd.binding = 0;
+	vbd.elementRate = false;
+	vbd.stride = sizeof(Vertex);
+
+	std::vector<VertexAttributeDescription> vads(4);
+	vads[0].binding = 0;
+	vads[0].location = 0;
+	vads[0].format = VERTEX_R32_G32_B32;
+	vads[0].size = 3;
+	vads[0].name = "vertexPosition";
+	vads[0].offset = offsetof(Vertex, positions);
+	vads[0].usage = ATTRIB_POSITION;
+
+	vads[1].binding = 0;
+	vads[1].location = 1;
+	vads[1].format = VERTEX_R32_G32_B32;
+	vads[1].size = 3;
+	vads[1].name = "vertexNormal";
+	vads[1].offset = offsetof(Vertex, normal);
+	vads[1].usage = ATTRIB_NORMAL;
+
+	vads[2].binding = 0;
+	vads[2].location = 2;
+	vads[2].format = VERTEX_R32_G32_B32;
+	vads[2].size = 3;
+	vads[2].name = "vertexTangent";
+	vads[2].offset = offsetof(Vertex, tangent);
+	vads[2].usage = ATTRIB_TANGENT;
+
+	vads[3].binding = 0;
+	vads[3].location = 3;
+	vads[3].format = VERTEX_R32_G32;
+	vads[3].size = 2;
+	vads[3].name = "vertexTexCoord";
+	vads[3].offset = offsetof(Vertex, texCoord);
+	vads[3].usage = ATTRIB_TEXCOORD0;
+
+	UniformBufferBindingCreateInfo ubbci;
+	ubbci.binding = 0;
+	ubbci.shaderLocation = "UniformBufferObject";
+	ubbci.size = sizeof(myUBO);
+	ubbci.stages = SHADER_STAGE_VERTEX_BIT;
+	UniformBufferBinding *ubb = graphicsWrapper->CreateUniformBufferBinding(ubbci);
+
+	UniformBufferCreateInfo ubci;
+	ubci.isDynamic = false;
+	ubci.size = sizeof(MatUniformBufferObject);
+	ubci.binding = ubb;
+	ubo = graphicsWrapper->CreateUniformBuffer(ubci);
+
+	UniformBufferBindingCreateInfo ubbci2;
+	ubbci2.binding = 1;
+	ubbci2.shaderLocation = "ModelMatrixBuffer";
+	ubbci2.size = sizeof(modelUBO);
+	ubbci2.stages = SHADER_STAGE_VERTEX_BIT;
+	UniformBufferBinding *ubb2 = graphicsWrapper->CreateUniformBufferBinding(ubbci2);
+
+	UniformBufferCreateInfo ubci2;
+	ubci2.isDynamic = false;
+	ubci2.size = sizeof(modelUBO);
+	ubci2.binding = ubb2;
+	ubo2 = graphicsWrapper->CreateUniformBuffer(ubci2);
+
+	materialManager.Initialize(graphicsWrapper, vbd, vads, ubb);
+	geometryCache.Initialize(graphicsWrapper, vbd, vads, &materialManager);
+
+	std::vector<ColorFormat> gbufferCFs = {
+		FORMAT_COLOR_R8G8B8A8,	// R  G  B  MatID
+		FORMAT_COLOR_R8G8B8A8,	// sR sG sB Roughness
+		FORMAT_COLOR_R8G8B8A8	// nX nY nZ
+	};
 	
-	if (!graphicsWrapper->InitializeGraphics())
-		return false;
+	FramebufferCreateInfo gbufferCI;
+	gbufferCI.colorFormats = gbufferCFs.data();
+	gbufferCI.depthFormat = FORMAT_DEPTH_24;
+	gbufferCI.numColorTargets = (uint32_t)gbufferCFs.size();
+	gbufferCI.width = engine.settings.resolutionX;
+	gbufferCI.height = engine.settings.resolutionY;
+	gbufferCI.renderPass = nullptr;
+	gbuffer = graphicsWrapper->CreateFramebuffer(gbufferCI);
 
-	graphicsWrapper->SetResolution(0, 0, settings.resolutionX, settings.resolutionY);
+	ColorFormat deviceColorFormat = graphicsWrapper->GetDeviceColorFormat();
+	FramebufferCreateInfo defaultFramebufferCI;
+	defaultFramebufferCI.colorFormats = &deviceColorFormat;
+	defaultFramebufferCI.depthFormat = FORMAT_DEPTH_24;
+	defaultFramebufferCI.numColorTargets = 1;
+	defaultFramebufferCI.width = engine.settings.resolutionX;
+	defaultFramebufferCI.height = engine.settings.resolutionY;
+	defaultFramebufferCI.renderPass = nullptr;
+	defaultFramebuffer = graphicsWrapper->CreateFramebuffer(defaultFramebufferCI);
+
 	return true;
 }
 
-#ifdef UseClassInstance
-Engine *Engine::GetInstance() {
-	if (!_instance)
-		_instance = new Engine();
-	return _instance;
-}
-#else
 Engine &Engine::GetInstance() {
 	static Engine newEngine;
 	return newEngine;
 }
-#endif
 
-void Engine::Render(glm::mat4 _projMat, glm::mat4 _viewMat, glm::vec3 eyePos, bool usePost) {
-	renderPath->Draw(_projMat, _viewMat, eyePos, settings.enableReflections && usePost);
-
-	if (usePost && debugMode == 0) {
-		cameraSystem.components[0].PostProcessing(renderPath->GetFramebuffer());
-		postPipeline.ProcessScene(renderPath->GetGBuffer(), cameraSystem.components[0].GetFramebuffer());
+void Engine::Render(glm::mat4 _projMat, glm::mat4 _viewMat) {
+	if (graphicsWrapper->SupportsCommandBuffers()) {
+		materialManager.DrawDeferred();
+		graphicsWrapper->WaitUntilIdle();
 	}
+	else {
+		if (!engine.settings.debugNoLighting) {
+			gbuffer->BindWrite();
+			gbuffer->Clear();
+			materialManager.DrawImmediate();
+			gbuffer->Unbind();
+			graphicsWrapper->BindDefaultFramebuffer();
+			gbuffer->BindRead();
+			renderPath->Draw(gbuffer);
+			gbuffer->Unbind();
 
-#ifdef _WIN32
-	graphicsWrapper->SwapBuffer();
-#else
-	window->SwapBuffer();
-#endif
+			graphicsWrapper->SwapBuffer();
+		}
+		else {
+			graphicsWrapper->BindDefaultFramebuffer();
+			graphicsWrapper->Clear();
+			materialManager.DrawImmediate();
+			//graphicsWrapper->Blit(0,0,0,1366,768);
+			graphicsWrapper->SwapBuffer();
+		}
+	}
 }
 
 void Engine::PlayEngineSound(double sound) {
@@ -513,33 +353,31 @@ void Engine::PlayEngineSound2(double sound) {
 }
 
 void Engine::Run() {
-	window->ResetCursor();
-
-	//double lag = 0.0;
-	//double MS_PER_UPDATE = GetUpdateTimeDelta();
+	graphicsWrapper->ResetCursor();
 
 	while (isRunning) {
 		CalculateTime();
-		//lag += GetRenderTimeDelta();
-		window->HandleEvents();
+
+		graphicsWrapper->HandleEvents();
 		inputSystem.LoopControls();
 		physicsSystem.StepSimulation(GetUpdateTimeDelta());
 		physicsSystem.SetTransforms();
 
 		if (cameraSystem.components.size() > 0) {
 			CCamera *cam = &cameraSystem.components[0];
-			unsigned int entityID = cam->entityID;
-			EBase *entity = &engine.entities[entityID];
-			unsigned int transID = entity->components[COMPONENT_TRANSFORM];
-			CTransform *trans = &engine.transformSystem.components[transID];
 			
-			glm::mat4 projection = cam->GetProjection();
-			glm::mat4 view = cam->GetView();
+			myUBO.proj = cam->GetProjection();
+			myUBO.view = cam->GetView();
+
+			modelUBO.model = glm::scale(glm::vec3(0.01f, 0.01f, 0.01f));
+			ubo2->UpdateUniformBuffer(&modelUBO);
+			ubo2->Bind();
+			ubo->UpdateUniformBuffer(&myUBO);
 
 			if (settings.enableShadows)
 				lightSystem.DrawShadows();
-			graphicsWrapper->SetResolution(0, 0, settings.resolutionX, settings.resolutionY);
-			Render(projection, view, trans->GetPosition(), true);
+			ubo->Bind();
+			Render(myUBO.proj, myUBO.view);
 		}
 
 		//sUi.Update();
@@ -601,7 +439,7 @@ bool Engine::InitializeScene(std::string szScenePath) {
 
 	LoadLevel(szSceneNewPath);
 	geometryCache.LoadPreloaded();
-	terrainSystem.GenerateComponents();
+	//terrainSystem.GenerateComponents();
 
 	return true;
 }
@@ -633,12 +471,19 @@ void Engine::ShutdownControl(double) {
 }
 
 Engine::~Engine() {
+	materialManager.Shutdown();
 	geometryCache.Shutdown();
 	physicsSystem.Cleanup();
 
 	if (audioSystem)
 		audioSystem->Shutdown();
-	
-	if (window)
-		window->Shutdown();
+
+	if (gbuffer)
+		graphicsWrapper->DeleteFramebuffer(gbuffer);
+
+	if (defaultFramebuffer)
+		graphicsWrapper->DeleteFramebuffer(defaultFramebuffer);
+
+	if (graphicsWrapper)
+		graphicsWrapper->Cleanup();
 }

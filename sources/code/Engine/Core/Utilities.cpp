@@ -45,7 +45,7 @@ bool ReadFile(std::string pFileName, std::string& output)
 		return true;
 	}
 	else {
-		printf("Unable to open file %s", pFileName.c_str());
+		printf("Unable to open file %s\n", pFileName.c_str());
 	}
 
 	return false;

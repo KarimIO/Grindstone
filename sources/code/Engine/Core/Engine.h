@@ -14,8 +14,6 @@
 #include "../Renderpaths/RenderPathDeferred.h"
 #include "../Renderpaths/RenderPathForward.h"
 
-#include <Window.h>
-#include "Shader.h"
 #include "../Systems/SGeometry.h"
 #include "Input.h"
 
@@ -29,8 +27,6 @@
 
 #include "TextureManager.h"
 
-#include <Shader.h>
-
 #include "../Core/EBase.h"
 
 #include "../Systems/Physics.h"
@@ -40,6 +36,8 @@
 #include "../Systems/CController.h"
 
 #include "Systems/SUI.h"
+
+#include "Systems/SShader.h"
 
 enum RenderPathType {
 	RENDERPATH_FORWARD = 0,
@@ -69,15 +67,32 @@ enum {
 #include "PostProcess/PostPipeline.h"
 class EBase;
 
+struct MatUniformBufferObject {
+	glm::mat4 view;
+	glm::mat4 proj;
+};
+
+struct ModelMatrixUBO {
+	glm::mat4 model;
+};
+
 class Engine {
+public:
+	VertexBindingDescription planeVBD;
+	VertexAttributeDescription planeVAD;
+	UniformBufferBinding *deffubb;
+	UniformBufferBinding *lightubb;
+	TextureBindingLayout *tbl;
+	UniformBufferBinding *pointLightUBB;
+	UniformBufferBinding *spotLightUBB;
+	std::vector<TextureSubBinding> bindings;
 private:
-	bool InitializeWindow();
+	Framebuffer *gbuffer;
+	Framebuffer *defaultFramebuffer;
+
 	bool InitializeAudio();
 	bool InitializeGraphics(GraphicsLanguage);
 	void InitializeSettings();
-
-	void LoadShadowShader();
-	void LoadMainShader();
 
 	void CheckModPaths();
 
@@ -86,6 +101,8 @@ private:
 	PostPipeline postPipeline;
 
 	//SUI sUi;
+	UniformBuffer *ubo;
+	MatUniformBufferObject myUBO;
 
 	std::vector<System *> systems;
 
@@ -100,12 +117,13 @@ private:
 
 	std::chrono::nanoseconds deltaTime;
 public:
-	VertexArrayObject	*vaoQuad;
-	VertexBufferObject	*vboQuad;
+	UniformBuffer *ubo2;
+	ModelMatrixUBO modelUBO;
 
+	GraphicsPipeline *pipeline;
 	int debugMode;
+	MaterialManager materialManager;
 	TextureManager textureManager;
-	STerrain terrainSystem;
 	STransform transformSystem;
 	SCamera cameraSystem;
 	SController controllerSystem;
@@ -114,8 +132,10 @@ public:
 		int resolutionX;
 		int resolutionY;
 		float fov;
+		bool vsync;
 		bool enableReflections;
 		bool enableShadows;
+		bool debugNoLighting;
 		GraphicsLanguage graphicsLanguage;
 	} settings;
 
@@ -126,20 +146,17 @@ public:
 	CubemapSystem cubemapSystem;
 	InputComponent input;
 
-	GameWindow *window;
 	SModel geometryCache;
 	SLight lightSystem;
 
-	ShaderProgram *shader;
-	ShaderProgram *shadowShader;
+	RenderPass *renderPass;
+	std::vector<Framebuffer *> fbos;
 
 	InputSystem inputSystem;
 	GraphicsWrapper *graphicsWrapper;
-#ifdef UseClassInstance
-	static Engine *GetInstance();
-#else
+
 	static Engine &GetInstance();
-#endif
+
 	bool Initialize();
 	void Run();
 
@@ -155,7 +172,7 @@ public:
 	double GetTimeCurrent();
 	double GetUpdateTimeDelta();
 	double GetRenderTimeDelta();
-	void Render(glm::mat4, glm::mat4, glm::vec3, bool);
+	void Render(glm::mat4, glm::mat4);
 	void PlayEngineSound(double sound);
 	void PlayEngineSound2(double sound);
 
@@ -167,10 +184,6 @@ public:
 	void ShutdownControl(double);
 };
 
-#ifdef UseClassInstance
-	#define engine (*Engine::GetInstance())	// Needs work
-#else
-	#define engine Engine::GetInstance()	// Only works with C++11+
-#endif
+#define engine Engine::GetInstance()	// Only works with C++11+
 
 #endif
