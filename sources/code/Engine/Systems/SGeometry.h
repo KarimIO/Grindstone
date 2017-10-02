@@ -54,12 +54,33 @@ public:
 	std::vector<Material *> materials;
 };
 
+class StaticMesh : public Mesh {
+public:
+	uint32_t NumIndices = 0;
+	uint32_t BaseVertex = 0;
+	uint32_t BaseIndex = 0;
+	CModel *model = nullptr;
+
+	void Draw();
+	void DrawDeferred(CommandBuffer *);
+};
+
+class SkeletalMesh : public Mesh {
+public:
+	void Draw() {
+
+	};
+	void DrawDeferred(CommandBuffer *) {
+
+	};
+};
+
 class CModel {
 	friend class SModel;
 public:
 	bool useLargeBuffer = true;
 	std::vector<unsigned int> references;
-	std::vector<Mesh> meshes;
+	std::vector<StaticMesh> meshes;
 	VertexBuffer *vertexBuffer;
 	IndexBuffer *indexBuffer;
 	VertexArrayObject *vertexArrayObject;

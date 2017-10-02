@@ -249,7 +249,7 @@ int main() {
     if (!pixels) {
         printf("Texture failed to load!: %s \nPress enter to exit. ", path.c_str());
 		std::cin.get();
-        return NULL;
+        return -1;
     }
 
 	unsigned char *fixedPixels = pixels;

@@ -17,7 +17,7 @@ GLVertexBuffer::GLVertexBuffer(VertexBufferCreateInfo createInfo) {
 		bool normalized = GL_FALSE;
 
 		glEnableVertexAttribArray(attrib->location);
-		glVertexAttribPointer(attrib->location, attrib->size, type, normalized, stride, (const void *)attrib->offset);
+		glVertexAttribPointer(attrib->location, attrib->size, type, normalized, stride, reinterpret_cast<const void *>(attrib->offset));
 	}
 
 	//glBindVertexArray(0);

@@ -25,8 +25,6 @@
 
 #include <SoundFile.h>
 
-#include "TextureManager.h"
-
 #include "../Core/EBase.h"
 
 #include "../Systems/Physics.h"
@@ -90,7 +88,6 @@ private:
 	Framebuffer *gbuffer;
 	Framebuffer *defaultFramebuffer;
 
-	bool InitializeAudio();
 	bool InitializeGraphics(GraphicsLanguage);
 	void InitializeSettings();
 
@@ -103,11 +100,6 @@ private:
 	//SUI sUi;
 	UniformBuffer *ubo;
 	MatUniformBufferObject myUBO;
-
-	std::vector<System *> systems;
-
-	AudioSystem *audioSystem;
-	std::vector<SoundFile *> sounds;
 
 	// Time Data
 	std::chrono::time_point<std::chrono::high_resolution_clock> currentTime, prevTime, startTime;
@@ -123,7 +115,6 @@ public:
 	GraphicsPipeline *pipeline;
 	int debugMode;
 	MaterialManager materialManager;
-	TextureManager textureManager;
 	STransform transformSystem;
 	SCamera cameraSystem;
 	SController controllerSystem;
@@ -173,8 +164,6 @@ public:
 	double GetUpdateTimeDelta();
 	double GetRenderTimeDelta();
 	void Render(glm::mat4, glm::mat4);
-	void PlayEngineSound(double sound);
-	void PlayEngineSound2(double sound);
 
 	void Shutdown();
 

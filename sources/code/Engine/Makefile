@@ -70,7 +70,7 @@ rebuild_cache/fast: rebuild_cache
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/cmake-gui -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -298,33 +298,6 @@ Core/Space.cpp.s:
 	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/Engine/CMakeFiles/Grindstone.dir/build.make sources/code/Engine/CMakeFiles/Grindstone.dir/Core/Space.cpp.s
 .PHONY : Core/Space.cpp.s
 
-Core/TextureManager.o: Core/TextureManager.cpp.o
-
-.PHONY : Core/TextureManager.o
-
-# target to build an object file
-Core/TextureManager.cpp.o:
-	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/Engine/CMakeFiles/Grindstone.dir/build.make sources/code/Engine/CMakeFiles/Grindstone.dir/Core/TextureManager.cpp.o
-.PHONY : Core/TextureManager.cpp.o
-
-Core/TextureManager.i: Core/TextureManager.cpp.i
-
-.PHONY : Core/TextureManager.i
-
-# target to preprocess a source file
-Core/TextureManager.cpp.i:
-	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/Engine/CMakeFiles/Grindstone.dir/build.make sources/code/Engine/CMakeFiles/Grindstone.dir/Core/TextureManager.cpp.i
-.PHONY : Core/TextureManager.cpp.i
-
-Core/TextureManager.s: Core/TextureManager.cpp.s
-
-.PHONY : Core/TextureManager.s
-
-# target to generate assembly for a file
-Core/TextureManager.cpp.s:
-	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/Engine/CMakeFiles/Grindstone.dir/build.make sources/code/Engine/CMakeFiles/Grindstone.dir/Core/TextureManager.cpp.s
-.PHONY : Core/TextureManager.cpp.s
-
 Core/Utilities.o: Core/Utilities.cpp.o
 
 .PHONY : Core/Utilities.o
@@ -406,60 +379,6 @@ PostProcess/ColorGradingPost.cpp.s:
 	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/Engine/CMakeFiles/Grindstone.dir/build.make sources/code/Engine/CMakeFiles/Grindstone.dir/PostProcess/ColorGradingPost.cpp.s
 .PHONY : PostProcess/ColorGradingPost.cpp.s
 
-PostProcess/DOFPost.o: PostProcess/DOFPost.cpp.o
-
-.PHONY : PostProcess/DOFPost.o
-
-# target to build an object file
-PostProcess/DOFPost.cpp.o:
-	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/Engine/CMakeFiles/Grindstone.dir/build.make sources/code/Engine/CMakeFiles/Grindstone.dir/PostProcess/DOFPost.cpp.o
-.PHONY : PostProcess/DOFPost.cpp.o
-
-PostProcess/DOFPost.i: PostProcess/DOFPost.cpp.i
-
-.PHONY : PostProcess/DOFPost.i
-
-# target to preprocess a source file
-PostProcess/DOFPost.cpp.i:
-	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/Engine/CMakeFiles/Grindstone.dir/build.make sources/code/Engine/CMakeFiles/Grindstone.dir/PostProcess/DOFPost.cpp.i
-.PHONY : PostProcess/DOFPost.cpp.i
-
-PostProcess/DOFPost.s: PostProcess/DOFPost.cpp.s
-
-.PHONY : PostProcess/DOFPost.s
-
-# target to generate assembly for a file
-PostProcess/DOFPost.cpp.s:
-	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/Engine/CMakeFiles/Grindstone.dir/build.make sources/code/Engine/CMakeFiles/Grindstone.dir/PostProcess/DOFPost.cpp.s
-.PHONY : PostProcess/DOFPost.cpp.s
-
-PostProcess/GaussianBlurPost.o: PostProcess/GaussianBlurPost.cpp.o
-
-.PHONY : PostProcess/GaussianBlurPost.o
-
-# target to build an object file
-PostProcess/GaussianBlurPost.cpp.o:
-	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/Engine/CMakeFiles/Grindstone.dir/build.make sources/code/Engine/CMakeFiles/Grindstone.dir/PostProcess/GaussianBlurPost.cpp.o
-.PHONY : PostProcess/GaussianBlurPost.cpp.o
-
-PostProcess/GaussianBlurPost.i: PostProcess/GaussianBlurPost.cpp.i
-
-.PHONY : PostProcess/GaussianBlurPost.i
-
-# target to preprocess a source file
-PostProcess/GaussianBlurPost.cpp.i:
-	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/Engine/CMakeFiles/Grindstone.dir/build.make sources/code/Engine/CMakeFiles/Grindstone.dir/PostProcess/GaussianBlurPost.cpp.i
-.PHONY : PostProcess/GaussianBlurPost.cpp.i
-
-PostProcess/GaussianBlurPost.s: PostProcess/GaussianBlurPost.cpp.s
-
-.PHONY : PostProcess/GaussianBlurPost.s
-
-# target to generate assembly for a file
-PostProcess/GaussianBlurPost.cpp.s:
-	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/Engine/CMakeFiles/Grindstone.dir/build.make sources/code/Engine/CMakeFiles/Grindstone.dir/PostProcess/GaussianBlurPost.cpp.s
-.PHONY : PostProcess/GaussianBlurPost.cpp.s
-
 PostProcess/PostPipeline.o: PostProcess/PostPipeline.cpp.o
 
 .PHONY : PostProcess/PostPipeline.o
@@ -486,33 +405,6 @@ PostProcess/PostPipeline.s: PostProcess/PostPipeline.cpp.s
 PostProcess/PostPipeline.cpp.s:
 	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/Engine/CMakeFiles/Grindstone.dir/build.make sources/code/Engine/CMakeFiles/Grindstone.dir/PostProcess/PostPipeline.cpp.s
 .PHONY : PostProcess/PostPipeline.cpp.s
-
-PostProcess/SSAOPost.o: PostProcess/SSAOPost.cpp.o
-
-.PHONY : PostProcess/SSAOPost.o
-
-# target to build an object file
-PostProcess/SSAOPost.cpp.o:
-	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/Engine/CMakeFiles/Grindstone.dir/build.make sources/code/Engine/CMakeFiles/Grindstone.dir/PostProcess/SSAOPost.cpp.o
-.PHONY : PostProcess/SSAOPost.cpp.o
-
-PostProcess/SSAOPost.i: PostProcess/SSAOPost.cpp.i
-
-.PHONY : PostProcess/SSAOPost.i
-
-# target to preprocess a source file
-PostProcess/SSAOPost.cpp.i:
-	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/Engine/CMakeFiles/Grindstone.dir/build.make sources/code/Engine/CMakeFiles/Grindstone.dir/PostProcess/SSAOPost.cpp.i
-.PHONY : PostProcess/SSAOPost.cpp.i
-
-PostProcess/SSAOPost.s: PostProcess/SSAOPost.cpp.s
-
-.PHONY : PostProcess/SSAOPost.s
-
-# target to generate assembly for a file
-PostProcess/SSAOPost.cpp.s:
-	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/Engine/CMakeFiles/Grindstone.dir/build.make sources/code/Engine/CMakeFiles/Grindstone.dir/PostProcess/SSAOPost.cpp.s
-.PHONY : PostProcess/SSAOPost.cpp.s
 
 Renderpaths/RenderPathDeferred.o: Renderpaths/RenderPathDeferred.cpp.o
 
@@ -947,9 +839,6 @@ help:
 	@echo "... Core/Space.o"
 	@echo "... Core/Space.i"
 	@echo "... Core/Space.s"
-	@echo "... Core/TextureManager.o"
-	@echo "... Core/TextureManager.i"
-	@echo "... Core/TextureManager.s"
 	@echo "... Core/Utilities.o"
 	@echo "... Core/Utilities.i"
 	@echo "... Core/Utilities.s"
@@ -959,18 +848,9 @@ help:
 	@echo "... PostProcess/ColorGradingPost.o"
 	@echo "... PostProcess/ColorGradingPost.i"
 	@echo "... PostProcess/ColorGradingPost.s"
-	@echo "... PostProcess/DOFPost.o"
-	@echo "... PostProcess/DOFPost.i"
-	@echo "... PostProcess/DOFPost.s"
-	@echo "... PostProcess/GaussianBlurPost.o"
-	@echo "... PostProcess/GaussianBlurPost.i"
-	@echo "... PostProcess/GaussianBlurPost.s"
 	@echo "... PostProcess/PostPipeline.o"
 	@echo "... PostProcess/PostPipeline.i"
 	@echo "... PostProcess/PostPipeline.s"
-	@echo "... PostProcess/SSAOPost.o"
-	@echo "... PostProcess/SSAOPost.i"
-	@echo "... PostProcess/SSAOPost.s"
 	@echo "... Renderpaths/RenderPathDeferred.o"
 	@echo "... Renderpaths/RenderPathDeferred.i"
 	@echo "... Renderpaths/RenderPathDeferred.s"

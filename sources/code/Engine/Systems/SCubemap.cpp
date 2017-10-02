@@ -1,8 +1,6 @@
 #include "SCubemap.h"
 #include <iostream>
 
-#include "../Core/TextureManager.h"
-
 #include "../Core/Engine.h"
 
 void CubemapSystem::CaptureCubemaps(double) {

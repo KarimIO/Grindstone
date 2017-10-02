@@ -36,10 +36,10 @@ struct MaterialReference {
 };
 
 struct Mesh {
+	MaterialReference material;
 	uint32_t num_indices = 0;
 	uint32_t base_vertex = 0;
 	uint32_t base_index = 0;
-	MaterialReference material;
 	void *vertex_array_object = nullptr;
 };
 

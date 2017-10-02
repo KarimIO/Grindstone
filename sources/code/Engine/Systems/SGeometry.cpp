@@ -1,8 +1,6 @@
 #include "../Core/Engine.h"
 
 #include "SGeometry.h"
-#include "../Core/TextureManager.h"
-#include "../Core/GraphicsDLLPointer.h"
 
 #include <fstream>
 
@@ -102,7 +100,7 @@ bool SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 	indices.resize(inFormat.numIndices);
 
 	offset = static_cast<char*>(offset) + sizeof(ModelFormatHeader);
-	uint32_t size = inFormat.numMeshes * sizeof(Mesh);
+	uint32_t size = inFormat.numMeshes * sizeof(StaticMesh);
 	memcpy(&model->meshes[0], offset, size);
 	offset = static_cast<char*>(offset) + size;
 	size = inFormat.numVertices * sizeof(Vertex);
@@ -111,7 +109,9 @@ bool SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 	size = inFormat.numIndices * sizeof(unsigned int);
 	memcpy(&indices[0], offset, size);
 	offset = static_cast<char*>(offset) + size;
-	
+
+	std::cout << inFormat.numMaterials << "\n";
+	std::cin.get();
 	std::vector<MaterialReference> materialReferences;
 	materialReferences.resize(inFormat.numMaterials);
 
@@ -163,12 +163,12 @@ bool SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 
 	for (unsigned int i = 0; i < inFormat.numMeshes; i++) {
 		// Use the temporarily uint32_t material as an ID for the actual material.
-		Mesh *currentMesh = &model->meshes[i];
+		StaticMesh *currentMesh = &model->meshes[i];
 		uint16_t matID = currentMesh->material.material;
 		currentMesh->material = materialReferences[matID];
 		currentMesh->model = model;
 		Material *mat = materials[matID];
-		mat->m_meshes.push_back(currentMesh);
+		mat->m_meshes.push_back(reinterpret_cast<Mesh *>(currentMesh));
 	}
 
 	return true;
@@ -206,7 +206,7 @@ void SModel::Shutdown() {
 	}
 }
 
-void Mesh::Draw() {
+void StaticMesh::Draw() {
 	for (auto &reference : model->references) {
 		auto renderComponent = engine.geometryCache.renderComponents[reference];
 		auto entityID = renderComponent.entityID;
@@ -222,7 +222,7 @@ void Mesh::Draw() {
 	}
 }
 
-void Mesh::DrawDeferred(CommandBuffer *cmd) {
+void StaticMesh::DrawDeferred(CommandBuffer *cmd) {
 	cmd->BindBufferObjects(model->vertexBuffer, model->indexBuffer, model->useLargeBuffer);
 	cmd->DrawIndexed(BaseVertex, BaseIndex, NumIndices, 1);
 }

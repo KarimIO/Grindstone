@@ -1,19 +1,18 @@
 #include "PostPipeline.h"
 
-void PostPipeline::Initialize() {
-	colorGrading.Initialize();
+void PostPipeline::AddPostProcess(BasePostProcess *process) {
+	processes.push_back(process);
 }
 
-void PostPipeline::Start() {
+Framebuffer *PostPipeline::ProcessScene(Framebuffer *inputFbo) {
+	Framebuffer *fbo = inputFbo;
+	for (auto &process : processes) {
+		inputFbo = process->Process(fbo);
+	}
 }
 
-void PostPipeline::End() {
-}
-
-void PostPipeline::ProcessScene(Framebuffer *inputFbo, Framebuffer *fbo) {
-	Start();
-
-	colorGrading.Process(fbo);
-
-	End();
+PostPipeline::~PostPipeline() {
+	for (auto &process : processes) {
+		delete process;
+	}
 }

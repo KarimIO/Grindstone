@@ -15,6 +15,9 @@
 #include "SGeometry.h"
 #include "Core/Engine.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
+
 /*enum SHADER_JSON_STATE {
 	SHADER_JSON_MAIN = 0,
 	SHADER_JSON_NAME,
@@ -585,7 +588,7 @@ MaterialReference MaterialManager::CreateMaterial(std::string path) {
 		input.open(path + ".gjm", std::ios::ate | std::ios::binary);
 
 		if (!input.is_open()) {
-			std::cerr << "Failed to open file: " << path.c_str() << "!\n";
+			std::cerr << "Failed to open material: " << path.c_str() << "!\n";
 			return MaterialReference();
 		}
 	}

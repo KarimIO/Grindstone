@@ -1,4 +1,0 @@
-#ifndef _GRAPHICS_DLL_POINTER_H
-#define _GRAPHICS_DLL_POINTER_H
-
-#endif

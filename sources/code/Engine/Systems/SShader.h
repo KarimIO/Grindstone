@@ -54,15 +54,12 @@ struct MaterialReference {
 
 class CModel;
 
-struct Mesh {
-	uint32_t NumIndices = 0;
-	uint32_t BaseVertex = 0;
-	uint32_t BaseIndex = 0;
+class Mesh {
+public:
 	MaterialReference material;
-	CModel *model = nullptr;
 
-	void Draw();
-	void DrawDeferred(CommandBuffer *);
+	virtual void Draw() = 0;
+	virtual void DrawDeferred(CommandBuffer *) = 0;
 };
 
 class Material {

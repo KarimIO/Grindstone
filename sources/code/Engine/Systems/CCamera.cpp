@@ -1,7 +1,6 @@
 #include "CCamera.h"
 #include "../Core/Engine.h"
 #include "../Core/Utilities.h"
-#include "../Core/GraphicsDLLPointer.h"
 
 struct CamUBO {
 	int texture = 0;

@@ -1,5 +1,4 @@
 #include "CLight.h"
-#include "../Core/GraphicsDLLPointer.h"
 #include "Core/EBase.h"
 #include "Core/Engine.h"
 

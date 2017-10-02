@@ -269,7 +269,8 @@ void GLGraphicsWrapper::BindVertexArrayObject(VertexArrayObject *vao) {
 
 void GLGraphicsWrapper::DrawImmediateIndexed(bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
 	uint32_t size = largeBuffer ? sizeof(uint32_t) : sizeof(uint16_t);
-	glDrawElementsBaseVertex(GL_TRIANGLES, indexCount, largeBuffer ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, (void *)(indexOffsetPtr * size), baseVertex);
+	void *ptr = reinterpret_cast<void *>(indexOffsetPtr * size);
+	glDrawElementsBaseVertex(GL_TRIANGLES, indexCount, largeBuffer ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, ptr, baseVertex);
 }
 
 void GLGraphicsWrapper::DrawImmediateVertices(uint32_t base, uint32_t count) {

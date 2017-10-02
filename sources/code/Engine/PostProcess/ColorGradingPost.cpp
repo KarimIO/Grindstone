@@ -1,10 +1,9 @@
 #include "ColorGradingPost.h"
 #include <string>
 #include "../Core/Utilities.h"
-#include "../Core/GraphicsDLLPointer.h"
 #include "../Core/Engine.h"
 
-void ColorGradingPost::Initialize() {
+ColorGradingPost::ColorGradingPost() {
 	/*std::string vsPath = "../shaders/overlay.glvs";
 	std::string fsPath = "../shaders/post/ColorGrading.glfs";
 
@@ -32,7 +31,15 @@ void ColorGradingPost::Initialize() {
 	fsPath.clear();*/
 }
 
-void ColorGradingPost::Process(Framebuffer *target) {
+ColorGradingPost::ColorGradingPost(const ColorGradingPost &cp) {
+
+}
+
+ColorGradingPost::ColorGradingPost(ColorGradingPost &&mv) {
+
+}
+
+Framebuffer *ColorGradingPost::Process(Framebuffer *target) {
 	/*target->ReadBind();
 	target->BindTexture(0);
 	target->Unbind();
@@ -50,14 +57,12 @@ void ColorGradingPost::Process(Framebuffer *target) {
 	//fbo->Unbind();
 
 	if (engine.graphicsWrapper->CheckForErrors())
-		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";*/
+		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
+		
+	return fbo;*/
 }
 
-Framebuffer *ColorGradingPost::GetFramebuffer() {
-	return fbo;
-}
-
-void ColorGradingPost::Cleanup() {
+ColorGradingPost::~ColorGradingPost() {
 	/*shader->Cleanup();
 	//fbo->Cleanup();
 	pfnDeleteGraphicsPointer(shader);

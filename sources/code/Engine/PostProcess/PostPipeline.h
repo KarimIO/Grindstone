@@ -2,19 +2,24 @@
 #define _POST_PIPELINE_H
 
 #include "Framebuffer.h"
-#include "ColorGradingPost.h"
+#include "BasePost.h"
 
+// Contains all active post-process pipelines for a camera.
+// Note: Should ideally exist per-camera, as an attribute of it.
+// Example:
+// 		PostPipeline process;
+// 		process.AddPostProcess(colorGrading);
+// 		process.AddPostProcess(dofProcess);
+// 		process.AddPostProcess(blurProcess);
+// 		...
+//		fbo = process.ProcessScene(fbo);
 class PostPipeline {
-	ColorGradingPost colorGrading;
 public:
-	void Initialize();
-	
-	void Start();
-	void End();
-
-	void ProcessScene(Framebuffer *inputFbo, Framebuffer *fbo);
-	//void ProcessSceneAndSecondary();
-	//void ProcessSceneAndSecondaryAndGUI();
+	void AddPostProcess(BasePostProcess *);
+	Framebuffer *ProcessScene(Framebuffer *inputFbo);
+	~PostPipeline();
+private:
+	std::vector<BasePostProcess *> processes;
 };
 
 #endif

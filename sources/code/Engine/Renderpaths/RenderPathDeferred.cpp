@@ -1,5 +1,6 @@
 #include "RenderPathDeferred.h"
 #include "Core/Engine.h"
+#include <stb/stb_image.h>
 
 Texture *LoadCubemap(std::string path, GraphicsWrapper *m_graphicsWrapper) {
 

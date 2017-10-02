@@ -1,6 +1,5 @@
 #include "Engine.h"
 #include "Utilities.h"
-#include "GraphicsDLLPointer.h"
 #include "iniHandler.h"
 #include <stdio.h>
 #include "LevelLoader.h"
@@ -25,7 +24,7 @@
 #endif
 
 #ifdef UseClassInstance
-	Engine *Engine::_instance=0;
+	Engine *Engine::=0;
 #endif
 
 bool Engine::Initialize() {
@@ -33,7 +32,6 @@ bool Engine::Initialize() {
 
 	// Get Settings here:
 	InitializeSettings();
-	//if (!InitializeAudio())										return false;
 	if (!InitializeGraphics(engine.settings.graphicsLanguage))		return false;
 	physicsSystem.Initialize();
 
@@ -49,20 +47,12 @@ bool Engine::Initialize() {
 		break;
 	};
 
-	postPipeline.Initialize();
-
 	CheckModPaths();
 
 	//sUi.LoadDocument("test.rml");
 
 	inputSystem.AddControl("escape", "Shutdown", NULL, 1);
 	inputSystem.BindAction("Shutdown", NULL, this, &Engine::ShutdownControl, KEY_RELEASED);
-
-	inputSystem.AddControl("e", "PlaySound", NULL, 1);
-	inputSystem.BindAction("PlaySound", NULL, this, &Engine::PlayEngineSound);
-
-	inputSystem.AddControl("r", "PlaySound2", NULL, 1);
-	inputSystem.BindAction("PlaySound2", NULL, this, &Engine::PlayEngineSound2);
 
 	inputSystem.AddControl("q", "CaptureCubemaps", NULL, 1);
 	inputSystem.BindAction("CaptureCubemaps", NULL, &(engine.cubemapSystem), &CubemapSystem::CaptureCubemaps);
@@ -142,23 +132,6 @@ void Engine::InitializeSettings() {
 		defaultMap = "../assets/scenes/sponza.json";
 	}
 
-}
-
-bool Engine::InitializeAudio() {
-	LoadDLL(std::string("../audiosdl"));
-
-	AudioSystem *(*pfnCreateAudio)() = (AudioSystem *(*)())LoadDLLFunction("createAudio");
-	if (!pfnCreateAudio) {
-		fprintf(stderr, "Cannot get createAudio function!\n");
-		return false;
-	}
-
-	audioSystem = pfnCreateAudio();
-	audioSystem->Initialize();
-	sounds.push_back(audioSystem->LoadSound("../assets/sounds/snaredrum.wav"));
-	sounds.push_back(audioSystem->LoadSound("../assets/sounds/kickdrum.wav"));
-
-	return true;
 }
 
 bool Engine::InitializeGraphics(GraphicsLanguage gl) {
@@ -310,6 +283,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 }
 
 Engine &Engine::GetInstance() {
+	// Create the Engine instance when "GetInstance()" is called (ie: when "engine" is used).
 	static Engine newEngine;
 	return newEngine;
 }
@@ -340,16 +314,6 @@ void Engine::Render(glm::mat4 _projMat, glm::mat4 _viewMat) {
 			graphicsWrapper->SwapBuffer();
 		}
 	}
-}
-
-void Engine::PlayEngineSound(double sound) {
-	int v = rand() % sounds.size();
-	if (v < sounds.size())
-		sounds[v]->Play();
-}
-
-void Engine::PlayEngineSound2(double sound) {
-	sounds[0]->Stop();
 }
 
 void Engine::Run() {
@@ -474,9 +438,6 @@ Engine::~Engine() {
 	materialManager.Shutdown();
 	geometryCache.Shutdown();
 	physicsSystem.Cleanup();
-
-	if (audioSystem)
-		audioSystem->Shutdown();
 
 	if (gbuffer)
 		graphicsWrapper->DeleteFramebuffer(gbuffer);

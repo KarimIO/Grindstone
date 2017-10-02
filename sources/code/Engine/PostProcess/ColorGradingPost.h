@@ -3,15 +3,21 @@
 
 #include "Framebuffer.h"
 #include "GraphicsPipeline.h"
+#include "BasePost.h"
 
-class ColorGradingPost {
+// Post Processing effect used in PostPipelines in CCameras.
+// This Post Process Effect takes the assigned Look-Up Table (LUT)
+//		and applies it to an image.
+class ColorGradingPost : public BasePostProcess {
 	Framebuffer *fbo;
 	GraphicsPipeline *shader;
 public:
-	void Initialize();
-	void Process(Framebuffer *target);
-	Framebuffer * GetFramebuffer();
-	void Cleanup();
+	ColorGradingPost();
+	ColorGradingPost(const ColorGradingPost &);
+	ColorGradingPost(ColorGradingPost &&);
+	~ColorGradingPost();
+	
+	Framebuffer *Process(Framebuffer *target);
 };
 
 #endif
