@@ -49,14 +49,14 @@ Framebuffer *ColorGradingPost::Process(Framebuffer *target) {
 	shader->SetInteger();
 
 	//fbo->WriteBind();
-	engine.graphicsWrapper->Clear(CLEAR_ALL);
+	engine.graphics_wrapper_->Clear(CLEAR_ALL);
 
 	engine.vaoQuad->Bind();
-	engine.graphicsWrapper->DrawVertexArray(4);
+	engine.graphics_wrapper_->DrawVertexArray(4);
 	engine.vaoQuad->Unbind();
 	//fbo->Unbind();
 
-	if (engine.graphicsWrapper->CheckForErrors())
+	if (engine.graphics_wrapper_->CheckForErrors())
 		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
 		
 	return fbo;*/

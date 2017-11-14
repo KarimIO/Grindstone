@@ -571,7 +571,7 @@ void InputSystem::LoopControls() {
 		}
 	}
 
-	engine.graphicsWrapper->ResetCursor();
+	engine.graphics_wrapper_->ResetCursor();
 }
 
 ControlHandler::ControlHandler(std::string controlCode, InputComponent * componentPtr, ControlHandler * prev, double val) {

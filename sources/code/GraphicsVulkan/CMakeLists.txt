@@ -1,7 +1,7 @@
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(VK_SOURCES VkBufferCommon.cpp VkCommandBuffer.cpp VkFormats.cpp VkFramebuffer.h VkFramebuffer.cpp VkGraphicsPipeline.cpp VkGraphicsWrapper.cpp VkIndexBuffer.cpp VkRenderPass.cpp VkTexture.cpp VkUniformBuffer.cpp VkVertexBuffer.cpp VkDevice.cpp)
-set(VK_HEADERS VkBufferCommon.h VkCommandBuffer.h VkFormats.h VkFramebuffer.h VkFramebuffer.h VkGraphicsPipeline.h VkGraphicsWrapper.h VkIndexBuffer.h VkRenderPass.h VkTexture.h VkUniformBuffer.h VkVertexBuffer.h)
-set(VK_COMMON ../GraphicsCommon/CommandBuffer.h ../GraphicsCommon/Descriptors.h ../GraphicsCommon/Formats.h ../GraphicsCommon/Framebuffer.h ../GraphicsCommon/GraphicsPipeline.h ../GraphicsCommon/GraphicsWrapper.h ../GraphicsCommon/IndexBuffer.h ../GraphicsCommon/RenderPass.h ../GraphicsCommon/Texture.h ../GraphicsCommon/UniformBuffer.h ../GraphicsCommon/VertexBuffer.h)
+set(VK_SOURCES VkBufferCommon.cpp VkCommandBuffer.cpp VkFormats.cpp VkFramebuffer.hpp VkFramebuffer.cpp VkGraphicsPipeline.cpp VkGraphicsWrapper.cpp VkIndexBuffer.cpp VkRenderPass.cpp VkTexture.cpp VkUniformBuffer.cpp VkVertexBuffer.cpp VkDevice.cpp)
+set(VK_HEADERS VkBufferCommon.hpp VkCommandBuffer.hpp VkFormats.hpp VkFramebuffer.hpp VkFramebuffer.hpp VkGraphicsPipeline.hpp VkGraphicsWrapper.hpp VkIndexBuffer.hpp VkRenderPass.hpp VkTexture.hpp VkUniformBuffer.hpp VkVertexBuffer.hpp)
+set(VK_COMMON ../GraphicsCommon/CommandBuffer.hpp ../GraphicsCommon/Descriptors.hpp ../GraphicsCommon/Formats.hpp ../GraphicsCommon/Framebuffer.hpp ../GraphicsCommon/GraphicsPipeline.hpp ../GraphicsCommon/GraphicsWrapper.hpp ../GraphicsCommon/IndexBuffer.hpp ../GraphicsCommon/RenderPass.hpp ../GraphicsCommon/Texture.hpp ../GraphicsCommon/UniformBuffer.hpp ../GraphicsCommon/VertexBuffer.hpp)
 
 SET(VULKAN_DIR "D:/Libraries/Vulkan" CACHE PATH "Location of Vulkan Library")
 include_directories(${VULKAN_DIR}/Include)

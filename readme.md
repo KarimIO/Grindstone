@@ -15,12 +15,9 @@ Install the following Windows dependencies.
  * [Assimp](http://www.assimp.org/)
  * [Bullet](http://bulletphysics.org/)
  * [CMake](https://cmake.org/)
- * [GLM](http://glm.g-truc.net/)
  * [libRocket](http://librocket.com/)
  * [SDL](https://www.libsdl.org/)
- * [STB](https://github.com/nothings/stb/)
 Optional Graphics-Specific dependencies:
- * [OPENGL: GL3W](https://github.com/skaslev/gl3w)
  * [VULKAN: Lunar API](https://vulkan.lunarg.com/sdk/home)
  * [DIRECTX: Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk)
 
@@ -30,14 +27,14 @@ All you need to do is run CMake and build the projects. Change the working direc
 You must first update and get all the following dependencies:
 ```
 $ sudo dnf update 
-$ sudo dnf install gcc-c++ make glm-devel assimp-devel xorg-x11-apps mesa-libGL-devel cmake rapidjson-devel
+$ sudo dnf install gcc-c++ make assimp-devel xorg-x11-apps mesa-libGL-devel cmake
 ```
 
 ### Ubuntu / Debian
 You must first update and get all the following dependencies:
 ```
 $ sudo apt update 
-$ sudo apt install g++ make libglm-dev libassimp-dev libgl1-mesa-dev xorg xorg-dev cmake rapidjson-dev
+$ sudo apt install g++ make libassimp-dev libgl1-mesa-dev xorg xorg-dev cmake
 ```
 
 To build libRocket, download the repository, enter the ```Build``` folder, and call the following:

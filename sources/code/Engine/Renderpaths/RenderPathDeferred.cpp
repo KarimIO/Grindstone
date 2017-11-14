@@ -2,7 +2,7 @@
 #include "Core/Engine.h"
 #include <stb/stb_image.h>
 
-Texture *LoadCubemap(std::string path, GraphicsWrapper *m_graphicsWrapper) {
+Texture *LoadCubemap(std::string path, GraphicsWrapper *m_graphics_wrapper_) {
 
 	std::string facePaths[6];
 	facePaths[0] = path + "FT.png";
@@ -51,7 +51,7 @@ Texture *LoadCubemap(std::string path, GraphicsWrapper *m_graphicsWrapper) {
 	createInfo.width = texWidth;
 	createInfo.height = texHeight;
 
-	Texture *t = m_graphicsWrapper->CreateCubemap(createInfo);
+	Texture *t = m_graphics_wrapper_->CreateCubemap(createInfo);
 
 	for (int i = 0; i < 6; i++) {
 		stbi_image_free(createInfo.data[i]);
@@ -60,8 +60,8 @@ Texture *LoadCubemap(std::string path, GraphicsWrapper *m_graphicsWrapper) {
 	return t;
 }
 
-RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphicsWrapper) {
-	m_graphicsWrapper = graphicsWrapper;
+RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_) {
+	m_graphics_wrapper_ = graphics_wrapper_;
 
 	float planeVerts[4 * 6] = {
 		-1.0, -1.0,
@@ -76,7 +76,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphicsWrapper) {
 	deffubci.isDynamic = false;
 	deffubci.size = sizeof(DefferedUBO);
 	deffubci.binding = engine.deffubb;
-	deffUBO = graphicsWrapper->CreateUniformBuffer(deffubci);
+	deffUBO = graphics_wrapper_->CreateUniformBuffer(deffubci);
 
 	VertexBufferCreateInfo planeVboCI;
 	planeVboCI.binding = &engine.planeVBD;
@@ -90,15 +90,15 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphicsWrapper) {
 	VertexArrayObjectCreateInfo vaci;
 	vaci.vertexBuffer = planeVBO;
 	vaci.indexBuffer = nullptr;
-	planeVAO = graphicsWrapper->CreateVertexArrayObject(vaci);
-	planeVBO = graphicsWrapper->CreateVertexBuffer(planeVboCI);
+	planeVAO = graphics_wrapper_->CreateVertexArrayObject(vaci);
+	planeVBO = graphics_wrapper_->CreateVertexBuffer(planeVboCI);
 
 	vaci.vertexBuffer = planeVBO;
 	vaci.indexBuffer = nullptr;
 	planeVAO->BindResources(vaci);
 	planeVAO->Unbind();
 
-	m_cubemap = LoadCubemap("../assets/cubemaps/level4", m_graphicsWrapper);
+	m_cubemap = LoadCubemap("../assets/cubemaps/level4", m_graphics_wrapper_);
 
 	std::vector<TextureSubBinding> cubemapBindings;
 	cubemapBindings.reserve(1);
@@ -109,7 +109,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphicsWrapper) {
 	tblci.bindings = cubemapBindings.data();
 	tblci.bindingCount = (uint32_t)cubemapBindings.size();
 	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	TextureBindingLayout *cubemapLayout = graphicsWrapper->CreateTextureBindingLayout(tblci);
+	TextureBindingLayout *cubemapLayout = graphics_wrapper_->CreateTextureBindingLayout(tblci);
 
 	SingleTextureBind stb;
 	stb.texture = m_cubemap;
@@ -118,7 +118,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphicsWrapper) {
 	TextureBindingCreateInfo ci;
 	ci.textures = &stb;
 	ci.textureCount = 1;
-	m_cubemapBinding = m_graphicsWrapper->CreateTextureBinding(ci);
+	m_cubemapBinding = m_graphics_wrapper_->CreateTextureBinding(ci);
 
 	ShaderStageCreateInfo vi;
 	ShaderStageCreateInfo fi;
@@ -169,14 +169,14 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphicsWrapper) {
 	iblGPCI.textureBindingCount = (uint32_t)tbls.size();
 	iblGPCI.uniformBufferBindings = &engine.deffubb;
 	iblGPCI.uniformBufferBindingCount = 1;
-	m_iblPipeline = graphicsWrapper->CreateGraphicsPipeline(iblGPCI);
+	m_iblPipeline = graphics_wrapper_->CreateGraphicsPipeline(iblGPCI);
 }
 
 void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 	gbuffer->BindTextures();
 
 	CCamera *cam = &engine.cameraSystem.components[0];
-	EBase *ent = &engine.entities[cam->entityID];
+	Entity *ent = &engine.entities[cam->entityID];
 	glm::vec3 eyePos = engine.transformSystem.components[ent->components[COMPONENT_TRANSFORM]].position;
 	deffUBOBuffer.eyePos.x = eyePos.x;
 	deffUBOBuffer.eyePos.y = eyePos.y;
@@ -188,28 +188,28 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 	deffUBOBuffer.resolution.y = engine.settings.resolutionY;
 	deffUBO->UpdateUniformBuffer(&deffUBOBuffer);
 
-	m_graphicsWrapper->Clear();
-	m_graphicsWrapper->SetImmediateBlending(true);
+	m_graphics_wrapper_->Clear();
+	m_graphics_wrapper_->SetImmediateBlending(true);
 	deffUBO->Bind();
-	engine.graphicsWrapper->BindVertexArrayObject(planeVAO);
+	engine.graphics_wrapper_->BindVertexArrayObject(planeVAO);
 	
 	engine.lightSystem.m_pointLightPipeline->Bind();
 	for (auto light : engine.lightSystem.pointLights) {
 		light.Bind();
 
-		m_graphicsWrapper->DrawImmediateVertices(0, 6);
+		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 	}
 
 	engine.lightSystem.m_spotLightPipeline->Bind();
 	for (auto light : engine.lightSystem.spotLights) {
 		light.Bind();
 
-		m_graphicsWrapper->DrawImmediateVertices(0, 6);
+		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 	}
 
 	m_iblPipeline->Bind();
-	//m_graphicsWrapper->BindTextureBinding(m_cubemapBinding);
-	m_graphicsWrapper->DrawImmediateVertices(0, 6);
+	//m_graphics_wrapper_->BindTextureBinding(m_cubemapBinding);
+	m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 
-	m_graphicsWrapper->SetImmediateBlending(false);
+	m_graphics_wrapper_->SetImmediateBlending(false);
 }

@@ -3,6 +3,8 @@
 #include "iniHandler.h"
 #include <stdio.h>
 #include "LevelLoader.h"
+#include "Systems/SGeometryStatic.h"
+
 #if defined(_WIN32)
 	#define LoadDLL(path) HMODULE dllHandle = LoadLibrary((path+".dll").c_str()); \
 	if (!dllHandle) { \
@@ -35,15 +37,15 @@ bool Engine::Initialize() {
 	if (!InitializeGraphics(engine.settings.graphicsLanguage))		return false;
 	physicsSystem.Initialize();
 
-	lightSystem.SetPointers(graphicsWrapper, &geometryCache);
+	lightSystem.SetPointers(graphics_wrapper_, &geometry_system);
 
 	renderPathType = RENDERPATH_DEFERRED;
 	switch (renderPathType) {
 	default:
-		//renderPath = (RenderPath *)new RenderPathForward(graphicsWrapper, &geometryCache);
+		//renderPath = (RenderPath *)new RenderPathForward(graphics_wrapper_, &geometry_system);
 		break;
 	case RENDERPATH_DEFERRED:
-		renderPath = (RenderPath *)new RenderPathDeferred(graphicsWrapper);
+		renderPath = (RenderPath *)new RenderPathDeferred(graphics_wrapper_);
 		break;
 	};
 
@@ -182,77 +184,39 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 #else
 	createInfo.debug = true;
 #endif
-	graphicsWrapper = (GraphicsWrapper*)pfnCreateGraphics(createInfo);
+	graphics_wrapper_ = (GraphicsWrapper*)pfnCreateGraphics(createInfo);
 
 
-	graphicsWrapper->CreateDefaultStructures();
-
-	VertexBindingDescription vbd;
-	vbd.binding = 0;
-	vbd.elementRate = false;
-	vbd.stride = sizeof(Vertex);
-
-	std::vector<VertexAttributeDescription> vads(4);
-	vads[0].binding = 0;
-	vads[0].location = 0;
-	vads[0].format = VERTEX_R32_G32_B32;
-	vads[0].size = 3;
-	vads[0].name = "vertexPosition";
-	vads[0].offset = offsetof(Vertex, positions);
-	vads[0].usage = ATTRIB_POSITION;
-
-	vads[1].binding = 0;
-	vads[1].location = 1;
-	vads[1].format = VERTEX_R32_G32_B32;
-	vads[1].size = 3;
-	vads[1].name = "vertexNormal";
-	vads[1].offset = offsetof(Vertex, normal);
-	vads[1].usage = ATTRIB_NORMAL;
-
-	vads[2].binding = 0;
-	vads[2].location = 2;
-	vads[2].format = VERTEX_R32_G32_B32;
-	vads[2].size = 3;
-	vads[2].name = "vertexTangent";
-	vads[2].offset = offsetof(Vertex, tangent);
-	vads[2].usage = ATTRIB_TANGENT;
-
-	vads[3].binding = 0;
-	vads[3].location = 3;
-	vads[3].format = VERTEX_R32_G32;
-	vads[3].size = 2;
-	vads[3].name = "vertexTexCoord";
-	vads[3].offset = offsetof(Vertex, texCoord);
-	vads[3].usage = ATTRIB_TEXCOORD0;
+	graphics_wrapper_->CreateDefaultStructures();
 
 	UniformBufferBindingCreateInfo ubbci;
 	ubbci.binding = 0;
 	ubbci.shaderLocation = "UniformBufferObject";
 	ubbci.size = sizeof(myUBO);
 	ubbci.stages = SHADER_STAGE_VERTEX_BIT;
-	UniformBufferBinding *ubb = graphicsWrapper->CreateUniformBufferBinding(ubbci);
+	UniformBufferBinding *ubb = graphics_wrapper_->CreateUniformBufferBinding(ubbci);
 
 	UniformBufferCreateInfo ubci;
 	ubci.isDynamic = false;
 	ubci.size = sizeof(MatUniformBufferObject);
 	ubci.binding = ubb;
-	ubo = graphicsWrapper->CreateUniformBuffer(ubci);
+	ubo = graphics_wrapper_->CreateUniformBuffer(ubci);
 
 	UniformBufferBindingCreateInfo ubbci2;
 	ubbci2.binding = 1;
 	ubbci2.shaderLocation = "ModelMatrixBuffer";
 	ubbci2.size = sizeof(modelUBO);
 	ubbci2.stages = SHADER_STAGE_VERTEX_BIT;
-	UniformBufferBinding *ubb2 = graphicsWrapper->CreateUniformBufferBinding(ubbci2);
+	UniformBufferBinding *ubb2 = graphics_wrapper_->CreateUniformBufferBinding(ubbci2);
 
 	UniformBufferCreateInfo ubci2;
 	ubci2.isDynamic = false;
 	ubci2.size = sizeof(modelUBO);
 	ubci2.binding = ubb2;
-	ubo2 = graphicsWrapper->CreateUniformBuffer(ubci2);
+	ubo2 = graphics_wrapper_->CreateUniformBuffer(ubci2);
 
-	materialManager.Initialize(graphicsWrapper, vbd, vads, ubb);
-	geometryCache.Initialize(graphicsWrapper, vbd, vads, &materialManager);
+	materialManager.Initialize(graphics_wrapper_, vbd, vads, ubb);
+	geometry_system.AddSystem(new SGeometryStatic(graphics_wrapper_));
 
 	std::vector<ColorFormat> gbufferCFs = {
 		FORMAT_COLOR_R8G8B8A8,	// R  G  B  MatID
@@ -267,9 +231,9 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	gbufferCI.width = engine.settings.resolutionX;
 	gbufferCI.height = engine.settings.resolutionY;
 	gbufferCI.renderPass = nullptr;
-	gbuffer = graphicsWrapper->CreateFramebuffer(gbufferCI);
+	gbuffer = graphics_wrapper_->CreateFramebuffer(gbufferCI);
 
-	ColorFormat deviceColorFormat = graphicsWrapper->GetDeviceColorFormat();
+	ColorFormat deviceColorFormat = graphics_wrapper_->GetDeviceColorFormat();
 	FramebufferCreateInfo defaultFramebufferCI;
 	defaultFramebufferCI.colorFormats = &deviceColorFormat;
 	defaultFramebufferCI.depthFormat = FORMAT_DEPTH_24;
@@ -277,7 +241,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	defaultFramebufferCI.width = engine.settings.resolutionX;
 	defaultFramebufferCI.height = engine.settings.resolutionY;
 	defaultFramebufferCI.renderPass = nullptr;
-	defaultFramebuffer = graphicsWrapper->CreateFramebuffer(defaultFramebufferCI);
+	defaultFramebuffer = graphics_wrapper_->CreateFramebuffer(defaultFramebufferCI);
 
 	return true;
 }
@@ -289,9 +253,9 @@ Engine &Engine::GetInstance() {
 }
 
 void Engine::Render(glm::mat4 _projMat, glm::mat4 _viewMat) {
-	if (graphicsWrapper->SupportsCommandBuffers()) {
+	if (graphics_wrapper_->SupportsCommandBuffers()) {
 		materialManager.DrawDeferred();
-		graphicsWrapper->WaitUntilIdle();
+		graphics_wrapper_->WaitUntilIdle();
 	}
 	else {
 		if (!engine.settings.debugNoLighting) {
@@ -299,33 +263,34 @@ void Engine::Render(glm::mat4 _projMat, glm::mat4 _viewMat) {
 			gbuffer->Clear();
 			materialManager.DrawImmediate();
 			gbuffer->Unbind();
-			graphicsWrapper->BindDefaultFramebuffer();
+			graphics_wrapper_->BindDefaultFramebuffer();
 			gbuffer->BindRead();
 			renderPath->Draw(gbuffer);
 			gbuffer->Unbind();
 
-			graphicsWrapper->SwapBuffer();
+			graphics_wrapper_->SwapBuffer();
 		}
 		else {
-			graphicsWrapper->BindDefaultFramebuffer();
-			graphicsWrapper->Clear();
+			graphics_wrapper_->BindDefaultFramebuffer();
+			graphics_wrapper_->Clear();
 			materialManager.DrawImmediate();
-			//graphicsWrapper->Blit(0,0,0,1366,768);
-			graphicsWrapper->SwapBuffer();
+			//graphics_wrapper_->Blit(0,0,0,1366,768);
+			graphics_wrapper_->SwapBuffer();
 		}
 	}
 }
 
 void Engine::Run() {
-	graphicsWrapper->ResetCursor();
+	graphics_wrapper_->ResetCursor();
 
 	while (isRunning) {
 		CalculateTime();
 
-		graphicsWrapper->HandleEvents();
+		graphics_wrapper_->HandleEvents();
 		inputSystem.LoopControls();
+
+		gameplay_system.Update(GetUpdateTimeDelta());
 		physicsSystem.StepSimulation(GetUpdateTimeDelta());
-		physicsSystem.SetTransforms();
 
 		if (cameraSystem.components.size() > 0) {
 			CCamera *cam = &cameraSystem.components[0];
@@ -402,8 +367,8 @@ bool Engine::InitializeScene(std::string szScenePath) {
 	}
 
 	LoadLevel(szSceneNewPath);
-	geometryCache.LoadPreloaded();
-	//terrainSystem.GenerateComponents();
+	geometry_system.LoadPreloaded();
+	materialManager.LoadPreloaded;
 
 	return true;
 }
@@ -435,16 +400,14 @@ void Engine::ShutdownControl(double) {
 }
 
 Engine::~Engine() {
-	materialManager.Shutdown();
-	geometryCache.Shutdown();
 	physicsSystem.Cleanup();
 
 	if (gbuffer)
-		graphicsWrapper->DeleteFramebuffer(gbuffer);
+		graphics_wrapper_->DeleteFramebuffer(gbuffer);
 
 	if (defaultFramebuffer)
-		graphicsWrapper->DeleteFramebuffer(defaultFramebuffer);
+		graphics_wrapper_->DeleteFramebuffer(defaultFramebuffer);
 
-	if (graphicsWrapper)
-		graphicsWrapper->Cleanup();
+	if (graphics_wrapper_)
+		graphics_wrapper_->Cleanup();
 }

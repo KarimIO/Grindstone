@@ -9,7 +9,7 @@ void CubemapSystem::CaptureCubemaps(double) {
 	glm::mat4 Proj = glm::perspective(1.5708f, 1.0f, 1.0f, 1000.0f);
 	glm::mat4 View;
 
-	engine.graphicsWrapper->SetResolution(0, 0, 512, 512);
+	engine.graphics_wrapper_->SetResolution(0, 0, 512, 512);
 
 	writing = true;
 	for (size_t i = 0; i < components.size(); i++) {
@@ -20,8 +20,8 @@ void CubemapSystem::CaptureCubemaps(double) {
 			View = glm::lookAt(components[i].position, components[i].position + gCubeDirections[j].Target, gCubeDirections[j].Up);
 
 			engine.Render(Proj, View, components[i].position, false);
-			engine.graphicsWrapper->SwapBuffer();
-			data[j] = engine.graphicsWrapper->ReadScreen(512, 512);
+			engine.graphics_wrapper_->SwapBuffer();
+			data[j] = engine.graphics_wrapper_->ReadScreen(512, 512);
 		}
 		
 		engine.textureManager.WriteCubemap(path.c_str(), ".png", 512, 512, 3, data);
@@ -33,7 +33,7 @@ void CubemapSystem::CaptureCubemaps(double) {
 	LoadCubemaps();
 
 	writing = false;
-	engine.graphicsWrapper->SetResolution(0, 0, engine.settings.resolutionX, engine.settings.resolutionY);*/
+	engine.graphics_wrapper_->SetResolution(0, 0, engine.settings.resolutionX, engine.settings.resolutionY);*/
 }
 
 void CubemapSystem::LoadCubemaps() {

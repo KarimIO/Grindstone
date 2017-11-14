@@ -57,7 +57,7 @@ private:
 	unsigned char keyType;
 	unsigned int componentID;
 	unsigned char componentType;
-	EBase *ent;
+	Entity *ent;
 	unsigned int entityID;
 	unsigned char subIterator;
 	glm::vec3 position;
@@ -196,9 +196,24 @@ public:
 			}
 			else if (std::string(str) == "COMPONENT_RENDER") {
 				componentType = COMPONENT_RENDER;
-				engine.geometryCache.AddComponent(entityID, ent->components[COMPONENT_RENDER]);
+				engine.geometry_system.AddComponent(entityID, ent->components[COMPONENT_RENDER]);
 				componentID = ent->components[COMPONENT_RENDER];
 			}
+			else if (std::string(str) == "COMPONENT_GEOMETRY_STATIC") {
+				componentType = COMPONENT_GEOMETRY;
+				engine.geometry_system.AddComponent(entityID, ent->components[COMPONENT_GEOMETRY]);
+				componentID = ent->components[COMPONENT_GEOMETRY];
+			}
+			/*else if (std::string(str) == "COMPONENT_GEOMETRY_SKELETAL") {
+				componentType = COMPONENT_TERRAIN;
+				engine.terrainSystem.AddComponent(ent->components[COMPONENT_TERRAIN]);
+				componentID = ent->components[COMPONENT_TERRAIN];
+			}*/
+			/*else if (std::string(str) == "COMPONENT_TERRAIN") {
+				componentType = COMPONENT_TERRAIN;
+				engine.terrainSystem.AddComponent(ent->components[COMPONENT_TERRAIN]);
+				componentID = ent->components[COMPONENT_TERRAIN];
+			}*/
 			else if (std::string(str) == "COMPONENT_LIGHT_POINT") {
 				componentType = COMPONENT_LIGHT_POINT;
 				engine.lightSystem.AddPointLight(entityID);
@@ -219,11 +234,6 @@ public:
 				engine.physicsSystem.AddComponent(entityID, ent->components[COMPONENT_PHYSICS]);
 				componentID = ent->components[COMPONENT_PHYSICS];
 			}
-			/*else if (std::string(str) == "COMPONENT_TERRAIN") {
-				componentType = COMPONENT_TERRAIN;
-				engine.terrainSystem.AddComponent(ent->components[COMPONENT_TERRAIN]);
-				componentID = ent->components[COMPONENT_TERRAIN];
-			}*/
 			else if (std::string(str) == "COMPONENT_INPUT") {
 				componentType = COMPONENT_INPUT;
 			}
@@ -238,7 +248,8 @@ public:
 			}
 		}
 		else if (keyType == KEY_COMPONENT_PATH) {
-			engine.geometryCache.PreloadModel3D(("../assets/" + std::string(str)).c_str(), ent->components[COMPONENT_RENDER]);
+			// , ent->components[COMPONENT_RENDER]
+			engine.geometry_system.AddComponent(GEOMETRY_STATIC_MODEL, ("../assets/" + std::string(str)).c_str());
 		}
 
 		/*else if (componentType == COMPONENT_TERRAIN)
@@ -251,7 +262,7 @@ public:
 		level++;
 		if (level == LEVEL_ENTITY) {
 			entityID = (unsigned int)engine.entities.size();
-			engine.entities.push_back(EBase());
+			engine.entities.push_back(Entity());
 			ent = &engine.entities[entityID];
 		}
 		return true;
