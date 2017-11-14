@@ -1,4 +1,4 @@
-#include "CAudio.h"
+#include "SAudio.h"
 
 void CAudio::SetSound(SoundFile * sound) {
 	this->sound = sound;
