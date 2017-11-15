@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../GraphicsCommon/GraphicsPipeline.h"
+#include "../GraphicsCommon/GraphicsPipeline.hpp"
 
 class GLGraphicsPipeline : public GraphicsPipeline {
 	GLuint program;

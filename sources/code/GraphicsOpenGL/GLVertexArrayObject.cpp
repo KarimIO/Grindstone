@@ -1,5 +1,5 @@
 #include <GL/gl3w.h>
-#include "GLVertexArrayObject.h"
+#include "GLVertexArrayObject.hpp"
 #include <iostream>
 
 GLVertexArrayObject::GLVertexArrayObject(VertexArrayObjectCreateInfo createInfo) {

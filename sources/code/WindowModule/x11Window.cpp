@@ -1,12 +1,12 @@
 #if defined(__linux__)
-#include "../Engine/Core/Input.h"
+#include "../Engine/Core/Input.hpp"
 #include <stdio.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysymdef.h>
 
-#include "../GraphicsOpenGL/GLGraphicsWrapper.h"
+#include "../GraphicsOpenGL/GLGraphicsWrapper.hpp"
 
 #include <cstring>
 

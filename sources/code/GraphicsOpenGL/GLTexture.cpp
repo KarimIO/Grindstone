@@ -1,5 +1,5 @@
 #include <GL/gl3w.h>
-#include "GLTexture.h"
+#include "GLTexture.hpp"
 #include <iostream>
 
 #define GL_COMPRESSED_RGB_S3TC_DXT1_EXT                   0x83F0

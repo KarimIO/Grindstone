@@ -1,7 +1,7 @@
-#include "../GraphicsCommon/GraphicsWrapper.h"
+#include "../GraphicsCommon/GraphicsWrapper.hpp"
 
 #if defined(_WIN32) && !defined(GLFW_WINDOW)
-#include "../Engine/Core/Input.h"
+#include "../Engine/Core/Input.hpp"
 
 int TranslateKey(int key);
 

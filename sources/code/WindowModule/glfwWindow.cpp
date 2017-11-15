@@ -1,7 +1,7 @@
-#include "../GraphicsCommon/GraphicsWrapper.h"
+#include "../GraphicsCommon/GraphicsWrapper.hpp"
 
 #if defined(GLFW_WINDOW)
-#include "../Engine/Core/Input.h"
+#include "../Engine/Core/Input.hpp"
 #include <stdio.h>
 
 #include <GLFW/glfw3.h>

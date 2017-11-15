@@ -16,7 +16,7 @@
 #elif defined(__linux__)
 	#include <dlfcn.h>
 
-	#define LoadDLL(path) void *lib_handle = dlopen(("./"+path+".so").c_str(), RTLD_LAZY);\
+	#define LoadDLL(path) void *lib_handle = dlopen(("./lib"+path+".so").c_str(), RTLD_LAZY);\
 	if (!lib_handle) {\
 		fprintf(stderr, "Failed to load %s: %s\n", path.c_str(), dlerror());\
 		return false;\

@@ -433,32 +433,32 @@ __/WindowModule/glfwWindow.cpp.s:
 	cd /home/karim/Work/Grindstone && $(MAKE) -f sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/build.make sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/__/WindowModule/glfwWindow.cpp.s
 .PHONY : __/WindowModule/glfwWindow.cpp.s
 
-__/WindowModule/win32Window.o: __/WindowModule/win32Window.cpp.o
+__/WindowModule/x11Window.o: __/WindowModule/x11Window.cpp.o
 
-.PHONY : __/WindowModule/win32Window.o
+.PHONY : __/WindowModule/x11Window.o
 
 # target to build an object file
-__/WindowModule/win32Window.cpp.o:
-	cd /home/karim/Work/Grindstone && $(MAKE) -f sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/build.make sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/__/WindowModule/win32Window.cpp.o
-.PHONY : __/WindowModule/win32Window.cpp.o
+__/WindowModule/x11Window.cpp.o:
+	cd /home/karim/Work/Grindstone && $(MAKE) -f sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/build.make sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/__/WindowModule/x11Window.cpp.o
+.PHONY : __/WindowModule/x11Window.cpp.o
 
-__/WindowModule/win32Window.i: __/WindowModule/win32Window.cpp.i
+__/WindowModule/x11Window.i: __/WindowModule/x11Window.cpp.i
 
-.PHONY : __/WindowModule/win32Window.i
+.PHONY : __/WindowModule/x11Window.i
 
 # target to preprocess a source file
-__/WindowModule/win32Window.cpp.i:
-	cd /home/karim/Work/Grindstone && $(MAKE) -f sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/build.make sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/__/WindowModule/win32Window.cpp.i
-.PHONY : __/WindowModule/win32Window.cpp.i
+__/WindowModule/x11Window.cpp.i:
+	cd /home/karim/Work/Grindstone && $(MAKE) -f sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/build.make sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/__/WindowModule/x11Window.cpp.i
+.PHONY : __/WindowModule/x11Window.cpp.i
 
-__/WindowModule/win32Window.s: __/WindowModule/win32Window.cpp.s
+__/WindowModule/x11Window.s: __/WindowModule/x11Window.cpp.s
 
-.PHONY : __/WindowModule/win32Window.s
+.PHONY : __/WindowModule/x11Window.s
 
 # target to generate assembly for a file
-__/WindowModule/win32Window.cpp.s:
-	cd /home/karim/Work/Grindstone && $(MAKE) -f sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/build.make sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/__/WindowModule/win32Window.cpp.s
-.PHONY : __/WindowModule/win32Window.cpp.s
+__/WindowModule/x11Window.cpp.s:
+	cd /home/karim/Work/Grindstone && $(MAKE) -f sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/build.make sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/__/WindowModule/x11Window.cpp.s
+.PHONY : __/WindowModule/x11Window.cpp.s
 
 __/__/deps/GL/gl3w.o: __/__/deps/GL/gl3w.c.o
 
@@ -530,9 +530,9 @@ help:
 	@echo "... __/WindowModule/glfwWindow.o"
 	@echo "... __/WindowModule/glfwWindow.i"
 	@echo "... __/WindowModule/glfwWindow.s"
-	@echo "... __/WindowModule/win32Window.o"
-	@echo "... __/WindowModule/win32Window.i"
-	@echo "... __/WindowModule/win32Window.s"
+	@echo "... __/WindowModule/x11Window.o"
+	@echo "... __/WindowModule/x11Window.i"
+	@echo "... __/WindowModule/x11Window.s"
 	@echo "... __/__/deps/GL/gl3w.o"
 	@echo "... __/__/deps/GL/gl3w.i"
 	@echo "... __/__/deps/GL/gl3w.s"

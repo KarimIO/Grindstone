@@ -47,7 +47,7 @@ class SSubGeometry {
 public:
 	virtual void LoadGeometry(unsigned int render_id, std::string path) = 0;
 	virtual void LoadPreloaded() = 0;
-	virtual ~SSubGeometry() = 0;
+	virtual ~SSubGeometry() {};
 };
 
 class SGeometry {

@@ -1,7 +1,7 @@
 #ifndef _GL_UNIFORM_BUFFER_H
 #define _GL_UNIFORM_BUFFER_H
 
-#include "../GraphicsCommon/UniformBuffer.h"
+#include "../GraphicsCommon/UniformBuffer.hpp"
 
 class GLUniformBufferBinding : public UniformBufferBinding {
 	const char *uniformName;

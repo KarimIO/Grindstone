@@ -1,5 +1,5 @@
-#include "ModelConverter.h"
-#include "MaterialCreator.h"
+#include "ModelConverter.hpp"
+#include "MaterialCreator.hpp"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -9,7 +9,7 @@
 #include <fstream>
 #include <chrono>
 
-#include "Utilities.h"
+#include "Utilities.hpp"
 
 #include <map>
 
@@ -341,7 +341,7 @@ bool ModelConverter(std::string inputPath) {
 			meshes[i].num_indices = mesh->mNumFaces * 3;
 			meshes[i].base_vertex = NumVertices;
 			meshes[i].base_index = NumIndices;
-			meshes[i].material.material = mesh->mMaterialIndex;
+			meshes[i].material_index = mesh->mMaterialIndex;
 
 			NumVertices += mesh->mNumVertices;
 			NumIndices += meshes[i].num_indices;

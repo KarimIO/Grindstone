@@ -1,10 +1,10 @@
 #include <GL/gl3w.h>
-#include "GLGraphicsWrapper.h"
+#include "GLGraphicsWrapper.hpp"
 
-#include "GLVertexArrayObject.h"
-#include "GLVertexBuffer.h"
-#include "GLIndexBuffer.h"
-#include "GLGraphicsPipeline.h"
+#include "GLVertexArrayObject.hpp"
+#include "GLVertexBuffer.hpp"
+#include "GLIndexBuffer.hpp"
+#include "GLGraphicsPipeline.hpp"
 #include <iostream>
 #include <cstdio>
 

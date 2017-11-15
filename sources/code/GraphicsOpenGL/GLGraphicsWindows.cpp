@@ -1,4 +1,4 @@
-#include "GLGraphicsWrapper.h"
+#include "GLGraphicsWrapper.hpp"
 
 #if !defined(GLFW_WINDOW) && defined(_WIN32)
 #include <GL/gl3w.h>

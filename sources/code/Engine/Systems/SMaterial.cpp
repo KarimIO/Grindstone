@@ -579,9 +579,6 @@ PipelineReference MaterialManager::CreatePipeline(std::string pipelineName) {
 }
 
 void MaterialManager::LoadPreloaded() {
-	for (uint32_t &unloaded : unloaded_) {
-		
-	}
 }
 
 MaterialReference MaterialManager::PreLoadMaterial(std::string path) {
@@ -624,11 +621,11 @@ MaterialReference MaterialManager::PreLoadMaterial(std::string path) {
 	std::vector<SingleTextureBind> textures;
 	textures.resize(4);
 	std::string dir = path.substr(0, path.find_last_of("/") + 1);
-	textures[0].texture = PreLoadTexture(dir + albedoPath);
+	textures[0].texture = LoadTexture(dir + albedoPath);
 	if (textures[0].texture != nullptr) {
-		textures[1].texture = PreLoadTexture(dir + normalPath);
-		textures[2].texture = PreLoadTexture(dir + roughnessPath);
-		textures[3].texture = PreLoadTexture(dir + specularPath);
+		textures[1].texture = LoadTexture(dir + normalPath);
+		textures[2].texture = LoadTexture(dir + roughnessPath);
+		textures[3].texture = LoadTexture(dir + specularPath);
 
 		textures[0].address = 0;
 		textures[1].address = 1;
@@ -655,19 +652,31 @@ MaterialReference MaterialManager::PreLoadMaterial(std::string path) {
 }
 
 MaterialReference MaterialManager::CreateMaterial(std::string path) {
-	if (material_map_.find(path) != material_map_.end())
+	std::cout << material_map_.size() << " _ " << std::endl;
+	material_map_.end();
+	std::cout << "CM3" << std::endl;
+	material_map_.find(path);
+	std::cout << "CM4" << std::endl;
+	if (material_map_.find(path) != material_map_.end()) {
+		std::cout << "CM2" << std::endl;
 		return material_map_[path];
+	}
 
+	std::cout << "CM" << std::endl;
 	std::ifstream input(path + ".gbm", std::ios::ate | std::ios::binary);
 
+	std::cout << "CM" << std::endl;
 	if (!input.is_open()) {
+		std::cout << "CM" << std::endl;
 		input.open(path + ".gjm", std::ios::ate | std::ios::binary);
 
+		std::cout << "CM" << std::endl;
 		if (!input.is_open()) {
 			std::cerr << "Failed to open material: " << path.c_str() << "!\n";
 			return MaterialReference();
 		}
 	}
+	std::cout << "CM" << std::endl;
 
 	std::cout << "Material reading from: " << path << "!\n";
 
@@ -773,12 +782,21 @@ struct DDSHeader {
 #define FOURCC_DXT3 0x33545844
 #define FOURCC_DXT5 0x35545844
 
-Texture * MaterialManager::LoadTexture(std::string path) {
+
+Texture *MaterialManager::PreLoadTexture(std::string path) {
 	if (texture_map_[path]) {
 		printf("Texture reused: %s \n", path.c_str());
 		return texture_map_[path];
 	}
 
+	//unloaded_.push_back();
+}
+
+Texture * MaterialManager::LoadTexture(std::string path) {
+	if (texture_map_[path]) {
+		printf("Texture reused: %s \n", path.c_str());
+		return texture_map_[path];
+	}
 
 	const char *filecode = path.c_str() + path.size() - 4;
 	if (strncmp(filecode, "dds", 3) == 0) {

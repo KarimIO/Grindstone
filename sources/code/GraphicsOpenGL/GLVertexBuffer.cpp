@@ -1,5 +1,5 @@
 #include <GL/gl3w.h>
-#include "GLVertexBuffer.h"
+#include "GLVertexBuffer.hpp"
 #include <iostream>
 
 GLVertexBuffer::GLVertexBuffer(VertexBufferCreateInfo createInfo) {

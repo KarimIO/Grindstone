@@ -1,8 +1,8 @@
 #ifndef _GL_FRAMEBUFFER_H
 #define _GL_FRAMEBUFFER_H
 
-#include "../GraphicsCommon/Framebuffer.h"
-#include "../GraphicsCommon/DLLDefs.h"
+#include "../GraphicsCommon/Framebuffer.hpp"
+#include "../GraphicsCommon/DLLDefs.hpp"
 
 class GLFramebuffer : public Framebuffer {
 	GLuint m_fbo;

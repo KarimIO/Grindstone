@@ -3,6 +3,8 @@ PROJECT(Grindstone C CXX)
 
 enable_testing()
 
+set (CMAKE_BUILD_TYPE Debug)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/sources/cmake)
 find_package(assimp REQUIRED)
 find_package(Bullet REQUIRED)

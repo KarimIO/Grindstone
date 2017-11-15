@@ -1,4 +1,4 @@
-#include "MaterialCreator.h"
+#include "MaterialCreator.hpp"
 #include <fstream>
 #include <iostream>
 #include <vector>

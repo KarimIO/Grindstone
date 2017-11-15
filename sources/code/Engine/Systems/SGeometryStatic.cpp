@@ -98,7 +98,7 @@ void SGeometryStatic::LoadModel(CModelStatic *model) {
 	indices.resize(inFormat.numIndices);
 
 	offset = static_cast<char*>(offset) + sizeof(ModelFormatHeader);
-	uint32_t size = inFormat.numMeshes * sizeof(MeshStatic);
+	uint32_t size = inFormat.numMeshes * sizeof(MeshCreateInfo);
 	std::vector<MeshCreateInfo> temp_meshes(inFormat.numMeshes);
 	memcpy(temp_meshes.data(), offset, size);
 	offset = static_cast<char*>(offset) + size;
@@ -110,7 +110,6 @@ void SGeometryStatic::LoadModel(CModelStatic *model) {
 	offset = static_cast<char*>(offset) + size;
 
 	std::cout << inFormat.numMaterials << "\n";
-	std::cin.get();
 	std::vector<MaterialReference> materialReferences;
 	materialReferences.resize(inFormat.numMaterials);
 
@@ -119,7 +118,8 @@ void SGeometryStatic::LoadModel(CModelStatic *model) {
 	char *words = (char *)offset;
 	for (unsigned int i = 0; i < inFormat.numMaterials; i++) {
 		// Need to add a non-lazyload material
-		materialReferences[i] = material_system_->PreLoadMaterial(words);
+		std::cout << words << std::endl;
+		materialReferences[i] = material_system_->CreateMaterial(words);
 		words = strchr(words, '\0') + 1;
 	}
 

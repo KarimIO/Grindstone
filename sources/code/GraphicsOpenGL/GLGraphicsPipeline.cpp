@@ -1,11 +1,11 @@
 #include <GL/gl3w.h>
-#include "GLUniformBuffer.h"
-#include "GLTexture.h"
+#include "GLUniformBuffer.hpp"
+#include "GLTexture.hpp"
 #include <vector>
 #include <iostream>
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
-#include "GLGraphicsPipeline.h"
+#include "GLGraphicsPipeline.hpp"
 #include <cstring>
 
 GLuint GLGraphicsPipeline::createShaderModule(ShaderStageCreateInfo createInfo) {

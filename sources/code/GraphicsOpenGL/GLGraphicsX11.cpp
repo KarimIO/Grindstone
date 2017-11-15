@@ -1,6 +1,6 @@
 #if (defined(__linux__) || defined(__APPLE__))
 //#include <GL/gl3w.h>
-#include "GLGraphicsWrapper.h"
+#include "GLGraphicsWrapper.hpp"
 #include <GL/glx.h>
 
 #include <cstring>

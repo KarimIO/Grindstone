@@ -1,5 +1,5 @@
 #include <GL/gl3w.h>
-#include "GLIndexBuffer.h"
+#include "GLIndexBuffer.hpp"
 #include <iostream>
 
 GLIndexBuffer::GLIndexBuffer(IndexBufferCreateInfo createInfo) {

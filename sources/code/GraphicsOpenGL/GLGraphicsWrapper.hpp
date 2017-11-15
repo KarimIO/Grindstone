@@ -3,15 +3,15 @@
 #include <GL/gl3w.h>
 #include <vector>
 
-#include "GLRenderPass.h"
-#include "GLGraphicsPipeline.h"
-#include "GLFramebuffer.h"
-#include "GLVertexBuffer.h"
-#include "GLIndexBuffer.h"
-#include "GLUniformBuffer.h"
-#include "GLTexture.h"
-#include "../GraphicsCommon/GraphicsWrapper.h"
-#include "../GraphicsCommon/DLLDefs.h"
+#include "GLRenderPass.hpp"
+#include "GLGraphicsPipeline.hpp"
+#include "GLFramebuffer.hpp"
+#include "GLVertexBuffer.hpp"
+#include "GLIndexBuffer.hpp"
+#include "GLUniformBuffer.hpp"
+#include "GLTexture.hpp"
+#include "../GraphicsCommon/GraphicsWrapper.hpp"
+#include "../GraphicsCommon/DLLDefs.hpp"
 
 #ifdef __linux__
 #include <GL/glx.h>

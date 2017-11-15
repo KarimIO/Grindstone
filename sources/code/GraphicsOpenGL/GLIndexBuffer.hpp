@@ -1,9 +1,9 @@
 #ifndef _GL_INDEX_BUFFER_H
 #define _GL_INDEX_BUFFER_H
 
-#include "../GraphicsCommon/DLLDefs.h"
+#include "../GraphicsCommon/DLLDefs.hpp"
 #include <stdint.h>
-#include "../GraphicsCommon/IndexBuffer.h"
+#include "../GraphicsCommon/IndexBuffer.hpp"
 
 class GLIndexBuffer : public IndexBuffer {
 	GLuint buffer;

@@ -1,7 +1,7 @@
 #include <GL/gl3w.h>
 #include <iostream>
-#include "GLFramebuffer.h"
-#include "GLTexture.h"
+#include "GLFramebuffer.hpp"
+#include "GLTexture.hpp"
 
 GLFramebuffer::GLFramebuffer(FramebufferCreateInfo createInfo) {
 	m_width = createInfo.width;

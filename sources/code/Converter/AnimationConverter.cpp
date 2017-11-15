@@ -1,4 +1,4 @@
-#include "ModelConverter.h"
+#include "ModelConverter.hpp"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -8,8 +8,8 @@
 #include <fstream>
 #include <chrono>
 
-#include "MaterialCreator.h"
-#include "Utilities.h"
+#include "MaterialCreator.hpp"
+#include "Utilities.hpp"
 
 bool AnimationConverter(std::string input) {
 	return false;

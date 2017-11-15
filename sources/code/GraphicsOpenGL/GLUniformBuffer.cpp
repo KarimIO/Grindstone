@@ -1,7 +1,5 @@
 #include <GL/gl3w.h>
-#include "GLUniformBuffer.h"
-
-
+#include "GLUniformBuffer.hpp"
 
 GLUniformBuffer::GLUniformBuffer(UniformBufferCreateInfo ci) {
 	size = ci.size;

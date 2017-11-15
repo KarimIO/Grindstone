@@ -2,7 +2,7 @@
 #define _GL_VERTEX_BUFFER_H
 
 #include <stdint.h>
-#include "../GraphicsCommon/VertexBuffer.h"
+#include "../GraphicsCommon/VertexBuffer.hpp"
 
 
 class GLVertexBuffer : public VertexBuffer {

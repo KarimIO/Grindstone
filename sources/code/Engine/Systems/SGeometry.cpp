@@ -14,6 +14,10 @@ void SGeometry::RemoveComponent(uint32_t id) {
 	// Swap r with back, and size--
 }
 
+CRender &SGeometry::GetComponent(uint32_t id) {
+	return render_components_[id];
+}
+
 void SGeometry::AddSystem(SSubGeometry *system) {
 	systems_.push_back(system);
 }

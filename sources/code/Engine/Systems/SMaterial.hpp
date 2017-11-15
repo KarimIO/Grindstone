@@ -110,7 +110,7 @@ private:
 	std::map<std::string, PipelineReference> pipeline_map_;
 	std::map<std::string, MaterialReference> material_map_;
 	std::map<std::string, Texture *> texture_map_;
-	std::vector<uint32_t> unloaded_;
+	std::vector<Texture *> unloaded_;
 
 	GraphicsWrapper *graphics_wrapper_;
 };
