@@ -2,14 +2,14 @@
 #define _S_LIGHT_H
 
 #include <vector>
-#include "GraphicsWrapper.h"
-#include "SGeometry.h"
-#include "../Core/System.h"
-#include "CBase.h"
-#include <Framebuffer.h>
+#include "GraphicsWrapper.hpp"
+#include "SGeometry.hpp"
+#include "../Core/System.hpp"
+#include "CBase.hpp"
+#include <Framebuffer.hpp>
 #include <glm/glm.hpp>
-#include "CubeInfo.h"
-#include "UniformBuffer.h"
+#include "CubeInfo.hpp"
+#include "UniformBuffer.hpp"
 
 struct LightPointUBO {
 	glm::vec3 position;
@@ -94,7 +94,7 @@ public:
 class SLight : public System {
 public:
 	GraphicsWrapper *graphics_wrapper_;
-	SModel *geometry_system;
+	SGeometry *geometry_system;
 
 	GraphicsPipeline *m_pointLightPipeline;
 	GraphicsPipeline *m_spotLightPipeline;
@@ -111,7 +111,7 @@ public:
 	void AddSpotLight(unsigned int entityID);
 	void AddDirectionalLight(unsigned int entityID);
 
-	void SetPointers(GraphicsWrapper *gw, SModel *gc);
+	void SetPointers(GraphicsWrapper *gw, SGeometry *gc);
 	void DrawShadows();
 };
 

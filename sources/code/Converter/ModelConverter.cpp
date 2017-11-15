@@ -36,11 +36,10 @@ struct MaterialReference {
 };
 
 struct Mesh {
-	MaterialReference material;
 	uint32_t num_indices = 0;
 	uint32_t base_vertex = 0;
 	uint32_t base_index = 0;
-	void *vertex_array_object = nullptr;
+	uint32_t material_index = UINT32_MAX;
 };
 
 struct ModelFormatHeader {
@@ -283,7 +282,7 @@ bool ModelConverter(std::string inputPath) {
 			meshes[i].num_indices = pScene->mMeshes[i]->mNumFaces * 3;
 			meshes[i].base_vertex = NumVertices;
 			meshes[i].base_index = NumIndices;
-			meshes[i].material.material = pScene->mMeshes[i]->mMaterialIndex;
+			meshes[i].material_index = pScene->mMeshes[i]->mMaterialIndex;
 
 			NumVertices += pScene->mMeshes[i]->mNumVertices;
 			NumIndices += meshes[i].num_indices;

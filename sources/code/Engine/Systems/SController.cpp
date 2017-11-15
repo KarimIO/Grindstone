@@ -1,5 +1,5 @@
-#include "CController.h"
-#include "../Core/Engine.h"
+#include "SController.hpp"
+#include "../Core/Engine.hpp"
 
 void SController::AddComponent(unsigned int entityID, unsigned int &target) {
 	components.push_back(CController());
@@ -28,28 +28,28 @@ void CController::Initialize(unsigned int _entityID) {
 }
 
 void CController::MoveForwardBack(double scale) {
-	unsigned int transfID = Engine::GetInstance().entities[entityID].components[COMPONENT_TRANSFORM];
+	unsigned int transfID = Engine::GetInstance().entities[entityID].components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transfID];
 
 	trans->position += 5.0f * float(scale * speedModifier) * trans->GetForward();
 }
 
 void CController::MoveSide(double scale) {
-	unsigned int transfID = engine.entities[entityID].components[COMPONENT_TRANSFORM];
+	unsigned int transfID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transfID];
 
 	trans->position += 5.0f * float(scale * speedModifier) * trans->GetRight();
 }
 
 void CController::MoveVertical(double scale) {
-	unsigned int transfID = engine.entities[entityID].components[COMPONENT_TRANSFORM];
+	unsigned int transfID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transfID];
 
 	trans->position.y += 5.0f * float(scale * speedModifier);
 }
 
 void CController::TurnPitch(double scale) {
-	unsigned int transfID = engine.entities[entityID].components[COMPONENT_TRANSFORM];
+	unsigned int transfID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transfID];
 
 	trans->angles.x += float(sensitivity * engine.GetUpdateTimeDelta() * scale);
@@ -59,7 +59,7 @@ void CController::TurnPitch(double scale) {
 }
 
 void CController::TurnYaw(double scale) {
-	unsigned int transfID = engine.entities[entityID].components[COMPONENT_TRANSFORM];
+	unsigned int transfID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transfID];
 	trans->angles.y += float(sensitivity * engine.GetUpdateTimeDelta() * scale);
 }

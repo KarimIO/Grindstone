@@ -29,7 +29,7 @@ public:
 	void AddSystem(SGBase *system);
 	void RemoveSystem(SGBase *system);
 
-	void Update(double dt);
+	void Update(double d);
 	~SGameplay();
 private:
 	std::set<SGBase *> subsystems;

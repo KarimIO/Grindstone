@@ -6,7 +6,6 @@ enable_testing()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/sources/cmake)
 find_package(assimp REQUIRED)
 find_package(Bullet REQUIRED)
-find_package(RapidJSON REQUIRED)
 set(DEPS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/sources/deps")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)

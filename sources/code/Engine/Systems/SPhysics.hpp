@@ -1,8 +1,8 @@
 #ifndef _PHYSICS_H
 #define _PHYSICS_H
 
-#include "CBase.h"
-#include <btBulletDynamicsCommon.h>
+#include "CBase.hpp"
+#include <bullet/btBulletDynamicsCommon.h>
 #include "glm/glm.hpp"
 #include <vector>
 

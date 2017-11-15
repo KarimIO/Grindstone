@@ -1,4 +1,4 @@
-#include "SGameplay.h"
+#include "SGameplay.hpp"
 
 void SGameplay::AddComponent(CGameplay * component) {
 }

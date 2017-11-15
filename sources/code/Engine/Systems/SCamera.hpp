@@ -1,13 +1,13 @@
 #ifndef _C_CAMERA_H
 #define _C_CAMERA_H
 
-#include "CBase.h"
+#include "CBase.hpp"
 #include <vector>
-#include "CTransform.h"
+#include "STransform.hpp"
 
 #include <glm/glm.hpp>
-#include "Framebuffer.h"
-#include "GraphicsPipeline.h"
+#include "../GraphicsCommon/Framebuffer.hpp"
+#include "../GraphicsCommon/GraphicsPipeline.hpp"
 
 #define PROJECTION_ORTHOGRAPHIC false;
 #define PROJECTION_PERSPECTIVE  true;

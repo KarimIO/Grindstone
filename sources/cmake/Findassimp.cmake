@@ -54,14 +54,14 @@ else(WIN32)
 
 	find_path(
 	  assimp_INCLUDE_DIRS
-	  NAMES postprocess.h scene.h version.h config.h cimport.h
-	  PATHS /usr/local/include/
+	  NAMES assimp/postprocess.h assimp/scene.h assimp/version.h assimp/config.h assimp/cimport.h
+	  PATHS /usr/local/include/ /usr/include/
 	)
 
 	find_library(
 	  assimp_LIBRARIES
 	  NAMES assimp
-	  PATHS /usr/local/lib/
+	  PATHS /usr/local/lib/ /usr/lib/ /usr/lib/x86_64-linux-gnu
 	)
 
 	if (assimp_INCLUDE_DIRS AND assimp_LIBRARIES)
@@ -73,6 +73,13 @@ else(WIN32)
 		message(STATUS "Found asset importer library: ${assimp_LIBRARIES}")
 	  endif (NOT assimp_FIND_QUIETLY)
 	else (assimp_FOUND)
+		if (NOT assimp_INCLUDE_DIRS)
+			message(STATUS "Could not find AssImp Includes")
+		endif(NOT assimp_INCLUDE_DIRS)
+		if (NOT assimp_LIBRARIES)
+			message(STATUS "Could not find AssImp Libraries")
+		endif(NOT assimp_LIBRARIES)
+
 	  if (assimp_FIND_REQUIRED)
 		message(FATAL_ERROR "Could not find asset importer library")
 	  endif (assimp_FIND_REQUIRED)

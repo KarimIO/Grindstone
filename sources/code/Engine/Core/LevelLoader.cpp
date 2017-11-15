@@ -1,12 +1,12 @@
-#include "LevelLoader.h"
+#include "LevelLoader.hpp"
 
 #include "rapidjson/reader.h"
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/istreamwrapper.h"
 #include "rapidjson/error/en.h"
 
-#include "../Core/Engine.h"
-#include "../Systems/CBase.h"
+#include "Engine.hpp"
+#include "../Systems/CBase.hpp"
 
 enum {
 	LEVEL_ROOT = 0,
@@ -57,6 +57,7 @@ private:
 	unsigned char keyType;
 	unsigned int componentID;
 	unsigned char componentType;
+	unsigned char subType;
 	Entity *ent;
 	unsigned int entityID;
 	unsigned char subIterator;
@@ -86,7 +87,7 @@ public:
 			engine.cubemapSystem.Reserve(i);
 		//else if (componentType == COMPONENT_TERRAIN)
 			//if (keyType == KEY_COMPONENT_PATCHES)
-				//engine.terrainSystem.components[componentID].numPatches = i;
+				//engine.terrainSystem.components_[componentID].numPatches = i;
 		return true;
 	}
 	bool Uint(unsigned u) { Int((int)u); return true; }
@@ -167,11 +168,11 @@ public:
 				}
 				/*else if (componentType == COMPONENT_TERRAIN) {
 					if (keyType == KEY_COMPONENT_WIDTH)
-						engine.terrainSystem.components[componentID].width = (float)d;
+						engine.terrainSystem.components_[componentID].width = (float)d;
 					if (keyType == KEY_COMPONENT_HEIGHT)
-						engine.terrainSystem.components[componentID].height = (float)d;
+						engine.terrainSystem.components_[componentID].height = (float)d;
 					if (keyType == KEY_COMPONENT_LENGTH)
-						engine.terrainSystem.components[componentID].length = (float)d;
+						engine.terrainSystem.components_[componentID].length = (float)d;
 				}*/
 			}
 		}
@@ -181,58 +182,54 @@ public:
 		if (keyType == KEY_COMPONENT_TYPE) {
 			if (std::string(str) == "COMPONENT_TRANSFORM") {
 				componentType = COMPONENT_TRANSFORM;
-				engine.transformSystem.AddComponent(entityID, ent->components[COMPONENT_TRANSFORM]);
-				componentID = ent->components[COMPONENT_TRANSFORM];
+				engine.transformSystem.AddComponent(entityID, ent->components_[COMPONENT_TRANSFORM]);
+				componentID = ent->components_[COMPONENT_TRANSFORM];
 			}
 			else if (std::string(str) == "COMPONENT_CONTROLLER") {
 				componentType = COMPONENT_CONTROLLER;
-				engine.controllerSystem.AddComponent(entityID, ent->components[COMPONENT_CONTROLLER]);
-				componentID = ent->components[COMPONENT_CONTROLLER];
+				engine.controllerSystem.AddComponent(entityID, ent->components_[COMPONENT_CONTROLLER]);
+				componentID = ent->components_[COMPONENT_CONTROLLER];
 			}
 			else if (std::string(str) == "COMPONENT_CAMERA") {
 				componentType = COMPONENT_CAMERA;
-				engine.cameraSystem.AddComponent(entityID, ent->components[COMPONENT_CAMERA]);
-				componentID = ent->components[COMPONENT_CAMERA];
-			}
-			else if (std::string(str) == "COMPONENT_RENDER") {
-				componentType = COMPONENT_RENDER;
-				engine.geometry_system.AddComponent(entityID, ent->components[COMPONENT_RENDER]);
-				componentID = ent->components[COMPONENT_RENDER];
+				engine.cameraSystem.AddComponent(entityID, ent->components_[COMPONENT_CAMERA]);
+				componentID = ent->components_[COMPONENT_CAMERA];
 			}
 			else if (std::string(str) == "COMPONENT_GEOMETRY_STATIC") {
 				componentType = COMPONENT_GEOMETRY;
-				engine.geometry_system.AddComponent(entityID, ent->components[COMPONENT_GEOMETRY]);
-				componentID = ent->components[COMPONENT_GEOMETRY];
+				subType = GEOMETRY_STATIC_MODEL;
+				engine.geometry_system.AddComponent(entityID, ent->components_[COMPONENT_GEOMETRY], GEOMETRY_STATIC_MODEL);
+				componentID = ent->components_[COMPONENT_GEOMETRY];
 			}
 			/*else if (std::string(str) == "COMPONENT_GEOMETRY_SKELETAL") {
 				componentType = COMPONENT_TERRAIN;
-				engine.terrainSystem.AddComponent(ent->components[COMPONENT_TERRAIN]);
-				componentID = ent->components[COMPONENT_TERRAIN];
+				engine.terrainSystem.AddComponent(ent->components_[COMPONENT_TERRAIN]);
+				componentID = ent->components_[COMPONENT_TERRAIN];
 			}*/
 			/*else if (std::string(str) == "COMPONENT_TERRAIN") {
 				componentType = COMPONENT_TERRAIN;
-				engine.terrainSystem.AddComponent(ent->components[COMPONENT_TERRAIN]);
-				componentID = ent->components[COMPONENT_TERRAIN];
+				engine.terrainSystem.AddComponent(ent->components_[COMPONENT_TERRAIN]);
+				componentID = ent->components_[COMPONENT_TERRAIN];
 			}*/
 			else if (std::string(str) == "COMPONENT_LIGHT_POINT") {
 				componentType = COMPONENT_LIGHT_POINT;
 				engine.lightSystem.AddPointLight(entityID);
-				componentID = ent->components[COMPONENT_LIGHT_POINT];
+				componentID = ent->components_[COMPONENT_LIGHT_POINT];
 			}
 			else if (std::string(str) == "COMPONENT_LIGHT_SPOT") {
 				componentType = COMPONENT_LIGHT_SPOT;
 				engine.lightSystem.AddSpotLight(entityID);
-				componentID = ent->components[COMPONENT_LIGHT_SPOT];
+				componentID = ent->components_[COMPONENT_LIGHT_SPOT];
 			}
 			else if (std::string(str) == "COMPONENT_LIGHT_DIRECTIONAL") {
 				componentType = COMPONENT_LIGHT_DIRECTIONAL;
 				engine.lightSystem.AddDirectionalLight(entityID);
-				componentID = ent->components[COMPONENT_LIGHT_DIRECTIONAL];
+				componentID = ent->components_[COMPONENT_LIGHT_DIRECTIONAL];
 			}
 			else if (std::string(str) == "COMPONENT_PHYSICS") {
 				componentType = COMPONENT_PHYSICS;
-				engine.physicsSystem.AddComponent(entityID, ent->components[COMPONENT_PHYSICS]);
-				componentID = ent->components[COMPONENT_PHYSICS];
+				engine.physicsSystem.AddComponent(entityID, ent->components_[COMPONENT_PHYSICS]);
+				componentID = ent->components_[COMPONENT_PHYSICS];
 			}
 			else if (std::string(str) == "COMPONENT_INPUT") {
 				componentType = COMPONENT_INPUT;
@@ -248,13 +245,14 @@ public:
 			}
 		}
 		else if (keyType == KEY_COMPONENT_PATH) {
-			// , ent->components[COMPONENT_RENDER]
-			engine.geometry_system.AddComponent(GEOMETRY_STATIC_MODEL, ("../assets/" + std::string(str)).c_str());
+			if (componentType == COMPONENT_GEOMETRY) {
+				engine.geometry_system.GetSystem(subType)->LoadGeometry(componentID, ("../assets/" + std::string(str)).c_str());
+			}
 		}
 
 		/*else if (componentType == COMPONENT_TERRAIN)
 			if (keyType == KEY_COMPONENT_HEIGHTMAP)
-				engine.terrainSystem.components[componentID].heightmapPath = "../materials/" + std::string(str);
+				engine.terrainSystem.components_[componentID].heightmapPath = "../materials/" + std::string(str);
 		*/
 		return true;
 	}

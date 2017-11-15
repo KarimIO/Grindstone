@@ -1,7 +1,7 @@
 #ifndef _S_AUDIO_H
 #define _S_AUDIO_H
 
-#include "SoundFile.h"
+#include "SoundFile.hpp"
 
 class CAudio {
 private:

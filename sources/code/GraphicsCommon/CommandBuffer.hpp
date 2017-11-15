@@ -1,12 +1,12 @@
 #pragma once
 
 #include <vector>
-#include "Framebuffer.h"
-#include "RenderPass.h"
-#include "GraphicsPipeline.h"
-#include "VertexBuffer.h"
-#include "IndexBuffer.h"
-#include "UniformBuffer.h"
+#include "Framebuffer.hpp"
+#include "RenderPass.hpp"
+#include "GraphicsPipeline.hpp"
+#include "VertexBuffer.hpp"
+#include "IndexBuffer.hpp"
+#include "UniformBuffer.hpp"
 
 enum CommandType {
 	CMD_BIND_VERTEX_BUFFER = 0,

@@ -1,6 +1,6 @@
-#include "CCamera.h"
-#include "../Core/Engine.h"
-#include "../Core/Utilities.h"
+#include "SCamera.hpp"
+#include "../Core/Engine.hpp"
+#include "../Core/Utilities.hpp"
 
 struct CamUBO {
 	int texture = 0;
@@ -147,7 +147,7 @@ glm::mat4 CCamera::GetProjection() {
 }
 
 glm::mat4 CCamera::GetView() {
-	CTransform *transform = &engine.transformSystem.components[engine.entities[entityID].components[COMPONENT_TRANSFORM]];
+	CTransform *transform = &engine.transformSystem.components[engine.entities[entityID].components_[COMPONENT_TRANSFORM]];
 	glm::mat4 view = glm::lookAt(
 		transform->GetPosition(),
 		transform->GetPosition() + transform->GetForward(),

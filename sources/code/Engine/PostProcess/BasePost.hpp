@@ -1,7 +1,7 @@
 #ifndef _BASE_POST_H
 #define _BASE_POST_H
 
-#include "../../GraphicsCommon/Framebuffer.h"
+#include "../../GraphicsCommon/Framebuffer.hpp"
 
 // Interface for a PostProcess. Should be created and passed to
 //      the PostPipeline in a camera to be used in rendering.

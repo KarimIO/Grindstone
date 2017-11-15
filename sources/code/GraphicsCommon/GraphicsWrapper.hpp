@@ -1,13 +1,13 @@
 #pragma once
 
-#include "IndexBuffer.h"
-#include "RenderPass.h"
-#include "Framebuffer.h"
-#include "VertexBuffer.h"
-#include "UniformBuffer.h"
-#include "GraphicsPipeline.h"
-#include "CommandBuffer.h"
-#include "VertexArrayObject.h"
+#include "IndexBuffer.hpp"
+#include "RenderPass.hpp"
+#include "Framebuffer.hpp"
+#include "VertexBuffer.hpp"
+#include "UniformBuffer.hpp"
+#include "GraphicsPipeline.hpp"
+#include "CommandBuffer.hpp"
+#include "VertexArrayObject.hpp"
 
 #ifdef _WIN32
 	#include <Windows.h>

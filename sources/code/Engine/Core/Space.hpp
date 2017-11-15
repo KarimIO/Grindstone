@@ -2,8 +2,8 @@
 #define _SPACE_H
 
 #include <vector>
-#include "System.h"
-#include "../Systems/CBase.h"
+#include "System.hpp"
+#include "../Systems/CBase.hpp"
 
 class Space {
 public:

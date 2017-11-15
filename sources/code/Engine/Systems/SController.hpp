@@ -1,8 +1,8 @@
 #ifndef _C_CONTROLLER_H
 #define _C_CONTROLLER_H
 
-#include "CBase.h"
-#include "Core/Input.h"
+#include "CBase.hpp"
+#include "Core/Input.hpp"
 #include <vector>
 
 class CController : public CBase {

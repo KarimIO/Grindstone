@@ -1,5 +1,5 @@
-#include "SGeometryStatic.h"
-#include "Core/Engine.h"
+#include "SGeometryStatic.hpp"
+#include "../Core/Engine.hpp"
 #include <fstream>
 
 struct ModelUBO {
@@ -14,8 +14,8 @@ struct ModelUBO {
 
 void MeshStatic::Draw() {
 	for (auto &reference : model->references) {
-		auto renderComponent = engine.geometry_system.render_components[reference];
-		auto entityID = renderComponent.entityID;
+		auto renderComponent = engine.geometry_system.GetComponent(reference);
+		auto entityID = renderComponent.entity_id;
 		auto transform = engine.transformSystem.components[entityID];
 		glm::mat4 modelMatrix = transform.GetModelMatrix();
 
@@ -37,36 +37,20 @@ std::string CModelStatic::getName() {
 	return name;
 }
 
-CGeometry *SGeometryStatic::PreloadComponent(std::string path) {
-	for (size_t i = 0; i < models.size(); i++) {
-		if (models[i].getName() == path) {
-			models[i].references.push_back((unsigned int)renderID);
-			return;
-		}
-	}
-
-	models.push_back(CModelStatic());
-	CModelStatic &model = models.back();
-	model.references.push_back((unsigned int)renderID);
-	model.name = path;
-	unloadedModelIDs.push_back((unsigned int)(models.size() - 1));
+void CModelStatic::setName(std::string path) {
+	name = path;
 }
 
-CGeometry *SGeometryStatic::LoadComponent(std::string path) {
+void SGeometryStatic::LoadGeometry(uint32_t render_id, std::string path) {
 	for (size_t i = 0; i < models.size(); i++) {
 		if (models[i].getName() == path) {
-			renderID = models[i].references.size();
-			models[i].references.push_back((unsigned int)renderID);
+			models[i].references.push_back((uint32_t)render_id);
 			return;
 		}
 	}
 
-	renderID = 0;
-	models.push_back(CModelStatic());
-	CModelStatic &model = models.back();
-	model.references.push_back((unsigned int)renderID);
-	model.name = path;
-	LoadModel(&model);
+	unloadedModelIDs.push_back((unsigned int)(models.size()));
+	models.push_back({path, {render_id}});
 }
 
 void SGeometryStatic::LoadPreloaded() {
@@ -115,7 +99,8 @@ void SGeometryStatic::LoadModel(CModelStatic *model) {
 
 	offset = static_cast<char*>(offset) + sizeof(ModelFormatHeader);
 	uint32_t size = inFormat.numMeshes * sizeof(MeshStatic);
-	memcpy(&model->meshes[0], offset, size);
+	std::vector<MeshCreateInfo> temp_meshes(inFormat.numMeshes);
+	memcpy(temp_meshes.data(), offset, size);
 	offset = static_cast<char*>(offset) + size;
 	size = inFormat.numVertices * sizeof(Vertex);
 	memcpy(&vertices[0], offset, size);
@@ -178,59 +163,18 @@ void SGeometryStatic::LoadModel(CModelStatic *model) {
 
 	for (unsigned int i = 0; i < inFormat.numMeshes; i++) {
 		// Use the temporarily uint32_t material as an ID for the actual material.
-		MeshStatic *current_mesh = &model->meshes[i];
-		uint16_t matID = current_mesh->material.material;
-		current_mesh->material = materialReferences[matID];
-		current_mesh->model = model;
-		Material *mat = materials[matID];
-		mat->m_meshes.push_back(reinterpret_cast<Mesh *>(current_mesh));
+		MeshCreateInfo &temp_mesh = temp_meshes[i];
+		MeshStatic &current_mesh = model->meshes[i];
+		current_mesh.model = model;
+		current_mesh.material = materials[temp_mesh.MaterialIndex];
+		current_mesh.NumIndices = temp_mesh.NumIndices;
+		current_mesh.BaseVertex = temp_mesh.BaseVertex;
+		current_mesh.BaseIndex = temp_mesh.BaseIndex;
+		current_mesh.material->m_meshes.push_back(reinterpret_cast<Mesh *>(&current_mesh));
 	}
 }
 
-SGeometryStatic::SGeometryStatic(GraphicsWrapper * graphics_wrapper) : graphics_wrapper_(graphics_wrapper) {
-	vbd_.binding = 0;
-	vbd_.elementRate = false;
-	vbd_.stride = sizeof(Vertex);
-
-	vads_.resize(4);
-	vads_[0].binding = 0;
-	vads_[0].location = 0;
-	vads_[0].format = VERTEX_R32_G32_B32;
-	vads_[0].size = 3;
-	vads_[0].name = "vertexPosition";
-	vads_[0].offset = offsetof(Vertex, positions);
-	vads_[0].usage = ATTRIB_POSITION;
-
-	vads_[1].binding = 0;
-	vads_[1].location = 1;
-	vads_[1].format = VERTEX_R32_G32_B32;
-	vads_[1].size = 3;
-	vads_[1].name = "vertexNormal";
-	vads_[1].offset = offsetof(Vertex, normal);
-	vads_[1].usage = ATTRIB_NORMAL;
-
-	vads_[2].binding = 0;
-	vads_[2].location = 2;
-	vads_[2].format = VERTEX_R32_G32_B32;
-	vads_[2].size = 3;
-	vads_[2].name = "vertexTangent";
-	vads_[2].offset = offsetof(Vertex, tangent);
-	vads_[2].usage = ATTRIB_TANGENT;
-
-	vads_[3].binding = 0;
-	vads_[3].location = 3;
-	vads_[3].format = VERTEX_R32_G32;
-	vads_[3].size = 2;
-	vads_[3].name = "vertexTexCoord";
-	vads_[3].offset = offsetof(Vertex, texCoord);
-	vads_[3].usage = ATTRIB_TEXCOORD0;
-}
-
-void SGeometryStatic::AddComponent(unsigned int entID, unsigned int &target) {
-	renderComponents.push_back(CRender());
-	renderComponents[renderComponents.size() - 1].entityID = entID;
-	target = (unsigned int)(renderComponents.size() - 1);
-}
+SGeometryStatic::SGeometryStatic(GraphicsWrapper * graphics_wrapper, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads) : graphics_wrapper_(graphics_wrapper), vbd_(vbd), vads_(vads) {}
 
 SGeometryStatic::~SGeometryStatic() {
 	if (graphics_wrapper_) {

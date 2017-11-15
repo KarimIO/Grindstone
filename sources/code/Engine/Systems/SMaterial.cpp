@@ -1,4 +1,4 @@
-#include "SMaterial.h"
+#include "SMaterial.hpp"
 
 #include <fstream>
 
@@ -11,9 +11,9 @@
 
 #include "glm/common.hpp"
 
-#include "Core/Utilities.h"
-#include "SGeometry.h"
-#include "Core/Engine.h"
+#include "Core/Utilities.hpp"
+#include "SGeometry.hpp"
+#include "Core/Engine.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
@@ -576,6 +576,12 @@ PipelineReference MaterialManager::CreatePipeline(std::string pipelineName) {
 
 	// Create It
 	return PipelineReference();
+}
+
+void MaterialManager::LoadPreloaded() {
+	for (uint32_t &unloaded : unloaded_) {
+		
+	}
 }
 
 MaterialReference MaterialManager::PreLoadMaterial(std::string path) {

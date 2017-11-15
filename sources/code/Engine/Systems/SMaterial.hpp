@@ -1,7 +1,8 @@
 #ifndef _S_SHADER_H
 #define _S_SHADER_H
 
-#include "GraphicsWrapper.h"
+#include "GraphicsWrapper.hpp"
+#include "SGeometry.hpp"
 #include <map>
 #include <vector>
 
@@ -52,7 +53,7 @@ struct MaterialReference {
 	uint16_t material = 0;
 };
 
-class CModel;
+class Mesh;
 
 class Material {
 public:
@@ -109,6 +110,7 @@ private:
 	std::map<std::string, PipelineReference> pipeline_map_;
 	std::map<std::string, MaterialReference> material_map_;
 	std::map<std::string, Texture *> texture_map_;
+	std::vector<uint32_t> unloaded_;
 
 	GraphicsWrapper *graphics_wrapper_;
 };

@@ -6,9 +6,9 @@
 
 #include <string>
 #include <vector>
-#include "Texture.h"
+#include "Texture.hpp"
 
-#include "CubeInfo.h"
+#include "CubeInfo.hpp"
 
 class CubemapComponent;
 class CubemapSystem {

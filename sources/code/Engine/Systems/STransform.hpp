@@ -3,7 +3,7 @@
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
-#include "CBase.h"
+#include "CBase.hpp"
 #include <vector>
 
 class CTransform : public CBase {

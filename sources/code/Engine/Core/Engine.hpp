@@ -6,36 +6,37 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
-#include <GraphicsWrapper.h>
+#include <GraphicsWrapper.hpp>
 
-#include <AudioCommon.h>
+#include <AudioCommon.hpp>
 
-#include "../Renderpaths/RenderPath.h"
-#include "../Renderpaths/RenderPathDeferred.h"
-#include "../Renderpaths/RenderPathForward.h"
+#include "../Renderpaths/RenderPath.hpp"
+#include "../Renderpaths/RenderPathDeferred.hpp"
+#include "../Renderpaths/RenderPathForward.hpp"
 
-#include "../Systems/SGeometry.h"
-#include "Input.h"
+#include "../Systems/SGeometry.hpp"
+#include "Input.hpp"
 
-#include "../Systems/SCubemap.h"
-#include "../Systems/SLight.h"
+#include "../Systems/SCubemap.hpp"
+#include "../Systems/SLight.hpp"
 
 #include <chrono>
 #include <string>
 
-#include <SoundFile.h>
+#include <SoundFile.hpp>
 
-#include "../Core/Entity.h"
+#include "../Core/Entity.hpp"
 
-#include "../Systems/SPhysics.h"
+#include "../Systems/SPhysics.hpp"
 
-#include "../Systems/STransform.h"
-#include "../Systems/SCamera.h"
-#include "../Systems/SController.h"
-#include "Systems/SMaterial.h"
-#include "Systems/SGameplay.h"
-#include "Systems/SUI.h"
+#include "../Systems/STransform.hpp"
+#include "../Systems/SCamera.hpp"
+#include "../Systems/SController.hpp"
+#include "Systems/SMaterial.hpp"
+#include "Systems/SGameplay.hpp"
+#include "Systems/SUI.hpp"
 
+#include "PostProcess/PostPipeline.hpp"
 enum RenderPathType {
 	RENDERPATH_FORWARD = 0,
 	RENDERPATH_DEFERRED,
@@ -61,7 +62,6 @@ enum {
 	DEBUG_SHADOW,
 	NUM_DEBUG
 };
-#include "PostProcess/PostPipeline.h"
 class Entity;
 
 struct MatUniformBufferObject {

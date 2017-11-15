@@ -1,13 +1,13 @@
 #pragma once
 
-#include "RenderPass.h"
-#include "VertexBuffer.h"
-#include "UniformBuffer.h"
+#include "RenderPass.hpp"
+#include "VertexBuffer.hpp"
+#include "UniformBuffer.hpp"
 #include <string>
 #include <vector>
 #include <iostream>
-#include "Texture.h"
-#include "UniformBuffer.h"
+#include "Texture.hpp"
+#include "UniformBuffer.hpp"
 
 enum ShaderStageType {
 	SHADER_VERTEX = 0,

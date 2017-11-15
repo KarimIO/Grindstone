@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include "iniHandler.h"
+#include "iniHandler.hpp"
 
 void INIConfigFile::SetPath(std::string dir) {
 	szPath = dir;

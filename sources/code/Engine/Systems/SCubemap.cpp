@@ -1,7 +1,7 @@
-#include "SCubemap.h"
+#include "SCubemap.hpp"
 #include <iostream>
 
-#include "../Core/Engine.h"
+#include "../Core/Engine.hpp"
 
 void CubemapSystem::CaptureCubemaps(double) {
 	/*std::cout << "Capture Cubemaps" << "\n";

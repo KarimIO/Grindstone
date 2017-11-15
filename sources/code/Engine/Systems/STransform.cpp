@@ -1,4 +1,4 @@
-#include "CTransform.h"
+#include "STransform.hpp"
 #include <glm/gtx/transform.hpp>
 
 void STransform::AddComponent(unsigned int entityID, unsigned int &target) {

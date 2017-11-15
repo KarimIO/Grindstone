@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "Formats.h"
+#include "Formats.hpp"
 
 struct TextureSubBinding {
 	const char *shaderLocation;

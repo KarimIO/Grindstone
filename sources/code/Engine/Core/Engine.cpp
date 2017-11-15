@@ -1,9 +1,9 @@
-#include "Engine.h"
-#include "Utilities.h"
-#include "iniHandler.h"
+#include "Engine.hpp"
+#include "Utilities.hpp"
+#include "iniHandler.hpp"
 #include <stdio.h>
-#include "LevelLoader.h"
-#include "Systems/SGeometryStatic.h"
+#include "LevelLoader.hpp"
+#include "Systems/SGeometryStatic.hpp"
 
 #if defined(_WIN32)
 	#define LoadDLL(path) HMODULE dllHandle = LoadLibrary((path+".dll").c_str()); \
@@ -215,8 +215,47 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	ubci2.binding = ubb2;
 	ubo2 = graphics_wrapper_->CreateUniformBuffer(ubci2);
 
+	VertexBindingDescription vbd;
+	std::vector<VertexAttributeDescription> vads;
+	vbd.binding = 0;
+	vbd.elementRate = false;
+	vbd.stride = sizeof(Vertex);
+
+	vads.resize(4);
+	vads[0].binding = 0;
+	vads[0].location = 0;
+	vads[0].format = VERTEX_R32_G32_B32;
+	vads[0].size = 3;
+	vads[0].name = "vertexPosition";
+	vads[0].offset = offsetof(Vertex, positions);
+	vads[0].usage = ATTRIB_POSITION;
+
+	vads[1].binding = 0;
+	vads[1].location = 1;
+	vads[1].format = VERTEX_R32_G32_B32;
+	vads[1].size = 3;
+	vads[1].name = "vertexNormal";
+	vads[1].offset = offsetof(Vertex, normal);
+	vads[1].usage = ATTRIB_NORMAL;
+
+	vads[2].binding = 0;
+	vads[2].location = 2;
+	vads[2].format = VERTEX_R32_G32_B32;
+	vads[2].size = 3;
+	vads[2].name = "vertexTangent";
+	vads[2].offset = offsetof(Vertex, tangent);
+	vads[2].usage = ATTRIB_TANGENT;
+
+	vads[3].binding = 0;
+	vads[3].location = 3;
+	vads[3].format = VERTEX_R32_G32;
+	vads[3].size = 2;
+	vads[3].name = "vertexTexCoord";
+	vads[3].offset = offsetof(Vertex, texCoord);
+	vads[3].usage = ATTRIB_TEXCOORD0;
+
 	materialManager.Initialize(graphics_wrapper_, vbd, vads, ubb);
-	geometry_system.AddSystem(new SGeometryStatic(graphics_wrapper_));
+	geometry_system.AddSystem(new SGeometryStatic(graphics_wrapper_, vbd, vads));
 
 	std::vector<ColorFormat> gbufferCFs = {
 		FORMAT_COLOR_R8G8B8A8,	// R  G  B  MatID
@@ -368,7 +407,7 @@ bool Engine::InitializeScene(std::string szScenePath) {
 
 	LoadLevel(szSceneNewPath);
 	geometry_system.LoadPreloaded();
-	materialManager.LoadPreloaded;
+	materialManager.LoadPreloaded();
 
 	return true;
 }

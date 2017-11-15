@@ -1,5 +1,5 @@
-#include "RenderPathDeferred.h"
-#include "Core/Engine.h"
+#include "RenderPathDeferred.hpp"
+#include "Core/Engine.hpp"
 #include <stb/stb_image.h>
 
 Texture *LoadCubemap(std::string path, GraphicsWrapper *m_graphics_wrapper_) {
@@ -177,7 +177,7 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 
 	CCamera *cam = &engine.cameraSystem.components[0];
 	Entity *ent = &engine.entities[cam->entityID];
-	glm::vec3 eyePos = engine.transformSystem.components[ent->components[COMPONENT_TRANSFORM]].position;
+	glm::vec3 eyePos = engine.transformSystem.components[ent->components_[COMPONENT_TRANSFORM]].position;
 	deffUBOBuffer.eyePos.x = eyePos.x;
 	deffUBOBuffer.eyePos.y = eyePos.y;
 	deffUBOBuffer.eyePos.z = eyePos.z;

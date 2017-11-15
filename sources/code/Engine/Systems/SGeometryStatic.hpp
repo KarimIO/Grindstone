@@ -1,7 +1,7 @@
 #ifndef _S_GEOMETRY_STATIC_H
 #define _S_GEOMETRY_STATIC_H
 
-#include "SGeometry.h"
+#include "SGeometry.hpp"
 
 struct Vertex {
 	glm::vec3 positions;
@@ -36,22 +36,32 @@ struct ModelFormatHeader {
 	bool largeIndex;
 };
 
+class CModelStatic;
+
 class MeshStatic : public Mesh {
 public:
 	uint32_t NumIndices = 0;
 	uint32_t BaseVertex = 0;
 	uint32_t BaseIndex = 0;
+	Material *material;
 	CModelStatic *model = nullptr;
 
 	virtual void Draw();
 	virtual void DrawDeferred(CommandBuffer *);
 };
 
-class CModelStatic {
+struct MeshCreateInfo {
+	uint32_t NumIndices = 0;
+	uint32_t BaseVertex = 0;
+	uint32_t BaseIndex = 0;
+	uint32_t MaterialIndex = UINT32_MAX;
+};
+
+class CModelStatic : public Geometry {
 	friend class SGeometryStatic;
 public:
 	bool useLargeBuffer = true;
-	std::vector<unsigned int> references;
+	std::vector<uint32_t> references;
 	std::vector<MeshStatic> meshes;
 	VertexBuffer *vertexBuffer;
 	IndexBuffer *indexBuffer;
@@ -59,23 +69,18 @@ public:
 	CommandBuffer *commandBuffer;
 	std::string name;
 
-	std::string getName();
+	CModelStatic(std::string path, std::vector<uint32_t> refs) : name(path), references(refs) {};
+
+	virtual std::string getName();
+	virtual void setName(std::string dir);
 };
 
 class SGeometryStatic : public SSubGeometry {
 public:
-	SGeometryStatic(GraphicsWrapper *graphics_wrapper_);
+	SGeometryStatic(GraphicsWrapper *graphics_wrapper_, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads);
 
-	virtual CGeometry *PreloadComponent(std::string path);
-	virtual CGeometry *LoadComponent(std::string path);
+	virtual void LoadGeometry(unsigned int render_id, std::string path);
 	virtual void LoadPreloaded();
-
-	void AddComponent(unsigned int entID, unsigned int &target);
-
-	void LoadModel3D(const char *szPath, size_t entityID);
-	void PreloadModel3D(const char * szPath, size_t renderID);
-
-	std::vector<CommandBuffer *> GetCommandBuffers();
 
 	~SGeometryStatic();
 private:
@@ -83,9 +88,9 @@ private:
 	MaterialManager *material_system_;
 	VertexBindingDescription vbd_;
 	std::vector<VertexAttributeDescription> vads_;
+	std::vector<CommandBuffer *> GetCommandBuffers();
 
 	std::vector<CModelStatic> models;
-	std::vector<CRender> renderComponents;
 	std::vector<unsigned int> unloadedModelIDs;
 	void LoadModel(CModelStatic *model);
 };

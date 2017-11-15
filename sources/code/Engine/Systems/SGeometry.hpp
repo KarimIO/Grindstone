@@ -1,15 +1,17 @@
 #ifndef _SGEOMETRY_H
 #define _SGEOMETRY_H
 
-#include "../GraphicsCommon/GraphicsWrapper.h"
-#include "../GraphicsCommon/Texture.h"
-#include "../GraphicsCommon/CommandBuffer.h"
-#include "../GraphicsCommon/VertexArrayObject.h"
+#include "../GraphicsCommon/GraphicsWrapper.hpp"
+#include "../GraphicsCommon/Texture.hpp"
+#include "../GraphicsCommon/CommandBuffer.hpp"
+#include "../GraphicsCommon/VertexArrayObject.hpp"
 
 #include <glm/glm.hpp>
 #include <vector>
 
-#include "SMaterial.h"
+#include "CBase.hpp"
+
+#include "SMaterial.hpp"
 
 enum GeometryType {
 	GEOMETRY_STATIC_MODEL = 0,
@@ -18,40 +20,48 @@ enum GeometryType {
 };
 
 class Material;
-
-class CRender {
-private:
-public:
-	size_t entityID;
-	std::vector<Material *> materials;
-};
+struct MaterialReference;
 
 class Mesh {
 public:
-	MaterialReference material;
+	Material *material;
 
 	virtual void Draw() = 0;
 	virtual void DrawDeferred(CommandBuffer *) = 0;
 };
 
-class CGeometry {};
+class CRender {
+public:
+	uint32_t entity_id;
+	GeometryType geometry_type;
+	uint32_t geometry_id;
+	std::vector<Material *> materials;
+};
+
+class Geometry {
+public:
+	virtual void setName(std::string dir) = 0;
+};
 
 class SSubGeometry {
 public:
-	virtual CGeometry *PreloadComponent(std::string path) = 0;
-	virtual CGeometry *LoadComponent(std::string path) = 0;
+	virtual void LoadGeometry(unsigned int render_id, std::string path) = 0;
 	virtual void LoadPreloaded() = 0;
 	virtual ~SSubGeometry() = 0;
 };
 
 class SGeometry {
 public:
-	void AddComponent(GeometryType type, std::string path);
+	void AddComponent(uint32_t entityID, uint32_t &component, GeometryType type);
+	CRender &GetComponent(uint32_t id);
+	void RemoveComponent(uint32_t id);
 	void AddSystem(SSubGeometry *system);
 	void LoadPreloaded();
+	SSubGeometry *GetSystem(uint32_t id);
 	~SGeometry();
 private:
-	std::vector<SSubGeometry *> systems;
+	std::vector<SSubGeometry *> systems_;
+	std::vector<CRender> render_components_;
 };
 
 #endif

@@ -1,7 +1,7 @@
 #ifndef _INPUT_H
 #define _INPUT_H
 
-#include "InputInterface.h"
+#include "InputInterface.hpp"
 #include <functional>
 #include <vector>
 

@@ -1,7 +1,7 @@
-#include "Physics.h"
+#include "SPhysics.hpp"
 #include <iostream>
 
-#include "Core/Engine.h"
+#include "Core/Engine.hpp"
 
 void SPhysics::Initialize() {
 	broadphase = new btDbvtBroadphase();
@@ -66,7 +66,7 @@ void CPhysics::ApplyCentralImpulse(glm::vec3 force) {
 }
 
 void CPhysics::Create() {
-	unsigned int transComponentID = engine.entities[entityID].components[COMPONENT_TRANSFORM];
+	unsigned int transComponentID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
 	CTransform *transComponent = &engine.transformSystem.components[transComponentID];
 	glm::vec3 posTrans = transComponent->GetPosition();
 	glm::vec3 angTrans = transComponent->GetAngles();
@@ -116,7 +116,7 @@ void SPhysics::SetTransforms() {
 		components[i].rigidBody->getMotionState()->getWorldTransform(transform);
 		btVector3 pos = transform.getOrigin();
 		unsigned int entityID = components[i].entityID;
-		unsigned int transformID = engine.entities[entityID].components[COMPONENT_TRANSFORM];
+		unsigned int transformID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
 		CTransform *transComponent = &engine.transformSystem.components[transformID];
 		transComponent->position = glm::vec3(pos.getX(), pos.getY(), pos.getZ());
 		btQuaternion q = transform.getRotation();

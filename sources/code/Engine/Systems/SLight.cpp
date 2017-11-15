@@ -1,5 +1,5 @@
-#include "SLight.h"
-#include "../Core/Engine.h"
+#include "SLight.hpp"
+#include "../Core/Engine.hpp"
 
 CPointLight::CPointLight(unsigned int entityID) {
 	this->entityID = entityID;
@@ -47,7 +47,7 @@ void CPointLight::SetShadow(bool state) {
 
 void CPointLight::Bind() {
 	Entity *entity = &engine.entities[entityID];
-	unsigned int transID = entity->components[COMPONENT_TRANSFORM];
+	unsigned int transID = entity->components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transID];
 	lightUBOBuffer.position = trans->position;
 	lightUBO->UpdateUniformBuffer(&lightUBOBuffer);
@@ -102,7 +102,7 @@ void CSpotLight::SetShadow(bool state) {
 
 void CSpotLight::Bind() {
 	Entity *entity = &engine.entities[entityID];
-	unsigned int transID = entity->components[COMPONENT_TRANSFORM];
+	unsigned int transID = entity->components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transID];
 	lightUBOBuffer.position = trans->GetPosition();
 	lightUBOBuffer.direction = trans->GetForward();
@@ -144,7 +144,7 @@ void CDirectionalLight::SetShadow(bool state) {
 
 void CDirectionalLight::Bind() {
 	Entity *entity = &engine.entities[entityID];
-	unsigned int transID = entity->components[COMPONENT_TRANSFORM];
+	unsigned int transID = entity->components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transID];
 	lightUBOBuffer.position = trans->position;
 	lightUBO->UpdateUniformBuffer(&lightUBOBuffer);
@@ -152,36 +152,36 @@ void CDirectionalLight::Bind() {
 }
 
 void SLight::AddPointLight(unsigned int entityID, glm::vec3 lightColor, float intensity, bool castShadow, float lightRadius) {
-	engine.entities[entityID].components[COMPONENT_LIGHT_POINT] = (unsigned int)pointLights.size();
+	engine.entities[entityID].components_[COMPONENT_LIGHT_POINT] = (unsigned int)pointLights.size();
 	pointLights.push_back(CPointLight(entityID, lightColor, intensity, engine.settings.enableShadows && castShadow, lightRadius));
 }
 
 void SLight::AddSpotLight(unsigned int entityID, glm::vec3 lightColor, float intensity, bool castShadow, float lightRadius, float innerSpotAngle, float outerSpotAngle) {
-	engine.entities[entityID].components[COMPONENT_LIGHT_SPOT] = (unsigned int)spotLights.size();
+	engine.entities[entityID].components_[COMPONENT_LIGHT_SPOT] = (unsigned int)spotLights.size();
 	spotLights.push_back(CSpotLight(entityID, lightColor, intensity, engine.settings.enableShadows && castShadow, lightRadius, innerSpotAngle, outerSpotAngle));
 }
 
 void SLight::AddDirectionalLight(unsigned int entityID) {
-	engine.entities[entityID].components[COMPONENT_LIGHT_DIRECTIONAL] = (unsigned int)directionalLights.size();
+	engine.entities[entityID].components_[COMPONENT_LIGHT_DIRECTIONAL] = (unsigned int)directionalLights.size();
 	directionalLights.push_back(CDirectionalLight(entityID));
 }
 
 void SLight::AddPointLight(unsigned int entityID) {
-	engine.entities[entityID].components[COMPONENT_LIGHT_POINT] = (unsigned int)pointLights.size();
+	engine.entities[entityID].components_[COMPONENT_LIGHT_POINT] = (unsigned int)pointLights.size();
 	pointLights.push_back(CPointLight(entityID));
 }
 
 void SLight::AddSpotLight(unsigned int entityID) {
-	engine.entities[entityID].components[COMPONENT_LIGHT_SPOT] = (unsigned int)spotLights.size();
+	engine.entities[entityID].components_[COMPONENT_LIGHT_SPOT] = (unsigned int)spotLights.size();
 	spotLights.push_back(CSpotLight(entityID));
 }
 
 void SLight::AddDirectionalLight(unsigned int entityID, glm::vec3 lightColor, float intensity, bool castShadow, float sunRadius) {
-	engine.entities[entityID].components[COMPONENT_LIGHT_DIRECTIONAL] = (unsigned int)directionalLights.size();
+	engine.entities[entityID].components_[COMPONENT_LIGHT_DIRECTIONAL] = (unsigned int)directionalLights.size();
 	directionalLights.push_back(CDirectionalLight(entityID, lightColor, intensity, engine.settings.enableShadows && castShadow, sunRadius));
 }
 
-void SLight::SetPointers(GraphicsWrapper *gw, SModel *gc) {
+void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 	graphics_wrapper_ = gw;
 	geometry_system = gc;
 

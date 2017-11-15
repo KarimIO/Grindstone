@@ -1,7 +1,8 @@
-#pragma once
+#ifndef _VERTEX_ARRAY_OBJECT_H
+#define _VERTEX_ARRAY_OBJECT_H
 
-#include "VertexBuffer.h"
-#include "IndexBuffer.h"
+#include "VertexBuffer.hpp"
+#include "IndexBuffer.hpp"
 
 struct VertexArrayObjectCreateInfo {
 	VertexBuffer *vertexBuffer;
@@ -15,3 +16,5 @@ public:
 	virtual void BindResources(VertexArrayObjectCreateInfo createInfo) {};
 	virtual void Unbind() {};
 };
+
+#endif

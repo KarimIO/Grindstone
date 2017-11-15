@@ -1,4 +1,4 @@
-#include "PostPipeline.h"
+#include "PostPipeline.hpp"
 
 void PostPipeline::AddPostProcess(BasePostProcess *process) {
 	processes.push_back(process);

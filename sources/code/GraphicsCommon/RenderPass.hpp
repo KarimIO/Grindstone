@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Framebuffer.h"
-#include "Formats.h"
+#include "Framebuffer.hpp"
+#include "Formats.hpp"
 #include <stdint.h>
 
 typedef union ClearColor {

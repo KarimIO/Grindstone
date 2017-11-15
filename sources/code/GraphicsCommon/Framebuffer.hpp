@@ -1,8 +1,8 @@
 #pragma once
 
-#include "RenderPass.h"
+#include "RenderPass.hpp"
+#include "Formats.hpp"
 #include <vector>
-#include "Formats.h"
 #include <stdint.h>
 
 class RenderPass;

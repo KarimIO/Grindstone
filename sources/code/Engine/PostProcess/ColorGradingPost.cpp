@@ -1,7 +1,7 @@
-#include "ColorGradingPost.h"
+#include "ColorGradingPost.hpp"
 #include <string>
-#include "../Core/Utilities.h"
-#include "../Core/Engine.h"
+#include "../Core/Utilities.hpp"
+#include "../Core/Engine.hpp"
 
 ColorGradingPost::ColorGradingPost() {
 	/*std::string vsPath = "../shaders/overlay.glvs";

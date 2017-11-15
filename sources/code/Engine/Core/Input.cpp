@@ -1,6 +1,6 @@
-#include "Input.h"
-#include "Engine.h"
-#include "Utilities.h"
+#include "Input.hpp"
+#include "Engine.hpp"
+#include "Utilities.hpp"
 #include <fstream>
 
 InputSystem::InputSystem() {
