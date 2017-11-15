@@ -1,7 +1,7 @@
 #ifndef _GL_TEXTURE_H
 #define _GL_TEXTURE_H
 
-#include "../GraphicsCommon/Texture.h"
+#include "../GraphicsCommon/Texture.hpp"
 #include <vector>
 #include <d3d11.h>
 

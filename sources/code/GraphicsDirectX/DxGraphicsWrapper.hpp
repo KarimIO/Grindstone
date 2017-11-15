@@ -11,9 +11,9 @@
 //#include "DxIndexBuffer.h"
 //#include "DxUniformBuffer.h"
 //#include "DxTexture.h"
-#include "../GraphicsCommon/GraphicsWrapper.h"
-#include "../GraphicsCommon/DLLDefs.h"
-#include "../GraphicsCommon/VertexArrayObject.h"
+#include "../GraphicsCommon/GraphicsWrapper.hpp"
+#include "../GraphicsCommon/DLLDefs.hpp"
+#include "../GraphicsCommon/VertexArrayObject.hpp"
 
 class GRAPHICS_EXPORT_CLASS DxGraphicsWrapper : public GraphicsWrapper {
 private:

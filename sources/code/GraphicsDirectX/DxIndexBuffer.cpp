@@ -1,4 +1,4 @@
-#include "DxIndexBuffer.h"
+#include "DxIndexBuffer.hpp"
 
 DxIndexBuffer::DxIndexBuffer(ID3D11Device *device, ID3D11DeviceContext *_deviceContext, IndexBufferCreateInfo createInfo) {
 	deviceContext = _deviceContext;

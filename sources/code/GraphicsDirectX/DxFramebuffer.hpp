@@ -1,8 +1,8 @@
 #ifndef _DX_FRAMEBUFFER_H
 #define _DX_FRAMEBUFFER_H
 
-#include "../GraphicsCommon/Framebuffer.h"
-#include "../GraphicsCommon/DLLDefs.h"
+#include "../GraphicsCommon/Framebuffer.hpp"
+#include "../GraphicsCommon/DLLDefs.hpp"
 #include <d3d11.h>
 
 class DxFramebuffer : public Framebuffer {

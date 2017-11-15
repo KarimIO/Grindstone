@@ -2,7 +2,7 @@
 #define _PHYSICS_H
 
 #include "CBase.hpp"
-#include <bullet/btBulletDynamicsCommon.h>
+#include <btBulletDynamicsCommon.h>
 #include "glm/glm.hpp"
 #include <vector>
 

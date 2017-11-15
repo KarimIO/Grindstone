@@ -1,4 +1,4 @@
-#include "DxGraphicsPipeline.h"
+#include "DxGraphicsPipeline.hpp"
 
 bool DxGraphicsPipeline::createShaderModule(ShaderStageCreateInfo shaderStageCreateInfo) {
 	switch (shaderStageCreateInfo.type) {

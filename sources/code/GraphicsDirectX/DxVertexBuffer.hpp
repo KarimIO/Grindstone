@@ -2,7 +2,7 @@
 #define _DX_VERTEX_BUFFER_H
 
 #include <stdint.h>
-#include "../GraphicsCommon/VertexBuffer.h"
+#include "../GraphicsCommon/VertexBuffer.hpp"
 #include <d3d11.h>
 
 

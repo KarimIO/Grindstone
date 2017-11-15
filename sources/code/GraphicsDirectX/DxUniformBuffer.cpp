@@ -1,4 +1,4 @@
-#include "DxUniformBuffer.h"
+#include "DxUniformBuffer.hpp"
 #include <iostream>
 
 DxUniformBuffer::DxUniformBuffer(ID3D11Device* device, ID3D11DeviceContext* _deviceContext, UniformBufferCreateInfo ci) {

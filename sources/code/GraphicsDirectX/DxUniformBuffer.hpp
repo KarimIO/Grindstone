@@ -1,7 +1,7 @@
 #ifndef _DX_UNIFORM_BUFFER_H
 #define _DX_UNIFORM_BUFFER_H
 
-#include "../GraphicsCommon/UniformBuffer.h"
+#include "../GraphicsCommon/UniformBuffer.hpp"
 #include <d3d11.h>
 
 class DxUniformBufferBinding : public UniformBufferBinding {

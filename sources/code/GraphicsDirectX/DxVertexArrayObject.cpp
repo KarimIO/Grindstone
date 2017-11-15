@@ -1,4 +1,4 @@
-#include "DxVertexArrayObject.h"
+#include "DxVertexArrayObject.hpp"
 #include <iostream>
 
 DxVertexArrayObject::DxVertexArrayObject(VertexArrayObjectCreateInfo createInfo) {

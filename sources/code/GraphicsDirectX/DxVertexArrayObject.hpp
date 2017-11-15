@@ -1,9 +1,9 @@
 #ifndef _GL_VERTEX_ARRAY_OBJECT_H
 #define _GL_VERTEX_ARRAY_OBJECT_H
 
-#include "../GraphicsCommon/VertexArrayObject.h"
-#include "DxVertexBuffer.h"
-#include "DxIndexBuffer.h"
+#include "../GraphicsCommon/VertexArrayObject.hpp"
+#include "DxVertexBuffer.hpp"
+#include "DxIndexBuffer.hpp"
 
 class DxVertexArrayObject : public VertexArrayObject {
 private:

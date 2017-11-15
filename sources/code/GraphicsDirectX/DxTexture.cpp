@@ -1,4 +1,4 @@
-#include "DxTexture.h"
+#include "DxTexture.hpp"
 #include <iostream>
 
 DxTexture::DxTexture(ID3D11Device *device, ID3D11DeviceContext *deviceContext, TextureCreateInfo createInfo) {

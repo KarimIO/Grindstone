@@ -1,12 +1,12 @@
-#include "DxVertexArrayObject.h"
-#include "DxGraphicsPipeline.h"
-#include "DxUniformBuffer.h"
-#include "DxGraphicsWrapper.h"
+#include "DxVertexArrayObject.hpp"
+#include "DxGraphicsPipeline.hpp"
+#include "DxUniformBuffer.hpp"
+#include "DxGraphicsWrapper.hpp"
 #include <iostream>
 #include <array>
 #include <assert.h>
-#include "DxTexture.h"
-#include "DxFramebuffer.h"
+#include "DxTexture.hpp"
+#include "DxFramebuffer.hpp"
 
 void DxGraphicsWrapper::Clear() {
 	float color[4] = { 0.0, 0.0, 0.0, 1.0 };
@@ -134,7 +134,7 @@ denominator = displayModeList[i].RefreshRate.Denominator;
 	uint32_t m_videoCardMemory = (uint32_t)(adapterDesc.DedicatedVideoMemory);
 
 	// Convert the name of the video card to a character array and store it.
-	error = wcstombs_s(&stringLength, m_videoCardDescription, 128, adapterDesc.Description, 128);
+	error = wcstombs_s((size_t *)&stringLength, m_videoCardDescription, 128, adapterDesc.Description, 128);
 	if (error != 0) {
 		return;
 	}

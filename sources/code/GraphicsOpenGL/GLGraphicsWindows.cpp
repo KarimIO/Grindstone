@@ -3,7 +3,7 @@
 #if !defined(GLFW_WINDOW) && defined(_WIN32)
 #include <GL/gl3w.h>
 #include <windows.h>
-#include "wglext.h"
+#include <wglext.h>
 
 bool GLGraphicsWrapper::InitializeWindowContext() {
 	InitializeWin32Window();

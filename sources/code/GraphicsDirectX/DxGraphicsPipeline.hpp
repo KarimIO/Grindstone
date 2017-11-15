@@ -1,7 +1,7 @@
 #pragma once
 
 #include <d3d11.h>
-#include "../GraphicsCommon/GraphicsPipeline.h"
+#include "../GraphicsCommon/GraphicsPipeline.hpp"
 
 class DxGraphicsPipeline : public GraphicsPipeline {
 	ID3D11Device *device;

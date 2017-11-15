@@ -2,7 +2,7 @@
 #define _DX_INDEX_BUFFER_H
 
 #include <stdint.h>
-#include "../GraphicsCommon/IndexBuffer.h"
+#include "../GraphicsCommon/IndexBuffer.hpp"
 #include <d3d11.h>
 
 

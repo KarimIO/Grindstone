@@ -60,6 +60,7 @@ Framebuffer *ColorGradingPost::Process(Framebuffer *target) {
 		std::cout << "Error was at " << __LINE__ << ", in " << __FILE__ << " \n";
 		
 	return fbo;*/
+	return nullptr;
 }
 
 ColorGradingPost::~ColorGradingPost() {

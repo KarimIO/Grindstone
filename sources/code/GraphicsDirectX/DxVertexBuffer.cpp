@@ -1,4 +1,4 @@
-#include "DxVertexBuffer.h"
+#include "DxVertexBuffer.hpp"
 
 DxVertexBuffer::DxVertexBuffer(ID3D11Device *device, ID3D11DeviceContext *_deviceContext, VertexBufferCreateInfo createInfo) {
 	deviceContext = _deviceContext;
