@@ -31,10 +31,10 @@
 	Engine *Engine::=0;
 #endif
 
-bool run_loading = false;
+bool run_loading = true;
 void Engine::LoadingScreenThread() {
 	auto start = std::chrono::high_resolution_clock::now();
-	LoadingScreen screen(engine.graphics_wrapper_);
+	LoadingScreen screen(graphics_wrapper_);
 	while (run_loading) {
 		auto curr = std::chrono::high_resolution_clock::now();
 		double t = std::chrono::duration_cast<std::chrono::nanoseconds>(curr - start).count() / 100000000.0f;
@@ -49,7 +49,7 @@ bool Engine::Initialize() {
 
 	// Get Settings here:
 	InitializeSettings();
-	if (!InitializeGraphics(engine.settings.graphicsLanguage))		return false;
+	if (!InitializeGraphics(settings.graphicsLanguage))		return false;
 #if MULTITHEAD_LOAD
 	run_loading = true;
 	std::thread t1(&Engine::LoadingScreenThread, this);
@@ -77,7 +77,7 @@ bool Engine::Initialize() {
 	inputSystem.BindAction("Shutdown", NULL, this, &Engine::ShutdownControl, KEY_RELEASED);
 
 	inputSystem.AddControl("q", "CaptureCubemaps", NULL, 1);
-	inputSystem.BindAction("CaptureCubemaps", NULL, &(engine.cubemapSystem), &CubemapSystem::CaptureCubemaps);
+	inputSystem.BindAction("CaptureCubemaps", NULL, &(cubemapSystem), &CubemapSystem::CaptureCubemaps);
 
 	inputSystem.AddControl("1", "SwitchDebug", NULL, 1);
 	inputSystem.BindAction("SwitchDebug", NULL, this, &Engine::SwitchDebug);
@@ -85,7 +85,7 @@ bool Engine::Initialize() {
 	//terrainSystem.Initialize();
 	if (!InitializeScene(defaultMap))	return false;
 
-	cameraSystem.components[0].SetAspectRatio((float)engine.settings.resolutionX/engine.settings.resolutionY);
+	cameraSystem.components[0].SetAspectRatio((float)settings.resolutionX/settings.resolutionY);
 	
 	if (settings.enableReflections)
 		cubemapSystem.LoadCubemaps();
@@ -200,9 +200,9 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	}
 
 	InstanceCreateInfo createInfo;
-	createInfo.width = engine.settings.resolutionX;
-	createInfo.height = engine.settings.resolutionY;
-	createInfo.vsync = engine.settings.vsync;
+	createInfo.width = settings.resolutionX;
+	createInfo.height = settings.resolutionY;
+	createInfo.vsync = settings.vsync;
 	createInfo.inputInterface = &inputSystem;
 	createInfo.title = "Grindstone";
 #ifdef NDEBUG
@@ -280,6 +280,18 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	vads[3].offset = offsetof(Vertex, texCoord);
 	vads[3].usage = ATTRIB_TEXCOORD0;
 
+	planeVBD.binding = 0;
+	planeVBD.elementRate = false;
+	planeVBD.stride = sizeof(float) * 2;
+
+	planeVAD.binding = 0;
+	planeVAD.location = 0;
+	planeVAD.format = VERTEX_R32_G32;
+	planeVAD.size = 2;
+	planeVAD.name = "vertexPosition";
+	planeVAD.offset = 0;
+	planeVAD.usage = ATTRIB_POSITION;
+
 	materialManager.Initialize(graphics_wrapper_, vbd, vads, ubb);
 	geometry_system.AddSystem(new SGeometryStatic(&materialManager, graphics_wrapper_, vbd, vads));
 
@@ -293,8 +305,8 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	gbufferCI.colorFormats = gbufferCFs.data();
 	gbufferCI.depthFormat = FORMAT_DEPTH_24;
 	gbufferCI.numColorTargets = (uint32_t)gbufferCFs.size();
-	gbufferCI.width = engine.settings.resolutionX;
-	gbufferCI.height = engine.settings.resolutionY;
+	gbufferCI.width = settings.resolutionX;
+	gbufferCI.height = settings.resolutionY;
 	gbufferCI.renderPass = nullptr;
 	gbuffer = graphics_wrapper_->CreateFramebuffer(gbufferCI);
 
@@ -303,8 +315,8 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	defaultFramebufferCI.colorFormats = &deviceColorFormat;
 	defaultFramebufferCI.depthFormat = FORMAT_DEPTH_24;
 	defaultFramebufferCI.numColorTargets = 1;
-	defaultFramebufferCI.width = engine.settings.resolutionX;
-	defaultFramebufferCI.height = engine.settings.resolutionY;
+	defaultFramebufferCI.width = settings.resolutionX;
+	defaultFramebufferCI.height = settings.resolutionY;
 	defaultFramebufferCI.renderPass = nullptr;
 	defaultFramebuffer = graphics_wrapper_->CreateFramebuffer(defaultFramebufferCI);
 
@@ -323,7 +335,7 @@ void Engine::Render(glm::mat4 _projMat, glm::mat4 _viewMat) {
 		graphics_wrapper_->WaitUntilIdle();
 	}
 	else {
-		if (!engine.settings.debugNoLighting) {
+		if (!settings.debugNoLighting) {
 			gbuffer->BindWrite();
 			gbuffer->Clear();
 			materialManager.DrawImmediate();

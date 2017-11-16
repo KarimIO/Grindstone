@@ -19,18 +19,17 @@ OutType convertString(std::string input) {
 int main(int argc, char* argv[]) {
 	std::string path;
 	// Check the number of parameters
-#if 0
 	if (argc < 2) {
 		std::cout << "Enter path to file: ";
 		std::cin >> path;
+		if (path == "crytek") {
+			path = "../assets/models/crytek-sponza/sponza.obj";
+		}
 	}
 	else {
-		path = argv[0];
+		path = argv[1];
 	}
-#else
-	path = "../assets/models/crytek-sponza/sponza.obj";
-#endif
-	
+
 	OutType type = convertString(path);
 	//switch (type) {
 	//case OUTPUT_MODEL:

@@ -185,18 +185,6 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 	graphics_wrapper_ = gw;
 	geometry_system = gc;
 
-	engine.planeVBD.binding = 0;
-	engine.planeVBD.elementRate = false;
-	engine.planeVBD.stride = sizeof(float) * 2;
-
-	engine.planeVAD.binding = 0;
-	engine.planeVAD.location = 0;
-	engine.planeVAD.format = VERTEX_R32_G32;
-	engine.planeVAD.size = 2;
-	engine.planeVAD.name = "vertexPosition";
-	engine.planeVAD.offset = 0;
-	engine.planeVAD.usage = ATTRIB_POSITION;
-
 	UniformBufferBindingCreateInfo deffubbci;
 	deffubbci.binding = 0;
 	deffubbci.shaderLocation = "UniformBufferObject";

@@ -8,7 +8,6 @@ struct PixelInputType {
     float2 texCoord : TEXCOORD0;
 };
 
-
 cbuffer MatrixInfoType {
     float aspect;
     float time;

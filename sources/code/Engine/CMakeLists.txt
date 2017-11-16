@@ -38,7 +38,8 @@ if (WIN32)
 
     target_link_libraries(Grindstone optimized ${bullet_LIBRARIES})
 else ()
-    target_link_libraries(Grindstone ${CMAKE_DL_LIBS} BulletDynamics BulletCollision LinearMath)
+    find_package (Threads)
+    target_link_libraries(Grindstone ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} BulletDynamics BulletCollision LinearMath)
 endif()
 
 target_include_directories(Grindstone PUBLIC ${DEPS_DIR} ${RAPIDJSON_INCLUDE_DIRS} ${BULLET_INCLUDE_DIR} ${INCLUDE_DIRECTORIES})
