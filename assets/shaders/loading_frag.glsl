@@ -42,7 +42,7 @@ void main() {
     for (uint i = 0u; i < num_orbs; i++) {
         float f = float(i) / num_orbs;
         float off = ubo.time + i;
-        off *= 0.2;
+        off *= -0.2;
         vec2 circle_pos = vec2(0.5 + cos(off) * circle_dist / ubo.aspect, 0.5 + sin(off) * circle_dist);
         cs += CalcSphere(circle_pos - fragTexCoord, 0.005 * sqrt(f)) * f;
     }

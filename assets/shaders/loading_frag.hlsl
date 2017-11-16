@@ -44,7 +44,7 @@ float4 main(PixelInputType input) : SV_TARGET {
     for (uint i = 0; i < num_orbs; i++) {
         float f = float(i) / num_orbs;
         float off = time + i;
-        off *= 0.2;
+        off *= -0.2;
         float2 circle_pos = float2(0.5 + cos(off) * circle_dist / aspect, 0.5 + sin(off) * circle_dist);
         cs += CalcSphere(circle_pos - input.texCoord, 0.005 * sqrt(f)) * f;
     }
