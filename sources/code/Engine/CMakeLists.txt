@@ -1,6 +1,6 @@
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-set(ENGINE_CORE_HEADERS Core/Engine.hpp Core/Entity.hpp Core/iniHandler.hpp Core/Input.hpp Core/InputInterface.hpp Core/Space.hpp Core/Utilities.hpp Core/LevelLoader.hpp)
+set(ENGINE_CORE_HEADERS Core/Engine.hpp Core/Entity.hpp Core/LoadingScreen.hpp Core/iniHandler.hpp Core/Input.hpp Core/InputInterface.hpp Core/Space.hpp Core/Utilities.hpp Core/LevelLoader.hpp)
 source_group("Core\\Header Files" FILES ${ENGINE_CORE_HEADERS})
 set(ENGINE_RENDERPATHS_HEADERS Renderpaths/RenderPath.hpp  Renderpaths/RenderPathDeferred.hpp Renderpaths/RenderPathForward.hpp)
 source_group("Render Paths\\Header Files" FILES ${ENGINE_RENDERPATHS_HEADERS})
@@ -10,7 +10,7 @@ set(ENGINE_POST_HEADERS PostProcess/BasePost.hpp PostProcess/PostPipeline.hpp Po
 source_group("Post Processing\\Header Files" FILES ${ENGINE_POST_HEADERS})
 set(ENGINE_HEADERS ${ENGINE_CORE_HEADERS} ${ENGINE_ENTITES_HEADERS} ${ENGINE_RENDERPATHS_HEADERS} ${ENGINE_SYSTEMS_HEADERS} ${ENGINE_POST_HEADERS})
 
-set(ENGINE_CORE_SOURCES Core/Main.cpp Core/Entity.cpp Core/Engine.cpp Core/iniHandler.cpp Core/Input.cpp Core/Space.cpp Core/Utilities.cpp Core/LevelLoader.cpp)
+set(ENGINE_CORE_SOURCES Core/Main.cpp Core/Entity.cpp Core/Engine.cpp Core/LoadingScreen.cpp Core/iniHandler.cpp Core/Input.cpp Core/Space.cpp Core/Utilities.cpp Core/LevelLoader.cpp)
 source_group("Core\\Source Files" FILES ${ENGINE_CORE_SOURCES})
 set(ENGINE_RENDERPATHS_SOURCES Renderpaths/RenderPathDeferred.cpp Renderpaths/RenderPathForward.cpp)
 source_group("Render Paths\\Source Files" FILES ${ENGINE_RENDERPATHS_SOURCES})

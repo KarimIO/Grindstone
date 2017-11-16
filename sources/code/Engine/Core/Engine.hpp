@@ -84,6 +84,7 @@ public:
 	UniformBufferBinding *spotLightUBB;
 	std::vector<TextureSubBinding> bindings;
 private:
+	void LoadingScreenThread();
 	Framebuffer *gbuffer;
 	Framebuffer *defaultFramebuffer;
 

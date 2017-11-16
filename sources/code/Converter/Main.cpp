@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
 		path = argv[0];
 	}
 #else
-	path = "../assets/models/materialTest/materialTest.obj";
+	path = "../assets/models/crytek-sponza/sponza.obj";
 #endif
 	
 	OutType type = convertString(path);

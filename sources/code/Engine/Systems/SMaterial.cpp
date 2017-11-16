@@ -445,8 +445,8 @@ bool readFile(const std::string& filename, std::vector<char>& outputfile) {
 	return true;
 }
 
-RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapper_, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads, UniformBufferBinding *ubb) {
-	graphics_wrapper_ = graphics_wrapper_;
+RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapper, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads, UniformBufferBinding *ubb) {
+	graphics_wrapper_ = graphics_wrapper;
 
 	render_passes_.resize(1);
 
@@ -652,31 +652,19 @@ MaterialReference MaterialManager::PreLoadMaterial(std::string path) {
 }
 
 MaterialReference MaterialManager::CreateMaterial(std::string path) {
-	std::cout << material_map_.size() << " _ " << std::endl;
-	material_map_.end();
-	std::cout << "CM3" << std::endl;
-	material_map_.find(path);
-	std::cout << "CM4" << std::endl;
 	if (material_map_.find(path) != material_map_.end()) {
-		std::cout << "CM2" << std::endl;
 		return material_map_[path];
 	}
 
-	std::cout << "CM" << std::endl;
 	std::ifstream input(path + ".gbm", std::ios::ate | std::ios::binary);
 
-	std::cout << "CM" << std::endl;
 	if (!input.is_open()) {
-		std::cout << "CM" << std::endl;
 		input.open(path + ".gjm", std::ios::ate | std::ios::binary);
-
-		std::cout << "CM" << std::endl;
 		if (!input.is_open()) {
 			std::cerr << "Failed to open material: " << path.c_str() << "!\n";
 			return MaterialReference();
 		}
 	}
-	std::cout << "CM" << std::endl;
 
 	std::cout << "Material reading from: " << path << "!\n";
 
@@ -790,6 +778,7 @@ Texture *MaterialManager::PreLoadTexture(std::string path) {
 	}
 
 	//unloaded_.push_back();
+	return nullptr;
 }
 
 Texture * MaterialManager::LoadTexture(std::string path) {

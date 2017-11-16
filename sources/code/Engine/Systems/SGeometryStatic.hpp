@@ -77,9 +77,9 @@ public:
 
 class SGeometryStatic : public SSubGeometry {
 public:
-	SGeometryStatic(GraphicsWrapper *graphics_wrapper_, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads);
+	SGeometryStatic(MaterialManager *material_system, GraphicsWrapper *graphics_wrapper, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads);
 
-	virtual void LoadGeometry(unsigned int render_id, std::string path);
+	virtual void LoadGeometry(uint32_t render_id, std::string path);
 	virtual void LoadPreloaded();
 
 	~SGeometryStatic();

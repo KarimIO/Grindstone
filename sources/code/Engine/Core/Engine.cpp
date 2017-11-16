@@ -3,7 +3,9 @@
 #include "iniHandler.hpp"
 #include <stdio.h>
 #include "LevelLoader.hpp"
+#include "LoadingScreen.hpp"
 #include "Systems/SGeometryStatic.hpp"
+#include <thread>
 
 #if defined(_WIN32)
 	#define LoadDLL(path) HMODULE dllHandle = LoadLibrary((path+".dll").c_str()); \
@@ -29,12 +31,30 @@
 	Engine *Engine::=0;
 #endif
 
+bool run_loading = false;
+void Engine::LoadingScreenThread() {
+	auto start = std::chrono::high_resolution_clock::now();
+	LoadingScreen screen(engine.graphics_wrapper_);
+	while (run_loading) {
+		auto curr = std::chrono::high_resolution_clock::now();
+		double t = std::chrono::duration_cast<std::chrono::nanoseconds>(curr - start).count() / 100000000.0f;
+		screen.Render(t);
+	}
+}
+
+#define MULTITHEAD_LOAD 0
+
 bool Engine::Initialize() {
 	srand((unsigned int)time(NULL));
 
 	// Get Settings here:
 	InitializeSettings();
 	if (!InitializeGraphics(engine.settings.graphicsLanguage))		return false;
+#if MULTITHEAD_LOAD
+	run_loading = true;
+	std::thread t1(&Engine::LoadingScreenThread, this);
+#endif
+
 	physicsSystem.Initialize();
 
 	lightSystem.SetPointers(graphics_wrapper_, &geometry_system);
@@ -74,6 +94,12 @@ bool Engine::Initialize() {
 	prevTime = std::chrono::high_resolution_clock::now();
 	startTime = std::chrono::high_resolution_clock::now();
 	printf("Initialization Complete! Starting:\n==================================\n");
+
+#if MULTITHEAD_LOAD
+	run_loading = false;
+	t1.join();
+#endif
+
 	return true;
 }
 
@@ -255,7 +281,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	vads[3].usage = ATTRIB_TEXCOORD0;
 
 	materialManager.Initialize(graphics_wrapper_, vbd, vads, ubb);
-	geometry_system.AddSystem(new SGeometryStatic(graphics_wrapper_, vbd, vads));
+	geometry_system.AddSystem(new SGeometryStatic(&materialManager, graphics_wrapper_, vbd, vads));
 
 	std::vector<ColorFormat> gbufferCFs = {
 		FORMAT_COLOR_R8G8B8A8,	// R  G  B  MatID

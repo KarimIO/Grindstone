@@ -174,7 +174,7 @@ void SGeometryStatic::LoadModel(CModelStatic *model) {
 	}
 }
 
-SGeometryStatic::SGeometryStatic(GraphicsWrapper * graphics_wrapper, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads) : graphics_wrapper_(graphics_wrapper), vbd_(vbd), vads_(vads) {}
+SGeometryStatic::SGeometryStatic(MaterialManager *material_system, GraphicsWrapper * graphics_wrapper, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads) : graphics_wrapper_(graphics_wrapper), vbd_(vbd), vads_(vads), material_system_(material_system) {}
 
 SGeometryStatic::~SGeometryStatic() {
 	if (graphics_wrapper_) {

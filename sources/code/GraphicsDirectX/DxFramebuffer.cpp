@@ -1,4 +1,4 @@
-#include "DxFramebuffer.h"
+#include "DxFramebuffer.hpp"
 #include <iostream>
 
 DxFramebuffer::DxFramebuffer(ID3D11Device *device, ID3D11DeviceContext *deviceContext, FramebufferCreateInfo ci) {

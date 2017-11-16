@@ -12,14 +12,14 @@ if(WIN32)
 		NAMES
 			assimp/anim.h
 		HINTS
-			${ASSIMP_ROOT_DIR}/include
+			${ASSIMP_ROOT_DIR}/include ${ASSIMP_ROOT_DIR}/include/assimp
 	)
 
 	find_path(ASSIMP_LIBRARY_DIR
 		NAMES
 			assimp.lib
 		HINTS
-			${ASSIMP_ROOT_DIR}/lib/x${ASSIMP_ARCHITECTURE}
+			${ASSIMP_ROOT_DIR}/lib/x${ASSIMP_ARCHITECTURE} ${ASSIMP_ROOT_DIR}/lib${ASSIMP_ARCHITECTURE}
 	)
 
 	set(assimp_LIBRARIES assimp)
