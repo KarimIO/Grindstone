@@ -445,7 +445,7 @@ bool readFile(const std::string& filename, std::vector<char>& outputfile) {
 	return true;
 }
 
-RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapper, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads, UniformBufferBinding *ubb) {
+RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapper, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads, std::vector<UniformBufferBinding *> ubbs) {
 	graphics_wrapper_ = graphics_wrapper;
 
 	render_passes_.resize(1);
@@ -541,8 +541,8 @@ RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapp
 	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
 	gpci.shaderStageCreateInfos = stages.data();
 	gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
-	gpci.uniformBufferBindings = &ubb;
-	gpci.uniformBufferBindingCount = 1;
+	gpci.uniformBufferBindings = ubbs.data();
+	gpci.uniformBufferBindingCount = ubbs.size();
 	gpci.textureBindings = &tbl;
 	gpci.textureBindingCount = 1;
 	gpci.cullMode = CULL_BACK;

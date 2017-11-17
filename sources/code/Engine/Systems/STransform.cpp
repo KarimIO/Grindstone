@@ -7,6 +7,12 @@ void STransform::AddComponent(unsigned int entityID, unsigned int &target) {
 	target = (unsigned int)(components.size() - 1);
 }
 
+void STransform::Update() {
+	for (auto &component : components) {
+		component.Update();
+	}
+}
+
 CTransform::CTransform() {
 	componentType = COMPONENT_TRANSFORM;
 	scale = glm::vec3(1, 1, 1);
@@ -46,15 +52,17 @@ glm::vec3 CTransform::GetScale() {
 	return scale;
 }
 
-glm::mat4x4 CTransform::GetModelMatrix() {
-	glm::mat4x4 Model = glm::mat4(1);
-	Model = glm::translate(
-		Model,
+void CTransform::Update() {
+	model = glm::mat4(1);
+	model = glm::translate(
+		model,
 		position);
-	Model = glm::scale(Model, GetScale());
+	model = glm::scale(model, GetScale());
 	float maxRot = (std::fmax(std::fmax(angles.x, angles.y), angles.z));
 	if (maxRot > 0)
-		Model = glm::rotate(Model, maxRot, angles / maxRot);
+		model = glm::rotate(model, maxRot, angles / maxRot);
+}
 
-	return Model;
+glm::mat4x4 &CTransform::GetModelMatrix() {
+	return model;
 }

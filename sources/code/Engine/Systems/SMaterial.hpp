@@ -83,7 +83,7 @@ public:
 
 class MaterialManager {
 public:
-	RenderPassContainer *Initialize(GraphicsWrapper *gw, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads, UniformBufferBinding *ubb);
+	RenderPassContainer *Initialize(GraphicsWrapper *gw, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads, std::vector<UniformBufferBinding *>ubbs);
 	PipelineReference CreatePipeline(std::string pipelineName);
 	MaterialReference CreateMaterial(std::string shaderName);
 	MaterialReference PreLoadMaterial(std::string shaderName);

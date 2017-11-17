@@ -48,7 +48,7 @@ public:
 	CPhysics *Get(unsigned int componentID);
 	CPhysics *GetComponent(unsigned int componentID);
 	void RemoveComponent(unsigned int componentID);
-	void StepSimulation(double dt);
+	void Update(double dt);
 	void SetTransforms();
 	void CleanupComponents();
 	void Cleanup();

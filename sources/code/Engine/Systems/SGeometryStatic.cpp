@@ -17,9 +17,8 @@ void MeshStatic::Draw() {
 		auto renderComponent = engine.geometry_system.GetComponent(reference);
 		auto entityID = renderComponent.entity_id;
 		auto transform = engine.transformSystem.components[entityID];
-		glm::mat4 modelMatrix = transform.GetModelMatrix();
 
-		engine.ubo2->UpdateUniformBuffer(&modelMatrix);
+		engine.ubo2->UpdateUniformBuffer(&transform.GetModelMatrix());
 		engine.ubo2->Bind();
 
 		engine.graphics_wrapper_->BindVertexArrayObject(model->vertexArrayObject);

@@ -105,7 +105,7 @@ CPhysics *SPhysics::GetComponent(unsigned int componentID){
 	return &components[componentID];
 }
 
-void SPhysics::StepSimulation(double dt) {
+void SPhysics::Update(double dt) {
 	dynamicsWorld->stepSimulation((btScalar)dt, 10);
 	SetTransforms();
 }

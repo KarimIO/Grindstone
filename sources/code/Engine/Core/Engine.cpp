@@ -234,12 +234,14 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	ubbci2.size = sizeof(glm::mat4);
 	ubbci2.stages = SHADER_STAGE_VERTEX_BIT;
 	UniformBufferBinding *ubb2 = graphics_wrapper_->CreateUniformBufferBinding(ubbci2);
-
+	
 	UniformBufferCreateInfo ubci2;
 	ubci2.isDynamic = true;
 	ubci2.size = sizeof(glm::mat4);
 	ubci2.binding = ubb2;
 	ubo2 = graphics_wrapper_->CreateUniformBuffer(ubci2);
+
+	std::vector<UniformBufferBinding *> ubbs = { ubb, ubb2 };
 
 	VertexBindingDescription vbd;
 	std::vector<VertexAttributeDescription> vads;
@@ -292,7 +294,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	planeVAD.offset = 0;
 	planeVAD.usage = ATTRIB_POSITION;
 
-	materialManager.Initialize(graphics_wrapper_, vbd, vads, ubb);
+	materialManager.Initialize(graphics_wrapper_, vbd, vads, ubbs);
 	geometry_system.AddSystem(new SGeometryStatic(&materialManager, graphics_wrapper_, vbd, vads));
 
 	std::vector<ColorFormat> gbufferCFs = {
@@ -367,7 +369,8 @@ void Engine::Run() {
 		inputSystem.LoopControls();
 
 		gameplay_system.Update(GetUpdateTimeDelta());
-		physicsSystem.StepSimulation(GetUpdateTimeDelta());
+		physicsSystem.Update(GetUpdateTimeDelta());
+		transformSystem.Update();
 
 		glm::mat4 pv;
 		if (cameraSystem.components.size() > 0) {
