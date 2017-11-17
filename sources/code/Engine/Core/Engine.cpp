@@ -218,26 +218,26 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	UniformBufferBindingCreateInfo ubbci;
 	ubbci.binding = 0;
 	ubbci.shaderLocation = "UniformBufferObject";
-	ubbci.size = sizeof(myUBO);
+	ubbci.size = sizeof(glm::mat4);
 	ubbci.stages = SHADER_STAGE_VERTEX_BIT;
 	UniformBufferBinding *ubb = graphics_wrapper_->CreateUniformBufferBinding(ubbci);
 
 	UniformBufferCreateInfo ubci;
-	ubci.isDynamic = false;
-	ubci.size = sizeof(MatUniformBufferObject);
+	ubci.isDynamic = true;
+	ubci.size = sizeof(glm::mat4);
 	ubci.binding = ubb;
 	ubo = graphics_wrapper_->CreateUniformBuffer(ubci);
 
 	UniformBufferBindingCreateInfo ubbci2;
 	ubbci2.binding = 1;
 	ubbci2.shaderLocation = "ModelMatrixBuffer";
-	ubbci2.size = sizeof(modelUBO);
+	ubbci2.size = sizeof(glm::mat4);
 	ubbci2.stages = SHADER_STAGE_VERTEX_BIT;
 	UniformBufferBinding *ubb2 = graphics_wrapper_->CreateUniformBufferBinding(ubbci2);
 
 	UniformBufferCreateInfo ubci2;
-	ubci2.isDynamic = false;
-	ubci2.size = sizeof(modelUBO);
+	ubci2.isDynamic = true;
+	ubci2.size = sizeof(glm::mat4);
 	ubci2.binding = ubb2;
 	ubo2 = graphics_wrapper_->CreateUniformBuffer(ubci2);
 
@@ -329,7 +329,7 @@ Engine &Engine::GetInstance() {
 	return newEngine;
 }
 
-void Engine::Render(glm::mat4 _projMat, glm::mat4 _viewMat) {
+void Engine::Render() {
 	if (graphics_wrapper_->SupportsCommandBuffers()) {
 		materialManager.DrawDeferred();
 		graphics_wrapper_->WaitUntilIdle();
@@ -369,21 +369,18 @@ void Engine::Run() {
 		gameplay_system.Update(GetUpdateTimeDelta());
 		physicsSystem.StepSimulation(GetUpdateTimeDelta());
 
+		glm::mat4 pv;
 		if (cameraSystem.components.size() > 0) {
 			CCamera *cam = &cameraSystem.components[0];
-			
-			myUBO.proj = cam->GetProjection();
-			myUBO.view = cam->GetView();
 
-			modelUBO.model = glm::scale(glm::vec3(0.01f, 0.01f, 0.01f));
-			ubo2->UpdateUniformBuffer(&modelUBO);
+			pv = cam->GetProjection() * cam->GetView();
+			ubo->UpdateUniformBuffer(&pv);
+			ubo->Bind();
 			ubo2->Bind();
-			ubo->UpdateUniformBuffer(&myUBO);
 
 			if (settings.enableShadows)
 				lightSystem.DrawShadows();
-			ubo->Bind();
-			Render(myUBO.proj, myUBO.view);
+			Render();
 		}
 
 		//sUi.Update();

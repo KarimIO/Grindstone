@@ -1,8 +1,7 @@
 #version 330 core
 
 layout(std140) uniform UniformBufferObject {
-    mat4 view;
-    mat4 proj;
+    mat4 proj_view;
 } ubo;
 
 layout(std140) uniform ModelMatrixBuffer {
@@ -20,7 +19,8 @@ out vec3 fragTangent;
 out vec2 fragTexCoord;
 
 void main() {
-    gl_Position = ubo.proj * ubo.view * mbo.model * vec4(vertexPosition, 1.0);
+    // mbo.model messes up everything for some reason
+    gl_Position = ubo.proj_view * vec4(vertexPosition, 1.0);
     fragPosition = (mbo.model * vec4(vertexPosition, 1.0)).xyz;
     fragNormal = normalize((mbo.model * vec4(vertexNormal, 1.0)).xyz);
     fragTangent =  normalize((mbo.model * vec4(vertexTangent, 1.0)).xyz);

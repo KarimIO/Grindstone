@@ -9,8 +9,7 @@
 
 cbuffer MatrixBuffer
 {
-    matrix viewMatrix;
-    matrix projectionMatrix;
+    matrix proj_view;
 };
 
 cbuffer ModelMatrixBuffer {
@@ -48,8 +47,7 @@ PixelInputType main(VertexInputType input) {
     // Calculate the position of the vertex against the world, view, and projection matrices.
     position = mul(position, worldMatrix);
     output.worldPosition = position.xyz;
-    position = mul(position, viewMatrix);
-    output.position = mul(position, projectionMatrix);
+    output.position = mul(position, proj_view);
     
     output.normal = normalize(mul(float4(input.normal, 1.0), worldMatrix).xyz);
     output.tangent = normalize(mul(float4(input.tangent, 1.0), worldMatrix).xyz);

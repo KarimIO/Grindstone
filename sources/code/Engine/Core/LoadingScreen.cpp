@@ -176,7 +176,7 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 
 	UniformBufferCreateInfo ubci;
 	ubci.isDynamic = false;
-	ubci.size = sizeof(MatUniformBufferObject);
+	ubci.size = sizeof(loadUBO);
 	ubci.binding = ubb_;
 	ubo_ = graphics_wrapper_->CreateUniformBuffer(ubci);
 

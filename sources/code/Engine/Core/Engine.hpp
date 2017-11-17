@@ -64,15 +64,6 @@ enum {
 };
 class Entity;
 
-struct MatUniformBufferObject {
-	glm::mat4 view;
-	glm::mat4 proj;
-};
-
-struct ModelMatrixUBO {
-	glm::mat4 model;
-};
-
 class Engine {
 public:
 	VertexBindingDescription planeVBD;
@@ -99,7 +90,6 @@ private:
 
 	//SUI sUi;
 	UniformBuffer *ubo;
-	MatUniformBufferObject myUBO;
 
 	// Time Data
 	std::chrono::time_point<std::chrono::high_resolution_clock> currentTime, prevTime, startTime;
@@ -110,7 +100,6 @@ private:
 	std::chrono::nanoseconds deltaTime;
 public:
 	UniformBuffer *ubo2;
-	ModelMatrixUBO modelUBO;
 
 	GraphicsPipeline *pipeline;
 	int debugMode;
@@ -164,7 +153,7 @@ public:
 	double GetTimeCurrent();
 	double GetUpdateTimeDelta();
 	double GetRenderTimeDelta();
-	void Render(glm::mat4, glm::mat4);
+	void Render();
 
 	void Shutdown();
 
