@@ -51,8 +51,10 @@ bool Engine::Initialize() {
 	InitializeSettings();
 	if (!InitializeGraphics(settings.graphicsLanguage))		return false;
 #if MULTITHEAD_LOAD
-	run_loading = true;
 	std::thread t1(&Engine::LoadingScreenThread, this);
+#else
+	run_loading = false;
+	LoadingScreenThread();
 #endif
 
 	physicsSystem.Initialize();

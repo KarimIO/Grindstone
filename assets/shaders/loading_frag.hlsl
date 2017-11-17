@@ -11,7 +11,6 @@ struct PixelInputType {
 cbuffer MatrixInfoType {
     float aspect;
     float time;
-    float buffer[2];
 }
 
 float Dist(float2 d) {
@@ -37,16 +36,18 @@ float4 main(PixelInputType input) : SV_TARGET {
         color = float4(0,0,0,1);
 
     float4 background = float4(0.211, 0.306, 0.341, 1.0);
-    float cs = 0;
-    const float circle_dist = 0.15;
-    const uint num_orbs = 10;
-    float offset = sin(time * 2 / 3.14159) * 0.5 + 1;
-    for (uint i = 0; i < num_orbs; i++) {
-        float f = float(i) / num_orbs;
-        float off = time + i;
-        off *= -0.2;
-        float2 circle_pos = float2(0.5 + cos(off) * circle_dist / aspect, 0.5 + sin(off) * circle_dist);
-        cs += CalcSphere(circle_pos - input.texCoord, 0.005 * sqrt(f)) * f;
+    float cs = 0.0f;
+    if (time > 0.0f) {
+        const float circle_dist = 0.15;
+        const uint num_orbs = 10;
+        float offset = sin(time * 2 / 3.14159) * 0.5 + 1;
+        for (uint i = 0; i < num_orbs; i++) {
+            float f = float(i) / num_orbs;
+            float off = time + i;
+            off *= -0.2;
+            float2 circle_pos = float2(0.5 + cos(off) * circle_dist / aspect, 0.5 + sin(off) * circle_dist);
+            cs += CalcSphere(circle_pos - input.texCoord, 0.005 * sqrt(f)) * f;
+        }
     }
     float4 c = float4(cs, cs, cs, 1);
     return c + background + color;

@@ -9,7 +9,6 @@ uniform sampler2D logo;
 layout(std140) uniform UniformBufferObject {
     float aspect;
     float time;
-    float buffer[2];
 } ubo;
 
 float Dist(vec2 d) {
@@ -35,16 +34,18 @@ void main() {
         color = vec4(0,0,0,1);
 
     vec4 background = vec4(0.211, 0.306, 0.341, 1.0);
-    float cs = 0;
-    const float circle_dist = 0.15;
-    const uint num_orbs = 10u;
-    float offset = sin(ubo.time * 2 / 3.14159) * 0.5 + 1;
-    for (uint i = 0u; i < num_orbs; i++) {
-        float f = float(i) / num_orbs;
-        float off = ubo.time + i;
-        off *= -0.2;
-        vec2 circle_pos = vec2(0.5 + cos(off) * circle_dist / ubo.aspect, 0.5 + sin(off) * circle_dist);
-        cs += CalcSphere(circle_pos - fragTexCoord, 0.005 * sqrt(f)) * f;
+    float cs = 0.0f;
+    if (ubo.time > 0.0f) {
+        const float circle_dist = 0.15;
+        const uint num_orbs = 10u;
+        float offset = sin(ubo.time * 2 / 3.14159) * 0.5 + 1;
+        for (uint i = 0u; i < num_orbs; i++) {
+            float f = float(i) / num_orbs;
+            float off = ubo.time + i;
+            off *= -0.2;
+            vec2 circle_pos = vec2(0.5 + cos(off) * circle_dist / ubo.aspect, 0.5 + sin(off) * circle_dist);
+            cs += CalcSphere(circle_pos - fragTexCoord, 0.005 * sqrt(f)) * f;
+        }
     }
     vec4 c = vec4(cs, cs, cs, 1);
     finalColor =  c + background + color;

@@ -181,8 +181,7 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 	ubo_ = graphics_wrapper_->CreateUniformBuffer(ubci);
 
 	loadUBO.aspect = (float)engine.settings.resolutionX / (float)engine.settings.resolutionY;
-
-	Render(0.0);
+	Render(0.0f);
 }
 
 void LoadingScreen::Render(double dt) {
