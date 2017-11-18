@@ -1,5 +1,6 @@
 #include "SGeometryStatic.hpp"
 #include "../Core/Engine.hpp"
+#include "../FormatCommon/StaticModel.hpp"
 #include <fstream>
 
 struct ModelUBO {
@@ -58,6 +59,10 @@ void SGeometryStatic::LoadPreloaded() {
 	}
 }
 
+void SGeometryStatic::Cull() {
+
+}
+
 std::vector<CommandBuffer*> SGeometryStatic::GetCommandBuffers() {
 	std::vector<CommandBuffer*> buffers;
 	buffers.reserve(models.size());
@@ -88,40 +93,53 @@ void SGeometryStatic::LoadModel(CModelStatic *model) {
 	ModelFormatHeader inFormat;
 	void *offset = buffer.data();
 	memcpy(&inFormat, offset, sizeof(ModelFormatHeader));
-
-	model->meshes.resize(inFormat.numMeshes);
-	std::vector<Vertex> vertices;
-	vertices.resize(inFormat.numVertices);
-	std::vector<unsigned int> indices;
-	indices.resize(inFormat.numIndices);
-
 	offset = static_cast<char*>(offset) + sizeof(ModelFormatHeader);
-	uint32_t size = inFormat.numMeshes * sizeof(MeshCreateInfo);
-	std::vector<MeshCreateInfo> temp_meshes(inFormat.numMeshes);
+	switch (inFormat.bounding_type) {
+	case BOUNDING_SPHERE:
+		model->bounding = new BoundingSphere();
+		break;
+	case BOUNDING_BOX:
+		model->bounding = new BoundingBox();
+		break;
+	}
+	memcpy(model->bounding->GetData(), offset, model->bounding->GetSize());
+	model->bounding->Print();
+	
+	offset = static_cast<char*>(offset) + model->bounding->GetSize();
+
+	model->meshes.resize(inFormat.num_meshes);
+	std::vector<Vertex> vertices;
+	vertices.resize(inFormat.num_vertices);
+	std::vector<unsigned int> indices;
+	indices.resize(inFormat.num_indices);
+
+	//offset = static_cast<char*>(offset) + model->bounding->GetSize();
+	uint32_t size = inFormat.num_meshes * sizeof(MeshCreateInfo);
+	std::vector<MeshCreateInfo> temp_meshes(inFormat.num_meshes);
 	memcpy(temp_meshes.data(), offset, size);
 	offset = static_cast<char*>(offset) + size;
-	size = inFormat.numVertices * sizeof(Vertex);
+	size = inFormat.num_vertices * sizeof(Vertex);
 	memcpy(&vertices[0], offset, size);
 	offset = static_cast<char*>(offset) + size;
-	size = inFormat.numIndices * sizeof(unsigned int);
+	size = inFormat.num_indices * sizeof(unsigned int);
 	memcpy(&indices[0], offset, size);
 	offset = static_cast<char*>(offset) + size;
 
-	std::cout << inFormat.numMaterials << "\n";
+	std::cout << "Loading " << inFormat.num_materials << " materials.\n";
 	std::vector<MaterialReference> materialReferences;
-	materialReferences.resize(inFormat.numMaterials);
+	materialReferences.resize(inFormat.num_materials);
 
 	std::vector<Material *> materials;
-	materials.resize(inFormat.numMaterials);
+	materials.resize(inFormat.num_materials);
 	char *words = (char *)offset;
-	for (unsigned int i = 0; i < inFormat.numMaterials; i++) {
+	for (unsigned int i = 0; i < inFormat.num_materials; i++) {
 		// Need to add a non-lazyload material
-		std::cout << words << std::endl;
+		std::cout << "Loading Material: " << words << std::endl;
 		materialReferences[i] = material_system_->CreateMaterial(words);
 		words = strchr(words, '\0') + 1;
 	}
 
-	for (unsigned int i = 0; i < inFormat.numMaterials; i++) {
+	for (unsigned int i = 0; i < inFormat.num_materials; i++) {
 		materials[i] = material_system_->GetMaterial(materialReferences[i]);
 	}
 
@@ -159,7 +177,7 @@ void SGeometryStatic::LoadModel(CModelStatic *model) {
 		model->vertexArrayObject->Unbind();
 	}
 
-	for (unsigned int i = 0; i < inFormat.numMeshes; i++) {
+	for (unsigned int i = 0; i < inFormat.num_meshes; i++) {
 		// Use the temporarily uint32_t material as an ID for the actual material.
 		MeshCreateInfo &temp_mesh = temp_meshes[i];
 		MeshStatic &current_mesh = model->meshes[i];
@@ -191,4 +209,8 @@ SGeometryStatic::~SGeometryStatic() {
 			}
 		}
 	}
+
+	/*for (auto &model : models) {
+		delete model.bounding;
+	}*/
 }

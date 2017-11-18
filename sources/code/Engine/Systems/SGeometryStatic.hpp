@@ -2,6 +2,7 @@
 #define _S_GEOMETRY_STATIC_H
 
 #include "SGeometry.hpp"
+#include "../FormatCommon/Bounding.hpp"
 
 struct Vertex {
 	glm::vec3 positions;
@@ -24,16 +25,6 @@ enum {
 	UV_VB_LOCATION,
 	NORMAL_VB_LOCATION,
 	TANGENT_VB_LOCATION,
-};
-
-struct ModelFormatHeader {
-	uint32_t version;
-	uint32_t numMeshes;
-	uint64_t numVertices;
-	uint64_t numIndices;
-	uint32_t numMaterials;
-	uint8_t numBones;
-	bool largeIndex;
 };
 
 class CModelStatic;
@@ -60,6 +51,7 @@ struct MeshCreateInfo {
 class CModelStatic : public Geometry {
 	friend class SGeometryStatic;
 public:
+	BoundingShape *bounding;
 	bool useLargeBuffer = true;
 	std::vector<uint32_t> references;
 	std::vector<MeshStatic> meshes;
@@ -81,6 +73,8 @@ public:
 
 	virtual void LoadGeometry(uint32_t render_id, std::string path);
 	virtual void LoadPreloaded();
+
+	virtual void Cull();
 
 	~SGeometryStatic();
 private:

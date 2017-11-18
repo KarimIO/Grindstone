@@ -8,7 +8,9 @@ set(ENGINE_SYSTEMS_HEADERS Systems/SController.hpp Systems/STransform.hpp System
 source_group("Systems\\Header Files" FILES ${ENGINE_SYSTEMS_HEADERS})
 set(ENGINE_POST_HEADERS PostProcess/BasePost.hpp PostProcess/PostPipeline.hpp PostProcess/ColorGradingPost.hpp)
 source_group("Post Processing\\Header Files" FILES ${ENGINE_POST_HEADERS})
-set(ENGINE_HEADERS ${ENGINE_CORE_HEADERS} ${ENGINE_ENTITES_HEADERS} ${ENGINE_RENDERPATHS_HEADERS} ${ENGINE_SYSTEMS_HEADERS} ${ENGINE_POST_HEADERS})
+set(ENGINE_OTHER_HEADERS ../FormatCommon/Bounding.hpp ../FormatCommon/StaticModel.hpp)
+source_group("Other\\Header Files" FILES ${ENGINE_OTHER_HEADERS})
+set(ENGINE_HEADERS ${ENGINE_OTHER_HEADERS} ${ENGINE_CORE_HEADERS} ${ENGINE_ENTITES_HEADERS} ${ENGINE_RENDERPATHS_HEADERS} ${ENGINE_SYSTEMS_HEADERS} ${ENGINE_POST_HEADERS})
 
 set(ENGINE_CORE_SOURCES Core/Main.cpp Core/Entity.cpp Core/Engine.cpp Core/LoadingScreen.cpp Core/iniHandler.cpp Core/Input.cpp Core/Space.cpp Core/Utilities.cpp Core/LevelLoader.cpp)
 source_group("Core\\Source Files" FILES ${ENGINE_CORE_SOURCES})
@@ -18,7 +20,9 @@ set(ENGINE_SYSTEMS_SOURCES Systems/SController.cpp Systems/STransform.cpp System
 source_group("Systems\\Source Files" FILES ${ENGINE_SYSTEMS_SOURCES})
 set(ENGINE_POST_SOURCES PostProcess/PostPipeline.cpp PostProcess/ColorGradingPost.cpp)
 source_group("Post Processing\\Source Files" FILES ${ENGINE_POST_SOURCES})
-set(ENGINE_SOURCES ${ENGINE_CORE_SOURCES} ${ENGINE_ENTITES_SOURCES} ${ENGINE_RENDERPATHS_SOURCES} ${ENGINE_SYSTEMS_SOURCES} ${ENGINE_POST_SOURCES}) 
+set(ENGINE_OTHER_SOURCES ../FormatCommon/Bounding.cpp)
+source_group("Other\\Source Files" FILES ${ENGINE_OTHER_SOURCES})
+set(ENGINE_SOURCES ${ENGINE_OTHER_SOURCES} ${ENGINE_CORE_SOURCES} ${ENGINE_ENTITES_SOURCES} ${ENGINE_RENDERPATHS_SOURCES} ${ENGINE_SYSTEMS_SOURCES} ${ENGINE_POST_SOURCES}) 
 
 set(INCLUDE_DIRECTORIES ../GraphicsCommon ../AudioModule)
 

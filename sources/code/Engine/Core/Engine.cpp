@@ -373,6 +373,7 @@ void Engine::Run() {
 		gameplay_system.Update(GetUpdateTimeDelta());
 		physicsSystem.Update(GetUpdateTimeDelta());
 		transformSystem.Update();
+		geometry_system.Cull();
 
 		glm::mat4 pv;
 		if (cameraSystem.components.size() > 0) {

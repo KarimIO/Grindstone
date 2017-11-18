@@ -32,6 +32,12 @@ void SGeometry::LoadPreloaded() {
 	}
 }
 
+void SGeometry::Cull() {
+	for (auto &system : systems_) {
+		system->Cull();
+	}
+}
+
 SGeometry::~SGeometry() {
 	for (auto &system : systems_) {
 		delete system;

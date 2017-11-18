@@ -10,6 +10,10 @@
 #include <chrono>
 
 #include "Utilities.hpp"
+#include "ModelConverter.hpp"
+
+#include "../FormatCommon/Bounding.hpp"
+#include "../FormatCommon/StaticModel.hpp"
 
 #include <map>
 
@@ -29,27 +33,11 @@ struct VertexSkeletal {
 	float		bone_weights[4];
 };
 
-struct MaterialReference {
-	uint8_t		renderpass = 0;
-	uint8_t		pipeline = 0;
-	uint16_t	material = 0;
-};
-
 struct Mesh {
 	uint32_t num_indices = 0;
 	uint32_t base_vertex = 0;
 	uint32_t base_index = 0;
 	uint32_t material_index = UINT32_MAX;
-};
-
-struct ModelFormatHeader {
-	uint32_t version;
-	uint32_t num_meshes;
-	uint64_t num_vertices;
-	uint64_t num_indices;
-	uint32_t num_materials;
-	uint8_t num_bones;
-	bool large_index;
 };
 
 void SwitchSlashes(std::string &path) {
@@ -154,7 +142,7 @@ void InitMaterials(bool skeletalMaterials, std::string folder_name, std::string 
 	}
 }
 
-void InitMesh(const aiMesh *paiMesh,
+void InitMesh(BoundingShape *bounding, const aiMesh *paiMesh,
 	std::vector<Vertex>& vertices,
 	std::vector<uint32_t>& indices) {
 	const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
@@ -166,6 +154,9 @@ void InitMesh(const aiMesh *paiMesh,
 		const aiVector3D* pTexCoord = paiMesh->HasTextureCoords(0) ? &(paiMesh->mTextureCoords[0][i]) : &Zero3D;
 
 		vertices.push_back({ { pPos->x, pPos->y, pPos->z },{ pNormal->x, pNormal->y, pNormal->z },{ -pTangent->x, -pTangent->y, -pTangent->z },{ pTexCoord->x, pTexCoord->y } });
+
+		const float pos[3]{pPos->x, pPos->y, pPos->z};
+		bounding->TestBounding(pos);
 	}
 
 	for (unsigned int i = 0; i < paiMesh->mNumFaces; i++) {
@@ -294,14 +285,15 @@ bool ModelConverter(std::string inputPath) {
 		vertices.reserve(NumVertices);
 		indices.reserve(NumIndices);
 
-		std::vector<std::string> matNames;
-		matNames.resize(pScene->mNumMaterials);
+		std::vector<std::string> material_names;
+		material_names.resize(pScene->mNumMaterials);
 		if (pScene->HasMaterials()) {
-			InitMaterials(false, fileName, inputPath, pScene->mNumMaterials, pScene->mMaterials, matNames);
+			InitMaterials(false, fileName, inputPath, pScene->mNumMaterials, pScene->mMaterials, material_names);
 		}
 
+		BoundingBox bounding;
 		for (size_t i = 0; i < pScene->mNumMeshes; i++) {
-			InitMesh(pScene->mMeshes[i], vertices, indices);
+			InitMesh(&bounding, pScene->mMeshes[i], vertices, indices);
 		}
 
 		importer.FreeScene();
@@ -309,20 +301,23 @@ bool ModelConverter(std::string inputPath) {
 		ModelFormatHeader outFormat;
 		outFormat.version = 1;
 		outFormat.large_index = false;
-		outFormat.num_vertices = vertices.size();
-		outFormat.num_indices = indices.size();
-		outFormat.num_meshes = meshes.size();
-		outFormat.num_materials = matNames.size();
+		outFormat.num_vertices = static_cast<uint64_t>(vertices.size());
+		outFormat.num_indices = static_cast<uint64_t>(indices.size());
+		outFormat.num_meshes = static_cast<uint32_t>(meshes.size());
+		outFormat.num_materials = static_cast<uint32_t>(material_names.size());
 		outFormat.num_bones = 0;
+		outFormat.bounding_type = BOUNDING_BOX;
 
 		std::cout << "Model Parsed! Outputting.\n";
 
 		std::ofstream output(outputPath, std::ios::binary);
 		output.write(reinterpret_cast<const char*> (&outFormat), sizeof(ModelFormatHeader));
+		output.write(reinterpret_cast<const char*> (bounding.GetData()), bounding.GetSize());
+		bounding.Print();
 		output.write(reinterpret_cast<const char*> (meshes.data()), meshes.size() * sizeof(Mesh));
 		output.write(reinterpret_cast<const char*> (vertices.data()), vertices.size() * sizeof(Vertex));
 		output.write(reinterpret_cast<const char*> (indices.data()), indices.size() * sizeof(uint32_t));
-		for (const auto &matName : matNames) {
+		for (const auto &matName : material_names) {
 			output << matName << '\0';
 		}
 		output.close();
@@ -374,10 +369,10 @@ bool ModelConverter(std::string inputPath) {
 		ModelFormatHeader outFormat;
 		outFormat.version = 1;
 		outFormat.large_index = false;
-		outFormat.num_vertices = vertices.size();
-		outFormat.num_indices = indices.size();
-		outFormat.num_meshes = meshes.size();
-		outFormat.num_materials = material_names.size();
+		outFormat.num_vertices = static_cast<uint64_t>(vertices.size());
+		outFormat.num_indices = static_cast<uint64_t>(indices.size());
+		outFormat.num_meshes = static_cast<uint32_t>(meshes.size());
+		outFormat.num_materials = static_cast<uint32_t>(material_names.size());
 		outFormat.num_bones = NumBones;
 
 		std::cout << "Model Parsed! Outputting.\n";
@@ -405,6 +400,8 @@ bool ModelConverter(std::string inputPath) {
 	std::cout << std::chrono::duration<double, std::milli>(t_end - t_start).count()
 		<< " ms\n";
 	std::cout << "Model Outputted to: " << outputPath << "!\n";
+
+	return true;
 }
 
 bool LoadModelFile(std::string inputPath) {
@@ -450,7 +447,7 @@ bool LoadModelFile(std::string inputPath) {
 	offset = static_cast<char*>(offset) + inFormat.num_indices * sizeof(unsigned int);
 
 	char *words = (char *)offset;
-	for (int i = 0; i < inFormat.num_materials; i++) {
+	for (uint32_t i = 0; i < inFormat.num_materials; i++) {
 		materialNames[i] = words;
 		LoadMaterial(words);
 		words = strchr(words, '\0')+1;
@@ -464,4 +461,6 @@ bool LoadModelFile(std::string inputPath) {
 		<< " ms\n";
 
 	std::cout << "Model read!\n";
+
+	return true;
 }
