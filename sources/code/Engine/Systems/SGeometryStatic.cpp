@@ -86,7 +86,7 @@ void SGeometryStatic::Cull(CCamera *cam) {
 			auto &reference = engine.geometry_system.GetComponent(reference_id);
 			auto transform_id = engine.entities[reference.entity_id].components_[COMPONENT_TRANSFORM];
 			glm::vec3 obj_position = engine.transformSystem.components[transform_id].GetPosition();
-			reference.should_draw = model.bounding->TestCamera(cam_near, cam_far, cam_fov, sphere_factor_x, sphere_factor_y, cam_aspect, obj_position, cam_position, forward, up, right);
+			reference.should_draw = true; // model.bounding->TestCamera(cam_near, cam_far, cam_fov, sphere_factor_x, sphere_factor_y, cam_aspect, obj_position, cam_position, forward, up, right);
 			if (reference.should_draw) {
 				drawing++;
 				for (auto &mesh : model.meshes) {

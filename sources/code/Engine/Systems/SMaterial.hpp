@@ -76,8 +76,11 @@ private:
 struct PipelineContainer {
 	GraphicsPipeline *program;
 	CommandBuffer *commandBuffer;
+	std::string name;
+	std::string shader_paths[SHADER_FRAGMENT + 1];
 	std::map<std::string, ParameterDescriptor> parameterDescriptorTable;
 	std::vector<Material> materials;
+	void generateProgram();
 	uint32_t draw_count;
 };
 

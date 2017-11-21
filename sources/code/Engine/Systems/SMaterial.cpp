@@ -22,6 +22,13 @@
 	SHADER_JSON_MAIN = 0,
 	SHADER_JSON_NAME,
 	SHADER_JSON_SHADERS,
+	// Draw Modes
+	SHADER_JSON_SHADER_DEFERRED,
+	SHADER_JSON_SHADER_FORWARD,
+	// Platforms
+	SHADER_JSON_SHADER_OPENGL,
+	SHADER_JSON_SHADER_DIRECTX,
+	SHADER_JSON_SHADER_VULKAN,
 	SHADER_JSON_PROPERTIES,
 	SHADER_JSON_PROPERTY,
 	SHADER_JSON_PROPERTY_NAME,
@@ -251,7 +258,9 @@ public:
 		return true;
 	}
 	bool StartObject() {
-		if (state == SHADER_JSON_PROPERTIES) state = SHADER_JSON_PROPERTY;
+		if (state == SHADER_JSON_PROPERTIES)
+			state = SHADER_JSON_PROPERTY;
+
 		return true;
 	}
 	bool Key(const char* str, rapidjson::SizeType length, bool copy) {
@@ -267,6 +276,33 @@ public:
 			}
 		}
 		else if (state == SHADER_JSON_SHADERS) {
+			if (std::string(str) == "deferred") {
+				state = SHADER_JSON_SHADER_DEFERRED;
+			}
+			else if (std::string(str) == "forward") {
+				state = SHADER_JSON_SHADER_FORWARD;
+			}
+			else {
+				std::cout << "Invalid Shader file!" << std::endl;
+			}
+		}
+		else if (state == SHADER_JSON_SHADER_DEFERRED || state == SHADER_JSON_SHADER_FORWARD) {
+			if (std::string(str) == "opengl") {
+				state = SHADER_JSON_SHADER_OPENGL;
+			}
+			else if (std::string(str) == "directx") {
+				state = SHADER_JSON_SHADER_DIRECTX;
+			}
+			else if (std::string(str) == "vulkan") {
+				state = SHADER_JSON_SHADER_VULKAN;
+			}
+			else {
+				std::cout << "Invalid Shader file!" << std::endl;
+			}
+		}
+		else if ((engine.settings.graphicsLanguage == GRAPHICS_OPENGL && state == SHADER_JSON_SHADER_OPENGL) ||
+				(engine.settings.graphicsLanguage == GRAPHICS_DIRECTX && state == SHADER_JSON_SHADER_DIRECTX) ||
+				(engine.settings.graphicsLanguage == GRAPHICS_VULKAN && state == SHADER_JSON_SHADER_VULKAN)) {
 			if (std::string(str) == "vertex") {
 				state = SHADER_JSON_VERTEX;
 			}
@@ -450,11 +486,6 @@ RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapp
 
 	render_passes_.resize(1);
 
-	render_passes_[0].pipelines.resize(1);
-	render_passes_[0].pipelines[0].program = engine.pipeline;
-	pipeline_map_["../shaders/standard"].pipeline = 0;
-	pipeline_map_["../shaders/standard"].renderpass = 0;
-
 	RenderPassCreateInfo rpci;
 	std::vector<ClearColorValue> colorClearValues = { { 0.0f, 0.0f, 0.0f, 1.0f } };
 	ClearDepthStencil dscf;
@@ -567,7 +598,35 @@ RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapp
 	cbci.secondaryInfo.renderPass = render_passes_[0].renderPass;
 	pipeline->commandBuffer = graphics_wrapper_->CreateCommandBuffer(cbci);
 
+	render_passes_[0].pipelines.resize(1);
+	render_passes_[0].pipelines[0].name = "../shaders/standard";
+	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+		render_passes_[0].pipelines[0].shader_paths[SHADER_VERTEX] = "../assets/shaders/vert.glsl";
+		render_passes_[0].pipelines[0].shader_paths[SHADER_FRAGMENT] = "../assets/shaders/frag.glsl";
+	}
+	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+		render_passes_[0].pipelines[0].shader_paths[SHADER_VERTEX] = "../assets/shaders/vert.fxc";
+		render_passes_[0].pipelines[0].shader_paths[SHADER_FRAGMENT] = "../assets/shaders/frag.fxc";
+	}
+	else {
+		render_passes_[0].pipelines[0].shader_paths[SHADER_VERTEX] = "../assets/shaders/vert.spv";
+		render_passes_[0].pipelines[0].shader_paths[SHADER_FRAGMENT] = "../assets/shaders/frag.spv";
+	}
+	render_passes_[0].pipelines[0].parameterDescriptorTable["albedoTexture"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
+	render_passes_[0].pipelines[0].parameterDescriptorTable["normalTexture"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
+	render_passes_[0].pipelines[0].parameterDescriptorTable["roughnessTexture"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
+	render_passes_[0].pipelines[0].parameterDescriptorTable["metalnessTexture"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
+	render_passes_[0].pipelines[0].parameterDescriptorTable["albedoConstant"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
+	render_passes_[0].pipelines[0].parameterDescriptorTable["metalnessConstant"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
+	render_passes_[0].pipelines[0].parameterDescriptorTable["roughnessConstant"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
+	render_passes_[0].pipelines[0].generateProgram();
+	pipeline_map_["../shaders/standard"].pipeline = 0;
+	pipeline_map_["../shaders/standard"].renderpass = 0;
+
 	return nullptr;
+}
+
+void PipelineContainer::generateProgram() {
 }
 
 PipelineReference MaterialManager::CreatePipeline(std::string pipelineName) {
