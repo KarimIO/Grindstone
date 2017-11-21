@@ -74,7 +74,7 @@ public:
 	virtual void LoadGeometry(uint32_t render_id, std::string path);
 	virtual void LoadPreloaded();
 
-	virtual void Cull();
+	virtual void Cull(CCamera *cam);
 
 	~SGeometryStatic();
 private:

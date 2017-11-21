@@ -15,15 +15,17 @@ struct ModelUBO {
 
 void MeshStatic::Draw() {
 	for (auto &reference : model->references) {
-		auto renderComponent = engine.geometry_system.GetComponent(reference);
-		auto entityID = renderComponent.entity_id;
-		auto transform = engine.transformSystem.components[entityID];
+		CRender &renderComponent = engine.geometry_system.GetComponent(reference);
+		if (renderComponent.should_draw) {
+			auto entityID = renderComponent.entity_id;
+			auto transform = engine.transformSystem.components[entityID];
 
-		engine.ubo2->UpdateUniformBuffer(&transform.GetModelMatrix());
-		engine.ubo2->Bind();
+			engine.ubo2->UpdateUniformBuffer(&transform.GetModelMatrix());
+			engine.ubo2->Bind();
 
-		engine.graphics_wrapper_->BindVertexArrayObject(model->vertexArrayObject);
-		engine.graphics_wrapper_->DrawImmediateIndexed(true, BaseVertex, BaseIndex, NumIndices);
+			engine.graphics_wrapper_->BindVertexArrayObject(model->vertexArrayObject);
+			engine.graphics_wrapper_->DrawImmediateIndexed(true, BaseVertex, BaseIndex, NumIndices);
+		}
 	}
 }
 
@@ -59,8 +61,42 @@ void SGeometryStatic::LoadPreloaded() {
 	}
 }
 
-void SGeometryStatic::Cull() {
+void SGeometryStatic::Cull(CCamera *cam) {
+	float cam_near = cam->GetNear();
+	float cam_far = cam->GetFar();
+	float cam_fov = cam->GetFOV() / 2.0f;
+	float cam_aspect = cam->GetAspectRatio();
+	auto transform_id = engine.entities[cam->entityID].components_[COMPONENT_TRANSFORM];
+	auto &transform = engine.transformSystem.components[transform_id];
+	glm::vec3 cam_position = transform.GetPosition();
+	glm::vec3 forward = transform.GetForward();
+	glm::vec3 right = transform.GetRight();
+	glm::vec3 up = transform.GetUp();
 
+	float sphere_factor_y = 1.0f / cos(cam_fov);
+
+	cam_fov = tan(cam_fov);
+	float angle = atan(cam_fov * cam_aspect);
+	float sphere_factor_x = 1.0f / cos(angle);
+
+	unsigned int drawing = 0, total = 0;
+	for (auto &model : models) {
+		for (auto &reference_id : model.references) {
+			total++;
+			auto &reference = engine.geometry_system.GetComponent(reference_id);
+			auto transform_id = engine.entities[reference.entity_id].components_[COMPONENT_TRANSFORM];
+			glm::vec3 obj_position = engine.transformSystem.components[transform_id].GetPosition();
+			reference.should_draw = model.bounding->TestCamera(cam_near, cam_far, cam_fov, sphere_factor_x, sphere_factor_y, cam_aspect, obj_position, cam_position, forward, up, right);
+			if (reference.should_draw) {
+				drawing++;
+				for (auto &mesh : model.meshes) {
+					mesh.material->IncrementDrawCount();
+				}
+			}
+		}
+	}
+
+	// std::cout << "Drawing " << drawing << " / " << total << std::endl;
 }
 
 std::vector<CommandBuffer*> SGeometryStatic::GetCommandBuffers() {

@@ -48,6 +48,11 @@ public:
 
 	glm::mat4 GetProjection();
 	glm::mat4 GetView();
+
+	float GetNear();
+	float GetFar();
+	float GetAspectRatio();
+	float GetFOV();
 };
 
 class SCamera {

@@ -32,9 +32,9 @@ void SGeometry::LoadPreloaded() {
 	}
 }
 
-void SGeometry::Cull() {
+void SGeometry::Cull(CCamera *cam) {
 	for (auto &system : systems_) {
-		system->Cull();
+		system->Cull(cam);
 	}
 }
 

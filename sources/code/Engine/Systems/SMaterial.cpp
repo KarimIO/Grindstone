@@ -895,11 +895,15 @@ void MaterialManager::DrawImmediate() {
 		//renderPass->Bind();
 		for (auto const &pipeline : renderPass.pipelines) {
 			pipeline.program->Bind();
-			for (auto const &material : pipeline.materials) {
-				if (material.m_textureBinding != nullptr)
-					graphics_wrapper_->BindTextureBinding(material.m_textureBinding);
-				for (auto const &mesh : material.m_meshes) {
-					mesh->Draw();
+			if (pipeline.draw_count > 0) {
+				for (auto const &material : pipeline.materials) {
+					if (material.draw_count > 0) {
+						if (material.m_textureBinding != nullptr)
+							graphics_wrapper_->BindTextureBinding(material.m_textureBinding);
+						for (auto const &mesh : material.m_meshes) {
+							mesh->Draw();
+						}
+					}
 				}
 			}
 		}
@@ -936,6 +940,17 @@ void MaterialManager::DrawDeferred() {
 	}
 }
 
+void MaterialManager::resetDraws() {
+	for (auto &render_pass : render_passes_) {
+		for (auto &pipeline : render_pass.pipelines) {
+			pipeline.draw_count = 0;
+			for (auto &material : pipeline.materials) {
+				material.draw_count = 0;
+			}
+		}
+	}
+}
+
 MaterialManager::~MaterialManager() {
 	for (const auto &texture : texture_map_) {
 		graphics_wrapper_->DeleteTexture(texture.second);
@@ -953,4 +968,9 @@ MaterialManager::~MaterialManager() {
 Material::Material(TextureBinding * textureBinding) {
 	m_meshes.reserve(1);
 	m_textureBinding = textureBinding;
+}
+
+void Material::IncrementDrawCount() {
+	draw_count++;
+	engine.materialManager.GetPipeline(reference.pipelineReference)->draw_count++;
 }

@@ -12,6 +12,7 @@
 #include "CBase.hpp"
 
 #include "SMaterial.hpp"
+#include "SCamera.hpp"
 
 enum GeometryType {
 	GEOMETRY_STATIC_MODEL = 0,
@@ -36,6 +37,7 @@ public:
 	GeometryType geometry_type;
 	uint32_t geometry_id;
 	std::vector<Material *> materials;
+	bool should_draw;
 };
 
 class Geometry {
@@ -47,7 +49,7 @@ class SSubGeometry {
 public:
 	virtual void LoadGeometry(unsigned int render_id, std::string path) = 0;
 	virtual void LoadPreloaded() = 0;
-	virtual void Cull() = 0;
+	virtual void Cull(CCamera *cam) = 0;
 	virtual ~SSubGeometry() {};
 };
 
@@ -58,7 +60,7 @@ public:
 	void RemoveComponent(uint32_t id);
 	void AddSystem(SSubGeometry *system);
 	void LoadPreloaded();
-	void Cull();
+	void Cull(CCamera *cam);
 	SSubGeometry *GetSystem(uint32_t id);
 	~SGeometry();
 private:

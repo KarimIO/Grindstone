@@ -50,6 +50,7 @@ assets/*
 !assets/models/sphere.obj
 !assets/scenes/terrain.json
 !assets/scenes/sponza.json
+!assets/scenes/sphere.json
 !assets/shaders/
 sources/include/*
 ~sources/include/stb_image_write.h
@@ -57,6 +58,12 @@ sources/include/*
 !assets/materials/heightmaps/height.png
 !assets/materials/ssaoNoise.png
 !assets/materials/grindstone.png
+!assets/models/sphere.gmf
+!assets/materials/sphere/*
+!assets/materials/albedo.png
+!assets/materials/dielectric.png
+!assets/materials/normal.png
+!assets/materials/roughness.png
 assets/shaders/objects/backup/*
 settings.ini
 

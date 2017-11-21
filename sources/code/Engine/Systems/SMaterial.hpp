@@ -55,7 +55,10 @@ struct MaterialReference {
 
 class Mesh;
 
+class MaterialManager;
+
 class Material {
+	friend MaterialManager;
 public:
 	TextureBinding *m_textureBinding;
 	std::vector<Mesh *> m_meshes;
@@ -64,6 +67,10 @@ public:
 		m_meshes.clear();
 	}
 	Material(TextureBinding *textureBinding);
+	void IncrementDrawCount();
+private:
+	MaterialReference reference;
+	uint32_t draw_count;
 };
 
 struct PipelineContainer {
@@ -71,6 +78,7 @@ struct PipelineContainer {
 	CommandBuffer *commandBuffer;
 	std::map<std::string, ParameterDescriptor> parameterDescriptorTable;
 	std::vector<Material> materials;
+	uint32_t draw_count;
 };
 
 struct RenderPassContainer {
@@ -104,6 +112,7 @@ public:
 	//GraphicsPipeline *CreateShaderFromPaths(std::string name, std::string vsPath, std::string fsPath, std::string gsPath, std::string csPath, std::string tesPath, std::string tcsPath);
 	void DrawImmediate();
 	void DrawDeferred();
+	void resetDraws();
 	~MaterialManager();
 private:
 	std::vector<RenderPassContainer> render_passes_;

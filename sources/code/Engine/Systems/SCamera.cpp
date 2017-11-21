@@ -11,6 +11,10 @@ CCamera::CCamera() {
 	aperture = 16;
 	shutterSpeed = 1.0f / 200.0f;
 	iso = 200.0f;
+	camNear = 0.1f;
+	camFar = 100.0f;
+	fov = engine.settings.fov;
+	aspectRatio = float(engine.settings.resolutionX) / engine.settings.resolutionY;
 
 	/*std::string vsPath = "../shaders/overlay.glvs";
 	std::string fsPath = "../shaders/post/ManualExposure.glfs";
@@ -131,7 +135,7 @@ float CCamera::CalculateExposure(float middleVal) {
 }
 
 glm::mat4 CCamera::GetProjection() {
-	glm::mat4 projection = glm::perspective(engine.settings.fov, aspectRatio, 0.1f, 100.0f);
+	glm::mat4 projection = glm::perspective(fov, aspectRatio, camNear, camFar);
 	if (engine.settings.graphicsLanguage == GRAPHICS_VULKAN)
 		projection[1][1] *= -1;
 	
@@ -155,6 +159,24 @@ glm::mat4 CCamera::GetView() {
 	);
 
 	return view;
+}
+
+float CCamera::GetNear() {
+	return camNear;
+}
+
+float CCamera::GetFar()
+{
+	return camFar;
+}
+
+float CCamera::GetAspectRatio()
+{
+	return aspectRatio;
+}
+
+float CCamera::GetFOV() {
+	return fov;
 }
 
 void SCamera::AddComponent(unsigned int entID, unsigned int & target) {
