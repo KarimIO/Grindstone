@@ -1,7 +1,0 @@
-{
-	"shader": "../shaders/standard",
-	"albedoTexture": "../albedo.png",
-	"normalTexture": "../normal.png",
-	"roughnessTexture": "../roughness.png",
-	"specularTexture": "../dielectric.png"
-}

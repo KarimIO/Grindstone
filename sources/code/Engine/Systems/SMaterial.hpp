@@ -33,12 +33,20 @@ enum PARAM_TYPE {
 
 bool readFile(const std::string& filename, std::vector<char>& outputfile);
 
-struct ParameterDescriptor {
+class ParameterDescriptor {
+	public:
 	std::string description;
 	PARAM_TYPE paramType;
 	void *dataPtr;
-	ParameterDescriptor(std::string _desc, PARAM_TYPE _type, void *_ptr);
 	ParameterDescriptor();
+	ParameterDescriptor(std::string _desc, PARAM_TYPE _type, void *_ptr);
+};
+
+class TextureParameterDescriptor : public ParameterDescriptor {
+public:
+	unsigned int texture_id;
+	TextureParameterDescriptor() {};
+	TextureParameterDescriptor(unsigned int _texture_id, std::string _desc, PARAM_TYPE _type, void *_ptr);
 };
 
 class Material;
@@ -79,6 +87,7 @@ struct PipelineContainer {
 	CommandBuffer *commandBuffer;
 	std::string name;
 	std::string shader_paths[SHADER_FRAGMENT + 1];
+	std::map<std::string, TextureParameterDescriptor> textureDescriptorTable;
 	std::map<std::string, ParameterDescriptor> parameterDescriptorTable;
 	std::vector<Material> materials;
 	uint32_t draw_count;

@@ -9,8 +9,6 @@ struct StandardMaterialCreateInfo {
 	std::string roughnessPath;
 };
 
-bool CreateMaterialJsonFile(StandardMaterialCreateInfo ci, std::string path);
-bool CreateMaterialBinaryFile(StandardMaterialCreateInfo ci, std::string path);
-bool ConvertMaterialFileJsonToBinary(std::string input);
+bool CreateStandardMaterial(StandardMaterialCreateInfo ci, std::string path);
 
 bool LoadMaterial(std::string input);

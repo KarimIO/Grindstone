@@ -131,14 +131,13 @@ void InitMaterials(bool skeletalMaterials, std::string folder_name, std::string 
 			}
 		}
 
-		std::string outMat = outPath + name.C_Str();
+		std::string outMat = outPath + name.C_Str() + ".gmat";
 		mat_names[i] = outMat;
 
-		std::cout << "\tOutputting material: " << outMat << ".gjm and .gbm\n";
+		std::cout << "\tOutputting material: " << outMat << "\n";
 
 		std::string shader = skeletalMaterials ? "../shaders/skeletal" : "../shaders/standard";
-		CreateMaterialJsonFile(newMat, outMat + ".gjm");
-		CreateMaterialBinaryFile(newMat, outMat + ".gbm");
+		CreateStandardMaterial(newMat, outMat);
 	}
 }
 

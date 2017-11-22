@@ -18,6 +18,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
+#include <iostream>
+#include <fstream>
+
 /*enum SHADER_JSON_STATE {
 	SHADER_JSON_MAIN = 0,
 	SHADER_JSON_NAME,
@@ -359,6 +362,13 @@ ParameterDescriptor::ParameterDescriptor(std::string _desc, PARAM_TYPE _type, vo
 	dataPtr = _ptr;
 }
 
+TextureParameterDescriptor::TextureParameterDescriptor(unsigned int _texture_id, std::string _desc, PARAM_TYPE _type, void * _ptr) {
+	texture_id = _texture_id;
+	description = _desc;
+	paramType = _type;
+	dataPtr = _ptr;
+}
+
 bool readFile(const std::string& filename, std::vector<char>& outputfile) {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
@@ -461,13 +471,15 @@ RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapp
 		render_passes_[0].pipelines[0].shader_paths[SHADER_FRAGMENT] = "../assets/shaders/frag.spv";
 	}
 
-	render_passes_[0].pipelines[0].parameterDescriptorTable["albedoTexture"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
-	render_passes_[0].pipelines[0].parameterDescriptorTable["normalTexture"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
-	render_passes_[0].pipelines[0].parameterDescriptorTable["roughnessTexture"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
-	render_passes_[0].pipelines[0].parameterDescriptorTable["metalnessTexture"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
-	render_passes_[0].pipelines[0].parameterDescriptorTable["albedoConstant"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
-	render_passes_[0].pipelines[0].parameterDescriptorTable["metalnessConstant"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
-	render_passes_[0].pipelines[0].parameterDescriptorTable["roughnessConstant"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
+	render_passes_[0].pipelines[0].textureDescriptorTable["albedoTexture"] = { 0u, "Albedo Texture", PARAM_TEXTURE, nullptr };
+	render_passes_[0].pipelines[0].textureDescriptorTable["normalTexture"] = { 1u, "Normal Texture", PARAM_TEXTURE, nullptr };
+	render_passes_[0].pipelines[0].textureDescriptorTable["roughnessTexture"] = { 2u, "Roughness Texture", PARAM_TEXTURE, nullptr };
+	render_passes_[0].pipelines[0].textureDescriptorTable["metalnessTexture"] = { 3u, "Metalness Texture", PARAM_TEXTURE, nullptr };
+	render_passes_[0].pipelines[0].parameterDescriptorTable["albedoConstant"] = { "Albedo Multiplier", PARAM_VEC3, nullptr };
+	render_passes_[0].pipelines[0].parameterDescriptorTable["metalnessTextureEnabled"] = { "Metalness Texture Enabled", PARAM_BOOL, nullptr };
+	render_passes_[0].pipelines[0].parameterDescriptorTable["metalnessConstant"] = { "Metalness Constant", PARAM_VEC3, nullptr };
+	render_passes_[0].pipelines[0].parameterDescriptorTable["roughnessTextureEnabled"] = { "Roughness Texture Enabled", PARAM_BOOL, nullptr };
+	render_passes_[0].pipelines[0].parameterDescriptorTable["roughnessConstant"] = { "Roughness Constant", PARAM_VEC3, nullptr };
 	generateProgram(render_passes_[0].pipelines[0]);
 	pipeline_map_["../shaders/standard"].pipeline = 0;
 	pipeline_map_["../shaders/standard"].renderpass = 0;
@@ -517,7 +529,6 @@ void MaterialManager::generateProgram(PipelineContainer &container) {
 	gpci.cullMode = CULL_BACK;
 	gpci.primitiveType = PRIM_TRIANGLES;
 	container.program = graphics_wrapper_->CreateGraphicsPipeline(gpci);
-	std::cout << container.program << std::endl;
 }
 
 PipelineReference MaterialManager::CreatePipeline(std::string pipelineName) {
@@ -535,15 +546,10 @@ MaterialReference MaterialManager::PreLoadMaterial(std::string path) {
 	if (material_map_.find(path) != material_map_.end())
 		return material_map_[path];
 
-	std::ifstream input(path + ".gbm", std::ios::ate | std::ios::binary);
-
+	std::ifstream input(path);
 	if (!input.is_open()) {
-		input.open(path + ".gjm", std::ios::ate | std::ios::binary);
-
-		if (!input.is_open()) {
-			std::cerr << "Failed to open material: " << path.c_str() << "!\n";
-			return MaterialReference();
-		}
+		std::cerr << "Failed to open material: " << path.c_str() << "!\n";
+		return MaterialReference();
 	}
 
 	std::cout << "Material reading from: " << path << "!\n";
@@ -606,63 +612,68 @@ MaterialReference MaterialManager::CreateMaterial(std::string path) {
 		return material_map_[path];
 	}
 
-	std::ifstream input(path + ".gbm", std::ios::ate | std::ios::binary);
-
+	std::ifstream input(path);
 	if (!input.is_open()) {
-		input.open(path + ".gjm", std::ios::ate | std::ios::binary);
-		if (!input.is_open()) {
-			std::cerr << "Failed to open material: " << path.c_str() << "!\n";
-			return MaterialReference();
-		}
+		std::cerr << "Failed to open material: " << path.c_str() << "!\n";
+		return MaterialReference();
 	}
 
 	std::cout << "Material reading from: " << path << "!\n";
 
-	size_t fileSize = (size_t)input.tellg();
-	std::vector<char> buffer(fileSize);
+	std::string shader_param;
+	std::getline(input, shader_param);
+	unsigned int p = shader_param.find(':');
+	if (p == -1) {
+		throw std::runtime_error("Error! " + path + " is invalid, the first line must refer to the shader.");
+	}
+	else {
+		if (shader_param.substr(0, p) != "shader") {
+			throw std::runtime_error("Error! " + path + " is invalid, the first line must refer to the shader.");
+		}
+		shader_param = shader_param.substr(p+2);
+	}
 
-	input.seekg(0);
-	input.read(buffer.data(), fileSize);
-
-	// Extend shader info here
-	char *words = buffer.data();
-	std::string shader = words;
-	words = strchr(words, '\0') + 1;
-	std::string albedoPath = words;
-	words = strchr(words, '\0') + 1;
-	std::string normalPath = words;
-	words = strchr(words, '\0') + 1;
-	std::string roughnessPath = words;
-	words = strchr(words, '\0') + 1;
-	std::string specularPath = words;
+	PipelineReference pipeline_reference = CreatePipeline(shader_param);
+	PipelineContainer *pipeline = GetPipeline(pipeline_reference);
 
 	TextureBinding *textureBinding = nullptr;
 
 	std::vector<SingleTextureBind> textures;
 	textures.resize(4);
 	std::string dir = path.substr(0, path.find_last_of("/") + 1);
-	textures[0].texture = LoadTexture(dir + albedoPath);
-	if (textures[0].texture != nullptr) {
-		textures[1].texture = LoadTexture(dir + normalPath);
-		textures[2].texture = LoadTexture(dir + roughnessPath);
-		textures[3].texture = LoadTexture(dir + specularPath);
 
-		textures[0].address = 0;
-		textures[1].address = 1;
-		textures[2].address = 2;
-		textures[3].address = 3;
-
-		TextureBindingCreateInfo ci;
-		ci.textures = textures.data();
-		ci.textureCount = (uint32_t)textures.size();
-		textureBinding = graphics_wrapper_->CreateTextureBinding(ci);
+	std::string line, parameter, value;
+	while (std::getline(input, line)) {
+		p = line.find(':');
+		if (p != -1) {
+			parameter = line.substr(0, p);
+			value = line.substr(p+2);
+			auto it1 = pipeline->parameterDescriptorTable.find(parameter);
+			if (it1 != pipeline->parameterDescriptorTable.end()) {
+				std::cout << "Found Parameter: " << parameter << ": " << value << std::endl;
+			}
+			else {
+				auto it2 = pipeline->textureDescriptorTable.find(parameter);
+				if (it2 != pipeline->textureDescriptorTable.end()) {
+					unsigned int texture_id = it2->second.texture_id;
+					std::cout << "Found Texture: (" << texture_id << ") " << parameter << ": " << value << std::endl;
+					textures[texture_id].texture = LoadTexture(dir + value);
+					textures[texture_id].address = texture_id;
+				}
+				else {
+					std::cout << "Invalid parameter " << parameter << std::endl;
+				}
+			}
+		}
 	}
 
-	PipelineReference pipelineRef = CreatePipeline(shader);
-	PipelineContainer *pipeline = GetPipeline(pipelineRef);
+	TextureBindingCreateInfo ci;
+	ci.textures = textures.data();
+	ci.textureCount = (uint32_t)textures.size();
+	textureBinding = graphics_wrapper_->CreateTextureBinding(ci);
 
 	MaterialReference ref;
-	ref.pipelineReference = pipelineRef;
+	ref.pipelineReference = pipeline_reference;
 	ref.material = (uint32_t)pipeline->materials.size();
 
 	pipeline->materials.emplace_back(textureBinding);
