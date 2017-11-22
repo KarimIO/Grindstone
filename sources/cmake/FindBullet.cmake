@@ -101,13 +101,12 @@ else(WIN32)
 	endif()
   endmacro()
 
-  find_path(BULLET_INCLUDE_DIR NAMES btBulletCollisionCommon.h
+  find_path(BULLET_INCLUDE_DIR NAMES bullet/btBulletCollisionCommon.h
 	HINTS
-	  ${BULLET_ROOT}/include/bullet
-	  ${BULLET_ROOT}/src/bullet
+	/usr/local/include/ /usr/include/
   )
   set(BULLET_INCLUDE_DIR ${BULLET_INCLUDE_DIR}/bullet)
-  message(STATUS ${BULLET_INCLUDE_DIR})
+  message(STATUS "Found Bullet Includes Directory: " ${BULLET_INCLUDE_DIR})
 
   # Find the libraries
 

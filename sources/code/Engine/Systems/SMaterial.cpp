@@ -350,115 +350,14 @@ public:
 		return true;
 	}
 	bool EndArray(rapidjson::SizeType elementCount) {return true;}
-};
-
-/*ShaderProgram *MaterialManager::CreateShaderFromPaths(std::string name, std::string vsPath, std::string fsPath, std::string gsPath, std::string csPath, std::string tesPath, std::string tcsPath) {
-	std::string vsContent, fsContent, gsContent, csContent, tesContent, tcsContent;
-	int iterator = 2; // Must have at least a vertex and fragment shader.
-
-	if (!ReadFileIncludable(vsPath, vsContent)) {
-		fprintf(stderr, "Failed to read vertex shader %s of %s.\n", vsPath.c_str(), name.c_str());
-		return NULL;
-	}
-
-	if (!ReadFileIncludable(fsPath, fsContent)) {
-		fprintf(stderr, "Failed to read fragment shader %s of %s.\n", fsPath.c_str(), name.c_str());
-		return NULL;
-	}
-
-	if (gsPath != "") {
-		if (!ReadFileIncludable(gsPath, gsContent)) {
-			fprintf(stderr, "Failed to read geometry shader %s of %s.\n", gsPath.c_str(), name.c_str());
-			return NULL;
-		}
-		iterator++;
-	}
-
-	if (csPath != "") {
-		if (!ReadFileIncludable(csPath, csContent)) {
-			fprintf(stderr, "Failed to read compute shader %s of %s.\n", csPath.c_str(), name.c_str());
-			return NULL;
-		}
-		iterator++;
-	}
-
-	if (tesPath != "") {
-		if (!ReadFileIncludable(tesPath, tesContent)) {
-			fprintf(stderr, "Failed to read tesselation evaluation shader %s of %s.\n", tesPath.c_str(), name.c_str());
-			return NULL;
-		}
-		iterator++;
-	}
-
-	if (tcsPath != "") {
-		if (!ReadFileIncludable(tcsPath, tcsContent)) {
-			fprintf(stderr, "Failed to read tesselation control shader %s of %s.\n", tcsPath.c_str(), name.c_str());
-			return NULL;
-		}
-		iterator++;
-	}
-
-	ShaderProgram *program = pfnCreateShader();
-	program->Initialize(iterator);
-	if (!program->AddShader(&vsPath, &vsContent, SHADER_VERTEX)) {
-		fprintf(stderr, "Failed to add vertex shader %s of %s.\n", vsPath.c_str(), name.c_str());
-		return NULL;
-	}
-	if (!program->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT)) {
-		fprintf(stderr, "Failed to add fragment shader %s of %s.\n", fsPath.c_str(), name.c_str());
-		return NULL;
-	}
-	if (gsContent.size() > 0) {
-		if (!program->AddShader(&gsPath, &gsContent, SHADER_GEOMETRY)) {
-			fprintf(stderr, "Failed to add geometry shader %s of %s.\n", gsPath.c_str(), name.c_str());
-			return NULL;
-		}
-	}
-	if (gsContent.size() > 0) {
-		if (!program->AddShader(&csPath, &csContent, SHADER_COMPUTE)) {
-			fprintf(stderr, "Failed to add control shader %s of %s.\n", csPath.c_str(), name.c_str());
-			return NULL;
-		}
-	}
-	if (gsContent.size() > 0) {
-		if (!program->AddShader(&tesPath, &tesContent, SHADER_TESS_EVALUATION)) {
-			fprintf(stderr, "Failed to add tesselation evaluation shader %s of %s.\n", tesPath.c_str(), name.c_str());
-			return NULL;
-		}
-	}
-	if (gsContent.size() > 0) {
-		if (!program->AddShader(&tcsPath, &tcsContent, SHADER_TESS_CONTROL)) {
-			fprintf(stderr, "Failed to add tesselation control shader %s of %s.\n", tcsPath.c_str(), name.c_str());
-			return NULL;
-		}
-	}
-	if (!program->Compile()) {
-		fprintf(stderr, "Failed to compile shader program: %s.\n", name.c_str());
-		return NULL;
-	}
-
-	return program;
-}
-
-ShaderProgram *MaterialManager::ParseShaderFile(std::string path) {
-	rapidjson::Reader reader;
-	ShaderJSONHandler handler;
-	handler.fileMap = &shaderFiles;
-	std::ifstream input(path);
-	rapidjson::IStreamWrapper isw(input);
-	reader.Parse(isw, handler);
-	ShaderProgram *program = CreateShaderFromPaths(handler.szName, handler.vertexShader, handler.fragmentShader, handler.geometryShader, handler.computeShader, handler.eTessShader, handler.cTessShader);
-	handler.file->program = program;
-	input.close();
-	return program;
-}
+}; */
 
 ParameterDescriptor::ParameterDescriptor() {}
 ParameterDescriptor::ParameterDescriptor(std::string _desc, PARAM_TYPE _type, void * _ptr) {
 	description = _desc;
 	paramType = _type;
 	dataPtr = _ptr;
-}*/
+}
 
 bool readFile(const std::string& filename, std::vector<char>& outputfile) {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
@@ -483,6 +382,9 @@ bool readFile(const std::string& filename, std::vector<char>& outputfile) {
 
 RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapper, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads, std::vector<UniformBufferBinding *> ubbs) {
 	graphics_wrapper_ = graphics_wrapper;
+	vbd_ = vbd;
+	vads_ = vads;
+	ubbs_ = ubbs;
 
 	render_passes_.resize(1);
 
@@ -514,47 +416,6 @@ RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapp
 	size_t fboSize = fboCount * sizeof(Framebuffer *);
 	memcpy(render_passes_[0].framebuffers.data(), fboPtr, fboSize);
 
-	GraphicsPipelineCreateInfo gpci;
-	gpci.scissorW = engine.settings.resolutionX;
-	gpci.width = static_cast<float>(engine.settings.resolutionX);
-	gpci.scissorH = engine.settings.resolutionY;
-	gpci.height = static_cast<float>(engine.settings.resolutionY);
-	gpci.renderPass = render_passes_[0].renderPass;
-	gpci.attributes = vads.data();
-	gpci.attributesCount = (uint32_t)vads.size();
-	gpci.bindings = &vbd;
-	gpci.bindingsCount = 1;
-
-	ShaderStageCreateInfo vi;
-	ShaderStageCreateInfo fi;
-	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
-		vi.fileName = "../assets/shaders/vert.glsl";
-		fi.fileName = "../assets/shaders/frag.glsl";
-	}
-	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
-		vi.fileName = "../assets/shaders/vert.fxc";
-		fi.fileName = "../assets/shaders/frag.fxc";
-	}
-	else {
-		vi.fileName = "../assets/shaders/vert.spv";
-		fi.fileName = "../assets/shaders/frag.spv";
-	}
-	std::vector<char> vfile;
-	if (!readFile(vi.fileName, vfile))
-		return nullptr;
-
-	vi.content = vfile.data();
-	vi.size = (uint32_t)vfile.size();
-	vi.type = SHADER_VERTEX;
-
-	std::vector<char> ffile;
-	if (!readFile(fi.fileName, ffile))
-		return nullptr;
-		
-	fi.content = ffile.data();
-	fi.size = (uint32_t)ffile.size();
-	fi.type = SHADER_FRAGMENT;
-
 	std::vector<TextureSubBinding> bindings;
 	bindings.reserve(4);
 	bindings.emplace_back("tex0", 0);
@@ -567,22 +428,9 @@ RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapp
 	tblci.bindings = bindings.data();
 	tblci.bindingCount = (uint32_t)bindings.size();
 	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	TextureBindingLayout *tbl = graphics_wrapper_->CreateTextureBindingLayout(tblci);
+	tbl_ = graphics_wrapper_->CreateTextureBindingLayout(tblci);
 
-	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
-	gpci.shaderStageCreateInfos = stages.data();
-	gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
-	gpci.uniformBufferBindings = ubbs.data();
-	gpci.uniformBufferBindingCount = ubbs.size();
-	gpci.textureBindings = &tbl;
-	gpci.textureBindingCount = 1;
-	gpci.cullMode = CULL_BACK;
-	gpci.primitiveType = PRIM_TRIANGLES;
-	render_passes_[0].pipelines[0].program = graphics_wrapper_->CreateGraphicsPipeline(gpci);
-	
-	PipelineContainer *pipeline = &render_passes_[0].pipelines[0];
-
-	CommandBufferCreateInfo cbci;
+	/*CommandBufferCreateInfo cbci;
 	cbci.steps = nullptr;
 	cbci.count = 0;
 	cbci.numOutputs = fboCount;
@@ -596,7 +444,7 @@ RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapp
 	cbci.secondaryInfo.fbos = render_passes_[0].framebuffers.data();
 	cbci.secondaryInfo.fboCount = (uint32_t)render_passes_[0].framebuffers.size();
 	cbci.secondaryInfo.renderPass = render_passes_[0].renderPass;
-	pipeline->commandBuffer = graphics_wrapper_->CreateCommandBuffer(cbci);
+	pipeline->commandBuffer = graphics_wrapper_->CreateCommandBuffer(cbci);*/
 
 	render_passes_[0].pipelines.resize(1);
 	render_passes_[0].pipelines[0].name = "../shaders/standard";
@@ -612,6 +460,7 @@ RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapp
 		render_passes_[0].pipelines[0].shader_paths[SHADER_VERTEX] = "../assets/shaders/vert.spv";
 		render_passes_[0].pipelines[0].shader_paths[SHADER_FRAGMENT] = "../assets/shaders/frag.spv";
 	}
+
 	render_passes_[0].pipelines[0].parameterDescriptorTable["albedoTexture"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
 	render_passes_[0].pipelines[0].parameterDescriptorTable["normalTexture"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
 	render_passes_[0].pipelines[0].parameterDescriptorTable["roughnessTexture"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
@@ -619,14 +468,56 @@ RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapp
 	render_passes_[0].pipelines[0].parameterDescriptorTable["albedoConstant"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
 	render_passes_[0].pipelines[0].parameterDescriptorTable["metalnessConstant"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
 	render_passes_[0].pipelines[0].parameterDescriptorTable["roughnessConstant"] = { "Albedo Texture", PARAM_TEXTURE, nullptr };
-	render_passes_[0].pipelines[0].generateProgram();
+	generateProgram(render_passes_[0].pipelines[0]);
 	pipeline_map_["../shaders/standard"].pipeline = 0;
 	pipeline_map_["../shaders/standard"].renderpass = 0;
 
 	return nullptr;
 }
 
-void PipelineContainer::generateProgram() {
+void MaterialManager::generateProgram(PipelineContainer &container) {
+	GraphicsPipelineCreateInfo gpci;
+	gpci.scissorW = engine.settings.resolutionX;
+	gpci.width = static_cast<float>(engine.settings.resolutionX);
+	gpci.scissorH = engine.settings.resolutionY;
+	gpci.height = static_cast<float>(engine.settings.resolutionY);
+	gpci.renderPass = render_passes_[0].renderPass;
+	gpci.attributes = vads_.data();
+	gpci.attributesCount = (uint32_t)vads_.size();
+	gpci.bindings = &vbd_;
+	gpci.bindingsCount = 1;
+
+	ShaderStageCreateInfo vi;
+	ShaderStageCreateInfo fi;
+	vi.fileName = container.shader_paths[SHADER_VERTEX].c_str();
+	std::vector<char> vfile;
+	if (!readFile(vi.fileName, vfile))
+		return;
+
+	vi.content = vfile.data();
+	vi.size = (uint32_t)vfile.size();
+	vi.type = SHADER_VERTEX;
+
+	fi.fileName = container.shader_paths[SHADER_FRAGMENT].c_str();
+	std::vector<char> ffile;
+	if (!readFile(fi.fileName, ffile))
+		return;
+
+	fi.content = ffile.data();
+	fi.size = (uint32_t)ffile.size();
+	fi.type = SHADER_FRAGMENT;
+
+	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
+	gpci.shaderStageCreateInfos = stages.data();
+	gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
+	gpci.uniformBufferBindings = ubbs_.data();
+	gpci.uniformBufferBindingCount = ubbs_.size();
+	gpci.textureBindings = &tbl_;
+	gpci.textureBindingCount = 1;
+	gpci.cullMode = CULL_BACK;
+	gpci.primitiveType = PRIM_TRIANGLES;
+	container.program = graphics_wrapper_->CreateGraphicsPipeline(gpci);
+	std::cout << container.program << std::endl;
 }
 
 PipelineReference MaterialManager::CreatePipeline(std::string pipelineName) {

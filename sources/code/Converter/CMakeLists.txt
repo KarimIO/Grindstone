@@ -8,5 +8,5 @@ link_directories(${ASSIMP_LIBRARY_DIR})
 add_executable(converter ${CV_SOURCES} ${CV_HEADERS})
 
 set_target_properties(converter PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
-target_include_directories(converter PRIVATE ${ASSIMP_INCLUDE_DIR})
+target_include_directories(converter PRIVATE ${ASSIMP_INCLUDE_DIR} ${DEPS_DIR})
 target_link_libraries(converter ${assimp_LIBRARIES})

@@ -74,13 +74,13 @@ private:
 };
 
 struct PipelineContainer {
+	PipelineReference reference;
 	GraphicsPipeline *program;
 	CommandBuffer *commandBuffer;
 	std::string name;
 	std::string shader_paths[SHADER_FRAGMENT + 1];
 	std::map<std::string, ParameterDescriptor> parameterDescriptorTable;
 	std::vector<Material> materials;
-	void generateProgram();
 	uint32_t draw_count;
 };
 
@@ -115,6 +115,7 @@ public:
 	//GraphicsPipeline *CreateShaderFromPaths(std::string name, std::string vsPath, std::string fsPath, std::string gsPath, std::string csPath, std::string tesPath, std::string tcsPath);
 	void DrawImmediate();
 	void DrawDeferred();
+	void generateProgram(PipelineContainer &container);
 	void resetDraws();
 	~MaterialManager();
 private:
@@ -125,6 +126,10 @@ private:
 	std::vector<Texture *> unloaded_;
 
 	GraphicsWrapper *graphics_wrapper_;
+	TextureBindingLayout *tbl_;
+	VertexBindingDescription vbd_;
+	std::vector<VertexAttributeDescription> vads_;
+	std::vector<UniformBufferBinding *> ubbs_;
 };
 
 #endif
