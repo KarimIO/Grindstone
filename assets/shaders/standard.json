@@ -3,8 +3,8 @@
     "shaders": {
         "deferred": {
             "opengl": {
-                "vertex": "vert.glvs",
-                "fragment": "frag.glfs"
+                "vertex": "vert.glsl",
+                "fragment": "frag.glsl"
             },
             "directx": {
                 "vertex": "vert.fxc",
@@ -12,7 +12,7 @@
             }
         }
     },
-    "properties": {
+    "textures": {
         "albedoTexture": {
             "name": "Albedo Texture",
             "type": "texture",
@@ -32,7 +32,9 @@
             "name": "Metalness Texture",
             "type": "texture",
             "default": "materials/dielectric.png"
-        },
+        }
+    },
+    "properties": {
         "albedoConstant": {
             "name": "Albedo Color",
             "type": "color",

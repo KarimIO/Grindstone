@@ -21,7 +21,7 @@
 #include <iostream>
 #include <fstream>
 
-/*enum SHADER_JSON_STATE {
+enum SHADER_JSON_STATE {
 	SHADER_JSON_MAIN = 0,
 	SHADER_JSON_NAME,
 	SHADER_JSON_SHADERS,
@@ -45,25 +45,24 @@
 	SHADER_JSON_TESSCTRL
 };
 
+enum StateJsonRenderType {
+	STATE_JSON_RENDER_FORWARD = 0,
+	STATE_JSON_RENDER_DEFERRED
+};
+
 struct ShaderJSONHandler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>, ShaderJSONHandler> {
 private:
 	unsigned char subIterator;
 public:
-	std::string vertexShader;
-	std::string fragmentShader;
-	std::string geometryShader;
-	std::string computeShader;
-	std::string eTessShader;
-	std::string cTessShader;
-
-	std::string szName;
+	std::string dir;
+	StateJsonRenderType staterendertype;
 
 	std::string paramName;
 	std::string paramText;
 	PARAM_TYPE paramType;
 	void *paramDefault;
 
-	SHADER_JSON_STATE state;
+	SHADER_JSON_STATE state = SHADER_JSON_MAIN;
 
 	glm::uvec4 uvec4;
 	glm::ivec4 ivec4;
@@ -71,12 +70,15 @@ public:
 	glm::vec4  vec4;
 	glm::dvec4 dvec4;
 
-	std::map<std::string, ShaderFile> *fileMap;
-	ShaderFile *file;
+	bool in_textures;
+	unsigned int texture_id = 0;
+
+	PipelineContainer *pipeline;
 
 	bool Null() { return true; }
 	bool Bool(bool b) {
 		if (state == SHADER_JSON_PROPERTY_DEFAULT) {
+			state = SHADER_JSON_PROPERTY;
 			if (paramType == PARAM_BOOL) {
 				paramDefault = new bool(b);
 			}
@@ -96,6 +98,7 @@ public:
 					paramDefault = new glm::bvec4(bvec4);
 			}
 		}
+		state = SHADER_JSON_PROPERTY;
 		return true;
 	}
 	bool Int(int i) {
@@ -117,6 +120,7 @@ public:
 			if (subIterator == 4)
 				paramDefault = new glm::ivec4(ivec4);
 		}
+		state = SHADER_JSON_PROPERTY;
 		return true;
 	}
 	bool Uint(unsigned u) {
@@ -138,6 +142,7 @@ public:
 			if (subIterator == 4)
 				paramDefault = new glm::uvec4(uvec4);
 		}
+		state = SHADER_JSON_PROPERTY;
 		return true;
 	}
 	bool Int64(int64_t i) { Int((int)i); return true; }
@@ -176,21 +181,25 @@ public:
 		}
 		else if (paramType == PARAM_DVEC4) {
 			dvec4[subIterator++] = d;
-			if (subIterator == 4)
+			if (subIterator == 4) {
 				paramDefault = new glm::dvec4(dvec4);
+			}
 		}
+		state = SHADER_JSON_PROPERTY;
 		return true;
 	}
 	bool String(const char* str, rapidjson::SizeType length, bool copy) {
+		std::cout << "B: " << str << std::endl;
 		if (state == SHADER_JSON_NAME) {
-			szName = str;
-			(*fileMap)[szName] = ShaderFile();
-			file = &((*fileMap)[szName]);
+			pipeline->name_text = str;
+			state = SHADER_JSON_MAIN;
 		}
 		else if (state == SHADER_JSON_PROPERTY_NAME) {
-			paramName = str;
+			paramText = str;
+			state = SHADER_JSON_PROPERTY;
 		}
 		else if (state == SHADER_JSON_PROPERTY_TYPE) {
+			state = SHADER_JSON_PROPERTY;
 			if (std::string(str) == "bool")
 				paramType = PARAM_BOOL;
 			else if (std::string(str) == "int")
@@ -237,33 +246,86 @@ public:
 				paramType = PARAM_CUBEMAP;
 		}
 		else if (state == SHADER_JSON_PROPERTY_DEFAULT) {
+			state = SHADER_JSON_PROPERTY;
 			if (paramType == PARAM_TEXTURE || paramType == PARAM_CUBEMAP)
 				paramDefault = (void *)str;
 		}
 		else if (state == SHADER_JSON_VERTEX) {
-			vertexShader = str;
+			pipeline->shader_paths[SHADER_VERTEX] = dir + str;
+			if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+				state = SHADER_JSON_SHADER_OPENGL;
+			}
+			else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+				state = SHADER_JSON_SHADER_DIRECTX;
+			}
+			else {
+				state = SHADER_JSON_SHADER_VULKAN;
+			}
 		}
 		else if (state == SHADER_JSON_FRAGMENT) {
-			fragmentShader = str;
+			pipeline->shader_paths[SHADER_FRAGMENT] = dir + str;
+			if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+				state = SHADER_JSON_SHADER_OPENGL;
+			}
+			else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+				state = SHADER_JSON_SHADER_DIRECTX;
+			}
+			else {
+				state = SHADER_JSON_SHADER_VULKAN;
+			}
 		}
 		else if (state == SHADER_JSON_GEOMETRY) {
-			geometryShader = str;
+			pipeline->shader_paths[SHADER_GEOMETRY] = dir + str;
+			if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+				state = SHADER_JSON_SHADER_OPENGL;
+			}
+			else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+				state = SHADER_JSON_SHADER_DIRECTX;
+			}
+			else {
+				state = SHADER_JSON_SHADER_VULKAN;
+			}
 		}
 		else if (state == SHADER_JSON_COMPUTE) {
-			computeShader = str;
+			std::cout << "Computer shaders not supported yet!" << std::endl;
+			if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+				state = SHADER_JSON_SHADER_OPENGL;
+			}
+			else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+				state = SHADER_JSON_SHADER_DIRECTX;
+			}
+			else {
+				state = SHADER_JSON_SHADER_VULKAN;
+			}
 		}
 		else if (state == SHADER_JSON_TESSEVAL) {
-			eTessShader = str;
+			pipeline->shader_paths[SHADER_TESS_EVALUATION] = dir + str;
+			state = SHADER_JSON_SHADER_OPENGL;
+			if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+				state = SHADER_JSON_SHADER_OPENGL;
+			}
+			else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+				state = SHADER_JSON_SHADER_DIRECTX;
+			}
+			else {
+				state = SHADER_JSON_SHADER_VULKAN;
+			}
 		}
 		else if (state == SHADER_JSON_TESSCTRL) {
-			cTessShader = str;
+			pipeline->shader_paths[SHADER_TESS_CONTROL] = dir + str;
+			if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+				state = SHADER_JSON_SHADER_OPENGL;
+			}
+			else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+				state = SHADER_JSON_SHADER_DIRECTX;
+			}
+			else {
+				state = SHADER_JSON_SHADER_VULKAN;
+			}
 		}
 		return true;
 	}
 	bool StartObject() {
-		if (state == SHADER_JSON_PROPERTIES)
-			state = SHADER_JSON_PROPERTY;
-
 		return true;
 	}
 	bool Key(const char* str, rapidjson::SizeType length, bool copy) {
@@ -276,6 +338,11 @@ public:
 			}
 			else if (std::string(str) == "properties") {
 				state = SHADER_JSON_PROPERTIES;
+				in_textures = false;
+			}
+			else if (std::string(str) == "textures") {
+				state = SHADER_JSON_PROPERTIES;
+				in_textures = true;
 			}
 		}
 		else if (state == SHADER_JSON_SHADERS) {
@@ -327,6 +394,7 @@ public:
 		}
 		else if (state == SHADER_JSON_PROPERTIES) {
 			paramName = str;
+			state = SHADER_JSON_PROPERTY;
 		}
 		else if (state == SHADER_JSON_PROPERTY) {
 			if (std::string(str) == "name") {
@@ -342,18 +410,47 @@ public:
 		return true;
 	}
 	bool EndObject(rapidjson::SizeType memberCount) {
-		if (state == SHADER_JSON_PROPERTY) {
+		switch (state) {
+		case SHADER_JSON_PROPERTIES:
+			state = SHADER_JSON_MAIN;
+			break;
+		case SHADER_JSON_PROPERTY:
 			state = SHADER_JSON_PROPERTIES;
-			file->parameterDescriptorTable[paramName] = ParameterDescriptor(paramText, paramType, paramDefault);
+			if (in_textures) {
+				pipeline->textureDescriptorTable[paramName] = TextureParameterDescriptor(texture_id++, paramText, paramType, paramDefault);
+			}
+			else {
+				pipeline->parameterDescriptorTable[paramName] = ParameterDescriptor(paramText, paramType, paramDefault);
+			}
+			break;
+		case SHADER_JSON_SHADER_DEFERRED:
+		case SHADER_JSON_SHADER_FORWARD:
+			state = SHADER_JSON_SHADERS;
+			break;
+		case SHADER_JSON_SHADER_OPENGL:
+		case SHADER_JSON_SHADER_DIRECTX:
+		case SHADER_JSON_SHADER_VULKAN:
+			if (staterendertype == STATE_JSON_RENDER_DEFERRED)
+				state = SHADER_JSON_SHADER_DEFERRED;
+			else
+				state = SHADER_JSON_SHADER_FORWARD;
+			break;
+		case SHADER_JSON_SHADERS:
+			state = SHADER_JSON_MAIN;
+			break;
 		}
+
 		return true;
 	}
 	bool StartArray() {
 		subIterator = 0;
 		return true;
 	}
-	bool EndArray(rapidjson::SizeType elementCount) {return true;}
-}; */
+	bool EndArray(rapidjson::SizeType elementCount) {
+		state = SHADER_JSON_PROPERTY;
+		return true;
+	}
+}; 
 
 ParameterDescriptor::ParameterDescriptor() {}
 ParameterDescriptor::ParameterDescriptor(std::string _desc, PARAM_TYPE _type, void * _ptr) {
@@ -457,32 +554,26 @@ RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapp
 	pipeline->commandBuffer = graphics_wrapper_->CreateCommandBuffer(cbci);*/
 
 	render_passes_[0].pipelines.resize(1);
-	render_passes_[0].pipelines[0].name = "../shaders/standard";
-	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
-		render_passes_[0].pipelines[0].shader_paths[SHADER_VERTEX] = "../assets/shaders/vert.glsl";
-		render_passes_[0].pipelines[0].shader_paths[SHADER_FRAGMENT] = "../assets/shaders/frag.glsl";
-	}
-	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
-		render_passes_[0].pipelines[0].shader_paths[SHADER_VERTEX] = "../assets/shaders/vert.fxc";
-		render_passes_[0].pipelines[0].shader_paths[SHADER_FRAGMENT] = "../assets/shaders/frag.fxc";
+	std::string path = "../assets/shaders/standard.json";
+	render_passes_[0].pipelines[0].name = path;
+
+	rapidjson::Reader reader;
+	ShaderJSONHandler handler;
+	handler.dir = path.substr(0, path.find_last_of("/") + 1);
+	handler.pipeline = &render_passes_[0].pipelines[0];
+	std::ifstream input(path.c_str());
+	if (input.fail()) {
+		throw std::runtime_error("Failed to load pipeline " + path);
 	}
 	else {
-		render_passes_[0].pipelines[0].shader_paths[SHADER_VERTEX] = "../assets/shaders/vert.spv";
-		render_passes_[0].pipelines[0].shader_paths[SHADER_FRAGMENT] = "../assets/shaders/frag.spv";
+		rapidjson::IStreamWrapper isw(input);
+		reader.Parse(isw, handler);
+		input.close();
 	}
 
-	render_passes_[0].pipelines[0].textureDescriptorTable["albedoTexture"] = { 0u, "Albedo Texture", PARAM_TEXTURE, nullptr };
-	render_passes_[0].pipelines[0].textureDescriptorTable["normalTexture"] = { 1u, "Normal Texture", PARAM_TEXTURE, nullptr };
-	render_passes_[0].pipelines[0].textureDescriptorTable["roughnessTexture"] = { 2u, "Roughness Texture", PARAM_TEXTURE, nullptr };
-	render_passes_[0].pipelines[0].textureDescriptorTable["metalnessTexture"] = { 3u, "Metalness Texture", PARAM_TEXTURE, nullptr };
-	render_passes_[0].pipelines[0].parameterDescriptorTable["albedoConstant"] = { "Albedo Multiplier", PARAM_VEC3, nullptr };
-	render_passes_[0].pipelines[0].parameterDescriptorTable["metalnessTextureEnabled"] = { "Metalness Texture Enabled", PARAM_BOOL, nullptr };
-	render_passes_[0].pipelines[0].parameterDescriptorTable["metalnessConstant"] = { "Metalness Constant", PARAM_VEC3, nullptr };
-	render_passes_[0].pipelines[0].parameterDescriptorTable["roughnessTextureEnabled"] = { "Roughness Texture Enabled", PARAM_BOOL, nullptr };
-	render_passes_[0].pipelines[0].parameterDescriptorTable["roughnessConstant"] = { "Roughness Constant", PARAM_VEC3, nullptr };
 	generateProgram(render_passes_[0].pipelines[0]);
-	pipeline_map_["../shaders/standard"].pipeline = 0;
-	pipeline_map_["../shaders/standard"].renderpass = 0;
+	pipeline_map_[path].pipeline = 0;
+	pipeline_map_[path].renderpass = 0;
 
 	return nullptr;
 }
@@ -656,7 +747,6 @@ MaterialReference MaterialManager::CreateMaterial(std::string path) {
 				auto it2 = pipeline->textureDescriptorTable.find(parameter);
 				if (it2 != pipeline->textureDescriptorTable.end()) {
 					unsigned int texture_id = it2->second.texture_id;
-					std::cout << "Found Texture: (" << texture_id << ") " << parameter << ": " << value << std::endl;
 					textures[texture_id].texture = LoadTexture(dir + value);
 					textures[texture_id].address = texture_id;
 				}
