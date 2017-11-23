@@ -1,15 +1,15 @@
 {
-    "type": "opaque",
-    "name": "Main Shader (Metalness + Roughness Workflow)",
+    "type": "transparent",
+    "name": "Water Shader",
     "shaders": {
         "deferred": {
             "opengl": {
-                "vertex": "vert.glsl",
-                "fragment": "frag.glsl"
+                "vertex": "water_vert.glsl",
+                "fragment": "water_frag.glsl"
             },
             "directx": {
-                "vertex": "vert.fxc",
-                "fragment": "frag.fxc"
+                "vertex": "water_vert.fxc",
+                "fragment": "water_frag.fxc"
             }
         }
     },
@@ -33,23 +33,6 @@
             "name": "Metalness Texture",
             "type": "texture",
             "default": "materials/dielectric.png"
-        }
-    },
-    "properties": {
-        "albedoConstant": {
-            "name": "Albedo Color",
-            "type": "color",
-            "default": [1.0, 1.0, 1.0]
-        },
-        "metalnessConstant": {
-            "name": "Metalness",
-            "type": "constant",
-            "default": 0.0
-        },
-        "roughnessConstant": {
-            "name": "Roughness",
-            "type": "constant",
-            "default": 0.5
         }
     }
 }

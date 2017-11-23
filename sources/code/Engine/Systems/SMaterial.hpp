@@ -31,6 +31,11 @@ enum PARAM_TYPE {
 	PARAM_CUBEMAP
 };
 
+enum ProgramType {
+	TYPE_OPAQUE = 0,
+	TYPE_TRANSPARENT
+};
+
 bool readFile(const std::string& filename, std::vector<char>& outputfile);
 
 class ParameterDescriptor {
@@ -54,6 +59,7 @@ class Material;
 struct PipelineReference {
 	uint8_t renderpass = 0;
 	uint8_t pipeline = 0;
+	ProgramType pipeline_type;
 };
 
 struct MaterialReference {
@@ -74,7 +80,7 @@ public:
 		m_textureBinding = 0;
 		m_meshes.clear();
 	}
-	Material(TextureBinding *textureBinding);
+	Material(MaterialReference reference, TextureBinding *textureBinding);
 	void IncrementDrawCount();
 private:
 	MaterialReference reference;
@@ -82,6 +88,8 @@ private:
 };
 
 struct PipelineContainer {
+	ProgramType type;
+	TextureBindingLayout *tbl;
 	PipelineReference reference;
 	GraphicsPipeline *program;
 	CommandBuffer *commandBuffer;
@@ -99,7 +107,8 @@ public:
 	RenderPass *renderPass;
 	CommandBuffer *commandBuffer;
 	std::vector<Framebuffer *> framebuffers;
-	std::vector<PipelineContainer> pipelines;
+	std::vector<PipelineContainer> pipelines_deferred;
+	std::vector<PipelineContainer> pipelines_forward;
 };
 
 class MaterialManager {
@@ -123,8 +132,9 @@ public:
 	void LoadPreloaded();
 	//GraphicsPipeline *ParseShaderFile(std::string path);
 	//GraphicsPipeline *CreateShaderFromPaths(std::string name, std::string vsPath, std::string fsPath, std::string gsPath, std::string csPath, std::string tesPath, std::string tcsPath);
-	void DrawImmediate();
-	void DrawDeferred();
+	void DrawDeferredImmediate();
+	void DrawForwardImmediate();
+	void DrawDeferredCommand();
 	void generateProgram(PipelineContainer &container);
 	void resetDraws();
 	~MaterialManager();
@@ -136,7 +146,6 @@ private:
 	std::vector<Texture *> unloaded_;
 
 	GraphicsWrapper *graphics_wrapper_;
-	TextureBindingLayout *tbl_;
 	VertexBindingDescription vbd_;
 	std::vector<VertexAttributeDescription> vads_;
 	std::vector<UniformBufferBinding *> ubbs_;

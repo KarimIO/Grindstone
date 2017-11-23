@@ -24,6 +24,7 @@
 enum SHADER_JSON_STATE {
 	SHADER_JSON_MAIN = 0,
 	SHADER_JSON_NAME,
+	SHADER_JSON_TYPE,
 	SHADER_JSON_SHADERS,
 	// Draw Modes
 	SHADER_JSON_SHADER_DEFERRED,
@@ -54,6 +55,7 @@ struct ShaderJSONHandler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>
 private:
 	unsigned char subIterator;
 public:
+	std::string path;
 	std::string dir;
 	StateJsonRenderType staterendertype;
 
@@ -73,6 +75,7 @@ public:
 	bool in_textures;
 	unsigned int texture_id = 0;
 
+	RenderPassContainer *render_pass;
 	PipelineContainer *pipeline;
 
 	bool Null() { return true; }
@@ -189,9 +192,28 @@ public:
 		return true;
 	}
 	bool String(const char* str, rapidjson::SizeType length, bool copy) {
-		std::cout << "B: " << str << std::endl;
 		if (state == SHADER_JSON_NAME) {
 			pipeline->name_text = str;
+			state = SHADER_JSON_MAIN;
+		}
+		else if (state == SHADER_JSON_TYPE) {
+			std::string type = str;
+			if (type == "opaque") {
+				render_pass->pipelines_deferred.push_back(PipelineContainer());
+				pipeline = &render_pass->pipelines_deferred.back();
+				pipeline->type = TYPE_OPAQUE;
+				pipeline->reference.pipeline_type = TYPE_OPAQUE;
+				pipeline->reference.renderpass = 0;
+				pipeline->reference.pipeline = render_pass->pipelines_deferred.size() - 1;
+			}
+			else if (type == "transparent") {
+				render_pass->pipelines_forward.push_back(PipelineContainer());
+				pipeline = &render_pass->pipelines_forward.back();
+				pipeline->type = TYPE_TRANSPARENT;
+				pipeline->reference.pipeline_type = TYPE_TRANSPARENT;
+				pipeline->reference.renderpass = 0;
+				pipeline->reference.pipeline = render_pass->pipelines_forward.size() - 1;
+			}
 			state = SHADER_JSON_MAIN;
 		}
 		else if (state == SHADER_JSON_PROPERTY_NAME) {
@@ -332,6 +354,9 @@ public:
 		if (state == SHADER_JSON_MAIN) {
 			if (std::string(str) == "name") {
 				state = SHADER_JSON_NAME;
+			}
+			else if (std::string(str) == "type") {
+				state = SHADER_JSON_TYPE;
 			}
 			else if (std::string(str) == "shaders") {
 				state = SHADER_JSON_SHADERS;
@@ -523,20 +548,6 @@ RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapp
 	size_t fboSize = fboCount * sizeof(Framebuffer *);
 	memcpy(render_passes_[0].framebuffers.data(), fboPtr, fboSize);
 
-	std::vector<TextureSubBinding> bindings;
-	bindings.reserve(4);
-	bindings.emplace_back("tex0", 0);
-	bindings.emplace_back("tex1", 1);
-	bindings.emplace_back("tex2", 2);
-	bindings.emplace_back("tex3", 3);
-
-	TextureBindingLayoutCreateInfo tblci;
-	tblci.bindingLocation = 2;
-	tblci.bindings = bindings.data();
-	tblci.bindingCount = (uint32_t)bindings.size();
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	tbl_ = graphics_wrapper_->CreateTextureBindingLayout(tblci);
-
 	/*CommandBufferCreateInfo cbci;
 	cbci.steps = nullptr;
 	cbci.count = 0;
@@ -552,28 +563,6 @@ RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapp
 	cbci.secondaryInfo.fboCount = (uint32_t)render_passes_[0].framebuffers.size();
 	cbci.secondaryInfo.renderPass = render_passes_[0].renderPass;
 	pipeline->commandBuffer = graphics_wrapper_->CreateCommandBuffer(cbci);*/
-
-	render_passes_[0].pipelines.resize(1);
-	std::string path = "../assets/shaders/standard.json";
-	render_passes_[0].pipelines[0].name = path;
-
-	rapidjson::Reader reader;
-	ShaderJSONHandler handler;
-	handler.dir = path.substr(0, path.find_last_of("/") + 1);
-	handler.pipeline = &render_passes_[0].pipelines[0];
-	std::ifstream input(path.c_str());
-	if (input.fail()) {
-		throw std::runtime_error("Failed to load pipeline " + path);
-	}
-	else {
-		rapidjson::IStreamWrapper isw(input);
-		reader.Parse(isw, handler);
-		input.close();
-	}
-
-	generateProgram(render_passes_[0].pipelines[0]);
-	pipeline_map_[path].pipeline = 0;
-	pipeline_map_[path].renderpass = 0;
 
 	return nullptr;
 }
@@ -610,12 +599,27 @@ void MaterialManager::generateProgram(PipelineContainer &container) {
 	fi.size = (uint32_t)ffile.size();
 	fi.type = SHADER_FRAGMENT;
 
+	std::cout << vi.fileName << " + " << fi.fileName << " loaded." << std::endl;
+
+	std::vector<TextureSubBinding> bindings;
+	bindings.reserve(container.textureDescriptorTable.size());
+	for (auto &t : container.textureDescriptorTable) {
+		bindings.emplace_back(t.first.c_str(), t.second.texture_id);
+	}
+
+	TextureBindingLayoutCreateInfo tblci;
+	tblci.bindingLocation = 2;
+	tblci.bindings = bindings.data();
+	tblci.bindingCount = (uint32_t)bindings.size();
+	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	container.tbl = graphics_wrapper_->CreateTextureBindingLayout(tblci);
+
 	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
 	gpci.shaderStageCreateInfos = stages.data();
 	gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
 	gpci.uniformBufferBindings = ubbs_.data();
 	gpci.uniformBufferBindingCount = ubbs_.size();
-	gpci.textureBindings = &tbl_;
+	gpci.textureBindings = &container.tbl;
 	gpci.textureBindingCount = 1;
 	gpci.cullMode = CULL_BACK;
 	gpci.primitiveType = PRIM_TRIANGLES;
@@ -626,8 +630,29 @@ PipelineReference MaterialManager::CreatePipeline(std::string pipelineName) {
 	if (pipeline_map_.find(pipelineName) != pipeline_map_.end())
 		return pipeline_map_[pipelineName];
 
+	rapidjson::Reader reader;
+	ShaderJSONHandler handler;
+	handler.path = pipelineName;
+	handler.dir = pipelineName.substr(0, pipelineName.find_last_of("/") + 1);
+	handler.render_pass = &render_passes_[0];
+	std::ifstream input(pipelineName.c_str());
+	PipelineContainer *pipeline;
+	if (input.fail()) {
+		throw std::runtime_error("Failed to load pipeline " + pipelineName);
+	}
+	else {
+		rapidjson::IStreamWrapper isw(input);
+		reader.Parse(isw, handler);
+		input.close();
+
+		pipeline = handler.pipeline;
+	}
+
+	generateProgram(*pipeline);
+	pipeline_map_[pipelineName] = pipeline->reference;
+
 	// Create It
-	return PipelineReference();
+	return pipeline->reference;
 }
 
 void MaterialManager::LoadPreloaded() {
@@ -692,7 +717,7 @@ MaterialReference MaterialManager::PreLoadMaterial(std::string path) {
 	ref.pipelineReference = pipelineRef;
 	ref.material = (uint32_t)pipeline->materials.size();
 
-	pipeline->materials.emplace_back(textureBinding);
+	pipeline->materials.emplace_back(ref, textureBinding);
 
 	material_map_[path] = ref;
 	return ref;
@@ -766,7 +791,7 @@ MaterialReference MaterialManager::CreateMaterial(std::string path) {
 	ref.pipelineReference = pipeline_reference;
 	ref.material = (uint32_t)pipeline->materials.size();
 
-	pipeline->materials.emplace_back(textureBinding);
+	pipeline->materials.emplace_back(ref, textureBinding);
 
 	material_map_[path] = ref;
 	return ref;
@@ -777,11 +802,17 @@ RenderPassContainer *MaterialManager::GetRenderPass(uint8_t i) {
 }
 
 PipelineContainer * MaterialManager::GetPipeline(PipelineReference ref) {
-	return &render_passes_[ref.renderpass].pipelines[ref.pipeline];
+	if (ref.pipeline_type == TYPE_OPAQUE)
+		return &render_passes_[ref.renderpass].pipelines_deferred[ref.pipeline];
+	else
+		return &render_passes_[ref.renderpass].pipelines_forward[ref.pipeline];
 }
 
 Material * MaterialManager::GetMaterial(MaterialReference ref) {
-	return &render_passes_[ref.pipelineReference.renderpass].pipelines[ref.pipelineReference.pipeline].materials[ref.material];
+	if (ref.pipelineReference.pipeline_type == TYPE_OPAQUE)
+		return &render_passes_[ref.pipelineReference.renderpass].pipelines_deferred[ref.pipelineReference.pipeline].materials[ref.material];
+	else
+		return &render_passes_[ref.pipelineReference.renderpass].pipelines_forward[ref.pipelineReference.pipeline].materials[ref.material];
 }
 
 void MaterialManager::RemoveRenderPass(uint8_t i) {
@@ -941,10 +972,10 @@ Texture * MaterialManager::LoadTexture(std::string path) {
 	return nullptr;
 }
 
-void MaterialManager::DrawImmediate() {
+void MaterialManager::DrawDeferredImmediate() {
 	for (auto const &renderPass : render_passes_) {
 		//renderPass->Bind();
-		for (auto const &pipeline : renderPass.pipelines) {
+		for (auto const &pipeline : renderPass.pipelines_deferred) {
 			pipeline.program->Bind();
 			if (pipeline.draw_count > 0) {
 				for (auto const &material : pipeline.materials) {
@@ -961,13 +992,33 @@ void MaterialManager::DrawImmediate() {
 	}
 }
 
-void MaterialManager::DrawDeferred() {
+void MaterialManager::DrawForwardImmediate() {
+	for (auto const &renderPass : render_passes_) {
+		//renderPass->Bind();
+		for (auto const &pipeline : renderPass.pipelines_forward) {
+			pipeline.program->Bind();
+			if (pipeline.draw_count > 0) {
+				for (auto const &material : pipeline.materials) {
+					if (material.draw_count > 0) {
+						if (material.m_textureBinding != nullptr)
+							graphics_wrapper_->BindTextureBinding(material.m_textureBinding);
+						for (auto const &mesh : material.m_meshes) {
+							mesh->Draw();
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+void MaterialManager::DrawDeferredCommand() {
 	uint32_t currentFrame = graphics_wrapper_->GetImageIndex();
 
 	for (auto const &renderPass : render_passes_) {
 		std::vector<CommandBuffer *> cmds;
-		cmds.reserve(renderPass.pipelines.size());
-		for (auto const &pipeline : renderPass.pipelines) {
+		cmds.reserve(renderPass.pipelines_deferred.size());
+		for (auto const &pipeline : renderPass.pipelines_deferred) {
 			pipeline.commandBuffer->SetCommandBuffer(currentFrame);
 			pipeline.commandBuffer->Reset();
 			pipeline.commandBuffer->Begin();
@@ -993,7 +1044,13 @@ void MaterialManager::DrawDeferred() {
 
 void MaterialManager::resetDraws() {
 	for (auto &render_pass : render_passes_) {
-		for (auto &pipeline : render_pass.pipelines) {
+		for (auto &pipeline : render_pass.pipelines_deferred) {
+			pipeline.draw_count = 0;
+			for (auto &material : pipeline.materials) {
+				material.draw_count = 0;
+			}
+		}
+		for (auto &pipeline : render_pass.pipelines_forward) {
 			pipeline.draw_count = 0;
 			for (auto &material : pipeline.materials) {
 				material.draw_count = 0;
@@ -1008,7 +1065,11 @@ MaterialManager::~MaterialManager() {
 	}
 
 	for (const auto &render_pass : render_passes_) {
-		for (const auto &pipeline : render_pass.pipelines) {
+		for (const auto &pipeline : render_pass.pipelines_deferred) {
+			graphics_wrapper_->DeleteGraphicsPipeline(pipeline.program);
+		}
+
+		for (const auto &pipeline : render_pass.pipelines_forward) {
 			graphics_wrapper_->DeleteGraphicsPipeline(pipeline.program);
 		}
 
@@ -1016,9 +1077,9 @@ MaterialManager::~MaterialManager() {
 	}
 }
 
-Material::Material(TextureBinding * textureBinding) {
-	m_meshes.reserve(1);
+Material::Material(MaterialReference reference, TextureBinding * textureBinding) {
 	m_textureBinding = textureBinding;
+	this->reference = reference;
 }
 
 void Material::IncrementDrawCount() {

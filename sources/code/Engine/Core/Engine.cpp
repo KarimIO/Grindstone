@@ -335,18 +335,19 @@ Engine &Engine::GetInstance() {
 
 void Engine::Render() {
 	if (graphics_wrapper_->SupportsCommandBuffers()) {
-		materialManager.DrawDeferred();
+		materialManager.DrawDeferredCommand();
 		graphics_wrapper_->WaitUntilIdle();
 	}
 	else {
 		if (!settings.debugNoLighting) {
 			gbuffer->BindWrite();
 			gbuffer->Clear();
-			materialManager.DrawImmediate();
+			materialManager.DrawDeferredImmediate();
 			gbuffer->Unbind();
 			graphics_wrapper_->BindDefaultFramebuffer();
 			gbuffer->BindRead();
 			renderPath->Draw(gbuffer);
+			materialManager.DrawForwardImmediate();
 			gbuffer->Unbind();
 
 			graphics_wrapper_->SwapBuffer();
@@ -354,7 +355,8 @@ void Engine::Render() {
 		else {
 			graphics_wrapper_->BindDefaultFramebuffer();
 			graphics_wrapper_->Clear();
-			materialManager.DrawImmediate();
+			materialManager.DrawDeferredImmediate();
+			materialManager.DrawForwardImmediate();
 			//graphics_wrapper_->Blit(0,0,0,1366,768);
 			graphics_wrapper_->SwapBuffer();
 		}
