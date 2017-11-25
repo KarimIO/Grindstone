@@ -80,7 +80,7 @@ public:
 	void BindVertexArrayObject(VertexArrayObject *);
 	void DrawImmediateIndexed(bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount);
 	void DrawImmediateVertices(uint32_t base, uint32_t count);
-	void SetImmediateBlending(bool);
+	void SetImmediateBlending(BlendMode);
 	void BindDefaultFramebuffer();
 
 	ColorFormat GetDeviceColorFormat();

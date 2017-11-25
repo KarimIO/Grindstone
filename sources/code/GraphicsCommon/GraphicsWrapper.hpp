@@ -37,6 +37,12 @@ struct InstanceCreateInfo {
 #include <GLFW/glfw3.h>
 #endif
 
+enum BlendMode {
+	BLEND_NONE = 0,
+	BLEND_ADDITIVE,
+	BLEND_ADD_ALPHA,
+};
+
 class GraphicsWrapper {
 public:
 
@@ -110,7 +116,7 @@ public:
 	virtual void BindVertexArrayObject(VertexArrayObject *) = 0;
 	virtual	void DrawImmediateIndexed(bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) = 0;
 	virtual void DrawImmediateVertices(uint32_t base, uint32_t count) = 0;
-	virtual void SetImmediateBlending(bool) = 0;
+	virtual void SetImmediateBlending(BlendMode) = 0;
 
 	virtual ColorFormat GetDeviceColorFormat() = 0;
 

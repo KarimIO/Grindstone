@@ -277,15 +277,23 @@ void GLGraphicsWrapper::DrawImmediateVertices(uint32_t base, uint32_t count) {
 	glDrawArrays(GL_TRIANGLE_STRIP, base, count);
 }
 
-void GLGraphicsWrapper::SetImmediateBlending(bool en) {
-	if (en) {
+void GLGraphicsWrapper::SetImmediateBlending(BlendMode mode) {
+	switch (mode) {
+	case BLEND_NONE:
+	default:
+		glDisable(GL_BLEND);
+		break;
+	case BLEND_ADDITIVE:
 		glEnable(GL_BLEND);
 		glBlendEquation(GL_FUNC_ADD);
 		glBlendFunc(GL_ONE, GL_ONE);
-
+		break;
+	case BLEND_ADD_ALPHA:
+		glEnable(GL_BLEND);
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+		break;
 	}
-	else
-		glDisable(GL_BLEND);
 }
 
 void GLGraphicsWrapper::BindDefaultFramebuffer()

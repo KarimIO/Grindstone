@@ -342,11 +342,14 @@ void Engine::Render() {
 		if (!settings.debugNoLighting) {
 			gbuffer->BindWrite();
 			gbuffer->Clear();
+			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			materialManager.DrawDeferredImmediate();
 			gbuffer->Unbind();
 			graphics_wrapper_->BindDefaultFramebuffer();
 			gbuffer->BindRead();
+			graphics_wrapper_->SetImmediateBlending(BLEND_ADDITIVE);
 			renderPath->Draw(gbuffer);
+			graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
 			materialManager.DrawForwardImmediate();
 			gbuffer->Unbind();
 
@@ -355,7 +358,9 @@ void Engine::Render() {
 		else {
 			graphics_wrapper_->BindDefaultFramebuffer();
 			graphics_wrapper_->Clear();
+			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			materialManager.DrawDeferredImmediate();
+			graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
 			materialManager.DrawForwardImmediate();
 			//graphics_wrapper_->Blit(0,0,0,1366,768);
 			graphics_wrapper_->SwapBuffer();

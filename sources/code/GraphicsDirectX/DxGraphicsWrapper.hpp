@@ -30,6 +30,7 @@ private:
 	ID3D11RasterizerState* m_rasterState;
 
 	ID3D11BlendState* m_alphaBlendState;
+	ID3D11BlendState* m_addBlendState;
 	ID3D11BlendState* m_noBlendState;
 public:
 	void Clear();
@@ -79,7 +80,7 @@ public:
 	void DrawCommandBuffers(uint32_t imageIndex, CommandBuffer ** commandBuffers, uint32_t commandBufferCount);
 	void DrawImmediateIndexed(bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount);
 	void DrawImmediateVertices(uint32_t base, uint32_t count);
-	void SetImmediateBlending(bool);
+	void SetImmediateBlending(BlendMode);
 	void BindDefaultFramebuffer();
 
 	ColorFormat GetDeviceColorFormat();

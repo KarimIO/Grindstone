@@ -189,7 +189,6 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 	deffUBO->UpdateUniformBuffer(&deffUBOBuffer);
 
 	m_graphics_wrapper_->Clear();
-	m_graphics_wrapper_->SetImmediateBlending(true);
 	deffUBO->Bind();
 	engine.graphics_wrapper_->BindVertexArrayObject(planeVAO);
 	
@@ -210,6 +209,4 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 	m_iblPipeline->Bind();
 	//m_graphics_wrapper_->BindTextureBinding(m_cubemapBinding);
 	m_graphics_wrapper_->DrawImmediateVertices(0, 6);
-
-	m_graphics_wrapper_->SetImmediateBlending(false);
 }

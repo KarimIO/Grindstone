@@ -361,6 +361,16 @@ denominator = displayModeList[i].RefreshRate.Denominator;
 	BlendStateDescription.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
 	BlendStateDescription.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
 
+	result = m_device->CreateBlendState(&BlendStateDescription, &m_addBlendState);
+	if (FAILED(result)) {
+		return;
+	}
+
+	BlendStateDescription.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	BlendStateDescription.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+
+	BlendStateDescription.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+
 	result = m_device->CreateBlendState(&BlendStateDescription, &m_alphaBlendState);
 	if (FAILED(result)) {
 		return;
@@ -492,13 +502,18 @@ void DxGraphicsWrapper::DrawImmediateVertices(uint32_t base, uint32_t count) {
 	m_deviceContext->Draw(count, base);
 }
 
-void DxGraphicsWrapper::SetImmediateBlending(bool state) {
+void DxGraphicsWrapper::SetImmediateBlending(BlendMode state) {
 	const float blendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	if (state) {
-		m_deviceContext->OMSetBlendState(m_alphaBlendState, blendFactor, 0xffffffff);
-	}
-	else {
+	switch (state) {
+	case BLEND_NONE:
 		m_deviceContext->OMSetBlendState(m_noBlendState, blendFactor, 0xffffffff);
+		break;
+	case BLEND_ADDITIVE:
+		m_deviceContext->OMSetBlendState(m_addBlendState, blendFactor, 0xffffffff);
+		break;
+	case BLEND_ADD_ALPHA:
+		m_deviceContext->OMSetBlendState(m_alphaBlendState, blendFactor, 0xffffffff);
+		break;
 	}
 }
 
