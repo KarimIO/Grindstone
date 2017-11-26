@@ -10,6 +10,7 @@
 #include "GLIndexBuffer.hpp"
 #include "GLUniformBuffer.hpp"
 #include "GLTexture.hpp"
+#include "GLDepthTarget.hpp"
 #include "../GraphicsCommon/GraphicsWrapper.hpp"
 #include "../GraphicsCommon/DLLDefs.hpp"
 
@@ -65,6 +66,7 @@ public:
 	TextureBinding *CreateTextureBinding(TextureBindingCreateInfo createInfo);
 	TextureBindingLayout *CreateTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo);
 	RenderTarget *CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc);
+	DepthTarget *CreateDepthTarget(DepthTargetCreateInfo *rt, uint32_t rc);
 
 	uint32_t GetImageIndex();
 

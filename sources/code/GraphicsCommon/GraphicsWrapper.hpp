@@ -100,6 +100,7 @@ public:
 	virtual TextureBinding *CreateTextureBinding(TextureBindingCreateInfo ci) = 0;
 	virtual TextureBindingLayout *CreateTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo) = 0;
 	virtual RenderTarget *CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc) = 0;
+	virtual DepthTarget *CreateDepthTarget(DepthTargetCreateInfo *rt, uint32_t rc) = 0;
 
 	virtual bool SupportsCommandBuffers() = 0;
 	virtual bool SupportsTesselation() = 0;

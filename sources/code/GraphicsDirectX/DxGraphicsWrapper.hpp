@@ -14,6 +14,8 @@
 #include "../GraphicsCommon/GraphicsWrapper.hpp"
 #include "../GraphicsCommon/DLLDefs.hpp"
 #include "../GraphicsCommon/VertexArrayObject.hpp"
+#include "DxRenderTarget.hpp"
+#include "DxDepthTarget.hpp"
 
 class GRAPHICS_EXPORT_CLASS DxGraphicsWrapper : public GraphicsWrapper {
 private:
@@ -64,6 +66,8 @@ public:
 	Texture *CreateTexture(TextureCreateInfo createInfo);
 	TextureBinding *CreateTextureBinding(TextureBindingCreateInfo createInfo);
 	TextureBindingLayout *CreateTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo);
+	RenderTarget *CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc); 
+	DepthTarget *CreateDepthTarget(DepthTargetCreateInfo *rt, uint32_t rc);
 
 	bool SupportsCommandBuffers();
 	bool SupportsTesselation();
@@ -83,7 +87,7 @@ public:
 	void SetImmediateBlending(BlendMode);
 	void BindDefaultFramebuffer();
 
-	ColorFormat GetDeviceColorFormat();
+	ImageFormat GetDeviceColorFormat();
 
 	void SwapBuffer();
 };

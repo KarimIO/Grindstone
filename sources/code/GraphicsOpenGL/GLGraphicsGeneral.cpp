@@ -231,6 +231,10 @@ RenderTarget *GLGraphicsWrapper::CreateRenderTarget(RenderTargetCreateInfo *rt, 
 	return static_cast<RenderTarget *>(new GLRenderTarget(rt, rc));
 }
 
+DepthTarget * GLGraphicsWrapper::CreateDepthTarget(DepthTargetCreateInfo * rt, uint32_t rc) {
+	return static_cast<DepthTarget *>(new GLDepthTarget(rt, rc));
+}
+
 
 uint32_t GLGraphicsWrapper::GetImageIndex() {
 	return 0;

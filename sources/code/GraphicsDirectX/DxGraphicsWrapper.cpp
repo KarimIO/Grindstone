@@ -450,6 +450,14 @@ Framebuffer * DxGraphicsWrapper::CreateFramebuffer(FramebufferCreateInfo ci) {
 	return (Framebuffer *)new DxFramebuffer(m_device, m_deviceContext, ci);
 }
 
+RenderTarget *DxGraphicsWrapper::CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc) {
+	return static_cast<RenderTarget *>(new DxRenderTarget(rt, rc));
+}
+
+DepthTarget *DxGraphicsWrapper::CreateDepthTarget(DepthTargetCreateInfo *rt, uint32_t rc) {
+	return static_cast<DepthTarget *>(new DxDepthTarget(rt, rc));
+}
+
 RenderPass *DxGraphicsWrapper::CreateRenderPass(RenderPassCreateInfo ci) {
 	return nullptr;
 }
