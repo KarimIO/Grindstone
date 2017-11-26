@@ -29,7 +29,7 @@ Texture *LoadCubemap(std::string path, GraphicsWrapper *m_graphics_wrapper_) {
 
 	printf("Cubemap loaded: %s \n", path.c_str());
 
-	ColorFormat format;
+	ImageFormat format;
 	switch (texChannels) {
 	case 1:
 		format = FORMAT_COLOR_R8;
@@ -173,7 +173,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_) {
 }
 
 void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
-	gbuffer->BindTextures();
+	engine.gbuffer_images_->Bind();
 
 	CCamera *cam = &engine.cameraSystem.components[0];
 	Entity *ent = &engine.entities[cam->entityID];

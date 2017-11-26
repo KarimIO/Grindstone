@@ -99,6 +99,7 @@ public:
 	virtual Texture *CreateTexture(TextureCreateInfo createInfo) = 0;
 	virtual TextureBinding *CreateTextureBinding(TextureBindingCreateInfo ci) = 0;
 	virtual TextureBindingLayout *CreateTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo) = 0;
+	virtual RenderTarget *CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc) = 0;
 
 	virtual bool SupportsCommandBuffers() = 0;
 	virtual bool SupportsTesselation() = 0;
@@ -118,7 +119,7 @@ public:
 	virtual void DrawImmediateVertices(uint32_t base, uint32_t count) = 0;
 	virtual void SetImmediateBlending(BlendMode) = 0;
 
-	virtual ColorFormat GetDeviceColorFormat() = 0;
+	virtual ImageFormat GetDeviceColorFormat() = 0;
 
 	virtual void SwapBuffer() = 0;
 };

@@ -299,30 +299,31 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	materialManager.Initialize(graphics_wrapper_, vbd, vads, ubbs);
 	geometry_system.AddSystem(new SGeometryStatic(&materialManager, graphics_wrapper_, vbd, vads));
 
-	std::vector<ColorFormat> gbufferCFs = {
+	std::vector<ImageFormat> gbufferCFs = {
 		FORMAT_COLOR_R8G8B8A8,	// R  G  B  MatID
 		FORMAT_COLOR_R8G8B8A8,	// sR sG sB Roughness
 		FORMAT_COLOR_R8G8B8A8	// nX nY nZ
 	};
-	
-	FramebufferCreateInfo gbufferCI;
-	gbufferCI.colorFormats = gbufferCFs.data();
-	gbufferCI.depthFormat = FORMAT_DEPTH_24;
-	gbufferCI.numColorTargets = (uint32_t)gbufferCFs.size();
-	gbufferCI.width = settings.resolutionX;
-	gbufferCI.height = settings.resolutionY;
-	gbufferCI.renderPass = nullptr;
-	gbuffer = graphics_wrapper_->CreateFramebuffer(gbufferCI);
 
-	ColorFormat deviceColorFormat = graphics_wrapper_->GetDeviceColorFormat();
-	FramebufferCreateInfo defaultFramebufferCI;
-	defaultFramebufferCI.colorFormats = &deviceColorFormat;
-	defaultFramebufferCI.depthFormat = FORMAT_DEPTH_24;
-	defaultFramebufferCI.numColorTargets = 1;
-	defaultFramebufferCI.width = settings.resolutionX;
-	defaultFramebufferCI.height = settings.resolutionY;
-	defaultFramebufferCI.renderPass = nullptr;
-	defaultFramebuffer = graphics_wrapper_->CreateFramebuffer(defaultFramebufferCI);
+	std::vector<RenderTargetCreateInfo> gbuffer_images_ci;
+	gbuffer_images_ci.reserve(3);
+	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY);
+	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY);
+	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY);
+	gbuffer_images_ = graphics_wrapper_->CreateRenderTarget(gbuffer_images_ci.data(), gbuffer_images_ci.size());
+
+	RenderTargetCreateInfo depth_image_ci;
+	depth_image_ci.format = FORMAT_DEPTH_32;
+	depth_image_ci.width = settings.resolutionX;
+	depth_image_ci.height = settings.resolutionY;
+	depth_image_ = graphics_wrapper_->CreateRenderTarget(&depth_image_ci, 1);
+	
+	FramebufferCreateInfo gbuffer_ci;
+	gbuffer_ci.render_target_lists = &gbuffer_images_;
+	gbuffer_ci.num_render_target_lists = 1;
+	gbuffer_ci.depth_target = depth_image_;
+	gbuffer_ci.render_pass = nullptr;
+	gbuffer = graphics_wrapper_->CreateFramebuffer(gbuffer_ci);
 
 	return true;
 }

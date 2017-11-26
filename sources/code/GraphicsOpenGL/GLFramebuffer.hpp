@@ -5,21 +5,17 @@
 #include "../GraphicsCommon/DLLDefs.hpp"
 
 class GLFramebuffer : public Framebuffer {
-	GLuint m_fbo;
-	GLuint *m_textures;
-	GLuint m_numTextures;
-	GLuint m_depthTexture;
-
-	uint32_t m_width, m_height;
 public:
 	GLFramebuffer(FramebufferCreateInfo);
 	~GLFramebuffer();
-	void Clear();
-	void Blit(int i, int x, int y, int w, int h);
-	void BindWrite();
-	void BindRead();
-	void BindTextures();
-	void Unbind();
+	virtual void Clear();
+	virtual void CopyFrom(Framebuffer *);
+	virtual void Bind();
+	virtual void BindWrite();
+	virtual void BindRead();
+	virtual void Unbind();
+private:
+	GLuint fbo_;
 };
 
 #endif

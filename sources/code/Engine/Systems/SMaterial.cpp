@@ -534,20 +534,6 @@ RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapp
 	rpci.m_depthFormat = FORMAT_DEPTH_32;
 	render_passes_[0].renderPass = graphics_wrapper_->CreateRenderPass(rpci);
 
-	DefaultFramebufferCreateInfo dfbci;
-	dfbci.width = engine.settings.resolutionX;
-	dfbci.height = engine.settings.resolutionY;
-	dfbci.renderPass = render_passes_[0].renderPass;
-	dfbci.depthFormat = FORMAT_DEPTH_32;
-
-	Framebuffer **fboPtr;
-	uint32_t fboCount;
-	graphics_wrapper_->CreateDefaultFramebuffers(dfbci, fboPtr, fboCount);
-
-	render_passes_[0].framebuffers.resize(fboCount);
-	size_t fboSize = fboCount * sizeof(Framebuffer *);
-	memcpy(render_passes_[0].framebuffers.data(), fboPtr, fboSize);
-
 	/*CommandBufferCreateInfo cbci;
 	cbci.steps = nullptr;
 	cbci.count = 0;
@@ -909,7 +895,7 @@ Texture * MaterialManager::LoadTexture(std::string path) {
 		fclose(fp);
 
 		unsigned int components = (header.fourCC == FOURCC_DXT1) ? 3 : 4;
-		ColorFormat format;
+		ImageFormat format;
 		switch (header.fourCC) {
 		case FOURCC_DXT1:
 			format = FORMAT_COLOR_RGBA_DXT1;
@@ -948,7 +934,7 @@ Texture * MaterialManager::LoadTexture(std::string path) {
 
 		printf("Texture loaded: %s \n", path.c_str());
 
-		ColorFormat format;
+		ImageFormat format;
 		switch (texChannels) {
 		case 1:
 			format = FORMAT_COLOR_R8;

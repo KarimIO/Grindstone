@@ -298,6 +298,33 @@ GLIndexBuffer.cpp.s:
 	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/build.make sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/GLIndexBuffer.cpp.s
 .PHONY : GLIndexBuffer.cpp.s
 
+GLRenderTarget.o: GLRenderTarget.cpp.o
+
+.PHONY : GLRenderTarget.o
+
+# target to build an object file
+GLRenderTarget.cpp.o:
+	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/build.make sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/GLRenderTarget.cpp.o
+.PHONY : GLRenderTarget.cpp.o
+
+GLRenderTarget.i: GLRenderTarget.cpp.i
+
+.PHONY : GLRenderTarget.i
+
+# target to preprocess a source file
+GLRenderTarget.cpp.i:
+	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/build.make sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/GLRenderTarget.cpp.i
+.PHONY : GLRenderTarget.cpp.i
+
+GLRenderTarget.s: GLRenderTarget.cpp.s
+
+.PHONY : GLRenderTarget.s
+
+# target to generate assembly for a file
+GLRenderTarget.cpp.s:
+	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/build.make sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/GLRenderTarget.cpp.s
+.PHONY : GLRenderTarget.cpp.s
+
 GLTexture.o: GLTexture.cpp.o
 
 .PHONY : GLTexture.o
@@ -515,6 +542,9 @@ help:
 	@echo "... GLIndexBuffer.o"
 	@echo "... GLIndexBuffer.i"
 	@echo "... GLIndexBuffer.s"
+	@echo "... GLRenderTarget.o"
+	@echo "... GLRenderTarget.i"
+	@echo "... GLRenderTarget.s"
 	@echo "... GLTexture.o"
 	@echo "... GLTexture.i"
 	@echo "... GLTexture.s"

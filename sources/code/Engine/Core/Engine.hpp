@@ -129,6 +129,8 @@ public:
 
 	SGeometry geometry_system;
 	SLight lightSystem;
+	RenderTarget *depth_image_;
+	RenderTarget *gbuffer_images_;
 
 	RenderPass *renderPass;
 	std::vector<Framebuffer *> fbos;

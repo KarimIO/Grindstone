@@ -64,6 +64,7 @@ public:
 	Texture *CreateTexture(TextureCreateInfo createInfo);
 	TextureBinding *CreateTextureBinding(TextureBindingCreateInfo createInfo);
 	TextureBindingLayout *CreateTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo);
+	RenderTarget *CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc);
 
 	uint32_t GetImageIndex();
 
@@ -83,7 +84,7 @@ public:
 	void SetImmediateBlending(BlendMode);
 	void BindDefaultFramebuffer();
 
-	ColorFormat GetDeviceColorFormat();
+	ImageFormat GetDeviceColorFormat();
 
 	void SwapBuffer();
 };

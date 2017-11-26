@@ -5,6 +5,7 @@
 #include "GLVertexBuffer.hpp"
 #include "GLIndexBuffer.hpp"
 #include "GLGraphicsPipeline.hpp"
+#include "GLRenderTarget.hpp"
 #include <iostream>
 #include <cstdio>
 
@@ -226,6 +227,11 @@ Texture *GLGraphicsWrapper::CreateTexture(TextureCreateInfo ci) {
 	return static_cast<Texture *>(new GLTexture(ci));
 }
 
+RenderTarget *GLGraphicsWrapper::CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc) {
+	return static_cast<RenderTarget *>(new GLRenderTarget(rt, rc));
+}
+
+
 uint32_t GLGraphicsWrapper::GetImageIndex() {
 	return 0;
 }
@@ -301,7 +307,7 @@ void GLGraphicsWrapper::BindDefaultFramebuffer()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-ColorFormat GLGraphicsWrapper::GetDeviceColorFormat() {
+ImageFormat GLGraphicsWrapper::GetDeviceColorFormat() {
 	return FORMAT_COLOR_R8G8B8A8;
 }
 

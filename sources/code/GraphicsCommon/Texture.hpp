@@ -31,14 +31,14 @@ struct TextureCreateInfo {
 	unsigned char *data;
 	uint32_t width, height;
 	uint16_t mipmaps;
-	ColorFormat format;
+	ImageFormat format;
 };
 
 struct CubemapCreateInfo {
 	unsigned char *data[6];
 	uint32_t width, height;
 	uint16_t mipmaps;
-	ColorFormat format;
+	ImageFormat format;
 };
 
 class Texture {
