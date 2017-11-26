@@ -607,12 +607,20 @@ void MaterialManager::generateProgram(PipelineContainer &container) {
 		bindings.emplace_back(t.first.c_str(), t.second.texture_id);
 	}
 
-	TextureBindingLayoutCreateInfo tblci;
-	tblci.bindingLocation = 2;
-	tblci.bindings = bindings.data();
-	tblci.bindingCount = (uint32_t)bindings.size();
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	container.tbl = graphics_wrapper_->CreateTextureBindingLayout(tblci);
+	int tbl_count;
+	if (bindings.size() > 0) {
+		TextureBindingLayoutCreateInfo tblci;
+		tblci.bindingLocation = 2;
+		tblci.bindings = bindings.data();
+		tblci.bindingCount = (uint32_t)bindings.size();
+		tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+		container.tbl = graphics_wrapper_->CreateTextureBindingLayout(tblci);
+		tbl_count = 1;
+	}
+	else {
+		container.tbl = nullptr;
+		tbl_count = 0;
+	}
 
 	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
 	gpci.shaderStageCreateInfos = stages.data();
@@ -620,7 +628,7 @@ void MaterialManager::generateProgram(PipelineContainer &container) {
 	gpci.uniformBufferBindings = ubbs_.data();
 	gpci.uniformBufferBindingCount = ubbs_.size();
 	gpci.textureBindings = &container.tbl;
-	gpci.textureBindingCount = 1;
+	gpci.textureBindingCount = tbl_count;
 	gpci.cullMode = CULL_BACK;
 	gpci.primitiveType = PRIM_TRIANGLES;
 	container.program = graphics_wrapper_->CreateGraphicsPipeline(gpci);
@@ -752,10 +760,8 @@ MaterialReference MaterialManager::CreateMaterial(std::string path) {
 	PipelineReference pipeline_reference = CreatePipeline(shader_param);
 	PipelineContainer *pipeline = GetPipeline(pipeline_reference);
 
-	TextureBinding *textureBinding = nullptr;
-
 	std::vector<SingleTextureBind> textures;
-	textures.resize(4);
+	textures.resize(pipeline->textureDescriptorTable.size());
 	std::string dir = path.substr(0, path.find_last_of("/") + 1);
 
 	std::string line, parameter, value;
@@ -782,11 +788,15 @@ MaterialReference MaterialManager::CreateMaterial(std::string path) {
 		}
 	}
 
-	TextureBindingCreateInfo ci;
-	ci.textures = textures.data();
-	ci.textureCount = (uint32_t)textures.size();
-	textureBinding = graphics_wrapper_->CreateTextureBinding(ci);
-
+	TextureBinding *textureBinding = nullptr;
+	if (textures.size() > 0) {
+		std::cout << path << " has " << textures.size() << " textures." << std::endl;
+		TextureBindingCreateInfo ci;
+		ci.textures = textures.data();
+		ci.textureCount = (uint32_t)textures.size();
+		textureBinding = graphics_wrapper_->CreateTextureBinding(ci);
+	}
+	
 	MaterialReference ref;
 	ref.pipelineReference = pipeline_reference;
 	ref.material = (uint32_t)pipeline->materials.size();

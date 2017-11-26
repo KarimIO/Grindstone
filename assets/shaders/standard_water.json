@@ -4,35 +4,13 @@
     "shaders": {
         "deferred": {
             "opengl": {
-                "vertex": "water_vert.glsl",
-                "fragment": "water_frag.glsl"
+                "vertex": "standard_water.vert.glsl",
+                "fragment": "standard_water.frag.glsl"
             },
             "directx": {
-                "vertex": "water_vert.fxc",
-                "fragment": "water_frag.fxc"
+                "vertex": "standard_water.vert.fxc",
+                "fragment": "standard_water.frag.fxc"
             }
-        }
-    },
-    "textures": {
-        "albedoTexture": {
-            "name": "Albedo Texture",
-            "type": "texture",
-            "default": "materials/albedo.png"
-        },
-        "normalTexture": {
-            "name": "Normal Texture",
-            "type": "texture",
-            "default": "materials/normal.png"
-        },
-        "roughnessTexture": {
-            "name": "Roughness Texture",
-            "type": "texture",
-            "default": "materials/roughness.png"
-        },
-        "metalnessTexture": {
-            "name": "Metalness Texture",
-            "type": "texture",
-            "default": "materials/dielectric.png"
         }
     }
 }

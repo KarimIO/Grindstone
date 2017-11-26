@@ -4,12 +4,12 @@
     "shaders": {
         "deferred": {
             "opengl": {
-                "vertex": "standard.vert.glsl",
-                "fragment": "standard.frag.glsl"
+                "vertex": "standard_mask.vert.glsl",
+                "fragment": "standard_mask.frag.glsl"
             },
             "directx": {
-                "vertex": "standard.vert.fxc",
-                "fragment": "standard.frag.fxc"
+                "vertex": "standard_mask.vert.fxc",
+                "fragment": "standard_mask.frag.fxc"
             }
         }
     },
