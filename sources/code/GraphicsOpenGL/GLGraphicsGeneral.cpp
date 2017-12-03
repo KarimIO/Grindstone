@@ -287,6 +287,15 @@ void GLGraphicsWrapper::DrawImmediateVertices(uint32_t base, uint32_t count) {
 	glDrawArrays(GL_TRIANGLE_STRIP, base, count);
 }
 
+void GLGraphicsWrapper::EnableDepth(bool state) {
+	if (state) {
+		glEnable(GL_DEPTH_TEST);
+	}
+	else {
+		glDisable(GL_DEPTH_TEST);
+	}
+}
+
 void GLGraphicsWrapper::SetImmediateBlending(BlendMode mode) {
 	switch (mode) {
 	case BLEND_NONE:

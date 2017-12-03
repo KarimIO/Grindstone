@@ -50,6 +50,11 @@ void GLFramebuffer::Clear() {
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
+void GLFramebuffer::Blit(uint32_t i, uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
+	glReadBuffer(GL_COLOR_ATTACHMENT0 + i);
+	glBlitFramebuffer(x, y, x + w, y + h, x, y, x + w, y + h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+}
+
 void GLFramebuffer::CopyFrom(Framebuffer *) {
 
 }

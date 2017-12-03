@@ -299,23 +299,15 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	materialManager.Initialize(graphics_wrapper_, vbd, vads, ubbs);
 	geometry_system.AddSystem(new SGeometryStatic(&materialManager, graphics_wrapper_, vbd, vads));
 
-	std::vector<ImageFormat> gbufferCFs = {
-		FORMAT_COLOR_R8G8B8A8,	// R  G  B  MatID
-		FORMAT_COLOR_R8G8B8A8,	// sR sG sB Roughness
-		FORMAT_COLOR_R8G8B8A8	// nX nY nZ
-	};
-
 	std::vector<RenderTargetCreateInfo> gbuffer_images_ci;
-	gbuffer_images_ci.reserve(3);
-	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY);
-	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY);
-	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY);
+	gbuffer_images_ci.reserve(4);
+	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY); // R  G  B matID
+	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY); // nX nY nZ
+	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY); // sR sG sB Roughness
+	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY); // sR sG sB Roughness
 	gbuffer_images_ = graphics_wrapper_->CreateRenderTarget(gbuffer_images_ci.data(), gbuffer_images_ci.size());
 
-	RenderTargetCreateInfo depth_image_ci;
-	depth_image_ci.format = FORMAT_DEPTH_32;
-	depth_image_ci.width = settings.resolutionX;
-	depth_image_ci.height = settings.resolutionY;
+	RenderTargetCreateInfo depth_image_ci(FORMAT_DEPTH_32, settings.resolutionX, settings.resolutionY);
 	depth_image_ = graphics_wrapper_->CreateRenderTarget(&depth_image_ci, 1);
 	
 	FramebufferCreateInfo gbuffer_ci;
@@ -341,19 +333,21 @@ void Engine::Render() {
 	}
 	else {
 		if (!settings.debugNoLighting) {
-			gbuffer->BindWrite();
+			gbuffer->Bind();
 			gbuffer->Clear();
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			materialManager.DrawDeferredImmediate();
-			gbuffer->Unbind();
-			graphics_wrapper_->BindDefaultFramebuffer();
-			gbuffer->BindRead();
+
+			graphics_wrapper_->EnableDepth(false);
 			graphics_wrapper_->SetImmediateBlending(BLEND_ADDITIVE);
 			renderPath->Draw(gbuffer);
+			graphics_wrapper_->EnableDepth(true);
 			graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
 			materialManager.DrawForwardImmediate();
-			gbuffer->Unbind();
 
+			graphics_wrapper_->BindDefaultFramebuffer();
+			gbuffer->BindRead();
+			gbuffer->Blit(3, 0, 0, engine.settings.resolutionX, engine.settings.resolutionY);
 			graphics_wrapper_->SwapBuffer();
 		}
 		else {
@@ -489,14 +483,19 @@ void Engine::ShutdownControl(double) {
 }
 
 Engine::~Engine() {
+	std::cout << "Cleaning Physics System...";
 	physicsSystem.Cleanup();
+	std::cout << "Physics System cleaned.";
 
-	if (gbuffer)
+	if (gbuffer) {
+		std::cout << "Cleaning gbuffer...";
 		graphics_wrapper_->DeleteFramebuffer(gbuffer);
+		std::cout << "GBuffer Cleaned.";
+	}
 
-	if (defaultFramebuffer)
-		graphics_wrapper_->DeleteFramebuffer(defaultFramebuffer);
-
-	if (graphics_wrapper_)
+	if (graphics_wrapper_) {
+		std::cout << "Cleaning Graphics Wrapper...";
 		graphics_wrapper_->Cleanup();
+		std::cout << "Graphics Wrapper cleaned.";
+	}
 }

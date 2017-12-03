@@ -136,6 +136,33 @@ graphicsgl/fast:
 	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/build.make sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/build
 .PHONY : graphicsgl/fast
 
+GLDepthTarget.o: GLDepthTarget.cpp.o
+
+.PHONY : GLDepthTarget.o
+
+# target to build an object file
+GLDepthTarget.cpp.o:
+	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/build.make sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/GLDepthTarget.cpp.o
+.PHONY : GLDepthTarget.cpp.o
+
+GLDepthTarget.i: GLDepthTarget.cpp.i
+
+.PHONY : GLDepthTarget.i
+
+# target to preprocess a source file
+GLDepthTarget.cpp.i:
+	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/build.make sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/GLDepthTarget.cpp.i
+.PHONY : GLDepthTarget.cpp.i
+
+GLDepthTarget.s: GLDepthTarget.cpp.s
+
+.PHONY : GLDepthTarget.s
+
+# target to generate assembly for a file
+GLDepthTarget.cpp.s:
+	cd /home/karimah/Work/Grindstone && $(MAKE) -f sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/build.make sources/code/GraphicsOpenGL/CMakeFiles/graphicsgl.dir/GLDepthTarget.cpp.s
+.PHONY : GLDepthTarget.cpp.s
+
 GLFramebuffer.o: GLFramebuffer.cpp.o
 
 .PHONY : GLFramebuffer.o
@@ -524,6 +551,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... graphicsgl"
 	@echo "... test"
+	@echo "... GLDepthTarget.o"
+	@echo "... GLDepthTarget.i"
+	@echo "... GLDepthTarget.s"
 	@echo "... GLFramebuffer.o"
 	@echo "... GLFramebuffer.i"
 	@echo "... GLFramebuffer.s"

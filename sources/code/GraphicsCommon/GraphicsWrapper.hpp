@@ -8,6 +8,7 @@
 #include "GraphicsPipeline.hpp"
 #include "CommandBuffer.hpp"
 #include "VertexArrayObject.hpp"
+#include "DepthTarget.hpp"
 
 #ifdef _WIN32
 	#include <Windows.h>
@@ -119,6 +120,7 @@ public:
 	virtual	void DrawImmediateIndexed(bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) = 0;
 	virtual void DrawImmediateVertices(uint32_t base, uint32_t count) = 0;
 	virtual void SetImmediateBlending(BlendMode) = 0;
+	virtual void EnableDepth(bool state) = 0;
 
 	virtual ImageFormat GetDeviceColorFormat() = 0;
 

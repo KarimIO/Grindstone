@@ -18,7 +18,7 @@ layout(std140) uniform Light {
 	vec3 buffer;
 } light;
 
-out vec3 outColor;
+layout(location = 3) out vec4 outColor;
 
 in vec2 fragTexCoord;
 
@@ -185,10 +185,10 @@ void main() {
 	float dotPR = dot(lightDir, lightDirection);
 	dotPR = clamp((dotPR-minDot)/(maxDot-minDot), 0, 1);
 	if (dotPR > 0) {
-		outColor = LightPointCalc(Albedo.rgb, Position.xyz, vec4(Specular, Roughness), Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, ubo.eyePos.xyz) * dotPR;
-		outColor = hdrGammaTransform(outColor);
+		vec3 outColor3 = LightPointCalc(Albedo.rgb, Position.xyz, vec4(Specular, Roughness), Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, ubo.eyePos.xyz) * dotPR;
+		outColor = vec4(hdrGammaTransform(outColor3), 1);
 	}
 	else {
-		outColor = vec3(0,0,0);
+		outColor = vec4(0,0,0,1);
 	}
 }

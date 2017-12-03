@@ -27,6 +27,7 @@ class Framebuffer {
 public:
 	virtual void Clear() = 0;
 	virtual void CopyFrom(Framebuffer *) = 0;
+	virtual void Blit(uint32_t i, uint32_t x, uint32_t y, uint32_t w, uint32_t h) = 0;
 	virtual void Bind() = 0;
 	virtual void BindWrite() = 0;
 	virtual void BindRead() = 0;
