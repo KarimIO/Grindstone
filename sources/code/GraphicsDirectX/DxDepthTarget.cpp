@@ -1,7 +1,7 @@
 #include "DxDepthTarget.hpp"
 #include <iostream>
 
-DxDepthTarget::DxDepthTarget(ID3D11Device *device, ID3D11DeviceContext *deviceContext, DepthTargetCreateInfo create_info) {
+DxDepthTarget::DxDepthTarget(ID3D11Device *device, ID3D11DeviceContext *device_context, DepthTargetCreateInfo create_info) : device_(device), device_context_(device_context) {
 	/*D3D11_SAMPLER_DESC samplerDesc;
 	// Create a texture sampler state description.
 	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
@@ -46,7 +46,7 @@ DxDepthTarget::DxDepthTarget(ID3D11Device *device, ID3D11DeviceContext *deviceCo
 	depthBufferDesc.MiscFlags = 0;
 
 	// Create the texture for the depth buffer using the filled out description.
-	HRESULT result = m_device->CreateTexture2D(&depthBufferDesc, NULL, &m_depthStencilBuffer);
+	HRESULT result = device->CreateTexture2D(&depthBufferDesc, NULL, &m_depthStencilBuffer);
 	if (FAILED(result)) {
 		return;
 	}
@@ -94,7 +94,7 @@ DxDepthTarget::DxDepthTarget(ID3D11Device *device, ID3D11DeviceContext *deviceCo
 	depthStencilViewDesc.Texture2D.MipSlice = 0;
 
 	// Create the depth stencil view.
-	result = m_device->CreateDepthStencilView(m_depthStencilBuffer, &depthStencilViewDesc, &m_depthStencilView);
+	result = device->CreateDepthStencilView(m_depthStencilBuffer, &depthStencilViewDesc, &m_depthStencilView);
 	if (FAILED(result)) {
 		return;
 	}
@@ -113,28 +113,24 @@ DxDepthTarget::DxDepthTarget(ID3D11Device *device, ID3D11DeviceContext *deviceCo
 	}
 }
 
-uint32_t DxDepthTarget::getHandle() {
-    return handles_[0];
+void DxDepthTarget::clear() {
+	device_context_->ClearDepthStencilView(m_depthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 }
 
-uint32_t DxDepthTarget::getHandle(uint32_t i) {
-    return handles_[i];
+ID3D11Texture2D * DxDepthTarget::getTexture() {
+	return m_depthStencilBuffer;
 }
 
-uint32_t DxDepthTarget::getNumRenderTargets() {
-    return size_;
+ID3D11DepthStencilView * DxDepthTarget::getTextureView() {
+	return m_depthStencilView;
 }
 
-void DxDepthTarget::Bind() {
-    for (uint32_t i = 0; i < size_; i++) {
-        glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(GL_TEXTURE_2D, handles_[i]);
-    }
+ID3D11SamplerState * DxDepthTarget::getSamplerState() {
+	return m_depthSamplerState;
 }
 
-void DxDepthTarget::Bind(uint32_t i) {
-    glActiveTexture(GL_TEXTURE0 + i);
-    glBindTexture(GL_TEXTURE_2D, handles_[i]);
+ID3D11ShaderResourceView * DxDepthTarget::getSRV() {
+	return m_depthShaderResourceView;
 }
 
 DxDepthTarget::~DxDepthTarget() {

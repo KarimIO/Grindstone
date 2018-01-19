@@ -46,19 +46,35 @@ if(WIN32)
 			${BULLET_ROOT}/src
 	)
 
-	find_path(BULLET_LIBRARY_DIR
+	find_path(bullet_DEB_DIR
 		NAMES
-			BulletCollision.lib BulletDynamics.lib BulletSoftBody.lib  LinearMath.lib
+			BulletCollision_Debug.lib
 		HINTS
-			${BULLET_ROOT}/bin
+			${BULLET_ROOT}/build/lib/Debug
 	)
 
-	set(bullet_LIBRARIES ${BULLET_LIBRARY_DIR}/BulletCollision.lib ${BULLET_LIBRARY_DIR}/BulletDynamics.lib ${BULLET_LIBRARY_DIR}/LinearMath.lib)
-	set(bullet_LIBRARIES_DEBUG ${BULLET_LIBRARY_DIR}/BulletCollision_d.lib ${BULLET_LIBRARY_DIR}/BulletDynamics_d.lib ${BULLET_LIBRARY_DIR}/LinearMath_d.lib)
+	find_path(bullet_REL_DIR
+		NAMES
+			BulletCollision.lib
+		HINTS
+			${BULLET_ROOT}/build/lib/Release
+	)
 
-	if (BULLET_INCLUDE_DIR AND bullet_LIBRARIES)
+	set(bullet_LIB_DEB
+		${bullet_DEB_DIR}/BulletCollision_Debug.lib 
+		${bullet_DEB_DIR}/BulletDynamics_Debug.lib 
+		${bullet_DEB_DIR}/BulletSoftBody_Debug.lib 
+		${bullet_DEB_DIR}/LinearMath_Debug.lib)
+
+	set(bullet_LIB_REL
+		${bullet_REL_DIR}/BulletCollision.lib 
+		${bullet_REL_DIR}/BulletDynamics.lib 
+		${bullet_REL_DIR}/BulletSoftBody.lib 
+		${bullet_REL_DIR}/LinearMath.lib)
+
+	if (BULLET_INCLUDE_DIR AND bullet_LIB_DEB AND bullet_LIB_REL)
 		SET(bullet_FOUND TRUE)
-	ENDIF (BULLET_INCLUDE_DIR AND bullet_LIBRARIES)
+	ENDIF (BULLET_INCLUDE_DIR AND bullet_LIB_DEB AND bullet_LIB_REL)
 
 	if (bullet_FOUND)
 		if (NOT bullet_FIND_QUIETLY)
@@ -68,9 +84,9 @@ if(WIN32)
 		if (NOT BULLET_INCLUDE_DIR)
 			message(STATUS "Could not find Bullet Includes")
 		endif(NOT BULLET_INCLUDE_DIR)
-		if (NOT bullet_LIBRARIES)
+		if (NOT bullet_LIB_DEB OR bullet_LIB_REL)
 			message(STATUS "Could not find Bullet Libraries")
-		endif(NOT bullet_LIBRARIES)
+		endif(NOT bullet_LIB_DEB OR bullet_LIB_REL)
 
 		if (bullet_FIND_REQUIRED)
 			message(FATAL_ERROR "Could not find bullet library")

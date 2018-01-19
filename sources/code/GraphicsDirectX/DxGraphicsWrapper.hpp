@@ -67,7 +67,8 @@ public:
 	TextureBinding *CreateTextureBinding(TextureBindingCreateInfo createInfo);
 	TextureBindingLayout *CreateTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo);
 	RenderTarget *CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc); 
-	DepthTarget *CreateDepthTarget(DepthTargetCreateInfo *rt, uint32_t rc);
+	DepthTarget *CreateDepthTarget(DepthTargetCreateInfo rt);
+	void CopyToDepthBuffer(DepthTarget *p);
 
 	bool SupportsCommandBuffers();
 	bool SupportsTesselation();
@@ -85,9 +86,10 @@ public:
 	void DrawImmediateIndexed(bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount);
 	void DrawImmediateVertices(uint32_t base, uint32_t count);
 	void SetImmediateBlending(BlendMode);
-	void BindDefaultFramebuffer();
+	void BindDefaultFramebuffer(bool depth);
+	void EnableDepth(bool state);
 
-	ImageFormat GetDeviceColorFormat();
+	ColorFormat GetDeviceColorFormat();
 
 	void SwapBuffer();
 };

@@ -3,11 +3,19 @@
 
 #include "../GraphicsCommon/Framebuffer.hpp"
 #include "../GraphicsCommon/DLLDefs.hpp"
+#include "DxRenderTarget.hpp"
+#include "DxDepthTarget.hpp"
 #include <d3d11.h>
 
 class DxFramebuffer : public Framebuffer {
 	ID3D11Device *m_device;
 	ID3D11DeviceContext *m_deviceContext;
+	std::vector<ID3D11RenderTargetView*>	render_targets_;
+	std::vector<ID3D11ShaderResourceView*>	srvs_;
+	std::vector<ID3D11SamplerState *> samplers_;
+
+	std::vector<DxRenderTarget *> render_target_lists_;
+	DxDepthTarget *depth_target_;
 
 	uint32_t width, height;
 public:

@@ -101,14 +101,15 @@ public:
 	virtual TextureBinding *CreateTextureBinding(TextureBindingCreateInfo ci) = 0;
 	virtual TextureBindingLayout *CreateTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo) = 0;
 	virtual RenderTarget *CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc) = 0;
-	virtual DepthTarget *CreateDepthTarget(DepthTargetCreateInfo *rt, uint32_t rc) = 0;
+	virtual DepthTarget *CreateDepthTarget(DepthTargetCreateInfo rt) = 0;
+	virtual void CopyToDepthBuffer(DepthTarget *p) = 0;
 
 	virtual bool SupportsCommandBuffers() = 0;
 	virtual bool SupportsTesselation() = 0;
 	virtual bool SupportsGeometryShader() = 0;
 	virtual bool SupportsComputeShader() = 0;
 	virtual bool SupportsMultiDrawIndirect() = 0;
-	virtual void BindDefaultFramebuffer() = 0;
+	virtual void BindDefaultFramebuffer(bool depth) = 0;
 
 	virtual uint32_t GetImageIndex() = 0;
 
@@ -122,7 +123,7 @@ public:
 	virtual void SetImmediateBlending(BlendMode) = 0;
 	virtual void EnableDepth(bool state) = 0;
 
-	virtual ImageFormat GetDeviceColorFormat() = 0;
+	virtual ColorFormat GetDeviceColorFormat() = 0;
 
 	virtual void SwapBuffer() = 0;
 };

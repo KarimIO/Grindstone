@@ -74,10 +74,10 @@ public:
 	UniformBufferBinding *pointLightUBB;
 	UniformBufferBinding *spotLightUBB;
 	std::vector<TextureSubBinding> bindings;
+	Framebuffer *gbuffer_;
+	Framebuffer *defaultFramebuffer;
 private:
 	void LoadingScreenThread();
-	Framebuffer *gbuffer;
-	Framebuffer *defaultFramebuffer;
 
 	bool InitializeGraphics(GraphicsLanguage);
 	void InitializeSettings();
@@ -129,7 +129,7 @@ public:
 
 	SGeometry geometry_system;
 	SLight lightSystem;
-	RenderTarget *depth_image_;
+	DepthTarget *depth_image_;
 	RenderTarget *gbuffer_images_;
 
 	RenderPass *renderPass;

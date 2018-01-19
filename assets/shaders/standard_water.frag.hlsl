@@ -34,5 +34,5 @@ float3 CalcBumpedNormal(float3 Ng, float3 Nt, float3 Tan) {
 // Pixel Shader
 ////////////////////////////////////////////////////////////////////////////////
 float4 main(PixelInputType input) : SV_Target0 {
-    return float4(1.0,0.8,0.0,0.2);
+    return float4(1.0,0.8,0.0,0.4);
 }

@@ -14,6 +14,8 @@ OutType convertString(std::string input) {
 		return OUTPUT_MODEL;
 	else if (ext == "obj")
 		return OUTPUT_MODEL;
+
+	return OUTPUT_MODEL;
 }
 
 int main(int argc, char* argv[]) {
@@ -21,7 +23,7 @@ int main(int argc, char* argv[]) {
 	// Check the number of parameters
 	if (argc < 2) {
 		std::cout << "Enter path to file: ";
-		std::cin >> path;
+		std::getline(std::cin, path);
 		if (path == "crytek") {
 			path = "../assets/models/crytek-sponza/sponza.obj";
 		}

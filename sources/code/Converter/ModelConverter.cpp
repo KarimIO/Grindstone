@@ -435,7 +435,7 @@ bool LoadModelFile(std::string inputPath) {
 	materialNames.resize(inFormat.num_materials);
 
 	offset = static_cast<char*>(offset) + sizeof(ModelFormatHeader);
-	uint32_t size = inFormat.num_meshes * sizeof(Mesh);
+	uint64_t size = inFormat.num_meshes * sizeof(Mesh);
 	memcpy(&remeshes[0], offset, size);
 	offset = static_cast<char*>(offset) + size;
 	size = inFormat.num_vertices * sizeof(Vertex);

@@ -175,7 +175,7 @@ void LoadingScreen::Render(double dt) {
 	ubo_->UpdateUniformBuffer(&loadUBO);
 	ubo_->Bind();
 
-	graphics_wrapper_->BindDefaultFramebuffer();
+	graphics_wrapper_->BindDefaultFramebuffer(false);
 	graphics_wrapper_->Clear();
 	pipeline_->Bind();
 	graphics_wrapper_->BindTextureBinding(tb_);

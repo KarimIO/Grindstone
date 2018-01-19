@@ -22,7 +22,7 @@ struct RenderPassCreateInfo {
 	ClearColorValue *m_colorClearValues;
 	uint32_t m_colorClearCount;
 	ClearDepthStencil m_depthStencilClearValue;
-	ImageFormat m_depthFormat;
+	DepthFormat m_depthFormat;
 };
 
 class RenderPass {

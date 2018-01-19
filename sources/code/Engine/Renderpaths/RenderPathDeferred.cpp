@@ -5,12 +5,12 @@
 Texture *LoadCubemap(std::string path, GraphicsWrapper *m_graphics_wrapper_) {
 
 	std::string facePaths[6];
-	facePaths[0] = path + "FT.png";
-	facePaths[1] = path + "BK.png";
-	facePaths[2] = path + "UP.png";
-	facePaths[3] = path + "DN.png";
-	facePaths[4] = path + "RT.png";
-	facePaths[5] = path + "LF.png";
+	facePaths[0] = path + "ft.tga";
+	facePaths[1] = path + "bk.tga";
+	facePaths[2] = path + "up.tga";
+	facePaths[3] = path + "dn.tga";
+	facePaths[4] = path + "rt.tga";
+	facePaths[5] = path + "lf.tga";
 
 
 	CubemapCreateInfo createInfo;
@@ -29,7 +29,7 @@ Texture *LoadCubemap(std::string path, GraphicsWrapper *m_graphics_wrapper_) {
 
 	printf("Cubemap loaded: %s \n", path.c_str());
 
-	ImageFormat format;
+	ColorFormat format;
 	switch (texChannels) {
 	case 1:
 		format = FORMAT_COLOR_R8;
@@ -98,7 +98,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_) {
 	planeVAO->BindResources(vaci);
 	planeVAO->Unbind();
 
-	m_cubemap = LoadCubemap("../assets/cubemaps/level4", m_graphics_wrapper_);
+	m_cubemap = LoadCubemap("../assets/cubemaps/glacier_", m_graphics_wrapper_);
 
 	std::vector<TextureSubBinding> cubemapBindings;
 	cubemapBindings.reserve(1);
@@ -173,8 +173,6 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_) {
 }
 
 void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
-	engine.gbuffer_images_->Bind();
-
 	CCamera *cam = &engine.cameraSystem.components[0];
 	Entity *ent = &engine.entities[cam->entityID];
 	glm::vec3 eyePos = engine.transformSystem.components[ent->components_[COMPONENT_TRANSFORM]].position;
@@ -188,7 +186,6 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 	deffUBOBuffer.resolution.y = engine.settings.resolutionY;
 	deffUBO->UpdateUniformBuffer(&deffUBOBuffer);
 
-	m_graphics_wrapper_->Clear();
 	deffUBO->Bind();
 	engine.graphics_wrapper_->BindVertexArrayObject(planeVAO);
 	
@@ -206,7 +203,9 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 	}
 
-	m_iblPipeline->Bind();
-	//m_graphics_wrapper_->BindTextureBinding(m_cubemapBinding);
-	m_graphics_wrapper_->DrawImmediateVertices(0, 6);
+	/*if (m_cubemap) {
+		m_iblPipeline->Bind();
+		m_graphics_wrapper_->BindTextureBinding(m_cubemapBinding);
+		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
+	}*/
 }

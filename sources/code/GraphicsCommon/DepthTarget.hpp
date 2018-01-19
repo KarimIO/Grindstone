@@ -5,17 +5,15 @@
 #include "Formats.hpp"
 
 struct DepthTargetCreateInfo {
-    ImageFormat format;
+    DepthFormat format;
     uint32_t width, height;
 	DepthTargetCreateInfo() {};
-	DepthTargetCreateInfo(ImageFormat fmt, uint32_t w, uint32_t h) : format(fmt), width(w), height(h) {}
+	DepthTargetCreateInfo(DepthFormat fmt, uint32_t w, uint32_t h) : format(fmt), width(w), height(h) {}
 };
 
 class DepthTarget {
 public:
-    virtual void Bind() = 0;
-    virtual void Bind(uint32_t i) = 0;
-    virtual ~DepthTarget() = 0;
+	virtual ~DepthTarget() {};
 };
 
 #endif

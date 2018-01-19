@@ -895,7 +895,7 @@ Texture * MaterialManager::LoadTexture(std::string path) {
 		fclose(fp);
 
 		unsigned int components = (header.fourCC == FOURCC_DXT1) ? 3 : 4;
-		ImageFormat format;
+		ColorFormat format;
 		switch (header.fourCC) {
 		case FOURCC_DXT1:
 			format = FORMAT_COLOR_RGBA_DXT1;
@@ -934,7 +934,7 @@ Texture * MaterialManager::LoadTexture(std::string path) {
 
 		printf("Texture loaded: %s \n", path.c_str());
 
-		ImageFormat format;
+		ColorFormat format;
 		switch (texChannels) {
 		case 1:
 			format = FORMAT_COLOR_R8;

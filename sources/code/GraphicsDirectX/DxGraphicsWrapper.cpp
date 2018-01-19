@@ -351,7 +351,7 @@ denominator = displayModeList[i].RefreshRate.Denominator;
 	BlendStateDescription.AlphaToCoverageEnable = FALSE;
 	BlendStateDescription.IndependentBlendEnable = FALSE;
 	BlendStateDescription.RenderTarget[0].BlendEnable = TRUE;
-	BlendStateDescription.RenderTarget[0].RenderTargetWriteMask = 0x0f;
+	BlendStateDescription.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 	BlendStateDescription.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
 	BlendStateDescription.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
 
@@ -451,11 +451,16 @@ Framebuffer * DxGraphicsWrapper::CreateFramebuffer(FramebufferCreateInfo ci) {
 }
 
 RenderTarget *DxGraphicsWrapper::CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc) {
-	return static_cast<RenderTarget *>(new DxRenderTarget(rt, rc));
+	return static_cast<RenderTarget *>(new DxRenderTarget(m_device, m_deviceContext, rt, rc));
 }
 
-DepthTarget *DxGraphicsWrapper::CreateDepthTarget(DepthTargetCreateInfo *rt, uint32_t rc) {
-	return static_cast<DepthTarget *>(new DxDepthTarget(rt, rc));
+DepthTarget *DxGraphicsWrapper::CreateDepthTarget(DepthTargetCreateInfo rt) {
+	return static_cast<DepthTarget *>(new DxDepthTarget(m_device, m_deviceContext, rt));
+}
+
+void DxGraphicsWrapper::CopyToDepthBuffer(DepthTarget * p) {
+	DxDepthTarget *dxd = static_cast<DxDepthTarget *>(p);
+	m_deviceContext->CopyResource(m_depthStencilBuffer, dxd->getTexture());
 }
 
 RenderPass *DxGraphicsWrapper::CreateRenderPass(RenderPassCreateInfo ci) {
@@ -525,9 +530,16 @@ void DxGraphicsWrapper::SetImmediateBlending(BlendMode state) {
 	}
 }
 
-void DxGraphicsWrapper::BindDefaultFramebuffer()
-{
-	m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, NULL);
+void DxGraphicsWrapper::BindDefaultFramebuffer(bool depth) {
+	if (depth) {
+		m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilView);
+	}
+	else {
+		m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, nullptr);
+	}
+}
+
+void DxGraphicsWrapper::EnableDepth(bool state) {
 }
 
 ColorFormat DxGraphicsWrapper::GetDeviceColorFormat() {

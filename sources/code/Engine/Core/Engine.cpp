@@ -300,22 +300,21 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	geometry_system.AddSystem(new SGeometryStatic(&materialManager, graphics_wrapper_, vbd, vads));
 
 	std::vector<RenderTargetCreateInfo> gbuffer_images_ci;
-	gbuffer_images_ci.reserve(4);
+	gbuffer_images_ci.reserve(3);
 	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY); // R  G  B matID
 	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY); // nX nY nZ
 	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY); // sR sG sB Roughness
-	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY); // sR sG sB Roughness
 	gbuffer_images_ = graphics_wrapper_->CreateRenderTarget(gbuffer_images_ci.data(), gbuffer_images_ci.size());
 
-	RenderTargetCreateInfo depth_image_ci(FORMAT_DEPTH_32, settings.resolutionX, settings.resolutionY);
-	depth_image_ = graphics_wrapper_->CreateRenderTarget(&depth_image_ci, 1);
+	DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_32, settings.resolutionX, settings.resolutionY);
+	depth_image_ = graphics_wrapper_->CreateDepthTarget(depth_image_ci);
 	
 	FramebufferCreateInfo gbuffer_ci;
 	gbuffer_ci.render_target_lists = &gbuffer_images_;
 	gbuffer_ci.num_render_target_lists = 1;
 	gbuffer_ci.depth_target = depth_image_;
 	gbuffer_ci.render_pass = nullptr;
-	gbuffer = graphics_wrapper_->CreateFramebuffer(gbuffer_ci);
+	gbuffer_ = graphics_wrapper_->CreateFramebuffer(gbuffer_ci);
 
 	return true;
 }
@@ -333,25 +332,26 @@ void Engine::Render() {
 	}
 	else {
 		if (!settings.debugNoLighting) {
-			gbuffer->Bind();
-			gbuffer->Clear();
+			gbuffer_->BindWrite();
+			gbuffer_->Clear();
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			materialManager.DrawDeferredImmediate();
 
-			graphics_wrapper_->EnableDepth(false);
 			graphics_wrapper_->SetImmediateBlending(BLEND_ADDITIVE);
-			renderPath->Draw(gbuffer);
-			graphics_wrapper_->EnableDepth(true);
+			graphics_wrapper_->BindDefaultFramebuffer(false);
+			gbuffer_->BindRead();
+			graphics_wrapper_->Clear();
+			renderPath->Draw(gbuffer_);
+			
 			graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
+			graphics_wrapper_->BindDefaultFramebuffer(true);
+			graphics_wrapper_->CopyToDepthBuffer(depth_image_);
 			materialManager.DrawForwardImmediate();
 
-			graphics_wrapper_->BindDefaultFramebuffer();
-			gbuffer->BindRead();
-			gbuffer->Blit(3, 0, 0, engine.settings.resolutionX, engine.settings.resolutionY);
 			graphics_wrapper_->SwapBuffer();
 		}
 		else {
-			graphics_wrapper_->BindDefaultFramebuffer();
+			graphics_wrapper_->BindDefaultFramebuffer(true);
 			graphics_wrapper_->Clear();
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			materialManager.DrawDeferredImmediate();
@@ -487,9 +487,9 @@ Engine::~Engine() {
 	physicsSystem.Cleanup();
 	std::cout << "Physics System cleaned.";
 
-	if (gbuffer) {
+	if (gbuffer_) {
 		std::cout << "Cleaning gbuffer...";
-		graphics_wrapper_->DeleteFramebuffer(gbuffer);
+		graphics_wrapper_->DeleteFramebuffer(gbuffer_);
 		std::cout << "GBuffer Cleaned.";
 	}
 

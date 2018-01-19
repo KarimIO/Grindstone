@@ -1,7 +1,7 @@
 #include "DxRenderTarget.hpp"
 #include <iostream>
 
-DxRenderTarget::DxRenderTarget(ID3D11Device *device, ID3D11DeviceContext *deviceContext, RenderTargetCreateInfo *create_info, uint32_t count) {
+DxRenderTarget::DxRenderTarget(ID3D11Device *device, ID3D11DeviceContext *device_context, RenderTargetCreateInfo *create_info, uint32_t count) : device_(device), device_context_(device_context) {
 	m_numRenderTargets = count;
 
 	m_renderTargetTexture = new ID3D11Texture2D *[m_numRenderTargets];
@@ -83,25 +83,27 @@ DxRenderTarget::DxRenderTarget(ID3D11Device *device, ID3D11DeviceContext *device
     }
 }
 
-uint32_t DxRenderTarget::getHandle() {
+void DxRenderTarget::clear() {
+	float color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+	for (uint32_t i = 0; i < m_numRenderTargets; i++)
+		device_context_->ClearRenderTargetView(m_renderTargetView[i], color);
 }
 
-uint32_t DxRenderTarget::getHandle(uint32_t i) {
+uint32_t DxRenderTarget::getSize() {
+	return m_numRenderTargets;
 }
 
-uint32_t DxRenderTarget::getNumRenderTargets() {
+ID3D11RenderTargetView **DxRenderTarget::getTextureViews() {
+	return m_renderTargetView;
 }
 
-void DxRenderTarget::Bind() {
-    for (uint32_t i = 0; i < size_; i++) {
-        glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(GL_TEXTURE_2D, handles_[i]);
-    }
+ID3D11SamplerState **DxRenderTarget::getSamplerStates() {
+	return m_sampleStates;
 }
 
-void DxRenderTarget::Bind(uint32_t i) {
-    glActiveTexture(GL_TEXTURE0 + i);
-    glBindTexture(GL_TEXTURE_2D, handles_[i]);
+ID3D11ShaderResourceView **DxRenderTarget::getSRVs() {
+	return m_shaderResourceView;
 }
 
 DxRenderTarget::~DxRenderTarget() {
