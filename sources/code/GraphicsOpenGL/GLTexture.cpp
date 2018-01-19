@@ -132,7 +132,7 @@ uint32_t GLTextureBindingLayout::GetNumSubBindings() {
 	return subbindingCount;
 }
 
-void TranslateFormats(ColorFormat inFormat, GLenum &format, GLint &internalFormat) {
+void TranslateFormats(ImageFormat inFormat, GLenum &format, GLint &internalFormat) {
 	switch (inFormat) {
 	case FORMAT_COLOR_R8:
 		internalFormat = GL_RED;
@@ -150,5 +150,33 @@ void TranslateFormats(ColorFormat inFormat, GLenum &format, GLint &internalForma
 		internalFormat = GL_RGBA32F;
 		format = GL_RGBA;
 		break;
+	case FORMAT_DEPTH_16:
+		internalFormat = GL_DEPTH_COMPONENT16;
+		format = GL_DEPTH_COMPONENT;
+		break;
+	case FORMAT_DEPTH_24:
+		internalFormat = GL_DEPTH_COMPONENT24;
+		format = GL_DEPTH_COMPONENT;
+		break;
+	case FORMAT_DEPTH_32:
+		internalFormat = GL_DEPTH_COMPONENT32F;
+		format = GL_DEPTH_COMPONENT;
+		break;
+	/*case FORMAT_DEPTH_16_STENCIL_8:
+		internalFormat = GL_DEPTH24_STENCIL8;
+		break;*/
+	case FORMAT_DEPTH_24_STENCIL_8:
+		internalFormat = GL_DEPTH24_STENCIL8;
+		format = GL_DEPTH_COMPONENT;
+		break;
+	case FORMAT_DEPTH_32_STENCIL_8:
+		internalFormat = GL_DEPTH32F_STENCIL8;
+		format = GL_DEPTH_COMPONENT;
+		break;
+	/*case FORMAT_STENCIL_8:
+		internalFormat = GL_DEPTH32F_STENCIL8;
+		break;*/
+	default:
+		throw std::runtime_error("Invalid Format!\n");
 	}
 }

@@ -31,14 +31,27 @@ enum PARAM_TYPE {
 	PARAM_CUBEMAP
 };
 
+enum ProgramType {
+	TYPE_OPAQUE = 0,
+	TYPE_TRANSPARENT
+};
+
 bool readFile(const std::string& filename, std::vector<char>& outputfile);
 
-struct ParameterDescriptor {
+class ParameterDescriptor {
+	public:
 	std::string description;
 	PARAM_TYPE paramType;
 	void *dataPtr;
-	ParameterDescriptor(std::string _desc, PARAM_TYPE _type, void *_ptr);
 	ParameterDescriptor();
+	ParameterDescriptor(std::string _desc, PARAM_TYPE _type, void *_ptr);
+};
+
+class TextureParameterDescriptor : public ParameterDescriptor {
+public:
+	unsigned int texture_id;
+	TextureParameterDescriptor() {};
+	TextureParameterDescriptor(unsigned int _texture_id, std::string _desc, PARAM_TYPE _type, void *_ptr);
 };
 
 class Material;
@@ -46,6 +59,7 @@ class Material;
 struct PipelineReference {
 	uint8_t renderpass = 0;
 	uint8_t pipeline = 0;
+	ProgramType pipeline_type;
 };
 
 struct MaterialReference {
@@ -66,7 +80,7 @@ public:
 		m_textureBinding = 0;
 		m_meshes.clear();
 	}
-	Material(TextureBinding *textureBinding);
+	Material(MaterialReference reference, TextureBinding *textureBinding);
 	void IncrementDrawCount();
 private:
 	MaterialReference reference;
@@ -74,8 +88,15 @@ private:
 };
 
 struct PipelineContainer {
+	ProgramType type;
+	TextureBindingLayout *tbl;
+	PipelineReference reference;
 	GraphicsPipeline *program;
 	CommandBuffer *commandBuffer;
+	std::string name;
+	std::string name_text;
+	std::string shader_paths[SHADER_FRAGMENT + 1];
+	std::map<std::string, TextureParameterDescriptor> textureDescriptorTable;
 	std::map<std::string, ParameterDescriptor> parameterDescriptorTable;
 	std::vector<Material> materials;
 	uint32_t draw_count;
@@ -86,7 +107,8 @@ public:
 	RenderPass *renderPass;
 	CommandBuffer *commandBuffer;
 	std::vector<Framebuffer *> framebuffers;
-	std::vector<PipelineContainer> pipelines;
+	std::vector<PipelineContainer> pipelines_deferred;
+	std::vector<PipelineContainer> pipelines_forward;
 };
 
 class MaterialManager {
@@ -110,8 +132,10 @@ public:
 	void LoadPreloaded();
 	//GraphicsPipeline *ParseShaderFile(std::string path);
 	//GraphicsPipeline *CreateShaderFromPaths(std::string name, std::string vsPath, std::string fsPath, std::string gsPath, std::string csPath, std::string tesPath, std::string tcsPath);
-	void DrawImmediate();
-	void DrawDeferred();
+	void DrawDeferredImmediate();
+	void DrawForwardImmediate();
+	void DrawDeferredCommand();
+	void generateProgram(PipelineContainer &container);
 	void resetDraws();
 	~MaterialManager();
 private:
@@ -122,6 +146,9 @@ private:
 	std::vector<Texture *> unloaded_;
 
 	GraphicsWrapper *graphics_wrapper_;
+	VertexBindingDescription vbd_;
+	std::vector<VertexAttributeDescription> vads_;
+	std::vector<UniformBufferBinding *> ubbs_;
 };
 
 #endif

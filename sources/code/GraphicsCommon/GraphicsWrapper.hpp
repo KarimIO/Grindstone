@@ -8,6 +8,7 @@
 #include "GraphicsPipeline.hpp"
 #include "CommandBuffer.hpp"
 #include "VertexArrayObject.hpp"
+#include "DepthTarget.hpp"
 
 #ifdef _WIN32
 	#include <Windows.h>
@@ -36,6 +37,12 @@ struct InstanceCreateInfo {
 #if defined(GLFW_WINDOW)
 #include <GLFW/glfw3.h>
 #endif
+
+enum BlendMode {
+	BLEND_NONE = 0,
+	BLEND_ADDITIVE,
+	BLEND_ADD_ALPHA,
+};
 
 class GraphicsWrapper {
 public:
@@ -93,13 +100,16 @@ public:
 	virtual Texture *CreateTexture(TextureCreateInfo createInfo) = 0;
 	virtual TextureBinding *CreateTextureBinding(TextureBindingCreateInfo ci) = 0;
 	virtual TextureBindingLayout *CreateTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo) = 0;
+	virtual RenderTarget *CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc) = 0;
+	virtual DepthTarget *CreateDepthTarget(DepthTargetCreateInfo rt) = 0;
+	virtual void CopyToDepthBuffer(DepthTarget *p) = 0;
 
 	virtual bool SupportsCommandBuffers() = 0;
 	virtual bool SupportsTesselation() = 0;
 	virtual bool SupportsGeometryShader() = 0;
 	virtual bool SupportsComputeShader() = 0;
 	virtual bool SupportsMultiDrawIndirect() = 0;
-	virtual void BindDefaultFramebuffer() = 0;
+	virtual void BindDefaultFramebuffer(bool depth) = 0;
 
 	virtual uint32_t GetImageIndex() = 0;
 
@@ -110,7 +120,8 @@ public:
 	virtual void BindVertexArrayObject(VertexArrayObject *) = 0;
 	virtual	void DrawImmediateIndexed(bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) = 0;
 	virtual void DrawImmediateVertices(uint32_t base, uint32_t count) = 0;
-	virtual void SetImmediateBlending(bool) = 0;
+	virtual void SetImmediateBlending(BlendMode) = 0;
+	virtual void EnableDepth(bool state) = 0;
 
 	virtual ColorFormat GetDeviceColorFormat() = 0;
 

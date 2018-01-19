@@ -1,9 +1,9 @@
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(GL_CORE_SOURCES ../../deps/GL/gl3w.c GLGraphicsGeneral.cpp GLGraphicsWindows.cpp GLGraphicsX11.cpp ../WindowModule/glfwWindow.cpp)
 set(GL_CORE_HEADERS ../../deps/GL/gl3w.h glcorearb.hpp GLGraphicsWrapper.hpp)
-set(GL_OBJ_SOURCES GLFramebuffer.cpp GLGraphicsPipeline.cpp GLTexture.cpp GLVertexArrayObject.cpp GLVertexBuffer.cpp GLIndexBuffer.cpp GLUniformBuffer.cpp)
-set(GL_OBJ_HEADERS GLFramebuffer.hpp GLGraphicsPipeline.hpp GLTexture.hpp GLVertexArrayObject.hpp GLVertexBuffer.hpp GLIndexBuffer.hpp GLUniformBuffer.hpp)
-set(GL_COMMON_HEADERS ../GraphicsCommon/CommandBuffer.hpp ../GraphicsCommon/Formats.hpp ../GraphicsCommon/VertexArrayObject.hpp ../GraphicsCommon/Framebuffer.hpp ../GraphicsCommon/GraphicsPipeline.hpp ../GraphicsCommon/GraphicsWrapper.hpp ../GraphicsCommon/IndexBuffer.hpp ../GraphicsCommon/RenderPass.hpp ../GraphicsCommon/Texture.hpp ../GraphicsCommon/UniformBuffer.hpp ../GraphicsCommon/VertexBuffer.hpp)
+set(GL_OBJ_SOURCES GLDepthTarget.cpp GLRenderTarget.cpp GLFramebuffer.cpp GLGraphicsPipeline.cpp GLTexture.cpp GLVertexArrayObject.cpp GLVertexBuffer.cpp GLIndexBuffer.cpp GLUniformBuffer.cpp)
+set(GL_OBJ_HEADERS GLDepthTarget.hpp GLRenderTarget.hpp GLFramebuffer.hpp GLGraphicsPipeline.hpp GLTexture.hpp GLVertexArrayObject.hpp GLVertexBuffer.hpp GLIndexBuffer.hpp GLUniformBuffer.hpp)
+set(GL_COMMON_HEADERS ../GraphicsCommon/DepthTarget.hpp ../GraphicsCommon/RenderTarget.hpp ../GraphicsCommon/CommandBuffer.hpp ../GraphicsCommon/Formats.hpp ../GraphicsCommon/VertexArrayObject.hpp ../GraphicsCommon/Framebuffer.hpp ../GraphicsCommon/GraphicsPipeline.hpp ../GraphicsCommon/GraphicsWrapper.hpp ../GraphicsCommon/IndexBuffer.hpp ../GraphicsCommon/RenderPass.hpp ../GraphicsCommon/Texture.hpp ../GraphicsCommon/UniformBuffer.hpp ../GraphicsCommon/VertexBuffer.hpp)
 
 if (WIN32)
     set(GL_SOURCES_WINDOW ../WindowModule/win32Window.cpp)

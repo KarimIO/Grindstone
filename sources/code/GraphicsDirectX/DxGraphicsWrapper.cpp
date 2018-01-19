@@ -351,7 +351,7 @@ denominator = displayModeList[i].RefreshRate.Denominator;
 	BlendStateDescription.AlphaToCoverageEnable = FALSE;
 	BlendStateDescription.IndependentBlendEnable = FALSE;
 	BlendStateDescription.RenderTarget[0].BlendEnable = TRUE;
-	BlendStateDescription.RenderTarget[0].RenderTargetWriteMask = 0x0f;
+	BlendStateDescription.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 	BlendStateDescription.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
 	BlendStateDescription.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
 
@@ -360,6 +360,16 @@ denominator = displayModeList[i].RefreshRate.Denominator;
 
 	BlendStateDescription.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
 	BlendStateDescription.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+
+	result = m_device->CreateBlendState(&BlendStateDescription, &m_addBlendState);
+	if (FAILED(result)) {
+		return;
+	}
+
+	BlendStateDescription.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	BlendStateDescription.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+
+	BlendStateDescription.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
 
 	result = m_device->CreateBlendState(&BlendStateDescription, &m_alphaBlendState);
 	if (FAILED(result)) {
@@ -440,6 +450,19 @@ Framebuffer * DxGraphicsWrapper::CreateFramebuffer(FramebufferCreateInfo ci) {
 	return (Framebuffer *)new DxFramebuffer(m_device, m_deviceContext, ci);
 }
 
+RenderTarget *DxGraphicsWrapper::CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc) {
+	return static_cast<RenderTarget *>(new DxRenderTarget(m_device, m_deviceContext, rt, rc));
+}
+
+DepthTarget *DxGraphicsWrapper::CreateDepthTarget(DepthTargetCreateInfo rt) {
+	return static_cast<DepthTarget *>(new DxDepthTarget(m_device, m_deviceContext, rt));
+}
+
+void DxGraphicsWrapper::CopyToDepthBuffer(DepthTarget * p) {
+	DxDepthTarget *dxd = static_cast<DxDepthTarget *>(p);
+	m_deviceContext->CopyResource(m_depthStencilBuffer, dxd->getTexture());
+}
+
 RenderPass *DxGraphicsWrapper::CreateRenderPass(RenderPassCreateInfo ci) {
 	return nullptr;
 }
@@ -492,19 +515,31 @@ void DxGraphicsWrapper::DrawImmediateVertices(uint32_t base, uint32_t count) {
 	m_deviceContext->Draw(count, base);
 }
 
-void DxGraphicsWrapper::SetImmediateBlending(bool state) {
+void DxGraphicsWrapper::SetImmediateBlending(BlendMode state) {
 	const float blendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	if (state) {
-		m_deviceContext->OMSetBlendState(m_alphaBlendState, blendFactor, 0xffffffff);
-	}
-	else {
+	switch (state) {
+	case BLEND_NONE:
 		m_deviceContext->OMSetBlendState(m_noBlendState, blendFactor, 0xffffffff);
+		break;
+	case BLEND_ADDITIVE:
+		m_deviceContext->OMSetBlendState(m_addBlendState, blendFactor, 0xffffffff);
+		break;
+	case BLEND_ADD_ALPHA:
+		m_deviceContext->OMSetBlendState(m_alphaBlendState, blendFactor, 0xffffffff);
+		break;
 	}
 }
 
-void DxGraphicsWrapper::BindDefaultFramebuffer()
-{
-	m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, NULL);
+void DxGraphicsWrapper::BindDefaultFramebuffer(bool depth) {
+	if (depth) {
+		m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilView);
+	}
+	else {
+		m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, nullptr);
+	}
+}
+
+void DxGraphicsWrapper::EnableDepth(bool state) {
 }
 
 ColorFormat DxGraphicsWrapper::GetDeviceColorFormat() {

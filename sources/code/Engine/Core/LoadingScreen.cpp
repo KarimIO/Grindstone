@@ -31,20 +31,6 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 	rpci.m_depthFormat = FORMAT_DEPTH_NONE;
 	render_pass_ = graphics_wrapper_->CreateRenderPass(rpci);
 
-	DefaultFramebufferCreateInfo dfbci;
-	dfbci.width = engine.settings.resolutionX;
-	dfbci.height = engine.settings.resolutionY;
-	dfbci.renderPass = render_pass_;
-	dfbci.depthFormat = FORMAT_DEPTH_NONE;
-
-	Framebuffer **fboPtr;
-	uint32_t fboCount;
-	graphics_wrapper_->CreateDefaultFramebuffers(dfbci, fboPtr, fboCount);
-
-	/*render_pass_.framebuffers.resize(fboCount);
-	size_t fboSize = fboCount * sizeof(Framebuffer *);
-	memcpy(render_passes_[0].framebuffers.data(), fboPtr, fboSize);*/
-
 	GraphicsPipelineCreateInfo gpci;
 	gpci.scissorW = engine.settings.resolutionX;
 	gpci.width = static_cast<float>(engine.settings.resolutionX);
@@ -189,7 +175,7 @@ void LoadingScreen::Render(double dt) {
 	ubo_->UpdateUniformBuffer(&loadUBO);
 	ubo_->Bind();
 
-	graphics_wrapper_->BindDefaultFramebuffer();
+	graphics_wrapper_->BindDefaultFramebuffer(false);
 	graphics_wrapper_->Clear();
 	pipeline_->Bind();
 	graphics_wrapper_->BindTextureBinding(tb_);

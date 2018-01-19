@@ -131,14 +131,13 @@ void InitMaterials(bool skeletalMaterials, std::string folder_name, std::string 
 			}
 		}
 
-		std::string outMat = outPath + name.C_Str();
+		std::string outMat = outPath + name.C_Str() + ".gmat";
 		mat_names[i] = outMat;
 
-		std::cout << "\tOutputting material: " << outMat << ".gjm and .gbm\n";
+		std::cout << "\tOutputting material: " << outMat << "\n";
 
 		std::string shader = skeletalMaterials ? "../shaders/skeletal" : "../shaders/standard";
-		CreateMaterialJsonFile(newMat, outMat + ".gjm");
-		CreateMaterialBinaryFile(newMat, outMat + ".gbm");
+		CreateStandardMaterial(newMat, outMat);
 	}
 }
 
@@ -436,7 +435,7 @@ bool LoadModelFile(std::string inputPath) {
 	materialNames.resize(inFormat.num_materials);
 
 	offset = static_cast<char*>(offset) + sizeof(ModelFormatHeader);
-	uint32_t size = inFormat.num_meshes * sizeof(Mesh);
+	uint64_t size = inFormat.num_meshes * sizeof(Mesh);
 	memcpy(&remeshes[0], offset, size);
 	offset = static_cast<char*>(offset) + size;
 	size = inFormat.num_vertices * sizeof(Vertex);

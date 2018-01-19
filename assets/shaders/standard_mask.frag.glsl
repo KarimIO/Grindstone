@@ -9,10 +9,10 @@ in vec3 fragNormal;
 in vec3 fragTangent;
 in vec2 fragTexCoord;
 
-uniform sampler2D tex0;
-uniform sampler2D tex1;
-uniform sampler2D tex2;
-uniform sampler2D tex3;
+uniform sampler2D albedoTexture;
+uniform sampler2D normalTexture;
+uniform sampler2D roughnessTexture;
+uniform sampler2D metalnessTexture;
 
 vec3 CalcBumpedNormal(vec3 Ng, vec3 Nt, vec3 Tan) {
   vec3 BumpMapNormal = Nt;
@@ -29,14 +29,19 @@ vec3 CalcBumpedNormal(vec3 Ng, vec3 Nt, vec3 Tan) {
 }
 
 void main() {
-  float Metalness = texture(tex3, fragTexCoord).r;
+  vec4 albedo = texture(albedoTexture, fragTexCoord);
+  if (albedo.a < 0.2) {
+    discard;
+  }
 
-  out0 = (1 - Metalness) * texture(tex0, fragTexCoord);
-  out1 = texture(tex1, fragTexCoord);
+  float Metalness = texture(metalnessTexture, fragTexCoord).r;
+
+  out0 = (1 - Metalness) * texture(albedoTexture, fragTexCoord);
+  out1 = texture(normalTexture, fragTexCoord);
 
   vec3 Normals = CalcBumpedNormal(fragNormal, out1.rgb, fragTangent);
   out1 = vec4(normalize(Normals.rgb) , 1);
   
-  vec3 Specular = mix(vec3(0.04), texture(tex0, fragTexCoord).rgb, Metalness);
-  out2 = vec4(Specular, texture(tex2, fragTexCoord).r);
+  vec3 Specular = mix(vec3(0.04), texture(albedoTexture, fragTexCoord).rgb, Metalness);
+  out2 = vec4(Specular, texture(roughnessTexture, fragTexCoord).r);
 }

@@ -14,6 +14,8 @@
 #include "../GraphicsCommon/GraphicsWrapper.hpp"
 #include "../GraphicsCommon/DLLDefs.hpp"
 #include "../GraphicsCommon/VertexArrayObject.hpp"
+#include "DxRenderTarget.hpp"
+#include "DxDepthTarget.hpp"
 
 class GRAPHICS_EXPORT_CLASS DxGraphicsWrapper : public GraphicsWrapper {
 private:
@@ -30,6 +32,7 @@ private:
 	ID3D11RasterizerState* m_rasterState;
 
 	ID3D11BlendState* m_alphaBlendState;
+	ID3D11BlendState* m_addBlendState;
 	ID3D11BlendState* m_noBlendState;
 public:
 	void Clear();
@@ -63,6 +66,9 @@ public:
 	Texture *CreateTexture(TextureCreateInfo createInfo);
 	TextureBinding *CreateTextureBinding(TextureBindingCreateInfo createInfo);
 	TextureBindingLayout *CreateTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo);
+	RenderTarget *CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc); 
+	DepthTarget *CreateDepthTarget(DepthTargetCreateInfo rt);
+	void CopyToDepthBuffer(DepthTarget *p);
 
 	bool SupportsCommandBuffers();
 	bool SupportsTesselation();
@@ -79,8 +85,9 @@ public:
 	void DrawCommandBuffers(uint32_t imageIndex, CommandBuffer ** commandBuffers, uint32_t commandBufferCount);
 	void DrawImmediateIndexed(bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount);
 	void DrawImmediateVertices(uint32_t base, uint32_t count);
-	void SetImmediateBlending(bool);
-	void BindDefaultFramebuffer();
+	void SetImmediateBlending(BlendMode);
+	void BindDefaultFramebuffer(bool depth);
+	void EnableDepth(bool state);
 
 	ColorFormat GetDeviceColorFormat();
 

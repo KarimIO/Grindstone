@@ -5,38 +5,23 @@
 #include <stdio.h>
 #include <string.h>
 
-bool CreateMaterialJsonFile(StandardMaterialCreateInfo ci, std::string path) {
+bool CreateStandardMaterial(StandardMaterialCreateInfo ci, std::string path) {
 	std::ofstream output(path);
-	output << "{\n\t\"shader\": \"../shaders/standard\",\n";
-	output << "\t\"albedoTexture\": \"" << ci.albedoPath << "\",\n";
-	output << "\t\"normalTexture\": \"" << ci.normalPath << "\",\n";
-	output << "\t\"roughnessTexture\": \"" << ci.roughnessPath << "\",\n";
-	output << "\t\"specularTexture\": \"" << ci.specularPath << "\"\n}";
-	output.close();
-	return false;
-}
-
-bool CreateMaterialBinaryFile(StandardMaterialCreateInfo ci, std::string path) {
-	std::ofstream output(path, std::ios::binary);
-	output << "../shaders/standard" << '\0';
-	output << ci.albedoPath << '\0';
-	output << ci.normalPath << '\0';
-	output << ci.roughnessPath << '\0';
-	output << ci.specularPath << '\0';
+	output << "shader: ../assets/shaders/standard.json\n";
+	output << "albedoTexture: " << ci.albedoPath << "\n";
+	output << "normalTexture: " << ci.normalPath << "\n";
+	output << "roughnessTexture: " << ci.roughnessPath << "\n";
+	output << "metalnessTexture: " << ci.specularPath;
 	output.close();
 	return false;
 }
 
 bool LoadMaterial(std::string path) {
-	std::ifstream input(path + ".gbm", std::ios::ate | std::ios::binary);
+	std::ifstream input(path + ".gmat", std::ios::ate | std::ios::binary);
 
 	if (!input.is_open()) {
-		input.open(path + ".gjm", std::ios::ate | std::ios::binary);
-
-		if (!input.is_open()) {
-			std::cerr << "Failed to open file: " << path.c_str() << "!\n";
-			return false;
-		}
+		std::cerr << "Failed to open file: " << path.c_str() << ".gjm!\n";
+		return false;
 	}
 
 	std::cout << "Material reading from: " << path << "!\n";

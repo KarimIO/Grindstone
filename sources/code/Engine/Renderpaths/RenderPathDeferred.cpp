@@ -5,19 +5,19 @@
 Texture *LoadCubemap(std::string path, GraphicsWrapper *m_graphics_wrapper_) {
 
 	std::string facePaths[6];
-	facePaths[0] = path + "FT.png";
-	facePaths[1] = path + "BK.png";
-	facePaths[2] = path + "UP.png";
-	facePaths[3] = path + "DN.png";
-	facePaths[4] = path + "RT.png";
-	facePaths[5] = path + "LF.png";
+	facePaths[0] = path + "ft.tga";
+	facePaths[1] = path + "bk.tga";
+	facePaths[2] = path + "up.tga";
+	facePaths[3] = path + "dn.tga";
+	facePaths[4] = path + "rt.tga";
+	facePaths[5] = path + "lf.tga";
 
 
 	CubemapCreateInfo createInfo;
 	
 	int texWidth, texHeight, texChannels;
 	for (int i = 0; i < 6; i++) {
-		createInfo.data[i] = stbi_load(facePaths[i].c_str(), &texWidth, &texHeight, &texChannels, STBI_default);
+		createInfo.data[i] = stbi_load(facePaths[i].c_str(), &texWidth, &texHeight, &texChannels, 4);
 		if (!createInfo.data[i]) {
 			printf("Texture failed to load!: %s \n", facePaths[i].c_str());
 			for (int j = 0; j < i; j++) {
@@ -98,14 +98,14 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_) {
 	planeVAO->BindResources(vaci);
 	planeVAO->Unbind();
 
-	m_cubemap = LoadCubemap("../assets/cubemaps/level4", m_graphics_wrapper_);
+	m_cubemap = LoadCubemap("../assets/cubemaps/glacier_", m_graphics_wrapper_);
 
 	std::vector<TextureSubBinding> cubemapBindings;
 	cubemapBindings.reserve(1);
 	cubemapBindings.emplace_back("environmentMap", 4);
 
 	TextureBindingLayoutCreateInfo tblci;
-	tblci.bindingLocation = 2;
+	tblci.bindingLocation = 1;
 	tblci.bindings = cubemapBindings.data();
 	tblci.bindingCount = (uint32_t)cubemapBindings.size();
 	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
@@ -173,8 +173,6 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_) {
 }
 
 void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
-	gbuffer->BindTextures();
-
 	CCamera *cam = &engine.cameraSystem.components[0];
 	Entity *ent = &engine.entities[cam->entityID];
 	glm::vec3 eyePos = engine.transformSystem.components[ent->components_[COMPONENT_TRANSFORM]].position;
@@ -188,8 +186,6 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 	deffUBOBuffer.resolution.y = engine.settings.resolutionY;
 	deffUBO->UpdateUniformBuffer(&deffUBOBuffer);
 
-	m_graphics_wrapper_->Clear();
-	m_graphics_wrapper_->SetImmediateBlending(true);
 	deffUBO->Bind();
 	engine.graphics_wrapper_->BindVertexArrayObject(planeVAO);
 	
@@ -207,9 +203,9 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 	}
 
-	m_iblPipeline->Bind();
-	//m_graphics_wrapper_->BindTextureBinding(m_cubemapBinding);
-	m_graphics_wrapper_->DrawImmediateVertices(0, 6);
-
-	m_graphics_wrapper_->SetImmediateBlending(false);
+	if (m_cubemap) {
+		m_iblPipeline->Bind();
+		m_graphics_wrapper_->BindTextureBinding(m_cubemapBinding);
+		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
+	}
 }

@@ -10,6 +10,7 @@
 #include "GLIndexBuffer.hpp"
 #include "GLUniformBuffer.hpp"
 #include "GLTexture.hpp"
+#include "GLDepthTarget.hpp"
 #include "../GraphicsCommon/GraphicsWrapper.hpp"
 #include "../GraphicsCommon/DLLDefs.hpp"
 
@@ -64,6 +65,8 @@ public:
 	Texture *CreateTexture(TextureCreateInfo createInfo);
 	TextureBinding *CreateTextureBinding(TextureBindingCreateInfo createInfo);
 	TextureBindingLayout *CreateTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo);
+	RenderTarget *CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc);
+	DepthTarget *CreateDepthTarget(DepthTargetCreateInfo *rt, uint32_t rc);
 
 	uint32_t GetImageIndex();
 
@@ -80,10 +83,11 @@ public:
 	void BindVertexArrayObject(VertexArrayObject *);
 	void DrawImmediateIndexed(bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount);
 	void DrawImmediateVertices(uint32_t base, uint32_t count);
-	void SetImmediateBlending(bool);
+	void SetImmediateBlending(BlendMode);
+	void EnableDepth(bool state);
 	void BindDefaultFramebuffer();
 
-	ColorFormat GetDeviceColorFormat();
+	ImageFormat GetDeviceColorFormat();
 
 	void SwapBuffer();
 };

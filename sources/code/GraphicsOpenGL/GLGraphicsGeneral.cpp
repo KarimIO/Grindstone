@@ -5,6 +5,7 @@
 #include "GLVertexBuffer.hpp"
 #include "GLIndexBuffer.hpp"
 #include "GLGraphicsPipeline.hpp"
+#include "GLRenderTarget.hpp"
 #include <iostream>
 #include <cstdio>
 
@@ -226,6 +227,15 @@ Texture *GLGraphicsWrapper::CreateTexture(TextureCreateInfo ci) {
 	return static_cast<Texture *>(new GLTexture(ci));
 }
 
+RenderTarget *GLGraphicsWrapper::CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc) {
+	return static_cast<RenderTarget *>(new GLRenderTarget(rt, rc));
+}
+
+DepthTarget * GLGraphicsWrapper::CreateDepthTarget(DepthTargetCreateInfo * rt, uint32_t rc) {
+	return static_cast<DepthTarget *>(new GLDepthTarget(rt, rc));
+}
+
+
 uint32_t GLGraphicsWrapper::GetImageIndex() {
 	return 0;
 }
@@ -277,15 +287,32 @@ void GLGraphicsWrapper::DrawImmediateVertices(uint32_t base, uint32_t count) {
 	glDrawArrays(GL_TRIANGLE_STRIP, base, count);
 }
 
-void GLGraphicsWrapper::SetImmediateBlending(bool en) {
-	if (en) {
+void GLGraphicsWrapper::EnableDepth(bool state) {
+	if (state) {
+		glEnable(GL_DEPTH_TEST);
+	}
+	else {
+		glDisable(GL_DEPTH_TEST);
+	}
+}
+
+void GLGraphicsWrapper::SetImmediateBlending(BlendMode mode) {
+	switch (mode) {
+	case BLEND_NONE:
+	default:
+		glDisable(GL_BLEND);
+		break;
+	case BLEND_ADDITIVE:
 		glEnable(GL_BLEND);
 		glBlendEquation(GL_FUNC_ADD);
 		glBlendFunc(GL_ONE, GL_ONE);
-
+		break;
+	case BLEND_ADD_ALPHA:
+		glEnable(GL_BLEND);
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+		break;
 	}
-	else
-		glDisable(GL_BLEND);
 }
 
 void GLGraphicsWrapper::BindDefaultFramebuffer()
@@ -293,7 +320,7 @@ void GLGraphicsWrapper::BindDefaultFramebuffer()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-ColorFormat GLGraphicsWrapper::GetDeviceColorFormat() {
+ImageFormat GLGraphicsWrapper::GetDeviceColorFormat() {
 	return FORMAT_COLOR_R8G8B8A8;
 }
 

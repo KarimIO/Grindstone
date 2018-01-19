@@ -35,12 +35,10 @@ if (MSVC)
 endif()
 
 set_target_properties(Grindstone PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
-link_directories(${BULLET_LIBRARY_DIRS})
 
 if (WIN32)
-    target_link_libraries(Grindstone debug ${bullet_LIBRARIES_DEBUG})
-
-    target_link_libraries(Grindstone optimized ${bullet_LIBRARIES})
+    #target_link_libraries(Grindstone optimized ${bullet_LIB_REL})
+	target_link_libraries(Grindstone ${bullet_LIB_DEB})
 else ()
     find_package (Threads)
     target_link_libraries(Grindstone ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} BulletDynamics BulletCollision LinearMath)

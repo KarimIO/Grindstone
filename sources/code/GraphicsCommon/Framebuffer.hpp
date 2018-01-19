@@ -2,6 +2,8 @@
 
 #include "RenderPass.hpp"
 #include "Formats.hpp"
+#include "RenderTarget.hpp"
+#include "DepthTarget.hpp"
 #include <vector>
 #include <stdint.h>
 
@@ -11,28 +13,24 @@ struct DefaultFramebufferCreateInfo {
 	uint32_t width;
 	uint32_t height;
 	RenderPass *renderPass;
-
-	DepthFormat depthFormat = FORMAT_DEPTH_32;
 };
 
 struct FramebufferCreateInfo {
-	uint32_t width;
-	uint32_t height;
-	RenderPass *renderPass;
+	RenderPass *render_pass;
 
-	ColorFormat *colorFormats;
-	uint32_t numColorTargets;
-	DepthFormat depthFormat;
+	RenderTarget **render_target_lists;
+	uint32_t num_render_target_lists;
+	DepthTarget *depth_target;
 };
 
 
 class Framebuffer {
 public:
 	virtual void Clear() = 0;
-	virtual void Blit(int i, int x, int y, int w, int h) = 0;
+	virtual void CopyFrom(Framebuffer *) = 0;
+	virtual void Bind() = 0;
 	virtual void BindWrite() = 0;
 	virtual void BindRead() = 0;
-	virtual void BindTextures() = 0;
 	virtual void Unbind() = 0;
 	virtual ~Framebuffer() {};
 };

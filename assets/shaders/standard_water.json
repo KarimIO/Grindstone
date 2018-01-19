@@ -1,0 +1,16 @@
+{
+    "type": "transparent",
+    "name": "Water Shader",
+    "shaders": {
+        "deferred": {
+            "opengl": {
+                "vertex": "standard_water.vert.glsl",
+                "fragment": "standard_water.frag.glsl"
+            },
+            "directx": {
+                "vertex": "standard_water.vert.fxc",
+                "fragment": "standard_water.frag.fxc"
+            }
+        }
+    }
+}
