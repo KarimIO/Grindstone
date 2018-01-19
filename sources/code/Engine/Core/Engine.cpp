@@ -220,7 +220,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	UniformBufferBindingCreateInfo ubbci;
 	ubbci.binding = 0;
 	ubbci.shaderLocation = "UniformBufferObject";
-	ubbci.size = sizeof(glm::mat4);
+	ubbci.size = 128; //sizeof(glm::mat4);
 	ubbci.stages = SHADER_STAGE_VERTEX_BIT;
 	UniformBufferBinding *ubb = graphics_wrapper_->CreateUniformBufferBinding(ubbci);
 
@@ -233,7 +233,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	UniformBufferBindingCreateInfo ubbci2;
 	ubbci2.binding = 1;
 	ubbci2.shaderLocation = "ModelMatrixBuffer";
-	ubbci2.size = sizeof(glm::mat4);
+	ubbci2.size = 128; // sizeof(glm::mat4);
 	ubbci2.stages = SHADER_STAGE_VERTEX_BIT;
 	UniformBufferBinding *ubb2 = graphics_wrapper_->CreateUniformBufferBinding(ubbci2);
 	

@@ -23,6 +23,7 @@ public:
 class DxTextureBinding : public TextureBinding {
 	ID3D11DeviceContext *m_deviceContext;
 	std::vector<DxTexture *> m_textures;
+	unsigned int first_address_;
 public:
 	DxTextureBinding(ID3D11DeviceContext *deviceContext, TextureBindingCreateInfo ci);
 	void Bind();

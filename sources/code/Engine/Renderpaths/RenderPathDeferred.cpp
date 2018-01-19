@@ -17,7 +17,7 @@ Texture *LoadCubemap(std::string path, GraphicsWrapper *m_graphics_wrapper_) {
 	
 	int texWidth, texHeight, texChannels;
 	for (int i = 0; i < 6; i++) {
-		createInfo.data[i] = stbi_load(facePaths[i].c_str(), &texWidth, &texHeight, &texChannels, STBI_default);
+		createInfo.data[i] = stbi_load(facePaths[i].c_str(), &texWidth, &texHeight, &texChannels, 4);
 		if (!createInfo.data[i]) {
 			printf("Texture failed to load!: %s \n", facePaths[i].c_str());
 			for (int j = 0; j < i; j++) {
@@ -105,7 +105,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_) {
 	cubemapBindings.emplace_back("environmentMap", 4);
 
 	TextureBindingLayoutCreateInfo tblci;
-	tblci.bindingLocation = 2;
+	tblci.bindingLocation = 1;
 	tblci.bindings = cubemapBindings.data();
 	tblci.bindingCount = (uint32_t)cubemapBindings.size();
 	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
@@ -203,9 +203,9 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 	}
 
-	/*if (m_cubemap) {
+	if (m_cubemap) {
 		m_iblPipeline->Bind();
 		m_graphics_wrapper_->BindTextureBinding(m_cubemapBinding);
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
-	}*/
+	}
 }

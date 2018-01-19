@@ -70,7 +70,79 @@ DxTexture::DxTexture(ID3D11Device *device, ID3D11DeviceContext *deviceContext, T
 }
 
 DxTexture::DxTexture(ID3D11Device *device, ID3D11DeviceContext *deviceContext, CubemapCreateInfo createInfo) {
-	
+	D3D11_SAMPLER_DESC samplerDesc;
+	// Create a texture sampler state description.
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.MipLODBias = 0.0f;
+	samplerDesc.MaxAnisotropy = 1;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+	samplerDesc.BorderColor[0] = 0;
+	samplerDesc.BorderColor[1] = 0;
+	samplerDesc.BorderColor[2] = 0;
+	samplerDesc.BorderColor[3] = 0;
+	samplerDesc.MinLOD = 0;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	// Create the texture sampler state.
+	if (FAILED(device->CreateSamplerState(&samplerDesc, &m_sampleState))) {
+		std::cout << "Sampler View failed to be created!\n";
+		return;
+	}
+
+	unsigned int pixelSize = 0;
+
+	D3D11_TEXTURE2D_DESC textureDesc;
+	textureDesc.Width = createInfo.width;
+	textureDesc.Height = createInfo.height;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 6;
+	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // TranslateFormat(createInfo.format, pixelSize);
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
+
+	// Set the row pitch of the targa image data.
+	unsigned int rowPitch = (createInfo.width) * 4 * sizeof(unsigned char);
+
+	D3D11_SUBRESOURCE_DATA pData[6];
+	for (int i = 0; i < 6; i++)
+	{
+		//Pointer to the pixel data
+		pData[i].pSysMem = createInfo.data[i];
+		//Line width in bytes
+		pData[i].SysMemPitch = rowPitch; // 4 bytes per pixel
+		// This is only used for 3d textures.
+		pData[i].SysMemSlicePitch = 0;
+	}
+
+	// Create the empty texture.
+	HRESULT hResult = device->CreateTexture2D(&textureDesc, &pData[0], &m_texture);
+	if (FAILED(hResult)) {
+		std::cout << "Texture failed to be created!\n";
+		return;
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+	srvDesc.Format = textureDesc.Format;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+	srvDesc.TextureCube.MostDetailedMip = 0;
+	srvDesc.TextureCube.MipLevels = textureDesc.MipLevels;
+
+	// Create the shader resource view for the texture.
+	hResult = device->CreateShaderResourceView(m_texture, &srvDesc, &m_textureView);
+	if (FAILED(hResult)) {
+		std::cout << "Texture View failed to be created!\n";
+		return;
+	}
+
+	// Generate mipmaps for this texture.
+	//deviceContext->GenerateMips(m_textureView);
 }
 
 ID3D11ShaderResourceView *DxTexture::GetTextureView() {
@@ -118,6 +190,7 @@ DXGI_FORMAT TranslateFormat(ColorFormat inFormat, unsigned int &pixelSize) {
 
 DxTextureBinding::DxTextureBinding(ID3D11DeviceContext *deviceContext, TextureBindingCreateInfo ci) {
 	m_deviceContext = deviceContext;
+	first_address_ = ci.textures[0].address;
 
 	m_textures.reserve(ci.textureCount);
 	for (uint32_t i = 0; i < ci.textureCount; i++) {
@@ -139,8 +212,8 @@ void DxTextureBinding::Bind() {
 
 	ID3D11ShaderResourceView *const *texData = (ID3D11ShaderResourceView * const *)textures.data();
 	ID3D11SamplerState **samplersData = samplers.data();
-	m_deviceContext->PSSetSamplers(0, count, samplersData);
-	m_deviceContext->PSSetShaderResources(0, count, texData);
+	m_deviceContext->PSSetSamplers(first_address_, count, samplersData);
+	m_deviceContext->PSSetShaderResources(first_address_, count, texData);
 }
 
 DxTextureBindingLayout::DxTextureBindingLayout(TextureBindingLayoutCreateInfo ci) {

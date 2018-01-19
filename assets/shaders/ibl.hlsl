@@ -17,7 +17,7 @@ struct PixelInputType {
 };
 
 Texture2D shaderTexture[4] : register(t0);
-TextureCube imageBaseLightTex : register(t2);
+TextureCube imageBaseLightTex;
 SamplerState SampleType[4];
 
 cbuffer MatrixInfoType {
@@ -33,20 +33,16 @@ cbuffer MatrixInfoType {
 float4 main(PixelInputType input) : SV_TARGET {
     float  depth        = shaderTexture[3].Sample(SampleType[0], input.texCoord).r;
     float3 Position = WorldPosFromDepth(invProj, invView, depth, input.texCoord);
-    //return float4(position, 1.0);
-    /*float near = 0.1;
-    float far = 100;
-    float ProjectionA = far / (far - near);
-    float ProjectionB = (-far * near) / (far - near);
-    depth = ProjectionB / ((depth - ProjectionA));
-    float4 position = float4(input.viewRay * depth, 1.0);*/
-    // Convert to World Space:
-    // position = mul(invView, position);
+
     float3 Albedo       = shaderTexture[0].Sample(SampleType[0], input.texCoord).rgb;
     float3 Normal       = shaderTexture[1].Sample(SampleType[0], input.texCoord).rgb;
     float4 Specular     = shaderTexture[2].Sample(SampleType[0], input.texCoord);
-    //float3 refl = imageBaseLightTex.Sample(SampleType[0], Normal).rgb;
+
+    float3 v = normalize(eyePos.xyz - Position);
+    float3 r = reflect(v, Normal);
+   
+    float3 refl = imageBaseLightTex.Sample(SampleType[0], r).rgb;
 
     float3 ambientColor = float3(0.9f, 0.96f, 1.0f) * 0.05f;
-	return float4(Albedo * ambientColor, 1.0f);
+	return float4(Specular.xyz * refl, 1.0f);
 }

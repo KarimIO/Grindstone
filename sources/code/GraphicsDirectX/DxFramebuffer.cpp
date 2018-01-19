@@ -40,7 +40,7 @@ DxFramebuffer::~DxFramebuffer() {
 void DxFramebuffer::Clear() {
 
 	for (uint32_t i = 0; i < render_target_lists_.size(); i++)
-		render_target_lists_.clear();
+		render_target_lists_[i]->clear();
 
 	if (depth_target_ != nullptr)
 		depth_target_->clear();
