@@ -32,7 +32,8 @@ enum PARAM_TYPE {
 };
 
 enum ProgramType {
-	TYPE_OPAQUE = 0,
+	TYPE_UNLIT = 0,
+	TYPE_OPAQUE,
 	TYPE_TRANSPARENT
 };
 
@@ -108,6 +109,7 @@ public:
 	CommandBuffer *commandBuffer;
 	std::vector<Framebuffer *> framebuffers;
 	std::vector<PipelineContainer> pipelines_deferred;
+	std::vector<PipelineContainer> pipelines_unlit;
 	std::vector<PipelineContainer> pipelines_forward;
 };
 
@@ -117,6 +119,8 @@ public:
 	PipelineReference CreatePipeline(std::string pipelineName);
 	MaterialReference CreateMaterial(std::string shaderName);
 	MaterialReference PreLoadMaterial(std::string shaderName);
+
+	Texture * LoadCubemap(std::string path);
 
 	RenderPassContainer *GetRenderPass(uint8_t);
 	PipelineContainer *GetPipeline(PipelineReference);
@@ -132,6 +136,7 @@ public:
 	void LoadPreloaded();
 	//GraphicsPipeline *ParseShaderFile(std::string path);
 	//GraphicsPipeline *CreateShaderFromPaths(std::string name, std::string vsPath, std::string fsPath, std::string gsPath, std::string csPath, std::string tesPath, std::string tcsPath);
+	void DrawUnlitImmediate();
 	void DrawDeferredImmediate();
 	void DrawForwardImmediate();
 	void DrawDeferredCommand();

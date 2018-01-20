@@ -1,0 +1,23 @@
+{
+    "type": "unlit",
+    "name": "Sky Shader",
+    "shaders": {
+        "deferred": {
+            "opengl": {
+                "vertex": "sky.vert.glsl",
+                "fragment": "sky.frag.glsl"
+            },
+            "directx": {
+                "vertex": "sky.vert.fxc",
+                "fragment": "sky.frag.fxc"
+            }
+        }
+    },
+    "textures": {
+        "skybox": {
+            "name": "Skybox",
+            "type": "cubemap",
+            "default": "cubemaps/glacier_.tga"
+        }
+    }
+}

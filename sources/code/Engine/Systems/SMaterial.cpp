@@ -198,7 +198,15 @@ public:
 		}
 		else if (state == SHADER_JSON_TYPE) {
 			std::string type = str;
-			if (type == "opaque") {
+			if (type == "unlit") {
+				render_pass->pipelines_unlit.push_back(PipelineContainer());
+				pipeline = &render_pass->pipelines_unlit.back();
+				pipeline->type = TYPE_UNLIT;
+				pipeline->reference.pipeline_type = TYPE_UNLIT;
+				pipeline->reference.renderpass = 0;
+				pipeline->reference.pipeline = render_pass->pipelines_unlit.size() - 1;
+			}
+			else if (type == "opaque") {
 				render_pass->pipelines_deferred.push_back(PipelineContainer());
 				pipeline = &render_pass->pipelines_deferred.back();
 				pipeline->type = TYPE_OPAQUE;
@@ -717,6 +725,68 @@ MaterialReference MaterialManager::PreLoadMaterial(std::string path) {
 	return ref;
 }
 
+Texture *MaterialManager::LoadCubemap(std::string path) {
+
+	int d = path.find_last_of('.');
+	std::string ext = path.substr(d + 1);
+	path = path.substr(0, d);
+
+	std::string facePaths[6];
+	facePaths[0] = path + "ft." + ext;
+	facePaths[1] = path + "bk." + ext;
+	facePaths[2] = path + "up." + ext;
+	facePaths[3] = path + "dn." + ext;
+	facePaths[4] = path + "rt." + ext;
+	facePaths[5] = path + "lf." + ext;
+
+
+	CubemapCreateInfo createInfo;
+
+	int texWidth, texHeight, texChannels;
+	for (int i = 0; i < 6; i++) {
+		createInfo.data[i] = stbi_load(facePaths[i].c_str(), &texWidth, &texHeight, &texChannels, 4);
+		if (!createInfo.data[i]) {
+			printf("Texture failed to load!: %s \n", facePaths[i].c_str());
+			for (int j = 0; j < i; j++) {
+				stbi_image_free(createInfo.data[j]);
+			}
+			return NULL;
+		}
+	}
+
+	printf("Cubemap loaded: %s \n", path.c_str());
+
+	ColorFormat format;
+	switch (texChannels) {
+	case 1:
+		format = FORMAT_COLOR_R8;
+		break;
+	case 2:
+		format = FORMAT_COLOR_R8G8;
+		break;
+	case 3:
+		format = FORMAT_COLOR_R8G8B8;
+		break;
+	default:
+	case 4:
+		format = FORMAT_COLOR_R8G8B8A8;
+		break;
+	}
+
+	createInfo.format = format;
+	createInfo.mipmaps = 0;
+	createInfo.width = texWidth;
+	createInfo.height = texHeight;
+
+	Texture *t = graphics_wrapper_->CreateCubemap(createInfo);
+
+	for (int i = 0; i < 6; i++) {
+		stbi_image_free(createInfo.data[i]);
+	}
+
+	return t;
+}
+
 MaterialReference MaterialManager::CreateMaterial(std::string path) {
 	if (material_map_.find(path) != material_map_.end()) {
 		return material_map_[path];
@@ -764,7 +834,12 @@ MaterialReference MaterialManager::CreateMaterial(std::string path) {
 				auto it2 = pipeline->textureDescriptorTable.find(parameter);
 				if (it2 != pipeline->textureDescriptorTable.end()) {
 					unsigned int texture_id = it2->second.texture_id;
-					textures[texture_id].texture = LoadTexture(dir + value);
+					if (it2->second.paramType == PARAM_CUBEMAP) {
+						textures[texture_id].texture = LoadCubemap(dir + value);
+					}
+					else {
+						textures[texture_id].texture = LoadTexture(dir + value);
+					}
 					textures[texture_id].address = texture_id;
 				}
 				else {
@@ -798,14 +873,18 @@ RenderPassContainer *MaterialManager::GetRenderPass(uint8_t i) {
 }
 
 PipelineContainer * MaterialManager::GetPipeline(PipelineReference ref) {
-	if (ref.pipeline_type == TYPE_OPAQUE)
+	if (ref.pipeline_type == TYPE_UNLIT)
+		return &render_passes_[ref.renderpass].pipelines_unlit[ref.pipeline];
+	else if (ref.pipeline_type == TYPE_OPAQUE)
 		return &render_passes_[ref.renderpass].pipelines_deferred[ref.pipeline];
 	else
 		return &render_passes_[ref.renderpass].pipelines_forward[ref.pipeline];
 }
 
 Material * MaterialManager::GetMaterial(MaterialReference ref) {
-	if (ref.pipelineReference.pipeline_type == TYPE_OPAQUE)
+	if (ref.pipelineReference.pipeline_type == TYPE_UNLIT)
+		return &render_passes_[ref.pipelineReference.renderpass].pipelines_unlit[ref.pipelineReference.pipeline].materials[ref.material];
+	else if (ref.pipelineReference.pipeline_type == TYPE_OPAQUE)
 		return &render_passes_[ref.pipelineReference.renderpass].pipelines_deferred[ref.pipelineReference.pipeline].materials[ref.material];
 	else
 		return &render_passes_[ref.pipelineReference.renderpass].pipelines_forward[ref.pipelineReference.pipeline].materials[ref.material];
@@ -968,6 +1047,25 @@ Texture * MaterialManager::LoadTexture(std::string path) {
 	return nullptr;
 }
 
+void MaterialManager::DrawUnlitImmediate() {
+	for (auto const &renderPass : render_passes_) {
+		for (auto const &pipeline : renderPass.pipelines_unlit) {
+			pipeline.program->Bind();
+			if (pipeline.draw_count > 0) {
+				for (auto const &material : pipeline.materials) {
+					if (material.draw_count > 0) {
+						if (material.m_textureBinding != nullptr)
+							graphics_wrapper_->BindTextureBinding(material.m_textureBinding);
+						for (auto const &mesh : material.m_meshes) {
+							mesh->Draw();
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 void MaterialManager::DrawDeferredImmediate() {
 	for (auto const &renderPass : render_passes_) {
 		//renderPass->Bind();
@@ -1046,6 +1144,12 @@ void MaterialManager::resetDraws() {
 				material.draw_count = 0;
 			}
 		}
+		for (auto &pipeline : render_pass.pipelines_unlit) {
+			pipeline.draw_count = 0;
+			for (auto &material : pipeline.materials) {
+				material.draw_count = 0;
+			}
+		}
 		for (auto &pipeline : render_pass.pipelines_forward) {
 			pipeline.draw_count = 0;
 			for (auto &material : pipeline.materials) {
@@ -1062,6 +1166,10 @@ MaterialManager::~MaterialManager() {
 
 	for (const auto &render_pass : render_passes_) {
 		for (const auto &pipeline : render_pass.pipelines_deferred) {
+			graphics_wrapper_->DeleteGraphicsPipeline(pipeline.program);
+		}
+
+		for (const auto &pipeline : render_pass.pipelines_unlit) {
 			graphics_wrapper_->DeleteGraphicsPipeline(pipeline.program);
 		}
 

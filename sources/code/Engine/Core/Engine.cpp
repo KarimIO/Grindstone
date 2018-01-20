@@ -332,20 +332,27 @@ void Engine::Render() {
 	}
 	else {
 		if (!settings.debugNoLighting) {
+			// Opaque
 			gbuffer_->BindWrite();
 			gbuffer_->Clear();
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			materialManager.DrawDeferredImmediate();
 
+			// Deferred
 			graphics_wrapper_->SetImmediateBlending(BLEND_ADDITIVE);
 			graphics_wrapper_->BindDefaultFramebuffer(false);
 			gbuffer_->BindRead();
 			graphics_wrapper_->Clear();
 			renderPath->Draw(gbuffer_);
-			
-			graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
+
+			// Unlit
 			graphics_wrapper_->BindDefaultFramebuffer(true);
 			graphics_wrapper_->CopyToDepthBuffer(depth_image_);
+			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+			materialManager.DrawUnlitImmediate();
+			
+			// Forward
+			graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
 			materialManager.DrawForwardImmediate();
 
 			graphics_wrapper_->SwapBuffer();
