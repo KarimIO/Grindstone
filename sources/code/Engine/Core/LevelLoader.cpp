@@ -198,15 +198,16 @@ public:
 			else if (std::string(str) == "COMPONENT_GEOMETRY_STATIC") {
 				componentType = COMPONENT_GEOMETRY;
 				subType = GEOMETRY_STATIC_MODEL;
-				engine.geometry_system.AddComponent(entityID, ent->components_[COMPONENT_GEOMETRY], GEOMETRY_STATIC_MODEL);
-				componentID = ent->components_[COMPONENT_GEOMETRY];
+				engine.geometry_system.AddComponent(entityID, ent->components_[componentType], GEOMETRY_STATIC_MODEL);
+				componentID = ent->components_[componentType];
+			}
+			else if (std::string(str) == "COMPONENT_GEOMETRY_TERRAIN") {
+				componentType = COMPONENT_GEOMETRY;
+				subType = GEOMETRY_TERRAIN;
+				engine.geometry_system.AddComponent(entityID, ent->components_[componentType], GEOMETRY_TERRAIN);
+				componentID = ent->components_[componentType];
 			}
 			/*else if (std::string(str) == "COMPONENT_GEOMETRY_SKELETAL") {
-				componentType = COMPONENT_TERRAIN;
-				engine.terrainSystem.AddComponent(ent->components_[COMPONENT_TERRAIN]);
-				componentID = ent->components_[COMPONENT_TERRAIN];
-			}*/
-			/*else if (std::string(str) == "COMPONENT_TERRAIN") {
 				componentType = COMPONENT_TERRAIN;
 				engine.terrainSystem.AddComponent(ent->components_[COMPONENT_TERRAIN]);
 				componentID = ent->components_[COMPONENT_TERRAIN];

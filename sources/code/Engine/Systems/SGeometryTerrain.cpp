@@ -1,361 +1,155 @@
-#if 0
-#include "Terrain.h"
-#include "../Core/Utilities.h"
-#include "../Core/Engine.h"
-#include "../Core/TextureManager.h"
+#include "SGeometryTerrain.hpp"
+#include "Core/Engine.hpp"
 
-void STerrain::Initialize() {
-	// Load terrain shaders, depending on tessellation support.
-	if (engine.graphics_wrapper_->SupportsTesselation()) {
-		std::string vsPath = "../shaders/terrain/terrain.glvs";
-		std::string fsPath = "../shaders/terrain/terrain.glfs";
-		std::string csPath = "../shaders/terrain/terrain.glcs";
-		std::string esPath = "../shaders/terrain/terrain.gles";
+SGeometryTerrain::SGeometryTerrain(MaterialManager *material_system, GraphicsWrapper * graphics_wrapper, std::vector<UniformBufferBinding *> ubbs) : graphics_wrapper_(graphics_wrapper), material_system_(material_system) {
+	geometry_info_.ubb_count = ubbs.size();
+	geometry_info_.ubbs = new UniformBufferBinding *[ubbs.size()];
 
-		std::string vsContent;
-		if (!ReadFile(vsPath, vsContent))
-			fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
-
-		std::string fsContent;
-		if (!ReadFile(fsPath, fsContent))
-			fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
-
-		std::string csContent;
-		if (!ReadFile(csPath, csContent))
-			fprintf(stderr, "Failed to read tesselation control shader: %s.\n", csPath.c_str());
-
-		std::string esContent;
-		if (!ReadFile(esPath, esContent))
-			fprintf(stderr, "Failed to read tesselation evaluation shader: %s.\n", esPath.c_str());
-
-		terrainShader = pfnCreateShader();
-		terrainShader->Initialize(4);
-		if (!terrainShader->AddShader(&vsPath, &vsContent, SHADER_VERTEX))
-			fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
-		if (!terrainShader->AddShader(&csPath, &csContent, SHADER_TESS_CONTROL))
-			fprintf(stderr, "Failed to add tesselation control shader %s.\n", csPath.c_str());
-		if (!terrainShader->AddShader(&esPath, &esContent, SHADER_TESS_EVALUATION))
-			fprintf(stderr, "Failed to add tesselation evaluation shader %s.\n", esPath.c_str());
-		if (!terrainShader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
-			fprintf(stderr, "Failed to add fragment shader %s.\n", fsPath.c_str());
-		if (!terrainShader->Compile())
-			fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
-
-		vsContent.clear();
-		fsContent.clear();
-		csContent.clear();
-		esContent.clear();
-		vsPath.clear();
-		fsPath.clear();
-		csPath.clear();
-		esPath.clear();
-	}
-	else {
-		std::string vsPath = "../shaders/terrain/terrainnotess.glvs";
-		std::string fsPath = "../shaders/terrain/terrain.glfs";
-
-		std::string vsContent;
-		if (!ReadFile(vsPath, vsContent))
-			fprintf(stderr, "Failed to read vertex shader: %s.\n", vsPath.c_str());
-
-		std::string fsContent;
-		if (!ReadFile(fsPath, fsContent))
-			fprintf(stderr, "Failed to read fragment shader: %s.\n", fsPath.c_str());
-
-		terrainShader = pfnCreateShader();
-		terrainShader->Initialize(2);
-		if (!terrainShader->AddShader(&vsPath, &vsContent, SHADER_VERTEX))
-			fprintf(stderr, "Failed to add vertex shader %s.\n", vsPath.c_str());
-		if (!terrainShader->AddShader(&fsPath, &fsContent, SHADER_FRAGMENT))
-			fprintf(stderr, "Failed to add fragment shader %s.\n", fsPath.c_str());
-
-		terrainShader->BindAttribLocation(0, "vertexPos");
-		terrainShader->BindAttribLocation(1, "texCoord");
-		terrainShader->BindAttribLocation(2, "vertexNormals");
-		terrainShader->BindAttribLocation(3, "vertexTangents");
-
-		terrainShader->BindOutputLocation(0, "position");
-		terrainShader->BindOutputLocation(1, "normal");
-		terrainShader->BindOutputLocation(2, "albedo");
-		terrainShader->BindOutputLocation(3, "specular");
-
-		if (!terrainShader->Compile())
-			fprintf(stderr, "Failed to compile program with: %s.\n", vsPath.c_str());
-
-		vsContent.clear();
-		fsContent.clear();
-		vsPath.clear();
-		fsPath.clear();
+	for (unsigned int i = 0; i < geometry_info_.ubb_count; i++) {
+		geometry_info_.ubbs[i] = ubbs[i];
 	}
 
-	terrainShader->SetNumUniforms(11);
-	terrainShader->CreateUniform("gWorld");
-	terrainShader->CreateUniform("gVP");
-	terrainShader->CreateUniform("height");
-	terrainShader->CreateUniform("time");
-	terrainShader->CreateUniform("numPatches");
-	terrainShader->CreateUniform("eyePos");
-	terrainShader->CreateUniform("terrainMap");
-	terrainShader->CreateUniform("grassAlbedo");
-	terrainShader->CreateUniform("grassGeometry");
-	terrainShader->CreateUniform("rockAlbedo");
-	terrainShader->CreateUniform("rockGeometry");
+	geometry_info_.vbds_count = 1;
+	geometry_info_.vbds = new VertexBindingDescription();
+	geometry_info_.vbds->binding = 0;
+	geometry_info_.vbds->elementRate = false;
+	geometry_info_.vbds->stride = sizeof(glm::vec2);
 
-	//grassAlbedo = engine.textureManager.LoadTexture("../materials/terrain/grass/albedo.png", COLOR_SRGB);
-	//grassGeometry = engine.textureManager.LoadTexture("../materials/terrain/grass/geometry.png", COLOR_RGBA);
-
-	//rockAlbedo = engine.textureManager.LoadTexture("../materials/terrain/rock/albedo.png", COLOR_SRGB);
-	//rockGeometry = engine.textureManager.LoadTexture("../materials/terrain/rock/geometry.png", COLOR_RGBA);
+	geometry_info_.vads_count = 1;
+	geometry_info_.vads = new VertexAttributeDescription();
+	geometry_info_.vads->binding = 0;
+	geometry_info_.vads->location = 0;
+	geometry_info_.vads->format = VERTEX_R32_G32;
+	geometry_info_.vads->size = 2;
+	geometry_info_.vads->name = "vertexPosition";
+	geometry_info_.vads->offset = 0;
+	geometry_info_.vads->usage = ATTRIB_POSITION;
 }
 
-void STerrain::AddComponent(unsigned int &componentID) {
-	components.push_back(CTerrain());
-	componentID = (unsigned int)components.size() - 1;
-}
-
-void STerrain::GenerateComponents() {
-	if (engine.graphics_wrapper_->SupportsTesselation()) {
-		std::vector<glm::vec2> vertices;
-		std::vector<glm::vec2> texCoords;
-		std::vector<unsigned int> indices;
-		for (size_t ci = 0; ci < components.size(); ci++) {
-			CTerrain *terrain = &components[ci];
-
-			int numVerts = terrain->numPatches + 1;
-			int numVertsArea = numVerts * numVerts;
-
-			terrain->texture = engine.textureManager.LoadTexture(terrain->heightmapPath, COLOR_RGBA);
-			vertices.reserve(numVertsArea);
-			texCoords.reserve(numVertsArea);
-			indices.reserve(terrain->numPatches * terrain->numPatches * 6);
-			terrain->numIndices = terrain->numPatches * terrain->numPatches * 6;
-			float patchWidth = terrain->width / (float)terrain->numPatches;
-			float patchLength = terrain->length / (float)terrain->numPatches;
-			float widthStart = -terrain->width / 2.0f;
-			float lengthStart = -terrain->length / 2.0f;
-
-			for (size_t i = 0; i <= terrain->numPatches; i++) {
-				for (size_t j = 0; j <= terrain->numPatches; j++) {
-					vertices.push_back(glm::vec2(widthStart + patchWidth * j, lengthStart + patchLength * i));
-					texCoords.push_back(glm::vec2((float)j / (float)terrain->numPatches, (float)i / (float)terrain->numPatches));
-				}
-			}
-
-			for (size_t i = 0; i < terrain->numPatches; i++) {
-				for (size_t j = 0; j < terrain->numPatches; j++) {
-					indices.push_back((unsigned int)(i*numVerts + j));
-					indices.push_back((unsigned int)((i + 1)*numVerts + j));
-					indices.push_back((unsigned int)((i + 1)*numVerts + j + 1));
-					indices.push_back((unsigned int)((i + 1)*numVerts + j + 1));
-					indices.push_back((unsigned int)(i*numVerts + j + 1));
-					indices.push_back((unsigned int)(i*numVerts + j));
-				}
-			}
-
-			terrain->vao = pfnCreateVAO();
-			terrain->vao->Initialize();
-			terrain->vao->Bind();
-
-			VertexBufferObject *vbo = pfnCreateVBO();
-			vbo->Initialize(3);
-			vbo->AddVBO(&vertices[0], vertices.size() * sizeof(vertices[0]), 2, SIZE_FLOAT, DRAW_STATIC);
-			vbo->Bind(0, 0, false, 0, 0);
-			vbo->AddVBO(&texCoords[0], texCoords.size() * sizeof(texCoords[0]), 2, SIZE_FLOAT, DRAW_STATIC);
-			vbo->Bind(1, 1, false, 0, 0);
-			vbo->AddIBO(&indices[0], indices.size() * sizeof(unsigned int), DRAW_STATIC); // 3 and SIZE_FLOAT are arbitrary
-
-			terrain->vao->Unbind();
-
-			vertices.clear();
-			texCoords.clear();
-			indices.clear();
-		}
-	}
-	else {
-		std::vector<glm::vec2> vertices;
-		std::vector<glm::vec2> texCoords;
-		std::vector<unsigned int> indices;
-		for (size_t ci = 0; ci < components.size(); ci++) {
-			CTerrain *terrain = &components[ci];
-
-			int numVerts = terrain->numPatches + 1;
-			int numVertsArea = numVerts * numVerts;
-
-			int texWidth, texHeight;
-			terrain->texture = engine.textureManager.LoadTexture(terrain->heightmapPath, COLOR_RGBA);
-			unsigned char *pixels = engine.textureManager.LoadTextureData(terrain->heightmapPath, COLOR_RGBA, texWidth, texHeight);
-			vertices.reserve(numVertsArea);
-			texCoords.reserve(numVertsArea);
-			indices.reserve(terrain->numPatches * terrain->numPatches * 6);
-			terrain->numIndices = terrain->numPatches * terrain->numPatches * 6;
-			float patchWidth = terrain->width / (float)terrain->numPatches;
-			float patchLength = terrain->length / (float)terrain->numPatches;
-			float widthStart = -terrain->width / 2.0f;
-			float lengthStart = -terrain->length / 2.0f;
-			int texUnitX = (texWidth - 1) / terrain->numPatches;
-			int texUnitY = (texHeight - 1) / terrain->numPatches;
-
-			for (size_t i = 0; i <= terrain->numPatches; i++) {
-				for (size_t j = 0; j <= terrain->numPatches; j++) {
-					vertices.push_back(glm::vec2(widthStart + patchWidth * j, lengthStart + patchLength * i));
-					texCoords.push_back(glm::vec2((float)j / (float)terrain->numPatches, (float)i / (float)terrain->numPatches));
-				}
-			}
-
-			for (size_t i = 0; i < terrain->numPatches; i++) {
-				for (size_t j = 0; j < terrain->numPatches; j++) {
-					indices.push_back((unsigned int)(i*numVerts + j));
-					indices.push_back((unsigned int)((i + 1)*numVerts + j));
-					indices.push_back((unsigned int)((i + 1)*numVerts + j + 1));
-					indices.push_back((unsigned int)((i + 1)*numVerts + j + 1));
-					indices.push_back((unsigned int)(i*numVerts + j + 1));
-					indices.push_back((unsigned int)(i*numVerts + j));
-				}
-			}
-
-			terrain->vao = pfnCreateVAO();
-			terrain->vao->Initialize();
-			terrain->vao->Bind();
-
-			VertexBufferObject *vbo = pfnCreateVBO();
-			vbo->Initialize(3);
-			vbo->AddVBO(&vertices[0], vertices.size() * sizeof(vertices[0]), 2, SIZE_FLOAT, DRAW_STATIC);
-			vbo->Bind(0, 0, false, 0, 0);
-			vbo->AddVBO(&texCoords[0], texCoords.size() * sizeof(texCoords[0]), 2, SIZE_FLOAT, DRAW_STATIC);
-			vbo->Bind(1, 1, false, 0, 0);
-			vbo->AddIBO(&indices[0], indices.size() * sizeof(unsigned int), DRAW_STATIC); // 3 and SIZE_FLOAT are arbitrary
-
-			terrain->vao->Unbind();
-
-			vertices.clear();
-			texCoords.clear();
-			indices.clear();
-		}
-	}
-}
-
-void STerrain::LoadTerrain(std::string path, float width, float length, float height, unsigned int patches) {
-	int numVerts = patches + 1;
-	int numVertsArea = numVerts * numVerts;
-
-	components.push_back(CTerrain());
-	CTerrain *terrain = &components.back();
-	terrain->texture = engine.textureManager.LoadTexture(path, COLOR_RGBA);
+void SGeometryTerrain::LoadModel(CTerrain * model) {
 	std::vector<glm::vec2> vertices;
-	std::vector<glm::vec2> texCoords;
 	std::vector<unsigned int> indices;
-	vertices.reserve(numVertsArea);
-	texCoords.reserve(numVertsArea);
-	indices.reserve(patches * patches * 6);
-	terrain->numIndices = patches * patches * 6;
-	terrain->numPatches = patches;
-	float patchWidth	= width / (float)patches;
-	float patchLength	= length / (float)patches;
-	float widthStart	= -width / 2.0f;
-	float lengthStart	= -length / 2.0f;
-	terrain->height = height;
 
-	for (size_t i = 0; i <= patches; i++) {
-		for (size_t j = 0; j <= patches; j++) {
-			vertices.push_back(glm::vec2(widthStart + patchWidth * j, lengthStart + patchLength * i));
-			texCoords.push_back(glm::vec2((float)j/(float)patches, (float)i / (float)patches));
+	int tile_w = 16, tile_h = 16;
+
+	float offset_x = tile_w / 2.0f;
+	float offset_y = tile_h / 2.0f;
+
+	indices.reserve((tile_w + 1) * (tile_h + 1));
+	for (int i = 0; i < tile_w; i++) {
+		for (int j = 0; j < tile_h; j++) {
+			vertices.push_back(glm::vec2(float(i - offset_x), float(j - offset_y)));
 		}
 	}
 
-	for (size_t i = 0; i < patches; i++) {
-		for (size_t j = 0; j < patches; j++) {
-			indices.push_back((unsigned int)(i*numVerts + j));
-			indices.push_back((unsigned int)((i + 1)*numVerts + j));
-			indices.push_back((unsigned int)((i + 1)*numVerts + j + 1));
-			indices.push_back((unsigned int)((i + 1)*numVerts + j + 1));
-			indices.push_back((unsigned int)(i*numVerts + j + 1));
-			indices.push_back((unsigned int)(i*numVerts + j));
+	indices.reserve(tile_w * tile_h * 6);
+	int index = 0;
+	for (int i = 0; i < tile_w; i++) {
+		for (int j = 0; j < tile_h - 1; j++) {
+			int offset = i * tile_w + j;
+
+			indices.push_back(offset);
+			indices.push_back(offset + 1);
+			indices.push_back(offset + tile_w);
+
+			indices.push_back(offset + 1);
+			indices.push_back(offset + tile_w + 1);
+			indices.push_back(offset + tile_w);
 		}
 	}
 
-	terrain->vao = pfnCreateVAO();
-	terrain->vao->Initialize();
-	terrain->vao->Bind();
+	model->material = material_system_->GetMaterial(material_system_->CreateMaterial(geometry_info_, "../assets/materials/terrain_mat.gmat"));
+	model->material->m_meshes.push_back(reinterpret_cast<Mesh *>(model));
 
-	VertexBufferObject *vbo = pfnCreateVBO();
-	vbo->Initialize(3);
-	vbo->AddVBO(&vertices[0], vertices.size() * sizeof(vertices[0]), 2, SIZE_FLOAT, DRAW_STATIC);
-	vbo->Bind(0, 0, false, 0, 0);
-	vbo->AddVBO(&texCoords[0], texCoords.size() * sizeof(texCoords[0]), 2, SIZE_FLOAT, DRAW_STATIC);
-	vbo->Bind(1, 1, false, 0, 0);
-	/*vbo->AddVBO(&normals[0], normals.size() * sizeof(normals[0]), 3, SIZE_FLOAT, DRAW_STATIC);
-	vbo->Bind(2, 2, false, 0, 0);
-	vbo->AddVBO(&tangents[0], tangents.size() * sizeof(tangents[0]), 3, SIZE_FLOAT, DRAW_STATIC);
-	vbo->Bind(3, 3, false, 0, 0);*/
-	vbo->AddIBO(&indices[0], indices.size() * sizeof(unsigned int), DRAW_STATIC); // 3 and SIZE_FLOAT are arbitrary
+	model->num_indices = indices.size();
 
-	terrain->vao->Unbind();
+	VertexBufferCreateInfo vbci;
+	vbci.attribute = geometry_info_.vads;
+	vbci.attributeCount = (uint32_t)geometry_info_.vads_count;
+	vbci.binding = geometry_info_.vbds;
+	vbci.bindingCount = geometry_info_.vbds_count;
+	vbci.content = static_cast<const void *>(vertices.data());
+	vbci.count = static_cast<uint32_t>(vertices.size());
+	vbci.size = static_cast<uint32_t>(sizeof(glm::vec2) * vertices.size());
 
-	vertices.clear();
-	texCoords.clear();
-	indices.clear();
-}
+	IndexBufferCreateInfo ibci;
+	ibci.content = static_cast<const void *>(indices.data());
+	ibci.count = static_cast<uint32_t>(indices.size());
+	ibci.size = static_cast<uint32_t>(sizeof(uint32_t) * indices.size());
 
-struct TerrainContainer {
-	glm::mat4 gWorld;
-	glm::mat4 gVP;
-	float height;
-	float time;
-	int numPatches;
-	glm::vec3 eyePos;
-	int terrainMap;
-	int grassAlbedo;
-	int grassGeometry;
-	int rockAlbedo;
-	int rockGeometry;
-} terrainContainer;
+	if (graphics_wrapper_->SupportsCommandBuffers()) {
+		model->vertexBuffer = graphics_wrapper_->CreateVertexBuffer(vbci);
+		model->indexBuffer = graphics_wrapper_->CreateIndexBuffer(ibci);
+	}
+	else {
+		VertexArrayObjectCreateInfo vaci;
+		vaci.vertexBuffer = model->vertexBuffer;
+		vaci.indexBuffer = model->indexBuffer;
+		model->vertexArrayObject = graphics_wrapper_->CreateVertexArrayObject(vaci);
+		model->vertexBuffer = graphics_wrapper_->CreateVertexBuffer(vbci);
+		model->indexBuffer = graphics_wrapper_->CreateIndexBuffer(ibci);
 
-void STerrain::Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos) {
-	terrainContainer.gWorld = glm::mat4(1);
-	terrainContainer.gVP = projection * view;
-	terrainContainer.eyePos = eyePos;
-	terrainContainer.terrainMap = 0;
-	terrainContainer.grassAlbedo = 1;
-	terrainContainer.grassGeometry = 2;
-	terrainContainer.rockAlbedo = 3;
-	terrainContainer.rockGeometry = 4;
-	terrainContainer.time = (float)engine.GetTimeCurrent();
-	terrainShader->Use();
-	if (grassAlbedo)
-		grassAlbedo->Bind(1);
-	if (grassGeometry)
-		grassGeometry->Bind(2);
-	if (rockAlbedo)
-		rockAlbedo->Bind(3);
-	if (rockGeometry)
-		rockGeometry->Bind(4);
-
-	for (size_t i = 0; i < components.size(); i++) {
-		terrainContainer.height = components[i].height;
-		terrainContainer.numPatches = components[i].numPatches;
-
-		terrainShader->PassData(&terrainContainer);
-		terrainShader->SetUniform4m();
-		terrainShader->SetUniform4m();
-		terrainShader->SetUniformFloat();
-		terrainShader->SetUniformFloat();
-		terrainShader->SetInteger();
-		terrainShader->SetVec3();
-		terrainShader->SetInteger();
-		terrainShader->SetInteger();
-		terrainShader->SetInteger();
-		terrainShader->SetInteger();
-		terrainShader->SetInteger();
-		// engine.graphics_wrapper_->SupportsTesselation() && 
-		if (components[i].texture)
-			components[i].texture->Bind(0);
-
-		components[i].vao->Bind();
-		if (engine.graphics_wrapper_->SupportsTesselation())
-			engine.graphics_wrapper_->DrawBaseVertex(SHAPE_PATCHES, (void*)(0), 0, components[i].numIndices);
-		else
-			engine.graphics_wrapper_->DrawBaseVertex(SHAPE_TRIANGLES, (void*)(0), 0, components[i].numIndices);
-		components[i].vao->Unbind();
+		vaci.vertexBuffer = model->vertexBuffer;
+		vaci.indexBuffer = model->indexBuffer;
+		model->vertexArrayObject->BindResources(vaci);
+		model->vertexArrayObject->Unbind();
 	}
 }
-#endif
+
+void SGeometryTerrain::LoadGeometry(unsigned int render_id, std::string path) {
+	for (size_t i = 0; i < models.size(); i++) {
+		if (models[i].getName() == path) {
+			models[i].references.push_back((uint32_t)render_id);
+			return;
+		}
+	}
+
+	unloadedModelIDs.push_back((unsigned int)(models.size()));
+	models.push_back({ path,{ render_id } });
+}
+
+void SGeometryTerrain::LoadPreloaded() {
+	for (unsigned int unloadedModelID : unloadedModelIDs) {
+		CTerrain *model = &models[unloadedModelID];
+		LoadModel(model);
+	}
+}
+
+void SGeometryTerrain::Cull(CCamera * cam) {
+	for (auto &model : models) {
+		for (auto &reference_id : model.references) {
+			auto &reference = engine.geometry_system.GetComponent(reference_id);
+			reference.should_draw = true;
+			if (reference.should_draw) {
+				model.material->IncrementDrawCount();
+			}
+		}
+	}
+}
+
+std::string CTerrain::getName() {
+	return name;
+}
+
+void CTerrain::setName(std::string dir) {
+	name = dir;
+}
+
+void CTerrain::Draw() {
+	for (auto &reference : references) {
+		CRender &renderComponent = engine.geometry_system.GetComponent(reference);
+		if (renderComponent.should_draw) {
+			auto entityID = renderComponent.entity_id;
+			auto transform = engine.transformSystem.components[entityID];
+
+			engine.ubo2->UpdateUniformBuffer(&transform.GetModelMatrix());
+			engine.ubo2->Bind();
+
+			engine.graphics_wrapper_->BindVertexArrayObject(vertexArrayObject);
+			engine.graphics_wrapper_->DrawImmediateIndexed(true, 0, 0, num_indices);
+		}
+	}
+}
+
+void CTerrain::DrawDeferred(CommandBuffer *) {
+}

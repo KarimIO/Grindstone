@@ -171,7 +171,7 @@ void SGeometryStatic::LoadModel(CModelStatic *model) {
 	for (unsigned int i = 0; i < inFormat.num_materials; i++) {
 		// Need to add a non-lazyload material
 		std::cout << "Loading Material: " << words << std::endl;
-		materialReferences[i] = material_system_->CreateMaterial(words);
+		materialReferences[i] = material_system_->CreateMaterial(geometry_info_, words);
 		words = strchr(words, '\0') + 1;
 	}
 
@@ -182,10 +182,10 @@ void SGeometryStatic::LoadModel(CModelStatic *model) {
 	input.close();
 
 	VertexBufferCreateInfo vbci;
-	vbci.attribute = vads_.data();
-	vbci.attributeCount = (uint32_t)vads_.size();
-	vbci.binding = &vbd_;
-	vbci.bindingCount = 1;
+	vbci.attribute = geometry_info_.vads;
+	vbci.attributeCount = (uint32_t)geometry_info_.vads_count;
+	vbci.binding = geometry_info_.vbds;
+	vbci.bindingCount = geometry_info_.vbds_count;
 	vbci.content = static_cast<const void *>(vertices.data());
 	vbci.count = static_cast<uint32_t>(vertices.size());
 	vbci.size = static_cast<uint32_t>(sizeof(Vertex) * vertices.size());
@@ -226,7 +226,54 @@ void SGeometryStatic::LoadModel(CModelStatic *model) {
 	}
 }
 
-SGeometryStatic::SGeometryStatic(MaterialManager *material_system, GraphicsWrapper * graphics_wrapper, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads) : graphics_wrapper_(graphics_wrapper), vbd_(vbd), vads_(vads), material_system_(material_system) {}
+SGeometryStatic::SGeometryStatic(MaterialManager *material_system, GraphicsWrapper * graphics_wrapper, std::vector<UniformBufferBinding *> ubbs) : graphics_wrapper_(graphics_wrapper), material_system_(material_system) {
+	geometry_info_.ubb_count = ubbs.size();
+	geometry_info_.ubbs = new UniformBufferBinding *[ubbs.size()];
+
+	for (unsigned int i = 0; i < geometry_info_.ubb_count; i++) {
+		geometry_info_.ubbs[i] = ubbs[i];
+	}
+
+	geometry_info_.vbds_count = 1;
+	geometry_info_.vbds = new VertexBindingDescription();
+	geometry_info_.vbds->binding = 0;
+	geometry_info_.vbds->elementRate = false;
+	geometry_info_.vbds->stride = sizeof(Vertex);
+
+	geometry_info_.vads_count = 4;
+	geometry_info_.vads = new VertexAttributeDescription[4];
+	geometry_info_.vads[0].binding = 0;
+	geometry_info_.vads[0].location = 0;
+	geometry_info_.vads[0].format = VERTEX_R32_G32_B32;
+	geometry_info_.vads[0].size = 3;
+	geometry_info_.vads[0].name = "vertexPosition";
+	geometry_info_.vads[0].offset = offsetof(Vertex, positions);
+	geometry_info_.vads[0].usage = ATTRIB_POSITION;
+
+	geometry_info_.vads[1].binding = 0;
+	geometry_info_.vads[1].location = 1;
+	geometry_info_.vads[1].format = VERTEX_R32_G32_B32;
+	geometry_info_.vads[1].size = 3;
+	geometry_info_.vads[1].name = "vertexNormal";
+	geometry_info_.vads[1].offset = offsetof(Vertex, normal);
+	geometry_info_.vads[1].usage = ATTRIB_NORMAL;
+
+	geometry_info_.vads[2].binding = 0;
+	geometry_info_.vads[2].location = 2;
+	geometry_info_.vads[2].format = VERTEX_R32_G32_B32;
+	geometry_info_.vads[2].size = 3;
+	geometry_info_.vads[2].name = "vertexTangent";
+	geometry_info_.vads[2].offset = offsetof(Vertex, tangent);
+	geometry_info_.vads[2].usage = ATTRIB_TANGENT;
+
+	geometry_info_.vads[3].binding = 0;
+	geometry_info_.vads[3].location = 3;
+	geometry_info_.vads[3].format = VERTEX_R32_G32;
+	geometry_info_.vads[3].size = 2;
+	geometry_info_.vads[3].name = "vertexTexCoord";
+	geometry_info_.vads[3].offset = offsetof(Vertex, texCoord);
+	geometry_info_.vads[3].usage = ATTRIB_TEXCOORD0;
+}
 
 SGeometryStatic::~SGeometryStatic() {
 	if (graphics_wrapper_) {

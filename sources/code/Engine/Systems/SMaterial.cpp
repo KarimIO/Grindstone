@@ -21,6 +21,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "Core/Engine.hpp"
+
 enum SHADER_JSON_STATE {
 	SHADER_JSON_MAIN = 0,
 	SHADER_JSON_NAME,
@@ -520,11 +522,8 @@ bool readFile(const std::string& filename, std::vector<char>& outputfile) {
 	return true;
 }
 
-RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapper, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads, std::vector<UniformBufferBinding *> ubbs) {
+RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapper) {
 	graphics_wrapper_ = graphics_wrapper;
-	vbd_ = vbd;
-	vads_ = vads;
-	ubbs_ = ubbs;
 
 	render_passes_.resize(1);
 
@@ -561,17 +560,17 @@ RenderPassContainer *MaterialManager::Initialize(GraphicsWrapper *graphics_wrapp
 	return nullptr;
 }
 
-void MaterialManager::generateProgram(PipelineContainer &container) {
+void MaterialManager::generateProgram(GeometryInfo geometry_info, PipelineContainer &container) {
 	GraphicsPipelineCreateInfo gpci;
 	gpci.scissorW = engine.settings.resolutionX;
 	gpci.width = static_cast<float>(engine.settings.resolutionX);
 	gpci.scissorH = engine.settings.resolutionY;
 	gpci.height = static_cast<float>(engine.settings.resolutionY);
 	gpci.renderPass = render_passes_[0].renderPass;
-	gpci.attributes = vads_.data();
-	gpci.attributesCount = (uint32_t)vads_.size();
-	gpci.bindings = &vbd_;
-	gpci.bindingsCount = 1;
+	gpci.attributes = geometry_info.vads;
+	gpci.attributesCount = geometry_info.vads_count;
+	gpci.bindings = geometry_info.vbds;
+	gpci.bindingsCount = geometry_info.vbds_count;
 
 	ShaderStageCreateInfo vi;
 	ShaderStageCreateInfo fi;
@@ -619,8 +618,8 @@ void MaterialManager::generateProgram(PipelineContainer &container) {
 	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
 	gpci.shaderStageCreateInfos = stages.data();
 	gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
-	gpci.uniformBufferBindings = ubbs_.data();
-	gpci.uniformBufferBindingCount = ubbs_.size();
+	gpci.uniformBufferBindings = geometry_info.ubbs;
+	gpci.uniformBufferBindingCount = geometry_info.ubb_count;
 	gpci.textureBindings = &container.tbl;
 	gpci.textureBindingCount = tbl_count;
 	gpci.cullMode = CULL_BACK;
@@ -628,7 +627,7 @@ void MaterialManager::generateProgram(PipelineContainer &container) {
 	container.program = graphics_wrapper_->CreateGraphicsPipeline(gpci);
 }
 
-PipelineReference MaterialManager::CreatePipeline(std::string pipelineName) {
+PipelineReference MaterialManager::CreatePipeline(GeometryInfo geometry_info, std::string pipelineName) {
 	if (pipeline_map_.find(pipelineName) != pipeline_map_.end())
 		return pipeline_map_[pipelineName];
 
@@ -650,7 +649,7 @@ PipelineReference MaterialManager::CreatePipeline(std::string pipelineName) {
 		pipeline = handler.pipeline;
 	}
 
-	generateProgram(*pipeline);
+	generateProgram(geometry_info, *pipeline);
 	pipeline_map_[pipelineName] = pipeline->reference;
 
 	// Create It
@@ -660,7 +659,7 @@ PipelineReference MaterialManager::CreatePipeline(std::string pipelineName) {
 void MaterialManager::LoadPreloaded() {
 }
 
-MaterialReference MaterialManager::PreLoadMaterial(std::string path) {
+MaterialReference MaterialManager::PreLoadMaterial(GeometryInfo geometry_info, std::string path) {
 	if (material_map_.find(path) != material_map_.end())
 		return material_map_[path];
 
@@ -712,7 +711,7 @@ MaterialReference MaterialManager::PreLoadMaterial(std::string path) {
 		textureBinding = graphics_wrapper_->CreateTextureBinding(ci);
 	}
 
-	PipelineReference pipelineRef = CreatePipeline(shader);
+	PipelineReference pipelineRef = CreatePipeline(geometry_info, shader);
 	PipelineContainer *pipeline = GetPipeline(pipelineRef);
 
 	MaterialReference ref;
@@ -787,7 +786,7 @@ Texture *MaterialManager::LoadCubemap(std::string path) {
 	return t;
 }
 
-MaterialReference MaterialManager::CreateMaterial(std::string path) {
+MaterialReference MaterialManager::CreateMaterial(GeometryInfo geometry_info, std::string path) {
 	if (material_map_.find(path) != material_map_.end()) {
 		return material_map_[path];
 	}
@@ -813,7 +812,7 @@ MaterialReference MaterialManager::CreateMaterial(std::string path) {
 		shader_param = shader_param.substr(p+2);
 	}
 
-	PipelineReference pipeline_reference = CreatePipeline(shader_param);
+	PipelineReference pipeline_reference = CreatePipeline(geometry_info, shader_param);
 	PipelineContainer *pipeline = GetPipeline(pipeline_reference);
 
 	std::vector<SingleTextureBind> textures;

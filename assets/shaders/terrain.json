@@ -1,0 +1,16 @@
+{
+    "type": "opaque",
+    "name": "Terrain",
+    "shaders": {
+        "deferred": {
+            "opengl": {
+                "vertex": "terrain.vert.glsl",
+                "fragment": "terrain.frag.glsl"
+            },
+            "directx": {
+                "vertex": "terrain.vert.fxc",
+                "fragment": "terrain.frag.fxc"
+            }
+        }
+    }
+}

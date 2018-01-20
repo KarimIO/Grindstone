@@ -113,12 +113,21 @@ public:
 	std::vector<PipelineContainer> pipelines_forward;
 };
 
+struct GeometryInfo {
+	VertexBindingDescription *vbds;
+	unsigned int vbds_count;
+	VertexAttributeDescription *vads;
+	unsigned int vads_count;
+	UniformBufferBinding **ubbs;
+	unsigned int ubb_count;
+};
+
 class MaterialManager {
 public:
-	RenderPassContainer *Initialize(GraphicsWrapper *gw, VertexBindingDescription vbd, std::vector<VertexAttributeDescription> vads, std::vector<UniformBufferBinding *>ubbs);
-	PipelineReference CreatePipeline(std::string pipelineName);
-	MaterialReference CreateMaterial(std::string shaderName);
-	MaterialReference PreLoadMaterial(std::string shaderName);
+	RenderPassContainer *Initialize(GraphicsWrapper *gw);
+	PipelineReference CreatePipeline(GeometryInfo geometry_info, std::string pipelineName);
+	MaterialReference CreateMaterial(GeometryInfo geometry_info, std::string shaderName);
+	MaterialReference PreLoadMaterial(GeometryInfo geometry_info, std::string shaderName);
 
 	Texture * LoadCubemap(std::string path);
 
@@ -140,7 +149,7 @@ public:
 	void DrawDeferredImmediate();
 	void DrawForwardImmediate();
 	void DrawDeferredCommand();
-	void generateProgram(PipelineContainer &container);
+	void generateProgram(GeometryInfo geometry_info, PipelineContainer &container);
 	void resetDraws();
 	~MaterialManager();
 private:
@@ -151,9 +160,6 @@ private:
 	std::vector<Texture *> unloaded_;
 
 	GraphicsWrapper *graphics_wrapper_;
-	VertexBindingDescription vbd_;
-	std::vector<VertexAttributeDescription> vads_;
-	std::vector<UniformBufferBinding *> ubbs_;
 };
 
 #endif

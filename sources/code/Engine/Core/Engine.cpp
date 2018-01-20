@@ -245,45 +245,6 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 
 	std::vector<UniformBufferBinding *> ubbs = { ubb, ubb2 };
 
-	VertexBindingDescription vbd;
-	std::vector<VertexAttributeDescription> vads;
-	vbd.binding = 0;
-	vbd.elementRate = false;
-	vbd.stride = sizeof(Vertex);
-
-	vads.resize(4);
-	vads[0].binding = 0;
-	vads[0].location = 0;
-	vads[0].format = VERTEX_R32_G32_B32;
-	vads[0].size = 3;
-	vads[0].name = "vertexPosition";
-	vads[0].offset = offsetof(Vertex, positions);
-	vads[0].usage = ATTRIB_POSITION;
-
-	vads[1].binding = 0;
-	vads[1].location = 1;
-	vads[1].format = VERTEX_R32_G32_B32;
-	vads[1].size = 3;
-	vads[1].name = "vertexNormal";
-	vads[1].offset = offsetof(Vertex, normal);
-	vads[1].usage = ATTRIB_NORMAL;
-
-	vads[2].binding = 0;
-	vads[2].location = 2;
-	vads[2].format = VERTEX_R32_G32_B32;
-	vads[2].size = 3;
-	vads[2].name = "vertexTangent";
-	vads[2].offset = offsetof(Vertex, tangent);
-	vads[2].usage = ATTRIB_TANGENT;
-
-	vads[3].binding = 0;
-	vads[3].location = 3;
-	vads[3].format = VERTEX_R32_G32;
-	vads[3].size = 2;
-	vads[3].name = "vertexTexCoord";
-	vads[3].offset = offsetof(Vertex, texCoord);
-	vads[3].usage = ATTRIB_TEXCOORD0;
-
 	planeVBD.binding = 0;
 	planeVBD.elementRate = false;
 	planeVBD.stride = sizeof(float) * 2;
@@ -296,8 +257,9 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	planeVAD.offset = 0;
 	planeVAD.usage = ATTRIB_POSITION;
 
-	materialManager.Initialize(graphics_wrapper_, vbd, vads, ubbs);
-	geometry_system.AddSystem(new SGeometryStatic(&materialManager, graphics_wrapper_, vbd, vads));
+	materialManager.Initialize(graphics_wrapper_);
+	geometry_system.AddSystem(new SGeometryStatic(&materialManager, graphics_wrapper_, ubbs));
+	geometry_system.AddSystem(new SGeometryTerrain(&materialManager, graphics_wrapper_, ubbs));
 
 	std::vector<RenderTargetCreateInfo> gbuffer_images_ci;
 	gbuffer_images_ci.reserve(3);

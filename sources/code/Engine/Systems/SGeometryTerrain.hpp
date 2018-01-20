@@ -1,42 +1,47 @@
-#if 0
 #ifndef _TERRAIN_H
 #define _TERRAIN_H
 
 #include <string>
 #include <vector>
 #include <glm/glm.hpp>
-#include <Shader.h>
-#include <VertexArrayObject.h>
-#include <Texture.h>
+#include "SGeometry.hpp"
 
-class CTerrain {
+class CTerrain : public Mesh {
+	friend class SGeometryStatic;
 public:
-	Texture *texture;
-	VertexArrayObject *vao;
-	unsigned int numIndices;
-	unsigned int numPatches;
-	float height;
-	float width;
-	float length;
-	std::string heightmapPath;
+	std::vector<uint32_t> references;
+	VertexBuffer *vertexBuffer;
+	IndexBuffer *indexBuffer;
+	VertexArrayObject *vertexArrayObject;
+	CommandBuffer *commandBuffer;
+	std::string name;
+	unsigned int num_indices;
+
+	Material *material;
+
+	CTerrain(std::string path, std::vector<uint32_t> refs) : name(path), references(refs) {};
+
+	virtual std::string getName();
+	virtual void setName(std::string dir);
+
+	virtual void Draw();
+	virtual void DrawDeferred(CommandBuffer *);
 };
 
-class STerrain {
+class SGeometryTerrain : public SSubGeometry {
+public:
+	SGeometryTerrain(MaterialManager * material_system, GraphicsWrapper * graphics_wrapper, std::vector<UniformBufferBinding*> ubbs);
+	void LoadModel(CTerrain *model);
+	virtual void LoadGeometry(unsigned int render_id, std::string path);
+	virtual void LoadPreloaded();
+	virtual void Cull(CCamera *cam);
 private:
-	ShaderProgram *terrainShader;
-	Texture *grassAlbedo;
-	Texture *grassGeometry;
+	MaterialManager *material_system_;
+	GraphicsWrapper *graphics_wrapper_;
+	GeometryInfo geometry_info_;
 
-	Texture *rockAlbedo;
-	Texture *rockGeometry;
-public:
-	std::vector<CTerrain> components;
-	virtual void Initialize();
-	virtual void AddComponent(unsigned int &componentID);
-	virtual void GenerateComponents();
-	virtual void LoadTerrain(std::string path, float width, float length, float height, unsigned int patches);
-	virtual void Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 eyePos);
+	std::vector<CTerrain> models;
+	std::vector<unsigned int> unloadedModelIDs;
 };
 
-#endif
 #endif
