@@ -231,10 +231,13 @@ RenderTarget *GLGraphicsWrapper::CreateRenderTarget(RenderTargetCreateInfo *rt, 
 	return static_cast<RenderTarget *>(new GLRenderTarget(rt, rc));
 }
 
-DepthTarget * GLGraphicsWrapper::CreateDepthTarget(DepthTargetCreateInfo * rt, uint32_t rc) {
-	return static_cast<DepthTarget *>(new GLDepthTarget(rt, rc));
+DepthTarget * GLGraphicsWrapper::CreateDepthTarget(DepthTargetCreateInfo rt) {
+	return static_cast<DepthTarget *>(new GLDepthTarget(rt));
 }
 
+void GLGraphicsWrapper::CopyToDepthBuffer(DepthTarget *p) {
+	glBlitFramebuffer(0, 0, 1366, 768, 0, 0, 1366, 768, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+}
 
 uint32_t GLGraphicsWrapper::GetImageIndex() {
 	return 0;
@@ -288,12 +291,12 @@ void GLGraphicsWrapper::DrawImmediateVertices(uint32_t base, uint32_t count) {
 }
 
 void GLGraphicsWrapper::EnableDepth(bool state) {
-	if (state) {
-		glEnable(GL_DEPTH_TEST);
-	}
-	else {
-		glDisable(GL_DEPTH_TEST);
-	}
+
+}
+
+void GLGraphicsWrapper::BindDefaultFramebuffer(bool depth) {
+	glDepthMask(depth ? GL_TRUE : GL_FALSE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void GLGraphicsWrapper::SetImmediateBlending(BlendMode mode) {
@@ -315,12 +318,7 @@ void GLGraphicsWrapper::SetImmediateBlending(BlendMode mode) {
 	}
 }
 
-void GLGraphicsWrapper::BindDefaultFramebuffer()
-{
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-ImageFormat GLGraphicsWrapper::GetDeviceColorFormat() {
+ColorFormat GLGraphicsWrapper::GetDeviceColorFormat() {
 	return FORMAT_COLOR_R8G8B8A8;
 }
 

@@ -1,5 +1,6 @@
 #include "SGeometryTerrain.hpp"
 #include "Core/Engine.hpp"
+#include <stb/stb_image.h>
 
 SGeometryTerrain::SGeometryTerrain(MaterialManager *material_system, GraphicsWrapper * graphics_wrapper, std::vector<UniformBufferBinding *> ubbs) : graphics_wrapper_(graphics_wrapper), material_system_(material_system) {
 	geometry_info_.ubb_count = ubbs.size();
@@ -27,18 +28,52 @@ SGeometryTerrain::SGeometryTerrain(MaterialManager *material_system, GraphicsWra
 }
 
 void SGeometryTerrain::LoadModel(CTerrain * model) {
+	int texWidth, texHeight, texChannels;
+	unsigned char *data = stbi_load(model->getHeightmap().c_str(), &texWidth, &texHeight, &texChannels, 4);
+	if (!data) {
+		printf("Texture failed to load!: %s \n", model->getHeightmap());
+		return;
+	}
+
+	TextureCreateInfo createInfo;
+	createInfo.data = data;
+	createInfo.mipmaps = 1;
+	createInfo.format = FORMAT_COLOR_R8G8B8A8;
+	createInfo.width = texWidth;
+	createInfo.height = texHeight;
+
+	model->heightmap_texture_ = graphics_wrapper_->CreateTexture(createInfo);
+
+	std::vector<TextureSubBinding> heightmapBindings;
+	heightmapBindings.reserve(1);
+	heightmapBindings.emplace_back("heightmap", 0);
+
+	TextureBindingLayoutCreateInfo tblci;
+	tblci.bindingLocation = 0;
+	tblci.bindings = heightmapBindings.data();
+	tblci.bindingCount = (uint32_t)heightmapBindings.size();
+	tblci.stages = SHADER_STAGE_VERTEX_BIT;
+	TextureBindingLayout *heightmapLayout = graphics_wrapper_->CreateTextureBindingLayout(tblci);
+
+	SingleTextureBind stb;
+	stb.texture = model->heightmap_texture_;
+	stb.address = 0;
+
+	TextureBindingCreateInfo ci;
+	ci.textures = &stb;
+	ci.textureCount = 1;
+	ci.layout = heightmapLayout;
+	model->heightmap_texture_binding_ = graphics_wrapper_->CreateTextureBinding(ci);
+
 	std::vector<glm::vec2> vertices;
 	std::vector<unsigned int> indices;
 
-	int tile_w = 16, tile_h = 16;
-
-	float offset_x = tile_w / 2.0f;
-	float offset_y = tile_h / 2.0f;
+	int tile_w = 240, tile_h = 240;
 
 	indices.reserve((tile_w + 1) * (tile_h + 1));
 	for (int i = 0; i < tile_w; i++) {
 		for (int j = 0; j < tile_h; j++) {
-			vertices.push_back(glm::vec2(float(i - offset_x), float(j - offset_y)));
+			vertices.push_back(glm::vec2(float(i), float(j)));
 		}
 	}
 
@@ -61,7 +96,7 @@ void SGeometryTerrain::LoadModel(CTerrain * model) {
 	model->material = material_system_->GetMaterial(material_system_->CreateMaterial(geometry_info_, "../assets/materials/terrain_mat.gmat"));
 	model->material->m_meshes.push_back(reinterpret_cast<Mesh *>(model));
 
-	model->num_indices = indices.size();
+	model->num_indices_ = indices.size();
 
 	VertexBufferCreateInfo vbci;
 	vbci.attribute = geometry_info_.vads;
@@ -98,7 +133,7 @@ void SGeometryTerrain::LoadModel(CTerrain * model) {
 
 void SGeometryTerrain::LoadGeometry(unsigned int render_id, std::string path) {
 	for (size_t i = 0; i < models.size(); i++) {
-		if (models[i].getName() == path) {
+		if (models[i].getHeightmap() == path) {
 			models[i].references.push_back((uint32_t)render_id);
 			return;
 		}
@@ -127,15 +162,16 @@ void SGeometryTerrain::Cull(CCamera * cam) {
 	}
 }
 
-std::string CTerrain::getName() {
-	return name;
+std::string CTerrain::getHeightmap() {
+	return heightmap_dir_;
 }
 
-void CTerrain::setName(std::string dir) {
-	name = dir;
+void CTerrain::setHeightmap(std::string dir) {
+	heightmap_dir_ = dir;
 }
 
 void CTerrain::Draw() {
+	engine.graphics_wrapper_->BindTextureBinding(heightmap_texture_binding_);
 	for (auto &reference : references) {
 		CRender &renderComponent = engine.geometry_system.GetComponent(reference);
 		if (renderComponent.should_draw) {
@@ -146,7 +182,7 @@ void CTerrain::Draw() {
 			engine.ubo2->Bind();
 
 			engine.graphics_wrapper_->BindVertexArrayObject(vertexArrayObject);
-			engine.graphics_wrapper_->DrawImmediateIndexed(true, 0, 0, num_indices);
+			engine.graphics_wrapper_->DrawImmediateIndexed(true, 0, 0, num_indices_);
 		}
 	}
 }

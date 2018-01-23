@@ -191,6 +191,7 @@ DXGI_FORMAT TranslateFormat(ColorFormat inFormat, unsigned int &pixelSize) {
 DxTextureBinding::DxTextureBinding(ID3D11DeviceContext *deviceContext, TextureBindingCreateInfo ci) {
 	m_deviceContext = deviceContext;
 	first_address_ = ci.textures[0].address;
+	layout_ = static_cast<DxTextureBindingLayout *>(ci.layout);
 
 	m_textures.reserve(ci.textureCount);
 	for (uint32_t i = 0; i < ci.textureCount; i++) {
@@ -212,10 +213,18 @@ void DxTextureBinding::Bind() {
 
 	ID3D11ShaderResourceView *const *texData = (ID3D11ShaderResourceView * const *)textures.data();
 	ID3D11SamplerState **samplersData = samplers.data();
-	m_deviceContext->PSSetSamplers(first_address_, count, samplersData);
-	m_deviceContext->PSSetShaderResources(first_address_, count, texData);
+
+	if ((layout_->stages & SHADER_STAGE_VERTEX_BIT) != 0) {
+		m_deviceContext->VSSetSamplers(first_address_, count, samplersData);
+		m_deviceContext->VSSetShaderResources(first_address_, count, texData);
+	}
+
+	if ((layout_->stages & SHADER_STAGE_FRAGMENT_BIT) != 0) {
+		m_deviceContext->PSSetSamplers(first_address_, count, samplersData);
+		m_deviceContext->PSSetShaderResources(first_address_, count, texData);
+	}
 }
 
 DxTextureBindingLayout::DxTextureBindingLayout(TextureBindingLayoutCreateInfo ci) {
-	
+	stages = ci.stages;
 }

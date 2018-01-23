@@ -30,7 +30,7 @@ Texture *LoadCubemap(std::string path, GraphicsWrapper *m_graphics_wrapper_) {
 	printf("Cubemap loaded: %s \n", path.c_str());
 
 	ColorFormat format;
-	switch (texChannels) {
+	switch (4) {
 	case 1:
 		format = FORMAT_COLOR_R8;
 		break;
@@ -117,6 +117,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_) {
 
 	TextureBindingCreateInfo ci;
 	ci.textures = &stb;
+	ci.layout = cubemapLayout;
 	ci.textureCount = 1;
 	m_cubemapBinding = m_graphics_wrapper_->CreateTextureBinding(ci);
 

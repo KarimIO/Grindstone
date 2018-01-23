@@ -53,6 +53,7 @@ struct SingleTextureBind {
 struct TextureBindingCreateInfo {
 	SingleTextureBind *textures;
 	uint32_t textureCount;
+	TextureBindingLayout *layout;
 };
 
 class TextureBinding {

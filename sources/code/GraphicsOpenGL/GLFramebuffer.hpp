@@ -3,6 +3,8 @@
 
 #include "../GraphicsCommon/Framebuffer.hpp"
 #include "../GraphicsCommon/DLLDefs.hpp"
+#include "GLRenderTarget.hpp"
+#include "GLDepthTarget.hpp"
 
 class GLFramebuffer : public Framebuffer {
 public:
@@ -17,6 +19,11 @@ public:
 	virtual void Unbind();
 private:
 	GLuint fbo_;
+	GLRenderTarget **render_target_lists_;
+	uint32_t num_render_target_lists_;
+	uint32_t num_total_render_targets;
+
+	GLDepthTarget *depth_target_;
 };
 
 #endif

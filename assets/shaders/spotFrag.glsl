@@ -18,7 +18,7 @@ layout(std140) uniform Light {
 	vec3 buffer;
 } light;
 
-layout(location = 3) out vec4 outColor;
+out vec4 outColor;
 
 in vec2 fragTexCoord;
 

@@ -9,6 +9,8 @@
             },
             "directx": {
                 "vertex": "terrain.vert.fxc",
+                "tesselationcontrol": "terrain.ctrl.fxc",
+                "tesselationevaluate": "terrain.eval.fxc",
                 "fragment": "terrain.frag.fxc"
             }
         }

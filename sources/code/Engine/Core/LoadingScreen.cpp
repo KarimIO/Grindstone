@@ -121,6 +121,7 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 	TextureBindingCreateInfo tbci;
 	tbci.textures = &stb;
 	tbci.textureCount = 1;
+	tbci.layout = tbl_;
 	tb_ = graphics_wrapper_->CreateTextureBinding(tbci);
 
 	float planeVerts[4 * 6] = {
@@ -175,7 +176,7 @@ void LoadingScreen::Render(double dt) {
 	ubo_->UpdateUniformBuffer(&loadUBO);
 	ubo_->Bind();
 
-	graphics_wrapper_->BindDefaultFramebuffer(false);
+	graphics_wrapper_->BindDefaultFramebuffer(true);
 	graphics_wrapper_->Clear();
 	pipeline_->Bind();
 	graphics_wrapper_->BindTextureBinding(tb_);

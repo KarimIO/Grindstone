@@ -20,9 +20,12 @@ public:
 	~DxTexture();
 };
 
+class DxTextureBindingLayout;
+
 class DxTextureBinding : public TextureBinding {
 	ID3D11DeviceContext *m_deviceContext;
 	std::vector<DxTexture *> m_textures;
+	DxTextureBindingLayout *layout_;
 	unsigned int first_address_;
 public:
 	DxTextureBinding(ID3D11DeviceContext *deviceContext, TextureBindingCreateInfo ci);
@@ -32,6 +35,7 @@ public:
 class DxTextureBindingLayout : public TextureBindingLayout {
 public:
 	TextureSubBinding *subbindings;
+	uint32_t stages;
 	uint32_t subbindingCount;
 	DxTextureBindingLayout(TextureBindingLayoutCreateInfo);
 };

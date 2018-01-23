@@ -303,19 +303,21 @@ void Engine::Render() {
 			// Deferred
 			graphics_wrapper_->SetImmediateBlending(BLEND_ADDITIVE);
 			graphics_wrapper_->BindDefaultFramebuffer(false);
-			gbuffer_->BindRead();
+ 			gbuffer_->BindRead();
 			graphics_wrapper_->Clear();
 			renderPath->Draw(gbuffer_);
 
-			// Unlit
 			graphics_wrapper_->BindDefaultFramebuffer(true);
-			graphics_wrapper_->CopyToDepthBuffer(depth_image_);
-			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-			materialManager.DrawUnlitImmediate();
+			//gbuffer_->BindRead();
+			//graphics_wrapper_->CopyToDepthBuffer(depth_image_);
+
+			// Unlit
+			/*graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+			materialManager.DrawUnlitImmediate();*/
 			
 			// Forward
-			graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
-			materialManager.DrawForwardImmediate();
+			//graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
+			//materialManager.DrawForwardImmediate();
 
 			graphics_wrapper_->SwapBuffer();
 		}
@@ -324,9 +326,9 @@ void Engine::Render() {
 			graphics_wrapper_->Clear();
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			materialManager.DrawDeferredImmediate();
+			materialManager.DrawUnlitImmediate();
 			graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
 			materialManager.DrawForwardImmediate();
-			//graphics_wrapper_->Blit(0,0,0,1366,768);
 			graphics_wrapper_->SwapBuffer();
 		}
 	}

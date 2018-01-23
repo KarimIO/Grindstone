@@ -6,17 +6,13 @@
 
 class GLDepthTarget : public DepthTarget {
 public:
-    GLDepthTarget(DepthTargetCreateInfo *cis, uint32_t count);
+    GLDepthTarget(DepthTargetCreateInfo cis);
     uint32_t getHandle();
-    uint32_t getHandle(uint32_t i);
-    uint32_t getNumDepthTargets();
 
-    virtual void Bind();
-    virtual void Bind(uint32_t i);
+    virtual void Bind(int i);
     virtual ~GLDepthTarget();
 private:
-    uint32_t *handles_;
-    uint32_t size_;
+    uint32_t handle_;
 };
 
 #endif

@@ -13,7 +13,7 @@ GLRenderTarget::GLRenderTarget(RenderTargetCreateInfo *create_info, uint32_t cou
 
         GLint internalFormat;
         GLenum format;
-        TranslateFormats(create_info[i].format, format, internalFormat);
+        TranslateColorFormats(create_info[i].format, format, internalFormat);
 
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, create_info[i].width, create_info[i].height, 0, format, GL_FLOAT, 0);
 
@@ -41,9 +41,11 @@ void GLRenderTarget::Bind() {
     }
 }
 
-void GLRenderTarget::Bind(uint32_t i) {
-    glActiveTexture(GL_TEXTURE0 + i);
-    glBindTexture(GL_TEXTURE_2D, handles_[i]);
+void GLRenderTarget::Bind(uint32_t j) {
+	for (uint32_t i = 0; i < size_; i++) {
+		glActiveTexture(GL_TEXTURE0 + j + i);
+		glBindTexture(GL_TEXTURE_2D, handles_[i]);
+	}
 }
 
 GLRenderTarget::~GLRenderTarget() {

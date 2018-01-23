@@ -20,7 +20,7 @@ GLTexture::GLTexture(TextureCreateInfo ci) {
 	if (ci.mipmaps == 0) {
 		GLint internalFormat;
 		GLenum format;
-		TranslateFormats(ci.format, format, internalFormat);
+		TranslateColorFormats(ci.format, format, internalFormat);
 
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, ci.width, ci.height, 0, format, GL_UNSIGNED_BYTE, ci.data);
 		glGenerateMipmap(GL_TEXTURE_2D);
@@ -78,7 +78,7 @@ GLTexture::GLTexture(CubemapCreateInfo ci) {
 
 	GLint internalFormat;
 	GLenum format;
-	TranslateFormats(ci.format, format, internalFormat);
+	TranslateColorFormats(ci.format, format, internalFormat);
 
 	for (size_t i = 0; i < 6; i++) {
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, ci.width, ci.height, 0, format, GL_UNSIGNED_BYTE, ci.data[i]);
@@ -132,7 +132,7 @@ uint32_t GLTextureBindingLayout::GetNumSubBindings() {
 	return subbindingCount;
 }
 
-void TranslateFormats(ImageFormat inFormat, GLenum &format, GLint &internalFormat) {
+void TranslateColorFormats(ColorFormat inFormat, GLenum &format, GLint &internalFormat) {
 	switch (inFormat) {
 	case FORMAT_COLOR_R8:
 		internalFormat = GL_RED;
@@ -150,6 +150,13 @@ void TranslateFormats(ImageFormat inFormat, GLenum &format, GLint &internalForma
 		internalFormat = GL_RGBA32F;
 		format = GL_RGBA;
 		break;
+	default:
+		throw std::runtime_error("Invalid Format!\n");
+	}
+}
+
+void TranslateDepthFormats(DepthFormat inFormat, GLenum &format, GLint &internalFormat) {
+	switch (inFormat) {
 	case FORMAT_DEPTH_16:
 		internalFormat = GL_DEPTH_COMPONENT16;
 		format = GL_DEPTH_COMPONENT;

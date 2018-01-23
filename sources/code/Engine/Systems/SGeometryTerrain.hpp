@@ -7,25 +7,27 @@
 #include "SGeometry.hpp"
 
 class CTerrain : public Mesh {
-	friend class SGeometryStatic;
+	friend class SGeometryTerrain;
 public:
+	CTerrain(std::string path, std::vector<uint32_t> refs) : heightmap_dir_(path), references(refs) {};
+
+	virtual std::string getHeightmap();
+	virtual void setHeightmap(std::string dir);
+
+	virtual void Draw();
+	virtual void DrawDeferred(CommandBuffer *);
+private:
 	std::vector<uint32_t> references;
 	VertexBuffer *vertexBuffer;
 	IndexBuffer *indexBuffer;
 	VertexArrayObject *vertexArrayObject;
 	CommandBuffer *commandBuffer;
-	std::string name;
-	unsigned int num_indices;
+	Texture *heightmap_texture_;
+	TextureBinding *heightmap_texture_binding_;
+	std::string heightmap_dir_;
+	unsigned int num_indices_;
 
-	Material *material;
-
-	CTerrain(std::string path, std::vector<uint32_t> refs) : name(path), references(refs) {};
-
-	virtual std::string getName();
-	virtual void setName(std::string dir);
-
-	virtual void Draw();
-	virtual void DrawDeferred(CommandBuffer *);
+	Material *material_;
 };
 
 class SGeometryTerrain : public SSubGeometry {

@@ -756,7 +756,7 @@ Texture *MaterialManager::LoadCubemap(std::string path) {
 	printf("Cubemap loaded: %s \n", path.c_str());
 
 	ColorFormat format;
-	switch (texChannels) {
+	switch (4) {
 	case 1:
 		format = FORMAT_COLOR_R8;
 		break;
@@ -851,7 +851,9 @@ MaterialReference MaterialManager::CreateMaterial(GeometryInfo geometry_info, st
 	TextureBinding *textureBinding = nullptr;
 	if (textures.size() > 0) {
 		std::cout << path << " has " << textures.size() << " textures." << std::endl;
+
 		TextureBindingCreateInfo ci;
+		ci.layout = pipeline->tbl;
 		ci.textures = textures.data();
 		ci.textureCount = (uint32_t)textures.size();
 		textureBinding = graphics_wrapper_->CreateTextureBinding(ci);

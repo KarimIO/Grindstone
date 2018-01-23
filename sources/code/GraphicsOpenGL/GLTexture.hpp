@@ -4,7 +4,8 @@
 #include "../GraphicsCommon/Texture.hpp"
 #include <vector>
 
-void TranslateFormats(ImageFormat inFormat, GLenum &format, GLint &internalFormat);
+void TranslateColorFormats(ColorFormat inFormat, GLenum &format, GLint &internalFormat);
+void TranslateDepthFormats(DepthFormat inFormat, GLenum &format, GLint &internalFormat);
 
 class GLTexture : public Texture {
 	GLuint handle;

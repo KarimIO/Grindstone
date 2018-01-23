@@ -132,8 +132,15 @@ void main() {
 	vec4 Specular = texture(gbuffer2, fragTexCoord);
 
 
+    vec3 v = normalize(ubo.eyePos.xyz - Position);
+    vec3 r = reflect(v, Normal);
+   
+    vec3 refl = texture(environmentMap, r).rgb;
 
-	vec3 V = normalize(ubo.eyePos - Position);
+    vec3 ambientColor = vec3(0.9f, 0.96f, 1.0f) * 0.05f;
+	outColor = Specular.rgb * refl;
+
+	/*vec3 V = normalize(ubo.eyePos - Position);
 
 	vec3 N = Normal;
 	vec3 L = normalize(-reflect(V, N));
@@ -149,5 +156,5 @@ void main() {
 	vec3 Kspec  = radiance(N, V, Specular);
 
 	// Mix the materials
-	outColor = Kspec + Kdiff;
+	outColor = Kspec + Kdiff;*/
 }

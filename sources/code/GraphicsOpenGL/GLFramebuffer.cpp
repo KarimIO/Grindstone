@@ -2,18 +2,21 @@
 #include <iostream>
 #include "GLFramebuffer.hpp"
 #include "GLTexture.hpp"
-#include "GLRenderTarget.hpp"
 
 GLFramebuffer::GLFramebuffer(FramebufferCreateInfo create_info) {
+	render_target_lists_ = (GLRenderTarget **)(create_info.render_target_lists); 
+	num_render_target_lists_ = create_info.num_render_target_lists;
+	depth_target_ = (GLDepthTarget *)create_info.depth_target;
+
 	glGenFramebuffers(1, &fbo_);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
 
-	uint32_t num_targets = 0;
+	num_total_render_targets = 0;
 	for (uint32_t i = 0; i < create_info.num_render_target_lists; i++) {
-		num_targets += static_cast<GLRenderTarget *>(create_info.render_target_lists[i])->getNumRenderTargets();
+		num_total_render_targets += static_cast<GLRenderTarget *>(create_info.render_target_lists[i])->getNumRenderTargets();
 	}
 
-	GLenum *DrawBuffers = new GLenum[num_targets];
+	GLenum *DrawBuffers = new GLenum[num_total_render_targets];
 	uint32_t k = 0;
 	for (uint32_t i = 0; i < create_info.num_render_target_lists; i++) {
 		GLRenderTarget *render_target_list = static_cast<GLRenderTarget *>(create_info.render_target_lists[i]);
@@ -24,11 +27,11 @@ GLFramebuffer::GLFramebuffer(FramebufferCreateInfo create_info) {
 	}
 
 	if (create_info.depth_target) {
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, static_cast<GLRenderTarget *>(create_info.depth_target)->getHandle(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, static_cast<GLDepthTarget *>(create_info.depth_target)->getHandle(), 0);
 	}
 
-	if (num_targets > 0)
-		glDrawBuffers(num_targets, DrawBuffers);
+	if (num_total_render_targets > 0)
+		glDrawBuffers(num_total_render_targets, DrawBuffers);
 	else
 		glDrawBuffer(GL_NONE);
 
@@ -69,6 +72,14 @@ void GLFramebuffer::BindWrite() {
 
 void GLFramebuffer::BindRead() {
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_);
+	int j = 0;
+	for (int i = 0; i < num_render_target_lists_; i++) {
+		render_target_lists_[i]->Bind(j);
+		j += render_target_lists_[i]->getNumRenderTargets();
+	}
+
+	if (depth_target_)
+		depth_target_->Bind(j);
 }
 
 void GLFramebuffer::Unbind() {
