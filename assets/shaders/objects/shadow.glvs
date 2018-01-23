@@ -1,9 +1,0 @@
-#version 140
-
-in vec3 vertexPos;
-
-uniform mat4 pvmMatrix;
-
-void main() {
-    gl_Position = pvmMatrix * vec4(vertexPos, 1.0);
-}

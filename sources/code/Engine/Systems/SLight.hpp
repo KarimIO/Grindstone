@@ -98,6 +98,7 @@ public:
 
 	GraphicsPipeline *m_pointLightPipeline;
 	GraphicsPipeline *m_spotLightPipeline;
+	GraphicsPipeline *m_directionalLightPipeline;
 
 	std::vector<CPointLight>		pointLights;
 	std::vector<CSpotLight>			spotLights;

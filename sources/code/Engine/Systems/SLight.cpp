@@ -221,16 +221,16 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 	ShaderStageCreateInfo vi;
 	ShaderStageCreateInfo fi;
 	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
-		vi.fileName = "../assets/shaders/pointVert.glsl";
-		fi.fileName = "../assets/shaders/pointFrag.glsl";
+		vi.fileName = "../assets/shaders/lights_deferred/pointVert.glsl";
+		fi.fileName = "../assets/shaders/lights_deferred/pointFrag.glsl";
 	}
 	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
-		vi.fileName = "../assets/shaders/pointVert.fxc";
-		fi.fileName = "../assets/shaders/pointFrag.fxc";
+		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
+		fi.fileName = "../assets/shaders/lights_deferred/pointFrag.fxc";
 	}
 	else {
-		vi.fileName = "../assets/shaders/pointVert.spv";
-		fi.fileName = "../assets/shaders/pointFrag.spv";
+		vi.fileName = "../assets/shaders/lights_deferred/pointVert.spv";
+		fi.fileName = "../assets/shaders/lights_deferred/pointFrag.spv";
 	}
 	std::vector<char> vfile;
 	if (!readFile(vi.fileName, vfile))
@@ -269,16 +269,16 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 	m_pointLightPipeline = graphics_wrapper_->CreateGraphicsPipeline(pointGPCI);
 
 	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
-		vi.fileName = "../assets/shaders/pointVert.glsl";
-		fi.fileName = "../assets/shaders/spotFrag.glsl";
+		vi.fileName = "../assets/shaders/lights_deferred/pointVert.glsl";
+		fi.fileName = "../assets/shaders/lights_deferred/spotFrag.glsl";
 	}
 	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
-		vi.fileName = "../assets/shaders/pointVert.fxc";
-		fi.fileName = "../assets/shaders/spotFrag.fxc";
+		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
+		fi.fileName = "../assets/shaders/lights_deferred/spotFrag.fxc";
 	}
 	else {
-		vi.fileName = "../assets/shaders/pointVert.spv";
-		fi.fileName = "../assets/shaders/spotFrag.spv";
+		vi.fileName = "../assets/shaders/lights_deferred/pointVert.spv";
+		fi.fileName = "../assets/shaders/lights_deferred/spotFrag.spv";
 	}
 	vfile.clear();
 	if (!readFile(vi.fileName, vfile))
@@ -316,6 +316,57 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 	spotGPCI.uniformBufferBindings = ubbs.data();
 	spotGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
 	m_spotLightPipeline = graphics_wrapper_->CreateGraphicsPipeline(spotGPCI);
+
+	// DIRECTIONAL LIGHTS
+
+	/*if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+		vi.fileName = "../assets/shaders/lights_deferred/pointVert.glsl";
+		fi.fileName = "../assets/shaders/lights_deferred/spotFrag.glsl";
+	}
+	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
+		fi.fileName = "../assets/shaders/lights_deferred/spotFrag.fxc";
+	}
+	else {
+		vi.fileName = "../assets/shaders/lights_deferred/pointVert.spv";
+		fi.fileName = "../assets/shaders/lights_deferred/spotFrag.spv";
+	}
+	vfile.clear();
+	if (!readFile(vi.fileName, vfile))
+		return;
+	vi.content = vfile.data();
+	vi.size = (uint32_t)vfile.size();
+	vi.type = SHADER_VERTEX;
+
+	ffile.clear();
+	if (!readFile(fi.fileName, ffile))
+		return;
+	fi.content = ffile.data();
+	fi.size = (uint32_t)ffile.size();
+	fi.type = SHADER_FRAGMENT;
+
+	std::vector<ShaderStageCreateInfo> stagesSpot = { vi, fi };
+
+	GraphicsPipelineCreateInfo spotGPCI;
+	spotGPCI.cullMode = CULL_BACK;
+	spotGPCI.bindings = &engine.planeVBD;
+	spotGPCI.bindingsCount = 1;
+	spotGPCI.attributes = &engine.planeVAD;
+	spotGPCI.attributesCount = 1;
+	spotGPCI.width = (float)engine.settings.resolutionX;
+	spotGPCI.height = (float)engine.settings.resolutionY;
+	spotGPCI.scissorW = engine.settings.resolutionX;
+	spotGPCI.scissorH = engine.settings.resolutionY;
+	spotGPCI.primitiveType = PRIM_TRIANGLE_STRIPS;
+	spotGPCI.shaderStageCreateInfos = stagesSpot.data();
+	spotGPCI.shaderStageCreateInfoCount = (uint32_t)stagesSpot.size();
+	spotGPCI.textureBindings = &engine.tbl;
+	spotGPCI.textureBindingCount = 1;
+	ubbs.clear();
+	ubbs = { engine.deffubb, engine.spotLightUBB };
+	spotGPCI.uniformBufferBindings = ubbs.data();
+	spotGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
+	m_spotLightPipeline = graphics_wrapper_->CreateGraphicsPipeline(spotGPCI);*/
 }
 
 void SLight::DrawShadows() {

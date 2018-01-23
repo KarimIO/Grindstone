@@ -12,7 +12,7 @@ uniform sampler2D gbuffer1;
 uniform sampler2D noiseTex;
 uniform vec3 kernels[kernelSize];
 
-#include ../shaders/decode.is
+#include ../shaders/common/inc_transform.glsl
 
 const vec2 noiseScale = vec2(1366.0/4.0, 768.0/4.0);
 

@@ -37,7 +37,7 @@ void SGeometryTerrain::LoadModel(CTerrain * model) {
 
 	TextureCreateInfo createInfo;
 	createInfo.data = data;
-	createInfo.mipmaps = 1;
+	createInfo.mipmaps = 0;
 	createInfo.format = FORMAT_COLOR_R8G8B8A8;
 	createInfo.width = texWidth;
 	createInfo.height = texHeight;

@@ -45,16 +45,16 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 	ShaderStageCreateInfo vi;
 	ShaderStageCreateInfo fi;
 	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
-		vi.fileName = "../assets/shaders/loading_vert.glsl";
-		fi.fileName = "../assets/shaders/loading_frag.glsl";
+		vi.fileName = "../assets/shaders/loading_screen/loading_vert.glsl";
+		fi.fileName = "../assets/shaders/loading_screen/loading_frag.glsl";
 	}
 	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
-		vi.fileName = "../assets/shaders/loading_vert.fxc";
-		fi.fileName = "../assets/shaders/loading_frag.fxc";
+		vi.fileName = "../assets/shaders/loading_screen/loading_vert.fxc";
+		fi.fileName = "../assets/shaders/loading_screen/loading_frag.fxc";
 	}
 	else {
-		vi.fileName = "../assets/shaders/loading_vert.spv";
-		fi.fileName = "../assets/shaders/loading_frag.spv";
+		vi.fileName = "../assets/shaders/loading_screen/loading_vert.spv";
+		fi.fileName = "../assets/shaders/loading_screen/loading_frag.spv";
 	}
 	std::vector<char> vfile;
 	if (!readFile(vi.fileName, vfile)) {

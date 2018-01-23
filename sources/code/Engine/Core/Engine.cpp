@@ -268,7 +268,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY); // sR sG sB Roughness
 	gbuffer_images_ = graphics_wrapper_->CreateRenderTarget(gbuffer_images_ci.data(), gbuffer_images_ci.size());
 
-	DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_32, settings.resolutionX, settings.resolutionY);
+	DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24_STENCIL_8, settings.resolutionX, settings.resolutionY);
 	depth_image_ = graphics_wrapper_->CreateDepthTarget(depth_image_ci);
 	
 	FramebufferCreateInfo gbuffer_ci;
@@ -308,16 +308,15 @@ void Engine::Render() {
 			renderPath->Draw(gbuffer_);
 
 			graphics_wrapper_->BindDefaultFramebuffer(true);
-			//gbuffer_->BindRead();
-			//graphics_wrapper_->CopyToDepthBuffer(depth_image_);
+			/*gbuffer_->BindRead();
+			graphics_wrapper_->CopyToDepthBuffer(depth_image_);
 
 			// Unlit
-			/*graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-			materialManager.DrawUnlitImmediate();*/
-			
+			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+			materialManager.DrawUnlitImmediate();	
 			// Forward
-			//graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
-			//materialManager.DrawForwardImmediate();
+			graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
+			materialManager.DrawForwardImmediate();*/
 
 			graphics_wrapper_->SwapBuffer();
 		}

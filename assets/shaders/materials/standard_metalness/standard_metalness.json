@@ -1,35 +1,41 @@
 {
-    "name": "Main Shader (Metalness + Roughness Worflow)",
+    "type": "opaque",
+    "name": "Main Shader (Metalness + Roughness Workflow)",
     "shaders": {
-        "vertex": "main.glvs",
-        "fragment": "mainMetalness.glfs"
+        "deferred": {
+            "opengl": {
+                "vertex": "standard_metalness.vert.glsl",
+                "fragment": "standard_metalness.frag.glsl"
+            },
+            "directx": {
+                "vertex": "standard_metalness.vert.fxc",
+                "fragment": "standard_metalness.frag.fxc"
+            }
+        }
     },
-    "properties": {
+    "textures": {
         "albedoTexture": {
             "name": "Albedo Texture",
             "type": "texture",
-            "default": ""
+            "default": "materials/albedo.png"
         },
         "normalTexture": {
-            "name": "Albedo Texture",
+            "name": "Normal Texture",
             "type": "texture",
-            "default": ""
+            "default": "materials/normal.png"
         },
         "roughnessTexture": {
-            "name": "Albedo Texture",
+            "name": "Roughness Texture",
             "type": "texture",
-            "default": ""
+            "default": "materials/roughness.png"
         },
         "metalnessTexture": {
             "name": "Metalness Texture",
             "type": "texture",
-            "default": ""
-        },
-        "maskTexture": {
-            "name": "Mask",
-            "type": "texture",
-            "default": ""
-        },
+            "default": "materials/dielectric.png"
+        }
+    },
+    "properties": {
         "albedoConstant": {
             "name": "Albedo Color",
             "type": "color",

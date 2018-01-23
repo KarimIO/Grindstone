@@ -27,6 +27,6 @@ PixelOutputType main(PixelInputType input) {
     PixelOutputType output;
     output.albedo   = float4(input.texCoord, 0.0, 1.0);
     output.normal   = float4(0.0, 1.0, 0.0, 1.0);
-    output.specular = float4(0.5, 0.0, 0.0, 0.8);
+    output.specular = float4(0.04, 0.04, 0.04, 0.8);
     return output;
 }

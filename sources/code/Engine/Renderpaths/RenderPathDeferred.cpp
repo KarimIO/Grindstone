@@ -124,16 +124,16 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_) {
 	ShaderStageCreateInfo vi;
 	ShaderStageCreateInfo fi;
 	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
-		vi.fileName = "../assets/shaders/spotVert.glsl";
-		fi.fileName = "../assets/shaders/ibl.glsl";
+		vi.fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
+		fi.fileName = "../assets/shaders/lights_deferred/ibl.glsl";
 	}
 	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
-		vi.fileName = "../assets/shaders/pointVert.fxc";
-		fi.fileName = "../assets/shaders/ibl.fxc";
+		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
+		fi.fileName = "../assets/shaders/lights_deferred/ibl.fxc";
 	}
 	else {
-		vi.fileName = "../assets/shaders/spotVert.spv";
-		fi.fileName = "../assets/shaders/ibl.spv";
+		vi.fileName = "../assets/shaders/lights_deferred/spotVert.spv";
+		fi.fileName = "../assets/shaders/lights_deferred/ibl.spv";
 	}
 	std::vector<char> vfile;
 	if (!readFile(vi.fileName, vfile))
@@ -203,6 +203,13 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 	}
+
+	/*engine.lightSystem.m_directionalLightPipeline->Bind();
+	for (auto light : engine.lightSystem.directionalLights) {
+		light.Bind();
+
+		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
+	}*/
 
 	if (m_cubemap) {
 		m_iblPipeline->Bind();
