@@ -204,12 +204,12 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 	}
 
-	/*engine.lightSystem.m_directionalLightPipeline->Bind();
+	engine.lightSystem.m_directionalLightPipeline->Bind();
 	for (auto light : engine.lightSystem.directionalLights) {
 		light.Bind();
 
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
-	}*/
+	}
 
 	if (m_cubemap) {
 		m_iblPipeline->Bind();

@@ -73,6 +73,7 @@ public:
 	TextureBindingLayout *tbl;
 	UniformBufferBinding *pointLightUBB;
 	UniformBufferBinding *spotLightUBB;
+	UniformBufferBinding *directionalLightUBB;
 	std::vector<TextureSubBinding> bindings;
 	Framebuffer *gbuffer_;
 	Framebuffer *defaultFramebuffer;

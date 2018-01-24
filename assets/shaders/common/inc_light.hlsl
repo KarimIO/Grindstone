@@ -113,3 +113,32 @@ float3 LightPointCalc(in float3 Albedo, in float3 WorldPos, in float4 Specular, 
 	float3 BSDFValue = Diffuse + Spec;
 	return NL* BSDFValue * lightModifier;
 }
+
+float3 LightDirCalc(in float3 Albedo, in float3 WorldPos, in float3 lightDir, in float4 Specular, in float3 Normal, 
+		in float3 lightColor, in float3 eyePos) {
+
+
+	float3 eyeDir		= normalize(eyePos - WorldPos);
+	float3 eyeReflect = reflect(-eyeDir, Normal);
+	
+	float Roughness = Specular.a;
+	float alpha = Roughness * Roughness;
+	float alphaSqr = alpha*alpha;
+
+	float NL = clamp(dot(Normal, lightDir), 0, 1);
+	
+	float3 H = normalize(eyeDir + lightDir);
+	
+	float NV = abs(dot(Normal, eyeDir)) + 0.00001;
+	float NH = clamp(dot(Normal, H), 0, 1);
+	float LH = clamp(dot(lightDir, H), 0, 1);
+	float VH = clamp(dot(eyeDir, H), 0, 1);
+	
+	float3 Spec = BSDF(NV, NL, LH, NH, alpha, Specular.rgb);
+	
+	float3 Diffuse = Albedo.rgb*Diff_Disney(NV, NL, LH, Roughness)/pi;
+
+	float3 lightModifier = lightColor.xyz;
+	float3 BSDFValue = Diffuse + Spec;
+	return NL* BSDFValue * lightModifier;
+}

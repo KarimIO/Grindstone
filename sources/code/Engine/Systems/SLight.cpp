@@ -112,6 +112,12 @@ void CSpotLight::Bind() {
 
 CDirectionalLight::CDirectionalLight(unsigned int entityID) {
 	this->entityID = entityID;
+
+	UniformBufferCreateInfo lightuboci;
+	lightuboci.isDynamic = false;
+	lightuboci.size = sizeof(LightDirectionalUBO);
+	lightuboci.binding = engine.directionalLightUBB;
+	lightUBO = engine.graphics_wrapper_->CreateUniformBuffer(lightuboci);
 }
 
 CDirectionalLight::CDirectionalLight(unsigned int entID, glm::vec3 color, float strength, bool cast, float radius) {
@@ -120,6 +126,12 @@ CDirectionalLight::CDirectionalLight(unsigned int entID, glm::vec3 color, float 
 	lightUBOBuffer.power = strength;
 
 	castShadow = cast;
+
+	UniformBufferCreateInfo lightuboci;
+	lightuboci.isDynamic = false;
+	lightuboci.size = sizeof(LightDirectionalUBO);
+	lightuboci.binding = engine.directionalLightUBB;
+	lightUBO = engine.graphics_wrapper_->CreateUniformBuffer(lightuboci);
 
 #if 0
 	if (cast) {
@@ -146,7 +158,7 @@ void CDirectionalLight::Bind() {
 	Entity *entity = &engine.entities[entityID];
 	unsigned int transID = entity->components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transID];
-	lightUBOBuffer.position = trans->position;
+	lightUBOBuffer.position = glm::vec3(0, 0, 0) - trans->position;
 	lightUBO->UpdateUniformBuffer(&lightUBOBuffer);
 	lightUBO->Bind();
 }
@@ -204,6 +216,12 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 	lightubbci.size = sizeof(LightSpotUBO);
 	lightubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
 	engine.spotLightUBB = graphics_wrapper_->CreateUniformBufferBinding(lightubbci);
+
+	lightubbci.binding = 1;
+	lightubbci.shaderLocation = "Light";
+	lightubbci.size = sizeof(LightDirectionalUBO);
+	lightubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	engine.directionalLightUBB = graphics_wrapper_->CreateUniformBufferBinding(lightubbci);
 
 	engine.bindings.reserve(4);
 	engine.bindings.emplace_back("gbuffer0", 0); // R G B MatID
@@ -319,17 +337,17 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 
 	// DIRECTIONAL LIGHTS
 
-	/*if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
 		vi.fileName = "../assets/shaders/lights_deferred/pointVert.glsl";
-		fi.fileName = "../assets/shaders/lights_deferred/spotFrag.glsl";
+		fi.fileName = "../assets/shaders/lights_deferred/directionalFrag.glsl";
 	}
 	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
 		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
-		fi.fileName = "../assets/shaders/lights_deferred/spotFrag.fxc";
+		fi.fileName = "../assets/shaders/lights_deferred/directionalFrag.fxc";
 	}
 	else {
 		vi.fileName = "../assets/shaders/lights_deferred/pointVert.spv";
-		fi.fileName = "../assets/shaders/lights_deferred/spotFrag.spv";
+		fi.fileName = "../assets/shaders/lights_deferred/directionalFrag.spv";
 	}
 	vfile.clear();
 	if (!readFile(vi.fileName, vfile))
@@ -345,28 +363,28 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 	fi.size = (uint32_t)ffile.size();
 	fi.type = SHADER_FRAGMENT;
 
-	std::vector<ShaderStageCreateInfo> stagesSpot = { vi, fi };
+	std::vector<ShaderStageCreateInfo> directionalSpot = { vi, fi };
 
-	GraphicsPipelineCreateInfo spotGPCI;
-	spotGPCI.cullMode = CULL_BACK;
-	spotGPCI.bindings = &engine.planeVBD;
-	spotGPCI.bindingsCount = 1;
-	spotGPCI.attributes = &engine.planeVAD;
-	spotGPCI.attributesCount = 1;
-	spotGPCI.width = (float)engine.settings.resolutionX;
-	spotGPCI.height = (float)engine.settings.resolutionY;
-	spotGPCI.scissorW = engine.settings.resolutionX;
-	spotGPCI.scissorH = engine.settings.resolutionY;
-	spotGPCI.primitiveType = PRIM_TRIANGLE_STRIPS;
-	spotGPCI.shaderStageCreateInfos = stagesSpot.data();
-	spotGPCI.shaderStageCreateInfoCount = (uint32_t)stagesSpot.size();
-	spotGPCI.textureBindings = &engine.tbl;
-	spotGPCI.textureBindingCount = 1;
+	GraphicsPipelineCreateInfo directionalGPCI;
+	directionalGPCI.cullMode = CULL_BACK;
+	directionalGPCI.bindings = &engine.planeVBD;
+	directionalGPCI.bindingsCount = 1;
+	directionalGPCI.attributes = &engine.planeVAD;
+	directionalGPCI.attributesCount = 1;
+	directionalGPCI.width = (float)engine.settings.resolutionX;
+	directionalGPCI.height = (float)engine.settings.resolutionY;
+	directionalGPCI.scissorW = engine.settings.resolutionX;
+	directionalGPCI.scissorH = engine.settings.resolutionY;
+	directionalGPCI.primitiveType = PRIM_TRIANGLE_STRIPS;
+	directionalGPCI.shaderStageCreateInfos = directionalSpot.data();
+	directionalGPCI.shaderStageCreateInfoCount = (uint32_t)directionalSpot.size();
+	directionalGPCI.textureBindings = &engine.tbl;
+	directionalGPCI.textureBindingCount = 1;
 	ubbs.clear();
-	ubbs = { engine.deffubb, engine.spotLightUBB };
-	spotGPCI.uniformBufferBindings = ubbs.data();
-	spotGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
-	m_spotLightPipeline = graphics_wrapper_->CreateGraphicsPipeline(spotGPCI);*/
+	ubbs = { engine.deffubb, engine.directionalLightUBB };
+	directionalGPCI.uniformBufferBindings = ubbs.data();
+	directionalGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
+	m_directionalLightPipeline = graphics_wrapper_->CreateGraphicsPipeline(directionalGPCI);
 }
 
 void SLight::DrawShadows() {
