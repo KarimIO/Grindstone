@@ -388,4 +388,18 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 }
 
 void SLight::DrawShadows() {
+	graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+	engine.gbuffer_->Clear();
+
+	glm::mat4 pv;
+	for (auto &light : directionalLights) {
+		if (light.castShadow) {
+			pv = light.GetProjection() * light.GetView();
+			ubo->UpdateUniformBuffer(&pv);
+			ubo->Bind();
+			ubo2->Bind();
+
+			engine.materialManager.DrawShadowsImmediate();
+		}
+	}
 }

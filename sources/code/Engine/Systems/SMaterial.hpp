@@ -146,6 +146,7 @@ public:
 	//GraphicsPipeline *ParseShaderFile(std::string path);
 	//GraphicsPipeline *CreateShaderFromPaths(std::string name, std::string vsPath, std::string fsPath, std::string gsPath, std::string csPath, std::string tesPath, std::string tcsPath);
 	void DrawUnlitImmediate();
+	void DrawShadowsImmediate();
 	void DrawDeferredImmediate();
 	void DrawForwardImmediate();
 	void DrawDeferredCommand();

@@ -5,6 +5,8 @@
         "deferred": {
             "opengl": {
                 "vertex": "terrain.vert.glsl",
+                "tesselationcontrol": "terrain.ctrl.glsl",
+                "tesselationevaluate": "terrain.eval.glsl",
                 "fragment": "terrain.frag.glsl"
             },
             "directx": {

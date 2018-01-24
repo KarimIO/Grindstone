@@ -83,7 +83,7 @@ public:
 	
 	void WaitUntilIdle();
 	void DrawCommandBuffers(uint32_t imageIndex, CommandBuffer ** commandBuffers, uint32_t commandBufferCount);
-	void DrawImmediateIndexed(bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount);
+	void DrawImmediateIndexed(bool patches, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount);
 	void DrawImmediateVertices(uint32_t base, uint32_t count);
 	void SetImmediateBlending(BlendMode);
 	void BindDefaultFramebuffer(bool depth);

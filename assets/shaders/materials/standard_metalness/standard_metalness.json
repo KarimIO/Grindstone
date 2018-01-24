@@ -11,6 +11,16 @@
                 "vertex": "standard_metalness.vert.fxc",
                 "fragment": "standard_metalness.frag.fxc"
             }
+        },
+        "shadow": {
+            "opengl": {
+                "vertex": "standard_shadow.vert.glsl",
+                "fragment": "standard_shadow.frag.glsl"
+            },
+            "directx": {
+                "vertex": "standard_shadow.vert.fxc",
+                "fragment": "standard_shadow.frag.fxc"
+            }
         }
     },
     "textures": {

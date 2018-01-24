@@ -118,7 +118,7 @@ public:
 
 	virtual void BindTextureBinding(TextureBinding *) = 0;
 	virtual void BindVertexArrayObject(VertexArrayObject *) = 0;
-	virtual	void DrawImmediateIndexed(bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) = 0;
+	virtual	void DrawImmediateIndexed(bool patches, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) = 0;
 	virtual void DrawImmediateVertices(uint32_t base, uint32_t count) = 0;
 	virtual void SetImmediateBlending(BlendMode) = 0;
 	virtual void EnableDepth(bool state) = 0;

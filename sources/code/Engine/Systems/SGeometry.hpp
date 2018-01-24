@@ -27,6 +27,7 @@ class Mesh {
 public:
 	Material *material;
 
+	virtual void ShadowDraw() = 0;
 	virtual void Draw() = 0;
 	virtual void DrawDeferred(CommandBuffer *) = 0;
 };

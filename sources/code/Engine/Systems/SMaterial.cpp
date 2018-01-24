@@ -572,27 +572,32 @@ void MaterialManager::generateProgram(GeometryInfo geometry_info, PipelineContai
 	gpci.bindings = geometry_info.vbds;
 	gpci.bindingsCount = geometry_info.vbds_count;
 
-	ShaderStageCreateInfo vi;
-	ShaderStageCreateInfo fi;
-	vi.fileName = container.shader_paths[SHADER_VERTEX].c_str();
-	std::vector<char> vfile;
-	if (!readFile(vi.fileName, vfile))
-		return;
+	int num_shaders = 0;
+	const int max_shaders = 5;
+	for (int i = 0; i < max_shaders; i++) {
+		if (container.shader_paths[i] != "") {
+			++num_shaders;
+		}
+	}
 
-	vi.content = vfile.data();
-	vi.size = (uint32_t)vfile.size();
-	vi.type = SHADER_VERTEX;
+	std::vector<ShaderStageCreateInfo> stages;
+	stages.resize(num_shaders);
+	std::vector<char> files[max_shaders];
 
-	fi.fileName = container.shader_paths[SHADER_FRAGMENT].c_str();
-	std::vector<char> ffile;
-	if (!readFile(fi.fileName, ffile))
-		return;
+	num_shaders = 0;
+	for (int i = 0; i < max_shaders; i++) {
+		if (container.shader_paths[i] != "") {
+			stages[num_shaders].fileName = container.shader_paths[i].c_str();
+			if (!readFile(stages[num_shaders].fileName, files[num_shaders])) {
+				std::cerr << "Unable to load Shader!\n";
+				return;
+			}
 
-	fi.content = ffile.data();
-	fi.size = (uint32_t)ffile.size();
-	fi.type = SHADER_FRAGMENT;
-
-	std::cout << vi.fileName << " + " << fi.fileName << " loaded." << std::endl;
+			stages[num_shaders].content = files[num_shaders].data();
+			stages[num_shaders].size = (uint32_t)files[num_shaders].size();
+			stages[num_shaders++].type = static_cast<ShaderStageType>(i);
+		}
+	}
 
 	std::vector<TextureSubBinding> bindings;
 	bindings.reserve(container.textureDescriptorTable.size());
@@ -615,7 +620,6 @@ void MaterialManager::generateProgram(GeometryInfo geometry_info, PipelineContai
 		tbl_count = 0;
 	}
 
-	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
 	gpci.shaderStageCreateInfos = stages.data();
 	gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
 	gpci.uniformBufferBindings = geometry_info.ubbs;
@@ -1067,6 +1071,40 @@ void MaterialManager::DrawUnlitImmediate() {
 	}
 }
 
+void MaterialManager::DrawShadowsImmediate() {
+	for (auto const &renderPass : render_passes_) {
+		for (auto const &pipeline : renderPass.pipelines_deferred) {
+			pipeline.program->Bind();
+			if (pipeline.draw_count > 0) {
+				for (auto const &material : pipeline.materials) {
+					if (material.draw_count > 0) {
+						if (material.m_textureBinding != nullptr)
+							graphics_wrapper_->BindTextureBinding(material.m_textureBinding);
+						for (auto const &mesh : material.m_meshes) {
+							mesh->ShadowDraw();
+						}
+					}
+				}
+			}
+		}
+
+		for (auto const &pipeline : renderPass.pipelines_unlit) {
+			pipeline.program->Bind();
+			if (pipeline.draw_count > 0) {
+				for (auto const &material : pipeline.materials) {
+					if (material.draw_count > 0) {
+						if (material.m_textureBinding != nullptr)
+							graphics_wrapper_->BindTextureBinding(material.m_textureBinding);
+						for (auto const &mesh : material.m_meshes) {
+							mesh->ShadowDraw();
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 void MaterialManager::DrawDeferredImmediate() {
 	for (auto const &renderPass : render_passes_) {
 		//renderPass->Bind();
@@ -1089,14 +1127,11 @@ void MaterialManager::DrawDeferredImmediate() {
 
 void MaterialManager::DrawForwardImmediate() {
 	for (auto const &renderPass : render_passes_) {
-		//renderPass->Bind();
 		for (auto const &pipeline : renderPass.pipelines_forward) {
 			pipeline.program->Bind();
 			if (pipeline.draw_count > 0) {
 				for (auto const &material : pipeline.materials) {
 					if (material.draw_count > 0) {
-						if (material.m_textureBinding != nullptr)
-							graphics_wrapper_->BindTextureBinding(material.m_textureBinding);
 						for (auto const &mesh : material.m_meshes) {
 							mesh->Draw();
 						}

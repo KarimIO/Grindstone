@@ -507,7 +507,7 @@ void DxGraphicsWrapper::WaitUntilIdle() {
 void DxGraphicsWrapper::DrawCommandBuffers(uint32_t imageIndex, CommandBuffer ** commandBuffers, uint32_t commandBufferCount) {
 }
 
-void DxGraphicsWrapper::DrawImmediateIndexed(bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
+void DxGraphicsWrapper::DrawImmediateIndexed(bool patches, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
 	m_deviceContext->DrawIndexed(indexCount, indexOffsetPtr, baseVertex);
 }
 

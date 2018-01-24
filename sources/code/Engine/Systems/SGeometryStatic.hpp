@@ -37,6 +37,7 @@ public:
 	Material *material;
 	CModelStatic *model = nullptr;
 
+	virtual void ShadowDraw();
 	virtual void Draw();
 	virtual void DrawDeferred(CommandBuffer *);
 };

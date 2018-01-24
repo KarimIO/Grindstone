@@ -182,7 +182,8 @@ void CTerrain::Draw() {
 			engine.ubo2->Bind();
 
 			engine.graphics_wrapper_->BindVertexArrayObject(vertexArrayObject);
-			engine.graphics_wrapper_->DrawImmediateIndexed(true, 0, 0, num_indices_);
+			// Draw Patches only when Tesselated
+			engine.graphics_wrapper_->DrawImmediateIndexed(true, true, 0, 0, num_indices_);
 		}
 	}
 }
