@@ -208,6 +208,15 @@ void SGeometryStatic::LoadModel(CModelStatic *model) {
 	vbci.count = static_cast<uint32_t>(vertices.size());
 	vbci.size = static_cast<uint32_t>(sizeof(Vertex) * vertices.size());
 
+	/*VertexBufferCreateInfo svbci;
+	svbci.attribute = geometry_info_.vads;
+	svbci.attributeCount = (uint32_t)geometry_info_.vads_count;
+	svbci.binding = geometry_info_.vbds;
+	svbci.bindingCount = geometry_info_.vbds_count;
+	svbci.content = static_cast<const void *>(vertices.data());
+	svbci.count = static_cast<uint32_t>(vertices.size());
+	svbci.size = static_cast<uint32_t>(sizeof(Vertex) * vertices.size());*/
+
 	IndexBufferCreateInfo ibci;
 	ibci.content = static_cast<const void *>(indices.data());
 	ibci.count = static_cast<uint32_t>(indices.size());
@@ -229,6 +238,20 @@ void SGeometryStatic::LoadModel(CModelStatic *model) {
 		vaci.indexBuffer = model->indexBuffer;
 		model->vertexArrayObject->BindResources(vaci);
 		model->vertexArrayObject->Unbind();
+
+
+		/*VertexArrayObjectCreateInfo vaci;
+		vaci.vertexBuffer = model->shadowVertexBuffer;
+		vaci.indexBuffer = model->indexBuffer;
+		model->shadowVertexArrayObject = graphics_wrapper_->CreateVertexArrayObject(vaci);
+		model->shadowVertexBuffer = graphics_wrapper_->CreateVertexBuffer(svbci);
+		model->indexBuffer = graphics_wrapper_->CreateIndexBuffer(ibci);
+
+		vaci.vertexBuffer = model->shadowVertexBuffer;
+		vaci.indexBuffer = model->indexBuffer;
+		model->shadowVertexArrayObject->BindResources(vaci);
+		model->shadowVertexArrayObject->Unbind();*/
+
 	}
 
 	for (unsigned int i = 0; i < inFormat.num_meshes; i++) {
@@ -305,6 +328,7 @@ SGeometryStatic::~SGeometryStatic() {
 		else {
 			for (size_t i = 0; i < models.size(); i++) {
 				graphics_wrapper_->DeleteVertexArrayObject(models[i].vertexArrayObject);
+				//graphics_wrapper_->DeleteVertexArrayObject(models[i].shadowVertexArrayObject);
 				graphics_wrapper_->DeleteVertexBuffer(models[i].vertexBuffer);
 				graphics_wrapper_->DeleteIndexBuffer(models[i].indexBuffer);
 			}

@@ -14,6 +14,7 @@ public:
 	virtual std::string getHeightmap();
 	virtual void setHeightmap(std::string dir);
 
+	virtual void ShadowDraw();
 	virtual void Draw();
 	virtual void DrawDeferred(CommandBuffer *);
 private:

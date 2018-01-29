@@ -170,6 +170,10 @@ void CTerrain::setHeightmap(std::string dir) {
 	heightmap_dir_ = dir;
 }
 
+void CTerrain::ShadowDraw()
+{
+}
+
 void CTerrain::Draw() {
 	engine.graphics_wrapper_->BindTextureBinding(heightmap_texture_binding_);
 	for (auto &reference : references) {

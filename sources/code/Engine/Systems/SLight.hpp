@@ -19,6 +19,7 @@ struct LightPointUBO {
 };
 
 struct LightSpotUBO {
+	glm::mat4 shadow_mat;
 	glm::vec3 position;
 	float attenuationRadius;
 	glm::vec3 color;
@@ -26,11 +27,10 @@ struct LightSpotUBO {
 	glm::vec3 direction;
 	float innerAngle;
 	float outerAngle;
-	// For DirectX: We need to make sure the UBO is a multiple of 4
-	glm::vec3 buffer;
 };
 
 struct LightDirectionalUBO {
+	glm::mat4 shadow_mat;
 	glm::vec3 position;
 	float sourceRadius;
 	glm::vec3 color;
@@ -57,12 +57,16 @@ public:
 	LightSpotUBO lightUBOBuffer;
 	UniformBuffer *lightUBO;
 	Framebuffer *shadowFBO;
+	DepthTarget *shadow_db_;
 	uint32_t entityID;
+	glm::mat4 matrix_;
 
 	CSpotLight(unsigned int entityID);
 	CSpotLight(unsigned int entityID, glm::vec3 color, float strength, bool cast, float radius, float ia, float oa);
 	void SetShadow(bool);
 	void Bind();
+	glm::mat4 calculateMatrix();
+	glm::mat4 calculateMatrixBasis();
 };
 
 class CDirectionalLight {
@@ -71,12 +75,16 @@ public:
 	LightDirectionalUBO lightUBOBuffer;
 	UniformBuffer *lightUBO;
 	Framebuffer *shadowFBO;
+	DepthTarget *shadow_db_;
 	uint32_t entityID;
+	glm::mat4 matrix_;
 
 	CDirectionalLight(unsigned int entityID);
 	CDirectionalLight(unsigned int entityID, glm::vec3 color, float strength, bool cast, float radius);
 	void SetShadow(bool);
 	void Bind();
+	glm::mat4 calculateMatrix();
+	glm::mat4 calculateMatrixBasis();
 };
 
 struct DefferedUBO {

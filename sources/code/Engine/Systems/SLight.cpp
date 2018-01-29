@@ -1,5 +1,6 @@
 #include "SLight.hpp"
 #include "../Core/Engine.hpp"
+#include <glm/gtx/transform.hpp>
 
 CPointLight::CPointLight(unsigned int entityID) {
 	this->entityID = entityID;
@@ -62,6 +63,15 @@ CSpotLight::CSpotLight(unsigned int entityID) {
 	lightuboci.size = sizeof(LightSpotUBO);
 	lightuboci.binding = engine.spotLightUBB;
 	lightUBO = engine.graphics_wrapper_->CreateUniformBuffer(lightuboci);
+
+	DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, 512, 512);
+	shadow_db_ = engine.graphics_wrapper_->CreateDepthTarget(depth_image_ci);
+
+	FramebufferCreateInfo fbci;
+	fbci.num_render_target_lists = 0;
+	fbci.render_target_lists = nullptr;
+	fbci.depth_target = shadow_db_;
+	shadowFBO = engine.graphics_wrapper_->CreateFramebuffer(fbci);
 }
 
 CSpotLight::CSpotLight(unsigned int entID, glm::vec3 color, float strength, bool cast, float radius, float ia, float oa) {
@@ -78,6 +88,16 @@ CSpotLight::CSpotLight(unsigned int entID, glm::vec3 color, float strength, bool
 	lightuboci.size = sizeof(LightSpotUBO);
 	lightuboci.binding = engine.spotLightUBB;
 	lightUBO = engine.graphics_wrapper_->CreateUniformBuffer(lightuboci);
+	if (cast) {
+		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, 512, 512);
+		shadow_db_ = engine.graphics_wrapper_->CreateDepthTarget(depth_image_ci);
+
+		FramebufferCreateInfo fbci;
+		fbci.num_render_target_lists = 0;
+		fbci.render_target_lists = nullptr;
+		fbci.depth_target = shadow_db_;
+		shadowFBO = engine.graphics_wrapper_->CreateFramebuffer(fbci);
+	}
 
 #if 0
 	if (cast) {
@@ -106,8 +126,52 @@ void CSpotLight::Bind() {
 	CTransform *trans = &engine.transformSystem.components[transID];
 	lightUBOBuffer.position = trans->GetPosition();
 	lightUBOBuffer.direction = trans->GetForward();
+	lightUBOBuffer.shadow_mat = calculateMatrixBasis();
 	lightUBO->UpdateUniformBuffer(&lightUBOBuffer);
 	lightUBO->Bind();
+
+	shadowFBO->BindRead();
+	shadowFBO->BindTextures(4);
+}
+
+glm::mat4 CSpotLight::calculateMatrix() {
+	double camFar = lightUBOBuffer.attenuationRadius;
+	double fov = lightUBOBuffer.outerAngle * 2.0;
+	glm::mat4 projection = glm::perspective(fov, 1.0, 0.1, camFar);
+	if (engine.settings.graphicsLanguage == GRAPHICS_VULKAN)
+		projection[1][1] *= -1;
+
+	if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+		const glm::mat4 scale = glm::mat4(1.0f, 0, 0, 0,
+			0, 1.0f, 0, 0,
+			0, 0, 0.5f, 0,
+			0, 0, 0.25f, 1.0f);
+
+		projection = scale * projection;
+	}
+
+	unsigned int transformID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
+	CTransform *transform = &engine.transformSystem.components[transformID];
+	glm::mat4 view = glm::lookAt(
+		transform->GetPosition(),
+		transform->GetPosition() + transform->GetForward(),
+		glm::vec3(0, 1, 0)
+	);
+
+	matrix_ = projection * view;
+
+	return matrix_;
+}
+
+glm::mat4 CSpotLight::calculateMatrixBasis() {
+	glm::mat4 bias_matrix(
+		0.5, 0.0, 0.0, 0.0,
+		0.0, 0.5, 0.0, 0.0,
+		0.0, 0.0, 0.5, 0.0,
+		0.5, 0.5, 0.5, 1.0
+	);
+
+	return bias_matrix * matrix_;
 }
 
 CDirectionalLight::CDirectionalLight(unsigned int entityID) {
@@ -118,6 +182,17 @@ CDirectionalLight::CDirectionalLight(unsigned int entityID) {
 	lightuboci.size = sizeof(LightDirectionalUBO);
 	lightuboci.binding = engine.directionalLightUBB;
 	lightUBO = engine.graphics_wrapper_->CreateUniformBuffer(lightuboci);
+
+	if (true) {
+		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, 512, 512);
+		shadow_db_ = engine.graphics_wrapper_->CreateDepthTarget(depth_image_ci);
+
+		FramebufferCreateInfo fbci;
+		fbci.num_render_target_lists = 0;
+		fbci.render_target_lists = nullptr;
+		fbci.depth_target = shadow_db_;
+		shadowFBO = engine.graphics_wrapper_->CreateFramebuffer(fbci);
+	}
 }
 
 CDirectionalLight::CDirectionalLight(unsigned int entID, glm::vec3 color, float strength, bool cast, float radius) {
@@ -133,13 +208,16 @@ CDirectionalLight::CDirectionalLight(unsigned int entID, glm::vec3 color, float 
 	lightuboci.binding = engine.directionalLightUBB;
 	lightUBO = engine.graphics_wrapper_->CreateUniformBuffer(lightuboci);
 
-#if 0
 	if (cast) {
-		fbo->Initialize(0);
-		fbo->AddDepthBuffer(128, 128);
-		fbo->Generate();
+		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, 512, 512);
+		shadow_db_ = engine.graphics_wrapper_->CreateDepthTarget(depth_image_ci);
+
+		FramebufferCreateInfo fbci;
+		fbci.num_render_target_lists = 0;
+		fbci.render_target_lists = nullptr;
+		fbci.depth_target = shadow_db_;
+		shadowFBO = engine.graphics_wrapper_->CreateFramebuffer(fbci);
 	}
-#endif
 }
 
 void CDirectionalLight::SetShadow(bool state) {
@@ -158,9 +236,51 @@ void CDirectionalLight::Bind() {
 	Entity *entity = &engine.entities[entityID];
 	unsigned int transID = entity->components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transID];
-	lightUBOBuffer.position = glm::vec3(0, 0, 0) - trans->position;
+	lightUBOBuffer.position = trans->GetForward();
+	lightUBOBuffer.shadow_mat = calculateMatrixBasis();
 	lightUBO->UpdateUniformBuffer(&lightUBOBuffer);
 	lightUBO->Bind();
+
+	shadowFBO->BindRead();
+	shadowFBO->BindTextures(4);
+}
+
+glm::mat4 CDirectionalLight::calculateMatrix() {
+	glm::mat4 projection = glm::ortho<float>(-10, 10, -10, 10, -10, 30);
+	if (engine.settings.graphicsLanguage == GRAPHICS_VULKAN)
+		projection[1][1] *= -1;
+
+	if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+		const glm::mat4 scale = glm::mat4(1.0f, 0, 0, 0,
+			0, 1.0f, 0, 0,
+			0, 0, 0.5f, 0,
+			0, 0, 0.25f, 1.0f);
+
+		projection = scale * projection;
+	}
+
+	unsigned int transformID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
+	CTransform *transform = &engine.transformSystem.components[transformID];
+	glm::mat4 view = glm::lookAt(
+		transform->GetForward()*20.0f,
+		glm::vec3(0, 0, 0),
+		glm::vec3(0, 1, 0)
+	);
+
+	matrix_ = projection * view;
+
+	return matrix_;
+}
+
+glm::mat4 CDirectionalLight::calculateMatrixBasis() {
+	glm::mat4 bias_matrix(
+		0.5, 0.0, 0.0, 0.0,
+		0.0, 0.5, 0.0, 0.0,
+		0.0, 0.0, 0.5, 0.0,
+		0.5, 0.5, 0.5, 1.0
+	);
+	
+	return bias_matrix * matrix_;
 }
 
 void SLight::AddPointLight(unsigned int entityID, glm::vec3 lightColor, float intensity, bool castShadow, float lightRadius) {
@@ -223,11 +343,12 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 	lightubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
 	engine.directionalLightUBB = graphics_wrapper_->CreateUniformBufferBinding(lightubbci);
 
-	engine.bindings.reserve(4);
+	engine.bindings.reserve(5);
 	engine.bindings.emplace_back("gbuffer0", 0); // R G B MatID
 	engine.bindings.emplace_back("gbuffer1", 1); // nX nY nZ MatData
 	engine.bindings.emplace_back("gbuffer2", 2); // sR sG sB Roughness
 	engine.bindings.emplace_back("gbuffer3", 3); // Depth
+	engine.bindings.emplace_back("shadow_map", 4); // Shadow Map
 
 	TextureBindingLayoutCreateInfo tblci;
 	tblci.bindingLocation = 1;
@@ -389,15 +510,28 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 
 void SLight::DrawShadows() {
 	graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-	engine.gbuffer_->Clear();
-
 	glm::mat4 pv;
+	for (auto &light : spotLights) {
+		if (light.castShadow) {
+			light.shadowFBO->BindWrite();
+			light.shadowFBO->Clear();
+			pv = light.calculateMatrix();
+			engine.ubo->UpdateUniformBuffer(&pv);
+			engine.ubo->Bind();
+			engine.ubo2->Bind();
+
+			engine.materialManager.DrawShadowsImmediate();
+		}
+	}
+
 	for (auto &light : directionalLights) {
 		if (light.castShadow) {
-			pv = light.GetProjection() * light.GetView();
-			ubo->UpdateUniformBuffer(&pv);
-			ubo->Bind();
-			ubo2->Bind();
+			light.shadowFBO->BindWrite();
+			light.shadowFBO->Clear();
+			pv = light.calculateMatrix();
+			engine.ubo->UpdateUniformBuffer(&pv);
+			engine.ubo->Bind();
+			engine.ubo2->Bind();
 
 			engine.materialManager.DrawShadowsImmediate();
 		}

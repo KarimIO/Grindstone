@@ -30,6 +30,7 @@ public:
 	virtual void CopyFrom(Framebuffer *) = 0;
 	virtual void Bind() = 0;
 	virtual void BindWrite() = 0;
+	virtual void BindTextures(int i) = 0;
 	virtual void BindRead() = 0;
 	virtual void Unbind() = 0;
 	virtual ~Framebuffer() {};

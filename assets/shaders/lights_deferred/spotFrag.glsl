@@ -8,6 +8,7 @@ layout(std140) uniform UniformBufferObject {
 } ubo;
 
 layout(std140) uniform Light {
+	mat4 shadow_mat;
 	vec3 position;
 	float attenuationRadius;
 	vec3 color;
@@ -15,7 +16,6 @@ layout(std140) uniform Light {
 	vec3 direction;
 	float innerAngle;
 	float outerAngle;
-	vec3 buffer;
 } light;
 
 out vec4 outColor;
@@ -26,6 +26,7 @@ uniform sampler2D gbuffer0;
 uniform sampler2D gbuffer1;
 uniform sampler2D gbuffer2;
 uniform sampler2D gbuffer3;
+uniform sampler2D shadow_map;
 
 vec4 ViewPosFromDepth(float depth, vec2 TexCoord) {
     float z = depth * 2.0 - 1.0;
@@ -161,6 +162,28 @@ vec3 LightPointCalc(in vec3 Albedo, in vec3 WorldPos, in vec4 Specular, in vec3 
 	return vec3(NL* BSDFValue * lightModifier);
 }
 
+float getShadowValue(in vec3 pos, in float nl) {
+	vec4 shadow_coord = light.shadow_mat * vec4(pos,1);
+	vec3 shadow_coords_final = shadow_coord.xyz / shadow_coord.w;
+	float bias = 0.005*tan(acos(nl));
+	bias = clamp(bias, 0, 0.01);
+	bias /= shadow_coord.w;
+	
+	float sh = texture(shadow_map, shadow_coords_final.xy).r;
+	float vis = 0;
+	if (shadow_coords_final.x > 0 &&
+		shadow_coords_final.x < 1 &&
+		shadow_coords_final.y > 0 &&
+		shadow_coords_final.y < 1)
+	{
+		if (sh > shadow_coords_final.z - bias) {
+			vis = 1;
+		}
+	}
+
+	return vis;
+}
+
 void main() {
 	float Dist = texture(gbuffer3, fragTexCoord).r;
 	vec3 Position = WorldPosFromDepth(Dist, fragTexCoord);
@@ -184,9 +207,13 @@ void main() {
 	float minDot = cos(light.outerAngle);
 	float dotPR = dot(lightDir, lightDirection);
 	dotPR = clamp((dotPR-minDot)/(maxDot-minDot), 0, 1);
+
+	float NL = clamp(dot(Normal, lightDirection), 0, 1);
+	float sh = getShadowValue(Position, NL);
+
 	if (dotPR > 0) {
 		vec3 outColor3 = LightPointCalc(Albedo.rgb, Position.xyz, vec4(Specular, Roughness), Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, ubo.eyePos.xyz) * dotPR;
-		outColor = vec4(hdrGammaTransform(outColor3), 1);
+		outColor = vec4(sh * hdrGammaTransform(outColor3), 1);
 	}
 	else {
 		outColor = vec4(0,0,0,1);

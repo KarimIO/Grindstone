@@ -8,6 +8,7 @@ layout(std140) uniform UniformBufferObject {
 } ubo;
 
 layout(std140) uniform Light {
+	mat4 shadow_mat;
 	vec3 direction;
 	float sourceRadius;
 	vec3 color;
@@ -22,6 +23,7 @@ uniform sampler2D gbuffer0;
 uniform sampler2D gbuffer1;
 uniform sampler2D gbuffer2;
 uniform sampler2D gbuffer3;
+uniform sampler2D shadow_map;
 
 vec4 ViewPosFromDepth(float depth, vec2 TexCoord) {
     float z = depth * 2.0 - 1.0;
@@ -146,6 +148,26 @@ vec3 LightDirCalc(in vec3 Albedo, in vec3 WorldPos, in vec3 lightDir, in vec4 Sp
 
 in vec3 viewRay;
 
+float getShadowValue(in vec3 pos, in float nl) {
+	vec4 shadow_coord = light.shadow_mat * vec4(pos,1);
+	float bias = 0.005*tan(acos(nl));
+	bias = clamp(bias, 0, 0.01);
+	
+	float sh = texture(shadow_map, shadow_coord.xy).r;
+	float vis = 0;
+	if (shadow_coord.x > 0 &&
+		shadow_coord.x < 1 &&
+		shadow_coord.y > 0 &&
+		shadow_coord.y < 1)
+	{
+		if (sh > shadow_coord.z - bias) {
+			vis = 1;
+		}
+	}
+
+	return vis;
+}
+
 void main() {
 	float depth = texture(gbuffer3, fragTexCoord).r;
 	float near = 0.1;
@@ -164,10 +186,12 @@ void main() {
 	float lightSourceRadius = light.sourceRadius;
     vec3 lightColor = light.color;
     float lightIntensity = light.power;
-    vec3 lightDir = normalize(vec3(0.5, 0.5, 0.5));
+    vec3 lightDir = light.direction;
 	float nl = dot(lightDir, Normal);
 
-	vec3 lightPow = lightColor * lightIntensity;
+	vec3 lightPow = vec3(1,1,1) * 8;
 	vec3 outColor3 = LightDirCalc(Albedo.rgb, Position, lightDir.xyz, vec4(Specular, Roughness), Normal.xyz, lightPow, ubo.eyePos.xyz);
-	outColor = vec4(hdrGammaTransform(outColor3), 1);
+	
+	float sh = getShadowValue(Position, nl);
+	outColor = vec4(sh * outColor3, 1);
 }

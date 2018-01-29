@@ -90,7 +90,6 @@ private:
 	PostPipeline postPipeline;
 
 	//SUI sUi;
-	UniformBuffer *ubo;
 
 	// Time Data
 	std::chrono::time_point<std::chrono::high_resolution_clock> currentTime, prevTime, startTime;
@@ -100,6 +99,7 @@ private:
 
 	std::chrono::nanoseconds deltaTime;
 public:
+	UniformBuffer * ubo;
 	UniformBuffer *ubo2;
 
 	GraphicsPipeline *pipeline;

@@ -191,21 +191,21 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 	engine.graphics_wrapper_->BindVertexArrayObject(planeVAO);
 	
 	engine.lightSystem.m_pointLightPipeline->Bind();
-	for (auto light : engine.lightSystem.pointLights) {
+	for (auto &light : engine.lightSystem.pointLights) {
 		light.Bind();
 
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 	}
 
 	engine.lightSystem.m_spotLightPipeline->Bind();
-	for (auto light : engine.lightSystem.spotLights) {
+	for (auto &light : engine.lightSystem.spotLights) {
 		light.Bind();
 
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 	}
 
 	engine.lightSystem.m_directionalLightPipeline->Bind();
-	for (auto light : engine.lightSystem.directionalLights) {
+	for (auto &light : engine.lightSystem.directionalLights) {
 		light.Bind();
 
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);

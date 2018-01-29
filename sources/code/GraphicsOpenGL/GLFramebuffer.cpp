@@ -72,7 +72,10 @@ void GLFramebuffer::BindWrite() {
 
 void GLFramebuffer::BindRead() {
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_);
-	int j = 0;
+}
+
+void GLFramebuffer::BindTextures(int k) {
+	int j = k;
 	for (int i = 0; i < num_render_target_lists_; i++) {
 		render_target_lists_[i]->Bind(j);
 		j += render_target_lists_[i]->getNumRenderTargets();

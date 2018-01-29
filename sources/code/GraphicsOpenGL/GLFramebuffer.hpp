@@ -16,6 +16,7 @@ public:
 	virtual void Bind();
 	virtual void BindWrite();
 	virtual void BindRead();
+	virtual void BindTextures(int i);
 	virtual void Unbind();
 private:
 	GLuint fbo_;

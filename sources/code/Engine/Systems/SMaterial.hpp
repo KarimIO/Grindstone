@@ -93,10 +93,12 @@ struct PipelineContainer {
 	TextureBindingLayout *tbl;
 	PipelineReference reference;
 	GraphicsPipeline *program;
+	GraphicsPipeline *shadow_program;
 	CommandBuffer *commandBuffer;
 	std::string name;
 	std::string name_text;
 	std::string shader_paths[SHADER_FRAGMENT + 1];
+	std::string shadow_shader_paths[SHADER_FRAGMENT + 1];
 	std::map<std::string, TextureParameterDescriptor> textureDescriptorTable;
 	std::map<std::string, ParameterDescriptor> parameterDescriptorTable;
 	std::vector<Material> materials;

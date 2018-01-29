@@ -57,8 +57,10 @@ public:
 	std::vector<uint32_t> references;
 	std::vector<MeshStatic> meshes;
 	VertexBuffer *vertexBuffer;
+	VertexBuffer *shadowVertexBuffer;
 	IndexBuffer *indexBuffer;
 	VertexArrayObject *vertexArrayObject;
+	VertexArrayObject *shadowVertexArrayObject;
 	CommandBuffer *commandBuffer;
 	std::string name;
 

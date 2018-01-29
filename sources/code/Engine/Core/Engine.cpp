@@ -304,6 +304,7 @@ void Engine::Render() {
 			graphics_wrapper_->SetImmediateBlending(BLEND_ADDITIVE);
 			graphics_wrapper_->BindDefaultFramebuffer(false);
  			gbuffer_->BindRead();
+			gbuffer_->BindTextures(0);
 			graphics_wrapper_->Clear();
 			renderPath->Draw(gbuffer_);
 
@@ -346,6 +347,9 @@ void Engine::Run() {
 		physicsSystem.Update(GetUpdateTimeDelta());
 		transformSystem.Update();
 
+		if (settings.enableShadows)
+			lightSystem.DrawShadows();
+
 		glm::mat4 pv;
 		if (cameraSystem.components.size() > 0) {
 			CCamera *cam = &cameraSystem.components[0];
@@ -356,9 +360,7 @@ void Engine::Run() {
 			ubo->UpdateUniformBuffer(&pv);
 			ubo->Bind();
 			ubo2->Bind();
-
-			if (settings.enableShadows)
-				lightSystem.DrawShadows();
+			
 			Render();
 		}
 
