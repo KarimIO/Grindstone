@@ -13,6 +13,7 @@ struct RenderTargetCreateInfo {
 
 class RenderTarget {
 public:
+	virtual unsigned char *RenderScreen(unsigned int i) = 0;
 	virtual ~RenderTarget() {};
 };
 

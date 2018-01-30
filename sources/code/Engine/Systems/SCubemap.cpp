@@ -3,37 +3,53 @@
 
 #include "../Core/Engine.hpp"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb/stb_image_write.h"
+
+/*
+materialManager.resetDraws();
+geometry_system.Cull(cam);
+
+pv = cam->GetProjection() * cam->GetView();
+ubo->UpdateUniformBuffer(&pv);
+ubo->Bind();
+ubo2->Bind();
+
+Render();
+*/
+
+void WriteImage(std::string path, unsigned int w, unsigned int h, unsigned int c, unsigned char *p) {
+	stbi_write_png(path.c_str(), w, h, c, p, w * c);
+}
+
 void CubemapSystem::CaptureCubemaps(double) {
-	/*std::cout << "Capture Cubemaps" << "\n";
+	std::cout << "Capture Cubemaps" << "\n";
 
-	glm::mat4 Proj = glm::perspective(1.5708f, 1.0f, 1.0f, 1000.0f);
-	glm::mat4 View;
-
-	engine.graphics_wrapper_->SetResolution(0, 0, 512, 512);
+	glm::mat4 proj = glm::perspective(1.5708f, 1.0f, 1.0f, 1000.0f);
+	glm::mat4 view;
 
 	writing = true;
 	for (size_t i = 0; i < components.size(); i++) {
 
-		std::string path = "../cubemaps/level" + std::to_string(i);
-		unsigned char *data[6];
+		std::string path = "../assets/cubemaps/level" + std::to_string(i);
 		for (size_t j = 0; j < 6; j++) {
-			View = glm::lookAt(components[i].position, components[i].position + gCubeDirections[j].Target, gCubeDirections[j].Up);
+			view = glm::lookAt(components[i].position, components[i].position + gCubeDirections[j].Target, gCubeDirections[j].Up);
+			view = proj * view;
+			engine.ubo->UpdateUniformBuffer(&view);
+			engine.ubo->Bind();
 
-			engine.Render(Proj, View, components[i].position, false);
-			engine.graphics_wrapper_->SwapBuffer();
-			data[j] = engine.graphics_wrapper_->ReadScreen(512, 512);
+			engine.ubo2->Bind();
+
+			engine.Render();
+			engine.graphics_wrapper_->BindDefaultFramebuffer(true);
+			unsigned char *data = engine.gbuffer_images_[0].RenderScreen(0);
+			WriteImage((path + "_" + std::to_string(j) + ".png").c_str(), 512, 512, 3, data);
 		}
-		
-		engine.textureManager.WriteCubemap(path.c_str(), ".png", 512, 512, 3, data);
-
-		for (size_t j = 0; j < 6; j++)
-			pfnDeleteGraphicsPointer(data[j]);
 	}
 
 	LoadCubemaps();
 
 	writing = false;
-	engine.graphics_wrapper_->SetResolution(0, 0, engine.settings.resolutionX, engine.settings.resolutionY);*/
 }
 
 void CubemapSystem::LoadCubemaps() {
