@@ -71,6 +71,13 @@ DxGraphicsPipeline::DxGraphicsPipeline(ID3D11Device *_device, ID3D11DeviceContex
 		std::cout << "Failed to Create DX Input Layout\n";
 		return;
 	}
+
+	viewport.Width = (float)createInfo.width;
+	viewport.Height = (float)createInfo.height;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+	viewport.TopLeftX = 0.0f;
+	viewport.TopLeftY = 0.0f;
 }
 
 DxGraphicsPipeline::~DxGraphicsPipeline() {
@@ -101,4 +108,8 @@ void DxGraphicsPipeline::Bind() {
 	deviceContext->PSSetShader(pixelShader, NULL, 0);
 
 	deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// Create the viewport.
+	deviceContext->PSSetShader(pixelShader, NULL, 0);
+	deviceContext->RSSetViewports(1, &viewport);
 }

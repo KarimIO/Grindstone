@@ -211,11 +211,11 @@ void main() {
 	float NL = clamp(dot(Normal, lightDirection), 0, 1);
 	float sh = getShadowValue(Position, NL);
 
+	vec3 outColor3 = vec3(0,0,0);
 	if (dotPR > 0) {
-		vec3 outColor3 = LightPointCalc(Albedo.rgb, Position.xyz, vec4(Specular, Roughness), Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, ubo.eyePos.xyz) * dotPR;
-		outColor = vec4(sh * hdrGammaTransform(outColor3), 1);
+		outColor3 = LightPointCalc(Albedo.rgb, Position.xyz, vec4(Specular, Roughness), Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, ubo.eyePos.xyz) * dotPR;
+		outColor3 = hdrGammaTransform(outColor3);
 	}
-	else {
-		outColor = vec4(0,0,0,1);
-	}
+
+	outColor = vec4(sh * outColor3, 1);
 }

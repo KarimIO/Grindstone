@@ -236,7 +236,7 @@ void CDirectionalLight::Bind() {
 	Entity *entity = &engine.entities[entityID];
 	unsigned int transID = entity->components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transID];
-	lightUBOBuffer.position = trans->GetForward();
+	lightUBOBuffer.direction = trans->GetForward();
 	lightUBOBuffer.shadow_mat = calculateMatrixBasis();
 	lightUBO->UpdateUniformBuffer(&lightUBOBuffer);
 	lightUBO->Bind();

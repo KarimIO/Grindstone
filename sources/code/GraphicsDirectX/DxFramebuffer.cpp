@@ -29,8 +29,8 @@ DxFramebuffer::DxFramebuffer(ID3D11Device *device, ID3D11DeviceContext *deviceCo
 		}
 	}
 
-	samplers_.push_back(samplers_[0]);
-	//samplers_.push_back(depth_target_->getSamplerState());
+	//samplers_.push_back(samplers_[0]);
+	samplers_.push_back(depth_target_->getSamplerState());
 	srvs_.push_back(depth_target_->getSRV());
 }
 
@@ -78,9 +78,11 @@ void DxFramebuffer::BindRead() {
 	}
 	textures.push_back(m_depthShaderResourceView);
 	samplers.push_back(m_sampleStates[0]);*/
+}
 
-	m_deviceContext->PSSetShaderResources(0, srvs_.size(), srvs_.data());
-	m_deviceContext->PSSetSamplers(0, samplers_.size(), samplers_.data());
+void DxFramebuffer::BindTextures(int i) {
+	m_deviceContext->PSSetShaderResources(i, srvs_.size(), srvs_.data());
+	m_deviceContext->PSSetSamplers(i, samplers_.size(), samplers_.data());
 
 }
 

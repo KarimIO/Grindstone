@@ -26,6 +26,7 @@ public:
 	void Bind();
 	void BindWrite();
 	void BindRead();
+	void BindTextures(int i);
 	void Unbind();
 };
 

@@ -27,14 +27,18 @@ struct LightSpotUBO {
 	glm::vec3 direction;
 	float innerAngle;
 	float outerAngle;
+
+	char buffer[12];
 };
 
 struct LightDirectionalUBO {
 	glm::mat4 shadow_mat;
-	glm::vec3 position;
+	glm::vec3 direction;
 	float sourceRadius;
 	glm::vec3 color;
 	float power;
+
+	char buffer[32];
 };
 
 class CPointLight {

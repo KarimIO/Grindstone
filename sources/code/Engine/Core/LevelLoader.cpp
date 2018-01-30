@@ -111,32 +111,35 @@ public:
 					}
 				}
 				else if (componentType == COMPONENT_LIGHT_SPOT) {
+					LightSpotUBO &buffer = engine.lightSystem.spotLights[componentID].lightUBOBuffer;
 					if (keyType == KEY_COMPONENT_COLOR)
-						engine.lightSystem.spotLights[componentID].lightUBOBuffer.color[subIterator++] = (float)d;
+						buffer.color[subIterator++] = (float)d;
 					else if (keyType == KEY_COMPONENT_BRIGHTNESS)
-						engine.lightSystem.spotLights[componentID].lightUBOBuffer.power = (float)d;
+						buffer.power = (float)d;
 					else if (keyType == KEY_COMPONENT_RADIUS)
-						engine.lightSystem.spotLights[componentID].lightUBOBuffer.attenuationRadius = (float)d;
+						buffer.attenuationRadius = (float)d;
 					else if (keyType == KEY_COMPONENT_INNERANGLE)
-						engine.lightSystem.spotLights[componentID].lightUBOBuffer.innerAngle = (float)d*3.14159f / 180.0f;
+						buffer.innerAngle = (float)d*3.14159f / 180.0f;
 					else if (keyType == KEY_COMPONENT_OUTERANGLE)
-						engine.lightSystem.spotLights[componentID].lightUBOBuffer.outerAngle = (float)d*3.14159f / 180.0f;
+						buffer.outerAngle = (float)d*3.14159f / 180.0f;
 				}
 				else if (componentType == COMPONENT_LIGHT_POINT) {
+					LightPointUBO &buffer = engine.lightSystem.pointLights[componentID].lightUBOBuffer;
 					if (keyType == KEY_COMPONENT_COLOR)
-						engine.lightSystem.pointLights[componentID].lightUBOBuffer.color[subIterator++] = (float)d;
+						buffer.color[subIterator++] = (float)d;
 					else if (keyType == KEY_COMPONENT_BRIGHTNESS)
-						engine.lightSystem.pointLights[componentID].lightUBOBuffer.power = (float)d;
+						buffer.power = (float)d;
 					else if (keyType == KEY_COMPONENT_RADIUS)
-						engine.lightSystem.pointLights[componentID].lightUBOBuffer.attenuationRadius = (float)d;
+						buffer.attenuationRadius = (float)d;
 				}
 				else if (componentType == COMPONENT_LIGHT_DIRECTIONAL) {
+					LightDirectionalUBO &buffer = engine.lightSystem.directionalLights[componentID].lightUBOBuffer;
 					if (keyType == KEY_COMPONENT_COLOR)
-						engine.lightSystem.directionalLights[componentID].lightUBOBuffer.color[subIterator++] = (float)d;
+						buffer.color[subIterator++] = (float)d;
 					else if (keyType == KEY_COMPONENT_BRIGHTNESS)
-						engine.lightSystem.directionalLights[componentID].lightUBOBuffer.power = (float)d;
+						buffer.power = (float)d;
 					else if (keyType == KEY_COMPONENT_RADIUS)
-						engine.lightSystem.directionalLights[componentID].lightUBOBuffer.sourceRadius = (float)d;
+						buffer.sourceRadius = (float)d;
 				}
 				else if (componentType == COMPONENT_PHYSICS) {
 					if (keyType == KEY_COMPONENT_PHYSICS_PLANE) {

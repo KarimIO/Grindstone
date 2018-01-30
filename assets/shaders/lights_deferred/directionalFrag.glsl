@@ -189,7 +189,7 @@ void main() {
     vec3 lightDir = light.direction;
 	float nl = dot(lightDir, Normal);
 
-	vec3 lightPow = vec3(1,1,1) * 8;
+	vec3 lightPow = lightColor * lightIntensity;
 	vec3 outColor3 = LightDirCalc(Albedo.rgb, Position, lightDir.xyz, vec4(Specular, Roughness), Normal.xyz, lightPow, ubo.eyePos.xyz);
 	
 	float sh = getShadowValue(Position, nl);

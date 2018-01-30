@@ -2,7 +2,7 @@
 #include <iostream>
 
 DxDepthTarget::DxDepthTarget(ID3D11Device *device, ID3D11DeviceContext *device_context, DepthTargetCreateInfo create_info) : device_(device), device_context_(device_context) {
-	/*D3D11_SAMPLER_DESC samplerDesc;
+	D3D11_SAMPLER_DESC samplerDesc;
 	// Create a texture sampler state description.
 	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -20,9 +20,9 @@ DxDepthTarget::DxDepthTarget(ID3D11Device *device, ID3D11DeviceContext *device_c
 
 	// Create the texture sampler state.
 	if (FAILED(device->CreateSamplerState(&samplerDesc, &m_depthSamplerState))) {
-	std::cout << "Sampler View failed to be created!\n";
-	return;
-	}*/
+		std::cout << "Sampler View failed to be created!\n";
+		return;
+	}
 
 	D3D11_TEXTURE2D_DESC depthBufferDesc;
 	D3D11_DEPTH_STENCIL_DESC depthStencilDesc;
