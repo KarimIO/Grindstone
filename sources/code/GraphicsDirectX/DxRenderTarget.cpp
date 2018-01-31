@@ -4,6 +4,8 @@
 DxRenderTarget::DxRenderTarget(ID3D11Device *device, ID3D11DeviceContext *device_context, RenderTargetCreateInfo *create_info, uint32_t count) : device_(device), device_context_(device_context) {
 	m_numRenderTargets = count;
 
+	width_ = create_info->width;
+	height_ = create_info->height;
 	m_renderTargetTexture = new ID3D11Texture2D *[m_numRenderTargets];
 	m_renderTargetView = new ID3D11RenderTargetView *[m_numRenderTargets];
 	m_shaderResourceView = new ID3D11ShaderResourceView *[m_numRenderTargets];
@@ -104,6 +106,48 @@ ID3D11SamplerState **DxRenderTarget::getSamplerStates() {
 
 ID3D11ShaderResourceView **DxRenderTarget::getSRVs() {
 	return m_shaderResourceView;
+}
+
+unsigned char * DxRenderTarget::RenderScreen(unsigned int i) {
+	HRESULT hr;
+
+	ID3D11Resource* pSurface = nullptr;
+	m_renderTargetView[i]->GetResource(&pSurface);
+
+
+	unsigned char *p = new unsigned char[width_ * height_ * 4];
+
+	if (pSurface)
+	{
+		D3D11_TEXTURE2D_DESC desc;
+		ZeroMemory(&desc, sizeof(desc));
+		desc.ArraySize = 1;
+		desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		desc.Width = width_;
+		desc.Height = height_;
+		desc.MipLevels = 1;
+		desc.SampleDesc.Count = 1;
+		desc.SampleDesc.Quality = 0;
+		desc.BindFlags = 0;
+		desc.CPUAccessFlags = 0;
+		desc.Usage = D3D11_USAGE_DEFAULT;
+
+		ID3D11Texture2D* pTexture = nullptr;
+		hr = device_->CreateTexture2D(&desc, nullptr, &pTexture);
+		if (pTexture)
+		{
+			device_context_->CopyResource(pTexture, pSurface);
+			GUID g;
+			UINT size;
+			pSurface->GetPrivateData(g, &size, p);
+
+
+			pTexture->Release();
+		}
+		pSurface->Release();
+	}
+	
+	return nullptr;
 }
 
 DxRenderTarget::~DxRenderTarget() {
