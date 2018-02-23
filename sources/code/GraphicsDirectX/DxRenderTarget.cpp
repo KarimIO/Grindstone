@@ -147,7 +147,7 @@ unsigned char * DxRenderTarget::RenderScreen(unsigned int i) {
 		pSurface->Release();
 	}
 	
-	return nullptr;
+	return p;
 }
 
 DxRenderTarget::~DxRenderTarget() {

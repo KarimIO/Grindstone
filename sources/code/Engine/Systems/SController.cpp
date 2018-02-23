@@ -7,6 +7,34 @@ void SController::AddComponent(unsigned int entityID, unsigned int &target) {
 	target = (unsigned int)(components.size() - 1);
 }
 
+void SController::update(double dt) {
+	for (auto &c : components) {
+		c.update(dt);
+	}
+}
+
+void CController::update(double dt) {
+	auto &entity = engine.entities[entityID];
+	unsigned int transfID = entity.components_[COMPONENT_TRANSFORM];
+	CTransform *trans = &engine.transformSystem.components[transfID];
+
+	if (!ghost_mode_)
+		moveVelocity.y -= 9.81f * (float)dt;
+
+	moveVelocity.x *= 0.95f * (1.0f - dt);
+	moveVelocity.y *= 0.95f * (1.0f - dt);
+	moveVelocity.z *= 0.95f * (1.0f - dt);
+
+	if (ghost_mode_)
+		trans->position += moveVelocity * (float)dt;
+
+	if (!no_collide_) {
+		if (trans->position.y < 0.0) {
+			trans->position.y = 0.0;
+		}
+	}
+}
+
 void CController::Initialize(unsigned int _entityID) {
 	this->entityID = _entityID;
 	input.SetInputControlFile("cfgs/player.cfg");
@@ -23,36 +51,58 @@ void CController::Initialize(unsigned int _entityID) {
 	input.BindAction("Run", this, &CController::RunStart, KEY_PRESSED);
 	input.BindAction("Run", this, &CController::RunStop, KEY_RELEASED);
 	
-	speedModifier = 2.0;
-	sensitivity = 2.0;
+	ghost_mode_ = true;
+	no_collide_ = true;
+	speed_modifier_ = 4.0;
+	sensitivity_ = 2.0;
 }
 
 void CController::MoveForwardBack(double scale) {
-	unsigned int transfID = Engine::GetInstance().entities[entityID].components_[COMPONENT_TRANSFORM];
+	auto &entity = engine.entities[entityID];
+	unsigned int transfID = entity.components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transfID];
+	unsigned int physID = entity.components_[COMPONENT_PHYSICS];
 
-	trans->position += 5.0f * float(scale * speedModifier) * trans->GetForward();
+	glm::vec3 f = 20.0f * float(scale * speed_modifier_) * trans->GetForward();
+
+	/*if (physID) {
+		CPhysics *phys = &engine.physicsSystem.components[physID];
+		phys->ApplyCentralForce(f);
+	}
+	else {*/
+		moveVelocity += f;
+	//}
 }
 
 void CController::MoveSide(double scale) {
-	unsigned int transfID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
+	auto &entity = engine.entities[entityID];
+	unsigned int transfID = entity.components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transfID];
+	unsigned int physID = entity.components_[COMPONENT_PHYSICS];
 
-	trans->position += 5.0f * float(scale * speedModifier) * trans->GetRight();
+	glm::vec3 f = 5.0f * float(scale * speed_modifier_) * trans->GetRight();
+
+	/*if (physID) {
+		CPhysics *phys = &engine.physicsSystem.components[physID];
+		phys->ApplyCentralForce(f);
+	}
+	else {*/
+	moveVelocity += f;
+	//}
 }
 
 void CController::MoveVertical(double scale) {
 	unsigned int transfID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transfID];
 
-	trans->position.y += 5.0f * float(scale * speedModifier);
+	//trans->position.y += 5.0f * float(scale * speed_modifier_);
 }
 
 void CController::TurnPitch(double scale) {
 	unsigned int transfID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transfID];
 
-	trans->angles.x += float(sensitivity * engine.GetUpdateTimeDelta() * scale);
+	trans->angles.x += float(sensitivity_ * engine.GetUpdateTimeDelta() * scale);
 
 	if (trans->angles.x < -2.4f / 2)	trans->angles.x = -2.4f / 2;
 	if (trans->angles.x > 3.14f / 2)	trans->angles.x = 3.14f / 2;
@@ -61,7 +111,7 @@ void CController::TurnPitch(double scale) {
 void CController::TurnYaw(double scale) {
 	unsigned int transfID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transfID];
-	trans->angles.y += float(sensitivity * engine.GetUpdateTimeDelta() * scale);
+	trans->angles.y += float(sensitivity_ * engine.GetUpdateTimeDelta() * scale);
 }
 
 void CController::ZoomIn(double scale) {
@@ -77,9 +127,9 @@ void CController::ZoomOut(double scale) {
 }
 
 void CController::RunStart(double scale) {
-	speedModifier = 4.5;
+	speed_modifier_ = ghost_mode_ ? 10.0f : 4.5;
 }
 
 void CController::RunStop(double scale) {
-	speedModifier = 2.0;
+	speed_modifier_ = ghost_mode_ ? 4.0f : 2.0;
 }

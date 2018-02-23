@@ -1281,21 +1281,21 @@ void MaterialManager::DrawDeferredCommand() {
 void MaterialManager::resetDraws() {
 	for (auto &render_pass : render_passes_) {
 		for (auto &pipeline : render_pass.pipelines_deferred) {
-			pipeline.draw_count = 0;
+			pipeline.draw_count = 1;
 			for (auto &material : pipeline.materials) {
-				material.draw_count = 0;
+				material.draw_count = 1;
 			}
 		}
 		for (auto &pipeline : render_pass.pipelines_unlit) {
-			pipeline.draw_count = 0;
+			pipeline.draw_count = 1;
 			for (auto &material : pipeline.materials) {
-				material.draw_count = 0;
+				material.draw_count = 1;
 			}
 		}
 		for (auto &pipeline : render_pass.pipelines_forward) {
-			pipeline.draw_count = 0;
+			pipeline.draw_count = 1;
 			for (auto &material : pipeline.materials) {
-				material.draw_count = 0;
+				material.draw_count = 1;
 			}
 		}
 	}

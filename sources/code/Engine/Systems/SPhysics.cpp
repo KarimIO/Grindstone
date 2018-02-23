@@ -21,6 +21,10 @@ void CPhysics::SetShapePlane(float Nx, float Ny, float Nz, float c) {
 	shape = new btStaticPlaneShape(btVector3(Nx, Ny, Nz), c);
 }
 
+void CPhysics::SetShapeCapsule(float radius, float height) {
+	shape = new btCapsuleShape(radius, height);
+}
+
 void CPhysics::SetShapeSphere(float radius) {
 	shape = new btSphereShape(radius);
 }

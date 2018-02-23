@@ -4,11 +4,18 @@
 #include "CBase.hpp"
 #include "Core/Input.hpp"
 #include <vector>
+#include <btBulletDynamicsCommon.h>
+#include <glm/glm.hpp>
 
 class CController : public CBase {
-	double speedModifier;
-	double sensitivity;
-	InputComponent input;
+private:
+	bool ghost_mode_;
+	bool no_collide_;
+	double speed_modifier_;
+	double sensitivity_;
+	InputComponent	input;
+	btCollisionShape	*shape;
+	glm::vec3		moveVelocity;
 public:
 	void Initialize(unsigned int entityID);
 	void MoveForwardBack(double scale);
@@ -20,11 +27,13 @@ public:
 	void ZoomOut(double scale);
 	void RunStart(double scale);
 	void RunStop(double scale);
+	void update(double dt);
 };
 
 class SController {
 public:
 	void AddComponent(unsigned int entityID, unsigned int &target);
+	void update(double dt);
 	std::vector<CController> components;
 };
 

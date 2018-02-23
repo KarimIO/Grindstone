@@ -14,6 +14,7 @@ private:
 	btCollisionShape* shape;
 public:
 	void SetShapePlane(float Nx, float Ny, float Nz, float c);
+	void SetShapeCapsule(float radius, float height);
 	void SetShapeSphere(float radius);
 
 	void SetFriction(float f);
@@ -33,7 +34,7 @@ public:
 
 class SPhysics {
 	friend class CPhysics;
-private:
+public:
 	btBroadphaseInterface* broadphase;
 	btDefaultCollisionConfiguration* collisionConfiguration;
 	btCollisionDispatcher* dispatcher;

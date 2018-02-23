@@ -7,7 +7,7 @@
 
 bool CreateStandardMaterial(StandardMaterialCreateInfo ci, std::string path) {
 	std::ofstream output(path);
-	output << "shader: ../assets/shaders/standard.json\n";
+	output << "shader: ../assets/shaders/materials/standard_metalness/standard_metalness.json\n";
 	output << "albedoTexture: " << ci.albedoPath << "\n";
 	output << "normalTexture: " << ci.normalPath << "\n";
 	output << "roughnessTexture: " << ci.roughnessPath << "\n";

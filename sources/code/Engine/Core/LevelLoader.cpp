@@ -40,6 +40,7 @@ enum {
 	KEY_COMPONENT_PATCHES,
 	KEY_COMPONENT_HEIGHTMAP,
 	KEY_COMPONENT_PHYSICS_SPHERE,
+	KEY_COMPONENT_PHYSICS_CAPSULE,
 	KEY_COMPONENT_PHYSICS_PLANE,
 	KEY_COMPONENT_PHYSICS_MASS,
 	KEY_COMPONENT_PHYSICS_INERTIA,
@@ -61,6 +62,7 @@ private:
 	Entity *ent;
 	unsigned int entityID;
 	unsigned char subIterator;
+	glm::vec2 v2;
 	glm::vec3 position;
 	glm::vec4 v4;
 public:
@@ -147,6 +149,9 @@ public:
 					}
 					else if (keyType == KEY_COMPONENT_PHYSICS_SPHERE) {
 						engine.physicsSystem.Get(componentID)->SetShapeSphere((float)d);
+					}
+					else if (keyType == KEY_COMPONENT_PHYSICS_CAPSULE) {
+						v4[subIterator++] = (float)d;
 					}
 					else if (keyType == KEY_COMPONENT_PHYSICS_INERTIA) {
 						position[subIterator++] = (float)d;
@@ -356,6 +361,9 @@ public:
 			else if (std::string(str) == "shapeSphere") {
 				keyType = KEY_COMPONENT_PHYSICS_SPHERE;
 			}
+			else if (std::string(str) == "shapeCapsule") {
+				keyType = KEY_COMPONENT_PHYSICS_CAPSULE;
+			}
 			else if (std::string(str) == "mass") {
 				keyType = KEY_COMPONENT_PHYSICS_MASS;
 			}
@@ -392,6 +400,9 @@ public:
 		}
 		else if (keyType == KEY_COMPONENT_PHYSICS_PLANE && level == LEVEL_COMPONENT) {
 			engine.physicsSystem.Get(componentID)->SetShapePlane(v4.x, v4.y, v4.z, v4.w);
+		}
+		else if (keyType == KEY_COMPONENT_PHYSICS_CAPSULE && level == LEVEL_COMPONENT) {
+			engine.physicsSystem.Get(componentID)->SetShapeCapsule(v2.x, v2.y);
 		}
 		else if (keyType == KEY_COMPONENT_PHYSICS_INERTIA && level == LEVEL_COMPONENT) {
 			engine.physicsSystem.Get(componentID)->SetIntertia(position.x, position.y, position.z);

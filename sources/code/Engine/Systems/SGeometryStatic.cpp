@@ -18,7 +18,7 @@ void MeshStatic::ShadowDraw() {
 		CRender &renderComponent = engine.geometry_system.GetComponent(reference);
 
 		// Cull for shadows seperately
-		if (renderComponent.should_draw) {
+		//if (renderComponent.should_draw) {
 			auto entityID = renderComponent.entity_id;
 			auto transform = engine.transformSystem.components[entityID];
 
@@ -27,14 +27,14 @@ void MeshStatic::ShadowDraw() {
 
 			engine.graphics_wrapper_->BindVertexArrayObject(model->vertexArrayObject);
 			engine.graphics_wrapper_->DrawImmediateIndexed(false, true, BaseVertex, BaseIndex, NumIndices);
-		}
+		//}
 	}
 }
 
 void MeshStatic::Draw() {
 	for (auto &reference : model->references) {
 		CRender &renderComponent = engine.geometry_system.GetComponent(reference);
-		if (renderComponent.should_draw) {
+		//if (renderComponent.should_draw) {
 			auto entityID = renderComponent.entity_id;
 			auto transform = engine.transformSystem.components[entityID];
 
@@ -43,7 +43,7 @@ void MeshStatic::Draw() {
 
 			engine.graphics_wrapper_->BindVertexArrayObject(model->vertexArrayObject);
 			engine.graphics_wrapper_->DrawImmediateIndexed(false, true, BaseVertex, BaseIndex, NumIndices);
-		}
+		//}
 	}
 }
 

@@ -64,7 +64,6 @@ sources/include/*
 !assets/materials/dielectric.png
 !assets/materials/normal.png
 !assets/materials/roughness.png
-assets/shaders/objects/backup/*
 settings.ini
 
 # Cmake

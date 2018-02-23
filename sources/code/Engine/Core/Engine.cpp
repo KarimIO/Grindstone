@@ -344,6 +344,7 @@ void Engine::Run() {
 		inputSystem.LoopControls();
 
 		gameplay_system.Update(GetUpdateTimeDelta());
+		controllerSystem.update(GetUpdateTimeDelta());
 		physicsSystem.Update(GetUpdateTimeDelta());
 		transformSystem.Update();
 
@@ -354,7 +355,7 @@ void Engine::Run() {
 		if (cameraSystem.components.size() > 0) {
 			CCamera *cam = &cameraSystem.components[0];
 			materialManager.resetDraws();
-			geometry_system.Cull(cam);
+			//geometry_system.Cull(cam);
 
 			pv = cam->GetProjection() * cam->GetView();
 			ubo->UpdateUniformBuffer(&pv);
