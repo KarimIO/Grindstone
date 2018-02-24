@@ -124,7 +124,9 @@ defaultmap=../scenes/sponza.json
 All file formats are discussed [here.](formats.md)
 
 ### Sponza
-You can download the Sponza assets at:
+You can download the Sponza assets converted to Grindstone formats here: [Google Drive](https://drive.google.com/open?id=1ESJ7S98VKbvcpkhTM3jJPWlnUiBLrgV0)
+
+You can download the Sponza original assets at:
  * [Alexandre Pestana's site for the PBR Textures](http://www.alexandre-pestana.com/pbr-textures-sponza/)
  * [CryTek's site for the sponza_obj.rar file.](http://www.crytek.com/cryengine/cryengine3/downloads)
 We are not affiliated with either of these websites.

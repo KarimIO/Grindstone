@@ -46,24 +46,24 @@ Sources/Obj/
 bin/*
 !bin/readme.md
 .vscode/*
-assets/*
+assets/
+!assets/cubemaps/glacier_*
+!assets/materials/insphere/*
+!assets/materials/sphere/*
 !assets/models/sphere.obj
 !assets/scenes/terrain.json
-!assets/scenes/sponza.json
 !assets/scenes/sphere.json
-!assets/shaders/
-sources/include/*
-~sources/include/stb_image_write.h
-~sources/include/stb_image.h
+!assets/shaders/*
 !assets/materials/heightmaps/height.png
 !assets/materials/ssaoNoise.png
 !assets/materials/grindstone.png
-!assets/models/sphere.gmf
+!assets/models/sphere.*
 !assets/materials/sphere/*
-!assets/materials/albedo.png
-!assets/materials/dielectric.png
-!assets/materials/normal.png
-!assets/materials/roughness.png
+!assets/materials/albedo.*
+!assets/materials/dielectric.*
+!assets/materials/normal.*
+!assets/materials/roughness.*
+!assets/materials/*.gmat
 settings.ini
 
 # Cmake
