@@ -50,7 +50,6 @@ assets/
 !assets/cubemaps/glacier_*
 !assets/materials/insphere/*
 !assets/materials/sphere/*
-!assets/models/sphere.obj
 !assets/scenes/terrain.json
 !assets/scenes/sphere.json
 !assets/shaders/*
@@ -58,6 +57,8 @@ assets/
 !assets/materials/ssaoNoise.png
 !assets/materials/grindstone.png
 !assets/models/sphere.*
+!assets/models/insphere.*
+!assets/models/plane.*
 !assets/materials/sphere/*
 !assets/materials/albedo.*
 !assets/materials/dielectric.*

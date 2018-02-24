@@ -124,6 +124,7 @@ defaultmap=../scenes/sponza.json
 All file formats are discussed [here.](formats.md)
 
 ### Sponza
+You can download a level from here: [Gist](https://gist.github.com/KarimIO/2dc004cac2bf0dd56e7c4f76975eb856)
 You can download the Sponza assets converted to Grindstone formats here: [Google Drive](https://drive.google.com/open?id=1ESJ7S98VKbvcpkhTM3jJPWlnUiBLrgV0)
 
 You can download the Sponza original assets at:
