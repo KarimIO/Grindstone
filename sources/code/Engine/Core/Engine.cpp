@@ -119,9 +119,9 @@ void Engine::InitializeSettings() {
 		cfile.GetBool("Renderer", "reflections", true, settings.enableReflections);
 		cfile.GetBool("Renderer", "shadows", true, settings.enableShadows);
 		cfile.GetBool("Renderer", "debugNoLighting", false, settings.debugNoLighting);
-		cfile.GetBool("Debug", "showMaterialLod", true, settings.enableReflections);
-		cfile.GetBool("Debug", "showPipelineLoad", true, settings.enableShadows);
-		cfile.GetBool("Debug", "showTextureLoad", false, settings.debugNoLighting);
+		cfile.GetBool("Debug", "showMaterialLod", true, settings.showMaterialLoad);
+		cfile.GetBool("Debug", "showPipelineLoad", true, settings.showPipelineLoad);
+		cfile.GetBool("Debug", "showTextureLoad", false, settings.showTextureLoad);
 		cfile.GetString("Game", "defaultmap", "../assets/scenes/sponza.json", defaultMap);
 
 		graphics = strToLower(graphics);
