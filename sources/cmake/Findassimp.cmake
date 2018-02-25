@@ -56,16 +56,16 @@ else(WIN32)
 
 	find_path(
 	  ASSIMP_INCLUDE_DIR
-	  NAMES postprocess.h scene.h version.h config.h cimport.h
-	  PATHS /usr/local/include/
+	  NAMES assimp/anim.h
+	  PATHS /usr/include/assimp/
 	)
 
 	find_library(
 	  assimp_LIBRARIES
 	  NAMES assimp
-	  PATHS /usr/local/lib/
+	  PATHS /usr/lib/
 	)
-
+	message(STATUS ${ASSIMP_INCLUDE_DIR} ${assimp_LIBRARIES})
 	if (ASSIMP_INCLUDE_DIR AND assimp_LIBRARIES)
 	  SET(assimp_FOUND TRUE)
 	ENDIF (ASSIMP_INCLUDE_DIR AND assimp_LIBRARIES)

@@ -188,7 +188,6 @@ void SGeometryStatic::LoadModel(CModelStatic *model) {
 	char *words = (char *)offset;
 	for (unsigned int i = 0; i < inFormat.num_materials; i++) {
 		// Need to add a non-lazyload material
-		std::cout << "Loading Material: " << words << std::endl;
 		materialReferences[i] = material_system_->CreateMaterial(geometry_info_, words);
 		words = strchr(words, '\0') + 1;
 	}

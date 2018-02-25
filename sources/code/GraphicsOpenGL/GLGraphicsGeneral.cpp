@@ -24,6 +24,8 @@ void APIENTRY glDebugOutput(GLenum source,
 	// ignore non-significant error/warning codes
 	if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
 
+	if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) return;
+
 	std::cout << "--------------- \nDebug message (" << id << "): " << message << "\n";
 
 	switch (source)

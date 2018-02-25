@@ -72,5 +72,5 @@ settings.ini
 *cmake_install.cmake
 *CTestTestfile.cmake
 *CMakeFiles*
-*Makefile
-*makefile
+Makefile
+*/Makefile

@@ -119,6 +119,9 @@ void Engine::InitializeSettings() {
 		cfile.GetBool("Renderer", "reflections", true, settings.enableReflections);
 		cfile.GetBool("Renderer", "shadows", true, settings.enableShadows);
 		cfile.GetBool("Renderer", "debugNoLighting", false, settings.debugNoLighting);
+		cfile.GetBool("Debug", "showMaterialLod", true, settings.enableReflections);
+		cfile.GetBool("Debug", "showPipelineLoad", true, settings.enableShadows);
+		cfile.GetBool("Debug", "showTextureLoad", false, settings.debugNoLighting);
 		cfile.GetString("Game", "defaultmap", "../assets/scenes/sponza.json", defaultMap);
 
 		graphics = strToLower(graphics);
@@ -149,6 +152,9 @@ void Engine::InitializeSettings() {
 		cfile.SetBool("Renderer", "reflections", true);
 		cfile.SetBool("Renderer", "shadows", true);
 		cfile.SetBool("Renderer", "debugNoLighting", false);
+		cfile.SetBool("Debug", "showMaterialLod", true);
+		cfile.SetBool("Debug", "showPipelineLoad", true);
+		cfile.SetBool("Debug", "showTextureLoad", false);
 		cfile.SetString("Game", "defaultmap", "../assets/scenes/sponza.json");
 
 		settings.resolutionX = 1366;
@@ -159,6 +165,9 @@ void Engine::InitializeSettings() {
 		settings.enableShadows = false;
 		settings.debugNoLighting = false;
 		settings.vsync = true;
+		settings.showMaterialLoad=1;
+		settings.showPipelineLoad=1;
+		settings.showTextureLoad=0;
 		defaultMap = "../assets/scenes/sponza.json";
 	}
 
@@ -456,19 +465,19 @@ void Engine::ShutdownControl(double) {
 }
 
 Engine::~Engine() {
-	std::cout << "Cleaning Physics System...";
+	std::cout << "Cleaning Physics System...\n";
 	physicsSystem.Cleanup();
-	std::cout << "Physics System cleaned.";
+	std::cout << "Physics System cleaned.\n";
 
 	if (gbuffer_) {
-		std::cout << "Cleaning gbuffer...";
+		std::cout << "Cleaning gbuffer...\n";
 		graphics_wrapper_->DeleteFramebuffer(gbuffer_);
-		std::cout << "GBuffer Cleaned.";
+		std::cout << "GBuffer Cleaned.\n";
 	}
 
 	if (graphics_wrapper_) {
-		std::cout << "Cleaning Graphics Wrapper...";
+		std::cout << "Cleaning Graphics Wrapper...\n";
 		graphics_wrapper_->Cleanup();
-		std::cout << "Graphics Wrapper cleaned.";
+		std::cout << "Graphics Wrapper cleaned.\n";
 	}
 }

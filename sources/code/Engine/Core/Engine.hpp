@@ -118,6 +118,9 @@ public:
 		bool enableReflections;
 		bool enableShadows;
 		bool debugNoLighting;
+		bool showPipelineLoad;
+		bool showMaterialLoad;
+		bool showTextureLoad;
 		GraphicsLanguage graphicsLanguage;
 	} settings;
 

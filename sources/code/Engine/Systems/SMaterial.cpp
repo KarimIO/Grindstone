@@ -742,10 +742,12 @@ PipelineReference MaterialManager::CreatePipeline(GeometryInfo geometry_info, st
 	handler.path = pipelineName;
 	handler.dir = pipelineName.substr(0, pipelineName.find_last_of("/") + 1);
 	handler.render_pass = &render_passes_[0];
-	std::ifstream input(pipelineName.c_str());
+	
+	std::ifstream input(pipelineName);
 	PipelineContainer *pipeline;
 	if (input.fail()) {
-		throw std::runtime_error("Failed to load pipeline " + pipelineName);
+		std::cerr << "Input failed for " << pipelineName << "\nError: " << strerror(errno) << "\n";
+		return PipelineReference();
 	}
 	else {
 		rapidjson::IStreamWrapper isw(input);
@@ -754,7 +756,7 @@ PipelineReference MaterialManager::CreatePipeline(GeometryInfo geometry_info, st
 
 		pipeline = handler.pipeline;
 	}
-
+	
 	generateProgram(geometry_info, *pipeline);
 	pipeline_map_[pipelineName] = pipeline->reference;
 
@@ -775,7 +777,8 @@ MaterialReference MaterialManager::PreLoadMaterial(GeometryInfo geometry_info, s
 		return MaterialReference();
 	}
 
-	std::cout << "Material reading from: " << path << "!\n";
+	if (engine.settings.showMaterialLoad)
+		std::cout << "Material reading from: " << path << "!\n";
 
 	size_t fileSize = (size_t)input.tellg();
 	std::vector<char> buffer(fileSize);
@@ -892,6 +895,39 @@ Texture *MaterialManager::LoadCubemap(std::string path) {
 	return t;
 }
 
+std::istream& safeGetline(std::istream& is, std::string& t)
+{
+    t.clear();
+
+    // The characters in the stream are read one-by-one using a std::streambuf.
+    // That is faster than reading them one-by-one using the std::istream.
+    // Code that uses streambuf this way must be guarded by a sentry object.
+    // The sentry object performs various tasks,
+    // such as thread synchronization and updating the stream state.
+
+    std::istream::sentry se(is, true);
+    std::streambuf* sb = is.rdbuf();
+
+    for(;;) {
+        int c = sb->sbumpc();
+        switch (c) {
+        case '\n':
+            return is;
+        case '\r':
+            if(sb->sgetc() == '\n')
+                sb->sbumpc();
+            return is;
+        case std::streambuf::traits_type::eof():
+            // Also handle the case when the last line has no line ending
+            if(t.empty())
+                is.setstate(std::ios::eofbit);
+            return is;
+        default:
+            t += (char)c;
+        }
+    }
+}
+
 MaterialReference MaterialManager::CreateMaterial(GeometryInfo geometry_info, std::string path) {
 	if (material_map_.find(path) != material_map_.end()) {
 		return material_map_[path];
@@ -903,10 +939,11 @@ MaterialReference MaterialManager::CreateMaterial(GeometryInfo geometry_info, st
 		return MaterialReference();
 	}
 
-	std::cout << "Material reading from: " << path << "!\n";
+	if (engine.settings.showMaterialLoad)
+		std::cout << "Material reading from: " << path << "!\n";
 
 	std::string shader_param;
-	std::getline(input, shader_param);
+	safeGetline(input, shader_param);
 	unsigned int p = shader_param.find(':');
 	if (p == -1) {
 		throw std::runtime_error("Error! " + path + " is invalid, the first line must refer to the shader.");
@@ -926,7 +963,7 @@ MaterialReference MaterialManager::CreateMaterial(GeometryInfo geometry_info, st
 	std::string dir = path.substr(0, path.find_last_of("/") + 1);
 
 	std::string line, parameter, value;
-	while (std::getline(input, line)) {
+	while (safeGetline(input, line)) {
 		p = line.find(':');
 		if (p != -1) {
 			parameter = line.substr(0, p);
@@ -956,7 +993,8 @@ MaterialReference MaterialManager::CreateMaterial(GeometryInfo geometry_info, st
 
 	TextureBinding *textureBinding = nullptr;
 	if (textures.size() > 0) {
-		std::cout << path << " has " << textures.size() << " textures." << std::endl;
+		//if (settings.engine.showMaterialLoad)
+		//	std::cout << path << " has " << textures.size() << " textures." << std::endl;
 
 		TextureBindingCreateInfo ci;
 		ci.layout = pipeline->tbl;
@@ -1037,7 +1075,8 @@ struct DDSHeader {
 
 Texture *MaterialManager::PreLoadTexture(std::string path) {
 	if (texture_map_[path]) {
-		printf("Texture reused: %s \n", path.c_str());
+		if (engine.settings.showTextureLoad)
+			printf("Texture reused: %s \n", path.c_str());
 		return texture_map_[path];
 	}
 
@@ -1047,7 +1086,8 @@ Texture *MaterialManager::PreLoadTexture(std::string path) {
 
 Texture * MaterialManager::LoadTexture(std::string path) {
 	if (texture_map_[path]) {
-		printf("Texture reused: %s \n", path.c_str());
+		if (engine.settings.showTextureLoad)
+			printf("Texture reused: %s \n", path.c_str());
 		return texture_map_[path];
 	}
 
@@ -1118,7 +1158,8 @@ Texture * MaterialManager::LoadTexture(std::string path) {
 			return NULL;
 		}
 
-		printf("Texture loaded: %s \n", path.c_str());
+		if (engine.settings.showTextureLoad)
+			printf("Texture loaded: %s \n", path.c_str());
 
 		ColorFormat format;
 		switch (texChannels) {
