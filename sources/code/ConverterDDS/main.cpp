@@ -1,6 +1,7 @@
 #include <fstream>
 #include <string>
 #include <iostream>
+#include <cstring>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_DXT_IMPLEMENTATION
@@ -23,7 +24,7 @@ unsigned char *PadAlpha(unsigned char *in, int width, int height) {
     return out;
 }
 
-typedef unsigned long DWORD;
+typedef uint32_t DWORD;
 
 struct DDS_PIXELFORMAT {
 	DWORD dwSize = 32;
@@ -91,48 +92,61 @@ enum Compression {
 	C_BC7
 };
 
+typedef unsigned char uint8;
+
+void ExtractBlock(const unsigned char* inPtr, unsigned int width, unsigned char* colorBlock)
+  {
+    for (int j = 0; j < 4; j++)
+    {
+      memcpy(&colorBlock[j * 4 * 4], inPtr, 4 * 4);
+      inPtr += width * 4;
+    }
+  }
+
 void ConvertBC123(unsigned char *pixels, int width, int height, int bcnlevel, std::string path) {
 	// No Alpha
-	DDS_PIXELFORMAT outFormat;
-	outFormat.dwFlags = DDPF_FOURCC;
-	/*outFormat.dwRGBBitCount;
-	outFormat.dwRBitMask;
-	outFormat.dwGBitMask;
-	outFormat.dwBBitMask;
-	outFormat.dwABitMask;*/
-
 	DDSHeader outHeader;
+	std::memset(&outHeader, 0, sizeof(outHeader));
+	outHeader.dwSize = 124;
+	outHeader.ddspf.dwFlags = DDPF_FOURCC;
 	outHeader.dwFlags = DDSD_REQUIRED;
 	outHeader.dwHeight = height;
 	outHeader.dwWidth = width;
-	outHeader.dwDepth = 1;
+	outHeader.dwDepth = 0;
 	outHeader.dwCaps = DDSCAPS_TEXTURE;
-	outHeader.dwMipMapCount = 1;
+	outHeader.dwMipMapCount = 0;
 	bool alpha = false;
 	switch (bcnlevel) {
-	case 1:
-		outHeader.dwPitchOrLinearSize = width * height / 2;
-		outFormat.dwFourCC = FOURCC_DXT1;
+	default:
+	case 1: {
+		outHeader.dwPitchOrLinearSize = width * height;
+		outHeader.ddspf.dwFourCC = FOURCC_DXT1;
 		break;
+	}
 	case 2:
 		outHeader.dwPitchOrLinearSize = width * height;
-		outFormat.dwFourCC = FOURCC_DXT3;
+		outHeader.ddspf.dwFourCC = FOURCC_DXT3;
 		break;
 	case 3:
 		outHeader.dwPitchOrLinearSize = width * height;
-		outFormat.dwFourCC = FOURCC_DXT5;
+		outHeader.ddspf.dwFourCC = FOURCC_DXT5;
 		break;
 	}
-	outHeader.ddspf = outFormat;
+	char mark[] = {'G', 'R', 'I', 'N', 'D', 'S', 'T', 'O', 'N', 'E'};
+	std::memcpy(&outHeader.dwReserved1, mark, sizeof(mark));
 
 	int wq = width / 4;
 	int hq = height / 4;
 	unsigned char *outData = new unsigned char[outHeader.dwPitchOrLinearSize];
+	unsigned char block[64];
 	// TODO: Pad if non multiple of 4
-	for (int i = 0; i < hq; i++) {
-		for (int j = 0; j < wq; j++) {
-			int pos = i * hq + j;
-			stb_compress_dxt_block(outData + (pos * 8), pixels + (pos * 16 * 4), false, STB_DXT_NORMAL);
+	for (int j = 0; j < hq; j++) {
+		unsigned char *ptr = pixels + j * 4 * width * 4;
+		for (int i = 0; i < wq; i++) {
+			int pos = j * wq + i;
+			ExtractBlock(ptr, width, block);
+			stb_compress_dxt_block(outData + pos * 8, block, false, STB_DXT_DITHER);
+			ptr += 4 * 4;
 		}
 	}
 
@@ -245,7 +259,7 @@ int main() {
 	
 	std::string path = "normal.png";
     int texWidth, texHeight, texChannels;
-    stbi_uc *pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, 2);
+    stbi_uc *pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, 4);
     if (!pixels) {
         printf("Texture failed to load!: %s \nPress enter to exit. ", path.c_str());
 		std::cin.get();
@@ -259,9 +273,9 @@ int main() {
     }*/
 
     std::string outpath = "out.dds";
-    ConvertBCn(fixedPixels, texWidth, texHeight, C_BC5, outpath);
+    ConvertBCn(fixedPixels, texWidth, texHeight, C_BC1, outpath);
 	delete[] fixedPixels;
 
-	std::cout << "Conversion Complete. Press Enter to exit. ";
-	std::cin.get();
+	std::cout << "Conversion Complete. Press Enter to exit.\n";
+	//std::cin.get();
 }
