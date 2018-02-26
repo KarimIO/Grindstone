@@ -36,7 +36,7 @@ GLTexture::GLTexture(TextureCreateInfo ci) {
 
 		gl3wGetProcAddress("GL_COMPRESSED_RGBA_S3TC_DXT1_EXT");
 
-		for (uint32_t i = 0; i < ci.mipmaps + 1; i++) {
+		for (uint32_t i = 0; i <= ci.mipmaps; i++) {
 			unsigned int size = ((width + 3) / 4)*((height + 3) / 4)*blockSize;
 			glCompressedTexImage2D(GL_TEXTURE_2D, i, format, width, height,
 				0, size, buffer);
@@ -45,14 +45,12 @@ GLTexture::GLTexture(TextureCreateInfo ci) {
 			width /= 2;
 			height /= 2;
 		}
-
-		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 
-	/*glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);*/
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 }

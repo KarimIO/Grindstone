@@ -42,7 +42,7 @@ void ConvertBC123(unsigned char *pixels, int width, int height, Compression comp
 	outHeader.dwWidth = width;
 	outHeader.dwDepth = 0;
 	outHeader.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_MIPMAP;
-	outHeader.dwMipMapCount = std::log2(width)-2;
+	outHeader.dwMipMapCount = std::log2(width)+1;
 	bool alpha = false;
 	switch (compression) {
 	default:
@@ -65,13 +65,21 @@ void ConvertBC123(unsigned char *pixels, int width, int height, Compression comp
 
 	bool useMip = outHeader.dwMipMapCount > 1;
 	int size = outHeader.dwPitchOrLinearSize;
-	size = useMip ? 1.5 * size : size;
+	int mipsize = size;
+	unsigned int blockSize = (outHeader.ddspf.dwFourCC == FOURCC_DXT1) ? 8 : 16;
+	for (int i = 1; i < outHeader.dwMipMapCount; i++) {
+		mipsize = ((width + 3) / 4)*((height + 3) / 4)*blockSize;
+		size += mipsize;
+	}
+	
 	unsigned char *outData = new unsigned char[size];
 	int offset = 0;
 	unsigned char block[64];
 	unsigned char *mip = pixels;
+
+	int minlev = outHeader.dwMipMapCount - 2;
 	
-	for (int k = 0; k < outHeader.dwMipMapCount; k++) {
+	for (int k = 0; k < minlev; k++) {
 		for (int j = 0; j < height; j+=4) {
 			unsigned char *ptr = mip + j * width * 4;
 			for (int i = 0; i < width; i+=4) {
@@ -86,12 +94,15 @@ void ConvertBC123(unsigned char *pixels, int width, int height, Compression comp
 		
 		unsigned char *temp_mip = mip;
 
-		if (k-1 != outHeader.dwMipMapCount)
+		if (k-1 != minlev)
 			mip = CreateMip(temp_mip, width, height);
 
 		if (k != 0)
 			delete[] temp_mip;
 	}
+
+	memcpy(&outData[offset], &outData[offset], 8); // 2x2
+	memcpy(&outData[offset], &outData[offset], 8); // 1x1
 
 	std::ofstream out(path, std::ios::binary);
 	if (out.fail()) {
