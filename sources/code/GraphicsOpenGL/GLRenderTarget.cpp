@@ -15,7 +15,8 @@ GLRenderTarget::GLRenderTarget(RenderTargetCreateInfo *create_info, uint32_t cou
         glBindTexture(GL_TEXTURE_2D, handles_[i]);
 
         GLint internalFormat;
-        TranslateColorFormats(create_info[i].format, format_[i], internalFormat);
+        bool isCompressed;
+        TranslateColorFormats(create_info[i].format, isCompressed, format_[i], internalFormat);
 
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, create_info[i].width, create_info[i].height, 0, format_[i], GL_FLOAT, 0);
 

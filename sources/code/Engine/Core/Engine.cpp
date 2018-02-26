@@ -335,9 +335,9 @@ void Engine::Render() {
 			graphics_wrapper_->Clear();
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			materialManager.DrawDeferredImmediate();
-			materialManager.DrawUnlitImmediate();
+			/*materialManager.DrawUnlitImmediate();
 			graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
-			materialManager.DrawForwardImmediate();
+			materialManager.DrawForwardImmediate();*/
 			graphics_wrapper_->SwapBuffer();
 		}
 	}
@@ -357,7 +357,7 @@ void Engine::Run() {
 		physicsSystem.Update(GetUpdateTimeDelta());
 		transformSystem.Update();
 
-		if (settings.enableShadows)
+		if (!settings.debugNoLighting && settings.enableShadows)
 			lightSystem.DrawShadows();
 
 		glm::mat4 pv;

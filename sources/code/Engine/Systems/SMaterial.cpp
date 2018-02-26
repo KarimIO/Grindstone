@@ -1060,17 +1060,42 @@ void MaterialManager::RemoveMeshFromMaterial(MaterialReference ref, Mesh *mesh) 
 	}
 }
 
-struct DDSHeader {
-	unsigned int width;
-	unsigned int height;
-	unsigned int linearSize;
-	unsigned int mipMapCount;
-	unsigned int fourCC;
+typedef uint32_t DWORD;
+
+struct DDS_PIXELFORMAT {
+	DWORD dwSize = 32;
+	DWORD dwFlags;
+	DWORD dwFourCC;
+	DWORD dwRGBBitCount;
+	DWORD dwRBitMask;
+	DWORD dwGBitMask;
+	DWORD dwBBitMask;
+	DWORD dwABitMask;
 };
 
-#define FOURCC_DXT1 0x31545844
-#define FOURCC_DXT3 0x33545844
-#define FOURCC_DXT5 0x35545844
+struct DDSHeader {
+	DWORD           dwSize = 124;
+	DWORD           dwFlags;
+	DWORD           dwHeight;
+	DWORD           dwWidth;
+	DWORD           dwPitchOrLinearSize;
+	DWORD           dwDepth;
+	DWORD           dwMipMapCount;
+	DWORD           dwReserved1[11];
+	DDS_PIXELFORMAT ddspf;
+	DWORD           dwCaps;
+	DWORD           dwCaps2;
+	DWORD           dwCaps3;
+	DWORD           dwCaps4;
+	DWORD           dwReserved2;
+};
+
+#define MAKEFOURCC(c0, c1, c2, c3)	((DWORD)(char)(c0) | ((DWORD)(char)(c1) << 8) | \
+									((DWORD)(char)(c2) << 16) | ((DWORD)(char)(c3) << 24))
+#define MAKEFOURCCS(str)			MAKEFOURCC(str[0], str[1], str[2], str[3])
+#define FOURCC_DXT1 MAKEFOURCC('D', 'X', 'T', '1')
+#define FOURCC_DXT3 MAKEFOURCC('D', 'X', 'T', '3')
+#define FOURCC_DXT5 MAKEFOURCC('D', 'X', 'T', '5')
 
 
 Texture *MaterialManager::PreLoadTexture(std::string path) {
@@ -1091,19 +1116,22 @@ Texture * MaterialManager::LoadTexture(std::string path) {
 		return texture_map_[path];
 	}
 
-	const char *filecode = path.c_str() + path.size() - 4;
+	const char *filecode = path.c_str() + path.size() - 3;
 	if (strncmp(filecode, "dds", 3) == 0) {
 		// DDS
 		FILE *fp;
 
 		fp = fopen(path.c_str(), "rb");
-		if (fp == NULL)
+		if (fp == NULL) {
+			printf("Texture failed to load!: %s \n", path.c_str());
 			return 0;
+		}
 
 		// Verify file code in header
 		char filecode[4];
 		fread(filecode, 1, 4, fp);
 		if (strncmp(filecode, "DDS ", 4) != 0) {
+			printf("Texture failed to load!: %s \n", path.c_str());
 			fclose(fp);
 			return 0;
 		}
@@ -1114,15 +1142,15 @@ Texture * MaterialManager::LoadTexture(std::string path) {
 
 		unsigned char * buffer;
 		unsigned int bufsize;
-		bufsize = header.mipMapCount > 1 ? header.linearSize * 2 : header.linearSize;
+		bufsize = header.dwMipMapCount > 1 ? header.dwPitchOrLinearSize * 2 : header.dwPitchOrLinearSize;
 		buffer = (unsigned char*)malloc(bufsize * sizeof(unsigned char));
 		fread(buffer, 1, bufsize, fp);
 
 		fclose(fp);
 
-		unsigned int components = (header.fourCC == FOURCC_DXT1) ? 3 : 4;
+		unsigned int components = (header.ddspf.dwFourCC == FOURCC_DXT1) ? 3 : 4;
 		ColorFormat format;
-		switch (header.fourCC) {
+		switch (header.ddspf.dwFourCC) {
 		case FOURCC_DXT1:
 			format = FORMAT_COLOR_RGBA_DXT1;
 			break;
@@ -1134,20 +1162,26 @@ Texture * MaterialManager::LoadTexture(std::string path) {
 			break;
 		default:
 			free(buffer);
+			printf("Invalid FourCC in texture: %s \n", path.c_str());
 			return 0;
 		}
 
 		TextureCreateInfo createInfo;
 		createInfo.data = buffer;
-		createInfo.mipmaps = header.mipMapCount;
+		createInfo.mipmaps = header.dwMipMapCount;
 		createInfo.format = format;
-		createInfo.width = header.width;
-		createInfo.height = header.height;
+		createInfo.width = header.dwWidth;
+		createInfo.height = header.dwHeight;
 
 		Texture *t = graphics_wrapper_->CreateTexture(createInfo);
 		texture_map_[path] = t;
 
+		if (engine.settings.showTextureLoad)
+			printf("Texture loaded: %s \n", path.c_str());
+
 		stbi_image_free(buffer);
+
+		return t;
 	}
 	else {
 		int texWidth, texHeight, texChannels;
@@ -1157,9 +1191,6 @@ Texture * MaterialManager::LoadTexture(std::string path) {
 			printf("Texture failed to load!: %s \n", path.c_str());
 			return NULL;
 		}
-
-		if (engine.settings.showTextureLoad)
-			printf("Texture loaded: %s \n", path.c_str());
 
 		ColorFormat format;
 		switch (texChannels) {
@@ -1189,6 +1220,9 @@ Texture * MaterialManager::LoadTexture(std::string path) {
 		texture_map_[path] = t;
 
 		stbi_image_free(pixels);
+
+		if (engine.settings.showTextureLoad)
+			printf("Texture loaded: %s \n", path.c_str());
 
 		return t;	
 	}

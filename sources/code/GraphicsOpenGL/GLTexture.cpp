@@ -17,11 +17,12 @@ GLTexture::GLTexture(TextureCreateInfo ci) {
 
 	glBindTexture(GL_TEXTURE_2D, handle);
 
-	if (ci.mipmaps == 0) {
-		GLint internalFormat;
-		GLenum format;
-		TranslateColorFormats(ci.format, format, internalFormat);
+	GLint internalFormat;
+	GLenum format;
+	bool isCompressed;
+	TranslateColorFormats(ci.format, isCompressed, format, internalFormat);
 
+	if (!isCompressed) {
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, ci.width, ci.height, 0, format, GL_UNSIGNED_BYTE, ci.data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
@@ -35,23 +36,7 @@ GLTexture::GLTexture(TextureCreateInfo ci) {
 
 		gl3wGetProcAddress("GL_COMPRESSED_RGBA_S3TC_DXT1_EXT");
 
-		unsigned int format;
-		switch (ci.format) {
-		case FORMAT_COLOR_RGBA_DXT1:
-			format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-			break;
-		case FORMAT_COLOR_RGBA_DXT3:
-			format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-			break;
-		case FORMAT_COLOR_RGBA_DXT5:
-			format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-			break;
-		default:
-			free(buffer);
-			return;
-		}
-
-		for (uint32_t i = 0; i < ci.mipmaps; i++) {
+		for (uint32_t i = 0; i < ci.mipmaps + 1; i++) {
 			unsigned int size = ((width + 3) / 4)*((height + 3) / 4)*blockSize;
 			glCompressedTexImage2D(GL_TEXTURE_2D, i, format, width, height,
 				0, size, buffer);
@@ -78,7 +63,8 @@ GLTexture::GLTexture(CubemapCreateInfo ci) {
 
 	GLint internalFormat;
 	GLenum format;
-	TranslateColorFormats(ci.format, format, internalFormat);
+	bool isCompressed;
+	TranslateColorFormats(ci.format, isCompressed, format, internalFormat);
 
 	for (size_t i = 0; i < 6; i++) {
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, ci.width, ci.height, 0, format, GL_UNSIGNED_BYTE, ci.data[i]);
@@ -132,8 +118,23 @@ uint32_t GLTextureBindingLayout::GetNumSubBindings() {
 	return subbindingCount;
 }
 
-void TranslateColorFormats(ColorFormat inFormat, GLenum &format, GLint &internalFormat) {
+void TranslateColorFormats(ColorFormat inFormat, bool &isCompressed, GLenum &format, GLint &internalFormat) {
+
+	isCompressed = false;
+
 	switch (inFormat) {
+	case FORMAT_COLOR_RGBA_DXT1:
+		format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+		isCompressed = true;
+		break;
+	case FORMAT_COLOR_RGBA_DXT3:
+		format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+		isCompressed = true;
+		break;
+	case FORMAT_COLOR_RGBA_DXT5:
+		format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+		isCompressed = true;
+		break;
 	case FORMAT_COLOR_R8:
 		internalFormat = GL_RED;
 		format = GL_RED;
