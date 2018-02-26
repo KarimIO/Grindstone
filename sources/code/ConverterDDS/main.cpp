@@ -94,14 +94,29 @@ enum Compression {
 
 typedef unsigned char uint8;
 
-void ExtractBlock(const unsigned char* inPtr, unsigned int width, unsigned char* colorBlock)
-  {
-    for (int j = 0; j < 4; j++)
-    {
-      memcpy(&colorBlock[j * 4 * 4], inPtr, 4 * 4);
-      inPtr += width * 4;
-    }
-  }
+void ExtractBlock(const unsigned char* inPtr, unsigned int width, unsigned char* colorBlock) {
+	for (int j = 0; j < 4; j++) {
+		memcpy(&colorBlock[j * 4 * 4], inPtr, 4 * 4);
+		inPtr += width * 4;
+	}
+}
+
+unsigned char *CreateMip(unsigned char *pixel, int width, int height) {
+	int size = width * height;
+	unsigned char *mip = new unsigned char[size * 4];
+	int dst = -1;
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
+			int src = (i * width * 4 + j * 2) * 4;
+			mip[++dst]	= pixel[src];
+			mip[++dst]  = pixel[src + 1];
+			mip[++dst]  = pixel[src + 2];
+			mip[++dst]  = pixel[src + 3];
+		}
+	}
+
+	return mip;
+}
 
 void ConvertBC123(unsigned char *pixels, int width, int height, int bcnlevel, std::string path) {
 	// No Alpha
@@ -109,25 +124,25 @@ void ConvertBC123(unsigned char *pixels, int width, int height, int bcnlevel, st
 	std::memset(&outHeader, 0, sizeof(outHeader));
 	outHeader.dwSize = 124;
 	outHeader.ddspf.dwFlags = DDPF_FOURCC;
-	outHeader.dwFlags = DDSD_REQUIRED;
+	outHeader.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_LINEARSIZE | DDSD_MIPMAPCOUNT;
 	outHeader.dwHeight = height;
 	outHeader.dwWidth = width;
 	outHeader.dwDepth = 0;
-	outHeader.dwCaps = DDSCAPS_TEXTURE;
-	outHeader.dwMipMapCount = 0;
+	outHeader.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_MIPMAP;
+	outHeader.dwMipMapCount = std::log2(width)-2;
 	bool alpha = false;
 	switch (bcnlevel) {
 	default:
-	case 1: {
-		outHeader.dwPitchOrLinearSize = width * height;
+	case C_BC1: {
+		outHeader.dwPitchOrLinearSize = width * height / 2;
 		outHeader.ddspf.dwFourCC = FOURCC_DXT1;
 		break;
 	}
-	case 2:
+	case C_BC2:
 		outHeader.dwPitchOrLinearSize = width * height;
 		outHeader.ddspf.dwFourCC = FOURCC_DXT3;
 		break;
-	case 3:
+	case C_BC3:
 		outHeader.dwPitchOrLinearSize = width * height;
 		outHeader.ddspf.dwFourCC = FOURCC_DXT5;
 		break;
@@ -135,30 +150,45 @@ void ConvertBC123(unsigned char *pixels, int width, int height, int bcnlevel, st
 	char mark[] = {'G', 'R', 'I', 'N', 'D', 'S', 'T', 'O', 'N', 'E'};
 	std::memcpy(&outHeader.dwReserved1, mark, sizeof(mark));
 
-	int wq = width / 4;
-	int hq = height / 4;
-	unsigned char *outData = new unsigned char[outHeader.dwPitchOrLinearSize];
+	bool useMip = outHeader.dwMipMapCount > 1;
+	int size = outHeader.dwPitchOrLinearSize;
+	size = useMip ? 1.5 * size : size;
+	unsigned char *outData = new unsigned char[size];
+	int offset = 0;
 	unsigned char block[64];
-	// TODO: Pad if non multiple of 4
-	for (int j = 0; j < hq; j++) {
-		unsigned char *ptr = pixels + j * 4 * width * 4;
-		for (int i = 0; i < wq; i++) {
-			int pos = j * wq + i;
-			ExtractBlock(ptr, width, block);
-			stb_compress_dxt_block(outData + pos * 8, block, false, STB_DXT_DITHER);
-			ptr += 4 * 4;
+	unsigned char *mip = pixels;
+	
+	for (int k = 0; k < outHeader.dwMipMapCount; k++) {
+		for (int j = 0; j < height; j+=4) {
+			unsigned char *ptr = mip + j * width * 4;
+			for (int i = 0; i < width; i+=4) {
+				ExtractBlock(ptr, width, block);
+				stb_compress_dxt_block(&outData[offset], block, false, STB_DXT_DITHER);
+				ptr += 4 * 4;
+				offset += 8;
+			}
 		}
+		width /= 2;
+		height /= 2;
+		
+		unsigned char *temp_mip = mip;
+
+		if (k-1 != outHeader.dwMipMapCount)
+			mip = CreateMip(temp_mip, width, height);
+
+		if (k != 0)
+			delete[] temp_mip;
 	}
 
-	std::ofstream out("out.dds", std::ios::binary);
+	std::ofstream out(path, std::ios::binary);
 	if (out.fail()) {
-		std::cerr << "Failed to output to out.dds\n";
+		std::cerr << "Failed to output to " + path + ".\n";
 		return;
 	}
 	const char filecode[4] = { 'D', 'D', 'S', ' ' };
 	out.write((const char *)&filecode, sizeof(char) * 4);
 	out.write((const char *)&outHeader, sizeof(outHeader));
-	out.write((const char *)outData, outHeader.dwPitchOrLinearSize);
+	out.write((const char *)outData, size);
 	out.close();
 
 	delete[] outData;

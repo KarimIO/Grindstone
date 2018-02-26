@@ -1060,7 +1060,9 @@ void MaterialManager::RemoveMeshFromMaterial(MaterialReference ref, Mesh *mesh) 
 	}
 }
 
-//typedef uint32_t DWORD;
+#ifndef _MSC_VER
+	typedef uint32_t DWORD;
+#endif
 
 struct DDS_PIXELFORMAT {
 	DWORD dwSize = 32;
