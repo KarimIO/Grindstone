@@ -299,13 +299,6 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 	graphics_wrapper_ = gw;
 	geometry_system = gc;
 
-	UniformBufferBindingCreateInfo deffubbci;
-	deffubbci.binding = 0;
-	deffubbci.shaderLocation = "UniformBufferObject";
-	deffubbci.size = sizeof(DefferedUBO);
-	deffubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	engine.deffubb = graphics_wrapper_->CreateUniformBufferBinding(deffubbci);
-
 	UniformBufferBindingCreateInfo lightubbci;
 	lightubbci.binding = 1;
 	lightubbci.shaderLocation = "Light";

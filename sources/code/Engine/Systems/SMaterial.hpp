@@ -34,7 +34,8 @@ enum PARAM_TYPE {
 enum ProgramType {
 	TYPE_UNLIT = 0,
 	TYPE_OPAQUE,
-	TYPE_TRANSPARENT
+	TYPE_TRANSPARENT,
+	TYPE_MISC
 };
 
 bool readFile(const std::string& filename, std::vector<char>& outputfile);
@@ -113,6 +114,7 @@ public:
 	std::vector<PipelineContainer> pipelines_deferred;
 	std::vector<PipelineContainer> pipelines_unlit;
 	std::vector<PipelineContainer> pipelines_forward;
+	std::vector<PipelineContainer> pipelines_misc;
 };
 
 struct GeometryInfo {
@@ -127,8 +129,8 @@ struct GeometryInfo {
 class MaterialManager {
 public:
 	RenderPassContainer *Initialize(GraphicsWrapper *gw);
-	PipelineReference CreatePipeline(GeometryInfo geometry_info, std::string pipelineName);
-	MaterialReference CreateMaterial(GeometryInfo geometry_info, std::string shaderName);
+	PipelineReference CreatePipeline(GeometryInfo geometry_info, std::string pipelineName, bool miscPipeline = false);
+	MaterialReference CreateMaterial(GeometryInfo geometry_info, std::string shaderName, bool miscPipeline = false);
 	MaterialReference PreLoadMaterial(GeometryInfo geometry_info, std::string shaderName);
 
 	Texture * LoadCubemap(std::string path);

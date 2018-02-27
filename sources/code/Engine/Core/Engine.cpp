@@ -286,7 +286,28 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	gbuffer_ci.depth_target = depth_image_;
 	gbuffer_ci.render_pass = nullptr;
 	gbuffer_ = graphics_wrapper_->CreateFramebuffer(gbuffer_ci);
+	
+	UniformBufferBindingCreateInfo deffubbci;
+	deffubbci.binding = 0;
+	deffubbci.shaderLocation = "UniformBufferObject";
+	deffubbci.size = sizeof(DefferedUBO);
+	deffubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	deffubb = graphics_wrapper_->CreateUniformBufferBinding(deffubbci);
 
+	UniformBufferCreateInfo deffubci;
+	deffubci.isDynamic = false;
+	deffubci.size = sizeof(DefferedUBO);
+	deffubci.binding = engine.deffubb;
+	deffUBO = graphics_wrapper_->CreateUniformBuffer(deffubci);
+
+	skybox_.geometry_info_.vbds_count = 1;
+	skybox_.geometry_info_.vbds = &planeVBD;
+	skybox_.geometry_info_.vads_count = 1;
+	skybox_.geometry_info_.vads = &planeVAD;
+	skybox_.geometry_info_.ubb_count = 1;
+	skybox_.geometry_info_.ubbs = &deffubb;
+	skybox_.Initialize(&materialManager, graphics_wrapper_);
+	
 	return true;
 }
 
@@ -320,10 +341,13 @@ void Engine::Render() {
 			graphics_wrapper_->BindDefaultFramebuffer(true);
 			gbuffer_->BindRead();
 			graphics_wrapper_->CopyToDepthBuffer(depth_image_);
+			graphics_wrapper_->BindDefaultFramebuffer(false);
 
-			// Unlit
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-			materialManager.DrawUnlitImmediate();	
+			// Unlit
+			deffUBO->Bind();
+			skybox_.Render();
+			//materialManager.DrawUnlitImmediate();	
 			// Forward
 			//graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
 			//materialManager.DrawForwardImmediate();
@@ -334,7 +358,8 @@ void Engine::Render() {
 			graphics_wrapper_->BindDefaultFramebuffer(true);
 			graphics_wrapper_->Clear();
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-			materialManager.DrawDeferredImmediate();
+			skybox_.Render();
+			//materialManager.DrawDeferredImmediate();
 			/*materialManager.DrawUnlitImmediate();
 			graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
 			materialManager.DrawForwardImmediate();*/
@@ -365,6 +390,18 @@ void Engine::Run() {
 			CCamera *cam = &cameraSystem.components[0];
 			materialManager.resetDraws();
 			//geometry_system.Cull(cam);
+
+			Entity *ent = &engine.entities[cam->entityID];
+			glm::vec3 eyePos = engine.transformSystem.components[ent->components_[COMPONENT_TRANSFORM]].position;
+			deffUBOBuffer.eyePos.x = eyePos.x;
+			deffUBOBuffer.eyePos.y = eyePos.y;
+			deffUBOBuffer.eyePos.z = eyePos.z;
+			deffUBOBuffer.invProj = glm::inverse(cam->GetProjection());
+			deffUBOBuffer.view = glm::inverse(cam->GetView());
+
+			deffUBOBuffer.resolution.x = settings.resolutionX;
+			deffUBOBuffer.resolution.y = settings.resolutionY;
+			deffUBO->UpdateUniformBuffer(&deffUBOBuffer);
 
 			pv = cam->GetProjection() * cam->GetView();
 			ubo->UpdateUniformBuffer(&pv);

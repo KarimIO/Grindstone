@@ -13,9 +13,6 @@ class RenderPathDeferred : public RenderPath {
 	VertexArrayObject *planeVAO;
 	VertexBuffer *planeVBO;
 
-	UniformBuffer *deffUBO;
-	DefferedUBO deffUBOBuffer;
-
 	Texture *m_cubemap;
 	TextureBinding *m_cubemapBinding;
 

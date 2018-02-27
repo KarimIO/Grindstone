@@ -35,6 +35,7 @@
 #include "Systems/SMaterial.hpp"
 #include "Systems/SGameplay.hpp"
 #include "Systems/SUI.hpp"
+#include "../Systems/Skybox.hpp"
 
 #include "PostProcess/PostPipeline.hpp"
 enum RenderPathType {
@@ -66,6 +67,9 @@ class Entity;
 
 class Engine {
 public:
+	DefferedUBO deffUBOBuffer;
+	UniformBuffer *deffUBO;
+
 	VertexBindingDescription planeVBD;
 	VertexAttributeDescription planeVAD;
 	UniformBufferBinding *deffubb;
@@ -104,6 +108,7 @@ public:
 
 	GraphicsPipeline *pipeline;
 	int debugMode;
+	Skybox skybox_;
 	MaterialManager materialManager;
 	STransform transformSystem;
 	SCamera cameraSystem;

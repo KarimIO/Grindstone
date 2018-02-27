@@ -79,6 +79,8 @@ public:
 	bool in_textures;
 	unsigned int texture_id = 0;
 
+	bool misc;
+
 	RenderPassContainer *render_pass;
 	PipelineContainer *pipeline;
 
@@ -202,29 +204,31 @@ public:
 		}
 		else if (state == SHADER_JSON_TYPE) {
 			std::string type = str;
-			if (type == "unlit") {
-				render_pass->pipelines_unlit.push_back(PipelineContainer());
-				pipeline = &render_pass->pipelines_unlit.back();
-				pipeline->type = TYPE_UNLIT;
-				pipeline->reference.pipeline_type = TYPE_UNLIT;
-				pipeline->reference.renderpass = 0;
-				pipeline->reference.pipeline = render_pass->pipelines_unlit.size() - 1;
-			}
-			else if (type == "opaque") {
-				render_pass->pipelines_deferred.push_back(PipelineContainer());
-				pipeline = &render_pass->pipelines_deferred.back();
-				pipeline->type = TYPE_OPAQUE;
-				pipeline->reference.pipeline_type = TYPE_OPAQUE;
-				pipeline->reference.renderpass = 0;
-				pipeline->reference.pipeline = render_pass->pipelines_deferred.size() - 1;
-			}
-			else if (type == "transparent") {
-				render_pass->pipelines_forward.push_back(PipelineContainer());
-				pipeline = &render_pass->pipelines_forward.back();
-				pipeline->type = TYPE_TRANSPARENT;
-				pipeline->reference.pipeline_type = TYPE_TRANSPARENT;
-				pipeline->reference.renderpass = 0;
-				pipeline->reference.pipeline = render_pass->pipelines_forward.size() - 1;
+			if (!misc) {
+				if (type == "unlit") {
+					render_pass->pipelines_unlit.push_back(PipelineContainer());
+					pipeline = &render_pass->pipelines_unlit.back();
+					pipeline->type = TYPE_UNLIT;
+					pipeline->reference.pipeline_type = TYPE_UNLIT;
+					pipeline->reference.renderpass = 0;
+					pipeline->reference.pipeline = render_pass->pipelines_unlit.size() - 1;
+				}
+				else if (type == "opaque") {
+					render_pass->pipelines_deferred.push_back(PipelineContainer());
+					pipeline = &render_pass->pipelines_deferred.back();
+					pipeline->type = TYPE_OPAQUE;
+					pipeline->reference.pipeline_type = TYPE_OPAQUE;
+					pipeline->reference.renderpass = 0;
+					pipeline->reference.pipeline = render_pass->pipelines_deferred.size() - 1;
+				}
+				else if (type == "transparent") {
+					render_pass->pipelines_forward.push_back(PipelineContainer());
+					pipeline = &render_pass->pipelines_forward.back();
+					pipeline->type = TYPE_TRANSPARENT;
+					pipeline->reference.pipeline_type = TYPE_TRANSPARENT;
+					pipeline->reference.renderpass = 0;
+					pipeline->reference.pipeline = render_pass->pipelines_forward.size() - 1;
+				}
 			}
 			state = SHADER_JSON_MAIN;
 		}
@@ -735,18 +739,29 @@ void MaterialManager::generateProgram(GeometryInfo geometry_info, PipelineContai
 	}
 }
 
-PipelineReference MaterialManager::CreatePipeline(GeometryInfo geometry_info, std::string pipelineName) {
+PipelineReference MaterialManager::CreatePipeline(GeometryInfo geometry_info, std::string pipelineName, bool miscPipeline) {
 	if (pipeline_map_.find(pipelineName) != pipeline_map_.end())
 		return pipeline_map_[pipelineName];
 
+	PipelineContainer *pipeline;
+	if (miscPipeline) {
+		render_passes_[0].pipelines_misc.push_back(PipelineContainer());
+		pipeline = &render_passes_[0].pipelines_misc.back();
+		pipeline->type = TYPE_MISC;
+		pipeline->reference.pipeline_type = TYPE_MISC;
+		pipeline->reference.renderpass = 0;
+		pipeline->reference.pipeline = render_passes_[0].pipelines_misc.size() - 1;
+	}
+
 	rapidjson::Reader reader;
 	ShaderJSONHandler handler;
+	handler.pipeline = pipeline;
+	handler.misc = miscPipeline;
 	handler.path = pipelineName;
 	handler.dir = pipelineName.substr(0, pipelineName.find_last_of("/") + 1);
 	handler.render_pass = &render_passes_[0];
 	
 	std::ifstream input(pipelineName);
-	PipelineContainer *pipeline;
 	if (input.fail()) {
 		std::cerr << "Input failed for " << pipelineName << "\nError: " << strerror(errno) << "\n";
 		return PipelineReference();
@@ -758,7 +773,7 @@ PipelineReference MaterialManager::CreatePipeline(GeometryInfo geometry_info, st
 
 		pipeline = handler.pipeline;
 	}
-	
+
 	generateProgram(geometry_info, *pipeline);
 	pipeline_map_[pipelineName] = pipeline->reference;
 
@@ -770,7 +785,7 @@ void MaterialManager::LoadPreloaded() {
 }
 
 MaterialReference MaterialManager::PreLoadMaterial(GeometryInfo geometry_info, std::string path) {
-	if (material_map_.find(path) != material_map_.end())
+	/*if (material_map_.find(path) != material_map_.end())
 		return material_map_[path];
 
 	std::ifstream input(path);
@@ -832,7 +847,7 @@ MaterialReference MaterialManager::PreLoadMaterial(GeometryInfo geometry_info, s
 	pipeline->materials.emplace_back(ref, textureBinding);
 
 	material_map_[path] = ref;
-	return ref;
+	return ref;*/
 }
 
 Texture *MaterialManager::LoadCubemap(std::string path) {
@@ -930,7 +945,7 @@ std::istream& safeGetline(std::istream& is, std::string& t)
     }
 }
 
-MaterialReference MaterialManager::CreateMaterial(GeometryInfo geometry_info, std::string path) {
+MaterialReference MaterialManager::CreateMaterial(GeometryInfo geometry_info, std::string path, bool miscPipeline) {
 	if (material_map_.find(path) != material_map_.end()) {
 		return material_map_[path];
 	}
@@ -957,7 +972,7 @@ MaterialReference MaterialManager::CreateMaterial(GeometryInfo geometry_info, st
 		shader_param = shader_param.substr(p+2);
 	}
 
-	PipelineReference pipeline_reference = CreatePipeline(geometry_info, shader_param);
+	PipelineReference pipeline_reference = CreatePipeline(geometry_info, shader_param, miscPipeline);
 	PipelineContainer *pipeline = GetPipeline(pipeline_reference);
 
 	std::vector<SingleTextureBind> textures;
@@ -1024,6 +1039,8 @@ PipelineContainer * MaterialManager::GetPipeline(PipelineReference ref) {
 		return &render_passes_[ref.renderpass].pipelines_unlit[ref.pipeline];
 	else if (ref.pipeline_type == TYPE_OPAQUE)
 		return &render_passes_[ref.renderpass].pipelines_deferred[ref.pipeline];
+	else if (ref.pipeline_type == TYPE_MISC)
+		return &render_passes_[ref.renderpass].pipelines_misc[ref.pipeline];
 	else
 		return &render_passes_[ref.renderpass].pipelines_forward[ref.pipeline];
 }
@@ -1033,6 +1050,8 @@ Material * MaterialManager::GetMaterial(MaterialReference ref) {
 		return &render_passes_[ref.pipelineReference.renderpass].pipelines_unlit[ref.pipelineReference.pipeline].materials[ref.material];
 	else if (ref.pipelineReference.pipeline_type == TYPE_OPAQUE)
 		return &render_passes_[ref.pipelineReference.renderpass].pipelines_deferred[ref.pipelineReference.pipeline].materials[ref.material];
+	else if (ref.pipelineReference.pipeline_type == TYPE_MISC)
+		return &render_passes_[ref.pipelineReference.renderpass].pipelines_misc[ref.pipelineReference.pipeline].materials[ref.material];
 	else
 		return &render_passes_[ref.pipelineReference.renderpass].pipelines_forward[ref.pipelineReference.pipeline].materials[ref.material];
 }
@@ -1391,6 +1410,10 @@ MaterialManager::~MaterialManager() {
 		}
 
 		for (const auto &pipeline : render_pass.pipelines_unlit) {
+			graphics_wrapper_->DeleteGraphicsPipeline(pipeline.program);
+		}
+
+		for (const auto &pipeline : render_pass.pipelines_misc) {
 			graphics_wrapper_->DeleteGraphicsPipeline(pipeline.program);
 		}
 

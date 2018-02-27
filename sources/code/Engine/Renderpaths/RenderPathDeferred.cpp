@@ -72,12 +72,6 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_) {
 		1.0, -1.0,
 	};
 
-	UniformBufferCreateInfo deffubci;
-	deffubci.isDynamic = false;
-	deffubci.size = sizeof(DefferedUBO);
-	deffubci.binding = engine.deffubb;
-	deffUBO = graphics_wrapper_->CreateUniformBuffer(deffubci);
-
 	VertexBufferCreateInfo planeVboCI;
 	planeVboCI.binding = &engine.planeVBD;
 	planeVboCI.bindingCount = 1;
@@ -174,20 +168,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_) {
 }
 
 void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
-	CCamera *cam = &engine.cameraSystem.components[0];
-	Entity *ent = &engine.entities[cam->entityID];
-	glm::vec3 eyePos = engine.transformSystem.components[ent->components_[COMPONENT_TRANSFORM]].position;
-	deffUBOBuffer.eyePos.x = eyePos.x;
-	deffUBOBuffer.eyePos.y = eyePos.y;
-	deffUBOBuffer.eyePos.z = eyePos.z;
-	deffUBOBuffer.invProj = glm::inverse(cam->GetProjection());
-	deffUBOBuffer.view = glm::inverse(cam->GetView());
-
-	deffUBOBuffer.resolution.x = engine.settings.resolutionX;
-	deffUBOBuffer.resolution.y = engine.settings.resolutionY;
-	deffUBO->UpdateUniformBuffer(&deffUBOBuffer);
-
-	deffUBO->Bind();
+	engine.deffUBO->Bind();
 	engine.graphics_wrapper_->BindVertexArrayObject(planeVAO);
 	
 	engine.lightSystem.m_pointLightPipeline->Bind();
