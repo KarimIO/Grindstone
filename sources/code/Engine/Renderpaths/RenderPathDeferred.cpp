@@ -60,37 +60,10 @@ Texture *LoadCubemap(std::string path, GraphicsWrapper *m_graphics_wrapper_) {
 	return t;
 }
 
-RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_) {
+RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_, VertexArrayObject *plane_vao) {
 	m_graphics_wrapper_ = graphics_wrapper_;
 
-	float planeVerts[4 * 6] = {
-		-1.0, -1.0,
-		1.0, -1.0,
-		-1.0,  1.0,
-		1.0,  1.0,
-		-1.0,  1.0,
-		1.0, -1.0,
-	};
-
-	VertexBufferCreateInfo planeVboCI;
-	planeVboCI.binding = &engine.planeVBD;
-	planeVboCI.bindingCount = 1;
-	planeVboCI.attribute = &engine.planeVAD;
-	planeVboCI.attributeCount = 1;
-	planeVboCI.content = planeVerts;
-	planeVboCI.count = 6;
-	planeVboCI.size = sizeof(float) * 6 * 2;
-
-	VertexArrayObjectCreateInfo vaci;
-	vaci.vertexBuffer = planeVBO;
-	vaci.indexBuffer = nullptr;
-	planeVAO = graphics_wrapper_->CreateVertexArrayObject(vaci);
-	planeVBO = graphics_wrapper_->CreateVertexBuffer(planeVboCI);
-
-	vaci.vertexBuffer = planeVBO;
-	vaci.indexBuffer = nullptr;
-	planeVAO->BindResources(vaci);
-	planeVAO->Unbind();
+	plane_vao_ = plane_vao;
 
 	m_cubemap = LoadCubemap("../assets/cubemaps/glacier_", m_graphics_wrapper_);
 
@@ -169,7 +142,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_) {
 
 void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 	engine.deffUBO->Bind();
-	engine.graphics_wrapper_->BindVertexArrayObject(planeVAO);
+	engine.graphics_wrapper_->BindVertexArrayObject(plane_vao_);
 	
 	engine.lightSystem.m_pointLightPipeline->Bind();
 	for (auto &light : engine.lightSystem.pointLights) {

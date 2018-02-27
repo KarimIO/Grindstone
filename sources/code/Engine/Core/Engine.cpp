@@ -67,7 +67,7 @@ bool Engine::Initialize() {
 		//renderPath = (RenderPath *)new RenderPathForward(graphics_wrapper_, &geometry_system);
 		break;
 	case RENDERPATH_DEFERRED:
-		renderPath = (RenderPath *)new RenderPathDeferred(graphics_wrapper_);
+		renderPath = (RenderPath *)new RenderPathDeferred(graphics_wrapper_, planeVAO);
 		break;
 	};
 
@@ -300,13 +300,42 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	deffubci.binding = engine.deffubb;
 	deffUBO = graphics_wrapper_->CreateUniformBuffer(deffubci);
 
+	float planeVerts[4 * 6] = {
+		-1.0, -1.0,
+		1.0, -1.0,
+		-1.0,  1.0,
+		1.0,  1.0,
+		-1.0,  1.0,
+		1.0, -1.0,
+	};
+
+    VertexBufferCreateInfo planeVboCI;
+	planeVboCI.binding = &planeVBD;
+	planeVboCI.bindingCount = 1;
+	planeVboCI.attribute = &planeVAD;
+	planeVboCI.attributeCount = 1;
+	planeVboCI.content = planeVerts;
+	planeVboCI.count = 6;
+	planeVboCI.size = sizeof(float) * 6 * 2;
+
+	VertexArrayObjectCreateInfo planeVAOCi;
+	planeVAOCi.vertexBuffer = planeVBO;
+	planeVAOCi.indexBuffer = nullptr;
+	planeVAO = graphics_wrapper_->CreateVertexArrayObject(planeVAOCi);
+	planeVBO = graphics_wrapper_->CreateVertexBuffer(planeVboCI);
+
+    planeVAOCi.vertexBuffer = planeVBO;
+	planeVAOCi.indexBuffer = nullptr;
+	planeVAO->BindResources(planeVAOCi);
+	planeVAO->Unbind();
+	
 	skybox_.geometry_info_.vbds_count = 1;
 	skybox_.geometry_info_.vbds = &planeVBD;
 	skybox_.geometry_info_.vads_count = 1;
 	skybox_.geometry_info_.vads = &planeVAD;
 	skybox_.geometry_info_.ubb_count = 1;
 	skybox_.geometry_info_.ubbs = &deffubb;
-	skybox_.Initialize(&materialManager, graphics_wrapper_);
+	skybox_.Initialize(&materialManager, graphics_wrapper_, planeVAO, planeVBO);
 	
 	return true;
 }

@@ -5,7 +5,8 @@
 
 class Skybox {
 public:
-    void Initialize(MaterialManager *material_system, GraphicsWrapper *graphics_wrapper);
+    void Initialize(MaterialManager *material_system, GraphicsWrapper *graphics_wrapper, VertexArrayObject *plane_vao_, VertexBuffer *plane_vbo_);
+    void SetMaterial(std::string path);
     void Render();
     GeometryInfo geometry_info_;
 private:
@@ -13,8 +14,10 @@ private:
     MaterialManager *material_system_;
     GraphicsWrapper *graphics_wrapper_;
 
-	VertexArrayObject *planeVAO;
-	VertexBuffer *planeVBO;
+    VertexArrayObject *plane_vao_;
+	VertexBuffer *plane_vbo_;
+
+    bool enabled_;
 };
 
 #endif // !SKYBOX_HPP

@@ -70,6 +70,8 @@ public:
 	DefferedUBO deffUBOBuffer;
 	UniformBuffer *deffUBO;
 
+	VertexArrayObject *planeVAO;
+	VertexBuffer *planeVBO;
 	VertexBindingDescription planeVBD;
 	VertexAttributeDescription planeVAD;
 	UniformBufferBinding *deffubb;

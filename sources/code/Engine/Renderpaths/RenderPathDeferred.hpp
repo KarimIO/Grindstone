@@ -10,15 +10,14 @@
 class RenderPathDeferred : public RenderPath {
 	GraphicsWrapper *m_graphics_wrapper_;
 
-	VertexArrayObject *planeVAO;
-	VertexBuffer *planeVBO;
+	VertexArrayObject *plane_vao_;
 
 	Texture *m_cubemap;
 	TextureBinding *m_cubemapBinding;
 
 	GraphicsPipeline *m_iblPipeline;
 public:
-	RenderPathDeferred(GraphicsWrapper *graphics_wrapper_);
+	RenderPathDeferred(GraphicsWrapper *graphics_wrapper_, VertexArrayObject *plane_vao);
 	void Draw(Framebuffer *);
 };
 

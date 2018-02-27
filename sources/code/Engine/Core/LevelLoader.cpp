@@ -20,6 +20,7 @@ enum {
 	KEY_MAP_NAME = 0,
 	KEY_MAP_VERSION,
 	KEY_MAP_NUMENTS,
+	KEY_SKY_MATERIAL,
 	KEY_MAP_NUMCUBE,
 	KEY_MAP_CUBEMAPS,
 	KEY_ENTITY_NAME,
@@ -253,6 +254,10 @@ public:
 				componentType = COMPONENT_GAME_LOGIC;
 			}
 		}
+		else if (keyType == KEY_SKY_MATERIAL) {
+			std::cout << "Skybox set to: " << str << std::endl;
+			engine.skybox_.SetMaterial(str);
+		}
 		else if (keyType == KEY_COMPONENT_PATH) {
 			if (componentType == COMPONENT_GEOMETRY) {
 				engine.geometry_system.GetSystem(subType)->LoadGeometry(componentID, ("../assets/" + std::string(str)).c_str());
@@ -281,6 +286,9 @@ public:
 			}
 			else if (std::string(str) == "version") {
 				// Ignored for now
+			}
+			else if (std::string(str) == "skymaterial") {
+				keyType = KEY_SKY_MATERIAL;
 			}
 			else if (std::string(str) == "numentities") {
 				keyType = KEY_MAP_NUMENTS;
