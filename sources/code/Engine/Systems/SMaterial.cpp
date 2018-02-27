@@ -743,7 +743,7 @@ PipelineReference MaterialManager::CreatePipeline(GeometryInfo geometry_info, st
 	if (pipeline_map_.find(pipelineName) != pipeline_map_.end())
 		return pipeline_map_[pipelineName];
 
-	PipelineContainer *pipeline;
+	PipelineContainer *pipeline = nullptr;
 	if (miscPipeline) {
 		render_passes_[0].pipelines_misc.push_back(PipelineContainer());
 		pipeline = &render_passes_[0].pipelines_misc.back();
@@ -848,6 +848,7 @@ MaterialReference MaterialManager::PreLoadMaterial(GeometryInfo geometry_info, s
 
 	material_map_[path] = ref;
 	return ref;*/
+	return MaterialReference();
 }
 
 Texture *MaterialManager::LoadCubemap(std::string path) {

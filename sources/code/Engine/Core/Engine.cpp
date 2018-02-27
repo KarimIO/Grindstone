@@ -341,7 +341,7 @@ void Engine::Render() {
 			graphics_wrapper_->BindDefaultFramebuffer(true);
 			gbuffer_->BindRead();
 			graphics_wrapper_->CopyToDepthBuffer(depth_image_);
-			graphics_wrapper_->BindDefaultFramebuffer(false);
+			graphics_wrapper_->BindDefaultFramebuffer(true);
 
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			// Unlit
@@ -358,11 +358,12 @@ void Engine::Render() {
 			graphics_wrapper_->BindDefaultFramebuffer(true);
 			graphics_wrapper_->Clear();
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-			skybox_.Render();
-			//materialManager.DrawDeferredImmediate();
+			materialManager.DrawDeferredImmediate();
 			/*materialManager.DrawUnlitImmediate();
 			graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
 			materialManager.DrawForwardImmediate();*/
+			deffUBO->Bind();
+			skybox_.Render();
 			graphics_wrapper_->SwapBuffer();
 		}
 	}

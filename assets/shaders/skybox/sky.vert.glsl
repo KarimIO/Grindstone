@@ -12,7 +12,7 @@ in vec3 vertexPosition;
 out vec3 fragCoord;
 
 void main() {
-    gl_Position =  gl_Position = vec4(((gl_VertexID & 1) << 2) - 1, (gl_VertexID & 2) * 2 - 1, 0.0, 1.0);
+    gl_Position = vec4(((gl_VertexID & 1) << 2) - 1, (gl_VertexID & 2) * 2 - 1, 1.0, 1.0);
     //vec4(vertexPosition, 1);
     fragCoord = mat3(ubo.invView) * (ubo.invProj * gl_Position).xyz;
     // vec4(gl_Position * ubo.invProj).xyz;

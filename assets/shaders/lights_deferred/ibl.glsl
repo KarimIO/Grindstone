@@ -138,7 +138,7 @@ void main() {
     vec3 refl = texture(environmentMap, r).rgb;
 
     vec3 ambientColor = vec3(0.9f, 0.96f, 1.0f) * 0.05f;
-	outColor = Specular.rgb * refl;
+	outColor = Specular.rgb * refl + Albedo * ambientColor;
 
 	/*vec3 V = normalize(ubo.eyePos - Position);
 
