@@ -662,17 +662,6 @@ void MaterialManager::generateProgram(GeometryInfo geometry_info, PipelineContai
 		container.program = graphics_wrapper_->CreateGraphicsPipeline(gpci);
 	}
 	{
-		GraphicsPipelineCreateInfo gpci;
-		gpci.scissorW = 512;
-		gpci.width = static_cast<float>(gpci.scissorW);
-		gpci.scissorH = 512;
-		gpci.height = static_cast<float>(gpci.scissorH);
-		gpci.renderPass = render_passes_[0].renderPass;
-		gpci.attributes = geometry_info.vads;
-		gpci.attributesCount = geometry_info.vads_count;
-		gpci.bindings = geometry_info.vbds;
-		gpci.bindingsCount = geometry_info.vbds_count;
-
 		int num_shaders = 0;
 		const int max_shaders = 5;
 		for (int i = 0; i < max_shaders; i++) {
@@ -681,55 +670,68 @@ void MaterialManager::generateProgram(GeometryInfo geometry_info, PipelineContai
 			}
 		}
 
-		std::vector<ShaderStageCreateInfo> stages;
-		stages.resize(num_shaders);
-		std::vector<char> files[max_shaders];
+		if (num_shaders > 0) {
+			GraphicsPipelineCreateInfo gpci;
+			gpci.scissorW = 512;
+			gpci.width = static_cast<float>(gpci.scissorW);
+			gpci.scissorH = 512;
+			gpci.height = static_cast<float>(gpci.scissorH);
+			gpci.renderPass = render_passes_[0].renderPass;
+			gpci.attributes = geometry_info.vads;
+			gpci.attributesCount = geometry_info.vads_count;
+			gpci.bindings = geometry_info.vbds;
+			gpci.bindingsCount = geometry_info.vbds_count;
+			
+			std::vector<ShaderStageCreateInfo> stages;
+			stages.resize(num_shaders);
+			std::vector<char> files[max_shaders];
 
-		num_shaders = 0;
-		for (int i = 0; i < max_shaders; i++) {
-			if (container.shadow_shader_paths[i] != "") {
-				stages[num_shaders].fileName = container.shadow_shader_paths[i].c_str();
-				if (!readFile(stages[num_shaders].fileName, files[num_shaders])) {
-					std::cerr << "Unable to load Shader!\n";
-					return;
+			num_shaders = 0;
+			for (int i = 0; i < max_shaders; i++) {
+				if (container.shadow_shader_paths[i] != "") {
+					stages[num_shaders].fileName = container.shadow_shader_paths[i].c_str();
+					if (!readFile(stages[num_shaders].fileName, files[num_shaders])) {
+						std::cerr << "Unable to load Shader!\n";
+						return;
+					}
+
+					stages[num_shaders].content = files[num_shaders].data();
+					stages[num_shaders].size = (uint32_t)files[num_shaders].size();
+					stages[num_shaders++].type = static_cast<ShaderStageType>(i);
 				}
-
-				stages[num_shaders].content = files[num_shaders].data();
-				stages[num_shaders].size = (uint32_t)files[num_shaders].size();
-				stages[num_shaders++].type = static_cast<ShaderStageType>(i);
 			}
-		}
 
-		std::vector<TextureSubBinding> bindings;
-		bindings.reserve(container.textureDescriptorTable.size());
-		for (auto &t : container.textureDescriptorTable) {
-			bindings.emplace_back(t.first.c_str(), t.second.texture_id);
-		}
+			std::vector<TextureSubBinding> bindings;
+			bindings.reserve(container.textureDescriptorTable.size());
+			for (auto &t : container.textureDescriptorTable) {
+				bindings.emplace_back(t.first.c_str(), t.second.texture_id);
+			}
 
-		int tbl_count;
-		if (bindings.size() > 0) {
-			TextureBindingLayoutCreateInfo tblci;
-			tblci.bindingLocation = 2;
-			tblci.bindings = bindings.data();
-			tblci.bindingCount = (uint32_t)bindings.size();
-			tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-			container.tbl = graphics_wrapper_->CreateTextureBindingLayout(tblci);
-			tbl_count = 1;
-		}
-		else {
-			container.tbl = nullptr;
-			tbl_count = 0;
-		}
+			int tbl_count;
+			if (bindings.size() > 0) {
+				TextureBindingLayoutCreateInfo tblci;
+				tblci.bindingLocation = 2;
+				tblci.bindings = bindings.data();
+				tblci.bindingCount = (uint32_t)bindings.size();
+				tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+				container.tbl = graphics_wrapper_->CreateTextureBindingLayout(tblci);
+				tbl_count = 1;
+			}
+			else {
+				container.tbl = nullptr;
+				tbl_count = 0;
+			}
 
-		gpci.shaderStageCreateInfos = stages.data();
-		gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
-		gpci.uniformBufferBindings = geometry_info.ubbs;
-		gpci.uniformBufferBindingCount = geometry_info.ubb_count;
-		gpci.textureBindings = &container.tbl;
-		gpci.textureBindingCount = tbl_count;
-		gpci.cullMode = CULL_BACK;
-		gpci.primitiveType = PRIM_TRIANGLES;
-		container.shadow_program = graphics_wrapper_->CreateGraphicsPipeline(gpci);
+			gpci.shaderStageCreateInfos = stages.data();
+			gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
+			gpci.uniformBufferBindings = geometry_info.ubbs;
+			gpci.uniformBufferBindingCount = geometry_info.ubb_count;
+			gpci.textureBindings = &container.tbl;
+			gpci.textureBindingCount = tbl_count;
+			gpci.cullMode = CULL_BACK;
+			gpci.primitiveType = PRIM_TRIANGLES;
+			container.shadow_program = graphics_wrapper_->CreateGraphicsPipeline(gpci);
+		}
 	}
 }
 

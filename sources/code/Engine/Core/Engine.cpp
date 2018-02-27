@@ -318,15 +318,15 @@ void Engine::Render() {
 			renderPath->Draw(gbuffer_);
 
 			graphics_wrapper_->BindDefaultFramebuffer(true);
-			/*gbuffer_->BindRead();
+			gbuffer_->BindRead();
 			graphics_wrapper_->CopyToDepthBuffer(depth_image_);
 
 			// Unlit
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			materialManager.DrawUnlitImmediate();	
 			// Forward
-			graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
-			materialManager.DrawForwardImmediate();*/
+			//graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
+			//materialManager.DrawForwardImmediate();
 
 			graphics_wrapper_->SwapBuffer();
 		}
