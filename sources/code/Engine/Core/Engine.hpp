@@ -36,6 +36,7 @@
 #include "Systems/SGameplay.hpp"
 #include "Systems/SUI.hpp"
 #include "../Systems/Skybox.hpp"
+#include "exception.hpp"
 
 #include "PostProcess/PostPipeline.hpp"
 enum RenderPathType {

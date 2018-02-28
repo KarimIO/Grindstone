@@ -539,7 +539,6 @@ bool readFile(const std::string& filename, std::vector<char>& outputfile) {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
 	if (!file.is_open()) {
-		std::cerr << "Failed to open file: " << filename.c_str() << "!\n";
 		return false;
 	}
 
@@ -624,8 +623,8 @@ void MaterialManager::generateProgram(GeometryInfo geometry_info, PipelineContai
 			if (container.shader_paths[i] != "") {
 				stages[num_shaders].fileName = container.shader_paths[i].c_str();
 				if (!readFile(stages[num_shaders].fileName, files[num_shaders])) {
-					std::cerr << "Unable to load Shader!\n";
-					return;
+					std::string warn = "Unable to load Shader!: " + std::string(stages[num_shaders].fileName) + "\n";
+					throw std::runtime_error(warn);
 				}
 
 				stages[num_shaders].content = files[num_shaders].data();
@@ -695,8 +694,8 @@ void MaterialManager::generateProgram(GeometryInfo geometry_info, PipelineContai
 				if (container.shadow_shader_paths[i] != "") {
 					stages[num_shaders].fileName = container.shadow_shader_paths[i].c_str();
 					if (!readFile(stages[num_shaders].fileName, files[num_shaders])) {
-						std::cerr << "Unable to load Shader!\n";
-						return;
+						std::string warn = "Unable to load Shader!: " + std::string(stages[num_shaders].fileName) + "\n";
+						throw std::runtime_error(warn);
 					}
 
 					stages[num_shaders].content = files[num_shaders].data();
@@ -763,8 +762,8 @@ PipelineReference MaterialManager::CreatePipeline(GeometryInfo geometry_info, st
 	
 	std::ifstream input(pipelineName);
 	if (input.fail()) {
-		std::cerr << "Input failed for " << pipelineName << "\nError: " << strerror(errno) << "\n";
-		return PipelineReference();
+		std::string warn = "Input failed for " + pipelineName + "\nError: " + strerror(errno) + "\n";
+		throw std::runtime_error(warn);
 	}
 	else {
 		rapidjson::IStreamWrapper isw(input);
@@ -872,15 +871,16 @@ Texture *MaterialManager::LoadCubemap(std::string path) {
 	for (int i = 0; i < 6; i++) {
 		createInfo.data[i] = stbi_load(facePaths[i].c_str(), &texWidth, &texHeight, &texChannels, 4);
 		if (!createInfo.data[i]) {
-			printf("Texture failed to load!: %s \n", facePaths[i].c_str());
 			for (int j = 0; j < i; j++) {
 				stbi_image_free(createInfo.data[j]);
 			}
+			std::string warn = "Texture failed to load!: " + facePaths[i] + " \n";
+			throw std::runtime_error(warn);
 			return NULL;
 		}
 	}
 
-	printf("Cubemap loaded: %s \n", path.c_str());
+	G_NOTIFY("Cubemap loaded: %s \n", path.c_str());
 
 	ColorFormat format;
 	switch (4) {
@@ -953,8 +953,8 @@ MaterialReference MaterialManager::CreateMaterial(GeometryInfo geometry_info, st
 
 	std::ifstream input(path);
 	if (!input.is_open()) {
-		std::cerr << "Failed to open material: " << path.c_str() << "!\n";
-		return MaterialReference();
+		std::string warning = std::string("Material failed to load: ") + path.c_str() + " \n";
+		throw std::runtime_error(warning.c_str());
 	}
 
 	if (engine.settings.showMaterialLoad)
@@ -988,7 +988,7 @@ MaterialReference MaterialManager::CreateMaterial(GeometryInfo geometry_info, st
 			value = line.substr(p+2);
 			auto it1 = pipeline->parameterDescriptorTable.find(parameter);
 			if (it1 != pipeline->parameterDescriptorTable.end()) {
-				std::cout << "Found Parameter: " << parameter << ": " << value << std::endl;
+				G_NOTIFY("Found Parameter %s:%s\n", parameter, value);
 			}
 			else {
 				auto it2 = pipeline->textureDescriptorTable.find(parameter);
@@ -1003,7 +1003,7 @@ MaterialReference MaterialManager::CreateMaterial(GeometryInfo geometry_info, st
 					textures[texture_id].address = texture_id;
 				}
 				else {
-					std::cout << "Invalid parameter " << parameter << std::endl;
+					G_WARNING("Invalid parameter %s.\n", parameter);
 				}
 			}
 		}
@@ -1212,7 +1212,8 @@ Texture * MaterialManager::LoadTexture(std::string path) {
 		stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 		texChannels = 4;
 		if (!pixels) {
-			printf("Texture failed to load!: %s \n", path.c_str());
+			std::string warning = std::string("Texture failed to load: ") + path.c_str() + " \n";
+			throw std::runtime_error(warning.c_str());
 			return NULL;
 		}
 

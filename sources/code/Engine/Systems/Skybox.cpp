@@ -1,6 +1,7 @@
 #include "Skybox.hpp"
 #include "SMaterial.hpp"
 #include <string>
+#include "../Core/exception.hpp"
 
 void Skybox::Initialize(MaterialManager *material_system, GraphicsWrapper *graphics_wrapper, VertexArrayObject *plane_vao, VertexBuffer *plane_vbo) {
     material_system_ = material_system;
@@ -14,7 +15,12 @@ void Skybox::Initialize(MaterialManager *material_system, GraphicsWrapper *graph
 
 void Skybox::SetMaterial(std::string path) {
 	enabled_ = true;
-	material = material_system_->CreateMaterial(geometry_info_, "../assets/" + path, true);
+	try {
+		material = material_system_->CreateMaterial(geometry_info_, "../assets/" + path, true);
+	} catch(std::runtime_error &e) {
+		enabled_ = false;
+		G_WARNING(e.what());
+	}
 }
 
 void Skybox::Render() {

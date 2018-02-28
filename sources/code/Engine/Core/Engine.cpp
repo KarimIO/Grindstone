@@ -376,9 +376,11 @@ void Engine::Render() {
 			// Unlit
 			materialManager.DrawUnlitImmediate();	
 			// Forward
-			//graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
-			//materialManager.DrawForwardImmediate();
-			//graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+			graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
+			ubo->Bind();
+			ubo2->Bind();
+			materialManager.DrawForwardImmediate();
+			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			deffUBO->Bind();
 			skybox_.Render();
 
