@@ -374,12 +374,13 @@ void Engine::Render() {
 
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			// Unlit
-			deffUBO->Bind();
-			skybox_.Render();
-			//materialManager.DrawUnlitImmediate();	
+			materialManager.DrawUnlitImmediate();	
 			// Forward
 			//graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
 			//materialManager.DrawForwardImmediate();
+			//graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+			deffUBO->Bind();
+			skybox_.Render();
 
 			graphics_wrapper_->SwapBuffer();
 		}
@@ -388,9 +389,10 @@ void Engine::Render() {
 			graphics_wrapper_->Clear();
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			materialManager.DrawDeferredImmediate();
-			/*materialManager.DrawUnlitImmediate();
+			materialManager.DrawUnlitImmediate();
 			graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
-			materialManager.DrawForwardImmediate();*/
+			materialManager.DrawForwardImmediate();
+			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			deffUBO->Bind();
 			skybox_.Render();
 			graphics_wrapper_->SwapBuffer();
