@@ -12,47 +12,89 @@
 #define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT            0x8C4F
 
 GLTexture::GLTexture(TextureCreateInfo ci) {
-	isCubemap = false;
-	glGenTextures(1, &handle);
+	if (ci.ddscube) {
+		isCubemap = true;
+		glGenTextures(1, &handle);
 
-	glBindTexture(GL_TEXTURE_2D, handle);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, handle);
 
-	GLint internalFormat;
-	GLenum format;
-	bool isCompressed;
-	TranslateColorFormats(ci.format, isCompressed, format, internalFormat);
-
-	if (!isCompressed) {
-		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, ci.width, ci.height, 0, format, GL_UNSIGNED_BYTE, ci.data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else {
-		unsigned int blockSize = (ci.format == FORMAT_COLOR_RGBA_DXT1) ? 8 : 16;
+		GLint internalFormat;
+		GLenum format;
+		bool is_compressed;
+		TranslateColorFormats(ci.format, is_compressed, format, internalFormat);
 
 		uint32_t width = ci.width;
 		uint32_t height = ci.height;
 
 		unsigned char *buffer = ci.data;
+		unsigned int blockSize = (ci.format == FORMAT_COLOR_RGBA_DXT1) ? 8 : 16;
 
-		gl3wGetProcAddress("GL_COMPRESSED_RGBA_S3TC_DXT1_EXT");
+			gl3wGetProcAddress("GL_COMPRESSED_RGBA_S3TC_DXT1_EXT");
 
-		for (uint32_t i = 0; i <= ci.mipmaps; i++) {
-			unsigned int size = ((width + 3) / 4)*((height + 3) / 4)*blockSize;
-			glCompressedTexImage2D(GL_TEXTURE_2D, i, format, width, height,
-				0, size, buffer);
+		for (size_t i = 0; i < 6; i++) {
 
-			buffer += size;
-			width /= 2;
-			height /= 2;
+			for (uint32_t j = 0; j <= ci.mipmaps; j++) {
+				unsigned int size = ((width + 3) / 4)*((height + 3) / 4)*blockSize;
+				glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, j, format, width, height,
+					0, size, buffer);
+
+				buffer += size;
+				width /= 2;
+				height /= 2;
+			}
 		}
+
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 	}
+	else {
+		isCubemap = false;
+		glGenTextures(1, &handle);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glBindTexture(GL_TEXTURE_2D, handle);
 
-	glBindTexture(GL_TEXTURE_2D, 0);
+		GLint internalFormat;
+		GLenum format;
+		bool is_compressed;
+		TranslateColorFormats(ci.format, is_compressed, format, internalFormat);
+
+		if (!is_compressed) {
+			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, ci.width, ci.height, 0, format, GL_UNSIGNED_BYTE, ci.data);
+			glGenerateMipmap(GL_TEXTURE_2D);
+		}
+		else {
+			unsigned int blockSize = (ci.format == FORMAT_COLOR_RGBA_DXT1) ? 8 : 16;
+
+			uint32_t width = ci.width;
+			uint32_t height = ci.height;
+
+			unsigned char *buffer = ci.data;
+
+			gl3wGetProcAddress("GL_COMPRESSED_RGBA_S3TC_DXT1_EXT");
+
+			for (uint32_t i = 0; i <= ci.mipmaps; i++) {
+				unsigned int size = ((width + 3) / 4)*((height + 3) / 4)*blockSize;
+				glCompressedTexImage2D(GL_TEXTURE_2D, i, format, width, height,
+					0, size, buffer);
+
+				buffer += size;
+				width /= 2;
+				height /= 2;
+			}
+		}
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
 }
 
 GLTexture::GLTexture(CubemapCreateInfo ci) {
@@ -63,8 +105,8 @@ GLTexture::GLTexture(CubemapCreateInfo ci) {
 
 	GLint internalFormat;
 	GLenum format;
-	bool isCompressed;
-	TranslateColorFormats(ci.format, isCompressed, format, internalFormat);
+	bool is_compressed;
+	TranslateColorFormats(ci.format, is_compressed, format, internalFormat);
 
 	for (size_t i = 0; i < 6; i++) {
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, ci.width, ci.height, 0, format, GL_UNSIGNED_BYTE, ci.data[i]);
@@ -118,22 +160,25 @@ uint32_t GLTextureBindingLayout::GetNumSubBindings() {
 	return subbindingCount;
 }
 
-void TranslateColorFormats(ColorFormat inFormat, bool &isCompressed, GLenum &format, GLint &internalFormat) {
+void TranslateColorFormats(ColorFormat inFormat, bool &is_compressed, GLenum &format, GLint &internalFormat) {
 
-	isCompressed = false;
+	is_compressed = false;
 
 	switch (inFormat) {
+	case FORMAT_COLOR_RGB_DXT1:
+		format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+		is_compressed = true;
 	case FORMAT_COLOR_RGBA_DXT1:
 		format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-		isCompressed = true;
+		is_compressed = true;
 		break;
 	case FORMAT_COLOR_RGBA_DXT3:
 		format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-		isCompressed = true;
+		is_compressed = true;
 		break;
 	case FORMAT_COLOR_RGBA_DXT5:
 		format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-		isCompressed = true;
+		is_compressed = true;
 		break;
 	case FORMAT_COLOR_R8:
 		internalFormat = GL_RED;

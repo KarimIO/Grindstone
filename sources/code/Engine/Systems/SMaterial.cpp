@@ -520,6 +520,44 @@ public:
 		return true;
 	}
 }; 
+#ifndef _MSC_VER
+	typedef uint32_t DWORD;
+#endif
+
+struct DDS_PIXELFORMAT {
+	DWORD dwSize = 32;
+	DWORD dwFlags;
+	DWORD dwFourCC;
+	DWORD dwRGBBitCount;
+	DWORD dwRBitMask;
+	DWORD dwGBitMask;
+	DWORD dwBBitMask;
+	DWORD dwABitMask;
+};
+
+struct DDSHeader {
+	DWORD           dwSize = 124;
+	DWORD           dwFlags;
+	DWORD           dwHeight;
+	DWORD           dwWidth;
+	DWORD           dwPitchOrLinearSize;
+	DWORD           dwDepth;
+	DWORD           dwMipMapCount;
+	DWORD           dwReserved1[11];
+	DDS_PIXELFORMAT ddspf;
+	DWORD           dwCaps;
+	DWORD           dwCaps2;
+	DWORD           dwCaps3;
+	DWORD           dwCaps4;
+	DWORD           dwReserved2;
+};
+
+#define MAKEFOURCC(c0, c1, c2, c3)	((DWORD)(char)(c0) | ((DWORD)(char)(c1) << 8) | \
+									((DWORD)(char)(c2) << 16) | ((DWORD)(char)(c3) << 24))
+#define MAKEFOURCCS(str)			MAKEFOURCC(str[0], str[1], str[2], str[3])
+#define FOURCC_DXT1 MAKEFOURCC('D', 'X', 'T', '1')
+#define FOURCC_DXT3 MAKEFOURCC('D', 'X', 'T', '3')
+#define FOURCC_DXT5 MAKEFOURCC('D', 'X', 'T', '5')
 
 ParameterDescriptor::ParameterDescriptor() {}
 ParameterDescriptor::ParameterDescriptor(std::string _desc, PARAM_TYPE _type, void * _ptr) {
@@ -851,66 +889,143 @@ MaterialReference MaterialManager::PreLoadMaterial(GeometryInfo geometry_info, s
 }
 
 Texture *MaterialManager::LoadCubemap(std::string path) {
+	/*if (texture_map_[path]) {
+		if (engine.settings.showTextureLoad)
+			printf("Texture reused: %s \n", path.c_str());
+		return texture_map_[path];
+	}*/
 
-	int d = path.find_last_of('.');
-	std::string ext = path.substr(d + 1);
-	path = path.substr(0, d);
+	const char *filecode = path.c_str() + path.size() - 3;
 
-	std::string facePaths[6];
-	facePaths[0] = path + "ft." + ext;
-	facePaths[1] = path + "bk." + ext;
-	facePaths[2] = path + "up." + ext;
-	facePaths[3] = path + "dn." + ext;
-	facePaths[4] = path + "rt." + ext;
-	facePaths[5] = path + "lf." + ext;
+	if (strncmp(filecode, "dds", 3) == 0) {
+		// DDS
+		FILE *fp;
 
-
-	CubemapCreateInfo createInfo;
-
-	int texWidth, texHeight, texChannels;
-	for (int i = 0; i < 6; i++) {
-		createInfo.data[i] = stbi_load(facePaths[i].c_str(), &texWidth, &texHeight, &texChannels, 4);
-		if (!createInfo.data[i]) {
-			for (int j = 0; j < i; j++) {
-				stbi_image_free(createInfo.data[j]);
-			}
-			std::string warn = "Texture failed to load!: " + facePaths[i] + " \n";
+		fp = fopen(path.c_str(), "rb");
+		if (fp == NULL) {
+			std::string warn = "Cubemap failed to load: " + path + " \n";
 			throw std::runtime_error(warn);
-			return NULL;
 		}
+
+		// Verify file code in header
+		char filecode[4];
+		fread(filecode, 1, 4, fp);
+		if (strncmp(filecode, "DDS ", 4) != 0) {
+			fclose(fp);
+			std::string warn = "Invalid DDS cubemap: " + path + " \n";
+			throw std::runtime_error(warn);
+		}
+
+		DDSHeader header;
+
+		fread(&header, 124, 1, fp);
+
+		unsigned char * buffer;
+		unsigned int bufsize;
+		bufsize = header.dwMipMapCount > 1 ? header.dwPitchOrLinearSize * 2 : header.dwPitchOrLinearSize;
+		bufsize *= 6;
+		buffer = (unsigned char*)malloc(bufsize * sizeof(unsigned char));
+		fread(buffer, 1, bufsize, fp);
+
+		fclose(fp);
+
+		unsigned int components = (header.ddspf.dwFourCC == FOURCC_DXT1) ? 3 : 4;
+		ColorFormat format;
+		switch (header.ddspf.dwFourCC) {
+		case FOURCC_DXT1:
+			format = FORMAT_COLOR_RGBA_DXT1;
+			break;
+		case FOURCC_DXT3:
+			format = FORMAT_COLOR_RGBA_DXT3;
+			break;
+		case FOURCC_DXT5:
+			format = FORMAT_COLOR_RGBA_DXT5;
+			break;
+		default:
+			free(buffer);
+			std::string warn = "Invalid FourCC in cubemap: " + path + " \n";
+			throw std::runtime_error(warn);
+		}
+
+		TextureCreateInfo createInfo;
+		createInfo.data = buffer;
+		createInfo.mipmaps = header.dwMipMapCount;
+		createInfo.format = format;
+		createInfo.width = header.dwWidth;
+		createInfo.height = header.dwHeight;
+		createInfo.ddscube = true;
+
+		Texture *t = graphics_wrapper_->CreateTexture(createInfo);
+		texture_map_[path] = t;
+
+		if (engine.settings.showTextureLoad)
+			printf("Cubemap loaded: %s \n", path.c_str());
+
+		stbi_image_free(buffer);
+
+		return t;
 	}
+	else {
+		int d = path.find_last_of('.');
+		std::string ext = path.substr(d + 1);
+		path = path.substr(0, d);
 
-	G_NOTIFY("Cubemap loaded: %s \n", path.c_str());
+		std::string facePaths[6];
+		facePaths[0] = path + "ft." + ext;
+		facePaths[1] = path + "bk." + ext;
+		facePaths[2] = path + "up." + ext;
+		facePaths[3] = path + "dn." + ext;
+		facePaths[4] = path + "rt." + ext;
+		facePaths[5] = path + "lf." + ext;
 
-	ColorFormat format;
-	switch (4) {
-	case 1:
-		format = FORMAT_COLOR_R8;
-		break;
-	case 2:
-		format = FORMAT_COLOR_R8G8;
-		break;
-	case 3:
-		format = FORMAT_COLOR_R8G8B8;
-		break;
-	default:
-	case 4:
-		format = FORMAT_COLOR_R8G8B8A8;
-		break;
+
+		CubemapCreateInfo createInfo;
+
+		int texWidth, texHeight, texChannels;
+		for (int i = 0; i < 6; i++) {
+			createInfo.data[i] = stbi_load(facePaths[i].c_str(), &texWidth, &texHeight, &texChannels, 4);
+			if (!createInfo.data[i]) {
+				for (int j = 0; j < i; j++) {
+					stbi_image_free(createInfo.data[j]);
+				}
+				std::string warn = "Texture failed to load!: " + facePaths[i] + " \n";
+				throw std::runtime_error(warn);
+				return NULL;
+			}
+		}
+
+		G_NOTIFY("Cubemap loaded: %s \n", path.c_str());
+
+		ColorFormat format;
+		switch (4) {
+		case 1:
+			format = FORMAT_COLOR_R8;
+			break;
+		case 2:
+			format = FORMAT_COLOR_R8G8;
+			break;
+		case 3:
+			format = FORMAT_COLOR_R8G8B8;
+			break;
+		default:
+		case 4:
+			format = FORMAT_COLOR_R8G8B8A8;
+			break;
+		}
+
+		createInfo.format = format;
+		createInfo.mipmaps = 0;
+		createInfo.width = texWidth;
+		createInfo.height = texHeight;
+
+		Texture *t = graphics_wrapper_->CreateCubemap(createInfo);
+
+		for (int i = 0; i < 6; i++) {
+			stbi_image_free(createInfo.data[i]);
+		}
+
+		return t;
 	}
-
-	createInfo.format = format;
-	createInfo.mipmaps = 0;
-	createInfo.width = texWidth;
-	createInfo.height = texHeight;
-
-	Texture *t = graphics_wrapper_->CreateCubemap(createInfo);
-
-	for (int i = 0; i < 6; i++) {
-		stbi_image_free(createInfo.data[i]);
-	}
-
-	return t;
 }
 
 std::istream& safeGetline(std::istream& is, std::string& t)
@@ -1082,46 +1197,6 @@ void MaterialManager::RemoveMeshFromMaterial(MaterialReference ref, Mesh *mesh) 
 	}
 }
 
-#ifndef _MSC_VER
-	typedef uint32_t DWORD;
-#endif
-
-struct DDS_PIXELFORMAT {
-	DWORD dwSize = 32;
-	DWORD dwFlags;
-	DWORD dwFourCC;
-	DWORD dwRGBBitCount;
-	DWORD dwRBitMask;
-	DWORD dwGBitMask;
-	DWORD dwBBitMask;
-	DWORD dwABitMask;
-};
-
-struct DDSHeader {
-	DWORD           dwSize = 124;
-	DWORD           dwFlags;
-	DWORD           dwHeight;
-	DWORD           dwWidth;
-	DWORD           dwPitchOrLinearSize;
-	DWORD           dwDepth;
-	DWORD           dwMipMapCount;
-	DWORD           dwReserved1[11];
-	DDS_PIXELFORMAT ddspf;
-	DWORD           dwCaps;
-	DWORD           dwCaps2;
-	DWORD           dwCaps3;
-	DWORD           dwCaps4;
-	DWORD           dwReserved2;
-};
-
-#define MAKEFOURCC(c0, c1, c2, c3)	((DWORD)(char)(c0) | ((DWORD)(char)(c1) << 8) | \
-									((DWORD)(char)(c2) << 16) | ((DWORD)(char)(c3) << 24))
-#define MAKEFOURCCS(str)			MAKEFOURCC(str[0], str[1], str[2], str[3])
-#define FOURCC_DXT1 MAKEFOURCC('D', 'X', 'T', '1')
-#define FOURCC_DXT3 MAKEFOURCC('D', 'X', 'T', '3')
-#define FOURCC_DXT5 MAKEFOURCC('D', 'X', 'T', '5')
-
-
 Texture *MaterialManager::PreLoadTexture(std::string path) {
 	if (texture_map_[path]) {
 		if (engine.settings.showTextureLoad)
@@ -1196,6 +1271,7 @@ Texture * MaterialManager::LoadTexture(std::string path) {
 		createInfo.format = format;
 		createInfo.width = header.dwWidth;
 		createInfo.height = header.dwHeight;
+		createInfo.ddscube = false;
 
 		Texture *t = graphics_wrapper_->CreateTexture(createInfo);
 		texture_map_[path] = t;
@@ -1240,6 +1316,7 @@ Texture * MaterialManager::LoadTexture(std::string path) {
 		createInfo.data = pixels;
 		createInfo.width = texWidth;
 		createInfo.height = texHeight;
+		createInfo.ddscube = false;
 
 		Texture *t = graphics_wrapper_->CreateTexture(createInfo);
 		texture_map_[path] = t;

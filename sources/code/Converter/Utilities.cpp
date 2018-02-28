@@ -52,3 +52,8 @@ bool CopyFileTo(std::string path, std::string to) {
 	dst << src.rdbuf();
 	return true;
 }
+
+std::string SwapExtension(std::string path, std::string ext) {
+	size_t p = path.find_last_of(".");
+	return path.substr(0, p+1) + ext;
+}

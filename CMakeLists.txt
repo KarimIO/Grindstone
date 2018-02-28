@@ -23,7 +23,6 @@ endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )
 
 add_subdirectory(sources/code/Engine)
 add_subdirectory(sources/code/Converter)
-add_subdirectory(sources/code/ConverterDDS)
 
 option(USE_OPENGL "Should OpenGL be compiled?" ON)
 

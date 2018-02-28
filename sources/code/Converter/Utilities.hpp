@@ -5,5 +5,6 @@
 
 bool CopyFileTo(std::string path, std::string to);
 bool CreateFolder(const char * path);
+std::string SwapExtension(std::string path, std::string ext);
 
 #endif

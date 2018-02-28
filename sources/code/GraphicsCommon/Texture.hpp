@@ -31,6 +31,7 @@ struct TextureCreateInfo {
 	unsigned char *data;
 	uint32_t width, height;
 	uint16_t mipmaps;
+	bool ddscube;
 	ColorFormat format;
 };
 

@@ -56,11 +56,6 @@ void SwitchSlashes(std::string &path) {
 	}
 }
 
-std::string SwapExtension(std::string path, std::string ext) {
-	size_t p = path.find_last_of(".");
-	return path.substr(0, p+1) + ext;
-}
-
 void InitMaterials(bool skeletalMaterials, std::string folder_name, std::string path,
 	uint32_t num_materials, aiMaterial **materials, std::vector<std::string> &mat_names) {
 	std::string finalDir = path;
@@ -95,7 +90,7 @@ void InitMaterials(bool skeletalMaterials, std::string folder_name, std::string 
 				std::string name = FullPath.substr(FullPath.find_last_of("/") + 1);
 				name = SwapExtension(name, "dds");
 				std::string finaloutpath = outPath + name;
-				ConvertTexture(finalDir + FullPath, finaloutpath, C_BC1);
+				ConvertTexture(finalDir + FullPath, false, finaloutpath, C_BC1);
 				newMat.albedoPath = name;
 			}
 		}
@@ -107,7 +102,7 @@ void InitMaterials(bool skeletalMaterials, std::string folder_name, std::string 
 				std::string name = FullPath.substr(FullPath.find_last_of("/") + 1);
 				name = SwapExtension(name, "dds");
 				std::string finaloutpath = outPath + name;
-				ConvertTexture(finalDir + FullPath, finaloutpath);
+				ConvertTexture(finalDir + FullPath, false, finaloutpath);
 				newMat.normalPath = name;
 			}
 		}
@@ -118,7 +113,7 @@ void InitMaterials(bool skeletalMaterials, std::string folder_name, std::string 
 				std::string name = FullPath.substr(FullPath.find_last_of("/") + 1);
 				name = SwapExtension(name, "dds");
 				std::string finaloutpath = outPath + name;
-				ConvertTexture(finalDir + FullPath, finaloutpath);
+				ConvertTexture(finalDir + FullPath, false, finaloutpath);
 				newMat.normalPath = name;
 			}
 		}
@@ -130,7 +125,7 @@ void InitMaterials(bool skeletalMaterials, std::string folder_name, std::string 
 				std::string name = FullPath.substr(FullPath.find_last_of("/") + 1);
 				name = SwapExtension(name, "dds");
 				std::string finaloutpath = outPath + name;
-				ConvertTexture(finalDir + FullPath, finaloutpath);
+				ConvertTexture(finalDir + FullPath, false, finaloutpath);
 				newMat.specularPath = name;
 			}
 		}
@@ -142,7 +137,7 @@ void InitMaterials(bool skeletalMaterials, std::string folder_name, std::string 
 				std::string name = FullPath.substr(FullPath.find_last_of("/") + 1);
 				name = SwapExtension(name, "dds");
 				std::string finaloutpath = outPath + name;
-				ConvertTexture(finalDir + FullPath, finaloutpath);
+				ConvertTexture(finalDir + FullPath, false, finaloutpath);
 				newMat.roughnessPath = name;
 			}
 		}

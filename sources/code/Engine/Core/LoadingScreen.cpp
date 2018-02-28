@@ -109,6 +109,7 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 	createInfo.data = pixels;
 	createInfo.width = texWidth;
 	createInfo.height = texHeight;
+	createInfo.ddscube = false;
 
 	texture_ = graphics_wrapper_->CreateTexture(createInfo);
 
