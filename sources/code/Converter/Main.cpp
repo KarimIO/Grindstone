@@ -17,9 +17,39 @@ int main(int argc, char* argv[]) {
 	std::vector<std::string> paths;
 	// Check the number of parameters
 	if (argc < 2) {
-		std::cout << "Enter path to file: ";
-		paths.resize(1);
-		std::getline(std::cin, paths[0]);
+		std::cout << "Enter your command list. Use -c before any cubemap, -t before a texture, and -m before a model: ";
+		std::string handle;
+		std::getline(std::cin, handle);
+		
+		std::vector<std::string> tokens;
+		unsigned int pos = handle.find(' ');
+		unsigned int prev = 0;
+
+		while (pos != std::string::npos && pos < handle.size()) {
+			std::string inst = handle.substr(prev, pos - prev);
+			tokens.push_back(inst);
+			prev = pos + 1;
+
+			pos = handle.find(' ', prev);
+		}
+
+		std::string inst = handle.substr(prev, ((pos < handle.size()) ? pos : handle.size()) - prev);
+		tokens.push_back(inst);
+
+		for (int i = 0; i < tokens.size() - 1; i += 2) {
+			if (strcmp("-c", tokens[i].c_str()) == 0) {
+				types.push_back(OUTPUT_CUBEMAP);
+				paths.push_back(tokens[i + 1]);
+			}
+			else if (strcmp("-t", tokens[i].c_str()) == 0) {
+				types.push_back(OUTPUT_TEXTURE);
+				paths.push_back(tokens[i + 1]);
+			}
+			else if (strcmp("-m", tokens[i].c_str()) == 0) {
+				types.push_back(OUTPUT_MODEL);
+				paths.push_back(tokens[i + 1]);
+			}
+		}
 	}
 	else {
 		for (int i = 1; i < argc - 1; i+=2) {
@@ -61,7 +91,8 @@ int main(int argc, char* argv[]) {
 	}
 
 #ifdef _WIN32
-	system("pause");
+	std::cout << "Done. Press enter to quit!" << std::endl;
+	std::cin.get();
 #endif
 	return 0;
 }

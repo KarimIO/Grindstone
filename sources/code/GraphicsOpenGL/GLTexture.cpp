@@ -23,8 +23,6 @@ GLTexture::GLTexture(TextureCreateInfo ci) {
 		bool is_compressed;
 		TranslateColorFormats(ci.format, is_compressed, format, internalFormat);
 
-		uint32_t width = ci.width;
-		uint32_t height = ci.height;
 
 		unsigned char *buffer = ci.data;
 		unsigned int blockSize = (ci.format == FORMAT_COLOR_RGBA_DXT1) ? 8 : 16;
@@ -32,6 +30,8 @@ GLTexture::GLTexture(TextureCreateInfo ci) {
 			gl3wGetProcAddress("GL_COMPRESSED_RGBA_S3TC_DXT1_EXT");
 
 		for (size_t i = 0; i < 6; i++) {
+			uint32_t width = ci.width;
+			uint32_t height = ci.height;
 
 			for (uint32_t j = 0; j <= ci.mipmaps; j++) {
 				unsigned int size = ((width + 3) / 4)*((height + 3) / 4)*blockSize;

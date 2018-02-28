@@ -207,10 +207,10 @@ bool ConvertTexture(std::string input, bool is_cubemap, std::string output, Comp
 		std::string ext = input.substr(p);
 		path[0] = pre + "_ft" + ext;
 		path[1] = pre + "_bk" + ext;
-		path[2] = pre + "_lf" + ext;
-		path[3] = pre + "_rt" + ext;
-		path[4] = pre + "_up" + ext;
-		path[5] = pre + "_dn" + ext;
+		path[2] = pre + "_up" + ext;
+		path[3] = pre + "_dn" + ext;
+		path[4] = pre + "_rt" + ext;
+		path[5] = pre + "_lf" + ext;
 	}
 	else {
 		path = new std::string[1];
