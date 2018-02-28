@@ -47,7 +47,7 @@ bin/*
 !bin/readme.md
 .vscode/*
 assets/
-!assets/cubemaps/glacier_*
+!assets/cubemaps/glacier*
 !assets/materials/insphere/*
 !assets/materials/sphere/*
 !assets/scenes/terrain.json
