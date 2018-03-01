@@ -123,6 +123,7 @@ public:
 		int resolutionY;
 		float fov;
 		bool vsync;
+		bool use_ssao;
 		bool enableReflections;
 		bool enableShadows;
 		bool debugNoLighting;

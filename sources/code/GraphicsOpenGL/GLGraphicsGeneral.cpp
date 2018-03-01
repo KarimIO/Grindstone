@@ -273,6 +273,10 @@ void GLGraphicsWrapper::DrawCommandBuffers(uint32_t imageIndex, CommandBuffer **
 
 }
 
+void GLGraphicsWrapper::SetColorMask(uint8_t mask) {
+	glColorMask(mask & COLOR_MASK_RED, mask & COLOR_MASK_BLUE, mask & COLOR_MASK_GREEN, mask & COLOR_MASK_ALPHA);
+}
+
 void GLGraphicsWrapper::BindTextureBinding(TextureBinding *binding) {
 	GLTextureBinding *b = (GLTextureBinding *)binding;
 	b->Bind();
@@ -293,7 +297,7 @@ void GLGraphicsWrapper::DrawImmediateVertices(uint32_t base, uint32_t count) {
 }
 
 void GLGraphicsWrapper::EnableDepth(bool state) {
-
+	glDepthMask(state);
 }
 
 void GLGraphicsWrapper::BindDefaultFramebuffer(bool depth) {

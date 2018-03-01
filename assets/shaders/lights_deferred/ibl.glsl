@@ -128,7 +128,8 @@ void main() {
 	float Dist = texture(gbuffer3, fragTexCoord).r;
 	vec3 Position = WorldPosFromDepth(Dist, fragTexCoord);
 	vec3 Normal = texture(gbuffer1, fragTexCoord).xyz;
-	vec3 Albedo = texture(gbuffer0, fragTexCoord).rgb;
+	vec4 Albedo = texture(gbuffer0, fragTexCoord).rgba;
+	float SSAO = Albedo.a;
 	vec4 Specular = texture(gbuffer2, fragTexCoord);
 
 
@@ -138,7 +139,7 @@ void main() {
     vec3 refl = texture(environmentMap, r).rgb;
 
     vec3 ambientColor = vec3(0.9f, 0.96f, 1.0f) * 0.05f;
-	outColor = Specular.rgb * refl + Albedo * ambientColor;
+	outColor = Specular.rgb * refl + Albedo.rgb * ambientColor * SSAO;
 
 	/*vec3 V = normalize(ubo.eyePos - Position);
 

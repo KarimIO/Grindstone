@@ -14,8 +14,18 @@ class RenderPathDeferred : public RenderPath {
 
 	Texture *m_cubemap;
 	TextureBinding *m_cubemapBinding;
+	Texture *ssao_noise_;
+	TextureBinding *ssao_noise_binding_;
+	GraphicsPipeline *ssao_pipeline_;
 
 	GraphicsPipeline *m_iblPipeline;
+
+	struct SSAOBufferObject {
+		glm::vec3 kernel[32];
+		float radius;
+    	float bias;
+	} ssao_buffer;
+	UniformBuffer *ssao_ub;
 public:
 	RenderPathDeferred(GraphicsWrapper *graphics_wrapper_, VertexArrayObject *plane_vao);
 	void Draw(Framebuffer *);

@@ -44,6 +44,14 @@ enum BlendMode {
 	BLEND_ADD_ALPHA,
 };
 
+#define COLOR_MASK_RED 0x1
+#define COLOR_MASK_GREEN 0x2
+#define COLOR_MASK_BLUE 0x4
+#define COLOR_MASK_ALPHA 0x8
+#define COLOR_MASK_RG COLOR_MASK_RED | COLOR_MASK_GREEN
+#define COLOR_MASK_RGB COLOR_MASK_RG | COLOR_MASK_BLUE
+#define COLOR_MASK_RGBA COLOR_MASK_RGB | COLOR_MASK_ALPHA
+
 class GraphicsWrapper {
 public:
 
@@ -122,6 +130,7 @@ public:
 	virtual void DrawImmediateVertices(uint32_t base, uint32_t count) = 0;
 	virtual void SetImmediateBlending(BlendMode) = 0;
 	virtual void EnableDepth(bool state) = 0;
+	virtual void SetColorMask(uint8_t mask) = 0;
 
 	virtual ColorFormat GetDeviceColorFormat() = 0;
 

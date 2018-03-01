@@ -87,6 +87,7 @@ public:
 	void SetImmediateBlending(BlendMode);
 	void EnableDepth(bool state);
 	virtual void BindDefaultFramebuffer(bool depth);
+	void SetColorMask(uint8_t mask);
 
 	ColorFormat GetDeviceColorFormat();
 

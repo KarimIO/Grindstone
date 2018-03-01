@@ -119,6 +119,7 @@ void Engine::InitializeSettings() {
 		cfile.GetBool("Renderer", "reflections", true, settings.enableReflections);
 		cfile.GetBool("Renderer", "shadows", true, settings.enableShadows);
 		cfile.GetBool("Renderer", "debugNoLighting", false, settings.debugNoLighting);
+		cfile.GetBool("Renderer", "useSSAO", false, settings.use_ssao);
 		cfile.GetBool("Debug", "showMaterialLod", true, settings.showMaterialLoad);
 		cfile.GetBool("Debug", "showPipelineLoad", true, settings.showPipelineLoad);
 		cfile.GetBool("Debug", "showTextureLoad", false, settings.showTextureLoad);
@@ -152,6 +153,7 @@ void Engine::InitializeSettings() {
 		cfile.SetBool("Renderer", "reflections", true);
 		cfile.SetBool("Renderer", "shadows", true);
 		cfile.SetBool("Renderer", "debugNoLighting", false);
+		cfile.SetBool("Renderer", "useSSAO", false);
 		cfile.SetBool("Debug", "showMaterialLod", true);
 		cfile.SetBool("Debug", "showPipelineLoad", true);
 		cfile.SetBool("Debug", "showTextureLoad", false);
@@ -168,6 +170,7 @@ void Engine::InitializeSettings() {
 		settings.showMaterialLoad=1;
 		settings.showPipelineLoad=1;
 		settings.showTextureLoad=0;
+		settings.use_ssao = true;
 		defaultMap = "../assets/scenes/sponza.json";
 	}
 
@@ -360,14 +363,8 @@ void Engine::Render() {
 			materialManager.DrawDeferredImmediate();
 
 			// Deferred
-			graphics_wrapper_->SetImmediateBlending(BLEND_ADDITIVE);
-			graphics_wrapper_->BindDefaultFramebuffer(false);
- 			gbuffer_->BindRead();
-			gbuffer_->BindTextures(0);
-			graphics_wrapper_->Clear();
 			renderPath->Draw(gbuffer_);
 
-			graphics_wrapper_->BindDefaultFramebuffer(true);
 			gbuffer_->BindRead();
 			graphics_wrapper_->CopyToDepthBuffer(depth_image_);
 			graphics_wrapper_->BindDefaultFramebuffer(true);
