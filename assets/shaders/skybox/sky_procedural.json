@@ -1,0 +1,33 @@
+{
+    "type": "unlit",
+    "name": "Sky Shader",
+    "shaders": {
+        "deferred": {
+            "opengl": {
+                "vertex": "sky.vert.glsl",
+                "fragment": "sky_procedural.frag.glsl"
+            },
+            "directx": {
+                "vertex": "sky.vert.fxc",
+                "fragment": "sky.frag.fxc"
+            }
+        }
+    },
+    "textures": {
+        "stars": {
+            "name": "Stars",
+            "type": "texture",
+            "default": "materials/procedural_sky.tga"
+        },
+        "clouds_day": {
+            "name": "Clouds Day",
+            "type": "texture",
+            "default": "materials/procedural_sky.tga"
+        },
+        "clouds_noise": {
+            "name": "Noise for Clouds",
+            "type": "texture",
+            "default": "materials/procedural_sky.tga"
+        }
+    }
+}

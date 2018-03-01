@@ -156,8 +156,8 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_, Vert
 	ubci.binding = ubb;
 	ssao_ub = graphics_wrapper_->CreateUniformBuffer(ubci);
 
-	int noise_dim = 4;
-	int noise_size = noise_dim * noise_dim * 2;
+	const int noise_dim = 4;
+	const int noise_size = noise_dim * noise_dim * 2;
 	unsigned char noise[noise_size];
 	for (int i = 0; i < noise_size; i += 2) {
 		glm::vec3 pixel = glm::normalize(glm::vec3(rand(), rand(), 0));
