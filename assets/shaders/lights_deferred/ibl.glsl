@@ -109,8 +109,8 @@ vec3 radiance(vec3 N, vec3 V, vec4 Specular) {
 		vec3 f0 = Specular.rgb;
 		float f90 = clamp(50 * dot(f0, vec3(0.33)), 0, 1);
 
-		vec3 F_ = Light_F(f0, f90, VoH); // Defined elsewhere as subroutine
-		float G_ = Light_V( NoL, NoV, alphaSqr ); // Defined elsewhere as subroutine
+		vec3 F_ = clamp(Light_F(f0, f90, VoH), 0, 1); // Defined elsewhere as subroutine
+		float G_ = clamp(Light_V( NoL, NoV, alphaSqr ), 0, 1); // Defined elsewhere as subroutine
 		vec3 LColor = textureLod(environmentMap, L, lod).rgb;
 
 		// Since the sample is skewed towards the Distribution, we don't need
@@ -128,20 +128,23 @@ void main() {
 	float Dist = texture(gbuffer3, fragTexCoord).r;
 	vec3 Position = WorldPosFromDepth(Dist, fragTexCoord);
 	vec3 Normal = texture(gbuffer1, fragTexCoord).xyz;
-	vec4 Albedo = texture(gbuffer0, fragTexCoord).rgba;
-	float SSAO = Albedo.a;
+	vec3 Albedo = texture(gbuffer0, fragTexCoord).rgb;
 	vec4 Specular = texture(gbuffer2, fragTexCoord);
 
+    vec3 ambientColor = vec3(0.9f, 0.96f, 1.0f) * 0.03f;
+	
+	const int uBlurSize = 4;
+	vec2 texelSize = 1.0 / ubo.resolution;
+    float result = 0.0;
+    for (int i = 0; i < uBlurSize; ++i) {
+        for (int j = 0; j < uBlurSize; ++j) {
+            vec2 offset = vec2(float(i), float(j)) * texelSize;
+            result += texture(gbuffer0, fragTexCoord + offset).a;
+        }
+    }
+    float strength = result / float(uBlurSize * uBlurSize);
 
-    vec3 v = normalize(ubo.eyePos.xyz - Position);
-    vec3 r = reflect(v, Normal);
-   
-    vec3 refl = texture(environmentMap, r).rgb;
-
-    vec3 ambientColor = vec3(0.9f, 0.96f, 1.0f) * 0.05f;
-	outColor = Specular.rgb * refl + Albedo.rgb * ambientColor * SSAO;
-
-	/*vec3 V = normalize(ubo.eyePos - Position);
+	vec3 V = normalize(ubo.eyePos - Position);
 
 	vec3 N = Normal;
 	vec3 L = normalize(-reflect(V, N));
@@ -153,9 +156,9 @@ void main() {
 	vec3 eyeRefl= reflect(-eyeDir, Normal);
 
 	vec3 irrMap = texture(environmentMap, eyeRefl).rgb;
-	vec3 Kdiff  = irrMap * Albedo / pi;
+	vec3 Kdiff  = irrMap * Albedo.rgb / pi;
 	vec3 Kspec  = radiance(N, V, Specular);
 
 	// Mix the materials
-	outColor = Kspec + Kdiff;*/
+	outColor = (0.2 * Kspec + 0.9 * Kdiff + Albedo.rgb * ambientColor) * strength;
 }

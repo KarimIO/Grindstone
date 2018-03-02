@@ -44,13 +44,12 @@ vec3 WorldPosFromDepth(float depth, vec2 TexCoord) {
 }
 
 vec3 ViewNormal(vec3 inNorm) {
-    return (inverse(ubo.invView) * normalize(vec4(inNorm, 1.0))).rgb;
+    return (transpose(ubo.invView) * normalize(vec4(inNorm, 1.0))).rgb;
 }
 
 void main() {
     vec2 noiseScale = ubo.resolution.xy / 4;
 	float Dist = texture(gbuffer3, fragTexCoord).r;
-	vec3 albedo = texture(gbuffer0, fragTexCoord).rgb;
 	vec3 position = ViewPosFromDepth(Dist, fragTexCoord).xyz;
 	vec3 normal = texture(gbuffer1, fragTexCoord).xyz;
     normal = ViewNormal(normal);
@@ -63,11 +62,11 @@ void main() {
 
     float occlusion = 0.0;
 
-    float radius = (true) ? 1.2f : ssao_ubo.radius;
-    float bias = (true) ? 0.025f : ssao_ubo.bias;
+    float radius = ssao_ubo.radius;
+    float bias = ssao_ubo.bias;
 
     for(int i = 0; i < kernelSize; i++) {
-        vec3 sampleKernel = TBN * ssao_ubo.kernels[i];
+        vec3 sampleKernel = TBN * ssao_ubo.kernels[i].xyz;
         sampleKernel = position + sampleKernel * radius;
 
         vec4 offset = vec4(sampleKernel, 1.0);
@@ -77,7 +76,7 @@ void main() {
 
 	    float Dist = texture(gbuffer3, offset.xy).r;
         float sampleDepth = ViewPosFromDepth(Dist, offset.xy).z;
-        float rangeCheck = (abs(position.z - sampleDepth) < radius) ? 1.0 : 0.0;//smoothstep(0.0, 1.0, radius / abs(position.z - sampleDepth));
+        float rangeCheck = smoothstep(0.0, 1.0, radius / abs(position.z - sampleDepth));
         occlusion += (sampleDepth >= sampleKernel.z ? 1.0 : 0.0) * rangeCheck;
     }
 

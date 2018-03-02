@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
 		engine.Run();
 		engine.Shutdown();
 	}
-	catch (const std::runtime_error& e) {
+	catch (std::runtime_error& e) {
 		Print(PRINT_FATAL_ERROR, e.what());
 		return EXIT_FAILURE;
 	}

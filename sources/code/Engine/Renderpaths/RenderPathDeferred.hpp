@@ -21,7 +21,7 @@ class RenderPathDeferred : public RenderPath {
 	GraphicsPipeline *m_iblPipeline;
 
 	struct SSAOBufferObject {
-		glm::vec3 kernel[32];
+		float kernel[32 * 4];
 		float radius;
     	float bias;
 	} ssao_buffer;

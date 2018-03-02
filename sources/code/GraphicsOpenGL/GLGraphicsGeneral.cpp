@@ -238,7 +238,7 @@ DepthTarget * GLGraphicsWrapper::CreateDepthTarget(DepthTargetCreateInfo rt) {
 }
 
 void GLGraphicsWrapper::CopyToDepthBuffer(DepthTarget *p) {
-	glBlitFramebuffer(0, 0, 1366, 768, 0, 0, 1366, 768, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+	glBlitFramebuffer(0, 0, 1920, 1080, 0, 0, 1920, 1080, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 }
 
 uint32_t GLGraphicsWrapper::GetImageIndex() {

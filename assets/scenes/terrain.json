@@ -1,0 +1,36 @@
+{
+    "name": "Sponza Test",
+    "numentities": 7,
+    "entities": [
+        {
+            "components": [{
+                "componentType": "COMPONENT_TRANSFORM",
+                "position": [0.0, 2.0, 0.0]
+            }, {
+                "componentType": "COMPONENT_CAMERA"
+            }, {
+                "componentType": "COMPONENT_CONTROLLER"
+            }]
+        },
+        {
+            "components": [{
+                "componentType": "COMPONENT_TRANSFORM",
+                "scale": [1.0, 1.0, 1.0]
+            }, {
+                "componentType": "COMPONENT_GEOMETRY_TERRAIN",
+                "path": "heightmap.jpg"
+            }]
+        },
+        {
+            "components": [{
+                "componentType": "COMPONENT_TRANSFORM"
+            }, {
+                "componentType": "COMPONENT_LIGHT_DIRECTIONAL",
+                "castshadow": true,
+                "color": [1.0,1.0,1.0],
+                "brightness": 30.0,
+                "sunradius": 32.0
+            }]
+        }
+    ]
+}
