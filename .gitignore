@@ -46,7 +46,10 @@ Sources/Obj/
 bin/*
 !bin/readme.md
 .vscode/*
-assets/
+assets/cubemaps/*
+assets/materials/*
+assets/models/*
+assets/scenes/*
 !assets/cubemaps/glacier*
 !assets/materials/insphere/*
 !assets/materials/sphere/*
