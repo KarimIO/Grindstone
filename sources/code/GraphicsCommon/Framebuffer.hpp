@@ -28,9 +28,9 @@ class Framebuffer {
 public:
 	virtual void Clear() = 0;
 	virtual void CopyFrom(Framebuffer *) = 0;
-	virtual void Bind() = 0;
-	virtual void BindWrite() = 0;
+	virtual void BindWrite(bool depth) = 0;
 	virtual void BindTextures(int i) = 0;
+	virtual void Bind(bool depth) = 0;
 	virtual void BindRead() = 0;
 	virtual void Unbind() = 0;
 	virtual ~Framebuffer() {};

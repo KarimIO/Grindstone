@@ -181,5 +181,5 @@ void main() {
 
 	vec3 lightPow = lightColor * lightIntensity;
 	vec3 outColor3 = LightPointCalc(Albedo.rgb, Position.xyz, vec4(Specular, Roughness), Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, ubo.eyePos.xyz); // hdrGammaTransform()
-	outColor = vec4(hdrGammaTransform(outColor3), 1);
+	outColor = vec4(outColor3, 1);
 }

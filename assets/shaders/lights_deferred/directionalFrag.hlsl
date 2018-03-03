@@ -47,9 +47,9 @@ float getShadowValue(in float3 pos, in float nl) {
 		shadow_coord.y > 0 &&
 		shadow_coord.y < 1)
 	{
-		//if (sh > shadow_coords_final.z - bias) {
+		if (sh > shadow_coords_final.z - bias) {
 			vis = 1;
-		//}
+		}
 	}
 
 	return vis;

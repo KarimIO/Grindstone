@@ -318,20 +318,6 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 	lightubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
 	engine.directionalLightUBB = graphics_wrapper_->CreateUniformBufferBinding(lightubbci);
 
-	engine.bindings.reserve(5);
-	engine.bindings.emplace_back("gbuffer0", 0); // R G B MatID
-	engine.bindings.emplace_back("gbuffer1", 1); // nX nY nZ MatData
-	engine.bindings.emplace_back("gbuffer2", 2); // sR sG sB Roughness
-	engine.bindings.emplace_back("gbuffer3", 3); // Depth
-	engine.bindings.emplace_back("shadow_map", 4); // Shadow Map
-
-	TextureBindingLayoutCreateInfo tblci;
-	tblci.bindingLocation = 1;
-	tblci.bindings = engine.bindings.data();
-	tblci.bindingCount = (uint32_t)engine.bindings.size();
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	engine.tbl = graphics_wrapper_->CreateTextureBindingLayout(tblci);
-
 	ShaderStageCreateInfo vi;
 	ShaderStageCreateInfo fi;
 	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
@@ -488,7 +474,7 @@ void SLight::DrawShadows() {
 	glm::mat4 pv;
 	for (auto &light : spotLights) {
 		if (light.castShadow) {
-			light.shadowFBO->BindWrite();
+			light.shadowFBO->BindWrite(true);
 			light.shadowFBO->Clear();
 			pv = light.calculateMatrix();
 			engine.ubo->UpdateUniformBuffer(&pv);
@@ -501,7 +487,7 @@ void SLight::DrawShadows() {
 
 	for (auto &light : directionalLights) {
 		if (light.castShadow) {
-			light.shadowFBO->BindWrite();
+			light.shadowFBO->BindWrite(true);
 			light.shadowFBO->Clear();
 			pv = light.calculateMatrix();
 			engine.ubo->UpdateUniformBuffer(&pv);

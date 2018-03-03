@@ -13,7 +13,7 @@ public:
 
     virtual void Bind();
     virtual void Bind(uint32_t i);
-	virtual unsigned char *RenderScreen(unsigned int i);
+	virtual unsigned char *RenderScreen(unsigned int i, unsigned int resx, unsigned int resy);
     virtual ~GLRenderTarget();
 private:
     uint32_t *handles_;

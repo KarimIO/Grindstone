@@ -68,6 +68,19 @@ class Entity;
 
 class Engine {
 public:
+	std::string level_file_name_;
+	std::string level_name_;
+	Framebuffer * hdr_framebuffer_;
+	RenderTarget *hdr_buffer_;
+	GraphicsPipeline *pipeline_tonemap_;
+
+	TextureBindingLayout *reflection_cubemap_layout_;
+
+	struct ExposureUBO {
+		float exposure;
+	} exposure_buffer_;
+	UniformBuffer *exposure_ub_;
+
 	DefferedUBO deffUBOBuffer;
 	UniformBuffer *deffUBO;
 

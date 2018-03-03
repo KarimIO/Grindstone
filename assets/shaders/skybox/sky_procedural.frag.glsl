@@ -90,7 +90,7 @@ vec4 fullskycolor(in float sundot, in vec3 coord) {
 
 void main() {
     vec3 coord = normalize(fragCoord);
-    vec3 sundir = vec3(0,0.2,0.5);
+    vec3 sundir = vec3(0,1,0);
     sundir = normalize(sundir);
     float sundot = dot(coord, sundir);
 

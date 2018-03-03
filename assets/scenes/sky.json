@@ -1,7 +1,7 @@
 {
-    "name": "Sponza Test",
+    "name": "Sky Test",
     "numentities": 1,
-    "skymaterial": "materials/sky_procedural.gmat",
+    "skymaterial": "materials/skymain.gmat",
     "entities": [
         {
             "components": [{

@@ -12,8 +12,6 @@ class RenderPathDeferred : public RenderPath {
 
 	VertexArrayObject *plane_vao_;
 
-	Texture *m_cubemap;
-	TextureBinding *m_cubemapBinding;
 	Texture *ssao_noise_;
 	TextureBinding *ssao_noise_binding_;
 	GraphicsPipeline *ssao_pipeline_;
@@ -25,6 +23,7 @@ class RenderPathDeferred : public RenderPath {
 		float radius;
     	float bias;
 	} ssao_buffer;
+
 	UniformBuffer *ssao_ub;
 public:
 	RenderPathDeferred(GraphicsWrapper *graphics_wrapper_, VertexArrayObject *plane_vao);

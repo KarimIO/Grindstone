@@ -181,7 +181,7 @@ void TranslateColorFormats(ColorFormat inFormat, bool &is_compressed, GLenum &fo
 		is_compressed = true;
 		break;
 	case FORMAT_COLOR_R8:
-		internalFormat = GL_RED;
+		internalFormat = GL_R8;
 		format = GL_RED;
 		break;
 	case FORMAT_COLOR_R8G8:
@@ -189,10 +189,26 @@ void TranslateColorFormats(ColorFormat inFormat, bool &is_compressed, GLenum &fo
 		format = GL_RG;
 		break;
 	case FORMAT_COLOR_R8G8B8:
-		internalFormat = GL_RGB;
+		internalFormat = GL_RGB8;
 		format = GL_RGB;
 		break;
 	case FORMAT_COLOR_R8G8B8A8:
+		internalFormat = GL_RGBA8;
+		format = GL_RGBA;
+		break;
+	case FORMAT_COLOR_R16G16B16:
+		internalFormat = GL_RGB16F;
+		format = GL_RGBA;
+		break;
+	case FORMAT_COLOR_R16G16B16A16:
+		internalFormat = GL_RGBA16F;
+		format = GL_RGBA;
+		break;
+	case FORMAT_COLOR_R32G32B32:
+		internalFormat = GL_RGB32F;
+		format = GL_RGBA;
+		break;
+	case FORMAT_COLOR_R32G32B32A32:
 		internalFormat = GL_RGBA32F;
 		format = GL_RGBA;
 		break;

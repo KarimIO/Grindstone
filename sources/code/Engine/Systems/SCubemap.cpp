@@ -42,8 +42,8 @@ void CubemapSystem::CaptureCubemaps(double) {
 
 			engine.Render();
 			engine.graphics_wrapper_->BindDefaultFramebuffer(true);
-			unsigned char *data = engine.gbuffer_images_->RenderScreen(0);
-			WriteImage((path + "_" + std::to_string(j) + ".png").c_str(), 1366, 768, 3, data);
+			//unsigned char *data = engine.gbuffer_images_->RenderScreen(0);
+			//WriteImage((path + "_" + std::to_string(j) + ".png").c_str(), 1366, 768, 3, data);
 		}
 	}
 

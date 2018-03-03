@@ -214,7 +214,7 @@ void main() {
 	vec3 outColor3 = vec3(0,0,0);
 	if (dotPR > 0) {
 		outColor3 = LightPointCalc(Albedo.rgb, Position.xyz, vec4(Specular, Roughness), Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, ubo.eyePos.xyz) * dotPR;
-		outColor3 = hdrGammaTransform(outColor3);
+		//outColor3 = hdrGammaTransform(outColor3);
 	}
 
 	outColor = vec4(sh * outColor3, 1);

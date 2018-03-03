@@ -108,7 +108,7 @@ ID3D11ShaderResourceView **DxRenderTarget::getSRVs() {
 	return m_shaderResourceView;
 }
 
-unsigned char * DxRenderTarget::RenderScreen(unsigned int i) {
+unsigned char * DxRenderTarget::RenderScreen(unsigned int i, unsigned int resx, unsigned int resy) {
 	HRESULT hr;
 
 	ID3D11Resource* pSurface = nullptr;

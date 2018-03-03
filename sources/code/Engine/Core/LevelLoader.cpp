@@ -263,6 +263,9 @@ public:
 				engine.geometry_system.GetSystem(subType)->LoadGeometry(componentID, ("../assets/" + std::string(str)).c_str());
 			}
 		}
+		else if (keyType == KEY_MAP_NAME) {
+			engine.level_name_ = str;
+		}
 
 		/*else if (componentType == COMPONENT_TERRAIN)
 			if (keyType == KEY_COMPONENT_HEIGHTMAP)
@@ -282,7 +285,7 @@ public:
 	bool Key(const char* str, rapidjson::SizeType length, bool copy) {
 		if (level == LEVEL_MAP) {
 			if (std::string(str) == "name") {
-				// Ignored for now
+				keyType = KEY_MAP_NAME;
 			}
 			else if (std::string(str) == "version") {
 				// Ignored for now
@@ -422,6 +425,12 @@ public:
 
 bool LoadLevel(std::string path) {
 	printf("Loading level: %s\n", path.c_str());
+
+	// Set level file name
+	int f = path.find_last_of('/');
+	int l = path.find_last_of('.');
+	engine.level_file_name_ = path.substr(f + 1, l - f - 1);
+
 	rapidjson::Reader reader;
 	MyHandler handler;
 	std::ifstream input(path.c_str());

@@ -10,12 +10,12 @@ struct CubemapDirection
 
 const CubemapDirection gCubeDirections[6] =
 {
-	{ "FT", glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f, 0.0f) },
-	{ "BK", glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f, 0.0f) },
-	{ "UP", glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f, 1.0f) },
-	{ "DN", glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f,-1.0f) },
-	{ "RT", glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f, 0.0f) },
-	{ "LF", glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f) }
+	{ "ft", glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f, 0.0f) },
+	{ "bk", glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f, 0.0f) },
+	{ "up", glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f, 1.0f) },
+	{ "dn", glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f,-1.0f) },
+	{ "rt", glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f, 0.0f) },
+	{ "lf", glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f) }
 };
 
 #endif

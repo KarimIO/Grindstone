@@ -276,7 +276,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	std::vector<RenderTargetCreateInfo> gbuffer_images_ci;
 	gbuffer_images_ci.reserve(3);
 	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY); // R  G  B matID
-	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY); // nX nY nZ
+	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R16G16B16A16, settings.resolutionX, settings.resolutionY); // nX nY nZ
 	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY); // sR sG sB Roughness
 	gbuffer_images_ = graphics_wrapper_->CreateRenderTarget(gbuffer_images_ci.data(), gbuffer_images_ci.size());
 
@@ -289,6 +289,20 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	gbuffer_ci.depth_target = depth_image_;
 	gbuffer_ci.render_pass = nullptr;
 	gbuffer_ = graphics_wrapper_->CreateFramebuffer(gbuffer_ci);
+
+	bindings.reserve(5);
+	bindings.emplace_back("gbuffer0", 0); // R G B MatID
+	bindings.emplace_back("gbuffer1", 1); // nX nY nZ MatData
+	bindings.emplace_back("gbuffer2", 2); // sR sG sB Roughness
+	bindings.emplace_back("gbuffer3", 3); // Depth
+	bindings.emplace_back("shadow_map", 4); // Shadow Map
+
+	TextureBindingLayoutCreateInfo tblci;
+	tblci.bindingLocation = 1;
+	tblci.bindings = bindings.data();
+	tblci.bindingCount = (uint32_t)bindings.size();
+	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	tbl = graphics_wrapper_->CreateTextureBindingLayout(tblci);
 	
 	UniformBufferBindingCreateInfo deffubbci;
 	deffubbci.binding = 0;
@@ -300,7 +314,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	UniformBufferCreateInfo deffubci;
 	deffubci.isDynamic = false;
 	deffubci.size = sizeof(DefferedUBO);
-	deffubci.binding = engine.deffubb;
+	deffubci.binding = deffubb;
 	deffUBO = graphics_wrapper_->CreateUniformBuffer(deffubci);
 
 	float planeVerts[4 * 6] = {
@@ -339,7 +353,116 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	skybox_.geometry_info_.ubb_count = 1;
 	skybox_.geometry_info_.ubbs = &deffubb;
 	skybox_.Initialize(&materialManager, graphics_wrapper_, planeVAO, planeVBO);
-	
+
+	//=====================
+	// HDR FBO
+	//=====================
+
+	gbuffer_images_ci.clear();
+	gbuffer_images_ci.reserve(3);
+	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R16G16B16, engine.settings.resolutionX, engine.settings.resolutionY);
+	hdr_buffer_ = graphics_wrapper_->CreateRenderTarget(gbuffer_images_ci.data(), gbuffer_images_ci.size());
+
+	gbuffer_ci.render_target_lists = &hdr_buffer_;
+	gbuffer_ci.num_render_target_lists = 1;
+	gbuffer_ci.depth_target = depth_image_;
+	gbuffer_ci.render_pass = nullptr;
+	hdr_framebuffer_ = graphics_wrapper_->CreateFramebuffer(gbuffer_ci);
+
+	//=====================
+	// HDR Transform
+	//=====================
+
+	ubbci.binding = 0;
+	ubbci.shaderLocation = "ExposureUBO";
+	ubbci.size = sizeof(ExposureUBO);
+	ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	UniformBufferBinding *exposure_ubb = graphics_wrapper_->CreateUniformBufferBinding(ubbci);
+
+	ubci.isDynamic = false;
+	ubci.size = sizeof(ExposureUBO);
+	ubci.binding = ubb;
+	exposure_ub_ = graphics_wrapper_->CreateUniformBuffer(ubci);
+
+	exposure_buffer_.exposure = exp(0.0f);
+	exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
+
+	TextureSubBinding tonemap_sub_binding_ = TextureSubBinding("lighting", 0);
+
+	tblci.bindingLocation = 0;
+	tblci.bindings = &tonemap_sub_binding_;
+	tblci.bindingCount = 1;
+	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	TextureBindingLayout *tonemap_tbl = graphics_wrapper_->CreateTextureBindingLayout(tblci);
+
+	ShaderStageCreateInfo stages[2];
+	ShaderStageCreateInfo fi;
+	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
+		stages[1].fileName = "../assets/shaders/post_processing/tonemap.glsl";
+	}
+	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+		stages[0].fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
+		stages[1].fileName = "../assets/shaders/post_processing/tonemap.fxc";
+	}
+	else {
+		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.spv";
+		stages[1].fileName = "../assets/shaders/post_processing/tonemap.spv";
+	}
+
+	std::vector<char> vfile;
+	if (!readFile(stages[0].fileName, vfile)) {
+		throw std::runtime_error("Tonemapping Vertex Shader missing.\n");
+		return 0;
+	}
+	stages[0].content = vfile.data();
+	stages[0].size = (uint32_t)vfile.size();
+	stages[0].type = SHADER_VERTEX;
+
+	std::vector<char> ffile;
+	if (!readFile(stages[1].fileName, ffile)) {
+		throw std::runtime_error("Tonemapping Fragment Shader missing.\n");
+		return 0;
+	}
+	stages[1].content = ffile.data();
+	stages[1].size = (uint32_t)ffile.size();
+	stages[1].type = SHADER_FRAGMENT;
+
+	GraphicsPipelineCreateInfo tonemapGPCI;
+	tonemapGPCI.cullMode = CULL_BACK;
+	tonemapGPCI.bindings = &engine.planeVBD;
+	tonemapGPCI.bindingsCount = 1;
+	tonemapGPCI.attributes = &engine.planeVAD;
+	tonemapGPCI.attributesCount = 1;
+	tonemapGPCI.width = (float)engine.settings.resolutionX;
+	tonemapGPCI.height = (float)engine.settings.resolutionY;
+	tonemapGPCI.scissorW = engine.settings.resolutionX;
+	tonemapGPCI.scissorH = engine.settings.resolutionY;
+	tonemapGPCI.primitiveType = PRIM_TRIANGLES;
+	tonemapGPCI.shaderStageCreateInfos = stages;
+	tonemapGPCI.shaderStageCreateInfoCount = 2;
+
+	tonemapGPCI.textureBindings = &tonemap_tbl;
+	tonemapGPCI.textureBindingCount = 1;
+	tonemapGPCI.uniformBufferBindings = &exposure_ubb;
+	tonemapGPCI.uniformBufferBindingCount = 1;
+	pipeline_tonemap_ = graphics_wrapper_->CreateGraphicsPipeline(tonemapGPCI);
+
+	//=====================
+	// Cubemap
+	//=====================
+
+	bindings.clear();
+	bindings.resize(1);
+	bindings.emplace_back("environmentMap", 4);
+
+	TextureBindingLayoutCreateInfo tblci_refl;
+	tblci_refl.bindingLocation = 1;
+	tblci_refl.bindings = bindings.data();
+	tblci_refl.bindingCount = bindings.size();
+	tblci_refl.stages = SHADER_STAGE_FRAGMENT_BIT;
+	reflection_cubemap_layout_ = graphics_wrapper_->CreateTextureBindingLayout(tblci_refl);
+
 	return true;
 }
 
@@ -357,7 +480,7 @@ void Engine::Render() {
 	else {
 		if (!settings.debugNoLighting) {
 			// Opaque
-			gbuffer_->BindWrite();
+			gbuffer_->Bind(true);
 			gbuffer_->Clear();
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			materialManager.DrawDeferredImmediate();
@@ -365,9 +488,10 @@ void Engine::Render() {
 			// Deferred
 			renderPath->Draw(gbuffer_);
 
-			gbuffer_->BindRead();
+			/*gbuffer_->BindRead();
+			hdr_framebuffer_->BindWrite(true);
 			graphics_wrapper_->CopyToDepthBuffer(depth_image_);
-			graphics_wrapper_->BindDefaultFramebuffer(true);
+			hdr_framebuffer_->BindRead();
 
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			// Unlit
@@ -380,6 +504,15 @@ void Engine::Render() {
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			deffUBO->Bind();
 			skybox_.Render();
+			
+			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+			pipeline_tonemap_->Bind();
+			exposure_ub_->Bind();
+			hdr_framebuffer_->BindRead();
+			hdr_framebuffer_->BindTextures(0);
+			graphics_wrapper_->BindDefaultFramebuffer(false);
+			graphics_wrapper_->Clear();
+			graphics_wrapper_->DrawImmediateVertices(0, 6);*/
 
 			graphics_wrapper_->SwapBuffer();
 		}
@@ -422,8 +555,8 @@ void Engine::Run() {
 			materialManager.resetDraws();
 			//geometry_system.Cull(cam);
 
-			Entity *ent = &engine.entities[cam->entityID];
-			glm::vec3 eyePos = engine.transformSystem.components[ent->components_[COMPONENT_TRANSFORM]].position;
+			Entity *ent = &entities[cam->entityID];
+			glm::vec3 eyePos = transformSystem.components[ent->components_[COMPONENT_TRANSFORM]].position;
 			deffUBOBuffer.eyePos.x = eyePos.x;
 			deffUBOBuffer.eyePos.y = eyePos.y;
 			deffUBOBuffer.eyePos.z = eyePos.z;

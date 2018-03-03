@@ -15,7 +15,7 @@ public:
 	ID3D11RenderTargetView** getTextureViews();
 	ID3D11SamplerState** getSamplerStates();
 	ID3D11ShaderResourceView** getSRVs();
-	virtual unsigned char *RenderScreen(unsigned int i);
+	virtual unsigned char *RenderScreen(unsigned int i, unsigned int resx, unsigned int resy);
 
     virtual ~DxRenderTarget();
 private:

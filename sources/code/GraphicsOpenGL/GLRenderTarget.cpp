@@ -51,11 +51,11 @@ void GLRenderTarget::Bind(uint32_t j) {
 	}
 }
 
-unsigned char *GLRenderTarget::RenderScreen(unsigned int i) {
-	unsigned char *pixels = new unsigned char[width_ * height_ * 4];
-	glReadBuffer(GL_COLOR_ATTACHMENT0 + i);
+unsigned char *GLRenderTarget::RenderScreen(unsigned int i, unsigned int resx, unsigned int resy) {
+	unsigned char *pixels = new unsigned char[resx * resy * 3];
+	glReadBuffer(GL_FRONT_LEFT);
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0, 0, width_, height_, format_[i], GL_UNSIGNED_BYTE,  pixels);
+	glReadPixels(0, 0, resx, resy, GL_RGB, GL_UNSIGNED_BYTE,  pixels);
 	return pixels;
 }
 

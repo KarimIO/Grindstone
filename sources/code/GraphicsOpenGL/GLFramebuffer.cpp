@@ -62,12 +62,14 @@ void GLFramebuffer::CopyFrom(Framebuffer *) {
 
 }
 
-void GLFramebuffer::Bind() {
+void GLFramebuffer::Bind(bool depth) {
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
+	glDepthMask(depth ? GL_TRUE : GL_FALSE);
 }
 
-void GLFramebuffer::BindWrite() {
+void GLFramebuffer::BindWrite(bool depth) {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_);
+	glDepthMask(depth ? GL_TRUE : GL_FALSE);
 }
 
 void GLFramebuffer::BindRead() {

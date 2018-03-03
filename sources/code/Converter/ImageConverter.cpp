@@ -161,7 +161,7 @@ void ConvertBC123(unsigned char **pixels, bool is_cubemap, int width, int height
 				unsigned char *ptr = mip + j * width * 4;
 				for (int i = 0; i < width; i+=4) {
 					ExtractBlock(ptr, width, block);
-					stb_compress_dxt_block(&outData[offset], block, false, STB_DXT_DITHER);
+					stb_compress_dxt_block(&outData[offset], block, false, STB_DXT_NORMAL);
 					ptr += 4 * 4;
 					offset += 8;
 				}

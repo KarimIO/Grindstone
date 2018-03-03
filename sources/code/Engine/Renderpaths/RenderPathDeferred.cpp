@@ -65,29 +65,6 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_, Vert
 
 	plane_vao_ = plane_vao;
 
-	m_cubemap = LoadCubemap("../assets/cubemaps/glacier_", m_graphics_wrapper_);
-
-	std::vector<TextureSubBinding> cubemapBindings;
-	cubemapBindings.reserve(1);
-	cubemapBindings.emplace_back("environmentMap", 4);
-
-	TextureBindingLayoutCreateInfo tblci;
-	tblci.bindingLocation = 1;
-	tblci.bindings = cubemapBindings.data();
-	tblci.bindingCount = (uint32_t)cubemapBindings.size();
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	TextureBindingLayout *cubemapLayout = graphics_wrapper_->CreateTextureBindingLayout(tblci);
-
-	SingleTextureBind stb;
-	stb.texture = m_cubemap;
-	stb.address = 4;
-
-	TextureBindingCreateInfo ci;
-	ci.textures = &stb;
-	ci.layout = cubemapLayout;
-	ci.textureCount = 1;
-	m_cubemapBinding = m_graphics_wrapper_->CreateTextureBinding(ci);
-
 	ShaderStageCreateInfo vi;
 	ShaderStageCreateInfo fi;
 	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
@@ -131,10 +108,11 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_, Vert
 	iblGPCI.primitiveType = PRIM_TRIANGLES;
 	iblGPCI.shaderStageCreateInfos = stages.data();
 	iblGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
-	std::vector<TextureBindingLayout *> tbls = { engine.tbl, cubemapLayout };
+	TextureBindingLayout *refl_tbl = engine.reflection_cubemap_layout_;
+	TextureBindingLayout * tbls_refl[2] = { engine.tbl, refl_tbl };
 
-	iblGPCI.textureBindings = tbls.data();
-	iblGPCI.textureBindingCount = (uint32_t)tbls.size();
+	iblGPCI.textureBindings = tbls_refl;
+	iblGPCI.textureBindingCount = 2;
 	iblGPCI.uniformBufferBindings = &engine.deffubb;
 	iblGPCI.uniformBufferBindingCount = 1;
 	m_iblPipeline = graphics_wrapper_->CreateGraphicsPipeline(iblGPCI);
@@ -201,15 +179,18 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_, Vert
 
 	TextureSubBinding ssao_noise_sub_binding_ = TextureSubBinding("ssao_noise", 4);
 
+	TextureBindingLayoutCreateInfo tblci;
 	tblci.bindingLocation = 1;
 	tblci.bindings = &ssao_noise_sub_binding_;
 	tblci.bindingCount = 1;
 	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
 	TextureBindingLayout *ssao_noise_binding_layout = graphics_wrapper_->CreateTextureBindingLayout(tblci);
 
+	SingleTextureBind stb;
 	stb.texture = ssao_noise_;
 	stb.address = 4;
 
+	TextureBindingCreateInfo ci;
 	ci.textures = &stb;
 	ci.layout = ssao_noise_binding_layout;
 	ci.textureCount = 1;
@@ -261,7 +242,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_, Vert
 	ssaoGPCI.primitiveType = PRIM_TRIANGLES;
 	ssaoGPCI.shaderStageCreateInfos = stages.data();
 	ssaoGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
-	tbls = { engine.tbl, ssao_noise_binding_layout };
+	std::vector<TextureBindingLayout *>tbls = { engine.tbl, ssao_noise_binding_layout };
 
 	std::vector<UniformBufferBinding*> ubbs = { engine.deffubb , ubb };
 	ssaoGPCI.textureBindings = tbls.data();
@@ -350,7 +331,7 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 	engine.deffUBO->Bind();
 	engine.graphics_wrapper_->BindVertexArrayObject(plane_vao_);
 	
-	if (engine.settings.use_ssao) {
+	/*if (engine.settings.use_ssao) {
 		gbuffer->BindRead();
 		gbuffer->BindTextures(0);
 		m_graphics_wrapper_->EnableDepth(false);
@@ -361,14 +342,15 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 		m_graphics_wrapper_->SetColorMask(COLOR_MASK_RGBA);
 		m_graphics_wrapper_->EnableDepth(true);
-	}
+	}*/
 	
 	m_graphics_wrapper_->SetImmediateBlending(BLEND_ADDITIVE);
+	//engine.hdr_framebuffer_->BindWrite(false);
 	m_graphics_wrapper_->BindDefaultFramebuffer(false);
-	m_graphics_wrapper_->Clear();
 	gbuffer->BindRead();
 	gbuffer->BindTextures(0);
-	engine.lightSystem.m_pointLightPipeline->Bind();
+	m_graphics_wrapper_->Clear();
+	/*engine.lightSystem.m_pointLightPipeline->Bind();
 	for (auto &light : engine.lightSystem.pointLights) {
 		light.Bind();
 
@@ -380,7 +362,7 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 		light.Bind();
 
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
-	}
+	}*/
 
 	engine.lightSystem.m_directionalLightPipeline->Bind();
 	for (auto &light : engine.lightSystem.directionalLights) {
@@ -389,9 +371,13 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 	}
 
-	if (m_cubemap) {
-		m_iblPipeline->Bind();
-		m_graphics_wrapper_->BindTextureBinding(m_cubemapBinding);
-		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
-	}
+	/*if (engine.settings.enableReflections) {
+		glm::vec3 pos;
+		CubemapComponent *cube = engine.cubemapSystem.GetClosestCubemap(pos);
+		if (cube && cube->cubemap) {
+			m_iblPipeline->Bind();
+			m_graphics_wrapper_->BindTextureBinding(cube->cubemap_binding);
+			m_graphics_wrapper_->DrawImmediateVertices(0, 6);
+		}
+	}*/
 }
