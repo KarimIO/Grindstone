@@ -73,6 +73,7 @@ public:
 	Framebuffer * hdr_framebuffer_;
 	RenderTarget *hdr_buffer_;
 	GraphicsPipeline *pipeline_tonemap_;
+	std::vector<TextureSubBinding> tbci_refl_;
 
 	TextureBindingLayout *reflection_cubemap_layout_;
 

@@ -250,6 +250,7 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_, Vert
 	ssaoGPCI.uniformBufferBindings = ubbs.data();
 	ssaoGPCI.uniformBufferBindingCount = ubbs.size();
 	ssao_pipeline_ = graphics_wrapper_->CreateGraphicsPipeline(ssaoGPCI);
+
 	/*
 	//=====================
 	// SSAO Blur
@@ -345,12 +346,13 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 	}*/
 	
 	m_graphics_wrapper_->SetImmediateBlending(BLEND_ADDITIVE);
-	//engine.hdr_framebuffer_->BindWrite(false);
-	m_graphics_wrapper_->BindDefaultFramebuffer(false);
+	engine.hdr_framebuffer_->BindWrite(true);
+	//engine.graphics_wrapper_->BindDefaultFramebuffer(false);
 	gbuffer->BindRead();
 	gbuffer->BindTextures(0);
 	m_graphics_wrapper_->Clear();
-	/*engine.lightSystem.m_pointLightPipeline->Bind();
+
+	engine.lightSystem.m_pointLightPipeline->Bind();
 	for (auto &light : engine.lightSystem.pointLights) {
 		light.Bind();
 
@@ -362,7 +364,7 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 		light.Bind();
 
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
-	}*/
+	}
 
 	engine.lightSystem.m_directionalLightPipeline->Bind();
 	for (auto &light : engine.lightSystem.directionalLights) {

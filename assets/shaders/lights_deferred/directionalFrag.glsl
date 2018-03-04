@@ -161,5 +161,5 @@ void main() {
 	vec3 outColor3 = LightDirCalc(Albedo.rgb, Position, lightDir.xyz, vec4(Specular, Roughness), Normal.xyz, lightPow, ubo.eyePos.xyz);
 	
 	float sh = getShadowValue(Position, nl);
-	outColor = vec4(Normal, 1);
+	outColor = vec4(sh * outColor3, 1);
 }

@@ -358,15 +358,16 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	// HDR FBO
 	//=====================
 
-	gbuffer_images_ci.clear();
-	gbuffer_images_ci.reserve(3);
-	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R16G16B16, engine.settings.resolutionX, engine.settings.resolutionY);
+	std::vector<RenderTargetCreateInfo> hdr_buffer_ci;
+	hdr_buffer_ci.reserve(1);
+	hdr_buffer_ci.emplace_back(FORMAT_COLOR_R16G16B16, engine.settings.resolutionX, engine.settings.resolutionY);
 	hdr_buffer_ = graphics_wrapper_->CreateRenderTarget(gbuffer_images_ci.data(), gbuffer_images_ci.size());
 
-	gbuffer_ci.render_target_lists = &hdr_buffer_;
-	gbuffer_ci.num_render_target_lists = 1;
-	gbuffer_ci.depth_target = depth_image_;
-	gbuffer_ci.render_pass = nullptr;
+	FramebufferCreateInfo hdr_framebuffer_ci;
+	hdr_framebuffer_ci.render_target_lists = &hdr_buffer_;
+	hdr_framebuffer_ci.num_render_target_lists = 1;
+	hdr_framebuffer_ci.depth_target = depth_image_;
+	hdr_framebuffer_ci.render_pass = nullptr;
 	hdr_framebuffer_ = graphics_wrapper_->CreateFramebuffer(gbuffer_ci);
 
 	//=====================
@@ -452,14 +453,14 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	// Cubemap
 	//=====================
 
-	bindings.clear();
-	bindings.resize(1);
-	bindings.emplace_back("environmentMap", 4);
+	tbci_refl_.clear();
+	tbci_refl_.resize(1);
+	tbci_refl_.emplace_back("environmentMap", 4);
 
 	TextureBindingLayoutCreateInfo tblci_refl;
 	tblci_refl.bindingLocation = 1;
-	tblci_refl.bindings = bindings.data();
-	tblci_refl.bindingCount = bindings.size();
+	tblci_refl.bindings = tbci_refl_.data();
+	tblci_refl.bindingCount = tbci_refl_.size();
 	tblci_refl.stages = SHADER_STAGE_FRAGMENT_BIT;
 	reflection_cubemap_layout_ = graphics_wrapper_->CreateTextureBindingLayout(tblci_refl);
 
@@ -503,7 +504,7 @@ void Engine::Render() {
 			materialManager.DrawForwardImmediate();
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			deffUBO->Bind();
-			skybox_.Render();
+			skybox_.Render();*/
 			
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			pipeline_tonemap_->Bind();
@@ -512,7 +513,7 @@ void Engine::Render() {
 			hdr_framebuffer_->BindTextures(0);
 			graphics_wrapper_->BindDefaultFramebuffer(false);
 			graphics_wrapper_->Clear();
-			graphics_wrapper_->DrawImmediateVertices(0, 6);*/
+			graphics_wrapper_->DrawImmediateVertices(0, 6);
 
 			graphics_wrapper_->SwapBuffer();
 		}
