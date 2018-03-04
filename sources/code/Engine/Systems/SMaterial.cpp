@@ -552,6 +552,8 @@ struct DDSHeader {
 	DWORD           dwReserved2;
 };
 
+#define DDPF_ALPHAPIXELS 0x1
+
 #define MAKEFOURCC(c0, c1, c2, c3)	((DWORD)(char)(c0) | ((DWORD)(char)(c1) << 8) | \
 									((DWORD)(char)(c2) << 16) | ((DWORD)(char)(c3) << 24))
 #define MAKEFOURCCS(str)			MAKEFOURCC(str[0], str[1], str[2], str[3])
@@ -929,11 +931,13 @@ Texture *MaterialManager::LoadCubemap(std::string path) {
 
 		fclose(fp);
 
+		bool alphaflag = header.dwFlags & DDPF_ALPHAPIXELS;
+
 		unsigned int components = (header.ddspf.dwFourCC == FOURCC_DXT1) ? 3 : 4;
 		ColorFormat format;
 		switch (header.ddspf.dwFourCC) {
 		case FOURCC_DXT1:
-			format = FORMAT_COLOR_RGBA_DXT1;
+			format = alphaflag ? FORMAT_COLOR_RGBA_DXT1 : FORMAT_COLOR_RGB_DXT1;
 			break;
 		case FOURCC_DXT3:
 			format = FORMAT_COLOR_RGBA_DXT3;
@@ -1247,11 +1251,13 @@ Texture * MaterialManager::LoadTexture(std::string path) {
 
 		fclose(fp);
 
+		bool alphaflag = header.dwFlags & DDPF_ALPHAPIXELS;
+
 		unsigned int components = (header.ddspf.dwFourCC == FOURCC_DXT1) ? 3 : 4;
 		ColorFormat format;
 		switch (header.ddspf.dwFourCC) {
 		case FOURCC_DXT1:
-			format = FORMAT_COLOR_RGBA_DXT1;
+			format = alphaflag ? FORMAT_COLOR_RGBA_DXT1 : FORMAT_COLOR_RGB_DXT1;
 			break;
 		case FOURCC_DXT3:
 			format = FORMAT_COLOR_RGBA_DXT3;

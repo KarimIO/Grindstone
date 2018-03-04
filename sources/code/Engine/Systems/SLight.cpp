@@ -80,7 +80,7 @@ CSpotLight::CSpotLight(unsigned int entID, glm::vec3 color, float strength, bool
 	lightuboci.binding = engine.spotLightUBB;
 	lightUBO = engine.graphics_wrapper_->CreateUniformBuffer(lightuboci);
 	if (cast) {
-		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, 1024, 1024);
+		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, 1024, 1024, true);
 		shadow_db_ = engine.graphics_wrapper_->CreateDepthTarget(depth_image_ci);
 
 		FramebufferCreateInfo fbci;
@@ -95,7 +95,7 @@ void CSpotLight::SetShadow(bool state) {
 	castShadow = state;
 
 	if (state) {
-		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, 1024, 1024);
+		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, 1024, 1024, true);
 		shadow_db_ = engine.graphics_wrapper_->CreateDepthTarget(depth_image_ci);
 
 		FramebufferCreateInfo fbci;
@@ -189,7 +189,7 @@ CDirectionalLight::CDirectionalLight(unsigned int entID, glm::vec3 color, float 
 	lightUBO = engine.graphics_wrapper_->CreateUniformBuffer(lightuboci);
 
 	if (cast) {
-		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, res, res);
+		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, res, res, true);
 		shadow_db_ = engine.graphics_wrapper_->CreateDepthTarget(depth_image_ci);
 
 		FramebufferCreateInfo fbci;
@@ -204,7 +204,7 @@ void CDirectionalLight::SetShadow(bool state) {
 	castShadow = state;
 
 	if (state) {
-		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, res, res);
+		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, res, res, true);
 		shadow_db_ = engine.graphics_wrapper_->CreateDepthTarget(depth_image_ci);
 
 		FramebufferCreateInfo fbci;

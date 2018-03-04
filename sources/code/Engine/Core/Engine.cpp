@@ -282,7 +282,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY); // sR sG sB Roughness
 	gbuffer_images_ = graphics_wrapper_->CreateRenderTarget(gbuffer_images_ci.data(), gbuffer_images_ci.size());
 
-	DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24_STENCIL_8, settings.resolutionX, settings.resolutionY);
+	DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24_STENCIL_8, settings.resolutionX, settings.resolutionY, false);
 	depth_image_ = graphics_wrapper_->CreateDepthTarget(depth_image_ci);
 	
 	FramebufferCreateInfo gbuffer_ci;
