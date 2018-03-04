@@ -160,5 +160,5 @@ void main() {
 	vec3 Kspec  = radiance(N, V, Specular);
 
 	// Mix the materials
-	outColor = (0.2 * Kspec + 0.9 * Kdiff + Albedo.rgb * ambientColor) * strength;
+	outColor = (Kspec + Kdiff + Albedo.rgb * ambientColor) * strength;
 }

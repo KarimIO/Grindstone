@@ -31,7 +31,7 @@ void CubemapSystem::CaptureCubemaps(double) {
 	writing = true;
 	for (size_t i = 0; i < components.size(); i++) {
 
-		std::string path = "../assets/cubemaps/level" + std::to_string(i);
+		std::string path = "../assets/cubemaps/" + engine.level_file_name_ + "_" + std::to_string(i);
 		for (size_t j = 0; j < 6; j++) {
 			view = glm::lookAt(components[i].position, components[i].position + gCubeDirections[j].Target, gCubeDirections[j].Up);
 			view = proj * view;
@@ -42,8 +42,8 @@ void CubemapSystem::CaptureCubemaps(double) {
 
 			engine.Render();
 			engine.graphics_wrapper_->BindDefaultFramebuffer(true);
-			//unsigned char *data = engine.gbuffer_images_->RenderScreen(0);
-			//WriteImage((path + "_" + std::to_string(j) + ".png").c_str(), 1366, 768, 3, data);
+			unsigned char *data = engine.gbuffer_images_->RenderScreen(0, 512, 512);
+			WriteImage((path + "_" + gCubeDirections[j].name + ".png").c_str(), 512, 512, 3, data);
 		}
 	}
 
@@ -53,10 +53,28 @@ void CubemapSystem::CaptureCubemaps(double) {
 }
 
 void CubemapSystem::LoadCubemaps() {
-	/*writing = false;
+	G_NOTIFY("Loading Cubemaps.\n");
+	writing = false;
+	std::string path = "../assets/cubemaps/" + engine.level_file_name_ + "_";
 	for (size_t i = 0; i < components.size(); i++) {
-		components[i].cubemap = engine.textureManager.LoadCubemap("../assets/cubemaps/level" + std::to_string(i), ".png", COLOR_SRGB);
-	}*/
+		std::string sub_path = path + std::to_string(i) + "_.png";
+		try {
+			components[i].cubemap = engine.materialManager.LoadCubemap(sub_path);
+
+			SingleTextureBind stb;
+			stb.texture = components[i].cubemap;
+			stb.address = 4;
+
+			TextureBindingCreateInfo ci;
+			ci.textures = &stb;
+			ci.layout = engine.reflection_cubemap_layout_;
+			ci.textureCount = 1;
+			components[i].cubemap_binding = engine.graphics_wrapper_->CreateTextureBinding(ci);
+		}
+		catch(std::runtime_error &e) {
+			G_NOTIFY("Unable to load level cubemap" + sub_path + ".\n");
+		}
+	}
 }
 
 void CubemapSystem::Reserve(int n) {

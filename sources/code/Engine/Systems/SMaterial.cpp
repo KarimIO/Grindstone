@@ -713,9 +713,9 @@ void MaterialManager::generateProgram(GeometryInfo geometry_info, PipelineContai
 
 		if (num_shaders > 0) {
 			GraphicsPipelineCreateInfo gpci;
-			gpci.scissorW = 512;
+			gpci.scissorW = 1024;
 			gpci.width = static_cast<float>(gpci.scissorW);
-			gpci.scissorH = 512;
+			gpci.scissorH = 1024;
 			gpci.height = static_cast<float>(gpci.scissorH);
 			gpci.renderPass = render_passes_[0].renderPass;
 			gpci.attributes = geometry_info.vads;

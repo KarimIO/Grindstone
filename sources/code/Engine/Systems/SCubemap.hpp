@@ -29,6 +29,7 @@ public:
 	std::string cubemapName;
 	uint32_t cubeResolution;
 	Texture *cubemap;
+	TextureBinding *cubemap_binding;
 };
 
 #endif

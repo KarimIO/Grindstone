@@ -82,6 +82,7 @@ public:
 	DepthTarget *shadow_db_;
 	uint32_t entityID;
 	glm::mat4 matrix_;
+	unsigned int res;
 
 	CDirectionalLight(unsigned int entityID);
 	CDirectionalLight(unsigned int entityID, glm::vec3 color, float strength, bool cast, float radius);

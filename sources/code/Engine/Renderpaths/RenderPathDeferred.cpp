@@ -332,7 +332,7 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 	engine.deffUBO->Bind();
 	engine.graphics_wrapper_->BindVertexArrayObject(plane_vao_);
 	
-	/*if (engine.settings.use_ssao) {
+	if (engine.settings.use_ssao) {
 		gbuffer->BindRead();
 		gbuffer->BindTextures(0);
 		m_graphics_wrapper_->EnableDepth(false);
@@ -343,14 +343,14 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 		m_graphics_wrapper_->SetColorMask(COLOR_MASK_RGBA);
 		m_graphics_wrapper_->EnableDepth(true);
-	}*/
+	}
 	
 	m_graphics_wrapper_->SetImmediateBlending(BLEND_ADDITIVE);
-	engine.hdr_framebuffer_->BindWrite(true);
+	engine.hdr_framebuffer_->BindWrite(false);
+	m_graphics_wrapper_->Clear();
 	//engine.graphics_wrapper_->BindDefaultFramebuffer(false);
 	gbuffer->BindRead();
 	gbuffer->BindTextures(0);
-	m_graphics_wrapper_->Clear();
 
 	engine.lightSystem.m_pointLightPipeline->Bind();
 	for (auto &light : engine.lightSystem.pointLights) {
@@ -373,7 +373,7 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 	}
 
-	/*if (engine.settings.enableReflections) {
+	if (engine.settings.enableReflections) {
 		glm::vec3 pos;
 		CubemapComponent *cube = engine.cubemapSystem.GetClosestCubemap(pos);
 		if (cube && cube->cubemap) {
@@ -381,5 +381,5 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 			m_graphics_wrapper_->BindTextureBinding(cube->cubemap_binding);
 			m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 		}
-	}*/
+	}
 }

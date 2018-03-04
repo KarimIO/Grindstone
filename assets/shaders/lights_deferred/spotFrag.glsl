@@ -48,38 +48,6 @@ vec3 WorldPosFromDepth(float depth, vec2 TexCoord) {
     return WorldPosFromViewPos(ViewPosFromDepth(depth, TexCoord));
 }
 
-vec3 linearToSRGB(vec3 inColor) {
-    vec3 outColor;
-	outColor.r = inColor.r <= 0.0031308 ? 12.92 * inColor.r : 1.055 * pow(inColor.r, 1.0/2.4) - 0.055;
-	outColor.g = inColor.g <= 0.0031308 ? 12.92 * inColor.g : 1.055 * pow(inColor.g, 1.0/2.4) - 0.055;
-	outColor.b = inColor.b <= 0.0031308 ? 12.92 * inColor.b : 1.055 * pow(inColor.b, 1.0/2.4) - 0.055;
-	return outColor;
-}
-
-vec3 hdrTransform(vec3 color) {
-    float a = 2.51f;
-    float b = 0.03f;
-    float c = 2.43f;
-    float d = 0.59f;
-    float e = 0.14f;
-
-	return clamp((color*(a*color+b))/(color*(c*color+d)+e), 0, 1);
-}
-
-vec3 hdrTransformB(vec3 color) {
-    float a = 2.51f;
-    float b = 0.03f;
-    float c = 2.43f;
-    float d = 0.59f;
-    float e = 0.14f;
-
-	return clamp((color*(a*color+b))/(color*(c*color+d)+e), 0, 1);
-}
-
-vec3 hdrGammaTransform(vec3 color) {
-	return hdrTransform(color); // linearToSRGB()
-}
-
 const float pi = 3.14159f;
 
 // Schlick
@@ -165,7 +133,7 @@ vec3 LightPointCalc(in vec3 Albedo, in vec3 WorldPos, in vec4 Specular, in vec3 
 float getShadowValue(in vec3 pos, in float nl) {
 	vec4 shadow_coord = light.shadow_mat * vec4(pos,1);
 	vec3 shadow_coords_final = shadow_coord.xyz / shadow_coord.w;
-	float bias = 0.005*tan(acos(nl));
+	float bias = 0.01*tan(acos(nl));
 	bias = clamp(bias, 0, 0.01);
 	bias /= shadow_coord.w;
 	

@@ -39,6 +39,8 @@ void Engine::LoadingScreenThread() {
 		auto curr = std::chrono::high_resolution_clock::now();
 		double t = std::chrono::duration_cast<std::chrono::nanoseconds>(curr - start).count() / 100000000.0f;
 		screen.Render(t);
+		screen.Render(t);
+		screen.Render(t);
 	}
 }
 
@@ -361,14 +363,14 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	std::vector<RenderTargetCreateInfo> hdr_buffer_ci;
 	hdr_buffer_ci.reserve(1);
 	hdr_buffer_ci.emplace_back(FORMAT_COLOR_R16G16B16, engine.settings.resolutionX, engine.settings.resolutionY);
-	hdr_buffer_ = graphics_wrapper_->CreateRenderTarget(gbuffer_images_ci.data(), gbuffer_images_ci.size());
+	hdr_buffer_ = graphics_wrapper_->CreateRenderTarget(hdr_buffer_ci.data(), hdr_buffer_ci.size());
 
 	FramebufferCreateInfo hdr_framebuffer_ci;
 	hdr_framebuffer_ci.render_target_lists = &hdr_buffer_;
 	hdr_framebuffer_ci.num_render_target_lists = 1;
 	hdr_framebuffer_ci.depth_target = depth_image_;
 	hdr_framebuffer_ci.render_pass = nullptr;
-	hdr_framebuffer_ = graphics_wrapper_->CreateFramebuffer(gbuffer_ci);
+	hdr_framebuffer_ = graphics_wrapper_->CreateFramebuffer(hdr_framebuffer_ci);
 
 	//=====================
 	// HDR Transform
@@ -489,7 +491,7 @@ void Engine::Render() {
 			// Deferred
 			renderPath->Draw(gbuffer_);
 
-			/*gbuffer_->BindRead();
+			gbuffer_->BindRead();
 			hdr_framebuffer_->BindWrite(true);
 			graphics_wrapper_->CopyToDepthBuffer(depth_image_);
 			hdr_framebuffer_->BindRead();
@@ -504,15 +506,15 @@ void Engine::Render() {
 			materialManager.DrawForwardImmediate();
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			deffUBO->Bind();
-			skybox_.Render();*/
+			skybox_.Render();
 			
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			pipeline_tonemap_->Bind();
 			exposure_ub_->Bind();
-			hdr_framebuffer_->BindRead();
-			hdr_framebuffer_->BindTextures(0);
 			graphics_wrapper_->BindDefaultFramebuffer(false);
 			graphics_wrapper_->Clear();
+			hdr_framebuffer_->BindRead();
+			hdr_framebuffer_->BindTextures(0);
 			graphics_wrapper_->DrawImmediateVertices(0, 6);
 
 			graphics_wrapper_->SwapBuffer();
