@@ -31,7 +31,7 @@ void SGeometryTerrain::LoadModel(CTerrain * model) {
 	int texWidth, texHeight, texChannels;
 	unsigned char *data = stbi_load(model->getHeightmap().c_str(), &texWidth, &texHeight, &texChannels, 4);
 	if (!data) {
-		printf("Texture failed to load!: %s \n", model->getHeightmap());
+		printf("Texture failed to load!: %s \n", model->getHeightmap().c_str());
 		return;
 	}
 

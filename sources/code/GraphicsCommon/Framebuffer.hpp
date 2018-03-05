@@ -26,6 +26,7 @@ struct FramebufferCreateInfo {
 
 class Framebuffer {
 public:
+	virtual float getExposure(int i) = 0;
 	virtual void Clear() = 0;
 	virtual void CopyFrom(Framebuffer *) = 0;
 	virtual void BindWrite(bool depth) = 0;

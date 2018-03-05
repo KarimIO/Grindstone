@@ -11,6 +11,8 @@ public:
     uint32_t getHandle(uint32_t i);
     uint32_t getNumRenderTargets();
 
+    float getAverageValue(uint32_t i);
+
     virtual void Bind();
     virtual void Bind(uint32_t i);
 	virtual unsigned char *RenderScreen(unsigned int i, unsigned int resx, unsigned int resy);

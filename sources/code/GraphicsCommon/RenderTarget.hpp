@@ -13,6 +13,7 @@ struct RenderTargetCreateInfo {
 
 class RenderTarget {
 public:
+    virtual float getAverageValue(uint32_t i) = 0;
 	virtual unsigned char *RenderScreen(unsigned int i, unsigned int resx, unsigned int resy) = 0;
 	virtual ~RenderTarget() {};
 };

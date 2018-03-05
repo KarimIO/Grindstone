@@ -372,6 +372,73 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	hdr_framebuffer_ci.render_pass = nullptr;
 	hdr_framebuffer_ = graphics_wrapper_->CreateFramebuffer(hdr_framebuffer_ci);
 
+	// HDR
+
+	TextureSubBinding tonemap_sub_binding_ = TextureSubBinding("lighting", 0);
+
+	tblci.bindingLocation = 0;
+	tblci.bindings = &tonemap_sub_binding_;
+	tblci.bindingCount = 1;
+	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	TextureBindingLayout *tonemap_tbl = graphics_wrapper_->CreateTextureBindingLayout(tblci);
+
+	//=====================
+	// Bloom Step 1
+	//=====================
+
+	ShaderStageCreateInfo stages[2];
+	ShaderStageCreateInfo fi;
+	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
+		stages[1].fileName = "../assets/shaders/post_processing/bloom.glsl";
+	}
+	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+		stages[0].fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
+		stages[1].fileName = "../assets/shaders/post_processing/bloom.fxc";
+	}
+	else {
+		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.spv";
+		stages[1].fileName = "../assets/shaders/post_processing/bloom.spv";
+	}
+
+	std::vector<char> vfile;
+	if (!readFile(stages[0].fileName, vfile)) {
+		throw std::runtime_error("Bloom Vertex Shader missing.\n");
+		return 0;
+	}
+	stages[0].content = vfile.data();
+	stages[0].size = (uint32_t)vfile.size();
+	stages[0].type = SHADER_VERTEX;
+
+	std::vector<char> ffile;
+	if (!readFile(stages[1].fileName, ffile)) {
+		throw std::runtime_error("Bloom Fragment Shader missing.\n");
+		return 0;
+	}
+	stages[1].content = ffile.data();
+	stages[1].size = (uint32_t)ffile.size();
+	stages[1].type = SHADER_FRAGMENT;
+
+	GraphicsPipelineCreateInfo bloomGPCI;
+	bloomGPCI.cullMode = CULL_BACK;
+	bloomGPCI.bindings = &engine.planeVBD;
+	bloomGPCI.bindingsCount = 1;
+	bloomGPCI.attributes = &engine.planeVAD;
+	bloomGPCI.attributesCount = 1;
+	bloomGPCI.width = (float)engine.settings.resolutionX;
+	bloomGPCI.height = (float)engine.settings.resolutionY;
+	bloomGPCI.scissorW = engine.settings.resolutionX;
+	bloomGPCI.scissorH = engine.settings.resolutionY;
+	bloomGPCI.primitiveType = PRIM_TRIANGLES;
+	bloomGPCI.shaderStageCreateInfos = stages;
+	bloomGPCI.shaderStageCreateInfoCount = 2;
+
+	bloomGPCI.textureBindings = &tonemap_tbl;
+	bloomGPCI.textureBindingCount = 1;
+	bloomGPCI.uniformBufferBindings = nullptr;
+	bloomGPCI.uniformBufferBindingCount = 0;
+	pipeline_bloom_ = graphics_wrapper_->CreateGraphicsPipeline(bloomGPCI);
+
 	//=====================
 	// HDR Transform
 	//=====================
@@ -390,16 +457,6 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	exposure_buffer_.exposure = exp(0.0f);
 	exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
 
-	TextureSubBinding tonemap_sub_binding_ = TextureSubBinding("lighting", 0);
-
-	tblci.bindingLocation = 0;
-	tblci.bindings = &tonemap_sub_binding_;
-	tblci.bindingCount = 1;
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	TextureBindingLayout *tonemap_tbl = graphics_wrapper_->CreateTextureBindingLayout(tblci);
-
-	ShaderStageCreateInfo stages[2];
-	ShaderStageCreateInfo fi;
 	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
 		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		stages[1].fileName = "../assets/shaders/post_processing/tonemap.glsl";
@@ -413,7 +470,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 		stages[1].fileName = "../assets/shaders/post_processing/tonemap.spv";
 	}
 
-	std::vector<char> vfile;
+	vfile.clear();
 	if (!readFile(stages[0].fileName, vfile)) {
 		throw std::runtime_error("Tonemapping Vertex Shader missing.\n");
 		return 0;
@@ -422,7 +479,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	stages[0].size = (uint32_t)vfile.size();
 	stages[0].type = SHADER_VERTEX;
 
-	std::vector<char> ffile;
+	ffile.clear();
 	if (!readFile(stages[1].fileName, ffile)) {
 		throw std::runtime_error("Tonemapping Fragment Shader missing.\n");
 		return 0;
@@ -507,8 +564,18 @@ void Engine::Render() {
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			deffUBO->Bind();
 			skybox_.Render();
+
+			//exposure_buffer_.exposure = hdr_framebuffer_->getExposure(0);
+			//exposure_buffer_.exposure = exposure_buffer_.exposure*100.0f/12.5f;
+			//std::cout << exposure_buffer_.exposure << "\n";
+			//exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
 			
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+			pipeline_bloom_->Bind();
+			hdr_framebuffer_->Bind(false);
+			hdr_framebuffer_->BindTextures(0);
+			graphics_wrapper_->DrawImmediateVertices(0, 6);
+
 			pipeline_tonemap_->Bind();
 			exposure_ub_->Bind();
 			graphics_wrapper_->BindDefaultFramebuffer(false);

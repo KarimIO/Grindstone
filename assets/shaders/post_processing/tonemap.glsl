@@ -29,7 +29,7 @@ vec3 hdrTransform(vec3 color) {
 
 vec3 hdrGammaTransform(vec3 color) {
     float exposure = exposure_ubo.exposure;
-	return linearToSRGB(hdrTransform(color)) * exposure;
+	return linearToSRGB(hdrTransform(color ));
 }
 
 void main() {

@@ -2,6 +2,8 @@
 #include <iostream>
 #include "GLFramebuffer.hpp"
 #include "GLTexture.hpp"
+#include <cmath>
+#include <../deps/glm/glm.hpp>
 
 GLFramebuffer::GLFramebuffer(FramebufferCreateInfo create_info) {
 	render_target_lists_ = (GLRenderTarget **)(create_info.render_target_lists); 
@@ -51,6 +53,29 @@ GLFramebuffer::~GLFramebuffer() {
 
 void GLFramebuffer::Clear() {
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+}
+
+float GLFramebuffer::getExposure(int i) {
+	int width_ = 640;
+	int height_ = 480;
+    unsigned int s = width_ * height_;
+
+    GLfloat *values = new GLfloat[s * 3];
+	glReadBuffer(GL_COLOR_ATTACHMENT0 + i);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(0, 0, width_, height_, GL_RGB, GL_FLOAT, values);
+
+    float val = 0;
+    for (int i = 0; i < s * 3; i+=3) {
+        float lum = glm::dot(glm::vec3(values[i], values[i+1], values[i+2]), glm::vec3(0.3, 0.59, 0.11));
+        val += std::log2(lum);
+    }
+
+	val /= float(s);
+
+    delete[] values;
+
+    return val;
 }
 
 void GLFramebuffer::Blit(uint32_t i, uint32_t x, uint32_t y, uint32_t w, uint32_t h) {

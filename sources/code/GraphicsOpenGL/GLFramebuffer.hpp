@@ -10,6 +10,7 @@ class GLFramebuffer : public Framebuffer {
 public:
 	GLFramebuffer(FramebufferCreateInfo);
 	~GLFramebuffer();
+	virtual float getExposure(int i);
 	virtual void Clear();
 	virtual void CopyFrom(Framebuffer *);
 	virtual void Blit(uint32_t i, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
