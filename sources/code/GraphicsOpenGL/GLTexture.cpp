@@ -25,7 +25,8 @@ GLTexture::GLTexture(TextureCreateInfo ci) {
 
 
 		unsigned char *buffer = ci.data;
-		unsigned int blockSize = (ci.format == FORMAT_COLOR_RGBA_DXT1) ? 8 : 16;
+		unsigned int blockSize = (ci.format == FORMAT_COLOR_SRGB_DXT1 || ci.format == FORMAT_COLOR_SRGB_ALPHA_DXT1
+								|| ci.format == FORMAT_COLOR_RGB_DXT1 || ci.format == FORMAT_COLOR_RGBA_DXT1) ? 8 : 16;
 
 			gl3wGetProcAddress("GL_COMPRESSED_RGBA_S3TC_DXT1_EXT");
 
@@ -68,7 +69,8 @@ GLTexture::GLTexture(TextureCreateInfo ci) {
 			glGenerateMipmap(GL_TEXTURE_2D);
 		}
 		else {
-			unsigned int blockSize = (ci.format == FORMAT_COLOR_RGBA_DXT1) ? 8 : 16;
+			unsigned int blockSize = (ci.format == FORMAT_COLOR_SRGB_DXT1 || ci.format == FORMAT_COLOR_SRGB_ALPHA_DXT1
+									|| ci.format == FORMAT_COLOR_RGB_DXT1 || ci.format == FORMAT_COLOR_RGBA_DXT1) ? 8 : 16;
 
 			uint32_t width = ci.width;
 			uint32_t height = ci.height;
@@ -76,6 +78,7 @@ GLTexture::GLTexture(TextureCreateInfo ci) {
 			unsigned char *buffer = ci.data;
 
 			gl3wGetProcAddress("GL_COMPRESSED_RGBA_S3TC_DXT1_EXT");
+			gl3wGetProcAddress("GL_EXT_texture_sRGB");
 
 			for (uint32_t i = 0; i <= ci.mipmaps; i++) {
 				unsigned int size = ((width + 3) / 4)*((height + 3) / 4)*blockSize;
@@ -168,6 +171,7 @@ void TranslateColorFormats(ColorFormat inFormat, bool &is_compressed, GLenum &fo
 	case FORMAT_COLOR_RGB_DXT1:
 		format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 		is_compressed = true;
+		break;
 	case FORMAT_COLOR_RGBA_DXT1:
 		format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
 		is_compressed = true;

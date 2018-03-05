@@ -7,5 +7,5 @@ in vec3 fragCoord;
 uniform samplerCube skybox;
 
 void main() {
-    outColor = texture(skybox, fragCoord);
+    outColor = pow(texture(skybox, fragCoord), vec4(2.2));
 }

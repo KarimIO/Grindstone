@@ -931,7 +931,9 @@ Texture *MaterialManager::LoadCubemap(std::string path) {
 
 		fclose(fp);
 
-		bool alphaflag = header.dwFlags & DDPF_ALPHAPIXELS;
+		bool alphaflag = header.ddspf.dwFlags & DDPF_ALPHAPIXELS;
+		if (alphaflag)
+			G_WARNING(path + "\n");
 
 		unsigned int components = (header.ddspf.dwFourCC == FOURCC_DXT1) ? 3 : 4;
 		ColorFormat format;
@@ -1251,7 +1253,9 @@ Texture * MaterialManager::LoadTexture(std::string path) {
 
 		fclose(fp);
 
-		bool alphaflag = header.dwFlags & DDPF_ALPHAPIXELS;
+		bool alphaflag = header.ddspf.dwFlags & DDPF_ALPHAPIXELS;
+		if (alphaflag)
+			G_WARNING(path + "\n");
 
 		unsigned int components = (header.ddspf.dwFourCC == FOURCC_DXT1) ? 3 : 4;
 		ColorFormat format;

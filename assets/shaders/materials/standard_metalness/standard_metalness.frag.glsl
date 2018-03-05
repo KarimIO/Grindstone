@@ -32,6 +32,7 @@ void main() {
   float Metalness = texture(metalnessTexture, fragTexCoord).r;
 
   out0 = (1 - Metalness) * texture(albedoTexture, fragTexCoord);
+  out0 = pow(out0, vec4(2.2f));
   out1 = texture(normalTexture, fragTexCoord);
 
   vec3 Normals = CalcBumpedNormal(fragNormal, out1.rgb, fragTangent);

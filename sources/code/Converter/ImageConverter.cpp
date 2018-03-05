@@ -89,10 +89,25 @@ unsigned char *CreateMip(unsigned char *pixel, int width, int height) {
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
 			int src = (i * width * 4 + j * 2) * 4;
-			mip[++dst]	= pixel[src];
-			mip[++dst]  = pixel[src + 1];
-			mip[++dst]  = pixel[src + 2];
-			mip[++dst]  = pixel[src + 3];
+			mip[++dst]	= pixel[src] / 4;
+			mip[dst]	+= pixel[src + 4] / 4;
+			mip[dst]	+= pixel[src + 8] / 4;
+			mip[dst]	+= pixel[src + 12] / 4;
+
+			mip[++dst]  = pixel[src + 1] / 4;
+			mip[dst]  += pixel[src + 5] / 4;
+			mip[dst]  += pixel[src + 9] / 4;
+			mip[dst]  += pixel[src + 13] / 4;
+
+			mip[++dst]  = pixel[src + 2] / 4;
+			mip[dst]  += pixel[src + 6] / 4;
+			mip[dst]  += pixel[src + 10] / 4;
+			mip[dst]  += pixel[src + 14] / 4;
+
+			mip[++dst]  = pixel[src + 3] / 4;
+			mip[dst]  += pixel[src + 7] / 4;
+			mip[dst]  += pixel[src + 11] / 4;
+			mip[dst]  += pixel[src + 15] / 4;
 		}
 	}
 
