@@ -374,12 +374,12 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 	}
 
 	if (engine.settings.enableReflections) {
-		glm::vec3 pos;
+		glm::vec3 pos = engine.deffUBOBuffer.eyePos;
 		CubemapComponent *cube = engine.cubemapSystem.GetClosestCubemap(pos);
+		m_iblPipeline->Bind();
 		if (cube && cube->cubemap) {
-			m_iblPipeline->Bind();
 			m_graphics_wrapper_->BindTextureBinding(cube->cubemap_binding);
-			m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 		}
+		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 	}
 }

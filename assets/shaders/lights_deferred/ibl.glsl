@@ -131,7 +131,7 @@ void main() {
 	vec3 Albedo = texture(gbuffer0, fragTexCoord).rgb;
 	vec4 Specular = texture(gbuffer2, fragTexCoord);
 
-    vec3 ambientColor = vec3(0.9f, 0.96f, 1.0f) * 0.03f;
+    vec3 ambientColor = vec3(0.9f, 0.96f, 1.0f) * 0.2f;
 	
 	const int uBlurSize = 4;
 	vec2 texelSize = 1.0 / ubo.resolution;
@@ -160,5 +160,5 @@ void main() {
 	vec3 Kspec  = radiance(N, V, Specular);
 
 	// Mix the materials
-	outColor = (0 * Kspec + 0 * Kdiff + Albedo.rgb * ambientColor) * strength;
+	outColor = (Kspec + Kdiff) * strength;
 }

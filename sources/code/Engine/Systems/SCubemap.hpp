@@ -13,7 +13,6 @@
 class CubemapComponent;
 class CubemapSystem {
 private:
-	bool writing;
 	std::vector<CubemapComponent> components;
 public:
 	void CaptureCubemaps(double);
