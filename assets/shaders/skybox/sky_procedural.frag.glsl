@@ -4,12 +4,23 @@ out vec4 outColor;
 
 in vec3 fragCoord;
 
+layout(std140) uniform UniformBufferObject {
+    mat4 invView;
+    mat4 invProj;
+    vec4 eyePos;
+	vec4 resolution;
+    float time;
+} ubo;
+
 uniform sampler2D stars;
 uniform sampler2D clouds_day;
 uniform sampler2D clouds_noise;
+uniform sampler2D color_lut;
 
-const vec4 suncolor = vec4(1.0f, 0.8f, 0.4f, 1.0f);
-const vec4 cloudcolor = vec4(0.717, 0.782, 0.885, 0);
+vec4 suncolor = vec4(1.0f, 0.8f, 0.4f, 1.0f);
+vec4 cloudcolor = vec4(0.717, 0.782, 0.885, 0);
+vec4 horizoncolor = vec4(0.94, 1.0, 1.0, 1.0);
+vec4 zenithcolor = vec4(0.0852, 0.154, 0.34, 1.0);
 
 float clouds(in vec2 coord) {
     float t = 4.0f;
@@ -52,12 +63,19 @@ void rimColor(out vec4 color, out float alpha, in float sundot, in vec3 coord) {
     color = cloud_sunmask + cloud_f;
 }
 
+vec3 getSunPos() {
+    vec3 sundir = vec3(0,1,0);
+    sundir.x = sin(ubo.time);
+    sundir.y = cos(ubo.time);
+
+    return sundir;
+}
+
 vec4 skycolor(in vec3 coord) {
     // Params
-    float horizonfalloff = 3.0f;
-    vec4 horizoncolor = vec4(0.94, 1.0, 1.0, 1.0);
-    vec4 zenithcolor = vec4(0.0852, 0.154, 0.34, 1.0);
-    float sunheight = 1;
+    float sunheight = getSunPos().y;
+    float horizonfalloff = mix(3, 7, abs(sunheight));
+    sunheight = (sunheight < 0) ? abs(sunheight) : 0;
     float starbrightness = 0.1;
     
     // Textures
@@ -90,7 +108,13 @@ vec4 fullskycolor(in float sundot, in vec3 coord) {
 
 void main() {
     vec3 coord = normalize(fragCoord);
-    vec3 sundir = vec3(0,1,0);
+    vec3 sundir = getSunPos();
+    float sunheight = sundir.y * 0.49f + 0.50f;
+
+    zenithcolor = texture(color_lut, vec2(sunheight, 0));
+    horizoncolor = texture(color_lut, vec2(sunheight, 3/8));
+    cloudcolor = texture(color_lut, vec2(sunheight, 5/8));
+
     sundir = normalize(sundir);
     float sundot = dot(coord, sundir);
 

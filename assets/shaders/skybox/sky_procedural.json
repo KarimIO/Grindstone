@@ -17,17 +17,22 @@
         "stars": {
             "name": "Stars",
             "type": "texture",
-            "default": "materials/procedural_sky.tga"
+            "default": "materials/procedural_sky/T_Sky_Stars.TGA"
         },
         "clouds_day": {
             "name": "Clouds Day",
             "type": "texture",
-            "default": "materials/procedural_sky.tga"
+            "default": "materials/procedural_sky/T_Sky_Blue.TGA"
         },
         "clouds_noise": {
             "name": "Noise for Clouds",
             "type": "texture",
-            "default": "materials/procedural_sky.tga"
+            "default": "materials/procedural_sky/T_Sky_Clouds_M.TGA"
+        },
+        "color_lut": {
+            "name": "Color Lookup Table",
+            "type": "texture",
+            "default": "materials/procedural_sky/color_lut.png"
         }
     }
 }

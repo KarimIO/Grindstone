@@ -8,6 +8,7 @@ layout(std140) uniform UniformBufferObject {
     mat4 invProj;
     vec4 eyePos;
 	vec4 resolution;
+	float time;
 } ubo;
 
 const int kernelSize = 32;

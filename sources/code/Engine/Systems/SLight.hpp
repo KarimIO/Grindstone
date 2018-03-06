@@ -97,6 +97,7 @@ struct DefferedUBO {
 	glm::mat4 invProj;
 	glm::vec4 eyePos;
 	glm::vec4 resolution;
+	float time;
 };
 
 

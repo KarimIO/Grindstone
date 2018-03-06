@@ -632,6 +632,7 @@ void Engine::Run() {
 			deffUBOBuffer.eyePos.z = eyePos.z;
 			deffUBOBuffer.invProj = glm::inverse(cam->GetProjection());
 			deffUBOBuffer.view = glm::inverse(cam->GetView());
+			deffUBOBuffer.time = engine.GetTimeCurrent();
 
 			deffUBOBuffer.resolution.x = settings.resolutionX;
 			deffUBOBuffer.resolution.y = settings.resolutionY;

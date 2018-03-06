@@ -1,7 +1,7 @@
 {
     "name": "Sky Test",
     "numentities": 1,
-    "skymaterial": "materials/skymain.gmat",
+    "skymaterial": "materials/sky_procedural.gmat",
     "entities": [
         {
             "components": [{
