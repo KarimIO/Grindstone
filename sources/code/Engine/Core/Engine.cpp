@@ -282,7 +282,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings.resolutionX, settings.resolutionY); // sR sG sB Roughness
 	gbuffer_images_ = graphics_wrapper_->CreateRenderTarget(gbuffer_images_ci.data(), gbuffer_images_ci.size());
 
-	DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24_STENCIL_8, settings.resolutionX, settings.resolutionY, false);
+	DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24_STENCIL_8, settings.resolutionX, settings.resolutionY, false, false);
 	depth_image_ = graphics_wrapper_->CreateDepthTarget(depth_image_ci);
 	
 	FramebufferCreateInfo gbuffer_ci;
@@ -372,11 +372,13 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	hdr_framebuffer_ci.render_pass = nullptr;
 	hdr_framebuffer_ = graphics_wrapper_->CreateFramebuffer(hdr_framebuffer_ci);
 
-	// HDR
+	//=====================
+	// HDR Texture Binding
+	//=====================
 
-	TextureSubBinding tonemap_sub_binding_ = TextureSubBinding("lighting", 0);
+	TextureSubBinding tonemap_sub_binding_ = TextureSubBinding("lighting", 4);
 
-	tblci.bindingLocation = 0;
+	tblci.bindingLocation = 4;
 	tblci.bindings = &tonemap_sub_binding_;
 	tblci.bindingCount = 1;
 	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
@@ -387,7 +389,6 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	//=====================
 
 	ShaderStageCreateInfo stages[2];
-	ShaderStageCreateInfo fi;
 	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
 		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		stages[1].fileName = "../assets/shaders/post_processing/bloom.glsl";
@@ -438,6 +439,62 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	bloomGPCI.uniformBufferBindings = nullptr;
 	bloomGPCI.uniformBufferBindingCount = 0;
 	pipeline_bloom_ = graphics_wrapper_->CreateGraphicsPipeline(bloomGPCI);
+
+	//=====================
+	// SSR
+	//=====================
+
+	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
+		stages[1].fileName = "../assets/shaders/post_processing/ssr.glsl";
+	}
+	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+		stages[0].fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
+		stages[1].fileName = "../assets/shaders/post_processing/ssr.fxc";
+	}
+	else {
+		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.spv";
+		stages[1].fileName = "../assets/shaders/post_processing/ssr.spv";
+	}
+
+	vfile.clear();
+	if (!readFile(stages[0].fileName, vfile)) {
+		throw std::runtime_error("SSR Vertex Shader missing.\n");
+		return 0;
+	}
+	stages[0].content = vfile.data();
+	stages[0].size = (uint32_t)vfile.size();
+	stages[0].type = SHADER_VERTEX;
+
+	ffile.clear();
+	if (!readFile(stages[1].fileName, ffile)) {
+		throw std::runtime_error("SSR Fragment Shader missing.\n");
+		return 0;
+	}
+	stages[1].content = ffile.data();
+	stages[1].size = (uint32_t)ffile.size();
+	stages[1].type = SHADER_FRAGMENT;
+
+	GraphicsPipelineCreateInfo ssrGPCI;
+	ssrGPCI.cullMode = CULL_BACK;
+	ssrGPCI.bindings = &engine.planeVBD;
+	ssrGPCI.bindingsCount = 1;
+	ssrGPCI.attributes = &engine.planeVAD;
+	ssrGPCI.attributesCount = 1;
+	ssrGPCI.width = (float)engine.settings.resolutionX;
+	ssrGPCI.height = (float)engine.settings.resolutionY;
+	ssrGPCI.scissorW = engine.settings.resolutionX;
+	ssrGPCI.scissorH = engine.settings.resolutionY;
+	ssrGPCI.primitiveType = PRIM_TRIANGLES;
+	ssrGPCI.shaderStageCreateInfos = stages;
+	ssrGPCI.shaderStageCreateInfoCount = 2;
+
+	std::vector<TextureBindingLayout *>tbls = {tbl, tonemap_tbl};
+	ssrGPCI.textureBindings = tbls.data();
+	ssrGPCI.textureBindingCount = tbls.size();
+	ssrGPCI.uniformBufferBindings = &deffubb;
+	ssrGPCI.uniformBufferBindingCount = 1;
+	pipeline_ssr_ = graphics_wrapper_->CreateGraphicsPipeline(ssrGPCI);
 
 	//=====================
 	// HDR Transform
@@ -541,7 +598,7 @@ void Engine::Render() {
 		if (!settings.debugNoLighting) {
 			// Opaque
 			gbuffer_->Bind(true);
-			gbuffer_->Clear();
+			gbuffer_->Clear(CLEAR_BOTH);
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			materialManager.DrawDeferredImmediate();
 
@@ -564,31 +621,40 @@ void Engine::Render() {
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			deffUBO->Bind();
 			skybox_.Render();
+			
+			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+			pipeline_ssr_->Bind();
+			hdr_framebuffer_->Bind(false);
+			hdr_framebuffer_->BindTextures(4);
+			deffUBO->Bind();
+			gbuffer_->BindRead();
+			gbuffer_->BindTextures(0);
+			graphics_wrapper_->DrawImmediateVertices(0, 6);
 
 			//exposure_buffer_.exposure = hdr_framebuffer_->getExposure(0);
 			//exposure_buffer_.exposure = exposure_buffer_.exposure*100.0f/12.5f;
 			//std::cout << exposure_buffer_.exposure << "\n";
 			//exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
 			
-			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+			/*graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			pipeline_bloom_->Bind();
 			hdr_framebuffer_->Bind(false);
 			hdr_framebuffer_->BindTextures(0);
-			graphics_wrapper_->DrawImmediateVertices(0, 6);
+			graphics_wrapper_->DrawImmediateVertices(0, 6);*/
 
 			pipeline_tonemap_->Bind();
 			exposure_ub_->Bind();
 			graphics_wrapper_->BindDefaultFramebuffer(false);
-			graphics_wrapper_->Clear();
+			graphics_wrapper_->Clear(CLEAR_BOTH);
 			hdr_framebuffer_->BindRead();
-			hdr_framebuffer_->BindTextures(0);
+			hdr_framebuffer_->BindTextures(4);
 			graphics_wrapper_->DrawImmediateVertices(0, 6);
 
 			graphics_wrapper_->SwapBuffer();
 		}
 		else {
 			graphics_wrapper_->BindDefaultFramebuffer(true);
-			graphics_wrapper_->Clear();
+			graphics_wrapper_->Clear(CLEAR_BOTH);
 			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 			materialManager.DrawDeferredImmediate();
 			materialManager.DrawUnlitImmediate();

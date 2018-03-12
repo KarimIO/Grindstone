@@ -29,13 +29,19 @@ GLFramebuffer::GLFramebuffer(FramebufferCreateInfo create_info) {
 	}
 
 	if (create_info.depth_target) {
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, static_cast<GLDepthTarget *>(create_info.depth_target)->getHandle(), 0);
+		GLDepthTarget *dt = static_cast<GLDepthTarget *>(create_info.depth_target);
+		if (!dt->cubemap)
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, dt->getHandle(), 0);
+		else
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X, dt->getHandle(), 0);
 	}
 
 	if (num_total_render_targets > 0)
 		glDrawBuffers(num_total_render_targets, DrawBuffers);
-	else
+	else {
 		glDrawBuffer(GL_NONE);
+    	glReadBuffer(GL_NONE);
+	}
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		throw std::runtime_error("Framebuffer Incomplete\n");
@@ -51,8 +57,10 @@ GLFramebuffer::~GLFramebuffer() {
 	}
 }
 
-void GLFramebuffer::Clear() {
-	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+void GLFramebuffer::Clear(int mask) {
+	int m = (mask & CLEAR_DEPTH != 0) ? GL_DEPTH_BUFFER_BIT : 0;
+	m = m | ((mask & CLEAR_COLOR != 0) ? GL_COLOR_BUFFER_BIT : 0);
+	glClear(m);
 }
 
 float GLFramebuffer::getExposure(int i) {

@@ -1,6 +1,7 @@
 #include "SLight.hpp"
 #include "../Core/Engine.hpp"
 #include <glm/gtx/transform.hpp>
+#include "CubeInfo.hpp"
 
 CPointLight::CPointLight(unsigned int entityID) {
 	this->entityID = entityID;
@@ -16,6 +17,7 @@ CPointLight::CPointLight(unsigned int entID, glm::vec3 color, float strength, bo
 	lightUBOBuffer.attenuationRadius = radius;
 	lightUBOBuffer.color = color;
 	lightUBOBuffer.power = strength;
+	lightUBOBuffer.shadow = cast;
 
 	UniformBufferCreateInfo lightuboci;
 	lightuboci.isDynamic = false;
@@ -25,28 +27,44 @@ CPointLight::CPointLight(unsigned int entID, glm::vec3 color, float strength, bo
 
 	castShadow = cast;
 
-#if 0
-	if (cast) {
-		fbo->Initialize(0);
-		fbo->AddDepthCubeBuffer(256, 256);
-		fbo->Generate();
+	int res = 1024;
+	
+	if (castShadow) {
+		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, res, res, true, true);
+		shadow_db_ = engine.graphics_wrapper_->CreateDepthTarget(depth_image_ci);
+
+		FramebufferCreateInfo fbci;
+		fbci.num_render_target_lists = 0;
+		fbci.render_target_lists = nullptr;
+		fbci.depth_target = shadow_db_;
+		shadowFBO = engine.graphics_wrapper_->CreateFramebuffer(fbci);
 	}
-#endif
 }
 
 void CPointLight::SetShadow(bool state) {
 	castShadow = state;
-#if 0
-	if (state) {
-		fbo = pfnCreateFramebuffer();
-		fbo->Initialize(0);
-		fbo->AddDepthCubeBuffer(128, 128);
-		fbo->Generate();
+	lightUBOBuffer.shadow = castShadow;
+
+	int res = 1024;
+	
+	if (castShadow) {
+		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, res, res, true, true);
+		shadow_db_ = engine.graphics_wrapper_->CreateDepthTarget(depth_image_ci);
+
+		FramebufferCreateInfo fbci;
+		fbci.num_render_target_lists = 0;
+		fbci.render_target_lists = nullptr;
+		fbci.depth_target = shadow_db_;
+		shadowFBO = engine.graphics_wrapper_->CreateFramebuffer(fbci);
 	}
-#endif
 }
 
 void CPointLight::Bind() {
+	if (castShadow) {
+		shadowFBO->BindRead();
+		shadowFBO->BindTextures(4);
+	}
+
 	Entity *entity = &engine.entities[entityID];
 	unsigned int transID = entity->components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transID];
@@ -71,6 +89,7 @@ CSpotLight::CSpotLight(unsigned int entID, glm::vec3 color, float strength, bool
 	lightUBOBuffer.attenuationRadius = radius;
 	lightUBOBuffer.color = color;
 	lightUBOBuffer.power = strength;
+	lightUBOBuffer.shadow = cast;
 
 	castShadow = cast;
 
@@ -80,7 +99,7 @@ CSpotLight::CSpotLight(unsigned int entID, glm::vec3 color, float strength, bool
 	lightuboci.binding = engine.spotLightUBB;
 	lightUBO = engine.graphics_wrapper_->CreateUniformBuffer(lightuboci);
 	if (cast) {
-		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, 1024, 1024, true);
+		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, 1024, 1024, true, false);
 		shadow_db_ = engine.graphics_wrapper_->CreateDepthTarget(depth_image_ci);
 
 		FramebufferCreateInfo fbci;
@@ -93,9 +112,10 @@ CSpotLight::CSpotLight(unsigned int entID, glm::vec3 color, float strength, bool
 
 void CSpotLight::SetShadow(bool state) {
 	castShadow = state;
+	lightUBOBuffer.shadow = state;
 
 	if (state) {
-		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, 1024, 1024, true);
+		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, 1024, 1024, true, false);
 		shadow_db_ = engine.graphics_wrapper_->CreateDepthTarget(depth_image_ci);
 
 		FramebufferCreateInfo fbci;
@@ -177,6 +197,7 @@ CDirectionalLight::CDirectionalLight(unsigned int entID, glm::vec3 color, float 
 	lightUBOBuffer.sourceRadius = radius;
 	lightUBOBuffer.color = color;
 	lightUBOBuffer.power = strength;
+	lightUBOBuffer.shadow = cast;
 
 	res = 1024;
 
@@ -189,7 +210,7 @@ CDirectionalLight::CDirectionalLight(unsigned int entID, glm::vec3 color, float 
 	lightUBO = engine.graphics_wrapper_->CreateUniformBuffer(lightuboci);
 
 	if (cast) {
-		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, res, res, true);
+		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, res, res, true, false);
 		shadow_db_ = engine.graphics_wrapper_->CreateDepthTarget(depth_image_ci);
 
 		FramebufferCreateInfo fbci;
@@ -202,9 +223,10 @@ CDirectionalLight::CDirectionalLight(unsigned int entID, glm::vec3 color, float 
 
 void CDirectionalLight::SetShadow(bool state) {
 	castShadow = state;
+	lightUBOBuffer.shadow = castShadow;
 
 	if (state) {
-		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, res, res, true);
+		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, res, res, true, false);
 		shadow_db_ = engine.graphics_wrapper_->CreateDepthTarget(depth_image_ci);
 
 		FramebufferCreateInfo fbci;
@@ -474,11 +496,40 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 
 void SLight::DrawShadows() {
 	graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+
+	for (auto &light : pointLights) {
+		double camFar = light.lightUBOBuffer.attenuationRadius;
+		glm::mat4 proj = glm::perspective(1.5708f, 1.0f, 0.1f, 100.0f);
+		glm::mat4 view;
+
+		if (light.castShadow) {
+			//  gCubeDirections
+			light.shadowFBO->BindWrite(true);
+
+			unsigned int transformID = engine.entities[light.entityID].components_[COMPONENT_TRANSFORM];
+			CTransform *transform = &engine.transformSystem.components[transformID];
+
+			for (int i = 0; i < 6; ++i) {
+				light.shadow_db_->BindFace(i);
+				light.shadowFBO->Clear(CLEAR_DEPTH);
+				view = glm::lookAt(transform->position, transform->position + gCubeDirections[i].Target, gCubeDirections[i].Up);
+				view = proj * view;
+
+				engine.ubo->UpdateUniformBuffer(&view);
+				engine.ubo->Bind();
+				engine.ubo2->Bind();
+				
+				engine.materialManager.DrawShadowsImmediate();
+			}
+		}
+	}
+
 	glm::mat4 pv;
+
 	for (auto &light : spotLights) {
 		if (light.castShadow) {
 			light.shadowFBO->BindWrite(true);
-			light.shadowFBO->Clear();
+			light.shadowFBO->Clear(CLEAR_DEPTH);
 			pv = light.calculateMatrix();
 			engine.ubo->UpdateUniformBuffer(&pv);
 			engine.ubo->Bind();
@@ -491,7 +542,7 @@ void SLight::DrawShadows() {
 	for (auto &light : directionalLights) {
 		if (light.castShadow) {
 			light.shadowFBO->BindWrite(true);
-			light.shadowFBO->Clear();
+			light.shadowFBO->Clear(CLEAR_DEPTH);
 			pv = light.calculateMatrix();
 			engine.ubo->UpdateUniformBuffer(&pv);
 			engine.ubo->Bind();

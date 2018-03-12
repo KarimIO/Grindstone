@@ -14,6 +14,7 @@ layout(std140) uniform Light {
 	float sourceRadius;
 	vec3 color;
 	float power;
+	bool shadow;
 } light;
 
 out vec4 outColor;
@@ -179,6 +180,6 @@ void main() {
 	vec3 lightPow = lightColor * lightIntensity;
 	vec3 outColor3 = LightDirCalc(Albedo.rgb, Position, lightDir.xyz, vec4(Specular, Roughness), Normal.xyz, lightPow, ubo.eyePos.xyz);
 	
-	float sh = getShadowValue(Position, nl);
+	float sh = light.shadow ? getShadowValue(Position, nl) : 1.0f;
 	outColor = vec4(sh * outColor3, 1);
 }

@@ -13,6 +13,7 @@ layout(std140) uniform Light {
     float attenuationRadius;
 	vec3 color;
 	float power;
+	bool shadow;
 } light;
 
 out vec4 outColor;
@@ -23,6 +24,7 @@ uniform sampler2D gbuffer0;
 uniform sampler2D gbuffer1;
 uniform sampler2D gbuffer2;
 uniform sampler2D gbuffer3;
+uniform samplerCubeShadow shadow_map;
 
 vec4 ViewPosFromDepth(float depth, vec2 TexCoord) {
     float z = depth * 2.0 - 1.0;
@@ -158,6 +160,87 @@ vec3 LightPointCalc(in vec3 Albedo, in vec3 WorldPos, in vec4 Specular, in vec3 
 	return vec3(NL* BSDFValue * lightModifier);
 }
 
+float get_bias(float lightDot) {
+    float magicTan = sqrt(1.0f - lightDot * lightDot) / lightDot;
+    return clamp(0.006f * magicTan, 0.f, 0.05f);
+}
+
+float shadowRandom(vec4 seed4) {
+	float dot_product = dot(seed4, vec4(12.9898,78.233,45.164,94.673));
+    return fract(sin(dot_product) * 43758.5453);
+}
+
+vec2 poissonDisk[16] = vec2[]( 
+   vec2( -0.94201624, -0.39906216 ), 
+   vec2( 0.94558609, -0.76890725 ), 
+   vec2( -0.094184101, -0.92938870 ), 
+   vec2( 0.34495938, 0.29387760 ), 
+   vec2( -0.91588581, 0.45771432 ), 
+   vec2( -0.81544232, -0.87912464 ), 
+   vec2( -0.38277543, 0.27676845 ), 
+   vec2( 0.97484398, 0.75648379 ), 
+   vec2( 0.44323325, -0.97511554 ), 
+   vec2( 0.53742981, -0.47373420 ), 
+   vec2( -0.26496911, -0.41893023 ), 
+   vec2( 0.79197514, 0.19090188 ), 
+   vec2( -0.24188840, 0.99706507 ), 
+   vec2( -0.81409955, 0.91437590 ), 
+   vec2( 0.19984126, 0.78641367 ), 
+   vec2( 0.14383161, -0.14100790 ) 
+);
+
+vec3 gridSamplingDisk[20] = vec3[]
+(
+   vec3(1, 1, 1), vec3(1, -1, 1), vec3(-1, -1, 1), vec3(-1, 1, 1), 
+   vec3(1, 1, -1), vec3(1, -1, -1), vec3(-1, -1, -1), vec3(-1, 1, -1),
+   vec3(1, 1, 0), vec3(1, -1, 0), vec3(-1, -1, 0), vec3(-1, 1, 0),
+   vec3(1, 0, 1), vec3(-1, 0, 1), vec3(1, 0, -1), vec3(-1, 0, -1),
+   vec3(0, 1, 1), vec3(0, -1, 1), vec3(0, -1, -1), vec3(0, 1, -1)
+);
+
+float getShadow(vec3 pos, vec3 dir, float nl) {
+	float LocalZcomp = length(dir);
+
+	float n = 0.1f;
+	float f = light.attenuationRadius;
+    float NormZComp = (f+n) / (f-n) - (2*f*n)/(f-n)/LocalZcomp;
+    NormZComp = (NormZComp + 1.0) * 0.5;
+
+	float bias = get_bias(nl);
+
+	float visibility = 1.0f;
+	for (int i=0;i<4;i++){
+        int index = int(20.0*shadowRandom(vec4(floor(pos.xyz*1000.0), i)))%20;
+        visibility -= 0.2*(1.0-texture( shadow_map, vec4(dir + gridSamplingDisk[i]/700.0f, NormZComp - bias)));
+    }
+
+	return visibility;
+}
+/*
+float getShadow(vec3 dir, float nl) {
+	float LocalZcomp = length(dir);
+
+	float n = 0.1f;
+	float f = light.attenuationRadius;
+    float NormZComp = (f+n) / (f-n) - (2*f*n)/(f-n)/LocalZcomp;
+    NormZComp = (NormZComp + 1.0) * 0.5;
+
+	float bias = 0.05f;
+	
+	float len2 = texture(shadow_map, vec4(dir, NormZComp - bias));
+
+    float z = len2; // * 2.0 - 1.0;
+
+	z = 2.0 * n * f / (f + n - z * (f - n));	
+    
+	//float bias = 0.01*tan(acos(nl));
+	//bias = clamp(bias, 0, 0.01);
+	//bias /= shadow_coord.w;
+
+	return len2; //(len <= z + bias) ? 1.0f : 0.0f;
+}
+*/
+
 in vec3 viewRay;
 
 void main() {
@@ -182,5 +265,10 @@ void main() {
 
 	vec3 lightPow = lightColor * lightIntensity;
 	vec3 outColor3 = LightPointCalc(Albedo.rgb, Position.xyz, vec4(Specular, Roughness), Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, ubo.eyePos.xyz); // hdrGammaTransform()
-	outColor = vec4(outColor3, 1);
+	vec3 lightDir	= Position - lightPosition;
+
+	float nl = clamp(dot(Normal, normalize(lightDir)), 0, 1);
+	
+	float sh = (light.shadow) ? getShadow(Position, lightDir, nl) : 1.0f;
+	outColor = vec4(sh * outColor3, 1); //  * 
 }

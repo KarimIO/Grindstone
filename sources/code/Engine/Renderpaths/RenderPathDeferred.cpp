@@ -347,7 +347,7 @@ void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
 	
 	m_graphics_wrapper_->SetImmediateBlending(BLEND_ADDITIVE);
 	engine.hdr_framebuffer_->BindWrite(false);
-	m_graphics_wrapper_->Clear();
+	m_graphics_wrapper_->Clear(CLEAR_BOTH);
 	//engine.graphics_wrapper_->BindDefaultFramebuffer(false);
 	gbuffer->BindRead();
 	gbuffer->BindTextures(0);

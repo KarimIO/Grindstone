@@ -178,7 +178,7 @@ void LoadingScreen::Render(double dt) {
 	ubo_->Bind();
 
 	graphics_wrapper_->BindDefaultFramebuffer(true);
-	graphics_wrapper_->Clear();
+	graphics_wrapper_->Clear(CLEAR_BOTH);
 	pipeline_->Bind();
 	graphics_wrapper_->BindTextureBinding(tb_);
 	graphics_wrapper_->DrawImmediateVertices(0, 6);

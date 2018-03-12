@@ -16,6 +16,7 @@ struct LightPointUBO {
 	float attenuationRadius;
 	glm::vec3 color;
 	float power;
+	bool shadow;
 };
 
 struct LightSpotUBO {
@@ -27,8 +28,9 @@ struct LightSpotUBO {
 	glm::vec3 direction;
 	float innerAngle;
 	float outerAngle;
+	bool shadow;
 
-	char buffer[12];
+	char buffer[11];
 };
 
 struct LightDirectionalUBO {
@@ -37,8 +39,9 @@ struct LightDirectionalUBO {
 	float sourceRadius;
 	glm::vec3 color;
 	float power;
+	bool shadow;
 
-	char buffer[32];
+	char buffer[31];
 };
 
 class CPointLight {
@@ -47,6 +50,7 @@ public:
 	LightPointUBO lightUBOBuffer;
 	UniformBuffer *lightUBO;
 	Framebuffer *shadowFBO;
+	DepthTarget *shadow_db_;
 	uint32_t entityID;
 
 	CPointLight(unsigned int entityID);

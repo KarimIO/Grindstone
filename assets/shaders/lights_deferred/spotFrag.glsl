@@ -17,6 +17,7 @@ layout(std140) uniform Light {
 	vec3 direction;
 	float innerAngle;
 	float outerAngle;
+	bool shadow;
 } light;
 
 out vec4 outColor;
@@ -158,14 +159,15 @@ vec2 poissonDisk[16] = vec2[](
 float getShadowValue(in vec3 pos, in float nl) {
 	vec4 shadow_coord = light.shadow_mat * vec4(pos,1);
 	vec3 shadow_coords_final = shadow_coord.xyz / shadow_coord.w;
-	float bias = 0.01*tan(acos(nl));
-	bias = clamp(bias, 0, 0.01);
-	bias /= shadow_coord.w;
+	float bias = 0.005;
+	/*tan(acos(nl));
+	bias = clamp(bias, 0, 0.003)*/;
+	//bias /= shadow_coord.w;
 
 	float visibility = 1.0f;
 	for (int i=0;i<4;i++){
         int index = int(16.0*shadowRandom(vec4(floor(pos.xyz*1000.0), i)))%16;
-        visibility -= 0.2*(1.0-texture( shadow_map, vec3(shadow_coords_final.xy + poissonDisk[index]/700.0, shadow_coords_final.z - bias)));
+        visibility -= 0.2*(1.0-texture( shadow_map, vec3(shadow_coords_final.xy + poissonDisk[index]/1400.0, shadow_coords_final.z - bias)));
     }
 
 	return visibility;
@@ -196,7 +198,7 @@ void main() {
 	dotPR = clamp((dotPR-minDot)/(maxDot-minDot), 0, 1);
 
 	float NL = clamp(dot(Normal, lightDirection), 0, 1);
-	float sh = getShadowValue(Position, NL);
+	float sh = light.shadow ? getShadowValue(Position, NL) : 1.0f;
 
 	vec3 outColor3 = vec3(0,0,0);
 	if (dotPR > 0) {

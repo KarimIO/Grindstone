@@ -21,9 +21,9 @@ void CController::update(double dt) {
 	if (!ghost_mode_)
 		moveVelocity.y -= 9.81f * (float)dt;
 
-	moveVelocity.x *= 0.95f * (1.0f - dt);
-	moveVelocity.y *= 0.95f * (1.0f - dt);
-	moveVelocity.z *= 0.95f * (1.0f - dt);
+	moveVelocity.x *= 0.85f * (1.0f - dt);
+	moveVelocity.y *= 0.85f * (1.0f - dt);
+	moveVelocity.z *= 0.85f * (1.0f - dt);
 
 	if (ghost_mode_)
 		trans->position += moveVelocity * (float)dt;
@@ -53,7 +53,7 @@ void CController::Initialize(unsigned int _entityID) {
 	
 	ghost_mode_ = true;
 	no_collide_ = true;
-	speed_modifier_ = 4.0;
+	speed_modifier_ = 8.0;
 	sensitivity_ = 2.0;
 }
 
@@ -127,9 +127,9 @@ void CController::ZoomOut(double scale) {
 }
 
 void CController::RunStart(double scale) {
-	speed_modifier_ = ghost_mode_ ? 10.0f : 4.5;
+	speed_modifier_ = ghost_mode_ ? 10.0f : 9.0f;
 }
 
 void CController::RunStop(double scale) {
-	speed_modifier_ = ghost_mode_ ? 4.0f : 2.0;
+	speed_modifier_ = ghost_mode_ ? 6.0f : 5.0;
 }

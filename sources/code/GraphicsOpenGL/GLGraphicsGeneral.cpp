@@ -103,8 +103,10 @@ GLGraphicsWrapper::GLGraphicsWrapper(InstanceCreateInfo createInfo) {
 	printf("OpenGL Initialized!\n===================================\n");
 }
 
-void GLGraphicsWrapper::Clear() {
-	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+void GLGraphicsWrapper::Clear(int mask) {
+	int m = (mask & CLEAR_DEPTH != 0) ? GL_DEPTH_BUFFER_BIT : 0;
+	m = m | ((mask & CLEAR_COLOR != 0) ? GL_COLOR_BUFFER_BIT : 0);
+	glClear(m);
 }
 
 void GLGraphicsWrapper::SwapBuffer() {

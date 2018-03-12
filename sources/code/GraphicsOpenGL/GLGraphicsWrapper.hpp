@@ -36,7 +36,7 @@ private:
 
 public:
 	GLGraphicsWrapper(InstanceCreateInfo createInfo);
-	void Clear();
+	void Clear(int mask);
 	void CreateDefaultStructures();
 	void Cleanup();
 

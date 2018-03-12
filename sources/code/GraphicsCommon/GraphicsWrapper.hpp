@@ -82,7 +82,7 @@ public:
 	virtual void CreateDefaultStructures() = 0;
 	virtual void Cleanup() = 0;
 
-	virtual void Clear() = 0;
+	virtual void Clear(int mask) = 0;
 	virtual void DeleteFramebuffer(Framebuffer *ptr) = 0;
 	virtual void DeleteVertexBuffer(VertexBuffer *ptr) = 0;
 	virtual void DeleteIndexBuffer(IndexBuffer *ptr) = 0;

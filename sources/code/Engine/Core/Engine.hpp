@@ -74,6 +74,7 @@ public:
 	RenderTarget *hdr_buffer_;
 	GraphicsPipeline *pipeline_tonemap_;
 	GraphicsPipeline *pipeline_bloom_;
+	GraphicsPipeline *pipeline_ssr_;
 	std::vector<TextureSubBinding> tbci_refl_;
 
 	TextureBindingLayout *reflection_cubemap_layout_;

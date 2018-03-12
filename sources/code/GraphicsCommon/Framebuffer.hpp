@@ -7,6 +7,10 @@
 #include <vector>
 #include <stdint.h>
 
+#define CLEAR_DEPTH 0x1
+#define CLEAR_COLOR 0x2
+#define CLEAR_BOTH  CLEAR_DEPTH | CLEAR_COLOR
+
 class RenderPass;
 
 struct DefaultFramebufferCreateInfo {
@@ -27,7 +31,7 @@ struct FramebufferCreateInfo {
 class Framebuffer {
 public:
 	virtual float getExposure(int i) = 0;
-	virtual void Clear() = 0;
+	virtual void Clear(int mask) = 0;
 	virtual void CopyFrom(Framebuffer *) = 0;
 	virtual void BindWrite(bool depth) = 0;
 	virtual void BindTextures(int i) = 0;
