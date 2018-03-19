@@ -83,9 +83,6 @@ bool Engine::Initialize() {
 	inputSystem.AddControl("q", "CaptureCubemaps", NULL, 1);
 	inputSystem.BindAction("CaptureCubemaps", NULL, &(cubemapSystem), &CubemapSystem::CaptureCubemaps);
 
-	inputSystem.AddControl("1", "SwitchDebug", NULL, 1);
-	inputSystem.BindAction("SwitchDebug", NULL, this, &Engine::SwitchDebug);
-
 	//terrainSystem.Initialize();
 	if (!InitializeScene(defaultMap))	return false;
 
@@ -120,7 +117,6 @@ void Engine::InitializeSettings() {
 		cfile.GetString("Renderer", "graphics", "OpenGL", graphics);
 		cfile.GetBool("Renderer", "reflections", true, settings.enableReflections);
 		cfile.GetBool("Renderer", "shadows", true, settings.enableShadows);
-		cfile.GetBool("Renderer", "debugNoLighting", false, settings.debugNoLighting);
 		cfile.GetBool("Renderer", "useSSAO", false, settings.use_ssao);
 		cfile.GetBool("Debug", "showMaterialLod", true, settings.showMaterialLoad);
 		cfile.GetBool("Debug", "showPipelineLoad", true, settings.showPipelineLoad);
@@ -154,7 +150,6 @@ void Engine::InitializeSettings() {
 		cfile.SetString("Renderer", "graphics", "OpenGL");
 		cfile.SetBool("Renderer", "reflections", true);
 		cfile.SetBool("Renderer", "shadows", true);
-		cfile.SetBool("Renderer", "debugNoLighting", false);
 		cfile.SetBool("Renderer", "useSSAO", false);
 		cfile.SetBool("Debug", "showMaterialLod", true);
 		cfile.SetBool("Debug", "showPipelineLoad", true);
@@ -167,7 +162,6 @@ void Engine::InitializeSettings() {
 		settings.fov = 90.0f * (3.14159f / 360.0f); // Convert to rad, /2 for full fovY.
 		settings.enableReflections = true;
 		settings.enableShadows = false;
-		settings.debugNoLighting = false;
 		settings.vsync = true;
 		settings.showMaterialLoad=1;
 		settings.showPipelineLoad=1;
@@ -580,6 +574,8 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	tblci_refl.stages = SHADER_STAGE_FRAGMENT_BIT;
 	reflection_cubemap_layout_ = graphics_wrapper_->CreateTextureBindingLayout(tblci_refl);
 
+	debug_wrapper_.SetInitialize(gbuffer_);
+
 	return true;
 }
 
@@ -595,16 +591,16 @@ void Engine::Render() {
 		graphics_wrapper_->WaitUntilIdle();
 	}
 	else {
-		if (!settings.debugNoLighting) {
-			// Opaque
-			gbuffer_->Bind(true);
-			gbuffer_->Clear(CLEAR_BOTH);
-			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-			materialManager.DrawDeferredImmediate();
+		// Opaque
+		gbuffer_->Bind(true);
+		gbuffer_->Clear(CLEAR_BOTH);
+		graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+		materialManager.DrawDeferredImmediate();
 
-			// Deferred
+		if (engine.debug_wrapper_.GetDebugMode() == 0) {
+
+		// Deferred
 			renderPath->Draw(gbuffer_);
-
 			gbuffer_->BindRead();
 			hdr_framebuffer_->BindWrite(true);
 			graphics_wrapper_->CopyToDepthBuffer(depth_image_);
@@ -649,22 +645,12 @@ void Engine::Render() {
 			hdr_framebuffer_->BindRead();
 			hdr_framebuffer_->BindTextures(4);
 			graphics_wrapper_->DrawImmediateVertices(0, 6);
-
-			graphics_wrapper_->SwapBuffer();
 		}
 		else {
-			graphics_wrapper_->BindDefaultFramebuffer(true);
-			graphics_wrapper_->Clear(CLEAR_BOTH);
-			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-			materialManager.DrawDeferredImmediate();
-			materialManager.DrawUnlitImmediate();
-			graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
-			materialManager.DrawForwardImmediate();
-			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-			deffUBO->Bind();
-			skybox_.Render();
-			graphics_wrapper_->SwapBuffer();
+			debug_wrapper_.Draw();
 		}
+
+		graphics_wrapper_->SwapBuffer();
 	}
 }
 
@@ -682,14 +668,14 @@ void Engine::Run() {
 		physicsSystem.Update(GetUpdateTimeDelta());
 		transformSystem.Update();
 
-		if (!settings.debugNoLighting && settings.enableShadows)
+		if (settings.enableShadows)
 			lightSystem.DrawShadows();
 
 		glm::mat4 pv;
 		if (cameraSystem.components.size() > 0) {
 			CCamera *cam = &cameraSystem.components[0];
 			materialManager.resetDraws();
-			//geometry_system.Cull(cam);
+			geometry_system.Cull(cam);
 
 			Entity *ent = &entities[cam->entityID];
 			glm::vec3 eyePos = transformSystem.components[ent->components_[COMPONENT_TRANSFORM]].position;
@@ -752,12 +738,6 @@ std::string Engine::GetAvailablePath(std::string szString) {
 
 	// Return Empty String
 	return "";
-}
-
-void Engine::SwitchDebug(double) {
-	debugMode++;
-	if (debugMode == NUM_DEBUG)
-		debugMode = DEBUG_NONE;
 }
 
 // Initialize and Load a game scene

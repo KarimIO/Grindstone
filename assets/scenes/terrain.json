@@ -1,11 +1,12 @@
 {
     "name": "Sponza Test",
     "numentities": 7,
+    "skymaterial": "materials/sky_procedural.gmat",
     "entities": [
         {
             "components": [{
                 "componentType": "COMPONENT_TRANSFORM",
-                "position": [0.0, 2.0, 0.0]
+                "position": [0.0, 20.0, 0.0]
             }, {
                 "componentType": "COMPONENT_CAMERA"
             }, {
@@ -15,6 +16,7 @@
         {
             "components": [{
                 "componentType": "COMPONENT_TRANSFORM",
+                "position": [0.0, 0.0, 0.0],
                 "scale": [1.0, 1.0, 1.0]
             }, {
                 "componentType": "COMPONENT_GEOMETRY_TERRAIN",
@@ -23,10 +25,11 @@
         },
         {
             "components": [{
-                "componentType": "COMPONENT_TRANSFORM"
+                "componentType": "COMPONENT_TRANSFORM",
+                "angles": [0.45, 0.45, 0.45]
             }, {
                 "componentType": "COMPONENT_LIGHT_DIRECTIONAL",
-                "castshadow": true,
+                "castshadow": false,
                 "color": [1.0,1.0,1.0],
                 "brightness": 30.0,
                 "sunradius": 32.0

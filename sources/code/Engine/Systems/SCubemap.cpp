@@ -160,7 +160,7 @@ void CubemapSystem::CaptureCubemaps(double) {
 	int res = 128;
 
 
-	if (!engine.settings.debugNoLighting && engine.settings.enableShadows)
+	if (engine.settings.enableShadows)
 		engine.lightSystem.DrawShadows();
 
 	bool shouldUseShadows = engine.settings.enableShadows;

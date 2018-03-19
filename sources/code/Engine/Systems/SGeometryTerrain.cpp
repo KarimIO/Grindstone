@@ -68,7 +68,7 @@ void SGeometryTerrain::LoadModel(CTerrain * model) {
 	std::vector<glm::vec2> vertices;
 	std::vector<unsigned int> indices;
 
-	int tile_w = 240, tile_h = 240;
+	int tile_w = 8, tile_h = 8;
 
 	indices.reserve((tile_w + 1) * (tile_h + 1));
 	for (int i = 0; i < tile_w; i++) {
@@ -93,7 +93,11 @@ void SGeometryTerrain::LoadModel(CTerrain * model) {
 		}
 	}
 
-	model->material = material_system_->GetMaterial(material_system_->CreateMaterial(geometry_info_, "../assets/materials/terrain_mat.gmat"));
+	if (graphics_wrapper_->SupportsTesselation())
+		model->material = material_system_->GetMaterial(material_system_->CreateMaterial(geometry_info_, "../assets/materials/terrain.gmat"));
+	else
+		model->material = material_system_->GetMaterial(material_system_->CreateMaterial(geometry_info_, "../assets/materials/terrain_notess.gmat"));
+
 	model->material->m_meshes.push_back(reinterpret_cast<Mesh *>(model));
 
 	model->num_indices_ = indices.size();
@@ -187,7 +191,10 @@ void CTerrain::Draw() {
 
 			engine.graphics_wrapper_->BindVertexArrayObject(vertexArrayObject);
 			// Draw Patches only when Tesselated
-			engine.graphics_wrapper_->DrawImmediateIndexed(true, true, 0, 0, num_indices_);
+			if (engine.graphics_wrapper_->SupportsTesselation())
+				engine.graphics_wrapper_->DrawImmediateIndexed(true, true, 0, 0, num_indices_);
+			else
+				engine.graphics_wrapper_->DrawImmediateIndexed(false, true, 0, 0, num_indices_);
 		}
 	}
 }

@@ -36,6 +36,7 @@
 #include "Systems/SGameplay.hpp"
 #include "Systems/SUI.hpp"
 #include "../Systems/Skybox.hpp"
+#include "../Systems/Debug.hpp"
 #include "exception.hpp"
 
 #include "PostProcess/PostPipeline.hpp"
@@ -51,19 +52,6 @@ enum GraphicsLanguage {
 	GRAPHICS_METAL
 };
 
-enum {
-	DEBUG_NONE = 0,
-	DEBUG_FOURDISPLAY,
-	DEBUG_DEPTH,
-	DEBUG_POSITION,
-	DEBUG_2DNORMAL,
-	DEBUG_NORMAL,
-	DEBUG_ALBEDO,
-	DEBUG_SPECULAR,
-	DEBUG_ROUGHNESS,
-	DEBUG_SHADOW,
-	NUM_DEBUG
-};
 class Entity;
 
 class Engine {
@@ -126,7 +114,7 @@ public:
 	UniformBuffer *ubo2;
 
 	GraphicsPipeline *pipeline;
-	int debugMode;
+	Debug debug_wrapper_;
 	Skybox skybox_;
 	MaterialManager materialManager;
 	STransform transformSystem;
@@ -142,7 +130,6 @@ public:
 		bool use_ssao;
 		bool enableReflections;
 		bool enableShadows;
-		bool debugNoLighting;
 		bool showPipelineLoad;
 		bool showMaterialLoad;
 		bool showTextureLoad;
@@ -176,8 +163,6 @@ public:
 	//void AddSpace(Space *newSpace);
 
 	std::string GetAvailablePath(std::string);
-
-	void SwitchDebug(double);
 
 	bool InitializeScene(std::string);
 	void CalculateTime();

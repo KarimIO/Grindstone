@@ -22,17 +22,17 @@ uniform sampler2D heightmap;
 
 // read neightbor heights using an arbitrary small offset
 vec3 getNormals(vec2 P) {
-    vec3 off = vec3(1.0, 1.0, 0.0) / 512;
-    float hL = texture(heightmap, P.xy - off.xz).r * 20.0f;
-    float hR = texture(heightmap, P.xy + off.xz).r * 20.0f;
-    float hD = texture(heightmap, P.xy - off.zy).r * 20.0f;
-    float hU = texture(heightmap, P.xy + off.zy).r * 20.0f;
+    vec3 off = vec3(1.0, 1.0, 0.0) / 256;
+    float hL = texture(heightmap, P.xy - off.xz).r;
+    float hR = texture(heightmap, P.xy + off.xz).r;
+    float hD = texture(heightmap, P.xy - off.zy).r;
+    float hU = texture(heightmap, P.xy + off.zy).r;
 
     // deduce terrain normal
     vec3 N;
     N.x = hL - hR;
-    N.y = hD - hU;
-    N.z = 2.0;
+    N.y = 2.0;
+    N.z = hD - hU;
     N = normalize(N);
     return N;
 }
