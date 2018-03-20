@@ -118,8 +118,8 @@ void InitMaterials(bool skeletalMaterials, std::string folder_name, std::string 
 			}
 		}
 
-		if (pMaterial->GetTextureCount(aiTextureType_SPECULAR) > 0) {
-			if (pMaterial->GetTexture(aiTextureType_SPECULAR, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+		if (pMaterial->GetTextureCount(aiTextureType_AMBIENT) > 0) {
+			if (pMaterial->GetTexture(aiTextureType_AMBIENT, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 				std::string FullPath = Path.data;
 				SwitchSlashes(FullPath);
 				std::string name = FullPath.substr(FullPath.find_last_of("/") + 1);

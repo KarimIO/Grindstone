@@ -14,13 +14,13 @@ void Debug::SetInitialize(Framebuffer *framebuffer) {
     UniformBufferBindingCreateInfo ubbci;
 	ubbci.binding = 2;
 	ubbci.shaderLocation = "DebugBufferObject";
-	ubbci.size = sizeof(unsigned char);
+	ubbci.size = sizeof(unsigned int);
 	ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
 	UniformBufferBinding *ubb = engine.graphics_wrapper_->CreateUniformBufferBinding(ubbci);
 
 	UniformBufferCreateInfo ubci;
 	ubci.isDynamic = true;
-	ubci.size = sizeof(unsigned char);
+	ubci.size = sizeof(unsigned int);
 	ubci.binding = ubb;
 	ubo = engine.graphics_wrapper_->CreateUniformBuffer(ubci);
     ubo->UpdateUniformBuffer(&debug_mode_);
@@ -36,7 +36,7 @@ void Debug::SetInitialize(Framebuffer *framebuffer) {
 	}
 	else {
 		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.spv";
-		stages[1].fileName = "../assets/shaders/post_processing/debug.spv";
+	    stages[1].fileName = "../assets/shaders/post_processing/debug.spv";
 	}
 
 	std::vector<char> vfile;
@@ -76,7 +76,7 @@ void Debug::SetInitialize(Framebuffer *framebuffer) {
 	pipeline_ = engine.graphics_wrapper_->CreateGraphicsPipeline(gpci);
 }
 
-const unsigned char Debug::GetDebugMode() {
+const unsigned int Debug::GetDebugMode() {
     return debug_mode_;
 }
 
@@ -91,20 +91,36 @@ void Debug::SwitchDebug(double p) {
         debug_str = "No Debug";
         break;
     case 1:
-        debug_str = "Albedo";
+        debug_str = "Position";
         break;
     case 2:
         debug_str = "Normal";
+        break;
+    case 3:
+        debug_str = "Albedo";
+        break;
+    case 4:
+        debug_str = "Specular";
+        break;
+    case 5:
+        debug_str = "Roughness";
+        break;
+    case 6:
+        debug_str = "Distance";
         break;
     }
     std::cout << debug_str << std::endl;
 }
 
 void Debug::Draw() {
+	engine.deffUBO->Bind();
+	engine.graphics_wrapper_->BindVertexArrayObject(engine.planeVAO);
+
     pipeline_->Bind();
 	ubo->Bind();
 
 	engine.graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+	engine.graphics_wrapper_->EnableDepth(false);
 	engine.graphics_wrapper_->BindDefaultFramebuffer(false);
 	engine.graphics_wrapper_->Clear(CLEAR_BOTH);
 	framebuffer_->BindRead();

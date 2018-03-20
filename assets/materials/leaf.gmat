@@ -1,0 +1,5 @@
+shader: ../assets/shaders/materials/standard_metalness/standard_metalness.json
+albedoTexture: Sponza_Thorn_diffuse.dds
+normalTexture: Sponza_Thorn_normal.dds
+roughnessTexture: Sponza_Thorn_roughness.dds
+metalnessTexture: ../dielectric.png

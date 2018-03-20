@@ -9,10 +9,10 @@ private:
     Framebuffer *framebuffer_;
     GraphicsPipeline *pipeline_;
     UniformBuffer *ubo;
-    unsigned char debug_mode_;
+    unsigned int debug_mode_;
 public:
     Debug();
-    const unsigned char GetDebugMode();
+    const unsigned int GetDebugMode();
     void SetInitialize(Framebuffer *framebuffer);
     void SwitchDebug(double p);
     void Draw();

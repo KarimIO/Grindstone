@@ -1,0 +1,5 @@
+shader: ../assets/shaders/materials/standard_metalness/standard_metalness.json
+albedoTexture: ChainTexture_Albedo.dds
+normalTexture: ChainTexture_Normal.dds
+roughnessTexture: ChainTexture_Roughness.dds
+metalnessTexture: ../dielectric.png
