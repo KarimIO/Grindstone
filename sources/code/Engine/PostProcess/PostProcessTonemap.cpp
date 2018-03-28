@@ -82,6 +82,6 @@ void PostProcessTonemap::Process() {
 		engine.graphics_wrapper_->Clear(CLEAR_BOTH);
 	}
     source_->framebuffer->BindRead();
-    source_->framebuffer->BindTextures(0);
+    source_->framebuffer->BindTextures(4);
     engine.graphics_wrapper_->DrawImmediateVertices(0, 6);
 }
