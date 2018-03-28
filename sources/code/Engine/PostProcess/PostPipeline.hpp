@@ -15,11 +15,12 @@
 //		fbo = process.ProcessScene(fbo);
 class PostPipeline {
 public:
+	void Reserve(unsigned int size);
 	void AddPostProcess(BasePostProcess *);
-	Framebuffer *ProcessScene(Framebuffer *inputFbo);
+	void Process();
 	~PostPipeline();
 private:
-	std::vector<BasePostProcess *> processes;
+	std::vector<BasePostProcess *> processes_;
 };
 
 #endif

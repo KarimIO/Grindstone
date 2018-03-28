@@ -56,21 +56,19 @@ class Entity;
 
 class Engine {
 public:
+	TextureBindingLayout *tonemap_tbl_;
 	std::string level_file_name_;
 	std::string level_name_;
 	Framebuffer * hdr_framebuffer_;
 	RenderTarget *hdr_buffer_;
-	GraphicsPipeline *pipeline_tonemap_;
+	RenderTargetContainer rt_gbuffer_;
+	RenderTargetContainer rt_hdr_;
+	RenderTargetContainer rt_ldr_;
 	GraphicsPipeline *pipeline_bloom_;
 	GraphicsPipeline *pipeline_ssr_;
 	std::vector<TextureSubBinding> tbci_refl_;
 
 	TextureBindingLayout *reflection_cubemap_layout_;
-
-	struct ExposureUBO {
-		float exposure;
-	} exposure_buffer_;
-	UniformBuffer *exposure_ub_;
 
 	DefferedUBO deffUBOBuffer;
 	UniformBuffer *deffUBO;

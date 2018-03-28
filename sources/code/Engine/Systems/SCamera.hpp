@@ -9,6 +9,8 @@
 #include "../GraphicsCommon/Framebuffer.hpp"
 #include "../GraphicsCommon/GraphicsPipeline.hpp"
 
+#include "../PostProcess/PostPipeline.hpp"
+
 #define PROJECTION_ORTHOGRAPHIC false;
 #define PROJECTION_PERSPECTIVE  true;
 
@@ -21,10 +23,7 @@ private:
 	float camNear, camFar, aspectRatio;
 	bool projection;
 
-	Framebuffer *fbo;
-	GraphicsPipeline *shader;
-
-	float CalculateExposure(float middleVal = 0.18f);
+	PostPipeline post_pipeline_;
 public:
 	CCamera();
 	void SetSize(float x, float y, float width, float height);
@@ -43,9 +42,8 @@ public:
 	void SetISO(float _iso);
 	void SetFOV(float _fov);
 
-	void PostProcessing(Framebuffer *fbo);
-	Framebuffer *GetFramebuffer();
-
+	void PostProcessing();
+	
 	glm::mat4 GetProjection();
 	glm::mat4 GetView();
 

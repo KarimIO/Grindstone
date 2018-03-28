@@ -1,7 +1,16 @@
 #ifndef _BASE_POST_H
 #define _BASE_POST_H
 
-#include "../../GraphicsCommon/Framebuffer.hpp"
+#include "../GraphicsCommon/Framebuffer.hpp"
+#include "../GraphicsCommon/RenderTarget.hpp"
+#include "../GraphicsCommon/DepthTarget.hpp"
+
+struct RenderTargetContainer {
+	Framebuffer *framebuffer;
+	RenderTarget **render_targets;
+	unsigned int num_render_targets;
+	DepthTarget *depth_target;
+};
 
 // Interface for a PostProcess. Should be created and passed to
 //      the PostPipeline in a camera to be used in rendering.
@@ -11,10 +20,10 @@
 // Example:
 //      BasePostProcess postProcess;
 //      ...
-//      fbo = postProcess.Process(fbo);
+//      postProcess.Process();
 class BasePostProcess {
 public:
-    virtual Framebuffer *Process(Framebuffer *fbo) = 0;
+    virtual void Process() = 0;
 };
 
 #endif

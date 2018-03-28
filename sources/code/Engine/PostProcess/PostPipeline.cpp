@@ -1,20 +1,19 @@
 #include "PostPipeline.hpp"
+#include "PostProcessTonemap.hpp"
 
-void PostPipeline::AddPostProcess(BasePostProcess *process) {
-	processes.push_back(process);
+void PostPipeline::Reserve(unsigned int size) {
+	processes_.reserve(size);
 }
 
-Framebuffer *PostPipeline::ProcessScene(Framebuffer *inputFbo) {
-	Framebuffer *fbo = inputFbo;
-	for (auto &process : processes) {
-		fbo = process->Process(fbo);
-	}
+void PostPipeline::AddPostProcess(BasePostProcess *process) {
+	processes_.push_back(process);
+}
 
-	return fbo;
+void PostPipeline::Process() {
+	for (int i = 0; i < processes_.size(); i++) {
+		processes_.at(i)->Process();
+	}
 }
 
 PostPipeline::~PostPipeline() {
-	for (auto &process : processes) {
-		delete process;
-	}
 }

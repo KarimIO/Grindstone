@@ -1,5 +1,0 @@
-shader: ../assets/shaders/materials/standard_metalness/standard_metalness.json
-albedoTexture: VasePlant_diffuse.dds
-normalTexture: VasePlant_normal.dds
-roughnessTexture: VasePlant_roughness.dds
-metalnessTexture: ../dielectric.png

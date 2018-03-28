@@ -147,6 +147,7 @@ void main() {
         }
     }
     float strength = result / float(uBlurSize * uBlurSize);
+	strength *= strength;
 
 	vec3 V = normalize(ubo.eyePos - Position);
 
