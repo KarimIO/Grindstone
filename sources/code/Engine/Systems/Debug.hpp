@@ -13,7 +13,7 @@ private:
 public:
     Debug();
     const unsigned int GetDebugMode();
-    void SetInitialize(Framebuffer *framebuffer);
+    void Initialize(Framebuffer *framebuffer);
     void SwitchDebug(double p);
     void Draw();
     ~Debug();

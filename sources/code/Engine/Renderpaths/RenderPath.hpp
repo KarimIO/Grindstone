@@ -5,7 +5,7 @@
 
 class RenderPath {
 public:
-	virtual void Draw(Framebuffer *) = 0;
+	virtual void Render(Framebuffer *) = 0;
 };
 
 #endif

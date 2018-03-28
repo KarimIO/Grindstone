@@ -84,7 +84,70 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_, Vert
 	m_iblPipeline = graphics_wrapper_->CreateGraphicsPipeline(iblGPCI);*/
 }
 
-void RenderPathDeferred::Draw(Framebuffer *gbuffer) {
+void RenderPathDeferred::Render(Framebuffer *gbuffer_) {
+	// Opaque
+	gbuffer_->Bind(true);
+	gbuffer_->Clear(CLEAR_BOTH);
+	m_graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+	engine.materialManager.DrawDeferredImmediate();
+
+	if (engine.debug_wrapper_.GetDebugMode() == 0) {
+		// Deferred
+		RenderLights(gbuffer_);
+		gbuffer_->BindRead();
+		engine.hdr_framebuffer_->BindWrite(true);
+		m_graphics_wrapper_->CopyToDepthBuffer(engine.depth_image_);
+		engine.hdr_framebuffer_->BindRead();
+
+		m_graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+		// Unlit
+		engine.materialManager.DrawUnlitImmediate();	
+		// Forward
+		m_graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
+		engine.ubo->Bind();
+		engine.ubo2->Bind();
+		engine.materialManager.DrawForwardImmediate();
+		m_graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+		engine.deffUBO->Bind();
+		engine.skybox_.Render();
+		
+		/*graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+		pipeline_ssr_->Bind();
+		hdr_framebuffer_->Bind(false);
+		hdr_framebuffer_->BindTextures(4);
+		deffUBO->Bind();
+		gbuffer_->BindRead();
+		gbuffer_->BindTextures(0);
+		graphics_wrapper_->DrawImmediateVertices(0, 6);
+
+		//exposure_buffer_.exposure = hdr_framebuffer_->getExposure(0);
+		//exposure_buffer_.exposure = exposure_buffer_.exposure*100.0f/12.5f;
+		//std::cout << exposure_buffer_.exposure << "\n";
+		//exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
+		
+		/*graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+		pipeline_bloom_->Bind();
+		hdr_framebuffer_->Bind(false);
+		hdr_framebuffer_->BindTextures(0);
+		graphics_wrapper_->DrawImmediateVertices(0, 6);*/
+
+		/*pipeline_tonemap_->Bind();
+		exposure_ub_->Bind();
+		graphics_wrapper_->BindDefaultFramebuffer(false);
+		graphics_wrapper_->Clear(CLEAR_BOTH);
+		hdr_framebuffer_->BindRead();
+		hdr_framebuffer_->BindTextures(4);
+		graphics_wrapper_->DrawImmediateVertices(0, 6);*/
+
+		CCamera *cam = &engine.cameraSystem.components[0];
+		cam->PostProcessing();
+	}
+	else {
+		engine.debug_wrapper_.Draw();
+	}
+}
+
+void RenderPathDeferred::RenderLights(Framebuffer *gbuffer) {
 	engine.deffUBO->Bind();
 	engine.graphics_wrapper_->BindVertexArrayObject(plane_vao_);
 	

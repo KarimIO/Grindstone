@@ -5,7 +5,7 @@ const unsigned char DEBUG_MODE_MAX = 7;
 
 Debug::Debug() : framebuffer_(nullptr), debug_mode_(0) {}
 
-void Debug::SetInitialize(Framebuffer *framebuffer) {
+void Debug::Initialize(Framebuffer *framebuffer) {
     framebuffer_ = framebuffer;
 
 	engine.inputSystem.AddControl("1", "SwitchDebug", NULL, 1);

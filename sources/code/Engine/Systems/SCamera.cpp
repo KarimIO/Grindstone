@@ -14,19 +14,21 @@ CCamera::CCamera() {
 	fov = engine.settings.fov;
 	aspectRatio = float(engine.settings.resolutionX) / engine.settings.resolutionY;
 
+
+	RenderTargetContainer *rt_hdr = &engine.rt_hdr_;
+
 	if (engine.settings.use_ssao) {
 		BasePostProcess *pp_ssao = new PostProcessSSAO(&engine.rt_gbuffer_);
 		post_pipeline_.AddPostProcess(pp_ssao); 
 	}
 
-	// BasePostProcess *pp_ssao_blur = new PostProcessSSAOBlur(rt_ssao, rt_ssao_blur);
-	RenderTargetContainer *rt_hdr = &engine.rt_hdr_;
-	BasePostProcess *pp_ibl = new PostProcessIBL(&engine.rt_gbuffer_, rt_hdr); // Additive
+	if (engine.settings.enableReflections) {
+		BasePostProcess *pp_ibl = new PostProcessIBL(&engine.rt_gbuffer_, rt_hdr);
+		post_pipeline_.AddPostProcess(pp_ibl);
+	}
+
 	PostProcessTonemap *pp_tonemap = new PostProcessTonemap(rt_hdr, nullptr);
-	//post_pipeline_.AddPostProcess(pp_ssao_blur);
-	post_pipeline_.AddPostProcess(pp_ibl);
 	post_pipeline_.AddPostProcess(pp_tonemap);
-	post_pipeline_.Process();
 }
 
 void CCamera::SetSize(float X, float Y, float Width, float Height) {

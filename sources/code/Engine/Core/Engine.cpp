@@ -381,10 +381,10 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	// HDR Texture Binding
 	//=====================
 
-	TextureSubBinding tonemap_sub_binding_ = TextureSubBinding("lighting", 4);
+	TextureSubBinding *tonemap_sub_binding_ = new TextureSubBinding("lighting", 4);
 
 	tblci.bindingLocation = 4;
-	tblci.bindings = &tonemap_sub_binding_;
+	tblci.bindings = tonemap_sub_binding_;
 	tblci.bindingCount = 1;
 	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
 	tonemap_tbl_ = graphics_wrapper_->CreateTextureBindingLayout(tblci);
@@ -393,7 +393,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	// Bloom Step 1
 	//=====================
 
-	ShaderStageCreateInfo stages[2];
+	/*ShaderStageCreateInfo stages[2];
 	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
 		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		stages[1].fileName = "../assets/shaders/post_processing/bloom.glsl";
@@ -499,7 +499,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	ssrGPCI.textureBindingCount = tbls.size();
 	ssrGPCI.uniformBufferBindings = &deffubb;
 	ssrGPCI.uniformBufferBindingCount = 1;
-	pipeline_ssr_ = graphics_wrapper_->CreateGraphicsPipeline(ssrGPCI);
+	pipeline_ssr_ = graphics_wrapper_->CreateGraphicsPipeline(ssrGPCI);*/
 
 	//=====================
 	// Cubemap
@@ -516,7 +516,7 @@ bool Engine::InitializeGraphics(GraphicsLanguage gl) {
 	tblci_refl.stages = SHADER_STAGE_FRAGMENT_BIT;
 	reflection_cubemap_layout_ = graphics_wrapper_->CreateTextureBindingLayout(tblci_refl);
 
-	debug_wrapper_.SetInitialize(gbuffer_);
+	debug_wrapper_.Initialize(gbuffer_);
 
 	return true;
 }
@@ -533,67 +533,7 @@ void Engine::Render() {
 		graphics_wrapper_->WaitUntilIdle();
 	}
 	else {
-		// Opaque
-		gbuffer_->Bind(true);
-		gbuffer_->Clear(CLEAR_BOTH);
-		graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-		materialManager.DrawDeferredImmediate();
-
-		if (engine.debug_wrapper_.GetDebugMode() == 0) {
-
-		// Deferred
-			renderPath->Draw(gbuffer_);
-			gbuffer_->BindRead();
-			hdr_framebuffer_->BindWrite(true);
-			graphics_wrapper_->CopyToDepthBuffer(depth_image_);
-			hdr_framebuffer_->BindRead();
-
-			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-			// Unlit
-			materialManager.DrawUnlitImmediate();	
-			// Forward
-			graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
-			ubo->Bind();
-			ubo2->Bind();
-			materialManager.DrawForwardImmediate();
-			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-			deffUBO->Bind();
-			skybox_.Render();
-			
-			graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-			pipeline_ssr_->Bind();
-			hdr_framebuffer_->Bind(false);
-			hdr_framebuffer_->BindTextures(4);
-			deffUBO->Bind();
-			gbuffer_->BindRead();
-			gbuffer_->BindTextures(0);
-			graphics_wrapper_->DrawImmediateVertices(0, 6);
-
-			//exposure_buffer_.exposure = hdr_framebuffer_->getExposure(0);
-			//exposure_buffer_.exposure = exposure_buffer_.exposure*100.0f/12.5f;
-			//std::cout << exposure_buffer_.exposure << "\n";
-			//exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
-			
-			/*graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-			pipeline_bloom_->Bind();
-			hdr_framebuffer_->Bind(false);
-			hdr_framebuffer_->BindTextures(0);
-			graphics_wrapper_->DrawImmediateVertices(0, 6);*/
-
-			/*pipeline_tonemap_->Bind();
-			exposure_ub_->Bind();
-			graphics_wrapper_->BindDefaultFramebuffer(false);
-			graphics_wrapper_->Clear(CLEAR_BOTH);
-			hdr_framebuffer_->BindRead();
-			hdr_framebuffer_->BindTextures(4);
-			graphics_wrapper_->DrawImmediateVertices(0, 6);*/
-
-			CCamera *cam = &cameraSystem.components[0];
-			cam->PostProcessing();
-		}
-		else {
-			debug_wrapper_.Draw();
-		}
+		renderPath->Render(gbuffer_);
 
 		graphics_wrapper_->SwapBuffer();
 	}

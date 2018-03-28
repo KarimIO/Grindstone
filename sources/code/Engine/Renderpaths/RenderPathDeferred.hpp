@@ -15,7 +15,8 @@ class RenderPathDeferred : public RenderPath {
 	GraphicsPipeline *m_iblPipeline;
 public:
 	RenderPathDeferred(GraphicsWrapper *graphics_wrapper_, VertexArrayObject *plane_vao);
-	void Draw(Framebuffer *);
+	void Render(Framebuffer *);
+	void RenderLights(Framebuffer *);
 };
 
 #endif
