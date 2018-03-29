@@ -7,6 +7,9 @@
 #include "Systems/SGeometryStatic.hpp"
 #include <thread>
 
+#define DR_WAV_IMPLEMENTATION
+#include "../../../deps/dr_wav.h"
+
 #if defined(_WIN32)
 	#define LoadDLL(path) HMODULE dllHandle = LoadLibrary((path+".dll").c_str()); \
 	if (!dllHandle) { \
@@ -51,7 +54,8 @@ bool Engine::Initialize() {
 
 	// Get Settings here:
 	InitializeSettings();
-	if (!InitializeGraphics(settings.graphicsLanguage))		return false;
+	if (!InitializeGraphics())		return false;
+	if (!InitializeAudio())		return false;
 #if MULTITHEAD_LOAD
 	std::thread t1(&Engine::LoadingScreenThread, this);
 #else
@@ -79,6 +83,9 @@ bool Engine::Initialize() {
 
 	inputSystem.AddControl("escape", "Shutdown", NULL, 1);
 	inputSystem.BindAction("Shutdown", NULL, this, &Engine::ShutdownControl, KEY_RELEASED);
+
+	inputSystem.AddControl("r", "Play", NULL, 1);
+	inputSystem.BindAction("Play", NULL, this, &Engine::PlaySound, KEY_RELEASED);
 
 	inputSystem.AddControl("q", "CaptureCubemaps", NULL, 1);
 	inputSystem.BindAction("CaptureCubemaps", NULL, &(cubemapSystem), &CubemapSystem::CaptureCubemaps);
@@ -172,9 +179,53 @@ void Engine::InitializeSettings() {
 
 }
 
-bool Engine::InitializeGraphics(GraphicsLanguage gl) {
+bool Engine::InitializeAudio() {
+	std::string library = "openal";
+	
+	LoadDLL(library);
+
+	AudioWrapper* (*pfnCreateAudio)() = (AudioWrapper* (*)())LoadDLLFunction("createAudio");
+	if (!pfnCreateAudio) {
+		fprintf(stderr, "Cannot get createAudio function!\n");
+		return false;
+	}
+
+	pfnDeleteAudio = (void (*)(AudioWrapper*))LoadDLLFunction("deleteAudio");
+	if (!pfnDeleteAudio) {
+		fprintf(stderr, "Cannot get deleteAudio function!\n");
+		return false;
+	}
+
+	audio_wrapper_ = (AudioWrapper*)pfnCreateAudio();
+
+	unsigned int channels;
+	unsigned int sampleRate;
+	drwav_uint64 totalSampleCount;
+	char* pSampleData = (char *)drwav_open_and_read_file_s32("../assets/sounds/guitar.wav", &channels, &sampleRate, &totalSampleCount);
+	if (pSampleData == NULL) {
+		throw std::runtime_error("Error opening and reading WAV file.");
+	}
+
+
+
+	SoundBufferCreateInfo create_info;
+	create_info.data = pSampleData;
+    create_info.size = 4 * totalSampleCount;
+    create_info.channels = channels;
+    create_info.samples = 16;
+    create_info.frequency = 2 * sampleRate;
+
+	sound_buffer_ = audio_wrapper_->CreateBuffer(create_info);
+	sound_source_ = audio_wrapper_->CreateSource();
+	
+	drwav_free(pSampleData);
+	
+	return true;
+}
+
+bool Engine::InitializeGraphics() {
 	std::string library;
-	switch (gl) {
+	switch (settings.graphicsLanguage) {
 	default:
 		library = "graphicsgl";
 		break;
@@ -667,6 +718,10 @@ void Engine::ShutdownControl(double) {
 	Shutdown();
 }
 
+void Engine::PlaySound(double) {
+	sound_source_->Play(sound_buffer_);
+}
+
 Engine::~Engine() {
 	std::cout << "Cleaning Physics System...\n";
 	physicsSystem.Cleanup();
@@ -682,5 +737,11 @@ Engine::~Engine() {
 		std::cout << "Cleaning Graphics Wrapper...\n";
 		graphics_wrapper_->Cleanup();
 		std::cout << "Graphics Wrapper cleaned.\n";
+	}
+
+	if (audio_wrapper_) {
+		std::cout << "Cleaning Audio Wrapper...\n";
+		pfnDeleteAudio(audio_wrapper_);
+		std::cout << "Audio Wrapper cleaned.\n";
 	}
 }

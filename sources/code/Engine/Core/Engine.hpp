@@ -23,8 +23,6 @@
 #include <chrono>
 #include <string>
 
-#include <SoundFile.hpp>
-
 #include "../Core/Entity.hpp"
 
 #include "../Systems/SPhysics.hpp"
@@ -32,10 +30,11 @@
 #include "../Systems/STransform.hpp"
 #include "../Systems/SCamera.hpp"
 #include "../Systems/SController.hpp"
-#include "Systems/SMaterial.hpp"
-#include "Systems/SGameplay.hpp"
-#include "Systems/SUI.hpp"
+#include "../Systems/SMaterial.hpp"
+#include "../Systems/SGameplay.hpp"
+#include "../Systems/SUI.hpp"
 #include "../Systems/Skybox.hpp"
+#include "../Systems/SAudio.hpp"
 #include "../Systems/Debug.hpp"
 #include "exception.hpp"
 
@@ -86,10 +85,16 @@ public:
 	std::vector<TextureSubBinding> bindings;
 	Framebuffer *gbuffer_;
 	Framebuffer *defaultFramebuffer;
+
+	AudioWrapper *audio_wrapper_;
+	SoundBuffer *sound_buffer_;
+	SoundSource *sound_source_;
 private:
+	void (*pfnDeleteAudio)(AudioWrapper*);
 	void LoadingScreenThread();
 
-	bool InitializeGraphics(GraphicsLanguage);
+	bool InitializeGraphics();
+	bool InitializeAudio();
 	void InitializeSettings();
 
 	void CheckModPaths();
@@ -175,6 +180,7 @@ public:
 
 	~Engine();
 	void ShutdownControl(double);
+	void PlaySound(double);
 };
 
 #define engine Engine::GetInstance()

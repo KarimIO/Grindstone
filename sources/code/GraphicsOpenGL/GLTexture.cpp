@@ -184,6 +184,10 @@ void TranslateColorFormats(ColorFormat inFormat, bool &is_compressed, GLenum &fo
 		format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 		is_compressed = true;
 		break;
+	case FORMAT_COLOR_R10G10B10A2:
+		internalFormat = GL_RGB10_A2;
+		format = GL_RGBA;
+		break;
 	case FORMAT_COLOR_R8:
 		internalFormat = GL_R8;
 		format = GL_RED;

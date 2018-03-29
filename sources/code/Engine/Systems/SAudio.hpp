@@ -1,15 +1,17 @@
 #ifndef _S_AUDIO_H
 #define _S_AUDIO_H
 
-#include "SoundFile.hpp"
+#include <AudioCommon.hpp>
+#include <SoundBuffer.hpp>
+#include <SoundSource.hpp>
 
-class CAudio {
+class CAudioEmitter {
 private:
-	SoundFile *sound;
 public:
-	void SetSound(SoundFile *sound);
-	void Play();
-	void Stop();
+};
+
+class CAudioListener {
+public:
 };
 
 class SAudio {

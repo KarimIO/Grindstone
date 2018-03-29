@@ -6,8 +6,10 @@ set (CMAKE_BUILD_TYPE Debug)
 set (CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/sources/cmake)
+message(STATUS ${CMAKE_MODULE_PATH})
 find_package(assimp REQUIRED)
 find_package(Bullet REQUIRED)
+find_package(OpenAL REQUIRED)
 set(DEPS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/sources/deps")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
@@ -23,6 +25,7 @@ endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )
 
 add_subdirectory(sources/code/Engine)
 add_subdirectory(sources/code/Converter)
+add_subdirectory(sources/code/AudioOpenAL)
 
 option(USE_OPENGL "Should OpenGL be compiled?" ON)
 
