@@ -54,7 +54,7 @@ void CController::Initialize(unsigned int _entityID) {
 	ghost_mode_ = true;
 	no_collide_ = true;
 	speed_modifier_ = 8.0;
-	sensitivity_ = 2.0;
+	sensitivity_ = engine.settings.mouse_sensitivity;
 }
 
 void CController::MoveForwardBack(double scale) {
@@ -106,7 +106,7 @@ void CController::TurnPitch(double scale) {
 	unsigned int transfID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transfID];
 
-	trans->angles.x += float(sensitivity_ * engine.GetUpdateTimeDelta() * scale);
+	trans->angles.x += float(sensitivity_ * scale);
 
 	if (trans->angles.x < -2.4f / 2)	trans->angles.x = -2.4f / 2;
 	if (trans->angles.x > 3.14f / 2)	trans->angles.x = 3.14f / 2;
@@ -115,7 +115,7 @@ void CController::TurnPitch(double scale) {
 void CController::TurnYaw(double scale) {
 	unsigned int transfID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transfID];
-	trans->angles.y += float(sensitivity_ * engine.GetUpdateTimeDelta() * scale);
+	trans->angles.y += float(sensitivity_ * scale);
 }
 
 void CController::ZoomIn(double scale) {

@@ -137,6 +137,7 @@ public:
 		bool showPipelineLoad;
 		bool showMaterialLoad;
 		bool showTextureLoad;
+		float mouse_sensitivity;
 		GraphicsLanguage graphicsLanguage;
 	} settings;
 

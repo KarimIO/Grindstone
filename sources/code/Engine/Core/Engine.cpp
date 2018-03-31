@@ -116,6 +116,7 @@ void Engine::InitializeSettings() {
 		cfile.GetInteger("Window", "resx",	1366,	settings.resolutionX);
 		cfile.GetInteger("Window", "resy",	768,	settings.resolutionY);
 		cfile.GetFloat(  "Window", "fov",	90,		settings.fov);
+		cfile.GetFloat(  "Input", "mouseSensitivity",	1.0,		settings.mouse_sensitivity);
 		settings.fov *= 3.14159f / 360.0f; // Convert to rad, /2 for full fovY.
 		std::string graphics;
 		cfile.GetString("Renderer", "graphics", "OpenGL", graphics);
@@ -151,6 +152,7 @@ void Engine::InitializeSettings() {
 		cfile.SetInteger("Window", "resx", 1366);
 		cfile.SetInteger("Window", "resy", 768);
 		cfile.SetFloat("Window", "fov", 90);
+		cfile.SetFloat("Input", "mouseSensitivity",	1.0);
 		cfile.SetString("Renderer", "graphics", "OpenGL");
 		cfile.SetBool("Renderer", "reflections", true);
 		cfile.SetBool("Renderer", "shadows", true);
@@ -171,6 +173,7 @@ void Engine::InitializeSettings() {
 		settings.showPipelineLoad=1;
 		settings.showTextureLoad=0;
 		settings.use_ssao = true;
+		settings.mouse_sensitivity = 1.0f;
 		defaultMap = "../assets/scenes/sponza.json";
 	}
 
@@ -573,7 +576,7 @@ void Engine::Run() {
 		CalculateTime();
 
 		graphics_wrapper_->HandleEvents();
-		inputSystem.LoopControls();
+		inputSystem.LoopControls(GetUpdateTimeDelta());
 
 		gameplay_system.Update(GetUpdateTimeDelta());
 		controllerSystem.update(GetUpdateTimeDelta());

@@ -377,9 +377,11 @@ void InputSystem::SetMousePosition(int x, int y) {
 	if (!IsFocused())
 		return;
 
+	double delta_time = engine.GetUpdateTimeDelta();
+
 	double xOrg, yOrg;
-	xOrg = mouseData[MOUSE_XCOORD];
-	yOrg = mouseData[MOUSE_YCOORD];
+	xOrg = mouseData[MOUSE_XCOORD] * delta_time;
+	yOrg = mouseData[MOUSE_YCOORD] * delta_time;
 
 	if ((xOrg - x) != 0) {
 		mouseData[MOUSE_XCOORD] = x;
@@ -541,11 +543,9 @@ void InputSystem::ForceQuit() {
 	engine.Shutdown();
 }
 
-void InputSystem::LoopControls() {
+void InputSystem::LoopControls(double deltaTime) {
 	if (!IsFocused())
 		return;
-
-	double deltaTime = engine.GetUpdateTimeDelta();
 	
 	for (size_t i = 0; i <= MOUSE_MOUSE5; i++) {
 		if (mouseData[i] > 0) { // Key is Pressed

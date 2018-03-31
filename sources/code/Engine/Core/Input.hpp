@@ -70,7 +70,7 @@ public:
 	void ForceQuit();
 
 	InputSystem();
-	void LoopControls();
+	void LoopControls(double deltaTime);
 
 	int GetKeyboardKeyByName(std::string key);
 	int GetMouseKeyByName(std::string key);
