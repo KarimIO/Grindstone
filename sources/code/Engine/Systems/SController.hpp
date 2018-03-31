@@ -15,7 +15,6 @@ private:
 	double sensitivity_;
 	InputComponent	input;
 	btCollisionShape	*shape;
-	glm::vec3		moveVelocity;
 public:
 	void Initialize(unsigned int entityID);
 	void MoveForwardBack(double scale);

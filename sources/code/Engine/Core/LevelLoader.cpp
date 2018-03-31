@@ -204,6 +204,16 @@ public:
 				engine.cameraSystem.AddComponent(entityID, ent->components_[COMPONENT_CAMERA]);
 				componentID = ent->components_[COMPONENT_CAMERA];
 			}
+			else if (std::string(str) == "COMPONENT_AUDIO_LISTENER") {
+				componentType = COMPONENT_AUDIO_LISTENER;
+				engine.audio_system_.AddListener(entityID, ent->components_[COMPONENT_AUDIO_LISTENER]);
+				componentID = ent->components_[COMPONENT_AUDIO_LISTENER];
+			}
+			else if (std::string(str) == "COMPONENT_AUDIO_SOURCE") {
+				componentType = COMPONENT_AUDIO_SOURCE;
+				engine.audio_system_.AddSource(entityID, ent->components_[COMPONENT_AUDIO_SOURCE]);
+				componentID = ent->components_[COMPONENT_AUDIO_SOURCE];
+			}
 			else if (std::string(str) == "COMPONENT_GEOMETRY_STATIC") {
 				componentType = COMPONENT_GEOMETRY;
 				subType = GEOMETRY_STATIC_MODEL;
@@ -244,8 +254,11 @@ public:
 			else if (std::string(str) == "COMPONENT_INPUT") {
 				componentType = COMPONENT_INPUT;
 			}
-			else if (std::string(str) == "COMPONENT_AUDIO") {
-				componentType = COMPONENT_AUDIO;
+			else if (std::string(str) == "COMPONENT_AUDIO_SOURCE") {
+				componentType = COMPONENT_AUDIO_SOURCE;
+			}
+			else if (std::string(str) == "COMPONENT_AUDIO_LISTENER") {
+				componentType = COMPONENT_AUDIO_LISTENER;
 			}
 			else if (std::string(str) == "COMPONENT_SCRIPT") {
 				componentType = COMPONENT_SCRIPT;
@@ -261,6 +274,9 @@ public:
 		else if (keyType == KEY_COMPONENT_PATH) {
 			if (componentType == COMPONENT_GEOMETRY) {
 				engine.geometry_system.GetSystem(subType)->LoadGeometry(componentID, ("../assets/" + std::string(str)).c_str());
+			}
+			else if (componentType == COMPONENT_AUDIO_SOURCE) {
+				engine.audio_system_.AddBuffer(componentID, ("../assets/" + std::string(str)).c_str());
 			}
 		}
 		else if (keyType == KEY_MAP_NAME) {

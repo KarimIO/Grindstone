@@ -119,10 +119,12 @@ void SPhysics::SetTransforms() {
 		btTransform transform;
 		components[i].rigidBody->getMotionState()->getWorldTransform(transform);
 		btVector3 pos = transform.getOrigin();
+		btVector3 vel = components[i].rigidBody->getLinearVelocity();
 		unsigned int entityID = components[i].entityID;
 		unsigned int transformID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
 		CTransform *transComponent = &engine.transformSystem.components[transformID];
 		transComponent->position = glm::vec3(pos.getX(), pos.getY(), pos.getZ());
+		transComponent->velocity = glm::vec3(vel.getX(), vel.getY(), vel.getZ());
 		btQuaternion q = transform.getRotation();
 
 		float ysqr = q.y() * q.y();

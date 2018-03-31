@@ -125,6 +125,7 @@ public:
 	SController controllerSystem;
 	SPhysics physicsSystem;
 	SGameplay gameplay_system;
+	SAudio audio_system_;
 	struct Settings {
 		int resolutionX;
 		int resolutionY;

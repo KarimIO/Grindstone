@@ -7,9 +7,6 @@
 #include "Systems/SGeometryStatic.hpp"
 #include <thread>
 
-#define DR_WAV_IMPLEMENTATION
-#include "../../../deps/dr_wav.h"
-
 #if defined(_WIN32)
 	#define LoadDLL(path) HMODULE dllHandle = LoadLibrary((path+".dll").c_str()); \
 	if (!dllHandle) { \
@@ -197,28 +194,7 @@ bool Engine::InitializeAudio() {
 	}
 
 	audio_wrapper_ = (AudioWrapper*)pfnCreateAudio();
-
-	unsigned int channels;
-	unsigned int sampleRate;
-	drwav_uint64 totalSampleCount;
-	char* pSampleData = (char *)drwav_open_and_read_file_s32("../assets/sounds/guitar.wav", &channels, &sampleRate, &totalSampleCount);
-	if (pSampleData == NULL) {
-		throw std::runtime_error("Error opening and reading WAV file.");
-	}
-
-
-
-	SoundBufferCreateInfo create_info;
-	create_info.data = pSampleData;
-    create_info.size = 4 * totalSampleCount;
-    create_info.channels = channels;
-    create_info.samples = 16;
-    create_info.frequency = 2 * sampleRate;
-
-	sound_buffer_ = audio_wrapper_->CreateBuffer(create_info);
-	sound_source_ = audio_wrapper_->CreateSource();
-	
-	drwav_free(pSampleData);
+	audio_system_.Initialize(audio_wrapper_);
 	
 	return true;
 }
@@ -603,6 +579,11 @@ void Engine::Run() {
 		controllerSystem.update(GetUpdateTimeDelta());
 		physicsSystem.Update(GetUpdateTimeDelta());
 		transformSystem.Update();
+		audio_system_.Update();
+
+		// float time = GetTimeCurrent() * 10.0f;
+		// sound_source_->SetVolume(glm::sin(time)*0.5f + 0.5f);
+		// audio_wrapper_->SetListenerPosition(8.0f * glm::sin(time), 0, -2.0f);
 
 		if (settings.enableShadows)
 			lightSystem.DrawShadows();
@@ -719,7 +700,6 @@ void Engine::ShutdownControl(double) {
 }
 
 void Engine::PlaySound(double) {
-	sound_source_->Play(sound_buffer_);
 }
 
 Engine::~Engine() {

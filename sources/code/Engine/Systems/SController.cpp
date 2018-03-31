@@ -19,14 +19,14 @@ void CController::update(double dt) {
 	CTransform *trans = &engine.transformSystem.components[transfID];
 
 	if (!ghost_mode_)
-		moveVelocity.y -= 9.81f * (float)dt;
+		trans->velocity.y -= 9.81f * (float)dt;
 
-	moveVelocity.x *= 0.85f * (1.0f - dt);
-	moveVelocity.y *= 0.85f * (1.0f - dt);
-	moveVelocity.z *= 0.85f * (1.0f - dt);
+	trans->velocity.x *= 0.85f * (1.0f - dt);
+	trans->velocity.y *= 0.85f * (1.0f - dt);
+	trans->velocity.z *= 0.85f * (1.0f - dt);
 
 	if (ghost_mode_)
-		trans->position += moveVelocity * (float)dt;
+		trans->position += trans->velocity * (float)dt;
 
 	if (!no_collide_) {
 		if (trans->position.y < 0.0) {
@@ -70,7 +70,7 @@ void CController::MoveForwardBack(double scale) {
 		phys->ApplyCentralForce(f);
 	}
 	else {*/
-		moveVelocity += f;
+		trans->velocity += f;
 	//}
 }
 
@@ -87,7 +87,7 @@ void CController::MoveSide(double scale) {
 		phys->ApplyCentralForce(f);
 	}
 	else {*/
-	moveVelocity += f;
+	trans->velocity += f;
 	//}
 }
 
@@ -95,7 +95,11 @@ void CController::MoveVertical(double scale) {
 	unsigned int transfID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
 	CTransform *trans = &engine.transformSystem.components[transfID];
 
-	//trans->position.y += 5.0f * float(scale * speed_modifier_);
+	if (ghost_mode_) {
+		glm::vec3 f = 5.0f * float(scale * speed_modifier_) * trans->GetUp();
+
+		trans->velocity += f;
+	}
 }
 
 void CController::TurnPitch(double scale) {
