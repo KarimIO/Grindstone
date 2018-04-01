@@ -100,6 +100,8 @@ bool Engine::Initialize() {
 	startTime = std::chrono::high_resolution_clock::now();
 	printf("Initialization Complete! Starting:\n==================================\n");
 
+	audio_system_.PlayAutoplay();
+
 #if MULTITHEAD_LOAD
 	run_loading = false;
 	t1.join();

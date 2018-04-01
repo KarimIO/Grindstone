@@ -76,8 +76,7 @@ void SAudio::AddBuffer(unsigned int id, std::string path) {
 
 
 	SoundBuffer *sound_buffer_ = audio_wrapper_->CreateBuffer(create_info);
-	sources_[id].Play(sound_buffer_);
-    sources_[id].SetLooping(true);
+	sources_[id].SetBuffer(sound_buffer_);
     
 	drwav_free(create_info.data);
     drwav_close(wav);
@@ -91,6 +90,16 @@ void SAudio::AddListener(unsigned int entID, unsigned int & target) {
     listener_.entityID = entID;
     target = 1;
     listener_.disabled_ = false;
+}
+
+void SAudio::AddAutoplaySource(unsigned int id) {
+    autoplay_sources_.push_back(id);
+}
+
+void SAudio::PlayAutoplay() {
+    for (unsigned int i : autoplay_sources_) {
+        sources_[i].Play();
+    }
 }
 
 void SAudio::Update() {

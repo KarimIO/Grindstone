@@ -47,7 +47,11 @@ enum {
 	KEY_COMPONENT_PHYSICS_INERTIA,
 	KEY_COMPONENT_PHYSICS_FRICTION,
 	KEY_COMPONENT_PHYSICS_RESTITUTION,
-	KEY_COMPONENT_PHYSICS_DAMPING
+	KEY_COMPONENT_PHYSICS_DAMPING,
+	KEY_COMPONENT_AUDIO_AUTOPLAY,
+	KEY_COMPONENT_AUDIO_LOOPS,
+	KEY_COMPONENT_AUDIO_VOLUME,
+	KEY_COMPONENT_AUDIO_PITCH
 };
 
 #undef Bool
@@ -80,6 +84,15 @@ public:
 				engine.lightSystem.directionalLights[componentID].SetShadow(b);
 			}
 
+		}
+		else if(componentType == COMPONENT_AUDIO_SOURCE) {
+			if (keyType == KEY_COMPONENT_AUDIO_LOOPS) {
+				engine.audio_system_.GetComponent(componentID)->SetLooping(b);
+			}
+			else if (keyType == KEY_COMPONENT_AUDIO_AUTOPLAY) {
+				if (b)
+					engine.audio_system_.AddAutoplaySource(componentID);
+			}
 		}
 		return true;
 	}
@@ -173,6 +186,14 @@ public:
 						else {
 							engine.physicsSystem.Get(componentID)->SetDamping(position.x, (float)d);
 						}
+					}
+				}
+				else if(componentType == COMPONENT_AUDIO_SOURCE) {
+					if (keyType == KEY_COMPONENT_AUDIO_VOLUME) {
+						engine.audio_system_.GetComponent(componentID)->SetVolume(d);
+					}
+					else if (keyType == KEY_COMPONENT_AUDIO_PITCH) {
+						engine.audio_system_.GetComponent(componentID)->SetPitch(d);
 					}
 				}
 				/*else if (componentType == COMPONENT_TERRAIN) {
@@ -405,7 +426,21 @@ public:
 			}
 			else if (std::string(str) == "damping") {
 				keyType = KEY_COMPONENT_PHYSICS_DAMPING;
-			}				
+			}
+			else if (componentType == COMPONENT_AUDIO_SOURCE) {
+				if (std::string(str) == "loop") {
+					keyType = KEY_COMPONENT_AUDIO_LOOPS;
+				}
+				else if (std::string(str) == "autoplay") {
+					keyType = KEY_COMPONENT_AUDIO_AUTOPLAY;
+				}
+				else if (std::string(str) == "volume") {
+					keyType = KEY_COMPONENT_AUDIO_VOLUME;
+				}
+				else if (std::string(str) == "pitch") {
+					keyType = KEY_COMPONENT_AUDIO_PITCH;
+				}
+			}
 		}
 		return true;
 	}

@@ -10,19 +10,19 @@
 class CAudioSource : public CBase {
 public:
     CAudioSource(unsigned int entID, SoundSource *source);
-    inline void Play(SoundBuffer *buffer);
-    inline void Play();
-    inline void Pause();
-    inline void Stop();
+    void Play(SoundBuffer *buffer);
+    void Play();
+    void Pause();
+    void Stop();
 
-    inline void SetBuffer(SoundBuffer *buffer);
-    inline void SetPosition(float x, float y, float z);
-    inline void SetVelocity(float x, float y, float z);
-    inline void SetVolume(float volume);
-    inline void SetPitch(float pitch);
-    inline void SetLooping(bool loops);
+    void SetBuffer(SoundBuffer *buffer);
+    void SetPosition(float x, float y, float z);
+    void SetVelocity(float x, float y, float z);
+    void SetVolume(float volume);
+    void SetPitch(float pitch);
+    void SetLooping(bool loops);
 
-    inline bool IsPlaying();
+    bool IsPlaying();
 private:
     SoundSource *source_;
 };
@@ -39,6 +39,8 @@ public:
     void AddSource(unsigned int entID, unsigned int &target);
     void AddBuffer(unsigned int id, std::string path);
     void AddListener(unsigned int entID, unsigned int & target);
+    void AddAutoplaySource(unsigned int id);
+    void PlayAutoplay();
     void Update();
     void UpdateListenerData();
     void UpdateSourceData();
@@ -48,6 +50,7 @@ private:
     CAudioListener listener_;
     std::vector<SoundBuffer> buffers_;
     std::vector<CAudioSource> sources_;
+    std::vector<unsigned int> autoplay_sources_;
 };
 
 #endif
