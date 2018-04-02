@@ -235,7 +235,7 @@ bool Engine::InitializeGraphics() {
 		return false;
 	}
 
-	void (*pfnDeleteGraphics)(void*) = (void (*)(void*))LoadDLLFunction("deleteGraphics");
+	pfnDeleteGraphics = (void (*)(GraphicsWrapper*))LoadDLLFunction("deleteGraphics");
 	if (!pfnDeleteGraphics) {
 		fprintf(stderr, "Cannot get deleteGraphics function!\n");
 		return false;
@@ -708,6 +708,9 @@ void Engine::PlaySound(double) {
 }
 
 Engine::~Engine() {
+	materialManager.cleanup();
+	geometry_system.cleanup();
+
 	std::cout << "Cleaning Physics System...\n";
 	physicsSystem.Cleanup();
 	std::cout << "Physics System cleaned.\n";
@@ -720,13 +723,15 @@ Engine::~Engine() {
 
 	if (graphics_wrapper_) {
 		std::cout << "Cleaning Graphics Wrapper...\n";
-		graphics_wrapper_->Cleanup();
+		pfnDeleteGraphics(graphics_wrapper_);
+		graphics_wrapper_ = NULL;
 		std::cout << "Graphics Wrapper cleaned.\n";
 	}
 
 	if (audio_wrapper_) {
 		std::cout << "Cleaning Audio Wrapper...\n";
 		pfnDeleteAudio(audio_wrapper_);
+		audio_wrapper_ = NULL;
 		std::cout << "Audio Wrapper cleaned.\n";
 	}
 }

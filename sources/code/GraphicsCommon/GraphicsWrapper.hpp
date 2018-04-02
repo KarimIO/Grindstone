@@ -73,6 +73,8 @@ public:
 	uint32_t width;
 	uint32_t height;
 public:
+	virtual ~GraphicsWrapper() {};
+
 	virtual void HandleEvents();
 	virtual void SetCursorShown(bool);
 	virtual void ResetCursor();
@@ -80,7 +82,6 @@ public:
 	virtual void GetCursor(int &x, int &y);
 
 	virtual void CreateDefaultStructures() = 0;
-	virtual void Cleanup() = 0;
 
 	virtual void Clear(int mask) = 0;
 	virtual void DeleteFramebuffer(Framebuffer *ptr) = 0;

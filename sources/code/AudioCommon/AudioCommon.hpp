@@ -17,9 +17,9 @@
 #include "SoundBuffer.hpp"
 #include "SoundSource.hpp"
 
-class AudioWrapper {
+class AUDIO_EXPORT_CLASS AudioWrapper {
 public:
-    virtual ~AudioWrapper() = 0;
+    virtual ~AudioWrapper() {};
 
     virtual SoundBuffer* CreateBuffer(SoundBufferCreateInfo create_info) = 0;
     virtual SoundSource* CreateSource() = 0;
@@ -30,7 +30,9 @@ public:
 	virtual void SetListenerOrientation(float targ_x, float targ_y, float targ_z, float up_x, float up_y, float up_z) = 0;
 };
 
-extern "C" AUDIO_EXPORT AudioWrapper* createAudio();
-extern "C" AUDIO_EXPORT void deleteAudio(AudioWrapper *ptr);
+AUDIO_EXPORT {
+	AudioWrapper* createAudio();
+	void deleteAudio(AudioWrapper *ptr);
+}
 
 #endif

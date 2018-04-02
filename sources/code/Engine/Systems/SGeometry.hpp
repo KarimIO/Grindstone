@@ -63,6 +63,7 @@ public:
 	void LoadPreloaded();
 	void Cull(CCamera *cam);
 	SSubGeometry *GetSystem(uint32_t id);
+	void cleanup();
 	~SGeometry();
 private:
 	std::vector<SSubGeometry *> systems_;

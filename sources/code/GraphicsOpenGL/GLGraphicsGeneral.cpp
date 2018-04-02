@@ -123,7 +123,7 @@ void GLGraphicsWrapper::CreateDefaultStructures() {
 
 }
 
-void GLGraphicsWrapper::Cleanup() {
+GLGraphicsWrapper::~GLGraphicsWrapper() {
 #if defined(GLFW_WINDOW)
 	glfwTerminate();
 #elif defined(_WIN32)
@@ -330,10 +330,11 @@ ColorFormat GLGraphicsWrapper::GetDeviceColorFormat() {
 	return FORMAT_COLOR_R8G8B8A8;
 }
 
-GRAPHICS_EXPORT GraphicsWrapper* createGraphics(InstanceCreateInfo createInfo) {
+GraphicsWrapper* createGraphics(InstanceCreateInfo createInfo) {
 	return new GLGraphicsWrapper(createInfo);
 }
 
-GRAPHICS_EXPORT void deleteGraphics(void * ptr) {
-	free(ptr);
+void deleteGraphics(void * ptr) {
+	GLGraphicsWrapper * glptr = (GLGraphicsWrapper *)ptr;
+	delete glptr;
 }

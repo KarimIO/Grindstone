@@ -1450,9 +1450,15 @@ void MaterialManager::resetDraws() {
 }
 
 MaterialManager::~MaterialManager() {
+	cleanup();
+}
+
+void MaterialManager::cleanup() {
 	for (const auto &texture : texture_map_) {
 		graphics_wrapper_->DeleteTexture(texture.second);
 	}
+
+	texture_map_.clear();
 
 	for (const auto &render_pass : render_passes_) {
 		for (const auto &pipeline : render_pass.pipelines_deferred) {
@@ -1473,6 +1479,8 @@ MaterialManager::~MaterialManager() {
 
 		graphics_wrapper_->DeleteRenderPass(render_pass.renderPass);
 	}
+	
+	render_passes_.clear();
 }
 
 Material::Material(MaterialReference reference, TextureBinding * textureBinding) {

@@ -156,6 +156,7 @@ public:
 	void DrawDeferredCommand();
 	void generateProgram(GeometryInfo geometry_info, PipelineContainer &container);
 	void resetDraws();
+	void cleanup();
 	~MaterialManager();
 private:
 	std::vector<RenderPassContainer> render_passes_;

@@ -39,7 +39,13 @@ void SGeometry::Cull(CCamera *cam) {
 }
 
 SGeometry::~SGeometry() {
+	cleanup();
+}
+
+void SGeometry::cleanup() {
 	for (auto &system : systems_) {
 		delete system;
 	}
+
+	systems_.clear();
 }

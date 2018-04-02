@@ -91,6 +91,7 @@ public:
 	SoundSource *sound_source_;
 private:
 	void (*pfnDeleteAudio)(AudioWrapper*);
+	void (*pfnDeleteGraphics)(GraphicsWrapper*);
 	void LoadingScreenThread();
 
 	bool InitializeGraphics();

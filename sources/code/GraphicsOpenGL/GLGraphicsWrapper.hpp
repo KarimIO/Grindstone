@@ -36,9 +36,9 @@ private:
 
 public:
 	GLGraphicsWrapper(InstanceCreateInfo createInfo);
+	~GLGraphicsWrapper();
 	void Clear(int mask);
 	void CreateDefaultStructures();
-	void Cleanup();
 
 	void DeleteFramebuffer(Framebuffer *ptr);
 	void DeleteVertexBuffer(VertexBuffer *ptr);
@@ -94,5 +94,7 @@ public:
 	void SwapBuffer();
 };
 
-extern "C" GRAPHICS_EXPORT GraphicsWrapper* createGraphics(InstanceCreateInfo createInfo);
-extern "C" GRAPHICS_EXPORT void deleteGraphics(void *ptr);
+GRAPHICS_EXPORT {
+	GraphicsWrapper* createGraphics(InstanceCreateInfo createInfo);
+	void deleteGraphics(void *ptr);
+}
