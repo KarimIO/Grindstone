@@ -50,7 +50,7 @@ void CAudioSource::SetLooping(bool loops) {
 }
 
 bool CAudioSource::IsPlaying() {
-    source_->IsPlaying();
+    return source_->IsPlaying();
 }
 
 CAudioListener::CAudioListener() : disabled_(true) {}

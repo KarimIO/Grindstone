@@ -1,8 +1,6 @@
 #ifndef SOUND_BUFFER_HPP
 #define SOUND_BUFFER_HPP
 
-#include <AL/al.h>
-#include <AL/alc.h>
 #include <string>
 #include "../AudioCommon/SoundBuffer.hpp"
 
@@ -16,7 +14,7 @@ struct SoundBufferCreateInfo {
 
 class SoundBuffer {
 public:
-    virtual ~SoundBuffer() = 0;
+	virtual ~SoundBuffer() {};
 };
 
 #endif

@@ -45,6 +45,7 @@ Sources/Obj/
 
 bin/*
 !bin/readme.md
+.vs/*
 .vscode/*
 assets/cubemaps/*
 assets/materials/*

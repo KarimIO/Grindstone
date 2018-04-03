@@ -11,7 +11,7 @@
 	#endif
 #else
 	#define AUDIO_EXPORT_CLASS
-	#define AUDIO_EXPORT extern "C"
+	#define AUDIO_EXPORT 
 #endif
 
 #include "SoundBuffer.hpp"
@@ -30,9 +30,9 @@ public:
 	virtual void SetListenerOrientation(float targ_x, float targ_y, float targ_z, float up_x, float up_y, float up_z) = 0;
 };
 
-AUDIO_EXPORT {
-	AudioWrapper* createAudio();
-	void deleteAudio(AudioWrapper *ptr);
+extern "C" {
+	AUDIO_EXPORT AudioWrapper* createAudio();
+	AUDIO_EXPORT void deleteAudio(AudioWrapper *ptr);
 }
 
 #endif

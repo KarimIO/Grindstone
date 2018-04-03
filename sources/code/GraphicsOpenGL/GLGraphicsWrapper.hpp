@@ -94,7 +94,7 @@ public:
 	void SwapBuffer();
 };
 
-GRAPHICS_EXPORT {
-	GraphicsWrapper* createGraphics(InstanceCreateInfo createInfo);
-	void deleteGraphics(void *ptr);
+extern "C" {
+	GRAPHICS_EXPORT GraphicsWrapper* createGraphics(InstanceCreateInfo createInfo);
+	GRAPHICS_EXPORT void deleteGraphics(void *ptr);
 }

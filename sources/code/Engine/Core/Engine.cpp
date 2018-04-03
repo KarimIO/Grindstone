@@ -182,7 +182,7 @@ void Engine::InitializeSettings() {
 }
 
 bool Engine::InitializeAudio() {
-	std::string library = "openal";
+	std::string library = "audioopenal";
 	
 	LoadDLL(library);
 

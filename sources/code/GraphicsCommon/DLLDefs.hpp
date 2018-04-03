@@ -11,7 +11,7 @@
 	#endif
 #else
 #define GRAPHICS_EXPORT_CLASS
-#define GRAPHICS_EXPORT extern "C"
+#define GRAPHICS_EXPORT
 #endif
 
 #endif
