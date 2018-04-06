@@ -21,7 +21,7 @@ GLRenderTarget::GLRenderTarget(RenderTargetCreateInfo *create_info, uint32_t cou
         bool isCompressed;
         TranslateColorFormats(create_info[i].format, isCompressed, format_[i], internalFormat);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, create_info[i].width, create_info[i].height, 0, format_[i], GL_HALF_FLOAT, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, create_info[i].width, create_info[i].height, 0, format_[i], GL_FLOAT, 0);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -42,18 +42,20 @@ uint32_t GLRenderTarget::getNumRenderTargets() {
 
 float GLRenderTarget::getAverageValue(uint32_t i) {
     glBindTexture(GL_TEXTURE_2D, handles_[i]);
-    //glGenerateMipmap(GL_TEXTURE_2D);
+    glGenerateMipmap(GL_TEXTURE_2D);
 
-    unsigned int s = width_ * height_;
+    unsigned int s = 2 * 2;
 
-    GLfloat *values = new GLfloat[s * 3];
-	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, values);
-
+    GLfloat *values = new GLfloat[s];
+	//glGetTexImage(GL_TEXTURE_2D, 9, GL_RED, GL_FLOAT, values);
+	glReadPixels(0,0,2,2,GL_RED, GL_FLOAT, values);
     float val = 0;
-    for (int i = 0; i < s * 3; i+=3) {
-        float lum = glm::dot(glm::vec3(values[i], values[i+1], values[i+2]), glm::vec3(0.3, 0.59, 0.11));
-        val += std::log2(lum) / float(s);
+    for (int i = 0; i < s; i++) {
+		float lum = values[i];
+		val += lum;
     }
+
+	val /= 4.0f;
 
     delete[] values;
 

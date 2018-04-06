@@ -4,6 +4,7 @@
 #include "../PostProcess/PostProcessTonemap.hpp"
 #include "../PostProcess/PostProcessSSAO.hpp"
 #include "../PostProcess/PostProcessIBL.hpp"
+#include "../PostProcess/PostProcessAutoExposure.hpp"
 
 CCamera::CCamera() {
 	aperture = 16;
@@ -27,7 +28,10 @@ CCamera::CCamera() {
 		post_pipeline_.AddPostProcess(pp_ibl);
 	}
 
-	PostProcessTonemap *pp_tonemap = new PostProcessTonemap(rt_hdr, nullptr);
+	PostProcessAutoExposure *pp_auto = new PostProcessAutoExposure(rt_hdr, nullptr);
+	post_pipeline_.AddPostProcess(pp_auto);
+
+	PostProcessTonemap *pp_tonemap = new PostProcessTonemap(rt_hdr, nullptr, pp_auto);
 	post_pipeline_.AddPostProcess(pp_tonemap);
 }
 

@@ -147,6 +147,7 @@ PostProcessSSAO::PostProcessSSAO(RenderTargetContainer *source) : source_(source
 void PostProcessSSAO::Process() {
     if (source_ != nullptr) {
         source_->framebuffer->Bind(false);
+		source_->framebuffer->BindTextures(0);
     }
     
     engine.graphics_wrapper_->EnableDepth(false);
