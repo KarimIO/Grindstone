@@ -51,6 +51,7 @@ assets/cubemaps/*
 assets/materials/*
 assets/models/*
 assets/scenes/*
+assets/sounds/*
 !assets/cubemaps/glacier*
 !assets/materials/insphere/*
 !assets/materials/sphere/*

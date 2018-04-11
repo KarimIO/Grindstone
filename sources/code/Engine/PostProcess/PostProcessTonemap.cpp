@@ -79,7 +79,6 @@ void PostProcessTonemap::Process() {
 
 	float new_exp = 1.0f / glm::clamp(exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
 	exposure_buffer_.exposure = exposure_buffer_.exposure * (1.0f - dt) + new_exp * dt;
-	std::cout << exposure_buffer_.exposure << "\n";
 	exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
 
     pipeline_->Bind();
