@@ -84,6 +84,7 @@ void SAudio::AddBuffer(unsigned int id, std::string path) {
 
 void SAudio::AddSource(unsigned int entID, unsigned int &target) {
     sources_.emplace_back(entID, audio_wrapper_->CreateSource());
+    engine.entities[entID].components_[COMPONENT_AUDIO_SOURCE] = sources_.size()-1;
 }
 
 void SAudio::AddListener(unsigned int entID, unsigned int & target) {

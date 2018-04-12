@@ -14,7 +14,11 @@ OpenALSource::OpenALSource() {
 OpenALSource::OpenALSource(SoundSourceCreateInfo create_info) {
     alGenSources((ALuint)1, &source);
     
-    alSourcef(source, AL_PITCH, 1);
+    alSourcef(source, AL_PITCH, create_info.pitch);
+    alSourcef(source, AL_GAIN, create_info.volume);
+    alSource3f(source, AL_POSITION, create_info.position[0], create_info.position[1], create_info.position[2]);
+    alSource3f(source, AL_VELOCITY, create_info.velocity[0], create_info.velocity[1], create_info.velocity[2]);
+    alSourcei(source, AL_LOOPING, create_info.loops ? AL_TRUE : AL_FALSE);
 }
 
 OpenALSource::~OpenALSource() {
