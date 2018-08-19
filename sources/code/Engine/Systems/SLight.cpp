@@ -2,6 +2,7 @@
 #include "../Core/Engine.hpp"
 #include <glm/gtx/transform.hpp>
 #include "CubeInfo.hpp"
+#include <limits>
 
 CPointLight::CPointLight(unsigned int entityID) {
 	this->entityID = entityID;
@@ -186,6 +187,9 @@ CDirectionalLight::CDirectionalLight(unsigned int entityID) {
 	res = 1024;
 	this->entityID = entityID;
 
+	cascades_count_ = 4;
+	matrices_.resize(cascades_count_);
+
 	UniformBufferCreateInfo lightuboci;
 	lightuboci.isDynamic = false;
 	lightuboci.size = sizeof(LightDirectionalUBO);
@@ -197,11 +201,11 @@ CDirectionalLight::CDirectionalLight(unsigned int entID, glm::vec3 color, float 
 	lightUBOBuffer.sourceRadius = radius;
 	lightUBOBuffer.color = color;
 	lightUBOBuffer.power = strength;
-	lightUBOBuffer.shadow = cast;
+
+	cascades_count_ = 4;
+	matrices_.resize(cascades_count_);
 
 	res = 1024;
-
-	castShadow = cast;
 
 	UniformBufferCreateInfo lightuboci;
 	lightuboci.isDynamic = false;
@@ -209,16 +213,7 @@ CDirectionalLight::CDirectionalLight(unsigned int entID, glm::vec3 color, float 
 	lightuboci.binding = engine.directionalLightUBB;
 	lightUBO = engine.graphics_wrapper_->CreateUniformBuffer(lightuboci);
 
-	if (cast) {
-		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, res, res, true, false);
-		shadow_db_ = engine.graphics_wrapper_->CreateDepthTarget(depth_image_ci);
-
-		FramebufferCreateInfo fbci;
-		fbci.num_render_target_lists = 0;
-		fbci.render_target_lists = nullptr;
-		fbci.depth_target = shadow_db_;
-		shadowFBO = engine.graphics_wrapper_->CreateFramebuffer(fbci);
-	}
+	SetShadow(cast);
 }
 
 void CDirectionalLight::SetShadow(bool state) {
@@ -239,9 +234,12 @@ void CDirectionalLight::SetShadow(bool state) {
 
 void CDirectionalLight::Bind() {
 	if (castShadow) {
-		lightUBOBuffer.shadow_mat = calculateMatrixBasis();
-		shadowFBO->BindRead();
-		shadowFBO->BindTextures(4);
+		for (unsigned int i = 0; i < cascades_count_; ++i) {
+			lightUBOBuffer.shadow_mat[i] = calculateMatrixBasis(matrices_[0]);
+
+			shadowFBO->BindRead();
+			shadowFBO->BindTextures(4 + i);
+		}
 	}
 
 	Entity *entity = &engine.entities[entityID];
@@ -252,34 +250,82 @@ void CDirectionalLight::Bind() {
 	lightUBO->Bind();
 }
 
-glm::mat4 CDirectionalLight::calculateMatrix() {
-	glm::mat4 projection = glm::ortho<float>(-10, 10, -10, 10, -10, 30);
-	if (engine.settings.graphicsLanguage == GRAPHICS_VULKAN)
-		projection[1][1] *= -1;
+void CDirectionalLight::calculateMatrix() {
+	const unsigned int num_cascades_corners_ = 8;
 
-	if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
-		const glm::mat4 scale = glm::mat4(1.0f, 0, 0, 0,
-			0, 1.0f, 0, 0,
-			0, 0, 0.5f, 0,
-			0, 0, 0.25f, 1.0f);
-
-		projection = scale * projection;
-	}
+	CCamera *cam = &engine.cameraSystem.components[0];
+	float dist_near = cam->GetNear();
+	float dist_far = cam->GetFar();
+	glm::mat4 cam_inv = glm::inverse(cam->GetView());
 
 	unsigned int transformID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
 	CTransform *transform = &engine.transformSystem.components[transformID];
-	glm::mat4 view = glm::lookAt(
-		transform->GetForward()*20.0f,
+	glm::mat4 light_view = glm::lookAt(
 		glm::vec3(0, 0, 0),
+		transform->GetForward(),
 		glm::vec3(0, 1, 0)
 	);
 
-	matrix_ = projection * view;
+	float ar = cam->GetAspectRatio();
+	float tanHalfHFOV = tanf(cam->GetFOV());
+	float tanHalfVFOV = tanf(cam->GetFOV() * ar);
 
-	return matrix_;
+	for (unsigned int i = 0; i < cascades_count_ + 1; ++i) {
+		lightUBOBuffer.cascade_distance[i] = (dist_far * float(cascades_count_ - i) + dist_near * float(i)) / float(cascades_count_);
+	}
+
+	lightUBO->UpdateUniformBuffer(&lightUBOBuffer);
+	lightUBO->Bind();
+
+	for (unsigned int i = 0; i < cascades_count_; i++) {
+		float xn = lightUBOBuffer.cascade_distance[i] * tanHalfHFOV;
+		float xf = lightUBOBuffer.cascade_distance[i + 1] * tanHalfHFOV;
+		float yn = lightUBOBuffer.cascade_distance[i] * tanHalfVFOV;
+		float yf = lightUBOBuffer.cascade_distance[i + 1] * tanHalfVFOV;
+
+		glm::vec4 frustumCorners[num_cascades_corners_] = {
+			// near face
+			glm::vec4(xn, yn, lightUBOBuffer.cascade_distance[i], 1.0),
+			glm::vec4(-xn, yn, lightUBOBuffer.cascade_distance[i], 1.0),
+			glm::vec4(xn, -yn, lightUBOBuffer.cascade_distance[i], 1.0),
+			glm::vec4(-xn, -yn, lightUBOBuffer.cascade_distance[i], 1.0),
+
+			// far face
+			glm::vec4(xf, yf, lightUBOBuffer.cascade_distance[i + 1], 1.0),
+			glm::vec4(-xf, yf, lightUBOBuffer.cascade_distance[i + 1], 1.0),
+			glm::vec4(xf, -yf, lightUBOBuffer.cascade_distance[i + 1], 1.0),
+			glm::vec4(-xf, -yf, lightUBOBuffer.cascade_distance[i + 1], 1.0)
+		};
+
+		glm::vec4 frustumCornersL[num_cascades_corners_];
+
+		float minX = std::numeric_limits<float>::max();
+		float maxX = std::numeric_limits<float>::min();
+		float minY = std::numeric_limits<float>::max();
+		float maxY = std::numeric_limits<float>::min();
+		float minZ = std::numeric_limits<float>::max();
+		float maxZ = std::numeric_limits<float>::min();
+
+		for (unsigned int j = 0; j < cascades_count_; j++) {
+			// Transform the frustum coordinate from view to world space
+			glm::vec4 vW = cam_inv * frustumCorners[j];
+
+			// Transform the frustum coordinate from world to light space
+			frustumCornersL[j] = light_view * vW;
+
+			minX = glm::min(minX, frustumCornersL[j].x);
+			maxX = glm::max(maxX, frustumCornersL[j].x);
+			minY = glm::min(minY, frustumCornersL[j].y);
+			maxY = glm::max(maxY, frustumCornersL[j].y);
+			minZ = glm::min(minZ, frustumCornersL[j].z);
+			maxZ = glm::max(maxZ, frustumCornersL[j].z);
+		}
+
+		matrices_[i] = glm::ortho(minX, maxX, minY, maxY, minZ, maxZ);
+	}
 }
 
-glm::mat4 CDirectionalLight::calculateMatrixBasis() {
+glm::mat4 CDirectionalLight::calculateMatrixBasis(glm::mat4 matrix) {
 	glm::mat4 bias_matrix(
 		0.5, 0.0, 0.0, 0.0,
 		0.0, 0.5, 0.0, 0.0,
@@ -287,7 +333,7 @@ glm::mat4 CDirectionalLight::calculateMatrixBasis() {
 		0.5, 0.5, 0.5, 1.0
 	);
 	
-	return bias_matrix * matrix_;
+	return bias_matrix * matrix;
 }
 
 void SLight::AddPointLight(unsigned int entityID, glm::vec3 lightColor, float intensity, bool castShadow, float lightRadius) {
@@ -470,7 +516,7 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 	fi.size = (uint32_t)ffile.size();
 	fi.type = SHADER_FRAGMENT;
 
-	std::vector<ShaderStageCreateInfo> directionalSpot = { vi, fi };
+	std::vector<ShaderStageCreateInfo> stages_directional = { vi, fi };
 
 	GraphicsPipelineCreateInfo directionalGPCI;
 	directionalGPCI.cullMode = CULL_BACK;
@@ -483,8 +529,8 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 	directionalGPCI.scissorW = engine.settings.resolutionX;
 	directionalGPCI.scissorH = engine.settings.resolutionY;
 	directionalGPCI.primitiveType = PRIM_TRIANGLE_STRIPS;
-	directionalGPCI.shaderStageCreateInfos = directionalSpot.data();
-	directionalGPCI.shaderStageCreateInfoCount = (uint32_t)directionalSpot.size();
+	directionalGPCI.shaderStageCreateInfos = stages_directional.data();
+	directionalGPCI.shaderStageCreateInfoCount = (uint32_t)stages_directional.size();
 	directionalGPCI.textureBindings = &engine.tbl;
 	directionalGPCI.textureBindingCount = 1;
 	ubbs.clear();
@@ -492,10 +538,63 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 	directionalGPCI.uniformBufferBindings = ubbs.data();
 	directionalGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
 	m_directionalLightPipeline = graphics_wrapper_->CreateGraphicsPipeline(directionalGPCI);
+
+	// CASCADED DIRECTIONAL LIGHTS
+
+	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+		vi.fileName = "../assets/shaders/lights_deferred/cascade_shadow_vert.glsl";
+		fi.fileName = "../assets/shaders/lights_deferred/cascade_shadow_frag.glsl";
+	}
+	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+		vi.fileName = "../assets/shaders/lights_deferred/cascade_shadow_vert.fxc";
+		fi.fileName = "../assets/shaders/lights_deferred/cascade_shadow_frag.fxc";
+	}
+	else {
+		vi.fileName = "../assets/shaders/lights_deferred/cascade_shadow_vert.spv";
+		fi.fileName = "../assets/shaders/lights_deferred/cascade_shadow_frag.spv";
+	}
+
+	vfile.clear();
+	if (!readFile(vi.fileName, vfile))
+		return;
+	vi.content = vfile.data();
+	vi.size = (uint32_t)vfile.size();
+	vi.type = SHADER_VERTEX;
+
+	ffile.clear();
+	if (!readFile(fi.fileName, ffile))
+		return;
+	fi.content = ffile.data();
+	fi.size = (uint32_t)ffile.size();
+	fi.type = SHADER_FRAGMENT;
+
+	std::vector<ShaderStageCreateInfo> stages_cascade = { vi, fi };
+
+	GraphicsPipelineCreateInfo cascadeGPCI;
+	cascadeGPCI.cullMode = CULL_BACK;
+	cascadeGPCI.bindings = &engine.planeVBD;
+	cascadeGPCI.bindingsCount = 1;
+	cascadeGPCI.attributes = &engine.planeVAD;
+	cascadeGPCI.attributesCount = 1;
+	cascadeGPCI.width = (float)engine.settings.resolutionX;
+	cascadeGPCI.height = (float)engine.settings.resolutionY;
+	cascadeGPCI.scissorW = engine.settings.resolutionX;
+	cascadeGPCI.scissorH = engine.settings.resolutionY;
+	cascadeGPCI.primitiveType = PRIM_TRIANGLE_STRIPS;
+	cascadeGPCI.shaderStageCreateInfos = stages_cascade.data();
+	cascadeGPCI.shaderStageCreateInfoCount = (uint32_t)stages_cascade.size();
+	cascadeGPCI.textureBindings = &engine.tbl;
+	cascadeGPCI.textureBindingCount = 1;
+	ubbs.clear();
+	ubbs = { engine.deffubb, engine.directionalLightUBB };
+	cascadeGPCI.uniformBufferBindings = ubbs.data();
+	cascadeGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
+	m_cascadeLightPipeline = graphics_wrapper_->CreateGraphicsPipeline(cascadeGPCI);
 }
 
 void SLight::DrawShadows() {
 	graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+	MainUBO ubo;
 
 	for (auto &light : pointLights) {
 		double camFar = light.lightUBOBuffer.attenuationRadius;
@@ -513,9 +612,11 @@ void SLight::DrawShadows() {
 				light.shadow_db_->BindFace(i);
 				light.shadowFBO->Clear(CLEAR_DEPTH);
 				view = glm::lookAt(transform->position, transform->position + gCubeDirections[i].Target, gCubeDirections[i].Up);
-				view = proj * view;
+				
+				ubo.pv = proj * view;
+				ubo.eye_pos = transform->position;
 
-				engine.ubo->UpdateUniformBuffer(&view);
+				engine.ubo->UpdateUniformBuffer(&ubo);
 				engine.ubo->Bind();
 				engine.ubo2->Bind();
 				
@@ -530,8 +631,14 @@ void SLight::DrawShadows() {
 		if (light.castShadow) {
 			light.shadowFBO->BindWrite(true);
 			light.shadowFBO->Clear(CLEAR_DEPTH);
-			pv = light.calculateMatrix();
-			engine.ubo->UpdateUniformBuffer(&pv);
+
+			unsigned int transformID = engine.entities[light.entityID].components_[COMPONENT_TRANSFORM];
+			CTransform *transform = &engine.transformSystem.components[transformID];
+
+			ubo.pv = light.calculateMatrix();
+			ubo.eye_pos = transform->GetPosition();
+
+			engine.ubo->UpdateUniformBuffer(&ubo);
 			engine.ubo->Bind();
 			engine.ubo2->Bind();
 
@@ -543,12 +650,22 @@ void SLight::DrawShadows() {
 		if (light.castShadow) {
 			light.shadowFBO->BindWrite(true);
 			light.shadowFBO->Clear(CLEAR_DEPTH);
-			pv = light.calculateMatrix();
-			engine.ubo->UpdateUniformBuffer(&pv);
-			engine.ubo->Bind();
-			engine.ubo2->Bind();
 
-			engine.materialManager.DrawShadowsImmediate();
+			unsigned int transformID = engine.entities[light.entityID].components_[COMPONENT_TRANSFORM];
+			CTransform *transform = &engine.transformSystem.components[transformID];
+
+			light.calculateMatrix();
+			ubo.eye_pos = transform->GetPosition();
+
+			for (unsigned int i = 0; i < light.cascades_count_; ++i) {
+				ubo.pv = light.matrices_[i];
+
+				engine.ubo->UpdateUniformBuffer(&ubo);
+				engine.ubo->Bind();
+				engine.ubo2->Bind();
+
+				engine.materialManager.DrawShadowsImmediate();
+			}
 		}
 	}
 }

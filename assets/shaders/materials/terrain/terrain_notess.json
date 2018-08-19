@@ -5,11 +5,11 @@
         "deferred": {
             "opengl": {
                 "vertex": "terrain_notess.vert.glsl",
-                "fragment": "terrain_notess.frag.glsl"
+                "fragment": "terrain.frag.glsl"
             },
             "directx": {
                 "vertex": "terrain_notess.vert.fxc",
-                "fragment": "terrain_notess.frag.fxc"
+                "fragment": "terrain.frag.fxc"
             }
         }
     }

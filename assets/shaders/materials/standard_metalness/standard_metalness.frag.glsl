@@ -35,7 +35,7 @@ void main() {
   out0 = pow(out0, vec4(2.2f));
   out1 = texture(normalTexture, fragTexCoord);
 
-  vec3 Normals = CalcBumpedNormal(fragNormal, out1.rgb, fragTangent);
+  vec3 Normals = fragNormal; //CalcBumpedNormal(fragNormal, out1.rgb, fragTangent);
   out1 = vec4(normalize(Normals.rgb) , 1);
   
   vec3 Specular = mix(vec3(0.04), texture(albedoTexture, fragTexCoord).rgb, Metalness);

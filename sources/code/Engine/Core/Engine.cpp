@@ -123,6 +123,7 @@ void Engine::InitializeSettings() {
 		std::string graphics;
 		cfile.GetString("Renderer", "graphics", "OpenGL", graphics);
 		cfile.GetBool("Renderer", "reflections", true, settings.enableReflections);
+		cfile.GetBool("Renderer", "tesselation", true, settings.enableTesselation);
 		cfile.GetBool("Renderer", "shadows", true, settings.enableShadows);
 		cfile.GetBool("Renderer", "useSSAO", false, settings.use_ssao);
 		cfile.GetBool("Debug", "showMaterialLod", true, settings.showMaterialLoad);
@@ -158,6 +159,7 @@ void Engine::InitializeSettings() {
 		cfile.SetString("Renderer", "graphics", "OpenGL");
 		cfile.SetBool("Renderer", "reflections", true);
 		cfile.SetBool("Renderer", "shadows", true);
+		cfile.SetBool("Renderer", "tesselation", true);
 		cfile.SetBool("Renderer", "useSSAO", false);
 		cfile.SetBool("Debug", "showMaterialLod", true);
 		cfile.SetBool("Debug", "showPipelineLoad", true);
@@ -169,7 +171,8 @@ void Engine::InitializeSettings() {
 		settings.graphicsLanguage = GRAPHICS_OPENGL;
 		settings.fov = 90.0f * (3.14159f / 360.0f); // Convert to rad, /2 for full fovY.
 		settings.enableReflections = true;
-		settings.enableShadows = false;
+		settings.enableShadows = true;
+		settings.enableTesselation = true;
 		settings.vsync = true;
 		settings.showMaterialLoad=1;
 		settings.showPipelineLoad=1;
@@ -256,6 +259,7 @@ bool Engine::InitializeGraphics() {
 
 
 	graphics_wrapper_->CreateDefaultStructures();
+	graphics_wrapper_->SetCursorShown(false);
 
 	UniformBufferBindingCreateInfo ubbci;
 	ubbci.binding = 0;
@@ -266,7 +270,7 @@ bool Engine::InitializeGraphics() {
 
 	UniformBufferCreateInfo ubci;
 	ubci.isDynamic = true;
-	ubci.size = sizeof(glm::mat4);
+	ubci.size = sizeof(MainUBO);
 	ubci.binding = ubb;
 	ubo = graphics_wrapper_->CreateUniformBuffer(ubci);
 
@@ -324,12 +328,14 @@ bool Engine::InitializeGraphics() {
 	rt_gbuffer_.num_render_targets = 1;
 	rt_gbuffer_.depth_target = depth_image_;
 
-	bindings.reserve(5);
+	bindings.reserve(7);
 	bindings.emplace_back("gbuffer0", 0); // R G B MatID
 	bindings.emplace_back("gbuffer1", 1); // nX nY nZ MatData
 	bindings.emplace_back("gbuffer2", 2); // sR sG sB Roughness
 	bindings.emplace_back("gbuffer3", 3); // Depth
 	bindings.emplace_back("shadow_map", 4); // Shadow Map
+	bindings.emplace_back("shadow_map1", 5); // Shadow Map
+	bindings.emplace_back("shadow_map2", 6); // Shadow Map
 
 	TextureBindingLayoutCreateInfo tblci;
 	tblci.bindingLocation = 1;
@@ -613,7 +619,9 @@ void Engine::Run() {
 			deffUBO->UpdateUniformBuffer(&deffUBOBuffer);
 
 			pv = cam->GetProjection() * cam->GetView();
-			ubo->UpdateUniformBuffer(&pv);
+			ubo_buffer_.pv = pv;
+			ubo_buffer_.eye_pos = eyePos;
+			ubo->UpdateUniformBuffer(&ubo_buffer_);
 			ubo->Bind();
 			ubo2->Bind();
 			

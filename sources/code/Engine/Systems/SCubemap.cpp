@@ -193,7 +193,9 @@ void CubemapSystem::CaptureCubemaps(double) {
 				engine.deffUBOBuffer.resolution.y = res;
 				engine.deffUBO->UpdateUniformBuffer(&engine.deffUBOBuffer);
 
-				view = proj * view;
+				MainUBO ubo;
+				ubo.pv = proj * view;
+				ubo.eye_pos = components[i].position;
 				engine.ubo->UpdateUniformBuffer(&view);
 				engine.ubo->Bind();
 

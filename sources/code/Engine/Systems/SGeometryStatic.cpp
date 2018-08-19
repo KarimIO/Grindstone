@@ -26,7 +26,7 @@ void MeshStatic::ShadowDraw() {
 			engine.ubo2->Bind();
 
 			engine.graphics_wrapper_->BindVertexArrayObject(model->vertexArrayObject);
-			engine.graphics_wrapper_->DrawImmediateIndexed(false, true, BaseVertex, BaseIndex, NumIndices);
+			engine.graphics_wrapper_->DrawImmediateIndexed(GEOMETRY_TRIANGLES, true, BaseVertex, BaseIndex, NumIndices);
 		//}
 	}
 }
@@ -42,7 +42,7 @@ void MeshStatic::Draw() {
 			engine.ubo2->Bind();
 
 			engine.graphics_wrapper_->BindVertexArrayObject(model->vertexArrayObject);
-			engine.graphics_wrapper_->DrawImmediateIndexed(false, true, BaseVertex, BaseIndex, NumIndices);
+			engine.graphics_wrapper_->DrawImmediateIndexed(GEOMETRY_TRIANGLES, true, BaseVertex, BaseIndex, NumIndices);
 		//}
 	}
 }

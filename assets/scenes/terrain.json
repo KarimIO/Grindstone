@@ -6,7 +6,7 @@
         {
             "components": [{
                 "componentType": "COMPONENT_TRANSFORM",
-                "position": [0.0, 20.0, 0.0]
+                "position": [0.0, 6.0, 0.0]
             }, {
                 "componentType": "COMPONENT_CAMERA"
             }, {
@@ -16,8 +16,8 @@
         {
             "components": [{
                 "componentType": "COMPONENT_TRANSFORM",
-                "position": [0.0, 0.0, 0.0],
-                "scale": [1.0, 1.0, 1.0]
+                "position": [-100.0, 3.0, -100.0],
+                "scale":    [200.0, 8.0, 200.0]
             }, {
                 "componentType": "COMPONENT_GEOMETRY_TERRAIN",
                 "path": "heightmap.jpg"
@@ -29,7 +29,7 @@
                 "angles": [0.45, 0.45, 0.45]
             }, {
                 "componentType": "COMPONENT_LIGHT_DIRECTIONAL",
-                "castshadow": false,
+                "castshadow": true,
                 "color": [1.0,1.0,1.0],
                 "brightness": 30.0,
                 "sunradius": 32.0

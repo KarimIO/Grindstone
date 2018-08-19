@@ -44,6 +44,20 @@ enum BlendMode {
 	BLEND_ADD_ALPHA,
 };
 
+enum GrindstoneGeometryType {
+	GEOMETRY_POINTS,
+	GEOMETRY_LINES,
+	GEOMETRY_LINE_STRIP,
+	GEOMETRY_LINE_LOOP,
+	GEOMETRY_TRIANGLE_STRIP,
+	GEOMETRY_TRIANGLE_FAN,
+	GEOMETRY_TRIANGLES,
+	GEOMETRY_LINES_ADJACENCY,
+	GEOMETRY_TRIANGLES_ADJACENCY,
+	GEOMETRY_TRIANGLE_STRIP_ADJACENCY,
+	GEOMETRY_PATCHES
+};
+
 #define COLOR_MASK_RED 0x1
 #define COLOR_MASK_GREEN 0x2
 #define COLOR_MASK_BLUE 0x4
@@ -127,7 +141,7 @@ public:
 
 	virtual void BindTextureBinding(TextureBinding *) = 0;
 	virtual void BindVertexArrayObject(VertexArrayObject *) = 0;
-	virtual	void DrawImmediateIndexed(bool patches, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) = 0;
+	virtual	void DrawImmediateIndexed(GrindstoneGeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) = 0;
 	virtual void DrawImmediateVertices(uint32_t base, uint32_t count) = 0;
 	virtual void SetImmediateBlending(BlendMode) = 0;
 	virtual void EnableDepth(bool state) = 0;

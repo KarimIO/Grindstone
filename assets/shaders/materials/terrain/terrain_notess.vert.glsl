@@ -38,8 +38,8 @@ vec3 getNormals(vec2 P) {
 }
 
 void main() {
-    vec2 tex = (vertexPosition)/240.0f;
-    float heightmap = texture(heightmap, tex).r * 20.0f;
+    vec2 tex = (vertexPosition);
+    float heightmap = texture(heightmap, tex).r;
 
     // mbo.model messes up everything for some reason
     fragPosition = (mbo.model * vec4(vertexPosition.x, heightmap, vertexPosition.y, 1.0)).xyz;

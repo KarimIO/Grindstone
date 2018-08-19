@@ -172,8 +172,12 @@ void RenderPathDeferred::RenderLights(Framebuffer *gbuffer) {
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
 	}
 
-	engine.lightSystem.m_directionalLightPipeline->Bind();
 	for (auto &light : engine.lightSystem.directionalLights) {
+		if (light.cascades_count_ > 1)
+			engine.lightSystem.m_cascadeLightPipeline->Bind();
+		else
+			engine.lightSystem.m_directionalLightPipeline->Bind();
+
 		light.Bind();
 
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);

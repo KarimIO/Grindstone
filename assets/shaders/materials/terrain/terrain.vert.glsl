@@ -1,19 +1,20 @@
 #version 330 core
 
-in vec2 vertexPosition;
-
-layout(std140) uniform UniformBufferObject {
-    mat4 proj_view;
-} ubo;
-
 layout(std140) uniform ModelMatrixBuffer {
     mat4 model;
 } mbo;
 
-out vec2 ctrlTexCoord;
+in vec2 vertexPosition;
 
-void main() {
-    gl_Position = vec4(vertexPosition.x, 0.0, vertexPosition.y, 1.0);
-    gl_Position = gl_Position;
-    ctrlTexCoord = (vertexPosition)/240.0f;
-}
+uniform mat4 gWorld;
+
+out vec3 WorldPos_CS_in;
+out vec2 TexCoord_CS_in;
+out vec3 Normal_CS_in;
+
+void main()
+{
+    WorldPos_CS_in = (mbo.model * vec4(vertexPosition.x, 1.0, vertexPosition.y, 1.0)).xyz;
+    TexCoord_CS_in = vertexPosition;
+    Normal_CS_in = vec3(0, 1, 0);
+} 

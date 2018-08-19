@@ -288,10 +288,37 @@ void GLGraphicsWrapper::BindVertexArrayObject(VertexArrayObject *vao) {
 	vao->Bind();
 }
 
-void GLGraphicsWrapper::DrawImmediateIndexed(bool patches, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
+GLenum GetGeomType(GrindstoneGeometryType geom_type) {
+	switch (geom_type) {
+	case GEOMETRY_POINTS:
+		return GL_POINTS;
+	case GEOMETRY_LINES:
+		return GL_LINES;
+	case GEOMETRY_LINE_STRIP:
+		return GL_LINE_STRIP;
+	case GEOMETRY_LINE_LOOP:
+		return GL_LINE_LOOP;
+	case GEOMETRY_TRIANGLE_STRIP:
+		return GL_TRIANGLE_STRIP;
+	case GEOMETRY_TRIANGLE_FAN:
+		return GL_TRIANGLE_FAN;
+	case GEOMETRY_TRIANGLES:
+		return GL_TRIANGLES;
+	case GEOMETRY_LINES_ADJACENCY:
+		return GL_LINES_ADJACENCY;
+	case GEOMETRY_TRIANGLES_ADJACENCY:
+		return GL_TRIANGLES_ADJACENCY;
+	case GEOMETRY_TRIANGLE_STRIP_ADJACENCY:
+		return GL_TRIANGLE_STRIP_ADJACENCY;
+	case GEOMETRY_PATCHES:
+		return GL_PATCHES;
+	}
+}
+
+void GLGraphicsWrapper::DrawImmediateIndexed(GrindstoneGeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
 	uint32_t size = largeBuffer ? sizeof(uint32_t) : sizeof(uint16_t);
 	void *ptr = reinterpret_cast<void *>(indexOffsetPtr * size);
-	glDrawElementsBaseVertex(patches ? GL_PATCHES : GL_TRIANGLES, indexCount, largeBuffer ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, ptr, baseVertex);
+	glDrawElementsBaseVertex(GetGeomType(geom_type), indexCount, largeBuffer ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, ptr, baseVertex);
 }
 
 void GLGraphicsWrapper::DrawImmediateVertices(uint32_t base, uint32_t count) {

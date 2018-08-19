@@ -34,7 +34,8 @@ struct LightSpotUBO {
 };
 
 struct LightDirectionalUBO {
-	glm::mat4 shadow_mat;
+	glm::mat4 shadow_mat[3];
+	float cascade_distance[3];
 	glm::vec3 direction;
 	float sourceRadius;
 	glm::vec3 color;
@@ -85,15 +86,16 @@ public:
 	Framebuffer *shadowFBO;
 	DepthTarget *shadow_db_;
 	uint32_t entityID;
-	glm::mat4 matrix_;
+	std::vector<glm::mat4> matrices_;
 	unsigned int res;
+	unsigned int cascades_count_;
 
 	CDirectionalLight(unsigned int entityID);
 	CDirectionalLight(unsigned int entityID, glm::vec3 color, float strength, bool cast, float radius);
 	void SetShadow(bool);
 	void Bind();
-	glm::mat4 calculateMatrix();
-	glm::mat4 calculateMatrixBasis();
+	void calculateMatrix();
+	glm::mat4 calculateMatrixBasis(glm::mat4 matrix);
 };
 
 struct DefferedUBO {
@@ -117,6 +119,7 @@ public:
 	GraphicsPipeline *m_pointLightPipeline;
 	GraphicsPipeline *m_spotLightPipeline;
 	GraphicsPipeline *m_directionalLightPipeline;
+	GraphicsPipeline *m_cascadeLightPipeline;
 
 	std::vector<CPointLight>		pointLights;
 	std::vector<CSpotLight>			spotLights;

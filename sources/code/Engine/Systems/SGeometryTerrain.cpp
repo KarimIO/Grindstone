@@ -41,6 +41,7 @@ void SGeometryTerrain::LoadModel(CTerrain * model) {
 	createInfo.format = FORMAT_COLOR_R8G8B8A8;
 	createInfo.width = texWidth;
 	createInfo.height = texHeight;
+	createInfo.ddscube = false;
 
 	model->heightmap_texture_ = graphics_wrapper_->CreateTexture(createInfo);
 
@@ -68,32 +69,59 @@ void SGeometryTerrain::LoadModel(CTerrain * model) {
 	std::vector<glm::vec2> vertices;
 	std::vector<unsigned int> indices;
 
-	int tile_w = 8, tile_h = 8;
+	int tile_w = 32, tile_h = 32;
+	float w_factor = 1.0f / tile_w;
+	float h_factor = 1.0f / tile_h;
 
-	indices.reserve((tile_w + 1) * (tile_h + 1));
+	vertices.reserve((tile_w + 1) * (tile_h + 1));
 	for (int i = 0; i < tile_w; i++) {
 		for (int j = 0; j < tile_h; j++) {
-			vertices.push_back(glm::vec2(float(i), float(j)));
+			vertices.push_back(glm::vec2(float(i) * w_factor, float(j) * h_factor));
 		}
 	}
 
-	indices.reserve(tile_w * tile_h * 6);
-	int index = 0;
-	for (int i = 0; i < tile_w; i++) {
-		for (int j = 0; j < tile_h - 1; j++) {
-			int offset = i * tile_w + j;
+	
+	//UINT* indices = new UINT[arr_size];
+	if (engine.graphics_wrapper_->SupportsTesselation() && engine.settings.enableTesselation) {
+		int array_size = (tile_w - 1) * (tile_h - 1) * 6;
+		indices.resize(array_size);
+		int i = 0;
+		for (int y = 0; y < tile_h - 1; ++y) {
+			for (int x = 0; x < tile_w - 1; ++x) {
+				indices[i++] = x + y * tile_w;
+				indices[i++] = x + 1 + y * tile_w;
+				indices[i++] = x + (y + 1) * tile_w;
 
-			indices.push_back(offset);
-			indices.push_back(offset + 1);
-			indices.push_back(offset + tile_w);
+				indices[i++] = x + 1 + y * tile_w;
+				indices[i++] = x + 1 + (y + 1) * tile_w;
+				indices[i++] = x + (y + 1) * tile_w;
+			}
+		}
+	}
+	else {
+		int strip_size = tile_w * 2;
+		int num_strips = tile_h - 1;
+		int array_size = strip_size * num_strips + (num_strips - 1) * 4; // degenerate triangles
+		indices.resize(array_size);
 
-			indices.push_back(offset + 1);
-			indices.push_back(offset + tile_w + 1);
-			indices.push_back(offset + tile_w);
+		int i = 0;
+		for (int s = 0; s < num_strips; ++s) {
+			int m = 0;
+			for (int n = 0; n < tile_w; ++n) {
+				m = n + s * tile_w;
+				indices[i++] = m + tile_w;
+				indices[i++] = m;
+			}
+			if (s < num_strips - 1) { // create indices for degenerate triangles to get us back to the start.
+				indices[i++] = m;
+				indices[i++] = m - tile_w + 1;
+				indices[i++] = m - tile_w + 1;
+				indices[i++] = m - tile_w + 1;
+			}
 		}
 	}
 
-	if (graphics_wrapper_->SupportsTesselation())
+	if (graphics_wrapper_->SupportsTesselation() && engine.settings.enableTesselation)
 		model->material = material_system_->GetMaterial(material_system_->CreateMaterial(geometry_info_, "../assets/materials/terrain.gmat"));
 	else
 		model->material = material_system_->GetMaterial(material_system_->CreateMaterial(geometry_info_, "../assets/materials/terrain_notess.gmat"));
@@ -179,6 +207,9 @@ void CTerrain::ShadowDraw()
 }
 
 void CTerrain::Draw() {
+	bool tess = engine.graphics_wrapper_->SupportsTesselation() && engine.settings.enableTesselation;
+	GrindstoneGeometryType geom = tess ? GEOMETRY_PATCHES : GEOMETRY_TRIANGLE_STRIP;
+
 	engine.graphics_wrapper_->BindTextureBinding(heightmap_texture_binding_);
 	for (auto &reference : references) {
 		CRender &renderComponent = engine.geometry_system.GetComponent(reference);
@@ -187,14 +218,12 @@ void CTerrain::Draw() {
 			auto transform = engine.transformSystem.components[entityID];
 
 			engine.ubo2->UpdateUniformBuffer(&transform.GetModelMatrix());
+			engine.ubo->Bind();
 			engine.ubo2->Bind();
 
 			engine.graphics_wrapper_->BindVertexArrayObject(vertexArrayObject);
-			// Draw Patches only when Tesselated
-			if (engine.graphics_wrapper_->SupportsTesselation())
-				engine.graphics_wrapper_->DrawImmediateIndexed(true, true, 0, 0, num_indices_);
-			else
-				engine.graphics_wrapper_->DrawImmediateIndexed(false, true, 0, 0, num_indices_);
+			
+			engine.graphics_wrapper_->DrawImmediateIndexed(geom, true, 0, 0, num_indices_);
 		}
 	}
 }

@@ -52,8 +52,8 @@ bool GLGraphicsWrapper::InitializeWindowContext() {
 	}
 
 
-	int major = 3;
-	int minor = 3;
+	int major = 4;
+	int minor = 6;
 	//glGetIntegerv(GL_MAJOR_VERSION, &major);
 	//glGetIntegerv(GL_MINOR_VERSION, &minor);
 

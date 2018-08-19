@@ -53,6 +53,11 @@ enum GraphicsLanguage {
 
 class Entity;
 
+struct MainUBO {
+	glm::mat4 pv;
+	glm::vec3 eye_pos;
+};
+
 class Engine {
 public:
 	TextureBindingLayout *tonemap_tbl_;
@@ -114,6 +119,7 @@ private:
 
 	std::chrono::nanoseconds deltaTime;
 public:
+	MainUBO ubo_buffer_;
 	UniformBuffer * ubo;
 	UniformBuffer *ubo2;
 
@@ -134,6 +140,7 @@ public:
 		bool vsync;
 		bool use_ssao;
 		bool enableReflections;
+		bool enableTesselation;
 		bool enableShadows;
 		bool showPipelineLoad;
 		bool showMaterialLoad;
