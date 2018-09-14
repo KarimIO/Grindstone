@@ -187,7 +187,7 @@ CDirectionalLight::CDirectionalLight(unsigned int entityID) {
 	res = 1024;
 	this->entityID = entityID;
 
-	cascades_count_ = 4;
+	cascades_count_ = 3;
 	matrices_.resize(cascades_count_);
 
 	UniformBufferCreateInfo lightuboci;
@@ -202,14 +202,14 @@ CDirectionalLight::CDirectionalLight(unsigned int entID, glm::vec3 color, float 
 	lightUBOBuffer.color = color;
 	lightUBOBuffer.power = strength;
 
-	cascades_count_ = 4;
+	cascades_count_ = 3;
 	matrices_.resize(cascades_count_);
 
 	res = 1024;
 
 	UniformBufferCreateInfo lightuboci;
 	lightuboci.isDynamic = false;
-	lightuboci.size = sizeof(LightDirectionalUBO);
+	lightuboci.size = sizeof(lightUBOBuffer);
 	lightuboci.binding = engine.directionalLightUBB;
 	lightUBO = engine.graphics_wrapper_->CreateUniformBuffer(lightuboci);
 
@@ -228,17 +228,20 @@ void CDirectionalLight::SetShadow(bool state) {
 		fbci.num_render_target_lists = 0;
 		fbci.render_target_lists = nullptr;
 		fbci.depth_target = shadow_db_;
-		shadowFBO = engine.graphics_wrapper_->CreateFramebuffer(fbci);
+		shadowFBOs.resize(cascades_count_);
+		for (unsigned int i = 0; i < cascades_count_; ++i) {
+			shadowFBOs[i] = engine.graphics_wrapper_->CreateFramebuffer(fbci);
+		}
 	}
 }
 
 void CDirectionalLight::Bind() {
 	if (castShadow) {
 		for (unsigned int i = 0; i < cascades_count_; ++i) {
-			lightUBOBuffer.shadow_mat[i] = calculateMatrixBasis(matrices_[0]);
+			lightUBOBuffer.shadow_mat[i] = calculateMatrixBasis(matrices_[i]);
 
-			shadowFBO->BindRead();
-			shadowFBO->BindTextures(4 + i);
+			shadowFBOs[i]->BindRead();
+			shadowFBOs[i]->BindTextures(4 + i);
 		}
 	}
 
@@ -261,40 +264,46 @@ void CDirectionalLight::calculateMatrix() {
 	unsigned int transformID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
 	CTransform *transform = &engine.transformSystem.components[transformID];
 	glm::mat4 light_view = glm::lookAt(
+		-transform->GetForward(),
 		glm::vec3(0, 0, 0),
-		transform->GetForward(),
 		glm::vec3(0, 1, 0)
 	);
 
+	float fov = cam->GetFOV();
 	float ar = cam->GetAspectRatio();
-	float tanHalfHFOV = tanf(cam->GetFOV());
-	float tanHalfVFOV = tanf(cam->GetFOV() * ar);
+	float tanHalfHFOV = tanf(fov);
+	float tanHalfVFOV = tanf(fov * ar);
 
-	for (unsigned int i = 0; i < cascades_count_ + 1; ++i) {
+	/*for (unsigned int i = 0; i < cascades_count_ + 1; ++i) {
 		lightUBOBuffer.cascade_distance[i] = (dist_far * float(cascades_count_ - i) + dist_near * float(i)) / float(cascades_count_);
-	}
+	}*/
+
+	float lightTest[4];
+	lightTest[0] = lightUBOBuffer.cascade_distance[0] = dist_near;
+	lightTest[1] = lightUBOBuffer.cascade_distance[1] = 10.0f;
+	lightTest[2] = lightUBOBuffer.cascade_distance[2] = 40.0f;
+	lightTest[3] = dist_far;
 
 	lightUBO->UpdateUniformBuffer(&lightUBOBuffer);
-	lightUBO->Bind();
 
 	for (unsigned int i = 0; i < cascades_count_; i++) {
-		float xn = lightUBOBuffer.cascade_distance[i] * tanHalfHFOV;
-		float xf = lightUBOBuffer.cascade_distance[i + 1] * tanHalfHFOV;
-		float yn = lightUBOBuffer.cascade_distance[i] * tanHalfVFOV;
-		float yf = lightUBOBuffer.cascade_distance[i + 1] * tanHalfVFOV;
+		float xn = lightTest[i] * tanHalfHFOV;
+		float xf = lightTest[i + 1] * tanHalfHFOV;
+		float yn = lightTest[i] * tanHalfVFOV;
+		float yf = lightTest[i + 1] * tanHalfVFOV;
 
 		glm::vec4 frustumCorners[num_cascades_corners_] = {
 			// near face
-			glm::vec4(xn, yn, lightUBOBuffer.cascade_distance[i], 1.0),
-			glm::vec4(-xn, yn, lightUBOBuffer.cascade_distance[i], 1.0),
-			glm::vec4(xn, -yn, lightUBOBuffer.cascade_distance[i], 1.0),
-			glm::vec4(-xn, -yn, lightUBOBuffer.cascade_distance[i], 1.0),
+			glm::vec4(xn, yn, lightTest[i], 1.0),
+			glm::vec4(-xn, yn, lightTest[i], 1.0),
+			glm::vec4(xn, -yn, lightTest[i], 1.0),
+			glm::vec4(-xn, -yn, lightTest[i], 1.0),
 
 			// far face
-			glm::vec4(xf, yf, lightUBOBuffer.cascade_distance[i + 1], 1.0),
-			glm::vec4(-xf, yf, lightUBOBuffer.cascade_distance[i + 1], 1.0),
-			glm::vec4(xf, -yf, lightUBOBuffer.cascade_distance[i + 1], 1.0),
-			glm::vec4(-xf, -yf, lightUBOBuffer.cascade_distance[i + 1], 1.0)
+			glm::vec4(xf, yf, lightTest[i + 1], 1.0),
+			glm::vec4(-xf, yf, lightTest[i + 1], 1.0),
+			glm::vec4(xf, -yf, lightTest[i + 1], 1.0),
+			glm::vec4(-xf, -yf, lightTest[i + 1], 1.0)
 		};
 
 		glm::vec4 frustumCornersL[num_cascades_corners_];
@@ -321,7 +330,8 @@ void CDirectionalLight::calculateMatrix() {
 			maxZ = glm::max(maxZ, frustumCornersL[j].z);
 		}
 
-		matrices_[i] = glm::ortho(minX, maxX, minY, maxY, minZ, maxZ);
+		matrices_[i] = glm::ortho(minX, maxX, minY, maxY, minZ, maxZ) * light_view;
+		//matrices_[i] = glm::inverse(light_view) * matrices_[i];
 	}
 }
 
@@ -491,16 +501,16 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 	// DIRECTIONAL LIGHTS
 
 	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
-		vi.fileName = "../assets/shaders/lights_deferred/pointVert.glsl";
-		fi.fileName = "../assets/shaders/lights_deferred/directionalFrag.glsl";
+		vi.fileName = "../assets/shaders/lights_deferred/cascade_shadow_vert.glsl";
+		fi.fileName = "../assets/shaders/lights_deferred/cascade_shadow_frag.glsl";
 	}
 	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
-		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
-		fi.fileName = "../assets/shaders/lights_deferred/directionalFrag.fxc";
+		vi.fileName = "../assets/shaders/lights_deferred/cascade_shadow_vert.fxc";
+		fi.fileName = "../assets/shaders/lights_deferred/cascade_shadow_frag.fxc";
 	}
 	else {
-		vi.fileName = "../assets/shaders/lights_deferred/pointVert.spv";
-		fi.fileName = "../assets/shaders/lights_deferred/directionalFrag.spv";
+		vi.fileName = "../assets/shaders/lights_deferred/cascade_shadow_vert.spv";
+		fi.fileName = "../assets/shaders/lights_deferred/cascade_shadow_frag.spv";
 	}
 	vfile.clear();
 	if (!readFile(vi.fileName, vfile))
@@ -541,7 +551,7 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 
 	// CASCADED DIRECTIONAL LIGHTS
 
-	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+	/*if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
 		vi.fileName = "../assets/shaders/lights_deferred/cascade_shadow_vert.glsl";
 		fi.fileName = "../assets/shaders/lights_deferred/cascade_shadow_frag.glsl";
 	}
@@ -589,7 +599,7 @@ void SLight::SetPointers(GraphicsWrapper *gw, SGeometry *gc) {
 	ubbs = { engine.deffubb, engine.directionalLightUBB };
 	cascadeGPCI.uniformBufferBindings = ubbs.data();
 	cascadeGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
-	m_cascadeLightPipeline = graphics_wrapper_->CreateGraphicsPipeline(cascadeGPCI);
+	m_cascadeLightPipeline = graphics_wrapper_->CreateGraphicsPipeline(cascadeGPCI);*/
 }
 
 void SLight::DrawShadows() {
@@ -648,8 +658,6 @@ void SLight::DrawShadows() {
 
 	for (auto &light : directionalLights) {
 		if (light.castShadow) {
-			light.shadowFBO->BindWrite(true);
-			light.shadowFBO->Clear(CLEAR_DEPTH);
 
 			unsigned int transformID = engine.entities[light.entityID].components_[COMPONENT_TRANSFORM];
 			CTransform *transform = &engine.transformSystem.components[transformID];
@@ -658,6 +666,9 @@ void SLight::DrawShadows() {
 			ubo.eye_pos = transform->GetPosition();
 
 			for (unsigned int i = 0; i < light.cascades_count_; ++i) {
+				light.shadowFBOs[i]->BindWrite(true);
+				light.shadowFBOs[i]->Clear(CLEAR_DEPTH);
+
 				ubo.pv = light.matrices_[i];
 
 				engine.ubo->UpdateUniformBuffer(&ubo);

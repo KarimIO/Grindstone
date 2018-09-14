@@ -168,7 +168,7 @@ float getShadowValue(in vec3 pos, in float nl) {
 
 float CalcShadowFactor(int CascadeIndex, vec4 LightSpacePos)
 {
-    vec3 ProjCoords = LightSpacePos.xyz / LightSpacePos.w;
+    /*vec3 ProjCoords = LightSpacePos.xyz / LightSpacePos.w;
 
     vec3 UVCoords;
     UVCoords.x = 0.5 * ProjCoords.x + 0.5;
@@ -187,7 +187,23 @@ float CalcShadowFactor(int CascadeIndex, vec4 LightSpacePos)
     if (Depth < z + 0.00001)
         return 0.5;
     else
-        return 1.0;
+        return 1.0;*/
+
+
+	vec4 shadow_coord = LightSpacePos;
+	float bias = 0.005f; //*tan(acos(nl));
+	bias = clamp(bias, 0.0f, 0.01f);
+	vec3 UVCoords = vec3(shadow_coord.xy, shadow_coord.z - bias);
+
+	float Depth;
+	if (CascadeIndex == 0)
+	    Depth = texture(shadow_map, UVCoords);
+	else if (CascadeIndex == 1)
+	    Depth = texture(shadow_map1, UVCoords);
+	else
+	    Depth = texture(shadow_map2, UVCoords);
+
+	return Depth;
 } 
 
 void main() {
@@ -196,7 +212,7 @@ void main() {
     float far = 100;
     float ProjectionA = far / (far - near);
     float ProjectionB = (-far * near) / (far - near);
-    //depth = ProjectionB / ((depth - ProjectionA));
+    depth = ProjectionB / ((depth - ProjectionA));
     vec3 position = viewRay * depth;
 
 	vec3 Position = WorldPosFromDepth(depth, fragTexCoord);
@@ -217,14 +233,28 @@ void main() {
 	//float sh = light.shadow ? getShadowValue(Position, nl) : 1.0f;
 	float sh;
 	
-	for (int i = 0 ; i < NUM_CASCADES ; i++) {
-        if (depth <= light.cascade_ends[i]) {
-            outColor = vec4(float(i) / 4.0f,0,0,1);
-			//sh = CalcShadowFactor(i, LightSpacePos[i]);
+	//for (int i = 0; i < NUM_CASCADES; i++) {
+        /*if (depth <= 10) {
+			sh = CalcShadowFactor(0, light.shadow_mat[0] * vec4(Position, 1));
+            outColor = vec4(sh,0,0,1);
             return;
         }
-    }
+        else if (depth <= 40) {
+			sh = CalcShadowFactor(1, light.shadow_mat[1] * vec4(Position, 1));
+            outColor = vec4(0,sh,0,1);
+            return;
+        }
+        else if (depth <= 100) {
+			sh = CalcShadowFactor(2, light.shadow_mat[2] * vec4(Position, 1));
+            outColor = vec4(0,0,1,sh);
+            return;
+        }*/
+    //}
+	    
+	nl = texture(shadow_map1, vec3(fragTexCoord, 1));
 
-	outColor = vec4(0,light.cascade_ends[1],0,1);
+	outColor =  vec4(nl, nl, nl, 1);
+	
+	//outColor = vec4(light.cascade_ends[0]/100, 0, 0, 1);
 	//outColor = vec4(sh * outColor3, 1);
 }

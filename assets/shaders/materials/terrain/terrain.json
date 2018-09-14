@@ -15,6 +15,18 @@
                 "tesselationevaluate": "terrain.eval.fxc",
                 "fragment": "terrain.frag.fxc"
             }
+        },
+        "shadow": {
+            "opengl": {
+                "vertex": "terrain.vert.glsl",
+                "tesselationcontrol": "terrain.ctrl.glsl",
+                "tesselationevaluate": "terrain.eval.glsl",
+                "fragment": "terrain_shadow.frag.glsl"
+            },
+            "directx": {
+                "vertex": "terrain_shadow.vert.fxc",
+                "fragment": "terrain_shadow.frag.fxc"
+            }
         }
     }
 }

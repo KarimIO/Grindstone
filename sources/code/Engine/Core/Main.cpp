@@ -3,8 +3,7 @@
 #include <cstring>
 #include "Engine.hpp"
 
-int main(int argc, char *argv[]) {
-	std::cout << "The Grindstone Engine is Initializing.\n";
+int main(int argc, char *argv[]) {	std::cout << "The Grindstone Engine is Initializing.\n";
 	try {
 		if (!engine.Initialize()) {
 #ifdef _WIN32

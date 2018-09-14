@@ -41,8 +41,6 @@ struct LightDirectionalUBO {
 	glm::vec3 color;
 	float power;
 	bool shadow;
-
-	char buffer[31];
 };
 
 class CPointLight {
@@ -83,9 +81,9 @@ public:
 	bool castShadow;
 	LightDirectionalUBO lightUBOBuffer;
 	UniformBuffer *lightUBO;
-	Framebuffer *shadowFBO;
 	DepthTarget *shadow_db_;
 	uint32_t entityID;
+	std::vector<Framebuffer *>shadowFBOs;
 	std::vector<glm::mat4> matrices_;
 	unsigned int res;
 	unsigned int cascades_count_;

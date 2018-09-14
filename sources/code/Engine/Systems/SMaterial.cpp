@@ -1326,7 +1326,7 @@ void MaterialManager::DrawShadowsImmediate() {
 		for (auto const &pipeline : renderPass.pipelines_deferred) {
 			if (pipeline.shadow_program != nullptr) {
 				pipeline.shadow_program->Bind();
-				if (pipeline.draw_count > 0) {
+				//if (pipeline.draw_count > 0) {
 					for (auto const &material : pipeline.materials) {
 						if (material.draw_count > 0) {
 							if (material.m_textureBinding != nullptr)
@@ -1336,7 +1336,7 @@ void MaterialManager::DrawShadowsImmediate() {
 							}
 						}
 					}
-				}
+				//}
 			}
 		}
 

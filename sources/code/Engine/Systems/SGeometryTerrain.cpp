@@ -204,6 +204,7 @@ void CTerrain::setHeightmap(std::string dir) {
 
 void CTerrain::ShadowDraw()
 {
+	Draw();
 }
 
 void CTerrain::Draw() {
