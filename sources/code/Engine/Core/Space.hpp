@@ -2,13 +2,12 @@
 #define _SPACE_H
 
 #include <vector>
-#include "System.hpp"
-#include "../Systems/CBase.hpp"
+#include "Core/GameObject.hpp"
 
 class Space {
 public:
-	void AddComponent(ComponentType type);
-	std::vector<SpaceComponentList *> components;
+private:
+	std::vector<GameObject> objects_;
 };
 
 #endif

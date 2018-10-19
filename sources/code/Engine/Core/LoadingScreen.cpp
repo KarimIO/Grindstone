@@ -1,3 +1,4 @@
+#if 0
 #include "LoadingScreen.hpp"
 #include "Engine.hpp"
 #include <stb/stb_image.h>
@@ -189,3 +190,4 @@ LoadingScreen::~LoadingScreen() {
 	graphics_wrapper_->DeleteTexture(texture_);
 	graphics_wrapper_->DeleteGraphicsPipeline(pipeline_);
 }
+#endif

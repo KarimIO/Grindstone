@@ -1,22 +1,21 @@
 #include <iostream>
 #include <stdio.h>
 #include <cstring>
+#include "../Utilities/Logger.hpp"
 #include "Engine.hpp"
 
-int main(int argc, char *argv[]) {	std::cout << "The Grindstone Engine is Initializing.\n";
+/*extern "C" {
+	_declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+}*/
+
+
+int main(int argc, char *argv[]) {		
 	try {
-		if (!engine.Initialize()) {
-#ifdef _WIN32
-			system("pause");
-#endif
-			return -1;
-		}
-		
-		engine.Run();
-		engine.Shutdown();
+		// Note that engine calls its constructor, Engine::Engine
+		engine.run();
 	}
 	catch (std::runtime_error& e) {
-		Print(PRINT_FATAL_ERROR, e.what());
+		LOG_FATAL(e.what());
 		return EXIT_FAILURE;
 	}
 

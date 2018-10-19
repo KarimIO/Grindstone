@@ -251,9 +251,9 @@ void main() {
         }*/
     //}
 	    
-	nl = texture(shadow_map1, vec3(fragTexCoord, 1));
+	//nl = texture(shadow_map1, vec3(fragTexCoord, 1));
 
-	outColor =  vec4(nl, nl, nl, 1);
+	outColor =  vec4(Normal, 1);
 	
 	//outColor = vec4(light.cascade_ends[0]/100, 0, 0, 1);
 	//outColor = vec4(sh * outColor3, 1);

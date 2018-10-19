@@ -82,14 +82,16 @@ vec3 estimateNormal(vec2 texcoord) {
 void main() {
     // Interpolate the attributes of the output vertex using the barycentric coordinates
     fragTexCoord = interpolate2D(TexCoord_ES_in[0], TexCoord_ES_in[1], TexCoord_ES_in[2]);
+    vec4 texel = texture(heightmap, fragTexCoord.xy);
     //fragNormal = interpolate3D(Normal_ES_in[0], Normal_ES_in[1], Normal_ES_in[2]);
-    fragNormal = estimateNormal(fragTexCoord);
+    /*fragNormal = estimateNormal(fragTexCoord);
     fragNormal = (mbo.model * vec4(fragNormal, 1.0)).xyz;
-    fragNormal = normalize(fragNormal);
+    fragNormal = normalize(fragNormal);*/
+    fragNormal = texel.xyz;
     fragPosition = interpolate3D(WorldPos_ES_in[0], WorldPos_ES_in[1], WorldPos_ES_in[2]);
 
     // Displace the vertex along the normal
-    float Displacement = texture(heightmap, fragTexCoord.xy).x;
+    float Displacement = texel.x;
     fragPosition.y *= Displacement;
     gl_Position = ubo.proj_view * vec4(fragPosition, 1.0);
     fragTangent = vec3(0);

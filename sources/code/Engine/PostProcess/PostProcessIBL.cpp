@@ -1,6 +1,6 @@
 #include "PostProcessIBL.hpp"
 #include "../Core/Engine.hpp"
-
+/*
 PostProcessIBL::PostProcessIBL(RenderTargetContainer *source, RenderTargetContainer *target) : source_(source), target_(target) {
     engine.graphics_wrapper_ = engine.engine.graphics_wrapper_;
     
@@ -59,10 +59,7 @@ PostProcessIBL::PostProcessIBL(RenderTargetContainer *source, RenderTargetContai
 
 void PostProcessIBL::Process() {
 	engine.graphics_wrapper_->SetImmediateBlending(BLEND_ADDITIVE);
-	/*if (target_ == nullptr) {
-		engine.graphics_wrapper_->BindDefaultFramebuffer(false);
-		engine.graphics_wrapper_->Clear(CLEAR_BOTH);
-	}*/
+
     target_->framebuffer->BindWrite(false);
     source_->framebuffer->BindRead();
     source_->framebuffer->BindTextures(0);
@@ -75,4 +72,4 @@ void PostProcessIBL::Process() {
     }
     engine.graphics_wrapper_->DrawImmediateVertices(0, 6);
 	engine.graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-}
+}*/

@@ -1,6 +1,6 @@
 #include "PostProcessAutoExposure.hpp"
 #include "../Core/Engine.hpp"
-
+/*
 PostProcessAutoExposure::PostProcessAutoExposure(RenderTargetContainer *source, RenderTargetContainer *target) : source_(source), target_(target) {
     GraphicsWrapper *graphics_wrapper_ = engine.graphics_wrapper_;
 
@@ -77,4 +77,4 @@ void PostProcessAutoExposure::Process() {
 
 float PostProcessAutoExposure::GetExposure() {
 	return source_->render_targets[0]->getAverageValue(0);
-}
+}*/

@@ -1,64 +1,70 @@
 #ifndef _ENGINE_H
 #define _ENGINE_H
 
-#define GLM_FORCE_RADIANS
-
-#include <glm/glm.hpp>
-#include <glm/gtx/transform.hpp>
-
-#include <GraphicsWrapper.hpp>
-
-#include <AudioCommon.hpp>
-
-#include "../Renderpaths/RenderPath.hpp"
-#include "../Renderpaths/RenderPathDeferred.hpp"
-#include "../Renderpaths/RenderPathForward.hpp"
-
-#include "../Systems/SGeometry.hpp"
-#include "Input.hpp"
-
-#include "../Systems/SCubemap.hpp"
-#include "../Systems/SLight.hpp"
-
-#include <chrono>
+#include <vector>
 #include <string>
+#include "Utilities/SettingsFile.hpp"
 
-#include "../Core/Entity.hpp"
+class System;
+class Scene;
+class Settings;
+class DLLGraphics;
+class DLLAudio;
+class GraphicsWrapper;
+class AudioWrapper;
 
-#include "../Systems/SPhysics.hpp"
-
-#include "../Systems/STransform.hpp"
-#include "../Systems/SCamera.hpp"
-#include "../Systems/SController.hpp"
-#include "../Systems/SMaterial.hpp"
-#include "../Systems/SGameplay.hpp"
-#include "../Systems/SUI.hpp"
-#include "../Systems/Skybox.hpp"
-#include "../Systems/SAudio.hpp"
-#include "../Systems/Debug.hpp"
-#include "exception.hpp"
-
-#include "PostProcess/PostPipeline.hpp"
-enum RenderPathType {
-	RENDERPATH_FORWARD = 0,
-	RENDERPATH_DEFERRED,
-}; // Also, F+, TileBased, etc
-
-enum GraphicsLanguage {
-	GRAPHICS_OPENGL = 0,
-	GRAPHICS_VULKAN,
-	GRAPHICS_DIRECTX,
-	GRAPHICS_METAL
-};
-
-class Entity;
-
-struct MainUBO {
-	glm::mat4 pv;
-	glm::vec3 eye_pos;
-};
+class AudioManager;
+class ModelManager;
+class MaterialManager;
+class TextureManager;
+class GraphicsPipelineManager;
 
 class Engine {
+public:
+	Engine();
+
+	static Engine &getInstance();
+
+	Scene *addScene(std::string path);
+	System *addSystem(System *system);
+
+	const Settings *getSettings();
+
+	GraphicsWrapper *getGraphicsWrapper();
+
+	AudioManager *getAudioManager();
+	MaterialManager *getMaterialManager();
+	GraphicsPipelineManager *getGraphicsPipelineManager();
+	TextureManager *getTextureManager();
+	ModelManager *getModelManager();
+
+	void run();
+
+	~Engine();
+private:
+	bool running_;
+
+	std::vector<System *> systems_;
+	std::vector<Scene *> scenes_;
+
+	Settings *settings_;
+
+	GraphicsWrapper *graphics_wrapper_;
+	AudioWrapper *audio_wrapper_;
+
+	AudioManager *audio_manager_;
+	MaterialManager *material_manager_;
+	GraphicsPipelineManager *graphics_pipeline_manager_;
+	TextureManager *texture_manager_;
+	ModelManager *model_manager_;
+
+	DLLGraphics *dll_graphics_;
+	DLLAudio *dll_audio_;
+};
+
+#define engine Engine::getInstance()
+
+/*class Engine {
 public:
 	TextureBindingLayout *tonemap_tbl_;
 	std::string level_file_name_;
@@ -104,6 +110,8 @@ private:
 	void InitializeSettings();
 
 	void CheckModPaths();
+
+	void RefreshContent(double);
 
 	RenderPathType renderPathType;
 	RenderPath *renderPath;
@@ -164,7 +172,7 @@ public:
 	RenderPass *renderPass;
 	std::vector<Framebuffer *> fbos;
 
-	InputSystem inputSystem;
+	InputSystem &inputSystem;
 	GraphicsWrapper *graphics_wrapper_;
 
 	static Engine &GetInstance();
@@ -190,9 +198,7 @@ public:
 
 	~Engine();
 	void ShutdownControl(double);
-	void PlaySound(double);
-};
-
-#define engine Engine::GetInstance()
+	void playSound(double);
+};*/
 
 #endif

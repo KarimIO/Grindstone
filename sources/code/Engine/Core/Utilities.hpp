@@ -12,5 +12,6 @@ char charToLower(char letter);
 std::string strToLower(std::string phrase);
 char charToUpper(char letter);
 std::string strToUpper(std::string phrase);
+std::istream& safeGetline(std::istream& is, std::string& t);
 
 #endif

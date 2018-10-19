@@ -1,7 +1,7 @@
 #include "PostProcessSSR.hpp"
 #include "../Core/Engine.hpp"
 #include "../../GraphicsCommon/UniformBuffer.hpp"
-
+/*
 PostProcessSSR::PostProcessSSR(RenderTargetContainer *source, RenderTargetContainer *target) : source_(source), target_(target) {
     GraphicsWrapper *graphics_wrapper_ = engine.graphics_wrapper_;
 
@@ -84,4 +84,4 @@ void PostProcessSSR::Process() {// BLEND_ADDITIVE
 	engine.deffUBO->Bind();
 	engine.graphics_wrapper_->DrawImmediateVertices(0, 6);
 	engine.graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-}
+}*/

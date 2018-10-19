@@ -1,3 +1,5 @@
+#ifdef false
+
 #include "Input.hpp"
 #include "Engine.hpp"
 #include "Utilities.hpp"
@@ -370,7 +372,7 @@ void InputSystem::Cleanup(InputComponent * component) {
 }
 
 void InputSystem::ResizeEvent(int x, int y) {
-	std::cout << "Resized to : " << x << " - " << y << "\n";
+	LOG("Resized to: %i, %i.\n", x, y);
 }
 
 void InputSystem::SetMousePosition(int x, int y) {
@@ -613,3 +615,4 @@ void InputComponent::Cleanup() {
 	if (system != NULL)
 		system->Cleanup(this);
 }
+#endif

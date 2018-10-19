@@ -1,7 +1,7 @@
 #include "PostProcessSSAO.hpp"
 #include "../Core/Engine.hpp"
 #include "../../GraphicsCommon/UniformBuffer.hpp"
-
+/*
 PostProcessSSAO::PostProcessSSAO(RenderTargetContainer *source) : source_(source) {
     GraphicsWrapper *graphics_wrapper_ = engine.graphics_wrapper_;
     //=====================
@@ -158,4 +158,4 @@ void PostProcessSSAO::Process() {
     engine.graphics_wrapper_->DrawImmediateVertices(0, 6);
     engine.graphics_wrapper_->SetColorMask(COLOR_MASK_RGBA);
     engine.graphics_wrapper_->EnableDepth(true);
-}
+}*/

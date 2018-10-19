@@ -1,8 +1,9 @@
-#include "PostProcessTonemap.hpp"
+/*#include "PostProcessTonemap.hpp"
+#include "GraphicsWrapper.hpp"
 #include "../Core/Engine.hpp"
 
 PostProcessTonemap::PostProcessTonemap(RenderTargetContainer *source, RenderTargetContainer *target, PostProcessAutoExposure *auto_exposure) : source_(source), target_(target), auto_exposure_(auto_exposure) {
-    GraphicsWrapper *graphics_wrapper_ = engine.graphics_wrapper_;
+    GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
     
     // Exposure Uniform Buffer
     UniformBufferBindingCreateInfo ubbci;
@@ -10,13 +11,13 @@ PostProcessTonemap::PostProcessTonemap(RenderTargetContainer *source, RenderTarg
 	ubbci.shaderLocation = "ExposureUBO";
 	ubbci.size = sizeof(ExposureUBO);
 	ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	UniformBufferBinding *ubb = graphics_wrapper_->CreateUniformBufferBinding(ubbci);
+	UniformBufferBinding *ubb = graphics_wrapper->CreateUniformBufferBinding(ubbci);
 
     UniformBufferCreateInfo ubci;
 	ubci.isDynamic = false;
 	ubci.size = sizeof(ExposureUBO);
 	ubci.binding = ubb;
-	exposure_ub_ = graphics_wrapper_->CreateUniformBuffer(ubci);
+	exposure_ub_ = graphics_wrapper->CreateUniformBuffer(ubci);
 
     exposure_buffer_.exposure = exp(0.0f);
 	exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
@@ -71,7 +72,7 @@ PostProcessTonemap::PostProcessTonemap(RenderTargetContainer *source, RenderTarg
 	tonemapGPCI.textureBindingCount = 1;
 	tonemapGPCI.uniformBufferBindings = &ubb;
 	tonemapGPCI.uniformBufferBindingCount = 1;
-	pipeline_ = graphics_wrapper_->CreateGraphicsPipeline(tonemapGPCI);
+	pipeline_ = graphics_wrapper->CreateGraphicsPipeline(tonemapGPCI);
 }
 
 void PostProcessTonemap::Process() {
@@ -84,10 +85,10 @@ void PostProcessTonemap::Process() {
     pipeline_->Bind();
     exposure_ub_->Bind();
 	if (target_ == nullptr) {
-		engine.graphics_wrapper_->BindDefaultFramebuffer(false);
-		engine.graphics_wrapper_->Clear(CLEAR_BOTH);
+		engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
+		engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
 	}
     source_->framebuffer->BindRead();
     source_->framebuffer->BindTextures(4);
-    engine.graphics_wrapper_->DrawImmediateVertices(0, 6);
-}
+    engine.getGraphicsWrapper()->DrawImmediateVertices(0, 6);
+}*/

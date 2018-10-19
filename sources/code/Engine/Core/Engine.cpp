@@ -1,36 +1,155 @@
+// STD headers
+#include <vector>
+#include <string>
+
+// My Class
 #include "Engine.hpp"
-#include "Utilities.hpp"
-#include "iniHandler.hpp"
-#include <stdio.h>
-#include "LevelLoader.hpp"
-#include "LoadingScreen.hpp"
-#include "Systems/SGeometryStatic.hpp"
-#include <thread>
 
-#if defined(_WIN32)
-	#define LoadDLL(path) HMODULE dllHandle = LoadLibrary((path+".dll").c_str()); \
-	if (!dllHandle) { \
-		fprintf(stderr, "Failed to load %s!\n", path.c_str()); \
-		return false; \
+// Included Classes
+#include "Scene.hpp"
+#include "Space.hpp"
+// - Utils
+#include "../Utilities/SettingsFile.hpp"
+#include "../Utilities/DLLGraphics.hpp"
+#include "../Utilities/DLLAudio.hpp"
+// - Systems
+#include "../Systems/CameraSystem.hpp"
+#include "../Systems/LightPointSystem.hpp"
+#include "../Systems/LightDirectionalSystem.hpp"
+#include "../Systems/LightSpotSystem.hpp"
+// - AssetManagers
+#include "../AssetManagers/AudioManager.hpp"
+#include "../AssetManagers/MaterialManager.hpp"
+#include "../AssetManagers/GraphicsPipelineManager.hpp"
+#include "../AssetManagers/TextureManager.hpp"
+#include "../AssetManagers/ModelManager.hpp"
+
+// Util Classes
+#include "../Utilities/Logger.hpp"
+
+Engine::Engine() {
+	LOG("Initializing Grindstone Game Engine...\n");
+
+	// Seed Random to get proper random numbers
+	srand((unsigned int)time(NULL));
+
+	// Load Settings
+	settings_ = new Settings();
+
+	// Load DLLS
+	dll_graphics_ = new DLLGraphics();
+	graphics_wrapper_ = dll_graphics_->getWrapper();
+	dll_audio_ = new DLLAudio();
+	audio_wrapper_ = dll_audio_->getWrapper();
+
+	// Load Managers
+	audio_manager_ = new AudioManager();
+	material_manager_ = new MaterialManager();
+	graphics_pipeline_manager_ = new GraphicsPipelineManager();
+	texture_manager_ = new TextureManager();
+	model_manager_ = new ModelManager();
+	// - Load Input Manager
+
+	// Load Systems
+	addSystem(new LightDirectionalSystem());
+	addSystem(new LightPointSystem());
+	addSystem(new LightSpotSystem());
+	addSystem(new CameraSystem());
+	// addSystem(new GeometryStaticSystem());
+
+	// Load Default Level
+	addScene(settings_->default_map_);
+
+	LOG("Successfully Loaded.\n");
+	LOG("==============================\n");
+}
+
+Engine &Engine::getInstance() {
+	// Create the Engine instance when "getInstance()" is called (ie: when "engine" is used).
+	static Engine newEngine;
+	return newEngine;
+}
+
+Scene *Engine::addScene(std::string path) {
+	auto scene = new Scene(path);
+	scenes_.push_back(scene);
+	return scene;
+}
+
+System *Engine::addSystem(System * system) {
+	systems_.push_back(system);
+	return system;
+}
+
+const Settings *Engine::getSettings() {
+	return settings_;
+}
+
+GraphicsWrapper *Engine::getGraphicsWrapper() {
+	return graphics_wrapper_;
+}
+
+AudioManager *Engine::getAudioManager() {
+	return audio_manager_;
+}
+
+MaterialManager *Engine::getMaterialManager() {
+	return material_manager_;
+}
+
+GraphicsPipelineManager *Engine::getGraphicsPipelineManager() {
+	return graphics_pipeline_manager_;
+}
+
+TextureManager *Engine::getTextureManager() {
+	return texture_manager_;
+}
+
+ModelManager *Engine::getModelManager() {
+	return model_manager_;
+}
+
+void Engine::run() {
+	while (running_) {
+		// Calculate Timing
+		double dt = 1.0 / 60.0;
+
+		// Update all Systems
+		for (auto &system : systems_) {
+			system->update(dt);
+		}
 	}
 
-	#define LoadDLLFunction(string) GetProcAddress(dllHandle, string);
-#elif defined(__linux__)
-	#include <dlfcn.h>
+}
 
-	#define LoadDLL(path) void *lib_handle = dlopen(("./lib"+path+".so").c_str(), RTLD_LAZY);\
-	if (!lib_handle) {\
-		fprintf(stderr, "Failed to load %s: %s\n", path.c_str(), dlerror());\
-		return false;\
+Engine::~Engine() {
+	LOG("==============================\n");
+	LOG("Closing Grindstone...\n");
+
+	for (auto &scene : scenes_) {
+		delete scene;
 	}
 
-	#define LoadDLLFunction(string) dlsym(lib_handle, string);
-#endif
+	for (auto &system : systems_) {
+		delete system;
+	}
 
-#ifdef UseClassInstance
-	Engine *Engine::=0;
-#endif
+	if (dll_audio_) {
+		delete dll_audio_;
+	}
 
+	if (dll_graphics_) {
+		delete dll_graphics_;
+	}
+
+	if (settings_) {
+		delete settings_;
+	}
+
+	LOG("Closed Grindstone.\n");
+}
+
+/*
 bool run_loading = true;
 void Engine::LoadingScreenThread() {
 	auto start = std::chrono::high_resolution_clock::now();
@@ -47,6 +166,8 @@ void Engine::LoadingScreenThread() {
 #define MULTITHEAD_LOAD 0
 
 bool Engine::Initialize() {
+	LOG("The Grindstone Engine is Initializing.\n");
+
 	srand((unsigned int)time(NULL));
 
 	// Get Settings here:
@@ -82,10 +203,13 @@ bool Engine::Initialize() {
 	inputSystem.BindAction("Shutdown", NULL, this, &Engine::ShutdownControl, KEY_RELEASED);
 
 	inputSystem.AddControl("r", "Play", NULL, 1);
-	inputSystem.BindAction("Play", NULL, this, &Engine::PlaySound, KEY_RELEASED);
+	inputSystem.BindAction("Play", NULL, this, &Engine::playSound, KEY_RELEASED);
 
 	inputSystem.AddControl("q", "CaptureCubemaps", NULL, 1);
 	inputSystem.BindAction("CaptureCubemaps", NULL, &(cubemapSystem), &CubemapSystem::CaptureCubemaps);
+
+	inputSystem.AddControl("f5", "RefreshContent", NULL, 1);
+	inputSystem.BindAction("RefreshContent", NULL, this, &Engine::RefreshContent, KEY_RELEASED);
 
 	//terrainSystem.Initialize();
 	if (!InitializeScene(defaultMap))	return false;
@@ -110,154 +234,7 @@ bool Engine::Initialize() {
 	return true;
 }
 
-void Engine::InitializeSettings() {
-	INIConfigFile cfile;
-	
-	if (cfile.Initialize("../settings.ini")) {
-		cfile.GetBool("Window", "vsync", true, settings.vsync);
-		cfile.GetInteger("Window", "resx",	1366,	settings.resolutionX);
-		cfile.GetInteger("Window", "resy",	768,	settings.resolutionY);
-		cfile.GetFloat(  "Window", "fov",	90,		settings.fov);
-		cfile.GetFloat(  "Input", "mouseSensitivity",	1.0,		settings.mouse_sensitivity);
-		settings.fov *= 3.14159f / 360.0f; // Convert to rad, /2 for full fovY.
-		std::string graphics;
-		cfile.GetString("Renderer", "graphics", "OpenGL", graphics);
-		cfile.GetBool("Renderer", "reflections", true, settings.enableReflections);
-		cfile.GetBool("Renderer", "tesselation", true, settings.enableTesselation);
-		cfile.GetBool("Renderer", "shadows", true, settings.enableShadows);
-		cfile.GetBool("Renderer", "useSSAO", false, settings.use_ssao);
-		cfile.GetBool("Debug", "showMaterialLod", true, settings.showMaterialLoad);
-		cfile.GetBool("Debug", "showPipelineLoad", true, settings.showPipelineLoad);
-		cfile.GetBool("Debug", "showTextureLoad", false, settings.showTextureLoad);
-		cfile.GetString("Game", "defaultmap", "../assets/scenes/sponza.json", defaultMap);
-
-		graphics = strToLower(graphics);
-		if (graphics == "directx")
-			settings.graphicsLanguage = GRAPHICS_DIRECTX;
-		else if (graphics == "vulkan")
-			settings.graphicsLanguage = GRAPHICS_VULKAN;
-		else if (graphics == "metal")
-			settings.graphicsLanguage = GRAPHICS_METAL;
-		else if (graphics == "opengl")
-			settings.graphicsLanguage = GRAPHICS_OPENGL;
-		else {
-			fprintf(stderr, "SETTINGS.INI: Invalid value for graphics language (%s), using Opengl instead.\n", graphics.c_str());
-			settings.graphicsLanguage = GRAPHICS_OPENGL;
-			cfile.SetString("Renderer", "graphics", "OpenGL");
-		}
-
-		cfile.SaveFile();
-	}
-	else {
-		fprintf(stderr, "SETTINGS.INI: File not found.\n");
-
-		cfile.SetBool("Window", "vsync", true);
-		cfile.SetInteger("Window", "resx", 1366);
-		cfile.SetInteger("Window", "resy", 768);
-		cfile.SetFloat("Window", "fov", 90);
-		cfile.SetFloat("Input", "mouseSensitivity",	1.0);
-		cfile.SetString("Renderer", "graphics", "OpenGL");
-		cfile.SetBool("Renderer", "reflections", true);
-		cfile.SetBool("Renderer", "shadows", true);
-		cfile.SetBool("Renderer", "tesselation", true);
-		cfile.SetBool("Renderer", "useSSAO", false);
-		cfile.SetBool("Debug", "showMaterialLod", true);
-		cfile.SetBool("Debug", "showPipelineLoad", true);
-		cfile.SetBool("Debug", "showTextureLoad", false);
-		cfile.SetString("Game", "defaultmap", "../assets/scenes/sponza.json");
-
-		settings.resolutionX = 1366;
-		settings.resolutionY = 768;
-		settings.graphicsLanguage = GRAPHICS_OPENGL;
-		settings.fov = 90.0f * (3.14159f / 360.0f); // Convert to rad, /2 for full fovY.
-		settings.enableReflections = true;
-		settings.enableShadows = true;
-		settings.enableTesselation = true;
-		settings.vsync = true;
-		settings.showMaterialLoad=1;
-		settings.showPipelineLoad=1;
-		settings.showTextureLoad=0;
-		settings.use_ssao = true;
-		settings.mouse_sensitivity = 1.0f;
-		defaultMap = "../assets/scenes/sponza.json";
-	}
-
-}
-
-bool Engine::InitializeAudio() {
-	std::string library = "audioopenal";
-	
-	LoadDLL(library);
-
-	AudioWrapper* (*pfnCreateAudio)() = (AudioWrapper* (*)())LoadDLLFunction("createAudio");
-	if (!pfnCreateAudio) {
-		fprintf(stderr, "Cannot get createAudio function!\n");
-		return false;
-	}
-
-	pfnDeleteAudio = (void (*)(AudioWrapper*))LoadDLLFunction("deleteAudio");
-	if (!pfnDeleteAudio) {
-		fprintf(stderr, "Cannot get deleteAudio function!\n");
-		return false;
-	}
-
-	audio_wrapper_ = (AudioWrapper*)pfnCreateAudio();
-	audio_system_.Initialize(audio_wrapper_);
-	
-	return true;
-}
-
 bool Engine::InitializeGraphics() {
-	std::string library;
-	switch (settings.graphicsLanguage) {
-	default:
-		library = "graphicsgl";
-		break;
-#ifndef __APPLE__
-	case GRAPHICS_VULKAN:
-		library = "graphicsvk";
-		break;
-#endif
-#ifdef _WIN32
-	case GRAPHICS_DIRECTX:
-		library = "graphicsdx";
-		break;
-#endif
-#ifdef __APPLE__
-	case GRAPHICS_METAL:
-		library = "graphicsml";
-		break;
-#endif
-	};
-	
-	LoadDLL(library);
-
-	GraphicsWrapper* (*pfnCreateGraphics)(InstanceCreateInfo) = (GraphicsWrapper* (*)(InstanceCreateInfo))LoadDLLFunction("createGraphics");
-	if (!pfnCreateGraphics) {
-		fprintf(stderr, "Cannot get createGraphics function!\n");
-		return false;
-	}
-
-	pfnDeleteGraphics = (void (*)(GraphicsWrapper*))LoadDLLFunction("deleteGraphics");
-	if (!pfnDeleteGraphics) {
-		fprintf(stderr, "Cannot get deleteGraphics function!\n");
-		return false;
-	}
-
-	InstanceCreateInfo createInfo;
-	createInfo.width = settings.resolutionX;
-	createInfo.height = settings.resolutionY;
-	createInfo.vsync = settings.vsync;
-	createInfo.inputInterface = &inputSystem;
-	createInfo.title = "Grindstone";
-#ifdef NDEBUG
-	createInfo.debug = false;
-#else
-	createInfo.debug = true;
-#endif
-	graphics_wrapper_ = (GraphicsWrapper*)pfnCreateGraphics(createInfo);
-
-
 	graphics_wrapper_->CreateDefaultStructures();
 	graphics_wrapper_->SetCursorShown(false);
 
@@ -543,7 +520,7 @@ bool Engine::InitializeGraphics() {
 	// Cubemap
 	//=====================
 
-	tbci_refl_.clear();
+	/*tbci_refl_.clear();
 	tbci_refl_.resize(1);
 	tbci_refl_.emplace_back("environmentMap", 4);
 
@@ -557,24 +534,6 @@ bool Engine::InitializeGraphics() {
 	debug_wrapper_.Initialize(gbuffer_);
 
 	return true;
-}
-
-Engine &Engine::GetInstance() {
-	// Create the Engine instance when "GetInstance()" is called (ie: when "engine" is used).
-	static Engine newEngine;
-	return newEngine;
-}
-
-void Engine::Render() {
-	if (graphics_wrapper_->SupportsCommandBuffers()) {
-		materialManager.DrawDeferredCommand();
-		graphics_wrapper_->WaitUntilIdle();
-	}
-	else {
-		renderPath->Render(gbuffer_);
-
-		graphics_wrapper_->SwapBuffer();
-	}
 }
 
 void Engine::Run() {
@@ -591,10 +550,6 @@ void Engine::Run() {
 		physicsSystem.Update(GetUpdateTimeDelta());
 		transformSystem.Update();
 		audio_system_.Update();
-
-		// float time = GetTimeCurrent() * 10.0f;
-		// sound_source_->SetVolume(glm::sin(time)*0.5f + 0.5f);
-		// audio_wrapper_->SetListenerPosition(8.0f * glm::sin(time), 0, -2.0f);
 
 		if (settings.enableShadows)
 			lightSystem.DrawShadows();
@@ -632,114 +587,4 @@ void Engine::Run() {
 		//sUi.Render();
 	}
 }
-
-void Engine::CheckModPaths() {
-	std::ifstream file;
-	file.open("/mods/activemods.txt");
-
-	if (!file.fail()) {
-		std::string line;
-		while (std::getline(file, line)) {
-#ifdef __APPLE__
-			modPaths.push_back(getResourcePath()+line);
-#else
-			modPaths.push_back(line);
-#endif
-		}
-	}
-}
-
-// Find available path from include paths
-std::string Engine::GetAvailablePath(std::string szString) {
-	// Check Mods Directory
-	for (int i = 0; i < modPaths.size(); i++) {
-		std::string modPath = modPaths[i] + szString;
-		FileExists(modPaths[i] + szString);
-		return modPath;
-	}
-
-#ifdef __APPLE__
-	if (FileExists(szString))
-		return getResourcePath()+szString;
-#else
-	if (FileExists(szString))
-		return szString;
-#endif
-
-	// Return Empty String
-	return "";
-}
-
-// Initialize and Load a game scene
-bool Engine::InitializeScene(std::string szScenePath) {
-	std::string szSceneNewPath = GetAvailablePath(szScenePath);
-
-	if (szSceneNewPath == "") {
-		printf("Scene path %s not found.\n", szScenePath.c_str());
-		return false;
-	}
-
-	LoadLevel(szSceneNewPath);
-	geometry_system.LoadPreloaded();
-	materialManager.LoadPreloaded();
-
-	return true;
-}
-
-void Engine::CalculateTime() {
-	currentTime = std::chrono::high_resolution_clock::now();
-	deltaTime = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - prevTime);
-	prevTime = currentTime;
-}
-
-double Engine::GetTimeCurrent() {
-	return (double)std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - startTime).count()/1000000000.0;
-}
-
-double Engine::GetUpdateTimeDelta() {
-	return (double)deltaTime.count() / 1000000000.0;
-}
-
-double Engine::GetRenderTimeDelta() {
-	return (double)deltaTime.count() / 1000000000.0;
-}
-
-void Engine::Shutdown() {
-	isRunning = false;
-}
-
-void Engine::ShutdownControl(double) {
-	Shutdown();
-}
-
-void Engine::PlaySound(double) {
-}
-
-Engine::~Engine() {
-	materialManager.cleanup();
-	geometry_system.cleanup();
-
-	std::cout << "Cleaning Physics System...\n";
-	physicsSystem.Cleanup();
-	std::cout << "Physics System cleaned.\n";
-
-	if (gbuffer_) {
-		std::cout << "Cleaning gbuffer...\n";
-		graphics_wrapper_->DeleteFramebuffer(gbuffer_);
-		std::cout << "GBuffer Cleaned.\n";
-	}
-
-	if (graphics_wrapper_) {
-		std::cout << "Cleaning Graphics Wrapper...\n";
-		pfnDeleteGraphics(graphics_wrapper_);
-		graphics_wrapper_ = NULL;
-		std::cout << "Graphics Wrapper cleaned.\n";
-	}
-
-	if (audio_wrapper_) {
-		std::cout << "Cleaning Audio Wrapper...\n";
-		pfnDeleteAudio(audio_wrapper_);
-		audio_wrapper_ = NULL;
-		std::cout << "Audio Wrapper cleaned.\n";
-	}
-}
+*/
