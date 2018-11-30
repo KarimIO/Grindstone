@@ -62,6 +62,7 @@ public:
 	double getTimeCurrent();
 	double getUpdateTimeDelta();
 
+	void shutdownControl(double);
 
 	void run();
 

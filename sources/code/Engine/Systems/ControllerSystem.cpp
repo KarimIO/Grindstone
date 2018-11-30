@@ -57,7 +57,7 @@ ControllerComponent::ControllerComponent(GameObjectHandle object_handle, Compone
 
 	ghost_mode_ = true;
 	no_collide_ = true;
-	speed_modifier_ = 8.0;
+	speed_modifier_ = 0.1;
 	sensitivity_ = engine.getSettings()->mouse_sensitivity_;
 }
 
@@ -167,9 +167,9 @@ void ControllerComponent::ZoomOut(double scale) {
 }
 
 void ControllerComponent::RunStart(double scale) {
-	speed_modifier_ = ghost_mode_ ? 10.0f : 9.0f;
+	speed_modifier_ = ghost_mode_ ? 0.4f : 0.1f;
 }
 
 void ControllerComponent::RunStop(double scale) {
-	speed_modifier_ = ghost_mode_ ? 6.0f : 5.0;
+	speed_modifier_ = ghost_mode_ ? 0.2f : 0.1f;
 }

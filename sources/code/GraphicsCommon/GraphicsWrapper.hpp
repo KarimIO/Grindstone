@@ -94,6 +94,7 @@ public:
 	virtual void ResetCursor();
 	virtual void SetCursor(int x, int y);
 	virtual void GetCursor(int &x, int &y);
+	virtual void setFocus();
 
 	virtual void CreateDefaultStructures() = 0;
 

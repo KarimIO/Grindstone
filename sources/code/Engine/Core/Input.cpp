@@ -26,6 +26,9 @@ InputManager::InputManager() {
 		windowControls.resize(WINDOW_LAST);
 		windowData.resize(WINDOW_LAST);
 	}
+
+	AddControl("escape", "Shutdown", NULL, 1);
+	BindAction("Shutdown", NULL, &engine, &Engine::shutdownControl, KEY_RELEASED);
 }
 
 int InputManager::GetKeyboardKeyByName(std::string control) {
@@ -464,15 +467,15 @@ void InputManager::SetFocused(bool state) {
 	double time;
 	bool buttonpressed = false;
 
-	if (state && windowData[WINDOW_FOCUS] <= 0) {
+	if (state) {
 		time = engine.getTimeCurrent() + mouseData[WINDOW_FOCUS];
-		windowData[WINDOW_FOCUS] = engine.getTimeCurrent();
+		windowData[WINDOW_FOCUS] = 1;
 		isEvent = true;
 		buttonpressed = true;
 	}
-	else if (!state && windowData[WINDOW_FOCUS] >= 0) {
+	else if (!state) {
 		time = engine.getTimeCurrent() - windowData[WINDOW_FOCUS];
-		windowData[WINDOW_FOCUS] = -engine.getTimeCurrent();
+		windowData[WINDOW_FOCUS] = 0;
 		isEvent = true;
 	}
 

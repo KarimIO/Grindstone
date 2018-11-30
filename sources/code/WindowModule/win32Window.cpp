@@ -95,6 +95,10 @@ LRESULT CALLBACK GraphicsWrapper::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LP
 	case WM_CLOSE:
 		input->Quit();
 		break;
+	case WM_CREATE:
+		setFocus();
+		input->SetFocused(true);
+		break;
 	case WM_DESTROY:
 		input->ForceQuit();
 		break;
@@ -138,15 +142,15 @@ bool GraphicsWrapper::InitializeWin32Window() {
 	DWORD style, styleEx;
 	switch (fullscreen) {
 	case 0: // Windowed
-		style = WS_OVERLAPPEDWINDOW;
+		style = WS_OVERLAPPED;
 		styleEx = WS_EX_CLIENTEDGE;
 		break;
 	case 1: // Borderless Windowed
-		style = WS_OVERLAPPEDWINDOW;
+		style = WS_OVERLAPPED;
 		styleEx = WS_EX_CLIENTEDGE | WS_EX_TOPMOST;
 		break;
 	case 2: // Fullscreen
-		style = WS_OVERLAPPEDWINDOW;
+		style = WS_OVERLAPPED;
 		styleEx = WS_EX_CLIENTEDGE;
 		break;
 	}
@@ -182,6 +186,12 @@ bool GraphicsWrapper::InitializeWin32Window() {
 	UpdateWindow(window_handle);
 
 	return true;
+}
+
+void GraphicsWrapper::setFocus() {
+	BringWindowToTop(window_handle);
+	SetFocus(window_handle);
+	input->SetFocused(true);
 }
 
 void GraphicsWrapper::HandleEvents() {

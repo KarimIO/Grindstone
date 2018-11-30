@@ -73,9 +73,11 @@ void Engine::initialize() {
 	start_time_ = std::chrono::high_resolution_clock::now();
 	prev_time_ = prev_time_;
 
+	running_ = true;
 	LOG("Successfully Loaded.\n");
 	LOG("==============================\n");
-	running_ = true;
+
+	graphics_wrapper_->setFocus();
 }
 
 void Engine::initializeUniformBuffer() {
@@ -163,7 +165,8 @@ InputManager * Engine::getInputManager() {
 void Engine::run() {
 	while (running_) {
 		// Calculate Timing
-		double dt = 1.0 / 60.0;
+		calculateTime();
+		double dt = getUpdateTimeDelta();
 
 		graphics_wrapper_->HandleEvents();
 		input_manager_->LoopControls(dt);
@@ -222,6 +225,11 @@ double Engine::getTimeCurrent() {
 
 double Engine::getUpdateTimeDelta() {
 	return (double)delta_time_.count() / 1000000000.0;
+}
+
+void Engine::shutdownControl(double)
+{
+	shutdown();
 }
 
 
