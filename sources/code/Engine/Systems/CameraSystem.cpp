@@ -61,7 +61,7 @@ void CameraSystem::update(double dt) {
 	for (auto scene : scenes) {
 		for (auto space : scene->spaces_) {
 			CameraSubSystem *subsystem = (CameraSubSystem *)space->getSubsystem(system_type_);
-			for (auto component : subsystem->components_) {
+			for (auto &component : subsystem->components_) {
 				GameObjectHandle game_object_id = component.game_object_handle_;
 
 				// Get Transform Info

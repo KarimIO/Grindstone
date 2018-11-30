@@ -17,12 +17,15 @@
 #include "../Systems/LightSystem.hpp"
 #include "../Systems/TransformSystem.hpp"
 #include "../Systems/RenderStaticMeshSystem.hpp"
+#include "../Systems/ControllerSystem.hpp"
 // - AssetManagers
 #include "../AssetManagers/AudioManager.hpp"
 #include "../AssetManagers/MaterialManager.hpp"
 #include "../AssetManagers/GraphicsPipelineManager.hpp"
 #include "../AssetManagers/TextureManager.hpp"
 #include "../AssetManagers/ModelManager.hpp"
+
+#include "../Core/Input.hpp"
 
 #include "../GraphicsCommon/GraphicsWrapper.hpp"
 
@@ -37,6 +40,8 @@ void Engine::initialize() {
 
 	// Load Settings
 	settings_ = new Settings();
+
+	input_manager_ = new InputManager();
 
 	// Load DLLS
 	dll_graphics_ = new DLLGraphics();
@@ -55,6 +60,7 @@ void Engine::initialize() {
 	// - Load Input Manager
 
 	// Load Systems
+	addSystem(new ControllerSystem());
 	addSystem(new RenderStaticMeshSystem());
 	addSystem(new LightSystem());
 	addSystem(new TransformSystem());
@@ -63,6 +69,9 @@ void Engine::initialize() {
 
 	// Load Default Level
 	addScene(settings_->default_map_);
+
+	start_time_ = std::chrono::high_resolution_clock::now();
+	prev_time_ = prev_time_;
 
 	LOG("Successfully Loaded.\n");
 	LOG("==============================\n");
@@ -147,10 +156,17 @@ ModelManager *Engine::getModelManager() {
 	return model_manager_;
 }
 
+InputManager * Engine::getInputManager() {
+	return input_manager_;
+}
+
 void Engine::run() {
 	while (running_) {
 		// Calculate Timing
 		double dt = 1.0 / 60.0;
+
+		graphics_wrapper_->HandleEvents();
+		input_manager_->LoopControls(dt);
 
 		// Update all Systems
 		for (auto scene : scenes_) {
@@ -161,6 +177,10 @@ void Engine::run() {
 		}
 	}
 
+}
+
+void Engine::shutdown() {
+	running_ = false;
 }
 
 Engine::~Engine() {
@@ -189,6 +209,21 @@ Engine::~Engine() {
 
 	LOG("Closed Grindstone.\n");
 }
+
+void Engine::calculateTime() {
+	current_time_ = std::chrono::high_resolution_clock::now();
+	delta_time_ = std::chrono::duration_cast<std::chrono::nanoseconds>(current_time_ - prev_time_);
+	prev_time_ = current_time_;
+}
+
+double Engine::getTimeCurrent() {
+	return (double)std::chrono::duration_cast<std::chrono::nanoseconds>(current_time_ - start_time_).count() / 1000000000.0;
+}
+
+double Engine::getUpdateTimeDelta() {
+	return (double)delta_time_.count() / 1000000000.0;
+}
+
 
 /*
 bool run_loading = true;

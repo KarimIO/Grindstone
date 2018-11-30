@@ -1,11 +1,12 @@
-#ifdef false
-
 #include "Input.hpp"
 #include "Engine.hpp"
 #include "Utilities.hpp"
 #include <fstream>
 
-InputSystem::InputSystem() {
+#include "../GraphicsCommon/GraphicsWrapper.hpp"
+#include "../Utilities/Logger.hpp"
+
+InputManager::InputManager() {
 	// These should be set elsewhere
 	useWindow = true;
 	useKeyboard = true;
@@ -27,7 +28,7 @@ InputSystem::InputSystem() {
 	}
 }
 
-int InputSystem::GetKeyboardKeyByName(std::string control) {
+int InputManager::GetKeyboardKeyByName(std::string control) {
 	if (control == "escape")	return KEY_ESCAPE;
 	if (control == "esc")		return KEY_ESCAPE;
 	if (control == "tab")		return KEY_TAB;
@@ -155,7 +156,7 @@ int InputSystem::GetKeyboardKeyByName(std::string control) {
 	return -1;
 }
 
-int InputSystem::GetMouseKeyByName(std::string control) {
+int InputManager::GetMouseKeyByName(std::string control) {
 	if (control == "mouseleft")		return MOUSE_LEFT;
 	if (control == "mousemiddle")	return MOUSE_MIDDLE;
 	if (control == "mouseright")	return MOUSE_RIGHT;
@@ -173,7 +174,7 @@ int InputSystem::GetMouseKeyByName(std::string control) {
 	return -1;
 }
 
-int InputSystem::GetWindowKeyByName(std::string control) {
+int InputManager::GetWindowKeyByName(std::string control) {
 	if (control == "winclose")		return WINDOW_CLOSE;
 	if (control == "winforceclose")	return WINDOW_FORCECLOSE;
 	if (control == "winresizex")	return WINDOW_RESIZEX;
@@ -186,7 +187,7 @@ int InputSystem::GetWindowKeyByName(std::string control) {
 	return -1;
 }
 
-int InputSystem::TranslateKey(std::string key, int &device, ControlHandler *&handler) {
+int InputManager::TranslateKey(std::string key, int &device, ControlHandler *&handler) {
 	std::string control = strToLower(key);
 	int k;
 
@@ -221,7 +222,7 @@ int InputSystem::TranslateKey(std::string key, int &device, ControlHandler *&han
 	return -1;
 }
 
-bool InputSystem::AddControl(std::string keyCode, std::string controlCode, InputComponent *component, double val) {
+bool InputManager::AddControl(std::string keyCode, std::string controlCode, InputComponent *component, double val) {
 	ControlHandler *handler;
 	int device, key;
 	// Get Key and device from string
@@ -267,7 +268,7 @@ bool InputSystem::AddControl(std::string keyCode, std::string controlCode, Input
 	return true;
 }
 
-ControlHandler * InputSystem::GetControl(std::string control, InputComponent *component) {
+ControlHandler * InputManager::GetControl(std::string control, InputComponent *component) {
 	for (size_t i = 0; i < allControls.size(); i++) {
 		if (allControls[i]->component == component && allControls[i]->control == control)
 			return allControls[i];
@@ -276,11 +277,11 @@ ControlHandler * InputSystem::GetControl(std::string control, InputComponent *co
 	return NULL;
 }
 
-void InputSystem::SetInputControlFile(std::string path) {
+void InputManager::SetInputControlFile(std::string path) {
 	SetInputControlFile(path, NULL);
 }
 
-void InputSystem::SetInputControlFile(std::string path, InputComponent * component) {
+void InputManager::SetInputControlFile(std::string path, InputComponent * component) {
 	std::ifstream file;
 	file.open("../"+path);
 	if (file.fail()) {
@@ -298,7 +299,7 @@ void InputSystem::SetInputControlFile(std::string path, InputComponent * compone
 	}
 }
 
-void InputSystem::CleanupSystem(InputComponent * component, bool use, std::vector<ControlHandler *> &list) {
+void InputManager::CleanupSystem(InputComponent * component, bool use, std::vector<ControlHandler *> &list) {
 	if (use) {
 		for (size_t i = 0; i < list.size(); i++) {
 			ControlHandler *handler = list[i];
@@ -327,7 +328,7 @@ void InputSystem::CleanupSystem(InputComponent * component, bool use, std::vecto
 	}
 }
 
-void InputSystem::Cleanup() {
+void InputManager::Cleanup() {
 	for (size_t i = 0; i < allControls.size(); i++) {
 		delete allControls[i];
 	}
@@ -352,13 +353,13 @@ void InputSystem::Cleanup() {
 	}
 }
 
-void InputSystem::Shutdown() {
+void InputManager::Shutdown() {
 	for (size_t i = 0; i < allControls.size(); i++) {
 		delete allControls[i];
 	}
 }
 
-void InputSystem::Cleanup(InputComponent * component) {
+void InputManager::Cleanup(InputComponent * component) {
 	// Dereference from allcontrols first
 	for (size_t i = 0; i < allControls.size(); i++) {
 		if (allControls[i]->component == component)
@@ -371,15 +372,15 @@ void InputSystem::Cleanup(InputComponent * component) {
 	CleanupSystem(component, useWindow,		windowControls);
 }
 
-void InputSystem::ResizeEvent(int x, int y) {
+void InputManager::ResizeEvent(int x, int y) {
 	LOG("Resized to: %i, %i.\n", x, y);
 }
 
-void InputSystem::SetMousePosition(int x, int y) {
+void InputManager::SetMousePosition(int x, int y) {
 	if (!IsFocused())
 		return;
 
-	double delta_time = engine.GetUpdateTimeDelta();
+	double delta_time = engine.getUpdateTimeDelta();
 
 	double xOrg, yOrg;
 	xOrg = mouseData[MOUSE_XCOORD] * delta_time;
@@ -390,7 +391,7 @@ void InputSystem::SetMousePosition(int x, int y) {
 		ControlHandler *container = mouseControls[MOUSE_XCOORD];
 		while (container != NULL) {
 			if (container->command != NULL && container->command->type == COMMAND_AXIS)
-				container->command->Invoke(engine.settings.resolutionX / 2 - x);
+				container->command->Invoke(engine.getSettings()->resolution_x_ / 2 - x);
 			container = container->nextControl;
 		}
 	}
@@ -400,13 +401,13 @@ void InputSystem::SetMousePosition(int x, int y) {
 		ControlHandler *container = mouseControls[MOUSE_YCOORD];
 		while (container != NULL) {
 			if (container->command != NULL && container->command->type == COMMAND_AXIS)
-				container->command->Invoke(engine.settings.resolutionY / 2 - y);
+				container->command->Invoke(engine.getSettings()->resolution_y_ / 2 - y);
 			container = container->nextControl;
 		}
 	}
 }
 
-void InputSystem::SetMouseButton(int mb, bool state) {
+void InputManager::SetMouseButton(int mb, bool state) {
 	if (!IsFocused())
 		return;
 
@@ -416,14 +417,14 @@ void InputSystem::SetMouseButton(int mb, bool state) {
 
 	if (mb >= MOUSE_LEFT && mb <= MOUSE_MOUSE5) {
 		if (state && mouseData[mb] <= 0) {
-			time = engine.GetTimeCurrent() + mouseData[mb];
-			mouseData[mb] = engine.GetTimeCurrent();
+			time = engine.getTimeCurrent() + mouseData[mb];
+			mouseData[mb] = engine.getTimeCurrent();
 			isEvent = true;
 			buttonpressed = true;
 		}
 		else if (!state && mouseData[mb] >= 0) {
-			time = engine.GetTimeCurrent() - mouseData[mb];
-			mouseData[mb] = -engine.GetTimeCurrent();
+			time = engine.getTimeCurrent() - mouseData[mb];
+			mouseData[mb] = -engine.getTimeCurrent();
 			isEvent = true;
 		}
 
@@ -451,27 +452,27 @@ void InputSystem::SetMouseButton(int mb, bool state) {
 		while (container != NULL) {
 			if (container->command != NULL) {
 				BaseCommand *control = (BaseCommand *)container->command;
-				control->Invoke(engine.GetTimeCurrent());
+				control->Invoke(engine.getTimeCurrent());
 				container = container->nextControl;
 			}
 		}
 	}
 }
 
-void InputSystem::SetFocused(bool state) {
+void InputManager::SetFocused(bool state) {
 	bool isEvent = false;
 	double time;
 	bool buttonpressed = false;
 
 	if (state && windowData[WINDOW_FOCUS] <= 0) {
-		time = engine.GetTimeCurrent() + mouseData[WINDOW_FOCUS];
-		windowData[WINDOW_FOCUS] = engine.GetTimeCurrent();
+		time = engine.getTimeCurrent() + mouseData[WINDOW_FOCUS];
+		windowData[WINDOW_FOCUS] = engine.getTimeCurrent();
 		isEvent = true;
 		buttonpressed = true;
 	}
 	else if (!state && windowData[WINDOW_FOCUS] >= 0) {
-		time = engine.GetTimeCurrent() - windowData[WINDOW_FOCUS];
-		windowData[WINDOW_FOCUS] = -engine.GetTimeCurrent();
+		time = engine.getTimeCurrent() - windowData[WINDOW_FOCUS];
+		windowData[WINDOW_FOCUS] = -engine.getTimeCurrent();
 		isEvent = true;
 	}
 
@@ -494,11 +495,11 @@ void InputSystem::SetFocused(bool state) {
 	}
 }
 
-bool InputSystem::IsFocused() {
+bool InputManager::IsFocused() {
 	return windowData[WINDOW_FOCUS] > 0;
 }
 
-void InputSystem::SetKey(int key, bool state) {
+void InputManager::SetKey(int key, bool state) {
 	bool isEvent = false;
 	double time;
 	bool keypressed = false;
@@ -507,14 +508,14 @@ void InputSystem::SetKey(int key, bool state) {
 		return;
 
 	if (state && keyboardData[key] <= 0) {
-		time = engine.GetTimeCurrent() + keyboardData[key];
-		keyboardData[key] = engine.GetTimeCurrent();
+		time = engine.getTimeCurrent() + keyboardData[key];
+		keyboardData[key] = engine.getTimeCurrent();
 		isEvent = true;
 		keypressed = true;
 	}
 	else if (!state && keyboardData[key] >= 0) {
-		time = engine.GetTimeCurrent() - keyboardData[key];
-		keyboardData[key] = -engine.GetTimeCurrent();
+		time = engine.getTimeCurrent() - keyboardData[key];
+		keyboardData[key] = -engine.getTimeCurrent();
 		isEvent = true;
 	}
 
@@ -537,15 +538,15 @@ void InputSystem::SetKey(int key, bool state) {
 	}
 }
 
-void InputSystem::Quit() {
+void InputManager::Quit() {
 	ForceQuit();
 }
 
-void InputSystem::ForceQuit() {
-	engine.Shutdown();
+void InputManager::ForceQuit() {
+	engine.shutdown();
 }
 
-void InputSystem::LoopControls(double deltaTime) {
+void InputManager::LoopControls(double deltaTime) {
 	if (!IsFocused())
 		return;
 	
@@ -573,7 +574,7 @@ void InputSystem::LoopControls(double deltaTime) {
 		}
 	}
 
-	engine.graphics_wrapper_->ResetCursor();
+	engine.getGraphicsWrapper()->ResetCursor();
 }
 
 ControlHandler::ControlHandler(std::string controlCode, InputComponent * componentPtr, ControlHandler * prev, double val) {
@@ -607,12 +608,6 @@ void BaseCommand::Invoke(double value) {
 }
 
 void InputComponent::SetInputControlFile(std::string path) {
-	system = &engine.inputSystem;
-	system->SetInputControlFile(path, this);
+	manager_ = engine.getInputManager();
+	manager_->SetInputControlFile(path, this);
 }
-
-void InputComponent::Cleanup() {
-	if (system != NULL)
-		system->Cleanup(this);
-}
-#endif

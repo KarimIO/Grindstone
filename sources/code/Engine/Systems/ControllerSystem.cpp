@@ -1,141 +1,175 @@
-#if 0
-#include "SController.hpp"
+#include "ControllerSystem.hpp"
 #include "../Core/Engine.hpp"
+#include "../Core/Scene.hpp"
+#include "../Core/Space.hpp"
 
-void SController::AddComponent(unsigned int entityID, unsigned int &target) {
-	components.push_back(CController());
-	components.back().Initialize(entityID);
-	target = (unsigned int)(components.size() - 1);
+#include "TransformSystem.hpp"
+
+ControllerSubSystem::ControllerSubSystem() : SubSystem(COMPONENT_CONTROLLER) {
 }
 
-void SController::update(double dt) {
-	for (auto &c : components) {
-		c.update(dt);
-	}
+ComponentHandle ControllerSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
+	ComponentHandle component_handle = (ComponentHandle)components_.size();
+	components_.emplace_back(object_handle, component_handle);
+	//auto component = components_.back();
+
+	return component_handle;
 }
 
-void CController::update(double dt) {
-	auto &entity = engine.entities[entityID];
-	unsigned int transfID = entity.components_[COMPONENT_TRANSFORM];
-	CTransform *trans = &engine.transformSystem.components[transfID];
+ControllerComponent & ControllerSubSystem::getComponent(ComponentHandle handle) {
+	return components_[handle];
+}
 
-	if (!ghost_mode_)
-		trans->velocity.y -= 9.81f * (float)dt;
+void ControllerSubSystem::removeComponent(ComponentHandle id) {
+	components_.erase(components_.begin() + id);
+}
 
-	trans->velocity.x *= 0.85f * (1.0f - dt);
-	trans->velocity.y *= 0.85f * (1.0f - dt);
-	trans->velocity.z *= 0.85f * (1.0f - dt);
+ControllerSubSystem::~ControllerSubSystem() {}
 
-	if (ghost_mode_)
-		trans->position += trans->velocity * (float)dt;
-
-	if (!no_collide_) {
-		if (trans->position.y < 0.0) {
-			trans->position.y = 0.0;
+void ControllerSystem::update(double dt) {
+	auto scenes = engine.getScenes();
+	for (auto scene : scenes) {
+		for (auto space : scene->spaces_) {
+			ControllerSubSystem *subsystem = (ControllerSubSystem *)space->getSubsystem(system_type_);
+			for (auto &component : subsystem->components_) {
+				component.update(dt);
+			}
 		}
 	}
 }
 
-void CController::Initialize(unsigned int _entityID) {
-	this->entityID = _entityID;
+ControllerSystem::ControllerSystem() : System(COMPONENT_CONTROLLER) {}
+
+ControllerComponent::ControllerComponent(GameObjectHandle object_handle, ComponentHandle handle) : Component(COMPONENT_CONTROLLER, object_handle, handle) {
 	input.SetInputControlFile("cfgs/player.cfg");
-	input.BindAxis("MoveForward", this, &CController::MoveForwardBack);
-	input.BindAxis("MoveSide", this, &CController::MoveSide);
-	input.BindAxis("MoveVertical", this, &CController::MoveVertical);
-	
-	input.BindAxis("TurnPitch", this, &CController::TurnPitch);
-	input.BindAxis("TurnYaw", this, &CController::TurnYaw);
-	
-	input.BindAction("ZoomIn", this, &CController::ZoomIn);
-	input.BindAction("ZoomOut", this, &CController::ZoomOut);
-	
-	input.BindAction("Run", this, &CController::RunStart, KEY_PRESSED);
-	input.BindAction("Run", this, &CController::RunStop, KEY_RELEASED);
-	
+	input.BindAxis("MoveForward", this, &ControllerComponent::MoveForwardBack);
+	input.BindAxis("MoveSide", this, &ControllerComponent::MoveSide);
+	input.BindAxis("MoveVertical", this, &ControllerComponent::MoveVertical);
+
+	input.BindAxis("TurnPitch", this, &ControllerComponent::TurnPitch);
+	input.BindAxis("TurnYaw", this, &ControllerComponent::TurnYaw);
+
+	input.BindAction("ZoomIn", this, &ControllerComponent::ZoomIn);
+	input.BindAction("ZoomOut", this, &ControllerComponent::ZoomOut);
+
+	input.BindAction("Run", this, &ControllerComponent::RunStart, KEY_PRESSED);
+	input.BindAction("Run", this, &ControllerComponent::RunStop, KEY_RELEASED);
+
 	ghost_mode_ = true;
 	no_collide_ = true;
 	speed_modifier_ = 8.0;
-	sensitivity_ = engine.settings.mouse_sensitivity;
+	sensitivity_ = engine.getSettings()->mouse_sensitivity_;
 }
 
-void CController::MoveForwardBack(double scale) {
-	auto &entity = engine.entities[entityID];
-	unsigned int transfID = entity.components_[COMPONENT_TRANSFORM];
-	CTransform *trans = &engine.transformSystem.components[transfID];
-	unsigned int physID = entity.components_[COMPONENT_PHYSICS];
+void ControllerComponent::update(double dt) {
+	ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
+	auto &trans = getTransform()->getComponent(transform_id);
 
-	glm::vec3 f = 20.0f * float(scale * speed_modifier_) * trans->GetForward();
+	if (!ghost_mode_)
+		trans.velocity_.y -= 9.81f * (float)dt;
+
+	trans.velocity_.x *= 0.85f * (1.0f - dt);
+	trans.velocity_.y *= 0.85f * (1.0f - dt);
+	trans.velocity_.z *= 0.85f * (1.0f - dt);
+
+	if (ghost_mode_)
+		trans.position_ += trans.velocity_ * (float)dt;
+
+	if (!no_collide_) {
+		if (trans.position_.y < 0.0) {
+			trans.position_.y = 0.0;
+		}
+	}
+}
+
+TransformSubSystem *ControllerComponent::getTransform() {
+	auto *space = engine.getScene(0)->spaces_[0];
+	TransformSubSystem *transform = (TransformSubSystem *)(space->getSubsystem(COMPONENT_TRANSFORM));
+
+	return transform;
+}
+
+void ControllerComponent::MoveForwardBack(double scale) {
+	auto trans_system = getTransform();
+	ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
+	auto &trans = trans_system->getComponent(transform_id);
+
+	glm::vec3 f = 20.0f * float(scale * speed_modifier_) * trans_system->getForward(transform_id);
 
 	/*if (physID) {
 		CPhysics *phys = &engine.physicsSystem.components[physID];
 		phys->ApplyCentralForce(f);
 	}
 	else {*/
-		trans->velocity += f;
+		trans.velocity_ += f;
 	//}
 }
 
-void CController::MoveSide(double scale) {
-	auto &entity = engine.entities[entityID];
-	unsigned int transfID = entity.components_[COMPONENT_TRANSFORM];
-	CTransform *trans = &engine.transformSystem.components[transfID];
-	unsigned int physID = entity.components_[COMPONENT_PHYSICS];
+void ControllerComponent::MoveSide(double scale) {
+	auto trans_system = getTransform();
+	ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
+	auto &trans = trans_system->getComponent(transform_id);
 
-	glm::vec3 f = 5.0f * float(scale * speed_modifier_) * trans->GetRight();
+	glm::vec3 f = 5.0f * float(scale * speed_modifier_) * trans_system->getRight(transform_id);
 
 	/*if (physID) {
 		CPhysics *phys = &engine.physicsSystem.components[physID];
 		phys->ApplyCentralForce(f);
 	}
 	else {*/
-	trans->velocity += f;
+	trans.velocity_ += f;
 	//}
 }
 
-void CController::MoveVertical(double scale) {
-	unsigned int transfID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
-	CTransform *trans = &engine.transformSystem.components[transfID];
+void ControllerComponent::MoveVertical(double scale) {
+	auto trans_system = getTransform();
+	ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
+	auto &trans = trans_system->getComponent(transform_id);
 
 	if (ghost_mode_) {
-		glm::vec3 f = 5.0f * float(scale * speed_modifier_) * trans->GetUp();
+		glm::vec3 f = 5.0f * float(scale * speed_modifier_) * trans_system->getUp(transform_id);
 
-		trans->velocity += f;
+		trans.velocity_ += f;
 	}
 }
 
-void CController::TurnPitch(double scale) {
-	unsigned int transfID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
-	CTransform *trans = &engine.transformSystem.components[transfID];
+void ControllerComponent::TurnPitch(double scale) {
+	auto trans_system = getTransform();
+	ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
+	auto &trans = trans_system->getComponent(transform_id);
 
-	trans->angles.x += float(sensitivity_ * scale);
+	trans.angles_.x += float(sensitivity_ * scale);
 
-	if (trans->angles.x < -2.4f / 2)	trans->angles.x = -2.4f / 2;
-	if (trans->angles.x > 3.14f / 2)	trans->angles.x = 3.14f / 2;
+	if (trans.angles_.x < -2.4f / 2)	trans.angles_.x = -2.4f / 2;
+	if (trans.angles_.x > 3.14f / 2)	trans.angles_.x = 3.14f / 2;
 }
 
-void CController::TurnYaw(double scale) {
-	unsigned int transfID = engine.entities[entityID].components_[COMPONENT_TRANSFORM];
-	CTransform *trans = &engine.transformSystem.components[transfID];
-	trans->angles.y += float(sensitivity_ * scale);
+void ControllerComponent::TurnYaw(double scale) {
+	auto trans_system = getTransform();
+	ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
+	auto &trans = trans_system->getComponent(transform_id);
+
+	trans.angles_.y += float(sensitivity_ * scale);
 }
 
-void CController::ZoomIn(double scale) {
-	engine.settings.fov -= 0.05f;
+void ControllerComponent::ZoomIn(double scale) {
+	auto &fov = engine.getSettings()->fov_;
+	/*fov -= 0.05f;
 	if (engine.settings.fov < 0.4f)
-		engine.settings.fov = 0.4f;
+		engine.settings.fov = 0.4f;*/
 }
 
-void CController::ZoomOut(double scale) {
-	engine.settings.fov += 0.05f;
+void ControllerComponent::ZoomOut(double scale) {
+	auto &fov = engine.getSettings()->fov_;
+	/*engine.settings.fov += 0.05f;
 	if (engine.settings.fov > 1.57f)
-		engine.settings.fov = 1.57f;
+		engine.settings.fov = 1.57f;*/
 }
 
-void CController::RunStart(double scale) {
+void ControllerComponent::RunStart(double scale) {
 	speed_modifier_ = ghost_mode_ ? 10.0f : 9.0f;
 }
 
-void CController::RunStop(double scale) {
+void ControllerComponent::RunStop(double scale) {
 	speed_modifier_ = ghost_mode_ ? 6.0f : 5.0;
 }
-#endif

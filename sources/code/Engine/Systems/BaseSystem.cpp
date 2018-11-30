@@ -4,8 +4,8 @@ ComponentType getComponentType(std::string str) {
 	if (str == "COMPONENT_TRANSFORM")
 		return COMPONENT_TRANSFORM;
 
-	//if (str == "COMPONENT_CONTROLLER")
-	//	return COMPONENT_CONTROLLER;
+	if (str == "COMPONENT_CONTROLLER")
+		return COMPONENT_CONTROLLER;
 
 	if (str == "COMPONENT_CAMERA")
 		return COMPONENT_CAMERA;

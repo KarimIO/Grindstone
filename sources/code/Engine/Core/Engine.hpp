@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <chrono>
 #include "Utilities/SettingsFile.hpp"
 #include "Systems/BaseSystem.hpp"
 
@@ -19,6 +20,7 @@ class ModelManager;
 class MaterialManager;
 class TextureManager;
 class GraphicsPipelineManager;
+class InputManager;
 
 class UniformBufferBinding;
 class UniformBuffer;
@@ -30,6 +32,7 @@ typedef size_t SceneHandle;
 class Engine {
 public:
 	void initialize();
+	void shutdown();
 
 	void initializeUniformBuffer();
 
@@ -53,6 +56,12 @@ public:
 	GraphicsPipelineManager *getGraphicsPipelineManager();
 	TextureManager *getTextureManager();
 	ModelManager *getModelManager();
+	InputManager *getInputManager();
+
+	void calculateTime();
+	double getTimeCurrent();
+	double getUpdateTimeDelta();
+
 
 	void run();
 
@@ -73,11 +82,16 @@ private:
 	GraphicsPipelineManager *graphics_pipeline_manager_;
 	TextureManager *texture_manager_;
 	ModelManager *model_manager_;
+	InputManager *input_manager_;
 
 	UniformBufferBinding *ubb_;
 
 	DLLGraphics *dll_graphics_;
 	DLLAudio *dll_audio_;
+
+	std::chrono::time_point<std::chrono::high_resolution_clock> current_time_, prev_time_, start_time_;
+	std::chrono::nanoseconds delta_time_;
+
 };
 
 #define engine Engine::getInstance()

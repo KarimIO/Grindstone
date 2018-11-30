@@ -6,8 +6,10 @@
 #include "../Systems/TransformSystem.hpp"
 #include "../Systems/CameraSystem.hpp"
 #include "../Systems/RenderStaticMeshSystem.hpp"
+#include "../Systems/ControllerSystem.hpp"
 
 Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
+	addSystem(new ControllerSubSystem());
 	addSystem(new RenderStaticMeshSubSystem());
 	addSystem(new LightSubSystem());
 	addSystem(new TransformSubSystem());

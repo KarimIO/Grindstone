@@ -65,6 +65,8 @@ void TransformSystem::update(double dt) {
 		for (auto space : scene->spaces_) {
 			TransformSubSystem *subsystem = (TransformSubSystem *)space->getSubsystem(system_type_);
 			for (auto &component : subsystem->components_) {
+				component.position_ += component.velocity_;
+
 				// For every component, generate the Model Matrix:
 				// - Start with an Identity Matrix
 				component.model_ = glm::mat4(1);

@@ -1,23 +1,17 @@
-#if 0
-#ifndef _C_CONTROLLER_H
-#define _C_CONTROLLER_H
+#ifndef _CONTROLLER_SYSTEM_H
+#define _CONTROLLER_SYSTEM_H
 
-#include "CBase.hpp"
+#include "BaseSystem.hpp"
 #include "Core/Input.hpp"
 #include <vector>
 #include <btBulletDynamicsCommon.h>
 #include <glm/glm.hpp>
 
-class CController : public CBase {
-private:
-	bool ghost_mode_;
-	bool no_collide_;
-	double speed_modifier_;
-	double sensitivity_;
-	InputComponent	input;
-	btCollisionShape	*shape;
+class TransformSubSystem;
+
+class ControllerComponent : public Component {
 public:
-	void Initialize(unsigned int entityID);
+	ControllerComponent(GameObjectHandle object_handle, ComponentHandle handle);
 	void MoveForwardBack(double scale);
 	void MoveSide(double scale);
 	void MoveVertical(double scale);
@@ -28,14 +22,34 @@ public:
 	void RunStart(double scale);
 	void RunStop(double scale);
 	void update(double dt);
+	TransformSubSystem *getTransform();
+private:
+	bool ghost_mode_;
+	bool no_collide_;
+	double speed_modifier_;
+	double sensitivity_;
+	InputComponent	input;
+	btCollisionShape	*shape;
 };
 
-class SController {
+class ControllerSystem : public System {
 public:
-	void AddComponent(unsigned int entityID, unsigned int &target);
+	ControllerSystem();
 	void update(double dt);
-	std::vector<CController> components;
+private:
+	UniformBuffer *ubo_;
 };
 
-#endif
+class ControllerSubSystem : public SubSystem {
+	friend ControllerSystem;
+public:
+	ControllerSubSystem();
+	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
+	ControllerComponent &getComponent(ComponentHandle handle);
+	virtual void removeComponent(ComponentHandle handle);
+	virtual ~ControllerSubSystem();
+private:
+	std::vector<ControllerComponent> components_;
+};
+
 #endif

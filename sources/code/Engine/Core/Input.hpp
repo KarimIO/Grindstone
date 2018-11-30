@@ -47,7 +47,7 @@ struct ControlHandler {
 	ControlHandler(std::string controlCode, InputComponent *componentPtr, ControlHandler *prev, double val);
 };
 
-class InputSystem : public InputInterface {
+class InputManager : public InputInterface {
 protected:
 	std::vector<ControlHandler *> keyboardControls;
 	std::vector<ControlHandler *> mouseControls;
@@ -69,7 +69,7 @@ public:
 	void Quit();
 	void ForceQuit();
 
-	InputSystem();
+	InputManager();
 	void LoopControls(double deltaTime);
 
 	int GetKeyboardKeyByName(std::string key);
@@ -107,22 +107,21 @@ public:
 };
 
 class InputComponent {
-private:
-	InputSystem *system;
 public:
 	void SetInputControlFile(std::string path);
-	void Cleanup();
 	template <typename T>
 	void BindAction(std::string control, T *targetEntity, void (T::*methodPointer)(double), KEY_STATUS status = KEY_PRESSED) {
-		if (system != NULL)
-			system->BindAction(control, this, targetEntity, methodPointer, status);
+		if (manager_ != NULL)
+			manager_->BindAction(control, this, targetEntity, methodPointer, status);
 	}
 
 	template <typename T>
 	void BindAxis(std::string control, T *targetEntity, void (T::*methodPointer)(double)) {
-		if (system != NULL)
-			system->BindAxis(control, this, targetEntity, methodPointer);
+		if (manager_ != NULL)
+			manager_->BindAxis(control, this, targetEntity, methodPointer);
 	}
+private:
+	InputManager *manager_;
 };
 
 #endif
