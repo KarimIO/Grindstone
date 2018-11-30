@@ -5,6 +5,7 @@
 #include "TextureManager.hpp"
 
 // Included Classes
+#include "GraphicsWrapper.hpp"
 #include "GraphicsPipelineManager.hpp"
 #include "TextureManager.hpp"
 #include "Core/Engine.hpp"
@@ -102,7 +103,7 @@ TextureHandler TextureManager::loadCubemap(std::string path) {
 		return handle;
 	}
 	else {
-		int d = path.find_last_of('.');
+		size_t d = path.find_last_of('.');
 		std::string ext = path.substr(d + 1);
 		path = path.substr(0, d);
 

@@ -322,11 +322,21 @@ bool ModelConverter(std::string inputPath) {
 
 		std::ofstream output(outputPath, std::ios::binary);
 		output.write(reinterpret_cast<const char*> (&outFormat), sizeof(ModelFormatHeader));
+		uint32_t v = sizeof(ModelFormatHeader);
+		std::cout << "Model: " << v << "\n";
 		output.write(reinterpret_cast<const char*> (bounding.GetData()), bounding.GetSize());
+		v += bounding.GetSize();
+		std::cout << "Bounding: " << v << "\n";
 		bounding.Print();
 		output.write(reinterpret_cast<const char*> (meshes.data()), meshes.size() * sizeof(Mesh));
+		v += meshes.size() * sizeof(Mesh);
+		std::cout << "Meshes: " << v << "\n";
 		output.write(reinterpret_cast<const char*> (vertices.data()), vertices.size() * sizeof(Vertex));
+		v += vertices.size() * sizeof(Vertex);
+		std::cout << "Vertices: " << v << "\n";
 		output.write(reinterpret_cast<const char*> (indices.data()), indices.size() * sizeof(uint32_t));
+		v += indices.size() * sizeof(uint32_t);
+		std::cout << "Index: " << v << "\n";
 		for (const auto &matName : material_names) {
 			output << matName << '\0';
 		}

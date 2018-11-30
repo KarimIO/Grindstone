@@ -51,6 +51,42 @@ bool ReadFile(std::string pFileName, std::string& output)
 	return false;
 }
 
+bool readFileBinary(const std::string& filename, std::vector<char>& buffer) {
+	std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+	if (!file.is_open()) {
+		return false;
+	}
+
+	size_t file_size = (size_t)file.tellg();
+	buffer.resize(file_size);
+
+	file.seekg(0);
+	file.read(buffer.data(), file_size);
+
+	file.close();
+
+	return true;
+}
+
+bool readFile(const std::string& filename, std::vector<char>& buffer) {
+	std::ifstream file(filename, std::ios::ate);
+
+	if (!file.is_open()) {
+		return false;
+	}
+
+	size_t file_size = (size_t)file.tellg();
+	buffer.resize(file_size);
+
+	file.seekg(0);
+	file.read(buffer.data(), file_size);
+
+	file.close();
+
+	return true;
+}
+
 bool FileExists(std::string fileName) {
 	std::ifstream infile(fileName.c_str());
 	return infile.good();

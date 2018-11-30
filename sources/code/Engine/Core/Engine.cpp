@@ -14,9 +14,9 @@
 #include "../Utilities/DLLAudio.hpp"
 // - Systems
 #include "../Systems/CameraSystem.hpp"
-#include "../Systems/LightPointSystem.hpp"
-#include "../Systems/LightDirectionalSystem.hpp"
-#include "../Systems/LightSpotSystem.hpp"
+#include "../Systems/LightSystem.hpp"
+#include "../Systems/TransformSystem.hpp"
+#include "../Systems/RenderStaticMeshSystem.hpp"
 // - AssetManagers
 #include "../AssetManagers/AudioManager.hpp"
 #include "../AssetManagers/MaterialManager.hpp"
@@ -24,10 +24,12 @@
 #include "../AssetManagers/TextureManager.hpp"
 #include "../AssetManagers/ModelManager.hpp"
 
+#include "../GraphicsCommon/GraphicsWrapper.hpp"
+
 // Util Classes
 #include "../Utilities/Logger.hpp"
 
-Engine::Engine() {
+void Engine::initialize() {
 	LOG("Initializing Grindstone Game Engine...\n");
 
 	// Seed Random to get proper random numbers
@@ -40,20 +42,22 @@ Engine::Engine() {
 	dll_graphics_ = new DLLGraphics();
 	graphics_wrapper_ = dll_graphics_->getWrapper();
 	dll_audio_ = new DLLAudio();
-	audio_wrapper_ = dll_audio_->getWrapper();
+	//audio_wrapper_ = dll_audio_->getWrapper();
+
+	initializeUniformBuffer();
 
 	// Load Managers
-	audio_manager_ = new AudioManager();
+	//audio_manager_ = new AudioManager();
 	material_manager_ = new MaterialManager();
 	graphics_pipeline_manager_ = new GraphicsPipelineManager();
 	texture_manager_ = new TextureManager();
-	model_manager_ = new ModelManager();
+	model_manager_ = new ModelManager(ubb_);
 	// - Load Input Manager
 
 	// Load Systems
-	addSystem(new LightDirectionalSystem());
-	addSystem(new LightPointSystem());
-	addSystem(new LightSpotSystem());
+	addSystem(new RenderStaticMeshSystem());
+	addSystem(new LightSystem());
+	addSystem(new TransformSystem());
 	addSystem(new CameraSystem());
 	// addSystem(new GeometryStaticSystem());
 
@@ -62,6 +66,20 @@ Engine::Engine() {
 
 	LOG("Successfully Loaded.\n");
 	LOG("==============================\n");
+	running_ = true;
+}
+
+void Engine::initializeUniformBuffer() {
+	UniformBufferBindingCreateInfo ubbci;
+	ubbci.binding = 0;
+	ubbci.shaderLocation = "UniformBufferObject";
+	ubbci.size = 128; //sizeof(glm::mat4);
+	ubbci.stages = SHADER_STAGE_VERTEX_BIT;
+	ubb_ = graphics_wrapper_->CreateUniformBufferBinding(ubbci);
+}
+
+UniformBufferBinding *Engine::getUniformBufferBinding() {
+	return ubb_;
 }
 
 Engine &Engine::getInstance() {
@@ -77,8 +95,28 @@ Scene *Engine::addScene(std::string path) {
 }
 
 System *Engine::addSystem(System * system) {
-	systems_.push_back(system);
+	systems_[system->system_type_] = system;
 	return system;
+}
+
+System * Engine::getSystem(ComponentHandle type) {
+	return systems_[type];
+}
+
+std::vector<Scene*> &Engine::getScenes() {
+	return scenes_;
+}
+
+Scene * Engine::getScene(SceneHandle scene) {
+	return scenes_[scene];
+}
+
+Scene * Engine::getScene(std::string name) {
+	for (auto scene : scenes_)
+		if (scene->getName() == name)
+			return scene;
+
+	return nullptr;
 }
 
 const Settings *Engine::getSettings() {
@@ -115,8 +153,11 @@ void Engine::run() {
 		double dt = 1.0 / 60.0;
 
 		// Update all Systems
-		for (auto &system : systems_) {
-			system->update(dt);
+		for (auto scene : scenes_) {
+			for (auto &system : systems_) {
+				if (system)
+					system->update(dt);
+			}
 		}
 	}
 
@@ -133,10 +174,10 @@ Engine::~Engine() {
 	for (auto &system : systems_) {
 		delete system;
 	}
-
-	if (dll_audio_) {
+	
+	/*if (dll_audio_) {
 		delete dll_audio_;
-	}
+	}*/
 
 	if (dll_graphics_) {
 		delete dll_graphics_;

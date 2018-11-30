@@ -6,7 +6,7 @@
 #include <vector>
 
 struct TransformComponent : public Component {
-	TransformComponent(ComponentHandle id);
+	TransformComponent(GameObjectHandle object_handle, ComponentHandle id);
 
 	ComponentHandle parent_;
 	glm::vec3 position_;
@@ -18,10 +18,20 @@ struct TransformComponent : public Component {
 
 class TransformSystem : public System {
 public:
-	Component *addComponent();
-	void removeComponent(ComponentHandle id);
-
+	TransformSystem();
 	void update(double dt);
+private:
+	std::vector<TransformComponent> components_;
+};
+
+class TransformSubSystem : public SubSystem {
+	friend TransformSystem;
+public:
+	TransformSubSystem();
+	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
+	TransformComponent &getComponent(ComponentHandle handle);
+	virtual void removeComponent(ComponentHandle handle);
+
 	glm::vec3 getForward(ComponentHandle handle);
 	glm::vec3 getRight(ComponentHandle handle);
 	glm::vec3 getUp(ComponentHandle handle);
@@ -30,9 +40,10 @@ public:
 	glm::vec3 getVelocity(ComponentHandle handle);
 	glm::vec3 getScale(ComponentHandle handle);
 	glm::mat4x4 &getModelMatrix(ComponentHandle handle);
+
+	virtual ~TransformSubSystem();
 private:
 	std::vector<TransformComponent> components_;
-	inline TransformComponent &getComponent(ComponentHandle handle);
 };
 
 #endif

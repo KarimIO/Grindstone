@@ -89,7 +89,7 @@ void Settings::saveSettings(INIConfigFile &cfile) {
 bool Settings::loadSettings() {
 	INIConfigFile cfile;
 	cfile.SetPath(settings_path);
-	loadSettings(cfile);
+	return loadSettings(cfile);
 }
 
 void Settings::saveSettings() {

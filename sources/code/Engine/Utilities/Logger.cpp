@@ -5,12 +5,9 @@
 
 using namespace Logging;
 
-Logger::Logger(std::string log_path) {
-	log_path_ = log_path;
-	output_ = fopen(log_path.c_str(), "w");
-	if (output_ == NULL) {
-		throw std::runtime_error("Could not open log file.\n");
-	}
+Logger &Logger::getInstance() {
+	static Logger logger;
+	return logger;
 }
 
 void Logger::setPath(std::string log_path) {
@@ -27,7 +24,7 @@ void Logger::print(PrintType type, std::string str, ...) {
 	va_list args;
 	va_start(args, str);
 
-	printToFile(type, str, args);
+	// printToFile(type, str, args);
 	printToConsole(type, str, args);
 
 	va_end(args);

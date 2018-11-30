@@ -33,7 +33,7 @@ DLLGraphics::DLLGraphics() {
 	createInfo.width = settings->resolution_x_;
 	createInfo.height = settings->resolution_y_;
 	createInfo.vsync = settings->vsync_;
-	// createInfo.inputInterface = &inputSystem;
+	createInfo.inputInterface = nullptr; //&inputSystem;
 	createInfo.title = "Grindstone";
 #ifdef NDEBUG
 	createInfo.debug = false;

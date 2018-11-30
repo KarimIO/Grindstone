@@ -9,6 +9,9 @@
 #include "TextureManager.hpp"
 #include "Core/Engine.hpp"
 #include <GraphicsWrapper.hpp>
+#include <Texture.hpp>
+#include <GraphicsPipeline.hpp>
+#include <CommandBuffer.hpp>
 
 // Util Classes
 #include "../Utilities/Logger.hpp"
@@ -534,26 +537,6 @@ TextureParameterDescriptor::TextureParameterDescriptor(unsigned int _texture_id,
 	dataPtr = _ptr;
 }
 
-bool readFile(const std::string& filename, std::vector<char>& outputfile) {
-	std::ifstream file(filename, std::ios::ate | std::ios::binary);
-
-	if (!file.is_open()) {
-		return false;
-	}
-
-	size_t fileSize = (size_t)file.tellg();
-	std::vector<char> buffer(fileSize);
-
-	file.seekg(0);
-	file.read(buffer.data(), fileSize);
-
-	file.close();
-
-	outputfile = buffer;
-
-	return true;
-}
-
 void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, PipelineContainer &container) {
 	{
 		GraphicsPipelineCreateInfo gpci;
@@ -711,9 +694,26 @@ GraphicsPipelineManager::~GraphicsPipelineManager()
 {
 }
 
-RenderPassContainer * GraphicsPipelineManager::initialize(GraphicsWrapper * gw)
-{
-	return nullptr;
+GraphicsPipelineManager::GraphicsPipelineManager() {
+	initialize();
+}
+
+void GraphicsPipelineManager::initialize() {
+	render_passes_.resize(1);
+
+	RenderPassCreateInfo rpci;
+	std::vector<ClearColorValue> colorClearValues = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+	ClearDepthStencil dscf;
+	dscf.hasDepthStencilAttachment = true;
+	dscf.depth = 1.0f;
+	dscf.stencil = 0;
+	rpci.m_colorClearValues = colorClearValues.data();
+	rpci.m_colorClearCount = (uint32_t)colorClearValues.size();
+	rpci.m_depthStencilClearValue = dscf;
+	rpci.m_width = engine.getSettings()->resolution_x_;
+	rpci.m_height = engine.getSettings()->resolution_y_;
+	rpci.m_depthFormat = FORMAT_DEPTH_32;
+	render_passes_[0].renderPass = engine.getGraphicsWrapper()->CreateRenderPass(rpci);
 }
 
 PipelineReference GraphicsPipelineManager::createPipeline(GeometryInfo geometry_info, std::string pipelineName, bool miscPipeline) {
@@ -852,7 +852,7 @@ void GraphicsPipelineManager::drawDeferredImmediate() {
 		//renderPass->Bind();
 		for (auto &pipeline : renderPass.pipelines_deferred) {
 			pipeline.program->Bind();
-			if (pipeline.draw_count > 0) {
+			if (true || pipeline.draw_count > 0) {
 				for (auto &material : pipeline.materials) {
 					if (material.getDrawCount() > 0) {
 						if (material.m_textureBinding != nullptr)

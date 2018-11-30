@@ -4,10 +4,15 @@
 #include <map>
 #include <vector>
 #include "AssetReferences.hpp"
-#include <Texture.hpp>
-#include <GraphicsPipeline.hpp>
-#include <CommandBuffer.hpp>
-#include <GraphicsWrapper.hpp>
+#include "GraphicsPipeline.hpp"
+
+class GraphicsWrapper;
+class GraphicsPipeline;
+class CommandBuffer;
+class Texture;
+class TextureBindingLayout;
+class RenderPass;
+class Framebuffer;
 
 enum PARAM_TYPE {
 	PARAM_BOOL,
@@ -85,7 +90,8 @@ public:
 
 class GraphicsPipelineManager {
 public:
-	RenderPassContainer *initialize(GraphicsWrapper *gw);
+	GraphicsPipelineManager();
+	void initialize();
 	PipelineReference createPipeline(GeometryInfo geometry_info, std::string pipelineName, bool miscPipeline = false);
 
 	RenderPassContainer *getRenderPass(uint8_t);

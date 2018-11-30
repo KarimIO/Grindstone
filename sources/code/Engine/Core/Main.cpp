@@ -9,9 +9,13 @@
 }*/
 
 
-int main(int argc, char *argv[]) {		
+int main(int argc, char *argv[]) {
+	// Prepare output log location
+	Logging::Logger::getInstance().setPath("./output.log");
+
 	try {
 		// Note that engine calls its constructor, Engine::Engine
+		engine.initialize();
 		engine.run();
 	}
 	catch (std::runtime_error& e) {

@@ -23,6 +23,8 @@ struct MaterialReference {
 	uint16_t material = 0;
 };
 
+typedef uint32_t ModelReference;
+
 struct GeometryInfo {
 	VertexBindingDescription *vbds;
 	unsigned int vbds_count;
@@ -31,5 +33,8 @@ struct GeometryInfo {
 	UniformBufferBinding **ubbs;
 	unsigned int ubb_count;
 };
+
+typedef unsigned char ComponentHandle;
+typedef unsigned int GameObjectHandle;
 
 #endif

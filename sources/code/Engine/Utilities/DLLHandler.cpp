@@ -34,7 +34,7 @@ void *DLLHandler::getFunction(std::string name) {
 
 DLLHandler::~DLLHandler() {
 	#if defined(_WIN32)
-		FreeLibrary(*(HMODULE *)handle_);
+		FreeLibrary(handle_);
 	#elif defined(__linux__)
 		dlclose(handle_);
 	#endif

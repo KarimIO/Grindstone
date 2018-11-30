@@ -5,8 +5,10 @@
 #include <glm/glm.hpp>
 #include "BaseSystem.hpp"
 
+class RenderPath;
+
 struct CameraComponent : public Component {
-	CameraComponent(ComponentHandle id);
+	CameraComponent(GameObjectHandle object_handle, ComponentHandle id);
 
 	bool is_ortho;
 	double ortho_x_;
@@ -33,10 +35,21 @@ class CameraSystem : public System {
 public:
 	CameraSystem();
 
-	Component *addComponent();
-	void removeComponent(ComponentHandle id);
+	RenderPath *render_path_;
 
 	void update(double dt);
+private:
+	UniformBuffer *ubo_;
+};
+
+class CameraSubSystem : public SubSystem {
+	friend CameraSystem;
+public:
+	CameraSubSystem();
+	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
+	CameraComponent &getComponent(ComponentHandle handle);
+	virtual void removeComponent(ComponentHandle handle);
+	virtual ~CameraSubSystem();
 private:
 	std::vector<CameraComponent> components_;
 };

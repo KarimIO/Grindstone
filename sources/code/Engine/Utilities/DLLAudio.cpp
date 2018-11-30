@@ -11,8 +11,8 @@ AudioWrapper *DLLAudio::getWrapper() {
 }
 
 DLLAudio::~DLLAudio() {
-	if (wrapper_) {
+	/*if (wrapper_) {
 		pfnDeleteAudio(wrapper_);
 		wrapper_ = nullptr;
-	}
+	}*/
 }

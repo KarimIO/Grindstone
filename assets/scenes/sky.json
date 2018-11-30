@@ -1,17 +1,10 @@
 {
     "name": "Sky Test",
-    "numentities": 1,
-    "skymaterial": "materials/sky_procedural.gmat",
-    "entities": [
-        {
-            "components": [{
-                "componentType": "COMPONENT_TRANSFORM",
-                "position": [0.0, 2.0, 0.0]
-            }, {
-                "componentType": "COMPONENT_CAMERA"
-            }, {
-                "componentType": "COMPONENT_CONTROLLER"
-            }]
+    "spaces": {
+        "Main": {
+            "Player": {
+                "PREFAB": "prefabs/player.json"
+            }
         }
-    ]
+    }
 }

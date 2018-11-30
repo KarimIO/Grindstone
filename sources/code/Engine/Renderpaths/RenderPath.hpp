@@ -1,11 +1,11 @@
 #ifndef _RENDERPATH_H
 #define _RENDERPATH_H
 
-#include <Framebuffer.hpp>
+class Framebuffer;
 
 class RenderPath {
 public:
-	virtual void Render(Framebuffer *) = 0;
+	virtual void render(Framebuffer *gbuffer_) = 0;
 };
 
 #endif

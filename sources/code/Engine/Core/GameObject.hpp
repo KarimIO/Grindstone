@@ -7,12 +7,16 @@
 
 class GameObject {
 public:
+	GameObject(GameObjectHandle id, std::string name);
 	bool operator== (GameObject &other);
+	void setComponentHandle(ComponentType, ComponentHandle);
+	ComponentHandle getComponentHandle(ComponentType);
 	GameObjectHandle getID();
 	~GameObject();
 private:
+	std::string name_;
 	GameObjectHandle id_;
-	std::vector<ComponentHandle> handler_;
+	ComponentHandle components_[NUM_COMPONENTS];
 };
 
 #endif

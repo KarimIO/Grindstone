@@ -3,7 +3,6 @@
 
 #include <cstdint>
 
-
 enum Compression {
     C_DETECT = 0,
 	C_UNCOMPRESSED,
@@ -16,20 +15,16 @@ enum Compression {
 	C_BC7
 };
 
-#ifndef _MSC_VER
-	typedef uint32_t DWORD;
-#endif
-
 
 struct DDS_PIXELFORMAT {
-	DWORD dwSize = 32;
-	DWORD dwFlags;
-	DWORD dwFourCC;
-	DWORD dwRGBBitCount;
-	DWORD dwRBitMask;
-	DWORD dwGBitMask;
-	DWORD dwBBitMask;
-	DWORD dwABitMask;
+	uint32_t dwSize = 32;
+	uint32_t dwFlags;
+	uint32_t dwFourCC;
+	uint32_t dwRGBBitCount;
+	uint32_t dwRBitMask;
+	uint32_t dwGBitMask;
+	uint32_t dwBBitMask;
+	uint32_t dwABitMask;
 };
 
 #define DDPF_ALPHAPIXELS 0x1
@@ -47,24 +42,24 @@ struct DDS_PIXELFORMAT {
 #define DDSD_REQUIRED		DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_LINEARSIZE;
 
 struct DDSHeader {
-	DWORD           dwSize = 124;
-	DWORD           dwFlags;
-	DWORD           dwHeight;
-	DWORD           dwWidth;
-	DWORD           dwPitchOrLinearSize;
-	DWORD           dwDepth;
-	DWORD           dwMipMapCount;
-	DWORD           dwReserved1[11];
+	uint32_t           dwSize = 124;
+	uint32_t           dwFlags;
+	uint32_t           dwHeight;
+	uint32_t           dwWidth;
+	uint32_t           dwPitchOrLinearSize;
+	uint32_t           dwDepth;
+	uint32_t           dwMipMapCount;
+	uint32_t           dwReserved1[11];
 	DDS_PIXELFORMAT ddspf;
-	DWORD           dwCaps;
-	DWORD           dwCaps2;
-	DWORD           dwCaps3;
-	DWORD           dwCaps4;
-	DWORD           dwReserved2;
+	uint32_t           dwCaps;
+	uint32_t           dwCaps2;
+	uint32_t           dwCaps3;
+	uint32_t           dwCaps4;
+	uint32_t           dwReserved2;
 };
 
-#define MAKEFOURCC(c0, c1, c2, c3)	((DWORD)(char)(c0) | ((DWORD)(char)(c1) << 8) | \
-									((DWORD)(char)(c2) << 16) | ((DWORD)(char)(c3) << 24))
+#define MAKEFOURCC(c0, c1, c2, c3)	((uint32_t)(char)(c0) | ((uint32_t)(char)(c1) << 8) | \
+									((uint32_t)(char)(c2) << 16) | ((uint32_t)(char)(c3) << 24))
 #define MAKEFOURCCS(str)			MAKEFOURCC(str[0], str[1], str[2], str[3])
 #define FOURCC_DXT1 MAKEFOURCC('D', 'X', 'T', '1')
 #define FOURCC_DXT3 MAKEFOURCC('D', 'X', 'T', '3')

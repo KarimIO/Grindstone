@@ -1,19 +1,17 @@
 #ifndef _SYSTEM_H
 #define _SYSTEM_H
 
-typedef unsigned char ComponentHandle;
-typedef unsigned int GameObjectHandle;
+#include "rapidjson/document.h"
+#include "./AssetManagers/AssetReferences.hpp"
+#include <string>
 
 enum ComponentType {
 	COMPONENT_TRANSFORM = 0,
 	COMPONENT_CONTROLLER,
 	COMPONENT_CAMERA,
-	COMPONENT_MODEL,
-	COMPONENT_RENDER,
-	COMPONENT_GEOMETRY,
-	COMPONENT_LIGHT_POINT,
-	COMPONENT_LIGHT_SPOT,
-	COMPONENT_LIGHT_DIRECTIONAL,
+	COMPONENT_RENDER_STATIC_MESH,
+	COMPONENT_RENDER_TERRAIN,
+	COMPONENT_LIGHT,
 	COMPONENT_PHYSICS,
 	COMPONENT_INPUT,
 	COMPONENT_AUDIO_SOURCE,
@@ -25,18 +23,35 @@ enum ComponentType {
 	COMPONENT_BASE
 };
 
+ComponentType getComponentType(std::string str);
+
 struct Component {
+	Component();
+	Component(ComponentType, GameObjectHandle, ComponentHandle);
 	ComponentType component_type_ = COMPONENT_BASE;
-	GameObjectHandle game_object_id_;
-	ComponentHandle id_;
+	GameObjectHandle game_object_handle_;
+	ComponentHandle handle_;
 };
+
+class SubSystem {
+public:
+	SubSystem(ComponentType type);
+	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) = 0;
+	virtual void removeComponent(ComponentHandle id) = 0;
+
+	ComponentType getSystemType();
+	virtual ~SubSystem();
+private:
+	ComponentType system_type_;
+};
+
+class Scene;
 
 class System {
 public:
+	System(ComponentType type);
 	virtual void update(double dt) = 0;
-	virtual Component *addComponent() = 0;
-	virtual void removeComponent(ComponentHandle id) = 0;
-	virtual ~System() = 0;
+	virtual ~System();
 
 	ComponentType system_type_;
 };

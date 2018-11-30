@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include "Utilities/SettingsFile.hpp"
+#include "Systems/BaseSystem.hpp"
 
 class System;
 class Scene;
@@ -19,14 +20,29 @@ class MaterialManager;
 class TextureManager;
 class GraphicsPipelineManager;
 
+class UniformBufferBinding;
+class UniformBuffer;
+
+class GameObject;
+
+typedef size_t SceneHandle;
+
 class Engine {
 public:
-	Engine();
+	void initialize();
+
+	void initializeUniformBuffer();
+
+	UniformBufferBinding *getUniformBufferBinding();
 
 	static Engine &getInstance();
 
 	Scene *addScene(std::string path);
 	System *addSystem(System *system);
+	System *getSystem(ComponentHandle type);
+	std::vector<Scene *> &getScenes();
+	Scene *getScene(SceneHandle scene);
+	Scene *getScene(std::string scene);
 
 	const Settings *getSettings();
 
@@ -44,7 +60,7 @@ public:
 private:
 	bool running_;
 
-	std::vector<System *> systems_;
+	System *systems_[NUM_COMPONENTS];
 	std::vector<Scene *> scenes_;
 
 	Settings *settings_;
@@ -57,6 +73,8 @@ private:
 	GraphicsPipelineManager *graphics_pipeline_manager_;
 	TextureManager *texture_manager_;
 	ModelManager *model_manager_;
+
+	UniformBufferBinding *ubb_;
 
 	DLLGraphics *dll_graphics_;
 	DLLAudio *dll_audio_;

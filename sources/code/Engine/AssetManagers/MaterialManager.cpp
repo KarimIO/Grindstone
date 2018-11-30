@@ -43,12 +43,12 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 	}
 
 	if (engine.getSettings()->show_material_load_)
-		LOG("Material reading from: %s!\n", path);
+		LOG("Material reading from: %s!\n", path.c_str());
 
 	// Get Shader Name
 	std::string shader_param;
 	safeGetline(input, shader_param);
-	unsigned int p = shader_param.find(':');
+	size_t p = shader_param.find(':');
 	if (p == -1) {
 		// Return empty if we can't find the delimeter
 		LOG_WARN("%s is invalid, the first line must refer to the shader.", path);

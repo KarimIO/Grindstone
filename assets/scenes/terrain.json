@@ -1,39 +1,34 @@
 {
     "name": "Sponza Test",
-    "numentities": 7,
-    "skymaterial": "materials/sky.gmat",
-    "entities": [
-        {
-            "components": [{
-                "componentType": "COMPONENT_TRANSFORM",
-                "position": [0.0, 6.0, 0.0]
-            }, {
-                "componentType": "COMPONENT_CAMERA"
-            }, {
-                "componentType": "COMPONENT_CONTROLLER"
-            }]
-        },
-        {
-            "components": [{
-                "componentType": "COMPONENT_TRANSFORM",
-                "position": [-100.0, 3.0, -100.0],
-                "scale":    [200.0, 8.0, 200.0]
-            }, {
-                "componentType": "COMPONENT_GEOMETRY_TERRAIN",
-                "path": "heightmap.dds"
-            }]
-        },
-        {
-            "components": [{
-                "componentType": "COMPONENT_TRANSFORM",
-                "angles": [0.45, 0.45, 0.45]
-            }, {
-                "componentType": "COMPONENT_LIGHT_DIRECTIONAL",
-                "castshadow": true,
-                "color": [1.0,1.0,1.0],
-                "brightness": 30.0,
-                "sunradius": 32.0
-            }]
+    "spaces": {
+        "Main": {
+            "player_spawn": {
+                "PREFAB": "prefabs/player.json",
+                "COMPONENT_TRANSFORM": {
+                    "position": [0.0, 2.0, 0.0]
+                }
+            },
+            "terrain": {
+                "COMPONENT_TRANSFORM": {
+                    "position": [-100.0, 3.0, -100.0],
+                    "scale":    [200.0, 8.0, 200.0]
+                },
+                "COMPONENT_RENDER_TERRAIN": {
+                    "path": "heightmap.dds"
+                }
+            },
+            "skylight": {
+                "COMPONENT_TRANSFORM": {
+                    "angles": [0.45, 0.45, 0.45]
+                },
+                "COMPONENT_LIGHT": {
+                    "type": 0,
+                    "castshadow": true,
+                    "color": [1.0, 1.0, 1.0],
+                    "brightness": 30.0,
+                    "sunradius": 32.0
+                }
+            }
         }
-    ]
+    }
 }

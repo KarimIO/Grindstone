@@ -1,12 +1,16 @@
 #include "RenderPathDeferred.hpp"
 #include "Core/Engine.hpp"
 #include <stb/stb_image.h>
+#include "GraphicsWrapper.hpp"
+#include "AssetManagers/GraphicsPipelineManager.hpp"
 
-RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_, VertexArrayObject *plane_vao) {
-	m_graphics_wrapper_ = graphics_wrapper_;
+#include  "../Core/Engine.hpp"
+#include "../GraphicsCommon/RenderTarget.hpp"
+#include "../GraphicsCommon/DepthTarget.hpp"
+#include "../GraphicsCommon/GraphicsWrapper.hpp"
 
-	plane_vao_ = plane_vao;
-	
+RenderPathDeferred::RenderPathDeferred() {
+	createFramebuffer();
 	/*
 	//=====================
 	// SSAO Blur
@@ -34,11 +38,11 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_, Vert
 
 	ShaderStageCreateInfo vi;
 	ShaderStageCreateInfo fi;
-	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+	if (engine.settings->graphicsLanguage == GRAPHICS_OPENGL) {
 		vi.fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		fi.fileName = "../assets/shaders/lights_deferred/ibl.glsl";
 	}
-	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+	else if (engine.settings->graphicsLanguage == GRAPHICS_DIRECTX) {
 		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
 		fi.fileName = "../assets/shaders/lights_deferred/ibl.fxc";
 	}
@@ -68,10 +72,10 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_, Vert
 	iblGPCI.bindingsCount = 1;
 	iblGPCI.attributes = &engine.planeVAD;
 	iblGPCI.attributesCount = 1;
-	iblGPCI.width = (float)engine.settings.resolutionX;
-	iblGPCI.height = (float)engine.settings.resolutionY;
-	iblGPCI.scissorW = engine.settings.resolutionX;
-	iblGPCI.scissorH = engine.settings.resolutionY;
+	iblGPCI.width = (float)engine.settings->resolution_x_;
+	iblGPCI.height = (float)engine.settings->resolution_y_;
+	iblGPCI.scissorW = engine.settings->resolution_x_;
+	iblGPCI.scissorH = engine.settings->resolution_y_;
 	iblGPCI.primitiveType = PRIM_TRIANGLES;
 	iblGPCI.shaderStageCreateInfos = stages.data();
 	iblGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
@@ -84,16 +88,21 @@ RenderPathDeferred::RenderPathDeferred(GraphicsWrapper * graphics_wrapper_, Vert
 	m_iblPipeline = graphics_wrapper_->CreateGraphicsPipeline(iblGPCI);*/
 }
 
-void RenderPathDeferred::Render(Framebuffer *gbuffer_) {
+void RenderPathDeferred::render(Framebuffer *default) {
 	// Opaque
-	gbuffer_->Bind(true);
+	//default->Bind(true);
+	//default->Clear(CLEAR_BOTH);
 	gbuffer_->Clear(CLEAR_BOTH);
-	m_graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-	engine.materialManager.DrawDeferredImmediate();
+	engine.getGraphicsWrapper()->SetImmediateBlending(BLEND_NONE);
+	engine.getGraphicsPipelineManager()->drawDeferredImmediate();
 
-	if (engine.debug_wrapper_.GetDebugMode() == 0) {
+	/*if (engine.debug_wrapper_.GetDebugMode() == 0) {
+		engine.debug_wrapper_.Draw();
+	}
+	else*/
+	{
 		// Deferred
-		RenderLights(gbuffer_);
+		/*renderLights(gbuffer_);
 		gbuffer_->BindRead();
 		engine.hdr_framebuffer_->BindWrite(true);
 		m_graphics_wrapper_->CopyToDepthBuffer(engine.depth_image_);
@@ -109,7 +118,7 @@ void RenderPathDeferred::Render(Framebuffer *gbuffer_) {
 		engine.materialManager.DrawForwardImmediate();
 		m_graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 		engine.deffUBO->Bind();
-		engine.skybox_.Render();
+		engine.skybox_.Render();*/
 		
 		/*graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
 		pipeline_ssr_->Bind();
@@ -139,16 +148,13 @@ void RenderPathDeferred::Render(Framebuffer *gbuffer_) {
 		hdr_framebuffer_->BindTextures(4);
 		graphics_wrapper_->DrawImmediateVertices(0, 6);*/
 
-		CCamera *cam = &engine.cameraSystem.components[0];
-		cam->PostProcessing();
-	}
-	else {
-		engine.debug_wrapper_.Draw();
+		//CCamera *cam = &engine.cameraSystem.components[0];
+		//cam->PostProcessing();
 	}
 }
 
-void RenderPathDeferred::RenderLights(Framebuffer *gbuffer) {
-	engine.deffUBO->Bind();
+void RenderPathDeferred::renderLights() {
+	/*engine.deffUBO->Bind();
 	engine.graphics_wrapper_->BindVertexArrayObject(plane_vao_);
 	
 	m_graphics_wrapper_->SetImmediateBlending(BLEND_ADDITIVE);
@@ -174,12 +180,35 @@ void RenderPathDeferred::RenderLights(Framebuffer *gbuffer) {
 
 	engine.lightSystem.m_directionalLightPipeline->Bind();
 	for (auto &light : engine.lightSystem.directionalLights) {
-		/*if (light.cascades_count_ > 1)
-			engine.lightSystem.m_cascadeLightPipeline->Bind();
-		else*/
+		//if (light.cascades_count_ > 1)
+		//	engine.lightSystem.m_cascadeLightPipeline->Bind();
+		//else
 
 		light.Bind();
 
 		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
-	}
+	}*/
+}
+
+void RenderPathDeferred::createFramebuffer() {
+	auto settings = engine.getSettings();
+	auto graphics_wrapper = engine.getGraphicsWrapper();
+
+	std::vector<RenderTargetCreateInfo> gbuffer_images_ci;
+	gbuffer_images_ci.reserve(3);
+	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings->resolution_x_, settings->resolution_y_); // R  G  B matID
+	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R16G16B16A16, settings->resolution_x_, settings->resolution_y_); // nX nY nZ
+	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings->resolution_x_, settings->resolution_y_); // sR sG sB Roughness
+	render_targets_ = graphics_wrapper->CreateRenderTarget(gbuffer_images_ci.data(), gbuffer_images_ci.size());
+
+	DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24_STENCIL_8, settings->resolution_x_, settings->resolution_y_, false, false);
+	depth_target_ = graphics_wrapper->CreateDepthTarget(depth_image_ci);
+
+	FramebufferCreateInfo gbuffer_ci;
+	gbuffer_ci.render_target_lists = &render_targets_;
+	gbuffer_ci.num_render_target_lists = 1;
+	gbuffer_ci.depth_target = depth_target_;
+	gbuffer_ci.render_pass = nullptr;
+	gbuffer_ = graphics_wrapper->CreateFramebuffer(gbuffer_ci);
+
 }

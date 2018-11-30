@@ -1,3 +1,4 @@
+#if 0
 #ifndef _C_CONTROLLER_H
 #define _C_CONTROLLER_H
 
@@ -36,4 +37,5 @@ public:
 	std::vector<CController> components;
 };
 
+#endif
 #endif

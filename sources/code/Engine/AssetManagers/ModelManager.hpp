@@ -18,8 +18,6 @@ struct Vertex {
 	glm::vec2 texCoord;
 };
 
-typedef uint32_t ModelReference;
-
 enum {
 	VERTEX_VB = 0,
 	UV_VB,
@@ -70,8 +68,8 @@ struct MeshCreateInfo {
 };
 
 struct ModelStatic {
-	ModelReference id;
-	std::vector<uint32_t> references_;
+	ModelReference handle_;
+	std::vector<ComponentHandle> references_;
 	std::vector<MeshStatic> meshes;
 	BoundingShape *bounding;
 	VertexBuffer *vertex_buffer;
@@ -82,22 +80,26 @@ struct ModelStatic {
 	CommandBuffer *command_buffer;
 	std::string path_;
 
-	ModelStatic() {}
-	ModelStatic(std::string path, std::vector<uint32_t> refs) : path_(path), references_(refs) {};
+	ModelStatic();
+	ModelStatic(ModelReference handle, std::string path, ComponentHandle ref);
 };
 
 class ModelManager {
 public:
-	ModelManager();
-	void preloadModel(std::string);
-	void loadModel(std::string);
+	ModelManager(UniformBufferBinding *ubb);
+	ModelReference preloadModel(ComponentHandle, std::string);
+	ModelReference loadModel(ComponentHandle, std::string);
 	void loadPreloaded();
 	ModelStatic &getModel(ModelReference);
+	UniformBuffer *getModelUbo();
 private:
 	std::map<std::string, ModelReference> models_map_;
 	std::vector<ModelStatic> models_;
 	std::vector<ModelReference> unloaded_;
 	GeometryInfo geometry_info_;
+	UniformBufferBinding *model_ubb_;
+	UniformBuffer *model_ubo_;
+	std::vector<UniformBufferBinding *> ubbs_;
 
 	void loadModel(ModelStatic &model);
 };

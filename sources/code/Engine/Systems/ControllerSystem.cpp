@@ -138,5 +138,4 @@ void CController::RunStart(double scale) {
 void CController::RunStop(double scale) {
 	speed_modifier_ = ghost_mode_ ? 6.0f : 5.0;
 }
-
 #endif

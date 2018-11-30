@@ -2,21 +2,20 @@
 #define _RENDERPATH_DEFERRED_H
 
 #include "RenderPath.hpp"
-#include "../Systems/SGeometryTerrain.hpp"
-#include "Framebuffer.hpp"
-#include "GraphicsPipeline.hpp"
-#include "Systems/SLight.hpp"
+
+class RenderTarget;
+class DepthTarget;
 
 class RenderPathDeferred : public RenderPath {
-	GraphicsWrapper *m_graphics_wrapper_;
-
-	VertexArrayObject *plane_vao_;
-
-	GraphicsPipeline *m_iblPipeline;
 public:
-	RenderPathDeferred(GraphicsWrapper *graphics_wrapper_, VertexArrayObject *plane_vao);
-	void Render(Framebuffer *);
-	void RenderLights(Framebuffer *);
+	RenderPathDeferred();
+	void render(Framebuffer *default);
+	void renderLights();
+private:
+	void createFramebuffer();
+	Framebuffer *gbuffer_;
+	RenderTarget *render_targets_;
+	DepthTarget *depth_target_;
 };
 
 #endif
