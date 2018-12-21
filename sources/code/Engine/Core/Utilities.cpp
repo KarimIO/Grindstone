@@ -70,7 +70,7 @@ bool readFileBinary(const std::string& filename, std::vector<char>& buffer) {
 }
 
 bool readFile(const std::string& filename, std::vector<char>& buffer) {
-	std::ifstream file(filename, std::ios::ate);
+	std::ifstream file(filename, std::ios::binary | std::ios::ate);
 
 	if (!file.is_open()) {
 		return false;

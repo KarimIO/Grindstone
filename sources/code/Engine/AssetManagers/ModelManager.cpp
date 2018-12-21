@@ -36,6 +36,7 @@ void MeshStatic::draw() {
 			auto transform_component_id = sp->getObject(game_object_id);
 			auto transform = transform_system->getComponent(game_object_id);
 
+			engine.getModelManager()->getModelUbo()->Bind();
 			engine.getModelManager()->getModelUbo()->UpdateUniformBuffer(&transform.model_);
 
 			engine.getGraphicsWrapper()->BindVertexArrayObject(model->vertex_array_object);

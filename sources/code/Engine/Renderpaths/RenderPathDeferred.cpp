@@ -11,6 +11,7 @@
 
 RenderPathDeferred::RenderPathDeferred() {
 	createFramebuffer();
+	createPointLightShader();
 	/*
 	//=====================
 	// SSAO Blur
@@ -88,22 +89,115 @@ RenderPathDeferred::RenderPathDeferred() {
 	m_iblPipeline = graphics_wrapper_->CreateGraphicsPipeline(iblGPCI);*/
 }
 
-void RenderPathDeferred::render(Framebuffer *default) {
+void RenderPathDeferred::createPointLightShader() {
+	auto graphics_wrapper = engine.getGraphicsWrapper();
+
+	UniformBufferBindingCreateInfo light_ubbci;
+	light_ubbci.binding = 1;
+	light_ubbci.shaderLocation = "Light";
+	light_ubbci.size = sizeof(LightPointUBO);
+	light_ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	point_light_ubb_ = engine.getGraphicsWrapper()->CreateUniformBufferBinding(light_ubbci);
+
+	UniformBufferCreateInfo lightuboci;
+	lightuboci.isDynamic = false;
+	lightuboci.size = sizeof(LightPointUBO);
+	lightuboci.binding = point_light_ubb_;
+	point_light_ubo_handler_ = graphics_wrapper->CreateUniformBuffer(lightuboci);
+
+
+	ShaderStageCreateInfo vi;
+	ShaderStageCreateInfo fi;
+	if (engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL) {
+		vi.fileName = "../assets/shaders/lights_deferred/pointVert.glsl";
+		fi.fileName = "../assets/shaders/lights_deferred/pointFrag.glsl";
+	}
+	else if (engine.getSettings()->graphics_language_ == GRAPHICS_DIRECTX) {
+		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
+		fi.fileName = "../assets/shaders/lights_deferred/pointFrag.fxc";
+	}
+	else {
+		vi.fileName = "../assets/shaders/lights_deferred/pointVert.spv";
+		fi.fileName = "../assets/shaders/lights_deferred/pointFrag.spv";
+	}
+	std::vector<char> vfile;
+	if (!readFile(vi.fileName, vfile))
+		return;
+	vi.content = vfile.data();
+	vi.size = (uint32_t)vfile.size();
+	vi.type = SHADER_VERTEX;
+
+	std::vector<char> ffile;
+	if (!readFile(fi.fileName, ffile))
+		return;
+	fi.content = ffile.data();
+	fi.size = (uint32_t)ffile.size();
+	fi.type = SHADER_FRAGMENT;
+
+	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
+
+	GraphicsPipelineCreateInfo pointGPCI;
+	pointGPCI.cullMode = CULL_BACK;
+	pointGPCI.bindings = &plane_vbd_;
+	pointGPCI.bindingsCount = 1;
+	pointGPCI.attributes = &plane_vad_;
+	pointGPCI.attributesCount = 1;
+	pointGPCI.width = (float)engine.getSettings()->resolution_x_;
+	pointGPCI.height = (float)engine.getSettings()->resolution_y_;
+	pointGPCI.scissorW = engine.getSettings()->resolution_x_;
+	pointGPCI.scissorH = engine.getSettings()->resolution_y_;
+	pointGPCI.primitiveType = PRIM_TRIANGLE_STRIPS;
+	pointGPCI.shaderStageCreateInfos = stages.data();
+	pointGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
+	pointGPCI.textureBindings = &gbuffer_tbl_;
+	pointGPCI.textureBindingCount = 1;
+	std::vector<UniformBufferBinding *> ubbs = { deff_ubb_, point_light_ubb_ };
+	pointGPCI.uniformBufferBindings = ubbs.data();
+	pointGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
+	point_light_pipeline_ = engine.getGraphicsWrapper()->CreateGraphicsPipeline(pointGPCI);
+
+
+	light_point_ubo_.position[0] = 2;
+	light_point_ubo_.position[1] = 2;
+	light_point_ubo_.position[2] = 0;
+	light_point_ubo_.color[0] = 1;
+	light_point_ubo_.color[1] = 1;
+	light_point_ubo_.color[2] = 1;
+	light_point_ubo_.attenuationRadius = 60;
+	light_point_ubo_.power = 80;
+	light_point_ubo_.shadow = false;
+	point_light_ubo_handler_->UpdateUniformBuffer(&light_point_ubo_);
+}
+
+void RenderPathDeferred::render(Framebuffer *default, glm::mat4 p, glm::mat4 v, glm::vec3 eye) {
+	deferred_ubo_.invProj = glm::inverse(p);
+	deferred_ubo_.view = glm::inverse(v);
+	deferred_ubo_.eyePos.x = eye.x;
+	deferred_ubo_.eyePos.y = eye.y;
+	deferred_ubo_.eyePos.z = eye.z;
+	deferred_ubo_.resolution.x = engine.getSettings()->resolution_x_;
+	deferred_ubo_.resolution.y = engine.getSettings()->resolution_y_;
+	deff_ubo_handler_->UpdateUniformBuffer(&deferred_ubo_);
+
 	// Opaque
-	//default->Bind(true);
-	//default->Clear(CLEAR_BOTH);
+	gbuffer_->Bind(true);
 	gbuffer_->Clear(CLEAR_BOTH);
 	engine.getGraphicsWrapper()->SetImmediateBlending(BLEND_NONE);
 	engine.getGraphicsPipelineManager()->drawDeferredImmediate();
 
-	/*if (engine.debug_wrapper_.GetDebugMode() == 0) {
+	deff_ubo_handler_->Bind();
+
+	/*if (engine.debug_wrapper_.GetDebugMode() != 0) {
 		engine.debug_wrapper_.Draw();
 	}
 	else*/
 	{
 		// Deferred
-		/*renderLights(gbuffer_);
-		gbuffer_->BindRead();
+		renderLights();
+		
+		
+		
+		/*gbuffer_->BindRead();
 		engine.hdr_framebuffer_->BindWrite(true);
 		m_graphics_wrapper_->CopyToDepthBuffer(engine.depth_image_);
 		engine.hdr_framebuffer_->BindRead();
@@ -154,24 +248,23 @@ void RenderPathDeferred::render(Framebuffer *default) {
 }
 
 void RenderPathDeferred::renderLights() {
-	/*engine.deffUBO->Bind();
-	engine.graphics_wrapper_->BindVertexArrayObject(plane_vao_);
 	
-	m_graphics_wrapper_->SetImmediateBlending(BLEND_ADDITIVE);
-	engine.hdr_framebuffer_->BindWrite(false);
-	m_graphics_wrapper_->Clear(CLEAR_BOTH);
-	//engine.graphics_wrapper_->BindDefaultFramebuffer(false);
-	gbuffer->BindRead();
-	gbuffer->BindTextures(0);
+	engine.getGraphicsWrapper()->SetImmediateBlending(BLEND_ADDITIVE);
+	//engine.hdr_framebuffer_->BindWrite(false);
+	engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
+	engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
+	gbuffer_->BindRead();
+	gbuffer_->BindTextures(0);
 
-	engine.lightSystem.m_pointLightPipeline->Bind();
-	for (auto &light : engine.lightSystem.pointLights) {
-		light.Bind();
+	point_light_pipeline_->Bind();
+	//for (auto &light : engine.getSystem()) {
+		point_light_ubo_handler_->Bind();
 
-		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
-	}
+		engine.getGraphicsWrapper()->BindVertexArrayObject(plane_vao_);
+		engine.getGraphicsWrapper()->DrawImmediateVertices(0, 6);
+	//}
 
-	engine.lightSystem.m_spotLightPipeline->Bind();
+	/*engine.lightSystem.m_spotLightPipeline->Bind();
 	for (auto &light : engine.lightSystem.spotLights) {
 		light.Bind();
 
@@ -193,6 +286,73 @@ void RenderPathDeferred::renderLights() {
 void RenderPathDeferred::createFramebuffer() {
 	auto settings = engine.getSettings();
 	auto graphics_wrapper = engine.getGraphicsWrapper();
+
+	bindings.reserve(4);
+	bindings.emplace_back("gbuffer0", 0); // R G B MatID
+	bindings.emplace_back("gbuffer1", 1); // nX nY nZ MatData
+	bindings.emplace_back("gbuffer2", 2); // sR sG sB Roughness
+	bindings.emplace_back("gbuffer3", 3); // Depth
+
+	UniformBufferBindingCreateInfo deffubbci;
+	deffubbci.binding = 0;
+	deffubbci.shaderLocation = "UniformBufferObject";
+	deffubbci.size = sizeof(DefferedUBO);
+	deffubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	deff_ubb_ = graphics_wrapper->CreateUniformBufferBinding(deffubbci);
+
+	UniformBufferCreateInfo deffubci;
+	deffubci.isDynamic = false;
+	deffubci.size = sizeof(DefferedUBO);
+	deffubci.binding = deff_ubb_;
+	deff_ubo_handler_ = graphics_wrapper->CreateUniformBuffer(deffubci);
+
+	float plane_verts[4 * 6] = {
+		-1.0, -1.0,
+		1.0, -1.0,
+		-1.0,  1.0,
+		1.0,  1.0,
+		-1.0,  1.0,
+		1.0, -1.0,
+	};
+
+	plane_vbd_.binding = 0;
+	plane_vbd_.elementRate = false;
+	plane_vbd_.stride = sizeof(float) * 2;
+
+	plane_vad_.binding = 0;
+	plane_vad_.location = 0;
+	plane_vad_.format = VERTEX_R32_G32;
+	plane_vad_.size = 2;
+	plane_vad_.name = "vertexPosition";
+	plane_vad_.offset = 0;
+	plane_vad_.usage = ATTRIB_POSITION;
+
+
+	VertexBufferCreateInfo planeVboCI;
+	planeVboCI.binding = &plane_vbd_;
+	planeVboCI.bindingCount = 1;
+	planeVboCI.attribute = &plane_vad_;
+	planeVboCI.attributeCount = 1;
+	planeVboCI.content = plane_verts;
+	planeVboCI.count = 6;
+	planeVboCI.size = sizeof(float) * 6 * 2;
+
+	VertexArrayObjectCreateInfo plane_vao_ci;
+	plane_vao_ci.vertexBuffer = plane_vbo_;
+	plane_vao_ci.indexBuffer = nullptr;
+	plane_vao_ = graphics_wrapper->CreateVertexArrayObject(plane_vao_ci);
+	plane_vbo_ = graphics_wrapper->CreateVertexBuffer(planeVboCI);
+	plane_vao_ci.vertexBuffer = plane_vbo_;
+	plane_vao_ci.indexBuffer = nullptr;
+	plane_vao_->BindResources(plane_vao_ci);
+	plane_vao_->Unbind();
+
+	TextureBindingLayoutCreateInfo tblci;
+	tblci.bindingLocation = 0;
+	tblci.bindings = bindings.data();
+	tblci.bindingCount = (uint32_t)bindings.size();
+	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	gbuffer_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
 
 	std::vector<RenderTargetCreateInfo> gbuffer_images_ci;
 	gbuffer_images_ci.reserve(3);

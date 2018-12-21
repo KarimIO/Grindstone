@@ -45,7 +45,7 @@ private:
 class CameraSubSystem : public SubSystem {
 	friend CameraSystem;
 public:
-	CameraSubSystem();
+	CameraSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
 	CameraComponent &getComponent(ComponentHandle handle);
 	virtual void removeComponent(ComponentHandle handle);

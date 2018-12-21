@@ -21,7 +21,7 @@ public:
 class RenderStaticMeshSubSystem : public SubSystem {
 	friend RenderStaticMeshSystem;
 public:
-	RenderStaticMeshSubSystem();
+	RenderStaticMeshSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
 	RenderStaticMeshComponent &getComponent(ComponentHandle handle);
 	virtual void removeComponent(ComponentHandle handle);

@@ -5,14 +5,19 @@
 #include "./AssetManagers/AssetReferences.hpp"
 #include <string>
 
+class Space;
+
 enum ComponentType {
 	COMPONENT_TRANSFORM = 0,
 	COMPONENT_CONTROLLER,
+	COMPONENT_LIGHT_SPOT,
+	COMPONENT_LIGHT_POINT,
+	COMPONENT_LIGHT_DIRECTIONAL,
 	COMPONENT_CAMERA,
 	COMPONENT_RENDER_STATIC_MESH,
 	COMPONENT_RENDER_TERRAIN,
-	COMPONENT_LIGHT,
-	COMPONENT_PHYSICS,
+	COMPONENT_RIGID_BODY,
+	COMPONENT_COLLISION,
 	COMPONENT_INPUT,
 	COMPONENT_AUDIO_SOURCE,
 	COMPONENT_AUDIO_LISTENER,
@@ -35,14 +40,15 @@ struct Component {
 
 class SubSystem {
 public:
-	SubSystem(ComponentType type);
+	SubSystem(ComponentType type, Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) = 0;
 	virtual void removeComponent(ComponentHandle id) = 0;
 
 	ComponentType getSystemType();
 	virtual ~SubSystem();
-private:
+protected:
 	ComponentType system_type_;
+	Space *space_;
 };
 
 class Scene;

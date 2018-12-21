@@ -10,7 +10,6 @@ struct TransformComponent : public Component {
 
 	ComponentHandle parent_;
 	glm::vec3 position_;
-	glm::vec3 velocity_;
 	glm::vec3 angles_;
 	glm::vec3 scale_;
 	glm::mat4 model_;
@@ -27,7 +26,7 @@ private:
 class TransformSubSystem : public SubSystem {
 	friend TransformSystem;
 public:
-	TransformSubSystem();
+	TransformSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
 	TransformComponent &getComponent(ComponentHandle handle);
 	virtual void removeComponent(ComponentHandle handle);
@@ -37,7 +36,6 @@ public:
 	glm::vec3 getUp(ComponentHandle handle);
 	glm::vec3 getAngles(ComponentHandle handle);
 	glm::vec3 getPosition(ComponentHandle handle);
-	glm::vec3 getVelocity(ComponentHandle handle);
 	glm::vec3 getScale(ComponentHandle handle);
 	glm::mat4x4 &getModelMatrix(ComponentHandle handle);
 

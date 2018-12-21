@@ -17,7 +17,7 @@ TransformComponent::TransformComponent(GameObjectHandle object_handle, Component
 	scale_(glm::vec3(1, 1, 1)) {
 }
 
-TransformSubSystem::TransformSubSystem() : SubSystem(COMPONENT_TRANSFORM) {
+TransformSubSystem::TransformSubSystem(Space *space) : SubSystem(COMPONENT_TRANSFORM, space) {
 }
 
 ComponentHandle TransformSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
@@ -65,8 +65,6 @@ void TransformSystem::update(double dt) {
 		for (auto space : scene->spaces_) {
 			TransformSubSystem *subsystem = (TransformSubSystem *)space->getSubsystem(system_type_);
 			for (auto &component : subsystem->components_) {
-				component.position_ += component.velocity_;
-
 				// For every component, generate the Model Matrix:
 				// - Start with an Identity Matrix
 				component.model_ = glm::mat4(1);
@@ -116,10 +114,6 @@ glm::vec3 TransformSubSystem::getAngles(ComponentHandle handle) {
 
 glm::vec3 TransformSubSystem::getPosition(ComponentHandle handle) {
 	return components_[handle].position_;
-}
-
-glm::vec3 TransformSubSystem::getVelocity(ComponentHandle handle) {
-	return components_[handle].velocity_;
 }
 
 glm::vec3 TransformSubSystem::getScale(ComponentHandle handle) {

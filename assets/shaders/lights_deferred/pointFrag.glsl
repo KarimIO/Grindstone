@@ -270,5 +270,5 @@ void main() {
 	float nl = clamp(dot(Normal, normalize(lightDir)), 0, 1);
 	
 	float sh = (light.shadow) ? getShadow(Position, lightDir, nl) : 1.0f;
-	outColor = vec4(sh * outColor3, 1); //  * 
+	outColor = vec4(outColor3, 1); //  sh * 
 }

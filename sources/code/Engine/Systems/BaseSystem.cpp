@@ -9,15 +9,21 @@ ComponentType getComponentType(std::string str) {
 
 	if (str == "COMPONENT_CAMERA")
 		return COMPONENT_CAMERA;
-	
+
 	if (str == "COMPONENT_RENDER_STATIC_MESH")
 		return COMPONENT_RENDER_STATIC_MESH;
+
+	if (str == "COMPONENT_RIGID_BODY")
+		return COMPONENT_RIGID_BODY;
+
+	if (str == "COMPONENT_COLLISION")
+		return COMPONENT_COLLISION;
+
+	//if (str == "COMPONENT_LIGHT")
+	//	return COMPONENT_LIGHT;
 	
 	/*if (str == "COMPONENT_RENDER_TERRAIN")
 		return COMPONENT_RENDER_TERRAIN;
-	
-	if (str == "COMPONENT_LIGHT")
-		return COMPONENT_LIGHT;
 	
 	if (str == "COMPONENT_PHYSICS")
 		return COMPONENT_PHYSICS;
@@ -40,7 +46,7 @@ ComponentType getComponentType(std::string str) {
 	return COMPONENT_BASE;
 }
 
-SubSystem::SubSystem(ComponentType type = COMPONENT_BASE) : system_type_(type) {
+SubSystem::SubSystem(ComponentType type = COMPONENT_BASE, Space *space = nullptr) : system_type_(type), space_(space) {
 }
 
 ComponentType SubSystem::getSystemType() {

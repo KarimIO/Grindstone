@@ -28,7 +28,7 @@ CameraComponent::CameraComponent(GameObjectHandle object_handle, ComponentHandle
 	ortho_width_(1.0f),
 	ortho_height_(1.0f) {}
 
-CameraSubSystem::CameraSubSystem() : SubSystem(COMPONENT_CAMERA) {
+CameraSubSystem::CameraSubSystem(Space *space) : SubSystem(COMPONENT_CAMERA, space) {
 }
 
 ComponentHandle CameraSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
@@ -109,7 +109,7 @@ void CameraSystem::update(double dt) {
 				//engine.ubo2->Bind();
 
 				Framebuffer *gbuffer = nullptr; // engine.getDefaultFramebuffer()
-				render_path_->render(gbuffer);
+				render_path_->render(gbuffer, component.projection_, component.view_, pos);
 
 				// PostProcessing
 				engine.getGraphicsWrapper()->SwapBuffer();

@@ -5,7 +5,7 @@
 
 #include "TransformSystem.hpp"
 
-ControllerSubSystem::ControllerSubSystem() : SubSystem(COMPONENT_CONTROLLER) {
+ControllerSubSystem::ControllerSubSystem(Space *space) : SubSystem(COMPONENT_CONTROLLER, space) {
 }
 
 ComponentHandle ControllerSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
@@ -27,7 +27,7 @@ void ControllerSubSystem::removeComponent(ComponentHandle id) {
 ControllerSubSystem::~ControllerSubSystem() {}
 
 void ControllerSystem::update(double dt) {
-	auto scenes = engine.getScenes();
+	auto &scenes = engine.getScenes();
 	for (auto scene : scenes) {
 		for (auto space : scene->spaces_) {
 			ControllerSubSystem *subsystem = (ControllerSubSystem *)space->getSubsystem(system_type_);
@@ -57,7 +57,7 @@ ControllerComponent::ControllerComponent(GameObjectHandle object_handle, Compone
 
 	ghost_mode_ = true;
 	no_collide_ = true;
-	speed_modifier_ = 0.1;
+	speed_modifier_ = 6.0f;
 	sensitivity_ = engine.getSettings()->mouse_sensitivity_;
 }
 
@@ -66,14 +66,14 @@ void ControllerComponent::update(double dt) {
 	auto &trans = getTransform()->getComponent(transform_id);
 
 	if (!ghost_mode_)
-		trans.velocity_.y -= 9.81f * (float)dt;
+		velocity_.y -= 9.81f * (float)dt;
 
-	trans.velocity_.x *= 0.85f * (1.0f - dt);
-	trans.velocity_.y *= 0.85f * (1.0f - dt);
-	trans.velocity_.z *= 0.85f * (1.0f - dt);
+	velocity_.x *= 0.85f * (1.0f - dt);
+	velocity_.y *= 0.85f * (1.0f - dt);
+	velocity_.z *= 0.85f * (1.0f - dt);
 
 	if (ghost_mode_)
-		trans.position_ += trans.velocity_ * (float)dt;
+		trans.position_ += velocity_ * (float)dt;
 
 	if (!no_collide_) {
 		if (trans.position_.y < 0.0) {
@@ -101,7 +101,7 @@ void ControllerComponent::MoveForwardBack(double scale) {
 		phys->ApplyCentralForce(f);
 	}
 	else {*/
-		trans.velocity_ += f;
+		velocity_ += f;
 	//}
 }
 
@@ -117,7 +117,7 @@ void ControllerComponent::MoveSide(double scale) {
 		phys->ApplyCentralForce(f);
 	}
 	else {*/
-	trans.velocity_ += f;
+		velocity_ += f;
 	//}
 }
 
@@ -129,7 +129,7 @@ void ControllerComponent::MoveVertical(double scale) {
 	if (ghost_mode_) {
 		glm::vec3 f = 5.0f * float(scale * speed_modifier_) * trans_system->getUp(transform_id);
 
-		trans.velocity_ += f;
+		velocity_ += f;
 	}
 }
 
@@ -167,9 +167,9 @@ void ControllerComponent::ZoomOut(double scale) {
 }
 
 void ControllerComponent::RunStart(double scale) {
-	speed_modifier_ = ghost_mode_ ? 0.4f : 0.1f;
+	speed_modifier_ = ghost_mode_ ? 10.0f : 6.0f;
 }
 
 void ControllerComponent::RunStop(double scale) {
-	speed_modifier_ = ghost_mode_ ? 0.2f : 0.1f;
+	speed_modifier_ = ghost_mode_ ? 6.0f : 4.0f;
 }

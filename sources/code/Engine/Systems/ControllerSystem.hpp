@@ -28,6 +28,7 @@ private:
 	bool no_collide_;
 	double speed_modifier_;
 	double sensitivity_;
+	glm::vec3 velocity_;
 	InputComponent	input;
 	btCollisionShape	*shape;
 };
@@ -43,7 +44,7 @@ private:
 class ControllerSubSystem : public SubSystem {
 	friend ControllerSystem;
 public:
-	ControllerSubSystem();
+	ControllerSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
 	ControllerComponent &getComponent(ComponentHandle handle);
 	virtual void removeComponent(ComponentHandle handle);

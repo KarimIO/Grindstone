@@ -14,10 +14,11 @@
 #include "../Utilities/DLLAudio.hpp"
 // - Systems
 #include "../Systems/CameraSystem.hpp"
-#include "../Systems/LightSystem.hpp"
 #include "../Systems/TransformSystem.hpp"
 #include "../Systems/RenderStaticMeshSystem.hpp"
 #include "../Systems/ControllerSystem.hpp"
+#include "../Systems/ColliderSystem.hpp"
+#include "../Systems/RigidBodySystem.hpp"
 // - AssetManagers
 #include "../AssetManagers/AudioManager.hpp"
 #include "../AssetManagers/MaterialManager.hpp"
@@ -61,8 +62,10 @@ void Engine::initialize() {
 
 	// Load Systems
 	addSystem(new ControllerSystem());
+	addSystem(new ColliderSystem());
+	addSystem(new RigidBodySystem());
 	addSystem(new RenderStaticMeshSystem());
-	addSystem(new LightSystem());
+	//addSystem(new LightSystem());
 	addSystem(new TransformSystem());
 	addSystem(new CameraSystem());
 	// addSystem(new GeometryStaticSystem());

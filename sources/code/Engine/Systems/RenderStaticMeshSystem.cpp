@@ -8,7 +8,7 @@
 RenderStaticMeshComponent::RenderStaticMeshComponent(GameObjectHandle object_handle, ComponentHandle handle) :
 	Component(COMPONENT_RENDER_STATIC_MESH, object_handle, handle) {}
 
-RenderStaticMeshSubSystem::RenderStaticMeshSubSystem() : SubSystem(COMPONENT_RENDER_STATIC_MESH) {
+RenderStaticMeshSubSystem::RenderStaticMeshSubSystem(Space *space) : SubSystem(COMPONENT_RENDER_STATIC_MESH, space) {
 }
 
 RenderStaticMeshSubSystem::~RenderStaticMeshSubSystem() {
