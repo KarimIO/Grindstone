@@ -2,7 +2,7 @@
 #include "Utilities/Logger.hpp"
 #include <iostream>
 
-//#include "../Systems/LightSystem.hpp"
+#include "../Systems/LightPointSystem.hpp"
 #include "../Systems/TransformSystem.hpp"
 #include "../Systems/CameraSystem.hpp"
 #include "../Systems/RenderStaticMeshSystem.hpp"
@@ -15,12 +15,12 @@ Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 	addSystem(new ColliderSubSystem(this));
 	addSystem(new RigidBodySubSystem(this));
 	addSystem(new RenderStaticMeshSubSystem(this));
-	//addSystem(new LightSubSystem(this));
+	addSystem(new LightPointSubSystem(this));
 	addSystem(new TransformSubSystem(this));
 	addSystem(new CameraSubSystem(this));
 
 	for (rapidjson::Value::MemberIterator game_object_itr = val.MemberBegin(); game_object_itr != val.MemberEnd(); ++game_object_itr) {
-		auto game_object_id = objects_.size();
+		GameObjectHandle game_object_id = (GameObjectHandle)objects_.size();
 		objects_.emplace_back(game_object_id, game_object_itr->name.GetString());
 		GameObject &game_object = objects_.back();
 

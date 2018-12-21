@@ -17,6 +17,7 @@
 #include "../Systems/TransformSystem.hpp"
 #include "../Systems/RenderStaticMeshSystem.hpp"
 #include "../Systems/ControllerSystem.hpp"
+#include "../Systems/LightPointSystem.hpp"
 #include "../Systems/ColliderSystem.hpp"
 #include "../Systems/RigidBodySystem.hpp"
 // - AssetManagers
@@ -65,7 +66,7 @@ void Engine::initialize() {
 	addSystem(new ColliderSystem());
 	addSystem(new RigidBodySystem());
 	addSystem(new RenderStaticMeshSystem());
-	//addSystem(new LightSystem());
+	addSystem(new LightPointSystem());
 	addSystem(new TransformSystem());
 	addSystem(new CameraSystem());
 	// addSystem(new GeometryStaticSystem());

@@ -21,6 +21,7 @@ struct LightSpotUBO {
 
 struct LightSpotComponent : public Component {
 	LightSpotComponent(GameObjectHandle object_handle, ComponentHandle id);
+	size_t getNumComponents();
 };
 
 class LightSpotSystem : public System {

@@ -37,6 +37,10 @@ LightSpotComponent & LightSpotSubSystem::getComponent(ComponentHandle handle) {
 	return components_[handle];
 }
 
+size_t LightSpotComponent::getNumComponents() {
+	return 0; // components_.size();
+}
+
 void LightSpotSubSystem::removeComponent(ComponentHandle handle) {
 }
 

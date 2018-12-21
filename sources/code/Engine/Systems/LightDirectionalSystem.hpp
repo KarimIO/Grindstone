@@ -17,6 +17,7 @@ struct LightDirectionalUBO {
 
 struct LightDirectionalComponent : public Component {
 	LightDirectionalComponent(GameObjectHandle object_handle, ComponentHandle id);
+	size_t getNumComponents();
 };
 
 class LightDirectionalSystem : public System {

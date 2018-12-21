@@ -9,6 +9,11 @@
 #include "../GraphicsCommon/DepthTarget.hpp"
 #include "../GraphicsCommon/GraphicsWrapper.hpp"
 
+#include "../Systems/TransformSystem.hpp"
+#include "../Systems/LightPointSystem.hpp"
+
+#include "Core/Space.hpp"
+
 RenderPathDeferred::RenderPathDeferred() {
 	createFramebuffer();
 	createPointLightShader();
@@ -155,21 +160,9 @@ void RenderPathDeferred::createPointLightShader() {
 	pointGPCI.uniformBufferBindings = ubbs.data();
 	pointGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
 	point_light_pipeline_ = engine.getGraphicsWrapper()->CreateGraphicsPipeline(pointGPCI);
-
-
-	light_point_ubo_.position[0] = 2;
-	light_point_ubo_.position[1] = 2;
-	light_point_ubo_.position[2] = 0;
-	light_point_ubo_.color[0] = 1;
-	light_point_ubo_.color[1] = 1;
-	light_point_ubo_.color[2] = 1;
-	light_point_ubo_.attenuationRadius = 60;
-	light_point_ubo_.power = 80;
-	light_point_ubo_.shadow = false;
-	point_light_ubo_handler_->UpdateUniformBuffer(&light_point_ubo_);
 }
 
-void RenderPathDeferred::render(Framebuffer *default, glm::mat4 p, glm::mat4 v, glm::vec3 eye) {
+void RenderPathDeferred::render(Framebuffer *default, Space *space, glm::mat4 p, glm::mat4 v, glm::vec3 eye) {
 	deferred_ubo_.invProj = glm::inverse(p);
 	deferred_ubo_.view = glm::inverse(v);
 	deferred_ubo_.eyePos.x = eye.x;
@@ -193,7 +186,7 @@ void RenderPathDeferred::render(Framebuffer *default, glm::mat4 p, glm::mat4 v, 
 	else*/
 	{
 		// Deferred
-		renderLights();
+		renderLights(space);
 		
 		
 		
@@ -247,7 +240,7 @@ void RenderPathDeferred::render(Framebuffer *default, glm::mat4 p, glm::mat4 v, 
 	}
 }
 
-void RenderPathDeferred::renderLights() {
+void RenderPathDeferred::renderLights(Space *space) {
 	
 	engine.getGraphicsWrapper()->SetImmediateBlending(BLEND_ADDITIVE);
 	//engine.hdr_framebuffer_->BindWrite(false);
@@ -257,12 +250,25 @@ void RenderPathDeferred::renderLights() {
 	gbuffer_->BindTextures(0);
 
 	point_light_pipeline_->Bind();
-	//for (auto &light : engine.getSystem()) {
+	TransformSubSystem *transform_system = (TransformSubSystem *)space->getSubsystem(COMPONENT_TRANSFORM);
+	LightPointSubSystem *point_light_system = (LightPointSubSystem *)space->getSubsystem(COMPONENT_LIGHT_POINT);
+	for (size_t i = 0; i < point_light_system->getNumComponents(); ++i) {
+		auto &light = point_light_system->getComponent(i);
+		GameObjectHandle game_object_handle = light.game_object_handle_;
+		ComponentHandle component_transform_handle = space->getObject(game_object_handle).getComponentHandle(COMPONENT_TRANSFORM);
+		 
+		light_point_ubo_.position = transform_system->getPosition(component_transform_handle);
+		light_point_ubo_.color = light.properties_.color;
+		light_point_ubo_.attenuationRadius = light.properties_.attenuationRadius;
+		light_point_ubo_.power = light.properties_.power;
+		light_point_ubo_.shadow = light.properties_.shadow;
+		point_light_ubo_handler_->UpdateUniformBuffer(&light_point_ubo_);
+
 		point_light_ubo_handler_->Bind();
 
 		engine.getGraphicsWrapper()->BindVertexArrayObject(plane_vao_);
 		engine.getGraphicsWrapper()->DrawImmediateVertices(0, 6);
-	//}
+	}
 
 	/*engine.lightSystem.m_spotLightPipeline->Bind();
 	for (auto &light : engine.lightSystem.spotLights) {

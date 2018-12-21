@@ -27,6 +27,7 @@ public:
 	ColliderSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
 	ColliderComponent &getComponent(ComponentHandle handle);
+	size_t getNumComponents();
 	virtual void removeComponent(ComponentHandle handle);
 	virtual ~ColliderSubSystem();
 private:

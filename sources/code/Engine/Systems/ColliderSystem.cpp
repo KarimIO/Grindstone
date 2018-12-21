@@ -65,6 +65,10 @@ ColliderComponent & ColliderSubSystem::getComponent(ComponentHandle handle) {
 	return components_[handle];
 }
 
+size_t ColliderSubSystem::getNumComponents() {
+	return components_.size();
+}
+
 void ColliderSystem::update(double dt) {
 }
 

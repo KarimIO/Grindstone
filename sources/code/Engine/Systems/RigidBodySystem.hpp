@@ -43,6 +43,7 @@ public:
 	RigidBodySubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
 	RigidBodyComponent &getComponent(ComponentHandle handle);
+	size_t getNumComponents();
 	virtual void removeComponent(ComponentHandle handle);
 	virtual ~RigidBodySubSystem();
 private:

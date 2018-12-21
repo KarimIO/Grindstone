@@ -170,6 +170,10 @@ RigidBodyComponent & RigidBodySubSystem::getComponent(ComponentHandle handle) {
 	return components_[handle];
 }
 
+size_t RigidBodySubSystem::getNumComponents() {
+	return components_.size();
+}
+
 void RigidBodySubSystem::removeComponent(ComponentHandle handle) {
 	components_.erase(components_.begin() + handle);
 }

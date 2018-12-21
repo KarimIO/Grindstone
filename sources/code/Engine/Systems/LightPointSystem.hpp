@@ -5,17 +5,15 @@
 #include <vector>
 #include "glm/glm.hpp"
 
-struct LightPointUBO {
-	glm::vec3 position;
-	float attenuationRadius;
-	glm::vec3 color;
-	float power;
-	bool shadow;
-};
-
 struct LightPointComponent : public Component {
 	LightPointComponent(GameObjectHandle object_handle, ComponentHandle id);
-	LightPointUBO properties_;
+	struct {
+		glm::vec3 position;
+		float attenuationRadius;
+		glm::vec3 color;
+		float power;
+		bool shadow;
+	} properties_;
 };
 
 class LightPointSystem : public System {
@@ -32,6 +30,7 @@ public:
 	LightPointSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
 	LightPointComponent &getComponent(ComponentHandle handle);
+	size_t getNumComponents();
 	virtual void removeComponent(ComponentHandle handle);
 
 	virtual ~LightPointSubSystem();

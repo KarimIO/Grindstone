@@ -49,6 +49,7 @@ public:
 	ControllerComponent &getComponent(ComponentHandle handle);
 	virtual void removeComponent(ComponentHandle handle);
 	virtual ~ControllerSubSystem();
+	size_t getNumComponents();
 private:
 	std::vector<ControllerComponent> components_;
 };

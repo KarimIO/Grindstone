@@ -28,13 +28,39 @@ void LightPointSystem::update(double dt) {
 ComponentHandle LightPointSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value & params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
 	components_.emplace_back(object_handle, component_handle);
-	//LightComponent &component = components_.back();
+	auto &component = components_.back();
+		
+	if (params.HasMember("color")) {
+		auto &color = params["color"].GetArray();
+		component.properties_.color.x = color[0].GetFloat();
+		component.properties_.color.y = color[1].GetFloat();
+		component.properties_.color.z = color[2].GetFloat();
+	}
+	
+	if (params.HasMember("brightness")) {
+		float brightness = params["brightness"].GetFloat();
+		component.properties_.power = brightness;
+	}
+	
+	if (params.HasMember("radius")) {
+		float radius = params["radius"].GetFloat();
+		component.properties_.attenuationRadius = radius;
+	}
+	
+	if (params.HasMember("castshadow")) {
+		bool castshadow = params["castshadow"].GetBool();
+		component.properties_.shadow = castshadow;
+	}
 
 	return component_handle;
 }
 
 LightPointComponent & LightPointSubSystem::getComponent(ComponentHandle handle) {
 	return components_[handle];
+}
+
+size_t LightPointSubSystem::getNumComponents() {
+	return components_.size();
 }
 
 void LightPointSubSystem::removeComponent(ComponentHandle handle) {

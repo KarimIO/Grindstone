@@ -89,6 +89,10 @@ TransformSubSystem *ControllerComponent::getTransform() {
 	return transform;
 }
 
+size_t ControllerSubSystem::getNumComponents() {
+	return components_.size();
+}
+
 void ControllerComponent::MoveForwardBack(double scale) {
 	auto trans_system = getTransform();
 	ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);

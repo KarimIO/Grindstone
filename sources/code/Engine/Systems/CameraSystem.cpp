@@ -43,6 +43,10 @@ CameraComponent & CameraSubSystem::getComponent(ComponentHandle handle) {
 	return components_[handle];
 }
 
+size_t CameraSubSystem::getNumComponents() {
+	return components_.size();
+}
+
 void CameraSubSystem::removeComponent(ComponentHandle id) {
 	components_.erase(components_.begin() + id);
 }
@@ -109,7 +113,7 @@ void CameraSystem::update(double dt) {
 				//engine.ubo2->Bind();
 
 				Framebuffer *gbuffer = nullptr; // engine.getDefaultFramebuffer()
-				render_path_->render(gbuffer, component.projection_, component.view_, pos);
+				render_path_->render(gbuffer, space, component.projection_, component.view_, pos);
 
 				// PostProcessing
 				engine.getGraphicsWrapper()->SwapBuffer();

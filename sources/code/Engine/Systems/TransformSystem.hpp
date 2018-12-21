@@ -29,6 +29,7 @@ public:
 	TransformSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
 	TransformComponent &getComponent(ComponentHandle handle);
+	size_t getNumComponents();
 	virtual void removeComponent(ComponentHandle handle);
 
 	glm::vec3 getForward(ComponentHandle handle);

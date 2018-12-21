@@ -24,6 +24,7 @@ public:
 	RenderStaticMeshSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
 	RenderStaticMeshComponent &getComponent(ComponentHandle handle);
+	size_t getNumComponents();
 	virtual void removeComponent(ComponentHandle handle);
 	virtual ~RenderStaticMeshSubSystem();
 private:

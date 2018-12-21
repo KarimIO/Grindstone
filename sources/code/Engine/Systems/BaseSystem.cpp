@@ -19,8 +19,14 @@ ComponentType getComponentType(std::string str) {
 	if (str == "COMPONENT_COLLISION")
 		return COMPONENT_COLLISION;
 
-	//if (str == "COMPONENT_LIGHT")
-	//	return COMPONENT_LIGHT;
+	if (str == "COMPONENT_LIGHT_POINT")
+		return COMPONENT_LIGHT_POINT;
+
+	if (str == "COMPONENT_LIGHT_SPOT")
+		return COMPONENT_LIGHT_SPOT;
+
+	if (str == "COMPONENT_LIGHT_DIRECTIONAL")
+		return COMPONENT_LIGHT_DIRECTIONAL;
 	
 	/*if (str == "COMPONENT_RENDER_TERRAIN")
 		return COMPONENT_RENDER_TERRAIN;

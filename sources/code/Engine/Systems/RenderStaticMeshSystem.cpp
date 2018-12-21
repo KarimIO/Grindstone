@@ -36,6 +36,10 @@ RenderStaticMeshComponent &RenderStaticMeshSubSystem::getComponent(ComponentHand
 	return components_[id];
 }
 
+size_t RenderStaticMeshSubSystem::getNumComponents() {
+	return components_.size();
+}
+
 void RenderStaticMeshSystem::update(double dt) {
 }
 

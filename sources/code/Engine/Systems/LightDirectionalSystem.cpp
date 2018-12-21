@@ -37,6 +37,10 @@ LightDirectionalComponent & LightDirectionalSubSystem::getComponent(ComponentHan
 	return components_[handle];
 }
 
+size_t LightDirectionalComponent::getNumComponents() {
+	return 0; // components_.size();
+}
+
 void LightDirectionalSubSystem::removeComponent(ComponentHandle handle) {
 }
 

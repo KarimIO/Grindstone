@@ -41,6 +41,7 @@ struct Component {
 class SubSystem {
 public:
 	SubSystem(ComponentType type, Space *space);
+	virtual size_t getNumComponents() = 0;
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) = 0;
 	virtual void removeComponent(ComponentHandle id) = 0;
 

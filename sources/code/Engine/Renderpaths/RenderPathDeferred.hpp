@@ -13,12 +13,13 @@ class UniformBuffer;
 class TextureBindingLayout;
 class VertexArrayObject;
 class VertexBuffer;
+class Scene;
 
 class RenderPathDeferred : public RenderPath {
 public:
 	RenderPathDeferred();
-	void render(Framebuffer *default, glm::mat4 p, glm::mat4 v, glm::vec3 eye);
-	void renderLights();
+	void render(Framebuffer *default, Space *scene, glm::mat4 p, glm::mat4 v, glm::vec3 eye);
+	void renderLights(Space *scene);
 	void createPointLightShader();
 private:
 	void createFramebuffer();
@@ -41,9 +42,9 @@ private:
 	VertexAttributeDescription plane_vad_;
 
 	struct LightPointUBO {
-		float position[3];
+		glm::vec3 position;
 		float attenuationRadius;
-		float color[3];
+		glm::vec3 color;
 		float power;
 		bool shadow;
 	} light_point_ubo_;
