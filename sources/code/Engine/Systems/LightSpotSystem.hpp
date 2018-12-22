@@ -1,27 +1,28 @@
-#ifndef _LIGHT_SYSTEM_H
-#define _LIGHT_SYSTEM_H
+#ifndef _LIGHT_SPOT_SYSTEM_H
+#define _LIGHT_SPOT_SYSTEM_H
 
 #include "BaseSystem.hpp"
 #include <vector>
 #include "glm/glm.hpp"
 
-struct LightSpotUBO {
-	glm::mat4 shadow_mat;
-	glm::vec3 position;
-	float attenuationRadius;
-	glm::vec3 color;
-	float power;
-	glm::vec3 direction;
-	float innerAngle;
-	float outerAngle;
-	bool shadow;
-
-	char buffer[11];
-};
+class DepthTarget;
+class Framebuffer;
 
 struct LightSpotComponent : public Component {
 	LightSpotComponent(GameObjectHandle object_handle, ComponentHandle id);
-	size_t getNumComponents();
+
+	struct {
+		float attenuationRadius;
+		glm::vec3 color;
+		float power;
+		float innerAngle;
+		float outerAngle;
+		bool shadow;
+	} properties_;
+
+	glm::mat4 shadow_mat_;
+	Framebuffer *shadow_fbo_;
+	DepthTarget *shadow_dt_;
 };
 
 class LightSpotSystem : public System {
@@ -38,6 +39,7 @@ public:
 	LightSpotSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
 	LightSpotComponent &getComponent(ComponentHandle handle);
+	size_t getNumComponents();
 	virtual void removeComponent(ComponentHandle handle);
 
 	virtual ~LightSpotSubSystem();

@@ -167,7 +167,7 @@ float getShadowValue(in vec3 pos, in float nl) {
 	float visibility = 1.0f;
 	for (int i=0;i<4;i++){
         int index = int(16.0*shadowRandom(vec4(floor(pos.xyz*1000.0), i)))%16;
-        visibility -= 0.2*(1.0-texture( shadow_map, vec3(shadow_coords_final.xy + poissonDisk[index]/1400.0, shadow_coords_final.z - bias)));
+        visibility -= 0.25*(1.0-texture( shadow_map, vec3(shadow_coords_final.xy + poissonDisk[index]/1400.0, shadow_coords_final.z - bias)));
     }
 
 	return visibility;
@@ -202,7 +202,8 @@ void main() {
 
 	vec3 outColor3 = vec3(0,0,0);
 	if (dotPR > 0) {
-		outColor3 = LightPointCalc(Albedo.rgb, Position.xyz, vec4(Specular, Roughness), Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, ubo.eyePos.xyz) * dotPR;
+		outColor3 = LightPointCalc(Albedo.rgb, Position.xyz, vec4(Specular, Roughness), Normal.xyz, lightPosition, lightAttenuationRadius, lightPow, ubo.eyePos.xyz);
+		outColor3 *= dotPR;
 		//outColor3 = hdrGammaTransform(outColor3);
 	}
 

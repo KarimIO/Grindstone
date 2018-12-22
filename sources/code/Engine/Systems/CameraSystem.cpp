@@ -106,8 +106,9 @@ void CameraSystem::update(double dt) {
 
 				glm::mat4 pv = component.projection_ * component.view_;
 
-				ubo_->Bind();
-				ubo_->UpdateUniformBuffer(&pv);
+				auto ubo = engine.getUniformBuffer();
+				ubo->Bind();
+				ubo->UpdateUniformBuffer(&pv);
 
 				// Culling
 				//engine.ubo2->Bind();
@@ -124,12 +125,6 @@ void CameraSystem::update(double dt) {
 
 CameraSystem::CameraSystem() : System(COMPONENT_CAMERA) {
 	render_path_ = new RenderPathDeferred();
-
-	UniformBufferCreateInfo ubci;
-	ubci.isDynamic = true;
-	ubci.size = 128;
-	ubci.binding = engine.getUniformBufferBinding();
-	ubo_ = engine.getGraphicsWrapper()->CreateUniformBuffer(ubci);
 	/*RenderTargetContainer *rt_hdr = &engine.rt_hdr_;
 
 	if (engine.settings.use_ssao) {

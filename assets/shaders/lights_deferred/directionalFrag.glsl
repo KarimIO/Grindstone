@@ -116,7 +116,7 @@ vec3 LightDirCalc(in vec3 Albedo, in vec3 WorldPos, in vec3 lightDir, in vec4 Sp
 	return vec3(NL* BSDFValue * lightModifier);
 }
 
-in vec3 viewRay;
+//in vec3 viewRay;
 
 float shadowRandom(vec4 seed4) {
 	float dot_product = dot(seed4, vec4(12.9898,78.233,45.164,94.673));
@@ -163,7 +163,7 @@ void main() {
     float ProjectionA = far / (far - near);
     float ProjectionB = (-far * near) / (far - near);
     //depth = ProjectionB / ((depth - ProjectionA));
-    vec3 position = viewRay * depth;
+    //vec3 position = viewRay * depth;
 
 	vec3 Position = WorldPosFromDepth(depth, fragTexCoord);
 	vec3 Normal = texture(gbuffer1, fragTexCoord).rgb;

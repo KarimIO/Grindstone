@@ -39,7 +39,6 @@ public:
 
 	void update(double dt);
 private:
-	UniformBuffer *ubo_;
 };
 
 class CameraSubSystem : public SubSystem {

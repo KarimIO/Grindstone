@@ -36,6 +36,8 @@ public:
 
 	void initializeUniformBuffer();
 
+	UniformBuffer * getUniformBuffer();
+
 	UniformBufferBinding *getUniformBufferBinding();
 
 	static Engine &getInstance();
@@ -86,6 +88,7 @@ private:
 	InputManager *input_manager_;
 
 	UniformBufferBinding *ubb_;
+	UniformBuffer *ubo_;
 
 	DLLGraphics *dll_graphics_;
 	DLLAudio *dll_audio_;

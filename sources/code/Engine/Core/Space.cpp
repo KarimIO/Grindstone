@@ -2,7 +2,9 @@
 #include "Utilities/Logger.hpp"
 #include <iostream>
 
+#include "../Systems/LightSpotSystem.hpp"
 #include "../Systems/LightPointSystem.hpp"
+#include "../Systems/LightDirectionalSystem.hpp"
 #include "../Systems/TransformSystem.hpp"
 #include "../Systems/CameraSystem.hpp"
 #include "../Systems/RenderStaticMeshSystem.hpp"
@@ -16,6 +18,8 @@ Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 	addSystem(new RigidBodySubSystem(this));
 	addSystem(new RenderStaticMeshSubSystem(this));
 	addSystem(new LightPointSubSystem(this));
+	addSystem(new LightSpotSubSystem(this));
+	addSystem(new LightDirectionalSubSystem(this));
 	addSystem(new TransformSubSystem(this));
 	addSystem(new CameraSubSystem(this));
 

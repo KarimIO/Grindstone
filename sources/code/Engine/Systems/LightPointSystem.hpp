@@ -1,5 +1,5 @@
-#ifndef _LIGHT_SYSTEM_H
-#define _LIGHT_SYSTEM_H
+#ifndef _LIGHT_POINT_SYSTEM_H
+#define _LIGHT_POINT_SYSTEM_H
 
 #include "BaseSystem.hpp"
 #include <vector>

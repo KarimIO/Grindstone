@@ -1,23 +1,26 @@
-#ifndef _LIGHT_SYSTEM_H
-#define _LIGHT_SYSTEM_H
+#ifndef _LIGHT_DIRECTIONAL_SYSTEM_H
+#define _LIGHT_DIRECTIONAL_SYSTEM_H
 
 #include "BaseSystem.hpp"
 #include <vector>
 #include "glm/glm.hpp"
 
-struct LightDirectionalUBO {
-	glm::mat4 shadow_mat[3];
-	float cascade_distance[3];
-	glm::vec3 direction;
-	float sourceRadius;
-	glm::vec3 color;
-	float power;
-	bool shadow;
-};
+class DepthTarget;
+class Framebuffer;
 
 struct LightDirectionalComponent : public Component {
 	LightDirectionalComponent(GameObjectHandle object_handle, ComponentHandle id);
-	size_t getNumComponents();
+
+	struct {
+		float sourceRadius;
+		glm::vec3 color;
+		float power;
+		bool shadow;
+	} properties_;
+
+	glm::mat4 shadow_mat_;
+	Framebuffer *shadow_fbo_;
+	DepthTarget *shadow_dt_;
 };
 
 class LightDirectionalSystem : public System {
@@ -34,6 +37,7 @@ public:
 	LightDirectionalSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
 	LightDirectionalComponent &getComponent(ComponentHandle handle);
+	size_t getNumComponents();
 	virtual void removeComponent(ComponentHandle handle);
 
 	virtual ~LightDirectionalSubSystem();

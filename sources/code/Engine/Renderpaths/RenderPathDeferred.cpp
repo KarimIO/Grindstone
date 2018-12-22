@@ -11,12 +11,24 @@
 
 #include "../Systems/TransformSystem.hpp"
 #include "../Systems/LightPointSystem.hpp"
+#include "../Systems/LightSpotSystem.hpp"
+#include "../Systems/LightDirectionalSystem.hpp"
 
 #include "Core/Space.hpp"
+
+glm::mat4 bias_matrix(
+	0.5, 0.0, 0.0, 0.0,
+	0.0, 0.5, 0.0, 0.0,
+	0.0, 0.0, 0.5, 0.0,
+	0.5, 0.5, 0.5, 1.0
+);
 
 RenderPathDeferred::RenderPathDeferred() {
 	createFramebuffer();
 	createPointLightShader();
+	createSpotLightShader();
+	createDirectionalLightShader();
+
 	/*
 	//=====================
 	// SSAO Blur
@@ -110,7 +122,6 @@ void RenderPathDeferred::createPointLightShader() {
 	lightuboci.binding = point_light_ubb_;
 	point_light_ubo_handler_ = graphics_wrapper->CreateUniformBuffer(lightuboci);
 
-
 	ShaderStageCreateInfo vi;
 	ShaderStageCreateInfo fi;
 	if (engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL) {
@@ -160,6 +171,140 @@ void RenderPathDeferred::createPointLightShader() {
 	pointGPCI.uniformBufferBindings = ubbs.data();
 	pointGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
 	point_light_pipeline_ = engine.getGraphicsWrapper()->CreateGraphicsPipeline(pointGPCI);
+}
+
+void RenderPathDeferred::createSpotLightShader() {
+	auto graphics_wrapper = engine.getGraphicsWrapper();
+
+	UniformBufferBindingCreateInfo light_ubbci;
+	light_ubbci.binding = 1;
+	light_ubbci.shaderLocation = "Light";
+	light_ubbci.size = sizeof(LightSpotUBO);
+	light_ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	spot_light_ubb_ = engine.getGraphicsWrapper()->CreateUniformBufferBinding(light_ubbci);
+
+	UniformBufferCreateInfo lightuboci;
+	lightuboci.isDynamic = false;
+	lightuboci.size = sizeof(LightSpotUBO);
+	lightuboci.binding = spot_light_ubb_;
+	spot_light_ubo_handler_ = graphics_wrapper->CreateUniformBuffer(lightuboci);
+
+	ShaderStageCreateInfo vi;
+	ShaderStageCreateInfo fi;
+	if (engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL) {
+		vi.fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
+		fi.fileName = "../assets/shaders/lights_deferred/spotFrag.glsl";
+	}
+	else if (engine.getSettings()->graphics_language_ == GRAPHICS_DIRECTX) {
+		vi.fileName = "../assets/shaders/lights_deferred/spotVert.fxc";
+		fi.fileName = "../assets/shaders/lights_deferred/spotFrag.fxc";
+	}
+	else {
+		vi.fileName = "../assets/shaders/lights_deferred/spotVert.spv";
+		fi.fileName = "../assets/shaders/lights_deferred/spotFrag.spv";
+	}
+	std::vector<char> vfile;
+	if (!readFile(vi.fileName, vfile))
+		return;
+	vi.content = vfile.data();
+	vi.size = (uint32_t)vfile.size();
+	vi.type = SHADER_VERTEX;
+
+	std::vector<char> ffile;
+	if (!readFile(fi.fileName, ffile))
+		return;
+	fi.content = ffile.data();
+	fi.size = (uint32_t)ffile.size();
+	fi.type = SHADER_FRAGMENT;
+
+	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
+
+	GraphicsPipelineCreateInfo spotGPCI;
+	spotGPCI.cullMode = CULL_BACK;
+	spotGPCI.bindings = &plane_vbd_;
+	spotGPCI.bindingsCount = 1;
+	spotGPCI.attributes = &plane_vad_;
+	spotGPCI.attributesCount = 1;
+	spotGPCI.width = (float)engine.getSettings()->resolution_x_;
+	spotGPCI.height = (float)engine.getSettings()->resolution_y_;
+	spotGPCI.scissorW = engine.getSettings()->resolution_x_;
+	spotGPCI.scissorH = engine.getSettings()->resolution_y_;
+	spotGPCI.primitiveType = PRIM_TRIANGLE_STRIPS;
+	spotGPCI.shaderStageCreateInfos = stages.data();
+	spotGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
+	spotGPCI.textureBindings = &gbuffer_tbl_;
+	spotGPCI.textureBindingCount = 1;
+	std::vector<UniformBufferBinding *> ubbs = { deff_ubb_, spot_light_ubb_ };
+	spotGPCI.uniformBufferBindings = ubbs.data();
+	spotGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
+	spot_light_pipeline_ = engine.getGraphicsWrapper()->CreateGraphicsPipeline(spotGPCI);
+}
+
+void RenderPathDeferred::createDirectionalLightShader() {
+	auto graphics_wrapper = engine.getGraphicsWrapper();
+
+	UniformBufferBindingCreateInfo light_ubbci;
+	light_ubbci.binding = 1;
+	light_ubbci.shaderLocation = "Light";
+	light_ubbci.size = sizeof(LightDirectionalUBO);
+	light_ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	directional_light_ubb_ = engine.getGraphicsWrapper()->CreateUniformBufferBinding(light_ubbci);
+
+	UniformBufferCreateInfo lightuboci;
+	lightuboci.isDynamic = false;
+	lightuboci.size = sizeof(LightDirectionalUBO);
+	lightuboci.binding = directional_light_ubb_;
+	directional_light_ubo_handler_ = graphics_wrapper->CreateUniformBuffer(lightuboci);
+
+	ShaderStageCreateInfo vi;
+	ShaderStageCreateInfo fi;
+	if (engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL) {
+		vi.fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
+		fi.fileName = "../assets/shaders/lights_deferred/directionalFrag.glsl";
+	}
+	else if (engine.getSettings()->graphics_language_ == GRAPHICS_DIRECTX) {
+		vi.fileName = "../assets/shaders/lights_deferred/spotVert.fxc";
+		fi.fileName = "../assets/shaders/lights_deferred/directionalFrag.fxc";
+	}
+	else {
+		vi.fileName = "../assets/shaders/lights_deferred/spotVert.spv";
+		fi.fileName = "../assets/shaders/lights_deferred/directionalFrag.spv";
+	}
+	std::vector<char> vfile;
+	if (!readFile(vi.fileName, vfile))
+		return;
+	vi.content = vfile.data();
+	vi.size = (uint32_t)vfile.size();
+	vi.type = SHADER_VERTEX;
+
+	std::vector<char> ffile;
+	if (!readFile(fi.fileName, ffile))
+		return;
+	fi.content = ffile.data();
+	fi.size = (uint32_t)ffile.size();
+	fi.type = SHADER_FRAGMENT;
+
+	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
+
+	GraphicsPipelineCreateInfo directionalGPCI;
+	directionalGPCI.cullMode = CULL_BACK;
+	directionalGPCI.bindings = &plane_vbd_;
+	directionalGPCI.bindingsCount = 1;
+	directionalGPCI.attributes = &plane_vad_;
+	directionalGPCI.attributesCount = 1;
+	directionalGPCI.width = (float)engine.getSettings()->resolution_x_;
+	directionalGPCI.height = (float)engine.getSettings()->resolution_y_;
+	directionalGPCI.scissorW = engine.getSettings()->resolution_x_;
+	directionalGPCI.scissorH = engine.getSettings()->resolution_y_;
+	directionalGPCI.primitiveType = PRIM_TRIANGLE_STRIPS;
+	directionalGPCI.shaderStageCreateInfos = stages.data();
+	directionalGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
+	directionalGPCI.textureBindings = &gbuffer_tbl_;
+	directionalGPCI.textureBindingCount = 1;
+	std::vector<UniformBufferBinding *> ubbs = { deff_ubb_, directional_light_ubb_ };
+	directionalGPCI.uniformBufferBindings = ubbs.data();
+	directionalGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
+	directional_light_pipeline_ = engine.getGraphicsWrapper()->CreateGraphicsPipeline(directionalGPCI);
 }
 
 void RenderPathDeferred::render(Framebuffer *default, Space *space, glm::mat4 p, glm::mat4 v, glm::vec3 eye) {
@@ -241,22 +386,23 @@ void RenderPathDeferred::render(Framebuffer *default, Space *space, glm::mat4 p,
 }
 
 void RenderPathDeferred::renderLights(Space *space) {
-	
-	engine.getGraphicsWrapper()->SetImmediateBlending(BLEND_ADDITIVE);
+	auto graphics_wrapper = engine.getGraphicsWrapper();
+	TransformSubSystem *transform_system = (TransformSubSystem *)space->getSubsystem(COMPONENT_TRANSFORM);
+
+	graphics_wrapper->SetImmediateBlending(BLEND_ADDITIVE);
 	//engine.hdr_framebuffer_->BindWrite(false);
-	engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
-	engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
+	graphics_wrapper->BindDefaultFramebuffer(true);
+	graphics_wrapper->Clear(CLEAR_BOTH);
 	gbuffer_->BindRead();
 	gbuffer_->BindTextures(0);
 
 	point_light_pipeline_->Bind();
-	TransformSubSystem *transform_system = (TransformSubSystem *)space->getSubsystem(COMPONENT_TRANSFORM);
 	LightPointSubSystem *point_light_system = (LightPointSubSystem *)space->getSubsystem(COMPONENT_LIGHT_POINT);
 	for (size_t i = 0; i < point_light_system->getNumComponents(); ++i) {
 		auto &light = point_light_system->getComponent(i);
 		GameObjectHandle game_object_handle = light.game_object_handle_;
 		ComponentHandle component_transform_handle = space->getObject(game_object_handle).getComponentHandle(COMPONENT_TRANSFORM);
-		 
+
 		light_point_ubo_.position = transform_system->getPosition(component_transform_handle);
 		light_point_ubo_.color = light.properties_.color;
 		light_point_ubo_.attenuationRadius = light.properties_.attenuationRadius;
@@ -266,38 +412,76 @@ void RenderPathDeferred::renderLights(Space *space) {
 
 		point_light_ubo_handler_->Bind();
 
-		engine.getGraphicsWrapper()->BindVertexArrayObject(plane_vao_);
-		engine.getGraphicsWrapper()->DrawImmediateVertices(0, 6);
+		graphics_wrapper->BindVertexArrayObject(plane_vao_);
+		graphics_wrapper->DrawImmediateVertices(0, 6);
 	}
 
-	/*engine.lightSystem.m_spotLightPipeline->Bind();
-	for (auto &light : engine.lightSystem.spotLights) {
-		light.Bind();
+	spot_light_pipeline_->Bind();
+	LightSpotSubSystem *spot_light_system = (LightSpotSubSystem *)space->getSubsystem(COMPONENT_LIGHT_SPOT);
+	for (size_t i = 0; i < spot_light_system->getNumComponents(); ++i) {
+		auto &light = spot_light_system->getComponent(i);
+		GameObjectHandle game_object_handle = light.game_object_handle_;
+		ComponentHandle component_transform_handle = space->getObject(game_object_handle).getComponentHandle(COMPONENT_TRANSFORM);
 
-		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
+		light_spot_ubo_.direction = transform_system->getForward(component_transform_handle);
+		light_spot_ubo_.position = transform_system->getPosition(component_transform_handle);
+		light_spot_ubo_.color = light.properties_.color;
+		light_spot_ubo_.attenuationRadius = light.properties_.attenuationRadius;
+		light_spot_ubo_.power = light.properties_.power;
+		light_spot_ubo_.innerAngle = light.properties_.innerAngle;
+		light_spot_ubo_.outerAngle = light.properties_.outerAngle;
+		light_spot_ubo_.shadow = light.properties_.shadow;
+		light_spot_ubo_.shadow_mat = bias_matrix * light.shadow_mat_;
+		spot_light_ubo_handler_->UpdateUniformBuffer(&light_spot_ubo_);
+
+		if (light.properties_.shadow) {
+			light.shadow_fbo_->BindRead();
+			light.shadow_fbo_->BindTextures(4);
+		}
+
+		spot_light_ubo_handler_->Bind();
+
+		graphics_wrapper->BindVertexArrayObject(plane_vao_);
+		graphics_wrapper->DrawImmediateVertices(0, 6);
 	}
 
-	engine.lightSystem.m_directionalLightPipeline->Bind();
-	for (auto &light : engine.lightSystem.directionalLights) {
-		//if (light.cascades_count_ > 1)
-		//	engine.lightSystem.m_cascadeLightPipeline->Bind();
-		//else
+	directional_light_pipeline_->Bind();
+	LightDirectionalSubSystem *directional_light_system = (LightDirectionalSubSystem *)space->getSubsystem(COMPONENT_LIGHT_DIRECTIONAL);
+	for (size_t i = 0; i < directional_light_system->getNumComponents(); ++i) {
+		auto &light = directional_light_system->getComponent(i);
+		GameObjectHandle game_object_handle = light.game_object_handle_;
+		ComponentHandle component_transform_handle = space->getObject(game_object_handle).getComponentHandle(COMPONENT_TRANSFORM);
 
-		light.Bind();
+		light_directional_ubo_.direction = transform_system->getForward(component_transform_handle);
+		light_directional_ubo_.color = light.properties_.color;
+		light_directional_ubo_.source_radius = light.properties_.sourceRadius;
+		light_directional_ubo_.power = light.properties_.power;
+		light_directional_ubo_.shadow = light.properties_.shadow;
+		light_directional_ubo_.shadow_mat = bias_matrix * light.shadow_mat_;
+		directional_light_ubo_handler_->UpdateUniformBuffer(&light_directional_ubo_);
 
-		m_graphics_wrapper_->DrawImmediateVertices(0, 6);
-	}*/
+		if (light.properties_.shadow) {
+			light.shadow_fbo_->BindRead();
+			light.shadow_fbo_->BindTextures(4);
+		}
+
+		directional_light_ubo_handler_->Bind();
+
+		graphics_wrapper->BindVertexArrayObject(plane_vao_);
+		graphics_wrapper->DrawImmediateVertices(0, 6);
+	}
 }
 
 void RenderPathDeferred::createFramebuffer() {
 	auto settings = engine.getSettings();
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
-	bindings.reserve(4);
+	bindings.reserve(5);
 	bindings.emplace_back("gbuffer0", 0); // R G B MatID
 	bindings.emplace_back("gbuffer1", 1); // nX nY nZ MatData
 	bindings.emplace_back("gbuffer2", 2); // sR sG sB Roughness
 	bindings.emplace_back("gbuffer3", 3); // Depth
+	bindings.emplace_back("shadow_map", 4);
 
 	UniformBufferBindingCreateInfo deffubbci;
 	deffubbci.binding = 0;
@@ -312,7 +496,7 @@ void RenderPathDeferred::createFramebuffer() {
 	deffubci.binding = deff_ubb_;
 	deff_ubo_handler_ = graphics_wrapper->CreateUniformBuffer(deffubci);
 
-	float plane_verts[4 * 6] = {
+	float plane_verts[12] = {
 		-1.0, -1.0,
 		1.0, -1.0,
 		-1.0,  1.0,
@@ -333,21 +517,20 @@ void RenderPathDeferred::createFramebuffer() {
 	plane_vad_.offset = 0;
 	plane_vad_.usage = ATTRIB_POSITION;
 
-
-	VertexBufferCreateInfo planeVboCI;
-	planeVboCI.binding = &plane_vbd_;
-	planeVboCI.bindingCount = 1;
-	planeVboCI.attribute = &plane_vad_;
-	planeVboCI.attributeCount = 1;
-	planeVboCI.content = plane_verts;
-	planeVboCI.count = 6;
-	planeVboCI.size = sizeof(float) * 6 * 2;
+	VertexBufferCreateInfo plane_vbo_ci;
+	plane_vbo_ci.binding = &plane_vbd_;
+	plane_vbo_ci.bindingCount = 1;
+	plane_vbo_ci.attribute = &plane_vad_;
+	plane_vbo_ci.attributeCount = 1;
+	plane_vbo_ci.content = plane_verts;
+	plane_vbo_ci.count = 6;
+	plane_vbo_ci.size = sizeof(float) * 6 * 2;
 
 	VertexArrayObjectCreateInfo plane_vao_ci;
 	plane_vao_ci.vertexBuffer = plane_vbo_;
 	plane_vao_ci.indexBuffer = nullptr;
 	plane_vao_ = graphics_wrapper->CreateVertexArrayObject(plane_vao_ci);
-	plane_vbo_ = graphics_wrapper->CreateVertexBuffer(planeVboCI);
+	plane_vbo_ = graphics_wrapper->CreateVertexBuffer(plane_vbo_ci);
 	plane_vao_ci.vertexBuffer = plane_vbo_;
 	plane_vao_ci.indexBuffer = nullptr;
 	plane_vao_->BindResources(plane_vao_ci);

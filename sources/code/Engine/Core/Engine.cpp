@@ -18,6 +18,8 @@
 #include "../Systems/RenderStaticMeshSystem.hpp"
 #include "../Systems/ControllerSystem.hpp"
 #include "../Systems/LightPointSystem.hpp"
+#include "../Systems/LightSpotSystem.hpp"
+#include "../Systems/LightDirectionalSystem.hpp"
 #include "../Systems/ColliderSystem.hpp"
 #include "../Systems/RigidBodySystem.hpp"
 // - AssetManagers
@@ -67,6 +69,8 @@ void Engine::initialize() {
 	addSystem(new RigidBodySystem());
 	addSystem(new RenderStaticMeshSystem());
 	addSystem(new LightPointSystem());
+	addSystem(new LightSpotSystem());
+	addSystem(new LightDirectionalSystem());
 	addSystem(new TransformSystem());
 	addSystem(new CameraSystem());
 	// addSystem(new GeometryStaticSystem());
@@ -91,6 +95,16 @@ void Engine::initializeUniformBuffer() {
 	ubbci.size = 128; //sizeof(glm::mat4);
 	ubbci.stages = SHADER_STAGE_VERTEX_BIT;
 	ubb_ = graphics_wrapper_->CreateUniformBufferBinding(ubbci);
+
+	UniformBufferCreateInfo ubci;
+	ubci.isDynamic = true;
+	ubci.size = 128;
+	ubci.binding = ubb_;
+	ubo_ = engine.getGraphicsWrapper()->CreateUniformBuffer(ubci);
+}
+
+UniformBuffer *Engine::getUniformBuffer() {
+	return ubo_;
 }
 
 UniformBufferBinding *Engine::getUniformBufferBinding() {
