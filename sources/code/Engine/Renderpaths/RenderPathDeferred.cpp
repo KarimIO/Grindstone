@@ -154,9 +154,9 @@ void RenderPathDeferred::createPointLightShader() {
 
 	GraphicsPipelineCreateInfo pointGPCI;
 	pointGPCI.cullMode = CULL_BACK;
-	pointGPCI.bindings = &plane_vbd_;
+	pointGPCI.bindings = &engine.getPlaneVBD();
 	pointGPCI.bindingsCount = 1;
-	pointGPCI.attributes = &plane_vad_;
+	pointGPCI.attributes = &engine.getPlaneVAD();
 	pointGPCI.attributesCount = 1;
 	pointGPCI.width = (float)engine.getSettings()->resolution_x_;
 	pointGPCI.height = (float)engine.getSettings()->resolution_y_;
@@ -221,9 +221,9 @@ void RenderPathDeferred::createSpotLightShader() {
 
 	GraphicsPipelineCreateInfo spotGPCI;
 	spotGPCI.cullMode = CULL_BACK;
-	spotGPCI.bindings = &plane_vbd_;
+	spotGPCI.bindings = &engine.getPlaneVBD();
 	spotGPCI.bindingsCount = 1;
-	spotGPCI.attributes = &plane_vad_;
+	spotGPCI.attributes = &engine.getPlaneVAD();
 	spotGPCI.attributesCount = 1;
 	spotGPCI.width = (float)engine.getSettings()->resolution_x_;
 	spotGPCI.height = (float)engine.getSettings()->resolution_y_;
@@ -288,9 +288,9 @@ void RenderPathDeferred::createDirectionalLightShader() {
 
 	GraphicsPipelineCreateInfo directionalGPCI;
 	directionalGPCI.cullMode = CULL_BACK;
-	directionalGPCI.bindings = &plane_vbd_;
+	directionalGPCI.bindings = &engine.getPlaneVBD();
 	directionalGPCI.bindingsCount = 1;
-	directionalGPCI.attributes = &plane_vad_;
+	directionalGPCI.attributes = &engine.getPlaneVAD();
 	directionalGPCI.attributesCount = 1;
 	directionalGPCI.width = (float)engine.getSettings()->resolution_x_;
 	directionalGPCI.height = (float)engine.getSettings()->resolution_y_;
@@ -307,7 +307,7 @@ void RenderPathDeferred::createDirectionalLightShader() {
 	directional_light_pipeline_ = engine.getGraphicsWrapper()->CreateGraphicsPipeline(directionalGPCI);
 }
 
-void RenderPathDeferred::render(Framebuffer *default, Space *space, glm::mat4 p, glm::mat4 v, glm::vec3 eye) {
+void RenderPathDeferred::render(Framebuffer *fbo, Space *space, glm::mat4 p, glm::mat4 v, glm::vec3 eye) {
 	deferred_ubo_.invProj = glm::inverse(p);
 	deferred_ubo_.view = glm::inverse(v);
 	deferred_ubo_.eyePos.x = eye.x;
@@ -331,7 +331,7 @@ void RenderPathDeferred::render(Framebuffer *default, Space *space, glm::mat4 p,
 	else*/
 	{
 		// Deferred
-		renderLights(space);
+		renderLights(fbo, space);
 		
 		
 		
@@ -385,13 +385,13 @@ void RenderPathDeferred::render(Framebuffer *default, Space *space, glm::mat4 p,
 	}
 }
 
-void RenderPathDeferred::renderLights(Space *space) {
+void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 	TransformSubSystem *transform_system = (TransformSubSystem *)space->getSubsystem(COMPONENT_TRANSFORM);
 
 	graphics_wrapper->SetImmediateBlending(BLEND_ADDITIVE);
-	//engine.hdr_framebuffer_->BindWrite(false);
-	graphics_wrapper->BindDefaultFramebuffer(true);
+	fbo->BindWrite(true);
+	//graphics_wrapper->BindDefaultFramebuffer(true);
 	graphics_wrapper->Clear(CLEAR_BOTH);
 	gbuffer_->BindRead();
 	gbuffer_->BindTextures(0);
@@ -412,7 +412,7 @@ void RenderPathDeferred::renderLights(Space *space) {
 
 		point_light_ubo_handler_->Bind();
 
-		graphics_wrapper->BindVertexArrayObject(plane_vao_);
+		graphics_wrapper->BindVertexArrayObject(engine.getPlaneVAO());
 		graphics_wrapper->DrawImmediateVertices(0, 6);
 	}
 
@@ -441,7 +441,7 @@ void RenderPathDeferred::renderLights(Space *space) {
 
 		spot_light_ubo_handler_->Bind();
 
-		graphics_wrapper->BindVertexArrayObject(plane_vao_);
+		graphics_wrapper->BindVertexArrayObject(engine.getPlaneVAO());
 		graphics_wrapper->DrawImmediateVertices(0, 6);
 	}
 
@@ -467,7 +467,7 @@ void RenderPathDeferred::renderLights(Space *space) {
 
 		directional_light_ubo_handler_->Bind();
 
-		graphics_wrapper->BindVertexArrayObject(plane_vao_);
+		graphics_wrapper->BindVertexArrayObject(engine.getPlaneVAO());
 		graphics_wrapper->DrawImmediateVertices(0, 6);
 	}
 }
@@ -495,46 +495,6 @@ void RenderPathDeferred::createFramebuffer() {
 	deffubci.size = sizeof(DefferedUBO);
 	deffubci.binding = deff_ubb_;
 	deff_ubo_handler_ = graphics_wrapper->CreateUniformBuffer(deffubci);
-
-	float plane_verts[12] = {
-		-1.0, -1.0,
-		1.0, -1.0,
-		-1.0,  1.0,
-		1.0,  1.0,
-		-1.0,  1.0,
-		1.0, -1.0,
-	};
-
-	plane_vbd_.binding = 0;
-	plane_vbd_.elementRate = false;
-	plane_vbd_.stride = sizeof(float) * 2;
-
-	plane_vad_.binding = 0;
-	plane_vad_.location = 0;
-	plane_vad_.format = VERTEX_R32_G32;
-	plane_vad_.size = 2;
-	plane_vad_.name = "vertexPosition";
-	plane_vad_.offset = 0;
-	plane_vad_.usage = ATTRIB_POSITION;
-
-	VertexBufferCreateInfo plane_vbo_ci;
-	plane_vbo_ci.binding = &plane_vbd_;
-	plane_vbo_ci.bindingCount = 1;
-	plane_vbo_ci.attribute = &plane_vad_;
-	plane_vbo_ci.attributeCount = 1;
-	plane_vbo_ci.content = plane_verts;
-	plane_vbo_ci.count = 6;
-	plane_vbo_ci.size = sizeof(float) * 6 * 2;
-
-	VertexArrayObjectCreateInfo plane_vao_ci;
-	plane_vao_ci.vertexBuffer = plane_vbo_;
-	plane_vao_ci.indexBuffer = nullptr;
-	plane_vao_ = graphics_wrapper->CreateVertexArrayObject(plane_vao_ci);
-	plane_vbo_ = graphics_wrapper->CreateVertexBuffer(plane_vbo_ci);
-	plane_vao_ci.vertexBuffer = plane_vbo_;
-	plane_vao_ci.indexBuffer = nullptr;
-	plane_vao_->BindResources(plane_vao_ci);
-	plane_vao_->Unbind();
 
 	TextureBindingLayoutCreateInfo tblci;
 	tblci.bindingLocation = 0;

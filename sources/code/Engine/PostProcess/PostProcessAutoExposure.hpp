@@ -1,3 +1,4 @@
+#if 0
 #ifndef POST_PROCESS_AUTO_EXPOSURE_HPP
 #define POST_PROCESS_AUTO_EXPOSURE_HPP
 
@@ -18,5 +19,5 @@ private:
 	RenderTarget *lum_buffer_;
 	Framebuffer *lum_framebuffer_;
 };
-
+#endif
 #endif // !POST_PROCESS_AUTO_EXPOSURE_HPP

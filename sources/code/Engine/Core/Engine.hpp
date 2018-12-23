@@ -6,6 +6,7 @@
 #include <chrono>
 #include "Utilities/SettingsFile.hpp"
 #include "Systems/BaseSystem.hpp"
+#include <VertexArrayObject.hpp>
 
 class System;
 class Scene;
@@ -35,6 +36,16 @@ public:
 	void shutdown();
 
 	void initializeUniformBuffer();
+	void initializePlaneVertexBuffer();
+
+	VertexArrayObject *getPlaneVAO();
+	VertexBindingDescription getPlaneVBD();
+	VertexAttributeDescription getPlaneVAD();
+
+	VertexArrayObject *plane_vao_;
+	VertexBuffer *plane_vbo_;
+	VertexBindingDescription plane_vbd_;
+	VertexAttributeDescription plane_vad_;
 
 	UniformBuffer * getUniformBuffer();
 

@@ -1,9 +1,15 @@
-/*#include "PostProcessTonemap.hpp"
+#include "PostProcessTonemap.hpp"
 #include "GraphicsWrapper.hpp"
 #include "../Core/Engine.hpp"
+#include <glm/glm.hpp>
+#include "Utilities/SettingsFile.hpp"
+#include "Core/Utilities.hpp"
 
-PostProcessTonemap::PostProcessTonemap(RenderTargetContainer *source, RenderTargetContainer *target, PostProcessAutoExposure *auto_exposure) : source_(source), target_(target), auto_exposure_(auto_exposure) {
+// , PostProcessAutoExposure *auto_exposure
+// , auto_exposure_(auto_exposure)
+PostProcessTonemap::PostProcessTonemap(RenderTargetContainer *source, RenderTargetContainer *target) : source_(source), target_(target) {
     GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+	auto settings = engine.getSettings();
     
     // Exposure Uniform Buffer
     UniformBufferBindingCreateInfo ubbci;
@@ -25,11 +31,11 @@ PostProcessTonemap::PostProcessTonemap(RenderTargetContainer *source, RenderTarg
 	ShaderStageCreateInfo stages[2];
 
 	// Tonemap Graphics Pipeline
-	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+	if (settings->graphics_language_ == GRAPHICS_OPENGL) {
 		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		stages[1].fileName = "../assets/shaders/post_processing/tonemap.glsl";
 	}
-	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+	else if (settings->graphics_language_ == GRAPHICS_DIRECTX) {
 		stages[0].fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
 		stages[1].fileName = "../assets/shaders/post_processing/tonemap.fxc";
 	}
@@ -56,19 +62,29 @@ PostProcessTonemap::PostProcessTonemap(RenderTargetContainer *source, RenderTarg
 
 	GraphicsPipelineCreateInfo tonemapGPCI;
 	tonemapGPCI.cullMode = CULL_BACK;
-	tonemapGPCI.bindings = &engine.planeVBD;
+	tonemapGPCI.bindings = &engine.getPlaneVBD();
 	tonemapGPCI.bindingsCount = 1;
-	tonemapGPCI.attributes = &engine.planeVAD;
+	tonemapGPCI.attributes = &engine.getPlaneVAD();
 	tonemapGPCI.attributesCount = 1;
-	tonemapGPCI.width = (float)engine.settings.resolutionX;
-	tonemapGPCI.height = (float)engine.settings.resolutionY;
-	tonemapGPCI.scissorW = engine.settings.resolutionX;
-	tonemapGPCI.scissorH = engine.settings.resolutionY;
+	tonemapGPCI.width = (float)settings->resolution_x_;
+	tonemapGPCI.height = (float)settings->resolution_y_;
+	tonemapGPCI.scissorW = settings->resolution_x_;
+	tonemapGPCI.scissorH = settings->resolution_y_;
 	tonemapGPCI.primitiveType = PRIM_TRIANGLES;
 	tonemapGPCI.shaderStageCreateInfos = stages;
 	tonemapGPCI.shaderStageCreateInfoCount = 2;
 
-	tonemapGPCI.textureBindings = &engine.tonemap_tbl_;
+	TextureSubBinding *tonemap_sub_binding_ = new TextureSubBinding("lighting", 4);
+
+
+	TextureBindingLayoutCreateInfo tblci;
+	tblci.bindingLocation = 4;
+	tblci.bindings = tonemap_sub_binding_;
+	tblci.bindingCount = 1;
+	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	TextureBindingLayout *tonemap_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
+
+	tonemapGPCI.textureBindings = &tonemap_tbl_;
 	tonemapGPCI.textureBindingCount = 1;
 	tonemapGPCI.uniformBufferBindings = &ubb;
 	tonemapGPCI.uniformBufferBindingCount = 1;
@@ -76,19 +92,19 @@ PostProcessTonemap::PostProcessTonemap(RenderTargetContainer *source, RenderTarg
 }
 
 void PostProcessTonemap::Process() {
-	double dt = engine.GetRenderTimeDelta();
+	double dt = engine.getTimeCurrent();
 
-	float new_exp = 1.0f / glm::clamp(exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
-	exposure_buffer_.exposure = exposure_buffer_.exposure * (1.0f - dt) + new_exp * dt;
+	// float new_exp = 1.0f / glm::clamp(exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
+	exposure_buffer_.exposure = 1.0f; // exposure_buffer_.exposure * (1.0f - dt) + new_exp * dt;
 	exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
 
     pipeline_->Bind();
     exposure_ub_->Bind();
 	if (target_ == nullptr) {
-		engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
+		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
 		engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
-	}
+	} 
     source_->framebuffer->BindRead();
     source_->framebuffer->BindTextures(4);
     engine.getGraphicsWrapper()->DrawImmediateVertices(0, 6);
-}*/
+}

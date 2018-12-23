@@ -19,7 +19,7 @@ class RenderPathDeferred : public RenderPath {
 public:
 	RenderPathDeferred();
 	void render(Framebuffer *default, Space *scene, glm::mat4 p, glm::mat4 v, glm::vec3 eye);
-	void renderLights(Space *scene);
+	void renderLights(Framebuffer *fbo, Space *scene);
 	void createPointLightShader();
 	void createSpotLightShader();
 	void createDirectionalLightShader();
@@ -41,11 +41,6 @@ private:
 	UniformBuffer *spot_light_ubo_handler_;
 	UniformBuffer *directional_light_ubo_handler_;
 	UniformBuffer *deff_ubo_handler_;
-
-	VertexArrayObject *plane_vao_;
-	VertexBuffer *plane_vbo_;
-	VertexBindingDescription plane_vbd_;
-	VertexAttributeDescription plane_vad_;
 
 	struct LightPointUBO {
 		glm::vec3 position;

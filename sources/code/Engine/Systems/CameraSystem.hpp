@@ -4,6 +4,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include "BaseSystem.hpp"
+#include <PostProcess/PostPipeline.hpp>
 
 class RenderPath;
 
@@ -29,6 +30,12 @@ struct CameraComponent : public Component {
 	double iso_;
 	glm::mat4 projection_;
 	glm::mat4 view_;
+
+	PostPipeline post_pipeline_;
+
+	RenderTargetContainer rt_hdr_;
+	RenderTarget *hdr_buffer_;
+	Framebuffer *hdr_framebuffer_;
 };
 
 class CameraSystem : public System {

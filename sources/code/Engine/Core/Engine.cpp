@@ -54,6 +54,7 @@ void Engine::initialize() {
 	//audio_wrapper_ = dll_audio_->getWrapper();
 
 	initializeUniformBuffer();
+	initializePlaneVertexBuffer();
 
 	// Load Managers
 	//audio_manager_ = new AudioManager();
@@ -101,6 +102,60 @@ void Engine::initializeUniformBuffer() {
 	ubci.size = 128;
 	ubci.binding = ubb_;
 	ubo_ = engine.getGraphicsWrapper()->CreateUniformBuffer(ubci);
+}
+
+VertexArrayObject *Engine::getPlaneVAO() {
+	return plane_vao_;
+}
+
+VertexBindingDescription Engine::getPlaneVBD() {
+	return plane_vbd_;
+}
+
+VertexAttributeDescription Engine::getPlaneVAD() {
+	return plane_vad_;
+}
+
+void Engine::initializePlaneVertexBuffer() {
+	float plane_verts[12] = {
+		-1.0, -1.0,
+		1.0, -1.0,
+		-1.0,  1.0,
+		1.0,  1.0,
+		-1.0,  1.0,
+		1.0, -1.0,
+	};
+
+	plane_vbd_.binding = 0;
+	plane_vbd_.elementRate = false;
+	plane_vbd_.stride = sizeof(float) * 2;
+
+	plane_vad_.binding = 0;
+	plane_vad_.location = 0;
+	plane_vad_.format = VERTEX_R32_G32;
+	plane_vad_.size = 2;
+	plane_vad_.name = "vertexPosition";
+	plane_vad_.offset = 0;
+	plane_vad_.usage = ATTRIB_POSITION;
+
+	VertexBufferCreateInfo plane_vbo_ci;
+	plane_vbo_ci.binding = &plane_vbd_;
+	plane_vbo_ci.bindingCount = 1;
+	plane_vbo_ci.attribute = &plane_vad_;
+	plane_vbo_ci.attributeCount = 1;
+	plane_vbo_ci.content = plane_verts;
+	plane_vbo_ci.count = 6;
+	plane_vbo_ci.size = sizeof(float) * 6 * 2;
+
+	VertexArrayObjectCreateInfo plane_vao_ci;
+	plane_vao_ci.vertexBuffer = plane_vbo_;
+	plane_vao_ci.indexBuffer = nullptr;
+	plane_vao_ = graphics_wrapper_->CreateVertexArrayObject(plane_vao_ci);
+	plane_vbo_ = graphics_wrapper_->CreateVertexBuffer(plane_vbo_ci);
+	plane_vao_ci.vertexBuffer = plane_vbo_;
+	plane_vao_ci.indexBuffer = nullptr;
+	plane_vao_->BindResources(plane_vao_ci);
+	plane_vao_->Unbind();
 }
 
 UniformBuffer *Engine::getUniformBuffer() {
