@@ -4,10 +4,11 @@
 #include <glm/glm.hpp>
 #include "Utilities/SettingsFile.hpp"
 #include "Core/Utilities.hpp"
+#include "PostProcessAutoExposure.hpp"
 
 // , PostProcessAutoExposure *auto_exposure
 // , auto_exposure_(auto_exposure)
-PostProcessTonemap::PostProcessTonemap(RenderTargetContainer *source, RenderTargetContainer *target) : source_(source), target_(target) {
+PostProcessTonemap::PostProcessTonemap(RenderTargetContainer *source, RenderTargetContainer *target, PostProcessAutoExposure *auto_exposure) : source_(source), target_(target), auto_exposure_(auto_exposure) {
     GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
     
@@ -92,10 +93,10 @@ PostProcessTonemap::PostProcessTonemap(RenderTargetContainer *source, RenderTarg
 }
 
 void PostProcessTonemap::Process() {
-	double dt = engine.getTimeCurrent();
+	double dt = engine.getUpdateTimeDelta();
 
-	// float new_exp = 1.0f / glm::clamp(exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
-	exposure_buffer_.exposure = 1.0f; // exposure_buffer_.exposure * (1.0f - dt) + new_exp * dt;
+	float new_exp = 1.0f / glm::clamp(exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
+	exposure_buffer_.exposure = exposure_buffer_.exposure * (1.0f - dt) + new_exp * dt;
 	exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
 
     pipeline_->Bind();

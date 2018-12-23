@@ -9,7 +9,9 @@
 #include "Core/Space.hpp"
 #include "GraphicsWrapper.hpp"
 #include "./Renderpaths/RenderPathDeferred.hpp"
+
 #include "PostProcess/PostProcessTonemap.hpp"
+#include "PostProcess/PostProcessAutoExposure.hpp"
 
 CameraComponent::CameraComponent(GameObjectHandle object_handle, ComponentHandle handle) :
 	Component(COMPONENT_CAMERA, object_handle, handle),
@@ -66,12 +68,12 @@ ComponentHandle CameraSubSystem::addComponent(GameObjectHandle object_handle, ra
 	if (engine.settings.enableReflections) {
 		BasePostProcess *pp_ibl = new PostProcessIBL(&engine.rt_gbuffer_, rt_hdr);
 		post_pipeline_.AddPostProcess(pp_ibl);
-	}
+	}*/
 
-	PostProcessAutoExposure *pp_auto = new PostProcessAutoExposure(rt_hdr, nullptr);
-	post_pipeline_.AddPostProcess(pp_auto);*/
+	PostProcessAutoExposure *pp_auto = new PostProcessAutoExposure(&component.rt_hdr_, nullptr);
+	component.post_pipeline_.AddPostProcess(pp_auto);
 
-	PostProcessTonemap *pp_tonemap = new PostProcessTonemap(&component.rt_hdr_, nullptr);
+	PostProcessTonemap *pp_tonemap = new PostProcessTonemap(&component.rt_hdr_, nullptr, pp_auto);
 	component.post_pipeline_.AddPostProcess(pp_tonemap);
 
 	return component_handle;

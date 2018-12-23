@@ -1,19 +1,19 @@
-#ifndef POST_PROCESS_TONEMAP_HPP
-#define POST_PROCESS_TONEMAP_HPP
+#ifndef _POST_PROCESS_TONEMAP_HPP
+#define _POST_PROCESS_TONEMAP_HPP
 
 #include "BasePost.hpp"
-#include "GraphicsPipeline.hpp"
-#include "PostProcessAutoExposure.hpp"
+
+class PostProcessAutoExposure;
 
 class PostProcessTonemap : public BasePostProcess {
 public:
-    PostProcessTonemap(RenderTargetContainer *source, RenderTargetContainer *target); // PostProcessAutoExposure *auto_exposure
+    PostProcessTonemap(RenderTargetContainer *source, RenderTargetContainer *target, PostProcessAutoExposure *auto_exposure);
     virtual void Process();
 private:
     RenderTargetContainer *source_;
     RenderTargetContainer *target_;
 
-	// PostProcessAutoExposure *auto_exposure_;
+	PostProcessAutoExposure *auto_exposure_;
 
     GraphicsPipeline *pipeline_;
 

@@ -1,9 +1,11 @@
 #ifndef _BASE_POST_H
 #define _BASE_POST_H
 
-#include "../GraphicsCommon/Framebuffer.hpp"
-#include "../GraphicsCommon/RenderTarget.hpp"
-#include "../GraphicsCommon/DepthTarget.hpp"
+class GraphicsPipeline;
+class UniformBuffer;
+class Framebuffer;
+class RenderTarget;
+class DepthTarget;
 
 struct RenderTargetContainer {
 	Framebuffer *framebuffer;

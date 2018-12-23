@@ -1,9 +1,11 @@
-#if 0
-#ifndef POST_PROCESS_AUTO_EXPOSURE_HPP
-#define POST_PROCESS_AUTO_EXPOSURE_HPP
+#ifndef _POST_PROCESS_AUTO_EXPOSURE_HPP
+#define _POST_PROCESS_AUTO_EXPOSURE_HPP
 
 #include "BasePost.hpp"
-#include "GraphicsPipeline.hpp"
+
+class GraphicsPipeline;
+class UniformBuffer;
+struct RenderTargetContainer;
 
 class PostProcessAutoExposure : public BasePostProcess {
 public:
@@ -19,5 +21,5 @@ private:
 	RenderTarget *lum_buffer_;
 	Framebuffer *lum_framebuffer_;
 };
-#endif
+
 #endif // !POST_PROCESS_AUTO_EXPOSURE_HPP

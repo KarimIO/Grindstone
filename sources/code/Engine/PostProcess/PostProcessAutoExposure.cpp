@@ -1,27 +1,30 @@
-#include "PostProcessAutoExposure.hpp"
 #include "../Core/Engine.hpp"
-/*
+#include <GraphicsWrapper.hpp>
+#include "Core/Utilities.hpp"
+#include "PostProcessAutoExposure.hpp"
+
 PostProcessAutoExposure::PostProcessAutoExposure(RenderTargetContainer *source, RenderTargetContainer *target) : source_(source), target_(target) {
-    GraphicsWrapper *graphics_wrapper_ = engine.graphics_wrapper_;
+    GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+	auto settings = engine.getSettings();
 
 	RenderTargetCreateInfo lum_buffer_ci(FORMAT_COLOR_R8, 1024, 1024);
-	lum_buffer_ = graphics_wrapper_->CreateRenderTarget(&lum_buffer_ci, 1);
+	lum_buffer_ = graphics_wrapper->CreateRenderTarget(&lum_buffer_ci, 1);
 
 	FramebufferCreateInfo lum_framebuffer_ci;
 	lum_framebuffer_ci.render_target_lists = &lum_buffer_;
 	lum_framebuffer_ci.num_render_target_lists = 1;
 	lum_framebuffer_ci.depth_target = nullptr;
 	lum_framebuffer_ci.render_pass = nullptr;
-	lum_framebuffer_ = graphics_wrapper_->CreateFramebuffer(lum_framebuffer_ci);
+	lum_framebuffer_ = graphics_wrapper->CreateFramebuffer(lum_framebuffer_ci);
 	
 	ShaderStageCreateInfo stages[2];
 
 	// Tonemap Graphics Pipeline
-	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+	if (settings->graphics_language_ == GRAPHICS_OPENGL) {
 		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		stages[1].fileName = "../assets/shaders/post_processing/luminance.glsl";
 	}
-	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+	else if (settings->graphics_language_ == GRAPHICS_DIRECTX) {
 		stages[0].fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
 		stages[1].fileName = "../assets/shaders/post_processing/luminance.fxc";
 	}
@@ -48,9 +51,9 @@ PostProcessAutoExposure::PostProcessAutoExposure(RenderTargetContainer *source, 
 
 	GraphicsPipelineCreateInfo luminanceGPCI;
 	luminanceGPCI.cullMode = CULL_BACK;
-	luminanceGPCI.bindings = &engine.planeVBD;
+	luminanceGPCI.bindings = &engine.getPlaneVBD();
 	luminanceGPCI.bindingsCount = 1;
-	luminanceGPCI.attributes = &engine.planeVAD;
+	luminanceGPCI.attributes = &engine.getPlaneVAD();
 	luminanceGPCI.attributesCount = 1;
 	luminanceGPCI.width = (float)1024;
 	luminanceGPCI.height = (float)1024;
@@ -60,11 +63,23 @@ PostProcessAutoExposure::PostProcessAutoExposure(RenderTargetContainer *source, 
 	luminanceGPCI.shaderStageCreateInfos = stages;
 	luminanceGPCI.shaderStageCreateInfoCount = 2;
 
-	luminanceGPCI.textureBindings = &engine.tonemap_tbl_;
+
+	TextureSubBinding *tonemap_sub_binding_ = new TextureSubBinding("lighting", 4);
+
+
+	TextureBindingLayoutCreateInfo tblci;
+	tblci.bindingLocation = 4;
+	tblci.bindings = tonemap_sub_binding_;
+	tblci.bindingCount = 1;
+	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	TextureBindingLayout *tonemap_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
+
+
+	luminanceGPCI.textureBindings = &tonemap_tbl_;
 	luminanceGPCI.textureBindingCount = 1;
 	luminanceGPCI.uniformBufferBindings = nullptr;
 	luminanceGPCI.uniformBufferBindingCount = 0;
-	pipeline_ = graphics_wrapper_->CreateGraphicsPipeline(luminanceGPCI);
+	pipeline_ = graphics_wrapper->CreateGraphicsPipeline(luminanceGPCI);
 }
 
 void PostProcessAutoExposure::Process() {
@@ -72,9 +87,9 @@ void PostProcessAutoExposure::Process() {
 	lum_framebuffer_->BindWrite(false);
     source_->framebuffer->BindRead();
     source_->framebuffer->BindTextures(4);
-    engine.graphics_wrapper_->DrawImmediateVertices(0, 6);
+    engine.getGraphicsWrapper()->DrawImmediateVertices(0, 6);
 }
 
 float PostProcessAutoExposure::GetExposure() {
 	return source_->render_targets[0]->getAverageValue(0);
-}*/
+}
