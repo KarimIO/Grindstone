@@ -1,16 +1,22 @@
 #include "PostProcessIBL.hpp"
 #include "../Core/Engine.hpp"
-/*
-PostProcessIBL::PostProcessIBL(RenderTargetContainer *source, RenderTargetContainer *target) : source_(source), target_(target) {
-    engine.graphics_wrapper_ = engine.engine.graphics_wrapper_;
-    
+#include "Core/Utilities.hpp"
+#include <GraphicsWrapper.hpp>
+#include "Systems/CubemapSystem.hpp"
+#include "PostPipeline.hpp"
+#include "Core/Space.hpp"
+
+PostProcessIBL::PostProcessIBL(PostPipeline *pipeline, RenderTargetContainer *target) : BasePostProcess(pipeline), target_(target) {
+    auto graphics_wrapper = engine.getGraphicsWrapper();
+	auto settings = engine.getSettings();
+
     ShaderStageCreateInfo vi;
 	ShaderStageCreateInfo fi;
-	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+	if (settings->graphics_language_ == GRAPHICS_OPENGL) {
 		vi.fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		fi.fileName = "../assets/shaders/lights_deferred/ibl.glsl";
 	}
-	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+	else if (settings->graphics_language_ == GRAPHICS_DIRECTX) {
 		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
 		fi.fileName = "../assets/shaders/lights_deferred/ibl.fxc";
 	}
@@ -33,43 +39,58 @@ PostProcessIBL::PostProcessIBL(RenderTargetContainer *source, RenderTargetContai
 	fi.type = SHADER_FRAGMENT;
 
 	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
-
+	
+	subbinding_ = TextureSubBinding("environmentMap", 4);
+	TextureBindingLayoutCreateInfo tblci;
+	tblci.bindingLocation = 4;
+	tblci.bindings = &subbinding_;
+	tblci.bindingCount = (uint32_t)1;
+	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	env_map_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
+	
 	GraphicsPipelineCreateInfo iblGPCI;
 	iblGPCI.cullMode = CULL_BACK;
-	iblGPCI.bindings = &engine.planeVBD;
+	iblGPCI.bindings = &engine.getPlaneVBD();
 	iblGPCI.bindingsCount = 1;
-	iblGPCI.attributes = &engine.planeVAD;
+	iblGPCI.attributes = &engine.getPlaneVAD();
 	iblGPCI.attributesCount = 1;
-	iblGPCI.width = (float)engine.settings.resolutionX;
-	iblGPCI.height = (float)engine.settings.resolutionY;
-	iblGPCI.scissorW = engine.settings.resolutionX;
-	iblGPCI.scissorH = engine.settings.resolutionY;
+	iblGPCI.width = (float)settings->resolution_x_;
+	iblGPCI.height = (float)settings->resolution_y_;
+	iblGPCI.scissorW = settings->resolution_x_;
+	iblGPCI.scissorH = settings->resolution_y_;
 	iblGPCI.primitiveType = PRIM_TRIANGLES;
 	iblGPCI.shaderStageCreateInfos = stages.data();
 	iblGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
-	TextureBindingLayout *refl_tbl = engine.reflection_cubemap_layout_;
-	TextureBindingLayout * tbls_refl[2] = { engine.tbl, refl_tbl };
+	std::vector<TextureBindingLayout*> tbls_refl = { engine.gbuffer_tbl_, env_map_ }; // refl_tbl
 
-	iblGPCI.textureBindings = tbls_refl;
-	iblGPCI.textureBindingCount = 2;
-	iblGPCI.uniformBufferBindings = &engine.deffubb;
+	iblGPCI.textureBindings = tbls_refl.data();
+	iblGPCI.textureBindingCount = tbls_refl.size();
+	iblGPCI.uniformBufferBindings = &engine.deff_ubb_;
 	iblGPCI.uniformBufferBindingCount = 1;
-	pipeline_ = engine.graphics_wrapper_->CreateGraphicsPipeline(iblGPCI);
+	gpipeline_ = graphics_wrapper->CreateGraphicsPipeline(iblGPCI);
 }
 
 void PostProcessIBL::Process() {
-	engine.graphics_wrapper_->SetImmediateBlending(BLEND_ADDITIVE);
+	auto graphics_wrapper = engine.getGraphicsWrapper();
+	
+	graphics_wrapper->BindVertexArrayObject(engine.getPlaneVAO());
 
+	graphics_wrapper->SetImmediateBlending(BLEND_ADDITIVE);
+
+	//graphics_wrapper->BindDefaultFramebuffer(true);
+	//engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
     target_->framebuffer->BindWrite(false);
-    source_->framebuffer->BindRead();
-    source_->framebuffer->BindTextures(0);
+    //source_->framebuffer->BindRead();
+	//target_->framebuffer->BindTextures(0);
+	engine.deff_ubo_handler_->Bind();
 
-    glm::vec3 pos = engine.deffUBOBuffer.eyePos;
-    CubemapComponent *cube = engine.cubemapSystem.GetClosestCubemap(pos);
-    pipeline_->Bind();
-    if (cube && cube->cubemap) {
-        engine.graphics_wrapper_->BindTextureBinding(cube->cubemap_binding);
+	glm::vec3 pos = glm::vec3(0, 0, 0); // engine.deffUBOBuffer.eyePos;
+    CubemapComponent *cube = ((CubemapSubSystem *)getPipeline()->getSpace()->getSubsystem(COMPONENT_CUBEMAP))->getClosestCubemap(pos);
+    if (cube && cube->cubemap_) {
+		graphics_wrapper->BindTextureBinding(cube->cubemap_binding_);
     }
-    engine.graphics_wrapper_->DrawImmediateVertices(0, 6);
-	engine.graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-}*/
+
+	gpipeline_->Bind();
+	graphics_wrapper->DrawImmediateVertices(0, 6);
+	graphics_wrapper->SetImmediateBlending(BLEND_NONE);
+}

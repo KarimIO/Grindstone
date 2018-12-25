@@ -8,7 +8,7 @@ class Space;
 
 class RenderPath {
 public:
-	virtual void render(Framebuffer *gbuffer_, Space *scene, glm::mat4 p, glm::mat4 v, glm::vec3 eye) = 0;
+	virtual void render(Framebuffer *gbuffer_, Space *scene) = 0;
 };
 
 #endif

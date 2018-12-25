@@ -1,18 +1,21 @@
-#ifndef POST_PROCESS_IBL_HPP
-#define POST_PROCESS_IBL_HPP
+#ifndef _POST_PROCESS_IBL_HPP
+#define _POST_PROCESS_IBL_HPP
 
 #include "BasePost.hpp"
 #include "GraphicsPipeline.hpp"
 
 class PostProcessIBL : public BasePostProcess {
 public:
-    PostProcessIBL(RenderTargetContainer *source, RenderTargetContainer *target);
+    PostProcessIBL(PostPipeline *pipeline, RenderTargetContainer *target);
     virtual void Process();
 private:
-    RenderTargetContainer *source_;
+    //RenderTargetContainer *source_;
     RenderTargetContainer *target_;
 
-    GraphicsPipeline *pipeline_;
+	TextureBindingLayout  *env_map_;
+	TextureSubBinding subbinding_;
+
+    GraphicsPipeline *gpipeline_;
 };
 
 #endif // !POST_PROCESS_IBL_HPP

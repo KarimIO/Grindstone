@@ -165,9 +165,10 @@ void RenderPathDeferred::createPointLightShader() {
 	pointGPCI.primitiveType = PRIM_TRIANGLE_STRIPS;
 	pointGPCI.shaderStageCreateInfos = stages.data();
 	pointGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
-	pointGPCI.textureBindings = &gbuffer_tbl_;
-	pointGPCI.textureBindingCount = 1;
-	std::vector<UniformBufferBinding *> ubbs = { deff_ubb_, point_light_ubb_ };
+	std::vector<TextureBindingLayout *> tbls_ = { engine.gbuffer_tbl_, shadow_tbl_ };
+	pointGPCI.textureBindings = tbls_.data();
+	pointGPCI.textureBindingCount = (uint32_t)tbls_.size();
+	std::vector<UniformBufferBinding *> ubbs = { engine.deff_ubb_, point_light_ubb_ };
 	pointGPCI.uniformBufferBindings = ubbs.data();
 	pointGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
 	point_light_pipeline_ = engine.getGraphicsWrapper()->CreateGraphicsPipeline(pointGPCI);
@@ -232,9 +233,10 @@ void RenderPathDeferred::createSpotLightShader() {
 	spotGPCI.primitiveType = PRIM_TRIANGLE_STRIPS;
 	spotGPCI.shaderStageCreateInfos = stages.data();
 	spotGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
-	spotGPCI.textureBindings = &gbuffer_tbl_;
-	spotGPCI.textureBindingCount = 1;
-	std::vector<UniformBufferBinding *> ubbs = { deff_ubb_, spot_light_ubb_ };
+	std::vector<TextureBindingLayout *> tbls_ = { engine.gbuffer_tbl_, shadow_tbl_ };
+	spotGPCI.textureBindings = tbls_.data();
+	spotGPCI.textureBindingCount = (uint32_t)tbls_.size();
+	std::vector<UniformBufferBinding *> ubbs = { engine.deff_ubb_, spot_light_ubb_ };
 	spotGPCI.uniformBufferBindings = ubbs.data();
 	spotGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
 	spot_light_pipeline_ = engine.getGraphicsWrapper()->CreateGraphicsPipeline(spotGPCI);
@@ -299,31 +301,23 @@ void RenderPathDeferred::createDirectionalLightShader() {
 	directionalGPCI.primitiveType = PRIM_TRIANGLE_STRIPS;
 	directionalGPCI.shaderStageCreateInfos = stages.data();
 	directionalGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
-	directionalGPCI.textureBindings = &gbuffer_tbl_;
-	directionalGPCI.textureBindingCount = 1;
-	std::vector<UniformBufferBinding *> ubbs = { deff_ubb_, directional_light_ubb_ };
+	std::vector<TextureBindingLayout *> tbls_ = { engine.gbuffer_tbl_, shadow_tbl_ };
+	directionalGPCI.textureBindings = tbls_.data();
+	directionalGPCI.textureBindingCount = (uint32_t)tbls_.size();
+	std::vector<UniformBufferBinding *> ubbs = { engine.deff_ubb_, directional_light_ubb_ };
 	directionalGPCI.uniformBufferBindings = ubbs.data();
 	directionalGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
 	directional_light_pipeline_ = engine.getGraphicsWrapper()->CreateGraphicsPipeline(directionalGPCI);
 }
 
-void RenderPathDeferred::render(Framebuffer *fbo, Space *space, glm::mat4 p, glm::mat4 v, glm::vec3 eye) {
-	deferred_ubo_.invProj = glm::inverse(p);
-	deferred_ubo_.view = glm::inverse(v);
-	deferred_ubo_.eyePos.x = eye.x;
-	deferred_ubo_.eyePos.y = eye.y;
-	deferred_ubo_.eyePos.z = eye.z;
-	deferred_ubo_.resolution.x = engine.getSettings()->resolution_x_;
-	deferred_ubo_.resolution.y = engine.getSettings()->resolution_y_;
-	deff_ubo_handler_->UpdateUniformBuffer(&deferred_ubo_);
-
+void RenderPathDeferred::render(Framebuffer *fbo, Space *space) {
 	// Opaque
 	gbuffer_->Bind(true);
 	gbuffer_->Clear(CLEAR_BOTH);
 	engine.getGraphicsWrapper()->SetImmediateBlending(BLEND_NONE);
 	engine.getGraphicsPipelineManager()->drawDeferredImmediate();
 
-	deff_ubo_handler_->Bind();
+	engine.deff_ubo_handler_->Bind();
 
 	/*if (engine.debug_wrapper_.GetDebugMode() != 0) {
 		engine.debug_wrapper_.Draw();
@@ -332,8 +326,6 @@ void RenderPathDeferred::render(Framebuffer *fbo, Space *space, glm::mat4 p, glm
 	{
 		// Deferred
 		renderLights(fbo, space);
-		
-		
 		
 		/*gbuffer_->BindRead();
 		engine.hdr_framebuffer_->BindWrite(true);
@@ -389,9 +381,12 @@ void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 	TransformSubSystem *transform_system = (TransformSubSystem *)space->getSubsystem(COMPONENT_TRANSFORM);
 
+	if (fbo == nullptr)
+		graphics_wrapper->BindDefaultFramebuffer(true);
+	else
+		fbo->BindWrite(true);
+	
 	graphics_wrapper->SetImmediateBlending(BLEND_ADDITIVE);
-	fbo->BindWrite(true);
-	//graphics_wrapper->BindDefaultFramebuffer(true);
 	graphics_wrapper->Clear(CLEAR_BOTH);
 	gbuffer_->BindRead();
 	gbuffer_->BindTextures(0);
@@ -476,32 +471,14 @@ void RenderPathDeferred::createFramebuffer() {
 	auto settings = engine.getSettings();
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
-	bindings.reserve(5);
-	bindings.emplace_back("gbuffer0", 0); // R G B MatID
-	bindings.emplace_back("gbuffer1", 1); // nX nY nZ MatData
-	bindings.emplace_back("gbuffer2", 2); // sR sG sB Roughness
-	bindings.emplace_back("gbuffer3", 3); // Depth
-	bindings.emplace_back("shadow_map", 4);
-
-	UniformBufferBindingCreateInfo deffubbci;
-	deffubbci.binding = 0;
-	deffubbci.shaderLocation = "UniformBufferObject";
-	deffubbci.size = sizeof(DefferedUBO);
-	deffubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	deff_ubb_ = graphics_wrapper->CreateUniformBufferBinding(deffubbci);
-
-	UniformBufferCreateInfo deffubci;
-	deffubci.isDynamic = false;
-	deffubci.size = sizeof(DefferedUBO);
-	deffubci.binding = deff_ubb_;
-	deff_ubo_handler_ = graphics_wrapper->CreateUniformBuffer(deffubci);
+	shadow_binding_ = TextureSubBinding("shadow_map", 4);
 
 	TextureBindingLayoutCreateInfo tblci;
-	tblci.bindingLocation = 0;
-	tblci.bindings = bindings.data();
-	tblci.bindingCount = (uint32_t)bindings.size();
+	tblci.bindingLocation = 4;
+	tblci.bindings = &shadow_binding_;
+	tblci.bindingCount = (uint32_t)1;
 	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	gbuffer_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
+	shadow_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
 
 	std::vector<RenderTargetCreateInfo> gbuffer_images_ci;
 	gbuffer_images_ci.reserve(3);

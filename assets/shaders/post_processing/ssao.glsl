@@ -82,5 +82,5 @@ void main() {
     }
 
     occlusion = 1.0 - (occlusion / kernelSize);
-    SSAOout = vec4(occlusion);
+    SSAOout = vec4(1, fragTexCoord, 1);
 }

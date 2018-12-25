@@ -11,6 +11,7 @@
 #include "../Systems/ControllerSystem.hpp"
 #include "../Systems/ColliderSystem.hpp"
 #include "../Systems/RigidBodySystem.hpp"
+#include "../Systems/CubemapSystem.hpp"
 
 Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 	addSystem(new ControllerSubSystem(this));
@@ -21,6 +22,7 @@ Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 	addSystem(new LightSpotSubSystem(this));
 	addSystem(new LightDirectionalSubSystem(this));
 	addSystem(new TransformSubSystem(this));
+	addSystem(new CubemapSubSystem(this));
 	addSystem(new CameraSubSystem(this));
 
 	for (rapidjson::Value::MemberIterator game_object_itr = val.MemberBegin(); game_object_itr != val.MemberEnd(); ++game_object_itr) {
@@ -40,7 +42,6 @@ Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 					LOG_WARN("Could not get component: %s.\n", type_str);
 				}
 				else {
-					std::cout << type_str << " " << type << "\n";
 					rapidjson::Value &params = component_itr->value;
 					auto subsystem = subsystems_[type];
 					auto handle = subsystem->addComponent(game_object_id, params);

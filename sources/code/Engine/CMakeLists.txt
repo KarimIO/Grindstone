@@ -22,7 +22,7 @@ set(ENGINE_SYSTEMS_SOURCES Systems/RenderStaticMeshSystem.cpp Systems/Controller
 source_group("Systems\\Source Files" FILES ${ENGINE_SYSTEMS_SOURCES})
 set(ENGINE_ASSET_MANAGERS_SOURCES AssetManagers/AudioManager.cpp AssetManagers/GraphicsPipelineManager.cpp AssetManagers/MaterialManager.cpp AssetManagers/ModelManager.cpp AssetManagers/TextureManager.cpp)
 source_group("Asset Managers\\Source Files" FILES ${ENGINE_ASSET_MANAGERS_SOURCES})
-set(ENGINE_POST_SOURCES PostProcess/PostProcessAutoExposure.cpp PostProcess/PostProcessSSR.cpp PostProcess/PostPipeline.cpp PostProcess/ColorGradingPost.cpp PostProcess/PostProcessIBL.cpp PostProcess/PostProcessSSAO.cpp PostProcess/PostProcessSSAOBlur.cpp PostProcess/PostProcessTonemap.cpp)
+set(ENGINE_POST_SOURCES PostProcess/BasePost.cpp PostProcess/PostProcessAutoExposure.cpp PostProcess/PostProcessSSR.cpp PostProcess/PostPipeline.cpp PostProcess/ColorGradingPost.cpp PostProcess/PostProcessIBL.cpp PostProcess/PostProcessSSAO.cpp PostProcess/PostProcessSSAOBlur.cpp PostProcess/PostProcessTonemap.cpp)
 source_group("Post Processing\\Source Files" FILES ${ENGINE_POST_SOURCES})
 set(ENGINE_OTHER_SOURCES Utilities/SettingsFile.cpp ../FormatCommon/Bounding.cpp Utilities/Logger.cpp Utilities/DLLHandler.cpp Utilities/DLLGraphics.cpp Utilities/DLLAudio.cpp)
 source_group("Other\\Source Files" FILES ${ENGINE_OTHER_SOURCES})

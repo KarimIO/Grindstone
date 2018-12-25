@@ -7,6 +7,8 @@
 #include "Utilities/SettingsFile.hpp"
 #include "Systems/BaseSystem.hpp"
 #include <VertexArrayObject.hpp>
+#include <glm/glm.hpp>
+#include <Texture.hpp>
 
 class System;
 class Scene;
@@ -37,6 +39,22 @@ public:
 
 	void initializeUniformBuffer();
 	void initializePlaneVertexBuffer();
+	void deffUBO();
+	void initializeTBL();
+
+	TextureBindingLayout *gbuffer_tbl_;
+
+	std::vector<TextureSubBinding> subbindings_;
+	UniformBufferBinding *deff_ubb_;
+	UniformBuffer *deff_ubo_handler_;
+
+	struct DefferedUBO {
+		glm::mat4 view;
+		glm::mat4 invProj;
+		glm::vec4 eyePos;
+		glm::vec4 resolution;
+		float time;
+	};
 
 	VertexArrayObject *getPlaneVAO();
 	VertexBindingDescription getPlaneVBD();

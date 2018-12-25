@@ -8,7 +8,7 @@
 
 // , PostProcessAutoExposure *auto_exposure
 // , auto_exposure_(auto_exposure)
-PostProcessTonemap::PostProcessTonemap(RenderTargetContainer *source, RenderTargetContainer *target, PostProcessAutoExposure *auto_exposure) : source_(source), target_(target), auto_exposure_(auto_exposure) {
+PostProcessTonemap::PostProcessTonemap(PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target, PostProcessAutoExposure *auto_exposure) : BasePostProcess(pipeline), source_(source), target_(target), auto_exposure_(auto_exposure) {
     GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
     
@@ -89,17 +89,32 @@ PostProcessTonemap::PostProcessTonemap(RenderTargetContainer *source, RenderTarg
 	tonemapGPCI.textureBindingCount = 1;
 	tonemapGPCI.uniformBufferBindings = &ubb;
 	tonemapGPCI.uniformBufferBindingCount = 1;
-	pipeline_ = graphics_wrapper->CreateGraphicsPipeline(tonemapGPCI);
+	gpipeline_ = graphics_wrapper->CreateGraphicsPipeline(tonemapGPCI);
+
+	first_render_ = true;
 }
 
 void PostProcessTonemap::Process() {
 	double dt = engine.getUpdateTimeDelta();
 
-	float new_exp = 1.0f / glm::clamp(exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
-	exposure_buffer_.exposure = exposure_buffer_.exposure * (1.0f - dt) + new_exp * dt;
-	exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
+	if (first_render_) {
+		exposure_buffer_.exposure = 1.0f / glm::clamp(exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
+		exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
 
-    pipeline_->Bind();
+		first_render_ = false;
+	}
+	else {
+		if (auto_exposure_) {
+			float new_exp = 1.0f / glm::clamp(exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
+			exposure_buffer_.exposure = exposure_buffer_.exposure * (1.0f - dt) + new_exp * dt;
+			exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
+		}
+		else {
+			exposure_buffer_.exposure = 1.0f;
+		}
+	}
+
+    gpipeline_->Bind();
     exposure_ub_->Bind();
 	if (target_ == nullptr) {
 		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);

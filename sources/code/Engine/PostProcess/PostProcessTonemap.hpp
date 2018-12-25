@@ -7,7 +7,7 @@ class PostProcessAutoExposure;
 
 class PostProcessTonemap : public BasePostProcess {
 public:
-    PostProcessTonemap(RenderTargetContainer *source, RenderTargetContainer *target, PostProcessAutoExposure *auto_exposure);
+    PostProcessTonemap(PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target, PostProcessAutoExposure *auto_exposure);
     virtual void Process();
 private:
     RenderTargetContainer *source_;
@@ -15,11 +15,13 @@ private:
 
 	PostProcessAutoExposure *auto_exposure_;
 
-    GraphicsPipeline *pipeline_;
+    GraphicsPipeline *gpipeline_;
 
 	struct ExposureUBO {
 		float exposure;
 	} exposure_buffer_;
+
+	bool first_render_ = true;
 
 	UniformBuffer *exposure_ub_;
 };

@@ -1,5 +1,4 @@
-#if 0
-#include "SCubemap.hpp"
+#include "CubemapSystem.hpp"
 #include <iostream>
 
 #include "../Core/Engine.hpp"
@@ -11,12 +10,16 @@
 
 #include <fstream>
 
-#include "DDSformat.hpp"
 #include <cstring>
 
 #include "../Utilities/Logger.hpp"
+#include "Core/Scene.hpp"
+#include "Core/Space.hpp"
+#include "TransformSystem.hpp"
+#include "../AssetManagers/TextureManager.hpp"
+#include <GraphicsWrapper.hpp>
 
-void ExtractBlock(const unsigned char* inPtr, unsigned int width, unsigned char* colorBlock) {
+/*void ExtractBlock(const unsigned char* inPtr, unsigned int width, unsigned char* colorBlock) {
     for (int j = 0; j < 4; j++) {
         memcpy(&colorBlock[j * 4 * 4], inPtr, 4 * 4);
         inPtr += width * 4;
@@ -223,56 +226,134 @@ void CubemapSystem::CaptureCubemaps(double) {
 
 	engine.settings.enableShadows = shouldUseShadows;
 }
+*/
 
-void CubemapSystem::LoadCubemaps() {
-	LOG("Loading Cubemaps.\n");
-	std::string path = "../assets/cubemaps/" + engine.level_file_name_ + "_";
-	for (size_t i = 0; i < components.size(); i++) {
-		std::string sub_path = path + std::to_string(i) + ".dds";
-		try {
-			components[i].cubemap = engine.materialManager.LoadCubemap(sub_path);
+CubemapComponent::CubemapComponent(GameObjectHandle object_handle, ComponentHandle id) : Component(COMPONENT_CUBEMAP, object_handle, id), capture_method_(CubemapComponent::CaptureMethod::CAPTURE_BAKE), near_(0.1f), far_(100.0f), resolution_(128) {}
 
-			SingleTextureBind stb;
-			stb.texture = components[i].cubemap;
-			stb.address = 4;
+CubemapSystem::CubemapSystem() : System(COMPONENT_CUBEMAP) {}
 
-			TextureBindingCreateInfo ci;
-			ci.textures = &stb;
-			ci.layout = engine.reflection_cubemap_layout_;
-			ci.textureCount = 1;
-			components[i].cubemap_binding = engine.graphics_wrapper_->CreateTextureBinding(ci);
-		}
-		catch(std::runtime_error &e) {
-			LOG("Unable to load level cubemap" + sub_path + ".\n");
-		}
-	}
+CubemapSubSystem::CubemapSubSystem(Space *space) : SubSystem(COMPONENT_CUBEMAP, space) {
+	cube_binding_ = TextureSubBinding("environmentMap", 4);
+
+	TextureBindingLayoutCreateInfo tblci;
+	tblci.bindingLocation = 4;
+	tblci.bindings = &cube_binding_;
+	tblci.bindingCount = (uint32_t)1;
+	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	texture_binding_layout_ = engine.getGraphicsWrapper()->CreateTextureBindingLayout(tblci);
 }
 
-void CubemapSystem::Reserve(int n) {
-	components.reserve(n);
-}
+ComponentHandle CubemapSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value & params) {
+	ComponentHandle component_handle = (ComponentHandle)components_.size();
+	components_.emplace_back(object_handle, component_handle);
+	auto &component = components_.back();
 
-CubemapComponent *CubemapSystem::GetClosestCubemap(glm::vec3 point) {
-	float closestLength = FLT_MAX;
-	float length;
-	size_t j = 0;
-	if (components.size() > 0) {
-		for (size_t i = 0; i < components.size(); i++) {
-			glm::vec3 p2 = point - components[i].position;
-			length = sqrt(p2.x*p2.x + p2.y*p2.y + p2.z*p2.z);
-			if (length < closestLength) {
-				closestLength = length;
-				j = i;
+	if (params.HasMember("type")) {
+		std::string type = params["type"].GetString();
+
+		if (type == "baked") {
+			component.capture_method_ = CubemapComponent::CaptureMethod::CAPTURE_BAKE;
+		}
+		else if (type == "realtime") {
+			component.capture_method_ = CubemapComponent::CaptureMethod::CAPTURE_REALTIME;
+		}
+		else if (type == "custom") {
+			component.capture_method_ = CubemapComponent::CaptureMethod::CAPTURE_CUSTOM;
+
+			if (params.HasMember("path")) {
+				std::string path = std::string("../assets/") + params["path"].GetString();
+
+				// Load File
+				TextureHandler handle = engine.getTextureManager()->loadCubemap(path);
+				Texture *texture = engine.getTextureManager()->getTexture(handle);
+				component.cubemap_ = texture;
+				component.cubemap_binding_;
+
+				SingleTextureBind stb;
+				stb.texture = component.cubemap_;
+				stb.address = 4;
+
+				TextureBindingCreateInfo ci;
+				ci.textures = &stb;
+				ci.layout = texture_binding_layout_;
+				ci.textureCount = 1;
+				component.cubemap_binding_ = engine.getGraphicsWrapper()->CreateTextureBinding(ci);
+			}
+			else {
+				LOG_WARN("No path given.");
 			}
 		}
-		return &components[j];
+		else {
+			LOG_WARN("Invalid type.");
+		}
 	}
-	return nullptr;
+
+	if (component.capture_method_ == CubemapComponent::CaptureMethod::CAPTURE_BAKE ||
+		component.capture_method_ == CubemapComponent::CaptureMethod::CAPTURE_REALTIME) {
+		if (params.HasMember("resolution")) {
+			component.resolution_ = params["resolution"].GetUint();
+		}
+
+		if (params.HasMember("far")) {
+			component.far_ = params["far"].GetFloat();
+		}
+
+		if (params.HasMember("near")) {
+			component.near_ = params["far"].GetFloat();
+		}
+	}
+
+	return component_handle;
 }
 
-CubemapComponent *CubemapSystem::AddCubemap(glm::vec3 position) {
-	components.push_back(CubemapComponent());
-	components[components.size() - 1].position = position;
-	return &components[components.size() - 1];
+
+void CubemapSystem::update(double dt) {
+	auto scenes = engine.getScenes();
+	for (auto scene : scenes) {
+		for (auto space : scene->spaces_) {
+			CubemapSubSystem *subsystem = (CubemapSubSystem *)space->getSubsystem(system_type_);
+			for (auto &component : subsystem->components_) {
+			}
+		}
+	}
 }
-#endif
+
+CubemapComponent & CubemapSubSystem::getComponent(ComponentHandle handle) {
+	return components_[handle];
+}
+
+size_t CubemapSubSystem::getNumComponents() {
+	return components_.size();
+}
+
+void CubemapSubSystem::removeComponent(ComponentHandle handle) {
+}
+
+void CubemapSubSystem::captureCubemaps(double) {
+}
+
+void CubemapSubSystem::loadCubemaps() {
+}
+
+CubemapComponent * CubemapSubSystem::getClosestCubemap(glm::vec3 eye) {
+	float dist_max = INFINITY;
+	CubemapComponent *max = nullptr;
+
+	for (auto &component : components_) {
+		GameObjectHandle game_object_id = component.game_object_handle_;
+		ComponentHandle transform_id = space_->getObject(game_object_id).getComponentHandle(COMPONENT_TRANSFORM);
+		TransformSubSystem *transform = (TransformSubSystem *)(space_->getSubsystem(COMPONENT_TRANSFORM));
+
+		glm::vec3 c = transform->getPosition(transform_id);
+		float dist = glm::distance(eye, c);
+		if (dist < dist_max) {
+			max = &component;
+			dist_max = dist;
+		}
+	}
+
+	return max;
+}
+
+CubemapSubSystem::~CubemapSubSystem() {
+}

@@ -1,9 +1,14 @@
 #include "PostProcessSSAO.hpp"
 #include "../Core/Engine.hpp"
 #include "../../GraphicsCommon/UniformBuffer.hpp"
-/*
-PostProcessSSAO::PostProcessSSAO(RenderTargetContainer *source) : source_(source) {
-    GraphicsWrapper *graphics_wrapper_ = engine.graphics_wrapper_;
+#include <GraphicsWrapper.hpp>
+#include <glm/glm.hpp>
+#include "Core/Utilities.hpp"
+
+PostProcessSSAO::PostProcessSSAO(PostPipeline *pipeline, RenderTargetContainer *source) : BasePostProcess(pipeline), source_(source) {
+    GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+	auto settings = engine.getSettings();
+
     //=====================
 	// SSAO
 	//=====================
@@ -13,13 +18,13 @@ PostProcessSSAO::PostProcessSSAO(RenderTargetContainer *source) : source_(source
 	ubbci.shaderLocation = "SSAOBufferObject";
 	ubbci.size = sizeof(SSAOBufferObject);
 	ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	UniformBufferBinding *ubb = graphics_wrapper_->CreateUniformBufferBinding(ubbci);
+	UniformBufferBinding *ubb = graphics_wrapper->CreateUniformBufferBinding(ubbci);
 
 	UniformBufferCreateInfo ubci;
 	ubci.isDynamic = false;
 	ubci.size = sizeof(SSAOBufferObject);
 	ubci.binding = ubb;
-	ssao_ub = graphics_wrapper_->CreateUniformBuffer(ubci);
+	ssao_ub = graphics_wrapper->CreateUniformBuffer(ubci);
 
 	const int noise_dim = 4;
 	const int noise_size = noise_dim * noise_dim * 2;
@@ -62,7 +67,7 @@ PostProcessSSAO::PostProcessSSAO(RenderTargetContainer *source) : source_(source
 	ssao_noise_ci.height = noise_dim;
 	ssao_noise_ci.ddscube = false;
 
-	Texture *ssao_noise_ = graphics_wrapper_->CreateTexture(ssao_noise_ci);
+	Texture *ssao_noise_ = graphics_wrapper->CreateTexture(ssao_noise_ci);
 
 	TextureSubBinding ssao_noise_sub_binding_ = TextureSubBinding("ssao_noise", 4);
 
@@ -71,7 +76,7 @@ PostProcessSSAO::PostProcessSSAO(RenderTargetContainer *source) : source_(source
 	tblci.bindings = &ssao_noise_sub_binding_;
 	tblci.bindingCount = 1;
 	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	TextureBindingLayout *ssao_noise_binding_layout = graphics_wrapper_->CreateTextureBindingLayout(tblci);
+	TextureBindingLayout *ssao_noise_binding_layout = graphics_wrapper->CreateTextureBindingLayout(tblci);
 
 	SingleTextureBind stb;
 	stb.texture = ssao_noise_;
@@ -81,18 +86,18 @@ PostProcessSSAO::PostProcessSSAO(RenderTargetContainer *source) : source_(source
 	ci.textures = &stb;
 	ci.layout = ssao_noise_binding_layout;
 	ci.textureCount = 1;
-	ssao_noise_binding_ = graphics_wrapper_->CreateTextureBinding(ci);
+	ssao_noise_binding_ = graphics_wrapper->CreateTextureBinding(ci);
 
 	ShaderStageCreateInfo vi;
 	ShaderStageCreateInfo fi;
 	std::vector<char> vfile;
 	std::vector<char> ffile;
 
-	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+	if (settings->graphics_language_ == GRAPHICS_OPENGL) {
 		vi.fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		fi.fileName = "../assets/shaders/post_processing/ssao.glsl";
 	}
-	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+	else if (settings->graphics_language_ == GRAPHICS_DIRECTX) {
 		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
 		fi.fileName = "../assets/shaders/post_processing/ssao.fxc";
 	}
@@ -123,39 +128,43 @@ PostProcessSSAO::PostProcessSSAO(RenderTargetContainer *source) : source_(source
 
 	GraphicsPipelineCreateInfo ssaoGPCI;
 	ssaoGPCI.cullMode = CULL_BACK;
-	ssaoGPCI.bindings = &engine.planeVBD;
+	ssaoGPCI.bindings = &engine.getPlaneVBD();
 	ssaoGPCI.bindingsCount = 1;
-	ssaoGPCI.attributes = &engine.planeVAD;
+	ssaoGPCI.attributes = &engine.getPlaneVAD();
 	ssaoGPCI.attributesCount = 1;
-	ssaoGPCI.width = (float)engine.settings.resolutionX; // DIVIDE BY TWO
-	ssaoGPCI.height = (float)engine.settings.resolutionY;
-	ssaoGPCI.scissorW = engine.settings.resolutionX;
-	ssaoGPCI.scissorH = engine.settings.resolutionY;
+	ssaoGPCI.width = (float)settings->resolution_x_; // DIVIDE BY TWO
+	ssaoGPCI.height = (float)settings->resolution_y_;
+	ssaoGPCI.scissorW = settings->resolution_x_;
+	ssaoGPCI.scissorH = settings->resolution_y_;
 	ssaoGPCI.primitiveType = PRIM_TRIANGLES;
 	ssaoGPCI.shaderStageCreateInfos = stages;
 	ssaoGPCI.shaderStageCreateInfoCount = 2;
-	std::vector<TextureBindingLayout *>tbls = { engine.tbl, ssao_noise_binding_layout };
+	std::vector<TextureBindingLayout *>tbls = {engine.gbuffer_tbl_};
 
-	std::vector<UniformBufferBinding*> ubbs = { engine.deffubb , ubb };
+	std::vector<UniformBufferBinding*> ubbs = { engine.deff_ubb_ , ubb };
 	ssaoGPCI.textureBindings = tbls.data();
 	ssaoGPCI.textureBindingCount = (uint32_t)tbls.size();
 	ssaoGPCI.uniformBufferBindings = ubbs.data();
 	ssaoGPCI.uniformBufferBindingCount = ubbs.size();
-	pipeline_ = graphics_wrapper_->CreateGraphicsPipeline(ssaoGPCI);
+	pipeline_ = graphics_wrapper->CreateGraphicsPipeline(ssaoGPCI);
 }
 
 void PostProcessSSAO::Process() {
+	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+
+	engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
+
     if (source_ != nullptr) {
-        source_->framebuffer->Bind(false);
+        source_->framebuffer->BindRead();
 		source_->framebuffer->BindTextures(0);
     }
     
-    engine.graphics_wrapper_->EnableDepth(false);
-    engine.graphics_wrapper_->SetColorMask(COLOR_MASK_ALPHA);
+    //graphics_wrapper->EnableDepth(false);
+    //graphics_wrapper->SetColorMask(COLOR_MASK_ALPHA);
     ssao_ub->Bind();
     pipeline_->Bind();
-    engine.graphics_wrapper_->BindTextureBinding(ssao_noise_binding_);
-    engine.graphics_wrapper_->DrawImmediateVertices(0, 6);
-    engine.graphics_wrapper_->SetColorMask(COLOR_MASK_RGBA);
-    engine.graphics_wrapper_->EnableDepth(true);
-}*/
+    graphics_wrapper->BindTextureBinding(ssao_noise_binding_);
+    graphics_wrapper->DrawImmediateVertices(0, 6);
+    //graphics_wrapper->SetColorMask(COLOR_MASK_RGBA);
+    //graphics_wrapper->EnableDepth(true);
+}

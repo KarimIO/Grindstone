@@ -9,7 +9,7 @@
 class RenderPath;
 
 struct CameraComponent : public Component {
-	CameraComponent(GameObjectHandle object_handle, ComponentHandle id);
+	CameraComponent(Space *space, GameObjectHandle object_handle, ComponentHandle id);
 
 	bool is_ortho;
 	double ortho_x_;

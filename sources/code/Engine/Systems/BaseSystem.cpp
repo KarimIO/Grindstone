@@ -7,6 +7,9 @@ ComponentType getComponentType(std::string str) {
 	if (str == "COMPONENT_CONTROLLER")
 		return COMPONENT_CONTROLLER;
 
+	if (str == "COMPONENT_CUBEMAP")
+		return COMPONENT_CUBEMAP;
+
 	if (str == "COMPONENT_CAMERA")
 		return COMPONENT_CAMERA;
 

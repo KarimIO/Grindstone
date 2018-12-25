@@ -44,18 +44,19 @@ float GLRenderTarget::getAverageValue(uint32_t i) {
     glBindTexture(GL_TEXTURE_2D, handles_[i]);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    unsigned int s = 2 * 2;
+	unsigned int w = 8;
+    unsigned int s = w * w;
 
     GLfloat *values = new GLfloat[s];
 	//glGetTexImage(GL_TEXTURE_2D, 9, GL_RED, GL_FLOAT, values);
-	glReadPixels(0,0,2,2,GL_RED, GL_FLOAT, values);
+	glReadPixels(0,0,w,w,GL_RED, GL_FLOAT, values);
     float val = 0;
     for (int i = 0; i < s; i++) {
 		float lum = values[i];
 		val += lum;
     }
 
-	val /= 4.0f;
+	val /= float(s);
 
     delete[] values;
 

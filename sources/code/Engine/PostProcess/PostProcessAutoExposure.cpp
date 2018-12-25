@@ -3,7 +3,7 @@
 #include "Core/Utilities.hpp"
 #include "PostProcessAutoExposure.hpp"
 
-PostProcessAutoExposure::PostProcessAutoExposure(RenderTargetContainer *source, RenderTargetContainer *target) : source_(source), target_(target) {
+PostProcessAutoExposure::PostProcessAutoExposure(PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target) : BasePostProcess(pipeline), source_(source), target_(target) {
     GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
 
@@ -79,11 +79,11 @@ PostProcessAutoExposure::PostProcessAutoExposure(RenderTargetContainer *source, 
 	luminanceGPCI.textureBindingCount = 1;
 	luminanceGPCI.uniformBufferBindings = nullptr;
 	luminanceGPCI.uniformBufferBindingCount = 0;
-	pipeline_ = graphics_wrapper->CreateGraphicsPipeline(luminanceGPCI);
+	gpipeline_ = graphics_wrapper->CreateGraphicsPipeline(luminanceGPCI);
 }
 
 void PostProcessAutoExposure::Process() {
-    pipeline_->Bind();
+    gpipeline_->Bind();
 	lum_framebuffer_->BindWrite(false);
     source_->framebuffer->BindRead();
     source_->framebuffer->BindTextures(4);

@@ -1,12 +1,12 @@
-#ifndef POST_PROCESS_SSAO_HPP
-#define POST_PROCESS_SSAO_HPP
+#ifndef _POST_PROCESS_SSAO_HPP
+#define _POST_PROCESS_SSAO_HPP
 
 #include "BasePost.hpp"
 #include "GraphicsPipeline.hpp"
 
 class PostProcessSSAO : public BasePostProcess {
 public:
-    PostProcessSSAO(RenderTargetContainer *source);
+    PostProcessSSAO(PostPipeline *pipeline, RenderTargetContainer *source);
     virtual void Process();
 private:
     RenderTargetContainer *source_;

@@ -12,9 +12,12 @@
 
 #include "PostProcess/PostProcessTonemap.hpp"
 #include "PostProcess/PostProcessAutoExposure.hpp"
+#include "PostProcess/PostProcessSSAO.hpp"
+#include "PostProcess/PostProcessIBL.hpp"
 
-CameraComponent::CameraComponent(GameObjectHandle object_handle, ComponentHandle handle) :
+CameraComponent::CameraComponent(Space *space, GameObjectHandle object_handle, ComponentHandle handle) :
 	Component(COMPONENT_CAMERA, object_handle, handle),
+	post_pipeline_(space),
 	aperture_size_(16),
 	shutter_speed_(1.0f / 200.0f),
 	iso_(200.0f),
@@ -36,7 +39,7 @@ CameraSubSystem::CameraSubSystem(Space *space) : SubSystem(COMPONENT_CAMERA, spa
 
 ComponentHandle CameraSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
-	components_.emplace_back(object_handle, component_handle);
+	components_.emplace_back(space_, object_handle, component_handle);
 	auto &component = components_.back();
 	auto settings = engine.getSettings();
 	auto graphics_wrapper = engine.getGraphicsWrapper();
@@ -60,20 +63,20 @@ ComponentHandle CameraSubSystem::addComponent(GameObjectHandle object_handle, ra
 
 	//RenderTargetContainer *rt_hdr = &engine.rt_hdr_;
 
-	/*if (engine.getSettings().use_ssao) {
-		BasePostProcess *pp_ssao = new PostProcessSSAO(&engine.rt_gbuffer_);
-		post_pipeline_.AddPostProcess(pp_ssao);
+	if (engine.getSettings()->enable_ssao_) {
+		BasePostProcess *pp_ssao = new PostProcessSSAO(&component.post_pipeline_, &component.rt_hdr_);
+		component.post_pipeline_.AddPostProcess(pp_ssao);
 	}
 
-	if (engine.settings.enableReflections) {
-		BasePostProcess *pp_ibl = new PostProcessIBL(&engine.rt_gbuffer_, rt_hdr);
-		post_pipeline_.AddPostProcess(pp_ibl);
-	}*/
+	if (settings->enable_reflections_) {
+		PostProcessIBL *pp_ibl = new PostProcessIBL(&component.post_pipeline_, &component.rt_hdr_);
+		component.post_pipeline_.AddPostProcess(pp_ibl);
+	}
 
-	PostProcessAutoExposure *pp_auto = new PostProcessAutoExposure(&component.rt_hdr_, nullptr);
+	PostProcessAutoExposure *pp_auto = new PostProcessAutoExposure(&component.post_pipeline_, &component.rt_hdr_, nullptr);
 	component.post_pipeline_.AddPostProcess(pp_auto);
 
-	PostProcessTonemap *pp_tonemap = new PostProcessTonemap(&component.rt_hdr_, nullptr, pp_auto);
+	PostProcessTonemap *pp_tonemap = new PostProcessTonemap(&component.post_pipeline_, &component.rt_hdr_, nullptr, pp_auto);
 	component.post_pipeline_.AddPostProcess(pp_tonemap);
 
 	return component_handle;
@@ -153,8 +156,19 @@ void CameraSystem::update(double dt) {
 				// Culling
 				//engine.ubo2->Bind();
 
-				Framebuffer *gbuffer = component.hdr_framebuffer_; // engine.getDefaultFramebuffer()
-				render_path_->render(gbuffer, space, component.projection_, component.view_, pos);
+
+				Engine::DefferedUBO deferred_ubo;
+				deferred_ubo.invProj = glm::inverse(component.projection_);
+				deferred_ubo.view = glm::inverse(component.view_);
+				deferred_ubo.eyePos.x = pos.x;
+				deferred_ubo.eyePos.y = pos.y;
+				deferred_ubo.eyePos.z = pos.z;
+				deferred_ubo.resolution.x = engine.getSettings()->resolution_x_;
+				deferred_ubo.resolution.y = engine.getSettings()->resolution_y_;
+				engine.deff_ubo_handler_->UpdateUniformBuffer(&deferred_ubo);
+
+				Framebuffer *gbuffer = component.hdr_framebuffer_;
+				render_path_->render(gbuffer, space);
 
 				// PostProcessing
 				engine.getGraphicsWrapper()->BindVertexArrayObject(engine.getPlaneVAO());

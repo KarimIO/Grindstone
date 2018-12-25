@@ -4,6 +4,8 @@
 #include "Framebuffer.hpp"
 #include "BasePost.hpp"
 
+class Space;
+
 // Contains all active post-process pipelines for a camera.
 // Note: Should ideally exist per-camera, as an attribute of it.
 // Example:
@@ -15,12 +17,15 @@
 //		fbo = process.ProcessScene(fbo);
 class PostPipeline {
 public:
+	PostPipeline(Space *space);
 	void Reserve(unsigned int size);
 	void AddPostProcess(BasePostProcess *);
 	void Process();
+	Space *getSpace();
 	~PostPipeline();
 private:
 	std::vector<BasePostProcess *> processes_;
+	Space *space_;
 };
 
 #endif

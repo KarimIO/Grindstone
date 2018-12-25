@@ -6,7 +6,7 @@
 
 class PostProcessSSR : public BasePostProcess {
 public:
-	PostProcessSSR(RenderTargetContainer *source, RenderTargetContainer *target);
+	PostProcessSSR(BasePostProcess *pipeline, RenderTargetContainer *source, RenderTargetContainer *target);
 
     virtual void Process();
 private:

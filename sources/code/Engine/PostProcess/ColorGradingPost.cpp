@@ -3,7 +3,7 @@
 #include "../Core/Utilities.hpp"
 #include "../Core/Engine.hpp"
 
-ColorGradingPost::ColorGradingPost() {
+ColorGradingPost::ColorGradingPost(PostPipeline *pipeline) : BasePostProcess(pipeline) {
 	/*std::string vsPath = "../shaders/overlay.glvs";
 	std::string fsPath = "../shaders/post/ColorGrading.glfs";
 
@@ -29,14 +29,6 @@ ColorGradingPost::ColorGradingPost() {
 
 	fsContent.clear();
 	fsPath.clear();*/
-}
-
-ColorGradingPost::ColorGradingPost(const ColorGradingPost &cp) {
-
-}
-
-ColorGradingPost::ColorGradingPost(ColorGradingPost &&mv) {
-
 }
 
 Framebuffer *ColorGradingPost::Process(Framebuffer *target) {

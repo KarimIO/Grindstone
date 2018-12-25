@@ -12,9 +12,7 @@ class ColorGradingPost : public BasePostProcess {
 	Framebuffer *fbo;
 	GraphicsPipeline *shader;
 public:
-	ColorGradingPost();
-	ColorGradingPost(const ColorGradingPost &);
-	ColorGradingPost(ColorGradingPost &&);
+	ColorGradingPost(PostPipeline *pipeline);
 	~ColorGradingPost();
 	
 	Framebuffer *Process(Framebuffer *target);

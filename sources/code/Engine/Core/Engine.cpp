@@ -21,6 +21,7 @@
 #include "../Systems/LightSpotSystem.hpp"
 #include "../Systems/LightDirectionalSystem.hpp"
 #include "../Systems/ColliderSystem.hpp"
+#include "../Systems/CubemapSystem.hpp"
 #include "../Systems/RigidBodySystem.hpp"
 // - AssetManagers
 #include "../AssetManagers/AudioManager.hpp"
@@ -55,6 +56,8 @@ void Engine::initialize() {
 
 	initializeUniformBuffer();
 	initializePlaneVertexBuffer();
+	deffUBO();
+	initializeTBL();
 
 	// Load Managers
 	//audio_manager_ = new AudioManager();
@@ -67,6 +70,7 @@ void Engine::initialize() {
 	// Load Systems
 	addSystem(new ControllerSystem());
 	addSystem(new ColliderSystem());
+	addSystem(new CubemapSystem());
 	addSystem(new RigidBodySystem());
 	addSystem(new RenderStaticMeshSystem());
 	addSystem(new LightPointSystem());
@@ -101,7 +105,37 @@ void Engine::initializeUniformBuffer() {
 	ubci.isDynamic = true;
 	ubci.size = 128;
 	ubci.binding = ubb_;
-	ubo_ = engine.getGraphicsWrapper()->CreateUniformBuffer(ubci);
+	ubo_ = graphics_wrapper_->CreateUniformBuffer(ubci);
+}
+
+void Engine::initializeTBL() {
+	subbindings_.reserve(4);
+	subbindings_.emplace_back("gbuffer0", 0); // R G B MatID
+	subbindings_.emplace_back("gbuffer1", 1); // nX nY nZ MatData
+	subbindings_.emplace_back("gbuffer2", 2); // sR sG sB Roughness
+	subbindings_.emplace_back("gbuffer3", 3); // Depth
+
+	TextureBindingLayoutCreateInfo tblci;
+	tblci.bindingLocation = 0;
+	tblci.bindings = subbindings_.data();
+	tblci.bindingCount = (uint32_t)subbindings_.size();
+	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	gbuffer_tbl_ = graphics_wrapper_->CreateTextureBindingLayout(tblci);
+}
+
+void Engine::deffUBO() {
+	UniformBufferBindingCreateInfo deffubbci;
+	deffubbci.binding = 0;
+	deffubbci.shaderLocation = "UniformBufferObject";
+	deffubbci.size = sizeof(DefferedUBO);
+	deffubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	deff_ubb_ = graphics_wrapper_->CreateUniformBufferBinding(deffubbci);
+
+	UniformBufferCreateInfo deffubci;
+	deffubci.isDynamic = false;
+	deffubci.size = sizeof(DefferedUBO);
+	deffubci.binding = deff_ubb_;
+	deff_ubo_handler_ = graphics_wrapper_->CreateUniformBuffer(deffubci);
 }
 
 VertexArrayObject *Engine::getPlaneVAO() {

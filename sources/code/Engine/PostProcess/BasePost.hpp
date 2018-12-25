@@ -6,6 +6,7 @@ class UniformBuffer;
 class Framebuffer;
 class RenderTarget;
 class DepthTarget;
+class PostPipeline;
 
 struct RenderTargetContainer {
 	Framebuffer *framebuffer;
@@ -25,7 +26,11 @@ struct RenderTargetContainer {
 //      postProcess.Process();
 class BasePostProcess {
 public:
+	BasePostProcess(PostPipeline *post);
     virtual void Process() = 0;
+	PostPipeline *getPipeline();
+protected:
+	PostPipeline *pipeline_;
 };
 
 #endif

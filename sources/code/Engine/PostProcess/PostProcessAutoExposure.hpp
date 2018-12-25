@@ -9,14 +9,14 @@ struct RenderTargetContainer;
 
 class PostProcessAutoExposure : public BasePostProcess {
 public:
-	PostProcessAutoExposure(RenderTargetContainer *source, RenderTargetContainer *target);
+	PostProcessAutoExposure(PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target);
     virtual void Process();
 	float GetExposure();
 private:
     RenderTargetContainer *source_;
     RenderTargetContainer *target_;
 
-    GraphicsPipeline *pipeline_;
+    GraphicsPipeline *gpipeline_;
 
 	RenderTarget *lum_buffer_;
 	Framebuffer *lum_framebuffer_;
