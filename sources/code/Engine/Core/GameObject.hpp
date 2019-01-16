@@ -12,6 +12,7 @@ public:
 	void setComponentHandle(ComponentType, ComponentHandle);
 	ComponentHandle getComponentHandle(ComponentType);
 	GameObjectHandle getID();
+	std::string getName();
 	~GameObject();
 private:
 	std::string name_;

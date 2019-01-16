@@ -8,10 +8,30 @@
 bool CreateStandardMaterial(StandardMaterialCreateInfo ci, std::string path) {
 	std::ofstream output(path);
 	output << "shader: ../assets/shaders/materials/standard_metalness/standard_metalness.json\n";
-	output << "albedoTexture: " << ci.albedoPath << "\n";
-	output << "normalTexture: " << ci.normalPath << "\n";
-	output << "roughnessTexture: " << ci.roughnessPath << "\n";
-	output << "metalnessTexture: " << ci.specularPath;
+	if (ci.albedoPath != "") {
+		output << "albedoTexture: " << ci.albedoPath << "\n";
+	}
+	output << "hasAlbedoTexture: " << (ci.albedoPath != "" ? "true" : "false") << "\n";
+
+	if (ci.normalPath != "") {
+		output << "normalTexture: " << ci.normalPath << "\n";
+	}
+	output << "hasNormalTexture: " << (ci.normalPath != "" ? "true" : "false") << "\n";
+
+	if (ci.roughnessPath != "") {
+		output << "roughnessTexture: " << ci.roughnessPath << "\n";
+	}
+	output << "hasRoughTexture: " << (ci.roughnessPath != "" ? "true" : "false") << "\n";
+
+	if (ci.specularPath != "") {
+		output << "metalnessTexture: " << ci.specularPath << "\n";
+	}
+	output << "hasMetalTexture: " << (ci.specularPath != "" ? "true" : "false") << "\n";
+
+	output << "albedoConstant: " << ci.albedoColor[0] << " " << ci.albedoColor[1] << " " << ci.albedoColor[2] << " " << ci.albedoColor[3] << "\n";
+	output << "metalnessConstant: " << ci.metalness << "\n";
+	output << "roughnessConstant: " << ci.roughness << "\n";
+
 	output.close();
 	return false;
 }

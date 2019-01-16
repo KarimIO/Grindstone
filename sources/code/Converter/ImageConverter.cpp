@@ -246,9 +246,17 @@ bool ConvertTexture(std::string input, bool is_cubemap, std::string output, Comp
 		}
 	}
 
+	if (compression == C_DETECT)
+		if (texChannels == 4) {
+			compression = C_BC3;
+		}
+		else {
+			compression = C_BC1;
+		}
+
     switch(compression) {
         default:
-            ConvertBC123(pixels, is_cubemap, texWidth, texHeight, C_BC1, output);
+            ConvertBC123(pixels, is_cubemap, texWidth, texHeight, compression, output);
             break;
     }
 

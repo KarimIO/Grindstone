@@ -4,9 +4,11 @@
 #include "BasePost.hpp"
 #include "GraphicsPipeline.hpp"
 
+class PostProcessSSAO;
+
 class PostProcessIBL : public BasePostProcess {
 public:
-    PostProcessIBL(PostPipeline *pipeline, RenderTargetContainer *target);
+    PostProcessIBL(PostPipeline *pipeline, RenderTargetContainer *target, PostProcessSSAO *ssao);
     virtual void Process();
 private:
     //RenderTargetContainer *source_;
@@ -16,6 +18,7 @@ private:
 	TextureSubBinding subbinding_;
 
     GraphicsPipeline *gpipeline_;
+	PostProcessSSAO  *ssao_;
 };
 
 #endif // !POST_PROCESS_IBL_HPP

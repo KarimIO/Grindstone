@@ -8,6 +8,8 @@ class PostProcessSSAO : public BasePostProcess {
 public:
     PostProcessSSAO(PostPipeline *pipeline, RenderTargetContainer *source);
     virtual void Process();
+	TextureBindingLayout *getLayout();
+	Framebuffer *getFramebuffer();
 private:
     RenderTargetContainer *source_;
 
@@ -23,6 +25,11 @@ private:
 	} ssao_buffer;
 
 	UniformBuffer *ssao_ub;
+
+	TextureSubBinding ssao_output_;
+	RenderTarget *ssao_buffer_;
+	Framebuffer *ssao_fbo_;
+	TextureBindingLayout *ssao_layout_;
 };
 
 #endif // !POST_PROCESS_SSAO_HPP

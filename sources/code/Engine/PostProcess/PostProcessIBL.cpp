@@ -5,8 +5,9 @@
 #include "Systems/CubemapSystem.hpp"
 #include "PostPipeline.hpp"
 #include "Core/Space.hpp"
+#include "PostProcessSSAO.hpp"
 
-PostProcessIBL::PostProcessIBL(PostPipeline *pipeline, RenderTargetContainer *target) : BasePostProcess(pipeline), target_(target) {
+PostProcessIBL::PostProcessIBL(PostPipeline *pipeline, RenderTargetContainer *target, PostProcessSSAO *ssao) : BasePostProcess(pipeline), target_(target), ssao_(ssao) {
     auto graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
 
@@ -63,6 +64,10 @@ PostProcessIBL::PostProcessIBL(PostPipeline *pipeline, RenderTargetContainer *ta
 	iblGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
 	std::vector<TextureBindingLayout*> tbls_refl = { engine.gbuffer_tbl_, env_map_ }; // refl_tbl
 
+	if (ssao_) {
+		tbls_refl.push_back(ssao_->getLayout());
+	}
+
 	iblGPCI.textureBindings = tbls_refl.data();
 	iblGPCI.textureBindingCount = tbls_refl.size();
 	iblGPCI.uniformBufferBindings = &engine.deff_ubb_;
@@ -79,6 +84,8 @@ void PostProcessIBL::Process() {
 
 	//graphics_wrapper->BindDefaultFramebuffer(true);
 	//engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
+	ssao_->getFramebuffer()->BindRead();
+	ssao_->getFramebuffer()->BindTextures(5);
     target_->framebuffer->BindWrite(false);
     //source_->framebuffer->BindRead();
 	//target_->framebuffer->BindTextures(0);

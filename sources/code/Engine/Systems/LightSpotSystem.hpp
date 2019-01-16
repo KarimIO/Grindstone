@@ -18,6 +18,7 @@ struct LightSpotComponent : public Component {
 		float innerAngle;
 		float outerAngle;
 		bool shadow;
+		uint16_t resolution;
 	} properties_;
 
 	glm::mat4 shadow_mat_;

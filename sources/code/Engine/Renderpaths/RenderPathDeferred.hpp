@@ -57,6 +57,7 @@ private:
 		glm::vec3 direction;
 		float innerAngle;
 		float outerAngle;
+		float shadow_resolution;
 		bool shadow;
 	} light_spot_ubo_;
 
@@ -66,6 +67,7 @@ private:
 		float source_radius;
 		glm::vec3 color;
 		float power;
+		float shadow_resolution;
 		bool shadow;
 	} light_directional_ubo_;
 

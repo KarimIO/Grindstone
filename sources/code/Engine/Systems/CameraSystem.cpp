@@ -14,6 +14,8 @@
 #include "PostProcess/PostProcessAutoExposure.hpp"
 #include "PostProcess/PostProcessSSAO.hpp"
 #include "PostProcess/PostProcessIBL.hpp"
+#include "PostProcess/PostProcessColorGrading.hpp"
+#include "PostProcess/PostProcessBloom.hpp"
 
 CameraComponent::CameraComponent(Space *space, GameObjectHandle object_handle, ComponentHandle handle) :
 	Component(COMPONENT_CAMERA, object_handle, handle),
@@ -63,21 +65,28 @@ ComponentHandle CameraSubSystem::addComponent(GameObjectHandle object_handle, ra
 
 	//RenderTargetContainer *rt_hdr = &engine.rt_hdr_;
 
+	BasePostProcess *pp_ssao = nullptr;
 	if (engine.getSettings()->enable_ssao_) {
-		BasePostProcess *pp_ssao = new PostProcessSSAO(&component.post_pipeline_, &component.rt_hdr_);
+		pp_ssao = new PostProcessSSAO(&component.post_pipeline_, &component.rt_hdr_);
 		component.post_pipeline_.AddPostProcess(pp_ssao);
 	}
 
 	if (settings->enable_reflections_) {
-		PostProcessIBL *pp_ibl = new PostProcessIBL(&component.post_pipeline_, &component.rt_hdr_);
+		PostProcessIBL *pp_ibl = new PostProcessIBL(&component.post_pipeline_, &component.rt_hdr_, (PostProcessSSAO *)pp_ssao);
 		component.post_pipeline_.AddPostProcess(pp_ibl);
 	}
 
 	PostProcessAutoExposure *pp_auto = new PostProcessAutoExposure(&component.post_pipeline_, &component.rt_hdr_, nullptr);
 	component.post_pipeline_.AddPostProcess(pp_auto);
 
-	PostProcessTonemap *pp_tonemap = new PostProcessTonemap(&component.post_pipeline_, &component.rt_hdr_, nullptr, pp_auto);
+	/*PostProcessBloom *pp_bloom = new PostProcessBloom(&component.post_pipeline_, &component.rt_hdr_, &component.rt_hdr_, pp_auto);
+	component.post_pipeline_.AddPostProcess(pp_bloom);*/
+
+	PostProcessTonemap *pp_tonemap = new PostProcessTonemap(&component.post_pipeline_, &component.rt_hdr_, &component.rt_hdr_, pp_auto);
 	component.post_pipeline_.AddPostProcess(pp_tonemap);
+
+	PostProcessColorGrading *pp_grading = new PostProcessColorGrading(&component.post_pipeline_, &component.rt_hdr_);
+	component.post_pipeline_.AddPostProcess(pp_grading);
 
 	return component_handle;
 }
@@ -166,6 +175,9 @@ void CameraSystem::update(double dt) {
 				deferred_ubo.resolution.x = engine.getSettings()->resolution_x_;
 				deferred_ubo.resolution.y = engine.getSettings()->resolution_y_;
 				engine.deff_ubo_handler_->UpdateUniformBuffer(&deferred_ubo);
+
+
+				engine.getGraphicsWrapper()->setViewport(0, 0, engine.getSettings()->resolution_x_, engine.getSettings()->resolution_y_);
 
 				Framebuffer *gbuffer = component.hdr_framebuffer_;
 				render_path_->render(gbuffer, space);

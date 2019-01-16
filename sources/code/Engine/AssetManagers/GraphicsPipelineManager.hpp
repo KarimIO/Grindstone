@@ -13,6 +13,7 @@ class Texture;
 class TextureBindingLayout;
 class RenderPass;
 class Framebuffer;
+class UniformBufferBinding;
 
 enum PARAM_TYPE {
 	PARAM_BOOL,
@@ -75,6 +76,8 @@ struct PipelineContainer {
 	std::map<std::string, ParameterDescriptor> parameterDescriptorTable;
 	std::vector<Material> materials;
 	uint32_t draw_count;
+	uint16_t param_size;
+	UniformBufferBinding *param_ubb;
 };
 
 struct RenderPassContainer {
@@ -106,7 +109,7 @@ public:
 	//GraphicsPipeline *ParseShaderFile(std::string path);
 	//GraphicsPipeline *CreateShaderFromPaths(std::string name, std::string vsPath, std::string fsPath, std::string gsPath, std::string csPath, std::string tesPath, std::string tcsPath);
 	void drawUnlitImmediate();
-	void drawShadowsImmediate();
+	void drawShadowsImmediate(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
 	void drawDeferredImmediate();
 	void drawForwardImmediate();
 	// void drawDeferredCommand();

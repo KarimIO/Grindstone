@@ -6,5 +6,7 @@
 bool CopyFileTo(std::string path, std::string to);
 bool CreateFolder(const char * path);
 std::string SwapExtension(std::string path, std::string ext);
+std::string sanitizeFileName(std::string name);
+void switchSlashes(std::string &path);
 
 #endif

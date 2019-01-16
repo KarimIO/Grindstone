@@ -75,6 +75,10 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 	textures.resize(pipeline->textureDescriptorTable.size());
 	std::string dir = path.substr(0, path.find_last_of("/") + 1);
 
+	char *buffer = new char[pipeline->param_size];
+	memset(buffer, 0, pipeline->param_size);
+	char *buffpos = buffer;
+
 	// Load parameters
 	auto texture_manager = engine.getTextureManager();
 	std::string line, parameter, value;
@@ -86,7 +90,40 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 			auto it1 = pipeline->parameterDescriptorTable.find(parameter);
 			if (it1 != pipeline->parameterDescriptorTable.end()) {
 				// This is a parameter, and we don't handle those yet.
-				LOG("In %s, found Parameter %s:%s\n", path, parameter, value);
+				//LOG("In %s, found Parameter %s:%s\n", path, parameter, value);
+				auto it2 = pipeline->parameterDescriptorTable.find(parameter);
+				if (it2 != pipeline->parameterDescriptorTable.end()) {
+					int pos = 0;
+					if (it2->second.paramType == PARAM_VEC4) {
+						float *list = (float *)buffpos;
+						for (int i = 0; i < 4; ++i) {
+							int npos = value.find(" ", pos);
+							std::string floatval = value.substr(pos, npos - pos);
+							pos = npos + 1;
+							list[i] = std::stof(floatval);
+						}
+
+						std::cout << parameter << ": ";
+						for (int i = 0; i < 4; ++i) {
+							std::cout << list[i] << " ";
+						}
+						std::cout << "_ " << int(buffpos - buffer) << "\n";
+
+						buffpos += sizeof(float) * 4;
+					}
+					else if (it2->second.paramType == PARAM_FLOAT) {
+						*(float *)buffpos = std::stof(value);
+
+						std::cout << parameter << ": " << std::stof(value) << " _ " << int(buffpos - buffer) << "\n";
+						buffpos += sizeof(float);
+					}
+					else if (it2->second.paramType == PARAM_BOOL) {
+						*(bool *)buffpos = (value == "true") ? true : false;
+
+						std::cout << parameter << ": " << value << " _ " << int(buffpos - buffer) << "\n";
+						buffpos += sizeof(bool) * 4;
+					}
+				}
 			}
 			else {
 				// Check if it's a valid texture descriptor
@@ -121,6 +158,16 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 		ci.textureCount = (uint32_t)textures.size();
 		textureBinding = engine.getGraphicsWrapper()->CreateTextureBinding(ci);
 	}
+
+	UniformBuffer *ubo = nullptr;
+	if (pipeline->parameterDescriptorTable.size() > 0) {
+		UniformBufferCreateInfo uboci;
+		uboci.isDynamic = false;
+		uboci.size = pipeline->param_size;
+		uboci.binding = pipeline->param_ubb;
+		ubo = engine.getGraphicsWrapper()->CreateUniformBuffer(uboci);
+		ubo->UpdateUniformBuffer(buffer);
+	}
 	
 	// Make a new reference
 	MaterialReference ref;
@@ -129,6 +176,10 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 
 	// Place reference in material path
 	pipeline->materials.emplace_back(ref, textureBinding);
+
+	Material *mat = &pipeline->materials.back();
+	mat->param_buffer_handler_ = ubo;
+	mat->param_buffer_ = buffer;
 
 	material_map_[path] = ref;
 	return ref;

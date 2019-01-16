@@ -57,3 +57,31 @@ std::string SwapExtension(std::string path, std::string ext) {
 	size_t p = path.find_last_of(".");
 	return path.substr(0, p+1) + ext;
 }
+
+
+
+std::string sanitizeFileName(std::string name) {
+	const std::string illegal = "<>/\\/\":";
+	for (auto c = name.begin(); c < name.end(); ++c) {
+		if (illegal.find(*c) != std::string::npos) {
+			*c = ' ';
+		}
+	}
+
+	return name;
+}
+
+void switchSlashes(std::string &path) {
+	size_t index = 0;
+	while (true) {
+		// Locate the substring to replace.
+		index = path.find("\\", index);
+		if (index == std::string::npos) break;
+
+		// Make the replacement.
+		path.replace(index, 1, "/");
+
+		// Advance index forward so the next iteration doesn't pick it up as well.
+		index += 1;
+	}
+}

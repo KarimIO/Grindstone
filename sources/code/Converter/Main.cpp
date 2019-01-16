@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 		std::getline(std::cin, handle);
 		
 		std::vector<std::string> tokens;
-		unsigned int pos = handle.find(' ');
+		unsigned int pos = (unsigned int)handle.find(' ');
 		unsigned int prev = 0;
 
 		while (pos != std::string::npos && pos < handle.size()) {
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
 			tokens.push_back(inst);
 			prev = pos + 1;
 
-			pos = handle.find(' ', prev);
+			pos = (unsigned int)handle.find(' ', prev);
 		}
 
 		std::string inst = handle.substr(prev, ((pos < handle.size()) ? pos : handle.size()) - prev);
@@ -77,10 +77,10 @@ int main(int argc, char* argv[]) {
 		std::cout << "Handling " << path << ".\n";
 
 		switch (type) {
-			default:
-			case OUTPUT_MODEL:
-				ModelConverter(path);
-				break;
+		default:
+		case OUTPUT_MODEL:
+			parseModelConverterParams(path);
+			break;
 			case OUTPUT_TEXTURE:
 				ConvertTexture(path, false, SwapExtension(path, "dds"));
 				break;

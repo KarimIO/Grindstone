@@ -96,6 +96,8 @@ public:
 	virtual void GetCursor(int &x, int &y);
 	virtual void setFocus();
 
+	virtual void setViewport(uint16_t x, uint16_t y, uint16_t w, uint16_t h) = 0;
+
 	virtual void CreateDefaultStructures() = 0;
 
 	virtual void Clear(int mask) = 0;

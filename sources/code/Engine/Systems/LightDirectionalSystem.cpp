@@ -16,6 +16,7 @@ LightDirectionalSystem::LightDirectionalSystem() : System(COMPONENT_LIGHT_DIRECT
 
 void LightDirectionalSystem::update(double dt) {
 	const Settings *settings = engine.getSettings();
+	auto graphics_wrapper = engine.getGraphicsWrapper();
 
 	bool invert_proj = settings->graphics_language_ == GRAPHICS_VULKAN;
 	bool scale_proj = settings->graphics_language_ == GRAPHICS_DIRECTX;
@@ -68,8 +69,8 @@ void LightDirectionalSystem::update(double dt) {
 					// Render
 					component.shadow_fbo_->Bind(true);
 					component.shadow_fbo_->Clear(CLEAR_DEPTH);
-					engine.getGraphicsWrapper()->SetImmediateBlending(BLEND_NONE);
-					engine.getGraphicsPipelineManager()->drawShadowsImmediate();
+					graphics_wrapper->SetImmediateBlending(BLEND_NONE);
+					engine.getGraphicsPipelineManager()->drawShadowsImmediate(0, 0, component.properties_.resolution, component.properties_.resolution);
 				}
 			}
 		}
@@ -96,13 +97,20 @@ ComponentHandle LightDirectionalSubSystem::addComponent(GameObjectHandle object_
 		component.properties_.sourceRadius = params["radius"].GetFloat();
 	}
 
+	if (params.HasMember("shadowresolution")) {
+		component.properties_.resolution = params["shadowresolution"].GetUint();
+	}
+	else {
+		component.properties_.resolution = 2048;
+	}
+
 	if (params.HasMember("castshadow")) {
 		component.properties_.shadow = params["castshadow"].GetBool();
 
 		if (component.properties_.shadow) {
 			auto graphics_wrapper = engine.getGraphicsWrapper();
 
-			DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, 1024, 1024, true, false);
+			DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, component.properties_.resolution, component.properties_.resolution, true, false);
 			component.shadow_dt_ = graphics_wrapper->CreateDepthTarget(depth_image_ci);
 
 			FramebufferCreateInfo fbci;

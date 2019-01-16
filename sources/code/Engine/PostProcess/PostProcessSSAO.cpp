@@ -9,6 +9,16 @@ PostProcessSSAO::PostProcessSSAO(PostPipeline *pipeline, RenderTargetContainer *
     GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
 
+	RenderTargetCreateInfo ssao_buffer_ci(FORMAT_COLOR_R8, settings->resolution_x_, settings->resolution_y_);
+	ssao_buffer_ = graphics_wrapper->CreateRenderTarget(&ssao_buffer_ci, 1);
+
+	FramebufferCreateInfo hdr_framebuffer_ci;
+	hdr_framebuffer_ci.render_target_lists = &ssao_buffer_;
+	hdr_framebuffer_ci.num_render_target_lists = 1;
+	hdr_framebuffer_ci.depth_target = nullptr; // depth_image_;
+	hdr_framebuffer_ci.render_pass = nullptr;
+	ssao_fbo_ = graphics_wrapper->CreateFramebuffer(hdr_framebuffer_ci);
+
     //=====================
 	// SSAO
 	//=====================
@@ -54,7 +64,7 @@ PostProcessSSAO::PostProcessSSAO(PostPipeline *pipeline, RenderTargetContainer *
 		ssao_buffer.kernel[i * 4 + 2] = kernel.z;
 	}
 
-	ssao_buffer.radius = 0.8f;
+	ssao_buffer.radius = 0.3f;
     ssao_buffer.bias = 0.025f;
 
 	ssao_ub->UpdateUniformBuffer(&ssao_buffer);
@@ -72,7 +82,7 @@ PostProcessSSAO::PostProcessSSAO(PostPipeline *pipeline, RenderTargetContainer *
 	TextureSubBinding ssao_noise_sub_binding_ = TextureSubBinding("ssao_noise", 4);
 
 	TextureBindingLayoutCreateInfo tblci;
-	tblci.bindingLocation = 1;
+	tblci.bindingLocation = 4;
 	tblci.bindings = &ssao_noise_sub_binding_;
 	tblci.bindingCount = 1;
 	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
@@ -139,7 +149,7 @@ PostProcessSSAO::PostProcessSSAO(PostPipeline *pipeline, RenderTargetContainer *
 	ssaoGPCI.primitiveType = PRIM_TRIANGLES;
 	ssaoGPCI.shaderStageCreateInfos = stages;
 	ssaoGPCI.shaderStageCreateInfoCount = 2;
-	std::vector<TextureBindingLayout *>tbls = {engine.gbuffer_tbl_};
+	std::vector<TextureBindingLayout *>tbls = {engine.gbuffer_tbl_, ssao_noise_binding_layout };
 
 	std::vector<UniformBufferBinding*> ubbs = { engine.deff_ubb_ , ubb };
 	ssaoGPCI.textureBindings = tbls.data();
@@ -147,17 +157,29 @@ PostProcessSSAO::PostProcessSSAO(PostPipeline *pipeline, RenderTargetContainer *
 	ssaoGPCI.uniformBufferBindings = ubbs.data();
 	ssaoGPCI.uniformBufferBindingCount = ubbs.size();
 	pipeline_ = graphics_wrapper->CreateGraphicsPipeline(ssaoGPCI);
+
+	// Export SSAO Layout
+	ssao_output_ = TextureSubBinding("ssao", 5);
+
+	TextureBindingLayoutCreateInfo stblci;
+	stblci.bindingLocation = 5;
+	stblci.bindings = &ssao_output_;
+	stblci.bindingCount = 1;
+	stblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	ssao_layout_ = graphics_wrapper->CreateTextureBindingLayout(stblci);
 }
 
 void PostProcessSSAO::Process() {
 	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 
-	engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
+	//engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
+	ssao_fbo_->BindWrite(true);
+	engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
 
-    if (source_ != nullptr) {
+    /*if (source_ != nullptr) {
         source_->framebuffer->BindRead();
 		source_->framebuffer->BindTextures(0);
-    }
+    }*/
     
     //graphics_wrapper->EnableDepth(false);
     //graphics_wrapper->SetColorMask(COLOR_MASK_ALPHA);
@@ -167,4 +189,12 @@ void PostProcessSSAO::Process() {
     graphics_wrapper->DrawImmediateVertices(0, 6);
     //graphics_wrapper->SetColorMask(COLOR_MASK_RGBA);
     //graphics_wrapper->EnableDepth(true);
+}
+
+TextureBindingLayout * PostProcessSSAO::getLayout() {
+	return ssao_layout_;
+}
+
+Framebuffer * PostProcessSSAO::getFramebuffer() {
+	return ssao_fbo_;
 }

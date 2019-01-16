@@ -14,6 +14,8 @@ class Material {
 	friend MaterialManager;
 public:
 	TextureBinding *m_textureBinding;
+	UniformBuffer *param_buffer_handler_;
+	char *param_buffer_;
 	std::vector<MeshStatic *> m_meshes;
 	Material() {
 		m_textureBinding = 0;

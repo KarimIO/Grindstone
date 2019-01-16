@@ -12,6 +12,7 @@
 #include <Texture.hpp>
 #include <GraphicsPipeline.hpp>
 #include <CommandBuffer.hpp>
+#include <UniformBuffer.hpp>
 
 // Util Classes
 #include "../Utilities/Logger.hpp"
@@ -77,6 +78,8 @@ public:
 	glm::bvec4 bvec4;
 	glm::vec4  vec4;
 	glm::dvec4 dvec4;
+
+	uint16_t param_size;
 
 	bool in_textures;
 	unsigned int texture_id = 0;
@@ -240,46 +243,94 @@ public:
 		}
 		else if (state == SHADER_JSON_PROPERTY_TYPE) {
 			state = SHADER_JSON_PROPERTY;
-			if (std::string(str) == "bool")
+			if (std::string(str) == "boolean") {
 				paramType = PARAM_BOOL;
-			else if (std::string(str) == "int")
-				paramType = PARAM_INT;
-			else if (std::string(str) == "uint")
-				paramType = PARAM_UINT;
-			else if (std::string(str) == "float")
+				param_size += sizeof(bool) * 4;
+			}
+			else if (std::string(str) == "constant") {
 				paramType = PARAM_FLOAT;
-			else if (std::string(str) == "double")
-				paramType = PARAM_DOUBLE;
-			else if (std::string(str) == "bvec2")
-				paramType = PARAM_BVEC2;
-			else if (std::string(str) == "bvec3")
-				paramType = PARAM_BVEC3;
-			else if (std::string(str) == "bvec4")
-				paramType = PARAM_BVEC4;
-			else if (std::string(str) == "ivec2")
-				paramType = PARAM_IVEC2;
-			else if (std::string(str) == "ivec3")
-				paramType = PARAM_IVEC3;
-			else if (std::string(str) == "ivec4")
-				paramType = PARAM_IVEC4;
-			else if (std::string(str) == "uvec2")
-				paramType = PARAM_UVEC2;
-			else if (std::string(str) == "uvec3")
-				paramType = PARAM_UVEC3;
-			else if (std::string(str) == "uvec4")
-				paramType = PARAM_UVEC4;
-			else if (std::string(str) == "vec2")
-				paramType = PARAM_VEC2;
-			else if (std::string(str) == "vec3")
-				paramType = PARAM_VEC3;
-			else if (std::string(str) == "vec4")
+				param_size += sizeof(float);
+			}
+			else if (std::string(str) == "color") {
 				paramType = PARAM_VEC4;
-			else if (std::string(str) == "dvec2")
+				param_size += sizeof(glm::vec4);
+			}
+			else if (std::string(str) == "int") {
+				paramType = PARAM_INT;
+				param_size += sizeof(int);
+			}
+			else if (std::string(str) == "uint") {
+				paramType = PARAM_UINT;
+				param_size += sizeof(unsigned int);
+			}
+			else if (std::string(str) == "float") {
+				paramType = PARAM_FLOAT;
+				param_size += sizeof(float);
+			}
+			else if (std::string(str) == "double") {
+				paramType = PARAM_DOUBLE;
+				param_size += sizeof(double);
+			}
+			else if (std::string(str) == "bvec2") {
+				paramType = PARAM_BVEC2;
+				param_size += sizeof(bool) * 2;
+			}
+			else if (std::string(str) == "bvec3") {
+				paramType = PARAM_BVEC3;
+				param_size += sizeof(bool) * 3;
+			}
+			else if (std::string(str) == "bvec4") {
+				paramType = PARAM_BVEC4;
+				param_size += sizeof(bool) * 4;
+			}
+			else if (std::string(str) == "ivec2") {
+				paramType = PARAM_IVEC2;
+				param_size += sizeof(int) * 2;
+			}
+			else if (std::string(str) == "ivec3") {
+				paramType = PARAM_IVEC3;
+				param_size += sizeof(int) * 3;
+			}
+			else if (std::string(str) == "ivec4") {
+				paramType = PARAM_IVEC4;
+				param_size += sizeof(int) * 4;
+			}
+			else if (std::string(str) == "uvec2") {
+				paramType = PARAM_UVEC2;
+				param_size += sizeof(unsigned int) * 2;
+			}
+			else if (std::string(str) == "uvec3") {
+				paramType = PARAM_UVEC3;
+				param_size += sizeof(unsigned int) * 3;
+			}
+			else if (std::string(str) == "uvec4") {
+				paramType = PARAM_UVEC4;
+				param_size += sizeof(unsigned int) * 4;
+			}
+			else if (std::string(str) == "vec2") {
+				paramType = PARAM_VEC2;
+				param_size += sizeof(glm::vec2);
+			}
+			else if (std::string(str) == "vec3") {
+				paramType = PARAM_VEC3;
+				param_size += sizeof(glm::vec3);
+			}
+			else if (std::string(str) == "vec4") {
+				paramType = PARAM_VEC4;
+				param_size += sizeof(glm::vec4);
+			}
+			else if (std::string(str) == "dvec2") {
 				paramType = PARAM_DVEC2;
-			else if (std::string(str) == "dvec3")
+				param_size += sizeof(double) * 2;
+			}
+			else if (std::string(str) == "dvec3") {
 				paramType = PARAM_DVEC3;
-			else if (std::string(str) == "dvec4")
+				param_size += sizeof(double) * 3;
+			}
+			else if (std::string(str) == "dvec4") {
 				paramType = PARAM_DVEC4;
+				param_size += sizeof(double) * 4;
+			}
 			else if (std::string(str) == "texture")
 				paramType = PARAM_TEXTURE;
 			else if (std::string(str) == "cubemap")
@@ -407,6 +458,7 @@ public:
 			else if (std::string(str) == "properties") {
 				state = SHADER_JSON_PROPERTIES;
 				in_textures = false;
+				param_size = 0;
 			}
 			else if (std::string(str) == "textures") {
 				state = SHADER_JSON_PROPERTIES;
@@ -492,6 +544,7 @@ public:
 			}
 			else {
 				pipeline->parameterDescriptorTable[paramName] = ParameterDescriptor(paramText, paramType, paramDefault);
+				pipeline->param_size = param_size;
 			}
 			break;
 		case SHADER_JSON_SHADER_DEFERRED:
@@ -538,6 +591,22 @@ TextureParameterDescriptor::TextureParameterDescriptor(unsigned int _texture_id,
 }
 
 void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, PipelineContainer &container) {
+	// Prepare UBBS
+	std::vector<UniformBufferBinding *> ubbs;
+	if (container.param_ubb != nullptr) {
+		ubbs.resize(geometry_info.ubb_count + 1);
+		ubbs[geometry_info.ubb_count] = container.param_ubb;
+	}
+	else {
+		ubbs.resize(geometry_info.ubb_count);
+	}
+
+	for (int i = 0; i < geometry_info.ubb_count; ++i) {
+		ubbs[i] = geometry_info.ubbs[i];
+	} 
+	
+
+	// Create Regular Shader
 	{
 		GraphicsPipelineCreateInfo gpci;
 		gpci.scissorW = engine.getSettings()->resolution_x_;
@@ -600,14 +669,16 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 
 		gpci.shaderStageCreateInfos = stages.data();
 		gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
-		gpci.uniformBufferBindings = geometry_info.ubbs;
-		gpci.uniformBufferBindingCount = geometry_info.ubb_count;
+		gpci.uniformBufferBindings = ubbs.data();
+		gpci.uniformBufferBindingCount = ubbs.size();
 		gpci.textureBindings = &container.tbl;
 		gpci.textureBindingCount = tbl_count;
 		gpci.cullMode = CULL_BACK;
 		gpci.primitiveType = PRIM_TRIANGLES;
 		container.program = engine.getGraphicsWrapper()->CreateGraphicsPipeline(gpci);
 	}
+
+	//  Create Shadows
 	{
 		int num_shaders = 0;
 		const int max_shaders = 5;
@@ -668,11 +739,11 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 				container.tbl = nullptr;
 				tbl_count = 0;
 			}
-
+			
 			gpci.shaderStageCreateInfos = stages.data();
 			gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
-			gpci.uniformBufferBindings = geometry_info.ubbs;
-			gpci.uniformBufferBindingCount = geometry_info.ubb_count;
+			gpci.uniformBufferBindings = ubbs.data();
+			gpci.uniformBufferBindingCount = ubbs.size();
 			gpci.textureBindings = &container.tbl;
 			gpci.textureBindingCount = tbl_count;
 			gpci.cullMode = CULL_BACK;
@@ -751,6 +822,15 @@ PipelineReference GraphicsPipelineManager::createPipeline(GeometryInfo geometry_
 		pipeline = handler.pipeline;
 	}
 
+	if (pipeline->parameterDescriptorTable.size() > 0) {
+		UniformBufferBindingCreateInfo ubbci;
+		ubbci.binding = 2;
+		ubbci.shaderLocation = "Parameters";
+		ubbci.size = pipeline->param_size;
+		ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+		pipeline->param_ubb = engine.getGraphicsWrapper()->CreateUniformBufferBinding(ubbci);
+	}
+
 	generateProgram(geometry_info, *pipeline);
 	pipeline_map_[pipelineName] = pipeline->reference;
 
@@ -809,11 +889,12 @@ void GraphicsPipelineManager::drawUnlitImmediate() {
 	}
 }
 
-void GraphicsPipelineManager::drawShadowsImmediate() {
+void GraphicsPipelineManager::drawShadowsImmediate(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
 	for (auto &renderPass : render_passes_) {
 		for (auto &pipeline : renderPass.pipelines_deferred) {
 			if (pipeline.shadow_program != nullptr) {
 				pipeline.shadow_program->Bind();
+				engine.getGraphicsWrapper()->setViewport(x, y, w, h);
 				if (true || pipeline.draw_count > 0) {
 					for (auto &material : pipeline.materials) {
 						if (true || material.getDrawCount() > 0) {
@@ -857,6 +938,10 @@ void GraphicsPipelineManager::drawDeferredImmediate() {
 					if (material.getDrawCount() > 0) {
 						if (material.m_textureBinding != nullptr)
 							engine.getGraphicsWrapper()->BindTextureBinding(material.m_textureBinding);
+
+						if (material.param_buffer_handler_ != nullptr)
+							material.param_buffer_handler_->Bind();
+
 						for (auto &mesh : material.m_meshes) {
 							mesh->draw();
 						}

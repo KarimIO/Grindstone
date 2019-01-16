@@ -10,7 +10,7 @@ struct ModelFormatHeader {
 	uint64_t num_vertices;
 	uint64_t num_indices;
 	uint32_t num_materials;
-	uint16_t num_bones;
+	bool has_bones;
 	bool large_index;
 	BoundingType bounding_type;
 };

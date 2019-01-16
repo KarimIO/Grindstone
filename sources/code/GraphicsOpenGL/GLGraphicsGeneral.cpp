@@ -180,6 +180,10 @@ void GLGraphicsWrapper::DeleteVertexArrayObject(VertexArrayObject * ptr) {
 	delete (GLVertexArrayObject *)ptr;
 }
 
+void GLGraphicsWrapper::setViewport(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
+	glViewport(x, y, w, h);
+	glScissor(x, y, w, h);
+}
 
 Framebuffer * GLGraphicsWrapper::CreateFramebuffer(FramebufferCreateInfo ci) {
 	return static_cast<Framebuffer *>(new GLFramebuffer(ci));

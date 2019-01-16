@@ -71,7 +71,7 @@ void LightSpotSystem::update(double dt) {
 					component.shadow_fbo_->Bind(true);
 					component.shadow_fbo_->Clear(CLEAR_DEPTH);
 					engine.getGraphicsWrapper()->SetImmediateBlending(BLEND_NONE);
-					engine.getGraphicsPipelineManager()->drawShadowsImmediate();
+					engine.getGraphicsPipelineManager()->drawShadowsImmediate(0, 0, component.properties_.resolution, component.properties_.resolution);
 				}
 			}
 		}
@@ -106,13 +106,20 @@ ComponentHandle LightSpotSubSystem::addComponent(GameObjectHandle object_handle,
 		component.properties_.outerAngle = params["outerAngle"].GetFloat();
 	}
 
+	if (params.HasMember("shadowresolution")) {
+		component.properties_.resolution = params["shadowresolution"].GetUint();
+	}
+	else {
+		component.properties_.resolution = 512;
+	}
+
 	if (params.HasMember("castshadow")) {
 		component.properties_.shadow = params["castshadow"].GetBool();
 
 		if (component.properties_.shadow) {
 			auto graphics_wrapper = engine.getGraphicsWrapper();
 
-			DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, 1024, 1024, true, false);
+			DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, component.properties_.resolution, component.properties_.resolution, true, false);
 			component.shadow_dt_ = graphics_wrapper->CreateDepthTarget(depth_image_ci);
 
 			FramebufferCreateInfo fbci;

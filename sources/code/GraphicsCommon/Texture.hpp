@@ -27,12 +27,39 @@ struct TextureMipMapCreateInfo {
 	uint32_t width, height;
 };
 
+enum TextureWrapMode {
+	TEXWRAP_REPEAT = 0,
+	TEXWRAP_CLAMP_TO_EDGE,
+	TEXWRAP_CLAMP_TO_BORDER,
+	TEXWRAP_MIRRORED_REPEAT,
+	TEXWRAP_MIRROR_CLAMP_TO_EDGE
+};
+
+enum TextureFilter {
+	TEXFILTER_NEAREST = 0,
+	TEXFILTER_LINEAR,
+	TEXFILTER_NEAREST_MIPMAP_NEAREST,
+	TEXFILTER_LINEAR_MIPMAP_NEAREST,
+	TEXFILTER_NEAREST_MIPMAP_LINEAR,
+	TEXFILTER_LINEAR_MIPMAP_LINEAR,
+};
+
+struct TextureOptions {
+	TextureWrapMode wrap_mode_u = TEXWRAP_REPEAT;
+	TextureWrapMode wrap_mode_v = TEXWRAP_REPEAT;
+	TextureWrapMode wrap_mode_w = TEXWRAP_REPEAT;
+	TextureFilter min_filter = TEXFILTER_LINEAR_MIPMAP_LINEAR;
+	TextureFilter mag_filter = TEXFILTER_LINEAR;
+	bool generate_mipmaps = true;
+};
+
 struct TextureCreateInfo {
 	unsigned char *data;
 	uint32_t width, height;
 	uint16_t mipmaps;
 	bool ddscube;
 	ColorFormat format;
+	TextureOptions options;
 };
 
 struct CubemapCreateInfo {
@@ -40,6 +67,7 @@ struct CubemapCreateInfo {
 	uint32_t width, height;
 	uint16_t mipmaps;
 	ColorFormat format;
+	TextureOptions options;
 };
 
 class Texture {

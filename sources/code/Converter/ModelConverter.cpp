@@ -6,7 +6,6 @@
 #include <assimp/postprocess.h>
 
 #include <iostream>
-#include <vector>
 #include <fstream>
 #include <chrono>
 
@@ -16,48 +15,25 @@
 #include "../FormatCommon/Bounding.hpp"
 #include "../FormatCommon/StaticModel.hpp"
 
-#include <map>
+void ModelConverter::addBoneData(uint32_t bone_id, float weight, VertexWeights &v) {
+	const unsigned int n = BONES_PER_VERTEX;
 
-struct Vertex {
-	float positions[3];
-	float normal[3];
-	float tangent[3];
-	float tex_coord[2];
-};
-
-struct VertexSkeletal {
-	float		positions[3];
-	float		normal[3];
-	float		tangent[3];
-	float		tex_coord[2];
-	uint16_t	bone_ids[4];
-	float		bone_weights[4];
-};
-
-struct Mesh {
-	uint32_t num_indices = 0;
-	uint32_t base_vertex = 0;
-	uint32_t base_index = 0;
-	uint32_t material_index = UINT32_MAX;
-};
-
-void SwitchSlashes(std::string &path) {
-	size_t index = 0;
-	while (true) {
-		// Locate the substring to replace.
-		index = path.find("\\", index);
-		if (index == std::string::npos) break;
-
-		// Make the replacement.
-		path.replace(index, 1, "/");
-
-		// Advance index forward so the next iteration doesn't pick it up as well.
-		index += 1;
+	for (uint16_t i = 0; i < n; i++) {
+		if (v.bone_weights[i] == 0.0f) {
+			v.bone_ids[i] = bone_id;
+			v.bone_weights[i] = weight;
+			return;
+		}
 	}
+
+	// should never get here - more bones than we have space for
+	assert(0);
 }
 
-void InitMaterials(bool skeletalMaterials, std::string folder_name, std::string path,
-	uint32_t num_materials, aiMaterial **materials, std::vector<std::string> &mat_names) {
+void ModelConverter::initMaterials(std::string folder_name, std::string path) {
+	uint32_t num_materials = scene_->mNumMaterials;
+	aiMaterial **materials = scene_->mMaterials;
+
 	std::string finalDir = path;
 	finalDir = finalDir.substr(0, finalDir.find_last_of('/') + 1);
 
@@ -70,10 +46,10 @@ void InitMaterials(bool skeletalMaterials, std::string folder_name, std::string 
 	aiString Path;
 	for (uint32_t i = 0; i < num_materials; i++) {
 		StandardMaterialCreateInfo newMat;
-		newMat.albedoPath = "../albedo.png";
-		newMat.normalPath = "../normal.png";
-		newMat.specularPath = "../dielectric.png";
-		newMat.roughnessPath = "../roughness.png";
+		newMat.albedoPath = "";
+		newMat.normalPath = "";
+		newMat.specularPath = "";
+		newMat.roughnessPath = "";
 		pMaterial = materials[i];
 
 		aiString name;
@@ -86,7 +62,7 @@ void InitMaterials(bool skeletalMaterials, std::string folder_name, std::string 
 		if (pMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
 			if (pMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 				std::string FullPath = Path.data;
-				SwitchSlashes(FullPath);
+				switchSlashes(FullPath);
 				std::string name = FullPath.substr(FullPath.find_last_of("/") + 1);
 				name = SwapExtension(name, "dds");
 				std::string finaloutpath = outPath + name;
@@ -98,22 +74,22 @@ void InitMaterials(bool skeletalMaterials, std::string folder_name, std::string 
 		if (pMaterial->GetTextureCount(aiTextureType_HEIGHT) > 0) {
 			if (pMaterial->GetTexture(aiTextureType_HEIGHT, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 				std::string FullPath = Path.data;
-				SwitchSlashes(FullPath);
+				switchSlashes(FullPath);
 				std::string name = FullPath.substr(FullPath.find_last_of("/") + 1);
 				name = SwapExtension(name, "dds");
 				std::string finaloutpath = outPath + name;
-				ConvertTexture(finalDir + FullPath, false, finaloutpath);
+				ConvertTexture(finalDir + FullPath, false, finaloutpath, C_BC1);
 				newMat.normalPath = name;
 			}
 		}
 		else if (pMaterial->GetTextureCount(aiTextureType_NORMALS) > 0) {
 			if (pMaterial->GetTexture(aiTextureType_NORMALS, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 				std::string FullPath = Path.data;
-				SwitchSlashes(FullPath);
+				switchSlashes(FullPath);
 				std::string name = FullPath.substr(FullPath.find_last_of("/") + 1);
 				name = SwapExtension(name, "dds");
 				std::string finaloutpath = outPath + name;
-				ConvertTexture(finalDir + FullPath, false, finaloutpath);
+				ConvertTexture(finalDir + FullPath, false, finaloutpath, C_BC1);
 				newMat.normalPath = name;
 			}
 		}
@@ -121,11 +97,11 @@ void InitMaterials(bool skeletalMaterials, std::string folder_name, std::string 
 		if (pMaterial->GetTextureCount(aiTextureType_AMBIENT) > 0) {
 			if (pMaterial->GetTexture(aiTextureType_AMBIENT, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 				std::string FullPath = Path.data;
-				SwitchSlashes(FullPath);
+				switchSlashes(FullPath);
 				std::string name = FullPath.substr(FullPath.find_last_of("/") + 1);
 				name = SwapExtension(name, "dds");
 				std::string finaloutpath = outPath + name;
-				ConvertTexture(finalDir + FullPath, false, finaloutpath);
+				ConvertTexture(finalDir + FullPath, false, finaloutpath, C_BC1);
 				newMat.specularPath = name;
 			}
 		}
@@ -133,354 +109,244 @@ void InitMaterials(bool skeletalMaterials, std::string folder_name, std::string 
 		if (pMaterial->GetTextureCount(aiTextureType_SHININESS) > 0) {
 			if (pMaterial->GetTexture(aiTextureType_SHININESS, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 				std::string FullPath = Path.data;
-				SwitchSlashes(FullPath);
+				switchSlashes(FullPath);
 				std::string name = FullPath.substr(FullPath.find_last_of("/") + 1);
 				name = SwapExtension(name, "dds");
 				std::string finaloutpath = outPath + name;
-				ConvertTexture(finalDir + FullPath, false, finaloutpath);
+				ConvertTexture(finalDir + FullPath, false, finaloutpath, C_BC1);
 				newMat.roughnessPath = name;
 			}
 		}
 
-		std::string outMat = outPath + name.C_Str() + ".gmat";
-		mat_names[i] = outMat;
+		aiColor4D diffuse_color;
+		if (AI_SUCCESS == aiGetMaterialColor(pMaterial, AI_MATKEY_COLOR_DIFFUSE, &diffuse_color))
+			memcpy(&newMat.albedoColor, &diffuse_color, sizeof(glm::vec4));
+
+		aiColor4D metalness;
+		if (AI_SUCCESS == aiGetMaterialColor(pMaterial, AI_MATKEY_COLOR_SPECULAR, &metalness))
+			newMat.metalness = metalness.r;
+
+		aiColor4D roughness;
+		if (AI_SUCCESS == aiGetMaterialColor(pMaterial, AI_MATKEY_COLOR_AMBIENT, &roughness))
+			newMat.roughness = roughness.r;
+
+		std::string sanname = sanitizeFileName(name.C_Str());
+
+		std::string outMat = outPath + sanname + ".gmat";
+		material_names_[i] = outMat;
 
 		std::cout << "\tOutputting material: " << outMat << "\n";
 
-		std::string shader = skeletalMaterials ? "../shaders/skeletal" : "../shaders/standard";
+		//std::string shader = skeletalMaterials ? "../shaders/skeletal" : "../shaders/standard";
 		CreateStandardMaterial(newMat, outMat);
 	}
 }
 
-void InitMesh(BoundingShape *bounding, const aiMesh *paiMesh,
-	std::vector<Vertex>& vertices,
-	std::vector<uint32_t>& indices) {
+void ModelConverter::initMesh(unsigned int i) {
 	const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
 
-	for (unsigned int i = 0; i < paiMesh->mNumVertices; i++) {
-		const aiVector3D* pPos = &(paiMesh->mVertices[i]);
-		const aiVector3D* pNormal = paiMesh->HasNormals() ? &(paiMesh->mNormals[i]) : &Zero3D;
-		const aiVector3D* pTangent = paiMesh->HasTangentsAndBitangents() ? &(paiMesh->mTangents[i]) : &Zero3D;
-		const aiVector3D* pTexCoord = paiMesh->HasTextureCoords(0) ? &(paiMesh->mTextureCoords[0][i]) : &Zero3D;
+	auto &mesh = scene_->mMeshes[i];
 
-		vertices.push_back({ { pPos->x, pPos->y, pPos->z },{ pNormal->x, pNormal->y, pNormal->z },{ -pTangent->x, -pTangent->y, -pTangent->z },{ pTexCoord->x, pTexCoord->y } });
+	for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+		const aiVector3D* pPos = &(mesh->mVertices[i]);
+		const aiVector3D* pNormal = &(mesh->mNormals[i]);
+		const aiVector3D* pTangent = &(mesh->mTangents[i]);
+		const aiVector3D* pTexCoord = mesh->HasTextureCoords(0) ? &(mesh->mTextureCoords[0][i]) : &Zero3D;
 
-		const float pos[3]{pPos->x, pPos->y, pPos->z};
-		bounding->TestBounding(pos);
+		vertices_.push_back({
+			{ pPos->x, pPos->y, pPos->z },
+			{ pNormal->x, pNormal->y, pNormal->z },
+			{ -pTangent->x, -pTangent->y, -pTangent->z },
+			{ pTexCoord->x, pTexCoord->y }
+		});
+
+		const float pos[3]{ pPos->x, pPos->y, pPos->z };
+		bounding_shape_->TestBounding(pos);
 	}
 
-	for (unsigned int i = 0; i < paiMesh->mNumFaces; i++) {
-		const aiFace& Face = paiMesh->mFaces[i];
+	for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+		const aiFace& Face = mesh->mFaces[i];
 		assert(Face.mNumIndices == 3);
-		indices.push_back(Face.mIndices[0]);
-		indices.push_back(Face.mIndices[1]);
-		indices.push_back(Face.mIndices[2]);
+		indices_.push_back(Face.mIndices[0]);
+		indices_.push_back(Face.mIndices[1]);
+		indices_.push_back(Face.mIndices[2]);
 	}
+
+	loadBones(i);
 }
 
-std::map<std::string, uint16_t> m_BoneMapping;
-uint16_t NumBones = 0;
+void ModelConverter::loadBones(unsigned int i) {
+	const aiMesh *ai_mesh = scene_->mMeshes[i];
+	Mesh *g_mesh = &meshes_[i];
 
-#define NUM_IDs 4
+	for (unsigned int i = 0; i < ai_mesh->mNumBones; ++i) {
+		unsigned int bone_index = 0;
+		aiBone *bone = ai_mesh->mBones[i];
 
-void AddBoneData(uint32_t bone_id, float weight, VertexSkeletal &vertex) {
-	for (uint16_t i = 0; i < NUM_IDs; i++) {
-		if (vertex.bone_weights[i] == 0.0f) {
-			vertex.bone_ids[i] = bone_id;
-			vertex.bone_weights[i] = weight;
-			return;
+		std::string bone_name = bone->mName.C_Str();
+
+		// If we can't find the name of the bone, create a new one
+		auto b = bone_map_.find(bone_name);
+		if (b == bone_map_.end()) {
+			bone_index = num_bones_++;
+
+			bone_map_[bone_name] = bone_index;
+			bone_info_.emplace_back(bone_name, (bone->mOffsetMatrix));
 		}
-	}
-
-	// should never get here - more bones than we have space for
-	assert(0);
-}
-
-void InitMesh(const aiMesh *paiMesh,
-	std::vector<VertexSkeletal>& vertices,
-	std::vector<uint32_t>& indices,
-	std::vector<aiMatrix4x4>& boneOffsetMatrices,
-	uint32_t baseVertex) {
-	const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
-
-	for (unsigned int i = 0; i < paiMesh->mNumVertices; i++) {
-		const aiVector3D* pPos = &(paiMesh->mVertices[i]);
-		const aiVector3D* pNormal = paiMesh->HasNormals() ? &(paiMesh->mNormals[i]) : &Zero3D;
-		const aiVector3D* pTangent = paiMesh->HasTangentsAndBitangents() ? &(paiMesh->mTangents[i]) : &Zero3D;
-		const aiVector3D* pTexCoord = paiMesh->HasTextureCoords(0) ? &(paiMesh->mTextureCoords[0][i]) : &Zero3D;
-
-		vertices.push_back({ { pPos->x, pPos->y, pPos->z },{ pNormal->x, pNormal->y, pNormal->z },{ -pTangent->x, -pTangent->y, -pTangent->z },{ pTexCoord->x, pTexCoord->y } });
-	}
-
-	for (unsigned int i = 0; i < paiMesh->mNumFaces; i++) {
-		const aiFace& Face = paiMesh->mFaces[i];
-		assert(Face.mNumIndices == 3);
-		indices.push_back(Face.mIndices[0]);
-		indices.push_back(Face.mIndices[1]);
-		indices.push_back(Face.mIndices[2]);
-	}
-
-	for (uint32_t j = 0; j < paiMesh->mNumBones; j++) {
-		aiBone *bone = paiMesh->mBones[j];
-		std::string boneName = bone->mName.C_Str();
-		uint16_t boneID = 0;
-		if (m_BoneMapping.find(boneName) == m_BoneMapping.end()) {
-			m_BoneMapping[boneName] = NumBones++;
-			boneID = NumBones;
+		else {
+			bone_index = b->second;
 		}
-		else
-			boneID = m_BoneMapping[boneName];
 
-		boneOffsetMatrices[boneID] = bone->mOffsetMatrix;
-
-		for (uint16_t k = 0; k < bone->mNumWeights; k++) {
-			aiVertexWeight *weight = &bone->mWeights[k];
-			uint32_t VertexID = baseVertex + weight->mVertexId;
-			AddBoneData(boneID, weight->mWeight, vertices[VertexID]);
+		for (unsigned int j = 0; j < bone->mNumWeights; ++j) {
+			aiVertexWeight &vert_weight = bone->mWeights[j];
+			unsigned int vertex_id = g_mesh->base_vertex + vert_weight.mVertexId;
+			float weight = vert_weight.mWeight;
+			addBoneData(bone_index, weight, vertex_weights_[vertex_id]);
 		}
 	}
 }
 
-bool ModelConverter(std::string inputPath) {
+void ModelConverter::outputSkeleton() {
+	std::string skeleton_output_path = "../assets/models/" + file_name_ + ".gsf";
+	std::cout << "Outputting skeleton with " << bone_info_.size() << " bones to: " << skeleton_output_path << "\n";
+
+	std::ofstream output(skeleton_output_path, std::ios::binary);
+	for (auto &b : bone_info_) {
+		output << b.name << '\0';
+		output.write((const char *)&b.matrix, sizeof(aiMatrix4x4));
+	}
+	output.close();
+}
+
+// TODO: Allow for optional existing Skeleton to prevent creation of extra skeletons
+ModelConverter::ModelConverter(Params params) : num_bones_(0) {
 	auto t_start = std::chrono::high_resolution_clock::now();
 
-	SwitchSlashes(inputPath);
-	std::string fileName = inputPath.substr(0, inputPath.find_last_of("."));;
-	fileName = fileName.substr(fileName.find_last_of("/") + 1);
-	std::string outputPath = "../assets/models/" + fileName + ".gmf";
-	std::cout << "Loading model: " << inputPath << ".\n";
+	switchSlashes(params.path);
+	file_name_ = params.path.substr(0, params.path.find_last_of("."));;
+	file_name_ = file_name_.substr(file_name_.find_last_of("/") + 1);
+	std::string model_output_path = "../assets/models/" + file_name_ + ".gmf";
+	std::cout << "Loading model: " << params.path << ".\n";
 
 	Assimp::Importer importer;
-	const aiScene* pScene = importer.ReadFile(inputPath,
+	scene_ = (aiScene *)importer.ReadFile(params.path,
 		aiProcess_CalcTangentSpace |
 		aiProcess_Triangulate |
-		aiProcess_PreTransformVertices |
-		aiProcess_GenSmoothNormals |
-		aiProcess_JoinIdenticalVertices |
-		aiProcess_SortByPType);
+		aiProcess_GenSmoothNormals);
+	// | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType | aiProcess_PreTransformVertices
 
 	// If the import failed, report it
-	if (!pScene) {
-		printf("%s\n", importer.GetErrorString());
-		return false;
+	if (!scene_) {
+		throw std::runtime_error(importer.GetErrorString());
 	}
+
+	create_skeleton_ = (params.skeleton_path == "");
+	if (!create_skeleton_) {
+		// Load the preexisting skeleton path
+		// loadBones(params.skeleton_path) => bone_map = contents;
+	}
+
 
 	std::cout << "Model Loaded! Parsing.\n";
 
-	// TODO: Fix this detection
-	bool isStaticMesh = true;
-	
+	unsigned int num_vertices = 0;
+	unsigned int num_indices = 0;
 
-	// TODO: Break into many models (incl. Transforms, Lights, etc) + create prefab?
-	if (isStaticMesh) {
-		// Static Model
-		unsigned int NumVertices = 0;
-		unsigned int NumIndices = 0;
+	// Prepare Mesh Info
+	meshes_.resize(scene_->mNumMeshes);
+	for (unsigned int i = 0; i < scene_->mNumMeshes; i++) {
+		meshes_[i].num_indices = scene_->mMeshes[i]->mNumFaces * 3;
+		meshes_[i].base_vertex = num_vertices;
+		meshes_[i].base_index = num_indices;
+		meshes_[i].material_index = scene_->mMeshes[i]->mMaterialIndex;
 
-		std::vector<Mesh> meshes;
-		meshes.resize(pScene->mNumMeshes);
-		for (unsigned int i = 0; i < pScene->mNumMeshes; i++) {
-			meshes[i].num_indices = pScene->mMeshes[i]->mNumFaces * 3;
-			meshes[i].base_vertex = NumVertices;
-			meshes[i].base_index = NumIndices;
-			meshes[i].material_index = pScene->mMeshes[i]->mMaterialIndex;
-
-			NumVertices += pScene->mMeshes[i]->mNumVertices;
-			NumIndices += meshes[i].num_indices;
-		}
-
-		std::vector<Vertex> vertices;
-		std::vector<unsigned int> indices;
-
-		vertices.reserve(NumVertices);
-		indices.reserve(NumIndices);
-
-		std::vector<std::string> material_names;
-		material_names.resize(pScene->mNumMaterials);
-		if (pScene->HasMaterials()) {
-			InitMaterials(false, fileName, inputPath, pScene->mNumMaterials, pScene->mMaterials, material_names);
-		}
-
-		BoundingBox bounding;
-		for (size_t i = 0; i < pScene->mNumMeshes; i++) {
-			InitMesh(&bounding, pScene->mMeshes[i], vertices, indices);
-		}
-
-		importer.FreeScene();
-
-		ModelFormatHeader outFormat;
-		outFormat.version = 1;
-		outFormat.large_index = false;
-		outFormat.num_vertices = static_cast<uint64_t>(vertices.size());
-		outFormat.num_indices = static_cast<uint64_t>(indices.size());
-		outFormat.num_meshes = static_cast<uint32_t>(meshes.size());
-		outFormat.num_materials = static_cast<uint32_t>(material_names.size());
-		outFormat.num_bones = 0;
-		outFormat.bounding_type = BOUNDING_BOX;
-
-		std::cout << "Model Parsed! Outputting.\n";
-
-		std::ofstream output(outputPath, std::ios::binary);
-		output.write(reinterpret_cast<const char*> (&outFormat), sizeof(ModelFormatHeader));
-		uint32_t v = sizeof(ModelFormatHeader);
-		std::cout << "Model: " << v << "\n";
-		output.write(reinterpret_cast<const char*> (bounding.GetData()), bounding.GetSize());
-		v += bounding.GetSize();
-		std::cout << "Bounding: " << v << "\n";
-		bounding.Print();
-		output.write(reinterpret_cast<const char*> (meshes.data()), meshes.size() * sizeof(Mesh));
-		v += meshes.size() * sizeof(Mesh);
-		std::cout << "Meshes: " << v << "\n";
-		output.write(reinterpret_cast<const char*> (vertices.data()), vertices.size() * sizeof(Vertex));
-		v += vertices.size() * sizeof(Vertex);
-		std::cout << "Vertices: " << v << "\n";
-		output.write(reinterpret_cast<const char*> (indices.data()), indices.size() * sizeof(uint32_t));
-		v += indices.size() * sizeof(uint32_t);
-		std::cout << "Index: " << v << "\n";
-		for (const auto &matName : material_names) {
-			output << matName << '\0';
-		}
-		output.close();
-	}
-	else {
-		// Skeletal Model
-		unsigned int NumVertices = 0;
-		unsigned int NumIndices = 0;
-
-		std::vector<Mesh> meshes;
-		meshes.resize(pScene->mNumMeshes);
-
-		for (uint32_t i = 0; i < pScene->mNumMeshes; i++) {
-			aiMesh *mesh = pScene->mMeshes[i];
-
-			meshes[i].num_indices = mesh->mNumFaces * 3;
-			meshes[i].base_vertex = NumVertices;
-			meshes[i].base_index = NumIndices;
-			meshes[i].material_index = mesh->mMaterialIndex;
-
-			NumVertices += mesh->mNumVertices;
-			NumIndices += meshes[i].num_indices;
-		}
-
-		std::vector<VertexSkeletal> vertices;
-		std::vector<unsigned int> indices;
-
-		vertices.reserve(NumVertices);
-		indices.reserve(NumIndices);
-
-		std::vector<std::string> material_names;
-		material_names.resize(pScene->mNumMaterials);
-		if (pScene->HasMaterials()) {
-			InitMaterials(true, fileName, inputPath, pScene->mNumMaterials, pScene->mMaterials, material_names);
-		}
-
-		std::vector<aiMatrix4x4> offset_matrices;
-		std::vector<std::string> bone_names;
-		for (size_t i = 0; i < pScene->mNumMeshes; i++) {
-			InitMesh(pScene->mMeshes[i], vertices, indices, offset_matrices, meshes[i].base_vertex);
-		}
-
-		for (auto &bone_map : m_BoneMapping) {
-			std::cout << bone_map.first << " - " << bone_map.second << '\n';
-		}
-
-		importer.FreeScene();
-
-		ModelFormatHeader outFormat;
-		outFormat.version = 1;
-		outFormat.large_index = false;
-		outFormat.num_vertices = static_cast<uint64_t>(vertices.size());
-		outFormat.num_indices = static_cast<uint64_t>(indices.size());
-		outFormat.num_meshes = static_cast<uint32_t>(meshes.size());
-		outFormat.num_materials = static_cast<uint32_t>(material_names.size());
-		outFormat.num_bones = NumBones;
-
-		std::cout << "Model Parsed! Outputting.\n";
-
-		std::ofstream output(outputPath, std::ios::binary);
-		output.write(reinterpret_cast<const char*> (&outFormat), sizeof(ModelFormatHeader));
-		output.write(reinterpret_cast<const char*> (meshes.data()), meshes.size() * sizeof(Mesh));
-		output.write(reinterpret_cast<const char*> (vertices.data()), vertices.size() * sizeof(VertexSkeletal));
-		output.write(reinterpret_cast<const char*> (indices.data()), indices.size() * sizeof(uint32_t));
-		output.write(reinterpret_cast<const char*> (offset_matrices.data()), offset_matrices.size() * sizeof(aiMatrix4x4));
-
-		for (const auto &material_name : material_names) {
-			output << material_name << '\0';
-		}
-
-		for (const auto &boneName : bone_names) {
-			output << boneName << '\0';
-		}
-
-		output.close();
+		num_vertices += scene_->mMeshes[i]->mNumVertices;
+		num_indices += meshes_[i].num_indices;
 	}
 
+	vertices_.reserve(num_vertices);
+	vertex_weights_.resize(num_vertices);
+	indices_.reserve(num_indices);
+
+	// Prepare materials
+	material_names_.resize(scene_->mNumMaterials);
+	if (scene_->HasMaterials()) {
+		initMaterials(file_name_, params.path);
+	}
+
+	// Prepare Vertex Info and Bounding Box
+	bounding_shape_ = new BoundingBox();
+	for (unsigned int i = 0; i < scene_->mNumMeshes; i++) {
+		initMesh(i);
+	}
+
+	importer.FreeScene();
+
+	std::cout << "Model Parsed! Outputting.\n";
+
+	// Prepare Model Header
+	ModelFormatHeader outFormat;
+	outFormat.version = 1;
+	outFormat.large_index = false;
+	outFormat.num_vertices = static_cast<uint64_t>(vertices_.size());
+	outFormat.num_indices = static_cast<uint64_t>(indices_.size());
+	outFormat.num_meshes = static_cast<uint32_t>(meshes_.size());
+	outFormat.num_materials = static_cast<uint32_t>(material_names_.size());
+	outFormat.has_bones = num_bones_ > 0;
+	outFormat.bounding_type = BOUNDING_BOX;
+
+	if (create_skeleton_ && outFormat.has_bones)
+		outputSkeleton();
+
+	std::ofstream output(model_output_path, std::ios::binary);
+
+	//	- Output Header
+	output.write(reinterpret_cast<const char*> (&outFormat), sizeof(ModelFormatHeader));
+
+	//	- Output Bounding Size
+	output.write(reinterpret_cast<const char*> (bounding_shape_->GetData()), bounding_shape_->GetSize());
+	bounding_shape_->Print();
+
+	//	- Output Meshes
+	std::cout << "Outputting mesh info for " << meshes_.size() << " meshes.\n";
+	output.write(reinterpret_cast<const char*> (meshes_.data()), meshes_.size() * sizeof(Mesh));
+
+	//	- Ouput Vertices
+	std::cout << "Outputting " << vertices_.size() << " vertices.\n";
+	output.write(reinterpret_cast<const char*> (vertices_.data()), vertices_.size() * sizeof(Vertex));
+
+	// - Ouput Bone Info
+	if (outFormat.has_bones) {
+		std::cout << "Outputting bone weight info.\n";
+		output.write(reinterpret_cast<const char*> (vertex_weights_.data()), vertex_weights_.size() * sizeof(VertexWeights));
+	}
+
+	// TODO: Output all TexCoords here
+
+	// - Output Indices
+	std::cout << "Outputting " << indices_.size() << " indices.\n";
+
+	// - Output Materials
+	output.write(reinterpret_cast<const char*> (indices_.data()), indices_.size() * sizeof(uint32_t));
+	for (const auto &matName : material_names_) {
+		output << matName << '\0';
+	}
+
+	output.close();
+
+	// Print final info.
 	auto t_end = std::chrono::high_resolution_clock::now();
 
-	std::cout << std::chrono::duration<double, std::milli>(t_end - t_start).count()
-		<< " ms\n";
-	std::cout << "Model Outputted to: " << outputPath << "!\n";
-
-	return true;
+	std::cout << std::chrono::duration<double, std::milli>(t_end - t_start).count() << " ms\n";
+	std::cout << "Model Outputted to: " << model_output_path << "!\n";
 }
 
-bool LoadModelFile(std::string inputPath) {
-	auto t_start = std::chrono::high_resolution_clock::now();
+void parseModelConverterParams(std::string params) {
+	ModelConverter::Params model_params;
+	model_params.path = params;
+	model_params.skeleton_path = "";
 
-	std::ifstream input(inputPath, std::ios::ate | std::ios::binary);
-
-	if (!input.is_open()) {
-		std::cerr << "Failed to open file: " << inputPath.c_str() << "!\n";
-		return false;
-	}
-
-	std::cout << "Model reading from: " << inputPath << "!\n";
-
-	size_t fileSize = (size_t)input.tellg();
-	std::vector<char> buffer(fileSize);
-
-	input.seekg(0);
-	input.read(buffer.data(), fileSize);
-
-	ModelFormatHeader inFormat;
-	void *offset = buffer.data();
-	memcpy(&inFormat, offset, sizeof(ModelFormatHeader));
-
-	std::vector<Mesh> remeshes;
-	remeshes.resize(inFormat.num_meshes);
-	std::vector<Vertex> revertices;
-	revertices.resize(inFormat.num_vertices);
-	std::vector<unsigned int> reindices;
-	reindices.resize(inFormat.num_indices);
-	std::vector<std::string> materialNames;
-	materialNames.resize(inFormat.num_materials);
-
-	offset = static_cast<char*>(offset) + sizeof(ModelFormatHeader);
-	uint64_t size = inFormat.num_meshes * sizeof(Mesh);
-	memcpy(&remeshes[0], offset, size);
-	offset = static_cast<char*>(offset) + size;
-	size = inFormat.num_vertices * sizeof(Vertex);
-	memcpy(&revertices[0], offset, size);
-	offset = static_cast<char*>(offset) + size;
-	size = inFormat.num_indices * sizeof(unsigned int);
-	memcpy(&reindices[0], offset, size);
-	offset = static_cast<char*>(offset) + inFormat.num_indices * sizeof(unsigned int);
-
-	char *words = (char *)offset;
-	for (uint32_t i = 0; i < inFormat.num_materials; i++) {
-		materialNames[i] = words;
-		LoadMaterial(words);
-		words = strchr(words, '\0')+1;
-	}
-
-	input.close();
-
-	auto t_end = std::chrono::high_resolution_clock::now();
-
-	std::cout << std::chrono::duration<double, std::milli>(t_end - t_start).count()
-		<< " ms\n";
-
-	std::cout << "Model read!\n";
-
-	return true;
+	ModelConverter m(model_params);
 }
+
+ModelConverter::BoneInfo::BoneInfo(std::string n, aiMatrix4x4 m) : name(n), matrix(m) {}

@@ -19,6 +19,10 @@ GameObjectHandle GameObject::getID() {
 	return id_;
 }
 
+std::string GameObject::getName() {
+	return name_;
+}
+
 GameObject::~GameObject() {
 	// Delete all Components from Systems
 }

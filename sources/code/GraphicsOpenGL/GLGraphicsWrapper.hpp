@@ -51,6 +51,8 @@ public:
 	void DeleteCommandBuffer(CommandBuffer * ptr);
 	void DeleteVertexArrayObject(VertexArrayObject *ptr);
 
+	void setViewport(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+
 	Framebuffer *CreateFramebuffer(FramebufferCreateInfo ci);
 	RenderPass *CreateRenderPass(RenderPassCreateInfo ci);
 	GraphicsPipeline *CreateGraphicsPipeline(GraphicsPipelineCreateInfo ci);

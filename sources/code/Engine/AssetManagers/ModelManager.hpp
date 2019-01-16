@@ -43,7 +43,7 @@ struct ModelFormatHeader {
 	uint64_t num_vertices;
 	uint64_t num_indices;
 	uint32_t num_materials;
-	uint16_t num_bones;
+	bool has_bones;
 	bool large_index;
 	BoundingType bounding_type;
 };
@@ -65,6 +65,13 @@ struct MeshCreateInfo {
 	uint32_t base_vertex = 0;
 	uint32_t base_index = 0;
 	uint32_t material_index = UINT32_MAX;
+};
+
+#define BONES_PER_VERTEX 4
+
+struct VertexWeights {
+	uint16_t	bone_ids[BONES_PER_VERTEX];
+	float		bone_weights[BONES_PER_VERTEX];
 };
 
 struct ModelStatic {

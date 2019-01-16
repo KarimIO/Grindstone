@@ -381,10 +381,10 @@ void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 	TransformSubSystem *transform_system = (TransformSubSystem *)space->getSubsystem(COMPONENT_TRANSFORM);
 
-	if (fbo == nullptr)
-		graphics_wrapper->BindDefaultFramebuffer(true);
-	else
+	if (fbo)
 		fbo->BindWrite(true);
+	else
+		graphics_wrapper->BindDefaultFramebuffer(true);
 	
 	graphics_wrapper->SetImmediateBlending(BLEND_ADDITIVE);
 	graphics_wrapper->Clear(CLEAR_BOTH);
@@ -427,6 +427,7 @@ void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
 		light_spot_ubo_.outerAngle = light.properties_.outerAngle;
 		light_spot_ubo_.shadow = light.properties_.shadow;
 		light_spot_ubo_.shadow_mat = bias_matrix * light.shadow_mat_;
+		light_spot_ubo_.shadow_resolution = light.properties_.resolution;
 		spot_light_ubo_handler_->UpdateUniformBuffer(&light_spot_ubo_);
 
 		if (light.properties_.shadow) {
@@ -453,6 +454,7 @@ void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
 		light_directional_ubo_.power = light.properties_.power;
 		light_directional_ubo_.shadow = light.properties_.shadow;
 		light_directional_ubo_.shadow_mat = bias_matrix * light.shadow_mat_;
+		light_directional_ubo_.shadow_resolution = light.properties_.resolution;
 		directional_light_ubo_handler_->UpdateUniformBuffer(&light_directional_ubo_);
 
 		if (light.properties_.shadow) {

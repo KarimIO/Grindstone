@@ -11,6 +11,7 @@ uniform sampler2D gbuffer1;
 uniform sampler2D gbuffer2;
 uniform sampler2D gbuffer3;
 uniform samplerCube environmentMap;
+uniform sampler2D ssao;
 
 layout(std140) uniform UniformBufferObject {
     mat4 invView;
@@ -134,19 +135,19 @@ void main() {
 	vec3 Albedo = texture(gbuffer0, fragTexCoord).rgb;
 	vec4 Specular = texture(gbuffer2, fragTexCoord);
 
-    vec3 ambientColor = vec3(0.9f, 0.96f, 1.0f) * 0.05f;
+    vec3 ambientColor = vec3(0.9f, 0.96f, 1.0f) * 0.02;
 	ambientColor *= Albedo;
 
 	const int uBlurSize = 4;
 	vec2 texelSize = 1.0 / ubo.resolution;
-    float result = 0.0;
+    float strength = 0.0;
     for (int i = 0; i < uBlurSize; ++i) {
         for (int j = 0; j < uBlurSize; ++j) {
             vec2 offset = vec2(float(i), float(j)) * texelSize;
-            result += texture(gbuffer0, fragTexCoord + offset).a;
+            strength += texture(ssao, fragTexCoord + offset).r;
         }
     }
-    float strength = result / float(uBlurSize * uBlurSize);
+    strength /= float(uBlurSize * uBlurSize);
 	strength *= strength;
 
 	vec3 V = normalize(ubo.eyePos - Position);
@@ -165,5 +166,5 @@ void main() {
 	vec3 Kspec  = radiance(N, V, Specular);
 
 	// Mix the materials
-	outColor = (Kspec * 1 + 1 * Kdiff + ambientColor) * strength;
+	outColor = (Kspec * 1 + 0 * Kdiff + ambientColor) * strength;
 }

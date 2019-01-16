@@ -14,6 +14,10 @@ public:
 	GLTexture(TextureCreateInfo ci);
 	GLTexture(CubemapCreateInfo ci);
 	void Bind(int i);
+
+	GLenum translateTexWrap(TextureWrapMode);
+	GLenum translateTexFilter(TextureFilter);
+
 	~GLTexture();
 };
 

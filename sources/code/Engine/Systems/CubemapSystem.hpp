@@ -12,6 +12,8 @@
 
 #include "CubeInfo.hpp"
 
+class Framebuffer;
+class RenderTarget;
 class TextureBindingLayout;
 
 struct CubemapComponent : public Component {
@@ -19,6 +21,8 @@ struct CubemapComponent : public Component {
 	uint32_t resolution_;
 	Texture *cubemap_;
 	TextureBinding *cubemap_binding_;
+	Framebuffer *capture_fbo_;
+	RenderTarget *render_target_;
 	float near_;
 	float far_;
 	enum CaptureMethod {
@@ -26,12 +30,15 @@ struct CubemapComponent : public Component {
 		CAPTURE_BAKE,
 		CAPTURE_CUSTOM
 	} capture_method_;
+	std::string path_;
+	void bake();
 };
 
 class CubemapSystem : public System {
 public:
 	CubemapSystem();
 	void update(double dt);
+	void bake(double t);
 };
 
 class CubemapSubSystem : public SubSystem {
@@ -43,7 +50,7 @@ public:
 	size_t getNumComponents();
 	virtual void removeComponent(ComponentHandle handle);
 
-	void captureCubemaps(double);
+	void bake();
 	void loadCubemaps();
 	CubemapComponent *getClosestCubemap(glm::vec3);
 

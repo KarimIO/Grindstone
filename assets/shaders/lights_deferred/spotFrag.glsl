@@ -17,6 +17,7 @@ layout(std140) uniform Light {
 	vec3 direction;
 	float innerAngle;
 	float outerAngle;
+	float shadow_resolution;
 	bool shadow;
 } light;
 
@@ -167,7 +168,7 @@ float getShadowValue(in vec3 pos, in float nl) {
 	float visibility = 1.0f;
 	for (int i=0;i<4;i++){
         int index = int(16.0*shadowRandom(vec4(floor(pos.xyz*1000.0), i)))%16;
-        visibility -= 0.25*(1.0-texture( shadow_map, vec3(shadow_coords_final.xy + poissonDisk[index]/1400.0, shadow_coords_final.z - bias)));
+        visibility -= 0.25*(1.0-texture( shadow_map, vec3(shadow_coords_final.xy + poissonDisk[index]/light.shadow_resolution, shadow_coords_final.z - bias)));
     }
 
 	return visibility;

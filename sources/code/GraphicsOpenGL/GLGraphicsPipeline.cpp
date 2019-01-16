@@ -119,14 +119,15 @@ GLGraphicsPipeline::GLGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) {
 
 	delete[] shaders;
 
+	// TODO: Properly do this:
+	glUseProgram(program);
+
 	for (size_t i = 0; i < createInfo.uniformBufferBindingCount; i++) {
 		GLUniformBufferBinding *ubb = (GLUniformBufferBinding *)createInfo.uniformBufferBindings[i];
 		GLuint index = glGetUniformBlockIndex(program, ubb->GetUniformName());
 		glUniformBlockBinding(program, index, ubb->GetBindingLocation());
 	}
 
-	// TODO: Properly do this:
-	glUseProgram(program);
 	for (int i = 0; i < createInfo.textureBindingCount; i++) {
 		GLTextureBindingLayout *texbinding = (GLTextureBindingLayout *)createInfo.textureBindings[i];
 		for (int j = 0; j < texbinding->GetNumSubBindings(); j++) {
@@ -140,8 +141,8 @@ GLGraphicsPipeline::GLGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) {
 void GLGraphicsPipeline::Bind() {
 	glUseProgram(program);
 	
-	glViewport(0, 0, width, height);
-	glScissor(scissorX, scissorY, scissorW, scissorH);
+	//glViewport(0, 0, width, height);
+	//glScissor(scissorX, scissorY, scissorW, scissorH);
 	switch (cullMode) {
 	case CULL_NONE:
 		glDisable(GL_CULL_FACE);

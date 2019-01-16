@@ -118,8 +118,10 @@ void PostProcessTonemap::Process() {
     exposure_ub_->Bind();
 	if (target_ == nullptr) {
 		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
-		engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
 	} 
+	else {
+		target_->framebuffer->BindWrite(true);
+	}
     source_->framebuffer->BindRead();
     source_->framebuffer->BindTextures(4);
     engine.getGraphicsWrapper()->DrawImmediateVertices(0, 6);

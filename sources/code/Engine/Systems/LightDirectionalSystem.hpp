@@ -16,6 +16,7 @@ struct LightDirectionalComponent : public Component {
 		glm::vec3 color;
 		float power;
 		bool shadow;
+		uint16_t resolution;
 	} properties_;
 
 	glm::mat4 shadow_mat_;

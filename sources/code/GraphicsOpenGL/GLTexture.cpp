@@ -45,11 +45,11 @@ GLTexture::GLTexture(TextureCreateInfo ci) {
 			}
 		}
 
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, translateTexWrap(ci.options.wrap_mode_u));
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, translateTexWrap(ci.options.wrap_mode_v));
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, translateTexWrap(ci.options.wrap_mode_w));
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, translateTexFilter(ci.options.mag_filter));
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, translateTexFilter(ci.options.min_filter));
 
 		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 	}
@@ -66,7 +66,9 @@ GLTexture::GLTexture(TextureCreateInfo ci) {
 
 		if (!is_compressed) {
 			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, ci.width, ci.height, 0, format, GL_UNSIGNED_BYTE, ci.data);
-			glGenerateMipmap(GL_TEXTURE_2D);
+
+			if (ci.options.generate_mipmaps)
+				glGenerateMipmap(GL_TEXTURE_2D);
 		}
 		else {
 			unsigned int blockSize = (ci.format == FORMAT_COLOR_SRGB_DXT1 || ci.format == FORMAT_COLOR_SRGB_ALPHA_DXT1
@@ -91,12 +93,54 @@ GLTexture::GLTexture(TextureCreateInfo ci) {
 			}
 		}
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, translateTexWrap(ci.options.wrap_mode_u));
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, translateTexWrap(ci.options.wrap_mode_v));
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, translateTexFilter(ci.options.mag_filter));
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, translateTexFilter(ci.options.min_filter));
 
 		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+}
+
+
+GLenum GLTexture::translateTexWrap(TextureWrapMode m) {
+	switch (m) {
+		case TEXWRAP_REPEAT:
+			return GL_REPEAT;
+
+		case TEXWRAP_CLAMP_TO_EDGE:
+			return GL_CLAMP_TO_EDGE;
+
+		case TEXWRAP_CLAMP_TO_BORDER:
+			return GL_CLAMP_TO_BORDER;
+
+		case TEXWRAP_MIRRORED_REPEAT:
+			return GL_MIRRORED_REPEAT;
+
+		case TEXWRAP_MIRROR_CLAMP_TO_EDGE:
+			return GL_MIRROR_CLAMP_TO_EDGE;
+	}
+}
+
+GLenum GLTexture::translateTexFilter(TextureFilter m) {
+	switch (m) {
+		case TEXFILTER_NEAREST: 
+			return GL_NEAREST;
+	
+		case TEXFILTER_LINEAR: 
+			return GL_LINEAR;
+		
+		case TEXFILTER_NEAREST_MIPMAP_NEAREST: 
+			return GL_NEAREST_MIPMAP_NEAREST;
+
+		case TEXFILTER_LINEAR_MIPMAP_NEAREST: 
+			return GL_LINEAR_MIPMAP_NEAREST;
+
+		case TEXFILTER_NEAREST_MIPMAP_LINEAR: 
+			return GL_NEAREST_MIPMAP_LINEAR;
+
+		case TEXFILTER_LINEAR_MIPMAP_LINEAR: 
+			return GL_LINEAR_MIPMAP_LINEAR;
 	}
 }
 
@@ -115,13 +159,14 @@ GLTexture::GLTexture(CubemapCreateInfo ci) {
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, ci.width, ci.height, 0, format, GL_UNSIGNED_BYTE, ci.data[i]);
 	}
 
-	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+	if (ci.options.generate_mipmaps)
+		glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, translateTexWrap(ci.options.wrap_mode_u));
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, translateTexWrap(ci.options.wrap_mode_v));
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, translateTexWrap(ci.options.wrap_mode_w));
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, translateTexFilter(ci.options.mag_filter));
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, translateTexFilter(ci.options.min_filter));
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
@@ -146,7 +191,8 @@ GLTextureBinding::GLTextureBinding(TextureBindingCreateInfo ci) {
 
 void GLTextureBinding::Bind() {
 	for (int i = 0; i < textures.size(); i++) {
-		textures[i]->Bind(targets[i]);
+		if (textures[i])
+			textures[i]->Bind(targets[i]);
 	}
 }
 

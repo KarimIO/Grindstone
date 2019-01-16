@@ -13,7 +13,7 @@ layout(std140) uniform UniformBufferObject {
 
 const int kernelSize = 32;
 layout(std140) uniform SSAOBufferObject {
-    vec3 kernels[32];
+    vec3 kernels[kernelSize];
     float radius;
     float bias;
 } ssao_ubo;
@@ -82,5 +82,5 @@ void main() {
     }
 
     occlusion = 1.0 - (occlusion / kernelSize);
-    SSAOout = vec4(1, fragTexCoord, 1);
+    SSAOout = vec4(vec3(occlusion), 1);
 }

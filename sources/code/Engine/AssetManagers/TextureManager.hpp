@@ -17,9 +17,9 @@ struct TextureContainer {
 class TextureManager {
 public:
 	//Texture *preloadTexture(std::string path);
-	TextureHandler loadTexture(std::string path);
+	TextureHandler loadTexture(std::string path, TextureOptions options = TextureOptions());
 	//Texture *preloadCubemap(std::string path);
-	TextureHandler loadCubemap(std::string path);
+	TextureHandler loadCubemap(std::string path, TextureOptions options = TextureOptions());
 	//void loadPreloaded();
 
 	Texture *getTexture(TextureHandler handle);
@@ -27,6 +27,8 @@ public:
 
 	void removeTexture(TextureContainer *container);
 	void removeTexture(TextureHandler handle);
+
+	void writeCubemap(std::string path, unsigned char *data[6], uint16_t res);
 
 	~TextureManager();
 private:

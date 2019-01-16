@@ -60,6 +60,26 @@
             "name": "Roughness",
             "type": "constant",
             "default": 0.5
+        },
+        "hasAlbedoTexture": {
+            "name": "Has Albedo Texture",
+            "type": "boolean",
+            "default": false
+        },
+        "hasRoughTexture": {
+            "name": "Has Roughness Texture",
+            "type": "boolean",
+            "default": false
+        },
+        "hasMetalTexture": {
+            "name": "Has Metal Texture",
+            "type": "boolean",
+            "default": false
+        },
+        "hasNormalTexture": {
+            "name": "Has Normal Texture",
+            "type": "boolean",
+            "default": false
         }
     }
 }

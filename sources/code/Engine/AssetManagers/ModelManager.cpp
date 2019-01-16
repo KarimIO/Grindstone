@@ -190,22 +190,36 @@ void ModelManager::loadModel(ModelStatic &model) {
 
 	offset = static_cast<char*>(offset) + model.bounding->GetSize();
 
-	model.meshes.resize(inFormat.num_meshes);
 	std::vector<Vertex> vertices;
-	vertices.resize(inFormat.num_vertices);
+	std::vector<VertexWeights> vertex_weights;
 	std::vector<unsigned int> indices;
+
+	std::vector<MeshCreateInfo> temp_meshes(inFormat.num_meshes);
+	model.meshes.resize(inFormat.num_meshes);
+	vertices.resize(inFormat.num_vertices);
+	vertex_weights.resize(inFormat.num_vertices);
 	indices.resize(inFormat.num_indices);
 
-	//offset = static_cast<char*>(offset) + model.bounding->GetSize();
+	// Copy Meshes
 	uint32_t size = inFormat.num_meshes * sizeof(MeshCreateInfo);
-	std::vector<MeshCreateInfo> temp_meshes(inFormat.num_meshes);
 	memcpy(temp_meshes.data(), offset, size);
 	offset = static_cast<char*>(offset) + size;
+
+	// Copy Vertices
 	size = inFormat.num_vertices * sizeof(Vertex);
-	memcpy(&vertices[0], offset, size);
+	memcpy(vertices.data(), offset, size);
 	offset = static_cast<char*>(offset) + size;
+
+	// Copy Vertex Weights
+	if (inFormat.has_bones) {
+		size = inFormat.num_vertices * sizeof(VertexWeights);
+		memcpy(vertex_weights.data(), offset, size);
+		offset = static_cast<char*>(offset) + size;
+	}
+
+	// Copy Indices
 	size = inFormat.num_indices * sizeof(unsigned int);
-	memcpy(&indices[0], offset, size);
+	memcpy(indices.data(), offset, size);
 	offset = static_cast<char*>(offset) + size;
 
 	std::cout << "Loading " << inFormat.num_materials << " materials.\n";
