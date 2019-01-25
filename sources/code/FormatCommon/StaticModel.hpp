@@ -4,6 +4,8 @@
 #include "Bounding.hpp"
 #include <stdint.h>
 
+#define MODEL_FILE_VERSION_NUM 2
+
 struct ModelFormatHeader {
 	uint32_t version;
 	uint32_t num_meshes;

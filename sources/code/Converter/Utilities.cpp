@@ -85,3 +85,13 @@ void switchSlashes(std::string &path) {
 		index += 1;
 	}
 }
+
+std::string extractFilename(std::string path) {
+	path = extractFilenameAndExtension(path);
+	return path.substr(0, path.find_last_of("."));
+	return std::string();
+}
+
+std::string extractFilenameAndExtension(std::string path) {
+	return path.substr(path.find_last_of("/") + 1);
+}

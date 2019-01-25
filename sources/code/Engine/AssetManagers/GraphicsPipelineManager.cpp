@@ -245,7 +245,7 @@ public:
 			state = SHADER_JSON_PROPERTY;
 			if (std::string(str) == "boolean") {
 				paramType = PARAM_BOOL;
-				param_size += sizeof(bool) * 4;
+				param_size += 4;
 			}
 			else if (std::string(str) == "constant") {
 				paramType = PARAM_FLOAT;
@@ -273,15 +273,15 @@ public:
 			}
 			else if (std::string(str) == "bvec2") {
 				paramType = PARAM_BVEC2;
-				param_size += sizeof(bool) * 2;
+				param_size += 4;
 			}
 			else if (std::string(str) == "bvec3") {
 				paramType = PARAM_BVEC3;
-				param_size += sizeof(bool) * 3;
+				param_size += 4;
 			}
 			else if (std::string(str) == "bvec4") {
 				paramType = PARAM_BVEC4;
-				param_size += sizeof(bool) * 4;
+				param_size += 4;
 			}
 			else if (std::string(str) == "ivec2") {
 				paramType = PARAM_IVEC2;

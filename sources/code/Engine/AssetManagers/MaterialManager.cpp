@@ -103,24 +103,14 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 							list[i] = std::stof(floatval);
 						}
 
-						std::cout << parameter << ": ";
-						for (int i = 0; i < 4; ++i) {
-							std::cout << list[i] << " ";
-						}
-						std::cout << "_ " << int(buffpos - buffer) << "\n";
-
 						buffpos += sizeof(float) * 4;
 					}
 					else if (it2->second.paramType == PARAM_FLOAT) {
 						*(float *)buffpos = std::stof(value);
-
-						std::cout << parameter << ": " << std::stof(value) << " _ " << int(buffpos - buffer) << "\n";
 						buffpos += sizeof(float);
 					}
 					else if (it2->second.paramType == PARAM_BOOL) {
 						*(bool *)buffpos = (value == "true") ? true : false;
-
-						std::cout << parameter << ": " << value << " _ " << int(buffpos - buffer) << "\n";
 						buffpos += sizeof(bool) * 4;
 					}
 				}

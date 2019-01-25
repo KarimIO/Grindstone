@@ -1,31 +1,20 @@
 #include "Core/Engine.hpp"
-#include "RenderStaticMeshSystem.hpp"
+#include "RenderSkeletalMeshSystem.hpp"
 #include "TransformSystem.hpp"
 #include "../Core/Engine.hpp"
 #include "../Utilities/SettingsFile.hpp"
 #include "../AssetManagers/ModelManager.hpp"
 
+RenderSkeletalMeshComponent::RenderSkeletalMeshComponent(GameObjectHandle object_handle, ComponentHandle handle) :
+	Component(COMPONENT_RENDER_SKELETAL_MESH, object_handle, handle) {}
 
-simulateAnimation
-render(Mesh, Skeleton, Animation) {
-	mesh->bindProgram();
-	mesh->bindMaterial();
-
-	skeleton->bindBones(animation, time);
-	bindMeshInfo(skeleton)
-	renderVertex(Mesh)
+RenderSkeletalMeshSubSystem::RenderSkeletalMeshSubSystem(Space *space) : SubSystem(COMPONENT_RENDER_SKELETAL_MESH, space) {
 }
 
-RenderStaticMeshComponent::RenderStaticMeshComponent(GameObjectHandle object_handle, ComponentHandle handle) :
-	Component(COMPONENT_RENDER_STATIC_MESH, object_handle, handle) {}
-
-RenderStaticMeshSubSystem::RenderStaticMeshSubSystem(Space *space) : SubSystem(COMPONENT_RENDER_STATIC_MESH, space) {
+RenderSkeletalMeshSubSystem::~RenderSkeletalMeshSubSystem() {
 }
 
-RenderStaticMeshSubSystem::~RenderStaticMeshSubSystem() {
-}
-
-ComponentHandle RenderStaticMeshSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
+ComponentHandle RenderSkeletalMeshSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
 	components_.emplace_back(object_handle, component_handle);
 	auto component = components_.back();
@@ -39,19 +28,19 @@ ComponentHandle RenderStaticMeshSubSystem::addComponent(GameObjectHandle object_
 	return component_handle;
 }
 
-void RenderStaticMeshSubSystem::removeComponent(ComponentHandle id) {
+void RenderSkeletalMeshSubSystem::removeComponent(ComponentHandle id) {
 	components_.erase(components_.begin() + id);
 }
 
-RenderStaticMeshComponent &RenderStaticMeshSubSystem::getComponent(ComponentHandle id) {
+RenderSkeletalMeshComponent &RenderSkeletalMeshSubSystem::getComponent(ComponentHandle id) {
 	return components_[id];
 }
 
-size_t RenderStaticMeshSubSystem::getNumComponents() {
+size_t RenderSkeletalMeshSubSystem::getNumComponents() {
 	return components_.size();
 }
 
-void RenderStaticMeshSystem::update(double dt) {
+void RenderSkeletalMeshSystem::update(double dt) {
 }
 
-RenderStaticMeshSystem::RenderStaticMeshSystem() : System(COMPONENT_CAMERA) {}
+RenderSkeletalMeshSystem::RenderSkeletalMeshSystem() : System(COMPONENT_CAMERA) {}

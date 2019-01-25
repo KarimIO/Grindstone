@@ -211,6 +211,15 @@ void ModelConverter::outputSkeleton() {
 	std::cout << "Outputting skeleton with " << bone_info_.size() << " bones to: " << skeleton_output_path << "\n";
 
 	std::ofstream output(skeleton_output_path, std::ios::binary);
+
+	//  - Output File MetaData
+	output.write("GSF", 3);
+
+	uint16_t num_bones = bone_info_.size();
+	//  - Output number of bones
+	output.write((char *)&num_bones, sizeof(uint16_t));
+
+	//  - Output File MetaData
 	for (auto &b : bone_info_) {
 		output << b.name << '\0';
 		output.write((const char *)&b.matrix, sizeof(aiMatrix4x4));
@@ -223,9 +232,8 @@ ModelConverter::ModelConverter(Params params) : num_bones_(0) {
 	auto t_start = std::chrono::high_resolution_clock::now();
 
 	switchSlashes(params.path);
-	file_name_ = params.path.substr(0, params.path.find_last_of("."));;
-	file_name_ = file_name_.substr(file_name_.find_last_of("/") + 1);
-	std::string model_output_path = "../assets/models/" + file_name_ + ".gmf";
+	file_name_ = extractFilename(params.path);
+	std::string model_output_path("../assets/models/" + file_name_ + ".gmf");
 	std::cout << "Loading model: " << params.path << ".\n";
 
 	Assimp::Importer importer;
@@ -286,7 +294,6 @@ ModelConverter::ModelConverter(Params params) : num_bones_(0) {
 
 	// Prepare Model Header
 	ModelFormatHeader outFormat;
-	outFormat.version = 1;
 	outFormat.large_index = false;
 	outFormat.num_vertices = static_cast<uint64_t>(vertices_.size());
 	outFormat.num_indices = static_cast<uint64_t>(indices_.size());
@@ -299,6 +306,9 @@ ModelConverter::ModelConverter(Params params) : num_bones_(0) {
 		outputSkeleton();
 
 	std::ofstream output(model_output_path, std::ios::binary);
+
+	//  - Output File MetaData
+	output.write("GMF", 3);
 
 	//	- Output Header
 	output.write(reinterpret_cast<const char*> (&outFormat), sizeof(ModelFormatHeader));
@@ -341,12 +351,12 @@ ModelConverter::ModelConverter(Params params) : num_bones_(0) {
 	std::cout << "Model Outputted to: " << model_output_path << "!\n";
 }
 
-void parseModelConverterParams(std::string params) {
-	ModelConverter::Params model_params;
-	model_params.path = params;
-	model_params.skeleton_path = "";
+void parseModelConverterParams(std::string args) {
+	ModelConverter::Params params;
+	params.path = args.substr(4);
+	params.skeleton_path = "";
 
-	ModelConverter m(model_params);
+	ModelConverter m(params);
 }
 
 ModelConverter::BoneInfo::BoneInfo(std::string n, aiMatrix4x4 m) : name(n), matrix(m) {}
