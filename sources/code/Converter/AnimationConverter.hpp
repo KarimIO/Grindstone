@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <glm/gtx/quaternion.hpp>
+#include "../AssetCommon/SkeletonLoader.hpp"
 
 class aiNode;
 class aiAnimation;
@@ -20,6 +21,7 @@ public:
 	AnimationConverter(Params params);
 	AnimationConverter(aiScene *scene, std::string skeleton_path);
 private:
+	glm::mat4 global_inverse_;
 
 	struct Keyframe {
 		glm::vec3 position_;
@@ -32,7 +34,6 @@ private:
 		std::vector<Keyframe> keyframes_;
 	};
 
-	void parseSkeleton(std::string path);
 	void getAnimationLength();
 	void processFrames();
 	void processScene();
@@ -40,7 +41,7 @@ private:
 	const aiNodeAnim *findNodeAnim(const aiAnimation *animation, std::string bone_name);
 
 	aiScene *scene_;
-	std::vector<std::string> bone_map_;
+	std::vector<GrindstoneAssetCommon::BoneInfo> bone_info_;
 
 	float animation_length_;
 	std::vector<AnimationConverter::Node> nodes_;

@@ -106,15 +106,17 @@ void ConvertBC123(unsigned char **pixels, bool is_cubemap, int width, int height
 	DDSHeader outHeader;
 	std::memset(&outHeader, 0, sizeof(outHeader));
 	outHeader.dwSize = 124;
-	outHeader.ddspf.dwFlags = DDPF_FOURCC;
+	outHeader.ddspf.dwFlags = DDPF_FOURCC | DDPF_ALPHAPIXELS;
 	outHeader.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_LINEARSIZE | DDSD_MIPMAPCOUNT;
 	outHeader.dwHeight = height;
 	outHeader.dwWidth = width;
 	outHeader.dwDepth = 0;
 	outHeader.dwCaps = DDSCAPS_COMPLEX | DDSCAPS_TEXTURE | DDSCAPS_MIPMAP;
-	outHeader.dwMipMapCount = std::log2(width)+1;
+	outHeader.dwMipMapCount = 1; // std::log2(width) + 1 - 2;
 	if (is_cubemap)
 		outHeader.dwCaps2 = DDS_CUBEMAP_ALLFACES;
+
+	outHeader.ddspf.dwSize = 32;
 
 	bool alpha = false;
 	switch (compression) {
@@ -136,7 +138,6 @@ void ConvertBC123(unsigned char **pixels, bool is_cubemap, int width, int height
 	char mark[] = {'G', 'R', 'I', 'N', 'D', 'S', 'T', 'O', 'N', 'E'};
 	std::memcpy(&outHeader.dwReserved1, mark, sizeof(mark));
 
-	bool useMip = outHeader.dwMipMapCount > 1;
 	int size = outHeader.dwPitchOrLinearSize;
 	int mipsize = size;
 	unsigned int blockSize = (outHeader.ddspf.dwFourCC == FOURCC_DXT1) ? 8 : 16;
@@ -152,7 +153,7 @@ void ConvertBC123(unsigned char **pixels, bool is_cubemap, int width, int height
 	int offset = 0;
 	unsigned char block[64];
 
-	int minlev = outHeader.dwMipMapCount - 2;
+	int minlev = outHeader.dwMipMapCount;
 	int num_faces = is_cubemap ? 6 : 1;
 	for (int l = 0; l < num_faces; l++) {
 		unsigned char *mip = pixels[l];
@@ -180,10 +181,10 @@ void ConvertBC123(unsigned char **pixels, bool is_cubemap, int width, int height
 				delete[] temp_mip;
 		}
 
-		memcpy(&outData[offset], &outData[offset], 8); // 2x2
+		/*memcpy(&outData[offset], &outData[offset], 8); // 2x2
 		offset += 8;
 		memcpy(&outData[offset], &outData[offset], 8); // 1x1
-		offset += 8;
+		offset += 8;*/
 	}
 
 	std::ofstream out(path, std::ios::binary);
@@ -201,7 +202,7 @@ void ConvertBC123(unsigned char **pixels, bool is_cubemap, int width, int height
 }
 
 bool ConvertTexture(std::string input, bool is_cubemap, std::string output, Compression compression) {
-    std::string *path;
+	std::string *path;
 	if (is_cubemap) {
 		path = new std::string[6];
 		int p = input.find_last_of('.');
@@ -218,10 +219,10 @@ bool ConvertTexture(std::string input, bool is_cubemap, std::string output, Comp
 		path = new std::string[1];
 		path[0] = input;
 	}
-    int texWidth, texHeight, texChannels;
+	int texWidth, texHeight, texChannels;
 	int num_maps = is_cubemap ? 6 : 1;
 	stbi_uc **pixels = new stbi_uc*[num_maps];
-    for (int i = 0; i < num_maps; i++) {
+	for (int i = 0; i < num_maps; i++) {
 		pixels[i] = stbi_load(path[i].c_str(), &texWidth, &texHeight, &texChannels, 4);
 		if (!pixels[i]) {
 			printf("Texture failed to load!: %s", path[i].c_str());
@@ -233,13 +234,16 @@ bool ConvertTexture(std::string input, bool is_cubemap, std::string output, Comp
 		}
 	}
 
-	if (compression == C_DETECT)
+	if (compression == C_DETECT) {
 		if (texChannels == 4) {
 			compression = C_BC3;
 		}
 		else {
 			compression = C_BC1;
 		}
+	}
+
+	compression = C_BC1;
 
     switch(compression) {
         default:

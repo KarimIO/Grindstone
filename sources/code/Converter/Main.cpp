@@ -25,7 +25,6 @@ void getHelp() {
 	std::cout << "cube <path>\n";
 	std::cout << "img <path>\n";
 	std::cout << "mdl <path>\n";
-	std::cout << "\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -42,10 +41,11 @@ int main(int argc, char* argv[]) {
 		args.push(arg);
 	}
 
+	args.push("img D:/Work/Grindstone/AssetSrc/crytek-sponza/textures_pbr/ChainTexture_Albedo.tga");
 	std::cout << "Welcome to Grindstone Converter!\nType help for more info.\n";
 
 	// If we don't have any input, then simply poll for it
-	if (argc <= 1)
+	if (args.size() == 0)
 		handleArgInput(args);
 
 	while (args.size() > 0) {
@@ -62,10 +62,10 @@ int main(int argc, char* argv[]) {
 				parseModelConverterParams(arg);
 			}
 			else if (arg3 == "img") {
-				ConvertTexture(arg, false, SwapExtension(arg, "dds"));
+				ConvertTexture(arg.substr(4), false, SwapExtension(arg.substr(4), "dds"));
 			}
 			else if (arg4 == "cube") {
-				ConvertTexture(arg, true, SwapExtension(arg, "dds"));
+				ConvertTexture(arg.substr(5), true, SwapExtension(arg.substr(5), "dds"));
 			}
 			else if (arg4 == "anim") {
 				parseAnimationConverterParams(arg);
@@ -80,6 +80,8 @@ int main(int argc, char* argv[]) {
 		catch (std::runtime_error err) {
 			std::cout << err.what() << "\n";
 		}
+
+		std::cout << "\n";
 
 		handleArgInput(args);
 	}

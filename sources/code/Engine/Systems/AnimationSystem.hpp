@@ -6,6 +6,7 @@
 #include "AssetManagers/AssetReferences.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include "../AssetCommon/SkeletonLoader.hpp"
 
 struct Animation {
 	struct Keyframe {
@@ -33,22 +34,25 @@ struct AnimationPlayer {
 
 struct Skeleton {
 	glm::mat4 global_inverse_;
-	std::vector<glm::mat4> skeleton_;
+	std::vector<GrindstoneAssetCommon::BoneInfo> bone_info_;
 };
 
 struct AnimationComponent : public Component {
-	AnimationComponent(GameObjectHandle object_handle, ComponentHandle handle);
+	AnimationComponent(GameObjectHandle object_handle, ComponentHandle handle, std::string animation_path, std::string skeleton_path);
 
 	void update(double dt);
+
+	std::string animation_path_;
+	std::string skeleton_path_;
 
 	void play();
 	void pause();
 private:
 	std::string path_;
 	std::vector<AnimationPlayer> animations_;
-	Skeleton *skeleton_;
 	std::vector<glm::mat4> bones_animated_;
 	bool playing_;
+	Skeleton *skeleton_;
 
 	void readNodeHeirarchy(double time, Animation::Node *node, glm::mat4x4 parent_transform);
 };

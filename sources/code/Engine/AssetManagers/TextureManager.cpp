@@ -222,7 +222,7 @@ TextureHandler TextureManager::loadTexture(std::string path, TextureOptions opti
 		ColorFormat format;
 		switch (header.ddspf.dwFourCC) {
 		case FOURCC_DXT1:
-			format = alphaflag ? FORMAT_COLOR_RGBA_DXT1 : FORMAT_COLOR_RGB_DXT1;
+			format = FORMAT_COLOR_RGBA_DXT1; // alphaflag ? FORMAT_COLOR_RGBA_DXT1 : FORMAT_COLOR_RGB_DXT1;
 			break;
 		case FOURCC_DXT3:
 			format = FORMAT_COLOR_RGBA_DXT3;
@@ -245,7 +245,13 @@ TextureHandler TextureManager::loadTexture(std::string path, TextureOptions opti
 		createInfo.ddscube = false;
 		createInfo.options = options;
 
-		Texture *t = engine.getGraphicsWrapper()->CreateTexture(createInfo);
+		Texture *t = nullptr;
+		try {
+			t = engine.getGraphicsWrapper()->CreateTexture(createInfo);
+		}
+		catch (const char *e) {
+			std::cerr << e << "\n";
+		}
 		TextureHandler handle = textures_.size();
 		texture_map_[path] = handle;
 		textures_.emplace_back(t);

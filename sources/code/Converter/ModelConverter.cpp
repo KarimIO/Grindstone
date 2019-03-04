@@ -206,6 +206,18 @@ void ModelConverter::loadBones(unsigned int i) {
 	}
 }
 
+/*
+Skeleton File Structure: 
+ - GSF
+ - NumBones
+ - Bones:
+	- BoneName
+	- BoneMatrix
+ - Heirarchy:
+	- NumChildren
+	- Children
+*/
+
 void ModelConverter::outputSkeleton() {
 	std::string skeleton_output_path = "../assets/models/" + file_name_ + ".gsf";
 	std::cout << "Outputting skeleton with " << bone_info_.size() << " bones to: " << skeleton_output_path << "\n";

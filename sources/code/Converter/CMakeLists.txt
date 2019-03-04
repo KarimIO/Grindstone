@@ -1,6 +1,6 @@
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CV_SOURCES Main.cpp ImageConverter.cpp ModelConverter.cpp AnimationConverter.cpp MaterialCreator.cpp Utilities.cpp ../FormatCommon/Bounding.cpp)
-set(CV_HEADERS ImageConverter.hpp ModelConverter.hpp AnimationConverter.hpp MaterialCreator.hpp Utilities.hpp ../FormatCommon/Bounding.hpp ../FormatCommon/StaticModel.hpp)
+set(CV_SOURCES ../AssetCommon/SkeletonLoader.cpp ImageConverter.cpp ModelConverter.cpp AnimationConverter.cpp MaterialCreator.cpp Utilities.cpp ../FormatCommon/Bounding.cpp Main.cpp)
+set(CV_HEADERS ../AssetCommon/SkeletonLoader.hpp ImageConverter.hpp ModelConverter.hpp AnimationConverter.hpp MaterialCreator.hpp Utilities.hpp ../FormatCommon/Bounding.hpp ../FormatCommon/StaticModel.hpp)
 
 source_group("Header Files" FILES ${CV_HEADERS})
 source_group("Source Files" FILES ${CV_SOURCES})

@@ -10,7 +10,7 @@ set(ENGINE_ASSET_MANAGERS_HEADERS AssetManagers/AssetReferences.hpp AssetManager
 source_group("Asset Managers\\Header Files" FILES ${ENGINE_ASSET_MANAGERS_HEADERS})
 set(ENGINE_POST_HEADERS PostProcess/BasePost.hpp PostProcess/PostProcessAutoExposure.hpp PostProcess/PostProcessSSR.hpp PostProcess/PostPipeline.hpp PostProcess/PostProcessBloom.hpp PostProcess/PostProcessColorGrading.hpp PostProcess/PostProcessIBL.hpp PostProcess/PostProcessSSAO.hpp PostProcess/PostProcessSSAOBlur.hpp PostProcess/PostProcessTonemap.hpp)
 source_group("Post Processing\\Header Files" FILES ${ENGINE_POST_HEADERS})
-set(ENGINE_OTHER_HEADERS Utilities/SettingsFile.hpp ../FormatCommon/Bounding.hpp ../FormatCommon/StaticModel.hpp Utilities/Logger.hpp Utilities/DLLHandler.hpp Utilities/DLLGraphics.hpp Utilities/DLLAudio.hpp)
+set(ENGINE_OTHER_HEADERS ../AssetCommon/SkeletonLoader.hpp Utilities/SettingsFile.hpp ../FormatCommon/Bounding.hpp ../FormatCommon/StaticModel.hpp Utilities/Logger.hpp Utilities/DLLHandler.hpp Utilities/DLLGraphics.hpp Utilities/DLLAudio.hpp)
 source_group("Other\\Header Files" FILES ${ENGINE_OTHER_HEADERS})
 set(ENGINE_HEADERS ${ENGINE_OTHER_HEADERS} ${ENGINE_CORE_HEADERS} ${ENGINE_ASSET_MANAGERS_HEADERS} ${ENGINE_RENDERPATHS_HEADERS} ${ENGINE_SYSTEMS_HEADERS} ${ENGINE_POST_HEADERS})
 
@@ -24,7 +24,7 @@ set(ENGINE_ASSET_MANAGERS_SOURCES AssetManagers/AudioManager.cpp AssetManagers/G
 source_group("Asset Managers\\Source Files" FILES ${ENGINE_ASSET_MANAGERS_SOURCES})
 set(ENGINE_POST_SOURCES PostProcess/BasePost.cpp PostProcess/PostProcessAutoExposure.cpp PostProcess/PostProcessSSR.cpp PostProcess/PostPipeline.cpp PostProcess/PostProcessBloom.cpp PostProcess/PostProcessColorGrading.cpp PostProcess/PostProcessIBL.cpp PostProcess/PostProcessSSAO.cpp PostProcess/PostProcessSSAOBlur.cpp PostProcess/PostProcessTonemap.cpp)
 source_group("Post Processing\\Source Files" FILES ${ENGINE_POST_SOURCES})
-set(ENGINE_OTHER_SOURCES Utilities/SettingsFile.cpp ../FormatCommon/Bounding.cpp Utilities/Logger.cpp Utilities/DLLHandler.cpp Utilities/DLLGraphics.cpp Utilities/DLLAudio.cpp)
+set(ENGINE_OTHER_SOURCES ../AssetCommon/SkeletonLoader.cpp Utilities/SettingsFile.cpp ../FormatCommon/Bounding.cpp Utilities/Logger.cpp Utilities/DLLHandler.cpp Utilities/DLLGraphics.cpp Utilities/DLLAudio.cpp)
 source_group("Other\\Source Files" FILES ${ENGINE_OTHER_SOURCES})
 set(ENGINE_SOURCES ${ENGINE_OTHER_SOURCES} ${ENGINE_ASSET_MANAGERS_SOURCES} ${ENGINE_CORE_SOURCES} ${ENGINE_RENDERPATHS_SOURCES} ${ENGINE_SYSTEMS_SOURCES} ${ENGINE_POST_SOURCES}) 
 

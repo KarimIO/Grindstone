@@ -23,42 +23,6 @@
 //		for each keyframe:
 //			position rotation scale time
 
-void AnimationConverter::parseSkeleton(std::string path) {
-	// Read all bone names here.
-	std::ifstream input("../assets/models/" + path, std::ios::ate | std::ios::binary);
-
-	if (!input.is_open()) {
-		std::cerr << "Failed to open file: " << path << "!\n";
-		return;
-	}
-
-	std::cout << "Model reading from: " << path << "!\n";
-
-	size_t fileSize = (size_t)input.tellg();
-	std::vector<char> buffer(fileSize);
-
-	input.seekg(0);
-	input.read(buffer.data(), fileSize);
-	
-	auto bufferpos = buffer.data();
-
-	if (buffer[0] != 'G' && buffer[1] != 'S' || buffer[2] != 'F')
-		throw std::runtime_error("Invalid File: Doesn't start with GSF");
-
-	uint16_t num_bones = (uint16_t)bufferpos[3];
-	bone_map_.resize(num_bones);
-
-	bufferpos += 3 * sizeof(char) + sizeof(uint16_t);
-
-	for (size_t i = 0; i < num_bones; ++i) {
-		bone_map_[i] = bufferpos;
-
-		bufferpos += bone_map_[i].size() + 1 + sizeof(aiMatrix4x4);
-	}
-
-	input.close();
-}
-
 void AnimationConverter::getAnimationLength() {
 	// To get anim length, get the time of the last keyframe of the 0th channel, of the 0th animation
 	unsigned int numPosKeys = scene_->mAnimations[0]->mChannels[0]->mNumPositionKeys;
@@ -66,7 +30,7 @@ void AnimationConverter::getAnimationLength() {
 }
 
 void AnimationConverter::processFrames() {
-	nodes_.resize(bone_map_.size());
+	nodes_.resize(bone_info_.size());
 
 	for (unsigned int i = 0; i < scene_->mRootNode->mNumChildren; ++i) {
 		traverseNode(scene_->mRootNode->mChildren[i]);
@@ -115,8 +79,8 @@ void AnimationConverter::traverseNode(const aiNode * node) {
 
 		// Handle bone name.
 		bool found = false;
-		for (int i = 0; i < bone_map_.size(); ++i) {
-			if (bone_map_[i] == bone_name) {
+		for (int i = 0; i < bone_info_.size(); ++i) {
+			if (bone_info_[i].bone_name == bone_name) {
 				found = true;
 				std::vector<Keyframe> &keyframes = nodes_[i].keyframes_;
 
@@ -134,26 +98,26 @@ void AnimationConverter::traverseNode(const aiNode * node) {
 
 				// Process all keys for bone
 				for (int j = 0; j < node_anim->mNumPositionKeys; ++j) {
-					aiVectorKey posn_key = node_anim->mPositionKeys[j];
-					aiVectorKey scale_key = node_anim->mScalingKeys[j];
-					aiQuatKey rotate_key = node_anim->mRotationKeys[j];
+					aiVectorKey posn_key	= node_anim->mPositionKeys[j];
+					aiVectorKey scale_key	= node_anim->mScalingKeys[j];
+					aiQuatKey rotate_key	= node_anim->mRotationKeys[j];
 
 					keyframes.emplace_back(Keyframe());
 					auto &key = keyframes.back();
-					key.position_.x = posn_key.mValue.x;
-					key.position_.y = posn_key.mValue.y;
-					key.position_.z = posn_key.mValue.z;
+					key.position_.x	= posn_key.mValue.x;
+					key.position_.y	= posn_key.mValue.y;
+					key.position_.z	= posn_key.mValue.z;
 
-					key.scale_.x = scale_key.mValue.x;
-					key.scale_.y = scale_key.mValue.y;
-					key.scale_.z = scale_key.mValue.z;
+					key.scale_.x	= scale_key.mValue.x;
+					key.scale_.y	= scale_key.mValue.y;
+					key.scale_.z	= scale_key.mValue.z;
 
-					key.rotation_.x = rotate_key.mValue.x;
-					key.rotation_.y = rotate_key.mValue.y;
-					key.rotation_.z = rotate_key.mValue.z;
-					key.rotation_.w = rotate_key.mValue.w;
+					key.rotation_.x	= rotate_key.mValue.x;
+					key.rotation_.y	= rotate_key.mValue.y;
+					key.rotation_.z	= rotate_key.mValue.z;
+					key.rotation_.w	= rotate_key.mValue.w;
 
-					key.time_ = posn_key.mTime;
+					key.time_		= posn_key.mTime;
 				}
 			}
 		}
@@ -181,7 +145,7 @@ AnimationConverter::AnimationConverter(Params params) : params_(params) {
 	std::cout << "Loading animation: " << params.path << ".\n";
 
 	// Load skeleton names
-	parseSkeleton(params.skeleton_path);
+	GrindstoneAssetCommon::loadSkeleton(params.skeleton_path, global_inverse_, bone_info_);
 
 	// Load scene
 	Assimp::Importer importer;
@@ -211,7 +175,7 @@ AnimationConverter::AnimationConverter(aiScene *scene, std::string skeleton_path
 	// TODO: process Path info
 
 	// Load skeleton names
-	parseSkeleton(skeleton_path);
+	GrindstoneAssetCommon::loadSkeleton(skeleton_path, global_inverse_, bone_info_);
 	processScene();
 
 	// Print final info.

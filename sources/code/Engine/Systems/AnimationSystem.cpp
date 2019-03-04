@@ -6,9 +6,58 @@
 #include "../AssetManagers/ModelManager.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <fstream>
 
-AnimationComponent::AnimationComponent(GameObjectHandle object_handle, ComponentHandle handle) :
-	Component(COMPONENT_ANIMATION, object_handle, handle) {}
+void loadAnimation(std::string path, Skeleton *skeleton, Animation *animation) {
+	std::ifstream input("../assets/animations/" + path, std::ios::ate | std::ios::binary);
+
+	if (!input.is_open()) {
+		throw std::runtime_error("Failed to open file: " + path + "!");
+	}
+
+	std::cout << "Model reading from: " << path << "!\n";
+
+	size_t fileSize = (size_t)input.tellg();
+	std::vector<char> buffer(fileSize);
+
+	input.seekg(0);
+	input.read(buffer.data(), fileSize);
+
+	auto bufferpos = buffer.data();
+
+	if (buffer[0] != 'G' && buffer[1] != 'A' || buffer[2] != 'F') {
+		throw std::runtime_error("Invalid File: Animation doesn't start with GAF");
+	}
+
+	animation->length_ = (float)bufferpos[3];
+
+	bufferpos += 3 * sizeof(char) + sizeof(float);
+
+	size_t numbones;
+
+	// Copy global inverse
+	memcpy((void *)&numbones, bufferpos, sizeof(size_t));
+
+	// Go to bones
+	bufferpos += sizeof(size_t);
+
+	for (size_t i = 0; i < numbones; ++i) {
+		animation->root_;
+	}
+
+	input.close();
+}
+
+AnimationComponent::AnimationComponent(GameObjectHandle object_handle, ComponentHandle handle, std::string animation_path, std::string skeleton_path) :
+	Component(COMPONENT_ANIMATION, object_handle, handle), animation_path_(animation_path), skeleton_path_(skeleton_path), playing_(false) {
+	skeleton_ = new Skeleton();
+	// Load Skeleton File
+	GrindstoneAssetCommon::loadSkeleton(skeleton_path, skeleton_->global_inverse_, skeleton_->bone_info_);
+
+	// Load Animation
+	Animation *animation = nullptr;
+	loadAnimation(animation_path, skeleton_, animation);
+}
 
 void AnimationComponent::play() {
 	playing_ = true;
@@ -26,6 +75,7 @@ void AnimationComponent::readNodeHeirarchy(double time, Animation::Node *node, g
 	glm::vec3 position;
 	glm::quat rotation;
 
+	// If there's only one keyframe, use the data for that keyframe
 	if (node->keyframe_.size() == 1) {
 		auto key = node->keyframe_[0];
 		scaling = key.scale_;
@@ -33,10 +83,13 @@ void AnimationComponent::readNodeHeirarchy(double time, Animation::Node *node, g
 		rotation = key.rotation_;
 	}
 	else {
+		// Otherwise, loop over all keyframes...
 		for (size_t i = 0; i < node->keyframe_.size() - 1; ++i) {
 			auto key = node->keyframe_[i];
-			auto next_key = node->keyframe_[i + 1];
+			// ...and test if this is the appropriate keyframe.
 			if (key.time_ > time) {
+				// If so, use the transformation information of that keyframe
+				auto next_key = node->keyframe_[i + 1];
 				float delta_time = next_key.time_ - key.time_;
 				float factor = (time - key.time_) / delta_time;
 
@@ -47,13 +100,14 @@ void AnimationComponent::readNodeHeirarchy(double time, Animation::Node *node, g
 		}
 	}
 
-	scaling_mat = glm::scale(scaling_mat, scaling);
-	rotating_mat = glm::toMat4(rotation);
-	position_mat = glm::translate(position_mat, position);
+	// Get the matrices
+	scaling_mat		= glm::scale(scaling_mat, scaling);
+	rotating_mat	= glm::toMat4(rotation);
+	position_mat	= glm::translate(position_mat, position);
 
 	// Combine the above transformations
 	global_transform = parent_transform * position_mat * rotating_mat * scaling_mat;
-	bones_animated_[node->bone_id_] = skeleton_->global_inverse_ * global_transform * skeleton_->skeleton_[node->bone_id_];
+	// bones_animated_[node->bone_id_] = skeleton_->global_inverse_ * global_transform * skeleton_->skeleton_[node->bone_id_];
 	
 	for (auto child : node->children_) {
 		readNodeHeirarchy(time, child, global_transform);
@@ -75,7 +129,7 @@ void AnimationComponent::update(double dt) {
 			// Should we just pause at the end?
 			if (anim.current_time_ >= animlen) {
 				pause();
-			}
+			} 
 		}
 
 		readNodeHeirarchy(anim.current_time_, anim.animation_->root_, glm::mat4());
@@ -92,13 +146,19 @@ AnimationSubSystem::~AnimationSubSystem() {
 
 ComponentHandle AnimationSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
-	components_.emplace_back(object_handle, component_handle);
-	auto component = components_.back();
 
-	if (params.HasMember("path")) {
-		auto path = params["path"].GetString();
-		//component.path_ = path;
+	std::string animation_path, skeleton_path;
+
+	if (params.HasMember("animation")) {
+		animation_path = params["animation"].GetString();
 	}
+
+	if (params.HasMember("skeleton")) {
+		skeleton_path = params["skeleton"].GetString();
+	}
+
+	components_.emplace_back(object_handle, component_handle, animation_path, skeleton_path);
+	auto component = components_.back();
 
 	return component_handle;
 }
