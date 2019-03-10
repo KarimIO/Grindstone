@@ -78,10 +78,10 @@ struct DDSHeader {
 #define DDS_CUBEMAP_ALLFACES		DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEX | DDSCAPS2_CUBEMAP_NEGATIVEX | DDSCAPS2_CUBEMAP_POSITIVEY | DDSCAPS2_CUBEMAP_NEGATIVEY | DDSCAPS2_CUBEMAP_POSITIVEZ | DDSCAPS2_CUBEMAP_NEGATIVEZ;
 
 void ExtractBlock(const unsigned char* inPtr, unsigned int width, unsigned char* colorBlock) {
-    for (int j = 0; j < 4; j++) {
-        memcpy(&colorBlock[j * 4 * 4], inPtr, 4 * 4);
-        inPtr += width * 4;
-    }
+	for (int j = 0; j < 4; j++) {
+		memcpy(&colorBlock[j * 4 * 4], inPtr, 4 * 4);
+		inPtr += width * 4;
+	}
 }
 
 unsigned char *CreateMip(unsigned char *pixel, int width, int height) {
@@ -135,7 +135,7 @@ void ConvertBC123(unsigned char **pixels, bool is_cubemap, int width, int height
 		outHeader.ddspf.dwFourCC = FOURCC_DXT5;
 		break;
 	}
-	char mark[] = {'G', 'R', 'I', 'N', 'D', 'S', 'T', 'O', 'N', 'E'};
+	char mark[] = { 'G', 'R', 'I', 'N', 'D', 'S', 'T', 'O', 'N', 'E' };
 	std::memcpy(&outHeader.dwReserved1, mark, sizeof(mark));
 
 	int size = outHeader.dwPitchOrLinearSize;
@@ -148,7 +148,7 @@ void ConvertBC123(unsigned char **pixels, bool is_cubemap, int width, int height
 
 	if (is_cubemap)
 		size *= 6;
-	
+
 	unsigned char *outData = new unsigned char[size];
 	int offset = 0;
 	unsigned char block[64];
@@ -160,9 +160,9 @@ void ConvertBC123(unsigned char **pixels, bool is_cubemap, int width, int height
 		width = outHeader.dwWidth;
 		height = outHeader.dwHeight;
 		for (int k = 0; k < minlev; k++) {
-			for (int j = 0; j < height; j+=4) {
+			for (int j = 0; j < height; j += 4) {
 				unsigned char *ptr = mip + j * width * 4;
-				for (int i = 0; i < width; i+=4) {
+				for (int i = 0; i < width; i += 4) {
 					ExtractBlock(ptr, width, block);
 					stb_compress_dxt_block(&outData[offset], block, false, STB_DXT_NORMAL);
 					ptr += 4 * 4;
@@ -171,10 +171,10 @@ void ConvertBC123(unsigned char **pixels, bool is_cubemap, int width, int height
 			}
 			width /= 2;
 			height /= 2;
-			
+
 			unsigned char *temp_mip = mip;
 
-			if (k-1 != minlev)
+			if (k - 1 != minlev)
 				mip = CreateMip(temp_mip, width, height);
 
 			if (k != 0)
@@ -245,13 +245,13 @@ bool ConvertTexture(std::string input, bool is_cubemap, std::string output, Comp
 
 	compression = C_BC1;
 
-    switch(compression) {
-        default:
-            ConvertBC123(pixels, is_cubemap, texWidth, texHeight, compression, output);
-            break;
-    }
+	switch (compression) {
+	default:
+		ConvertBC123(pixels, is_cubemap, texWidth, texHeight, compression, output);
+		break;
+	}
 
-    delete[] pixels;
+	delete[] pixels;
 
-    return true;
+	return true;
 }

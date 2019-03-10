@@ -101,14 +101,14 @@ void PostProcessTonemap::Process() {
 	double dt = engine.getUpdateTimeDelta();
 
 	if (first_render_) {
-		exposure_buffer_.exposure = 1.0f / glm::clamp(exp(auto_exposure_->GetExposure()), 0.1, 16.0);
+		exposure_buffer_.exposure = 1.0f / glm::clamp((float)exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
 		exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
 
 		first_render_ = false;
 	}
 	else {
 		if (auto_exposure_) {
-			float new_exp = 1.0f / glm::clamp(exp(auto_exposure_->GetExposure()), 0.1, 16.0);
+			float new_exp = 1.0f / glm::clamp((float)exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
 			exposure_buffer_.exposure = exposure_buffer_.exposure * (1.0f - dt) + new_exp * dt;
 			exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
 		}

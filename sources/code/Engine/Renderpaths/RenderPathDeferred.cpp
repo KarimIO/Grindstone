@@ -320,13 +320,18 @@ void RenderPathDeferred::createDirectionalLightShader() {
 }
 
 void RenderPathDeferred::render(Framebuffer *fbo, Space *space) {
+	bool debug = true;
+	
 	// Opaque
-	gbuffer_->Bind(true);
+	if (!debug)
+		gbuffer_->Bind(true);
+
 	gbuffer_->Clear(CLEAR_BOTH);
 	engine.getGraphicsWrapper()->SetImmediateBlending(BLEND_NONE);
 	engine.getGraphicsPipelineManager()->drawDeferredImmediate();
 
-	engine.deff_ubo_handler_->Bind();
+	if (!debug)
+		engine.deff_ubo_handler_->Bind();
 
 	/*if (engine.debug_wrapper_.GetDebugMode() != 0) {
 		engine.debug_wrapper_.Draw();
@@ -334,7 +339,8 @@ void RenderPathDeferred::render(Framebuffer *fbo, Space *space) {
 	else*/
 	{
 		// Deferred
-		renderLights(fbo, space);
+		//if (!debug)
+		//	renderLights(fbo, space);
 		
 		/*gbuffer_->BindRead();
 		engine.hdr_framebuffer_->BindWrite(true);

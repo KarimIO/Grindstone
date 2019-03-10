@@ -7,6 +7,7 @@ void DLLHandler::initialize(std::string path) {
 		handle_ = LoadLibrary((path+".dll").c_str());
 		if (!handle_) {
 			std::string err = "Failed to load " + path + "!";
+			std::cerr << "Get Last Error : " << GetLastError() << "\n";
 			throw std::runtime_error(err);
 		}
 	#elif defined(__linux__)

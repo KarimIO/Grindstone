@@ -173,8 +173,13 @@ void ModelManager::loadModel(ModelStatic &model) {
 	input.seekg(0);
 	input.read(buffer.data(), fileSize);
 
+	if (buffer[0] != 'G' || buffer[1] != 'M' || buffer[2] != 'F') {
+		std::cerr << "Failed to open file: " << path << "!\n";
+		return;
+	}
+
 	ModelFormatHeader inFormat;
-	void *offset = buffer.data();
+	void *offset = buffer.data() + 3;
 	memcpy(&inFormat, offset, sizeof(ModelFormatHeader));
 	offset = static_cast<char*>(offset) + sizeof(ModelFormatHeader);
 	switch (inFormat.bounding_type) {

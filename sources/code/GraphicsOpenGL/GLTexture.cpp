@@ -82,7 +82,7 @@ GLTexture::GLTexture(TextureCreateInfo ci) {
 			gl3wGetProcAddress("GL_COMPRESSED_RGBA_S3TC_DXT1_EXT");
 			gl3wGetProcAddress("GL_EXT_texture_sRGB");
 
-			for (uint32_t i = 0; i <= ci.mipmaps; i++) {
+			for (uint32_t i = 0; i < ci.mipmaps; i++) {
 				unsigned int size = ((width + 3) / 4)*((height + 3) / 4)*blockSize;
 				glCompressedTexImage2D(GL_TEXTURE_2D, i, format, width, height,
 					0, size, buffer);

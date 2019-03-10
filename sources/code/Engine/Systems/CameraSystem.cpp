@@ -183,8 +183,8 @@ void CameraSystem::update(double dt) {
 				render_path_->render(gbuffer, space);
 
 				// PostProcessing
-				engine.getGraphicsWrapper()->BindVertexArrayObject(engine.getPlaneVAO());
-				component.post_pipeline_.Process();
+				//engine.getGraphicsWrapper()->BindVertexArrayObject(engine.getPlaneVAO());
+				//component.post_pipeline_.Process();
 
 				engine.getGraphicsWrapper()->SwapBuffer();
 			}
