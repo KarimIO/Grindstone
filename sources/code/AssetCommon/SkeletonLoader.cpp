@@ -1,6 +1,7 @@
 #include "SkeletonLoader.hpp"
 #include <fstream>
 #include <iostream>
+#include <cstring>
 
 void GrindstoneAssetCommon::loadSkeleton(std::string path, glm::mat4 global_inverse, std::vector<BoneInfo> bone_names) {
 	// Read all bone names here.

@@ -13,7 +13,7 @@ public:
 	SubSystem *getSubsystem(ComponentType type);
 	GameObject &getObject(GameObjectHandle handle);
 private:
-	SubSystem *Space::addSystem(SubSystem * system);
+	SubSystem *addSystem(SubSystem * system);
 	std::string name_;
 	SubSystem *subsystems_[NUM_COMPONENTS];
 	std::vector<GameObject> objects_;

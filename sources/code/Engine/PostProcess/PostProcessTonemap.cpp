@@ -61,11 +61,14 @@ PostProcessTonemap::PostProcessTonemap(PostPipeline *pipeline, RenderTargetConta
 	stages[1].size = (uint32_t)ffile.size();
 	stages[1].type = SHADER_FRAGMENT;
 
+	auto vbd = engine.getPlaneVBD();
+	auto vad = engine.getPlaneVAD();
+
 	GraphicsPipelineCreateInfo tonemapGPCI;
 	tonemapGPCI.cullMode = CULL_BACK;
-	tonemapGPCI.bindings = &engine.getPlaneVBD();
+	tonemapGPCI.bindings = &vbd;
 	tonemapGPCI.bindingsCount = 1;
-	tonemapGPCI.attributes = &engine.getPlaneVAD();
+	tonemapGPCI.attributes = &vad;
 	tonemapGPCI.attributesCount = 1;
 	tonemapGPCI.width = (float)settings->resolution_x_;
 	tonemapGPCI.height = (float)settings->resolution_y_;
@@ -98,14 +101,14 @@ void PostProcessTonemap::Process() {
 	double dt = engine.getUpdateTimeDelta();
 
 	if (first_render_) {
-		exposure_buffer_.exposure = 1.0f / glm::clamp(exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
+		exposure_buffer_.exposure = 1.0f / glm::clamp(exp(auto_exposure_->GetExposure()), 0.1, 16.0);
 		exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
 
 		first_render_ = false;
 	}
 	else {
 		if (auto_exposure_) {
-			float new_exp = 1.0f / glm::clamp(exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
+			float new_exp = 1.0f / glm::clamp(exp(auto_exposure_->GetExposure()), 0.1, 16.0);
 			exposure_buffer_.exposure = exposure_buffer_.exposure * (1.0f - dt) + new_exp * dt;
 			exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
 		}

@@ -18,7 +18,7 @@ ComponentHandle ColliderSubSystem::addComponent(GameObjectHandle object_handle, 
 
 		if (type == "plane") {
 			if (params.HasMember("shape")) {
-				auto &shape = params["shape"].GetArray();
+				auto shape = params["shape"].GetArray();
 				component.plane_shape_[0] = shape[0].GetFloat();
 				component.plane_shape_[1] = shape[1].GetFloat();
 				component.plane_shape_[2] = shape[2].GetFloat();

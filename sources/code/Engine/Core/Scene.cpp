@@ -34,7 +34,9 @@ void Scene::loadLevel(std::string path) {
 	
 	// Load Scene File
 	std::string buffer;
-	ReadFile(path, buffer);
+	if (!ReadFile(path, buffer)) {
+		throw std::runtime_error("Failed to load scene.\n");
+	}
 
 	rapidjson::Document document;
 	document.Parse(buffer.c_str());

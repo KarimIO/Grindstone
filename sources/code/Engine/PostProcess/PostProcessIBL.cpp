@@ -49,11 +49,14 @@ PostProcessIBL::PostProcessIBL(PostPipeline *pipeline, RenderTargetContainer *ta
 	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
 	env_map_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
 	
+	auto vbd = engine.getPlaneVBD();
+	auto vad = engine.getPlaneVAD();
+
 	GraphicsPipelineCreateInfo iblGPCI;
 	iblGPCI.cullMode = CULL_BACK;
-	iblGPCI.bindings = &engine.getPlaneVBD();
+	iblGPCI.bindings = &vbd;
 	iblGPCI.bindingsCount = 1;
-	iblGPCI.attributes = &engine.getPlaneVAD();
+	iblGPCI.attributes = &vad;
 	iblGPCI.attributesCount = 1;
 	iblGPCI.width = (float)settings->resolution_x_;
 	iblGPCI.height = (float)settings->resolution_y_;

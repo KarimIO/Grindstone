@@ -2,6 +2,7 @@
 #define _INI_FILE_H
 
 #include <vector>
+#include <string>
 
 struct ConfigData {
 	std::string key;

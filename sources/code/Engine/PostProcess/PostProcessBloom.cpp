@@ -40,11 +40,14 @@ PostProcessBloom::PostProcessBloom(PostPipeline *pipeline, RenderTargetContainer
 	stages[1].size = (uint32_t)ffile.size();
 	stages[1].type = SHADER_FRAGMENT;
 
+	auto vbd = engine.getPlaneVBD();
+	auto vad = engine.getPlaneVAD();
+
 	GraphicsPipelineCreateInfo luminanceGPCI;
 	luminanceGPCI.cullMode = CULL_BACK;
-	luminanceGPCI.bindings = &engine.getPlaneVBD();
+	luminanceGPCI.bindings = &vbd;
 	luminanceGPCI.bindingsCount = 1;
-	luminanceGPCI.attributes = &engine.getPlaneVAD();
+	luminanceGPCI.attributes = &vad;
 	luminanceGPCI.attributesCount = 1;
 	luminanceGPCI.width = (float)1024;
 	luminanceGPCI.height = (float)1024;

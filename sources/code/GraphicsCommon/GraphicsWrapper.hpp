@@ -86,9 +86,9 @@ public:
 	const char *title;
 	uint32_t width;
 	uint32_t height;
+	
 public:
-	virtual ~GraphicsWrapper() {};
-
+	// Common windowing functions
 	virtual void HandleEvents();
 	virtual void SetCursorShown(bool);
 	virtual void ResetCursor();
@@ -96,6 +96,9 @@ public:
 	virtual void GetCursor(int &x, int &y);
 	virtual void setFocus();
 
+// Interfaces
+public:
+	virtual ~GraphicsWrapper() {};
 	virtual void setViewport(uint16_t x, uint16_t y, uint16_t w, uint16_t h) = 0;
 
 	virtual void CreateDefaultStructures() = 0;

@@ -1,7 +1,9 @@
 #ifndef _SYSTEM_H
 #define _SYSTEM_H
 
+#undef Bool
 #include "rapidjson/document.h"
+
 #include "./AssetManagers/AssetReferences.hpp"
 #include <string>
 

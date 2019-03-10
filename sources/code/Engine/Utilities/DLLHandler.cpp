@@ -1,5 +1,6 @@
 #include "DLLHandler.hpp"
 #include <stdexcept>
+#include <iostream>
 
 void DLLHandler::initialize(std::string path) {
 	#if defined(_WIN32)
@@ -9,7 +10,8 @@ void DLLHandler::initialize(std::string path) {
 			throw std::runtime_error(err);
 		}
 	#elif defined(__linux__)
-		handle_ = dlopen(("./lib"+path+".so").c_str(), RTLD_LAZY);
+		path = "./lib"+path+".so";
+		handle_ = dlopen(path.c_str(), RTLD_LAZY);
 		if (!handle_) {
 			std::string err = "Failed to load " + path + ": " + dlerror();
 			throw std::runtime_error(err);
@@ -36,6 +38,7 @@ DLLHandler::~DLLHandler() {
 	#if defined(_WIN32)
 		FreeLibrary(handle_);
 	#elif defined(__linux__)
-		dlclose(handle_);
+		if (handle_)
+			dlclose(handle_);
 	#endif
 }

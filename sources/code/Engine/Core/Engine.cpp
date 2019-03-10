@@ -45,11 +45,14 @@ void Engine::initialize() {
 
 	// Load Settings
 	settings_ = new Settings();
+	LOG("Settings loaded.\n");
 
 	input_manager_ = new InputManager();
+	LOG("Input Manager loaded.\n");
 
 	// Load DLLS
 	dll_graphics_ = new DLLGraphics();
+	LOG("GrPHICS.\n");
 	graphics_wrapper_ = dll_graphics_->getWrapper();
 	dll_audio_ = new DLLAudio();
 	//audio_wrapper_ = dll_audio_->getWrapper();

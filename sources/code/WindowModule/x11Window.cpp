@@ -256,4 +256,9 @@ void GraphicsWrapper::HandleEvents() {
 	}
 }
 
+void GraphicsWrapper::setFocus() {
+	XRaiseWindow(xDisplay, xWindow);
+	//XSetInputFocus(xDisplay, xWindow, RevertToNone, CurrentTime);
+}
+
 #endif

@@ -18,7 +18,7 @@ class Scene;
 class RenderPathDeferred : public RenderPath {
 public:
 	RenderPathDeferred();
-	void render(Framebuffer *default, Space *scene);
+	void render(Framebuffer *default_fb, Space *scene);
 	void renderLights(Framebuffer *fbo, Space *scene);
 	void createPointLightShader();
 	void createSpotLightShader();

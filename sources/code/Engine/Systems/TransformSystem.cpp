@@ -26,7 +26,7 @@ ComponentHandle TransformSubSystem::addComponent(GameObjectHandle object_handle,
 	auto &component = components_.back();
 
 	if (params.HasMember("position")) {
-		auto &pos = params["position"].GetArray();
+		auto pos = params["position"].GetArray();
 		auto x = pos[0].GetFloat();
 		auto y = pos[1].GetFloat();
 		auto z = pos[2].GetFloat();
@@ -34,7 +34,7 @@ ComponentHandle TransformSubSystem::addComponent(GameObjectHandle object_handle,
 	}
 
 	if (params.HasMember("scale")) {
-		auto &pos = params["scale"].GetArray();
+		auto pos = params["scale"].GetArray();
 		auto x = pos[0].GetFloat();
 		auto y = pos[1].GetFloat();
 		auto z = pos[2].GetFloat();
@@ -42,7 +42,7 @@ ComponentHandle TransformSubSystem::addComponent(GameObjectHandle object_handle,
 	}
 
 	if (params.HasMember("angles")) {
-		auto &pos = params["angles"].GetArray();
+		auto pos = params["angles"].GetArray();
 		auto x = pos[0].GetFloat();
 		auto y = pos[1].GetFloat();
 		auto z = pos[2].GetFloat();

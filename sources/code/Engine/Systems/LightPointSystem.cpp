@@ -31,7 +31,7 @@ ComponentHandle LightPointSubSystem::addComponent(GameObjectHandle object_handle
 	auto &component = components_.back();
 		
 	if (params.HasMember("color")) {
-		auto &color = params["color"].GetArray();
+		auto color = params["color"].GetArray();
 		component.properties_.color.x = color[0].GetFloat();
 		component.properties_.color.y = color[1].GetFloat();
 		component.properties_.color.z = color[2].GetFloat();

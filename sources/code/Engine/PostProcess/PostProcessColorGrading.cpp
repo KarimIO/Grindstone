@@ -42,11 +42,14 @@ PostProcessColorGrading::PostProcessColorGrading(PostPipeline *pipeline, RenderT
 	stages[1].size = (uint32_t)ffile.size();
 	stages[1].type = SHADER_FRAGMENT;
 
+	auto vbd = engine.getPlaneVBD();
+	auto vad = engine.getPlaneVAD();
+
 	GraphicsPipelineCreateInfo gradingGPCI;
 	gradingGPCI.cullMode = CULL_BACK;
-	gradingGPCI.bindings = &engine.getPlaneVBD();
+	gradingGPCI.bindings = &vbd;
 	gradingGPCI.bindingsCount = 1;
-	gradingGPCI.attributes = &engine.getPlaneVAD();
+	gradingGPCI.attributes = &vad;
 	gradingGPCI.attributesCount = 1;
 	gradingGPCI.width = (float)settings->resolution_x_;
 	gradingGPCI.height = (float)settings->resolution_y_;

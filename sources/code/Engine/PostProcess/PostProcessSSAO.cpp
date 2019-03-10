@@ -136,11 +136,14 @@ PostProcessSSAO::PostProcessSSAO(PostPipeline *pipeline, RenderTargetContainer *
 
 	ShaderStageCreateInfo stages[2] = { vi, fi };
 
+	auto vbd = engine.getPlaneVBD();
+	auto vad = engine.getPlaneVAD();
+	
 	GraphicsPipelineCreateInfo ssaoGPCI;
 	ssaoGPCI.cullMode = CULL_BACK;
-	ssaoGPCI.bindings = &engine.getPlaneVBD();
+	ssaoGPCI.bindings = &vbd;
 	ssaoGPCI.bindingsCount = 1;
-	ssaoGPCI.attributes = &engine.getPlaneVAD();
+	ssaoGPCI.attributes = &vad;
 	ssaoGPCI.attributesCount = 1;
 	ssaoGPCI.width = (float)settings->resolution_x_; // DIVIDE BY TWO
 	ssaoGPCI.height = (float)settings->resolution_y_;

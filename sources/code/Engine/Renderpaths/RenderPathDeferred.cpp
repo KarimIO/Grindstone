@@ -152,11 +152,14 @@ void RenderPathDeferred::createPointLightShader() {
 
 	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
 
+	auto vbd = engine.getPlaneVBD();
+	auto vad = engine.getPlaneVAD();
+
 	GraphicsPipelineCreateInfo pointGPCI;
 	pointGPCI.cullMode = CULL_BACK;
-	pointGPCI.bindings = &engine.getPlaneVBD();
+	pointGPCI.bindings = &vbd;
 	pointGPCI.bindingsCount = 1;
-	pointGPCI.attributes = &engine.getPlaneVAD();
+	pointGPCI.attributes = &vad;
 	pointGPCI.attributesCount = 1;
 	pointGPCI.width = (float)engine.getSettings()->resolution_x_;
 	pointGPCI.height = (float)engine.getSettings()->resolution_y_;
@@ -220,11 +223,14 @@ void RenderPathDeferred::createSpotLightShader() {
 
 	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
 
+	auto vbd = engine.getPlaneVBD();
+	auto vad = engine.getPlaneVAD();
+
 	GraphicsPipelineCreateInfo spotGPCI;
 	spotGPCI.cullMode = CULL_BACK;
-	spotGPCI.bindings = &engine.getPlaneVBD();
+	spotGPCI.bindings = &vbd;
 	spotGPCI.bindingsCount = 1;
-	spotGPCI.attributes = &engine.getPlaneVAD();
+	spotGPCI.attributes = &vad;
 	spotGPCI.attributesCount = 1;
 	spotGPCI.width = (float)engine.getSettings()->resolution_x_;
 	spotGPCI.height = (float)engine.getSettings()->resolution_y_;
@@ -288,11 +294,14 @@ void RenderPathDeferred::createDirectionalLightShader() {
 
 	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
 
+	auto vbd = engine.getPlaneVBD();
+	auto vad = engine.getPlaneVAD();
+
 	GraphicsPipelineCreateInfo directionalGPCI;
 	directionalGPCI.cullMode = CULL_BACK;
-	directionalGPCI.bindings = &engine.getPlaneVBD();
+	directionalGPCI.bindings = &vbd;
 	directionalGPCI.bindingsCount = 1;
-	directionalGPCI.attributes = &engine.getPlaneVAD();
+	directionalGPCI.attributes = &vad;
 	directionalGPCI.attributesCount = 1;
 	directionalGPCI.width = (float)engine.getSettings()->resolution_x_;
 	directionalGPCI.height = (float)engine.getSettings()->resolution_y_;

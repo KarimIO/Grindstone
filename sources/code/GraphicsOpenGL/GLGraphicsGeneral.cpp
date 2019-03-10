@@ -316,6 +316,8 @@ GLenum GetGeomType(GrindstoneGeometryType geom_type) {
 	case GEOMETRY_PATCHES:
 		return GL_PATCHES;
 	}
+
+	throw std::runtime_error("Invalid Geometry Type");
 }
 
 void GLGraphicsWrapper::DrawImmediateIndexed(GrindstoneGeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {

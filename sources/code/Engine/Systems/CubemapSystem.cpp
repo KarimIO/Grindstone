@@ -17,6 +17,7 @@
 #include "Core/Input.hpp"
 #include "Systems/CameraSystem.hpp"
 #include "Renderpaths/RenderPath.hpp"
+#include <thread>
 
 void CubemapSubSystem::bake() {
 	TransformSubSystem *transform = (TransformSubSystem *)(space_->getSubsystem(COMPONENT_TRANSFORM));
