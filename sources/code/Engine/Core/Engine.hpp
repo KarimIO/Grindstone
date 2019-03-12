@@ -32,6 +32,12 @@ class GameObject;
 
 typedef size_t SceneHandle;
 
+class ImguiManager;
+
+#define INCLUDE_EDITOR
+
+class Editor;
+
 class Engine {
 public:
 	void initialize();
@@ -41,6 +47,12 @@ public:
 	void initializePlaneVertexBuffer();
 	void deffUBO();
 	void initializeTBL();
+
+#ifdef INCLUDE_EDITOR
+	void launchEditor();
+	Editor *getEditor();
+	bool edit_mode_;
+#endif
 
 	TextureBindingLayout *gbuffer_tbl_;
 
@@ -88,6 +100,7 @@ public:
 	TextureManager *getTextureManager();
 	ModelManager *getModelManager();
 	InputManager *getInputManager();
+	ImguiManager *getImguiManager();
 
 	void calculateTime();
 	double getTimeCurrent();
@@ -115,6 +128,11 @@ private:
 	TextureManager *texture_manager_;
 	ModelManager *model_manager_;
 	InputManager *input_manager_;
+	ImguiManager *imgui_manager_;
+
+#ifdef INCLUDE_EDITOR
+	Editor *editor_;
+#endif
 
 	UniformBufferBinding *ubb_;
 	UniformBuffer *ubo_;

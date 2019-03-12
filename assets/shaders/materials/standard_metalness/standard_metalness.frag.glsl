@@ -55,4 +55,5 @@ void main() {
 
 	vec3 Specular = mix(vec3(0.04), albedo.rgb, metalness);
 	out2 = vec4(Specular, roughness);
+  out0 = vec4(fragTexCoord.r, 0, 0, 1);
 }

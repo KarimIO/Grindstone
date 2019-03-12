@@ -577,7 +577,8 @@ void InputManager::LoopControls(double deltaTime) {
 		}
 	}
 
-	engine.getGraphicsWrapper()->ResetCursor();
+	if (!engine.edit_mode_)
+		engine.getGraphicsWrapper()->ResetCursor();
 }
 
 ControlHandler::ControlHandler(std::string controlCode, InputComponent * componentPtr, ControlHandler * prev, double val) {

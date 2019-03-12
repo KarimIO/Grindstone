@@ -186,7 +186,6 @@ void CameraSystem::update(double dt) {
 				//engine.getGraphicsWrapper()->BindVertexArrayObject(engine.getPlaneVAO());
 				//component.post_pipeline_.Process();
 
-				engine.getGraphicsWrapper()->SwapBuffer();
 			}
 		}
 	}

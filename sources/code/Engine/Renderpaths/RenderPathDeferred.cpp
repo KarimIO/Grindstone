@@ -325,6 +325,8 @@ void RenderPathDeferred::render(Framebuffer *fbo, Space *space) {
 	// Opaque
 	if (!debug)
 		gbuffer_->Bind(true);
+	else
+		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
 
 	gbuffer_->Clear(CLEAR_BOTH);
 	engine.getGraphicsWrapper()->SetImmediateBlending(BLEND_NONE);

@@ -12,11 +12,11 @@ public:
 	void loadPrefab(std::string name, rapidjson::Value & val);
 	SubSystem *getSubsystem(ComponentType type);
 	GameObject &getObject(GameObjectHandle handle);
+	std::vector<GameObject> objects_;
 private:
 	SubSystem *addSystem(SubSystem * system);
 	std::string name_;
 	SubSystem *subsystems_[NUM_COMPONENTS];
-	std::vector<GameObject> objects_;
 };
 
 #endif

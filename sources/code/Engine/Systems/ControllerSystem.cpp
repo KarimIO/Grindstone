@@ -138,22 +138,26 @@ void ControllerComponent::MoveVertical(double scale) {
 }
 
 void ControllerComponent::TurnPitch(double scale) {
-	auto trans_system = getTransform();
-	ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
-	auto &trans = trans_system->getComponent(transform_id);
+	if (!engine.edit_mode_) {
+		auto trans_system = getTransform();
+		ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
+		auto &trans = trans_system->getComponent(transform_id);
 
-	trans.angles_.x += float(sensitivity_ * scale);
+		trans.angles_.x += float(sensitivity_ * scale);
 
-	if (trans.angles_.x < -2.4f / 2)	trans.angles_.x = -2.4f / 2;
-	if (trans.angles_.x > 3.14f / 2)	trans.angles_.x = 3.14f / 2;
+		if (trans.angles_.x < -2.4f / 2)	trans.angles_.x = -2.4f / 2;
+		if (trans.angles_.x > 3.14f / 2)	trans.angles_.x = 3.14f / 2;
+	}
 }
 
 void ControllerComponent::TurnYaw(double scale) {
-	auto trans_system = getTransform();
-	ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
-	auto &trans = trans_system->getComponent(transform_id);
+	if (!engine.edit_mode_) {
+		auto trans_system = getTransform();
+		ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
+		auto &trans = trans_system->getComponent(transform_id);
 
-	trans.angles_.y += float(sensitivity_ * scale);
+		trans.angles_.y += float(sensitivity_ * scale);
+	}
 }
 
 void ControllerComponent::ZoomIn(double scale) {
