@@ -1,4 +1,5 @@
 #include "GameObject.hpp"
+#include <climits>
 
 GameObject::GameObject(GameObjectHandle id, std::string name) : id_(id), name_(name) {
 	memset(components_, UINT_MAX, sizeof(components_));
