@@ -1,6 +1,7 @@
 #include "GameObject.hpp"
 
 GameObject::GameObject(GameObjectHandle id, std::string name) : id_(id), name_(name) {
+	memset(components_, UINT_MAX, sizeof(components_));
 }
 
 bool GameObject::operator== (GameObject &other) {

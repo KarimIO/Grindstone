@@ -27,10 +27,11 @@ bool Settings::loadSettings(INIConfigFile &cfile) {
 		cfile.GetBool("Renderer", "tesselation", true, enable_tesselation_);
 		cfile.GetBool("Renderer", "shadows", true, enable_shadows_);
 		cfile.GetBool("Renderer", "useSSAO", false, enable_ssao_);
-		cfile.GetBool("Debug", "showMaterialLod", true, show_material_load_);
+		cfile.GetBool("Debug", "showMaterialLoad", true, show_material_load_);
 		cfile.GetBool("Debug", "showPipelineLoad", true, show_pipeline_load_);
 		cfile.GetBool("Debug", "showTextureLoad", false, show_texture_load_);
 		cfile.GetString("Game", "defaultmap", "../assets/scenes/sponza.json", default_map_);
+		cfile.GetBool("Game", "startWithEditor", false, start_editor_);
 
 		graphics = strToLower(graphics);
 		if (graphics == "directx")
@@ -63,11 +64,12 @@ void Settings::saveSettings(INIConfigFile &cfile) {
 	enable_shadows_ = true;
 	enable_tesselation_ = true;
 	vsync_ = true;
-	show_material_load_ = 1;
-	show_pipeline_load_ = 1;
+	show_material_load_ = 0;
+	show_pipeline_load_ = 0;
 	show_texture_load_ = 0;
 	enable_ssao_ = true;
-	mouse_sensitivity_ = 1.0f;
+	mouse_sensitivity_ = 0.005f;
+	start_editor_ = false;
 	default_map_ = "../assets/scenes/sponza.json";
 
 	cfile.SetBool("Window", "vsync", vsync_);
@@ -80,10 +82,12 @@ void Settings::saveSettings(INIConfigFile &cfile) {
 	cfile.SetBool("Renderer", "shadows", enable_shadows_);
 	cfile.SetBool("Renderer", "tesselation", enable_tesselation_);
 	cfile.SetBool("Renderer", "useSSAO", enable_ssao_);
-	cfile.SetBool("Debug", "showMaterialLod", show_material_load_);
+	cfile.SetBool("Debug", "showMaterialLoad", show_material_load_);
 	cfile.SetBool("Debug", "showPipelineLoad", show_pipeline_load_);
 	cfile.SetBool("Debug", "showTextureLoad", show_texture_load_);
 	cfile.SetString("Game", "defaultmap", default_map_);
+	cfile.SetBool("Game", "startWithEditor", start_editor_);
+	cfile.SaveFile();
 }
 
 bool Settings::loadSettings() {

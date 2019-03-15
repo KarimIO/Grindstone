@@ -55,7 +55,6 @@ void Engine::initialize() {
 
 	// Load DLLS
 	dll_graphics_ = new DLLGraphics();
-	LOG("GrPHICS.\n");
 	graphics_wrapper_ = dll_graphics_->getWrapper();
 	dll_audio_ = new DLLAudio();
 	//audio_wrapper_ = dll_audio_->getWrapper();
@@ -73,8 +72,6 @@ void Engine::initialize() {
 	model_manager_ = new ModelManager(ubb_);
 	imgui_manager_ = new ImguiManager();
 	// - Load Input Manager
-
-	launchEditor();
 
 	// Load Systems
 	addSystem(new ControllerSystem());
@@ -94,6 +91,11 @@ void Engine::initialize() {
 
 	start_time_ = std::chrono::high_resolution_clock::now();
 	prev_time_ = prev_time_;
+
+#ifdef INCLUDE_EDITOR
+	if (settings_->start_editor_)
+		launchEditor();
+#endif
 
 	running_ = true;
 	LOG("Successfully Loaded.\n");
@@ -302,6 +304,8 @@ void Engine::run() {
 
 		graphics_wrapper_->HandleEvents();
 		input_manager_->LoopControls(dt);
+
+		graphics_wrapper_->Clear(CLEAR_BOTH);
 
 		// Add: if (simulating_)
 		// Update all Systems

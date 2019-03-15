@@ -63,11 +63,14 @@ public:
 	void ResizeEvent(int, int);
 	void SetMouseButton(int, bool);
 	void SetMousePosition(int, int);
+	void GetMousePosition(int &, int &);
 	void SetFocused(bool);
 	bool IsFocused();
 	void SetKey(int, bool);
 	void Quit();
 	void ForceQuit();
+	int GetKey(int key);
+	int GetMouseButton(int mb);
 
 	InputManager();
 	void LoopControls(double deltaTime);

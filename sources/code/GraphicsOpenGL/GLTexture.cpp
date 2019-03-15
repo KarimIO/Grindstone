@@ -102,6 +102,9 @@ GLTexture::GLTexture(TextureCreateInfo ci) {
 	}
 }
 
+unsigned int GLTexture::getTexture() {
+	return handle;
+}
 
 GLenum GLTexture::translateTexWrap(TextureWrapMode m) {
 	switch (m) {

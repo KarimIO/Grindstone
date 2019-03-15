@@ -7,8 +7,8 @@
 class GLRenderTarget : public RenderTarget {
 public:
     GLRenderTarget(RenderTargetCreateInfo *cis, uint32_t count);
-    uint32_t getHandle();
-    uint32_t getHandle(uint32_t i);
+    virtual uint32_t getHandle();
+	virtual uint32_t getHandle(uint32_t i);
     uint32_t getNumRenderTargets();
 
     float getAverageValue(uint32_t i);

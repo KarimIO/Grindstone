@@ -15,6 +15,8 @@ public:
 	GLTexture(CubemapCreateInfo ci);
 	void Bind(int i);
 
+	virtual unsigned int getTexture();
+
 	GLenum translateTexWrap(TextureWrapMode);
 	GLenum translateTexFilter(TextureFilter);
 

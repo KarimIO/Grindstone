@@ -23,8 +23,20 @@ glm::mat4 bias_matrix(
 	0.5, 0.5, 0.5, 1.0
 );
 
-RenderPathDeferred::RenderPathDeferred() {
-	createFramebuffer();
+RenderPathDeferred::RenderPathDeferred(unsigned int w = engine.getSettings()->resolution_x_, unsigned int h = engine.getSettings()->resolution_y_) {
+	auto settings = engine.getSettings();
+	auto graphics_wrapper = engine.getGraphicsWrapper();
+
+	shadow_binding_ = TextureSubBinding("shadow_map", 4);
+
+	TextureBindingLayoutCreateInfo tblci;
+	tblci.bindingLocation = 4;
+	tblci.bindings = &shadow_binding_;
+	tblci.bindingCount = (uint32_t)1;
+	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	shadow_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
+
+	createFramebuffer(w, h);
 	createPointLightShader();
 	createSpotLightShader();
 	createDirectionalLightShader();
@@ -323,17 +335,18 @@ void RenderPathDeferred::render(Framebuffer *fbo, Space *space) {
 	bool debug = true;
 	
 	// Opaque
-	if (!debug)
-		gbuffer_->Bind(true);
-	else
-		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
+	//if (!debug)
+		fbo->Bind(true);
+	//else
+	//	engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
 
-	gbuffer_->Clear(CLEAR_BOTH);
+	fbo->Clear(CLEAR_BOTH);
 	engine.getGraphicsWrapper()->SetImmediateBlending(BLEND_NONE);
 	engine.getGraphicsPipelineManager()->drawDeferredImmediate();
 
-	if (!debug)
-		engine.deff_ubo_handler_->Bind();
+
+	//if (!debug)
+	//	engine.deff_ubo_handler_->Bind();
 
 	/*if (engine.debug_wrapper_.GetDebugMode() != 0) {
 		engine.debug_wrapper_.Draw();
@@ -486,27 +499,17 @@ void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
 	}
 }
 
-void RenderPathDeferred::createFramebuffer() {
-	auto settings = engine.getSettings();
+void RenderPathDeferred::createFramebuffer(unsigned int width, unsigned int height) {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
-
-	shadow_binding_ = TextureSubBinding("shadow_map", 4);
-
-	TextureBindingLayoutCreateInfo tblci;
-	tblci.bindingLocation = 4;
-	tblci.bindings = &shadow_binding_;
-	tblci.bindingCount = (uint32_t)1;
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	shadow_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
 
 	std::vector<RenderTargetCreateInfo> gbuffer_images_ci;
 	gbuffer_images_ci.reserve(3);
-	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings->resolution_x_, settings->resolution_y_); // R  G  B matID
-	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R16G16B16A16, settings->resolution_x_, settings->resolution_y_); // nX nY nZ
-	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, settings->resolution_x_, settings->resolution_y_); // sR sG sB Roughness
+	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, width, height); // R  G  B matID
+	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R16G16B16A16, width, height); // nX nY nZ
+	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, width, height); // sR sG sB Roughness
 	render_targets_ = graphics_wrapper->CreateRenderTarget(gbuffer_images_ci.data(), gbuffer_images_ci.size());
 
-	DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24_STENCIL_8, settings->resolution_x_, settings->resolution_y_, false, false);
+	DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24_STENCIL_8, width, height, false, false);
 	depth_target_ = graphics_wrapper->CreateDepthTarget(depth_image_ci);
 
 	FramebufferCreateInfo gbuffer_ci;

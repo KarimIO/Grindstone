@@ -34,7 +34,7 @@ struct GeometryInfo {
 	unsigned int ubb_count;
 };
 
-typedef unsigned char ComponentHandle;
+typedef unsigned int ComponentHandle;
 typedef unsigned int GameObjectHandle;
 
 #endif

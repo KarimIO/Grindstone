@@ -1,6 +1,6 @@
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-set(ENGINE_CORE_HEADERS Core/Engine.hpp Core/Editor.hpp Core/GameObject.hpp Core/LoadingScreen.hpp Core/iniHandler.hpp Core/Input.hpp Core/InputInterface.hpp Core/Space.hpp Core/Utilities.hpp Core/Scene.hpp)
+set(ENGINE_CORE_HEADERS Core/Camera.hpp Core/Engine.hpp Core/Editor.hpp Core/GameObject.hpp Core/LoadingScreen.hpp Core/iniHandler.hpp Core/Input.hpp Core/InputInterface.hpp Core/Space.hpp Core/Utilities.hpp Core/Scene.hpp)
 source_group("Core\\Header Files" FILES ${ENGINE_CORE_HEADERS})
 set(ENGINE_RENDERPATHS_HEADERS Renderpaths/RenderPath.hpp  Renderpaths/RenderPathDeferred.hpp Renderpaths/RenderPathForward.hpp)
 source_group("Render Paths\\Header Files" FILES ${ENGINE_RENDERPATHS_HEADERS})
@@ -14,7 +14,7 @@ set(ENGINE_OTHER_HEADERS ../AssetCommon/SkeletonLoader.hpp Utilities/SettingsFil
 source_group("Other\\Header Files" FILES ${ENGINE_OTHER_HEADERS})
 set(ENGINE_HEADERS ${ENGINE_OTHER_HEADERS} ${ENGINE_CORE_HEADERS} ${ENGINE_ASSET_MANAGERS_HEADERS} ${ENGINE_RENDERPATHS_HEADERS} ${ENGINE_SYSTEMS_HEADERS} ${ENGINE_POST_HEADERS})
 
-set(ENGINE_CORE_SOURCES Core/Main.cpp Core/Editor.cpp Core/GameObject.cpp Core/Engine.cpp Core/LoadingScreen.cpp Core/iniHandler.cpp Core/Input.cpp Core/Space.cpp Core/Utilities.cpp Core/Scene.cpp)
+set(ENGINE_CORE_SOURCES Core/Main.cpp Core/Camera.cpp Core/Editor.cpp Core/GameObject.cpp Core/Engine.cpp Core/LoadingScreen.cpp Core/iniHandler.cpp Core/Input.cpp Core/Space.cpp Core/Utilities.cpp Core/Scene.cpp)
 source_group("Core\\Source Files" FILES ${ENGINE_CORE_SOURCES})
 set(ENGINE_RENDERPATHS_SOURCES Renderpaths/RenderPathDeferred.cpp Renderpaths/RenderPathForward.cpp)
 source_group("Render Paths\\Source Files" FILES ${ENGINE_RENDERPATHS_SOURCES})
@@ -26,11 +26,15 @@ set(ENGINE_POST_SOURCES PostProcess/BasePost.cpp PostProcess/PostProcessAutoExpo
 source_group("Post Processing\\Source Files" FILES ${ENGINE_POST_SOURCES})
 set(ENGINE_OTHER_SOURCES ../AssetCommon/SkeletonLoader.cpp Utilities/SettingsFile.cpp ../FormatCommon/Bounding.cpp Utilities/Logger.cpp Utilities/DLLHandler.cpp Utilities/DLLGraphics.cpp Utilities/DLLAudio.cpp)
 source_group("Other\\Source Files" FILES ${ENGINE_OTHER_SOURCES})
-set(ENGINE_IMGUI_SOURCES ../../deps/imgui/imgui.cpp ../../deps/imgui/imgui_dock.cpp ../../deps/imgui/imgui_impl_opengl3.cpp ../../deps/GL/gl3w.c ../../deps/imgui/imgui_draw.cpp ../../deps/imgui/imgui_widgets.cpp)
-source_group("Imgui\\Source Files" FILES ${ENGINE_OTHER_SOURCES})
+set(ENGINE_IMGUI_SOURCES ../../deps/imgui/imgui.cpp ../../deps/imgui/imgui_impl_opengl3.cpp ../../deps/GL/gl3w.c ../../deps/imgui/imgui_draw.cpp ../../deps/imgui/imgui_widgets.cpp)
+source_group("Imgui\\Source Files" FILES ${ENGINE_IMGUI_SOURCES})
 set(ENGINE_SOURCES ${ENGINE_IMGUI_SOURCES} ${ENGINE_OTHER_SOURCES} ${ENGINE_ASSET_MANAGERS_SOURCES} ${ENGINE_CORE_SOURCES} ${ENGINE_RENDERPATHS_SOURCES} ${ENGINE_SYSTEMS_SOURCES} ${ENGINE_POST_SOURCES}) 
 
 set(INCLUDE_DIRECTORIES ../GraphicsCommon ../AudioCommon)
+
+if (WIN32)
+    set(RAPIDJSON_PATH CACHE PATH "RAPIDJSON Path")
+endif ()
 
 add_executable(Grindstone ${ENGINE_SOURCES} ${ENGINE_HEADERS})
 
@@ -42,6 +46,8 @@ endif()
 
 set_target_properties(Grindstone PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
+find_package(OpenGL) 
+target_link_libraries(Grindstone ${OPENGL_gl_LIBRARY})
 if (WIN32)
     #target_link_libraries(Grindstone optimized ${bullet_LIB_REL})
 	target_link_libraries(Grindstone ${bullet_LIB_DEB})
@@ -50,4 +56,4 @@ else ()
     target_link_libraries(Grindstone ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} BulletDynamics BulletCollision LinearMath)
 endif()
 
-target_include_directories(Grindstone PUBLIC ${DEPS_DIR} ${RAPIDJSON_INCLUDE_DIRS} ${BULLET_INCLUDE_DIR} ${INCLUDE_DIRECTORIES})
+target_include_directories(Grindstone PUBLIC ${RAPIDJSON_PATH} ${DEPS_DIR} ${RAPIDJSON_INCLUDE_DIRS} ${BULLET_INCLUDE_DIR} ${INCLUDE_DIRECTORIES})

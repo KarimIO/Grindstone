@@ -17,14 +17,14 @@ class Scene;
 
 class RenderPathDeferred : public RenderPath {
 public:
-	RenderPathDeferred();
+	RenderPathDeferred(unsigned int w, unsigned int h);
 	void render(Framebuffer *default_fb, Space *scene);
 	void renderLights(Framebuffer *fbo, Space *scene);
 	void createPointLightShader();
 	void createSpotLightShader();
 	void createDirectionalLightShader();
 private:
-	void createFramebuffer();
+	void createFramebuffer(unsigned int width, unsigned int height);
 	Framebuffer *gbuffer_;
 	RenderTarget *render_targets_;
 	DepthTarget *depth_target_;

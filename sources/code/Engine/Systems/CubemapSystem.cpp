@@ -62,7 +62,7 @@ void CubemapSubSystem::bake() {
 			engine.getGraphicsWrapper()->setViewport(0, 0, component.resolution_, component.resolution_);
 
 			Framebuffer *gbuffer = nullptr; // component.capture_fbo_;
-			((CameraSystem *) engine.getSystem(COMPONENT_CAMERA))->render_path_->render(gbuffer, space_);
+			// FIX THIS: ((CameraSystem *) engine.getSystem(COMPONENT_CAMERA))->render_path_->render(gbuffer, space_);
 
 			// PostProcessing
 			//engine.getGraphicsWrapper()->BindVertexArrayObject(engine.getPlaneVAO());

@@ -5,6 +5,7 @@
 
 #include "../GraphicsCommon/GraphicsWrapper.hpp"
 #include "../Utilities/Logger.hpp"
+#include "AssetManagers/ImguiManager.hpp"
 
 InputManager::InputManager() {
 	// These should be set elsewhere
@@ -410,8 +411,20 @@ void InputManager::SetMousePosition(int x, int y) {
 	}
 }
 
+void InputManager::GetMousePosition(int &x, int &y) {
+	engine.getGraphicsWrapper()->GetCursor(x, y);
+}
+
+int InputManager::GetKey(int k) {
+	return keyboardData[k];
+}
+
+int InputManager::GetMouseButton(int mb) {
+	return mouseData[mb];
+}
+
 void InputManager::SetMouseButton(int mb, bool state) {
-	if (!IsFocused())
+	if (!IsFocused() && state) // Only set buttons when unfocused if it's a release
 		return;
 
 	bool isEvent = false;
@@ -448,6 +461,8 @@ void InputManager::SetMouseButton(int mb, bool state) {
 				container = container->nextControl;
 			}
 		}
+
+		engine.getImguiManager()->MouseButtonCallback(mb, state, 0);
 	}
 
 	if (mb >= MOUSE_WHEEL_UP && mb <= MOUSE_WHEEL_RIGHT) {
@@ -459,6 +474,11 @@ void InputManager::SetMouseButton(int mb, bool state) {
 				container = container->nextControl;
 			}
 		}
+
+		double y = (mb == MOUSE_WHEEL_UP) - (mb == MOUSE_WHEEL_DOWN);
+		double x = (mb == MOUSE_WHEEL_RIGHT) - (mb == MOUSE_WHEEL_LEFT);
+		
+		engine.getImguiManager()->ScrollCallback(x, y);
 	}
 }
 
@@ -538,6 +558,8 @@ void InputManager::SetKey(int key, bool state) {
 
 			container = container->nextControl;
 		}
+
+		engine.getImguiManager()->KeyCallback(key, state);
 	}
 }
 
@@ -550,7 +572,7 @@ void InputManager::ForceQuit() {
 }
 
 void InputManager::LoopControls(double deltaTime) {
-	if (!IsFocused())
+	if (!IsFocused() || engine.edit_mode_)
 		return;
 	
 	for (size_t i = 0; i <= MOUSE_MOUSE5; i++) {
@@ -577,8 +599,7 @@ void InputManager::LoopControls(double deltaTime) {
 		}
 	}
 
-	if (!engine.edit_mode_)
-		engine.getGraphicsWrapper()->ResetCursor();
+	engine.getGraphicsWrapper()->ResetCursor();
 }
 
 ControlHandler::ControlHandler(std::string controlCode, InputComponent * componentPtr, ControlHandler * prev, double val) {

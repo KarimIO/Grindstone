@@ -110,6 +110,15 @@ static unsigned int g_VboHandle = 0, g_ElementsHandle = 0;
 // Functions
 bool    ImGui_ImplOpenGL3_Init(const char* glsl_version)
 {
+	if (gl3wInit()) {
+		fprintf(stderr, "failed to initialize OpenGL\n");
+		return -1;
+	}
+	if (!gl3wIsSupported(3, 2)) {
+		fprintf(stderr, "OpenGL 3.2 not supported\n");
+		return -1;
+	}
+
     ImGuiIO& io = ImGui::GetIO();
     io.BackendRendererName = "imgui_impl_opengl3";
 
@@ -390,13 +399,13 @@ static bool CheckProgram(GLuint handle, const char* desc)
 bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
 {
     // Backup GL state
-    GLint last_texture, last_array_buffer;
+    /*GLint last_texture, last_array_buffer;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
     glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &last_array_buffer);
 #ifndef IMGUI_IMPL_OPENGL_ES2
     GLint last_vertex_array;
     glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &last_vertex_array);
-#endif
+#endif*/
 
     // Parse GLSL version string
     int glsl_version = 130;
@@ -409,8 +418,7 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
         "attribute vec4 Color;\n"
         "varying vec2 Frag_UV;\n"
         "varying vec4 Frag_Color;\n"
-        "void main()\n"
-        "{\n"
+        "void main() {\n"
         "    Frag_UV = UV;\n"
         "    Frag_Color = Color;\n"
         "    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
@@ -423,8 +431,7 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
         "in vec4 Color;\n"
         "out vec2 Frag_UV;\n"
         "out vec4 Frag_Color;\n"
-        "void main()\n"
-        "{\n"
+        "void main() {\n"
         "    Frag_UV = UV;\n"
         "    Frag_Color = Color;\n"
         "    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
@@ -438,8 +445,7 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
         "uniform mat4 ProjMtx;\n"
         "out vec2 Frag_UV;\n"
         "out vec4 Frag_Color;\n"
-        "void main()\n"
-        "{\n"
+        "void main() {\n"
         "    Frag_UV = UV;\n"
         "    Frag_Color = Color;\n"
         "    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
@@ -452,8 +458,7 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
         "uniform mat4 ProjMtx;\n"
         "out vec2 Frag_UV;\n"
         "out vec4 Frag_Color;\n"
-        "void main()\n"
-        "{\n"
+        "void main() {\n"
         "    Frag_UV = UV;\n"
         "    Frag_Color = Color;\n"
         "    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
@@ -466,8 +471,7 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
         "uniform sampler2D Texture;\n"
         "varying vec2 Frag_UV;\n"
         "varying vec4 Frag_Color;\n"
-        "void main()\n"
-        "{\n"
+        "void main() {\n"
         "    gl_FragColor = Frag_Color * texture2D(Texture, Frag_UV.st);\n"
         "}\n";
 
@@ -476,8 +480,7 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
         "in vec2 Frag_UV;\n"
         "in vec4 Frag_Color;\n"
         "out vec4 Out_Color;\n"
-        "void main()\n"
-        "{\n"
+        "void main() {\n"
         "    Out_Color = Frag_Color * texture(Texture, Frag_UV.st);\n"
         "}\n";
 
@@ -487,8 +490,7 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
         "in vec2 Frag_UV;\n"
         "in vec4 Frag_Color;\n"
         "layout (location = 0) out vec4 Out_Color;\n"
-        "void main()\n"
-        "{\n"
+        "void main() {\n"
         "    Out_Color = Frag_Color * texture(Texture, Frag_UV.st);\n"
         "}\n";
 
@@ -497,8 +499,7 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
         "in vec4 Frag_Color;\n"
         "uniform sampler2D Texture;\n"
         "layout (location = 0) out vec4 Out_Color;\n"
-        "void main()\n"
-        "{\n"
+        "void main() {\n"
         "    Out_Color = Frag_Color * texture(Texture, Frag_UV.st);\n"
         "}\n";
 
@@ -558,11 +559,11 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
     ImGui_ImplOpenGL3_CreateFontsTexture();
 
     // Restore modified GL state
-    glBindTexture(GL_TEXTURE_2D, last_texture);
+    /*glBindTexture(GL_TEXTURE_2D, last_texture);
     glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
 #ifndef IMGUI_IMPL_OPENGL_ES2
     glBindVertexArray(last_vertex_array);
-#endif
+#endif*/
 
     return true;
 }
