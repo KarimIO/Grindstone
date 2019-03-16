@@ -264,7 +264,7 @@ Scene * Engine::getScene(std::string name) {
 	return nullptr;
 }
 
-const Settings *Engine::getSettings() {
+Settings *Engine::getSettings() {
 	return settings_;
 }
 

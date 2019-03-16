@@ -378,6 +378,8 @@ void InputManager::Cleanup(InputComponent * component) {
 
 void InputManager::ResizeEvent(int x, int y) {
 	LOG("Resized to: %i, %i.\n", x, y);
+	engine.getSettings()->resolution_x_ = x;
+	engine.getSettings()->resolution_y_ = y;
 }
 
 void InputManager::SetMousePosition(int x, int y) {

@@ -161,7 +161,9 @@ void Editor::getDirectory() {
 	files_.clear();
 
 	if (asset_path_ != "../assets") {
-		size_t d = asset_path_.find_last_of('/');
+		size_t d1 = asset_path_.find_last_of('\\');
+		size_t d2 = asset_path_.find_last_of('/');
+		size_t d = (d1 > d2) ? d1 : d2;
 		std::string p = asset_path_.substr(0, d);
 		directories_.emplace_back(p, "^ Up ^");
 	}

@@ -90,7 +90,7 @@ public:
 	Scene *getScene(SceneHandle scene);
 	Scene *getScene(std::string scene);
 
-	const Settings *getSettings();
+	Settings *getSettings();
 
 	GraphicsWrapper *getGraphicsWrapper();
 
