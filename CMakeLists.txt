@@ -3,7 +3,7 @@ PROJECT(Grindstone C CXX)
 
 enable_testing()
 set (CMAKE_BUILD_TYPE Debug)
-set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/sources/cmake)
 message(STATUS ${CMAKE_MODULE_PATH})

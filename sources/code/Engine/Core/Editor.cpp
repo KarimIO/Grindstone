@@ -16,13 +16,26 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_opengl3.h"
 
+#include <filesystem>
+
+#include <vector>
+#include <algorithm>
+#include <iterator>
+
 Editor::Editor(ImguiManager *manager) : selected_object_(nullptr) {
 	manager_ = manager;
 	show_scene_graph_ = true;
+	show_asset_browser_ = true;
+	show_viewport_= true;
+	show_component_panel_ = true;
 
 	cameras_ = new Camera(engine.getScenes()[0]->spaces_[0], true);
 	cameras_->setViewport(200, 200);
 	cameras_->initialize();
+
+	asset_path_ = "../assets";
+	next_asset_path_ = "";
+	getDirectory();
 }
 
 void Editor::update() {
@@ -45,6 +58,12 @@ void Editor::update() {
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+	if (next_asset_path_ != "" && next_asset_path_ != asset_path_) {
+		asset_path_ = next_asset_path_;
+		next_asset_path_ = "";
+		getDirectory();
+	}
 }
 
 void Editor::prepareDockspace() {
@@ -90,90 +109,140 @@ void Editor::prepareDockspace() {
 		ShowDockingDisabledMessage();
 	}*/
 
-	/*if (ImGui::BeginMenuBar())
-	{
-		if (ImGui::BeginMenu("Docking"))
-		{
-			// Disabling fullscreen would allow the window to be moved to the front of other windows, 
-			// which we can't undo at the moment without finer window depth/z control.
-			//ImGui::MenuItem("Fullscreen", NULL, &opt_fullscreen_persistant);
-
-			if (ImGui::MenuItem("Flag: NoSplit", "", (opt_flags & ImGuiDockNodeFlags_NoSplit) != 0))                 opt_flags ^= ImGuiDockNodeFlags_NoSplit;
-			if (ImGui::MenuItem("Flag: NoDockingInCentralNode", "", (opt_flags & ImGuiDockNodeFlags_NoDockingInCentralNode) != 0))  opt_flags ^= ImGuiDockNodeFlags_NoDockingInCentralNode;
-			if (ImGui::MenuItem("Flag: NoResize", "", (opt_flags & ImGuiDockNodeFlags_NoResize) != 0))                opt_flags ^= ImGuiDockNodeFlags_NoResize;
-			if (ImGui::MenuItem("Flag: PassthruDockspace", "", (opt_flags & ImGuiDockNodeFlags_PassthruDockspace) != 0))       opt_flags ^= ImGuiDockNodeFlags_PassthruDockspace;
-			if (ImGui::MenuItem("Flag: AutoHideTabBar", "", (opt_flags & ImGuiDockNodeFlags_AutoHideTabBar) != 0))          opt_flags ^= ImGuiDockNodeFlags_AutoHideTabBar;
-			ImGui::Separator();
+	if (ImGui::BeginMenuBar()) {
+		if (ImGui::BeginMenu("File")) {
+			if (ImGui::MenuItem("Close", "", false))
+				engine.shutdown();
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("View")) {
+			if (ImGui::MenuItem("Show Asset Browser", "", show_asset_browser_)) show_asset_browser_ = !show_asset_browser_;
+			if (ImGui::MenuItem("Show Scene Graph", "", show_scene_graph_)) show_scene_graph_ = !show_scene_graph_;
+			if (ImGui::MenuItem("Show Component Panel", "", show_component_panel_)) show_component_panel_ = !show_component_panel_;
+			if (ImGui::MenuItem("Show Viewport Panel", "", show_viewport_)) show_viewport_ = !show_viewport_;
 			ImGui::EndMenu();
 		}
 
 		ImGui::EndMenuBar();
-	}*/
+	}
 
 	ImGui::End();
 }
 
 void Editor::componentPanel() {
-	ImGui::Begin("Components");
-	if (selected_object_) {
-		Scene *scene = engine.getScenes()[0];
-		if (scene) {
-			Space *space = scene->spaces_[0];
-			if (space) {
-				for (int i = 0; i < NUM_COMPONENTS - 1; ++i) {
-					unsigned int h = selected_object_->getComponentHandle(ComponentType(i));
-					if (h != UINT_MAX)
-						ImGui::Text("%s %u", component_names[i], h);
+	if (show_component_panel_) {
+		ImGui::Begin("Components Panel", &show_component_panel_);
+		if (selected_object_) {
+			Scene *scene = engine.getScenes()[0];
+			if (scene) {
+				Space *space = scene->spaces_[0];
+				if (space) {
+					for (int i = 0; i < NUM_COMPONENTS - 1; ++i) {
+						unsigned int h = selected_object_->getComponentHandle(ComponentType(i));
+						if (h != UINT_MAX)
+							ImGui::Text("%s %u", component_names[i], h);
+					}
+					/*static int op = -1;
+					if (ImGui::Combo("Add Component", &op, "COMPONENT_TRANSFORM\0COMPONENT_GAME_LOGIC\0COMPONENT_SCRIPT\0COMPONENT_CONTROLLER\0COMPONENT_INPUT\0COMPONENT_RIGID_BODY\0COMPONENT_COLLISION\0COMPONENT_ANIMATION\0COMPONENT_CUBEMAP\0COMPONENT_LIGHT_SPOT\0COMPONENT_LIGHT_POINT\0COMPONENT_LIGHT_DIRECTIONAL\0COMPONENT_CAMERA\0COMPONENT_RENDER_STATIC_MESH\0COMPONENT_RENDER_SKELETAL_MESH\0COMPONENT_RENDER_TERRAIN\0COMPONENT_AUDIO_SOURCE")) {
+						//op
+					}*/
 				}
-				/*static int op = -1;
-				if (ImGui::Combo("Add Component", &op, "COMPONENT_TRANSFORM\0COMPONENT_GAME_LOGIC\0COMPONENT_SCRIPT\0COMPONENT_CONTROLLER\0COMPONENT_INPUT\0COMPONENT_RIGID_BODY\0COMPONENT_COLLISION\0COMPONENT_ANIMATION\0COMPONENT_CUBEMAP\0COMPONENT_LIGHT_SPOT\0COMPONENT_LIGHT_POINT\0COMPONENT_LIGHT_DIRECTIONAL\0COMPONENT_CAMERA\0COMPONENT_RENDER_STATIC_MESH\0COMPONENT_RENDER_SKELETAL_MESH\0COMPONENT_RENDER_TERRAIN\0COMPONENT_AUDIO_SOURCE")) {
-					//op
-				}*/
 			}
 		}
+		else {
+			ImGui::Text("Nothing selected.");
+		}
+		ImGui::End();
 	}
-	else {
-		ImGui::Text("Nothing selected.");
+}
+
+void Editor::getDirectory() {
+	directories_.clear();
+	files_.clear();
+
+	if (asset_path_ != "../assets") {
+		size_t d = asset_path_.find_last_of('/');
+		std::string p = asset_path_.substr(0, d);
+		directories_.emplace_back(p, "^ Up ^");
 	}
-	ImGui::End();
+
+	for (auto & p : std::filesystem::directory_iterator(asset_path_)) {
+		std::string path = p.path().string();
+		std::string name = p.path().filename().string();
+		if (p.is_directory()) {
+			directories_.emplace_back(path, name);
+		}
+		else {
+			files_.emplace_back(path, name);
+		}
+	}
 }
 
 void Editor::assetPanel() {
-	if (show_assets_) {
-		ImGui::Begin("Asset Browser");
+	if (show_asset_browser_) {
+		ImGui::Begin("Asset Browser", &show_asset_browser_);
 
+		ImVec2 button_sz(80, 30);
+		ImGuiStyle& style = ImGui::GetStyle();
+		float window_visible_x2 = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+		for (int n = 0; n < directories_.size(); n++) {
+			ImGui::PushID(n);
+			if (ImGui::Button(directories_[n].name.c_str(), button_sz)) {
+				next_asset_path_ = directories_[n].path;
+			}
+			float last_button_x2 = ImGui::GetItemRectMax().x;
+			float next_button_x2 = last_button_x2 + style.ItemSpacing.x + button_sz.x; // Expected position if next button was on same line
+			if (n + 1 < directories_.size() && next_button_x2 < window_visible_x2)
+				ImGui::SameLine();
+			ImGui::PopID();
+		}
 
+		ImGui::Separator();
+
+		for (int n = 0; n < files_.size(); n++) {
+			ImGui::PushID(n);
+			ImGui::Button(files_[n].name.c_str(), button_sz);
+			float last_button_x2 = ImGui::GetItemRectMax().x;
+			float next_button_x2 = last_button_x2 + style.ItemSpacing.x + button_sz.x; // Expected position if next button was on same line
+			if (n + 1 < files_.size() && next_button_x2 < window_visible_x2)
+				ImGui::SameLine();
+			ImGui::PopID();
+		}
 		
 		ImGui::End();
 	}
 }
 
 void Editor::viewportPanels() {
+	if (show_viewport_) {
+		cameras_->render();
+		engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
 
-	cameras_->render();
-	engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
+		for (int i = 0; i < 1; ++i) {
 
-	for (int i = 0; i < 1; ++i) {
+			/*std::string title = "Viewport";
+			title += std::to_string(i);*/
+			ImGui::Begin("Viewport", &show_viewport_);
+			ImVec2 size = ImGui::GetWindowSize();
+			ImGuiStyle& style = ImGui::GetStyle();
+			size.x -= style.FramePadding.x * 2;
+			size.y -= style.FramePadding.y * 2;
+			cameras_->setViewport(size.x, size.y);
 
-		std::string title = "Viewport";
-		title += std::to_string(i);
-		ImGui::Begin(title.c_str());
-		ImVec2 size = ImGui::GetWindowSize();
-		cameras_->setViewport(size.x, size.y);
-
-		unsigned int t = ((GLRenderTarget *)cameras_->final_buffer_)->getHandle();
-		
-		ImGui::GetWindowDrawList()->AddImage(
-			(void *)t, ImVec2(ImGui::GetCursorScreenPos()),
-			ImVec2(ImGui::GetCursorScreenPos().x + size.x, ImGui::GetCursorScreenPos().y + size.y), ImVec2(0, 1), ImVec2(1, 0));
+			unsigned int t = ((GLRenderTarget *)cameras_->final_buffer_)->getHandle();
 			
-		ImGui::End();
+			ImGui::GetWindowDrawList()->AddImage(
+				(void *)t, ImVec2(ImGui::GetCursorScreenPos()),
+				ImVec2(ImGui::GetCursorScreenPos().x + size.x, ImGui::GetCursorScreenPos().y + size.y), ImVec2(0, 1), ImVec2(1, 0));
+				
+			ImGui::End();
+		}
 	}
 }
 
 void Editor::sceneGraphPanel() {
     if (show_scene_graph_) {
-        ImGui::Begin("Scene Graph"); 
+        ImGui::Begin("Scene Graph", &show_scene_graph_); 
 
         // Scene Graph:
 		for (auto scene : engine.getScenes()) {

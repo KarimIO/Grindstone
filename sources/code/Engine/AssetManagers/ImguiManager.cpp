@@ -274,8 +274,8 @@ void ImguiManager::NewFrame()
 	// Setup display size (every frame to accommodate for window resizing)
 	int w, h;
 	int display_w, display_h;
-	w = display_w = engine.getSettings()->resolution_x_ - 16;
-	h = display_h = engine.getSettings()->resolution_y_ - 40;
+	w = display_w = engine.getSettings()->resolution_x_;
+	h = display_h = engine.getSettings()->resolution_y_;
 	//glfwGetWindowSize(g_Window, &w, &h);
 	//glfwGetFramebufferSize(g_Window, &display_w, &display_h);
 	io.DisplaySize = ImVec2((float)w, (float)h);
