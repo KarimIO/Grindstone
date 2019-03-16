@@ -170,6 +170,7 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 	Material *mat = &pipeline->materials.back();
 	mat->param_buffer_handler_ = ubo;
 	mat->param_buffer_ = buffer;
+	mat->path = path;
 
 	material_map_[path] = ref;
 	return ref;

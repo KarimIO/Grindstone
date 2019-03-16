@@ -335,12 +335,15 @@ void RenderPathDeferred::render(Framebuffer *fbo, Space *space) {
 	bool debug = true;
 	
 	// Opaque
-	//if (!debug)
+	if (fbo) {
 		fbo->Bind(true);
-	//else
-	//	engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
+		fbo->Clear(CLEAR_BOTH);
+	}
+	else {
+		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
+		engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
+	}
 
-	fbo->Clear(CLEAR_BOTH);
 	engine.getGraphicsWrapper()->SetImmediateBlending(BLEND_NONE);
 	engine.getGraphicsPipelineManager()->drawDeferredImmediate();
 

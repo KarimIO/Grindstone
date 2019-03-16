@@ -7,7 +7,7 @@ CameraComponent::CameraComponent(Space *space, GameObjectHandle object_handle, C
 	camera_(space), Component(COMPONENT_CAMERA, object_handle, handle) {
 	camera_.setViewport(engine.getSettings()->resolution_x_, engine.getSettings()->resolution_y_);
 	camera_.initialize();
-	camera_.setEnabled(false);
+	camera_.setEnabled(true);
 }
 
 CameraSubSystem::CameraSubSystem(Space *space) : SubSystem(COMPONENT_CAMERA, space) {
@@ -36,11 +36,13 @@ void CameraSubSystem::removeComponent(ComponentHandle id) {
 CameraSubSystem::~CameraSubSystem() {}
 
 void CameraSystem::update(double dt) {
-	for (auto &scene : engine.getScenes()) {
-		for (auto &space : scene->spaces_) {
-			CameraSubSystem *subsystem = (CameraSubSystem *)space->getSubsystem(system_type_);
-			for (auto &comp : subsystem->components_) {
-				comp.camera_.render();
+	if (!engine.getSettings()->start_editor_) {
+		for (auto &scene : engine.getScenes()) {
+			for (auto &space : scene->spaces_) {
+				CameraSubSystem *subsystem = (CameraSubSystem *)space->getSubsystem(system_type_);
+				for (auto &comp : subsystem->components_) {
+					comp.camera_.render();
+				}
 			}
 		}
 	}

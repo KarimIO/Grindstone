@@ -24,6 +24,7 @@ public:
 	Material(MaterialReference reference, TextureBinding *textureBinding);
 	void incrementDrawCount();
 	const uint32_t getDrawCount();
+	std::string path;
 private:
 	MaterialReference reference;
 	uint32_t draw_count;
