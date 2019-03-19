@@ -301,6 +301,7 @@ void Engine::run() {
 		// Calculate Timing
 		calculateTime();
 		double dt = getUpdateTimeDelta();
+		graphics_wrapper_->setTitle((std::string("Grindstone - ") + std::to_string(int(1 / dt)) + "fps").c_str());
 
 		graphics_wrapper_->HandleEvents();
 		input_manager_->LoopControls(dt);

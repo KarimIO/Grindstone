@@ -17,6 +17,8 @@ public:
 	void initialize();
 	void setViewport(unsigned int w, unsigned int h);
 	void render(glm::vec3 &pos, glm::mat4 &view);
+	void setOrtho(double l, double r, double t, double b);
+	void setPerspective();
 	~Camera();
 
 	unsigned int viewport_width_;

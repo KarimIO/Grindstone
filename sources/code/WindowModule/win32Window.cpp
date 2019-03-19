@@ -112,6 +112,10 @@ void GraphicsWrapper::SetCursorShown(bool shown) {
 	ShowCursor(shown);
 }
 
+void GraphicsWrapper::setTitle(const char *str) {
+	SetWindowTextA(window_handle, str);
+}
+
 bool GraphicsWrapper::InitializeWin32Window() {
 	int fullscreen = 2;
 

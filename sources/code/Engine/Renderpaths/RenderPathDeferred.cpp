@@ -40,6 +40,9 @@ RenderPathDeferred::RenderPathDeferred(unsigned int w = engine.getSettings()->re
 	createPointLightShader();
 	createSpotLightShader();
 	createDirectionalLightShader();
+	createDebugShader();
+
+	debug_mode_ = 0;
 
 	/*
 	//=====================
@@ -116,6 +119,83 @@ RenderPathDeferred::RenderPathDeferred(unsigned int w = engine.getSettings()->re
 	iblGPCI.uniformBufferBindings = &engine.deffubb;
 	iblGPCI.uniformBufferBindingCount = 1;
 	m_iblPipeline = graphics_wrapper_->CreateGraphicsPipeline(iblGPCI);*/
+}
+
+void RenderPathDeferred::setDebugMode(unsigned int d) {
+	if (d >= 0 && d <= 7) {
+		debug_mode_ = d;
+	}
+}
+
+void RenderPathDeferred::createDebugShader() {
+	auto graphics_wrapper = engine.getGraphicsWrapper();
+
+	UniformBufferBindingCreateInfo ubbci;
+	ubbci.binding = 1;
+	ubbci.shaderLocation = "Debug";
+	ubbci.size = sizeof(debug_mode_);
+	ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	debug_ubb_ = engine.getGraphicsWrapper()->CreateUniformBufferBinding(ubbci);
+
+	UniformBufferCreateInfo uboci;
+	uboci.isDynamic = false;
+	uboci.size = sizeof(debug_mode_);
+	uboci.binding = debug_ubb_;
+	debug_ubo_handler_ = graphics_wrapper->CreateUniformBuffer(uboci);
+
+	ShaderStageCreateInfo vi;
+	ShaderStageCreateInfo fi;
+	if (engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL) {
+		vi.fileName = "../assets/shaders/lights_deferred/pointVert.glsl";
+		fi.fileName = "../assets/shaders/debug/debug.glsl";
+	}
+	else if (engine.getSettings()->graphics_language_ == GRAPHICS_DIRECTX) {
+		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
+		fi.fileName = "../assets/shaders/debug/debug.fxc";
+	}
+	else {
+		vi.fileName = "../assets/shaders/lights_deferred/pointVert.spv";
+		fi.fileName = "../assets/shaders/debug/debug.spv";
+	}
+	std::vector<char> vfile;
+	if (!readFile(vi.fileName, vfile))
+		return;
+	vi.content = vfile.data();
+	vi.size = (uint32_t)vfile.size();
+	vi.type = SHADER_VERTEX;
+
+	std::vector<char> ffile;
+	if (!readFile(fi.fileName, ffile))
+		return;
+	fi.content = ffile.data();
+	fi.size = (uint32_t)ffile.size();
+	fi.type = SHADER_FRAGMENT;
+
+	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
+
+	auto vbd = engine.getPlaneVBD();
+	auto vad = engine.getPlaneVAD();
+
+	GraphicsPipelineCreateInfo gpci;
+	gpci.cullMode = CULL_BACK;
+	gpci.bindings = &vbd;
+	gpci.bindingsCount = 1;
+	gpci.attributes = &vad;
+	gpci.attributesCount = 1;
+	gpci.width = (float)engine.getSettings()->resolution_x_;
+	gpci.height = (float)engine.getSettings()->resolution_y_;
+	gpci.scissorW = engine.getSettings()->resolution_x_;
+	gpci.scissorH = engine.getSettings()->resolution_y_;
+	gpci.primitiveType = PRIM_TRIANGLE_STRIPS;
+	gpci.shaderStageCreateInfos = stages.data();
+	gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
+	std::vector<TextureBindingLayout *> tbls_ = { engine.gbuffer_tbl_ };
+	gpci.textureBindings = tbls_.data();
+	gpci.textureBindingCount = (uint32_t)tbls_.size();
+	std::vector<UniformBufferBinding *> ubbs = { engine.deff_ubb_, debug_ubb_ };
+	gpci.uniformBufferBindings = ubbs.data();
+	gpci.uniformBufferBindingCount = (uint32_t)ubbs.size();
+	debug_pipeline_ = engine.getGraphicsWrapper()->CreateGraphicsPipeline(gpci);
 }
 
 void RenderPathDeferred::createPointLightShader() {
@@ -332,33 +412,28 @@ void RenderPathDeferred::createDirectionalLightShader() {
 }
 
 void RenderPathDeferred::render(Framebuffer *fbo, Space *space) {
-	bool debug = false;
-	
-	// Opaque
-	if (debug) {
-		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
-		engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
-	}
-	else {
-		gbuffer_->Bind(true);
-		gbuffer_->Clear(CLEAR_BOTH);
-	}
+	// Set fbo to gbuffer
+	gbuffer_->Bind(true);
 
+	// Clear screen
+	gbuffer_->Clear(CLEAR_BOTH);
+
+	// Set as Opaque
 	engine.getGraphicsWrapper()->SetImmediateBlending(BLEND_NONE);
+	
+	// Render opaque elements
 	engine.getGraphicsPipelineManager()->drawDeferredImmediate();
 
+	// Prepare deffered stage information
+	engine.deff_ubo_handler_->Bind();
 
-	if (!debug)
-		engine.deff_ubo_handler_->Bind();
-
-	/*if (engine.debug_wrapper_.GetDebugMode() != 0) {
-		engine.debug_wrapper_.Draw();
+	if (debug_mode_ != 0) {
+		renderDebug(fbo);
 	}
-	else*/
+	else
 	{
 		// Deferred
-		if (!debug)
-			renderLights(fbo, space);
+		renderLights(fbo, space);
 		
 		/*gbuffer_->BindRead();
 		engine.hdr_framebuffer_->BindWrite(true);
@@ -408,6 +483,29 @@ void RenderPathDeferred::render(Framebuffer *fbo, Space *space) {
 		//CCamera *cam = &engine.cameraSystem.components[0];
 		//cam->PostProcessing();
 	}
+}
+
+void RenderPathDeferred::renderDebug(Framebuffer *fbo) {
+	auto graphics_wrapper = engine.getGraphicsWrapper();
+
+	if (fbo) {
+		fbo->BindWrite(true);
+		fbo->Clear(CLEAR_BOTH);
+	}
+	else {
+		graphics_wrapper->BindDefaultFramebuffer(true);
+		graphics_wrapper->Clear(CLEAR_BOTH);
+	}
+
+	gbuffer_->BindRead();
+	gbuffer_->BindTextures(0);
+
+	debug_ubo_handler_->UpdateUniformBuffer(&debug_mode_);
+	debug_ubo_handler_->Bind();
+
+	debug_pipeline_->Bind();
+	graphics_wrapper->BindVertexArrayObject(engine.getPlaneVAO());
+	graphics_wrapper->DrawImmediateVertices(0, 6);
 }
 
 void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {

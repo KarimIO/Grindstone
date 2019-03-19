@@ -22,6 +22,58 @@
 #include <algorithm>
 #include <iterator>
 #include <glm/gtx/transform.hpp>
+#include "Renderpaths/RenderPath.hpp"
+
+Editor::Viewport::Viewport(Camera *c, View v) : camera_(c), pos(1, 1, 1), target(0, 0, 0), first(true) {
+	setView(v);
+	setViewMatrix();
+}
+
+void Editor::Viewport::setViewMatrix() {
+	view_mat = glm::lookAt(pos, target, up);
+}
+
+void Editor::Viewport::setView(View v) {
+	view = v;
+	target = glm::vec3(0, 0, 0);
+	up = glm::vec3(0, 1, 0);
+	
+	if (v == Perspective) {
+		camera_->setPerspective();
+	}
+	else {
+		camera_->setOrtho(-10, 10, 10, -10);
+	}
+
+	double d = 30;
+
+	switch (v) {
+	case Viewport::View::Top:
+		pos = glm::vec3(0, d, 0);
+		up = glm::vec3(1, 0, 0);
+		break;
+	case Viewport::View::Bottom:
+		pos = glm::vec3(0, -d, 0);
+		up = glm::vec3(-1, 0, 0);
+		break;
+	case Viewport::View::Left:
+		pos = glm::vec3(d, 0, 0);
+		break;
+	case Viewport::View::Right:
+		pos = glm::vec3(-d, 0, 0);
+		break;
+	case Viewport::View::Front:
+		pos = glm::vec3(0, 0, d);
+		break;
+	case Viewport::View::Back:
+		pos = glm::vec3(0, 0, -d);
+		break;
+	default:
+	case Viewport::View::Perspective:
+		pos = glm::vec3(1, 1, 1);
+		break;
+	}
+}
 
 Editor::Editor(ImguiManager *manager) : selected_object_(nullptr) {
 	manager_ = manager;
@@ -29,9 +81,15 @@ Editor::Editor(ImguiManager *manager) : selected_object_(nullptr) {
 	show_asset_browser_ = true;
 	show_viewport_= true;
 	show_component_panel_ = true;
-
-	cameras_ = new Camera(engine.getScenes()[0]->spaces_[0], true);
-	cameras_->setViewport(200, 200);
+	
+	Camera *c = new Camera(engine.getScenes()[0]->spaces_[0], true);
+	c->setViewport(800, 600);
+	c->initialize();
+	viewports_.emplace_back(c, Viewport::View::Top);
+	c = new Camera(engine.getScenes()[0]->spaces_[0], true);
+	c->setViewport(800, 600);
+	c->initialize();
+	viewports_.emplace_back(c, Viewport::View::Perspective);
 
 	asset_path_ = "../assets";
 	next_asset_path_ = "";
@@ -210,50 +268,104 @@ void Editor::assetPanel() {
 				ImGui::SameLine();
 			ImGui::PopID();
 		}
-		
+
 		ImGui::End();
 	}
 }
 
-bool first = true;
-
 void Editor::viewportPanels() {
 	if (show_viewport_) {
+		int i = 0;
+		for (auto &v : viewports_) {
 
-		for (int i = 0; i < 1; ++i) {
-
-			/*std::string title = "Viewport";
-			title += std::to_string(i);*/
-			ImGui::Begin("Viewport", &show_viewport_);
+			std::string title = "Viewport ";
+			title += std::to_string(++i);
+			
+			ImGui::Begin(title.c_str(), &show_viewport_);
 			ImVec2 size = ImGui::GetWindowSize();
 			ImGuiStyle& style = ImGui::GetStyle();
 			size.x -= style.FramePadding.x * 2;
 			size.y -= style.FramePadding.y * 2;
-			if (first) {
-				first = false;
-				cameras_->setViewport(size.x, size.y);
-				cameras_->initialize();
+			if (v.first) {
+				v.first = false;
+				v.camera_->setViewport(size.x, size.y);
+				v.camera_->initialize();
 			}
 
-			glm::vec3 pos = glm::vec3(4, 8, 0);
-			glm::vec3 fwd = glm::vec3(0, 1, 0) - pos;
-			glm::vec3 up = glm::vec3(0, 1, 0);
-
-			glm::mat4 view = glm::lookAt(
-				pos,
-				pos + fwd,
-				up
-			);
-
-			cameras_->render(pos, view);
+			v.camera_->render(v.pos, v.view_mat);
 			engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
 
-			unsigned int t = ((GLRenderTarget *)cameras_->final_buffer_)->getHandle();
-			
+			unsigned int t = ((GLRenderTarget *)v.camera_->final_buffer_)->getHandle();
+
 			ImGui::GetWindowDrawList()->AddImage(
 				(void *)t, ImVec2(ImGui::GetCursorScreenPos()),
 				ImVec2(ImGui::GetCursorScreenPos().x + size.x, ImGui::GetCursorScreenPos().y + size.y), ImVec2(0, 1), ImVec2(1, 0));
-				
+
+			static bool filled;
+			static bool wire;
+
+			const char* items[] = { "Up", "Down", "Left", "Right", "Forward", "Back", "Perspective" };
+			if (v.view_option == nullptr) {
+				v.view_option = items[6];
+				v.setView(Viewport::View::Perspective);
+			}
+
+			ImGui::PushItemWidth(100);
+			if (ImGui::BeginCombo("##combo", v.view_option)) {
+				for (unsigned int n = 0; n < IM_ARRAYSIZE(items); n++) {
+					bool is_selected = (v.view_option == items[n]); // You can store your selection however you want, outside or inside your objects
+					if (ImGui::Selectable(items[n], is_selected)) {
+						v.view_option = items[n];
+						v.setView((Viewport::View)n);
+						v.setViewMatrix();
+					}
+
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+				}
+				ImGui::EndCombo();
+			}
+
+			const char* debug_combo_items[] = { "Lit", "Distance", "Normal", "View Normal", "Albedo", "Specular", "Roughness", "Position" };
+			if (v.debug_combo_option == nullptr)
+				v.debug_combo_option = debug_combo_items[0];
+
+			if (ImGui::TreeNode("View Data")) {
+				ImGui::Checkbox("Filled", &filled);
+				ImGui::Checkbox("Grid", &wire);
+				ImGui::Checkbox("Wireframe", &wire);
+
+				ImGui::Separator();
+
+				if (ImGui::TreeNode("Post-Processing")) {
+					ImGui::Checkbox("SSAO", &filled);
+					ImGui::Checkbox("Reflections", &wire);
+					ImGui::Checkbox("Auto-Exposure", &wire);
+					ImGui::Checkbox("Color Grading", &wire);
+
+					ImGui::TreePop();
+				}
+
+				ImGui::Separator();
+
+				ImGui::PushItemWidth(100);
+				if (ImGui::BeginCombo("##debug_combo", v.debug_combo_option)) {
+					for (int n = 0; n < IM_ARRAYSIZE(debug_combo_items); n++) {
+						bool is_selected = (v.debug_combo_option == debug_combo_items[n]); // You can store your selection however you want, outside or inside your objects
+						if (ImGui::Selectable(debug_combo_items[n], is_selected)) {
+							v.debug_combo_option = debug_combo_items[n];
+							v.camera_->render_path_->setDebugMode(n);
+						}
+
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+					}
+					ImGui::EndCombo();
+				}
+
+				ImGui::TreePop();
+			}
+
 			ImGui::End();
 		}
 	}

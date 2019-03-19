@@ -601,7 +601,8 @@ void InputManager::LoopControls(double deltaTime) {
 		}
 	}
 
-	engine.getGraphicsWrapper()->ResetCursor();
+	auto sett = engine.getSettings();
+	engine.getGraphicsWrapper()->SetCursor(sett->resolution_x_ / 2, sett->resolution_y_ / 2);
 }
 
 ControlHandler::ControlHandler(std::string controlCode, InputComponent * componentPtr, ControlHandler * prev, double val) {

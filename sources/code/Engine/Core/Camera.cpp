@@ -149,7 +149,7 @@ void Camera::render(glm::vec3 &pos, glm::mat4 &view) {
 	// Calculate Projection
 	if (is_ortho) {
 		// Perspective
-		projection_ = glm::ortho(ortho_x_, ortho_y_, ortho_width_, ortho_height_);
+		projection_ = glm::ortho(ortho_x_, ortho_y_, ortho_width_, ortho_height_, 0.5, 50.0);
 	}
 	else {
 		// Orthographic
@@ -198,6 +198,19 @@ void Camera::render(glm::vec3 &pos, glm::mat4 &view) {
 	// PostProcessing
 	engine.getGraphicsWrapper()->BindVertexArrayObject(engine.getPlaneVAO());
 	post_pipeline_.Process();
+}
+
+void Camera::setOrtho(double l, double r, double t, double b) {
+	is_ortho = true;
+	ortho_x_ = l;
+	ortho_y_ = r;
+	ortho_width_ = b;
+	ortho_height_ = t;
+	//projection_ = glm::ortho(l, r, b, t);
+}
+
+void Camera::setPerspective() {
+	is_ortho = false;
 }
 
 Camera::~Camera() {
