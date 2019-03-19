@@ -4,9 +4,9 @@
 #include "../Utilities/Logger.hpp"
 #include "Engine.hpp"
 
-/*extern "C" {
-	_declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
-}*/
+extern "C" {
+	_declspec(dllexport) long NvOptimusEnablement = 0x00000001;
+}
 
 
 int main(int argc, char *argv[]) {

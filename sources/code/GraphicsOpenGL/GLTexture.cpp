@@ -82,7 +82,7 @@ GLTexture::GLTexture(TextureCreateInfo ci) {
 			gl3wGetProcAddress("GL_COMPRESSED_RGBA_S3TC_DXT1_EXT");
 			gl3wGetProcAddress("GL_EXT_texture_sRGB");
 
-			for (uint32_t i = 0; i < ci.mipmaps; i++) {
+			for (uint32_t i = 0; i <= ci.mipmaps; i++) {
 				unsigned int size = ((width + 3) / 4)*((height + 3) / 4)*blockSize;
 				glCompressedTexImage2D(GL_TEXTURE_2D, i, format, width, height,
 					0, size, buffer);
@@ -175,8 +175,13 @@ GLTexture::GLTexture(CubemapCreateInfo ci) {
 }
 
 void GLTexture::Bind(int i) {
-	glActiveTexture(GL_TEXTURE0 + i);
-	glBindTexture(isCubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D, handle);
+	if (glIsTexture(handle)) {
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(isCubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D, handle);
+	}
+	else {
+		std::cout << "Invalid texture handle: " << handle << std::endl;
+	}
 }
 
 GLTexture::~GLTexture() {
@@ -187,8 +192,11 @@ GLTextureBinding::GLTextureBinding(TextureBindingCreateInfo ci) {
 	textures.reserve(ci.textureCount);
 	targets.reserve(ci.textureCount);
 	for (int i = 0; i < ci.textureCount; i++) {
-		textures.push_back(reinterpret_cast<GLTexture *>(ci.textures[i].texture));
-		targets.push_back(ci.textures[i].address);
+		GLTexture *t = (GLTexture *)(ci.textures[i].texture);
+		if (t) {
+			textures.push_back(t);
+			targets.push_back(ci.textures[i].address);
+		}
 	}
 }
 

@@ -25,7 +25,7 @@
 
 TextureContainer::TextureContainer(Texture *t) {
 	texture_ = t;
-}	
+}
 
 TextureHandler TextureManager::loadCubemap(std::string path, TextureOptions options) {
 	if (texture_map_[path]) {
@@ -214,9 +214,9 @@ TextureHandler TextureManager::loadTexture(std::string path, TextureOptions opti
 
 		fclose(fp);
 
-		bool alphaflag = 0; // header.ddspf.dwFlags & DDPF_ALPHAPIXELS;
-		//if (alphaflag)
-		//	LOG_WARN(path + "\n");
+		bool alphaflag = header.ddspf.dwFlags & DDPF_ALPHAPIXELS;
+		if (alphaflag)
+			LOG_WARN(path + "\n");
 
 		unsigned int components = (header.ddspf.dwFourCC == FOURCC_DXT1) ? 3 : 4;
 		ColorFormat format;

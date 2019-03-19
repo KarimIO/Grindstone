@@ -34,6 +34,8 @@ Camera::Camera(Space *space, bool useFramebuffer) :
 	ortho_width_(1.0f),
 	ortho_height_(1.0f),
 	use_framebuffer_(useFramebuffer),
+	hdr_buffer_(nullptr),
+	hdr_framebuffer_(nullptr),
 	final_framebuffer_(nullptr),
 	final_buffer_(nullptr),
 	enabled_(true) {
@@ -44,11 +46,6 @@ void Camera::initialize() {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
 	render_path_ = new RenderPathDeferred(viewport_width_, viewport_height_);
-
-	rt_hdr_.framebuffer = hdr_framebuffer_;
-	rt_hdr_.render_targets = &hdr_buffer_;
-	rt_hdr_.num_render_targets = 1;
-	rt_hdr_.depth_target = nullptr;
 
 	BasePostProcess *pp_ssao = nullptr;
 	if (settings->enable_ssao_) {
@@ -70,7 +67,7 @@ void Camera::initialize() {
 	PostProcessTonemap *pp_tonemap = new PostProcessTonemap(&post_pipeline_, &rt_hdr_, &rt_hdr_, pp_auto);
 	post_pipeline_.AddPostProcess(pp_tonemap);
 
-	PostProcessColorGrading *pp_grading = new PostProcessColorGrading(&post_pipeline_, &rt_hdr_);
+	PostProcessColorGrading *pp_grading = new PostProcessColorGrading(&post_pipeline_, &rt_hdr_, &final_framebuffer_);
 	post_pipeline_.AddPostProcess(pp_grading);
 }
 
@@ -79,6 +76,14 @@ void Camera::setEnabled(bool status) {
 }
 
 void Camera::generateFramebuffers() {
+	/*if (hdr_buffer_) {
+		engine.getGraphicsWrapper()->DeleteRenderTarget(hdr_buffer_);
+	}*/
+
+	if (hdr_framebuffer_) {
+		engine.getGraphicsWrapper()->DeleteFramebuffer(hdr_framebuffer_);
+	}
+
 	RenderTargetCreateInfo hdr_buffer_ci(FORMAT_COLOR_R16G16B16, viewport_width_, viewport_height_);
 	hdr_buffer_ = engine.getGraphicsWrapper()->CreateRenderTarget(&hdr_buffer_ci, 1);
 
@@ -90,6 +95,14 @@ void Camera::generateFramebuffers() {
 	hdr_framebuffer_ = engine.getGraphicsWrapper()->CreateFramebuffer(hdr_framebuffer_ci);
 
 	if (use_framebuffer_) {
+		/*if (final_buffer_) {
+			engine.getGraphicsWrapper()->DeleteRenderTarget(final_buffer_);
+		}*/
+
+		if (final_framebuffer_) {
+			engine.getGraphicsWrapper()->DeleteFramebuffer(final_framebuffer_);
+		}
+
 		RenderTargetCreateInfo fbo_buffer_ci(FORMAT_COLOR_R8G8B8, viewport_width_, viewport_height_);
 		final_buffer_ = engine.getGraphicsWrapper()->CreateRenderTarget(&fbo_buffer_ci, 1);
 
@@ -103,6 +116,11 @@ void Camera::generateFramebuffers() {
 		final_framebuffer_ci.render_pass = nullptr;
 		final_framebuffer_ = engine.getGraphicsWrapper()->CreateFramebuffer(final_framebuffer_ci);
 	}
+
+	rt_hdr_.framebuffer = hdr_framebuffer_;
+	rt_hdr_.render_targets = &hdr_buffer_;
+	rt_hdr_.num_render_targets = 1;
+	rt_hdr_.depth_target = nullptr;
 }
 
 void Camera::setViewport(unsigned int w, unsigned int h) {
@@ -114,7 +132,7 @@ void Camera::setViewport(unsigned int w, unsigned int h) {
 	}
 }
 
-void Camera::render() {
+void Camera::render(glm::vec3 &pos, glm::mat4 &view) {
 	if (space_ == nullptr || !enabled_) return;
 
 	const Settings *settings = engine.getSettings();
@@ -152,18 +170,7 @@ void Camera::render() {
 		projection_ = scale * projection_;
 	}
 
-	// CalculateView
-	glm::vec3 pos = glm::vec3(0, 2, 0);
-	glm::vec3 fwd = glm::vec3(-1, -1, -1);
-	glm::vec3 up = glm::vec3(0, 1, 0);
-
-	view_ = glm::lookAt(
-		pos,
-		pos + fwd,
-		up
-	);
-
-	glm::mat4 pv = projection_ * view_;
+	glm::mat4 pv = projection_ * view;
 
 	auto ubo = engine.getUniformBuffer();
 	ubo->Bind();
@@ -175,7 +182,7 @@ void Camera::render() {
 
 	Engine::DefferedUBO deferred_ubo;
 	deferred_ubo.invProj = glm::inverse(projection_);
-	deferred_ubo.view = glm::inverse(view_);
+	deferred_ubo.view = glm::inverse(view);
 	deferred_ubo.eyePos.x = pos.x;
 	deferred_ubo.eyePos.y = pos.y;
 	deferred_ubo.eyePos.z = pos.z;
@@ -186,11 +193,11 @@ void Camera::render() {
 
 	engine.getGraphicsWrapper()->setViewport(0, 0, viewport_width_, viewport_height_);
 
-	render_path_->render(final_framebuffer_, space_);
+	render_path_->render(hdr_framebuffer_, space_);
 
 	// PostProcessing
-	//engine.getGraphicsWrapper()->BindVertexArrayObject(engine.getPlaneVAO());
-	//post_pipeline_.Process();
+	engine.getGraphicsWrapper()->BindVertexArrayObject(engine.getPlaneVAO());
+	post_pipeline_.Process();
 }
 
 Camera::~Camera() {

@@ -305,8 +305,6 @@ void Engine::run() {
 		graphics_wrapper_->HandleEvents();
 		input_manager_->LoopControls(dt);
 
-		graphics_wrapper_->Clear(CLEAR_BOTH);
-
 		// Add: if (simulating_)
 		// Update all Systems
 		for (auto scene : scenes_) {

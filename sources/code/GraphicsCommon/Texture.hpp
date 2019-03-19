@@ -77,6 +77,7 @@ public:
 struct SingleTextureBind {
 	Texture *texture;
 	uint8_t address;
+	SingleTextureBind() : texture(nullptr), address(0) {}
 };
 
 struct TextureBindingCreateInfo {

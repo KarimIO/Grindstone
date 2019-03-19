@@ -332,24 +332,24 @@ void RenderPathDeferred::createDirectionalLightShader() {
 }
 
 void RenderPathDeferred::render(Framebuffer *fbo, Space *space) {
-	bool debug = true;
+	bool debug = false;
 	
 	// Opaque
-	if (fbo) {
-		fbo->Bind(true);
-		fbo->Clear(CLEAR_BOTH);
-	}
-	else {
+	if (debug) {
 		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
 		engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
+	}
+	else {
+		gbuffer_->Bind(true);
+		gbuffer_->Clear(CLEAR_BOTH);
 	}
 
 	engine.getGraphicsWrapper()->SetImmediateBlending(BLEND_NONE);
 	engine.getGraphicsPipelineManager()->drawDeferredImmediate();
 
 
-	//if (!debug)
-	//	engine.deff_ubo_handler_->Bind();
+	if (!debug)
+		engine.deff_ubo_handler_->Bind();
 
 	/*if (engine.debug_wrapper_.GetDebugMode() != 0) {
 		engine.debug_wrapper_.Draw();
@@ -357,8 +357,8 @@ void RenderPathDeferred::render(Framebuffer *fbo, Space *space) {
 	else*/
 	{
 		// Deferred
-		//if (!debug)
-		//	renderLights(fbo, space);
+		if (!debug)
+			renderLights(fbo, space);
 		
 		/*gbuffer_->BindRead();
 		engine.hdr_framebuffer_->BindWrite(true);
@@ -414,91 +414,100 @@ void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 	TransformSubSystem *transform_system = (TransformSubSystem *)space->getSubsystem(COMPONENT_TRANSFORM);
 
-	if (fbo)
+	if (fbo) {
 		fbo->BindWrite(true);
-	else
+		fbo->Clear(CLEAR_BOTH);
+	}
+	else {
 		graphics_wrapper->BindDefaultFramebuffer(true);
+		graphics_wrapper->Clear(CLEAR_BOTH);
+	}
 	
 	graphics_wrapper->SetImmediateBlending(BLEND_ADDITIVE);
-	graphics_wrapper->Clear(CLEAR_BOTH);
 	gbuffer_->BindRead();
 	gbuffer_->BindTextures(0);
 
-	point_light_pipeline_->Bind();
 	LightPointSubSystem *point_light_system = (LightPointSubSystem *)space->getSubsystem(COMPONENT_LIGHT_POINT);
-	for (size_t i = 0; i < point_light_system->getNumComponents(); ++i) {
-		auto &light = point_light_system->getComponent(i);
-		GameObjectHandle game_object_handle = light.game_object_handle_;
-		ComponentHandle component_transform_handle = space->getObject(game_object_handle).getComponentHandle(COMPONENT_TRANSFORM);
+	if (point_light_system->getNumComponents()) {
+		point_light_pipeline_->Bind();
+		for (size_t i = 0; i < point_light_system->getNumComponents(); ++i) {
+			auto &light = point_light_system->getComponent(i);
+			GameObjectHandle game_object_handle = light.game_object_handle_;
+			ComponentHandle component_transform_handle = space->getObject(game_object_handle).getComponentHandle(COMPONENT_TRANSFORM);
 
-		light_point_ubo_.position = transform_system->getPosition(component_transform_handle);
-		light_point_ubo_.color = light.properties_.color;
-		light_point_ubo_.attenuationRadius = light.properties_.attenuationRadius;
-		light_point_ubo_.power = light.properties_.power;
-		light_point_ubo_.shadow = light.properties_.shadow;
-		point_light_ubo_handler_->UpdateUniformBuffer(&light_point_ubo_);
+			light_point_ubo_.position = transform_system->getPosition(component_transform_handle);
+			light_point_ubo_.color = light.properties_.color;
+			light_point_ubo_.attenuationRadius = light.properties_.attenuationRadius;
+			light_point_ubo_.power = light.properties_.power;
+			light_point_ubo_.shadow = light.properties_.shadow;
+			point_light_ubo_handler_->UpdateUniformBuffer(&light_point_ubo_);
 
-		point_light_ubo_handler_->Bind();
+			point_light_ubo_handler_->Bind();
 
-		graphics_wrapper->BindVertexArrayObject(engine.getPlaneVAO());
-		graphics_wrapper->DrawImmediateVertices(0, 6);
+			graphics_wrapper->BindVertexArrayObject(engine.getPlaneVAO());
+			graphics_wrapper->DrawImmediateVertices(0, 6);
+		}
 	}
 
-	spot_light_pipeline_->Bind();
 	LightSpotSubSystem *spot_light_system = (LightSpotSubSystem *)space->getSubsystem(COMPONENT_LIGHT_SPOT);
-	for (size_t i = 0; i < spot_light_system->getNumComponents(); ++i) {
-		auto &light = spot_light_system->getComponent(i);
-		GameObjectHandle game_object_handle = light.game_object_handle_;
-		ComponentHandle component_transform_handle = space->getObject(game_object_handle).getComponentHandle(COMPONENT_TRANSFORM);
+	if (spot_light_system->getNumComponents() > 0) {
+		spot_light_pipeline_->Bind();
+		for (size_t i = 0; i < spot_light_system->getNumComponents(); ++i) {
+			auto &light = spot_light_system->getComponent(i);
+			GameObjectHandle game_object_handle = light.game_object_handle_;
+			ComponentHandle component_transform_handle = space->getObject(game_object_handle).getComponentHandle(COMPONENT_TRANSFORM);
 
-		light_spot_ubo_.direction = transform_system->getForward(component_transform_handle);
-		light_spot_ubo_.position = transform_system->getPosition(component_transform_handle);
-		light_spot_ubo_.color = light.properties_.color;
-		light_spot_ubo_.attenuationRadius = light.properties_.attenuationRadius;
-		light_spot_ubo_.power = light.properties_.power;
-		light_spot_ubo_.innerAngle = light.properties_.innerAngle;
-		light_spot_ubo_.outerAngle = light.properties_.outerAngle;
-		light_spot_ubo_.shadow = light.properties_.shadow;
-		light_spot_ubo_.shadow_mat = bias_matrix * light.shadow_mat_;
-		light_spot_ubo_.shadow_resolution = light.properties_.resolution;
-		spot_light_ubo_handler_->UpdateUniformBuffer(&light_spot_ubo_);
+			light_spot_ubo_.direction = transform_system->getForward(component_transform_handle);
+			light_spot_ubo_.position = transform_system->getPosition(component_transform_handle);
+			light_spot_ubo_.color = light.properties_.color;
+			light_spot_ubo_.attenuationRadius = light.properties_.attenuationRadius;
+			light_spot_ubo_.power = light.properties_.power;
+			light_spot_ubo_.innerAngle = light.properties_.innerAngle;
+			light_spot_ubo_.outerAngle = light.properties_.outerAngle;
+			light_spot_ubo_.shadow = light.properties_.shadow;
+			light_spot_ubo_.shadow_mat = bias_matrix * light.shadow_mat_;
+			light_spot_ubo_.shadow_resolution = light.properties_.resolution;
+			spot_light_ubo_handler_->UpdateUniformBuffer(&light_spot_ubo_);
 
-		if (light.properties_.shadow) {
-			light.shadow_fbo_->BindRead();
-			light.shadow_fbo_->BindTextures(4);
+			if (light.properties_.shadow) {
+				light.shadow_fbo_->BindRead();
+				light.shadow_fbo_->BindTextures(4);
+			}
+
+			spot_light_ubo_handler_->Bind();
+
+			graphics_wrapper->BindVertexArrayObject(engine.getPlaneVAO());
+			graphics_wrapper->DrawImmediateVertices(0, 6);
 		}
-
-		spot_light_ubo_handler_->Bind();
-
-		graphics_wrapper->BindVertexArrayObject(engine.getPlaneVAO());
-		graphics_wrapper->DrawImmediateVertices(0, 6);
 	}
 
-	directional_light_pipeline_->Bind();
 	LightDirectionalSubSystem *directional_light_system = (LightDirectionalSubSystem *)space->getSubsystem(COMPONENT_LIGHT_DIRECTIONAL);
-	for (size_t i = 0; i < directional_light_system->getNumComponents(); ++i) {
-		auto &light = directional_light_system->getComponent(i);
-		GameObjectHandle game_object_handle = light.game_object_handle_;
-		ComponentHandle component_transform_handle = space->getObject(game_object_handle).getComponentHandle(COMPONENT_TRANSFORM);
+	if (directional_light_system->getNumComponents() > 0) {
+		directional_light_pipeline_->Bind();
+		for (size_t i = 0; i < directional_light_system->getNumComponents(); ++i) {
+			auto &light = directional_light_system->getComponent(i);
+			GameObjectHandle game_object_handle = light.game_object_handle_;
+			ComponentHandle component_transform_handle = space->getObject(game_object_handle).getComponentHandle(COMPONENT_TRANSFORM);
 
-		light_directional_ubo_.direction = transform_system->getForward(component_transform_handle);
-		light_directional_ubo_.color = light.properties_.color;
-		light_directional_ubo_.source_radius = light.properties_.sourceRadius;
-		light_directional_ubo_.power = light.properties_.power;
-		light_directional_ubo_.shadow = light.properties_.shadow;
-		light_directional_ubo_.shadow_mat = bias_matrix * light.shadow_mat_;
-		light_directional_ubo_.shadow_resolution = light.properties_.resolution;
-		directional_light_ubo_handler_->UpdateUniformBuffer(&light_directional_ubo_);
+			light_directional_ubo_.direction = transform_system->getForward(component_transform_handle);
+			light_directional_ubo_.color = light.properties_.color;
+			light_directional_ubo_.source_radius = light.properties_.sourceRadius;
+			light_directional_ubo_.power = light.properties_.power;
+			light_directional_ubo_.shadow = light.properties_.shadow;
+			light_directional_ubo_.shadow_mat = bias_matrix * light.shadow_mat_;
+			light_directional_ubo_.shadow_resolution = light.properties_.resolution;
+			directional_light_ubo_handler_->UpdateUniformBuffer(&light_directional_ubo_);
 
-		if (light.properties_.shadow) {
-			light.shadow_fbo_->BindRead();
-			light.shadow_fbo_->BindTextures(4);
+			if (light.properties_.shadow) {
+				light.shadow_fbo_->BindRead();
+				light.shadow_fbo_->BindTextures(4);
+			}
+
+			directional_light_ubo_handler_->Bind();
+
+			graphics_wrapper->BindVertexArrayObject(engine.getPlaneVAO());
+			graphics_wrapper->DrawImmediateVertices(0, 6);
 		}
-
-		directional_light_ubo_handler_->Bind();
-
-		graphics_wrapper->BindVertexArrayObject(engine.getPlaneVAO());
-		graphics_wrapper->DrawImmediateVertices(0, 6);
 	}
 }
 

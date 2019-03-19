@@ -21,6 +21,7 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <glm/gtx/transform.hpp>
 
 Editor::Editor(ImguiManager *manager) : selected_object_(nullptr) {
 	manager_ = manager;
@@ -31,7 +32,6 @@ Editor::Editor(ImguiManager *manager) : selected_object_(nullptr) {
 
 	cameras_ = new Camera(engine.getScenes()[0]->spaces_[0], true);
 	cameras_->setViewport(200, 200);
-	cameras_->initialize();
 
 	asset_path_ = "../assets";
 	next_asset_path_ = "";
@@ -215,10 +215,10 @@ void Editor::assetPanel() {
 	}
 }
 
+bool first = true;
+
 void Editor::viewportPanels() {
 	if (show_viewport_) {
-		cameras_->render();
-		engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
 
 		for (int i = 0; i < 1; ++i) {
 
@@ -229,7 +229,24 @@ void Editor::viewportPanels() {
 			ImGuiStyle& style = ImGui::GetStyle();
 			size.x -= style.FramePadding.x * 2;
 			size.y -= style.FramePadding.y * 2;
-			cameras_->setViewport(size.x, size.y);
+			if (first) {
+				first = false;
+				cameras_->setViewport(size.x, size.y);
+				cameras_->initialize();
+			}
+
+			glm::vec3 pos = glm::vec3(4, 8, 0);
+			glm::vec3 fwd = glm::vec3(0, 1, 0) - pos;
+			glm::vec3 up = glm::vec3(0, 1, 0);
+
+			glm::mat4 view = glm::lookAt(
+				pos,
+				pos + fwd,
+				up
+			);
+
+			cameras_->render(pos, view);
+			engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
 
 			unsigned int t = ((GLRenderTarget *)cameras_->final_buffer_)->getHandle();
 			

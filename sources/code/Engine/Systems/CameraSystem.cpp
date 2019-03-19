@@ -2,6 +2,8 @@
 #include "../Core/Engine.hpp"
 #include "../Core/Scene.hpp"
 #include "../Core/Space.hpp"
+#include "TransformSystem.hpp"
+#include <glm/gtx/transform.hpp>
 
 CameraComponent::CameraComponent(Space *space, GameObjectHandle object_handle, ComponentHandle handle) :
 	camera_(space), Component(COMPONENT_CAMERA, object_handle, handle) {
@@ -39,9 +41,22 @@ void CameraSystem::update(double dt) {
 	if (!engine.getSettings()->start_editor_) {
 		for (auto &scene : engine.getScenes()) {
 			for (auto &space : scene->spaces_) {
+				TransformSubSystem *transformsub = (TransformSubSystem *)space->getSubsystem(COMPONENT_TRANSFORM);
 				CameraSubSystem *subsystem = (CameraSubSystem *)space->getSubsystem(system_type_);
 				for (auto &comp : subsystem->components_) {
-					comp.camera_.render();
+					ComponentHandle transformc = space->getObject(comp.game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
+
+					glm::vec3 pos = transformsub->getPosition(transformc);
+					glm::vec3 fwd = transformsub->getForward(transformc);
+					glm::vec3 up = transformsub->getUp(transformc);
+
+					glm::mat4 view = glm::lookAt(
+						pos,
+						pos + fwd,
+						up
+					);
+
+					comp.camera_.render(pos, view);
 				}
 			}
 		}

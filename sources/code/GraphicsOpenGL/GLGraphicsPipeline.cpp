@@ -125,7 +125,12 @@ GLGraphicsPipeline::GLGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) {
 	for (size_t i = 0; i < createInfo.uniformBufferBindingCount; i++) {
 		GLUniformBufferBinding *ubb = (GLUniformBufferBinding *)createInfo.uniformBufferBindings[i];
 		GLuint index = glGetUniformBlockIndex(program, ubb->GetUniformName());
-		glUniformBlockBinding(program, index, ubb->GetBindingLocation());
+		if (index != GL_INVALID_INDEX) {
+			glUniformBlockBinding(program, index, ubb->GetBindingLocation());
+		}
+		else {
+			std::cout << "Couldn't attach Uniform Buffer" << ubb->GetUniformName() << std::endl;
+		}
 	}
 
 	for (int i = 0; i < createInfo.textureBindingCount; i++) {

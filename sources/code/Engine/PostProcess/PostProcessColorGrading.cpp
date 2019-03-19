@@ -5,8 +5,10 @@
 #include <GraphicsWrapper.hpp>
 #include "AssetManagers/TextureManager.hpp"
 #include "Texture.hpp"
+#include "Framebuffer.hpp"
+#include "GraphicsPipeline.hpp"
 
-PostProcessColorGrading::PostProcessColorGrading(PostPipeline *pipeline, RenderTargetContainer *target) : BasePostProcess(pipeline), target_(target) {
+PostProcessColorGrading::PostProcessColorGrading(PostPipeline *pipeline, RenderTargetContainer *target, Framebuffer **target_fbo) : BasePostProcess(pipeline), target_(target), target_fbo_(target_fbo) {
 	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
 
@@ -112,13 +114,19 @@ void PostProcessColorGrading::Process() {
 	double dt = engine.getUpdateTimeDelta();
 
 	gpipeline_->Bind();
-	engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
+	if (target_fbo_ && target_fbo_[0]) {
+		target_fbo_[0]->Bind(true);
+		target_fbo_[0]->Clear(CLEAR_BOTH);
+	}
+	else {
+		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
+		engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
+	}
 	target_->framebuffer->BindRead();
 	target_->framebuffer->BindTextures(0);
 	
 	engine.getGraphicsWrapper()->BindTextureBinding(texture_binding_);
 
-	engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
 	engine.getGraphicsWrapper()->DrawImmediateVertices(0, 6);
 }
 

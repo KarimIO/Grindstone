@@ -16,7 +16,7 @@ public:
 	Camera(Space *space, bool useFramebuffer = false);
 	void initialize();
 	void setViewport(unsigned int w, unsigned int h);
-	void render();
+	void render(glm::vec3 &pos, glm::mat4 &view);
 	~Camera();
 
 	unsigned int viewport_width_;
