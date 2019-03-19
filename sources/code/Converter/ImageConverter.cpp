@@ -106,13 +106,13 @@ void ConvertBC123(unsigned char **pixels, bool is_cubemap, int width, int height
 	DDSHeader outHeader;
 	std::memset(&outHeader, 0, sizeof(outHeader));
 	outHeader.dwSize = 124;
-	outHeader.ddspf.dwFlags = DDPF_FOURCC | DDPF_ALPHAPIXELS;
+	outHeader.ddspf.dwFlags = DDPF_FOURCC;
 	outHeader.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_LINEARSIZE | DDSD_MIPMAPCOUNT;
 	outHeader.dwHeight = height;
 	outHeader.dwWidth = width;
 	outHeader.dwDepth = 0;
 	outHeader.dwCaps = DDSCAPS_COMPLEX | DDSCAPS_TEXTURE | DDSCAPS_MIPMAP;
-	outHeader.dwMipMapCount = 1; // std::log2(width) + 1 - 2;
+	outHeader.dwMipMapCount = std::log2(width) + 1;
 	if (is_cubemap)
 		outHeader.dwCaps2 = DDS_CUBEMAP_ALLFACES;
 
@@ -153,7 +153,7 @@ void ConvertBC123(unsigned char **pixels, bool is_cubemap, int width, int height
 	int offset = 0;
 	unsigned char block[64];
 
-	int minlev = outHeader.dwMipMapCount;
+	int minlev = outHeader.dwMipMapCount - 2;
 	int num_faces = is_cubemap ? 6 : 1;
 	for (int l = 0; l < num_faces; l++) {
 		unsigned char *mip = pixels[l];
@@ -181,10 +181,10 @@ void ConvertBC123(unsigned char **pixels, bool is_cubemap, int width, int height
 				delete[] temp_mip;
 		}
 
-		/*memcpy(&outData[offset], &outData[offset], 8); // 2x2
+		memcpy(&outData[offset], &outData[offset], 8); // 2x2
 		offset += 8;
 		memcpy(&outData[offset], &outData[offset], 8); // 1x1
-		offset += 8;*/
+		offset += 8;
 	}
 
 	std::ofstream out(path, std::ios::binary);
@@ -234,16 +234,13 @@ bool ConvertTexture(std::string input, bool is_cubemap, std::string output, Comp
 		}
 	}
 
-	if (compression == C_DETECT) {
+	if (compression == C_DETECT)
 		if (texChannels == 4) {
 			compression = C_BC3;
 		}
 		else {
 			compression = C_BC1;
 		}
-	}
-
-	compression = C_BC1;
 
 	switch (compression) {
 	default:

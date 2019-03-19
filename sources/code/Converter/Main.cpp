@@ -41,7 +41,6 @@ int main(int argc, char* argv[]) {
 		args.push(arg);
 	}
 
-	args.push("img D:/Work/Grindstone/AssetSrc/crytek-sponza/textures_pbr/ChainTexture_Albedo.tga");
 	std::cout << "Welcome to Grindstone Converter!\nType help for more info.\n";
 
 	// If we don't have any input, then simply poll for it
