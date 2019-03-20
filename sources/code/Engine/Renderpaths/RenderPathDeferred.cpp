@@ -16,6 +16,8 @@
 
 #include "Core/Space.hpp"
 
+#include <GL/gl3w.h>
+
 glm::mat4 bias_matrix(
 	0.5, 0.0, 0.0, 0.0,
 	0.0, 0.5, 0.0, 0.0,
@@ -41,6 +43,7 @@ RenderPathDeferred::RenderPathDeferred(unsigned int w = engine.getSettings()->re
 	createSpotLightShader();
 	createDirectionalLightShader();
 	createDebugShader();
+	wireframe_ = false;
 
 	debug_mode_ = 0;
 
@@ -125,6 +128,10 @@ void RenderPathDeferred::setDebugMode(unsigned int d) {
 	if (d >= 0 && d <= 7) {
 		debug_mode_ = d;
 	}
+}
+
+unsigned int RenderPathDeferred::getDebugMode() {
+	return debug_mode_;
 }
 
 void RenderPathDeferred::createDebugShader() {
@@ -420,13 +427,19 @@ void RenderPathDeferred::render(Framebuffer *fbo, Space *space) {
 
 	// Set as Opaque
 	engine.getGraphicsWrapper()->SetImmediateBlending(BLEND_NONE);
-	
+
 	// Render opaque elements
-	engine.getGraphicsPipelineManager()->drawDeferredImmediate();
+	if (!wireframe_) {
+		engine.getGraphicsPipelineManager()->drawDeferredImmediate();
+	}
+	if (wireframe_) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		engine.getGraphicsPipelineManager()->drawDeferredImmediate();
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 
 	// Prepare deffered stage information
 	engine.deff_ubo_handler_->Bind();
-
 	if (debug_mode_ != 0) {
 		renderDebug(fbo);
 	}

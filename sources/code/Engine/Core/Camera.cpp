@@ -19,6 +19,8 @@
 #include "PostProcess/PostProcessColorGrading.hpp"
 #include "PostProcess/PostProcessBloom.hpp"
 
+#include <GL/gl3w.h>
+
 Camera::Camera(Space *space, bool useFramebuffer) :
 	space_(space),
 	post_pipeline_(nullptr),
@@ -190,14 +192,17 @@ void Camera::render(glm::vec3 &pos, glm::mat4 &view) {
 	deferred_ubo.resolution.y = viewport_height_;
 	engine.deff_ubo_handler_->UpdateUniformBuffer(&deferred_ubo);
 
-
 	engine.getGraphicsWrapper()->setViewport(0, 0, viewport_width_, viewport_height_);
 
-	render_path_->render(hdr_framebuffer_, space_);
+	bool in_debug = (render_path_->getDebugMode() > 0);
+	Framebuffer *f = in_debug ? final_framebuffer_ : hdr_framebuffer_;
+	render_path_->render(f, space_);
 
 	// PostProcessing
-	engine.getGraphicsWrapper()->BindVertexArrayObject(engine.getPlaneVAO());
-	post_pipeline_.Process();
+	if (!in_debug) {
+		engine.getGraphicsWrapper()->BindVertexArrayObject(engine.getPlaneVAO());
+		post_pipeline_.Process();
+	}
 }
 
 void Camera::setOrtho(double l, double r, double t, double b) {

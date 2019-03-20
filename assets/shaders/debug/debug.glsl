@@ -55,7 +55,7 @@ void main() {
 	float Roughness = texture(gbuffer2, fragTexCoord).a;
 
     if (debug.mode == 1u) {
-        Dist /= 5.0f;
+        Dist /= 2.0f;
 	    outColor = vec4(Dist, Dist, Dist, 1);
     }
     else if (debug.mode == 2u) {
@@ -75,6 +75,9 @@ void main() {
     }
     else if (debug.mode == 7u) {
         outColor = vec4(Position, 1);
+    }
+    else if (debug.mode == 8u) {
+        outColor = vec4(1,1,1,1);
     }
     else {
         outColor = vec4(fragTexCoord, 0, 1);

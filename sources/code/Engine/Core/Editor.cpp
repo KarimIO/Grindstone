@@ -22,7 +22,7 @@
 #include <algorithm>
 #include <iterator>
 #include <glm/gtx/transform.hpp>
-#include "Renderpaths/RenderPath.hpp"
+#include "Renderpaths/RenderPathDeferred.hpp"
 
 Editor::Viewport::Viewport(Camera *c, View v) : camera_(c), pos(1, 1, 1), target(0, 0, 0), first(true) {
 	setView(v);
@@ -85,6 +85,7 @@ Editor::Editor(ImguiManager *manager) : selected_object_(nullptr) {
 	Camera *c = new Camera(engine.getScenes()[0]->spaces_[0], true);
 	c->setViewport(800, 600);
 	c->initialize();
+	((RenderPathDeferred *)c->render_path_)->wireframe_ = true;
 	viewports_.emplace_back(c, Viewport::View::Top);
 	c = new Camera(engine.getScenes()[0]->spaces_[0], true);
 	c->setViewport(800, 600);
@@ -280,17 +281,17 @@ void Editor::viewportPanels() {
 
 			std::string title = "Viewport ";
 			title += std::to_string(++i);
-			
+
 			ImGui::Begin(title.c_str(), &show_viewport_);
 			ImVec2 size = ImGui::GetWindowSize();
 			ImGuiStyle& style = ImGui::GetStyle();
 			size.x -= style.FramePadding.x * 2;
 			size.y -= style.FramePadding.y * 2;
-			if (v.first) {
+			/*if (v.first) {
 				v.first = false;
 				v.camera_->setViewport(size.x, size.y);
-				v.camera_->initialize();
-			}
+				//v.camera_->initialize();
+			}*/
 
 			v.camera_->render(v.pos, v.view_mat);
 			engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
@@ -301,13 +302,11 @@ void Editor::viewportPanels() {
 				(void *)t, ImVec2(ImGui::GetCursorScreenPos()),
 				ImVec2(ImGui::GetCursorScreenPos().x + size.x, ImGui::GetCursorScreenPos().y + size.y), ImVec2(0, 1), ImVec2(1, 0));
 
-			static bool filled;
-			static bool wire;
+			static bool pp;
 
 			const char* items[] = { "Up", "Down", "Left", "Right", "Forward", "Back", "Perspective" };
 			if (v.view_option == nullptr) {
-				v.view_option = items[6];
-				v.setView(Viewport::View::Perspective);
+				v.view_option = items[v.view];
 			}
 
 			ImGui::PushItemWidth(100);
@@ -331,17 +330,15 @@ void Editor::viewportPanels() {
 				v.debug_combo_option = debug_combo_items[0];
 
 			if (ImGui::TreeNode("View Data")) {
-				ImGui::Checkbox("Filled", &filled);
-				ImGui::Checkbox("Grid", &wire);
-				ImGui::Checkbox("Wireframe", &wire);
+				ImGui::Checkbox("Wireframe", &((RenderPathDeferred *)v.camera_->render_path_)->wireframe_);
 
 				ImGui::Separator();
 
 				if (ImGui::TreeNode("Post-Processing")) {
-					ImGui::Checkbox("SSAO", &filled);
-					ImGui::Checkbox("Reflections", &wire);
-					ImGui::Checkbox("Auto-Exposure", &wire);
-					ImGui::Checkbox("Color Grading", &wire);
+					ImGui::Checkbox("SSAO", &pp);
+					ImGui::Checkbox("Reflections", &pp);
+					ImGui::Checkbox("Auto-Exposure", &pp);
+					ImGui::Checkbox("Color Grading", &pp);
 
 					ImGui::TreePop();
 				}
@@ -372,8 +369,13 @@ void Editor::viewportPanels() {
 }
 
 void Editor::sceneGraphPanel() {
-    if (show_scene_graph_) {
-        ImGui::Begin("Scene Graph", &show_scene_graph_); 
+	if (show_scene_graph_) {
+		ImGui::Begin("Scene Graph", &show_scene_graph_);
+
+		if (ImGui::Button("Add GameObject")) {
+			engine.getScenes()[0]->spaces_[0]->objects_.emplace_back(engine.getScenes()[0]->spaces_[0]->objects_.size(), "New Object");
+		}
+		ImGui::Separator();
 
         // Scene Graph:
 		for (auto scene : engine.getScenes()) {

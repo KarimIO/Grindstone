@@ -17,8 +17,12 @@ class Scene;
 
 class RenderPathDeferred : public RenderPath {
 public:
+	bool filled_;
+	bool wireframe_;
+
 	RenderPathDeferred(unsigned int w, unsigned int h);
-	void setDebugMode(unsigned int d);
+	virtual void setDebugMode(unsigned int d) override;
+	virtual unsigned int getDebugMode() override;
 	void render(Framebuffer *default_fb, Space *scene);
 	void renderLights(Framebuffer *fbo, Space *scene);
 private:

@@ -8,6 +8,7 @@ class Space;
 
 class RenderPath {
 public:
+	virtual unsigned int getDebugMode() = 0;
 	virtual void setDebugMode(unsigned int d) = 0;
 	virtual void render(Framebuffer *gbuffer_, Space *scene) = 0;
 };
