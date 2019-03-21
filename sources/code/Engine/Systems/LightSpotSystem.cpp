@@ -12,6 +12,14 @@ LightSpotComponent::LightSpotComponent(GameObjectHandle object_handle, Component
 
 LightSpotSubSystem::LightSpotSubSystem(Space *space) : SubSystem(COMPONENT_LIGHT_SPOT, space) {}
 
+ComponentHandle LightSpotSubSystem::addComponent(GameObjectHandle object_handle) {
+	ComponentHandle component_handle = (ComponentHandle)components_.size();
+	components_.emplace_back(object_handle, component_handle);
+	auto &component = components_.back();
+
+	return component_handle;
+}
+
 LightSpotSystem::LightSpotSystem() : System(COMPONENT_LIGHT_SPOT) {}
 
 void LightSpotSystem::update(double dt) {

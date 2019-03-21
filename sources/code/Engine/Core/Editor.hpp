@@ -36,7 +36,7 @@ private:
 
     ImguiManager *manager_;
 
-	GameObject *selected_object_;
+	GameObjectHandle selected_object_handle_;
 
 	bool show_scene_graph_;
     bool show_viewport_;
@@ -53,6 +53,8 @@ private:
 
     void getDirectory();
 
+	void displayComponent(ComponentType type, ComponentHandle handle);
+
     struct FileElement {
         std::string path;
         std::string name;
@@ -60,6 +62,8 @@ private:
     };
     std::vector<FileElement> directories_;
     std::vector<FileElement> files_;
+
+	char *obj_name;
 };
 
 #endif

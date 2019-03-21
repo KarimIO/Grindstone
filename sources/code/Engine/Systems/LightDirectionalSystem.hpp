@@ -36,7 +36,8 @@ class LightDirectionalSubSystem : public SubSystem {
 	friend LightDirectionalSystem;
 public:
 	LightDirectionalSubSystem(Space *space);
-	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
+	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
+	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
 	LightDirectionalComponent &getComponent(ComponentHandle handle);
 	size_t getNumComponents();
 	virtual void removeComponent(ComponentHandle handle);

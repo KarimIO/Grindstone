@@ -45,7 +45,8 @@ class CubemapSubSystem : public SubSystem {
 	friend CubemapSystem;
 public:
 	CubemapSubSystem(Space *space);
-	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
+	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
+	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
 	CubemapComponent &getComponent(ComponentHandle handle);
 	size_t getNumComponents();
 	virtual void removeComponent(ComponentHandle handle);

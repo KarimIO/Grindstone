@@ -20,6 +20,13 @@ TransformComponent::TransformComponent(GameObjectHandle object_handle, Component
 TransformSubSystem::TransformSubSystem(Space *space) : SubSystem(COMPONENT_TRANSFORM, space) {
 }
 
+ComponentHandle TransformSubSystem::addComponent(GameObjectHandle object_handle) {
+	ComponentHandle component_handle = (ComponentHandle)components_.size();
+	components_.emplace_back(object_handle, component_handle);
+
+	return component_handle;
+}
+
 ComponentHandle TransformSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
 	components_.emplace_back(object_handle, component_handle);

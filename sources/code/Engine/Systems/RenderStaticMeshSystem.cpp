@@ -11,6 +11,14 @@ RenderStaticMeshComponent::RenderStaticMeshComponent(GameObjectHandle object_han
 RenderStaticMeshSubSystem::RenderStaticMeshSubSystem(Space *space) : SubSystem(COMPONENT_RENDER_STATIC_MESH, space) {
 }
 
+ComponentHandle RenderStaticMeshSubSystem::addComponent(GameObjectHandle object_handle) {
+	ComponentHandle component_handle = (ComponentHandle)components_.size();
+	components_.emplace_back(object_handle, component_handle);
+	auto &component = components_.back();
+
+	return component_handle;
+}
+
 RenderStaticMeshSubSystem::~RenderStaticMeshSubSystem() {
 }
 

@@ -15,6 +15,13 @@ CameraComponent::CameraComponent(Space *space, GameObjectHandle object_handle, C
 CameraSubSystem::CameraSubSystem(Space *space) : SubSystem(COMPONENT_CAMERA, space) {
 }
 
+ComponentHandle CameraSubSystem::addComponent(GameObjectHandle object_handle) {
+	ComponentHandle component_handle = (ComponentHandle)components_.size();
+	components_.emplace_back(space_, object_handle, component_handle);
+
+	return component_handle;
+}
+
 ComponentHandle CameraSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
 	components_.emplace_back(space_, object_handle, component_handle);

@@ -38,6 +38,7 @@ struct Skeleton {
 };
 
 struct AnimationComponent : public Component {
+	AnimationComponent(GameObjectHandle object_handle, ComponentHandle handle);
 	AnimationComponent(GameObjectHandle object_handle, ComponentHandle handle, std::string animation_path, std::string skeleton_path);
 
 	void update(double dt);
@@ -68,7 +69,8 @@ class AnimationSubSystem : public SubSystem {
 	friend AnimationSystem;
 public:
 	AnimationSubSystem(Space *space);
-	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
+	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
+	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
 	AnimationComponent &getComponent(ComponentHandle handle);
 	size_t getNumComponents();
 	virtual void removeComponent(ComponentHandle handle);

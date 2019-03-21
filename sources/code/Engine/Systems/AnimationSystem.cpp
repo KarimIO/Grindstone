@@ -48,6 +48,10 @@ void loadAnimation(std::string path, Skeleton *skeleton, Animation *animation) {
 	input.close();
 }
 
+AnimationComponent::AnimationComponent(GameObjectHandle object_handle, ComponentHandle handle) :
+	Component(COMPONENT_ANIMATION, object_handle, handle), animation_path_(""), skeleton_path_(""), playing_(false), skeleton_(nullptr) {
+}
+
 AnimationComponent::AnimationComponent(GameObjectHandle object_handle, ComponentHandle handle, std::string animation_path, std::string skeleton_path) :
 	Component(COMPONENT_ANIMATION, object_handle, handle), animation_path_(animation_path), skeleton_path_(skeleton_path), playing_(false) {
 	skeleton_ = new Skeleton();
@@ -90,8 +94,8 @@ void AnimationComponent::readNodeHeirarchy(double time, Animation::Node *node, g
 			if (key.time_ > time) {
 				// If so, use the transformation information of that keyframe
 				auto next_key = node->keyframe_[i + 1];
-				float delta_time = next_key.time_ - key.time_;
-				float factor = (time - key.time_) / delta_time;
+				float delta_time = (float)(next_key.time_ - key.time_);
+				float factor = (float)(time - key.time_) / delta_time;
 
 				scaling = next_key.scale_ + (next_key.scale_ - key.scale_) * factor;
 				position = next_key.position_ + (next_key.position_ - key.position_) * factor;
@@ -139,6 +143,13 @@ void AnimationComponent::update(double dt) {
 // SYSTEMS
 
 AnimationSubSystem::AnimationSubSystem(Space *space) : SubSystem(COMPONENT_ANIMATION, space) {
+}
+
+ComponentHandle AnimationSubSystem::addComponent(GameObjectHandle object_handle) {
+	ComponentHandle component_handle = (ComponentHandle)components_.size();
+	components_.emplace_back(object_handle, component_handle);
+
+	return component_handle;
 }
 
 AnimationSubSystem::~AnimationSubSystem() {

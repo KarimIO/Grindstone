@@ -24,6 +24,13 @@ RigidBodySubSystem::RigidBodySubSystem(Space *space) : SubSystem(COMPONENT_RIGID
 	dynamics_world_->setGravity(btVector3(0, gravity, 0));
 }
 
+ComponentHandle RigidBodySubSystem::addComponent(GameObjectHandle object_handle) {
+	ComponentHandle component_handle = (ComponentHandle)components_.size();
+	components_.emplace_back(object_handle, component_handle);
+
+	return component_handle;
+}
+
 void RigidBodySystem::update(double dt) {
 	auto scenes = engine.getScenes();
 	for (auto scene : scenes) {

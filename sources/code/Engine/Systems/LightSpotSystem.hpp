@@ -38,7 +38,8 @@ class LightSpotSubSystem : public SubSystem {
 	friend LightSpotSystem;
 public:
 	LightSpotSubSystem(Space *space);
-	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
+	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
+	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
 	LightSpotComponent &getComponent(ComponentHandle handle);
 	size_t getNumComponents();
 	virtual void removeComponent(ComponentHandle handle);

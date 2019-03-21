@@ -8,10 +8,12 @@
 #include "../Systems/TransformSystem.hpp"
 #include "../Systems/CameraSystem.hpp"
 #include "../Systems/RenderStaticMeshSystem.hpp"
+#include "../Systems/RenderTerrainSystem.hpp"
 #include "../Systems/ControllerSystem.hpp"
 #include "../Systems/ColliderSystem.hpp"
 #include "../Systems/RigidBodySystem.hpp"
 #include "../Systems/CubemapSystem.hpp"
+#include "Engine.hpp"
 
 Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 	addSystem(new ControllerSubSystem(this));
@@ -24,6 +26,7 @@ Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 	addSystem(new TransformSubSystem(this));
 	addSystem(new CubemapSubSystem(this));
 	addSystem(new CameraSubSystem(this));
+	addSystem(new RenderTerrainSubSystem((RenderTerrainSystem *)engine.getSystem(COMPONENT_RENDER_TERRAIN), this));
 
 	for (rapidjson::Value::MemberIterator game_object_itr = val.MemberBegin(); game_object_itr != val.MemberEnd(); ++game_object_itr) {
 		GameObjectHandle game_object_id = (GameObjectHandle)objects_.size();

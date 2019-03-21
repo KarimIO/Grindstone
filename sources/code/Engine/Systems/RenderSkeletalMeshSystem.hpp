@@ -22,7 +22,8 @@ class RenderSkeletalMeshSubSystem : public SubSystem {
 	friend RenderSkeletalMeshSystem;
 public:
 	RenderSkeletalMeshSubSystem(Space *space);
-	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params);
+	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
+	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
 	RenderSkeletalMeshComponent &getComponent(ComponentHandle handle);
 	size_t getNumComponents();
 	virtual void removeComponent(ComponentHandle handle);

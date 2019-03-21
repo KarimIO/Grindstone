@@ -23,6 +23,7 @@
 #include <iterator>
 #include <glm/gtx/transform.hpp>
 #include "Renderpaths/RenderPathDeferred.hpp"
+#include "Systems/TransformSystem.hpp"
 
 Editor::Viewport::Viewport(Camera *c, View v) : camera_(c), pos(1, 1, 1), target(0, 0, 0), first(true) {
 	setView(v);
@@ -75,12 +76,14 @@ void Editor::Viewport::setView(View v) {
 	}
 }
 
-Editor::Editor(ImguiManager *manager) : selected_object_(nullptr) {
+Editor::Editor(ImguiManager *manager) : selected_object_handle_(-1) {
 	manager_ = manager;
 	show_scene_graph_ = true;
 	show_asset_browser_ = true;
 	show_viewport_= true;
 	show_component_panel_ = true;
+
+	obj_name = new char[128];
 	
 	Camera *c = new Camera(engine.getScenes()[0]->spaces_[0], true);
 	c->setViewport(800, 600);
@@ -98,25 +101,25 @@ Editor::Editor(ImguiManager *manager) : selected_object_(nullptr) {
 }
 
 void Editor::update() {
-    ImGui_ImplOpenGL3_NewFrame();
-    manager_->NewFrame();
-    ImGui::NewFrame();
+	ImGui_ImplOpenGL3_NewFrame();
+	manager_->NewFrame();
+	ImGui::NewFrame();
 
 	//ImGui::SetNextWindowPos(ImVec2(0, 40));
 	//ImGui::SetNextWindowSize(ImVec2(engine.getSettings()->resolution_x_, engine.getSettings()->resolution_y_ - 40));
 
 	//ImGui::Begin("Dock Demo"); // , NULL, window_flags
-    
+
 	prepareDockspace();
-    sceneGraphPanel();
-    componentPanel();
+	sceneGraphPanel();
+	componentPanel();
 	assetPanel();
 	viewportPanels();
-   
+
 	//ImGui::End();
 
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 	if (next_asset_path_ != "" && next_asset_path_ != asset_path_) {
 		asset_path_ = next_asset_path_;
@@ -191,20 +194,37 @@ void Editor::prepareDockspace() {
 void Editor::componentPanel() {
 	if (show_component_panel_) {
 		ImGui::Begin("Components Panel", &show_component_panel_);
-		if (selected_object_) {
+		if (selected_object_handle_ != -1) {
 			Scene *scene = engine.getScenes()[0];
 			if (scene) {
 				Space *space = scene->spaces_[0];
 				if (space) {
+					GameObject *selected_object_ = &space->getObject(selected_object_handle_);
+					if (ImGui::InputText("Object Name", obj_name, 128)) {
+						selected_object_->setName(obj_name);
+					}
+
+					ImGui::Separator();
+
+					int op = 0;
+					if (ImGui::BeginCombo("##addcompcombo", "Add a component")) {
+						for (unsigned int n = 0; n < IM_ARRAYSIZE(component_names); n++) {
+							bool is_selected = (op == n); // You can store your selection however you want, outside or inside your objects
+							if (ImGui::Selectable(component_names[n], is_selected)) {
+								ComponentType ct = (ComponentType)n;
+								ComponentHandle comp = space->getSubsystem(ct)->addComponent(selected_object_->getID());
+								selected_object_->setComponentHandle(ct, comp);
+							}
+						}
+						ImGui::EndCombo();
+					}
+
 					for (int i = 0; i < NUM_COMPONENTS - 1; ++i) {
 						unsigned int h = selected_object_->getComponentHandle(ComponentType(i));
-						if (h != UINT_MAX)
-							ImGui::Text("%s %u", component_names[i], h);
+						if (h != UINT_MAX) { // Don't show unused components
+							displayComponent(ComponentType(i), h);
+						}
 					}
-					/*static int op = -1;
-					if (ImGui::Combo("Add Component", &op, "COMPONENT_TRANSFORM\0COMPONENT_GAME_LOGIC\0COMPONENT_SCRIPT\0COMPONENT_CONTROLLER\0COMPONENT_INPUT\0COMPONENT_RIGID_BODY\0COMPONENT_COLLISION\0COMPONENT_ANIMATION\0COMPONENT_CUBEMAP\0COMPONENT_LIGHT_SPOT\0COMPONENT_LIGHT_POINT\0COMPONENT_LIGHT_DIRECTIONAL\0COMPONENT_CAMERA\0COMPONENT_RENDER_STATIC_MESH\0COMPONENT_RENDER_SKELETAL_MESH\0COMPONENT_RENDER_TERRAIN\0COMPONENT_AUDIO_SOURCE")) {
-						//op
-					}*/
 				}
 			}
 		}
@@ -236,6 +256,71 @@ void Editor::getDirectory() {
 		else {
 			files_.emplace_back(path, name);
 		}
+	}
+}
+
+void Editor::displayComponent(ComponentType type, ComponentHandle handle) {
+	if (ImGui::TreeNode(component_names[type])) {
+		// Component Settings
+		switch (type) {
+		case COMPONENT_TRANSFORM: {
+			TransformComponent &tr = ((TransformSubSystem *)engine.getScenes()[0]->spaces_[0]->getSubsystem(COMPONENT_TRANSFORM))->getComponent(handle);
+			float x = tr.position_.x;
+			float y = tr.position_.y;
+			float z = tr.position_.z;
+			ImGui::Text("Position");
+			ImGuiStyle& style = ImGui::GetStyle();
+			float w = (ImGui::GetWindowContentRegionMax().x / 3.0f) - style.FramePadding.x;
+			w = (w > 30.0f) ? w : 30.0f;
+			ImGui::PushItemWidth(w);
+			ImGui::PushItemWidth(w);
+			ImGui::PushItemWidth(w);
+			if (ImGui::InputFloat("##tX", &x))
+				tr.position_.x = x;
+			ImGui::SameLine();
+			if (ImGui::InputFloat("##tY", &y))
+				tr.position_.y = y;
+			ImGui::SameLine();
+			if (ImGui::InputFloat("##tZ", &z))
+				tr.position_.z = z;
+
+			float rx = glm::degrees(tr.angles_.x);
+			float ry = glm::degrees(tr.angles_.y);
+			float rz = glm::degrees(tr.angles_.z);
+			ImGui::Text("Rotation");
+			ImGui::PushItemWidth(w);
+			ImGui::PushItemWidth(w);
+			ImGui::PushItemWidth(w);
+			if (ImGui::InputFloat("##rX", &rx))
+				tr.angles_.x = glm::radians(rx);
+			ImGui::SameLine();
+			if (ImGui::InputFloat("##rY", &ry))
+				tr.angles_.y = glm::radians(ry);
+			ImGui::SameLine();
+			if (ImGui::InputFloat("##rZ", &rz))
+				tr.angles_.z = glm::radians(rz);
+
+			float sx = tr.scale_.x;
+			float sy = tr.scale_.y;
+			float sz = tr.scale_.z;
+			ImGui::Text("Scale");
+			ImGui::PushItemWidth(w);
+			ImGui::PushItemWidth(w);
+			ImGui::PushItemWidth(w);
+			if (ImGui::InputFloat("##sX", &sx) && sx != 0.0f)
+				tr.scale_.x = sx;
+			ImGui::SameLine();
+			if (ImGui::InputFloat("##sY", &sy) && sy != 0.0f)
+				tr.scale_.y = sy;
+			ImGui::SameLine();
+			if (ImGui::InputFloat("##sZ", &sz) && sz != 0.0f)
+				tr.scale_.z = sz;
+			break;
+		}
+		default: break;
+		}
+
+		ImGui::TreePop();
 	}
 }
 
@@ -383,7 +468,10 @@ void Editor::sceneGraphPanel() {
                 for (auto &object : space->objects_) {
 					std::string n = object.getName();
 					if (ImGui::Button(n.c_str())) {
-						selected_object_ = &object;
+						selected_object_handle_ = object.getID();
+						auto s = object.getName().size();
+						memset(obj_name + s, 0, 256 - s);
+						memcpy(obj_name, object.getName().c_str(), s);
 					}
                 }
             }

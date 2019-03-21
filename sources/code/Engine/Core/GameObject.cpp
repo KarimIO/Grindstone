@@ -25,6 +25,10 @@ std::string GameObject::getName() {
 	return name_;
 }
 
+void GameObject::setName(std::string str) {
+	name_ = str;
+}
+
 GameObject::~GameObject() {
 	// Delete all Components from Systems
 }

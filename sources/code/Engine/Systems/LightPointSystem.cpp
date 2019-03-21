@@ -7,6 +7,13 @@ LightPointComponent::LightPointComponent(GameObjectHandle object_handle, Compone
 
 LightPointSubSystem::LightPointSubSystem(Space *space) : SubSystem(COMPONENT_LIGHT_POINT, space) {}
 
+ComponentHandle LightPointSubSystem::addComponent(GameObjectHandle object_handle) {
+	ComponentHandle component_handle = (ComponentHandle)components_.size();
+	components_.emplace_back(object_handle, component_handle);
+
+	return component_handle;
+}
+
 LightPointSystem::LightPointSystem() : System(COMPONENT_LIGHT_POINT) {}
 
 void LightPointSystem::update(double dt) {

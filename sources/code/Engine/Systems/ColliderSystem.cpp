@@ -8,6 +8,13 @@ ColliderSystem::ColliderSystem() : System(COMPONENT_COLLISION) {}
 
 ColliderSubSystem::ColliderSubSystem(Space *space) : SubSystem(COMPONENT_COLLISION, space) {}
 
+ComponentHandle ColliderSubSystem::addComponent(GameObjectHandle object_handle) {
+	ComponentHandle component_handle = (ComponentHandle)components_.size();
+	components_.emplace_back(object_handle, component_handle);
+
+	return component_handle;
+}
+
 ComponentHandle ColliderSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value & params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
 	components_.emplace_back(object_handle, component_handle);

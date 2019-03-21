@@ -1,3 +1,129 @@
+#include <iostream>
+#include "Core/Engine.hpp"
+#include "RenderTerrainSystem.hpp"
+#include "TransformSystem.hpp"
+#include "../Core/Engine.hpp"
+#include "../Utilities/SettingsFile.hpp"
+#include <fstream>
+#include "Core/Engine.hpp"
+#include "AssetManagers/MaterialManager.hpp"
+#include "GraphicsWrapper.hpp"
+
+RenderTerrainComponent::RenderTerrainComponent(GameObjectHandle object_handle, ComponentHandle handle) :
+	Component(COMPONENT_RENDER_TERRAIN, object_handle, handle) {}
+
+RenderTerrainSubSystem::RenderTerrainSubSystem(RenderTerrainSystem *system, Space *space) : SubSystem(COMPONENT_RENDER_TERRAIN, space), system_(system) {
+}
+
+void RenderTerrainComponent::generateMesh() {
+}
+
+ComponentHandle RenderTerrainSubSystem::addComponent(GameObjectHandle object_handle) {
+	ComponentHandle component_handle = (ComponentHandle)components_.size();
+	components_.emplace_back(object_handle, component_handle);
+	auto &component = components_.back();
+
+	return component_handle;
+}
+
+RenderTerrainSubSystem::~RenderTerrainSubSystem() {
+}
+
+ComponentHandle RenderTerrainSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
+	ComponentHandle component_handle = (ComponentHandle)components_.size();
+	components_.emplace_back(object_handle, component_handle);
+	auto component = components_.back();
+
+	if (params.HasMember("path")) {
+		auto path = params["path"].GetString();
+		component.path_ = path;
+		// If Raw file
+		std::ifstream input(component.path_, std::ios::ate | std::ios::binary);
+		if (!input.is_open()) {
+			std::cerr << "Invalid Path to Terrain\n" << std::endl;
+		} 
+		else {
+			component.heightmap_data_ = 0;
+			
+			component.heightmap_size_ = input.tellg();
+			component.heightmap_data_ = new char[component.heightmap_size_];
+
+			input.seekg(0);
+			input.read(component.heightmap_data_, component.heightmap_size_);
+		}
+		// If other kind of image
+	}
+
+	if (params.HasMember("materialPath")) {
+		auto path = params["materialPath"].GetString();
+		component.material_path_ = path;
+	}
+	else {
+		component.material_path_ = "../assets/materials/terrain_notess.gmat";
+	}
+
+	component.material_ = engine.getMaterialManager()->loadMaterial(system_->geometry_info_, component.material_path_);
+	Material *mat = engine.getMaterialManager()->getMaterial(component.material_);
+
+	component.generateMesh();
+
+	return component_handle;
+}
+
+void RenderTerrainSubSystem::removeComponent(ComponentHandle id) {
+	components_.erase(components_.begin() + id);
+}
+
+RenderTerrainComponent &RenderTerrainSubSystem::getComponent(ComponentHandle id) {
+	return components_[id];
+}
+
+size_t RenderTerrainSubSystem::getNumComponents() {
+	return components_.size();
+}
+
+void RenderTerrainSystem::update(double dt) {
+}
+
+RenderTerrainSystem::RenderTerrainSystem(UniformBufferBinding *ubb) : System(COMPONENT_RENDER_TERRAIN) {
+	geometry_info_.vbds_count = 1;
+	geometry_info_.vbds = new VertexBindingDescription();
+	geometry_info_.vbds->binding = 0;
+	geometry_info_.vbds->elementRate = false;
+	geometry_info_.vbds->stride = sizeof(float);
+
+	geometry_info_.vads_count = 1;
+	geometry_info_.vads = new VertexAttributeDescription();
+	geometry_info_.vads[0].binding = 0;
+	geometry_info_.vads[0].location = 0;
+	geometry_info_.vads[0].format = VERTEX_R32_G32_B32;
+	geometry_info_.vads[0].size = 3;
+	geometry_info_.vads[0].name = "vertexPosition";
+	geometry_info_.vads[0].offset = 0;
+	geometry_info_.vads[0].usage = ATTRIB_POSITION;
+
+	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+
+	UniformBufferBindingCreateInfo ubbci2;
+	ubbci2.binding = 1;
+	ubbci2.shaderLocation = "ModelMatrixBuffer";
+	ubbci2.size = 128; // sizeof(glm::mat4);
+	ubbci2.stages = SHADER_STAGE_VERTEX_BIT;
+	model_ubb_ = graphics_wrapper->CreateUniformBufferBinding(ubbci2);
+
+	UniformBufferCreateInfo ubci2;
+	ubci2.isDynamic = true;
+	ubci2.size = 128;
+	ubci2.binding = model_ubb_;
+	model_ubo_ = graphics_wrapper->CreateUniformBuffer(ubci2);
+
+	ubbs_ = { ubb, model_ubb_ };
+
+	geometry_info_.ubb_count = ubbs_.size();
+	geometry_info_.ubbs = ubbs_.data();
+}
+
+
 #if 0
 #include "SGeometryTerrain.hpp"
 #include "Core/Engine.hpp"

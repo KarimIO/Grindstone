@@ -12,6 +12,13 @@ LightDirectionalComponent::LightDirectionalComponent(GameObjectHandle object_han
 
 LightDirectionalSubSystem::LightDirectionalSubSystem(Space *space) : SubSystem(COMPONENT_LIGHT_DIRECTIONAL, space) {}
 
+ComponentHandle LightDirectionalSubSystem::addComponent(GameObjectHandle object_handle) {
+	ComponentHandle component_handle = (ComponentHandle)components_.size();
+	components_.emplace_back(object_handle, component_handle);
+
+	return component_handle;
+}
+
 LightDirectionalSystem::LightDirectionalSystem() : System(COMPONENT_LIGHT_DIRECTIONAL) {}
 
 void LightDirectionalSystem::update(double dt) {

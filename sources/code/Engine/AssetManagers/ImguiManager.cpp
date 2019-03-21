@@ -97,16 +97,19 @@ void ImguiManager::KeyCallback(int key, int action) {
 	io.KeyAlt = io.KeysDown[KEY_LALT] || io.KeysDown[KEY_ALT];
 	io.KeySuper = io.KeysDown[KEY_WINDOW]; // || io.KeysDown[KEY_WINDOW];
 
+	bool numlock = true;
 	unsigned char keycode = 0;
 	if (key >= KEY_A && key <= KEY_Z) {
 		keycode = key - KEY_A + (io.KeyShift ? 'A' : 'a');
 	}
-	else if (key >= KEY_0 && key <= KEY_9) {
+	else if (key >= KEY_0 && key <= KEY_9 || (numlock && (key >= KEY_NUMPAD_0 && key <= KEY_NUMPAD_9))) {
 		keycode = key - KEY_0 + '0';
 	}
 	else if (key == KEY_SPACE) keycode = ' ';
+	else if (key == KEY_PERIOD) keycode = '.';
+	else if (key == KEY_DASH || key == KEY_NUMPAD_SUBTRACT) keycode = '-';
 	
-	if (keycode > 0)
+	if (action >= 1 && keycode > 0)
 		CharCallback(keycode);
 }
 

@@ -8,6 +8,13 @@
 ControllerSubSystem::ControllerSubSystem(Space *space) : SubSystem(COMPONENT_CONTROLLER, space) {
 }
 
+ComponentHandle ControllerSubSystem::addComponent(GameObjectHandle object_handle) {
+	ComponentHandle component_handle = (ComponentHandle)components_.size();
+	components_.emplace_back(object_handle, component_handle);
+
+	return component_handle;
+}
+
 ComponentHandle ControllerSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
 	components_.emplace_back(object_handle, component_handle);

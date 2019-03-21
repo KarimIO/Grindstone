@@ -27,6 +27,7 @@ static const char *component_names[] = {
 	"COMPONENT_RENDER_SKELETAL_MESH",
 	"COMPONENT_RENDER_TERRAIN",
 	"COMPONENT_AUDIO_SOURCE",
+	"COMPONENT_AUDIO_LISTENER"
 };
 
 enum ComponentType {
@@ -67,6 +68,7 @@ class SubSystem {
 public:
 	SubSystem(ComponentType type, Space *space);
 	virtual size_t getNumComponents() = 0;
+	virtual ComponentHandle addComponent(GameObjectHandle object_handle) = 0;
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) = 0;
 	virtual void removeComponent(ComponentHandle id) = 0;
 

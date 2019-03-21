@@ -11,7 +11,6 @@ in vec2 fragTexCoord;
 
 layout(std140) uniform UniformBufferObject {
     mat4 proj_view;
-    vec3 eye_pos;
 } ubo;
 
 void main() {
