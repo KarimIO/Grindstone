@@ -5,6 +5,26 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include "BaseSystem.hpp"
+#include "../AssetCommon/Drawable.hpp"
+
+class VertexBuffer;
+class IndexBuffer;
+class VertexArrayObject;
+
+
+class TerrainDrawable : public Drawable {
+public:
+	ComponentHandle component_handle_;
+	VertexBuffer *vertex_buffer;
+	IndexBuffer *index_buffer;
+	VertexArrayObject *vertex_array_object;
+	unsigned int num_indices_;
+	UniformBufferBinding *model_ubb_;
+	UniformBuffer *model_ubo_;
+
+	void shadowDraw() override;
+	void draw() override;
+};
 
 struct RenderTerrainComponent : public Component {
 	RenderTerrainComponent(GameObjectHandle object_handle, ComponentHandle handle);
@@ -14,6 +34,7 @@ struct RenderTerrainComponent : public Component {
 	char *heightmap_data_;
 	unsigned int heightmap_size_;
 	void generateMesh();
+	TerrainDrawable *terrain_drawable_;
 };
 
 class RenderTerrainSystem : public System {
@@ -21,6 +42,7 @@ public:
 	RenderTerrainSystem(UniformBufferBinding *ubb);
 
 	void update(double dt);
+	UniformBuffer *getModelUbo();
 	GeometryInfo geometry_info_;
 private:
 	UniformBufferBinding *model_ubb_;

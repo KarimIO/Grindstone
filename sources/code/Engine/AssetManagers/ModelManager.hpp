@@ -10,6 +10,7 @@
 #include <VertexArrayObject.hpp>
 #include <CommandBuffer.hpp>
 #include "AssetManagers/AssetReferences.hpp"
+#include "../AssetCommon/Drawable.hpp"
 
 struct Vertex {
 	glm::vec3 positions;
@@ -48,7 +49,7 @@ struct ModelFormatHeader {
 	BoundingType bounding_type;
 };
 
-class MeshStatic {
+class MeshStatic : public Drawable {
 public:
 	uint32_t num_indices = 0;
 	uint32_t base_vertex = 0;
@@ -56,8 +57,8 @@ public:
 	MaterialReference material_reference;
 	ModelReference model_reference;
 
-	virtual void shadowDraw();
-	virtual void draw();
+	void shadowDraw() override;
+	void draw() override;
 };
 
 struct MeshCreateInfo {

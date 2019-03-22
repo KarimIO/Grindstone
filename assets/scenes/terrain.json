@@ -6,12 +6,15 @@
                 "PREFAB": "prefabs/player.json",
                 "COMPONENT_TRANSFORM": {
                     "position": [0.0, 2.0, 0.0]
-                }
+                },
+                "COMPONENT_CAMERA": {},
+                "COMPONENT_CONTROLLER": {},
+                "COMPONENT_AUDIO_LISTENER": {}
             },
             "terrain": {
                 "COMPONENT_TRANSFORM": {
-                    "position": [-100.0, 3.0, -100.0],
-                    "scale":    [200.0, 8.0, 200.0]
+                    "position": [0.0, 0.0, 0.0],
+                    "scale":    [20.0, 20.0, 20.0]
                 },
                 "COMPONENT_RENDER_TERRAIN": {
                     "path": "heightmap.dds"
@@ -19,14 +22,15 @@
             },
             "skylight": {
                 "COMPONENT_TRANSFORM": {
-                    "angles": [0.45, 0.45, 0.45]
+                    "position": [12.5, 2.0, 4.0],
+                    "angles": [1.0, 0.0, 0.0]
                 },
-                "COMPONENT_LIGHT": {
-                    "type": 0,
+                "COMPONENT_LIGHT_DIRECTIONAL": {
                     "castshadow": true,
-                    "color": [1.0, 1.0, 1.0],
-                    "brightness": 30.0,
-                    "sunradius": 32.0
+                    "color": [1.0,1.0,1.0],
+                    "brightness": 100.0,
+                    "radius": 10.0,
+                    "shadowresolution": 1024
                 }
             }
         }
