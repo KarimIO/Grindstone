@@ -1,6 +1,7 @@
 #include "Bounding.hpp"
 #include <cmath>
 #include <iostream>
+#include "Utilities/Logger.hpp"
 
 void *BoundingSphere::GetData() {
 	return &radius_;
@@ -16,8 +17,7 @@ size_t BoundingSphere::GetSize() const {
 }
 
 void BoundingSphere::Print() const {
-	std::cout << "Bounding Sphere: " << std::endl
-					<< "\tRadius: " << radius_ << std::endl;
+	GRIND_LOG("Bounding Sphere: Radius {0}", radius_);
 }
 
 bool BoundingSphere::TestCamera(float near, float far, float fov, float sphere_factor_x, float sphere_factor_y, float aspect, glm::vec3 origin, glm::vec3 eye, glm::vec3 forward, glm::vec3 up, glm::vec3 right) {
@@ -54,13 +54,11 @@ size_t BoundingBox::GetSize() const {
 
 void BoundingBox::Print() const {
 	BoundingSphere::Print();
-	std::cout << "Bounding Box: " << std::endl
-		<< "\tLeft: " << left_
-		<< "\tRight: " << right_ << std::endl 
-		<< "\tTop: " << upper_
-		<< "\tBottom: " << lower_ << std::endl
-		<< "\tFront: " << front_
-		<< "\tBack: " << back_ << std::endl;
+	GRIND_LOG("Bounding Box:\n"
+		"\tLeft: {0}\tRight: {1}\n"
+		"\tTop: {2}\tBottom: {3}\n"
+		"\tFront: {4}\tBack: {5}\n",
+		left_, right_, upper_, lower_, front_, back_);
 }
 
 void BoundingBox::TestBounding(const float vertex[3]) {
@@ -74,9 +72,9 @@ void BoundingBox::TestBounding(const float vertex[3]) {
 	front_ = (vertex[2] > front_) ? vertex[2] : front_;
 }
 
-bool BoundingBox::TestCamera(float near, float far, float fov, float sphere_factor_x, float sphere_factor_y, float aspect, glm::vec3 origin, glm::vec3 eye, glm::vec3 forward, glm::vec3 up, glm::vec3 right) {
+bool BoundingBox::TestCamera(float neard, float fard, float fov, float sphere_factor_x, float sphere_factor_y, float aspect, glm::vec3 origin, glm::vec3 eye, glm::vec3 forward, glm::vec3 up, glm::vec3 right) {
 	// Simple bounding sphere
-	if (!BoundingSphere::TestCamera(near, far, fov, sphere_factor_x, sphere_factor_y, aspect, origin, eye, forward, up, right))
+	if (!BoundingSphere::TestCamera(neard, fard, fov, sphere_factor_x, sphere_factor_y, aspect, origin, eye, forward, up, right))
 		return false;
 
 
@@ -93,17 +91,17 @@ bool BoundingBox::TestCamera(float near, float far, float fov, float sphere_fact
 	};
 
 	for (glm::vec3 &vertex : box_vertices) {
-		if (TestPoint(near, far, fov, aspect, origin + vertex, eye, forward, up, right))
+		if (TestPoint(neard, fard, fov, aspect, origin + vertex, eye, forward, up, right))
 			return true;
 	}
 
 	return false;
 }
 
-bool BoundingBox::TestPoint(float near, float far, float fov, float aspect, glm::vec3 origin, glm::vec3 eye, glm::vec3 forward, glm::vec3 up, glm::vec3 right) {
+bool BoundingBox::TestPoint(float neard, float fard, float fov, float aspect, glm::vec3 origin, glm::vec3 eye, glm::vec3 forward, glm::vec3 up, glm::vec3 right) {
 	glm::vec3 v = origin - eye;
 	float pc_z = glm::dot(v, forward);
-	if (pc_z < near || pc_z > far) {
+	if (pc_z < neard || pc_z > fard) {
 		return false;
 	}
 

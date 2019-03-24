@@ -12,6 +12,7 @@
 
 #include  "Core/Scene.hpp"
 #include  "Core/Space.hpp"
+#include <fstream>
 
 ModelStatic::ModelStatic() {}
 ModelStatic::ModelStatic(ModelReference handle, std::string path, ComponentHandle ref) : handle_(handle), path_(path) {
@@ -161,11 +162,11 @@ void ModelManager::loadModel(ModelStatic &model) {
 	std::ifstream input(path, std::ios::ate | std::ios::binary);
 
 	if (!input.is_open()) {
-		std::cerr << "Failed to open file: " << path << "!\n";
+		GRIND_ERROR("Failed to open file: {0}!", path);
 		return;
 	}
 
-	std::cout << "Model reading from: " << path << "!\n";
+	GRIND_LOG("Model reading from: {0}", path );
 
 	size_t fileSize = (size_t)input.tellg();
 	std::vector<char> buffer(fileSize);
@@ -174,7 +175,7 @@ void ModelManager::loadModel(ModelStatic &model) {
 	input.read(buffer.data(), fileSize);
 
 	if (buffer[0] != 'G' || buffer[1] != 'M' || buffer[2] != 'F') {
-		std::cerr << "Failed to open file: " << path << "!\n";
+		GRIND_ERROR("Failed to open file: {0}!", path);
 		return;
 	}
 
@@ -227,7 +228,6 @@ void ModelManager::loadModel(ModelStatic &model) {
 	memcpy(indices.data(), offset, size);
 	offset = static_cast<char*>(offset) + size;
 
-	std::cout << "Loading " << inFormat.num_materials << " materials.\n";
 	std::vector<MaterialReference> materialReferences;
 	materialReferences.resize(inFormat.num_materials);
 
@@ -341,7 +341,8 @@ void ModelManager::loadModel(ModelStatic &model) {
 	memcpy(&inFormat, offset, sizeof(ModelFormatHeader));
 	offset = static_cast<char*>(offset) + sizeof(ModelFormatHeader);
 	auto a = (char *)offset - buffer.data();
-	std::cout << "Header:" << a << "\n";
+	std::
+	<< "Header:" << a << "\n";
 	
 	// Get Submesh Data
 	model.meshes.resize(inFormat.num_meshes);

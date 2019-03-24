@@ -1,5 +1,5 @@
 #include "Scene.hpp"
-#include "../Utilities/Logger.hpp"
+//#include "../Utilities/Logger.hpp"
 #include "Utilities.hpp"
 #include "Space.hpp"
 #include "Engine.hpp"
@@ -28,7 +28,7 @@ std::string Scene::getPath() {
 }
 
 void Scene::loadLevel(std::string path) {
-	LOG("Loading level: %s\n", path);
+	//LOG("Loading level: %s\n", path);
 
 	path_ = path;
 	

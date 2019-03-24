@@ -393,7 +393,7 @@ public:
 			}
 		}
 		else if (state == SHADER_JSON_COMPUTE) {
-			std::cout << "Computer shaders not supported yet!" << std::endl;
+			GRIND_ERROR("Computer shaders not supported yet!");
 			if (engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL) {
 				state = SHADER_JSON_SHADER_OPENGL;
 			}
@@ -476,7 +476,7 @@ public:
 				state = shader_type = SHADER_JSON_SHADER_SHADOW;
 			}
 			else {
-				std::cout << "Invalid Shader file!" << std::endl;
+				GRIND_ERROR("Invalid Shader file!");
 			}
 		}
 		else if (state == SHADER_JSON_SHADER_DEFERRED || state == SHADER_JSON_SHADER_FORWARD || state == SHADER_JSON_SHADER_SHADOW) {
@@ -490,7 +490,7 @@ public:
 				state = SHADER_JSON_SHADER_VULKAN;
 			}
 			else {
-				std::cout << "Invalid Shader file!" << std::endl;
+				GRIND_ERROR("Invalid Shader file!");
 			}
 		}
 		else if ((engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL && state == SHADER_JSON_SHADER_OPENGL) ||

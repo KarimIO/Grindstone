@@ -42,17 +42,17 @@
 #include "../Utilities/Logger.hpp"
 
 void Engine::initialize() {
-	LOG("Initializing Grindstone Game Engine...\n");
+	GRIND_LOG("Initializing Grindstone Game Engine...");
 
 	// Seed Random to get proper random numbers
 	srand((unsigned int)time(NULL));
 
 	// Load Settings
 	settings_ = new Settings();
-	LOG("Settings loaded.\n");
+	GRIND_LOG("Settings loaded.");
 
 	input_manager_ = new InputManager();
-	LOG("Input Manager loaded.\n");
+	GRIND_LOG("Input Manager loaded.");
 
 	// Load DLLS
 	dll_graphics_ = new DLLGraphics();
@@ -100,8 +100,8 @@ void Engine::initialize() {
 #endif
 
 	running_ = true;
-	LOG("Successfully Loaded.\n");
-	LOG("==============================\n");
+	GRIND_LOG("Successfully Loaded.");
+	GRIND_LOG("==============================");
 
 	graphics_wrapper_->setFocus();
 }
@@ -331,8 +331,8 @@ void Engine::shutdown() {
 }
 
 Engine::~Engine() {
-	LOG("==============================\n");
-	LOG("Closing Grindstone...\n");
+	GRIND_LOG("==============================");
+	GRIND_LOG("Closing Grindstone...");
 
 	for (auto &scene : scenes_) {
 		delete scene;
@@ -354,7 +354,7 @@ Engine::~Engine() {
 		delete settings_;
 	}
 
-	LOG("Closed Grindstone.\n");
+	GRIND_LOG("Closed Grindstone.");
 }
 
 void Engine::calculateTime() {

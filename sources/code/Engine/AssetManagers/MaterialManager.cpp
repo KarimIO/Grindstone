@@ -38,12 +38,12 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 	// Load the material
 	std::ifstream input(path);
 	if (input.fail()) {
-		LOG_WARN("Material failed to load: %s\n.", path);
+		GRIND_WARN("Material failed to load: {0}.", path);
 		return empty_material_reference_;
 	}
 
 	if (engine.getSettings()->show_material_load_)
-		LOG("Material reading from: %s!\n", path.c_str());
+		GRIND_LOG("Material reading from: {0}!", path.c_str());
 
 	// Get Shader Name
 	std::string shader_param;
@@ -51,13 +51,13 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 	size_t p = shader_param.find(':');
 	if (p == -1) {
 		// Return empty if we can't find the delimeter
-		LOG_WARN("%s is invalid, the first line must refer to the shader.", path);
+		GRIND_WARN("{0} is invalid, the first line must refer to the shader.", path);
 		return empty_material_reference_;
 	}
 	else {
 		if (shader_param.substr(0, p) != "shader") {
 			// Return empty if the key isn't "shader"
-			LOG_WARN("%s is invalid, the first line must refer to the shader.", path);
+			GRIND_WARN("{0} is invalid, the first line must refer to the shader.", path);
 			return empty_material_reference_;
 		}
 
@@ -90,7 +90,7 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 			auto it1 = pipeline->parameterDescriptorTable.find(parameter);
 			if (it1 != pipeline->parameterDescriptorTable.end()) {
 				// This is a parameter, and we don't handle those yet.
-				//LOG("In %s, found Parameter %s:%s\n", path, parameter, value);
+				//GRIND_LOG("In %s, found Parameter %s:%s\n", path, parameter, value);
 				auto it2 = pipeline->parameterDescriptorTable.find(parameter);
 				if (it2 != pipeline->parameterDescriptorTable.end()) {
 					int pos = 0;
@@ -133,7 +133,7 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 				}
 				else {
 					// Not a valid paramter
-					LOG_WARN("In %s, invalid parameter %s.\n", path, parameter);
+					GRIND_WARN("In {0}, invalid parameter {1}.", path, parameter);
 				}
 			}
 		}

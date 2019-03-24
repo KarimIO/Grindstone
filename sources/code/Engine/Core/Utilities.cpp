@@ -1,6 +1,7 @@
 #include "Utilities.hpp"
 #include <fstream>
 #include <string>
+#include "../Utilities/Logger.hpp"
 
 bool ReadFileIncludable(std::string pFileName, std::string& output)
 {
@@ -25,7 +26,7 @@ bool ReadFileIncludable(std::string pFileName, std::string& output)
 		return true;
 	}
 	else {
-		printf("Unable to open file %s\n", pFileName.c_str());
+		GRIND_ERROR("Unable to open file {0}", pFileName.c_str());
 	}
 
 	return false;
@@ -45,7 +46,7 @@ bool ReadFile(std::string pFileName, std::string& output)
 		return true;
 	}
 	else {
-		printf("Unable to open file %s\n", pFileName.c_str());
+		GRIND_ERROR("Unable to open file {0}", pFileName.c_str());
 	}
 
 	return false;

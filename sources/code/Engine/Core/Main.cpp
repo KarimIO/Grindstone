@@ -3,15 +3,15 @@
 #include <cstring>
 #include "../Utilities/Logger.hpp"
 #include "Engine.hpp"
+#include <spdlog/spdlog.h>
 
 extern "C" {
 	_declspec(dllexport) long NvOptimusEnablement = 0x00000001;
 }
 
-
 int main(int argc, char *argv[]) {
 	// Prepare output log location
-	Logging::Logger::getInstance().setPath("./output.log");
+	Logger::init("../output.log");
 
 	try {
 		// Note that engine calls its constructor, Engine::Engine
@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
 		engine.run();
 	}
 	catch (std::runtime_error& e) {
-		LOG_FATAL(e.what());
+		GRIND_FATAL(e.what());
 		return EXIT_FAILURE;
 	}
 

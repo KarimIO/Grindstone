@@ -58,11 +58,11 @@ ComponentHandle ColliderSubSystem::addComponent(GameObjectHandle object_handle, 
 			component.shape_ = new btCapsuleShape(component.capsule_radius_, component.capsule_height_);
 		}
 		else {
-			LOG_WARN("Invalid shape.");
+			GRIND_WARN("Invalid shape.");
 		}
 	}
 	else {
-		LOG_WARN("Invalid shape.");
+		GRIND_WARN("Invalid shape.");
 	}
 
 	return component_handle;

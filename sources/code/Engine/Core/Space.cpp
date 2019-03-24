@@ -37,12 +37,12 @@ Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 		for (rapidjson::Value::MemberIterator component_itr = comps.MemberBegin(); component_itr != comps.MemberEnd(); ++component_itr) {
 			auto type_str = component_itr->name.GetString();
 			if(type_str == "PREFAB") {
-				std::cout << type_str << "\n";
+				GRIND_WARN("TODO: HANDLE PREFABS!");
 			}
 			else {
 				auto type = getComponentType(type_str);
 				if (type == COMPONENT_BASE) {
-					LOG_WARN("Could not get component: %s.\n", type_str);
+					GRIND_WARN("Could not get component: {0}", type_str);
 				}
 				else {
 					rapidjson::Value &params = component_itr->value;

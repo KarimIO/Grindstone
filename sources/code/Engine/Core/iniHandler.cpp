@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include "iniHandler.hpp"
+#include "Utilities/Logger.hpp"
 
 void INIConfigFile::SetPath(std::string dir) {
 	szPath = dir;
@@ -106,7 +107,7 @@ bool INIConfigFile::LoadFile(const char *mode) {
 	errno_t err = fopen_s(&pFile, GetPath().c_str(), mode);
 	if (err == NULL) return true;
 
-	std::cout << WindowsError(err) << "\n";
+	GRIND_ERROR("Failed to laod file: {0}", WindowsError(err));
 	return false;
 #else
 	pFile = fopen(GetPath().c_str(), mode);
@@ -126,7 +127,7 @@ bool INIConfigFile::Initialize(std::string path) {
 bool INIConfigFile::ReadFile() {
 	modified = false;
 	if (!LoadFile()) {
-		std::cout << "File " << GetPath() << " couldn't be loaded." << "\n";
+		GRIND_ERROR("File {0} couldn't be loaded", GetPath());
 		LoadFile("w");
 		CloseFile();
 		return false;
@@ -164,7 +165,7 @@ bool INIConfigFile::ReadFile() {
 			}
 			else {
 				if (catNum == -1) {
-					std::cout << "Unassigned Data! Quit!" << "\n";
+					GRIND_ERROR("Unassigned Data!");
 					return false;
 				}
 

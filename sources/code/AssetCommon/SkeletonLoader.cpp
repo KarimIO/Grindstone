@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <cstring>
+#include "Utilities/Logger.hpp"
 
 void GrindstoneAssetCommon::loadSkeleton(std::string path, glm::mat4 global_inverse, std::vector<BoneInfo> bone_names) {
 	// Read all bone names here.
@@ -11,7 +12,7 @@ void GrindstoneAssetCommon::loadSkeleton(std::string path, glm::mat4 global_inve
 		throw std::runtime_error("Failed to open file: " + path + "!");
 	}
 
-	std::cout << "Model reading from: " << path << "!\n";
+	GRIND_LOG("Skeleton reading from {0}!", path);
 
 	size_t fileSize = (size_t)input.tellg();
 	std::vector<char> buffer(fileSize);

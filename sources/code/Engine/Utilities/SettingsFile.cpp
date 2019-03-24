@@ -7,7 +7,7 @@ Settings::Settings() {
 	INIConfigFile cfile;
 
 	if (!loadSettings(cfile)) {
-		LOG_WARN("SETTINGS.INI: File not found.\n");
+		GRIND_WARN("SETTINGS.INI: File not found.");
 
 		saveSettings(cfile);
 	}
@@ -43,7 +43,7 @@ bool Settings::loadSettings(INIConfigFile &cfile) {
 		else if (graphics == "opengl")
 			graphics_language_ = GRAPHICS_OPENGL;
 		else {
-			LOG_ERROR("SETTINGS.INI: Invalid value for graphics language (%s), using Opengl instead.\n", graphics.c_str());
+			GRIND_ERROR("SETTINGS.INI: Invalid value for graphics language ({0}), using Opengl instead.", graphics.c_str());
 			graphics_language_ = GRAPHICS_OPENGL;
 			cfile.SetString("Renderer", "graphics", "OpenGL");
 		}

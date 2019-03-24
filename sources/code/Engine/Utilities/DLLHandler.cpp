@@ -1,20 +1,22 @@
 #include "DLLHandler.hpp"
 #include <stdexcept>
 #include <iostream>
+#include "Logger.hpp"
 
 void DLLHandler::initialize(std::string path) {
 	#if defined(_WIN32)
-		handle_ = LoadLibrary((path+".dll").c_str());
+		path = path + ".dll";
+		handle_ = LoadLibrary(path.c_str());
 		if (!handle_) {
 			std::string err = "Failed to load " + path + "!";
-			std::cerr << "Get Last Error : " << GetLastError() << "\n";
+			GRIND_ERROR("Failed to load {0}: {1}", path, GetLastError());
 			throw std::runtime_error(err);
 		}
 	#elif defined(__linux__)
 		path = "./lib"+path+".so";
 		handle_ = dlopen(path.c_str(), RTLD_LAZY);
 		if (!handle_) {
-			std::string err = "Failed to load " + path + ": " + dlerror();
+			GRIND_ERROR("Failed to load {0}: {1}", path, dlerror());
 			throw std::runtime_error(err);
 		}
 	#endif

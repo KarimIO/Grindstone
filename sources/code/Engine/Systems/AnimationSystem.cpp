@@ -7,6 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <fstream>
+#include "Utilities/Logger.hpp"
 
 void loadAnimation(std::string path, Skeleton *skeleton, Animation *animation) {
 	std::ifstream input("../assets/animations/" + path, std::ios::ate | std::ios::binary);
@@ -15,7 +16,7 @@ void loadAnimation(std::string path, Skeleton *skeleton, Animation *animation) {
 		throw std::runtime_error("Failed to open file: " + path + "!");
 	}
 
-	std::cout << "Model reading from: " << path << "!\n";
+	GRIND_LOG("Model reading from: {0}!", path);
 
 	size_t fileSize = (size_t)input.tellg();
 	std::vector<char> buffer(fileSize);

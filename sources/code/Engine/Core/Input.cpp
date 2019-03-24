@@ -232,7 +232,7 @@ bool InputManager::AddControl(std::string keyCode, std::string controlCode, Inpu
 	// Get Key and device from string
 	key = TranslateKey(keyCode, device, handler);
 	if (key == -1) {
-		fprintf(stderr, "INPUT: %s is not a supported keycode!\n", keyCode.c_str());
+		GRIND_ERROR("INPUT: {0} is not a supported keycode!", keyCode.c_str());
 		return false;
 	}
 
@@ -289,7 +289,7 @@ void InputManager::SetInputControlFile(std::string path, InputComponent * compon
 	std::ifstream file;
 	file.open("../"+path);
 	if (file.fail()) {
-		fprintf(stderr, "INPUT: File load failed: %s\n", path.c_str());
+		GRIND_ERROR("INPUT: File load failed: {0}\n", path.c_str());
 		return;
 	}
 
@@ -377,7 +377,7 @@ void InputManager::Cleanup(InputComponent * component) {
 }
 
 void InputManager::ResizeEvent(int x, int y) {
-	LOG("Resized to: %i, %i.\n", x, y);
+	GRIND_LOG("Resized to: {0}, {1}.", x, y);
 	engine.getSettings()->resolution_x_ = x;
 	engine.getSettings()->resolution_y_ = y;
 }

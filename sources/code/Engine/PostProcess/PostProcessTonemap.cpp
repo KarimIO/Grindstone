@@ -100,30 +100,32 @@ PostProcessTonemap::PostProcessTonemap(PostPipeline *pipeline, RenderTargetConta
 void PostProcessTonemap::Process() {
 	double dt = engine.getUpdateTimeDelta();
 
-	if (first_render_) {
-		exposure_buffer_.exposure = 1.0f / glm::clamp((float)exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
-		exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
+	if (auto_exposure_) {
+		if (first_render_) {
+			exposure_buffer_.exposure = 1.0f / glm::clamp((float)exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
+			exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
 
-		first_render_ = false;
-	}
-	else {
-		if (auto_exposure_) {
+			first_render_ = false;
+		}
+		else {
 			float new_exp = 1.0f / glm::clamp((float)exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
 			exposure_buffer_.exposure = exposure_buffer_.exposure * (1.0f - dt) + new_exp * dt;
 			exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
 		}
-		else {
-			exposure_buffer_.exposure = 1.0f;
-		}
+	}
+	else {
+		exposure_buffer_.exposure = 1.0f;
 	}
 
     gpipeline_->Bind();
     exposure_ub_->Bind();
 	if (target_ == nullptr) {
 		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
+		engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
 	} 
 	else {
 		target_->framebuffer->BindWrite(true);
+		//target_->framebuffer->Clear(CLEAR_BOTH);
 	}
     source_->framebuffer->BindRead();
     source_->framebuffer->BindTextures(4);

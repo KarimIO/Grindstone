@@ -179,11 +179,11 @@ ComponentHandle CubemapSubSystem::addComponent(GameObjectHandle object_handle, r
 				component.cubemap_binding_ = engine.getGraphicsWrapper()->CreateTextureBinding(ci);
 			}
 			else {
-				LOG_WARN("No path given.");
+				GRIND_WARN("No path given.");
 			}
 		}
 		else {
-			LOG_WARN("Invalid type.");
+			GRIND_WARN("Invalid type.");
 		}
 	}
 

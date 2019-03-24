@@ -40,8 +40,7 @@ TextureHandler TextureManager::loadCubemap(std::string path, TextureOptions opti
 
 		fp = fopen(path.c_str(), "rb");
 		if (fp == NULL) {
-			std::string warn = "Cubemap failed to load: " + path + " \n";
-			LOG_WARN(warn);
+			GRIND_WARN("Cubemap failed to load: {0}", path);
 			return -1;
 		}
 
@@ -50,7 +49,7 @@ TextureHandler TextureManager::loadCubemap(std::string path, TextureOptions opti
 		fread(filecode, 1, 4, fp);
 		if (strncmp(filecode, "DDS ", 4) != 0) {
 			fclose(fp);
-			LOG_WARN("Invalid DDS cubemap: " + path + " \n");
+			GRIND_WARN("Invalid DDS cubemap: {0}", path);
 			return -1;
 		}
 
@@ -68,8 +67,6 @@ TextureHandler TextureManager::loadCubemap(std::string path, TextureOptions opti
 		fclose(fp);
 
 		bool alphaflag = header.ddspf.dwFlags & DDPF_ALPHAPIXELS;
-		if (alphaflag)
-			LOG_WARN(path + "\n");
 
 		unsigned int components = (header.ddspf.dwFourCC == FOURCC_DXT1) ? 3 : 4;
 		ColorFormat format;
@@ -85,7 +82,7 @@ TextureHandler TextureManager::loadCubemap(std::string path, TextureOptions opti
 			break;
 		default:
 			free(buffer);
-			LOG_WARN("Invalid FourCC in cubemap: %s \n", path);
+			GRIND_WARN("Invalid FourCC in cubemap: {0}", path);
 			return -1;
 		}
 
@@ -104,7 +101,7 @@ TextureHandler TextureManager::loadCubemap(std::string path, TextureOptions opti
 		textures_.emplace_back(t);
 
 		if (engine.getSettings()->show_texture_load_)
-			LOG("Cubemap loaded: %s \n", path.c_str());
+			GRIND_LOG("Cubemap loaded: {0}", path.c_str());
 
 		stbi_image_free(buffer);
 
@@ -134,12 +131,12 @@ TextureHandler TextureManager::loadCubemap(std::string path, TextureOptions opti
 					stbi_image_free(createInfo.data[j]);
 				}
 
-				LOG_WARN("Texture failed to load!: %s\n");
+				GRIND_WARN("Texture failed to load!: {0}");
 				return -1;
 			}
 		}
 
-		LOG("Cubemap loaded: %s \n", path.c_str());
+		GRIND_LOG("Cubemap loaded: {0}", path.c_str());
 
 		ColorFormat format;
 		switch (4) {
@@ -189,7 +186,7 @@ TextureHandler TextureManager::loadTexture(std::string path, TextureOptions opti
 
 		fp = fopen(path.c_str(), "rb");
 		if (fp == NULL) {
-			LOG_WARN("Texture failed to load!: %s \n", path.c_str());
+			GRIND_WARN("Texture failed to load!: {0}", path.c_str());
 			return 0;
 		}
 
@@ -197,7 +194,7 @@ TextureHandler TextureManager::loadTexture(std::string path, TextureOptions opti
 		char filecode[4];
 		fread(filecode, 1, 4, fp);
 		if (strncmp(filecode, "DDS ", 4) != 0) {
-			printf("Texture failed to load!: %s \n", path.c_str());
+			GRIND_ERROR("Texture failed to load!: {0}", path.c_str());
 			fclose(fp);
 			return 0;
 		}
@@ -215,8 +212,6 @@ TextureHandler TextureManager::loadTexture(std::string path, TextureOptions opti
 		fclose(fp);
 
 		bool alphaflag = header.ddspf.dwFlags & DDPF_ALPHAPIXELS;
-		if (alphaflag)
-			LOG_WARN(path + "\n");
 
 		unsigned int components = (header.ddspf.dwFourCC == FOURCC_DXT1) ? 3 : 4;
 		ColorFormat format;
@@ -232,7 +227,7 @@ TextureHandler TextureManager::loadTexture(std::string path, TextureOptions opti
 			break;
 		default:
 			free(buffer);
-			LOG_WARN("Invalid FourCC in texture: %s \n", path.c_str());
+			GRIND_WARN("Invalid FourCC in texture: {0}", path.c_str());
 			return error_texture_;
 		}
 
@@ -250,14 +245,14 @@ TextureHandler TextureManager::loadTexture(std::string path, TextureOptions opti
 			t = engine.getGraphicsWrapper()->CreateTexture(createInfo);
 		}
 		catch (const char *e) {
-			std::cerr << e << "\n";
+			GRIND_ERROR("{0}", e);
 		}
 		TextureHandler handle = textures_.size();
 		texture_map_[path] = handle;
 		textures_.emplace_back(t);
 
 		if (engine.getSettings()->show_texture_load_)
-			LOG("Texture loaded: %s \n", path.c_str());
+			GRIND_LOG("Texture loaded: {0}", path.c_str());
 
 		stbi_image_free(buffer);
 
@@ -268,7 +263,7 @@ TextureHandler TextureManager::loadTexture(std::string path, TextureOptions opti
 		stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 		texChannels = 4;
 		if (!pixels) {
-			LOG_WARN("Texture failed to load: %s!\n", path);
+			GRIND_WARN("Texture failed to load: {0}", path);
 			return error_texture_;
 		}
 
@@ -306,7 +301,7 @@ TextureHandler TextureManager::loadTexture(std::string path, TextureOptions opti
 		stbi_image_free(pixels);
 
 		if (engine.getSettings()->show_texture_load_)
-			LOG("Texture loaded: %s \n", path.c_str());
+			GRIND_LOG("Texture loaded: {0}", path.c_str());
 
 		return handle;
 	}
@@ -462,7 +457,7 @@ void ConvertBC123(unsigned char **pixels, bool is_cubemap, int width, int height
 
 	std::ofstream out(path, std::ios::binary);
 	if (out.fail()) {
-		std::cerr << "Failed to output to " + path + ".\n";
+		GRIND_ERROR("Failed to output to: {0}!", path);
 		return;
 	}
 	const char filecode[4] = { 'D', 'D', 'S', ' ' };
