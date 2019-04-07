@@ -2,6 +2,7 @@
 
 #ifdef INCLUDE_EDITOR
 #include "Editor.hpp"
+#include "Core/Input.hpp"
 #include "../AssetManagers/ImguiManager.hpp"
 #include "../AssetManagers/TextureManager.hpp"
 #include "Scene.hpp"
@@ -24,21 +25,35 @@
 #include <glm/gtx/transform.hpp>
 #include "Renderpaths/RenderPathDeferred.hpp"
 #include "Systems/TransformSystem.hpp"
+#include "Utilities/Logger.hpp"
 
-Editor::Viewport::Viewport(Camera *c, View v) : camera_(c), pos(1, 1, 1), target(0, 0, 0), first(true) {
+Editor::Viewport::Viewport(Camera *c, View v) : camera_(c), first(true) {
 	setView(v);
-	setViewMatrix();
+}
+
+void Editor::Viewport::calcDirs() {
+	fwd = glm::vec3(
+		glm::cos(angles.x) * glm::sin(angles.y),
+		glm::sin(angles.x),
+		glm::cos(angles.x) * glm::cos(angles.y)
+	);
+
+	right = glm::vec3(
+		glm::sin(angles.y - 3.14159f / 2.0f),
+		0,
+		glm::cos(angles.y - 3.14159f / 2.0f)
+	);
+	
+	up = glm::cross(right, fwd);
 }
 
 void Editor::Viewport::setViewMatrix() {
-	view_mat = glm::lookAt(pos, target, up);
+	view_mat = glm::lookAt(pos, pos + fwd, up);
 }
 
 void Editor::Viewport::setView(View v) {
 	view = v;
-	target = glm::vec3(0, 0, 0);
-	up = glm::vec3(0, 1, 0);
-	
+
 	if (v == Perspective) {
 		camera_->setPerspective();
 	}
@@ -47,33 +62,42 @@ void Editor::Viewport::setView(View v) {
 	}
 
 	double d = 30;
+	float qpi = glm::pi<float>() / 2.0f;
 
 	switch (v) {
 	case Viewport::View::Top:
 		pos = glm::vec3(0, d, 0);
-		up = glm::vec3(1, 0, 0);
+		angles = glm::vec3(-qpi, 0.0, 0.0);
 		break;
 	case Viewport::View::Bottom:
 		pos = glm::vec3(0, -d, 0);
-		up = glm::vec3(-1, 0, 0);
+		angles = glm::vec3(qpi, 0.0, 0.0);
 		break;
 	case Viewport::View::Left:
 		pos = glm::vec3(d, 0, 0);
+		angles = glm::vec3(0.0, -qpi, 0.0);
 		break;
 	case Viewport::View::Right:
 		pos = glm::vec3(-d, 0, 0);
+		angles = glm::vec3(0.0, qpi, 0.0);
 		break;
 	case Viewport::View::Front:
 		pos = glm::vec3(0, 0, d);
+		angles = glm::vec3(0.0, qpi * 2.0f, 0.0);
 		break;
 	case Viewport::View::Back:
 		pos = glm::vec3(0, 0, -d);
+		angles = glm::vec3(0.0, 0.0, 0.0);
 		break;
 	default:
 	case Viewport::View::Perspective:
-		pos = glm::vec3(1, 1, 1);
+		pos = glm::vec3(-1, 2, -1);
+		angles = glm::vec3(-0.78, 0.78, 0.78);
 		break;
 	}
+
+	calcDirs();
+	setViewMatrix();
 }
 
 Editor::Editor(ImguiManager *manager) : selected_object_handle_(-1) {
@@ -84,6 +108,8 @@ Editor::Editor(ImguiManager *manager) : selected_object_handle_(-1) {
 	show_component_panel_ = true;
 
 	obj_name = new char[128];
+
+	viewport_manipulating_ = 0;
 	
 	Camera *c = new Camera(engine.getScenes()[0]->spaces_[0], true);
 	c->setViewport(800, 600);
@@ -361,22 +387,85 @@ void Editor::assetPanel() {
 
 void Editor::viewportPanels() {
 	if (show_viewport_) {
+		bool viewport_selected = false;
+		bool right_clicking = engine.getInputManager()->GetMouseButton(MOUSE_RIGHT) > 0;
+
+		auto mouse = ImGui::GetMousePos();
+
+		double dt = engine.getUpdateTimeDelta();
+
 		int i = 0;
 		for (auto &v : viewports_) {
-
 			std::string title = "Viewport ";
 			title += std::to_string(++i);
 
 			ImGui::Begin(title.c_str(), &show_viewport_);
 			ImVec2 size = ImGui::GetWindowSize();
-			ImGuiStyle& style = ImGui::GetStyle();
+			/*ImGuiStyle& style = ImGui::GetStyle();
 			size.x -= style.FramePadding.x * 2;
-			size.y -= style.FramePadding.y * 2;
+			size.y -= style.FramePadding.y * 2;*/
+
 			/*if (v.first) {
 				v.first = false;
 				v.camera_->setViewport(size.x, size.y);
 				//v.camera_->initialize();
 			}*/
+
+			//if (viewport_manipulating_) {
+			if (right_clicking) {
+				auto min = ImGui::GetWindowPos();
+				auto max = min;
+				max.x += size.x;
+				max.y += size.y;
+				
+				if (viewport_manipulating_ == i) {
+					float msensitivity = 0.5f;
+
+					int midx = (min.x + max.x) / 2.0f;
+					int midy = (min.y + max.y) / 2.0f;
+
+					float cx = midx - mouse.x;
+					float cy = midy - mouse.y;
+
+					if (v.view == Viewport::View::Perspective) {
+						v.angles.x += float(dt) * msensitivity * cy;
+						v.angles.y += float(dt) * msensitivity * cx;
+
+						float hpi = glm::pi<float>() / 2.0f;
+
+						v.angles.x = glm::clamp(v.angles.x, -hpi, hpi);
+					}
+					else {
+						
+						v.pos += (float)dt * 2.0f * (cx * v.right - cy * v.up);
+					}
+
+					float ox = ((engine.getInputManager()->GetKey(KEY_W) > 0) ? 1 : 0) - ((engine.getInputManager()->GetKey(KEY_S) > 0) ? 1 : 0);
+					float oy = ((engine.getInputManager()->GetKey(KEY_D) > 0) ? 1 : 0) - ((engine.getInputManager()->GetKey(KEY_A) > 0) ? 1 : 0);
+					float oz = ((engine.getInputManager()->GetKey(KEY_SPACE) > 0) ? 1 : 0) - ((engine.getInputManager()->GetKey(KEY_CONTROL) > 0) ? 1 : 0);
+
+					v.pos += (float)dt * 8.0f * (ox * v.fwd + oy * v.right + oz * v.up);
+
+					v.calcDirs();
+					v.setViewMatrix();
+
+					engine.getGraphicsWrapper()->SetCursor(midx, midy);
+					viewport_selected = true;
+				}
+				else if (viewport_manipulating_ == 0) {
+					if (mouse.x < max.x && mouse.x > min.x && mouse.y > min.y && mouse.y < max.y) {
+						viewport_manipulating_ = i;
+
+						int midx = (min.x + max.x) / 2.0f;
+						int midy = (min.y + max.y) / 2.0f;
+
+						engine.getGraphicsWrapper()->SetCursor(midx, midy);
+					}
+				}
+			}
+			else {
+				viewport_manipulating_ = 0;
+			}
 
 			v.camera_->render(v.pos, v.view_mat);
 			engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
@@ -401,7 +490,6 @@ void Editor::viewportPanels() {
 					if (ImGui::Selectable(items[n], is_selected)) {
 						v.view_option = items[n];
 						v.setView((Viewport::View)n);
-						v.setViewMatrix();
 					}
 
 					if (is_selected)

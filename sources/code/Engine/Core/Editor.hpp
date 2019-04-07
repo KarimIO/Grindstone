@@ -22,13 +22,17 @@ private:
 			Perspective
 		} view;
 		glm::vec3 pos;
-		glm::vec3 target;
+		glm::vec3 fwd;
+		glm::vec3 right;
 		glm::vec3 up;
 		glm::mat4 view_mat;
+		glm::vec3 angles;
+
 		bool first;
 		const char *view_option = nullptr;
 		const char *debug_combo_option = nullptr;
 		Viewport(Camera *c, View v);
+		void calcDirs();
 		void setViewMatrix();
 		void setView(View v);
 	};
@@ -64,6 +68,7 @@ private:
     std::vector<FileElement> files_;
 
 	char *obj_name;
+	unsigned int viewport_manipulating_;
 };
 
 #endif
