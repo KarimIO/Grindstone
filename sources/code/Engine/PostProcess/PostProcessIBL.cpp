@@ -95,10 +95,10 @@ void PostProcessIBL::Process() {
 	engine.deff_ubo_handler_->Bind();
 
 	glm::vec3 pos = glm::vec3(0, 0, 0); // engine.deffUBOBuffer.eyePos;
-    CubemapComponent *cube = ((CubemapSubSystem *)getPipeline()->getSpace()->getSubsystem(COMPONENT_CUBEMAP))->getClosestCubemap(pos);
+    /*CubemapComponent *cube = ((CubemapSubSystem *)getPipeline()->getSpace()->getSubsystem(COMPONENT_CUBEMAP))->getClosestCubemap(pos);
     if (cube && cube->cubemap_) {
 		graphics_wrapper->BindTextureBinding(cube->cubemap_binding_);
-    }
+    }*/
 
 	gpipeline_->Bind();
 	graphics_wrapper->DrawImmediateVertices(0, 6);

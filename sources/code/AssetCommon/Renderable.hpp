@@ -1,7 +1,7 @@
-#ifndef _DRAWABLE_H
-#define _DRAWABLE_H
+#ifndef _RENDERABLE_H
+#define _RENDERABLE_H
 
-class Drawable {
+class Renderable {
 public:
 	virtual void shadowDraw() = 0;
 	virtual void draw() = 0;

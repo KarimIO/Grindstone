@@ -935,7 +935,7 @@ void GraphicsPipelineManager::drawDeferredImmediate() {
 			pipeline.program->Bind();
 			if (true || pipeline.draw_count > 0) {
 				for (auto &material : pipeline.materials) {
-					if (material.getDrawCount() > 0) {
+					//if (material.getDrawCount() > 0) {
 						if (material.m_textureBinding != nullptr)
 							engine.getGraphicsWrapper()->BindTextureBinding(material.m_textureBinding);
 
@@ -945,7 +945,7 @@ void GraphicsPipelineManager::drawDeferredImmediate() {
 						for (auto &mesh : material.m_meshes) {
 							mesh->draw();
 						}
-					}
+					//}
 				}
 			}
 		}

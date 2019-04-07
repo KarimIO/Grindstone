@@ -203,6 +203,10 @@ int TranslateKey(int key) {
 	}
 }
 
+void GraphicsWrapper::setTitle(const char *str) {
+	XStoreName(xDisplay, xWindow, str);
+}
+
 void GraphicsWrapper::HandleEvents() {
 	if (input == NULL) {
 		std::cout << "No Interface!" << std::endl;

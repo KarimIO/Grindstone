@@ -8,15 +8,14 @@ void DLLHandler::initialize(std::string path) {
 		path = path + ".dll";
 		handle_ = LoadLibrary(path.c_str());
 		if (!handle_) {
-			std::string err = "Failed to load " + path + "!";
-			GRIND_ERROR("Failed to load {0}: {1}", path, GetLastError());
+			std::string err = "Failed to load " + path + ": " + GetLastError() + "!";
 			throw std::runtime_error(err);
 		}
 	#elif defined(__linux__)
 		path = "./lib"+path+".so";
 		handle_ = dlopen(path.c_str(), RTLD_LAZY);
 		if (!handle_) {
-			GRIND_ERROR("Failed to load {0}: {1}", path, dlerror());
+			std::string err = "Failed to load " + path + ": " + dlerror() + "!";
 			throw std::runtime_error(err);
 		}
 	#endif

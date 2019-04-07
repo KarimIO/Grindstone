@@ -5,9 +5,11 @@
 #include "Engine.hpp"
 #include <spdlog/spdlog.h>
 
+#ifdef _WIN32
 extern "C" {
 	_declspec(dllexport) long NvOptimusEnablement = 0x00000001;
 }
+#endif
 
 int main(int argc, char *argv[]) {
 	// Prepare output log location

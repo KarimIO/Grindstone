@@ -5,7 +5,7 @@
 #include <vector>
 #include "AssetReferences.hpp"
 #include "GraphicsPipelineManager.hpp"
-#include "../AssetCommon/Drawable.hpp"
+#include "../AssetCommon/Renderable.hpp"
 
 class MeshStatic;
 
@@ -17,7 +17,7 @@ public:
 	TextureBinding *m_textureBinding;
 	UniformBuffer *param_buffer_handler_;
 	char *param_buffer_;
-	std::vector<Drawable *> m_meshes;
+	std::vector<Renderable *> m_meshes;
 	Material() {
 		m_textureBinding = 0;
 		m_meshes.clear();
@@ -39,7 +39,7 @@ public:
 	Material *getMaterial(MaterialReference);
 
 	void removeMaterial(MaterialReference);
-	void removeMeshFromMaterial(MaterialReference, Drawable*);
+	void removeMeshFromMaterial(MaterialReference, Renderable*);
 
 	void loadPreloaded();
 	

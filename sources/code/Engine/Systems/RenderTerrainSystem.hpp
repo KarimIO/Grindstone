@@ -5,14 +5,14 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include "BaseSystem.hpp"
-#include "../AssetCommon/Drawable.hpp"
+#include "../AssetCommon/Renderable.hpp"
 
 class VertexBuffer;
 class IndexBuffer;
 class VertexArrayObject;
 
 
-class TerrainDrawable : public Drawable {
+class TerrainDrawable : public Renderable {
 public:
 	ComponentHandle component_handle_;
 	VertexBuffer *vertex_buffer;

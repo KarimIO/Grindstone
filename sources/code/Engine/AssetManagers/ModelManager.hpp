@@ -10,7 +10,7 @@
 #include <VertexArrayObject.hpp>
 #include <CommandBuffer.hpp>
 #include "AssetManagers/AssetReferences.hpp"
-#include "../AssetCommon/Drawable.hpp"
+#include "../AssetCommon/Renderable.hpp"
 
 struct Vertex {
 	glm::vec3 positions;
@@ -49,7 +49,7 @@ struct ModelFormatHeader {
 	BoundingType bounding_type;
 };
 
-class MeshStatic : public Drawable {
+class MeshStatic : public Renderable {
 public:
 	uint32_t num_indices = 0;
 	uint32_t base_vertex = 0;

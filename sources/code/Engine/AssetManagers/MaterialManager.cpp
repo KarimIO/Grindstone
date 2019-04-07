@@ -195,7 +195,7 @@ void MaterialManager::removeMaterial(MaterialReference ref) {
 	return material;*/
 }
 
-void MaterialManager::removeMeshFromMaterial(MaterialReference ref, Drawable*mesh) {
+void MaterialManager::removeMeshFromMaterial(MaterialReference ref, Renderable*mesh) {
 	Material *mat = getMaterial(ref);
 	if (mat->m_meshes.size() > 1) {
 		int index = 0; // Get Index from Reference by searching vector

@@ -17,7 +17,7 @@ size_t BoundingSphere::GetSize() const {
 }
 
 void BoundingSphere::Print() const {
-	GRIND_LOG("Bounding Sphere: Radius {0}", radius_);
+	//GRIND_LOG("Bounding Sphere: Radius {0}", radius_);
 }
 
 bool BoundingSphere::TestCamera(float near, float far, float fov, float sphere_factor_x, float sphere_factor_y, float aspect, glm::vec3 origin, glm::vec3 eye, glm::vec3 forward, glm::vec3 up, glm::vec3 right) {
@@ -53,12 +53,12 @@ size_t BoundingBox::GetSize() const {
 }
 
 void BoundingBox::Print() const {
-	BoundingSphere::Print();
+	/*BoundingSphere::Print();
 	GRIND_LOG("Bounding Box:\n"
 		"\tLeft: {0}\tRight: {1}\n"
 		"\tTop: {2}\tBottom: {3}\n"
 		"\tFront: {4}\tBack: {5}\n",
-		left_, right_, upper_, lower_, front_, back_);
+		left_, right_, upper_, lower_, front_, back_);*/
 }
 
 void BoundingBox::TestBounding(const float vertex[3]) {
