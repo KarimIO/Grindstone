@@ -12,5 +12,12 @@
                 "fragment": "terrain.frag.fxc"
             }
         }
+    },
+    "textures": {
+        "heightmap": {
+            "name": "Heightmap",
+            "type": "texture",
+            "default": "materials/albedo.png"
+        }
     }
 }

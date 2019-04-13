@@ -40,12 +40,12 @@ vec3 getNormals(vec2 P) {
 
 void main() {
     vec2 tex = (vertexPosition);
-    float heightmap = 0.0; //texture(heightmap, tex).r;
+    float heightmap = texture(heightmap, tex).r;
 
     // mbo.model messes up everything for some reason
     fragPosition = (mbo.model * vec4(vertexPosition.x, heightmap, vertexPosition.y, 1.0)).xyz;
     gl_Position = ubo.proj_view * vec4(fragPosition, 1.0);
     fragNormal = getNormals(tex).xyz;
     fragTangent =  vec3(0,1,0);
-    fragTexCoord = tex;
+    fragTexCoord = vec2(tex);
 }

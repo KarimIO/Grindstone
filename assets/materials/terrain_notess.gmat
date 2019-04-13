@@ -1,1 +1,2 @@
 shader: ../assets/shaders/materials/terrain/terrain_notess.json
+heightmap: ../heightmap.jpg

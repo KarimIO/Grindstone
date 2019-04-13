@@ -21,7 +21,7 @@ void RenderTerrainComponent::generateMesh() {
 	std::vector<glm::vec2> vertices;
 	std::vector<unsigned int> indices;
 
-	int tile_w = 32, tile_h = 32;
+	int tile_w = 128, tile_h = 128;
 	float w_factor = 1.0f / tile_w;
 	float h_factor = 1.0f / tile_h;
 
@@ -133,20 +133,31 @@ ComponentHandle RenderTerrainSubSystem::addComponent(GameObjectHandle object_han
 
 	if (params.HasMember("path")) {
 		auto path = params["path"].GetString();
-		component.path_ = path;
+		component.path_ = std::string("../assets/") + path;
 		// If Raw file
 		std::ifstream input(component.path_, std::ios::ate | std::ios::binary);
 		if (!input.is_open()) {
 			GRIND_ERROR("Invalid path to terrain.");
 		} 
 		else {
-			component.heightmap_data_ = 0;
+			/*component.heightmap_data_ = 0;
 			
 			component.heightmap_size_ = input.tellg();
 			component.heightmap_data_ = new char[component.heightmap_size_];
 
 			input.seekg(0);
 			input.read(component.heightmap_data_, component.heightmap_size_);
+
+			TextureCreateInfo tci;
+			tci.data = (unsigned char *)component.heightmap_data_;
+			tci.width = tci.height = 512;
+			tci.format = FORMAT_COLOR_R16;
+			tci.ddscube = false;
+			tci.mipmaps = 0;
+			tci.options = TextureOptions();
+			component.heightmap_ = engine.getGraphicsWrapper()->CreateTexture(tci);
+
+			input.close();*/
 		}
 		// If other kind of image
 	}

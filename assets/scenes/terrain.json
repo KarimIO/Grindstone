@@ -14,10 +14,9 @@
             "terrain": {
                 "COMPONENT_TRANSFORM": {
                     "position": [0.0, 0.0, 0.0],
-                    "scale":    [20.0, 20.0, 20.0]
+                    "scale":    [10.0, 0.5, 10.0]
                 },
                 "COMPONENT_RENDER_TERRAIN": {
-                    "path": "heightmap.dds"
                 }
             },
             "skylight": {

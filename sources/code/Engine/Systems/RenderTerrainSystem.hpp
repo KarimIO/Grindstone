@@ -10,7 +10,7 @@
 class VertexBuffer;
 class IndexBuffer;
 class VertexArrayObject;
-
+class Texture;
 
 class TerrainDrawable : public Renderable {
 public:
@@ -31,6 +31,7 @@ struct RenderTerrainComponent : public Component {
 	std::string path_;
 	std::string material_path_;
 	MaterialReference material_;
+	Texture *heightmap_;
 	char *heightmap_data_;
 	unsigned int heightmap_size_;
 	void generateMesh();

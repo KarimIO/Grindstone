@@ -353,6 +353,11 @@ void Editor::displayComponent(ComponentType type, ComponentHandle handle) {
 void Editor::assetPanel() {
 	if (show_asset_browser_) {
 		ImGui::Begin("Asset Browser", &show_asset_browser_);
+		if (ImGui::BeginPopupContextItem("Asset Browser Rt")) {
+			ImGui::BeginMenu("Create Folder");
+			ImGui::BeginMenu("Create File");
+			ImGui::EndPopup();
+		}
 
 		ImVec2 button_sz(80, 30);
 		ImGuiStyle& style = ImGui::GetStyle();
@@ -420,13 +425,18 @@ void Editor::viewportPanels() {
 				
 				if (viewport_manipulating_ == i) {
 					float msensitivity = 0.5f;
+					float keymovespeed = 8.0f;
+					float cursormovespeed = 2.0f;
 
-					int midx = (min.x + max.x) / 2.0f;
-					int midy = (min.y + max.y) / 2.0f;
+					int midx = int(min.x + max.x) / 2;
+					int midy = int(min.y + max.y) / 2;
 
-					float cx = midx - mouse.x;
-					float cy = midy - mouse.y;
+					float cx = (midx - mouse.x);
+					float cy = (midy - mouse.y);
 
+					float ox = (((engine.getInputManager()->GetKey(KEY_W) > 0) ? keymovespeed : 0) - ((engine.getInputManager()->GetKey(KEY_S) > 0) ? keymovespeed : 0));
+					float oy = (((engine.getInputManager()->GetKey(KEY_D) > 0) ? keymovespeed : 0) - ((engine.getInputManager()->GetKey(KEY_A) > 0) ? keymovespeed : 0));
+					
 					if (v.view == Viewport::View::Perspective) {
 						v.angles.x += float(dt) * msensitivity * cy;
 						v.angles.y += float(dt) * msensitivity * cx;
@@ -434,17 +444,17 @@ void Editor::viewportPanels() {
 						float hpi = glm::pi<float>() / 2.0f;
 
 						v.angles.x = glm::clamp(v.angles.x, -hpi, hpi);
+
+						float oz = 8.0f * ((engine.getInputManager()->GetKey(KEY_SPACE) > 0) ? 1 : 0) - ((engine.getInputManager()->GetKey(KEY_CONTROL) > 0) ? 1 : 0);
+						
+						v.pos += (float)dt * (ox * v.fwd + oy * v.right + oz * v.up);
 					}
 					else {
-						
-						v.pos += (float)dt * 2.0f * (cx * v.right - cy * v.up);
+						cx *= cursormovespeed;
+						cy *= cursormovespeed;
+						v.pos += (float)dt * ((cx + oy) * v.right + (- cy + ox) * v.up);
 					}
 
-					float ox = ((engine.getInputManager()->GetKey(KEY_W) > 0) ? 1 : 0) - ((engine.getInputManager()->GetKey(KEY_S) > 0) ? 1 : 0);
-					float oy = ((engine.getInputManager()->GetKey(KEY_D) > 0) ? 1 : 0) - ((engine.getInputManager()->GetKey(KEY_A) > 0) ? 1 : 0);
-					float oz = ((engine.getInputManager()->GetKey(KEY_SPACE) > 0) ? 1 : 0) - ((engine.getInputManager()->GetKey(KEY_CONTROL) > 0) ? 1 : 0);
-
-					v.pos += (float)dt * 8.0f * (ox * v.fwd + oy * v.right + oz * v.up);
 
 					v.calcDirs();
 					v.setViewMatrix();
@@ -456,8 +466,8 @@ void Editor::viewportPanels() {
 					if (mouse.x < max.x && mouse.x > min.x && mouse.y > min.y && mouse.y < max.y) {
 						viewport_manipulating_ = i;
 
-						int midx = (min.x + max.x) / 2.0f;
-						int midy = (min.y + max.y) / 2.0f;
+						int midx = int(min.x + max.x) / 2;
+						int midy = int(min.y + max.y) / 2;
 
 						engine.getGraphicsWrapper()->SetCursor(midx, midy);
 					}
@@ -546,7 +556,7 @@ void Editor::sceneGraphPanel() {
 		ImGui::Begin("Scene Graph", &show_scene_graph_);
 
 		if (ImGui::Button("Add GameObject")) {
-			engine.getScenes()[0]->spaces_[0]->objects_.emplace_back(engine.getScenes()[0]->spaces_[0]->objects_.size(), "New Object");
+			engine.getScenes()[0]->spaces_[0]->objects_.emplace_back((GameObjectHandle)engine.getScenes()[0]->spaces_[0]->objects_.size(), "New Object");
 		}
 		ImGui::Separator();
 
