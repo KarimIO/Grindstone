@@ -38,7 +38,7 @@ endif ()
 
 add_executable(Grindstone ${ENGINE_SOURCES} ${ENGINE_HEADERS})
 
-target_compile_definitions(Grindstone PRIVATE _CRT_SECURE_NO_WARNINGS)
+target_compile_definitions(Grindstone PRIVATE _CRT_SECURE_NO_WARNINGS INCLUDE_EDITOR)
 
 if (MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")

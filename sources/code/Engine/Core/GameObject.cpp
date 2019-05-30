@@ -1,6 +1,13 @@
 #include "GameObject.hpp"
 #include <climits>
 
+GameObject::GameObject(const GameObject & g) {
+	id_ = g.id_;
+	name_ = g.name_;
+
+	memcpy(components_, g.components_, sizeof(components_));
+}
+
 GameObject::GameObject(GameObjectHandle id, std::string name) : id_(id), name_(name) {
 	memset(components_, UINT_MAX, sizeof(components_));
 }

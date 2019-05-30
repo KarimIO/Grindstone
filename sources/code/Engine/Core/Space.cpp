@@ -16,6 +16,7 @@
 #include "Engine.hpp"
 
 Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
+	memset(subsystems_, 0, sizeof(subsystems_));
 	addSystem(new ControllerSubSystem(this));
 	addSystem(new ColliderSubSystem(this));
 	addSystem(new RigidBodySubSystem(this));
@@ -55,6 +56,33 @@ Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 	}
 }
 
+Space::Space(const Space &s) {
+	name_ = s.name_;
+	 
+	for (GameObject &g : objects_) {
+		objects_.emplace_back(g);
+	}
+
+	for (int i = 0; i < NUM_COMPONENTS; ++i) {
+		/*if (s.subsystems_[i]) {
+			subsystems_[i] = s.subsystems_[i]->copy();
+		}
+		else*/
+			subsystems_[i] = nullptr;
+	}
+}
+
+void Space::clear() {
+	for (int i = 0; i < NUM_COMPONENTS; ++i) {
+		if (subsystems_[i])
+			delete subsystems_[i];
+	}
+}
+
+Space::~Space() {
+	clear();
+}
+
 void Space::loadPrefab(std::string name, rapidjson::Value &val) {
 
 }
@@ -65,6 +93,10 @@ SubSystem * Space::getSubsystem(ComponentType type) {
 
 GameObject & Space::getObject(GameObjectHandle handle) {
 	return objects_[handle];
+}
+
+std::string Space::getName() {
+	return name_;
 }
 
 SubSystem *Space::addSystem(SubSystem * system) {

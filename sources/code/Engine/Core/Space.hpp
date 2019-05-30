@@ -8,10 +8,14 @@
 class Space {
 public:
 	Space(std::string name, rapidjson::Value &);
+	Space(const Space &s);
+	void clear();
+	~Space();
 
 	void loadPrefab(std::string name, rapidjson::Value & val);
 	SubSystem *getSubsystem(ComponentType type);
 	GameObject &getObject(GameObjectHandle handle);
+	std::string getName();
 	std::vector<GameObject> objects_;
 private:
 	SubSystem *addSystem(SubSystem * system);

@@ -139,6 +139,30 @@ size_t TransformSubSystem::getNumComponents() {
 	return components_.size();
 }
 
+void TransformSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
+	
+	w.Key("position");
+	w.StartArray();
+	w.Double(getComponent(handle).position_.x);
+	w.Double(getComponent(handle).position_.y);
+	w.Double(getComponent(handle).position_.z);
+	w.EndArray();
+
+	w.Key("scale");
+	w.StartArray();
+	w.Double(getComponent(handle).scale_.x);
+	w.Double(getComponent(handle).scale_.y);
+	w.Double(getComponent(handle).scale_.z);
+	w.EndArray();
+
+	w.Key("angles");
+	w.StartArray();
+	w.Double(getComponent(handle).angles_.x);
+	w.Double(getComponent(handle).angles_.y);
+	w.Double(getComponent(handle).angles_.z);
+	w.EndArray();
+}
+
 TransformSubSystem::~TransformSubSystem() {
 
 }

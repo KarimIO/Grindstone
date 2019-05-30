@@ -19,12 +19,37 @@ Scene::Scene(std::string path) {
 	loadLevel(path);
 }
 
+Scene::Scene(const Scene &s) {
+	path_ = s.path_;
+	name_ = s.name_;
+
+	for (Space *sp : s.spaces_) {
+		spaces_.push_back(new Space(*sp));
+	}
+}
+
+void Scene::clear() {
+	for (Space *s : spaces_) {
+		delete s;
+	}
+	spaces_.clear();
+}
+
+Scene::~Scene() {
+	clear();
+}
+
 std::string Scene::getName() {
 	return name_;
 }
 
 std::string Scene::getPath() {
 	return path_;
+}
+
+void Scene::reload() {
+	clear();
+	loadLevel(path_);
 }
 
 void Scene::loadLevel(std::string path) {

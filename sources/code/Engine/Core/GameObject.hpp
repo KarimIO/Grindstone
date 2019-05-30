@@ -7,6 +7,7 @@
 
 class GameObject {
 public:
+	GameObject(const GameObject &g);
 	GameObject(GameObjectHandle id, std::string name);
 	bool operator== (GameObject &other);
 	void setComponentHandle(ComponentType, ComponentHandle);

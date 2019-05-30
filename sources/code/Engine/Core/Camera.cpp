@@ -96,7 +96,7 @@ void Camera::generateFramebuffers() {
 	hdr_framebuffer_ci.render_pass = nullptr;
 	hdr_framebuffer_ = engine.getGraphicsWrapper()->CreateFramebuffer(hdr_framebuffer_ci);
 
-	if (use_framebuffer_) {
+	// if (use_framebuffer_) {
 		/*if (final_buffer_) {
 			engine.getGraphicsWrapper()->DeleteRenderTarget(final_buffer_);
 		}*/
@@ -117,7 +117,7 @@ void Camera::generateFramebuffers() {
 		final_framebuffer_ci.depth_target = depth_target_; // depth_image_;
 		final_framebuffer_ci.render_pass = nullptr;
 		final_framebuffer_ = engine.getGraphicsWrapper()->CreateFramebuffer(final_framebuffer_ci);
-	}
+	// }
 
 	rt_hdr_.framebuffer = hdr_framebuffer_;
 	rt_hdr_.render_targets = &hdr_buffer_;

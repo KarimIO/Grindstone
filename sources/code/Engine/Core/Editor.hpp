@@ -7,7 +7,8 @@ class ImguiManager;
 
 class Editor {
 public:
-    Editor(ImguiManager *manager);
+	void setPath(std::string path);
+	Editor(ImguiManager *manager);
     void update();
 private:
 	struct Viewport {
@@ -38,6 +39,8 @@ private:
 	};
 	std::vector<Viewport> viewports_;
 
+	std::string path_;
+
     ImguiManager *manager_;
 
 	GameObjectHandle selected_object_handle_;
@@ -54,6 +57,13 @@ private:
     void componentPanel();
     void assetPanel();
 	void viewportPanels();
+
+	void saveFile();
+	void saveFileAs();
+	void saveFile(std::string path, Scene * scene);
+	void cleanCameras();
+	void loadFileFrom();
+	void loadFile();
 
     void getDirectory();
 

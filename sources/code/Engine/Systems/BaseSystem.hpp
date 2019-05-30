@@ -4,6 +4,10 @@
 #undef Bool
 #include "rapidjson/document.h"
 
+#ifdef INCLUDE_EDITOR
+#include <rapidjson/prettywriter.h>
+#endif
+
 #include "./AssetManagers/AssetReferences.hpp"
 #include <string>
 
@@ -70,6 +74,12 @@ public:
 	virtual size_t getNumComponents() = 0;
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle) = 0;
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) = 0;
+	virtual SubSystem *copy() { return nullptr; };
+
+#ifdef INCLUDE_EDITOR
+	virtual void writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> &w) = 0;
+#endif
+
 	virtual void removeComponent(ComponentHandle id) = 0;
 
 	ComponentType getSystemType();

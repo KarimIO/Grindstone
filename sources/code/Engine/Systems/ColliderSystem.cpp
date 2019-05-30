@@ -76,6 +76,46 @@ size_t ColliderSubSystem::getNumComponents() {
 	return components_.size();
 }
 
+void ColliderSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
+	auto &c = getComponent(handle);
+	switch (c.shape_type_) {
+	case ColliderComponent::CAPSULE: {
+		w.Key("type");
+		w.String("capsule");
+
+		w.Key("shape");
+		w.Double(c.capsule_radius_);
+		w.Key("height");
+		w.Double(c.capsule_height_);
+		break;
+	}
+	case ColliderComponent::PLANE: {
+		w.Key("type");
+		w.String("plane");
+
+		w.Key("shape");
+		w.StartArray();
+		w.Double(c.plane_shape_[0]);
+		w.Double(c.plane_shape_[1]);
+		w.Double(c.plane_shape_[2]);
+		w.Double(c.plane_shape_[3]);
+		w.EndArray();
+		break;
+	}
+	case ColliderComponent::SPHERE: {
+		w.Key("sphere");
+		w.String("plane");
+
+		w.Key("radius");
+		w.Double(c.sphere_radius_);
+		break;
+	}
+	default:
+		GRIND_WARN("Invalid shape.");
+		break;
+	}
+}
+
 void ColliderSystem::update(double dt) {
 }
 

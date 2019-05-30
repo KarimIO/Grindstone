@@ -238,6 +238,10 @@ size_t CubemapSubSystem::getNumComponents() {
 	return components_.size();
 }
 
+void CubemapSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
+	// TODO
+}
+
 void CubemapSubSystem::removeComponent(ComponentHandle handle) {
 }
 

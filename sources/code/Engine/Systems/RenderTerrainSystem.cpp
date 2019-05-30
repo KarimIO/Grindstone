@@ -190,6 +190,9 @@ size_t RenderTerrainSubSystem::getNumComponents() {
 	return components_.size();
 }
 
+void RenderTerrainSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
+}
+
 void RenderTerrainSystem::update(double dt) {
 }
 

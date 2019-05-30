@@ -137,6 +137,8 @@ ComponentHandle LightSpotSubSystem::addComponent(GameObjectHandle object_handle,
 			component.shadow_fbo_ = graphics_wrapper->CreateFramebuffer(fbci);
 		}
 	}
+	else
+		component.properties_.shadow = false;
 
 	return component_handle;
 }
@@ -147,6 +149,35 @@ LightSpotComponent & LightSpotSubSystem::getComponent(ComponentHandle handle) {
 
 size_t LightSpotSubSystem::getNumComponents() {
 	return components_.size();
+}
+
+void LightSpotSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
+	auto &c = getComponent(handle);
+
+	w.Key("color");
+	w.StartArray();
+	w.Double(c.properties_.color.x);
+	w.Double(c.properties_.color.y);
+	w.Double(c.properties_.color.z);
+	w.EndArray();
+
+	w.Key("brightness");
+	w.Double(c.properties_.power);
+	
+	w.Key("radius");
+	w.Double(c.properties_.attenuationRadius);
+
+	w.Key("innerAngle");
+	w.Double(c.properties_.innerAngle);
+
+	w.Key("outerAngle");
+	w.Double(c.properties_.outerAngle);
+
+	w.Key("shadowresolution");
+	w.Int(c.properties_.resolution);
+
+	w.Key("castshadow");
+	w.Bool(c.properties_.shadow);
 }
 
 void LightSpotSubSystem::removeComponent(ComponentHandle handle) {

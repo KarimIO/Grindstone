@@ -522,6 +522,7 @@ void RenderPathDeferred::renderDebug(Framebuffer *fbo) {
 }
 
 void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
+	if (!space) return;
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 	TransformSubSystem *transform_system = (TransformSubSystem *)space->getSubsystem(COMPONENT_TRANSFORM);
 
@@ -539,7 +540,7 @@ void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
 	gbuffer_->BindTextures(0);
 
 	LightPointSubSystem *point_light_system = (LightPointSubSystem *)space->getSubsystem(COMPONENT_LIGHT_POINT);
-	if (point_light_system->getNumComponents()) {
+	if (point_light_system && point_light_system->getNumComponents() > 0) {
 		point_light_pipeline_->Bind();
 		for (size_t i = 0; i < point_light_system->getNumComponents(); ++i) {
 			auto &light = point_light_system->getComponent(i);
@@ -561,7 +562,7 @@ void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
 	}
 
 	LightSpotSubSystem *spot_light_system = (LightSpotSubSystem *)space->getSubsystem(COMPONENT_LIGHT_SPOT);
-	if (spot_light_system->getNumComponents() > 0) {
+	if (spot_light_pipeline_ && spot_light_system->getNumComponents() > 0) {
 		spot_light_pipeline_->Bind();
 		for (size_t i = 0; i < spot_light_system->getNumComponents(); ++i) {
 			auto &light = spot_light_system->getComponent(i);
@@ -580,7 +581,7 @@ void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
 			light_spot_ubo_.shadow_resolution = light.properties_.resolution;
 			spot_light_ubo_handler_->UpdateUniformBuffer(&light_spot_ubo_);
 
-			if (light.properties_.shadow) {
+			if (light.properties_.shadow && light.shadow_fbo_) {
 				light.shadow_fbo_->BindRead();
 				light.shadow_fbo_->BindTextures(4);
 			}
@@ -593,7 +594,7 @@ void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
 	}
 
 	LightDirectionalSubSystem *directional_light_system = (LightDirectionalSubSystem *)space->getSubsystem(COMPONENT_LIGHT_DIRECTIONAL);
-	if (directional_light_system->getNumComponents() > 0) {
+	if (directional_light_system && directional_light_system->getNumComponents() > 0) {
 		directional_light_pipeline_->Bind();
 		for (size_t i = 0; i < directional_light_system->getNumComponents(); ++i) {
 			auto &light = directional_light_system->getComponent(i);
@@ -609,7 +610,7 @@ void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
 			light_directional_ubo_.shadow_resolution = light.properties_.resolution;
 			directional_light_ubo_handler_->UpdateUniformBuffer(&light_directional_ubo_);
 
-			if (light.properties_.shadow) {
+			if (light.properties_.shadow && light.shadow_fbo_) {
 				light.shadow_fbo_->BindRead();
 				light.shadow_fbo_->BindTextures(4);
 			}

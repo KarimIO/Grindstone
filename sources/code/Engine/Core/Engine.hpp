@@ -34,8 +34,6 @@ typedef size_t SceneHandle;
 
 class ImguiManager;
 
-#define INCLUDE_EDITOR
-
 class Editor;
 
 class Engine {
@@ -49,9 +47,13 @@ public:
 	void initializeTBL();
 
 #ifdef INCLUDE_EDITOR
+	void editorControl(double);
 	void launchEditor();
 	Editor *getEditor();
+	void startSimulation();
+	void stopSimulation();
 	bool edit_mode_;
+	bool edit_is_simulating_;
 #endif
 
 	TextureBindingLayout *gbuffer_tbl_;
@@ -115,6 +117,7 @@ private:
 	bool running_;
 
 	System *systems_[NUM_COMPONENTS];
+	std::vector<Scene *> simulate_scenes_;
 	std::vector<Scene *> scenes_;
 
 	Settings *settings_;

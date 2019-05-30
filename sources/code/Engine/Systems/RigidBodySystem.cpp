@@ -181,6 +181,22 @@ size_t RigidBodySubSystem::getNumComponents() {
 	return components_.size();
 }
 
+void RigidBodySubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
+	RigidBodyComponent &c = getComponent(handle);
+
+	w.Key("restitution");
+	w.Double(c.restitution_);
+
+	w.Key("friction");
+	w.Double(c.friction_);
+
+	w.Key("damping_linear");
+	w.Double(c.damping_linear_);
+
+	w.Key("damping_rotational");
+	w.Double(c.damping_rotational_);
+}
+
 void RigidBodySubSystem::removeComponent(ComponentHandle handle) {
 	components_.erase(components_.begin() + handle);
 }

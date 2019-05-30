@@ -1,6 +1,7 @@
 #include "Engine.hpp"
 
 #ifdef INCLUDE_EDITOR
+#include "Space.hpp"
 #include "Editor.hpp"
 #include "Core/Input.hpp"
 #include "../AssetManagers/ImguiManager.hpp"
@@ -17,7 +18,10 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_opengl3.h"
 
+#include <rapidjson/prettywriter.h>
+
 #include <filesystem>
+#include <fstream>
 
 #include <vector>
 #include <algorithm>
@@ -25,10 +29,15 @@
 #include <glm/gtx/transform.hpp>
 #include "Renderpaths/RenderPathDeferred.hpp"
 #include "Systems/TransformSystem.hpp"
+#include "Systems/LightSpotSystem.hpp"
 #include "Utilities/Logger.hpp"
 
 Editor::Viewport::Viewport(Camera *c, View v) : camera_(c), first(true) {
 	setView(v);
+}
+
+void Editor::setPath(std::string path) {
+	path_ = path;
 }
 
 void Editor::Viewport::calcDirs() {
@@ -199,6 +208,16 @@ void Editor::prepareDockspace() {
 
 	if (ImGui::BeginMenuBar()) {
 		if (ImGui::BeginMenu("File")) {
+			if (ImGui::MenuItem("Save", "", false))
+				saveFile();
+			if (ImGui::MenuItem("Save As", "", false))
+				saveFileAs();
+			ImGui::Separator();
+			if (ImGui::MenuItem("Load", "", false))
+				loadFile();
+			if (ImGui::MenuItem("Load From", "", false))
+				loadFileFrom();
+			ImGui::Separator();
 			if (ImGui::MenuItem("Close", "", false))
 				engine.shutdown();
 			ImGui::EndMenu();
@@ -207,8 +226,26 @@ void Editor::prepareDockspace() {
 			if (ImGui::MenuItem("Show Asset Browser", "", show_asset_browser_)) show_asset_browser_ = !show_asset_browser_;
 			if (ImGui::MenuItem("Show Scene Graph", "", show_scene_graph_)) show_scene_graph_ = !show_scene_graph_;
 			if (ImGui::MenuItem("Show Component Panel", "", show_component_panel_)) show_component_panel_ = !show_component_panel_;
-			if (ImGui::MenuItem("Show Viewport Panel", "", show_viewport_)) show_viewport_ = !show_viewport_;
+			if (ImGui::MenuItem("Add Viewport Panel", "", false)) {
+				Camera *c = new Camera(engine.getScenes()[0]->spaces_[0], true);
+				c->setViewport(800, 600);
+				c->initialize();
+				viewports_.emplace_back(c, Viewport::View::Perspective);
+			}
 			ImGui::EndMenu();
+		}
+
+		if (!engine.edit_is_simulating_) {
+			if (ImGui::BeginMenu("Simulate")) {
+				engine.startSimulation();
+				ImGui::EndMenu();
+			}
+		}
+		else {
+			if (ImGui::BeginMenu("Stop Simulation")) {
+				engine.stopSimulation();
+				ImGui::EndMenu();
+			}
 		}
 
 		ImGui::EndMenuBar();
@@ -285,38 +322,76 @@ void Editor::getDirectory() {
 	}
 }
 
+void vec3Component(std::string base, glm::vec3 &val, float w) {
+	float x = val.x;
+	float y = val.y;
+	float z = val.z;
+	ImGui::PushItemWidth(w);
+	ImGui::PushItemWidth(w);
+	ImGui::PushItemWidth(w);
+	if (ImGui::InputFloat((base + "X").c_str(), &x))
+		val.x = x;
+	ImGui::SameLine();
+	if (ImGui::InputFloat((base + "Y").c_str(), &y))
+		val.y = y;
+	ImGui::SameLine();
+	if (ImGui::InputFloat((base + "Z").c_str(), &z))
+		val.z = z;
+}
+
+void floatComponent(std::string text, std::string base, float &val) {
+	float x = val;
+	ImGui::Text(text.c_str());
+	if (ImGui::InputFloat(base.c_str(), &x))
+		val = x;
+}
+
+void vec4Component(std::string base, glm::vec3 &val, float &vala, float w) {
+	float x = val.x;
+	float y = val.y;
+	float z = val.z;
+	float a = vala;
+	ImGui::PushItemWidth(w);
+	ImGui::PushItemWidth(w);
+	ImGui::PushItemWidth(w);
+	ImGui::PushItemWidth(w);
+	if (ImGui::InputFloat((base + "X").c_str(), &x))
+		val.x = x;
+	ImGui::SameLine();
+	if (ImGui::InputFloat((base + "Y").c_str(), &y))
+		val.y = y;
+	ImGui::SameLine();
+	if (ImGui::InputFloat((base + "Z").c_str(), &z))
+		val.z = z;
+	ImGui::SameLine();
+	if (ImGui::InputFloat((base + "A").c_str(), &a))
+		vala = a;
+}
+
 void Editor::displayComponent(ComponentType type, ComponentHandle handle) {
 	if (ImGui::TreeNode(component_names[type])) {
+		ImGuiStyle& style = ImGui::GetStyle();
+		float w = ImGui::GetWindowContentRegionMax().x;
+		float p = style.FramePadding.x;
+		float w3 = (w / 3.0f) - p;
+		w3 = (w3 > 30.0f) ? w3 : 30.0f;
+		float w4 = (w / 3.0f) - p;
+		w4 = (w4 > 30.0f) ? w4 : 30.0f;
+
 		// Component Settings
 		switch (type) {
 		case COMPONENT_TRANSFORM: {
 			TransformComponent &tr = ((TransformSubSystem *)engine.getScenes()[0]->spaces_[0]->getSubsystem(COMPONENT_TRANSFORM))->getComponent(handle);
-			float x = tr.position_.x;
-			float y = tr.position_.y;
-			float z = tr.position_.z;
-			ImGui::Text("Position");
-			ImGuiStyle& style = ImGui::GetStyle();
-			float w = (ImGui::GetWindowContentRegionMax().x / 3.0f) - style.FramePadding.x;
-			w = (w > 30.0f) ? w : 30.0f;
-			ImGui::PushItemWidth(w);
-			ImGui::PushItemWidth(w);
-			ImGui::PushItemWidth(w);
-			if (ImGui::InputFloat("##tX", &x))
-				tr.position_.x = x;
-			ImGui::SameLine();
-			if (ImGui::InputFloat("##tY", &y))
-				tr.position_.y = y;
-			ImGui::SameLine();
-			if (ImGui::InputFloat("##tZ", &z))
-				tr.position_.z = z;
+			ImGui::Text("Position"); 
+			vec3Component("##t", tr.position_, w3);
 
 			float rx = glm::degrees(tr.angles_.x);
 			float ry = glm::degrees(tr.angles_.y);
 			float rz = glm::degrees(tr.angles_.z);
 			ImGui::Text("Rotation");
-			ImGui::PushItemWidth(w);
-			ImGui::PushItemWidth(w);
-			ImGui::PushItemWidth(w);
+			ImGui::PushItemWidth(w4);
+			ImGui::PushItemWidth(w4);
+			ImGui::PushItemWidth(w4);
 			if (ImGui::InputFloat("##rX", &rx))
 				tr.angles_.x = glm::radians(rx);
 			ImGui::SameLine();
@@ -330,9 +405,9 @@ void Editor::displayComponent(ComponentType type, ComponentHandle handle) {
 			float sy = tr.scale_.y;
 			float sz = tr.scale_.z;
 			ImGui::Text("Scale");
-			ImGui::PushItemWidth(w);
-			ImGui::PushItemWidth(w);
-			ImGui::PushItemWidth(w);
+			ImGui::PushItemWidth(w3);
+			ImGui::PushItemWidth(w3);
+			ImGui::PushItemWidth(w3);
 			if (ImGui::InputFloat("##sX", &sx) && sx != 0.0f)
 				tr.scale_.x = sx;
 			ImGui::SameLine();
@@ -341,6 +416,17 @@ void Editor::displayComponent(ComponentType type, ComponentHandle handle) {
 			ImGui::SameLine();
 			if (ImGui::InputFloat("##sZ", &sz) && sz != 0.0f)
 				tr.scale_.z = sz;
+			break;
+		}
+		case COMPONENT_LIGHT_SPOT: {
+			LightSpotComponent &tr = ((LightSpotSubSystem *)engine.getScenes()[0]->spaces_[0]->getSubsystem(COMPONENT_LIGHT_SPOT))->getComponent(handle);
+			ImGui::Text("Color");
+			vec4Component("##lsc", tr.properties_.color, tr.properties_.power, w4);
+
+			floatComponent("Inner Angle", "##lsi", tr.properties_.innerAngle);
+			floatComponent("Outer Angle", "##lso", tr.properties_.outerAngle);
+			floatComponent("Attuenuation Radius", "##lsa", tr.properties_.attenuationRadius);
+			ImGui::Checkbox("Shadow Enabled", &tr.properties_.shadow);
 			break;
 		}
 		default: break;
@@ -390,151 +476,153 @@ void Editor::assetPanel() {
 	}
 }
 
+#include "Systems/CameraSystem.hpp"
+
 void Editor::viewportPanels() {
 	if (show_viewport_) {
-		bool viewport_selected = false;
-		bool right_clicking = engine.getInputManager()->GetMouseButton(MOUSE_RIGHT) > 0;
-
-		auto mouse = ImGui::GetMousePos();
-
-		double dt = engine.getUpdateTimeDelta();
-
-		int i = 0;
-		for (auto &v : viewports_) {
-			std::string title = "Viewport ";
-			title += std::to_string(++i);
-
-			ImGui::Begin(title.c_str(), &show_viewport_);
+		if (engine.edit_is_simulating_) {
+			ImGui::Begin("Simulation Viewport", &show_viewport_);
 			ImVec2 size = ImGui::GetWindowSize();
-			/*ImGuiStyle& style = ImGui::GetStyle();
-			size.x -= style.FramePadding.x * 2;
-			size.y -= style.FramePadding.y * 2;*/
 
-			/*if (v.first) {
-				v.first = false;
-				v.camera_->setViewport(size.x, size.y);
-				//v.camera_->initialize();
-			}*/
+			Space *space = engine.getScene(0)->spaces_[0];
+			CameraSubSystem *camsys = (CameraSubSystem *)space->getSubsystem(COMPONENT_CAMERA);
+			CameraComponent &camcomp = camsys->getComponent(0);
+			GameObjectHandle obj = camcomp.game_object_handle_;
+			ComponentHandle transcomp = space->getObject(obj).getComponentHandle(COMPONENT_TRANSFORM);
+			TransformSubSystem *transys = (TransformSubSystem *)space->getSubsystem(COMPONENT_TRANSFORM);
+			
+			glm::vec3 pos = transys->getPosition(transcomp);
+			glm::vec3 fwd = transys->getForward(transcomp);
+			glm::vec3 up = transys->getUp(transcomp);
 
-			//if (viewport_manipulating_) {
-			if (right_clicking) {
-				auto min = ImGui::GetWindowPos();
-				auto max = min;
-				max.x += size.x;
-				max.y += size.y;
-				
-				if (viewport_manipulating_ == i) {
-					float msensitivity = 0.5f;
-					float keymovespeed = 8.0f;
-					float cursormovespeed = 2.0f;
+			glm::mat4 view = glm::lookAt(
+				pos,
+				pos + fwd,
+				up
+			);
 
-					int midx = int(min.x + max.x) / 2;
-					int midy = int(min.y + max.y) / 2;
+			Camera &cam = camcomp.camera_;
 
-					float cx = (midx - mouse.x);
-					float cy = (midy - mouse.y);
-
-					float ox = (((engine.getInputManager()->GetKey(KEY_W) > 0) ? keymovespeed : 0) - ((engine.getInputManager()->GetKey(KEY_S) > 0) ? keymovespeed : 0));
-					float oy = (((engine.getInputManager()->GetKey(KEY_D) > 0) ? keymovespeed : 0) - ((engine.getInputManager()->GetKey(KEY_A) > 0) ? keymovespeed : 0));
-					
-					if (v.view == Viewport::View::Perspective) {
-						v.angles.x += float(dt) * msensitivity * cy;
-						v.angles.y += float(dt) * msensitivity * cx;
-
-						float hpi = glm::pi<float>() / 2.0f;
-
-						v.angles.x = glm::clamp(v.angles.x, -hpi, hpi);
-
-						float oz = 8.0f * ((engine.getInputManager()->GetKey(KEY_SPACE) > 0) ? 1 : 0) - ((engine.getInputManager()->GetKey(KEY_CONTROL) > 0) ? 1 : 0);
-						
-						v.pos += (float)dt * (ox * v.fwd + oy * v.right + oz * v.up);
-					}
-					else {
-						cx *= cursormovespeed;
-						cy *= cursormovespeed;
-						v.pos += (float)dt * ((cx + oy) * v.right + (- cy + ox) * v.up);
-					}
-
-
-					v.calcDirs();
-					v.setViewMatrix();
-
-					engine.getGraphicsWrapper()->SetCursor(midx, midy);
-					viewport_selected = true;
-				}
-				else if (viewport_manipulating_ == 0) {
-					if (mouse.x < max.x && mouse.x > min.x && mouse.y > min.y && mouse.y < max.y) {
-						viewport_manipulating_ = i;
-
-						int midx = int(min.x + max.x) / 2;
-						int midy = int(min.y + max.y) / 2;
-
-						engine.getGraphicsWrapper()->SetCursor(midx, midy);
-					}
-				}
-			}
-			else {
-				viewport_manipulating_ = 0;
-			}
-
-			v.camera_->render(v.pos, v.view_mat);
+			cam.render(pos, view);
 			engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
 
-			unsigned int t = ((GLRenderTarget *)v.camera_->final_buffer_)->getHandle();
+			unsigned int t = ((GLRenderTarget *)cam.final_buffer_)->getHandle();
 
 			ImGui::GetWindowDrawList()->AddImage(
 				(void *)t, ImVec2(ImGui::GetCursorScreenPos()),
 				ImVec2(ImGui::GetCursorScreenPos().x + size.x, ImGui::GetCursorScreenPos().y + size.y), ImVec2(0, 1), ImVec2(1, 0));
 
-			static bool pp;
+			ImGui::End();
+		}
+		else {
+			bool viewport_selected = false;
+			bool right_clicking = engine.getInputManager()->GetMouseButton(MOUSE_RIGHT) > 0;
 
-			const char* items[] = { "Up", "Down", "Left", "Right", "Forward", "Back", "Perspective" };
-			if (v.view_option == nullptr) {
-				v.view_option = items[v.view];
-			}
+			auto mouse = ImGui::GetMousePos();
 
-			ImGui::PushItemWidth(100);
-			if (ImGui::BeginCombo("##combo", v.view_option)) {
-				for (unsigned int n = 0; n < IM_ARRAYSIZE(items); n++) {
-					bool is_selected = (v.view_option == items[n]); // You can store your selection however you want, outside or inside your objects
-					if (ImGui::Selectable(items[n], is_selected)) {
-						v.view_option = items[n];
-						v.setView((Viewport::View)n);
+			double dt = engine.getUpdateTimeDelta();
+
+			int i = 0;
+			for (auto &v : viewports_) {
+				std::string title = "Viewport ";
+				title += std::to_string(++i);
+
+				ImGui::Begin(title.c_str(), &show_viewport_);
+				ImVec2 size = ImGui::GetWindowSize();
+				/*ImGuiStyle& style = ImGui::GetStyle();
+				size.x -= style.FramePadding.x * 2;
+				size.y -= style.FramePadding.y * 2;*/
+
+				/*if (v.first) {
+					v.first = false;
+					v.camera_->setViewport(size.x, size.y);
+					//v.camera_->initialize();
+				}*/
+
+				//if (viewport_manipulating_) {
+				if (right_clicking) {
+					auto min = ImGui::GetWindowPos();
+					auto max = min;
+					max.x += size.x;
+					max.y += size.y;
+
+					if (viewport_manipulating_ == i) {
+						float msensitivity = 0.5f;
+						float keymovespeed = 8.0f;
+						float cursormovespeed = 2.0f;
+
+						int midx = int(min.x + max.x) / 2;
+						int midy = int(min.y + max.y) / 2;
+
+						float cx = (midx - mouse.x);
+						float cy = (midy - mouse.y);
+
+						float ox = (((engine.getInputManager()->GetKey(KEY_W) > 0) ? keymovespeed : 0) - ((engine.getInputManager()->GetKey(KEY_S) > 0) ? keymovespeed : 0));
+						float oy = (((engine.getInputManager()->GetKey(KEY_D) > 0) ? keymovespeed : 0) - ((engine.getInputManager()->GetKey(KEY_A) > 0) ? keymovespeed : 0));
+
+						if (v.view == Viewport::View::Perspective) {
+							v.angles.x += float(dt) * msensitivity * cy;
+							v.angles.y += float(dt) * msensitivity * cx;
+
+							float hpi = glm::pi<float>() / 2.0f;
+
+							v.angles.x = glm::clamp(v.angles.x, -hpi, hpi);
+
+							float oz = 8.0f * ((engine.getInputManager()->GetKey(KEY_SPACE) > 0) ? 1 : 0) - ((engine.getInputManager()->GetKey(KEY_CONTROL) > 0) ? 1 : 0);
+
+							v.pos += (float)dt * (ox * v.fwd + oy * v.right + oz * v.up);
+						}
+						else {
+							cx *= cursormovespeed;
+							cy *= cursormovespeed;
+							v.pos += (float)dt * ((cx + oy) * v.right + (-cy + ox) * v.up);
+						}
+
+
+						v.calcDirs();
+						v.setViewMatrix();
+
+						engine.getGraphicsWrapper()->SetCursor(midx, midy);
+						viewport_selected = true;
 					}
+					else if (viewport_manipulating_ == 0) {
+						if (mouse.x < max.x && mouse.x > min.x && mouse.y > min.y && mouse.y < max.y) {
+							viewport_manipulating_ = i;
 
-					if (is_selected)
-						ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+							int midx = int(min.x + max.x) / 2;
+							int midy = int(min.y + max.y) / 2;
+
+							engine.getGraphicsWrapper()->SetCursor(midx, midy);
+						}
+					}
 				}
-				ImGui::EndCombo();
-			}
-
-			const char* debug_combo_items[] = { "Lit", "Distance", "Normal", "View Normal", "Albedo", "Specular", "Roughness", "Position" };
-			if (v.debug_combo_option == nullptr)
-				v.debug_combo_option = debug_combo_items[0];
-
-			if (ImGui::TreeNode("View Data")) {
-				ImGui::Checkbox("Wireframe", &((RenderPathDeferred *)v.camera_->render_path_)->wireframe_);
-
-				ImGui::Separator();
-
-				if (ImGui::TreeNode("Post-Processing")) {
-					ImGui::Checkbox("SSAO", &pp);
-					ImGui::Checkbox("Reflections", &pp);
-					ImGui::Checkbox("Auto-Exposure", &pp);
-					ImGui::Checkbox("Color Grading", &pp);
-
-					ImGui::TreePop();
+				else {
+					viewport_manipulating_ = 0;
 				}
 
-				ImGui::Separator();
+				v.camera_->render(v.pos, v.view_mat);
+				engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
+
+				unsigned int t = ((GLRenderTarget *)v.camera_->final_buffer_)->getHandle();
+
+				ImGui::GetWindowDrawList()->AddImage(
+					(void *)t, ImVec2(ImGui::GetCursorScreenPos()),
+					ImVec2(ImGui::GetCursorScreenPos().x + size.x, ImGui::GetCursorScreenPos().y + size.y), ImVec2(0, 1), ImVec2(1, 0));
+
+				static bool pp;
+
+				const char* items[] = { "Up", "Down", "Left", "Right", "Forward", "Back", "Perspective" };
+				if (v.view_option == nullptr) {
+					v.view_option = items[v.view];
+				}
 
 				ImGui::PushItemWidth(100);
-				if (ImGui::BeginCombo("##debug_combo", v.debug_combo_option)) {
-					for (int n = 0; n < IM_ARRAYSIZE(debug_combo_items); n++) {
-						bool is_selected = (v.debug_combo_option == debug_combo_items[n]); // You can store your selection however you want, outside or inside your objects
-						if (ImGui::Selectable(debug_combo_items[n], is_selected)) {
-							v.debug_combo_option = debug_combo_items[n];
-							v.camera_->render_path_->setDebugMode(n);
+				if (ImGui::BeginCombo("##combo", v.view_option)) {
+					for (unsigned int n = 0; n < IM_ARRAYSIZE(items); n++) {
+						bool is_selected = (v.view_option == items[n]); // You can store your selection however you want, outside or inside your objects
+						if (ImGui::Selectable(items[n], is_selected)) {
+							v.view_option = items[n];
+							v.setView((Viewport::View)n);
 						}
 
 						if (is_selected)
@@ -543,12 +631,150 @@ void Editor::viewportPanels() {
 					ImGui::EndCombo();
 				}
 
-				ImGui::TreePop();
-			}
+				const char* debug_combo_items[] = { "Lit", "Distance", "Normal", "View Normal", "Albedo", "Specular", "Roughness", "Position" };
+				if (v.debug_combo_option == nullptr)
+					v.debug_combo_option = debug_combo_items[0];
 
-			ImGui::End();
+				if (ImGui::TreeNode("View Data")) {
+					ImGui::Checkbox("Wireframe", &((RenderPathDeferred *)v.camera_->render_path_)->wireframe_);
+
+					ImGui::Separator();
+
+					if (ImGui::TreeNode("Post-Processing")) {
+						ImGui::Checkbox("SSAO", &pp);
+						ImGui::Checkbox("Reflections", &pp);
+						ImGui::Checkbox("Auto-Exposure", &pp);
+						ImGui::Checkbox("Color Grading", &pp);
+
+						ImGui::TreePop();
+					}
+
+					ImGui::Separator();
+
+					ImGui::PushItemWidth(100);
+					if (ImGui::BeginCombo("##debug_combo", v.debug_combo_option)) {
+						for (int n = 0; n < IM_ARRAYSIZE(debug_combo_items); n++) {
+							bool is_selected = (v.debug_combo_option == debug_combo_items[n]); // You can store your selection however you want, outside or inside your objects
+							if (ImGui::Selectable(debug_combo_items[n], is_selected)) {
+								v.debug_combo_option = debug_combo_items[n];
+								v.camera_->render_path_->setDebugMode(n);
+							}
+
+							if (is_selected)
+								ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+						}
+						ImGui::EndCombo();
+					}
+
+					ImGui::TreePop();
+				}
+
+				ImGui::End();
+			}
 		}
 	}
+}
+
+void Editor::saveFile() {
+	saveFile(path_, engine.getScenes()[0]);
+}
+
+void Editor::saveFileAs() {
+	std::string p = engine.getGraphicsWrapper()->getSavePath();
+	//loadFile(path_, engine.getScenes()[0]);
+	if (p != "") {
+		path_ = p;
+		saveFile(path_, engine.getScenes()[0]);
+	}
+}
+
+void Editor::saveFile(std::string path, Scene *scene) {
+
+	rapidjson::StringBuffer buffer;
+	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+	writer.StartObject();
+	writer.Key("name");
+	writer.String("New Scene");
+
+	writer.Key("spaces");
+	writer.StartObject();
+
+	for (auto space : scene->spaces_) {
+		writer.Key(space->getName().c_str());
+		writer.StartObject();
+
+		for (auto &object : space->objects_) {
+			writer.Key(object.getName().c_str());
+			writer.StartObject();
+
+			for (int i = 0; i < NUM_COMPONENTS; ++i) {
+				ComponentHandle h = object.getComponentHandle((ComponentType)i);
+				if (h != -1) {
+					writer.Key(component_names[i]);
+					writer.StartObject();
+					space->getSubsystem((ComponentType)i)->writeComponentToJson(h, writer);
+					writer.EndObject();
+				}
+			}
+
+			writer.EndObject();
+		}
+
+		writer.EndObject();
+	}
+
+	writer.EndObject();
+	writer.EndObject();
+
+	std::ofstream ofile(path);
+	if (ofile.is_open()) {
+		GRIND_LOG("Writing to: {0}.\n", path);
+		ofile << buffer.GetString();
+	}
+	else {
+		GRIND_WARN("Could not write to file {0}.\n", path);
+	}
+
+	ofile.close();
+}
+
+void Editor::cleanCameras() {
+	for (auto v : viewports_) {
+		delete v.camera_;
+	}
+
+	viewports_.clear();
+
+	Camera *c = new Camera(engine.getScenes()[0]->spaces_[0], true);
+	c->setViewport(800, 600);
+	c->initialize();
+	((RenderPathDeferred *)c->render_path_)->wireframe_ = true;
+	viewports_.emplace_back(c, Viewport::View::Top);
+	c = new Camera(engine.getScenes()[0]->spaces_[0], true);
+	c->setViewport(800, 600);
+	c->initialize();
+	viewports_.emplace_back(c, Viewport::View::Perspective);
+
+}
+
+void Editor::loadFileFrom() {
+	std::string p = engine.getGraphicsWrapper()->getLoadPath();
+	//loadFile(path_, engine.getScenes()[0]);
+	if (p != "") {
+		path_ = p;
+		Scene *s = engine.getScenes()[0];
+		if (s) {
+			delete s;
+		}
+		engine.getScenes().clear();
+		engine.addScene(path_);
+		cleanCameras();
+	}
+}
+
+void Editor::loadFile() {
+	engine.getScenes()[0]->reload();
+	cleanCameras();
 }
 
 void Editor::sceneGraphPanel() {

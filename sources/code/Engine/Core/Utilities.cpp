@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include "../Utilities/Logger.hpp"
+#include <iostream>
 
 bool ReadFileIncludable(std::string pFileName, std::string& output)
 {
@@ -71,7 +72,17 @@ bool readFileBinary(const std::string& filename, std::vector<char>& buffer) {
 }
 
 bool readFile(const std::string& filename, std::vector<char>& buffer) {
-	std::ifstream file(filename, std::ios::binary | std::ios::ate);
+	std::ifstream file;
+
+
+	file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+	try {
+		file.open(filename, std::ios::binary | std::ios::ate);
+	}
+	catch (std::system_error& e) {
+		std::cerr << e.code().message() << std::endl;
+	}
 
 	if (!file.is_open()) {
 		return false;

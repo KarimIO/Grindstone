@@ -25,7 +25,7 @@ RenderStaticMeshSubSystem::~RenderStaticMeshSubSystem() {
 ComponentHandle RenderStaticMeshSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
 	components_.emplace_back(object_handle, component_handle);
-	auto component = components_.back();
+	auto &component = components_.back();
 
 	if (params.HasMember("path")) {
 		auto path = params["path"].GetString();
@@ -46,6 +46,13 @@ RenderStaticMeshComponent &RenderStaticMeshSubSystem::getComponent(ComponentHand
 
 size_t RenderStaticMeshSubSystem::getNumComponents() {
 	return components_.size();
+}
+
+void RenderStaticMeshSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
+	auto &c = getComponent(handle);
+
+	w.Key("path");
+	w.String(c.path_.c_str());
 }
 
 void RenderStaticMeshSystem::update(double dt) {

@@ -48,6 +48,13 @@ size_t RenderSkeletalMeshSubSystem::getNumComponents() {
 	return components_.size();
 }
 
+void RenderSkeletalMeshSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
+	auto &c = getComponent(handle);
+
+	w.Key("path");
+	w.String(c.path_.c_str());
+}
+
 void RenderSkeletalMeshSystem::update(double dt) {
 }
 

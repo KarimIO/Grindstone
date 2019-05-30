@@ -28,8 +28,13 @@ InputManager::InputManager() {
 		windowData.resize(WINDOW_LAST);
 	}
 
-	AddControl("escape", "Shutdown", NULL, 1);
-	BindAction("Shutdown", NULL, &engine, &Engine::shutdownControl, KEY_RELEASED);
+	if (!engine.edit_mode_ || engine.edit_is_simulating_) {
+		AddControl("escape", "Shutdown", NULL, 1);
+		BindAction("Shutdown", NULL, &engine, &Engine::shutdownControl, KEY_RELEASED);
+	}
+
+	AddControl("f8", "Editor", NULL, 1);
+	BindAction("Editor", NULL, &engine, &Engine::editorControl, KEY_RELEASED);
 }
 
 int InputManager::GetKeyboardKeyByName(std::string control) {
@@ -287,7 +292,16 @@ void InputManager::SetInputControlFile(std::string path) {
 
 void InputManager::SetInputControlFile(std::string path, InputComponent * component) {
 	std::ifstream file;
-	file.open("../"+path);
+
+	file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+	try {
+		file.open("../" + path);
+	}
+	catch (std::system_error& e) {
+		std::cerr << e.code().message() << std::endl;
+	}
+
 	if (file.fail()) {
 		GRIND_ERROR("INPUT: File load failed: {0}\n", path.c_str());
 		return;
@@ -301,6 +315,8 @@ void InputManager::SetInputControlFile(std::string path, InputComponent * compon
 		file >> num;
 		AddControl(key, command, component, num);
 	}
+
+	file.close();
 }
 
 void InputManager::CleanupSystem(InputComponent * component, bool use, std::vector<ControlHandler *> &list) {
@@ -574,9 +590,9 @@ void InputManager::ForceQuit() {
 }
 
 void InputManager::LoopControls(double deltaTime) {
-	if (!IsFocused() || engine.edit_mode_)
+	if (!IsFocused() || (engine.edit_mode_ && !engine.edit_is_simulating_))
 		return;
-	
+
 	for (size_t i = 0; i <= MOUSE_MOUSE5; i++) {
 		if (mouseData[i] > 0) { // Key is Pressed
 			ControlHandler *container = mouseControls[i];
@@ -602,7 +618,8 @@ void InputManager::LoopControls(double deltaTime) {
 	}
 
 	auto sett = engine.getSettings();
-	engine.getGraphicsWrapper()->SetCursor(sett->resolution_x_ / 2, sett->resolution_y_ / 2);
+	if (!engine.edit_mode_)
+		engine.getGraphicsWrapper()->SetCursor(sett->resolution_x_ / 2, sett->resolution_y_ / 2);
 }
 
 ControlHandler::ControlHandler(std::string controlCode, InputComponent * componentPtr, ControlHandler * prev, double val) {
@@ -633,6 +650,10 @@ ActionCommand::ActionCommand(void * TargetEntity, std::function<void(double)> fu
 void BaseCommand::Invoke(double value) {
 	if (function != NULL)
 		function(value);
+}
+
+InputComponent::~InputComponent() {
+	manager_->Cleanup(this);
 }
 
 void InputComponent::SetInputControlFile(std::string path) {

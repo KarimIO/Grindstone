@@ -32,6 +32,7 @@ public:
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
 	LightPointComponent &getComponent(ComponentHandle handle);
 	size_t getNumComponents();
+	virtual void writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) override;
 	virtual void removeComponent(ComponentHandle handle);
 
 	virtual ~LightPointSubSystem();

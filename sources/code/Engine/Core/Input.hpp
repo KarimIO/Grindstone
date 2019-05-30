@@ -1,6 +1,7 @@
 #ifndef _INPUT_H
 #define _INPUT_H
 
+#include "Systems/BaseSystem.hpp"
 #include "InputInterface.hpp"
 #include <functional>
 #include <vector>
@@ -111,6 +112,7 @@ public:
 
 class InputComponent {
 public:
+	~InputComponent();
 	void SetInputControlFile(std::string path);
 	template <typename T>
 	void BindAction(std::string control, T *targetEntity, void (T::*methodPointer)(double), KEY_STATUS status = KEY_PRESSED) {

@@ -187,6 +187,9 @@ size_t AnimationSubSystem::getNumComponents() {
 	return components_.size();
 }
 
+void AnimationSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
+}
+
 void AnimationSystem::update(double dt) {
 }
 

@@ -116,6 +116,54 @@ void GraphicsWrapper::setTitle(const char *str) {
 	SetWindowTextA(window_handle, str);
 }
 
+char *GraphicsWrapper::getSavePath() {
+	OPENFILENAME ofn;
+	char *szFileName = new char[MAX_PATH];
+	memset(szFileName, 0, MAX_PATH);
+
+	ZeroMemory(&ofn, sizeof(ofn));
+
+	ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
+	ofn.hwndOwner = window_handle;
+	ofn.lpstrFilter = "JSON Files (*.json)\0*.json\0All Files (*.*)\0*.*\0";
+	ofn.lpstrFile = szFileName;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
+	ofn.lpstrDefExt = "json";
+
+	if (GetSaveFileName(&ofn)) {
+		std::string p = (LPSTR)szFileName;
+		memcpy(szFileName, p.c_str(), MAX_PATH);
+		return szFileName;
+	}
+
+	return "";
+}
+
+char *GraphicsWrapper::getLoadPath() {
+	OPENFILENAME ofn;
+	char *szFileName = new char[MAX_PATH];
+	memset(szFileName, 0, MAX_PATH);
+
+	ZeroMemory(&ofn, sizeof(ofn));
+
+	ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
+	ofn.hwndOwner = window_handle;
+	ofn.lpstrFilter = "JSON Files (*.json)\0*.json\0All Files (*.*)\0*.*\0";
+	ofn.lpstrFile = szFileName;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST;
+	ofn.lpstrDefExt = "json";
+
+	if (GetOpenFileName(&ofn)) {
+		std::string p = (LPSTR)szFileName;
+		memcpy(szFileName, p.c_str(), MAX_PATH);
+		return szFileName;
+	}
+
+	return "";
+}
+
 bool GraphicsWrapper::InitializeWin32Window() {
 	int fullscreen = 2;
 

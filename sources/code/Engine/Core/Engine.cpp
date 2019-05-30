@@ -95,8 +95,11 @@ void Engine::initialize() {
 	prev_time_ = prev_time_;
 
 #ifdef INCLUDE_EDITOR
-	if (settings_->start_editor_)
+	edit_is_simulating_ = false;
+
+	if (settings_->start_editor_) {
 		launchEditor();
+	}
 #endif
 
 	running_ = true;
@@ -105,18 +108,6 @@ void Engine::initialize() {
 
 	graphics_wrapper_->setFocus();
 }
-
-#ifdef INCLUDE_EDITOR
-void Engine::launchEditor() {
-	edit_mode_ = true;
-	if (!editor_)
-		editor_ = new Editor(imgui_manager_);
-}
-
-Editor *Engine::getEditor() {
-	return editor_;
-}
-#endif
 
 ImguiManager *Engine::getImguiManager() {
 	return imgui_manager_;
@@ -310,16 +301,26 @@ void Engine::run() {
 
 		// Add: if (simulating_)
 		// Update all Systems
-		for (auto scene : scenes_) {
+		std::vector<Scene *> *scenes = &scenes_;
+
+#ifdef INCLUDE_EDITOR
+		if (edit_mode_ && edit_is_simulating_) {
+			scenes = &simulate_scenes_;
+		}
+#endif
+
+		for (auto scene : *scenes) {
 			for (auto &system : systems_) {
 				if (system)
 					system->update(dt);
 			}
 		}
-		
-		if (edit_mode_) {
+
+#ifdef INCLUDE_EDITOR
+		if (edit_mode_) { //  && !edit_is_simulating_
 			editor_->update();
 		}
+#endif
 
 		getGraphicsWrapper()->SwapBuffer();
 	}
@@ -371,7 +372,50 @@ double Engine::getUpdateTimeDelta() {
 	return (double)delta_time_.count() / 1000000000.0;
 }
 
-void Engine::shutdownControl(double)
-{
+void Engine::shutdownControl(double) {
 	shutdown();
 }
+
+#ifdef INCLUDE_EDITOR
+void Engine::editorControl(double) {
+	if (edit_mode_) {
+		edit_mode_ = false;
+	}
+	else {
+		edit_mode_ = true;
+		launchEditor();
+	}
+}
+
+void Engine::launchEditor() {
+	edit_mode_ = true;
+	if (!editor_) {
+		editor_ = new Editor(imgui_manager_);
+		editor_->setPath(engine.getScenes()[0]->getPath());
+	}
+}
+
+Editor *Engine::getEditor() {
+	return editor_;
+}
+
+void Engine::startSimulation() {
+	edit_is_simulating_ = true;
+
+	for (auto s : scenes_) {
+		Scene *c = new Scene(*s);
+		simulate_scenes_.push_back(c);
+	}
+}
+
+void Engine::stopSimulation() {
+	for (auto s : simulate_scenes_) {
+		delete s;
+	}
+
+	simulate_scenes_.clear();
+
+	edit_is_simulating_ = false;
+}
+
+#endif

@@ -70,6 +70,26 @@ size_t LightPointSubSystem::getNumComponents() {
 	return components_.size();
 }
 
+void LightPointSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
+	auto &c = getComponent(handle);
+
+	w.Key("color");
+	w.StartArray();
+	w.Double(c.properties_.color.x);
+	w.Double(c.properties_.color.y);
+	w.Double(c.properties_.color.z);
+	w.EndArray();
+
+	w.Key("brightness");
+	w.Double(c.properties_.power);
+
+	w.Key("radius");
+	w.Double(c.properties_.attenuationRadius);
+
+	w.Key("castshadow");
+	w.Bool(c.properties_.shadow);
+}
+
 void LightPointSubSystem::removeComponent(ComponentHandle handle) {
 }
 

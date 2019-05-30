@@ -96,6 +96,8 @@ public:
 	virtual void GetCursor(int &x, int &y);
 	virtual void setFocus();
 	virtual void setTitle(const char *title);
+	virtual char *getSavePath();
+	virtual char *getLoadPath();
 
 // Interfaces
 public:

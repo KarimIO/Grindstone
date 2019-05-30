@@ -38,6 +38,10 @@ size_t CameraSubSystem::getNumComponents() {
 	return components_.size();
 }
 
+void CameraSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
+
+}
+
 void CameraSubSystem::removeComponent(ComponentHandle id) {
 	components_.erase(components_.begin() + id);
 }
@@ -45,7 +49,9 @@ void CameraSubSystem::removeComponent(ComponentHandle id) {
 CameraSubSystem::~CameraSubSystem() {}
 
 void CameraSystem::update(double dt) {
-	if (!engine.getSettings()->start_editor_) {
+	bool ed = engine.edit_mode_;
+	bool sim = engine.edit_is_simulating_;
+	if (!ed || sim) {
 		for (auto &scene : engine.getScenes()) {
 			for (auto &space : scene->spaces_) {
 				TransformSubSystem *transformsub = (TransformSubSystem *)space->getSubsystem(COMPONENT_TRANSFORM);
