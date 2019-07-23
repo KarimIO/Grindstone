@@ -124,6 +124,18 @@ RenderPathDeferred::RenderPathDeferred(unsigned int w = engine.getSettings()->re
 	m_iblPipeline = graphics_wrapper_->CreateGraphicsPipeline(iblGPCI);*/
 }
 
+void RenderPathDeferred::recreateFramebuffer(unsigned int w, unsigned int h) {
+	auto graphics_wrapper = engine.getGraphicsWrapper();
+
+	//graphics_wrapper->DeleteRenderTarget(render_targets_);
+		
+	//graphics_wrapper->DeleteDepthTarget(depth_target_);
+
+	graphics_wrapper->DeleteFramebuffer(gbuffer_);
+		
+	createFramebuffer(w, h);
+}
+
 void RenderPathDeferred::setDebugMode(unsigned int d) {
 	if (d >= 0 && d <= 7) {
 		debug_mode_ = d;
@@ -418,7 +430,10 @@ void RenderPathDeferred::createDirectionalLightShader() {
 	directional_light_pipeline_ = engine.getGraphicsWrapper()->CreateGraphicsPipeline(directionalGPCI);
 }
 
-void RenderPathDeferred::render(Framebuffer *fbo, Space *space) {
+void RenderPathDeferred::render(Framebuffer *fbo, DepthTarget *depthTarget, Space *space) {
+	auto graphics_wrapper = engine.getGraphicsWrapper();
+	auto pipeline = engine.getGraphicsPipelineManager();
+
 	// Set fbo to gbuffer
 	gbuffer_->Bind(true);
 
@@ -426,17 +441,14 @@ void RenderPathDeferred::render(Framebuffer *fbo, Space *space) {
 	gbuffer_->Clear(CLEAR_BOTH);
 
 	// Set as Opaque
-	engine.getGraphicsWrapper()->SetImmediateBlending(BLEND_NONE);
+	graphics_wrapper->SetImmediateBlending(BLEND_NONE);
 
 	// Render opaque elements
-	if (!wireframe_) {
-		engine.getGraphicsPipelineManager()->drawDeferredImmediate();
-	}
 	if (wireframe_) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		engine.getGraphicsPipelineManager()->drawDeferredImmediate();
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
+
+	pipeline->drawDeferredImmediate();
 
 	// Prepare deffered stage information
 	engine.deff_ubo_handler_->Bind();
@@ -495,6 +507,36 @@ void RenderPathDeferred::render(Framebuffer *fbo, Space *space) {
 
 		//CCamera *cam = &engine.cameraSystem.components[0];
 		//cam->PostProcessing();
+	
+		if (fbo) {
+			fbo->BindWrite(true);
+			//fbo->Clear(CLEAR_BOTH);
+		}
+		else {
+			graphics_wrapper->BindDefaultFramebuffer(true);
+			//graphics_wrapper->Clear(CLEAR_BOTH);
+		}
+		
+		gbuffer_->BindRead();
+		engine.getGraphicsWrapper()->CopyToDepthBuffer(depthTarget);
+		graphics_wrapper->EnableDepth(true);
+
+		engine.getUniformBuffer()->Bind();
+
+		pipeline->drawUnlitImmediate();
+		graphics_wrapper->SetImmediateBlending(BLEND_ADD_ALPHA);
+		fbo->BindTextures(0);
+		pipeline->drawForwardImmediate();
+		graphics_wrapper->EnableDepth(false);
+
+		if (wireframe_) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
+
+		gbuffer_->BindRead();
+		gbuffer_->BindTextures(0);
+
+		engine.deff_ubo_handler_->Bind();
 	}
 }
 

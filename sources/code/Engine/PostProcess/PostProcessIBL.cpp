@@ -5,10 +5,14 @@
 #include "Systems/CubemapSystem.hpp"
 #include "PostPipeline.hpp"
 #include "Core/Space.hpp"
-#include "PostProcessSSAO.hpp"
 
-PostProcessIBL::PostProcessIBL(PostPipeline *pipeline, RenderTargetContainer *target, PostProcessSSAO *ssao) : BasePostProcess(pipeline), target_(target), ssao_(ssao) {
-    auto graphics_wrapper = engine.getGraphicsWrapper();
+PostProcessIBL::PostProcessIBL(PostPipeline *pipeline, RenderTargetContainer *target, int w, int h) : BasePostProcess(pipeline), target_(target), viewport_w_(w), viewport_h_(h) {
+	prepareSSAO();
+	prepareIBL();
+}
+
+void PostProcessIBL::prepareIBL() {
+	auto graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
 
     ShaderStageCreateInfo vi;
@@ -58,18 +62,16 @@ PostProcessIBL::PostProcessIBL(PostPipeline *pipeline, RenderTargetContainer *ta
 	iblGPCI.bindingsCount = 1;
 	iblGPCI.attributes = &vad;
 	iblGPCI.attributesCount = 1;
-	iblGPCI.width = (float)settings->resolution_x_;
-	iblGPCI.height = (float)settings->resolution_y_;
-	iblGPCI.scissorW = settings->resolution_x_;
-	iblGPCI.scissorH = settings->resolution_y_;
+	iblGPCI.width = (float)viewport_w_;
+	iblGPCI.height = (float)viewport_h_;
+	iblGPCI.scissorW = viewport_w_;
+	iblGPCI.scissorH = viewport_h_;
 	iblGPCI.primitiveType = PRIM_TRIANGLES;
 	iblGPCI.shaderStageCreateInfos = stages.data();
 	iblGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
 	std::vector<TextureBindingLayout*> tbls_refl = { engine.gbuffer_tbl_, env_map_ }; // refl_tbl
 
-	if (ssao_) {
-		tbls_refl.push_back(ssao_->getLayout());
-	}
+	tbls_refl.push_back(ssao_layout_);
 
 	iblGPCI.textureBindings = tbls_refl.data();
 	iblGPCI.textureBindingCount = tbls_refl.size();
@@ -78,29 +80,250 @@ PostProcessIBL::PostProcessIBL(PostPipeline *pipeline, RenderTargetContainer *ta
 	gpipeline_ = graphics_wrapper->CreateGraphicsPipeline(iblGPCI);
 }
 
-void PostProcessIBL::Process() {
-	auto graphics_wrapper = engine.getGraphicsWrapper();
+void PostProcessIBL::prepareSSAO() {
+	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+	auto settings = engine.getSettings();
+
+	RenderTargetCreateInfo ssao_buffer_ci(FORMAT_COLOR_R8, viewport_w_, viewport_h_);
+	ssao_buffer_ = graphics_wrapper->CreateRenderTarget(&ssao_buffer_ci, 1);
+
+	FramebufferCreateInfo hdr_framebuffer_ci;
+	hdr_framebuffer_ci.render_target_lists = &ssao_buffer_;
+	hdr_framebuffer_ci.num_render_target_lists = 1;
+	hdr_framebuffer_ci.depth_target = nullptr; // depth_image_;
+	hdr_framebuffer_ci.render_pass = nullptr;
+	ssao_fbo_ = graphics_wrapper->CreateFramebuffer(hdr_framebuffer_ci);
+
+	//=====================
+	// SSAO
+	//=====================
+
+	UniformBufferBindingCreateInfo ubbci;
+	ubbci.binding = 1;
+	ubbci.shaderLocation = "SSAOBufferObject";
+	ubbci.size = sizeof(SSAOBufferObject);
+	ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	UniformBufferBinding *ubb = graphics_wrapper->CreateUniformBufferBinding(ubbci);
+
+	UniformBufferCreateInfo ubci;
+	ubci.isDynamic = false;
+	ubci.size = sizeof(SSAOBufferObject);
+	ubci.binding = ubb;
+	ssao_ub = graphics_wrapper->CreateUniformBuffer(ubci);
+
+	const int noise_dim = 4;
+	const int noise_size = noise_dim * noise_dim * 2;
+	unsigned char noise[noise_size];
+	for (int i = 0; i < noise_size; i += 2) {
+		glm::vec3 pixel = glm::normalize(glm::vec3(
+			(2.0f * (float)rand() / (float)RAND_MAX) - 1.0f,
+			(2.0f * (float)rand() / (float)RAND_MAX) - 1.0f, 0));
+		noise[i] = (pixel.x / 2.0f + 0.5f) * 255;
+		noise[i + 1] = (pixel.y / 2.0f + 0.5f) * 255;
+	}
+
+	int kernel_size = 32;
+	for (int i = 0; i < 32; ++i) {
+		glm::vec3 kernel = glm::vec3(
+			(2.0f * (float)rand() / (float)RAND_MAX) - 1.0f,
+			(2.0f * (float)rand() / (float)RAND_MAX) - 1.0f,
+			(float)rand() / (float)RAND_MAX);
+
+		kernel = glm::normalize(kernel);
+
+		float scale = float(i) / float(kernel_size);
+		scale = (scale * scale) * (1.0 - 0.1f) + 0.1f;
+		kernel *= scale;
+		ssao_buffer.kernel[i * 4] = kernel.x;
+		ssao_buffer.kernel[i * 4 + 1] = kernel.y;
+		ssao_buffer.kernel[i * 4 + 2] = kernel.z;
+	}
+
+	ssao_buffer.radius = 0.3f;
+	ssao_buffer.bias = 0.025f;
+
+	ssao_ub->UpdateUniformBuffer(&ssao_buffer);
+
+	TextureCreateInfo ssao_noise_ci;
+	ssao_noise_ci.data = noise;
+	ssao_noise_ci.format = FORMAT_COLOR_R8G8;
+	ssao_noise_ci.mipmaps = 0;
+	ssao_noise_ci.width = noise_dim;
+	ssao_noise_ci.height = noise_dim;
+	ssao_noise_ci.ddscube = false;
+
+	Texture *ssao_noise_ = graphics_wrapper->CreateTexture(ssao_noise_ci);
+
+	TextureSubBinding ssao_noise_sub_binding_ = TextureSubBinding("ssao_noise", 4);
+
+	TextureBindingLayoutCreateInfo tblci;
+	tblci.bindingLocation = 4;
+	tblci.bindings = &ssao_noise_sub_binding_;
+	tblci.bindingCount = 1;
+	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	TextureBindingLayout *ssao_noise_binding_layout = graphics_wrapper->CreateTextureBindingLayout(tblci);
+
+	SingleTextureBind stb;
+	stb.texture = ssao_noise_;
+	stb.address = 4;
+
+	TextureBindingCreateInfo ci;
+	ci.textures = &stb;
+	ci.layout = ssao_noise_binding_layout;
+	ci.textureCount = 1;
+	ssao_noise_binding_ = graphics_wrapper->CreateTextureBinding(ci);
+
+	ShaderStageCreateInfo vi;
+	ShaderStageCreateInfo fi;
+	std::vector<char> vfile;
+	std::vector<char> ffile;
+
+	if (settings->graphics_language_ == GRAPHICS_OPENGL) {
+		vi.fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
+		fi.fileName = "../assets/shaders/post_processing/ssao.glsl";
+	}
+	else if (settings->graphics_language_ == GRAPHICS_DIRECTX) {
+		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
+		fi.fileName = "../assets/shaders/post_processing/ssao.fxc";
+	}
+	else {
+		vi.fileName = "../assets/shaders/lights_deferred/spotVert.spv";
+		fi.fileName = "../assets/shaders/post_processing/ssao.spv";
+	}
+
+	vfile.clear();
+	if (!readFile(vi.fileName, vfile)) {
+		throw std::runtime_error("SSAO Vertex Shader missing.\n");
+		return;
+	}
+	vi.content = vfile.data();
+	vi.size = (uint32_t)vfile.size();
+	vi.type = SHADER_VERTEX;
+
+	ffile.clear();
+	if (!readFile(fi.fileName, ffile)) {
+		throw std::runtime_error("SSAO Fragment Shader missing.\n");
+		return;
+	}
+	fi.content = ffile.data();
+	fi.size = (uint32_t)ffile.size();
+	fi.type = SHADER_FRAGMENT;
+
+	ShaderStageCreateInfo stages[2] = { vi, fi };
+
+	auto vbd = engine.getPlaneVBD();
+	auto vad = engine.getPlaneVAD();
+
+	GraphicsPipelineCreateInfo ssaoGPCI;
+	ssaoGPCI.cullMode = CULL_BACK;
+	ssaoGPCI.bindings = &vbd;
+	ssaoGPCI.bindingsCount = 1;
+	ssaoGPCI.attributes = &vad;
+	ssaoGPCI.attributesCount = 1;
+	ssaoGPCI.width = (float)viewport_w_; // DIVIDE BY TWO
+	ssaoGPCI.height = (float)viewport_h_;
+	ssaoGPCI.scissorW = viewport_w_;
+	ssaoGPCI.scissorH = viewport_h_;
+	ssaoGPCI.primitiveType = PRIM_TRIANGLES;
+	ssaoGPCI.shaderStageCreateInfos = stages;
+	ssaoGPCI.shaderStageCreateInfoCount = 2;
+	std::vector<TextureBindingLayout *>tbls = { engine.gbuffer_tbl_, ssao_noise_binding_layout };
+
+	std::vector<UniformBufferBinding*> ubbs = { engine.deff_ubb_ , ubb };
+	ssaoGPCI.textureBindings = tbls.data();
+	ssaoGPCI.textureBindingCount = (uint32_t)tbls.size();
+	ssaoGPCI.uniformBufferBindings = ubbs.data();
+	ssaoGPCI.uniformBufferBindingCount = ubbs.size();
+	pipeline_ = graphics_wrapper->CreateGraphicsPipeline(ssaoGPCI);
+
+	// Export SSAO Layout
+	ssao_output_ = TextureSubBinding("ssao", 5);
+
+	TextureBindingLayoutCreateInfo stblci;
+	stblci.bindingLocation = 5;
+	stblci.bindings = &ssao_output_;
+	stblci.bindingCount = 1;
+	stblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	ssao_layout_ = graphics_wrapper->CreateTextureBindingLayout(stblci);
+}
+
+void PostProcessIBL::ssao() {
+	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+
+	//engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
+	ssao_fbo_->BindWrite(true);
+	engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
+
+	/*if (source_ != nullptr) {
+		source_->framebuffer->BindRead();
+		source_->framebuffer->BindTextures(0);
+	}*/
+
+	engine.getGraphicsWrapper()->BindTextureBinding(ssao_noise_binding_);
 	
+	graphics_wrapper->EnableDepth(false);
+	//graphics_wrapper->SetColorMask(COLOR_MASK_ALPHA);
+	ssao_ub->Bind();
+	pipeline_->Bind();
+	graphics_wrapper->BindTextureBinding(ssao_noise_binding_);
+	graphics_wrapper->DrawImmediateVertices(0, 6);
+	//graphics_wrapper->SetColorMask(COLOR_MASK_RGBA);
+	graphics_wrapper->EnableDepth(true);
+}
+
+void PostProcessIBL::ibl() {
+	auto graphics_wrapper = engine.getGraphicsWrapper();
+
 	graphics_wrapper->BindVertexArrayObject(engine.getPlaneVAO());
 
 	graphics_wrapper->SetImmediateBlending(BLEND_ADDITIVE);
 
 	//graphics_wrapper->BindDefaultFramebuffer(true);
 	//engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
-	ssao_->getFramebuffer()->BindRead();
-	ssao_->getFramebuffer()->BindTextures(5);
-    target_->framebuffer->BindWrite(false);
-    //source_->framebuffer->BindRead();
+	ssao_fbo_->BindRead();
+	ssao_fbo_->BindTextures(5);
+	target_->framebuffer->BindWrite(false);
+	//source_->framebuffer->BindRead();
 	//target_->framebuffer->BindTextures(0);
 	engine.deff_ubo_handler_->Bind();
 
 	glm::vec3 pos = glm::vec3(0, 0, 0); // engine.deffUBOBuffer.eyePos;
-    /*CubemapComponent *cube = ((CubemapSubSystem *)getPipeline()->getSpace()->getSubsystem(COMPONENT_CUBEMAP))->getClosestCubemap(pos);
-    if (cube && cube->cubemap_) {
+	Space *s = getPipeline()->getSpace();
+	CubemapSubSystem *sys = ((CubemapSubSystem *)s->getSubsystem(COMPONENT_CUBEMAP));
+	CubemapComponent *cube = sys->getClosestCubemap(pos);
+	if (cube && cube->cubemap_) {
 		graphics_wrapper->BindTextureBinding(cube->cubemap_binding_);
-    }*/
+	}
 
 	gpipeline_->Bind();
 	graphics_wrapper->DrawImmediateVertices(0, 6);
 	graphics_wrapper->SetImmediateBlending(BLEND_NONE);
+}
+
+void PostProcessIBL::Process() {
+	if (usesSSAO()) {
+		ssao();
+	}
+	ibl();
+}
+
+void PostProcessIBL::recreateFramebuffer(unsigned int w, unsigned int h) {
+	auto graphics_wrapper = engine.getGraphicsWrapper();
+
+	// graphics_wrapper->DeleteRenderTarget(ssao_buffer_);
+	graphics_wrapper->DeleteFramebuffer(ssao_fbo_);
+
+	RenderTargetCreateInfo ssao_buffer_ci(FORMAT_COLOR_R8, viewport_w_, viewport_h_);
+	ssao_buffer_ = graphics_wrapper->CreateRenderTarget(&ssao_buffer_ci, 1);
+
+	FramebufferCreateInfo hdr_framebuffer_ci;
+	hdr_framebuffer_ci.render_target_lists = &ssao_buffer_;
+	hdr_framebuffer_ci.num_render_target_lists = 1;
+	hdr_framebuffer_ci.depth_target = nullptr; // depth_image_;
+	hdr_framebuffer_ci.render_pass = nullptr;
+	ssao_fbo_ = graphics_wrapper->CreateFramebuffer(hdr_framebuffer_ci);
+}
+
+bool PostProcessIBL::usesSSAO() {
+	return true;
 }

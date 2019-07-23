@@ -5,7 +5,6 @@
 #include "../Core/Scene.hpp"
 #include "../Core/Space.hpp"
 
-
 RigidBodyComponent::RigidBodyComponent(GameObjectHandle object_handle, ComponentHandle id) : Component(COMPONENT_RIGID_BODY, object_handle, id) {}
 
 RigidBodySystem::RigidBodySystem() : System(COMPONENT_RIGID_BODY)  {}
@@ -57,21 +56,23 @@ void RigidBodySystem::update(double dt) {
 
 				float ysqr = q.y() * q.y();
 
+				float tpi = 3.14159f * 1.0f;
+
 				// roll (x-axis rotation)
 				float t0 = +2.0f * (q.w() * q.x() + q.y() * q.z());
 				float t1 = +1.0f - 2.0f * (q.x() * q.x() + ysqr);
-				transform_component.angles_.z = std::atan2(t0, t1);
+				transform_component.angles_.x = fmod(std::atan2(t0, t1), tpi);
 
 				// pitch (y-axis rotation)
 				float t2 = +2.0f * (q.w() * q.y() - q.z() * q.x());
 				t2 = t2 > 1.0f ? 1.0f : t2;
 				t2 = t2 < -1.0f ? -1.0f : t2;
-				transform_component.angles_.x = std::asin(t2);
+				transform_component.angles_.y = fmod(std::asin(t2), tpi);
 
 				// yaw (z-axis rotation)
 				float t3 = +2.0f * (q.w() * q.z() + q.x() * q.y());
 				float t4 = +1.0f - 2.0f * (ysqr + q.z() * q.z());
-				transform_component.angles_.y = std::atan2(t3, t4);
+				transform_component.angles_.z = fmod(std::atan2(t3, t4), tpi);
 			}
 		}
 	}
@@ -80,7 +81,15 @@ void RigidBodySystem::update(double dt) {
 ComponentHandle RigidBodySubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
 	components_.emplace_back(object_handle, component_handle);
-	auto &component = components_.back();
+
+	setComponent(component_handle, params);
+
+	return component_handle;
+}
+
+void RigidBodySubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
+	auto &component = components_[component_handle];
+	auto object_handle = component.game_object_handle_;
 
 	if (params.HasMember("mass")) {
 		float mass = params["mass"].GetFloat();
@@ -104,9 +113,14 @@ ComponentHandle RigidBodySubSystem::addComponent(GameObjectHandle object_handle,
 	btCollisionShape *shape = subsystem->getComponent(collider_handle).shape_;
 
 	btDefaultMotionState* motionState = new btDefaultMotionState(trans);
-	btRigidBody::btRigidBodyConstructionInfo rigidBodyCI(component.mass_, motionState, shape, btVector3(0, 0, 0));
+
+	btVector3 inertia;
+	shape->calculateLocalInertia(component.mass_, inertia);
+	btRigidBody::btRigidBodyConstructionInfo rigidBodyCI(component.mass_, motionState, shape, inertia);
 	component.rigid_body_ = new btRigidBody(rigidBodyCI);
 	dynamics_world_->addRigidBody(component.rigid_body_);
+
+	// this->->updateSingleAABB(component.rigid_body_);
 
 	if (params.HasMember("restitution")) {
 		float resitution = params["restitution"].GetFloat();
@@ -131,8 +145,6 @@ ComponentHandle RigidBodySubSystem::addComponent(GameObjectHandle object_handle,
 	}
 
 	component.rigid_body_->setDamping(component.damping_linear_, component.damping_rotational_);
-
-	return component_handle;
 }
 
 void RigidBodyComponent::setMass(float mass) {
@@ -203,6 +215,7 @@ void RigidBodySubSystem::removeComponent(ComponentHandle handle) {
 
 RigidBodySubSystem::~RigidBodySubSystem() {
 	for (int i = 0; i < components_.size(); i++) {
+		dynamics_world_->removeRigidBody(components_[i].rigid_body_);
 		delete components_[i].rigid_body_;
 	}
 

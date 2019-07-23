@@ -24,7 +24,15 @@ GLFramebuffer::GLFramebuffer(FramebufferCreateInfo create_info) {
 		GLRenderTarget *render_target_list = static_cast<GLRenderTarget *>(create_info.render_target_lists[i]);
 		for (size_t j = 0; j < render_target_list->getNumRenderTargets(); j++) {
 			DrawBuffers[k] = GL_COLOR_ATTACHMENT0 + k;
-			glFramebufferTexture2D(GL_FRAMEBUFFER, DrawBuffers[k++], GL_TEXTURE_2D, render_target_list->getHandle(j), 0);
+			if (render_target_list->is_cubemap_) {
+				for (int f = 0; f < 6; ++f) {
+					glFramebufferTexture2D(GL_FRAMEBUFFER, DrawBuffers[k], GL_TEXTURE_CUBE_MAP_POSITIVE_X + f, render_target_list->getHandle(j), 0);
+				}
+				k++;
+			}
+			else {
+				glFramebufferTexture2D(GL_FRAMEBUFFER, DrawBuffers[k++], GL_TEXTURE_2D, render_target_list->getHandle(j), 0);
+			}
 		}
 	}
 
@@ -33,7 +41,9 @@ GLFramebuffer::GLFramebuffer(FramebufferCreateInfo create_info) {
 		if (!dt->cubemap)
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, dt->getHandle(), 0);
 		else
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X, dt->getHandle(), 0);
+			for (int f = 0; f < 6; ++f) {
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X + f, dt->getHandle(), 0);
+			}
 	}
 
 	if (num_total_render_targets > 0)
@@ -43,8 +53,8 @@ GLFramebuffer::GLFramebuffer(FramebufferCreateInfo create_info) {
     	glReadBuffer(GL_NONE);
 	}
 
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		throw std::runtime_error("Framebuffer Incomplete\n");
+	//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		//throw std::runtime_error("Framebuffer Incomplete\n");
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 

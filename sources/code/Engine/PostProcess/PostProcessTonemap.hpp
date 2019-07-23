@@ -17,13 +17,18 @@ private:
 
     GraphicsPipeline *gpipeline_;
 
-	struct ExposureUBO {
+	struct EffectUBO {
+		float vignetteRadius;
+		float vignetteSoftness;
+		float vignetteStrength;
 		float exposure;
-	} exposure_buffer_;
+		float noiseStrength;
+		float time;
+	} effect_buffer_;
 
 	bool first_render_ = true;
 
-	UniformBuffer *exposure_ub_;
+	UniformBuffer *effect_ub_;
 };
 
 #endif // !POST_PROCESS_TONEMAP_HPP

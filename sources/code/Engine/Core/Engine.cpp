@@ -114,16 +114,18 @@ ImguiManager *Engine::getImguiManager() {
 }
 
 void Engine::initializeUniformBuffer() {
+	int s = sizeof(glm::mat4) * 2 + sizeof(glm::vec4) + sizeof(float) + sizeof(glm::vec3);
+
 	UniformBufferBindingCreateInfo ubbci;
 	ubbci.binding = 0;
 	ubbci.shaderLocation = "UniformBufferObject";
-	ubbci.size = 128; //sizeof(glm::mat4);
+	ubbci.size = s; //sizeof(glm::mat4);
 	ubbci.stages = SHADER_STAGE_VERTEX_BIT;
 	ubb_ = graphics_wrapper_->CreateUniformBufferBinding(ubbci);
 
 	UniformBufferCreateInfo ubci;
 	ubci.isDynamic = true;
-	ubci.size = 128;
+	ubci.size = s;
 	ubci.binding = ubb_;
 	ubo_ = graphics_wrapper_->CreateUniformBuffer(ubci);
 }
@@ -146,7 +148,7 @@ void Engine::initializeTBL() {
 void Engine::deffUBO() {
 	UniformBufferBindingCreateInfo deffubbci;
 	deffubbci.binding = 0;
-	deffubbci.shaderLocation = "UniformBufferObject";
+	deffubbci.shaderLocation = "DefferedUBO";
 	deffubbci.size = sizeof(DefferedUBO);
 	deffubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
 	deff_ubb_ = graphics_wrapper_->CreateUniformBufferBinding(deffubbci);

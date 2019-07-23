@@ -40,6 +40,7 @@ public:
 	LightSpotSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
+	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value & params) override;
 	LightSpotComponent &getComponent(ComponentHandle handle);
 	size_t getNumComponents();
 	virtual void writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) override;

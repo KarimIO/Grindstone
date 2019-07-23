@@ -12,7 +12,7 @@ public:
 	void clear();
 	~Space();
 
-	void loadPrefab(std::string name, rapidjson::Value & val);
+	void loadPrefab(std::string name, GameObject &val);
 	SubSystem *getSubsystem(ComponentType type);
 	GameObject &getObject(GameObjectHandle handle);
 	std::string getName();

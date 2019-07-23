@@ -12,9 +12,15 @@
 
 #include "CubeInfo.hpp"
 
+class Camera;
 class Framebuffer;
 class RenderTarget;
 class TextureBindingLayout;
+class GraphicsPipeline;
+class UniformBuffer;
+class VertexArrayObject;
+class VertexBufferObject;
+class IndexBuffer;
 
 struct CubemapComponent : public Component {
 	CubemapComponent(GameObjectHandle object_handle, ComponentHandle id);
@@ -31,14 +37,12 @@ struct CubemapComponent : public Component {
 		CAPTURE_CUSTOM
 	} capture_method_;
 	std::string path_;
-	void bake();
 };
 
 class CubemapSystem : public System {
 public:
 	CubemapSystem();
 	void update(double dt);
-	void bake(double t);
 };
 
 class CubemapSubSystem : public SubSystem {
@@ -47,20 +51,58 @@ public:
 	CubemapSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
+	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value & params) override;
 	CubemapComponent &getComponent(ComponentHandle handle);
 	size_t getNumComponents();
 	virtual void writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) override;
 	virtual void removeComponent(ComponentHandle handle);
+	CubemapComponent *getClosestCubemap(glm::vec3);
 
 	void bake();
-	void loadCubemaps();
-	CubemapComponent *getClosestCubemap(glm::vec3);
 
 	virtual ~CubemapSubSystem();
 private:
+	void prepareSphere();
+	void prepareUniformBuffer();
+	void prepareIrradianceShader();
+	void prepareSpecularShader();
+
+	void convoluteIrradiance(CubemapComponent &c);
+	void convoluteSpecular(CubemapComponent &c);
+
+	void loadCubemaps();
+
 	std::vector<CubemapComponent> components_;
 	TextureSubBinding cube_binding_;
 	TextureBindingLayout *texture_binding_layout_;
+	Camera *camera_;
+	glm::mat4 projection_;
+
+	GraphicsPipeline *irradiance_pipeline_;
+	RenderTarget *irradiance_image_;
+	Framebuffer *irradiance_fbo_;
+
+	GraphicsPipeline *specular_pipeline_;
+	RenderTarget *specular_image_;
+	Framebuffer *specular_fbo_;
+
+	VertexArrayObject *sphere_vao_;
+	VertexBuffer *sphere_vbo_;
+	IndexBuffer *sphere_ibo_;
+	VertexBindingDescription sphere_vbd_;
+	VertexAttributeDescription sphere_vad_;
+
+	Framebuffer *camera_framebuffer_;
+	RenderTarget *final_buffer_;
+
+	unsigned int total_sphere_indices_;
+
+	UniformBufferBinding *ubb_;
+	UniformBuffer *ub_;
+	struct ConvolutionBufferObject {
+		glm::mat4 matrix_;
+		float roughness_;
+	} ubo_;
 };
 
 #endif

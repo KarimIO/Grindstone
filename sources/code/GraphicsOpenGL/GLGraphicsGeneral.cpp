@@ -234,8 +234,8 @@ Texture *GLGraphicsWrapper::CreateTexture(TextureCreateInfo ci) {
 	return static_cast<Texture *>(new GLTexture(ci));
 }
 
-RenderTarget *GLGraphicsWrapper::CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc) {
-	return static_cast<RenderTarget *>(new GLRenderTarget(rt, rc));
+RenderTarget *GLGraphicsWrapper::CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc, bool cube) {
+	return static_cast<RenderTarget *>(new GLRenderTarget(rt, rc, cube));
 }
 
 DepthTarget * GLGraphicsWrapper::CreateDepthTarget(DepthTargetCreateInfo rt) {

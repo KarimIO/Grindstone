@@ -3,7 +3,7 @@
 in vec2 fragTexCoord;
 layout(location = 0) out vec4 SSAOout;
 
-layout(std140) uniform UniformBufferObject {
+layout(std140) uniform DefferedUBO {
     mat4 invView;
     mat4 invProj;
     vec4 eyePos;
@@ -49,7 +49,7 @@ vec3 ViewNormal(vec3 inNorm) {
 }
 
 void main() {
-    vec2 noiseScale = ubo.resolution.xy / 4;
+    ivec2 noiseScale = textureSize(gbuffer1, 0) / 4;
 	float Dist = texture(gbuffer3, fragTexCoord).r;
 	vec3 position = ViewPosFromDepth(Dist, fragTexCoord).xyz;
 	vec3 normal = texture(gbuffer1, fragTexCoord).xyz;

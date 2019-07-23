@@ -30,8 +30,15 @@ ComponentHandle TransformSubSystem::addComponent(GameObjectHandle object_handle)
 ComponentHandle TransformSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
 	components_.emplace_back(object_handle, component_handle);
-	auto &component = components_.back();
+	
+	setComponent(component_handle, params);
 
+	return component_handle;
+}
+
+void TransformSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
+	auto &component = components_[component_handle];
+	
 	if (params.HasMember("position")) {
 		auto pos = params["position"].GetArray();
 		auto x = pos[0].GetFloat();
@@ -50,13 +57,11 @@ ComponentHandle TransformSubSystem::addComponent(GameObjectHandle object_handle,
 
 	if (params.HasMember("angles")) {
 		auto pos = params["angles"].GetArray();
-		auto x = pos[0].GetFloat();
-		auto y = pos[1].GetFloat();
-		auto z = pos[2].GetFloat();
+		auto x = glm::radians(pos[0].GetFloat());
+		auto y = glm::radians(pos[1].GetFloat());
+		auto z = glm::radians(pos[2].GetFloat());
 		component.angles_ = glm::vec3(x, y, z);
 	}
-
-	return component_handle;
 }
 
 void TransformSubSystem::removeComponent(ComponentHandle id) {

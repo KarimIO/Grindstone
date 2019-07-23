@@ -14,10 +14,10 @@
 
 #include "PostProcess/PostProcessTonemap.hpp"
 #include "PostProcess/PostProcessAutoExposure.hpp"
-#include "PostProcess/PostProcessSSAO.hpp"
 #include "PostProcess/PostProcessIBL.hpp"
 #include "PostProcess/PostProcessColorGrading.hpp"
 #include "PostProcess/PostProcessBloom.hpp"
+#include "PostProcess/PostProcessSSR.hpp"
 
 #include <GL/gl3w.h>
 
@@ -40,28 +40,38 @@ Camera::Camera(Space *space, bool useFramebuffer) :
 	hdr_framebuffer_(nullptr),
 	final_framebuffer_(nullptr),
 	final_buffer_(nullptr),
+	render_path_(nullptr),
+	pp_ssao(nullptr),
+	custom_final_framebuffer_(false),
 	enabled_(true) {
 }
 
+Camera::Camera(Space *space, unsigned int w, unsigned int h, bool useFramebuffer) : Camera(space, useFramebuffer) {
+	viewport_width_	= w;
+	viewport_height_ = h;
+}
+
 void Camera::initialize() {
-	auto settings = engine.getSettings();
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
 	render_path_ = new RenderPathDeferred(viewport_width_, viewport_height_);
+	post_pipeline_.setSpace(space_);
 
-	BasePostProcess *pp_ssao = nullptr;
-	if (settings->enable_ssao_) {
-		pp_ssao = new PostProcessSSAO(&post_pipeline_, &rt_hdr_);
-		post_pipeline_.AddPostProcess(pp_ssao);
+	if (true) {
+		PostProcessSSR *pp_ssr = new PostProcessSSR(&post_pipeline_, &rt_hdr_, &rt_hdr_);
+		post_pipeline_.AddPostProcess(pp_ssr);
 	}
 
-	if (settings->enable_reflections_) {
-		PostProcessIBL *pp_ibl = new PostProcessIBL(&post_pipeline_, &rt_hdr_, (PostProcessSSAO *)pp_ssao);
+	if (false && enable_reflections_) {
+		PostProcessIBL *pp_ibl = new PostProcessIBL(&post_pipeline_, &rt_hdr_, viewport_width_, viewport_height_);
 		post_pipeline_.AddPostProcess(pp_ibl);
 	}
-
-	PostProcessAutoExposure *pp_auto = new PostProcessAutoExposure(&post_pipeline_, &rt_hdr_, nullptr);
-	post_pipeline_.AddPostProcess(pp_auto);
+	
+	PostProcessAutoExposure *pp_auto = nullptr;
+	if (enable_auto_exposure_) {
+		pp_auto = new PostProcessAutoExposure(&post_pipeline_, &rt_hdr_, nullptr);
+		post_pipeline_.AddPostProcess(pp_auto);
+	}
 
 	/*PostProcessBloom *pp_bloom = new PostProcessBloom(&post_pipeline_, &rt_hdr_, &rt_hdr_, pp_auto);
 	post_pipeline_.AddPostProcess(pp_bloom);*/
@@ -77,6 +87,11 @@ void Camera::setEnabled(bool status) {
 	enabled_ = status;
 }
 
+void Camera::setCustomFinalFramebuffer(Framebuffer *framebuffer) {
+	final_framebuffer_ = framebuffer;
+	custom_final_framebuffer_ = true;
+}
+
 void Camera::generateFramebuffers() {
 	/*if (hdr_buffer_) {
 		engine.getGraphicsWrapper()->DeleteRenderTarget(hdr_buffer_);
@@ -89,14 +104,17 @@ void Camera::generateFramebuffers() {
 	RenderTargetCreateInfo hdr_buffer_ci(FORMAT_COLOR_R16G16B16, viewport_width_, viewport_height_);
 	hdr_buffer_ = engine.getGraphicsWrapper()->CreateRenderTarget(&hdr_buffer_ci, 1);
 
+	DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24_STENCIL_8, viewport_width_, viewport_height_, false, false);
+	depth_target_ = engine.getGraphicsWrapper()->CreateDepthTarget(depth_image_ci);
+
 	FramebufferCreateInfo hdr_framebuffer_ci;
 	hdr_framebuffer_ci.render_target_lists = &hdr_buffer_;
 	hdr_framebuffer_ci.num_render_target_lists = 1;
-	hdr_framebuffer_ci.depth_target = nullptr; // depth_image_;
+	hdr_framebuffer_ci.depth_target = depth_target_;
 	hdr_framebuffer_ci.render_pass = nullptr;
 	hdr_framebuffer_ = engine.getGraphicsWrapper()->CreateFramebuffer(hdr_framebuffer_ci);
 
-	// if (use_framebuffer_) {
+	if (use_framebuffer_ && !custom_final_framebuffer_) {
 		/*if (final_buffer_) {
 			engine.getGraphicsWrapper()->DeleteRenderTarget(final_buffer_);
 		}*/
@@ -108,21 +126,28 @@ void Camera::generateFramebuffers() {
 		RenderTargetCreateInfo fbo_buffer_ci(FORMAT_COLOR_R8G8B8, viewport_width_, viewport_height_);
 		final_buffer_ = engine.getGraphicsWrapper()->CreateRenderTarget(&fbo_buffer_ci, 1);
 
-		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24_STENCIL_8, viewport_width_, viewport_height_, false, false);
-		DepthTarget *depth_target_ = engine.getGraphicsWrapper()->CreateDepthTarget(depth_image_ci);
+		//DepthTargetCreateInfo depth_image_ci2(FORMAT_DEPTH_24_STENCIL_8, viewport_width_, viewport_height_, false, false);
+		//DepthTarget *depth_target2_ = engine.getGraphicsWrapper()->CreateDepthTarget(depth_image_ci);
 
 		FramebufferCreateInfo final_framebuffer_ci;
 		final_framebuffer_ci.render_target_lists = &final_buffer_;
 		final_framebuffer_ci.num_render_target_lists = 1;
-		final_framebuffer_ci.depth_target = depth_target_; // depth_image_;
+		final_framebuffer_ci.depth_target = nullptr; // depth_image_;
 		final_framebuffer_ci.render_pass = nullptr;
 		final_framebuffer_ = engine.getGraphicsWrapper()->CreateFramebuffer(final_framebuffer_ci);
-	// }
+	}
 
 	rt_hdr_.framebuffer = hdr_framebuffer_;
 	rt_hdr_.render_targets = &hdr_buffer_;
 	rt_hdr_.num_render_targets = 1;
 	rt_hdr_.depth_target = nullptr;
+
+	// TODO: Re-Add this
+	// if (pp_ssao)
+	// 	((PostProcessSSAO *)pp_ibl)->recreateFramebuffer(viewport_width_, viewport_height_);
+
+	if (render_path_)
+		render_path_->recreateFramebuffer(viewport_width_, viewport_height_);
 }
 
 void Camera::setViewport(unsigned int w, unsigned int h) {
@@ -134,8 +159,23 @@ void Camera::setViewport(unsigned int w, unsigned int h) {
 	}
 }
 
-void Camera::render(glm::vec3 &pos, glm::mat4 &view) {
+void Camera::render(glm::vec3 & pos, glm::mat4 & view) {
+	render(pos, view, -1);
+}
+
+struct UBOProjView {
+	glm::mat4 proj_view;
+	glm::vec3 eyepos;
+	float time;
+	glm::mat4 invproj;
+	glm::mat4 invview;
+	glm::vec4 resolution;
+};
+
+void Camera::render(glm::vec3 &pos, glm::mat4 &view, int face) {
 	if (space_ == nullptr || !enabled_) return;
+
+	auto graphics_wrapper = engine.getGraphicsWrapper();
 
 	const Settings *settings = engine.getSettings();
 	double default_aspect = double(viewport_width_) / double(viewport_height_);
@@ -176,15 +216,23 @@ void Camera::render(glm::vec3 &pos, glm::mat4 &view) {
 
 	auto ubo = engine.getUniformBuffer();
 	ubo->Bind();
-	ubo->UpdateUniformBuffer(&pv);
+	UBOProjView ubodata;
+	ubodata.proj_view = pv;
+	ubodata.time = engine.getTimeCurrent();
+	ubodata.eyepos = pos;
+	ubodata.invproj = glm::inverse(projection_);
+	ubodata.invview = glm::inverse(view);
+	ubodata.resolution.x = viewport_width_;
+	ubodata.resolution.y = viewport_height_;
+	ubo->UpdateUniformBuffer(&ubodata);
 
 	// Culling
 	//engine.ubo2->Bind();
-
+	 
 
 	Engine::DefferedUBO deferred_ubo;
-	deferred_ubo.invProj = glm::inverse(projection_);
-	deferred_ubo.view = glm::inverse(view);
+	deferred_ubo.invProj = ubodata.invproj;
+	deferred_ubo.view = ubodata.invview;
 	deferred_ubo.eyePos.x = pos.x;
 	deferred_ubo.eyePos.y = pos.y;
 	deferred_ubo.eyePos.z = pos.z;
@@ -192,15 +240,17 @@ void Camera::render(glm::vec3 &pos, glm::mat4 &view) {
 	deferred_ubo.resolution.y = viewport_height_;
 	engine.deff_ubo_handler_->UpdateUniformBuffer(&deferred_ubo);
 
-	engine.getGraphicsWrapper()->setViewport(0, 0, viewport_width_, viewport_height_);
+	graphics_wrapper->setViewport(0, 0, viewport_width_, viewport_height_);
 
 	bool in_debug = (render_path_->getDebugMode() > 0);
 	Framebuffer *f = in_debug ? final_framebuffer_ : hdr_framebuffer_;
-	render_path_->render(f, space_);
+	render_path_->render(f, depth_target_, space_);
+	
+	// final_framebuffer_->
 
 	// PostProcessing
 	if (!in_debug) {
-		engine.getGraphicsWrapper()->BindVertexArrayObject(engine.getPlaneVAO());
+		graphics_wrapper->BindVertexArrayObject(engine.getPlaneVAO());
 		post_pipeline_.Process();
 	}
 }

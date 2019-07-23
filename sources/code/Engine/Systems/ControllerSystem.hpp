@@ -47,6 +47,7 @@ public:
 	ControllerSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
+	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value & params) override;
 	ControllerComponent &getComponent(ComponentHandle handle);
 	virtual void writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) override;
 	virtual void removeComponent(ComponentHandle handle);

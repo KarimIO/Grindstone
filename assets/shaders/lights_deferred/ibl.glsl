@@ -13,7 +13,7 @@ uniform sampler2D gbuffer3;
 uniform samplerCube environmentMap;
 uniform sampler2D ssao;
 
-layout(std140) uniform UniformBufferObject {
+layout(std140) uniform DefferedUBO {
     mat4 invView;
     mat4 invProj;
     vec3 eyePos;
@@ -135,7 +135,7 @@ void main() {
 	vec3 Albedo = texture(gbuffer0, fragTexCoord).rgb;
 	vec4 Specular = texture(gbuffer2, fragTexCoord);
 
-    vec3 ambientColor = vec3(0.9f, 0.96f, 1.0f) * 0.02;
+    vec3 ambientColor = vec3(0.9f, 0.96f, 1.0f) * 0.1;
 	ambientColor *= Albedo;
 
 	const int uBlurSize = 4;
@@ -159,12 +159,13 @@ void main() {
 
 	// Calculate different portions of the color
 	vec3 eyeDir = normalize(ubo.eyePos - Position);
-	vec3 eyeRefl= reflect(-eyeDir, Normal);
+	vec3 eyeRefl= reflect(eyeDir, Normal);
+	eyeRefl.x = -eyeRefl.x;
 
 	vec3 irrMap = texture(environmentMap, eyeRefl).rgb;
 	vec3 Kdiff  = irrMap * Albedo.rgb / pi;
 	vec3 Kspec  = radiance(N, V, Specular);
 
 	// Mix the materials
-	outColor = (Kspec * 1 + 0 * Kdiff + ambientColor) * strength;
+	outColor = vec3(0); //(Kspec * 1 + 0 * Kdiff + ambientColor) * strength;
 }

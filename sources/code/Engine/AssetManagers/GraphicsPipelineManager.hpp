@@ -64,10 +64,13 @@ class MaterialManager;
 struct PipelineContainer {
 	ProgramType type;
 	TextureBindingLayout *tbl;
+	TextureBindingLayout **tbl_arr;
 	PipelineReference reference;
 	GraphicsPipeline *program;
 	GraphicsPipeline *shadow_program;
 	CommandBuffer *commandBuffer;
+
+	CullMode cull_mode_;
 	std::string name;
 	std::string name_text;
 	std::string shader_paths[SHADER_FRAGMENT + 1];

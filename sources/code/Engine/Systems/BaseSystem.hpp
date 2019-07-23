@@ -49,6 +49,7 @@ enum ComponentType {
 	COMPONENT_LIGHT_DIRECTIONAL,
 	COMPONENT_CAMERA,
 	COMPONENT_RENDER_STATIC_MESH,
+	COMPONENT_RENDER_INSTANCED_MESH,
 	COMPONENT_RENDER_SKELETAL_MESH,
 	COMPONENT_RENDER_TERRAIN,
 	COMPONENT_AUDIO_SOURCE,
@@ -74,6 +75,7 @@ public:
 	virtual size_t getNumComponents() = 0;
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle) = 0;
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) = 0;
+	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value &params) = 0;
 	virtual SubSystem *copy() { return nullptr; };
 
 #ifdef INCLUDE_EDITOR

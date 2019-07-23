@@ -11,6 +11,8 @@ public:
 	Editor(ImguiManager *manager);
     void update();
 private:
+	double next_refresh_asset_directory_time_;
+
 	struct Viewport {
 		Camera *camera_;
 		enum View : unsigned int {
@@ -62,6 +64,7 @@ private:
 	void saveFileAs();
 	void saveFile(std::string path, Scene * scene);
 	void cleanCameras();
+	void importFile();
 	void loadFileFrom();
 	void loadFile();
 

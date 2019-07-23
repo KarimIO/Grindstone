@@ -1,87 +1,103 @@
 #include "PostProcessSSR.hpp"
+#include "GraphicsWrapper.hpp"
 #include "../Core/Engine.hpp"
-#include "../../GraphicsCommon/UniformBuffer.hpp"
-/*
-PostProcessSSR::PostProcessSSR(RenderTargetContainer *source, RenderTargetContainer *target) : source_(source), target_(target) {
-    GraphicsWrapper *graphics_wrapper_ = engine.graphics_wrapper_;
+#include <glm/glm.hpp>
+#include "Utilities/SettingsFile.hpp"
+#include "Core/Utilities.hpp"
+#include "PostProcessAutoExposure.hpp"
 
-	ShaderStageCreateInfo vi;
-	ShaderStageCreateInfo fi;
-	std::vector<char> vfile;
-	std::vector<char> ffile;
+// , PostProcessAutoExposure *auto_exposure
+// , auto_exposure_(auto_exposure)
+PostProcessSSR::PostProcessSSR(PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target) : BasePostProcess(pipeline), source_(source), target_(target) {
+	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+	auto settings = engine.getSettings();
 
-	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
-		vi.fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
-		fi.fileName = "../assets/shaders/post_processing/ssr.glsl";
+	ShaderStageCreateInfo stages[2];
+
+	// SSR Graphics Pipeline
+	if (settings->graphics_language_ == GRAPHICS_OPENGL) {
+		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
+		stages[1].fileName = "../assets/shaders/post_processing/ssr.glsl";
 	}
-	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
-		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
-		fi.fileName = "../assets/shaders/post_processing/ssr.fxc";
+	else if (settings->graphics_language_ == GRAPHICS_DIRECTX) {
+		stages[0].fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
+		stages[1].fileName = "../assets/shaders/post_processing/ssr.fxc";
 	}
 	else {
-		vi.fileName = "../assets/shaders/lights_deferred/spotVert.spv";
-		fi.fileName = "../assets/shaders/post_processing/ssr.spv";
+		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.spv";
+		stages[1].fileName = "../assets/shaders/post_processing/ssr.spv";
 	}
-	
-	vfile.clear();
-	if (!readFile(vi.fileName, vfile)) {
+
+	std::vector<char> vfile;
+	if (!readFile(stages[0].fileName, vfile)) {
 		throw std::runtime_error("SSR Vertex Shader missing.\n");
-		return;
 	}
-	vi.content = vfile.data();
-	vi.size = (uint32_t)vfile.size();
-	vi.type = SHADER_VERTEX;
+	stages[0].content = vfile.data();
+	stages[0].size = (uint32_t)vfile.size();
+	stages[0].type = SHADER_VERTEX;
 
-	ffile.clear();
-	if (!readFile(fi.fileName, ffile)) {
+	std::vector<char> ffile;
+	if (!readFile(stages[1].fileName, ffile)) {
 		throw std::runtime_error("SSR Fragment Shader missing.\n");
-		return;
 	}
-	fi.content = ffile.data();
-	fi.size = (uint32_t)ffile.size();
-	fi.type = SHADER_FRAGMENT;
+	stages[1].content = ffile.data();
+	stages[1].size = (uint32_t)ffile.size();
+	stages[1].type = SHADER_FRAGMENT;
 
-	ShaderStageCreateInfo stages[2] = { vi, fi };
+	auto vbd = engine.getPlaneVBD();
+	auto vad = engine.getPlaneVAD();
 
-	GraphicsPipelineCreateInfo SSRGPCI;
-	SSRGPCI.cullMode = CULL_BACK;
-	SSRGPCI.bindings = &engine.planeVBD;
-	SSRGPCI.bindingsCount = 1;
-	SSRGPCI.attributes = &engine.planeVAD;
-	SSRGPCI.attributesCount = 1;
-	SSRGPCI.width = (float)engine.settings.resolutionX; // DIVIDE BY TWO
-	SSRGPCI.height = (float)engine.settings.resolutionY;
-	SSRGPCI.scissorW = engine.settings.resolutionX;
-	SSRGPCI.scissorH = engine.settings.resolutionY;
-	SSRGPCI.primitiveType = PRIM_TRIANGLES;
-	SSRGPCI.shaderStageCreateInfos = stages;
-	SSRGPCI.shaderStageCreateInfoCount = 2;
-	std::vector<TextureBindingLayout *>tbls = { engine.tbl, engine.tonemap_tbl_	 };
+	GraphicsPipelineCreateInfo ssrGPCI;
+	ssrGPCI.cullMode = CULL_BACK;
+	ssrGPCI.bindings = &vbd;
+	ssrGPCI.bindingsCount = 1;
+	ssrGPCI.attributes = &vad;
+	ssrGPCI.attributesCount = 1;
+	ssrGPCI.width = (float)settings->resolution_x_;
+	ssrGPCI.height = (float)settings->resolution_y_;
+	ssrGPCI.scissorW = settings->resolution_x_;
+	ssrGPCI.scissorH = settings->resolution_y_;
+	ssrGPCI.primitiveType = PRIM_TRIANGLES;
+	ssrGPCI.shaderStageCreateInfos = stages;
+	ssrGPCI.shaderStageCreateInfoCount = 2;
 
-	std::vector<UniformBufferBinding*> ubbs = { engine.deffubb };
-	SSRGPCI.textureBindings = tbls.data();
-	SSRGPCI.textureBindingCount = (uint32_t)tbls.size();
-	SSRGPCI.uniformBufferBindings = ubbs.data();
-	SSRGPCI.uniformBufferBindingCount = ubbs.size();
-	pipeline_ = graphics_wrapper_->CreateGraphicsPipeline(SSRGPCI);
+	TextureSubBinding *ssr_sub_binding_ = new TextureSubBinding("lighting", 4);
+
+
+	TextureBindingLayoutCreateInfo tblci;
+	tblci.bindingLocation = 4;
+	tblci.bindings = ssr_sub_binding_;
+	tblci.bindingCount = 1;
+	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	TextureBindingLayout *ssr_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
+
+	std::vector<TextureBindingLayout*> tbls_refl = { engine.gbuffer_tbl_, ssr_tbl_ }; // refl_tbl
+
+	ssrGPCI.textureBindings = tbls_refl.data();
+	ssrGPCI.textureBindingCount = tbls_refl.size();
+	ssrGPCI.uniformBufferBindings = nullptr;
+	ssrGPCI.uniformBufferBindingCount = 0;
+	gpipeline_ = graphics_wrapper->CreateGraphicsPipeline(ssrGPCI);
 }
 
-void PostProcessSSR::Process() {// BLEND_ADDITIVE
-	engine.graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-	target_->framebuffer->BindWrite(true);
+void PostProcessSSR::Process() {
+	auto graphics_wrapper = engine.getGraphicsWrapper();
+	double dt = engine.getUpdateTimeDelta();
+
+	gpipeline_->Bind();
+	if (target_ == nullptr) {
+		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
+		engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
+	}
+	else {
+		target_->framebuffer->BindWrite(true);
+		//target_->framebuffer->Clear(CLEAR_BOTH);
+	}
+	graphics_wrapper->SetImmediateBlending(BLEND_ADDITIVE);
+
 	source_->framebuffer->BindRead();
-	source_->framebuffer->BindTextures(0);
+	source_->framebuffer->BindTextures(4);
+	graphics_wrapper->DrawImmediateVertices(0, 6);
 
-	//target_->framebuffer->BindRead();
-	//target_->framebuffer->BindTextures(4);
-	
-	//if (target_ == nullptr) {
-		engine.graphics_wrapper_->BindDefaultFramebuffer(false);
-		engine.graphics_wrapper_->Clear(CLEAR_BOTH);
-	//}
-
-	pipeline_->Bind();
-	engine.deffUBO->Bind();
-	engine.graphics_wrapper_->DrawImmediateVertices(0, 6);
-	engine.graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
-}*/
+	graphics_wrapper->SetImmediateBlending(BLEND_NONE);
+}

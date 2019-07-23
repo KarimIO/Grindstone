@@ -1,5 +1,5 @@
 {
-    "type": "unlit",
+    "type": "transparent",
     "name": "Sky Shader",
     "shaders": {
         "deferred": {

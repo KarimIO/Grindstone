@@ -23,8 +23,9 @@ public:
 	RenderPathDeferred(unsigned int w, unsigned int h);
 	virtual void setDebugMode(unsigned int d) override;
 	virtual unsigned int getDebugMode() override;
-	void render(Framebuffer *default_fb, Space *scene);
+	void render(Framebuffer *default_fb, DepthTarget *depthTarget, Space *scene);
 	void renderLights(Framebuffer *fbo, Space *scene);
+	void recreateFramebuffer(unsigned int w, unsigned int h);
 private:
 	void createPointLightShader();
 	void createSpotLightShader();

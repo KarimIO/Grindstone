@@ -14,9 +14,26 @@
             "terrain": {
                 "COMPONENT_TRANSFORM": {
                     "position": [0.0, 0.0, 0.0],
-                    "scale":    [10.0, 0.5, 10.0]
+                    "scale":    [30.0, 2.0, 30.0]
                 },
                 "COMPONENT_RENDER_TERRAIN": {
+                }
+            },
+            "water": {
+                "COMPONENT_TRANSFORM": {
+                    "position": [
+                        0.0,
+                        0.05,
+                        0.0
+                    ],
+                    "scale": [
+                        50.0,
+                        0.4,
+                        50.0
+                    ]
+                },
+                "COMPONENT_RENDER_STATIC_MESH": {
+                    "path": "models/plane.gmf"
                 }
             },
             "skylight": {

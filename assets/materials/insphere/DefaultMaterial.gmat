@@ -1,2 +1,2 @@
 shader: ../assets/shaders/skybox/sky.json
-skybox: ../../cubemaps/glacier_.tga
+skybox: ../../cubemaps/glacier.tga

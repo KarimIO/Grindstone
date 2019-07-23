@@ -7,6 +7,8 @@
 
 CameraComponent::CameraComponent(Space *space, GameObjectHandle object_handle, ComponentHandle handle) :
 	camera_(space), Component(COMPONENT_CAMERA, object_handle, handle) {
+
+	camera_.enable_reflections_ = engine.getSettings()->enable_reflections_;
 	camera_.setViewport(engine.getSettings()->resolution_x_, engine.getSettings()->resolution_y_);
 	camera_.initialize();
 	camera_.setEnabled(true);
@@ -25,9 +27,15 @@ ComponentHandle CameraSubSystem::addComponent(GameObjectHandle object_handle) {
 ComponentHandle CameraSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
 	components_.emplace_back(space_, object_handle, component_handle);
-	auto &component = components_.back();
+
+	setComponent(component_handle, params);
 
 	return component_handle;
+}
+
+void CameraSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
+	auto &component = components_[component_handle];
+
 }
 
 CameraComponent & CameraSubSystem::getComponent(ComponentHandle handle) {

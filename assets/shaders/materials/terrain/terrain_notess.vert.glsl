@@ -47,5 +47,5 @@ void main() {
     gl_Position = ubo.proj_view * vec4(fragPosition, 1.0);
     fragNormal = getNormals(tex).xyz;
     fragTangent =  vec3(0,1,0);
-    fragTexCoord = vec2(tex);
+    fragTexCoord = vec2(heightmap);
 }

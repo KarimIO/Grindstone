@@ -15,19 +15,23 @@ PostProcessTonemap::PostProcessTonemap(PostPipeline *pipeline, RenderTargetConta
     // Exposure Uniform Buffer
     UniformBufferBindingCreateInfo ubbci;
     ubbci.binding = 0;
-	ubbci.shaderLocation = "ExposureUBO";
-	ubbci.size = sizeof(ExposureUBO);
+	ubbci.shaderLocation = "EffectUBO";
+	ubbci.size = sizeof(EffectUBO);
 	ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
 	UniformBufferBinding *ubb = graphics_wrapper->CreateUniformBufferBinding(ubbci);
 
     UniformBufferCreateInfo ubci;
 	ubci.isDynamic = false;
-	ubci.size = sizeof(ExposureUBO);
+	ubci.size = sizeof(EffectUBO);
 	ubci.binding = ubb;
-	exposure_ub_ = graphics_wrapper->CreateUniformBuffer(ubci);
-
-    exposure_buffer_.exposure = exp(0.0f);
-	exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
+	effect_ub_ = graphics_wrapper->CreateUniformBuffer(ubci);
+	 
+	effect_buffer_.vignetteRadius = 0.75f;
+	effect_buffer_.vignetteSoftness = 0.45f;
+	effect_buffer_.vignetteStrength = 0.5f;
+	effect_buffer_.noiseStrength = 2.0f;
+	effect_buffer_.exposure = exp(0.0f);
+	effect_ub_->UpdateUniformBuffer(&effect_buffer_);
 
 	ShaderStageCreateInfo stages[2];
 
@@ -102,23 +106,24 @@ void PostProcessTonemap::Process() {
 
 	if (auto_exposure_) {
 		if (first_render_) {
-			exposure_buffer_.exposure = 1.0f / glm::clamp((float)exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
-			exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
-
+			effect_buffer_.exposure = 1.0f / glm::clamp((float)exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
+			
 			first_render_ = false;
 		}
 		else {
 			float new_exp = 1.0f / glm::clamp((float)exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
-			exposure_buffer_.exposure = exposure_buffer_.exposure * (1.0f - dt) + new_exp * dt;
-			exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
+			effect_buffer_.exposure = effect_buffer_.exposure * (1.0f - dt) + new_exp * dt;
 		}
 	}
 	else {
-		exposure_buffer_.exposure = 1.0f;
+		effect_buffer_.exposure = 1.0f;
 	}
 
+	effect_buffer_.time = engine.getTimeCurrent();
+	effect_ub_->UpdateUniformBuffer(&effect_buffer_);
+
     gpipeline_->Bind();
-    exposure_ub_->Bind();
+    effect_ub_->Bind();
 	if (target_ == nullptr) {
 		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
 		engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);

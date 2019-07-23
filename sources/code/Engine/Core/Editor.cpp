@@ -11,6 +11,7 @@
 #include "GameObject.hpp"
 #include "GraphicsWrapper.hpp"
 #include "Texture.hpp"
+#include "../Systems/CubemapSystem.hpp"
 
 #include <GL/gl3w.h>
 #include "../GraphicsOpenGL/GLRenderTarget.hpp"
@@ -31,6 +32,9 @@
 #include "Systems/TransformSystem.hpp"
 #include "Systems/LightSpotSystem.hpp"
 #include "Utilities/Logger.hpp"
+
+#include "../Converter/ImageConverter.hpp"
+#include "../Converter/Utilities.hpp"
 
 Editor::Viewport::Viewport(Camera *c, View v) : camera_(c), first(true) {
 	setView(v);
@@ -122,10 +126,14 @@ Editor::Editor(ImguiManager *manager) : selected_object_handle_(-1) {
 	
 	Camera *c = new Camera(engine.getScenes()[0]->spaces_[0], true);
 	c->setViewport(800, 600);
+	c->enable_reflections_ = false;
+	c->enable_auto_exposure_ = false;
 	c->initialize();
 	((RenderPathDeferred *)c->render_path_)->wireframe_ = true;
 	viewports_.emplace_back(c, Viewport::View::Top);
 	c = new Camera(engine.getScenes()[0]->spaces_[0], true);
+	c->enable_reflections_ = true;
+	c->enable_auto_exposure_ = true;
 	c->setViewport(800, 600);
 	c->initialize();
 	viewports_.emplace_back(c, Viewport::View::Perspective);
@@ -133,6 +141,7 @@ Editor::Editor(ImguiManager *manager) : selected_object_handle_(-1) {
 	asset_path_ = "../assets";
 	next_asset_path_ = "";
 	getDirectory();
+	next_refresh_asset_directory_time_ = 0;
 }
 
 void Editor::update() {
@@ -218,20 +227,52 @@ void Editor::prepareDockspace() {
 			if (ImGui::MenuItem("Load From", "", false))
 				loadFileFrom();
 			ImGui::Separator();
+			if (ImGui::MenuItem("Import", "", false))
+				importFile();
+			ImGui::Separator();
 			if (ImGui::MenuItem("Close", "", false))
 				engine.shutdown();
 			ImGui::EndMenu();
 		}
+
 		if (ImGui::BeginMenu("View")) {
 			if (ImGui::MenuItem("Show Asset Browser", "", show_asset_browser_)) show_asset_browser_ = !show_asset_browser_;
 			if (ImGui::MenuItem("Show Scene Graph", "", show_scene_graph_)) show_scene_graph_ = !show_scene_graph_;
 			if (ImGui::MenuItem("Show Component Panel", "", show_component_panel_)) show_component_panel_ = !show_component_panel_;
 			if (ImGui::MenuItem("Add Viewport Panel", "", false)) {
 				Camera *c = new Camera(engine.getScenes()[0]->spaces_[0], true);
+				c->enable_reflections_ = true;
+				c->enable_auto_exposure_ = true;
 				c->setViewport(800, 600);
 				c->initialize();
 				viewports_.emplace_back(c, Viewport::View::Perspective);
 			}
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Build")) {
+			auto space = engine.getScene(0)->spaces_[0];
+			auto cubemap_sys = (CubemapSubSystem *)space->getSubsystem(COMPONENT_CUBEMAP);
+
+			//if (ImGui::MenuItem("Build Irradiance Probes", "", false)) {
+			if (ImGui::MenuItem("Build Light Probes", "", false)) {
+				cubemap_sys->bake();
+			}
+			
+			/*if (ImGui::MenuItem("Build Reflection Probes", "", false)) {
+				
+			}
+			
+			if (ImGui::MenuItem("Build Lightmap", "", false)) {
+				
+			}
+			
+			if (ImGui::MenuItem("Build Lighting", "", false)) {
+				cubemap_sys->bake();	// Build Irradiance
+				// Build Reflection Probes
+				// Build Lightmap
+			}*/
+
 			ImGui::EndMenu();
 		}
 
@@ -438,6 +479,12 @@ void Editor::displayComponent(ComponentType type, ComponentHandle handle) {
 
 void Editor::assetPanel() {
 	if (show_asset_browser_) {
+		double time = engine.getTimeCurrent();
+		if (next_refresh_asset_directory_time_ <= time) {
+			getDirectory();
+			next_refresh_asset_directory_time_ = time + 10.0;
+		}
+
 		ImGui::Begin("Asset Browser", &show_asset_browser_);
 		if (ImGui::BeginPopupContextItem("Asset Browser Rt")) {
 			ImGui::BeginMenu("Create Folder");
@@ -503,6 +550,7 @@ void Editor::viewportPanels() {
 
 			Camera &cam = camcomp.camera_;
 
+			cam.setViewport(size.x, size.y);
 			cam.render(pos, view);
 			engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
 
@@ -600,6 +648,7 @@ void Editor::viewportPanels() {
 					viewport_manipulating_ = 0;
 				}
 
+				// v.camera_->setViewport(size.x, size.y);
 				v.camera_->render(v.pos, v.view_mat);
 				engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
 
@@ -641,10 +690,10 @@ void Editor::viewportPanels() {
 					ImGui::Separator();
 
 					if (ImGui::TreeNode("Post-Processing")) {
-						ImGui::Checkbox("SSAO", &pp);
-						ImGui::Checkbox("Reflections", &pp);
-						ImGui::Checkbox("Auto-Exposure", &pp);
-						ImGui::Checkbox("Color Grading", &pp);
+						ImGui::Checkbox("Auto Exposure", &v.camera_->enable_auto_exposure_);
+						ImGui::Checkbox("Reflections", &v.camera_->enable_reflections_);
+						//ImGui::Checkbox("Auto-Exposure", &pp);
+						//ImGui::Checkbox("Color Grading", &pp);
 
 						ImGui::TreePop();
 					}
@@ -680,7 +729,7 @@ void Editor::saveFile() {
 }
 
 void Editor::saveFileAs() {
-	std::string p = engine.getGraphicsWrapper()->getSavePath();
+	std::string p = engine.getGraphicsWrapper()->getSavePath("JSON Files (*.json)\0*.json\0All Files (*.*)\0*.*\0", "json");
 	//loadFile(path_, engine.getScenes()[0]);
 	if (p != "") {
 		path_ = p;
@@ -747,18 +796,54 @@ void Editor::cleanCameras() {
 
 	Camera *c = new Camera(engine.getScenes()[0]->spaces_[0], true);
 	c->setViewport(800, 600);
+	c->enable_reflections_ = false;
+	c->enable_auto_exposure_ = false;
 	c->initialize();
 	((RenderPathDeferred *)c->render_path_)->wireframe_ = true;
 	viewports_.emplace_back(c, Viewport::View::Top);
 	c = new Camera(engine.getScenes()[0]->spaces_[0], true);
+	c->enable_reflections_ = true;
+	c->enable_auto_exposure_ = true;
 	c->setViewport(800, 600);
 	c->initialize();
 	viewports_.emplace_back(c, Viewport::View::Perspective);
 
 }
 
+void Editor::importFile() {
+	std::string path = engine.getGraphicsWrapper()->getLoadPath("Image File\0*.png;*.tga;*.jpg;*.jpeg;*.bmp;*.psd;*.gif;*.hdr;*.pic\0Model Files\0*.3ds;*.dxf;*.fbx;*.obj;*.blend;*.dae\0All Files (*.*)\0*.*\0", "png");
+
+	GRIND_LOG("Importing {0}", path);
+
+	size_t posslash = path.find_last_of('\\');
+	posslash = (posslash == -1) ? 0 : posslash;
+	size_t posslashf = path.find_last_of('/');
+	posslashf = (posslashf == -1) ? 0 : posslashf;
+	if (posslashf > posslash) posslash = posslashf;
+
+	size_t posdot = path.find_last_of('.');
+	std::string base = path.substr(posslash + 1, posdot - posslash - 1);
+	std::string ext = path.substr(posdot + 1);
+
+	if (ext == "png" || ext == "tga" || ext == "jpg" || ext == "jpeg" || ext == "bmp" || ext == "psd" || ext == "gif" || ext == "hdr" || ext == "pic") {
+		std::string final = asset_path_ + "/" + base + ".dds";
+		GRIND_WARN("Importing Image {0}", final);
+
+		ConvertTexture(path, false, final, Compression::C_DETECT);
+	}
+	else if (ext == "3ds" || ext == "dxf" || ext == "fbx" || ext == "obj" || ext == "blend" || ext == "dae") {
+		GRIND_WARN("Importing Model");
+	}
+	else {
+		GRIND_WARN("Invalid file type: {0}", ext);
+	}
+
+	getDirectory();
+	next_refresh_asset_directory_time_ = engine.getTimeCurrent() + 10.0;
+}
+
 void Editor::loadFileFrom() {
-	std::string p = engine.getGraphicsWrapper()->getLoadPath();
+	std::string p = engine.getGraphicsWrapper()->getLoadPath("JSON Files (*.json)\0*.json\0All Files (*.*)\0*.*\0", "json");
 	//loadFile(path_, engine.getScenes()[0]);
 	if (p != "") {
 		path_ = p;

@@ -129,7 +129,14 @@ RenderTerrainSubSystem::~RenderTerrainSubSystem() {
 ComponentHandle RenderTerrainSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
 	components_.emplace_back(object_handle, component_handle);
-	auto component = components_.back();
+
+	setComponent(component_handle, params);
+
+	return component_handle;
+}
+
+void RenderTerrainSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
+	auto &component = components_[component_handle];
 
 	if (params.HasMember("path")) {
 		auto path = params["path"].GetString();
@@ -174,8 +181,6 @@ ComponentHandle RenderTerrainSubSystem::addComponent(GameObjectHandle object_han
 	Material *mat = engine.getMaterialManager()->getMaterial(component.material_);
 
 	component.generateMesh();
-
-	return component_handle;
 }
 
 void RenderTerrainSubSystem::removeComponent(ComponentHandle id) {

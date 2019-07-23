@@ -1,8 +1,23 @@
 {
     "Player": {
-        "COMPONENT_TRANSFORM": {},
-        "COMPONENT_CAMERA": {},
+        "COMPONENT_TRANSFORM": {
+            "position": [
+                0.0,
+                1.0,
+                0.0
+            ],
+            "scale": [
+                0.001,
+                0.001,
+                0.001
+            ],
+            "angles": [
+                0.0,
+                0.0,
+                0.0
+            ]
+        },
         "COMPONENT_CONTROLLER": {},
-        "COMPONENT_AUDIO_LISTENER": {}
+        "COMPONENT_CAMERA": {}
     }
 }

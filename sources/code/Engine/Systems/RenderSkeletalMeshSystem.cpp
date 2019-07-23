@@ -25,15 +25,20 @@ RenderSkeletalMeshSubSystem::~RenderSkeletalMeshSubSystem() {
 ComponentHandle RenderSkeletalMeshSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
 	components_.emplace_back(object_handle, component_handle);
-	auto component = components_.back();
+
+	setComponent(component_handle, params);
+
+	return component_handle;
+}
+
+void RenderSkeletalMeshSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
+	auto &component = components_[component_handle];
 
 	if (params.HasMember("path")) {
 		auto path = params["path"].GetString();
 		component.path_ = path;
 		component.model_handle_ = engine.getModelManager()->preloadModel(component_handle, path);
 	}
-
-	return component_handle;
 }
 
 void RenderSkeletalMeshSubSystem::removeComponent(ComponentHandle id) {

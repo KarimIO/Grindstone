@@ -2,19 +2,7 @@
 #define DDS_FORMAT_HPP
 
 #include <cstdint>
-
-enum Compression {
-    C_DETECT = 0,
-	C_UNCOMPRESSED,
-	C_BC1,
-	C_BC2,
-	C_BC3,
-	C_BC4,
-	C_BC5,
-	C_BC6H,
-	C_BC7
-};
-
+#include "../Converter/ImageConverter.hpp"
 
 struct DDS_PIXELFORMAT {
 	uint32_t dwSize = 32;

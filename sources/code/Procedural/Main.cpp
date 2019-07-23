@@ -9,7 +9,10 @@ int main() {
 	int seed = 237;
 
 	FastNoise noise(300);
-	int width, height = width = 512;
+	int width, height;
+	std::cout << "Width / Height: ";
+	std::cin >> width;
+	height = width;
 	double *data = new double[width * height];
 
 	double scale = 1.0;

@@ -1,6 +1,8 @@
 #include "ColliderSystem.hpp"
 #include <btBulletDynamicsCommon.h>
 #include "../Utilities/Logger.hpp"
+#include "../Core/Space.hpp"
+#include "TransformSystem.hpp"
 
 ColliderComponent::ColliderComponent(GameObjectHandle object_handle, ComponentHandle id) : Component(COMPONENT_COLLISION, object_handle, id) {}
 
@@ -15,10 +17,22 @@ ComponentHandle ColliderSubSystem::addComponent(GameObjectHandle object_handle) 
 	return component_handle;
 }
 
-ComponentHandle ColliderSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value & params) {
+ComponentHandle ColliderSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
 	components_.emplace_back(object_handle, component_handle);
-	auto &component = components_.back();
+
+	setComponent(component_handle, params);
+
+	return component_handle;
+}
+
+void ColliderSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
+	auto &component = components_[component_handle];
+	auto object_handle = component.game_object_handle_;
+
+	ComponentHandle transform_id = space_->getObject(object_handle).getComponentHandle(COMPONENT_TRANSFORM);
+	TransformSubSystem *transform_sub = (TransformSubSystem *)(space_->getSubsystem(COMPONENT_TRANSFORM));
+	TransformComponent &transform_component = transform_sub->getComponent(transform_id);
 
 	if (params.HasMember("type")) {
 		std::string type = params["type"].GetString();
@@ -35,6 +49,35 @@ ComponentHandle ColliderSubSystem::addComponent(GameObjectHandle object_handle, 
 			auto &c = component.plane_shape_;
 
 			component.shape_ = new btStaticPlaneShape(btVector3(c[0], c[1], c[2]), c[3]);
+		}
+		else if (type == "box") {
+			if (params.HasMember("offset")) {
+				auto shape = params["offset"].GetArray();
+				component.box_offset_[0] = shape[0].GetFloat();
+				component.box_offset_[1] = shape[1].GetFloat();
+				component.box_offset_[2] = shape[2].GetFloat();
+			}
+			else {
+				component.box_offset_[0] = 0.0f;
+				component.box_offset_[1] = 0.0f;
+				component.box_offset_[2] = 0.0f;
+			}
+
+			if (params.HasMember("size")) {
+				auto shape = params["size"].GetArray();
+				component.box_size_[0] = shape[0].GetFloat();
+				component.box_size_[1] = shape[2].GetFloat();
+				component.box_size_[2] = shape[1].GetFloat();
+			}
+			else {
+				component.box_offset_[0] = 1.0f;
+				component.box_offset_[1] = 1.0f;
+				component.box_offset_[2] = 1.0f;
+			}
+
+			auto &c = component.plane_shape_;
+
+			component.shape_ = new btBoxShape(btVector3(component.box_size_[0] / 2.0f, component.box_size_[1] / 2.0f, component.box_size_[2] / 2.0f));
 		}
 		else if (type == "sphere") {
 			if (params.HasMember("radius")) {
@@ -64,8 +107,10 @@ ComponentHandle ColliderSubSystem::addComponent(GameObjectHandle object_handle, 
 	else {
 		GRIND_WARN("Invalid shape.");
 	}
+	
+	glm::vec3 scale = transform_component.scale_;
 
-	return component_handle;
+	component.shape_->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
 }
 
 ColliderComponent & ColliderSubSystem::getComponent(ComponentHandle handle) {
@@ -79,7 +124,7 @@ size_t ColliderSubSystem::getNumComponents() {
 void ColliderSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
 	auto &c = getComponent(handle);
 	switch (c.shape_type_) {
-	case ColliderComponent::CAPSULE: {
+	case ColliderComponent::ShapeType::CAPSULE: {
 		w.Key("type");
 		w.String("capsule");
 
@@ -89,7 +134,7 @@ void ColliderSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::
 		w.Double(c.capsule_height_);
 		break;
 	}
-	case ColliderComponent::PLANE: {
+	case ColliderComponent::ShapeType::PLANE: {
 		w.Key("type");
 		w.String("plane");
 
@@ -102,7 +147,26 @@ void ColliderSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::
 		w.EndArray();
 		break;
 	}
-	case ColliderComponent::SPHERE: {
+	case ColliderComponent::ShapeType::BOX: {
+		w.Key("type");
+		w.String("box");
+
+		w.Key("offset");
+		w.StartArray();
+		w.Double(c.box_offset_[0]);
+		w.Double(c.box_offset_[1]);
+		w.Double(c.box_offset_[2]);
+		w.EndArray();
+
+		w.Key("size");
+		w.StartArray();
+		w.Double(c.box_size_[0]);
+		w.Double(c.box_size_[1]);
+		w.Double(c.box_size_[2]);
+		w.EndArray();
+		break;
+	}
+	case ColliderComponent::ShapeType::SPHERE: {
 		w.Key("sphere");
 		w.String("plane");
 

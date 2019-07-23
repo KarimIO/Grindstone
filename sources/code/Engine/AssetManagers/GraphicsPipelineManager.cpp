@@ -30,6 +30,7 @@ enum SHADER_JSON_STATE {
 	SHADER_JSON_MAIN = 0,
 	SHADER_JSON_NAME,
 	SHADER_JSON_TYPE,
+	SHADER_JSON_CULL_FACE,
 	SHADER_JSON_SHADERS,
 	// Draw Modes
 	SHADER_JSON_SHADER_DEFERRED,
@@ -107,9 +108,9 @@ public:
 					paramDefault = new glm::bvec3(bvec4.x, bvec4.y, bvec4.z);
 			}
 			else if (paramType == PARAM_BVEC4) {
-				bvec4[subIterator++] = b;
-				if (subIterator == 4)
-					paramDefault = new glm::bvec4(bvec4);
+bvec4[subIterator++] = b;
+if (subIterator == 4)
+paramDefault = new glm::bvec4(bvec4);
 			}
 		}
 		state = SHADER_JSON_PROPERTY;
@@ -205,6 +206,18 @@ public:
 	bool String(const char* str, rapidjson::SizeType length, bool copy) {
 		if (state == SHADER_JSON_NAME) {
 			pipeline->name_text = str;
+			state = SHADER_JSON_MAIN;
+		}
+		else if (state == SHADER_JSON_CULL_FACE) {
+			std::string type = str;
+			if (type == "front")		pipeline->cull_mode_ = CULL_FRONT;
+			else if (type == "back")	pipeline->cull_mode_ = CULL_BACK;
+			else if (type == "none")	pipeline->cull_mode_ = CULL_NONE;
+			else if (type == "both")	pipeline->cull_mode_ = CULL_BOTH;
+			else {
+				GRIND_LOG("Invalid cull mode: {0}", type.c_str());
+				pipeline->cull_mode_ = CULL_NONE;
+			}
 			state = SHADER_JSON_MAIN;
 		}
 		else if (state == SHADER_JSON_TYPE) {
@@ -449,6 +462,9 @@ public:
 			if (std::string(str) == "name") {
 				state = SHADER_JSON_NAME;
 			}
+			else if (std::string(str) == "cullface") {
+				state = SHADER_JSON_CULL_FACE;
+			}
 			else if (std::string(str) == "type") {
 				state = SHADER_JSON_TYPE;
 			}
@@ -667,13 +683,28 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 			tbl_count = 0;
 		}
 
+		if (container.type == TYPE_TRANSPARENT) {
+			container.tbl_arr = new TextureBindingLayout *[2];
+			container.tbl_arr[0] = engine.gbuffer_tbl_;
+			container.tbl_arr[1] = container.tbl;
+		}
+		else {
+			container.tbl_arr = &container.tbl;
+		}
+
 		gpci.shaderStageCreateInfos = stages.data();
 		gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
 		gpci.uniformBufferBindings = ubbs.data();
 		gpci.uniformBufferBindingCount = ubbs.size();
-		gpci.textureBindings = &container.tbl;
-		gpci.textureBindingCount = tbl_count;
-		gpci.cullMode = CULL_BACK;
+		gpci.textureBindings = container.tbl_arr;
+		if (container.type == TYPE_TRANSPARENT) {
+			gpci.textureBindingCount = tbl_count + 1;
+		}
+		else {
+			gpci.textureBindingCount = tbl_count;
+
+		}
+		gpci.cullMode = container.cull_mode_;
 		gpci.primitiveType = PRIM_TRIANGLES;
 		container.program = engine.getGraphicsWrapper()->CreateGraphicsPipeline(gpci);
 	}
@@ -874,17 +905,17 @@ void GraphicsPipelineManager::drawUnlitImmediate() {
 	for (auto &renderPass : render_passes_) {
 		for (auto &pipeline : renderPass.pipelines_unlit) {
 			pipeline.program->Bind();
-			if (pipeline.draw_count > 0) {
+			//if (pipeline.draw_count > 0) {
 				for (auto &material : pipeline.materials) {
-					if (material.getDrawCount() > 0) {
-						if (material.m_textureBinding != nullptr)
+					//if (material.getDrawCount() > 0) {
+						//if (material.m_textureBinding != nullptr)
 							engine.getGraphicsWrapper()->BindTextureBinding(material.m_textureBinding);
 						for (auto mesh : material.m_meshes) {
 							mesh->draw();
 						}
-					}
+					//}
 				}
-			}
+			//}
 		}
 	}
 }
@@ -956,15 +987,21 @@ void GraphicsPipelineManager::drawForwardImmediate() {
 	for (auto &renderPass : render_passes_) {
 		for (auto &pipeline : renderPass.pipelines_forward) {
 			pipeline.program->Bind();
-			if (pipeline.draw_count > 0) {
+			//if (pipeline.draw_count > 0) {
 				for (auto &material : pipeline.materials) {
-					if (material.getDrawCount() > 0) {
+					//if (material.getDrawCount() > 0) {
+						if (material.m_textureBinding != nullptr)
+							engine.getGraphicsWrapper()->BindTextureBinding(material.m_textureBinding);
+
+						if (material.param_buffer_handler_ != nullptr)
+							material.param_buffer_handler_->Bind();
+
 						for (auto &mesh : material.m_meshes) {
 							mesh->draw();
 						}
-					}
+					//}
 				}
-			}
+			//}
 		}
 	}
 }

@@ -21,6 +21,7 @@ public:
 	void Reserve(unsigned int size);
 	void AddPostProcess(BasePostProcess *);
 	void Process();
+	void setSpace(Space *space);
 	Space *getSpace();
 	~PostPipeline();
 private:

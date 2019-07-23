@@ -8,7 +8,7 @@ uniform sampler2D gbuffer3;
 
 out vec4 outColor;
 
-layout(std140) uniform UniformBufferObject {
+layout(std140) uniform DefferedUBO {
     mat4 invView;
     mat4 invProj;
     vec4 eyePos;

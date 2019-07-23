@@ -158,6 +158,16 @@ AnimationSubSystem::~AnimationSubSystem() {
 
 ComponentHandle AnimationSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
+	components_.emplace_back(object_handle, component_handle);
+
+	setComponent(component_handle, params);
+
+	return component_handle;
+}
+
+void AnimationSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
+	auto &component = components_[component_handle];
+	auto object_handle = component.game_object_handle_;
 
 	std::string animation_path, skeleton_path;
 
@@ -170,9 +180,6 @@ ComponentHandle AnimationSubSystem::addComponent(GameObjectHandle object_handle,
 	}
 
 	components_.emplace_back(object_handle, component_handle, animation_path, skeleton_path);
-	auto component = components_.back();
-
-	return component_handle;
 }
 
 void AnimationSubSystem::removeComponent(ComponentHandle id) {

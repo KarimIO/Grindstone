@@ -17,6 +17,10 @@ void PostPipeline::Process() {
 	}
 }
 
+void PostPipeline::setSpace(Space * space) {
+	space_ = space;
+}
+
 Space *PostPipeline::getSpace() {
 	return space_;
 }

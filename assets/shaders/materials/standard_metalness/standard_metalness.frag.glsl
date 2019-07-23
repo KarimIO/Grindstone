@@ -45,7 +45,7 @@ void main() {
 
 	out0 = (1 - metalness) * albedo;
 	out0 = pow(out0, vec4(2.2f));
-	if (param.hasNormalTexture) {
+	if (false && param.hasNormalTexture) {
 		out1 = vec4(texture(normalTexture, fragTexCoord).rgb, 1);
 		out1 = vec4(CalcBumpedNormal(fragNormal, out1.rgb, fragTangent), 1);
 	}

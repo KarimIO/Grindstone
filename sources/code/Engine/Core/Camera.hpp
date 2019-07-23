@@ -14,9 +14,11 @@ class Space;
 class Camera {
 public:
 	Camera(Space *space, bool useFramebuffer = false);
+	Camera(Space *space, unsigned int w, unsigned int h, bool useFramebuffer = false);
 	void initialize();
 	void setViewport(unsigned int w, unsigned int h);
 	void render(glm::vec3 &pos, glm::mat4 &view);
+	void render(glm::vec3 &pos, glm::mat4 &view, int face);
 	void setOrtho(double l, double r, double t, double b);
 	void setPerspective();
 	~Camera();
@@ -44,11 +46,18 @@ public:
 
 	RenderTargetContainer rt_hdr_;
 	RenderTarget *hdr_buffer_;
+	DepthTarget *depth_target_;
 	Framebuffer *hdr_framebuffer_;
 	RenderPath *render_path_;
 
 	RenderTarget *final_buffer_;
 	Framebuffer *final_framebuffer_;
+
+	bool custom_final_framebuffer_;
+	void setCustomFinalFramebuffer(Framebuffer *framebuffer);
+
+	bool enable_reflections_;
+	bool enable_auto_exposure_;
 	
 	bool use_framebuffer_;
 
@@ -59,6 +68,7 @@ private:
 	void generateFramebuffers();
 
 	bool enabled_;
+	BasePostProcess *pp_ssao;
 };
 
 #endif

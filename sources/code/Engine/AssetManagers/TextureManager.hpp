@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "MaterialManager.hpp"
+#include "../FormatCommon/DDSformat.hpp"
 
 typedef size_t TextureHandler;
 
@@ -28,7 +29,7 @@ public:
 	void removeTexture(TextureContainer *container);
 	void removeTexture(TextureHandler handle);
 
-	void writeCubemap(std::string path, unsigned char *data[6], uint16_t res);
+	void writeCubemap(std::string path, unsigned char ***data, uint16_t res);
 
 	~TextureManager();
 private:

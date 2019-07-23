@@ -20,7 +20,7 @@ enum Compression {
 
 void ExtractBlock(const unsigned char* inPtr, unsigned int width, unsigned char* colorBlock);
 
-void ConvertBC123(unsigned char *pixels, int width, int height, Compression compression, std::string path);
+void ConvertBC123(unsigned char ***pixels, bool is_cubemap, int width, int height, Compression compression, std::string path, bool generateMips);
 
 bool ConvertTexture(std::string input, bool is_cubemap, std::string output, Compression compression = C_DETECT);
 

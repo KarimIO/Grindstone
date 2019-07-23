@@ -67,7 +67,7 @@ public:
 	Texture *CreateTexture(TextureCreateInfo createInfo);
 	TextureBinding *CreateTextureBinding(TextureBindingCreateInfo createInfo);
 	TextureBindingLayout *CreateTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo);
-	RenderTarget *CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc);
+	RenderTarget *CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc, bool cube = false);
 	DepthTarget *CreateDepthTarget(DepthTargetCreateInfo rt);
 	void CopyToDepthBuffer(DepthTarget *p);
 

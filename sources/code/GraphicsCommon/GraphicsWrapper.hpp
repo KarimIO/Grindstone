@@ -96,8 +96,8 @@ public:
 	virtual void GetCursor(int &x, int &y);
 	virtual void setFocus();
 	virtual void setTitle(const char *title);
-	virtual char *getSavePath();
-	virtual char *getLoadPath();
+	virtual char *getSavePath(const char *filter, const char *default_ext);
+	virtual char *getLoadPath(const char *filter, const char *default_ext);
 
 // Interfaces
 public:
@@ -132,7 +132,7 @@ public:
 	virtual Texture *CreateTexture(TextureCreateInfo createInfo) = 0;
 	virtual TextureBinding *CreateTextureBinding(TextureBindingCreateInfo ci) = 0;
 	virtual TextureBindingLayout *CreateTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo) = 0;
-	virtual RenderTarget *CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc) = 0;
+	virtual RenderTarget *CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc, bool cube = false) = 0;
 	virtual DepthTarget *CreateDepthTarget(DepthTargetCreateInfo rt) = 0;
 	virtual void CopyToDepthBuffer(DepthTarget *p) = 0;
 

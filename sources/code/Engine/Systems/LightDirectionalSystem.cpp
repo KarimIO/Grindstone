@@ -84,10 +84,17 @@ void LightDirectionalSystem::update(double dt) {
 	}
 }
 
-ComponentHandle LightDirectionalSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value & params) {
+ComponentHandle LightDirectionalSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
 	components_.emplace_back(object_handle, component_handle);
-	auto &component = components_.back();
+
+	setComponent(component_handle, params);
+
+	return component_handle;
+}
+
+void LightDirectionalSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
+	auto &component = components_[component_handle];
 
 	if (params.HasMember("color")) {
 		auto color = params["color"].GetArray();
@@ -129,8 +136,6 @@ ComponentHandle LightDirectionalSubSystem::addComponent(GameObjectHandle object_
 	}
 	else
 		component.properties_.shadow = false;
-
-	return component_handle;
 }
 
 LightDirectionalComponent & LightDirectionalSubSystem::getComponent(ComponentHandle handle) {
