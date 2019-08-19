@@ -10,8 +10,6 @@ public:
 	void setPath(std::string path);
 	Editor(ImguiManager *manager);
     void update();
-private:
-	double next_refresh_asset_directory_time_;
 
 	struct Viewport {
 		Camera *camera_;
@@ -40,6 +38,9 @@ private:
 		void setView(View v);
 	};
 	std::vector<Viewport> viewports_;
+private:
+
+	double next_refresh_asset_directory_time_;
 
 	std::string path_;
 
@@ -58,6 +59,8 @@ private:
     void sceneGraphPanel();
     void componentPanel();
     void assetPanel();
+	void drawGizmos();
+	void drawBox(glm::vec3 start, glm::vec3 end);
 	void viewportPanels();
 
 	void saveFile();

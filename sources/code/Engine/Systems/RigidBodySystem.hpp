@@ -45,11 +45,12 @@ public:
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
 	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value & params) override;
 	RigidBodyComponent &getComponent(ComponentHandle handle);
+	virtual Component *getBaseComponent(ComponentHandle component_handle) override;
 	size_t getNumComponents();
 	virtual void writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) override;
 	virtual void removeComponent(ComponentHandle handle);
 	virtual ~RigidBodySubSystem();
-private:
+//private:
 	btBroadphaseInterface* broadphase_;
 	btDefaultCollisionConfiguration* collision_configuration_;
 	btCollisionDispatcher* dispatcher_;

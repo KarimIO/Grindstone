@@ -32,6 +32,7 @@
 #include "Systems/TransformSystem.hpp"
 #include "Systems/LightSpotSystem.hpp"
 #include "Utilities/Logger.hpp"
+#include "Systems/RigidBodySystem.hpp"
 
 #include "../Converter/ImageConverter.hpp"
 #include "../Converter/Utilities.hpp"
@@ -110,7 +111,7 @@ void Editor::Viewport::setView(View v) {
 	}
 
 	calcDirs();
-	setViewMatrix();
+	// setViewMatrix();
 }
 
 Editor::Editor(ImguiManager *manager) : selected_object_handle_(-1) {
@@ -486,11 +487,16 @@ void Editor::assetPanel() {
 		}
 
 		ImGui::Begin("Asset Browser", &show_asset_browser_);
-		if (ImGui::BeginPopupContextItem("Asset Browser Rt")) {
-			ImGui::BeginMenu("Create Folder");
-			ImGui::BeginMenu("Create File");
+
+		/*
+		if (ImGui::IsMouseHoveringWindow())
+			ImGui::OpenPopup("FilePopup");
+		if (ImGui::BeginPopup("FilePopup", 1))
+		{
+			ImGui::Button("Test");
 			ImGui::EndPopup();
 		}
+		*/
 
 		ImVec2 button_sz(80, 30);
 		ImGuiStyle& style = ImGui::GetStyle();
@@ -525,7 +531,22 @@ void Editor::assetPanel() {
 
 #include "Systems/CameraSystem.hpp"
 
+void Editor::drawGizmos() {
+	drawBox(glm::vec3(-2, -2, -2), glm::vec3(2, 2, 2));
+}
+
+void Editor::drawBox(glm::vec3 start, glm::vec3 end) {
+	auto gw = engine.getGraphicsWrapper();
+	
+	// gw->DrawImmediateIndexed(0, flase, 0);
+}
+
+bool has_left_clicked = false;
+
 void Editor::viewportPanels() {
+	bool left_clicking = engine.getInputManager()->GetMouseButton(MOUSE_LEFT) > 0;
+	bool right_clicking = engine.getInputManager()->GetMouseButton(MOUSE_RIGHT) > 0;
+
 	if (show_viewport_) {
 		if (engine.edit_is_simulating_) {
 			ImGui::Begin("Simulation Viewport", &show_viewport_);
@@ -542,16 +563,15 @@ void Editor::viewportPanels() {
 			glm::vec3 fwd = transys->getForward(transcomp);
 			glm::vec3 up = transys->getUp(transcomp);
 
-			glm::mat4 view = glm::lookAt(
-				pos,
-				pos + fwd,
-				up
-			);
-
 			Camera &cam = camcomp.camera_;
-
+			
+			cam.setDirections(fwd, up);
+			cam.setPosition(pos);
 			cam.setViewport(size.x, size.y);
-			cam.render(pos, view);
+			cam.render();
+
+			drawGizmos();
+
 			engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
 
 			unsigned int t = ((GLRenderTarget *)cam.final_buffer_)->getHandle();
@@ -564,7 +584,6 @@ void Editor::viewportPanels() {
 		}
 		else {
 			bool viewport_selected = false;
-			bool right_clicking = engine.getInputManager()->GetMouseButton(MOUSE_RIGHT) > 0;
 
 			auto mouse = ImGui::GetMousePos();
 
@@ -588,7 +607,7 @@ void Editor::viewportPanels() {
 				}*/
 
 				//if (viewport_manipulating_) {
-				if (right_clicking) {
+				if (!has_left_clicked && left_clicking || right_clicking) {
 					auto min = ImGui::GetWindowPos();
 					auto max = min;
 					max.x += size.x;
@@ -628,19 +647,77 @@ void Editor::viewportPanels() {
 
 
 						v.calcDirs();
-						v.setViewMatrix();
+						// v.setViewMatrix();
 
 						engine.getGraphicsWrapper()->SetCursor(midx, midy);
 						viewport_selected = true;
 					}
 					else if (viewport_manipulating_ == 0) {
 						if (mouse.x < max.x && mouse.x > min.x && mouse.y > min.y && mouse.y < max.y) {
-							viewport_manipulating_ = i;
+							if (right_clicking) {
+								viewport_manipulating_ = i;
 
-							int midx = int(min.x + max.x) / 2;
-							int midy = int(min.y + max.y) / 2;
+								int midx = int(min.x + max.x) / 2;
+								int midy = int(min.y + max.y) / 2;
 
-							engine.getGraphicsWrapper()->SetCursor(midx, midy);
+								engine.getGraphicsWrapper()->SetCursor(midx, midy);
+							}
+							if (left_clicking) {
+								RayTraceResults r = v.camera_->rayTraceMousePostion(mouse.x, mouse.y);
+								if (r.hit) {
+									selected_object_handle_ = r.object_handle;
+								}
+								else {
+									selected_object_handle_ = -1;
+								}
+
+								/*glm::vec3 eye_pos = v.pos;
+								glm::vec3 ray_world;
+
+								if (v.view == Editor::Viewport::Perspective) {
+									int cx = mouse.x - min.x;
+									int cy = mouse.y - min.y;
+
+									float width = (max.x - min.x);
+									float height = (max.y - min.y);
+
+									float x = 0.0f; // (2.0f * cx) / width - 1.0f;
+									float y = 0.0f; // (2.0f * cy) / height - 1.0f;
+									glm::vec4 ray_clip = glm::vec4(x, y, -1.0, 1.0);
+									glm::vec4 ray_eye = glm::inverse(v.camera_->projection_ * v.view_mat) * ray_clip;
+									//ray_world = (glm::inverse(v.camera_->view_) * ray_eye);
+									// don't forget to normalise the vector at some point
+									ray_world = eye_pos + v.fwd * 10.0f; // glm::normalize(ray_world) * 100.0f;
+								}
+								else {
+									ray_world = 10.0f * v.fwd;
+								}
+
+								std::cout << "From: " << eye_pos.x << " " << eye_pos.y << " " << eye_pos.z << std::endl;
+								std::cout << "To: " << ray_world.x << " " << ray_world.y << " " << ray_world.z << std::endl;
+								std::cout << "=========\n";
+
+								btVector3 btRayFrom(eye_pos.x, eye_pos.y, eye_pos.z);
+								btVector3 btRayTo(ray_world.x, ray_world.y, ray_world.z);
+								btCollisionWorld::ClosestRayResultCallback rayCallback(btRayFrom, btRayTo);
+								auto space = engine.getScene(0)->spaces_[0];
+								RigidBodySubSystem *sys = ((RigidBodySubSystem *)space->getSubsystem(COMPONENT_RIGID_BODY));
+								sys->dynamics_world_->rayTest(btRayFrom, btRayTo, rayCallback);
+								if (rayCallback.hasHit()) {
+									auto r = rayCallback.m_hitPointWorld;
+									auto game_obj_handle = rayCallback.m_collisionObject->getUserIndex();
+									auto &game_obj = space->getObject(game_obj_handle);
+									
+									selected_object_handle_ = game_obj_handle;
+
+									auto s = game_obj.getName().size();
+									memset(obj_name + s, 0, 256 - s);
+									memcpy(obj_name, game_obj.getName().c_str(), s);
+								}
+								else {
+									selected_object_handle_ = -1;
+								*/
+							}
 						}
 					}
 				}
@@ -648,8 +725,10 @@ void Editor::viewportPanels() {
 					viewport_manipulating_ = 0;
 				}
 
-				// v.camera_->setViewport(size.x, size.y);
-				v.camera_->render(v.pos, v.view_mat);
+				v.camera_->setViewport(size.x, size.y);
+				v.camera_->setPosition(v.pos);
+				v.camera_->setDirections(v.fwd, v.up);
+				v.camera_->render();
 				engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
 
 				unsigned int t = ((GLRenderTarget *)v.camera_->final_buffer_)->getHandle();
@@ -722,6 +801,8 @@ void Editor::viewportPanels() {
 			}
 		}
 	}
+
+	has_left_clicked = left_clicking;
 }
 
 void Editor::saveFile() {

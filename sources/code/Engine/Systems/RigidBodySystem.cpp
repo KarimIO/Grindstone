@@ -118,6 +118,7 @@ void RigidBodySubSystem::setComponent(ComponentHandle component_handle, rapidjso
 	shape->calculateLocalInertia(component.mass_, inertia);
 	btRigidBody::btRigidBodyConstructionInfo rigidBodyCI(component.mass_, motionState, shape, inertia);
 	component.rigid_body_ = new btRigidBody(rigidBodyCI);
+	component.rigid_body_->setUserIndex(component.game_object_handle_);
 	dynamics_world_->addRigidBody(component.rigid_body_);
 
 	// this->->updateSingleAABB(component.rigid_body_);
@@ -187,6 +188,10 @@ void RigidBodyComponent::applyCentralImpulse(glm::vec3 force) {
 
 RigidBodyComponent & RigidBodySubSystem::getComponent(ComponentHandle handle) {
 	return components_[handle];
+}
+
+Component * RigidBodySubSystem::getBaseComponent(ComponentHandle component_handle) {
+	return &components_[component_handle];
 }
 
 size_t RigidBodySubSystem::getNumComponents() {

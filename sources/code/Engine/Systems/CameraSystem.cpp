@@ -42,6 +42,10 @@ CameraComponent & CameraSubSystem::getComponent(ComponentHandle handle) {
 	return components_[handle];
 }
 
+Component * CameraSubSystem::getBaseComponent(ComponentHandle component_handle) {
+	return &components_[component_handle];
+}
+
 size_t CameraSubSystem::getNumComponents() {
 	return components_.size();
 }
@@ -71,13 +75,9 @@ void CameraSystem::update(double dt) {
 					glm::vec3 fwd = transformsub->getForward(transformc);
 					glm::vec3 up = transformsub->getUp(transformc);
 
-					glm::mat4 view = glm::lookAt(
-						pos,
-						pos + fwd,
-						up
-					);
-
-					comp.camera_.render(pos, view);
+					comp.camera_.setPosition(pos);
+					comp.camera_.setDirections(fwd, up);
+					comp.camera_.render();
 				}
 			}
 		}

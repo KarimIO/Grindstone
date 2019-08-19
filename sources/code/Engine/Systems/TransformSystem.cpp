@@ -140,6 +140,10 @@ TransformComponent &TransformSubSystem::getComponent(ComponentHandle handle) {
 	return components_[handle];
 }
 
+Component * TransformSubSystem::getBaseComponent(ComponentHandle component_handle) {
+	return &components_[component_handle];
+}
+
 size_t TransformSubSystem::getNumComponents() {
 	return components_.size();
 }

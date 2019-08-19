@@ -24,6 +24,7 @@
 #include "../Systems/CubemapSystem.hpp"
 #include "../Systems/RigidBodySystem.hpp"
 #include "../Systems/RenderTerrainSystem.hpp"
+#include "../Systems/RenderSpriteSystem.hpp"
 // - AssetManagers
 #include "../AssetManagers/AudioManager.hpp"
 #include "../AssetManagers/MaterialManager.hpp"
@@ -81,6 +82,7 @@ void Engine::initialize() {
 	addSystem(new RigidBodySystem());
 	addSystem(new RenderTerrainSystem(ubb_));
 	addSystem(new RenderStaticMeshSystem());
+	addSystem(new RenderSpriteSystem());
 	addSystem(new LightPointSystem());
 	addSystem(new LightSpotSystem());
 	addSystem(new LightDirectionalSystem());

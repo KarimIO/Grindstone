@@ -46,7 +46,7 @@ vec3 ViewNormal(vec3 inNorm) {
     return (transpose(ubo.invView) * normalize(vec4(inNorm, 1.0))).rgb;
 }
 
-noperspective in vec2 fragTexCoord;
+in vec2 fragTexCoord; // noperspective
 
 out vec4 outColor;
 

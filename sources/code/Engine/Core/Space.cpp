@@ -14,6 +14,7 @@
 #include "../Systems/ColliderSystem.hpp"
 #include "../Systems/RigidBodySystem.hpp"
 #include "../Systems/CubemapSystem.hpp"
+#include "../Systems/RenderSpriteSystem.hpp"
 #include "Engine.hpp"
 
 Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
@@ -25,6 +26,7 @@ Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 	addSystem(new LightPointSubSystem(this));
 	addSystem(new LightSpotSubSystem(this));
 	addSystem(new LightDirectionalSubSystem(this));
+	addSystem(new RenderSpriteSubSystem(this));
 	addSystem(new TransformSubSystem(this));
 	addSystem(new CubemapSubSystem(this));
 	addSystem(new CameraSubSystem(this));
@@ -50,14 +52,19 @@ Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 				else {
 					rapidjson::Value &params = component_itr->value;
 					auto subsystem = subsystems_[type];
-				
-					ComponentHandle handle = game_object.getComponentHandle(type);
-					if (handle == -1) {
-						auto handle = subsystem->addComponent(game_object_handle, params);
-						game_object.setComponentHandle(type, handle);
+
+					if (subsystem == nullptr) {
+						GRIND_ERROR("No subsystem initialized for: {0}", component_names[type]);
 					}
 					else {
-						subsystem->setComponent(handle, params);
+						ComponentHandle handle = game_object.getComponentHandle(type);
+						if (handle == -1) {
+							auto handle = subsystem->addComponent(game_object_handle, params);
+							game_object.setComponentHandle(type, handle);
+						}
+						else {
+							subsystem->setComponent(handle, params);
+						}
 					}
 				}
 			}

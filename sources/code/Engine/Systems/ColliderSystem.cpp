@@ -110,11 +110,17 @@ void ColliderSubSystem::setComponent(ComponentHandle component_handle, rapidjson
 	
 	glm::vec3 scale = transform_component.scale_;
 
+	component.shape_->setUserIndex(component.game_object_handle_);
+	// setUserPointer((void*)rigidBody);
 	component.shape_->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
 }
 
 ColliderComponent & ColliderSubSystem::getComponent(ComponentHandle handle) {
 	return components_[handle];
+}
+
+Component * ColliderSubSystem::getBaseComponent(ComponentHandle component_handle) {
+	return &components_[component_handle];
 }
 
 size_t ColliderSubSystem::getNumComponents() {

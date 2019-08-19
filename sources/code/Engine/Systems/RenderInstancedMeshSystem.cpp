@@ -50,6 +50,10 @@ RenderInstancedMeshComponent &RenderInstancedMeshSubSystem::getComponent(Compone
 	return components_[id];
 }
 
+Component * RenderInstancedMeshSubSystem::getBaseComponent(ComponentHandle component_handle) {
+	return &components_[component_handle];
+}
+
 size_t RenderInstancedMeshSubSystem::getNumComponents() {
 	return components_.size();
 }

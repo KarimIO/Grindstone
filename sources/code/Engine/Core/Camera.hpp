@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <PostProcess/PostPipeline.hpp>
 #include "PostProcess/BasePost.hpp"
+#include "Core/GameObject.hpp"
 
 class RenderPath;
 class RenderTarget;
@@ -11,22 +12,44 @@ class Framebuffer;
 class RenderPath;
 class Space;
 
+struct RayTraceResults {
+	bool hit;
+	GameObjectHandle object_handle;
+	glm::vec3 position;
+};
+
 class Camera {
 public:
 	Camera(Space *space, bool useFramebuffer = false);
 	Camera(Space *space, unsigned int w, unsigned int h, bool useFramebuffer = false);
 	void initialize();
 	void setViewport(unsigned int w, unsigned int h);
-	void render(glm::vec3 &pos, glm::mat4 &view);
-	void render(glm::vec3 &pos, glm::mat4 &view, int face);
+	void setPosition(glm::vec3 pos);
+	void setDirections(glm::vec3 fwd, glm::vec3 up);
+	void buildProjection();
+	void buildView();
+	void render();
 	void setOrtho(double l, double r, double t, double b);
 	void setPerspective();
+
+	float getFov();
+	float getAspectRatio();
+	float getNear();
+	float getFar();
+	const glm::vec3 &getPosition();
+	const glm::vec3 &getForward();
+	const glm::vec3 &getUp();
+	const glm::mat4 &getView();
+	const glm::mat4 &getProjection();
+
+	RayTraceResults rayTrace(glm::vec3 pos, glm::vec3 final_pos);
+	RayTraceResults rayTraceMousePostion(int mx, int my);
 	~Camera();
 
 	unsigned int viewport_width_;
 	unsigned int viewport_height_;
 
-	bool is_ortho;
+	bool is_ortho_;
 	double ortho_x_;
 	double ortho_y_;
 	double ortho_width_;
@@ -34,11 +57,15 @@ public:
 
 	double projection_fov_;
 
+	float aspect_ratio_;
 	double near_;
 	double far_;
 	double aperture_size_;
 	double shutter_speed_;
 	double iso_;
+	glm::vec3 position_;
+	glm::vec3 forward_;
+	glm::vec3 up_;
 	glm::mat4 projection_;
 	glm::mat4 view_;
 
@@ -68,6 +95,9 @@ private:
 	void generateFramebuffers();
 
 	bool enabled_;
+	bool view_dirty_;
+	bool projection_dirty_;
+	glm::mat4 pv_;
 	BasePostProcess *pp_ssao;
 };
 

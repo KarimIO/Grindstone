@@ -3,8 +3,10 @@
 
 #include "BaseSystem.hpp"
 #include <vector>
+#include <array>
 #include "glm/glm.hpp"
 
+class Camera;
 class DepthTarget;
 class Framebuffer;
 
@@ -20,8 +22,11 @@ struct LightDirectionalComponent : public Component {
 	} properties_;
 
 	glm::mat4 shadow_mat_;
+	glm::mat4 view_;
 	Framebuffer *shadow_fbo_;
 	DepthTarget *shadow_dt_;
+
+	std::vector<std::array<glm::mat4, 4>> camera_matrices_;
 };
 
 class LightDirectionalSystem : public System {
@@ -35,11 +40,13 @@ private:
 class LightDirectionalSubSystem : public SubSystem {
 	friend LightDirectionalSystem;
 public:
+	void CalcOrthoProjs(Camera &cam, LightDirectionalComponent &comp);
 	LightDirectionalSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
 	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value & params) override;
 	LightDirectionalComponent &getComponent(ComponentHandle handle);
+	virtual Component *getBaseComponent(ComponentHandle component_handle) override;
 	size_t getNumComponents();
 	virtual void writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) override;
 	virtual void removeComponent(ComponentHandle handle);

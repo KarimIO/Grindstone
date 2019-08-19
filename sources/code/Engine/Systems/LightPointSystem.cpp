@@ -71,6 +71,10 @@ LightPointComponent & LightPointSubSystem::getComponent(ComponentHandle handle) 
 	return components_[handle];
 }
 
+Component * LightPointSubSystem::getBaseComponent(ComponentHandle component_handle) {
+	return &components_[component_handle];
+}
+
 size_t LightPointSubSystem::getNumComponents() {
 	return components_.size();
 }

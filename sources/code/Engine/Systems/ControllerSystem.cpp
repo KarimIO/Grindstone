@@ -34,6 +34,10 @@ ControllerComponent & ControllerSubSystem::getComponent(ComponentHandle handle) 
 	return components_[handle];
 }
 
+Component * ControllerSubSystem::getBaseComponent(ComponentHandle component_handle) {
+	return &components_[component_handle];
+}
+
 void ControllerSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
 }
 

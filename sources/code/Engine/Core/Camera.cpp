@@ -18,6 +18,7 @@
 #include "PostProcess/PostProcessColorGrading.hpp"
 #include "PostProcess/PostProcessBloom.hpp"
 #include "PostProcess/PostProcessSSR.hpp"
+#include "../Systems/RenderSpriteSystem.hpp"
 
 #include <GL/gl3w.h>
 
@@ -30,7 +31,7 @@ Camera::Camera(Space *space, bool useFramebuffer) :
 	near_(0.1f),
 	far_(100.0f),
 	projection_fov_(1.0f),
-	is_ortho(false),
+	is_ortho_(false),
 	ortho_x_(0.0f),
 	ortho_y_(0.0f),
 	ortho_width_(1.0f),
@@ -49,6 +50,7 @@ Camera::Camera(Space *space, bool useFramebuffer) :
 Camera::Camera(Space *space, unsigned int w, unsigned int h, bool useFramebuffer) : Camera(space, useFramebuffer) {
 	viewport_width_	= w;
 	viewport_height_ = h;
+	aspect_ratio_ = double(w) / double(h);
 }
 
 void Camera::initialize() {
@@ -155,48 +157,40 @@ void Camera::setViewport(unsigned int w, unsigned int h) {
 		viewport_width_ = w;
 		viewport_height_ = h;
 
+		aspect_ratio_ = double(w) / double(h);
+
 		generateFramebuffers();
 	}
 }
 
-void Camera::render(glm::vec3 & pos, glm::mat4 & view) {
-	render(pos, view, -1);
+void Camera::setPosition(glm::vec3 pos) {
+	position_ = pos;
+
+	view_dirty_ = true;
 }
 
-struct UBOProjView {
-	glm::mat4 proj_view;
-	glm::vec3 eyepos;
-	float time;
-	glm::mat4 invproj;
-	glm::mat4 invview;
-	glm::vec4 resolution;
-};
+void Camera::setDirections(glm::vec3 fwd, glm::vec3 up) {
+	forward_ = fwd;
+	up_ = up;
 
-void Camera::render(glm::vec3 &pos, glm::mat4 &view, int face) {
-	if (space_ == nullptr || !enabled_) return;
+	view_dirty_ = true;
+}
 
-	auto graphics_wrapper = engine.getGraphicsWrapper();
-
+void Camera::buildProjection() {
 	const Settings *settings = engine.getSettings();
-	double default_aspect = double(viewport_width_) / double(viewport_height_);
-	double default_fov = 1.0;
 
 	bool invert_proj = settings->graphics_language_ == GRAPHICS_VULKAN;
 	bool scale_proj = settings->graphics_language_ == GRAPHICS_DIRECTX;
 
-	// Get Transform Info
-	//ComponentHandle transform_id = space->getObject(game_object_id).getComponentHandle(COMPONENT_TRANSFORM);
-	//TransformSubSystem *transform = (TransformSubSystem *)(space->getSubsystem(COMPONENT_TRANSFORM));
-
 	// Calculate Projection
-	if (is_ortho) {
+	if (is_ortho_) {
 		// Perspective
 		projection_ = glm::ortho(ortho_x_, ortho_y_, ortho_width_, ortho_height_, 0.5, 50.0);
 	}
 	else {
 		// Orthographic
-		double fov = default_fov * projection_fov_;
-		double aspect = default_aspect * (viewport_width_ / viewport_height_);
+		double fov = projection_fov_;
+		double aspect = aspect_ratio_;
 		projection_ = glm::perspective(fov, aspect, near_, far_);
 	}
 
@@ -212,16 +206,55 @@ void Camera::render(glm::vec3 &pos, glm::mat4 &view, int face) {
 		projection_ = scale * projection_;
 	}
 
-	glm::mat4 pv = projection_ * view;
+	projection_dirty_ = false;
+}
+
+void Camera::buildView() {
+	view_ = glm::lookAt(position_, position_ + forward_, up_);
+
+	view_dirty_ = false;
+}
+
+struct UBOProjView {
+	glm::mat4 proj_view;
+	glm::vec3 eyepos;
+	float time;
+	glm::mat4 invproj;
+	glm::mat4 invview;
+	glm::vec4 resolution;
+};
+
+void Camera::render() {
+	if (space_ == nullptr || !enabled_) return;
+
+	bool dirty = projection_dirty_ || view_dirty_;
+
+	if (projection_dirty_) {
+		buildProjection();
+	}
+
+	if (view_dirty_) {
+		buildView();
+	}
+
+	if (dirty) {
+		pv_ = projection_ * view_;
+	}
+
+	auto graphics_wrapper = engine.getGraphicsWrapper();
+	
+	// Get Transform Info
+	//ComponentHandle transform_id = space->getObject(game_object_id).getComponentHandle(COMPONENT_TRANSFORM);
+	//TransformSubSystem *transform = (TransformSubSystem *)(space->getSubsystem(COMPONENT_TRANSFORM));
 
 	auto ubo = engine.getUniformBuffer();
 	ubo->Bind();
 	UBOProjView ubodata;
-	ubodata.proj_view = pv;
+	ubodata.proj_view = pv_;
 	ubodata.time = engine.getTimeCurrent();
-	ubodata.eyepos = pos;
+	ubodata.eyepos = position_;
 	ubodata.invproj = glm::inverse(projection_);
-	ubodata.invview = glm::inverse(view);
+	ubodata.invview = glm::inverse(view_);
 	ubodata.resolution.x = viewport_width_;
 	ubodata.resolution.y = viewport_height_;
 	ubo->UpdateUniformBuffer(&ubodata);
@@ -233,9 +266,9 @@ void Camera::render(glm::vec3 &pos, glm::mat4 &view, int face) {
 	Engine::DefferedUBO deferred_ubo;
 	deferred_ubo.invProj = ubodata.invproj;
 	deferred_ubo.view = ubodata.invview;
-	deferred_ubo.eyePos.x = pos.x;
-	deferred_ubo.eyePos.y = pos.y;
-	deferred_ubo.eyePos.z = pos.z;
+	deferred_ubo.eyePos.x = position_.x;
+	deferred_ubo.eyePos.y = position_.y;
+	deferred_ubo.eyePos.z = position_.z;
 	deferred_ubo.resolution.x = viewport_width_;
 	deferred_ubo.resolution.y = viewport_height_;
 	engine.deff_ubo_handler_->UpdateUniformBuffer(&deferred_ubo);
@@ -253,19 +286,69 @@ void Camera::render(glm::vec3 &pos, glm::mat4 &view, int face) {
 		graphics_wrapper->BindVertexArrayObject(engine.getPlaneVAO());
 		post_pipeline_.Process();
 	}
+
+	auto sprite_sys = ((RenderSpriteSubSystem *)space_->getSubsystem(COMPONENT_RENDER_SPRITE));
+	sprite_sys->renderSprites(is_ortho_, position_, depth_target_);
 }
 
 void Camera::setOrtho(double l, double r, double t, double b) {
-	is_ortho = true;
+	is_ortho_ = true;
 	ortho_x_ = l;
 	ortho_y_ = r;
 	ortho_width_ = b;
 	ortho_height_ = t;
-	//projection_ = glm::ortho(l, r, b, t);
+	projection_dirty_ = true;
 }
 
 void Camera::setPerspective() {
-	is_ortho = false;
+	is_ortho_ = false;
+	projection_dirty_ = true;
+}
+
+float Camera::getFov() {
+	return projection_fov_;
+}
+
+float Camera::getAspectRatio() {
+	return aspect_ratio_;
+}
+
+float Camera::getNear() {
+	return near_;
+}
+
+float Camera::getFar() {
+	return far_;
+}
+
+const glm::vec3 & Camera::getPosition() {
+	return position_;
+}
+
+const glm::vec3 & Camera::getForward() {
+	return forward_;
+}
+
+const glm::vec3 & Camera::getUp() {
+	return up_;
+}
+
+const glm::mat4 & Camera::getView() {
+	return view_;
+}
+
+const glm::mat4 & Camera::getProjection() {
+	return projection_;
+}
+
+RayTraceResults Camera::rayTrace(glm::vec3 pos, glm::vec3 final_pos)
+{
+	return RayTraceResults();
+}
+
+RayTraceResults Camera::rayTraceMousePostion(int mx, int my)
+{
+	return RayTraceResults();
 }
 
 Camera::~Camera() {

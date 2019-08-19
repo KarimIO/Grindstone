@@ -152,6 +152,10 @@ LightSpotComponent & LightSpotSubSystem::getComponent(ComponentHandle handle) {
 	return components_[handle];
 }
 
+Component * LightSpotSubSystem::getBaseComponent(ComponentHandle component_handle) {
+	return &components_[component_handle];
+}
+
 size_t LightSpotSubSystem::getNumComponents() {
 	return components_.size();
 }

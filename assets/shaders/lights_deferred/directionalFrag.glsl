@@ -182,5 +182,5 @@ void main() {
 	vec3 outColor3 = LightDirCalc(Albedo.rgb, Position, lightDir.xyz, vec4(Specular, Roughness), Normal.xyz, lightPow, ubo.eyePos.xyz);
 	
 	float sh = light.shadow ? getShadowValue(Position, nl) : 1.0f;
-	outColor = vec4(sh * outColor3, 1);
+	outColor = vec4(texture( shadow_map, vec3(fragTexCoord, 0)), 0, 0, 1); //vec4(vec3(sh), 1); // sh * outColor3
 }

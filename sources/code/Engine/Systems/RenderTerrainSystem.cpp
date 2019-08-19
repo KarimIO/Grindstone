@@ -191,6 +191,10 @@ RenderTerrainComponent &RenderTerrainSubSystem::getComponent(ComponentHandle id)
 	return components_[id];
 }
 
+Component * RenderTerrainSubSystem::getBaseComponent(ComponentHandle component_handle) {
+	return &components_[component_handle];
+}
+
 size_t RenderTerrainSubSystem::getNumComponents() {
 	return components_.size();
 }

@@ -26,7 +26,9 @@ public:
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
 	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value & params) override;
 	RenderStaticMeshComponent &getComponent(ComponentHandle handle);
+	virtual Component *getBaseComponent(ComponentHandle component_handle) override;
 	size_t getNumComponents();
+	void renderDebug(glm::mat4 &matrix);
 	virtual void writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) override;
 	virtual void removeComponent(ComponentHandle handle);
 	virtual ~RenderStaticMeshSubSystem();

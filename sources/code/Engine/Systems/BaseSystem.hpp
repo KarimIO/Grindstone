@@ -27,6 +27,7 @@ static const char *component_names[] = {
 	"COMPONENT_LIGHT_POINT",
 	"COMPONENT_LIGHT_DIRECTIONAL",
 	"COMPONENT_CAMERA",
+	"COMPONENT_RENDER_SPRITE",
 	"COMPONENT_RENDER_STATIC_MESH",
 	"COMPONENT_RENDER_SKELETAL_MESH",
 	"COMPONENT_RENDER_TERRAIN",
@@ -48,6 +49,7 @@ enum ComponentType {
 	COMPONENT_LIGHT_POINT,
 	COMPONENT_LIGHT_DIRECTIONAL,
 	COMPONENT_CAMERA,
+	COMPONENT_RENDER_SPRITE,
 	COMPONENT_RENDER_STATIC_MESH,
 	COMPONENT_RENDER_INSTANCED_MESH,
 	COMPONENT_RENDER_SKELETAL_MESH,
@@ -76,6 +78,7 @@ public:
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle) = 0;
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) = 0;
 	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value &params) = 0;
+	virtual Component *getBaseComponent(ComponentHandle component_handle) = 0;
 	virtual SubSystem *copy() { return nullptr; };
 
 #ifdef INCLUDE_EDITOR

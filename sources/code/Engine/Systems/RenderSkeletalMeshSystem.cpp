@@ -49,6 +49,10 @@ RenderSkeletalMeshComponent &RenderSkeletalMeshSubSystem::getComponent(Component
 	return components_[id];
 }
 
+Component * RenderSkeletalMeshSubSystem::getBaseComponent(ComponentHandle component_handle) {
+	return &components_[component_handle];
+}
+
 size_t RenderSkeletalMeshSubSystem::getNumComponents() {
 	return components_.size();
 }

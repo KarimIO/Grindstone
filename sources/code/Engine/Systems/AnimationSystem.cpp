@@ -190,6 +190,10 @@ AnimationComponent &AnimationSubSystem::getComponent(ComponentHandle id) {
 	return components_[id];
 }
 
+Component * AnimationSubSystem::getBaseComponent(ComponentHandle component_handle) {
+	return &components_[component_handle];
+}
+
 size_t AnimationSubSystem::getNumComponents() {
 	return components_.size();
 }

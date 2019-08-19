@@ -49,6 +49,10 @@ RenderStaticMeshComponent &RenderStaticMeshSubSystem::getComponent(ComponentHand
 	return components_[id];
 }
 
+Component * RenderStaticMeshSubSystem::getBaseComponent(ComponentHandle component_handle) {
+	return &components_[component_handle];
+}
+
 size_t RenderStaticMeshSubSystem::getNumComponents() {
 	return components_.size();
 }
@@ -63,4 +67,4 @@ void RenderStaticMeshSubSystem::writeComponentToJson(ComponentHandle handle, rap
 void RenderStaticMeshSystem::update(double dt) {
 }
 
-RenderStaticMeshSystem::RenderStaticMeshSystem() : System(COMPONENT_CAMERA) {}
+RenderStaticMeshSystem::RenderStaticMeshSystem() : System(COMPONENT_RENDER_STATIC_MESH) {}

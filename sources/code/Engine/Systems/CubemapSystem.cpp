@@ -417,13 +417,13 @@ void CubemapSubSystem::bake() {
 		// For every face...
 		for (uint8_t i = 0; i < 6; ++i) {
 			// Get view matrix for face
-			glm::mat4 view = glm::lookAt(pos, pos + gCubeDirections[i].Target, gCubeDirections[i].Up);
-			
 			//engine.getGraphicsWrapper()->setViewport(0, 0, component.resolution_, component.resolution_);
 
 			// Render 10 times (to auto-adjust exposure)
 			for (int j = 0; j < 10; ++j) {
-				camera_->render(pos, view, i);
+				camera_->setPosition(pos);
+				camera_->setDirections(gCubeDirections[i].Target, gCubeDirections[i].Up);
+				camera_->render();
 			}
 		}
 
@@ -603,6 +603,10 @@ void CubemapSystem::update(double dt) {
 
 CubemapComponent & CubemapSubSystem::getComponent(ComponentHandle handle) {
 	return components_[handle];
+}
+
+Component * CubemapSubSystem::getBaseComponent(ComponentHandle component_handle) {
+	return &components_[component_handle];
 }
 
 size_t CubemapSubSystem::getNumComponents() {
