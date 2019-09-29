@@ -13,6 +13,8 @@ struct TransformComponent : public Component {
 	glm::vec3 angles_;
 	glm::vec3 scale_;
 	glm::mat4 model_;
+
+	 REFLECT()
 };
 
 class TransformSystem : public System {
@@ -21,6 +23,8 @@ public:
 	void update(double dt);
 private:
 	std::vector<TransformComponent> components_;
+
+	 REFLECT_SYSTEM()
 };
 
 class TransformSubSystem : public SubSystem {

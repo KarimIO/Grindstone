@@ -11,6 +11,8 @@ struct CameraComponent : public Component {
 	CameraComponent(Space *space, GameObjectHandle object_handle, ComponentHandle id);
 
 	Camera camera_;
+
+	REFLECT()
 };
 
 class CameraSystem : public System {
@@ -18,6 +20,8 @@ public:
 	CameraSystem();
 
 	void update(double dt);
+
+	REFLECT_SYSTEM()
 private:
 };
 

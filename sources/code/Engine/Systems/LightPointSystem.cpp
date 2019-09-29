@@ -67,6 +67,20 @@ void LightPointSubSystem::setComponent(ComponentHandle component_handle, rapidjs
 	}
 }
 
+void LightPointSubSystem::setShadow(ComponentHandle h, bool shadow) {
+	auto &component = components_[h];
+
+	if (shadow) {
+		auto graphics_wrapper = engine.getGraphicsWrapper();
+	}
+}
+
+void LightPointSubSystem::initialize() {
+	for (auto &c : components_) {
+		setShadow(c.handle_, c.properties_.shadow);
+	}
+}
+
 LightPointComponent & LightPointSubSystem::getComponent(ComponentHandle handle) {
 	return components_[handle];
 }
@@ -100,7 +114,25 @@ void LightPointSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson
 }
 
 void LightPointSubSystem::removeComponent(ComponentHandle handle) {
+	GameObjectHandle h = components_[handle].game_object_handle_;
+	space_->getObject(h).setComponentHandle(system_type_, UINT_MAX);
+	
+	components_.erase(components_.begin() + handle);
+
+	for (ComponentHandle h = handle; h < components_.size(); ++h) {
+		auto comp = components_[h];
+		comp.handle_ = h;
+		space_->getObject(comp.game_object_handle_).setComponentHandle(system_type_, h);
+	}
 }
 
 LightPointSubSystem::~LightPointSubSystem() {
 }
+
+REFLECT_STRUCT_BEGIN(LightPointComponent, LightPointSystem)
+	REFLECT_STRUCT_MEMBER(properties_.color)
+	REFLECT_STRUCT_MEMBER(properties_.power)
+	REFLECT_STRUCT_MEMBER(properties_.attenuationRadius)
+	REFLECT_STRUCT_MEMBER_D(properties_.shadow, "Enable Shadows", "castshadow", reflect::Metadata::ViewInAll)
+	REFLECT_NO_SUBCAT()
+REFLECT_STRUCT_END()

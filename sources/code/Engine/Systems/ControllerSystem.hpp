@@ -31,6 +31,8 @@ private:
 	glm::vec3 velocity_;
 	InputComponent	input;
 	btCollisionShape	*shape;
+
+	REFLECT()
 };
 
 class ControllerSystem : public System {
@@ -39,6 +41,8 @@ public:
 	void update(double dt);
 private:
 	UniformBuffer *ubo_;
+
+	REFLECT_SYSTEM()
 };
 
 class ControllerSubSystem : public SubSystem {

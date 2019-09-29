@@ -18,12 +18,14 @@ struct LightSpotComponent : public Component {
 		float innerAngle;
 		float outerAngle;
 		bool shadow;
-		uint16_t resolution;
+		uint16_t resolution = 128;
 	} properties_;
 
 	glm::mat4 shadow_mat_;
 	Framebuffer *shadow_fbo_;
 	DepthTarget *shadow_dt_;
+
+	REFLECT()
 };
 
 class LightSpotSystem : public System {
@@ -32,6 +34,8 @@ public:
 	void update(double dt);
 private:
 	std::vector<LightSpotComponent> components_;
+
+	REFLECT_SYSTEM()
 };
 
 class LightSpotSubSystem : public SubSystem {
@@ -41,6 +45,8 @@ public:
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
 	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value & params) override;
+	void setShadow(ComponentHandle h, bool shadow);
+	virtual void initialize() override;
 	LightSpotComponent &getComponent(ComponentHandle handle);
 	virtual Component *getBaseComponent(ComponentHandle component_handle) override;
 	size_t getNumComponents();

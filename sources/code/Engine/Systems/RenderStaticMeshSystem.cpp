@@ -22,6 +22,12 @@ ComponentHandle RenderStaticMeshSubSystem::addComponent(GameObjectHandle object_
 RenderStaticMeshSubSystem::~RenderStaticMeshSubSystem() {
 }
 
+void RenderStaticMeshSubSystem::initialize() {
+	for (auto &c : components_) {
+		c.model_handle_ = engine.getModelManager()->preloadModel(c.handle_, c.path_);
+	}
+}
+
 ComponentHandle RenderStaticMeshSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
 	ComponentHandle component_handle = (ComponentHandle)components_.size();
 	components_.emplace_back(object_handle, component_handle);
@@ -68,3 +74,8 @@ void RenderStaticMeshSystem::update(double dt) {
 }
 
 RenderStaticMeshSystem::RenderStaticMeshSystem() : System(COMPONENT_RENDER_STATIC_MESH) {}
+
+REFLECT_STRUCT_BEGIN(RenderStaticMeshComponent, RenderStaticMeshSystem)
+REFLECT_STRUCT_MEMBER(path_)
+REFLECT_NO_SUBCAT()
+REFLECT_STRUCT_END()

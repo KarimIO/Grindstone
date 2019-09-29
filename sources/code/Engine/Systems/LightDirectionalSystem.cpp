@@ -56,7 +56,8 @@ void LightDirectionalSubSystem::CalcOrthoProjs(Camera &cam, LightDirectionalComp
 		};
 
 		glm::vec4 frustumCornersL[NUM_FRUSTUM_CORNERS];
-
+#undef max
+#undef min
 		float minX = std::numeric_limits<float>::max();
 		float maxX = std::numeric_limits<float>::min();
 		float minY = std::numeric_limits<float>::max();
@@ -235,6 +236,29 @@ void LightDirectionalSubSystem::setComponent(ComponentHandle component_handle, r
 		component.properties_.shadow = false;
 }
 
+void LightDirectionalSubSystem::setShadow(ComponentHandle h, bool shadow) {
+	auto &component = components_[h];
+
+	if (shadow) {
+		auto graphics_wrapper = engine.getGraphicsWrapper();
+
+		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, component.properties_.resolution, component.properties_.resolution, true, false);
+		component.shadow_dt_ = graphics_wrapper->CreateDepthTarget(depth_image_ci);
+
+		FramebufferCreateInfo fbci;
+		fbci.num_render_target_lists = 0;
+		fbci.render_target_lists = nullptr;
+		fbci.depth_target = component.shadow_dt_;
+		component.shadow_fbo_ = graphics_wrapper->CreateFramebuffer(fbci);
+	}
+}
+
+void LightDirectionalSubSystem::initialize() {
+	for (auto &c : components_) {
+		setShadow(c.handle_, c.properties_.shadow);
+	}
+}
+
 LightDirectionalComponent & LightDirectionalSubSystem::getComponent(ComponentHandle handle) {
 	return components_[handle];
 }
@@ -275,3 +299,11 @@ void LightDirectionalSubSystem::removeComponent(ComponentHandle handle) {
 
 LightDirectionalSubSystem::~LightDirectionalSubSystem() {
 }
+
+REFLECT_STRUCT_BEGIN(LightDirectionalComponent, LightDirectionalSystem)
+REFLECT_STRUCT_MEMBER(properties_.color)
+REFLECT_STRUCT_MEMBER(properties_.power)
+REFLECT_STRUCT_MEMBER(properties_.sourceRadius)
+REFLECT_STRUCT_MEMBER_D(properties_.shadow, "Enable Shadows", "castshadow", reflect::Metadata::SaveSetAndView)
+REFLECT_NO_SUBCAT()
+REFLECT_STRUCT_END()

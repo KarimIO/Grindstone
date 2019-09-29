@@ -14,6 +14,8 @@ struct LightPointComponent : public Component {
 		float power;
 		bool shadow;
 	} properties_;
+
+	REFLECT()
 };
 
 class LightPointSystem : public System {
@@ -22,6 +24,8 @@ public:
 	void update(double dt);
 private:
 	std::vector<LightPointComponent> components_;
+
+	REFLECT_SYSTEM()
 };
 
 class LightPointSubSystem : public SubSystem {
@@ -31,6 +35,8 @@ public:
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
 	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value & params) override;
+	void setShadow(ComponentHandle h, bool shadow);
+	virtual void initialize() override;
 	LightPointComponent &getComponent(ComponentHandle handle);
 	virtual Component *getBaseComponent(ComponentHandle component_handle) override;
 	size_t getNumComponents();

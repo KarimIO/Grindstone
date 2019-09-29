@@ -259,15 +259,15 @@ void Editor::prepareDockspace() {
 			if (ImGui::MenuItem("Build Light Probes", "", false)) {
 				cubemap_sys->bake();
 			}
-			
+
 			/*if (ImGui::MenuItem("Build Reflection Probes", "", false)) {
-				
+
 			}
-			
+
 			if (ImGui::MenuItem("Build Lightmap", "", false)) {
-				
+
 			}
-			
+
 			if (ImGui::MenuItem("Build Lighting", "", false)) {
 				cubemap_sys->bake();	// Build Irradiance
 				// Build Reflection Probes
@@ -294,6 +294,167 @@ void Editor::prepareDockspace() {
 	}
 
 	ImGui::End();
+}
+
+void vec2Component(std::string base, glm::vec2 &val, float w) {
+	float x = val.x;
+	float y = val.y;
+	if (w > 0.0f) {
+		ImGui::PushItemWidth(w);
+		ImGui::PushItemWidth(w);
+	}
+	if (ImGui::InputFloat((base + "X").c_str(), &x))
+		val.x = x;
+	ImGui::SameLine();
+	if (ImGui::InputFloat((base + "Y").c_str(), &y))
+		val.y = y;
+}
+
+void vec3Component(std::string base, glm::vec3 &val, float w) {
+	float x = val.x;
+	float y = val.y;
+	float z = val.z;
+	if (w > 0.0f) {
+		ImGui::PushItemWidth(w);
+		ImGui::PushItemWidth(w);
+		ImGui::PushItemWidth(w);
+	}
+	if (ImGui::InputFloat((base + "X").c_str(), &x))
+		val.x = x;
+	ImGui::SameLine();
+	if (ImGui::InputFloat((base + "Y").c_str(), &y))
+		val.y = y;
+	ImGui::SameLine();
+	if (ImGui::InputFloat((base + "Z").c_str(), &z))
+		val.z = z;
+}
+
+void vec4Component(std::string base, glm::vec4 &val, float w) {
+	float x = val.x;
+	float y = val.y;
+	float z = val.z;
+	float a = val.z;
+	if (w > 0.0f) {
+		ImGui::PushItemWidth(w);
+		ImGui::PushItemWidth(w);
+		ImGui::PushItemWidth(w);
+		ImGui::PushItemWidth(w);
+	}
+	if (ImGui::InputFloat((base + "X").c_str(), &x))
+		val.x = x;
+	ImGui::SameLine();
+	if (ImGui::InputFloat((base + "Y").c_str(), &y))
+		val.y = y;
+	ImGui::SameLine();
+	if (ImGui::InputFloat((base + "Z").c_str(), &z))
+		val.z = z;
+	ImGui::SameLine();
+	if (ImGui::InputFloat((base + "W").c_str(), &z))
+		val.z = z;
+}
+
+void floatComponent(float w, std::string base, float &val) {
+	ImGui::PushItemWidth(w);
+	float x = val;
+	if (ImGui::InputFloat(base.c_str(), &x))
+		val = x;
+}
+
+void boolComponent(float w, std::string base, bool &val) {
+	ImGui::PushItemWidth(w);
+	bool x = val;
+	if (ImGui::Checkbox(base.c_str(), &x))
+		val = x;
+}
+
+void doubleComponent(float w, std::string base, double &val) {
+	ImGui::PushItemWidth(w);
+	double x = val;
+	if (ImGui::InputDouble(base.c_str(), &x))
+		val = x;
+}
+
+void parseCategory(reflect::TypeDescriptor_Struct::Category &cat, unsigned char *component) {
+	ImGuiStyle& style = ImGui::GetStyle();
+	float w = ImGui::GetWindowContentRegionMax().x;
+	float p = style.FramePadding.x;
+	float w2 = (w / 2.0f) - p;
+	w2 = (w2 > 30.0f) ? w2 : 30.0f;
+	float w3 = (w / 3.0f) - p;
+	w3 = (w3 > 30.0f) ? w3 : 30.0f;
+	float w4 = (w / 4.0f) - p;
+	w4 = (w4 > 30.0f) ? w4 : 30.0f;
+	for (auto &member : cat.members) {
+		if (member.metadata & reflect::Metadata::ViewInEditor || member.metadata & reflect::Metadata::SetInEditor) {
+			ImGui::Text(member.display_name.c_str());
+			std::string extended_member_name = std::string("##") + member.variable_name;
+			switch (member.type->type) {
+			case reflect::TypeDescriptor::ReflectionTypeData::ReflString: {
+				std::string &v = *(std::string *)(component + member.offset);
+				if (member.metadata & reflect::Metadata::SetInEditor)
+					ImGui::Text("Setting strings not supported. Current: %s", v.c_str());
+				else
+					ImGui::Text("%s", v.c_str());
+				break;
+			}
+			case reflect::TypeDescriptor::ReflectionTypeData::ReflBool: {
+				bool &v = *(bool *)(component + member.offset);
+				if (member.metadata & reflect::Metadata::SetInEditor)
+					boolComponent(w, extended_member_name, v);
+				else
+					ImGui::Text("%s", v ? "true" : "false");
+				break;
+			}
+			case reflect::TypeDescriptor::ReflectionTypeData::ReflFloat: {
+				float &v = *(float *)(component + member.offset);
+				if (member.metadata & reflect::Metadata::SetInEditor)
+					floatComponent(w, extended_member_name, v);
+				else
+					ImGui::Text("%f", v);
+				break;
+			}
+			case reflect::TypeDescriptor::ReflectionTypeData::ReflDouble: {
+				double &v = *(double *)(component + member.offset);
+				if (member.metadata & reflect::Metadata::SetInEditor)
+					doubleComponent(w, extended_member_name, v);
+				else
+					ImGui::Text("%d", v);
+				break;
+			}
+			case reflect::TypeDescriptor::ReflectionTypeData::ReflVec2: {
+				glm::vec2 &v = *(glm::vec2 *)(component + member.offset);
+				if (member.metadata & reflect::Metadata::SetInEditor)
+					vec2Component(extended_member_name, v, -1.0);
+				else
+					ImGui::Text("%f %f", v.x, v.y);
+				break;
+			}
+			case reflect::TypeDescriptor::ReflectionTypeData::ReflVec3: {
+				glm::vec3 &v = *(glm::vec3 *)(component + member.offset);
+				if (member.metadata & reflect::Metadata::SetInEditor)
+					vec3Component(extended_member_name, v, w3);
+				else
+					ImGui::Text("%f %f %f", v.x, v.y, v.z);
+				break;
+			}
+			case reflect::TypeDescriptor::ReflectionTypeData::ReflVec4: {
+				glm::vec4 &v = *(glm::vec4 *)(component + member.offset);
+				if (member.metadata & reflect::Metadata::SetInEditor)
+					vec4Component(extended_member_name, v, w4);
+				else
+					ImGui::Text("%f %f %f %f", v.x, v.y, v.z, v.w);
+				break;
+			}
+			}
+		}
+	}
+
+	for (auto &c : cat.categories) {
+		if (ImGui::TreeNode(c.name.c_str())) {
+			parseCategory(c, component);
+			ImGui::TreePop();
+		}
+	}
 }
 
 void Editor::componentPanel() {
@@ -325,9 +486,25 @@ void Editor::componentPanel() {
 					}
 
 					for (int i = 0; i < NUM_COMPONENTS - 1; ++i) {
-						unsigned int h = selected_object_->getComponentHandle(ComponentType(i));
-						if (h != UINT_MAX) { // Don't show unused components
-							displayComponent(ComponentType(i), h);
+						ComponentType component_type = ComponentType(i);
+						ComponentHandle h = selected_object_->getComponentHandle(component_type);
+
+						if (h != UINT_MAX) {
+							reflect::TypeDescriptor_Struct *refl = engine.getSystem(component_type)->getReflection();
+							if (refl) {
+								Component *component = space->getSubsystem(component_type)->getBaseComponent(h);
+								if (ImGui::TreeNode(component_names[i])) {
+									if (component_type != COMPONENT_TRANSFORM) {
+										if (ImGui::Button("Remove Component")) {
+											space->getSubsystem(component_type)->removeComponent(h);
+										}
+									}
+
+									parseCategory(refl->category, (unsigned char *)component);
+									
+									ImGui::TreePop();
+								}
+							}
 						}
 					}
 				}
@@ -364,54 +541,9 @@ void Editor::getDirectory() {
 	}
 }
 
-void vec3Component(std::string base, glm::vec3 &val, float w) {
-	float x = val.x;
-	float y = val.y;
-	float z = val.z;
-	ImGui::PushItemWidth(w);
-	ImGui::PushItemWidth(w);
-	ImGui::PushItemWidth(w);
-	if (ImGui::InputFloat((base + "X").c_str(), &x))
-		val.x = x;
-	ImGui::SameLine();
-	if (ImGui::InputFloat((base + "Y").c_str(), &y))
-		val.y = y;
-	ImGui::SameLine();
-	if (ImGui::InputFloat((base + "Z").c_str(), &z))
-		val.z = z;
-}
-
-void floatComponent(std::string text, std::string base, float &val) {
-	float x = val;
-	ImGui::Text(text.c_str());
-	if (ImGui::InputFloat(base.c_str(), &x))
-		val = x;
-}
-
-void vec4Component(std::string base, glm::vec3 &val, float &vala, float w) {
-	float x = val.x;
-	float y = val.y;
-	float z = val.z;
-	float a = vala;
-	ImGui::PushItemWidth(w);
-	ImGui::PushItemWidth(w);
-	ImGui::PushItemWidth(w);
-	ImGui::PushItemWidth(w);
-	if (ImGui::InputFloat((base + "X").c_str(), &x))
-		val.x = x;
-	ImGui::SameLine();
-	if (ImGui::InputFloat((base + "Y").c_str(), &y))
-		val.y = y;
-	ImGui::SameLine();
-	if (ImGui::InputFloat((base + "Z").c_str(), &z))
-		val.z = z;
-	ImGui::SameLine();
-	if (ImGui::InputFloat((base + "A").c_str(), &a))
-		vala = a;
-}
-
 void Editor::displayComponent(ComponentType type, ComponentHandle handle) {
-	if (ImGui::TreeNode(component_names[type])) {
+	
+	/*if (ImGui::TreeNode(component_names[type])) {
 		ImGuiStyle& style = ImGui::GetStyle();
 		float w = ImGui::GetWindowContentRegionMax().x;
 		float p = style.FramePadding.x;
@@ -475,7 +607,7 @@ void Editor::displayComponent(ComponentType type, ComponentHandle handle) {
 		}
 
 		ImGui::TreePop();
-	}
+	}*/
 }
 
 void Editor::assetPanel() {
@@ -818,6 +950,66 @@ void Editor::saveFileAs() {
 	}
 }
 
+void Editor::writeComponentToJson(reflect::TypeDescriptor_Struct::Category &refl, unsigned char * component_ptr, rapidjson::PrettyWriter<rapidjson::StringBuffer> &w) {
+	for (auto &mem : refl.members) {
+		std::string n = mem.stored_name;
+
+		unsigned char *p = component_ptr + mem.offset;
+
+		w.Key(n.c_str());
+
+		switch (mem.type->type)
+		{
+		case reflect::TypeDescriptor::ReflString:
+			w.String((*(std::string *)p).c_str());
+			break;
+		case reflect::TypeDescriptor::ReflBool:
+			w.Bool(*(bool *)p);
+			break;
+		case reflect::TypeDescriptor::ReflInt:
+			w.Int(*(int *)p);
+			break;
+		case reflect::TypeDescriptor::ReflFloat:
+			w.Double(*(float *)p);
+			break;
+		case reflect::TypeDescriptor::ReflDouble:
+			w.Double(*(double *)p);
+			break;
+		case reflect::TypeDescriptor::ReflVec2: {
+			glm::vec2 &v = (*(glm::vec2 *)p);
+			w.StartArray();
+			w.Double(v.x);
+			w.Double(v.y);
+			w.EndArray();
+			break;
+		}
+		case reflect::TypeDescriptor::ReflVec3: {
+			glm::vec3 &v = (*(glm::vec3 *)p);
+			w.StartArray();
+			w.Double(v.x);
+			w.Double(v.y);
+			w.Double(v.z);
+			w.EndArray();
+			break;
+		}
+		case reflect::TypeDescriptor::ReflVec4: {
+			glm::vec4 &v = (*(glm::vec4 *)p);
+			w.StartArray();
+			w.Double(v.x);
+			w.Double(v.y);
+			w.Double(v.z);
+			w.Double(v.w);
+			w.EndArray();
+			break;
+		}
+		}
+	}
+
+	for (auto &cat : refl.categories) {
+		writeComponentToJson(cat, component_ptr, w);
+	}
+}
+
 void Editor::saveFile(std::string path, Scene *scene) {
 
 	rapidjson::StringBuffer buffer;
@@ -838,11 +1030,19 @@ void Editor::saveFile(std::string path, Scene *scene) {
 			writer.StartObject();
 
 			for (int i = 0; i < NUM_COMPONENTS; ++i) {
-				ComponentHandle h = object.getComponentHandle((ComponentType)i);
+				ComponentType t = (ComponentType)i;
+				ComponentHandle h = object.getComponentHandle(t);
 				if (h != -1) {
 					writer.Key(component_names[i]);
 					writer.StartObject();
-					space->getSubsystem((ComponentType)i)->writeComponentToJson(h, writer);
+
+					reflect::TypeDescriptor_Struct *refl = engine.getSystem(t)->getReflection();
+					if (refl) {
+						Component *component = space->getSubsystem(t)->getBaseComponent(h);
+
+						writeComponentToJson(refl->category, (unsigned char *)component, writer);
+					}
+					//space->getSubsystem((ComponentType)i)->writeComponentToJson(h, writer);
 					writer.EndObject();
 				}
 			}

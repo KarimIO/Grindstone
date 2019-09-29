@@ -203,3 +203,7 @@ void ControllerComponent::RunStart(double scale) {
 void ControllerComponent::RunStop(double scale) {
 	speed_modifier_ = ghost_mode_ ? 6.0f : 4.0f;
 }
+
+REFLECT_STRUCT_BEGIN(ControllerComponent, ControllerSystem)
+REFLECT_NO_SUBCAT()
+REFLECT_STRUCT_END()

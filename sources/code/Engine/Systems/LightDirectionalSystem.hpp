@@ -27,6 +27,8 @@ struct LightDirectionalComponent : public Component {
 	DepthTarget *shadow_dt_;
 
 	std::vector<std::array<glm::mat4, 4>> camera_matrices_;
+
+	REFLECT()
 };
 
 class LightDirectionalSystem : public System {
@@ -35,6 +37,8 @@ public:
 	void update(double dt);
 private:
 	std::vector<LightDirectionalComponent> components_;
+
+	REFLECT_SYSTEM()
 };
 
 class LightDirectionalSubSystem : public SubSystem {
@@ -45,6 +49,8 @@ public:
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
 	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value & params) override;
+	void setShadow(ComponentHandle h, bool shadow);
+	virtual void initialize() override;
 	LightDirectionalComponent &getComponent(ComponentHandle handle);
 	virtual Component *getBaseComponent(ComponentHandle component_handle) override;
 	size_t getNumComponents();

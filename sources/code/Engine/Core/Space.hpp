@@ -18,6 +18,8 @@ public:
 	std::string getName();
 	std::vector<GameObject> objects_;
 private:
+	void setComponentParams(ComponentHandle handle, ComponentType component_type, rapidjson::Value & params);
+
 	SubSystem *addSystem(SubSystem * system);
 	std::string name_;
 	SubSystem *subsystems_[NUM_COMPONENTS];

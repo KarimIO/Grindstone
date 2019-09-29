@@ -17,6 +17,76 @@
 #include "../Systems/RenderSpriteSystem.hpp"
 #include "Engine.hpp"
 
+void handleReflParams(reflect::TypeDescriptor_Struct::Category &refl, unsigned char * componentPtr, rapidjson::Value &params) {
+	for (auto &mem : refl.members) {
+		std::string n = mem.stored_name;
+
+		unsigned char *p = componentPtr + mem.offset;
+		
+		if (params.HasMember(n.c_str())) {
+			switch (mem.type->type)
+			{
+			case reflect::TypeDescriptor::ReflString:
+				(*(std::string *)p) = params[n.c_str()].GetString();
+				break;
+			case reflect::TypeDescriptor::ReflBool:
+				(*(bool *)p) = params[n.c_str()].GetBool();
+				break;
+			case reflect::TypeDescriptor::ReflInt:
+				(*(int *)p) = params[n.c_str()].GetInt();
+				break;
+			case reflect::TypeDescriptor::ReflFloat: {
+				float v = params[n.c_str()].GetFloat();
+				(*(float *)p) = v;
+				break;
+			}
+			case reflect::TypeDescriptor::ReflDouble: {
+				double v = params[n.c_str()].GetDouble();
+				(*(double *)p) = v;
+				break;
+			}
+			case reflect::TypeDescriptor::ReflVec2: {
+				auto a = params[n.c_str()].GetArray();
+				glm::vec2 &v = (*(glm::vec2 *)p);
+				v.x = a[0].GetFloat();
+				v.y = a[1].GetFloat();
+				break;
+			}
+			case reflect::TypeDescriptor::ReflVec3: {
+				auto a = params[n.c_str()].GetArray();
+				glm::vec3 &v = (*(glm::vec3 *)p);
+				v.x = a[0].GetFloat();
+				v.y = a[1].GetFloat();
+				v.z = a[2].GetFloat();
+				break;
+			}
+			case reflect::TypeDescriptor::ReflVec4: {
+				auto a = params[n.c_str()].GetArray();
+				glm::vec4 &v = (*(glm::vec4 *)p);
+				v.x = a[0].GetFloat();
+				v.y = a[1].GetFloat();
+				v.z = a[2].GetFloat();
+				v.w = a[3].GetFloat();
+				break;
+			}
+			}
+		}
+	}
+
+	for (auto &cat : refl.categories) {
+		handleReflParams(cat, componentPtr, params);
+	}
+}
+
+void Space::setComponentParams(ComponentHandle handle, ComponentType component_type, rapidjson::Value &params) {
+	reflect::TypeDescriptor_Struct *refl = engine.getSystem(component_type)->getReflection();
+	if (refl) {
+		Component *component = getSubsystem(component_type)->getBaseComponent(handle);
+
+		handleReflParams(refl->category, (unsigned char *)component, params);
+	}
+}
+
 Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 	memset(subsystems_, 0, sizeof(subsystems_));
 	addSystem(new ControllerSubSystem(this));
@@ -59,16 +129,23 @@ Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 					else {
 						ComponentHandle handle = game_object.getComponentHandle(type);
 						if (handle == -1) {
-							auto handle = subsystem->addComponent(game_object_handle, params);
+							auto handle = subsystem->addComponent(game_object_handle);
 							game_object.setComponentHandle(type, handle);
+							setComponentParams(handle, type, params);
 						}
 						else {
 							subsystem->setComponent(handle, params);
+							setComponentParams(handle, type, params);
 						}
 					}
 				}
 			}
 		}
+	}
+
+	for (auto &subsys : subsystems_) {
+		if (subsys)
+			subsys->initialize();
 	}
 }
 
@@ -126,7 +203,7 @@ void Space::loadPrefab(std::string name, GameObject &game_object) {
 			else {*/
 			auto type = getComponentType(type_str);
 			if (type == COMPONENT_BASE) {
-				GRIND_WARN("Could not get component: {0}", type_str);
+				GRIND_WARN("No such component type: {0}", type_str);
 			}
 			else {
 				rapidjson::Value &params = component_itr->value;

@@ -65,6 +65,7 @@ private:
 
 	void saveFile();
 	void saveFileAs();
+	void writeComponentToJson(reflect::TypeDescriptor_Struct::Category &refl, unsigned char * componentPtr, rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer);
 	void saveFile(std::string path, Scene * scene);
 	void cleanCameras();
 	void importFile();

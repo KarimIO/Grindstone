@@ -175,3 +175,13 @@ void TransformSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson:
 TransformSubSystem::~TransformSubSystem() {
 
 }
+
+REFLECT_STRUCT_BEGIN(TransformComponent, TransformSystem)
+	REFLECT_STRUCT_MEMBER(position_)
+	REFLECT_STRUCT_MEMBER(angles_)
+	REFLECT_SUBCATS_START()
+		REFLECT_SUBCAT_START("My Category")
+			REFLECT_STRUCT_MEMBER(scale_)
+		REFLECT_SUBCAT_END()
+	REFLECT_SUBCATS_END()
+REFLECT_STRUCT_END()

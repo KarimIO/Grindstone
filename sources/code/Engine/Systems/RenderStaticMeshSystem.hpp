@@ -9,6 +9,8 @@ struct RenderStaticMeshComponent : public Component {
 	RenderStaticMeshComponent(GameObjectHandle object_handle, ComponentHandle handle);
 	std::string path_;
 	ModelReference model_handle_;
+
+	REFLECT()
 };
 
 class RenderStaticMeshSystem : public System {
@@ -16,6 +18,8 @@ public:
 	RenderStaticMeshSystem();
 
 	void update(double dt);
+
+	REFLECT_SYSTEM()
 };
 
 class RenderStaticMeshSubSystem : public SubSystem {
@@ -32,6 +36,7 @@ public:
 	virtual void writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) override;
 	virtual void removeComponent(ComponentHandle handle);
 	virtual ~RenderStaticMeshSubSystem();
+	virtual void initialize() override;
 private:
 	std::vector<RenderStaticMeshComponent> components_;
 };

@@ -36,6 +36,19 @@ void GameObject::setName(std::string str) {
 	name_ = str;
 }
 
+void GameObject::removeComponent(ComponentType component_type) {
+	ComponentHandle &component_handle = components_[component_type];
+
+	component_handle = UINT_MAX;
+}
+
+void GameObject::removeAllComponents() {
+	for (int i = 0; i < NUM_COMPONENTS - 1; ++i) {
+		ComponentType component_type = ComponentType(i);
+		removeComponent(component_type);
+	}
+}
+
 GameObject::~GameObject() {
 	// Delete all Components from Systems
 }

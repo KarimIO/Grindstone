@@ -1,6 +1,8 @@
 #ifndef _SYSTEM_H
 #define _SYSTEM_H
 
+#include "../Utilities/Reflection.hpp"
+
 #undef Bool
 #include "rapidjson/document.h"
 
@@ -80,6 +82,7 @@ public:
 	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value &params) = 0;
 	virtual Component *getBaseComponent(ComponentHandle component_handle) = 0;
 	virtual SubSystem *copy() { return nullptr; };
+	virtual void initialize() {};
 
 #ifdef INCLUDE_EDITOR
 	virtual void writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> &w) = 0;
@@ -100,6 +103,7 @@ class System {
 public:
 	System(ComponentType type);
 	virtual void update(double dt) = 0;
+	virtual reflect::TypeDescriptor_Struct *getReflection() { return nullptr; };
 	virtual ~System();
 
 	ComponentType system_type_;

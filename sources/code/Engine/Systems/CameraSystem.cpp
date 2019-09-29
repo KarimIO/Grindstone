@@ -86,3 +86,7 @@ void CameraSystem::update(double dt) {
 
 CameraSystem::CameraSystem() : System(COMPONENT_CAMERA) {
 }
+
+REFLECT_STRUCT_BEGIN(CameraComponent, CameraSystem)
+REFLECT_NO_SUBCAT()
+REFLECT_STRUCT_END()
