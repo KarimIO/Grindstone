@@ -100,6 +100,7 @@ public:
 	void loadPreloaded();
 	ModelStatic &getModel(ModelReference);
 	UniformBuffer *getModelUbo();
+	void removeModelInstance(ModelReference, ComponentHandle);
 private:
 	std::map<std::string, ModelReference> models_map_;
 	std::vector<ModelStatic> models_;
@@ -109,7 +110,7 @@ private:
 	UniformBuffer *model_ubo_;
 	std::vector<UniformBufferBinding *> ubbs_;
 
-	void loadModel(ModelStatic &model);
+	bool loadModel(ModelStatic &model);
 };
 
 #endif

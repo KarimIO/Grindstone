@@ -10,6 +10,7 @@
 #include "Core/Engine.hpp"
 #include <GraphicsWrapper.hpp>
 #include "AssetReferences.hpp"
+#include "ModelManager.hpp"
 
 // Util Classes
 #include "../Utilities/Logger.hpp"
@@ -93,48 +94,48 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 				//GRIND_LOG("In %s, found Parameter %s:%s\n", path, parameter, value);
 				auto it2 = pipeline->parameterDescriptorTable.find(parameter);
 				if (it2 != pipeline->parameterDescriptorTable.end()) {
-					int pos = 0;
-					if (it2->second.paramType == PARAM_VEC4) {
-						float *list = (float *)buffpos;
-						for (int i = 0; i < 4; ++i) {
-							int npos = value.find(" ", pos);
-							std::string floatval = value.substr(pos, npos - pos);
-							pos = npos + 1;
-							list[i] = std::stof(floatval);
-						}
+int pos = 0;
+if (it2->second.paramType == PARAM_VEC4) {
+	float *list = (float *)buffpos;
+	for (int i = 0; i < 4; ++i) {
+		int npos = value.find(" ", pos);
+		std::string floatval = value.substr(pos, npos - pos);
+		pos = npos + 1;
+		list[i] = std::stof(floatval);
+	}
 
-						buffpos += sizeof(float) * 4;
-					}
-					else if (it2->second.paramType == PARAM_FLOAT) {
-						*(float *)buffpos = std::stof(value);
-						buffpos += sizeof(float);
-					}
-					else if (it2->second.paramType == PARAM_BOOL) {
-						*(bool *)buffpos = (value == "true") ? true : false;
-						buffpos += sizeof(bool) * 4;
-					}
+	buffpos += sizeof(float) * 4;
+}
+else if (it2->second.paramType == PARAM_FLOAT) {
+	*(float *)buffpos = std::stof(value);
+	buffpos += sizeof(float);
+}
+else if (it2->second.paramType == PARAM_BOOL) {
+	*(bool *)buffpos = (value == "true") ? true : false;
+	buffpos += sizeof(bool) * 4;
+}
 				}
 			}
 			else {
-				// Check if it's a valid texture descriptor
-				auto it2 = pipeline->textureDescriptorTable.find(parameter);
-				if (it2 != pipeline->textureDescriptorTable.end()) {
-					unsigned int texture_id = it2->second.texture_id;
-					if (it2->second.paramType == PARAM_CUBEMAP) {
-						auto handle = texture_manager->loadCubemap(dir + value);
-						textures[texture_id].texture = texture_manager->getTexture(handle);
-					}
-					else {
-						auto handle = texture_manager->loadTexture(dir + value);
-						textures[texture_id].texture = texture_manager->getTexture(handle);
-					}
-
-					textures[texture_id].address = texture_id;
+			// Check if it's a valid texture descriptor
+			auto it2 = pipeline->textureDescriptorTable.find(parameter);
+			if (it2 != pipeline->textureDescriptorTable.end()) {
+				unsigned int texture_id = it2->second.texture_id;
+				if (it2->second.paramType == PARAM_CUBEMAP) {
+					auto handle = texture_manager->loadCubemap(dir + value);
+					textures[texture_id].texture = texture_manager->getTexture(handle);
 				}
 				else {
-					// Not a valid paramter
-					GRIND_WARN("In {0}, invalid parameter {1}.", path, parameter);
+					auto handle = texture_manager->loadTexture(dir + value);
+					textures[texture_id].texture = texture_manager->getTexture(handle);
 				}
+
+				textures[texture_id].address = texture_id;
+			}
+			else {
+				// Not a valid paramter
+				GRIND_WARN("In {0}, invalid parameter {1}.", path, parameter);
+			}
 			}
 		}
 	}
@@ -158,7 +159,7 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 		ubo = engine.getGraphicsWrapper()->CreateUniformBuffer(uboci);
 		ubo->UpdateUniformBuffer(buffer);
 	}
-	
+
 	// Make a new reference
 	MaterialReference ref;
 	ref.pipelineReference = pipeline_reference;
@@ -189,10 +190,21 @@ Material *MaterialManager::getMaterial(MaterialReference ref) {
 }
 
 void MaterialManager::removeMaterial(MaterialReference ref) {
-	/*auto pipeline_manager = engine.getGraphicsPipelineManager();
+	auto pipeline_manager = engine.getGraphicsPipelineManager();
 	auto pipeline = pipeline_manager->getPipeline(ref.pipelineReference);
-	auto material = &pipeline->materials[ref.material];
-	return material;*/
+
+	/*pipeline->materials.erase(pipeline->materials.begin() + ref.material);
+
+	for (auto i = ref.material; i < pipeline->materials.size(); ++i) {
+		pipeline->materials[i].reference.material = i;
+		for (auto &mesh : pipeline->materials[i].m_meshes) {
+			((MeshStatic *)mesh)->material_reference.material = i;
+		}
+	}
+
+	if (pipeline->materials.size() == 0) {
+		pipeline_manager->removePipeline(ref.pipelineReference);
+	}*/
 }
 
 void MaterialManager::removeMeshFromMaterial(MaterialReference ref, Renderable*mesh) {
@@ -206,6 +218,9 @@ void MaterialManager::removeMeshFromMaterial(MaterialReference ref, Renderable*m
 		mat->m_meshes.pop_back();
 	}
 	else if (mat->m_meshes.size() == 1) {
+		// Don't really need this but just in case.
+		mat->m_meshes.pop_back();
+
 		// Remove entire Material
 		removeMaterial(ref);
 	}

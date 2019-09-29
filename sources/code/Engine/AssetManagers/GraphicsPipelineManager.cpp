@@ -247,6 +247,9 @@ paramDefault = new glm::bvec4(bvec4);
 					pipeline->reference.renderpass = 0;
 					pipeline->reference.pipeline = uint8_t(render_pass->pipelines_forward.size() - 1);
 				}
+				else {
+					GRIND_ERROR("Invalid material type: {0}", type);
+				}
 			}
 			state = SHADER_JSON_MAIN;
 		}

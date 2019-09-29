@@ -75,7 +75,14 @@ void RenderStaticMeshSystem::update(double dt) {
 
 RenderStaticMeshSystem::RenderStaticMeshSystem() : System(COMPONENT_RENDER_STATIC_MESH) {}
 
+void test(void *owner) {
+	RenderStaticMeshComponent *component = ((RenderStaticMeshComponent *)owner);
+	if (component->model_handle_ != -1)
+		engine.getModelManager()->removeModelInstance(component->model_handle_, component->handle_);
+	component->model_handle_ = engine.getModelManager()->loadModel(component->handle_, component->path_);
+}
+
 REFLECT_STRUCT_BEGIN(RenderStaticMeshComponent, RenderStaticMeshSystem)
-REFLECT_STRUCT_MEMBER(path_)
+REFLECT_STRUCT_MEMBER_D(path_, "Path to Model", "path", reflect::SaveSetAndView, test)
 REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()

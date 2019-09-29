@@ -296,21 +296,30 @@ void Editor::prepareDockspace() {
 	ImGui::End();
 }
 
-void vec2Component(std::string base, glm::vec2 &val, float w) {
+bool vec2Component(std::string base, glm::vec2 &val, float w) {
 	float x = val.x;
 	float y = val.y;
 	if (w > 0.0f) {
 		ImGui::PushItemWidth(w);
 		ImGui::PushItemWidth(w);
 	}
-	if (ImGui::InputFloat((base + "X").c_str(), &x))
+
+	bool changed = false;
+	if (ImGui::InputFloat((base + "X").c_str(), &x)) {
 		val.x = x;
+		changed = true;
+	}
+
 	ImGui::SameLine();
-	if (ImGui::InputFloat((base + "Y").c_str(), &y))
+	if (ImGui::InputFloat((base + "Y").c_str(), &y)) {
 		val.y = y;
+		changed = true;
+	}
+
+	return changed;
 }
 
-void vec3Component(std::string base, glm::vec3 &val, float w) {
+bool vec3Component(std::string base, glm::vec3 &val, float w) {
 	float x = val.x;
 	float y = val.y;
 	float z = val.z;
@@ -319,17 +328,29 @@ void vec3Component(std::string base, glm::vec3 &val, float w) {
 		ImGui::PushItemWidth(w);
 		ImGui::PushItemWidth(w);
 	}
-	if (ImGui::InputFloat((base + "X").c_str(), &x))
+
+	bool changed = false;
+	if (ImGui::InputFloat((base + "X").c_str(), &x)) {
 		val.x = x;
+		changed = true;
+	}
+
 	ImGui::SameLine();
-	if (ImGui::InputFloat((base + "Y").c_str(), &y))
+	if (ImGui::InputFloat((base + "Y").c_str(), &y)) {
 		val.y = y;
+		changed = true;
+	}
+
 	ImGui::SameLine();
-	if (ImGui::InputFloat((base + "Z").c_str(), &z))
+	if (ImGui::InputFloat((base + "Z").c_str(), &z)) {
 		val.z = z;
+		changed = true;
+	}
+
+	return changed;
 }
 
-void vec4Component(std::string base, glm::vec4 &val, float w) {
+bool vec4Component(std::string base, glm::vec4 &val, float w) {
 	float x = val.x;
 	float y = val.y;
 	float z = val.z;
@@ -340,38 +361,78 @@ void vec4Component(std::string base, glm::vec4 &val, float w) {
 		ImGui::PushItemWidth(w);
 		ImGui::PushItemWidth(w);
 	}
-	if (ImGui::InputFloat((base + "X").c_str(), &x))
+
+	bool changed = false;
+	if (ImGui::InputFloat((base + "X").c_str(), &x)) {
 		val.x = x;
+		changed = true;
+	}
+
 	ImGui::SameLine();
-	if (ImGui::InputFloat((base + "Y").c_str(), &y))
+	if (ImGui::InputFloat((base + "Y").c_str(), &y)) {
 		val.y = y;
+		changed = true;
+	}
+
 	ImGui::SameLine();
-	if (ImGui::InputFloat((base + "Z").c_str(), &z))
+	if (ImGui::InputFloat((base + "Z").c_str(), &z)) {
 		val.z = z;
+		changed = true;
+	}
+
 	ImGui::SameLine();
-	if (ImGui::InputFloat((base + "W").c_str(), &z))
+	if (ImGui::InputFloat((base + "W").c_str(), &z)) {
 		val.z = z;
+		changed = true;
+	}
+
+	return changed;
 }
 
-void floatComponent(float w, std::string base, float &val) {
+bool floatComponent(float w, std::string base, float &val) {
 	ImGui::PushItemWidth(w);
 	float x = val;
-	if (ImGui::InputFloat(base.c_str(), &x))
+	if (ImGui::InputFloat(base.c_str(), &x)) {
 		val = x;
+		return true;
+	}
+
+	return false;
 }
 
-void boolComponent(float w, std::string base, bool &val) {
+bool boolComponent(float w, std::string base, bool &val) {
 	ImGui::PushItemWidth(w);
 	bool x = val;
-	if (ImGui::Checkbox(base.c_str(), &x))
+	if (ImGui::Checkbox(base.c_str(), &x)) {
 		val = x;
+		return true;
+	}
+
+	return false;
 }
 
-void doubleComponent(float w, std::string base, double &val) {
+bool stringComponent(float w, std::string base, std::string &val) {
+	ImGui::PushItemWidth(w);
+	char buf[1024];
+	std::fill_n(buf, 1024, 0);
+	std::copy_n(val.begin(), (1024 < (int)val.size()) ? 1024 : (int)val.size(), buf);
+	if (ImGui::InputText(base.c_str(), buf, 1024)) {
+		val = std::string(buf);
+		return true;
+	}
+
+	return false;
+}
+
+bool doubleComponent(float w, std::string base, double &val) {
 	ImGui::PushItemWidth(w);
 	double x = val;
-	if (ImGui::InputDouble(base.c_str(), &x))
+	if (ImGui::InputDouble(base.c_str(), &x)) {
 		val = x;
+		return true;
+	}
+	
+	return false;
 }
 
 void parseCategory(reflect::TypeDescriptor_Struct::Category &cat, unsigned char *component) {
@@ -392,7 +453,9 @@ void parseCategory(reflect::TypeDescriptor_Struct::Category &cat, unsigned char 
 			case reflect::TypeDescriptor::ReflectionTypeData::ReflString: {
 				std::string &v = *(std::string *)(component + member.offset);
 				if (member.metadata & reflect::Metadata::SetInEditor)
-					ImGui::Text("Setting strings not supported. Current: %s", v.c_str());
+					if (stringComponent(w, extended_member_name, v))
+						if (member.onChangeCallback)
+							member.onChangeCallback(component);
 				else
 					ImGui::Text("%s", v.c_str());
 				break;
@@ -400,7 +463,9 @@ void parseCategory(reflect::TypeDescriptor_Struct::Category &cat, unsigned char 
 			case reflect::TypeDescriptor::ReflectionTypeData::ReflBool: {
 				bool &v = *(bool *)(component + member.offset);
 				if (member.metadata & reflect::Metadata::SetInEditor)
-					boolComponent(w, extended_member_name, v);
+					if (boolComponent(w, extended_member_name, v))
+						if (member.onChangeCallback)
+							member.onChangeCallback(component);
 				else
 					ImGui::Text("%s", v ? "true" : "false");
 				break;
@@ -408,7 +473,9 @@ void parseCategory(reflect::TypeDescriptor_Struct::Category &cat, unsigned char 
 			case reflect::TypeDescriptor::ReflectionTypeData::ReflFloat: {
 				float &v = *(float *)(component + member.offset);
 				if (member.metadata & reflect::Metadata::SetInEditor)
-					floatComponent(w, extended_member_name, v);
+					if (floatComponent(w, extended_member_name, v))
+						if (member.onChangeCallback)
+							member.onChangeCallback(component);
 				else
 					ImGui::Text("%f", v);
 				break;
@@ -424,7 +491,9 @@ void parseCategory(reflect::TypeDescriptor_Struct::Category &cat, unsigned char 
 			case reflect::TypeDescriptor::ReflectionTypeData::ReflVec2: {
 				glm::vec2 &v = *(glm::vec2 *)(component + member.offset);
 				if (member.metadata & reflect::Metadata::SetInEditor)
-					vec2Component(extended_member_name, v, -1.0);
+					if (vec2Component(extended_member_name, v, -1.0))
+						if (member.onChangeCallback)
+							member.onChangeCallback(component);
 				else
 					ImGui::Text("%f %f", v.x, v.y);
 				break;
@@ -439,8 +508,11 @@ void parseCategory(reflect::TypeDescriptor_Struct::Category &cat, unsigned char 
 			}
 			case reflect::TypeDescriptor::ReflectionTypeData::ReflVec4: {
 				glm::vec4 &v = *(glm::vec4 *)(component + member.offset);
-				if (member.metadata & reflect::Metadata::SetInEditor)
-					vec4Component(extended_member_name, v, w4);
+				if (member.metadata & reflect::Metadata::SetInEditor) {
+					if (vec4Component(extended_member_name, v, w4))
+						if (member.onChangeCallback)
+							member.onChangeCallback(component);
+				}
 				else
 					ImGui::Text("%f %f %f %f", v.x, v.y, v.z, v.w);
 				break;

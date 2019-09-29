@@ -56,56 +56,56 @@ ModelManager::ModelManager(UniformBufferBinding *ubb) {
 	geometry_info_.vads_count = 4;
 	geometry_info_.vads = new VertexAttributeDescription[4];
 	geometry_info_.vads[0].binding = 0;
-	geometry_info_.vads[0].location = 0;
-	geometry_info_.vads[0].format = VERTEX_R32_G32_B32;
-	geometry_info_.vads[0].size = 3;
-	geometry_info_.vads[0].name = "vertexPosition";
-	geometry_info_.vads[0].offset = offsetof(Vertex, positions);
-	geometry_info_.vads[0].usage = ATTRIB_POSITION;
+geometry_info_.vads[0].location = 0;
+geometry_info_.vads[0].format = VERTEX_R32_G32_B32;
+geometry_info_.vads[0].size = 3;
+geometry_info_.vads[0].name = "vertexPosition";
+geometry_info_.vads[0].offset = offsetof(Vertex, positions);
+geometry_info_.vads[0].usage = ATTRIB_POSITION;
 
-	geometry_info_.vads[1].binding = 0;
-	geometry_info_.vads[1].location = 1;
-	geometry_info_.vads[1].format = VERTEX_R32_G32_B32;
-	geometry_info_.vads[1].size = 3;
-	geometry_info_.vads[1].name = "vertexNormal";
-	geometry_info_.vads[1].offset = offsetof(Vertex, normal);
-	geometry_info_.vads[1].usage = ATTRIB_NORMAL;
+geometry_info_.vads[1].binding = 0;
+geometry_info_.vads[1].location = 1;
+geometry_info_.vads[1].format = VERTEX_R32_G32_B32;
+geometry_info_.vads[1].size = 3;
+geometry_info_.vads[1].name = "vertexNormal";
+geometry_info_.vads[1].offset = offsetof(Vertex, normal);
+geometry_info_.vads[1].usage = ATTRIB_NORMAL;
 
-	geometry_info_.vads[2].binding = 0;
-	geometry_info_.vads[2].location = 2;
-	geometry_info_.vads[2].format = VERTEX_R32_G32_B32;
-	geometry_info_.vads[2].size = 3;
-	geometry_info_.vads[2].name = "vertexTangent";
-	geometry_info_.vads[2].offset = offsetof(Vertex, tangent);
-	geometry_info_.vads[2].usage = ATTRIB_TANGENT;
+geometry_info_.vads[2].binding = 0;
+geometry_info_.vads[2].location = 2;
+geometry_info_.vads[2].format = VERTEX_R32_G32_B32;
+geometry_info_.vads[2].size = 3;
+geometry_info_.vads[2].name = "vertexTangent";
+geometry_info_.vads[2].offset = offsetof(Vertex, tangent);
+geometry_info_.vads[2].usage = ATTRIB_TANGENT;
 
-	geometry_info_.vads[3].binding = 0;
-	geometry_info_.vads[3].location = 3;
-	geometry_info_.vads[3].format = VERTEX_R32_G32;
-	geometry_info_.vads[3].size = 2;
-	geometry_info_.vads[3].name = "vertexTexCoord";
-	geometry_info_.vads[3].offset = offsetof(Vertex, texCoord);
-	geometry_info_.vads[3].usage = ATTRIB_TEXCOORD0;
+geometry_info_.vads[3].binding = 0;
+geometry_info_.vads[3].location = 3;
+geometry_info_.vads[3].format = VERTEX_R32_G32;
+geometry_info_.vads[3].size = 2;
+geometry_info_.vads[3].name = "vertexTexCoord";
+geometry_info_.vads[3].offset = offsetof(Vertex, texCoord);
+geometry_info_.vads[3].usage = ATTRIB_TEXCOORD0;
 
-	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 
-	UniformBufferBindingCreateInfo ubbci2;
-	ubbci2.binding = 1;
-	ubbci2.shaderLocation = "ModelMatrixBuffer";
-	ubbci2.size = 128; // sizeof(glm::mat4);
-	ubbci2.stages = SHADER_STAGE_VERTEX_BIT;
-	model_ubb_ = graphics_wrapper->CreateUniformBufferBinding(ubbci2);
+UniformBufferBindingCreateInfo ubbci2;
+ubbci2.binding = 1;
+ubbci2.shaderLocation = "ModelMatrixBuffer";
+ubbci2.size = 128; // sizeof(glm::mat4);
+ubbci2.stages = SHADER_STAGE_VERTEX_BIT;
+model_ubb_ = graphics_wrapper->CreateUniformBufferBinding(ubbci2);
 
-	UniformBufferCreateInfo ubci2;
-	ubci2.isDynamic = true;
-	ubci2.size = 128;
-	ubci2.binding = model_ubb_;
-	model_ubo_ = graphics_wrapper->CreateUniformBuffer(ubci2);
+UniformBufferCreateInfo ubci2;
+ubci2.isDynamic = true;
+ubci2.size = 128;
+ubci2.binding = model_ubb_;
+model_ubo_ = graphics_wrapper->CreateUniformBuffer(ubci2);
 
-	ubbs_ = { ubb, model_ubb_ };
+ubbs_ = { ubb, model_ubb_ };
 
-	geometry_info_.ubb_count = ubbs_.size();
-	geometry_info_.ubbs = ubbs_.data();
+geometry_info_.ubb_count = ubbs_.size();
+geometry_info_.ubbs = ubbs_.data();
 }
 
 ModelReference ModelManager::preloadModel(ComponentHandle render_handle, std::string path) {
@@ -135,9 +135,13 @@ ModelReference ModelManager::loadModel(ComponentHandle render_handle, std::strin
 	models_.emplace_back(ref, path, render_handle);
 
 	// Load it
-	loadModel(models_.back());
-
-	return ref;
+	if (loadModel(models_.back())) {
+		return ref;
+	}
+	else {
+		models_.pop_back();
+		return -1;
+	}
 }
 
 void ModelManager::loadPreloaded() {
@@ -154,7 +158,32 @@ UniformBuffer * ModelManager::getModelUbo() {
 	return model_ubo_;
 }
 
-void ModelManager::loadModel(ModelStatic &model) {
+void ModelManager::removeModelInstance(ModelReference model_ref, ComponentHandle c) {
+	auto &m = models_[model_ref];
+	auto &mr = m.references_;
+
+	for (int i = 0; i < mr.size(); ++i) {
+		if (mr[i] == c) mr.erase(mr.begin() + i);
+	}
+
+	if (mr.size() == 0) {
+		for (auto &mesh : m.meshes) {
+			engine.getMaterialManager()->removeMeshFromMaterial(mesh.material_reference, &mesh);
+		}
+
+		// Delete model data
+		GraphicsWrapper *gw = engine.getGraphicsWrapper();
+		gw->DeleteVertexArrayObject(m.vertex_array_object);
+		gw->DeleteVertexBuffer(m.vertex_buffer);
+		gw->DeleteIndexBuffer(m.index_buffer);
+
+		models_.erase(models_.begin() + model_ref);
+	}
+
+	// UPDATE MODEL REFERENCE LIST
+}
+
+bool ModelManager::loadModel(ModelStatic &model) {
 	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	MaterialManager *material_system = engine.getMaterialManager();
 
@@ -163,7 +192,7 @@ void ModelManager::loadModel(ModelStatic &model) {
 
 	if (!input.is_open()) {
 		GRIND_ERROR("Failed to open file: {0}!", path);
-		return;
+		return false;
 	}
 
 	GRIND_LOG("Model reading from: {0}", path );
@@ -176,7 +205,7 @@ void ModelManager::loadModel(ModelStatic &model) {
 
 	if (buffer[0] != 'G' || buffer[1] != 'M' || buffer[2] != 'F') {
 		GRIND_ERROR("Failed to open file: {0}!", path);
-		return;
+		return false;
 	}
 
 	ModelFormatHeader inFormat;
@@ -306,7 +335,7 @@ void ModelManager::loadModel(ModelStatic &model) {
 		MeshCreateInfo &temp_mesh = temp_meshes[i];
 		MeshStatic &current_mesh = model.meshes[i];
 		current_mesh.model_reference = model.handle_;
-		//current_mesh.material_reference = ;
+		current_mesh.material_reference = materialReferences[temp_mesh.material_index];
 		current_mesh.num_indices = temp_mesh.num_indices;
 		current_mesh.base_vertex = temp_mesh.base_vertex;
 		current_mesh.base_index = temp_mesh.base_index;
@@ -427,4 +456,6 @@ void ModelManager::loadModel(ModelStatic &model) {
 		auto mat = engine.getMaterialManager()->getMaterial(current_mesh.material_reference);
 		mat->m_meshes.push_back(reinterpret_cast<MeshStatic *>(&current_mesh));
 	}*/
+
+	return true;
 }

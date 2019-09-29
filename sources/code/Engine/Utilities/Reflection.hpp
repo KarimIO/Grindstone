@@ -102,6 +102,8 @@ namespace reflect {
 			Metadata metadata;
 
 			TypeDescriptor* type;
+
+			void (*onChangeCallback)(void *owner);
 		};
 		
 		struct Category {
@@ -154,10 +156,10 @@ public: \
         typeDesc->size = sizeof(T); \
         typeDesc->category = { "", {
 
-#define REFLECT_STRUCT_MEMBER_D(name, display_name, stored_name, mods) \
-            {#name, reflect::parseDisplayName(display_name, #name), reflect::parseStoredName(stored_name, #name), offsetof(T, name), mods, reflect::TypeResolver<decltype(T::name)>::get()},
+#define REFLECT_STRUCT_MEMBER_D(name, display_name, stored_name, mods, callback) \
+            {#name, reflect::parseDisplayName(display_name, #name), reflect::parseStoredName(stored_name, #name), offsetof(T, name), mods, reflect::TypeResolver<decltype(T::name)>::get(), callback},
 
-#define REFLECT_STRUCT_MEMBER(name) REFLECT_STRUCT_MEMBER_D(name, "", "", reflect::Metadata::SaveSetAndView)
+#define REFLECT_STRUCT_MEMBER(name) REFLECT_STRUCT_MEMBER_D(name, "", "", reflect::Metadata::SaveSetAndView, nullptr)
 
 #define REFLECT_NO_SUBCAT() }, {}
 #define REFLECT_SUBCATS_START() }, {
