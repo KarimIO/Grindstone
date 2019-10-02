@@ -585,7 +585,7 @@ void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
 	if (point_light_system && point_light_system->getNumComponents() > 0) {
 		point_light_pipeline_->Bind();
 		for (size_t i = 0; i < point_light_system->getNumComponents(); ++i) {
-			auto &light = point_light_system->getComponent(i);
+			auto &light = point_light_system->getComponent((ComponentHandle)i);
 			GameObjectHandle game_object_handle = light.game_object_handle_;
 			ComponentHandle component_transform_handle = space->getObject(game_object_handle).getComponentHandle(COMPONENT_TRANSFORM);
 
@@ -607,7 +607,7 @@ void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
 	if (spot_light_pipeline_ && spot_light_system->getNumComponents() > 0) {
 		spot_light_pipeline_->Bind();
 		for (size_t i = 0; i < spot_light_system->getNumComponents(); ++i) {
-			auto &light = spot_light_system->getComponent(i);
+			auto &light = spot_light_system->getComponent((ComponentHandle)i);
 			GameObjectHandle game_object_handle = light.game_object_handle_;
 			ComponentHandle component_transform_handle = space->getObject(game_object_handle).getComponentHandle(COMPONENT_TRANSFORM);
 
@@ -639,7 +639,7 @@ void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
 	if (directional_light_system && directional_light_system->getNumComponents() > 0) {
 		directional_light_pipeline_->Bind();
 		for (size_t i = 0; i < directional_light_system->getNumComponents(); ++i) {
-			auto &light = directional_light_system->getComponent(i);
+			auto &light = directional_light_system->getComponent((ComponentHandle)i);
 			GameObjectHandle game_object_handle = light.game_object_handle_;
 			ComponentHandle component_transform_handle = space->getObject(game_object_handle).getComponentHandle(COMPONENT_TRANSFORM);
 
@@ -673,7 +673,7 @@ void RenderPathDeferred::createFramebuffer(unsigned int width, unsigned int heig
 	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, width, height); // R  G  B matID
 	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R16G16B16A16, width, height); // nX nY nZ
 	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, width, height); // sR sG sB Roughness
-	render_targets_ = graphics_wrapper->CreateRenderTarget(gbuffer_images_ci.data(), gbuffer_images_ci.size());
+	render_targets_ = graphics_wrapper->CreateRenderTarget(gbuffer_images_ci.data(), (uint32_t)gbuffer_images_ci.size());
 
 	DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24_STENCIL_8, width, height, false, false);
 	depth_target_ = graphics_wrapper->CreateDepthTarget(depth_image_ci);

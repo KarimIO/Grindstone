@@ -771,17 +771,17 @@ void Editor::viewportPanels() {
 			
 			cam.setDirections(fwd, up);
 			cam.setPosition(pos);
-			cam.setViewport(size.x, size.y);
+			cam.setViewport((unsigned int)size.x, (unsigned int)size.y);
 			cam.render();
 
 			drawGizmos();
 
 			engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
 
-			unsigned int t = ((GLRenderTarget *)cam.final_buffer_)->getHandle();
+			ImTextureID t = (ImTextureID)((GLRenderTarget *)cam.final_buffer_)->getHandle();
 
 			ImGui::GetWindowDrawList()->AddImage(
-				(void *)t, ImVec2(ImGui::GetCursorScreenPos()),
+				t, ImVec2(ImGui::GetCursorScreenPos()),
 				ImVec2(ImGui::GetCursorScreenPos().x + size.x, ImGui::GetCursorScreenPos().y + size.y), ImVec2(0, 1), ImVec2(1, 0));
 
 			ImGui::End();
@@ -789,7 +789,9 @@ void Editor::viewportPanels() {
 		else {
 			bool viewport_selected = false;
 
-			auto mouse = ImGui::GetMousePos();
+			ImVec2 mouse = ImGui::GetMousePos();
+			int mousex = (int)mouse.x;
+			int mousey = (int)mouse.y;
 
 			double dt = engine.getUpdateTimeDelta();
 
@@ -800,6 +802,8 @@ void Editor::viewportPanels() {
 
 				ImGui::Begin(title.c_str(), &show_viewport_);
 				ImVec2 size = ImGui::GetWindowSize();
+				int sizex = (int)size.x;
+				int sizey = (int)size.y;
 				/*ImGuiStyle& style = ImGui::GetStyle();
 				size.x -= style.FramePadding.x * 2;
 				size.y -= style.FramePadding.y * 2;*/
@@ -812,21 +816,22 @@ void Editor::viewportPanels() {
 
 				//if (viewport_manipulating_) {
 				if (!has_left_clicked && left_clicking || right_clicking) {
-					auto min = ImGui::GetWindowPos();
-					auto max = min;
-					max.x += size.x;
-					max.y += size.y;
+					ImVec2 min = ImGui::GetWindowPos();
+					int minx = (int)min.x;
+					int miny = (int)min.y;
+					int maxx = minx + sizex;
+					int maxy = miny + sizey;
+
+					int midx = int(minx + maxx) / 2;
+					int midy = int(miny + maxy) / 2;
 
 					if (viewport_manipulating_ == i) {
 						float msensitivity = 0.5f;
 						float keymovespeed = 8.0f;
 						float cursormovespeed = 2.0f;
 
-						int midx = int(min.x + max.x) / 2;
-						int midy = int(min.y + max.y) / 2;
-
-						float cx = (midx - mouse.x);
-						float cy = (midy - mouse.y);
+						float cx = float(midx - mousex);
+						float cy = float(midy - mousey);
 
 						float ox = (((engine.getInputManager()->GetKey(KEY_W) > 0) ? keymovespeed : 0) - ((engine.getInputManager()->GetKey(KEY_S) > 0) ? keymovespeed : 0));
 						float oy = (((engine.getInputManager()->GetKey(KEY_D) > 0) ? keymovespeed : 0) - ((engine.getInputManager()->GetKey(KEY_A) > 0) ? keymovespeed : 0));
@@ -857,17 +862,14 @@ void Editor::viewportPanels() {
 						viewport_selected = true;
 					}
 					else if (viewport_manipulating_ == 0) {
-						if (mouse.x < max.x && mouse.x > min.x && mouse.y > min.y && mouse.y < max.y) {
+						if (mousex < maxx && mousex > minx && mousey > miny && mousey < maxy) {
 							if (right_clicking) {
 								viewport_manipulating_ = i;
-
-								int midx = int(min.x + max.x) / 2;
-								int midy = int(min.y + max.y) / 2;
 
 								engine.getGraphicsWrapper()->SetCursor(midx, midy);
 							}
 							if (left_clicking) {
-								RayTraceResults r = v.camera_->rayTraceMousePostion(mouse.x, mouse.y);
+								RayTraceResults r = v.camera_->rayTraceMousePostion(mousex, mousey);
 								if (r.hit) {
 									selected_object_handle_ = r.object_handle;
 								}
@@ -929,16 +931,16 @@ void Editor::viewportPanels() {
 					viewport_manipulating_ = 0;
 				}
 
-				v.camera_->setViewport(size.x, size.y);
+				v.camera_->setViewport((unsigned int)size.x, (unsigned int)size.y);
 				v.camera_->setPosition(v.pos);
 				v.camera_->setDirections(v.fwd, v.up);
 				v.camera_->render();
 				engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
 
-				unsigned int t = ((GLRenderTarget *)v.camera_->final_buffer_)->getHandle();
+				ImTextureID t = (ImTextureID)(((GLRenderTarget *)v.camera_->final_buffer_)->getHandle());
 
 				ImGui::GetWindowDrawList()->AddImage(
-					(void *)t, ImVec2(ImGui::GetCursorScreenPos()),
+					t, ImVec2(ImGui::GetCursorScreenPos()),
 					ImVec2(ImGui::GetCursorScreenPos().x + size.x, ImGui::GetCursorScreenPos().y + size.y), ImVec2(0, 1), ImVec2(1, 0));
 
 				static bool pp;

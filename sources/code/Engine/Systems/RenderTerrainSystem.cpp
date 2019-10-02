@@ -107,7 +107,7 @@ void RenderTerrainComponent::generateMesh() {
 		vaci.indexBuffer = terrain_drawable_->index_buffer;
 		terrain_drawable_->vertex_array_object->BindResources(vaci);
 		terrain_drawable_->vertex_array_object->Unbind();
-		terrain_drawable_->num_indices_ = indices.size();
+		terrain_drawable_->num_indices_ = (unsigned int)indices.size();
 	//}
 
 	auto matmgr = engine.getMaterialManager();
@@ -243,7 +243,7 @@ RenderTerrainSystem::RenderTerrainSystem(UniformBufferBinding *ubb) : System(COM
 
 	ubbs_ = { ubb, model_ubb_ };
 
-	geometry_info_.ubb_count = ubbs_.size();
+	geometry_info_.ubb_count = (unsigned int)ubbs_.size();
 	geometry_info_.ubbs = ubbs_.data();
 }
 

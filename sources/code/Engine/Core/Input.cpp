@@ -434,11 +434,11 @@ void InputManager::GetMousePosition(int &x, int &y) {
 }
 
 int InputManager::GetKey(int k) {
-	return keyboardData[k];
+	return keyboardData[k] > 0.0;
 }
 
 int InputManager::GetMouseButton(int mb) {
-	return mouseData[mb];
+	return mouseData[mb] > 0.0;
 }
 
 void InputManager::SetMouseButton(int mb, bool state) {

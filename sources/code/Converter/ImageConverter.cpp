@@ -9,7 +9,9 @@
 #include <stb/stb_image_resize.h>
 #include "ImageConverter.hpp"
 
-typedef uint32_t DWORD;
+#include "Utilities/Logger.hpp"
+
+typedef unsigned long DWORD;
 
 struct DDS_PIXELFORMAT {
 	DWORD dwSize = 32;
@@ -212,7 +214,7 @@ void ConvertBC123(unsigned char ***pixels, bool is_cubemap, int width, int heigh
 	outHeader.dwWidth = width;
 	outHeader.dwDepth = 0;
 	outHeader.dwCaps = DDSCAPS_COMPLEX | DDSCAPS_TEXTURE | DDSCAPS_MIPMAP;
-	outHeader.dwMipMapCount = std::log2(width) - 1;
+	outHeader.dwMipMapCount = DWORD(std::log2(width) - 1);
 	if (is_cubemap)
 		outHeader.dwCaps2 = DDS_CUBEMAP_ALLFACES;
 
@@ -239,7 +241,7 @@ void ConvertBC123(unsigned char ***pixels, bool is_cubemap, int width, int heigh
 	int size = outHeader.dwPitchOrLinearSize;
 	int mipsize = size;
 	unsigned int blockSize = (outHeader.ddspf.dwFourCC == FOURCC_DXT1) ? 8 : 16;
-	for (int i = 1; i < outHeader.dwMipMapCount; i++) {
+	for (DWORD i = 1u; i < outHeader.dwMipMapCount; i++) {
 		mipsize = ((width + 3) / 4)*((height + 3) / 4)*blockSize;
 		size += mipsize;
 	}
@@ -295,7 +297,7 @@ void ConvertBC123(unsigned char ***pixels, bool is_cubemap, int width, int heigh
 
 	std::ofstream out(path, std::ios::binary);
 	if (out.fail()) {
-		printf("Failed to output to: %s!", path);
+		GRIND_ERROR("Failed to output to: {0}!", path);
 		return;
 	}
 	const char filecode[4] = { 'D', 'D', 'S', ' ' };
@@ -311,7 +313,7 @@ bool ConvertTexture(std::string input, bool is_cubemap, std::string output, Comp
 	std::string *path;
 	if (is_cubemap) {
 		path = new std::string[6];
-		int p = input.find_last_of('.');
+		size_t p = input.find_last_of('.');
 		std::string pre = input.substr(0, p);
 		std::string ext = input.substr(p);
 		path[0] = pre + "_ft" + ext;
@@ -331,7 +333,7 @@ bool ConvertTexture(std::string input, bool is_cubemap, std::string output, Comp
 	for (int i = 0; i < num_maps; i++) {
 		pixels[i] = stbi_load(path[i].c_str(), &texWidth, &texHeight, &texChannels, 4);
 		if (!pixels[i]) {
-			printf("Texture failed to load!: %s", path[i].c_str());
+			GRIND_ERROR("Texture failed to load!: {0}", path[i].c_str());
 			for (int j = 0; j < i; i++) {
 				delete[] pixels[j];
 			}
@@ -349,9 +351,13 @@ bool ConvertTexture(std::string input, bool is_cubemap, std::string output, Comp
 		}
 
 	switch (compression) {
-	default:
+	case C_BC1:
+	case C_BC2:
+	case C_BC3:
 		ConvertBC123(&pixels, is_cubemap, texWidth, texHeight, compression, output, true);
 		break;
+	default:
+		GRIND_ERROR("Image Conversion: Invalid compression type!");
 	}
 
 	delete[] pixels;

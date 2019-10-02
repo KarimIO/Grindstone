@@ -29,7 +29,7 @@ public:
 	void buildProjection();
 	void buildView();
 	void render();
-	void setOrtho(double l, double r, double t, double b);
+	void setOrtho(float l, float r, float t, float b);
 	void setPerspective();
 
 	float getFov();
@@ -43,26 +43,26 @@ public:
 	const glm::mat4 &getProjection();
 
 	RayTraceResults rayTrace(glm::vec3 pos, glm::vec3 final_pos);
-	RayTraceResults rayTraceMousePostion(int mx, int my);
+	RayTraceResults rayTraceMousePostion(unsigned int mx, unsigned int my);
 	~Camera();
 
 	unsigned int viewport_width_;
 	unsigned int viewport_height_;
 
 	bool is_ortho_;
-	double ortho_x_;
-	double ortho_y_;
-	double ortho_width_;
-	double ortho_height_;
+	float ortho_x_;
+	float ortho_y_;
+	float ortho_width_;
+	float ortho_height_;
 
-	double projection_fov_;
+	float projection_fov_;
 
 	float aspect_ratio_;
-	double near_;
-	double far_;
-	double aperture_size_;
-	double shutter_speed_;
-	double iso_;
+	float near_;
+	float far_;
+	float aperture_size_;
+	float shutter_speed_;
+	float iso_;
 	glm::vec3 position_;
 	glm::vec3 forward_;
 	glm::vec3 up_;

@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "MaterialManager.hpp"
-#include "../FormatCommon/DDSformat.hpp"
 
 typedef size_t TextureHandler;
 

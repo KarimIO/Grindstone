@@ -2,7 +2,6 @@
 #define DDS_FORMAT_HPP
 
 #include <cstdint>
-#include "../Converter/ImageConverter.hpp"
 
 struct DDS_PIXELFORMAT {
 	uint32_t dwSize = 32;
@@ -46,8 +45,11 @@ struct DDSHeader {
 	uint32_t           dwReserved2;
 };
 
-#define MAKEFOURCC(c0, c1, c2, c3)	((uint32_t)(char)(c0) | ((uint32_t)(char)(c1) << 8) | \
-									((uint32_t)(char)(c2) << 16) | ((uint32_t)(char)(c3) << 24))
+#ifndef MAKEFOURCC
+	#define MAKEFOURCC(c0, c1, c2, c3)	((uint32_t)(char)(c0) | ((uint32_t)(char)(c1) << 8) | \
+										((uint32_t)(char)(c2) << 16) | ((uint32_t)(char)(c3) << 24))
+#endif
+
 #define MAKEFOURCCS(str)			MAKEFOURCC(str[0], str[1], str[2], str[3])
 #define FOURCC_DXT1 MAKEFOURCC('D', 'X', 'T', '1')
 #define FOURCC_DXT3 MAKEFOURCC('D', 'X', 'T', '3')

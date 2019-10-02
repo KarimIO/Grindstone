@@ -13,8 +13,8 @@
 #include <limits>
 
 void LightDirectionalSubSystem::CalcOrthoProjs(Camera &cam, LightDirectionalComponent &comp) {
-	const int NUM_FRUSTUM_CORNERS = 8;
-	int NUM_CASCADES = 3;
+	const unsigned int NUM_FRUSTUM_CORNERS = 8;
+	unsigned int NUM_CASCADES = 3;
 	float m_cascadeEnd[4];
 
 	float znear = cam.getNear();
@@ -35,7 +35,7 @@ void LightDirectionalSubSystem::CalcOrthoProjs(Camera &cam, LightDirectionalComp
 	float tanHalfHFOV = tanf(glm::radians(cam.getFov() / 2.0f));
 	float tanHalfVFOV = tanf(glm::radians((cam.getFov() * ar) / 2.0f));
 
-	for (unsigned int i = 0; i < NUM_CASCADES; i++) {
+	for (unsigned int i = 0u; i < NUM_CASCADES; i++) {
 		float xn = m_cascadeEnd[i] * tanHalfHFOV;
 		float xf = m_cascadeEnd[i + 1] * tanHalfHFOV;
 		float yn = m_cascadeEnd[i] * tanHalfVFOV;

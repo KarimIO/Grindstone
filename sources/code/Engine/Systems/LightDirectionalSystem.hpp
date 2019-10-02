@@ -23,8 +23,8 @@ struct LightDirectionalComponent : public Component {
 
 	glm::mat4 shadow_mat_;
 	glm::mat4 view_;
-	Framebuffer *shadow_fbo_;
-	DepthTarget *shadow_dt_;
+	Framebuffer *shadow_fbo_ = nullptr;
+	DepthTarget *shadow_dt_ = nullptr;
 
 	std::vector<std::array<glm::mat4, 4>> camera_matrices_;
 

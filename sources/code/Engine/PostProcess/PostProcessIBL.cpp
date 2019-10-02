@@ -74,7 +74,7 @@ void PostProcessIBL::prepareIBL() {
 	tbls_refl.push_back(ssao_layout_);
 
 	iblGPCI.textureBindings = tbls_refl.data();
-	iblGPCI.textureBindingCount = tbls_refl.size();
+	iblGPCI.textureBindingCount = (uint32_t)tbls_refl.size();
 	iblGPCI.uniformBufferBindings = &engine.deff_ubb_;
 	iblGPCI.uniformBufferBindingCount = 1;
 	gpipeline_ = graphics_wrapper->CreateGraphicsPipeline(iblGPCI);
@@ -118,8 +118,8 @@ void PostProcessIBL::prepareSSAO() {
 		glm::vec3 pixel = glm::normalize(glm::vec3(
 			(2.0f * (float)rand() / (float)RAND_MAX) - 1.0f,
 			(2.0f * (float)rand() / (float)RAND_MAX) - 1.0f, 0));
-		noise[i] = (pixel.x / 2.0f + 0.5f) * 255;
-		noise[i + 1] = (pixel.y / 2.0f + 0.5f) * 255;
+		noise[i] = unsigned char((pixel.x / 2.0f + 0.5f) * 255);
+		noise[i + 1] = unsigned char ((pixel.y / 2.0f + 0.5f) * 255);
 	}
 
 	int kernel_size = 32;
@@ -132,7 +132,7 @@ void PostProcessIBL::prepareSSAO() {
 		kernel = glm::normalize(kernel);
 
 		float scale = float(i) / float(kernel_size);
-		scale = (scale * scale) * (1.0 - 0.1f) + 0.1f;
+		scale = (scale * scale) * (1.0f - 0.1f) + 0.1f;
 		kernel *= scale;
 		ssao_buffer.kernel[i * 4] = kernel.x;
 		ssao_buffer.kernel[i * 4 + 1] = kernel.y;
@@ -233,7 +233,7 @@ void PostProcessIBL::prepareSSAO() {
 	ssaoGPCI.textureBindings = tbls.data();
 	ssaoGPCI.textureBindingCount = (uint32_t)tbls.size();
 	ssaoGPCI.uniformBufferBindings = ubbs.data();
-	ssaoGPCI.uniformBufferBindingCount = ubbs.size();
+	ssaoGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
 	pipeline_ = graphics_wrapper->CreateGraphicsPipeline(ssaoGPCI);
 
 	// Export SSAO Layout

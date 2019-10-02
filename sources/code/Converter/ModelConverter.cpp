@@ -227,7 +227,7 @@ void ModelConverter::outputSkeleton() {
 	//  - Output File MetaData
 	output.write("GSF", 3);
 
-	uint16_t num_bones = bone_info_.size();
+	uint16_t num_bones = (uint16_t)bone_info_.size();
 	//  - Output number of bones
 	output.write((char *)&num_bones, sizeof(uint16_t));
 

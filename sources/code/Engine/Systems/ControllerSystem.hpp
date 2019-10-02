@@ -4,7 +4,6 @@
 #include "BaseSystem.hpp"
 #include "Core/Input.hpp"
 #include <vector>
-#include <btBulletDynamicsCommon.h>
 #include <glm/glm.hpp>
 
 class TransformSubSystem;
@@ -30,7 +29,6 @@ private:
 	double sensitivity_;
 	glm::vec3 velocity_;
 	InputComponent	input;
-	btCollisionShape	*shape;
 
 	REFLECT()
 };

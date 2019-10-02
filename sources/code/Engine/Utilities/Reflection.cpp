@@ -47,7 +47,7 @@ namespace reflect {
 			}
 		}
 
-		for (int i = n.size() - 1; i > 0; i--) {
+		for (size_t i = n.size() - 1u; i > 0u; i--) {
 			if (n[i] == ' '&&n[i] == n[i - 1]) {
 				n.erase(n.begin() + i);
 			}

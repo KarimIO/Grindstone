@@ -104,7 +104,7 @@ model_ubo_ = graphics_wrapper->CreateUniformBuffer(ubci2);
 
 ubbs_ = { ubb, model_ubb_ };
 
-geometry_info_.ubb_count = ubbs_.size();
+geometry_info_.ubb_count = (unsigned int)ubbs_.size();
 geometry_info_.ubbs = ubbs_.data();
 }
 
@@ -241,21 +241,21 @@ bool ModelManager::loadModel(ModelStatic &model) {
 	offset = static_cast<char*>(offset) + size;
 
 	// Copy Vertices
-	size = inFormat.num_vertices * sizeof(Vertex);
-	memcpy(vertices.data(), offset, size);
-	offset = static_cast<char*>(offset) + size;
+	uint64_t size64 = inFormat.num_vertices * sizeof(Vertex);
+	memcpy(vertices.data(), offset, size64);
+	offset = static_cast<char*>(offset) + size64;
 
 	// Copy Vertex Weights
 	if (inFormat.has_bones) {
-		size = inFormat.num_vertices * sizeof(VertexWeights);
-		memcpy(vertex_weights.data(), offset, size);
-		offset = static_cast<char*>(offset) + size;
+		size64 = inFormat.num_vertices * sizeof(VertexWeights);
+		memcpy(vertex_weights.data(), offset, size64);
+		offset = static_cast<char*>(offset) + size64;
 	}
 
 	// Copy Indices
-	size = inFormat.num_indices * sizeof(unsigned int);
-	memcpy(indices.data(), offset, size);
-	offset = static_cast<char*>(offset) + size;
+	size64 = inFormat.num_indices * sizeof(unsigned int);
+	memcpy(indices.data(), offset, size64);
+	offset = static_cast<char*>(offset) + size64;
 
 	std::vector<MaterialReference> materialReferences;
 	materialReferences.resize(inFormat.num_materials);

@@ -102,7 +102,7 @@ PostProcessTonemap::PostProcessTonemap(PostPipeline *pipeline, RenderTargetConta
 }
 
 void PostProcessTonemap::Process() {
-	double dt = engine.getUpdateTimeDelta();
+	float dt = (float)engine.getUpdateTimeDelta();
 
 	if (auto_exposure_) {
 		if (first_render_) {
@@ -119,7 +119,7 @@ void PostProcessTonemap::Process() {
 		effect_buffer_.exposure = 1.0f;
 	}
 
-	effect_buffer_.time = engine.getTimeCurrent();
+	effect_buffer_.time = (float)engine.getTimeCurrent();
 	effect_ub_->UpdateUniformBuffer(&effect_buffer_);
 
     gpipeline_->Bind();

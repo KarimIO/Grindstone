@@ -74,7 +74,7 @@ PostProcessSSR::PostProcessSSR(PostPipeline *pipeline, RenderTargetContainer *so
 	std::vector<TextureBindingLayout*> tbls_refl = { engine.gbuffer_tbl_, ssr_tbl_ }; // refl_tbl
 
 	ssrGPCI.textureBindings = tbls_refl.data();
-	ssrGPCI.textureBindingCount = tbls_refl.size();
+	ssrGPCI.textureBindingCount = (uint32_t)tbls_refl.size();
 	ssrGPCI.uniformBufferBindings = nullptr;
 	ssrGPCI.uniformBufferBindingCount = 0;
 	gpipeline_ = graphics_wrapper->CreateGraphicsPipeline(ssrGPCI);

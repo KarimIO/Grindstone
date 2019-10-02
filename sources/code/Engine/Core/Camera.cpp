@@ -50,7 +50,7 @@ Camera::Camera(Space *space, bool useFramebuffer) :
 Camera::Camera(Space *space, unsigned int w, unsigned int h, bool useFramebuffer) : Camera(space, useFramebuffer) {
 	viewport_width_	= w;
 	viewport_height_ = h;
-	aspect_ratio_ = double(w) / double(h);
+	aspect_ratio_ = float(w) / float(h);
 }
 
 void Camera::initialize() {
@@ -157,7 +157,7 @@ void Camera::setViewport(unsigned int w, unsigned int h) {
 		viewport_width_ = w;
 		viewport_height_ = h;
 
-		aspect_ratio_ = double(w) / double(h);
+		aspect_ratio_ = float(w) / float(h);
 
 		generateFramebuffers();
 	}
@@ -185,13 +185,11 @@ void Camera::buildProjection() {
 	// Calculate Projection
 	if (is_ortho_) {
 		// Perspective
-		projection_ = glm::ortho(ortho_x_, ortho_y_, ortho_width_, ortho_height_, 0.5, 50.0);
+		projection_ = glm::ortho(ortho_x_, ortho_y_, ortho_width_, ortho_height_, 0.5f, 50.0f);
 	}
 	else {
 		// Orthographic
-		double fov = projection_fov_;
-		double aspect = aspect_ratio_;
-		projection_ = glm::perspective(fov, aspect, near_, far_);
+		projection_ = glm::perspective(projection_fov_, aspect_ratio_, near_, far_);
 	}
 
 	if (invert_proj)
@@ -251,12 +249,12 @@ void Camera::render() {
 	ubo->Bind();
 	UBOProjView ubodata;
 	ubodata.proj_view = pv_;
-	ubodata.time = engine.getTimeCurrent();
+	ubodata.time = (float)engine.getTimeCurrent();
 	ubodata.eyepos = position_;
 	ubodata.invproj = glm::inverse(projection_);
 	ubodata.invview = glm::inverse(view_);
-	ubodata.resolution.x = viewport_width_;
-	ubodata.resolution.y = viewport_height_;
+	ubodata.resolution.x = (float)viewport_width_;
+	ubodata.resolution.y = (float)viewport_height_;
 	ubo->UpdateUniformBuffer(&ubodata);
 
 	// Culling
@@ -269,8 +267,8 @@ void Camera::render() {
 	deferred_ubo.eyePos.x = position_.x;
 	deferred_ubo.eyePos.y = position_.y;
 	deferred_ubo.eyePos.z = position_.z;
-	deferred_ubo.resolution.x = viewport_width_;
-	deferred_ubo.resolution.y = viewport_height_;
+	deferred_ubo.resolution.x = (float)viewport_width_;
+	deferred_ubo.resolution.y = (float)viewport_height_;
 	engine.deff_ubo_handler_->UpdateUniformBuffer(&deferred_ubo);
 
 	graphics_wrapper->setViewport(0, 0, viewport_width_, viewport_height_);
@@ -291,7 +289,7 @@ void Camera::render() {
 	sprite_sys->renderSprites(is_ortho_, position_, depth_target_);
 }
 
-void Camera::setOrtho(double l, double r, double t, double b) {
+void Camera::setOrtho(float l, float r, float t, float b) {
 	is_ortho_ = true;
 	ortho_x_ = l;
 	ortho_y_ = r;
@@ -346,7 +344,7 @@ RayTraceResults Camera::rayTrace(glm::vec3 pos, glm::vec3 final_pos)
 	return RayTraceResults();
 }
 
-RayTraceResults Camera::rayTraceMousePostion(int mx, int my)
+RayTraceResults Camera::rayTraceMousePostion(unsigned int mx, unsigned int my)
 {
 	return RayTraceResults();
 }

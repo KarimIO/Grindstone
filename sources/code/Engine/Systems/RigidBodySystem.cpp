@@ -5,6 +5,8 @@
 #include "../Core/Scene.hpp"
 #include "../Core/Space.hpp"
 
+#include <btBulletDynamicsCommon.h>
+
 RigidBodyComponent::RigidBodyComponent(GameObjectHandle object_handle, ComponentHandle id) : Component(COMPONENT_RIGID_BODY, object_handle, id) {}
 
 RigidBodySystem::RigidBodySystem() : System(COMPONENT_RIGID_BODY)  {}

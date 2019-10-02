@@ -94,26 +94,26 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 				//GRIND_LOG("In %s, found Parameter %s:%s\n", path, parameter, value);
 				auto it2 = pipeline->parameterDescriptorTable.find(parameter);
 				if (it2 != pipeline->parameterDescriptorTable.end()) {
-int pos = 0;
-if (it2->second.paramType == PARAM_VEC4) {
-	float *list = (float *)buffpos;
-	for (int i = 0; i < 4; ++i) {
-		int npos = value.find(" ", pos);
-		std::string floatval = value.substr(pos, npos - pos);
-		pos = npos + 1;
-		list[i] = std::stof(floatval);
-	}
+					size_t pos = 0;
+					if (it2->second.paramType == PARAM_VEC4) {
+						float *list = (float *)buffpos;
+						for (int i = 0; i < 4; ++i) {
+							size_t npos = value.find(" ", pos);
+							std::string floatval = value.substr(pos, npos - pos);
+							pos = npos + 1;
+							list[i] = std::stof(floatval);
+						}
 
-	buffpos += sizeof(float) * 4;
-}
-else if (it2->second.paramType == PARAM_FLOAT) {
-	*(float *)buffpos = std::stof(value);
-	buffpos += sizeof(float);
-}
-else if (it2->second.paramType == PARAM_BOOL) {
-	*(bool *)buffpos = (value == "true") ? true : false;
-	buffpos += sizeof(bool) * 4;
-}
+						buffpos += sizeof(float) * 4;
+					}
+					else if (it2->second.paramType == PARAM_FLOAT) {
+						*(float *)buffpos = std::stof(value);
+						buffpos += sizeof(float);
+					}
+					else if (it2->second.paramType == PARAM_BOOL) {
+						*(bool *)buffpos = (value == "true") ? true : false;
+						buffpos += sizeof(bool) * 4;
+					}
 				}
 			}
 			else {

@@ -10,6 +10,7 @@ class Framebuffer;
 
 struct LightSpotComponent : public Component {
 	LightSpotComponent(GameObjectHandle object_handle, ComponentHandle id);
+	void setShadow(bool shadow);
 
 	struct {
 		float attenuationRadius;
@@ -22,8 +23,8 @@ struct LightSpotComponent : public Component {
 	} properties_;
 
 	glm::mat4 shadow_mat_;
-	Framebuffer *shadow_fbo_;
-	DepthTarget *shadow_dt_;
+	Framebuffer *shadow_fbo_ = nullptr;
+	DepthTarget *shadow_dt_ = nullptr;
 
 	REFLECT()
 };
@@ -45,7 +46,6 @@ public:
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
 	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value & params) override;
-	void setShadow(ComponentHandle h, bool shadow);
 	virtual void initialize() override;
 	LightSpotComponent &getComponent(ComponentHandle handle);
 	virtual Component *getBaseComponent(ComponentHandle component_handle) override;

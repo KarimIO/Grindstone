@@ -6,9 +6,9 @@
 #include <glm/gtx/quaternion.hpp>
 #include "../AssetCommon/SkeletonLoader.hpp"
 
-class aiNode;
-class aiAnimation;
-class aiNodeAnim;
+struct aiNode;
+struct aiAnimation;
+struct aiNodeAnim;
 
 class AnimationConverter {
 public:
@@ -43,7 +43,7 @@ private:
 	aiScene *scene_;
 	std::vector<GrindstoneAssetCommon::BoneInfo> bone_info_;
 
-	float animation_length_;
+	double animation_length_;
 	std::vector<AnimationConverter::Node> nodes_;
 };
 

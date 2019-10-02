@@ -70,6 +70,8 @@ const aiNodeAnim *AnimationConverter::findNodeAnim(const aiAnimation *animation,
 			return pNodeAnim;
 		}
 	}
+
+	return nullptr;
 }
 
 void AnimationConverter::traverseNode(const aiNode * node) {
@@ -97,7 +99,7 @@ void AnimationConverter::traverseNode(const aiNode * node) {
 				}
 
 				// Process all keys for bone
-				for (int j = 0; j < node_anim->mNumPositionKeys; ++j) {
+				for (unsigned int j = 0u; j < node_anim->mNumPositionKeys; ++j) {
 					aiVectorKey posn_key	= node_anim->mPositionKeys[j];
 					aiVectorKey scale_key	= node_anim->mScalingKeys[j];
 					aiQuatKey rotate_key	= node_anim->mRotationKeys[j];

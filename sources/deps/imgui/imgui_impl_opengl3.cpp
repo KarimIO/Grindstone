@@ -112,11 +112,11 @@ bool    ImGui_ImplOpenGL3_Init(const char* glsl_version)
 {
 	if (gl3wInit()) {
 		fprintf(stderr, "failed to initialize OpenGL\n");
-		return -1;
+		return false;
 	}
 	if (!gl3wIsSupported(3, 2)) {
 		fprintf(stderr, "OpenGL 3.2 not supported\n");
-		return -1;
+		return false;
 	}
 
     ImGuiIO& io = ImGui::GetIO();

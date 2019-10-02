@@ -620,7 +620,7 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 		ubbs.resize(geometry_info.ubb_count);
 	}
 
-	for (int i = 0; i < geometry_info.ubb_count; ++i) {
+	for (unsigned int i = 0u; i < geometry_info.ubb_count; ++i) {
 		ubbs[i] = geometry_info.ubbs[i];
 	} 
 	
@@ -698,7 +698,7 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 		gpci.shaderStageCreateInfos = stages.data();
 		gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
 		gpci.uniformBufferBindings = ubbs.data();
-		gpci.uniformBufferBindingCount = ubbs.size();
+		gpci.uniformBufferBindingCount = (uint32_t)ubbs.size();
 		gpci.textureBindings = container.tbl_arr;
 		if (container.type == TYPE_TRANSPARENT) {
 			gpci.textureBindingCount = tbl_count + 1;
@@ -777,7 +777,7 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 			gpci.shaderStageCreateInfos = stages.data();
 			gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
 			gpci.uniformBufferBindings = ubbs.data();
-			gpci.uniformBufferBindingCount = ubbs.size();
+			gpci.uniformBufferBindingCount = (uint32_t)ubbs.size();
 			gpci.textureBindings = &container.tbl;
 			gpci.textureBindingCount = tbl_count;
 			gpci.cullMode = CULL_BACK;

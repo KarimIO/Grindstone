@@ -148,26 +148,30 @@ void LightSpotSubSystem::setComponent(ComponentHandle component_handle, rapidjso
 		component.properties_.shadow = false;
 }
 
-void LightSpotSubSystem::setShadow(ComponentHandle h, bool shadow) {
-	auto &component = components_[h];
+void LightSpotComponent::setShadow(bool shadow) {
+	auto graphics_wrapper = engine.getGraphicsWrapper();
+
+	// if (shadow_dt_)	graphics_wrapper->DeleteDepthTarget(shadow_dt_);
+	if (shadow_fbo_)	graphics_wrapper->DeleteFramebuffer(shadow_fbo_);
+
+	shadow_dt_ = nullptr;
+	shadow_fbo_ = nullptr;
 
 	if (shadow) {
-		auto graphics_wrapper = engine.getGraphicsWrapper();
-
-		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, component.properties_.resolution, component.properties_.resolution, true, false);
-		component.shadow_dt_ = graphics_wrapper->CreateDepthTarget(depth_image_ci);
+		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, properties_.resolution, properties_.resolution, true, false);
+		shadow_dt_ = graphics_wrapper->CreateDepthTarget(depth_image_ci);
 
 		FramebufferCreateInfo fbci;
 		fbci.num_render_target_lists = 0;
 		fbci.render_target_lists = nullptr;
-		fbci.depth_target = component.shadow_dt_;
-		component.shadow_fbo_ = graphics_wrapper->CreateFramebuffer(fbci);
+		fbci.depth_target = shadow_dt_;
+		shadow_fbo_ = graphics_wrapper->CreateFramebuffer(fbci);
 	}
 }
 
 void LightSpotSubSystem::initialize() {
 	for (auto &c : components_) {
-		setShadow(c.handle_, c.properties_.shadow);
+		c.setShadow(c.properties_.shadow);
 	}
 }
 
@@ -218,12 +222,18 @@ void LightSpotSubSystem::removeComponent(ComponentHandle handle) {
 LightSpotSubSystem::~LightSpotSubSystem() {
 }
 
+
+void handleLightPathShadow(void *owner) {
+	LightSpotComponent *component = ((LightSpotComponent *)owner);
+	component->setShadow(component->properties_.shadow);
+}
+
 REFLECT_STRUCT_BEGIN(LightSpotComponent, LightSpotSystem)
 REFLECT_STRUCT_MEMBER(properties_.color)
 REFLECT_STRUCT_MEMBER(properties_.power)
 REFLECT_STRUCT_MEMBER(properties_.attenuationRadius)
 REFLECT_STRUCT_MEMBER(properties_.innerAngle)
 REFLECT_STRUCT_MEMBER(properties_.outerAngle)
-REFLECT_STRUCT_MEMBER_D(properties_.shadow, "Enable Shadows", "castshadow", reflect::Metadata::SaveSetAndView, nullptr)
+REFLECT_STRUCT_MEMBER_D(properties_.shadow, "Enable Shadows", "castshadow", reflect::Metadata::SaveSetAndView, handleLightPathShadow)
 REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()

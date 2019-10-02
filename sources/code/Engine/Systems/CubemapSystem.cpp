@@ -56,7 +56,7 @@ void CubemapSubSystem::prepareSphere() {
 		10,1,6, 11,0,9, 2,11,9, 5,2,9,  11,2,7
 	};
 
-	total_sphere_indices_ = indices.size();
+	total_sphere_indices_ = (unsigned int)indices.size();
 
 	sphere_vbd_.binding = 0;
 	sphere_vbd_.elementRate = false;
@@ -84,8 +84,8 @@ void CubemapSubSystem::prepareSphere() {
 	sphere_vbo_ci.attribute = &sphere_vad_;
 	sphere_vbo_ci.attributeCount = 1;
 	sphere_vbo_ci.content = vertices.data();
-	sphere_vbo_ci.count = vertices.size();
-	sphere_vbo_ci.size = sizeof(glm::vec3) * vertices.size();
+	sphere_vbo_ci.count = (uint32_t)vertices.size();
+	sphere_vbo_ci.size = (uint32_t)(sizeof(glm::vec3) * vertices.size());
 
 
 	VertexArrayObjectCreateInfo sphere_vao_ci;
@@ -126,7 +126,7 @@ void CubemapSubSystem::prepareIrradianceShader() {
 	std::vector<RenderTargetCreateInfo> irr_images_ci;
 	irr_images_ci.reserve(1);
 	irr_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, res, res);
-	irradiance_image_ = graphics_wrapper->CreateRenderTarget(irr_images_ci.data(), irr_images_ci.size());
+	irradiance_image_ = graphics_wrapper->CreateRenderTarget(irr_images_ci.data(), (uint32_t)irr_images_ci.size());
 
 	FramebufferCreateInfo irr_ci;
 	irr_ci.render_target_lists = &irradiance_image_;
@@ -202,7 +202,7 @@ void CubemapSubSystem::prepareSpecularShader() {
 	std::vector<RenderTargetCreateInfo> spec_images_ci;
 	spec_images_ci.reserve(1);
 	spec_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, res, res);
-	specular_image_ = graphics_wrapper->CreateRenderTarget(spec_images_ci.data(), spec_images_ci.size());
+	specular_image_ = graphics_wrapper->CreateRenderTarget(spec_images_ci.data(), (uint32_t)spec_images_ci.size());
 
 	FramebufferCreateInfo spec_ci;
 	spec_ci.render_target_lists = &specular_image_;
@@ -350,7 +350,7 @@ void CubemapSubSystem::convoluteSpecular(CubemapComponent &c) {
 	// camera_->final_framebuffer_->BindTextures(0);
 
 	int res = 512; // c.resolution_;
-	int mips = log(res) + 1;
+	int mips = int(log(res)) + 1;
 	unsigned char ***data = new unsigned char**[6];
 	int mipres;
 

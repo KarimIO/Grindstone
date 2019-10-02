@@ -214,7 +214,7 @@ void ImguiManager::UpdateMousePosAndButtons() {
 
 	if (engine.getInputManager()->IsFocused()) {
 		if (io.WantSetMousePos) {
-			engine.getInputManager()->SetMousePosition(mouse_pos_backup.x, mouse_pos_backup.y);
+			engine.getInputManager()->SetMousePosition(int(mouse_pos_backup.x), int(mouse_pos_backup.y));
 		}
 		else {
 			int mouse_x, mouse_y;

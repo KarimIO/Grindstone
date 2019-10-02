@@ -2,9 +2,16 @@
 #define _PHYSICS_SYSTEM_H
 
 #include "BaseSystem.hpp"
-#include <btBulletDynamicsCommon.h>
 #include "glm/glm.hpp"
 #include <vector>
+
+class btRigidBody;
+class btCollisionShape;
+class btBroadphaseInterface;
+class btDefaultCollisionConfiguration;
+class btCollisionDispatcher;
+class btSequentialImpulseConstraintSolver;
+class btDiscreteDynamicsWorld;
 
 class RigidBodyComponent : public Component {
 	friend class SPhysics;

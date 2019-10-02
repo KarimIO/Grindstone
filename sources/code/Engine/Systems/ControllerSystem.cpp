@@ -90,9 +90,9 @@ void ControllerComponent::update(double dt) {
 	if (!ghost_mode_)
 		velocity_.y -= 9.81f * (float)dt;
 
-	velocity_.x *= 0.85f * (1.0f - dt);
-	velocity_.y *= 0.85f * (1.0f - dt);
-	velocity_.z *= 0.85f * (1.0f - dt);
+	velocity_.x *= 0.85f * (1.0f - (float)dt);
+	velocity_.y *= 0.85f * (1.0f - (float)dt);
+	velocity_.z *= 0.85f * (1.0f - (float)dt);
 
 	if (ghost_mode_)
 		trans.position_ += velocity_ * (float)dt;
