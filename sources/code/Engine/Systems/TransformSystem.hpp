@@ -8,7 +8,6 @@
 struct TransformComponent : public Component {
 	TransformComponent(GameObjectHandle object_handle, ComponentHandle id);
 
-	ComponentHandle parent_;
 	glm::vec3 position_;
 	glm::vec3 angles_;
 	glm::vec3 scale_;
@@ -22,7 +21,6 @@ public:
 	TransformSystem();
 	void update(double dt);
 private:
-	std::vector<TransformComponent> components_;
 
 	 REFLECT_SYSTEM()
 };

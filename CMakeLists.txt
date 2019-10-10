@@ -23,6 +23,7 @@ foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
     set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${CMAKE_CURRENT_SOURCE_DIR}/bin ) 
 endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES ) 
 
+add_subdirectory(sources/code/Game)
 add_subdirectory(sources/code/Engine)
 add_subdirectory(sources/code/Procedural)
 add_subdirectory(sources/code/Converter)

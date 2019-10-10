@@ -2,11 +2,19 @@
 #define _EDITOR_H
 
 #include "../Core/Camera.hpp"
+#include <vector>
 
 class ImguiManager;
 
+struct SceneGraphNode {
+	GameObjectHandle object_handle_;
+	std::vector<SceneGraphNode *> children_;
+	SceneGraphNode(GameObjectHandle o, std::vector<SceneGraphNode *> c);
+};
+
 class Editor {
 public:
+	void refreshSceneGraph();
 	void setPath(std::string path);
 	Editor(ImguiManager *manager);
     void update();
@@ -50,14 +58,14 @@ private:
 
 	bool show_scene_graph_;
     bool show_viewport_;
-    bool show_component_panel_;
+    bool show_inspector_panel_;
     bool show_asset_browser_;
     std::string asset_path_;
     std::string next_asset_path_;
 
 	void prepareDockspace();
     void sceneGraphPanel();
-    void componentPanel();
+    void inspectorPanel();
     void assetPanel();
 	void drawGizmos();
 	void drawBox(glm::vec3 start, glm::vec3 end);
@@ -71,10 +79,9 @@ private:
 	void importFile();
 	void loadFileFrom();
 	void loadFile();
+	void renderSceneGraphTree(std::vector<SceneGraphNode *> &scene_graph_nodes);
 
     void getDirectory();
-
-	void displayComponent(ComponentType type, ComponentHandle handle);
 
     struct FileElement {
         std::string path;
@@ -83,6 +90,8 @@ private:
     };
     std::vector<FileElement> directories_;
     std::vector<FileElement> files_;
+
+	std::vector<SceneGraphNode *> scene_graph_;
 
 	char *obj_name;
 	unsigned int viewport_manipulating_;

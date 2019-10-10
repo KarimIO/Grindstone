@@ -8,7 +8,7 @@ GameObject::GameObject(const GameObject & g) {
 	memcpy(components_, g.components_, sizeof(components_));
 }
 
-GameObject::GameObject(GameObjectHandle id, std::string name) : id_(id), name_(name) {
+GameObject::GameObject(GameObjectHandle id, std::string name, GameObjectHandle parent) : id_(id), name_(name), parent_(parent) {
 	memset(components_, UINT_MAX, sizeof(components_));
 }
 
@@ -26,6 +26,10 @@ ComponentHandle GameObject::getComponentHandle(ComponentType type) {
 
 GameObjectHandle GameObject::getID() {
 	return id_;
+}
+
+GameObjectHandle GameObject::getParentID() {
+	return parent_;
 }
 
 std::string GameObject::getName() {

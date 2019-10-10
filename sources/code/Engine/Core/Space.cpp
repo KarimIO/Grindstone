@@ -16,6 +16,7 @@
 #include "../Systems/CubemapSystem.hpp"
 #include "../Systems/RenderSpriteSystem.hpp"
 #include "Engine.hpp"
+#include "Editor.hpp"
 
 void handleReflParams(reflect::TypeDescriptor_Struct::Category &refl, unsigned char * componentPtr, rapidjson::Value &params) {
 	for (auto &mem : refl.members) {
@@ -104,7 +105,8 @@ Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 
 	for (rapidjson::Value::MemberIterator game_object_itr = val.MemberBegin(); game_object_itr != val.MemberEnd(); ++game_object_itr) {
 		GameObjectHandle game_object_handle = (GameObjectHandle)objects_.size();
-		objects_.emplace_back(game_object_handle, game_object_itr->name.GetString());
+		GameObjectHandle parent_handle = -1;
+		objects_.emplace_back(game_object_handle, game_object_itr->name.GetString(), parent_handle);
 		GameObject &game_object = objects_.back();
 
 		auto &comps = game_object_itr->value;
@@ -147,6 +149,11 @@ Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 		if (subsys)
 			subsys->initialize();
 	}
+
+#ifdef INCLUDE_EDITOR
+	if (engine.getEditor())
+		engine.getEditor()->refreshSceneGraph();
+#endif
 }
 
 Space::Space(const Space &s) {

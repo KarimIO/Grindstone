@@ -1,10 +1,10 @@
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-set(ENGINE_CORE_HEADERS Core/Camera.hpp Core/Engine.hpp Core/Editor.hpp Core/GameObject.hpp Core/LoadingScreen.hpp Core/iniHandler.hpp Core/Input.hpp Core/InputInterface.hpp Core/Space.hpp Core/Utilities.hpp Core/Scene.hpp)
+set(ENGINE_CORE_HEADERS Core/Camera.hpp Core/Engine.hpp Core/Editor.hpp Core/GameBase.hpp Core/GameSystem.hpp Core/GameObject.hpp Core/LoadingScreen.hpp Core/iniHandler.hpp Core/Input.hpp Core/InputInterface.hpp Core/Space.hpp Core/Utilities.hpp Core/Scene.hpp)
 source_group("Core\\Header Files" FILES ${ENGINE_CORE_HEADERS})
 set(ENGINE_RENDERPATHS_HEADERS Renderpaths/RenderPath.hpp  Renderpaths/RenderPathDeferred.hpp Renderpaths/RenderPathForward.hpp)
 source_group("Render Paths\\Header Files" FILES ${ENGINE_RENDERPATHS_HEADERS})
-set(ENGINE_SYSTEMS_HEADERS Systems/AnimationSystem.hpp Systems/RenderSkeletalMeshSystem.hpp Systems/RenderStaticMeshSystem.hpp Systems/RenderInstancedMeshSystem.hpp Systems/ControllerSystem.hpp Systems/TransformSystem.hpp Systems/AudioSystem.hpp Systems/BaseSystem.hpp Systems/CameraSystem.hpp Systems/ColliderSystem.hpp Systems/RigidBodySystem.hpp Systems/CubemapSystem.hpp Systems/GameplaySystem.hpp Systems/GeometryStaticSystem.hpp Systems/RenderSpriteSystem.hpp Systems/GeometrySkeletalSystem.hpp Systems/RenderTerrainSystem.hpp Systems/GeometrySystem.hpp Systems/LightPointSystem.hpp Systems/LightSpotSystem.hpp Systems/LightDirectionalSystem.hpp)
+set(ENGINE_SYSTEMS_HEADERS Systems/AnimationSystem.hpp Systems/ScriptSystem.hpp Systems/RenderSkeletalMeshSystem.hpp Systems/RenderStaticMeshSystem.hpp Systems/RenderInstancedMeshSystem.hpp Systems/ControllerSystem.hpp Systems/TransformSystem.hpp Systems/AudioSystem.hpp Systems/BaseSystem.hpp Systems/CameraSystem.hpp Systems/ColliderSystem.hpp Systems/RigidBodySystem.hpp Systems/CubemapSystem.hpp Systems/GameplaySystem.hpp Systems/GeometryStaticSystem.hpp Systems/RenderSpriteSystem.hpp Systems/GeometrySkeletalSystem.hpp Systems/RenderTerrainSystem.hpp Systems/GeometrySystem.hpp Systems/LightPointSystem.hpp Systems/LightSpotSystem.hpp Systems/LightDirectionalSystem.hpp)
 source_group("Systems\\Header Files" FILES ${ENGINE_SYSTEMS_HEADERS})
 set(ENGINE_ASSET_MANAGERS_HEADERS AssetManagers/AssetReferences.hpp AssetManagers/ImguiManager.hpp AssetManagers/AudioManager.hpp AssetManagers/GraphicsPipelineManager.hpp AssetManagers/MaterialManager.hpp AssetManagers/ModelManager.hpp AssetManagers/TextureManager.hpp)
 source_group("Asset Managers\\Header Files" FILES ${ENGINE_ASSET_MANAGERS_HEADERS})
@@ -20,7 +20,7 @@ set(ENGINE_CORE_SOURCES Core/Main.cpp Core/Camera.cpp Core/Editor.cpp Core/GameO
 source_group("Core\\Source Files" FILES ${ENGINE_CORE_SOURCES})
 set(ENGINE_RENDERPATHS_SOURCES Renderpaths/RenderPathDeferred.cpp Renderpaths/RenderPathForward.cpp)
 source_group("Render Paths\\Source Files" FILES ${ENGINE_RENDERPATHS_SOURCES})
-set(ENGINE_SYSTEMS_SOURCES Systems/AnimationSystem.cpp Systems/RenderSkeletalMeshSystem.cpp Systems/RenderStaticMeshSystem.cpp Systems/RenderInstancedMeshSystem.cpp Systems/ControllerSystem.cpp Systems/TransformSystem.cpp Systems/AudioSystem.cpp Systems/BaseSystem.cpp Systems/CameraSystem.cpp Systems/ColliderSystem.cpp Systems/RigidBodySystem.cpp Systems/CubemapSystem.cpp Systems/GameplaySystem.cpp Systems/GeometryStaticSystem.cpp Systems/RenderSpriteSystem.cpp Systems/GeometrySkeletalSystem.cpp Systems/RenderTerrainSystem.cpp Systems/GeometrySystem.cpp Systems/LightPointSystem.cpp Systems/LightSpotSystem.cpp Systems/LightDirectionalSystem.cpp)
+set(ENGINE_SYSTEMS_SOURCES Systems/AnimationSystem.cpp Systems/ScriptSystem.cpp Systems/RenderSkeletalMeshSystem.cpp Systems/RenderStaticMeshSystem.cpp Systems/RenderInstancedMeshSystem.cpp Systems/ControllerSystem.cpp Systems/TransformSystem.cpp Systems/AudioSystem.cpp Systems/BaseSystem.cpp Systems/CameraSystem.cpp Systems/ColliderSystem.cpp Systems/RigidBodySystem.cpp Systems/CubemapSystem.cpp Systems/GameplaySystem.cpp Systems/GeometryStaticSystem.cpp Systems/RenderSpriteSystem.cpp Systems/GeometrySkeletalSystem.cpp Systems/RenderTerrainSystem.cpp Systems/GeometrySystem.cpp Systems/LightPointSystem.cpp Systems/LightSpotSystem.cpp Systems/LightDirectionalSystem.cpp)
 source_group("Systems\\Source Files" FILES ${ENGINE_SYSTEMS_SOURCES})
 set(ENGINE_ASSET_MANAGERS_SOURCES AssetManagers/ImguiManager.cpp AssetManagers/AudioManager.cpp AssetManagers/GraphicsPipelineManager.cpp AssetManagers/MaterialManager.cpp AssetManagers/ModelManager.cpp AssetManagers/TextureManager.cpp)
 source_group("Asset Managers\\Source Files" FILES ${ENGINE_ASSET_MANAGERS_SOURCES})
@@ -34,18 +34,17 @@ set(ENGINE_IMGUI_SOURCES ../../deps/imgui/imgui.cpp ../../deps/imgui/imgui_impl_
 source_group("Imgui\\Source Files" FILES ${ENGINE_IMGUI_SOURCES})
 set(ENGINE_SOURCES ${ENGINE_CONVERTER_SOURCES} ${ENGINE_IMGUI_SOURCES} ${ENGINE_OTHER_SOURCES} ${ENGINE_ASSET_MANAGERS_SOURCES} ${ENGINE_CORE_SOURCES} ${ENGINE_RENDERPATHS_SOURCES} ${ENGINE_SYSTEMS_SOURCES} ${ENGINE_POST_SOURCES}) 
 
+
 set(INCLUDE_DIRECTORIES ../GraphicsCommon ../AudioCommon ${DEPS_DIR}/spdlog/include/)
 
-if (WIN32)
-    set(RAPIDJSON_PATH CACHE PATH "RAPIDJSON Path")
-endif ()
+set(MONO_PATH CACHE PATH "Mono Path")
+set(RAPIDJSON_PATH CACHE PATH "RAPIDJSON Path")
 
-link_directories(${ASSIMP_LIBRARY_DIR})
+link_directories(${ASSIMP_LIBRARY_DIR} ${MONO_PATH}/lib)
 add_executable(Grindstone ${ENGINE_SOURCES} ${ENGINE_HEADERS})
 
 target_compile_definitions(Grindstone PRIVATE _CRT_SECURE_NO_WARNINGS INCLUDE_EDITOR)
 
-target_link_libraries(Grindstone ${assimp_LIBRARIES})
 
 if (MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
@@ -54,7 +53,7 @@ endif()
 set_target_properties(Grindstone PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
 find_package(OpenGL) 
-target_link_libraries(Grindstone ${OPENGL_gl_LIBRARY})
+target_link_libraries(Grindstone ${OPENGL_gl_LIBRARY} mono-2.0-sgen.lib ${assimp_LIBRARIES})
 if (WIN32)
     #target_link_libraries(Grindstone optimized ${bullet_LIB_REL})
 	target_link_libraries(Grindstone ${bullet_LIB_DEB})
@@ -63,4 +62,4 @@ else ()
     target_link_libraries(Grindstone stdc++fs ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} BulletDynamics BulletCollision LinearMath)
 endif()
 
-target_include_directories(Grindstone PUBLIC ${ASSIMP_INCLUDE_DIR} ${RAPIDJSON_PATH} ${DEPS_DIR} ${RAPIDJSON_INCLUDE_DIRS} ${BULLET_INCLUDE_DIR} ${INCLUDE_DIRECTORIES})
+target_include_directories(Grindstone PUBLIC ${MONO_PATH}/include/mono-2.0 ${ASSIMP_INCLUDE_DIR} ${RAPIDJSON_PATH} ${DEPS_DIR} ${RAPIDJSON_INCLUDE_DIRS} ${BULLET_INCLUDE_DIR} ${INCLUDE_DIRECTORIES})

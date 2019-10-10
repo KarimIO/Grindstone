@@ -41,6 +41,22 @@ Editor::Viewport::Viewport(Camera *c, View v) : camera_(c), first(true) {
 	setView(v);
 }
 
+void Editor::refreshSceneGraph() {
+	for (auto &o : engine.getScene(0)->spaces_[0]->objects_) {
+		GameObjectHandle h = o.getParentID();
+		if (h == -1) {
+			scene_graph_.push_back(new SceneGraphNode(h, {}));
+		}
+		else {
+			std::vector<SceneGraphNode *> &s = scene_graph_;
+			while (s.size() > 0 && s.back()->object_handle_ != h) {
+				s = s.back()->children_;
+			}
+			s.push_back(new SceneGraphNode(h, {}));
+		}
+	}
+}
+
 void Editor::setPath(std::string path) {
 	path_ = path;
 }
@@ -119,7 +135,7 @@ Editor::Editor(ImguiManager *manager) : selected_object_handle_(-1) {
 	show_scene_graph_ = true;
 	show_asset_browser_ = true;
 	show_viewport_= true;
-	show_component_panel_ = true;
+	show_inspector_panel_ = true;
 
 	obj_name = new char[128];
 
@@ -142,6 +158,7 @@ Editor::Editor(ImguiManager *manager) : selected_object_handle_(-1) {
 	asset_path_ = "../assets";
 	next_asset_path_ = "";
 	getDirectory();
+	refreshSceneGraph();
 	next_refresh_asset_directory_time_ = 0;
 }
 
@@ -157,7 +174,7 @@ void Editor::update() {
 
 	prepareDockspace();
 	sceneGraphPanel();
-	componentPanel();
+	inspectorPanel();
 	assetPanel();
 	viewportPanels();
 
@@ -239,7 +256,7 @@ void Editor::prepareDockspace() {
 		if (ImGui::BeginMenu("View")) {
 			if (ImGui::MenuItem("Show Asset Browser", "", show_asset_browser_)) show_asset_browser_ = !show_asset_browser_;
 			if (ImGui::MenuItem("Show Scene Graph", "", show_scene_graph_)) show_scene_graph_ = !show_scene_graph_;
-			if (ImGui::MenuItem("Show Component Panel", "", show_component_panel_)) show_component_panel_ = !show_component_panel_;
+			if (ImGui::MenuItem("Show Component Panel", "", show_inspector_panel_)) show_inspector_panel_ = !show_inspector_panel_;
 			if (ImGui::MenuItem("Add Viewport Panel", "", false)) {
 				Camera *c = new Camera(engine.getScenes()[0]->spaces_[0], true);
 				c->enable_reflections_ = true;
@@ -529,9 +546,9 @@ void parseCategory(reflect::TypeDescriptor_Struct::Category &cat, unsigned char 
 	}
 }
 
-void Editor::componentPanel() {
-	if (show_component_panel_) {
-		ImGui::Begin("Components Panel", &show_component_panel_);
+void Editor::inspectorPanel() {
+	if (show_inspector_panel_) {
+		ImGui::Begin("Inspector Panel", &show_inspector_panel_);
 		if (selected_object_handle_ != -1) {
 			Scene *scene = engine.getScenes()[0];
 			if (scene) {
@@ -611,75 +628,6 @@ void Editor::getDirectory() {
 			files_.emplace_back(path, name);
 		}
 	}
-}
-
-void Editor::displayComponent(ComponentType type, ComponentHandle handle) {
-	
-	/*if (ImGui::TreeNode(component_names[type])) {
-		ImGuiStyle& style = ImGui::GetStyle();
-		float w = ImGui::GetWindowContentRegionMax().x;
-		float p = style.FramePadding.x;
-		float w3 = (w / 3.0f) - p;
-		w3 = (w3 > 30.0f) ? w3 : 30.0f;
-		float w4 = (w / 3.0f) - p;
-		w4 = (w4 > 30.0f) ? w4 : 30.0f;
-
-		// Component Settings
-		switch (type) {
-		case COMPONENT_TRANSFORM: {
-			TransformComponent &tr = ((TransformSubSystem *)engine.getScenes()[0]->spaces_[0]->getSubsystem(COMPONENT_TRANSFORM))->getComponent(handle);
-			ImGui::Text("Position"); 
-			vec3Component("##t", tr.position_, w3);
-
-			float rx = glm::degrees(tr.angles_.x);
-			float ry = glm::degrees(tr.angles_.y);
-			float rz = glm::degrees(tr.angles_.z);
-			ImGui::Text("Rotation");
-			ImGui::PushItemWidth(w4);
-			ImGui::PushItemWidth(w4);
-			ImGui::PushItemWidth(w4);
-			if (ImGui::InputFloat("##rX", &rx))
-				tr.angles_.x = glm::radians(rx);
-			ImGui::SameLine();
-			if (ImGui::InputFloat("##rY", &ry))
-				tr.angles_.y = glm::radians(ry);
-			ImGui::SameLine();
-			if (ImGui::InputFloat("##rZ", &rz))
-				tr.angles_.z = glm::radians(rz);
-
-			float sx = tr.scale_.x;
-			float sy = tr.scale_.y;
-			float sz = tr.scale_.z;
-			ImGui::Text("Scale");
-			ImGui::PushItemWidth(w3);
-			ImGui::PushItemWidth(w3);
-			ImGui::PushItemWidth(w3);
-			if (ImGui::InputFloat("##sX", &sx) && sx != 0.0f)
-				tr.scale_.x = sx;
-			ImGui::SameLine();
-			if (ImGui::InputFloat("##sY", &sy) && sy != 0.0f)
-				tr.scale_.y = sy;
-			ImGui::SameLine();
-			if (ImGui::InputFloat("##sZ", &sz) && sz != 0.0f)
-				tr.scale_.z = sz;
-			break;
-		}
-		case COMPONENT_LIGHT_SPOT: {
-			LightSpotComponent &tr = ((LightSpotSubSystem *)engine.getScenes()[0]->spaces_[0]->getSubsystem(COMPONENT_LIGHT_SPOT))->getComponent(handle);
-			ImGui::Text("Color");
-			vec4Component("##lsc", tr.properties_.color, tr.properties_.power, w4);
-
-			floatComponent("Inner Angle", "##lsi", tr.properties_.innerAngle);
-			floatComponent("Outer Angle", "##lso", tr.properties_.outerAngle);
-			floatComponent("Attuenuation Radius", "##lsa", tr.properties_.attenuationRadius);
-			ImGui::Checkbox("Shadow Enabled", &tr.properties_.shadow);
-			break;
-		}
-		default: break;
-		}
-
-		ImGui::TreePop();
-	}*/
 }
 
 void Editor::assetPanel() {
@@ -1217,6 +1165,24 @@ void Editor::loadFile() {
 	cleanCameras();
 }
 
+void Editor::renderSceneGraphTree(std::vector<SceneGraphNode*>& scene_graph_nodes) {
+	for (auto &s : scene_graph_nodes) {
+		std::string n = engine.getScene(0)->spaces_[0]->getObject(s->object_handle_).getName();
+
+		if (s->children_.size() > 0) {
+			ImGui::TreeNode(n.c_str());
+			if (ImGui::Button("Select Object")) {
+				selected_object_handle_ = s->object_handle_;
+				auto s = n.size();
+				memset(obj_name + s, 0, 256 - s);
+				memcpy(obj_name, n.c_str(), s);
+			}
+			renderSceneGraphTree(s->children_);
+			ImGui::TreePop();
+		}
+	}
+}
+
 void Editor::sceneGraphPanel() {
 	if (show_scene_graph_) {
 		ImGui::Begin("Scene Graph", &show_scene_graph_);
@@ -1227,7 +1193,7 @@ void Editor::sceneGraphPanel() {
 		ImGui::Separator();
 
         // Scene Graph:
-		for (auto scene : engine.getScenes()) {
+		/*for (auto scene : engine.getScenes()) {
             for (auto space : scene->spaces_) {
                 for (auto &object : space->objects_) {
 					std::string n = object.getName();
@@ -1239,8 +1205,14 @@ void Editor::sceneGraphPanel() {
 					}
                 }
             }
-        }
+        }*/
+
+		renderSceneGraphTree(scene_graph_);
+
         ImGui::End();
     }
 }
 #endif
+
+SceneGraphNode::SceneGraphNode(GameObjectHandle o, std::vector<SceneGraphNode*> c) : object_handle_(o), children_(c) {
+}

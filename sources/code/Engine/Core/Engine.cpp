@@ -52,6 +52,7 @@ void Engine::initialize() {
 	settings_ = new Settings();
 	GRIND_LOG("Settings loaded.");
 
+	// Load Input Manager
 	input_manager_ = new InputManager();
 	GRIND_LOG("Input Manager loaded.");
 
@@ -66,14 +67,13 @@ void Engine::initialize() {
 	deffUBO();
 	initializeTBL();
 
-	// Load Managers
+	// Load Asset Managers
 	//audio_manager_ = new AudioManager();
 	material_manager_ = new MaterialManager();
 	graphics_pipeline_manager_ = new GraphicsPipelineManager();
 	texture_manager_ = new TextureManager();
 	model_manager_ = new ModelManager(ubb_);
 	imgui_manager_ = new ImguiManager();
-	// - Load Input Manager
 
 	// Load Systems
 	addSystem(new ControllerSystem());
@@ -88,7 +88,6 @@ void Engine::initialize() {
 	addSystem(new LightDirectionalSystem());
 	addSystem(new TransformSystem());
 	addSystem(new CameraSystem());
-	// addSystem(new GeometryStaticSystem());
 
 	// Load Default Level
 	addScene(settings_->default_map_);
