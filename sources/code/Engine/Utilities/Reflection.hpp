@@ -75,7 +75,7 @@ namespace reflect {
 	};
 
 	enum Metadata : short {
-		None = 0,
+		NoMetadata = 0,
 		ViewInEditor = 1 << 0,
 		SetInEditor = 1 << 1,
 		ViewInScript = 1 << 2,

@@ -16,6 +16,7 @@ Install the following Windows dependencies.
  * [Bullet](http://bulletphysics.org/)
  * [CMake](https://cmake.org/)
  * [libRocket](http://librocket.com/)
+ * [OpenAL](https://www.openal.org/)
  * [SDL](https://www.libsdl.org/)
 Optional Graphics-Specific dependencies:
  * [VULKAN: Lunar API](https://vulkan.lunarg.com/sdk/home)
@@ -34,7 +35,7 @@ $ sudo dnf install gcc-c++ make assimp-devel xorg-x11-apps mesa-libGL-devel cmak
 You must first update and get all the following dependencies:
 ```
 $ sudo apt update 
-$ sudo apt install g++ make libassimp-dev libgl1-mesa-dev xorg xorg-dev cmake
+$ sudo apt install g++ make libassimp-dev libgl1-mesa-dev xorg xorg-dev cmake libopenal-dev mono-devel
 ```
 
 To build libRocket, download the repository, enter the ```Build``` folder, and call the following:

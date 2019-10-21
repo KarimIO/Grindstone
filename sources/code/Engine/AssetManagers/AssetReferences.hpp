@@ -6,7 +6,8 @@
 #include <UniformBuffer.hpp>
 
 enum ProgramType {
-	TYPE_UNLIT = 0,
+	TYPE_MISSING = 0,
+	TYPE_UNLIT,
 	TYPE_OPAQUE,
 	TYPE_TRANSPARENT,
 	TYPE_MISC

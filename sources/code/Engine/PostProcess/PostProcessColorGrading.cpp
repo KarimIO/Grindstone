@@ -87,9 +87,7 @@ PostProcessColorGrading::PostProcessColorGrading(PostPipeline *pipeline, RenderT
 	options.generate_mipmaps = false;
 
 	auto texmgr = engine.getTextureManager();
-	std::string path = "lut.png";
-	std::string fullpath = std::string("../assets/materials/") + path;
-	TextureHandler handle = texmgr->loadTexture(fullpath, options);
+	TextureHandler handle = texmgr->loadTexture("../engineassets/materials/postprocessing/lut.png", options);
 	if (handle == size_t(-1)) {
 		texture_ = nullptr;
 		texture_binding_ = nullptr;

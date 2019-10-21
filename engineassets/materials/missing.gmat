@@ -1,0 +1,8 @@
+shader: ../assets/shaders/materials/standard_metalness/standard_metalness.json
+hasAlbedoTexture: false
+hasNormalTexture: false
+hasRoughTexture: false
+hasMetalTexture: false
+albedoConstant: 0.8 0.8 0.8 1
+metalnessConstant: 0
+roughnessConstant: 0.5

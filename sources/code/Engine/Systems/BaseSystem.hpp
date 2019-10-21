@@ -4,7 +4,7 @@
 #include "../Utilities/Reflection.hpp"
 
 #undef Bool
-#include "rapidjson/document.h"
+#include <rapidjson/document.h>
 
 #ifdef INCLUDE_EDITOR
 #include <rapidjson/prettywriter.h>

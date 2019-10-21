@@ -247,7 +247,7 @@ RenderSpriteSystem::RenderSpriteSystem() : System(COMPONENT_RENDER_SPRITE) {
 }
 
 void RenderSpriteSystem::loadDebugSprites() {
-	TextureHandler t = engine.getTextureManager()->loadTexture("../assets/materials/debug/light_point_sprite.png");
+	TextureHandler t = engine.getTextureManager()->loadTexture("../engineassets/materials/debug/light_point_sprite.png");
 	Texture *tex = engine.getTextureManager()->getTexture(t);
 
 	SingleTextureBind stb;

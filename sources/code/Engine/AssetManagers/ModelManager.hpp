@@ -110,6 +110,8 @@ private:
 	UniformBuffer *model_ubo_;
 	std::vector<UniformBufferBinding *> ubbs_;
 
+	MaterialReference empty_material;
+
 	bool loadModel(ModelStatic &model);
 };
 

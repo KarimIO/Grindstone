@@ -272,26 +272,6 @@ size_t LightDirectionalSubSystem::getNumComponents() {
 }
 
 void LightDirectionalSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
-	auto &c = getComponent(handle);
-
-	w.Key("color");
-	w.StartArray();
-	w.Double(c.properties_.color.x);
-	w.Double(c.properties_.color.y);
-	w.Double(c.properties_.color.z);
-	w.EndArray();
-
-	w.Key("brightness");
-	w.Double(c.properties_.power);
-
-	w.Key("radius");
-	w.Double(c.properties_.sourceRadius);
-	
-	w.Key("shadowresolution");
-	w.Uint(c.properties_.resolution);
-
-	w.Key("castshadow");
-	w.Bool(c.properties_.shadow);
 }
 
 void LightDirectionalSubSystem::removeComponent(ComponentHandle handle) {

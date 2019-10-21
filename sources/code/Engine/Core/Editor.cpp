@@ -1,5 +1,10 @@
 #include "Engine.hpp"
 
+#include "GraphicsWrapper.hpp"
+
+#define INCLUDE_EDITOR
+#undef Bool
+
 #ifdef INCLUDE_EDITOR
 #include "Space.hpp"
 #include "Editor.hpp"
@@ -9,7 +14,6 @@
 #include "Scene.hpp"
 #include "Space.hpp"
 #include "GameObject.hpp"
-#include "GraphicsWrapper.hpp"
 #include "Texture.hpp"
 #include "../Systems/CubemapSystem.hpp"
 
@@ -502,7 +506,7 @@ void parseCategory(reflect::TypeDescriptor_Struct::Category &cat, unsigned char 
 				if (member.metadata & reflect::Metadata::SetInEditor)
 					doubleComponent(w, extended_member_name, v);
 				else
-					ImGui::Text("%d", v);
+					ImGui::Text("%f", v);
 				break;
 			}
 			case reflect::TypeDescriptor::ReflectionTypeData::ReflVec2: {
@@ -1166,6 +1170,8 @@ void Editor::loadFile() {
 }
 
 void Editor::renderSceneGraphTree(std::vector<SceneGraphNode*>& scene_graph_nodes) {
+	return;
+	
 	for (auto &s : scene_graph_nodes) {
 		std::string n = engine.getScene(0)->spaces_[0]->getObject(s->object_handle_).getName();
 
@@ -1188,7 +1194,7 @@ void Editor::sceneGraphPanel() {
 		ImGui::Begin("Scene Graph", &show_scene_graph_);
 
 		if (ImGui::Button("Add GameObject")) {
-			engine.getScenes()[0]->spaces_[0]->objects_.emplace_back((GameObjectHandle)engine.getScenes()[0]->spaces_[0]->objects_.size(), "New Object");
+			engine.getScenes()[0]->spaces_[0]->objects_.emplace_back((GameObjectHandle)engine.getScenes()[0]->spaces_[0]->objects_.size(), "New Object", -1);
 		}
 		ImGui::Separator();
 
@@ -1212,7 +1218,8 @@ void Editor::sceneGraphPanel() {
         ImGui::End();
     }
 }
-#endif
 
 SceneGraphNode::SceneGraphNode(GameObjectHandle o, std::vector<SceneGraphNode*> c) : object_handle_(o), children_(c) {
 }
+
+#endif

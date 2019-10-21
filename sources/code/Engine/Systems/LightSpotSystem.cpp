@@ -188,32 +188,6 @@ size_t LightSpotSubSystem::getNumComponents() {
 }
 
 void LightSpotSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
-	auto &c = getComponent(handle);
-
-	w.Key("color");
-	w.StartArray();
-	w.Double(c.properties_.color.x);
-	w.Double(c.properties_.color.y);
-	w.Double(c.properties_.color.z);
-	w.EndArray();
-
-	w.Key("brightness");
-	w.Double(c.properties_.power);
-	
-	w.Key("radius");
-	w.Double(c.properties_.attenuationRadius);
-
-	w.Key("innerAngle");
-	w.Double(c.properties_.innerAngle);
-
-	w.Key("outerAngle");
-	w.Double(c.properties_.outerAngle);
-
-	w.Key("shadowresolution");
-	w.Int(c.properties_.resolution);
-
-	w.Key("castshadow");
-	w.Bool(c.properties_.shadow);
 }
 
 void LightSpotSubSystem::removeComponent(ComponentHandle handle) {

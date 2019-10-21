@@ -118,8 +118,8 @@ void PostProcessIBL::prepareSSAO() {
 		glm::vec3 pixel = glm::normalize(glm::vec3(
 			(2.0f * (float)rand() / (float)RAND_MAX) - 1.0f,
 			(2.0f * (float)rand() / (float)RAND_MAX) - 1.0f, 0));
-		noise[i] = unsigned char((pixel.x / 2.0f + 0.5f) * 255);
-		noise[i + 1] = unsigned char ((pixel.y / 2.0f + 0.5f) * 255);
+		noise[i] = (unsigned char)((pixel.x / 2.0f + 0.5f) * 255);
+		noise[i + 1] = (unsigned char)((pixel.y / 2.0f + 0.5f) * 255);
 	}
 
 	int kernel_size = 32;

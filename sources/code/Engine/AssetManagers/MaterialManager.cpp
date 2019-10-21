@@ -40,7 +40,7 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 	std::ifstream input(path);
 	if (input.fail()) {
 		GRIND_WARN("Material failed to load: {0}.", path);
-		return empty_material_reference_;
+		return invalid_material;
 	}
 
 	if (engine.getSettings()->show_material_load_)
@@ -53,13 +53,13 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 	if (p == -1) {
 		// Return empty if we can't find the delimeter
 		GRIND_WARN("{0} is invalid, the first line must refer to the shader.", path);
-		return empty_material_reference_;
+		return invalid_material;
 	}
 	else {
 		if (shader_param.substr(0, p) != "shader") {
 			// Return empty if the key isn't "shader"
 			GRIND_WARN("{0} is invalid, the first line must refer to the shader.", path);
-			return empty_material_reference_;
+			return invalid_material;
 		}
 
 		// Get Parameter Name

@@ -40,6 +40,14 @@ static bool isExtensionSupported(const char *extList, const char *extension) {
     return false;
 }
 
+char *GraphicsWrapper::getSavePath(const char *filter, const char *default_ext) {
+	return "";
+}
+
+char *GraphicsWrapper::getLoadPath(const char *filter, const char *default_ext) {
+	return "";
+}
+
 void GraphicsWrapper::SetCursorShown(bool) {
 	// Create blank cursor
 	static char data[1] = {0};

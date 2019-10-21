@@ -7,6 +7,8 @@
 #include "GraphicsPipelineManager.hpp"
 #include "../AssetCommon/Renderable.hpp"
 
+const MaterialReference invalid_material = {{(uint8_t)-1, (uint8_t)-1, TYPE_MISSING}, (uint16_t)-1};
+
 class MeshStatic;
 
 class MaterialManager;
@@ -47,8 +49,6 @@ public:
 	~MaterialManager();
 private:
 	std::map<std::string, MaterialReference> material_map_;
-
-	MaterialReference empty_material_reference_;
 };
 
 #endif

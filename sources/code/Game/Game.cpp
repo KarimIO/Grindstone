@@ -1,5 +1,5 @@
 #include "Game.hpp"
 
-void Game::initialize() {
+/*void Game::initialize() {
 
-}
+}*/
