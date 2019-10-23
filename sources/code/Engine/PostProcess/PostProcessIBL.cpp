@@ -6,12 +6,15 @@
 #include "PostPipeline.hpp"
 #include "Core/Space.hpp"
 
-PostProcessIBL::PostProcessIBL(PostPipeline *pipeline, RenderTargetContainer *target, int w, int h) : BasePostProcess(pipeline), target_(target), viewport_w_(w), viewport_h_(h) {
-	prepareSSAO();
-	prepareIBL();
+PostProcessIBL::PostProcessIBL(unsigned int w, unsigned int h, PostPipeline *pipeline, RenderTargetContainer *target) : BasePostProcess(pipeline), target_(target), viewport_w_(w), viewport_h_(h) {
+	reloadGraphics(w, h);
 }
 
-void PostProcessIBL::prepareIBL() {
+PostProcessIBL::~PostProcessIBL() {
+	destroyGraphics();
+}
+
+void PostProcessIBL::prepareIBL(unsigned int w, unsigned h) {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
 
@@ -80,7 +83,7 @@ void PostProcessIBL::prepareIBL() {
 	gpipeline_ = graphics_wrapper->CreateGraphicsPipeline(iblGPCI);
 }
 
-void PostProcessIBL::prepareSSAO() {
+void PostProcessIBL::prepareSSAO(unsigned int w, unsigned h) {
 	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
 
@@ -293,11 +296,11 @@ void PostProcessIBL::ibl() {
 	CubemapComponent *cube = sys->getClosestCubemap(pos);
 	if (cube && cube->cubemap_) {
 		graphics_wrapper->BindTextureBinding(cube->cubemap_binding_);
-	}
 
-	gpipeline_->Bind();
-	graphics_wrapper->DrawImmediateVertices(0, 6);
-	graphics_wrapper->SetImmediateBlending(BLEND_NONE);
+		gpipeline_->Bind();
+		graphics_wrapper->DrawImmediateVertices(0, 6);
+		graphics_wrapper->SetImmediateBlending(BLEND_NONE);
+	}
 }
 
 void PostProcessIBL::Process() {
@@ -326,4 +329,50 @@ void PostProcessIBL::recreateFramebuffer(unsigned int w, unsigned int h) {
 
 bool PostProcessIBL::usesSSAO() {
 	return true;
+}
+
+void PostProcessIBL::resizeBuffers(unsigned int w, unsigned h) {
+	prepareSSAO(w, h);
+	prepareIBL(w, h);
+}
+
+void PostProcessIBL::reloadGraphics(unsigned int w, unsigned h) {
+	resizeBuffers(w, h);
+}
+
+void PostProcessIBL::destroyGraphics() {
+	auto gw = engine.getGraphicsWrapper();
+	if (env_map_) {
+		gw->DeleteTextureBindingLayout(env_map_);
+		env_map_ = nullptr;
+	}
+
+	if (gpipeline_) {
+		gw->DeleteGraphicsPipeline(gpipeline_);
+		gpipeline_ = nullptr;
+	}
+	if (pipeline_) {
+		gw->DeleteGraphicsPipeline(pipeline_);
+		pipeline_ = nullptr;
+	}
+	if (ssao_noise_binding_) {
+		gw->DeleteTextureBinding(ssao_noise_binding_);
+		ssao_noise_binding_ = nullptr;
+	}
+	if (ssao_ub) {
+		gw->DeleteUniformBuffer(ssao_ub);
+		ssao_ub = nullptr;
+	}
+	if (ssao_buffer_) {
+		gw->DeleteRenderTarget(ssao_buffer_);
+		ssao_buffer_ = nullptr;
+	}
+	if (ssao_fbo_) {
+		gw->DeleteFramebuffer(ssao_fbo_);
+		ssao_fbo_ = nullptr;
+	}
+	if (ssao_layout_) {
+		gw->DeleteTextureBindingLayout(ssao_layout_);
+		ssao_layout_ = nullptr;
+	}
 }

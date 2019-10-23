@@ -33,6 +33,9 @@ class LightSpotSystem : public System {
 public:
 	LightSpotSystem();
 	void update(double dt);
+
+	void loadGraphics();
+	void destroyGraphics();
 private:
 	std::vector<LightSpotComponent> components_;
 
@@ -44,13 +47,10 @@ class LightSpotSubSystem : public SubSystem {
 public:
 	LightSpotSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
-	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
-	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value & params) override;
 	virtual void initialize() override;
 	LightSpotComponent &getComponent(ComponentHandle handle);
 	virtual Component *getBaseComponent(ComponentHandle component_handle) override;
 	size_t getNumComponents();
-	virtual void writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) override;
 	virtual void removeComponent(ComponentHandle handle);
 
 	virtual ~LightSpotSubSystem();

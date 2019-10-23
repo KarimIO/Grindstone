@@ -8,14 +8,18 @@ class PostProcessSSAO;
 
 class PostProcessIBL : public BasePostProcess {
 public:
-    PostProcessIBL(PostPipeline *pipeline, RenderTargetContainer *target, int w, int h);
-	void prepareIBL();
-	void prepareSSAO();
+    PostProcessIBL(unsigned int w, unsigned h, PostPipeline *pipeline, RenderTargetContainer *target);
+	virtual ~PostProcessIBL() override;
+	void prepareIBL(unsigned int w, unsigned h);
+	void prepareSSAO(unsigned int w, unsigned h);
 	void ssao();
 	void ibl();
     virtual void Process();
 	void recreateFramebuffer(unsigned int w, unsigned int h);
 	bool usesSSAO();
+	virtual void resizeBuffers(unsigned int w, unsigned h) override;
+	virtual void reloadGraphics(unsigned int w, unsigned h) override;
+	virtual void destroyGraphics() override;
 private:
     //RenderTargetContainer *source_;
     RenderTargetContainer *target_;

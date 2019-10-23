@@ -32,39 +32,12 @@ void LightPointSystem::update(double dt) {
 	}
 }
 
-ComponentHandle LightPointSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
-	ComponentHandle component_handle = (ComponentHandle)components_.size();
-	components_.emplace_back(object_handle, component_handle);
-
-	setComponent(component_handle, params);
-
-	return component_handle;
+void LightPointSystem::loadGraphics()
+{
 }
 
-void LightPointSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
-	auto &component = components_[component_handle];
-
-	if (params.HasMember("color")) {
-		auto color = params["color"].GetArray();
-		component.properties_.color.x = color[0].GetFloat();
-		component.properties_.color.y = color[1].GetFloat();
-		component.properties_.color.z = color[2].GetFloat();
-	}
-	
-	if (params.HasMember("brightness")) {
-		float brightness = params["brightness"].GetFloat();
-		component.properties_.power = brightness;
-	}
-	
-	if (params.HasMember("radius")) {
-		float radius = params["radius"].GetFloat();
-		component.properties_.attenuationRadius = radius;
-	}
-	
-	if (params.HasMember("castshadow")) {
-		bool castshadow = params["castshadow"].GetBool();
-		component.properties_.shadow = castshadow;
-	}
+void LightPointSystem::destroyGraphics()
+{
 }
 
 void LightPointSubSystem::setShadow(ComponentHandle h, bool shadow) {
@@ -93,26 +66,6 @@ size_t LightPointSubSystem::getNumComponents() {
 	return components_.size();
 }
 
-void LightPointSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
-	auto &c = getComponent(handle);
-
-	w.Key("color");
-	w.StartArray();
-	w.Double(c.properties_.color.x);
-	w.Double(c.properties_.color.y);
-	w.Double(c.properties_.color.z);
-	w.EndArray();
-
-	w.Key("brightness");
-	w.Double(c.properties_.power);
-
-	w.Key("radius");
-	w.Double(c.properties_.attenuationRadius);
-
-	w.Key("castshadow");
-	w.Bool(c.properties_.shadow);
-}
-
 void LightPointSubSystem::removeComponent(ComponentHandle handle) {
 	GameObjectHandle h = components_[handle].game_object_handle_;
 	space_->getObject(h).setComponentHandle(system_type_, UINT_MAX);
@@ -129,7 +82,7 @@ void LightPointSubSystem::removeComponent(ComponentHandle handle) {
 LightPointSubSystem::~LightPointSubSystem() {
 }
 
-REFLECT_STRUCT_BEGIN(LightPointComponent, LightPointSystem)
+REFLECT_STRUCT_BEGIN(LightPointComponent, LightPointSystem, COMPONENT_LIGHT_POINT)
 	REFLECT_STRUCT_MEMBER(properties_.color)
 	REFLECT_STRUCT_MEMBER(properties_.power)
 	REFLECT_STRUCT_MEMBER(properties_.attenuationRadius)

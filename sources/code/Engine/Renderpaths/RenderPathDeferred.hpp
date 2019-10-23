@@ -20,12 +20,17 @@ public:
 	bool filled_;
 	bool wireframe_;
 
+	void createShadowTextureBindingLayout();
+
 	RenderPathDeferred(unsigned int w, unsigned int h);
 	virtual void setDebugMode(unsigned int d) override;
 	virtual unsigned int getDebugMode() override;
 	void render(Framebuffer *default_fb, DepthTarget *depthTarget, Space *scene);
 	void renderLights(Framebuffer *fbo, Space *scene);
-	void recreateFramebuffer(unsigned int w, unsigned int h);
+	virtual void recreateFramebuffer(unsigned int w, unsigned int h) override;
+	virtual void destroyGraphics() override;
+	virtual void reloadGraphics() override;
+	void destroyFramebuffers();
 private:
 	void createPointLightShader();
 	void createSpotLightShader();

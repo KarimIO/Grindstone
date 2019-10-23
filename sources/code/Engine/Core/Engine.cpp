@@ -240,6 +240,11 @@ System *Engine::addSystem(System * system) {
 	return system;
 }
 
+template<class T>
+T *Engine::getSystem() {
+	return static_cast<T *>(systems_[T::static_system_type_]);
+}
+
 System * Engine::getSystem(ComponentHandle type) {
 	return systems_[type];
 }
@@ -350,6 +355,8 @@ Engine::~Engine() {
 		delete dll_audio_;
 	}*/
 
+	graphics_pipeline_manager_->cleanup();
+
 	if (dll_graphics_) {
 		delete dll_graphics_;
 	}
@@ -377,6 +384,70 @@ double Engine::getUpdateTimeDelta() {
 
 void Engine::shutdownControl(double) {
 	shutdown();
+}
+
+void Engine::reloadAudioDLL() {
+	// Remove all Audio Resources
+
+	// Reload Audio DLL
+	// dll_audio_->reload();
+	// audio_wrapper_ = dll_audio_->getWrapper();
+
+	// Rebuild Graphics Resources
+
+	// Reload Graphics
+}
+
+void Engine::reloadGraphicsDLL() {
+	// Remove all Graphics Resources
+	getSystem<LightPointSystem>()->destroyGraphics();
+	getSystem<LightSpotSystem>()->destroyGraphics();
+	getSystem<LightDirectionalSystem>()->destroyGraphics();
+	getSystem<CameraSystem>()->destroyGraphics();
+	getSystem<CubemapSystem>()->destroyGraphics();
+
+	graphics_wrapper_->DeleteUniformBufferBinding(ubb_);
+	graphics_wrapper_->DeleteUniformBuffer(ubo_);
+	graphics_wrapper_->DeleteUniformBufferBinding(deff_ubb_);
+	graphics_wrapper_->DeleteUniformBuffer(deff_ubo_handler_);
+	graphics_wrapper_->DeleteVertexArrayObject(plane_vao_);
+	graphics_wrapper_->DeleteVertexBuffer(plane_vbo_);
+	graphics_wrapper_->DeleteTextureBindingLayout(gbuffer_tbl_);
+
+	delete imgui_manager_;
+
+	graphics_pipeline_manager_->cleanup();
+	model_manager_->destroyGraphics();
+	
+	// Reload Graphics DLL
+	dll_graphics_->reload();
+	graphics_wrapper_ = dll_graphics_->getWrapper();
+
+	// Reload Graphics
+	initializeUniformBuffer();
+	initializePlaneVertexBuffer();
+	deffUBO();
+	initializeTBL();
+
+	imgui_manager_ = new ImguiManager();
+	if (editor_)
+		editor_->reload(imgui_manager_);
+
+	// Rebuild Graphics Resources
+	getSystem<LightPointSystem>()->loadGraphics();
+	getSystem<LightSpotSystem>()->loadGraphics();
+	getSystem<LightDirectionalSystem>()->loadGraphics();
+	getSystem<CameraSystem>()->loadGraphics();
+	getSystem<CubemapSystem>()->loadGraphics();
+
+	// Materials System
+	model_manager_->reloadGraphics();
+}
+
+void Engine::refreshAll(double) {
+	reloadGraphicsDLL();
+	reloadAudioDLL();
+
 }
 
 #ifdef INCLUDE_EDITOR

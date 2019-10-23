@@ -13,6 +13,8 @@ public:
 	virtual void setDebugMode(unsigned int d) = 0;
 	virtual void render(Framebuffer *gbuffer_, DepthTarget *depthTarget, Space *scene) = 0;
 	virtual void recreateFramebuffer(unsigned int w, unsigned int h) = 0;
+	virtual void destroyGraphics() = 0;
+	virtual void reloadGraphics() = 0;
 };
 
 #endif

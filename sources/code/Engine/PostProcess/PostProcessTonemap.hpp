@@ -3,17 +3,28 @@
 
 #include "BasePost.hpp"
 
+class TextureSubBinding;
+class TextureBindingLayout;
+class UniformBufferBinding;
+
 class PostProcessAutoExposure;
 
 class PostProcessTonemap : public BasePostProcess {
 public:
-    PostProcessTonemap(PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target, PostProcessAutoExposure *auto_exposure);
+    PostProcessTonemap(unsigned int w, unsigned h, PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target, PostProcessAutoExposure *auto_exposure);
     virtual void Process();
+	virtual void resizeBuffers(unsigned int w, unsigned h) override;
+	virtual void reloadGraphics(unsigned int w, unsigned h) override;
+	virtual void destroyGraphics() override;
 private:
     RenderTargetContainer *source_;
     RenderTargetContainer *target_;
 
 	PostProcessAutoExposure *auto_exposure_;
+
+	TextureSubBinding *tonemap_sub_binding_;
+	TextureBindingLayout *tonemap_tbl_;
+	UniformBufferBinding *ubb_;
 
     GraphicsPipeline *gpipeline_;
 

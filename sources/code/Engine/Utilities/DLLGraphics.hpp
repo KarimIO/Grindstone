@@ -10,6 +10,8 @@ class DLLGraphics : public DLLHandler {
 public:
 	DLLGraphics();
 	GraphicsWrapper *getWrapper();
+	void setup();
+	void reload();
 	~DLLGraphics();
 private:
 	GraphicsWrapper *wrapper_;

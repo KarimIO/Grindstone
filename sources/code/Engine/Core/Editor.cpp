@@ -2,7 +2,6 @@
 
 #include "GraphicsWrapper.hpp"
 
-#define INCLUDE_EDITOR
 #undef Bool
 
 #ifdef INCLUDE_EDITOR
@@ -95,56 +94,56 @@ void Editor::Viewport::setView(View v) {
 		camera_->setOrtho(-10, 10, 10, -10);
 	}
 
-	double d = 30;
-	float qpi = glm::pi<float>() / 2.0f;
+double d = 30;
+float qpi = glm::pi<float>() / 2.0f;
 
-	switch (v) {
-	case Viewport::View::Top:
-		pos = glm::vec3(0, d, 0);
-		angles = glm::vec3(-qpi, 0.0, 0.0);
-		break;
-	case Viewport::View::Bottom:
-		pos = glm::vec3(0, -d, 0);
-		angles = glm::vec3(qpi, 0.0, 0.0);
-		break;
-	case Viewport::View::Left:
-		pos = glm::vec3(d, 0, 0);
-		angles = glm::vec3(0.0, -qpi, 0.0);
-		break;
-	case Viewport::View::Right:
-		pos = glm::vec3(-d, 0, 0);
-		angles = glm::vec3(0.0, qpi, 0.0);
-		break;
-	case Viewport::View::Front:
-		pos = glm::vec3(0, 0, d);
-		angles = glm::vec3(0.0, qpi * 2.0f, 0.0);
-		break;
-	case Viewport::View::Back:
-		pos = glm::vec3(0, 0, -d);
-		angles = glm::vec3(0.0, 0.0, 0.0);
-		break;
-	default:
-	case Viewport::View::Perspective:
-		pos = glm::vec3(-1, 2, -1);
-		angles = glm::vec3(-0.78, 0.78, 0.78);
-		break;
-	}
+switch (v) {
+case Viewport::View::Top:
+	pos = glm::vec3(0, d, 0);
+	angles = glm::vec3(-qpi, 0.0, 0.0);
+	break;
+case Viewport::View::Bottom:
+	pos = glm::vec3(0, -d, 0);
+	angles = glm::vec3(qpi, 0.0, 0.0);
+	break;
+case Viewport::View::Left:
+	pos = glm::vec3(d, 0, 0);
+	angles = glm::vec3(0.0, -qpi, 0.0);
+	break;
+case Viewport::View::Right:
+	pos = glm::vec3(-d, 0, 0);
+	angles = glm::vec3(0.0, qpi, 0.0);
+	break;
+case Viewport::View::Front:
+	pos = glm::vec3(0, 0, d);
+	angles = glm::vec3(0.0, qpi * 2.0f, 0.0);
+	break;
+case Viewport::View::Back:
+	pos = glm::vec3(0, 0, -d);
+	angles = glm::vec3(0.0, 0.0, 0.0);
+	break;
+default:
+case Viewport::View::Perspective:
+	pos = glm::vec3(-1, 2, -1);
+	angles = glm::vec3(-0.78, 0.78, 0.78);
+	break;
+}
 
-	calcDirs();
-	// setViewMatrix();
+calcDirs();
+// setViewMatrix();
 }
 
 Editor::Editor(ImguiManager *manager) : selected_object_handle_(-1) {
 	manager_ = manager;
 	show_scene_graph_ = true;
 	show_asset_browser_ = true;
-	show_viewport_= true;
+	show_viewport_ = true;
 	show_inspector_panel_ = true;
 
 	obj_name = new char[128];
 
 	viewport_manipulating_ = 0;
-	
+
 	Camera *c = new Camera(engine.getScenes()[0]->spaces_[0], true);
 	c->setViewport(800, 600);
 	c->enable_reflections_ = false;
@@ -191,6 +190,14 @@ void Editor::update() {
 		asset_path_ = next_asset_path_;
 		next_asset_path_ = "";
 		getDirectory();
+	}
+}
+
+void Editor::reload(ImguiManager * manager) {
+	manager_ = manager;
+
+	for (auto &v : viewports_) {
+		v.camera_->reloadGraphics();
 	}
 }
 
@@ -278,7 +285,7 @@ void Editor::prepareDockspace() {
 
 			//if (ImGui::MenuItem("Build Irradiance Probes", "", false)) {
 			if (ImGui::MenuItem("Build Light Probes", "", false)) {
-				cubemap_sys->bake();
+				engine.getSystem<CubemapSystem>()->bake();
 			}
 
 			/*if (ImGui::MenuItem("Build Reflection Probes", "", false)) {

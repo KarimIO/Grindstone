@@ -318,6 +318,16 @@ TextureContainer *TextureManager::getTextureContainer(TextureHandler handle) {
 	return &textures_[handle];
 }
 
+void TextureManager::reloadAll() {
+	for (size_t i = 0; i < textures_.size(); ++i) {
+		reloadTexture(i);
+	}
+}
+
+void TextureManager::reloadTexture(TextureHandler handle) {
+	engine.getGraphicsWrapper()->DeleteTexture(textures_[handle].texture_);
+}
+
 Texture *TextureManager::getTexture(TextureHandler handle) {
 	return getTextureContainer(handle)->texture_;
 }
@@ -362,8 +372,14 @@ void TextureManager::writeCubemap(std::string path, unsigned char ***data, uint1
 	}
 }
 
-TextureManager::~TextureManager() {
+void TextureManager::cleanup() {
 	for (auto &texture : textures_) {
 		removeTexture(&texture);
 	}
+
+	texture_map_.clear();
+}
+
+TextureManager::~TextureManager() {
+	cleanup();
 }

@@ -22,6 +22,9 @@ public:
 	TextureHandler loadCubemap(std::string path, TextureOptions options = TextureOptions());
 	//void loadPreloaded();
 
+	void reloadAll();
+	void reloadTexture(TextureHandler handle);
+
 	Texture *getTexture(TextureHandler handle);
 	TextureContainer *getTextureContainer(TextureHandler handle);
 
@@ -30,6 +33,7 @@ public:
 
 	void writeCubemap(std::string path, unsigned char ***data, uint16_t res);
 
+	void cleanup();
 	~TextureManager();
 private:
 	std::map<std::string, TextureHandler> texture_map_;

@@ -127,10 +127,21 @@ GLGraphicsWrapper::~GLGraphicsWrapper() {
 	glfwTerminate();
 #elif defined(_WIN32)
 	ReleaseDC(window_handle, hDC);
+	closing_state_ = WindowClosingState::Closing;
+	DestroyWindow(window_handle);
+	UnregisterClassA("GameWindow", GetModuleHandle(NULL));
 	wglDeleteContext(hRC);
 #else
 	CleanX11();
 #endif
+}
+
+void GLGraphicsWrapper::DeleteRenderTarget(RenderTarget *ptr) {
+	delete (GLRenderTarget *)ptr;
+}
+
+void GLGraphicsWrapper::DeleteDepthTarget(DepthTarget *ptr) {
+	delete (GLDepthTarget *)ptr;
 }
 
 void GLGraphicsWrapper::DeleteFramebuffer(Framebuffer *ptr) {
@@ -163,6 +174,14 @@ void GLGraphicsWrapper::DeleteRenderPass(RenderPass *ptr) {
 
 void GLGraphicsWrapper::DeleteTexture(Texture *ptr) {
 	delete (GLTexture *)ptr;
+}
+
+void GLGraphicsWrapper::DeleteTextureBinding(TextureBinding *ptr) {
+	delete (GLTextureBinding *)ptr;
+}
+
+void GLGraphicsWrapper::DeleteTextureBindingLayout(TextureBindingLayout *ptr) {
+	delete (GLTextureBindingLayout *)ptr;
 }
 
 TextureBinding * GLGraphicsWrapper::CreateTextureBinding(TextureBindingCreateInfo createInfo) {

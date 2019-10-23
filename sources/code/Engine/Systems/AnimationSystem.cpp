@@ -156,32 +156,6 @@ ComponentHandle AnimationSubSystem::addComponent(GameObjectHandle object_handle)
 AnimationSubSystem::~AnimationSubSystem() {
 }
 
-ComponentHandle AnimationSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
-	ComponentHandle component_handle = (ComponentHandle)components_.size();
-	components_.emplace_back(object_handle, component_handle);
-
-	setComponent(component_handle, params);
-
-	return component_handle;
-}
-
-void AnimationSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
-	auto &component = components_[component_handle];
-	auto object_handle = component.game_object_handle_;
-
-	std::string animation_path, skeleton_path;
-
-	if (params.HasMember("animation")) {
-		animation_path = params["animation"].GetString();
-	}
-
-	if (params.HasMember("skeleton")) {
-		skeleton_path = params["skeleton"].GetString();
-	}
-
-	components_.emplace_back(object_handle, component_handle, animation_path, skeleton_path);
-}
-
 void AnimationSubSystem::removeComponent(ComponentHandle id) {
 	components_.erase(components_.begin() + id);
 }
@@ -198,10 +172,14 @@ size_t AnimationSubSystem::getNumComponents() {
 	return components_.size();
 }
 
-void AnimationSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
-}
-
 void AnimationSystem::update(double dt) {
 }
 
 AnimationSystem::AnimationSystem() : System(COMPONENT_CAMERA) {}
+
+/*if (params.HasMember("animation")) {
+		animation_path = params["animation"].GetString();
+	}
+
+	if (params.HasMember("skeleton")) {
+		skeleton_path = params["skeleton"].GetString();*/

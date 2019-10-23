@@ -22,6 +22,9 @@ public:
 	void AddPostProcess(BasePostProcess *);
 	void Process();
 	void setSpace(Space *space);
+	void resizeBuffers(unsigned int w, unsigned h);
+	void reloadGraphics(unsigned int w, unsigned h);
+	void destroyGraphics();
 	Space *getSpace();
 	~PostPipeline();
 private:

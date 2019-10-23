@@ -18,6 +18,7 @@ public:
 	void setPath(std::string path);
 	Editor(ImguiManager *manager);
     void update();
+	void reload(ImguiManager *manager);
 
 	struct Viewport {
 		Camera *camera_;
@@ -46,13 +47,13 @@ public:
 		void setView(View v);
 	};
 	std::vector<Viewport> viewports_;
+
+	ImguiManager *manager_;
 private:
 
 	double next_refresh_asset_directory_time_;
 
 	std::string path_;
-
-    ImguiManager *manager_;
 
 	GameObjectHandle selected_object_handle_;
 

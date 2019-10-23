@@ -76,6 +76,7 @@ struct VertexWeights {
 };
 
 struct ModelStatic {
+	bool loaded_ = false;
 	ModelReference handle_;
 	std::vector<ComponentHandle> references_;
 	std::vector<MeshStatic> meshes;
@@ -95,12 +96,15 @@ struct ModelStatic {
 class ModelManager {
 public:
 	ModelManager(UniformBufferBinding *ubb);
+	void prepareGraphics();
 	ModelReference preloadModel(ComponentHandle, std::string);
 	ModelReference loadModel(ComponentHandle, std::string);
 	void loadPreloaded();
 	ModelStatic &getModel(ModelReference);
 	UniformBuffer *getModelUbo();
 	void removeModelInstance(ModelReference, ComponentHandle);
+	void destroyGraphics();
+	void reloadGraphics();
 private:
 	std::map<std::string, ModelReference> models_map_;
 	std::vector<ModelStatic> models_;
@@ -111,6 +115,8 @@ private:
 	std::vector<UniformBufferBinding *> ubbs_;
 
 	MaterialReference empty_material;
+
+	void destroyModel(ModelReference ref);
 
 	bool loadModel(ModelStatic &model);
 };

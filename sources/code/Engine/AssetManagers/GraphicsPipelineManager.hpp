@@ -119,6 +119,7 @@ public:
 	void generateProgram(GeometryInfo geometry_info, PipelineContainer &container);
 	void resetDraws();
 	void cleanup();
+	void destroyPipelineContainerGraphics(PipelineContainer &p);
 	~GraphicsPipelineManager();
 private:
 	std::vector<RenderPassContainer> render_passes_;

@@ -31,37 +31,31 @@ struct CubemapComponent : public Component {
 	RenderTarget *render_target_;
 	float near_;
 	float far_;
-	enum CaptureMethod {
+	enum CaptureMethod : int {
 		CAPTURE_REALTIME = 0,
 		CAPTURE_BAKE,
 		CAPTURE_CUSTOM
-	} capture_method_;
+	};
+	int capture_method_;
 	std::string path_;
+
+	REFLECT()
 };
 
 class CubemapSystem : public System {
 public:
 	CubemapSystem();
 	void update(double dt);
-};
 
-class CubemapSubSystem : public SubSystem {
-	friend CubemapSystem;
-public:
-	CubemapSubSystem(Space *space);
-	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
-	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
-	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value & params) override;
-	CubemapComponent &getComponent(ComponentHandle handle);
-	virtual Component *getBaseComponent(ComponentHandle component_handle) override;
-	size_t getNumComponents();
-	virtual void writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) override;
-	virtual void removeComponent(ComponentHandle handle);
-	CubemapComponent *getClosestCubemap(glm::vec3);
+	void loadGraphics();
+	void destroyGraphics();
 
 	void bake();
 
-	virtual ~CubemapSubSystem();
+	TextureBindingLayout *texture_binding_layout_;
+	Framebuffer *camera_framebuffer_;
+
+	REFLECT_SYSTEM()
 private:
 	void prepareSphere();
 	void prepareUniformBuffer();
@@ -73,10 +67,7 @@ private:
 
 	void loadCubemaps();
 
-	std::vector<CubemapComponent> components_;
 	TextureSubBinding cube_binding_;
-	TextureBindingLayout *texture_binding_layout_;
-	Camera *camera_;
 	glm::mat4 projection_;
 
 	GraphicsPipeline *irradiance_pipeline_;
@@ -92,8 +83,6 @@ private:
 	IndexBuffer *sphere_ibo_;
 	VertexBindingDescription sphere_vbd_;
 	VertexAttributeDescription sphere_vad_;
-
-	Framebuffer *camera_framebuffer_;
 	RenderTarget *final_buffer_;
 
 	unsigned int total_sphere_indices_;
@@ -104,6 +93,24 @@ private:
 		glm::mat4 matrix_;
 		float roughness_;
 	} ubo_;
+};
+
+class CubemapSubSystem : public SubSystem {
+	friend CubemapSystem;
+public:
+	CubemapSubSystem(Space *space);
+	virtual void initialize();
+	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
+	CubemapComponent &getComponent(ComponentHandle handle);
+	virtual Component *getBaseComponent(ComponentHandle component_handle) override;
+	size_t getNumComponents();
+	virtual void removeComponent(ComponentHandle handle);
+	CubemapComponent *getClosestCubemap(glm::vec3);
+	Camera *camera_;
+
+	virtual ~CubemapSubSystem();
+private:
+	std::vector<CubemapComponent> components_;
 };
 
 #endif

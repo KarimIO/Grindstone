@@ -52,6 +52,7 @@ private:
     std::vector<SoundBuffer> buffers_;
     std::vector<CAudioSource> sources_;
     std::vector<unsigned int> autoplay_sources_;
+	const static ComponentType static_system_type_ = COMPONENT_RIGID_BODY;
 };
 
 #endif

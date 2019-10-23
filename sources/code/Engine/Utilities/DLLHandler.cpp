@@ -36,11 +36,15 @@ void *DLLHandler::getFunction(std::string name) {
 	return fn;
 }
 
+void DLLHandler::close() {
+#if defined(_WIN32)
+	FreeLibrary(handle_);
+#elif defined(__linux__)
+	if (handle_)
+		dlclose(handle_);
+#endif
+}
+
 DLLHandler::~DLLHandler() {
-	#if defined(_WIN32)
-		FreeLibrary(handle_);
-	#elif defined(__linux__)
-		if (handle_)
-			dlclose(handle_);
-	#endif
+	close();
 }

@@ -30,12 +30,9 @@ class TransformSubSystem : public SubSystem {
 public:
 	TransformSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
-	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
-	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value &params) override;
 	TransformComponent &getComponent(ComponentHandle handle);
 	virtual Component *getBaseComponent(ComponentHandle component_handle) override;
 	size_t getNumComponents();
-	virtual void writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) override;
 	virtual void removeComponent(ComponentHandle handle);
 
 	glm::vec3 getForward(ComponentHandle handle);

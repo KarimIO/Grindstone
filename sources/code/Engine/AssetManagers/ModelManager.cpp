@@ -15,7 +15,7 @@
 #include <fstream>
 
 ModelStatic::ModelStatic() {}
-ModelStatic::ModelStatic(ModelReference handle, std::string path, ComponentHandle ref) : handle_(handle), path_(path) {
+ModelStatic::ModelStatic(ModelReference handle, std::string path, ComponentHandle ref) : handle_(handle), path_(path), index_buffer(nullptr), vertex_buffer(nullptr), vertex_array_object(nullptr), shadow_vertex_array_object(nullptr), shadow_vertex_buffer(nullptr) {
 	references_.push_back(ref);
 };
 
@@ -87,6 +87,10 @@ ModelManager::ModelManager(UniformBufferBinding *ubb) {
 	geometry_info_.vads[3].offset = offsetof(Vertex, texCoord);
 	geometry_info_.vads[3].usage = ATTRIB_TEXCOORD0;
 
+	prepareGraphics();
+}
+
+void ModelManager::prepareGraphics() {
 	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 
 	UniformBufferBindingCreateInfo ubbci2;
@@ -102,7 +106,7 @@ ModelManager::ModelManager(UniformBufferBinding *ubb) {
 	ubci2.binding = model_ubb_;
 	model_ubo_ = graphics_wrapper->CreateUniformBuffer(ubci2);
 
-	ubbs_ = { ubb, model_ubb_ };
+	ubbs_ = { engine.getUniformBufferBinding(), model_ubb_ };
 
 	geometry_info_.ubb_count = (unsigned int)ubbs_.size();
 	geometry_info_.ubbs = ubbs_.data();
@@ -183,6 +187,48 @@ void ModelManager::removeModelInstance(ModelReference model_ref, ComponentHandle
 	}
 
 	// UPDATE MODEL REFERENCE LIST
+}
+
+void ModelManager::destroyGraphics() {
+	GraphicsWrapper *gw = engine.getGraphicsWrapper();
+
+
+	gw->DeleteUniformBuffer(model_ubo_);
+	gw->DeleteUniformBufferBinding(model_ubb_);
+
+	ubbs_.clear();
+	for (ModelReference i = 0; i < (ModelReference)models_.size(); ++i) {
+		destroyModel(i);
+	}
+}
+
+void ModelManager::reloadGraphics() {
+	prepareGraphics();
+
+	for (ModelReference i = 0; i < (ModelReference)models_.size(); ++i) {
+		loadModel(models_[i]);
+	}
+}
+
+void ModelManager::destroyModel(ModelReference ref) {
+	GraphicsWrapper *gw = engine.getGraphicsWrapper();
+
+	auto &m = models_[ref];
+	// delete m.bounding;
+	// m.command_buffer;
+	if (m.loaded_) {
+		if (m.vertex_buffer)
+			gw->DeleteVertexBuffer(m.vertex_buffer);
+		if (m.vertex_array_object)
+			gw->DeleteVertexArrayObject(m.vertex_array_object);
+		if (m.shadow_vertex_buffer)
+			gw->DeleteVertexBuffer(m.shadow_vertex_buffer);
+		if (m.index_buffer)
+			gw->DeleteIndexBuffer(m.index_buffer);
+		if (m.shadow_vertex_array_object)
+			gw->DeleteVertexArrayObject(m.shadow_vertex_array_object);
+		m.meshes.clear();
+	}
 }
 
 bool ModelManager::loadModel(ModelStatic &model) {
@@ -461,6 +507,8 @@ bool ModelManager::loadModel(ModelStatic &model) {
 		auto mat = engine.getMaterialManager()->getMaterial(current_mesh.material_reference);
 		mat->m_meshes.push_back(reinterpret_cast<MeshStatic *>(&current_mesh));
 	}*/
+
+	model.loaded_ = true;
 
 	return true;
 }

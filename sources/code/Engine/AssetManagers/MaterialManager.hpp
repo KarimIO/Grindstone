@@ -44,11 +44,14 @@ public:
 	void removeMeshFromMaterial(MaterialReference, Renderable*);
 
 	void loadPreloaded();
+
+	void reloadAll();
+	void reloadMaterial(MaterialReference handle);
 	
 	void cleanup();
 	~MaterialManager();
-private:
 	std::map<std::string, MaterialReference> material_map_;
+private:
 };
 
 #endif

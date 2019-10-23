@@ -17,28 +17,12 @@ ComponentHandle ControllerSubSystem::addComponent(GameObjectHandle object_handle
 	return component_handle;
 }
 
-ComponentHandle ControllerSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
-	ComponentHandle component_handle = (ComponentHandle)components_.size();
-	components_.emplace_back(object_handle, component_handle);
-
-	setComponent(component_handle, params);
-
-	return component_handle;
-}
-
-void ControllerSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
-	auto &component = components_[component_handle];
-}
-
 ControllerComponent & ControllerSubSystem::getComponent(ComponentHandle handle) {
 	return components_[handle];
 }
 
 Component * ControllerSubSystem::getBaseComponent(ComponentHandle component_handle) {
 	return &components_[component_handle];
-}
-
-void ControllerSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
 }
 
 void ControllerSubSystem::removeComponent(ComponentHandle id) {
@@ -204,6 +188,6 @@ void ControllerComponent::RunStop(double scale) {
 	speed_modifier_ = ghost_mode_ ? 6.0f : 4.0f;
 }
 
-REFLECT_STRUCT_BEGIN(ControllerComponent, ControllerSystem)
+REFLECT_STRUCT_BEGIN(ControllerComponent, ControllerSystem, COMPONENT_CONTROLLER)
 REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()

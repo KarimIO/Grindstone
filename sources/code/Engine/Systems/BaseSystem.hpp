@@ -78,15 +78,9 @@ public:
 	SubSystem(ComponentType type, Space *space);
 	virtual size_t getNumComponents() = 0;
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle) = 0;
-	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) = 0;
-	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value &params) = 0;
 	virtual Component *getBaseComponent(ComponentHandle component_handle) = 0;
 	virtual SubSystem *copy() { return nullptr; };
 	virtual void initialize() {};
-
-#ifdef INCLUDE_EDITOR
-	virtual void writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> &w) = 0;
-#endif
 
 	virtual void removeComponent(ComponentHandle id) = 0;
 

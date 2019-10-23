@@ -27,43 +27,6 @@ ComponentHandle TransformSubSystem::addComponent(GameObjectHandle object_handle)
 	return component_handle;
 }
 
-ComponentHandle TransformSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
-	ComponentHandle component_handle = (ComponentHandle)components_.size();
-	components_.emplace_back(object_handle, component_handle);
-	
-	setComponent(component_handle, params);
-
-	return component_handle;
-}
-
-void TransformSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
-	auto &component = components_[component_handle];
-	
-	if (params.HasMember("position")) {
-		auto pos = params["position"].GetArray();
-		auto x = pos[0].GetFloat();
-		auto y = pos[1].GetFloat();
-		auto z = pos[2].GetFloat();
-		component.position_ = glm::vec3(x, y, z);
-	}
-
-	if (params.HasMember("scale")) {
-		auto pos = params["scale"].GetArray();
-		auto x = pos[0].GetFloat();
-		auto y = pos[1].GetFloat();
-		auto z = pos[2].GetFloat();
-		component.scale_ = glm::vec3(x, y, z);
-	}
-
-	if (params.HasMember("angles")) {
-		auto pos = params["angles"].GetArray();
-		auto x = glm::radians(pos[0].GetFloat());
-		auto y = glm::radians(pos[1].GetFloat());
-		auto z = glm::radians(pos[2].GetFloat());
-		component.angles_ = glm::vec3(x, y, z);
-	}
-}
-
 void TransformSubSystem::removeComponent(ComponentHandle id) {
 	components_.erase(components_.begin() + id);
 }
@@ -148,35 +111,11 @@ size_t TransformSubSystem::getNumComponents() {
 	return components_.size();
 }
 
-void TransformSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
-	
-	w.Key("position");
-	w.StartArray();
-	w.Double(getComponent(handle).position_.x);
-	w.Double(getComponent(handle).position_.y);
-	w.Double(getComponent(handle).position_.z);
-	w.EndArray();
-
-	w.Key("scale");
-	w.StartArray();
-	w.Double(getComponent(handle).scale_.x);
-	w.Double(getComponent(handle).scale_.y);
-	w.Double(getComponent(handle).scale_.z);
-	w.EndArray();
-
-	w.Key("angles");
-	w.StartArray();
-	w.Double(getComponent(handle).angles_.x);
-	w.Double(getComponent(handle).angles_.y);
-	w.Double(getComponent(handle).angles_.z);
-	w.EndArray();
-}
-
 TransformSubSystem::~TransformSubSystem() {
 
 }
 
-REFLECT_STRUCT_BEGIN(TransformComponent, TransformSystem)
+REFLECT_STRUCT_BEGIN(TransformComponent, TransformSystem, COMPONENT_TRANSFORM)
 	REFLECT_STRUCT_MEMBER(position_)
 	REFLECT_STRUCT_MEMBER(angles_)
 	REFLECT_SUBCATS_START()

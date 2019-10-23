@@ -86,6 +86,8 @@ public:
 	static Engine &getInstance();
 
 	Scene *addScene(std::string path);
+	template<class T>
+	T * getSystem();
 	System *addSystem(System *system);
 	System *getSystem(ComponentHandle type);
 	std::vector<Scene *> &getScenes();
@@ -109,6 +111,12 @@ public:
 	double getUpdateTimeDelta();
 
 	void shutdownControl(double);
+
+	void reloadAudioDLL();
+
+	void reloadGraphicsDLL();
+
+	void refreshAll(double);
 
 	void run();
 

@@ -126,15 +126,7 @@ ComponentHandle RenderTerrainSubSystem::addComponent(GameObjectHandle object_han
 RenderTerrainSubSystem::~RenderTerrainSubSystem() {
 }
 
-ComponentHandle RenderTerrainSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
-	ComponentHandle component_handle = (ComponentHandle)components_.size();
-	components_.emplace_back(object_handle, component_handle);
-
-	setComponent(component_handle, params);
-
-	return component_handle;
-}
-
+#if 0
 void RenderTerrainSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
 	auto &component = components_[component_handle];
 
@@ -182,6 +174,7 @@ void RenderTerrainSubSystem::setComponent(ComponentHandle component_handle, rapi
 
 	component.generateMesh();
 }
+#endif
 
 void RenderTerrainSubSystem::removeComponent(ComponentHandle id) {
 	components_.erase(components_.begin() + id);
@@ -197,9 +190,6 @@ Component * RenderTerrainSubSystem::getBaseComponent(ComponentHandle component_h
 
 size_t RenderTerrainSubSystem::getNumComponents() {
 	return components_.size();
-}
-
-void RenderTerrainSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
 }
 
 void RenderTerrainSystem::update(double dt) {

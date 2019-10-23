@@ -88,6 +88,15 @@ public:
 	uint32_t height;
 	
 public:
+	enum class WindowClosingState {
+		NotClosing = 0,
+		Closing,
+		Closed
+	} closing_state_;
+
+	virtual void Close();
+	virtual void PrepareShutdown();
+
 	// Common windowing functions
 	virtual void HandleEvents();
 	virtual void SetCursorShown(bool);
@@ -107,6 +116,8 @@ public:
 	virtual void CreateDefaultStructures() = 0;
 
 	virtual void Clear(int mask) = 0;
+	virtual void DeleteRenderTarget(RenderTarget * ptr) = 0;
+	virtual void DeleteDepthTarget(DepthTarget * ptr) = 0;
 	virtual void DeleteFramebuffer(Framebuffer *ptr) = 0;
 	virtual void DeleteVertexBuffer(VertexBuffer *ptr) = 0;
 	virtual void DeleteIndexBuffer(IndexBuffer *ptr) = 0;
@@ -115,6 +126,8 @@ public:
 	virtual void DeleteGraphicsPipeline(GraphicsPipeline *ptr) = 0;
 	virtual void DeleteRenderPass(RenderPass *ptr) = 0;
 	virtual void DeleteTexture(Texture *ptr) = 0;
+	virtual void DeleteTextureBinding(TextureBinding *ptr) = 0;
+	virtual void DeleteTextureBindingLayout(TextureBindingLayout *ptr) = 0;
 	virtual void DeleteCommandBuffer(CommandBuffer *ptr) = 0;
 	virtual void DeleteVertexArrayObject(VertexArrayObject *ptr) = 0;
 

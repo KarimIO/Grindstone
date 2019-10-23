@@ -9,12 +9,18 @@ struct RenderTargetContainer;
 
 class PostProcessAutoExposure : public BasePostProcess {
 public:
-	PostProcessAutoExposure(PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target);
+	PostProcessAutoExposure(unsigned int w, unsigned h, PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target);
+	virtual ~PostProcessAutoExposure() override;
     virtual void Process();
+	virtual void resizeBuffers(unsigned int w, unsigned h) override;
+	virtual void reloadGraphics(unsigned int w, unsigned h) override;
+	virtual void destroyGraphics() override;
 	float GetExposure();
 private:
     RenderTargetContainer *source_;
     RenderTargetContainer *target_;
+	TextureSubBinding *tonemap_sub_binding_;
+	TextureBindingLayout *tonemap_tbl_;
 
     GraphicsPipeline *gpipeline_;
 

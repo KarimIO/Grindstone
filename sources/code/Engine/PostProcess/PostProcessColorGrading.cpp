@@ -8,7 +8,38 @@
 #include "Framebuffer.hpp"
 #include "GraphicsPipeline.hpp"
 
-PostProcessColorGrading::PostProcessColorGrading(PostPipeline *pipeline, RenderTargetContainer *target, Framebuffer **target_fbo) : BasePostProcess(pipeline), target_(target), target_fbo_(target_fbo) {
+PostProcessColorGrading::PostProcessColorGrading(unsigned int w, unsigned h, PostPipeline *pipeline, RenderTargetContainer *target, Framebuffer **target_fbo) : BasePostProcess(pipeline), target_(target), target_fbo_(target_fbo) {
+	reloadGraphics(w, h);
+}
+
+void PostProcessColorGrading::Process() {
+	double dt = engine.getUpdateTimeDelta();
+
+	gpipeline_->Bind();
+	if (target_fbo_ && target_fbo_[0]) {
+		target_fbo_[0]->Bind(true);
+		// target_fbo_[0]->Clear(CLEAR_BOTH);
+	}
+	else {
+		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
+		engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
+	}
+	target_->framebuffer->BindRead();
+	target_->framebuffer->BindTextures(0);
+	
+	engine.getGraphicsWrapper()->BindTextureBinding(texture_binding_);
+
+	engine.getGraphicsWrapper()->DrawImmediateVertices(0, 6);
+}
+
+PostProcessColorGrading::~PostProcessColorGrading() {
+}
+
+void PostProcessColorGrading::resizeBuffers(unsigned int w, unsigned h)
+{
+}
+
+void PostProcessColorGrading::reloadGraphics(unsigned int w, unsigned h) {
 	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
 
@@ -70,13 +101,14 @@ PostProcessColorGrading::PostProcessColorGrading(PostPipeline *pipeline, RenderT
 	tblci.bindings = grading_sub_binding_;
 	tblci.bindingCount = 2;
 	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	TextureBindingLayout *grading_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
+	grading_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
 
 	gradingGPCI.textureBindings = &grading_tbl_;
 	gradingGPCI.textureBindingCount = 1;
 	gradingGPCI.uniformBufferBindings = nullptr;
 	gradingGPCI.uniformBufferBindingCount = 0;
 	gpipeline_ = graphics_wrapper->CreateGraphicsPipeline(gradingGPCI);
+	delete grading_sub_binding_;
 
 	// LUT
 	TextureOptions options;
@@ -105,32 +137,12 @@ PostProcessColorGrading::PostProcessColorGrading(PostPipeline *pipeline, RenderT
 		ci.textureCount = 1;
 		texture_binding_ = graphics_wrapper->CreateTextureBinding(ci);
 	}
-
 }
 
-void PostProcessColorGrading::Process() {
-	double dt = engine.getUpdateTimeDelta();
+void PostProcessColorGrading::destroyGraphics() {
+	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 
-	gpipeline_->Bind();
-	if (target_fbo_ && target_fbo_[0]) {
-		target_fbo_[0]->Bind(true);
-		target_fbo_[0]->Clear(CLEAR_BOTH);
-	}
-	else {
-		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
-		engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
-	}
-	target_->framebuffer->BindRead();
-	target_->framebuffer->BindTextures(0);
-	
-	engine.getGraphicsWrapper()->BindTextureBinding(texture_binding_);
-
-	engine.getGraphicsWrapper()->DrawImmediateVertices(0, 6);
-}
-
-PostProcessColorGrading::~PostProcessColorGrading() {
-	/*shader->Cleanup();
-	//fbo->Cleanup();
-	pfnDeleteGraphicsPointer(shader);
-	pfnDeleteGraphicsPointer(fbo);*/
+	graphics_wrapper->DeleteTextureBinding(texture_binding_);
+	graphics_wrapper->DeleteTextureBindingLayout(grading_tbl_);
+	graphics_wrapper->DeleteGraphicsPipeline(gpipeline_);
 }

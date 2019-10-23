@@ -106,36 +106,6 @@ void RenderSpriteSubSystem::handleDebugSprite(bool render_ortho, glm::vec3 color
 	renderSprite(render_ortho, 1.0f, final_color, tex_binding, model);
 }
 
-ComponentHandle RenderSpriteSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
-	ComponentHandle component_handle = (ComponentHandle)components_.size();
-	components_.emplace_back(object_handle, component_handle);
-
-	setComponent(component_handle, params);
-
-	return component_handle;
-}
-
-void RenderSpriteSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
-	auto &component = components_[component_handle];
-
-	if (params.HasMember("path")) {
-		auto path = params["path"].GetString();
-		component.path_ = path;
-		component.texture_handle_ = engine.getTextureManager()->loadTexture(path);
-		Texture *tex = engine.getTextureManager()->getTexture(component.texture_handle_);
-		
-		SingleTextureBind stb;
-		stb.address = 0;
-		stb.texture = tex;
-
-		TextureBindingCreateInfo ci;
-		ci.layout = ((RenderSpriteSystem *)engine.getSystem(COMPONENT_RENDER_SPRITE))->tbl_;
-		ci.textures = &stb;
-		ci.textureCount = 1;
-		component.texture_binding_ = engine.getGraphicsWrapper()->CreateTextureBinding(ci);
-	}
-}
-
 void RenderSpriteSubSystem::removeComponent(ComponentHandle id) {
 	components_.erase(components_.begin() + id);
 }
@@ -152,12 +122,7 @@ size_t RenderSpriteSubSystem::getNumComponents() {
 	return components_.size();
 }
 
-void RenderSpriteSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
-	auto &c = getComponent(handle);
 
-	w.Key("path");
-	w.String(c.path_.c_str());
-}
 
 void RenderSpriteSystem::update(double dt) {
 }
@@ -260,3 +225,19 @@ void RenderSpriteSystem::loadDebugSprites() {
 	ci.textureCount = 1;
 	debug_light_pos_sprite_ = engine.getGraphicsWrapper()->CreateTextureBinding(ci);
 }
+
+
+/*auto path = params["path"].GetString();
+component.path_ = path;
+component.texture_handle_ = engine.getTextureManager()->loadTexture(path);
+Texture *tex = engine.getTextureManager()->getTexture(component.texture_handle_);
+
+SingleTextureBind stb;
+stb.address = 0;
+stb.texture = tex;
+
+TextureBindingCreateInfo ci;
+ci.layout = ((RenderSpriteSystem *)engine.getSystem(COMPONENT_RENDER_SPRITE))->tbl_;
+ci.textures = &stb;
+ci.textureCount = 1;
+component.texture_binding_ = engine.getGraphicsWrapper()->CreateTextureBinding(ci);*/

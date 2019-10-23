@@ -17,6 +17,7 @@ class DLLHandler {
 protected:
 	void initialize(std::string load);
 	void *getFunction(std::string name);
+	void close();
 	~DLLHandler();
 private:
 	DLLHandle handle_;

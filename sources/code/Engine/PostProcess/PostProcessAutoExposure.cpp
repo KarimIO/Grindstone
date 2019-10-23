@@ -3,28 +3,53 @@
 #include "Core/Utilities.hpp"
 #include "PostProcessAutoExposure.hpp"
 
-PostProcessAutoExposure::PostProcessAutoExposure(PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target) : BasePostProcess(pipeline), source_(source), target_(target) {
-    GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
-	auto settings = engine.getSettings();
+PostProcessAutoExposure::PostProcessAutoExposure(unsigned int w, unsigned h, PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target) : BasePostProcess(pipeline), source_(source), target_(target), lum_buffer_(nullptr), lum_framebuffer_(nullptr), gpipeline_(nullptr){
+	auto gw = engine.getGraphicsWrapper();
+	tonemap_sub_binding_ = new TextureSubBinding("lighting", 4);
+
+	reloadGraphics(w, h);
+}
+
+PostProcessAutoExposure::~PostProcessAutoExposure() {
+	destroyGraphics();
+	delete tonemap_sub_binding_;
+}
+
+void PostProcessAutoExposure::resizeBuffers(unsigned int w, unsigned h) {
+	auto gw = engine.getGraphicsWrapper();
+	auto gl = engine.getSettings()->graphics_language_;
+
+	if (lum_buffer_) {
+		gw->DeleteRenderTarget(lum_buffer_);
+		lum_buffer_ = nullptr;
+	}
+	if (lum_framebuffer_) {
+		gw->DeleteFramebuffer(lum_framebuffer_);
+		lum_framebuffer_ = nullptr;
+	}
+	if (gpipeline_) {
+		gw->DeleteGraphicsPipeline(gpipeline_);
+		gpipeline_ = nullptr;
+	}
 
 	RenderTargetCreateInfo lum_buffer_ci(FORMAT_COLOR_R8, 1024, 1024);
-	lum_buffer_ = graphics_wrapper->CreateRenderTarget(&lum_buffer_ci, 1);
+	lum_buffer_ = gw->CreateRenderTarget(&lum_buffer_ci, 1);
 
 	FramebufferCreateInfo lum_framebuffer_ci;
 	lum_framebuffer_ci.render_target_lists = &lum_buffer_;
 	lum_framebuffer_ci.num_render_target_lists = 1;
 	lum_framebuffer_ci.depth_target = nullptr;
 	lum_framebuffer_ci.render_pass = nullptr;
-	lum_framebuffer_ = graphics_wrapper->CreateFramebuffer(lum_framebuffer_ci);
-	
+	lum_framebuffer_ = gw->CreateFramebuffer(lum_framebuffer_ci);
+
 	ShaderStageCreateInfo stages[2];
 
 	// Tonemap Graphics Pipeline
-	if (settings->graphics_language_ == GRAPHICS_OPENGL) {
+	if (gl == GRAPHICS_OPENGL) {
 		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		stages[1].fileName = "../assets/shaders/post_processing/luminance.glsl";
 	}
-	else if (settings->graphics_language_ == GRAPHICS_DIRECTX) {
+	else if (gl == GRAPHICS_DIRECTX) {
 		stages[0].fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
 		stages[1].fileName = "../assets/shaders/post_processing/luminance.fxc";
 	}
@@ -66,23 +91,41 @@ PostProcessAutoExposure::PostProcessAutoExposure(PostPipeline *pipeline, RenderT
 	luminanceGPCI.shaderStageCreateInfos = stages;
 	luminanceGPCI.shaderStageCreateInfoCount = 2;
 
+	luminanceGPCI.textureBindings = &tonemap_tbl_;
+	luminanceGPCI.textureBindingCount = 1;
+	luminanceGPCI.uniformBufferBindings = nullptr;
+	luminanceGPCI.uniformBufferBindingCount = 0;
+	gpipeline_ = gw->CreateGraphicsPipeline(luminanceGPCI);
+}
 
-	TextureSubBinding *tonemap_sub_binding_ = new TextureSubBinding("lighting", 4);
-
-
+void PostProcessAutoExposure::reloadGraphics(unsigned int w, unsigned h) {
 	TextureBindingLayoutCreateInfo tblci;
 	tblci.bindingLocation = 4;
 	tblci.bindings = tonemap_sub_binding_;
 	tblci.bindingCount = 1;
 	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	TextureBindingLayout *tonemap_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
+	tonemap_tbl_ = engine.getGraphicsWrapper()->CreateTextureBindingLayout(tblci);
+	resizeBuffers(w, h);
+}
 
-
-	luminanceGPCI.textureBindings = &tonemap_tbl_;
-	luminanceGPCI.textureBindingCount = 1;
-	luminanceGPCI.uniformBufferBindings = nullptr;
-	luminanceGPCI.uniformBufferBindingCount = 0;
-	gpipeline_ = graphics_wrapper->CreateGraphicsPipeline(luminanceGPCI);
+void PostProcessAutoExposure::destroyGraphics() {
+	auto gw = engine.getGraphicsWrapper();
+	if (lum_buffer_) {
+		gw->DeleteRenderTarget(lum_buffer_);
+		lum_buffer_ = nullptr;
+	}
+	if (lum_framebuffer_) {
+		gw->DeleteFramebuffer(lum_framebuffer_);
+		lum_framebuffer_ = nullptr;
+	}
+	if (gpipeline_) {
+		gw->DeleteGraphicsPipeline(gpipeline_);
+		gpipeline_ = nullptr;
+	}
+	if (tonemap_tbl_) {
+		gw->DeleteTextureBindingLayout(tonemap_tbl_);
+		tonemap_tbl_ = nullptr;
+	}
 }
 
 void PostProcessAutoExposure::Process() {

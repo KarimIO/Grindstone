@@ -93,19 +93,31 @@ LRESULT CALLBACK GraphicsWrapper::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LP
 		input->SetKey(TranslateKey(int(wParam)), false);
 		break;
 	case WM_CLOSE:
-		input->Quit();
+		if (MessageBox(NULL, "Are you sure you want to cancel?", "Error!",
+			MB_ICONEXCLAMATION | MB_YESNO)) {
+			input->Quit();
+		}
 		break;
 	case WM_CREATE:
 		setFocus();
 		input->SetFocused(true);
 		break;
 	case WM_DESTROY:
-		input->ForceQuit();
+		if (closing_state_ == WindowClosingState::Closing) {
+			closing_state_ = WindowClosingState::Closed;
+		}
+		else {
+			input->ForceQuit();
+		}
 		break;
 	default:
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
 	return 0;
+}
+
+void GraphicsWrapper::Close() {
+	PostMessage(window_handle, WM_CLOSE, 0, 0);
 }
 
 void GraphicsWrapper::SetCursorShown(bool shown) {
@@ -238,6 +250,11 @@ bool GraphicsWrapper::InitializeWin32Window() {
 	UpdateWindow(window_handle);
 
 	return true;
+}
+
+void GraphicsWrapper::PrepareShutdown() {
+	closing_state_ = WindowClosingState::Closing;
+	DestroyWindow(window_handle);
 }
 
 void GraphicsWrapper::setFocus() {

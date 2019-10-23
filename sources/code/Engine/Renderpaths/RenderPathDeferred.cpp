@@ -25,20 +25,23 @@ glm::mat4 bias_matrix(
 	0.5, 0.5, 0.5, 1.0
 );
 
+void RenderPathDeferred::createShadowTextureBindingLayout() {
+	TextureBindingLayoutCreateInfo tblci;
+	tblci.bindingLocation = 4;
+	tblci.bindings = &shadow_binding_;
+	tblci.bindingCount = (uint32_t)1;
+	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	shadow_tbl_ = engine.getGraphicsWrapper()->CreateTextureBindingLayout(tblci);
+}
+
 RenderPathDeferred::RenderPathDeferred(unsigned int w = engine.getSettings()->resolution_x_, unsigned int h = engine.getSettings()->resolution_y_) {
 	auto settings = engine.getSettings();
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
 	shadow_binding_ = TextureSubBinding("shadow_map", 4);
 
-	TextureBindingLayoutCreateInfo tblci;
-	tblci.bindingLocation = 4;
-	tblci.bindings = &shadow_binding_;
-	tblci.bindingCount = (uint32_t)1;
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	shadow_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
-
 	createFramebuffer(w, h);
+	createShadowTextureBindingLayout();
 	createPointLightShader();
 	createSpotLightShader();
 	createDirectionalLightShader();
@@ -125,15 +128,99 @@ RenderPathDeferred::RenderPathDeferred(unsigned int w = engine.getSettings()->re
 }
 
 void RenderPathDeferred::recreateFramebuffer(unsigned int w, unsigned int h) {
-	auto graphics_wrapper = engine.getGraphicsWrapper();
-
-	//graphics_wrapper->DeleteRenderTarget(render_targets_);
-		
-	//graphics_wrapper->DeleteDepthTarget(depth_target_);
-
-	graphics_wrapper->DeleteFramebuffer(gbuffer_);
-		
+	destroyFramebuffers();
 	createFramebuffer(w, h);
+}
+
+void RenderPathDeferred::destroyFramebuffers() {
+	auto gw = engine.getGraphicsWrapper();
+
+	if (render_targets_) {
+		gw->DeleteRenderTarget(render_targets_);
+		render_targets_ = nullptr;
+	}
+	if (depth_target_) {
+		gw->DeleteDepthTarget(depth_target_);
+		depth_target_ = nullptr;
+	}
+	if (gbuffer_) {
+		gw->DeleteFramebuffer(gbuffer_);
+		gbuffer_ = nullptr;
+	}
+}
+
+void RenderPathDeferred::destroyGraphics() {
+	auto gw = engine.getGraphicsWrapper();
+
+	if (debug_pipeline_) {
+		gw->DeleteGraphicsPipeline(debug_pipeline_);
+		debug_pipeline_ = nullptr;
+	}
+	if (point_light_pipeline_) {
+		gw->DeleteGraphicsPipeline(point_light_pipeline_);
+		point_light_pipeline_ = nullptr;
+	}
+	if (directional_light_pipeline_) {
+		gw->DeleteGraphicsPipeline(directional_light_pipeline_);
+		directional_light_pipeline_ = nullptr;
+	}
+	if (spot_light_pipeline_) {
+		gw->DeleteGraphicsPipeline(spot_light_pipeline_);
+		spot_light_pipeline_ = nullptr;
+	}
+
+	if (shadow_tbl_) {
+		gw->DeleteTextureBindingLayout(shadow_tbl_);
+		shadow_tbl_ = nullptr;
+	}
+
+	if (point_light_ubb_) {
+		gw->DeleteUniformBufferBinding(point_light_ubb_);
+		point_light_ubb_ = nullptr;
+	}
+
+	if (spot_light_ubb_) {
+		gw->DeleteUniformBufferBinding(spot_light_ubb_);
+		spot_light_ubb_ = nullptr;
+	}
+
+	if (directional_light_ubb_) {
+		gw->DeleteUniformBufferBinding(directional_light_ubb_);
+		directional_light_ubb_ = nullptr;
+	}
+
+	if (debug_ubb_) {
+		gw->DeleteUniformBufferBinding(debug_ubb_);
+		debug_ubb_ = nullptr;
+	}
+
+	if (point_light_ubo_handler_) {
+		gw->DeleteUniformBuffer(point_light_ubo_handler_);
+		point_light_ubo_handler_ = nullptr;
+	}
+	if (spot_light_ubo_handler_) {
+		gw->DeleteUniformBuffer(spot_light_ubo_handler_);
+		spot_light_ubo_handler_ = nullptr;
+	}
+
+	if (directional_light_ubo_handler_) {
+		gw->DeleteUniformBuffer(directional_light_ubo_handler_);
+		directional_light_ubo_handler_ = nullptr;
+	}
+
+	if (debug_ubo_handler_) {
+		gw->DeleteUniformBuffer(debug_ubo_handler_);
+		debug_ubo_handler_ = nullptr;
+	}
+	destroyFramebuffers();
+}
+
+void RenderPathDeferred::reloadGraphics() {
+	createShadowTextureBindingLayout();
+	createPointLightShader();
+	createSpotLightShader();
+	createDirectionalLightShader();
+	createDebugShader();
 }
 
 void RenderPathDeferred::setDebugMode(unsigned int d) {
@@ -508,6 +595,7 @@ void RenderPathDeferred::render(Framebuffer *fbo, DepthTarget *depthTarget, Spac
 		//CCamera *cam = &engine.cameraSystem.components[0];
 		//cam->PostProcessing();
 	
+#if 0
 		if (fbo) {
 			fbo->BindWrite(true);
 			//fbo->Clear(CLEAR_BOTH);
@@ -525,7 +613,8 @@ void RenderPathDeferred::render(Framebuffer *fbo, DepthTarget *depthTarget, Spac
 
 		pipeline->drawUnlitImmediate();
 		graphics_wrapper->SetImmediateBlending(BLEND_ADD_ALPHA);
-		fbo->BindTextures(0);
+		if (fbo)
+			fbo->BindTextures(0);
 		pipeline->drawForwardImmediate();
 		graphics_wrapper->EnableDepth(false);
 
@@ -537,6 +626,7 @@ void RenderPathDeferred::render(Framebuffer *fbo, DepthTarget *depthTarget, Spac
 		gbuffer_->BindTextures(0);
 
 		engine.deff_ubo_handler_->Bind();
+#endif
 	}
 }
 

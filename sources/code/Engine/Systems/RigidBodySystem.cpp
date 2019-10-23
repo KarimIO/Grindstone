@@ -80,15 +80,78 @@ void RigidBodySystem::update(double dt) {
 	}
 }
 
-ComponentHandle RigidBodySubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
-	ComponentHandle component_handle = (ComponentHandle)components_.size();
-	components_.emplace_back(object_handle, component_handle);
 
-	setComponent(component_handle, params);
 
-	return component_handle;
+void RigidBodyComponent::setMass(float mass) {
+	rigid_body_->setMassProps(mass, btVector3(0, 0, 0));
 }
 
+void RigidBodyComponent::setIntertia(float x, float y, float z) {
+	/*btVector3 fallInertia(x, y, z);
+	if (mass_ != 0.0f)
+		shape->calculateLocalInertia(mass, fallInertia);*/
+}
+
+void RigidBodyComponent::setFriction(float f) {
+	rigid_body_->setFriction(f);
+}
+
+void RigidBodyComponent::setRestitution(float r) {
+	rigid_body_->setRestitution(r);
+}
+
+void RigidBodyComponent::setDamping(float linear, float rotational) {
+	rigid_body_->setDamping(linear, rotational);
+}
+
+void RigidBodyComponent::applyForce(glm::vec3 pos, glm::vec3 force) {
+	rigid_body_->applyForce(btVector3(pos.x, pos.y, pos.z), btVector3(force.x, force.y, force.z));
+}
+
+void RigidBodyComponent::applyCentralForce(glm::vec3 force) {
+	rigid_body_->applyCentralForce(btVector3(force.x, force.y, force.z));
+}
+
+void RigidBodyComponent::applyImpulse(glm::vec3 pos, glm::vec3 force) {
+	rigid_body_->applyForce(btVector3(pos.x, pos.y, pos.z), btVector3(force.x, force.y, force.z));
+}
+
+void RigidBodyComponent::applyCentralImpulse(glm::vec3 force) {
+	rigid_body_->applyCentralForce(btVector3(force.x, force.y, force.z));
+}
+
+RigidBodyComponent & RigidBodySubSystem::getComponent(ComponentHandle handle) {
+	return components_[handle];
+}
+
+Component * RigidBodySubSystem::getBaseComponent(ComponentHandle component_handle) {
+	return &components_[component_handle];
+}
+
+size_t RigidBodySubSystem::getNumComponents() {
+	return components_.size();
+}
+
+void RigidBodySubSystem::removeComponent(ComponentHandle handle) {
+	components_.erase(components_.begin() + handle);
+}
+
+RigidBodySubSystem::~RigidBodySubSystem() {
+	for (int i = 0; i < components_.size(); i++) {
+		dynamics_world_->removeRigidBody(components_[i].rigid_body_);
+		delete components_[i].rigid_body_;
+	}
+
+	components_.clear();
+	delete dynamics_world_;
+	delete solver_;
+	delete collision_configuration_;
+	delete dispatcher_;
+	delete broadphase_;
+}
+
+
+/*
 void RigidBodySubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
 	auto &component = components_[component_handle];
 	auto object_handle = component.game_object_handle_;
@@ -148,88 +211,4 @@ void RigidBodySubSystem::setComponent(ComponentHandle component_handle, rapidjso
 	}
 
 	component.rigid_body_->setDamping(component.damping_linear_, component.damping_rotational_);
-}
-
-void RigidBodyComponent::setMass(float mass) {
-	rigid_body_->setMassProps(mass, btVector3(0, 0, 0));
-}
-
-void RigidBodyComponent::setIntertia(float x, float y, float z) {
-	/*btVector3 fallInertia(x, y, z);
-	if (mass_ != 0.0f)
-		shape->calculateLocalInertia(mass, fallInertia);*/
-}
-
-void RigidBodyComponent::setFriction(float f) {
-	rigid_body_->setFriction(f);
-}
-
-void RigidBodyComponent::setRestitution(float r) {
-	rigid_body_->setRestitution(r);
-}
-
-void RigidBodyComponent::setDamping(float linear, float rotational) {
-	rigid_body_->setDamping(linear, rotational);
-}
-
-void RigidBodyComponent::applyForce(glm::vec3 pos, glm::vec3 force) {
-	rigid_body_->applyForce(btVector3(pos.x, pos.y, pos.z), btVector3(force.x, force.y, force.z));
-}
-
-void RigidBodyComponent::applyCentralForce(glm::vec3 force) {
-	rigid_body_->applyCentralForce(btVector3(force.x, force.y, force.z));
-}
-
-void RigidBodyComponent::applyImpulse(glm::vec3 pos, glm::vec3 force) {
-	rigid_body_->applyForce(btVector3(pos.x, pos.y, pos.z), btVector3(force.x, force.y, force.z));
-}
-
-void RigidBodyComponent::applyCentralImpulse(glm::vec3 force) {
-	rigid_body_->applyCentralForce(btVector3(force.x, force.y, force.z));
-}
-
-RigidBodyComponent & RigidBodySubSystem::getComponent(ComponentHandle handle) {
-	return components_[handle];
-}
-
-Component * RigidBodySubSystem::getBaseComponent(ComponentHandle component_handle) {
-	return &components_[component_handle];
-}
-
-size_t RigidBodySubSystem::getNumComponents() {
-	return components_.size();
-}
-
-void RigidBodySubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
-	RigidBodyComponent &c = getComponent(handle);
-
-	w.Key("restitution");
-	w.Double(c.restitution_);
-
-	w.Key("friction");
-	w.Double(c.friction_);
-
-	w.Key("damping_linear");
-	w.Double(c.damping_linear_);
-
-	w.Key("damping_rotational");
-	w.Double(c.damping_rotational_);
-}
-
-void RigidBodySubSystem::removeComponent(ComponentHandle handle) {
-	components_.erase(components_.begin() + handle);
-}
-
-RigidBodySubSystem::~RigidBodySubSystem() {
-	for (int i = 0; i < components_.size(); i++) {
-		dynamics_world_->removeRigidBody(components_[i].rigid_body_);
-		delete components_[i].rigid_body_;
-	}
-
-	components_.clear();
-	delete dynamics_world_;
-	delete solver_;
-	delete collision_configuration_;
-	delete dispatcher_;
-	delete broadphase_;
-}
+}*/

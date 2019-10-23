@@ -10,8 +10,12 @@ class PostProcessAutoExposure;
 
 class PostProcessBloom : public BasePostProcess {
 public:
-	PostProcessBloom(PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target, PostProcessAutoExposure *auto_exposure);
+	PostProcessBloom(unsigned int w, unsigned h, PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target, PostProcessAutoExposure *auto_exposure);
+	virtual ~PostProcessBloom() override;
     virtual void Process();
+	virtual void resizeBuffers(unsigned int w, unsigned h) override;
+	virtual void reloadGraphics(unsigned int w, unsigned h) override;
+	virtual void destroyGraphics() override;
 private:
     RenderTargetContainer *source_;
     RenderTargetContainer *target_;

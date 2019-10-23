@@ -3,6 +3,14 @@
 #include <GraphicsWrapper.hpp>
 
 DLLGraphics::DLLGraphics() {
+	setup();
+}
+
+GraphicsWrapper *DLLGraphics::getWrapper() {
+	return wrapper_;
+}
+
+void DLLGraphics::setup() {
 	auto settings = engine.getSettings();
 
 	std::string library;
@@ -54,8 +62,19 @@ DLLGraphics::DLLGraphics() {
 	wrapper_ = (GraphicsWrapper*)pfnCreateGraphics(createInfo);
 }
 
-GraphicsWrapper *DLLGraphics::getWrapper() {
-	return wrapper_;
+void DLLGraphics::reload() {
+	wrapper_->closing_state_ = GraphicsWrapper::WindowClosingState::Closing;
+	// Remove previous instance of Wrapper
+	if (wrapper_) {
+		pfnDeleteGraphics(wrapper_);
+		wrapper_ = nullptr;
+	}
+
+	// Close DLL
+	close();
+
+	// Setup the new DLL and Wrapper
+	setup();
 }
 
 DLLGraphics::~DLLGraphics() {

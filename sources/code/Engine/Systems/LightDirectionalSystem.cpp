@@ -85,7 +85,7 @@ void LightDirectionalSubSystem::CalcOrthoProjs(Camera &cam, LightDirectionalComp
 	}
 }
 
-LightDirectionalComponent::LightDirectionalComponent(GameObjectHandle object_handle, ComponentHandle id) : Component(COMPONENT_LIGHT_DIRECTIONAL, object_handle, id) {
+LightDirectionalComponent::LightDirectionalComponent(GameObjectHandle object_handle, ComponentHandle id) : Component(COMPONENT_LIGHT_DIRECTIONAL, object_handle, id), shadow_dt_(nullptr), shadow_fbo_(nullptr) {
 	camera_matrices_.resize(1);
 }
 
@@ -182,65 +182,46 @@ void LightDirectionalSystem::update(double dt) {
 	}
 }
 
-ComponentHandle LightDirectionalSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
-	ComponentHandle component_handle = (ComponentHandle)components_.size();
-	components_.emplace_back(object_handle, component_handle);
+void LightDirectionalSystem::destroyGraphics() {
+	for (auto & scene : engine.getScenes()) {
+		for (auto space : scene->spaces_) {
+			LightDirectionalSubSystem *sub = (LightDirectionalSubSystem *)space->getSubsystem(COMPONENT_LIGHT_DIRECTIONAL);
+			for (auto &c : sub->components_) {
+				if (c.shadow_dt_)
+					engine.getGraphicsWrapper()->DeleteDepthTarget(c.shadow_dt_);
+				
+				if (c.shadow_fbo_)
+					engine.getGraphicsWrapper()->DeleteFramebuffer(c.shadow_fbo_);
 
-	setComponent(component_handle, params);
-
-	return component_handle;
-}
-
-void LightDirectionalSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
-	auto &component = components_[component_handle];
-
-	if (params.HasMember("color")) {
-		auto color = params["color"].GetArray();
-		component.properties_.color.x = color[0].GetFloat();
-		component.properties_.color.y = color[1].GetFloat();
-		component.properties_.color.z = color[2].GetFloat();
-	}
-
-	if (params.HasMember("brightness")) {
-		component.properties_.power = params["brightness"].GetFloat();
-	}
-
-	if (params.HasMember("radius")) {
-		component.properties_.sourceRadius = params["radius"].GetFloat();
-	}
-
-	if (params.HasMember("shadowresolution")) {
-		component.properties_.resolution = params["shadowresolution"].GetUint();
-	}
-	else {
-		component.properties_.resolution = 2048;
-	}
-
-	if (params.HasMember("castshadow")) {
-		component.properties_.shadow = params["castshadow"].GetBool();
-
-		if (component.properties_.shadow) {
-			auto graphics_wrapper = engine.getGraphicsWrapper();
-
-			DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, component.properties_.resolution, component.properties_.resolution, true, false);
-			component.shadow_dt_ = graphics_wrapper->CreateDepthTarget(depth_image_ci);
-
-			FramebufferCreateInfo fbci;
-			fbci.num_render_target_lists = 0;
-			fbci.render_target_lists = nullptr;
-			fbci.depth_target = component.shadow_dt_;
-			component.shadow_fbo_ = graphics_wrapper->CreateFramebuffer(fbci);
+				c.shadow_dt_ = nullptr;
+				c.shadow_fbo_ = nullptr;
+			}
 		}
 	}
-	else
-		component.properties_.shadow = false;
+}
+
+void LightDirectionalSystem::loadGraphics() {
+	for (auto & scene : engine.getScenes()) {
+		for (auto space : scene->spaces_) {
+			LightDirectionalSubSystem *sub = (LightDirectionalSubSystem *)space->getSubsystem(COMPONENT_LIGHT_DIRECTIONAL);
+			for (auto &c : sub->components_) {
+				sub->setShadow(c.game_object_handle_, c.properties_.shadow);
+			}
+		}
+	}
 }
 
 void LightDirectionalSubSystem::setShadow(ComponentHandle h, bool shadow) {
+	auto graphics_wrapper = engine.getGraphicsWrapper();
 	auto &component = components_[h];
 
+	if (component.shadow_dt_)	graphics_wrapper->DeleteDepthTarget(component.shadow_dt_);
+	if (component.shadow_fbo_)	graphics_wrapper->DeleteFramebuffer(component.shadow_fbo_);
+
+	component.shadow_dt_ = nullptr;
+	component.shadow_fbo_ = nullptr;
+
 	if (shadow) {
-		auto graphics_wrapper = engine.getGraphicsWrapper();
 
 		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, component.properties_.resolution, component.properties_.resolution, true, false);
 		component.shadow_dt_ = graphics_wrapper->CreateDepthTarget(depth_image_ci);
@@ -271,16 +252,13 @@ size_t LightDirectionalSubSystem::getNumComponents() {
 	return components_.size();
 }
 
-void LightDirectionalSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
-}
-
 void LightDirectionalSubSystem::removeComponent(ComponentHandle handle) {
 }
 
 LightDirectionalSubSystem::~LightDirectionalSubSystem() {
 }
 
-REFLECT_STRUCT_BEGIN(LightDirectionalComponent, LightDirectionalSystem)
+REFLECT_STRUCT_BEGIN(LightDirectionalComponent, LightDirectionalSystem, COMPONENT_LIGHT_DIRECTIONAL)
 REFLECT_STRUCT_MEMBER(properties_.color)
 REFLECT_STRUCT_MEMBER(properties_.power)
 REFLECT_STRUCT_MEMBER(properties_.sourceRadius)

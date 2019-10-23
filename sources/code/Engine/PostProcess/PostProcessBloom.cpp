@@ -4,7 +4,7 @@
 #include "PostProcessBloom.hpp"
 #include "PostProcessAutoExposure.hpp"
 
-PostProcessBloom::PostProcessBloom(PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target, PostProcessAutoExposure *auto_exposure) : BasePostProcess(pipeline), source_(source), target_(target), auto_exposure_(auto_exposure) {
+PostProcessBloom::PostProcessBloom(unsigned int w, unsigned h, PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target, PostProcessAutoExposure *auto_exposure) : BasePostProcess(pipeline), source_(source), target_(target), auto_exposure_(auto_exposure) {
     GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
 
@@ -74,6 +74,10 @@ PostProcessBloom::PostProcessBloom(PostPipeline *pipeline, RenderTargetContainer
 	gpipeline_ = graphics_wrapper->CreateGraphicsPipeline(luminanceGPCI);
 }
 
+PostProcessBloom::~PostProcessBloom()
+{
+}
+
 void PostProcessBloom::Process() {
     gpipeline_->Bind();
 	engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
@@ -82,4 +86,16 @@ void PostProcessBloom::Process() {
     source_->framebuffer->BindRead();
     source_->framebuffer->BindTextures(4);
     engine.getGraphicsWrapper()->DrawImmediateVertices(0, 6);
+}
+
+void PostProcessBloom::resizeBuffers(unsigned int w, unsigned h)
+{
+}
+
+void PostProcessBloom::reloadGraphics(unsigned int w, unsigned h)
+{
+}
+
+void PostProcessBloom::destroyGraphics()
+{
 }

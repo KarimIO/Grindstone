@@ -139,7 +139,8 @@ namespace reflect {
 #define REFLECT_SYSTEM() \
 public: \
     static reflect::TypeDescriptor_Struct grindstone_reflection_info_; \
-	virtual reflect::TypeDescriptor_Struct *getReflection() { return &grindstone_reflection_info_; }
+	virtual reflect::TypeDescriptor_Struct *getReflection() { return &grindstone_reflection_info_; } \
+	const static ComponentType static_system_type_;
 
 #define REFLECT() \
 public: \
@@ -147,7 +148,8 @@ public: \
     static reflect::TypeDescriptor_Struct grindstone_reflection_info_; \
     static void initReflection(reflect::TypeDescriptor_Struct*);
 
-#define REFLECT_STRUCT_BEGIN(type, system) \
+#define REFLECT_STRUCT_BEGIN(type, system, enum_type) \
+const ComponentType system::static_system_type_ = enum_type; \
     reflect::TypeDescriptor_Struct type::grindstone_reflection_info_{type::initReflection}; \
     reflect::TypeDescriptor_Struct system::grindstone_reflection_info_ = type::grindstone_reflection_info_; \
     void type::initReflection(reflect::TypeDescriptor_Struct* typeDesc) { \

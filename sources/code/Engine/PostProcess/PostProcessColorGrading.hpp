@@ -7,6 +7,7 @@ class Framebuffer;
 class GraphicsPipeline;
 class Texture;
 class TextureBinding;
+class TextureBindingLayout;
 
 // Post Processing effect used in PostPipelines in CCameras.
 // This Post Process Effect takes the assigned Look-Up Table (LUT)
@@ -17,9 +18,13 @@ class PostProcessColorGrading : public BasePostProcess {
 	GraphicsPipeline *gpipeline_;
 	Texture *texture_;
 	TextureBinding *texture_binding_;
+	TextureBindingLayout *grading_tbl_;
 public:
-	PostProcessColorGrading(PostPipeline *pipeline, RenderTargetContainer *target, Framebuffer **target_fbo);
-	~PostProcessColorGrading();
+	PostProcessColorGrading(unsigned int w, unsigned h, PostPipeline *pipeline, RenderTargetContainer *target, Framebuffer **target_fbo);
+	virtual ~PostProcessColorGrading() override;
+	virtual void resizeBuffers(unsigned int w, unsigned h) override;
+	virtual void reloadGraphics(unsigned int w, unsigned h) override;
+	virtual void destroyGraphics() override;
 	
 	void Process();
 };

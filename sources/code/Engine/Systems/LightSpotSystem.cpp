@@ -8,7 +8,8 @@
 #include "AssetManagers/GraphicsPipelineManager.hpp"
 #include "glm/gtx/transform.hpp"
 
-LightSpotComponent::LightSpotComponent(GameObjectHandle object_handle, ComponentHandle id) : Component(COMPONENT_LIGHT_SPOT, object_handle, id) {}
+LightSpotComponent::LightSpotComponent(GameObjectHandle object_handle, ComponentHandle id) : Component(COMPONENT_LIGHT_SPOT, object_handle, id), shadow_dt_(nullptr), shadow_fbo_(nullptr) {
+}
 
 LightSpotSubSystem::LightSpotSubSystem(Space *space) : SubSystem(COMPONENT_LIGHT_SPOT, space) {}
 
@@ -18,6 +19,35 @@ ComponentHandle LightSpotSubSystem::addComponent(GameObjectHandle object_handle)
 	auto &component = components_.back();
 
 	return component_handle;
+}
+
+void LightSpotSystem::destroyGraphics() {
+	for (auto & scene : engine.getScenes()) {
+		for (auto space : scene->spaces_) {
+			LightSpotSubSystem *sub = (LightSpotSubSystem *)space->getSubsystem(COMPONENT_LIGHT_SPOT);
+			for (auto &c : sub->components_) {
+				if (c.shadow_dt_)
+					engine.getGraphicsWrapper()->DeleteDepthTarget(c.shadow_dt_);
+				
+				if (c.shadow_fbo_)
+					engine.getGraphicsWrapper()->DeleteFramebuffer(c.shadow_fbo_);
+
+				c.shadow_dt_ = nullptr;
+				c.shadow_fbo_ = nullptr;
+			}
+		}
+	}
+}
+
+void LightSpotSystem::loadGraphics() {
+	for (auto & scene : engine.getScenes()) {
+		for (auto space : scene->spaces_) {
+			LightSpotSubSystem *sub = (LightSpotSubSystem *)space->getSubsystem(COMPONENT_LIGHT_SPOT);
+			for (auto &c : sub->components_) {
+				c.setShadow(c.properties_.shadow);
+			}
+		}
+	}
 }
 
 LightSpotSystem::LightSpotSystem() : System(COMPONENT_LIGHT_SPOT) {}
@@ -86,72 +116,10 @@ void LightSpotSystem::update(double dt) {
 	}
 }
 
-ComponentHandle LightSpotSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
-	ComponentHandle component_handle = (ComponentHandle)components_.size();
-	components_.emplace_back(object_handle, component_handle);
-
-	setComponent(component_handle, params);
-
-	return component_handle;
-}
-
-void LightSpotSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
-	auto &component = components_[component_handle];
-
-	if (params.HasMember("color")) {
-		auto color = params["color"].GetArray();
-		component.properties_.color.x = color[0].GetFloat();
-		component.properties_.color.y = color[1].GetFloat();
-		component.properties_.color.z = color[2].GetFloat();
-	}
-
-	if (params.HasMember("brightness")) {
-		component.properties_.power = params["brightness"].GetFloat();
-	}
-
-	if (params.HasMember("radius")) {
-		component.properties_.attenuationRadius = params["radius"].GetFloat();
-	}
-
-	if (params.HasMember("innerAngle")) {
-		component.properties_.innerAngle = params["innerAngle"].GetFloat();
-	}
-
-	if (params.HasMember("outerAngle")) {
-		component.properties_.outerAngle = params["outerAngle"].GetFloat();
-	}
-
-	if (params.HasMember("shadowresolution")) {
-		component.properties_.resolution = params["shadowresolution"].GetUint();
-	}
-	else {
-		component.properties_.resolution = 512;
-	}
-
-	if (params.HasMember("castshadow")) {
-		component.properties_.shadow = params["castshadow"].GetBool();
-
-		if (component.properties_.shadow) {
-			auto graphics_wrapper = engine.getGraphicsWrapper();
-
-			DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, component.properties_.resolution, component.properties_.resolution, true, false);
-			component.shadow_dt_ = graphics_wrapper->CreateDepthTarget(depth_image_ci);
-
-			FramebufferCreateInfo fbci;
-			fbci.num_render_target_lists = 0;
-			fbci.render_target_lists = nullptr;
-			fbci.depth_target = component.shadow_dt_;
-			component.shadow_fbo_ = graphics_wrapper->CreateFramebuffer(fbci);
-		}
-	}
-	else
-		component.properties_.shadow = false;
-}
-
 void LightSpotComponent::setShadow(bool shadow) {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
-	// if (shadow_dt_)	graphics_wrapper->DeleteDepthTarget(shadow_dt_);
+	if (shadow_dt_)	graphics_wrapper->DeleteDepthTarget(shadow_dt_);
 	if (shadow_fbo_)	graphics_wrapper->DeleteFramebuffer(shadow_fbo_);
 
 	shadow_dt_ = nullptr;
@@ -187,9 +155,6 @@ size_t LightSpotSubSystem::getNumComponents() {
 	return components_.size();
 }
 
-void LightSpotSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
-}
-
 void LightSpotSubSystem::removeComponent(ComponentHandle handle) {
 }
 
@@ -202,7 +167,7 @@ void handleLightPathShadow(void *owner) {
 	component->setShadow(component->properties_.shadow);
 }
 
-REFLECT_STRUCT_BEGIN(LightSpotComponent, LightSpotSystem)
+REFLECT_STRUCT_BEGIN(LightSpotComponent, LightSpotSystem, COMPONENT_LIGHT_SPOT)
 REFLECT_STRUCT_MEMBER(properties_.color)
 REFLECT_STRUCT_MEMBER(properties_.power)
 REFLECT_STRUCT_MEMBER(properties_.attenuationRadius)

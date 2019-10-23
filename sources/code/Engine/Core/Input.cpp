@@ -33,6 +33,9 @@ InputManager::InputManager() {
 		BindAction("Shutdown", NULL, &engine, &Engine::shutdownControl, KEY_RELEASED);
 	}
 
+	AddControl("f7", "RefreshAll", NULL, 1);
+	BindAction("RefreshAll", NULL, &engine, &Engine::refreshAll, KEY_RELEASED);
+
 	AddControl("f8", "Editor", NULL, 1);
 	BindAction("Editor", NULL, &engine, &Engine::editorControl, KEY_RELEASED);
 }
@@ -582,7 +585,7 @@ void InputManager::SetKey(int key, bool state) {
 }
 
 void InputManager::Quit() {
-	ForceQuit();
+	engine.getGraphicsWrapper()->Close();
 }
 
 void InputManager::ForceQuit() {

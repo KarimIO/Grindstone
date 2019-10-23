@@ -17,16 +17,8 @@ ComponentHandle ColliderSubSystem::addComponent(GameObjectHandle object_handle) 
 	return component_handle;
 }
 
-ComponentHandle ColliderSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
-	ComponentHandle component_handle = (ComponentHandle)components_.size();
-	components_.emplace_back(object_handle, component_handle);
 
-	setComponent(component_handle, params);
-
-	return component_handle;
-}
-
-void ColliderSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
+/*void ColliderSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
 	auto &component = components_[component_handle];
 	auto object_handle = component.game_object_handle_;
 
@@ -113,7 +105,7 @@ void ColliderSubSystem::setComponent(ComponentHandle component_handle, rapidjson
 	component.shape_->setUserIndex(component.game_object_handle_);
 	// setUserPointer((void*)rigidBody);
 	component.shape_->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
-}
+}*/
 
 ColliderComponent & ColliderSubSystem::getComponent(ComponentHandle handle) {
 	return components_[handle];
@@ -125,65 +117,6 @@ Component * ColliderSubSystem::getBaseComponent(ComponentHandle component_handle
 
 size_t ColliderSubSystem::getNumComponents() {
 	return components_.size();
-}
-
-void ColliderSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
-	auto &c = getComponent(handle);
-	switch (c.shape_type_) {
-	case ColliderComponent::ShapeType::CAPSULE: {
-		w.Key("type");
-		w.String("capsule");
-
-		w.Key("shape");
-		w.Double(c.capsule_radius_);
-		w.Key("height");
-		w.Double(c.capsule_height_);
-		break;
-	}
-	case ColliderComponent::ShapeType::PLANE: {
-		w.Key("type");
-		w.String("plane");
-
-		w.Key("shape");
-		w.StartArray();
-		w.Double(c.plane_shape_[0]);
-		w.Double(c.plane_shape_[1]);
-		w.Double(c.plane_shape_[2]);
-		w.Double(c.plane_shape_[3]);
-		w.EndArray();
-		break;
-	}
-	case ColliderComponent::ShapeType::BOX: {
-		w.Key("type");
-		w.String("box");
-
-		w.Key("offset");
-		w.StartArray();
-		w.Double(c.box_offset_[0]);
-		w.Double(c.box_offset_[1]);
-		w.Double(c.box_offset_[2]);
-		w.EndArray();
-
-		w.Key("size");
-		w.StartArray();
-		w.Double(c.box_size_[0]);
-		w.Double(c.box_size_[1]);
-		w.Double(c.box_size_[2]);
-		w.EndArray();
-		break;
-	}
-	case ColliderComponent::ShapeType::SPHERE: {
-		w.Key("sphere");
-		w.String("plane");
-
-		w.Key("radius");
-		w.Double(c.sphere_radius_);
-		break;
-	}
-	default:
-		GRIND_WARN("Invalid shape.");
-		break;
-	}
 }
 
 void ColliderSystem::update(double dt) {

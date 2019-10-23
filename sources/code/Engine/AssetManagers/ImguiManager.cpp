@@ -43,6 +43,7 @@ ImguiManager::ImguiManager() {
 
 ImguiManager::~ImguiManager()
 {
+	ImGui_ImplOpenGL3_Shutdown();
 }
 
 #define GLFW_HAS_WINDOW_TOPMOST     (GLFW_VERSION_MAJOR * 1000 + GLFW_VERSION_MINOR * 100 >= 3200) // 3.2+ GLFW_FLOATING

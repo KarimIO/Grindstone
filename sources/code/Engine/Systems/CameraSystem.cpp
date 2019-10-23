@@ -24,20 +24,6 @@ ComponentHandle CameraSubSystem::addComponent(GameObjectHandle object_handle) {
 	return component_handle;
 }
 
-ComponentHandle CameraSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
-	ComponentHandle component_handle = (ComponentHandle)components_.size();
-	components_.emplace_back(space_, object_handle, component_handle);
-
-	setComponent(component_handle, params);
-
-	return component_handle;
-}
-
-void CameraSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
-	auto &component = components_[component_handle];
-
-}
-
 CameraComponent & CameraSubSystem::getComponent(ComponentHandle handle) {
 	return components_[handle];
 }
@@ -48,10 +34,6 @@ Component * CameraSubSystem::getBaseComponent(ComponentHandle component_handle) 
 
 size_t CameraSubSystem::getNumComponents() {
 	return components_.size();
-}
-
-void CameraSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
-
 }
 
 void CameraSubSystem::removeComponent(ComponentHandle id) {
@@ -84,9 +66,32 @@ void CameraSystem::update(double dt) {
 	}
 }
 
+void CameraSystem::loadGraphics() {
+	for (auto & scene : engine.getScenes()) {
+		for (auto space : scene->spaces_) {
+			CameraSubSystem *sub = (CameraSubSystem *)space->getSubsystem(COMPONENT_CAMERA);
+			for (auto &c : sub->components_) {
+				c.camera_.reloadGraphics();
+			}
+		}
+	}
+}
+
+void CameraSystem::destroyGraphics() {
+	for (auto & scene : engine.getScenes()) {
+		for (auto space : scene->spaces_) {
+			CameraSubSystem *sub = (CameraSubSystem *)space->getSubsystem(COMPONENT_CAMERA);
+			for (auto &c : sub->components_) {
+				c.camera_.destroyGraphics();
+			}
+		}
+	}
+}
+
+
 CameraSystem::CameraSystem() : System(COMPONENT_CAMERA) {
 }
 
-REFLECT_STRUCT_BEGIN(CameraComponent, CameraSystem)
+REFLECT_STRUCT_BEGIN(CameraComponent, CameraSystem, COMPONENT_CAMERA)
 REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()

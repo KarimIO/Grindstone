@@ -21,9 +21,30 @@ void PostPipeline::setSpace(Space * space) {
 	space_ = space;
 }
 
+void PostPipeline::resizeBuffers(unsigned int w, unsigned int h) {
+	for (auto p : processes_) {
+		p->resizeBuffers(w, h);
+	}
+}
+
+void PostPipeline::reloadGraphics(unsigned int w, unsigned int h) {
+	for (auto p : processes_) {
+		p->reloadGraphics(w, h);
+	}
+}
+
+void PostPipeline::destroyGraphics() {
+	for (auto p : processes_) {
+		p->destroyGraphics();
+	}
+}
+
 Space *PostPipeline::getSpace() {
 	return space_;
 }
 
 PostPipeline::~PostPipeline() {
+	for (auto p : processes_) {
+		delete p;
+	}
 }

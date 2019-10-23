@@ -722,68 +722,68 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 			}
 		}
 
-		if (num_shaders > 0) {
-			GraphicsPipelineCreateInfo gpci;
-			gpci.scissorW = 1024;
-			gpci.width = static_cast<float>(gpci.scissorW);
-			gpci.scissorH = 1024;
-			gpci.height = static_cast<float>(gpci.scissorH);
-			gpci.renderPass = render_passes_[0].renderPass;
-			gpci.attributes = geometry_info.vads;
-			gpci.attributesCount = geometry_info.vads_count;
-			gpci.bindings = geometry_info.vbds;
-			gpci.bindingsCount = geometry_info.vbds_count;
-			
-			std::vector<ShaderStageCreateInfo> stages;
-			stages.resize(num_shaders);
-			std::vector<char> files[max_shaders];
+if (num_shaders > 0) {
+	GraphicsPipelineCreateInfo gpci;
+	gpci.scissorW = 1024;
+	gpci.width = static_cast<float>(gpci.scissorW);
+	gpci.scissorH = 1024;
+	gpci.height = static_cast<float>(gpci.scissorH);
+	gpci.renderPass = render_passes_[0].renderPass;
+	gpci.attributes = geometry_info.vads;
+	gpci.attributesCount = geometry_info.vads_count;
+	gpci.bindings = geometry_info.vbds;
+	gpci.bindingsCount = geometry_info.vbds_count;
 
-			num_shaders = 0;
-			for (int i = 0; i < max_shaders; i++) {
-				if (container.shadow_shader_paths[i] != "") {
-					stages[num_shaders].fileName = container.shadow_shader_paths[i].c_str();
-					if (!readFile(stages[num_shaders].fileName, files[num_shaders])) {
-						std::string warn = "Unable to load Shader!: " + std::string(stages[num_shaders].fileName) + "\n";
-						throw std::runtime_error(warn);
-					}
+	std::vector<ShaderStageCreateInfo> stages;
+	stages.resize(num_shaders);
+	std::vector<char> files[max_shaders];
 
-					stages[num_shaders].content = files[num_shaders].data();
-					stages[num_shaders].size = (uint32_t)files[num_shaders].size();
-					stages[num_shaders++].type = static_cast<ShaderStageType>(i);
-				}
+	num_shaders = 0;
+	for (int i = 0; i < max_shaders; i++) {
+		if (container.shadow_shader_paths[i] != "") {
+			stages[num_shaders].fileName = container.shadow_shader_paths[i].c_str();
+			if (!readFile(stages[num_shaders].fileName, files[num_shaders])) {
+				std::string warn = "Unable to load Shader!: " + std::string(stages[num_shaders].fileName) + "\n";
+				throw std::runtime_error(warn);
 			}
 
-			std::vector<TextureSubBinding> bindings;
-			bindings.reserve(container.textureDescriptorTable.size());
-			for (auto &t : container.textureDescriptorTable) {
-				bindings.emplace_back(t.first.c_str(), t.second.texture_id);
-			}
-
-			int tbl_count;
-			if (bindings.size() > 0) {
-				TextureBindingLayoutCreateInfo tblci;
-				tblci.bindingLocation = 2;
-				tblci.bindings = bindings.data();
-				tblci.bindingCount = (uint32_t)bindings.size();
-				tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-				container.tbl = engine.getGraphicsWrapper()->CreateTextureBindingLayout(tblci);
-				tbl_count = 1;
-			}
-			else {
-				container.tbl = nullptr;
-				tbl_count = 0;
-			}
-			
-			gpci.shaderStageCreateInfos = stages.data();
-			gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
-			gpci.uniformBufferBindings = ubbs.data();
-			gpci.uniformBufferBindingCount = (uint32_t)ubbs.size();
-			gpci.textureBindings = &container.tbl;
-			gpci.textureBindingCount = tbl_count;
-			gpci.cullMode = CULL_BACK;
-			gpci.primitiveType = PRIM_TRIANGLES;
-			container.shadow_program = engine.getGraphicsWrapper()->CreateGraphicsPipeline(gpci);
+			stages[num_shaders].content = files[num_shaders].data();
+			stages[num_shaders].size = (uint32_t)files[num_shaders].size();
+			stages[num_shaders++].type = static_cast<ShaderStageType>(i);
 		}
+	}
+
+	std::vector<TextureSubBinding> bindings;
+	bindings.reserve(container.textureDescriptorTable.size());
+	for (auto &t : container.textureDescriptorTable) {
+		bindings.emplace_back(t.first.c_str(), t.second.texture_id);
+	}
+
+	int tbl_count;
+	if (bindings.size() > 0) {
+		TextureBindingLayoutCreateInfo tblci;
+		tblci.bindingLocation = 2;
+		tblci.bindings = bindings.data();
+		tblci.bindingCount = (uint32_t)bindings.size();
+		tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+		container.tbl = engine.getGraphicsWrapper()->CreateTextureBindingLayout(tblci);
+		tbl_count = 1;
+	}
+	else {
+		container.tbl = nullptr;
+		tbl_count = 0;
+	}
+
+	gpci.shaderStageCreateInfos = stages.data();
+	gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
+	gpci.uniformBufferBindings = ubbs.data();
+	gpci.uniformBufferBindingCount = (uint32_t)ubbs.size();
+	gpci.textureBindings = &container.tbl;
+	gpci.textureBindingCount = tbl_count;
+	gpci.cullMode = CULL_BACK;
+	gpci.primitiveType = PRIM_TRIANGLES;
+	container.shadow_program = engine.getGraphicsWrapper()->CreateGraphicsPipeline(gpci);
+}
 	}
 }
 
@@ -791,12 +791,67 @@ void GraphicsPipelineManager::resetDraws()
 {
 }
 
-void GraphicsPipelineManager::cleanup()
-{
+void GraphicsPipelineManager::cleanup() {
+	auto gw = engine.getGraphicsWrapper();
+	for (auto &r : render_passes_) {
+		gw->DeleteRenderPass(r.renderPass);
+		for (auto &f : r.framebuffers) {
+			gw->DeleteFramebuffer(f);
+		}
+		for (auto &p : r.pipelines_deferred) {
+			destroyPipelineContainerGraphics(p);
+		}
+		for (auto &p : r.pipelines_forward) {
+			destroyPipelineContainerGraphics(p);
+		}
+		for (auto &p : r.pipelines_misc) {
+			destroyPipelineContainerGraphics(p);
+		}
+		for (auto &p : r.pipelines_unlit) {
+			destroyPipelineContainerGraphics(p);
+		}
+
+		r.pipelines_deferred.clear();
+		r.pipelines_forward.clear();
+		r.pipelines_misc.clear();
+		r.pipelines_unlit.clear();
+	}
+
+	pipeline_map_.clear();
+	engine.getMaterialManager()->material_map_.clear();
+	engine.getTextureManager()->cleanup();
 }
 
-GraphicsPipelineManager::~GraphicsPipelineManager()
-{
+void GraphicsPipelineManager::destroyPipelineContainerGraphics(PipelineContainer &p) {
+	auto gw = engine.getGraphicsWrapper();
+
+	//CommandBuffer *commandBuffer;
+	if (p.tbl) {
+		gw->DeleteTextureBindingLayout(p.tbl);
+		p.tbl = nullptr;
+	}
+	if (p.program) {
+		gw->DeleteGraphicsPipeline(p.program);
+		p.program = nullptr;
+	}
+	if (p.shadow_program) {
+		gw->DeleteGraphicsPipeline(p.shadow_program);
+		p.shadow_program = nullptr;
+	}
+	if (p.param_ubb) {
+		gw->DeleteUniformBufferBinding(p.param_ubb);
+		p.param_ubb = nullptr;
+	}
+
+	for (auto &m : p.materials) {
+		delete m.param_buffer_;
+		gw->DeleteUniformBuffer(m.param_buffer_handler_);
+		gw->DeleteTextureBinding(m.m_textureBinding);
+	}
+}
+
+GraphicsPipelineManager::~GraphicsPipelineManager() {
+	cleanup();
 }
 
 GraphicsPipelineManager::GraphicsPipelineManager() {

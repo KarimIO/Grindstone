@@ -7,8 +7,12 @@ class PostProcessAutoExposure;
 
 class PostProcessSSR : public BasePostProcess {
 public:
-	PostProcessSSR(PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target);
+	PostProcessSSR(unsigned int w, unsigned h, PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target);
+	virtual ~PostProcessSSR() override;
 	virtual void Process();
+	virtual void resizeBuffers(unsigned int w, unsigned h) override;
+	virtual void reloadGraphics(unsigned int w, unsigned h) override;
+	virtual void destroyGraphics() override;
 private:
 	RenderTargetContainer *source_;
 	RenderTargetContainer *target_;

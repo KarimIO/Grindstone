@@ -59,29 +59,29 @@ void Camera::initialize() {
 	render_path_ = new RenderPathDeferred(viewport_width_, viewport_height_);
 	post_pipeline_.setSpace(space_);
 
-	if (true) {
-		PostProcessSSR *pp_ssr = new PostProcessSSR(&post_pipeline_, &rt_hdr_, &rt_hdr_);
+	/*if (true) {
+		PostProcessSSR *pp_ssr = new PostProcessSSR(viewport_width_, viewport_height_, &post_pipeline_, &rt_hdr_, &rt_hdr_);
 		post_pipeline_.AddPostProcess(pp_ssr);
-	}
+	}*/
 
-	if (false && enable_reflections_) {
-		PostProcessIBL *pp_ibl = new PostProcessIBL(&post_pipeline_, &rt_hdr_, viewport_width_, viewport_height_);
+	if (enable_reflections_) {
+		PostProcessIBL *pp_ibl = new PostProcessIBL(viewport_width_, viewport_height_, &post_pipeline_, &rt_hdr_);
 		post_pipeline_.AddPostProcess(pp_ibl);
 	}
 	
 	PostProcessAutoExposure *pp_auto = nullptr;
 	if (enable_auto_exposure_) {
-		pp_auto = new PostProcessAutoExposure(&post_pipeline_, &rt_hdr_, nullptr);
+		pp_auto = new PostProcessAutoExposure(viewport_width_, viewport_height_, &post_pipeline_, &rt_hdr_, nullptr);
 		post_pipeline_.AddPostProcess(pp_auto);
 	}
 
 	/*PostProcessBloom *pp_bloom = new PostProcessBloom(&post_pipeline_, &rt_hdr_, &rt_hdr_, pp_auto);
 	post_pipeline_.AddPostProcess(pp_bloom);*/
 
-	PostProcessTonemap *pp_tonemap = new PostProcessTonemap(&post_pipeline_, &rt_hdr_, &rt_hdr_, pp_auto);
+	PostProcessTonemap *pp_tonemap = new PostProcessTonemap(viewport_width_, viewport_height_, &post_pipeline_, &rt_hdr_, &rt_hdr_, pp_auto);
 	post_pipeline_.AddPostProcess(pp_tonemap);
 
-	PostProcessColorGrading *pp_grading = new PostProcessColorGrading(&post_pipeline_, &rt_hdr_, &final_framebuffer_);
+	PostProcessColorGrading *pp_grading = new PostProcessColorGrading(viewport_width_, viewport_height_, &post_pipeline_, &rt_hdr_, &final_framebuffer_);
 	post_pipeline_.AddPostProcess(pp_grading);
 }
 
@@ -95,9 +95,9 @@ void Camera::setCustomFinalFramebuffer(Framebuffer *framebuffer) {
 }
 
 void Camera::generateFramebuffers() {
-	/*if (hdr_buffer_) {
+	if (hdr_buffer_) {
 		engine.getGraphicsWrapper()->DeleteRenderTarget(hdr_buffer_);
-	}*/
+	}
 
 	if (hdr_framebuffer_) {
 		engine.getGraphicsWrapper()->DeleteFramebuffer(hdr_framebuffer_);
@@ -160,6 +160,7 @@ void Camera::setViewport(unsigned int w, unsigned int h) {
 		aspect_ratio_ = float(w) / float(h);
 
 		generateFramebuffers();
+		post_pipeline_.resizeBuffers(viewport_width_, viewport_height_);
 	}
 }
 
@@ -285,8 +286,8 @@ void Camera::render() {
 		post_pipeline_.Process();
 	}
 
-	auto sprite_sys = ((RenderSpriteSubSystem *)space_->getSubsystem(COMPONENT_RENDER_SPRITE));
-	sprite_sys->renderSprites(is_ortho_, position_, depth_target_);
+	//auto sprite_sys = ((RenderSpriteSubSystem *)space_->getSubsystem(COMPONENT_RENDER_SPRITE));
+	//sprite_sys->renderSprites(is_ortho_, position_, depth_target_);
 }
 
 void Camera::setOrtho(float l, float r, float t, float b) {
@@ -301,6 +302,46 @@ void Camera::setOrtho(float l, float r, float t, float b) {
 void Camera::setPerspective() {
 	is_ortho_ = false;
 	projection_dirty_ = true;
+}
+
+void Camera::reloadGraphics() {
+	render_path_->reloadGraphics();
+	generateFramebuffers();
+
+	post_pipeline_.reloadGraphics(viewport_width_, viewport_height_);
+}
+
+void Camera::destroyGraphics() {
+	if (use_framebuffer_ && !custom_final_framebuffer_) {
+		if (final_framebuffer_) {
+			engine.getGraphicsWrapper()->DeleteFramebuffer(final_framebuffer_);
+			final_framebuffer_ = nullptr;
+		}
+
+		if (final_buffer_) {
+			engine.getGraphicsWrapper()->DeleteRenderTarget(final_buffer_);
+			final_buffer_ = nullptr;
+		}
+	}
+
+	if (hdr_framebuffer_) {
+		engine.getGraphicsWrapper()->DeleteFramebuffer(hdr_framebuffer_);
+		hdr_framebuffer_ = nullptr;
+	}
+
+	if (hdr_buffer_) {
+		engine.getGraphicsWrapper()->DeleteRenderTarget(hdr_buffer_);
+		hdr_buffer_ = nullptr;
+	}
+
+	if (depth_target_) {
+		engine.getGraphicsWrapper()->DeleteDepthTarget(depth_target_);
+		depth_target_ = nullptr;
+	}
+
+	post_pipeline_.destroyGraphics();
+	RenderPathDeferred *drp = (RenderPathDeferred *)render_path_;
+	drp->destroyGraphics();
 }
 
 float Camera::getFov() {
@@ -350,4 +391,6 @@ RayTraceResults Camera::rayTraceMousePostion(unsigned int mx, unsigned int my)
 }
 
 Camera::~Camera() {
+	destroyGraphics();
+	delete render_path_;
 }

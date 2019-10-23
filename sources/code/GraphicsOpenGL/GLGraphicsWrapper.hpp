@@ -35,21 +35,26 @@ private:
 #endif
 
 public:
+
 	GLGraphicsWrapper(InstanceCreateInfo createInfo);
 	~GLGraphicsWrapper();
 	void Clear(int mask);
 	void CreateDefaultStructures();
 
-	void DeleteFramebuffer(Framebuffer *ptr);
-	void DeleteVertexBuffer(VertexBuffer *ptr);
-	void DeleteIndexBuffer(IndexBuffer *ptr);
-	void DeleteUniformBuffer(UniformBuffer * ptr);
-	void DeleteUniformBufferBinding(UniformBufferBinding * ptr);
-	void DeleteGraphicsPipeline(GraphicsPipeline *ptr);
-	void DeleteRenderPass(RenderPass *ptr);
-	void DeleteTexture(Texture *ptr);
-	void DeleteCommandBuffer(CommandBuffer * ptr);
-	void DeleteVertexArrayObject(VertexArrayObject *ptr);
+	virtual void DeleteRenderTarget(RenderTarget * ptr) override;
+	virtual void DeleteDepthTarget(DepthTarget * ptr) override;
+	virtual void DeleteFramebuffer(Framebuffer *ptr) override;
+	virtual void DeleteVertexBuffer(VertexBuffer *ptr) override;
+	virtual void DeleteIndexBuffer(IndexBuffer *ptr) override;
+	virtual void DeleteUniformBuffer(UniformBuffer * ptr) override;
+	virtual void DeleteUniformBufferBinding(UniformBufferBinding * ptr) override;
+	virtual void DeleteGraphicsPipeline(GraphicsPipeline *ptr) override;
+	virtual void DeleteRenderPass(RenderPass *ptr) override;
+	virtual void DeleteTexture(Texture *ptr) override;
+	virtual void DeleteTextureBinding(TextureBinding *ptr) override;
+	virtual void DeleteTextureBindingLayout(TextureBindingLayout *ptr) override;
+	virtual void DeleteCommandBuffer(CommandBuffer * ptr) override;
+	virtual void DeleteVertexArrayObject(VertexArrayObject *ptr) override;
 
 	void setViewport(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
 

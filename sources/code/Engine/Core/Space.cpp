@@ -131,14 +131,11 @@ Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 					else {
 						ComponentHandle handle = game_object.getComponentHandle(type);
 						if (handle == -1) {
-							auto handle = subsystem->addComponent(game_object_handle);
+							handle = subsystem->addComponent(game_object_handle);
 							game_object.setComponentHandle(type, handle);
-							setComponentParams(handle, type, params);
 						}
-						else {
-							subsystem->setComponent(handle, params);
-							setComponentParams(handle, type, params);
-						}
+
+						setComponentParams(handle, type, params);
 					}
 				}
 			}
@@ -218,12 +215,11 @@ void Space::loadPrefab(std::string name, GameObject &game_object) {
 
 				ComponentHandle handle = game_object.getComponentHandle(type);
 				if (handle == -1) {
-					auto handle = subsystem->addComponent(game_object_handle, params);
+					handle = subsystem->addComponent(game_object_handle);
 					game_object.setComponentHandle(type, handle);
 				}
-				else {
-					subsystem->setComponent(handle, params);
-				}
+
+				setComponentParams(handle, type, params);
 			}
 			//}
 		}

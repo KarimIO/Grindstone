@@ -9,6 +9,8 @@ class DLLAudio : public DLLHandler {
 public:
 	DLLAudio();
 	AudioWrapper *getWrapper();
+	void setup();
+	void reload();
 	~DLLAudio();
 private:
 	AudioWrapper *wrapper_;

@@ -20,7 +20,7 @@
 #include "../Converter/ImageConverter.hpp"
 #include <thread>
 
-#include <GL/gl3w.h>
+//#include <GL/gl3w.h>
 
 ///////////////////////////////////////////////////////////////////////////////
 // find middle point of 2 vertices
@@ -37,7 +37,7 @@ void computeHalfVertex(float radius, const float v1[3], const float v2[3], float
 	newV[2] *= scale;
 }
 
-void CubemapSubSystem::prepareSphere() {
+void CubemapSystem::prepareSphere() {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
 	std::vector<glm::vec3> vertices = {
@@ -100,7 +100,7 @@ void CubemapSubSystem::prepareSphere() {
 	sphere_vao_->Unbind();
 }
 
-void CubemapSubSystem::prepareUniformBuffer() {
+void CubemapSystem::prepareUniformBuffer() {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
 	UniformBufferBindingCreateInfo ubbci;
@@ -117,7 +117,7 @@ void CubemapSubSystem::prepareUniformBuffer() {
 	ub_ = graphics_wrapper->CreateUniformBuffer(ubci);
 }
 
-void CubemapSubSystem::prepareIrradianceShader() {
+void CubemapSystem::prepareIrradianceShader() {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
 
@@ -193,7 +193,7 @@ void CubemapSubSystem::prepareIrradianceShader() {
 	irradiance_pipeline_ = graphics_wrapper->CreateGraphicsPipeline(irrGPCI);
 }
 
-void CubemapSubSystem::prepareSpecularShader() {
+void CubemapSystem::prepareSpecularShader() {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
 
@@ -270,7 +270,7 @@ void CubemapSubSystem::prepareSpecularShader() {
 	specular_pipeline_ = graphics_wrapper->CreateGraphicsPipeline(specGPCI);
 }
 
-void CubemapSubSystem::convoluteIrradiance(CubemapComponent &c) {
+void CubemapSystem::convoluteIrradiance(CubemapComponent &c) {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
 	graphics_wrapper->BindVertexArrayObject(sphere_vao_);
@@ -331,7 +331,7 @@ void CubemapSubSystem::convoluteIrradiance(CubemapComponent &c) {
 	// graphics_wrapper->EnableDepth(true);
 }
 
-void CubemapSubSystem::convoluteSpecular(CubemapComponent &c) {
+void CubemapSystem::convoluteSpecular(CubemapComponent &c) {
 	return;
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
@@ -399,83 +399,94 @@ void CubemapSubSystem::convoluteSpecular(CubemapComponent &c) {
 	std::cout << "Outputting " << path << "\n";
 }
 
-void CubemapSubSystem::bake() {
-	TransformSubSystem *transform = (TransformSubSystem *)(space_->getSubsystem(COMPONENT_TRANSFORM));
-
+void CubemapSystem::bake() {
 	// For each cubemap component...
-	for (auto &component : components_) {
-		// Copy Projection data.
-		camera_->near_ = component.near_;
-		camera_->far_ = component.far_;
+	for (auto scene : engine.getScenes()) {
+		for (auto space : scene->spaces_) {
+			TransformSubSystem *transform = (TransformSubSystem *)(space->getSubsystem(COMPONENT_TRANSFORM));
+			CubemapSubSystem *sub = (CubemapSubSystem *)space->getSubsystem(COMPONENT_CUBEMAP);
+			for (auto &component : sub->components_) {
+				// Copy Projection data.
+				sub->camera_->near_ = component.near_;
+				sub->camera_->far_ = component.far_;
 
-		GameObjectHandle game_object_id = component.game_object_handle_;
-		GameObject &obj = space_->getObject(game_object_id);
-		ComponentHandle transform_id = obj.getComponentHandle(COMPONENT_TRANSFORM);
+				GameObjectHandle game_object_id = component.game_object_handle_;
+				GameObject &obj = space->getObject(game_object_id);
+				ComponentHandle transform_id = obj.getComponentHandle(COMPONENT_TRANSFORM);
 
-		glm::vec3 pos = transform->getPosition(transform_id);
+				glm::vec3 pos = transform->getPosition(transform_id);
 
-		// For every face...
-		for (uint8_t i = 0; i < 6; ++i) {
-			// Get view matrix for face
-			//engine.getGraphicsWrapper()->setViewport(0, 0, component.resolution_, component.resolution_);
+				// For every face...
+				for (uint8_t i = 0; i < 6; ++i) {
+					// Get view matrix for face
+					//engine.getGraphicsWrapper()->setViewport(0, 0, component.resolution_, component.resolution_);
 
-			// Render 10 times (to auto-adjust exposure)
-			for (int j = 0; j < 10; ++j) {
-				camera_->setPosition(pos);
-				camera_->setDirections(gCubeDirections[i].Target, gCubeDirections[i].Up);
-				camera_->render();
+					// Render 10 times (to auto-adjust exposure)
+					for (int j = 0; j < 10; ++j) {
+						sub->camera_->setPosition(pos);
+						sub->camera_->setDirections(gCubeDirections[i].Target, gCubeDirections[i].Up);
+						sub->camera_->render();
+					}
+				}
+
+				// Convolute and Export Irradiance and Specular
+				convoluteIrradiance(component);
+				convoluteSpecular(component);
 			}
 		}
-
-		// Convolute and Export Irradiance and Specular
-		convoluteIrradiance(component);
-		convoluteSpecular(component);
 	}
 }
 
-CubemapComponent::CubemapComponent(GameObjectHandle object_handle, ComponentHandle id) : Component(COMPONENT_CUBEMAP, object_handle, id), capture_method_(CubemapComponent::CaptureMethod::CAPTURE_BAKE), near_(0.1f), far_(100.0f), resolution_(512) {}
+CubemapComponent::CubemapComponent(GameObjectHandle object_handle, ComponentHandle id) : Component(COMPONENT_CUBEMAP, object_handle, id), capture_method_(CubemapComponent::CaptureMethod::CAPTURE_BAKE), near_(0.1f), far_(100.0f), resolution_(512), cubemap_(nullptr), cubemap_binding_(nullptr), capture_fbo_(nullptr), render_target_(nullptr) {}
 
 CubemapSystem::CubemapSystem() : System(COMPONENT_CUBEMAP) {
-	auto input = engine.getInputManager();
-}
-
-CubemapSubSystem::CubemapSubSystem(Space *space) : SubSystem(COMPONENT_CUBEMAP, space) {
 	auto gw = engine.getGraphicsWrapper();
+	auto input = engine.getInputManager();
 
 	cube_binding_ = TextureSubBinding("environmentMap", 4);
 
 	projection_ = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 5.0f);
 
-	RenderTargetCreateInfo fbo_buffer_ci(FORMAT_COLOR_R8G8B8, 512, 512);
-	final_buffer_ = gw->CreateRenderTarget(&fbo_buffer_ci, 1, true);
+	loadGraphics();
+}
 
-	FramebufferCreateInfo final_framebuffer_ci;
-	final_framebuffer_ci.render_target_lists = &final_buffer_;
-	final_framebuffer_ci.num_render_target_lists = 1;
-	final_framebuffer_ci.depth_target = nullptr; // depth_image_;
-	final_framebuffer_ci.render_pass = nullptr;
-	camera_framebuffer_ = gw->CreateFramebuffer(final_framebuffer_ci);
+CubemapSubSystem::CubemapSubSystem(Space *space) : SubSystem(COMPONENT_CUBEMAP, space) {
 
 	// Prepare Camera
 	camera_ = new Camera(space, true);
-	camera_->setCustomFinalFramebuffer(camera_framebuffer_);
+	camera_->setCustomFinalFramebuffer(engine.getSystem<CubemapSystem>()->camera_framebuffer_);
 	camera_->projection_fov_ = glm::radians(90.0f);
 	camera_->enable_reflections_ = true;
 	camera_->enable_auto_exposure_ = false;
 	camera_->setViewport(512, 512); // Un-hardcode this
 	camera_->initialize();
+}
 
-	TextureBindingLayoutCreateInfo tblci;
-	tblci.bindingLocation = 4;
-	tblci.bindings = &cube_binding_;
-	tblci.bindingCount = (uint32_t)1;
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	texture_binding_layout_ = gw->CreateTextureBindingLayout(tblci);
+void CubemapSubSystem::initialize() {
+	for (auto &component : components_) {
+		auto objname = space_->getObject(component.game_object_handle_).getName();
+		component.path_ = objname;
 
-	prepareSphere();
-	prepareUniformBuffer();
-	prepareIrradianceShader();
-	prepareSpecularShader();
+		// Load File
+		TextureHandler handle = engine.getTextureManager()->loadCubemap(std::string("../assets/cubemaps/") + component.path_ + ".dds");
+		if (handle == size_t(-1)) {
+			component.cubemap_ = nullptr;
+			component.cubemap_binding_ = nullptr;
+		}
+		else {
+			Texture *texture = engine.getTextureManager()->getTexture(handle);
+			component.cubemap_ = texture;
+			SingleTextureBind stb;
+			stb.texture = component.cubemap_;
+			stb.address = 4;
+
+			TextureBindingCreateInfo ci;
+			ci.textures = &stb;
+			ci.layout = engine.getSystem<CubemapSystem>()->texture_binding_layout_;
+			ci.textureCount = 1;
+			component.cubemap_binding_ = engine.getGraphicsWrapper()->CreateTextureBinding(ci);
+		}
+	}
 }
 
 ComponentHandle CubemapSubSystem::addComponent(GameObjectHandle object_handle) {
@@ -485,15 +496,7 @@ ComponentHandle CubemapSubSystem::addComponent(GameObjectHandle object_handle) {
 	return component_handle;
 }
 
-ComponentHandle CubemapSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
-	ComponentHandle component_handle = (ComponentHandle)components_.size();
-	components_.emplace_back(object_handle, component_handle);
-
-	setComponent(component_handle, params);
-
-	return component_handle;
-}
-
+/*
 void CubemapSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
 	auto &component = components_[component_handle];
 	auto object_handle = component.game_object_handle_;
@@ -588,7 +591,7 @@ void CubemapSubSystem::setComponent(ComponentHandle component_handle, rapidjson:
 		component.capture_fbo_ = engine.getGraphicsWrapper()->CreateFramebuffer(gbuffer_ci);
 	}
 }
-
+*/
 
 void CubemapSystem::update(double dt) {
 	auto scenes = engine.getScenes();
@@ -596,6 +599,95 @@ void CubemapSystem::update(double dt) {
 		for (auto space : scene->spaces_) {
 			CubemapSubSystem *subsystem = (CubemapSubSystem *)space->getSubsystem(system_type_);
 			for (auto &component : subsystem->components_) {
+			}
+		}
+	}
+}
+
+void CubemapSystem::loadGraphics() {
+	auto gw = engine.getGraphicsWrapper();
+
+	RenderTargetCreateInfo fbo_buffer_ci(FORMAT_COLOR_R8G8B8, 512, 512);
+	final_buffer_ = gw->CreateRenderTarget(&fbo_buffer_ci, 1, true);
+
+	FramebufferCreateInfo final_framebuffer_ci;
+	final_framebuffer_ci.render_target_lists = &final_buffer_;
+	final_framebuffer_ci.num_render_target_lists = 1;
+	final_framebuffer_ci.depth_target = nullptr; // depth_image_;
+	final_framebuffer_ci.render_pass = nullptr;
+	camera_framebuffer_ = gw->CreateFramebuffer(final_framebuffer_ci);
+
+	TextureBindingLayoutCreateInfo tblci;
+	tblci.bindingLocation = 4;
+	tblci.bindings = &cube_binding_;
+	tblci.bindingCount = (uint32_t)1;
+	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	texture_binding_layout_ = gw->CreateTextureBindingLayout(tblci);
+
+	prepareSphere();
+	prepareUniformBuffer();
+	prepareIrradianceShader();
+	prepareSpecularShader();
+
+	auto scenes = engine.getScenes();
+	for (auto scene : scenes) {
+		for (auto space : scene->spaces_) {
+			CubemapSubSystem *subsystem = (CubemapSubSystem *)space->getSubsystem(system_type_);
+			for (auto &component : subsystem->components_) {
+				auto objname = space->getObject(component.game_object_handle_).getName();
+				component.path_ = objname;
+
+				// Load File
+				TextureHandler handle = engine.getTextureManager()->loadCubemap(std::string("../assets/cubemaps/") + component.path_ + ".dds");
+				if (handle == size_t(-1)) {
+					component.cubemap_ = nullptr;
+					component.cubemap_binding_ = nullptr;
+				}
+				else {
+					Texture *texture = engine.getTextureManager()->getTexture(handle);
+					component.cubemap_ = texture;
+					SingleTextureBind stb;
+					stb.texture = component.cubemap_;
+					stb.address = 4;
+
+					TextureBindingCreateInfo ci;
+					ci.textures = &stb;
+					ci.layout = engine.getSystem<CubemapSystem>()->texture_binding_layout_;
+					ci.textureCount = 1;
+					component.cubemap_binding_ = engine.getGraphicsWrapper()->CreateTextureBinding(ci);
+				}
+			}
+		}
+	}
+}
+
+void CubemapSystem::destroyGraphics() {
+	auto gw = engine.getGraphicsWrapper();
+
+	gw->DeleteGraphicsPipeline(irradiance_pipeline_);
+	gw->DeleteRenderTarget(irradiance_image_);
+	gw->DeleteFramebuffer(irradiance_fbo_);
+
+	gw->DeleteGraphicsPipeline(specular_pipeline_);
+	gw->DeleteRenderTarget(specular_image_);
+	gw->DeleteFramebuffer(specular_fbo_);
+
+	gw->DeleteVertexArrayObject(sphere_vao_);
+	gw->DeleteVertexBuffer(sphere_vbo_);
+	gw->DeleteIndexBuffer(sphere_ibo_);
+	gw->DeleteRenderTarget(final_buffer_);
+
+	gw->DeleteUniformBufferBinding(ubb_);
+	gw->DeleteUniformBuffer(ub_);
+
+	auto scenes = engine.getScenes();
+	for (auto scene : scenes) {
+		for (auto space : scene->spaces_) {
+			CubemapSubSystem *subsystem = (CubemapSubSystem *)space->getSubsystem(system_type_);
+			for (auto &component : subsystem->components_) {
+				gw->DeleteTextureBinding(component.cubemap_binding_);
+				gw->DeleteFramebuffer(component.capture_fbo_);
+				gw->DeleteRenderTarget(component.render_target_);
 			}
 		}
 	}
@@ -613,14 +705,10 @@ size_t CubemapSubSystem::getNumComponents() {
 	return components_.size();
 }
 
-void CubemapSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
-	// TODO
-}
-
 void CubemapSubSystem::removeComponent(ComponentHandle handle) {
 }
 
-void CubemapSubSystem::loadCubemaps() {
+void CubemapSystem::loadCubemaps() {
 }
 
 CubemapComponent * CubemapSubSystem::getClosestCubemap(glm::vec3 eye) {
@@ -645,3 +733,36 @@ CubemapComponent * CubemapSubSystem::getClosestCubemap(glm::vec3 eye) {
 
 CubemapSubSystem::~CubemapSubSystem() {
 }
+
+
+void handleMode(void *owner) {
+	CubemapComponent *component = ((CubemapComponent *)owner);
+	
+	auto objname = engine.getScene(0)->spaces_[0]->getObject(component->game_object_handle_).getName();
+	component->path_ = objname;
+
+	// Load File
+	TextureHandler handle = engine.getTextureManager()->loadCubemap(std::string("../assets/cubemaps/") + component->path_ + ".dds");
+	if (handle == size_t(-1)) {
+		component->cubemap_ = nullptr;
+		component->cubemap_binding_ = nullptr;
+	}
+	else {
+		Texture *texture = engine.getTextureManager()->getTexture(handle);
+		component->cubemap_ = texture;
+		SingleTextureBind stb;
+		stb.texture = component->cubemap_;
+		stb.address = 4;
+
+		TextureBindingCreateInfo ci;
+		ci.textures = &stb;
+		ci.layout = engine.getSystem<CubemapSystem>()->texture_binding_layout_;
+		ci.textureCount = 1;
+		component->cubemap_binding_ = engine.getGraphicsWrapper()->CreateTextureBinding(ci);
+	}
+}
+
+REFLECT_STRUCT_BEGIN(CubemapComponent, CubemapSystem, COMPONENT_CUBEMAP)
+REFLECT_STRUCT_MEMBER_D(capture_method_, "Capture Method", "capturemethod", reflect::Metadata::SaveSetAndView, handleMode)
+REFLECT_NO_SUBCAT()
+REFLECT_STRUCT_END()

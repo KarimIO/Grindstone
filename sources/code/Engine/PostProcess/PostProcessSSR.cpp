@@ -8,7 +8,7 @@
 
 // , PostProcessAutoExposure *auto_exposure
 // , auto_exposure_(auto_exposure)
-PostProcessSSR::PostProcessSSR(PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target) : BasePostProcess(pipeline), source_(source), target_(target) {
+PostProcessSSR::PostProcessSSR(unsigned int w, unsigned h, PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target) : BasePostProcess(pipeline), source_(source), target_(target) {
 	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
 
@@ -80,6 +80,10 @@ PostProcessSSR::PostProcessSSR(PostPipeline *pipeline, RenderTargetContainer *so
 	gpipeline_ = graphics_wrapper->CreateGraphicsPipeline(ssrGPCI);
 }
 
+PostProcessSSR::~PostProcessSSR()
+{
+}
+
 void PostProcessSSR::Process() {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 	double dt = engine.getUpdateTimeDelta();
@@ -100,4 +104,16 @@ void PostProcessSSR::Process() {
 	graphics_wrapper->DrawImmediateVertices(0, 6);
 
 	graphics_wrapper->SetImmediateBlending(BLEND_NONE);
+}
+
+void PostProcessSSR::resizeBuffers(unsigned int w, unsigned h)
+{
+}
+
+void PostProcessSSR::reloadGraphics(unsigned int w, unsigned h)
+{
+}
+
+void PostProcessSSR::destroyGraphics()
+{
 }

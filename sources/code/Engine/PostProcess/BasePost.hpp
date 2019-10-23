@@ -27,7 +27,11 @@ struct RenderTargetContainer {
 class BasePostProcess {
 public:
 	BasePostProcess(PostPipeline *post);
+	virtual ~BasePostProcess();
     virtual void Process() = 0;
+	virtual void resizeBuffers(unsigned int w, unsigned h);
+	virtual void reloadGraphics(unsigned int w, unsigned h);
+	virtual void destroyGraphics();
 	PostPipeline *getPipeline();
 protected:
 	PostPipeline *pipeline_;

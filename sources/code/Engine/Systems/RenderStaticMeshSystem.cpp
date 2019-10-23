@@ -28,25 +28,6 @@ void RenderStaticMeshSubSystem::initialize() {
 	}
 }
 
-ComponentHandle RenderStaticMeshSubSystem::addComponent(GameObjectHandle object_handle, rapidjson::Value &params) {
-	ComponentHandle component_handle = (ComponentHandle)components_.size();
-	components_.emplace_back(object_handle, component_handle);
-
-	setComponent(component_handle, params);
-
-	return component_handle;
-}
-
-void RenderStaticMeshSubSystem::setComponent(ComponentHandle component_handle, rapidjson::Value & params) {
-	auto &component = components_[component_handle];
-
-	if (params.HasMember("path")) {
-		auto path = params["path"].GetString();
-		component.path_ = path;
-		component.model_handle_ = engine.getModelManager()->preloadModel(component_handle, path);
-	}
-}
-
 void RenderStaticMeshSubSystem::removeComponent(ComponentHandle id) {
 	components_.erase(components_.begin() + id);
 }
@@ -63,13 +44,6 @@ size_t RenderStaticMeshSubSystem::getNumComponents() {
 	return components_.size();
 }
 
-void RenderStaticMeshSubSystem::writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) {
-	auto &c = getComponent(handle);
-
-	w.Key("path");
-	w.String(c.path_.c_str());
-}
-
 void RenderStaticMeshSystem::update(double dt) {
 }
 
@@ -82,7 +56,7 @@ void handleRenderMeshStaticPath(void *owner) {
 	component->model_handle_ = engine.getModelManager()->loadModel(component->handle_, component->path_);
 }
 
-REFLECT_STRUCT_BEGIN(RenderStaticMeshComponent, RenderStaticMeshSystem)
+REFLECT_STRUCT_BEGIN(RenderStaticMeshComponent, RenderStaticMeshSystem, COMPONENT_RENDER_STATIC_MESH)
 REFLECT_STRUCT_MEMBER_D(path_, "Path to Model", "path", reflect::SaveSetAndView, handleRenderMeshStaticPath)
 REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()

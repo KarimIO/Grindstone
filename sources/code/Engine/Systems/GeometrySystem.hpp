@@ -9,11 +9,6 @@
 #include <glm/glm.hpp>
 #include <vector>
 
-#include "CBase.hpp"
-
-#include "SMaterial.hpp"
-#include "SCamera.hpp"
-
 enum GeometryType {
 	GEOMETRY_STATIC_MODEL = 0,
 	//GEOMETRY_SKELETAL_MODEL,

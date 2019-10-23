@@ -18,10 +18,13 @@ struct CameraComponent : public Component {
 class CameraSystem : public System {
 public:
 	CameraSystem();
-
 	void update(double dt);
 
+	void loadGraphics();
+	void destroyGraphics();
+
 	REFLECT_SYSTEM()
+
 private:
 };
 
@@ -30,12 +33,9 @@ class CameraSubSystem : public SubSystem {
 public:
 	CameraSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
-	virtual ComponentHandle addComponent(GameObjectHandle object_handle, rapidjson::Value &params) override;
-	virtual void setComponent(ComponentHandle component_handle, rapidjson::Value & params) override;
 	CameraComponent &getComponent(ComponentHandle handle);
 	virtual Component *getBaseComponent(ComponentHandle component_handle) override;
 	size_t getNumComponents();
-	virtual void writeComponentToJson(ComponentHandle handle, rapidjson::PrettyWriter<rapidjson::StringBuffer> & w) override;
 	virtual void removeComponent(ComponentHandle handle);
 	virtual ~CameraSubSystem();
 private:

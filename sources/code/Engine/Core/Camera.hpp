@@ -32,6 +32,9 @@ public:
 	void setOrtho(float l, float r, float t, float b);
 	void setPerspective();
 
+	void reloadGraphics();
+	void destroyGraphics();
+
 	float getFov();
 	float getAspectRatio();
 	float getNear();

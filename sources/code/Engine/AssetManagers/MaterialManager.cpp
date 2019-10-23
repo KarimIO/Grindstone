@@ -133,8 +133,8 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 				textures[texture_id].address = texture_id;
 			}
 			else {
-				// Not a valid paramter
-				GRIND_WARN("In {0}, invalid parameter {1}.", path, parameter);
+			// Not a valid paramter
+			GRIND_WARN("In {0}, invalid parameter {1}.", path, parameter);
 			}
 			}
 		}
@@ -227,5 +227,20 @@ void MaterialManager::removeMeshFromMaterial(MaterialReference ref, Renderable*m
 }
 
 void MaterialManager::loadPreloaded()
+{
+}
+
+void MaterialManager::reloadAll() {
+	/*std::vector<std::string> material_list;
+	for (auto &m : material_map_) {
+		material_list.push_back(m.first);
+	}
+	*/
+
+	engine.getGraphicsPipelineManager()->cleanup();
+
+}
+
+void MaterialManager::reloadMaterial(MaterialReference handle)
 {
 }
