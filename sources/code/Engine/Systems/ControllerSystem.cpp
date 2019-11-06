@@ -32,13 +32,13 @@ void ControllerSubSystem::removeComponent(ComponentHandle id) {
 ControllerSubSystem::~ControllerSubSystem() {
 }
 
-void ControllerSystem::update(double dt) {
+void ControllerSystem::update() {
 	auto &scenes = engine.getScenes();
 	for (auto scene : scenes) {
 		for (auto space : scene->spaces_) {
 			ControllerSubSystem *subsystem = (ControllerSubSystem *)space->getSubsystem(system_type_);
 			for (auto &component : subsystem->components_) {
-				component.update(dt);
+				component.update(engine.getUpdateTimeDelta());
 			}
 		}
 	}

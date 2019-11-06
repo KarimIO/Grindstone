@@ -1,5 +1,9 @@
 #include "ScriptSystem.hpp"
 
+#include "Core/Engine.hpp"
+#include "Core/Scene.hpp"
+#include "Core/Space.hpp"
+
 #include <iostream>
 
 #include <mono/jit/jit.h>
@@ -13,11 +17,16 @@ AssemblyPackage::AssemblyPackage(MonoAssembly *a, MonoImage *i, std::string p) :
 
 ScriptFields::ScriptFields(ScriptFields::ScriptFieldType t, std::string n, MonoClassField *f) : type_(t), name_(n), field_(f) {}
 
-ScriptSystem::ScriptSystem() {
+ScriptComponent::ScriptComponent(GameObjectHandle object_handle, ComponentHandle id) : Component(COMPONENT_SCRIPT, object_handle, id) {}
+
+ScriptSystem::ScriptSystem() : System(COMPONENT_SCRIPT) {
 	mono_set_dirs("C:\\Program Files\\Mono\\lib", "C:\\Program Files\\Mono\\etc");
 
 	domain_ = mono_jit_init_version("grindstone_mono_domain",
 		"v4.0.30319");
+
+	auto i = loadAssembly("scriptbin/Main.dll");
+	loadClass(0, "Example");
 }
 
 unsigned int ScriptSystem::loadAssembly(std::string path) {
@@ -141,11 +150,16 @@ void ScriptSystem::loadClass(unsigned int assembly_id, std::string classname) {
 	std::cout << "Value of 'Id' is " << result << std::endl;*/
 }
 
-void ScriptSystem::createObject(unsigned int component_handle, std::string classname) {
-	auto class_s = script_classes_[classname];
+inline ScriptClass *ScriptSystem::getClass(std::string name) {
+	return script_classes_[name];
+}
+
+void ScriptSubSystem::createObject(unsigned int component_handle, std::string classname) {
+	ScriptSystem *scriptsys = engine.getSystem<ScriptSystem>();
+	auto class_s = scriptsys->getClass(classname);
 	auto class_n = class_s->class_;
-	auto obj = mono_object_new(domain_, class_n);
-	component_[component_handle].scripts_.emplace_back(class_s, obj);
+	auto obj = mono_object_new(scriptsys->getDomain(), class_n);
+	components_[component_handle].scripts_.emplace_back(class_s, obj);
 
 	if (class_s->script_method_ctor_) {
 		MonoObject* exception = nullptr;
@@ -155,32 +169,10 @@ void ScriptSystem::createObject(unsigned int component_handle, std::string class
 			std::cout << mono_string_to_utf8(mono_object_to_string(exception, nullptr)) << std::endl;
 		}
 	}
-}
+}	
 
-unsigned int ScriptSystem::addComponent() {
-	unsigned int c = (unsigned int)component_.size();
-	component_.emplace_back();
-
-	return c;
-}
-
-void ScriptSystem::initialize() {
-	for (auto &c : component_) {
-		for (auto &s : c.scripts_) {
-			if (s.script_class_->script_method_init_) {
-				MonoObject* exception = nullptr;
-				mono_runtime_invoke(s.script_class_->script_method_init_, s.script_object_, nullptr, &exception);
-
-				if (exception) {
-					std::cout << mono_string_to_utf8(mono_object_to_string(exception, nullptr)) << std::endl;
-				}
-			}
-		}
-	}
-}
-
-void ScriptSystem::start() {
-	for (auto &c : component_) {
+void ScriptSubSystem::start() {
+	for (auto &c : components_) {
 		for (auto &s : c.scripts_) {
 			if (s.script_class_->script_method_start_) {
 				MonoObject* exception = nullptr;
@@ -195,22 +187,27 @@ void ScriptSystem::start() {
 }
 
 void ScriptSystem::update() {
-	for (auto &c : component_) {
-		for (auto &s : c.scripts_) {
-			if (s.script_class_->script_method_update_) {
-				MonoObject* exception = nullptr;
-				mono_runtime_invoke(s.script_class_->script_method_update_, s.script_object_, nullptr, &exception);
+	for (auto scene : engine.getScenes()) {
+		for (auto space : scene->spaces_) {
+			ScriptSubSystem *sub = (ScriptSubSystem *)space->getSubsystem(COMPONENT_SCRIPT);
+			for (auto &c : sub->components_) {
+				for (auto &s : c.scripts_) {
+					if (s.script_class_->script_method_update_) {
+						MonoObject* exception = nullptr;
+						mono_runtime_invoke(s.script_class_->script_method_update_, s.script_object_, nullptr, &exception);
 
-				if (exception) {
-					std::cout << mono_string_to_utf8(mono_object_to_string(exception, nullptr)) << std::endl;
+						if (exception) {
+							std::cout << mono_string_to_utf8(mono_object_to_string(exception, nullptr)) << std::endl;
+						}
+					}
 				}
 			}
 		}
 	}
 }
 
-void ScriptSystem::cleanup() {
-	for (auto &c : component_) {
+void ScriptSubSystem::cleanup() {
+	for (auto &c : components_) {
 		for (auto &s : c.scripts_) {
 			if (s.script_class_->script_method_cleanup_) {
 				MonoObject* exception = nullptr;
@@ -223,3 +220,58 @@ void ScriptSystem::cleanup() {
 		}
 	}
 }
+
+ScriptSubSystem::ScriptSubSystem(Space * space) : SubSystem(COMPONENT_SCRIPT, space) {
+}
+
+ComponentHandle ScriptSubSystem::addComponent(GameObjectHandle object_handle) {
+	ComponentHandle component_handle = (ComponentHandle)components_.size();
+	components_.emplace_back(object_handle, component_handle);
+
+	return component_handle;
+}
+
+void ScriptSubSystem::initialize() {
+	//for (auto &c : components_) {
+		
+	//}
+
+	//engine.getSystem<ScriptSystem>()
+	createObject(0, "Example");
+	
+	for (auto &c : components_) {
+		for (auto &s : c.scripts_) {
+			if (s.script_class_->script_method_init_) {
+				MonoObject* exception = nullptr;
+				mono_runtime_invoke(s.script_class_->script_method_init_, s.script_object_, nullptr, &exception);
+
+				if (exception) {
+					std::cout << mono_string_to_utf8(mono_object_to_string(exception, nullptr)) << std::endl;
+				}
+			}
+		}
+	}
+}
+
+ScriptComponent & ScriptSubSystem::getComponent(ComponentHandle handle) {
+	return components_[handle];
+}
+
+Component * ScriptSubSystem::getBaseComponent(ComponentHandle handle) {
+	return &components_[handle];
+}
+
+size_t ScriptSubSystem::getNumComponents() {
+	return components_.size();
+}
+
+void ScriptSubSystem::removeComponent(ComponentHandle handle) {
+	components_.erase(components_.begin() + handle);
+}
+
+ScriptSubSystem::~ScriptSubSystem() {
+}
+
+REFLECT_STRUCT_BEGIN(ScriptComponent, ScriptSystem, COMPONENT_SCRIPT)
+REFLECT_NO_SUBCAT()
+REFLECT_STRUCT_END()

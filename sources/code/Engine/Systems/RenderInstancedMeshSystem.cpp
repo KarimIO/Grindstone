@@ -38,7 +38,7 @@ size_t RenderInstancedMeshSubSystem::getNumComponents() {
 	return components_.size();
 }
 
-void RenderInstancedMeshSystem::update(double dt) {
+void RenderInstancedMeshSystem::update() {
 }
 
 RenderInstancedMeshSystem::RenderInstancedMeshSystem() : System(COMPONENT_CAMERA) {}

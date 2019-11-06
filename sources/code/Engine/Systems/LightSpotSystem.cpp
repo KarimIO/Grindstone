@@ -52,7 +52,7 @@ void LightSpotSystem::loadGraphics() {
 
 LightSpotSystem::LightSpotSystem() : System(COMPONENT_LIGHT_SPOT) {}
 
-void LightSpotSystem::update(double dt) {
+void LightSpotSystem::update() {
 	const Settings *settings = engine.getSettings();
 
 	bool invert_proj = settings->graphics_language_ == GRAPHICS_VULKAN;

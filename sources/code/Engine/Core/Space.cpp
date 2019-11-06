@@ -14,6 +14,7 @@
 #include "../Systems/ColliderSystem.hpp"
 #include "../Systems/RigidBodySystem.hpp"
 #include "../Systems/CubemapSystem.hpp"
+#include "../Systems/ScriptSystem.hpp"
 #include "../Systems/RenderSpriteSystem.hpp"
 #include "Engine.hpp"
 #include "Editor.hpp"
@@ -101,6 +102,7 @@ Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 	addSystem(new TransformSubSystem(this));
 	addSystem(new CubemapSubSystem(this));
 	addSystem(new CameraSubSystem(this));
+	addSystem(new ScriptSubSystem(this));
 	addSystem(new RenderTerrainSubSystem((RenderTerrainSystem *)engine.getSystem(COMPONENT_RENDER_TERRAIN), this));
 
 	for (rapidjson::Value::MemberIterator game_object_itr = val.MemberBegin(); game_object_itr != val.MemberEnd(); ++game_object_itr) {

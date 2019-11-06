@@ -17,7 +17,7 @@ class RenderStaticMeshSystem : public System {
 public:
 	RenderStaticMeshSystem();
 
-	void update(double dt);
+	void update();
 
 	REFLECT_SYSTEM()
 };

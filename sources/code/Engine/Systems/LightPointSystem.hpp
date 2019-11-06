@@ -21,7 +21,7 @@ struct LightPointComponent : public Component {
 class LightPointSystem : public System {
 public:
 	LightPointSystem();
-	void update(double dt);
+	void update();
 
 	void loadGraphics();
 	void destroyGraphics();

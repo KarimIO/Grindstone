@@ -593,7 +593,7 @@ void CubemapSubSystem::setComponent(ComponentHandle component_handle, rapidjson:
 }
 */
 
-void CubemapSystem::update(double dt) {
+void CubemapSystem::update() {
 	auto scenes = engine.getScenes();
 	for (auto scene : scenes) {
 		for (auto space : scene->spaces_) {

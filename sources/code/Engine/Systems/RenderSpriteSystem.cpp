@@ -124,7 +124,7 @@ size_t RenderSpriteSubSystem::getNumComponents() {
 
 
 
-void RenderSpriteSystem::update(double dt) {
+void RenderSpriteSystem::update() {
 }
 
 RenderSpriteSystem::RenderSpriteSystem() : System(COMPONENT_RENDER_SPRITE) {

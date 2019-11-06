@@ -18,7 +18,7 @@ struct CameraComponent : public Component {
 class CameraSystem : public System {
 public:
 	CameraSystem();
-	void update(double dt);
+	void update();
 
 	void loadGraphics();
 	void destroyGraphics();

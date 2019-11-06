@@ -192,7 +192,7 @@ size_t RenderTerrainSubSystem::getNumComponents() {
 	return components_.size();
 }
 
-void RenderTerrainSystem::update(double dt) {
+void RenderTerrainSystem::update() {
 }
 
 UniformBuffer * RenderTerrainSystem::getModelUbo() {

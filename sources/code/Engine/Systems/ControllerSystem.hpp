@@ -36,7 +36,7 @@ private:
 class ControllerSystem : public System {
 public:
 	ControllerSystem();
-	void update(double dt);
+	void update();
 private:
 	UniformBuffer *ubo_;
 

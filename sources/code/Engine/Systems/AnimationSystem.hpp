@@ -41,7 +41,7 @@ struct AnimationComponent : public Component {
 	AnimationComponent(GameObjectHandle object_handle, ComponentHandle handle);
 	AnimationComponent(GameObjectHandle object_handle, ComponentHandle handle, std::string animation_path, std::string skeleton_path);
 
-	void update(double dt);
+	void update();
 
 	std::string animation_path_;
 	std::string skeleton_path_;
@@ -62,7 +62,7 @@ class AnimationSystem : public System {
 public:
 	AnimationSystem();
 
-	void update(double dt);
+	void update();
 };
 
 class AnimationSubSystem : public SubSystem {

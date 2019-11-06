@@ -15,7 +15,7 @@ void GameplaySystem::RemoveSystem(SGBase *system) {
 	subsystems.erase(system);
 }
 
-void GameplaySystem::Update(double dt) {
+void GameplaySystem::update() {
 	for (auto &system : subsystems) {
 		system->Update(dt);
 	}

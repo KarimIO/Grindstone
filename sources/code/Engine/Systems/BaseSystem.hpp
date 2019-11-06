@@ -96,7 +96,7 @@ class Scene;
 class System {
 public:
 	System(ComponentType type);
-	virtual void update(double dt) = 0;
+	virtual void update() = 0;
 	virtual reflect::TypeDescriptor_Struct *getReflection() { return nullptr; };
 	virtual ~System();
 

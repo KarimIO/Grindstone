@@ -1,4 +1,7 @@
-#pragma once
+#ifndef _SCRIPT_SYSTEM_H
+#define _SCRIPT_SYSTEM_H
+
+#include "BaseSystem.hpp"
 
 #include <string>
 #include <vector>
@@ -52,8 +55,11 @@ struct ScriptInstance {
 
 class ScriptSystem;
 
-struct ScriptComponent {
+struct ScriptComponent : public Component {
+	ScriptComponent(GameObjectHandle object_handle, ComponentHandle id);
+
 	std::vector<ScriptInstance> scripts_;
+	REFLECT()
 };
 
 struct ScriptClass {
@@ -69,22 +75,41 @@ struct ScriptClass {
 	std::vector<ScriptFields> fields_;
 };
 
-class ScriptSystem {
+class ScriptSubSystem : public SubSystem {
+	friend ScriptSystem;
 public:
-	ScriptSystem();
-	void initialize();
-	void update();
+	ScriptSubSystem(Space *space);
 	void start();
 	void cleanup();
+	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
+	virtual void initialize() override;
+	ScriptComponent &getComponent(ComponentHandle handle);
+	virtual Component *getBaseComponent(ComponentHandle component_handle) override;
+	size_t getNumComponents();
+	virtual void removeComponent(ComponentHandle handle);
+	void createObject(unsigned int component_handle, std::string classname);
+
+	virtual ~ScriptSubSystem();
+private:
+	std::vector<ScriptComponent> components_;
+};
+
+class ScriptSystem : public System {
+	friend ScriptSubSystem;
+public:
+	ScriptSystem();
+	void update();
+	inline ScriptClass *getClass(std::string);
 	unsigned int loadAssembly(std::string path);
 	void loadClass(unsigned int assembly_id, std::string classname);
-	void createObject(unsigned int component_handle, std::string classname);
-	unsigned int addComponent();
 	MonoDomain* getDomain();
 	~ScriptSystem();
 private:
 	std::vector<AssemblyPackage *> assemblies_;
-	std::vector<ScriptComponent> component_;
 	std::map<std::string, ScriptClass *> script_classes_;
 	MonoDomain *domain_;
+
+	REFLECT_SYSTEM()
 };
+
+#endif

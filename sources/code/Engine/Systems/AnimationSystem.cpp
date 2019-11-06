@@ -119,7 +119,9 @@ void AnimationComponent::readNodeHeirarchy(double time, Animation::Node *node, g
 	}
 }
 
-void AnimationComponent::update(double dt) {
+void AnimationComponent::update() {
+	double dt = engine.getUpdateTimeDelta();
+
 	// For every anim this component handles...
 	for (auto &anim : animations_) {
 
@@ -172,7 +174,7 @@ size_t AnimationSubSystem::getNumComponents() {
 	return components_.size();
 }
 
-void AnimationSystem::update(double dt) {
+void AnimationSystem::update() {
 }
 
 AnimationSystem::AnimationSystem() : System(COMPONENT_CAMERA) {}

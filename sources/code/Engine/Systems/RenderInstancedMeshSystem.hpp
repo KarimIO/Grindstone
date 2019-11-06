@@ -15,7 +15,7 @@ class RenderInstancedMeshSystem : public System {
 public:
 	RenderInstancedMeshSystem();
 
-	void update(double dt);
+	void update();
 };
 
 class RenderInstancedMeshSubSystem : public SubSystem {

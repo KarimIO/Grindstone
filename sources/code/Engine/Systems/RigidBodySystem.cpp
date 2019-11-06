@@ -32,7 +32,9 @@ ComponentHandle RigidBodySubSystem::addComponent(GameObjectHandle object_handle)
 	return component_handle;
 }
 
-void RigidBodySystem::update(double dt) {
+void RigidBodySystem::update() {
+	auto dt = engine.getUpdateTimeDelta();
+
 	auto scenes = engine.getScenes();
 	for (auto scene : scenes) {
 		for (auto space : scene->spaces_) {

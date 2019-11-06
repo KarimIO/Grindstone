@@ -34,7 +34,7 @@ void TransformSubSystem::removeComponent(ComponentHandle id) {
 TransformSystem::TransformSystem() : System(COMPONENT_TRANSFORM) {
 }
 
-void TransformSystem::update(double dt) {
+void TransformSystem::update() {
 	auto scenes = engine.getScenes();
 	for (auto scene : scenes) {
 		for (auto space : scene->spaces_) {

@@ -34,7 +34,7 @@ struct LightDirectionalComponent : public Component {
 class LightDirectionalSystem : public System {
 public:
 	LightDirectionalSystem();
-	void update(double dt);
+	void update();
 
 	void loadGraphics();
 	void destroyGraphics();

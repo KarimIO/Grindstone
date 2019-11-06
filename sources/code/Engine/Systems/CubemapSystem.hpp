@@ -45,7 +45,7 @@ struct CubemapComponent : public Component {
 class CubemapSystem : public System {
 public:
 	CubemapSystem();
-	void update(double dt);
+	void update();
 
 	void loadGraphics();
 	void destroyGraphics();

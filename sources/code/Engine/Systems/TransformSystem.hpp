@@ -19,7 +19,7 @@ struct TransformComponent : public Component {
 class TransformSystem : public System {
 public:
 	TransformSystem();
-	void update(double dt);
+	void update();
 private:
 
 	 REFLECT_SYSTEM()

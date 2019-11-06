@@ -32,7 +32,7 @@ struct LightSpotComponent : public Component {
 class LightSpotSystem : public System {
 public:
 	LightSpotSystem();
-	void update(double dt);
+	void update();
 
 	void loadGraphics();
 	void destroyGraphics();

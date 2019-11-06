@@ -41,7 +41,7 @@ public:
 class RigidBodySystem : public System {
 public:
 	RigidBodySystem();
-	void update(double dt);
+	void update();
 };
 
 class RigidBodySubSystem : public SubSystem {

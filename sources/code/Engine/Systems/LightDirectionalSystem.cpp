@@ -100,7 +100,7 @@ ComponentHandle LightDirectionalSubSystem::addComponent(GameObjectHandle object_
 
 LightDirectionalSystem::LightDirectionalSystem() : System(COMPONENT_LIGHT_DIRECTIONAL) {}
 
-void LightDirectionalSystem::update(double dt) {
+void LightDirectionalSystem::update() {
 	const Settings *settings = engine.getSettings();
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 

@@ -27,7 +27,7 @@ struct ColliderComponent : public Component {
 class ColliderSystem : public System {
 public:
 	ColliderSystem();
-	void update(double dt);
+	void update();
 };
 
 class ColliderSubSystem : public SubSystem {

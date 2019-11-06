@@ -25,6 +25,7 @@
 #include "../Systems/RigidBodySystem.hpp"
 #include "../Systems/RenderTerrainSystem.hpp"
 #include "../Systems/RenderSpriteSystem.hpp"
+#include "../Systems/ScriptSystem.hpp"
 // - AssetManagers
 #include "../AssetManagers/AudioManager.hpp"
 #include "../AssetManagers/MaterialManager.hpp"
@@ -88,6 +89,7 @@ void Engine::initialize() {
 	addSystem(new LightDirectionalSystem());
 	addSystem(new TransformSystem());
 	addSystem(new CameraSystem());
+	addSystem(new ScriptSystem());
 
 	// Load Default Level
 	addScene(settings_->default_map_);
@@ -240,11 +242,6 @@ System *Engine::addSystem(System * system) {
 	return system;
 }
 
-template<class T>
-T *Engine::getSystem() {
-	return static_cast<T *>(systems_[T::static_system_type_]);
-}
-
 System * Engine::getSystem(ComponentHandle type) {
 	return systems_[type];
 }
@@ -320,7 +317,7 @@ void Engine::run() {
 		for (auto scene : *scenes) {
 			for (auto &system : systems_) {
 				if (system)
-					system->update(dt);
+					system->update();
 			}
 		}
 

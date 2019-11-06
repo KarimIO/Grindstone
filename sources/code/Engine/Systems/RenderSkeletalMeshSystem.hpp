@@ -15,7 +15,7 @@ class RenderSkeletalMeshSystem : public System {
 public:
 	RenderSkeletalMeshSystem();
 
-	void update(double dt);
+	void update();
 };
 
 class RenderSkeletalMeshSubSystem : public SubSystem {

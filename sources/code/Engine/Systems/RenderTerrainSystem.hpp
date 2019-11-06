@@ -42,7 +42,7 @@ class RenderTerrainSystem : public System {
 public:
 	RenderTerrainSystem(UniformBufferBinding *ubb);
 
-	void update(double dt);
+	void update();
 	UniformBuffer *getModelUbo();
 	GeometryInfo geometry_info_;
 private:

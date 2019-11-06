@@ -44,7 +44,7 @@ size_t RenderStaticMeshSubSystem::getNumComponents() {
 	return components_.size();
 }
 
-void RenderStaticMeshSystem::update(double dt) {
+void RenderStaticMeshSystem::update() {
 }
 
 RenderStaticMeshSystem::RenderStaticMeshSystem() : System(COMPONENT_RENDER_STATIC_MESH) {}

@@ -21,8 +21,8 @@ void PostProcessColorGrading::Process() {
 		// target_fbo_[0]->Clear(CLEAR_BOTH);
 	}
 	else {
-		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
-		engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
+		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);		engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
+
 	}
 	target_->framebuffer->BindRead();
 	target_->framebuffer->BindTextures(0);

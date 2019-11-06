@@ -3,7 +3,7 @@
 
 #include "BasePost.hpp"
 
-class TextureSubBinding;
+struct TextureSubBinding;
 class TextureBindingLayout;
 class UniformBufferBinding;
 

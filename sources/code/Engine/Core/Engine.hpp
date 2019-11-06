@@ -86,8 +86,12 @@ public:
 	static Engine &getInstance();
 
 	Scene *addScene(std::string path);
+
 	template<class T>
-	T * getSystem();
+	T *getSystem() {
+		return (T *)(systems_[T::static_system_type_]);
+	}
+
 	System *addSystem(System *system);
 	System *getSystem(ComponentHandle type);
 	std::vector<Scene *> &getScenes();

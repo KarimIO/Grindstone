@@ -119,7 +119,7 @@ size_t ColliderSubSystem::getNumComponents() {
 	return components_.size();
 }
 
-void ColliderSystem::update(double dt) {
+void ColliderSystem::update() {
 }
 
 void ColliderSubSystem::removeComponent(ComponentHandle handle) {

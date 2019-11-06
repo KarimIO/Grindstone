@@ -36,7 +36,7 @@ public:
 	TextureBindingLayout *tbl_;
 	UniformBuffer *ubo_;
 	UniformBufferBinding *ubb_;
-	void update(double dt);
+	void update();
 
 	TextureBinding *debug_light_pos_sprite_;
 };

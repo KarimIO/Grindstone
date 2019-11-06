@@ -11,7 +11,7 @@ public:
 
 class SGBase {
 public:
-	virtual void Update(double dt) = 0;
+	virtual void update() = 0;
 };
 
 class GameplayComponent {

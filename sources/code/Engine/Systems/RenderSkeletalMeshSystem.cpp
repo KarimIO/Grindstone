@@ -38,7 +38,7 @@ size_t RenderSkeletalMeshSubSystem::getNumComponents() {
 	return components_.size();
 }
 
-void RenderSkeletalMeshSystem::update(double dt) {
+void RenderSkeletalMeshSystem::update() {
 }
 
 RenderSkeletalMeshSystem::RenderSkeletalMeshSystem() : System(COMPONENT_CAMERA) {}
