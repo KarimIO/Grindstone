@@ -40,12 +40,12 @@
 #include "../Converter/ImageConverter.hpp"
 #include "../Converter/Utilities.hpp"
 
-Editor::Viewport::Viewport(Camera *c, View v) : camera_(c), first(true) {
+Editor::Viewport::Viewport(Camera *c, View v) : camera_(c), first(true), viewport_shown(true) {
 	setView(v);
 }
 
 void Editor::refreshSceneGraph() {
-	for (auto &o : engine.getScene(0)->spaces_[0]->objects_) {
+	/*for (auto &o : engine.getScene(0)->spaces_[0]->objects_) {
 		GameObjectHandle h = o.getParentID();
 		if (h == -1) {
 			scene_graph_.push_back(new SceneGraphNode(h, {}));
@@ -57,7 +57,7 @@ void Editor::refreshSceneGraph() {
 			}
 			s.push_back(new SceneGraphNode(h, {}));
 		}
-	}
+	}*/
 }
 
 void Editor::setPath(std::string path) {
@@ -138,9 +138,13 @@ Editor::Editor(ImguiManager *manager) : selected_object_handle_(-1) {
 	show_scene_graph_ = true;
 	show_asset_browser_ = true;
 	show_viewport_ = true;
+	show_console_ = true;
 	show_inspector_panel_ = true;
 
 	obj_name = new char[128];
+	console_buffer_[0] = 0;
+	console_entries_first_ = 0;
+	console_entries_count_ = 0;
 
 	viewport_manipulating_ = 0;
 
@@ -179,6 +183,7 @@ void Editor::update() {
 	sceneGraphPanel();
 	inspectorPanel();
 	assetPanel();
+	consolePanel();
 	viewportPanels();
 
 	//ImGui::End();
@@ -549,12 +554,12 @@ void parseCategory(reflect::TypeDescriptor_Struct::Category &cat, unsigned char 
 		}
 	}
 
-	for (auto &c : cat.categories) {
-		if (ImGui::TreeNode(c.name.c_str())) {
-			parseCategory(c, component);
-			ImGui::TreePop();
-		}
+for (auto &c : cat.categories) {
+	if (ImGui::TreeNode(c.name.c_str())) {
+		parseCategory(c, component);
+		ImGui::TreePop();
 	}
+}
 }
 
 void Editor::inspectorPanel() {
@@ -601,7 +606,7 @@ void Editor::inspectorPanel() {
 									}
 
 									parseCategory(refl->category, (unsigned char *)component);
-									
+
 									ImGui::TreePop();
 								}
 							}
@@ -638,6 +643,52 @@ void Editor::getDirectory() {
 		else {
 			files_.emplace_back(path, name);
 		}
+	}
+}
+
+void Editor::consolePanel() {
+	ImGui::Begin("Console", &show_console_);
+	ImVec2 winsize = ImGui::GetWindowSize();
+	ImGui::BeginChild("Scrolling", ImVec2(0.0f, -24.0f));
+	/*for (int i = console_entries_first_; i < console_entries_count_; i = (i + 1) % console_entries_count_) {
+		ImGui::Text("%004d: %s", i, console_entries_[i]);
+	}*/
+
+	if (console_entries_count_ >= MAX_CONSOLE_ENTRIES) {
+		unsigned int i = console_entries_first_;
+		do {
+			ImGui::Text("%s", console_entries_[i]);
+			i = (i + 1) % MAX_CONSOLE_ENTRIES;
+		} while (i != console_entries_first_);
+	}
+	else {
+		for (int i = 0; i < console_entries_count_; ++i) {
+			ImGui::Text("%s", console_entries_[i]);
+		}
+	}
+
+	ImGui::EndChild();
+
+	ImGui::PushItemWidth(winsize.x-4.0f);
+	if (ImGui::InputText("##Input Command...", console_buffer_, 256, ImGuiInputTextFlags_EnterReturnsTrue)) {
+		engine.consoleCommand(console_buffer_);
+		console_buffer_[0] = 0;
+	}
+	ImGui::End();
+}
+
+void Editor::printConsoleEntry(const char *entry) {
+	int n = strlen(entry) + 1;
+	char *t = new char[n];
+	memcpy(t, entry, n);
+
+	if (console_entries_count_ >= MAX_CONSOLE_ENTRIES) {
+		delete console_entries_[console_entries_first_];
+		console_entries_[console_entries_first_] = t;
+		console_entries_first_ = (console_entries_first_ + 1) % MAX_CONSOLE_ENTRIES;
+	}
+	else {
+		console_entries_[console_entries_count_++] = t;
 	}
 }
 
@@ -759,7 +810,7 @@ void Editor::viewportPanels() {
 				std::string title = "Viewport ";
 				title += std::to_string(++i);
 
-				ImGui::Begin(title.c_str(), &show_viewport_);
+				ImGui::Begin(title.c_str(), &v.viewport_shown);
 				ImVec2 size = ImGui::GetWindowSize();
 				int sizex = (int)size.x;
 				int sizey = (int)size.y;
@@ -1206,7 +1257,7 @@ void Editor::sceneGraphPanel() {
 		ImGui::Separator();
 
         // Scene Graph:
-		/*for (auto scene : engine.getScenes()) {
+		for (auto scene : engine.getScenes()) {
             for (auto space : scene->spaces_) {
                 for (auto &object : space->objects_) {
 					std::string n = object.getName();
@@ -1218,9 +1269,9 @@ void Editor::sceneGraphPanel() {
 					}
                 }
             }
-        }*/
+        }
 
-		renderSceneGraphTree(scene_graph_);
+		// renderSceneGraphTree(scene_graph_);
 
         ImGui::End();
     }

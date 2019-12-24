@@ -4,6 +4,8 @@
 #include "../Core/Camera.hpp"
 #include <vector>
 
+#define MAX_CONSOLE_ENTRIES 256
+
 class ImguiManager;
 
 struct SceneGraphNode {
@@ -38,6 +40,7 @@ public:
 		glm::mat4 view_mat;
 		glm::vec3 angles;
 
+		bool viewport_shown;
 		bool first;
 		const char *view_option = nullptr;
 		const char *debug_combo_option = nullptr;
@@ -47,6 +50,8 @@ public:
 		void setView(View v);
 	};
 	std::vector<Viewport> viewports_;
+
+	void printConsoleEntry(const char * entry);
 
 	ImguiManager *manager_;
 private:
@@ -59,6 +64,7 @@ private:
 
 	bool show_scene_graph_;
     bool show_viewport_;
+	bool show_console_;
     bool show_inspector_panel_;
     bool show_asset_browser_;
     std::string asset_path_;
@@ -67,7 +73,8 @@ private:
 	void prepareDockspace();
     void sceneGraphPanel();
     void inspectorPanel();
-    void assetPanel();
+	void consolePanel();
+	void assetPanel();
 	void drawGizmos();
 	void drawBox(glm::vec3 start, glm::vec3 end);
 	void viewportPanels();
@@ -95,6 +102,10 @@ private:
 	std::vector<SceneGraphNode *> scene_graph_;
 
 	char *obj_name;
+	char console_buffer_[256];
+	char *console_entries_[MAX_CONSOLE_ENTRIES];
+	unsigned int console_entries_first_;
+	unsigned int console_entries_count_;
 	unsigned int viewport_manipulating_;
 };
 

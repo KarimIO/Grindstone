@@ -148,6 +148,16 @@ void Engine::initializeTBL() {
 	gbuffer_tbl_ = graphics_wrapper_->CreateTextureBindingLayout(tblci);
 }
 
+void Engine::consoleCommand(std::string command) {
+	GRIND_LOG("Console Command: {}", command);
+	if (command == "reload") {
+		scenes_[0]->reload();
+	}
+	else if (command == "reloadGraphics") {
+		reloadGraphicsDLL();
+	}
+}
+
 void Engine::deffUBO() {
 	UniformBufferBindingCreateInfo deffubbci;
 	deffubbci.binding = 0;

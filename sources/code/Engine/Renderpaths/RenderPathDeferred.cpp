@@ -537,6 +537,10 @@ void RenderPathDeferred::render(Framebuffer *fbo, DepthTarget *depthTarget, Spac
 
 	pipeline->drawDeferredImmediate();
 
+	if (wireframe_) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
 	// Prepare deffered stage information
 	engine.deff_ubo_handler_->Bind();
 	if (debug_mode_ != 0) {

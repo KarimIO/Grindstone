@@ -46,6 +46,8 @@ public:
 	void deffUBO();
 	void initializeTBL();
 
+	void consoleCommand(std::string command);
+
 #ifdef INCLUDE_EDITOR
 	void editorControl(double);
 	void launchEditor();
