@@ -15,7 +15,7 @@
 #include <UniformBuffer.hpp>
 
 // Util Classes
-#include "../Utilities/Logger.hpp"
+
 #include "Core/Utilities.hpp"
 #include "glm/common.hpp"
 
@@ -210,13 +210,13 @@ paramDefault = new glm::bvec4(bvec4);
 		}
 		else if (state == SHADER_JSON_CULL_FACE) {
 			std::string type = str;
-			if (type == "front")		pipeline->cull_mode_ = CULL_FRONT;
-			else if (type == "back")	pipeline->cull_mode_ = CULL_BACK;
-			else if (type == "none")	pipeline->cull_mode_ = CULL_NONE;
-			else if (type == "both")	pipeline->cull_mode_ = CULL_BOTH;
+			if (type == "front")		pipeline->cull_mode_ = Grindstone::GraphicsAPI::CullMode::Front;
+			else if (type == "back")	pipeline->cull_mode_ = Grindstone::GraphicsAPI::CullMode::Back;
+			else if (type == "none")	pipeline->cull_mode_ = Grindstone::GraphicsAPI::CullMode::None;
+			else if (type == "both")	pipeline->cull_mode_ = Grindstone::GraphicsAPI::CullMode::Both;
 			else {
 				GRIND_LOG("Invalid cull mode: {0}", type.c_str());
-				pipeline->cull_mode_ = CULL_NONE;
+				pipeline->cull_mode_ = Grindstone::GraphicsAPI::CullMode::None;
 			}
 			state = SHADER_JSON_MAIN;
 		}
@@ -359,15 +359,15 @@ paramDefault = new glm::bvec4(bvec4);
 		}
 		else if (state == SHADER_JSON_VERTEX) {
 			if (shader_type == SHADER_JSON_SHADER_SHADOW) {
-					pipeline->shadow_shader_paths[SHADER_VERTEX] = dir + str;
+					pipeline->shadow_shader_paths[(int)Grindstone::GraphicsAPI::ShaderStage::Vertex] = dir + str;
 			}
 			else {
-				pipeline->shader_paths[SHADER_VERTEX] = dir + str;
+				pipeline->shader_paths[(int)Grindstone::GraphicsAPI::ShaderStage::Vertex] = dir + str;
 			}
-			if (engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL) {
+			if (engine.getSettings()->graphics_language_ == GraphicsLanguage::OpenGL) {
 				state = SHADER_JSON_SHADER_OPENGL;
 			}
-			else if (engine.getSettings()->graphics_language_ == GRAPHICS_DIRECTX) {
+			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX) {
 				state = SHADER_JSON_SHADER_DIRECTX;
 			}
 			else {
@@ -376,15 +376,15 @@ paramDefault = new glm::bvec4(bvec4);
 		}
 		else if (state == SHADER_JSON_FRAGMENT) {
 			if (shader_type == SHADER_JSON_SHADER_SHADOW) {
-				pipeline->shadow_shader_paths[SHADER_FRAGMENT] = dir + str;
+				pipeline->shadow_shader_paths[(int)Grindstone::GraphicsAPI::ShaderStage::Fragment] = dir + str;
 			}
 			else {
-				pipeline->shader_paths[SHADER_FRAGMENT] = dir + str;
+				pipeline->shader_paths[(int)Grindstone::GraphicsAPI::ShaderStage::Fragment] = dir + str;
 			}
-			if (engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL) {
+			if (engine.getSettings()->graphics_language_ == GraphicsLanguage::OpenGL) {
 				state = SHADER_JSON_SHADER_OPENGL;
 			}
-			else if (engine.getSettings()->graphics_language_ == GRAPHICS_DIRECTX) {
+			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX) {
 				state = SHADER_JSON_SHADER_DIRECTX;
 			}
 			else {
@@ -393,15 +393,15 @@ paramDefault = new glm::bvec4(bvec4);
 		}
 		else if (state == SHADER_JSON_GEOMETRY) {
 			if (shader_type == SHADER_JSON_SHADER_SHADOW) {
-				pipeline->shadow_shader_paths[SHADER_GEOMETRY] = dir + str;
+				pipeline->shadow_shader_paths[(int)Grindstone::GraphicsAPI::ShaderStage::Geometry] = dir + str;
 			}
 			else {
-				pipeline->shader_paths[SHADER_GEOMETRY] = dir + str;
+				pipeline->shader_paths[(int)Grindstone::GraphicsAPI::ShaderStage::Geometry] = dir + str;
 			}
-			if (engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL) {
+			if (engine.getSettings()->graphics_language_ == GraphicsLanguage::OpenGL) {
 				state = SHADER_JSON_SHADER_OPENGL;
 			}
-			else if (engine.getSettings()->graphics_language_ == GRAPHICS_DIRECTX) {
+			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX) {
 				state = SHADER_JSON_SHADER_DIRECTX;
 			}
 			else {
@@ -410,10 +410,10 @@ paramDefault = new glm::bvec4(bvec4);
 		}
 		else if (state == SHADER_JSON_COMPUTE) {
 			GRIND_ERROR("Computer shaders not supported yet!");
-			if (engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL) {
+			if (engine.getSettings()->graphics_language_ == GraphicsLanguage::OpenGL) {
 				state = SHADER_JSON_SHADER_OPENGL;
 			}
-			else if (engine.getSettings()->graphics_language_ == GRAPHICS_DIRECTX) {
+			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX) {
 				state = SHADER_JSON_SHADER_DIRECTX;
 			}
 			else {
@@ -422,16 +422,16 @@ paramDefault = new glm::bvec4(bvec4);
 		}
 		else if (state == SHADER_JSON_TESSEVAL) {
 			if (shader_type == SHADER_JSON_SHADER_SHADOW) {
-				pipeline->shadow_shader_paths[SHADER_TESS_EVALUATION] = dir + str;
+				pipeline->shadow_shader_paths[(int)Grindstone::GraphicsAPI::ShaderStage::TesselationEvaluation] = dir + str;
 			}
 			else {
-				pipeline->shader_paths[SHADER_TESS_EVALUATION] = dir + str;
+				pipeline->shader_paths[(int)Grindstone::GraphicsAPI::ShaderStage::TesselationEvaluation] = dir + str;
 			}
 			state = SHADER_JSON_SHADER_OPENGL;
-			if (engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL) {
+			if (engine.getSettings()->graphics_language_ == GraphicsLanguage::OpenGL) {
 				state = SHADER_JSON_SHADER_OPENGL;
 			}
-			else if (engine.getSettings()->graphics_language_ == GRAPHICS_DIRECTX) {
+			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX) {
 				state = SHADER_JSON_SHADER_DIRECTX;
 			}
 			else {
@@ -440,15 +440,15 @@ paramDefault = new glm::bvec4(bvec4);
 		}
 		else if (state == SHADER_JSON_TESSCTRL) {
 			if (shader_type == SHADER_JSON_SHADER_SHADOW) {
-				pipeline->shadow_shader_paths[SHADER_TESS_CONTROL] = dir + str;
+				pipeline->shadow_shader_paths[(int)Grindstone::GraphicsAPI::ShaderStage::TesselationControl] = dir + str;
 			}
 			else {
-				pipeline->shader_paths[SHADER_TESS_CONTROL] = dir + str;
+				pipeline->shader_paths[(int)Grindstone::GraphicsAPI::ShaderStage::TesselationControl] = dir + str;
 			}
-			if (engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL) {
+			if (engine.getSettings()->graphics_language_ == GraphicsLanguage::OpenGL) {
 				state = SHADER_JSON_SHADER_OPENGL;
 			}
-			else if (engine.getSettings()->graphics_language_ == GRAPHICS_DIRECTX) {
+			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX) {
 				state = SHADER_JSON_SHADER_DIRECTX;
 			}
 			else {
@@ -512,9 +512,9 @@ paramDefault = new glm::bvec4(bvec4);
 				GRIND_ERROR("Invalid Shader file!");
 			}
 		}
-		else if ((engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL && state == SHADER_JSON_SHADER_OPENGL) ||
-				(engine.getSettings()->graphics_language_ == GRAPHICS_DIRECTX && state == SHADER_JSON_SHADER_DIRECTX) ||
-				(engine.getSettings()->graphics_language_ == GRAPHICS_VULKAN && state == SHADER_JSON_SHADER_VULKAN)) {
+		else if ((engine.getSettings()->graphics_language_ == GraphicsLanguage::OpenGL && state == SHADER_JSON_SHADER_OPENGL) ||
+				(engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX && state == SHADER_JSON_SHADER_DIRECTX) ||
+				(engine.getSettings()->graphics_language_ == GraphicsLanguage::Vulkan && state == SHADER_JSON_SHADER_VULKAN)) {
 			if (std::string(str) == "vertex") {
 				state = SHADER_JSON_VERTEX;
 			}
@@ -611,7 +611,7 @@ TextureParameterDescriptor::TextureParameterDescriptor(unsigned int _texture_id,
 
 void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, PipelineContainer &container) {
 	// Prepare UBBS
-	std::vector<UniformBufferBinding *> ubbs;
+	std::vector<Grindstone::GraphicsAPI::UniformBufferBinding *> ubbs;
 	if (container.param_ubb != nullptr) {
 		ubbs.resize(geometry_info.ubb_count + 1);
 		ubbs[geometry_info.ubb_count] = container.param_ubb;
@@ -627,7 +627,7 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 
 	// Create Regular Shader
 	{
-		GraphicsPipelineCreateInfo gpci;
+		Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo gpci;
 		gpci.scissorW = engine.getSettings()->resolution_x_;
 		gpci.width = static_cast<float>(engine.getSettings()->resolution_x_);
 		gpci.scissorH = engine.getSettings()->resolution_y_;
@@ -646,7 +646,7 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 			}
 		}
 
-		std::vector<ShaderStageCreateInfo> stages;
+		std::vector<Grindstone::GraphicsAPI::ShaderStageCreateInfo> stages;
 		stages.resize(num_shaders);
 		std::vector<char> files[max_shaders];
 
@@ -661,11 +661,11 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 
 				stages[num_shaders].content = files[num_shaders].data();
 				stages[num_shaders].size = (uint32_t)files[num_shaders].size();
-				stages[num_shaders++].type = static_cast<ShaderStageType>(i);
+				stages[num_shaders++].type = static_cast<Grindstone::GraphicsAPI::ShaderStage>(i);
 			}
 		}
 
-		std::vector<TextureSubBinding> bindings;
+		std::vector<Grindstone::GraphicsAPI::TextureSubBinding> bindings;
 		bindings.reserve(container.textureDescriptorTable.size());
 		for (auto &t : container.textureDescriptorTable) {
 			bindings.emplace_back(t.first.c_str(), t.second.texture_id);
@@ -673,11 +673,11 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 
 		int tbl_count;
 		if (bindings.size() > 0) {
-			TextureBindingLayoutCreateInfo tblci;
+			Grindstone::GraphicsAPI::TextureBindingLayoutCreateInfo tblci;
 			tblci.bindingLocation = 2;
 			tblci.bindings = bindings.data();
 			tblci.bindingCount = (uint32_t)bindings.size();
-			tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+			tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 			container.tbl = engine.getGraphicsWrapper()->CreateTextureBindingLayout(tblci);
 			tbl_count = 1;
 		}
@@ -687,7 +687,7 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 		}
 
 		if (container.type == TYPE_TRANSPARENT) {
-			container.tbl_arr = new TextureBindingLayout *[2];
+			container.tbl_arr = new Grindstone::GraphicsAPI::TextureBindingLayout *[2];
 			container.tbl_arr[0] = engine.gbuffer_tbl_;
 			container.tbl_arr[1] = container.tbl;
 		}
@@ -708,7 +708,7 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 
 		}
 		gpci.cullMode = container.cull_mode_;
-		gpci.primitiveType = PRIM_TRIANGLES;
+		gpci.primitiveType = Grindstone::GraphicsAPI::GeometryType::Triangles;
 		container.program = engine.getGraphicsWrapper()->CreateGraphicsPipeline(gpci);
 	}
 
@@ -722,68 +722,68 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 			}
 		}
 
-if (num_shaders > 0) {
-	GraphicsPipelineCreateInfo gpci;
-	gpci.scissorW = 1024;
-	gpci.width = static_cast<float>(gpci.scissorW);
-	gpci.scissorH = 1024;
-	gpci.height = static_cast<float>(gpci.scissorH);
-	gpci.renderPass = render_passes_[0].renderPass;
-	gpci.attributes = geometry_info.vads;
-	gpci.attributesCount = geometry_info.vads_count;
-	gpci.bindings = geometry_info.vbds;
-	gpci.bindingsCount = geometry_info.vbds_count;
+		if (num_shaders > 0) {
+			Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo gpci;
+			gpci.scissorW = 1024;
+			gpci.width = static_cast<float>(gpci.scissorW);
+			gpci.scissorH = 1024;
+			gpci.height = static_cast<float>(gpci.scissorH);
+			gpci.renderPass = render_passes_[0].renderPass;
+			gpci.attributes = geometry_info.vads;
+			gpci.attributesCount = geometry_info.vads_count;
+			gpci.bindings = geometry_info.vbds;
+			gpci.bindingsCount = geometry_info.vbds_count;
 
-	std::vector<ShaderStageCreateInfo> stages;
-	stages.resize(num_shaders);
-	std::vector<char> files[max_shaders];
+			std::vector<Grindstone::GraphicsAPI::ShaderStageCreateInfo> stages;
+			stages.resize(num_shaders);
+			std::vector<char> files[max_shaders];
 
-	num_shaders = 0;
-	for (int i = 0; i < max_shaders; i++) {
-		if (container.shadow_shader_paths[i] != "") {
-			stages[num_shaders].fileName = container.shadow_shader_paths[i].c_str();
-			if (!readFile(stages[num_shaders].fileName, files[num_shaders])) {
-				std::string warn = "Unable to load Shader!: " + std::string(stages[num_shaders].fileName) + "\n";
-				throw std::runtime_error(warn);
+			num_shaders = 0;
+			for (int i = 0; i < max_shaders; i++) {
+				if (container.shadow_shader_paths[i] != "") {
+					stages[num_shaders].fileName = container.shadow_shader_paths[i].c_str();
+					if (!readFile(stages[num_shaders].fileName, files[num_shaders])) {
+						std::string warn = "Unable to load Shader!: " + std::string(stages[num_shaders].fileName) + "\n";
+						throw std::runtime_error(warn);
+					}
+
+					stages[num_shaders].content = files[num_shaders].data();
+					stages[num_shaders].size = (uint32_t)files[num_shaders].size();
+					stages[num_shaders++].type = static_cast<Grindstone::GraphicsAPI::ShaderStage>(i);
+				}
 			}
 
-			stages[num_shaders].content = files[num_shaders].data();
-			stages[num_shaders].size = (uint32_t)files[num_shaders].size();
-			stages[num_shaders++].type = static_cast<ShaderStageType>(i);
+			std::vector<Grindstone::GraphicsAPI::TextureSubBinding> bindings;
+			bindings.reserve(container.textureDescriptorTable.size());
+			for (auto &t : container.textureDescriptorTable) {
+				bindings.emplace_back(t.first.c_str(), t.second.texture_id);
+			}
+
+			int tbl_count;
+			if (bindings.size() > 0) {
+				Grindstone::GraphicsAPI::TextureBindingLayoutCreateInfo tblci;
+				tblci.bindingLocation = 2;
+				tblci.bindings = bindings.data();
+				tblci.bindingCount = (uint32_t)bindings.size();
+				tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
+				container.tbl = engine.getGraphicsWrapper()->CreateTextureBindingLayout(tblci);
+				tbl_count = 1;
+			}
+			else {
+				container.tbl = nullptr;
+				tbl_count = 0;
+			}
+
+			gpci.shaderStageCreateInfos = stages.data();
+			gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
+			gpci.uniformBufferBindings = ubbs.data();
+			gpci.uniformBufferBindingCount = (uint32_t)ubbs.size();
+			gpci.textureBindings = &container.tbl;
+			gpci.textureBindingCount = tbl_count;
+			gpci.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
+			gpci.primitiveType = Grindstone::GraphicsAPI::GeometryType::Triangles;
+			container.shadow_program = engine.getGraphicsWrapper()->CreateGraphicsPipeline(gpci);
 		}
-	}
-
-	std::vector<TextureSubBinding> bindings;
-	bindings.reserve(container.textureDescriptorTable.size());
-	for (auto &t : container.textureDescriptorTable) {
-		bindings.emplace_back(t.first.c_str(), t.second.texture_id);
-	}
-
-	int tbl_count;
-	if (bindings.size() > 0) {
-		TextureBindingLayoutCreateInfo tblci;
-		tblci.bindingLocation = 2;
-		tblci.bindings = bindings.data();
-		tblci.bindingCount = (uint32_t)bindings.size();
-		tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-		container.tbl = engine.getGraphicsWrapper()->CreateTextureBindingLayout(tblci);
-		tbl_count = 1;
-	}
-	else {
-		container.tbl = nullptr;
-		tbl_count = 0;
-	}
-
-	gpci.shaderStageCreateInfos = stages.data();
-	gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
-	gpci.uniformBufferBindings = ubbs.data();
-	gpci.uniformBufferBindingCount = (uint32_t)ubbs.size();
-	gpci.textureBindings = &container.tbl;
-	gpci.textureBindingCount = tbl_count;
-	gpci.cullMode = CULL_BACK;
-	gpci.primitiveType = PRIM_TRIANGLES;
-	container.shadow_program = engine.getGraphicsWrapper()->CreateGraphicsPipeline(gpci);
-}
 	}
 }
 
@@ -859,11 +859,12 @@ GraphicsPipelineManager::GraphicsPipelineManager() {
 }
 
 void GraphicsPipelineManager::initialize() {
+	GRIND_PROFILE_FUNC();
 	render_passes_.resize(1);
 
-	RenderPassCreateInfo rpci;
-	std::vector<ClearColorValue> colorClearValues = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-	ClearDepthStencil dscf;
+	Grindstone::GraphicsAPI::RenderPassCreateInfo rpci;
+	std::vector<Grindstone::GraphicsAPI::ClearColorValue> colorClearValues = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+	Grindstone::GraphicsAPI::ClearDepthStencil dscf;
 	dscf.hasDepthStencilAttachment = true;
 	dscf.depth = 1.0f;
 	dscf.stencil = 0;
@@ -872,7 +873,7 @@ void GraphicsPipelineManager::initialize() {
 	rpci.m_depthStencilClearValue = dscf;
 	rpci.m_width = engine.getSettings()->resolution_x_;
 	rpci.m_height = engine.getSettings()->resolution_y_;
-	rpci.m_depthFormat = FORMAT_DEPTH_32;
+	rpci.m_depthFormat = Grindstone::GraphicsAPI::DepthFormat::D32;
 	render_passes_[0].renderPass = engine.getGraphicsWrapper()->CreateRenderPass(rpci);
 }
 
@@ -912,11 +913,11 @@ PipelineReference GraphicsPipelineManager::createPipeline(GeometryInfo geometry_
 	}
 
 	if (pipeline->parameterDescriptorTable.size() > 0) {
-		UniformBufferBindingCreateInfo ubbci;
+		Grindstone::GraphicsAPI::UniformBufferBindingCreateInfo ubbci;
 		ubbci.binding = 2;
 		ubbci.shaderLocation = "Parameters";
 		ubbci.size = pipeline->param_size;
-		ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+		ubbci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 		pipeline->param_ubb = engine.getGraphicsWrapper()->CreateUniformBufferBinding(ubbci);
 	}
 
@@ -1018,6 +1019,7 @@ void GraphicsPipelineManager::drawShadowsImmediate(uint16_t x, uint16_t y, uint1
 }
 
 void GraphicsPipelineManager::drawDeferredImmediate() {
+	GRIND_PROFILE_FUNC();
 	for (auto &renderPass : render_passes_) {
 		//renderPass->Bind();
 		for (auto &pipeline : renderPass.pipelines_deferred) {

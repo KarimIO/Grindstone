@@ -24,16 +24,16 @@
 //#define STB_DXT_IMPLEMENTATION
 #include <stb/stb_dxt.h>
 
-#include "../Utilities/Logger.hpp"
+
 #include "Core/Utilities.hpp"
 
 #include "../Converter/ImageConverter.hpp"
 
-TextureContainer::TextureContainer(Texture *t) {
+TextureContainer::TextureContainer(Grindstone::GraphicsAPI::Texture *t) {
 	texture_ = t;
 }
 
-TextureHandler TextureManager::loadCubemap(std::string path, TextureOptions options) {
+TextureHandler TextureManager::loadCubemap(std::string path, Grindstone::GraphicsAPI::TextureOptions options) {
 	if (texture_map_[path]) {
 		return texture_map_[path];
 	}
@@ -75,16 +75,16 @@ TextureHandler TextureManager::loadCubemap(std::string path, TextureOptions opti
 		bool alphaflag = header.ddspf.dwFlags & DDPF_ALPHAPIXELS;
 
 		unsigned int components = (header.ddspf.dwFourCC == FOURCC_DXT1) ? 3 : 4;
-		ColorFormat format;
+		Grindstone::GraphicsAPI::ColorFormat format;
 		switch (header.ddspf.dwFourCC) {
 		case FOURCC_DXT1:
-			format = alphaflag ? FORMAT_COLOR_RGBA_DXT1 : FORMAT_COLOR_RGB_DXT1;
+			format = alphaflag ? Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT1 : Grindstone::GraphicsAPI::ColorFormat::RGB_DXT1;
 			break;
 		case FOURCC_DXT3:
-			format = FORMAT_COLOR_RGBA_DXT3;
+			format = Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT3;
 			break;
 		case FOURCC_DXT5:
-			format = FORMAT_COLOR_RGBA_DXT5;
+			format = Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT5;
 			break;
 		default:
 			free(buffer);
@@ -92,7 +92,7 @@ TextureHandler TextureManager::loadCubemap(std::string path, TextureOptions opti
 			return -1;
 		}
 
-		TextureCreateInfo createInfo;
+		Grindstone::GraphicsAPI::TextureCreateInfo createInfo;
 		createInfo.data = buffer;
 		createInfo.mipmaps = header.dwMipMapCount;
 		createInfo.format = format;
@@ -101,7 +101,7 @@ TextureHandler TextureManager::loadCubemap(std::string path, TextureOptions opti
 		createInfo.ddscube = true;
 		createInfo.options = options;
 
-		Texture *t = engine.getGraphicsWrapper()->CreateTexture(createInfo);
+		Grindstone::GraphicsAPI::Texture *t = engine.getGraphicsWrapper()->CreateTexture(createInfo);
 		TextureHandler handle = textures_.size();
 		texture_map_[path] = handle;
 		textures_.emplace_back(t);
@@ -127,7 +127,7 @@ TextureHandler TextureManager::loadCubemap(std::string path, TextureOptions opti
 		facePaths[5] = path + "_lf." + ext;
 
 
-		CubemapCreateInfo createInfo;
+		Grindstone::GraphicsAPI::CubemapCreateInfo createInfo;
 		 
 		int texWidth, texHeight, texChannels;
 		for (int i = 0; i < 6; i++) {
@@ -144,20 +144,20 @@ TextureHandler TextureManager::loadCubemap(std::string path, TextureOptions opti
 
 		GRIND_LOG("Cubemap loaded: {0}", path.c_str());
 
-		ColorFormat format;
+		Grindstone::GraphicsAPI::ColorFormat format;
 		switch (4) {
 		case 1:
-			format = FORMAT_COLOR_R8;
+			format = Grindstone::GraphicsAPI::ColorFormat::R8;
 			break;
 		case 2:
-			format = FORMAT_COLOR_R8G8;
+			format = Grindstone::GraphicsAPI::ColorFormat::R8G8;
 			break;
 		case 3:
-			format = FORMAT_COLOR_R8G8B8;
+			format = Grindstone::GraphicsAPI::ColorFormat::R8G8B8;
 			break;
 		default:
 		case 4:
-			format = FORMAT_COLOR_R8G8B8A8;
+			format = Grindstone::GraphicsAPI::ColorFormat::R8G8B8A8;
 			break;
 		}
 
@@ -167,7 +167,7 @@ TextureHandler TextureManager::loadCubemap(std::string path, TextureOptions opti
 		createInfo.height = texHeight;
 		createInfo.options = options;
 
-		Texture *t = engine.getGraphicsWrapper()->CreateCubemap(createInfo);
+		Grindstone::GraphicsAPI::Texture *t = engine.getGraphicsWrapper()->CreateCubemap(createInfo);
 		TextureHandler handle = textures_.size();
 		textures_.push_back(TextureContainer(t));
 		texture_map_[path] = handle;
@@ -180,7 +180,7 @@ TextureHandler TextureManager::loadCubemap(std::string path, TextureOptions opti
 	}
 }
 
-TextureHandler TextureManager::loadTexture(std::string path, TextureOptions options) {
+TextureHandler TextureManager::loadTexture(std::string path, Grindstone::GraphicsAPI::TextureOptions options) {
 	if (texture_map_[path]) {
 		return texture_map_[path];
 	}
@@ -220,16 +220,16 @@ TextureHandler TextureManager::loadTexture(std::string path, TextureOptions opti
 		bool alphaflag = header.ddspf.dwFlags & DDPF_ALPHAPIXELS;
 
 		unsigned int components = (header.ddspf.dwFourCC == FOURCC_DXT1) ? 3 : 4;
-		ColorFormat format;
+		Grindstone::GraphicsAPI::ColorFormat format;
 		switch (header.ddspf.dwFourCC) {
 		case FOURCC_DXT1:
-			format = FORMAT_COLOR_RGBA_DXT1; // alphaflag ? FORMAT_COLOR_RGBA_DXT1 : FORMAT_COLOR_RGB_DXT1;
+			format = Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT1; // alphaflag ? Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT1 : Grindstone::GraphicsAPI::ColorFormat::RGB_DXT1;
 			break;
 		case FOURCC_DXT3:
-			format = FORMAT_COLOR_RGBA_DXT3;
+			format = Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT3;
 			break;
 		case FOURCC_DXT5:
-			format = FORMAT_COLOR_RGBA_DXT5;
+			format = Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT5;
 			break;
 		default:
 			free(buffer);
@@ -237,7 +237,7 @@ TextureHandler TextureManager::loadTexture(std::string path, TextureOptions opti
 			return error_texture_;
 		}
 
-		TextureCreateInfo createInfo;
+		Grindstone::GraphicsAPI::TextureCreateInfo createInfo;
 		createInfo.data = buffer;
 		createInfo.mipmaps = header.dwMipMapCount;
 		createInfo.format = format;
@@ -246,7 +246,7 @@ TextureHandler TextureManager::loadTexture(std::string path, TextureOptions opti
 		createInfo.ddscube = false;
 		createInfo.options = options;
 
-		Texture *t = nullptr;
+		Grindstone::GraphicsAPI::Texture *t = nullptr;
 		try {
 			t = engine.getGraphicsWrapper()->CreateTexture(createInfo);
 		}
@@ -273,24 +273,24 @@ TextureHandler TextureManager::loadTexture(std::string path, TextureOptions opti
 			return error_texture_;
 		}
 
-		ColorFormat format;
+		Grindstone::GraphicsAPI::ColorFormat format;
 		switch (texChannels) {
 		case 1:
-			format = FORMAT_COLOR_R8;
+			format = Grindstone::GraphicsAPI::ColorFormat::R8;
 			break;
 		case 2:
-			format = FORMAT_COLOR_R8G8;
+			format = Grindstone::GraphicsAPI::ColorFormat::R8G8;
 			break;
 		case 3:
-			format = FORMAT_COLOR_R8G8B8;
+			format = Grindstone::GraphicsAPI::ColorFormat::R8G8B8;
 			break;
 		default:
 		case 4:
-			format = FORMAT_COLOR_R8G8B8A8;
+			format = Grindstone::GraphicsAPI::ColorFormat::R8G8B8A8;
 			break;
 		}
 
-		TextureCreateInfo createInfo;
+		Grindstone::GraphicsAPI::TextureCreateInfo createInfo;
 		createInfo.format = format;
 		createInfo.mipmaps = 0;
 		createInfo.data = pixels;
@@ -299,7 +299,7 @@ TextureHandler TextureManager::loadTexture(std::string path, TextureOptions opti
 		createInfo.ddscube = false;
 		createInfo.options = options;
 
-		Texture *t = engine.getGraphicsWrapper()->CreateTexture(createInfo);
+		Grindstone::GraphicsAPI::Texture *t = engine.getGraphicsWrapper()->CreateTexture(createInfo);
 		TextureHandler handle = textures_.size();
 		textures_.emplace_back(TextureContainer(t));
 		texture_map_[path] = handle;
@@ -328,7 +328,7 @@ void TextureManager::reloadTexture(TextureHandler handle) {
 	engine.getGraphicsWrapper()->DeleteTexture(textures_[handle].texture_);
 }
 
-Texture *TextureManager::getTexture(TextureHandler handle) {
+Grindstone::GraphicsAPI::Texture *TextureManager::getTexture(TextureHandler handle) {
 	return getTextureContainer(handle)->texture_;
 }
 

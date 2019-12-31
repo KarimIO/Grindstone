@@ -6,9 +6,13 @@
 #include "../AssetManagers/AssetReferences.hpp"
 #include "../AssetManagers/TextureManager.hpp"
 
-class TextureBinding;
-class GraphicsPipeline;
-class DepthTarget;
+namespace Grindstone {
+	namespace GraphicsAPI {
+		class TextureBinding;
+		class GraphicsPipeline;
+		class DepthTarget;
+	}
+}
 
 struct SpriteUniformBuffer {
 	glm::mat4 model;
@@ -20,7 +24,7 @@ struct SpriteUniformBuffer {
 struct RenderSpriteComponent : public Component {
 	RenderSpriteComponent(GameObjectHandle object_handle, ComponentHandle handle);
 	std::string path_;
-	TextureBinding *texture_binding_;
+	Grindstone::GraphicsAPI::TextureBinding *texture_binding_;
 	TextureHandler texture_handle_;
 	glm::vec4 color_;
 	float aspect_;
@@ -32,13 +36,13 @@ public:
 
 	void loadDebugSprites();
 
-	GraphicsPipeline *pipeline_;
-	TextureBindingLayout *tbl_;
-	UniformBuffer *ubo_;
-	UniformBufferBinding *ubb_;
+	Grindstone::GraphicsAPI::GraphicsPipeline *pipeline_;
+	Grindstone::GraphicsAPI::TextureBindingLayout *tbl_;
+	Grindstone::GraphicsAPI::UniformBuffer *ubo_;
+	Grindstone::GraphicsAPI::UniformBufferBinding *ubb_;
 	void update();
 
-	TextureBinding *debug_light_pos_sprite_;
+	Grindstone::GraphicsAPI::TextureBinding *debug_light_pos_sprite_;
 };
 
 class RenderSpriteSubSystem : public SubSystem {
@@ -52,9 +56,9 @@ public:
 	virtual void removeComponent(ComponentHandle handle);
 	virtual ~RenderSpriteSubSystem();
 	
-	void renderSprite(bool render_ortho, float aspect, glm::vec4 color, TextureBinding *binding, glm::mat4 model);
-	void renderSprites(bool render_ortho, glm::vec3 cam_pos, DepthTarget *depth_target);
-	void handleDebugSprite(bool render_ortho, glm::vec3 color, glm::vec3 cam_pos, GameObjectHandle handle, TextureBinding * tex_binding);
+	void renderSprite(bool render_ortho, float aspect, glm::vec4 color, Grindstone::GraphicsAPI::TextureBinding *binding, glm::mat4 model);
+	void renderSprites(bool render_ortho, glm::vec3 cam_pos, Grindstone::GraphicsAPI::DepthTarget *depth_target);
+	void handleDebugSprite(bool render_ortho, glm::vec3 color, glm::vec3 cam_pos, GameObjectHandle handle, Grindstone::GraphicsAPI::TextureBinding * tex_binding);
 private:
 	std::vector<RenderSpriteComponent> components_;
 };

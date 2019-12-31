@@ -236,4 +236,23 @@ namespace reflect {
 		return &typeDesc;
 	}
 
+	//--------------------------------------------------------
+	// A type descriptor for glm::quat
+	//--------------------------------------------------------
+
+	struct TypeDescriptor_Quat : TypeDescriptor {
+		TypeDescriptor_Quat() : TypeDescriptor{ "glm::quat", sizeof(glm::quat), ReflectionTypeData::ReflQuat } {
+		}
+		virtual void dump(const void* obj, int /* unused */) const override {
+			glm::quat v = *(const glm::quat*) obj;
+			std::cout << "glm::quat{\"" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << "\"}";
+		}
+	};
+
+	template <>
+	TypeDescriptor* getPrimitiveDescriptor<glm::quat>() {
+		static TypeDescriptor_Quat typeDesc;
+		return &typeDesc;
+	}
+
 } // namespace reflect

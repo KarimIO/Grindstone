@@ -3,9 +3,13 @@
 
 #include "BasePost.hpp"
 
-struct TextureSubBinding;
-class TextureBindingLayout;
-class UniformBufferBinding;
+namespace Grindstone {
+	namespace GraphicsAPI {
+		struct TextureSubBinding;
+		class TextureBindingLayout;
+		class UniformBufferBinding;
+	}
+}
 
 class PostProcessAutoExposure;
 
@@ -22,11 +26,11 @@ private:
 
 	PostProcessAutoExposure *auto_exposure_;
 
-	TextureSubBinding *tonemap_sub_binding_;
-	TextureBindingLayout *tonemap_tbl_;
-	UniformBufferBinding *ubb_;
+	Grindstone::GraphicsAPI::TextureSubBinding *tonemap_sub_binding_;
+	Grindstone::GraphicsAPI::TextureBindingLayout *tonemap_tbl_;
+	Grindstone::GraphicsAPI::UniformBufferBinding *ubb_;
 
-    GraphicsPipeline *gpipeline_;
+	Grindstone::GraphicsAPI::GraphicsPipeline *gpipeline_;
 
 	struct EffectUBO {
 		float vignetteRadius;
@@ -39,7 +43,7 @@ private:
 
 	bool first_render_ = true;
 
-	UniformBuffer *effect_ub_;
+	Grindstone::GraphicsAPI::UniformBuffer *effect_ub_;
 };
 
 #endif // !POST_PROCESS_TONEMAP_HPP

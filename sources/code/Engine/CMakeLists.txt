@@ -10,7 +10,7 @@ set(ENGINE_ASSET_MANAGERS_HEADERS AssetManagers/AssetReferences.hpp AssetManager
 source_group("Asset Managers\\Header Files" FILES ${ENGINE_ASSET_MANAGERS_HEADERS})
 set(ENGINE_POST_HEADERS PostProcess/BasePost.hpp PostProcess/PostProcessAutoExposure.hpp PostProcess/PostProcessSSR.hpp PostProcess/PostPipeline.hpp PostProcess/PostProcessBloom.hpp PostProcess/PostProcessColorGrading.hpp PostProcess/PostProcessIBL.hpp PostProcess/PostProcessTonemap.hpp)
 source_group("Post Processing\\Header Files" FILES ${ENGINE_POST_HEADERS})
-set(ENGINE_OTHER_HEADERS ../AssetCommon/SkeletonLoader.hpp Utilities/SettingsFile.hpp ../FormatCommon/Bounding.hpp ../FormatCommon/StaticModel.hpp Utilities/Logger.hpp Utilities/Reflection.hpp Utilities/DLLHandler.hpp Utilities/DLLGraphics.hpp Utilities/DLLAudio.hpp)
+set(ENGINE_OTHER_HEADERS ../AssetCommon/SkeletonLoader.hpp Utilities/Profiling.hpp Utilities/SettingsFile.hpp ../FormatCommon/Bounding.hpp ../FormatCommon/StaticModel.hpp pch.hpp Utilities/Reflection.hpp Utilities/DLLHandler.hpp Utilities/DLLGraphics.hpp Utilities/DLLAudio.hpp)
 source_group("Other\\Header Files" FILES ${ENGINE_OTHER_HEADERS})
 set(ENGINE_CONVERTER_HEADERS ../Converter/AnimationConverter.hpp ../Converter/ImageConverter.hpp ../Converter/MaterialCreator.hpp ../Converter/ModelConverter.hpp ../Converter/Utilities.hpp)
 source_group("Converter\\Header Files" FILES ${ENGINE_CONVERTER_HEADERS})
@@ -30,7 +30,7 @@ set(ENGINE_OTHER_SOURCES ../AssetCommon/SkeletonLoader.cpp Utilities/SettingsFil
 source_group("Other\\Source Files" FILES ${ENGINE_OTHER_SOURCES})
 set(ENGINE_CONVERTER_SOURCES ../Converter/AnimationConverter.cpp ../Converter/ImageConverter.cpp ../Converter/MaterialCreator.cpp ../Converter/ModelConverter.cpp ../Converter/Utilities.cpp)
 source_group("Converter\\Source Files" FILES ${ENGINE_CONVERTER_SOURCES})
-set(ENGINE_IMGUI_SOURCES ../../deps/imgui/imgui.cpp ../../deps/imgui/imgui_impl_opengl3.cpp ../../deps/GL/gl3w.c ../../deps/imgui/imgui_draw.cpp ../../deps/imgui/imgui_widgets.cpp)
+set(ENGINE_IMGUI_SOURCES ../../deps/imgui/imgui.cpp ../../deps/imgui/imgui_impl_opengl3.cpp ../../deps/GL/gl3w.cpp ../../deps/imgui/imgui_draw.cpp ../../deps/imgui/imgui_widgets.cpp)
 source_group("Imgui\\Source Files" FILES ${ENGINE_IMGUI_SOURCES})
 set(ENGINE_SOURCES ${ENGINE_CONVERTER_SOURCES} ${ENGINE_IMGUI_SOURCES} ${ENGINE_OTHER_SOURCES} ${ENGINE_ASSET_MANAGERS_SOURCES} ${ENGINE_CORE_SOURCES} ${ENGINE_RENDERPATHS_SOURCES} ${ENGINE_SYSTEMS_SOURCES} ${ENGINE_POST_SOURCES}) 
 
@@ -43,14 +43,17 @@ set(RAPIDJSON_PATH CACHE PATH "RAPIDJSON Path")
 link_directories(${ASSIMP_LIBRARY_DIR} ${MONO_PATH}/lib)
 add_executable(Grindstone ${ENGINE_SOURCES} ${ENGINE_HEADERS})
 
-target_compile_definitions(Grindstone PRIVATE _CRT_SECURE_NO_WARNINGS INCLUDE_EDITOR)
-
+target_compile_definitions(Grindstone PRIVATE _CRT_SECURE_NO_WARNINGS INCLUDE_EDITOR GRIND_PROFILE)
 
 if (MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 endif()
 
 set_target_properties(Grindstone PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+target_precompile_headers(Grindstone PRIVATE "pch.hpp")
 
 find_package(OpenGL) 
 target_link_libraries(Grindstone ${OPENGL_gl_LIBRARY} ${assimp_LIBRARIES})

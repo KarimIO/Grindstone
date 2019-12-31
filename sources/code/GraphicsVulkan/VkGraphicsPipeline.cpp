@@ -1,12 +1,12 @@
-#include "VkGraphicsPipeline.h"
-#include "VkRenderPass.h"
+#include "VkGraphicsPipeline.hpp"
+#include "VkRenderPass.hpp"
 #include <iostream>
 #include <vector>
 
-#include "VkVertexBuffer.h"
-#include "VkBufferCommon.h"
-#include "VkUniformBuffer.h"
-#include "VkTexture.h"
+#include "VkVertexBuffer.hpp"
+#include "VkBufferCommon.hpp"
+#include "VkUniformBuffer.hpp"
+#include "VkTexture.hpp"
 #include <cstring>
 
 VkShaderModule vkGraphicsPipeline::createShaderModule(ShaderStageCreateInfo createInfo) {

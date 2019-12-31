@@ -5,13 +5,17 @@
 #include <stdint.h>
 #include "../GraphicsCommon/IndexBuffer.hpp"
 
-class GLIndexBuffer : public IndexBuffer {
-	GLuint buffer;
-public:
-	GLIndexBuffer(IndexBufferCreateInfo createInfo);
-	~GLIndexBuffer();
+namespace Grindstone {
+	namespace GraphicsAPI {
+		class GLIndexBuffer : public IndexBuffer {
+			GLuint buffer;
+		public:
+			GLIndexBuffer(IndexBufferCreateInfo createInfo);
+			~GLIndexBuffer();
 
-	void Bind();
-};
+			void Bind();
+		};
+	}
+}
 
 #endif

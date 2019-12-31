@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../GraphicsCommon/Formats.h"
+#include "../GraphicsCommon/Formats.hpp"
 #include <vulkan/vulkan.h>
 
 VkFormat TranslateDepthFormat(DepthFormat format);

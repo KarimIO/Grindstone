@@ -16,15 +16,15 @@ class MaterialManager;
 class Material {
 	friend MaterialManager;
 public:
-	TextureBinding *m_textureBinding;
-	UniformBuffer *param_buffer_handler_;
+	Grindstone::GraphicsAPI::TextureBinding *m_textureBinding;
+	Grindstone::GraphicsAPI::UniformBuffer *param_buffer_handler_;
 	char *param_buffer_;
 	std::vector<Renderable *> m_meshes;
 	Material() {
 		m_textureBinding = 0;
 		m_meshes.clear();
 	}
-	Material(MaterialReference reference, TextureBinding *textureBinding);
+	Material(MaterialReference reference, Grindstone::GraphicsAPI::TextureBinding *textureBinding);
 	void incrementDrawCount();
 	const uint32_t getDrawCount();
 	std::string path;

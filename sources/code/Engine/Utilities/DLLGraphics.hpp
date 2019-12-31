@@ -4,18 +4,22 @@
 #include "DLLHandler.hpp"
 #include "GraphicsLanguage.hpp"
 
-class GraphicsWrapper;
+namespace Grindstone {
+	namespace GraphicsAPI {
+		class GraphicsWrapper;
+	}
+}
 
 class DLLGraphics : public DLLHandler {
 public:
 	DLLGraphics();
-	GraphicsWrapper *getWrapper();
+	Grindstone::GraphicsAPI::GraphicsWrapper *getWrapper();
 	void setup();
 	void reload();
 	~DLLGraphics();
 private:
-	GraphicsWrapper *wrapper_;
-	void(*pfnDeleteGraphics)(GraphicsWrapper*);
+	Grindstone::GraphicsAPI::GraphicsWrapper *wrapper_;
+	void(*pfnDeleteGraphics)(Grindstone::GraphicsAPI::GraphicsWrapper*);
 };
 
 #endif

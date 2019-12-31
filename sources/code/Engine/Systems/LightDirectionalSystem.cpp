@@ -101,11 +101,12 @@ ComponentHandle LightDirectionalSubSystem::addComponent(GameObjectHandle object_
 LightDirectionalSystem::LightDirectionalSystem() : System(COMPONENT_LIGHT_DIRECTIONAL) {}
 
 void LightDirectionalSystem::update() {
+	GRIND_PROFILE_FUNC();
 	const Settings *settings = engine.getSettings();
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
-	bool invert_proj = settings->graphics_language_ == GRAPHICS_VULKAN;
-	bool scale_proj = settings->graphics_language_ == GRAPHICS_DIRECTX;
+	bool invert_proj = settings->graphics_language_ == GraphicsLanguage::Vulkan;
+	bool scale_proj = settings->graphics_language_ == GraphicsLanguage::DirectX;
 
 	double aspect = 1.0;
 	double near_dist = 0.1;
@@ -173,8 +174,8 @@ void LightDirectionalSystem::update() {
 
 					// Render
 					component.shadow_fbo_->Bind(true);
-					component.shadow_fbo_->Clear(CLEAR_DEPTH);
-					graphics_wrapper->SetImmediateBlending(BLEND_NONE);
+					component.shadow_fbo_->Clear(Grindstone::GraphicsAPI::ClearMode::Depth);
+					graphics_wrapper->SetImmediateBlending(Grindstone::GraphicsAPI::BlendMode::None);
 					engine.getGraphicsPipelineManager()->drawShadowsImmediate(0, 0, component.properties_.resolution, component.properties_.resolution);
 				}
 			}
@@ -223,10 +224,10 @@ void LightDirectionalSubSystem::setShadow(ComponentHandle h, bool shadow) {
 
 	if (shadow) {
 
-		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24, component.properties_.resolution, component.properties_.resolution, true, false);
+		Grindstone::GraphicsAPI::DepthTargetCreateInfo depth_image_ci(Grindstone::GraphicsAPI::DepthFormat::D24, component.properties_.resolution, component.properties_.resolution, true, false);
 		component.shadow_dt_ = graphics_wrapper->CreateDepthTarget(depth_image_ci);
 
-		FramebufferCreateInfo fbci;
+		Grindstone::GraphicsAPI::FramebufferCreateInfo fbci;
 		fbci.num_render_target_lists = 0;
 		fbci.render_target_lists = nullptr;
 		fbci.depth_target = component.shadow_dt_;

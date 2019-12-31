@@ -6,14 +6,18 @@
 #include "AssetReferences.hpp"
 #include "GraphicsPipeline.hpp"
 
-class GraphicsWrapper;
-class GraphicsPipeline;
-class CommandBuffer;
-class Texture;
-class TextureBindingLayout;
-class RenderPass;
-class Framebuffer;
-class UniformBufferBinding;
+namespace Grindstone {
+	namespace GraphicsAPI {
+		class GraphicsWrapper;
+		class GraphicsPipeline;
+		class CommandBuffer;
+		class Texture;
+		class TextureBindingLayout;
+		class RenderPass;
+		class Framebuffer;
+		class UniformBufferBinding;
+	}
+}
 
 enum PARAM_TYPE {
 	PARAM_BOOL,
@@ -63,31 +67,31 @@ class MaterialManager;
 
 struct PipelineContainer {
 	ProgramType type;
-	TextureBindingLayout *tbl;
-	TextureBindingLayout **tbl_arr;
+	Grindstone::GraphicsAPI::TextureBindingLayout *tbl;
+	Grindstone::GraphicsAPI::TextureBindingLayout **tbl_arr;
 	PipelineReference reference;
-	GraphicsPipeline *program;
-	GraphicsPipeline *shadow_program;
-	CommandBuffer *commandBuffer;
+	Grindstone::GraphicsAPI::GraphicsPipeline *program;
+	Grindstone::GraphicsAPI::GraphicsPipeline *shadow_program;
+	Grindstone::GraphicsAPI::CommandBuffer *commandBuffer;
 
-	CullMode cull_mode_;
+	Grindstone::GraphicsAPI::CullMode cull_mode_;
 	std::string name;
 	std::string name_text;
-	std::string shader_paths[SHADER_FRAGMENT + 1];
-	std::string shadow_shader_paths[SHADER_FRAGMENT + 1];
+	std::string shader_paths[Grindstone::GraphicsAPI::numShaderGraphicStage];
+	std::string shadow_shader_paths[Grindstone::GraphicsAPI::numShaderGraphicStage];
 	std::map<std::string, TextureParameterDescriptor> textureDescriptorTable;
 	std::map<std::string, ParameterDescriptor> parameterDescriptorTable;
 	std::vector<Material> materials;
 	uint32_t draw_count;
 	uint16_t param_size;
-	UniformBufferBinding *param_ubb;
+	Grindstone::GraphicsAPI::UniformBufferBinding *param_ubb;
 };
 
 struct RenderPassContainer {
 public:
-	RenderPass *renderPass;
-	CommandBuffer *commandBuffer;
-	std::vector<Framebuffer *> framebuffers;
+	Grindstone::GraphicsAPI::RenderPass *renderPass;
+	Grindstone::GraphicsAPI::CommandBuffer *commandBuffer;
+	std::vector<Grindstone::GraphicsAPI::Framebuffer *> framebuffers;
 	std::vector<PipelineContainer> pipelines_deferred;
 	std::vector<PipelineContainer> pipelines_unlit;
 	std::vector<PipelineContainer> pipelines_forward;
@@ -125,8 +129,8 @@ private:
 	std::vector<RenderPassContainer> render_passes_;
 	std::map<std::string, PipelineReference> pipeline_map_;
 	std::map<std::string, MaterialReference> material_map_;
-	std::map<std::string, Texture *> texture_map_;
-	std::vector<Texture *> unloaded_;
+	std::map<std::string, Grindstone::GraphicsAPI::Texture *> texture_map_;
+	std::vector<Grindstone::GraphicsAPI::Texture *> unloaded_;
 };
 
 #endif

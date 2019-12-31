@@ -89,7 +89,7 @@ void Camera::setEnabled(bool status) {
 	enabled_ = status;
 }
 
-void Camera::setCustomFinalFramebuffer(Framebuffer *framebuffer) {
+void Camera::setCustomFinalFramebuffer(Grindstone::GraphicsAPI::Framebuffer *framebuffer) {
 	final_framebuffer_ = framebuffer;
 	custom_final_framebuffer_ = true;
 }
@@ -103,13 +103,13 @@ void Camera::generateFramebuffers() {
 		engine.getGraphicsWrapper()->DeleteFramebuffer(hdr_framebuffer_);
 	}
 
-	RenderTargetCreateInfo hdr_buffer_ci(FORMAT_COLOR_R16G16B16, viewport_width_, viewport_height_);
+	Grindstone::GraphicsAPI::RenderTargetCreateInfo hdr_buffer_ci(Grindstone::GraphicsAPI::ColorFormat::R16G16B16, viewport_width_, viewport_height_);
 	hdr_buffer_ = engine.getGraphicsWrapper()->CreateRenderTarget(&hdr_buffer_ci, 1);
 
-	DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24_STENCIL_8, viewport_width_, viewport_height_, false, false);
+	Grindstone::GraphicsAPI::DepthTargetCreateInfo depth_image_ci(Grindstone::GraphicsAPI::DepthFormat::D24_STENCIL_8, viewport_width_, viewport_height_, false, false);
 	depth_target_ = engine.getGraphicsWrapper()->CreateDepthTarget(depth_image_ci);
 
-	FramebufferCreateInfo hdr_framebuffer_ci;
+	Grindstone::GraphicsAPI::FramebufferCreateInfo hdr_framebuffer_ci;
 	hdr_framebuffer_ci.render_target_lists = &hdr_buffer_;
 	hdr_framebuffer_ci.num_render_target_lists = 1;
 	hdr_framebuffer_ci.depth_target = depth_target_;
@@ -125,13 +125,13 @@ void Camera::generateFramebuffers() {
 			engine.getGraphicsWrapper()->DeleteFramebuffer(final_framebuffer_);
 		}
 
-		RenderTargetCreateInfo fbo_buffer_ci(FORMAT_COLOR_R8G8B8, viewport_width_, viewport_height_);
+		Grindstone::GraphicsAPI::RenderTargetCreateInfo fbo_buffer_ci(Grindstone::GraphicsAPI::ColorFormat::R8G8B8, viewport_width_, viewport_height_);
 		final_buffer_ = engine.getGraphicsWrapper()->CreateRenderTarget(&fbo_buffer_ci, 1);
 
-		//DepthTargetCreateInfo depth_image_ci2(FORMAT_DEPTH_24_STENCIL_8, viewport_width_, viewport_height_, false, false);
+		//DepthTargetCreateInfo depth_image_ci2(Grindstone::GraphicsAPI::DepthFormat::D24_STENCIL_8, viewport_width_, viewport_height_, false, false);
 		//DepthTarget *depth_target2_ = engine.getGraphicsWrapper()->CreateDepthTarget(depth_image_ci);
 
-		FramebufferCreateInfo final_framebuffer_ci;
+		Grindstone::GraphicsAPI::FramebufferCreateInfo final_framebuffer_ci;
 		final_framebuffer_ci.render_target_lists = &final_buffer_;
 		final_framebuffer_ci.num_render_target_lists = 1;
 		final_framebuffer_ci.depth_target = nullptr; // depth_image_;
@@ -180,8 +180,8 @@ void Camera::setDirections(glm::vec3 fwd, glm::vec3 up) {
 void Camera::buildProjection() {
 	const Settings *settings = engine.getSettings();
 
-	bool invert_proj = settings->graphics_language_ == GRAPHICS_VULKAN;
-	bool scale_proj = settings->graphics_language_ == GRAPHICS_DIRECTX;
+	bool invert_proj = settings->graphics_language_ == GraphicsLanguage::Vulkan;
+	bool scale_proj = settings->graphics_language_ == GraphicsLanguage::DirectX;
 
 	// Calculate Projection
 	if (is_ortho_) {
@@ -224,6 +224,7 @@ struct UBOProjView {
 };
 
 void Camera::render() {
+	GRIND_PROFILE_FUNC();
 	if (space_ == nullptr || !enabled_) return;
 
 	bool dirty = projection_dirty_ || view_dirty_;
@@ -275,7 +276,7 @@ void Camera::render() {
 	graphics_wrapper->setViewport(0, 0, viewport_width_, viewport_height_);
 
 	bool in_debug = (render_path_->getDebugMode() > 0);
-	Framebuffer *f = in_debug ? final_framebuffer_ : hdr_framebuffer_;
+	Grindstone::GraphicsAPI::Framebuffer *f = in_debug ? final_framebuffer_ : hdr_framebuffer_;
 	render_path_->render(f, depth_target_, space_);
 	
 	// final_framebuffer_->

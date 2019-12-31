@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../GraphicsCommon/CommandBuffer.h"
+#include "../GraphicsCommon/CommandBuffer.hpp"
 #include <vector>
 #include <vulkan/vulkan.h>
 

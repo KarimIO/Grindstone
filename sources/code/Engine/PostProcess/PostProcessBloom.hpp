@@ -3,10 +3,15 @@
 
 #include "BasePost.hpp"
 
-class GraphicsPipeline;
-class UniformBuffer;
-struct RenderTargetContainer;
+namespace Grindstone {
+	namespace GraphicsAPI {
+		class GraphicsPipeline;
+		class UniformBuffer;
+	}
+}
+
 class PostProcessAutoExposure;
+struct RenderTargetContainer;
 
 class PostProcessBloom : public BasePostProcess {
 public:
@@ -22,7 +27,7 @@ private:
 
 	PostProcessAutoExposure *auto_exposure_;
 
-    GraphicsPipeline *gpipeline_;
+	Grindstone::GraphicsAPI::GraphicsPipeline *gpipeline_;
 };
 
 #endif // !POST_PROCESS_BLOOM_HPP

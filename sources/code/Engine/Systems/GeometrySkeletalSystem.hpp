@@ -43,7 +43,7 @@ private:
 	std::vector<Material *> materials;
 	std::vector<Mesh> meshes;
 	std::vector<Animation> animations;
-	VertexArrayObject *vao;
+	Grindstone::GraphicsAPI::VertexArrayObject *vao;
 	std::string name;
 public:
 	std::string getName();

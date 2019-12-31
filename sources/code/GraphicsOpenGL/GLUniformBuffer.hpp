@@ -3,26 +3,30 @@
 
 #include "../GraphicsCommon/UniformBuffer.hpp"
 
-class GLUniformBufferBinding : public UniformBufferBinding {
-	const char *uniformName;
-	GLuint bindingLocation;
-public:
-	GLUniformBufferBinding(UniformBufferBindingCreateInfo);
-	const char *GetUniformName();
-	GLuint GetBindingLocation();
-};
+namespace Grindstone {
+	namespace GraphicsAPI {
+		class GLUniformBufferBinding : public UniformBufferBinding {
+			const char *uniformName;
+			GLuint bindingLocation;
+		public:
+			GLUniformBufferBinding(UniformBufferBindingCreateInfo);
+			const char *GetUniformName();
+			GLuint GetBindingLocation();
+		};
 
-class GLUniformBuffer : public UniformBuffer {
-private:
-	GLuint ubo;
-	GLuint bindingLocation;
-	uint32_t size;
-public:
-	GLUniformBuffer(UniformBufferCreateInfo ci);
-	void Bind();
-	~GLUniformBuffer();
+		class GLUniformBuffer : public UniformBuffer {
+		private:
+			GLuint ubo;
+			GLuint bindingLocation;
+			uint32_t size;
+		public:
+			GLUniformBuffer(UniformBufferCreateInfo ci);
+			void Bind();
+			~GLUniformBuffer();
 
-	void UpdateUniformBuffer(void * content);
-};
+			void UpdateUniformBuffer(void * content);
+		};
+	}
+}
 
 #endif

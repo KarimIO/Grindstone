@@ -9,7 +9,7 @@
 #include <stb/stb_image_resize.h>
 #include "ImageConverter.hpp"
 
-#include "Utilities/Logger.hpp"
+
 
 typedef unsigned long DWORD;
 

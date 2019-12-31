@@ -27,7 +27,7 @@ ComponentHandle RenderSpriteSubSystem::addComponent(GameObjectHandle object_hand
 
 RenderSpriteSubSystem::~RenderSpriteSubSystem() {}
 
-void RenderSpriteSubSystem::renderSprite(bool render_ortho, float aspect, glm::vec4 color, TextureBinding *binding, glm::mat4 model) {
+void RenderSpriteSubSystem::renderSprite(bool render_ortho, float aspect, glm::vec4 color, Grindstone::GraphicsAPI::TextureBinding *binding, glm::mat4 model) {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 	auto system = ((RenderSpriteSystem *)engine.getSystem(COMPONENT_RENDER_SPRITE));
 	
@@ -53,9 +53,9 @@ void RenderSpriteSubSystem::renderSprite(bool render_ortho, float aspect, glm::v
 	graphics_wrapper->DrawImmediateVertices(0, 6);
 }
 
-void RenderSpriteSubSystem::renderSprites(bool render_ortho, glm::vec3 cam_pos, DepthTarget *depth_target) {
+void RenderSpriteSubSystem::renderSprites(bool render_ortho, glm::vec3 cam_pos, Grindstone::GraphicsAPI::DepthTarget *depth_target) {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
-	graphics_wrapper->SetImmediateBlending(BLEND_ADD_ALPHA);
+	graphics_wrapper->SetImmediateBlending(Grindstone::GraphicsAPI::BlendMode::AdditiveAlpha);
 	graphics_wrapper->CopyToDepthBuffer(depth_target);
 	graphics_wrapper->EnableDepth(true);
 
@@ -92,7 +92,7 @@ void RenderSpriteSubSystem::renderSprites(bool render_ortho, glm::vec3 cam_pos, 
 	}
 }
 
-void RenderSpriteSubSystem::handleDebugSprite(bool render_ortho, glm::vec3 color, glm::vec3 cam_pos, GameObjectHandle game_obj_handle, TextureBinding *tex_binding) {
+void RenderSpriteSubSystem::handleDebugSprite(bool render_ortho, glm::vec3 color, glm::vec3 cam_pos, GameObjectHandle game_obj_handle, Grindstone::GraphicsAPI::TextureBinding *tex_binding) {
 	TransformSubSystem *sub = (TransformSubSystem *)space_->getSubsystem(COMPONENT_TRANSFORM);
 	GameObject game_object = space_->getObject(game_obj_handle);
 	ComponentHandle comp_handle = game_object.getComponentHandle(COMPONENT_TRANSFORM);
@@ -128,39 +128,40 @@ void RenderSpriteSystem::update() {
 }
 
 RenderSpriteSystem::RenderSpriteSystem() : System(COMPONENT_RENDER_SPRITE) {
+	GRIND_PROFILE_FUNC();
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
-	UniformBufferBindingCreateInfo ubbci;
+	Grindstone::GraphicsAPI::UniformBufferBindingCreateInfo ubbci;
 	ubbci.binding = 1;
 	ubbci.shaderLocation = "SpriteUBO";
 	ubbci.size = sizeof(SpriteUniformBuffer);
-	ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	ubbci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	ubb_ = engine.getGraphicsWrapper()->CreateUniformBufferBinding(ubbci);
 
-	UniformBufferCreateInfo uboci;
+	Grindstone::GraphicsAPI::UniformBufferCreateInfo uboci;
 	uboci.isDynamic = false;
 	uboci.size = sizeof(SpriteUniformBuffer);
 	uboci.binding = ubb_;
 	ubo_ = graphics_wrapper->CreateUniformBuffer(uboci);
 
-	TextureSubBinding subbinding;
+	Grindstone::GraphicsAPI::TextureSubBinding subbinding;
 	subbinding.shaderLocation = "image";
 	subbinding.textureLocation = 0;
 
-	TextureBindingLayoutCreateInfo tblci;
+	Grindstone::GraphicsAPI::TextureBindingLayoutCreateInfo tblci;
 	tblci.bindingLocation = 0;
 	tblci.bindings = &subbinding;
 	tblci.bindingCount = 1;
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	tbl_ = engine.getGraphicsWrapper()->CreateTextureBindingLayout(tblci);
 
-	ShaderStageCreateInfo vi;
-	ShaderStageCreateInfo fi;
-	if (engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL) {
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo vi;
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo fi;
+	if (engine.getSettings()->graphics_language_ == GraphicsLanguage::OpenGL) {
 		vi.fileName = "../assets/shaders/spriteVert.glsl";
 		fi.fileName = "../assets/shaders/spriteFrag.glsl";
 	}
-	else if (engine.getSettings()->graphics_language_ == GRAPHICS_DIRECTX) {
+	else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX) {
 		vi.fileName = "../assets/shaders/spriteVert.fxc";
 		fi.fileName = "../assets/shaders/spriteFrag.fxc";
 	}
@@ -173,22 +174,22 @@ RenderSpriteSystem::RenderSpriteSystem() : System(COMPONENT_RENDER_SPRITE) {
 		return;
 	vi.content = vfile.data();
 	vi.size = (uint32_t)vfile.size();
-	vi.type = SHADER_VERTEX;
+	vi.type = Grindstone::GraphicsAPI::ShaderStage::Vertex;
 
 	std::vector<char> ffile;
 	if (!readFile(fi.fileName, ffile))
 		return;
 	fi.content = ffile.data();
 	fi.size = (uint32_t)ffile.size();
-	fi.type = SHADER_FRAGMENT;
+	fi.type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
-	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
+	std::vector<Grindstone::GraphicsAPI::ShaderStageCreateInfo> stages = { vi, fi };
 
 	auto vbd = engine.getPlaneVBD();
 	auto vad = engine.getPlaneVAD();
 
-	GraphicsPipelineCreateInfo spriteGPCI;
-	spriteGPCI.cullMode = CULL_BACK;
+	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo spriteGPCI;
+	spriteGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
 	spriteGPCI.bindings = &vbd;
 	spriteGPCI.bindingsCount = 1;
 	spriteGPCI.attributes = &vad;
@@ -197,13 +198,13 @@ RenderSpriteSystem::RenderSpriteSystem() : System(COMPONENT_RENDER_SPRITE) {
 	spriteGPCI.height = (float)engine.getSettings()->resolution_y_;
 	spriteGPCI.scissorW = engine.getSettings()->resolution_x_;
 	spriteGPCI.scissorH = engine.getSettings()->resolution_y_;
-	spriteGPCI.primitiveType = PRIM_TRIANGLE_STRIPS;
+	spriteGPCI.primitiveType = Grindstone::GraphicsAPI::GeometryType::TriangleStrips;
 	spriteGPCI.shaderStageCreateInfos = stages.data();
 	spriteGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
-	std::vector<TextureBindingLayout *> tbls_ = { };
+	std::vector<Grindstone::GraphicsAPI::TextureBindingLayout *> tbls_ = { };
 	spriteGPCI.textureBindings = tbls_.data();
 	spriteGPCI.textureBindingCount = (uint32_t)tbls_.size();
-	std::vector<UniformBufferBinding *> ubbs = { engine.getUniformBufferBinding(), ubb_ };
+	std::vector<Grindstone::GraphicsAPI::UniformBufferBinding *> ubbs = { engine.getUniformBufferBinding(), ubb_ };
 	spriteGPCI.uniformBufferBindings = ubbs.data();
 	spriteGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
 	pipeline_ = engine.getGraphicsWrapper()->CreateGraphicsPipeline(spriteGPCI);
@@ -213,13 +214,13 @@ RenderSpriteSystem::RenderSpriteSystem() : System(COMPONENT_RENDER_SPRITE) {
 
 void RenderSpriteSystem::loadDebugSprites() {
 	TextureHandler t = engine.getTextureManager()->loadTexture("../engineassets/materials/debug/light_point_sprite.png");
-	Texture *tex = engine.getTextureManager()->getTexture(t);
+	Grindstone::GraphicsAPI::Texture *tex = engine.getTextureManager()->getTexture(t);
 
-	SingleTextureBind stb;
+	Grindstone::GraphicsAPI::SingleTextureBind stb;
 	stb.address = 0;
 	stb.texture = tex;
 
-	TextureBindingCreateInfo ci;
+	Grindstone::GraphicsAPI::TextureBindingCreateInfo ci;
 	ci.layout = tbl_;
 	ci.textures = &stb;
 	ci.textureCount = 1;

@@ -5,14 +5,18 @@
 #include "../GraphicsCommon/VertexBuffer.hpp"
 
 
-class GLVertexBuffer : public VertexBuffer {
-private:
-	GLuint buffer;
-public:
-	GLVertexBuffer(VertexBufferCreateInfo createInfo);
-	~GLVertexBuffer();
+namespace Grindstone {
+	namespace GraphicsAPI {
+		class GLVertexBuffer : public VertexBuffer {
+		private:
+			GLuint buffer;
+		public:
+			GLVertexBuffer(VertexBufferCreateInfo createInfo);
+			~GLVertexBuffer();
 
-	void Bind();
-};
+			void Bind();
+		};
+	}
+}
 
 #endif

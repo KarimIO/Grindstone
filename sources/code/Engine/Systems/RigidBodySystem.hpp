@@ -36,12 +36,16 @@ public:
 	float damping_rotational_;
 	btRigidBody* rigid_body_;
 	btCollisionShape* shape_;
+
+	REFLECT()
 };
 
 class RigidBodySystem : public System {
 public:
 	RigidBodySystem();
 	void update();
+
+	REFLECT_SYSTEM()
 };
 
 class RigidBodySubSystem : public SubSystem {
@@ -53,6 +57,7 @@ public:
 	virtual Component *getBaseComponent(ComponentHandle component_handle) override;
 	size_t getNumComponents();
 	virtual void removeComponent(ComponentHandle handle);
+	virtual void initialize() override;
 	virtual ~RigidBodySubSystem();
 //private:
 	btBroadphaseInterface* broadphase_;

@@ -7,7 +7,6 @@
 
 #include <cstring>
 
-#include "../Utilities/Logger.hpp"
 #include "Core/Scene.hpp"
 #include "Core/Space.hpp"
 #include "TransformSystem.hpp"
@@ -19,8 +18,6 @@
 #include "Renderpaths/RenderPath.hpp"
 #include "../Converter/ImageConverter.hpp"
 #include <thread>
-
-//#include <GL/gl3w.h>
 
 ///////////////////////////////////////////////////////////////////////////////
 // find middle point of 2 vertices
@@ -65,20 +62,20 @@ void CubemapSystem::prepareSphere() {
 
 	sphere_vad_.binding = 0;
 	sphere_vad_.location = 0;
-	//sphere_vad_.format = VERTEX_R32_G32;
-	sphere_vad_.format = VERTEX_R32_G32_B32; // CHANGE
+	//sphere_vad_.format = Grindstone::GraphicsAPI::VertexFormat::R32_G32;
+	sphere_vad_.format = Grindstone::GraphicsAPI::VertexFormat::R32_G32_B32; // CHANGE
 	sphere_vad_.size = 3;
 	// sphere_vad_.size = 2; // CHANGE
 	sphere_vad_.name = "vertexPosition";
 	sphere_vad_.offset = 0;
-	sphere_vad_.usage = ATTRIB_POSITION;
+	sphere_vad_.usage = Grindstone::GraphicsAPI::AttributeUsage::Position;
 
-	IndexBufferCreateInfo ibci;
+	Grindstone::GraphicsAPI::IndexBufferCreateInfo ibci;
 	ibci.content = static_cast<const void *>(indices.data());
 	ibci.count = static_cast<uint32_t>(indices.size());
 	ibci.size = static_cast<uint32_t>(sizeof(uint32_t) * indices.size());
 
-	VertexBufferCreateInfo sphere_vbo_ci;
+	Grindstone::GraphicsAPI::VertexBufferCreateInfo sphere_vbo_ci;
 	sphere_vbo_ci.binding = &sphere_vbd_;
 	sphere_vbo_ci.bindingCount = 1;
 	sphere_vbo_ci.attribute = &sphere_vad_;
@@ -88,7 +85,7 @@ void CubemapSystem::prepareSphere() {
 	sphere_vbo_ci.size = (uint32_t)(sizeof(glm::vec3) * vertices.size());
 
 
-	VertexArrayObjectCreateInfo sphere_vao_ci;
+	Grindstone::GraphicsAPI::VertexArrayObjectCreateInfo sphere_vao_ci;
 	sphere_vao_ci.vertexBuffer = sphere_vbo_;
 	sphere_vao_ci.indexBuffer = sphere_ibo_;
 	sphere_vao_ = graphics_wrapper->CreateVertexArrayObject(sphere_vao_ci);
@@ -103,14 +100,14 @@ void CubemapSystem::prepareSphere() {
 void CubemapSystem::prepareUniformBuffer() {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
-	UniformBufferBindingCreateInfo ubbci;
+	Grindstone::GraphicsAPI::UniformBufferBindingCreateInfo ubbci;
 	ubbci.binding = 1;
 	ubbci.shaderLocation = "ConvolutionBufferObject";
 	ubbci.size = sizeof(ConvolutionBufferObject);
-	ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	ubbci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	ubb_ = graphics_wrapper->CreateUniformBufferBinding(ubbci);
 
-	UniformBufferCreateInfo ubci;
+	Grindstone::GraphicsAPI::UniformBufferCreateInfo ubci;
 	ubci.isDynamic = false;
 	ubci.size = sizeof(ConvolutionBufferObject);
 	ubci.binding = ubb_;
@@ -123,28 +120,28 @@ void CubemapSystem::prepareIrradianceShader() {
 
 	// Create Irradiance
 	int res = 512;
-	std::vector<RenderTargetCreateInfo> irr_images_ci;
+	std::vector<Grindstone::GraphicsAPI::RenderTargetCreateInfo> irr_images_ci;
 	irr_images_ci.reserve(1);
-	irr_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, res, res);
+	irr_images_ci.emplace_back(Grindstone::GraphicsAPI::ColorFormat::R8G8B8A8, res, res);
 	irradiance_image_ = graphics_wrapper->CreateRenderTarget(irr_images_ci.data(), (uint32_t)irr_images_ci.size());
 
-	FramebufferCreateInfo irr_ci;
+	Grindstone::GraphicsAPI::FramebufferCreateInfo irr_ci;
 	irr_ci.render_target_lists = &irradiance_image_;
 	irr_ci.num_render_target_lists = 1;
 	irr_ci.depth_target = nullptr;
 	irr_ci.render_pass = nullptr;
 	irradiance_fbo_ = graphics_wrapper->CreateFramebuffer(irr_ci);
 
-	ShaderStageCreateInfo vi;
-	ShaderStageCreateInfo fi;
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo vi;
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo fi;
 	std::vector<char> vfile;
 	std::vector<char> ffile;
 
-	if (settings->graphics_language_ == GRAPHICS_OPENGL) {
+	if (settings->graphics_language_ == GraphicsLanguage::OpenGL) {
 		vi.fileName = "../assets/shaders/baking/cubemap_vert.glsl";
 		fi.fileName = "../assets/shaders/baking/cubemap_irr.glsl";
 	}
-	else if (settings->graphics_language_ == GRAPHICS_DIRECTX) {
+	else if (settings->graphics_language_ == GraphicsLanguage::DirectX) {
 		vi.fileName = "../assets/shaders/baking/cubemap_vert.fxc";
 		fi.fileName = "../assets/shaders/baking/cubemap_irr.fxc";
 	}
@@ -160,7 +157,7 @@ void CubemapSystem::prepareIrradianceShader() {
 	}
 	vi.content = vfile.data();
 	vi.size = (uint32_t)vfile.size();
-	vi.type = SHADER_VERTEX;
+	vi.type = Grindstone::GraphicsAPI::ShaderStage::Vertex;
 
 	ffile.clear();
 	if (!readFile(fi.fileName, ffile)) {
@@ -169,12 +166,12 @@ void CubemapSystem::prepareIrradianceShader() {
 	}
 	fi.content = ffile.data();
 	fi.size = (uint32_t)ffile.size();
-	fi.type = SHADER_FRAGMENT;
+	fi.type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
-	ShaderStageCreateInfo stages[2] = { vi, fi };
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo stages[2] = { vi, fi };
 
-	GraphicsPipelineCreateInfo irrGPCI;
-	irrGPCI.cullMode = CULL_BACK;
+	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo irrGPCI;
+	irrGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
 	irrGPCI.bindings = &sphere_vbd_;
 	irrGPCI.bindingsCount = 1;
 	irrGPCI.attributes = &sphere_vad_;
@@ -183,7 +180,7 @@ void CubemapSystem::prepareIrradianceShader() {
 	irrGPCI.height = (float)res;
 	irrGPCI.scissorW = res;
 	irrGPCI.scissorH = res;
-	irrGPCI.primitiveType = PRIM_TRIANGLES;
+	irrGPCI.primitiveType = Grindstone::GraphicsAPI::GeometryType::Triangles;
 	irrGPCI.shaderStageCreateInfos = stages;
 	irrGPCI.shaderStageCreateInfoCount = 2;
 	irrGPCI.textureBindings = &texture_binding_layout_;
@@ -199,12 +196,12 @@ void CubemapSystem::prepareSpecularShader() {
 
 	// Create Specular
 	int res = 512;
-	std::vector<RenderTargetCreateInfo> spec_images_ci;
+	std::vector<Grindstone::GraphicsAPI::RenderTargetCreateInfo> spec_images_ci;
 	spec_images_ci.reserve(1);
-	spec_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, res, res);
+	spec_images_ci.emplace_back(Grindstone::GraphicsAPI::ColorFormat::R8G8B8A8, res, res);
 	specular_image_ = graphics_wrapper->CreateRenderTarget(spec_images_ci.data(), (uint32_t)spec_images_ci.size());
 
-	FramebufferCreateInfo spec_ci;
+	Grindstone::GraphicsAPI::FramebufferCreateInfo spec_ci;
 	spec_ci.render_target_lists = &specular_image_;
 	spec_ci.num_render_target_lists = 1;
 	spec_ci.depth_target = nullptr;
@@ -212,16 +209,16 @@ void CubemapSystem::prepareSpecularShader() {
 	specular_fbo_ = graphics_wrapper->CreateFramebuffer(spec_ci);
 
 	// Create Pipeline
-	ShaderStageCreateInfo vi;
-	ShaderStageCreateInfo fi;
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo vi;
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo fi;
 	std::vector<char> vfile;
 	std::vector<char> ffile;
 
-	if (settings->graphics_language_ == GRAPHICS_OPENGL) {
+	if (settings->graphics_language_ == GraphicsLanguage::OpenGL) {
 		vi.fileName = "../assets/shaders/baking/cubemap_vert.glsl";
 		fi.fileName = "../assets/shaders/baking/cubemap_spec.glsl";
 	}
-	else if (settings->graphics_language_ == GRAPHICS_DIRECTX) {
+	else if (settings->graphics_language_ == GraphicsLanguage::DirectX) {
 		vi.fileName = "../assets/shaders/baking/cubemap_vert.fxc";
 		fi.fileName = "../assets/shaders/baking/cubemap_spec.fxc";
 	}
@@ -237,7 +234,7 @@ void CubemapSystem::prepareSpecularShader() {
 	}
 	vi.content = vfile.data();
 	vi.size = (uint32_t)vfile.size();
-	vi.type = SHADER_VERTEX;
+	vi.type = Grindstone::GraphicsAPI::ShaderStage::Vertex;
 
 	ffile.clear();
 	if (!readFile(fi.fileName, ffile)) {
@@ -246,12 +243,12 @@ void CubemapSystem::prepareSpecularShader() {
 	}
 	fi.content = ffile.data();
 	fi.size = (uint32_t)ffile.size();
-	fi.type = SHADER_FRAGMENT;
+	fi.type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
-	ShaderStageCreateInfo stages[2] = { vi, fi };
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo stages[2] = { vi, fi };
 
-	GraphicsPipelineCreateInfo specGPCI;
-	specGPCI.cullMode = CULL_BACK;
+	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo specGPCI;
+	specGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
 	specGPCI.bindings = &sphere_vbd_;
 	specGPCI.bindingsCount = 1;
 	specGPCI.attributes = &sphere_vad_;
@@ -260,7 +257,7 @@ void CubemapSystem::prepareSpecularShader() {
 	specGPCI.height = (float)res;
 	specGPCI.scissorW = res;
 	specGPCI.scissorH = res;
-	specGPCI.primitiveType = PRIM_TRIANGLES;
+	specGPCI.primitiveType = Grindstone::GraphicsAPI::GeometryType::Triangles;
 	specGPCI.shaderStageCreateInfos = stages;
 	specGPCI.shaderStageCreateInfoCount = 2;
 	specGPCI.textureBindings = &texture_binding_layout_;
@@ -280,10 +277,10 @@ void CubemapSystem::convoluteIrradiance(CubemapComponent &c) {
 	// Bind Irradiance Convolution graphics pipeline
 	irradiance_pipeline_->Bind();
 
-	// Bind Irradiance Convolution Framebuffer
+	// Bind Irradiance Convolution Grindstone::GraphicsAPI::Framebuffer
 	// irradiance_fbo_->BindWrite(false);
 
-	// Bind camera framebuffer for read
+	// Bind camera Grindstone::GraphicsAPI::Framebuffer for read
 	// camera_->final_framebuffer_->BindRead();
 	// camera_->final_framebuffer_->BindTextures(0);
 
@@ -312,10 +309,10 @@ void CubemapSystem::convoluteIrradiance(CubemapComponent &c) {
 		graphics_wrapper->setViewport(0, 0, res, res);
 
 		// Clear it
-		graphics_wrapper->Clear(CLEAR_BOTH);
+		graphics_wrapper->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 
 		// Render
-		graphics_wrapper->DrawImmediateIndexed(GEOMETRY_TRIANGLES, true, 0, 0, total_sphere_indices_);
+		graphics_wrapper->DrawImmediateIndexed(Grindstone::GraphicsAPI::GeometryType::TriangleStrips, true, 0, 0, total_sphere_indices_);
 		
 		graphics_wrapper->SwapBuffer();
 		irradiance_fbo_->BindRead();
@@ -342,10 +339,10 @@ void CubemapSystem::convoluteSpecular(CubemapComponent &c) {
 	// Bind Irradiance Convolution graphics pipeline
 	specular_pipeline_->Bind();
 
-	// Bind Irradiance Convolution Framebuffer
+	// Bind Irradiance Convolution Grindstone::GraphicsAPI::Framebuffer
 	// irradiance_fbo_->BindWrite(false);
 
-	// Bind camera framebuffer for read
+	// Bind camera Grindstone::GraphicsAPI::Framebuffer for read
 	// camera_->final_framebuffer_->BindRead();
 	// camera_->final_framebuffer_->BindTextures(0);
 
@@ -379,10 +376,10 @@ void CubemapSystem::convoluteSpecular(CubemapComponent &c) {
 			camera_framebuffer_->BindTextures(4);
 
 			// Clear it
-			graphics_wrapper->Clear(CLEAR_BOTH);
+			graphics_wrapper->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 
 			// Render
-			graphics_wrapper->DrawImmediateIndexed(GEOMETRY_TRIANGLES, true, 0, 0, total_sphere_indices_);
+			graphics_wrapper->DrawImmediateIndexed(Grindstone::GraphicsAPI::GeometryType::TriangleStrips, true, 0, 0, total_sphere_indices_);
 			
 			graphics_wrapper->SwapBuffer();
 			specular_fbo_->BindRead();
@@ -440,10 +437,11 @@ void CubemapSystem::bake() {
 CubemapComponent::CubemapComponent(GameObjectHandle object_handle, ComponentHandle id) : Component(COMPONENT_CUBEMAP, object_handle, id), capture_method_(CubemapComponent::CaptureMethod::CAPTURE_BAKE), near_(0.1f), far_(100.0f), resolution_(512), cubemap_(nullptr), cubemap_binding_(nullptr), capture_fbo_(nullptr), render_target_(nullptr) {}
 
 CubemapSystem::CubemapSystem() : System(COMPONENT_CUBEMAP) {
+	GRIND_PROFILE_FUNC();
 	auto gw = engine.getGraphicsWrapper();
 	auto input = engine.getInputManager();
 
-	cube_binding_ = TextureSubBinding("environmentMap", 4);
+	cube_binding_ = Grindstone::GraphicsAPI::TextureSubBinding("environmentMap", 4);
 
 	projection_ = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 5.0f);
 
@@ -474,13 +472,13 @@ void CubemapSubSystem::initialize() {
 			component.cubemap_binding_ = nullptr;
 		}
 		else {
-			Texture *texture = engine.getTextureManager()->getTexture(handle);
+			Grindstone::GraphicsAPI::Texture *texture = engine.getTextureManager()->getTexture(handle);
 			component.cubemap_ = texture;
-			SingleTextureBind stb;
+			Grindstone::GraphicsAPI::SingleTextureBind stb;
 			stb.texture = component.cubemap_;
 			stb.address = 4;
 
-			TextureBindingCreateInfo ci;
+			Grindstone::GraphicsAPI::TextureBindingCreateInfo ci;
 			ci.textures = &stb;
 			ci.layout = engine.getSystem<CubemapSystem>()->texture_binding_layout_;
 			ci.textureCount = 1;
@@ -577,13 +575,13 @@ void CubemapSubSystem::setComponent(ComponentHandle component_handle, rapidjson:
 			component.near_ = params["far"].GetFloat();
 		}
 
-		RenderTargetCreateInfo gbuffer_images_ci(FORMAT_COLOR_R8G8B8A8, component.resolution_, component.resolution_);
+		RenderTargetCreateInfo gbuffer_images_ci(Grindstone::GraphicsAPI::ColorFormat::R8G8B8A8, component.resolution_, component.resolution_);
 		component.render_target_ = engine.getGraphicsWrapper()->CreateRenderTarget(&gbuffer_images_ci, 1);
 
-		DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24_STENCIL_8, component.resolution_, component.resolution_, false, false);
+		DepthTargetCreateInfo depth_image_ci(Grindstone::GraphicsAPI::DepthFormat::D24_STENCIL_8, component.resolution_, component.resolution_, false, false);
 		DepthTarget *depth_target_ = engine.getGraphicsWrapper()->CreateDepthTarget(depth_image_ci);
 
-		FramebufferCreateInfo gbuffer_ci;
+		Grindstone::GraphicsAPI::FramebufferCreateInfo gbuffer_ci;
 		gbuffer_ci.render_target_lists = &component.render_target_;
 		gbuffer_ci.num_render_target_lists = 1;
 		gbuffer_ci.depth_target = depth_target_;
@@ -594,6 +592,7 @@ void CubemapSubSystem::setComponent(ComponentHandle component_handle, rapidjson:
 */
 
 void CubemapSystem::update() {
+	GRIND_PROFILE_FUNC();
 	auto scenes = engine.getScenes();
 	for (auto scene : scenes) {
 		for (auto space : scene->spaces_) {
@@ -607,21 +606,21 @@ void CubemapSystem::update() {
 void CubemapSystem::loadGraphics() {
 	auto gw = engine.getGraphicsWrapper();
 
-	RenderTargetCreateInfo fbo_buffer_ci(FORMAT_COLOR_R8G8B8, 512, 512);
+	Grindstone::GraphicsAPI::RenderTargetCreateInfo fbo_buffer_ci(Grindstone::GraphicsAPI::ColorFormat::R8G8B8, 512, 512);
 	final_buffer_ = gw->CreateRenderTarget(&fbo_buffer_ci, 1, true);
 
-	FramebufferCreateInfo final_framebuffer_ci;
+	Grindstone::GraphicsAPI::FramebufferCreateInfo final_framebuffer_ci;
 	final_framebuffer_ci.render_target_lists = &final_buffer_;
 	final_framebuffer_ci.num_render_target_lists = 1;
 	final_framebuffer_ci.depth_target = nullptr; // depth_image_;
 	final_framebuffer_ci.render_pass = nullptr;
 	camera_framebuffer_ = gw->CreateFramebuffer(final_framebuffer_ci);
 
-	TextureBindingLayoutCreateInfo tblci;
+	Grindstone::GraphicsAPI::TextureBindingLayoutCreateInfo tblci;
 	tblci.bindingLocation = 4;
 	tblci.bindings = &cube_binding_;
 	tblci.bindingCount = (uint32_t)1;
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	texture_binding_layout_ = gw->CreateTextureBindingLayout(tblci);
 
 	prepareSphere();
@@ -644,13 +643,13 @@ void CubemapSystem::loadGraphics() {
 					component.cubemap_binding_ = nullptr;
 				}
 				else {
-					Texture *texture = engine.getTextureManager()->getTexture(handle);
+					Grindstone::GraphicsAPI::Texture *texture = engine.getTextureManager()->getTexture(handle);
 					component.cubemap_ = texture;
-					SingleTextureBind stb;
+					Grindstone::GraphicsAPI::SingleTextureBind stb;
 					stb.texture = component.cubemap_;
 					stb.address = 4;
 
-					TextureBindingCreateInfo ci;
+					Grindstone::GraphicsAPI::TextureBindingCreateInfo ci;
 					ci.textures = &stb;
 					ci.layout = engine.getSystem<CubemapSystem>()->texture_binding_layout_;
 					ci.textureCount = 1;
@@ -748,13 +747,13 @@ void handleMode(void *owner) {
 		component->cubemap_binding_ = nullptr;
 	}
 	else {
-		Texture *texture = engine.getTextureManager()->getTexture(handle);
+		Grindstone::GraphicsAPI::Texture *texture = engine.getTextureManager()->getTexture(handle);
 		component->cubemap_ = texture;
-		SingleTextureBind stb;
+		Grindstone::GraphicsAPI::SingleTextureBind stb;
 		stb.texture = component->cubemap_;
 		stb.address = 4;
 
-		TextureBindingCreateInfo ci;
+		Grindstone::GraphicsAPI::TextureBindingCreateInfo ci;
 		ci.textures = &stb;
 		ci.layout = engine.getSystem<CubemapSystem>()->texture_binding_layout_;
 		ci.textureCount = 1;

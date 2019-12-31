@@ -4,17 +4,21 @@
 #include "VertexBuffer.hpp"
 #include "IndexBuffer.hpp"
 
-struct VertexArrayObjectCreateInfo {
-	VertexBuffer *vertexBuffer;
-	IndexBuffer *indexBuffer;
-};
+namespace Grindstone {
+	namespace GraphicsAPI {
+		struct VertexArrayObjectCreateInfo {
+			VertexBuffer *vertexBuffer;
+			IndexBuffer *indexBuffer;
+		};
 
-class VertexArrayObject {
-public:
-	virtual ~VertexArrayObject() {};
-	virtual void Bind() {};
-	virtual void BindResources(VertexArrayObjectCreateInfo createInfo) {};
-	virtual void Unbind() {};
+		class VertexArrayObject {
+		public:
+			virtual ~VertexArrayObject() {};
+			virtual void Bind() {};
+			virtual void BindResources(VertexArrayObjectCreateInfo createInfo) {};
+			virtual void Unbind() {};
+		};
+	};
 };
 
 #endif

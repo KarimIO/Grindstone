@@ -5,17 +5,17 @@
 #include "PostProcessAutoExposure.hpp"
 
 PostProcessBloom::PostProcessBloom(unsigned int w, unsigned h, PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target, PostProcessAutoExposure *auto_exposure) : BasePostProcess(pipeline), source_(source), target_(target), auto_exposure_(auto_exposure) {
-    GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+	Grindstone::GraphicsAPI::GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
 
-	ShaderStageCreateInfo stages[2];
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo stages[2];
 
 	// Tonemap Graphics Pipeline
-	if (settings->graphics_language_ == GRAPHICS_OPENGL) {
+	if (settings->graphics_language_ == GraphicsLanguage::OpenGL) {
 		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		stages[1].fileName = "../assets/shaders/post_processing/bloom.glsl";
 	}
-	else if (settings->graphics_language_ == GRAPHICS_DIRECTX) {
+	else if (settings->graphics_language_ == GraphicsLanguage::DirectX) {
 		stages[0].fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
 		stages[1].fileName = "../assets/shaders/post_processing/bloom.fxc";
 	}
@@ -30,7 +30,7 @@ PostProcessBloom::PostProcessBloom(unsigned int w, unsigned h, PostPipeline *pip
 	}
 	stages[0].content = vfile.data();
 	stages[0].size = (uint32_t)vfile.size();
-	stages[0].type = SHADER_VERTEX;
+	stages[0].type = Grindstone::GraphicsAPI::ShaderStage::Vertex;
 
 	std::vector<char> ffile;
 	if (!readFile(stages[1].fileName, ffile)) {
@@ -38,13 +38,13 @@ PostProcessBloom::PostProcessBloom(unsigned int w, unsigned h, PostPipeline *pip
 	}
 	stages[1].content = ffile.data();
 	stages[1].size = (uint32_t)ffile.size();
-	stages[1].type = SHADER_FRAGMENT;
+	stages[1].type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
 	auto vbd = engine.getPlaneVBD();
 	auto vad = engine.getPlaneVAD();
 
-	GraphicsPipelineCreateInfo luminanceGPCI;
-	luminanceGPCI.cullMode = CULL_BACK;
+	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo luminanceGPCI;
+	luminanceGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
 	luminanceGPCI.bindings = &vbd;
 	luminanceGPCI.bindingsCount = 1;
 	luminanceGPCI.attributes = &vad;
@@ -53,18 +53,18 @@ PostProcessBloom::PostProcessBloom(unsigned int w, unsigned h, PostPipeline *pip
 	luminanceGPCI.height = (float)1024;
 	luminanceGPCI.scissorW = 1024;
 	luminanceGPCI.scissorH = 1024;
-	luminanceGPCI.primitiveType = PRIM_TRIANGLES;
+	luminanceGPCI.primitiveType = Grindstone::GraphicsAPI::GeometryType::Triangles;
 	luminanceGPCI.shaderStageCreateInfos = stages;
 	luminanceGPCI.shaderStageCreateInfoCount = 2;
 
-	TextureSubBinding *tonemap_sub_binding_ = new TextureSubBinding("lighting", 4);
+	Grindstone::GraphicsAPI::TextureSubBinding *tonemap_sub_binding_ = new Grindstone::GraphicsAPI::TextureSubBinding("lighting", 4);
 
-	TextureBindingLayoutCreateInfo tblci;
+	Grindstone::GraphicsAPI::TextureBindingLayoutCreateInfo tblci;
 	tblci.bindingLocation = 4;
 	tblci.bindings = tonemap_sub_binding_;
 	tblci.bindingCount = 1;
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	TextureBindingLayout *tonemap_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
+	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
+	Grindstone::GraphicsAPI::TextureBindingLayout *tonemap_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
 
 
 	luminanceGPCI.textureBindings = &tonemap_tbl_;
@@ -79,9 +79,10 @@ PostProcessBloom::~PostProcessBloom()
 }
 
 void PostProcessBloom::Process() {
+	GRIND_PROFILE_FUNC();
     gpipeline_->Bind();
 	engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
-	engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
+	engine.getGraphicsWrapper()->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 	//target_->framebuffer->BindWrite(true);
     source_->framebuffer->BindRead();
     source_->framebuffer->BindTextures(4);

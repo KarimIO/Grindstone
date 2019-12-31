@@ -3,17 +3,17 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 
-#include "VkRenderPass.h"
-#include "VkGraphicsPipeline.h"
-#include "VkFramebuffer.h"
-#include "VkCommandBuffer.h"
-#include "VkVertexBuffer.h"
-#include "VkIndexBuffer.h"
-#include "VkUniformBuffer.h"
-#include "VkTexture.h"
-#include "../GraphicsCommon/GraphicsWrapper.h"
-#include "../GraphicsCommon/DLLDefs.h"
-#include "../GraphicsCommon/VertexArrayObject.h"
+#include "VkRenderPass.hpp"
+#include "VkGraphicsPipeline.hpp"
+#include "VkFramebuffer.hpp"
+#include "VkCommandBuffer.hpp"
+#include "VkVertexBuffer.hpp"
+#include "VkIndexBuffer.hpp"
+#include "VkUniformBuffer.hpp"
+#include "VkTexture.hpp"
+#include "../GraphicsCommon/GraphicsWrapper.hpp"
+#include "../GraphicsCommon/DLLDefs.hpp"
+#include "../GraphicsCommon/VertexArrayObject.hpp"
 
 const std::vector<const char*> validationLayers = {
 	"VK_LAYER_LUNARG_standard_validation"
@@ -35,7 +35,7 @@ struct SwapChainSupportDetails {
 	std::vector<VkPresentModeKHR> presentModes;
 };
 
-class GRAPHICS_EXPORT_CLASS VkGraphicsWrapper : public GraphicsWrapper {
+class GRAPHICS_EXPORT_CLASS VulkanGraphicsWrapper : public GraphicsWrapper {
 private:
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;
@@ -90,7 +90,7 @@ private:
 public:
 	void Clear();
 
-	VkGraphicsWrapper(InstanceCreateInfo createInfo);
+	VulkanGraphicsWrapper(InstanceCreateInfo createInfo);
 	void CreateDefaultStructures();
 	void Cleanup();
 

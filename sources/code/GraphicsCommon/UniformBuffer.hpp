@@ -3,25 +3,29 @@
 #include <stdint.h>
 #include "Formats.hpp"
 
-struct UniformBufferBindingCreateInfo {
-	const char *shaderLocation;
-	uint32_t binding;
-	uint32_t stages;
-	uint32_t size;
-};
+namespace Grindstone {
+	namespace GraphicsAPI {
+		struct UniformBufferBindingCreateInfo {
+			const char *shaderLocation;
+			uint32_t binding;
+			ShaderStageBit stages;
+			uint32_t size;
+		};
 
-class UniformBufferBinding {
-public:
-};
+		class UniformBufferBinding {
+		public:
+		};
 
-struct UniformBufferCreateInfo {
-	bool isDynamic;
-	uint32_t size;
-	UniformBufferBinding *binding;
-};
+		struct UniformBufferCreateInfo {
+			bool isDynamic;
+			uint32_t size;
+			UniformBufferBinding *binding;
+		};
 
-class UniformBuffer {
-public:
-	virtual void UpdateUniformBuffer(void * content) {};
-	virtual void Bind() {};
+		class UniformBuffer {
+		public:
+			virtual void UpdateUniformBuffer(void * content) {};
+			virtual void Bind() {};
+		};
+	};
 };

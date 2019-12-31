@@ -1,19 +1,19 @@
 #pragma once
 
-#include "../GraphicsCommon/UniformBuffer.h"
+#include "../GraphicsCommon/UniformBuffer.hpp"
 #include <vulkan/vulkan.h>
 
 
-class vkUniformBufferBinding : public UniformBufferBinding {
+class VulkanUniformBufferBinding : public UniformBufferBinding {
 	VkDescriptorSetLayout descriptorSetLayout;
 	VkDevice *device;
 public:
-	vkUniformBufferBinding(VkDevice *device, UniformBufferBindingCreateInfo);
+	VulkanUniformBufferBinding(VkDevice *device, UniformBufferBindingCreateInfo);
 	VkDescriptorSetLayout *getLayout();
-	~vkUniformBufferBinding();
+	~VulkanUniformBufferBinding();
 };
 
-class vkUniformBuffer : public UniformBuffer {
+class VulkanUniformBuffer : public UniformBuffer {
 	VkDevice *device;
 	VkPhysicalDevice *physicalDevice;
 	VkDescriptorPool *descriptorPool;
@@ -25,8 +25,8 @@ class vkUniformBuffer : public UniformBuffer {
 
 	VkDescriptorSet descriptorSet;
 public:
-	vkUniformBuffer(VkDevice *dev, VkPhysicalDevice *phys, VkDescriptorPool *descPool, UniformBufferCreateInfo ci);
+	VulkanUniformBuffer(VkDevice *dev, VkPhysicalDevice *phys, VkDescriptorPool *descPool, UniformBufferCreateInfo ci);
 	void UpdateUniformBuffer(void * content);
 	VkDescriptorSet *GetDescriptorSet();
-	~vkUniformBuffer();
+	~VulkanUniformBuffer();
 };

@@ -38,8 +38,6 @@ public:
 	ControllerSystem();
 	void update();
 private:
-	UniformBuffer *ubo_;
-
 	REFLECT_SYSTEM()
 };
 

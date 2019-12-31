@@ -43,6 +43,7 @@ void CameraSubSystem::removeComponent(ComponentHandle id) {
 CameraSubSystem::~CameraSubSystem() {}
 
 void CameraSystem::update() {
+	GRIND_PROFILE_FUNC();
 	bool ed = engine.edit_mode_;
 	bool sim = engine.edit_is_simulating_;
 	if (!ed || sim) {

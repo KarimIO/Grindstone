@@ -18,13 +18,13 @@ void PostProcessIBL::prepareIBL(unsigned int w, unsigned h) {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
 
-    ShaderStageCreateInfo vi;
-	ShaderStageCreateInfo fi;
-	if (settings->graphics_language_ == GRAPHICS_OPENGL) {
+    Grindstone::GraphicsAPI::ShaderStageCreateInfo vi;
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo fi;
+	if (settings->graphics_language_ == GraphicsLanguage::OpenGL) {
 		vi.fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		fi.fileName = "../assets/shaders/lights_deferred/ibl.glsl";
 	}
-	else if (settings->graphics_language_ == GRAPHICS_DIRECTX) {
+	else if (settings->graphics_language_ == GraphicsLanguage::DirectX) {
 		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
 		fi.fileName = "../assets/shaders/lights_deferred/ibl.fxc";
 	}
@@ -37,30 +37,30 @@ void PostProcessIBL::prepareIBL(unsigned int w, unsigned h) {
 		return;
 	vi.content = vfile.data();
 	vi.size = (uint32_t)vfile.size();
-	vi.type = SHADER_VERTEX;
+	vi.type = Grindstone::GraphicsAPI::ShaderStage::Vertex;
 
 	std::vector<char> ffile;
 	if (!readFile(fi.fileName, ffile))
 		return;
 	fi.content = ffile.data();
 	fi.size = (uint32_t)ffile.size();
-	fi.type = SHADER_FRAGMENT;
+	fi.type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
-	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
+	std::vector<Grindstone::GraphicsAPI::ShaderStageCreateInfo> stages = { vi, fi };
 	
-	subbinding_ = TextureSubBinding("environmentMap", 4);
-	TextureBindingLayoutCreateInfo tblci;
+	subbinding_ = Grindstone::GraphicsAPI::TextureSubBinding("environmentMap", 4);
+	Grindstone::GraphicsAPI::TextureBindingLayoutCreateInfo tblci;
 	tblci.bindingLocation = 4;
 	tblci.bindings = &subbinding_;
 	tblci.bindingCount = (uint32_t)1;
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	env_map_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
 	
 	auto vbd = engine.getPlaneVBD();
 	auto vad = engine.getPlaneVAD();
 
-	GraphicsPipelineCreateInfo iblGPCI;
-	iblGPCI.cullMode = CULL_BACK;
+	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo iblGPCI;
+	iblGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
 	iblGPCI.bindings = &vbd;
 	iblGPCI.bindingsCount = 1;
 	iblGPCI.attributes = &vad;
@@ -69,10 +69,10 @@ void PostProcessIBL::prepareIBL(unsigned int w, unsigned h) {
 	iblGPCI.height = (float)viewport_h_;
 	iblGPCI.scissorW = viewport_w_;
 	iblGPCI.scissorH = viewport_h_;
-	iblGPCI.primitiveType = PRIM_TRIANGLES;
+	iblGPCI.primitiveType = Grindstone::GraphicsAPI::GeometryType::Triangles;
 	iblGPCI.shaderStageCreateInfos = stages.data();
 	iblGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
-	std::vector<TextureBindingLayout*> tbls_refl = { engine.gbuffer_tbl_, env_map_ }; // refl_tbl
+	std::vector<Grindstone::GraphicsAPI::TextureBindingLayout*> tbls_refl = { engine.gbuffer_tbl_, env_map_ }; // refl_tbl
 
 	tbls_refl.push_back(ssao_layout_);
 
@@ -84,13 +84,13 @@ void PostProcessIBL::prepareIBL(unsigned int w, unsigned h) {
 }
 
 void PostProcessIBL::prepareSSAO(unsigned int w, unsigned h) {
-	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+	Grindstone::GraphicsAPI::GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
 
-	RenderTargetCreateInfo ssao_buffer_ci(FORMAT_COLOR_R8, viewport_w_, viewport_h_);
+	Grindstone::GraphicsAPI::RenderTargetCreateInfo ssao_buffer_ci(Grindstone::GraphicsAPI::ColorFormat::R8, viewport_w_, viewport_h_);
 	ssao_buffer_ = graphics_wrapper->CreateRenderTarget(&ssao_buffer_ci, 1);
 
-	FramebufferCreateInfo hdr_framebuffer_ci;
+	Grindstone::GraphicsAPI::FramebufferCreateInfo hdr_framebuffer_ci;
 	hdr_framebuffer_ci.render_target_lists = &ssao_buffer_;
 	hdr_framebuffer_ci.num_render_target_lists = 1;
 	hdr_framebuffer_ci.depth_target = nullptr; // depth_image_;
@@ -101,14 +101,14 @@ void PostProcessIBL::prepareSSAO(unsigned int w, unsigned h) {
 	// SSAO
 	//=====================
 
-	UniformBufferBindingCreateInfo ubbci;
+	Grindstone::GraphicsAPI::UniformBufferBindingCreateInfo ubbci;
 	ubbci.binding = 1;
 	ubbci.shaderLocation = "SSAOBufferObject";
 	ubbci.size = sizeof(SSAOBufferObject);
-	ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	UniformBufferBinding *ubb = graphics_wrapper->CreateUniformBufferBinding(ubbci);
+	ubbci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
+	Grindstone::GraphicsAPI::UniformBufferBinding *ubb = graphics_wrapper->CreateUniformBufferBinding(ubbci);
 
-	UniformBufferCreateInfo ubci;
+	Grindstone::GraphicsAPI::UniformBufferCreateInfo ubci;
 	ubci.isDynamic = false;
 	ubci.size = sizeof(SSAOBufferObject);
 	ubci.binding = ubb;
@@ -147,45 +147,45 @@ void PostProcessIBL::prepareSSAO(unsigned int w, unsigned h) {
 
 	ssao_ub->UpdateUniformBuffer(&ssao_buffer);
 
-	TextureCreateInfo ssao_noise_ci;
+	Grindstone::GraphicsAPI::TextureCreateInfo ssao_noise_ci;
 	ssao_noise_ci.data = noise;
-	ssao_noise_ci.format = FORMAT_COLOR_R8G8;
+	ssao_noise_ci.format = Grindstone::GraphicsAPI::ColorFormat::R8G8;
 	ssao_noise_ci.mipmaps = 0;
 	ssao_noise_ci.width = noise_dim;
 	ssao_noise_ci.height = noise_dim;
 	ssao_noise_ci.ddscube = false;
 
-	Texture *ssao_noise_ = graphics_wrapper->CreateTexture(ssao_noise_ci);
+	Grindstone::GraphicsAPI::Texture *ssao_noise_ = graphics_wrapper->CreateTexture(ssao_noise_ci);
 
-	TextureSubBinding ssao_noise_sub_binding_ = TextureSubBinding("ssao_noise", 4);
+	Grindstone::GraphicsAPI::TextureSubBinding ssao_noise_sub_binding_ = Grindstone::GraphicsAPI::TextureSubBinding("ssao_noise", 4);
 
-	TextureBindingLayoutCreateInfo tblci;
+	Grindstone::GraphicsAPI::TextureBindingLayoutCreateInfo tblci;
 	tblci.bindingLocation = 4;
 	tblci.bindings = &ssao_noise_sub_binding_;
 	tblci.bindingCount = 1;
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
-	TextureBindingLayout *ssao_noise_binding_layout = graphics_wrapper->CreateTextureBindingLayout(tblci);
+	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
+	Grindstone::GraphicsAPI::TextureBindingLayout *ssao_noise_binding_layout = graphics_wrapper->CreateTextureBindingLayout(tblci);
 
-	SingleTextureBind stb;
+	Grindstone::GraphicsAPI::SingleTextureBind stb;
 	stb.texture = ssao_noise_;
 	stb.address = 4;
 
-	TextureBindingCreateInfo ci;
+	Grindstone::GraphicsAPI::TextureBindingCreateInfo ci;
 	ci.textures = &stb;
 	ci.layout = ssao_noise_binding_layout;
 	ci.textureCount = 1;
 	ssao_noise_binding_ = graphics_wrapper->CreateTextureBinding(ci);
 
-	ShaderStageCreateInfo vi;
-	ShaderStageCreateInfo fi;
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo vi;
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo fi;
 	std::vector<char> vfile;
 	std::vector<char> ffile;
 
-	if (settings->graphics_language_ == GRAPHICS_OPENGL) {
+	if (settings->graphics_language_ == GraphicsLanguage::OpenGL) {
 		vi.fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		fi.fileName = "../assets/shaders/post_processing/ssao.glsl";
 	}
-	else if (settings->graphics_language_ == GRAPHICS_DIRECTX) {
+	else if (settings->graphics_language_ == GraphicsLanguage::DirectX) {
 		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
 		fi.fileName = "../assets/shaders/post_processing/ssao.fxc";
 	}
@@ -201,7 +201,7 @@ void PostProcessIBL::prepareSSAO(unsigned int w, unsigned h) {
 	}
 	vi.content = vfile.data();
 	vi.size = (uint32_t)vfile.size();
-	vi.type = SHADER_VERTEX;
+	vi.type = Grindstone::GraphicsAPI::ShaderStage::Vertex;
 
 	ffile.clear();
 	if (!readFile(fi.fileName, ffile)) {
@@ -210,15 +210,15 @@ void PostProcessIBL::prepareSSAO(unsigned int w, unsigned h) {
 	}
 	fi.content = ffile.data();
 	fi.size = (uint32_t)ffile.size();
-	fi.type = SHADER_FRAGMENT;
+	fi.type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
-	ShaderStageCreateInfo stages[2] = { vi, fi };
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo stages[2] = { vi, fi };
 
 	auto vbd = engine.getPlaneVBD();
 	auto vad = engine.getPlaneVAD();
 
-	GraphicsPipelineCreateInfo ssaoGPCI;
-	ssaoGPCI.cullMode = CULL_BACK;
+	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo ssaoGPCI;
+	ssaoGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
 	ssaoGPCI.bindings = &vbd;
 	ssaoGPCI.bindingsCount = 1;
 	ssaoGPCI.attributes = &vad;
@@ -227,12 +227,12 @@ void PostProcessIBL::prepareSSAO(unsigned int w, unsigned h) {
 	ssaoGPCI.height = (float)viewport_h_;
 	ssaoGPCI.scissorW = viewport_w_;
 	ssaoGPCI.scissorH = viewport_h_;
-	ssaoGPCI.primitiveType = PRIM_TRIANGLES;
+	ssaoGPCI.primitiveType = Grindstone::GraphicsAPI::GeometryType::Triangles;
 	ssaoGPCI.shaderStageCreateInfos = stages;
 	ssaoGPCI.shaderStageCreateInfoCount = 2;
-	std::vector<TextureBindingLayout *>tbls = { engine.gbuffer_tbl_, ssao_noise_binding_layout };
+	std::vector<Grindstone::GraphicsAPI::TextureBindingLayout *>tbls = { engine.gbuffer_tbl_, ssao_noise_binding_layout };
 
-	std::vector<UniformBufferBinding*> ubbs = { engine.deff_ubb_ , ubb };
+	std::vector<Grindstone::GraphicsAPI::UniformBufferBinding*> ubbs = { engine.deff_ubb_ , ubb };
 	ssaoGPCI.textureBindings = tbls.data();
 	ssaoGPCI.textureBindingCount = (uint32_t)tbls.size();
 	ssaoGPCI.uniformBufferBindings = ubbs.data();
@@ -240,22 +240,23 @@ void PostProcessIBL::prepareSSAO(unsigned int w, unsigned h) {
 	pipeline_ = graphics_wrapper->CreateGraphicsPipeline(ssaoGPCI);
 
 	// Export SSAO Layout
-	ssao_output_ = TextureSubBinding("ssao", 5);
+	ssao_output_ = Grindstone::GraphicsAPI::TextureSubBinding("ssao", 5);
 
-	TextureBindingLayoutCreateInfo stblci;
+	Grindstone::GraphicsAPI::TextureBindingLayoutCreateInfo stblci;
 	stblci.bindingLocation = 5;
 	stblci.bindings = &ssao_output_;
 	stblci.bindingCount = 1;
-	stblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	stblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	ssao_layout_ = graphics_wrapper->CreateTextureBindingLayout(stblci);
 }
 
 void PostProcessIBL::ssao() {
-	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+	GRIND_PROFILE_FUNC();
+	Grindstone::GraphicsAPI::GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 
 	//engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
 	ssao_fbo_->BindWrite(true);
-	engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
+	engine.getGraphicsWrapper()->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 
 	/*if (source_ != nullptr) {
 		source_->framebuffer->BindRead();
@@ -275,14 +276,15 @@ void PostProcessIBL::ssao() {
 }
 
 void PostProcessIBL::ibl() {
+	GRIND_PROFILE_FUNC();
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
 	graphics_wrapper->BindVertexArrayObject(engine.getPlaneVAO());
 
-	graphics_wrapper->SetImmediateBlending(BLEND_ADDITIVE);
+	graphics_wrapper->SetImmediateBlending(Grindstone::GraphicsAPI::BlendMode::Additive);
 
 	//graphics_wrapper->BindDefaultFramebuffer(true);
-	//engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
+	//engine.getGraphicsWrapper()->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 	ssao_fbo_->BindRead();
 	ssao_fbo_->BindTextures(5);
 	target_->framebuffer->BindWrite(false);
@@ -299,11 +301,12 @@ void PostProcessIBL::ibl() {
 
 		gpipeline_->Bind();
 		graphics_wrapper->DrawImmediateVertices(0, 6);
-		graphics_wrapper->SetImmediateBlending(BLEND_NONE);
+		graphics_wrapper->SetImmediateBlending(Grindstone::GraphicsAPI::BlendMode::None);
 	}
 }
 
 void PostProcessIBL::Process() {
+	GRIND_PROFILE_FUNC();
 	if (usesSSAO()) {
 		ssao();
 	}
@@ -316,10 +319,10 @@ void PostProcessIBL::recreateFramebuffer(unsigned int w, unsigned int h) {
 	// graphics_wrapper->DeleteRenderTarget(ssao_buffer_);
 	graphics_wrapper->DeleteFramebuffer(ssao_fbo_);
 
-	RenderTargetCreateInfo ssao_buffer_ci(FORMAT_COLOR_R8, viewport_w_, viewport_h_);
+	Grindstone::GraphicsAPI::RenderTargetCreateInfo ssao_buffer_ci(Grindstone::GraphicsAPI::ColorFormat::R8, viewport_w_, viewport_h_);
 	ssao_buffer_ = graphics_wrapper->CreateRenderTarget(&ssao_buffer_ci, 1);
 
-	FramebufferCreateInfo hdr_framebuffer_ci;
+	Grindstone::GraphicsAPI::FramebufferCreateInfo hdr_framebuffer_ci;
 	hdr_framebuffer_ci.render_target_lists = &ssao_buffer_;
 	hdr_framebuffer_ci.num_render_target_lists = 1;
 	hdr_framebuffer_ci.depth_target = nullptr; // depth_image_;

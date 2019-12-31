@@ -13,22 +13,26 @@
 #include "CubeInfo.hpp"
 
 class Camera;
-class Framebuffer;
-class RenderTarget;
-class TextureBindingLayout;
-class GraphicsPipeline;
-class UniformBuffer;
-class VertexArrayObject;
-class VertexBufferObject;
-class IndexBuffer;
+namespace Grindstone {
+	namespace GraphicsAPI {
+		class Framebuffer;
+		class RenderTarget;
+		class TextureBindingLayout;
+		class GraphicsPipeline;
+		class UniformBuffer;
+		class VertexArrayObject;
+		class VertexBufferObject;
+		class IndexBuffer;
+	}
+}
 
 struct CubemapComponent : public Component {
 	CubemapComponent(GameObjectHandle object_handle, ComponentHandle id);
 	uint32_t resolution_;
-	Texture *cubemap_;
-	TextureBinding *cubemap_binding_;
-	Framebuffer *capture_fbo_;
-	RenderTarget *render_target_;
+	Grindstone::GraphicsAPI::Texture *cubemap_;
+	Grindstone::GraphicsAPI::TextureBinding *cubemap_binding_;
+	Grindstone::GraphicsAPI::Framebuffer *capture_fbo_;
+	Grindstone::GraphicsAPI::RenderTarget *render_target_;
 	float near_;
 	float far_;
 	enum CaptureMethod : int {
@@ -52,8 +56,8 @@ public:
 
 	void bake();
 
-	TextureBindingLayout *texture_binding_layout_;
-	Framebuffer *camera_framebuffer_;
+	Grindstone::GraphicsAPI::TextureBindingLayout *texture_binding_layout_;
+	Grindstone::GraphicsAPI::Framebuffer *camera_framebuffer_;
 
 	REFLECT_SYSTEM()
 private:
@@ -67,28 +71,28 @@ private:
 
 	void loadCubemaps();
 
-	TextureSubBinding cube_binding_;
+	Grindstone::GraphicsAPI::TextureSubBinding cube_binding_;
 	glm::mat4 projection_;
 
-	GraphicsPipeline *irradiance_pipeline_;
-	RenderTarget *irradiance_image_;
-	Framebuffer *irradiance_fbo_;
+	Grindstone::GraphicsAPI::GraphicsPipeline *irradiance_pipeline_;
+	Grindstone::GraphicsAPI::RenderTarget *irradiance_image_;
+	Grindstone::GraphicsAPI::Framebuffer *irradiance_fbo_;
 
-	GraphicsPipeline *specular_pipeline_;
-	RenderTarget *specular_image_;
-	Framebuffer *specular_fbo_;
+	Grindstone::GraphicsAPI::GraphicsPipeline *specular_pipeline_;
+	Grindstone::GraphicsAPI::RenderTarget *specular_image_;
+	Grindstone::GraphicsAPI::Framebuffer *specular_fbo_;
 
-	VertexArrayObject *sphere_vao_;
-	VertexBuffer *sphere_vbo_;
-	IndexBuffer *sphere_ibo_;
-	VertexBindingDescription sphere_vbd_;
-	VertexAttributeDescription sphere_vad_;
-	RenderTarget *final_buffer_;
+	Grindstone::GraphicsAPI::VertexArrayObject *sphere_vao_;
+	Grindstone::GraphicsAPI::VertexBuffer *sphere_vbo_;
+	Grindstone::GraphicsAPI::IndexBuffer *sphere_ibo_;
+	Grindstone::GraphicsAPI::VertexBindingDescription sphere_vbd_;
+	Grindstone::GraphicsAPI::VertexAttributeDescription sphere_vad_;
+	Grindstone::GraphicsAPI::RenderTarget *final_buffer_;
 
 	unsigned int total_sphere_indices_;
 
-	UniformBufferBinding *ubb_;
-	UniformBuffer *ub_;
+	Grindstone::GraphicsAPI::UniformBufferBinding *ubb_;
+	Grindstone::GraphicsAPI::UniformBuffer *ub_;
 	struct ConvolutionBufferObject {
 		glm::mat4 matrix_;
 		float roughness_;

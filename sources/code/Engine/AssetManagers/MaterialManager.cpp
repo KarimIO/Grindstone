@@ -13,10 +13,10 @@
 #include "ModelManager.hpp"
 
 // Util Classes
-#include "../Utilities/Logger.hpp"
+
 #include "Core/Utilities.hpp"
 
-Material::Material(MaterialReference reference, TextureBinding * textureBinding) {
+Material::Material(MaterialReference reference, Grindstone::GraphicsAPI::TextureBinding * textureBinding) {
 	m_textureBinding = textureBinding;
 	this->reference = reference;
 }
@@ -72,7 +72,7 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 	PipelineContainer *pipeline = pipeline_manager->getPipeline(pipeline_reference);
 
 	// Create Table of Textures
-	std::vector<SingleTextureBind> textures;
+	std::vector<Grindstone::GraphicsAPI::SingleTextureBind> textures;
 	textures.resize(pipeline->textureDescriptorTable.size());
 	std::string dir = path.substr(0, path.find_last_of("/") + 1);
 
@@ -141,18 +141,18 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 	}
 
 	// Bind textures to pipeline in material
-	TextureBinding *textureBinding = nullptr;
+	Grindstone::GraphicsAPI::TextureBinding *textureBinding = nullptr;
 	if (textures.size() > 0) {
-		TextureBindingCreateInfo ci;
+		Grindstone::GraphicsAPI::TextureBindingCreateInfo ci;
 		ci.layout = pipeline->tbl;
 		ci.textures = textures.data();
 		ci.textureCount = (uint32_t)textures.size();
 		textureBinding = engine.getGraphicsWrapper()->CreateTextureBinding(ci);
 	}
 
-	UniformBuffer *ubo = nullptr;
+	Grindstone::GraphicsAPI::UniformBuffer *ubo = nullptr;
 	if (pipeline->parameterDescriptorTable.size() > 0) {
-		UniformBufferCreateInfo uboci;
+		Grindstone::GraphicsAPI::UniformBufferCreateInfo uboci;
 		uboci.isDynamic = false;
 		uboci.size = pipeline->param_size;
 		uboci.binding = pipeline->param_ubb;

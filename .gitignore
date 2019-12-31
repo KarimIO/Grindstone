@@ -73,6 +73,7 @@ assets/sounds/*
 !assets/materials/*.gmat
 !assets/materials/procedural_sky/*
 settings.ini
+log/*
 
 # Cmake
 *CMakeCache.txt

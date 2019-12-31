@@ -7,7 +7,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <fstream>
-#include "Utilities/Logger.hpp"
 
 void loadAnimation(std::string path, Skeleton *skeleton, Animation *animation) {
 	std::ifstream input("../assets/animations/" + path, std::ios::ate | std::ios::binary);

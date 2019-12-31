@@ -4,17 +4,22 @@
 #include <stdint.h>
 #include "../GraphicsCommon/DepthTarget.hpp"
 
-class GLDepthTarget : public DepthTarget {
-public:
-    GLDepthTarget(DepthTargetCreateInfo cis);
-    uint32_t getHandle();
-	bool cubemap;
 
-    virtual void BindFace(int k);
-    virtual void Bind(int i);
-    virtual ~GLDepthTarget();
-private:
-    uint32_t handle_;
-};
+namespace Grindstone {
+	namespace GraphicsAPI {
+		class GLDepthTarget : public DepthTarget {
+		public:
+			GLDepthTarget(DepthTargetCreateInfo cis);
+			uint32_t getHandle();
+			bool cubemap;
+
+			virtual void BindFace(int k);
+			virtual void Bind(int i);
+			virtual ~GLDepthTarget();
+		private:
+			uint32_t handle_;
+		};
+	}
+}
 
 #endif

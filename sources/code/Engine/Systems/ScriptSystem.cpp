@@ -20,13 +20,19 @@ ScriptFields::ScriptFields(ScriptFields::ScriptFieldType t, std::string n, MonoC
 ScriptComponent::ScriptComponent(GameObjectHandle object_handle, ComponentHandle id) : Component(COMPONENT_SCRIPT, object_handle, id) {}
 
 ScriptSystem::ScriptSystem() : System(COMPONENT_SCRIPT) {
-	mono_set_dirs("C:\\Program Files\\Mono\\lib", "C:\\Program Files\\Mono\\etc");
+	GRIND_PROFILE_FUNC();
+	{
+		GRIND_PROFILE_SCOPE("Load Mono");
+		mono_set_dirs("C:\\Program Files\\Mono\\lib", "C:\\Program Files\\Mono\\etc");
 
-	domain_ = mono_jit_init_version("grindstone_mono_domain",
-		"v4.0.30319");
-
-	auto i = loadAssembly("scriptbin/Main.dll");
-	loadClass(0, "Example");
+		domain_ = mono_jit_init_version("grindstone_mono_domain",
+			"v4.0.30319");
+	}
+	{
+		GRIND_PROFILE_SCOPE("Load C# Assembly");
+		auto i = loadAssembly("scriptbin/Main.dll");
+		loadClass(0, "Example");
+	}
 }
 
 unsigned int ScriptSystem::loadAssembly(std::string path) {
@@ -187,6 +193,7 @@ void ScriptSubSystem::start() {
 }
 
 void ScriptSystem::update() {
+	GRIND_PROFILE_FUNC();
 	for (auto scene : engine.getScenes()) {
 		for (auto space : scene->spaces_) {
 			ScriptSubSystem *sub = (ScriptSubSystem *)space->getSubsystem(COMPONENT_SCRIPT);
@@ -237,7 +244,7 @@ void ScriptSubSystem::initialize() {
 	//}
 
 	//engine.getSystem<ScriptSystem>()
-	createObject(0, "Example");
+	//createObject(0, "Example");
 	
 	for (auto &c : components_) {
 		for (auto &s : c.scripts_) {

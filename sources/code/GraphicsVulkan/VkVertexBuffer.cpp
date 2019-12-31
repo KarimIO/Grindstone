@@ -1,9 +1,9 @@
-#include "VkVertexBuffer.h"
+#include "VkVertexBuffer.hpp"
 #include <array>
-#include "VkBufferCommon.h"
+#include "VkBufferCommon.hpp"
 #include <cstring>
 
-vkVertexBuffer::vkVertexBuffer(VkGraphicsWrapper *gw, VkDevice *dev, VkPhysicalDevice *physical, VertexBufferCreateInfo createInfo) {
+vkVertexBuffer::vkVertexBuffer(vkGraphicsWrapper *gw, VkDevice *dev, VkPhysicalDevice *physical, VertexBufferCreateInfo createInfo) {
 	device = dev;
 	graphicsWrapper = gw;
 	physicalDevice = physical;

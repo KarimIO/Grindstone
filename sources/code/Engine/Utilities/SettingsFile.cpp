@@ -1,9 +1,10 @@
 #include "SettingsFile.hpp"
 #include "Core/Utilities.hpp"
 #include "Core/iniHandler.hpp"
-#include "Logger.hpp"
+
 
 Settings::Settings() {
+	GRIND_PROFILE_FUNC();
 	INIConfigFile cfile;
 
 	if (!loadSettings(cfile)) {
@@ -35,16 +36,16 @@ bool Settings::loadSettings(INIConfigFile &cfile) {
 
 		graphics = strToLower(graphics);
 		if (graphics == "directx")
-			graphics_language_ = GRAPHICS_DIRECTX;
+			graphics_language_ = GraphicsLanguage::DirectX;
 		else if (graphics == "vulkan")
-			graphics_language_ = GRAPHICS_VULKAN;
+			graphics_language_ = GraphicsLanguage::Vulkan;
 		else if (graphics == "metal")
-			graphics_language_ = GRAPHICS_METAL;
+			graphics_language_ = GraphicsLanguage::Metal;
 		else if (graphics == "opengl")
-			graphics_language_ = GRAPHICS_OPENGL;
+			graphics_language_ = GraphicsLanguage::OpenGL;
 		else {
 			GRIND_ERROR("SETTINGS.INI: Invalid value for graphics language ({0}), using Opengl instead.", graphics.c_str());
-			graphics_language_ = GRAPHICS_OPENGL;
+			graphics_language_ = GraphicsLanguage::OpenGL;
 			cfile.SetString("Renderer", "graphics", "OpenGL");
 		}
 
@@ -58,7 +59,7 @@ bool Settings::loadSettings(INIConfigFile &cfile) {
 void Settings::saveSettings(INIConfigFile &cfile) {
 	resolution_x_ = 1366;
 	resolution_y_ = 768;
-	graphics_language_ = GRAPHICS_OPENGL;
+	graphics_language_ = GraphicsLanguage::OpenGL;
 	fov_ = 90.0f;
 	enable_reflections_ = true;
 	enable_shadows_ = true;

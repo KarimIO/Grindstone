@@ -1,10 +1,10 @@
-#include "VkCommandBuffer.h"
-#include "VkRenderPass.h"
-#include "VkGraphicsPipeline.h"
-#include "VkFramebuffer.h"
-#include "VkVertexBuffer.h"
-#include "VkIndexBuffer.h"
-#include "VkUniformBuffer.h"
+#include "VkCommandBuffer.hpp"
+#include "VkRenderPass.hpp"
+#include "VkGraphicsPipeline.hpp"
+#include "VkFramebuffer.hpp"
+#include "VkVertexBuffer.hpp"
+#include "VkIndexBuffer.hpp"
+#include "VkUniformBuffer.hpp"
 #include <cstring>
 
 void vkCommandBuffer::HandleStep(uint32_t framebufferID, VkCommandBuffer *commandBuffer, CommandCreateInfo *step) {

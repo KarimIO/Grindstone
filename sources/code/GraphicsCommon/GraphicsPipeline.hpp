@@ -8,59 +8,50 @@
 #include <iostream>
 #include "Texture.hpp"
 #include "UniformBuffer.hpp"
+#include "Formats.hpp"
 
-enum ShaderStageType {
-	SHADER_VERTEX = 0,
-	SHADER_TESS_EVALUATION,
-	SHADER_TESS_CONTROL,
-	SHADER_GEOMETRY,
-	SHADER_FRAGMENT
-};
+namespace Grindstone {
+	namespace GraphicsAPI {
+		struct ShaderStageCreateInfo {
+			const char *fileName;
+			const char *content;
+			uint32_t size;
+			ShaderStage type;
+		};
 
-struct ShaderStageCreateInfo {
-	const char *fileName;
-	const char *content;
-	uint32_t size;
-	ShaderStageType type;
-};
+		enum class CullMode {
+			None = 0,
+			Front,
+			Back,
+			Both
+		};
 
-enum PrimitiveType {
-	PRIM_TRIANGLES = 0,
-	PRIM_TRIANGLE_STRIPS,
-	PRIM_PATCHES
-};
+		struct GraphicsPipelineCreateInfo {
+			GeometryType primitiveType;
+			CullMode cullMode;
+			RenderPass *renderPass;
+			float width, height;
+			int32_t scissorX = 0, scissorY = 0;
+			uint32_t scissorW, scissorH;
+			ShaderStageCreateInfo *shaderStageCreateInfos;
+			uint32_t shaderStageCreateInfoCount;
 
-enum CullMode {
-	CULL_NONE = 0,
-	CULL_FRONT,
-	CULL_BACK,
-	CULL_BOTH
-};
+			UniformBufferBinding **uniformBufferBindings;
+			uint32_t uniformBufferBindingCount;
 
-struct GraphicsPipelineCreateInfo {
-	PrimitiveType primitiveType;
-	CullMode cullMode;
-	RenderPass *renderPass;
-	float width, height;
-	int32_t scissorX = 0, scissorY = 0;
-	uint32_t scissorW, scissorH;
-	ShaderStageCreateInfo *shaderStageCreateInfos;
-	uint32_t shaderStageCreateInfoCount;
+			TextureBindingLayout **textureBindings;
+			uint32_t textureBindingCount;
 
-	UniformBufferBinding **uniformBufferBindings;
-	uint32_t uniformBufferBindingCount;
-	
-	TextureBindingLayout **textureBindings;
-	uint32_t textureBindingCount;
+			VertexBindingDescription *bindings;
+			uint32_t bindingsCount;
+			VertexAttributeDescription *attributes;
+			uint32_t attributesCount;
+		};
 
-	VertexBindingDescription *bindings;
-	uint32_t bindingsCount;
-	VertexAttributeDescription *attributes;
-	uint32_t attributesCount;
-};
-
-class GraphicsPipeline {
-public:
-	virtual void Bind() {};
-	virtual ~GraphicsPipeline() {}
-};
+		class GraphicsPipeline {
+		public:
+			virtual void Bind() {};
+			virtual ~GraphicsPipeline() {}
+		};
+	}
+}

@@ -1,5 +1,6 @@
 #include "DLLAudio.hpp"
 
+
 DLLAudio::DLLAudio() {
 	setup();
 }
@@ -9,6 +10,7 @@ AudioWrapper *DLLAudio::getWrapper() {
 }
 
 void DLLAudio::setup() {
+	GRIND_PROFILE_FUNC();
 	std::string library = "audioopenal";
 
 	initialize(library);

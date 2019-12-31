@@ -5,16 +5,20 @@
 #include "GLVertexBuffer.hpp"
 #include "GLIndexBuffer.hpp"
 
-class GLVertexArrayObject : public VertexArrayObject {
-public:
-	GLuint vao;
-public:
-	GLVertexArrayObject(VertexArrayObjectCreateInfo createInfo);
-	~GLVertexArrayObject();
+namespace Grindstone {
+	namespace GraphicsAPI {
+		class GLVertexArrayObject : public VertexArrayObject {
+		public:
+			GLuint vao;
+		public:
+			GLVertexArrayObject(VertexArrayObjectCreateInfo createInfo);
+			~GLVertexArrayObject();
 
-	void Bind();
-	void BindResources(VertexArrayObjectCreateInfo createInfo);
-	void Unbind();
-};
+			void Bind();
+			void BindResources(VertexArrayObjectCreateInfo createInfo);
+			void Unbind();
+		};
+	}
+}
 
 #endif

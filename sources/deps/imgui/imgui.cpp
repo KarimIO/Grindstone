@@ -908,7 +908,7 @@ CODE
 
  Q: I integrated Dear ImGui in my engine and the text or lines are blurry..
  A: In your Render function, try translating your projection matrix by (0.5f,0.5f) or (0.375f,0.375f).
-    Also make sure your orthographic projection matrix and io.DisplaySize matches your actual framebuffer dimension.
+    Also make sure your orthographic projection matrix and io.DisplaySize matches your actual Framebuffer dimension.
 
  Q: I integrated Dear ImGui in my engine and some elements are clipping or disappearing when I move windows around..
  A: You are probably mishandling the clipping rectangles in your render function.

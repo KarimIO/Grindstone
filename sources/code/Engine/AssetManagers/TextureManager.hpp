@@ -10,22 +10,22 @@ typedef size_t TextureHandler;
 
 struct TextureContainer {
 	unsigned short use_count;
-	Texture *texture_;
-	TextureContainer(Texture *t);
+	Grindstone::GraphicsAPI::Texture *texture_;
+	TextureContainer(Grindstone::GraphicsAPI::Texture *t);
 };
 
 class TextureManager {
 public:
 	//Texture *preloadTexture(std::string path);
-	TextureHandler loadTexture(std::string path, TextureOptions options = TextureOptions());
+	TextureHandler loadTexture(std::string path, Grindstone::GraphicsAPI::TextureOptions options = Grindstone::GraphicsAPI::TextureOptions());
 	//Texture *preloadCubemap(std::string path);
-	TextureHandler loadCubemap(std::string path, TextureOptions options = TextureOptions());
+	TextureHandler loadCubemap(std::string path, Grindstone::GraphicsAPI::TextureOptions options = Grindstone::GraphicsAPI::TextureOptions());
 	//void loadPreloaded();
 
 	void reloadAll();
 	void reloadTexture(TextureHandler handle);
 
-	Texture *getTexture(TextureHandler handle);
+	Grindstone::GraphicsAPI::Texture *getTexture(TextureHandler handle);
 	TextureContainer *getTextureContainer(TextureHandler handle);
 
 	void removeTexture(TextureContainer *container);

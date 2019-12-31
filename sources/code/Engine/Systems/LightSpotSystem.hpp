@@ -5,8 +5,12 @@
 #include <vector>
 #include "glm/glm.hpp"
 
-class DepthTarget;
-class Framebuffer;
+namespace Grindstone {
+	namespace GraphicsAPI {
+		class DepthTarget;
+		class Framebuffer;
+	}
+}
 
 struct LightSpotComponent : public Component {
 	LightSpotComponent(GameObjectHandle object_handle, ComponentHandle id);
@@ -23,8 +27,8 @@ struct LightSpotComponent : public Component {
 	} properties_;
 
 	glm::mat4 shadow_mat_;
-	Framebuffer *shadow_fbo_ = nullptr;
-	DepthTarget *shadow_dt_ = nullptr;
+	Grindstone::GraphicsAPI::Framebuffer *shadow_fbo_ = nullptr;
+	Grindstone::GraphicsAPI::DepthTarget *shadow_dt_ = nullptr;
 
 	REFLECT()
 };

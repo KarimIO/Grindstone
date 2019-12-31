@@ -7,8 +7,12 @@
 #include "glm/glm.hpp"
 
 class Camera;
-class DepthTarget;
-class Framebuffer;
+namespace Grindstone {
+	namespace GraphicsAPI {
+		class DepthTarget;
+		class Framebuffer;
+	}
+}
 
 struct LightDirectionalComponent : public Component {
 	LightDirectionalComponent(GameObjectHandle object_handle, ComponentHandle id);
@@ -23,8 +27,8 @@ struct LightDirectionalComponent : public Component {
 
 	glm::mat4 shadow_mat_;
 	glm::mat4 view_;
-	Framebuffer *shadow_fbo_ = nullptr;
-	DepthTarget *shadow_dt_ = nullptr;
+	Grindstone::GraphicsAPI::Framebuffer *shadow_fbo_ = nullptr;
+	Grindstone::GraphicsAPI::DepthTarget *shadow_dt_ = nullptr;
 
 	std::vector<std::array<glm::mat4, 4>> camera_matrices_;
 

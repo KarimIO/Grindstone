@@ -3,13 +3,14 @@
 
 #include "BaseSystem.hpp"
 #include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <vector>
 
 struct TransformComponent : public Component {
 	TransformComponent(GameObjectHandle object_handle, ComponentHandle id);
 
 	glm::vec3 position_;
-	glm::vec3 angles_;
+	glm::quat quaternion_;
 	glm::vec3 scale_;
 	glm::mat4 model_;
 
@@ -38,7 +39,7 @@ public:
 	glm::vec3 getForward(ComponentHandle handle);
 	glm::vec3 getRight(ComponentHandle handle);
 	glm::vec3 getUp(ComponentHandle handle);
-	glm::vec3 getAngles(ComponentHandle handle);
+	glm::quat getQuaternion(ComponentHandle handle);
 	glm::vec3 getPosition(ComponentHandle handle);
 	glm::vec3 getScale(ComponentHandle handle);
 	glm::mat4x4 &getModelMatrix(ComponentHandle handle);

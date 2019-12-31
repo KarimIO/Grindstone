@@ -1,7 +1,7 @@
-#include "VkTexture.h"
-#include "VkBufferCommon.h"
+#include "VkTexture.hpp"
+#include "VkBufferCommon.hpp"
 #include <iostream>
-#include "VkFormats.h"
+#include "VkFormats.hpp"
 #include <vector>
 #include <cstring>
 
@@ -18,19 +18,19 @@ vkTexture::vkTexture(VkDevice *dev, VkPhysicalDevice *phys, VkCommandPool *comma
 
 	VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
 	switch (ci.format) {
-	case FORMAT_COLOR_R8:
+	case ColorFormat::R8:
 		format = VK_FORMAT_R8_UNORM;
 		channels = 1;
 		break;
-	case FORMAT_COLOR_R8G8:
+	case ColorFormat::R8G8:
 		format = VK_FORMAT_R8G8_UNORM;
 		channels = 2;
 		break;
-	case FORMAT_COLOR_R8G8B8:
+	case ColorFormat::R8G8B8:
 		format = VK_FORMAT_B8G8R8_UINT;
 		channels = 3;
 		break;
-	case FORMAT_COLOR_R8G8B8A8:
+	case ColorFormat::R8G8B8A8:
 		format = VK_FORMAT_R8G8B8A8_UNORM;
 		channels = 4;
 		break;

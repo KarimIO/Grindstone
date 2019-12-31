@@ -1,6 +1,6 @@
-#include "VkBufferCommon.h"
+#include "VkBufferCommon.hpp"
 #include <iostream>
-#include "../GraphicsCommon/VertexBuffer.h"
+#include "../GraphicsCommon/VertexBuffer.hpp"
 
 uint32_t findMemoryType(VkPhysicalDevice *physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 	VkPhysicalDeviceMemoryProperties memProperties;

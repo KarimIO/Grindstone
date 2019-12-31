@@ -33,6 +33,10 @@ ComponentHandle RigidBodySubSystem::addComponent(GameObjectHandle object_handle)
 }
 
 void RigidBodySystem::update() {
+	GRIND_PROFILE_FUNC();
+	if (engine.edit_mode_)
+		return;
+
 	auto dt = engine.getUpdateTimeDelta();
 
 	auto scenes = engine.getScenes();
@@ -57,8 +61,9 @@ void RigidBodySystem::update() {
 
 				transform_component.position_ = glm::vec3(pos.getX(), pos.getY(), pos.getZ());
 				btQuaternion q = transform.getRotation();
+				transform_component.quaternion_ = glm::quat(q.x(), q.y(), q.z(), q.w());
 
-				float ysqr = q.y() * q.y();
+				/*float ysqr = q.y() * q.y();
 
 				float tpi = 3.14159f * 1.0f;
 
@@ -76,7 +81,7 @@ void RigidBodySystem::update() {
 				// yaw (z-axis rotation)
 				float t3 = +2.0f * (q.w() * q.z() + q.x() * q.y());
 				float t4 = +1.0f - 2.0f * (ysqr + q.z() * q.z());
-				transform_component.angles_.z = fmod(std::atan2(t3, t4), tpi);
+				transform_component.angles_.z = fmod(std::atan2(t3, t4), tpi);*/
 			}
 		}
 	}
@@ -138,6 +143,41 @@ void RigidBodySubSystem::removeComponent(ComponentHandle handle) {
 	components_.erase(components_.begin() + handle);
 }
 
+void RigidBodySubSystem::initialize() {
+	for (auto &component : components_) {
+		auto object_handle = component.game_object_handle_;
+
+		ComponentHandle transform_id = space_->getObject(object_handle).getComponentHandle(COMPONENT_TRANSFORM);
+		TransformSubSystem *transform_sub = (TransformSubSystem *)(space_->getSubsystem(COMPONENT_TRANSFORM));
+		TransformComponent &transform_component = transform_sub->getComponent(transform_id);
+
+		glm::vec3 posTrans = transform_component.position_;
+		glm::quat angTrans = transform_component.quaternion_;
+
+		btQuaternion quaternion(angTrans.y, angTrans.x, angTrans.z, angTrans.w);
+		btVector3 position(posTrans.x, posTrans.y, posTrans.z);
+
+		btTransform trans(quaternion, position);
+
+		ComponentHandle collider_handle = space_->getObject(object_handle).getComponentHandle(COMPONENT_COLLISION);
+		ColliderSubSystem *subsystem = (ColliderSubSystem *)space_->getSubsystem(COMPONENT_COLLISION);
+		btCollisionShape *shape = subsystem->getComponent(collider_handle).shape_;
+
+		btDefaultMotionState* motionState = new btDefaultMotionState(trans);
+
+		btVector3 inertia;
+		shape->calculateLocalInertia(component.mass_, inertia);
+		btRigidBody::btRigidBodyConstructionInfo rigidBodyCI(component.mass_, motionState, shape, inertia);
+		component.rigid_body_ = new btRigidBody(rigidBodyCI);
+		component.rigid_body_->setUserIndex(component.game_object_handle_);
+		dynamics_world_->addRigidBody(component.rigid_body_);
+
+		component.rigid_body_->setRestitution(component.restitution_);
+		component.rigid_body_->setFriction(component.friction_);
+		component.rigid_body_->setDamping(component.damping_linear_, component.damping_rotational_);
+	}
+}
+
 RigidBodySubSystem::~RigidBodySubSystem() {
 	for (int i = 0; i < components_.size(); i++) {
 		dynamics_world_->removeRigidBody(components_[i].rigid_body_);
@@ -151,6 +191,16 @@ RigidBodySubSystem::~RigidBodySubSystem() {
 	delete dispatcher_;
 	delete broadphase_;
 }
+
+
+REFLECT_STRUCT_BEGIN(RigidBodyComponent, RigidBodySystem, COMPONENT_RIGID_BODY)
+REFLECT_STRUCT_MEMBER(mass_)
+REFLECT_STRUCT_MEMBER(friction_)
+REFLECT_STRUCT_MEMBER(restitution_)
+REFLECT_STRUCT_MEMBER(damping_linear_)
+REFLECT_STRUCT_MEMBER(damping_rotational_)
+REFLECT_NO_SUBCAT()
+REFLECT_STRUCT_END()
 
 
 /*

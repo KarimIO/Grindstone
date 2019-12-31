@@ -5,8 +5,6 @@
 
 #include "TransformSystem.hpp"
 
-#include "Utilities/Logger.hpp"
-
 ControllerSubSystem::ControllerSubSystem(Space *space) : SubSystem(COMPONENT_CONTROLLER, space) {
 }
 
@@ -33,6 +31,7 @@ ControllerSubSystem::~ControllerSubSystem() {
 }
 
 void ControllerSystem::update() {
+	GRIND_PROFILE_FUNC();
 	auto &scenes = engine.getScenes();
 	for (auto scene : scenes) {
 		for (auto space : scene->spaces_) {
@@ -149,10 +148,10 @@ void ControllerComponent::TurnPitch(double scale) {
 		ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
 		auto &trans = trans_system->getComponent(transform_id);
 
-		trans.angles_.x += float(sensitivity_ * scale);
+		//trans.angles_.x += float(sensitivity_ * scale);
 
-		if (trans.angles_.x < -2.4f / 2)	trans.angles_.x = -2.4f / 2;
-		if (trans.angles_.x > 3.14f / 2)	trans.angles_.x = 3.14f / 2;
+		//if (trans.angles_.x < -2.4f / 2)	trans.angles_.x = -2.4f / 2;
+		//if (trans.angles_.x > 3.14f / 2)	trans.angles_.x = 3.14f / 2;
 	}
 }
 
@@ -162,7 +161,8 @@ void ControllerComponent::TurnYaw(double scale) {
 		ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
 		auto &trans = trans_system->getComponent(transform_id);
 
-		trans.angles_.y += float(sensitivity_ * scale);
+		//trans.angles_.y += float(sensitivity_ * scale);
+		trans.quaternion_ = glm::quat(glm::vec3(0, float(sensitivity_ * scale), 0)) * trans.quaternion_;
 	}
 }
 

@@ -16,7 +16,7 @@ public:
 private:
 	RenderTargetContainer *source_;
 	RenderTargetContainer *target_;
-	GraphicsPipeline *gpipeline_;
+	Grindstone::GraphicsAPI::GraphicsPipeline *gpipeline_;
 };
 
 #endif // !POST_PROCESS_TONEMAP_HPP

@@ -1,14 +1,14 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-#include "VkGraphicsWrapper.h"
-#include "../GraphicsCommon/IndexBuffer.h"
+#include "vkGraphicsWrapper.hpp"
+#include "../GraphicsCommon/IndexBuffer.hpp"
 
-class VkGraphicsWrapper;
+class VulkanGraphicsWrapper;
 
-class vkIndexBuffer : public IndexBuffer {
+class VulkanIndexBuffer : public IndexBuffer {
 public:
-	VkGraphicsWrapper *graphicsWrapper;
+	VulkanGraphicsWrapper *graphicsWrapper;
 	VkDevice *device;
 	VkPhysicalDevice *physicalDevice;
 	uint32_t size;
@@ -17,8 +17,8 @@ public:
 	VkBuffer buffer;
 	VkDeviceMemory memory;
 public:
-	vkIndexBuffer(VkGraphicsWrapper *, VkDevice *dev, VkPhysicalDevice *physicalDevice, IndexBufferCreateInfo createInfo);
-	~vkIndexBuffer();
+	VulkanIndexBuffer(VulkanGraphicsWrapper *, VkDevice *dev, VkPhysicalDevice *physicalDevice, IndexBufferCreateInfo createInfo);
+	~VulkanIndexBuffer();
 
 	VkBuffer *GetBuffer();
 	uint32_t GetSize();

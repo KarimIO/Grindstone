@@ -7,9 +7,12 @@
 #include "Core/GameObject.hpp"
 
 class RenderPath;
-class RenderTarget;
-class Framebuffer;
-class RenderPath;
+namespace Grindstone {
+	namespace GraphicsAPI {
+		class RenderTarget;
+		class Framebuffer;
+	}
+}
 class Space;
 
 struct RayTraceResults {
@@ -75,16 +78,16 @@ public:
 	PostPipeline post_pipeline_;
 
 	RenderTargetContainer rt_hdr_;
-	RenderTarget *hdr_buffer_;
-	DepthTarget *depth_target_;
-	Framebuffer *hdr_framebuffer_;
+	Grindstone::GraphicsAPI::RenderTarget *hdr_buffer_;
+	Grindstone::GraphicsAPI::DepthTarget *depth_target_;
+	Grindstone::GraphicsAPI::Framebuffer *hdr_framebuffer_;
 	RenderPath *render_path_;
 
-	RenderTarget *final_buffer_;
-	Framebuffer *final_framebuffer_;
+	Grindstone::GraphicsAPI::RenderTarget *final_buffer_;
+	Grindstone::GraphicsAPI::Framebuffer *final_framebuffer_;
 
 	bool custom_final_framebuffer_;
-	void setCustomFinalFramebuffer(Framebuffer *framebuffer);
+	void setCustomFinalFramebuffer(Grindstone::GraphicsAPI::Framebuffer *framebuffer);
 
 	bool enable_reflections_;
 	bool enable_auto_exposure_;

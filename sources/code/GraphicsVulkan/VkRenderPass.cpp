@@ -1,7 +1,7 @@
-#include "VkRenderPass.h"
+#include "VkRenderPass.hpp"
 #include <iostream>
 #include <vector>
-#include "VkFormats.h"
+#include "VkFormats.hpp"
 
 vkRenderPass::vkRenderPass(VkDevice *dev, VkFormat swapChainImageFormat, RenderPassCreateInfo createInfo) {
 	device = dev;

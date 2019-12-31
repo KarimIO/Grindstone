@@ -20,9 +20,11 @@ PostProcessTonemap::PostProcessTonemap(unsigned int w, unsigned h, PostPipeline 
 }
 
 void PostProcessTonemap::Process() {
+	GRIND_PROFILE_FUNC();
 	float dt = (float)engine.getUpdateTimeDelta();
 
 	if (auto_exposure_) {
+		GRIND_PROFILE_SCOPE("Calculating Auto Exposure");
 		if (first_render_) {
 			effect_buffer_.exposure = 1.0f / glm::clamp((float)exp(auto_exposure_->GetExposure()), 0.1f, 16.0f);
 			
@@ -44,11 +46,11 @@ void PostProcessTonemap::Process() {
     effect_ub_->Bind();
 	if (target_ == nullptr) {
 		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
-		engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
+		engine.getGraphicsWrapper()->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 	} 
 	else {
 		target_->framebuffer->BindWrite(true);
-		//target_->framebuffer->Clear(CLEAR_BOTH);
+		//target_->framebuffer->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 	}
     source_->framebuffer->BindRead();
     source_->framebuffer->BindTextures(4);
@@ -60,18 +62,18 @@ void PostProcessTonemap::resizeBuffers(unsigned int w, unsigned h)
 }
 
 void PostProcessTonemap::reloadGraphics(unsigned int w, unsigned h) {
-	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+	Grindstone::GraphicsAPI::GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	auto gl = engine.getSettings()->graphics_language_;
 
 	// Exposure Uniform Buffer
-	UniformBufferBindingCreateInfo ubbci;
+	Grindstone::GraphicsAPI::UniformBufferBindingCreateInfo ubbci;
 	ubbci.binding = 0;
 	ubbci.shaderLocation = "EffectUBO";
 	ubbci.size = sizeof(EffectUBO);
-	ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	ubbci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	ubb_ = graphics_wrapper->CreateUniformBufferBinding(ubbci);
 
-	UniformBufferCreateInfo ubci;
+	Grindstone::GraphicsAPI::UniformBufferCreateInfo ubci;
 	ubci.isDynamic = false;
 	ubci.size = sizeof(EffectUBO);
 	ubci.binding = ubb_;
@@ -79,14 +81,14 @@ void PostProcessTonemap::reloadGraphics(unsigned int w, unsigned h) {
 
 	effect_ub_->UpdateUniformBuffer(&effect_buffer_);
 
-	ShaderStageCreateInfo stages[2];
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo stages[2];
 
 	// Tonemap Graphics Pipeline
-	if (gl == GRAPHICS_OPENGL) {
+	if (gl == GraphicsLanguage::OpenGL) {
 		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		stages[1].fileName = "../assets/shaders/post_processing/tonemap.glsl";
 	}
-	else if (gl == GRAPHICS_DIRECTX) {
+	else if (gl == GraphicsLanguage::DirectX) {
 		stages[0].fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
 		stages[1].fileName = "../assets/shaders/post_processing/tonemap.fxc";
 	}
@@ -101,7 +103,7 @@ void PostProcessTonemap::reloadGraphics(unsigned int w, unsigned h) {
 	}
 	stages[0].content = vfile.data();
 	stages[0].size = (uint32_t)vfile.size();
-	stages[0].type = SHADER_VERTEX;
+	stages[0].type = Grindstone::GraphicsAPI::ShaderStage::Vertex;
 
 	std::vector<char> ffile;
 	if (!readFile(stages[1].fileName, ffile)) {
@@ -109,13 +111,13 @@ void PostProcessTonemap::reloadGraphics(unsigned int w, unsigned h) {
 	}
 	stages[1].content = ffile.data();
 	stages[1].size = (uint32_t)ffile.size();
-	stages[1].type = SHADER_FRAGMENT;
+	stages[1].type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
 	auto vbd = engine.getPlaneVBD();
 	auto vad = engine.getPlaneVAD();
 
-	GraphicsPipelineCreateInfo tonemapGPCI;
-	tonemapGPCI.cullMode = CULL_BACK;
+	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo tonemapGPCI;
+	tonemapGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
 	tonemapGPCI.bindings = &vbd;
 	tonemapGPCI.bindingsCount = 1;
 	tonemapGPCI.attributes = &vad;
@@ -124,17 +126,17 @@ void PostProcessTonemap::reloadGraphics(unsigned int w, unsigned h) {
 	tonemapGPCI.height = (float)h;
 	tonemapGPCI.scissorW = w;
 	tonemapGPCI.scissorH = h;
-	tonemapGPCI.primitiveType = PRIM_TRIANGLES;
+	tonemapGPCI.primitiveType = Grindstone::GraphicsAPI::GeometryType::Triangles;
 	tonemapGPCI.shaderStageCreateInfos = stages;
 	tonemapGPCI.shaderStageCreateInfoCount = 2;
 
-	tonemap_sub_binding_ = new TextureSubBinding("lighting", 4);
+	tonemap_sub_binding_ = new Grindstone::GraphicsAPI::TextureSubBinding("lighting", 4);
 
-	TextureBindingLayoutCreateInfo tblci;
+	Grindstone::GraphicsAPI::TextureBindingLayoutCreateInfo tblci;
 	tblci.bindingLocation = 4;
 	tblci.bindings = tonemap_sub_binding_;
 	tblci.bindingCount = 1;
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	tonemap_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
 
 	tonemapGPCI.textureBindings = &tonemap_tbl_;
@@ -145,7 +147,7 @@ void PostProcessTonemap::reloadGraphics(unsigned int w, unsigned h) {
 }
 
 void PostProcessTonemap::destroyGraphics() {
-	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+	Grindstone::GraphicsAPI::GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	if (gpipeline_) {
 		graphics_wrapper->DeleteGraphicsPipeline(gpipeline_);
 		gpipeline_ = nullptr;

@@ -7,20 +7,24 @@
 #include "BaseSystem.hpp"
 #include "../AssetCommon/Renderable.hpp"
 
-class VertexBuffer;
-class IndexBuffer;
-class VertexArrayObject;
-class Texture;
+namespace Grindstone {
+	namespace GraphicsAPI {
+		class VertexBuffer;
+		class IndexBuffer;
+		class VertexArrayObject;
+		class Texture;
+	}
+}
 
 class TerrainDrawable : public Renderable {
 public:
 	ComponentHandle component_handle_;
-	VertexBuffer *vertex_buffer;
-	IndexBuffer *index_buffer;
-	VertexArrayObject *vertex_array_object;
+	Grindstone::GraphicsAPI::VertexBuffer *vertex_buffer;
+	Grindstone::GraphicsAPI::IndexBuffer *index_buffer;
+	Grindstone::GraphicsAPI::VertexArrayObject *vertex_array_object;
 	unsigned int num_indices_;
-	UniformBufferBinding *model_ubb_;
-	UniformBuffer *model_ubo_;
+	Grindstone::GraphicsAPI::UniformBufferBinding *model_ubb_;
+	Grindstone::GraphicsAPI::UniformBuffer *model_ubo_;
 
 	void shadowDraw() override;
 	void draw() override;
@@ -31,7 +35,7 @@ struct RenderTerrainComponent : public Component {
 	std::string path_;
 	std::string material_path_;
 	MaterialReference material_;
-	Texture *heightmap_;
+	Grindstone::GraphicsAPI::Texture *heightmap_;
 	char *heightmap_data_;
 	unsigned int heightmap_size_;
 	void generateMesh();
@@ -40,15 +44,15 @@ struct RenderTerrainComponent : public Component {
 
 class RenderTerrainSystem : public System {
 public:
-	RenderTerrainSystem(UniformBufferBinding *ubb);
+	RenderTerrainSystem(Grindstone::GraphicsAPI::UniformBufferBinding *ubb);
 
 	void update();
-	UniformBuffer *getModelUbo();
+	Grindstone::GraphicsAPI::UniformBuffer *getModelUbo();
 	GeometryInfo geometry_info_;
 private:
-	UniformBufferBinding *model_ubb_;
-	UniformBuffer *model_ubo_;
-	std::vector<UniformBufferBinding *> ubbs_;
+	Grindstone::GraphicsAPI::UniformBufferBinding *model_ubb_;
+	Grindstone::GraphicsAPI::UniformBuffer *model_ubo_;
+	std::vector<Grindstone::GraphicsAPI::UniformBufferBinding *> ubbs_;
 };
 
 class RenderTerrainSubSystem : public SubSystem {
@@ -79,9 +83,9 @@ public:
 	virtual void DrawDeferred(CommandBuffer *);
 private:
 	std::vector<uint32_t> references;
-	VertexBuffer *vertexBuffer;
+	Grindstone::GraphicsAPI::VertexBuffer *Grindstone::GraphicsAPI::VertexBuffer;
 	IndexBuffer *indexBuffer;
-	VertexArrayObject *vertexArrayObject;
+	Grindstone::GraphicsAPI::VertexArrayObject *Grindstone::GraphicsAPI::VertexArrayObject;
 	CommandBuffer *commandBuffer;
 	Texture *heightmap_texture_;
 	TextureBinding *heightmap_texture_binding_;
@@ -93,7 +97,7 @@ private:
 
 class SGeometryTerrain : public SSubGeometry {
 public:
-	SGeometryTerrain(MaterialManager * material_system, GraphicsWrapper * graphics_wrapper, std::vector<UniformBufferBinding*> ubbs);
+	SGeometryTerrain(MaterialManager * material_system, GraphicsWrapper * graphics_wrapper, std::vector<Grindstone::GraphicsAPI::UniformBufferBinding*> ubbs);
 	void LoadModel(CTerrain *model);
 	virtual void LoadGeometry(unsigned int render_id, std::string path);
 	virtual void LoadPreloaded();

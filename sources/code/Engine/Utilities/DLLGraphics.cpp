@@ -6,38 +6,54 @@ DLLGraphics::DLLGraphics() {
 	setup();
 }
 
-GraphicsWrapper *DLLGraphics::getWrapper() {
+Grindstone::GraphicsAPI::GraphicsWrapper *DLLGraphics::getWrapper() {
 	return wrapper_;
 }
 
 void DLLGraphics::setup() {
+	Grindstone::GraphicsAPI::GraphicsWrapper* (*pfnCreateGraphics)(Grindstone::GraphicsAPI::InstanceCreateInfo);
 	auto settings = engine.getSettings();
+	{
+		GRIND_PROFILE_SCOPE("Load DLLGraphics");
+		auto settings = engine.getSettings();
 
-	std::string library;
-	switch (settings->graphics_language_) {
-	default:
-		library = "graphicsgl";
-		break;
+		std::string library;
+		switch (settings->graphics_language_) {
+		default:
+			library = "graphicsgl";
+			break;
 #ifndef __APPLE__
-	case GRAPHICS_VULKAN:
-		library = "graphicsvk";
-		break;
+		case GraphicsLanguage::Vulkan:
+			library = "graphicsvk";
+			break;
 #endif
 #ifdef _WIN32
-	case GRAPHICS_DIRECTX:
-		library = "graphicsdx";
-		break;
+		case GraphicsLanguage::DirectX:
+			library = "graphicsdx";
+			break;
 #endif
 #ifdef __APPLE__
-	case GRAPHICS_METAL:
-		library = "graphicsml";
-		break;
+		case GraphicsLanguage::Metal:
+			library = "graphicsml";
+			break;
 #endif
-	};
+		};
 
-	initialize(library);
+		initialize(library);
 
-	InstanceCreateInfo createInfo;
+		pfnCreateGraphics = (Grindstone::GraphicsAPI::GraphicsWrapper* (*)(Grindstone::GraphicsAPI::InstanceCreateInfo))getFunction("createGraphics");
+		if (!pfnCreateGraphics) {
+			throw std::runtime_error("Cannot get createGraphics function!\n");
+		}
+
+		pfnDeleteGraphics = (void(*)(Grindstone::GraphicsAPI::GraphicsWrapper*))getFunction("deleteGraphics");
+		if (!pfnDeleteGraphics) {
+			throw std::runtime_error("Cannot get deleteGraphics function!\n");
+		}
+	}
+
+	GRIND_PROFILE_SCOPE("Create GraphicsWrapper");
+	Grindstone::GraphicsAPI::InstanceCreateInfo createInfo;
 	createInfo.width = settings->resolution_x_;
 	createInfo.height = settings->resolution_y_;
 	createInfo.vsync = settings->vsync_;
@@ -49,21 +65,11 @@ void DLLGraphics::setup() {
 	createInfo.debug = true;
 #endif
 
-	GraphicsWrapper* (*pfnCreateGraphics)(InstanceCreateInfo) = (GraphicsWrapper* (*)(InstanceCreateInfo))getFunction("createGraphics");
-	if (!pfnCreateGraphics) {
-		throw std::runtime_error("Cannot get createGraphics function!\n");
-	}
-
-	pfnDeleteGraphics = (void(*)(GraphicsWrapper*))getFunction("deleteGraphics");
-	if (!pfnDeleteGraphics) {
-		throw std::runtime_error("Cannot get deleteGraphics function!\n");
-	}
-
-	wrapper_ = (GraphicsWrapper*)pfnCreateGraphics(createInfo);
+	wrapper_ = (Grindstone::GraphicsAPI::GraphicsWrapper*)pfnCreateGraphics(createInfo);
 }
 
 void DLLGraphics::reload() {
-	wrapper_->closing_state_ = GraphicsWrapper::WindowClosingState::Closing;
+	wrapper_->closing_state_ = Grindstone::GraphicsAPI::GraphicsWrapper::WindowClosingState::Closing;
 	// Remove previous instance of Wrapper
 	if (wrapper_) {
 		pfnDeleteGraphics(wrapper_);

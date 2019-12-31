@@ -41,9 +41,10 @@
 #include "Editor.hpp"
 
 // Util Classes
-#include "../Utilities/Logger.hpp"
+
 
 void Engine::initialize() {
+	GRIND_PROFILE_BEGIN_SESSION("Loading", "../log/grind-profile-load.json");
 	GRIND_LOG("Initializing Grindstone Game Engine...");
 
 	// Seed Random to get proper random numbers
@@ -63,33 +64,42 @@ void Engine::initialize() {
 	dll_audio_ = new DLLAudio();
 	//audio_wrapper_ = dll_audio_->getWrapper();
 
-	initializeUniformBuffer();
-	initializePlaneVertexBuffer();
-	deffUBO();
-	initializeTBL();
+	{
+		GRIND_PROFILE_SCOPE("Init Basic Graphic Primitives");
+		initializeUniformBuffer();
+		initializePlaneVertexBuffer();
+		deffUBO();
+		initializeTBL();
+	}
 
 	// Load Asset Managers
-	//audio_manager_ = new AudioManager();
-	material_manager_ = new MaterialManager();
-	graphics_pipeline_manager_ = new GraphicsPipelineManager();
-	texture_manager_ = new TextureManager();
-	model_manager_ = new ModelManager(ubb_);
-	imgui_manager_ = new ImguiManager();
+	{
+		GRIND_PROFILE_SCOPE("Load Asset Managers");
+			//audio_manager_ = new AudioManager();
+		material_manager_ = new MaterialManager();
+		graphics_pipeline_manager_ = new GraphicsPipelineManager();
+		texture_manager_ = new TextureManager();
+		model_manager_ = new ModelManager(ubb_);
+		imgui_manager_ = new ImguiManager();
+	}
 
 	// Load Systems
-	addSystem(new ControllerSystem());
-	addSystem(new ColliderSystem());
-	addSystem(new CubemapSystem());
-	addSystem(new RigidBodySystem());
-	addSystem(new RenderTerrainSystem(ubb_));
-	addSystem(new RenderStaticMeshSystem());
-	addSystem(new RenderSpriteSystem());
-	addSystem(new LightPointSystem());
-	addSystem(new LightSpotSystem());
-	addSystem(new LightDirectionalSystem());
-	addSystem(new TransformSystem());
-	addSystem(new CameraSystem());
-	addSystem(new ScriptSystem());
+	{
+		GRIND_PROFILE_SCOPE("Load Systems");
+		addSystem(new ControllerSystem());
+		addSystem(new ColliderSystem());
+		addSystem(new CubemapSystem());
+		addSystem(new RigidBodySystem());
+		addSystem(new RenderTerrainSystem(ubb_));
+		addSystem(new RenderStaticMeshSystem());
+		addSystem(new RenderSpriteSystem());
+		addSystem(new LightPointSystem());
+		addSystem(new LightSpotSystem());
+		addSystem(new LightDirectionalSystem());
+		addSystem(new TransformSystem());
+		addSystem(new CameraSystem());
+		addSystem(new ScriptSystem());
+	}
 
 	// Load Default Level
 	addScene(settings_->default_map_);
@@ -110,6 +120,7 @@ void Engine::initialize() {
 	GRIND_LOG("==============================");
 
 	graphics_wrapper_->setFocus();
+	GRIND_PROFILE_END_SESSION();
 }
 
 ImguiManager *Engine::getImguiManager() {
@@ -119,14 +130,14 @@ ImguiManager *Engine::getImguiManager() {
 void Engine::initializeUniformBuffer() {
 	int s = sizeof(glm::mat4) * 2 + sizeof(glm::vec4) + sizeof(float) + sizeof(glm::vec3);
 
-	UniformBufferBindingCreateInfo ubbci;
+	Grindstone::GraphicsAPI::UniformBufferBindingCreateInfo ubbci;
 	ubbci.binding = 0;
 	ubbci.shaderLocation = "UniformBufferObject";
 	ubbci.size = s; //sizeof(glm::mat4);
-	ubbci.stages = SHADER_STAGE_VERTEX_BIT;
+	ubbci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Vertex;
 	ubb_ = graphics_wrapper_->CreateUniformBufferBinding(ubbci);
 
-	UniformBufferCreateInfo ubci;
+	Grindstone::GraphicsAPI::UniformBufferCreateInfo ubci;
 	ubci.isDynamic = true;
 	ubci.size = s;
 	ubci.binding = ubb_;
@@ -140,11 +151,11 @@ void Engine::initializeTBL() {
 	subbindings_.emplace_back("gbuffer2", 2); // sR sG sB Roughness
 	subbindings_.emplace_back("gbuffer3", 3); // Depth
 
-	TextureBindingLayoutCreateInfo tblci;
+	Grindstone::GraphicsAPI::TextureBindingLayoutCreateInfo tblci;
 	tblci.bindingLocation = 0;
 	tblci.bindings = subbindings_.data();
 	tblci.bindingCount = (uint32_t)subbindings_.size();
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	gbuffer_tbl_ = graphics_wrapper_->CreateTextureBindingLayout(tblci);
 }
 
@@ -159,29 +170,29 @@ void Engine::consoleCommand(std::string command) {
 }
 
 void Engine::deffUBO() {
-	UniformBufferBindingCreateInfo deffubbci;
+	Grindstone::GraphicsAPI::UniformBufferBindingCreateInfo deffubbci;
 	deffubbci.binding = 0;
 	deffubbci.shaderLocation = "DefferedUBO";
 	deffubbci.size = sizeof(DefferedUBO);
-	deffubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	deffubbci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	deff_ubb_ = graphics_wrapper_->CreateUniformBufferBinding(deffubbci);
 
-	UniformBufferCreateInfo deffubci;
+	Grindstone::GraphicsAPI::UniformBufferCreateInfo deffubci;
 	deffubci.isDynamic = false;
 	deffubci.size = sizeof(DefferedUBO);
 	deffubci.binding = deff_ubb_;
 	deff_ubo_handler_ = graphics_wrapper_->CreateUniformBuffer(deffubci);
 }
 
-VertexArrayObject *Engine::getPlaneVAO() {
+Grindstone::GraphicsAPI::VertexArrayObject *Engine::getPlaneVAO() {
 	return plane_vao_;
 }
 
-VertexBindingDescription Engine::getPlaneVBD() {
+Grindstone::GraphicsAPI::VertexBindingDescription Engine::getPlaneVBD() {
 	return plane_vbd_;
 }
 
-VertexAttributeDescription Engine::getPlaneVAD() {
+Grindstone::GraphicsAPI::VertexAttributeDescription Engine::getPlaneVAD() {
 	return plane_vad_;
 }
 
@@ -201,13 +212,13 @@ void Engine::initializePlaneVertexBuffer() {
 
 	plane_vad_.binding = 0;
 	plane_vad_.location = 0;
-	plane_vad_.format = VERTEX_R32_G32;
+	plane_vad_.format = Grindstone::GraphicsAPI::VertexFormat::R32_G32;
 	plane_vad_.size = 2;
 	plane_vad_.name = "vertexPosition";
 	plane_vad_.offset = 0;
-	plane_vad_.usage = ATTRIB_POSITION;
+	plane_vad_.usage = Grindstone::GraphicsAPI::AttributeUsage::Position;
 
-	VertexBufferCreateInfo plane_vbo_ci;
+	Grindstone::GraphicsAPI::VertexBufferCreateInfo plane_vbo_ci;
 	plane_vbo_ci.binding = &plane_vbd_;
 	plane_vbo_ci.bindingCount = 1;
 	plane_vbo_ci.attribute = &plane_vad_;
@@ -216,7 +227,7 @@ void Engine::initializePlaneVertexBuffer() {
 	plane_vbo_ci.count = 6;
 	plane_vbo_ci.size = sizeof(float) * 6 * 2;
 
-	VertexArrayObjectCreateInfo plane_vao_ci;
+	Grindstone::GraphicsAPI::VertexArrayObjectCreateInfo plane_vao_ci;
 	plane_vao_ci.vertexBuffer = plane_vbo_;
 	plane_vao_ci.indexBuffer = nullptr;
 	plane_vao_ = graphics_wrapper_->CreateVertexArrayObject(plane_vao_ci);
@@ -227,11 +238,11 @@ void Engine::initializePlaneVertexBuffer() {
 	plane_vao_->Unbind();
 }
 
-UniformBuffer *Engine::getUniformBuffer() {
+Grindstone::GraphicsAPI::UniformBuffer *Engine::getUniformBuffer() {
 	return ubo_;
 }
 
-UniformBufferBinding *Engine::getUniformBufferBinding() {
+Grindstone::GraphicsAPI::UniformBufferBinding *Engine::getUniformBufferBinding() {
 	return ubb_;
 }
 
@@ -276,7 +287,7 @@ Settings *Engine::getSettings() {
 	return settings_;
 }
 
-GraphicsWrapper *Engine::getGraphicsWrapper() {
+Grindstone::GraphicsAPI::GraphicsWrapper *Engine::getGraphicsWrapper() {
 	return graphics_wrapper_;
 }
 
@@ -305,7 +316,13 @@ InputManager * Engine::getInputManager() {
 }
 
 void Engine::run() {
+	bool profiled_frame = false;
 	while (running_) {
+		if (profile_frame_) {
+			GRIND_PROFILE_BEGIN_SESSION("Running", "../log/grind-profile-run.json");
+			profiled_frame = true;
+			profile_frame_ = false;
+		}
 		// Calculate Timing
 		calculateTime();
 		double dt = getUpdateTimeDelta();
@@ -338,8 +355,12 @@ void Engine::run() {
 #endif
 
 		getGraphicsWrapper()->SwapBuffer();
-	}
 
+		if (profiled_frame) {
+			GRIND_PROFILE_END_SESSION();
+			profiled_frame = false;
+		}
+	}
 }
 
 void Engine::shutdown() {
@@ -376,6 +397,7 @@ Engine::~Engine() {
 }
 
 void Engine::calculateTime() {
+	GRIND_PROFILE_FUNC();
 	current_time_ = std::chrono::high_resolution_clock::now();
 	delta_time_ = std::chrono::duration_cast<std::chrono::nanoseconds>(current_time_ - prev_time_);
 	prev_time_ = current_time_;
@@ -454,7 +476,10 @@ void Engine::reloadGraphicsDLL() {
 void Engine::refreshAll(double) {
 	reloadGraphicsDLL();
 	reloadAudioDLL();
+}
 
+void Engine::profileFrame(double) {
+	profile_frame_ = true;
 }
 
 #ifdef INCLUDE_EDITOR

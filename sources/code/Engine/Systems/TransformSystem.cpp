@@ -3,6 +3,7 @@
 #include "Core/Scene.hpp"
 #include "Core/Space.hpp"
 #include <glm/gtx/transform.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
@@ -35,6 +36,7 @@ TransformSystem::TransformSystem() : System(COMPONENT_TRANSFORM) {
 }
 
 void TransformSystem::update() {
+	GRIND_PROFILE_FUNC();
 	auto scenes = engine.getScenes();
 	for (auto scene : scenes) {
 		for (auto space : scene->spaces_) {
@@ -52,39 +54,29 @@ void TransformSystem::update() {
 				component.model_ = glm::scale(component.model_, s);
 
 				// - Rotate the Model along its axis
-				glm::vec3 angles = subsystem->getAngles(component.handle_);
-				float maxRot = (std::fmax(std::fmax(angles.x, angles.y), angles.z));
-				if (maxRot > 0)
-					component.model_ = glm::rotate(component.model_, maxRot, angles / maxRot);
+				glm::quat quat = subsystem->getQuaternion(component.handle_);
+				component.model_ = glm::toMat4(quat) * component.model_;
 			}
 		}
 	}
 }
 
 glm::vec3 TransformSubSystem::getForward(ComponentHandle handle) {
-	glm::vec3 ang = getAngles(handle);
-	return glm::vec3(
-		glm::cos(ang.x) * glm::sin(ang.y),
-		glm::sin(ang.x),
-		glm::cos(ang.x) * glm::cos(ang.y)
-	);
+	glm::quat quat = getQuaternion(handle);
+	return quat * glm::vec3(0.0f, 0.0f, 1.0f);
 }
 
 glm::vec3 TransformSubSystem::getRight(ComponentHandle handle) {
-	glm::vec3 ang = getAngles(handle);
-	return glm::vec3(
-		glm::sin(ang.y - 3.14159f / 2.0f),
-		0,
-		glm::cos(ang.y - 3.14159f / 2.0f)
-	);
+	glm::quat quat = getQuaternion(handle);
+	return quat * glm::vec3(1.0f, 0.0f, 0.0f);
 }
 
 glm::vec3 TransformSubSystem::getUp(ComponentHandle handle) {
 	return glm::cross(getRight(handle), getForward(handle));
 }
 
-glm::vec3 TransformSubSystem::getAngles(ComponentHandle handle) {
-	return components_[handle].angles_;
+glm::quat TransformSubSystem::getQuaternion(ComponentHandle handle) {
+	return components_[handle].quaternion_;
 }
 
 glm::vec3 TransformSubSystem::getPosition(ComponentHandle handle) {
@@ -117,7 +109,7 @@ TransformSubSystem::~TransformSubSystem() {
 
 REFLECT_STRUCT_BEGIN(TransformComponent, TransformSystem, COMPONENT_TRANSFORM)
 	REFLECT_STRUCT_MEMBER(position_)
-	REFLECT_STRUCT_MEMBER(angles_)
+	REFLECT_STRUCT_MEMBER(quaternion_)
 	REFLECT_SUBCATS_START()
 		REFLECT_SUBCAT_START("My Category")
 			REFLECT_STRUCT_MEMBER(scale_)

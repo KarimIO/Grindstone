@@ -1,11 +1,11 @@
-#include "VkFramebuffer.h"
-#include "VkRenderPass.h"
-#include "VkBufferCommon.h"
-#include "VkFormats.h"
+#include "VkFramebuffer.hpp"
+#include "VkRenderPass.hpp"
+#include "VkBufferCommon.hpp"
+#include "VkFormats.hpp"
 #include <array>
 #include <iostream>
 
-void vkFramebuffer::CreateDepthStencil(VkImage &image, VkImageView &imageView, VkDeviceMemory &imageMem, VkFormat imageFormat) {
+void VulkanFramebuffer::CreateDepthStencil(VkImage &image, VkImageView &imageView, VkDeviceMemory &imageMem, VkFormat imageFormat) {
 	createImage(device, physicalDevice, width, height, imageFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMem);
 
 	VkImageViewCreateInfo viewInfo = {};
@@ -24,14 +24,14 @@ void vkFramebuffer::CreateDepthStencil(VkImage &image, VkImageView &imageView, V
 	}
 }
 
-vkFramebuffer::vkFramebuffer(VkDevice *dev, VkPhysicalDevice *_physicalDevice, VkImage image, VkFormat imageFormat, DefaultFramebufferCreateInfo createInfo) {
+VulkanFramebuffer::VulkanFramebuffer(VkDevice *dev, VkPhysicalDevice *_physicalDevice, VkImage image, VkFormat imageFormat, DefaultFramebufferCreateInfo createInfo) {
 	device = dev;
 	physicalDevice = _physicalDevice;
 	width = createInfo.width;
 	height = createInfo.height;
 	defaultFramebuffer = true;
 
-	if (createInfo.depthFormat != FORMAT_DEPTH_NONE) {
+	if (createInfo != DepthFormat::None) {
 		images.resize(2);
 		imageViews.resize(2);
 		imageMemory.resize(1);
@@ -62,7 +62,7 @@ vkFramebuffer::vkFramebuffer(VkDevice *dev, VkPhysicalDevice *_physicalDevice, V
 
 	VkFramebufferCreateInfo framebufferInfo = {};
 	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	framebufferInfo.renderPass = *((vkRenderPass *)createInfo.renderPass)->GetRenderPass();
+	framebufferInfo.renderPass = *((VulkanRenderPass *)createInfo.renderPass)->GetRenderPass();
 	framebufferInfo.attachmentCount = static_cast<uint32_t>(imageViews.size());
 	framebufferInfo.pAttachments = imageViews.data();
 	framebufferInfo.width = createInfo.width;
@@ -74,35 +74,11 @@ vkFramebuffer::vkFramebuffer(VkDevice *dev, VkPhysicalDevice *_physicalDevice, V
 	}
 }
 
-vkFramebuffer::vkFramebuffer(VkDevice * device, VkPhysicalDevice * physicalDevice, FramebufferCreateInfo createInfo)
+VulkanFramebuffer::VulkanFramebuffer(VkDevice * device, VkPhysicalDevice * physicalDevice, FramebufferCreateInfo createInfo)
 {
 }
 
-void vkFramebuffer::Blit(int i, int x, int y, int w, int h) {
-	std::cout << "vkFramebuffer::Blit is not used in Vulkan\n";
-}
-
-void vkFramebuffer::BindWrite() {
-	std::cout << "vkFramebuffer::BindWrite is not used in Vulkan\n";
-}
-
-void vkFramebuffer::BindRead() {
-	std::cout << "vkFramebuffer::BindRead is not used in Vulkan\n";
-}
-
-void vkFramebuffer::Clear() {
-	std::cout << "vkFramebuffer::Clear is not used in Vulkan\n";
-}
-
-void vkFramebuffer::BindTextures() {
-	std::cout << "vkFramebuffer::BindTextures is not used in Vulkan\n";
-}
-
-void vkFramebuffer::Unbind() {
-	std::cout << "vkFramebuffer::Unbind is not used in Vulkan\n";
-}
-
-vkFramebuffer::~vkFramebuffer() {
+VulkanFramebuffer::~VulkanFramebuffer() {
 	vkDestroyFramebuffer(*device, framebuffer, nullptr);
 	
 	size_t i = 0;
@@ -119,6 +95,31 @@ vkFramebuffer::~vkFramebuffer() {
 	}
 }
 
-VkFramebuffer *vkFramebuffer::GetFramebuffer() {
+VkFramebuffer *VulkanFramebuffer::GetFramebuffer() {
 	return &framebuffer;
+}
+
+float VulkanFramebuffer::getExposure(int i) {
+	std::cout << "VulkanFramebuffer::getExposure is not used in Vulkan\n";
+	return 0.0f;
+}
+
+void VulkanFramebuffer::Clear(int mask) {
+	std::cout << "VulkanFramebuffer::Clear is not used in Vulkan\n";
+}
+
+void VulkanFramebuffer::CopyFrom(Framebuffer *) {
+	std::cout << "VulkanFramebuffer::CopyFrom is not used in Vulkan\n";
+}
+
+void VulkanFramebuffer::BindWrite(bool depth) {
+	std::cout << "VulkanFramebuffer::BindWrite is not used in Vulkan\n";
+}
+
+void VulkanFramebuffer::BindTextures(int i) {
+	std::cout << "VulkanFramebuffer::BindTextures is not used in Vulkan\n";
+}
+
+void VulkanFramebuffer::Bind(bool depth) {
+	std::cout << "VulkanFramebuffer::Bind is not used in Vulkan\n";
 }

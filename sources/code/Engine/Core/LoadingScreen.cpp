@@ -4,19 +4,19 @@
 #include <stb/stb_image.h>
 
 LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
-	VertexBindingDescription vbd;
+	Grindstone::GraphicsAPI::VertexBindingDescription vbd;
 	vbd.binding = 0;
 	vbd.elementRate = false;
 	vbd.stride = sizeof(glm::vec2);
 
-	VertexAttributeDescription vad;
+	Grindstone::GraphicsAPI::VertexAttributeDescription vad;
 	vad.binding = 0;
 	vad.location = 0;
-	vad.format = VERTEX_R32_G32;
+	vad.format = Grindstone::GraphicsAPI::VertexFormat::R32_G32;
 	vad.size = 2;
 	vad.name = "vertexPosition";
 	vad.offset = 0;
-	vad.usage = ATTRIB_POSITION;
+	vad.usage = Grindstone::GraphicsAPI::AttributeUsage::Position;
 
 	RenderPassCreateInfo rpci;
 	ClearColorValue colorClearValues = { 1.0f, 0.0f, 0.0f, 1.0f };
@@ -29,7 +29,7 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 	rpci.m_depthStencilClearValue = dscf;
 	rpci.m_width = engine.settings.resolutionX;
 	rpci.m_height = engine.settings.resolutionY;
-	rpci.m_depthFormat = FORMAT_DEPTH_NONE;
+	rpci.m_depthFormat = DepthFormat::DNONE;
 	render_pass_ = graphics_wrapper_->CreateRenderPass(rpci);
 
 	GraphicsPipelineCreateInfo gpci;
@@ -43,13 +43,13 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 	gpci.bindings = &vbd;
 	gpci.bindingsCount = 1;
 
-	ShaderStageCreateInfo vi;
-	ShaderStageCreateInfo fi;
-	if (engine.settings.graphicsLanguage == GRAPHICS_OPENGL) {
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo vi;
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo fi;
+	if (engine.settings.graphicsLanguage == GraphicsLanguage::OpenGL) {
 		vi.fileName = "../assets/shaders/loading_screen/loading_vert.glsl";
 		fi.fileName = "../assets/shaders/loading_screen/loading_frag.glsl";
 	}
-	else if (engine.settings.graphicsLanguage == GRAPHICS_DIRECTX) {
+	else if (engine.settings.graphicsLanguage == GraphicsLanguage::DirectX) {
 		vi.fileName = "../assets/shaders/loading_screen/loading_vert.fxc";
 		fi.fileName = "../assets/shaders/loading_screen/loading_frag.fxc";
 	}
@@ -65,7 +65,7 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 
 	vi.content = vfile.data();
 	vi.size = (uint32_t)vfile.size();
-	vi.type = SHADER_VERTEX;
+	vi.type = Grindstone::GraphicsAPI::ShaderStage::Vertex;
 
 	std::vector<char> ffile;
 	if (!readFile(fi.fileName, ffile)) {
@@ -75,7 +75,7 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 
 	fi.content = ffile.data();
 	fi.size = (uint32_t)ffile.size();
-	fi.type = SHADER_FRAGMENT;
+	fi.type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
 	TextureSubBinding binding = {"logo", 0};
 
@@ -83,18 +83,18 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 	tblci.bindingLocation = 0;
 	tblci.bindings = &binding;
 	tblci.bindingCount = (uint32_t)1;
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	tbl_ = graphics_wrapper_->CreateTextureBindingLayout(tblci);
 
-	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
+	std::vector<Grindstone::GraphicsAPI::ShaderStageCreateInfo> stages = { vi, fi };
 	gpci.shaderStageCreateInfos = stages.data();
 	gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
 	gpci.uniformBufferBindings = nullptr;
 	gpci.uniformBufferBindingCount = 0;
 	gpci.textureBindings = &tbl_;
 	gpci.textureBindingCount = 1;
-	gpci.cullMode = CULL_NONE;
-	gpci.primitiveType = PRIM_TRIANGLES;
+	gpci.cullMode = Grindstone::GraphicsAPI::CullMode::None;
+	gpci.primitiveType = Grindstone::GraphicsAPI::GeometryType::Triangles;
 	pipeline_ = graphics_wrapper_->CreateGraphicsPipeline(gpci);
 
 	int texWidth, texHeight, texChannels;
@@ -104,8 +104,8 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 		printf("Texture failed to load!: materials/grindstone.png \n");
 		return;
 	}
-	TextureCreateInfo createInfo;
-	createInfo.format = FORMAT_COLOR_R8G8B8A8;
+	Grindstone::GraphicsAPI::TextureCreateInfo createInfo;
+	createInfo.format = Grindstone::GraphicsAPI::ColorFormat::R8G8B8A8;
 	createInfo.mipmaps = 0;
 	createInfo.data = pixels;
 	createInfo.width = texWidth;
@@ -135,7 +135,7 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 		1.0, -1.0,
 	};
 
-	VertexBufferCreateInfo planeVboCI;
+	Grindstone::GraphicsAPI::VertexBufferCreateInfo planeVboCI;
 	planeVboCI.binding = &engine.planeVBD;
 	planeVboCI.bindingCount = 1;
 	planeVboCI.attribute = &engine.planeVAD;
@@ -144,7 +144,7 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 	planeVboCI.count = 6;
 	planeVboCI.size = sizeof(float) * 6 * 2;
 
-	VertexArrayObjectCreateInfo vaci;
+	Grindstone::GraphicsAPI::VertexArrayObjectCreateInfo vaci;
 	vaci.vertexBuffer = vbo_;
 	vaci.indexBuffer = nullptr;
 	vao_ = graphics_wrapper_->CreateVertexArrayObject(vaci);
@@ -156,11 +156,11 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 	vao_->Unbind();
 	graphics_wrapper_->BindVertexArrayObject(vao_);
 
-	UniformBufferBindingCreateInfo ubbci;
+	Grindstone::GraphicsAPI::UniformBufferBindingCreateInfo ubbci;
 	ubbci.binding = 0;
 	ubbci.shaderLocation = "UniformBufferObject";
 	ubbci.size = sizeof(loadUBO);
-	ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	ubbci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	ubb_ = graphics_wrapper_->CreateUniformBufferBinding(ubbci);
 
 	UniformBufferCreateInfo ubci;
@@ -179,7 +179,7 @@ void LoadingScreen::Render(double dt) {
 	ubo_->Bind();
 
 	graphics_wrapper_->BindDefaultFramebuffer(true);
-	graphics_wrapper_->Clear(CLEAR_BOTH);
+	graphics_wrapper_->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 	pipeline_->Bind();
 	graphics_wrapper_->BindTextureBinding(tb_);
 	graphics_wrapper_->DrawImmediateVertices(0, 6);

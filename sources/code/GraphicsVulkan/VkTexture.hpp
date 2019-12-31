@@ -1,26 +1,26 @@
 #pragma once
 
-#include "../GraphicsCommon/Texture.h"
+#include "../GraphicsCommon/Texture.hpp"
 #include <vulkan/vulkan.h>
 
-class vkTextureBindingLayout : public TextureBindingLayout {
+class VulkanTextureBindingLayout : public TextureBindingLayout {
 	VkDescriptorSetLayout descriptorSetLayout;
 	VkDevice *device;
 public:
-	vkTextureBindingLayout(VkDevice *device, TextureBindingLayoutCreateInfo ci);
+	VulkanTextureBindingLayout(VkDevice *device, TextureBindingLayoutCreateInfo ci);
 	VkDescriptorSetLayout *getLayout();
-	~vkTextureBindingLayout();
+	~VulkanTextureBindingLayout();
 };
 
-class vkTextureBinding : public TextureBinding {
+class VulkanTextureBinding : public TextureBinding {
 	VkDescriptorSet descriptorSet;
 	VkDevice *device;
 public:
-	vkTextureBinding(VkDevice *device, VkDescriptorPool *descriptorPool, TextureBindingCreateInfo);
+	VulkanTextureBinding(VkDevice *device, VkDescriptorPool *descriptorPool, TextureBindingCreateInfo);
 	VkDescriptorSet *getDescriptor();
 };
 
-class vkTexture : public Texture {
+class VulkanTexture : public Texture {
 	VkDevice *device;
 	VkPhysicalDevice *physicalDevice;
 
@@ -31,9 +31,9 @@ class vkTexture : public Texture {
 
 	uint32_t width, height;
 public:
-	vkTexture(VkDevice *dev, VkPhysicalDevice *phys, VkCommandPool *commandPool, VkDescriptorPool *descriptorPool, VkQueue *queue, TextureCreateInfo ci);
-	vkTexture(VkDevice *dev, VkPhysicalDevice *phys, VkCommandPool *commandPool, VkDescriptorPool *descriptorPool, VkQueue *queue, CubemapCreateInfo ci);
-	~vkTexture();
+	VulkanTexture(VkDevice *dev, VkPhysicalDevice *phys, VkCommandPool *commandPool, VkDescriptorPool *descriptorPool, VkQueue *queue, TextureCreateInfo ci);
+	VulkanTexture(VkDevice *dev, VkPhysicalDevice *phys, VkCommandPool *commandPool, VkDescriptorPool *descriptorPool, VkQueue *queue, CubemapCreateInfo ci);
+	~VulkanTexture();
 
 	VkImageView *GetImageView();
 	VkSampler *GetSampler();

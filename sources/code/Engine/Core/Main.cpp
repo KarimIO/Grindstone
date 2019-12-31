@@ -1,9 +1,6 @@
 #include <iostream>
 #include <stdio.h>
-#include <cstring>
-#include "../Utilities/Logger.hpp"
 #include "Engine.hpp"
-#include <spdlog/spdlog.h>
 
 #ifdef _WIN32
 extern "C" {
@@ -13,7 +10,7 @@ extern "C" {
 
 int main(int argc, char *argv[]) {
 	// Prepare output log location
-	Logger::init("../output.log");
+	Logger::init("../log/output.log");
 
 	try {
 		// Note that engine calls its constructor, Engine::Engine

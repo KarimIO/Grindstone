@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../GraphicsCommon/RenderPass.h"
+#include "../GraphicsCommon/RenderPass.hpp"
 #include <vulkan/vulkan.h>
 
-class vkRenderPass : public RenderPass {
+class VulkanRenderPass : public RenderPass {
 public:
 	VkRenderPass renderPass;
 	VkDevice *device;
@@ -15,8 +15,8 @@ public:
 	uint32_t m_colorClearCount;
 	ClearDepthStencil m_depthStencilClearValue;
 
-	vkRenderPass(VkDevice *, VkFormat, RenderPassCreateInfo);
-	~vkRenderPass();
+	VulkanRenderPass(VkDevice *, VkFormat, RenderPassCreateInfo);
+	~VulkanRenderPass();
 
 	VkRenderPass *GetRenderPass();
 };

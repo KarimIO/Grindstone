@@ -1,4 +1,4 @@
-#include "VkFormats.h"
+#include "VkFormats.hpp"
 
 VkFormat TranslateDepthFormat(DepthFormat format) {
 	switch (format) {

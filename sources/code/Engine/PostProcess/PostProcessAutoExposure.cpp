@@ -5,7 +5,7 @@
 
 PostProcessAutoExposure::PostProcessAutoExposure(unsigned int w, unsigned h, PostPipeline *pipeline, RenderTargetContainer *source, RenderTargetContainer *target) : BasePostProcess(pipeline), source_(source), target_(target), lum_buffer_(nullptr), lum_framebuffer_(nullptr), gpipeline_(nullptr){
 	auto gw = engine.getGraphicsWrapper();
-	tonemap_sub_binding_ = new TextureSubBinding("lighting", 4);
+	tonemap_sub_binding_ = new Grindstone::GraphicsAPI::TextureSubBinding("lighting", 4);
 
 	reloadGraphics(w, h);
 }
@@ -32,24 +32,24 @@ void PostProcessAutoExposure::resizeBuffers(unsigned int w, unsigned h) {
 		gpipeline_ = nullptr;
 	}
 
-	RenderTargetCreateInfo lum_buffer_ci(FORMAT_COLOR_R8, 1024, 1024);
+	Grindstone::GraphicsAPI::RenderTargetCreateInfo lum_buffer_ci(Grindstone::GraphicsAPI::ColorFormat::R8, 1024, 1024);
 	lum_buffer_ = gw->CreateRenderTarget(&lum_buffer_ci, 1);
 
-	FramebufferCreateInfo lum_framebuffer_ci;
+	Grindstone::GraphicsAPI::FramebufferCreateInfo lum_framebuffer_ci;
 	lum_framebuffer_ci.render_target_lists = &lum_buffer_;
 	lum_framebuffer_ci.num_render_target_lists = 1;
 	lum_framebuffer_ci.depth_target = nullptr;
 	lum_framebuffer_ci.render_pass = nullptr;
 	lum_framebuffer_ = gw->CreateFramebuffer(lum_framebuffer_ci);
 
-	ShaderStageCreateInfo stages[2];
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo stages[2];
 
 	// Tonemap Graphics Pipeline
-	if (gl == GRAPHICS_OPENGL) {
+	if (gl == GraphicsLanguage::OpenGL) {
 		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		stages[1].fileName = "../assets/shaders/post_processing/luminance.glsl";
 	}
-	else if (gl == GRAPHICS_DIRECTX) {
+	else if (gl == GraphicsLanguage::DirectX) {
 		stages[0].fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
 		stages[1].fileName = "../assets/shaders/post_processing/luminance.fxc";
 	}
@@ -64,7 +64,7 @@ void PostProcessAutoExposure::resizeBuffers(unsigned int w, unsigned h) {
 	}
 	stages[0].content = vfile.data();
 	stages[0].size = (uint32_t)vfile.size();
-	stages[0].type = SHADER_VERTEX;
+	stages[0].type = Grindstone::GraphicsAPI::ShaderStage::Vertex;
 
 	std::vector<char> ffile;
 	if (!readFile(stages[1].fileName, ffile)) {
@@ -72,13 +72,13 @@ void PostProcessAutoExposure::resizeBuffers(unsigned int w, unsigned h) {
 	}
 	stages[1].content = ffile.data();
 	stages[1].size = (uint32_t)ffile.size();
-	stages[1].type = SHADER_FRAGMENT;
+	stages[1].type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
 	auto vbd = engine.getPlaneVBD();
 	auto vad = engine.getPlaneVAD();
 
-	GraphicsPipelineCreateInfo luminanceGPCI;
-	luminanceGPCI.cullMode = CULL_BACK;
+	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo luminanceGPCI;
+	luminanceGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
 	luminanceGPCI.bindings = &vbd;
 	luminanceGPCI.bindingsCount = 1;
 	luminanceGPCI.attributes = &vad;
@@ -87,7 +87,7 @@ void PostProcessAutoExposure::resizeBuffers(unsigned int w, unsigned h) {
 	luminanceGPCI.height = (float)1024;
 	luminanceGPCI.scissorW = 1024;
 	luminanceGPCI.scissorH = 1024;
-	luminanceGPCI.primitiveType = PRIM_TRIANGLES;
+	luminanceGPCI.primitiveType = Grindstone::GraphicsAPI::GeometryType::Triangles;
 	luminanceGPCI.shaderStageCreateInfos = stages;
 	luminanceGPCI.shaderStageCreateInfoCount = 2;
 
@@ -99,11 +99,11 @@ void PostProcessAutoExposure::resizeBuffers(unsigned int w, unsigned h) {
 }
 
 void PostProcessAutoExposure::reloadGraphics(unsigned int w, unsigned h) {
-	TextureBindingLayoutCreateInfo tblci;
+	Grindstone::GraphicsAPI::TextureBindingLayoutCreateInfo tblci;
 	tblci.bindingLocation = 4;
 	tblci.bindings = tonemap_sub_binding_;
 	tblci.bindingCount = 1;
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	tonemap_tbl_ = engine.getGraphicsWrapper()->CreateTextureBindingLayout(tblci);
 	resizeBuffers(w, h);
 }
@@ -129,6 +129,7 @@ void PostProcessAutoExposure::destroyGraphics() {
 }
 
 void PostProcessAutoExposure::Process() {
+	GRIND_PROFILE_FUNC();
     gpipeline_->Bind();
 	lum_framebuffer_->BindWrite(false);
     source_->framebuffer->BindRead();

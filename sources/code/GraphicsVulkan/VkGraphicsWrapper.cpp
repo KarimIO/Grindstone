@@ -1,4 +1,4 @@
-#include "VkGraphicsWrapper.h"
+#include "vkGraphicsWrapper.hpp"
 #include <iostream>
 #include <array>
 #include <assert.h>
@@ -22,13 +22,13 @@ void DestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT
 	}
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL VkGraphicsWrapper::debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj, size_t location, int32_t code, const char * layerPrefix, const char * msg, void * userData) {
+VKAPI_ATTR VkBool32 VKAPI_CALL VulkanGraphicsWrapper::debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj, size_t location, int32_t code, const char * layerPrefix, const char * msg, void * userData) {
 	std::cerr << "VULKAN VALIDATION: " << msg << std::endl;
 
 	return VK_FALSE;
 }
 
-void VkGraphicsWrapper::SetupDebugCallback() {
+void VulkanGraphicsWrapper::SetupDebugCallback() {
 	VkDebugReportCallbackCreateInfoEXT createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
 	createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
@@ -39,12 +39,12 @@ void VkGraphicsWrapper::SetupDebugCallback() {
 	}
 }
 
-void VkGraphicsWrapper::Clear() {
-	std::cout << "Clear is not used in VkGraphicsWrapper\n";
+void VulkanGraphicsWrapper::Clear() {
+	std::cout << "Clear is not used in vkGraphicsWrapper\n";
 	assert(true);
 }
 
-VkGraphicsWrapper::VkGraphicsWrapper(InstanceCreateInfo createInfo) {
+VulkanGraphicsWrapper::VulkanGraphicsWrapper(InstanceCreateInfo createInfo) {
 	debug = createInfo.debug;
 	width = createInfo.width;
 	height = createInfo.height;
@@ -86,7 +86,7 @@ VkGraphicsWrapper::VkGraphicsWrapper(InstanceCreateInfo createInfo) {
 	std::cout << "Vulkan is Initialized\n";
 }
 
-void VkGraphicsWrapper::CreateDefaultDescriptorPool() {
+void VulkanGraphicsWrapper::CreateDefaultDescriptorPool() {
 	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	poolSizes[0].descriptorCount = 1;
@@ -104,7 +104,7 @@ void VkGraphicsWrapper::CreateDefaultDescriptorPool() {
 	}
 }
 
-void VkGraphicsWrapper::CreateDefaultStructures() {
+void VulkanGraphicsWrapper::CreateDefaultStructures() {
 	CreateDefaultCommandPool();
 	CreateDefaultDescriptorPool();
 
@@ -119,7 +119,7 @@ void VkGraphicsWrapper::CreateDefaultStructures() {
 }
 
 
-void VkGraphicsWrapper::CreateDefaultFramebuffers(DefaultFramebufferCreateInfo createInfo, Framebuffer **&framebuffers, uint32_t &framebufferCount) {
+void VulkanGraphicsWrapper::CreateDefaultFramebuffers(DefaultFramebufferCreateInfo createInfo, Framebuffer **&framebuffers, uint32_t &framebufferCount) {
 	std::vector<VkImage> images;
 	std::vector<VkImageView> imageViews;
 
@@ -131,20 +131,20 @@ void VkGraphicsWrapper::CreateDefaultFramebuffers(DefaultFramebufferCreateInfo c
 	framebuffers = new Framebuffer *[imageCount];
 
 	for (size_t i = 0; i < imageCount; i++) {
-		framebuffers[i] = new vkFramebuffer(&device, &physicalDevice, images[i], swapChainImageFormat, createInfo);
+		framebuffers[i] = new VulkanFramebuffer(&device, &physicalDevice, images[i], swapChainImageFormat, createInfo);
 	}
 
 	framebufferCount = imageCount;
 }
 
-uint32_t VkGraphicsWrapper::GetImageIndex() {
+uint32_t VulkanGraphicsWrapper::GetImageIndex() {
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 	
 	return imageIndex;
 }
 
-void VkGraphicsWrapper::CreateDefaultCommandPool() {
+void VulkanGraphicsWrapper::CreateDefaultCommandPool() {
 	VkCommandPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.queueFamilyIndex = indices.graphics;
@@ -155,63 +155,63 @@ void VkGraphicsWrapper::CreateDefaultCommandPool() {
 	}
 }
 
-CommandBuffer *VkGraphicsWrapper::CreateCommandBuffer(CommandBufferCreateInfo ci) {
+CommandBuffer *VulkanGraphicsWrapper::CreateCommandBuffer(CommandBufferCreateInfo ci) {
 	return dynamic_cast<CommandBuffer *>(new vkCommandBuffer(&device, &commandPool, ci));
 }
 
-VertexArrayObject * VkGraphicsWrapper::CreateVertexArrayObject(VertexArrayObjectCreateInfo ci) {
+VertexArrayObject * VulkanGraphicsWrapper::CreateVertexArrayObject(VertexArrayObjectCreateInfo ci) {
 	return nullptr;
 }
 
-VertexBuffer *VkGraphicsWrapper::CreateVertexBuffer(VertexBufferCreateInfo ci) {
-	return dynamic_cast<VertexBuffer *>(new vkVertexBuffer(this, &device, &physicalDevice, ci));
+VertexBuffer *VulkanGraphicsWrapper::CreateVertexBuffer(VertexBufferCreateInfo ci) {
+	return dynamic_cast<VertexBuffer *>(new VulkanVertexBuffer(this, &device, &physicalDevice, ci));
 }
 
-IndexBuffer *VkGraphicsWrapper::CreateIndexBuffer(IndexBufferCreateInfo ci) {
-	return dynamic_cast<IndexBuffer *>(new vkIndexBuffer(this, &device, &physicalDevice, ci));
+IndexBuffer *VulkanGraphicsWrapper::CreateIndexBuffer(IndexBufferCreateInfo ci) {
+	return dynamic_cast<IndexBuffer *>(new VulkanIndexBuffer(this, &device, &physicalDevice, ci));
 }
 
-UniformBuffer * VkGraphicsWrapper::CreateUniformBuffer(UniformBufferCreateInfo ci) {
-	return dynamic_cast<UniformBuffer *>(new vkUniformBuffer(&device, &physicalDevice, &descriptorPool, ci));
+UniformBuffer * VulkanGraphicsWrapper::CreateUniformBuffer(UniformBufferCreateInfo ci) {
+	return dynamic_cast<UniformBuffer *>(new VulkanUniformBuffer(&device, &physicalDevice, &descriptorPool, ci));
 }
 
-UniformBufferBinding *VkGraphicsWrapper::CreateUniformBufferBinding(UniformBufferBindingCreateInfo ci) {
-	return static_cast<UniformBufferBinding *>(new vkUniformBufferBinding(&device, ci));
+UniformBufferBinding *VulkanGraphicsWrapper::CreateUniformBufferBinding(UniformBufferBindingCreateInfo ci) {
+	return static_cast<UniformBufferBinding *>(new VulkanUniformBufferBinding(&device, ci));
 }
 
-Texture * VkGraphicsWrapper::CreateTexture(TextureCreateInfo createInfo) {
-	return dynamic_cast<Texture *>(new vkTexture(&device, &physicalDevice, &commandPool, &descriptorPool, &graphicsQueue, createInfo));
+Texture * VulkanGraphicsWrapper::CreateTexture(TextureCreateInfo createInfo) {
+	return dynamic_cast<Texture *>(new VulkanTexture(&device, &physicalDevice, &commandPool, &descriptorPool, &graphicsQueue, createInfo));
 }
 
-TextureBinding * VkGraphicsWrapper::CreateTextureBinding(TextureBindingCreateInfo createInfo) {
-	return dynamic_cast<TextureBinding *>(new vkTextureBinding(&device, &descriptorPool, createInfo));
+TextureBinding * VulkanGraphicsWrapper::CreateTextureBinding(TextureBindingCreateInfo createInfo) {
+	return dynamic_cast<TextureBinding *>(new VulkanTextureBinding(&device, &descriptorPool, createInfo));
 }
 
-bool VkGraphicsWrapper::SupportsCommandBuffers() {
+bool VulkanGraphicsWrapper::SupportsCommandBuffers() {
 	return true;
 }
 
-bool VkGraphicsWrapper::SupportsTesselation() {
+bool VulkanGraphicsWrapper::SupportsTesselation() {
 	return deviceFeatures.tessellationShader;
 }
 
-bool VkGraphicsWrapper::SupportsGeometryShader() {
+bool VulkanGraphicsWrapper::SupportsGeometryShader() {
 	return deviceFeatures.geometryShader;
 }
 
-bool VkGraphicsWrapper::SupportsComputeShader() {
+bool VulkanGraphicsWrapper::SupportsComputeShader() {
 	return true;
 }
 
-bool VkGraphicsWrapper::SupportsMultiDrawIndirect() {
+bool VulkanGraphicsWrapper::SupportsMultiDrawIndirect() {
 	return deviceFeatures.multiDrawIndirect;
 }
 
-void VkGraphicsWrapper::WaitUntilIdle() {
+void VulkanGraphicsWrapper::WaitUntilIdle() {
 	vkDeviceWaitIdle(device);
 }
 
-void VkGraphicsWrapper::DrawCommandBuffers(uint32_t imageIndex, CommandBuffer ** commandBuffers, uint32_t commandBufferCount) {
+void VulkanGraphicsWrapper::DrawCommandBuffers(uint32_t imageIndex, CommandBuffer ** commandBuffers, uint32_t commandBufferCount) {
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -225,7 +225,7 @@ void VkGraphicsWrapper::DrawCommandBuffers(uint32_t imageIndex, CommandBuffer **
 	std::vector<VkCommandBuffer> cbuffers;
 	cbuffers.reserve(commandBufferCount);
 	for (size_t i = 0; i < commandBufferCount; i++) {
-		cbuffers.push_back(*static_cast<vkCommandBuffer *>(commandBuffers[i])->GetCommandBuffer(imageIndex));
+		cbuffers.push_back(*static_cast<VulkanCommandBuffer *>(commandBuffers[i])->GetCommandBuffer(imageIndex));
 	}
 	submitInfo.commandBufferCount = cbuffers.size();
 	submitInfo.pCommandBuffers = cbuffers.data();
@@ -255,51 +255,51 @@ void VkGraphicsWrapper::DrawCommandBuffers(uint32_t imageIndex, CommandBuffer **
 	vkQueueWaitIdle(presentQueue);
 }
 
-void VkGraphicsWrapper::BindTextureBinding(TextureBinding *) {
-	std::cout << "BindTextureBinding is not used in VkGraphicsWrapper\n";
+void VulkanGraphicsWrapper::BindTextureBinding(TextureBinding *) {
+	std::cout << "BindTextureBinding is not used in VulkanGraphicsWrapper\n";
 	assert(true);
 }
 
-void VkGraphicsWrapper::BindVertexArrayObject(VertexArrayObject *) {
-	std::cout << "BindVertexArrayObject is not used in VkGraphicsWrapper\n";
+void VulkanGraphicsWrapper::BindVertexArrayObject(VertexArrayObject *) {
+	std::cout << "BindVertexArrayObject is not used in VulkanGraphicsWrapper\n";
 	assert(true);
 }
 
-void VkGraphicsWrapper::DrawImmediateIndexed(bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
-	std::cout << "DrawImmediateIndexed is not used in VkGraphicsWrapper\n";
+void VulkanGraphicsWrapper::DrawImmediateIndexed(bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
+	std::cout << "DrawImmediateIndexed is not used in VulkanGraphicsWrapper\n";
 	assert(true);
 }
 
-void VkGraphicsWrapper::DrawImmediateVertices(uint32_t base, uint32_t count)
+void VulkanGraphicsWrapper::DrawImmediateVertices(uint32_t base, uint32_t count)
 {
 }
 
-void VkGraphicsWrapper::SetImmediateBlending(bool)
+void VulkanGraphicsWrapper::SetImmediateBlending(bool)
 {
 }
 
-ColorFormat VkGraphicsWrapper::GetDeviceColorFormat() {
+ColorFormat VulkanGraphicsWrapper::GetDeviceColorFormat() {
 	switch (swapChainImageFormat) {
 	case VK_FORMAT_R8_UNORM:
-		return FORMAT_COLOR_R8;
+		return ColorFormat::R8;
 	case VK_FORMAT_R8G8_UNORM:
-		return FORMAT_COLOR_R8G8;
+		return ColorFormat::R8G8;
 	case VK_FORMAT_B8G8R8_UINT:
-		return FORMAT_COLOR_R8G8B8;
+		return ColorFormat::R8G8B8;
 	case VK_FORMAT_R8G8B8A8_UNORM:
-		return FORMAT_COLOR_R8G8B8A8;
+		return ColorFormat::R8G8B8A8;
 	default:
 		std::cout << "GetDeviceColorFormat returned incorrect color: " << swapChainImageFormat << "\n";
-		return FORMAT_COLOR_R8G8B8A8;
+		return ColorFormat::R8G8B8A8;
 	}
 }
 
-void VkGraphicsWrapper::SwapBuffer() {
-	std::cout << "SwapBuffer is not used in VkGraphicsWrapper\n";
+void VulkanGraphicsWrapper::SwapBuffer() {
+	std::cout << "SwapBuffer is not used in VulkanGraphicsWrapper\n";
 	assert(true);
 }
 
-void VkGraphicsWrapper::Cleanup() {
+void VulkanGraphicsWrapper::Cleanup() {
 	vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
 	vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
 
@@ -315,65 +315,65 @@ void VkGraphicsWrapper::Cleanup() {
 	vkDestroyInstance(instance, nullptr);
 }
 
-void VkGraphicsWrapper::DeleteFramebuffer(Framebuffer *ptr) {
-	delete (vkFramebuffer *)ptr;
+void VulkanGraphicsWrapper::DeleteFramebuffer(Framebuffer *ptr) {
+	delete (VulkanFramebuffer *)ptr;
 }
 
-void VkGraphicsWrapper::DeleteVertexBuffer(VertexBuffer *ptr) {
-	delete (vkVertexBuffer *)ptr;
+void VulkanGraphicsWrapper::DeleteVertexBuffer(VertexBuffer *ptr) {
+	delete (VulkanVertexBuffer *)ptr;
 }
 
-void VkGraphicsWrapper::DeleteIndexBuffer(IndexBuffer *ptr) {
-	delete (vkIndexBuffer *)ptr;
+void VulkanGraphicsWrapper::DeleteIndexBuffer(IndexBuffer *ptr) {
+	delete (VulkanIndexBuffer *)ptr;
 }
 
-void VkGraphicsWrapper::DeleteUniformBuffer(UniformBuffer *ptr) {
-	delete (vkUniformBuffer *)ptr;
+void VulkanGraphicsWrapper::DeleteUniformBuffer(UniformBuffer *ptr) {
+	delete (VulkanUniformBuffer *)ptr;
 }
 
-void VkGraphicsWrapper::DeleteUniformBufferBinding(UniformBufferBinding * ptr) {
+void VulkanGraphicsWrapper::DeleteUniformBufferBinding(UniformBufferBinding * ptr) {
 }
 
-void VkGraphicsWrapper::DeleteGraphicsPipeline(GraphicsPipeline *ptr) {
-	delete (vkGraphicsPipeline *)ptr;
+void VulkanGraphicsWrapper::DeleteGraphicsPipeline(GraphicsPipeline *ptr) {
+	delete (VulkanGraphicsPipeline *)ptr;
 }
 
-void VkGraphicsWrapper::DeleteRenderPass(RenderPass *ptr) {
-	delete (vkRenderPass *)ptr;
+void VulkanGraphicsWrapper::DeleteRenderPass(RenderPass *ptr) {
+	delete (VulkanRenderPass *)ptr;
 }
 
-void VkGraphicsWrapper::DeleteTexture(Texture * ptr) {
-	delete (vkTexture *)ptr;
+void VulkanGraphicsWrapper::DeleteTexture(Texture * ptr) {
+	delete (VulkanTexture *)ptr;
 }
 
-void VkGraphicsWrapper::DeleteCommandBuffer(CommandBuffer *ptr) {
-	delete (vkCommandBuffer *)ptr;
+void VulkanGraphicsWrapper::DeleteCommandBuffer(CommandBuffer *ptr) {
+	delete (VulkanCommandBuffer *)ptr;
 }
 
-void VkGraphicsWrapper::DeleteVertexArrayObject(VertexArrayObject * ptr) {
+void VulkanGraphicsWrapper::DeleteVertexArrayObject(VertexArrayObject * ptr) {
 }
 
-Texture * VkGraphicsWrapper::CreateCubemap(CubemapCreateInfo createInfo) {
-	return new vkTexture(&device, &physicalDevice, &commandPool, &descriptorPool, &graphicsQueue, createInfo);
+Texture * VulkanGraphicsWrapper::CreateCubemap(CubemapCreateInfo createInfo) {
+	return new VulkanTexture(&device, &physicalDevice, &commandPool, &descriptorPool, &graphicsQueue, createInfo);
 }
 
-TextureBindingLayout * VkGraphicsWrapper::CreateTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo) {
-	return new vkTextureBindingLayout(&device, createInfo);
+TextureBindingLayout * VulkanGraphicsWrapper::CreateTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo) {
+	return new VulkanTextureBindingLayout(&device, createInfo);
 }
 
-Framebuffer * VkGraphicsWrapper::CreateFramebuffer(FramebufferCreateInfo ci) {
-	return new vkFramebuffer(&device, &physicalDevice, ci);
+Framebuffer * VulkanGraphicsWrapper::CreateFramebuffer(FramebufferCreateInfo ci) {
+	return new VulkanFramebuffer(&device, &physicalDevice, ci);
 }
 
-RenderPass *VkGraphicsWrapper::CreateRenderPass(RenderPassCreateInfo ci) {
-	return new vkRenderPass(&device, swapChainImageFormat, ci);
+RenderPass *VulkanGraphicsWrapper::CreateRenderPass(RenderPassCreateInfo ci) {
+	return new VulkanRenderPass(&device, swapChainImageFormat, ci);
 }
 
-GraphicsPipeline * VkGraphicsWrapper::CreateGraphicsPipeline(GraphicsPipelineCreateInfo ci) {
-	return new vkGraphicsPipeline(&device, ci);
+GraphicsPipeline * VulkanGraphicsWrapper::CreateGraphicsPipeline(GraphicsPipelineCreateInfo ci) {
+	return new VulkanGraphicsPipeline(&device, ci);
 }
 
-void VkGraphicsWrapper::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+void VulkanGraphicsWrapper::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
 
 	VkCommandBufferAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -407,7 +407,7 @@ void VkGraphicsWrapper::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDev
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
-bool VkGraphicsWrapper::CheckValidationLayerSupport() {
+bool VulkanGraphicsWrapper::CheckValidationLayerSupport() {
 	uint32_t layerCount;
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
@@ -432,7 +432,7 @@ bool VkGraphicsWrapper::CheckValidationLayerSupport() {
 	return true;
 }
 
-void VkGraphicsWrapper::InitializeVulkan() {
+void VulkanGraphicsWrapper::InitializeVulkan() {
 	if (debug && !CheckValidationLayerSupport()) {
 		throw std::runtime_error("VULKAN: Validation layers requested, but not available!");
 	}
@@ -477,7 +477,7 @@ void VkGraphicsWrapper::InitializeVulkan() {
 	vkInitializeHandleResult(vkCreateInstance(&createInfo, NULL, &instance));
 }
 
-bool VkGraphicsWrapper::vkInitializeHandleResult(VkResult result) {
+bool VulkanGraphicsWrapper::vkInitializeHandleResult(VkResult result) {
 	const char *message;
 	switch (result) {
 	case VK_SUCCESS:
@@ -520,7 +520,7 @@ bool QueueFamilies::isComplete() {
 
 
 GRAPHICS_EXPORT GraphicsWrapper* createGraphics(InstanceCreateInfo createInfo) {
-	return new VkGraphicsWrapper(createInfo);
+	return new VulkanGraphicsWrapper(createInfo);
 }
 
 GRAPHICS_EXPORT void deleteGraphics(void * ptr) {

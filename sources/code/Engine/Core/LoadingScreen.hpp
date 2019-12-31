@@ -18,11 +18,11 @@ private:
 	Texture *texture_;
 	GraphicsPipeline *pipeline_;
 	RenderPass *render_pass_;
-	VertexArrayObject *vao_;
-	VertexBuffer *vbo_;
+	Grindstone::GraphicsAPI::VertexArrayObject *vao_;
+	Grindstone::GraphicsAPI::VertexBuffer *vbo_;
 	TextureBinding *tb_;
 	TextureBindingLayout *tbl_;
-	UniformBufferBinding *ubb_;
+	Grindstone::GraphicsAPI::UniformBufferBinding *ubb_;
 	UniformBuffer *ubo_;
 };
 

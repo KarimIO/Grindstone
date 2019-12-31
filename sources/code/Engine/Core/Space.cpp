@@ -1,5 +1,5 @@
 #include "Space.hpp"
-#include "Utilities/Logger.hpp"
+
 #include "Utilities.hpp"
 #include <iostream>
 
@@ -19,15 +19,22 @@
 #include "Engine.hpp"
 #include "Editor.hpp"
 
+#include <glm/gtc/quaternion.hpp>
+
 void handleReflParams(reflect::TypeDescriptor_Struct::Category &refl, unsigned char * componentPtr, rapidjson::Value &params) {
 	for (auto &mem : refl.members) {
 		std::string n = mem.stored_name;
+
+		GRIND_WARN("\t{0}", n);
 
 		unsigned char *p = componentPtr + mem.offset;
 		
 		if (params.HasMember(n.c_str())) {
 			switch (mem.type->type)
 			{
+			default:
+				GRIND_WARN("Unsupported member type");
+				break;
 			case reflect::TypeDescriptor::ReflString:
 				(*(std::string *)p) = params[n.c_str()].GetString();
 				break;
@@ -71,6 +78,15 @@ void handleReflParams(reflect::TypeDescriptor_Struct::Category &refl, unsigned c
 				v.w = a[3].GetFloat();
 				break;
 			}
+			case reflect::TypeDescriptor::ReflQuat: {
+				auto a = params[n.c_str()].GetArray();
+				glm::quat &v = (*(glm::quat *)p);
+				v.x = a[0].GetFloat();
+				v.y = a[1].GetFloat();
+				v.z = a[2].GetFloat();
+				v.w = a[3].GetFloat();
+				break;
+			}
 			}
 		}
 	}
@@ -81,6 +97,9 @@ void handleReflParams(reflect::TypeDescriptor_Struct::Category &refl, unsigned c
 }
 
 void Space::setComponentParams(ComponentHandle handle, ComponentType component_type, rapidjson::Value &params) {
+	if (component_type == COMPONENT_COLLISION)
+		GRIND_WARN("TET");
+
 	reflect::TypeDescriptor_Struct *refl = engine.getSystem(component_type)->getReflection();
 	if (refl) {
 		Component *component = getSubsystem(component_type)->getBaseComponent(handle);
@@ -110,6 +129,7 @@ Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 		GameObjectHandle parent_handle = -1;
 		objects_.emplace_back(game_object_handle, game_object_itr->name.GetString(), parent_handle);
 		GameObject &game_object = objects_.back();
+		GRIND_WARN("NAME: {0}", game_object.getName());
 
 		auto &comps = game_object_itr->value;
 		for (rapidjson::Value::MemberIterator component_itr = comps.MemberBegin(); component_itr != comps.MemberEnd(); ++component_itr) {
@@ -119,6 +139,7 @@ Space::Space(std::string name, rapidjson::Value &val) : name_(name) {
 				loadPrefab(params, game_object);
 			}
 			else {
+				GRIND_WARN("COMP: {0}", type_str);
 				auto type = getComponentType(type_str);
 				if (type == COMPONENT_BASE) {
 					GRIND_WARN("Could not get component: {0}", type_str);

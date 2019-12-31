@@ -1,5 +1,4 @@
 #include "Scene.hpp"
-//#include "../Utilities/Logger.hpp"
 #include "Utilities.hpp"
 #include "Space.hpp"
 #include "Engine.hpp"
@@ -53,6 +52,7 @@ void Scene::reload() {
 }
 
 void Scene::loadLevel(std::string path) {
+	//GRIND_PROFILE_FUNC();
 	//LOG("Loading level: %s\n", path);
 
 	path_ = path;

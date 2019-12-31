@@ -6,7 +6,7 @@
 
 #include "Core/Utilities.hpp"
 #include "Core/Engine.hpp"
-#include "../Utilities/Logger.hpp"
+
 #include "../GraphicsCommon/VertexBuffer.hpp"
 #include "GraphicsWrapper.hpp"
 
@@ -41,66 +41,67 @@ void MeshStatic::draw() {
 			engine.getModelManager()->getModelUbo()->UpdateUniformBuffer(&transform.model_);
 
 			engine.getGraphicsWrapper()->BindVertexArrayObject(model->vertex_array_object);
-			engine.getGraphicsWrapper()->DrawImmediateIndexed(GEOMETRY_TRIANGLES, true, base_vertex, base_index, num_indices);
+			engine.getGraphicsWrapper()->DrawImmediateIndexed(Grindstone::GraphicsAPI::GeometryType::Triangles, true, base_vertex, base_index, num_indices);
 		//}
 	}
 }
 
-ModelManager::ModelManager(UniformBufferBinding *ubb) {
+ModelManager::ModelManager(Grindstone::GraphicsAPI::UniformBufferBinding *ubb) {
+	GRIND_PROFILE_FUNC();
 	geometry_info_.vbds_count = 1;
-	geometry_info_.vbds = new VertexBindingDescription();
+	geometry_info_.vbds = new Grindstone::GraphicsAPI::VertexBindingDescription();
 	geometry_info_.vbds->binding = 0;
 	geometry_info_.vbds->elementRate = false;
 	geometry_info_.vbds->stride = sizeof(Vertex);
 
 	geometry_info_.vads_count = 4;
-	geometry_info_.vads = new VertexAttributeDescription[4];
+	geometry_info_.vads = new Grindstone::GraphicsAPI::VertexAttributeDescription[4];
 	geometry_info_.vads[0].binding = 0;
 	geometry_info_.vads[0].location = 0;
-	geometry_info_.vads[0].format = VERTEX_R32_G32_B32;
+	geometry_info_.vads[0].format = Grindstone::GraphicsAPI::VertexFormat::R32_G32_B32;
 	geometry_info_.vads[0].size = 3;
 	geometry_info_.vads[0].name = "vertexPosition";
 	geometry_info_.vads[0].offset = offsetof(Vertex, positions);
-	geometry_info_.vads[0].usage = ATTRIB_POSITION;
+	geometry_info_.vads[0].usage = Grindstone::GraphicsAPI::AttributeUsage::Position;
 
 	geometry_info_.vads[1].binding = 0;
 	geometry_info_.vads[1].location = 1;
-	geometry_info_.vads[1].format = VERTEX_R32_G32_B32;
+	geometry_info_.vads[1].format = Grindstone::GraphicsAPI::VertexFormat::R32_G32_B32;
 	geometry_info_.vads[1].size = 3;
 	geometry_info_.vads[1].name = "vertexNormal";
 	geometry_info_.vads[1].offset = offsetof(Vertex, normal);
-	geometry_info_.vads[1].usage = ATTRIB_NORMAL;
+	geometry_info_.vads[1].usage = Grindstone::GraphicsAPI::AttributeUsage::Normal;
 
 	geometry_info_.vads[2].binding = 0;
 	geometry_info_.vads[2].location = 2;
-	geometry_info_.vads[2].format = VERTEX_R32_G32_B32;
+	geometry_info_.vads[2].format = Grindstone::GraphicsAPI::VertexFormat::R32_G32_B32;
 	geometry_info_.vads[2].size = 3;
 	geometry_info_.vads[2].name = "vertexTangent";
 	geometry_info_.vads[2].offset = offsetof(Vertex, tangent);
-	geometry_info_.vads[2].usage = ATTRIB_TANGENT;
+	geometry_info_.vads[2].usage = Grindstone::GraphicsAPI::AttributeUsage::Tangent;
 
 	geometry_info_.vads[3].binding = 0;
 	geometry_info_.vads[3].location = 3;
-	geometry_info_.vads[3].format = VERTEX_R32_G32;
+	geometry_info_.vads[3].format = Grindstone::GraphicsAPI::VertexFormat::R32_G32;
 	geometry_info_.vads[3].size = 2;
 	geometry_info_.vads[3].name = "vertexTexCoord";
 	geometry_info_.vads[3].offset = offsetof(Vertex, texCoord);
-	geometry_info_.vads[3].usage = ATTRIB_TEXCOORD0;
+	geometry_info_.vads[3].usage = Grindstone::GraphicsAPI::AttributeUsage::TexCoord0;
 
 	prepareGraphics();
 }
 
 void ModelManager::prepareGraphics() {
-	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+	Grindstone::GraphicsAPI::GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 
-	UniformBufferBindingCreateInfo ubbci2;
+	Grindstone::GraphicsAPI::UniformBufferBindingCreateInfo ubbci2;
 	ubbci2.binding = 1;
 	ubbci2.shaderLocation = "ModelMatrixBuffer";
 	ubbci2.size = 128; // sizeof(glm::mat4);
-	ubbci2.stages = SHADER_STAGE_VERTEX_BIT;
+	ubbci2.stages = Grindstone::GraphicsAPI::ShaderStageBit::Vertex;
 	model_ubb_ = graphics_wrapper->CreateUniformBufferBinding(ubbci2);
 
-	UniformBufferCreateInfo ubci2;
+	Grindstone::GraphicsAPI::UniformBufferCreateInfo ubci2;
 	ubci2.isDynamic = true;
 	ubci2.size = 128;
 	ubci2.binding = model_ubb_;
@@ -160,7 +161,7 @@ ModelStatic &ModelManager::getModel(ModelReference reference) {
 	return models_[reference];
 }
 
-UniformBuffer * ModelManager::getModelUbo() {
+Grindstone::GraphicsAPI::UniformBuffer * ModelManager::getModelUbo() {
 	return model_ubo_;
 }
 
@@ -178,7 +179,7 @@ void ModelManager::removeModelInstance(ModelReference model_ref, ComponentHandle
 		}
 
 		// Delete model data
-		GraphicsWrapper *gw = engine.getGraphicsWrapper();
+		Grindstone::GraphicsAPI::GraphicsWrapper *gw = engine.getGraphicsWrapper();
 		gw->DeleteVertexArrayObject(m.vertex_array_object);
 		gw->DeleteVertexBuffer(m.vertex_buffer);
 		gw->DeleteIndexBuffer(m.index_buffer);
@@ -190,7 +191,7 @@ void ModelManager::removeModelInstance(ModelReference model_ref, ComponentHandle
 }
 
 void ModelManager::destroyGraphics() {
-	GraphicsWrapper *gw = engine.getGraphicsWrapper();
+	Grindstone::GraphicsAPI::GraphicsWrapper *gw = engine.getGraphicsWrapper();
 
 
 	gw->DeleteUniformBuffer(model_ubo_);
@@ -211,7 +212,7 @@ void ModelManager::reloadGraphics() {
 }
 
 void ModelManager::destroyModel(ModelReference ref) {
-	GraphicsWrapper *gw = engine.getGraphicsWrapper();
+	Grindstone::GraphicsAPI::GraphicsWrapper *gw = engine.getGraphicsWrapper();
 
 	auto &m = models_[ref];
 	// delete m.bounding;
@@ -232,7 +233,7 @@ void ModelManager::destroyModel(ModelReference ref) {
 }
 
 bool ModelManager::loadModel(ModelStatic &model) {
-	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+	Grindstone::GraphicsAPI::GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	MaterialManager *material_system = engine.getMaterialManager();
 
 	std::string path = std::string("../assets/" + model.path_);
@@ -326,7 +327,7 @@ bool ModelManager::loadModel(ModelStatic &model) {
 
 	input.close();
 
-	VertexBufferCreateInfo vbci;
+	Grindstone::GraphicsAPI::VertexBufferCreateInfo vbci;
 	vbci.attribute = geometry_info_.vads;
 	vbci.attributeCount = (uint32_t)geometry_info_.vads_count;
 	vbci.binding = geometry_info_.vbds;
@@ -335,7 +336,7 @@ bool ModelManager::loadModel(ModelStatic &model) {
 	vbci.count = static_cast<uint32_t>(vertices.size());
 	vbci.size = static_cast<uint32_t>(sizeof(Vertex) * vertices.size());
 
-	/*VertexBufferCreateInfo svbci;
+	/*Grindstone::GraphicsAPI::VertexBufferCreateInfo svbci;
 	svbci.attribute = geometry_info_.vads;
 	svbci.attributeCount = (uint32_t)geometry_info_.vads_count;
 	svbci.binding = geometry_info_.vbds;
@@ -344,7 +345,7 @@ bool ModelManager::loadModel(ModelStatic &model) {
 	svbci.count = static_cast<uint32_t>(vertices.size());
 	svbci.size = static_cast<uint32_t>(sizeof(Vertex) * vertices.size());*/
 
-	IndexBufferCreateInfo ibci;
+	Grindstone::GraphicsAPI::IndexBufferCreateInfo ibci;
 	ibci.content = static_cast<const void *>(indices.data());
 	ibci.count = static_cast<uint32_t>(indices.size());
 	ibci.size = static_cast<uint32_t>(sizeof(uint32_t) * indices.size());
@@ -354,7 +355,7 @@ bool ModelManager::loadModel(ModelStatic &model) {
 		model.index_buffer = graphics_wrapper->CreateIndexBuffer(ibci);
 	}
 	else {
-		VertexArrayObjectCreateInfo vaci;
+		Grindstone::GraphicsAPI::VertexArrayObjectCreateInfo vaci;
 		vaci.vertexBuffer = model.vertex_buffer;
 		vaci.indexBuffer = model.index_buffer;
 		model.vertex_array_object = graphics_wrapper->CreateVertexArrayObject(vaci);
@@ -367,17 +368,17 @@ bool ModelManager::loadModel(ModelStatic &model) {
 		model.vertex_array_object->Unbind();
 
 
-		/*VertexArrayObjectCreateInfo vaci;
-		vaci.vertexBuffer = model.shadowVertexBuffer;
+		/*Grindstone::GraphicsAPI::VertexArrayObjectCreateInfo vaci;
+		vaci.vertexBuffer = model.shadowGrindstone::GraphicsAPI::VertexBuffer;
 		vaci.indexBuffer = model.indexBuffer;
-		model.shadowVertexArrayObject = graphics_wrapper_->CreateVertexArrayObject(vaci);
-		model.shadowVertexBuffer = graphics_wrapper_->CreateVertexBuffer(svbci);
+		model.shadowGrindstone::GraphicsAPI::VertexArrayObject = graphics_wrapper_->CreateVertexArrayObject(vaci);
+		model.shadowGrindstone::GraphicsAPI::VertexBuffer = graphics_wrapper_->CreateVertexBuffer(svbci);
 		model.indexBuffer = graphics_wrapper_->CreateIndexBuffer(ibci);
 
-		vaci.vertexBuffer = model.shadowVertexBuffer;
+		vaci.vertexBuffer = model.shadowGrindstone::GraphicsAPI::VertexBuffer;
 		vaci.indexBuffer = model.indexBuffer;
-		model.shadowVertexArrayObject->BindResources(vaci);
-		model.shadowVertexArrayObject->Unbind();*/
+		model.shadowGrindstone::GraphicsAPI::VertexArrayObject->BindResources(vaci);
+		model.shadowGrindstone::GraphicsAPI::VertexArrayObject->Unbind();*/
 
 	}
 
@@ -469,7 +470,7 @@ bool ModelManager::loadModel(ModelStatic &model) {
 	}
 
 	// Create Vertex Buffer
-	VertexBufferCreateInfo vbci;
+	Grindstone::GraphicsAPI::VertexBufferCreateInfo vbci;
 	vbci.attribute = geometry_info_.vads;
 	vbci.attributeCount = (uint32_t)geometry_info_.vads_count;
 	vbci.binding = geometry_info_.vbds;
@@ -485,7 +486,7 @@ bool ModelManager::loadModel(ModelStatic &model) {
 	ibci.size = static_cast<uint32_t>(sizeof(uint32_t) * indices.size());
 
 	// Create Vertex Array Object / CommandBuffer
-	VertexArrayObjectCreateInfo vaci;
+	Grindstone::GraphicsAPI::VertexArrayObjectCreateInfo vaci;
 	vaci.vertexBuffer = model.vertex_buffer;
 	vaci.indexBuffer = model.index_buffer;
 	model.vertex_array_object = engine.getGraphicsWrapper()->CreateVertexArrayObject(vaci);

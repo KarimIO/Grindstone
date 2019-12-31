@@ -24,17 +24,17 @@ private:
     //RenderTargetContainer *source_;
     RenderTargetContainer *target_;
 
-	TextureBindingLayout  *env_map_;
-	TextureSubBinding subbinding_;
+	Grindstone::GraphicsAPI::TextureBindingLayout  *env_map_;
+	Grindstone::GraphicsAPI::TextureSubBinding subbinding_;
 
-    GraphicsPipeline *gpipeline_;
+	Grindstone::GraphicsAPI::GraphicsPipeline *gpipeline_;
 private:
 	RenderTargetContainer *source_;
 
-	GraphicsPipeline *pipeline_;
+	Grindstone::GraphicsAPI::GraphicsPipeline *pipeline_;
 
-	Texture *ssao_noise_;
-	TextureBinding *ssao_noise_binding_;
+	Grindstone::GraphicsAPI::Texture *ssao_noise_;
+	Grindstone::GraphicsAPI::TextureBinding *ssao_noise_binding_;
 
 	struct SSAOBufferObject {
 		float kernel[32 * 4];
@@ -42,12 +42,12 @@ private:
 		float bias;
 	} ssao_buffer;
 
-	UniformBuffer *ssao_ub;
+	Grindstone::GraphicsAPI::UniformBuffer *ssao_ub;
 
-	TextureSubBinding ssao_output_;
-	RenderTarget *ssao_buffer_;
-	Framebuffer *ssao_fbo_;
-	TextureBindingLayout *ssao_layout_;
+	Grindstone::GraphicsAPI::TextureSubBinding ssao_output_;
+	Grindstone::GraphicsAPI::RenderTarget *ssao_buffer_;
+	Grindstone::GraphicsAPI::Framebuffer *ssao_fbo_;
+	Grindstone::GraphicsAPI::TextureBindingLayout *ssao_layout_;
 
 	unsigned int viewport_w_;
 	unsigned int viewport_h_;

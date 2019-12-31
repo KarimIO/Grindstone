@@ -1,11 +1,11 @@
 #ifndef _GRAPHICS_LANGUAGE_H
 #define _GRAPHICS_LANGUAGE_H
 
-enum GraphicsLanguage {
-	GRAPHICS_OPENGL = 0,
-	GRAPHICS_VULKAN,
-	GRAPHICS_DIRECTX,
-	GRAPHICS_METAL
+enum class GraphicsLanguage {
+	OpenGL = 0,
+	Vulkan,
+	DirectX,
+	Metal
 };
 
 #endif

@@ -26,11 +26,11 @@ glm::mat4 bias_matrix(
 );
 
 void RenderPathDeferred::createShadowTextureBindingLayout() {
-	TextureBindingLayoutCreateInfo tblci;
+	Grindstone::GraphicsAPI::TextureBindingLayoutCreateInfo tblci;
 	tblci.bindingLocation = 4;
 	tblci.bindings = &shadow_binding_;
 	tblci.bindingCount = (uint32_t)1;
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	shadow_tbl_ = engine.getGraphicsWrapper()->CreateTextureBindingLayout(tblci);
 }
 
@@ -38,9 +38,9 @@ RenderPathDeferred::RenderPathDeferred(unsigned int w = engine.getSettings()->re
 	auto settings = engine.getSettings();
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
-	shadow_binding_ = TextureSubBinding("shadow_map", 4);
+	shadow_binding_ = Grindstone::GraphicsAPI::TextureSubBinding("shadow_map", 4);
 
-	createFramebuffer(w, h);
+	CreateFramebuffer(w, h);
 	createShadowTextureBindingLayout();
 	createPointLightShader();
 	createSpotLightShader();
@@ -62,7 +62,7 @@ RenderPathDeferred::RenderPathDeferred(unsigned int w = engine.getSettings()->re
 	tblci.bindingLocation = 1;
 	tblci.bindings = cubemapBindings.data();
 	tblci.bindingCount = (uint32_t)cubemapBindings.size();
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	TextureBindingLayout *cubemapLayout = graphics_wrapper_->CreateTextureBindingLayout(tblci);
 
 	SingleTextureBind stb;
@@ -75,13 +75,13 @@ RenderPathDeferred::RenderPathDeferred(unsigned int w = engine.getSettings()->re
 	ci.textureCount = 1;
 	m_cubemapBinding = m_graphics_wrapper_->CreateTextureBinding(ci);
 
-	ShaderStageCreateInfo vi;
-	ShaderStageCreateInfo fi;
-	if (engine.settings->graphicsLanguage == GRAPHICS_OPENGL) {
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo vi;
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo fi;
+	if (engine.settings->graphicsLanguage == GraphicsLanguage::OpenGL) {
 		vi.fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		fi.fileName = "../assets/shaders/lights_deferred/ibl.glsl";
 	}
-	else if (engine.settings->graphicsLanguage == GRAPHICS_DIRECTX) {
+	else if (engine.settings->graphicsLanguage == GraphicsLanguage::DirectX) {
 		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
 		fi.fileName = "../assets/shaders/lights_deferred/ibl.fxc";
 	}
@@ -94,19 +94,19 @@ RenderPathDeferred::RenderPathDeferred(unsigned int w = engine.getSettings()->re
 		return;
 	vi.content = vfile.data();
 	vi.size = (uint32_t)vfile.size();
-	vi.type = SHADER_VERTEX;
+	vi.type = Grindstone::GraphicsAPI::ShaderStage::Vertex;
 
 	std::vector<char> ffile;
 	if (!readFile(fi.fileName, ffile))
 		return;
 	fi.content = ffile.data();
 	fi.size = (uint32_t)ffile.size();
-	fi.type = SHADER_FRAGMENT;
+	fi.type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
-	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
+	std::vector<Grindstone::GraphicsAPI::ShaderStageCreateInfo> stages = { vi, fi };
 
 	GraphicsPipelineCreateInfo iblGPCI;
-	iblGPCI.cullMode = CULL_BACK;
+	iblGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
 	iblGPCI.bindings = &engine.planeVBD;
 	iblGPCI.bindingsCount = 1;
 	iblGPCI.attributes = &engine.planeVAD;
@@ -115,7 +115,7 @@ RenderPathDeferred::RenderPathDeferred(unsigned int w = engine.getSettings()->re
 	iblGPCI.height = (float)engine.settings->resolution_y_;
 	iblGPCI.scissorW = engine.settings->resolution_x_;
 	iblGPCI.scissorH = engine.settings->resolution_y_;
-	iblGPCI.primitiveType = PRIM_TRIANGLES;
+	iblGPCI.primitiveType = Grindstone::GraphicsAPI::GeometryType::Triangles;
 	iblGPCI.shaderStageCreateInfos = stages.data();
 	iblGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
 	std::vector<TextureBindingLayout *> tbls = { engine.tbl, cubemapLayout };
@@ -129,7 +129,7 @@ RenderPathDeferred::RenderPathDeferred(unsigned int w = engine.getSettings()->re
 
 void RenderPathDeferred::recreateFramebuffer(unsigned int w, unsigned int h) {
 	destroyFramebuffers();
-	createFramebuffer(w, h);
+	CreateFramebuffer(w, h);
 }
 
 void RenderPathDeferred::destroyFramebuffers() {
@@ -236,26 +236,26 @@ unsigned int RenderPathDeferred::getDebugMode() {
 void RenderPathDeferred::createDebugShader() {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
-	UniformBufferBindingCreateInfo ubbci;
+	Grindstone::GraphicsAPI::UniformBufferBindingCreateInfo ubbci;
 	ubbci.binding = 1;
 	ubbci.shaderLocation = "Debug";
 	ubbci.size = sizeof(debug_mode_);
-	ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	ubbci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	debug_ubb_ = engine.getGraphicsWrapper()->CreateUniformBufferBinding(ubbci);
 
-	UniformBufferCreateInfo uboci;
+	Grindstone::GraphicsAPI::UniformBufferCreateInfo uboci;
 	uboci.isDynamic = false;
 	uboci.size = sizeof(debug_mode_);
 	uboci.binding = debug_ubb_;
 	debug_ubo_handler_ = graphics_wrapper->CreateUniformBuffer(uboci);
 
-	ShaderStageCreateInfo vi;
-	ShaderStageCreateInfo fi;
-	if (engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL) {
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo vi;
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo fi;
+	if (engine.getSettings()->graphics_language_ == GraphicsLanguage::OpenGL) {
 		vi.fileName = "../assets/shaders/lights_deferred/pointVert.glsl";
 		fi.fileName = "../assets/shaders/debug/debug.glsl";
 	}
-	else if (engine.getSettings()->graphics_language_ == GRAPHICS_DIRECTX) {
+	else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX) {
 		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
 		fi.fileName = "../assets/shaders/debug/debug.fxc";
 	}
@@ -268,22 +268,22 @@ void RenderPathDeferred::createDebugShader() {
 		return;
 	vi.content = vfile.data();
 	vi.size = (uint32_t)vfile.size();
-	vi.type = SHADER_VERTEX;
+	vi.type = Grindstone::GraphicsAPI::ShaderStage::Vertex;
 
 	std::vector<char> ffile;
 	if (!readFile(fi.fileName, ffile))
 		return;
 	fi.content = ffile.data();
 	fi.size = (uint32_t)ffile.size();
-	fi.type = SHADER_FRAGMENT;
+	fi.type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
-	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
+	std::vector<Grindstone::GraphicsAPI::ShaderStageCreateInfo> stages = { vi, fi };
 
 	auto vbd = engine.getPlaneVBD();
 	auto vad = engine.getPlaneVAD();
 
-	GraphicsPipelineCreateInfo gpci;
-	gpci.cullMode = CULL_BACK;
+	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo gpci;
+	gpci.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
 	gpci.bindings = &vbd;
 	gpci.bindingsCount = 1;
 	gpci.attributes = &vad;
@@ -292,13 +292,13 @@ void RenderPathDeferred::createDebugShader() {
 	gpci.height = (float)engine.getSettings()->resolution_y_;
 	gpci.scissorW = engine.getSettings()->resolution_x_;
 	gpci.scissorH = engine.getSettings()->resolution_y_;
-	gpci.primitiveType = PRIM_TRIANGLE_STRIPS;
+	gpci.primitiveType = Grindstone::GraphicsAPI::GeometryType::TriangleStrips;
 	gpci.shaderStageCreateInfos = stages.data();
 	gpci.shaderStageCreateInfoCount = (uint32_t)stages.size();
-	std::vector<TextureBindingLayout *> tbls_ = { engine.gbuffer_tbl_ };
+	std::vector<Grindstone::GraphicsAPI::TextureBindingLayout *> tbls_ = { engine.gbuffer_tbl_ };
 	gpci.textureBindings = tbls_.data();
 	gpci.textureBindingCount = (uint32_t)tbls_.size();
-	std::vector<UniformBufferBinding *> ubbs = { engine.deff_ubb_, debug_ubb_ };
+	std::vector<Grindstone::GraphicsAPI::UniformBufferBinding *> ubbs = { engine.deff_ubb_, debug_ubb_ };
 	gpci.uniformBufferBindings = ubbs.data();
 	gpci.uniformBufferBindingCount = (uint32_t)ubbs.size();
 	debug_pipeline_ = engine.getGraphicsWrapper()->CreateGraphicsPipeline(gpci);
@@ -307,26 +307,26 @@ void RenderPathDeferred::createDebugShader() {
 void RenderPathDeferred::createPointLightShader() {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
-	UniformBufferBindingCreateInfo light_ubbci;
+	Grindstone::GraphicsAPI::UniformBufferBindingCreateInfo light_ubbci;
 	light_ubbci.binding = 1;
 	light_ubbci.shaderLocation = "Light";
 	light_ubbci.size = sizeof(LightPointUBO);
-	light_ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	light_ubbci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	point_light_ubb_ = engine.getGraphicsWrapper()->CreateUniformBufferBinding(light_ubbci);
 
-	UniformBufferCreateInfo lightuboci;
+	Grindstone::GraphicsAPI::UniformBufferCreateInfo lightuboci;
 	lightuboci.isDynamic = false;
 	lightuboci.size = sizeof(LightPointUBO);
 	lightuboci.binding = point_light_ubb_;
 	point_light_ubo_handler_ = graphics_wrapper->CreateUniformBuffer(lightuboci);
 
-	ShaderStageCreateInfo vi;
-	ShaderStageCreateInfo fi;
-	if (engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL) {
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo vi;
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo fi;
+	if (engine.getSettings()->graphics_language_ == GraphicsLanguage::OpenGL) {
 		vi.fileName = "../assets/shaders/lights_deferred/pointVert.glsl";
 		fi.fileName = "../assets/shaders/lights_deferred/pointFrag.glsl";
 	}
-	else if (engine.getSettings()->graphics_language_ == GRAPHICS_DIRECTX) {
+	else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX) {
 		vi.fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
 		fi.fileName = "../assets/shaders/lights_deferred/pointFrag.fxc";
 	}
@@ -339,22 +339,22 @@ void RenderPathDeferred::createPointLightShader() {
 		return;
 	vi.content = vfile.data();
 	vi.size = (uint32_t)vfile.size();
-	vi.type = SHADER_VERTEX;
+	vi.type = Grindstone::GraphicsAPI::ShaderStage::Vertex;
 
 	std::vector<char> ffile;
 	if (!readFile(fi.fileName, ffile))
 		return;
 	fi.content = ffile.data();
 	fi.size = (uint32_t)ffile.size();
-	fi.type = SHADER_FRAGMENT;
+	fi.type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
-	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
+	std::vector<Grindstone::GraphicsAPI::ShaderStageCreateInfo> stages = { vi, fi };
 
 	auto vbd = engine.getPlaneVBD();
 	auto vad = engine.getPlaneVAD();
 
-	GraphicsPipelineCreateInfo pointGPCI;
-	pointGPCI.cullMode = CULL_BACK;
+	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo pointGPCI;
+	pointGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
 	pointGPCI.bindings = &vbd;
 	pointGPCI.bindingsCount = 1;
 	pointGPCI.attributes = &vad;
@@ -363,13 +363,13 @@ void RenderPathDeferred::createPointLightShader() {
 	pointGPCI.height = (float)engine.getSettings()->resolution_y_;
 	pointGPCI.scissorW = engine.getSettings()->resolution_x_;
 	pointGPCI.scissorH = engine.getSettings()->resolution_y_;
-	pointGPCI.primitiveType = PRIM_TRIANGLE_STRIPS;
+	pointGPCI.primitiveType = Grindstone::GraphicsAPI::GeometryType::TriangleStrips;
 	pointGPCI.shaderStageCreateInfos = stages.data();
 	pointGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
-	std::vector<TextureBindingLayout *> tbls_ = { engine.gbuffer_tbl_, shadow_tbl_ };
+	std::vector<Grindstone::GraphicsAPI::TextureBindingLayout *> tbls_ = { engine.gbuffer_tbl_, shadow_tbl_ };
 	pointGPCI.textureBindings = tbls_.data();
 	pointGPCI.textureBindingCount = (uint32_t)tbls_.size();
-	std::vector<UniformBufferBinding *> ubbs = { engine.deff_ubb_, point_light_ubb_ };
+	std::vector<Grindstone::GraphicsAPI::UniformBufferBinding *> ubbs = { engine.deff_ubb_, point_light_ubb_ };
 	pointGPCI.uniformBufferBindings = ubbs.data();
 	pointGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
 	point_light_pipeline_ = engine.getGraphicsWrapper()->CreateGraphicsPipeline(pointGPCI);
@@ -378,26 +378,26 @@ void RenderPathDeferred::createPointLightShader() {
 void RenderPathDeferred::createSpotLightShader() {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
-	UniformBufferBindingCreateInfo light_ubbci;
+	Grindstone::GraphicsAPI::UniformBufferBindingCreateInfo light_ubbci;
 	light_ubbci.binding = 1;
 	light_ubbci.shaderLocation = "Light";
 	light_ubbci.size = sizeof(LightSpotUBO);
-	light_ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	light_ubbci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	spot_light_ubb_ = engine.getGraphicsWrapper()->CreateUniformBufferBinding(light_ubbci);
 
-	UniformBufferCreateInfo lightuboci;
+	Grindstone::GraphicsAPI::UniformBufferCreateInfo lightuboci;
 	lightuboci.isDynamic = false;
 	lightuboci.size = sizeof(LightSpotUBO);
 	lightuboci.binding = spot_light_ubb_;
 	spot_light_ubo_handler_ = graphics_wrapper->CreateUniformBuffer(lightuboci);
 
-	ShaderStageCreateInfo vi;
-	ShaderStageCreateInfo fi;
-	if (engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL) {
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo vi;
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo fi;
+	if (engine.getSettings()->graphics_language_ == GraphicsLanguage::OpenGL) {
 		vi.fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		fi.fileName = "../assets/shaders/lights_deferred/spotFrag.glsl";
 	}
-	else if (engine.getSettings()->graphics_language_ == GRAPHICS_DIRECTX) {
+	else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX) {
 		vi.fileName = "../assets/shaders/lights_deferred/spotVert.fxc";
 		fi.fileName = "../assets/shaders/lights_deferred/spotFrag.fxc";
 	}
@@ -410,22 +410,22 @@ void RenderPathDeferred::createSpotLightShader() {
 		return;
 	vi.content = vfile.data();
 	vi.size = (uint32_t)vfile.size();
-	vi.type = SHADER_VERTEX;
+	vi.type = Grindstone::GraphicsAPI::ShaderStage::Vertex;
 
 	std::vector<char> ffile;
 	if (!readFile(fi.fileName, ffile))
 		return;
 	fi.content = ffile.data();
 	fi.size = (uint32_t)ffile.size();
-	fi.type = SHADER_FRAGMENT;
+	fi.type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
-	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
+	std::vector<Grindstone::GraphicsAPI::ShaderStageCreateInfo> stages = { vi, fi };
 
 	auto vbd = engine.getPlaneVBD();
 	auto vad = engine.getPlaneVAD();
 
-	GraphicsPipelineCreateInfo spotGPCI;
-	spotGPCI.cullMode = CULL_BACK;
+	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo spotGPCI;
+	spotGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
 	spotGPCI.bindings = &vbd;
 	spotGPCI.bindingsCount = 1;
 	spotGPCI.attributes = &vad;
@@ -434,13 +434,13 @@ void RenderPathDeferred::createSpotLightShader() {
 	spotGPCI.height = (float)engine.getSettings()->resolution_y_;
 	spotGPCI.scissorW = engine.getSettings()->resolution_x_;
 	spotGPCI.scissorH = engine.getSettings()->resolution_y_;
-	spotGPCI.primitiveType = PRIM_TRIANGLE_STRIPS;
+	spotGPCI.primitiveType = Grindstone::GraphicsAPI::GeometryType::TriangleStrips;
 	spotGPCI.shaderStageCreateInfos = stages.data();
 	spotGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
-	std::vector<TextureBindingLayout *> tbls_ = { engine.gbuffer_tbl_, shadow_tbl_ };
+	std::vector<Grindstone::GraphicsAPI::TextureBindingLayout *> tbls_ = { engine.gbuffer_tbl_, shadow_tbl_ };
 	spotGPCI.textureBindings = tbls_.data();
 	spotGPCI.textureBindingCount = (uint32_t)tbls_.size();
-	std::vector<UniformBufferBinding *> ubbs = { engine.deff_ubb_, spot_light_ubb_ };
+	std::vector<Grindstone::GraphicsAPI::UniformBufferBinding *> ubbs = { engine.deff_ubb_, spot_light_ubb_ };
 	spotGPCI.uniformBufferBindings = ubbs.data();
 	spotGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
 	spot_light_pipeline_ = engine.getGraphicsWrapper()->CreateGraphicsPipeline(spotGPCI);
@@ -449,26 +449,26 @@ void RenderPathDeferred::createSpotLightShader() {
 void RenderPathDeferred::createDirectionalLightShader() {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
-	UniformBufferBindingCreateInfo light_ubbci;
+	Grindstone::GraphicsAPI::UniformBufferBindingCreateInfo light_ubbci;
 	light_ubbci.binding = 1;
 	light_ubbci.shaderLocation = "Light";
 	light_ubbci.size = sizeof(LightDirectionalUBO);
-	light_ubbci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	light_ubbci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	directional_light_ubb_ = engine.getGraphicsWrapper()->CreateUniformBufferBinding(light_ubbci);
 
-	UniformBufferCreateInfo lightuboci;
+	Grindstone::GraphicsAPI::UniformBufferCreateInfo lightuboci;
 	lightuboci.isDynamic = false;
 	lightuboci.size = sizeof(LightDirectionalUBO);
 	lightuboci.binding = directional_light_ubb_;
 	directional_light_ubo_handler_ = graphics_wrapper->CreateUniformBuffer(lightuboci);
 
-	ShaderStageCreateInfo vi;
-	ShaderStageCreateInfo fi;
-	if (engine.getSettings()->graphics_language_ == GRAPHICS_OPENGL) {
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo vi;
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo fi;
+	if (engine.getSettings()->graphics_language_ == GraphicsLanguage::OpenGL) {
 		vi.fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		fi.fileName = "../assets/shaders/lights_deferred/directionalFrag.glsl";
 	}
-	else if (engine.getSettings()->graphics_language_ == GRAPHICS_DIRECTX) {
+	else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX) {
 		vi.fileName = "../assets/shaders/lights_deferred/spotVert.fxc";
 		fi.fileName = "../assets/shaders/lights_deferred/directionalFrag.fxc";
 	}
@@ -481,22 +481,22 @@ void RenderPathDeferred::createDirectionalLightShader() {
 		return;
 	vi.content = vfile.data();
 	vi.size = (uint32_t)vfile.size();
-	vi.type = SHADER_VERTEX;
+	vi.type = Grindstone::GraphicsAPI::ShaderStage::Vertex;
 
 	std::vector<char> ffile;
 	if (!readFile(fi.fileName, ffile))
 		return;
 	fi.content = ffile.data();
 	fi.size = (uint32_t)ffile.size();
-	fi.type = SHADER_FRAGMENT;
+	fi.type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
-	std::vector<ShaderStageCreateInfo> stages = { vi, fi };
+	std::vector<Grindstone::GraphicsAPI::ShaderStageCreateInfo> stages = { vi, fi };
 
 	auto vbd = engine.getPlaneVBD();
 	auto vad = engine.getPlaneVAD();
 
-	GraphicsPipelineCreateInfo directionalGPCI;
-	directionalGPCI.cullMode = CULL_BACK;
+	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo directionalGPCI;
+	directionalGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
 	directionalGPCI.bindings = &vbd;
 	directionalGPCI.bindingsCount = 1;
 	directionalGPCI.attributes = &vad;
@@ -505,19 +505,19 @@ void RenderPathDeferred::createDirectionalLightShader() {
 	directionalGPCI.height = (float)engine.getSettings()->resolution_y_;
 	directionalGPCI.scissorW = engine.getSettings()->resolution_x_;
 	directionalGPCI.scissorH = engine.getSettings()->resolution_y_;
-	directionalGPCI.primitiveType = PRIM_TRIANGLE_STRIPS;
+	directionalGPCI.primitiveType = Grindstone::GraphicsAPI::GeometryType::TriangleStrips;
 	directionalGPCI.shaderStageCreateInfos = stages.data();
 	directionalGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
-	std::vector<TextureBindingLayout *> tbls_ = { engine.gbuffer_tbl_, shadow_tbl_ };
+	std::vector<Grindstone::GraphicsAPI::TextureBindingLayout *> tbls_ = { engine.gbuffer_tbl_, shadow_tbl_ };
 	directionalGPCI.textureBindings = tbls_.data();
 	directionalGPCI.textureBindingCount = (uint32_t)tbls_.size();
-	std::vector<UniformBufferBinding *> ubbs = { engine.deff_ubb_, directional_light_ubb_ };
+	std::vector<Grindstone::GraphicsAPI::UniformBufferBinding *> ubbs = { engine.deff_ubb_, directional_light_ubb_ };
 	directionalGPCI.uniformBufferBindings = ubbs.data();
 	directionalGPCI.uniformBufferBindingCount = (uint32_t)ubbs.size();
 	directional_light_pipeline_ = engine.getGraphicsWrapper()->CreateGraphicsPipeline(directionalGPCI);
 }
 
-void RenderPathDeferred::render(Framebuffer *fbo, DepthTarget *depthTarget, Space *space) {
+void RenderPathDeferred::render(Grindstone::GraphicsAPI::Framebuffer *fbo, Grindstone::GraphicsAPI::DepthTarget *depthTarget, Space *space) {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 	auto pipeline = engine.getGraphicsPipelineManager();
 
@@ -525,10 +525,10 @@ void RenderPathDeferred::render(Framebuffer *fbo, DepthTarget *depthTarget, Spac
 	gbuffer_->Bind(true);
 
 	// Clear screen
-	gbuffer_->Clear(CLEAR_BOTH);
+	gbuffer_->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 
 	// Set as Opaque
-	graphics_wrapper->SetImmediateBlending(BLEND_NONE);
+	graphics_wrapper->SetImmediateBlending(Grindstone::GraphicsAPI::BlendMode::None);
 
 	// Render opaque elements
 	if (wireframe_) {
@@ -556,19 +556,19 @@ void RenderPathDeferred::render(Framebuffer *fbo, DepthTarget *depthTarget, Spac
 		m_graphics_wrapper_->CopyToDepthBuffer(engine.depth_image_);
 		engine.hdr_framebuffer_->BindRead();
 
-		m_graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+		m_graphics_wrapper_->SetImmediateBlending(Grindstone::GraphicsAPI::BlendMode::None);
 		// Unlit
 		engine.materialManager.DrawUnlitImmediate();	
 		// Forward
-		m_graphics_wrapper_->SetImmediateBlending(BLEND_ADD_ALPHA);
+		m_graphics_wrapper_->SetImmediateBlending(Grindstone::GraphicsAPI::BlendMode::AdditiveAlpha);
 		engine.ubo->Bind();
 		engine.ubo2->Bind();
 		engine.materialManager.DrawForwardImmediate();
-		m_graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+		m_graphics_wrapper_->SetImmediateBlending(Grindstone::GraphicsAPI::BlendMode::None);
 		engine.deffUBO->Bind();
 		engine.skybox_.Render();*/
 		
-		/*graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+		/*graphics_wrapper_->SetImmediateBlending(Grindstone::GraphicsAPI::BlendMode::None);
 		pipeline_ssr_->Bind();
 		hdr_framebuffer_->Bind(false);
 		hdr_framebuffer_->BindTextures(4);
@@ -582,7 +582,7 @@ void RenderPathDeferred::render(Framebuffer *fbo, DepthTarget *depthTarget, Spac
 		//std::cout << exposure_buffer_.exposure << "\n";
 		//exposure_ub_->UpdateUniformBuffer(&exposure_buffer_);
 		
-		/*graphics_wrapper_->SetImmediateBlending(BLEND_NONE);
+		/*graphics_wrapper_->SetImmediateBlending(Grindstone::GraphicsAPI::BlendMode::None);
 		pipeline_bloom_->Bind();
 		hdr_framebuffer_->Bind(false);
 		hdr_framebuffer_->BindTextures(0);
@@ -590,8 +590,8 @@ void RenderPathDeferred::render(Framebuffer *fbo, DepthTarget *depthTarget, Spac
 
 		/*pipeline_tonemap_->Bind();
 		exposure_ub_->Bind();
-		graphics_wrapper_->BindDefaultFramebuffer(false);
-		graphics_wrapper_->Clear(CLEAR_BOTH);
+		graphics_wrapper_BindDefaultFramebuffer(false);
+		graphics_wrapper_->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 		hdr_framebuffer_->BindRead();
 		hdr_framebuffer_->BindTextures(4);
 		graphics_wrapper_->DrawImmediateVertices(0, 6);*/
@@ -602,11 +602,11 @@ void RenderPathDeferred::render(Framebuffer *fbo, DepthTarget *depthTarget, Spac
 #if 0
 		if (fbo) {
 			fbo->BindWrite(true);
-			//fbo->Clear(CLEAR_BOTH);
+			//fbo->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 		}
 		else {
 			graphics_wrapper->BindDefaultFramebuffer(true);
-			//graphics_wrapper->Clear(CLEAR_BOTH);
+			//graphics_wrapper->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 		}
 		
 		gbuffer_->BindRead();
@@ -616,7 +616,7 @@ void RenderPathDeferred::render(Framebuffer *fbo, DepthTarget *depthTarget, Spac
 		engine.getUniformBuffer()->Bind();
 
 		pipeline->drawUnlitImmediate();
-		graphics_wrapper->SetImmediateBlending(BLEND_ADD_ALPHA);
+		graphics_wrapper->SetImmediateBlending(Grindstone::GraphicsAPI::BlendMode::AdditiveAlpha);
 		if (fbo)
 			fbo->BindTextures(0);
 		pipeline->drawForwardImmediate();
@@ -634,16 +634,16 @@ void RenderPathDeferred::render(Framebuffer *fbo, DepthTarget *depthTarget, Spac
 	}
 }
 
-void RenderPathDeferred::renderDebug(Framebuffer *fbo) {
+void RenderPathDeferred::renderDebug(Grindstone::GraphicsAPI::Framebuffer *fbo) {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
 	if (fbo) {
 		fbo->BindWrite(true);
-		fbo->Clear(CLEAR_BOTH);
+		fbo->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 	}
 	else {
 		graphics_wrapper->BindDefaultFramebuffer(true);
-		graphics_wrapper->Clear(CLEAR_BOTH);
+		graphics_wrapper->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 	}
 
 	gbuffer_->BindRead();
@@ -657,21 +657,22 @@ void RenderPathDeferred::renderDebug(Framebuffer *fbo) {
 	graphics_wrapper->DrawImmediateVertices(0, 6);
 }
 
-void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
+void RenderPathDeferred::renderLights(Grindstone::GraphicsAPI::Framebuffer *fbo, Space *space) {
 	if (!space) return;
+	GRIND_PROFILE_FUNC();
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 	TransformSubSystem *transform_system = (TransformSubSystem *)space->getSubsystem(COMPONENT_TRANSFORM);
 
 	if (fbo) {
 		fbo->BindWrite(true);
-		fbo->Clear(CLEAR_BOTH);
+		fbo->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 	}
 	else {
 		graphics_wrapper->BindDefaultFramebuffer(true);
-		graphics_wrapper->Clear(CLEAR_BOTH);
+		graphics_wrapper->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 	}
 	
-	graphics_wrapper->SetImmediateBlending(BLEND_ADDITIVE);
+	graphics_wrapper->SetImmediateBlending(Grindstone::GraphicsAPI::BlendMode::Additive);
 	gbuffer_->BindRead();
 	gbuffer_->BindTextures(0);
 
@@ -759,20 +760,20 @@ void RenderPathDeferred::renderLights(Framebuffer *fbo, Space *space) {
 	}
 }
 
-void RenderPathDeferred::createFramebuffer(unsigned int width, unsigned int height) {
+void RenderPathDeferred::CreateFramebuffer(unsigned int width, unsigned int height) {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
-	std::vector<RenderTargetCreateInfo> gbuffer_images_ci;
+	std::vector<Grindstone::GraphicsAPI::RenderTargetCreateInfo> gbuffer_images_ci;
 	gbuffer_images_ci.reserve(3);
-	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, width, height); // R  G  B matID
-	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R16G16B16A16, width, height); // nX nY nZ
-	gbuffer_images_ci.emplace_back(FORMAT_COLOR_R8G8B8A8, width, height); // sR sG sB Roughness
+	gbuffer_images_ci.emplace_back(Grindstone::GraphicsAPI::ColorFormat::R8G8B8A8, width, height); // R  G  B matID
+	gbuffer_images_ci.emplace_back(Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height); // nX nY nZ
+	gbuffer_images_ci.emplace_back(Grindstone::GraphicsAPI::ColorFormat::R8G8B8A8, width, height); // sR sG sB Roughness
 	render_targets_ = graphics_wrapper->CreateRenderTarget(gbuffer_images_ci.data(), (uint32_t)gbuffer_images_ci.size());
 
-	DepthTargetCreateInfo depth_image_ci(FORMAT_DEPTH_24_STENCIL_8, width, height, false, false);
+	Grindstone::GraphicsAPI::DepthTargetCreateInfo depth_image_ci(Grindstone::GraphicsAPI::DepthFormat::D24_STENCIL_8, width, height, false, false);
 	depth_target_ = graphics_wrapper->CreateDepthTarget(depth_image_ci);
 
-	FramebufferCreateInfo gbuffer_ci;
+	Grindstone::GraphicsAPI::FramebufferCreateInfo gbuffer_ci;
 	gbuffer_ci.render_target_lists = &render_targets_;
 	gbuffer_ci.num_render_target_lists = 1;
 	gbuffer_ci.depth_target = depth_target_;

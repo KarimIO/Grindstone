@@ -1,6 +1,6 @@
 #include "ColliderSystem.hpp"
 #include <btBulletDynamicsCommon.h>
-#include "../Utilities/Logger.hpp"
+
 #include "../Core/Space.hpp"
 #include "TransformSystem.hpp"
 
@@ -99,7 +99,7 @@ ComponentHandle ColliderSubSystem::addComponent(GameObjectHandle object_handle) 
 	else {
 		GRIND_WARN("Invalid shape.");
 	}
-	
+
 	glm::vec3 scale = transform_component.scale_;
 
 	component.shape_->setUserIndex(component.game_object_handle_);
@@ -125,5 +125,54 @@ void ColliderSystem::update() {
 void ColliderSubSystem::removeComponent(ComponentHandle handle) {
 }
 
+void ColliderSubSystem::initialize() {
+	for (auto &component : components_) {
+		switch (component.shape_type_) {
+		case 0:
+			component.shape_ = new btStaticPlaneShape(btVector3(component.plane_shape_[0], component.plane_shape_[1], component.plane_shape_[2]), component.plane_shape_[3]);
+			break;
+		case 1:
+			component.shape_ = new btSphereShape(component.sphere_radius_);
+			break;
+		case 2:
+			component.shape_ = new btBoxShape(btVector3(component.box_size_[0] / 2.0f, component.box_size_[1] / 2.0f, component.box_size_[2] / 2.0f));
+			break;
+		case 3:
+			component.shape_ = new btCapsuleShape(component.capsule_radius_, component.capsule_height_);
+			break;
+		}
+	}
+}
+
 ColliderSubSystem::~ColliderSubSystem() {
 }
+
+
+void handleCollider(void *owner) {
+	ColliderComponent &component = *((ColliderComponent *)owner);
+	switch(component.shape_type_) {
+	case 0:
+		component.shape_ = new btStaticPlaneShape(btVector3(component.plane_shape_[0], component.plane_shape_[1], component.plane_shape_[2]), component.plane_shape_[3]);
+		break;
+	case 1:
+		component.shape_ = new btSphereShape(component.sphere_radius_);
+		break;
+	case 2:
+		component.shape_ = new btBoxShape(btVector3(component.box_size_[0] / 2.0f, component.box_size_[1] / 2.0f, component.box_size_[2] / 2.0f));
+		break;
+	case 3:
+		component.shape_ = new btCapsuleShape(component.capsule_radius_, component.capsule_height_);
+		break;
+	}
+}
+
+REFLECT_STRUCT_BEGIN(ColliderComponent, ColliderSystem, COMPONENT_COLLISION)
+REFLECT_STRUCT_MEMBER(capsule_height_)
+REFLECT_STRUCT_MEMBER(capsule_radius_)
+REFLECT_STRUCT_MEMBER(box_size_)
+REFLECT_STRUCT_MEMBER(box_offset_)
+REFLECT_STRUCT_MEMBER(plane_shape_)
+REFLECT_STRUCT_MEMBER(sphere_radius_)
+REFLECT_STRUCT_MEMBER_D(shape_type_, "Shape Type", "shapeType", reflect::Metadata::SaveSetAndView, handleCollider)
+REFLECT_NO_SUBCAT()
+REFLECT_STRUCT_END()

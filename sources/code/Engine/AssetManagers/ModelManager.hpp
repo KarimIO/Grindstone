@@ -81,12 +81,12 @@ struct ModelStatic {
 	std::vector<ComponentHandle> references_;
 	std::vector<MeshStatic> meshes;
 	BoundingShape *bounding;
-	VertexBuffer *vertex_buffer;
-	VertexBuffer *shadow_vertex_buffer;
-	IndexBuffer *index_buffer;
-	VertexArrayObject *vertex_array_object;
-	VertexArrayObject *shadow_vertex_array_object;
-	CommandBuffer *command_buffer;
+	Grindstone::GraphicsAPI::VertexBuffer *vertex_buffer;
+	Grindstone::GraphicsAPI::VertexBuffer *shadow_vertex_buffer;
+	Grindstone::GraphicsAPI::IndexBuffer *index_buffer;
+	Grindstone::GraphicsAPI::VertexArrayObject *vertex_array_object;
+	Grindstone::GraphicsAPI::VertexArrayObject *shadow_vertex_array_object;
+	Grindstone::GraphicsAPI::CommandBuffer *command_buffer;
 	std::string path_;
 
 	ModelStatic();
@@ -95,13 +95,13 @@ struct ModelStatic {
 
 class ModelManager {
 public:
-	ModelManager(UniformBufferBinding *ubb);
+	ModelManager(Grindstone::GraphicsAPI::UniformBufferBinding *ubb);
 	void prepareGraphics();
 	ModelReference preloadModel(ComponentHandle, std::string);
 	ModelReference loadModel(ComponentHandle, std::string);
 	void loadPreloaded();
 	ModelStatic &getModel(ModelReference);
-	UniformBuffer *getModelUbo();
+	Grindstone::GraphicsAPI::UniformBuffer *getModelUbo();
 	void removeModelInstance(ModelReference, ComponentHandle);
 	void destroyGraphics();
 	void reloadGraphics();
@@ -110,9 +110,9 @@ private:
 	std::vector<ModelStatic> models_;
 	std::vector<ModelReference> unloaded_;
 	GeometryInfo geometry_info_;
-	UniformBufferBinding *model_ubb_;
-	UniformBuffer *model_ubo_;
-	std::vector<UniformBufferBinding *> ubbs_;
+	Grindstone::GraphicsAPI::UniformBufferBinding *model_ubb_;
+	Grindstone::GraphicsAPI::UniformBuffer *model_ubo_;
+	std::vector<Grindstone::GraphicsAPI::UniformBufferBinding *> ubbs_;
 
 	MaterialReference empty_material;
 

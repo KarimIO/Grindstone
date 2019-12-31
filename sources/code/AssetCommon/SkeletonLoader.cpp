@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <cstring>
-//#include "../Engine/Utilities/Logger.hpp"
+//#include "../Engine/pch.hpp"
 
 void GrindstoneAssetCommon::loadSkeleton(std::string path, glm::mat4 global_inverse, std::vector<BoneInfo> bone_names) {
 	// Read all bone names here.

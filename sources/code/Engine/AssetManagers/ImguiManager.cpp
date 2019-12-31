@@ -9,6 +9,7 @@
 #include <iostream>
 
 ImguiManager::ImguiManager() {
+	GRIND_PROFILE_FUNC();
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;

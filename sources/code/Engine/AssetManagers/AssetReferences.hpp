@@ -27,11 +27,11 @@ struct MaterialReference {
 typedef uint32_t ModelReference;
 
 struct GeometryInfo {
-	VertexBindingDescription *vbds;
+	Grindstone::GraphicsAPI::VertexBindingDescription *vbds;
 	unsigned int vbds_count;
-	VertexAttributeDescription *vads;
+	Grindstone::GraphicsAPI::VertexAttributeDescription *vads;
 	unsigned int vads_count;
-	UniformBufferBinding **ubbs;
+	Grindstone::GraphicsAPI::UniformBufferBinding **ubbs;
 	unsigned int ubb_count;
 };
 

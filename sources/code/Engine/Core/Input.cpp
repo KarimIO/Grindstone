@@ -1,13 +1,12 @@
 #include "Input.hpp"
 #include "Engine.hpp"
 #include "Utilities.hpp"
-#include <fstream>
 
 #include "../GraphicsCommon/GraphicsWrapper.hpp"
-#include "../Utilities/Logger.hpp"
 #include "AssetManagers/ImguiManager.hpp"
 
 InputManager::InputManager() {
+	GRIND_PROFILE_FUNC();
 	// These should be set elsewhere
 	useWindow = true;
 	useKeyboard = true;
@@ -28,16 +27,18 @@ InputManager::InputManager() {
 		windowData.resize(WINDOW_LAST);
 	}
 
-	if (!engine.edit_mode_ || engine.edit_is_simulating_) {
-		AddControl("escape", "Shutdown", NULL, 1);
-		BindAction("Shutdown", NULL, &engine, &Engine::shutdownControl, KEY_RELEASED);
-	}
+	AddControl("escape", "Shutdown", NULL, 1);
+	BindAction("Shutdown", NULL, &engine, &Engine::shutdownControl, KEY_RELEASED);
 
 	AddControl("f7", "RefreshAll", NULL, 1);
 	BindAction("RefreshAll", NULL, &engine, &Engine::refreshAll, KEY_RELEASED);
 
 	AddControl("f8", "Editor", NULL, 1);
 	BindAction("Editor", NULL, &engine, &Engine::editorControl, KEY_RELEASED);
+
+	AddControl("f9", "ProfileFrame", NULL, 1);
+	BindAction("ProfileFrame", NULL, &engine, &Engine::profileFrame, KEY_RELEASED);
+
 }
 
 int InputManager::GetKeyboardKeyByName(std::string control) {
@@ -593,6 +594,7 @@ void InputManager::ForceQuit() {
 }
 
 void InputManager::LoopControls(double deltaTime) {
+	GRIND_PROFILE_FUNC();
 	if (!IsFocused() || (engine.edit_mode_ && !engine.edit_is_simulating_))
 		return;
 

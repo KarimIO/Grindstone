@@ -8,21 +8,22 @@
 #include "Framebuffer.hpp"
 #include "GraphicsPipeline.hpp"
 
-PostProcessColorGrading::PostProcessColorGrading(unsigned int w, unsigned h, PostPipeline *pipeline, RenderTargetContainer *target, Framebuffer **target_fbo) : BasePostProcess(pipeline), target_(target), target_fbo_(target_fbo) {
+PostProcessColorGrading::PostProcessColorGrading(unsigned int w, unsigned h, PostPipeline *pipeline, RenderTargetContainer *target, Grindstone::GraphicsAPI::Framebuffer **target_fbo) : BasePostProcess(pipeline), target_(target), target_fbo_(target_fbo) {
 	reloadGraphics(w, h);
 }
 
 void PostProcessColorGrading::Process() {
+	GRIND_PROFILE_FUNC();
 	double dt = engine.getUpdateTimeDelta();
 
 	gpipeline_->Bind();
 	if (target_fbo_ && target_fbo_[0]) {
 		target_fbo_[0]->Bind(true);
-		// target_fbo_[0]->Clear(CLEAR_BOTH);
+		// target_fbo_[0]->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 	}
 	else {
-		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);		engine.getGraphicsWrapper()->Clear(CLEAR_BOTH);
-
+		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
+		engine.getGraphicsWrapper()->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
 	}
 	target_->framebuffer->BindRead();
 	target_->framebuffer->BindTextures(0);
@@ -40,17 +41,17 @@ void PostProcessColorGrading::resizeBuffers(unsigned int w, unsigned h)
 }
 
 void PostProcessColorGrading::reloadGraphics(unsigned int w, unsigned h) {
-	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+	Grindstone::GraphicsAPI::GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
 
-	ShaderStageCreateInfo stages[2];
+	Grindstone::GraphicsAPI::ShaderStageCreateInfo stages[2];
 
 	// Tonemap Graphics Pipeline
-	if (settings->graphics_language_ == GRAPHICS_OPENGL) {
+	if (settings->graphics_language_ == GraphicsLanguage::OpenGL) {
 		stages[0].fileName = "../assets/shaders/lights_deferred/spotVert.glsl";
 		stages[1].fileName = "../assets/shaders/post_processing/grading.glsl";
 	}
-	else if (settings->graphics_language_ == GRAPHICS_DIRECTX) {
+	else if (settings->graphics_language_ == GraphicsLanguage::DirectX) {
 		stages[0].fileName = "../assets/shaders/lights_deferred/pointVert.fxc";
 		stages[1].fileName = "../assets/shaders/post_processing/grading.fxc";
 	}
@@ -65,7 +66,7 @@ void PostProcessColorGrading::reloadGraphics(unsigned int w, unsigned h) {
 	}
 	stages[0].content = vfile.data();
 	stages[0].size = (uint32_t)vfile.size();
-	stages[0].type = SHADER_VERTEX;
+	stages[0].type = Grindstone::GraphicsAPI::ShaderStage::Vertex;
 
 	std::vector<char> ffile;
 	if (!readFile(stages[1].fileName, ffile)) {
@@ -73,13 +74,13 @@ void PostProcessColorGrading::reloadGraphics(unsigned int w, unsigned h) {
 	}
 	stages[1].content = ffile.data();
 	stages[1].size = (uint32_t)ffile.size();
-	stages[1].type = SHADER_FRAGMENT;
+	stages[1].type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
 	auto vbd = engine.getPlaneVBD();
 	auto vad = engine.getPlaneVAD();
 
-	GraphicsPipelineCreateInfo gradingGPCI;
-	gradingGPCI.cullMode = CULL_BACK;
+	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo gradingGPCI;
+	gradingGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
 	gradingGPCI.bindings = &vbd;
 	gradingGPCI.bindingsCount = 1;
 	gradingGPCI.attributes = &vad;
@@ -88,19 +89,19 @@ void PostProcessColorGrading::reloadGraphics(unsigned int w, unsigned h) {
 	gradingGPCI.height = (float)settings->resolution_y_;
 	gradingGPCI.scissorW = settings->resolution_x_;
 	gradingGPCI.scissorH = settings->resolution_y_;
-	gradingGPCI.primitiveType = PRIM_TRIANGLES;
+	gradingGPCI.primitiveType = Grindstone::GraphicsAPI::GeometryType::Triangles;
 	gradingGPCI.shaderStageCreateInfos = stages;
 	gradingGPCI.shaderStageCreateInfoCount = 2;
 
-	TextureSubBinding *grading_sub_binding_ = new TextureSubBinding[2];
-	grading_sub_binding_[0] = TextureSubBinding("img", 0);
-	grading_sub_binding_[1] = TextureSubBinding("lut", 1);
+	Grindstone::GraphicsAPI::TextureSubBinding *grading_sub_binding_ = new Grindstone::GraphicsAPI::TextureSubBinding[2];
+	grading_sub_binding_[0] = Grindstone::GraphicsAPI::TextureSubBinding("img", 0);
+	grading_sub_binding_[1] = Grindstone::GraphicsAPI::TextureSubBinding("lut", 1);
 
-	TextureBindingLayoutCreateInfo tblci;
+	Grindstone::GraphicsAPI::TextureBindingLayoutCreateInfo tblci;
 	tblci.bindingLocation = 0;
 	tblci.bindings = grading_sub_binding_;
 	tblci.bindingCount = 2;
-	tblci.stages = SHADER_STAGE_FRAGMENT_BIT;
+	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
 	grading_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
 
 	gradingGPCI.textureBindings = &grading_tbl_;
@@ -111,11 +112,11 @@ void PostProcessColorGrading::reloadGraphics(unsigned int w, unsigned h) {
 	delete grading_sub_binding_;
 
 	// LUT
-	TextureOptions options;
-	options.wrap_mode_u = TEXWRAP_CLAMP_TO_EDGE;
-	options.wrap_mode_v = TEXWRAP_CLAMP_TO_EDGE;
-	options.min_filter = TEXFILTER_LINEAR;
-	options.mag_filter = TEXFILTER_LINEAR;
+	Grindstone::GraphicsAPI::TextureOptions options;
+	options.wrap_mode_u =	Grindstone::GraphicsAPI::TextureWrapMode::ClampToEdge;
+	options.wrap_mode_v = Grindstone::GraphicsAPI::TextureWrapMode::ClampToEdge;
+	options.min_filter = Grindstone::GraphicsAPI::TextureFilter::Linear;
+	options.mag_filter = Grindstone::GraphicsAPI::TextureFilter::Linear;
 	options.generate_mipmaps = false;
 
 	auto texmgr = engine.getTextureManager();
@@ -125,13 +126,13 @@ void PostProcessColorGrading::reloadGraphics(unsigned int w, unsigned h) {
 		texture_binding_ = nullptr;
 	}
 	else {
-		Texture *texture = texmgr->getTexture(handle);
+		Grindstone::GraphicsAPI::Texture *texture = texmgr->getTexture(handle);
 		texture_ = texture;
-		SingleTextureBind stb;
+		Grindstone::GraphicsAPI::SingleTextureBind stb;
 		stb.texture = texture_;
 		stb.address = 1;
 
-		TextureBindingCreateInfo ci;
+		Grindstone::GraphicsAPI::TextureBindingCreateInfo ci;
 		ci.textures = &stb;
 		ci.layout = grading_tbl_;
 		ci.textureCount = 1;
@@ -140,7 +141,7 @@ void PostProcessColorGrading::reloadGraphics(unsigned int w, unsigned h) {
 }
 
 void PostProcessColorGrading::destroyGraphics() {
-	GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
+	Grindstone::GraphicsAPI::GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 
 	graphics_wrapper->DeleteTextureBinding(texture_binding_);
 	graphics_wrapper->DeleteTextureBindingLayout(grading_tbl_);

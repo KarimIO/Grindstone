@@ -1,9 +1,9 @@
-#include "VkIndexBuffer.h"
+#include "VkIndexBuffer.hpp"
 #include <array>
-#include "VkBufferCommon.h"
+#include "VkBufferCommon.hpp"
 #include <cstring>
 
-vkIndexBuffer::vkIndexBuffer(VkGraphicsWrapper *gw, VkDevice *dev, VkPhysicalDevice *physical, IndexBufferCreateInfo createInfo) {
+vkIndexBuffer::vkIndexBuffer(vkGraphicsWrapper *gw, VkDevice *dev, VkPhysicalDevice *physical, IndexBufferCreateInfo createInfo) {
 	device = dev;
 	graphicsWrapper = gw;
 	physicalDevice = physical;

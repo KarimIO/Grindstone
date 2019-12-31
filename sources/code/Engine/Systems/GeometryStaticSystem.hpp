@@ -9,7 +9,7 @@
 
 class SGeometryStatic : public SSubGeometry {
 public:
-	SGeometryStatic(MaterialManager *material_system, GraphicsWrapper *graphics_wrapper, std::vector<UniformBufferBinding *> ubbs);
+	SGeometryStatic(MaterialManager *material_system, GraphicsWrapper *graphics_wrapper, std::vector<Grindstone::GraphicsAPI::UniformBufferBinding *> ubbs);
 
 	virtual void LoadGeometry(uint32_t render_id, std::string path);
 	virtual void LoadPreloaded();

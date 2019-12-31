@@ -1,6 +1,6 @@
-#include "VkUniformBuffer.h"
+#include "VkUniformBuffer.hpp"
 #include <iostream>
-#include "VkBufferCommon.h"
+#include "VkBufferCommon.hpp"
 #include <vector>
 #include <cstring>
 

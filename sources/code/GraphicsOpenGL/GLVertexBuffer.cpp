@@ -2,33 +2,37 @@
 #include "GLVertexBuffer.hpp"
 #include <iostream>
 
-GLVertexBuffer::GLVertexBuffer(VertexBufferCreateInfo createInfo) {
-	glGenBuffers(1, &buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ARRAY_BUFFER, createInfo.size, createInfo.content, GL_STATIC_DRAW);
+namespace Grindstone {
+	namespace GraphicsAPI {
+		GLVertexBuffer::GLVertexBuffer(VertexBufferCreateInfo createInfo) {
+			glGenBuffers(1, &buffer);
+			glBindBuffer(GL_ARRAY_BUFFER, buffer);
+			glBufferData(GL_ARRAY_BUFFER, createInfo.size, createInfo.content, GL_STATIC_DRAW);
 
-	uint32_t stride;
-	stride = createInfo.binding[0].stride;
+			uint32_t stride;
+			stride = createInfo.binding[0].stride;
 
-	for (uint32_t i = 0; i < createInfo.attributeCount; i++) {
-		VertexAttributeDescription *attrib = &createInfo.attribute[i];
-		
-		uint32_t type = GL_FLOAT;
-		bool normalized = GL_FALSE;
+			for (uint32_t i = 0; i < createInfo.attributeCount; i++) {
+				VertexAttributeDescription *attrib = &createInfo.attribute[i];
 
-		glEnableVertexAttribArray(attrib->location);
-		glVertexAttribPointer(attrib->location, attrib->size, type, normalized, stride, reinterpret_cast<const void *>(attrib->offset));
+				uint32_t type = GL_FLOAT;
+				bool normalized = GL_FALSE;
+
+				glEnableVertexAttribArray(attrib->location);
+				glVertexAttribPointer(attrib->location, attrib->size, type, normalized, stride, reinterpret_cast<const void *>(attrib->offset));
+			}
+
+			//glBindVertexArray(0);
+		}
+
+		GLVertexBuffer::~GLVertexBuffer() {
+			glDeleteBuffers(1, &buffer);
+		}
+
+		void GLVertexBuffer::Bind() {
+			glBindBuffer(GL_ARRAY_BUFFER, buffer);
+		}
 	}
-
-	//glBindVertexArray(0);
-}
-
-GLVertexBuffer::~GLVertexBuffer() {
-	glDeleteBuffers(1, &buffer);
-}
-
-void GLVertexBuffer::Bind() {
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);
 }
 
 // ===================================================

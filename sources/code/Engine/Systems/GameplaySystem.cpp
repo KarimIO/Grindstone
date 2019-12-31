@@ -16,6 +16,7 @@ void GameplaySystem::RemoveSystem(SGBase *system) {
 }
 
 void GameplaySystem::update() {
+	GRIND_PROFILE_FUNC();
 	for (auto &system : subsystems) {
 		system->Update(dt);
 	}

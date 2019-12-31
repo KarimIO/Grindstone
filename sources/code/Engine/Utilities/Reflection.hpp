@@ -1,7 +1,5 @@
-#include <vector>
-#include <iostream>
-#include <string>
-#include <cstddef>
+#ifndef _REFLECTION_HPP
+#define _REFLECTION_HPP
 
 namespace reflect {
 
@@ -27,6 +25,7 @@ namespace reflect {
 			ReflVec2,
 			ReflVec3,
 			ReflVec4,
+			ReflQuat,
 		};
 		ReflectionTypeData type;
 
@@ -227,3 +226,5 @@ const ComponentType system::static_system_type_ = enum_type; \
 	};
 
 } // namespace reflect
+
+#endif

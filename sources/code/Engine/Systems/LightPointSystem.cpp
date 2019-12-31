@@ -17,6 +17,7 @@ ComponentHandle LightPointSubSystem::addComponent(GameObjectHandle object_handle
 LightPointSystem::LightPointSystem() : System(COMPONENT_LIGHT_POINT) {}
 
 void LightPointSystem::update() {
+	GRIND_PROFILE_FUNC();
 	auto &scenes = engine.getScenes();
 	for (auto scene : scenes) {
 		for (auto space : scene->spaces_) {

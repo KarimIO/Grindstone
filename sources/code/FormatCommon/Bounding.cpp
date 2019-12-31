@@ -1,7 +1,6 @@
 #include "Bounding.hpp"
 #include <cmath>
 #include <iostream>
-#include "Utilities/Logger.hpp"
 
 void *BoundingSphere::GetData() {
 	return &radius_;

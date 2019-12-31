@@ -34,11 +34,13 @@
 #include "Renderpaths/RenderPathDeferred.hpp"
 #include "Systems/TransformSystem.hpp"
 #include "Systems/LightSpotSystem.hpp"
-#include "Utilities/Logger.hpp"
 #include "Systems/RigidBodySystem.hpp"
 
+#include <glm/gtx/quaternion.hpp>
 #include "../Converter/ImageConverter.hpp"
 #include "../Converter/Utilities.hpp"
+
+const char* debug_combo_items[] = { "Lit", "Distance", "Normal", "View Normal", "Albedo", "Specular", "Roughness", "Position" };
 
 Editor::Viewport::Viewport(Camera *c, View v) : camera_(c), first(true), viewport_shown(true) {
 	setView(v);
@@ -155,6 +157,10 @@ Editor::Editor(ImguiManager *manager) : selected_object_handle_(-1) {
 	c->initialize();
 	((RenderPathDeferred *)c->render_path_)->wireframe_ = true;
 	viewports_.emplace_back(c, Viewport::View::Top);
+	auto &v = viewports_.back();
+	int n = 2;
+	v.debug_combo_option = debug_combo_items[2];
+	v.camera_->render_path_->setDebugMode(n);
 	c = new Camera(engine.getScenes()[0]->spaces_[0], true);
 	c->enable_reflections_ = true;
 	c->enable_auto_exposure_ = true;
@@ -170,6 +176,7 @@ Editor::Editor(ImguiManager *manager) : selected_object_handle_(-1) {
 }
 
 void Editor::update() {
+	GRIND_PROFILE_FUNC();
 	ImGui_ImplOpenGL3_NewFrame();
 	manager_->NewFrame();
 	ImGui::NewFrame();
@@ -330,100 +337,40 @@ void Editor::prepareDockspace() {
 }
 
 bool vec2Component(std::string base, glm::vec2 &val, float w) {
-	float x = val.x;
-	float y = val.y;
-	if (w > 0.0f) {
+	if (w > 0.0f)
 		ImGui::PushItemWidth(w);
-		ImGui::PushItemWidth(w);
-	}
 
-	bool changed = false;
-	if (ImGui::InputFloat((base + "X").c_str(), &x)) {
-		val.x = x;
-		changed = true;
-	}
-
-	ImGui::SameLine();
-	if (ImGui::InputFloat((base + "Y").c_str(), &y)) {
-		val.y = y;
-		changed = true;
-	}
-
-	return changed;
+	return ImGui::InputFloat2(base.c_str(), (float *)&val);
 }
 
 bool vec3Component(std::string base, glm::vec3 &val, float w) {
-	float x = val.x;
-	float y = val.y;
-	float z = val.z;
-	if (w > 0.0f) {
+	if (w > 0.0f)
 		ImGui::PushItemWidth(w);
-		ImGui::PushItemWidth(w);
-		ImGui::PushItemWidth(w);
+
+	/*float *x = (float *)&val;
+	if (ImGui::InputFloat3(base.c_str(), &x)) {
+		val[0] = x[0];
+		val[1] = x[1];
+		val[2] = x[2];
+		return true;
 	}
 
-	bool changed = false;
-	if (ImGui::InputFloat((base + "X").c_str(), &x)) {
-		val.x = x;
-		changed = true;
-	}
+	return false;*/
 
-	ImGui::SameLine();
-	if (ImGui::InputFloat((base + "Y").c_str(), &y)) {
-		val.y = y;
-		changed = true;
-	}
-
-	ImGui::SameLine();
-	if (ImGui::InputFloat((base + "Z").c_str(), &z)) {
-		val.z = z;
-		changed = true;
-	}
-
-	return changed;
+	return ImGui::InputFloat3(base.c_str(), (float *)&val);
 }
 
 bool vec4Component(std::string base, glm::vec4 &val, float w) {
-	float x = val.x;
-	float y = val.y;
-	float z = val.z;
-	float a = val.z;
-	if (w > 0.0f) {
+	if (w > 0.0f)
 		ImGui::PushItemWidth(w);
-		ImGui::PushItemWidth(w);
-		ImGui::PushItemWidth(w);
-		ImGui::PushItemWidth(w);
-	}
 
-	bool changed = false;
-	if (ImGui::InputFloat((base + "X").c_str(), &x)) {
-		val.x = x;
-		changed = true;
-	}
-
-	ImGui::SameLine();
-	if (ImGui::InputFloat((base + "Y").c_str(), &y)) {
-		val.y = y;
-		changed = true;
-	}
-
-	ImGui::SameLine();
-	if (ImGui::InputFloat((base + "Z").c_str(), &z)) {
-		val.z = z;
-		changed = true;
-	}
-
-	ImGui::SameLine();
-	if (ImGui::InputFloat((base + "W").c_str(), &z)) {
-		val.z = z;
-		changed = true;
-	}
-
-	return changed;
+	return ImGui::InputFloat4(base.c_str(), (float *)&val);
 }
 
 bool floatComponent(float w, std::string base, float &val) {
-	ImGui::PushItemWidth(w);
+	if (w  > 0.0f)
+		ImGui::PushItemWidth(w);
+	
 	float x = val;
 	if (ImGui::InputFloat(base.c_str(), &x)) {
 		val = x;
@@ -434,14 +381,14 @@ bool floatComponent(float w, std::string base, float &val) {
 }
 
 bool boolComponent(float w, std::string base, bool &val) {
-	ImGui::PushItemWidth(w);
-	bool x = val;
-	if (ImGui::Checkbox(base.c_str(), &x)) {
-		val = x;
-		return true;
-	}
+ImGui::PushItemWidth(w);
+bool x = val;
+if (ImGui::Checkbox(base.c_str(), &x)) {
+	val = x;
+	return true;
+}
 
-	return false;
+return false;
 }
 
 bool stringComponent(float w, std::string base, std::string &val) {
@@ -464,7 +411,7 @@ bool doubleComponent(float w, std::string base, double &val) {
 		val = x;
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -485,56 +432,77 @@ void parseCategory(reflect::TypeDescriptor_Struct::Category &cat, unsigned char 
 			switch (member.type->type) {
 			case reflect::TypeDescriptor::ReflectionTypeData::ReflString: {
 				std::string &v = *(std::string *)(component + member.offset);
-				if (member.metadata & reflect::Metadata::SetInEditor)
-					if (stringComponent(w, extended_member_name, v))
-						if (member.onChangeCallback)
+				if (member.metadata & reflect::Metadata::SetInEditor) {
+					if (stringComponent(w, extended_member_name, v)) {
+						if (member.onChangeCallback) {
 							member.onChangeCallback(component);
+						}
+					}
+				}
 				else
 					ImGui::Text("%s", v.c_str());
 				break;
 			}
 			case reflect::TypeDescriptor::ReflectionTypeData::ReflBool: {
 				bool &v = *(bool *)(component + member.offset);
-				if (member.metadata & reflect::Metadata::SetInEditor)
-					if (boolComponent(w, extended_member_name, v))
-						if (member.onChangeCallback)
+				if (member.metadata & reflect::Metadata::SetInEditor) {
+					if (boolComponent(w, extended_member_name, v)) {
+						if (member.onChangeCallback) {
 							member.onChangeCallback(component);
+						}
+					}
+				}
 				else
 					ImGui::Text("%s", v ? "true" : "false");
 				break;
 			}
 			case reflect::TypeDescriptor::ReflectionTypeData::ReflFloat: {
 				float &v = *(float *)(component + member.offset);
-				if (member.metadata & reflect::Metadata::SetInEditor)
-					if (floatComponent(w, extended_member_name, v))
-						if (member.onChangeCallback)
+				if (member.metadata & reflect::Metadata::SetInEditor) {
+					if (floatComponent(w, extended_member_name, v)) {
+						if (member.onChangeCallback) {
 							member.onChangeCallback(component);
+						}
+					}
+				}
 				else
 					ImGui::Text("%f", v);
 				break;
 			}
 			case reflect::TypeDescriptor::ReflectionTypeData::ReflDouble: {
 				double &v = *(double *)(component + member.offset);
-				if (member.metadata & reflect::Metadata::SetInEditor)
-					doubleComponent(w, extended_member_name, v);
+				if (member.metadata & reflect::Metadata::SetInEditor) {
+					if (doubleComponent(w, extended_member_name, v)) {
+						if (member.onChangeCallback) {
+							member.onChangeCallback(component);
+						}
+					}
+				}
 				else
 					ImGui::Text("%f", v);
 				break;
 			}
 			case reflect::TypeDescriptor::ReflectionTypeData::ReflVec2: {
 				glm::vec2 &v = *(glm::vec2 *)(component + member.offset);
-				if (member.metadata & reflect::Metadata::SetInEditor)
-					if (vec2Component(extended_member_name, v, -1.0))
-						if (member.onChangeCallback)
+				if (member.metadata & reflect::Metadata::SetInEditor) {
+					if (vec2Component(extended_member_name, v, w)) {
+						if (member.onChangeCallback) {
 							member.onChangeCallback(component);
+						}
+					}
+				}
 				else
 					ImGui::Text("%f %f", v.x, v.y);
 				break;
 			}
 			case reflect::TypeDescriptor::ReflectionTypeData::ReflVec3: {
 				glm::vec3 &v = *(glm::vec3 *)(component + member.offset);
-				if (member.metadata & reflect::Metadata::SetInEditor)
-					vec3Component(extended_member_name, v, w3);
+				if (member.metadata & reflect::Metadata::SetInEditor) {
+					if (vec3Component(extended_member_name, v, w)) {
+						if (member.onChangeCallback)
+							member.onChangeCallback(component);
+					}
+				}
 				else
 					ImGui::Text("%f %f %f", v.x, v.y, v.z);
 				break;
@@ -542,12 +510,30 @@ void parseCategory(reflect::TypeDescriptor_Struct::Category &cat, unsigned char 
 			case reflect::TypeDescriptor::ReflectionTypeData::ReflVec4: {
 				glm::vec4 &v = *(glm::vec4 *)(component + member.offset);
 				if (member.metadata & reflect::Metadata::SetInEditor) {
-					if (vec4Component(extended_member_name, v, w4))
+					if (vec4Component(extended_member_name, v, w))
 						if (member.onChangeCallback)
 							member.onChangeCallback(component);
 				}
 				else
 					ImGui::Text("%f %f %f %f", v.x, v.y, v.z, v.w);
+				break;
+			}
+			case reflect::TypeDescriptor::ReflectionTypeData::ReflQuat: {
+				glm::quat &q = *(glm::quat *)(component + member.offset);
+
+				glm::vec3 v = glm::eulerAngles(q) * 180.0f / glm::pi<float>();
+
+				if (member.metadata & reflect::Metadata::SetInEditor) {
+					ImGui::PushItemWidth(w);
+					if (ImGui::InputFloat3(extended_member_name.c_str(), (float *)&v, 4)) {
+						q = glm::quat(glm::vec3(v.x, v.y, v.z) * glm::pi<float>() / 180.0f);
+						if (member.onChangeCallback)
+							member.onChangeCallback(component);
+					}
+				}
+				else {
+					ImGui::Text("%f %f %f", v.x, v.y, v.z);
+				}
 				break;
 			}
 			}
@@ -662,7 +648,7 @@ void Editor::consolePanel() {
 		} while (i != console_entries_first_);
 	}
 	else {
-		for (int i = 0; i < console_entries_count_; ++i) {
+		for (unsigned int i = 0; i < console_entries_count_; ++i) {
 			ImGui::Text("%s", console_entries_[i]);
 		}
 	}
@@ -788,7 +774,7 @@ void Editor::viewportPanels() {
 
 			engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
 
-			ImTextureID t = (ImTextureID)((GLRenderTarget *)cam.final_buffer_)->getHandle();
+			ImTextureID t = (ImTextureID)((Grindstone::GraphicsAPI::GLRenderTarget *)cam.final_buffer_)->getHandle();
 
 			ImGui::GetWindowDrawList()->AddImage(
 				t, ImVec2(ImGui::GetCursorScreenPos()),
@@ -947,7 +933,7 @@ void Editor::viewportPanels() {
 				v.camera_->render();
 				engine.getGraphicsWrapper()->BindDefaultFramebuffer(false);
 
-				ImTextureID t = (ImTextureID)(((GLRenderTarget *)v.camera_->final_buffer_)->getHandle());
+				ImTextureID t = (ImTextureID)(((Grindstone::GraphicsAPI::GLRenderTarget *)v.camera_->final_buffer_)->getHandle());
 
 				ImGui::GetWindowDrawList()->AddImage(
 					t, ImVec2(ImGui::GetCursorScreenPos()),
@@ -975,7 +961,6 @@ void Editor::viewportPanels() {
 					ImGui::EndCombo();
 				}
 
-				const char* debug_combo_items[] = { "Lit", "Distance", "Normal", "View Normal", "Albedo", "Specular", "Roughness", "Position" };
 				if (v.debug_combo_option == nullptr)
 					v.debug_combo_option = debug_combo_items[0];
 

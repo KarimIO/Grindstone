@@ -1,7 +1,6 @@
 #include "Utilities.hpp"
 #include <fstream>
 #include <string>
-#include "../Utilities/Logger.hpp"
 #include <iostream>
 
 bool ReadFileIncludable(std::string pFileName, std::string& output)

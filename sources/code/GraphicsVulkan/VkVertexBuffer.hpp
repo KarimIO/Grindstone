@@ -1,14 +1,14 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-#include "../GraphicsCommon/VertexBuffer.h"
-#include "VkGraphicsWrapper.h"
+#include "../GraphicsCommon/VertexBuffer.hpp"
+#include "vkGraphicsWrapper.hpp"
 
-class VkGraphicsWrapper;
+class VulkanGraphicsWrapper;
 
-class vkVertexBuffer : public VertexBuffer {
+class VulkanVertexBuffer : public VertexBuffer {
 public:
-	VkGraphicsWrapper *graphicsWrapper;
+	VulkanGraphicsWrapper *graphicsWrapper;
 	VkDevice *device;
 	VkPhysicalDevice *physicalDevice;
 	uint32_t size;
@@ -17,8 +17,8 @@ public:
 	VkBuffer buffer;
 	VkDeviceMemory memory;
 public:
-	vkVertexBuffer(VkGraphicsWrapper *, VkDevice *dev, VkPhysicalDevice *physicalDevice, VertexBufferCreateInfo createInfo);
-	~vkVertexBuffer();
+	VulkanVertexBuffer(VulkanGraphicsWrapper *, VkDevice *dev, VkPhysicalDevice *physicalDevice, VertexBufferCreateInfo createInfo);
+	~VulkanVertexBuffer();
 
 	VkBuffer *GetBuffer();
 	uint32_t GetSize();

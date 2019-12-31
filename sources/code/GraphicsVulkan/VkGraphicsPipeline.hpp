@@ -1,17 +1,17 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-#include "../GraphicsCommon/GraphicsPipeline.h"
+#include "../GraphicsCommon/GraphicsPipeline.hpp"
 
-class vkGraphicsPipeline : public GraphicsPipeline {
+class VulkanGraphicsPipeline : public GraphicsPipeline {
 	VkDevice *device;
 	VkPipeline graphicsPipeline;
 	VkPipelineLayout pipelineLayout;
 
 	VkShaderModule createShaderModule(ShaderStageCreateInfo shaderStageCreateInfo);
 public:
-	vkGraphicsPipeline(VkDevice *dev, GraphicsPipelineCreateInfo createInfo);
+	VulkanGraphicsPipeline(VkDevice *dev, GraphicsPipelineCreateInfo createInfo);
 	VkPipeline *GetGraphicsPipeline();
 	VkPipelineLayout *GetPipelineLayout();
-	~vkGraphicsPipeline();
+	~VulkanGraphicsPipeline();
 };

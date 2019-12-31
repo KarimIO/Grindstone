@@ -12,6 +12,7 @@ void PostPipeline::AddPostProcess(BasePostProcess *process) {
 }
 
 void PostPipeline::Process() {
+	GRIND_PROFILE_FUNC();
 	for (int i = 0; i < processes_.size(); i++) {
 		processes_.at(i)->Process();
 	}
