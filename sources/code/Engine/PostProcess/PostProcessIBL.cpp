@@ -65,10 +65,10 @@ void PostProcessIBL::prepareIBL(unsigned int w, unsigned h) {
 	iblGPCI.bindingsCount = 1;
 	iblGPCI.attributes = &vad;
 	iblGPCI.attributesCount = 1;
-	iblGPCI.width = (float)viewport_w_;
-	iblGPCI.height = (float)viewport_h_;
-	iblGPCI.scissorW = viewport_w_;
-	iblGPCI.scissorH = viewport_h_;
+	iblGPCI.width = (float)w;
+	iblGPCI.height = (float)h;
+	iblGPCI.scissorW = w;
+	iblGPCI.scissorH = h;
 	iblGPCI.primitiveType = Grindstone::GraphicsAPI::GeometryType::Triangles;
 	iblGPCI.shaderStageCreateInfos = stages.data();
 	iblGPCI.shaderStageCreateInfoCount = (uint32_t)stages.size();
@@ -87,7 +87,7 @@ void PostProcessIBL::prepareSSAO(unsigned int w, unsigned h) {
 	Grindstone::GraphicsAPI::GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	auto settings = engine.getSettings();
 
-	Grindstone::GraphicsAPI::RenderTargetCreateInfo ssao_buffer_ci(Grindstone::GraphicsAPI::ColorFormat::R8, viewport_w_, viewport_h_);
+	Grindstone::GraphicsAPI::RenderTargetCreateInfo ssao_buffer_ci(Grindstone::GraphicsAPI::ColorFormat::R8, w, h);
 	ssao_buffer_ = graphics_wrapper->CreateRenderTarget(&ssao_buffer_ci, 1);
 
 	Grindstone::GraphicsAPI::FramebufferCreateInfo hdr_framebuffer_ci;
@@ -223,10 +223,10 @@ void PostProcessIBL::prepareSSAO(unsigned int w, unsigned h) {
 	ssaoGPCI.bindingsCount = 1;
 	ssaoGPCI.attributes = &vad;
 	ssaoGPCI.attributesCount = 1;
-	ssaoGPCI.width = (float)viewport_w_; // DIVIDE BY TWO
-	ssaoGPCI.height = (float)viewport_h_;
-	ssaoGPCI.scissorW = viewport_w_;
-	ssaoGPCI.scissorH = viewport_h_;
+	ssaoGPCI.width = (float)w; // DIVIDE BY TWO
+	ssaoGPCI.height = (float)h;
+	ssaoGPCI.scissorW = w;
+	ssaoGPCI.scissorH = h;
 	ssaoGPCI.primitiveType = Grindstone::GraphicsAPI::GeometryType::Triangles;
 	ssaoGPCI.shaderStageCreateInfos = stages;
 	ssaoGPCI.shaderStageCreateInfoCount = 2;
@@ -319,7 +319,7 @@ void PostProcessIBL::recreateFramebuffer(unsigned int w, unsigned int h) {
 	// graphics_wrapper->DeleteRenderTarget(ssao_buffer_);
 	graphics_wrapper->DeleteFramebuffer(ssao_fbo_);
 
-	Grindstone::GraphicsAPI::RenderTargetCreateInfo ssao_buffer_ci(Grindstone::GraphicsAPI::ColorFormat::R8, viewport_w_, viewport_h_);
+	Grindstone::GraphicsAPI::RenderTargetCreateInfo ssao_buffer_ci(Grindstone::GraphicsAPI::ColorFormat::R8, w, h);
 	ssao_buffer_ = graphics_wrapper->CreateRenderTarget(&ssao_buffer_ci, 1);
 
 	Grindstone::GraphicsAPI::FramebufferCreateInfo hdr_framebuffer_ci;
