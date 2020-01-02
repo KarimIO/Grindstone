@@ -1241,10 +1241,10 @@ void Editor::sceneGraphPanel() {
 		}
 		ImGui::Separator();
 
-        // Scene Graph:
+		// Scene Graph:
 		for (auto scene : engine.getScenes()) {
-            for (auto space : scene->spaces_) {
-                for (auto &object : space->objects_) {
+			for (auto space : scene->spaces_) {
+				for (auto &object : space->objects_) {
 					std::string n = object.getName();
 					if (ImGui::Button(n.c_str())) {
 						selected_object_handle_ = object.getID();
@@ -1252,14 +1252,14 @@ void Editor::sceneGraphPanel() {
 						memset(obj_name + s, 0, 256 - s);
 						memcpy(obj_name, object.getName().c_str(), s);
 					}
-                }
-            }
-        }
+				}
+			}
+		}
 
 		// renderSceneGraphTree(scene_graph_);
 
-        ImGui::End();
-    }
+		ImGui::End();
+	}
 }
 
 SceneGraphNode::SceneGraphNode(GameObjectHandle o, std::vector<SceneGraphNode*> c) : object_handle_(o), children_(c) {

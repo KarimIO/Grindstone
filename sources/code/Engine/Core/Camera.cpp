@@ -158,6 +158,7 @@ void Camera::setViewport(unsigned int w, unsigned int h) {
 		viewport_height_ = h;
 
 		aspect_ratio_ = float(w) / float(h);
+		projection_dirty_ = true;
 
 		generateFramebuffers();
 		post_pipeline_.resizeBuffers(viewport_width_, viewport_height_);
@@ -186,7 +187,12 @@ void Camera::buildProjection() {
 	// Calculate Projection
 	if (is_ortho_) {
 		// Perspective
-		projection_ = glm::ortho(ortho_x_, ortho_y_, ortho_width_, ortho_height_, 0.5f, 50.0f);
+		;
+
+		float z = 3.0f;
+		float x = z * aspect_ratio_;
+		float y = z;
+		projection_ = glm::ortho(-x, x, -y, y, 0.5f, 50.0f);
 	}
 	else {
 		// Orthographic
