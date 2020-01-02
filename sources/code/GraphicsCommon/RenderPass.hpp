@@ -22,6 +22,7 @@ namespace Grindstone {
 		struct RenderPassCreateInfo {
 			uint32_t m_width;
 			uint32_t m_height;
+			ColorFormat *m_colorFormats;
 			ClearColorValue *m_colorClearValues;
 			uint32_t m_colorClearCount;
 			ClearDepthStencil m_depthStencilClearValue;

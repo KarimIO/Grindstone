@@ -34,83 +34,83 @@ namespace Grindstone {
 		}
 
 		LRESULT CALLBACK GraphicsWrapper::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-			if (!input)
+			if (!input_)
 				return DefWindowProc(hwnd, msg, wParam, lParam);
 
 			switch (msg) {
 			case WM_SIZE:
-				input->ResizeEvent(LOWORD(lParam), HIWORD(lParam));
+				input_->ResizeEvent(LOWORD(lParam), HIWORD(lParam));
 				break;
 			case WM_MOUSEMOVE:
-				input->SetMousePosition(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+				input_->SetMousePosition(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 				break;
 			case WM_SETFOCUS:
-				input->SetFocused(true);
+				input_->SetFocused(true);
 				break;
 			case WM_KILLFOCUS:
-				input->SetFocused(false);
+				input_->SetFocused(false);
 				break;
 			case WM_MOUSEHWHEEL:
 				if (GET_WHEEL_DELTA_WPARAM(wParam) < 0)
-					input->SetMouseButton(MOUSE_WHEEL_LEFT, true);
+					input_->SetMouseButton(MOUSE_WHEEL_LEFT, true);
 				else
-					input->SetMouseButton(MOUSE_WHEEL_RIGHT, true);
+					input_->SetMouseButton(MOUSE_WHEEL_RIGHT, true);
 				break;
 			case WM_MOUSEWHEEL:
 				if (GET_WHEEL_DELTA_WPARAM(wParam) > 0)
-					input->SetMouseButton(MOUSE_WHEEL_UP, true);
+					input_->SetMouseButton(MOUSE_WHEEL_UP, true);
 				else
-					input->SetMouseButton(MOUSE_WHEEL_DOWN, true);
+					input_->SetMouseButton(MOUSE_WHEEL_DOWN, true);
 				break;
 			case WM_LBUTTONDOWN:
-				input->SetMouseButton(MOUSE_LEFT, true);
+				input_->SetMouseButton(MOUSE_LEFT, true);
 				break;
 			case WM_LBUTTONUP:
-				input->SetMouseButton(MOUSE_LEFT, false);
+				input_->SetMouseButton(MOUSE_LEFT, false);
 				break;
 			case WM_MBUTTONDOWN:
-				input->SetMouseButton(MOUSE_MIDDLE, true);
+				input_->SetMouseButton(MOUSE_MIDDLE, true);
 				break;
 			case WM_MBUTTONUP:
-				input->SetMouseButton(MOUSE_MIDDLE, false);
+				input_->SetMouseButton(MOUSE_MIDDLE, false);
 				break;
 			case WM_RBUTTONDOWN:
-				input->SetMouseButton(MOUSE_RIGHT, true);
+				input_->SetMouseButton(MOUSE_RIGHT, true);
 				break;
 			case WM_RBUTTONUP:
-				input->SetMouseButton(MOUSE_RIGHT, false);
+				input_->SetMouseButton(MOUSE_RIGHT, false);
 				break;
 			case WM_XBUTTONDOWN:
-				input->SetMouseButton(MOUSE_MOUSE4, true); //MOUSE_MOUSE5 as well
+				input_->SetMouseButton(MOUSE_MOUSE4, true); //MOUSE_MOUSE5 as well
 				break;
 			case WM_XBUTTONUP:
-				input->SetMouseButton(MOUSE_MOUSE4, false);
+				input_->SetMouseButton(MOUSE_MOUSE4, false);
 				break;
 			case WM_KEYDOWN:
 				// Repeat Count
 				if ((HIWORD(lParam) & KF_REPEAT) == 0) {
-					input->SetKey(TranslateKey(int(wParam)), true);
+					input_->SetKey(TranslateKey(int(wParam)), true);
 				}
 				break;
 			case WM_KEYUP:
-				input->SetKey(TranslateKey(int(wParam)), false);
+				input_->SetKey(TranslateKey(int(wParam)), false);
 				break;
 			case WM_CLOSE:
 				if (MessageBox(NULL, "Are you sure you want to cancel?", "Error!",
 					MB_ICONEXCLAMATION | MB_YESNO)) {
-					input->Quit();
+					input_->Quit();
 				}
 				break;
 			case WM_CREATE:
 				setFocus();
-				input->SetFocused(true);
+				input_->SetFocused(true);
 				break;
 			case WM_DESTROY:
 				if (closing_state_ == WindowClosingState::Closing) {
 					closing_state_ = WindowClosingState::Closed;
 				}
 				else {
-					input->ForceQuit();
+					input_->ForceQuit();
 				}
 				break;
 			default:
@@ -225,14 +225,14 @@ namespace Grindstone {
 			RECT rect;
 			rect.left = 0;
 			rect.top = 0;
-			rect.right = width;
-			rect.bottom = height;
+			rect.right = width_;
+			rect.bottom = height_;
 			AdjustWindowRectEx(&rect, style, FALSE, styleEx);
 
 			window_handle = CreateWindowEx(
 				styleEx,
 				className,
-				title,
+				title_,
 				style,
 				0,
 				0,
@@ -263,7 +263,7 @@ namespace Grindstone {
 		void GraphicsWrapper::setFocus() {
 			BringWindowToTop(window_handle);
 			SetFocus(window_handle);
-			input->SetFocused(true);
+			input_->SetFocused(true);
 		}
 
 		void GraphicsWrapper::HandleEvents() {
@@ -405,7 +405,7 @@ namespace Grindstone {
 		}
 
 		void GraphicsWrapper::ResetCursor() {
-			SetCursor(width / 2, height / 2);
+			SetCursor(width_ / 2, height_ / 2);
 		}
 
 		void GraphicsWrapper::SetCursor(int x, int y) {

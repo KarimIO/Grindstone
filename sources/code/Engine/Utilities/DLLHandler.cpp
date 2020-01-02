@@ -29,7 +29,7 @@ void *DLLHandler::getFunction(std::string name) {
 	#endif
 	
 	if (!fn) {
-		throw std::runtime_error("Error loading function.\n");
+		GRIND_ERROR("Error loading function '{0}'", name);
 		return nullptr;
 	}
 

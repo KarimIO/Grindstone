@@ -79,7 +79,7 @@ namespace Grindstone {
 			wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)
 				wglGetProcAddress("wglSwapIntervalEXT");
 			if (wglSwapIntervalEXT != NULL)
-				wglSwapIntervalEXT(vsync);
+				wglSwapIntervalEXT(vsync_);
 
 
 			if (!hRC)

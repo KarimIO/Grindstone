@@ -57,10 +57,12 @@ namespace Grindstone {
 			Display *xDisplay;
 			Window xWindow;
 #endif
-			InputInterface *input;
-			const char *title;
-			uint32_t width;
-			uint32_t height;
+			InputInterface *input_;
+			const char *title_;
+			uint32_t width_;
+			uint32_t height_;
+			bool debug_;
+			bool vsync_;
 
 		public:
 			enum class WindowClosingState {
@@ -82,15 +84,15 @@ namespace Grindstone {
 			virtual void setTitle(const char *title);
 			virtual char *getSavePath(const char *filter, const char *default_ext);
 			virtual char *getLoadPath(const char *filter, const char *default_ext);
-
 			// Interfaces
 		public:
 			virtual ~GraphicsWrapper() {};
+			virtual void getSwapChainRenderTargets(RenderTarget **&rts, uint32_t &rt_count) = 0;
 			virtual void setViewport(uint16_t x, uint16_t y, uint16_t w, uint16_t h) = 0;
 
 			virtual void CreateDefaultStructures() = 0;
 
-			virtual void Clear(int mask) = 0;
+			virtual void Clear(ClearMode mask) = 0;
 			virtual void DeleteRenderTarget(RenderTarget * ptr) = 0;
 			virtual void DeleteDepthTarget(DepthTarget * ptr) = 0;
 			virtual void DeleteFramebuffer(Framebuffer *ptr) = 0;
@@ -124,11 +126,13 @@ namespace Grindstone {
 			virtual DepthTarget *CreateDepthTarget(DepthTargetCreateInfo rt) = 0;
 			virtual void CopyToDepthBuffer(DepthTarget *p) = 0;
 
-			virtual bool SupportsCommandBuffers() = 0;
-			virtual bool SupportsTesselation() = 0;
-			virtual bool SupportsGeometryShader() = 0;
-			virtual bool SupportsComputeShader() = 0;
-			virtual bool SupportsMultiDrawIndirect() = 0;
+			virtual const bool shouldUseImmediateMode() = 0;
+			virtual const bool supportsCommandBuffers() = 0;
+			virtual const bool supportsTesselation() = 0;
+			virtual const bool supportsGeometryShader() = 0;
+			virtual const bool supportsComputeShader() = 0;
+			virtual const bool supportsMultiDrawIndirect() = 0;
+
 			virtual void BindDefaultFramebuffer(bool depth) = 0;
 
 			virtual uint32_t GetImageIndex() = 0;

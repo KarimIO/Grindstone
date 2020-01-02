@@ -350,7 +350,7 @@ bool ModelManager::loadModel(ModelStatic &model) {
 	ibci.count = static_cast<uint32_t>(indices.size());
 	ibci.size = static_cast<uint32_t>(sizeof(uint32_t) * indices.size());
 
-	if (graphics_wrapper->SupportsCommandBuffers()) {
+	if (graphics_wrapper->supportsCommandBuffers()) {
 		model.vertex_buffer = graphics_wrapper->CreateVertexBuffer(vbci);
 		model.index_buffer = graphics_wrapper->CreateIndexBuffer(ibci);
 	}

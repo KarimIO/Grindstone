@@ -61,13 +61,13 @@ void APIENTRY glDebugOutput(GLenum source,
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		GLGraphicsWrapper::GLGraphicsWrapper(InstanceCreateInfo createInfo) {
-			debug = createInfo.debug;
-			vsync = createInfo.vsync;
-			width = createInfo.width;
-			height = createInfo.height;
-			title = createInfo.title;
-			input = createInfo.inputInterface;
+		GLGraphicsWrapper::GLGraphicsWrapper(InstanceCreateInfo ci) {
+			debug_ = ci.debug;
+			vsync_ = ci.vsync;
+			width_ = ci.width;
+			height_ = ci.height;
+			title_ = ci.title;
+			input_ = ci.inputInterface;
 
 			std::cout << "About to initialize context...\n";
 			if (!InitializeWindowContext())
@@ -86,7 +86,7 @@ namespace Grindstone {
 
 			printf("OpenGL %s initialized using GLSL %s.\n\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-			if (debug) {
+			if (debug_) {
 				GLint flags;
 				glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
 				if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
@@ -105,7 +105,7 @@ namespace Grindstone {
 			printf("OpenGL Initialized!\n===================================\n");
 		}
 
-		void GLGraphicsWrapper::Clear(int mask) {
+		void GLGraphicsWrapper::Clear(ClearMode mask) {
 			int m = ((mask & ClearMode::Depth) != 0) ? GL_DEPTH_BUFFER_BIT : 0;
 			m = m | (((mask & ClearMode::Color) != 0) ? GL_COLOR_BUFFER_BIT : 0);
 			glClear(m);
@@ -202,6 +202,10 @@ namespace Grindstone {
 			delete (GLVertexArrayObject *)ptr;
 		}
 
+		void GLGraphicsWrapper::getSwapChainRenderTargets(RenderTarget **& rts, uint32_t & rt_count)
+		{
+		}
+
 		void GLGraphicsWrapper::setViewport(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
 			glViewport(x, y, w, h);
 			glScissor(x, y, w, h);
@@ -272,23 +276,27 @@ namespace Grindstone {
 			return 0;
 		}
 
-		bool GLGraphicsWrapper::SupportsCommandBuffers() {
+		const bool GLGraphicsWrapper::shouldUseImmediateMode() {
+			return true;
+		}
+
+		const bool GLGraphicsWrapper::supportsCommandBuffers() {
 			return false;
 		}
 
-		bool GLGraphicsWrapper::SupportsTesselation() {
+		const bool GLGraphicsWrapper::supportsTesselation() {
 			return gl3wIsSupported(4, 0) ? true : false;
 		}
 
-		bool GLGraphicsWrapper::SupportsGeometryShader() {
+		const bool GLGraphicsWrapper::supportsGeometryShader() {
 			return gl3wIsSupported(3, 2) ? true : false;
 		}
 
-		bool GLGraphicsWrapper::SupportsComputeShader() {
+		const bool GLGraphicsWrapper::supportsComputeShader() {
 			return gl3wIsSupported(4, 3) ? true : false;
 		}
 
-		bool GLGraphicsWrapper::SupportsMultiDrawIndirect() {
+		const bool GLGraphicsWrapper::supportsMultiDrawIndirect() {
 			return gl3wIsSupported(4, 3) ? true : false;
 		}
 

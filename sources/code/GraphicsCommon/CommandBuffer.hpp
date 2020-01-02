@@ -19,26 +19,12 @@ namespace Grindstone {
 			BindDescriptorSet,
 			CallCommandBuffer,
 			DrawVertices,
-			DrawVerticesIndexed
+			DrawVerticesIndices
 		};
 
 		class CommandBuffer {
 		public:
-
-			virtual void Reset() = 0;
-			virtual void Begin() = 0;
-			virtual void End() = 0;
-
-			virtual void SetCommandBuffer(uint16_t currentBuffer) = 0;
-
-			virtual void BindRenderPass(RenderPass *renderpass, Framebuffer **framebuffers, uint32_t framebufferCount) = 0;
-			virtual void UnbindRenderPass() = 0;
-			virtual void BindCommandBuffers(CommandBuffer **cmd, uint32_t numCommands) = 0;
-			virtual void BindGraphicsPipeline(GraphicsPipeline *pipeline) = 0;
-			virtual void BindTextureDescriptor(TextureBinding *binding) = 0;
-			virtual void BindUBODescriptor(UniformBufferBinding *binding) = 0;
-			virtual void BindBufferObjects(VertexBuffer *vb, IndexBuffer *ib, bool _useLargeBuffer) = 0;
-			virtual void DrawIndexed(int32_t _baseVertex, uint32_t _indexStart, uint32_t _count, uint32_t _numInstances) = 0;
+			virtual ~CommandBuffer() {};
 		};
 
 		struct CommandCreateInfo {
@@ -65,17 +51,27 @@ namespace Grindstone {
 
 		struct CommandBindRenderPass : public CommandCreateInfo {
 			RenderPass *renderPass;
-			Framebuffer **framebuffers;
-			uint32_t framebufferCount;
+			Framebuffer *framebuffer;
 			uint32_t width, height;
 			ClearColorValue *colorClearValues;
 			uint32_t colorClearCount;
 			ClearDepthStencil depthStencilClearValue;
 
 			CommandBindRenderPass() {};
-			CommandBindRenderPass(RenderPass *_renderPass) {
-				renderPass = _renderPass;
-
+			CommandBindRenderPass(RenderPass *_renderPass,
+				Framebuffer *_framebuffer,
+				uint32_t _width, 
+				uint32_t _height,
+				ClearColorValue *_colorClearValues,
+				uint32_t _colorClearCount,
+				ClearDepthStencil _depthStencilClearValue) :
+					renderPass(_renderPass),
+					framebuffer(_framebuffer),
+					width(_width),
+					height(_height),
+					colorClearValues(_colorClearValues),
+					colorClearCount(_colorClearCount),
+					depthStencilClearValue(_depthStencilClearValue) {
 				type = CommandBufferType::BindRenderPass;
 			};
 
@@ -105,14 +101,14 @@ namespace Grindstone {
 			GraphicsPipeline *graphicsPipeline;
 			UniformBuffer **uniformBuffers;
 			uint32_t uniformBufferCount;
-			Texture **textures;
+			TextureBinding **textureBindings;
 			uint32_t textureCount;
 			CommandBindDescriptorSets() {};
-			CommandBindDescriptorSets(GraphicsPipeline *gp, UniformBuffer **ubs, uint32_t _uboCount, Texture **_textures, uint32_t _textureCount) {
+			CommandBindDescriptorSets(GraphicsPipeline *gp, UniformBuffer **ubs, uint32_t _uboCount, TextureBinding **_textureBindings, uint32_t _textureCount) {
 				graphicsPipeline = gp;
 				uniformBuffers = ubs;
 				uniformBufferCount = _uboCount;
-				textures = _textures;
+				textureBindings = _textureBindings;
 				textureCount = _textureCount;
 				type = CommandBufferType::BindDescriptorSet;
 			};
@@ -149,25 +145,24 @@ namespace Grindstone {
 			};
 		};
 
-		struct CommandDrawIndexed : public CommandCreateInfo {
+		struct CommandDrawIndices : public CommandCreateInfo {
 			uint32_t indexStart;
 			uint32_t count;
 			uint32_t numInstances;
 			int32_t baseVertex;
-			CommandDrawIndexed() {};
-			CommandDrawIndexed(int32_t _baseVertex, uint32_t _indexStart, uint32_t _count, uint32_t _numInstances) {
+			CommandDrawIndices() {};
+			CommandDrawIndices(int32_t _baseVertex, uint32_t _indexStart, uint32_t _count, uint32_t _numInstances) {
 				indexStart = _indexStart;
 				count = _count;
 				numInstances = _numInstances;
 				baseVertex = _baseVertex;
-				type = CommandBufferType::DrawVerticesIndexed;
+				type = CommandBufferType::DrawVerticesIndices;
 			};
 		};
 
 		struct CommandBufferSecondaryInfo {
 			bool isSecondary;
-			Framebuffer **fbos;
-			uint32_t fboCount;
+			Framebuffer *framebuffer;
 			RenderPass *renderPass;
 		};
 

@@ -24,9 +24,6 @@ namespace Grindstone {
 
 		class GRAPHICS_EXPORT_CLASS GLGraphicsWrapper : public GraphicsWrapper {
 		private:
-			bool debug;
-			bool vsync;
-
 #if defined(GLFW_WINDOW)
 #elif defined(_WIN32)
 			HGLRC	hRC;
@@ -42,8 +39,11 @@ namespace Grindstone {
 
 			GLGraphicsWrapper(InstanceCreateInfo createInfo);
 			~GLGraphicsWrapper();
-			void Clear(int mask);
+			void Clear(ClearMode mask);
 			void CreateDefaultStructures();
+
+			virtual void getSwapChainRenderTargets(RenderTarget **&rts, uint32_t &rt_count) override;
+			void setViewport(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
 
 			virtual void DeleteRenderTarget(RenderTarget * ptr) override;
 			virtual void DeleteDepthTarget(DepthTarget * ptr) override;
@@ -59,8 +59,6 @@ namespace Grindstone {
 			virtual void DeleteTextureBindingLayout(TextureBindingLayout *ptr) override;
 			virtual void DeleteCommandBuffer(CommandBuffer * ptr) override;
 			virtual void DeleteVertexArrayObject(VertexArrayObject *ptr) override;
-
-			void setViewport(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
 
 			Framebuffer *CreateFramebuffer(FramebufferCreateInfo ci);
 			RenderPass *CreateRenderPass(RenderPassCreateInfo ci);
@@ -82,11 +80,12 @@ namespace Grindstone {
 
 			uint32_t GetImageIndex();
 
-			bool SupportsCommandBuffers();
-			bool SupportsTesselation();
-			bool SupportsGeometryShader();
-			bool SupportsComputeShader();
-			bool SupportsMultiDrawIndirect();
+			const bool shouldUseImmediateMode();
+			const bool supportsCommandBuffers();
+			const bool supportsTesselation();
+			const bool supportsGeometryShader();
+			const bool supportsComputeShader();
+			const bool supportsMultiDrawIndirect();
 
 			void WaitUntilIdle();
 			void DrawCommandBuffers(uint32_t imageIndex, CommandBuffer ** commandBuffers, uint32_t commandBufferCount);

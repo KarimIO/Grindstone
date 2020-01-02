@@ -148,6 +148,8 @@ void ControllerComponent::TurnPitch(double scale) {
 		ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
 		auto &trans = trans_system->getComponent(transform_id);
 
+		trans.quaternion_ = glm::quat(glm::vec3(float(sensitivity_ * scale), 0, 0)) * trans.quaternion_;
+
 		//trans.angles_.x += float(sensitivity_ * scale);
 
 		//if (trans.angles_.x < -2.4f / 2)	trans.angles_.x = -2.4f / 2;

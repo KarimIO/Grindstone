@@ -247,7 +247,7 @@ void TerrainDrawable::shadowDraw() {
 
 void TerrainDrawable::draw() {
 	auto graphics = engine.getGraphicsWrapper();
-	bool tess = graphics->SupportsTesselation() && engine.getSettings()->enable_tesselation_;
+	bool tess = graphics->supportsTesselation() && engine.getSettings()->enable_tesselation_;
 	/*GrindstoneGeometryType geom = tess ? GEOMETRY_PATCHES : Grindstone::GraphicsAPI::GeometryType::TriangleStrips;
 
 	engine.graphics->BindTextureBinding(heightmap_texture_binding_);

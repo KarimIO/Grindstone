@@ -1,8 +1,8 @@
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(Vk_CORE_SOURCES vkGraphicsWrapper.cpp VkGraphicsWindows.cpp VkGraphicsX11.cpp ../WindowModule/glfwWindow.cpp)
-set(Vk_CORE_HEADERS vkGraphicsWrapper.hpp)
-set(Vk_OBJ_SOURCES VkDepthTarget.cpp VkRenderTarget.cpp VkFramebuffer.cpp VkGraphicsPipeline.cpp VkTexture.cpp VkRenderPass.cpp VkVertexBuffer.cpp VkIndexBuffer.cpp VkUniformBuffer.cpp)
-set(Vk_OBJ_HEADERS VkDepthTarget.hpp VkRenderTarget.hpp VkFramebuffer.hpp VkGraphicsPipeline.hpp VkTexture.hpp VkRenderPass.hpp VkVertexBuffer.hpp VkIndexBuffer.hpp VkUniformBuffer.hpp)
+set(Vk_CORE_SOURCES VulkanGraphicsWrapper.cpp ../WindowModule/glfwWindow.cpp)
+set(Vk_CORE_HEADERS VulkanGraphicsWrapper.hpp)
+set(Vk_OBJ_SOURCES VulkanUtils.cpp VulkanFormat.cpp VulkanDepthTarget.cpp VulkanRenderTarget.cpp VulkanFramebuffer.cpp VulkanGraphicsPipeline.cpp VulkanTexture.cpp VulkanRenderPass.cpp VulkanVertexBuffer.cpp VulkanIndexBuffer.cpp VulkanUniformBuffer.cpp VulkanCommandBuffer.cpp)
+set(Vk_OBJ_HEADERS VulkanUtils.hpp VulkanFormat.hpp VulkanDepthTarget.hpp VulkanRenderTarget.hpp VulkanFramebuffer.hpp VulkanGraphicsPipeline.hpp VulkanTexture.hpp VulkanRenderPass.hpp VulkanVertexBuffer.hpp VulkanIndexBuffer.hpp VulkanUniformBuffer.hpp VulkanCommandBuffer.hpp)
 set(Vk_COMMON_HEADERS ../GraphicsCommon/DepthTarget.hpp ../GraphicsCommon/RenderTarget.hpp ../GraphicsCommon/CommandBuffer.hpp ../GraphicsCommon/Formats.hpp ../GraphicsCommon/VertexArrayObject.hpp ../GraphicsCommon/Framebuffer.hpp ../GraphicsCommon/GraphicsPipeline.hpp ../GraphicsCommon/GraphicsWrapper.hpp ../GraphicsCommon/IndexBuffer.hpp ../GraphicsCommon/RenderPass.hpp ../GraphicsCommon/Texture.hpp ../GraphicsCommon/UniformBuffer.hpp ../GraphicsCommon/VertexBuffer.hpp)
 
 if (WIN32)
@@ -37,5 +37,3 @@ else()
 endif()
 
 target_compile_definitions(graphicsvk PRIVATE GRAPHICS_DLL)
-
-target_link_libraries(graphicsvk vulkan-1)
