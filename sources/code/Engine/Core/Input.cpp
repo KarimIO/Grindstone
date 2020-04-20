@@ -2,8 +2,8 @@
 #include "Engine.hpp"
 #include "Utilities.hpp"
 
-#include "../GraphicsCommon/GraphicsWrapper.hpp"
-#include "AssetManagers/ImguiManager.hpp"
+#include <GraphicsCommon/GraphicsWrapper.hpp>
+#include <WindowModule/BaseWindow.hpp>
 
 InputManager::InputManager() {
 	GRIND_PROFILE_FUNC();
@@ -32,9 +32,6 @@ InputManager::InputManager() {
 
 	AddControl("f7", "RefreshAll", NULL, 1);
 	BindAction("RefreshAll", NULL, &engine, &Engine::refreshAll, KEY_RELEASED);
-
-	AddControl("f8", "Editor", NULL, 1);
-	BindAction("Editor", NULL, &engine, &Engine::editorControl, KEY_RELEASED);
 
 	AddControl("f9", "ProfileFrame", NULL, 1);
 	BindAction("ProfileFrame", NULL, &engine, &Engine::profileFrame, KEY_RELEASED);
@@ -433,8 +430,8 @@ void InputManager::SetMousePosition(int x, int y) {
 	}
 }
 
-void InputManager::GetMousePosition(int &x, int &y) {
-	engine.getGraphicsWrapper()->GetCursor(x, y);
+void InputManager::GetMousePosition(unsigned int &x, unsigned int &y) {
+	engine.getWindow()->getMousePos(x, y);
 }
 
 int InputManager::GetKey(int k) {
@@ -484,7 +481,7 @@ void InputManager::SetMouseButton(int mb, bool state) {
 			}
 		}
 
-		engine.getImguiManager()->MouseButtonCallback(mb, state, 0);
+		//engine.getImguiManager()->MouseButtonCallback(mb, state, 0);
 	}
 
 	if (mb >= MOUSE_WHEEL_UP && mb <= MOUSE_WHEEL_RIGHT) {
@@ -500,7 +497,7 @@ void InputManager::SetMouseButton(int mb, bool state) {
 		double y = (mb == MOUSE_WHEEL_UP) - (mb == MOUSE_WHEEL_DOWN);
 		double x = (mb == MOUSE_WHEEL_RIGHT) - (mb == MOUSE_WHEEL_LEFT);
 		
-		engine.getImguiManager()->ScrollCallback(x, y);
+		//engine.getImguiManager()->ScrollCallback(x, y);
 	}
 }
 
@@ -581,12 +578,12 @@ void InputManager::SetKey(int key, bool state) {
 			container = container->nextControl;
 		}
 
-		engine.getImguiManager()->KeyCallback(key, state);
+		//engine.getImguiManager()->KeyCallback(key, state);
 	}
 }
 
 void InputManager::Quit() {
-	engine.getGraphicsWrapper()->Close();
+	engine.getWindow()->close();
 }
 
 void InputManager::ForceQuit() {
@@ -595,7 +592,7 @@ void InputManager::ForceQuit() {
 
 void InputManager::LoopControls(double deltaTime) {
 	GRIND_PROFILE_FUNC();
-	if (!IsFocused() || (engine.edit_mode_ && !engine.edit_is_simulating_))
+	if (!IsFocused())
 		return;
 
 	for (size_t i = 0; i <= MOUSE_MOUSE5; i++) {
@@ -623,8 +620,7 @@ void InputManager::LoopControls(double deltaTime) {
 	}
 
 	auto sett = engine.getSettings();
-	if (!engine.edit_mode_)
-		engine.getGraphicsWrapper()->SetCursor(sett->resolution_x_ / 2, sett->resolution_y_ / 2);
+	engine.getWindow()->setMousePos(sett->resolution_x_ / 2, sett->resolution_y_ / 2);
 }
 
 ControlHandler::ControlHandler(std::string controlCode, InputComponent * componentPtr, ControlHandler * prev, double val) {

@@ -9,12 +9,18 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		class GLVertexBuffer : public VertexBuffer {
 		private:
-			GLuint buffer;
+			uint32_t size_;
+			GLuint buffer_;
+			VertexBufferLayout layout_;
 		public:
 			GLVertexBuffer(VertexBufferCreateInfo createInfo);
 			~GLVertexBuffer();
 
-			void Bind();
+			VertexBufferLayout &getLayout();
+
+			virtual void updateBuffer(void *content);
+
+			void bind();
 		};
 	}
 }

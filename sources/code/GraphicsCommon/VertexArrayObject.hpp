@@ -7,16 +7,16 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		struct VertexArrayObjectCreateInfo {
-			VertexBuffer *vertexBuffer;
-			IndexBuffer *indexBuffer;
+			VertexBuffer** vertex_buffers;
+			uint32_t vertex_buffer_count;
+			IndexBuffer* index_buffer;
 		};
 
 		class VertexArrayObject {
 		public:
 			virtual ~VertexArrayObject() {};
-			virtual void Bind() {};
-			virtual void BindResources(VertexArrayObjectCreateInfo createInfo) {};
-			virtual void Unbind() {};
+			virtual void Bind() = 0;
+			virtual void Unbind() = 0;
 		};
 	};
 };

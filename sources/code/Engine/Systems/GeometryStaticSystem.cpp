@@ -23,11 +23,11 @@ void MeshStatic::ShadowDraw() {
 			auto entityID = renderComponent.entity_id;
 			auto transform = engine.transformSystem.components[entityID];
 
-			engine.ubo2->UpdateUniformBuffer(&transform.GetModelMatrix());
+			engine.ubo2->updateBuffer(&transform.GetModelMatrix());
 			engine.ubo2->Bind();
 
-			engine.graphics_wrapper_->BindVertexArrayObject(model->Grindstone::GraphicsAPI::VertexArrayObject);
-			engine.graphics_wrapper_->DrawImmediateIndexed(Grindstone::GraphicsAPI::GeometryType::Triangles, true, BaseVertex, BaseIndex, NumIndices);
+			engine.graphics_wrapper_->bindVertexArrayObject(model->Grindstone::GraphicsAPI::VertexArrayObject);
+			engine.graphics_wrapper_->drawImmediateIndexed(Grindstone::GraphicsAPI::GeometryType::Triangles, true, BaseVertex, BaseIndex, NumIndices);
 		//}
 	}
 }
@@ -39,11 +39,11 @@ void MeshStatic::Draw() {
 			auto entityID = renderComponent.entity_id;
 			auto transform = engine.transformSystem.components[entityID];
 
-			engine.ubo2->UpdateUniformBuffer(&transform.GetModelMatrix());
+			engine.ubo2->updateBuffer(&transform.GetModelMatrix());
 			engine.ubo2->Bind();
 
-			engine.graphics_wrapper_->BindVertexArrayObject(model->Grindstone::GraphicsAPI::VertexArrayObject);
-			engine.graphics_wrapper_->DrawImmediateIndexed(Grindstone::GraphicsAPI::GeometryType::TriangleStrips, true, BaseVertex, BaseIndex, NumIndices);
+			engine.graphics_wrapper_->bindVertexArrayObject(model->Grindstone::GraphicsAPI::VertexArrayObject);
+			engine.graphics_wrapper_->drawImmediateIndexed(Grindstone::GraphicsAPI::GeometryType::TriangleStrips, true, BaseVertex, BaseIndex, NumIndices);
 		//}
 	}
 }
@@ -223,16 +223,16 @@ void SGeometryStatic::LoadModel(CModelStatic *model) {
 	ibci.size = static_cast<uint32_t>(sizeof(uint32_t) * indices.size());
 
 	if (graphics_wrapper_->SupportsCommandBuffers()) {
-		model->Grindstone::GraphicsAPI::VertexBuffer = graphics_wrapper_->CreateVertexBuffer(vbci);
-		model->indexBuffer = graphics_wrapper_->CreateIndexBuffer(ibci);
+		model->Grindstone::GraphicsAPI::VertexBuffer = graphics_wrapper_->createVertexBuffer(vbci);
+		model->indexBuffer = graphics_wrapper_->createIndexBuffer(ibci);
 	}
 	else {
 		Grindstone::GraphicsAPI::VertexArrayObjectCreateInfo vaci;
 		vaci.vertexBuffer = model->Grindstone::GraphicsAPI::VertexBuffer;
 		vaci.indexBuffer = model->indexBuffer;
-		model->Grindstone::GraphicsAPI::VertexArrayObject = graphics_wrapper_->CreateVertexArrayObject(vaci);
-		model->Grindstone::GraphicsAPI::VertexBuffer = graphics_wrapper_->CreateVertexBuffer(vbci);
-		model->indexBuffer = graphics_wrapper_->CreateIndexBuffer(ibci);
+		model->Grindstone::GraphicsAPI::VertexArrayObject = graphics_wrapper_->createVertexArrayObject(vaci);
+		model->Grindstone::GraphicsAPI::VertexBuffer = graphics_wrapper_->createVertexBuffer(vbci);
+		model->indexBuffer = graphics_wrapper_->createIndexBuffer(ibci);
 
 		vaci.vertexBuffer = model->Grindstone::GraphicsAPI::VertexBuffer;
 		vaci.indexBuffer = model->indexBuffer;
@@ -243,9 +243,9 @@ void SGeometryStatic::LoadModel(CModelStatic *model) {
 		/*Grindstone::GraphicsAPI::VertexArrayObjectCreateInfo vaci;
 		vaci.vertexBuffer = model->shadowGrindstone::GraphicsAPI::VertexBuffer;
 		vaci.indexBuffer = model->indexBuffer;
-		model->shadowGrindstone::GraphicsAPI::VertexArrayObject = graphics_wrapper_->CreateVertexArrayObject(vaci);
-		model->shadowGrindstone::GraphicsAPI::VertexBuffer = graphics_wrapper_->CreateVertexBuffer(svbci);
-		model->indexBuffer = graphics_wrapper_->CreateIndexBuffer(ibci);
+		model->shadowGrindstone::GraphicsAPI::VertexArrayObject = graphics_wrapper_->createVertexArrayObject(vaci);
+		model->shadowGrindstone::GraphicsAPI::VertexBuffer = graphics_wrapper_->createVertexBuffer(svbci);
+		model->indexBuffer = graphics_wrapper_->createIndexBuffer(ibci);
 
 		vaci.vertexBuffer = model->shadowGrindstone::GraphicsAPI::VertexBuffer;
 		vaci.indexBuffer = model->indexBuffer;
@@ -320,17 +320,17 @@ SGeometryStatic::~SGeometryStatic() {
 	if (graphics_wrapper_) {
 		if (graphics_wrapper_->SupportsCommandBuffers()) {
 			for (size_t i = 0; i < models.size(); i++) {
-				graphics_wrapper_->DeleteCommandBuffer(models[i].commandBuffer);
-				graphics_wrapper_->DeleteVertexBuffer(models[i].vertexBuffer);
-				graphics_wrapper_->DeleteIndexBuffer(models[i].indexBuffer);
+				graphics_wrapper_->deleteCommandBuffer(models[i].commandBuffer);
+				graphics_wrapper_->deleteVertexBuffer(models[i].vertexBuffer);
+				graphics_wrapper_->deleteIndexBuffer(models[i].indexBuffer);
 			}
 		}
 		else {
 			for (size_t i = 0; i < models.size(); i++) {
-				graphics_wrapper_->DeleteVertexArrayObject(models[i].Grindstone::GraphicsAPI::VertexArrayObject);
-				//graphics_wrapper_->DeleteVertexArrayObject(models[i].shadowGrindstone::GraphicsAPI::VertexArrayObject);
-				graphics_wrapper_->DeleteVertexBuffer(models[i].vertexBuffer);
-				graphics_wrapper_->DeleteIndexBuffer(models[i].indexBuffer);
+				graphics_wrapper_->deleteVertexArrayObject(models[i].Grindstone::GraphicsAPI::VertexArrayObject);
+				//graphics_wrapper_->deleteVertexArrayObject(models[i].shadowGrindstone::GraphicsAPI::VertexArrayObject);
+				graphics_wrapper_->deleteVertexBuffer(models[i].vertexBuffer);
+				graphics_wrapper_->deleteIndexBuffer(models[i].indexBuffer);
 			}
 		}
 	}

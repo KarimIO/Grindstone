@@ -1,5 +1,5 @@
 #include "PostProcessTonemap.hpp"
-#include "GraphicsWrapper.hpp"
+#include <GraphicsCommon/GraphicsWrapper.hpp>
 #include "../Core/Engine.hpp"
 #include <glm/glm.hpp>
 #include "Utilities/SettingsFile.hpp"
@@ -40,21 +40,22 @@ void PostProcessTonemap::Process() {
 	}
 
 	effect_buffer_.time = (float)engine.getTimeCurrent();
-	effect_ub_->UpdateUniformBuffer(&effect_buffer_);
+	effect_ub_->updateBuffer(&effect_buffer_);
 
     gpipeline_->Bind();
     effect_ub_->Bind();
 	if (target_ == nullptr) {
-		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
-		engine.getGraphicsWrapper()->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
+		engine.getGraphicsWrapper()->bindDefaultFramebuffer(true);
+		float col[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		engine.getGraphicsWrapper()->clear(Grindstone::GraphicsAPI::ClearMode::ColorAndDepth, col, 1.0f, 0);
 	} 
 	else {
 		target_->framebuffer->BindWrite(true);
-		//target_->framebuffer->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
+		//target_->framebuffer->Clear(Grindstone::GraphicsAPI::ClearMode::ColorAndDepth);
 	}
     source_->framebuffer->BindRead();
     source_->framebuffer->BindTextures(4);
-    engine.getGraphicsWrapper()->DrawImmediateVertices(0, 6);
+    engine.getGraphicsWrapper()->drawImmediateVertices(Grindstone::GraphicsAPI::GeometryType::Triangles, 0, 6);
 }
 
 void PostProcessTonemap::resizeBuffers(unsigned int w, unsigned h)
@@ -71,15 +72,15 @@ void PostProcessTonemap::reloadGraphics(unsigned int w, unsigned h) {
 	ubbci.shaderLocation = "EffectUBO";
 	ubbci.size = sizeof(EffectUBO);
 	ubbci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
-	ubb_ = graphics_wrapper->CreateUniformBufferBinding(ubbci);
+	ubb_ = graphics_wrapper->createUniformBufferBinding(ubbci);
 
 	Grindstone::GraphicsAPI::UniformBufferCreateInfo ubci;
 	ubci.isDynamic = false;
 	ubci.size = sizeof(EffectUBO);
 	ubci.binding = ubb_;
-	effect_ub_ = graphics_wrapper->CreateUniformBuffer(ubci);
+	effect_ub_ = graphics_wrapper->createUniformBuffer(ubci);
 
-	effect_ub_->UpdateUniformBuffer(&effect_buffer_);
+	effect_ub_->updateBuffer(&effect_buffer_);
 
 	Grindstone::GraphicsAPI::ShaderStageCreateInfo stages[2];
 
@@ -113,15 +114,12 @@ void PostProcessTonemap::reloadGraphics(unsigned int w, unsigned h) {
 	stages[1].size = (uint32_t)ffile.size();
 	stages[1].type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
-	auto vbd = engine.getPlaneVBD();
-	auto vad = engine.getPlaneVAD();
+	auto vertex_layout = engine.getPlaneVertexLayout();
 
 	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo tonemapGPCI;
 	tonemapGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
-	tonemapGPCI.bindings = &vbd;
-	tonemapGPCI.bindingsCount = 1;
-	tonemapGPCI.attributes = &vad;
-	tonemapGPCI.attributesCount = 1;
+	tonemapGPCI.vertex_bindings = &vertex_layout;
+	tonemapGPCI.vertex_bindings_count = 1;
 	tonemapGPCI.width = (float)w;
 	tonemapGPCI.height = (float)h;
 	tonemapGPCI.scissorW = w;
@@ -137,31 +135,31 @@ void PostProcessTonemap::reloadGraphics(unsigned int w, unsigned h) {
 	tblci.bindings = tonemap_sub_binding_;
 	tblci.bindingCount = 1;
 	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
-	tonemap_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
+	tonemap_tbl_ = graphics_wrapper->createTextureBindingLayout(tblci);
 
 	tonemapGPCI.textureBindings = &tonemap_tbl_;
 	tonemapGPCI.textureBindingCount = 1;
 	tonemapGPCI.uniformBufferBindings = &ubb_;
 	tonemapGPCI.uniformBufferBindingCount = 1;
-	gpipeline_ = graphics_wrapper->CreateGraphicsPipeline(tonemapGPCI);
+	gpipeline_ = graphics_wrapper->createGraphicsPipeline(tonemapGPCI);
 }
 
 void PostProcessTonemap::destroyGraphics() {
 	Grindstone::GraphicsAPI::GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 	if (gpipeline_) {
-		graphics_wrapper->DeleteGraphicsPipeline(gpipeline_);
+		graphics_wrapper->deleteGraphicsPipeline(gpipeline_);
 		gpipeline_ = nullptr;
 	}
 	if (effect_ub_) {
-		graphics_wrapper->DeleteUniformBuffer(effect_ub_);
+		graphics_wrapper->deleteUniformBuffer(effect_ub_);
 		effect_ub_ = nullptr;
 	}
 	if (ubb_) {
-		graphics_wrapper->DeleteUniformBufferBinding(ubb_);
+		graphics_wrapper->deleteUniformBufferBinding(ubb_);
 		ubb_ = nullptr;
 	}
 	if (tonemap_tbl_) {
-		graphics_wrapper->DeleteTextureBindingLayout(tonemap_tbl_);
+		graphics_wrapper->deleteTextureBindingLayout(tonemap_tbl_);
 		tonemap_tbl_ = nullptr;
 	}
 

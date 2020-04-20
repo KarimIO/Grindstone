@@ -44,47 +44,38 @@ CameraSubSystem::~CameraSubSystem() {}
 
 void CameraSystem::update() {
 	GRIND_PROFILE_FUNC();
-	bool ed = engine.edit_mode_;
-	bool sim = engine.edit_is_simulating_;
-	if (!ed || sim) {
-		for (auto &scene : engine.getScenes()) {
-			for (auto &space : scene->spaces_) {
-				TransformSubSystem *transformsub = (TransformSubSystem *)space->getSubsystem(COMPONENT_TRANSFORM);
-				CameraSubSystem *subsystem = (CameraSubSystem *)space->getSubsystem(system_type_);
-				for (auto &comp : subsystem->components_) {
-					ComponentHandle transformc = space->getObject(comp.game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
 
-					glm::vec3 pos = transformsub->getPosition(transformc);
-					glm::vec3 fwd = transformsub->getForward(transformc);
-					glm::vec3 up = transformsub->getUp(transformc);
+	for (auto space : engine.getSpaces()) {
+		TransformSubSystem *transformsub = (TransformSubSystem *)space->getSubsystem(COMPONENT_TRANSFORM);
+		CameraSubSystem *subsystem = (CameraSubSystem *)space->getSubsystem(system_type_);
+		for (auto &comp : subsystem->components_) {
+			ComponentHandle transformc = space->getObject(comp.game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
 
-					comp.camera_.setPosition(pos);
-					comp.camera_.setDirections(fwd, up);
-					comp.camera_.render();
-				}
-			}
+			glm::vec3 pos = transformsub->getPosition(transformc);
+			glm::vec3 fwd = transformsub->getForward(transformc);
+			glm::vec3 up = transformsub->getUp(transformc);
+
+			comp.camera_.setPosition(pos);
+			comp.camera_.setDirections(fwd, up);
+			comp.camera_.render();
 		}
 	}
 }
 
 void CameraSystem::loadGraphics() {
-	for (auto & scene : engine.getScenes()) {
-		for (auto space : scene->spaces_) {
-			CameraSubSystem *sub = (CameraSubSystem *)space->getSubsystem(COMPONENT_CAMERA);
-			for (auto &c : sub->components_) {
-				c.camera_.reloadGraphics();
-			}
+	for (auto space : engine.getSpaces()) {
+		CameraSubSystem *sub = (CameraSubSystem *)space->getSubsystem(COMPONENT_CAMERA);
+		for (auto &c : sub->components_) {
+			c.camera_.reloadGraphics();
 		}
 	}
 }
 
 void CameraSystem::destroyGraphics() {
-	for (auto & scene : engine.getScenes()) {
-		for (auto space : scene->spaces_) {
-			CameraSubSystem *sub = (CameraSubSystem *)space->getSubsystem(COMPONENT_CAMERA);
-			for (auto &c : sub->components_) {
-				c.camera_.destroyGraphics();
-			}
+	for (auto space : engine.getSpaces()) {
+		CameraSubSystem *sub = (CameraSubSystem *)space->getSubsystem(COMPONENT_CAMERA);
+		for (auto &c : sub->components_) {
+			c.camera_.destroyGraphics();
 		}
 	}
 }

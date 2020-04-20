@@ -26,6 +26,12 @@ namespace Grindstone {
 			vkFreeMemory(device, stagingBufferMemory, nullptr);
 		}
 
+		VulkanIndexBuffer::~VulkanIndexBuffer() {
+			VkDevice device = VulkanGraphicsWrapper::get().getDevice();
+			vkDestroyBuffer(device, buffer_, nullptr);
+			vkFreeMemory(device, memory_, nullptr);
+		}
+
 		VkBuffer VulkanIndexBuffer::getBuffer() {
 			return buffer_;
 		}

@@ -72,7 +72,7 @@ std::vector<CommandBuffer*> SModel::GetCommandBuffers() {
 
 /*void Mesh::Draw() {
 Grindstone::GraphicsAPI::VertexArrayObject->Bind();
-engine.graphics_wrapper_->DrawGrindstone::GraphicsAPI::VertexArrayObject(true, BaseVertex, BaseIndex, NumIndices);
+engine.graphics_wrapper_->drawGrindstone::GraphicsAPI::VertexArrayObject(true, BaseVertex, BaseIndex, NumIndices);
 }*/
 
 bool SModel::LoadModel3DFile(const char *szPath, CModel *model) {
@@ -145,16 +145,16 @@ bool SModel::LoadModel3DFile(const char *szPath, CModel *model) {
 	ibci.size = static_cast<uint32_t>(sizeof(uint32_t) * indices.size());
 
 	if (graphics_wrapper_->SupportsCommandBuffers()) {
-		model->Grindstone::GraphicsAPI::VertexBuffer = graphics_wrapper_->CreateVertexBuffer(vbci);
-		model->indexBuffer = graphics_wrapper_->CreateIndexBuffer(ibci);
+		model->Grindstone::GraphicsAPI::VertexBuffer = graphics_wrapper_->createVertexBuffer(vbci);
+		model->indexBuffer = graphics_wrapper_->createIndexBuffer(ibci);
 	}
 	else {
 		Grindstone::GraphicsAPI::VertexArrayObjectCreateInfo vaci;
 		vaci.vertexBuffer = model->Grindstone::GraphicsAPI::VertexBuffer;
 		vaci.indexBuffer = model->indexBuffer;
-		model->Grindstone::GraphicsAPI::VertexArrayObject = graphics_wrapper_->CreateVertexArrayObject(vaci);
-		model->Grindstone::GraphicsAPI::VertexBuffer = graphics_wrapper_->CreateVertexBuffer(vbci);
-		model->indexBuffer = graphics_wrapper_->CreateIndexBuffer(ibci);
+		model->Grindstone::GraphicsAPI::VertexArrayObject = graphics_wrapper_->createVertexArrayObject(vaci);
+		model->Grindstone::GraphicsAPI::VertexBuffer = graphics_wrapper_->createVertexBuffer(vbci);
+		model->indexBuffer = graphics_wrapper_->createIndexBuffer(ibci);
 
 		vaci.vertexBuffer = model->Grindstone::GraphicsAPI::VertexBuffer;
 		vaci.indexBuffer = model->indexBuffer;
@@ -191,23 +191,23 @@ void SModel::AddComponent(unsigned int entID, unsigned int &target) {
 void SModel::Shutdown() {
 	if (graphics_wrapper_->SupportsCommandBuffers()) {
 		for (size_t i = 0; i < models.size(); i++) {
-			graphics_wrapper_->DeleteCommandBuffer(models[i].commandBuffer);
-			graphics_wrapper_->DeleteVertexBuffer(models[i].vertexBuffer);
-			graphics_wrapper_->DeleteIndexBuffer(models[i].indexBuffer);
+			graphics_wrapper_->deleteCommandBuffer(models[i].commandBuffer);
+			graphics_wrapper_->deleteVertexBuffer(models[i].vertexBuffer);
+			graphics_wrapper_->deleteIndexBuffer(models[i].indexBuffer);
 		}
 	}
 	else {
 		for (size_t i = 0; i < models.size(); i++) {
-			graphics_wrapper_->DeleteVertexArrayObject(models[i].Grindstone::GraphicsAPI::VertexArrayObject);
-			graphics_wrapper_->DeleteVertexBuffer(models[i].vertexBuffer);
-			graphics_wrapper_->DeleteIndexBuffer(models[i].indexBuffer);
+			graphics_wrapper_->deleteVertexArrayObject(models[i].Grindstone::GraphicsAPI::VertexArrayObject);
+			graphics_wrapper_->deleteVertexBuffer(models[i].vertexBuffer);
+			graphics_wrapper_->deleteIndexBuffer(models[i].indexBuffer);
 		}
 	}
 }
 
 void Mesh::Draw() {
-	engine.graphics_wrapper_->BindVertexArrayObject(model->Grindstone::GraphicsAPI::VertexArrayObject);
-	engine.graphics_wrapper_->DrawImmediateIndexed(true, BaseVertex, BaseIndex, NumIndices);
+	engine.graphics_wrapper_->bindVertexArrayObject(model->Grindstone::GraphicsAPI::VertexArrayObject);
+	engine.graphics_wrapper_->drawImmediateIndexed(true, BaseVertex, BaseIndex, NumIndices);
 }
 
 void Mesh::DrawDeferred(CommandBuffer *cmd) {

@@ -8,7 +8,7 @@ namespace Grindstone {
 		class VulkanVertexBuffer : public VertexBuffer {
 		public:
 			VulkanVertexBuffer(VertexBufferCreateInfo ci);
-			virtual ~VulkanVertexBuffer() {};
+			virtual ~VulkanVertexBuffer() override;
 		public:
 			VkBuffer getBuffer();
 		private:

@@ -16,7 +16,7 @@ namespace Grindstone {
 			VkFramebuffer getFramebuffer();
 		public:
 			virtual float getExposure(int i) override;
-			virtual void Clear(int mask) override;
+			virtual void Clear(ClearMode mask) override;
 			virtual void CopyFrom(Framebuffer *) override;
 			virtual void BindWrite(bool depth) override;
 			virtual void BindTextures(int i) override;

@@ -1,5 +1,5 @@
 #include "../Core/Engine.hpp"
-#include <GraphicsWrapper.hpp>
+#include <GraphicsCommon/GraphicsWrapper.hpp>
 #include "Core/Utilities.hpp"
 #include "PostProcessBloom.hpp"
 #include "PostProcessAutoExposure.hpp"
@@ -40,15 +40,12 @@ PostProcessBloom::PostProcessBloom(unsigned int w, unsigned h, PostPipeline *pip
 	stages[1].size = (uint32_t)ffile.size();
 	stages[1].type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
-	auto vbd = engine.getPlaneVBD();
-	auto vad = engine.getPlaneVAD();
+	auto vertex_layout = engine.getPlaneVertexLayout();
 
 	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo luminanceGPCI;
 	luminanceGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
-	luminanceGPCI.bindings = &vbd;
-	luminanceGPCI.bindingsCount = 1;
-	luminanceGPCI.attributes = &vad;
-	luminanceGPCI.attributesCount = 1;
+	luminanceGPCI.vertex_bindings = &vertex_layout;
+	luminanceGPCI.vertex_bindings_count = 1;
 	luminanceGPCI.width = (float)1024;
 	luminanceGPCI.height = (float)1024;
 	luminanceGPCI.scissorW = 1024;
@@ -64,14 +61,14 @@ PostProcessBloom::PostProcessBloom(unsigned int w, unsigned h, PostPipeline *pip
 	tblci.bindings = tonemap_sub_binding_;
 	tblci.bindingCount = 1;
 	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
-	Grindstone::GraphicsAPI::TextureBindingLayout *tonemap_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
+	Grindstone::GraphicsAPI::TextureBindingLayout *tonemap_tbl_ = graphics_wrapper->createTextureBindingLayout(tblci);
 
 
 	luminanceGPCI.textureBindings = &tonemap_tbl_;
 	luminanceGPCI.textureBindingCount = 1;
 	luminanceGPCI.uniformBufferBindings = nullptr;
 	luminanceGPCI.uniformBufferBindingCount = 0;
-	gpipeline_ = graphics_wrapper->CreateGraphicsPipeline(luminanceGPCI);
+	gpipeline_ = graphics_wrapper->createGraphicsPipeline(luminanceGPCI);
 }
 
 PostProcessBloom::~PostProcessBloom()
@@ -81,12 +78,13 @@ PostProcessBloom::~PostProcessBloom()
 void PostProcessBloom::Process() {
 	GRIND_PROFILE_FUNC();
     gpipeline_->Bind();
-	engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
-	engine.getGraphicsWrapper()->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
-	//target_->framebuffer->BindWrite(true);
+	engine.getGraphicsWrapper()->bindDefaultFramebuffer(true);
+	float col[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	engine.getGraphicsWrapper()->clear(Grindstone::GraphicsAPI::ClearMode::ColorAndDepth, col, 1.0f, 0);
+	target_->framebuffer->BindWrite(true);
     source_->framebuffer->BindRead();
     source_->framebuffer->BindTextures(4);
-    engine.getGraphicsWrapper()->DrawImmediateVertices(0, 6);
+    engine.getGraphicsWrapper()->drawImmediateVertices(Grindstone::GraphicsAPI::GeometryType::Triangles, 0, 6);
 }
 
 void PostProcessBloom::resizeBuffers(unsigned int w, unsigned h)

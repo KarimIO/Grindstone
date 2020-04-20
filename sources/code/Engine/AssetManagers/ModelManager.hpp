@@ -5,10 +5,10 @@
 #include <vector>
 #include <map>
 #include "glm/glm.hpp"
-#include "../FormatCommon/Bounding.hpp"
-#include <IndexBuffer.hpp>
-#include <VertexArrayObject.hpp>
-#include <CommandBuffer.hpp>
+#include <FormatCommon/Bounding.hpp>
+#include <GraphicsCommon/IndexBuffer.hpp>
+#include <GraphicsCommon/VertexArrayObject.hpp>
+#include <GraphicsCommon/CommandBuffer.hpp>
 #include "AssetManagers/AssetReferences.hpp"
 #include "../AssetCommon/Renderable.hpp"
 
@@ -119,6 +119,7 @@ private:
 	void destroyModel(ModelReference ref);
 
 	bool loadModel(ModelStatic &model);
+	Grindstone::GraphicsAPI::VertexBufferLayout vertex_layout_;
 };
 
 #endif

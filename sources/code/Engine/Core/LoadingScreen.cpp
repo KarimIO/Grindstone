@@ -30,7 +30,7 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 	rpci.m_width = engine.settings.resolutionX;
 	rpci.m_height = engine.settings.resolutionY;
 	rpci.m_depthFormat = DepthFormat::DNONE;
-	render_pass_ = graphics_wrapper_->CreateRenderPass(rpci);
+	render_pass_ = graphics_wrapper_->createRenderPass(rpci);
 
 	GraphicsPipelineCreateInfo gpci;
 	gpci.scissorW = engine.settings.resolutionX;
@@ -84,7 +84,7 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 	tblci.bindings = &binding;
 	tblci.bindingCount = (uint32_t)1;
 	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
-	tbl_ = graphics_wrapper_->CreateTextureBindingLayout(tblci);
+	tbl_ = graphics_wrapper_->createTextureBindingLayout(tblci);
 
 	std::vector<Grindstone::GraphicsAPI::ShaderStageCreateInfo> stages = { vi, fi };
 	gpci.shaderStageCreateInfos = stages.data();
@@ -95,7 +95,7 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 	gpci.textureBindingCount = 1;
 	gpci.cullMode = Grindstone::GraphicsAPI::CullMode::None;
 	gpci.primitiveType = Grindstone::GraphicsAPI::GeometryType::Triangles;
-	pipeline_ = graphics_wrapper_->CreateGraphicsPipeline(gpci);
+	pipeline_ = graphics_wrapper_->createGraphicsPipeline(gpci);
 
 	int texWidth, texHeight, texChannels;
 	stbi_uc* pixels = stbi_load("../assets/materials/grindstone.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
@@ -112,7 +112,7 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 	createInfo.height = texHeight;
 	createInfo.ddscube = false;
 
-	texture_ = graphics_wrapper_->CreateTexture(createInfo);
+	texture_ = graphics_wrapper_->createTexture(createInfo);
 
 	stbi_image_free(pixels);
 
@@ -124,7 +124,7 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 	tbci.textures = &stb;
 	tbci.textureCount = 1;
 	tbci.layout = tbl_;
-	tb_ = graphics_wrapper_->CreateTextureBinding(tbci);
+	tb_ = graphics_wrapper_->createTextureBinding(tbci);
 
 	float planeVerts[4 * 6] = {
 		-1.0, -1.0,
@@ -147,27 +147,27 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 	Grindstone::GraphicsAPI::VertexArrayObjectCreateInfo vaci;
 	vaci.vertexBuffer = vbo_;
 	vaci.indexBuffer = nullptr;
-	vao_ = graphics_wrapper_->CreateVertexArrayObject(vaci);
-	vbo_ = graphics_wrapper_->CreateVertexBuffer(planeVboCI);
+	vao_ = graphics_wrapper_->createVertexArrayObject(vaci);
+	vbo_ = graphics_wrapper_->createVertexBuffer(planeVboCI);
 
 	vaci.vertexBuffer = vbo_;
 	vaci.indexBuffer = nullptr;
 	vao_->BindResources(vaci);
 	vao_->Unbind();
-	graphics_wrapper_->BindVertexArrayObject(vao_);
+	graphics_wrapper_->bindVertexArrayObject(vao_);
 
 	Grindstone::GraphicsAPI::UniformBufferBindingCreateInfo ubbci;
 	ubbci.binding = 0;
 	ubbci.shaderLocation = "UniformBufferObject";
 	ubbci.size = sizeof(loadUBO);
 	ubbci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
-	ubb_ = graphics_wrapper_->CreateUniformBufferBinding(ubbci);
+	ubb_ = graphics_wrapper_->createUniformBufferBinding(ubbci);
 
 	UniformBufferCreateInfo ubci;
 	ubci.isDynamic = false;
 	ubci.size = sizeof(loadUBO);
 	ubci.binding = ubb_;
-	ubo_ = graphics_wrapper_->CreateUniformBuffer(ubci);
+	ubo_ = graphics_wrapper_->createUniformBuffer(ubci);
 
 	loadUBO.aspect = (float)engine.settings.resolutionX / (float)engine.settings.resolutionY;
 	Render(0.0f);
@@ -175,19 +175,19 @@ LoadingScreen::LoadingScreen(GraphicsWrapper *gw) : graphics_wrapper_(gw) {
 
 void LoadingScreen::Render(double dt) {
 	loadUBO.time = (float)dt;
-	ubo_->UpdateUniformBuffer(&loadUBO);
+	ubo_->updateBuffer(&loadUBO);
 	ubo_->Bind();
 
-	graphics_wrapper_->BindDefaultFramebuffer(true);
-	graphics_wrapper_->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
+	graphics_wrapper_->bindDefaultFramebuffer(true);
+	graphics_wrapper_->clear(Grindstone::GraphicsAPI::ClearMode::ColorAndDepth);
 	pipeline_->Bind();
-	graphics_wrapper_->BindTextureBinding(tb_);
-	graphics_wrapper_->DrawImmediateVertices(0, 6);
-	graphics_wrapper_->SwapBuffer();
+	graphics_wrapper_->bindTextureBinding(tb_);
+	graphics_wrapper_->drawImmediateVertices(Grindstone::GraphicsAPI::GeometryType::Triangles, 0, 6);
+	graphics_wrapper_->swapBuffers();
 }
 
 LoadingScreen::~LoadingScreen() {
-	graphics_wrapper_->DeleteTexture(texture_);
-	graphics_wrapper_->DeleteGraphicsPipeline(pipeline_);
+	graphics_wrapper_->deleteTexture(texture_);
+	graphics_wrapper_->deleteGraphicsPipeline(pipeline_);
 }
 #endif

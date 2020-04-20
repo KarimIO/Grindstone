@@ -1,7 +1,7 @@
 #ifndef _SGEOMETRY_H
 #define _SGEOMETRY_H
 
-#include "../GraphicsCommon/GraphicsWrapper.hpp"
+#include <GraphicsCommon/GraphicsWrapper.hpp>
 #include "../GraphicsCommon/Texture.hpp"
 #include "../GraphicsCommon/CommandBuffer.hpp"
 #include "../GraphicsCommon/VertexArrayObject.hpp"

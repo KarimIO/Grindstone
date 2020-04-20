@@ -37,26 +37,23 @@ TransformSystem::TransformSystem() : System(COMPONENT_TRANSFORM) {
 
 void TransformSystem::update() {
 	GRIND_PROFILE_FUNC();
-	auto scenes = engine.getScenes();
-	for (auto scene : scenes) {
-		for (auto space : scene->spaces_) {
-			TransformSubSystem *subsystem = (TransformSubSystem *)space->getSubsystem(system_type_);
-			for (auto &component : subsystem->components_) {
-				// For every component, generate the Model Matrix:
-				// - Start with an Identity Matrix
-				component.model_ = glm::mat4(1);
+	for (auto space : engine.getSpaces()) {
+		TransformSubSystem *subsystem = (TransformSubSystem *)space->getSubsystem(system_type_);
+		for (auto &component : subsystem->components_) {
+			// For every component, generate the Model Matrix:
+			// - Start with an Identity Matrix
+			component.model_ = glm::mat4(1);
 
-				// - Move in to the correct position
-				component.model_ = glm::translate(component.model_, subsystem->getPosition(component.handle_));
+			// - Move in to the correct position
+			component.model_ = glm::translate(component.model_, subsystem->getPosition(component.handle_));
 
-				// - Scale the Model
-				auto &s = component.scale_;
-				component.model_ = glm::scale(component.model_, s);
+			// - Scale the Model
+			auto &s = component.scale_;
+			component.model_ = glm::scale(component.model_, s);
 
-				// - Rotate the Model along its axis
-				glm::quat quat = subsystem->getQuaternion(component.handle_);
-				component.model_ = glm::toMat4(quat) * component.model_;
-			}
+			// - Rotate the Model along its axis
+			glm::quat quat = subsystem->getQuaternion(component.handle_);
+			component.model_ = glm::toMat4(quat) * component.model_;
 		}
 	}
 }

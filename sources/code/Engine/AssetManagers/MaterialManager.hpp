@@ -35,8 +35,8 @@ private:
 
 class MaterialManager {
 public:
-	MaterialReference loadMaterial(GeometryInfo geometry_info, std::string shaderName);
-	MaterialReference preloadMaterial(GeometryInfo geometry_info, std::string shaderName);
+	MaterialReference loadMaterial(GeometryInfo geometry_info, std::string material_path);
+	MaterialReference preloadMaterial(GeometryInfo geometry_info, std::string material_path);
 
 	Material *getMaterial(MaterialReference);
 

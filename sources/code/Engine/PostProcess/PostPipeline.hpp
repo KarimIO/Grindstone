@@ -1,7 +1,7 @@
 #ifndef _POST_PIPELINE_H
 #define _POST_PIPELINE_H
 
-#include "Framebuffer.hpp"
+#include <GraphicsCommon/Framebuffer.hpp>
 #include "BasePost.hpp"
 
 class Space;

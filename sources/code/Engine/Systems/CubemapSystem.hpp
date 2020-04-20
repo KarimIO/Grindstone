@@ -8,7 +8,7 @@
 
 #include <string>
 #include <vector>
-#include "Texture.hpp"
+#include <GraphicsCommon/Texture.hpp>
 
 #include "CubeInfo.hpp"
 
@@ -85,8 +85,7 @@ private:
 	Grindstone::GraphicsAPI::VertexArrayObject *sphere_vao_;
 	Grindstone::GraphicsAPI::VertexBuffer *sphere_vbo_;
 	Grindstone::GraphicsAPI::IndexBuffer *sphere_ibo_;
-	Grindstone::GraphicsAPI::VertexBindingDescription sphere_vbd_;
-	Grindstone::GraphicsAPI::VertexAttributeDescription sphere_vad_;
+	Grindstone::GraphicsAPI::VertexBufferLayout sphere_vertex_layout_;
 	Grindstone::GraphicsAPI::RenderTarget *final_buffer_;
 
 	unsigned int total_sphere_indices_;

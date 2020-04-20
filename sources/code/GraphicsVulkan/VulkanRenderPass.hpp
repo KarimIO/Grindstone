@@ -8,7 +8,7 @@ namespace Grindstone {
 		class VulkanRenderPass : public RenderPass {
 		public:
 			VulkanRenderPass(RenderPassCreateInfo rp);
-			virtual ~VulkanRenderPass() {};
+			virtual ~VulkanRenderPass() override;
 		public:
 			VkRenderPass getRenderPassHandle();
 			uint32_t getWidth();

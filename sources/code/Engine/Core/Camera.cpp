@@ -9,7 +9,7 @@
 #include "glm/gtx/transform.hpp"
 #include "Core/Scene.hpp"
 #include "Core/Space.hpp"
-#include "GraphicsWrapper.hpp"
+#include <GraphicsCommon/GraphicsWrapper.hpp>
 #include "./Renderpaths/RenderPathDeferred.hpp"
 
 #include "PostProcess/PostProcessTonemap.hpp"
@@ -59,24 +59,24 @@ void Camera::initialize() {
 	render_path_ = new RenderPathDeferred(viewport_width_, viewport_height_);
 	post_pipeline_.setSpace(space_);
 
-	/*if (true) {
+	if (false) {
 		PostProcessSSR *pp_ssr = new PostProcessSSR(viewport_width_, viewport_height_, &post_pipeline_, &rt_hdr_, &rt_hdr_);
 		post_pipeline_.AddPostProcess(pp_ssr);
-	}*/
+	}
 
-	if (enable_reflections_) {
+	if (false && enable_reflections_) {
 		PostProcessIBL *pp_ibl = new PostProcessIBL(viewport_width_, viewport_height_, &post_pipeline_, &rt_hdr_);
 		post_pipeline_.AddPostProcess(pp_ibl);
 	}
 	
 	PostProcessAutoExposure *pp_auto = nullptr;
-	if (enable_auto_exposure_) {
+	if (false && enable_auto_exposure_) {
 		pp_auto = new PostProcessAutoExposure(viewport_width_, viewport_height_, &post_pipeline_, &rt_hdr_, nullptr);
 		post_pipeline_.AddPostProcess(pp_auto);
 	}
 
-	/*PostProcessBloom *pp_bloom = new PostProcessBloom(&post_pipeline_, &rt_hdr_, &rt_hdr_, pp_auto);
-	post_pipeline_.AddPostProcess(pp_bloom);*/
+	//PostProcessBloom *pp_bloom = new PostProcessBloom(viewport_width_, viewport_height_, &post_pipeline_, &rt_hdr_, &rt_hdr_, pp_auto);
+	//post_pipeline_.AddPostProcess(pp_bloom);
 
 	PostProcessTonemap *pp_tonemap = new PostProcessTonemap(viewport_width_, viewport_height_, &post_pipeline_, &rt_hdr_, &rt_hdr_, pp_auto);
 	post_pipeline_.AddPostProcess(pp_tonemap);
@@ -96,47 +96,47 @@ void Camera::setCustomFinalFramebuffer(Grindstone::GraphicsAPI::Framebuffer *fra
 
 void Camera::generateFramebuffers() {
 	if (hdr_buffer_) {
-		engine.getGraphicsWrapper()->DeleteRenderTarget(hdr_buffer_);
+		engine.getGraphicsWrapper()->deleteRenderTarget(hdr_buffer_);
 	}
 
 	if (hdr_framebuffer_) {
-		engine.getGraphicsWrapper()->DeleteFramebuffer(hdr_framebuffer_);
+		engine.getGraphicsWrapper()->deleteFramebuffer(hdr_framebuffer_);
 	}
 
 	Grindstone::GraphicsAPI::RenderTargetCreateInfo hdr_buffer_ci(Grindstone::GraphicsAPI::ColorFormat::R16G16B16, viewport_width_, viewport_height_);
-	hdr_buffer_ = engine.getGraphicsWrapper()->CreateRenderTarget(&hdr_buffer_ci, 1);
+	hdr_buffer_ = engine.getGraphicsWrapper()->createRenderTarget(&hdr_buffer_ci, 1);
 
 	Grindstone::GraphicsAPI::DepthTargetCreateInfo depth_image_ci(Grindstone::GraphicsAPI::DepthFormat::D24_STENCIL_8, viewport_width_, viewport_height_, false, false);
-	depth_target_ = engine.getGraphicsWrapper()->CreateDepthTarget(depth_image_ci);
+	depth_target_ = engine.getGraphicsWrapper()->createDepthTarget(depth_image_ci);
 
 	Grindstone::GraphicsAPI::FramebufferCreateInfo hdr_framebuffer_ci;
 	hdr_framebuffer_ci.render_target_lists = &hdr_buffer_;
 	hdr_framebuffer_ci.num_render_target_lists = 1;
 	hdr_framebuffer_ci.depth_target = depth_target_;
 	hdr_framebuffer_ci.render_pass = nullptr;
-	hdr_framebuffer_ = engine.getGraphicsWrapper()->CreateFramebuffer(hdr_framebuffer_ci);
+	hdr_framebuffer_ = engine.getGraphicsWrapper()->createFramebuffer(hdr_framebuffer_ci);
 
 	if (use_framebuffer_ && !custom_final_framebuffer_) {
 		/*if (final_buffer_) {
-			engine.getGraphicsWrapper()->DeleteRenderTarget(final_buffer_);
+			engine.getGraphicsWrapper()->deleteRenderTarget(final_buffer_);
 		}*/
 
 		if (final_framebuffer_) {
-			engine.getGraphicsWrapper()->DeleteFramebuffer(final_framebuffer_);
+			engine.getGraphicsWrapper()->deleteFramebuffer(final_framebuffer_);
 		}
 
 		Grindstone::GraphicsAPI::RenderTargetCreateInfo fbo_buffer_ci(Grindstone::GraphicsAPI::ColorFormat::R8G8B8, viewport_width_, viewport_height_);
-		final_buffer_ = engine.getGraphicsWrapper()->CreateRenderTarget(&fbo_buffer_ci, 1);
+		final_buffer_ = engine.getGraphicsWrapper()->createRenderTarget(&fbo_buffer_ci, 1);
 
 		//DepthTargetCreateInfo depth_image_ci2(Grindstone::GraphicsAPI::DepthFormat::D24_STENCIL_8, viewport_width_, viewport_height_, false, false);
-		//DepthTarget *depth_target2_ = engine.getGraphicsWrapper()->CreateDepthTarget(depth_image_ci);
+		//DepthTarget *depth_target2_ = engine.getGraphicsWrapper()->createDepthTarget(depth_image_ci);
 
 		Grindstone::GraphicsAPI::FramebufferCreateInfo final_framebuffer_ci;
 		final_framebuffer_ci.render_target_lists = &final_buffer_;
 		final_framebuffer_ci.num_render_target_lists = 1;
 		final_framebuffer_ci.depth_target = nullptr; // depth_image_;
 		final_framebuffer_ci.render_pass = nullptr;
-		final_framebuffer_ = engine.getGraphicsWrapper()->CreateFramebuffer(final_framebuffer_ci);
+		final_framebuffer_ = engine.getGraphicsWrapper()->createFramebuffer(final_framebuffer_ci);
 	}
 
 	rt_hdr_.framebuffer = hdr_framebuffer_;
@@ -263,7 +263,7 @@ void Camera::render() {
 	ubodata.invview = glm::inverse(view_);
 	ubodata.resolution.x = (float)viewport_width_;
 	ubodata.resolution.y = (float)viewport_height_;
-	ubo->UpdateUniformBuffer(&ubodata);
+	ubo->updateBuffer(&ubodata);
 
 	// Culling
 	//engine.ubo2->Bind();
@@ -277,7 +277,7 @@ void Camera::render() {
 	deferred_ubo.eyePos.z = position_.z;
 	deferred_ubo.resolution.x = (float)viewport_width_;
 	deferred_ubo.resolution.y = (float)viewport_height_;
-	engine.deff_ubo_handler_->UpdateUniformBuffer(&deferred_ubo);
+	engine.deff_ubo_handler_->updateBuffer(&deferred_ubo);
 
 	graphics_wrapper->setViewport(0, 0, viewport_width_, viewport_height_);
 
@@ -289,7 +289,7 @@ void Camera::render() {
 
 	// PostProcessing
 	if (!in_debug) {
-		graphics_wrapper->BindVertexArrayObject(engine.getPlaneVAO());
+		graphics_wrapper->bindVertexArrayObject(engine.getPlaneVAO());
 		post_pipeline_.Process();
 	}
 
@@ -321,28 +321,28 @@ void Camera::reloadGraphics() {
 void Camera::destroyGraphics() {
 	if (use_framebuffer_ && !custom_final_framebuffer_) {
 		if (final_framebuffer_) {
-			engine.getGraphicsWrapper()->DeleteFramebuffer(final_framebuffer_);
+			engine.getGraphicsWrapper()->deleteFramebuffer(final_framebuffer_);
 			final_framebuffer_ = nullptr;
 		}
 
 		if (final_buffer_) {
-			engine.getGraphicsWrapper()->DeleteRenderTarget(final_buffer_);
+			engine.getGraphicsWrapper()->deleteRenderTarget(final_buffer_);
 			final_buffer_ = nullptr;
 		}
 	}
 
 	if (hdr_framebuffer_) {
-		engine.getGraphicsWrapper()->DeleteFramebuffer(hdr_framebuffer_);
+		engine.getGraphicsWrapper()->deleteFramebuffer(hdr_framebuffer_);
 		hdr_framebuffer_ = nullptr;
 	}
 
 	if (hdr_buffer_) {
-		engine.getGraphicsWrapper()->DeleteRenderTarget(hdr_buffer_);
+		engine.getGraphicsWrapper()->deleteRenderTarget(hdr_buffer_);
 		hdr_buffer_ = nullptr;
 	}
 
 	if (depth_target_) {
-		engine.getGraphicsWrapper()->DeleteDepthTarget(depth_target_);
+		engine.getGraphicsWrapper()->deleteDepthTarget(depth_target_);
 		depth_target_ = nullptr;
 	}
 

@@ -11,7 +11,7 @@ namespace Grindstone {
 		class VulkanGraphicsPipeline : public GraphicsPipeline {
 		public:
 			VulkanGraphicsPipeline(GraphicsPipelineCreateInfo ci);
-			virtual ~VulkanGraphicsPipeline() {};
+			virtual ~VulkanGraphicsPipeline() override;
 			VkPipeline getGraphicsPipeline();
 			VkPipelineLayout getGraphicsPipelineLayout();
 		public:

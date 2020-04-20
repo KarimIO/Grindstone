@@ -5,7 +5,7 @@
 #include "TextureManager.hpp"
 
 // Included Classes
-#include "GraphicsWrapper.hpp"
+#include <GraphicsCommon/GraphicsWrapper.hpp>
 #include "GraphicsPipelineManager.hpp"
 #include "TextureManager.hpp"
 #include "Core/Engine.hpp"
@@ -101,7 +101,7 @@ TextureHandler TextureManager::loadCubemap(std::string path, Grindstone::Graphic
 		createInfo.ddscube = true;
 		createInfo.options = options;
 
-		Grindstone::GraphicsAPI::Texture *t = engine.getGraphicsWrapper()->CreateTexture(createInfo);
+		Grindstone::GraphicsAPI::Texture *t = engine.getGraphicsWrapper()->createTexture(createInfo);
 		TextureHandler handle = textures_.size();
 		texture_map_[path] = handle;
 		textures_.emplace_back(t);
@@ -167,7 +167,7 @@ TextureHandler TextureManager::loadCubemap(std::string path, Grindstone::Graphic
 		createInfo.height = texHeight;
 		createInfo.options = options;
 
-		Grindstone::GraphicsAPI::Texture *t = engine.getGraphicsWrapper()->CreateCubemap(createInfo);
+		Grindstone::GraphicsAPI::Texture *t = engine.getGraphicsWrapper()->createCubemap(createInfo);
 		TextureHandler handle = textures_.size();
 		textures_.push_back(TextureContainer(t));
 		texture_map_[path] = handle;
@@ -248,7 +248,7 @@ TextureHandler TextureManager::loadTexture(std::string path, Grindstone::Graphic
 
 		Grindstone::GraphicsAPI::Texture *t = nullptr;
 		try {
-			t = engine.getGraphicsWrapper()->CreateTexture(createInfo);
+			t = engine.getGraphicsWrapper()->createTexture(createInfo);
 		}
 		catch (const char *e) {
 			GRIND_ERROR("{0}", e);
@@ -299,7 +299,7 @@ TextureHandler TextureManager::loadTexture(std::string path, Grindstone::Graphic
 		createInfo.ddscube = false;
 		createInfo.options = options;
 
-		Grindstone::GraphicsAPI::Texture *t = engine.getGraphicsWrapper()->CreateTexture(createInfo);
+		Grindstone::GraphicsAPI::Texture *t = engine.getGraphicsWrapper()->createTexture(createInfo);
 		TextureHandler handle = textures_.size();
 		textures_.emplace_back(TextureContainer(t));
 		texture_map_[path] = handle;
@@ -325,7 +325,7 @@ void TextureManager::reloadAll() {
 }
 
 void TextureManager::reloadTexture(TextureHandler handle) {
-	engine.getGraphicsWrapper()->DeleteTexture(textures_[handle].texture_);
+	engine.getGraphicsWrapper()->deleteTexture(textures_[handle].texture_);
 }
 
 Grindstone::GraphicsAPI::Texture *TextureManager::getTexture(TextureHandler handle) {
@@ -337,7 +337,7 @@ void TextureManager::removeTexture(TextureContainer *container) {
 		container->use_count -= 1;
 	}
 	else {
-		engine.getGraphicsWrapper()->DeleteTexture(container->texture_);
+		engine.getGraphicsWrapper()->deleteTexture(container->texture_);
 		// TODO: remove from array.
 	}
 }

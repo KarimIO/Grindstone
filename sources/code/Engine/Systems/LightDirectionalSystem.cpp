@@ -4,12 +4,11 @@
 #include "LightDirectionalSystem.hpp"
 #include "TransformSystem.hpp"
 
-#include <GraphicsWrapper.hpp>
+#include <GraphicsCommon/GraphicsWrapper.hpp>
 #include "AssetManagers/GraphicsPipelineManager.hpp"
 #include "glm/gtx/transform.hpp"
 
 #include "CameraSystem.hpp"
-#include "Core/Editor.hpp"
 #include <limits>
 
 void LightDirectionalSubSystem::CalcOrthoProjs(Camera &cam, LightDirectionalComponent &comp) {
@@ -111,103 +110,89 @@ void LightDirectionalSystem::update() {
 	double aspect = 1.0;
 	double near_dist = 0.1;
 
-	auto &scenes = engine.getScenes();
-	for (auto scene : scenes) {
-		for (auto space : scene->spaces_) {
-			LightDirectionalSubSystem *subsystem = (LightDirectionalSubSystem *)space->getSubsystem(system_type_);
-			TransformSubSystem * transf_sys = (TransformSubSystem *)space->getSubsystem(COMPONENT_TRANSFORM);
-			for (auto &component : subsystem->components_) {
-				if (component.properties_.shadow) {
-					// CalculateView
-					GameObjectHandle game_object_id = component.game_object_handle_;
+	for (auto space : engine.getSpaces()) {
+		LightDirectionalSubSystem *subsystem = (LightDirectionalSubSystem *)space->getSubsystem(system_type_);
+		TransformSubSystem * transf_sys = (TransformSubSystem *)space->getSubsystem(COMPONENT_TRANSFORM);
+		for (auto &component : subsystem->components_) {
+			if (component.properties_.shadow) {
+				// CalculateView
+				GameObjectHandle game_object_id = component.game_object_handle_;
 
-					// Get Transform Info
-					ComponentHandle transform_id = space->getObject(game_object_id).getComponentHandle(COMPONENT_TRANSFORM);
-					TransformSubSystem *transform = (TransformSubSystem *)(space->getSubsystem(COMPONENT_TRANSFORM));
+				// Get Transform Info
+				ComponentHandle transform_id = space->getObject(game_object_id).getComponentHandle(COMPONENT_TRANSFORM);
+				TransformSubSystem *transform = (TransformSubSystem *)(space->getSubsystem(COMPONENT_TRANSFORM));
 
-					// Calculate Projection
-					/*component.shadow_mat_ = glm::ortho<float>(-10, 10, -10, 10, -10, 30);
+				// Calculate Projection
+				/*component.shadow_mat_ = glm::ortho<float>(-10, 10, -10, 10, -10, 30);
 
-					if (invert_proj)
-						component.shadow_mat_[1][1] *= -1;
+				if (invert_proj)
+					component.shadow_mat_[1][1] *= -1;
 
-					if (scale_proj) {
-						const glm::mat4 scale = glm::mat4(1.0f, 0, 0, 0,
-							0, 1.0f, 0, 0,
-							0, 0, 0.5f, 0,
-							0, 0, 0.25f, 1.0f);
+				if (scale_proj) {
+					const glm::mat4 scale = glm::mat4(1.0f, 0, 0, 0,
+						0, 1.0f, 0, 0,
+						0, 0, 0.5f, 0,
+						0, 0, 0.25f, 1.0f);
 
-						component.shadow_mat_ = scale * component.shadow_mat_;
-					}*/
+					component.shadow_mat_ = scale * component.shadow_mat_;
+				}*/
 
-					auto transf_comp_id = space->getObject(component.game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
-					auto dir = transf_sys->getForward(transf_comp_id);
+				auto transf_comp_id = space->getObject(component.game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
+				auto dir = transf_sys->getForward(transf_comp_id);
 
-					component.view_ = glm::lookAt(glm::vec3(0.0f), dir, glm::vec3(0.0f, 1.0f, 0.0f));
+				component.view_ = glm::lookAt(glm::vec3(0.0f), dir, glm::vec3(0.0f, 1.0f, 0.0f));
 
-					auto cam_sys = (CameraSubSystem *)space->getSubsystem(COMPONENT_CAMERA);
-					for (int c_i = 0; c_i < cam_sys->getNumComponents(); ++c_i) {
-						Camera &c = cam_sys->getComponent(c_i).camera_;
-						subsystem->CalcOrthoProjs(c, component);
-					}
-
-					auto editor = engine.getEditor();
-					if (editor) {
-						for (auto &v : editor->viewports_) {
-							subsystem->CalcOrthoProjs(*v.camera_, component);
-						}
-					}
-
-					// CalculateView
-					/*glm::vec3 pos = transform->getPosition(transform_id);
-					component.shadow_mat_ = component.shadow_mat_ * glm::lookAt(
-						transform->getForward(transform_id) * 20.0f,
-						glm::vec3(0, 0, 0),
-						glm::vec3(0, 1, 0)
-					);*/
-
-					auto ubo = engine.getUniformBuffer();
-					ubo->Bind();
-					ubo->UpdateUniformBuffer(&component.camera_matrices_[0][0]);
-
-					// Culling
-
-					// Render
-					component.shadow_fbo_->Bind(true);
-					component.shadow_fbo_->Clear(Grindstone::GraphicsAPI::ClearMode::Depth);
-					graphics_wrapper->SetImmediateBlending(Grindstone::GraphicsAPI::BlendMode::None);
-					engine.getGraphicsPipelineManager()->drawShadowsImmediate(0, 0, component.properties_.resolution, component.properties_.resolution);
+				auto cam_sys = (CameraSubSystem *)space->getSubsystem(COMPONENT_CAMERA);
+				for (int c_i = 0; c_i < cam_sys->getNumComponents(); ++c_i) {
+					Camera &c = cam_sys->getComponent(c_i).camera_;
+					subsystem->CalcOrthoProjs(c, component);
 				}
+
+				// CalculateView
+				/*glm::vec3 pos = transform->getPosition(transform_id);
+				component.shadow_mat_ = component.shadow_mat_ * glm::lookAt(
+					transform->getForward(transform_id) * 20.0f,
+					glm::vec3(0, 0, 0),
+					glm::vec3(0, 1, 0)
+				);*/
+
+				auto ubo = engine.getUniformBuffer();
+				ubo->Bind();
+				ubo->updateBuffer(&component.camera_matrices_[0][0]);
+
+				// Culling
+
+				// Render
+				component.shadow_fbo_->Bind(true);
+				component.shadow_fbo_->Clear(Grindstone::GraphicsAPI::ClearMode::Depth);
+				graphics_wrapper->setImmediateBlending(Grindstone::GraphicsAPI::BlendMode::None);
+				engine.getGraphicsPipelineManager()->drawShadowsImmediate(0, 0, component.properties_.resolution, component.properties_.resolution);
 			}
 		}
 	}
 }
 
 void LightDirectionalSystem::destroyGraphics() {
-	for (auto & scene : engine.getScenes()) {
-		for (auto space : scene->spaces_) {
-			LightDirectionalSubSystem *sub = (LightDirectionalSubSystem *)space->getSubsystem(COMPONENT_LIGHT_DIRECTIONAL);
-			for (auto &c : sub->components_) {
-				if (c.shadow_dt_)
-					engine.getGraphicsWrapper()->DeleteDepthTarget(c.shadow_dt_);
+	for (auto space : engine.getSpaces()) {
+		LightDirectionalSubSystem *sub = (LightDirectionalSubSystem *)space->getSubsystem(COMPONENT_LIGHT_DIRECTIONAL);
+		for (auto &c : sub->components_) {
+			if (c.shadow_dt_)
+				engine.getGraphicsWrapper()->deleteDepthTarget(c.shadow_dt_);
 				
-				if (c.shadow_fbo_)
-					engine.getGraphicsWrapper()->DeleteFramebuffer(c.shadow_fbo_);
+			if (c.shadow_fbo_)
+				engine.getGraphicsWrapper()->deleteFramebuffer(c.shadow_fbo_);
 
-				c.shadow_dt_ = nullptr;
-				c.shadow_fbo_ = nullptr;
-			}
+			c.shadow_dt_ = nullptr;
+			c.shadow_fbo_ = nullptr;
 		}
 	}
 }
 
 void LightDirectionalSystem::loadGraphics() {
-	for (auto & scene : engine.getScenes()) {
-		for (auto space : scene->spaces_) {
-			LightDirectionalSubSystem *sub = (LightDirectionalSubSystem *)space->getSubsystem(COMPONENT_LIGHT_DIRECTIONAL);
-			for (auto &c : sub->components_) {
-				sub->setShadow(c.game_object_handle_, c.properties_.shadow);
-			}
+	for (auto space : engine.getSpaces()) {
+		LightDirectionalSubSystem *sub = (LightDirectionalSubSystem *)space->getSubsystem(COMPONENT_LIGHT_DIRECTIONAL);
+		for (auto &c : sub->components_) {
+			sub->setShadow(c.game_object_handle_, c.properties_.shadow);
 		}
 	}
 }
@@ -216,8 +201,8 @@ void LightDirectionalSubSystem::setShadow(ComponentHandle h, bool shadow) {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 	auto &component = components_[h];
 
-	if (component.shadow_dt_)	graphics_wrapper->DeleteDepthTarget(component.shadow_dt_);
-	if (component.shadow_fbo_)	graphics_wrapper->DeleteFramebuffer(component.shadow_fbo_);
+	if (component.shadow_dt_)	graphics_wrapper->deleteDepthTarget(component.shadow_dt_);
+	if (component.shadow_fbo_)	graphics_wrapper->deleteFramebuffer(component.shadow_fbo_);
 
 	component.shadow_dt_ = nullptr;
 	component.shadow_fbo_ = nullptr;
@@ -225,13 +210,13 @@ void LightDirectionalSubSystem::setShadow(ComponentHandle h, bool shadow) {
 	if (shadow) {
 
 		Grindstone::GraphicsAPI::DepthTargetCreateInfo depth_image_ci(Grindstone::GraphicsAPI::DepthFormat::D24, component.properties_.resolution, component.properties_.resolution, true, false);
-		component.shadow_dt_ = graphics_wrapper->CreateDepthTarget(depth_image_ci);
+		component.shadow_dt_ = graphics_wrapper->createDepthTarget(depth_image_ci);
 
 		Grindstone::GraphicsAPI::FramebufferCreateInfo fbci;
 		fbci.num_render_target_lists = 0;
 		fbci.render_target_lists = nullptr;
 		fbci.depth_target = component.shadow_dt_;
-		component.shadow_fbo_ = graphics_wrapper->CreateFramebuffer(fbci);
+		component.shadow_fbo_ = graphics_wrapper->createFramebuffer(fbci);
 	}
 }
 

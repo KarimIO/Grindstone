@@ -32,8 +32,7 @@ bool Settings::loadSettings(INIConfigFile &cfile) {
 		cfile.GetBool("Debug", "showPipelineLoad", true, show_pipeline_load_);
 		cfile.GetBool("Debug", "showTextureLoad", false, show_texture_load_);
 		cfile.GetString("Game", "defaultmap", "../assets/scenes/sponza.json", default_map_);
-		cfile.GetBool("Game", "startWithEditor", false, start_editor_);
-
+		
 		graphics = strToLower(graphics);
 		if (graphics == "directx")
 			graphics_language_ = GraphicsLanguage::DirectX;
@@ -70,7 +69,6 @@ void Settings::saveSettings(INIConfigFile &cfile) {
 	show_texture_load_ = 0;
 	enable_ssao_ = true;
 	mouse_sensitivity_ = 0.005f;
-	start_editor_ = false;
 	default_map_ = "../assets/scenes/sponza.json";
 
 	cfile.SetBool("Window", "vsync", vsync_);
@@ -87,7 +85,6 @@ void Settings::saveSettings(INIConfigFile &cfile) {
 	cfile.SetBool("Debug", "showPipelineLoad", show_pipeline_load_);
 	cfile.SetBool("Debug", "showTextureLoad", show_texture_load_);
 	cfile.SetString("Game", "defaultmap", default_map_);
-	cfile.SetBool("Game", "startWithEditor", start_editor_);
 	cfile.SaveFile();
 }
 

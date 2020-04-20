@@ -4,6 +4,7 @@
 
 #ifdef _WIN32
 #define VK_USE_PLATFORM_WIN32_KHR
+#include "../WindowModule/Win32Window.hpp"
 #else
 #define VK_USE_PLATFORM_XLIB_KHR
 #endif
@@ -44,7 +45,7 @@ const bool enableValidationLayers = true;
 #endif
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-	std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+	std::cerr << "Vulkan: " << pCallbackData->pMessage << std::endl;
 
 	return VK_FALSE;
 }
@@ -71,16 +72,12 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		VulkanGraphicsWrapper *VulkanGraphicsWrapper::graphics_wrapper_ = nullptr;
 
-		VulkanGraphicsWrapper::VulkanGraphicsWrapper(InstanceCreateInfo ci) {
+		bool VulkanGraphicsWrapper::initialize(GraphicsWrapperCreateInfo ci) {
+			api_type_ = GraphicsAPIType::Vulkan;
 			graphics_wrapper_ = this;
 			debug_ = ci.debug;
-			vsync_ = ci.vsync;
-			width_ = ci.width;
-			height_ = ci.height;
-			title_ = ci.title;
-			input_ = ci.inputInterface;
+			window_ = ci.window;
 
-			createWindow();
 			createInstance();
 			if (ci.debug)
 				setupDebugMessenger();
@@ -91,11 +88,10 @@ namespace Grindstone {
 			createCommandPool();
 			createSyncObjects();
 			createDescriptorPool();
+
+			return true;
 		}
 
-		void VulkanGraphicsWrapper::createWindow() {
-			InitializeWin32Window();
-		}
 		void VulkanGraphicsWrapper::createInstance() {
 			if (enableValidationLayers && !checkValidationLayerSupport()) {
 				throw std::runtime_error("validation layers requested, but not available!");
@@ -148,28 +144,7 @@ namespace Grindstone {
 		}
 
 		void VulkanGraphicsWrapper::createSurface() {
-#ifdef VK_USE_PLATFORM_WIN32_KHR
-			VkWin32SurfaceCreateInfoKHR surfaceCreateInfo;
-			surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-			surfaceCreateInfo.hinstance = GetModuleHandle(NULL);
-			surfaceCreateInfo.hwnd = window_handle;
-			surfaceCreateInfo.pNext = VK_NULL_HANDLE;
-			surfaceCreateInfo.flags = 0;
 
-			if (vkCreateWin32SurfaceKHR(instance_, &surfaceCreateInfo, nullptr, &surface_) != VK_SUCCESS)
-				return;
-#elif defined(VK_USE_PLATFORM_XLIB_KHR)
-			VkXlibSurfaceCreateInfoKHR surfaceCreateInfo;
-			surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
-			surfaceCreateInfo.hinstance = GetModuleHandle(NULL);
-			surfaceCreateInfo.dpy = xDisplay;
-			surfaceCreateInfo.window = xWindow;
-			surfaceCreateInfo.pNext = VK_NULL_HANDLE;
-			surfaceCreateInfo.flags = 0;
-
-			if (vkCreateXlibSurfaceKHR(instance_, &surfaceCreateInfo, nullptr, &surface_) != VK_SUCCESS)
-				return;
-#endif
 		}
 
 		void VulkanGraphicsWrapper::pickPhysicalDevice() {
@@ -193,6 +168,22 @@ namespace Grindstone {
 				}
 				break;
 			}
+
+			VkPhysicalDeviceProperties properties;
+			vkGetPhysicalDeviceProperties(physical_device_, &properties);
+			const char *vendor_name = getVendorNameFromID(properties.vendorID);
+			if (vendor_name == 0) {
+				vendor_name_ = std::string("Unknown Vendor(") + std::to_string(properties.vendorID) + ")";
+			}
+			else {
+				vendor_name_ = vendor_name;
+			}
+			adapter_name_ = properties.deviceName;
+
+			unsigned int ver_maj = (properties.apiVersion >> 22) & 0x3FF;
+			unsigned int ver_min = (properties.apiVersion >> 12) & 0x3FF;
+			unsigned int ver_patch = (properties.apiVersion) & 0xfff;
+			api_version_ = std::to_string(ver_maj)+"."+ std::to_string(ver_min) + "." + std::to_string(ver_patch);
 
 			QueueFamilyIndices indices = findQueueFamilies(physical_device_);
 			graphics_family_ = indices.graphicsFamily;
@@ -272,10 +263,12 @@ namespace Grindstone {
 				return capabilities.currentExtent;
 			}
 			else {
+				unsigned int width, height;
+				window_->getWindowSize(width, height);
 
 				VkExtent2D actualExtent = {
-					static_cast<uint32_t>(width_),
-					static_cast<uint32_t>(height_)
+					static_cast<uint32_t>(width),
+					static_cast<uint32_t>(height)
 				};
 
 				actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
@@ -460,9 +453,8 @@ namespace Grindstone {
 		}
 
 		uint16_t VulkanGraphicsWrapper::scoreDevice(VkPhysicalDevice device) {
-			VkPhysicalDeviceProperties pProperties;
-			vkGetPhysicalDeviceProperties(device, &pProperties);
-			std::cout << "\t" << pProperties.deviceName << std::endl;
+			//VkPhysicalDeviceProperties pProperties;
+			//vkGetPhysicalDeviceProperties(device, &pProperties);
 
 			QueueFamilyIndices indices = findQueueFamilies(device);
 
@@ -486,34 +478,36 @@ namespace Grindstone {
 		}
 
 		VulkanGraphicsWrapper::~VulkanGraphicsWrapper() {
-			/*
 			for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-				vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
-				vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-				vkDestroyFence(device, inFlightFences[i], nullptr);
+				vkDestroySemaphore(device_, renderFinishedSemaphores[i], nullptr);
+				vkDestroySemaphore(device_, imageAvailableSemaphores[i], nullptr);
+				vkDestroyFence(device_, inFlightFences[i], nullptr);
 			}
-			*/
 
 			vkDestroyCommandPool(device_, command_pool_graphics_, nullptr);
+			vkDestroyDescriptorPool(device_, descriptor_pool_, nullptr);
+			// Delete rt imageview
+			vkDestroySwapchainKHR(device_, swap_chain_, nullptr);
 
 			vkDestroyDevice(device_, nullptr);
 
 			if (enableValidationLayers) {
-				//DestroyDebugUtilsMessengerEXT(instance_, debug_messenger_, nullptr);
+				DestroyDebugUtilsMessengerEXT(instance_, debug_messenger_, nullptr);
 			}
+
 
 			vkDestroySurfaceKHR(instance_, surface_, nullptr);
 			vkDestroyInstance(instance_, nullptr);
 
 		}
 
-		uint32_t VulkanGraphicsWrapper::GetImageIndex()
+		uint32_t VulkanGraphicsWrapper::getImageIndex()
 		{
 			return uint32_t();
 		}
 
-		void VulkanGraphicsWrapper::WaitUntilIdle()
-		{
+		void VulkanGraphicsWrapper::waitUntilIdle() {
+			vkDeviceWaitIdle(device_);
 		}
 
 		void VulkanGraphicsWrapper::createSyncObjects() {
@@ -542,9 +536,9 @@ namespace Grindstone {
 		void VulkanGraphicsWrapper::createDescriptorPool() {
 			std::array<VkDescriptorPoolSize, 2> poolSizes = {};
 			poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			poolSizes[0].descriptorCount = 1; // static_cast<uint32_t>(swapChainImages.size());
+			poolSizes[0].descriptorCount = 10; // static_cast<uint32_t>(swapChainImages.size());
 			poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			poolSizes[1].descriptorCount = 1; //static_cast<uint32_t>(swapChainImages.size());
+			poolSizes[1].descriptorCount = 10; //static_cast<uint32_t>(swapChainImages.size());
 
 			VkDescriptorPoolCreateInfo poolInfo = {};
 			poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -557,7 +551,7 @@ namespace Grindstone {
 			}
 		}
 
-		void VulkanGraphicsWrapper::DrawCommandBuffers(uint32_t ii, CommandBuffer ** commandBuffers, uint32_t commandBufferCount) {
+		void VulkanGraphicsWrapper::drawCommandBuffers(uint32_t ii, CommandBuffer ** commandBuffers, uint32_t commandBufferCount) {
 			vkWaitForFences(device_, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
 			uint32_t imageIndex;
@@ -608,7 +602,7 @@ namespace Grindstone {
 			currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 		}
 
-		ColorFormat VulkanGraphicsWrapper::GetDeviceColorFormat() {
+		ColorFormat VulkanGraphicsWrapper::getDeviceColorFormat() {
 			return swapchain_format_;
 		}
 
@@ -637,113 +631,129 @@ namespace Grindstone {
 			return command_pool_graphics_;
 		}
 
-		void VulkanGraphicsWrapper::CreateDefaultStructures()
-		{
-		}
 
-		void VulkanGraphicsWrapper::CreateDefaultFramebuffers(DefaultFramebufferCreateInfo ci, Framebuffer **& framebuffers, uint32_t & framebufferCount)
-		{
+		void VulkanGraphicsWrapper::adjustPerspective(float *perspective) {
+			perspective[1*4 + 1] *= -1;
 		}
 
 		//==================================
-		// Creator
+		// Get Text Metainfo
 		//==================================
-		Framebuffer *VulkanGraphicsWrapper::CreateFramebuffer(FramebufferCreateInfo ci) {
+		const char* VulkanGraphicsWrapper::getVendorName() {
+			return vendor_name_.c_str();
+		}
+
+		const char* VulkanGraphicsWrapper::getAdapterName() {
+			return adapter_name_.c_str();
+		}
+
+		const char* VulkanGraphicsWrapper::getAPIName() {
+			return "Vulkan";
+		}
+
+		const char* VulkanGraphicsWrapper::getAPIVersion() {
+			return api_version_.c_str();
+		}
+
+		//==================================
+		// Creators
+		//==================================
+		Framebuffer *VulkanGraphicsWrapper::createFramebuffer(FramebufferCreateInfo ci) {
 			return static_cast<Framebuffer *>(new VulkanFramebuffer(ci));
 		}
 
-		RenderPass * VulkanGraphicsWrapper::CreateRenderPass(RenderPassCreateInfo ci) {
+		RenderPass * VulkanGraphicsWrapper::createRenderPass(RenderPassCreateInfo ci) {
 			return static_cast<RenderPass *>(new VulkanRenderPass(ci));
 		}
 
-		GraphicsPipeline * VulkanGraphicsWrapper::CreateGraphicsPipeline(GraphicsPipelineCreateInfo ci) {
+		GraphicsPipeline * VulkanGraphicsWrapper::createGraphicsPipeline(GraphicsPipelineCreateInfo ci) {
 			return static_cast<GraphicsPipeline *>(new VulkanGraphicsPipeline(ci));
 		}
 
-		CommandBuffer * VulkanGraphicsWrapper::CreateCommandBuffer(CommandBufferCreateInfo ci) {
+		CommandBuffer * VulkanGraphicsWrapper::createCommandBuffer(CommandBufferCreateInfo ci) {
 			return static_cast<CommandBuffer *>(new VulkanCommandBuffer(ci));
 		}
 
-		VertexBuffer * VulkanGraphicsWrapper::CreateVertexBuffer(VertexBufferCreateInfo ci) {
+		VertexBuffer * VulkanGraphicsWrapper::createVertexBuffer(VertexBufferCreateInfo ci) {
 			return static_cast<VertexBuffer *>(new VulkanVertexBuffer(ci));
 		}
 
-		IndexBuffer * VulkanGraphicsWrapper::CreateIndexBuffer(IndexBufferCreateInfo ci) {
+		IndexBuffer * VulkanGraphicsWrapper::createIndexBuffer(IndexBufferCreateInfo ci) {
 			return static_cast<IndexBuffer *>(new VulkanIndexBuffer(ci));
 		}
 
-		UniformBuffer * VulkanGraphicsWrapper::CreateUniformBuffer(UniformBufferCreateInfo ci) {
+		UniformBuffer * VulkanGraphicsWrapper::createUniformBuffer(UniformBufferCreateInfo ci) {
 			return static_cast<UniformBuffer *>(new VulkanUniformBuffer(ci));
 		}
 
-		UniformBufferBinding * VulkanGraphicsWrapper::CreateUniformBufferBinding(UniformBufferBindingCreateInfo ci) {
+		UniformBufferBinding * VulkanGraphicsWrapper::createUniformBufferBinding(UniformBufferBindingCreateInfo ci) {
 			return static_cast<UniformBufferBinding *>(new VulkanUniformBufferBinding(ci));
 		}
 
-		Texture * VulkanGraphicsWrapper::CreateCubemap(CubemapCreateInfo ci) {
+		Texture * VulkanGraphicsWrapper::createCubemap(CubemapCreateInfo ci) {
 			return nullptr; // static_cast<Texture *>(new VulkanTexture(ci));
 		}
 
-		Texture * VulkanGraphicsWrapper::CreateTexture(TextureCreateInfo ci) {
+		Texture * VulkanGraphicsWrapper::createTexture(TextureCreateInfo ci) {
 			return static_cast<Texture *>(new VulkanTexture(ci));
 		}
 
-		TextureBinding * VulkanGraphicsWrapper::CreateTextureBinding(TextureBindingCreateInfo ci) {
+		TextureBinding * VulkanGraphicsWrapper::createTextureBinding(TextureBindingCreateInfo ci) {
 			return static_cast<TextureBinding *>(new VulkanTextureBinding(ci));
 		}
 
-		TextureBindingLayout * VulkanGraphicsWrapper::CreateTextureBindingLayout(TextureBindingLayoutCreateInfo ci) {
+		TextureBindingLayout * VulkanGraphicsWrapper::createTextureBindingLayout(TextureBindingLayoutCreateInfo ci) {
 			return static_cast<TextureBindingLayout *>(new VulkanTextureBindingLayout(ci));
 		}
 
-		RenderTarget * VulkanGraphicsWrapper::CreateRenderTarget(RenderTargetCreateInfo * ci, uint32_t rc, bool cube) {
+		RenderTarget * VulkanGraphicsWrapper::createRenderTarget(RenderTargetCreateInfo * ci, uint32_t rc, bool cube) {
 			return static_cast<RenderTarget *>(new VulkanRenderTarget(*ci));
 		}
 
-		DepthTarget * VulkanGraphicsWrapper::CreateDepthTarget(DepthTargetCreateInfo ci) {
+		DepthTarget * VulkanGraphicsWrapper::createDepthTarget(DepthTargetCreateInfo ci) {
 			return static_cast<DepthTarget *>(new VulkanDepthTarget(ci));
 		}
 
 		//==================================
-		// Deleter
+		// Deleters
 		//==================================
-		void VulkanGraphicsWrapper::DeleteRenderTarget(RenderTarget * ptr) {
+		void VulkanGraphicsWrapper::deleteRenderTarget(RenderTarget * ptr) {
 			delete (VulkanRenderTarget *)ptr;
 		}
-		void VulkanGraphicsWrapper::DeleteDepthTarget(DepthTarget * ptr) {
+		void VulkanGraphicsWrapper::deleteDepthTarget(DepthTarget * ptr) {
 			delete (VulkanDepthTarget *)ptr;
 		}
-		void VulkanGraphicsWrapper::DeleteFramebuffer(Framebuffer *ptr) {
+		void VulkanGraphicsWrapper::deleteFramebuffer(Framebuffer *ptr) {
 			delete (VulkanFramebuffer *)ptr;
 		}
-		void VulkanGraphicsWrapper::DeleteVertexBuffer(VertexBuffer *ptr) {
+		void VulkanGraphicsWrapper::deleteVertexBuffer(VertexBuffer *ptr) {
 			delete (VulkanVertexBuffer *)ptr;
 		}
-		void VulkanGraphicsWrapper::DeleteIndexBuffer(IndexBuffer *ptr) {
+		void VulkanGraphicsWrapper::deleteIndexBuffer(IndexBuffer *ptr) {
 			delete (VulkanIndexBuffer *)ptr;
 		}
-		void VulkanGraphicsWrapper::DeleteUniformBuffer(UniformBuffer *ptr) {
+		void VulkanGraphicsWrapper::deleteUniformBuffer(UniformBuffer *ptr) {
 			delete (VulkanUniformBuffer *)ptr;
 		}
-		void VulkanGraphicsWrapper::DeleteUniformBufferBinding(UniformBufferBinding * ptr) {
+		void VulkanGraphicsWrapper::deleteUniformBufferBinding(UniformBufferBinding * ptr) {
 			delete (VulkanUniformBufferBinding *)ptr;
 		}
-		void VulkanGraphicsWrapper::DeleteGraphicsPipeline(GraphicsPipeline *ptr) {
+		void VulkanGraphicsWrapper::deleteGraphicsPipeline(GraphicsPipeline *ptr) {
 			delete (VulkanGraphicsPipeline *)ptr;
 		}
-		void VulkanGraphicsWrapper::DeleteRenderPass(RenderPass *ptr) {
+		void VulkanGraphicsWrapper::deleteRenderPass(RenderPass *ptr) {
 			delete (VulkanRenderPass *)ptr;
 		}
-		void VulkanGraphicsWrapper::DeleteTexture(Texture * ptr) {
+		void VulkanGraphicsWrapper::deleteTexture(Texture * ptr) {
 			delete (VulkanTexture *)ptr;
 		}
-		void VulkanGraphicsWrapper::DeleteTextureBinding(TextureBinding * ptr) {
+		void VulkanGraphicsWrapper::deleteTextureBinding(TextureBinding * ptr) {
 			delete (VulkanTextureBinding *)ptr;
 		}
-		void VulkanGraphicsWrapper::DeleteTextureBindingLayout(TextureBindingLayout * ptr) {
+		void VulkanGraphicsWrapper::deleteTextureBindingLayout(TextureBindingLayout * ptr) {
 			delete (VulkanTextureBindingLayout *)ptr;
 		}
-		void VulkanGraphicsWrapper::DeleteCommandBuffer(CommandBuffer *ptr) {
+		void VulkanGraphicsWrapper::deleteCommandBuffer(CommandBuffer *ptr) {
 			delete (VulkanCommandBuffer *)ptr;
 		}
 
@@ -772,74 +782,73 @@ namespace Grindstone {
 		//==================================
 		// Unused
 		//==================================
-		VertexArrayObject * VulkanGraphicsWrapper::CreateVertexArrayObject(VertexArrayObjectCreateInfo ci) {
-			std::cout << "VulkanGraphicsWrapper::CreateVertexArrayObject is not used.\n";
+		VertexArrayObject * VulkanGraphicsWrapper::createVertexArrayObject(VertexArrayObjectCreateInfo ci) {
+			std::cout << "VulkanGraphicsWrapper::createVertexArrayObject is not used.\n";
 			assert(false);
 			return nullptr;
 		}
-		void VulkanGraphicsWrapper::DeleteVertexArrayObject(VertexArrayObject * ptr) {
-			std::cout << "VulkanGraphicsWrapper::DeleteVertexArrayObject is not used\n";
+		void VulkanGraphicsWrapper::deleteVertexArrayObject(VertexArrayObject * ptr) {
+			std::cout << "VulkanGraphicsWrapper::deleteVertexArrayObject is not used\n";
 			assert(false);
 		}
-		void VulkanGraphicsWrapper::Clear(ClearMode mask) {
-			std::cout << "VulkanGraphicsWrapper::Clear is not used.\n";
+		void VulkanGraphicsWrapper::clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) {
+			std::cout << "VulkanGraphicsWrapper::clear is not used.\n";
 			assert(false);
 		}
 		void VulkanGraphicsWrapper::setViewport(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
 			std::cout << "VulkanGraphicsWrapper::setViewport is not used.\n";
 			assert(false);
 		}
-		void VulkanGraphicsWrapper::BindTextureBinding(TextureBinding *) {
-			std::cout << "VulkanGraphicsWrapper::BindTextureBinding is not used.\n";
+		void VulkanGraphicsWrapper::bindTextureBinding(TextureBinding *) {
+			std::cout << "VulkanGraphicsWrapper::bindTextureBinding is not used.\n";
 			assert(false);
 		}
-		void VulkanGraphicsWrapper::BindVertexArrayObject(VertexArrayObject *) {
-			std::cout << "VulkanGraphicsWrapper::BindVertexArrayObject is not used.\n";
+		void VulkanGraphicsWrapper::bindVertexArrayObject(VertexArrayObject *) {
+			std::cout << "VulkanGraphicsWrapper::bindVertexArrayObject is not used.\n";
 			assert(false);
 		}
-		void VulkanGraphicsWrapper::DrawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
-			std::cout << "VulkanGraphicsWrapper::DrawImmediateIndexed is not used.\n";
+		void VulkanGraphicsWrapper::drawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
+			std::cout << "VulkanGraphicsWrapper::drawImmediateIndexed is not used.\n";
 			assert(false);
 		}
-		void VulkanGraphicsWrapper::DrawImmediateVertices(uint32_t base, uint32_t count) {
-			std::cout << "VulkanGraphicsWrapper::DrawImmediateVertices is not used.\n";
+		void VulkanGraphicsWrapper::drawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) {
+			std::cout << "VulkanGraphicsWrapper::drawImmediateVertices is not used.\n";
 			assert(false);
 		}
-		void VulkanGraphicsWrapper::SetImmediateBlending(BlendMode) {
+		void VulkanGraphicsWrapper::setImmediateBlending(BlendMode) {
 			std::cout << "VulkanGraphicsWrapper::SetImmediateBlending is not used.\n";
 			assert(false);
 		}
-		void VulkanGraphicsWrapper::EnableDepth(bool state) {
-			std::cout << "VulkanGraphicsWrapper::EnableDepth is not used.\n";
+		void VulkanGraphicsWrapper::enableDepth(bool state) {
+			std::cout << "VulkanGraphicsWrapper::enableDepth is not used.\n";
 			assert(false);
 		}
-		void VulkanGraphicsWrapper::SetColorMask(ColorMask mask) {
-			std::cout << "VulkanGraphicsWrapper::SetColorMask is not used.\n";
+		void VulkanGraphicsWrapper::setColorMask(ColorMask mask) {
+			std::cout << "VulkanGraphicsWrapper::setColorMask is not used.\n";
 			assert(false);
 		}
-		void VulkanGraphicsWrapper::SwapBuffer() {
-			std::cout << "VulkanGraphicsWrapper::SwapBuffer is not used.\n";
+		void VulkanGraphicsWrapper::swapBuffers() {
+			std::cout << "VulkanGraphicsWrapper::swapBuffers is not used.\n";
 			assert(false);
 		}
-		void VulkanGraphicsWrapper::CopyToDepthBuffer(DepthTarget * p) {
-			std::cout << "VulkanGraphicsWrapper::CopyToDepthBuffer is not used.\n";
+		void VulkanGraphicsWrapper::copyToDepthBuffer(DepthTarget * p) {
+			std::cout << "VulkanGraphicsWrapper::copyToDepthBuffer is not used.\n";
 			assert(false);
 		}
-		void VulkanGraphicsWrapper::BindDefaultFramebuffer(bool depth) {
-			std::cout << "VulkanGraphicsWrapper::BindDefaultFramebuffer is not used.\n";
+		void VulkanGraphicsWrapper::bindDefaultFramebuffer(bool depth) {
+			std::cout << "VulkanGraphicsWrapper::bindDefaultFramebuffer is not used.\n";
 			assert(false);
 		}
+	}
+}
 
-		//==================================
-		// DLL Interface
-		//==================================
-		GraphicsWrapper* createGraphics(InstanceCreateInfo createInfo) {
-			return new VulkanGraphicsWrapper(createInfo);
-		}
+extern "C" {
+	GRAPHICS_EXPORT Grindstone::GraphicsAPI::GraphicsWrapper* createGraphics() {
+		return new Grindstone::GraphicsAPI::VulkanGraphicsWrapper();
+	}
 
-		void deleteGraphics(void * ptr) {
-			VulkanGraphicsWrapper * glptr = (VulkanGraphicsWrapper *)ptr;
-			delete glptr;
-		}
+	GRAPHICS_EXPORT void deleteGraphics(void* ptr) {
+		Grindstone::GraphicsAPI::VulkanGraphicsWrapper* glptr = (Grindstone::GraphicsAPI::VulkanGraphicsWrapper*)ptr;
+		delete glptr;
 	}
 }

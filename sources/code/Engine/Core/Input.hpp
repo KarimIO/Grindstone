@@ -64,7 +64,7 @@ public:
 	void ResizeEvent(int, int);
 	void SetMouseButton(int, bool);
 	void SetMousePosition(int, int);
-	void GetMousePosition(int &, int &);
+	void GetMousePosition(unsigned int &, unsigned int &);
 	void SetFocused(bool);
 	bool IsFocused();
 	void SetKey(int, bool);

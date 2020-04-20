@@ -42,10 +42,8 @@ namespace Grindstone {
 			TextureBindingLayout **textureBindings;
 			uint32_t textureBindingCount;
 
-			VertexBindingDescription *bindings;
-			uint32_t bindingsCount;
-			VertexAttributeDescription *attributes;
-			uint32_t attributesCount;
+			VertexBufferLayout *vertex_bindings;
+			uint32_t vertex_bindings_count;
 		};
 
 		class GraphicsPipeline {

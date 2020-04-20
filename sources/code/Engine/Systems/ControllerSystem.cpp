@@ -32,13 +32,10 @@ ControllerSubSystem::~ControllerSubSystem() {
 
 void ControllerSystem::update() {
 	GRIND_PROFILE_FUNC();
-	auto &scenes = engine.getScenes();
-	for (auto scene : scenes) {
-		for (auto space : scene->spaces_) {
-			ControllerSubSystem *subsystem = (ControllerSubSystem *)space->getSubsystem(system_type_);
-			for (auto &component : subsystem->components_) {
-				component.update(engine.getUpdateTimeDelta());
-			}
+	for (auto space : engine.getSpaces()) {
+		ControllerSubSystem *subsystem = (ControllerSubSystem *)space->getSubsystem(system_type_);
+		for (auto &component : subsystem->components_) {
+			component.update(engine.getUpdateTimeDelta());
 		}
 	}
 }
@@ -60,6 +57,8 @@ ControllerComponent::ControllerComponent(GameObjectHandle object_handle, Compone
 	input.BindAction("Run", this, &ControllerComponent::RunStart, KEY_PRESSED);
 	input.BindAction("Run", this, &ControllerComponent::RunStop, KEY_RELEASED);
 
+	angles_ = glm::vec3(0, 0, glm::pi<float>());
+
 	ghost_mode_ = true;
 	no_collide_ = true;
 	speed_modifier_ = 6.0f;
@@ -67,7 +66,7 @@ ControllerComponent::ControllerComponent(GameObjectHandle object_handle, Compone
 }
 
 void ControllerComponent::update(double dt) {
-	ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
+	ComponentHandle transform_id = engine.getSpace(0)->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
 	auto &trans = getTransform()->getComponent(transform_id);
 
 	if (!ghost_mode_)
@@ -88,7 +87,7 @@ void ControllerComponent::update(double dt) {
 }
 
 TransformSubSystem *ControllerComponent::getTransform() {
-	auto *space = engine.getScene(0)->spaces_[0];
+	auto *space = engine.getSpace(0);
 	TransformSubSystem *transform = (TransformSubSystem *)(space->getSubsystem(COMPONENT_TRANSFORM));
 
 	return transform;
@@ -100,7 +99,7 @@ size_t ControllerSubSystem::getNumComponents() {
 
 void ControllerComponent::MoveForwardBack(double scale) {
 	auto trans_system = getTransform();
-	ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
+	ComponentHandle transform_id = engine.getSpace(0)->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
 	auto &trans = trans_system->getComponent(transform_id);
 
 	glm::vec3 f = 20.0f * float(scale * speed_modifier_) * trans_system->getForward(transform_id);
@@ -116,7 +115,7 @@ void ControllerComponent::MoveForwardBack(double scale) {
 
 void ControllerComponent::MoveSide(double scale) {
 	auto trans_system = getTransform();
-	ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
+	ComponentHandle transform_id = engine.getSpace(0)->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
 	auto &trans = trans_system->getComponent(transform_id);
 
 	glm::vec3 f = 5.0f * float(scale * speed_modifier_) * trans_system->getRight(transform_id);
@@ -132,7 +131,7 @@ void ControllerComponent::MoveSide(double scale) {
 
 void ControllerComponent::MoveVertical(double scale) {
 	auto trans_system = getTransform();
-	ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
+	ComponentHandle transform_id = engine.getSpace(0)->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
 	auto &trans = trans_system->getComponent(transform_id);
 
 	if (ghost_mode_) {
@@ -143,29 +142,25 @@ void ControllerComponent::MoveVertical(double scale) {
 }
 
 void ControllerComponent::TurnPitch(double scale) {
-	if (!engine.edit_mode_ || engine.edit_is_simulating_) {
-		auto trans_system = getTransform();
-		ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
-		auto &trans = trans_system->getComponent(transform_id);
+	auto trans_system = getTransform();
+	ComponentHandle transform_id = engine.getSpace(0)->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
+	auto &trans = trans_system->getComponent(transform_id);
 
-		trans.quaternion_ = glm::quat(glm::vec3(float(sensitivity_ * scale), 0, 0)) * trans.quaternion_;
+	angles_.x += float(sensitivity_ * scale);
 
-		//trans.angles_.x += float(sensitivity_ * scale);
+	if (angles_.x < -2.4f / 2)	angles_.x = -2.4f / 2;
+	if (angles_.x > 3.14f / 2)	angles_.x = 3.14f / 2;
 
-		//if (trans.angles_.x < -2.4f / 2)	trans.angles_.x = -2.4f / 2;
-		//if (trans.angles_.x > 3.14f / 2)	trans.angles_.x = 3.14f / 2;
-	}
+	trans.quaternion_ = glm::quat(angles_);
 }
 
 void ControllerComponent::TurnYaw(double scale) {
-	if (!engine.edit_mode_ || engine.edit_is_simulating_) {
-		auto trans_system = getTransform();
-		ComponentHandle transform_id = engine.getScene(0)->spaces_[0]->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
-		auto &trans = trans_system->getComponent(transform_id);
+	auto trans_system = getTransform();
+	ComponentHandle transform_id = engine.getSpace(0)->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
+	auto &trans = trans_system->getComponent(transform_id);
 
-		//trans.angles_.y += float(sensitivity_ * scale);
-		trans.quaternion_ = glm::quat(glm::vec3(0, float(sensitivity_ * scale), 0)) * trans.quaternion_;
-	}
+	angles_.y -= float(sensitivity_ * scale);
+	trans.quaternion_ = glm::quat(angles_);
 }
 
 void ControllerComponent::ZoomIn(double scale) {

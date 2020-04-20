@@ -1,7 +1,7 @@
 #ifndef _LOADING_SCREEN_H
 #define _LOADING_SCREEN_H
 
-#include "../GraphicsCommon/GraphicsWrapper.hpp"
+#include <GraphicsCommon/GraphicsWrapper.hpp>
 
 class LoadingScreen {
 public:

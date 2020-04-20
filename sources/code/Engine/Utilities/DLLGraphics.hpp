@@ -1,8 +1,9 @@
 #ifndef _DLL_GRAPHICS_H
 #define _DLL_GRAPHICS_H
 
+#include "../Utilities/GraphicsLanguage.hpp"
 #include "DLLHandler.hpp"
-#include "GraphicsLanguage.hpp"
+#include <stb\stb_image.h>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -10,16 +11,21 @@ namespace Grindstone {
 	}
 }
 
+class BaseWindow;
+
 class DLLGraphics : public DLLHandler {
 public:
 	DLLGraphics();
-	Grindstone::GraphicsAPI::GraphicsWrapper *getWrapper();
-	void setup();
+	BaseWindow* DLLGraphics::createWindow();
+	Grindstone::GraphicsAPI::GraphicsWrapper* createGraphicsWrapper();
+	void deleteGraphicsWrapper(Grindstone::GraphicsAPI::GraphicsWrapper *wrappper);
+	void setup(GraphicsLanguage settings);
 	void reload();
 	~DLLGraphics();
 private:
-	Grindstone::GraphicsAPI::GraphicsWrapper *wrapper_;
-	void(*pfnDeleteGraphics)(Grindstone::GraphicsAPI::GraphicsWrapper*);
+	BaseWindow* (*fnCreateWindow)();
+	void* (*fnCreateGraphicsWrapper)();
+	void(*fnDeleteGraphicsWrapper)(void*);
 };
 
 #endif

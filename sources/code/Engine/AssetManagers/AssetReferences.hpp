@@ -2,8 +2,8 @@
 #define _ASSET_REFERENCES_H
 
 #include <stdint.h>
-#include <VertexBuffer.hpp>
-#include <UniformBuffer.hpp>
+#include <GraphicsCommon/VertexBuffer.hpp>
+#include <GraphicsCommon/UniformBuffer.hpp>
 
 enum ProgramType {
 	TYPE_MISSING = 0,
@@ -27,10 +27,8 @@ struct MaterialReference {
 typedef uint32_t ModelReference;
 
 struct GeometryInfo {
-	Grindstone::GraphicsAPI::VertexBindingDescription *vbds;
-	unsigned int vbds_count;
-	Grindstone::GraphicsAPI::VertexAttributeDescription *vads;
-	unsigned int vads_count;
+	Grindstone::GraphicsAPI::VertexBufferLayout *vertex_layout;
+	unsigned int vertex_layout_count;
 	Grindstone::GraphicsAPI::UniformBufferBinding **ubbs;
 	unsigned int ubb_count;
 };

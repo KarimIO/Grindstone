@@ -1,7 +1,5 @@
 #include "DLLHandler.hpp"
 #include <stdexcept>
-#include <iostream>
-#include "Logger.hpp"
 
 void DLLHandler::initialize(std::string path) {
 	#if defined(_WIN32)
@@ -29,7 +27,6 @@ void *DLLHandler::getFunction(std::string name) {
 	#endif
 	
 	if (!fn) {
-		GRIND_ERROR("Error loading function '{0}'", name);
 		return nullptr;
 	}
 

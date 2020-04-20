@@ -2,11 +2,11 @@
 #include <string>
 #include "../Core/Utilities.hpp"
 #include "../Core/Engine.hpp"
-#include <GraphicsWrapper.hpp>
+#include <GraphicsCommon/GraphicsWrapper.hpp>
 #include "AssetManagers/TextureManager.hpp"
-#include "Texture.hpp"
-#include "Framebuffer.hpp"
-#include "GraphicsPipeline.hpp"
+#include <GraphicsCommon/Texture.hpp>
+#include <GraphicsCommon/Framebuffer.hpp>
+#include <GraphicsCommon/GraphicsPipeline.hpp>
 
 PostProcessColorGrading::PostProcessColorGrading(unsigned int w, unsigned h, PostPipeline *pipeline, RenderTargetContainer *target, Grindstone::GraphicsAPI::Framebuffer **target_fbo) : BasePostProcess(pipeline), target_(target), target_fbo_(target_fbo) {
 	reloadGraphics(w, h);
@@ -19,18 +19,19 @@ void PostProcessColorGrading::Process() {
 	gpipeline_->Bind();
 	if (target_fbo_ && target_fbo_[0]) {
 		target_fbo_[0]->Bind(true);
-		// target_fbo_[0]->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
+		// target_fbo_[0]->Clear(Grindstone::GraphicsAPI::ClearMode::ColorAndDepth);
 	}
 	else {
-		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
-		engine.getGraphicsWrapper()->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
+		engine.getGraphicsWrapper()->bindDefaultFramebuffer(true);
+		float col[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		engine.getGraphicsWrapper()->clear(Grindstone::GraphicsAPI::ClearMode::ColorAndDepth, col, 1.0f, 0);
 	}
 	target_->framebuffer->BindRead();
 	target_->framebuffer->BindTextures(0);
 	
-	engine.getGraphicsWrapper()->BindTextureBinding(texture_binding_);
+	engine.getGraphicsWrapper()->bindTextureBinding(texture_binding_);
 
-	engine.getGraphicsWrapper()->DrawImmediateVertices(0, 6);
+	engine.getGraphicsWrapper()->drawImmediateVertices(Grindstone::GraphicsAPI::GeometryType::Triangles, 0, 6);
 }
 
 PostProcessColorGrading::~PostProcessColorGrading() {
@@ -76,15 +77,12 @@ void PostProcessColorGrading::reloadGraphics(unsigned int w, unsigned h) {
 	stages[1].size = (uint32_t)ffile.size();
 	stages[1].type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
-	auto vbd = engine.getPlaneVBD();
-	auto vad = engine.getPlaneVAD();
+	auto vertex_layout = engine.getPlaneVertexLayout();
 
 	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo gradingGPCI;
 	gradingGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
-	gradingGPCI.bindings = &vbd;
-	gradingGPCI.bindingsCount = 1;
-	gradingGPCI.attributes = &vad;
-	gradingGPCI.attributesCount = 1;
+	gradingGPCI.vertex_bindings = &vertex_layout;
+	gradingGPCI.vertex_bindings_count = 1;
 	gradingGPCI.width = (float)settings->resolution_x_;
 	gradingGPCI.height = (float)settings->resolution_y_;
 	gradingGPCI.scissorW = settings->resolution_x_;
@@ -102,13 +100,13 @@ void PostProcessColorGrading::reloadGraphics(unsigned int w, unsigned h) {
 	tblci.bindings = grading_sub_binding_;
 	tblci.bindingCount = 2;
 	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
-	grading_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
+	grading_tbl_ = graphics_wrapper->createTextureBindingLayout(tblci);
 
 	gradingGPCI.textureBindings = &grading_tbl_;
 	gradingGPCI.textureBindingCount = 1;
 	gradingGPCI.uniformBufferBindings = nullptr;
 	gradingGPCI.uniformBufferBindingCount = 0;
-	gpipeline_ = graphics_wrapper->CreateGraphicsPipeline(gradingGPCI);
+	gpipeline_ = graphics_wrapper->createGraphicsPipeline(gradingGPCI);
 	delete grading_sub_binding_;
 
 	// LUT
@@ -136,14 +134,14 @@ void PostProcessColorGrading::reloadGraphics(unsigned int w, unsigned h) {
 		ci.textures = &stb;
 		ci.layout = grading_tbl_;
 		ci.textureCount = 1;
-		texture_binding_ = graphics_wrapper->CreateTextureBinding(ci);
+		texture_binding_ = graphics_wrapper->createTextureBinding(ci);
 	}
 }
 
 void PostProcessColorGrading::destroyGraphics() {
 	Grindstone::GraphicsAPI::GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 
-	graphics_wrapper->DeleteTextureBinding(texture_binding_);
-	graphics_wrapper->DeleteTextureBindingLayout(grading_tbl_);
-	graphics_wrapper->DeleteGraphicsPipeline(gpipeline_);
+	graphics_wrapper->deleteTextureBinding(texture_binding_);
+	graphics_wrapper->deleteTextureBindingLayout(grading_tbl_);
+	graphics_wrapper->deleteGraphicsPipeline(gpipeline_);
 }

@@ -15,8 +15,6 @@ namespace fs = std::filesystem;
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/common.h"
-#include "Core/Engine.hpp"
-#include "Core/Editor.hpp"
 
 spdlog::logger *Logger::debug_logger_;
 
@@ -32,9 +30,9 @@ protected:
 		// If needed (very likely but not mandatory), the sink formats the message before sending it to its final destination:
 		fmt::memory_buffer formatted;
 		base_sink<std::mutex>::formatter_->format(msg, formatted);
-		auto editor = engine.getEditor();
+		/*auto editor = engine.getEditor();
 		if (editor)
-			editor->printConsoleEntry(fmt::to_string(formatted).c_str());
+			editor->printConsoleEntry(fmt::to_string(formatted).c_str());*/
 	}
 
 	void flush_() override
@@ -45,17 +43,17 @@ protected:
 
 void Logger::init(std::string path) {
 	auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-	console_sink->set_level(spdlog::level::warn);
+	console_sink->set_level(spdlog::level::trace);
 	//console_sink->set_pattern("[multi_sink_example] [%^%l%$] %v");
 
 	auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path, true);
 	file_sink->set_level(spdlog::level::trace);
 
 	auto my_sink = std::make_shared<MySink>();
-	my_sink->set_level(spdlog::level::info);
+	my_sink->set_level(spdlog::level::trace);
 
 	debug_logger_ = new spdlog::logger("Debug Logger", { console_sink, file_sink, my_sink });
-	debug_logger_->set_level(spdlog::level::debug);
+	debug_logger_->set_level(spdlog::level::trace);
 }
 
 spdlog::logger *Logger::getDebugLogger() {

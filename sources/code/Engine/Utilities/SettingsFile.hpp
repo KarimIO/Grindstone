@@ -25,7 +25,6 @@ public:
 	bool show_pipeline_load_;
 	bool show_material_load_;
 	bool show_texture_load_;
-	bool start_editor_;
 	float mouse_sensitivity_;
 	GraphicsLanguage graphics_language_;
 private:

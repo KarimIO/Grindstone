@@ -10,7 +10,7 @@
 #include "Core/Input.hpp"
 #include "../AssetManagers/ImguiManager.hpp"
 #include "../AssetManagers/TextureManager.hpp"
-#include "Scene.hpp"
+#include "Space.hpp"
 #include "Space.hpp"
 #include "GameObject.hpp"
 #include "Texture.hpp"
@@ -46,8 +46,9 @@ Editor::Viewport::Viewport(Camera *c, View v) : camera_(c), first(true), viewpor
 	setView(v);
 }
 
+/*
 void Editor::refreshSceneGraph() {
-	/*for (auto &o : engine.getScene(0)->spaces_[0]->objects_) {
+	for (auto &o : engine.getSpace(0)->spaces_[0]->objects_) {
 		GameObjectHandle h = o.getParentID();
 		if (h == -1) {
 			scene_graph_.push_back(new SceneGraphNode(h, {}));
@@ -59,8 +60,8 @@ void Editor::refreshSceneGraph() {
 			}
 			s.push_back(new SceneGraphNode(h, {}));
 		}
-	}*/
-}
+	}
+}*/
 
 void Editor::setPath(std::string path) {
 	path_ = path;
@@ -150,7 +151,7 @@ Editor::Editor(ImguiManager *manager) : selected_object_handle_(-1) {
 
 	viewport_manipulating_ = 0;
 
-	Camera *c = new Camera(engine.getScenes()[0]->spaces_[0], true);
+	Camera *c = new Camera(engine.getSpace(0), true);
 	c->setViewport(800, 600);
 	c->enable_reflections_ = false;
 	c->enable_auto_exposure_ = false;
@@ -161,7 +162,7 @@ Editor::Editor(ImguiManager *manager) : selected_object_handle_(-1) {
 	int n = 2;
 	v.debug_combo_option = debug_combo_items[2];
 	v.camera_->render_path_->setDebugMode(n);
-	c = new Camera(engine.getScenes()[0]->spaces_[0], true);
+	c = new Camera(engine.getSpace(0), true);
 	c->enable_reflections_ = true;
 	c->enable_auto_exposure_ = true;
 	c->setViewport(800, 600);
@@ -171,7 +172,7 @@ Editor::Editor(ImguiManager *manager) : selected_object_handle_(-1) {
 	asset_path_ = "../assets";
 	next_asset_path_ = "";
 	getDirectory();
-	refreshSceneGraph();
+	//refreshSceneGraph();
 	next_refresh_asset_directory_time_ = 0;
 }
 
@@ -185,7 +186,6 @@ void Editor::update() {
 	//ImGui::SetNextWindowSize(ImVec2(engine.getSettings()->resolution_x_, engine.getSettings()->resolution_y_ - 40));
 
 	//ImGui::Begin("Dock Demo"); // , NULL, window_flags
-
 	prepareDockspace();
 	sceneGraphPanel();
 	inspectorPanel();
@@ -278,10 +278,10 @@ void Editor::prepareDockspace() {
 
 		if (ImGui::BeginMenu("View")) {
 			if (ImGui::MenuItem("Show Asset Browser", "", show_asset_browser_)) show_asset_browser_ = !show_asset_browser_;
-			if (ImGui::MenuItem("Show Scene Graph", "", show_scene_graph_)) show_scene_graph_ = !show_scene_graph_;
+			if (ImGui::MenuItem("Show Space Graph", "", show_scene_graph_)) show_scene_graph_ = !show_scene_graph_;
 			if (ImGui::MenuItem("Show Component Panel", "", show_inspector_panel_)) show_inspector_panel_ = !show_inspector_panel_;
 			if (ImGui::MenuItem("Add Viewport Panel", "", false)) {
-				Camera *c = new Camera(engine.getScenes()[0]->spaces_[0], true);
+				Camera *c = new Camera(engine.getSpace(0), true);
 				c->enable_reflections_ = true;
 				c->enable_auto_exposure_ = true;
 				c->setViewport(800, 600);
@@ -292,7 +292,7 @@ void Editor::prepareDockspace() {
 		}
 
 		if (ImGui::BeginMenu("Build")) {
-			auto space = engine.getScene(0)->spaces_[0];
+			auto space = engine.getSpace(0);
 			auto cubemap_sys = (CubemapSubSystem *)space->getSubsystem(COMPONENT_CUBEMAP);
 
 			//if (ImGui::MenuItem("Build Irradiance Probes", "", false)) {
@@ -552,49 +552,46 @@ void Editor::inspectorPanel() {
 	if (show_inspector_panel_) {
 		ImGui::Begin("Inspector Panel", &show_inspector_panel_);
 		if (selected_object_handle_ != -1) {
-			Scene *scene = engine.getScenes()[0];
-			if (scene) {
-				Space *space = scene->spaces_[0];
-				if (space) {
-					GameObject *selected_object_ = &space->getObject(selected_object_handle_);
-					if (ImGui::InputText("Object Name", obj_name, 128)) {
-						selected_object_->setName(obj_name);
-					}
+			Space *space = engine.getSpace(0);
+			if (space) {
+				GameObject *selected_object_ = &space->getObject(selected_object_handle_);
+				if (ImGui::InputText("Object Name", obj_name, 128)) {
+					selected_object_->setName(obj_name);
+				}
 
-					ImGui::Separator();
+				ImGui::Separator();
 
-					int op = 0;
-					if (ImGui::BeginCombo("##addcompcombo", "Add a component")) {
-						for (unsigned int n = 0; n < IM_ARRAYSIZE(component_names); n++) {
-							bool is_selected = (op == n); // You can store your selection however you want, outside or inside your objects
-							if (ImGui::Selectable(component_names[n], is_selected)) {
-								ComponentType ct = (ComponentType)n;
-								ComponentHandle comp = space->getSubsystem(ct)->addComponent(selected_object_->getID());
-								selected_object_->setComponentHandle(ct, comp);
-							}
+				int op = 0;
+				if (ImGui::BeginCombo("##addcompcombo", "Add a component")) {
+					for (unsigned int n = 0; n < IM_ARRAYSIZE(component_names); n++) {
+						bool is_selected = (op == n); // You can store your selection however you want, outside or inside your objects
+						if (ImGui::Selectable(component_names[n], is_selected)) {
+							ComponentType ct = (ComponentType)n;
+							ComponentHandle comp = space->getSubsystem(ct)->addComponent(selected_object_->getID());
+							selected_object_->setComponentHandle(ct, comp);
 						}
-						ImGui::EndCombo();
 					}
+					ImGui::EndCombo();
+				}
 
-					for (int i = 0; i < NUM_COMPONENTS - 1; ++i) {
-						ComponentType component_type = ComponentType(i);
-						ComponentHandle h = selected_object_->getComponentHandle(component_type);
+				for (int i = 0; i < NUM_COMPONENTS - 1; ++i) {
+					ComponentType component_type = ComponentType(i);
+					ComponentHandle h = selected_object_->getComponentHandle(component_type);
 
-						if (h != UINT_MAX) {
-							reflect::TypeDescriptor_Struct *refl = engine.getSystem(component_type)->getReflection();
-							if (refl) {
-								Component *component = space->getSubsystem(component_type)->getBaseComponent(h);
-								if (ImGui::TreeNode(component_names[i])) {
-									if (component_type != COMPONENT_TRANSFORM) {
-										if (ImGui::Button("Remove Component")) {
-											space->getSubsystem(component_type)->removeComponent(h);
-										}
+					if (h != UINT_MAX) {
+						reflect::TypeDescriptor_Struct *refl = engine.getSystem(component_type)->getReflection();
+						if (refl) {
+							Component *component = space->getSubsystem(component_type)->getBaseComponent(h);
+							if (ImGui::TreeNode(component_names[i])) {
+								if (component_type != COMPONENT_TRANSFORM) {
+									if (ImGui::Button("Remove Component")) {
+										space->getSubsystem(component_type)->removeComponent(h);
 									}
-
-									parseCategory(refl->category, (unsigned char *)component);
-
-									ImGui::TreePop();
 								}
+
+								parseCategory(refl->category, (unsigned char *)component);
+
+								ImGui::TreePop();
 							}
 						}
 					}
@@ -752,7 +749,7 @@ void Editor::viewportPanels() {
 			ImGui::Begin("Simulation Viewport", &show_viewport_);
 			ImVec2 size = ImGui::GetWindowSize();
 
-			Space *space = engine.getScene(0)->spaces_[0];
+			Space *space = engine.getSpace(0);
 			CameraSubSystem *camsys = (CameraSubSystem *)space->getSubsystem(COMPONENT_CAMERA);
 			CameraComponent &camcomp = camsys->getComponent(0);
 			GameObjectHandle obj = camcomp.game_object_handle_;
@@ -793,7 +790,7 @@ void Editor::viewportPanels() {
 
 			int i = 0;
 			for (auto &v : viewports_) {
-				std::string title = "Viewport ";
+				std::string title = "Viewport##";
 				title += std::to_string(++i);
 
 				ImGui::Begin(title.c_str(), &v.viewport_shown);
@@ -902,7 +899,7 @@ void Editor::viewportPanels() {
 								btVector3 btRayFrom(eye_pos.x, eye_pos.y, eye_pos.z);
 								btVector3 btRayTo(ray_world.x, ray_world.y, ray_world.z);
 								btCollisionWorld::ClosestRayResultCallback rayCallback(btRayFrom, btRayTo);
-								auto space = engine.getScene(0)->spaces_[0];
+								auto space = engine.getSpace(0)->spaces_[0];
 								RigidBodySubSystem *sys = ((RigidBodySubSystem *)space->getSubsystem(COMPONENT_RIGID_BODY));
 								sys->dynamics_world_->rayTest(btRayFrom, btRayTo, rayCallback);
 								if (rayCallback.hasHit()) {
@@ -1000,6 +997,13 @@ void Editor::viewportPanels() {
 
 				ImGui::End();
 			}
+
+			for (size_t i = 0; i < viewports_.size(); ++i) {
+				if (!viewports_[i].viewport_shown) {
+					viewports_.erase(viewports_.begin() + i);
+					break;
+				}
+			}
 		}
 	}
 
@@ -1007,15 +1011,15 @@ void Editor::viewportPanels() {
 }
 
 void Editor::saveFile() {
-	saveFile(path_, engine.getScenes()[0]);
+	saveFile(path_, engine.getSpace(0)->getScene(0));
 }
 
 void Editor::saveFileAs() {
 	std::string p = engine.getGraphicsWrapper()->getSavePath("JSON Files (*.json)\0*.json\0All Files (*.*)\0*.*\0", "json");
-	//loadFile(path_, engine.getScenes()[0]);
+	//loadFile(path_, engine.getSpaces()[0]);
 	if (p != "") {
 		path_ = p;
-		saveFile(path_, engine.getScenes()[0]);
+		saveFile(path_, engine.getSpace(0)->getScene(0));
 	}
 }
 
@@ -1085,12 +1089,12 @@ void Editor::saveFile(std::string path, Scene *scene) {
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
 	writer.StartObject();
 	writer.Key("name");
-	writer.String("New Scene");
+	writer.String("New Space");
 
 	writer.Key("spaces");
 	writer.StartObject();
 
-	for (auto space : scene->spaces_) {
+	/*for (auto space : scene->spaces_) {
 		writer.Key(space->getName().c_str());
 		writer.StartObject();
 
@@ -1120,7 +1124,7 @@ void Editor::saveFile(std::string path, Scene *scene) {
 		}
 
 		writer.EndObject();
-	}
+	}*/
 
 	writer.EndObject();
 	writer.EndObject();
@@ -1144,14 +1148,14 @@ void Editor::cleanCameras() {
 
 	viewports_.clear();
 
-	Camera *c = new Camera(engine.getScenes()[0]->spaces_[0], true);
+	Camera *c = new Camera(engine.getSpace(0), true);
 	c->setViewport(800, 600);
 	c->enable_reflections_ = false;
 	c->enable_auto_exposure_ = false;
 	c->initialize();
 	((RenderPathDeferred *)c->render_path_)->wireframe_ = true;
 	viewports_.emplace_back(c, Viewport::View::Top);
-	c = new Camera(engine.getScenes()[0]->spaces_[0], true);
+	c = new Camera(engine.getSpace(0), true);
 	c->enable_reflections_ = true;
 	c->enable_auto_exposure_ = true;
 	c->setViewport(800, 600);
@@ -1194,21 +1198,21 @@ void Editor::importFile() {
 
 void Editor::loadFileFrom() {
 	std::string p = engine.getGraphicsWrapper()->getLoadPath("JSON Files (*.json)\0*.json\0All Files (*.*)\0*.*\0", "json");
-	//loadFile(path_, engine.getScenes()[0]);
+	//loadFile(path_, engine.getSpaces()[0]);
 	if (p != "") {
 		path_ = p;
-		Scene *s = engine.getScenes()[0];
+		Space *s = engine.getSpace(0);
 		if (s) {
 			delete s;
 		}
-		engine.getScenes().clear();
-		engine.addScene(path_);
+		//engine.getSpaces().clear();
+		engine.addSpace(path_);
 		cleanCameras();
 	}
 }
 
 void Editor::loadFile() {
-	engine.getScenes()[0]->reload();
+	//engine.getSpace(0)->reload();
 	cleanCameras();
 }
 
@@ -1216,7 +1220,7 @@ void Editor::renderSceneGraphTree(std::vector<SceneGraphNode*>& scene_graph_node
 	return;
 	
 	for (auto &s : scene_graph_nodes) {
-		std::string n = engine.getScene(0)->spaces_[0]->getObject(s->object_handle_).getName();
+		std::string n = engine.getSpace(0)->getObject(s->object_handle_).getName();
 
 		if (s->children_.size() > 0) {
 			ImGui::TreeNode(n.c_str());
@@ -1237,21 +1241,19 @@ void Editor::sceneGraphPanel() {
 		ImGui::Begin("Scene Graph", &show_scene_graph_);
 
 		if (ImGui::Button("Add GameObject")) {
-			engine.getScenes()[0]->spaces_[0]->objects_.emplace_back((GameObjectHandle)engine.getScenes()[0]->spaces_[0]->objects_.size(), "New Object", -1);
+			engine.getSpace(0)->createObject("New Object");
 		}
 		ImGui::Separator();
 
-		// Scene Graph:
-		for (auto scene : engine.getScenes()) {
-			for (auto space : scene->spaces_) {
-				for (auto &object : space->objects_) {
-					std::string n = object.getName();
-					if (ImGui::Button(n.c_str())) {
-						selected_object_handle_ = object.getID();
-						auto s = object.getName().size();
-						memset(obj_name + s, 0, 256 - s);
-						memcpy(obj_name, object.getName().c_str(), s);
-					}
+		// Space Graph:
+		for (auto space : engine.getSpaces()) {
+			for (size_t i = 0; i < space->getNumObjects(); ++i) {
+				auto& object = space->getObject(i);
+				std::string n = object.getName();
+				if (ImGui::Button(n.c_str())) {
+					selected_object_handle_ = object.getID();
+					auto name = object.getName();
+					memcpy(obj_name, name.c_str(), name.size() + 1);
 				}
 			}
 		}

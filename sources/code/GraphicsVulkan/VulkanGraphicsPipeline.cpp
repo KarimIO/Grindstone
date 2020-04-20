@@ -50,24 +50,37 @@ namespace Grindstone {
 			
 			VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 			vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-			vertexInputInfo.vertexBindingDescriptionCount = ci.bindingsCount;
-			vertexInputInfo.pVertexBindingDescriptions = new VkVertexInputBindingDescription[ci.bindingsCount];
-			for (uint32_t i = 0; i < ci.bindingsCount; ++i) {
+			vertexInputInfo.vertexBindingDescriptionCount = ci.vertex_bindings_count;
+			vertexInputInfo.pVertexBindingDescriptions = new VkVertexInputBindingDescription[ci.vertex_bindings_count];
+			uint32_t vad_count = 0;
+			for (uint32_t i = 0; i < ci.vertex_bindings_count; ++i) {
+				auto& vb = ci.vertex_bindings[i];
 				VkVertexInputBindingDescription &vbd = (VkVertexInputBindingDescription &)vertexInputInfo.pVertexBindingDescriptions[i];
 				vbd = {};
-				vbd.binding = ci.bindings[i].binding;
-				vbd.inputRate = ci.bindings[i].elementRate ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
-				vbd.stride = ci.bindings[i].stride;
+				vbd.binding = i; // ci.bindings[i].binding;
+				vbd.inputRate = vb.element_rate ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
+				vbd.stride = vb.stride;
+				vad_count += vb.attribute_count;
 			}
-			vertexInputInfo.pVertexAttributeDescriptions = new VkVertexInputAttributeDescription[ci.attributesCount];
-			for (uint32_t i = 0; i < ci.attributesCount; ++i) {
-				VkVertexInputAttributeDescription &vad = (VkVertexInputAttributeDescription &)vertexInputInfo.pVertexAttributeDescriptions[i];
-				vad = {};
-				vad.binding = ci.attributes[i].binding;
-				vad.location = ci.attributes[i].location;
-				vad.format = TranslateVertexFormatsToVulkan(ci.attributes[i].format);
-				vad.offset = ci.attributes[i].offset;
+
+			vertexInputInfo.vertexAttributeDescriptionCount = vad_count;
+			VkVertexInputAttributeDescription *vads = new VkVertexInputAttributeDescription[vad_count];
+			vad_count = 0;
+
+			for (uint32_t i = 0; i < ci.vertex_bindings_count; ++i) {
+				auto& vb = ci.vertex_bindings[i];
+
+				for (uint32_t j = 0; j < vb.attribute_count; ++j) {
+					auto& va = vb.attributes[j];
+					VkVertexInputAttributeDescription &vad = vads[vad_count++];
+					vad.binding = i;
+					vad.location = j;
+					vad.format = TranslateVertexFormatsToVulkan(va.format);
+					vad.offset = va.offset;
+				}
 			}
+
+			vertexInputInfo.pVertexAttributeDescriptions = vads;
 
 			VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
 			inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -189,9 +202,16 @@ namespace Grindstone {
 				throw std::runtime_error("failed to create graphics pipeline!");
 			}
 
+			delete vads;
+
 			for (uint32_t i = 0; i < ci.shaderStageCreateInfoCount; ++i) {
 				vkDestroyShaderModule(VulkanGraphicsWrapper::get().getDevice(), shaderStages[i].module, nullptr);
 			}
+		}
+
+		VulkanGraphicsPipeline::~VulkanGraphicsPipeline() {
+			vkDestroyPipeline(VulkanGraphicsWrapper::get().getDevice(), graphics_pipeline_, nullptr);
+			vkDestroyPipelineLayout(VulkanGraphicsWrapper::get().getDevice(), pipeline_layout_, nullptr);
 		}
 
 		VkPipeline VulkanGraphicsPipeline::getGraphicsPipeline() {

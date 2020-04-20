@@ -1,5 +1,5 @@
 #include "../Core/Engine.hpp"
-#include <GraphicsWrapper.hpp>
+#include <GraphicsCommon/GraphicsWrapper.hpp>
 #include "Core/Utilities.hpp"
 #include "PostProcessAutoExposure.hpp"
 
@@ -20,27 +20,27 @@ void PostProcessAutoExposure::resizeBuffers(unsigned int w, unsigned h) {
 	auto gl = engine.getSettings()->graphics_language_;
 
 	if (lum_buffer_) {
-		gw->DeleteRenderTarget(lum_buffer_);
+		gw->deleteRenderTarget(lum_buffer_);
 		lum_buffer_ = nullptr;
 	}
 	if (lum_framebuffer_) {
-		gw->DeleteFramebuffer(lum_framebuffer_);
+		gw->deleteFramebuffer(lum_framebuffer_);
 		lum_framebuffer_ = nullptr;
 	}
 	if (gpipeline_) {
-		gw->DeleteGraphicsPipeline(gpipeline_);
+		gw->deleteGraphicsPipeline(gpipeline_);
 		gpipeline_ = nullptr;
 	}
 
 	Grindstone::GraphicsAPI::RenderTargetCreateInfo lum_buffer_ci(Grindstone::GraphicsAPI::ColorFormat::R8, 1024, 1024);
-	lum_buffer_ = gw->CreateRenderTarget(&lum_buffer_ci, 1);
+	lum_buffer_ = gw->createRenderTarget(&lum_buffer_ci, 1);
 
 	Grindstone::GraphicsAPI::FramebufferCreateInfo lum_framebuffer_ci;
 	lum_framebuffer_ci.render_target_lists = &lum_buffer_;
 	lum_framebuffer_ci.num_render_target_lists = 1;
 	lum_framebuffer_ci.depth_target = nullptr;
 	lum_framebuffer_ci.render_pass = nullptr;
-	lum_framebuffer_ = gw->CreateFramebuffer(lum_framebuffer_ci);
+	lum_framebuffer_ = gw->createFramebuffer(lum_framebuffer_ci);
 
 	Grindstone::GraphicsAPI::ShaderStageCreateInfo stages[2];
 
@@ -74,15 +74,12 @@ void PostProcessAutoExposure::resizeBuffers(unsigned int w, unsigned h) {
 	stages[1].size = (uint32_t)ffile.size();
 	stages[1].type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
-	auto vbd = engine.getPlaneVBD();
-	auto vad = engine.getPlaneVAD();
+	auto vertex_layout = engine.getPlaneVertexLayout();
 
 	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo luminanceGPCI;
 	luminanceGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
-	luminanceGPCI.bindings = &vbd;
-	luminanceGPCI.bindingsCount = 1;
-	luminanceGPCI.attributes = &vad;
-	luminanceGPCI.attributesCount = 1;
+	luminanceGPCI.vertex_bindings = &vertex_layout;
+	luminanceGPCI.vertex_bindings_count = 1;
 	luminanceGPCI.width = (float)1024;
 	luminanceGPCI.height = (float)1024;
 	luminanceGPCI.scissorW = 1024;
@@ -95,7 +92,7 @@ void PostProcessAutoExposure::resizeBuffers(unsigned int w, unsigned h) {
 	luminanceGPCI.textureBindingCount = 1;
 	luminanceGPCI.uniformBufferBindings = nullptr;
 	luminanceGPCI.uniformBufferBindingCount = 0;
-	gpipeline_ = gw->CreateGraphicsPipeline(luminanceGPCI);
+	gpipeline_ = gw->createGraphicsPipeline(luminanceGPCI);
 }
 
 void PostProcessAutoExposure::reloadGraphics(unsigned int w, unsigned h) {
@@ -104,26 +101,26 @@ void PostProcessAutoExposure::reloadGraphics(unsigned int w, unsigned h) {
 	tblci.bindings = tonemap_sub_binding_;
 	tblci.bindingCount = 1;
 	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
-	tonemap_tbl_ = engine.getGraphicsWrapper()->CreateTextureBindingLayout(tblci);
+	tonemap_tbl_ = engine.getGraphicsWrapper()->createTextureBindingLayout(tblci);
 	resizeBuffers(w, h);
 }
 
 void PostProcessAutoExposure::destroyGraphics() {
 	auto gw = engine.getGraphicsWrapper();
 	if (lum_buffer_) {
-		gw->DeleteRenderTarget(lum_buffer_);
+		gw->deleteRenderTarget(lum_buffer_);
 		lum_buffer_ = nullptr;
 	}
 	if (lum_framebuffer_) {
-		gw->DeleteFramebuffer(lum_framebuffer_);
+		gw->deleteFramebuffer(lum_framebuffer_);
 		lum_framebuffer_ = nullptr;
 	}
 	if (gpipeline_) {
-		gw->DeleteGraphicsPipeline(gpipeline_);
+		gw->deleteGraphicsPipeline(gpipeline_);
 		gpipeline_ = nullptr;
 	}
 	if (tonemap_tbl_) {
-		gw->DeleteTextureBindingLayout(tonemap_tbl_);
+		gw->deleteTextureBindingLayout(tonemap_tbl_);
 		tonemap_tbl_ = nullptr;
 	}
 }
@@ -134,7 +131,7 @@ void PostProcessAutoExposure::Process() {
 	lum_framebuffer_->BindWrite(false);
     source_->framebuffer->BindRead();
     source_->framebuffer->BindTextures(4);
-    engine.getGraphicsWrapper()->DrawImmediateVertices(0, 6);
+    engine.getGraphicsWrapper()->drawImmediateVertices(Grindstone::GraphicsAPI::GeometryType::Triangles, 0, 6);
 }
 
 float PostProcessAutoExposure::GetExposure() {

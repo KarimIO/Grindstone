@@ -14,99 +14,95 @@
 #include "../GraphicsCommon/GraphicsWrapper.hpp"
 #include "../GraphicsCommon/DLLDefs.hpp"
 
-#ifdef __linux__
-#include <GL/glx.h>
-#endif
-
 namespace Grindstone {
 	namespace GraphicsAPI {
 		GLenum GetGeomType(GeometryType geom_type);
 
-		class GRAPHICS_EXPORT_CLASS GLGraphicsWrapper : public GraphicsWrapper {
-		private:
-#if defined(GLFW_WINDOW)
-#elif defined(_WIN32)
-			HGLRC	hRC;
-			HDC		hDC;
-			bool InitializeWindowContext();
-#else
-			GLXContext context;
-			void CleanX11();
-			bool InitializeWindowContext();
-#endif
-
+		class GLGraphicsWrapper : public GraphicsWrapper {
 		public:
-
-			GLGraphicsWrapper(InstanceCreateInfo createInfo);
+			virtual bool initialize(GraphicsWrapperCreateInfo createInfo) override;
 			~GLGraphicsWrapper();
-			void Clear(ClearMode mask);
-			void CreateDefaultStructures();
+			virtual void clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) override;
+			virtual void swapBuffers() override;
+			virtual void adjustPerspective(float *perspective) override;
+
+			virtual const char* getVendorName() override;
+			virtual const char* getAdapterName() override;
+			virtual const char* getAPIName() override;
+			virtual const char* getAPIVersion() override;
 
 			virtual void getSwapChainRenderTargets(RenderTarget **&rts, uint32_t &rt_count) override;
-			void setViewport(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+			virtual void setViewport(uint16_t x, uint16_t y, uint16_t w, uint16_t h) override;
 
-			virtual void DeleteRenderTarget(RenderTarget * ptr) override;
-			virtual void DeleteDepthTarget(DepthTarget * ptr) override;
-			virtual void DeleteFramebuffer(Framebuffer *ptr) override;
-			virtual void DeleteVertexBuffer(VertexBuffer *ptr) override;
-			virtual void DeleteIndexBuffer(IndexBuffer *ptr) override;
-			virtual void DeleteUniformBuffer(UniformBuffer * ptr) override;
-			virtual void DeleteUniformBufferBinding(UniformBufferBinding * ptr) override;
-			virtual void DeleteGraphicsPipeline(GraphicsPipeline *ptr) override;
-			virtual void DeleteRenderPass(RenderPass *ptr) override;
-			virtual void DeleteTexture(Texture *ptr) override;
-			virtual void DeleteTextureBinding(TextureBinding *ptr) override;
-			virtual void DeleteTextureBindingLayout(TextureBindingLayout *ptr) override;
-			virtual void DeleteCommandBuffer(CommandBuffer * ptr) override;
-			virtual void DeleteVertexArrayObject(VertexArrayObject *ptr) override;
+			virtual void deleteRenderTarget(RenderTarget * ptr) override;
+			virtual void deleteDepthTarget(DepthTarget * ptr) override;
+			virtual void deleteFramebuffer(Framebuffer *ptr) override;
+			virtual void deleteVertexBuffer(VertexBuffer *ptr) override;
+			virtual void deleteIndexBuffer(IndexBuffer *ptr) override;
+			virtual void deleteUniformBuffer(UniformBuffer * ptr) override;
+			virtual void deleteUniformBufferBinding(UniformBufferBinding * ptr) override;
+			virtual void deleteGraphicsPipeline(GraphicsPipeline *ptr) override;
+			virtual void deleteRenderPass(RenderPass *ptr) override;
+			virtual void deleteTexture(Texture *ptr) override;
+			virtual void deleteTextureBinding(TextureBinding *ptr) override;
+			virtual void deleteTextureBindingLayout(TextureBindingLayout *ptr) override;
+			virtual void deleteCommandBuffer(CommandBuffer * ptr) override;
+			virtual void deleteVertexArrayObject(VertexArrayObject *ptr) override;
 
-			Framebuffer *CreateFramebuffer(FramebufferCreateInfo ci);
-			RenderPass *CreateRenderPass(RenderPassCreateInfo ci);
-			GraphicsPipeline *CreateGraphicsPipeline(GraphicsPipelineCreateInfo ci);
-			void CreateDefaultFramebuffers(DefaultFramebufferCreateInfo ci, Framebuffer **&framebuffers, uint32_t &framebufferCount);
-			CommandBuffer *CreateCommandBuffer(CommandBufferCreateInfo gp);
-			VertexArrayObject *CreateVertexArrayObject(VertexArrayObjectCreateInfo gp);
-			VertexBuffer *CreateVertexBuffer(VertexBufferCreateInfo ci);
-			IndexBuffer *CreateIndexBuffer(IndexBufferCreateInfo ci);
-			UniformBuffer *CreateUniformBuffer(UniformBufferCreateInfo ci);
-			UniformBufferBinding *CreateUniformBufferBinding(UniformBufferBindingCreateInfo ci);
-			Texture *CreateCubemap(CubemapCreateInfo createInfo);
-			Texture *CreateTexture(TextureCreateInfo createInfo);
-			TextureBinding *CreateTextureBinding(TextureBindingCreateInfo createInfo);
-			TextureBindingLayout *CreateTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo);
-			RenderTarget *CreateRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc, bool cube = false);
-			DepthTarget *CreateDepthTarget(DepthTargetCreateInfo rt);
-			void CopyToDepthBuffer(DepthTarget *p);
+			virtual Framebuffer *createFramebuffer(FramebufferCreateInfo ci) override;
+			virtual RenderPass *createRenderPass(RenderPassCreateInfo ci) override;
+			virtual GraphicsPipeline *createGraphicsPipeline(GraphicsPipelineCreateInfo ci) override;
+			virtual CommandBuffer *createCommandBuffer(CommandBufferCreateInfo gp) override;
+			virtual VertexArrayObject *createVertexArrayObject(VertexArrayObjectCreateInfo gp) override;
+			virtual VertexBuffer *createVertexBuffer(VertexBufferCreateInfo ci) override;
+			virtual IndexBuffer *createIndexBuffer(IndexBufferCreateInfo ci) override;
+			virtual UniformBuffer *createUniformBuffer(UniformBufferCreateInfo ci) override;
+			virtual UniformBufferBinding *createUniformBufferBinding(UniformBufferBindingCreateInfo ci) override;
+			virtual Texture *createCubemap(CubemapCreateInfo createInfo) override;
+			virtual Texture *createTexture(TextureCreateInfo createInfo) override;
+			virtual TextureBinding *createTextureBinding(TextureBindingCreateInfo createInfo) override;
+			virtual TextureBindingLayout *createTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo) override;
+			virtual RenderTarget *createRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc, bool cube = false) override;
+			virtual DepthTarget *createDepthTarget(DepthTargetCreateInfo rt) override;
 
-			uint32_t GetImageIndex();
+			virtual void copyToDepthBuffer(DepthTarget *p) override;
 
-			const bool shouldUseImmediateMode();
-			const bool supportsCommandBuffers();
-			const bool supportsTesselation();
-			const bool supportsGeometryShader();
-			const bool supportsComputeShader();
-			const bool supportsMultiDrawIndirect();
+			virtual uint32_t getImageIndex() override;
 
-			void WaitUntilIdle();
-			void DrawCommandBuffers(uint32_t imageIndex, CommandBuffer ** commandBuffers, uint32_t commandBufferCount);
+			virtual const bool shouldUseImmediateMode() override;
+			virtual const bool supportsCommandBuffers() override;
+			virtual const bool supportsTesselation() override;
+			virtual const bool supportsGeometryShader() override;
+			virtual const bool supportsComputeShader() override;
+			virtual const bool supportsMultiDrawIndirect() override;
 
-			void BindTextureBinding(TextureBinding *);
-			void BindVertexArrayObject(VertexArrayObject *);
-			void DrawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount);
-			void DrawImmediateVertices(uint32_t base, uint32_t count);
-			void SetImmediateBlending(BlendMode);
-			void EnableDepth(bool state);
-			virtual void BindDefaultFramebuffer(bool depth);
-			void SetColorMask(ColorMask mask);
+			virtual void waitUntilIdle() override;
+			virtual void drawCommandBuffers(uint32_t imageIndex, CommandBuffer ** commandBuffers, uint32_t commandBufferCount) override;
 
-			ColorFormat GetDeviceColorFormat();
+			virtual void bindTextureBinding(TextureBinding *) override;
+			virtual void bindVertexArrayObject(VertexArrayObject *) override;
+			virtual void drawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) override;
+			virtual void drawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) override;
+			virtual void setImmediateBlending(BlendMode) override;
+			virtual void enableDepth(bool state) override;
+			virtual void bindDefaultFramebuffer(bool depth) override;
+			virtual void setColorMask(ColorMask mask) override;
 
-			void SwapBuffer();
+			virtual ColorFormat getDeviceColorFormat() override;
+		private:
+			std::string vendor_name_;
+			std::string adapter_name_;
+			std::string api_version_;
+		private:
+#ifdef _WIN32
+			HDC window_device_context_;
+			HGLRC window_render_context_;
+#endif
 		};
 
-		extern "C" {
+		/*extern "C" {
 			GRAPHICS_EXPORT GraphicsWrapper* createGraphics(InstanceCreateInfo createInfo);
 			GRAPHICS_EXPORT void deleteGraphics(void *ptr);
-		}
+		}*/
 	}
 }

@@ -75,6 +75,10 @@ namespace Grindstone {
 			}
 		}
 
+		VulkanRenderPass::~VulkanRenderPass() {
+			vkDestroyRenderPass(VulkanGraphicsWrapper::get().getDevice(), render_pass_, nullptr);
+		}
+
 		VkRenderPass VulkanRenderPass::getRenderPassHandle() {
 			return render_pass_;
 		}

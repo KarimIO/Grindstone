@@ -1,5 +1,5 @@
 #include "PostProcessSSR.hpp"
-#include "GraphicsWrapper.hpp"
+#include <GraphicsCommon/GraphicsWrapper.hpp>
 #include "../Core/Engine.hpp"
 #include <glm/glm.hpp>
 #include "Utilities/SettingsFile.hpp"
@@ -44,15 +44,12 @@ PostProcessSSR::PostProcessSSR(unsigned int w, unsigned h, PostPipeline *pipelin
 	stages[1].size = (uint32_t)ffile.size();
 	stages[1].type = Grindstone::GraphicsAPI::ShaderStage::Fragment;
 
-	auto vbd = engine.getPlaneVBD();
-	auto vad = engine.getPlaneVAD();
+	auto vertex_layout = engine.getPlaneVertexLayout();
 
 	Grindstone::GraphicsAPI::GraphicsPipelineCreateInfo ssrGPCI;
 	ssrGPCI.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
-	ssrGPCI.bindings = &vbd;
-	ssrGPCI.bindingsCount = 1;
-	ssrGPCI.attributes = &vad;
-	ssrGPCI.attributesCount = 1;
+	ssrGPCI.vertex_bindings = &vertex_layout;
+	ssrGPCI.vertex_bindings_count = 1;
 	ssrGPCI.width = (float)settings->resolution_x_;
 	ssrGPCI.height = (float)settings->resolution_y_;
 	ssrGPCI.scissorW = settings->resolution_x_;
@@ -69,15 +66,15 @@ PostProcessSSR::PostProcessSSR(unsigned int w, unsigned h, PostPipeline *pipelin
 	tblci.bindings = ssr_sub_binding_;
 	tblci.bindingCount = 1;
 	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
-	Grindstone::GraphicsAPI::TextureBindingLayout *ssr_tbl_ = graphics_wrapper->CreateTextureBindingLayout(tblci);
+	Grindstone::GraphicsAPI::TextureBindingLayout *ssr_tbl_ = graphics_wrapper->createTextureBindingLayout(tblci);
 
-	std::vector<Grindstone::GraphicsAPI::TextureBindingLayout*> tbls_refl = { engine.gbuffer_tbl_, ssr_tbl_ }; // refl_tbl
+	std::vector<Grindstone::GraphicsAPI::TextureBindingLayout*> tbls_refl = { engine.getGbufferTBL(), ssr_tbl_ }; // refl_tbl
 
 	ssrGPCI.textureBindings = tbls_refl.data();
 	ssrGPCI.textureBindingCount = (uint32_t)tbls_refl.size();
 	ssrGPCI.uniformBufferBindings = nullptr;
 	ssrGPCI.uniformBufferBindingCount = 0;
-	gpipeline_ = graphics_wrapper->CreateGraphicsPipeline(ssrGPCI);
+	gpipeline_ = graphics_wrapper->createGraphicsPipeline(ssrGPCI);
 }
 
 PostProcessSSR::~PostProcessSSR()
@@ -91,20 +88,21 @@ void PostProcessSSR::Process() {
 
 	gpipeline_->Bind();
 	if (target_ == nullptr) {
-		engine.getGraphicsWrapper()->BindDefaultFramebuffer(true);
-		engine.getGraphicsWrapper()->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
+		engine.getGraphicsWrapper()->bindDefaultFramebuffer(true);
+		float col[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		engine.getGraphicsWrapper()->clear(Grindstone::GraphicsAPI::ClearMode::ColorAndDepth, col, 1.0f, 0);
 	}
 	else {
 		target_->framebuffer->BindWrite(true);
-		//target_->framebuffer->Clear(Grindstone::GraphicsAPI::ClearMode::Both);
+		//target_->framebuffer->Clear(Grindstone::GraphicsAPI::ClearMode::ColorAndDepth);
 	}
-	graphics_wrapper->SetImmediateBlending(Grindstone::GraphicsAPI::BlendMode::Additive);
+	graphics_wrapper->setImmediateBlending(Grindstone::GraphicsAPI::BlendMode::Additive);
 
 	source_->framebuffer->BindRead();
 	source_->framebuffer->BindTextures(4);
-	graphics_wrapper->DrawImmediateVertices(0, 6);
+	graphics_wrapper->drawImmediateVertices(Grindstone::GraphicsAPI::GeometryType::Triangles, 0, 6);
 
-	graphics_wrapper->SetImmediateBlending(Grindstone::GraphicsAPI::BlendMode::None);
+	graphics_wrapper->setImmediateBlending(Grindstone::GraphicsAPI::BlendMode::None);
 }
 
 void PostProcessSSR::resizeBuffers(unsigned int w, unsigned h)

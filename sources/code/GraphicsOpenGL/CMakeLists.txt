@@ -1,5 +1,5 @@
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(GL_CORE_SOURCES ../../deps/GL/gl3w.cpp GLGraphicsGeneral.cpp GLGraphicsWindows.cpp GLGraphicsX11.cpp ../WindowModule/glfwWindow.cpp)
+set(GL_CORE_SOURCES ../../deps/GL/gl3w.cpp GLGraphicsWrapper.cpp ../WindowModule/glfwWindow.cpp)
 set(GL_CORE_HEADERS ../../deps/GL/gl3w.h glcorearb.hpp GLGraphicsWrapper.hpp)
 set(GL_OBJ_SOURCES GLDepthTarget.cpp GLRenderTarget.cpp GLFramebuffer.cpp GLGraphicsPipeline.cpp GLTexture.cpp GLVertexArrayObject.cpp GLVertexBuffer.cpp GLIndexBuffer.cpp GLUniformBuffer.cpp)
 set(GL_OBJ_HEADERS GLDepthTarget.hpp GLRenderTarget.hpp GLFramebuffer.hpp GLGraphicsPipeline.hpp GLTexture.hpp GLVertexArrayObject.hpp GLVertexBuffer.hpp GLIndexBuffer.hpp GLUniformBuffer.hpp)

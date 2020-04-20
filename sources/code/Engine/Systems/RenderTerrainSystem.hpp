@@ -53,6 +53,7 @@ private:
 	Grindstone::GraphicsAPI::UniformBufferBinding *model_ubb_;
 	Grindstone::GraphicsAPI::UniformBuffer *model_ubo_;
 	std::vector<Grindstone::GraphicsAPI::UniformBufferBinding *> ubbs_;
+	Grindstone::GraphicsAPI::VertexBufferLayout vertex_layout_;
 };
 
 class RenderTerrainSubSystem : public SubSystem {

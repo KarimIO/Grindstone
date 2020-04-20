@@ -8,10 +8,10 @@ layout(std140) uniform ModelMatrixBuffer {
     mat4 model;
 } mbo;
 
-in vec3 vertexPosition;
-in vec3 vertexNormal;
-in vec3 vertexTangent;
-in vec2 vertexTexCoord;
+layout (location = 0) in vec3 vertexPosition;
+layout (location = 1) in vec3 vertexNormal;
+layout (location = 2) in vec3 vertexTangent;
+layout (location = 3) in vec2 vertexTexCoord;
 
 out vec3 fragPosition;
 out vec3 fragNormal;

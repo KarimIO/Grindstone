@@ -15,6 +15,9 @@ namespace Grindstone {
 			case TextureFilter::LinearMipMapLinear:
 				return VK_FILTER_LINEAR;
 			}
+
+			assert(false && "TranslateFilterToVulkan: Invalid TextureFilter!");
+			return VK_FILTER_LINEAR;
 		}
 
 		VkSamplerAddressMode TranslateWrapToVulkan(TextureWrapMode m) {
@@ -30,15 +33,21 @@ namespace Grindstone {
 			case TextureWrapMode::MirroredClampToEdge:
 				return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
 			}
+
+			assert(false && "TranslateWrapToVulkan: Invalid TextureWrapMode!");
+			return VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		}
 
 		VkFormat TranslateVertexFormatsToVulkan(VertexFormat format) {
 			switch (format) {
-			case VertexFormat::R32_G32:
+			case VertexFormat::Float3:
 				return VK_FORMAT_R32G32B32_SFLOAT;
-			case VertexFormat::R32_G32_B32:
+			case VertexFormat::Float2:
 				return VK_FORMAT_R32G32_SFLOAT;
 			}
+
+			assert(false && "TranslateVertexFormatsToVulkan: Invalid Vertex Format!");
+			return VK_FORMAT_R32G32B32_SFLOAT;
 		}
 
 		ColorFormat TranslateColorFormatFromVulkan(VkFormat format) {
@@ -52,11 +61,9 @@ namespace Grindstone {
 			case VK_FORMAT_R8G8B8A8_UNORM:
 			case VK_FORMAT_B8G8R8A8_UNORM:
 				return ColorFormat::R8G8B8A8;
-			default:
-				printf("Invalid color format!");
-				assert(false);
-				break;
 			}
+
+			assert(false && "TranslateColorFormatFromVulkan: Invalid color format!");
 			return ColorFormat::R8G8B8A8;
 		}
 		
@@ -72,15 +79,13 @@ namespace Grindstone {
 				return DepthFormat::D32_STENCIL_8;
 			case VK_FORMAT_D32_SFLOAT_S8_UINT:
 				return DepthFormat::D32_STENCIL_8;
-			default:
-				printf("Invalid depth format!");
-				assert(false);
-				break;
-				//case DepthFormat::D16_STENCIL_8:
-				//		return VK_FORMAT_D16_UNORM_S8_UINT;
-				//case FORMAT_STENCIL_8:
-				//	return VK_FORMAT_S8_UINT;
+			//case DepthFormat::D16_STENCIL_8:
+			//		return VK_FORMAT_D16_UNORM_S8_UINT;
+			//case FORMAT_STENCIL_8:
+			//	return VK_FORMAT_S8_UINT;
 			}
+
+			assert(false && "TranslateDepthFormatFromVulkan: Invalid depth format!");
 			return DepthFormat::D24;
 		}
 
@@ -98,11 +103,16 @@ namespace Grindstone {
 			case ColorFormat::R8G8B8A8:
 				channels = 4;
 				return VK_FORMAT_B8G8R8A8_UNORM;
+			case ColorFormat::R32G32B32A32:
+				channels = 4;
+				return VK_FORMAT_R32G32B32A32_SFLOAT;
 			default:
 				printf("Invalid color format!");
 				assert(false);
 				break;
 			}
+
+			assert(false && "TranslateColorFormatToVulkan: Invalid color format!");
 			return VK_FORMAT_B8G8R8A8_UNORM;
 		}
 
@@ -118,15 +128,13 @@ namespace Grindstone {
 				return VK_FORMAT_D24_UNORM_S8_UINT;
 			case DepthFormat::D32_STENCIL_8:
 				return VK_FORMAT_D32_SFLOAT_S8_UINT;
-			default:
-				printf("Invalid depth format!");
-				assert(false);
-				break;
 			//case DepthFormat::D16_STENCIL_8:
 			//		return VK_FORMAT_D16_UNORM_S8_UINT;
 			//case FORMAT_STENCIL_8:
 			//	return VK_FORMAT_S8_UINT;
 			}
+
+			assert(false && "TranslateDepthFormatToVulkan: Invalid depth format!");
 			return VK_FORMAT_D32_SFLOAT_S8_UINT;
 		}
 	}

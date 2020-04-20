@@ -2,15 +2,7 @@
 #define _SYSTEM_H
 
 #include "../Utilities/Reflection.hpp"
-
-#undef Bool
-#include <rapidjson/document.h>
-
-#ifdef INCLUDE_EDITOR
-#include <rapidjson/prettywriter.h>
-#endif
-
-#include "./AssetManagers/AssetReferences.hpp"
+#include <Engine/AssetManagers/AssetReferences.hpp>
 #include <string>
 
 class Space;
@@ -69,6 +61,7 @@ public:
 	virtual Component *getBaseComponent(ComponentHandle component_handle) = 0;
 	virtual SubSystem *copy() { return nullptr; };
 	virtual void initialize() {};
+	virtual void initializePreloaded() {};
 
 	virtual void removeComponent(ComponentHandle id) = 0;
 

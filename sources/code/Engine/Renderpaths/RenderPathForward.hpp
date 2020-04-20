@@ -2,7 +2,7 @@
 #define _RENDERPATH_FORWARD_H
 
 #include "RenderPath.hpp"
-#include <GraphicsWrapper.hpp>
+#include <GraphicsCommon/GraphicsWrapper.hpp>
 
 class RenderPathForward : public RenderPath {
 public:

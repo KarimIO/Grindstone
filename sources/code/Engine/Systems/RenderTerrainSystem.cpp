@@ -7,7 +7,7 @@
 #include <fstream>
 #include "Core/Engine.hpp"
 #include "AssetManagers/MaterialManager.hpp"
-#include "GraphicsWrapper.hpp"
+#include <GraphicsCommon/GraphicsWrapper.hpp>
 #include "Utilities/SettingsFile.hpp"
 
 RenderTerrainComponent::RenderTerrainComponent(GameObjectHandle object_handle, ComponentHandle handle) :
@@ -75,10 +75,7 @@ void RenderTerrainComponent::generateMesh() {
 	auto &geometry_info = ((RenderTerrainSystem *)engine.getSystem(COMPONENT_RENDER_TERRAIN))->geometry_info_;
 
 	Grindstone::GraphicsAPI::VertexBufferCreateInfo vbci;
-	vbci.attribute = geometry_info.vads;
-	vbci.attributeCount = (uint32_t)geometry_info.vads_count;
-	vbci.binding = geometry_info.vbds;
-	vbci.bindingCount = geometry_info.vbds_count;
+	vbci.layout = geometry_info.vertex_layout;
 	vbci.content = static_cast<const void *>(vertices.data());
 	vbci.count = static_cast<uint32_t>(vertices.size());
 	vbci.size = static_cast<uint32_t>(sizeof(glm::vec2) * vertices.size());
@@ -89,23 +86,22 @@ void RenderTerrainComponent::generateMesh() {
 	ibci.size = static_cast<uint32_t>(sizeof(uint32_t) * indices.size());
 
 	/*if (graphics_wrapper_->SupportsCommandBuffers()) {
-		model->Grindstone::GraphicsAPI::VertexBuffer = graphics_wrapper_->CreateVertexBuffer(vbci);
-		model->indexBuffer = graphics_wrapper_->CreateIndexBuffer(ibci);
+		model->Grindstone::GraphicsAPI::VertexBuffer = graphics_wrapper_->createVertexBuffer(vbci);
+		model->indexBuffer = graphics_wrapper_->createIndexBuffer(ibci);
 	}
 	else {*/
 
 		terrain_drawable_ = new TerrainDrawable();
-		Grindstone::GraphicsAPI::VertexArrayObjectCreateInfo vaci;
-		vaci.vertexBuffer = terrain_drawable_->vertex_buffer;
-		vaci.indexBuffer = terrain_drawable_->index_buffer;
-		terrain_drawable_->vertex_array_object = engine.getGraphicsWrapper()->CreateVertexArrayObject(vaci);
-		terrain_drawable_->vertex_buffer = engine.getGraphicsWrapper()->CreateVertexBuffer(vbci);
-		terrain_drawable_->index_buffer = engine.getGraphicsWrapper()->CreateIndexBuffer(ibci);
+		terrain_drawable_->vertex_buffer = engine.getGraphicsWrapper()->createVertexBuffer(vbci);
+		terrain_drawable_->index_buffer = engine.getGraphicsWrapper()->createIndexBuffer(ibci);
 
-		vaci.vertexBuffer = terrain_drawable_->vertex_buffer;
-		vaci.indexBuffer = terrain_drawable_->index_buffer;
-		terrain_drawable_->vertex_array_object->BindResources(vaci);
-		terrain_drawable_->vertex_array_object->Unbind();
+		Grindstone::GraphicsAPI::VertexArrayObjectCreateInfo vaci;
+		vaci.vertex_buffers = &terrain_drawable_->vertex_buffer;
+		vaci.vertex_buffer_count = 1;
+		vaci.index_buffer = terrain_drawable_->index_buffer;
+		terrain_drawable_->vertex_array_object = engine.getGraphicsWrapper()->createVertexArrayObject(vaci);
+
+
 		terrain_drawable_->num_indices_ = (unsigned int)indices.size();
 	//}
 
@@ -153,7 +149,7 @@ void RenderTerrainSubSystem::setComponent(ComponentHandle component_handle, rapi
 			tci.ddscube = false;
 			tci.mipmaps = 0;
 			tci.options = TextureOptions();
-			component.heightmap_ = engine.getGraphicsWrapper()->CreateTexture(tci);
+			component.heightmap_ = engine.getGraphicsWrapper()->createTexture(tci);
 
 			input.close();*/
 		}
@@ -200,21 +196,13 @@ Grindstone::GraphicsAPI::UniformBuffer * RenderTerrainSystem::getModelUbo() {
 
 RenderTerrainSystem::RenderTerrainSystem(Grindstone::GraphicsAPI::UniformBufferBinding *ubb) : System(COMPONENT_RENDER_TERRAIN) {
 	GRIND_PROFILE_FUNC();
-	geometry_info_.vbds_count = 1;
-	geometry_info_.vbds = new Grindstone::GraphicsAPI::VertexBindingDescription();
-	geometry_info_.vbds->binding = 0;
-	geometry_info_.vbds->elementRate = false;
-	geometry_info_.vbds->stride = sizeof(glm::vec2);
 
-	geometry_info_.vads_count = 1;
-	geometry_info_.vads = new Grindstone::GraphicsAPI::VertexAttributeDescription();
-	geometry_info_.vads[0].binding = 0;
-	geometry_info_.vads[0].location = 0;
-	geometry_info_.vads[0].format = Grindstone::GraphicsAPI::VertexFormat::R32_G32;
-	geometry_info_.vads[0].size = 2;
-	geometry_info_.vads[0].name = "vertexPosition";
-	geometry_info_.vads[0].offset = 0;
-	geometry_info_.vads[0].usage = Grindstone::GraphicsAPI::AttributeUsage::Position;
+	vertex_layout_ = Grindstone::GraphicsAPI::VertexBufferLayout({
+		{ Grindstone::GraphicsAPI::VertexFormat::Float2, "vertexPosition", false, Grindstone::GraphicsAPI::AttributeUsage::Position }
+	});
+
+	geometry_info_.vertex_layout = &vertex_layout_;
+	geometry_info_.vertex_layout_count = 1;
 
 	Grindstone::GraphicsAPI::GraphicsWrapper *graphics_wrapper = engine.getGraphicsWrapper();
 
@@ -223,13 +211,13 @@ RenderTerrainSystem::RenderTerrainSystem(Grindstone::GraphicsAPI::UniformBufferB
 	ubbci2.shaderLocation = "ModelMatrixBuffer";
 	ubbci2.size = 128; // sizeof(glm::mat4);
 	ubbci2.stages = Grindstone::GraphicsAPI::ShaderStageBit::Vertex;
-	model_ubb_ = graphics_wrapper->CreateUniformBufferBinding(ubbci2);
+	model_ubb_ = graphics_wrapper->createUniformBufferBinding(ubbci2);
 
 	Grindstone::GraphicsAPI::UniformBufferCreateInfo ubci2;
 	ubci2.isDynamic = true;
 	ubci2.size = 128;
 	ubci2.binding = model_ubb_;
-	model_ubo_ = graphics_wrapper->CreateUniformBuffer(ubci2);
+	model_ubo_ = graphics_wrapper->createUniformBuffer(ubci2);
 
 	ubbs_ = { ubb, model_ubb_ };
 
@@ -250,23 +238,23 @@ void TerrainDrawable::draw() {
 	bool tess = graphics->supportsTesselation() && engine.getSettings()->enable_tesselation_;
 	/*GrindstoneGeometryType geom = tess ? GEOMETRY_PATCHES : Grindstone::GraphicsAPI::GeometryType::TriangleStrips;
 
-	engine.graphics->BindTextureBinding(heightmap_texture_binding_);
+	engine.graphics->bindTextureBinding(heightmap_texture_binding_);
 	for (auto &reference : references) {
 		CRender &renderComponent = engine.geometry_system.GetComponent(reference);
 		if (renderComponent.should_draw) {
 			auto entityID = renderComponent.entity_id;
 			auto transform = engine.transformSystem.components[entityID];
 
-			engine.ubo2->UpdateUniformBuffer(&transform.GetModelMatrix());
+			engine.ubo2->updateBuffer(&transform.GetModelMatrix());
 			engine.ubo->Bind();
 			engine.ubo2->Bind();
 
-			engine.graphics->BindVertexArrayObject(Grindstone::GraphicsAPI::VertexArrayObject);
+			engine.graphics->bindVertexArrayObject(Grindstone::GraphicsAPI::VertexArrayObject);
 
-			engine.graphics->DrawImmediateIndexed(geom, true, 0, 0, num_indices_);
+			engine.graphics->drawImmediateIndexed(geom, true, 0, 0, num_indices_);
 		}
 	}*/
-	auto sp = engine.getScene(0)->spaces_[0];
+	auto sp = engine.getSpace(0);
 	RenderTerrainSystem *render_system = (RenderTerrainSystem *)engine.getSystem(COMPONENT_RENDER_TERRAIN);
 	RenderTerrainSubSystem *render_subsystem = (RenderTerrainSubSystem *)sp->getSubsystem(COMPONENT_RENDER_TERRAIN);
 	TransformSubSystem *transform_system = (TransformSubSystem *)sp->getSubsystem(COMPONENT_TRANSFORM);
@@ -280,10 +268,10 @@ void TerrainDrawable::draw() {
 	auto transform = transform_system->getComponent(game_object_id);
 
 	render_system->getModelUbo()->Bind();
-	render_system->getModelUbo()->UpdateUniformBuffer(&transform.model_);
+	render_system->getModelUbo()->updateBuffer(&transform.model_);
 	
-	graphics->BindVertexArrayObject(vertex_array_object);
-	graphics->DrawImmediateIndexed(Grindstone::GraphicsAPI::GeometryType::TriangleStrips, true, 0, 0, num_indices_);
+	graphics->bindVertexArrayObject(vertex_array_object);
+	graphics->drawImmediateIndexed(Grindstone::GraphicsAPI::GeometryType::TriangleStrips, true, 0, 0, num_indices_);
 	//}
 
 	/*for (auto &reference : model->references_) {
@@ -295,10 +283,10 @@ void TerrainDrawable::draw() {
 		auto transform = transform_system->getComponent(game_object_id);
 
 		engine.getModelManager()->getModelUbo()->Bind();
-		engine.getModelManager()->getModelUbo()->UpdateUniformBuffer(&transform.model_);
+		engine.getModelManager()->getModelUbo()->updateBuffer(&transform.model_);
 
-		engine.getGraphicsWrapper()->BindVertexArrayObject(model->vertex_array_object);
-		engine.getGraphicsWrapper()->DrawImmediateIndexed(Grindstone::GraphicsAPI::GeometryType::TriangleStrips, true, base_vertex, base_index, num_indices);
+		engine.getGraphicsWrapper()->bindVertexArrayObject(model->vertex_array_object);
+		engine.getGraphicsWrapper()->drawImmediateIndexed(Grindstone::GraphicsAPI::GeometryType::TriangleStrips, true, base_vertex, base_index, num_indices);
 		//}
 	}*/
 }

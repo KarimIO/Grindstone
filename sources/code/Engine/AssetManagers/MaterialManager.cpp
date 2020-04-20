@@ -8,7 +8,7 @@
 #include "GraphicsPipelineManager.hpp"
 #include "TextureManager.hpp"
 #include "Core/Engine.hpp"
-#include <GraphicsWrapper.hpp>
+#include <GraphicsCommon/GraphicsWrapper.hpp>
 #include "AssetReferences.hpp"
 #include "ModelManager.hpp"
 
@@ -147,7 +147,7 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 		ci.layout = pipeline->tbl;
 		ci.textures = textures.data();
 		ci.textureCount = (uint32_t)textures.size();
-		textureBinding = engine.getGraphicsWrapper()->CreateTextureBinding(ci);
+		textureBinding = engine.getGraphicsWrapper()->createTextureBinding(ci);
 	}
 
 	Grindstone::GraphicsAPI::UniformBuffer *ubo = nullptr;
@@ -156,8 +156,8 @@ MaterialReference MaterialManager::loadMaterial(GeometryInfo geometry_info, std:
 		uboci.isDynamic = false;
 		uboci.size = pipeline->param_size;
 		uboci.binding = pipeline->param_ubb;
-		ubo = engine.getGraphicsWrapper()->CreateUniformBuffer(uboci);
-		ubo->UpdateUniformBuffer(buffer);
+		ubo = engine.getGraphicsWrapper()->createUniformBuffer(uboci);
+		ubo->updateBuffer(buffer);
 	}
 
 	// Make a new reference

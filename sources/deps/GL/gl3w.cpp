@@ -278,7 +278,7 @@ static const char *proc_names[] = {
 	"glDebugMessageControl",
 	"glDebugMessageInsert",
 	"glDeleteBuffers",
-	"glDeleteFramebuffers",
+	"gldeleteFramebuffers",
 	"glDeleteProgram",
 	"glDeleteProgramPipelines",
 	"glDeleteQueries",

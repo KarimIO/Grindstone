@@ -8,6 +8,7 @@ namespace Grindstone {
 			glGenBuffers(1, &buffer);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, createInfo.size, createInfo.content, GL_STATIC_DRAW);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		}
 
 		GLIndexBuffer::~GLIndexBuffer() {

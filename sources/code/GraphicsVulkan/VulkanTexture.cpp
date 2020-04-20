@@ -72,7 +72,7 @@ namespace Grindstone {
 
 			transitionImageLayout(image_, format_, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
 			copyBufferToImage(stagingBuffer, image_, static_cast<uint32_t>(ci.width), static_cast<uint32_t>(ci.height));
-			//transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
+			transitionImageLayout(image_, format_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels);
 
 			vkDestroyBuffer(device, stagingBuffer, nullptr);
 			vkFreeMemory(device, stagingBufferMemory, nullptr);

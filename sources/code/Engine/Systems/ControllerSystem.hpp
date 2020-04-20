@@ -28,6 +28,7 @@ private:
 	double speed_modifier_;
 	double sensitivity_;
 	glm::vec3 velocity_;
+	glm::vec3 angles_;
 	InputComponent	input;
 
 	REFLECT()

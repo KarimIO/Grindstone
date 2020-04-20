@@ -2,8 +2,8 @@
 #define _RENDERPATH_DEFERRED_H
 
 #include "RenderPath.hpp"
-#include <VertexBuffer.hpp>
-#include <Texture.hpp>
+#include <GraphicsCommon/VertexBuffer.hpp>
+#include <GraphicsCommon/Texture.hpp>
 
 namespace Grindstone  {
 	namespace GraphicsAPI {

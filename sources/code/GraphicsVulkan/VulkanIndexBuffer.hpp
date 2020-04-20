@@ -8,7 +8,7 @@ namespace Grindstone {
 		class VulkanIndexBuffer : public IndexBuffer {
 		public:
 			VulkanIndexBuffer(IndexBufferCreateInfo ci);
-			virtual ~VulkanIndexBuffer() {};
+			virtual ~VulkanIndexBuffer() override;
 		public:
 			VkBuffer getBuffer();
 		private:

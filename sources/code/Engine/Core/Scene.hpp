@@ -3,22 +3,24 @@
 
 #include <vector>
 #include <string>
-#include "rapidjson/document.h"
 
 class Space;
+class GameObject;
 
 class Scene {
 public:
-	Scene(std::string path);
+	Scene(Space* space, std::string path);
 	Scene(const Scene &s);
-	void clear();
 	~Scene();
+	void clear();
 	std::string getName();
 	std::string getPath();
 	void reload();
-	std::vector<Space *> spaces_;
 private:
+	bool loadPrefab(std::string name, GameObject& game_object);
 	void loadLevel(std::string path);
+private:
+	Space* space_;
 	std::string path_;
 	std::string name_;
 };

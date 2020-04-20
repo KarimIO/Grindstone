@@ -2,7 +2,7 @@
 #define _POST_PROCESS_IBL_HPP
 
 #include "BasePost.hpp"
-#include "GraphicsPipeline.hpp"
+#include <GraphicsCommon/GraphicsPipeline.hpp>
 
 class PostProcessSSAO;
 

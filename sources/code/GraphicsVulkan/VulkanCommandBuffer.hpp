@@ -18,7 +18,7 @@ namespace Grindstone {
 			void uploadCmdBindDescriptorSet(CommandBindDescriptorSets *ci);
 			void uploadCmdBindCommandBuffers(CommandCallCmdBuffer *ci);
 			void uploadCmdBindGraphicsPipeline(CommandBindGraphicsPipeline *ci);
-			void uploadCmdBindVertexBuffer(CommandBindVBO *ci);
+			void uploadCmdBindVertexBuffers(CommandBindVBOs *ci);
 			void uploadCmdBindIndexBuffer(CommandBindIBO *ci);
 			void uploadCmdDrawVertices(CommandDrawVertices *ci);
 			void uploadCmdDrawIndices(CommandDrawIndices *ci);

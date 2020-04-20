@@ -1,8 +1,14 @@
 #ifndef _ENGINE_H
 #define _ENGINE_H
 
-#include <VertexBuffer.hpp>
-#include <Texture.hpp>
+#include "../pch.hpp"
+
+#include <GraphicsCommon/GraphicsWrapper.hpp>
+#include <GraphicsCommon/UniformBuffer.hpp>
+#include <GraphicsCommon/VertexBuffer.hpp>
+#include <GraphicsCommon/Texture.hpp>
+#include <Engine/Systems/BaseSystem.hpp>
+#include <WindowModule/BaseWindow.hpp>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -18,8 +24,7 @@ namespace Grindstone {
 	}
 }
 
-class System;
-class Scene;
+class Space;
 class Settings;
 class DLLGraphics;
 class DLLAudio;
@@ -34,64 +39,39 @@ class InputManager;
 
 class GameObject;
 
+class BaseWindow;
+
 typedef size_t SceneHandle;
 
-class ImguiManager;
-
-class Editor;
+#ifdef _MSC_VER
+#ifdef GRIND_ENGINE_DLL
+#define ENGINE_API __declspec(dllexport)
+#else
+#define ENGINE_API __declspec(dllimport)
+#endif
+#else
+#define ENGINE_API
+#endif
 
 class Engine {
 public:
-	void initialize();
-	void shutdown();
-
-	void initializeUniformBuffer();
-	void initializePlaneVertexBuffer();
-	void deffUBO();
-	void initializeTBL();
+	ENGINE_API virtual void initialize(BaseWindow *window);
+	ENGINE_API virtual void shutdown();
+	ENGINE_API virtual void run();
+	ENGINE_API virtual bool shouldQuit();
 
 	void consoleCommand(std::string command);
 
-#ifdef INCLUDE_EDITOR
-	void editorControl(double);
-	void launchEditor();
-	Editor *getEditor();
-	void startSimulation();
-	void stopSimulation();
-	bool edit_mode_;
-	bool edit_is_simulating_;
-#endif
-
-	Grindstone::GraphicsAPI::TextureBindingLayout *gbuffer_tbl_;
-
-	std::vector<Grindstone::GraphicsAPI::TextureSubBinding> subbindings_;
-	Grindstone::GraphicsAPI::UniformBufferBinding *deff_ubb_;
-	Grindstone::GraphicsAPI::UniformBuffer *deff_ubo_handler_;
-
-	struct DefferedUBO {
-		glm::mat4 view;
-		glm::mat4 invProj;
-		glm::vec4 eyePos;
-		glm::vec4 resolution;
-		float time;
-	};
-
+public:
 	Grindstone::GraphicsAPI::VertexArrayObject *getPlaneVAO();
-	Grindstone::GraphicsAPI::VertexBindingDescription getPlaneVBD();
-	Grindstone::GraphicsAPI::VertexAttributeDescription getPlaneVAD();
-
-	Grindstone::GraphicsAPI::VertexArrayObject *plane_vao_;
-	Grindstone::GraphicsAPI::VertexBuffer *plane_vbo_;
-	Grindstone::GraphicsAPI::VertexBindingDescription plane_vbd_;
-	Grindstone::GraphicsAPI::VertexAttributeDescription plane_vad_;
-
+	Grindstone::GraphicsAPI::VertexBufferLayout getPlaneVertexLayout();
 	Grindstone::GraphicsAPI::UniformBuffer * getUniformBuffer();
-
 	Grindstone::GraphicsAPI::UniformBufferBinding *getUniformBufferBinding();
+	Grindstone::GraphicsAPI::TextureBindingLayout* getGbufferTBL();
 
 	static Engine &getInstance();
 
-	Scene *addScene(std::string path);
+	ENGINE_API virtual Space *addSpace(const char *path);
 
 	template<class T>
 	T *getSystem() {
@@ -100,13 +80,14 @@ public:
 
 	System *addSystem(System *system);
 	System *getSystem(ComponentHandle type);
-	std::vector<Scene *> &getScenes();
-	Scene *getScene(SceneHandle scene);
-	Scene *getScene(std::string scene);
+	std::vector<Space*> &getSpaces();
+	Space *getSpace(size_t scene);
+	Space *getSpace(std::string scene);
 
 	Settings *getSettings();
 
-	Grindstone::GraphicsAPI::GraphicsWrapper *getGraphicsWrapper();
+	BaseWindow* getWindow();
+	Grindstone::GraphicsAPI::GraphicsWrapper* getGraphicsWrapper();
 
 	AudioManager *getAudioManager();
 	MaterialManager *getMaterialManager();
@@ -114,7 +95,6 @@ public:
 	TextureManager *getTextureManager();
 	ModelManager *getModelManager();
 	InputManager *getInputManager();
-	ImguiManager *getImguiManager();
 
 	void calculateTime();
 	double getTimeCurrent();
@@ -129,19 +109,43 @@ public:
 	void refreshAll(double);
 	void profileFrame(double);
 
-	void run();
-
 	~Engine();
+
+	struct DefferedUBO {
+		glm::mat4 view;
+		glm::mat4 invProj;
+		glm::vec4 eyePos;
+		glm::vec4 resolution;
+		float time;
+	};
+
+	Grindstone::GraphicsAPI::UniformBufferBinding* deff_ubb_;
+	Grindstone::GraphicsAPI::UniformBuffer* deff_ubo_handler_;
+
+private:
+	void initializeUniformBuffer();
+	void initializePlaneVertexBuffer();
+	void deffUBO();
+	void initializeTBL();
+
+	Grindstone::GraphicsAPI::TextureBindingLayout* gbuffer_tbl_;
+
+	std::vector<Grindstone::GraphicsAPI::TextureSubBinding> subbindings_;
+
+	Grindstone::GraphicsAPI::VertexArrayObject* plane_vao_;
+	Grindstone::GraphicsAPI::VertexBuffer* plane_vbo_;
+	Grindstone::GraphicsAPI::VertexBufferLayout plane_vertex_layout_;
+
 private:
 	bool running_;
 	bool profile_frame_;
 
 	System *systems_[NUM_COMPONENTS];
-	std::vector<Scene *> simulate_scenes_;
-	std::vector<Scene *> scenes_;
+	std::vector<Space *> spaces_;
 
 	Settings *settings_;
 
+	BaseWindow *window_;
 	Grindstone::GraphicsAPI::GraphicsWrapper *graphics_wrapper_;
 	AudioWrapper *audio_wrapper_;
 
@@ -151,11 +155,6 @@ private:
 	TextureManager *texture_manager_;
 	ModelManager *model_manager_;
 	InputManager *input_manager_;
-	ImguiManager *imgui_manager_;
-
-#ifdef INCLUDE_EDITOR
-	Editor *editor_;
-#endif
 
 	Grindstone::GraphicsAPI::UniformBufferBinding *ubb_;
 	Grindstone::GraphicsAPI::UniformBuffer *ubo_;
@@ -168,6 +167,47 @@ private:
 
 };
 
+inline Settings* Engine::getSettings() {
+	return settings_;
+}
+
+inline BaseWindow* Engine::getWindow() {
+	return window_;
+}
+
+inline Grindstone::GraphicsAPI::GraphicsWrapper* Engine::getGraphicsWrapper() {
+	return graphics_wrapper_;
+}
+
+inline AudioManager* Engine::getAudioManager() {
+	return audio_manager_;
+}
+
+inline MaterialManager* Engine::getMaterialManager() {
+	return material_manager_;
+}
+
+inline GraphicsPipelineManager* Engine::getGraphicsPipelineManager() {
+	return graphics_pipeline_manager_;
+}
+
+inline TextureManager* Engine::getTextureManager() {
+	return texture_manager_;
+}
+
+inline ModelManager* Engine::getModelManager() {
+	return model_manager_;
+}
+
+inline InputManager* Engine::getInputManager() {
+	return input_manager_;
+}
+
 #define engine Engine::getInstance()
+
+extern "C" {
+	ENGINE_API void* launchEngine();
+	ENGINE_API void deleteEngine(void* ptr);
+}
 
 #endif

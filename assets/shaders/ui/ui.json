@@ -1,0 +1,18 @@
+{
+    "type": "transparent",
+    "name": "Editor UI",
+    "shaders": {
+        "deferred": {
+            "opengl": {
+                "vertex": "uivert.glsl",
+                "fragment": "editorui.glsl"
+            },
+            "directx": {
+                "vertex": "sky.vert.fxc",
+                "fragment": "sky.frag.fxc"
+            }
+        }
+    },
+    "textures": {
+    }
+}

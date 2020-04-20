@@ -25,8 +25,8 @@ namespace Grindstone {
 				uploadCmdUnbindRenderPass(static_cast<CommandUnbindRenderPass *>(ci));
 				return;
 			}
-			case CommandBufferType::BindVertexBuffer: {
-				uploadCmdBindVertexBuffer(static_cast<CommandBindVBO *>(ci));
+			case CommandBufferType::BindVertexBuffers: {
+				uploadCmdBindVertexBuffers(static_cast<CommandBindVBOs *>(ci));
 				return;
 			}
 			case CommandBufferType::BindIndexBuffer: {
@@ -167,8 +167,8 @@ namespace Grindstone {
 			vkCmdBindPipeline(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->getGraphicsPipeline());
 		}
 
-		void VulkanCommandBuffer::uploadCmdBindVertexBuffer(CommandBindVBO * ci) {
-			VulkanVertexBuffer *vertexBuffer = dynamic_cast<VulkanVertexBuffer *>(ci->vertexBuffer);
+		void VulkanCommandBuffer::uploadCmdBindVertexBuffers(CommandBindVBOs* ci) {
+			VulkanVertexBuffer *vertexBuffer = dynamic_cast<VulkanVertexBuffer *>(ci->vertexBuffer[0]);
 			VkBuffer vertexBuffers[] = { vertexBuffer->getBuffer() };
 			VkDeviceSize offsets[] = { 0 };
 			vkCmdBindVertexBuffers(command_buffer_, 0, 1, vertexBuffers, offsets);

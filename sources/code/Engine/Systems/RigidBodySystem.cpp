@@ -34,55 +34,50 @@ ComponentHandle RigidBodySubSystem::addComponent(GameObjectHandle object_handle)
 
 void RigidBodySystem::update() {
 	GRIND_PROFILE_FUNC();
-	if (engine.edit_mode_)
-		return;
 
 	auto dt = engine.getUpdateTimeDelta();
 
-	auto scenes = engine.getScenes();
-	for (auto scene : scenes) {
-		for (auto space : scene->spaces_) {
-			// Step through the world
-			RigidBodySubSystem *subsystem = (RigidBodySubSystem *)space->getSubsystem(system_type_);
-			subsystem->dynamics_world_->stepSimulation((btScalar)dt, 10);
+	for (auto space : engine.getSpaces()) {
+		// Step through the world
+		RigidBodySubSystem *subsystem = (RigidBodySubSystem *)space->getSubsystem(system_type_);
+		subsystem->dynamics_world_->stepSimulation((btScalar)dt, 10);
 
-			for (auto &component : subsystem->components_) {
-				GameObjectHandle game_object_id = component.game_object_handle_;
-				auto &rigid_body = component.rigid_body_;
+		for (auto &component : subsystem->components_) {
+			GameObjectHandle game_object_id = component.game_object_handle_;
+			auto &rigid_body = component.rigid_body_;
 
-				ComponentHandle transform_id = space->getObject(game_object_id).getComponentHandle(COMPONENT_TRANSFORM);
-				TransformSubSystem *transform_sub = (TransformSubSystem *)(space->getSubsystem(COMPONENT_TRANSFORM));
-				TransformComponent &transform_component = transform_sub->getComponent(transform_id);
+			ComponentHandle transform_id = space->getObject(game_object_id).getComponentHandle(COMPONENT_TRANSFORM);
+			TransformSubSystem *transform_sub = (TransformSubSystem *)(space->getSubsystem(COMPONENT_TRANSFORM));
+			TransformComponent &transform_component = transform_sub->getComponent(transform_id);
 
-				btTransform transform;
-				rigid_body->getMotionState()->getWorldTransform(transform);
-				btVector3 pos = transform.getOrigin();
-				btVector3 vel = rigid_body->getLinearVelocity();
+			btTransform transform;
+			rigid_body->getMotionState()->getWorldTransform(transform);
+			btVector3 pos = transform.getOrigin();
+			btVector3 vel = rigid_body->getLinearVelocity();
 
-				transform_component.position_ = glm::vec3(pos.getX(), pos.getY(), pos.getZ());
-				btQuaternion q = transform.getRotation();
-				transform_component.quaternion_ = glm::quat(q.x(), q.y(), q.z(), q.w());
+			transform_component.position_ = glm::vec3(pos.getX(), pos.getY(), pos.getZ());
+			btQuaternion q = transform.getRotation();
+			transform_component.quaternion_ = glm::quat(q.x(), q.y(), q.z(), q.w());
 
-				/*float ysqr = q.y() * q.y();
+			/*float ysqr = q.y() * q.y();
 
-				float tpi = 3.14159f * 1.0f;
+			float tpi = 3.14159f * 1.0f;
 
-				// roll (x-axis rotation)
-				float t0 = +2.0f * (q.w() * q.x() + q.y() * q.z());
-				float t1 = +1.0f - 2.0f * (q.x() * q.x() + ysqr);
-				transform_component.angles_.x = fmod(std::atan2(t0, t1), tpi);
+			// roll (x-axis rotation)
+			float t0 = +2.0f * (q.w() * q.x() + q.y() * q.z());
+			float t1 = +1.0f - 2.0f * (q.x() * q.x() + ysqr);
+			transform_component.angles_.x = fmod(std::atan2(t0, t1), tpi);
 
-				// pitch (y-axis rotation)
-				float t2 = +2.0f * (q.w() * q.y() - q.z() * q.x());
-				t2 = t2 > 1.0f ? 1.0f : t2;
-				t2 = t2 < -1.0f ? -1.0f : t2;
-				transform_component.angles_.y = fmod(std::asin(t2), tpi);
+			// pitch (y-axis rotation)
+			float t2 = +2.0f * (q.w() * q.y() - q.z() * q.x());
+			t2 = t2 > 1.0f ? 1.0f : t2;
+			t2 = t2 < -1.0f ? -1.0f : t2;
+			transform_component.angles_.y = fmod(std::asin(t2), tpi);
 
-				// yaw (z-axis rotation)
-				float t3 = +2.0f * (q.w() * q.z() + q.x() * q.y());
-				float t4 = +1.0f - 2.0f * (ysqr + q.z() * q.z());
-				transform_component.angles_.z = fmod(std::atan2(t3, t4), tpi);*/
-			}
+			// yaw (z-axis rotation)
+			float t3 = +2.0f * (q.w() * q.z() + q.x() * q.y());
+			float t4 = +1.0f - 2.0f * (ysqr + q.z() * q.z());
+			transform_component.angles_.z = fmod(std::atan2(t3, t4), tpi);*/
 		}
 	}
 }

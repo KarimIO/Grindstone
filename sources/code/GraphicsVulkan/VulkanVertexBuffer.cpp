@@ -4,7 +4,7 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		Grindstone::GraphicsAPI::VulkanVertexBuffer::VulkanVertexBuffer(VertexBufferCreateInfo ci) {
+		VulkanVertexBuffer::VulkanVertexBuffer(VertexBufferCreateInfo ci) {
 			VkDevice device = VulkanGraphicsWrapper::get().getDevice();
 
 			VkDeviceSize bufferSize = ci.size;
@@ -26,7 +26,13 @@ namespace Grindstone {
 			vkFreeMemory(device, stagingBufferMemory, nullptr);
 		}
 
-		VkBuffer Grindstone::GraphicsAPI::VulkanVertexBuffer::getBuffer() {
+		VulkanVertexBuffer::~VulkanVertexBuffer() {
+			VkDevice device = VulkanGraphicsWrapper::get().getDevice();
+			vkDestroyBuffer(device, buffer_, nullptr);
+			vkFreeMemory(device, memory_, nullptr);
+		}
+
+		VkBuffer VulkanVertexBuffer::getBuffer() {
 			return buffer_;
 		}
 	}

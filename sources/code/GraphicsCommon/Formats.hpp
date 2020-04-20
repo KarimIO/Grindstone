@@ -48,7 +48,7 @@ namespace Grindstone {
 			Geometry,
 			Fragment,
 			NumGraphics,
-			Compute,
+			Compute = NumGraphics,
 			All
 		};
 

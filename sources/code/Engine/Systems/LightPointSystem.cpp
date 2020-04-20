@@ -18,17 +18,14 @@ LightPointSystem::LightPointSystem() : System(COMPONENT_LIGHT_POINT) {}
 
 void LightPointSystem::update() {
 	GRIND_PROFILE_FUNC();
-	auto &scenes = engine.getScenes();
-	for (auto scene : scenes) {
-		for (auto space : scene->spaces_) {
-			LightPointSubSystem *subsystem = (LightPointSubSystem *)space->getSubsystem(system_type_);
-			for (auto &component : subsystem->components_) {
-				// Culling
+	for (auto space : engine.getSpaces()) {
+		LightPointSubSystem *subsystem = (LightPointSubSystem *)space->getSubsystem(system_type_);
+		for (auto &component : subsystem->components_) {
+			// Culling
 
-				// CalculateView
+			// CalculateView
 
-				// Render
-			}
+			// Render
 		}
 	}
 }

@@ -8,11 +8,11 @@
 #include "ModelManager.hpp"
 #include "TextureManager.hpp"
 #include "Core/Engine.hpp"
-#include <GraphicsWrapper.hpp>
-#include <Texture.hpp>
-#include <GraphicsPipeline.hpp>
-#include <CommandBuffer.hpp>
-#include <UniformBuffer.hpp>
+#include <GraphicsCommon/GraphicsWrapper.hpp>
+#include <GraphicsCommon/Texture.hpp>
+#include <GraphicsCommon/GraphicsPipeline.hpp>
+#include <GraphicsCommon/CommandBuffer.hpp>
+#include <GraphicsCommon/UniformBuffer.hpp>
 
 // Util Classes
 
@@ -370,8 +370,11 @@ paramDefault = new glm::bvec4(bvec4);
 			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX) {
 				state = SHADER_JSON_SHADER_DIRECTX;
 			}
-			else {
+			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::Vulkan) {
 				state = SHADER_JSON_SHADER_VULKAN;
+			}
+			else {
+				GRIND_FATAL("Invalid Graphics Language!");
 			}
 		}
 		else if (state == SHADER_JSON_FRAGMENT) {
@@ -387,8 +390,11 @@ paramDefault = new glm::bvec4(bvec4);
 			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX) {
 				state = SHADER_JSON_SHADER_DIRECTX;
 			}
-			else {
+			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::Vulkan) {
 				state = SHADER_JSON_SHADER_VULKAN;
+			}
+			else {
+				GRIND_FATAL("Invalid Graphics Language!");
 			}
 		}
 		else if (state == SHADER_JSON_GEOMETRY) {
@@ -404,8 +410,11 @@ paramDefault = new glm::bvec4(bvec4);
 			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX) {
 				state = SHADER_JSON_SHADER_DIRECTX;
 			}
-			else {
+			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::Vulkan) {
 				state = SHADER_JSON_SHADER_VULKAN;
+			}
+			else {
+				GRIND_FATAL("Invalid Graphics Language!");
 			}
 		}
 		else if (state == SHADER_JSON_COMPUTE) {
@@ -416,8 +425,11 @@ paramDefault = new glm::bvec4(bvec4);
 			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX) {
 				state = SHADER_JSON_SHADER_DIRECTX;
 			}
-			else {
+			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::Vulkan) {
 				state = SHADER_JSON_SHADER_VULKAN;
+			}
+			else {
+				GRIND_FATAL("Invalid Graphics Language!");
 			}
 		}
 		else if (state == SHADER_JSON_TESSEVAL) {
@@ -434,8 +446,11 @@ paramDefault = new glm::bvec4(bvec4);
 			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX) {
 				state = SHADER_JSON_SHADER_DIRECTX;
 			}
-			else {
+			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::Vulkan) {
 				state = SHADER_JSON_SHADER_VULKAN;
+			}
+			else {
+				GRIND_FATAL("Invalid Graphics Language!");
 			}
 		}
 		else if (state == SHADER_JSON_TESSCTRL) {
@@ -451,8 +466,11 @@ paramDefault = new glm::bvec4(bvec4);
 			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::DirectX) {
 				state = SHADER_JSON_SHADER_DIRECTX;
 			}
-			else {
+			else if (engine.getSettings()->graphics_language_ == GraphicsLanguage::Vulkan) {
 				state = SHADER_JSON_SHADER_VULKAN;
+			}
+			else {
+				GRIND_FATAL("Invalid Graphics Language!");
 			}
 		}
 		return true;
@@ -633,10 +651,8 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 		gpci.scissorH = engine.getSettings()->resolution_y_;
 		gpci.height = static_cast<float>(engine.getSettings()->resolution_y_);
 		gpci.renderPass = render_passes_[0].renderPass;
-		gpci.attributes = geometry_info.vads;
-		gpci.attributesCount = geometry_info.vads_count;
-		gpci.bindings = geometry_info.vbds;
-		gpci.bindingsCount = geometry_info.vbds_count;
+		gpci.vertex_bindings = geometry_info.vertex_layout;
+		gpci.vertex_bindings_count = geometry_info.vertex_layout_count;
 
 		int num_shaders = 0;
 		const int max_shaders = 5;
@@ -644,6 +660,12 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 			if (container.shader_paths[i] != "") {
 				++num_shaders;
 			}
+		}
+
+		if (num_shaders == 0) {
+			// TODO: This should not be fatal. Return a missing material.
+			GRIND_FATAL("Invalid Graphics Pipeline! No shaders attached!!");
+			return;
 		}
 
 		std::vector<Grindstone::GraphicsAPI::ShaderStageCreateInfo> stages;
@@ -678,7 +700,7 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 			tblci.bindings = bindings.data();
 			tblci.bindingCount = (uint32_t)bindings.size();
 			tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
-			container.tbl = engine.getGraphicsWrapper()->CreateTextureBindingLayout(tblci);
+			container.tbl = engine.getGraphicsWrapper()->createTextureBindingLayout(tblci);
 			tbl_count = 1;
 		}
 		else {
@@ -688,7 +710,7 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 
 		if (container.type == TYPE_TRANSPARENT) {
 			container.tbl_arr = new Grindstone::GraphicsAPI::TextureBindingLayout *[2];
-			container.tbl_arr[0] = engine.gbuffer_tbl_;
+			container.tbl_arr[0] = engine.getGbufferTBL();
 			container.tbl_arr[1] = container.tbl;
 		}
 		else {
@@ -709,7 +731,7 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 		}
 		gpci.cullMode = container.cull_mode_;
 		gpci.primitiveType = Grindstone::GraphicsAPI::GeometryType::Triangles;
-		container.program = engine.getGraphicsWrapper()->CreateGraphicsPipeline(gpci);
+		container.program = engine.getGraphicsWrapper()->createGraphicsPipeline(gpci);
 	}
 
 	//  Create Shadows
@@ -729,10 +751,8 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 			gpci.scissorH = 1024;
 			gpci.height = static_cast<float>(gpci.scissorH);
 			gpci.renderPass = render_passes_[0].renderPass;
-			gpci.attributes = geometry_info.vads;
-			gpci.attributesCount = geometry_info.vads_count;
-			gpci.bindings = geometry_info.vbds;
-			gpci.bindingsCount = geometry_info.vbds_count;
+			gpci.vertex_bindings = geometry_info.vertex_layout;
+			gpci.vertex_bindings_count = geometry_info.vertex_layout_count;
 
 			std::vector<Grindstone::GraphicsAPI::ShaderStageCreateInfo> stages;
 			stages.resize(num_shaders);
@@ -766,7 +786,7 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 				tblci.bindings = bindings.data();
 				tblci.bindingCount = (uint32_t)bindings.size();
 				tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
-				container.tbl = engine.getGraphicsWrapper()->CreateTextureBindingLayout(tblci);
+				container.tbl = engine.getGraphicsWrapper()->createTextureBindingLayout(tblci);
 				tbl_count = 1;
 			}
 			else {
@@ -782,7 +802,7 @@ void GraphicsPipelineManager::generateProgram(GeometryInfo geometry_info, Pipeli
 			gpci.textureBindingCount = tbl_count;
 			gpci.cullMode = Grindstone::GraphicsAPI::CullMode::Back;
 			gpci.primitiveType = Grindstone::GraphicsAPI::GeometryType::Triangles;
-			container.shadow_program = engine.getGraphicsWrapper()->CreateGraphicsPipeline(gpci);
+			container.shadow_program = engine.getGraphicsWrapper()->createGraphicsPipeline(gpci);
 		}
 	}
 }
@@ -794,9 +814,9 @@ void GraphicsPipelineManager::resetDraws()
 void GraphicsPipelineManager::cleanup() {
 	auto gw = engine.getGraphicsWrapper();
 	for (auto &r : render_passes_) {
-		gw->DeleteRenderPass(r.renderPass);
+		gw->deleteRenderPass(r.renderPass);
 		for (auto &f : r.framebuffers) {
-			gw->DeleteFramebuffer(f);
+			gw->deleteFramebuffer(f);
 		}
 		for (auto &p : r.pipelines_deferred) {
 			destroyPipelineContainerGraphics(p);
@@ -827,26 +847,26 @@ void GraphicsPipelineManager::destroyPipelineContainerGraphics(PipelineContainer
 
 	//CommandBuffer *commandBuffer;
 	if (p.tbl) {
-		gw->DeleteTextureBindingLayout(p.tbl);
+		gw->deleteTextureBindingLayout(p.tbl);
 		p.tbl = nullptr;
 	}
 	if (p.program) {
-		gw->DeleteGraphicsPipeline(p.program);
+		gw->deleteGraphicsPipeline(p.program);
 		p.program = nullptr;
 	}
 	if (p.shadow_program) {
-		gw->DeleteGraphicsPipeline(p.shadow_program);
+		gw->deleteGraphicsPipeline(p.shadow_program);
 		p.shadow_program = nullptr;
 	}
 	if (p.param_ubb) {
-		gw->DeleteUniformBufferBinding(p.param_ubb);
+		gw->deleteUniformBufferBinding(p.param_ubb);
 		p.param_ubb = nullptr;
 	}
 
 	for (auto &m : p.materials) {
 		delete m.param_buffer_;
-		gw->DeleteUniformBuffer(m.param_buffer_handler_);
-		gw->DeleteTextureBinding(m.m_textureBinding);
+		gw->deleteUniformBuffer(m.param_buffer_handler_);
+		gw->deleteTextureBinding(m.m_textureBinding);
 	}
 }
 
@@ -863,18 +883,25 @@ void GraphicsPipelineManager::initialize() {
 	render_passes_.resize(1);
 
 	Grindstone::GraphicsAPI::RenderPassCreateInfo rpci;
+	std::vector<Grindstone::GraphicsAPI::ColorFormat> color_formats = {
+		Grindstone::GraphicsAPI::ColorFormat::R32G32B32A32,
+		Grindstone::GraphicsAPI::ColorFormat::R32G32B32A32,
+		Grindstone::GraphicsAPI::ColorFormat::R32G32B32A32,
+		Grindstone::GraphicsAPI::ColorFormat::R32G32B32A32
+	};
 	std::vector<Grindstone::GraphicsAPI::ClearColorValue> colorClearValues = { { 0.0f, 0.0f, 0.0f, 1.0f } };
 	Grindstone::GraphicsAPI::ClearDepthStencil dscf;
 	dscf.hasDepthStencilAttachment = true;
 	dscf.depth = 1.0f;
 	dscf.stencil = 0;
+	rpci.m_colorFormats = color_formats.data();
 	rpci.m_colorClearValues = colorClearValues.data();
 	rpci.m_colorClearCount = (uint32_t)colorClearValues.size();
 	rpci.m_depthStencilClearValue = dscf;
 	rpci.m_width = engine.getSettings()->resolution_x_;
 	rpci.m_height = engine.getSettings()->resolution_y_;
 	rpci.m_depthFormat = Grindstone::GraphicsAPI::DepthFormat::D32;
-	render_passes_[0].renderPass = engine.getGraphicsWrapper()->CreateRenderPass(rpci);
+	render_passes_[0].renderPass = engine.getGraphicsWrapper()->createRenderPass(rpci);
 }
 
 PipelineReference GraphicsPipelineManager::createPipeline(GeometryInfo geometry_info, std::string pipelineName, bool miscPipeline) {
@@ -918,7 +945,7 @@ PipelineReference GraphicsPipelineManager::createPipeline(GeometryInfo geometry_
 		ubbci.shaderLocation = "Parameters";
 		ubbci.size = pipeline->param_size;
 		ubbci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
-		pipeline->param_ubb = engine.getGraphicsWrapper()->CreateUniformBufferBinding(ubbci);
+		pipeline->param_ubb = engine.getGraphicsWrapper()->createUniformBufferBinding(ubbci);
 	}
 
 	generateProgram(geometry_info, *pipeline);
@@ -968,7 +995,7 @@ void GraphicsPipelineManager::drawUnlitImmediate() {
 				for (auto &material : pipeline.materials) {
 					//if (material.getDrawCount() > 0) {
 						//if (material.m_textureBinding != nullptr)
-							engine.getGraphicsWrapper()->BindTextureBinding(material.m_textureBinding);
+							engine.getGraphicsWrapper()->bindTextureBinding(material.m_textureBinding);
 						for (auto mesh : material.m_meshes) {
 							mesh->draw();
 						}
@@ -989,7 +1016,7 @@ void GraphicsPipelineManager::drawShadowsImmediate(uint16_t x, uint16_t y, uint1
 					for (auto &material : pipeline.materials) {
 						if (true || material.getDrawCount() > 0) {
 							if (material.m_textureBinding != nullptr)
-								engine.getGraphicsWrapper()->BindTextureBinding(material.m_textureBinding);
+								engine.getGraphicsWrapper()->bindTextureBinding(material.m_textureBinding);
 							for (auto mesh : material.m_meshes) {
 								mesh->shadowDraw();
 							}
@@ -1006,7 +1033,7 @@ void GraphicsPipelineManager::drawShadowsImmediate(uint16_t x, uint16_t y, uint1
 					for (auto &material : pipeline.materials) {
 						if (material.getDrawCount() > 0) {
 							if (material.m_textureBinding != nullptr)
-								engine.getGraphicsWrapper()->BindTextureBinding(material.m_textureBinding);
+								engine.getGraphicsWrapper()->bindTextureBinding(material.m_textureBinding);
 							for (auto mesh : material.m_meshes) {
 								mesh->shadowDraw();
 							}
@@ -1028,7 +1055,7 @@ void GraphicsPipelineManager::drawDeferredImmediate() {
 				for (auto &material : pipeline.materials) {
 					//if (material.getDrawCount() > 0) {
 						if (material.m_textureBinding != nullptr)
-							engine.getGraphicsWrapper()->BindTextureBinding(material.m_textureBinding);
+							engine.getGraphicsWrapper()->bindTextureBinding(material.m_textureBinding);
 
 						if (material.param_buffer_handler_ != nullptr)
 							material.param_buffer_handler_->Bind();
@@ -1051,7 +1078,7 @@ void GraphicsPipelineManager::drawForwardImmediate() {
 				for (auto &material : pipeline.materials) {
 					//if (material.getDrawCount() > 0) {
 						if (material.m_textureBinding != nullptr)
-							engine.getGraphicsWrapper()->BindTextureBinding(material.m_textureBinding);
+							engine.getGraphicsWrapper()->bindTextureBinding(material.m_textureBinding);
 
 						if (material.param_buffer_handler_ != nullptr)
 							material.param_buffer_handler_->Bind();

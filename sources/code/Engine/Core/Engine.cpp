@@ -32,18 +32,19 @@
 #include "../AssetManagers/GraphicsPipelineManager.hpp"
 #include "../AssetManagers/TextureManager.hpp"
 #include "../AssetManagers/ModelManager.hpp"
-#include "../AssetManagers/ImguiManager.hpp"
 
 #include "../Core/Input.hpp"
 
-#include "../GraphicsCommon/GraphicsWrapper.hpp"
-
-#include "Editor.hpp"
+#include <GraphicsCommon/GraphicsWrapper.hpp>
+#include <WindowModule/BaseWindow.hpp>
 
 // Util Classes
+#include "../Rendering/Renderer2D.hpp"
 
+Renderer2D r2d;
 
-void Engine::initialize() {
+void Engine::initialize(BaseWindow *window) {
+	Logger::init("../log/output.log");
 	GRIND_PROFILE_BEGIN_SESSION("Loading", "../log/grind-profile-load.json");
 	GRIND_LOG("Initializing Grindstone Game Engine...");
 
@@ -60,7 +61,22 @@ void Engine::initialize() {
 
 	// Load DLLS
 	dll_graphics_ = new DLLGraphics();
-	graphics_wrapper_ = dll_graphics_->getWrapper();
+	dll_graphics_->setup(settings_->graphics_language_);
+
+	/*window_ = dll_graphics_->createWindow();
+	window_->initialize(windowCreateInfo);*/
+	window_ = window;
+	window_->setInputInterface(input_manager_);
+
+	Grindstone::GraphicsAPI::GraphicsWrapperCreateInfo graphicsWrapperCreateInfo;
+	graphicsWrapperCreateInfo.debug = true;
+	graphicsWrapperCreateInfo.window = window_;
+	graphics_wrapper_ = dll_graphics_->createGraphicsWrapper();
+	graphics_wrapper_->initialize(graphicsWrapperCreateInfo);
+	std::cout << "Graphics Information: \r\n\t" <<
+		graphics_wrapper_->getVendorName() << "\r\n\t" <<
+		graphics_wrapper_->getAdapterName() << "\r\n\t" <<
+		graphics_wrapper_->getAPIName() << " " << graphics_wrapper_->getAPIVersion() << "\r\n\r\n";
 	dll_audio_ = new DLLAudio();
 	//audio_wrapper_ = dll_audio_->getWrapper();
 
@@ -75,12 +91,11 @@ void Engine::initialize() {
 	// Load Asset Managers
 	{
 		GRIND_PROFILE_SCOPE("Load Asset Managers");
-			//audio_manager_ = new AudioManager();
+		//audio_manager_ = new AudioManager();
 		material_manager_ = new MaterialManager();
 		graphics_pipeline_manager_ = new GraphicsPipelineManager();
 		texture_manager_ = new TextureManager();
 		model_manager_ = new ModelManager(ubb_);
-		imgui_manager_ = new ImguiManager();
 	}
 
 	// Load Systems
@@ -101,31 +116,20 @@ void Engine::initialize() {
 		addSystem(new ScriptSystem());
 	}
 
-	// Load Default Level
-	addScene(settings_->default_map_);
-
+	//r2d.initialize();
+	//r2d.resize(400);
+	
 	start_time_ = std::chrono::high_resolution_clock::now();
 	prev_time_ = prev_time_;
 
-#ifdef INCLUDE_EDITOR
-	edit_is_simulating_ = false;
-
-	if (settings_->start_editor_) {
-		launchEditor();
-	}
-#endif
-
 	running_ = true;
-	GRIND_LOG("Successfully Loaded.");
-	GRIND_LOG("==============================");
 
-	graphics_wrapper_->setFocus();
 	GRIND_PROFILE_END_SESSION();
+
+	GRIND_LOG("Engine succesfully setup.");
+	GRIND_LOG("==============================");
 }
 
-ImguiManager *Engine::getImguiManager() {
-	return imgui_manager_;
-}
 
 void Engine::initializeUniformBuffer() {
 	int s = sizeof(glm::mat4) * 2 + sizeof(glm::vec4) + sizeof(float) + sizeof(glm::vec3);
@@ -135,13 +139,13 @@ void Engine::initializeUniformBuffer() {
 	ubbci.shaderLocation = "UniformBufferObject";
 	ubbci.size = s; //sizeof(glm::mat4);
 	ubbci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Vertex;
-	ubb_ = graphics_wrapper_->CreateUniformBufferBinding(ubbci);
+	ubb_ = graphics_wrapper_->createUniformBufferBinding(ubbci);
 
 	Grindstone::GraphicsAPI::UniformBufferCreateInfo ubci;
 	ubci.isDynamic = true;
 	ubci.size = s;
 	ubci.binding = ubb_;
-	ubo_ = graphics_wrapper_->CreateUniformBuffer(ubci);
+	ubo_ = graphics_wrapper_->createUniformBuffer(ubci);
 }
 
 void Engine::initializeTBL() {
@@ -156,13 +160,13 @@ void Engine::initializeTBL() {
 	tblci.bindings = subbindings_.data();
 	tblci.bindingCount = (uint32_t)subbindings_.size();
 	tblci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
-	gbuffer_tbl_ = graphics_wrapper_->CreateTextureBindingLayout(tblci);
+	gbuffer_tbl_ = graphics_wrapper_->createTextureBindingLayout(tblci);
 }
 
 void Engine::consoleCommand(std::string command) {
 	GRIND_LOG("Console Command: {}", command);
 	if (command == "reload") {
-		scenes_[0]->reload();
+		//scenes_[0]->reload();
 	}
 	else if (command == "reloadGraphics") {
 		reloadGraphicsDLL();
@@ -175,25 +179,21 @@ void Engine::deffUBO() {
 	deffubbci.shaderLocation = "DefferedUBO";
 	deffubbci.size = sizeof(DefferedUBO);
 	deffubbci.stages = Grindstone::GraphicsAPI::ShaderStageBit::Fragment;
-	deff_ubb_ = graphics_wrapper_->CreateUniformBufferBinding(deffubbci);
+	deff_ubb_ = graphics_wrapper_->createUniformBufferBinding(deffubbci);
 
 	Grindstone::GraphicsAPI::UniformBufferCreateInfo deffubci;
-	deffubci.isDynamic = false;
+	deffubci.isDynamic = true;
 	deffubci.size = sizeof(DefferedUBO);
 	deffubci.binding = deff_ubb_;
-	deff_ubo_handler_ = graphics_wrapper_->CreateUniformBuffer(deffubci);
+	deff_ubo_handler_ = graphics_wrapper_->createUniformBuffer(deffubci);
 }
 
 Grindstone::GraphicsAPI::VertexArrayObject *Engine::getPlaneVAO() {
 	return plane_vao_;
 }
 
-Grindstone::GraphicsAPI::VertexBindingDescription Engine::getPlaneVBD() {
-	return plane_vbd_;
-}
-
-Grindstone::GraphicsAPI::VertexAttributeDescription Engine::getPlaneVAD() {
-	return plane_vad_;
+Grindstone::GraphicsAPI::VertexBufferLayout Engine::getPlaneVertexLayout() {
+	return plane_vertex_layout_;
 }
 
 void Engine::initializePlaneVertexBuffer() {
@@ -205,37 +205,28 @@ void Engine::initializePlaneVertexBuffer() {
 		-1.0,  1.0,
 		1.0, -1.0,
 	};
+	
+	Grindstone::GraphicsAPI::VertexBufferLayout vbd({
+		{ Grindstone::GraphicsAPI::VertexFormat::Float2, "vertexPosition", false, Grindstone::GraphicsAPI::AttributeUsage::Position }
+	});
 
-	plane_vbd_.binding = 0;
-	plane_vbd_.elementRate = false;
-	plane_vbd_.stride = sizeof(float) * 2;
-
-	plane_vad_.binding = 0;
-	plane_vad_.location = 0;
-	plane_vad_.format = Grindstone::GraphicsAPI::VertexFormat::R32_G32;
-	plane_vad_.size = 2;
-	plane_vad_.name = "vertexPosition";
-	plane_vad_.offset = 0;
-	plane_vad_.usage = Grindstone::GraphicsAPI::AttributeUsage::Position;
+	plane_vertex_layout_ = vbd;
 
 	Grindstone::GraphicsAPI::VertexBufferCreateInfo plane_vbo_ci;
-	plane_vbo_ci.binding = &plane_vbd_;
-	plane_vbo_ci.bindingCount = 1;
-	plane_vbo_ci.attribute = &plane_vad_;
-	plane_vbo_ci.attributeCount = 1;
+	plane_vbo_ci.layout = &plane_vertex_layout_;
 	plane_vbo_ci.content = plane_verts;
 	plane_vbo_ci.count = 6;
 	plane_vbo_ci.size = sizeof(float) * 6 * 2;
 
+	plane_vbo_ = graphics_wrapper_->createVertexBuffer(plane_vbo_ci);
+
 	Grindstone::GraphicsAPI::VertexArrayObjectCreateInfo plane_vao_ci;
-	plane_vao_ci.vertexBuffer = plane_vbo_;
-	plane_vao_ci.indexBuffer = nullptr;
-	plane_vao_ = graphics_wrapper_->CreateVertexArrayObject(plane_vao_ci);
-	plane_vbo_ = graphics_wrapper_->CreateVertexBuffer(plane_vbo_ci);
-	plane_vao_ci.vertexBuffer = plane_vbo_;
-	plane_vao_ci.indexBuffer = nullptr;
-	plane_vao_->BindResources(plane_vao_ci);
-	plane_vao_->Unbind();
+	plane_vao_ci.vertex_buffers = &plane_vbo_;
+	plane_vao_ci.vertex_buffer_count = 1;
+	plane_vao_ci.index_buffer = nullptr;
+
+	if (graphics_wrapper_->shouldUseImmediateMode())
+		plane_vao_ = graphics_wrapper_->createVertexArrayObject(plane_vao_ci);
 }
 
 Grindstone::GraphicsAPI::UniformBuffer *Engine::getUniformBuffer() {
@@ -246,16 +237,20 @@ Grindstone::GraphicsAPI::UniformBufferBinding *Engine::getUniformBufferBinding()
 	return ubb_;
 }
 
+Grindstone::GraphicsAPI::TextureBindingLayout* Engine::getGbufferTBL() {
+	return gbuffer_tbl_;
+}
+
 Engine &Engine::getInstance() {
 	// Create the Engine instance when "getInstance()" is called (ie: when "engine" is used).
 	static Engine newEngine;
 	return newEngine;
 }
 
-Scene *Engine::addScene(std::string path) {
-	auto scene = new Scene(path);
-	scenes_.push_back(scene);
-	return scene;
+Space *Engine::addSpace(const char *path) {
+	auto sp = new Space(path);
+	spaces_.emplace_back(sp);
+	return sp;
 }
 
 System *Engine::addSystem(System * system) {
@@ -267,100 +262,57 @@ System * Engine::getSystem(ComponentHandle type) {
 	return systems_[type];
 }
 
-std::vector<Scene*> &Engine::getScenes() {
-	return scenes_;
+std::vector<Space*>& Engine::getSpaces() {
+	return spaces_;
 }
 
-Scene * Engine::getScene(SceneHandle scene) {
-	return scenes_[scene];
+Space* Engine::getSpace(SceneHandle scene) {
+	return spaces_[scene];
 }
 
-Scene * Engine::getScene(std::string name) {
-	for (auto scene : scenes_)
+Space * Engine::getSpace(std::string name) {
+	for (auto scene : spaces_)
 		if (scene->getName() == name)
 			return scene;
 
 	return nullptr;
 }
 
-Settings *Engine::getSettings() {
-	return settings_;
-}
-
-Grindstone::GraphicsAPI::GraphicsWrapper *Engine::getGraphicsWrapper() {
-	return graphics_wrapper_;
-}
-
-AudioManager *Engine::getAudioManager() {
-	return audio_manager_;
-}
-
-MaterialManager *Engine::getMaterialManager() {
-	return material_manager_;
-}
-
-GraphicsPipelineManager *Engine::getGraphicsPipelineManager() {
-	return graphics_pipeline_manager_;
-}
-
-TextureManager *Engine::getTextureManager() {
-	return texture_manager_;
-}
-
-ModelManager *Engine::getModelManager() {
-	return model_manager_;
-}
-
-InputManager * Engine::getInputManager() {
-	return input_manager_;
+bool Engine::shouldQuit() {
+	return !running_;
 }
 
 void Engine::run() {
-	bool profiled_frame = false;
-	while (running_) {
-		if (profile_frame_) {
-			GRIND_PROFILE_BEGIN_SESSION("Running", "../log/grind-profile-run.json");
-			profiled_frame = true;
-			profile_frame_ = false;
-		}
-		// Calculate Timing
-		calculateTime();
-		double dt = getUpdateTimeDelta();
-		graphics_wrapper_->setTitle((std::string("Grindstone - ") + std::to_string(int(1 / dt)) + "fps").c_str());
+	/*if (profile_frame_) {
+		GRIND_PROFILE_BEGIN_SESSION("Running", "../log/grind-profile-run.json");
+		profiled_frame = true;
+		profile_frame_ = false;
+	}*/
+	//r2d.updateBuffers();
 
-		graphics_wrapper_->HandleEvents();
-		input_manager_->LoopControls(dt);
+	// Calculate Timing
+	calculateTime();
+	double dt = getUpdateTimeDelta();
+	window_->setWindowTitle((std::string("Grindstone - ") + std::to_string(int(1 / dt)) + "fps").c_str());
 
-		// Add: if (simulating_)
-		// Update all Systems
-		std::vector<Scene *> *scenes = &scenes_;
+	window_->handleEvents();
+	input_manager_->LoopControls(dt);
 
-#ifdef INCLUDE_EDITOR
-		if (edit_mode_ && edit_is_simulating_) {
-			scenes = &simulate_scenes_;
-		}
-#endif
-
-		for (auto scene : *scenes) {
-			for (auto &system : systems_) {
-				if (system)
-					system->update();
-			}
-		}
-
-#ifdef INCLUDE_EDITOR
-		if (edit_mode_) { //  && !edit_is_simulating_
-			editor_->update();
-		}
-#endif
-
-		getGraphicsWrapper()->SwapBuffer();
-
-		if (profiled_frame) {
-			GRIND_PROFILE_END_SESSION();
-			profiled_frame = false;
+	for (auto space : spaces_) {
+		for (auto &system : systems_) {
+			if (system)
+				system->update();
 		}
 	}
+
+	//r2d.draw();
+
+	getGraphicsWrapper()->swapBuffers();
+
+	/*if (profiled_frame) {
+		GRIND_PROFILE_END_SESSION();
+		profiled_frame = false;
+	}*/
 }
 
 void Engine::shutdown() {
@@ -371,8 +323,8 @@ Engine::~Engine() {
 	GRIND_LOG("==============================");
 	GRIND_LOG("Closing Grindstone...");
 
-	for (auto &scene : scenes_) {
-		delete scene;
+	for (auto &space : spaces_) {
+		delete space;
 	}
 
 	for (auto &system : systems_) {
@@ -383,7 +335,8 @@ Engine::~Engine() {
 		delete dll_audio_;
 	}*/
 
-	graphics_pipeline_manager_->cleanup();
+	if (graphics_pipeline_manager_)
+		graphics_pipeline_manager_->cleanup();
 
 	if (dll_graphics_) {
 		delete dll_graphics_;
@@ -435,32 +388,38 @@ void Engine::reloadGraphicsDLL() {
 	getSystem<CameraSystem>()->destroyGraphics();
 	getSystem<CubemapSystem>()->destroyGraphics();
 
-	graphics_wrapper_->DeleteUniformBufferBinding(ubb_);
-	graphics_wrapper_->DeleteUniformBuffer(ubo_);
-	graphics_wrapper_->DeleteUniformBufferBinding(deff_ubb_);
-	graphics_wrapper_->DeleteUniformBuffer(deff_ubo_handler_);
-	graphics_wrapper_->DeleteVertexArrayObject(plane_vao_);
-	graphics_wrapper_->DeleteVertexBuffer(plane_vbo_);
-	graphics_wrapper_->DeleteTextureBindingLayout(gbuffer_tbl_);
-
-	delete imgui_manager_;
+	graphics_wrapper_->deleteUniformBufferBinding(ubb_);
+	graphics_wrapper_->deleteUniformBuffer(ubo_);
+	graphics_wrapper_->deleteUniformBufferBinding(deff_ubb_);
+	graphics_wrapper_->deleteUniformBuffer(deff_ubo_handler_);
+	graphics_wrapper_->deleteVertexArrayObject(plane_vao_);
+	graphics_wrapper_->deleteVertexBuffer(plane_vbo_);
+	graphics_wrapper_->deleteTextureBindingLayout(gbuffer_tbl_);
 
 	graphics_pipeline_manager_->cleanup();
 	model_manager_->destroyGraphics();
 	
 	// Reload Graphics DLL
 	dll_graphics_->reload();
-	graphics_wrapper_ = dll_graphics_->getWrapper();
+	WindowCreateInfo windowCreateInfo;
+	windowCreateInfo.fullscreen = WindowFullscreenMode::Borderless;
+	//windowCreateInfo.width = settings_->resolution_x_;
+	//windowCreateInfo.height = settings_->resolution_y_;
+	windowCreateInfo.title = "Grindstone";
+	window_ = dll_graphics_->createWindow();
+	window_->initialize(windowCreateInfo);
+
+	Grindstone::GraphicsAPI::GraphicsWrapperCreateInfo graphicsWrapperCreateInfo;
+	graphicsWrapperCreateInfo.debug = true;
+	graphicsWrapperCreateInfo.window = window_;
+	graphics_wrapper_ = dll_graphics_->createGraphicsWrapper();
+	graphics_wrapper_->initialize(graphicsWrapperCreateInfo);
 
 	// Reload Graphics
 	initializeUniformBuffer();
 	initializePlaneVertexBuffer();
 	deffUBO();
 	initializeTBL();
-
-	imgui_manager_ = new ImguiManager();
-	if (editor_)
-		editor_->reload(imgui_manager_);
 
 	// Rebuild Graphics Resources
 	getSystem<LightPointSystem>()->loadGraphics();
@@ -482,46 +441,11 @@ void Engine::profileFrame(double) {
 	profile_frame_ = true;
 }
 
-#ifdef INCLUDE_EDITOR
-void Engine::editorControl(double) {
-	if (edit_mode_) {
-		edit_mode_ = false;
-	}
-	else {
-		edit_mode_ = true;
-		launchEditor();
-	}
+
+void* launchEngine() {
+	return &engine;
 }
 
-void Engine::launchEditor() {
-	edit_mode_ = true;
-	if (!editor_) {
-		editor_ = new Editor(imgui_manager_);
-		editor_->setPath(engine.getScenes()[0]->getPath());
-	}
+void deleteEngine(void* ptr) {
+	delete ptr;
 }
-
-Editor *Engine::getEditor() {
-	return editor_;
-}
-
-void Engine::startSimulation() {
-	edit_is_simulating_ = true;
-
-	for (auto s : scenes_) {
-		Scene *c = new Scene(*s);
-		simulate_scenes_.push_back(c);
-	}
-}
-
-void Engine::stopSimulation() {
-	for (auto s : simulate_scenes_) {
-		delete s;
-	}
-
-	simulate_scenes_.clear();
-
-	edit_is_simulating_ = false;
-}
-
-#endif

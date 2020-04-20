@@ -11,7 +11,7 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		enum class CommandBufferType {
-			BindVertexBuffer = 0,
+			BindVertexBuffers = 0,
 			BindIndexBuffer,
 			BindRenderPass,
 			UnbindRenderPass,
@@ -114,12 +114,14 @@ namespace Grindstone {
 			};
 		};
 
-		struct CommandBindVBO : public CommandCreateInfo {
-			VertexBuffer *vertexBuffer;
-			CommandBindVBO() {};
-			CommandBindVBO(VertexBuffer *vb) {
+		struct CommandBindVBOs : public CommandCreateInfo {
+			VertexBuffer **vertexBuffer;
+			uint32_t vertexBufferCount;
+			CommandBindVBOs() {};
+			CommandBindVBOs(VertexBuffer **vb, uint32_t count) {
 				vertexBuffer = vb;
-				type = CommandBufferType::BindVertexBuffer;
+				vertexBufferCount = count;
+				type = CommandBufferType::BindVertexBuffers;
 			};
 		};
 

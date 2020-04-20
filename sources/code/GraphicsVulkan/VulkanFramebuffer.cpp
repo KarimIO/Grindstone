@@ -38,6 +38,7 @@ namespace Grindstone {
 		}
 
 		VulkanFramebuffer::~VulkanFramebuffer() {
+			vkDestroyFramebuffer(VulkanGraphicsWrapper::get().getDevice(), framebuffer_, nullptr);
 		}
 
 		VkFramebuffer VulkanFramebuffer::getFramebuffer() {
@@ -50,7 +51,7 @@ namespace Grindstone {
 			assert(false);
 			return 0.0f;
 		}
-		void VulkanFramebuffer::Clear(int mask) {
+		void VulkanFramebuffer::Clear(ClearMode mask) {
 			std::cout << "VulkanFramebuffer::Clear is not used.\n";
 			assert(false);
 		}

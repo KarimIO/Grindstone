@@ -49,7 +49,8 @@ MonoDomain *ScriptSystem::getDomain() {
 }
 
 ScriptSystem::~ScriptSystem() {
-	mono_jit_cleanup(domain_);
+	// TODO: Fix
+	//mono_jit_cleanup(domain_);
 }
 
 ScriptFields::ScriptFieldType getTypeToken(std::string t) {
@@ -194,18 +195,16 @@ void ScriptSubSystem::start() {
 
 void ScriptSystem::update() {
 	GRIND_PROFILE_FUNC();
-	for (auto scene : engine.getScenes()) {
-		for (auto space : scene->spaces_) {
-			ScriptSubSystem *sub = (ScriptSubSystem *)space->getSubsystem(COMPONENT_SCRIPT);
-			for (auto &c : sub->components_) {
-				for (auto &s : c.scripts_) {
-					if (s.script_class_->script_method_update_) {
-						MonoObject* exception = nullptr;
-						mono_runtime_invoke(s.script_class_->script_method_update_, s.script_object_, nullptr, &exception);
+	for (auto space : engine.getSpaces()) {
+		ScriptSubSystem *sub = (ScriptSubSystem *)space->getSubsystem(COMPONENT_SCRIPT);
+		for (auto &c : sub->components_) {
+			for (auto &s : c.scripts_) {
+				if (s.script_class_->script_method_update_) {
+					MonoObject* exception = nullptr;
+					mono_runtime_invoke(s.script_class_->script_method_update_, s.script_object_, nullptr, &exception);
 
-						if (exception) {
-							std::cout << mono_string_to_utf8(mono_object_to_string(exception, nullptr)) << std::endl;
-						}
+					if (exception) {
+						std::cout << mono_string_to_utf8(mono_object_to_string(exception, nullptr)) << std::endl;
 					}
 				}
 			}

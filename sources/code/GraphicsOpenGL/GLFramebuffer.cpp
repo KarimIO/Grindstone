@@ -64,13 +64,13 @@ namespace Grindstone {
 
 		GLFramebuffer::~GLFramebuffer() {
 			if (fbo_ != 0) {
-				glDeleteFramebuffers(1, &fbo_);
+				//glDeleteFramebuffers(1, &fbo_);
 			}
 		}
 
-		void GLFramebuffer::Clear(int mask) {
-			int m = (mask & ClearMode::Depth != 0) ? GL_DEPTH_BUFFER_BIT : 0;
-			m = m | ((mask & ClearMode::Color != 0) ? GL_COLOR_BUFFER_BIT : 0);
+		void GLFramebuffer::Clear(ClearMode mask) {
+			int m = (((uint8_t)mask & (uint8_t)ClearMode::Depth) != 0) ? GL_DEPTH_BUFFER_BIT : 0;
+			m = m | ((((uint8_t)mask & (uint8_t)ClearMode::Color) != 0) ? GL_COLOR_BUFFER_BIT : 0);
 			glClear(m);
 		}
 

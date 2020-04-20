@@ -2,7 +2,8 @@
 #define _GAME_OBJECT_H
 
 #include <vector>
-#include "../Systems/BaseSystem.hpp"
+#include <string>
+#include <Engine/Systems/BaseSystem.hpp>
 
 
 class GameObject {

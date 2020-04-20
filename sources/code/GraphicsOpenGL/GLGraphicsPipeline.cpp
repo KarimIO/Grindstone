@@ -92,8 +92,9 @@ namespace Grindstone {
 				//return;
 			}*/
 
-			for (uint32_t i = 0; i < createInfo.attributesCount; i++) {
-				glBindAttribLocation(program, createInfo.attributes[i].location, createInfo.attributes[i].name);
+			auto& vbd = createInfo.vertex_bindings;
+			for (uint32_t i = 0; i < vbd->attribute_count; i++) {
+				glBindAttribLocation(program, vbd->attributes[i].location, vbd->attributes[i].name);
 			}
 
 			GLint result = 0;

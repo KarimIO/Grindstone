@@ -4,7 +4,7 @@
 #include <map>
 #include <vector>
 #include "AssetReferences.hpp"
-#include "GraphicsPipeline.hpp"
+#include <GraphicsCommon/GraphicsPipeline.hpp>
 
 namespace Grindstone {
 	namespace GraphicsAPI {

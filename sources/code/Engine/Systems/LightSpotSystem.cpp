@@ -4,7 +4,7 @@
 #include "LightSpotSystem.hpp"
 #include "TransformSystem.hpp"
 
-#include <GraphicsWrapper.hpp>
+#include <GraphicsCommon/GraphicsWrapper.hpp>
 #include "AssetManagers/GraphicsPipelineManager.hpp"
 #include "glm/gtx/transform.hpp"
 
@@ -22,30 +22,26 @@ ComponentHandle LightSpotSubSystem::addComponent(GameObjectHandle object_handle)
 }
 
 void LightSpotSystem::destroyGraphics() {
-	for (auto & scene : engine.getScenes()) {
-		for (auto space : scene->spaces_) {
-			LightSpotSubSystem *sub = (LightSpotSubSystem *)space->getSubsystem(COMPONENT_LIGHT_SPOT);
-			for (auto &c : sub->components_) {
-				if (c.shadow_dt_)
-					engine.getGraphicsWrapper()->DeleteDepthTarget(c.shadow_dt_);
+	for (auto space : engine.getSpaces()) {
+		LightSpotSubSystem *sub = (LightSpotSubSystem *)space->getSubsystem(COMPONENT_LIGHT_SPOT);
+		for (auto &c : sub->components_) {
+			if (c.shadow_dt_)
+				engine.getGraphicsWrapper()->deleteDepthTarget(c.shadow_dt_);
 				
-				if (c.shadow_fbo_)
-					engine.getGraphicsWrapper()->DeleteFramebuffer(c.shadow_fbo_);
+			if (c.shadow_fbo_)
+				engine.getGraphicsWrapper()->deleteFramebuffer(c.shadow_fbo_);
 
-				c.shadow_dt_ = nullptr;
-				c.shadow_fbo_ = nullptr;
-			}
+			c.shadow_dt_ = nullptr;
+			c.shadow_fbo_ = nullptr;
 		}
 	}
 }
 
 void LightSpotSystem::loadGraphics() {
-	for (auto & scene : engine.getScenes()) {
-		for (auto space : scene->spaces_) {
-			LightSpotSubSystem *sub = (LightSpotSubSystem *)space->getSubsystem(COMPONENT_LIGHT_SPOT);
-			for (auto &c : sub->components_) {
-				c.setShadow(c.properties_.shadow);
-			}
+	for (auto space : engine.getSpaces()) {
+		LightSpotSubSystem *sub = (LightSpotSubSystem *)space->getSubsystem(COMPONENT_LIGHT_SPOT);
+		for (auto &c : sub->components_) {
+			c.setShadow(c.properties_.shadow);
 		}
 	}
 }
@@ -62,56 +58,53 @@ void LightSpotSystem::update() {
 	double aspect = 1.0;
 	double near_dist = 0.1;
 
-	auto &scenes = engine.getScenes();
-	for (auto scene : scenes) {
-		for (auto space : scene->spaces_) {
-			LightSpotSubSystem *subsystem = (LightSpotSubSystem *)space->getSubsystem(system_type_);
-			for (auto &component : subsystem->components_) {
-				if (component.properties_.shadow) {
-					// CalculateView
-					GameObjectHandle game_object_id = component.game_object_handle_;
+	for (auto space : engine.getSpaces()) {
+		LightSpotSubSystem *subsystem = (LightSpotSubSystem *)space->getSubsystem(system_type_);
+		for (auto &component : subsystem->components_) {
+			if (component.properties_.shadow) {
+				// CalculateView
+				GameObjectHandle game_object_id = component.game_object_handle_;
 
-					// Get Transform Info
-					ComponentHandle transform_id = space->getObject(game_object_id).getComponentHandle(COMPONENT_TRANSFORM);
-					TransformSubSystem *transform = (TransformSubSystem *)(space->getSubsystem(COMPONENT_TRANSFORM));
+				// Get Transform Info
+				ComponentHandle transform_id = space->getObject(game_object_id).getComponentHandle(COMPONENT_TRANSFORM);
+				TransformSubSystem *transform = (TransformSubSystem *)(space->getSubsystem(COMPONENT_TRANSFORM));
 
-					// Calculate Projection
-					double fov = component.properties_.outerAngle * 2.0;
-					double far_dist = component.properties_.attenuationRadius;
-					component.shadow_mat_ = glm::perspective(fov, aspect, near_dist, far_dist);
+				// Calculate Projection
+				double fov = component.properties_.outerAngle * 2.0;
+				double far_dist = component.properties_.attenuationRadius;
+				component.shadow_mat_ = glm::perspective(fov, aspect, near_dist, far_dist);
 
-					if (invert_proj)
-						component.shadow_mat_[1][1] *= -1;
+				if (invert_proj)
+					component.shadow_mat_[1][1] *= -1;
 
-					if (scale_proj) {
-						const glm::mat4 scale = glm::mat4(1.0f, 0, 0, 0,
-							0, 1.0f, 0, 0,
-							0, 0, 0.5f, 0,
-							0, 0, 0.25f, 1.0f);
+				if (scale_proj) {
+					const glm::mat4 scale = glm::mat4(1.0f, 0, 0, 0,
+						0, 1.0f, 0, 0,
+						0, 0, 0.5f, 0,
+						0, 0, 0.25f, 1.0f);
 
-						component.shadow_mat_ = scale * component.shadow_mat_;
-					}
-
-					// CalculateView
-					glm::vec3 pos = transform->getPosition(transform_id);
-					component.shadow_mat_ = component.shadow_mat_ * glm::lookAt(
-						pos,
-						pos + transform->getForward(transform_id),
-						transform->getUp(transform_id)
-					);
-
-					auto ubo = engine.getUniformBuffer();
-					ubo->Bind();
-					ubo->UpdateUniformBuffer(&component.shadow_mat_);
-
-					// Culling
-
-					// Render
-					component.shadow_fbo_->Bind(true);
-					component.shadow_fbo_->Clear(Grindstone::GraphicsAPI::ClearMode::Depth);
-					engine.getGraphicsWrapper()->SetImmediateBlending(Grindstone::GraphicsAPI::BlendMode::None);
-					engine.getGraphicsPipelineManager()->drawShadowsImmediate(0, 0, component.properties_.resolution, component.properties_.resolution);
+					component.shadow_mat_ = scale * component.shadow_mat_;
 				}
+
+				// CalculateView
+				glm::vec3 pos = transform->getPosition(transform_id);
+				component.shadow_mat_ = component.shadow_mat_ * glm::lookAt(
+					pos,
+					pos + transform->getForward(transform_id),
+					transform->getUp(transform_id)
+				);
+
+				auto ubo = engine.getUniformBuffer();
+				ubo->Bind();
+				ubo->updateBuffer(&component.shadow_mat_);
+
+				// Culling
+
+				// Render
+				component.shadow_fbo_->Bind(true);
+				component.shadow_fbo_->Clear(Grindstone::GraphicsAPI::ClearMode::Depth);
+				engine.getGraphicsWrapper()->setImmediateBlending(Grindstone::GraphicsAPI::BlendMode::None);
+				engine.getGraphicsPipelineManager()->drawShadowsImmediate(0, 0, component.properties_.resolution, component.properties_.resolution);
 			}
 		}
 	}
@@ -120,21 +113,21 @@ void LightSpotSystem::update() {
 void LightSpotComponent::setShadow(bool shadow) {
 	auto graphics_wrapper = engine.getGraphicsWrapper();
 
-	if (shadow_dt_)	graphics_wrapper->DeleteDepthTarget(shadow_dt_);
-	if (shadow_fbo_)	graphics_wrapper->DeleteFramebuffer(shadow_fbo_);
+	if (shadow_dt_)	graphics_wrapper->deleteDepthTarget(shadow_dt_);
+	if (shadow_fbo_)	graphics_wrapper->deleteFramebuffer(shadow_fbo_);
 
 	shadow_dt_ = nullptr;
 	shadow_fbo_ = nullptr;
 
 	if (shadow) {
 		Grindstone::GraphicsAPI::DepthTargetCreateInfo depth_image_ci(Grindstone::GraphicsAPI::DepthFormat::D24, properties_.resolution, properties_.resolution, true, false);
-		shadow_dt_ = graphics_wrapper->CreateDepthTarget(depth_image_ci);
+		shadow_dt_ = graphics_wrapper->createDepthTarget(depth_image_ci);
 
 		Grindstone::GraphicsAPI::FramebufferCreateInfo fbci;
 		fbci.num_render_target_lists = 0;
 		fbci.render_target_lists = nullptr;
 		fbci.depth_target = shadow_dt_;
-		shadow_fbo_ = graphics_wrapper->CreateFramebuffer(fbci);
+		shadow_fbo_ = graphics_wrapper->createFramebuffer(fbci);
 	}
 }
 

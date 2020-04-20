@@ -10,6 +10,10 @@
             "directx": {
                 "vertex": "standard_metalness.vert.fxc",
                 "fragment": "standard_metalness.frag.fxc"
+            },
+            "vulkan": {
+                "vertex": "standard_metalness.vulkan.vert.spv",
+                "fragment": "standard_metalness.vulkan.frag.spv"
             }
         },
         "shadow": {
@@ -20,6 +24,10 @@
             "directx": {
                 "vertex": "standard_shadow.vert.fxc",
                 "fragment": "standard_shadow.frag.fxc"
+            },
+            "vulkan": {
+                "vertex": "standard_shadow.vulkan.vert.spv",
+                "fragment": "standard_shadow.vulkan.frag.spv"
             }
         }
     },

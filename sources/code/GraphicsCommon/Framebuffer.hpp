@@ -10,10 +10,12 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		enum ClearMode : uint8_t {
-			Depth = 0x1,
-			Color = 0x2,
-			Both = ClearMode::Depth | ClearMode::Color
+		enum class ClearMode : uint8_t {
+			Color = 1,
+			Depth = 2,
+			ColorAndDepth = 3,
+			Stencil = 4,
+			All = 7
 		};
 
 		class RenderPass;
@@ -36,7 +38,7 @@ namespace Grindstone {
 		class Framebuffer {
 		public:
 			virtual float getExposure(int i) = 0;
-			virtual void Clear(int mask) = 0;
+			virtual void Clear(ClearMode mask) = 0;
 			virtual void CopyFrom(Framebuffer *) = 0;
 			virtual void BindWrite(bool depth) = 0;
 			virtual void BindTextures(int i) = 0;
