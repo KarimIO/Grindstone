@@ -49,11 +49,12 @@ void CameraSystem::update() {
 		TransformSubSystem *transformsub = (TransformSubSystem *)space->getSubsystem(COMPONENT_TRANSFORM);
 		CameraSubSystem *subsystem = (CameraSubSystem *)space->getSubsystem(system_type_);
 		for (auto &comp : subsystem->components_) {
-			ComponentHandle transformc = space->getObject(comp.game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
+			GameObject& object = space->getObject(comp.game_object_handle_);
+			TransformComponent *transformc = object.getComponent<TransformComponent>();
 
-			glm::vec3 pos = transformsub->getPosition(transformc);
-			glm::vec3 fwd = transformsub->getForward(transformc);
-			glm::vec3 up = transformsub->getUp(transformc);
+			glm::vec3 pos = transformc->getPosition();
+			glm::vec3 fwd = transformc->getForward();
+			glm::vec3 up = transformc->getUp();
 
 			comp.camera_.setPosition(pos);
 			comp.camera_.setDirections(fwd, up);

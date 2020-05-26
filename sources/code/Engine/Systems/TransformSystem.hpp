@@ -9,15 +9,51 @@
 struct TransformComponent : public Component {
 	TransformComponent(GameObjectHandle object_handle, ComponentHandle id);
 
+public:
+	void setParent(TransformComponent *tc);
+	void addChild(TransformComponent *tc);
+	void removeChild(uint32_t i);
+	TransformComponent* getChild(uint32_t i);
+	void setLocalPosition(glm::vec3 pos);
+	void setPosition(glm::vec3 pos);
+	void setLocalRotation(glm::quat rot);
+	void setRotation(glm::quat rot);
+	void setLocalScale(glm::vec3 scale);
+	glm::vec3 getLocalPosition();
+	glm::vec3 getPosition();
+	glm::quat getLocalRotation();
+	glm::quat getRotation();
+	glm::vec3 getLocalScale();
+	glm::vec3 getForward();
+	glm::vec3 getRight();
+	glm::vec3 getUp();
+	glm::mat4x4& getModelMatrix();
+
+	bool move_with_parent_ = false;
+public:
+	// Actual Data:
+	glm::vec3 local_position_;
+	glm::quat local_rotation_;
+	glm::vec3 local_scale_;
+
+	// Cached Data:
+	glm::vec3 forward_;
+	glm::vec3 right_;
+	glm::vec3 up_;
 	glm::vec3 position_;
-	glm::quat quaternion_;
-	glm::vec3 scale_;
+	glm::quat rotation_;
+	glm::mat4 local_model_;
 	glm::mat4 model_;
 
-	 REFLECT(COMPONENT_TRANSFORM)
+	// Scene Graph Data:
+	TransformComponent* parent_;
+	std::vector<TransformComponent *> children_;
+
+	REFLECT(COMPONENT_TRANSFORM)
 };
 
 class TransformSystem : public System {
+	friend TransformComponent;
 public:
 	TransformSystem();
 	void update();
@@ -36,17 +72,10 @@ public:
 	size_t getNumComponents();
 	virtual void removeComponent(ComponentHandle handle);
 
-	glm::vec3 getForward(ComponentHandle handle);
-	glm::vec3 getRight(ComponentHandle handle);
-	glm::vec3 getUp(ComponentHandle handle);
-	glm::quat getQuaternion(ComponentHandle handle);
-	glm::vec3 getPosition(ComponentHandle handle);
-	glm::vec3 getScale(ComponentHandle handle);
-	glm::mat4x4 &getModelMatrix(ComponentHandle handle);
-
 	virtual ~TransformSubSystem();
 private:
 	std::vector<TransformComponent> components_;
+	std::vector<TransformComponent *> root_components_;
 };
 
 #endif

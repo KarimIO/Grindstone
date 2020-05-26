@@ -66,9 +66,9 @@ void RenderSpriteSubSystem::renderSprites(bool render_ortho, glm::vec3 cam_pos, 
 	for (auto &comp : components_) {
 		// Get Position
 		GameObject game_object = space_->getObject(comp.game_object_handle_);
-		ComponentHandle comp_handle = game_object.getComponentHandle(COMPONENT_TRANSFORM);
-		auto model = sub->getModelMatrix(comp_handle);
-		auto pos = sub->getPosition(comp_handle);
+		auto transf = game_object.getComponent<TransformComponent>();
+		auto model = transf->getModelMatrix();
+		auto pos = transf->getPosition();
 
 		renderSprite(render_ortho, comp.aspect_, comp.color_, comp.texture_binding_, model);
 	}
@@ -95,9 +95,10 @@ void RenderSpriteSubSystem::renderSprites(bool render_ortho, glm::vec3 cam_pos, 
 void RenderSpriteSubSystem::handleDebugSprite(bool render_ortho, glm::vec3 color, glm::vec3 cam_pos, GameObjectHandle game_obj_handle, Grindstone::GraphicsAPI::TextureBinding *tex_binding) {
 	TransformSubSystem *sub = (TransformSubSystem *)space_->getSubsystem(COMPONENT_TRANSFORM);
 	GameObject game_object = space_->getObject(game_obj_handle);
-	ComponentHandle comp_handle = game_object.getComponentHandle(COMPONENT_TRANSFORM);
-	auto model = sub->getModelMatrix(comp_handle);
-	auto pos = sub->getPosition(comp_handle);
+	auto transf = game_object.getComponent<TransformComponent>();
+		
+	auto model = transf->getModelMatrix();
+	auto pos = transf->getPosition();
 
 	float d = 1.0f - glm::clamp((glm::distance(cam_pos, pos) / 2.0f - 10.0f), 0.0f, 1.0f);
 

@@ -10,27 +10,36 @@ class Space;
 class GameObject {
 public:
 	// Regular Constructor
-	GameObject(GameObjectHandle id, std::string name, Space *space, GameObjectHandle parent);
+	GameObject(GameObjectHandle id, std::string name, Space *space);
 	// Copy Constructor
 	GameObject(const GameObject &g);
 	bool operator== (GameObject &other);
-	template<typename ComponentT>
-	ComponentT* createComponent();
 	virtual Component *createComponent(ComponentType type);
 	void setComponentHandle(ComponentType, ComponentHandle);
 	ComponentHandle getComponentHandle(ComponentType);
+	Component* getComponent(ComponentType);
 	GameObjectHandle getID();
-	GameObjectHandle getParentID();
 	std::string getName();
 	void setName(std::string str);
 	void removeComponent(ComponentType);
 	void removeAllComponents();
 	~GameObject();
+public:
+	template<typename ComponentT>
+	ComponentT* createComponent() {
+		ComponentType t = ComponentT::getComponentType();
+		return createComponent(t);
+	}
+	template<typename ComponentT>
+	ComponentT* getComponent() {
+		ComponentType t = ComponentT::getComponentType();
+
+		return (ComponentT *)getComponent(t);
+	}
 private:
 	std::string name_;
 	Space* space_;
 	GameObjectHandle id_;
-	GameObjectHandle parent_;
 	ComponentHandle components_[NUM_COMPONENTS];
 	std::vector<ComponentHandle> game_components_;
 };

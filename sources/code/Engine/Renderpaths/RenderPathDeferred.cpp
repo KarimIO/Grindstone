@@ -792,9 +792,9 @@ void RenderPathDeferred::renderLights(Grindstone::GraphicsAPI::Framebuffer *fbo,
 		for (size_t i = 0; i < point_light_system->getNumComponents(); ++i) {
 			auto &light = point_light_system->getComponent((ComponentHandle)i);
 			GameObjectHandle game_object_handle = light.game_object_handle_;
-			ComponentHandle component_transform_handle = space->getObject(game_object_handle).getComponentHandle(COMPONENT_TRANSFORM);
+			TransformComponent *component_transform = space->getObject(game_object_handle).getComponent<TransformComponent>();
 
-			light_point_ubo_.position = transform_system->getPosition(component_transform_handle);
+			light_point_ubo_.position = component_transform->getPosition();
 			light_point_ubo_.color = light.properties_.color;
 			light_point_ubo_.attenuationRadius = light.properties_.attenuationRadius;
 			light_point_ubo_.power = light.properties_.power;
@@ -814,10 +814,10 @@ void RenderPathDeferred::renderLights(Grindstone::GraphicsAPI::Framebuffer *fbo,
 		for (size_t i = 0; i < spot_light_system->getNumComponents(); ++i) {
 			auto &light = spot_light_system->getComponent((ComponentHandle)i);
 			GameObjectHandle game_object_handle = light.game_object_handle_;
-			ComponentHandle component_transform_handle = space->getObject(game_object_handle).getComponentHandle(COMPONENT_TRANSFORM);
+			TransformComponent *component_transform = space->getObject(game_object_handle).getComponent<TransformComponent>();
 
-			light_spot_ubo_.direction = transform_system->getForward(component_transform_handle);
-			light_spot_ubo_.position = transform_system->getPosition(component_transform_handle);
+			light_spot_ubo_.direction = component_transform->getForward();
+			light_spot_ubo_.position = component_transform->getPosition();
 			light_spot_ubo_.color = light.properties_.color;
 			light_spot_ubo_.attenuationRadius = light.properties_.attenuationRadius;
 			light_spot_ubo_.power = light.properties_.power;
@@ -846,9 +846,9 @@ void RenderPathDeferred::renderLights(Grindstone::GraphicsAPI::Framebuffer *fbo,
 		for (size_t i = 0; i < directional_light_system->getNumComponents(); ++i) {
 			auto &light = directional_light_system->getComponent((ComponentHandle)i);
 			GameObjectHandle game_object_handle = light.game_object_handle_;
-			ComponentHandle component_transform_handle = space->getObject(game_object_handle).getComponentHandle(COMPONENT_TRANSFORM);
+			TransformComponent* component_transform = space->getObject(game_object_handle).getComponent<TransformComponent>();
 
-			light_directional_ubo_.direction = transform_system->getForward(component_transform_handle);
+			light_directional_ubo_.direction = component_transform->getForward();
 			light_directional_ubo_.color = light.properties_.color;
 			light_directional_ubo_.source_radius = light.properties_.sourceRadius;
 			light_directional_ubo_.power = light.properties_.power;

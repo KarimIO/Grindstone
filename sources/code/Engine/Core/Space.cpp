@@ -16,6 +16,7 @@
 #include "../Systems/CubemapSystem.hpp"
 #include "../Systems/ScriptSystem.hpp"
 #include "../Systems/RenderSpriteSystem.hpp"
+#include "../Systems/UISystem.hpp"
 #include "Engine.hpp"
 #include "Scene.hpp"
 
@@ -42,7 +43,7 @@ void handleReflParams(reflect::TypeDescriptor_Struct::Category& refl, unsigned c
 	for (auto& mem : refl.members) {
 		std::string n = mem.stored_name;
 
-		//GRIND_WARN("\t{0}", n);
+		GRIND_WARN("\t{0}", n);
 
 		unsigned char* p = componentPtr + mem.offset;
 
@@ -114,12 +115,15 @@ void handleReflParams(reflect::TypeDescriptor_Struct::Category& refl, unsigned c
 }
 
 void setComponentParams(Space* space, ComponentHandle handle, ComponentType component_type, rapidjson::Value& params) {
-	if (component_type == COMPONENT_COLLISION)
-		GRIND_WARN("TET");
-
 	reflect::TypeDescriptor_Struct* refl = engine.getSystem(component_type)->getReflection();
 	if (refl) {
-		Component* component = space->getSubsystem(component_type)->getBaseComponent(handle);
+		SubSystem* subsys = space->getSubsystem(component_type);
+		Component* component = subsys->getBaseComponent(handle);
+
+		if (component_type == COMPONENT_RENDER_STATIC_MESH) {
+			RenderStaticMeshComponent* rsmc = (RenderStaticMeshComponent *)component;
+			std::cout << rsmc->component_type_ << std::endl;
+		}
 
 		handleReflParams(refl->category, (unsigned char*)component, params);
 	}
@@ -139,7 +143,7 @@ Space::Space(const char *name) : name_(name) {
 	addSubsystem(new CubemapSubSystem(this));
 	addSubsystem(new CameraSubSystem(this));
 	addSubsystem(new ScriptSubSystem(this));
-	// addSubsystem(new UiSubSystem(this));
+	addSubsystem(new UiSubSystem(this));
 	addSubsystem(new RenderTerrainSubSystem(this));
 }
 
@@ -180,7 +184,7 @@ bool Space::reloadScene() {
 
 bool Space::loadFromScene(std::string path) {
 	GRIND_PROFILE_FUNC();
-	GRIND_LOG("Loading level: %s\n", path);
+	GRIND_LOG("Loading level: {0}\n", path);
 
 	path_ = path;
 
@@ -198,6 +202,8 @@ bool Space::loadFromScene(std::string path) {
 	else
 		name_ = path;
 
+	objects_.reserve(document["objects"].MemberCount());
+
 	for (rapidjson::Value::MemberIterator itr = document["objects"].MemberBegin(); itr != document["objects"].MemberEnd(); ++itr) {
 		GameObjectHandle parent_handle = -1;
 		
@@ -212,7 +218,7 @@ bool Space::loadFromScene(std::string path) {
 				loadPrefab(params, game_object);
 			}
 			else {
-				//GRIND_WARN("COMP: {0}", type_str);
+				GRIND_WARN("COMP: {0}", type_str);
 				auto type = getComponentType(type_str);
 				if (type == COMPONENT_BASE) {
 					GRIND_WARN("Could not get component: {0}", type_str);
@@ -332,7 +338,7 @@ size_t Space::getNumObjects() {
 
 GameObject &Space::createObject(const char *name) {
 	auto id = (GameObjectHandle)objects_.size();
-	objects_.emplace_back(id, name, this, -1);
+	objects_.emplace_back(id, name, this);
 
 	return objects_.back();
 }

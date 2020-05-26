@@ -55,9 +55,9 @@ void RigidBodySystem::update() {
 			btVector3 pos = transform.getOrigin();
 			btVector3 vel = rigid_body->getLinearVelocity();
 
-			transform_component.position_ = glm::vec3(pos.getX(), pos.getY(), pos.getZ());
+			transform_component.setPosition(glm::vec3(pos.getX(), pos.getY(), pos.getZ()));
 			btQuaternion q = transform.getRotation();
-			transform_component.quaternion_ = glm::quat(q.x(), q.y(), q.z(), q.w());
+			transform_component.setRotation(glm::quat(q.x(), q.y(), q.z(), q.w()));
 
 			/*float ysqr = q.y() * q.y();
 
@@ -146,8 +146,8 @@ void RigidBodySubSystem::initialize() {
 		TransformSubSystem *transform_sub = (TransformSubSystem *)(space_->getSubsystem(COMPONENT_TRANSFORM));
 		TransformComponent &transform_component = transform_sub->getComponent(transform_id);
 
-		glm::vec3 posTrans = transform_component.position_;
-		glm::quat angTrans = transform_component.quaternion_;
+		glm::vec3 posTrans = transform_component.getPosition();
+		glm::quat angTrans = transform_component.getRotation();
 
 		btQuaternion quaternion(angTrans.y, angTrans.x, angTrans.z, angTrans.w);
 		btVector3 position(posTrans.x, posTrans.y, posTrans.z);

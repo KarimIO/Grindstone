@@ -6,11 +6,12 @@
 GameObject::GameObject(const GameObject & g) {
 	id_ = g.id_;
 	name_ = g.name_;
+	space_ = g.space_;
 
 	memcpy(components_, g.components_, sizeof(components_));
 }
 
-GameObject::GameObject(GameObjectHandle id, std::string name, Space *space, GameObjectHandle parent) : id_(id), name_(name), parent_(parent), space_(space) {
+GameObject::GameObject(GameObjectHandle id, std::string name, Space *space) : id_(id), name_(name), space_(space) {
 	memset(components_, UINT_MAX, sizeof(components_));
 }
 
@@ -18,19 +19,17 @@ bool GameObject::operator== (GameObject &other) {
 	return id_ == other.id_ && space_ == other.space_;
 }
 
-template<typename ComponentT>
-ComponentT *GameObject::createComponent() {
-	ComponentType t = T::getComponentType();
-	return createComponent(t);
-}
-
-Component *GameObject::createComponent(ComponentType type) {
+Component* GameObject::createComponent(ComponentType type) {
 	SubSystem* subsys = space_->getSubsystem(type);
 
-	if (subsys)
-		return subsys->getBaseComponent(subsys->addComponent(id_));
-	else
-		nullptr;
+	if (subsys) {
+		ComponentHandle comp = subsys->addComponent(id_);
+		components_[type] = comp;
+		return subsys->getBaseComponent(comp);
+	}
+	else {
+		return nullptr;
+	}
 }
 
 void GameObject::setComponentHandle(ComponentType type, ComponentHandle handle) {
@@ -41,12 +40,20 @@ ComponentHandle GameObject::getComponentHandle(ComponentType type) {
 	return components_[type];
 }
 
-GameObjectHandle GameObject::getID() {
-	return id_;
+Component* GameObject::getComponent(ComponentType type) {
+	SubSystem* subsys = space_->getSubsystem(type);
+
+	if (subsys) {
+		ComponentHandle handle = components_[type];
+		Component* component = subsys->getBaseComponent(handle);
+		return component;
+	}
+	else
+		return nullptr;
 }
 
-GameObjectHandle GameObject::getParentID() {
-	return parent_;
+GameObjectHandle GameObject::getID() {
+	return id_;
 }
 
 std::string GameObject::getName() {

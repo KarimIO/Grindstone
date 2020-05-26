@@ -57,7 +57,7 @@ ControllerComponent::ControllerComponent(GameObjectHandle object_handle, Compone
 	input.BindAction("Run", this, &ControllerComponent::RunStart, KEY_PRESSED);
 	input.BindAction("Run", this, &ControllerComponent::RunStop, KEY_RELEASED);
 
-	angles_ = glm::vec3(0, 0, glm::pi<float>());
+	angles_ = glm::vec3(0, 0, 0);
 
 	ghost_mode_ = true;
 	no_collide_ = true;
@@ -77,11 +77,11 @@ void ControllerComponent::update(double dt) {
 	velocity_.z *= 0.85f * (1.0f - (float)dt);
 
 	if (ghost_mode_)
-		trans.position_ += velocity_ * (float)dt;
+		trans.local_position_ += velocity_ * (float)dt;
 
 	if (!no_collide_) {
-		if (trans.position_.y < 0.0) {
-			trans.position_.y = 0.0;
+		if (trans.local_position_.y < 0.0) {
+			trans.local_position_.y = 0.0;
 		}
 	}
 }
@@ -100,9 +100,9 @@ size_t ControllerSubSystem::getNumComponents() {
 void ControllerComponent::MoveForwardBack(double scale) {
 	auto trans_system = getTransform();
 	ComponentHandle transform_id = engine.getSpace(0)->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
-	auto &trans = trans_system->getComponent(transform_id);
+	auto& trans = trans_system->getComponent(transform_id);
 
-	glm::vec3 f = 20.0f * float(scale * speed_modifier_) * trans_system->getForward(transform_id);
+	glm::vec3 f = 20.0f * float(scale * speed_modifier_) * trans.getForward();
 
 	/*if (physID) {
 		CPhysics *phys = &engine.physicsSystem.components[physID];
@@ -118,7 +118,7 @@ void ControllerComponent::MoveSide(double scale) {
 	ComponentHandle transform_id = engine.getSpace(0)->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
 	auto &trans = trans_system->getComponent(transform_id);
 
-	glm::vec3 f = 5.0f * float(scale * speed_modifier_) * trans_system->getRight(transform_id);
+	glm::vec3 f = 5.0f * float(scale * speed_modifier_) * trans.getRight();
 
 	/*if (physID) {
 		CPhysics *phys = &engine.physicsSystem.components[physID];
@@ -135,7 +135,7 @@ void ControllerComponent::MoveVertical(double scale) {
 	auto &trans = trans_system->getComponent(transform_id);
 
 	if (ghost_mode_) {
-		glm::vec3 f = 5.0f * float(scale * speed_modifier_) * trans_system->getUp(transform_id);
+		glm::vec3 f = 5.0f * float(scale * speed_modifier_) * trans.getUp();
 
 		velocity_ += f;
 	}
@@ -144,14 +144,14 @@ void ControllerComponent::MoveVertical(double scale) {
 void ControllerComponent::TurnPitch(double scale) {
 	auto trans_system = getTransform();
 	ComponentHandle transform_id = engine.getSpace(0)->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
-	auto &trans = trans_system->getComponent(transform_id);
+	auto& trans = trans_system->getComponent(transform_id);
 
-	angles_.x += float(sensitivity_ * scale);
+	angles_.x -= float(sensitivity_ * scale);
 
 	if (angles_.x < -2.4f / 2)	angles_.x = -2.4f / 2;
 	if (angles_.x > 3.14f / 2)	angles_.x = 3.14f / 2;
 
-	trans.quaternion_ = glm::quat(angles_);
+	trans.setLocalRotation(glm::quat(angles_));
 }
 
 void ControllerComponent::TurnYaw(double scale) {
@@ -159,8 +159,8 @@ void ControllerComponent::TurnYaw(double scale) {
 	ComponentHandle transform_id = engine.getSpace(0)->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
 	auto &trans = trans_system->getComponent(transform_id);
 
-	angles_.y -= float(sensitivity_ * scale);
-	trans.quaternion_ = glm::quat(angles_);
+	angles_.y += float(sensitivity_ * scale);
+	trans.setLocalRotation(glm::quat(angles_));
 }
 
 void ControllerComponent::ZoomIn(double scale) {

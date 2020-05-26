@@ -1,12 +1,11 @@
 #include "Core/Engine.hpp"
 #include "RenderStaticMeshSystem.hpp"
 #include "TransformSystem.hpp"
-#include "../Core/Engine.hpp"
 #include "../Utilities/SettingsFile.hpp"
 #include "../AssetManagers/ModelManager.hpp"
 
 RenderStaticMeshComponent::RenderStaticMeshComponent(GameObjectHandle object_handle, ComponentHandle handle) :
-	Component(COMPONENT_RENDER_STATIC_MESH, object_handle, handle) {}
+	Component(COMPONENT_RENDER_STATIC_MESH, object_handle, handle), path_("Hi there"), model_handle_(69) {}
 
 RenderStaticMeshSubSystem::RenderStaticMeshSubSystem(Space *space) : SubSystem(COMPONENT_RENDER_STATIC_MESH, space) {
 }

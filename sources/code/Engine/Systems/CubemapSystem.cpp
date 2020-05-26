@@ -389,9 +389,9 @@ void CubemapSystem::bake() {
 
 			GameObjectHandle game_object_id = component.game_object_handle_;
 			GameObject &obj = space->getObject(game_object_id);
-			ComponentHandle transform_id = obj.getComponentHandle(COMPONENT_TRANSFORM);
+			TransformComponent *transform = obj.getComponent<TransformComponent>();
 
-			glm::vec3 pos = transform->getPosition(transform_id);
+			glm::vec3 pos = transform->getPosition();
 
 			// For every face...
 			for (uint8_t i = 0; i < 6; ++i) {
@@ -686,10 +686,9 @@ CubemapComponent * CubemapSubSystem::getClosestCubemap(glm::vec3 eye) {
 
 	for (auto &component : components_) {
 		GameObjectHandle game_object_id = component.game_object_handle_;
-		ComponentHandle transform_id = space_->getObject(game_object_id).getComponentHandle(COMPONENT_TRANSFORM);
-		TransformSubSystem *transform = (TransformSubSystem *)(space_->getSubsystem(COMPONENT_TRANSFORM));
-
-		glm::vec3 c = transform->getPosition(transform_id);
+		TransformComponent *transform = space_->getObject(game_object_id).getComponent<TransformComponent>();
+		
+		glm::vec3 c = transform->getPosition();
 		float dist = glm::distance(eye, c);
 		if (dist < dist_max) {
 			max = &component;

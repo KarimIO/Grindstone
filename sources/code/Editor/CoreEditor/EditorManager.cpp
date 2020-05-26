@@ -10,6 +10,7 @@
 #include <Engine/Core/Space.hpp>
 #include <Engine/UI/UICanvas.hpp>
 #include <Engine/UI/UIPanel.hpp>
+#include <Engine/Systems/UISystem.hpp>
 
 #include <ExecutableCommon/DLLEngine.hpp>
 
@@ -95,8 +96,7 @@ namespace Grindstone {
         GameObject &object = space->createObject("UI");
         SubSystem *transf_subsys = space->getSubsystem(COMPONENT_TRANSFORM);
         object.createComponent(COMPONENT_TRANSFORM);
-        object.createComponent(COMPONENT_UI);
-        
+        UiComponent *cUi = object.createComponent<UiComponent>();
 
         window->show();
         window->setWindowFocus();

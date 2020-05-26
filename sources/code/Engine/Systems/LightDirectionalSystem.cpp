@@ -119,9 +119,8 @@ void LightDirectionalSystem::update() {
 				GameObjectHandle game_object_id = component.game_object_handle_;
 
 				// Get Transform Info
-				ComponentHandle transform_id = space->getObject(game_object_id).getComponentHandle(COMPONENT_TRANSFORM);
-				TransformSubSystem *transform = (TransformSubSystem *)(space->getSubsystem(COMPONENT_TRANSFORM));
-
+				TransformComponent *transform = space->getObject(game_object_id).getComponent<TransformComponent>();
+				
 				// Calculate Projection
 				/*component.shadow_mat_ = glm::ortho<float>(-10, 10, -10, 10, -10, 30);
 
@@ -136,9 +135,7 @@ void LightDirectionalSystem::update() {
 
 					component.shadow_mat_ = scale * component.shadow_mat_;
 				}*/
-
-				auto transf_comp_id = space->getObject(component.game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
-				auto dir = transf_sys->getForward(transf_comp_id);
+				auto dir = transform->getForward();
 
 				component.view_ = glm::lookAt(glm::vec3(0.0f), dir, glm::vec3(0.0f, 1.0f, 0.0f));
 

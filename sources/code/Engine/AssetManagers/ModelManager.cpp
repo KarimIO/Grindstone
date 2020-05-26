@@ -12,6 +12,7 @@
 
 #include  "Core/Scene.hpp"
 #include  "Core/Space.hpp"
+#include  "Core/GameObject.hpp"
 #include <fstream>
 
 ModelStatic::ModelStatic() {}
@@ -26,19 +27,18 @@ void MeshStatic::shadowDraw() {
 void MeshStatic::draw() {
 	auto sp = engine.getSpace(0);
 	RenderStaticMeshSubSystem *render_system = (RenderStaticMeshSubSystem *)sp->getSubsystem(COMPONENT_RENDER_STATIC_MESH);
-	TransformSubSystem *transform_system = (TransformSubSystem *)sp->getSubsystem(COMPONENT_TRANSFORM);
-
+	
 	ModelStatic *model = &engine.getModelManager()->getModel(model_reference);
 	for (auto &reference : model->references_) {
 		RenderStaticMeshComponent &render_component = render_system->getComponent(reference);
 
 		//if (renderComponent.should_draw) {
 			auto game_object_id = render_component.game_object_handle_;
-			auto transform_component_id = sp->getObject(game_object_id);
-			auto transform = transform_system->getComponent(game_object_id);
+			auto game_object = sp->getObject(game_object_id);
+			auto transform = game_object.getComponent<TransformComponent>();
 
 			engine.getModelManager()->getModelUbo()->Bind();
-			engine.getModelManager()->getModelUbo()->updateBuffer(&transform.model_);
+			engine.getModelManager()->getModelUbo()->updateBuffer(&transform->getModelMatrix());
 
 			engine.getGraphicsWrapper()->bindVertexArrayObject(model->vertex_array_object);
 			engine.getGraphicsWrapper()->drawImmediateIndexed(Grindstone::GraphicsAPI::GeometryType::Triangles, true, base_vertex, base_index, num_indices);

@@ -67,7 +67,7 @@ void LightSpotSystem::update() {
 
 				// Get Transform Info
 				ComponentHandle transform_id = space->getObject(game_object_id).getComponentHandle(COMPONENT_TRANSFORM);
-				TransformSubSystem *transform = (TransformSubSystem *)(space->getSubsystem(COMPONENT_TRANSFORM));
+				TransformComponent *transform = space->getObject(game_object_id).getComponent<TransformComponent>();
 
 				// Calculate Projection
 				double fov = component.properties_.outerAngle * 2.0;
@@ -87,11 +87,11 @@ void LightSpotSystem::update() {
 				}
 
 				// CalculateView
-				glm::vec3 pos = transform->getPosition(transform_id);
+				glm::vec3 pos = transform->getPosition();
 				component.shadow_mat_ = component.shadow_mat_ * glm::lookAt(
 					pos,
-					pos + transform->getForward(transform_id),
-					transform->getUp(transform_id)
+					pos + transform->getForward(),
+					transform->getUp()
 				);
 
 				auto ubo = engine.getUniformBuffer();

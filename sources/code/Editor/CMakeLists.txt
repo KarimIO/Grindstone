@@ -8,19 +8,17 @@ set(EDITOR_HEADERS ${EDITOR_OTHER_HEADERS} ${EDITOR_CORE_HEADERS})
 
 set(EDITOR_CORE_SOURCES CoreEditor/EditorManager.cpp CoreEditor/Main.cpp SceneEditor/SceneEditor.cpp MaterialEditor/MaterialEditor.cpp)
 source_group("Core\\Source Files" FILES ${EDITOR_CORE_SOURCES})
-set(EDITOR_IMGUI_SOURCES CoreEditor/ImguiManager.hpp CoreEditor/ImguiManager.cpp ../../deps/dear_imgui/imgui.cpp ../../deps/dear_imgui/examples/imgui_impl_opengl3.cpp ../../deps/GL/gl3w.cpp ../../deps/dear_imgui/imgui_draw.cpp ../../deps/dear_imgui/imgui_widgets.cpp)
-source_group("Imgui\\Source Files" FILES ${EDITOR_IMGUI_SOURCES})
 set(EDITOR_OTHER_SOURCES ../Engine/Utilities/Logger.cpp ../Engine/Utilities/DLLHandler.cpp ../Engine/Utilities/Reflection.cpp ../Engine/Utilities/DLLGraphics.cpp ../Engine/Utilities/DLLAudio.cpp)
 source_group("Other\\Source Files" FILES ${EDITOR_OTHER_SOURCES})
 set(EDITOR_WINDOW ../WindowModule/Win32Window.cpp ../WindowModule/Win32Window.hpp ../WindowModule/BaseWindow.hpp)
 source_group("Windowing" FILES ${EDITOR_WINDOW})
-set(EDITOR_SOURCES ${EDITOR_WINDOW} ${EDITOR_CORE_SOURCES} ${EDITOR_IMGUI_SOURCES} ${EDITOR_OTHER_SOURCES}) 
+set(EDITOR_SOURCES ${EDITOR_WINDOW} ${EDITOR_CORE_SOURCES} ${EDITOR_OTHER_SOURCES}) 
 
 set(GAME_EXEC_HEADERS ../ExecutableCommon/DLLEngine.hpp ../ExecutableCommon/DLLGame.hpp)
 set(GAME_EXEC_SOURCES ../ExecutableCommon/DLLEngine.cpp ../ExecutableCommon/DLLGame.cpp)
 source_group("DLL Interface" FILES ${GAME_EXEC_SOURCES} ${GAME_EXEC_HEADERS})
 
-set(INCLUDE_DIRECTORIES ../ ${DEPS_DIR}/spdlog/include/ ${DEPS_DIR}/dear_imgui)
+set(INCLUDE_DIRECTORIES ../ ${DEPS_DIR}/spdlog/include/)
 
 set(MONO_PATH CACHE PATH "Mono Path")
 set(RAPIDJSON_PATH CACHE PATH "RAPIDJSON Path")
