@@ -18,7 +18,7 @@ namespace Grindstone  {
 	}
 }
 
-class Scene;
+class Space;
 
 class RenderPathDeferred : public RenderPath {
 public:

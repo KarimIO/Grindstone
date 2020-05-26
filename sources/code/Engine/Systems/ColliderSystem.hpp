@@ -25,7 +25,7 @@ struct ColliderComponent : public Component {
 	float capsule_radius_;
 	float capsule_height_;
 
-	REFLECT()
+	REFLECT(COMPONENT_COLLISION)
 };
 
 class ColliderSystem : public System {

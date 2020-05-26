@@ -59,7 +59,7 @@ struct ScriptComponent : public Component {
 	ScriptComponent(GameObjectHandle object_handle, ComponentHandle id);
 
 	std::vector<ScriptInstance> scripts_;
-	REFLECT()
+	REFLECT(COMPONENT_SCRIPT)
 };
 
 struct ScriptClass {

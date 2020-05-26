@@ -59,7 +59,7 @@ private:
 class RenderTerrainSubSystem : public SubSystem {
 	friend RenderTerrainSystem;
 public:
-	RenderTerrainSubSystem(RenderTerrainSystem *system, Space *space);
+	RenderTerrainSubSystem(Space *space);
 	virtual ComponentHandle addComponent(GameObjectHandle object_handle) override;
 	RenderTerrainComponent &getComponent(ComponentHandle handle);
 	virtual Component *getBaseComponent(ComponentHandle component_handle) override;

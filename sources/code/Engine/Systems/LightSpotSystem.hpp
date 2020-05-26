@@ -30,7 +30,7 @@ struct LightSpotComponent : public Component {
 	Grindstone::GraphicsAPI::Framebuffer *shadow_fbo_ = nullptr;
 	Grindstone::GraphicsAPI::DepthTarget *shadow_dt_ = nullptr;
 
-	REFLECT()
+	REFLECT(COMPONENT_LIGHT_SPOT)
 };
 
 class LightSpotSystem : public System {

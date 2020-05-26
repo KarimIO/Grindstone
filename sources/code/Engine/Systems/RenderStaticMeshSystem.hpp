@@ -10,7 +10,7 @@ struct RenderStaticMeshComponent : public Component {
 	std::string path_;
 	ModelReference model_handle_;
 
-	REFLECT()
+	REFLECT(COMPONENT_RENDER_STATIC_MESH)
 };
 
 class RenderStaticMeshSystem : public System {

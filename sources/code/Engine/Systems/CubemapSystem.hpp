@@ -43,7 +43,7 @@ struct CubemapComponent : public Component {
 	int capture_method_;
 	std::string path_;
 
-	REFLECT()
+	REFLECT(COMPONENT_CUBEMAP)
 };
 
 class CubemapSystem : public System {

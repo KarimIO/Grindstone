@@ -92,11 +92,11 @@ namespace Grindstone {
         //addEditor(new SceneEditor("Wow2", 3, this));
 
         Space* space = engine_->addSpace("Main Game");
-        GameObjectHandle obj_handle = space->createObject("UI");
+        GameObject &object = space->createObject("UI");
         SubSystem *transf_subsys = space->getSubsystem(COMPONENT_TRANSFORM);
-        transf_subsys->addComponent(obj_handle);
-        SubSystem* render_static_subsys = space->getSubsystem(COMPONENT_RENDER_STATIC_MESH);
-        render_static_subsys->addComponent(obj_handle);
+        object.createComponent(COMPONENT_TRANSFORM);
+        object.createComponent(COMPONENT_UI);
+        
 
         window->show();
         window->setWindowFocus();

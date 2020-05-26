@@ -21,7 +21,7 @@ int main() {
 
         std::string level_name = "../assets/scenes/sponza.json";
         Space *space = app->addSpace("Main Game");
-        space->addScene(level_name.c_str());
+        space->loadFromScene(level_name.c_str());
 
         window->show();
         window->setWindowFocus();

@@ -778,14 +778,12 @@ void RenderPathDeferred::renderLights(Grindstone::GraphicsAPI::Framebuffer *fbo,
 	gbuffer_->BindRead();
 	gbuffer_->BindTextures(0);
 
-	sh_pipeline->Bind();
+	/*sh_pipeline->Bind();
 	sh_buffer.pvm = glm::mat4(1);
 	sh_ubo->updateBuffer(&sh_buffer);
 	sh_ubo->Bind();
 	graphics_wrapper->bindVertexArrayObject(cube_vao_);
-	graphics_wrapper->drawImmediateIndexed(Grindstone::GraphicsAPI::GeometryType::Triangles, true, 0, 0, cube_indices.size());
-
-	return;
+	graphics_wrapper->drawImmediateIndexed(Grindstone::GraphicsAPI::GeometryType::Triangles, true, 0, 0, cube_indices.size());*/
 
 	graphics_wrapper->setImmediateBlending(Grindstone::GraphicsAPI::BlendMode::Additive);
 	LightPointSubSystem *point_light_system = (LightPointSubSystem *)space->getSubsystem(COMPONENT_LIGHT_POINT);

@@ -31,7 +31,7 @@ private:
 	glm::vec3 angles_;
 	InputComponent	input;
 
-	REFLECT()
+	REFLECT(COMPONENT_CONTROLLER)
 };
 
 class ControllerSystem : public System {

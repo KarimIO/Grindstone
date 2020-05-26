@@ -5,12 +5,18 @@
 #include <string>
 #include <Engine/Systems/BaseSystem.hpp>
 
+class Space;
 
 class GameObject {
 public:
+	// Regular Constructor
+	GameObject(GameObjectHandle id, std::string name, Space *space, GameObjectHandle parent);
+	// Copy Constructor
 	GameObject(const GameObject &g);
-	GameObject(GameObjectHandle id, std::string name, GameObjectHandle parent);
 	bool operator== (GameObject &other);
+	template<typename ComponentT>
+	ComponentT* createComponent();
+	virtual Component *createComponent(ComponentType type);
 	void setComponentHandle(ComponentType, ComponentHandle);
 	ComponentHandle getComponentHandle(ComponentType);
 	GameObjectHandle getID();
@@ -22,6 +28,7 @@ public:
 	~GameObject();
 private:
 	std::string name_;
+	Space* space_;
 	GameObjectHandle id_;
 	GameObjectHandle parent_;
 	ComponentHandle components_[NUM_COMPONENTS];

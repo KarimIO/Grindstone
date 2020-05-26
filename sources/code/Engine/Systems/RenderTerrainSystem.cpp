@@ -13,7 +13,7 @@
 RenderTerrainComponent::RenderTerrainComponent(GameObjectHandle object_handle, ComponentHandle handle) :
 	Component(COMPONENT_RENDER_TERRAIN, object_handle, handle) {}
 
-RenderTerrainSubSystem::RenderTerrainSubSystem(RenderTerrainSystem *system, Space *space) : SubSystem(COMPONENT_RENDER_TERRAIN, space), system_(system) {
+RenderTerrainSubSystem::RenderTerrainSubSystem(Space *space) : SubSystem(COMPONENT_RENDER_TERRAIN, space), system_((RenderTerrainSystem*)engine.getSystem(COMPONENT_RENDER_TERRAIN)) {
 }
 
 void RenderTerrainComponent::generateMesh() {

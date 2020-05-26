@@ -37,7 +37,7 @@ public:
 	btRigidBody* rigid_body_;
 	btCollisionShape* shape_;
 
-	REFLECT()
+	REFLECT(COMPONENT_RIGID_BODY)
 };
 
 class RigidBodySystem : public System {

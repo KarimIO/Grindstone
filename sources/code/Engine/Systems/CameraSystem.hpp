@@ -12,7 +12,7 @@ struct CameraComponent : public Component {
 
 	Camera camera_;
 
-	REFLECT()
+	REFLECT(COMPONENT_CAMERA)
 };
 
 class CameraSystem : public System {

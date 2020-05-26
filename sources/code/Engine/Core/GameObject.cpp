@@ -1,6 +1,8 @@
 #include "GameObject.hpp"
 #include <climits>
 
+#include "Space.hpp"
+
 GameObject::GameObject(const GameObject & g) {
 	id_ = g.id_;
 	name_ = g.name_;
@@ -8,12 +10,27 @@ GameObject::GameObject(const GameObject & g) {
 	memcpy(components_, g.components_, sizeof(components_));
 }
 
-GameObject::GameObject(GameObjectHandle id, std::string name, GameObjectHandle parent) : id_(id), name_(name), parent_(parent) {
+GameObject::GameObject(GameObjectHandle id, std::string name, Space *space, GameObjectHandle parent) : id_(id), name_(name), parent_(parent), space_(space) {
 	memset(components_, UINT_MAX, sizeof(components_));
 }
 
 bool GameObject::operator== (GameObject &other) {
-	return id_ == other.id_;
+	return id_ == other.id_ && space_ == other.space_;
+}
+
+template<typename ComponentT>
+ComponentT *GameObject::createComponent() {
+	ComponentType t = T::getComponentType();
+	return createComponent(t);
+}
+
+Component *GameObject::createComponent(ComponentType type) {
+	SubSystem* subsys = space_->getSubsystem(type);
+
+	if (subsys)
+		return subsys->getBaseComponent(subsys->addComponent(id_));
+	else
+		nullptr;
 }
 
 void GameObject::setComponentHandle(ComponentType type, ComponentHandle handle) {

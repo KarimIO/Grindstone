@@ -1,6 +1,6 @@
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-set(ENGINE_CORE_HEADERS Core/Camera.hpp Core/Engine.hpp Core/GameBase.hpp Core/GameSystem.hpp Core/GameObject.hpp Core/LoadingScreen.hpp Core/iniHandler.hpp Core/Input.hpp Core/InputInterface.hpp Core/Space.hpp Core/Utilities.hpp Core/Scene.hpp)
+set(ENGINE_CORE_HEADERS Core/Camera.hpp Core/Engine.hpp Core/GameBase.hpp Core/GameSystem.hpp Core/GameObject.hpp Core/LoadingScreen.hpp Core/iniHandler.hpp Core/Input.hpp Core/InputInterface.hpp Core/Space.hpp Core/Utilities.hpp)
 source_group("Core\\Header Files" FILES ${ENGINE_CORE_HEADERS})
 set(ENGINE_RENDERPATHS_HEADERS Renderpaths/RenderPath.hpp  Renderpaths/RenderPathDeferred.hpp Renderpaths/RenderPathForward.hpp)
 source_group("Render Paths\\Header Files" FILES ${ENGINE_RENDERPATHS_HEADERS})
@@ -16,7 +16,7 @@ set(ENGINE_CONVERTER_HEADERS ../Converter/AnimationConverter.hpp ../Converter/Im
 source_group("Converter\\Header Files" FILES ${ENGINE_CONVERTER_HEADERS})
 set(ENGINE_HEADERS ${ENGINE_CONVERTER_HEADERS} ${ENGINE_OTHER_HEADERS} ${ENGINE_CORE_HEADERS} ${ENGINE_ASSET_MANAGERS_HEADERS} ${ENGINE_RENDERPATHS_HEADERS} ${ENGINE_SYSTEMS_HEADERS} ${ENGINE_POST_HEADERS})
 
-set(ENGINE_CORE_SOURCES ../../deps/GL/gl3w.cpp Core/Camera.cpp Core/GameObject.cpp Core/Engine.cpp Core/LoadingScreen.cpp Core/iniHandler.cpp Core/Input.cpp Core/Space.cpp Core/Utilities.cpp Core/Scene.cpp)
+set(ENGINE_CORE_SOURCES ../../deps/GL/gl3w.cpp Core/Camera.cpp Core/GameObject.cpp Core/Engine.cpp Core/LoadingScreen.cpp Core/iniHandler.cpp Core/Input.cpp Core/Space.cpp Core/Utilities.cpp)
 source_group("Core\\Source Files" FILES ${ENGINE_CORE_SOURCES})
 set(ENGINE_RENDERPATHS_SOURCES Renderpaths/RenderPathDeferred.cpp Renderpaths/RenderPathForward.cpp)
 source_group("Render Paths\\Source Files" FILES ${ENGINE_RENDERPATHS_SOURCES})

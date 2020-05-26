@@ -32,7 +32,7 @@ struct LightDirectionalComponent : public Component {
 
 	std::vector<std::array<glm::mat4, 4>> camera_matrices_;
 
-	REFLECT()
+	REFLECT(COMPONENT_LIGHT_DIRECTIONAL)
 };
 
 class LightDirectionalSystem : public System {

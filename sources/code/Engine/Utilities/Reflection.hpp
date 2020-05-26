@@ -141,11 +141,12 @@ public: \
 	virtual reflect::TypeDescriptor_Struct *getReflection() { return &grindstone_reflection_info_; } \
 	const static ComponentType static_system_type_;
 
-#define REFLECT() \
+#define REFLECT(type) \
 public: \
     friend struct reflect::DefaultResolver; \
     static reflect::TypeDescriptor_Struct grindstone_reflection_info_; \
-    static void initReflection(reflect::TypeDescriptor_Struct*);
+    static void initReflection(reflect::TypeDescriptor_Struct*); \
+	static ComponentType getComponentType() { return type;  };
 
 #define REFLECT_STRUCT_BEGIN(type, system, enum_type) \
 const ComponentType system::static_system_type_ = enum_type; \

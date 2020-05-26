@@ -14,7 +14,7 @@ struct TransformComponent : public Component {
 	glm::vec3 scale_;
 	glm::mat4 model_;
 
-	 REFLECT()
+	 REFLECT(COMPONENT_TRANSFORM)
 };
 
 class TransformSystem : public System {

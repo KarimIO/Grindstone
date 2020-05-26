@@ -15,7 +15,7 @@ struct LightPointComponent : public Component {
 		bool shadow;
 	} properties_;
 
-	REFLECT()
+	REFLECT(COMPONENT_LIGHT_POINT)
 };
 
 class LightPointSystem : public System {
