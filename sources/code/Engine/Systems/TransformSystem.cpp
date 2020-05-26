@@ -139,11 +139,11 @@ void TransformSystem::update() {
 
 void TransformSubSystem::recalculateNodes() {
 	for (auto c : root_components_) {
-		recalculateNode(c, glm::mat4(1));
+		recalculateNode(c, glm::mat4(1), glm::quat());
 	}
 }
 
-void TransformSubSystem::recalculateNode(ComponentHandle handle, glm::mat4& parent_matrix) {
+void TransformSubSystem::recalculateNode(ComponentHandle handle, glm::mat4& parent_matrix, glm::quat &parent_rotation) {
 	auto& component = components_[handle];
 
 	// For every component, generate the Model Matrix:
@@ -151,11 +151,7 @@ void TransformSubSystem::recalculateNode(ComponentHandle handle, glm::mat4& pare
 	component.local_model_ = glm::translate(component.local_position_);
 
 	// - Rotate the Model along its axis
-	//glm::vec3 euler = glm::eulerAngles(component.local_rotation_);
 	component.local_model_ = component.local_model_ * glm::toMat4(component.local_rotation_);
-	//component.local_model_ = glm::rotate(component.local_model_, euler.y, glm::vec3(0.0, 1.0, 0.0));
-	//component.local_model_ = glm::rotate(component.local_model_, euler.x, glm::vec3(1.0, 0.0, 0.0));
-	//component.local_model_ = glm::rotate(component.local_model_, euler.z, glm::vec3(0.0, 0.0, 1.0));
 
 	// - Scale the Model
 	component.local_model_ = glm::scale(component.local_model_, component.local_scale_);
@@ -171,7 +167,7 @@ void TransformSubSystem::recalculateNode(ComponentHandle handle, glm::mat4& pare
 		component.model_ = parent_matrix * component.local_model_;
 		glm::vec4 pos = parent_matrix * glm::vec4(component.local_position_, 1.0f);
 		component.position_ = glm::vec3(pos.x, pos.y, pos.z);
-		component.rotation_ = component.local_rotation_;
+		component.rotation_ = parent_rotation * component.local_rotation_;
 		// component->rotation_	= model * component->local_rotation_;
 	}
 
@@ -181,7 +177,7 @@ void TransformSubSystem::recalculateNode(ComponentHandle handle, glm::mat4& pare
 	component.right_ = component.rotation_ * glm::vec3(1.0f, 0.0f, 0.0f);
 
 	for (auto c : component.children_) {
-		recalculateNode(c, component.model_);
+		recalculateNode(c, component.model_, component.rotation_);
 	}
 }
 

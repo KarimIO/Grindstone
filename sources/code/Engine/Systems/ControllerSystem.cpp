@@ -118,7 +118,7 @@ void ControllerComponent::MoveSide(double scale) {
 	ComponentHandle transform_id = engine.getSpace(0)->getObject(game_object_handle_).getComponentHandle(COMPONENT_TRANSFORM);
 	auto &trans = trans_system->getComponent(transform_id);
 
-	glm::vec3 f = 5.0f * float(scale * speed_modifier_) * trans.getRight();
+	glm::vec3 f = 5.0f * float(scale * speed_modifier_) * -trans.getRight();
 
 	/*if (physID) {
 		CPhysics *phys = &engine.physicsSystem.components[physID];

@@ -78,7 +78,7 @@ public:
 	virtual void removeComponent(ComponentHandle handle);
 
 	void recalculateNodes();
-	void recalculateNode(ComponentHandle handle, glm::mat4& model_matrix);
+	void recalculateNode(ComponentHandle handle, glm::mat4& model_matrix, glm::quat & parent_rotation);
 
 	virtual ~TransformSubSystem();
 private:
