@@ -43,15 +43,13 @@ void handleReflParams(reflect::TypeDescriptor_Struct::Category& refl, unsigned c
 	for (auto& mem : refl.members) {
 		std::string n = mem.stored_name;
 
-		GRIND_WARN("\t{0}", n);
-
 		unsigned char* p = componentPtr + mem.offset;
 
 		if (params.HasMember(n.c_str())) {
 			switch (mem.type->type)
 			{
 			default:
-				GRIND_WARN("Unsupported member type");
+				GRIND_WARN("Unsupported member type: {0}", mem.type->type);
 				break;
 			case reflect::TypeDescriptor::ReflString:
 				(*(std::string*)p) = params[n.c_str()].GetString();
@@ -119,11 +117,6 @@ void setComponentParams(Space* space, ComponentHandle handle, ComponentType comp
 	if (refl) {
 		SubSystem* subsys = space->getSubsystem(component_type);
 		Component* component = subsys->getBaseComponent(handle);
-
-		if (component_type == COMPONENT_RENDER_STATIC_MESH) {
-			RenderStaticMeshComponent* rsmc = (RenderStaticMeshComponent *)component;
-			std::cout << rsmc->component_type_ << std::endl;
-		}
 
 		handleReflParams(refl->category, (unsigned char*)component, params);
 	}
@@ -208,7 +201,6 @@ bool Space::loadFromScene(std::string path) {
 		GameObjectHandle parent_handle = -1;
 		
 		GameObject& game_object = createObject(itr->name.GetString());
-		//GRIND_WARN("NAME: {0}", game_object.getName());
 
 		auto& comps = itr->value;
 		for (rapidjson::Value::MemberIterator component_itr = comps.MemberBegin(); component_itr != comps.MemberEnd(); ++component_itr) {
@@ -218,7 +210,6 @@ bool Space::loadFromScene(std::string path) {
 				loadPrefab(params, game_object);
 			}
 			else {
-				GRIND_WARN("COMP: {0}", type_str);
 				auto type = getComponentType(type_str);
 				if (type == COMPONENT_BASE) {
 					GRIND_WARN("Could not get component: {0}", type_str);

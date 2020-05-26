@@ -7,13 +7,15 @@
 #include <vector>
 
 struct TransformComponent : public Component {
-	TransformComponent(GameObjectHandle object_handle, ComponentHandle id);
-
+	TransformComponent(GameObjectHandle object_handle, ComponentHandle id, Space *space_);
 public:
+	void setParent(ComponentHandle handle);
 	void setParent(TransformComponent *tc);
-	void addChild(TransformComponent *tc);
+	void addChild(ComponentHandle handle);
+	void addChild(TransformComponent* tc);
 	void removeChild(uint32_t i);
-	TransformComponent* getChild(uint32_t i);
+	TransformComponent *getChild(uint32_t i);
+	ComponentHandle getChildHandle(uint32_t i);
 	void setLocalPosition(glm::vec3 pos);
 	void setPosition(glm::vec3 pos);
 	void setLocalRotation(glm::quat rot);
@@ -46,8 +48,10 @@ public:
 	glm::mat4 model_;
 
 	// Scene Graph Data:
-	TransformComponent* parent_;
-	std::vector<TransformComponent *> children_;
+	int parent_;
+	std::vector<ComponentHandle> children_;
+
+	Space* space_;
 
 	REFLECT(COMPONENT_TRANSFORM)
 };
@@ -70,12 +74,16 @@ public:
 	TransformComponent &getComponent(ComponentHandle handle);
 	virtual Component *getBaseComponent(ComponentHandle component_handle) override;
 	size_t getNumComponents();
+	virtual void initialize() override;
 	virtual void removeComponent(ComponentHandle handle);
+
+	void recalculateNodes();
+	void recalculateNode(ComponentHandle handle, glm::mat4& model_matrix);
 
 	virtual ~TransformSubSystem();
 private:
 	std::vector<TransformComponent> components_;
-	std::vector<TransformComponent *> root_components_;
+	std::vector<ComponentHandle> root_components_;
 };
 
 #endif
