@@ -449,6 +449,10 @@ namespace Grindstone {
 
 		void GLGraphicsWrapper::enableDepth(bool state) {
 			glDepthMask(state);
+			if (state)
+				glEnable(GL_DEPTH_TEST);
+			else
+				glDisable(GL_DEPTH_TEST);
 		}
 
 		void GLGraphicsWrapper::bindDefaultFramebuffer(bool depth) {

@@ -1,10 +1,11 @@
 #include "VulkanVertexBuffer.hpp"
 #include "VulkanGraphicsWrapper.hpp"
 #include "VulkanUtils.hpp"
+#include <assert.h>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		VulkanVertexBuffer::VulkanVertexBuffer(VertexBufferCreateInfo ci) {
+		VulkanVertexBuffer::VulkanVertexBuffer(VertexBufferCreateInfo ci) : size_(ci.size) {
 			VkDevice device = VulkanGraphicsWrapper::get().getDevice();
 
 			VkDeviceSize bufferSize = ci.size;
@@ -30,6 +31,11 @@ namespace Grindstone {
 			VkDevice device = VulkanGraphicsWrapper::get().getDevice();
 			vkDestroyBuffer(device, buffer_, nullptr);
 			vkFreeMemory(device, memory_, nullptr);
+		}
+
+		void VulkanVertexBuffer::updateBuffer(void* content) {
+			std::cout << "VulkanVertexBuffer::updateBuffer is not used.\n";
+			assert(false);
 		}
 
 		VkBuffer VulkanVertexBuffer::getBuffer() {

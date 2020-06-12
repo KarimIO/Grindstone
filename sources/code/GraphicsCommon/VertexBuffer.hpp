@@ -106,6 +106,7 @@ namespace Grindstone {
 				memcpy(attributes, elements.begin(), sizeof(VertexAttributeDescription) * elements.size());
 
 				for (uint32_t i = 0; i < attribute_count; ++i) {
+					attributes[i].location = i;
 					attributes[i].offset = stride;
 					stride += attributes[i].size;
 				}

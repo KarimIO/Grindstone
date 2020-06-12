@@ -95,7 +95,7 @@ void LightSpotSystem::update() {
 				);
 
 				auto ubo = engine.getUniformBuffer();
-				ubo->Bind();
+				ubo->bind();
 				ubo->updateBuffer(&component.shadow_mat_);
 
 				// Culling

@@ -14,5 +14,10 @@
         }
     },
     "textures": {
+        "inTexture": {
+            "name": "Texture",
+            "type": "texture",
+            "default": "materials/albedo.png"
+        }
     }
 }

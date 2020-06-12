@@ -12,7 +12,7 @@ enum class ConstraintPositioning {
     Max
 };
 
-struct Constraint {
+struct UiConstraint {
     ConstraintValueType value_type;
     union value {
         int pixel;

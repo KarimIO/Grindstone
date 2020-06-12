@@ -103,7 +103,7 @@ void ControllerComponent::MoveForwardBack(double scale) {
 	auto& trans = trans_system->getComponent(transform_id);
 
 	glm::vec3 f = 20.0f * float(scale * speed_modifier_) * trans.getForward();
-
+	
 	/*if (physID) {
 		CPhysics *phys = &engine.physicsSystem.components[physID];
 		phys->ApplyCentralForce(f);

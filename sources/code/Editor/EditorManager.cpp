@@ -81,21 +81,16 @@ namespace Grindstone {
         engine_->initialize(window);
         //BaseWindow *win = engine_->getWindow();
 
-        //UIPanel* root = new UIPanel("../assets/materials/ui.gmat");
-        //Space *space = engine_->addSpace("Editor");
-        //space->createObject("UI");
-
-        // UICanvas* canvas = new UICanvas();
-        //canvas->initialize();
 
         //imgui_manager_.initialize(win);
         //addEditor(new MaterialEditor("Wow3",  2, this));
         //addEditor(new SceneEditor("Wow2", 3, this));
 
-        Space* space = engine_->addSpace("Main Game");
+        Space* space = engine_->addSpace("Editor");
         GameObject &object = space->createObject("UI");
         SubSystem *transf_subsys = space->getSubsystem(COMPONENT_TRANSFORM);
         object.createComponent(COMPONENT_TRANSFORM);
+        //object.createComponent(COMPONENT_CAMERA);
         UiComponent *cUi = object.createComponent<UiComponent>();
 
         window->show();

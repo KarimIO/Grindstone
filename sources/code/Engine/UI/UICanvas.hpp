@@ -4,13 +4,13 @@
 
 class UICanvas {
 public:
-    void initialize();
-    void update();
-    void setRoot(UINode*);
-    UINode* getRoot();
+    virtual void initialize();
+    virtual void update();
+    virtual void setRoot(UINode*);
+    virtual UINode* getRoot();
     ~UICanvas();
 private:
-    UINode *root_node_;
+    UINode *root_node_ = nullptr;
     bool canvas_layout_updated_;
 
     Vector2u position_;

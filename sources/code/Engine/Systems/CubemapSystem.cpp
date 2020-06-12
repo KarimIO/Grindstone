@@ -273,7 +273,7 @@ void CubemapSystem::convoluteIrradiance(CubemapComponent &c) {
 		glm::mat4 view = glm::lookAt(glm::vec3(0), gCubeDirections[i].Target, gCubeDirections[i].Up);
 		ubo_.matrix_ = projection_ * view;
 		ub_->updateBuffer(&ubo_);
-		ub_->Bind();
+		ub_->bind();
 
 		// Allocate data
 		data[i] = new unsigned char *();
@@ -345,7 +345,7 @@ void CubemapSystem::convoluteSpecular(CubemapComponent &c) {
 		for (int m = 0; m < mips; ++m) {
 			ubo_.roughness_ = (float)m / (float)(mips - 1);
 			ub_->updateBuffer(&ubo_);
-			ub_->Bind();
+			ub_->bind();
 
 			// Allocate data array
 			data[i][m] = new unsigned char[mipres * mipres * 4];

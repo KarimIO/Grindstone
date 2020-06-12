@@ -1058,7 +1058,7 @@ void GraphicsPipelineManager::drawDeferredImmediate() {
 							engine.getGraphicsWrapper()->bindTextureBinding(material.m_textureBinding);
 
 						if (material.param_buffer_handler_ != nullptr)
-							material.param_buffer_handler_->Bind();
+							material.param_buffer_handler_->bind();
 
 						for (auto &mesh : material.m_meshes) {
 							mesh->draw();
@@ -1081,7 +1081,7 @@ void GraphicsPipelineManager::drawForwardImmediate() {
 							engine.getGraphicsWrapper()->bindTextureBinding(material.m_textureBinding);
 
 						if (material.param_buffer_handler_ != nullptr)
-							material.param_buffer_handler_->Bind();
+							material.param_buffer_handler_->bind();
 
 						for (auto &mesh : material.m_meshes) {
 							mesh->draw();

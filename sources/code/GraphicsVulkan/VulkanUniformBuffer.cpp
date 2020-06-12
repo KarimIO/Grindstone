@@ -74,16 +74,12 @@ namespace Grindstone {
 			return descriptor_set_;
 		}
 		
-		void VulkanUniformBuffer::UpdateUniformBuffer(void * content) {
+		void VulkanUniformBuffer::updateBuffer(void * content) {
 			VkDevice device = VulkanGraphicsWrapper::get().getDevice();
 			void* data;
 			vkMapMemory(device, memory_, 0, size_, 0, &data);
 			memcpy(data, content, size_);
 			vkUnmapMemory(device, memory_);
-		};
-		
-		void VulkanUniformBuffer::Bind() {
-		};
-		
+		};		
 	};
 };

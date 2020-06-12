@@ -26,6 +26,7 @@
 #include "../Systems/RenderTerrainSystem.hpp"
 #include "../Systems/RenderSpriteSystem.hpp"
 #include "../Systems/ScriptSystem.hpp"
+#include "../Systems/UISystem.hpp"
 // - AssetManagers
 #include "../AssetManagers/AudioManager.hpp"
 #include "../AssetManagers/MaterialManager.hpp"
@@ -40,8 +41,6 @@
 
 // Util Classes
 #include "../Rendering/Renderer2D.hpp"
-
-Renderer2D r2d;
 
 void Engine::initialize(BaseWindow *window) {
 	Logger::init("../log/output.log");
@@ -114,11 +113,9 @@ void Engine::initialize(BaseWindow *window) {
 		addSystem(new TransformSystem());
 		addSystem(new CameraSystem());
 		addSystem(new ScriptSystem());
+		addSystem(new UiSystem());
 	}
 
-	//r2d.initialize();
-	//r2d.resize(400);
-	
 	start_time_ = std::chrono::high_resolution_clock::now();
 	prev_time_ = prev_time_;
 
@@ -298,11 +295,13 @@ void Engine::run() {
 	window_->handleEvents();
 	input_manager_->LoopControls(dt);
 
+	for (auto& system : systems_) {
+		if (system)
+			system->update();
+	}
+
 	for (auto space : spaces_) {
-		for (auto &system : systems_) {
-			if (system)
-				system->update();
-		}
+		space->getGizmoRenderer().render();
 	}
 
 	//r2d.draw();

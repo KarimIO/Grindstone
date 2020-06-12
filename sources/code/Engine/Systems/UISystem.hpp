@@ -3,9 +3,12 @@
 
 #include <vector>
 #include "BaseSystem.hpp"
+#include <UI/UICanvas.hpp>
 
 struct UiComponent : public Component {
 	UiComponent(GameObjectHandle object_handle, ComponentHandle handle);
+
+	UICanvas canvas_;
 
 	REFLECT(COMPONENT_UI)
 };

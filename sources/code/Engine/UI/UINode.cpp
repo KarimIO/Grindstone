@@ -1,5 +1,17 @@
 #include <Engine/UI/UICanvas.hpp>
 
+Vector2i::Vector2i() : x(0), y(0) {}
+Vector2i::Vector2i(int _x, int _y) : x(_x), y(_y) {}
+
+Vector2u::Vector2u() : x(0u), y(0u) {}
+Vector2u::Vector2u(unsigned int _x, unsigned int _y) : x(_x), y(_y) {}
+
+Vector2f::Vector2f() : x(0.f), y(0.f) {}
+Vector2f::Vector2f(float _x, float _y) : x(_x), y(_y) {}
+
+UINode::UINode() : parent_(nullptr), layout_updated_(LayoutUpdateStatus::NeedsUpdate) {
+}
+
 void UINode::initialize() {
 }
 
@@ -16,7 +28,7 @@ void UINode::traverseLayout() {
     
     for (auto &n : children_) {
         if (n->layout_updated_ == LayoutUpdateStatus::NeedsUpdate) {
-            n->updateLayout(top_left_actual_, bottom_right_actual_);
+            //n->updateLayout(top_left_actual_, bottom_right_actual_);
         }
         else if (n->layout_updated_ == LayoutUpdateStatus::ChildNeedsUpdate) {
             n->traverseLayout();

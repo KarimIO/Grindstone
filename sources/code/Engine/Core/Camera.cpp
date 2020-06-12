@@ -254,7 +254,7 @@ void Camera::render() {
 	//TransformSubSystem *transform = (TransformSubSystem *)(space->getSubsystem(COMPONENT_TRANSFORM));
 
 	auto ubo = engine.getUniformBuffer();
-	ubo->Bind();
+	ubo->bind();
 	UBOProjView ubodata;
 	ubodata.proj_view = pv_;
 	ubodata.time = (float)engine.getTimeCurrent();

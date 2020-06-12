@@ -28,7 +28,7 @@ public:
 	template<typename ComponentT>
 	ComponentT* createComponent() {
 		ComponentType t = ComponentT::getComponentType();
-		return createComponent(t);
+		return (ComponentT *)createComponent(t);
 	}
 	template<typename ComponentT>
 	ComponentT* getComponent() {

@@ -42,8 +42,8 @@ void RenderSpriteSubSystem::renderSprite(bool render_ortho, float aspect, glm::v
 
 	system->pipeline_->Bind();
 	system->ubo_->updateBuffer(&ubo);
-	system->ubo_->Bind();
-	engine.getUniformBuffer()->Bind();
+	system->ubo_->bind();
+	engine.getUniformBuffer()->bind();
 
 	// Bind Texture	
 	graphics_wrapper->bindTextureBinding(binding);

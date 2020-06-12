@@ -1,0 +1,19 @@
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+set(MATERIAL_EDITOR_HEADERS MaterialEditor.hpp) 
+set(MATERIAL_EDITOR_SOURCES MaterialEditor.cpp)
+
+set(INCLUDE_DIRECTORIES ../)
+
+add_library(EditorPluginMaterial MODULE ${MATERIAL_EDITOR_HEADERS} ${MATERIAL_EDITOR_SOURCES})
+
+if (MSVC)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+endif()
+
+set_target_properties(EditorPluginMaterial PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+target_include_directories(EditorPluginMaterial PUBLIC ${MONO_PATH}/include/mono-2.0 /usr/include/mono-2.0 ${ASSIMP_INCLUDE_DIR} ${RAPIDJSON_PATH} ${DEPS_DIR} ${RAPIDJSON_INCLUDE_DIRS} ${BULLET_INCLUDE_DIR} ${INCLUDE_DIRECTORIES})

@@ -18,9 +18,9 @@ struct Quad2D {
 
 class Renderer2D : public Renderable {
 public:
+    void setMaterial(std::string path);
     virtual void shadowDraw() override;
     virtual void draw() override;
-    MaterialReference material_reference_;
 public:
     void resize(unsigned int size);
     void updateBuffers();
@@ -35,9 +35,10 @@ private:
     Quad2D* vertex_buffer_;
     unsigned int* indices_buffer_;
     bool* free_quad_list_;
-    Grindstone::GraphicsAPI::VertexArrayObject *vao_;
-    Grindstone::GraphicsAPI::VertexBuffer *vbo_;
-    Grindstone::GraphicsAPI::IndexBuffer *ibo_;
+    MaterialReference material_reference_;
+    Grindstone::GraphicsAPI::VertexArrayObject *vao_ = nullptr;
+    Grindstone::GraphicsAPI::VertexBuffer *vbo_ = nullptr;
+    Grindstone::GraphicsAPI::IndexBuffer *ibo_ = nullptr;
     GeometryInfo geometry_info_;
     Grindstone::GraphicsAPI::VertexBufferLayout vertex_layout_;
 };

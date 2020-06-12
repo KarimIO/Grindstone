@@ -1,12 +1,12 @@
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-set(EDITOR_CORE_HEADERS CoreEditor/EditorManager.hpp CoreEditor/EditorInstance.hpp SceneEditor/SceneEditor.hpp MaterialEditor/MaterialEditor.hpp)
+set(EDITOR_CORE_HEADERS EditorManager.hpp EditorInstance.hpp)
 source_group("Core\\Header Files" FILES ${EDITOR_CORE_HEADERS})
 set(EDITOR_OTHER_HEADERS ../Engine/Utilities/Profiling.hpp ../Engine/Utilities/SettingsFile.hpp ../Engine/Utilities/Reflection.hpp ../Engine/Utilities/DLLHandler.hpp ../Engine/Utilities/DLLGraphics.hpp ../Engine/Utilities/DLLAudio.hpp)
 source_group("Other\\Header Files" FILES ${EDITOR_OTHER_HEADERS})
 set(EDITOR_HEADERS ${EDITOR_OTHER_HEADERS} ${EDITOR_CORE_HEADERS}) 
 
-set(EDITOR_CORE_SOURCES CoreEditor/EditorManager.cpp CoreEditor/Main.cpp SceneEditor/SceneEditor.cpp MaterialEditor/MaterialEditor.cpp)
+set(EDITOR_CORE_SOURCES EditorManager.cpp Main.cpp)
 source_group("Core\\Source Files" FILES ${EDITOR_CORE_SOURCES})
 set(EDITOR_OTHER_SOURCES ../Engine/Utilities/Logger.cpp ../Engine/Utilities/DLLHandler.cpp ../Engine/Utilities/Reflection.cpp ../Engine/Utilities/DLLGraphics.cpp ../Engine/Utilities/DLLAudio.cpp)
 source_group("Other\\Source Files" FILES ${EDITOR_OTHER_SOURCES})
@@ -18,7 +18,7 @@ set(GAME_EXEC_HEADERS ../ExecutableCommon/DLLEngine.hpp ../ExecutableCommon/DLLG
 set(GAME_EXEC_SOURCES ../ExecutableCommon/DLLEngine.cpp ../ExecutableCommon/DLLGame.cpp)
 source_group("DLL Interface" FILES ${GAME_EXEC_SOURCES} ${GAME_EXEC_HEADERS})
 
-set(INCLUDE_DIRECTORIES ../ ${DEPS_DIR}/spdlog/include/)
+set(INCLUDE_DIRECTORIES ../ ${DEPS_DIR}/spdlog/include/ ../Engine)
 
 set(MONO_PATH CACHE PATH "Mono Path")
 set(RAPIDJSON_PATH CACHE PATH "RAPIDJSON Path")

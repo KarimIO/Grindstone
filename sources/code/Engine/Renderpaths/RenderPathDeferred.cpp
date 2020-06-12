@@ -637,7 +637,7 @@ void RenderPathDeferred::render(Grindstone::GraphicsAPI::Framebuffer *fbo, Grind
 	}*/
 
 	// Prepare deffered stage information
-	engine.deff_ubo_handler_->Bind();
+	engine.deff_ubo_handler_->bind();
 	if (debug_mode_ != 0) {
 		renderDebug(fbo);
 	}
@@ -712,7 +712,7 @@ void RenderPathDeferred::render(Grindstone::GraphicsAPI::Framebuffer *fbo, Grind
 		engine.getGraphicsWrapper()->copyToDepthBuffer(depthTarget);
 		graphics_wrapper->enableDepth(true);
 
-		engine.getUniformBuffer()->Bind();
+		engine.getUniformBuffer()->bind();
 
 		pipeline->drawUnlitImmediate();
 		graphics_wrapper->setImmediateBlending(Grindstone::GraphicsAPI::BlendMode::AdditiveAlpha);
@@ -728,7 +728,7 @@ void RenderPathDeferred::render(Grindstone::GraphicsAPI::Framebuffer *fbo, Grind
 		gbuffer_->BindRead();
 		gbuffer_->BindTextures(0);
 
-		engine.deff_ubo_handler_->Bind();
+		engine.deff_ubo_handler_->bind();
 #endif
 	}
 }
@@ -751,7 +751,7 @@ void RenderPathDeferred::renderDebug(Grindstone::GraphicsAPI::Framebuffer* fbo) 
 	gbuffer_->BindTextures(0);
 
 	debug_ubo_handler_->updateBuffer(&debug_mode_);
-	debug_ubo_handler_->Bind();
+	debug_ubo_handler_->bind();
 
 	debug_pipeline_->Bind();
 	graphics_wrapper->bindVertexArrayObject(engine.getPlaneVAO());
@@ -801,7 +801,7 @@ void RenderPathDeferred::renderLights(Grindstone::GraphicsAPI::Framebuffer *fbo,
 			light_point_ubo_.shadow = light.properties_.shadow;
 			point_light_ubo_handler_->updateBuffer(&light_point_ubo_);
 
-			point_light_ubo_handler_->Bind();
+			point_light_ubo_handler_->bind();
 
 			graphics_wrapper->bindVertexArrayObject(engine.getPlaneVAO());
 			graphics_wrapper->drawImmediateVertices(Grindstone::GraphicsAPI::GeometryType::Triangles, 0, 6);
@@ -833,7 +833,7 @@ void RenderPathDeferred::renderLights(Grindstone::GraphicsAPI::Framebuffer *fbo,
 				light.shadow_fbo_->BindTextures(4);
 			}
 
-			spot_light_ubo_handler_->Bind();
+			spot_light_ubo_handler_->bind();
 
 			graphics_wrapper->bindVertexArrayObject(engine.getPlaneVAO());
 			graphics_wrapper->drawImmediateVertices(Grindstone::GraphicsAPI::GeometryType::Triangles, 0, 6);
@@ -862,7 +862,7 @@ void RenderPathDeferred::renderLights(Grindstone::GraphicsAPI::Framebuffer *fbo,
 				light.shadow_fbo_->BindTextures(4);
 			}
 
-			directional_light_ubo_handler_->Bind();
+			directional_light_ubo_handler_->bind();
 
 			graphics_wrapper->bindVertexArrayObject(engine.getPlaneVAO());
 			graphics_wrapper->drawImmediateVertices(Grindstone::GraphicsAPI::GeometryType::Triangles, 0, 6);

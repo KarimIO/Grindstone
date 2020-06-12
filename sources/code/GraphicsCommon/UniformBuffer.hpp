@@ -25,7 +25,7 @@ namespace Grindstone {
 		class UniformBuffer {
 		public:
 			virtual void updateBuffer(void * content) {};
-			virtual void Bind() {};
+			virtual void bind() {};
 		};
 	};
 };

@@ -23,12 +23,15 @@ foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
     set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${CMAKE_CURRENT_SOURCE_DIR}/bin ) 
 endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES ) 
 
-add_subdirectory(sources/code/Game)
+add_subdirectory(sources/code/GameDLL)
 add_subdirectory(sources/code/Editor)
+add_subdirectory(sources/code/EditorPluginMaterial)
+add_subdirectory(sources/code/EditorPluginScene)
 add_subdirectory(sources/code/Engine)
 add_subdirectory(sources/code/Procedural)
 add_subdirectory(sources/code/GameExecutable)
 add_subdirectory(sources/code/AudioOpenAL)
+add_subdirectory(sources/code/PluginXmlUi)
 
 option(USE_OPENGL "Should OpenGL be compiled?" ON)
 

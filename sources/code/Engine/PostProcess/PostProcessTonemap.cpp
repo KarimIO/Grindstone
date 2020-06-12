@@ -43,7 +43,7 @@ void PostProcessTonemap::Process() {
 	effect_ub_->updateBuffer(&effect_buffer_);
 
     gpipeline_->Bind();
-    effect_ub_->Bind();
+    effect_ub_->bind();
 	if (target_ == nullptr) {
 		engine.getGraphicsWrapper()->bindDefaultFramebuffer(true);
 		float col[4] = { 0.0f, 0.0f, 0.0f, 1.0f };

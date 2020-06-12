@@ -10,22 +10,29 @@ enum class LayoutUpdateStatus {
 };
 
 struct Vector2i {
+    Vector2i();
+    Vector2i(int _x, int _y);
     int x;
     int y;
 };
 
 struct Vector2u {
+    Vector2u();
+    Vector2u(unsigned int _x, unsigned int _y);
     unsigned int x;
     unsigned int y;
 };
 
 struct Vector2f {
+    Vector2f();
+    Vector2f(float _x, float _y);
     float x;
     float y;
 };
 
 class UINode {
 public:
+    UINode();
     void initialize();
     
     void setLayout(unsigned int x, unsigned int y, unsigned int width, unsigned int height);
@@ -35,19 +42,18 @@ public:
 
     void draw();
     ~UINode();
-private:
+protected:
     std::vector<UINode *> children_;
     UINode *parent_;
     LayoutUpdateStatus layout_updated_;
 
-    Vector2i top_left_offset_;
-    Vector2i bottom_right_offset_;
-    
-    Vector2f top_left_normalized_;
-    Vector2f bottom_right_normalized_;
-    
-    Vector2f pivot_;
+    float top_;
+    float left_;
+    float bottom_;
+    float right_;
 
-    Vector2u top_left_actual_;
-    Vector2u bottom_right_actual_;
+    UiConstraint constraint_top_;
+    UiConstraint constraint_left_;
+    UiConstraint constraint_bottom_;
+    UiConstraint constraint_right_;
 };

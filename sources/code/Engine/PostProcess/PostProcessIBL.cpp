@@ -262,7 +262,7 @@ void PostProcessIBL::ssao() {
 	
 	graphics_wrapper->enableDepth(false);
 	//graphics_wrapper->SetColorMask(COLOR_MASK_ALPHA);
-	ssao_ub->Bind();
+	ssao_ub->bind();
 	pipeline_->Bind();
 	graphics_wrapper->bindTextureBinding(ssao_noise_binding_);
 	graphics_wrapper->drawImmediateVertices(Grindstone::GraphicsAPI::GeometryType::Triangles, 0, 6);
@@ -285,7 +285,7 @@ void PostProcessIBL::ibl() {
 	target_->framebuffer->BindWrite(false);
 	//source_->framebuffer->BindRead();
 	//target_->framebuffer->BindTextures(0);
-	engine.deff_ubo_handler_->Bind();
+	engine.deff_ubo_handler_->bind();
 
 	glm::vec3 pos = glm::vec3(0, 0, 0); // engine.deffUBOBuffer.eyePos;
 	Space *s = getPipeline()->getSpace();

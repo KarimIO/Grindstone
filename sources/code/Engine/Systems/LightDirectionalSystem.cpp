@@ -154,7 +154,7 @@ void LightDirectionalSystem::update() {
 				);*/
 
 				auto ubo = engine.getUniformBuffer();
-				ubo->Bind();
+				ubo->bind();
 				ubo->updateBuffer(&component.camera_matrices_[0][0]);
 
 				// Culling

@@ -22,8 +22,7 @@ namespace Grindstone {
 		public:
 			VkDescriptorSet getDescriptorSet();
 		public:
-			virtual void UpdateUniformBuffer(void * content) override;
-			virtual void Bind() override;
+			virtual void updateBuffer(void * content) override;
 		private:
 			VkDescriptorSet descriptor_set_;
 			VkBuffer buffer_;

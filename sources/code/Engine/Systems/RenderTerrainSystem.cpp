@@ -267,7 +267,7 @@ void TerrainDrawable::draw() {
 	auto transform_component_id = sp->getObject(game_object_id);
 	auto transform = transform_system->getComponent(game_object_id);
 
-	render_system->getModelUbo()->Bind();
+	render_system->getModelUbo()->bind();
 	render_system->getModelUbo()->updateBuffer(&transform.model_);
 	
 	graphics->bindVertexArrayObject(vertex_array_object);

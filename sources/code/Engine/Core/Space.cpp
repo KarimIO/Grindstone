@@ -138,6 +138,8 @@ Space::Space(const char *name) : name_(name) {
 	addSubsystem(new ScriptSubSystem(this));
 	addSubsystem(new UiSubSystem(this));
 	addSubsystem(new RenderTerrainSubSystem(this));
+
+	getGizmoRenderer().initialize();
 }
 
 Space::Space(const Space &s) {
@@ -151,6 +153,8 @@ Space::Space(const Space &s) {
 		else*/
 		subsystems_[i] = nullptr;
 	}
+
+	getGizmoRenderer().initialize();
 }
 
 Space::~Space() {
@@ -261,8 +265,6 @@ bool Space::loadFromScene(std::string path) {
 bool Space::loadPrefab(std::string name, GameObject& game_object) {
 	name = "../assets/" + name;
 
-	GRIND_WARN("Loading Prefab: {0}", name);
-
 	std::string buffer;
 	if (!ReadFile(name, buffer)) {
 		GRIND_WARN("Failed to load prefab {0}", name);
@@ -325,6 +327,10 @@ SubSystem *Space::addSubsystem(SubSystem * system) {
 
 size_t Space::getNumObjects() {
 	return objects_.size();
+}
+
+Grindstone::GizmoRenderer& Space::getGizmoRenderer() {
+	return gizmo_renderer_;
 }
 
 GameObject &Space::createObject(const char *name) {
