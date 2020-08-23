@@ -7,7 +7,7 @@
 using namespace Grindstone;
 
 extern "C" {
-    APP_EXPORT void initializeModule(Plugins::Interface* plugin_interface) {
+    APP_API void initializeModule(Plugins::Interface* plugin_interface) {
         // Load engine plugins
         // plugin_interface->loadPluginCritical("ScriptCSharp");
         plugin_interface->loadPluginCritical("PluginGraphicsOpenGL");
@@ -40,7 +40,7 @@ extern "C" {
         // Load custom game plugins
     }
 
-    APP_EXPORT void releaseModule(Plugins::Interface* plugin_interface) {
+    APP_API void releaseModule(Plugins::Interface* plugin_interface) {
     }
     
 }

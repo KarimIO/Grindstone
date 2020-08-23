@@ -29,51 +29,6 @@ namespace Grindstone {
 				return nullptr;
 			}
 
-			template<typename Type>
-			ComponentArray<Type>& registerComponentType() {
-				using TypeArray = ComponentArray<Type>;
-				TypeArray* tarr = new TypeArray();
-				component_map_.emplace(TypeArray::component_name_, tarr);
-
-				return *(tarr);
-			}
-
-			template<typename SystemClass>
-			SystemClass& registerSystem() {
-				SystemClass* sys = new SystemClass();
-				system_map_.emplace(typeid(SystemClass).name(), sys);
-
-				return *(sys);
-			}
-
-			template<typename ComponentStruct>
-			ComponentStruct& createComponent(Entity entity) {
-				ComponentType type = ComponentArray<ComponentStruct>::static_component_type_;
-				IComponentArray* arr = nullptr; //component_map_.at(type);
-				return ((ComponentArray<ComponentStruct>*)arr)->create(entity);
-			}
-
-			template<typename ComponentStruct>
-			ComponentStruct &createComponent(Entity entity, ComponentStruct&&component) {
-				ComponentType type = ComponentArray<ComponentStruct>::static_component_type_;
-				IComponentArray *arr = component_map_[typeid(ComponentStruct).name()];
-				return ((ComponentArray<ComponentStruct> *)arr)->create(entity, std::forward<ComponentStruct>(component));
-			}
-
-			template<typename ComponentStruct>
-			ComponentArray<ComponentStruct>& getComponentArray() {
-				const char * name = ComponentArray<ComponentStruct>::getComponentName();
-				
-				auto it = component_map_.find(name);
-				if (it != component_map_.end()) {
-					IComponentArray* arr = it->second;
-					return *((ComponentArray<ComponentStruct>*)arr);
-				}
-				else {
-					std::cout << "No such component\r\n";
-				}
-			}
-
 			void update();
 		private:
 			std::unordered_map<std::string , IComponentArray* > component_map_;
