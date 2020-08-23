@@ -8,19 +8,19 @@
 
 namespace Grindstone {
 	namespace ECS {
+		using SystemFactory = ISystem*(*)(Scene*s);
+		using ComponentFactory = IComponentArray*(*)();
 		class Core {
 		public:
-			template<typename T>
-			void registerSystem(const char* name) {
+			void registerSystem(const char* name, SystemFactory factory) {
 				// T::static_system_type_ = 0;
-				system_factories_[name] = T::createSystem;
+				system_factories_[name] = factory;
 			}
-			template<typename T>
-			void registerComponentType(const char *name) {
+			
+			void registerComponentType(const char *name, ComponentFactory factory) {
 				// T::component_type_ = 0;
 				// ComponentArray<T>::static_component_type_ = 0;
-				auto f = ComponentArray<T>::createComponentArray;
-				component_array_factories_[name] = f;
+				component_array_factories_[name] = factory;
 			}
 
 			size_t getComponentTypeCount();
@@ -31,8 +31,8 @@ namespace Grindstone {
 			IComponentArray* createComponentArray(size_t i);
 			ISystem* createSystem(size_t i, Scene* scene);
 		private:
-			std::unordered_map<std::string, ISystem*(*)(Scene*s)> system_factories_;
-			std::unordered_map<std::string, IComponentArray*(*)()> component_array_factories_;
+			std::unordered_map<std::string, SystemFactory> system_factories_;
+			std::unordered_map<std::string, ComponentFactory> component_array_factories_;
 		};
 	}
 }

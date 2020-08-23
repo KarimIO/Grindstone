@@ -17,10 +17,6 @@
 	#include <Common/Window/Win32Window.hpp>
 #endif
 
-#ifdef __linux__
-	#include <GL/glx.h>
-#endif
-
 void APIENTRY glDebugOutput(GLenum source,
 	GLenum type,
 	GLuint id,

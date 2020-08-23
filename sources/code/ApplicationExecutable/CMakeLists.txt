@@ -15,3 +15,5 @@ set_property(TARGET ApplicationExecutable PROPERTY VS_DEBUGGER_WORKING_DIRECTORY
 target_include_directories(ApplicationExecutable
     PUBLIC ../
 )
+
+target_link_libraries(ApplicationExecutable ${CMAKE_DL_LIBS})

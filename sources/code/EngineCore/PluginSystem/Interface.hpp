@@ -2,13 +2,10 @@
 
 #include "../pch.hpp"
 #include <Common/Window/Window.hpp>
+#include "../ECS/Core.hpp"
 
 namespace Grindstone {
     class EngineCore;
-
-    namespace ECS {
-        class Core;
-    }
 
     namespace GraphicsAPI {
         class Core;
@@ -28,8 +25,8 @@ namespace Grindstone {
             virtual void log(const char* msg);
             virtual bool loadPlugin(const char* name);
             virtual void loadPluginCritical(const char* name);
-            virtual void registerGraphicsCore(GraphicsAPI::Core* core);
-            virtual void registerWindowFactory(Grindstone::Window* (*gw)(Window::CreateInfo&));
+            virtual void registerGraphicsCore(Grindstone::GraphicsAPI::Core* core);
+            virtual void registerWindowFactory(Grindstone::Window* (*gw)(Grindstone::Window::CreateInfo&));
             virtual void registerDisplayFunctions(Grindstone::Display(*fn_get_main_display)(),
             uint8_t(*fn_count_displays)(),
             void    (*fn_enumerate_displays)(Grindstone::Display*));
@@ -38,14 +35,12 @@ namespace Grindstone {
             virtual uint8_t countDisplays();
             virtual void enumerateDisplays(Display*displays);
            
-            template<typename T>
-            void registerSystem() {
-                core_->registerSystem<T>();
+            void registerSystem(const char *name, ECS::SystemFactory factory) {
+                ecs_core_->registerSystem(name, factory);
             }
 
-            template<typename T>
-            void registerComponentType() {
-                core_->registerComponentType<T>();
+            void registerComponentType(const char *name, ECS::ComponentFactory factory) {
+                ecs_core_->registerComponentType(name, factory);
             }
         private:
             Manager*    manager_ = nullptr;

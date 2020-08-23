@@ -1,13 +1,15 @@
-#pragma once
-
 #include <GL/gl3w.h>
-#include "wglext.hpp"
-#include <Common/Window/Win32Window.hpp>
 #include "GLWindowGraphicsBinding.hpp"
+
+#ifdef _WIN32
+#include <Common/Window/Win32Window.hpp>
+#include "wglext.hpp"
+#endif
 
 namespace Grindstone {
 	namespace GraphicsAPI {
 		bool GLWindowGraphicsBinding::initialize(Window *window) {
+#ifdef _WIN32
 			window_ = window;
 			window_handle_ = ((Win32Window*)window)->getHandle();
 			static	PIXELFORMATDESCRIPTOR pfd =
@@ -85,16 +87,20 @@ namespace Grindstone {
 				wglMakeCurrent(window_device_context_, window_render_context_);
 				wglDeleteContext(temp);
 			}
-
+#endif
 			return true;
 		}
 
 		void GLWindowGraphicsBinding::shareLists(GLWindowGraphicsBinding *binding_to_copy_from) {
+#ifdef _WIN32
 			wglShareLists(binding_to_copy_from->window_render_context_, window_render_context_);
+#endif
 		}
 
 		void GLWindowGraphicsBinding::immediateSetContext() {
+#ifdef _WIN32
 			wglMakeCurrent(window_device_context_, window_render_context_);
+#endif
 		}
 
 		void GLWindowGraphicsBinding::immediateSwapBuffers() {

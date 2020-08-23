@@ -1,6 +1,9 @@
 #pragma once
 
-#include <Windows.h>
+#ifdef _WIN32
+	#include <Windows.h>
+#endif
+
 #include <Common/Window/Window.hpp>
 #include <Common/Graphics/WindowGraphicsBinding.hpp>
 

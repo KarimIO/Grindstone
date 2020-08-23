@@ -3,8 +3,13 @@
 #include "Logger.hpp"
 #include "Profiling.hpp"
 #include "BasicComponents.hpp"
+#include "ECS/ComponentArray.hpp"
 
 using namespace Grindstone;
+
+ECS::IComponentArray* createTransformComponentArray() {
+    return new ECS::ComponentArray<TransformComponent>;
+}
 
 bool EngineCore::initialize(CreateInfo& create_info) {
 	Logger::init("../log/output.log");
@@ -15,7 +20,7 @@ bool EngineCore::initialize(CreateInfo& create_info) {
     ecs_core_ = new ECS::Core();
     plugin_manager_ = new Plugins::Manager(this, ecs_core_);
 
-    ecs_core_->registerComponentType<TransformComponent>("Transform");
+    ecs_core_->registerComponentType("Transform", &createTransformComponentArray);
 
     // Load Game
     if (create_info.application_module_name_) {

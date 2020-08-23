@@ -49,7 +49,7 @@ namespace Grindstone {
 			template<typename ComponentStruct>
 			ComponentStruct& createComponent(Entity entity) {
 				ComponentType type = ComponentArray<ComponentStruct>::static_component_type_;
-				IComponentArray* arr = component_map_.at(type);
+				IComponentArray* arr = nullptr; //component_map_.at(type);
 				return ((ComponentArray<ComponentStruct>*)arr)->create(entity);
 			}
 

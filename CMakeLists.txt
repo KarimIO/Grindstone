@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(Grindstone VERSION 1.0.0 LANGUAGES CXX)
 
+set(CMAKE_CXX_STANDARD 17)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/sources/cmake)
 # find_package(assimp REQUIRED)
 # find_package(Bullet REQUIRED)

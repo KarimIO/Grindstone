@@ -30,7 +30,7 @@
 *.exp
 *.pdb
 *.ilk
-bin/*
+build/*
 
 # Executables
 *.exe
@@ -43,8 +43,8 @@ Sources/include/
 Sources/lib/
 Sources/Obj/
 
-bin/*
-!bin/readme.md
+build/*
+!build/readme.md
 .vs/*
 .vscode/*
 assets/cubemaps/*

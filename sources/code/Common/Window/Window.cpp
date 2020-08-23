@@ -1,11 +1,16 @@
 #include "Window.hpp"
-#include "Win32Window.hpp"
 
-using namespace Grindstone;
+#if defined(_WIN32)
+	#include "Win32Window.hpp"
+#elif defined(__linux__)
+	#include "X11Window.hpp"
+#endif
 
-Window* Window::create(CreateInfo& create_info) {
-#ifdef _WIN32
-	Win32Window *win = new Win32Window();
+Grindstone::Window* Grindstone::Window::create(CreateInfo& create_info) {
+#if defined(_WIN32)
+	Grindstone::Win32Window *win = new Grindstone::Win32Window();
+#elif defined(__linux__)
+	Grindstone::X11Window *win = nullptr; //new Grindstone::X11Window();
 #else
 	return nullptr;
 #endif

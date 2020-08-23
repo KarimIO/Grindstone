@@ -1,7 +1,8 @@
 #include "Display.hpp"
-#include <Windows.h>
-
 using namespace Grindstone;
+
+#ifdef _WIN32
+#include <Windows.h>
 
 BOOL CALLBACK EnumDispProc(HMONITOR hMon, HDC dcMon, RECT* pRcMon, LPARAM lParam) {
 	Display* pArg = reinterpret_cast<Display*>(lParam);
@@ -36,3 +37,16 @@ uint8_t Displays::getDisplayCount() {
 void Displays::enumerateDisplays(Display *displays) {
 	EnumDisplayMonitors(0, 0, EnumDispProc, reinterpret_cast<LPARAM>(displays));
 }
+#elif defined(__linux__)
+Display Displays::getMainDisplay() {
+	return Display();
+}
+
+uint8_t Displays::getDisplayCount() {
+	return 0;
+}
+
+void Displays::enumerateDisplays(Display *displays) {
+}
+
+#endif

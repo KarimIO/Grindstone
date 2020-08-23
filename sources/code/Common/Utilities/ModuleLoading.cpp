@@ -9,7 +9,15 @@ namespace Grindstone {
                 return LoadLibrary(name.c_str());
 #elif defined(__linux__)
                 name = "./lib" + name + ".so";
-                return dlopen(path.c_str(), RTLD_LAZY);
+
+                void* dlh = dlopen(name.c_str(), RTLD_NOW);
+                if (!dlh) 
+                {
+                    fprintf(stderr, "dlopen failed: %s\n", dlerror());
+                    return nullptr;
+                };
+
+                return dlh;
 #endif
             }
 

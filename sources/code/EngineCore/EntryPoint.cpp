@@ -3,7 +3,7 @@
 using namespace Grindstone;
 
 extern "C" {
-    __declspec(dllexport) void runEngine(EngineCore::CreateInfo& ci) {
+    ENGINE_CORE_API void runEngine(EngineCore::CreateInfo& ci) {
         try {
             EngineCore core;
             core.initialize(ci);

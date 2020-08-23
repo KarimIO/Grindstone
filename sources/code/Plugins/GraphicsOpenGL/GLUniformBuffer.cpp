@@ -1,5 +1,6 @@
 #include <GL/gl3w.h>
 #include "GLUniformBuffer.hpp"
+#include <cstring>
 
 namespace Grindstone {
 	namespace GraphicsAPI {

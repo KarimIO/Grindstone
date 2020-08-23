@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
-cd bin
-./Grindstone
+cd build
+./Application
