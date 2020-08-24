@@ -17,6 +17,7 @@ bool EngineCore::initialize(CreateInfo& create_info) {
 	GRIND_LOG("Initializing {0}...", create_info.application_title_);
 
     // Load core (Logging, ECS and Plugin Manager)
+    scene_manager_ = new SceneManager(this);
     ecs_core_ = new ECS::Core();
     plugin_manager_ = new Plugins::Manager(this, ecs_core_);
 
@@ -37,6 +38,9 @@ void EngineCore::run() {
     while (!should_close_) {
         for (auto w : windows_) {
             w->handleEvents();
+
+            
+
             w->immediateSwapBuffers();
         }
     }
@@ -51,6 +55,14 @@ EngineCore::~EngineCore() {
 
 void EngineCore::registerGraphicsCore(GraphicsAPI::Core*gw) {
     graphics_core_ = gw;
+}
+
+SceneManager* EngineCore::getSceneManager() {
+    return scene_manager_;
+}
+
+ECS::Core* EngineCore::getEcsCore() {
+    return ecs_core_;
 }
 
 void EngineCore::addWindow(Window* win) {

@@ -33,6 +33,12 @@ extern "C" {
         win->show();
         plugin_interface->addWindow(win);*/
 
+        auto scene = plugin_interface->getEngineCore()->getSceneManager()->addEmptyScene("My Scene");
+        ECS::Entity entity = scene->getECS()->createEntity();
+        scene->getECS()->createComponent(entity, "Transform");
+        
+        // --- For each component
+
         // Register Components
 
         // Register Systems

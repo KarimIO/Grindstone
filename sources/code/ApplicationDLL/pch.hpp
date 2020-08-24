@@ -7,5 +7,5 @@
         #define APP_API __declspec(dllimport)
     #endif
 #else
-    #define APP_EXPORT 
+    #define APP_API 
 #endif

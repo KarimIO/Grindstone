@@ -14,20 +14,15 @@ namespace Grindstone {
 		class Controller {
 		public:
 			Controller(Scene*);
-			Entity createEntity();
-			void removeEntity(Entity entity);
+			virtual Entity createEntity();
+			virtual void removeEntity(Entity entity);
 
-			void registerSystem(const char* type);
-			void registerComponentType(const char *type);
+			virtual void registerSystem(const char* type, ISystem*sys);
+			virtual void registerComponentType(const char *type, IComponentArray* carr);
 
-			void* createComponent(Entity entity, const char* component_name) {
-				auto it = component_map_.find(component_name);
-				if (it != component_map_.end()) {
-					return it->second->createGeneric(entity);
-				}
+			virtual void* createComponent(Entity entity, const char* component_name);
 
-				return nullptr;
-			}
+			Scene* getScene();
 
 			void update();
 		private:

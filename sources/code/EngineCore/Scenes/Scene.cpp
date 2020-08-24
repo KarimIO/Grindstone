@@ -9,7 +9,11 @@ using namespace Grindstone;
 Scene::Scene() : ecs_(this) {
 }
 
-void Scene::loadFromText(const char* path) {
+bool Scene::load(const char* path) {
+	return loadFromText(path);
+}
+
+bool Scene::loadFromText(const char* path) {
 	path_ = path;
 
 	// Get from text
@@ -43,8 +47,15 @@ void Scene::loadFromText(const char* path) {
 	*/
 	// --- 
 
+	return true;
 }
 
-void Scene::loadFromBinary(const char* path) {
+bool Scene::loadFromBinary(const char* path) {
 	throw std::runtime_error("Scene::loadFromBinary is not implemented!");
+
+	return true;
+}
+
+ECS::Controller* Scene::getECS() {
+	return &ecs_;
 }
