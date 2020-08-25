@@ -1,15 +1,22 @@
-#include "Camera.hpp"
-#include <EngineCore/BasicComponents.hpp>
+#include "RenderCameras.hpp"
+#include <EngineCore/Scenes/Scene.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
-
 using namespace Grindstone;
 
-void render() {
+CameraRenderingSystem::CameraRenderingSystem(Scene* s) : transform_array_(*(ECS::ComponentArray<TransformComponent>*)s->getECS()->getComponentArray("Transform")), camera_array_(*(ECS::ComponentArray<CameraComponent>*)s->getECS()->getComponentArray("Camera")) {
+    scene_ = s;
+}
+
+void CameraRenderingSystem::setGraphicsCore(GraphicsAPI::Core* core) {
+    graphics_core_ = core;
+}
+
+void CameraRenderingSystem::update() {
     // For each camera
     {
-        CameraComponent camera;
-        TransformComponent transform;
+        CameraComponent& camera = camera_array_.getComponent(1);
+        TransformComponent& transform = transform_array_.getComponent(1);
 
         glm::mat4 perspective, view;
         perspective = glm::perspective(
@@ -20,9 +27,9 @@ void render() {
         );
 
         view = glm::lookAt(
-            transform.position_, // the position of your camera, in world space
-            transform.getForward(),   // where you want to look at, in world space
-            transform.getUp()       // probably glm::vec3(0,1,0), but (0,-1,0) would make you looking upside-down, which can be great too
+            glm::vec3(1,1,1), // the position of your camera, in world space
+            glm::vec3(0,0,0),   // where you want to look at, in world space
+            glm::vec3(0,1,0)       // probably glm::vec3(0,1,0), but (0,-1,0) would make you looking upside-down, which can be great too
         );
 
         // Update uniform buffer
@@ -30,6 +37,6 @@ void render() {
         // Cull geometry
 
         // Render all renderpasses
-        
+
     }
 }

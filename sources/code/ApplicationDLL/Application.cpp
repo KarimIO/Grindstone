@@ -21,6 +21,7 @@ TestSys::TestSys(Scene* s) : transform_array_(*(ECS::ComponentArray<TransformCom
 }
 
 void TestSys::update() {
+    return;
     std::cout << "TesSys (" << transform_array_.getCount() << ")\r\n";
     for (size_t i = 0; i < transform_array_.getCount(); ++i) {
         auto& comp = transform_array_[i];
@@ -37,13 +38,14 @@ extern "C" {
         // Load engine plugins
         // plugin_interface->loadPluginCritical("ScriptCSharp");
         // plugin_interface->loadPluginCritical("PluginGraphicsOpenGL");
+        plugin_interface->loadPluginCritical("PluginCamera");
         plugin_interface->loadPluginCritical("PluginGraphicsVulkan");
 
-        /*Window::CreateInfo win_ci;
-        win_ci.fullscreen = Window::FullscreenMode::Borderless;
+        Window::CreateInfo win_ci;
+        win_ci.fullscreen = Window::FullscreenMode::Windowed;
         win_ci.title = "Sandbox";
-        win_ci.width = 1000;
-        win_ci.height = 1000;
+        win_ci.width = 800;
+        win_ci.height = 600;
         plugin_interface->enumerateDisplays(&win_ci.display);
         auto win = plugin_interface->createWindow(win_ci);
 
@@ -53,12 +55,13 @@ extern "C" {
 
         auto gw = plugin_interface->getGraphicsCore();
         gw->initialize(gw_create_info);
+        std::cout << "Grindstone Graphics: \r\n\t" << gw->getVendorName() << "\r\n\t" << gw->getAdapterName() << "\r\n\t" << gw->getAPIName() << " " << gw->getAPIVersion() << "\r\n===============================\r\n" << std::endl;
 
-        float clr_color[4] = { 0.f, 0.f, 0.f, 0.f };
-        gw->clear(GraphicsAPI::ClearMode::Color, clr_color);
+        //float clr_color[4] = { 0.f, 0.f, 0.f, 0.f };
+        //gw->clear(GraphicsAPI::ClearMode::Color, clr_color);
 
         win->show();
-        plugin_interface->addWindow(win);*/
+        plugin_interface->addWindow(win);
         
         // --- For each component
 
@@ -72,6 +75,7 @@ extern "C" {
         auto scene = plugin_interface->getEngineCore()->getSceneManager()->addEmptyScene("My Scene");
         ECS::Entity entity = scene->getECS()->createEntity();
         scene->getECS()->createComponent(entity, "Transform");
+        scene->getECS()->createComponent(entity, "Camera");
     }
 
     APP_API void releaseModule(Plugins::Interface* plugin_interface) {
