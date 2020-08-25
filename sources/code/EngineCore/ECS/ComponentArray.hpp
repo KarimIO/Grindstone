@@ -13,6 +13,7 @@ namespace Grindstone {
 		public:
 			ComponentType component_type_;
 			virtual void* createGeneric(Entity entity) = 0;
+			virtual size_t getCount() = 0;
 			virtual void reserve(unsigned int n) = 0;
 			virtual void remove(Entity entity) = 0;
 		};
@@ -38,6 +39,10 @@ namespace Grindstone {
 
 				return &components_.back();
 			}
+
+			virtual size_t getCount() override {
+				return components_.size();
+			}
 			
 			T& create(Entity entity) {
 				size_t i = components_.size();
@@ -58,13 +63,13 @@ namespace Grindstone {
 			bool contains(Entity entity) const {
 				return entity_table_.find(entity) != entity_table_.end();
 			}
-			T* getComponent(Entity entity) {
+			T& getComponent(Entity entity) {
 				auto comp = entity_table_.find(entity);
 				if (comp != entity_table_.end()) {
-					return &components_[comp->second];
+					return components_[comp->second];
 				}
-
-				return nullptr;
+				
+				throw std::runtime_error("Can't get component.");
 			}
 			virtual void remove(Entity entity) override {
 				auto comp = entity_table_.find(entity);

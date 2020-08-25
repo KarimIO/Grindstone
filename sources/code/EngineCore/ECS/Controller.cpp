@@ -25,6 +25,33 @@ namespace Grindstone {
 			component_map_[type] = carr;
 		}
 
+
+		ISystem* Controller::getSystem(const char* type) {
+			auto it = system_map_.find(type);
+			if (it != system_map_.end()) {
+				return it->second;
+			}
+			else {
+				std::string st = std::string("Controller::getSystem - Invalid system type: ") + type;
+				throw std::runtime_error(st);
+			}
+
+			return nullptr;
+		}
+
+		IComponentArray* Controller::getComponentArray(const char* type) {
+			auto it = component_map_.find(type);
+			if (it != component_map_.end()) {
+				return it->second;
+			}
+			else {
+				std::string st = std::string("Controller::getComponentArray - Invalid component type: ") + type;
+				throw std::runtime_error(st);
+			}
+
+			return nullptr;
+		}
+
 		void* Controller::createComponent(Entity entity, const char* component_name) {
 			auto it = component_map_.find(component_name);
 			if (it != component_map_.end()) {

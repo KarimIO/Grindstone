@@ -59,3 +59,7 @@ bool Scene::loadFromBinary(const char* path) {
 ECS::Controller* Scene::getECS() {
 	return &ecs_;
 }
+
+void Scene::update() {
+	ecs_.update();
+}

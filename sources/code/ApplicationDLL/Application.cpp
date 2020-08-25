@@ -3,8 +3,35 @@
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <Common/Graphics/GraphicsWrapper.hpp>
 #include <EngineCore/EngineCore.hpp>
+#include <EngineCore/ECS/System.hpp>
+#include <EngineCore/BasicComponents.hpp>
 
 using namespace Grindstone;
+
+class TestSys : public ECS::ISystem {
+public:
+    TestSys(Scene* s);
+    virtual void update() override;
+};
+
+TestSys::TestSys(Scene* s) {
+    scene_ = s;
+}
+
+void TestSys::update() {
+    std::cout << "TesSys\r\n";
+    ECS::IComponentArray* comp_arr_generic = scene_->getECS()->getComponentArray("Transform");
+    ECS::ComponentArray<TransformComponent>& comp_arr = *(ECS::ComponentArray<TransformComponent>*)comp_arr_generic;
+    std::cout << "\t" << comp_arr.getCount() << "\r\n";
+    for (size_t i = 0; i < comp_arr.getCount(); ++i) {
+        auto& comp = comp_arr[i];
+        std::cout << "\t" << comp.position_[0] << " " << comp.position_[1] << " " << comp.position_[2] << "\r\n";
+    }
+}
+
+ECS::ISystem* createTestSys(Scene* s) {
+    return new TestSys(s);
+}
 
 extern "C" {
     APP_API void initializeModule(Plugins::Interface* plugin_interface) {
@@ -32,18 +59,19 @@ extern "C" {
 
         win->show();
         plugin_interface->addWindow(win);*/
-
-        auto scene = plugin_interface->getEngineCore()->getSceneManager()->addEmptyScene("My Scene");
-        ECS::Entity entity = scene->getECS()->createEntity();
-        scene->getECS()->createComponent(entity, "Transform");
         
         // --- For each component
 
         // Register Components
 
         // Register Systems
+        plugin_interface->registerSystem("TestSys", createTestSys);
 
         // Load custom game plugins
+
+        auto scene = plugin_interface->getEngineCore()->getSceneManager()->addEmptyScene("My Scene");
+        ECS::Entity entity = scene->getECS()->createEntity();
+        scene->getECS()->createComponent(entity, "Transform");
     }
 
     APP_API void releaseModule(Plugins::Interface* plugin_interface) {

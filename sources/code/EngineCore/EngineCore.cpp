@@ -12,9 +12,9 @@ ECS::IComponentArray* createTransformComponentArray() {
 }
 
 bool EngineCore::initialize(CreateInfo& create_info) {
-	Logger::init("../log/output.log");
-	GRIND_PROFILE_BEGIN_SESSION("Loading", "../log/grind-profile-load.json");
-	GRIND_LOG("Initializing {0}...", create_info.application_title_);
+    Logger::init("../log/output.log");
+    GRIND_PROFILE_BEGIN_SESSION("Loading", "../log/grind-profile-load.json");
+    GRIND_LOG("Initializing {0}...", create_info.application_title_);
 
     // Load core (Logging, ECS and Plugin Manager)
     scene_manager_ = new SceneManager(this);
@@ -36,12 +36,13 @@ bool EngineCore::initialize(CreateInfo& create_info) {
 
 void EngineCore::run() {
     while (!should_close_) {
+        for (auto s : scene_manager_->scenes_) {
+            s.second->update();
+        }
+
         for (auto w : windows_) {
-            w->handleEvents();
-
-            
-
             w->immediateSwapBuffers();
+            w->handleEvents();
         }
     }
 }

@@ -9,12 +9,11 @@ namespace Grindstone {
 	class Scene {
 	public:
 		Scene();
-		void registerAll();
-		void registerComponentArray();
 		bool load(const char* path);
 		bool loadFromText(const char* path);
 		bool loadFromBinary(const char* path);
 		virtual ECS::Controller* getECS();
+		void update();
 	private:
 		ECS::Controller ecs_;
 		std::string name_;

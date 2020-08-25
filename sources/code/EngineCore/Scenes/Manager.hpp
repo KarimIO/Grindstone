@@ -13,8 +13,8 @@ namespace Grindstone {
 		SceneManager(EngineCore* core);
 		virtual Scene* loadScene(const char *path);
 		virtual Scene* addEmptyScene(const char *name);
-	private:
 		std::unordered_map<std::string, Scene*> scenes_;
+	private:
 		EngineCore *engine_core_;
 	};
 }

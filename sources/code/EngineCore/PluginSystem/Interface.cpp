@@ -77,3 +77,13 @@ void Plugins::Interface::enumerateDisplays(Display* displays) {
 		fn_enumerate_displays_(displays);
 	}
 }
+
+
+
+void Plugins::Interface::registerSystem(const char* name, ECS::SystemFactory factory) {
+	ecs_core_->registerSystem(name, factory);
+}
+
+void Plugins::Interface::registerComponentType(const char* name, ECS::ComponentFactory factory) {
+	ecs_core_->registerComponentType(name, factory);
+}

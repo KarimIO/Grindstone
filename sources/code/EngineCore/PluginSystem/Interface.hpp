@@ -35,13 +35,8 @@ namespace Grindstone {
             virtual uint8_t countDisplays();
             virtual void enumerateDisplays(Display*displays);
            
-            void registerSystem(const char *name, ECS::SystemFactory factory) {
-                ecs_core_->registerSystem(name, factory);
-            }
-
-            void registerComponentType(const char *name, ECS::ComponentFactory factory) {
-                ecs_core_->registerComponentType(name, factory);
-            }
+            virtual void registerSystem(const char* name, ECS::SystemFactory factory);
+            virtual void registerComponentType(const char* name, ECS::ComponentFactory factory);
         private:
             Manager*    manager_ = nullptr;
             GraphicsAPI::Core* graphics_core_ = nullptr;

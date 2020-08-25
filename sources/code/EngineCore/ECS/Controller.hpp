@@ -20,6 +20,9 @@ namespace Grindstone {
 			virtual void registerSystem(const char* type, ISystem*sys);
 			virtual void registerComponentType(const char *type, IComponentArray* carr);
 
+			virtual ISystem* getSystem(const char* type);
+			virtual IComponentArray* getComponentArray(const char* type);
+
 			virtual void* createComponent(Entity entity, const char* component_name);
 
 			Scene* getScene();
