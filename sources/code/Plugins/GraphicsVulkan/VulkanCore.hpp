@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../GraphicsCommon/GraphicsWrapper.hpp"
-#include "../GraphicsCommon/DLLDefs.hpp"
+#include <Common/Graphics/GraphicsWrapper.hpp>
+#include <Common/Graphics/DLLDefs.hpp>
 #include <vulkan/vulkan.h>
 
 namespace Grindstone {
@@ -18,13 +18,13 @@ namespace Grindstone {
 			}
 		};
 
-		class VulkanGraphicsWrapper : public GraphicsWrapper {
+		class VulkanCore : public Core {
 		public:
-			bool initialize(GraphicsWrapperCreateInfo ci);
-			~VulkanGraphicsWrapper();
+			virtual bool initialize(Core::CreateInfo& ci) override;
+			~VulkanCore();
 
-			static VulkanGraphicsWrapper *graphics_wrapper_;
-			static VulkanGraphicsWrapper &get();
+			static VulkanCore *graphics_wrapper_;
+			static VulkanCore &get();
 			virtual void registerWindow(Window* window) override;
 		public:
 			QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
@@ -77,7 +77,7 @@ namespace Grindstone {
 			virtual void deleteIndexBuffer(IndexBuffer *ptr) override;
 			virtual void deleteUniformBuffer(UniformBuffer * ptr) override;
 			virtual void deleteUniformBufferBinding(UniformBufferBinding * ptr) override;
-			virtual void deleteGraphicsPipeline(GraphicsPipeline *ptr) override;
+			virtual void deletePipeline(Pipeline *ptr) override;
 			virtual void deleteRenderPass(RenderPass *ptr) override;
 			virtual void deleteTexture(Texture *ptr) override;
 			virtual void deleteTextureBinding(TextureBinding *ptr) override;
@@ -85,21 +85,21 @@ namespace Grindstone {
 			virtual void deleteCommandBuffer(CommandBuffer *ptr) override;
 			virtual void deleteVertexArrayObject(VertexArrayObject *ptr) override;
 
-			virtual Framebuffer *createFramebuffer(FramebufferCreateInfo ci) override;
-			virtual RenderPass *createRenderPass(RenderPassCreateInfo ci) override;
-			virtual GraphicsPipeline *createGraphicsPipeline(GraphicsPipelineCreateInfo ci) override;
-			virtual CommandBuffer *createCommandBuffer(CommandBufferCreateInfo ci) override;
-			virtual VertexArrayObject *createVertexArrayObject(VertexArrayObjectCreateInfo ci) override;
-			virtual VertexBuffer *createVertexBuffer(VertexBufferCreateInfo ci) override;
-			virtual IndexBuffer *createIndexBuffer(IndexBufferCreateInfo ci) override;
-			virtual UniformBuffer *createUniformBuffer(UniformBufferCreateInfo ci) override;
-			virtual UniformBufferBinding *createUniformBufferBinding(UniformBufferBindingCreateInfo ci) override;
-			virtual Texture *createCubemap(CubemapCreateInfo createInfo) override;
-			virtual Texture *createTexture(TextureCreateInfo createInfo) override;
-			virtual TextureBinding *createTextureBinding(TextureBindingCreateInfo ci) override;
-			virtual TextureBindingLayout *createTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo) override;
-			virtual RenderTarget *createRenderTarget(RenderTargetCreateInfo *rt, uint32_t rc, bool cube = false) override;
-			virtual DepthTarget *createDepthTarget(DepthTargetCreateInfo rt) override;
+			virtual Framebuffer *createFramebuffer(Framebuffer::CreateInfo& ci) override;
+			virtual RenderPass *createRenderPass(RenderPass::CreateInfo& ci) override;
+			virtual Pipeline *createPipeline(Pipeline::CreateInfo& ci) override;
+			virtual CommandBuffer *createCommandBuffer(CommandBuffer::CreateInfo& ci) override;
+			virtual VertexArrayObject *createVertexArrayObject(VertexArrayObject::CreateInfo& ci) override;
+			virtual VertexBuffer *createVertexBuffer(VertexBuffer::CreateInfo& ci) override;
+			virtual IndexBuffer *createIndexBuffer(IndexBuffer::CreateInfo& ci) override;
+			virtual UniformBuffer *createUniformBuffer(UniformBuffer::CreateInfo& ci) override;
+			virtual UniformBufferBinding *createUniformBufferBinding(UniformBufferBinding::CreateInfo& ci) override;
+			virtual Texture * createCubemap(Texture::CubemapCreateInfo& createInfo) override;
+			virtual Texture *createTexture(Texture::CreateInfo& ci) override;
+			virtual TextureBinding *createTextureBinding(TextureBinding::CreateInfo& ci) override;
+			virtual TextureBindingLayout *createTextureBindingLayout(TextureBindingLayout::CreateInfo& ci) override;
+			virtual RenderTarget *createRenderTarget(RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) override;
+			virtual DepthTarget *createDepthTarget(DepthTarget::CreateInfo& rt) override;
 			
 			virtual inline const bool shouldUseImmediateMode() override;
 			virtual inline const bool supportsCommandBuffers() override;

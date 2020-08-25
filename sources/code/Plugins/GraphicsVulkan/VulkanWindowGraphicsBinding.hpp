@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Windows.h>
-#include "../Window/Window.hpp"
-#include "../GraphicsCommon/WindowGraphicsBinding.hpp"
+#include <Common/Window/Window.hpp>
+#include <Common/Graphics/WindowGraphicsBinding.hpp>
 
 #include "VulkanRenderTarget.hpp"
 #include <vector>

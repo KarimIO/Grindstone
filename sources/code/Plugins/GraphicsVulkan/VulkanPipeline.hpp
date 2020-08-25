@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../GraphicsCommon/GraphicsPipeline.hpp"
+#include <Common/Graphics/Pipeline.hpp>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -8,10 +8,10 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		class VulkanGraphicsPipeline : public GraphicsPipeline {
+		class VulkanPipeline : public Pipeline {
 		public:
-			VulkanGraphicsPipeline(GraphicsPipelineCreateInfo ci);
-			virtual ~VulkanGraphicsPipeline() override;
+			VulkanPipeline(Pipeline::CreateInfo& ci);
+			virtual ~VulkanPipeline() override;
 			VkPipeline getGraphicsPipeline();
 			VkPipelineLayout getGraphicsPipelineLayout();
 		public:

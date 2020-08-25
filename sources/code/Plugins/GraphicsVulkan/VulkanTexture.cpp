@@ -1,12 +1,12 @@
 #include "VulkanTexture.hpp"
 #include "VulkanUtils.hpp"
 #include "VulkanFormat.hpp"
-#include "VulkanGraphicsWrapper.hpp"
+#include "VulkanCore.hpp"
 #include <vulkan/vulkan.h>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		VulkanTextureBindingLayout::VulkanTextureBindingLayout(TextureBindingLayoutCreateInfo ci) {
+		VulkanTextureBindingLayout::VulkanTextureBindingLayout(TextureBindingLayout::CreateInfo& ci) {
 			VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
 			samplerLayoutBinding.binding = 0;
 			samplerLayoutBinding.descriptorCount = 1;
@@ -19,20 +19,20 @@ namespace Grindstone {
 			layoutInfo.bindingCount = 1;
 			layoutInfo.pBindings = &samplerLayoutBinding;
 
-			if (vkCreateDescriptorSetLayout(VulkanGraphicsWrapper::get().getDevice(), &layoutInfo, nullptr, &descriptor_set_layout_) != VK_SUCCESS) {
+			if (vkCreateDescriptorSetLayout(VulkanCore::get().getDevice(), &layoutInfo, nullptr, &descriptor_set_layout_) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create descriptor set layout!");
 			}
 		}
 
 		VulkanTextureBindingLayout::~VulkanTextureBindingLayout() {
-			vkDestroyDescriptorSetLayout(VulkanGraphicsWrapper::get().getDevice(), descriptor_set_layout_, nullptr);
+			vkDestroyDescriptorSetLayout(VulkanCore::get().getDevice(), descriptor_set_layout_, nullptr);
 		}
 
 		VkDescriptorSetLayout VulkanTextureBindingLayout::getDescriptorSetLayout() {
 			return descriptor_set_layout_;
 		}
 
-		VulkanTexture::VulkanTexture(TextureCreateInfo ci) {
+		VulkanTexture::VulkanTexture(Texture::CreateInfo& ci) {
 			uint32_t mipLevels;
 			createTextureImage(ci, mipLevels);
 			image_view_ = createImageView(image_, format_, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
@@ -40,7 +40,7 @@ namespace Grindstone {
 		}
 
 		VulkanTexture::~VulkanTexture() {
-			VkDevice device = VulkanGraphicsWrapper::get().getDevice();
+			VkDevice device = VulkanCore::get().getDevice();
 			vkDestroySampler(device, sampler_, nullptr);
 			vkDestroyImageView(device, image_view_, nullptr);
 
@@ -48,8 +48,8 @@ namespace Grindstone {
 			vkFreeMemory(device, image_memory_, nullptr);
 		}
 
-		void VulkanTexture::createTextureImage(TextureCreateInfo &ci, uint32_t &mipLevels) {
-			VkDevice device = VulkanGraphicsWrapper::get().getDevice();
+		void VulkanTexture::createTextureImage(Texture::CreateInfo& ci, uint32_t &mipLevels) {
+			VkDevice device = VulkanCore::get().getDevice();
 
 			uint8_t channels = 4;
 			format_ = VK_FORMAT_R8G8B8A8_UNORM;
@@ -81,7 +81,7 @@ namespace Grindstone {
 			//	generateMipmaps(image_, VK_FORMAT_R8G8B8A8_UNORM, ci.width, ci.height, mipLevels);
 		}
 
-		void VulkanTexture::createTextureSampler(TextureCreateInfo &ci, uint32_t mipLevels) {
+		void VulkanTexture::createTextureSampler(Texture::CreateInfo &ci, uint32_t mipLevels) {
 			VkSamplerCreateInfo samplerInfo = {};
 			samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 			samplerInfo.magFilter = TranslateFilterToVulkan(ci.options.mag_filter);
@@ -100,7 +100,7 @@ namespace Grindstone {
 			samplerInfo.maxLod = static_cast<float>(mipLevels);
 			samplerInfo.mipLodBias = 0;
 
-			if (vkCreateSampler(VulkanGraphicsWrapper::get().getDevice(), &samplerInfo, nullptr, &sampler_) != VK_SUCCESS) {
+			if (vkCreateSampler(VulkanCore::get().getDevice(), &samplerInfo, nullptr, &sampler_) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create texture sampler!");
 			}
 		}
@@ -113,16 +113,16 @@ namespace Grindstone {
 			return sampler_;
 		}
 
-		VulkanTextureBinding::VulkanTextureBinding(TextureBindingCreateInfo ci) {
+		VulkanTextureBinding::VulkanTextureBinding(TextureBinding::CreateInfo& ci) {
 			VkDescriptorSetLayout layouts = ((VulkanTextureBindingLayout *)ci.layout)->getDescriptorSetLayout();
 
 			VkDescriptorSetAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			allocInfo.descriptorPool = VulkanGraphicsWrapper::get().descriptor_pool_;
+			allocInfo.descriptorPool = VulkanCore::get().descriptor_pool_;
 			allocInfo.descriptorSetCount = 1;
 			allocInfo.pSetLayouts = &layouts;
 
-			if (vkAllocateDescriptorSets(VulkanGraphicsWrapper::get().getDevice(), &allocInfo, &descriptor_set_) != VK_SUCCESS) {
+			if (vkAllocateDescriptorSets(VulkanCore::get().getDevice(), &allocInfo, &descriptor_set_) != VK_SUCCESS) {
 				throw std::runtime_error("failed to allocate descriptor sets!");
 			}
 
@@ -141,7 +141,7 @@ namespace Grindstone {
 			descriptorWrites.descriptorCount = 1;
 			descriptorWrites.pImageInfo = &imageInfo;
 
-			vkUpdateDescriptorSets(VulkanGraphicsWrapper::get().getDevice(), 1, &descriptorWrites, 0, nullptr);
+			vkUpdateDescriptorSets(VulkanCore::get().getDevice(), 1, &descriptorWrites, 0, nullptr);
 		}
 
 		VulkanTextureBinding::~VulkanTextureBinding() {

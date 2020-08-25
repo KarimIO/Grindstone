@@ -1,5 +1,5 @@
 #include "VulkanUtils.hpp"
-#include "VulkanGraphicsWrapper.hpp"
+#include "VulkanCore.hpp"
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -16,7 +16,7 @@ namespace Grindstone {
 			viewInfo.subresourceRange.layerCount = 1;
 
 			VkImageView imageView;
-			if (vkCreateImageView(VulkanGraphicsWrapper::get().getDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
+			if (vkCreateImageView(VulkanCore::get().getDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create texture image view!");
 			}
 
@@ -24,7 +24,7 @@ namespace Grindstone {
 		}
 
 		void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
-			VkDevice device = VulkanGraphicsWrapper::get().getDevice();
+			VkDevice device = VulkanCore::get().getDevice();
 			
 			VkImageCreateInfo imageInfo = {};
 			imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -51,7 +51,7 @@ namespace Grindstone {
 			VkMemoryAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 			allocInfo.allocationSize = memRequirements.size;
-			allocInfo.memoryTypeIndex = VulkanGraphicsWrapper::get().findMemoryType(memRequirements.memoryTypeBits, properties);
+			allocInfo.memoryTypeIndex = VulkanCore::get().findMemoryType(memRequirements.memoryTypeBits, properties);
 
 			if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
 				throw std::runtime_error("failed to allocate image memory!");
@@ -61,7 +61,7 @@ namespace Grindstone {
 		}
 
 		void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
-			VkDevice device = VulkanGraphicsWrapper::get().getDevice();
+			VkDevice device = VulkanCore::get().getDevice();
 			VkBufferCreateInfo bufferInfo = {};
 			bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 			bufferInfo.size = size;
@@ -78,7 +78,7 @@ namespace Grindstone {
 			VkMemoryAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 			allocInfo.allocationSize = memRequirements.size;
-			allocInfo.memoryTypeIndex = VulkanGraphicsWrapper::get().findMemoryType(memRequirements.memoryTypeBits, properties);
+			allocInfo.memoryTypeIndex = VulkanCore::get().findMemoryType(memRequirements.memoryTypeBits, properties);
 
 			if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
 				throw std::runtime_error("failed to allocate buffer memory!");
@@ -88,11 +88,11 @@ namespace Grindstone {
 		}
 
 		VkCommandBuffer beginSingleTimeCommands() {
-			VkDevice device = VulkanGraphicsWrapper::get().getDevice();
+			VkDevice device = VulkanCore::get().getDevice();
 			VkCommandBufferAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-			allocInfo.commandPool = VulkanGraphicsWrapper::get().getGraphicsCommandPool();
+			allocInfo.commandPool = VulkanCore::get().getGraphicsCommandPool();
 			allocInfo.commandBufferCount = 1;
 
 			VkCommandBuffer commandBuffer;
@@ -108,8 +108,8 @@ namespace Grindstone {
 		}
 
 		void endSingleTimeCommands(VkCommandBuffer commandBuffer) {
-			VkDevice device = VulkanGraphicsWrapper::get().getDevice();
-			auto graphicsQueue = VulkanGraphicsWrapper::get().graphics_queue_;
+			VkDevice device = VulkanCore::get().getDevice();
+			auto graphicsQueue = VulkanCore::get().graphics_queue_;
 			vkEndCommandBuffer(commandBuffer);
 
 			VkSubmitInfo submitInfo = {};
@@ -120,7 +120,7 @@ namespace Grindstone {
 			vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 			vkQueueWaitIdle(graphicsQueue);
 
-			vkFreeCommandBuffers(device, VulkanGraphicsWrapper::get().getGraphicsCommandPool(), 1, &commandBuffer);
+			vkFreeCommandBuffers(device, VulkanCore::get().getGraphicsCommandPool(), 1, &commandBuffer);
 		}
 
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {

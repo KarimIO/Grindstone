@@ -1,23 +1,23 @@
 #pragma once
 
-#include "../GraphicsCommon/CommandBuffer.hpp"
+#include <Common/Graphics/CommandBuffer.hpp>
 #include <vulkan/vulkan.h>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
 		class VulkanCommandBuffer : public CommandBuffer {
 		public:
-			VulkanCommandBuffer(CommandBufferCreateInfo createInfo);
+			VulkanCommandBuffer(CommandBuffer::CreateInfo& createInfo);
 			virtual ~VulkanCommandBuffer() override;
 		public:
-			void handleStep(CommandCreateInfo * step);
+			void handleStep(CommandBuffer::Command* step);
 			VkCommandBuffer getCommandBuffer();
 		private:
 			void uploadCmdBindRenderPass(CommandBindRenderPass *ci);
 			void uploadCmdUnbindRenderPass(CommandUnbindRenderPass *ci);
 			void uploadCmdBindDescriptorSet(CommandBindDescriptorSets *ci);
 			void uploadCmdBindCommandBuffers(CommandCallCmdBuffer *ci);
-			void uploadCmdBindGraphicsPipeline(CommandBindGraphicsPipeline *ci);
+			void uploadCmdBindPipeline(CommandBindPipeline *ci);
 			void uploadCmdBindVertexBuffers(CommandBindVBOs *ci);
 			void uploadCmdBindIndexBuffer(CommandBindIBO *ci);
 			void uploadCmdDrawVertices(CommandDrawVertices *ci);

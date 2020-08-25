@@ -1,13 +1,13 @@
 #pragma once
 
-#include "../GraphicsCommon/UniformBuffer.hpp"
+#include <Common/Graphics/UniformBuffer.hpp>
 #include <vulkan/vulkan.h>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
 		class VulkanUniformBufferBinding : public UniformBufferBinding {
 		public:
-			VulkanUniformBufferBinding(UniformBufferBindingCreateInfo ci);
+			VulkanUniformBufferBinding(UniformBufferBinding::CreateInfo& ci);
 			virtual ~VulkanUniformBufferBinding();
 		public:
 			VkDescriptorSetLayout getDescriptorSetLayout();
@@ -17,7 +17,7 @@ namespace Grindstone {
 
 		class VulkanUniformBuffer : public UniformBuffer {
 		public:
-			VulkanUniformBuffer(UniformBufferCreateInfo ci);
+			VulkanUniformBuffer(UniformBuffer::CreateInfo& ci);
 			virtual ~VulkanUniformBuffer();
 		public:
 			VkDescriptorSet getDescriptorSet();

@@ -1,10 +1,10 @@
 #include "VulkanUniformBuffer.hpp"
-#include "VulkanGraphicsWrapper.hpp"
+#include "VulkanCore.hpp"
 #include "VulkanUtils.hpp"
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		VulkanUniformBufferBinding::VulkanUniformBufferBinding(UniformBufferBindingCreateInfo ci) {
+		VulkanUniformBufferBinding::VulkanUniformBufferBinding(UniformBufferBinding::CreateInfo& ci) {
 			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
 			uboLayoutBinding.binding = 0;
 			uboLayoutBinding.descriptorCount = 1;
@@ -17,13 +17,13 @@ namespace Grindstone {
 			layoutInfo.bindingCount = 1;
 			layoutInfo.pBindings = &uboLayoutBinding;
 
-			if (vkCreateDescriptorSetLayout(VulkanGraphicsWrapper::get().getDevice(), &layoutInfo, nullptr, &descriptor_set_layout_) != VK_SUCCESS) {
+			if (vkCreateDescriptorSetLayout(VulkanCore::get().getDevice(), &layoutInfo, nullptr, &descriptor_set_layout_) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create descriptor set layout!");
 			}
 		}
 
 		VulkanUniformBufferBinding::~VulkanUniformBufferBinding() {
-			vkDestroyDescriptorSetLayout(VulkanGraphicsWrapper::get().getDevice(), descriptor_set_layout_, nullptr);
+			vkDestroyDescriptorSetLayout(VulkanCore::get().getDevice(), descriptor_set_layout_, nullptr);
 		}
 
 		VkDescriptorSetLayout VulkanUniformBufferBinding::getDescriptorSetLayout() {
@@ -34,7 +34,7 @@ namespace Grindstone {
 		//==========================
 
 
-		VulkanUniformBuffer::VulkanUniformBuffer(UniformBufferCreateInfo ci) {
+		VulkanUniformBuffer::VulkanUniformBuffer(UniformBuffer::CreateInfo& ci) {
 			size_ = ci.size;
 			createBuffer(size_, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, buffer_, memory_);
 			
@@ -42,11 +42,11 @@ namespace Grindstone {
 
 			VkDescriptorSetAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			allocInfo.descriptorPool = VulkanGraphicsWrapper::get().descriptor_pool_;
+			allocInfo.descriptorPool = VulkanCore::get().descriptor_pool_;
 			allocInfo.descriptorSetCount = 1;
 			allocInfo.pSetLayouts = &layouts;
 
-			if (vkAllocateDescriptorSets(VulkanGraphicsWrapper::get().getDevice(), &allocInfo, &descriptor_set_) != VK_SUCCESS) {
+			if (vkAllocateDescriptorSets(VulkanCore::get().getDevice(), &allocInfo, &descriptor_set_) != VK_SUCCESS) {
 				throw std::runtime_error("failed to allocate descriptor sets!");
 			}
 
@@ -64,7 +64,7 @@ namespace Grindstone {
 			descriptorWrites.descriptorCount = 1;
 			descriptorWrites.pBufferInfo = &bufferInfo;
 
-			vkUpdateDescriptorSets(VulkanGraphicsWrapper::get().getDevice(), 1, &descriptorWrites, 0, nullptr);
+			vkUpdateDescriptorSets(VulkanCore::get().getDevice(), 1, &descriptorWrites, 0, nullptr);
 		}
 
 		VulkanUniformBuffer::~VulkanUniformBuffer() {
@@ -75,7 +75,7 @@ namespace Grindstone {
 		}
 		
 		void VulkanUniformBuffer::updateBuffer(void * content) {
-			VkDevice device = VulkanGraphicsWrapper::get().getDevice();
+			VkDevice device = VulkanCore::get().getDevice();
 			void* data;
 			vkMapMemory(device, memory_, 0, size_, 0, &data);
 			memcpy(data, content, size_);

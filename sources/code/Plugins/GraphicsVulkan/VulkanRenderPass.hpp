@@ -1,13 +1,13 @@
 #pragma once
 
-#include "../GraphicsCommon/RenderPass.hpp"
+#include <Common/Graphics/RenderPass.hpp>
 #include <vulkan/vulkan.h>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
 		class VulkanRenderPass : public RenderPass {
 		public:
-			VulkanRenderPass(RenderPassCreateInfo &rp);
+			VulkanRenderPass(RenderPass::CreateInfo &rp);
 			virtual ~VulkanRenderPass() override;
 		public:
 			VkRenderPass getRenderPassHandle();

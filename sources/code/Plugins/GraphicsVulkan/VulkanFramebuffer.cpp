@@ -2,13 +2,13 @@
 #include "VulkanFramebuffer.hpp"
 #include "VulkanRenderTarget.hpp"
 #include "VulkanDepthTarget.hpp"
-#include "VulkanGraphicsWrapper.hpp"
+#include "VulkanCore.hpp"
 
 #include <assert.h>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		VulkanFramebuffer::VulkanFramebuffer(FramebufferCreateInfo ci) {
+		VulkanFramebuffer::VulkanFramebuffer(Framebuffer::CreateInfo& ci) {
 			uint32_t total_views = ci.num_render_target_lists;
 			total_views += (ci.depth_target != nullptr) ? 1 : 0;
 
@@ -32,13 +32,13 @@ namespace Grindstone {
 			framebufferInfo.height = rp->getHeight();
 			framebufferInfo.layers = 1;
 
-			if (vkCreateFramebuffer(VulkanGraphicsWrapper::get().getDevice(), &framebufferInfo, nullptr, &framebuffer_) != VK_SUCCESS) {
+			if (vkCreateFramebuffer(VulkanCore::get().getDevice(), &framebufferInfo, nullptr, &framebuffer_) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create framebuffer!");
 			}
 		}
 
 		VulkanFramebuffer::~VulkanFramebuffer() {
-			vkDestroyFramebuffer(VulkanGraphicsWrapper::get().getDevice(), framebuffer_, nullptr);
+			vkDestroyFramebuffer(VulkanCore::get().getDevice(), framebuffer_, nullptr);
 		}
 
 		VkFramebuffer VulkanFramebuffer::getFramebuffer() {

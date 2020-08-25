@@ -12,19 +12,18 @@ class TestSys : public ECS::ISystem {
 public:
     TestSys(Scene* s);
     virtual void update() override;
+private:
+    ECS::ComponentArray<TransformComponent>& transform_array_;
 };
 
-TestSys::TestSys(Scene* s) {
+TestSys::TestSys(Scene* s) : transform_array_(*(ECS::ComponentArray<TransformComponent>*)s->getECS()->getComponentArray("Transform")) {
     scene_ = s;
 }
 
 void TestSys::update() {
-    std::cout << "TesSys\r\n";
-    ECS::IComponentArray* comp_arr_generic = scene_->getECS()->getComponentArray("Transform");
-    ECS::ComponentArray<TransformComponent>& comp_arr = *(ECS::ComponentArray<TransformComponent>*)comp_arr_generic;
-    std::cout << "\t" << comp_arr.getCount() << "\r\n";
-    for (size_t i = 0; i < comp_arr.getCount(); ++i) {
-        auto& comp = comp_arr[i];
+    std::cout << "TesSys (" << transform_array_.getCount() << ")\r\n";
+    for (size_t i = 0; i < transform_array_.getCount(); ++i) {
+        auto& comp = transform_array_[i];
         std::cout << "\t" << comp.position_[0] << " " << comp.position_[1] << " " << comp.position_[2] << "\r\n";
     }
 }
@@ -37,7 +36,8 @@ extern "C" {
     APP_API void initializeModule(Plugins::Interface* plugin_interface) {
         // Load engine plugins
         // plugin_interface->loadPluginCritical("ScriptCSharp");
-        plugin_interface->loadPluginCritical("PluginGraphicsOpenGL");
+        // plugin_interface->loadPluginCritical("PluginGraphicsOpenGL");
+        plugin_interface->loadPluginCritical("PluginGraphicsVulkan");
 
         /*Window::CreateInfo win_ci;
         win_ci.fullscreen = Window::FullscreenMode::Borderless;

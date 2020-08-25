@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../GraphicsCommon/RenderTarget.hpp"
+#include <Common/Graphics/RenderTarget.hpp>
 #include <vulkan/vulkan.h>
 
 namespace Grindstone {
@@ -8,7 +8,7 @@ namespace Grindstone {
 		class VulkanRenderTarget : public RenderTarget {
 		public:
 			VulkanRenderTarget(VkImage swapchain_image, VkFormat); // Build from swapchain
-			VulkanRenderTarget(RenderTargetCreateInfo ci);
+			VulkanRenderTarget(RenderTarget::CreateInfo& ci);
 			virtual ~VulkanRenderTarget() override;
 		public:
 			VkImageView getImageView();

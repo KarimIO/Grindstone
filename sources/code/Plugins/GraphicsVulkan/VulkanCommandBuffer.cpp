@@ -1,17 +1,17 @@
 #include "VulkanCommandBuffer.hpp"
 #include "VulkanRenderPass.hpp"
-#include "VulkanGraphicsPipeline.hpp"
+#include "VulkanPipeline.hpp"
 #include "VulkanFramebuffer.hpp"
 #include "VulkanVertexBuffer.hpp"
 #include "VulkanIndexBuffer.hpp"
-#include "VulkanGraphicsWrapper.hpp"
+#include "VulkanCore.hpp"
 #include "VulkanUniformBuffer.hpp"
 #include "VulkanTexture.hpp"
 #include <cstring>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		void VulkanCommandBuffer::handleStep(CommandCreateInfo *ci) {
+		void VulkanCommandBuffer::handleStep(Command* ci) {
 			switch (ci->type) {
 			case CommandBufferType::CallCommandBuffer: {
 				uploadCmdBindCommandBuffers(static_cast<CommandCallCmdBuffer *>(ci));
@@ -33,8 +33,8 @@ namespace Grindstone {
 				uploadCmdBindIndexBuffer(static_cast<CommandBindIBO *>(ci));
 				return;
 			}
-			case CommandBufferType::BindGraphicsPipeline: {
-				uploadCmdBindGraphicsPipeline(static_cast<CommandBindGraphicsPipeline *>(ci));
+			case CommandBufferType::BindPipeline: {
+				uploadCmdBindPipeline(static_cast<CommandBindPipeline *>(ci));
 				return;
 			}
 			case CommandBufferType::BindDescriptorSet: {
@@ -56,12 +56,12 @@ namespace Grindstone {
 			return command_buffer_;
 		}
 
-		VulkanCommandBuffer::VulkanCommandBuffer(CommandBufferCreateInfo ci) {
-			VkDevice device = VulkanGraphicsWrapper::get().getDevice();
+		VulkanCommandBuffer::VulkanCommandBuffer(CommandBuffer::CreateInfo& ci) {
+			VkDevice device = VulkanCore::get().getDevice();
 
 			VkCommandBufferAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-			allocInfo.commandPool = VulkanGraphicsWrapper::get().getGraphicsCommandPool();
+			allocInfo.commandPool = VulkanCore::get().getGraphicsCommandPool();
 			allocInfo.level = ci.secondaryInfo.isSecondary ? VK_COMMAND_BUFFER_LEVEL_SECONDARY : VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 			allocInfo.commandBufferCount = 1;
 
@@ -134,7 +134,7 @@ namespace Grindstone {
 		}
 
 		void VulkanCommandBuffer::uploadCmdBindDescriptorSet(CommandBindDescriptorSets *ci) {
-			VulkanGraphicsPipeline *graphicsPipeline = (VulkanGraphicsPipeline *)(ci->graphicsPipeline);
+			VulkanPipeline *graphicsPipeline = (VulkanPipeline *)(ci->graphicsPipeline);
 			std::vector<VkDescriptorSet> descriptorSets;
 			descriptorSets.reserve(ci->uniformBufferCount + ci->textureCount);
 			for (uint32_t i = 0; i < ci->uniformBufferCount; i++) {
@@ -162,9 +162,9 @@ namespace Grindstone {
 
 		}
 
-		void VulkanCommandBuffer::uploadCmdBindGraphicsPipeline(CommandBindGraphicsPipeline * ci) {
-			VulkanGraphicsPipeline *graphicsPipeline = (VulkanGraphicsPipeline *)(ci->graphicsPipeline);
-			vkCmdBindPipeline(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->getGraphicsPipeline());
+		void VulkanCommandBuffer::uploadCmdBindPipeline(CommandBindPipeline * ci) {
+			VulkanPipeline *pipeline = (VulkanPipeline *)(ci->graphicsPipeline);
+			vkCmdBindPipeline(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getGraphicsPipeline());
 		}
 
 		void VulkanCommandBuffer::uploadCmdBindVertexBuffers(CommandBindVBOs* ci) {

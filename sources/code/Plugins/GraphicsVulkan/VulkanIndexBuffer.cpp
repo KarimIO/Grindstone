@@ -1,11 +1,11 @@
 #include "VulkanIndexBuffer.hpp"
-#include "VulkanGraphicsWrapper.hpp"
+#include "VulkanCore.hpp"
 #include "VulkanUtils.hpp"
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		VulkanIndexBuffer::VulkanIndexBuffer(IndexBufferCreateInfo ci) {
-			VkDevice device = VulkanGraphicsWrapper::get().getDevice();
+		VulkanIndexBuffer::VulkanIndexBuffer(IndexBuffer::CreateInfo& ci) {
+			VkDevice device = VulkanCore::get().getDevice();
 
 			VkDeviceSize bufferSize = ci.size;
 
@@ -27,7 +27,7 @@ namespace Grindstone {
 		}
 
 		VulkanIndexBuffer::~VulkanIndexBuffer() {
-			VkDevice device = VulkanGraphicsWrapper::get().getDevice();
+			VkDevice device = VulkanCore::get().getDevice();
 			vkDestroyBuffer(device, buffer_, nullptr);
 			vkFreeMemory(device, memory_, nullptr);
 		}

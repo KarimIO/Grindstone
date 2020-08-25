@@ -1,13 +1,13 @@
 #pragma once
 
-#include "../GraphicsCommon/Texture.hpp"
+#include <Common/Graphics/Texture.hpp>
 #include <vulkan/vulkan.h>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
 		class VulkanTextureBindingLayout : public TextureBindingLayout {
 		public:
-			VulkanTextureBindingLayout(TextureBindingLayoutCreateInfo ci);
+			VulkanTextureBindingLayout(TextureBindingLayout::CreateInfo& ci);
 			~VulkanTextureBindingLayout();
 			VkDescriptorSetLayout getDescriptorSetLayout();
 		private:
@@ -16,13 +16,13 @@ namespace Grindstone {
 
 		class VulkanTexture : public Texture {
 		public:
-			VulkanTexture(TextureCreateInfo ci);
+			VulkanTexture(Texture::CreateInfo& ci);
 			virtual ~VulkanTexture();
 		public:
 			VkImageView getImageView();
 			VkSampler getSampler();
-			void createTextureImage(TextureCreateInfo &ci, uint32_t &mipLevels);
-			void createTextureSampler(TextureCreateInfo &ci, uint32_t mipLevels);
+			void createTextureImage(Texture::CreateInfo &ci, uint32_t &mipLevels);
+			void createTextureSampler(Texture::CreateInfo &ci, uint32_t mipLevels);
 		private:
 			VkImage image_;
 			VkDeviceMemory image_memory_;
@@ -33,7 +33,7 @@ namespace Grindstone {
 
 		class VulkanTextureBinding : public TextureBinding {
 		public:
-			VulkanTextureBinding(TextureBindingCreateInfo ci);
+			VulkanTextureBinding(TextureBinding::CreateInfo& ci);
 			~VulkanTextureBinding();
 		public:
 			VkDescriptorSet getDescriptorSet();

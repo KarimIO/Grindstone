@@ -1,14 +1,14 @@
 #pragma once
 
 #include <stdint.h>
-#include "../GraphicsCommon/DepthTarget.hpp"
+#include <Common/Graphics/DepthTarget.hpp>
 #include <vulkan/vulkan.h>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
 		class VulkanDepthTarget : public DepthTarget {
 		public:
-			VulkanDepthTarget(DepthTargetCreateInfo ci);
+			VulkanDepthTarget(DepthTarget::CreateInfo& ci);
 			virtual ~VulkanDepthTarget() override;
 		public:
 			VkImageView getImageView();

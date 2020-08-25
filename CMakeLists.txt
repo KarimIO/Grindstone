@@ -26,4 +26,8 @@ endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )
 add_subdirectory(sources/code/ApplicationDLL)
 add_subdirectory(sources/code/EngineCore)
 add_subdirectory(sources/code/ApplicationExecutable)
-add_subdirectory(sources/code/Plugins/GraphicsOpenGL)
+
+set(PLUGIN_DIR sources/code/Plugins)
+
+add_subdirectory(${PLUGIN_DIR}/GraphicsOpenGL)
+add_subdirectory(${PLUGIN_DIR}/GraphicsVulkan)

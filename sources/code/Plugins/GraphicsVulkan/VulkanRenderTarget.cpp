@@ -1,7 +1,7 @@
 #include "VulkanRenderTarget.hpp"
 #include "VulkanUtils.hpp"
 #include "VulkanFormat.hpp"
-#include "VulkanGraphicsWrapper.hpp"
+#include "VulkanCore.hpp"
 #include <iostream>
 #include <cassert>
 
@@ -11,7 +11,7 @@ namespace Grindstone {
 			image_view_ = createImageView(image_, format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 		}
 
-		VulkanRenderTarget::VulkanRenderTarget(RenderTargetCreateInfo ci) {
+		VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& ci) {
 			uint8_t channels;
 			VkFormat render_format = TranslateColorFormatToVulkan(ci.format, channels);
 
@@ -20,7 +20,7 @@ namespace Grindstone {
 		}
 
 		VulkanRenderTarget::~VulkanRenderTarget() {
-			VkDevice device = VulkanGraphicsWrapper::get().getDevice();
+			VkDevice device = VulkanCore::get().getDevice();
 			vkDestroyImageView(device, image_view_, nullptr);
 			vkDestroyImage(device, image_, nullptr);
 			vkFreeMemory(device, image_memory_, nullptr);

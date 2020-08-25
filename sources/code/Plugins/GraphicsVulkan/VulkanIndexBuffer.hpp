@@ -1,13 +1,13 @@
 #pragma once
 
-#include "../GraphicsCommon/IndexBuffer.hpp"
+#include <Common/Graphics/IndexBuffer.hpp>
 #include <vulkan/vulkan.h>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
 		class VulkanIndexBuffer : public IndexBuffer {
 		public:
-			VulkanIndexBuffer(IndexBufferCreateInfo ci);
+			VulkanIndexBuffer(IndexBuffer::CreateInfo& ci);
 			virtual ~VulkanIndexBuffer() override;
 		public:
 			VkBuffer getBuffer();

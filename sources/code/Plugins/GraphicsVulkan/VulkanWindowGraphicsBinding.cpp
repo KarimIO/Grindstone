@@ -8,10 +8,10 @@
 #endif
 
 #include "VulkanWindowGraphicsBinding.hpp"
-#include "VulkanGraphicsWrapper.hpp"
+#include "VulkanCore.hpp"
 #include "VulkanFormat.hpp"
 #include "VulkanCommandBuffer.hpp"
-#include "../Window/Win32Window.hpp"
+#include <Common/Window/Win32Window.hpp>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -27,7 +27,7 @@ namespace Grindstone {
 			surfaceCreateInfo.pNext = VK_NULL_HANDLE;
 			surfaceCreateInfo.flags = 0;
 
-			if (vkCreateWin32SurfaceKHR(VulkanGraphicsWrapper::get().getInstance(), &surfaceCreateInfo, nullptr, &surface_) != VK_SUCCESS)
+			if (vkCreateWin32SurfaceKHR(VulkanCore::get().getInstance(), &surfaceCreateInfo, nullptr, &surface_) != VK_SUCCESS)
 				return false;
 #elif defined(VK_USE_PLATFORM_XLIB_KHR)
 			VkXlibSurfaceCreateInfoKHR surfaceCreateInfo;
@@ -46,7 +46,7 @@ namespace Grindstone {
 		}
 
 		VulkanWindowGraphicsBinding::~VulkanWindowGraphicsBinding() {
-			auto gw = VulkanGraphicsWrapper::get();
+			auto gw = VulkanCore::get();
 			
 			// Delete rt imageview
 			vkDestroySwapchainKHR(gw.getDevice(), swap_chain_, nullptr);
@@ -133,7 +133,7 @@ namespace Grindstone {
 
 
 		void VulkanWindowGraphicsBinding::createSyncObjects() {
-			auto device = VulkanGraphicsWrapper::get().getDevice();
+			auto device = VulkanCore::get().getDevice();
 
 			image_available_semaphores_.resize(max_frames_in_flight_);
 			render_finished_semaphores_.resize(max_frames_in_flight_);
@@ -158,7 +158,7 @@ namespace Grindstone {
 		}
 
 		void VulkanWindowGraphicsBinding::presentCommandBuffer(CommandBuffer** buffers, uint32_t num_buffers) {
-			auto vkgw = VulkanGraphicsWrapper::get();
+			auto vkgw = VulkanCore::get();
 			auto device = vkgw.getDevice();
 			auto graphics_queue = vkgw.graphics_queue_;
 			auto present_queue = vkgw.present_queue_;
@@ -214,8 +214,8 @@ namespace Grindstone {
 		}
 
 		void VulkanWindowGraphicsBinding::createSwapChain() {
-			auto physical_device = VulkanGraphicsWrapper::get().getPhysicalDevice();
-			auto device = VulkanGraphicsWrapper::get().getDevice();
+			auto physical_device = VulkanCore::get().getPhysicalDevice();
+			auto device = VulkanCore::get().getDevice();
 
 			SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physical_device);
 
@@ -239,7 +239,7 @@ namespace Grindstone {
 			createInfo.imageArrayLayers = 1;
 			createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-			QueueFamilyIndices indices = VulkanGraphicsWrapper::get().findQueueFamilies(physical_device);
+			QueueFamilyIndices indices = VulkanCore::get().findQueueFamilies(physical_device);
 			uint32_t queueFamilyIndices[] = { indices.graphicsFamily, indices.presentFamily };
 
 			if (indices.graphicsFamily != indices.presentFamily) {
