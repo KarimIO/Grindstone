@@ -88,7 +88,8 @@ namespace Grindstone {
 
 			virtual void waitUntilIdle() = 0;
 
-			virtual void bindTextureBinding(TextureBinding*) = 0;
+			virtual void bindTexture(TextureBinding*) = 0;
+			virtual void bindPipeline(Pipeline* pipeline) = 0;
 			virtual void bindVertexArrayObject(VertexArrayObject*) = 0;
 			virtual	void drawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) = 0;
 			virtual void drawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) = 0;

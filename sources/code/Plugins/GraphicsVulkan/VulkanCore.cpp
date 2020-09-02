@@ -73,7 +73,7 @@ namespace Grindstone {
 		VulkanCore *VulkanCore::graphics_wrapper_ = nullptr;
 
 		bool VulkanCore::initialize(Core::CreateInfo& ci) {
-			api_type_ = GraphicsAPIType::Vulkan;
+			api_type_ = API::Vulkan;
 			graphics_wrapper_ = this;
 			debug_ = ci.debug;
 			primary_window_ = ci.window;
@@ -597,8 +597,12 @@ namespace Grindstone {
 			std::cout << "VulkanCore::clear is not used.\n";
 			assert(false);
 		}
-		void VulkanCore::bindTextureBinding(TextureBinding *) {
-			std::cout << "VulkanCore::bindTextureBinding is not used.\n";
+		void VulkanCore::bindTexture(TextureBinding *) {
+			std::cout << "VulkanCore::bindTexture is not used.\n";
+			assert(false);
+		}
+		void VulkanCore::bindPipeline(Pipeline*) {
+			std::cout << "VulkanCore::bindPipeline is not used.\n";
 			assert(false);
 		}
 		void VulkanCore::bindVertexArrayObject(VertexArrayObject *) {

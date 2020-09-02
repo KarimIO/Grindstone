@@ -72,7 +72,8 @@ namespace Grindstone {
 
 			virtual void waitUntilIdle() override;
 
-			virtual void bindTextureBinding(TextureBinding *) override;
+			virtual void bindTexture(TextureBinding *) override;
+			virtual void bindPipeline(Pipeline* pipeline) override;
 			virtual void bindVertexArrayObject(VertexArrayObject *) override;
 			virtual void drawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) override;
 			virtual void drawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) override;

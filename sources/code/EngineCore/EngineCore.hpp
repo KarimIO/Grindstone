@@ -18,13 +18,16 @@ namespace Grindstone {
         ~EngineCore();
         void run();
         void registerGraphicsCore(GraphicsAPI::Core*);
+        virtual void registerInputManager(Input::Interface*);
+        virtual Input::Interface* getInputManager();
         virtual SceneManager* getSceneManager();
         virtual ECS::Core* getEcsCore();
         void addWindow(Window* win);
-    private:
         std::vector<Window *> windows_;
+    private:
         SceneManager *scene_manager_;
         GraphicsAPI::Core* graphics_core_;
+        Input::Interface* input_manager_;
         ECS::Core* ecs_core_;
         Plugins::Manager* plugin_manager_;
         bool should_close_ = false;

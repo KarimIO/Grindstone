@@ -304,9 +304,14 @@ namespace Grindstone {
 			glColorMask((GLboolean)(mask & ColorMask::Red), (GLboolean)(mask & ColorMask::Blue), (GLboolean)(mask & ColorMask::Green), (GLboolean)(mask & ColorMask::Alpha));
 		}
 
-		void GLCore::bindTextureBinding(TextureBinding *binding) {
-			GLTextureBinding *b = (GLTextureBinding *)binding;
+		void GLCore::bindTexture(TextureBinding* binding) {
+			GLTextureBinding* b = (GLTextureBinding*)binding;
 			b->bind();
+		}
+
+		void GLCore::bindPipeline(Pipeline* pipeline) {
+			GLPipeline* p = (GLPipeline*)pipeline;
+			p->bind();
 		}
 
 		void GLCore::bindVertexArrayObject(VertexArrayObject *vao) {

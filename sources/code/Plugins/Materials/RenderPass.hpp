@@ -2,8 +2,8 @@
 
 namespace Grindstone {
     namespace Renderer {
-        class RenderPass {
+        struct RenderPass {
 
-        };
-    }
-}
+        }; // struct RenderPass
+	} // namespace Renderer
+} // namespace Grindstone

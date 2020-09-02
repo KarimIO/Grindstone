@@ -48,7 +48,7 @@ namespace Grindstone {
 				uint32_t vertex_bindings_count;
 			};
 
-			virtual void Bind() {};
+			virtual void bind() {};
 			virtual ~Pipeline() {}
 		};
 	}

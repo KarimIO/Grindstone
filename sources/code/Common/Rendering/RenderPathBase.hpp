@@ -7,6 +7,7 @@ namespace Grindstone {
         class RenderPathBase {
         public:
             virtual ~RenderPathBase() {};
+            virtual void initialize() = 0;
             virtual void render() = 0;
             virtual void resizeViewport(uint32_t x, uint32_t y) = 0;
         }; // class RenderPathBase

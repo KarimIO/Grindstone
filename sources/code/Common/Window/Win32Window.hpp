@@ -4,13 +4,16 @@
 
 #include "Window.hpp"
 #include <windows.h>
+#include <Common/Input.hpp>
 
 class InputInterface;
 
 namespace Grindstone {
+	class EngineCore;
+
 	class Win32Window : public Window {
 	public:
-		virtual bool initialize(CreateInfo create_info) override;
+		virtual bool initialize(CreateInfo& create_info) override;
 		virtual void show() override;
 		virtual bool shouldClose() override;
 		virtual bool handleEvents() override;
@@ -43,7 +46,7 @@ namespace Grindstone {
 		FullscreenMode fullscreen_mode_;
 		DWORD style_;
 		DWORD ex_style_;
-		InputInterface* input_;
+		EngineCore* engine_core_ = nullptr;
 		bool should_close_;
 	};
 };

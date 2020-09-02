@@ -58,8 +58,7 @@ Window* Plugins::Interface::createWindow(Window::CreateInfo& ci) {
 	return nullptr;
 }
 
-Display Plugins::Interface::getMainDisplay()
-{
+Display Plugins::Interface::getMainDisplay() {
 	return fn_get_main_display_();
 }
 

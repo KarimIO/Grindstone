@@ -12,6 +12,14 @@ namespace Grindstone {
 
     struct StaticMesh {
         GraphicsAPI::VertexArrayObject* vao_ = nullptr;
+
+        struct BoundingData {
+            float radius_;
+            float min_[3];
+            float max_[3];
+        } bounding_;
+
         // Submeshes
+        std::vector<StaticSubmesh> submeshes_;
     };
 }

@@ -7,6 +7,8 @@ class InputInterface;
 
 
 namespace Grindstone {
+	class EngineCore;
+
 	class Window {
 	public:
 		enum class FullscreenMode {
@@ -16,7 +18,7 @@ namespace Grindstone {
 		};
 
 		struct CreateInfo {
-			InputInterface* input_interface;
+			EngineCore* engine_core = nullptr;
 			FullscreenMode fullscreen;
 			Grindstone::Display display;
 			unsigned int width;
@@ -62,6 +64,6 @@ namespace Grindstone {
 	protected:
 		Grindstone::GraphicsAPI::WindowGraphicsBinding* windows_graphics_binding_;
 	private:
-		virtual bool initialize(CreateInfo create_info) = 0;
+		virtual bool initialize(CreateInfo& create_info) = 0;
 	};
 };

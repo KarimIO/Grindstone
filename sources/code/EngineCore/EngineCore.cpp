@@ -58,6 +58,14 @@ void EngineCore::registerGraphicsCore(GraphicsAPI::Core*gw) {
     graphics_core_ = gw;
 }
 
+void EngineCore::registerInputManager(Input::Interface* manager) {
+    input_manager_ = manager;
+}
+
+Input::Interface* EngineCore::getInputManager() {
+    return input_manager_;
+}
+
 SceneManager* EngineCore::getSceneManager() {
     return scene_manager_;
 }

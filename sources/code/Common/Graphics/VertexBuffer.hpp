@@ -76,8 +76,12 @@ namespace Grindstone {
 			Color,
 			TexCoord0,
 			TexCoord1,
+			TexCoord2,
+			TexCoord3,
 			Normal,
 			Tangent,
+			BlendWeights,
+			BlendIndices,
 			Other
 		};
 

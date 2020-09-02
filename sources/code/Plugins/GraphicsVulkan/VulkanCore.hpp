@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Common/Graphics/GraphicsWrapper.hpp>
+#include <Common/Graphics/Core.hpp>
 #include <Common/Graphics/DLLDefs.hpp>
 #include <vulkan/vulkan.h>
 
@@ -112,7 +112,8 @@ namespace Grindstone {
 
 			// Unused
 			virtual void clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) override;
-			virtual void bindTextureBinding(TextureBinding *) override;
+			virtual void bindTexture(TextureBinding*) override;
+			virtual void bindPipeline(Pipeline*) override;
 			virtual void bindVertexArrayObject(VertexArrayObject *) override;
 			virtual	void drawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) override;
 			virtual void drawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) override;

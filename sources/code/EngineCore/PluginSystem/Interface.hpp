@@ -2,6 +2,7 @@
 
 #include "../pch.hpp"
 #include <Common/Window/Window.hpp>
+#include <Plugins/InputSystem/InputSystem.hpp>
 #include "../ECS/Core.hpp"
 
 namespace Grindstone {

@@ -1,10 +1,11 @@
 #include "pch.hpp"
 
 #include <EngineCore/PluginSystem/Interface.hpp>
-#include <Common/Graphics/GraphicsWrapper.hpp>
+#include <Common/Graphics/Core.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/ECS/System.hpp>
 #include <EngineCore/BasicComponents.hpp>
+#include <Plugins/Renderables3D/StaticMeshComponent.hpp>
 
 using namespace Grindstone;
 
@@ -37,15 +38,29 @@ extern "C" {
     APP_API void initializeModule(Plugins::Interface* plugin_interface) {
         // Load engine plugins
         // plugin_interface->loadPluginCritical("ScriptCSharp");
-        // plugin_interface->loadPluginCritical("PluginGraphicsOpenGL");
+
+        bool use_vulkan = true;
+        if (!use_vulkan) {
+            plugin_interface->loadPluginCritical("PluginGraphicsOpenGL");
+        }
+        else {
+            plugin_interface->loadPluginCritical("PluginGraphicsVulkan");
+        }
+        
+        plugin_interface->loadPluginCritical("PluginInputSystem");
+        /*
+        plugin_interface->loadPluginCritical("PluginMaterials");
+        plugin_interface->loadPluginCritical("PluginRenderables3D");
+        plugin_interface->loadPluginCritical("PluginRenderingDeferred");
         plugin_interface->loadPluginCritical("PluginCamera");
-        plugin_interface->loadPluginCritical("PluginGraphicsVulkan");
+        */
 
         Window::CreateInfo win_ci;
         win_ci.fullscreen = Window::FullscreenMode::Windowed;
         win_ci.title = "Sandbox";
         win_ci.width = 800;
         win_ci.height = 600;
+        win_ci.engine_core = plugin_interface->getEngineCore();
         plugin_interface->enumerateDisplays(&win_ci.display);
         auto win = plugin_interface->createWindow(win_ci);
 
@@ -73,9 +88,14 @@ extern "C" {
         // Load custom game plugins
 
         auto scene = plugin_interface->getEngineCore()->getSceneManager()->addEmptyScene("My Scene");
+
         ECS::Entity entity = scene->getECS()->createEntity();
         scene->getECS()->createComponent(entity, "Transform");
-        scene->getECS()->createComponent(entity, "Camera");
+        // scene->getECS()->createComponent(entity, "Camera");
+
+        ECS::Entity entity2 = scene->getECS()->createEntity();
+        scene->getECS()->createComponent(entity2, "Transform");
+        // StaticMesh* mesh = (StaticMesh*)scene->getECS()->createComponent(entity2, "StaticMesh");
     }
 
     APP_API void releaseModule(Plugins::Interface* plugin_interface) {

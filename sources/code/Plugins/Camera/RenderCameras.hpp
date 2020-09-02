@@ -9,10 +9,11 @@ using namespace Grindstone;
 class CameraRenderingSystem : public ECS::ISystem {
 public:
     CameraRenderingSystem(Scene* s);
-    void setGraphicsCore(GraphicsAPI::Core* core);
+    void setGraphicsCore(GraphicsAPI::Core* core, Window* win);
     virtual void update() override;
 private:
     ECS::ComponentArray<CameraComponent>& camera_array_;
     ECS::ComponentArray<TransformComponent>& transform_array_;
     GraphicsAPI::Core* graphics_core_;
+    Window* window_;
 };

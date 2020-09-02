@@ -202,7 +202,7 @@ namespace Grindstone {
 				throw std::runtime_error("failed to create graphics pipeline!");
 			}
 
-			delete vads;
+			delete[] vads;
 
 			for (uint32_t i = 0; i < ci.shaderStageCreateInfoCount; ++i) {
 				vkDestroyShaderModule(VulkanCore::get().getDevice(), shaderStages[i].module, nullptr);

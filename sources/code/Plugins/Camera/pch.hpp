@@ -1,11 +1,11 @@
 #pragma once
 
 #ifdef _WIN32
-    #ifdef GRAPHICS_OPENGL
-        #define GRAPHICS_OPENGL_API __declspec(dllexport)
+    #ifdef CAMERA_DLL
+        #define CAMERA_API __declspec(dllexport)
     #else
-        #define GRAPHICS_OPENGL_API __declspec(dllimport)
+        #define CAMERA_API __declspec(dllimport)
     #endif
 #else
-    #define GRAPHICS_OPENGL_API
+    #define CAMERA_DLL
 #endif
