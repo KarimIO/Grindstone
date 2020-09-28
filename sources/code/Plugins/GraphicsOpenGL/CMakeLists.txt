@@ -8,7 +8,7 @@ set(GL_WINDOW_SOURCES ${COMMON_DIR}/Window/Window.cpp)
 set(GL_WINDOW_HEADERS ${COMMON_DIR}/Window/Window.hpp)
 set(GL_DISPLAY_SOURCES ${COMMON_DIR}/Display/Display.cpp)
 set(GL_DISPLAY_HEADERS ${COMMON_DIR}/Display/Display.hpp)
-set(GL_COMMON_HEADERS ${GRAPHICS_DIR}/DepthTarget.hpp ${GRAPHICS_DIR}/RenderTarget.hpp ${GRAPHICS_DIR}/CommandBuffer.hpp ${GRAPHICS_DIR}/Formats.hpp ${GRAPHICS_DIR}/Formats.cpp ${GRAPHICS_DIR}/VertexArrayObject.hpp ${GRAPHICS_DIR}/Framebuffer.hpp ${GRAPHICS_DIR}/Pipeline.hpp ${GRAPHICS_DIR}/GraphicsWrapper.hpp ${GRAPHICS_DIR}/IndexBuffer.hpp ${GRAPHICS_DIR}/RenderPass.hpp ${GRAPHICS_DIR}/Texture.hpp ${GRAPHICS_DIR}/UniformBuffer.hpp ${GRAPHICS_DIR}/VertexBuffer.hpp ${GRAPHICS_DIR}/WindowGraphicsBinding.hpp)
+set(GL_COMMON_HEADERS ${GRAPHICS_DIR}/DepthTarget.hpp ${GRAPHICS_DIR}/RenderTarget.hpp ${GRAPHICS_DIR}/CommandBuffer.hpp ${GRAPHICS_DIR}/Formats.hpp ${GRAPHICS_DIR}/Formats.cpp ${GRAPHICS_DIR}/VertexArrayObject.hpp ${GRAPHICS_DIR}/Framebuffer.hpp ${GRAPHICS_DIR}/Pipeline.hpp ${GRAPHICS_DIR}/Core.hpp ${GRAPHICS_DIR}/IndexBuffer.hpp ${GRAPHICS_DIR}/RenderPass.hpp ${GRAPHICS_DIR}/Texture.hpp ${GRAPHICS_DIR}/UniformBuffer.hpp ${GRAPHICS_DIR}/VertexBuffer.hpp ${GRAPHICS_DIR}/WindowGraphicsBinding.hpp)
 
 set(GL_OBJ_SOURCES ${GL_OBJ_SOURCES} GLWindowGraphicsBinding.cpp)
 set(GL_OBJ_HEADERS ${GL_OBJ_HEADERS} GLWindowGraphicsBinding.hpp)

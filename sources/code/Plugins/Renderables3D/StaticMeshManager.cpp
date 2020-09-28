@@ -69,6 +69,7 @@ namespace Grindstone {
 
 	bool StaticMeshManager::processMeshV1(char* offset, size_t file_size) {
 		GraphicsAPI::Core* graphics_core;
+		MaterialManager* material_manager;
 		StaticMesh mesh;
 
 		if (file_size < sizeof(ModelFormatHeader::V1) + 4) {
@@ -153,7 +154,7 @@ namespace Grindstone {
 		offset = static_cast<char*>(offset) + size;
 
 		std::vector<MaterialReference> material_references;
-		materialReferences.resize(mesh_header.num_materials_);
+		material_references.resize(mesh_header.num_materials_);
 
 		std::vector<Material *> materials;
 		materials.resize(mesh_header.num_materials_);
