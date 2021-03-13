@@ -13,7 +13,7 @@ namespace Grindstone {
 		class Manager {
 			friend class Interface;
 		public:
-			Manager(EngineCore* engine_core, ECS::Core* ecs_core);
+			Manager(EngineCore* engineCore, ECS::Core* ecsCore);
 			~Manager();
 			
 			bool load(const char* name);
@@ -21,9 +21,9 @@ namespace Grindstone {
 
 			void remove(const char* name);
 		private:
-			Interface interface_;
-			EngineCore *engine_core_;
-			std::map<std::string, Utilities::Modules::Handle> plugins_;
+			Interface pluginInterface;
+			EngineCore *engineCore;
+			std::map<std::string, Utilities::Modules::Handle> plugins;
 		};
 	}
 }

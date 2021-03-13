@@ -11,7 +11,7 @@ public:
 	static spdlog::logger *get();
 
 private:
-	static spdlog::logger *debug_logger_;
+	static spdlog::logger *debugLogger;
 };
 
 // Client log macros

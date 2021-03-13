@@ -11,8 +11,7 @@ namespace fs = std::filesystem;
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/common.h"
 
-spdlog::logger *Logger::debug_logger_;
-
+spdlog::logger *Logger::debugLogger;
 
 class MySink : public spdlog::sinks::base_sink<std::mutex> {
 protected:
@@ -47,10 +46,10 @@ void Logger::init(std::string path) {
 	auto my_sink = std::make_shared<MySink>();
 	my_sink->set_level(spdlog::level::trace);
 
-	debug_logger_ = new spdlog::logger("Debug Logger", { console_sink, file_sink, my_sink });
-	debug_logger_->set_level(spdlog::level::trace);
+	debugLogger = new spdlog::logger("Debug Logger", { console_sink, file_sink, my_sink });
+	debugLogger->set_level(spdlog::level::trace);
 }
 
 spdlog::logger *Logger::get() {
-	return debug_logger_;
+	return debugLogger;
 }

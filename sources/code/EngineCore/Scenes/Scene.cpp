@@ -2,11 +2,19 @@
 #include <iostream>
 
 #include "Scene.hpp"
-#include <EngineCore/ECS/Core.hpp>
 
 using namespace Grindstone;
 
-Scene::Scene() : ecs_(this) {
+Scene::Scene() {
+}
+
+ECS::Entity Scene::createEntity() {
+	return registry.create();
+}
+
+bool Scene::attachComponent(ECS::Entity entity, const char* componentName) {
+	auto componentFactory = componentFactories[componentName];
+	componentFactory(entity);
 }
 
 bool Scene::load(const char* path) {
@@ -14,10 +22,10 @@ bool Scene::load(const char* path) {
 }
 
 bool Scene::loadFromText(const char* path) {
-	path_ = path;
+	this->path = path;
 
 	// Get from text
-	name_ = path;
+	this->name = path;
 
 	// Register Systems
 	//ecs_.registerSystem("PhysicsSystem");
@@ -34,9 +42,9 @@ bool Scene::loadFromText(const char* path) {
 
 	// Load Entities with components
 	// - For each Entity
-	ECS::Entity entity = ecs_.createEntity();
+	Entity entity = createEntity();
 	// --- For each component
-	ecs_.createComponent(entity, "Transform");
+	attachComponent(entity, "Transform");
 
 	/*
 	ecs_.createComponent("Rotation");
@@ -56,10 +64,9 @@ bool Scene::loadFromBinary(const char* path) {
 	return true;
 }
 
-ECS::Controller* Scene::getECS() {
-	return &ecs_;
+entt::registry* Scene::getEntityRegistry() {
+	return &registry;
 }
 
 void Scene::update() {
-	ecs_.update();
 }

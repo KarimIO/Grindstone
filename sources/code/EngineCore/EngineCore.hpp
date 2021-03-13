@@ -9,9 +9,9 @@ namespace Grindstone {
     class EngineCore {
     public:
         struct CreateInfo {
-            bool is_editor_ = false;
-            const char* application_module_name_ = nullptr;
-            const char* application_title_ = nullptr;
+            bool isEditor = false;
+            const char* applicationModuleName = nullptr;
+            const char* applicationTitle = nullptr;
         };
 
         bool initialize(CreateInfo& ci);
@@ -23,13 +23,13 @@ namespace Grindstone {
         virtual SceneManager* getSceneManager();
         virtual ECS::Core* getEcsCore();
         void addWindow(Window* win);
-        std::vector<Window *> windows_;
+        std::vector<Window *> windows;
     private:
-        SceneManager *scene_manager_;
-        GraphicsAPI::Core* graphics_core_;
-        Input::Interface* input_manager_;
-        ECS::Core* ecs_core_;
-        Plugins::Manager* plugin_manager_;
-        bool should_close_ = false;
+        SceneManager *sceneManager;
+        GraphicsAPI::Core* graphicsCore;
+        Input::Interface* inputManager;
+        ECS::Core* ecsCore;
+        Plugins::Manager* pluginManager;
+        bool shouldClose = false;
     };
 }

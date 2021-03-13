@@ -4,50 +4,50 @@
 
 using namespace Grindstone::Profiler;
 
-Manager::Manager() : current_session_(nullptr), profile_count_(0) {}
+Manager::Manager() : currentSession(nullptr), profileCount(0) {}
 
 void Manager::beginSession(const std::string& name, const std::string& filepath) {
-	output_stream_.open(filepath);
+	outputStream.open(filepath);
 	writeHeader();
-	current_session_ = new InstrumentationSession{ name };
+	currentSession = new InstrumentationSession{ name };
 }
 
 void Manager::endSession() {
 	writeFooter();
-	output_stream_.close();
-	delete current_session_;
-	current_session_ = nullptr;
-	profile_count_ = 0;
+	outputStream.close();
+	delete currentSession;
+	currentSession = nullptr;
+	profileCount = 0;
 }
 
 void Manager::writeProfile(const Result& result) {
-	if (profile_count_++ > 0)
-		output_stream_ << ",";
+	if (profileCount++ > 0)
+		outputStream << ",";
 
-	std::string name = result.Name;
+	std::string name = result.name;
 	std::replace(name.begin(), name.end(), '"', '\'');
 
-	output_stream_ << "{";
-	output_stream_ << "\"cat\":\"function\",";
-	output_stream_ << "\"dur\":" << (result.End - result.Start) << ',';
-	output_stream_ << "\"name\":\"" << name << "\",";
-	output_stream_ << "\"ph\":\"X\",";
-	output_stream_ << "\"pid\":0,";
-	output_stream_ << "\"tid\":" << result.ThreadID << ",";
-	output_stream_ << "\"ts\":" << result.Start;
-	output_stream_ << "}";
+	outputStream << "\t{";
+	outputStream << "\t\t\"cat\":\"function\",";
+	outputStream << "\t\t\"dur\":" << (result.end - result.start) << ',';
+	outputStream << "\t\t\"name\":\"" << name << "\",";
+	outputStream << "\t\t\"ph\":\"X\",";
+	outputStream << "\t\t\"pid\":0,";
+	outputStream << "\t\t\"tid\":" << result.threadID << ",";
+	outputStream << "\t\t\"ts\":" << result.start;
+	outputStream << "\t}";
 
-	output_stream_.flush();
+	outputStream.flush();
 }
 
 void Manager::writeHeader() {
-	output_stream_ << "{\"otherData\": {},\"traceEvents\":[";
-	output_stream_.flush();
+	outputStream << "{\"otherData\": {},\"traceEvents\":[";
+	outputStream.flush();
 }
 
 void Manager::writeFooter() {
-	output_stream_ << "]}";
-	output_stream_.flush();
+	outputStream << "]}";
+	outputStream.flush();
 }
 
 Manager& Manager::get() {
@@ -55,12 +55,12 @@ Manager& Manager::get() {
 	return instance;
 }
 
-Timer::Timer(const char *name) : name_(name), stopped_(false) {
+Timer::Timer(const char *name) : name(name), stopped(false) {
 	start_time_ = std::chrono::high_resolution_clock::now();
 }
 
 Timer::~Timer() {
-	if (!stopped_)
+	if (!stopped)
 		stop();
 }
 
@@ -71,7 +71,7 @@ void Timer::stop() {
 	long long end = std::chrono::time_point_cast<std::chrono::microseconds>(end_time).time_since_epoch().count();
 
 	uint32_t threadID = (uint32_t)std::hash<std::thread::id>{}(std::this_thread::get_id());
-	Manager::get().writeProfile({ name_, start, end, threadID });
+	Manager::get().writeProfile({ name, start, end, threadID });
 
-	stopped_ = true;
+	stopped = true;
 }

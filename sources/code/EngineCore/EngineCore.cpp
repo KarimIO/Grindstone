@@ -4,6 +4,7 @@
 #include "Profiling.hpp"
 #include "BasicComponents.hpp"
 #include "ECS/ComponentArray.hpp"
+#include <entt/entt.hpp>
 
 using namespace Grindstone;
 
@@ -14,66 +15,65 @@ ECS::IComponentArray* createTransformComponentArray() {
 bool EngineCore::initialize(CreateInfo& create_info) {
     Logger::init("../log/output.log");
     GRIND_PROFILE_BEGIN_SESSION("Loading", "../log/grind-profile-load.json");
-    GRIND_LOG("Initializing {0}...", create_info.application_title_);
+    GRIND_LOG("Initializing {0}...", create_info.applicationTitle);
 
     // Load core (Logging, ECS and Plugin Manager)
-    scene_manager_ = new SceneManager(this);
-    ecs_core_ = new ECS::Core();
-    plugin_manager_ = new Plugins::Manager(this, ecs_core_);
+    sceneManager = new SceneManager(this);
+    pluginManager = new Plugins::Manager(this, ecsCore);
 
-    ecs_core_->registerComponentType("Transform", &createTransformComponentArray);
+    ecsCore->registerComponentType("Transform", &createTransformComponentArray);
 
     // Load Game
-    if (create_info.application_module_name_) {
-        plugin_manager_->loadCritical(create_info.application_module_name_);
+    if (create_info.applicationModuleName) {
+        pluginManager->loadCritical(create_info.applicationModuleName);
     }
 
-    GRIND_LOG("{0} Initialized.", create_info.application_title_);
+    GRIND_LOG("{0} Initialized.", create_info.applicationTitle);
     GRIND_PROFILE_END_SESSION();
 
     return true;
 }
 
 void EngineCore::run() {
-    while (!should_close_) {
-        for (auto s : scene_manager_->scenes_) {
-            s.second->update();
+    while (!shouldClose) {
+        for (auto scene : sceneManager->scenes) {
+            scene.second->update();
         }
 
-        for (auto w : windows_) {
-            w->immediateSwapBuffers();
-            w->handleEvents();
+        for (auto window : windows) {
+            window->immediateSwapBuffers();
+            window->handleEvents();
         }
     }
 }
 
 EngineCore::~EngineCore() {
     GRIND_LOG("Closing...");
-    delete plugin_manager_;
-    delete ecs_core_;
+    delete pluginManager;
+    delete ecsCore;
     GRIND_LOG("Closed.");
 }
 
 void EngineCore::registerGraphicsCore(GraphicsAPI::Core*gw) {
-    graphics_core_ = gw;
+    graphicsCore = gw;
 }
 
 void EngineCore::registerInputManager(Input::Interface* manager) {
-    input_manager_ = manager;
+    inputManager = manager;
 }
 
 Input::Interface* EngineCore::getInputManager() {
-    return input_manager_;
+    return inputManager;
 }
 
 SceneManager* EngineCore::getSceneManager() {
-    return scene_manager_;
+    return sceneManager;
 }
 
 ECS::Core* EngineCore::getEcsCore() {
-    return ecs_core_;
+    return ecsCore;
 }
 
 void EngineCore::addWindow(Window* win) {
-    windows_.push_back(win);
+    windows.push_back(win);
 }

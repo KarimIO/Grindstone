@@ -9,7 +9,7 @@
 
 namespace Grindstone {
 	namespace ECS {
-		using SystemFactory = ISystem*(*)(Scene*s);
+		using SystemFactory = ISystem*(*)(Scene*);
 		using ComponentFactory = IComponentArray*(*)();
 		class Core {
 		public:
@@ -26,8 +26,8 @@ namespace Grindstone {
 			IComponentArray* createComponentArray(size_t i);
 			ISystem* createSystem(size_t i, Scene* scene);
 		private:
-			std::unordered_map<std::string, SystemFactory> system_factories_;
-			std::unordered_map<std::string, ComponentFactory> component_array_factories_;
+			std::unordered_map<std::string, SystemFactory> systemFactories;
+			std::unordered_map<std::string, ComponentFactory> componentFactories;
 		};
 	}
 }

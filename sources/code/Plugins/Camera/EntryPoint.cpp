@@ -8,6 +8,7 @@ using namespace Grindstone;
 
 Plugins::Interface* g_plugin_interface;
 
+
 ECS::IComponentArray* cameraFactory() {
     return new ECS::ComponentArray<CameraComponent>();
 }

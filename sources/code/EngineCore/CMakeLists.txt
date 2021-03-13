@@ -33,7 +33,11 @@ target_compile_features(EngineCore PRIVATE cxx_std_17)
 target_compile_definitions(EngineCore PUBLIC ENGINE_CORE)
 
 target_include_directories(EngineCore
-    PUBLIC ../ ${DEPS_DIR} ${DEPS_DIR}/spdlog/include/
+    PUBLIC
+    ../
+    ${DEPS_DIR}
+    ${DEPS_DIR}/spdlog/include/
+    ${DEPS_DIR}/entt/src
 )
 
 target_precompile_headers(EngineCore

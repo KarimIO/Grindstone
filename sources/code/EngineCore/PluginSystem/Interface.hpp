@@ -39,13 +39,13 @@ namespace Grindstone {
             virtual void registerSystem(const char* name, ECS::SystemFactory factory);
             virtual void registerComponentType(const char* name, ECS::ComponentFactory factory);
         private:
-            Manager*    manager_ = nullptr;
-            GraphicsAPI::Core* graphics_core_ = nullptr;
-            ECS::Core*  ecs_core_ = nullptr;
-            Grindstone::Window* (*fn_window_factory_)(Grindstone::Window::CreateInfo&) = nullptr;
-            Grindstone::Display(*fn_get_main_display_)() = nullptr;
-            uint8_t (*fn_count_displays_)() = nullptr;
-            void    (*fn_enumerate_displays_)(Grindstone::Display*) = nullptr;
+            Manager*    manager = nullptr;
+            GraphicsAPI::Core* graphicsCore = nullptr;
+            ECS::Core*  ecsCore = nullptr;
+            Grindstone::Window* (*windowFactoryFn)(Grindstone::Window::CreateInfo&) = nullptr;
+            Grindstone::Display(*getMainDisplayFn)() = nullptr;
+            uint8_t (*countDisplaysFn)() = nullptr;
+            void    (*enumerateDisplaysFn)(Grindstone::Display*) = nullptr;
         };
 	}
 }

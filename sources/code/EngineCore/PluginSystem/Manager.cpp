@@ -4,18 +4,18 @@
 
 namespace Grindstone {
 	namespace Plugins {
-		Manager::Manager(EngineCore* engine_core, ECS::Core* core) : interface_(this, core), engine_core_(engine_core) {
+		Manager::Manager(EngineCore* engineCore, ECS::Core* core) : pluginInterface(this, core), engineCore(engineCore) {
 		}
 
 		Manager::~Manager() {
-			for (auto it = plugins_.rbegin(); it != plugins_.rend(); ++it) {
+			for (auto it = plugins.rbegin(); it != plugins.rend(); ++it) {
 				auto handle = it->second;
 				if (handle) {
 					void* f = Grindstone::Utilities::Modules::getFunction(handle, "releaseModule");
 
 					if (f) {
 						auto intf = (void (*)(Interface*))f;
-						intf(&interface_);
+						intf(&pluginInterface);
 					}
 				}
 			}
@@ -28,8 +28,8 @@ namespace Grindstone {
 #endif
 
 			// Return true if plugin already loaded
-			auto it = plugins_.find(path);
-			if (it != plugins_.end()) {
+			auto it = plugins.find(path);
+			if (it != plugins.end()) {
 #ifdef _DEBUG
 				throw std::runtime_error("Module already loaded! This error only exists in debug mode to make sure you don't write useless code.");
 #endif
@@ -39,13 +39,13 @@ namespace Grindstone {
 			auto handle = Grindstone::Utilities::Modules::load(path);
 
 			if (handle) {
-				plugins_[path] = handle;
+				plugins[path] = handle;
 
 				void* f = Grindstone::Utilities::Modules::getFunction(handle, "initializeModule");
 
 				if (f) {
 					auto intf = (void (*)(Interface *))f;
-					intf(&interface_);
+					intf(&pluginInterface);
 
 					return true;
 				}
@@ -61,19 +61,19 @@ namespace Grindstone {
 		}
 
 		void Manager::remove(const char* name) {
-			auto it = plugins_.find(name);
-			if (it != plugins_.end()) {
+			auto it = plugins.find(name);
+			if (it != plugins.end()) {
 				auto handle = it->second;
 				if (handle) {
-					void* f = Grindstone::Utilities::Modules::getFunction(handle, "releaseModule");
+					void* releaseFn = Grindstone::Utilities::Modules::getFunction(handle, "releaseModule");
 
-					if (f) {
-						auto intf = (void (*)(Interface*))f;
-						intf(&interface_);
+					if (releaseFn) {
+						auto intf = (void (*)(Interface*))releaseFn;
+						intf(&pluginInterface);
 					}
 				}
 
-				plugins_.erase(it);
+				plugins.erase(it);
 			}
 		}
 	}

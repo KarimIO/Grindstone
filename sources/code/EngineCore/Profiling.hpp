@@ -8,21 +8,21 @@
 namespace Grindstone {
 	namespace Profiler {
 		struct Result {
-			std::string Name;
-			long long Start, End;
-			uint32_t ThreadID;
+			std::string name;
+			long long start, end;
+			uint32_t threadID;
 		};
 
 		struct InstrumentationSession {
-			std::string Name;
+			std::string name;
 		};
 
 		class Manager {
 		private:
-			InstrumentationSession* current_session_;
-			std::string filepath_;
-			std::ofstream output_stream_;
-			int profile_count_;
+			InstrumentationSession* currentSession;
+			std::string path;
+			std::ofstream outputStream;
+			int profileCount;
 		public:
 			Manager();
 			void beginSession(const std::string& name, const std::string& filepath = "results.json");
@@ -39,9 +39,9 @@ namespace Grindstone {
 			~Timer();
 			void stop();
 		private:
-			const char* name_;
+			const char* name;
 			std::chrono::time_point<std::chrono::high_resolution_clock> start_time_;
-			bool stopped_;
+			bool stopped;
 		};
 	}
 }
