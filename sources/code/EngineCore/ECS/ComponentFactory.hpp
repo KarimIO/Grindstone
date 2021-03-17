@@ -1,10 +1,12 @@
 #pragma once
 
+#include <entt/entt.hpp>
+
+#include "EngineCore/ECS/Entity.hpp"
+using namespace Grindstone;
+
 namespace Grindstone {
 	namespace ECS {
-		class IComponentFactory {
-		public:
-			void* createComponent();
-		};
+		using ComponentFactory = void*(*)(entt::registry& registry, ECS::Entity entity);
 	}
 }

@@ -13,7 +13,7 @@ namespace Grindstone {
 		class Manager {
 			friend class Interface;
 		public:
-			Manager(EngineCore* engineCore, ECS::Core* ecsCore);
+			Manager(EngineCore* engineCore);
 			~Manager();
 			
 			bool load(const char* name);

@@ -4,6 +4,6 @@
 
 namespace Grindstone {
 	namespace ECS {
-		using Entity = entt::entity;
+		using SystemFactory = void(*)(entt::registry&);
 	}
 }

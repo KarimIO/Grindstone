@@ -3,7 +3,7 @@
 using namespace Grindstone;
 
 extern "C" {
-    ENGINE_CORE_API void runEngine(EngineCore::CreateInfo& ci) {
+    ENGINE_CORE_API void createEngine(EngineCore::CreateInfo& ci) {
         try {
             EngineCore core;
             core.initialize(ci);

@@ -1,27 +1,34 @@
+#include "EngineCore/EngineCore.hpp"
+#include "EngineCore/BuildSettings/SceneBuildSettings.hpp"
+#include "SceneLoaderJson.hpp"
 #include "Manager.hpp"
-#include "../EngineCore.hpp"
-#include "../ECS/Core.hpp"
-using namespace Grindstone;
+using namespace Grindstone::SceneManagement;
 
-SceneManager::SceneManager(EngineCore* core) : engine_core_(core) {
+SceneManager::SceneManager(EngineCore* core) : engineCore(core) {}
+
+void SceneManager::loadDefaultScene() {
+	BuildSettings::SceneBuildSettings settings; 
+	const char* defaultPath = settings.getDefaultScene();
+	loadScene(defaultPath);
 }
 
+void SceneManager::update() {
+	for (auto scene : scenes) {
+		scene.second->update();
+	}
+}
 
 Scene* SceneManager::loadScene(const char *path) {
-    auto s = new Scene();
-    s->load(path);
-    scenes_[path] = s;
+	Scene* newScene = new Scene(engineCore->getComponentRegistrar(), engineCore->getSystemRegistrar());
+	SceneLoaderJson sceneLoader(newScene, path);
+	scenes[path] = newScene;
 
-    engine_core_->getEcsCore()->registerController(*s->getECS());
-
-    return s;
+	return newScene;
 }
 
 Scene* SceneManager::addEmptyScene(const char *name) {
-    auto s = new Scene();
-    scenes_[name] = s;
+	Scene* newScene = new Scene(engineCore->getComponentRegistrar(), engineCore->getSystemRegistrar());
+	scenes[name] = newScene;
 
-    engine_core_->getEcsCore()->registerController(*s->getECS());
-
-    return s;
+	return newScene;
 }

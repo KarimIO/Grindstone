@@ -1,11 +1,32 @@
 #pragma once
 
 #include <vector>
-#include <EngineCore/PluginSystem/Manager.hpp>
-#include <EngineCore/ECS/Core.hpp>
-#include <EngineCore/Scenes/Manager.hpp>
 
 namespace Grindstone {
+	namespace GraphicsAPI {
+		class Core;
+	};
+
+	namespace Input {
+		class Interface;
+	};
+
+	namespace Plugins {
+		class Manager;
+	};
+
+    namespace ECS {
+        class ComponentRegistrar;
+        class SystemRegistrar;
+        class Core;
+    };
+
+	namespace SceneManagement {
+		class SceneManager;
+	}
+	
+	class Window;
+
     class EngineCore {
     public:
         struct CreateInfo {
@@ -20,16 +41,19 @@ namespace Grindstone {
         void registerGraphicsCore(GraphicsAPI::Core*);
         virtual void registerInputManager(Input::Interface*);
         virtual Input::Interface* getInputManager();
-        virtual SceneManager* getSceneManager();
-        virtual ECS::Core* getEcsCore();
+        virtual SceneManagement::SceneManager* getSceneManager();
+        virtual ECS::SystemRegistrar* getSystemRegistrar();
+        virtual ECS::ComponentRegistrar* getComponentRegistrar();
         void addWindow(Window* win);
         std::vector<Window *> windows;
     private:
-        SceneManager *sceneManager;
+        Plugins::Manager* pluginManager;
         GraphicsAPI::Core* graphicsCore;
         Input::Interface* inputManager;
+        SceneManagement::SceneManager* sceneManager;
+        ECS::ComponentRegistrar* componentRegistrar;
+        ECS::SystemRegistrar* systemRegistrar;
         ECS::Core* ecsCore;
-        Plugins::Manager* pluginManager;
         bool shouldClose = false;
     };
 }

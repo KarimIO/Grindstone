@@ -12,6 +12,7 @@ target_compile_definitions(ApplicationDLL PUBLIC APP_DLL)
 
 target_include_directories(ApplicationDLL
     PUBLIC ../
+    ${DEPS_DIR}/entt/src
 )
 
 target_precompile_headers(ApplicationDLL

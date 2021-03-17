@@ -4,7 +4,7 @@
 
 namespace Grindstone {
 	namespace Plugins {
-		Manager::Manager(EngineCore* engineCore, ECS::Core* core) : pluginInterface(this, core), engineCore(engineCore) {
+		Manager::Manager(EngineCore* engineCore) : pluginInterface(this), engineCore(engineCore) {
 		}
 
 		Manager::~Manager() {

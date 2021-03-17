@@ -3,7 +3,10 @@
 #include "../pch.hpp"
 #include <Common/Window/Window.hpp>
 #include <Plugins/InputSystem/InputSystem.hpp>
-#include "../ECS/Core.hpp"
+#include "../ECS/ComponentFactory.hpp"
+#include "../ECS/SystemFactory.hpp"
+#include "../ECS/ComponentRegistrar.hpp"
+#include "../ECS/SystemRegistrar.hpp"
 
 namespace Grindstone {
     class EngineCore;
@@ -17,12 +20,11 @@ namespace Grindstone {
 
         class ENGINE_CORE_API Interface {
         public:
-            Interface(Manager* manager, ECS::Core* core);
+            Interface(Manager* manager);
 
 			virtual void addWindow(Window* win);
             virtual EngineCore* getEngineCore();
             virtual GraphicsAPI::Core* getGraphicsCore();
-            virtual ECS::Core* getEcsCore();
             virtual void log(const char* msg);
             virtual bool loadPlugin(const char* name);
             virtual void loadPluginCritical(const char* name);
@@ -41,7 +43,8 @@ namespace Grindstone {
         private:
             Manager*    manager = nullptr;
             GraphicsAPI::Core* graphicsCore = nullptr;
-            ECS::Core*  ecsCore = nullptr;
+            ECS::SystemRegistrar* systemRegistrar = nullptr;
+            ECS::ComponentRegistrar* componentRegistrar = nullptr;
             Grindstone::Window* (*windowFactoryFn)(Grindstone::Window::CreateInfo&) = nullptr;
             Grindstone::Display(*getMainDisplayFn)() = nullptr;
             uint8_t (*countDisplaysFn)() = nullptr;

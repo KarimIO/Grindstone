@@ -5,8 +5,8 @@
 #include <Common/Window/Window.hpp>
 using namespace Grindstone;
 
-Plugins::Interface::Interface(Manager* manager, ECS::Core* core) 
-	: manager(manager), ecsCore(core) {
+Plugins::Interface::Interface(Manager* manager) 
+	: manager(manager) {
 }
 
 void Plugins::Interface::addWindow(Window* win) {
@@ -19,10 +19,6 @@ EngineCore* Plugins::Interface::getEngineCore() {
 
 GraphicsAPI::Core* Plugins::Interface::getGraphicsCore() {
 	return graphicsCore;
-}
-
-ECS::Core* Plugins::Interface::getEcsCore() {
-	return ecsCore;
 }
 
 void Plugins::Interface::log(const char* msg) {
@@ -87,12 +83,10 @@ void Plugins::Interface::enumerateDisplays(Display* displays) {
 	}
 }
 
-
-
 void Plugins::Interface::registerSystem(const char* name, ECS::SystemFactory factory) {
-	ecsCore->registerSystem(name, factory);
+	// ecsCore->registerSystem(name, factory);
 }
 
 void Plugins::Interface::registerComponentType(const char* name, ECS::ComponentFactory factory) {
-	ecsCore->registerComponentType(name, factory);
+	// ecsCore->registerComponentType(name, factory);
 }

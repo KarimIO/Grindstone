@@ -4,22 +4,29 @@
 #include <map>
 #include <entt/entt.hpp>
 
-#include "../ECS/Entity.hpp"
+#include "EngineCore/ECS/ComponentRegistrar.hpp"
+#include "EngineCore/ECS/SystemRegistrar.hpp"
+#include "EngineCore/ECS/Entity.hpp"
 
 namespace Grindstone {
-	class Scene {
-	public:
-		Scene();
-		ECS::Entity createEntity();
-		bool attachComponent(ECS::Entity entity, const char* componentName);
-		bool load(const char* path);
-		bool loadFromText(const char* path);
-		bool loadFromBinary(const char* path);
-		virtual entt::registry* getEntityRegistry();
-		void update();
-	private:
-		entt::registry registry;
-		std::string name;
-		std::string path;
-	};
+	namespace ECS {
+		class ComponentRegistrar;
+	}
+
+	namespace SceneManagement {
+		class Scene {
+		public:
+			Scene(ECS::ComponentRegistrar*, ECS::SystemRegistrar*);
+			ECS::Entity createEntity();
+			virtual entt::registry* getEntityRegistry();
+			virtual ECS::ComponentRegistrar* getComponentRegistrar();
+			void update();
+		private:
+			ECS::SystemRegistrar* systemRegistrar;
+			ECS::ComponentRegistrar* componentRegistrar;
+			entt::registry registry;
+			std::string name;
+			std::string path;
+		};
+	}
 }

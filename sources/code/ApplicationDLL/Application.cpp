@@ -2,6 +2,7 @@
 
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <Common/Graphics/Core.hpp>
+#include <EngineCore/Scenes/Scene.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/ECS/System.hpp>
 #include <EngineCore/BasicComponents.hpp>
