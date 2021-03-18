@@ -30,6 +30,11 @@ file(GLOB_RECURSE HEADER_PLUGIN_SYSTEM "${ENGINE_CORE_DIR}/PluginSystem/*.hpp")
 source_group("Plugin System\\Source Files" FILES ${SOURCE_PLUGIN_SYSTEM})
 source_group("Plugin System\\Header Files" FILES ${HEADER_PLUGIN_SYSTEM})
 
+file(GLOB_RECURSE SOURCE_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.cpp")
+file(GLOB_RECURSE HEADER_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.hpp")
+source_group("Reflection\\Source Files" FILES ${SOURCE_REFLECTION})
+source_group("Reflection\\Header Files" FILES ${HEADER_REFLECTION})
+
 file(GLOB_RECURSE SOURCE_COMMON_UTILS ../Common/Utilities/ModuleLoading.cpp)
 file(GLOB_RECURSE HEADER_COMMON_UTILS ../Common/Utilities/ModuleLoading.hpp)
 source_group("Common\\Utilities\\Source Files" FILES ${SOURCE_COMMON_UTILS})
@@ -47,6 +52,7 @@ set(ENGINE_CORE_SOURCES
 	${SOURCE_CORE_COMPONENTS}
 	${SOURCE_CORE_SYSTEMS}
 	${SOURCE_BUILD_SETTINGS}
+	${SOURCE_REFLECTION}
 )
 
 set(ENGINE_CORE_HEADERS
@@ -58,6 +64,7 @@ set(ENGINE_CORE_HEADERS
 	${HEADER_CORE_COMPONENTS}
 	${HEADER_CORE_SYSTEMS}
 	${HEADER_BUILD_SETTINGS}
+	${HEADER_REFLECTION}
 )
 
 add_library(EngineCore MODULE ${ENGINE_CORE_SOURCES} ${ENGINE_CORE_HEADERS})

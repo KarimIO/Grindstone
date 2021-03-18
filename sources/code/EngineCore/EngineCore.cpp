@@ -1,4 +1,7 @@
 #include "pch.hpp"
+
+#include <entt/entt.hpp>
+
 #include "EngineCore.hpp"
 #include "Logger.hpp"
 #include "Profiling.hpp"
@@ -11,7 +14,7 @@
 #include "Common/Graphics/Core.hpp"
 #include "Common/Display/DisplayManager.hpp"
 #include "Common/Window/WindowManager.hpp"
-#include <entt/entt.hpp>
+#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 
 using namespace Grindstone;
 
@@ -52,7 +55,7 @@ bool EngineCore::initialize(CreateInfo& create_info) {
 }
 
 void EngineCore::run() {
-	float clearVal[4] = {0.3, 0.6, 0.9, 1};
+	float clearVal[4] = {0.3f, 0.6f, 0.9f, 1.f};
 	while (!shouldClose) {
 		graphicsCore->clear(GraphicsAPI::ClearMode::All, clearVal, 0, 0);
 		sceneManager->update();
