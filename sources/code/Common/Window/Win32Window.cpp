@@ -44,7 +44,7 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 	Input::Interface* input;
 	if (engine_core_) {
 		input = engine_core_->getInputManager();
-		if (!input) {
+		if (input == nullptr) {
 			return DefWindowProc(hwnd, msg, wParam, lParam);
 		}
 	}

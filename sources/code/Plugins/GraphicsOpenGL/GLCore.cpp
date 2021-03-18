@@ -105,6 +105,10 @@ namespace Grindstone {
 			glEnable(GL_DEPTH_TEST);
 			glDepthFunc(GL_LEQUAL);
 
+			unsigned int w, h;
+			primary_window_->getWindowSize(w, h);
+			glViewport(0, 0, w, h);
+
 			return true;
 		}
 

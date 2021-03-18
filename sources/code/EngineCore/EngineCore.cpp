@@ -8,6 +8,9 @@
 #include "CoreSystems/setupCoreSystems.hpp"
 #include "Scenes/Manager.hpp"
 #include "PluginSystem/Manager.hpp"
+#include "Common/Graphics/Core.hpp"
+#include "Common/Display/DisplayManager.hpp"
+#include "Common/Window/WindowManager.hpp"
 #include <entt/entt.hpp>
 
 using namespace Grindstone;
@@ -18,6 +21,9 @@ bool EngineCore::initialize(CreateInfo& create_info) {
 	GRIND_LOG("Initializing {0}...", create_info.applicationTitle);
 
 	// Load core (Logging, ECS and Plugin Manager)
+	pluginManager = new Plugins::Manager(this);
+	pluginManager->load("PluginGraphicsOpenGL");
+
 	systemRegistrar = new ECS::SystemRegistrar();
 	setupCoreSystems(systemRegistrar);
 	componentRegistrar = new ECS::ComponentRegistrar();
@@ -26,6 +32,19 @@ bool EngineCore::initialize(CreateInfo& create_info) {
 
 	sceneManager->loadDefaultScene();
 
+	Window::CreateInfo win_ci;
+	win_ci.fullscreen = Window::FullscreenMode::Windowed;
+	win_ci.title = "Sandbox";
+	win_ci.width = 800;
+	win_ci.height = 600;
+	win_ci.engine_core = this;
+	displayManager->getMainDisplay();
+	auto win = windowManager->createWindow(win_ci);
+
+	GraphicsAPI::Core::CreateInfo graphicsCoreInfo{ win, true };
+	graphicsCore->initialize(graphicsCoreInfo);
+	win->show();
+
 	GRIND_LOG("{0} Initialized.", create_info.applicationTitle);
 	GRIND_PROFILE_END_SESSION();
 
@@ -33,13 +52,11 @@ bool EngineCore::initialize(CreateInfo& create_info) {
 }
 
 void EngineCore::run() {
+	float clearVal[4] = {0.3, 0.6, 0.9, 1};
 	while (!shouldClose) {
+		graphicsCore->clear(GraphicsAPI::ClearMode::All, clearVal, 0, 0);
 		sceneManager->update();
-
-		for (auto window : windows) {
-			window->immediateSwapBuffers();
-			window->handleEvents();
-		}
+		windowManager->updateWindows();
 	}
 }
 
@@ -72,8 +89,4 @@ ECS::ComponentRegistrar* EngineCore::getComponentRegistrar() {
 
 ECS::SystemRegistrar* EngineCore::getSystemRegistrar() {
 	return systemRegistrar;
-}
-
-void EngineCore::addWindow(Window* win) {
-	windows.push_back(win);
 }

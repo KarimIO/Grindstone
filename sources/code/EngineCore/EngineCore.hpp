@@ -26,6 +26,8 @@ namespace Grindstone {
 	}
 	
 	class Window;
+    class DisplayManager;
+    class WindowManager;
 
     class EngineCore {
     public:
@@ -44,16 +46,17 @@ namespace Grindstone {
         virtual SceneManagement::SceneManager* getSceneManager();
         virtual ECS::SystemRegistrar* getSystemRegistrar();
         virtual ECS::ComponentRegistrar* getComponentRegistrar();
-        void addWindow(Window* win);
-        std::vector<Window *> windows;
+    public:
+        DisplayManager* displayManager;
+        WindowManager* windowManager;
     private:
-        Plugins::Manager* pluginManager;
-        GraphicsAPI::Core* graphicsCore;
-        Input::Interface* inputManager;
-        SceneManagement::SceneManager* sceneManager;
-        ECS::ComponentRegistrar* componentRegistrar;
-        ECS::SystemRegistrar* systemRegistrar;
-        ECS::Core* ecsCore;
+        SceneManagement::SceneManager* sceneManager = nullptr;
+        ECS::ComponentRegistrar* componentRegistrar = nullptr;
+        ECS::SystemRegistrar* systemRegistrar = nullptr;
+        Plugins::Manager* pluginManager = nullptr;
+        GraphicsAPI::Core* graphicsCore = nullptr;
+        Input::Interface* inputManager = nullptr;
+        ECS::Core* ecsCore = nullptr;
         bool shouldClose = false;
     };
 }

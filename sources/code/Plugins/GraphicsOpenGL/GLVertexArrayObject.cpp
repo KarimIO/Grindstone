@@ -41,7 +41,7 @@ namespace Grindstone {
 				vbo->bind();
 
 				const auto& layout = vbo->getLayout();
-				for (int j = 0; j < layout.attribute_count; ++j) {
+				for (uint32_t j = 0; j < layout.attribute_count; ++j) {
 					VertexAttributeDescription &layout_element = layout.attributes[j];
 					GLenum vert_format = vertexFormatToOpenGLFormat(layout_element.format);
 					glEnableVertexAttribArray(number_buffers_);

@@ -1,12 +1,9 @@
 #pragma once
 
 #include "../pch.hpp"
-#include <Common/Window/Window.hpp>
-#include <Plugins/InputSystem/InputSystem.hpp>
-#include "../ECS/ComponentFactory.hpp"
-#include "../ECS/SystemFactory.hpp"
-#include "../ECS/ComponentRegistrar.hpp"
-#include "../ECS/SystemRegistrar.hpp"
+#include "EngineCore/ECS/SystemFactory.hpp"
+#include "EngineCore/ECS/ComponentFactory.hpp"
+#include "Common/Window/Window.hpp"
 
 namespace Grindstone {
     class EngineCore;
@@ -15,6 +12,14 @@ namespace Grindstone {
         class Core;
     }
 
+    namespace ECS {
+        class SystemRegistrar;
+        class ComponentRegistrar;
+    }
+
+    class WindowManager;
+    class DisplayManager;
+
 	namespace Plugins {
         class Manager;
 
@@ -22,17 +27,14 @@ namespace Grindstone {
         public:
             Interface(Manager* manager);
 
-			virtual void addWindow(Window* win);
             virtual EngineCore* getEngineCore();
             virtual GraphicsAPI::Core* getGraphicsCore();
             virtual void log(const char* msg);
             virtual bool loadPlugin(const char* name);
             virtual void loadPluginCritical(const char* name);
             virtual void registerGraphicsCore(Grindstone::GraphicsAPI::Core* core);
-            virtual void registerWindowFactory(Grindstone::Window* (*gw)(Grindstone::Window::CreateInfo&));
-            virtual void registerDisplayFunctions(Grindstone::Display(*fn_get_main_display)(),
-            uint8_t(*fn_count_displays)(),
-            void    (*fn_enumerate_displays)(Grindstone::Display*));
+            virtual void registerWindowManager(Grindstone::WindowManager*);
+            virtual void registerDisplayManager(Grindstone::DisplayManager*);
             virtual Window* createWindow(Window::CreateInfo&);
             virtual Display getMainDisplay();
             virtual uint8_t countDisplays();

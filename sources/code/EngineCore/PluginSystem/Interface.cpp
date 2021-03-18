@@ -9,10 +9,6 @@ Plugins::Interface::Interface(Manager* manager)
 	: manager(manager) {
 }
 
-void Plugins::Interface::addWindow(Window* win) {
-	manager->engineCore->addWindow(win);
-}
-
 EngineCore* Plugins::Interface::getEngineCore() {
 	return manager->engineCore;
 }
@@ -38,18 +34,12 @@ void Plugins::Interface::registerGraphicsCore(GraphicsAPI::Core* gw) {
 	manager->engineCore->registerGraphicsCore(gw);
 }
 
-void Plugins::Interface::registerWindowFactory(Window* (*wf)(Window::CreateInfo&)) {
-	windowFactoryFn = wf;
+void Plugins::Interface::registerWindowManager(WindowManager* windowManager) {
+	getEngineCore()->windowManager = windowManager;
 }
 
-void Plugins::Interface::registerDisplayFunctions(
-	Display(*getMainDisplayFn)(),
-	uint8_t(*countDisplaysFn)(),
-	void(*enumerateDisplaysFn)(Display*)
-) {
-	this->getMainDisplayFn = getMainDisplayFn;
-	this->countDisplaysFn = countDisplaysFn;
-	this->enumerateDisplaysFn = enumerateDisplaysFn;
+void Plugins::Interface::registerDisplayManager(DisplayManager* displayManager) {
+	getEngineCore()->displayManager = displayManager;
 }
 
 Window* Plugins::Interface::createWindow(Window::CreateInfo& ci) {

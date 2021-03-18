@@ -1,7 +1,5 @@
 #pragma once
 
-#include <entt/entt.hpp>
-
 #include "EngineCore/ECS/Entity.hpp"
 using namespace Grindstone;
 

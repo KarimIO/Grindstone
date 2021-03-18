@@ -4,10 +4,10 @@ set(GL_CORE_SOURCES ${DEPS_DIR}/GL/gl3w.cpp ${GRAPHICS_DIR}/Formats.cpp GLCore.c
 set(GL_CORE_HEADERS ${DEPS_DIR}/GL/gl3w.h glcorearb.hpp GLCore.hpp)
 set(GL_OBJ_SOURCES GLDepthTarget.cpp GLRenderTarget.cpp GLFramebuffer.cpp GLPipeline.cpp GLTexture.cpp GLVertexArrayObject.cpp GLVertexBuffer.cpp GLIndexBuffer.cpp GLUniformBuffer.cpp)
 set(GL_OBJ_HEADERS GLDepthTarget.hpp GLRenderTarget.hpp GLFramebuffer.hpp GLPipeline.hpp GLTexture.hpp GLVertexArrayObject.hpp GLVertexBuffer.hpp GLIndexBuffer.hpp GLUniformBuffer.hpp)
-set(GL_WINDOW_SOURCES ${COMMON_DIR}/Window/Window.cpp)
-set(GL_WINDOW_HEADERS ${COMMON_DIR}/Window/Window.hpp)
-set(GL_DISPLAY_SOURCES ${COMMON_DIR}/Display/Display.cpp)
-set(GL_DISPLAY_HEADERS ${COMMON_DIR}/Display/Display.hpp)
+set(GL_WINDOW_SOURCES ${COMMON_DIR}/Window/WindowManager.cpp)
+set(GL_WINDOW_HEADERS ${COMMON_DIR}/Window/WindowManager.hpp ${COMMON_DIR}/Window/Window.hpp)
+set(GL_DISPLAY_SOURCES ${COMMON_DIR}/Display/DisplayManager.cpp)
+set(GL_DISPLAY_HEADERS ${COMMON_DIR}/Display/DisplayManager.hpp ${COMMON_DIR}/Display/Display.hpp)
 set(GL_COMMON_HEADERS ${GRAPHICS_DIR}/DepthTarget.hpp ${GRAPHICS_DIR}/RenderTarget.hpp ${GRAPHICS_DIR}/CommandBuffer.hpp ${GRAPHICS_DIR}/Formats.hpp ${GRAPHICS_DIR}/Formats.cpp ${GRAPHICS_DIR}/VertexArrayObject.hpp ${GRAPHICS_DIR}/Framebuffer.hpp ${GRAPHICS_DIR}/Pipeline.hpp ${GRAPHICS_DIR}/Core.hpp ${GRAPHICS_DIR}/IndexBuffer.hpp ${GRAPHICS_DIR}/RenderPass.hpp ${GRAPHICS_DIR}/Texture.hpp ${GRAPHICS_DIR}/UniformBuffer.hpp ${GRAPHICS_DIR}/VertexBuffer.hpp ${GRAPHICS_DIR}/WindowGraphicsBinding.hpp)
 
 set(GL_OBJ_SOURCES ${GL_OBJ_SOURCES} GLWindowGraphicsBinding.cpp)
@@ -44,11 +44,15 @@ target_compile_features(PluginGraphicsOpenGL PRIVATE cxx_std_17)
 target_compile_definitions(PluginGraphicsOpenGL PUBLIC GRAPHICS_OPENGL GRAPHICS_DLL)
 
 target_include_directories(PluginGraphicsOpenGL
-    PUBLIC ${CODE_DIR} ${DEPS_DIR}
+    PUBLIC
+	${CODE_DIR}
+	${DEPS_DIR}
+    ${DEPS_DIR}/entt/src
 )
 
 target_precompile_headers(PluginGraphicsOpenGL
-    PUBLIC pch.hpp)
+    PUBLIC pch.hpp
+)
 
 find_package(OpenGL) 
 target_link_libraries(PluginGraphicsOpenGL ${OPENGL_gl_LIBRARY})

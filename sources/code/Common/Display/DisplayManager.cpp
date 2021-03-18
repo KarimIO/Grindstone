@@ -1,4 +1,4 @@
-#include "Display.hpp"
+#include "DisplayManager.hpp"
 using namespace Grindstone;
 
 #ifdef _WIN32
@@ -24,29 +24,31 @@ BOOL CALLBACK CountDispProc(HMONITOR hMon, HDC dcMon, RECT* pRcMon, LPARAM lPara
 	return TRUE;
 }
 
-Display Displays::getMainDisplay() {
-	return Display();
+Display DisplayManager::getMainDisplay() {
+	Display* displays = new Display[getDisplayCount()];
+	enumerateDisplays(displays);
+
+	return displays[0];
 }
 
-uint8_t Displays::getDisplayCount() {
+uint8_t DisplayManager::getDisplayCount() {
 	uint8_t count = 0;
 	EnumDisplayMonitors(0, 0, CountDispProc, reinterpret_cast<LPARAM>(&count));
 	return count;
 }
 
-void Displays::enumerateDisplays(Display *displays) {
+void DisplayManager::enumerateDisplays(Display *displays) {
 	EnumDisplayMonitors(0, 0, EnumDispProc, reinterpret_cast<LPARAM>(displays));
 }
 #elif defined(__linux__)
-Display Displays::getMainDisplay() {
+Display DisplayManager::getMainDisplay() {
 	return Display();
 }
 
-uint8_t Displays::getDisplayCount() {
+uint8_t DisplayManager::getDisplayCount() {
 	return 0;
 }
 
-void Displays::enumerateDisplays(Display *displays) {
+void DisplayManager::enumerateDisplays(Display *displays) {
 }
-
 #endif

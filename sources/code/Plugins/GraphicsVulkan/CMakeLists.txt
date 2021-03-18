@@ -4,10 +4,10 @@ set(Vk_CORE_SOURCES ${GRAPHICS_DIR}/Formats.cpp VulkanCore.cpp EntryPoint.cpp)
 set(Vk_CORE_HEADERS VulkanCore.hpp)
 set(Vk_OBJ_SOURCES VulkanUtils.cpp VulkanFormat.cpp VulkanDepthTarget.cpp VulkanRenderTarget.cpp VulkanFramebuffer.cpp VulkanPipeline.cpp VulkanTexture.cpp VulkanRenderPass.cpp VulkanVertexBuffer.cpp VulkanIndexBuffer.cpp VulkanUniformBuffer.cpp VulkanCommandBuffer.cpp)
 set(Vk_OBJ_HEADERS VulkanUtils.hpp VulkanFormat.hpp VulkanDepthTarget.hpp VulkanRenderTarget.hpp VulkanFramebuffer.hpp VulkanPipeline.hpp VulkanTexture.hpp VulkanRenderPass.hpp VulkanVertexBuffer.hpp VulkanIndexBuffer.hpp VulkanUniformBuffer.hpp VulkanCommandBuffer.hpp)
-set(Vk_WINDOW_SOURCES ${COMMON_DIR}/Window/Window.cpp)
-set(Vk_WINDOW_HEADERS ${COMMON_DIR}/Window/Window.hpp)
-set(Vk_DISPLAY_SOURCES ${COMMON_DIR}/Display/Display.cpp)
-set(Vk_DISPLAY_HEADERS ${COMMON_DIR}/Display/Display.hpp)
+set(Vk_WINDOW_SOURCES ${COMMON_DIR}/Window/WindowManager.cpp)
+set(Vk_WINDOW_HEADERS ${COMMON_DIR}/Window/WindowManager.hpp ${COMMON_DIR}/Window/Window.hpp)
+set(Vk_DISPLAY_SOURCES ${COMMON_DIR}/Display/DisplayManager.cpp)
+set(Vk_DISPLAY_HEADERS ${COMMON_DIR}/Display/DisplayManager.hpp ${COMMON_DIR}/Display/Display.hpp)
 set(Vk_COMMON_HEADERS ${GRAPHICS_DIR}/DepthTarget.hpp ${GRAPHICS_DIR}/RenderTarget.hpp ${GRAPHICS_DIR}/CommandBuffer.hpp ${GRAPHICS_DIR}/Formats.hpp ${GRAPHICS_DIR}/Formats.cpp ${GRAPHICS_DIR}/VertexArrayObject.hpp ${GRAPHICS_DIR}/Framebuffer.hpp ${GRAPHICS_DIR}/Pipeline.hpp ${GRAPHICS_DIR}/Core.hpp ${GRAPHICS_DIR}/IndexBuffer.hpp ${GRAPHICS_DIR}/RenderPass.hpp ${GRAPHICS_DIR}/Texture.hpp ${GRAPHICS_DIR}/UniformBuffer.hpp ${GRAPHICS_DIR}/VertexBuffer.hpp ${GRAPHICS_DIR}/WindowGraphicsBinding.hpp)
 
 set(Vk_OBJ_SOURCES ${Vk_OBJ_SOURCES} VulkanWindowGraphicsBinding.cpp)
@@ -60,5 +60,3 @@ target_compile_definitions(PluginGraphicsVulkan PRIVATE GRAPHICS_VULKAN GRAPHICS
 
 target_precompile_headers(PluginGraphicsVulkan
     PUBLIC pch.hpp)
-
-##

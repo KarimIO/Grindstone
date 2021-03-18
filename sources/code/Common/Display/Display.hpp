@@ -1,8 +1,6 @@
 #pragma once
 
-#include <vector>
-#include <Common/Graphics/Formats.hpp>
-#include <Common/Graphics/DLLDefs.hpp>
+#include <stdint.h>
 
 namespace Grindstone {
 	struct Display {
@@ -13,10 +11,4 @@ namespace Grindstone {
 		uint32_t x_, y_;
 		uint32_t width_, height_;
 	};
-
-	namespace Displays {
-		Grindstone::Display getMainDisplay();
-		uint8_t getDisplayCount();
-		void    enumerateDisplays(Grindstone::Display*);
-	}
-};
+}

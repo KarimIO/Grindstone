@@ -36,7 +36,7 @@ source_group("Common\\Utilities\\Source Files" FILES ${SOURCE_COMMON_UTILS})
 source_group("Common\\Utilities\\Header Files" FILES ${HEADER_COMMON_UTILS})
 
 file(GLOB_RECURSE SOURCE_MAIN EngineCore.cpp EntryPoint.cpp Logger.cpp Profiling.cpp)
-file(GLOB_RECURSE HEADER_MAIN EngineCore.hpp pch.hpp Logger.hpp Profiling.hpp)
+file(GLOB_RECURSE HEADER_MAIN EngineCore.hpp pch.hpp Logger.hpp Profiling.hpp ${COMMON_DIR}/Display/Display.hpp)
 
 set(ENGINE_CORE_SOURCES
 	${SOURCE_MAIN}

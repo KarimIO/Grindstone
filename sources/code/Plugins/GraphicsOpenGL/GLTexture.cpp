@@ -38,8 +38,16 @@ namespace Grindstone {
 
 					for (uint32_t j = 0; j <= ci.mipmaps; j++) {
 						unsigned int size = ((width + 3) / 4)*((height + 3) / 4)*blockSize;
-						glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, j, format, width, height,
-							0, size, buffer);
+						glCompressedTexImage2D(
+							(GLenum) GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+							j,
+							format,
+							width,
+							height,
+							0,
+							size,
+							buffer
+						);
 
 						buffer += size;
 						width /= 2;
@@ -165,7 +173,17 @@ namespace Grindstone {
 			translateColorFormats(ci.format, is_compressed, format, internalFormat);
 
 			for (size_t i = 0; i < 6; i++) {
-				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, ci.width, ci.height, 0, format, GL_UNSIGNED_BYTE, ci.data[i]);
+				glTexImage2D(
+					(GLenum) GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+					0,
+					internalFormat,
+					ci.width,
+					ci.height,
+					0,
+					format,
+					GL_UNSIGNED_BYTE,
+					ci.data[i]
+				);
 			}
 
 			if (ci.options.generate_mipmaps)
@@ -197,7 +215,7 @@ namespace Grindstone {
 		GLTextureBinding::GLTextureBinding(CreateInfo& ci) {
 			textures_.reserve(ci.textureCount);
 			targets_.reserve(ci.textureCount);
-			for (int i = 0; i < ci.textureCount; i++) {
+			for (uint32_t i = 0; i < ci.textureCount; i++) {
 				GLTexture *t = (GLTexture *)(ci.textures[i].texture);
 				if (t) {
 					textures_.push_back(t);

@@ -85,7 +85,7 @@ namespace Grindstone {
 			glReadPixels(0, 0, width_, height_, GL_RGB, GL_FLOAT, values);
 
 			float val = 0;
-			for (int i = 0; i < s; i += 3) {
+			for (unsigned int i = 0; i < s; i += 3) {
 				float lum = (values[i] + values[i + 1] + values[i + 2]);//glm::dot(glm::vec3(values[i], values[i+1], values[i+2]), glm::vec3(0.3, 0.59, 0.11));
 				val += lum; // std::log2(lum);
 			}
@@ -122,7 +122,7 @@ namespace Grindstone {
 
 		void GLFramebuffer::BindTextures(int k) {
 			int j = k;
-			for (int i = 0; i < num_render_target_lists_; i++) {
+			for (unsigned int i = 0; i < num_render_target_lists_; i++) {
 				render_target_lists_[i]->Bind(j);
 				j += render_target_lists_[i]->getNumRenderTargets();
 			}
