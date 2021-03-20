@@ -76,6 +76,7 @@ target_compile_definitions(EngineCore PUBLIC ENGINE_CORE)
 target_include_directories(EngineCore
     PUBLIC
     ../
+	${DEPS_DIR}
     ${DEPS_DIR}/spdlog/include/
     ${DEPS_DIR}/entt/src
 )

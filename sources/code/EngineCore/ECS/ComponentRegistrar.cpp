@@ -49,4 +49,3 @@ ComponentRegistrar::ComponentMap::iterator ComponentRegistrar::end() {
 ComponentRegistrar::ComponentMap::const_iterator ComponentRegistrar::end() const {
 	return componentFunctionsList.end();
 }
-

@@ -8,7 +8,6 @@ namespace Grindstone {
 
 		view.each([](auto &transformComponent) {
 			transformComponent.position[1] += 0.01f;
-			std::cout << transformComponent.position[1] << "\n";
 		});
 	}
 }

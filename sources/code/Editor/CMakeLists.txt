@@ -21,6 +21,7 @@ set(SOURCES_IMGUI
 	${DEPS_DIR}/imgui/imgui_widgets.cpp
 	${DEPS_DIR}/imgui/backends/imgui_impl_win32.cpp
 	${DEPS_DIR}/imgui/backends/imgui_impl_opengl3.cpp
+	${DEPS_DIR}/imgui/misc/cpp/imgui_stdlib.cpp
 )
 source_group("Imgui Editor\\Imgui\\Source Files" FILES ${SOURCES_IMGUI})
 

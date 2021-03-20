@@ -15,7 +15,8 @@ namespace Grindstone {
 				ReflBool,
 				ReflInt,
 				ReflFloat,
-				ReflDouble
+				ReflDouble,
+				ReflVec3
 			};
 			ReflectionTypeData type;
 
