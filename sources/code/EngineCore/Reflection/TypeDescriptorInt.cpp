@@ -32,7 +32,7 @@ namespace Grindstone {
 		}
 
 		struct TypeDescriptor_Int3 : TypeDescriptor {
-			TypeDescriptor_Int3() : TypeDescriptor{ "Int3", sizeof(Math::Int3), ReflectionTypeData::Int4 } {}
+			TypeDescriptor_Int3() : TypeDescriptor{ "Int3", sizeof(Math::Int3), ReflectionTypeData::Int3 } {}
 			virtual void dump(const void* obj, int /* unused */) const override {
 				const Math::Int3& value = *(const Math::Int3*)obj;
 				std::cout << "Int3{" << value.x << ", " << value.y << ", " << value.z << "}";

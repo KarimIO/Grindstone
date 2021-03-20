@@ -32,7 +32,7 @@ namespace Grindstone {
 		}
 
 		struct TypeDescriptor_Float3 : TypeDescriptor {
-			TypeDescriptor_Float3() : TypeDescriptor{ "Float3", sizeof(Math::Float3), ReflectionTypeData::Float4 } {}
+			TypeDescriptor_Float3() : TypeDescriptor{ "Float3", sizeof(Math::Float3), ReflectionTypeData::Float3 } {}
 			virtual void dump(const void* obj, int /* unused */) const override {
 				const Math::Float3& value = *(const Math::Float3*)obj;
 				std::cout << "Float3{" << value.x << ", " << value.y << ", " << value.z << "}";
