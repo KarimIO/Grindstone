@@ -14,10 +14,14 @@ namespace Grindstone {
 	}
 
 	namespace SceneManagement {
+		class SceneLoaderJson;
+
 		class Scene {
+			friend SceneLoaderJson;
 		public:
 			Scene(ECS::ComponentRegistrar*, ECS::SystemRegistrar*);
 			ECS::Entity createEntity();
+			virtual const char* getName();
 			virtual entt::registry* getEntityRegistry();
 			virtual ECS::ComponentRegistrar* getComponentRegistrar();
 			void update();

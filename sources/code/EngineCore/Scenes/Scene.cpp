@@ -16,6 +16,10 @@ ECS::Entity Scene::createEntity() {
 	return registry.create();
 }
 
+const char* Grindstone::SceneManagement::Scene::getName() {
+	return name.c_str();
+}
+
 entt::registry* Scene::getEntityRegistry() {
 	return &registry;
 }

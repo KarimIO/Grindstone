@@ -48,6 +48,7 @@ target_include_directories(Editor
 	${ASSIMP_INCLUDE_DIR}
 	${DEPS_DIR}
 	${DEPS_DIR}/imgui
+	${DEPS_DIR}/entt/src
 )
 
 target_link_libraries(Editor ${assimp_LIBRARIES} ${OPENGL_gl_LIBRARY} ${CMAKE_DL_LIBS})

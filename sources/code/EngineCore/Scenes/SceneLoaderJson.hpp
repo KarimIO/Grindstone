@@ -15,7 +15,7 @@ namespace Grindstone {
 			SceneLoaderJson(Scene*, const char* path);
 		private:
 			ECS::Entity createEntity();
-			bool attachComponent(ECS::Entity entity, const char* componentName);
+			void* attachComponent(ECS::Entity entity, const char* componentName);
 			bool load(const char* path);
 		private:
 			Scene* scene;

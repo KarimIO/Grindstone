@@ -1,13 +1,15 @@
 #pragma once
 
 namespace Grindstone {
+	class EngineCore;
+
 	namespace Editor {
 		namespace ImguiEditor {
 			class SceneHeirarchyPanel;
 
 			class ImguiEditor {
 			public:
-				ImguiEditor();
+				ImguiEditor(EngineCore* engineCore);
 				void update();
 				void render();
 			private:

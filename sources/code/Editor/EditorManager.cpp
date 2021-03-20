@@ -14,7 +14,7 @@ bool Editor::Manager::initialize() {
 }
 
 bool Editor::Manager::setupImguiEditor() {
-	imguiEditor = new ImguiEditor::ImguiEditor();
+	imguiEditor = new ImguiEditor::ImguiEditor(engineCore);
 	return true;
 }
 

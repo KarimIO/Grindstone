@@ -1,18 +1,19 @@
 #include <iostream>
-#include "ImguiEditor.hpp"
-#include "SceneHeirarchyPanel.hpp"
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
 #include <imgui/backends/imgui_impl_win32.h>
 #include <Windows.h>
 #include <Winuser.h>
 #include "GL/gl3w.h"
+#include "EngineCore/EngineCore.hpp"
+#include "ImguiEditor.hpp"
+#include "SceneHeirarchyPanel.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
 bool demoWindowIsShown = true;
 ImGuiID dockspaceId;
 
-ImguiEditor::ImguiEditor() {
+ImguiEditor::ImguiEditor(EngineCore* engineCore) {
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -43,7 +44,7 @@ ImguiEditor::ImguiEditor() {
 	ImGui_ImplWin32_Init(win);
 	ImGui_ImplOpenGL3_Init("#version 150");
 
-	sceneHeirarchyPanel = new SceneHeirarchyPanel();
+	sceneHeirarchyPanel = new SceneHeirarchyPanel(engineCore->getSceneManager());
 }
 
 void ImguiEditor::update() {

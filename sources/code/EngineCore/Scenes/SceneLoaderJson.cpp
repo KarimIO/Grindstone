@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
+#include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
 #include "SceneLoaderJson.hpp"
 #include "Scene.hpp"
 
@@ -16,16 +17,17 @@ ECS::Entity SceneLoaderJson::createEntity() {
 	return scene->createEntity();
 }
 
-bool SceneLoaderJson::attachComponent(ECS::Entity entity, const char* componentName) {
+void* SceneLoaderJson::attachComponent(ECS::Entity entity, const char* componentName) {
 	auto registry = scene->getEntityRegistry();
 	auto componentRegistrar = scene->getComponentRegistrar();
-	auto componentFactory = componentRegistrar->createComponent(componentName, *registry, entity);
+	void* componentPtr = componentRegistrar->createComponent(componentName, *registry, entity);
 
-	return componentFactory != nullptr;
+	return componentPtr;
 }
 
 bool SceneLoaderJson::load(const char* path) {
-	this->path = path;
+	scene->path = path;
+	scene->name = path;
 
 	// Get from text
 
@@ -46,7 +48,15 @@ bool SceneLoaderJson::load(const char* path) {
 	// - For each Entity
 	ECS::Entity entity = createEntity();
 	// --- For each component
+	TagComponent* tag = (TagComponent*)attachComponent(entity, "Tag");
+	tag->tag = "My Entity Name (Bobby)";
 	attachComponent(entity, "Transform");
+
+	ECS::Entity entity2 = createEntity();
+	// --- For each component
+	TagComponent* tag2 = (TagComponent*)attachComponent(entity2, "Tag");
+	tag2->tag = "The Grindstone Entity B)";
+	attachComponent(entity2, "Transform");
 
 	/*
 	ecs_.createComponent("Rotation");

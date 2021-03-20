@@ -1,18 +1,29 @@
 #pragma once
 
+#include <entt/entt.hpp>
+
 namespace Grindstone {
+	namespace SceneManagement {
+		class Scene;
+		class SceneManager;
+	}
+
 	namespace Editor {
 		namespace ImguiEditor {
 			class SceneHeirarchyPanel {
 			public:
+				SceneHeirarchyPanel(SceneManagement::SceneManager* sceneManager);
 				void render();
-				unsigned int getSelectedEntity();
-				void updateSelectedEntity(unsigned int);
+				entt::entity getSelectedEntity();
+				void updateSelectedEntity(entt::entity);
 			private:
-				void renderEntity();
+				const char* getEntityTag(entt::registry& registry, entt::entity entity);
+				void renderScene(SceneManagement::Scene* scene);
+				void renderEntity(entt::registry& registry, entt::entity entity);
 			private:
 				bool isShowingPanel = true;
-				unsigned int selectedEntity = -1;
+				entt::entity selectedEntity = entt::null;
+				SceneManagement::SceneManager* sceneManager;
 			};
 		}
 	}

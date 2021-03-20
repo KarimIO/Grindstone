@@ -3,5 +3,5 @@
 #include "EngineCore/ECS/Entity.hpp"
 
 namespace Grindstone {
-	void* createTransformComponent(entt::registry& registry, ECS::Entity entity);
+	void* createTagComponent(entt::registry& registry, ECS::Entity entity);
 }
