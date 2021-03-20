@@ -12,26 +12,29 @@ namespace Grindstone {
 			}
 			
 			void SceneHeirarchyPanel::render() {
-				ImGui::Begin("Scene Heirarchy", &isShowingPanel);
+				if (ImGui::Begin("Scene Heirarchy", &isShowingPanel)) {
 
-				auto numScenes = sceneManager->scenes.size();
-				if (numScenes == 0) {}
-				else if (numScenes == 1) {
-					auto sceneIterator = sceneManager->scenes.begin();
-					renderScene(sceneIterator->second);
-				}
-				else {
-					for (auto& scenePair : sceneManager->scenes) {
-						auto* scene = scenePair.second;
-						const char* sceneName = scene->getName();
-						if (ImGui::TreeNode(sceneName)) {
-							renderScene(scene);
-							ImGui::TreePop();
+					auto numScenes = sceneManager->scenes.size();
+					if (numScenes == 0) {
+						ImGui::Text("No entities in this scene.");
+					}
+					else if (numScenes == 1) {
+						auto sceneIterator = sceneManager->scenes.begin();
+						renderScene(sceneIterator->second);
+					}
+					else {
+						for (auto& scenePair : sceneManager->scenes) {
+							auto* scene = scenePair.second;
+							const char* sceneName = scene->getName();
+							if (ImGui::TreeNode(sceneName)) {
+								renderScene(scene);
+								ImGui::TreePop();
+							}
 						}
 					}
-				}
 
-				ImGui::End();
+					ImGui::End();
+				}
 			}
 
 			const char* SceneHeirarchyPanel::getEntityTag(entt::registry& registry, entt::entity entity) {

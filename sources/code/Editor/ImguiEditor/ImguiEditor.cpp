@@ -7,6 +7,7 @@
 #include "GL/gl3w.h"
 #include "EngineCore/EngineCore.hpp"
 #include "ImguiEditor.hpp"
+#include "SystemPanel.hpp"
 #include "SceneHeirarchyPanel.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
@@ -45,6 +46,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) {
 	ImGui_ImplOpenGL3_Init("#version 150");
 
 	sceneHeirarchyPanel = new SceneHeirarchyPanel(engineCore->getSceneManager());
+	systemPanel = new SystemPanel(engineCore->getSystemRegistrar());
 }
 
 void ImguiEditor::update() {
@@ -69,4 +71,5 @@ void ImguiEditor::update() {
 
 void ImguiEditor::render() {
 	sceneHeirarchyPanel->render();
+	systemPanel->render();
 }
