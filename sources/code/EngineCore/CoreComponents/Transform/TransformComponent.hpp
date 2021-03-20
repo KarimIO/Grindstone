@@ -5,9 +5,9 @@
 
 namespace Grindstone {
 	struct TransformComponent {
-		Math::Vec3 position;
-		Math::Vec3 angles;
-		Math::Vec3 scale;
+		Math::Float3 position;
+		Math::Float3 angles;
+		Math::Float3 scale;
 
 		REFLECT("Transform")
 	};

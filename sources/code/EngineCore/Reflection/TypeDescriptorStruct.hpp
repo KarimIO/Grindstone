@@ -10,9 +10,9 @@ namespace Grindstone {
 	namespace Reflection {
 		struct TypeDescriptor_Struct : TypeDescriptor {
 			struct Member {
-				std::string variable_name;
-				std::string display_name;
-				std::string stored_name;
+				std::string variableName;
+				std::string displayName;
+				std::string storedName;
 				size_t offset;
 
 				Metadata metadata;
@@ -32,7 +32,7 @@ namespace Grindstone {
 
 			TypeDescriptor_Struct(
 				void(*init)(TypeDescriptor_Struct*)
-			) : TypeDescriptor{ nullptr, 0, ReflectionTypeData::ReflStruct } {
+			) : TypeDescriptor{ nullptr, 0, ReflectionTypeData::Struct } {
 				init(this);
 			}
 
@@ -40,12 +40,12 @@ namespace Grindstone {
 				const char* name,
 				size_t size,
 				const Category &init
-			) : TypeDescriptor{ nullptr, 0, ReflectionTypeData::ReflStruct }, category{ init } {}
+			) : TypeDescriptor{ nullptr, 0, ReflectionTypeData::Struct }, category{ init } {}
 
 			virtual void dump(const void* obj, int indentLevel) const override {
 				std::cout << name << " {" << std::endl;
 				for (const Member& member : category.members) {
-					std::cout << std::string(4 * (indentLevel + 1), ' ') << member.display_name;
+					std::cout << std::string(4 * (indentLevel + 1), ' ') << member.displayName;
 					if (member.metadata != Metadata::NoMetadata)
 						std::cout << " [" << stringifyMetadata(member.metadata) << "]";
 					std::cout << " = ";

@@ -66,18 +66,73 @@ namespace Grindstone {
 				Reflection::TypeDescriptor_Struct::Member& member,
 				void* entity
 			) {
+				const char* displayName = member.displayName.c_str();
 				char* offset = ((char*)entity + member.offset);
 				switch(member.type->type) {
-				case Reflection::TypeDescriptor::ReflectionTypeData::ReflString:
+				case Reflection::TypeDescriptor::ReflectionTypeData::Bool:
+					ImGui::Checkbox(
+						displayName,
+						(bool*)offset
+					);
+					break;
+				case Reflection::TypeDescriptor::ReflectionTypeData::String:
 					ImGui::InputText(
-						member.display_name.c_str(),
+						displayName,
 						(std::string *)offset
 					);
 					break;
-				case Reflection::TypeDescriptor::ReflectionTypeData::ReflVec3:
-					ImGui::InputFloat3(
-						member.display_name.c_str(),
+				case Reflection::TypeDescriptor::ReflectionTypeData::Int:
+					ImGui::InputInt(
+						displayName,
+						(int*)offset
+					);
+					break;
+				case Reflection::TypeDescriptor::ReflectionTypeData::Int2:
+					ImGui::InputInt2(
+						displayName,
+						(int *)offset
+					);
+					break;
+				case Reflection::TypeDescriptor::ReflectionTypeData::Int3:
+					ImGui::InputInt3(
+						displayName,
+						(int *)offset
+					);
+					break;
+				case Reflection::TypeDescriptor::ReflectionTypeData::Int4:
+					ImGui::InputInt4(
+						displayName,
+						(int *)offset
+					);
+					break;
+				case Reflection::TypeDescriptor::ReflectionTypeData::Float:
+					ImGui::InputFloat(
+						displayName,
+						(float*)offset
+					);
+					break;
+				case Reflection::TypeDescriptor::ReflectionTypeData::Float2:
+					ImGui::InputFloat2(
+						displayName,
 						(float *)offset
+					);
+					break;
+				case Reflection::TypeDescriptor::ReflectionTypeData::Float3:
+					ImGui::InputFloat3(
+						displayName,
+						(float *)offset
+					);
+					break;
+				case Reflection::TypeDescriptor::ReflectionTypeData::Float4:
+					ImGui::InputFloat4(
+						displayName,
+						(float *)offset
+					);
+					break;
+				case Reflection::TypeDescriptor::ReflectionTypeData::Double:
+					ImGui::InputDouble(
+						displayName,
+						(double*)offset
 					);
 					break;
 				}

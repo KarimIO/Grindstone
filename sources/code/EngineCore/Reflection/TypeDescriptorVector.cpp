@@ -6,6 +6,7 @@
 namespace Grindstone {
 	namespace Reflection {
 		struct TypeDescriptor_StdVector : TypeDescriptor {
+			std::string name;
 			TypeDescriptor* itemType;
 			size_t(*getSize)(const void*);
 			const void* (*getItem)(const void*, size_t);
@@ -13,6 +14,7 @@ namespace Grindstone {
 			template <typename ItemType>
 			TypeDescriptor_StdVector(ItemType*)
 				: TypeDescriptor{ "std::vector<>", sizeof(std::vector<ItemType>), ReflectionTypeData::ReflVector },
+				name{ (std::string("std::vector<") + itemType->getFullName() + ">").c_str() },
 				itemType{ TypeResolver<ItemType>::get() } {
 				getSize = [](const void* vecPtr) -> size_t {
 					const auto& vec = *(const std::vector<ItemType>*) vecPtr;
@@ -23,8 +25,9 @@ namespace Grindstone {
 					return &vec[index];
 				};
 			}
-			virtual std::string getFullName() const override {
-				return std::string("std::vector<") + itemType->getFullName() + ">";
+
+			virtual const char* getFullName() const override {
+				return name.c_str();
 			}
 			virtual void dump(const void* obj, int indentLevel) const override {
 				size_t numItems = getSize(obj);
