@@ -39,7 +39,9 @@ namespace Grindstone {
 
         bool initialize(CreateInfo& ci);
         ~EngineCore();
-        void run();
+        virtual void run();
+		virtual void runLoopIteration();
+        virtual void updateWindows();
         void registerGraphicsCore(GraphicsAPI::Core*);
         virtual void registerInputManager(Input::Interface*);
         virtual Input::Interface* getInputManager();

@@ -1,28 +1,26 @@
 #pragma once
 
-#include "EditorRenderer.hpp"
-
 namespace Grindstone {
+	class EngineCore;
+
     namespace Editor {
+		namespace ImguiEditor {
+			class ImguiEditor;
+		}
+
         class IEditor;
 
         class Manager {
         public:
             bool initialize();
-            void run();
-
-            void loadPlugin();
-
-            Renderer renderer_;
-
+            ~Manager();
+			void run();
         private:
             bool loadEngine();
-            bool addDefaultPlugins();
-            bool createDefaultEditors();
-
+			bool setupImguiEditor();
         private:
-            bool is_running_;
-            std::vector<Editor::IEditor* > editors_;
+			EngineCore* engineCore;
+            ImguiEditor::ImguiEditor* imguiEditor;
         };
     }
 }

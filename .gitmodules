@@ -7,3 +7,6 @@
 [submodule "sources/deps/entt"]
 	path = sources/deps/entt
 	url = https://github.com/skypjack/entt.git
+[submodule "sources/deps/imgui"]
+	path = sources/deps/imgui
+	url = https://github.com/ocornut/imgui.git

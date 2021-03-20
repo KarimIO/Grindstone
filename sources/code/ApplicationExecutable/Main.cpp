@@ -3,7 +3,7 @@
 #include <EngineCore/EngineCore.hpp>
 using namespace Grindstone;
 
-using CreateEngineFunction = void(EngineCore::CreateInfo&);
+using CreateEngineFunction = EngineCore*(EngineCore::CreateInfo&);
 
 int main() {
 	Grindstone::Utilities::Modules::Handle handle;
@@ -26,8 +26,8 @@ int main() {
 	create_info.isEditor = false;
 	create_info.applicationModuleName = "ApplicationDLL";
 	create_info.applicationTitle = "Grindstone Sandbox";
-	createEngineFn(create_info);
-
+	EngineCore* engineCore = createEngineFn(create_info);
+	
 	Grindstone::Utilities::Modules::unload(handle);
 	return 0;
 }

@@ -24,6 +24,7 @@ foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
 endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES ) 
 
 add_subdirectory(sources/code/ApplicationDLL)
+add_subdirectory(sources/code/Editor)
 add_subdirectory(sources/code/EngineCore)
 add_subdirectory(sources/code/ApplicationExecutable)
 

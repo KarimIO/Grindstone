@@ -55,12 +55,21 @@ bool EngineCore::initialize(CreateInfo& create_info) {
 }
 
 void EngineCore::run() {
-	float clearVal[4] = {0.3f, 0.6f, 0.9f, 1.f};
 	while (!shouldClose) {
-		graphicsCore->clear(GraphicsAPI::ClearMode::All, clearVal, 0, 0);
-		sceneManager->update();
-		windowManager->updateWindows();
+		runLoopIteration();
+		updateWindows();
 	}
+}
+
+float clearVal[4] = {0.3f, 0.6f, 0.9f, 1.f};
+
+void EngineCore::runLoopIteration() {
+	graphicsCore->clear(GraphicsAPI::ClearMode::All, clearVal, 0, 0);
+	sceneManager->update();
+}
+
+void EngineCore::updateWindows() {
+	windowManager->updateWindows();
 }
 
 EngineCore::~EngineCore() {
