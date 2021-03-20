@@ -6,6 +6,7 @@ namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
 			class SceneHeirarchyPanel;
+			class InspectorPanel;
 			class SystemPanel;
 
 			class ImguiEditor {
@@ -15,6 +16,7 @@ namespace Grindstone {
 				void render();
 			private:
 				SceneHeirarchyPanel* sceneHeirarchyPanel = nullptr;
+				InspectorPanel* inspectorPanel = nullptr;
 				SystemPanel* systemPanel = nullptr;
 			};
 		}

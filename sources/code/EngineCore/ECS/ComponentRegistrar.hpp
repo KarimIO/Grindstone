@@ -5,19 +5,34 @@
 #include <string>
 
 #include "EngineCore/ECS/Entity.hpp"
-#include "ComponentFactory.hpp"
+#include "EngineCore/Reflection/ComponentReflection.hpp"
+#include "ComponentFunctions.hpp"
 using namespace Grindstone;
 
 namespace Grindstone {
 	namespace ECS {
 		class ComponentRegistrar {
 		public:
-			ComponentRegistrar();
-			void registerComponent(const char *name, ComponentFactory factory);
+			template<typename T>
+			void registerComponent(const char* name) {
+				registerComponent(name, {
+					&ECS::createTagComponent<T>,
+					&ECS::tryGetComponent<T>,
+					&ECS::getComponentReflectionData<T>
+				});
+			}
+			void registerComponent(const char *name, ComponentFunctions componentFunctions);
 			void* createComponent(const char *name, entt::registry& registry, ECS::Entity entity);
-			~ComponentRegistrar();
+			bool tryGetComponent(const char *name, entt::registry& registry, ECS::Entity entity, void*& outComponent);
+			bool tryGetComponentReflectionData(const char *name, Grindstone::Reflection::TypeDescriptor_Struct& outReflectionData);
+
+			using ComponentMap = std::unordered_map<std::string, ComponentFunctions>;
+			virtual ComponentMap::iterator begin();
+			virtual ComponentMap::const_iterator begin() const;
+			virtual ComponentMap::iterator end();
+			virtual ComponentMap::const_iterator end() const;
 		private:
-			std::unordered_map<std::string, ComponentFactory> componentFactories;
+			ComponentMap componentFunctionsList;
 		};
 	}
 }

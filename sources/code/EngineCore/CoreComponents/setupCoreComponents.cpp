@@ -1,10 +1,11 @@
-#include "Tag/createTagComponent.hpp"
-#include "Transform/createTransformComponent.hpp"
-#include "../ECS/ComponentRegistrar.hpp"
+#include "Tag/TagComponent.hpp"
+#include "Transform/TransformComponent.hpp"
 #include "setupCoreComponents.hpp"
+#include "../ECS/ComponentRegistrar.hpp"
+#include "EngineCore/ECS/ComponentFunctions.hpp"
 using namespace Grindstone;
 
 void Grindstone::setupCoreComponents(ECS::ComponentRegistrar* registrar) {
-	registrar->registerComponent("Tag", createTagComponent);
-	registrar->registerComponent("Transform", createTransformComponent);
+	registrar->registerComponent<Grindstone::TagComponent>("Tag");
+	registrar->registerComponent<Grindstone::TransformComponent>("Transform");
 }

@@ -2,7 +2,7 @@
 
 #include "../pch.hpp"
 #include "EngineCore/ECS/SystemFactory.hpp"
-#include "EngineCore/ECS/ComponentFactory.hpp"
+#include "EngineCore/ECS/ComponentFunctions.hpp"
 #include "Common/Window/Window.hpp"
 
 namespace Grindstone {
@@ -41,7 +41,7 @@ namespace Grindstone {
             virtual void enumerateDisplays(Display*displays);
            
             virtual void registerSystem(const char* name, ECS::SystemFactory factory);
-            virtual void registerComponentType(const char* name, ECS::ComponentFactory factory);
+            virtual void registerComponentType(const char* name, ECS::ComponentFunctions factory);
         private:
             Manager*    manager = nullptr;
             GraphicsAPI::Core* graphicsCore = nullptr;

@@ -10,6 +10,16 @@ void* Grindstone::createTagComponent(entt::registry& registry, ECS::Entity entit
 	return &registry.emplace<TagComponent>(entity);
 }
 
+bool tryGetEntityTagComponent(entt::registry& registry, ECS::Entity entity, void* outEntity) {
+	if (registry.has<TagComponent>(entity)) {
+		outEntity = &registry.get<TagComponent>(entity);
+		
+		return true;
+	}
+
+	return false;
+}
+
 REFLECT_STRUCT_BEGIN(TagComponent)
 	REFLECT_STRUCT_MEMBER(tag)
 	REFLECT_NO_SUBCAT()

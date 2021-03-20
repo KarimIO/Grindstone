@@ -1,7 +1,4 @@
 #pragma once
-
-#include <entt/entt.hpp>
-
 namespace Grindstone {
 	namespace ECS {
 		class SystemRegistrar;

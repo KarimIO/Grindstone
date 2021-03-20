@@ -1,3 +1,9 @@
+#pragma once
+
 namespace Grindstone {
-	void setupCoreComponents(class ECS::ComponentRegistrar* registrar);
+	namespace ECS {
+		class ComponentRegistrar;
+	}
+
+	void setupCoreComponents(ECS::ComponentRegistrar* registrar);
 }

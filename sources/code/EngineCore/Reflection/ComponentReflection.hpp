@@ -14,12 +14,12 @@ namespace Grindstone {
 #define REFLECT(name) \
 	public: \
 		friend struct Grindstone::Reflection::DefaultResolver; \
-		static Grindstone::Reflection::TypeDescriptor_Struct grindstoneReflectionInfo; \
+		static Grindstone::Reflection::TypeDescriptor_Struct reflectionInfo; \
 		static void initReflection(Grindstone::Reflection::TypeDescriptor_Struct*); \
 		static const char* getComponentName() { return "Transform";  };
 
 #define REFLECT_STRUCT_BEGIN(type) \
-		Grindstone::Reflection::TypeDescriptor_Struct type::grindstoneReflectionInfo{type::initReflection}; \
+		Grindstone::Reflection::TypeDescriptor_Struct type::reflectionInfo{type::initReflection}; \
 		void type::initReflection(Grindstone::Reflection::TypeDescriptor_Struct* typeDesc) { \
 			using T = type; \
 			typeDesc->name = "aaa"; \

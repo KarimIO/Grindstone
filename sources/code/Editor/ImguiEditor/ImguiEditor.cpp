@@ -8,6 +8,7 @@
 #include "EngineCore/EngineCore.hpp"
 #include "ImguiEditor.hpp"
 #include "SystemPanel.hpp"
+#include "InspectorPanel.hpp"
 #include "SceneHeirarchyPanel.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
@@ -46,6 +47,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) {
 	ImGui_ImplOpenGL3_Init("#version 150");
 
 	sceneHeirarchyPanel = new SceneHeirarchyPanel(engineCore->getSceneManager());
+	inspectorPanel = new InspectorPanel(engineCore);
 	systemPanel = new SystemPanel(engineCore->getSystemRegistrar());
 }
 
@@ -57,9 +59,7 @@ void ImguiEditor::update() {
 	glViewport(0, 0, 800, 600);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	dockspaceId = ImGui::GetID("MyDockspace");
-	ImGui::DockSpace(dockspaceId);
-
+	
 	render();
 
 	// Rendering
@@ -71,5 +71,6 @@ void ImguiEditor::update() {
 
 void ImguiEditor::render() {
 	sceneHeirarchyPanel->render();
+	inspectorPanel->render();
 	systemPanel->render();
 }

@@ -1,8 +1,7 @@
 #include <imgui/imgui.h>
 #include <entt/entt.hpp>
 #include "SystemPanel.hpp"
-#include "EngineCore/Scenes/Manager.hpp"
-#include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
+#include "EngineCore/ECS/SystemRegistrar.hpp"
 
 namespace Grindstone {
 	namespace Editor {
