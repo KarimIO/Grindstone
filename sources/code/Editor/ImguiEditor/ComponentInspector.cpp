@@ -32,15 +32,15 @@ namespace Grindstone {
 				Grindstone::Reflection::TypeDescriptor_Struct& componentReflectionData,
 				void* entity
 			) {
-				if (!ImGui::TreeNode(componentTypeName)) {
+				/*if (!ImGui::TreeNode(componentTypeName)) {
 					return;
-				}
+				}*/
 
 				ImGui::Text(componentTypeName);
 				renderComponentCategory(componentReflectionData.category, entity);
 				ImGui::Separator();
 
-				ImGui::TreePop();
+				//ImGui::TreePop();
 			}
 			
 			void ComponentInspector::renderComponentCategory(

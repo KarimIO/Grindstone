@@ -51,6 +51,7 @@ bool SceneLoaderJson::load(const char* path) {
 	TagComponent* tag = (TagComponent*)attachComponent(entity, "Tag");
 	tag->tag = "My Entity Name (Bobby)";
 	attachComponent(entity, "Transform");
+	attachComponent(entity, "Camera");
 
 	ECS::Entity entity2 = createEntity();
 	// --- For each component

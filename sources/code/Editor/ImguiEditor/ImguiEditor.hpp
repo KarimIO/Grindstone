@@ -8,6 +8,7 @@ namespace Grindstone {
 			class SceneHeirarchyPanel;
 			class InspectorPanel;
 			class SystemPanel;
+			class Menubar;
 
 			class ImguiEditor {
 			public:
@@ -15,9 +16,12 @@ namespace Grindstone {
 				void update();
 				void render();
 			private:
+				void renderDockspace();
+			private:
 				SceneHeirarchyPanel* sceneHeirarchyPanel = nullptr;
 				InspectorPanel* inspectorPanel = nullptr;
 				SystemPanel* systemPanel = nullptr;
+				Menubar* menubar = nullptr;
 			};
 		}
 	}

@@ -10,17 +10,15 @@
 #include "SystemPanel.hpp"
 #include "InspectorPanel.hpp"
 #include "SceneHeirarchyPanel.hpp"
+#include "Menubar.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
-
-bool demoWindowIsShown = true;
-ImGuiID dockspaceId;
 
 ImguiEditor::ImguiEditor(EngineCore* engineCore) {
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
 
@@ -49,6 +47,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) {
 	sceneHeirarchyPanel = new SceneHeirarchyPanel(engineCore->getSceneManager());
 	inspectorPanel = new InspectorPanel(engineCore);
 	systemPanel = new SystemPanel(engineCore->getSystemRegistrar());
+	menubar = new Menubar();
 }
 
 void ImguiEditor::update() {
@@ -58,7 +57,6 @@ void ImguiEditor::update() {
 
 	glViewport(0, 0, 800, 600);
 	glClear(GL_COLOR_BUFFER_BIT);
-
 	
 	render();
 
@@ -70,7 +68,50 @@ void ImguiEditor::update() {
 }
 
 void ImguiEditor::render() {
+	renderDockspace();
 	sceneHeirarchyPanel->render();
 	inspectorPanel->render();
 	systemPanel->render();
+}
+
+void ImguiEditor::renderDockspace() {
+	static bool opt_fullscreen_persistant = true;
+	static ImGuiDockNodeFlags opt_flags = ImGuiDockNodeFlags_None;
+	bool optFullscreen = opt_fullscreen_persistant;
+
+	// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+	// because it would be confusing to have two docking targets within each others.
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+	if (optFullscreen) 	{
+		ImGuiViewport* viewport = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(viewport->Pos);
+		ImGui::SetNextWindowSize(viewport->Size);
+		ImGui::SetNextWindowViewport(viewport->ID);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+		window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+	}
+
+	// When using ImGuiDockNodeFlags_PassthruDockspace, DockSpace() will render our background and handle the pass-thru hole, so we ask Begin() to not render a background.
+	if (opt_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+		window_flags |= ImGuiWindowFlags_NoBackground;
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+	ImGui::Begin("Editor Dockspace", nullptr, window_flags);
+	ImGui::PopStyleVar();
+
+	if (optFullscreen)
+		ImGui::PopStyleVar(2);
+
+	// Dockspace
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable) 	{
+		ImGuiID dockspaceId = ImGui::GetID("Editor Dockspace");
+		ImGui::DockSpace(dockspaceId, ImVec2(0.0f, 0.0f), opt_flags);
+	}
+
+	menubar->render();
+
+	ImGui::End();
 }

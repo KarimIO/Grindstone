@@ -15,9 +15,7 @@ spdlog::logger *Logger::debugLogger;
 
 class MySink : public spdlog::sinks::base_sink<std::mutex> {
 protected:
-	void sink_it_(const spdlog::details::log_msg& msg) override
-	{
-
+	void sink_it_(const spdlog::details::log_msg& msg) override {
 		// log_msg is a struct containing the log entry info like level, timestamp, thread id etc.
 		// msg.raw contains pre formatted log
 
@@ -29,8 +27,7 @@ protected:
 			editor->printConsoleEntry(fmt::to_string(formatted).c_str());*/
 	}
 
-	void flush_() override
-	{
+	void flush_() override {
 		//std::cout << std::flush;
 	}
 };

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <entt/entt.hpp>
+#include "exampleSystem.hpp"
 #include "../CoreComponents/Transform/TransformComponent.hpp"
 
 namespace Grindstone {
