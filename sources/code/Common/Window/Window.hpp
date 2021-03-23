@@ -5,7 +5,6 @@
 
 class InputInterface;
 
-
 namespace Grindstone {
 	class EngineCore;
 
@@ -18,7 +17,7 @@ namespace Grindstone {
 		};
 
 		struct CreateInfo {
-			EngineCore* engine_core = nullptr;
+			EngineCore* engineCore = nullptr;
 			FullscreenMode fullscreen;
 			Grindstone::Display display;
 			unsigned int width;
@@ -26,44 +25,44 @@ namespace Grindstone {
 			const char* title;
 		};
 	public:
-		static Window* create(CreateInfo& create_info);
-		virtual void show() = 0;
-		virtual bool shouldClose() = 0;
-		virtual bool handleEvents() = 0;
-		virtual void setFullscreen(FullscreenMode mode) = 0;
-		virtual void getWindowRect(unsigned int& left, unsigned int& top, unsigned int& right, unsigned int& bottom) = 0;
-		virtual void getWindowSize(unsigned int& width, unsigned int& height) = 0;
-		virtual void setWindowSize(unsigned int width, unsigned int height) = 0;
-		virtual void getMousePos(unsigned int& x, unsigned int& y) = 0;
-		virtual void setMousePos(unsigned int x, unsigned int y) = 0;
-		virtual void setWindowPos(unsigned int x, unsigned int y) = 0;
-		virtual void getWindowPos(unsigned int& x, unsigned int& y) = 0;
-		virtual void setWindowFocus() = 0;
-		virtual bool getWindowFocus() = 0;
-		virtual bool getWindowMinimized() = 0;
-		virtual void setWindowTitle(const char* title) = 0;
-		virtual void setWindowAlpha(float alpha) = 0;
-		virtual float getWindowDpiScale() = 0;
-		virtual void close() = 0;
+		static Window* Create(CreateInfo& create_info);
+		virtual void Show() = 0;
+		virtual bool ShouldClose() = 0;
+		virtual bool HandleEvents() = 0;
+		virtual void SetFullscreen(FullscreenMode mode) = 0;
+		virtual void GetWindowRect(unsigned int& left, unsigned int& top, unsigned int& right, unsigned int& bottom) = 0;
+		virtual void GetWindowSize(unsigned int& width, unsigned int& height) = 0;
+		virtual void SetWindowSize(unsigned int width, unsigned int height) = 0;
+		virtual void GetMousePos(unsigned int& x, unsigned int& y) = 0;
+		virtual void SetMousePos(unsigned int x, unsigned int y) = 0;
+		virtual void SetWindowPos(unsigned int x, unsigned int y) = 0;
+		virtual void GetWindowPos(unsigned int& x, unsigned int& y) = 0;
+		virtual void SetWindowFocus() = 0;
+		virtual bool GetWindowFocus() = 0;
+		virtual bool GetWindowMinimized() = 0;
+		virtual void SetWindowTitle(const char* title) = 0;
+		virtual void SetWindowAlpha(float alpha) = 0;
+		virtual float GetWindowDpiScale() = 0;
+		virtual void Close() = 0;
 	public:
-		inline Grindstone::GraphicsAPI::WindowGraphicsBinding* getWindowGraphicsBinding() {
-			return windows_graphics_binding_;
+		inline Grindstone::GraphicsAPI::WindowGraphicsBinding* GetWindowGraphicsBinding() {
+			return windowsGraphicsBinding;
 		}
 
-		inline void addBinding(Grindstone::GraphicsAPI::WindowGraphicsBinding* wgb) {
-			windows_graphics_binding_ = wgb;
+		inline void AddBinding(Grindstone::GraphicsAPI::WindowGraphicsBinding* wgb) {
+			windowsGraphicsBinding = wgb;
 		}
 
-		inline void immediateSetContext() {
-			windows_graphics_binding_->immediateSetContext();
+		inline void ImmediateSetContext() {
+			windowsGraphicsBinding->ImmediateSetContext();
 		}
 
-		inline void immediateSwapBuffers() {
-			windows_graphics_binding_->immediateSwapBuffers();
+		inline void ImmediateSwapBuffers() {
+			windowsGraphicsBinding->ImmediateSwapBuffers();
 		}
 	protected:
-		Grindstone::GraphicsAPI::WindowGraphicsBinding* windows_graphics_binding_;
+		Grindstone::GraphicsAPI::WindowGraphicsBinding* windowsGraphicsBinding;
 	private:
-		virtual bool initialize(CreateInfo& create_info) = 0;
+		virtual bool Initialize(CreateInfo& createInfo) = 0;
 	};
 };

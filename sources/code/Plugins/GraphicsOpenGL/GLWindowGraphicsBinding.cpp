@@ -8,10 +8,10 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		bool GLWindowGraphicsBinding::initialize(Window *window) {
+		bool GLWindowGraphicsBinding::Initialize(Window *window) {
 #ifdef _WIN32
-			window_ = window;
-			window_handle_ = ((Win32Window*)window)->getHandle();
+			window = window;
+			windowHandle = ((Win32Window*)window)->GetHandle();
 			static	PIXELFORMATDESCRIPTOR pfd =
 			{
 				sizeof(PIXELFORMATDESCRIPTOR),
@@ -34,22 +34,22 @@ namespace Grindstone {
 				0, 0, 0							
 			};
 
-			if (!(window_device_context_ = GetDC(window_handle_)))
+			if (!(windowDeviceContext = GetDC(windowHandle)))
 				return false;
 
 			unsigned int PixelFormat;
-			if (!(PixelFormat = ChoosePixelFormat(window_device_context_, &pfd)))
+			if (!(PixelFormat = ChoosePixelFormat(windowDeviceContext, &pfd)))
 				return false;
 
-			if (!SetPixelFormat(window_device_context_, PixelFormat, &pfd))
+			if (!SetPixelFormat(windowDeviceContext, PixelFormat, &pfd))
 				return false;
 
-			HGLRC temp = wglCreateContext(window_device_context_);
+			HGLRC temp = wglCreateContext(windowDeviceContext);
 			if (!temp) {
 				return false;
 			}
 
-			if (wglMakeCurrent(window_device_context_, temp) == NULL) {
+			if (wglMakeCurrent(windowDeviceContext, temp) == NULL) {
 				return false;
 			}
 
@@ -70,7 +70,7 @@ namespace Grindstone {
 			wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)
 				wglGetProcAddress("wglCreateContextAttribsARB");
 			if (wglCreateContextAttribsARB != NULL)
-				window_render_context_ = wglCreateContextAttribsARB(window_device_context_, 0, attribs);
+				windowRenderContext = wglCreateContextAttribsARB(windowDeviceContext, 0, attribs);
 
 			PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = NULL;
 			wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)
@@ -79,40 +79,40 @@ namespace Grindstone {
 				wglSwapIntervalEXT(true);
 
 
-			if (!window_render_context_) {
-				window_render_context_ = temp;
+			if (!windowRenderContext) {
+				windowRenderContext = temp;
 			}
 			else
 			{
-				wglMakeCurrent(window_device_context_, window_render_context_);
+				wglMakeCurrent(windowDeviceContext, windowRenderContext);
 				wglDeleteContext(temp);
 			}
 #endif
 			return true;
 		}
 
-		void GLWindowGraphicsBinding::shareLists(GLWindowGraphicsBinding *binding_to_copy_from) {
+		void GLWindowGraphicsBinding::ShareLists(GLWindowGraphicsBinding *binding_to_copy_from) {
 #ifdef _WIN32
-			wglShareLists(binding_to_copy_from->window_render_context_, window_render_context_);
+			wglShareLists(binding_to_copy_from->windowRenderContext, windowRenderContext);
 #endif
 		}
 
-		void GLWindowGraphicsBinding::immediateSetContext() {
+		void GLWindowGraphicsBinding::ImmediateSetContext() {
 #ifdef _WIN32
-			wglMakeCurrent(window_device_context_, window_render_context_);
+			wglMakeCurrent(windowDeviceContext, windowRenderContext);
 #endif
 		}
 
-		void GLWindowGraphicsBinding::immediateSwapBuffers() {
+		void GLWindowGraphicsBinding::ImmediateSwapBuffers() {
 #ifdef _WIN32
-			SwapBuffers(window_device_context_);
+			SwapBuffers(windowDeviceContext);
 #endif
 		}
 
 		GLWindowGraphicsBinding::~GLWindowGraphicsBinding() {
 #ifdef _WIN32
-			wglDeleteContext(window_render_context_);
-			ReleaseDC(window_handle_, window_device_context_);
+			wglDeleteContext(windowRenderContext);
+			ReleaseDC(windowHandle, windowDeviceContext);
 #endif
 		}
 	};

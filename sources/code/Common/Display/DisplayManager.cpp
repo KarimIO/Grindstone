@@ -9,11 +9,11 @@ BOOL CALLBACK EnumDispProc(HMONITOR hMon, HDC dcMon, RECT* pRcMon, LPARAM lParam
 
 	// TODO: Fix all this
 	Display &display = *pArg;
-	display.monitor_id_ = 0;
-	display.x_ = pRcMon->left;
-	display.y_ = pRcMon->top;
-	display.width_ = pRcMon->right - pRcMon->left;
-	display.height_ = pRcMon->bottom - pRcMon->top;
+	display.monitorId = 0;
+	display.x = pRcMon->left;
+	display.y = pRcMon->top;
+	display.width = pRcMon->right - pRcMon->left;
+	display.height = pRcMon->bottom - pRcMon->top;
 
 	return TRUE;
 }
@@ -24,31 +24,31 @@ BOOL CALLBACK CountDispProc(HMONITOR hMon, HDC dcMon, RECT* pRcMon, LPARAM lPara
 	return TRUE;
 }
 
-Display DisplayManager::getMainDisplay() {
-	Display* displays = new Display[getDisplayCount()];
-	enumerateDisplays(displays);
+Display DisplayManager::GetMainDisplay() {
+	Display* displays = new Display[GetDisplayCount()];
+	EnumerateDisplays(displays);
 
 	return displays[0];
 }
 
-uint8_t DisplayManager::getDisplayCount() {
+uint8_t DisplayManager::GetDisplayCount() {
 	uint8_t count = 0;
 	EnumDisplayMonitors(0, 0, CountDispProc, reinterpret_cast<LPARAM>(&count));
 	return count;
 }
 
-void DisplayManager::enumerateDisplays(Display *displays) {
+void DisplayManager::EnumerateDisplays(Display *displays) {
 	EnumDisplayMonitors(0, 0, EnumDispProc, reinterpret_cast<LPARAM>(displays));
 }
 #elif defined(__linux__)
-Display DisplayManager::getMainDisplay() {
+Display DisplayManager::GetMainDisplay() {
 	return Display();
 }
 
-uint8_t DisplayManager::getDisplayCount() {
+uint8_t DisplayManager::GetDisplayCount() {
 	return 0;
 }
 
-void DisplayManager::enumerateDisplays(Display *displays) {
+void DisplayManager::EnumerateDisplays(Display *displays) {
 }
 #endif

@@ -9,10 +9,10 @@ namespace Grindstone {
 		class WindowGraphicsBinding {
 		public:
 			~WindowGraphicsBinding() {};
-			virtual bool initialize(Window *window) = 0;
-			virtual void immediateSetContext() {};
-			virtual void immediateSwapBuffers() {};
-			virtual void presentCommandBuffer(CommandBuffer**buffers, uint32_t num_buffers) {};
+			virtual bool Initialize(Window *window) = 0;
+			virtual void ImmediateSetContext() {};
+			virtual void ImmediateSwapBuffers() {};
+			virtual void PresentCommandBuffer(CommandBuffer**buffers, uint32_t num_buffers) {};
 		};
 	};
 };

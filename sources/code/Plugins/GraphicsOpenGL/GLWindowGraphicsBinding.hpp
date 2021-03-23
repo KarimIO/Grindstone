@@ -11,18 +11,18 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		class GLWindowGraphicsBinding : public WindowGraphicsBinding {
 		public:
-			virtual bool initialize(Window *window) override;
-			virtual void immediateSetContext() override;
-			virtual void immediateSwapBuffers() override;
+			virtual bool Initialize(Window *window) override;
+			virtual void ImmediateSetContext() override;
+			virtual void ImmediateSwapBuffers() override;
 			~GLWindowGraphicsBinding();
 		public:
-			void shareLists(GLWindowGraphicsBinding* binding_to_copy_from);
+			void ShareLists(GLWindowGraphicsBinding* binding_to_copy_from);
 		private:
-			Window* window_;
+			Window* window;
 #ifdef _WIN32
-			HWND	window_handle_;
-			HGLRC	window_render_context_;
-			HDC		window_device_context_;
+			HWND	windowHandle;
+			HGLRC	windowRenderContext;
+			HDC		windowDeviceContext;
 #endif
 		};
 	};

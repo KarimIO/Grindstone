@@ -14,6 +14,9 @@ namespace Grindstone {
 			void SceneHeirarchyPanel::render() {
 				if (ImGui::Begin("Scene Heirarchy", &isShowingPanel)) {
 
+					if (ImGui::Button("Add GameObject")) {}
+					ImGui::Separator();
+
 					auto numScenes = sceneManager->scenes.size();
 					if (numScenes == 0) {
 						ImGui::Text("No entities in this scene.");

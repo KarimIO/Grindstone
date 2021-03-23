@@ -35,6 +35,11 @@ file(GLOB_RECURSE HEADER_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.hpp")
 source_group("Reflection\\Source Files" FILES ${SOURCE_REFLECTION})
 source_group("Reflection\\Header Files" FILES ${HEADER_REFLECTION})
 
+file(GLOB_RECURSE SOURCE_EVENTS "${ENGINE_CORE_DIR}/Events/*.cpp")
+file(GLOB_RECURSE HEADER_EVENTS "${ENGINE_CORE_DIR}/Events/*.hpp")
+source_group("Events\\Source Files" FILES ${SOURCE_EVENTS})
+source_group("Events\\Header Files" FILES ${HEADER_EVENTS})
+
 file(GLOB_RECURSE SOURCE_COMMON_UTILS ../Common/Utilities/ModuleLoading.cpp)
 file(GLOB_RECURSE HEADER_COMMON_UTILS ../Common/Utilities/ModuleLoading.hpp)
 source_group("Common\\Utilities\\Source Files" FILES ${SOURCE_COMMON_UTILS})
@@ -53,6 +58,7 @@ set(ENGINE_CORE_SOURCES
 	${SOURCE_CORE_SYSTEMS}
 	${SOURCE_BUILD_SETTINGS}
 	${SOURCE_REFLECTION}
+	${SOURCE_EVENTS}
 )
 
 set(ENGINE_CORE_HEADERS
@@ -65,6 +71,7 @@ set(ENGINE_CORE_HEADERS
 	${HEADER_CORE_SYSTEMS}
 	${HEADER_BUILD_SETTINGS}
 	${HEADER_REFLECTION}
+	${HEADER_EVENTS}
 )
 
 add_library(EngineCore MODULE ${ENGINE_CORE_SOURCES} ${ENGINE_CORE_HEADERS})

@@ -7,7 +7,7 @@ using namespace Grindstone;
 	#include "X11Window.hpp"
 #endif
 
-Window* WindowManager::createWindow(Window::CreateInfo& createInfo) {
+Window* WindowManager::Create(Window::CreateInfo& createInfo) {
 #if defined(_WIN32)
 	Grindstone::Win32Window *win = new Grindstone::Win32Window();
 #elif defined(__linux__)
@@ -16,7 +16,7 @@ Window* WindowManager::createWindow(Window::CreateInfo& createInfo) {
 	return nullptr;
 #endif
 
-	if (win->initialize(createInfo)) {
+	if (win->Initialize(createInfo)) {
 		windows.push_back(win);
 		return win;
 	}
@@ -26,17 +26,17 @@ Window* WindowManager::createWindow(Window::CreateInfo& createInfo) {
 	}
 }
 
-Window* WindowManager::getWindowByIndex(unsigned int i) {
+Window* WindowManager::GetWindowByIndex(unsigned int i) {
 	return windows[i];
 }
 
-unsigned int WindowManager::getNumWindows() {
+unsigned int WindowManager::GetNumWindows() {
 	return windows.size();
 }
 
-void WindowManager::updateWindows() {
+void WindowManager::UpdateWindows() {
 	for (auto window : windows) {
-		window->immediateSwapBuffers();
-		window->handleEvents();
+		window->ImmediateSwapBuffers();
+		window->HandleEvents();
 	}
 }

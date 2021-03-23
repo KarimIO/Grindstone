@@ -65,14 +65,14 @@ void APIENTRY glDebugOutput(GLenum source,
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		bool GLCore::initialize(Core::CreateInfo& ci) {
-			api_type_ = API::OpenGL;
-			debug_ = ci.debug;
-			primary_window_ = ci.window;
+		bool GLCore::Initialize(Core::CreateInfo& ci) {
+			apiType = API::OpenGL;
+			debug = ci.debug;
+			primaryWindow = ci.window;
 
 			auto wgb = new GLWindowGraphicsBinding();
-			ci.window->addBinding(wgb);
-			wgb->initialize(ci.window);
+			ci.window->AddBinding(wgb);
+			wgb->Initialize(ci.window);
 
 			if (gl3wInit()) {
 				printf("Failed to initialize GL3W. Returning...\n");
@@ -85,11 +85,11 @@ namespace Grindstone {
 				return false;
 			}
 
-			vendor_name_		= (const char *)glGetString(GL_VENDOR);
-			adapter_name_		= (const char *)glGetString(GL_RENDERER);
-			api_version_		= (const char *)glGetString(GL_VERSION);
+			vendorName		= (const char *)glGetString(GL_VENDOR);
+			adapterName		= (const char *)glGetString(GL_RENDERER);
+			apiVersion		= (const char *)glGetString(GL_VERSION);
 
-			if (debug_) {
+			if (debug) {
 				GLint flags;
 				glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
 				if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
@@ -106,13 +106,13 @@ namespace Grindstone {
 			glDepthFunc(GL_LEQUAL);
 
 			unsigned int w, h;
-			primary_window_->getWindowSize(w, h);
+			primaryWindow->GetWindowSize(w, h);
 			glViewport(0, 0, w, h);
 
 			return true;
 		}
 
-		void GLCore::clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) {
+		void GLCore::Clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) {
 			glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
 			glClearDepthf(clear_depth);
 			glClearStencil(clear_stencil);
@@ -123,206 +123,205 @@ namespace Grindstone {
 			glClear(m);
 		}
 
-		void GLCore::adjustPerspective(float *perspective) {
+		void GLCore::AdjustPerspective(float *perspective) {
 		}
 
-		void GLCore::registerWindow(Window* window) {
+		void GLCore::RegisterWindow(Window* window) {
 			auto wgb = new GLWindowGraphicsBinding();
-			window->addBinding(wgb);
-			wgb->initialize(window);
-			wgb->shareLists((GLWindowGraphicsBinding *)primary_window_->getWindowGraphicsBinding());
+			window->AddBinding(wgb);
+			wgb->Initialize(window);
+			wgb->ShareLists((GLWindowGraphicsBinding *)primaryWindow->GetWindowGraphicsBinding());
 		}
 
 		//==================================
 		// Get Text Metainfo
 		//==================================
-		const char* GLCore::getVendorName() {
-			return vendor_name_.c_str();
+		const char* GLCore::GetVendorName() {
+			return vendorName.c_str();
 		}
 
-		const char* GLCore::getAdapterName() {
-			return adapter_name_.c_str();
+		const char* GLCore::GetAdapterName() {
+			return adapterName.c_str();
 		}
 
-		const char* GLCore::getAPIName() {
+		const char* GLCore::GetAPIName() {
 			return "OpenGL";
 		}
 
-		const char* GLCore::getAPIVersion() {
-			return api_version_.c_str();
+		const char* GLCore::GetAPIVersion() {
+			return apiVersion.c_str();
 		}
-
 
 		//==================================
 		// Creators
 		//==================================
-		TextureBinding* GLCore::createTextureBinding(TextureBinding::CreateInfo& createInfo) {
+		TextureBinding* GLCore::CreateTextureBinding(TextureBinding::CreateInfo& createInfo) {
 			return static_cast<TextureBinding*>(new GLTextureBinding(createInfo));
 		}
 
-		TextureBindingLayout* GLCore::createTextureBindingLayout(TextureBindingLayout::CreateInfo& createInfo) {
+		TextureBindingLayout* GLCore::CreateTextureBindingLayout(TextureBindingLayout::CreateInfo& createInfo) {
 			return static_cast<TextureBindingLayout*>(new GLTextureBindingLayout(createInfo));
 		}
 
-		Framebuffer* GLCore::createFramebuffer(Framebuffer::CreateInfo& ci) {
+		Framebuffer* GLCore::CreateFramebuffer(Framebuffer::CreateInfo& ci) {
 			return static_cast<Framebuffer*>(new GLFramebuffer(ci));
 		}
 
-		RenderPass* GLCore::createRenderPass(RenderPass::CreateInfo& ci) {
+		RenderPass* GLCore::CreateRenderPass(RenderPass::CreateInfo& ci) {
 			return 0;
 		}
 
-		Pipeline* GLCore::createPipeline(Pipeline::CreateInfo& ci) {
+		Pipeline* GLCore::CreatePipeline(Pipeline::CreateInfo& ci) {
 			return static_cast<Pipeline*>(new GLPipeline(ci));
 		}
 
-		VertexArrayObject* GLCore::createVertexArrayObject(VertexArrayObject::CreateInfo& ci) {
+		VertexArrayObject* GLCore::CreateVertexArrayObject(VertexArrayObject::CreateInfo& ci) {
 			return static_cast<VertexArrayObject*>(new GLVertexArrayObject(ci));
 		}
 
-		CommandBuffer* GLCore::createCommandBuffer(CommandBuffer::CreateInfo& ci) {
+		CommandBuffer* GLCore::CreateCommandBuffer(CommandBuffer::CreateInfo& ci) {
 			return 0;
 		}
 
-		VertexBuffer* GLCore::createVertexBuffer(VertexBuffer::CreateInfo& ci) {
+		VertexBuffer* GLCore::CreateVertexBuffer(VertexBuffer::CreateInfo& ci) {
 			return static_cast<VertexBuffer*>(new GLVertexBuffer(ci));
 		}
 
-		IndexBuffer* GLCore::createIndexBuffer(IndexBuffer::CreateInfo& ci) {
+		IndexBuffer* GLCore::CreateIndexBuffer(IndexBuffer::CreateInfo& ci) {
 			return static_cast<IndexBuffer*>(new GLIndexBuffer(ci));
 		}
 
-		UniformBuffer* GLCore::createUniformBuffer(UniformBuffer::CreateInfo& ci) {
+		UniformBuffer* GLCore::CreateUniformBuffer(UniformBuffer::CreateInfo& ci) {
 			return static_cast<UniformBuffer*>(new GLUniformBuffer(ci));
 		}
 
-		UniformBufferBinding* GLCore::createUniformBufferBinding(UniformBufferBinding::CreateInfo& ci) {
+		UniformBufferBinding* GLCore::CreateUniformBufferBinding(UniformBufferBinding::CreateInfo& ci) {
 			return static_cast<UniformBufferBinding*>(new GLUniformBufferBinding(ci));
 		}
 
-		Texture* GLCore::createCubemap(Texture::CubemapCreateInfo& ci) {
+		Texture* GLCore::CreateCubemap(Texture::CubemapCreateInfo& ci) {
 			return static_cast<Texture*>(new GLTexture(ci));
 		}
 
-		Texture* GLCore::createTexture(Texture::CreateInfo& ci) {
+		Texture* GLCore::CreateTexture(Texture::CreateInfo& ci) {
 			return static_cast<Texture*>(new GLTexture(ci));
 		}
 
-		RenderTarget* GLCore::createRenderTarget(RenderTarget::CreateInfo* rt, uint32_t rc, bool cube) {
+		RenderTarget* GLCore::CreateRenderTarget(RenderTarget::CreateInfo* rt, uint32_t rc, bool cube) {
 			return static_cast<RenderTarget*>(new GLRenderTarget(rt, rc, cube));
 		}
 
-		DepthTarget* GLCore::createDepthTarget(DepthTarget::CreateInfo& rt) {
+		DepthTarget* GLCore::CreateDepthTarget(DepthTarget::CreateInfo& rt) {
 			return static_cast<DepthTarget*>(new GLDepthTarget(rt));
 		}
 
 		//==================================
 		// Booleans
 		//==================================
-		const bool GLCore::shouldUseImmediateMode() {
+		const bool GLCore::ShouldUseImmediateMode() {
 			return true;
 		}
-		const bool GLCore::supportsCommandBuffers() {
+		const bool GLCore::SupportsCommandBuffers() {
 			return false;
 		}
-		const bool GLCore::supportsTesselation() {
+		const bool GLCore::SupportsTesselation() {
 			return gl3wIsSupported(4, 0) ? true : false;
 		}
-		const bool GLCore::supportsGeometryShader() {
+		const bool GLCore::SupportsGeometryShader() {
 			return gl3wIsSupported(3, 2) ? true : false;
 		}
-		const bool GLCore::supportsComputeShader() {
+		const bool GLCore::SupportsComputeShader() {
 			return gl3wIsSupported(4, 3) ? true : false;
 		}
-		const bool GLCore::supportsMultiDrawIndirect() {
+		const bool GLCore::SupportsMultiDrawIndirect() {
 			return gl3wIsSupported(4, 3) ? true : false;
 		}
 
 		//==================================
 		// Deleters
 		//==================================
-		void GLCore::deleteRenderTarget(RenderTarget *ptr) {
+		void GLCore::DeleteRenderTarget(RenderTarget *ptr) {
 			delete (GLRenderTarget *)ptr;
 		}
 
-		void GLCore::deleteDepthTarget(DepthTarget *ptr) {
+		void GLCore::DeleteDepthTarget(DepthTarget *ptr) {
 			delete (GLDepthTarget *)ptr;
 		}
 
-		void GLCore::deleteFramebuffer(Framebuffer *ptr) {
+		void GLCore::DeleteFramebuffer(Framebuffer *ptr) {
 			delete (GLFramebuffer *)ptr;
 		}
 
-		void GLCore::deleteVertexBuffer(VertexBuffer *ptr) {
+		void GLCore::DeleteVertexBuffer(VertexBuffer *ptr) {
 			delete (GLVertexBuffer *)ptr;
 		}
 
-		void GLCore::deleteIndexBuffer(IndexBuffer *ptr) {
+		void GLCore::DeleteIndexBuffer(IndexBuffer *ptr) {
 			delete (GLIndexBuffer *)ptr;
 		}
 
-		void GLCore::deleteUniformBuffer(UniformBuffer * ptr) {
+		void GLCore::DeleteUniformBuffer(UniformBuffer * ptr) {
 			delete (GLUniformBuffer *)ptr;
 		}
 
-		void GLCore::deleteUniformBufferBinding(UniformBufferBinding * ptr) {
+		void GLCore::DeleteUniformBufferBinding(UniformBufferBinding * ptr) {
 			delete (GLUniformBufferBinding *)ptr;
 		}
 
-		void GLCore::deletePipeline(Pipeline*ptr) {
+		void GLCore::DeletePipeline(Pipeline*ptr) {
 			delete (GLPipeline *)ptr;
 		}
 
-		void GLCore::deleteRenderPass(RenderPass *ptr) {
+		void GLCore::DeleteRenderPass(RenderPass *ptr) {
 			//delete (GLRenderPass *)ptr;
 		}
 
-		void GLCore::deleteTexture(Texture *ptr) {
+		void GLCore::DeleteTexture(Texture *ptr) {
 			delete (GLTexture *)ptr;
 		}
 
-		void GLCore::deleteTextureBinding(TextureBinding *ptr) {
+		void GLCore::DeleteTextureBinding(TextureBinding *ptr) {
 			delete (GLTextureBinding *)ptr;
 		}
 
-		void GLCore::deleteTextureBindingLayout(TextureBindingLayout *ptr) {
+		void GLCore::DeleteTextureBindingLayout(TextureBindingLayout *ptr) {
 			delete (GLTextureBindingLayout *)ptr;
 		}
 
-		void GLCore::deleteCommandBuffer(CommandBuffer * ptr) {
+		void GLCore::DeleteCommandBuffer(CommandBuffer * ptr) {
 		}
 
-		void GLCore::deleteVertexArrayObject(VertexArrayObject * ptr) {
+		void GLCore::DeleteVertexArrayObject(VertexArrayObject * ptr) {
 			delete (GLVertexArrayObject *)ptr;
 		}
 
-		void GLCore::copyToDepthBuffer(DepthTarget *p) {
+		void GLCore::CopyToDepthBuffer(DepthTarget *p) {
 			glBlitFramebuffer(0, 0, 1920, 1080, 0, 0, 1920, 1080, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 		}
 
-		void GLCore::waitUntilIdle() {
+		void GLCore::WaitUntilIdle() {
 
 		}
 
-		void GLCore::setColorMask(ColorMask mask) {
+		void GLCore::SetColorMask(ColorMask mask) {
 			glColorMask((GLboolean)(mask & ColorMask::Red), (GLboolean)(mask & ColorMask::Blue), (GLboolean)(mask & ColorMask::Green), (GLboolean)(mask & ColorMask::Alpha));
 		}
 
-		void GLCore::bindTexture(TextureBinding* binding) {
+		void GLCore::BindTexture(TextureBinding* binding) {
 			GLTextureBinding* b = (GLTextureBinding*)binding;
 			b->bind();
 		}
 
-		void GLCore::bindPipeline(Pipeline* pipeline) {
+		void GLCore::BindPipeline(Pipeline* pipeline) {
 			GLPipeline* p = (GLPipeline*)pipeline;
 			p->bind();
 		}
 
-		void GLCore::bindVertexArrayObject(VertexArrayObject *vao) {
+		void GLCore::BindVertexArrayObject(VertexArrayObject *vao) {
 			vao->bind();
 		}
 
-		GLenum getGeomType(GeometryType geom_type) {
+		GLenum GetGeomType(GeometryType geom_type) {
 			switch (geom_type) {
 			case GeometryType::Points:
 				return GL_POINTS;
@@ -351,26 +350,26 @@ namespace Grindstone {
 			throw std::runtime_error("Invalid Geometry Type");
 		}
 
-		void GLCore::drawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
+		void GLCore::DrawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
 			uint32_t size = largeBuffer ? sizeof(uint32_t) : sizeof(uint16_t);
 			void *ptr = reinterpret_cast<void *>(indexOffsetPtr * size);
-			glDrawElementsBaseVertex(getGeomType(geom_type), indexCount, largeBuffer ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, ptr, baseVertex);
+			glDrawElementsBaseVertex(GetGeomType(geom_type), indexCount, largeBuffer ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, ptr, baseVertex);
 		}
 
-		void GLCore::drawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) {
-			glDrawArrays(getGeomType(geom_type), base, count);
+		void GLCore::DrawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) {
+			glDrawArrays(GetGeomType(geom_type), base, count);
 		}
 
-		void GLCore::enableDepth(bool state) {
+		void GLCore::EnableDepth(bool state) {
 			glDepthMask(state);
 		}
 
-		void GLCore::bindDefaultFramebuffer(bool depth) {
+		void GLCore::BindDefaultFramebuffer(bool depth) {
 			glDepthMask(depth ? GL_TRUE : GL_FALSE);
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
 
-		void GLCore::setImmediateBlending(BlendMode mode) {
+		void GLCore::SetImmediateBlending(BlendMode mode) {
 			switch (mode) {
 			case BlendMode::None:
 			default:

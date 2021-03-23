@@ -3,16 +3,13 @@
 #include <vector>
 #include "Window.hpp"
 
-class InputInterface;
-
-
 namespace Grindstone {
 	class WindowManager {
 	public:
-		virtual Window* createWindow(Window::CreateInfo&);
-		virtual Window* getWindowByIndex(unsigned int i);
-		virtual unsigned int getNumWindows();
-		virtual void updateWindows();
+		virtual Window* Create(Window::CreateInfo&);
+		virtual Window* GetWindowByIndex(unsigned int i);
+		virtual unsigned int GetNumWindows();
+		virtual void UpdateWindows();
 	private:
         std::vector<Window*> windows;
 	};

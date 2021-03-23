@@ -4,16 +4,19 @@
 using namespace Grindstone::Editor::ImguiEditor;
 
 void Menubar::render() {
-	if (ImGui::BeginMenuBar()) {
-		if (ImGui::BeginMenu("File")) {
-			renderFileMenu();
-		}
-		if (ImGui::BeginMenu("View")) {
-			renderViewMenu();
-		}
-
-		ImGui::EndMenuBar();
+	if (!ImGui::BeginMenuBar()) {
+		return;
 	}
+
+	if (ImGui::BeginMenu("File")) {
+		renderFileMenu();
+	}
+
+	if (ImGui::BeginMenu("View")) {
+		renderViewMenu();
+	}
+
+	ImGui::EndMenuBar();
 }
 
 void Menubar::renderFileMenu() {

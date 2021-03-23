@@ -1,22 +1,24 @@
 #pragma once
 
-#include "InputCodes.hpp"
+#include "Event/KeyPressCode.hpp"
+#include "Event/MouseButtonCode.hpp"
 
 namespace Grindstone {
 	namespace Input {
 		class Interface {
 		public:
-			virtual void resizeEvent(int, int) = 0;
-			virtual void setMouseButton(MouseAction, ButtonStatus) = 0;
-			virtual ButtonStatus getMouseButton(MouseAction) = 0;
-			virtual void setMousePosition(int, int) = 0;
-			virtual void getMousePosition(int&, int&) = 0;
-			virtual void setFocused(bool) = 0;
-			virtual bool isFocused() = 0;
-			virtual void setKey(KeyAction, ButtonStatus) = 0;
-			virtual ButtonStatus getKey(KeyAction) = 0;
-			virtual void quit() = 0;
-			virtual void forceQuit() = 0;
+			virtual void ResizeEvent(int, int) = 0;
+			virtual void SetMouseButton(Events::MouseButtonCode, bool) = 0;
+			virtual bool IsMouseButtonPressed(Events::MouseButtonCode) = 0;
+			virtual void SetMousePosition(int, int) = 0;
+			virtual void GetMousePosition(int&, int&) = 0;
+			virtual void SetIsFocused(bool) = 0;
+			virtual bool IsFocused() = 0;
+			virtual void MouseScroll(int offsetX, int offsetY) = 0;
+			virtual void SetKeyPressed(Events::KeyPressCode, bool) = 0;
+			virtual bool IsKeyPressed(Events::KeyPressCode) = 0;
+			virtual void Quit() = 0;
+			virtual void ForceQuit() = 0;
 		}; // class Interface
 	} // namespace Input
 } // namespace Grindstone

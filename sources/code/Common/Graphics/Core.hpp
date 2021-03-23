@@ -29,75 +29,75 @@ namespace Grindstone {
 				bool debug;
 			};
 
-			virtual bool initialize(CreateInfo& createInfo) = 0;
-			virtual void registerWindow(Window* window) = 0;
-			API getAPI() {
-				return api_type_;
+			virtual bool Initialize(CreateInfo& createInfo) = 0;
+			virtual void RegisterWindow(Window* window) = 0;
+			API GetAPI() {
+				return apiType;
 			}
 		public:
-			virtual const char* getVendorName() = 0;
-			virtual const char* getAdapterName() = 0;
-			virtual const char* getAPIName() = 0;
-			virtual const char* getAPIVersion() = 0;
+			virtual const char* GetVendorName() = 0;
+			virtual const char* GetAdapterName() = 0;
+			virtual const char* GetAPIName() = 0;
+			virtual const char* GetAPIVersion() = 0;
 
-			virtual void clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) = 0;
+			virtual void Clear(ClearMode mask, float clear_color[4] = nullptr, float clear_depth = 0, uint32_t clear_stencil = 0) = 0;
 			
-			virtual void adjustPerspective(float *perspective) = 0;
+			virtual void AdjustPerspective(float *perspective) = 0;
 
-			virtual void deleteRenderTarget(RenderTarget* ptr) = 0;
-			virtual void deleteDepthTarget(DepthTarget* ptr) = 0;
-			virtual void deleteFramebuffer(Framebuffer* ptr) = 0;
-			virtual void deleteVertexBuffer(VertexBuffer* ptr) = 0;
-			virtual void deleteIndexBuffer(IndexBuffer* ptr) = 0;
-			virtual void deleteUniformBuffer(UniformBuffer* ptr) = 0;
-			virtual void deleteUniformBufferBinding(UniformBufferBinding* ptr) = 0;
-			virtual void deletePipeline(Pipeline* ptr) = 0;
-			virtual void deleteRenderPass(RenderPass* ptr) = 0;
-			virtual void deleteTexture(Texture* ptr) = 0;
-			virtual void deleteTextureBinding(TextureBinding* ptr) = 0;
-			virtual void deleteTextureBindingLayout(TextureBindingLayout* ptr) = 0;
-			virtual void deleteCommandBuffer(CommandBuffer* ptr) = 0;
-			virtual void deleteVertexArrayObject(VertexArrayObject* ptr) = 0;
+			virtual void DeleteRenderTarget(RenderTarget* ptr) = 0;
+			virtual void DeleteDepthTarget(DepthTarget* ptr) = 0;
+			virtual void DeleteFramebuffer(Framebuffer* ptr) = 0;
+			virtual void DeleteVertexBuffer(VertexBuffer* ptr) = 0;
+			virtual void DeleteIndexBuffer(IndexBuffer* ptr) = 0;
+			virtual void DeleteUniformBuffer(UniformBuffer* ptr) = 0;
+			virtual void DeleteUniformBufferBinding(UniformBufferBinding* ptr) = 0;
+			virtual void DeletePipeline(Pipeline* ptr) = 0;
+			virtual void DeleteRenderPass(RenderPass* ptr) = 0;
+			virtual void DeleteTexture(Texture* ptr) = 0;
+			virtual void DeleteTextureBinding(TextureBinding* ptr) = 0;
+			virtual void DeleteTextureBindingLayout(TextureBindingLayout* ptr) = 0;
+			virtual void DeleteCommandBuffer(CommandBuffer* ptr) = 0;
+			virtual void DeleteVertexArrayObject(VertexArrayObject* ptr) = 0;
 
-			virtual Framebuffer* createFramebuffer(Framebuffer::CreateInfo& ci) = 0;
-			virtual RenderPass* createRenderPass(RenderPass::CreateInfo& ci) = 0;
-			virtual Pipeline* createPipeline(Pipeline::CreateInfo& ci) = 0;
-			virtual CommandBuffer* createCommandBuffer(CommandBuffer::CreateInfo& ci) = 0;
-			virtual VertexArrayObject* createVertexArrayObject(VertexArrayObject::CreateInfo& ci) = 0;
-			virtual VertexBuffer* createVertexBuffer(VertexBuffer::CreateInfo& ci) = 0;
-			virtual IndexBuffer* createIndexBuffer(IndexBuffer::CreateInfo& ci) = 0;
-			virtual UniformBuffer* createUniformBuffer(UniformBuffer::CreateInfo& ci) = 0;
-			virtual UniformBufferBinding* createUniformBufferBinding(UniformBufferBinding::CreateInfo& ci) = 0;
-			virtual Texture* createCubemap(Texture::CubemapCreateInfo& createInfo) = 0;
-			virtual Texture* createTexture(Texture::CreateInfo& createInfo) = 0;
-			virtual TextureBinding* createTextureBinding(TextureBinding::CreateInfo& ci) = 0;
-			virtual TextureBindingLayout* createTextureBindingLayout(TextureBindingLayout::CreateInfo& createInfo) = 0;
-			virtual RenderTarget *createRenderTarget(RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) = 0;
-			virtual DepthTarget* createDepthTarget(DepthTarget::CreateInfo& rt) = 0;
+			virtual Framebuffer* CreateFramebuffer(Framebuffer::CreateInfo& ci) = 0;
+			virtual RenderPass* CreateRenderPass(RenderPass::CreateInfo& ci) = 0;
+			virtual Pipeline* CreatePipeline(Pipeline::CreateInfo& ci) = 0;
+			virtual CommandBuffer* CreateCommandBuffer(CommandBuffer::CreateInfo& ci) = 0;
+			virtual VertexArrayObject* CreateVertexArrayObject(VertexArrayObject::CreateInfo& ci) = 0;
+			virtual VertexBuffer* CreateVertexBuffer(VertexBuffer::CreateInfo& ci) = 0;
+			virtual IndexBuffer* CreateIndexBuffer(IndexBuffer::CreateInfo& ci) = 0;
+			virtual UniformBuffer* CreateUniformBuffer(UniformBuffer::CreateInfo& ci) = 0;
+			virtual UniformBufferBinding* CreateUniformBufferBinding(UniformBufferBinding::CreateInfo& ci) = 0;
+			virtual Texture* CreateCubemap(Texture::CubemapCreateInfo& createInfo) = 0;
+			virtual Texture* CreateTexture(Texture::CreateInfo& createInfo) = 0;
+			virtual TextureBinding* CreateTextureBinding(TextureBinding::CreateInfo& ci) = 0;
+			virtual TextureBindingLayout* CreateTextureBindingLayout(TextureBindingLayout::CreateInfo& createInfo) = 0;
+			virtual RenderTarget* CreateRenderTarget(RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) = 0;
+			virtual DepthTarget* CreateDepthTarget(DepthTarget::CreateInfo& rt) = 0;
 
-			virtual void copyToDepthBuffer(DepthTarget* p) = 0;
+			virtual void CopyToDepthBuffer(DepthTarget* p) = 0;
 
-			virtual const bool shouldUseImmediateMode() = 0;
-			virtual const bool supportsCommandBuffers() = 0;
-			virtual const bool supportsTesselation() = 0;
-			virtual const bool supportsGeometryShader() = 0;
-			virtual const bool supportsComputeShader() = 0;
-			virtual const bool supportsMultiDrawIndirect() = 0;
+			virtual const bool ShouldUseImmediateMode() = 0;
+			virtual const bool SupportsCommandBuffers() = 0;
+			virtual const bool SupportsTesselation() = 0;
+			virtual const bool SupportsGeometryShader() = 0;
+			virtual const bool SupportsComputeShader() = 0;
+			virtual const bool SupportsMultiDrawIndirect() = 0;
 
-			virtual void bindDefaultFramebuffer(bool depth) = 0;
+			virtual void BindDefaultFramebuffer(bool depth) = 0;
 
-			virtual void waitUntilIdle() = 0;
+			virtual void WaitUntilIdle() = 0;
 
-			virtual void bindTexture(TextureBinding*) = 0;
-			virtual void bindPipeline(Pipeline* pipeline) = 0;
-			virtual void bindVertexArrayObject(VertexArrayObject*) = 0;
-			virtual	void drawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) = 0;
-			virtual void drawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) = 0;
-			virtual void setImmediateBlending(BlendMode) = 0;
-			virtual void enableDepth(bool state) = 0;
-			virtual void setColorMask(ColorMask mask) = 0;
+			virtual void BindTexture(TextureBinding*) = 0;
+			virtual void BindPipeline(Pipeline* pipeline) = 0;
+			virtual void BindVertexArrayObject(VertexArrayObject*) = 0;
+			virtual	void DrawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) = 0;
+			virtual void DrawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) = 0;
+			virtual void SetImmediateBlending(BlendMode) = 0;
+			virtual void EnableDepth(bool state) = 0;
+			virtual void SetColorMask(ColorMask mask) = 0;
 
-			const char* getVendorNameFromID(uint32_t vendorID) {
+			const char* GetVendorNameFromID(uint32_t vendorID) {
 				switch (vendorID) {
 				case 0x1002:
 					return "Advanced Micro Devices (AMD)";
@@ -124,8 +124,8 @@ namespace Grindstone {
 				}
 			};
 		protected:
-			bool debug_;
-			API api_type_;
+			bool debug;
+			API apiType;
 		};
 	}
 }

@@ -13,40 +13,40 @@ namespace Grindstone {
 
 	class Win32Window : public Window {
 	public:
-		virtual bool initialize(CreateInfo& create_info) override;
-		virtual void show() override;
-		virtual bool shouldClose() override;
-		virtual bool handleEvents() override;
-		virtual void setFullscreen(FullscreenMode mode) override;
-		virtual void getWindowRect(unsigned int& left, unsigned int& top, unsigned int& right, unsigned int& bottom) override;
-		virtual void getWindowSize(unsigned int& width, unsigned int& height) override;
-		virtual void setWindowSize(unsigned int width, unsigned int height) override;
-		virtual void setMousePos(unsigned int x, unsigned int y) override;
-		virtual void getMousePos(unsigned int& x, unsigned int& y) override;
-		virtual void setWindowPos(unsigned int x, unsigned int y) override;
-		virtual void getWindowPos(unsigned int& x, unsigned int& y) override;
-		virtual void setWindowFocus() override;
-		virtual bool getWindowFocus() override;
-		virtual bool getWindowMinimized() override;
-		virtual void setWindowTitle(const char* title) override;
-		virtual void setWindowAlpha(float alpha) override;
-		virtual float getWindowDpiScale() override;
-		virtual void close() override;
+		virtual bool Initialize(CreateInfo& create_info) override;
+		virtual void Show() override;
+		virtual bool ShouldClose() override;
+		virtual bool HandleEvents() override;
+		virtual void SetFullscreen(FullscreenMode mode) override;
+		virtual void GetWindowRect(unsigned int& left, unsigned int& top, unsigned int& right, unsigned int& bottom) override;
+		virtual void GetWindowSize(unsigned int& width, unsigned int& height) override;
+		virtual void SetWindowSize(unsigned int width, unsigned int height) override;
+		virtual void SetMousePos(unsigned int x, unsigned int y) override;
+		virtual void GetMousePos(unsigned int& x, unsigned int& y) override;
+		virtual void SetWindowPos(unsigned int x, unsigned int y) override;
+		virtual void GetWindowPos(unsigned int& x, unsigned int& y) override;
+		virtual void SetWindowFocus() override;
+		virtual bool GetWindowFocus() override;
+		virtual bool GetWindowMinimized() override;
+		virtual void SetWindowTitle(const char* title) override;
+		virtual void SetWindowAlpha(float alpha) override;
+		virtual float GetWindowDpiScale() override;
+		virtual void Close() override;
 	public:
-		HWND getHandle();
+		HWND GetHandle();
 	private:
 		static LRESULT CALLBACK sWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 		LRESULT	CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	private:
-		HWND	window_handle_;
-		RECT	window_size_;
-		unsigned int width_;
-		unsigned int height_;
-		FullscreenMode fullscreen_mode_;
-		DWORD style_;
-		DWORD ex_style_;
-		EngineCore* engine_core_ = nullptr;
-		bool should_close_;
+		HWND	windowHandle;
+		RECT	windowSize;
+		unsigned int width;
+		unsigned int height;
+		FullscreenMode fullscreenMode;
+		DWORD style;
+		DWORD extendedStyle;
+		EngineCore* engineCore = nullptr;
+		bool shouldClose;
 	};
 };

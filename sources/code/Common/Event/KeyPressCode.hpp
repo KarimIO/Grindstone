@@ -1,29 +1,8 @@
 #pragma once
 
-#include <Common/Rendering/RenderPathBase.hpp>
-
 namespace Grindstone {
-	namespace Input {
-		enum class MouseAction {
-			Left = 0,
-			Middle,
-			Right,
-
-			Mouse4,
-			Mouse5,
-
-			WheelUp,
-			WheelDown,
-			WheelLeft,
-			WheelRight,
-
-			// X and Y Position
-			XCoord,
-			YCoord,
-			Last
-		};
-
-		enum class KeyAction {
+	namespace Events {
+		enum class KeyPressCode {
 			ArrowLeft = 0,
 			ArrowRight,
 			ArrowUp,
@@ -85,8 +64,8 @@ namespace Grindstone {
 			Num7,
 			Num8,
 			Num9,
-			DASH,
-			ADD,
+			Dash,
+			Add,
 
 			A,
 			B,
@@ -152,30 +131,6 @@ namespace Grindstone {
 			Space,
 			Last,
 			None = Last
-		};
-
-		enum class WindowEvent {
-			Close = 0,
-			ForceClose,
-			ResizeX,
-			ResizeY,
-			MoveX,
-			MoveY,
-			Focus,
-			Minimize,
-			Last
-		};
-
-		enum class DeviceType{
-			Window = 0,
-			Keyboard,
-			Mouse
-		};
-
-		enum class ButtonStatus {
-			Pressed = 0,
-			Released
-		};
-
-	} // namespace Input
+		}; // enum class KeyPressCode
+	} // namespace Events
 } // namespace Grindstone

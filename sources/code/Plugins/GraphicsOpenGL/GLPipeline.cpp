@@ -63,7 +63,7 @@ namespace Grindstone {
 		}
 
 		GLPipeline::GLPipeline(CreateInfo& createInfo) {
-			primitive_type_ = getGeomType(createInfo.primitiveType);
+			primitive_type_ = GetGeomType(createInfo.primitiveType);
 
 			width_ = createInfo.width;
 			height_ = createInfo.height;

@@ -11,6 +11,7 @@
 #include "CoreSystems/setupCoreSystems.hpp"
 #include "Scenes/Manager.hpp"
 #include "PluginSystem/Manager.hpp"
+#include "Events/InputManager.hpp"
 #include "Common/Graphics/Core.hpp"
 #include "Common/Display/DisplayManager.hpp"
 #include "Common/Window/WindowManager.hpp"
@@ -34,19 +35,20 @@ bool EngineCore::initialize(CreateInfo& create_info) {
 	sceneManager = new SceneManagement::SceneManager(this);
 
 	sceneManager->loadDefaultScene();
+	inputManager = new Input::Manager();
 
-	Window::CreateInfo win_ci;
-	win_ci.fullscreen = Window::FullscreenMode::Windowed;
-	win_ci.title = "Sandbox";
-	win_ci.width = 800;
-	win_ci.height = 600;
-	win_ci.engine_core = this;
-	displayManager->getMainDisplay();
-	auto win = windowManager->createWindow(win_ci);
+	Window::CreateInfo windowCreationInfo;
+	windowCreationInfo.fullscreen = Window::FullscreenMode::Windowed;
+	windowCreationInfo.title = "Sandbox";
+	windowCreationInfo.width = 800;
+	windowCreationInfo.height = 600;
+	windowCreationInfo.engineCore = this;
+	displayManager->GetMainDisplay();
+	auto win = windowManager->Create(windowCreationInfo);
 
 	GraphicsAPI::Core::CreateInfo graphicsCoreInfo{ win, true };
-	graphicsCore->initialize(graphicsCoreInfo);
-	win->show();
+	graphicsCore->Initialize(graphicsCoreInfo);
+	win->Show();
 
 	GRIND_LOG("{0} Initialized.", create_info.applicationTitle);
 	GRIND_PROFILE_END_SESSION();
@@ -64,12 +66,12 @@ void EngineCore::run() {
 float clearVal[4] = {0.3f, 0.6f, 0.9f, 1.f};
 
 void EngineCore::runLoopIteration() {
-	graphicsCore->clear(GraphicsAPI::ClearMode::All, clearVal, 0, 0);
+	graphicsCore->Clear(GraphicsAPI::ClearMode::All, clearVal, 0, 0);
 	sceneManager->update();
 }
 
 void EngineCore::updateWindows() {
-	windowManager->updateWindows();
+	windowManager->UpdateWindows();
 }
 
 EngineCore::~EngineCore() {

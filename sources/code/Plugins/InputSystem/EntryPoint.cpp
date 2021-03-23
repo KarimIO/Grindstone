@@ -1,7 +1,7 @@
 #include "pch.hpp"
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <EngineCore/EngineCore.hpp>
-#include "InputSystem.hpp"
+#include "InputManager.hpp"
 using namespace Grindstone;
 
 extern "C" {

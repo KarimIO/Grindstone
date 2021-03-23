@@ -7,8 +7,8 @@ namespace Grindstone {
 	public:
 		// colorBuffer	Color RenderBuffer.
 		// depthBuffer	Depth RenderBuffer.
-		uint32_t monitor_id_;
-		uint32_t x_, y_;
-		uint32_t width_, height_;
+		uint32_t monitorId;
+		uint32_t x, y;
+		uint32_t width, height;
 	};
 }
