@@ -68,8 +68,8 @@ void ImguiEditor::update() {
 void ImguiEditor::render() {
 	renderDockspace();
 	sceneHeirarchyPanel->render();
-	inspectorPanel->render(selectedEntity);
 	systemPanel->render();
+	inspectorPanel->render(selectedEntity);
 }
 
 void ImguiEditor::updateSelectedEntity(entt::entity selectedEntity) {

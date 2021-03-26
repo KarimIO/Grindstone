@@ -18,11 +18,7 @@ ECS::Entity SceneLoaderJson::createEntity() {
 }
 
 void* SceneLoaderJson::attachComponent(ECS::Entity entity, const char* componentName) {
-	auto registry = scene->getEntityRegistry();
-	auto componentRegistrar = scene->getComponentRegistrar();
-	void* componentPtr = componentRegistrar->createComponent(componentName, *registry, entity);
-
-	return componentPtr;
+	return scene->attachComponent(entity, componentName);
 }
 
 bool SceneLoaderJson::load(const char* path) {

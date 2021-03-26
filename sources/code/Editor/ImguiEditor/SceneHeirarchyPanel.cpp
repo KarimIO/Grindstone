@@ -42,11 +42,6 @@ namespace Grindstone {
 						editor->updateSelectedEntity(entt::null);
 					}
 
-					if (ImGui::BeginPopupContextWindow(0, RIGHT_MOUSE_BUTTON, false)) {
-						if (ImGui::MenuItem("Add new entity")) {}
-						ImGui::EndPopup();
-					}
-
 					ImGui::End();
 				}
 			}
@@ -68,6 +63,13 @@ namespace Grindstone {
 						renderEntity(registry, entity);
 					}
 				);
+
+				if (ImGui::BeginPopupContextWindow(0, RIGHT_MOUSE_BUTTON, false)) {
+					if (ImGui::MenuItem("Add new entity")) {
+						scene->createDefaultEntity();
+					}
+					ImGui::EndPopup();
+				}
 			}
 
 			void SceneHeirarchyPanel::renderEntity(entt::registry& registry, entt::entity entity) {

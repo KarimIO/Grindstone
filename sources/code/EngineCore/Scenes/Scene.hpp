@@ -20,7 +20,9 @@ namespace Grindstone {
 			friend SceneLoaderJson;
 		public:
 			Scene(ECS::ComponentRegistrar*, ECS::SystemRegistrar*);
-			ECS::Entity createEntity();
+			virtual ECS::Entity createEntity();
+			virtual ECS::Entity createDefaultEntity();
+			virtual void* attachComponent(ECS::Entity entity, const char* componentName);
 			virtual const char* getName();
 			virtual entt::registry* getEntityRegistry();
 			virtual ECS::ComponentRegistrar* getComponentRegistrar();
