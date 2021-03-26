@@ -24,10 +24,10 @@ namespace Grindstone {
 		}; // struct MouseMovedEvent
 		
 		struct MouseScrolledEvent : public BaseEvent {
-			MouseScrolledEvent(int scrollX, int scrollY)
+			MouseScrolledEvent(float scrollX, float scrollY)
 				: scrollX(scrollX), scrollY(scrollY) {}
-			int scrollX;
-			int scrollY;
+			float scrollX;
+			float scrollY;
 
 			SETUP_EVENT(MouseScrolled)
 		}; // struct MouseScrolledEvent

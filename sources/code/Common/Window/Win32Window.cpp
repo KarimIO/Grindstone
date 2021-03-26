@@ -65,12 +65,16 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 	case WM_KILLFOCUS:
 		input->SetIsFocused(false);
 		break;
-	case WM_MOUSEHWHEEL:
-		input->MouseScroll(GET_WHEEL_DELTA_WPARAM(wParam), 0);
+	case WM_MOUSEHWHEEL: {
+		float delta = (float)GET_WHEEL_DELTA_WPARAM(wParam) / (float)WHEEL_DELTA;
+		input->MouseScroll(delta, 0);
 		break;
-	case WM_MOUSEWHEEL:
-		input->MouseScroll(0, GET_WHEEL_DELTA_WPARAM(wParam));
+	}
+	case WM_MOUSEWHEEL: {
+		float delta = (float)GET_WHEEL_DELTA_WPARAM(wParam) / (float)WHEEL_DELTA;
+		input->MouseScroll(0, delta);
 		break;
+	}
 	case WM_LBUTTONDOWN:
 		input->SetMouseButton(Events::MouseButtonCode::Left, true);
 		break;

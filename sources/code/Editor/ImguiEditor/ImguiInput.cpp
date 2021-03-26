@@ -32,6 +32,14 @@ bool OnMousePressed(BaseEvent* ev, void* data) {
 	return true;
 }
 
+bool OnMouseScrolled(BaseEvent* ev, void* data) {
+	ImGuiIO* io = (ImGuiIO*)data;
+	MouseScrolledEvent* evCast = (MouseScrolledEvent*)ev;
+	io->MouseWheel = evCast->scrollY;
+	io->MouseWheelH = evCast->scrollX;
+	return true;
+}
+
 bool OnKeyPressed(BaseEvent* ev, void* data) {
 	ImGuiIO* io = (ImGuiIO*)data;
 	KeyPressEvent* evCast = (KeyPressEvent*)ev;
@@ -56,6 +64,7 @@ ImguiInput::ImguiInput(ImGuiIO& io, EngineCore* engineCore) : io(io) {
 	auto eventDispatcher = engineCore->getEventDispatcher();
 	eventDispatcher->AddEventListener(EventType::MouseMoved, &OnMouseMove, &io);
 	eventDispatcher->AddEventListener(EventType::MouseButton, &OnMousePressed, &io);
+	eventDispatcher->AddEventListener(EventType::MouseScrolled, &OnMouseScrolled, &io);
 	eventDispatcher->AddEventListener(EventType::KeyPress, &OnKeyPressed, &io);
 	eventDispatcher->AddEventListener(EventType::CharacterTyped, &OnCharacterTyped, &io);
 

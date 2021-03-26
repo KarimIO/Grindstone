@@ -53,7 +53,7 @@ bool Manager::IsFocused() {
 	return isFocused;
 }
 
-void Manager::MouseScroll(int offsetX, int offsetY) {
+void Manager::MouseScroll(float offsetX, float offsetY) {
 	MouseScrolledEvent* ev = new MouseScrolledEvent{offsetX, offsetY};
 	dispatcher->Dispatch(ev);
 }

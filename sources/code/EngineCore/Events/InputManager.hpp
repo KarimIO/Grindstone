@@ -22,9 +22,9 @@ namespace Grindstone {
 			virtual void SetMouseButton(Events::MouseButtonCode, bool) override;
 			virtual void SetMousePosition(int, int) override;
 			virtual void SetIsFocused(bool) override;
-			virtual void MouseScroll(int, int) override;
+			virtual void MouseScroll(float, float) override;
 			virtual void SetKeyPressed(Events::KeyPressCode, bool) override;
-			virtual void AddCharacterTyped(unsigned short character);
+			virtual void AddCharacterTyped(unsigned short character) override;
 			virtual void Quit() override;
 			virtual void ForceQuit() override;
 		private:
