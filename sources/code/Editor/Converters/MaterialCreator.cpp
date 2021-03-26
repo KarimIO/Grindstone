@@ -1,3 +1,4 @@
+#if 0
 #include "MaterialCreator.hpp"
 #include <fstream>
 #include <iostream>
@@ -75,3 +76,4 @@ bool LoadMaterial(std::string path) {
 
 	return true;
 }
+#endif

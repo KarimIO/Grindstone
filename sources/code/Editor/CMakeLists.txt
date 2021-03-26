@@ -1,16 +1,18 @@
 set(EDITOR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-file(GLOB_RECURSE SOURCE_MAIN Main.cpp ../Common/Utilities/ModuleLoading.cpp)
+file(GLOB_RECURSE SOURCE_MAIN Main.cpp ../Common/Utilities/ModuleLoading.cpp EditorManager.cpp EditorManager.hpp)
 
-set(HEADERS_CONVERTER EditorManager.hpp)
-set(SOURCES_CONVERTER EditorManager.cpp)
+file(GLOB_RECURSE SOURCE_CONVERTERS "${EDITOR_DIR}/Converters/*.cpp")
+file(GLOB_RECURSE HEADER_CONVERTERS "${EDITOR_DIR}/Converters/*.hpp")
+source_group("Converters\\Source Files" FILES ${SOURCE_CONVERTERS})
+source_group("Converters\\Header Files" FILES ${HEADER_CONVERTERS})
 
 file(GLOB_RECURSE SOURCE_IMGUI_EDITOR "${EDITOR_DIR}/ImguiEditor/*.cpp")
 file(GLOB_RECURSE HEADER_IMGUI_EDITOR "${EDITOR_DIR}/ImguiEditor/*.hpp")
 source_group("Imgui Editor\\Source Files" FILES ${SOURCE_IMGUI_EDITOR})
 source_group("Imgui Editor\\Header Files" FILES ${HEADER_IMGUI_EDITOR})
 
-set(SOURCES_IMGUI
+set(SOURCE_IMGUI
 	${DEPS_DIR}/GL/gl3w.cpp
 	${DEPS_DIR}/GL/gl3w.h
 	${DEPS_DIR}/GL/glcorearb.h
@@ -29,14 +31,14 @@ find_package(assimp REQUIRED)
 
 set(EDITOR_SOURCES
 	${SOURCE_MAIN}
-	${SOURCES_IMGUI}
+	${SOURCE_IMGUI}
 	${SOURCE_IMGUI_EDITOR}
-	${SOURCES_CONVERTER}
+	${SOURCE_CONVERTERS}
 )
 
 set(EDITOR_HEADERS
-	${HEADERS_CONVERTER}
 	${HEADER_IMGUI_EDITOR}
+	${HEADER_CONVERTERS}
 )
 
 add_executable(Editor ${EDITOR_HEADERS} ${EDITOR_SOURCES})

@@ -33,7 +33,6 @@ namespace Grindstone {
 						ImGui::Text("No entity selected.");
 					}
 
-
 					ImGui::End();
 				}
 			}

@@ -10,6 +10,7 @@
 #include "SystemPanel.hpp"
 #include "InspectorPanel.hpp"
 #include "SceneHeirarchyPanel.hpp"
+#include "ImageConverterModal.hpp"
 #include "Menubar.hpp"
 #include "ImguiInput.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
@@ -37,15 +38,16 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) {
 
 	HWND win = GetActiveWindow();
 	ImGui_ImplWin32_Init(win);
-	
+
 	input = new ImguiInput(io, engineCore);
-	
+
 	ImGui_ImplOpenGL3_Init("#version 150");
 
 	sceneHeirarchyPanel = new SceneHeirarchyPanel(engineCore->getSceneManager(), this);
+	imageConverterModal = new ImageConverterModal();
 	inspectorPanel = new InspectorPanel(engineCore);
 	systemPanel = new SystemPanel(engineCore->getSystemRegistrar());
-	menubar = new Menubar();
+	menubar = new Menubar(this);
 }
 
 void ImguiEditor::update() {
@@ -55,7 +57,7 @@ void ImguiEditor::update() {
 
 	glViewport(0, 0, 800, 600);
 	glClear(GL_COLOR_BUFFER_BIT);
-	
+
 	render();
 
 	// Rendering
@@ -67,9 +69,14 @@ void ImguiEditor::update() {
 
 void ImguiEditor::render() {
 	renderDockspace();
+	imageConverterModal->render();
 	sceneHeirarchyPanel->render();
 	systemPanel->render();
 	inspectorPanel->render(selectedEntity);
+}
+
+void ImguiEditor::showModal() {
+	imageConverterModal->show();
 }
 
 void ImguiEditor::updateSelectedEntity(entt::entity selectedEntity) {
@@ -77,42 +84,32 @@ void ImguiEditor::updateSelectedEntity(entt::entity selectedEntity) {
 }
 
 void ImguiEditor::renderDockspace() {
-	static bool opt_fullscreen_persistant = true;
-	static ImGuiDockNodeFlags opt_flags = ImGuiDockNodeFlags_None;
-	bool optFullscreen = opt_fullscreen_persistant;
+	static ImGuiDockNodeFlags optFlags = ImGuiDockNodeFlags_None;
 
 	// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
 	// - because it would be confusing to have two docking targets within each others.
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-	if (optFullscreen) 	{
-		ImGuiViewport* viewport = ImGui::GetMainViewport();
-		ImGui::SetNextWindowPos(viewport->Pos);
-		ImGui::SetNextWindowSize(viewport->Size);
-		ImGui::SetNextWindowViewport(viewport->ID);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-		window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-	}
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->Pos);
+	ImGui::SetNextWindowSize(viewport->Size);
+	ImGui::SetNextWindowViewport(viewport->ID);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+		ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_MenuBar |
+		ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
 	// When using ImGuiDockNodeFlags_PassthruDockspace, DockSpace() will render our background and
 	// - handle the pass-thru hole, so we ask Begin() to not render a background.
-	if (opt_flags & ImGuiDockNodeFlags_PassthruCentralNode)
-		window_flags |= ImGuiWindowFlags_NoBackground;
+	if (optFlags & ImGuiDockNodeFlags_PassthruCentralNode)
+		windowFlags |= ImGuiWindowFlags_NoBackground;
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-	ImGui::Begin("Editor Dockspace", nullptr, window_flags);
+	ImGui::Begin("Editor Dockspace", nullptr, windowFlags);
 	ImGui::PopStyleVar();
+	ImGui::PopStyleVar(2);
 
-	if (optFullscreen)
-		ImGui::PopStyleVar(2);
-
-	// Dockspace
-	ImGuiIO& io = ImGui::GetIO();
-	if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable) 	{
-		ImGuiID dockspaceId = ImGui::GetID("Editor Dockspace");
-		ImGui::DockSpace(dockspaceId, ImVec2(0.0f, 0.0f), opt_flags);
-	}
+	ImGuiID dockspaceId = ImGui::GetID("Editor Dockspace");
+	ImGui::DockSpace(dockspaceId, ImVec2(0.0f, 0.0f), optFlags);
 
 	menubar->render();
 

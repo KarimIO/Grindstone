@@ -3,9 +3,6 @@
 
 #include <string>
 
-// #include <stb/stb_image.h>
-// #include <stb/stb_dxt.h>
-
 enum Compression {
     C_DETECT = 0,
 	C_UNCOMPRESSED,

@@ -5,12 +5,17 @@ namespace Grindstone {
 
 	namespace Editor {
 		namespace ImguiEditor {
+			class ImguiEditor;
 			class Menubar {
 			public:
+				Menubar(ImguiEditor* editor);
 				void render();
 			private:
 				void renderFileMenu();
 				void renderViewMenu();
+				void renderConvertMenu();
+			private:
+				ImguiEditor* editor;
 			};
 		}
 	}

@@ -1,4 +1,3 @@
-#if 0
 #include <fstream>
 #include <string>
 #include <iostream>
@@ -7,10 +6,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_DXT_IMPLEMENTATION
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include <stb/stb_image.h>
+#include <stb/stb_dxt.h>
 #include <stb/stb_image_resize.h>
 #include "ImageConverter.hpp"
-
-
 
 typedef unsigned long DWORD;
 
@@ -298,7 +297,7 @@ void ConvertBC123(unsigned char ***pixels, bool is_cubemap, int width, int heigh
 
 	std::ofstream out(path, std::ios::binary);
 	if (out.fail()) {
-		GRIND_ERROR("Failed to output to: {0}!", path);
+		printf("Failed to output to: {0}!", path);
 		return;
 	}
 	const char filecode[4] = { 'D', 'D', 'S', ' ' };
@@ -334,7 +333,7 @@ bool ConvertTexture(std::string input, bool is_cubemap, std::string output, Comp
 	for (int i = 0; i < num_maps; i++) {
 		pixels[i] = stbi_load(path[i].c_str(), &texWidth, &texHeight, &texChannels, 4);
 		if (!pixels[i]) {
-			GRIND_ERROR("Texture failed to load!: {0}", path[i].c_str());
+			printf("Texture failed to load!: {0}", path[i].c_str());
 			for (int j = 0; j < i; i++) {
 				delete[] pixels[j];
 			}
@@ -358,11 +357,10 @@ bool ConvertTexture(std::string input, bool is_cubemap, std::string output, Comp
 		ConvertBC123(&pixels, is_cubemap, texWidth, texHeight, compression, output, true);
 		break;
 	default:
-		GRIND_ERROR("Image Conversion: Invalid compression type!");
+		printf("Image Conversion: Invalid compression type!");
 	}
 
 	delete[] pixels;
 
 	return true;
 }
-#endif

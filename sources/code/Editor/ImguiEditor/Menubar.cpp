@@ -1,7 +1,10 @@
 #include <iostream>
 #include <imgui/imgui.h>
+#include "ImguiEditor.hpp"
 #include "Menubar.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
+
+Menubar::Menubar(ImguiEditor* editor) : editor(editor) {}
 
 void Menubar::render() {
 	if (!ImGui::BeginMenuBar()) {
@@ -14,6 +17,10 @@ void Menubar::render() {
 
 	if (ImGui::BeginMenu("View")) {
 		renderViewMenu();
+	}
+
+	if (ImGui::BeginMenu("Convert")) {
+		renderConvertMenu();
 	}
 
 	ImGui::EndMenuBar();
@@ -37,5 +44,12 @@ void Menubar::renderViewMenu() {
 	if (ImGui::MenuItem("Show Scene Graph", "", false)) {}
 	if (ImGui::MenuItem("Show Inspector Panel", "", false)) {}
 	if (ImGui::MenuItem("Add Viewport Panel", "", false)) {}
+	ImGui::EndMenu();
+}
+
+void Menubar::renderConvertMenu() {
+	if (ImGui::MenuItem("Convert Model", "", false)) {
+		editor->showModal();
+	}
 	ImGui::EndMenu();
 }
