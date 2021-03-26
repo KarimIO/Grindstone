@@ -16,6 +16,7 @@
 #include "Common/Display/DisplayManager.hpp"
 #include "Common/Window/WindowManager.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
+#include "Events/Dispatcher.hpp"
 
 using namespace Grindstone;
 
@@ -35,7 +36,8 @@ bool EngineCore::initialize(CreateInfo& create_info) {
 	sceneManager = new SceneManagement::SceneManager(this);
 
 	sceneManager->loadDefaultScene();
-	inputManager = new Input::Manager();
+	eventDispatcher = new Events::Dispatcher();
+	inputManager = new Input::Manager(eventDispatcher);
 
 	Window::CreateInfo windowCreationInfo;
 	windowCreationInfo.fullscreen = Window::FullscreenMode::Windowed;
@@ -72,6 +74,7 @@ void EngineCore::runLoopIteration() {
 
 void EngineCore::updateWindows() {
 	windowManager->UpdateWindows();
+	eventDispatcher->HandleEvents();
 }
 
 EngineCore::~EngineCore() {
@@ -103,4 +106,8 @@ ECS::ComponentRegistrar* EngineCore::getComponentRegistrar() {
 
 ECS::SystemRegistrar* EngineCore::getSystemRegistrar() {
 	return systemRegistrar;
+}
+
+Events::Dispatcher* EngineCore::getEventDispatcher() {
+	return eventDispatcher;
 }

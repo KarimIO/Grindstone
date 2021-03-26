@@ -15,9 +15,9 @@ namespace Grindstone {
 		}; // struct KeyPressEvent
 		
 		struct CharacterTypedEvent : public BaseEvent {
-			CharacterTypedEvent(KeyPressCode code)
-				: code(code) {}
-			KeyPressCode code = KeyPressCode::None;
+			CharacterTypedEvent(unsigned short character)
+				: character(character) {}
+			unsigned short character = 0;
 
 			SETUP_EVENT(CharacterTyped)
 		}; // struct CharacterTypedEvent

@@ -12,7 +12,8 @@ namespace Grindstone {
 			}
 			
 			void SceneHeirarchyPanel::render() {
-				if (ImGui::Begin("Scene Heirarchy", &isShowingPanel)) {
+				if (isShowingPanel) {
+					ImGui::Begin("Scene Heirarchy", &isShowingPanel);
 
 					if (ImGui::Button("Add GameObject")) {}
 					ImGui::Separator();
@@ -51,11 +52,6 @@ namespace Grindstone {
 
 			void SceneHeirarchyPanel::renderScene(SceneManagement::Scene* scene) {
 				auto& registry = *scene->getEntityRegistry();
-				
-				if (selectedEntity != entt::null) {
-					const char* selectedEntityTag = getEntityTag(registry, selectedEntity);
-					ImGui::Text(selectedEntityTag);
-				}
 
 				registry.each(
 					[&](auto entity) {

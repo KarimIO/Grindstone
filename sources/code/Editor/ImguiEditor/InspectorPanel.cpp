@@ -14,8 +14,9 @@ namespace Grindstone {
 			}
 			
 			void InspectorPanel::render() {
-				if (ImGui::Begin("Inspector", &isShowingPanel)) {
-					
+				if (isShowingPanel) {
+					ImGui::Begin("Inspector", &isShowingPanel);
+
 					auto sceneManager = engineCore->getSceneManager();
 					auto numScenes = sceneManager->scenes.size();
 					if (numScenes == 0) {

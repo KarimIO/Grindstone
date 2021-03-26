@@ -17,6 +17,7 @@ namespace Grindstone {
 			virtual void MouseScroll(int offsetX, int offsetY) = 0;
 			virtual void SetKeyPressed(Events::KeyPressCode, bool) = 0;
 			virtual bool IsKeyPressed(Events::KeyPressCode) = 0;
+			virtual void AddCharacterTyped(unsigned short character) = 0;
 			virtual void Quit() = 0;
 			virtual void ForceQuit() = 0;
 		}; // class Interface

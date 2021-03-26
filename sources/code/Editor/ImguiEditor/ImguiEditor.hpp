@@ -9,6 +9,7 @@ namespace Grindstone {
 			class InspectorPanel;
 			class SystemPanel;
 			class Menubar;
+			class ImguiInput;
 
 			class ImguiEditor {
 			public:
@@ -18,6 +19,7 @@ namespace Grindstone {
 			private:
 				void renderDockspace();
 			private:
+				ImguiInput* input = nullptr;
 				SceneHeirarchyPanel* sceneHeirarchyPanel = nullptr;
 				InspectorPanel* inspectorPanel = nullptr;
 				SystemPanel* systemPanel = nullptr;

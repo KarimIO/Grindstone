@@ -95,6 +95,12 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 	case WM_XBUTTONUP:
 		input->SetMouseButton(Events::MouseButtonCode::Mouse4, false);
 		break;
+	case WM_SYSCHAR:
+	case WM_CHAR:
+		if (wParam > 0 && wParam < 0x10000) {
+			input->AddCharacterTyped((unsigned short)wParam);
+		}
+		break;
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
 		// Repeat Count

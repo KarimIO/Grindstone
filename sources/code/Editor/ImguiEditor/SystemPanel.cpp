@@ -11,7 +11,8 @@ namespace Grindstone {
 			}
 			
 			void SystemPanel::render() {
-				if (ImGui::Begin("Systems", &isShowingPanel)) {
+				if (isShowingPanel) {
+					ImGui::Begin("Systems", &isShowingPanel);
 
 					for (auto& system : systemRegistrar->systemFactories) {
 						renderSystem(system.first.c_str());

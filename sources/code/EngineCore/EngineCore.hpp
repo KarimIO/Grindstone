@@ -24,6 +24,10 @@ namespace Grindstone {
 	namespace SceneManagement {
 		class SceneManager;
 	}
+
+	namespace Events {
+		class Dispatcher;
+	}
 	
 	class Window;
     class DisplayManager;
@@ -47,6 +51,7 @@ namespace Grindstone {
         virtual Input::Interface* getInputManager();
         virtual SceneManagement::SceneManager* getSceneManager();
         virtual ECS::SystemRegistrar* getSystemRegistrar();
+		virtual Events::Dispatcher* getEventDispatcher();
         virtual ECS::ComponentRegistrar* getComponentRegistrar();
     public:
         DisplayManager* displayManager;
@@ -55,6 +60,7 @@ namespace Grindstone {
         SceneManagement::SceneManager* sceneManager = nullptr;
         ECS::ComponentRegistrar* componentRegistrar = nullptr;
         ECS::SystemRegistrar* systemRegistrar = nullptr;
+        Events::Dispatcher* eventDispatcher = nullptr;
         Plugins::Manager* pluginManager = nullptr;
         GraphicsAPI::Core* graphicsCore = nullptr;
         Input::Interface* inputManager = nullptr;

@@ -11,6 +11,7 @@
 #include "InspectorPanel.hpp"
 #include "SceneHeirarchyPanel.hpp"
 #include "Menubar.hpp"
+#include "ImguiInput.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
 ImguiEditor::ImguiEditor(EngineCore* engineCore) {
@@ -19,7 +20,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) {
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	// io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
 
 	// Setup Dear ImGui style
@@ -34,14 +35,11 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) {
 		return;
 	}
 
-	ImGuiStyle& style = ImGui::GetStyle();
-	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-		style.WindowRounding = 0.0f;
-		style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-	}
-
 	HWND win = GetActiveWindow();
 	ImGui_ImplWin32_Init(win);
+	
+	input = new ImguiInput(io, engineCore);
+	
 	ImGui_ImplOpenGL3_Init("#version 150");
 
 	sceneHeirarchyPanel = new SceneHeirarchyPanel(engineCore->getSceneManager());
@@ -80,7 +78,7 @@ void ImguiEditor::renderDockspace() {
 	bool optFullscreen = opt_fullscreen_persistant;
 
 	// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
-	// because it would be confusing to have two docking targets within each others.
+	// - because it would be confusing to have two docking targets within each others.
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 	if (optFullscreen) 	{
 		ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -93,7 +91,8 @@ void ImguiEditor::renderDockspace() {
 		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 	}
 
-	// When using ImGuiDockNodeFlags_PassthruDockspace, DockSpace() will render our background and handle the pass-thru hole, so we ask Begin() to not render a background.
+	// When using ImGuiDockNodeFlags_PassthruDockspace, DockSpace() will render our background and
+	// - handle the pass-thru hole, so we ask Begin() to not render a background.
 	if (opt_flags & ImGuiDockNodeFlags_PassthruCentralNode)
 		window_flags |= ImGuiWindowFlags_NoBackground;
 
