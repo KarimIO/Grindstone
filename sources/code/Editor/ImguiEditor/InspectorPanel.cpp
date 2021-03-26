@@ -13,7 +13,7 @@ namespace Grindstone {
 				componentInspector = new ComponentInspector();
 			}
 			
-			void InspectorPanel::render() {
+			void InspectorPanel::render(entt::entity selectedEntity) {
 				if (isShowingPanel) {
 					ImGui::Begin("Inspector", &isShowingPanel);
 
@@ -22,14 +22,17 @@ namespace Grindstone {
 					if (numScenes == 0) {
 						ImGui::Text("No entities in this scene.");
 					}
-					else {
+					else if (selectedEntity != entt::null) {
 						auto sceneIterator = sceneManager->scenes.begin();
 						SceneManagement::Scene* scene = sceneIterator->second;
 						auto& registrar = *scene->getComponentRegistrar();
 						auto& registry = *scene->getEntityRegistry();
-						auto selectedEntity = entt::entity(0);
 						componentInspector->render(registrar, registry, selectedEntity);
 					}
+					else {
+						ImGui::Text("No entity selected.");
+					}
+
 
 					ImGui::End();
 				}

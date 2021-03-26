@@ -1,21 +1,25 @@
 #include <imgui/imgui.h>
 #include <entt/entt.hpp>
-#include "SceneHeirarchyPanel.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
+#include "ImguiEditor.hpp"
+#include "SceneHeirarchyPanel.hpp"
+
+const bool RIGHT_MOUSE_BUTTON = 1;
 
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
-			SceneHeirarchyPanel::SceneHeirarchyPanel(SceneManagement::SceneManager* sceneManager) {
-				this->sceneManager = sceneManager;
-			}
+			SceneHeirarchyPanel::SceneHeirarchyPanel(
+				SceneManagement::SceneManager* sceneManager,
+				ImguiEditor* editor
+			) : sceneManager(sceneManager), editor(editor) {}
 			
 			void SceneHeirarchyPanel::render() {
 				if (isShowingPanel) {
 					ImGui::Begin("Scene Heirarchy", &isShowingPanel);
 
-					if (ImGui::Button("Add GameObject")) {}
+					if (ImGui::Button("Add new entity")) {}
 					ImGui::Separator();
 
 					auto numScenes = sceneManager->scenes.size();
@@ -35,6 +39,15 @@ namespace Grindstone {
 								ImGui::TreePop();
 							}
 						}
+					}
+					
+					if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
+						editor->updateSelectedEntity(entt::null);
+					}
+
+					if (ImGui::BeginPopupContextWindow(0, RIGHT_MOUSE_BUTTON, false)) {
+						if (ImGui::MenuItem("Add new entity")) {}
+						ImGui::EndPopup();
 					}
 
 					ImGui::End();
@@ -63,16 +76,8 @@ namespace Grindstone {
 			void SceneHeirarchyPanel::renderEntity(entt::registry& registry, entt::entity entity) {
 				const char* entityTag = getEntityTag(registry, entity);
 				if (ImGui::Button(entityTag)) {
-					updateSelectedEntity(entity);
+					editor->updateSelectedEntity(entity);
 				}
-			}
-			
-			entt::entity SceneHeirarchyPanel::getSelectedEntity() {
-				return selectedEntity;
-			}
-			
-			void SceneHeirarchyPanel::updateSelectedEntity(entt::entity selectedEntity) {
-				this->selectedEntity = selectedEntity;
 			}
 		}
 	}

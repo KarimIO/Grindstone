@@ -20,7 +20,15 @@ bool OnMouseMove(BaseEvent* ev, void* data) {
 bool OnMousePressed(BaseEvent* ev, void* data) {
 	ImGuiIO* io = (ImGuiIO*)data;
 	MousePressEvent* evCast = (MousePressEvent*)ev;
-	io->MouseDown[(int)evCast->code] = evCast->isPressed;
+	int mouseBtn = (int)evCast->code;
+	if (mouseBtn == 2) {
+		mouseBtn = 1;
+	}
+	else if (mouseBtn == 1) {
+		mouseBtn = 2;
+	}
+
+	io->MouseDown[mouseBtn] = evCast->isPressed;
 	return true;
 }
 

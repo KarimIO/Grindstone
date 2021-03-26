@@ -42,7 +42,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) {
 	
 	ImGui_ImplOpenGL3_Init("#version 150");
 
-	sceneHeirarchyPanel = new SceneHeirarchyPanel(engineCore->getSceneManager());
+	sceneHeirarchyPanel = new SceneHeirarchyPanel(engineCore->getSceneManager(), this);
 	inspectorPanel = new InspectorPanel(engineCore);
 	systemPanel = new SystemPanel(engineCore->getSystemRegistrar());
 	menubar = new Menubar();
@@ -68,8 +68,12 @@ void ImguiEditor::update() {
 void ImguiEditor::render() {
 	renderDockspace();
 	sceneHeirarchyPanel->render();
-	inspectorPanel->render();
+	inspectorPanel->render(selectedEntity);
 	systemPanel->render();
+}
+
+void ImguiEditor::updateSelectedEntity(entt::entity selectedEntity) {
+	this->selectedEntity = selectedEntity;
 }
 
 void ImguiEditor::renderDockspace() {

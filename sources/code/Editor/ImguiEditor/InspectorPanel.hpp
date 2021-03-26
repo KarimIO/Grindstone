@@ -12,7 +12,7 @@ namespace Grindstone {
 			class InspectorPanel {
 			public:
 				InspectorPanel(EngineCore* engineCore);
-				void render();
+				void render(entt::entity selectedEntity);
 			private:
 				bool isShowingPanel = true;
 				EngineCore* engineCore = nullptr;
