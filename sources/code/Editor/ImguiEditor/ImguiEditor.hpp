@@ -8,6 +8,7 @@ namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
 			class SceneHeirarchyPanel;
+			class ModelConverterModal;
 			class ImageConverterModal;
 			class InspectorPanel;
 			class SystemPanel;
@@ -19,7 +20,8 @@ namespace Grindstone {
 				ImguiEditor(EngineCore* engineCore);
 				void update();
 				void render();
-				void showModal();
+				void showModelModal();
+				void showImageModal();
 				void updateSelectedEntity(entt::entity selectedEntity);
 			private:
 				void renderDockspace();
@@ -27,6 +29,7 @@ namespace Grindstone {
 				entt::entity selectedEntity = entt::null;
 				ImguiInput* input = nullptr;
 				ImageConverterModal* imageConverterModal = nullptr;
+				ModelConverterModal* modelConverterModal = nullptr;
 				SceneHeirarchyPanel* sceneHeirarchyPanel = nullptr;
 				InspectorPanel* inspectorPanel = nullptr;
 				SystemPanel* systemPanel = nullptr;

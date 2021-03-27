@@ -5,12 +5,14 @@
 #include <Windows.h>
 #include <Winuser.h>
 #include "GL/gl3w.h"
+
 #include "EngineCore/EngineCore.hpp"
+#include "Modals/ModelConverterModal.hpp"
+#include "Modals/ImageConverterModal.hpp"
 #include "ImguiEditor.hpp"
 #include "SystemPanel.hpp"
 #include "InspectorPanel.hpp"
 #include "SceneHeirarchyPanel.hpp"
-#include "ImageConverterModal.hpp"
 #include "Menubar.hpp"
 #include "ImguiInput.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
@@ -44,6 +46,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) {
 	ImGui_ImplOpenGL3_Init("#version 150");
 
 	sceneHeirarchyPanel = new SceneHeirarchyPanel(engineCore->getSceneManager(), this);
+	modelConverterModal = new ModelConverterModal();
 	imageConverterModal = new ImageConverterModal();
 	inspectorPanel = new InspectorPanel(engineCore);
 	systemPanel = new SystemPanel(engineCore->getSystemRegistrar());
@@ -69,13 +72,18 @@ void ImguiEditor::update() {
 
 void ImguiEditor::render() {
 	renderDockspace();
+	modelConverterModal->render();
 	imageConverterModal->render();
 	sceneHeirarchyPanel->render();
 	systemPanel->render();
 	inspectorPanel->render(selectedEntity);
 }
 
-void ImguiEditor::showModal() {
+void ImguiEditor::showModelModal() {
+	modelConverterModal->show();
+}
+
+void ImguiEditor::showImageModal() {
 	imageConverterModal->show();
 }
 

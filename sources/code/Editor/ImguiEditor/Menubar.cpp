@@ -49,7 +49,10 @@ void Menubar::renderViewMenu() {
 
 void Menubar::renderConvertMenu() {
 	if (ImGui::MenuItem("Convert Model", "", false)) {
-		editor->showModal();
+		editor->showModelModal();
+	}
+	if (ImGui::MenuItem("Convert Image", "", false)) {
+		editor->showImageModal();
 	}
 	ImGui::EndMenu();
 }

@@ -123,16 +123,16 @@ unsigned char *CreateMip(unsigned char *pixel, int width, int height) {
 	bool alpha = false;
 	switch (compression) {
 	default:
-	case C_BC1: {
+	case Compression::BC1: {
 		outHeader.dwPitchOrLinearSize = width * height / 2;
 		outHeader.ddspf.dwFourCC = FOURCC_DXT1;
 		break;
 	}
-	case C_BC2:
+	case Compression::BC2:
 		outHeader.dwPitchOrLinearSize = width * height;
 		outHeader.ddspf.dwFourCC = FOURCC_DXT3;
 		break;
-	case C_BC3:
+	case Compression::BC3:
 		outHeader.dwPitchOrLinearSize = width * height;
 		outHeader.ddspf.dwFourCC = FOURCC_DXT5;
 		break;
@@ -221,16 +221,12 @@ void ConvertBC123(unsigned char ***pixels, bool is_cubemap, int width, int heigh
 	bool alpha = false;
 	switch (compression) {
 	default:
-	case C_BC1: {
+	case Compression::BC1: {
 		outHeader.dwPitchOrLinearSize = width * height / 2;
 		outHeader.ddspf.dwFourCC = FOURCC_DXT1;
 		break;
 	}
-	case C_BC2:
-		outHeader.dwPitchOrLinearSize = width * height;
-		outHeader.ddspf.dwFourCC = FOURCC_DXT3;
-		break;
-	case C_BC3:
+	case Compression::BC3:
 		outHeader.dwPitchOrLinearSize = width * height;
 		outHeader.ddspf.dwFourCC = FOURCC_DXT5;
 		break;
@@ -297,8 +293,7 @@ void ConvertBC123(unsigned char ***pixels, bool is_cubemap, int width, int heigh
 
 	std::ofstream out(path, std::ios::binary);
 	if (out.fail()) {
-		printf("Failed to output to: {0}!", path);
-		return;
+		throw "Failed to output texture!";
 	}
 	const char filecode[4] = { 'D', 'D', 'S', ' ' };
 	out.write((const char *)&filecode, sizeof(char) * 4);
@@ -333,31 +328,30 @@ bool ConvertTexture(std::string input, bool is_cubemap, std::string output, Comp
 	for (int i = 0; i < num_maps; i++) {
 		pixels[i] = stbi_load(path[i].c_str(), &texWidth, &texHeight, &texChannels, 4);
 		if (!pixels[i]) {
-			printf("Texture failed to load!: {0}", path[i].c_str());
 			for (int j = 0; j < i; i++) {
 				delete[] pixels[j];
 			}
 			delete[] pixels;
-			return false;
+			throw "Unable to load texture!";
 		}
 	}
 
-	if (compression == C_DETECT)
+	if (compression == Compression::Detect)
 		if (texChannels == 4) {
-			compression = C_BC3;
+			compression = Compression::BC3;
 		}
 		else {
-			compression = C_BC1;
+			compression = Compression::BC1;
 		}
 
 	switch (compression) {
-	case C_BC1:
-	case C_BC2:
-	case C_BC3:
+	case Compression::BC1:
+	case Compression::BC3:
 		ConvertBC123(&pixels, is_cubemap, texWidth, texHeight, compression, output, true);
 		break;
 	default:
-		printf("Image Conversion: Invalid compression type!");
+		delete[] pixels;
+		throw "Invalid compression type!";
 	}
 
 	delete[] pixels;

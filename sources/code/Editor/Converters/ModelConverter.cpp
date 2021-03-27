@@ -12,8 +12,8 @@
 
 #include "Utilities.hpp"
 
-#include "../FormatCommon/Bounding.hpp"
-#include "../FormatCommon/StaticModel.hpp"
+#include "Common/Formats/Model.hpp"
+using namespace Grindstone::Formats;
 
 void ModelConverter::addBoneData(uint32_t bone_id, float weight, VertexWeights &v) {
 	const unsigned int n = BONES_PER_VERTEX;
@@ -305,7 +305,7 @@ ModelConverter::ModelConverter(Params params) : num_bones_(0) {
 	std::cout << "Model Parsed! Outputting.\n";
 
 	// Prepare Model Header
-	ModelFormatHeader outFormat;
+	Model::Header::V1 outFormat;
 	outFormat.large_index = false;
 	outFormat.num_vertices = static_cast<uint64_t>(vertices_.size());
 	outFormat.num_indices = static_cast<uint64_t>(indices_.size());
@@ -323,7 +323,7 @@ ModelConverter::ModelConverter(Params params) : num_bones_(0) {
 	output.write("GMF", 3);
 
 	//	- Output Header
-	output.write(reinterpret_cast<const char*> (&outFormat), sizeof(ModelFormatHeader));
+	output.write(reinterpret_cast<const char*> (&outFormat), sizeof(Model::Header));
 
 	//	- Output Bounding Size
 	output.write(reinterpret_cast<const char*> (bounding_shape_->GetData()), bounding_shape_->GetSize());
