@@ -8,23 +8,26 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		class GLRenderTarget : public RenderTarget {
 		public:
-			GLRenderTarget(CreateInfo *cis, uint32_t count, bool cubemap);
-			virtual uint32_t getHandle();
-			virtual uint32_t getHandle(uint32_t i);
-			uint32_t getNumRenderTargets();
+			GLRenderTarget(CreateInfo *createInfoList, uint32_t createInfoCount, bool isCcubemap);
+			virtual uint32_t GetHandle();
+			virtual uint32_t GetHandle(uint32_t i);
+			uint32_t GetNumRenderTargets();
+			virtual void Resize(uint32_t width, uint32_t height);
 
-			float getAverageValue(uint32_t i);
-
+			bool IsCubemap();
 			virtual void Bind();
 			virtual void Bind(uint32_t i);
 			virtual void RenderScreen(unsigned int i, unsigned int resx, unsigned int resy, unsigned char *data);
 			virtual ~GLRenderTarget();
-			bool is_cubemap_;
 		private:
-			uint32_t *handles_;
-			uint32_t size_;
-			uint32_t width_, height_;
-			unsigned int *format_;
+			void CreateRenderTargets();
+		private:
+			bool isCubemap;
+			int *internalFormats;
+			unsigned int *formats;
+			uint32_t *renderTargetHandles;
+			uint32_t renderTargetCount;
+			uint32_t width, height;
 		};
 	}
 }

@@ -42,8 +42,14 @@ source_group("Events\\Header Files" FILES ${HEADER_EVENTS})
 
 file(GLOB_RECURSE SOURCE_COMMON_UTILS ../Common/Utilities/ModuleLoading.cpp)
 file(GLOB_RECURSE HEADER_COMMON_UTILS ../Common/Utilities/ModuleLoading.hpp)
-source_group("Common\\Utilities\\Source Files" FILES ${SOURCE_COMMON_UTILS})
-source_group("Common\\Utilities\\Header Files" FILES ${HEADER_COMMON_UTILS})
+source_group("Utilities\\Source Files" FILES ${SOURCE_COMMON_UTILS})
+source_group("Utilities\\Header Files" FILES ${HEADER_COMMON_UTILS})
+
+
+file(GLOB_RECURSE SOURCE_RENDERING "${ENGINE_CORE_DIR}/Rendering/*.cpp")
+file(GLOB_RECURSE HEADER_RENDERING "${ENGINE_CORE_DIR}/Rendering/*.hpp")
+source_group("Rendering\\Source Files" FILES ${SOURCE_RENDERING})
+source_group("Rendering\\Header Files" FILES ${HEADER_RENDERING})
 
 file(GLOB_RECURSE SOURCE_MAIN EngineCore.cpp EntryPoint.cpp Logger.cpp Profiling.cpp)
 file(GLOB_RECURSE HEADER_MAIN EngineCore.hpp pch.hpp Logger.hpp Profiling.hpp ${COMMON_DIR}/Display/Display.hpp)
@@ -58,6 +64,7 @@ set(ENGINE_CORE_SOURCES
 	${SOURCE_CORE_SYSTEMS}
 	${SOURCE_BUILD_SETTINGS}
 	${SOURCE_REFLECTION}
+	${SOURCE_RENDERING}
 	${SOURCE_EVENTS}
 )
 
@@ -71,6 +78,7 @@ set(ENGINE_CORE_HEADERS
 	${HEADER_CORE_SYSTEMS}
 	${HEADER_BUILD_SETTINGS}
 	${HEADER_REFLECTION}
+	${HEADER_RENDERING}
 	${HEADER_EVENTS}
 )
 

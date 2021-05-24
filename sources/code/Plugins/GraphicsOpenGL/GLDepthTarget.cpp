@@ -4,24 +4,37 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		GLDepthTarget::GLDepthTarget(CreateInfo& create_info) {
-			glGenTextures(1, &handle_);
-			cubemap = create_info.cubemap;
-			if (cubemap) {
-				glBindTexture(GL_TEXTURE_CUBE_MAP, handle_);
+		GLDepthTarget::GLDepthTarget(CreateInfo& createInfo) {
+			width = createInfo.width;
+			height = createInfo.height;
+			depthFormat = createInfo.format;
+			isCubemap = createInfo.isCubemap;
+			isShadowMap = createInfo.isShadowMap;
+
+			CreateDepthTarget();
+		}
+
+		void GLDepthTarget::CreateDepthTarget() {
+			if (handle) {
+				glDeleteTextures(1, &handle);
+			}
+
+			glGenTextures(1, &handle);
+			if (isCubemap) {
+				glBindTexture(GL_TEXTURE_CUBE_MAP, handle);
 
 				GLint internalFormat;
 				GLenum format;
-				translateDepthFormats(create_info.format, format, internalFormat);
+				translateDepthFormats(depthFormat, format, internalFormat);
 
 				for (GLenum i = 0; i < 6; i++) {
-					glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, create_info.width, create_info.height, 0, format, GL_FLOAT, 0);
+					glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, width, height, 0, format, GL_FLOAT, 0);
 				}
 
 				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-				if (create_info.shadow_map) {
+				if (isShadowMap) {
 					glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 					glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 					glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -33,17 +46,17 @@ namespace Grindstone {
 				}
 			}
 			else {
-				glBindTexture(GL_TEXTURE_2D, handle_);
+				glBindTexture(GL_TEXTURE_2D, handle);
 
 				GLint internalFormat;
 				GLenum format;
-				translateDepthFormats(create_info.format, format, internalFormat);
+				translateDepthFormats(depthFormat, format, internalFormat);
 
-				glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, create_info.width, create_info.height, 0, format, GL_FLOAT, 0);
+				glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_FLOAT, 0);
 
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-				if (create_info.shadow_map) {
+				if (isShadowMap) {
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -56,22 +69,33 @@ namespace Grindstone {
 			}
 		}
 
-		uint32_t GLDepthTarget::getHandle() {
-			return handle_;
+		uint32_t GLDepthTarget::GetHandle() {
+			return handle;
+		}
+
+		bool GLDepthTarget::IsCubemap() {
+			return isCubemap;
 		}
 
 		void GLDepthTarget::Bind(int i) {
 			glActiveTexture(GL_TEXTURE0 + i);
-			glBindTexture(cubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D, handle_);
+			glBindTexture(isCubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D, handle);
+		}
+
+		void GLDepthTarget::Resize(uint32_t width, uint32_t height) {
+			this->width = width;
+			this->height = height;
+
+			CreateDepthTarget();
 		}
 
 		void GLDepthTarget::BindFace(int k) {
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X + k, handle_, 0);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X + k, handle, 0);
 			glDrawBuffer(GL_NONE);
 		}
 
 		GLDepthTarget::~GLDepthTarget() {
-			glDeleteTextures(1, &handle_);
+			glDeleteTextures(1, &handle);
 		}
 	}
 }

@@ -12,22 +12,26 @@ namespace Grindstone {
 		public:
 			GLFramebuffer(CreateInfo&);
 			~GLFramebuffer();
-			virtual float getExposure(int i);
-			virtual void Clear(ClearMode mask);
-			virtual void CopyFrom(Framebuffer *);
+			virtual int GetAttachment(int attachmentIndex) override;
+			virtual void Clear(ClearMode mask) override;
+			virtual void Resize(uint32_t width, uint32_t height) override;
+			virtual void CopyFrom(Framebuffer *) override;
+			virtual void Bind(bool depth) override;
+			virtual void BindWrite(bool depth) override;
+			virtual void BindRead() override;
+			virtual void BindTextures(int i) override;
+			virtual void Unbind() override;
+			
 			virtual void Blit(uint32_t i, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
-			virtual void Bind(bool depth);
-			virtual void BindWrite(bool depth);
-			virtual void BindRead();
-			virtual void BindTextures(int i);
-			virtual void Unbind();
 		private:
-			GLuint fbo_;
-			GLRenderTarget **render_target_lists_;
-			uint32_t num_render_target_lists_;
-			uint32_t num_total_render_targets;
+			void CreateFramebuffer();
+		private:
+			GLuint fbo_ = 0;
+			uint32_t numRenderTargetLists = 0;
+			uint32_t numTotalRenderTargets = 0;
+			GLRenderTarget **renderTargetLists = nullptr;
 
-			GLDepthTarget *depth_target_;
+			GLDepthTarget *depthTarget = nullptr;
 		};
 	}
 }

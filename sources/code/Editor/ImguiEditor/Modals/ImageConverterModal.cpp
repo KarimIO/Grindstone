@@ -31,10 +31,10 @@ namespace Grindstone {
 				"Uncompressed",
 				"BC1 - RGB (With optional Cutoff)",
 				"BC3 - RGBA",
-				"BC4 - Greyscale",
-				"BC5 - RG",
-				"BC6 - HDR Image",
-				"BC7 - High Quality RGBA"
+				// "BC4 - Greyscale",
+				// "BC5 - RG",
+				// "BC6 - HDR Image",
+				// "BC7 - High Quality RGBA"
 			};
 
 			ImageConverterModal::ImageConverterModal() {}

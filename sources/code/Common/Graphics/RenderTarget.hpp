@@ -13,9 +13,13 @@ namespace Grindstone {
 				ColorFormat format;
 				uint32_t width, height;
 				CreateInfo() {};
-				CreateInfo(ColorFormat fmt, uint32_t w, uint32_t h) : format(fmt), width(w), height(h) {}
+				CreateInfo(ColorFormat colorFormat, uint32_t width, uint32_t height) :
+					format(colorFormat),
+					width(width),
+					height(height) {}
 			};
-			virtual float getAverageValue(uint32_t i) = 0;
+
+			virtual void Resize(uint32_t width, uint32_t height) = 0;
 			virtual void RenderScreen(unsigned int i, unsigned int resx, unsigned int resy, unsigned char *data) = 0;
 			virtual ~RenderTarget() {};
 		};

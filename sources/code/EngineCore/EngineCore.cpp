@@ -104,6 +104,10 @@ ECS::ComponentRegistrar* EngineCore::getComponentRegistrar() {
 	return componentRegistrar;
 }
 
+GraphicsAPI::Core* EngineCore::getGraphicsCore() {
+	return graphicsCore;
+}
+
 ECS::SystemRegistrar* EngineCore::getSystemRegistrar() {
 	return systemRegistrar;
 }

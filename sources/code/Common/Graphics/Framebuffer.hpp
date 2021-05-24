@@ -19,7 +19,6 @@ namespace Grindstone {
 
 		class RenderPass;
 
-
 		class Framebuffer {
 		public:
 			struct DefaultFramebufferCreateInfo {
@@ -29,14 +28,15 @@ namespace Grindstone {
 			};
 
 			struct CreateInfo {
-				RenderPass* render_pass;
+				RenderPass* renderPass;
 
-				RenderTarget** render_target_lists;
-				uint32_t num_render_target_lists;
-				DepthTarget* depth_target;
+				RenderTarget** renderTargetLists;
+				uint32_t numRenderTargetLists;
+				DepthTarget* depthTarget;
 			};
 
-			virtual float getExposure(int i) = 0;
+			virtual int GetAttachment(int attachmentIndex) = 0;
+			virtual void Resize(uint32_t width, uint32_t height) = 0;
 			virtual void Clear(ClearMode mask) = 0;
 			virtual void CopyFrom(Framebuffer *) = 0;
 			virtual void BindWrite(bool depth) = 0;

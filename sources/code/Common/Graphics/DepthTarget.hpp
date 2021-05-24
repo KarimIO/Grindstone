@@ -12,12 +12,17 @@ namespace Grindstone {
 			struct CreateInfo {
 				DepthFormat format;
 				uint32_t width, height;
-				bool shadow_map;
-				bool cubemap;
+				bool isShadowMap;
+				bool isCubemap;
 				CreateInfo() {};
-				CreateInfo(DepthFormat fmt, uint32_t w, uint32_t h, bool s, bool c) : format(fmt), width(w), height(h), shadow_map(s), cubemap(c) {}
+				CreateInfo(DepthFormat depthFormat, uint32_t width, uint32_t height, bool isShadowMap, bool isCubeMap) :
+					format(depthFormat),
+					width(width), height(height),
+					isShadowMap(isShadowMap),
+					isCubemap(isCubeMap) {}
 			};
 
+			virtual void Resize(uint32_t width, uint32_t height) = 0;
 			virtual void BindFace(int k) = 0;
 			virtual ~DepthTarget() {};
 		};

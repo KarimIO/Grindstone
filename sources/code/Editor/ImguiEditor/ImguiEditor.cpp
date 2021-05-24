@@ -9,6 +9,7 @@
 #include "EngineCore/EngineCore.hpp"
 #include "Modals/ModelConverterModal.hpp"
 #include "Modals/ImageConverterModal.hpp"
+#include "ViewportPanel.hpp"
 #include "ImguiEditor.hpp"
 #include "SystemPanel.hpp"
 #include "InspectorPanel.hpp"
@@ -49,6 +50,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) {
 	modelConverterModal = new ModelConverterModal();
 	imageConverterModal = new ImageConverterModal();
 	inspectorPanel = new InspectorPanel(engineCore);
+	viewportPanel = new ViewportPanel(engineCore->getGraphicsCore());
 	systemPanel = new SystemPanel(engineCore->getSystemRegistrar());
 	menubar = new Menubar(this);
 }
@@ -75,6 +77,7 @@ void ImguiEditor::render() {
 	modelConverterModal->render();
 	imageConverterModal->render();
 	sceneHeirarchyPanel->render();
+	viewportPanel->render();
 	systemPanel->render();
 	inspectorPanel->render(selectedEntity);
 }

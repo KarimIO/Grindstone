@@ -3,24 +3,24 @@
 namespace Grindstone {
 	class EngineCore;
 
-    namespace Editor {
+	namespace Editor {
 		namespace ImguiEditor {
 			class ImguiEditor;
 		}
 
-        class IEditor;
+		class IEditor;
 
-        class Manager {
-        public:
-            bool initialize();
-            ~Manager();
+		class Manager {
+		public:
+			bool initialize();
+			~Manager();
 			void run();
-        private:
-            bool loadEngine();
+		private:
+			bool loadEngine();
 			bool setupImguiEditor();
-        private:
+		private:
 			EngineCore* engineCore;
-            ImguiEditor::ImguiEditor* imguiEditor;
-        };
-    }
+			ImguiEditor::ImguiEditor* imguiEditor;
+		};
+	}
 }

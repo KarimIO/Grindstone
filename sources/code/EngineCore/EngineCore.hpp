@@ -53,6 +53,7 @@ namespace Grindstone {
         virtual ECS::SystemRegistrar* getSystemRegistrar();
 		virtual Events::Dispatcher* getEventDispatcher();
         virtual ECS::ComponentRegistrar* getComponentRegistrar();
+        virtual GraphicsAPI::Core* getGraphicsCore();
     public:
         DisplayManager* displayManager;
         WindowManager* windowManager;

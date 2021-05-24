@@ -1,6 +1,12 @@
 set(EDITOR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-file(GLOB_RECURSE SOURCE_MAIN Main.cpp ../Common/Utilities/ModuleLoading.cpp EditorManager.cpp EditorManager.hpp)
+file(GLOB_RECURSE SOURCE_MAIN
+	Main.cpp
+	../Common/Utilities/ModuleLoading.cpp
+	EditorManager.cpp EditorManager.hpp
+	EditorCamera.cpp EditorCamera.hpp
+	Camera.cpp Camera.hpp
+)
 
 file(GLOB_RECURSE SOURCE_CONVERTERS "${EDITOR_DIR}/Converters/*.cpp")
 file(GLOB_RECURSE HEADER_CONVERTERS "${EDITOR_DIR}/Converters/*.hpp")
