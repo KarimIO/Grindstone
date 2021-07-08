@@ -19,7 +19,7 @@ void SceneManager::update() {
 }
 
 Scene* SceneManager::loadScene(const char *path) {
-	Scene* newScene = new Scene(engineCore->getComponentRegistrar(), engineCore->getSystemRegistrar());
+	Scene* newScene = new Scene(engineCore, engineCore->getComponentRegistrar(), engineCore->getSystemRegistrar());
 	SceneLoaderJson sceneLoader(newScene, path);
 	scenes[path] = newScene;
 
@@ -27,7 +27,7 @@ Scene* SceneManager::loadScene(const char *path) {
 }
 
 Scene* SceneManager::addEmptyScene(const char *name) {
-	Scene* newScene = new Scene(engineCore->getComponentRegistrar(), engineCore->getSystemRegistrar());
+	Scene* newScene = new Scene(engineCore, engineCore->getComponentRegistrar(), engineCore->getSystemRegistrar());
 	scenes[name] = newScene;
 
 	return newScene;

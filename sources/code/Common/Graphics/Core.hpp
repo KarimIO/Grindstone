@@ -40,7 +40,7 @@ namespace Grindstone {
 			virtual const char* GetAPIName() = 0;
 			virtual const char* GetAPIVersion() = 0;
 
-			virtual void Clear(ClearMode mask, float clear_color[4] = nullptr, float clear_depth = 0, uint32_t clear_stencil = 0) = 0;
+			virtual void Clear(ClearMode mask, float clearColor[4] = nullptr, float clearDepth = 0, uint32_t clearStencil = 0) = 0;
 			
 			virtual void AdjustPerspective(float *perspective) = 0;
 

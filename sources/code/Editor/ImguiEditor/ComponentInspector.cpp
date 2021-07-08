@@ -7,6 +7,21 @@
 #include "EngineCore/Reflection/TypeDescriptor.hpp"
 #include "Common/Math.hpp"
 
+const int   ENTRY_COUNT = 10;
+const char* ENTRIES[ENTRY_COUNT] =
+{
+	"Entry 0",
+	"Entry 1",
+	"Entry 2",
+	"Entry 3",
+	"Entry 4",
+	"Entry 5",
+	"Entry 6",
+	"Entry 7",
+	"Entry 8",
+	"Entry 9"
+};
+
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {

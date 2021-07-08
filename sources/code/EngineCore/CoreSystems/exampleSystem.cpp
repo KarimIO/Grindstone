@@ -4,7 +4,7 @@
 #include "../CoreComponents/Transform/TransformComponent.hpp"
 
 namespace Grindstone {
-	void exampleSystem(entt::registry& registry) {
+	void exampleSystem(EngineCore* engineCore, entt::registry& registry) {
 		auto view = registry.view<TransformComponent>();
 
 		view.each([](auto &transformComponent) {

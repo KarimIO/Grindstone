@@ -3,7 +3,9 @@
 #include <entt/entt.hpp>
 
 namespace Grindstone {
+	class EngineCore;
+	
 	namespace ECS {
-		using SystemFactory = void(*)(entt::registry&);
+		using SystemFactory = void(*)(EngineCore*, entt::registry&);
 	}
 }

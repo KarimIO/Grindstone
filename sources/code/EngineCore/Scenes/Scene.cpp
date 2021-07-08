@@ -9,9 +9,10 @@ using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
 
 Scene::Scene(
+	EngineCore* engineCore,
 	ECS::ComponentRegistrar* componentRegistrar,
 	ECS::SystemRegistrar* systemRegistrar
-) : componentRegistrar(componentRegistrar), systemRegistrar(systemRegistrar) {}
+) : engineCore(engineCore), componentRegistrar(componentRegistrar), systemRegistrar(systemRegistrar) {}
 
 ECS::Entity Scene::createEntity() {
 	return registry.create();
@@ -42,5 +43,5 @@ ECS::ComponentRegistrar* Grindstone::SceneManagement::Scene::getComponentRegistr
 }
 
 void Scene::update() {
-	systemRegistrar->update(registry);
+	systemRegistrar->Update(engineCore, registry);
 }

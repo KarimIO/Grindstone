@@ -1,5 +1,6 @@
 #include <entt/entt.hpp>
 
 namespace Grindstone {
-	void exampleSystem(entt::registry& registry);
+	class EngineCore;
+	void exampleSystem(EngineCore* engineCore, entt::registry& registry);
 }

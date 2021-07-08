@@ -1,3 +1,4 @@
+#if 0
 #include <array>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -88,3 +89,4 @@ void Render(
 	// RenderLights();
 	// PostProcess();
 }
+#endif

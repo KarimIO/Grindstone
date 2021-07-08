@@ -10,7 +10,7 @@ PluginBuildSettings::PluginBuildSettings() {
 void PluginBuildSettings::load() {
 	const char *path = "../BuildSettings/Plugins.json";
 
-	plugins.push_back("assets/scenes/sponza.json");
+	plugins.push_back("[Plugin Name]");
 }
 
 unsigned int PluginBuildSettings::getNumPlugins() {

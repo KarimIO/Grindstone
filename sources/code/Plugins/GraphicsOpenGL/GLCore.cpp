@@ -113,7 +113,13 @@ namespace Grindstone {
 		}
 
 		void GLCore::Clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) {
-			glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
+			if (clear_color == nullptr) {
+				glClearColor(0, 0, 0, 1);
+			}
+			else {
+				glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
+			}
+			
 			glClearDepthf(clear_depth);
 			glClearStencil(clear_stencil);
 

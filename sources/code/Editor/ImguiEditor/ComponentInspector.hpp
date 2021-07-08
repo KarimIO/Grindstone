@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <entt/entt.hpp>
 #include "EngineCore/Reflection/TypeDescriptorStruct.hpp"
 

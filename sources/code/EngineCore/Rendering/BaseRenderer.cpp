@@ -1,18 +1,18 @@
-#if 0
 #include <array>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include "Common/Graphics/Core.hpp"
 #include "Common/Graphics/VertexArrayObject.hpp"
+#include "BaseRenderer.hpp"
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
 
 std::array<glm::vec3, 8> cubeVertices = {
-	glm::vec3(-1.0, -1.0,  1.0), glm::vec3( 1.0, -1.0,  1.0),
-	glm::vec3( 1.0,  1.0,  1.0), glm::vec3(-1.0,  1.0,  1.0),
-	glm::vec3(-1.0, -1.0, -1.0), glm::vec3( 1.0, -1.0, -1.0),
-	glm::vec3( 1.0,  1.0, -1.0), glm::vec3(-1.0,  1.0, -1.0)
+	glm::vec3(-.6, -.6,  .6), glm::vec3( .6, -.6,  .6),
+	glm::vec3( .6,  .6,  .6), glm::vec3(-.6,  .6,  .6),
+	glm::vec3(-.6, -.6, -.6), glm::vec3( .6, -.6, -.6),
+	glm::vec3( .6,  .6, -.6), glm::vec3(-.6,  .6, -.6)
 };
 
 std::array<uint32_t, 36> cubeIndices = {
@@ -36,7 +36,7 @@ std::array<uint32_t, 36> cubeIndices = {
 	3, 7, 6
 };
 
-void Render(
+void Grindstone::BaseRender(
 	GraphicsAPI::Core *core,
 	glm::mat4 projectionMatrix,
 	glm::mat4 viewMatrix
@@ -50,20 +50,20 @@ void Render(
 		}
 	});
 
-	VertexBuffer::CreateInfo vboCi;
+	VertexBuffer::CreateInfo vboCi{};
 	vboCi.content = cubeVertices.data();
 	vboCi.count = cubeVertices.size();
 	vboCi.size = vboCi.count * sizeof(glm::vec3);
 	vboCi.layout = &layout;
 	VertexBuffer* vbo = core->CreateVertexBuffer(vboCi);
 
-	IndexBuffer::CreateInfo iboCi;
+	IndexBuffer::CreateInfo iboCi{};
 	iboCi.content = cubeIndices.data();
 	iboCi.count = cubeIndices.size();
 	iboCi.size = sizeof(uint32_t) * iboCi.count;
 	IndexBuffer* ibo = core->CreateIndexBuffer(iboCi);
 
-	VertexArrayObject::CreateInfo vaoCi;
+	VertexArrayObject::CreateInfo vaoCi{};
 	vaoCi.vertex_buffer_count = 1;
 	vaoCi.vertex_buffers = &vbo;
 	vaoCi.index_buffer = ibo;
@@ -83,10 +83,11 @@ void Render(
 	UniformBuffer* ubo = core->CreateUniformBuffer(ubCi);
 	ubo->updateBuffer();*/
 
-	core->Clear(ClearMode::All);
+	static float clearColor[4] = { 0.2f, 0.2f, 0, 1.f };
+	core->Clear(ClearMode::Color, clearColor);
+	vao->bind();
 	core->DrawImmediateIndexed(GeometryType::Triangles, true, 0, 0, 32);
 	
 	// RenderLights();
 	// PostProcess();
 }
-#endif

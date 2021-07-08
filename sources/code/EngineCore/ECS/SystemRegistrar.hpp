@@ -12,8 +12,8 @@ namespace Grindstone {
 		class SystemRegistrar {
 		public:
 			SystemRegistrar();
-			void registerSystem(const char *name, SystemFactory factory);
-			void update(entt::registry& registry);
+			void RegisterSystem(const char *name, SystemFactory factory);
+			void Update(EngineCore* engineCore, entt::registry& registry);
 			~SystemRegistrar();
 			std::unordered_map<std::string, SystemFactory> systemFactories;
 		private:

@@ -9,6 +9,8 @@
 #include "EngineCore/ECS/Entity.hpp"
 
 namespace Grindstone {
+	class EngineCore;
+
 	namespace ECS {
 		class ComponentRegistrar;
 	}
@@ -19,7 +21,7 @@ namespace Grindstone {
 		class Scene {
 			friend SceneLoaderJson;
 		public:
-			Scene(ECS::ComponentRegistrar*, ECS::SystemRegistrar*);
+			Scene(EngineCore*, ECS::ComponentRegistrar*, ECS::SystemRegistrar*);
 			virtual ECS::Entity createEntity();
 			virtual ECS::Entity createDefaultEntity();
 			virtual void* attachComponent(ECS::Entity entity, const char* componentName);
@@ -28,6 +30,7 @@ namespace Grindstone {
 			virtual ECS::ComponentRegistrar* getComponentRegistrar();
 			void update();
 		private:
+			EngineCore* engineCore;
 			ECS::SystemRegistrar* systemRegistrar;
 			ECS::ComponentRegistrar* componentRegistrar;
 			entt::registry registry;

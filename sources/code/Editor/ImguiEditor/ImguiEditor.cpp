@@ -13,6 +13,7 @@
 #include "ImguiEditor.hpp"
 #include "SystemPanel.hpp"
 #include "InspectorPanel.hpp"
+#include "AssetBrowserPanel.hpp"
 #include "SceneHeirarchyPanel.hpp"
 #include "Menubar.hpp"
 #include "ImguiInput.hpp"
@@ -50,6 +51,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) {
 	modelConverterModal = new ModelConverterModal();
 	imageConverterModal = new ImageConverterModal();
 	inspectorPanel = new InspectorPanel(engineCore);
+	assetBrowserPanel = new AssetBrowserPanel(engineCore);
 	viewportPanel = new ViewportPanel(engineCore->getGraphicsCore());
 	systemPanel = new SystemPanel(engineCore->getSystemRegistrar());
 	menubar = new Menubar(this);
@@ -76,6 +78,7 @@ void ImguiEditor::render() {
 	renderDockspace();
 	modelConverterModal->render();
 	imageConverterModal->render();
+	assetBrowserPanel->render();
 	sceneHeirarchyPanel->render();
 	viewportPanel->render();
 	systemPanel->render();
