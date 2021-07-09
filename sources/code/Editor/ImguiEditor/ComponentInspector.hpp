@@ -3,6 +3,7 @@
 #include <string>
 #include <entt/entt.hpp>
 #include "EngineCore/Reflection/TypeDescriptorStruct.hpp"
+#include "NewComponentInput.hpp"
 
 namespace Grindstone {
 	namespace SceneManagement {
@@ -33,6 +34,7 @@ namespace Grindstone {
 					Reflection::TypeDescriptor_Struct::Member& member,
 					void* entity
 				);
+				NewComponentInput newComponentInput;
 				bool isShowingPanel = true;
 			};
 		}

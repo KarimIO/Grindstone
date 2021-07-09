@@ -7,21 +7,6 @@
 #include "EngineCore/Reflection/TypeDescriptor.hpp"
 #include "Common/Math.hpp"
 
-const int   ENTRY_COUNT = 10;
-const char* ENTRIES[ENTRY_COUNT] =
-{
-	"Entry 0",
-	"Entry 1",
-	"Entry 2",
-	"Entry 3",
-	"Entry 4",
-	"Entry 5",
-	"Entry 6",
-	"Entry 7",
-	"Entry 8",
-	"Entry 9"
-};
-
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
@@ -30,6 +15,8 @@ namespace Grindstone {
 				entt::registry& registry,
 				entt::entity entity
 			) {
+				std::vector<std::string> unusedComponentsItems;
+				std::vector<ECS::ComponentFunctions> unusedComponentsFunctions;
 				for each (auto componentEntry in registrar) {
 					const char* componentTypeName = componentEntry.first.c_str();
 					auto componentReflectionData = componentEntry.second.getComponentReflectionDataFn();
@@ -39,7 +26,21 @@ namespace Grindstone {
 					if (tryGetComponentFn(registry, entity, outEntity)) {
 						renderComponent(componentTypeName, componentReflectionData, outEntity);
 					}
+					else {
+						unusedComponentsItems.push_back(componentEntry.first);
+						unusedComponentsFunctions.push_back(componentEntry.second);
+					}
 				}
+
+				ImGui::Separator();
+
+				ImGui::Text("Attach a component:");
+				newComponentInput.render(
+					registry,
+					entity,
+					unusedComponentsItems,
+					unusedComponentsFunctions
+				);
 			}
 
 			void ComponentInspector::renderComponent(
