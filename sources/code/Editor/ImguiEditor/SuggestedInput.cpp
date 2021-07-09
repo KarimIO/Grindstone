@@ -42,6 +42,7 @@ namespace Grindstone {
 				ImVec2 position,
 				float suggestionsWidth
 			) {
+				bool hasAnyAvailableOptions = false;
 				size_t chosenItem = -1;
 
 				std::string lowerCaseString = toLowerCase(inputString);
@@ -51,10 +52,7 @@ namespace Grindstone {
 					ImGuiWindowFlags_NoTitleBar |
 					ImGuiWindowFlags_NoResize |
 					ImGuiWindowFlags_NoMove |
-					ImGuiWindowFlags_HorizontalScrollbar |
 					ImGuiWindowFlags_NoSavedSettings;
-					//ImGuiWindowFlags_ShowBorders;
-
 
 				ImGui::SetNextWindowPos(position);
 				ImGui::SetNextWindowSize({ suggestionsWidth, 256.f });
@@ -64,11 +62,24 @@ namespace Grindstone {
 					std::string fieldText = unusedComponentsItems[i];
 					std::string lowerCaseFieldText = toLowerCase(fieldText);
 					if (lowerCaseFieldText.find(lowerCaseString) != -1) {
+						hasAnyAvailableOptions = true;
 						if (ImGui::Button(fieldText.c_str(), { innerWidth, 0 } )) {
 							chosenItem = i;
 						}
 					}
 				}
+
+				if (!hasAnyAvailableOptions) {
+					ImVec2 windowSize = ImGui::GetWindowSize();
+					ImVec2 size = ImGui::CalcTextSize("No components available");
+					ImVec2 centerPos = {
+						(windowSize.x - size.x) * 0.5f,
+						(windowSize.y - size.y) * 0.5f
+					};
+					ImGui::SetCursorPos(centerPos);
+					ImGui::Text("No components available");
+				}
+
 				ImGui::End();
 
 				ImGui::PopStyleVar();
