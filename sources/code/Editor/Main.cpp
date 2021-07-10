@@ -1,11 +1,15 @@
-#include "EditorManager.hpp"
 #include <iostream>
+#include "EditorManager.hpp"
+#include "Converters/ShaderImporter.hpp"
 using namespace Grindstone;
 
 int main() {
-    Grindstone::Editor::Manager editorManager;
-    editorManager.initialize();
-    editorManager.run();
+	Converters::ShaderImporter importer;
+	importer.convertFile("../test.vert.glsl");
 
-    return 1;
+	Grindstone::Editor::Manager editorManager;
+	editorManager.initialize();
+	editorManager.run();
+
+	return 1;
 }

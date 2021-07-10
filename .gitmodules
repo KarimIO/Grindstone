@@ -10,3 +10,9 @@
 [submodule "sources/deps/imgui"]
 	path = sources/deps/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "sources/deps/spirv-cross"]
+	path = sources/deps/spirv-cross
+	url = https://github.com/KhronosGroup/SPIRV-Cross.git
+[submodule "sources/deps/shaderc"]
+	path = sources/deps/shaderc
+	url = https://github.com/google/shaderc.git
