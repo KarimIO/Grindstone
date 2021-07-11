@@ -24,7 +24,8 @@ namespace Grindstone {
 				void render();
 				void showModelModal();
 				void showImageModal();
-				void updateSelectedEntity(entt::entity selectedEntity);
+				void selectFile(std::string selectedFileType, std::string selectedFilePath);
+				void selectEntity(entt::entity selectedEntity);
 			private:
 				void renderDockspace();
 			private:

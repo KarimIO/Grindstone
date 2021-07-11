@@ -39,7 +39,7 @@ namespace Grindstone {
 					}
 					
 					if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
-						editor->updateSelectedEntity(entt::null);
+						editor->selectEntity(entt::null);
 					}
 
 					ImGui::End();
@@ -75,7 +75,7 @@ namespace Grindstone {
 			void SceneHeirarchyPanel::renderEntity(entt::registry& registry, entt::entity entity) {
 				const char* entityTag = getEntityTag(registry, entity);
 				if (ImGui::Button(entityTag)) {
-					editor->updateSelectedEntity(entity);
+					editor->selectEntity(entity);
 				}
 			}
 		}

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <fstream>
 #include <string>
 #include <imgui/imgui.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
@@ -8,15 +9,40 @@
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/Scenes/Scene.hpp"
 #include "EngineCore/EngineCore.hpp"
+#include "ImguiEditor.hpp"
 
 const std::filesystem::path assetFolderPath = "..\\assets";
 const double refreshInterval = 1.0;
 const bool RIGHT_MOUSE_BUTTON = 1;
 
+std::filesystem::path GetNewDefaultPath(std::filesystem::path basePath, std::string fileName, std::string extension) {
+	std::filesystem::path finalPath = basePath / (fileName + extension);
+	if (!std::filesystem::exists(finalPath)) {
+		return finalPath;
+	}
+
+	size_t i = 2;
+	while (true) {
+		finalPath = basePath / (fileName + " (" + std::to_string(i++) + ")" + extension);
+		if (!std::filesystem::exists(finalPath)) {
+			return finalPath;
+		}
+	}
+}
+
+std::filesystem::path CreateDefaultMaterial(std::filesystem::path& currentPath) {
+	std::filesystem::path path = GetNewDefaultPath(currentPath, "New Material", ".gmat");
+	std::ofstream output(path);
+	output << "{\n\t\"name\": \"New Material\"\n\t\"shader\": \"\"\n}";
+	output.close();
+
+	return path;
+}
+
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
-			AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore) : engineCore(engineCore) {
+			AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore) {
 				currentPath = assetFolderPath;
 				pathToRename = "";
 			}
@@ -70,9 +96,25 @@ namespace Grindstone {
 				lastRefreshedAssetsTime = currentTime;
 			}
 
-			void AssetBrowserPanel::clickDirectoryEntry(std::filesystem::directory_entry entry) {
-				if (entry.is_directory()) {
-					setPath(entry.path());
+			void AssetBrowserPanel::processDirectoryEntryClicks(std::filesystem::directory_entry entry) {
+				if (ImGui::IsItemHovered()) {
+					if (ImGui::IsMouseDoubleClicked(0)) {
+						if (entry.is_directory()) {
+							setPath(entry.path());
+						}
+						else {
+							// Open File
+						}
+					}
+					else if (ImGui::IsMouseClicked(0)) {
+						if (!entry.is_directory()) {
+							auto path = entry.path();
+							auto extension = path.extension();
+							if (extension == ".gmat") {
+								editor->selectFile("material", path.string());
+							}
+						}
+					}
 				}
 			}
 
@@ -115,15 +157,27 @@ namespace Grindstone {
 
 			void AssetBrowserPanel::renderCurrentDirectoryContextMenu() {
 				if (ImGui::BeginPopupContextWindow()) {
-					if (ImGui::MenuItem("Create New Folder")) {
-						std::filesystem::path newFolderName = currentPath / "New folder";
-						std::filesystem::create_directory(newFolderName);
-						pathToRename = newFolderName;
-						pathRenameNewName = newFolderName.filename().string();
-						refreshAssets();
+					if (ImGui::BeginMenu("Create")) {
+						if (ImGui::MenuItem("New Folder")) {
+							std::filesystem::path newFolderName = GetNewDefaultPath(currentPath, "New folder", "");
+							std::filesystem::create_directory(newFolderName);
+							afterCreate(newFolderName);
+						}
+						if (ImGui::MenuItem("Material")) {
+							auto materialPath = CreateDefaultMaterial(currentPath);
+							afterCreate(materialPath);
+						}
+						ImGui::EndMenu();
 					}
+					if (ImGui::MenuItem("Import File...")) { }
 					ImGui::EndPopup();
 				}
+			}
+
+			void AssetBrowserPanel::afterCreate(std::filesystem::path path) {
+				pathToRename = path;
+				pathRenameNewName = path.filename().string();
+				refreshAssets();
 			}
 
 			void AssetBrowserPanel::tryRenameFile() {
@@ -153,9 +207,7 @@ namespace Grindstone {
 					std::string buttonString = filenameString + "##AssetButton";
 					ImGui::Button(buttonString.c_str(), { thumbnailSize, thumbnailSize });
 					renderAssetContextMenu(directoryEntry);
-					if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
-						clickDirectoryEntry(directoryEntry);
-					}
+					processDirectoryEntryClicks(directoryEntry);
 
 					if (pathToRename == path) {
 						ImGui::PushItemWidth(thumbnailSize);

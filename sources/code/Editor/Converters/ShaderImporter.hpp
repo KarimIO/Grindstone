@@ -21,5 +21,7 @@ namespace Grindstone {
 				std::string vkGlslSource;
 				std::vector<uint32_t> vkSpirv;
 		};
+
+		void ImportShadersFromGlsl(const char* filePath);
 	}
 }

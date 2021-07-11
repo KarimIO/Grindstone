@@ -35,7 +35,6 @@ namespace Grindstone {
 					void* entity
 				);
 				NewComponentInput newComponentInput;
-				bool isShowingPanel = true;
 			};
 		}
 	}

@@ -31,30 +31,13 @@ std::string readTextFile(const char* filename) {
 	return content;
 }
 
-std::vector<uint32_t> compileVulkanGlslToSpirv(
-	const std::string& source_name,
-	shaderc_shader_kind kind,
-	const std::string& source,
-	bool optimize = false
-) {
-	shaderc::Compiler compiler;
-	shaderc::CompileOptions options;
-
-	if (optimize) options.SetOptimizationLevel(shaderc_optimization_level_size);
-
-	shaderc::SpvCompilationResult module =
-		compiler.CompileGlslToSpv(source, kind, source_name.c_str(), options);
-
-	if (module.GetCompilationStatus() != shaderc_compilation_status_success) {
-		std::cerr << module.GetErrorMessage();
-		return std::vector<uint32_t>();
-	}
-
-	return { module.cbegin(), module.cend() };
-}
-
 namespace Grindstone {
 	namespace Converters {
+		void ImportShadersFromGlsl(const char* filePath) {
+			Converters::ShaderImporter importer;
+			importer.convertFile(filePath);
+		}
+
 		void ShaderImporter::convertFile(const char* filePath) {
 			path = filePath;
 

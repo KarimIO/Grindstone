@@ -12,15 +12,17 @@ namespace Grindstone {
 		class ComponentInspector;
 
 		namespace ImguiEditor {
+			class ImguiEditor;
 			class AssetBrowserPanel {
 			public:
-				AssetBrowserPanel(EngineCore* engineCore);
+				AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor);
 				void render();
 			private:
 				void setPath(std::filesystem::path path);
 				void refreshAssetsIfNecessary();
 				void sortAlphabetically(std::vector<std::filesystem::directory_entry> entries);
 				void refreshAssets();
+				void processDirectoryEntryClicks(std::filesystem::directory_entry entry);
 				void clickDirectoryEntry(std::filesystem::directory_entry entry);
 				void renderPath();
 				void renderAssetContextMenu(std::filesystem::directory_entry entry);
@@ -28,12 +30,14 @@ namespace Grindstone {
 				void tryRenameFile();
 				void renderAssetSet(std::vector<std::filesystem::directory_entry> entries);
 				void renderAssets();
+				void afterCreate(std::filesystem::path path);
 			private:
 				std::vector<std::filesystem::directory_entry> sortedDirectories;
 				std::vector<std::filesystem::directory_entry> sortedFiles;
 
 				bool isShowingPanel = true;
 				EngineCore* engineCore = nullptr;
+				ImguiEditor* editor = nullptr;
 				std::filesystem::path pathToRename;
 				std::string pathRenameNewName;
 				std::filesystem::path currentPath;

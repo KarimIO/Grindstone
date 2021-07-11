@@ -51,7 +51,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) {
 	modelConverterModal = new ModelConverterModal();
 	imageConverterModal = new ImageConverterModal();
 	inspectorPanel = new InspectorPanel(engineCore);
-	assetBrowserPanel = new AssetBrowserPanel(engineCore);
+	assetBrowserPanel = new AssetBrowserPanel(engineCore, this);
 	viewportPanel = new ViewportPanel(engineCore->getGraphicsCore());
 	systemPanel = new SystemPanel(engineCore->getSystemRegistrar());
 	menubar = new Menubar(this);
@@ -82,7 +82,7 @@ void ImguiEditor::render() {
 	sceneHeirarchyPanel->render();
 	viewportPanel->render();
 	systemPanel->render();
-	inspectorPanel->render(selectedEntity);
+	inspectorPanel->render();
 }
 
 void ImguiEditor::showModelModal() {
@@ -93,8 +93,13 @@ void ImguiEditor::showImageModal() {
 	imageConverterModal->show();
 }
 
-void ImguiEditor::updateSelectedEntity(entt::entity selectedEntity) {
+void ImguiEditor::selectFile(std::string selectedFileType, std::string selectedFilePath) {
+	inspectorPanel->selectFile(selectedFileType, selectedFilePath);
+}
+
+void ImguiEditor::selectEntity(entt::entity selectedEntity) {
 	this->selectedEntity = selectedEntity;
+	inspectorPanel->selectEntity(selectedEntity);
 }
 
 void ImguiEditor::renderDockspace() {
