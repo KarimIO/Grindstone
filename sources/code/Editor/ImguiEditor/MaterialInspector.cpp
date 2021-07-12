@@ -18,12 +18,14 @@ namespace Grindstone {
 					tryLoadShaderReflection();
 				}
 
+				ImGui::Separator();
+
 				renderTextures();
 				renderParameters();
 			}
 
 			void MaterialInspector::tryLoadShaderReflection() {
-
+				
 			}
 
 			void MaterialInspector::renderTextures() {

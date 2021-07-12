@@ -15,6 +15,12 @@ namespace Grindstone {
 				materialInspector = new MaterialInspector(engineCore);
 			}
 
+			void InspectorPanel::deselect() {
+				selectedFileType = "";
+				selectedFilePath = "";
+				selectedEntity = entt::null;
+			}
+
 			void InspectorPanel::selectFile(std::string selectedFileType, std::string selectedFilePath) {
 				this->selectedFileType = selectedFileType;
 				this->selectedFilePath = selectedFilePath;

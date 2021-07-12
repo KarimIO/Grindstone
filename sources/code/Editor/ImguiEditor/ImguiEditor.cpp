@@ -94,6 +94,10 @@ void ImguiEditor::showImageModal() {
 	imageConverterModal->show();
 }
 
+void ImguiEditor::deselectFromInspector() {
+	inspectorPanel->deselect();
+}
+
 void ImguiEditor::selectFile(std::string selectedFileType, std::string selectedFilePath) {
 	inspectorPanel->selectFile(selectedFileType, selectedFilePath);
 }

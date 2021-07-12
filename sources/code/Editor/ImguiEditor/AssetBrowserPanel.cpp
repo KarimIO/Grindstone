@@ -115,8 +115,10 @@ namespace Grindstone {
 							auto extension = path.extension();
 							if (extension == ".gmat") {
 								editor->selectFile("material", path.string());
+								return;
 							}
 						}
+						editor->deselectFromInspector();
 					}
 				}
 			}

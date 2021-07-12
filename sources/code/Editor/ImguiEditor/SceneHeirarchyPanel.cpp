@@ -1,4 +1,5 @@
 #include <imgui/imgui.h>
+#include <imgui/misc/cpp/imgui_stdlib.h>
 #include <entt/entt.hpp>
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
@@ -73,9 +74,36 @@ namespace Grindstone {
 			}
 
 			void SceneHeirarchyPanel::renderEntity(entt::registry& registry, entt::entity entity) {
+				const float panelWidth = ImGui::GetContentRegionAvail().x;
+				ImGui::PushItemWidth(panelWidth);
+
 				const char* entityTag = getEntityTag(registry, entity);
-				if (ImGui::Button(entityTag)) {
-					editor->selectEntity(entity);
+				if (entityToRename == entity) {
+					const auto flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
+					if (ImGui::InputText("##AssetRename", &entityRenameNewName, flags)) {
+						entityToRename = entt::null;
+						if (registry.has<TagComponent>(entity)) {
+							TagComponent& tag = registry.get<TagComponent>(entity);
+							tag.tag = entityRenameNewName;
+						}
+						entityRenameNewName = "";
+					}
+				}
+				else {
+					if (ImGui::Button(entityTag)) {
+						editor->selectEntity(entity);
+					}
+					if (ImGui::BeginPopupContextItem()) {
+						if (ImGui::MenuItem("Rename")) {
+							entityToRename = entity;
+							entityRenameNewName = entityTag;
+						}
+						if (ImGui::MenuItem("Delete")) {
+							editor->selectEntity(entt::null);
+							registry.destroy(entity);
+						}
+						ImGui::EndPopup();
+					}
 				}
 			}
 		}

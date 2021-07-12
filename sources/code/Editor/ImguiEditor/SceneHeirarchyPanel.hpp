@@ -24,6 +24,8 @@ namespace Grindstone {
 				bool isShowingPanel = true;
 				SceneManagement::SceneManager* sceneManager;
 				ImguiEditor* editor;
+				entt::entity entityToRename = entt::null;
+				std::string entityRenameNewName;
 			};
 		}
 	}
