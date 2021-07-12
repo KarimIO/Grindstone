@@ -32,6 +32,10 @@ namespace Grindstone {
 		virtual void SetWindowAlpha(float alpha) override;
 		virtual float GetWindowDpiScale() override;
 		virtual void Close() override;
+
+		virtual void CopyStringToClipboard(const std::string& stringToCopy) override;
+		virtual std::string OpenFileDialogue(const char* filter) override;
+		virtual std::string SaveFileDialogue(const char* filter) override;
 	public:
 		HWND GetHandle();
 	private:

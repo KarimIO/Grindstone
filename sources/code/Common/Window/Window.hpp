@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <Common/Graphics/WindowGraphicsBinding.hpp>
 #include <Common/Display/Display.hpp>
 
@@ -44,6 +45,10 @@ namespace Grindstone {
 		virtual void SetWindowAlpha(float alpha) = 0;
 		virtual float GetWindowDpiScale() = 0;
 		virtual void Close() = 0;
+
+		virtual void CopyStringToClipboard(const std::string& stringToCopy) = 0;
+		virtual std::string OpenFileDialogue(const char* filter = "All Files (*.*)\0*.*\0") = 0;
+		virtual std::string SaveFileDialogue(const char* filter = "All Files (*.*)\0*.*\0") = 0;
 	public:
 		inline Grindstone::GraphicsAPI::WindowGraphicsBinding* GetWindowGraphicsBinding() {
 			return windowsGraphicsBinding;

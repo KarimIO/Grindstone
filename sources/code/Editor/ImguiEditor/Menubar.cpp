@@ -27,15 +27,15 @@ void Menubar::render() {
 }
 
 void Menubar::renderFileMenu() {
-	if (ImGui::MenuItem("New", "", false)) {}
-	if (ImGui::MenuItem("Save", "", false)) {}
-	if (ImGui::MenuItem("Save As", "", false)) {}
+	if (ImGui::MenuItem("New", "Ctrl+N", false)) {}
+	if (ImGui::MenuItem("Save", "Ctrl+S", false)) {}
+	if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S", false)) {}
 	ImGui::Separator();
-	if (ImGui::MenuItem("Import", "", false)) {}
-	if (ImGui::MenuItem("Load", "", false)) {}
-	if (ImGui::MenuItem("Load From", "", false)) {}
+	if (ImGui::MenuItem("Reload", "", false)) {}
+	if (ImGui::MenuItem("Load...", "Ctrl+O", false)) {}
 	ImGui::Separator();
-	if (ImGui::MenuItem("Close", "", false)) {}
+	if (ImGui::MenuItem("Import...", "Ctrl+I", false)) {}
+	if (ImGui::MenuItem("Exit", false)) {}
 	ImGui::EndMenu();
 }
 

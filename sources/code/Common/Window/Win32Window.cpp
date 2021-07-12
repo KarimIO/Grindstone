@@ -134,6 +134,62 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
+void Win32Window::CopyStringToClipboard(const std::string& stringToCopy) {
+	const size_t sizeOfStringWithNullTerminator = stringToCopy.size() + 1;
+	OpenClipboard(windowHandle);
+	EmptyClipboard();
+	HGLOBAL hg = GlobalAlloc(GMEM_MOVEABLE, sizeOfStringWithNullTerminator);
+	if (!hg) {
+		CloseClipboard();
+		return;
+	}
+	memcpy(GlobalLock(hg), stringToCopy.c_str(), sizeOfStringWithNullTerminator);
+	GlobalUnlock(hg);
+	SetClipboardData(CF_TEXT, hg);
+	CloseClipboard();
+	GlobalFree(hg);
+}
+
+std::string Win32Window::OpenFileDialogue(const char* filter) {
+	OPENFILENAME ofn;
+	char fileName[MAX_PATH] = "";
+	ZeroMemory(&ofn, sizeof(ofn));
+
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = windowHandle;
+	ofn.lpstrFilter = filter;
+	ofn.lpstrFile = fileName;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.Flags = OFN_NOCHANGEDIR | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+	ofn.lpstrDefExt = "";
+
+	if (GetOpenFileName(&ofn)) {
+		return fileName;
+	}
+
+	return "";
+}
+
+std::string Win32Window::SaveFileDialogue(const char* filter) {
+	OPENFILENAME ofn;
+	char fileName[MAX_PATH] = "";
+	ZeroMemory(&ofn, sizeof(ofn));
+
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = windowHandle;
+	ofn.lpstrFilter = filter;
+	ofn.lpstrFile = fileName;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.Flags = OFN_NOCHANGEDIR | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+	ofn.lpstrDefExt = "";
+
+	if (GetSaveFileName(&ofn)) {
+		return fileName;
+	}
+
+	return "";
+}
+
 bool Win32Window::Initialize(CreateInfo& createInfo) {
 	auto hInstance = GetModuleHandle(NULL);
 
