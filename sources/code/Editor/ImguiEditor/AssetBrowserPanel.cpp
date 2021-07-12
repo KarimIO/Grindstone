@@ -6,6 +6,7 @@
 #include <entt/entt.hpp>
 #include "ComponentInspector.hpp"
 #include "AssetBrowserPanel.hpp"
+#include "Common/Window/WindowManager.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/Scenes/Scene.hpp"
 #include "EngineCore/EngineCore.hpp"
@@ -104,6 +105,8 @@ namespace Grindstone {
 						}
 						else {
 							// Open File
+							auto window = engineCore->windowManager->GetWindowByIndex(0);
+							window->OpenFileUsingDefaultProgram(entry.path().string().c_str());
 						}
 					}
 					else if (ImGui::IsMouseClicked(0)) {
@@ -143,13 +146,38 @@ namespace Grindstone {
 
 			void AssetBrowserPanel::renderAssetContextMenu(std::filesystem::directory_entry entry) {
 				if (ImGui::BeginPopupContextItem()) {
+					auto path = entry.path();
 					if (ImGui::MenuItem("Rename")) {
-						pathToRename = entry.path();
+						pathToRename = path;
 						pathRenameNewName = entry.path().filename().string();
 					}
 					if (ImGui::MenuItem("Delete")) {
-						std::filesystem::remove_all(entry.path());
+						std::filesystem::remove_all(path);
 						refreshAssets();
+					}
+					ImGui::Separator();
+					if (ImGui::BeginMenu("Copy path to file")) {
+						auto window = engineCore->windowManager->GetWindowByIndex(0);
+						if (ImGui::MenuItem("Copy relative path")) {
+							window->CopyStringToClipboard(path.string());
+						}
+						if (ImGui::MenuItem("Copy absolute path")) {
+							auto absolutePath = std::filesystem::absolute(path);
+							window->CopyStringToClipboard(absolutePath.string());
+						}
+						ImGui::EndMenu();
+					}
+
+					auto menuItemNameForOpen = entry.is_directory()
+						? "Open folder in explorer"
+						: "Open using default program";
+					if (ImGui::MenuItem(menuItemNameForOpen)) {
+						auto window = engineCore->windowManager->GetWindowByIndex(0);
+						window->OpenFileUsingDefaultProgram(path.string().c_str());
+					}
+					if (ImGui::MenuItem("Reaveal in explorer")) {
+						auto window = engineCore->windowManager->GetWindowByIndex(0);
+						window->ExplorePath(path.string().c_str());
 					}
 					ImGui::EndPopup();
 				}
@@ -169,7 +197,25 @@ namespace Grindstone {
 						}
 						ImGui::EndMenu();
 					}
-					if (ImGui::MenuItem("Import File...")) { }
+					if (ImGui::MenuItem("Import File...")) {
+						editor->importFile(currentPath.string().c_str());
+					}
+					ImGui::Separator();
+					if (ImGui::BeginMenu("Copy path to folder")) {
+						auto window = engineCore->windowManager->GetWindowByIndex(0);
+						if (ImGui::MenuItem("Copy relative path")) {
+							window->CopyStringToClipboard(currentPath.string());
+						}
+						if (ImGui::MenuItem("Copy absolute path")) {
+							auto absolutePath = std::filesystem::absolute(currentPath);
+							window->CopyStringToClipboard(absolutePath.string());
+						}
+						ImGui::EndMenu();
+					}
+					if (ImGui::MenuItem("Open folder in explorer")) {
+						auto window = engineCore->windowManager->GetWindowByIndex(0);
+						window->ExplorePath(currentPath.string().c_str());
+					}
 					ImGui::EndPopup();
 				}
 			}

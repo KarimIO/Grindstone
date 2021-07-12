@@ -6,6 +6,7 @@
 #include <Winuser.h>
 #include "GL/gl3w.h"
 
+#include "Common/Window/WindowManager.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "Modals/ModelConverterModal.hpp"
 #include "Modals/ImageConverterModal.hpp"
@@ -19,7 +20,7 @@
 #include "ImguiInput.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
-ImguiEditor::ImguiEditor(EngineCore* engineCore) {
+ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -100,6 +101,11 @@ void ImguiEditor::selectFile(std::string selectedFileType, std::string selectedF
 void ImguiEditor::selectEntity(entt::entity selectedEntity) {
 	this->selectedEntity = selectedEntity;
 	inspectorPanel->selectEntity(selectedEntity);
+}
+
+void ImguiEditor::importFile(const char* folderPathToImportTo) {
+	auto window = engineCore->windowManager->GetWindowByIndex(0);
+	auto filePath = window->OpenFileDialogue();
 }
 
 void ImguiEditor::renderDockspace() {

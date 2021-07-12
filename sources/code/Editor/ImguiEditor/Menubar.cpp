@@ -34,7 +34,9 @@ void Menubar::renderFileMenu() {
 	if (ImGui::MenuItem("Reload", "", false)) {}
 	if (ImGui::MenuItem("Load...", "Ctrl+O", false)) {}
 	ImGui::Separator();
-	if (ImGui::MenuItem("Import...", "Ctrl+I", false)) {}
+	if (ImGui::MenuItem("Import...", "Ctrl+I", false)) {
+		editor->importFile();
+	}
 	if (ImGui::MenuItem("Exit", false)) {}
 	ImGui::EndMenu();
 }

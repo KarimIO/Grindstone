@@ -36,6 +36,8 @@ namespace Grindstone {
 		virtual void CopyStringToClipboard(const std::string& stringToCopy) override;
 		virtual std::string OpenFileDialogue(const char* filter) override;
 		virtual std::string SaveFileDialogue(const char* filter) override;
+		virtual void ExplorePath(const char* path) override;
+		virtual void OpenFileUsingDefaultProgram(const char* path) override;
 	public:
 		HWND GetHandle();
 	private:

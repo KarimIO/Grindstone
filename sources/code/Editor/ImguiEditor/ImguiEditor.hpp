@@ -26,9 +26,11 @@ namespace Grindstone {
 				void showImageModal();
 				void selectFile(std::string selectedFileType, std::string selectedFilePath);
 				void selectEntity(entt::entity selectedEntity);
+				void importFile(const char* folderPathToImportTo = "");
 			private:
 				void renderDockspace();
 			private:
+				EngineCore* engineCore = nullptr;
 				entt::entity selectedEntity = entt::null;
 				ImguiInput* input = nullptr;
 				ImageConverterModal* imageConverterModal = nullptr;

@@ -49,6 +49,8 @@ namespace Grindstone {
 		virtual void CopyStringToClipboard(const std::string& stringToCopy) = 0;
 		virtual std::string OpenFileDialogue(const char* filter = "All Files (*.*)\0*.*\0") = 0;
 		virtual std::string SaveFileDialogue(const char* filter = "All Files (*.*)\0*.*\0") = 0;
+		virtual void ExplorePath(const char* path) = 0;
+		virtual void OpenFileUsingDefaultProgram(const char* path) = 0;
 	public:
 		inline Grindstone::GraphicsAPI::WindowGraphicsBinding* GetWindowGraphicsBinding() {
 			return windowsGraphicsBinding;

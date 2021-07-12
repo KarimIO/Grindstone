@@ -190,6 +190,15 @@ std::string Win32Window::SaveFileDialogue(const char* filter) {
 	return "";
 }
 
+void Win32Window::ExplorePath(const char* path) {
+	std::string commandArg = std::string("/select, ") + path;
+	ShellExecute(0, NULL, "explorer.exe", commandArg.c_str(), NULL, SW_SHOWNORMAL);
+}
+
+void Win32Window::OpenFileUsingDefaultProgram(const char* path) {
+	ShellExecute(0, 0, path, 0, 0, SW_SHOW);
+}
+
 bool Win32Window::Initialize(CreateInfo& createInfo) {
 	auto hInstance = GetModuleHandle(NULL);
 
