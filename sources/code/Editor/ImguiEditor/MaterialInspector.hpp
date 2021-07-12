@@ -4,6 +4,8 @@
 #include <vector>
 
 namespace Grindstone {
+	class EngineCore;
+
 	namespace Editor {
 		namespace ImguiEditor {
 			struct MaterialTexture {
@@ -16,6 +18,7 @@ namespace Grindstone {
 
 			class MaterialInspector {
 			public:
+				MaterialInspector(EngineCore* engineCore);
 				void setMaterialPath(const char* materialPath);
 				void render();
 			private:
@@ -26,9 +29,10 @@ namespace Grindstone {
 				void renderParameter(MaterialParameter& parameter);
 				std::string materialPath;
 				std::string materialName;
-				std::string shaderRelativePath;
+				std::string shaderPath;
 				std::vector<MaterialTexture> textures;
 				std::vector<MaterialParameter> parameters;
+				EngineCore* engineCore;
 			};
 		}
 	}

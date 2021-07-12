@@ -12,7 +12,7 @@ namespace Grindstone {
 		namespace ImguiEditor {
 			InspectorPanel::InspectorPanel(EngineCore* engineCore) : engineCore(engineCore) {
 				componentInspector = new ComponentInspector();
-				materialInspector = new MaterialInspector();
+				materialInspector = new MaterialInspector(engineCore);
 			}
 
 			void InspectorPanel::selectFile(std::string selectedFileType, std::string selectedFilePath) {

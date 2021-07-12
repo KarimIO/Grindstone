@@ -1,10 +1,12 @@
 #include <imgui/imgui.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include "MaterialInspector.hpp"
+#include "BrowseFile.hpp"
 
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
+			MaterialInspector::MaterialInspector(EngineCore* engineCore) : engineCore(engineCore) {}
 			void MaterialInspector::setMaterialPath(const char* materialPath) {
 				this->materialPath = materialPath;
 			}
@@ -12,7 +14,7 @@ namespace Grindstone {
 			void MaterialInspector::render() {
 				ImGui::Text("Editing Material: %s", materialPath.c_str());
 				ImGui::InputText("Material Name", &materialName);
-				if (ImGui::InputText("Shader Path", &shaderRelativePath, ImGuiInputTextFlags_EnterReturnsTrue)) {
+				if (BrowseFile(engineCore, "Shader Path", shaderPath)) {
 					tryLoadShaderReflection();
 				}
 
