@@ -27,7 +27,7 @@ std::string getDataTypeName(spirv_cross::SPIRType::BaseType type) {
 		case spirv_cross::SPIRType::BaseType::Sampler: return "Sampler";
 		case spirv_cross::SPIRType::BaseType::AccelerationStructure: return "AccelerationStructure";
 		case spirv_cross::SPIRType::BaseType::RayQuery: return "RayQuery";
-		default: "Unknown";
+		default: return "Unknown";
 	}
 }
 
@@ -62,8 +62,7 @@ std::string reflectResourceType(
 	spirv_cross::Compiler& compiler,
 	spirv_cross::SmallVector<spirv_cross::Resource>& resourceList
 ) {
-	std::string output = std::string(",\n\t\"") + resourceType + "\": [";
-	bool isFirstOfType = true;
+	std::string output = std::string("\n         ") + resourceType + ":";
 	for (const auto& resource : resourceList) {
 		const auto& bufferType = compiler.get_type(resource.base_type_id);
 		uint32_t bufferSize = compiler.get_declared_struct_size(bufferType);
@@ -71,20 +70,11 @@ std::string reflectResourceType(
 		int memberCount = bufferType.member_types.size();
 		auto resourceName = resource.name;
 
-		if (!isFirstOfType) {
-			output += ",\n";
-		}
-		else {
-			isFirstOfType = false;
-			output += "\n";
-		}
-		output += "\t\t{\n";
-		output += "\t\t\t\"name\": \"" + resourceName + "\",\n";
-		output += "\t\t\t\"binding\": " + std::to_string(binding) + ",\n";
-		output += "\t\t\t\"bufferSize\": " + std::to_string(bufferSize) + ",\n";
-		output += "\t\t\t\"members\": [";
+		output += "\n          - name: " + resourceName + "\n";
+		output += "            binding: " + std::to_string(binding) + "\n";
+		output += "            bufferSize: " + std::to_string(bufferSize) + "\n";
+		output += "            members:";
 		unsigned member_count = bufferType.member_types.size();
-		bool isFirstMember = true;
 		for (unsigned i = 0; i < member_count; i++) {
 			auto& member_type = compiler.get_type(bufferType.member_types[i]);
 			size_t member_size = compiler.get_declared_struct_member_size(bufferType, i);
@@ -102,25 +92,14 @@ std::string reflectResourceType(
 				size_t matrix_stride = compiler.type_struct_member_matrix_stride(bufferType, i);
 			}
 			const std::string& name = compiler.get_member_name(bufferType.self, i);
-			if (!isFirstMember) {
-				output += ",\n";
-			}
-			else {
-				isFirstMember = false;
-				output += "\n";
-			}
-			output += "\t\t\t\t{\n";
-			output += "\t\t\t\t\t\"name\": \"" + name + "\",\n";
-			output += "\t\t\t\t\t\"offset\": \"" + std::to_string(offset) + "\",\n";
-			output += "\t\t\t\t\t\"type\": \"" + getDataTypeName(member_type.basetype) + "\",\n";
-			output += "\t\t\t\t\t\"memberSize\": \"" + std::to_string(member_size) + "\"\n";
-			output += "\t\t\t\t}";
+			output += "\n             - name: " + name + "\n";
+			output += "               offset: " + std::to_string(offset) + "\n";
+			output += "               type: " + getDataTypeName(member_type.basetype) + "\n";
+			output += "               memberSize: " + std::to_string(member_size);
 		}
-		output += "\n\t\t\t]\n";
-		output += "\t\t}";
 	}
 
-	return output + "\n\t]";
+	return output;
 }
 
 namespace Grindstone {
@@ -128,6 +107,17 @@ namespace Grindstone {
 		void ImportShadersFromGlsl(const char* filePath) {
 			Converters::ShaderImporter importer;
 			importer.convertFile(filePath);
+		}
+
+		shaderc_shader_kind getShaderTypeForShaderc(ShaderImporter::ShaderType type) {
+			switch(type) {
+			case ShaderImporter::ShaderType::Vertex: return shaderc_glsl_vertex_shader;
+			case ShaderImporter::ShaderType::Fragment: return shaderc_glsl_fragment_shader;
+			case ShaderImporter::ShaderType::Geometry: return shaderc_glsl_geometry_shader;
+			case ShaderImporter::ShaderType::Compute: return shaderc_glsl_compute_shader;
+			case ShaderImporter::ShaderType::TesselationControl: return shaderc_glsl_tess_control_shader;
+			case ShaderImporter::ShaderType::TesselationEvaluation: return shaderc_glsl_tess_evaluation_shader;
+			}
 		}
 
 		void ShaderImporter::convertFile(const char* filePath) {
@@ -139,27 +129,119 @@ namespace Grindstone {
 				basePath = path.substr(0, lastPeriod);
 			}
 
-			vkGlslSource = readTextFile(filePath);
+			sourceFileContents = readTextFile(filePath);
 
 			process();
 		}
 
 		void ShaderImporter::process() {
-			convertToSpirv();
-			{
-				auto glsl = convertToOpenglGlsl();
-				convertToOpenglSpirv(glsl);
-			}
-			reflectResources();
+			extractName();
+			reflectionFileOutput = "shader:\n    - name: " + shaderName;
+			extractSubmodules();
+
+			outputStringToFile(".reflect.yml", reflectionFileOutput);
 		}
 
-		void ShaderImporter::convertToSpirv() {
+		std::string ShaderImporter::extractField(const char* fieldKey) {
+			auto fieldPos = sourceFileContents.find(fieldKey);
+			auto newLinePos = sourceFileContents.find('\n', fieldPos);
+			auto valuePos = fieldPos + strlen(fieldKey) + 1;
+			return sourceFileContents.substr(valuePos, newLinePos - valuePos);
+		}
+
+		void ShaderImporter::extractName() {
+			shaderName = extractField("#name");
+		}
+		
+		void ShaderImporter::extractSubmodules() {
+			const char* fieldKey = "#shaderModule";
+			const size_t fieldKeyLength = strlen(fieldKey) + 1;
+
+			size_t beginSearchPos = 0;
+
+			while (true) {
+				size_t fieldPos = sourceFileContents.find(fieldKey, beginSearchPos);
+				if (fieldPos == -1) {
+					return;
+				}
+
+				size_t newLinePos = sourceFileContents.find('\n', fieldPos);
+				size_t valuePos = fieldPos + fieldKeyLength;
+
+				size_t beginPos = newLinePos + 1;
+				size_t endPos = sourceFileContents.find("#endShaderModule", newLinePos);
+
+				std::string shaderTypeString = sourceFileContents.substr(valuePos, newLinePos - valuePos);
+				auto shaderType = getShaderTypeFromString(shaderTypeString);
+				std::string glsl = sourceFileContents.substr(beginPos, endPos - beginPos);
+				std::string extension = getShaderTypeExtension(shaderType);
+				processSubmodule(shaderType, extension.c_str(), glsl.c_str());
+
+				beginSearchPos = endPos;
+			}
+		}
+
+		ShaderImporter::ShaderType ShaderImporter::getShaderTypeFromString(std::string& str) {
+			if (str == "vertex") {
+				return ShaderType::Vertex;
+			}
+			else if (str == "fragment") {
+				return ShaderType::Fragment;
+			}
+			else if (str == "geometry") {
+				return ShaderType::Geometry;
+			}
+			else if (str == "compute") {
+				return ShaderType::Compute;
+			}
+			else if (str == "tesselationControl") {
+				return ShaderType::TesselationControl;
+			}
+			else if (str == "tesselationEvaluation") {
+				return ShaderType::TesselationEvaluation;
+			}
+
+			throw std::runtime_error("Invalid Shader Type!");
+		}
+
+		const char* ShaderImporter::getShaderTypeExtension(ShaderType type) {
+			switch(type) {
+			case ShaderType::Vertex: return ".vert";
+			case ShaderType::Fragment: return ".frag";
+			case ShaderType::Geometry: return ".geom";
+			case ShaderType::Compute: return ".comp";
+			case ShaderType::TesselationControl: return ".ctrl";
+			case ShaderType::TesselationEvaluation: return ".eval";
+			}
+		}
+		
+		const char* ShaderImporter::getShaderTypeAsString(ShaderType type) {
+			switch(type) {
+			case ShaderType::Vertex: return "vertex";
+			case ShaderType::Fragment: return "fragment";
+			case ShaderType::Geometry: return "geometry";
+			case ShaderType::Compute: return "compute";
+			case ShaderType::TesselationControl: return "tesselationControl";
+			case ShaderType::TesselationEvaluation: return "tesselationEvaluation";
+			}
+		}
+
+		void ShaderImporter::processSubmodule(ShaderType shaderType, const char* extension, const char* glslSource) {
+			std::vector<uint32_t> vkSpirv = convertToSpirv(shaderType, extension, glslSource);
+			{
+				auto opengGlsl = convertToOpenglGlsl(vkSpirv);
+				convertToOpenglSpirv(shaderType, extension, glslSource);
+			}
+			reflectResources(shaderType, vkSpirv);
+		}
+
+		std::vector<uint32_t> ShaderImporter::convertToSpirv(ShaderType shaderType, const char* extension, const char* shaderModuleGlsl) {
 			shaderc::Compiler compiler;
 			shaderc::CompileOptions options;
 
 			auto result = compiler.CompileGlslToSpv(
-				vkGlslSource,
-				shaderc_glsl_vertex_shader,
+				shaderModuleGlsl,
+				getShaderTypeForShaderc(shaderType),
 				path.c_str(),
 				options
 			);
@@ -168,12 +250,14 @@ namespace Grindstone {
 				std::cerr << result.GetErrorMessage() << std::endl;
 			}
 
-			vkSpirv = std::vector<uint32_t>(result.cbegin(), result.cend());
+			auto vkSpirv = std::vector<uint32_t>(result.cbegin(), result.cend());
 
-			outputUint32ToFile(".vulkan.spv", vkSpirv);
+			outputUint32ToFile((std::string(extension) + ".vulkan.spv").c_str(), vkSpirv);
+
+			return vkSpirv;
 		}
 
-		std::string ShaderImporter::convertToOpenglGlsl() {
+		std::string ShaderImporter::convertToOpenglGlsl(std::vector<uint32_t>& vkSpirv) {
 			spirv_cross::CompilerGLSL glslTranspiler(vkSpirv);
 
 			spirv_cross::CompilerGLSL::Options glslTranspilerOptions;
@@ -185,14 +269,14 @@ namespace Grindstone {
 			return openglGlsl;
 		}
 
-		void ShaderImporter::convertToOpenglSpirv(std::string & glsl) {
+		void ShaderImporter::convertToOpenglSpirv(ShaderType shaderType, const char* extension, const char* opengGlsl) {
 			shaderc::Compiler compiler;
 			shaderc::CompileOptions options;
 			options.SetTargetEnvironment(shaderc_target_env_opengl, shaderc_env_version_opengl_4_5);
 
 			auto result = compiler.CompileGlslToSpv(
-				glsl,
-				shaderc_glsl_vertex_shader,
+				opengGlsl,
+				getShaderTypeForShaderc(shaderType),
 				path.c_str(),
 				options
 			);
@@ -201,29 +285,33 @@ namespace Grindstone {
 				std::cerr << result.GetErrorMessage() << std::endl;
 			}
 
-			outputUint32ToFile(".opengl.spv", std::vector<uint32_t>(result.cbegin(), result.cend()));
+			outputUint32ToFile((std::string(extension) + ".opengl.spv").c_str(), std::vector<uint32_t>(result.cbegin(), result.cend()));
 		}
 
-		void ShaderImporter::reflectResources() {
+		void ShaderImporter::reflectResources(ShaderType shaderType, std::vector<uint32_t>& vkSpirv) {
 			spirv_cross::Compiler compiler(vkSpirv);
 			spirv_cross::ShaderResources resources = compiler.get_shader_resources();
+			auto shaderTypeStr = getShaderTypeAsString(shaderType);
 
-			std::string reflFileContents = "{\n";
-			reflFileContents += "\t\"originalPath\": \"" + path + "\"";
+			reflectionFileOutput += std::string("\n    - ") + shaderTypeStr;
 
+			std::string resourcesStr;
 			if (resources.uniform_buffers.size()) {
-				reflFileContents += reflectResourceType("uniformBuffers", compiler, resources.uniform_buffers);
+				resourcesStr += reflectResourceType("uniformBuffers", compiler, resources.uniform_buffers);
 			}
 			if (resources.push_constant_buffers.size()) {
-				reflFileContents += reflectResourceType("pushConstants", compiler, resources.push_constant_buffers);
+				resourcesStr += reflectResourceType("pushConstants", compiler, resources.push_constant_buffers);
 			}
 			if (resources.separate_images.size()) {
-				reflFileContents += reflectResourceType("texture2ds", compiler, resources.separate_images);
+				resourcesStr += reflectResourceType("texture2ds", compiler, resources.separate_images);
 			}
 
-			reflFileContents += "\n}";
-
-			outputStringToFile(".reflect.json", reflFileContents);
+			if (!resourcesStr.empty()) {
+				reflectionFileOutput += ": " + resourcesStr;
+			}
+			else {
+				reflectionFileOutput += ": {}";
+			}
 		}
 
 		void ShaderImporter::outputStringToFile(const char* extension, std::string& content) {
