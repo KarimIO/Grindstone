@@ -57,12 +57,12 @@ std::string readTextFile(const char* filename) {
 	return content;
 }
 
-std::string reflectResourceType(
-	const char* resourceType,
+void reflectStruct(
+	Grindstone::Converters::ShaderImporter::ShaderType shaderType,
+	std::vector<Grindstone::Converters::ShaderImporter::UniformBuffer>& uniformBuffers,
 	spirv_cross::Compiler& compiler,
 	spirv_cross::SmallVector<spirv_cross::Resource>& resourceList
 ) {
-	std::string output = std::string("\n         ") + resourceType + ":";
 	for (const auto& resource : resourceList) {
 		const auto& bufferType = compiler.get_type(resource.base_type_id);
 		uint32_t bufferSize = compiler.get_declared_struct_size(bufferType);
@@ -70,36 +70,23 @@ std::string reflectResourceType(
 		int memberCount = bufferType.member_types.size();
 		auto resourceName = resource.name;
 
-		output += "\n          - name: " + resourceName + "\n";
-		output += "            binding: " + std::to_string(binding) + "\n";
-		output += "            bufferSize: " + std::to_string(bufferSize) + "\n";
-		output += "            members:";
-		unsigned member_count = bufferType.member_types.size();
-		for (unsigned i = 0; i < member_count; i++) {
-			auto& member_type = compiler.get_type(bufferType.member_types[i]);
-			size_t member_size = compiler.get_declared_struct_member_size(bufferType, i);
+		uniformBuffers.emplace_back(resourceName.c_str(), binding, bufferSize);
+		auto& uniformBuffer = uniformBuffers.back();
+		uniformBuffer.shaderPasses.push_back(shaderType);
+
+		for (unsigned i = 0; i < memberCount; i++) {
+			auto& memberType = compiler.get_type(bufferType.member_types[i]);
+			size_t memberSize = compiler.get_declared_struct_member_size(bufferType, i);
 
 			// Get member offset within this struct.
 			size_t offset = compiler.type_struct_member_offset(bufferType, i);
 
-			if (!member_type.array.empty()) {
-				// Get array stride, e.g. float4 foo[]; Will have array stride of 16 bytes.
-				size_t array_stride = compiler.type_struct_member_array_stride(bufferType, i);
-			}
-
-			if (member_type.columns > 1) {
-				// Get bytes stride between columns (if column major), for float4x4 -> 16 bytes.
-				size_t matrix_stride = compiler.type_struct_member_matrix_stride(bufferType, i);
-			}
 			const std::string& name = compiler.get_member_name(bufferType.self, i);
-			output += "\n             - name: " + name + "\n";
-			output += "               offset: " + std::to_string(offset) + "\n";
-			output += "               type: " + getDataTypeName(member_type.basetype) + "\n";
-			output += "               memberSize: " + std::to_string(member_size);
+			auto& typeStr = getDataTypeName(memberType.basetype);
+
+			uniformBuffer.members.emplace_back(name, typeStr, offset, memberSize);
 		}
 	}
-
-	return output;
 }
 
 namespace Grindstone {
@@ -120,6 +107,8 @@ namespace Grindstone {
 			}
 		}
 
+		ShaderImporter::ShaderImporter() : reflectionWriter(reflectionStringBuffer) {}
+
 		void ShaderImporter::convertFile(const char* filePath) {
 			path = filePath;
 
@@ -135,11 +124,54 @@ namespace Grindstone {
 		}
 
 		void ShaderImporter::process() {
+			reflectionWriter.StartObject();
 			extractName();
-			reflectionFileOutput = "shader:\n    - name: " + shaderName;
 			extractSubmodules();
+			writeReflectionDocument();
+		}
 
-			outputStringToFile(".reflect.yml", reflectionFileOutput);
+		void ShaderImporter::writeReflectionDocument() {
+			reflectionWriter.Key("uniformBuffers");
+			reflectionWriter.StartArray();
+			for each (auto& uniformBuffer in uniformBuffers) {
+				reflectionWriter.StartObject();
+				reflectionWriter.Key("name");
+				reflectionWriter.String(uniformBuffer.name.c_str());
+				reflectionWriter.Key("binding");
+				reflectionWriter.Uint(uniformBuffer.binding);
+				reflectionWriter.Key("bufferSize");
+				reflectionWriter.Uint(uniformBuffer.buffserSize);
+
+				reflectionWriter.Key("usedIn");
+				reflectionWriter.StartArray();
+				for each (auto & shaderPass in uniformBuffer.shaderPasses) {
+					reflectionWriter.String(getShaderTypeAsString(shaderPass));
+				}
+				reflectionWriter.EndArray();
+
+				reflectionWriter.Key("members");
+				reflectionWriter.StartArray();
+				for each (auto &member in uniformBuffer.members) {
+					reflectionWriter.StartObject();
+					reflectionWriter.Key("name");
+					reflectionWriter.String(member.name.c_str());
+					reflectionWriter.Key("offset");
+					reflectionWriter.Uint(member.offset);
+					reflectionWriter.Key("memberSize");
+					reflectionWriter.Uint(member.memberSize);
+					reflectionWriter.Key("type");
+					reflectionWriter.String(member.type.c_str());
+					reflectionWriter.EndObject();
+				}
+				reflectionWriter.EndArray();
+
+				reflectionWriter.EndObject();
+			}
+			reflectionWriter.EndArray();
+
+			reflectionWriter.EndObject();
+
+			outputStringToFile(".reflect.json", reflectionStringBuffer.GetString());
 		}
 
 		std::string ShaderImporter::extractField(const char* fieldKey) {
@@ -151,6 +183,8 @@ namespace Grindstone {
 
 		void ShaderImporter::extractName() {
 			shaderName = extractField("#name");
+			reflectionWriter.Key("name");
+			reflectionWriter.String(shaderName.c_str());
 		}
 		
 		void ShaderImporter::extractSubmodules() {
@@ -293,31 +327,22 @@ namespace Grindstone {
 			spirv_cross::ShaderResources resources = compiler.get_shader_resources();
 			auto shaderTypeStr = getShaderTypeAsString(shaderType);
 
-			reflectionFileOutput += std::string("\n    - ") + shaderTypeStr;
-
 			std::string resourcesStr;
 			if (resources.uniform_buffers.size()) {
-				resourcesStr += reflectResourceType("uniformBuffers", compiler, resources.uniform_buffers);
+				reflectStruct(shaderType, uniformBuffers, compiler, resources.uniform_buffers);
 			}
 			if (resources.push_constant_buffers.size()) {
-				resourcesStr += reflectResourceType("pushConstants", compiler, resources.push_constant_buffers);
+				// reflectStruct(uniformBuffers, compiler, resources.push_constant_buffers);
 			}
 			if (resources.separate_images.size()) {
-				resourcesStr += reflectResourceType("texture2ds", compiler, resources.separate_images);
-			}
-
-			if (!resourcesStr.empty()) {
-				reflectionFileOutput += ": " + resourcesStr;
-			}
-			else {
-				reflectionFileOutput += ": {}";
+				// reflectResourceType(reflectionWriter, "texture2ds", compiler, resources.separate_images);
 			}
 		}
 
-		void ShaderImporter::outputStringToFile(const char* extension, std::string& content) {
+		void ShaderImporter::outputStringToFile(const char* extension, const char* content) {
 			std::string outputFilename = basePath + extension;
 			std::ofstream file(outputFilename);
-			file.write((const char*)content.data(), content.size());
+			file.write((const char*)content, strlen(content));
 			file.flush();
 			file.close();
 		}

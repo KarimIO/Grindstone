@@ -24,7 +24,7 @@ int EditorCamera::GetPrimaryFramebufferAttachment() {
 
 void EditorCamera::Render() {
 	framebuffer->Bind(false);
-	float clearColor[4] = { 0.1, 0.1, 0.1, 1 };
+	float clearColor[4] = { 0.1f, 0.1f, 0.1f, 1.f };
 	core->Clear(GraphicsAPI::ClearMode::Color, clearColor);
 
 	// Cull
