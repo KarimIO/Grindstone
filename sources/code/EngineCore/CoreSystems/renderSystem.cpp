@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -24,15 +25,26 @@ namespace Grindstone {
 		const auto upVector = glm::vec3(0, 1, 0);
 		auto view = registry.view<const TransformComponent, const CameraComponent>();
 
+		auto duration = std::chrono::system_clock::now().time_since_epoch();
+		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+		double time = millis / 1000.0;
+
 		view.each([&](
 			const TransformComponent& transformComponent,
 			const CameraComponent& cameraComponent
 		) {
-			const glm::vec3 forwardVector = eulerToForward(transformComponent.angles);
+			// const glm::vec3 forwardVector = eulerToForward(transformComponent.angles);
+			// const glm::vec3 pos = transformComponent.position;
+			const glm::vec3 pos = glm::vec3(
+				5 * glm::cos(time * 5),
+				5 * glm::sin(time * 5),
+				0
+			);
+			//transformComponent.position;
 
 			const auto viewMatrix = glm::lookAt(
-				transformComponent.position,
-				forwardVector,
+				pos,
+				glm::vec3(),
 				upVector
 			);
 

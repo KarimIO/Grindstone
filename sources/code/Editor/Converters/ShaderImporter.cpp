@@ -57,6 +57,20 @@ std::string readTextFile(const char* filename) {
 	return content;
 }
 
+void reflectImages(
+	Grindstone::Converters::ShaderImporter::ShaderType shaderType,
+	std::vector<Grindstone::Converters::ShaderImporter::Texture>& textures,
+	spirv_cross::Compiler& compiler,
+	spirv_cross::SmallVector<spirv_cross::Resource>& resourceList
+) {
+	for (const auto& resource : resourceList) {
+		uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+		auto resourceName = resource.name;
+		textures.emplace_back(resourceName, binding);
+		textures.back().shaderPasses.push_back(shaderType);
+	}
+}
+
 void reflectStruct(
 	Grindstone::Converters::ShaderImporter::ShaderType shaderType,
 	std::vector<Grindstone::Converters::ShaderImporter::UniformBuffer>& uniformBuffers,
@@ -77,12 +91,11 @@ void reflectStruct(
 		for (unsigned i = 0; i < memberCount; i++) {
 			auto& memberType = compiler.get_type(bufferType.member_types[i]);
 			size_t memberSize = compiler.get_declared_struct_member_size(bufferType, i);
-
-			// Get member offset within this struct.
 			size_t offset = compiler.type_struct_member_offset(bufferType, i);
-
 			const std::string& name = compiler.get_member_name(bufferType.self, i);
 			auto& typeStr = getDataTypeName(memberType.basetype);
+			memberType.vecsize;
+			memberType.columns;
 
 			uniformBuffer.members.emplace_back(name, typeStr, offset, memberSize);
 		}
@@ -124,34 +137,31 @@ namespace Grindstone {
 		}
 
 		void ShaderImporter::process() {
-			reflectionWriter.StartObject();
-			extractName();
+			shaderName = extractField("#name");
 			extractSubmodules();
 			writeReflectionDocument();
 		}
-
-		void ShaderImporter::writeReflectionDocument() {
-			reflectionWriter.Key("uniformBuffers");
+		void ShaderImporter::writeReflectionStruct(std::vector<UniformBuffer>& structs) {
 			reflectionWriter.StartArray();
-			for each (auto& uniformBuffer in uniformBuffers) {
+			for each (auto & structMeta in structs) {
 				reflectionWriter.StartObject();
 				reflectionWriter.Key("name");
-				reflectionWriter.String(uniformBuffer.name.c_str());
+				reflectionWriter.String(structMeta.name.c_str());
 				reflectionWriter.Key("binding");
-				reflectionWriter.Uint(uniformBuffer.binding);
+				reflectionWriter.Uint(structMeta.binding);
 				reflectionWriter.Key("bufferSize");
-				reflectionWriter.Uint(uniformBuffer.buffserSize);
+				reflectionWriter.Uint(structMeta.buffserSize);
 
 				reflectionWriter.Key("usedIn");
 				reflectionWriter.StartArray();
-				for each (auto & shaderPass in uniformBuffer.shaderPasses) {
+				for each (auto & shaderPass in structMeta.shaderPasses) {
 					reflectionWriter.String(getShaderTypeAsString(shaderPass));
 				}
 				reflectionWriter.EndArray();
 
 				reflectionWriter.Key("members");
 				reflectionWriter.StartArray();
-				for each (auto &member in uniformBuffer.members) {
+				for each (auto & member in structMeta.members) {
 					reflectionWriter.StartObject();
 					reflectionWriter.Key("name");
 					reflectionWriter.String(member.name.c_str());
@@ -168,6 +178,50 @@ namespace Grindstone {
 				reflectionWriter.EndObject();
 			}
 			reflectionWriter.EndArray();
+		}
+
+		void ShaderImporter::writeReflectionImage(std::vector<Texture>& resources) {
+			reflectionWriter.StartArray();
+			for each (auto & resource in resources) {
+				reflectionWriter.StartObject();
+				reflectionWriter.Key("name");
+				reflectionWriter.String(resource.name.c_str());
+				reflectionWriter.Key("binding");
+				reflectionWriter.Uint(resource.binding);
+
+				reflectionWriter.Key("usedIn");
+				reflectionWriter.StartArray();
+				for each (auto & shaderPass in resource.shaderPasses) {
+					reflectionWriter.String(getShaderTypeAsString(shaderPass));
+				}
+				reflectionWriter.EndArray();
+
+				reflectionWriter.EndObject();
+			}
+			reflectionWriter.EndArray();
+		}
+
+		void ShaderImporter::writeReflectionDocument() {
+			reflectionWriter.StartObject();
+
+			reflectionWriter.Key("name");
+			reflectionWriter.String(shaderName.c_str());
+
+			reflectionWriter.Key("shaderModules");
+			reflectionWriter.StartArray();
+			for each (auto & shaderPass in shaderPasses) {
+				reflectionWriter.String(getShaderTypeAsString(shaderPass));
+			}
+			reflectionWriter.EndArray();
+
+			reflectionWriter.Key("uniformBuffers");
+			writeReflectionStruct(uniformBuffers);
+
+			reflectionWriter.Key("textures");
+			writeReflectionImage(textures);
+
+			reflectionWriter.Key("samplers");
+			writeReflectionImage(samplers);
 
 			reflectionWriter.EndObject();
 
@@ -179,12 +233,6 @@ namespace Grindstone {
 			auto newLinePos = sourceFileContents.find('\n', fieldPos);
 			auto valuePos = fieldPos + strlen(fieldKey) + 1;
 			return sourceFileContents.substr(valuePos, newLinePos - valuePos);
-		}
-
-		void ShaderImporter::extractName() {
-			shaderName = extractField("#name");
-			reflectionWriter.Key("name");
-			reflectionWriter.String(shaderName.c_str());
 		}
 		
 		void ShaderImporter::extractSubmodules() {
@@ -325,17 +373,21 @@ namespace Grindstone {
 		void ShaderImporter::reflectResources(ShaderType shaderType, std::vector<uint32_t>& vkSpirv) {
 			spirv_cross::Compiler compiler(vkSpirv);
 			spirv_cross::ShaderResources resources = compiler.get_shader_resources();
-			auto shaderTypeStr = getShaderTypeAsString(shaderType);
+
+			shaderPasses.push_back(shaderType);
 
 			std::string resourcesStr;
 			if (resources.uniform_buffers.size()) {
 				reflectStruct(shaderType, uniformBuffers, compiler, resources.uniform_buffers);
 			}
 			if (resources.push_constant_buffers.size()) {
-				// reflectStruct(uniformBuffers, compiler, resources.push_constant_buffers);
+				// reflectStruct(shaderType, pushConstants, compiler, resources.push_constant_buffers);
+			}
+			if (resources.sampled_images.size()) {
+				reflectImages(shaderType, samplers, compiler, resources.sampled_images);
 			}
 			if (resources.separate_images.size()) {
-				// reflectResourceType(reflectionWriter, "texture2ds", compiler, resources.separate_images);
+				reflectImages(shaderType, textures, compiler, resources.separate_images);
 			}
 		}
 

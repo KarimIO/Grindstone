@@ -18,9 +18,16 @@ namespace Grindstone {
 					TesselationControl,
 					TesselationEvaluation
 				};
+
 				struct Texture {
 					std::string name;
 					size_t binding;
+					std::vector<ShaderType> shaderPasses;
+					Texture() = default;
+					Texture(
+						std::string name,
+						size_t binding
+					) : name(name), binding(binding) {}
 				};
 
 				struct UniformBuffer {
@@ -54,9 +61,10 @@ namespace Grindstone {
 				void convertFile(const char* filePath);
 			private:
 				void process();
+				void writeReflectionStruct(std::vector<UniformBuffer>& structs);
+				void writeReflectionImage(std::vector<Texture>& resources);
 				void writeReflectionDocument();
 				std::string extractField(const char* fieldKey);
-				void extractName();
 				void extractSubmodules();
 				void processSubmodule(ShaderType shaderType, const char* extension, const char* glslSource);
 				std::vector<uint32_t> convertToSpirv(ShaderType, const char* extension, const char* shaderModuleGlsl);
@@ -75,6 +83,7 @@ namespace Grindstone {
 				std::string sourceFileContents;
 				std::vector<ShaderType> shaderPasses;
 				std::vector<Texture> textures;
+				std::vector<Texture> samplers;
 				std::vector<UniformBuffer> uniformBuffers;
 				rapidjson::StringBuffer reflectionStringBuffer;
 				rapidjson::PrettyWriter<rapidjson::StringBuffer> reflectionWriter;

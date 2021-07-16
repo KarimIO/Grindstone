@@ -92,7 +92,7 @@ namespace Grindstone {
 				//return;
 			}*/
 
-			auto& vbd = createInfo.vertex_bindings;
+			auto& vbd = createInfo.vertexBindings;
 			for (uint32_t i = 0; i < vbd->attribute_count; i++) {
 				glBindAttribLocation(program_, vbd->attributes[i].location, vbd->attributes[i].name);
 			}
@@ -145,7 +145,7 @@ namespace Grindstone {
 			glUseProgram(program_);
 
 			glViewport(0, 0, (GLsizei)width_, (GLsizei)height_);
-			glScissor(scissor_x_, scissor_y_, scissor_w_, scissor_h_);
+			// glScissor(scissor_x_, scissor_y_, scissor_w_, scissor_h_);
 			switch (cull_mode_) {
 			case CullMode::None:
 				glDisable(GL_CULL_FACE);

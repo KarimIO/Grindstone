@@ -44,8 +44,8 @@ namespace Grindstone {
 				TextureBindingLayout** textureBindings;
 				uint32_t textureBindingCount;
 
-				VertexBufferLayout* vertex_bindings;
-				uint32_t vertex_bindings_count;
+				VertexBufferLayout* vertexBindings;
+				uint32_t vertexBindingsCount;
 			};
 
 			virtual void bind() {};
