@@ -1,2 +1,0 @@
-shader: ../assets/shaders/skybox/sky.json
-skybox: ../cubemaps/glacier.dds

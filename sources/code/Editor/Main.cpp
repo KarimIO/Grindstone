@@ -4,8 +4,6 @@
 using namespace Grindstone;
 
 int main() {
-	Converters::ShaderImporter importer;
-	importer.convertFile("..\\test.glsl");
 	Grindstone::Editor::Manager editorManager;
 	editorManager.initialize();
 	editorManager.run();

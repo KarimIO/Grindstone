@@ -1,5 +1,0 @@
-shader: ../assets/shaders/skybox/sky_procedural.json
-stars: ../materials/procedural_sky/T_Sky_Stars.TGA
-clouds_day: ../materials/procedural_sky/T_Sky_Blue.TGA
-clouds_noise: ../materials/procedural_sky/T_Sky_Clouds_M.TGA
-color_lut: ../materials/procedural_sky/color_lut.png

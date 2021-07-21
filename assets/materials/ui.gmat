@@ -1,2 +1,0 @@
-shader: ../assets/shaders/ui/ui.json
-inTexture: ../materials/ui.png

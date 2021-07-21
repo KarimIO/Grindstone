@@ -7,6 +7,7 @@
 #include "ComponentInspector.hpp"
 #include "Editor/Converters/ShaderImporter.hpp"
 #include "Editor/Converters/ModelConverter.hpp"
+#include "Editor/Converters/TextureConverter.hpp"
 #include "AssetBrowserPanel.hpp"
 #include "Common/Window/WindowManager.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
@@ -162,6 +163,17 @@ namespace Grindstone {
 				if (firstDotExtension == ".glsl") {
 					if (ImGui::MenuItem("Convert")) {
 						Grindstone::Converters::ImportShadersFromGlsl(path.c_str());
+					}
+				}
+				else if (
+					firstDotExtension == ".jpg" ||
+					firstDotExtension == ".jpeg" ||
+					firstDotExtension == ".tga" ||
+					firstDotExtension == ".bmp" ||
+					firstDotExtension == ".png"
+				) {
+					if (ImGui::MenuItem("Convert")) {
+						Grindstone::Converters::ImportTexture(path.c_str());
 					}
 				}
 				else if (

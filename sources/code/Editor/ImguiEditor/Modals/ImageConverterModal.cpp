@@ -1,6 +1,6 @@
 #include <imgui/imgui.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
-#include "Editor/Converters/ImageConverter.hpp"
+#include "Editor/Converters/TextureConverter.hpp"
 #include "ImageConverterModal.hpp"
 
 const ImVec2 IMG_CONVERTER_WINDOW_SIZE = { 400.f, 250.f };
@@ -50,12 +50,7 @@ namespace Grindstone {
 				isProcessing = true;
 				auto inputPath = getInputPathWithProperSlashes();
 				try {
-					ConvertTexture(
-						inputPath,
-						shouldImportCubemap,
-						getImageOutputPath(inputPath),
-						(Compression)selectedFormatIndex
-					);
+					Grindstone::Converters::ImportTexture(inputPath.c_str());
 				}
 				catch (const char* error) {
 					this->error = error;

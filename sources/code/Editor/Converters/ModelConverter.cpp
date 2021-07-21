@@ -1,6 +1,6 @@
 #include "ModelConverter.hpp"
 #include "MaterialCreator.hpp"
-#include "ImageConverter.hpp"
+#include "TextureConverter.hpp"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -89,7 +89,7 @@ void ModelConverter::ConvertTexture(aiMaterial* pMaterial, aiTextureType type, s
 			std::string name = fullPath.substr(fullPath.find_last_of("/") + 1);
 			// name = SwapExtension(name, "dds");
 			std::string finaloutpath = baseOutputPath + name;
-			::ConvertTexture(/*finalDir +*/ fullPath, false, finaloutpath, Compression::BC1);
+			Grindstone::Converters::ImportTexture(/*finalDir +*/ fullPath.c_str());
 			outPath = name;
 		}
 	}
@@ -176,7 +176,7 @@ void ModelConverter::Convert(const char* path) {
 
 	ProcessNodeTree(scene->mRootNode);
 	InitSubmeshes();
-	ConvertMaterials();
+	// ConvertMaterials();
 	ProcessVertices();
 
 	importer.FreeScene();
