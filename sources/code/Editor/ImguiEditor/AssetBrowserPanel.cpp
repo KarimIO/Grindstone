@@ -5,6 +5,8 @@
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include <entt/entt.hpp>
 #include "ComponentInspector.hpp"
+#include "Editor/Converters/ShaderImporter.hpp"
+#include "Editor/Converters/ModelConverter.hpp"
 #include "AssetBrowserPanel.hpp"
 #include "Common/Window/WindowManager.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
@@ -146,9 +148,37 @@ namespace Grindstone {
 				ImGui::Text(finalPart.c_str());
 			}
 
+			void AssetBrowserPanel::renderContextMenuConvertButton(std::filesystem::directory_entry entry) {
+				if (entry.is_directory()) {
+					return;
+				}
+
+				auto path = entry.path().string();
+				size_t firstDot = path.find_last_of('.');
+				std::string firstDotExtension = path.substr(firstDot);
+				// size_t secondDot = path.find_last_of('.', firstDot - 1);
+				// std::string secondDotExtension = path.substr(secondDot);
+
+				if (firstDotExtension == ".glsl") {
+					if (ImGui::MenuItem("Convert")) {
+						Grindstone::Converters::ImportShadersFromGlsl(path.c_str());
+					}
+				}
+				else if (
+					firstDotExtension == ".fbx" ||
+					firstDotExtension == ".mdl" ||
+					firstDotExtension == ".dae"
+				) {
+					if (ImGui::MenuItem("Convert")) {
+						Grindstone::Converters::ImportModel(path.c_str());
+					}
+				}
+			}
+
 			void AssetBrowserPanel::renderAssetContextMenu(std::filesystem::directory_entry entry) {
 				if (ImGui::BeginPopupContextItem()) {
 					auto path = entry.path();
+					renderContextMenuConvertButton(entry);
 					if (ImGui::MenuItem("Rename")) {
 						pathToRename = path;
 						pathRenameNewName = entry.path().filename().string();

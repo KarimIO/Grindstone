@@ -23,3 +23,11 @@ std::vector<char> Utils::LoadFile(const char* inputPath) {
 
 	return fileData;
 }
+
+std::string Utils::LoadFileText(const char* inputPath) {
+	std::ifstream ifs(inputPath);
+	std::string content((std::istreambuf_iterator<char>(ifs)),
+		(std::istreambuf_iterator<char>()));
+
+	return content;
+}

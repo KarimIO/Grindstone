@@ -6,5 +6,6 @@
 namespace Grindstone {
 	namespace Utils {
 		std::vector<char> LoadFile(const char* inputPath);
+		std::string LoadFileText(const char* inputPath);
 	}
 }

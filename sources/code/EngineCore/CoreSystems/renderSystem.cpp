@@ -36,9 +36,9 @@ namespace Grindstone {
 			// const glm::vec3 forwardVector = eulerToForward(transformComponent.angles);
 			// const glm::vec3 pos = transformComponent.position;
 			const glm::vec3 pos = glm::vec3(
-				5 * glm::cos(time * 5),
-				5 * glm::sin(time * 5),
-				0
+				1.5 * glm::cos(time * 2),
+				2,
+				1.5 * glm::sin(time * 2)
 			);
 			//transformComponent.position;
 

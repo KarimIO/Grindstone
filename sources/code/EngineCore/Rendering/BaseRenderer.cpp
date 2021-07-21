@@ -11,10 +11,10 @@ using namespace Grindstone::GraphicsAPI;
 
 
 std::array<glm::vec3, 8> cubeVertices = {
-	glm::vec3(-.6, -.6,  .6), glm::vec3( .6, -.6,  .6),
-	glm::vec3( .6,  .6,  .6), glm::vec3(-.6,  .6,  .6),
-	glm::vec3(-.6, -.6, -.6), glm::vec3( .6, -.6, -.6),
-	glm::vec3( .6,  .6, -.6), glm::vec3(-.6,  .6, -.6)
+	glm::vec3(-1, -1,  1), glm::vec3( 1, -1,  1),
+	glm::vec3( 1,  1,  1), glm::vec3(-1,  1,  1),
+	glm::vec3(-1, -1, -1), glm::vec3( 1, -1, -1),
+	glm::vec3( 1,  1, -1), glm::vec3(-1,  1, -1)
 };
 
 std::array<uint32_t, 36> cubeIndices = {

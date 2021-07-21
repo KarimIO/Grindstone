@@ -56,16 +56,12 @@ add_executable(Editor ${EDITOR_HEADERS} ${EDITOR_SOURCES})
 
 set_property(TARGET Editor PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${BUILD_DIRECTORY})
 
-set(RAPIDJSON_PATH CACHE PATH "RAPIDJSON Path")
-
 target_include_directories(Editor
     PUBLIC
 	../
 	${ASSIMP_INCLUDE_DIR}
 	${RAPIDJSON_PATH}
 	${DEPS_DIR}
-	${DEPS_DIR}/rapidyaml/src
-	${DEPS_DIR}/rapidyaml/c4
 	${DEPS_DIR}/shaderc/
 	${DEPS_DIR}/shaderc/libshaderc/include
 	${DEPS_DIR}/imgui

@@ -3,6 +3,7 @@ project(Grindstone VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(RAPIDJSON_PATH CACHE PATH "RAPIDJSON Path")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/sources/cmake)
 # find_package(assimp REQUIRED)
 # find_package(Bullet REQUIRED)

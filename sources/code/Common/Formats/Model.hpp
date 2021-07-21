@@ -5,23 +5,21 @@
 namespace Grindstone {
 	namespace Formats {
 		namespace Model {
-			enum class IndexSize {
+			enum class IndexSize : uint8_t {
 				Bit16,
 				Bit32
 			};
 
 			namespace Header {
 				struct V1 {
-					uint64_t total_file_size_;
-					uint32_t num_meshes_;
-					uint64_t num_vertices_;
-					uint64_t vertices_size_;
-					uint64_t num_indices_;
-					uint32_t num_materials_;
-					uint8_t vertex_flags_;
-					bool has_bones_;
+					uint32_t totalFileSize = 0;
+					uint32_t version = 0;
+					uint32_t meshCount = 0;
+					uint64_t vertexCount = 0;
+					uint64_t indexCount = 0;
+					IndexSize isUsing32BitIndices = IndexSize::Bit16;
 				};
-			};
+			}
 		}
 	}
 }

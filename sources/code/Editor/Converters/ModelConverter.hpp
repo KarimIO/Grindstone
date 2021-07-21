@@ -3,81 +3,59 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
 
-class BoundingShape;
+namespace Grindstone {
+	namespace Converters {
+		class ModelConverter {
+		public:
+			void Convert(const char* path);
+		private:
+			struct Prefab {
 
-class ModelConverter {
-public:
-	struct Params {
-		std::string path;
-		std::string skeleton_path;
-	};
+			};
 
-	ModelConverter(Params params);
-private:
+			struct ScenePrefab {
 
-	// Definitions
-	struct Vertex {
-		float positions[3];
-		float normal[3];
-		float tangent[3];
-		float tex_coord[2];
-	};
+			};
 
-	#define BONES_PER_VERTEX 4
+			struct Submesh {
+				uint32_t indexCount = 0;
+				uint32_t baseVertex = 0;
+				uint32_t baseIndex = 0;
+				uint32_t materialIndex = UINT32_MAX;
+			};
 
-	struct VertexWeights {
-		uint16_t	bone_ids[BONES_PER_VERTEX];
-		float		bone_weights[BONES_PER_VERTEX];
+		private:
+			void ProcessNodeTree(aiNode* node);
+			void ConvertMaterials();
+			void ConvertTexture(aiMaterial* pMaterial, aiTextureType type, std::string basePath, std::string& outPath);
+			void InitSubmeshes();
+			void ProcessVertices();
 
-		VertexWeights() {
-			clear();
-		}
+			void OutputPrefabs();
+			void OutputMeshes();
+			void OutputVertexArray(std::ofstream& output, std::vector<float>& vertexArray);
 
-		void clear() {
-			memset(bone_ids, 0, sizeof(bone_ids));
-			memset(bone_weights, 0, sizeof(bone_weights));
-		}
-	};
+			// Members
+			std::string path;
+			const aiScene* scene;
 
-	struct Mesh {
-		uint32_t num_indices = 0;
-		uint32_t base_vertex = 0;
-		uint32_t base_index = 0;
-		uint32_t material_index = UINT32_MAX;
-	};
+			struct OutputData {
+				uint32_t vertexCount;
+				uint32_t indexCount;
+				struct VertexArray {
+					std::vector<float> position;
+					std::vector<float> normal;
+					std::vector<float> tangent;
+					std::vector<std::vector<float>> texCoordArray;
+				} vertexArray;
+				std::vector<uint16_t> indices;
+				std::vector<Submesh> meshes;
+				std::vector<std::string> materialNames;
+			} outputData;
+		};
 
-	struct BoneInfo {
-		std::string name;
-		aiMatrix4x4 matrix;
-
-		BoneInfo(std::string name, aiMatrix4x4 matrix);
-	};
-
-	// Methods
-private:
-	void initMaterials(std::string folder_name, std::string path);
-	void initMesh(unsigned int i);
-	void loadBones(unsigned int i);
-	void addBoneData(uint32_t bone_id, float weight, VertexWeights &v);
-	void outputSkeleton();
-
-	// Members
-	std::string file_name_;
-	aiScene* scene_;
-
-	BoundingShape *bounding_shape_;
-	std::vector<std::string> material_names_;
-	std::vector<Vertex> vertices_;
-	std::vector<uint32_t> indices_;
-	std::vector<VertexWeights> vertex_weights_;
-	std::vector<Mesh> meshes_;
-
-	std::vector<BoneInfo> bone_info_;
-	std::map<std::string, uint16_t> bone_map_;
-	uint16_t num_bones_;
-	bool create_skeleton_;
-};
-
-void parseModelConverterParams(std::string params);
+		void ImportModel(const char* path);
+	}
+}

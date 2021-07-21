@@ -29,6 +29,7 @@ namespace Grindstone {
 			virtual const char* GetAdapterName() override;
 			virtual const char* GetAPIName() override;
 			virtual const char* GetAPIVersion() override;
+			virtual const char* GetDefaultShaderExtension() override;
 
 			virtual void DeleteRenderTarget(RenderTarget * ptr) override;
 			virtual void DeleteDepthTarget(DepthTarget * ptr) override;

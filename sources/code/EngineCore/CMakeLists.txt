@@ -1,5 +1,20 @@
 set(ENGINE_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
+file(GLOB_RECURSE SOURCE_ASSETS_SHADERS "${ENGINE_CORE_DIR}/Assets/Shaders/*.cpp")
+file(GLOB_RECURSE HEADER_ASSETS_SHADERS "${ENGINE_CORE_DIR}/Assets/Shaders/*.hpp")
+source_group("Assets\\Shaders\\Source Files" FILES ${SOURCE_ASSETS_SHADERS})
+source_group("Assets\\Shaders\\Header Files" FILES ${HEADER_ASSETS_SHADERS})
+
+file(GLOB_RECURSE SOURCE_ASSETS_MATERIALS "${ENGINE_CORE_DIR}/Assets/Materials/*.cpp")
+file(GLOB_RECURSE HEADER_ASSETS_MATERIALS "${ENGINE_CORE_DIR}/Assets/Materials/*.hpp")
+source_group("Assets\\Materials\\Source Files" FILES ${SOURCE_ASSETS_MATERIALS})
+source_group("Assets\\Materials\\Header Files" FILES ${HEADER_ASSETS_MATERIALS})
+
+file(GLOB_RECURSE SOURCE_ASSETS_MESHES_3D "${ENGINE_CORE_DIR}/Assets/Mesh3d/*.cpp")
+file(GLOB_RECURSE HEADER_ASSETS_MESHES_3D "${ENGINE_CORE_DIR}/Assets/Mesh3d/*.hpp")
+source_group("Assets\\Mesh3d\\Source Files" FILES ${SOURCE_ASSETS_MESHES_3D})
+source_group("Assets\\Mesh3d\\Header Files" FILES ${HEADER_ASSETS_MESHES_3D})
+
 file(GLOB_RECURSE SOURCE_BUILD_SETTINGS "${ENGINE_CORE_DIR}/BuildSettings/*.cpp")
 file(GLOB_RECURSE HEADER_BUILD_SETTINGS "${ENGINE_CORE_DIR}/BuildSettings/*.hpp")
 source_group("BuildSettings\\Source Files" FILES ${SOURCE_BUILD_SETTINGS})
@@ -40,8 +55,8 @@ file(GLOB_RECURSE HEADER_EVENTS "${ENGINE_CORE_DIR}/Events/*.hpp")
 source_group("Events\\Source Files" FILES ${SOURCE_EVENTS})
 source_group("Events\\Header Files" FILES ${HEADER_EVENTS})
 
-file(GLOB_RECURSE SOURCE_COMMON_UTILS ../Common/Utilities/ModuleLoading.cpp)
-file(GLOB_RECURSE HEADER_COMMON_UTILS ../Common/Utilities/ModuleLoading.hpp)
+file(GLOB_RECURSE SOURCE_COMMON_UTILS ${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINE_CORE_DIR}/Utils/Utilities.cpp)
+file(GLOB_RECURSE HEADER_COMMON_UTILS ${COMMON_DIR}/Utilities/ModuleLoading.hpp ${ENGINE_CORE_DIR}/Utils/Utilities.hpp)
 source_group("Utilities\\Source Files" FILES ${SOURCE_COMMON_UTILS})
 source_group("Utilities\\Header Files" FILES ${HEADER_COMMON_UTILS})
 
@@ -56,6 +71,9 @@ file(GLOB_RECURSE HEADER_MAIN EngineCore.hpp pch.hpp Logger.hpp Profiling.hpp ${
 
 set(ENGINE_CORE_SOURCES
 	${SOURCE_MAIN}
+	${SOURCE_ASSETS_SHADERS}
+	${SOURCE_ASSETS_MATERIALS}
+	${SOURCE_ASSETS_MESHES_3D}
 	${SOURCE_PLUGIN_SYSTEM}
 	${SOURCE_ECS}
 	${SOURCE_COMMON_UTILS}
@@ -70,6 +88,9 @@ set(ENGINE_CORE_SOURCES
 
 set(ENGINE_CORE_HEADERS
 	${HEADER_MAIN}
+	${HEADER_ASSETS_SHADERS}
+	${HEADER_ASSETS_MATERIALS}
+	${HEADER_ASSETS_MESHES_3D}
 	${HEADER_PLUGIN_SYSTEM}
 	${HEADER_ECS}
 	${HEADER_COMMON_UTILS}
@@ -92,6 +113,7 @@ target_include_directories(EngineCore
     PUBLIC
     ../
 	${DEPS_DIR}
+	${RAPIDJSON_PATH}
     ${DEPS_DIR}/spdlog/include/
     ${DEPS_DIR}/entt/src
 )

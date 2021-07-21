@@ -39,6 +39,7 @@ namespace Grindstone {
 			virtual const char* GetAdapterName() = 0;
 			virtual const char* GetAPIName() = 0;
 			virtual const char* GetAPIVersion() = 0;
+			virtual const char* GetDefaultShaderExtension() = 0;
 
 			virtual void Clear(ClearMode mask, float clearColor[4] = nullptr, float clearDepth = 0, uint32_t clearStencil = 0) = 0;
 			

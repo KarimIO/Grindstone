@@ -21,4 +21,6 @@ bool MaterialManager::TryGetMaterial(const char* path, Material*& material) {
 }
 
 Material& MaterialManager::CreateMaterialFromFile(const char* path) {
+	Material m;
+	return m;
 }

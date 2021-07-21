@@ -1,11 +1,13 @@
 #pragma once
 
 #include <string>
-#include <map>
-#include <fstream>
+#include "Common/Graphics/Pipeline.hpp"
+#include "ShaderReflectionData.hpp"
 
 namespace Grindstone {
 	struct Shader {
-		std::string path;
+		std::string basePath;
+		GraphicsAPI::Pipeline* pipeline = nullptr;
+		ShaderReflectionData reflectionData;
 	};
 }
