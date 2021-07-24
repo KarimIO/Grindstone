@@ -138,7 +138,6 @@ void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& s
 	ubbCi.stages = GraphicsAPI::ShaderStageBit::All;
 	ubbs[1] = graphicsCore->CreateUniformBufferBinding(ubbCi);
 
-
 	pipelineCi.uniformBufferBindings = ubbs.data();
 	pipelineCi.uniformBufferBindingCount = (uint32_t)ubbs.size();
 

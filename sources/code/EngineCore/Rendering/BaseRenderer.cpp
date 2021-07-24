@@ -11,11 +11,18 @@
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
-std::array<glm::vec3, 8> cubeVertices = {
-	glm::vec3(-1, -1,  1), glm::vec3( 1, -1,  1),
-	glm::vec3( 1,  1,  1), glm::vec3(-1,  1,  1),
-	glm::vec3(-1, -1, -1), glm::vec3( 1, -1, -1),
-	glm::vec3( 1,  1, -1), glm::vec3(-1,  1, -1)
+std::array<glm::vec3, 8> cubeVertexPositions = {
+	glm::vec3(-1, -1,  1), glm::vec3(1, -1,  1),
+	glm::vec3(1,  1,  1), glm::vec3(-1,  1,  1),
+	glm::vec3(-1, -1, -1), glm::vec3(1, -1, -1),
+	glm::vec3(1,  1, -1), glm::vec3(-1,  1, -1)
+};
+
+std::array<glm::vec3, 8> cubeVertexTexCoords = {
+	glm::vec3(0, 0,  1), glm::vec3(1, 0,  1),
+	glm::vec3(1,  1,  1), glm::vec3(0,  1,  1),
+	glm::vec3(0, 0, 0), glm::vec3(1, 0, 0),
+	glm::vec3(1,  1, 0), glm::vec3(0,  1, 0)
 };
 
 std::array<uint32_t, 36> cubeIndices = {
@@ -39,26 +46,10 @@ std::array<uint32_t, 36> cubeIndices = {
 	3, 7, 6
 };
 
-/*
-std::string vertexShader = "#version 330 core\n\
-layout(location = 0) in vec3 vertexPosition;\n\
-layout (std140) uniform Matrices {\n\
-	mat4 proj;\n\
-};\n\
-void main() {\n\
-	gl_Position = proj * vec4(vertexPosition, 1.0);\n\
-}";
-
-std::string fragmentShader = "#version 330 core\n\
-out vec4 color;\n\
-void main() {\n\
-	color = vec4(1, 0, 0, 1);\n\
-}";
-*/
-
 bool isFirst = true;
 Pipeline* pipeline;
 VertexBuffer* vbo;
+VertexBuffer* vboTex;
 VertexArrayObject* vao;
 UniformBufferBinding* ubb;
 UniformBuffer* ubo;
@@ -76,7 +67,7 @@ void Grindstone::BaseRender(
 	glm::mat4 viewMatrix
 ) {
 	if (isFirst) {
-		VertexBufferLayout layout({
+		VertexBufferLayout vertexPositionLayout({
 			{
 				Grindstone::GraphicsAPI::VertexFormat::Float3,
 				"vertexPosition",
@@ -86,11 +77,27 @@ void Grindstone::BaseRender(
 		});
 
 		VertexBuffer::CreateInfo vboCi{};
-		vboCi.content = cubeVertices.data();
-		vboCi.count = cubeVertices.size();
+		vboCi.content = cubeVertexPositions.data();
+		vboCi.count = cubeVertexPositions.size();
 		vboCi.size = vboCi.count * sizeof(glm::vec3);
-		vboCi.layout = &layout;
+		vboCi.layout = &vertexPositionLayout;
 		vbo = core->CreateVertexBuffer(vboCi);
+
+		VertexBufferLayout vertexTexCoordLayout({
+			{
+				Grindstone::GraphicsAPI::VertexFormat::Float2,
+				"vertexTexCoord",
+				false,
+				Grindstone::GraphicsAPI::AttributeUsage::TexCoord0
+			}
+		});
+
+		VertexBuffer::CreateInfo vboTexCi{};
+		vboTexCi.content = cubeVertexTexCoords.data();
+		vboTexCi.count = cubeVertexTexCoords.size();
+		vboTexCi.size = vboTexCi.count * sizeof(glm::vec3);
+		vboTexCi.layout = &vertexTexCoordLayout;
+		vboTex = core->CreateVertexBuffer(vboTexCi);
 
 		IndexBuffer::CreateInfo iboCi{};
 		iboCi.content = cubeIndices.data();
@@ -98,9 +105,11 @@ void Grindstone::BaseRender(
 		iboCi.size = sizeof(uint32_t) * iboCi.count;
 		IndexBuffer* ibo = core->CreateIndexBuffer(iboCi);
 
+		std::vector<VertexBuffer*> vbs = { vbo, vboTex };
+
 		VertexArrayObject::CreateInfo vaoCi{};
-		vaoCi.vertex_buffer_count = 1;
-		vaoCi.vertex_buffers = &vbo;
+		vaoCi.vertex_buffer_count = vbs.size();
+		vaoCi.vertex_buffers = vbs.data();
 		vaoCi.index_buffer = ibo;
 		vao = core->CreateVertexArrayObject(vaoCi);
 
@@ -137,7 +146,7 @@ void Grindstone::BaseRender(
 	ubo->updateBuffer(&engineUboStruct);
 	ubo->bind();
 	vao->bind();
-	core->DrawImmediateIndexed(GeometryType::Triangles, true, 0, 0, 32);
+	core->DrawImmediateIndexed(GeometryType::Triangles, true, 0, 0, 36);
 	
 	// RenderLights();
 	// PostProcess();
