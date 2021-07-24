@@ -1,10 +1,9 @@
 #include "Common/Formats/Dds.hpp"
 #include "Common/Graphics/Core.hpp"
+#include "EngineCore/EngineCore.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "TextureManager.hpp"
 using namespace Grindstone;
-
-GraphicsAPI::Core* graphicsCore;
 
 TextureAsset& TextureManager::LoadTexture(const char* path) {
 	TextureAsset* texture = nullptr;
@@ -61,6 +60,7 @@ TextureAsset TextureManager::CreateFromDds(const char* data, size_t fileSize) {
 	createInfo.height = header.dwHeight;
 	createInfo.isCubemap = false;
 
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().getGraphicsCore();
 	Grindstone::GraphicsAPI::Texture* texture = graphicsCore->CreateTexture(createInfo);
 	
 	return TextureAsset{texture};

@@ -60,6 +60,7 @@ ShaderReflectionLoader::ShaderReflectionLoader(
 void ShaderReflectionLoader::Process() {
 	ProcessMetadata();
 	ProcessUniformBuffers();
+	ProcessTextures();
 }
 
 void ShaderReflectionLoader::ProcessMetadata() {
@@ -82,7 +83,7 @@ void ShaderReflectionLoader::ProcessUniformBuffers() {
 	}
 
 	auto& uniformBuffers = document["uniformBuffers"];
-	outData.uniformBuffers.resize(uniformBuffers.Size());
+	outData.uniformBuffers.reserve(uniformBuffers.Size());
 	for (
 		rapidjson::Value* itr = uniformBuffers.Begin();
 		itr != uniformBuffers.End();
@@ -113,20 +114,23 @@ void ShaderReflectionLoader::ProcessUniformBuffers() {
 }
 
 void ShaderReflectionLoader::ProcessTextures() {
-	if (!document.HasMember("uniformBuffers")) {
+	if (!document.HasMember("samplers")) {
 		return;
 	}
 
-	auto& resources = document["uniformBuffers"];
-	outData.uniformBuffers.resize(resources.Size());
+	auto& resources = document["samplers"];
+	outData.textures.reserve(resources.Size());
 	for (
 		rapidjson::Value* itr = resources.Begin();
 		itr != resources.End();
 		++itr
 	) {
-		auto& uniformBuffer = itr->GetObject();
-		auto name = uniformBuffer["name"].GetString();
-		size_t bindingId = uniformBuffer["binding"].GetUint();
+		auto& texture = itr->GetObject();
+		auto name = texture["name"].GetString();
+		size_t bindingId = texture["binding"].GetUint();
+		auto& shaderModules = document["shaderModules"].GetArray();
+		uint8_t shaderModulesBits = GetShaderBitMaskFromArray(shaderModules);
+		outData.textures.emplace_back(name, bindingId, shaderModulesBits);
 	}
 }
 

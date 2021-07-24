@@ -139,14 +139,14 @@ namespace Grindstone {
 				}*/
 			}
 
-			for (uint32_t i = 0; i < createInfo.textureBindingCount; i++) {
+			/*for (uint32_t i = 0; i < createInfo.textureBindingCount; i++) {
 				GLTextureBindingLayout *texbinding = (GLTextureBindingLayout *)createInfo.textureBindings[i];
 				for (uint32_t j = 0; j < texbinding->getNumSubBindings(); j++) {
 					TextureSubBinding sub = texbinding->getSubBinding(j);
 					int loc = glGetUniformLocation(program_, sub.shaderLocation);
 					glUniform1i(loc, sub.textureLocation);
 				}
-			}
+			}*/
 		}
 
 		void GLPipeline::bind() {

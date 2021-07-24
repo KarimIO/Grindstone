@@ -8,6 +8,7 @@ namespace Grindstone {
 	struct Shader {
 		std::string basePath;
 		GraphicsAPI::Pipeline* pipeline = nullptr;
+		GraphicsAPI::TextureBindingLayout* textureBindingLayout = nullptr;
 		ShaderReflectionData reflectionData;
 	};
 }

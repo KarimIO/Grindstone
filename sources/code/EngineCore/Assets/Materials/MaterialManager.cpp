@@ -1,9 +1,11 @@
 #include "MaterialManager.hpp"
 #include "rapidjson/document.h"
 #include "EngineCore/Assets/Shaders/ShaderManager.hpp"
+#include "EngineCore/Assets/Textures/TextureManager.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "Common/Graphics/Core.hpp"
+#include "Common/Graphics/Texture.hpp"
 using namespace Grindstone;
 
 Material& MaterialManager::LoadMaterial(const char* path) {
@@ -38,16 +40,14 @@ Material MaterialManager::CreateMaterialFromData(std::filesystem::path relativeP
 		throw std::runtime_error("No shader found in material.");
 	}
 
-	std::filesystem::path shaderPath = relativePath / document["shader"].GetString();
-	std::string shaderPathStr = shaderPath.string();
-	const char* shaderPathCStr = shaderPathStr.c_str();
+	std::string shaderPath = (relativePath / document["shader"].GetString()).string();
 	ShaderManager* shaderManager = EngineCore::GetInstance().shaderManager;
-	Shader* shader = &shaderManager->LoadShader(shaderPathCStr);
+	Shader* shader = &shaderManager->LoadShader(shaderPath.c_str());
 
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().getGraphicsCore();
 	GraphicsAPI::UniformBufferBinding* uniformBufferBinding = nullptr;
 	GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
-	char* bufferSpace;
+	char* bufferSpace = nullptr;
 
 	auto& uniformBuffers = shader->reflectionData.uniformBuffers;
 	for (auto& uniformBuffer : uniformBuffers) {
@@ -68,29 +68,59 @@ Material MaterialManager::CreateMaterialFromData(std::filesystem::path relativeP
 		ubCi.size = uniformBuffer.bufferSize;
 		uniformBufferObject = graphicsCore->CreateUniformBuffer(ubCi);
 
-		bufferSpace = new char[uniformBuffer.bufferSize];
-
-		auto& parametersJson = document["parameters"].GetObject();
-		for (auto& member : uniformBuffer.members) {
-			auto& params = parametersJson[member.name.c_str()].GetArray();
-			std::vector<float> paramArray;
-			paramArray.resize(params.Size());
-			for (int i = 0; i < params.Size(); ++i) {
-				paramArray[i] = params[i].GetFloat();
-			}
-
-			// char* memberPos = bufferSpace + member.offset;
-			memcpy(bufferSpace, paramArray.data(), member.memberSize);
+		if (uniformBuffer.bufferSize == 0) {
+			bufferSpace = nullptr;
 		}
+		else {
+			bufferSpace = new char[uniformBuffer.bufferSize];
 
-		float a[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
-		uniformBufferObject->updateBuffer(&a);
+			auto& parametersJson = document["parameters"].GetObject();
+			for (auto& member : uniformBuffer.members) {
+				auto& params = parametersJson[member.name.c_str()].GetArray();
+				std::vector<float> paramArray;
+				paramArray.resize(params.Size());
+				for (int i = 0; i < params.Size(); ++i) {
+					paramArray[i] = params[i].GetFloat();
+				}
+
+				// char* memberPos = bufferSpace + member.offset;
+				memcpy(bufferSpace, paramArray.data(), member.memberSize);
+			}
+		}
+	}
+
+	GraphicsAPI::TextureBinding* textureBinding = nullptr;
+	auto& textures = shader->reflectionData.textures;
+	bool hasSamplers = document.HasMember("samplers");
+	if (textures.size() > 0 && hasSamplers) {
+		auto textureManager = EngineCore::GetInstance().textureManager;
+		auto& samplersJson = document["samplers"].GetObject();
+		for (auto& texture : textures) {
+			const char* textureName = texture.name.c_str();
+			if (samplersJson.HasMember(textureName)) {
+				const char* texturePath = samplersJson[textureName].GetString();
+				std::filesystem::path shaderPath = relativePath / texturePath;
+				TextureAsset& textureAsset = textureManager->LoadTexture(shaderPath.string().c_str());
+
+				GraphicsAPI::SingleTextureBind stb;
+				stb.texture = textureAsset.texture;
+				stb.address = 2;
+
+				GraphicsAPI::TextureBinding::CreateInfo textureBindingCreateInfo{};
+				textureBindingCreateInfo.textures = &stb;
+				textureBindingCreateInfo.textureCount = 1;
+				textureBindingCreateInfo.layout = shader->textureBindingLayout;
+				textureBinding = graphicsCore->CreateTextureBinding(textureBindingCreateInfo);
+				graphicsCore->BindTexture(textureBinding);
+			}
+		}
 	}
 
 	return {
 		name,
-		shaderPathCStr,
+		shaderPath.c_str(),
 		shader,
+		textureBinding,
 		uniformBufferBinding,
 		uniformBufferObject,
 		bufferSpace

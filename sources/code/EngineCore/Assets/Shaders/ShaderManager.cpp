@@ -141,8 +141,21 @@ void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& s
 	pipelineCi.uniformBufferBindings = ubbs.data();
 	pipelineCi.uniformBufferBindingCount = (uint32_t)ubbs.size();
 
-	pipelineCi.textureBindings = nullptr;
-	pipelineCi.textureBindingCount = 0;
+
+	GraphicsAPI::TextureSubBinding sub;
+	sub.shaderLocation = "texSampler";
+	sub.textureLocation = 2;
+
+	GraphicsAPI::TextureBindingLayout::CreateInfo textureBindingLayoutCreateInfo{};
+	textureBindingLayoutCreateInfo.bindingLocation = 2;
+	textureBindingLayoutCreateInfo.bindingCount = 1;
+	textureBindingLayoutCreateInfo.bindings = &sub;
+	textureBindingLayoutCreateInfo.stages = GraphicsAPI::ShaderStageBit::All;
+	auto textureBindingLayout = graphicsCore->CreateTextureBindingLayout(textureBindingLayoutCreateInfo);
+	shader.textureBindingLayout = textureBindingLayout;
+
+	pipelineCi.textureBindings = &textureBindingLayout;
+	pipelineCi.textureBindingCount = 1;
 
 	pipelineCi.vertexBindings = nullptr;
 	pipelineCi.vertexBindingsCount = 0;

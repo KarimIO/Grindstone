@@ -8,6 +8,7 @@ namespace Grindstone {
 		std::string name;
 		std::string shaderPath;
 		Shader* shader;
+		GraphicsAPI::TextureBinding* textureBinding;
 		GraphicsAPI::UniformBufferBinding* uniformBufferBinding;
 		GraphicsAPI::UniformBuffer* uniformBufferObject;
 		char* buffer;

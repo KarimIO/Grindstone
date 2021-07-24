@@ -18,11 +18,11 @@ std::array<glm::vec3, 8> cubeVertexPositions = {
 	glm::vec3(1,  1, -1), glm::vec3(-1,  1, -1)
 };
 
-std::array<glm::vec3, 8> cubeVertexTexCoords = {
-	glm::vec3(0, 0,  1), glm::vec3(1, 0,  1),
-	glm::vec3(1,  1,  1), glm::vec3(0,  1,  1),
-	glm::vec3(0, 0, 0), glm::vec3(1, 0, 0),
-	glm::vec3(1,  1, 0), glm::vec3(0,  1, 0)
+std::array<glm::vec2, 8> cubeVertexTexCoords = {
+	glm::vec2(0, 0), glm::vec2(1, 0),
+	glm::vec2(1, 0), glm::vec2(1, 1),
+	glm::vec2(1, 1), glm::vec2(0, 0),
+	glm::vec2(0, 0), glm::vec2(1, 0),
 };
 
 std::array<uint32_t, 36> cubeIndices = {
@@ -140,8 +140,11 @@ void Grindstone::BaseRender(
 	static float clearColor[4] = { 0.2f, 0.6f, 0, 1.f };
 	core->Clear(ClearMode::All, clearColor, 1);
 	myMaterial->shader->pipeline->bind();
-	myMaterial->uniformBufferObject->updateBuffer(myMaterial->buffer);
-	myMaterial->uniformBufferObject->bind();
+	if (myMaterial->uniformBufferObject) {
+		myMaterial->uniformBufferObject->updateBuffer(myMaterial->buffer);
+		myMaterial->uniformBufferObject->bind();
+	}
+	core->BindTexture(myMaterial->textureBinding);
 	// pipeline->bind();
 	ubo->updateBuffer(&engineUboStruct);
 	ubo->bind();
