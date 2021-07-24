@@ -42,8 +42,8 @@ namespace Grindstone {
 			const aiScene* scene;
 
 			struct OutputData {
-				uint32_t vertexCount;
-				uint32_t indexCount;
+				uint32_t vertexCount = 0;
+				uint32_t indexCount = 0;
 				struct VertexArray {
 					std::vector<float> position;
 					std::vector<float> normal;

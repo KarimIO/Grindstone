@@ -311,7 +311,7 @@ namespace Grindstone {
 		void ShaderImporter::processSubmodule(ShaderType shaderType, const char* extension, const char* glslSource) {
 			std::vector<uint32_t> vkSpirv = convertToSpirv(shaderType, extension, glslSource);
 			{
-				auto opengGlsl = convertToOpenglGlsl(vkSpirv);
+				auto opengGlsl = convertToOpenglGlsl(extension, vkSpirv);
 				convertToOpenglSpirv(shaderType, extension, glslSource);
 			}
 			reflectResources(shaderType, vkSpirv);
@@ -339,7 +339,7 @@ namespace Grindstone {
 			return vkSpirv;
 		}
 
-		std::string ShaderImporter::convertToOpenglGlsl(std::vector<uint32_t>& vkSpirv) {
+		std::string ShaderImporter::convertToOpenglGlsl(const char* extension, std::vector<uint32_t>& vkSpirv) {
 			spirv_cross::CompilerGLSL glslTranspiler(vkSpirv);
 
 			spirv_cross::CompilerGLSL::Options glslTranspilerOptions;
@@ -347,6 +347,8 @@ namespace Grindstone {
 			glslTranspiler.set_common_options(glslTranspilerOptions);
 
 			std::string openglGlsl = glslTranspiler.compile();
+
+			outputStringToFile((std::string(extension) + ".opengl.glsl").c_str(), openglGlsl.c_str());
 
 			return openglGlsl;
 		}

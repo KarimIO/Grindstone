@@ -18,6 +18,11 @@
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "Events/Dispatcher.hpp"
 
+#include "EngineCore/Assets/Materials/MaterialManager.hpp"
+#include "EngineCore/Assets/Textures/TextureManager.hpp"
+#include "EngineCore/Assets/Shaders/ShaderManager.hpp"
+#include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
+
 using namespace Grindstone;
 
 bool EngineCore::initialize(CreateInfo& create_info) {
@@ -29,13 +34,6 @@ bool EngineCore::initialize(CreateInfo& create_info) {
 	pluginManager = new Plugins::Manager(this);
 	pluginManager->load("PluginGraphicsOpenGL");
 
-	systemRegistrar = new ECS::SystemRegistrar();
-	setupCoreSystems(systemRegistrar);
-	componentRegistrar = new ECS::ComponentRegistrar();
-	setupCoreComponents(componentRegistrar);
-	sceneManager = new SceneManagement::SceneManager(this);
-
-	sceneManager->loadDefaultScene();
 	eventDispatcher = new Events::Dispatcher();
 	inputManager = new Input::Manager(eventDispatcher);
 
@@ -52,10 +50,28 @@ bool EngineCore::initialize(CreateInfo& create_info) {
 	graphicsCore->Initialize(graphicsCoreInfo);
 	win->Show();
 
+	materialManager = new MaterialManager();
+	textureManager = new TextureManager();
+	shaderManager = new ShaderManager();
+	mesh3dManager = new Mesh3dManager();
+
+	systemRegistrar = new ECS::SystemRegistrar();
+	setupCoreSystems(systemRegistrar);
+	componentRegistrar = new ECS::ComponentRegistrar();
+	setupCoreComponents(componentRegistrar);
+	sceneManager = new SceneManagement::SceneManager(this);
+
+	sceneManager->loadDefaultScene();
+
 	GRIND_LOG("{0} Initialized.", create_info.applicationTitle);
 	GRIND_PROFILE_END_SESSION();
 
 	return true;
+}
+
+EngineCore& EngineCore::GetInstance() {
+	static EngineCore instance;
+	return instance;
 }
 
 void EngineCore::run() {

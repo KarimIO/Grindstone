@@ -166,8 +166,8 @@ void ModelConverter::Convert(const char* path) {
 	scene = importer.ReadFile(
 		path,
 		aiProcess_CalcTangentSpace |
-		aiProcess_Triangulate |
-		aiProcess_GenSmoothNormals
+		aiProcess_GenSmoothNormals |
+		aiProcess_Triangulate
 	);
 
 	if (!scene) {

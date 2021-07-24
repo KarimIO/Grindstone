@@ -5,10 +5,10 @@ using namespace Grindstone;
 extern "C" {
 	ENGINE_CORE_API EngineCore* createEngine(EngineCore::CreateInfo& ci) {
 		try {
-			EngineCore *core = new EngineCore();
-			core->initialize(ci);
+			EngineCore& core = EngineCore::GetInstance();
+			core.initialize(ci);
 			
-			return core;
+			return &core;
 		}
 		catch (std::runtime_error& e) {
 			std::cerr << e.what() << std::endl;

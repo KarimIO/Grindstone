@@ -46,21 +46,21 @@ namespace Grindstone {
 		};
 
 		struct TextureOptions {
-			TextureWrapMode wrap_mode_u = TextureWrapMode::Repeat;
-			TextureWrapMode wrap_mode_v = TextureWrapMode::Repeat;
-			TextureWrapMode wrap_mode_w = TextureWrapMode::Repeat;
-			TextureFilter min_filter = TextureFilter::LinearMipMapLinear;
-			TextureFilter mag_filter = TextureFilter::Linear;
-			bool generate_mipmaps = true;
+			TextureWrapMode wrapModeU = TextureWrapMode::Repeat;
+			TextureWrapMode wrapModeV = TextureWrapMode::Repeat;
+			TextureWrapMode wrapModeW = TextureWrapMode::Repeat;
+			TextureFilter minFilter = TextureFilter::LinearMipMapLinear;
+			TextureFilter magFilter = TextureFilter::Linear;
+			bool shouldGenerateMipmaps = true;
 		};
 
 		class Texture {
 		public:
 			struct CreateInfo {
-				unsigned char* data;
+				const char* data;
 				uint32_t width, height;
 				uint16_t mipmaps;
-				bool ddscube;
+				bool isCubemap;
 				ColorFormat format;
 				TextureOptions options;
 			};

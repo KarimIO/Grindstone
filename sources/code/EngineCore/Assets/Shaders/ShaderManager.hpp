@@ -10,8 +10,8 @@ namespace Grindstone {
 	class ShaderManager {
 		public:
 			Shader& LoadShader(const char* path);
-			bool TryGetShader(const char* path, Shader*& shader);
 		private:
+			bool TryGetShader(const char* path, Shader*& shader);
 			Shader& CreateShaderFromFile(const char* path);
 			void CreateReflectionDataForShader(const char* path, Shader& shader);
 			void CreateShaderGraphicsPipeline(const char* path, Shader& shader);

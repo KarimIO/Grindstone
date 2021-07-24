@@ -46,7 +46,6 @@ ShaderReflectionLoader::ShaderReflectionLoader(
 ) : outData(data) {
 	std::string path = std::string(basePath) + ".reflect.json";
 	std::string content = Utils::LoadFileText(path.c_str());
-	rapidjson::Document document;
 	document.Parse(content.c_str());
 
 	Process();
@@ -58,8 +57,14 @@ void ShaderReflectionLoader::Process() {
 }
 
 void ShaderReflectionLoader::ProcessMetadata() {
+	if (!document.HasMember("name")) {
+		throw std::runtime_error("No name found in shader reflection.");
+	}
 	outData.name = document["name"].GetString();
 
+	if (!document.HasMember("shaderModules")) {
+		throw std::runtime_error("No shaderModules found in shader reflection.");
+	}
 	auto& shader = document["shaderModules"].GetArray();
 	outData.numShaderStages = shader.Size();
 	outData.shaderStagesBitMask = GetShaderBitMaskFromArray(shader);

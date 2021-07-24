@@ -14,7 +14,7 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		GLTexture::GLTexture(CreateInfo& ci) {
-			if (ci.ddscube) {
+			if (ci.isCubemap) {
 				is_cubemap_ = true;
 				glGenTextures(1, &handle_);
 
@@ -26,7 +26,7 @@ namespace Grindstone {
 				translateColorFormats(ci.format, is_compressed, format, internalFormat);
 
 
-				unsigned char *buffer = ci.data;
+				const char *buffer = ci.data;
 				unsigned int blockSize = (ci.format == ColorFormat::SRGB_DXT1 || ci.format == ColorFormat::SRGB_ALPHA_DXT1
 					|| ci.format == ColorFormat::RGB_DXT1 || ci.format == ColorFormat::RGBA_DXT1) ? 8 : 16;
 
@@ -55,11 +55,11 @@ namespace Grindstone {
 					}
 				}
 
-				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, translateTexWrap(ci.options.wrap_mode_u));
-				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, translateTexWrap(ci.options.wrap_mode_v));
-				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, translateTexWrap(ci.options.wrap_mode_w));
-				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, translateTexFilter(ci.options.mag_filter));
-				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, translateTexFilter(ci.options.min_filter));
+				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, translateTexWrap(ci.options.wrapModeU));
+				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, translateTexWrap(ci.options.wrapModeV));
+				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, translateTexWrap(ci.options.wrapModeW));
+				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, translateTexFilter(ci.options.magFilter));
+				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, translateTexFilter(ci.options.minFilter));
 
 				glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 			}
@@ -77,7 +77,7 @@ namespace Grindstone {
 				if (!is_compressed) {
 					glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, ci.width, ci.height, 0, format, GL_UNSIGNED_BYTE, ci.data);
 
-					if (ci.options.generate_mipmaps)
+					if (ci.options.shouldGenerateMipmaps)
 						glGenerateMipmap(GL_TEXTURE_2D);
 				}
 				else {
@@ -87,7 +87,7 @@ namespace Grindstone {
 					uint32_t width = ci.width;
 					uint32_t height = ci.height;
 
-					unsigned char *buffer = ci.data;
+					const char *buffer = ci.data;
 
 					gl3wGetProcAddress("GL_COMPRESSED_RGBA_S3TC_DXT1_EXT");
 					gl3wGetProcAddress("GL_EXT_texture_sRGB");
@@ -103,10 +103,10 @@ namespace Grindstone {
 					}
 				}
 
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, translateTexWrap(ci.options.wrap_mode_u));
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, translateTexWrap(ci.options.wrap_mode_v));
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, translateTexFilter(ci.options.mag_filter));
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, translateTexFilter(ci.options.min_filter));
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, translateTexWrap(ci.options.wrapModeU));
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, translateTexWrap(ci.options.wrapModeV));
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, translateTexFilter(ci.options.magFilter));
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, translateTexFilter(ci.options.minFilter));
 
 				glBindTexture(GL_TEXTURE_2D, 0);
 			}
@@ -186,14 +186,14 @@ namespace Grindstone {
 				);
 			}
 
-			if (ci.options.generate_mipmaps)
+			if (ci.options.shouldGenerateMipmaps)
 				glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, translateTexWrap(ci.options.wrap_mode_u));
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, translateTexWrap(ci.options.wrap_mode_v));
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, translateTexWrap(ci.options.wrap_mode_w));
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, translateTexFilter(ci.options.mag_filter));
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, translateTexFilter(ci.options.min_filter));
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, translateTexWrap(ci.options.wrapModeU));
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, translateTexWrap(ci.options.wrapModeV));
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, translateTexWrap(ci.options.wrapModeW));
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, translateTexFilter(ci.options.magFilter));
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, translateTexFilter(ci.options.minFilter));
 
 			glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 		}

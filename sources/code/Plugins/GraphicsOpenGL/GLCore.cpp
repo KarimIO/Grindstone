@@ -79,8 +79,8 @@ namespace Grindstone {
 				return false;
 			}
 
-			if (!gl3wIsSupported(3, 1)) {
-				printf("OpenGL %i.%i or more required for Grindstone Engine.\n", 3, 1);
+			if (!gl3wIsSupported(4, 6)) {
+				printf("OpenGL %i.%i or more required for Grindstone Engine.\n", 4, 6);
 				printf("Your Graphics Card only supports version %s. Quitting...\n\n", glGetString(GL_VERSION));
 				return false;
 			}

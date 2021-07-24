@@ -49,6 +49,8 @@ namespace Grindstone {
 			AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore) {
 				currentPath = assetFolderPath;
 				pathToRename = "";
+
+				std::filesystem::create_directories(currentPath);
 			}
 			
 			void AssetBrowserPanel::setPath(std::filesystem::path path) {
@@ -178,7 +180,7 @@ namespace Grindstone {
 				}
 				else if (
 					firstDotExtension == ".fbx" ||
-					firstDotExtension == ".mdl" ||
+					firstDotExtension == ".obj" ||
 					firstDotExtension == ".dae"
 				) {
 					if (ImGui::MenuItem("Convert")) {

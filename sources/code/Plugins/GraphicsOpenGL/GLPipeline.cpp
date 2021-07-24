@@ -34,27 +34,33 @@ namespace Grindstone {
 
 			GLuint shader = glCreateShader(shaderType);
 
-			const GLint length = createInfo.size;
+			bool shouldUseTextShaders = false;
 
-			std::string test;
-			test.reserve(length);
-			std::memcpy((void *)test.data(), createInfo.content, length);
+			if (shouldUseTextShaders) {
+				const GLint size = createInfo.size;
+				glShaderSource(shader, 1, &createInfo.content, &size);
+				glCompileShader(shader);
 
-			glShaderSource(shader, 1, &createInfo.content, &length);
-			glCompileShader(shader);
+				GLint result = GL_FALSE;
+				int infoLength;
 
-			GLint result = GL_FALSE;
-			int infoLength;
+				// Check Shader
+				glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
+				glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLength);
+				if (!result) {
+					printf("Error Report in Shader %s\n", createInfo.fileName);
+					std::vector<char> VertexShaderErrorMessage(infoLength + 1);
+					glGetShaderInfoLog(shader, infoLength, NULL, VertexShaderErrorMessage.data());
+					printf("%s\n", VertexShaderErrorMessage.data());
+					return false;
+				}
+			}
+			else {
+				glShaderBinary(1, &shader, GL_SHADER_BINARY_FORMAT_SPIR_V_ARB, createInfo.content, createInfo.size);
+				glSpecializeShader(shader, "main", 0, 0, 0);
 
-			// Check Shader
-			glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
-			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLength);
-			if (!result) {
-				printf("Error Report in Shader %s\n", createInfo.fileName);
-				std::vector<char> VertexShaderErrorMessage(infoLength + 1);
-				glGetShaderInfoLog(shader, infoLength, NULL, VertexShaderErrorMessage.data());
-				printf("%s\n", VertexShaderErrorMessage.data());
-				return false;
+				// int compiled = 0;
+				// glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
 			}
 
 			glAttachShader(program_, shader);
@@ -92,9 +98,11 @@ namespace Grindstone {
 				//return;
 			}*/
 
-			auto& vbd = createInfo.vertexBindings;
-			for (uint32_t i = 0; i < vbd->attribute_count; i++) {
-				glBindAttribLocation(program_, vbd->attributes[i].location, vbd->attributes[i].name);
+			if (createInfo.vertexBindingsCount > 0) {
+				auto& vbd = createInfo.vertexBindings;
+				for (uint32_t i = 0; i < vbd->attribute_count; i++) {
+					glBindAttribLocation(program_, vbd->attributes[i].location, vbd->attributes[i].name);
+				}
 			}
 
 			GLint result = 0;

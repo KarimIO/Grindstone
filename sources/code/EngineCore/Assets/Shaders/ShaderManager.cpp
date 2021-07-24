@@ -1,5 +1,6 @@
 #include <filesystem>
 #include "ShaderManager.hpp"
+#include "EngineCore/EngineCore.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Common/Graphics/Core.hpp"
 #include "ShaderReflectionLoader.hpp"
@@ -7,7 +8,7 @@ using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
 std::string GetShaderPath(const char* basePath, ShaderStage shaderStage, GraphicsAPI::Core* core) {
-	const char* shaderStageExtension;
+	const char* shaderStageExtension = "";
 
 	switch (shaderStage) {
 	case ShaderStage::Vertex:
@@ -69,13 +70,17 @@ void ShaderManager::CreateReflectionDataForShader(const char* path, Shader& shad
 }
 
 void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& shader) {
-	GraphicsAPI::Core* core;
+	GraphicsAPI::Core* core = EngineCore::GetInstance().getGraphicsCore();
 
 	auto& shaderStagesBitMask = shader.reflectionData.shaderStagesBitMask;
 	size_t numShaderStages = shader.reflectionData.numShaderStages;
 	std::vector<ShaderStageCreateInfo> shaderStages;
 	shaderStages.resize(numShaderStages);
 	size_t currentShaderStage = 0;
+
+	std::vector<std::vector<char>> fileData;
+	fileData.resize(2);
+	size_t fileDataIterator = 0;
 
 	for(
 		ShaderStage stage = ShaderStage::Vertex;
@@ -84,7 +89,7 @@ void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& s
 	) {
 		uint8_t stageBit = (1 << (uint8_t)stage);
 		if ((stageBit & shaderStagesBitMask) != stageBit) {
-			return;
+			continue;
 		}
 
 		auto& stageCreateInfo = shaderStages[currentShaderStage++];
@@ -92,13 +97,16 @@ void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& s
 		stageCreateInfo.fileName = path.c_str();
 
 		if (!std::filesystem::exists(path)) {
-			return;
+			throw std::runtime_error(std::string(path) + " shader not found.");
 		}
 
-		auto file = Utils::LoadFile(path.c_str());
+		fileData[fileDataIterator] = Utils::LoadFile(path.c_str());
+		auto& file = fileData[fileDataIterator];
 		stageCreateInfo.content = file.data();
-		stageCreateInfo.size = file.size();
+		stageCreateInfo.size = (uint32_t)file.size();
 		stageCreateInfo.type = stage;
+
+		++fileDataIterator;
 	}
 
 	Pipeline::CreateInfo pipelineCi{};
@@ -112,7 +120,7 @@ void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& s
 	pipelineCi.scissorW = 800;
 	pipelineCi.scissorH = 600;
 	pipelineCi.shaderStageCreateInfos = shaderStages.data();
-	pipelineCi.shaderStageCreateInfoCount = shaderStages.size();
+	pipelineCi.shaderStageCreateInfoCount = (uint32_t)shaderStages.size();
 
 	pipelineCi.uniformBufferBindings = nullptr;
 	pipelineCi.uniformBufferBindingCount = 0;

@@ -19,13 +19,15 @@ namespace Grindstone {
 		public:
 			void Convert(const char* path);
 		private:
+			unsigned char CombinePixels(unsigned char* pixelSrc);
 			unsigned char* CreateMip(unsigned char* pixel, int width, int height);
 			void ExtractBlock(
 				const unsigned char* inPtr,
-				unsigned int width,
 				unsigned char* colorBlock
 			);
 			void ConvertBC123();
+			void OutputDds(unsigned char* outPixels, int contentSize);
+			int CalculateMipMapLevelCount(int width, int height);
 
 			std::string path;
 			Compression compression;

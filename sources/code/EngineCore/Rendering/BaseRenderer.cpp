@@ -6,9 +6,10 @@
 #include "Common/Graphics/Pipeline.hpp"
 #include "BaseRenderer.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
+#include "EngineCore/EngineCore.hpp"
+#include "EngineCore/Assets/Materials/MaterialManager.hpp"
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
-
 
 std::array<glm::vec3, 8> cubeVertices = {
 	glm::vec3(-1, -1,  1), glm::vec3( 1, -1,  1),
@@ -38,13 +39,14 @@ std::array<uint32_t, 36> cubeIndices = {
 	3, 7, 6
 };
 
+/*
 std::string vertexShader = "#version 330 core\n\
 layout(location = 0) in vec3 vertexPosition;\n\
 layout (std140) uniform Matrices {\n\
 	mat4 proj;\n\
 };\n\
 void main() {\n\
-    gl_Position = proj * vec4(vertexPosition, 1.0);\n\
+	gl_Position = proj * vec4(vertexPosition, 1.0);\n\
 }";
 
 std::string fragmentShader = "#version 330 core\n\
@@ -52,12 +54,21 @@ out vec4 color;\n\
 void main() {\n\
 	color = vec4(1, 0, 0, 1);\n\
 }";
+*/
+
 bool isFirst = true;
 Pipeline* pipeline;
 VertexBuffer* vbo;
 VertexArrayObject* vao;
 UniformBufferBinding* ubb;
 UniformBuffer* ubo;
+Material* myMaterial;
+
+struct EngineUboStruct {
+	glm::mat4 proj;
+	glm::mat4 view;
+	glm::mat4 model;
+};
 
 void Grindstone::BaseRender(
 	GraphicsAPI::Core *core,
@@ -93,24 +104,28 @@ void Grindstone::BaseRender(
 		vaoCi.index_buffer = ibo;
 		vao = core->CreateVertexArrayObject(vaoCi);
 
-		std::vector<ShaderStageCreateInfo> shaderStages;
-		shaderStages.resize(2);
-		shaderStages[0] = ShaderStageCreateInfo{ "a.vert", vertexShader.c_str(), (unsigned int)vertexShader.size(), ShaderStage::Vertex };
-		shaderStages[1] = ShaderStageCreateInfo{ "a.frag", fragmentShader.c_str(), (unsigned int)fragmentShader.size(), ShaderStage::Fragment };
-
+		
 		UniformBufferBinding::CreateInfo ubbCi{};
 		ubbCi.binding = 0;
-		ubbCi.shaderLocation = "Matrices";
-		ubbCi.size = sizeof(glm::mat4);
+		ubbCi.shaderLocation = "EngineUbo";
+		ubbCi.size = sizeof(glm::mat4) * 3;
 		ubbCi.stages = ShaderStageBit::AllGraphics;
 		ubb = core->CreateUniformBufferBinding(ubbCi);
 
 		UniformBuffer::CreateInfo ubCi{};
 		ubCi.binding = ubb;
 		ubCi.isDynamic = true;
-		ubCi.size = sizeof(glm::mat4);
+		ubCi.size = sizeof(glm::mat4) * 3;
 		ubo = core->CreateUniformBuffer(ubCi);
 
+		/*
+		
+		std::vector<ShaderStageCreateInfo> shaderStages;
+		shaderStages.resize(2);
+		shaderStages[0] = ShaderStageCreateInfo{ "a.vert", vertexShader.c_str(), (unsigned int)vertexShader.size(), ShaderStage::Vertex };
+		shaderStages[1] = ShaderStageCreateInfo{ "a.frag", fragmentShader.c_str(), (unsigned int)fragmentShader.size(), ShaderStage::Fragment };
+
+		
 		Pipeline::CreateInfo pipelineCi{};
 		pipelineCi.primitiveType = GeometryType::Triangles;
 		pipelineCi.cullMode = CullMode::None;
@@ -133,16 +148,24 @@ void Grindstone::BaseRender(
 		pipelineCi.vertexBindings = &layout;
 		pipelineCi.vertexBindingsCount = 1;
 		pipeline = core->CreatePipeline(pipelineCi);
+		*/
+
+		auto materialManager = EngineCore::GetInstance().materialManager;
+		myMaterial = &materialManager->LoadMaterial("../assets/New Material.gmat");
 
 		isFirst = false;
 	}
 
-	glm::mat4 combinedMat = projectionMatrix * viewMatrix;
+	EngineUboStruct engineUboStruct;
+	engineUboStruct.proj = projectionMatrix;
+	engineUboStruct.view = viewMatrix;
+	engineUboStruct.model = glm::mat4(1);
 
 	static float clearColor[4] = { 0.2f, 0.6f, 0, 1.f };
 	core->Clear(ClearMode::All, clearColor, 1);
-	pipeline->bind();
-	ubo->updateBuffer(&combinedMat);
+	myMaterial->shader->pipeline->bind();
+	// pipeline->bind();
+	ubo->updateBuffer(&engineUboStruct);
 	vao->bind();
 	core->DrawImmediateIndexed(GeometryType::Triangles, true, 0, 0, 32);
 	

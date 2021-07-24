@@ -10,85 +10,19 @@
 #include <stb/stb_dxt.h>
 #include <stb/stb_image_resize.h>
 
+#include "Common/Formats/Dds.hpp"
 #include "TextureConverter.hpp"
 using namespace Grindstone::Converters;
 
-typedef unsigned long DWORD;
-
-struct DDS_PIXELFORMAT {
-	DWORD dwSize = 32;
-	DWORD dwFlags;
-	DWORD dwFourCC;
-	DWORD dwRGBBitCount;
-	DWORD dwRBitMask;
-	DWORD dwGBitMask;
-	DWORD dwBBitMask;
-	DWORD dwABitMask;
-};
-
-#define DDPF_ALPHAPIXELS 0x1
-#define DDPF_FOURCC 0x4
-#define DDPF_RGB 0x40
-
-#define DDSD_CAPS			0x1
-#define DDSD_HEIGHT			0x2
-#define DDSD_WIDTH			0x4
-#define DDSD_PITCH			0x8
-#define DDSD_PIXELFORMAT	0x1000
-#define DDSD_MIPMAPCOUNT	0x20000
-#define DDSD_LINEARSIZE		0x80000
-#define DDSD_DEPTH			0x800000
-#define DDSD_REQUIRED		DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_LINEARSIZE;
-
-struct DDSHeader {
-	DWORD           dwSize = 124;
-	DWORD           dwFlags;
-	DWORD           dwHeight;
-	DWORD           dwWidth;
-	DWORD           dwPitchOrLinearSize;
-	DWORD           dwDepth;
-	DWORD           dwMipMapCount;
-	DWORD           dwReserved1[11];
-	DDS_PIXELFORMAT ddspf;
-	DWORD           dwCaps;
-	DWORD           dwCaps2;
-	DWORD           dwCaps3;
-	DWORD           dwCaps4;
-	DWORD           dwReserved2;
-};
-
-#define MAKEFOURCC(c0, c1, c2, c3)	((DWORD)(char)(c0) | ((DWORD)(char)(c1) << 8) | \
-									((DWORD)(char)(c2) << 16) | ((DWORD)(char)(c3) << 24))
-#define MAKEFOURCCS(str)			MAKEFOURCC(str[0], str[1], str[2], str[3])
-#define FOURCC_DXT1 MAKEFOURCC('D', 'X', 'T', '1')
-#define FOURCC_DXT3 MAKEFOURCC('D', 'X', 'T', '3')
-#define FOURCC_DXT5 MAKEFOURCC('D', 'X', 'T', '5')
-#define FOURCC_BC4 MAKEFOURCC('A', 'T', 'I', '1')
-#define FOURCC_BC5 MAKEFOURCC('A', 'T', 'I', '2')
-
-#define DDSCAPS_COMPLEX		0x8
-#define DDSCAPS_MIPMAP		0x400000
-#define DDSCAPS_TEXTURE		0x1000
-
-#define DDSCAPS2_CUBEMAP			0x200
-#define DDSCAPS2_CUBEMAP_POSITIVEX	0x400
-#define DDSCAPS2_CUBEMAP_NEGATIVEX	0x800
-#define DDSCAPS2_CUBEMAP_POSITIVEY	0x1000
-#define DDSCAPS2_CUBEMAP_NEGATIVEY	0x2000
-#define DDSCAPS2_CUBEMAP_POSITIVEZ	0x4000
-#define DDSCAPS2_CUBEMAP_NEGATIVEZ	0x8000
-#define DDSCAPS2_CUBEMAP_VOLUME		0x200000
-
-#define DDS_CUBEMAP_ALLFACES		DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEX | DDSCAPS2_CUBEMAP_NEGATIVEX | DDSCAPS2_CUBEMAP_POSITIVEY | DDSCAPS2_CUBEMAP_NEGATIVEY | DDSCAPS2_CUBEMAP_POSITIVEZ | DDSCAPS2_CUBEMAP_NEGATIVEZ;
+const unsigned int blockWidth = 4;
 
 void TextureConverter::ExtractBlock(
 	const unsigned char* inPtr,
-	unsigned int width,
 	unsigned char* colorBlock
 ) {
 	for (int j = 0; j < 4; j++) {
-		memcpy(&colorBlock[j * 4 * 4], inPtr, 4 * 4);
-		inPtr += width * 4;
+		memcpy(&colorBlock[j * texChannels * blockWidth], inPtr, texChannels * blockWidth);
+		inPtr += texWidth * texChannels;
 	}
 }
 
@@ -121,17 +55,21 @@ void TextureConverter::Convert(const char* path) {
 	delete sourcePixels;
 }
 
+unsigned char TextureConverter::CombinePixels(unsigned char* pixelSrc) {
+	return (*pixelSrc + *(pixelSrc + 4) + *(pixelSrc + 8) + *(pixelSrc + 12)) / 4;
+}
+
 unsigned char *TextureConverter::CreateMip(unsigned char *pixel, int width, int height) {
-	int size = width * height;
-	unsigned char *mip = new unsigned char[size * 4];
+	int size = width * height * texChannels;
+	unsigned char *mip = new unsigned char[size];
 	int dst = -1;
-	for (int i = 0; i < height; i++) {
-		for (int j = 0; j < width; j++) {
-			int src = (i * width * 4 + j * 2) * 4;
-			mip[++dst] = (pixel[src] + pixel[src + 4] + pixel[src + 8] + pixel[src + 12]) / 4;
-			mip[++dst] = (pixel[src + 1] + pixel[src + 5] + pixel[src + 9] + pixel[src + 13]) / 4;
-			mip[++dst] = (pixel[src + 2] + pixel[src + 6] + pixel[src + 10] + pixel[src + 14]) / 4;
-			mip[++dst] = (pixel[src + 3] + pixel[src + 7] + pixel[src + 11] + pixel[src + 15]) / 4;
+	for (int srcRow = 0; srcRow < height; srcRow++) {
+		for (int srcCol = 0; srcCol < width; srcCol++) {
+			int src = (srcRow * width + srcCol) * texChannels;
+			mip[++dst] = CombinePixels(pixel + src);
+			mip[++dst] = CombinePixels(pixel + src + 1);
+			mip[++dst] = CombinePixels(pixel + src + 2);
+			mip[++dst] = CombinePixels(pixel + src + 3);
 		}
 	}
 
@@ -139,74 +77,49 @@ unsigned char *TextureConverter::CreateMip(unsigned char *pixel, int width, int 
 }
 
 void TextureConverter::ConvertBC123() {
-	// No Alpha
-	DDSHeader outHeader;
-	std::memset(&outHeader, 0, sizeof(outHeader));
-	outHeader.dwSize = 124;
-	outHeader.ddspf.dwFlags = DDPF_FOURCC;
-	outHeader.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_LINEARSIZE | DDSD_MIPMAPCOUNT;
-	outHeader.dwHeight = texHeight;
-	outHeader.dwWidth = texWidth;
-	outHeader.dwDepth = 0;
-	outHeader.dwCaps = DDSCAPS_COMPLEX | DDSCAPS_TEXTURE | DDSCAPS_MIPMAP;
-	outHeader.dwMipMapCount = DWORD(std::log2(texWidth) - 1);
-	// if (isCubemap)
-	// 	outHeader.dwCaps2 = DDS_CUBEMAP_ALLFACES;
-
-	bool alpha = false;
-	switch (compression) {
-	default:
-	case Compression::BC1: {
-		outHeader.dwPitchOrLinearSize = texWidth * texHeight / 2;
-		outHeader.ddspf.dwFourCC = FOURCC_DXT1;
-		break;
-	}
-	case Compression::BC3:
-		outHeader.dwPitchOrLinearSize = texWidth * texHeight;
-		outHeader.ddspf.dwFourCC = FOURCC_DXT5;
-		break;
-	}
-	char mark[] = { 'G', 'R', 'I', 'N', 'D', 'S', 'T', 'O', 'N', 'E' };
-	std::memcpy(&outHeader.dwReserved1, mark, sizeof(mark));
-
-	int size = outHeader.dwPitchOrLinearSize;
-	int mipsize = size;
-	unsigned int blockSize = (outHeader.ddspf.dwFourCC == FOURCC_DXT1) ? 8 : 16;
-	for (DWORD i = 1u; i < outHeader.dwMipMapCount; i++) {
-		mipsize = ((texWidth + 3) / 4)*((texHeight + 3) / 4)*blockSize;
-		size += mipsize;
-	}
-
-	bool isCubemap = false;
-	// if (isCubemap)
+	bool isSixSidedCubemap = false;
+	// if (isSixSidedCubemap)
 	// 	size *= 6;
 
-	unsigned char *outData = new unsigned char[size];
-	int offset = 0;
+	bool shouldGenerateMips = false;
+	int mipMapCount = shouldGenerateMips ?
+		CalculateMipMapLevelCount(texWidth, texHeight)
+		: 1;
+
+	int outputContentSize = 0;
+	unsigned int blockSize = (compression == Compression::BC1) ? 8 : 16;
+	int mipWidth = texWidth;
+	int mipHeight = texHeight;
+	for (int i = 0; i < mipMapCount; i++) {
+		int mipsize = ((mipWidth + 3) / 4) * ((mipHeight + 3) / 4) * blockSize;
+		outputContentSize += mipsize;
+
+		mipWidth /= 2;
+		mipHeight /= 2;
+	}
+
+	unsigned char* outData = new unsigned char[outputContentSize];
+	int dstOffset = 0;
 	unsigned char block[64];
 
-	bool shouldGenerateMips = true;
-
-	int minlev = outHeader.dwMipMapCount - 2;
-	int num_faces = isCubemap ? 6 : 1;
+	int minMipLevel = std::max(mipMapCount - 2, 1);
+	int faceCount = isSixSidedCubemap ? 6 : 1;
 	int levelWidth = texWidth;
 	int levelHeight = texHeight;
-	for (int l = 0; l < num_faces; l++) {
-		unsigned char* mip = sourcePixels;
-		levelWidth = outHeader.dwWidth;
-		levelHeight = outHeader.dwHeight;
-		for (int k = 0; k < minlev; k++) {
+	for (int faceIterator = 0; faceIterator < faceCount; faceIterator++) {
+		unsigned char* mipSourcePtr = sourcePixels;
+		for (int mipLevelIterator = 0; mipLevelIterator < minMipLevel; mipLevelIterator++) {
 			if (!shouldGenerateMips) {
-				mip = &sourcePixels[k];
+				mipSourcePtr = &sourcePixels[mipLevelIterator];
 			}
 
-			for (int j = 0; j < levelHeight; j += 4) {
-				unsigned char *ptr = mip + j * levelWidth * 4;
-				for (int i = 0; i < levelWidth; i += 4) {
-					ExtractBlock(ptr, texWidth, block);
-					stb_compress_dxt_block(&outData[offset], block, false, STB_DXT_NORMAL);
-					ptr += 4 * 4;
-					offset += 8;
+			for (int mipRow = 0; mipRow < levelHeight; mipRow += blockWidth) {
+				unsigned char *ptr = mipSourcePtr + (mipRow * levelWidth * texChannels);
+				for (int mipCol = 0; mipCol < levelWidth; mipCol += blockWidth) {
+					ExtractBlock(ptr, block);
+					stb_compress_dxt_block(&outData[dstOffset], block, false, STB_DXT_NORMAL);
+					ptr += blockWidth * texChannels;
+					dstOffset += 8;
 				}
 			}
 
@@ -214,16 +127,20 @@ void TextureConverter::ConvertBC123() {
 			levelHeight /= 2;
 
 			if (shouldGenerateMips) {
-				unsigned char *temp_mip = mip;
+				unsigned char *temp_mip = mipSourcePtr;
 
-				if (k - 1 != minlev)
-					mip = CreateMip(temp_mip, levelWidth, levelHeight);
+				if (mipLevelIterator - 1 != minMipLevel) {
+					mipSourcePtr = CreateMip(temp_mip, levelWidth, levelHeight);
+				}
 
-				if (k != 0)
+				if (mipLevelIterator != 0) {
 					delete[] temp_mip;
+				}
 			}
 
-			if (levelWidth < 4) break;
+			if (levelWidth < 4) {
+				break;
+			}
 		}
 
 		/*memcpy(&outData[offset], &outData[offset], 8); // 2x2
@@ -232,19 +149,58 @@ void TextureConverter::ConvertBC123() {
 		offset += 8;*/
 	}
 
-	size_t positionOfDot = path.find_last_of('.');
-	std::string outputPath = path.substr(0, positionOfDot - 1) + ".dds";
+	OutputDds(outData, outputContentSize);
+}
+
+void TextureConverter::OutputDds(unsigned char* outData, int contentSize) {
+	bool shouldGenerateMips = false;
+
+	DDSHeader outHeader;
+	std::memset(&outHeader, 0, sizeof(outHeader));
+	outHeader.dwSize = 124;
+	outHeader.ddspf.dwFlags = DDPF_FOURCC;
+	outHeader.dwFlags = DDSD_REQUIRED | DDSD_MIPMAPCOUNT;
+	outHeader.dwHeight = texHeight;
+	outHeader.dwWidth = texWidth;
+	outHeader.dwDepth = 0;
+	outHeader.dwCaps = DDSCAPS_COMPLEX | DDSCAPS_TEXTURE | DDSCAPS_MIPMAP;
+	outHeader.dwMipMapCount = shouldGenerateMips
+		? DWORD(CalculateMipMapLevelCount(texWidth, texHeight))
+		: 0;
+	// if (isSixSidedCubemap)
+	// 	outHeader.dwCaps2 = DDS_CUBEMAP_ALLFACES;
+
+	switch (compression) {
+	default:
+	case Compression::BC1:
+		outHeader.dwPitchOrLinearSize = texWidth * texHeight / 2;
+		outHeader.ddspf.dwFourCC = FOURCC_DXT1;
+		break;
+	case Compression::BC3:
+		outHeader.dwPitchOrLinearSize = texWidth * texHeight;
+		outHeader.ddspf.dwFourCC = FOURCC_DXT5;
+		break;
+	}
+	char mark[] = { 'G', 'R', 'I', 'N', 'D', 'S', 'T', 'O', 'N', 'E' };
+	std::memcpy(&outHeader.dwReserved1, mark, sizeof(mark));
+
+	std::string outputPath = path + ".dds";
 	std::ofstream out(outputPath, std::ios::binary);
 	if (out.fail()) {
 		throw std::runtime_error("Failed to output texture!");
 	}
 	const char filecode[4] = { 'D', 'D', 'S', ' ' };
-	out.write((const char *)&filecode, sizeof(char) * 4);
-	out.write((const char *)&outHeader, sizeof(outHeader));
-	out.write((const char *)outData, size);
+	out.write((const char*)&filecode, sizeof(char) * 4);
+	out.write((const char*)&outHeader, sizeof(outHeader));
+	out.write((const char*)outData, contentSize);
 	out.close();
 
 	delete[] outData;
+}
+
+int TextureConverter::CalculateMipMapLevelCount(int width, int height) {
+	int size = std::min(width, height);
+	return (int)std::log2(size) - 1;
 }
 
 void Grindstone::Converters::ImportTexture(const char* inputPath) {
