@@ -123,24 +123,19 @@ void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& s
 	pipelineCi.shaderStageCreateInfoCount = (uint32_t)shaderStages.size();
 
 	std::vector<GraphicsAPI::UniformBufferBinding*> ubbs;
-	ubbs.resize(2);
+	ubbs.reserve(shader.reflectionData.uniformBuffers.size());
 
-	GraphicsAPI::UniformBufferBinding::CreateInfo ubbCi{};
-	ubbCi.binding = 0;
-	ubbCi.shaderLocation = "EngineUbo";
-	ubbCi.size = 64 * 3;
-	ubbCi.stages = GraphicsAPI::ShaderStageBit::All;
-	ubbs[0] = graphicsCore->CreateUniformBufferBinding(ubbCi);
-
-	ubbCi.binding = 1;
-	ubbCi.shaderLocation = "MaterialUbo";
-	ubbCi.size = 16;
-	ubbCi.stages = GraphicsAPI::ShaderStageBit::All;
-	ubbs[1] = graphicsCore->CreateUniformBufferBinding(ubbCi);
+	for (auto& uniform : shader.reflectionData.uniformBuffers) {
+		GraphicsAPI::UniformBufferBinding::CreateInfo ubbCi{};
+		ubbCi.binding = uniform.bindingId;
+		ubbCi.shaderLocation = uniform.name.c_str();
+		ubbCi.size = uniform.bufferSize;
+		ubbCi.stages = (GraphicsAPI::ShaderStageBit)uniform.shaderStagesBitMask;
+		ubbs.push_back(graphicsCore->CreateUniformBufferBinding(ubbCi));
+	}
 
 	pipelineCi.uniformBufferBindings = ubbs.data();
 	pipelineCi.uniformBufferBindingCount = (uint32_t)ubbs.size();
-
 
 	GraphicsAPI::TextureSubBinding sub;
 	sub.shaderLocation = "texSampler";
