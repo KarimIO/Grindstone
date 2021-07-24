@@ -7,7 +7,7 @@
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
-std::string GetShaderPath(const char* basePath, ShaderStage shaderStage, GraphicsAPI::Core* core) {
+std::string GetShaderPath(const char* basePath, ShaderStage shaderStage, GraphicsAPI::Core* graphicsCore) {
 	const char* shaderStageExtension = "";
 
 	switch (shaderStage) {
@@ -34,7 +34,7 @@ std::string GetShaderPath(const char* basePath, ShaderStage shaderStage, Graphic
 		break;
 	}
 
-	return std::string(basePath) + shaderStageExtension + core->GetDefaultShaderExtension();
+	return std::string(basePath) + shaderStageExtension + graphicsCore->GetDefaultShaderExtension();
 }
 
 Shader& ShaderManager::LoadShader(const char* path) {
@@ -70,7 +70,7 @@ void ShaderManager::CreateReflectionDataForShader(const char* path, Shader& shad
 }
 
 void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& shader) {
-	GraphicsAPI::Core* core = EngineCore::GetInstance().getGraphicsCore();
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().getGraphicsCore();
 
 	auto& shaderStagesBitMask = shader.reflectionData.shaderStagesBitMask;
 	size_t numShaderStages = shader.reflectionData.numShaderStages;
@@ -93,7 +93,7 @@ void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& s
 		}
 
 		auto& stageCreateInfo = shaderStages[currentShaderStage++];
-		std::string path = GetShaderPath(basePath, stage, core);
+		std::string path = GetShaderPath(basePath, stage, graphicsCore);
 		stageCreateInfo.fileName = path.c_str();
 
 		if (!std::filesystem::exists(path)) {
@@ -122,13 +122,30 @@ void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& s
 	pipelineCi.shaderStageCreateInfos = shaderStages.data();
 	pipelineCi.shaderStageCreateInfoCount = (uint32_t)shaderStages.size();
 
-	pipelineCi.uniformBufferBindings = nullptr;
-	pipelineCi.uniformBufferBindingCount = 0;
+	std::vector<GraphicsAPI::UniformBufferBinding*> ubbs;
+	ubbs.resize(2);
+
+	GraphicsAPI::UniformBufferBinding::CreateInfo ubbCi{};
+	ubbCi.binding = 0;
+	ubbCi.shaderLocation = "EngineUbo";
+	ubbCi.size = 64 * 3;
+	ubbCi.stages = GraphicsAPI::ShaderStageBit::All;
+	ubbs[0] = graphicsCore->CreateUniformBufferBinding(ubbCi);
+
+	ubbCi.binding = 1;
+	ubbCi.shaderLocation = "MaterialUbo";
+	ubbCi.size = 16;
+	ubbCi.stages = GraphicsAPI::ShaderStageBit::All;
+	ubbs[1] = graphicsCore->CreateUniformBufferBinding(ubbCi);
+
+
+	pipelineCi.uniformBufferBindings = ubbs.data();
+	pipelineCi.uniformBufferBindingCount = (uint32_t)ubbs.size();
 
 	pipelineCi.textureBindings = nullptr;
 	pipelineCi.textureBindingCount = 0;
 
 	pipelineCi.vertexBindings = nullptr;
 	pipelineCi.vertexBindingsCount = 0;
-	shader.pipeline = core->CreatePipeline(pipelineCi);
+	shader.pipeline = graphicsCore->CreatePipeline(pipelineCi);
 }

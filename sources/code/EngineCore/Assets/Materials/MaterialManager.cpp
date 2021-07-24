@@ -3,6 +3,7 @@
 #include "EngineCore/Assets/Shaders/ShaderManager.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "EngineCore/EngineCore.hpp"
+#include "Common/Graphics/Core.hpp"
 using namespace Grindstone;
 
 Material& MaterialManager::LoadMaterial(const char* path) {
@@ -42,10 +43,57 @@ Material MaterialManager::CreateMaterialFromData(std::filesystem::path relativeP
 	const char* shaderPathCStr = shaderPathStr.c_str();
 	ShaderManager* shaderManager = EngineCore::GetInstance().shaderManager;
 	Shader* shader = &shaderManager->LoadShader(shaderPathCStr);
+
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().getGraphicsCore();
+	GraphicsAPI::UniformBufferBinding* uniformBufferBinding = nullptr;
+	GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
+	char* bufferSpace;
+
+	auto& uniformBuffers = shader->reflectionData.uniformBuffers;
+	for (auto& uniformBuffer : uniformBuffers) {
+		if (uniformBuffer.name != "MaterialUbo") {
+			continue;
+		}
+
+		GraphicsAPI::UniformBufferBinding::CreateInfo ubbCi{};
+		ubbCi.binding = 1;
+		ubbCi.shaderLocation = "MaterialUbo";
+		ubbCi.size = uniformBuffer.bufferSize;
+		ubbCi.stages = (GraphicsAPI::ShaderStageBit)uniformBuffer.shaderStagesBitMask;
+		uniformBufferBinding = graphicsCore->CreateUniformBufferBinding(ubbCi);
+
+		GraphicsAPI::UniformBuffer::CreateInfo ubCi{};
+		ubCi.binding = uniformBufferBinding;
+		ubCi.isDynamic = true;
+		ubCi.size = uniformBuffer.bufferSize;
+		uniformBufferObject = graphicsCore->CreateUniformBuffer(ubCi);
+
+		bufferSpace = new char[uniformBuffer.bufferSize];
+
+		auto& parametersJson = document["parameters"].GetObject();
+		for (auto& member : uniformBuffer.members) {
+			auto& params = parametersJson[member.name.c_str()].GetArray();
+			std::vector<float> paramArray;
+			paramArray.resize(params.Size());
+			for (int i = 0; i < params.Size(); ++i) {
+				paramArray[i] = params[i].GetFloat();
+			}
+
+			// char* memberPos = bufferSpace + member.offset;
+			memcpy(bufferSpace, paramArray.data(), member.memberSize);
+		}
+
+		float a[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
+		uniformBufferObject->updateBuffer(&a);
+	}
+
 	return {
 		name,
 		shaderPathCStr,
-		shader
+		shader,
+		uniformBufferBinding,
+		uniformBufferObject,
+		bufferSpace
 	};
 }
 

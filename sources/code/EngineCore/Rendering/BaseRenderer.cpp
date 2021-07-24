@@ -104,7 +104,6 @@ void Grindstone::BaseRender(
 		vaoCi.index_buffer = ibo;
 		vao = core->CreateVertexArrayObject(vaoCi);
 
-		
 		UniformBufferBinding::CreateInfo ubbCi{};
 		ubbCi.binding = 0;
 		ubbCi.shaderLocation = "EngineUbo";
@@ -117,38 +116,6 @@ void Grindstone::BaseRender(
 		ubCi.isDynamic = true;
 		ubCi.size = sizeof(glm::mat4) * 3;
 		ubo = core->CreateUniformBuffer(ubCi);
-
-		/*
-		
-		std::vector<ShaderStageCreateInfo> shaderStages;
-		shaderStages.resize(2);
-		shaderStages[0] = ShaderStageCreateInfo{ "a.vert", vertexShader.c_str(), (unsigned int)vertexShader.size(), ShaderStage::Vertex };
-		shaderStages[1] = ShaderStageCreateInfo{ "a.frag", fragmentShader.c_str(), (unsigned int)fragmentShader.size(), ShaderStage::Fragment };
-
-		
-		Pipeline::CreateInfo pipelineCi{};
-		pipelineCi.primitiveType = GeometryType::Triangles;
-		pipelineCi.cullMode = CullMode::None;
-		pipelineCi.renderPass;
-		pipelineCi.width = 800;
-		pipelineCi.height = 600;
-		pipelineCi.scissorX = 0;
-		pipelineCi.scissorY = 0;
-		pipelineCi.scissorW = 800;
-		pipelineCi.scissorH = 600;
-		pipelineCi.shaderStageCreateInfos = shaderStages.data();
-		pipelineCi.shaderStageCreateInfoCount = shaderStages.size();
-
-		pipelineCi.uniformBufferBindings = &ubb;
-		pipelineCi.uniformBufferBindingCount = 1;
-
-		pipelineCi.textureBindings = 0;
-		pipelineCi.textureBindingCount = 0;
-
-		pipelineCi.vertexBindings = &layout;
-		pipelineCi.vertexBindingsCount = 1;
-		pipeline = core->CreatePipeline(pipelineCi);
-		*/
 
 		auto materialManager = EngineCore::GetInstance().materialManager;
 		myMaterial = &materialManager->LoadMaterial("../assets/New Material.gmat");
@@ -164,8 +131,11 @@ void Grindstone::BaseRender(
 	static float clearColor[4] = { 0.2f, 0.6f, 0, 1.f };
 	core->Clear(ClearMode::All, clearColor, 1);
 	myMaterial->shader->pipeline->bind();
+	myMaterial->uniformBufferObject->updateBuffer(myMaterial->buffer);
+	myMaterial->uniformBufferObject->bind();
 	// pipeline->bind();
 	ubo->updateBuffer(&engineUboStruct);
+	ubo->bind();
 	vao->bind();
 	core->DrawImmediateIndexed(GeometryType::Triangles, true, 0, 0, 32);
 	

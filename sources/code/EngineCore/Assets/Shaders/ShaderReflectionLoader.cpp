@@ -1,3 +1,4 @@
+#include <filesystem>
 #include "rapidjson/document.h"
 #include "Common/Graphics/Formats.hpp"
 #include "ShaderManager.hpp"
@@ -45,6 +46,11 @@ ShaderReflectionLoader::ShaderReflectionLoader(
 	ShaderReflectionData& data
 ) : outData(data) {
 	std::string path = std::string(basePath) + ".reflect.json";
+
+	if (!std::filesystem::exists(path)) {
+		throw std::runtime_error(path + " not found!");
+	}
+
 	std::string content = Utils::LoadFileText(path.c_str());
 	document.Parse(content.c_str());
 
@@ -96,7 +102,7 @@ void ShaderReflectionLoader::ProcessUniformBuffers() {
 			rapidjson::Value* memberItr = memberSource.Begin();
 			memberItr != memberSource.End();
 			++memberItr
-			) {
+		) {
 			auto& memberData = memberItr->GetObject();
 			auto name = memberData["name"].GetString();
 			size_t offset = memberData["offset"].GetUint();

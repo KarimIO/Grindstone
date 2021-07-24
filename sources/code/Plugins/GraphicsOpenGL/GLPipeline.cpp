@@ -130,13 +130,13 @@ namespace Grindstone {
 
 			for (size_t i = 0; i < createInfo.uniformBufferBindingCount; i++) {
 				GLUniformBufferBinding *ubb = (GLUniformBufferBinding *)createInfo.uniformBufferBindings[i];
-				GLuint index = glGetUniformBlockIndex(program_, ubb->GetUniformName());
+				glUniformBlockBinding(program_, ubb->GetBindingLocation(), ubb->GetBindingLocation());
+				/*GLuint index = glGetUniformBlockIndex(program_, ubb->GetUniformName());
 				if (index != GL_INVALID_INDEX) {
-					glUniformBlockBinding(program_, index, ubb->GetBindingLocation());
 				}
 				else {
 					std::cout << "Couldn't attach Uniform Buffer" << ubb->GetUniformName() << std::endl;
-				}
+				}*/
 			}
 
 			for (uint32_t i = 0; i < createInfo.textureBindingCount; i++) {

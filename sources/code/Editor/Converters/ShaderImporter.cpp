@@ -348,8 +348,6 @@ namespace Grindstone {
 
 			std::string openglGlsl = glslTranspiler.compile();
 
-			outputStringToFile((std::string(extension) + ".opengl.glsl").c_str(), openglGlsl.c_str());
-
 			return openglGlsl;
 		}
 
@@ -357,6 +355,7 @@ namespace Grindstone {
 			shaderc::Compiler compiler;
 			shaderc::CompileOptions options;
 			options.SetTargetEnvironment(shaderc_target_env_opengl, shaderc_env_version_opengl_4_5);
+			options.SetOptimizationLevel(shaderc_optimization_level_performance);
 
 			auto result = compiler.CompileGlslToSpv(
 				opengGlsl,
@@ -403,8 +402,9 @@ namespace Grindstone {
 
 		void ShaderImporter::outputUint32ToFile(const char* extension, std::vector<uint32_t>& content) {
 			std::string outputFilename = basePath + extension;
-			std::ofstream file(outputFilename);
-			file.write((const char*)content.data(), sizeof(uint32_t) * content.size());
+			std::ofstream file(outputFilename, std::ios::out | std::ios::binary);
+			auto fileSize = sizeof(uint32_t) * content.size();
+			file.write((const char*)content.data(), fileSize);
 			file.flush();
 			file.close();
 		}
