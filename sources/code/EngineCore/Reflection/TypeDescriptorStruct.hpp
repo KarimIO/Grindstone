@@ -30,6 +30,8 @@ namespace Grindstone {
 
 			Category category;
 
+			TypeDescriptor_Struct() = default;
+
 			TypeDescriptor_Struct(
 				void(*init)(TypeDescriptor_Struct*)
 			) : TypeDescriptor{ nullptr, 0, ReflectionTypeData::Struct } {

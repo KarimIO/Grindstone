@@ -81,10 +81,7 @@ void EngineCore::run() {
 	}
 }
 
-float clearVal[4] = {0.3f, 0.6f, 0.9f, 1.f};
-
 void EngineCore::runLoopIteration() {
-	graphicsCore->Clear(GraphicsAPI::ClearMode::All, clearVal, 0, 0);
 	sceneManager->update();
 }
 

@@ -28,6 +28,7 @@ namespace Grindstone {
 			};
 			ReflectionTypeData type;
 
+			TypeDescriptor() = default;
 			TypeDescriptor(const char* name, size_t size, ReflectionTypeData t) : name{ name }, size{ size }, type{ t } {}
 			virtual ~TypeDescriptor() {}
 			virtual const char* getFullName() const { return name; }

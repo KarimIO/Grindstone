@@ -137,7 +137,7 @@ void Grindstone::BaseRender(
 	engineUboStruct.view = viewMatrix;
 	engineUboStruct.model = glm::mat4(1);
 
-	static float clearColor[4] = { 0.2f, 0.6f, 0, 1.f };
+	float clearColor[4] = { 0.3f, 0.6f, 0.9f, 1.f };
 	core->Clear(ClearMode::All, clearColor, 1);
 	myMaterial->shader->pipeline->bind();
 	if (myMaterial->uniformBufferObject) {

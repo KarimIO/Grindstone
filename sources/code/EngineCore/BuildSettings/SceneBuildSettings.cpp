@@ -8,7 +8,7 @@ SceneBuildSettings::SceneBuildSettings() {
 void SceneBuildSettings::load() {
 	const char *path = "../BuildSettings/BuildSettings.json";
 
-	scenes.push_back("assets/scenes/sponza.json");
+	scenes.push_back("../assets/scenes/test.scene.json");
 }
 
 const char* SceneBuildSettings::getDefaultScene() {

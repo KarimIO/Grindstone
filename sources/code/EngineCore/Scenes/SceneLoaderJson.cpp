@@ -1,9 +1,12 @@
 #include <stdexcept>
+#include <filesystem>
 #include <iostream>
 
+#include "EngineCore/EngineCore.hpp"
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
 #include "SceneLoaderJson.hpp"
+#include "EngineCore/Utils/Utilities.hpp"
 #include "Scene.hpp"
 
 using namespace Grindstone;
@@ -22,47 +25,140 @@ void* SceneLoaderJson::attachComponent(ECS::Entity entity, const char* component
 }
 
 bool SceneLoaderJson::load(const char* path) {
+	if (!std::filesystem::exists(path)) {
+		return false;
+	}
+
 	scene->path = path;
-	scene->name = path;
+	std::string fileContents = Utils::LoadFileText(path);
+	document.Parse(fileContents.c_str());
 
-	// Get from text
-
-	// Register Systems
-	//ecs_.registerSystem("PhysicsSystem");
-	//ecs_.registerSystem("TransformSystem");
-
-	// Register Components
-	/*ecs_.registerComponentType("Collider");
-	ecs_.registerComponentType("RigidBody");
-	ecs_.registerComponentType("Position");
-	ecs_.registerComponentType("Rotation");
-	ecs_.registerComponentType("Scale");
-	ecs_.registerComponentType("WorldMatrix");
-	ecs_.registerComponentType("Heirarchy");*/
-
-	// Load Entities with components
-	// - For each Entity
-	ECS::Entity entity = createEntity();
-	// --- For each component
-	TagComponent* tag = (TagComponent*)attachComponent(entity, "Tag");
-	tag->tag = "My Entity Name (Bobby)";
-	attachComponent(entity, "Transform");
-	attachComponent(entity, "Camera");
-
-	ECS::Entity entity2 = createEntity();
-	// --- For each component
-	TagComponent* tag2 = (TagComponent*)attachComponent(entity2, "Tag");
-	tag2->tag = "The Grindstone Entity B)";
-	attachComponent(entity2, "Transform");
-
-	/*
-	ecs_.createComponent("Rotation");
-	ecs_.createComponent("Scale");
-	ecs_.createComponent("World");
-	ecs_.createComponent("Hierarchy");
-	ecs_.createComponent("Hierarchy");
-	*/
-	// --- 
+	ProcessMeta();
+	ProcessEntities();
 
 	return true;
+}
+
+void SceneLoaderJson::ProcessMeta() {
+	if (document.HasMember("name")) {
+		scene->name = document["name"].GetString();
+	}
+	else {
+		scene->name = "Untitled Scene";
+	}
+}
+
+void SceneLoaderJson::ProcessEntities() {
+	auto& entities = document["entities"].GetArray();
+	for (
+		rapidjson::Value* entityIterator = entities.Begin();
+		entityIterator != entities.End();
+		++entityIterator
+		) {
+		auto& entity = entityIterator->GetObject();
+		ProcessEntity(entity);
+	}
+}
+
+void SceneLoaderJson::ProcessEntity(rapidjson::GenericObject<false, rapidjson::Value>& entityJson) {
+	ECS::Entity entity = createEntity();
+
+	auto& components = entityJson["components"].GetArray();
+	for (
+		rapidjson::Value* componentIterator = components.Begin();
+		componentIterator != components.End();
+		++componentIterator
+		) {
+		auto& component = componentIterator->GetObject();
+		ProcessComponent(entity, component);
+	}
+}
+
+void SceneLoaderJson::ProcessComponent(ECS::Entity entity, rapidjson::GenericObject<false, rapidjson::Value>& component) {
+	const char* componentType = component["component"].GetString();
+
+	Reflection::TypeDescriptor_Struct reflectionData;
+	auto componentRegistrar = EngineCore::GetInstance().getComponentRegistrar();
+	if (!componentRegistrar->tryGetComponentReflectionData(componentType, reflectionData)) {
+		return;
+	}
+
+	void* componentPtr = attachComponent(entity, componentType);
+
+	if (!component.HasMember("params")) {
+		return;
+	}
+
+	auto& parameters = component["params"].GetObject();
+	for (
+		auto parameterIterator = parameters.MemberBegin();
+		parameterIterator != parameters.MemberEnd();
+		++parameterIterator
+		) {
+		const char* paramKey = parameterIterator->name.GetString();
+		ProcessComponentParameter(entity, componentPtr, reflectionData, paramKey, parameterIterator->value);
+	}
+}
+
+using ReflectionTypeData = Reflection::TypeDescriptor_Struct::ReflectionTypeData;
+void SceneLoaderJson::ProcessComponentParameter(
+	ECS::Entity entity,
+	void* componentPtr,
+	Reflection::TypeDescriptor_Struct& reflectionData,
+	const char* parameterKey,
+	rapidjson::Value& parameter
+) {
+	Reflection::TypeDescriptor_Struct::Member* member = nullptr;
+	for (auto& itrMember : reflectionData.category.members) {
+		if (itrMember.storedName == parameterKey) {
+			member = &itrMember;
+			break;
+		}
+	}
+
+	if (member == nullptr) {
+		return;
+	}
+
+	auto offset = member->offset;
+	char* memberPtr = (char*)componentPtr + offset;
+
+	switch(member->type->type) {
+		case ReflectionTypeData::Vector:
+		case ReflectionTypeData::String: {
+			std::string& str = *(std::string*)memberPtr;
+			str = parameter.GetString();
+			break;
+		}
+		case ReflectionTypeData::Bool: {
+			bool& str = *(bool*)memberPtr;
+			str = parameter.GetBool();
+			break;
+		}
+		case ReflectionTypeData::Int: {
+			int& str = *(int*)memberPtr;
+			str = parameter.GetInt();
+			break;
+		}
+		case ReflectionTypeData::Int2:
+		case ReflectionTypeData::Int3:
+		case ReflectionTypeData::Int4:
+		case ReflectionTypeData::Float: {
+			float& str = *(float*)memberPtr;
+			str = parameter.GetFloat();
+			break;
+		}
+		case ReflectionTypeData::Float2:
+		case ReflectionTypeData::Float3:
+		case ReflectionTypeData::Float4:
+		case ReflectionTypeData::Double: {
+			double& str = *(double*)memberPtr;
+			str = parameter.GetDouble();
+			break;
+		}
+		case ReflectionTypeData::Double2:
+		case ReflectionTypeData::Double3:
+		case ReflectionTypeData::Double4:
+			break;
+	}
 }
