@@ -1,9 +1,15 @@
 #pragma once
 
 #include <string>
-#include "EngineCore/Assets/Shaders/Shader.hpp"
 
 namespace Grindstone {
+	namespace GraphicsAPI {
+		class UniformBufferBinding;
+		class TextureBinding;
+		class UniformBuffer;
+	}
+
+	struct Shader;
 	struct Material {
 		std::string name;
 		std::string shaderPath;
@@ -12,9 +18,6 @@ namespace Grindstone {
 		GraphicsAPI::UniformBufferBinding* uniformBufferBinding;
 		GraphicsAPI::UniformBuffer* uniformBufferObject;
 		char* buffer;
-
-		/*~Material() {
-			delete buffer;
-		}*/
+		std::vector<void*> renderables;
 	};
 }

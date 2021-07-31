@@ -7,6 +7,10 @@
 
 namespace Grindstone {
 	class EngineCore;
+
+	namespace GraphicsAPI {
+		class Texture;
+	}
 	
 	namespace Editor {
 		class ComponentInspector;
@@ -35,6 +39,11 @@ namespace Grindstone {
 			private:
 				std::vector<std::filesystem::directory_entry> sortedDirectories;
 				std::vector<std::filesystem::directory_entry> sortedFiles;
+
+				struct Icons {
+					GraphicsAPI::Texture* folderTexture;
+					GraphicsAPI::Texture* fileTexture;
+				} icons;
 
 				bool isShowingPanel = true;
 				EngineCore* engineCore = nullptr;

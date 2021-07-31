@@ -1,3 +1,4 @@
+#include <filesystem>
 #include "Common/Formats/Dds.hpp"
 #include "Common/Graphics/Core.hpp"
 #include "EngineCore/EngineCore.hpp"
@@ -67,6 +68,10 @@ TextureAsset TextureManager::CreateFromDds(const char* data, size_t fileSize) {
 }
 
 TextureAsset& TextureManager::CreateTextureFromFile(const char* path) {
+	if (!std::filesystem::exists(path)) {
+		throw std::runtime_error("Failed to load texture!");
+	}
+
 	std::vector<char> file = Utils::LoadFile(path);
 	textures[path] = CreateFromDds(file.data(), file.size());
 

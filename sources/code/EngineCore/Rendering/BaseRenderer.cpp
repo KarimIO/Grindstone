@@ -7,7 +7,9 @@
 #include "BaseRenderer.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "EngineCore/EngineCore.hpp"
-#include "EngineCore/Assets/Materials/MaterialManager.hpp"
+#include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
+#include "EngineCore/Assets/Shaders/Shader.hpp"
+#include "EngineCore/Assets/Materials/Material.hpp"
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
@@ -53,7 +55,7 @@ VertexBuffer* vboTex;
 VertexArrayObject* vao;
 UniformBufferBinding* ubb;
 UniformBuffer* ubo;
-Material* myMaterial;
+// Material* myMaterial;
 
 struct EngineUboStruct {
 	glm::mat4 proj;
@@ -76,12 +78,12 @@ void Grindstone::BaseRender(
 			}
 		});
 
-		VertexBuffer::CreateInfo vboCi{};
+		/*VertexBuffer::CreateInfo vboCi{};
 		vboCi.content = cubeVertexPositions.data();
 		vboCi.count = cubeVertexPositions.size();
 		vboCi.size = vboCi.count * sizeof(glm::vec3);
 		vboCi.layout = &vertexPositionLayout;
-		vbo = core->CreateVertexBuffer(vboCi);
+		vbo = core->CreateVertexBuffer(vboCi);*/
 
 		VertexBufferLayout vertexTexCoordLayout({
 			{
@@ -92,7 +94,7 @@ void Grindstone::BaseRender(
 			}
 		});
 
-		VertexBuffer::CreateInfo vboTexCi{};
+		/*VertexBuffer::CreateInfo vboTexCi{};
 		vboTexCi.content = cubeVertexTexCoords.data();
 		vboTexCi.count = cubeVertexTexCoords.size();
 		vboTexCi.size = vboTexCi.count * sizeof(glm::vec3);
@@ -111,7 +113,7 @@ void Grindstone::BaseRender(
 		vaoCi.vertex_buffer_count = vbs.size();
 		vaoCi.vertex_buffers = vbs.data();
 		vaoCi.index_buffer = ibo;
-		vao = core->CreateVertexArrayObject(vaoCi);
+		vao = core->CreateVertexArrayObject(vaoCi);*/
 
 		UniformBufferBinding::CreateInfo ubbCi{};
 		ubbCi.binding = 0;
@@ -126,8 +128,11 @@ void Grindstone::BaseRender(
 		ubCi.size = sizeof(glm::mat4) * 3;
 		ubo = core->CreateUniformBuffer(ubCi);
 
-		auto materialManager = EngineCore::GetInstance().materialManager;
-		myMaterial = &materialManager->LoadMaterial("../assets/New Material.gmat");
+		// auto materialManager = EngineCore::GetInstance().materialManager;
+		// myMaterial = &materialManager->LoadMaterial("../assets/New Material.gmat");
+
+		Mesh3dManager* mesh3dManager = EngineCore::GetInstance().mesh3dManager;
+		mesh3dManager->LoadMesh3d("../assets/models/sphere.gmf");
 
 		isFirst = false;
 	}
@@ -139,17 +144,18 @@ void Grindstone::BaseRender(
 
 	float clearColor[4] = { 0.3f, 0.6f, 0.9f, 1.f };
 	core->Clear(ClearMode::All, clearColor, 1);
-	myMaterial->shader->pipeline->bind();
+
+	/*myMaterial->shader->pipeline->bind();
 	if (myMaterial->uniformBufferObject) {
 		myMaterial->uniformBufferObject->updateBuffer(myMaterial->buffer);
 		myMaterial->uniformBufferObject->bind();
 	}
-	core->BindTexture(myMaterial->textureBinding);
+	core->BindTexture(myMaterial->textureBinding);*/
 	// pipeline->bind();
-	ubo->updateBuffer(&engineUboStruct);
-	ubo->bind();
-	vao->bind();
-	core->DrawImmediateIndexed(GeometryType::Triangles, true, 0, 0, 36);
+	// ubo->updateBuffer(&engineUboStruct);
+	// ubo->bind();
+	// vao->bind();
+	// core->DrawImmediateIndexed(GeometryType::Triangles, true, 0, 0, 36);
 	
 	// RenderLights();
 	// PostProcess();

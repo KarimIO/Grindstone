@@ -13,6 +13,8 @@
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/Scenes/Scene.hpp"
 #include "EngineCore/EngineCore.hpp"
+#include "EngineCore/Assets/Textures/TextureManager.hpp"
+#include "Plugins/GraphicsOpenGL/GLTexture.hpp"
 #include "ImguiEditor.hpp"
 
 const std::filesystem::path assetFolderPath = "..\\assets";
@@ -51,6 +53,13 @@ namespace Grindstone {
 				pathToRename = "";
 
 				std::filesystem::create_directories(currentPath);
+
+				auto textureManager = engineCore->textureManager;
+				auto& folderTextureAsset = textureManager->LoadTexture("../engineassets/editor/assetIcons/folder.dds");
+				icons.folderTexture = folderTextureAsset.texture;
+				auto& fileTextureAsset = textureManager->LoadTexture("../engineassets/editor/assetIcons/file.dds");
+				icons.fileTexture = fileTextureAsset.texture;
+
 			}
 			
 			void AssetBrowserPanel::setPath(std::filesystem::path path) {
@@ -297,7 +306,19 @@ namespace Grindstone {
 					const auto& path = directoryEntry.path();
 					std::string filenameString = path.filename().string();
 					std::string buttonString = filenameString + "##AssetButton";
-					ImGui::Button(buttonString.c_str(), { thumbnailSize, thumbnailSize });
+					GraphicsAPI::Texture* texture = directoryEntry.is_directory()
+						? icons.folderTexture
+						: icons.fileTexture;
+
+					ImTextureID icon = (ImTextureID)((GraphicsAPI::GLTexture *)texture)->getTexture();
+
+					ImGui::PushID(buttonString.c_str());
+					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.1));
+					ImGui::ImageButton(icon, { thumbnailSize, thumbnailSize }, ImVec2{0,0}, ImVec2{1,1}, 0);
+					ImGui::PopStyleColor(2);
+					ImGui::PopID();
+
 					renderAssetContextMenu(directoryEntry);
 					processDirectoryEntryClicks(directoryEntry);
 

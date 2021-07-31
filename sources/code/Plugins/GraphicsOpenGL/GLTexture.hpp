@@ -1,6 +1,7 @@
 #ifndef _GL_TEXTURE_H
 #define _GL_TEXTURE_H
 
+#include "GL/gl3w.h"
 #include <Common/Graphics/Texture.hpp>
 #include <vector>
 
