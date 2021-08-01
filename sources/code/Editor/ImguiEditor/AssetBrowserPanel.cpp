@@ -385,12 +385,8 @@ namespace Grindstone {
 
 					ImTextureID icon = getIcon(directoryEntry); 
 					ImGui::PushID(buttonString.c_str());
-					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.05));
-					ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.1));
 					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
 					ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{0,0}, ImVec2{1,1}, THUMBNAIL_PADDING);
-					ImGui::PopStyleColor(3);
 					ImGui::PopID();
 
 					renderAssetContextMenu(directoryEntry);
@@ -421,12 +417,16 @@ namespace Grindstone {
 
 				refreshAssetsIfNecessary();
 
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.05));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.1));
 				if (ImGui::BeginTable("assetTable", columnCount)) {
 					renderAssetSet(sortedDirectories);
 					renderAssetSet(sortedFiles);
 
 					ImGui::EndTable();
 				}
+				ImGui::PopStyleColor(3);
 			}
 			
 			void AssetBrowserPanel::render() {

@@ -59,11 +59,15 @@ namespace Grindstone {
 			void SceneHeirarchyPanel::renderScene(SceneManagement::Scene* scene) {
 				auto& registry = *scene->getEntityRegistry();
 
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 1, 1, 0.1));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.15));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.2));
 				registry.each(
 					[&](auto entity) {
 						renderEntity(registry, entity);
 					}
 				);
+				ImGui::PopStyleColor(3);
 
 				if (ImGui::BeginPopupContextWindow(0, RIGHT_MOUSE_BUTTON, false)) {
 					if (ImGui::MenuItem("Add new entity")) {
@@ -90,7 +94,8 @@ namespace Grindstone {
 					}
 				}
 				else {
-					if (ImGui::Button(entityTag)) {
+					ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2{0, 0.5});
+					if (ImGui::Button(entityTag, {panelWidth, 0})) {
 						editor->selectEntity(entity);
 					}
 					if (ImGui::BeginPopupContextItem()) {
@@ -104,6 +109,7 @@ namespace Grindstone {
 						}
 						ImGui::EndPopup();
 					}
+					ImGui::PopStyleVar();
 				}
 			}
 		}
