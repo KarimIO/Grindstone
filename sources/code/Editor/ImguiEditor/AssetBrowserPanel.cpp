@@ -17,9 +17,14 @@
 #include "Plugins/GraphicsOpenGL/GLTexture.hpp"
 #include "ImguiEditor.hpp"
 
-const std::filesystem::path assetFolderPath = "..\\assets";
-const double refreshInterval = 1.0;
+const std::filesystem::path ASSET_FOLDER_PATH = "..\\assets";
+const double REFRESH_INTERVAL = 1.0;
 const bool RIGHT_MOUSE_BUTTON = 1;
+const float PADDING = 8.0f;
+const float ENTRY_SIZE = 80.0f;
+const float THUMBNAIL_SIZE = 64.0f;
+const float THUMBNAIL_PADDING = 4.0f;
+const float THUMBNAIL_SPACING = (ENTRY_SIZE - THUMBNAIL_SIZE - THUMBNAIL_PADDING) / 2.0f;
 
 std::filesystem::path GetNewDefaultPath(std::filesystem::path basePath, std::string fileName, std::string extension) {
 	std::filesystem::path finalPath = basePath / (fileName + extension);
@@ -45,21 +50,92 @@ std::filesystem::path CreateDefaultMaterial(std::filesystem::path& currentPath) 
 	return path;
 }
 
+ImTextureID getIdFromTexture(GraphicsAPI::Texture* texture) {
+	GraphicsAPI::GLTexture* glTex = (GraphicsAPI::GLTexture*)texture;
+	return (ImTextureID)glTex->getTexture();
+}
+
+void TextCenter(std::string text) {
+	float font_size = ImGui::GetFontSize() * text.size() / 2;
+	ImGui::SameLine(
+		ImGui::GetWindowSize().x / 2 -
+		font_size + (font_size / 2)
+	);
+
+	ImGui::Text(text.c_str());
+}
+
+void PrepareIcon(Grindstone::TextureManager* textureManager, const char* path, GraphicsAPI::Texture*& texture, ImTextureID& id) {
+	auto& textureAsset = textureManager->LoadTexture(path);
+	texture = textureAsset.texture;
+	id = getIdFromTexture(texture);
+}
+
+#define PREPARE_ICON(type) PrepareIcon(textureManager, "../engineassets/editor/assetIcons/" #type ".dds", iconTextures.type, iconIds.type)
+
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
 			AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore) {
-				currentPath = assetFolderPath;
+				currentPath = ASSET_FOLDER_PATH;
 				pathToRename = "";
 
 				std::filesystem::create_directories(currentPath);
 
 				auto textureManager = engineCore->textureManager;
-				auto& folderTextureAsset = textureManager->LoadTexture("../engineassets/editor/assetIcons/folder.dds");
-				icons.folderTexture = folderTextureAsset.texture;
-				auto& fileTextureAsset = textureManager->LoadTexture("../engineassets/editor/assetIcons/file.dds");
-				icons.fileTexture = fileTextureAsset.texture;
+				PREPARE_ICON(folder);
+				PREPARE_ICON(file);
+				PREPARE_ICON(image);
+				PREPARE_ICON(material);
+				PREPARE_ICON(model);
+				PREPARE_ICON(shader);
+				PREPARE_ICON(scene);
+				PREPARE_ICON(sound);
+				PREPARE_ICON(text);
+				PREPARE_ICON(video);
+			}
 
+			ImTextureID AssetBrowserPanel::getIcon(const std::filesystem::directory_entry& directoryEntry) {
+				if (directoryEntry.is_directory()) {
+					return iconIds.folder;
+				}
+				
+				const std::string& path = directoryEntry.path().string();
+				size_t firstDot = path.find_last_of('.');
+				std::string firstDotExtension = path.substr(firstDot);
+				size_t secondDot = path.find_last_of('.', firstDot - 1);
+				std::string secondDotExtension = path.substr(secondDot);
+
+				if (firstDotExtension == ".glsl") {
+					return iconIds.shader;
+				}
+				else if (
+					firstDotExtension == ".jpg" ||
+					firstDotExtension == ".jpeg" ||
+					firstDotExtension == ".tga" ||
+					firstDotExtension == ".bmp" ||
+					firstDotExtension == ".png"
+					) {
+					return iconIds.image;
+				}
+				else if (
+					firstDotExtension == ".fbx" ||
+					firstDotExtension == ".obj" ||
+					firstDotExtension == ".dae"
+					) {
+					return iconIds.model;
+				}
+				else if (firstDotExtension == ".gmat") {
+					return iconIds.material;
+				}
+				else if (secondDotExtension == ".scene.json") {
+					return iconIds.scene;
+				}
+				else if (firstDotExtension == ".txt") {
+					return iconIds.text;
+				}
+				
+				return iconIds.file;
 			}
 			
 			void AssetBrowserPanel::setPath(std::filesystem::path path) {
@@ -71,7 +147,7 @@ namespace Grindstone {
 			void AssetBrowserPanel::refreshAssetsIfNecessary() {
 				auto currentTime = std::chrono::system_clock::now();
 				std::chrono::duration<double> elapsedSeconds = currentTime - lastRefreshedAssetsTime;
-				if (elapsedSeconds.count() > refreshInterval) {
+				if (elapsedSeconds.count() > REFRESH_INTERVAL) {
 					refreshAssets();
 				}
 			}
@@ -306,24 +382,22 @@ namespace Grindstone {
 					const auto& path = directoryEntry.path();
 					std::string filenameString = path.filename().string();
 					std::string buttonString = filenameString + "##AssetButton";
-					GraphicsAPI::Texture* texture = directoryEntry.is_directory()
-						? icons.folderTexture
-						: icons.fileTexture;
 
-					ImTextureID icon = (ImTextureID)((GraphicsAPI::GLTexture *)texture)->getTexture();
-
+					ImTextureID icon = getIcon(directoryEntry); 
 					ImGui::PushID(buttonString.c_str());
 					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.1));
-					ImGui::ImageButton(icon, { thumbnailSize, thumbnailSize }, ImVec2{0,0}, ImVec2{1,1}, 0);
-					ImGui::PopStyleColor(2);
+					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.05));
+					ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.1));
+					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
+					ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{0,0}, ImVec2{1,1}, THUMBNAIL_PADDING);
+					ImGui::PopStyleColor(3);
 					ImGui::PopID();
 
 					renderAssetContextMenu(directoryEntry);
 					processDirectoryEntryClicks(directoryEntry);
 
 					if (pathToRename == path) {
-						ImGui::PushItemWidth(thumbnailSize);
+						ImGui::PushItemWidth(ENTRY_SIZE);
 						const auto flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
 						if (ImGui::InputText("##AssetRename", &pathRenameNewName, flags)) {
 							tryRenameFile();
@@ -336,7 +410,7 @@ namespace Grindstone {
 			}
 
 			void AssetBrowserPanel::renderAssets() {
-				const float cellSize = thumbnailSize + padding;
+				const float cellSize = ENTRY_SIZE + PADDING;
 
 				const float panelWidth = ImGui::GetContentRegionAvail().x;
 				int columnCount = (int)(panelWidth / cellSize);
