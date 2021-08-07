@@ -1,18 +1,20 @@
+#include "EngineCore/Scenes/Scene.hpp"
+#include "Editor/EditorManager.hpp"
 #include "NewComponentInput.hpp"
 
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
 			void NewComponentInput::render(
-				entt::registry& registry,
+				SceneManagement::Scene* scene,
 				entt::entity entity,
-				std::vector<std::string>& unusedComponentsItems,
-				std::vector<ECS::ComponentFunctions>& unusedComponentsFunctions
+				std::vector<std::string>& unusedComponentsItems
 			) {
 				size_t chosenItem = suggestedInput.render(unusedComponentsItems);
 				
 				if (chosenItem != -1) {
-					unusedComponentsFunctions[chosenItem].createComponentFn(registry, entity);
+					std::string& componentToDeleteName = unusedComponentsItems[chosenItem];
+					Manager::GetInstance().getCommandList().AddComponent(scene, entity, componentToDeleteName.c_str());
 				}
 			}
 		}

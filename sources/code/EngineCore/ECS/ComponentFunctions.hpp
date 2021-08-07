@@ -9,10 +9,18 @@ namespace Grindstone {
 		using GetComponentReflectionDataFn = Grindstone::Reflection::TypeDescriptor_Struct(*)();
 		using TryGetComponentFn = bool(*)(entt::registry& registry, entt::entity entity, void*& outEntity);
 		using CreateComponentFn = void*(*)(entt::registry& registry, entt::entity entity);
+		using DeleteComponentFn = void(*)(entt::registry& registry, entt::entity entity);
 
 		template<typename T>
-		void* createTagComponent(entt::registry& registry, entt::entity entity) {
+		void* createComponent(entt::registry& registry, entt::entity entity) {
 			return &registry.emplace<T>(entity);
+		}
+
+		template<typename T>
+		void deleteComponent(entt::registry& registry, entt::entity entity) {
+			if (registry.has<T>(entity)) {
+				registry.remove<T>(entity);
+			}
 		}
 
 		template<typename T>
@@ -34,6 +42,7 @@ namespace Grindstone {
 		class ComponentFunctions {
 		public:
 			CreateComponentFn createComponentFn;
+			DeleteComponentFn deleteComponentFn;
 			TryGetComponentFn tryGetComponentFn;
 			GetComponentReflectionDataFn getComponentReflectionDataFn;
 		};

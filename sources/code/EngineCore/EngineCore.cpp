@@ -22,6 +22,8 @@
 #include "EngineCore/Assets/Textures/TextureManager.hpp"
 #include "EngineCore/Assets/Shaders/ShaderManager.hpp"
 #include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
+#include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
+#include "EngineCore/Assets/AssetRendererManager.hpp"
 
 using namespace Grindstone;
 
@@ -54,6 +56,8 @@ bool EngineCore::initialize(CreateInfo& create_info) {
 	textureManager = new TextureManager();
 	shaderManager = new ShaderManager();
 	mesh3dManager = new Mesh3dManager();
+	assetRendererManager = new AssetRendererManager();
+	assetRendererManager->AddAssetRenderer(new Mesh3dRenderer());
 
 	systemRegistrar = new ECS::SystemRegistrar();
 	setupCoreSystems(systemRegistrar);

@@ -12,7 +12,7 @@ namespace Grindstone {
 		namespace ImguiEditor {
 			void ComponentInspector::render(
 				ECS::ComponentRegistrar& registrar,
-				entt::registry& registry,
+				SceneManagement::Scene* scene,
 				entt::entity entity
 			) {
 				std::vector<std::string> unusedComponentsItems;
@@ -22,9 +22,9 @@ namespace Grindstone {
 					auto componentReflectionData = componentEntry.second.getComponentReflectionDataFn();
 					auto tryGetComponentFn = componentEntry.second.tryGetComponentFn;
 
-					void* outEntity = nullptr;
-					if (tryGetComponentFn(registry, entity, outEntity)) {
-						renderComponent(componentTypeName, componentReflectionData, outEntity);
+					void* outComponent = nullptr;
+					if (scene->tryGetComponent(componentTypeName, entity, outComponent)) {
+						renderComponent(componentTypeName, componentReflectionData, outComponent);
 					}
 					else {
 						unusedComponentsItems.push_back(componentEntry.first);
@@ -36,10 +36,9 @@ namespace Grindstone {
 
 				ImGui::Text("Attach a component:");
 				newComponentInput.render(
-					registry,
+					scene,
 					entity,
-					unusedComponentsItems,
-					unusedComponentsFunctions
+					unusedComponentsItems
 				);
 			}
 

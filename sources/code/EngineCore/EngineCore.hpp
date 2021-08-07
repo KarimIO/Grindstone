@@ -33,6 +33,7 @@ namespace Grindstone {
 	class DisplayManager;
 	class WindowManager;
 
+	class AssetRendererManager;
 	class MaterialManager;
 	class TextureManager;
 	class ShaderManager;
@@ -67,6 +68,7 @@ namespace Grindstone {
 		TextureManager* textureManager = nullptr;
 		ShaderManager* shaderManager = nullptr;
 		Mesh3dManager* mesh3dManager = nullptr;
+		AssetRendererManager* assetRendererManager = nullptr;
 	private:
 		SceneManagement::SceneManager* sceneManager = nullptr;
 		ECS::ComponentRegistrar* componentRegistrar = nullptr;

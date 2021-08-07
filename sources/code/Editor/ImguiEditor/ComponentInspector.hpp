@@ -8,7 +8,6 @@
 namespace Grindstone {
 	namespace SceneManagement {
 		class Scene;
-		class SceneManager;
 	}
 
 	namespace ECS {
@@ -19,7 +18,7 @@ namespace Grindstone {
 		namespace ImguiEditor {
 			class ComponentInspector {
 			public:
-				void render(ECS::ComponentRegistrar& registrar, entt::registry& registry, entt::entity entity);
+				void render(ECS::ComponentRegistrar& registrar, SceneManagement::Scene* scene, entt::entity entity);
 			private:
 				void renderComponent(
 					const char* componentTypeName,

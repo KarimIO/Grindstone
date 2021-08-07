@@ -12,6 +12,7 @@ namespace Grindstone {
 				void render();
 			private:
 				void renderFileMenu();
+				void renderEditMenu();
 				void renderViewMenu();
 				void renderConvertMenu();
 			private:

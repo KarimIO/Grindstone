@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Commands/CommandList.hpp"
+
 namespace Grindstone {
 	class EngineCore;
 
@@ -12,6 +14,9 @@ namespace Grindstone {
 
 		class Manager {
 		public:
+			Manager() = default;
+			static Manager& GetInstance();
+			CommandList& getCommandList();
 			bool initialize();
 			~Manager();
 			void run();
@@ -21,6 +26,7 @@ namespace Grindstone {
 		private:
 			EngineCore* engineCore;
 			ImguiEditor::ImguiEditor* imguiEditor;
+			CommandList commandList;
 		};
 	}
 }

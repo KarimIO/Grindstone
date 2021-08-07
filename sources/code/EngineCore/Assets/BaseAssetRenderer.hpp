@@ -13,7 +13,7 @@ namespace Grindstone {
 
 	class BaseAssetRenderer {
 	public:
-		void AddQueue(const char* name, RenderQueueContainer renderQueueContainer);
+		void AddQueue(const char* name);
 		void RenderQueue(const char* name);
 	private:
 		virtual void RenderQueue(RenderQueueContainer& renderQueueContainer) = 0;

@@ -25,6 +25,8 @@ namespace Grindstone {
 			virtual ECS::Entity createEntity();
 			virtual ECS::Entity createDefaultEntity();
 			virtual void* attachComponent(ECS::Entity entity, const char* componentName);
+			virtual bool tryGetComponent(const char* name, ECS::Entity entity, void*& outComponent);
+			virtual void detachComponent(ECS::Entity entity, const char* componentName);
 			virtual const char* getName();
 			virtual entt::registry* getEntityRegistry();
 			virtual ECS::ComponentRegistrar* getComponentRegistrar();

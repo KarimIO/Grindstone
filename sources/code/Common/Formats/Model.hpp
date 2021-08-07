@@ -18,6 +18,11 @@ namespace Grindstone {
 					uint64_t vertexCount = 0;
 					uint64_t indexCount = 0;
 					IndexSize isUsing32BitIndices = IndexSize::Bit16;
+					bool hasVertexPositions = false;
+					bool hasVertexNormals = false;
+					bool hasVertexTangents = false;
+					bool hasVertexTexCoord0 = false;
+					bool hasVertexTexCoord1 = false;
 				};
 			}
 		}

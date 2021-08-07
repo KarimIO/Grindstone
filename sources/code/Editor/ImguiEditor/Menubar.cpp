@@ -1,6 +1,7 @@
 #include <iostream>
 #include <imgui/imgui.h>
 #include "ImguiEditor.hpp"
+#include "../EditorManager.hpp"
 #include "Menubar.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
@@ -13,6 +14,10 @@ void Menubar::render() {
 
 	if (ImGui::BeginMenu("File")) {
 		renderFileMenu();
+	}
+
+	if (ImGui::BeginMenu("Edit")) {
+		renderEditMenu();
 	}
 
 	if (ImGui::BeginMenu("View")) {
@@ -38,6 +43,16 @@ void Menubar::renderFileMenu() {
 		editor->importFile();
 	}
 	if (ImGui::MenuItem("Exit", false)) {}
+	ImGui::EndMenu();
+}
+
+void Menubar::renderEditMenu() {
+	if (ImGui::MenuItem("Undo", "", false)) {
+		Editor::Manager::GetInstance().getCommandList().Undo();
+	}
+	if (ImGui::MenuItem("Redo", "", false)) {
+		Editor::Manager::GetInstance().getCommandList().Redo();
+	}
 	ImGui::EndMenu();
 }
 

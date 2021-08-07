@@ -1,8 +1,8 @@
 #include "BaseAssetRenderer.hpp"
 using namespace Grindstone;
 
-void BaseAssetRenderer::AddQueue(const char* name, RenderQueueContainer renderQueueContainer) {
-	renderQueues[name] = renderQueueContainer;
+void BaseAssetRenderer::AddQueue(const char* name) {
+	// renderQueues[name] = renderQueueContainer;
 }
 
 void BaseAssetRenderer::RenderQueue(const char* name) {

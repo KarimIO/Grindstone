@@ -14,14 +14,22 @@ void* ComponentRegistrar::createComponent(const char *name, entt::registry& regi
 	return selectedFactory->second.createComponentFn(registry, entity);
 }
 
+void ComponentRegistrar::deleteComponent(const char *name, entt::registry& registry, ECS::Entity entity) {
+	auto selectedFactory = componentFunctionsList.find(name);
+	if (selectedFactory == componentFunctionsList.end()) {
+		return;
+	}
+
+	return selectedFactory->second.deleteComponentFn(registry, entity);
+}
+
 bool ComponentRegistrar::tryGetComponent(const char *name, entt::registry& registry, ECS::Entity entity, void*& outComponent) {
 	auto selectedFactory = componentFunctionsList.find(name);
 	if (selectedFactory == componentFunctionsList.end()) {
 		return false;
 	}
 
-	outComponent = selectedFactory->second.createComponentFn(registry, entity);
-	return true;
+	return selectedFactory->second.tryGetComponentFn(registry, entity, outComponent);
 }
 
 bool ComponentRegistrar::tryGetComponentReflectionData(const char *name, Grindstone::Reflection::TypeDescriptor_Struct& outReflectionData) {

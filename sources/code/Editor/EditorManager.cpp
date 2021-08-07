@@ -3,22 +3,31 @@
 #include "EngineCore/EngineCore.hpp"
 #include "EditorManager.hpp"
 #include "ImguiEditor/ImguiEditor.hpp"
-
 using namespace Grindstone;
+using namespace Grindstone::Editor;
 
-bool Editor::Manager::initialize() {
+Manager& Manager::GetInstance() {
+	static Editor::Manager manager;
+	return manager;
+}
+
+CommandList& Manager::getCommandList() {
+	return commandList;
+}
+
+bool Manager::initialize() {
 	if (!loadEngine())			return false;
 	if (!setupImguiEditor())	return false;
 
 	return true;
 }
 
-bool Editor::Manager::setupImguiEditor() {
+bool Manager::setupImguiEditor() {
 	imguiEditor = new ImguiEditor::ImguiEditor(engineCore);
 	return true;
 }
 
-void Editor::Manager::run() {
+void Manager::run() {
 	while (true) {
 		engineCore->runLoopIteration();
 		imguiEditor->update();
@@ -27,7 +36,7 @@ void Editor::Manager::run() {
 }
 
 using CreateEngineFunction = EngineCore*(EngineCore::CreateInfo&);
-bool Editor::Manager::loadEngine() {
+bool Manager::loadEngine() {
 	Grindstone::Utilities::Modules::Handle handle;
 	handle = Grindstone::Utilities::Modules::load("EngineCore");
 
@@ -52,7 +61,7 @@ bool Editor::Manager::loadEngine() {
 	return true;
 }
 
-Editor::Manager::~Manager() {
+Manager::~Manager() {
 	/*if (handle) {
 		Grindstone::Utilities::Modules::unload(handle);
 		handle = 0;

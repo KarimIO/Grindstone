@@ -27,7 +27,7 @@ namespace Grindstone {
 			uint32_t indexCount = 0;
 			uint32_t baseVertex = 0;
 			uint32_t baseIndex = 0;
-			Mesh3d& mesh;
+			Mesh3d* mesh;
 		};
 		
 		std::string path;

@@ -10,6 +10,7 @@
 #include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
 #include "EngineCore/Assets/Shaders/Shader.hpp"
 #include "EngineCore/Assets/Materials/Material.hpp"
+#include "EngineCore/Assets/AssetRendererManager.hpp"
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
@@ -131,8 +132,8 @@ void Grindstone::BaseRender(
 		// auto materialManager = EngineCore::GetInstance().materialManager;
 		// myMaterial = &materialManager->LoadMaterial("../assets/New Material.gmat");
 
-		Mesh3dManager* mesh3dManager = EngineCore::GetInstance().mesh3dManager;
-		mesh3dManager->LoadMesh3d("../assets/models/sphere.gmf");
+		// Mesh3dManager* mesh3dManager = EngineCore::GetInstance().mesh3dManager;
+		// mesh3dManager->LoadMesh3d("../assets/models/sphere.gmf");
 
 		isFirst = false;
 	}
@@ -144,6 +145,7 @@ void Grindstone::BaseRender(
 
 	float clearColor[4] = { 0.3f, 0.6f, 0.9f, 1.f };
 	core->Clear(ClearMode::All, clearColor, 1);
+	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
 
 	/*myMaterial->shader->pipeline->bind();
 	if (myMaterial->uniformBufferObject) {

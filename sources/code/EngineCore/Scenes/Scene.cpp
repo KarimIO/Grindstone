@@ -22,6 +22,14 @@ void* Scene::attachComponent(ECS::Entity entity, const char* componentName) {
 	return componentRegistrar->createComponent(componentName, registry, entity);
 }
 
+bool Scene::tryGetComponent(const char* name, ECS::Entity entity, void*& outComponent) {
+	return componentRegistrar->tryGetComponent(name, registry, entity, outComponent);
+}
+
+void Scene::detachComponent(ECS::Entity entity, const char* componentName) {
+	componentRegistrar->deleteComponent(componentName, registry, entity);
+}
+
 ECS::Entity Grindstone::SceneManagement::Scene::createDefaultEntity() {
 	auto entity = createEntity();
 	auto tag = (TagComponent *)attachComponent(entity, "Tag");

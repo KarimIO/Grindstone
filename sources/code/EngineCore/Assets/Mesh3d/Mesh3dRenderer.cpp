@@ -32,7 +32,7 @@ void Mesh3dRenderer::RenderMaterial(Material& material) {
 }
 
 void Mesh3dRenderer::RenderSubmesh(Mesh3d::Submesh& submesh3d) {
-	Mesh3d mesh3d = submesh3d.mesh;
+	Mesh3d& mesh3d = *submesh3d.mesh;
 
 	GraphicsAPI::Core* core = EngineCore::GetInstance().getGraphicsCore();
 	core->BindVertexArrayObject(mesh3d.vertexArrayObject);

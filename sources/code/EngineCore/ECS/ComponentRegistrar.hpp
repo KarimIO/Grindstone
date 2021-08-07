@@ -16,13 +16,15 @@ namespace Grindstone {
 			template<typename T>
 			void registerComponent(const char* name) {
 				registerComponent(name, {
-					&ECS::createTagComponent<T>,
+					&ECS::createComponent<T>,
+					&ECS::deleteComponent<T>,
 					&ECS::tryGetComponent<T>,
 					&ECS::getComponentReflectionData<T>
 				});
 			}
 			void registerComponent(const char *name, ComponentFunctions componentFunctions);
 			void* createComponent(const char *name, entt::registry& registry, ECS::Entity entity);
+			void deleteComponent(const char *name, entt::registry& registry, ECS::Entity entity);
 			bool tryGetComponent(const char *name, entt::registry& registry, ECS::Entity entity, void*& outComponent);
 			bool tryGetComponentReflectionData(const char *name, Grindstone::Reflection::TypeDescriptor_Struct& outReflectionData);
 

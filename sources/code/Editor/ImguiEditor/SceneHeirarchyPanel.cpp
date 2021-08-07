@@ -3,6 +3,8 @@
 #include <entt/entt.hpp>
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
+#include "Editor/Commands/EntityCommands.hpp"
+#include "Editor/EditorManager.hpp"
 #include "ImguiEditor.hpp"
 #include "SceneHeirarchyPanel.hpp"
 
@@ -59,9 +61,9 @@ namespace Grindstone {
 			void SceneHeirarchyPanel::renderScene(SceneManagement::Scene* scene) {
 				auto& registry = *scene->getEntityRegistry();
 
-				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 1, 1, 0.1));
-				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.15));
-				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.2));
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 1, 1, 0.1f));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.15f));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.2f));
 				registry.each(
 					[&](auto entity) {
 						renderEntity(registry, entity);
@@ -71,7 +73,7 @@ namespace Grindstone {
 
 				if (ImGui::BeginPopupContextWindow(0, RIGHT_MOUSE_BUTTON, false)) {
 					if (ImGui::MenuItem("Add new entity")) {
-						scene->createDefaultEntity();
+						Editor::Manager::GetInstance().getCommandList().AddNewEntity(scene);
 					}
 					ImGui::EndPopup();
 				}

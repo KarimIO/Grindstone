@@ -3,18 +3,20 @@
 #include <vector>
 #include <string>
 #include "SuggestedInput.hpp"
-#include "EngineCore/ECS/ComponentFunctions.hpp"
 
 namespace Grindstone {
+	namespace SceneManagement {
+		class Scene;
+	}
+
 	namespace Editor {
 		namespace ImguiEditor {
 			class NewComponentInput {
 			public:
 				void render(
-					entt::registry& registry,
+					SceneManagement::Scene* scene,
 					entt::entity entity,
-					std::vector<std::string>& unusedComponentsItems,
-					std::vector<ECS::ComponentFunctions>& unusedComponentsFunctions
+					std::vector<std::string>& unusedComponentsItems
 				);
 			private:
 				SuggestedInput suggestedInput;

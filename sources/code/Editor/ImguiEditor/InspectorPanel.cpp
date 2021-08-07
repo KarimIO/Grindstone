@@ -55,7 +55,7 @@ namespace Grindstone {
 							SceneManagement::Scene* scene = sceneIterator->second;
 							auto& registrar = *scene->getComponentRegistrar();
 							auto& registry = *scene->getEntityRegistry();
-							componentInspector->render(registrar, registry, selectedEntity);
+							componentInspector->render(registrar, scene, selectedEntity);
 						}
 						else {
 							ImGui::Text("No entity selected.");
