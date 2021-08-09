@@ -22,7 +22,7 @@ namespace Grindstone {
 					
 					Selection& selection = Editor::Manager::GetInstance().GetSelection();
 					if (selection.HasSingleSelectedFile()) {
-						materialInspector->render();
+						materialInspector->Render();
 					}
 					else if (selection.HasSingleSelectedEntity()) {
 						componentInspector->Render(selection.GetSingleSelectedEntity());

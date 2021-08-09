@@ -10,13 +10,13 @@ namespace Grindstone {
 			class ImageConverterModal {
 			public:
 				ImageConverterModal();
-				void show();
-				void render();
+				void Show();
+				void Render();
 			private:
-				void close();
-				void convertFile();
-				std::string getInputPathWithProperSlashes();
-				void renderFormatCombo();
+				void Close();
+				void ConvertFile();
+				std::string GetInputPathWithProperSlashes();
+				void RenderFormatCombo();
 			private:
 				bool shouldImportCubemap = false;
 				bool isShown = false;

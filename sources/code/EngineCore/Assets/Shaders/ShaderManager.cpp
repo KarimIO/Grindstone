@@ -70,7 +70,7 @@ void ShaderManager::CreateReflectionDataForShader(const char* path, Shader& shad
 }
 
 void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& shader) {
-	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().getGraphicsCore();
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	auto& shaderStagesBitMask = shader.reflectionData.shaderStagesBitMask;
 	size_t numShaderStages = shader.reflectionData.numShaderStages;
@@ -127,9 +127,9 @@ void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& s
 
 	for (auto& uniform : shader.reflectionData.uniformBuffers) {
 		GraphicsAPI::UniformBufferBinding::CreateInfo ubbCi{};
-		ubbCi.binding = uniform.bindingId;
+		ubbCi.binding = (uint32_t)uniform.bindingId;
 		ubbCi.shaderLocation = uniform.name.c_str();
-		ubbCi.size = uniform.bufferSize;
+		ubbCi.size = (uint32_t)uniform.bufferSize;
 		ubbCi.stages = (GraphicsAPI::ShaderStageBit)uniform.shaderStagesBitMask;
 		ubbs.push_back(graphicsCore->CreateUniformBufferBinding(ubbCi));
 	}

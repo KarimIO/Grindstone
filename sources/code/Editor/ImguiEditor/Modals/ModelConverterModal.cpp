@@ -20,27 +20,27 @@ namespace Grindstone {
 		namespace ImguiEditor {
 			ModelConverterModal::ModelConverterModal() {}
 
-			void ModelConverterModal::show() {
+			void ModelConverterModal::Show() {
 				isShown = true;
 				modelPath = "";
 			}
 
-			void ModelConverterModal::convertFile() {
+			void ModelConverterModal::ConvertFile() {
 				isProcessing = true;
 				std::string slashSwappedStr = modelPath;
 				std::replace(slashSwappedStr.begin(), slashSwappedStr.end(), '\\', '/');
 				std::string outputPath = GetGmfPath(GetModelAssetPath(slashSwappedStr));
 				//ConvertTexture(slashSwappedStr, false, outputPath);
 				isProcessing = false;
-				close();
+				Close();
 			}
 
-			void ModelConverterModal::close() {
+			void ModelConverterModal::Close() {
 				isShown = false;
 				ImGui::CloseCurrentPopup();
 			}
 
-			void ModelConverterModal::render() {
+			void ModelConverterModal::Render() {
 				if (isShown) {
 					ImGui::OpenPopup("Convert Model");
 				}
@@ -61,11 +61,11 @@ namespace Grindstone {
 						ImGui::PopStyleColor();
 
 						if (ImGui::Button("Convert")) {
-							convertFile();
+							ConvertFile();
 						}
 						ImGui::SameLine();
 						if (ImGui::Button("Cancel")) {
-							close();
+							Close();
 						}
 					}
 					

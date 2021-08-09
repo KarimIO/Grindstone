@@ -20,13 +20,13 @@ namespace Grindstone {
 			class ImguiEditor {
 			public:
 				ImguiEditor(EngineCore* engineCore);
-				void update();
-				void render();
-				void showModelModal();
-				void showImageModal();
-				void importFile(const char* folderPathToImportTo = "");
+				void Update();
+				void Render();
+				void ShowModelModal();
+				void ShowImageModal();
+				void ImportFile(const char* folderPathToImportTo = "");
 			private:
-				void renderDockspace();
+				void RenderDockspace();
 			private:
 				EngineCore* engineCore = nullptr;
 				ImguiInput* input = nullptr;

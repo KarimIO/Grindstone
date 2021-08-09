@@ -19,6 +19,7 @@ namespace Grindstone {
 			static Manager& GetInstance();
 			CommandList& GetCommandList();
 			Selection& GetSelection();
+			EngineCore& GetEngineCore();
 			bool Initialize();
 			~Manager();
 			void Run();

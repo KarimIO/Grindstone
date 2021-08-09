@@ -27,7 +27,7 @@
 
 using namespace Grindstone;
 
-bool EngineCore::initialize(CreateInfo& create_info) {
+bool EngineCore::Initialize(CreateInfo& create_info) {
 	Logger::init("../log/output.log");
 	GRIND_PROFILE_BEGIN_SESSION("Loading", "../log/grind-profile-load.json");
 	GRIND_LOG("Initializing {0}...", create_info.applicationTitle);
@@ -60,10 +60,10 @@ bool EngineCore::initialize(CreateInfo& create_info) {
 	assetRendererManager->AddAssetRenderer(new Mesh3dRenderer());
 
 	systemRegistrar = new ECS::SystemRegistrar();
-	setupCoreSystems(systemRegistrar);
+	SetupCoreSystems(systemRegistrar);
 	componentRegistrar = new ECS::ComponentRegistrar();
 	setupCoreComponents(componentRegistrar);
-	sceneManager = new SceneManagement::SceneManager(this);
+	sceneManager = new SceneManagement::SceneManager();
 
 	sceneManager->loadDefaultScene();
 
@@ -78,18 +78,18 @@ EngineCore& EngineCore::GetInstance() {
 	return instance;
 }
 
-void EngineCore::run() {
+void EngineCore::Run() {
 	while (!shouldClose) {
-		runLoopIteration();
-		updateWindows();
+		RunLoopIteration();
+		UpdateWindows();
 	}
 }
 
-void EngineCore::runLoopIteration() {
+void EngineCore::RunLoopIteration() {
 	sceneManager->update();
 }
 
-void EngineCore::updateWindows() {
+void EngineCore::UpdateWindows() {
 	windowManager->UpdateWindows();
 	eventDispatcher->HandleEvents();
 }
@@ -101,34 +101,34 @@ EngineCore::~EngineCore() {
 	GRIND_LOG("Closed.");
 }
 
-void EngineCore::registerGraphicsCore(GraphicsAPI::Core* graphicsCore) {
+void EngineCore::RegisterGraphicsCore(GraphicsAPI::Core* graphicsCore) {
 	this->graphicsCore = graphicsCore;
 }
 
-void EngineCore::registerInputManager(Input::Interface* inputManager) {
+void EngineCore::RegisterInputManager(Input::Interface* inputManager) {
 	this->inputManager = inputManager;
 }
 
-Input::Interface* EngineCore::getInputManager() {
+Input::Interface* EngineCore::GetInputManager() {
 	return inputManager;
 }
 
-SceneManagement::SceneManager* EngineCore::getSceneManager() {
+SceneManagement::SceneManager* EngineCore::GetSceneManager() {
 	return sceneManager;
 }
 
-ECS::ComponentRegistrar* EngineCore::getComponentRegistrar() {
+ECS::ComponentRegistrar* EngineCore::GetComponentRegistrar() {
 	return componentRegistrar;
 }
 
-GraphicsAPI::Core* EngineCore::getGraphicsCore() {
+GraphicsAPI::Core* EngineCore::GetGraphicsCore() {
 	return graphicsCore;
 }
 
-ECS::SystemRegistrar* EngineCore::getSystemRegistrar() {
+ECS::SystemRegistrar* EngineCore::GetSystemRegistrar() {
 	return systemRegistrar;
 }
 
-Events::Dispatcher* EngineCore::getEventDispatcher() {
+Events::Dispatcher* EngineCore::GetEventDispatcher() {
 	return eventDispatcher;
 }

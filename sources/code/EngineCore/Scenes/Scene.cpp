@@ -1,19 +1,15 @@
 #include <stdexcept>
 #include <iostream>
 
+#include "EngineCore/EngineCore.hpp"
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
+#include "EngineCore/ECS/SystemRegistrar.hpp"
 #include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "Scene.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
-
-Scene::Scene(
-	EngineCore* engineCore,
-	ECS::ComponentRegistrar* componentRegistrar,
-	ECS::SystemRegistrar* systemRegistrar
-) : engineCore(engineCore), componentRegistrar(componentRegistrar), systemRegistrar(systemRegistrar) {}
 
 ECS::Entity Scene::CreateEmptyEntity() {
 	entt::entity entityId = registry.create();
@@ -39,14 +35,15 @@ const char* Grindstone::SceneManagement::Scene::GetName() {
 	return name.c_str();
 }
 
+// Made so that entities can access componentregistrat without requiring enginecore.
+ECS::ComponentRegistrar* Scene::GetComponentRegistrar() const {
+	return EngineCore::GetInstance().GetComponentRegistrar();
+}
+
 entt::registry& Scene::GetEntityRegistry() {
 	return registry;
 }
 
-ECS::ComponentRegistrar* Grindstone::SceneManagement::Scene::GetComponentRegistrar() {
-	return componentRegistrar;
-}
-
 void Scene::Update() {
-	systemRegistrar->Update(engineCore, registry);
+	EngineCore::GetInstance().GetSystemRegistrar()->Update(registry);
 }

@@ -48,17 +48,17 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 
 	ImGui_ImplOpenGL3_Init("#version 150");
 
-	sceneHeirarchyPanel = new SceneHeirarchyPanel(engineCore->getSceneManager(), this);
+	sceneHeirarchyPanel = new SceneHeirarchyPanel(engineCore->GetSceneManager(), this);
 	modelConverterModal = new ModelConverterModal();
 	imageConverterModal = new ImageConverterModal();
 	inspectorPanel = new InspectorPanel(engineCore);
 	assetBrowserPanel = new AssetBrowserPanel(engineCore, this);
-	viewportPanel = new ViewportPanel(engineCore->getGraphicsCore());
-	systemPanel = new SystemPanel(engineCore->getSystemRegistrar());
+	viewportPanel = new ViewportPanel(engineCore->GetGraphicsCore());
+	systemPanel = new SystemPanel(engineCore->GetSystemRegistrar());
 	menubar = new Menubar(this);
 }
 
-void ImguiEditor::update() {
+void ImguiEditor::Update() {
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
@@ -66,7 +66,7 @@ void ImguiEditor::update() {
 	glViewport(0, 0, 800, 600);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	render();
+	Render();
 
 	// Rendering
 	ImGui::Render();
@@ -75,31 +75,31 @@ void ImguiEditor::update() {
 	ImGui::RenderPlatformWindowsDefault();
 }
 
-void ImguiEditor::render() {
-	renderDockspace();
-	modelConverterModal->render();
-	imageConverterModal->render();
-	assetBrowserPanel->render();
+void ImguiEditor::Render() {
+	RenderDockspace();
+	modelConverterModal->Render();
+	imageConverterModal->Render();
+	assetBrowserPanel->Render();
 	sceneHeirarchyPanel->Render();
-	viewportPanel->render();
-	systemPanel->render();
+	viewportPanel->Render();
+	systemPanel->Render();
 	inspectorPanel->Render();
 }
 
-void ImguiEditor::showModelModal() {
-	modelConverterModal->show();
+void ImguiEditor::ShowModelModal() {
+	modelConverterModal->Show();
 }
 
-void ImguiEditor::showImageModal() {
-	imageConverterModal->show();
+void ImguiEditor::ShowImageModal() {
+	imageConverterModal->Show();
 }
 
-void ImguiEditor::importFile(const char* folderPathToImportTo) {
+void ImguiEditor::ImportFile(const char* folderPathToImportTo) {
 	auto window = engineCore->windowManager->GetWindowByIndex(0);
 	auto filePath = window->OpenFileDialogue();
 }
 
-void ImguiEditor::renderDockspace() {
+void ImguiEditor::RenderDockspace() {
 	static ImGuiDockNodeFlags optFlags = ImGuiDockNodeFlags_None;
 
 	// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
@@ -127,7 +127,7 @@ void ImguiEditor::renderDockspace() {
 	ImGuiID dockspaceId = ImGui::GetID("Editor Dockspace");
 	ImGui::DockSpace(dockspaceId, ImVec2(0.0f, 0.0f), optFlags);
 
-	menubar->render();
+	menubar->Render();
 
 	ImGui::End();
 }

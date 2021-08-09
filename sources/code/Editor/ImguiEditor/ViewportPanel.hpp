@@ -12,7 +12,7 @@ namespace Grindstone {
 			class ViewportPanel {
 			public:
 				ViewportPanel(GraphicsAPI::Core* graphicsCore);
-				void render();
+				void Render();
 			private:
 				bool isShowingPanel = true;
 				EditorCamera* camera;

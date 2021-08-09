@@ -7,31 +7,31 @@ using namespace Grindstone::Editor::ImguiEditor;
 
 Menubar::Menubar(ImguiEditor* editor) : editor(editor) {}
 
-void Menubar::render() {
+void Menubar::Render() {
 	if (!ImGui::BeginMenuBar()) {
 		return;
 	}
 
 	if (ImGui::BeginMenu("File")) {
-		renderFileMenu();
+		RenderFileMenu();
 	}
 
 	if (ImGui::BeginMenu("Edit")) {
-		renderEditMenu();
+		RenderEditMenu();
 	}
 
 	if (ImGui::BeginMenu("View")) {
-		renderViewMenu();
+		RenderViewMenu();
 	}
 
 	if (ImGui::BeginMenu("Convert")) {
-		renderConvertMenu();
+		RenderConvertMenu();
 	}
 
 	ImGui::EndMenuBar();
 }
 
-void Menubar::renderFileMenu() {
+void Menubar::RenderFileMenu() {
 	if (ImGui::MenuItem("New", "Ctrl+N", false)) {}
 	if (ImGui::MenuItem("Save", "Ctrl+S", false)) {}
 	if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S", false)) {}
@@ -40,13 +40,13 @@ void Menubar::renderFileMenu() {
 	if (ImGui::MenuItem("Load...", "Ctrl+O", false)) {}
 	ImGui::Separator();
 	if (ImGui::MenuItem("Import...", "Ctrl+I", false)) {
-		editor->importFile();
+		editor->ImportFile();
 	}
 	if (ImGui::MenuItem("Exit", false)) {}
 	ImGui::EndMenu();
 }
 
-void Menubar::renderEditMenu() {
+void Menubar::RenderEditMenu() {
 	auto& commandList = Editor::Manager::GetInstance().GetCommandList();
 	if (ImGui::MenuItem("Undo", "", false, commandList.HasAvailableUndo())) {
 		commandList.Undo();
@@ -57,7 +57,7 @@ void Menubar::renderEditMenu() {
 	ImGui::EndMenu();
 }
 
-void Menubar::renderViewMenu() {
+void Menubar::RenderViewMenu() {
 	if (ImGui::MenuItem("Show Asset Browser", "", false)) {}
 	if (ImGui::MenuItem("Show Scene Graph", "", false)) {}
 	if (ImGui::MenuItem("Show Inspector Panel", "", false)) {}
@@ -65,12 +65,12 @@ void Menubar::renderViewMenu() {
 	ImGui::EndMenu();
 }
 
-void Menubar::renderConvertMenu() {
+void Menubar::RenderConvertMenu() {
 	if (ImGui::MenuItem("Convert Model", "", false)) {
-		editor->showModelModal();
+		editor->ShowModelModal();
 	}
 	if (ImGui::MenuItem("Convert Image", "", false)) {
-		editor->showImageModal();
+		editor->ShowImageModal();
 	}
 	ImGui::EndMenu();
 }

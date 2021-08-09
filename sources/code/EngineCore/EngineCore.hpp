@@ -48,19 +48,19 @@ namespace Grindstone {
 			const char* applicationTitle = nullptr;
 		};
 
-		bool initialize(CreateInfo& ci);
+		bool Initialize(CreateInfo& ci);
 		~EngineCore();
-		virtual void run();
-		virtual void runLoopIteration();
-		virtual void updateWindows();
-		void registerGraphicsCore(GraphicsAPI::Core*);
-		virtual void registerInputManager(Input::Interface*);
-		virtual Input::Interface* getInputManager();
-		virtual SceneManagement::SceneManager* getSceneManager();
-		virtual ECS::SystemRegistrar* getSystemRegistrar();
-		virtual Events::Dispatcher* getEventDispatcher();
-		virtual ECS::ComponentRegistrar* getComponentRegistrar();
-		virtual GraphicsAPI::Core* getGraphicsCore();
+		virtual void Run();
+		virtual void RunLoopIteration();
+		virtual void UpdateWindows();
+		void RegisterGraphicsCore(GraphicsAPI::Core*);
+		virtual void RegisterInputManager(Input::Interface*);
+		virtual Input::Interface* GetInputManager();
+		virtual SceneManagement::SceneManager* GetSceneManager();
+		virtual ECS::SystemRegistrar* GetSystemRegistrar();
+		virtual Events::Dispatcher* GetEventDispatcher();
+		virtual ECS::ComponentRegistrar* GetComponentRegistrar();
+		virtual GraphicsAPI::Core* GetGraphicsCore();
 	public:
 		DisplayManager* displayManager;
 		WindowManager* windowManager;

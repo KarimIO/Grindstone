@@ -23,6 +23,7 @@ namespace Grindstone {
 			virtual void* GetComponent(const char* componentType);
 			virtual bool TryGetComponent(const char* componentType, void*& outComponent);
 			virtual void RemoveComponent(const char* componentType);
+			virtual void Destroy();
 
 			template<typename ComponentType, typename... Args>
 			ComponentType& AddComponent(Args&&... args) {

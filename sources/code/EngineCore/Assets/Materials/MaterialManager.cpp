@@ -44,7 +44,7 @@ Material MaterialManager::CreateMaterialFromData(std::filesystem::path relativeP
 	ShaderManager* shaderManager = EngineCore::GetInstance().shaderManager;
 	Shader* shader = &shaderManager->LoadShader(shaderPath.c_str());
 
-	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().getGraphicsCore();
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	GraphicsAPI::UniformBufferBinding* uniformBufferBinding = nullptr;
 	GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
 	char* bufferSpace = nullptr;
@@ -58,14 +58,14 @@ Material MaterialManager::CreateMaterialFromData(std::filesystem::path relativeP
 		GraphicsAPI::UniformBufferBinding::CreateInfo ubbCi{};
 		ubbCi.binding = 1;
 		ubbCi.shaderLocation = "MaterialUbo";
-		ubbCi.size = uniformBuffer.bufferSize;
+		ubbCi.size = (uint32_t)uniformBuffer.bufferSize;
 		ubbCi.stages = (GraphicsAPI::ShaderStageBit)uniformBuffer.shaderStagesBitMask;
 		uniformBufferBinding = graphicsCore->CreateUniformBufferBinding(ubbCi);
 
 		GraphicsAPI::UniformBuffer::CreateInfo ubCi{};
 		ubCi.binding = uniformBufferBinding;
 		ubCi.isDynamic = true;
-		ubCi.size = uniformBuffer.bufferSize;
+		ubCi.size = (uint32_t)uniformBuffer.bufferSize;
 		uniformBufferObject = graphicsCore->CreateUniformBuffer(ubCi);
 
 		if (uniformBuffer.bufferSize == 0) {
@@ -79,7 +79,7 @@ Material MaterialManager::CreateMaterialFromData(std::filesystem::path relativeP
 				auto& params = parametersJson[member.name.c_str()].GetArray();
 				std::vector<float> paramArray;
 				paramArray.resize(params.Size());
-				for (int i = 0; i < params.Size(); ++i) {
+				for (rapidjson::SizeType i = 0; i < params.Size(); ++i) {
 					paramArray[i] = params[i].GetFloat();
 				}
 

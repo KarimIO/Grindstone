@@ -4,8 +4,6 @@
 #include "Manager.hpp"
 using namespace Grindstone::SceneManagement;
 
-SceneManager::SceneManager(EngineCore* core) : engineCore(core) {}
-
 void SceneManager::loadDefaultScene() {
 	BuildSettings::SceneBuildSettings settings; 
 	const char* defaultPath = settings.getDefaultScene();
@@ -19,7 +17,7 @@ void SceneManager::update() {
 }
 
 Scene* SceneManager::loadScene(const char *path) {
-	Scene* newScene = new Scene(engineCore, engineCore->getComponentRegistrar(), engineCore->getSystemRegistrar());
+	Scene* newScene = new Scene();
 	SceneLoaderJson sceneLoader(newScene, path);
 	scenes[path] = newScene;
 
@@ -27,7 +25,7 @@ Scene* SceneManager::loadScene(const char *path) {
 }
 
 Scene* SceneManager::addEmptyScene(const char *name) {
-	Scene* newScene = new Scene(engineCore, engineCore->getComponentRegistrar(), engineCore->getSystemRegistrar());
+	Scene* newScene = new Scene();
 	scenes[name] = newScene;
 
 	return newScene;

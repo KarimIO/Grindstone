@@ -6,6 +6,6 @@ namespace Grindstone {
 	class EngineCore;
 	
 	namespace ECS {
-		using SystemFactory = void(*)(EngineCore*, entt::registry&);
+		using SystemFactory = void(*)(entt::registry&);
 	}
 }

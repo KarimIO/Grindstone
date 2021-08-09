@@ -21,7 +21,8 @@ glm::vec3 eulerToForward(glm::vec3 eulerAngle) {
 }
 
 namespace Grindstone {
-	void renderSystem(EngineCore* engineCore, entt::registry& registry) {
+	void RenderSystem(entt::registry& registry) {
+		EngineCore& engineCore = EngineCore::GetInstance();
 		const auto upVector = glm::vec3(0, 1, 0);
 		auto view = registry.view<const TransformComponent, const CameraComponent>();
 
@@ -56,7 +57,7 @@ namespace Grindstone {
 			);
 
 			BaseRender(
-				engineCore->getGraphicsCore(),
+				engineCore.GetGraphicsCore(),
 				projectionMatrix,
 				viewMatrix
 			);

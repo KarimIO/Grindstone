@@ -20,23 +20,23 @@ namespace Grindstone {
 			class AssetBrowserPanel {
 			public:
 				AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor);
-				void render();
+				void Render();
 			private:
-				void setPath(std::filesystem::path path);
-				void refreshAssetsIfNecessary();
-				void sortAlphabetically(std::vector<std::filesystem::directory_entry> entries);
-				void refreshAssets();
-				void processDirectoryEntryClicks(std::filesystem::directory_entry entry);
-				void clickDirectoryEntry(std::filesystem::directory_entry entry);
-				void renderPath();
-				void renderContextMenuConvertButton(std::filesystem::directory_entry entry);
-				void renderAssetContextMenu(std::filesystem::directory_entry entry);
-				void renderCurrentDirectoryContextMenu();
-				void tryRenameFile();
-				void renderAssetSet(std::vector<std::filesystem::directory_entry> entries);
-				void renderAssets();
-				void afterCreate(std::filesystem::path path);
-				ImTextureID getIcon(const std::filesystem::directory_entry& directoryEntry);
+				void SetPath(std::filesystem::path path);
+				void RefreshAssetsIfNecessary();
+				void SortAlphabetically(std::vector<std::filesystem::directory_entry> entries);
+				void RefreshAssets();
+				void ProcessDirectoryEntryClicks(std::filesystem::directory_entry entry);
+				void ClickDirectoryEntry(std::filesystem::directory_entry entry);
+				void RenderPath();
+				void RenderContextMenuConvertButton(std::filesystem::directory_entry entry);
+				void RenderAssetContextMenu(std::filesystem::directory_entry entry);
+				void RenderCurrentDirectoryContextMenu();
+				void TryRenameFile();
+				void RenderAssetSet(std::vector<std::filesystem::directory_entry> entries);
+				void RenderAssets();
+				void AfterCreate(std::filesystem::path path);
+				ImTextureID GetIcon(const std::filesystem::directory_entry& directoryEntry);
 			private:
 				std::vector<std::filesystem::directory_entry> sortedDirectories;
 				std::vector<std::filesystem::directory_entry> sortedFiles;

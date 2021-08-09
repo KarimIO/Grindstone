@@ -70,7 +70,7 @@ void SceneLoaderJson::ProcessComponent(ECS::Entity entity, rapidjson::GenericObj
 	const char* componentType = component["component"].GetString();
 
 	Reflection::TypeDescriptor_Struct reflectionData;
-	auto componentRegistrar = EngineCore::GetInstance().getComponentRegistrar();
+	auto componentRegistrar = EngineCore::GetInstance().GetComponentRegistrar();
 	if (!componentRegistrar->TryGetComponentReflectionData(componentType, reflectionData)) {
 		return;
 	}

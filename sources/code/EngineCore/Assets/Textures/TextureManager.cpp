@@ -61,7 +61,7 @@ TextureAsset TextureManager::CreateFromDds(const char* data, size_t fileSize) {
 	createInfo.height = header.dwHeight;
 	createInfo.isCubemap = false;
 
-	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().getGraphicsCore();
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	Grindstone::GraphicsAPI::Texture* texture = graphicsCore->CreateTexture(createInfo);
 	
 	return TextureAsset{texture};

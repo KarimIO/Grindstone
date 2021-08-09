@@ -18,15 +18,15 @@ namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
 			MaterialInspector::MaterialInspector(EngineCore* engineCore) : engineCore(engineCore) {}
-			void MaterialInspector::setMaterialPath(const char* materialPath) {
+			void MaterialInspector::SetMaterialPath(const char* materialPath) {
 				this->materialPath = materialPath;
 			}
 
-			void MaterialInspector::render() {
+			void MaterialInspector::Render() {
 				ImGui::Text("Editing Material: %s", materialPath.c_str());
 				ImGui::InputText("Material Name", &materialName);
 				if (BrowseFile(engineCore, "Shader Path", shaderPath)) {
-					tryLoadShaderReflection();
+					TryLoadShaderReflection();
 				}
 
 				if (!shaderPath.empty()) {
@@ -37,12 +37,12 @@ namespace Grindstone {
 						return;
 					}
 					ImGui::Text("Using shader: %s", shaderName.c_str());
-					renderTextures();
-					renderParameters();
+					RenderTextures();
+					RenderParameters();
 				}
 			}
 
-			void MaterialInspector::tryLoadShaderReflection() {
+			void MaterialInspector::TryLoadShaderReflection() {
 				if (!std::filesystem::exists(shaderPath)) {
 					hasLoadFile = false;
 					return;
@@ -54,10 +54,10 @@ namespace Grindstone {
 				shaderName = document["name"].GetString();
 				hasLoadFile = true;
 
-				loadShaderUniformBuffers(document);
+				LoadShaderUniformBuffers(document);
 			}
 
-			void MaterialInspector::loadShaderUniformBuffers(rapidjson::Document& document) {
+			void MaterialInspector::LoadShaderUniformBuffers(rapidjson::Document& document) {
 				if (!document.HasMember("uniformBuffers")) {
 					return;
 				}
@@ -91,7 +91,7 @@ namespace Grindstone {
 				}
 			}
 
-			void MaterialInspector::renderTextures() {
+			void MaterialInspector::RenderTextures() {
 				if (textures.size() == 0) {
 					return;
 				}
@@ -100,11 +100,11 @@ namespace Grindstone {
 				ImGui::Text("Textures:");
 
 				for each (auto texture in textures) {
-					renderTexture(texture);
+					RenderTexture(texture);
 				}
 			}
 
-			void MaterialInspector::renderParameters() {
+			void MaterialInspector::RenderParameters() {
 				for each (auto & uniformBuffer in materialUniformBuffers) {
 					if (ImGui::TreeNode(uniformBuffer.name.c_str())) {
 						for each (auto & member in uniformBuffer.members) {
@@ -122,15 +122,15 @@ namespace Grindstone {
 				ImGui::Text("Parameters:");
 
 				for each(auto parameter in parameters) {
-					renderParameter(parameter);
+					RenderParameter(parameter);
 				}
 			}
 
-			void MaterialInspector::renderTexture(MaterialTexture& texture) {
+			void MaterialInspector::RenderTexture(MaterialTexture& texture) {
 
 			}
 
-			void MaterialInspector::renderParameter(MaterialParameter& parameter) {
+			void MaterialInspector::RenderParameter(MaterialParameter& parameter) {
 				for each (auto& uniformBuffer in materialUniformBuffers) {
 					if (ImGui::TreeNode(uniformBuffer.name.c_str())) {
 						for each (auto& member in uniformBuffer.members) {

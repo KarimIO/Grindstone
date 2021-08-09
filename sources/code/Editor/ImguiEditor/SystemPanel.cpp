@@ -10,19 +10,19 @@ namespace Grindstone {
 				this->systemRegistrar = systemRegistrar;
 			}
 			
-			void SystemPanel::render() {
+			void SystemPanel::Render() {
 				if (isShowingPanel) {
 					ImGui::Begin("Systems", &isShowingPanel);
 
 					for (auto& system : systemRegistrar->systemFactories) {
-						renderSystem(system.first.c_str());
+						RenderSystem(system.first.c_str());
 					}
 
 					ImGui::End();
 				}
 			}
 
-			void SystemPanel::renderSystem(const char *system) {
+			void SystemPanel::RenderSystem(const char *system) {
 				ImGui::Text(system);
 			}
 		}

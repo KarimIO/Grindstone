@@ -19,6 +19,10 @@ Selection& Manager::GetSelection() {
 	return selection;
 }
 
+EngineCore& Manager::GetEngineCore() {
+	return *engineCore;
+}
+
 bool Manager::Initialize() {
 	if (!LoadEngine())			return false;
 	if (!SetupImguiEditor())	return false;
@@ -33,9 +37,9 @@ bool Manager::SetupImguiEditor() {
 
 void Manager::Run() {
 	while (true) {
-		engineCore->runLoopIteration();
-		imguiEditor->update();
-		engineCore->updateWindows();
+		engineCore->RunLoopIteration();
+		imguiEditor->Update();
+		engineCore->UpdateWindows();
 	}
 }
 

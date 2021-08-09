@@ -2,6 +2,8 @@
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include <entt/entt.hpp>
 #include "ComponentInspector.hpp"
+#include "Editor/EditorManager.hpp"
+#include "EngineCore/EngineCore.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "EngineCore/Reflection/TypeDescriptor.hpp"
@@ -11,10 +13,11 @@ namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
 			void ComponentInspector::Render(ECS::Entity entity) {
-				ECS::ComponentRegistrar& registrar = *entity.GetScene()->GetComponentRegistrar();
+				auto& editorManager = Editor::Manager::GetInstance();
+				ECS::ComponentRegistrar& componentRegistrar = *editorManager.GetEngineCore().GetComponentRegistrar();
 				std::vector<std::string> unusedComponentsItems;
 				std::vector<ECS::ComponentFunctions> unusedComponentsFunctions;
-				for each (auto componentEntry in registrar) {
+				for each (auto componentEntry in componentRegistrar) {
 					const char* componentTypeName = componentEntry.first.c_str();
 					auto componentReflectionData = componentEntry.second.GetComponentReflectionDataFn();
 					auto tryGetComponentFn = componentEntry.second.TryGetComponentFn;

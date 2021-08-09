@@ -1,6 +1,6 @@
+#pragma once
 #include <entt/entt.hpp>
 
 namespace Grindstone {
-	class EngineCore;
-	void exampleSystem(EngineCore* engineCore, entt::registry& registry);
+	void ExampleSystem(entt::registry& registry);
 }

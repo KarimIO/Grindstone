@@ -13,7 +13,7 @@ namespace Grindstone {
 		public:
 			SystemRegistrar();
 			void RegisterSystem(const char *name, SystemFactory factory);
-			void Update(EngineCore* engineCore, entt::registry& registry);
+			void Update(entt::registry& registry);
 			~SystemRegistrar();
 			std::unordered_map<std::string, SystemFactory> systemFactories;
 		private:

@@ -61,7 +61,7 @@ bool OnCharacterTyped(BaseEvent* ev, void* data) {
 }
 
 ImguiInput::ImguiInput(ImGuiIO& io, EngineCore* engineCore) : io(io) {
-	auto eventDispatcher = engineCore->getEventDispatcher();
+	auto eventDispatcher = engineCore->GetEventDispatcher();
 	eventDispatcher->AddEventListener(EventType::MouseMoved, &OnMouseMove, &io);
 	eventDispatcher->AddEventListener(EventType::MouseButton, &OnMousePressed, &io);
 	eventDispatcher->AddEventListener(EventType::MouseScrolled, &OnMouseScrolled, &io);

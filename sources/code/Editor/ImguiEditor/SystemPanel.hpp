@@ -9,9 +9,9 @@ namespace Grindstone {
 			class SystemPanel {
 			public:
 				SystemPanel(ECS::SystemRegistrar* systemRegistrar);
-				void render();
+				void Render();
 			private:
-				void renderSystem(const char *system);
+				void RenderSystem(const char *system);
 			private:
 				bool isShowingPanel = true;
 				ECS::SystemRegistrar* systemRegistrar;

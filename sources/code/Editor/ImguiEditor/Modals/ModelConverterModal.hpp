@@ -10,10 +10,10 @@ namespace Grindstone {
 			class ModelConverterModal {
 			public:
 				ModelConverterModal();
-				void show();
-				void convertFile();
-				void close();
-				void render();
+				void Show();
+				void ConvertFile();
+				void Close();
+				void Render();
 			private:
 				bool isShown = false;
 				bool isProcessing = false;

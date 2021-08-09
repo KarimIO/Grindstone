@@ -31,7 +31,7 @@ void Plugins::Interface::loadPluginCritical(const char* name) {
 
 void Plugins::Interface::registerGraphicsCore(GraphicsAPI::Core* gw) {
 	graphicsCore = gw;
-	manager->engineCore->registerGraphicsCore(gw);
+	manager->engineCore->RegisterGraphicsCore(gw);
 }
 
 void Plugins::Interface::registerWindowManager(WindowManager* windowManager) {

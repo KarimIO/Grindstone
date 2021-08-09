@@ -7,7 +7,7 @@ ViewportPanel::ViewportPanel(GraphicsAPI::Core* graphicsCore) {
 	camera = new EditorCamera(graphicsCore);
 }
 
-void ViewportPanel::render() {
+void ViewportPanel::Render() {
 	if (isShowingPanel) {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
 		ImGui::Begin("Viewport", &isShowingPanel);

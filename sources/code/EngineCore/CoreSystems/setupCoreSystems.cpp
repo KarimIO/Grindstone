@@ -4,7 +4,7 @@
 #include "exampleSystem.hpp"
 using namespace Grindstone;
 
-void Grindstone::setupCoreSystems(ECS::SystemRegistrar* registrar) {
-	registrar->RegisterSystem("Render", renderSystem);
-	registrar->RegisterSystem("Example", exampleSystem);
+void Grindstone::SetupCoreSystems(ECS::SystemRegistrar* registrar) {
+	registrar->RegisterSystem("Render", RenderSystem);
+	registrar->RegisterSystem("Example", ExampleSystem);
 }

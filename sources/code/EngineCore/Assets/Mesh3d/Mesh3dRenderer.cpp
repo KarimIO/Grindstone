@@ -23,7 +23,7 @@ void Mesh3dRenderer::RenderMaterial(Material& material) {
 		material.uniformBufferObject->bind();
 	}
 
-	GraphicsAPI::Core* core = EngineCore::GetInstance().getGraphicsCore();
+	GraphicsAPI::Core* core = EngineCore::GetInstance().GetGraphicsCore();
 	core->BindTexture(material.textureBinding);
 
 	for (void* submesh : material.renderables) {
@@ -34,7 +34,7 @@ void Mesh3dRenderer::RenderMaterial(Material& material) {
 void Mesh3dRenderer::RenderSubmesh(Mesh3d::Submesh& submesh3d) {
 	Mesh3d& mesh3d = *submesh3d.mesh;
 
-	GraphicsAPI::Core* core = EngineCore::GetInstance().getGraphicsCore();
+	GraphicsAPI::Core* core = EngineCore::GetInstance().GetGraphicsCore();
 	core->BindVertexArrayObject(mesh3d.vertexArrayObject);
 	core->DrawImmediateIndexed(
 		GraphicsAPI::GeometryType::Triangles,

@@ -8,10 +8,10 @@ void SystemRegistrar::RegisterSystem(const char *name, SystemFactory factory) {
 	systemFactories.emplace(name, factory);
 }
 
-void SystemRegistrar::Update(EngineCore* engineCore, entt::registry& registry) {
+void SystemRegistrar::Update(entt::registry& registry) {
 	for each (auto systemFactory in systemFactories) {
 		auto systemFn = systemFactory.second;
-		systemFn(engineCore, registry);
+		systemFn(registry);
 	}
 }
 

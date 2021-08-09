@@ -6,7 +6,7 @@ extern "C" {
 	ENGINE_CORE_API EngineCore* createEngine(EngineCore::CreateInfo& ci) {
 		try {
 			EngineCore& core = EngineCore::GetInstance();
-			core.initialize(ci);
+			core.Initialize(ci);
 			
 			return &core;
 		}

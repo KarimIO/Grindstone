@@ -20,15 +20,15 @@ namespace Grindstone {
 			class MaterialInspector {
 			public:
 				MaterialInspector(EngineCore* engineCore);
-				void setMaterialPath(const char* materialPath);
-				void render();
+				void SetMaterialPath(const char* materialPath);
+				void Render();
 			private:
-				void tryLoadShaderReflection();
-				void loadShaderUniformBuffers(rapidjson::Document& document);
-				void renderTextures();
-				void renderParameters();
-				void renderTexture(MaterialTexture& texture);
-				void renderParameter(MaterialParameter& parameter);
+				void TryLoadShaderReflection();
+				void LoadShaderUniformBuffers(rapidjson::Document& document);
+				void RenderTextures();
+				void RenderParameters();
+				void RenderTexture(MaterialTexture& texture);
+				void RenderParameter(MaterialParameter& parameter);
 				std::string materialPath;
 				std::string materialName;
 				std::string shaderPath;

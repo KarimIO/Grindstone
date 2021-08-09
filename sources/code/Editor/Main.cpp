@@ -4,7 +4,7 @@
 using namespace Grindstone;
 
 int main() {
-	Grindstone::Editor::Manager editorManager;
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
 	editorManager.Initialize();
 	editorManager.Run();
 
