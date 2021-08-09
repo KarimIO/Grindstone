@@ -23,8 +23,8 @@ void Selection::RemoveEntity(ECS::Entity entity) {
 	selectedEntities.erase(selectedEntities.find(entity));
 }
 
-bool Selection::HasSingleSelectedEntity() {
-	return selectedEntities.size() == 1 && selectedFiles.size() == 0;
+size_t Selection::GetSelectedEntityCount() {
+	return selectedEntities.size();
 }
 
 Grindstone::ECS::Entity Selection::GetSingleSelectedEntity() {
@@ -48,8 +48,8 @@ void Selection::RemoveFile(std::filesystem::path path) {
 	selectedFiles.erase(selectedFiles.find(path));
 }
 
-bool Selection::HasSingleSelectedFile() {
-	return selectedEntities.size() == 0 && selectedFiles.size() == 1;
+size_t Selection::GetSelectedFileCount() {
+	return selectedFiles.size();
 }
 
 std::filesystem::path Selection::GetSingleSelectedFile() {

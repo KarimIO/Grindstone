@@ -29,25 +29,26 @@ namespace Grindstone {
 			ComponentType& AddComponent(Args&&... args) {
 				return scene->GetEntityRegistry().emplace<ComponentType>(entityId, std::forward<Args>(args)...);
 			}
-			template<typename ComponentType, typename... Args>
+			template<typename ComponentType>
 			bool HasComponent() {
 				return scene->GetEntityRegistry().has<ComponentType>(entityId);
 			}
-			template<typename ComponentType, typename... Args>
+			template<typename ComponentType>
 			ComponentType& GetComponent() {
 				return scene->GetEntityRegistry().get<ComponentType>(entityId);
 			}
-			template<typename ComponentType, typename... Args>
-			bool TryGetComponent(ComponentType* outComponent) {
-				auto registry = scene->GetEntityRegistry();
-				if (registry.has<ComponentType>()) {
-					outComponent = &registry.get<ComponentType>();
+			template<typename ComponentType>
+			bool TryGetComponent(ComponentType*& outComponent) {
+				auto& registry = scene->GetEntityRegistry();
+				if (registry.has<ComponentType>(entityId)) {
+					outComponent = &registry.get<ComponentType>(entityId);
 					return true;
 				}
 
 				outComponent = nullptr;
+				return false;
 			}
-			template<typename ComponentType, typename... Args>
+			template<typename ComponentType>
 			void RemoveComponent(const char* componentType) {
 				return scene->GetEntityRegistry().remove<ComponentType>(entityId);
 			}
@@ -77,7 +78,9 @@ namespace Grindstone {
 		};
 
 		inline bool operator< (const ECS::Entity& lhs, const ECS::Entity& rhs) {
-			return lhs.GetScene() < rhs.GetScene() && lhs.GetHandle() < rhs.GetHandle();
+			bool isSceneLess = lhs.GetScene() < rhs.GetScene();
+			bool isEntityLess = lhs.GetHandle() < rhs.GetHandle();
+			return isSceneLess || isEntityLess;
 		}
 	}
 }

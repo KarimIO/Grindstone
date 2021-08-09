@@ -53,7 +53,13 @@ namespace Grindstone {
 			canUndo = true;
 			canRedo = false;
 
-			printf("i: %i, s: %i, e: %i, count: %i\n", commandIndex, stackBeginIndex, stackEndIndex, usedCommandCount);
+			printf(
+				"i: %i, s: %i, e: %i, count: %i\n", 
+				(int)commandIndex,
+				(int)stackBeginIndex,
+				(int)stackEndIndex,
+				(int)usedCommandCount
+			);
 			auto ac = (AddEntityCommand*)commands[0];
 			uint32_t a = ac ? (std::uint32_t)ac->entityId : 69;
 			auto bc = (AddEntityCommand*)commands[1];

@@ -22,9 +22,17 @@ namespace Grindstone {
 				if (isShowingPanel) {
 					ImGui::Begin("Scene Heirarchy", &isShowingPanel);
 
+					if (
+						ImGui::IsMouseDown(0) &&
+						ImGui::IsWindowHovered() &&
+						!ImGui::GetIO().KeyShift
+						) {
+						Editor::Manager::GetInstance().GetSelection().Clear();
+					}
+
 					auto numScenes = sceneManager->scenes.size();
 					if (numScenes == 0) {
-						ImGui::Text("No entities in this scene.");
+						ImGui::Text("No scenes mounted.");
 					}
 					else if (numScenes == 1) {
 						auto sceneIterator = sceneManager->scenes.begin();
@@ -39,10 +47,6 @@ namespace Grindstone {
 								ImGui::TreePop();
 							}
 						}
-					}
-					
-					if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
-						Editor::Manager::GetInstance().GetSelection().Clear();
 					}
 
 					ImGui::End();
@@ -87,17 +91,23 @@ namespace Grindstone {
 					const auto flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
 					if (ImGui::InputText("##AssetRename", &entityRenameNewName, flags)) {
 						entityToRename = ECS::Entity();
-						if (entity.HasComponent<TagComponent>()) {
-							TagComponent& tag = entity.GetComponent<TagComponent>();
-							tag.tag = entityRenameNewName;
+						TagComponent* tagComponent = nullptr;
+						if (entity.TryGetComponent<TagComponent>(tagComponent)) {
+							tagComponent->tag = entityRenameNewName;
 						}
 						entityRenameNewName = "";
 					}
 				}
 				else {
+					Selection& selection = Editor::Manager::GetInstance().GetSelection();
 					ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2{0, 0.5});
 					if (ImGui::Button(entityTag, {panelWidth, 0})) {
-						Editor::Manager::GetInstance().GetSelection().SetSelectedEntity(entity);
+						if (ImGui::GetIO().KeyShift) {
+							selection.AddEntity(entity);
+						}
+						else {
+							selection.SetSelectedEntity(entity);
+						}
 					}
 					if (ImGui::BeginPopupContextItem()) {
 						if (ImGui::MenuItem("Rename")) {
@@ -105,7 +115,7 @@ namespace Grindstone {
 							entityRenameNewName = entityTag;
 						}
 						if (ImGui::MenuItem("Delete")) {
-							Editor::Manager::GetInstance().GetSelection().RemoveEntity(entity);
+							selection.RemoveEntity(entity);
 							entity.GetScene()->DestroyEntity(entity);
 						}
 						ImGui::EndPopup();

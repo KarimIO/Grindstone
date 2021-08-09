@@ -27,8 +27,8 @@ namespace Grindstone {
 			bool LoadEngine();
 			bool SetupImguiEditor();
 		private:
-			EngineCore* engineCore;
-			ImguiEditor::ImguiEditor* imguiEditor;
+			EngineCore* engineCore = nullptr;
+			ImguiEditor::ImguiEditor* imguiEditor = nullptr;
 			CommandList commandList;
 			Selection selection;
 		};

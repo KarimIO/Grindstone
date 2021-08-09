@@ -21,11 +21,22 @@ namespace Grindstone {
 					ImGui::Begin("Inspector", &isShowingPanel);
 					
 					Selection& selection = Editor::Manager::GetInstance().GetSelection();
-					if (selection.HasSingleSelectedFile()) {
+					size_t selectedEntityCount = selection.GetSelectedEntityCount();
+					size_t selectedFileCount = selection.GetSelectedFileCount();
+					if (selectedEntityCount == 0 && selectedFileCount == 1) {
 						materialInspector->Render();
 					}
-					else if (selection.HasSingleSelectedEntity()) {
+					else if (selectedEntityCount == 1 && selectedFileCount == 0) {
 						componentInspector->Render(selection.GetSingleSelectedEntity());
+					}
+					else if (selectedEntityCount > 0 || selectedFileCount > 0) {
+						if (selectedEntityCount > 0) {
+							ImGui::Text("%i entities selected.", selectedEntityCount);
+						}
+
+						if (selectedFileCount > 0) {
+							ImGui::Text("%i files selected.", selectedFileCount);
+						}
 					}
 					else {
 						ImGui::Text("Nothing selected.");

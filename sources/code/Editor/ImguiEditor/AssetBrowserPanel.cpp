@@ -199,15 +199,13 @@ void AssetBrowserPanel::ProcessDirectoryEntryClicks(std::filesystem::directory_e
 			}
 		}
 		else if (ImGui::IsMouseClicked(0)) {
-			if (!entry.is_directory()) {
-				auto path = entry.path();
-				auto extension = path.extension();
-				if (extension == ".gmat") {
-					Editor::Manager::GetInstance().GetSelection().SetSelectedFile(path);
-					return;
-				}
+			Selection& selection = Editor::Manager::GetInstance().GetSelection();
+			if (ImGui::GetIO().KeyShift) {
+				selection.AddFile(entry.path());
 			}
-			Editor::Manager::GetInstance().GetSelection().Clear();
+			else {
+				selection.SetSelectedFile(entry.path());
+			}
 		}
 	}
 }
@@ -441,6 +439,10 @@ void AssetBrowserPanel::Render() {
 		RenderAssets();
 
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
+			if (!ImGui::GetIO().KeyShift) {
+				Selection& selection = Editor::Manager::GetInstance().GetSelection();
+				selection.Clear();
+			}
 			pathToRename = "";
 			pathRenameNewName = "";
 		}
