@@ -19,6 +19,10 @@ void Selection::AddEntity(ECS::Entity entity) {
 	selectedEntities.insert(entity);
 }
 
+bool Selection::IsEntitySelected(ECS::Entity entity) {
+	return selectedEntities.find(entity) != selectedEntities.end();
+}
+
 void Selection::RemoveEntity(ECS::Entity entity) {
 	selectedEntities.erase(selectedEntities.find(entity));
 }
@@ -35,16 +39,20 @@ void Selection::ClearFiles() {
 	selectedFiles.clear();
 }
 
-void Selection::SetSelectedFile(std::filesystem::path path) {
+void Selection::SetSelectedFile(const std::filesystem::path& path) {
 	Clear();
 	AddFile(path);
 }
 
-void Selection::AddFile(std::filesystem::path path) {
+void Selection::AddFile(const std::filesystem::path& path) {
 	selectedFiles.insert(path);
 }
 
-void Selection::RemoveFile(std::filesystem::path path) {
+bool Selection::IsFileSelected(const std::filesystem::path& path) {
+	return selectedFiles.find(path) != selectedFiles.end();
+}
+
+void Selection::RemoveFile(const std::filesystem::path& path) {
 	selectedFiles.erase(selectedFiles.find(path));
 }
 

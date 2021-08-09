@@ -187,6 +187,7 @@ void AssetBrowserPanel::RefreshAssets() {
 }
 
 void AssetBrowserPanel::ProcessDirectoryEntryClicks(std::filesystem::directory_entry entry) {
+	auto path = entry.path();
 	if (ImGui::IsItemHovered()) {
 		if (ImGui::IsMouseDoubleClicked(0)) {
 			if (entry.is_directory()) {
@@ -195,16 +196,16 @@ void AssetBrowserPanel::ProcessDirectoryEntryClicks(std::filesystem::directory_e
 			else {
 				// Open File
 				auto window = engineCore->windowManager->GetWindowByIndex(0);
-				window->OpenFileUsingDefaultProgram(entry.path().string().c_str());
+				window->OpenFileUsingDefaultProgram(path.string().c_str());
 			}
 		}
 		else if (ImGui::IsMouseClicked(0)) {
 			Selection& selection = Editor::Manager::GetInstance().GetSelection();
 			if (ImGui::GetIO().KeyShift) {
-				selection.AddFile(entry.path());
+				selection.AddFile(path);
 			}
 			else {
-				selection.SetSelectedFile(entry.path());
+				selection.SetSelectedFile(path);
 			}
 		}
 	}
@@ -380,14 +381,28 @@ void AssetBrowserPanel::RenderAssetSet(std::vector<std::filesystem::directory_en
 		std::string filenameString = path.filename().string();
 		std::string buttonString = filenameString + "##AssetButton";
 
+		bool isSelected = Editor::Manager::GetInstance().GetSelection().IsFileSelected(path);
+		ImVec4 mainColor = isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.3f) : ImVec4(0.f, 0.f, 0.f, 0.f);
+		ImGui::PushStyleColor(ImGuiCol_Button, mainColor);
+		ImGui::PushStyleColor(
+			ImGuiCol_ButtonHovered,
+			isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.4f) : ImVec4(1, 1, 1, 0.05f)
+		);
+		ImGui::PushStyleColor(
+			ImGuiCol_ButtonActive,
+			isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.5f) : ImVec4(1, 1, 1, 0.1f)
+		);
+
 		ImTextureID icon = GetIcon(directoryEntry); 
 		ImGui::PushID(buttonString.c_str());
 		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
-		ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{0,0}, ImVec2{1,1}, THUMBNAIL_PADDING);
+		ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{0,0}, ImVec2{1,1}, (int)THUMBNAIL_PADDING);
 		ImGui::PopID();
 
 		RenderAssetContextMenu(directoryEntry);
 		ProcessDirectoryEntryClicks(directoryEntry);
+
+		ImGui::PopStyleColor(3);
 
 		if (pathToRename == path) {
 			ImGui::PushItemWidth(ENTRY_SIZE);
@@ -414,16 +429,12 @@ void AssetBrowserPanel::RenderAssets() {
 
 	RefreshAssetsIfNecessary();
 
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.05));
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.1));
 	if (ImGui::BeginTable("assetTable", columnCount)) {
 		RenderAssetSet(sortedDirectories);
 		RenderAssetSet(sortedFiles);
 
 		ImGui::EndTable();
 	}
-	ImGui::PopStyleColor(3);
 }
 			
 void AssetBrowserPanel::Render() {

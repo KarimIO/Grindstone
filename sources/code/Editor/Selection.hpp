@@ -13,14 +13,16 @@ namespace Grindstone {
 			void ClearEntities();
 			void SetSelectedEntity(ECS::Entity);
 			void AddEntity(ECS::Entity);
+			bool IsEntitySelected(ECS::Entity);
 			void RemoveEntity(ECS::Entity);
 			size_t GetSelectedEntityCount();
 			ECS::Entity GetSingleSelectedEntity();
 
 			void ClearFiles();
-			void SetSelectedFile(std::filesystem::path path);
-			void AddFile(std::filesystem::path path);
-			void RemoveFile(std::filesystem::path path);
+			void SetSelectedFile(const std::filesystem::path& path);
+			void AddFile(const std::filesystem::path& path);
+			bool IsFileSelected(const std::filesystem::path& path);
+			void RemoveFile(const std::filesystem::path& path);
 			size_t GetSelectedFileCount();
 			std::filesystem::path GetSingleSelectedFile();
 		public:
