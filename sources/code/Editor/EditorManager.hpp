@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Commands/CommandList.hpp"
+#include "Selection.hpp"
 
 namespace Grindstone {
 	class EngineCore;
@@ -16,17 +17,19 @@ namespace Grindstone {
 		public:
 			Manager() = default;
 			static Manager& GetInstance();
-			CommandList& getCommandList();
-			bool initialize();
+			CommandList& GetCommandList();
+			Selection& GetSelection();
+			bool Initialize();
 			~Manager();
-			void run();
+			void Run();
 		private:
-			bool loadEngine();
-			bool setupImguiEditor();
+			bool LoadEngine();
+			bool SetupImguiEditor();
 		private:
 			EngineCore* engineCore;
 			ImguiEditor::ImguiEditor* imguiEditor;
 			CommandList commandList;
+			Selection selection;
 		};
 	}
 }

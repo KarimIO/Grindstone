@@ -11,23 +11,27 @@ Manager& Manager::GetInstance() {
 	return manager;
 }
 
-CommandList& Manager::getCommandList() {
+CommandList& Manager::GetCommandList() {
 	return commandList;
 }
 
-bool Manager::initialize() {
-	if (!loadEngine())			return false;
-	if (!setupImguiEditor())	return false;
+Selection& Manager::GetSelection() {
+	return selection;
+}
+
+bool Manager::Initialize() {
+	if (!LoadEngine())			return false;
+	if (!SetupImguiEditor())	return false;
 
 	return true;
 }
 
-bool Manager::setupImguiEditor() {
+bool Manager::SetupImguiEditor() {
 	imguiEditor = new ImguiEditor::ImguiEditor(engineCore);
 	return true;
 }
 
-void Manager::run() {
+void Manager::Run() {
 	while (true) {
 		engineCore->runLoopIteration();
 		imguiEditor->update();
@@ -36,7 +40,7 @@ void Manager::run() {
 }
 
 using CreateEngineFunction = EngineCore*(EngineCore::CreateInfo&);
-bool Manager::loadEngine() {
+bool Manager::LoadEngine() {
 	Grindstone::Utilities::Modules::Handle handle;
 	handle = Grindstone::Utilities::Modules::load("EngineCore");
 

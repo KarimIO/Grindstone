@@ -14,14 +14,8 @@ namespace Grindstone {
 			class InspectorPanel {
 			public:
 				InspectorPanel(EngineCore* engineCore);
-				void deselect();
-				void selectFile(std::string selectedFileType, std::string selectedFilePath);
-				void selectEntity(entt::entity selectedEntity);
-				void render();
+				void Render();
 			private:
-				std::string selectedFileType;
-				std::string selectedFilePath;
-				entt::entity selectedEntity = entt::null;
 				bool isShowingPanel = true;
 				EngineCore* engineCore = nullptr;
 				ComponentInspector* componentInspector = nullptr;

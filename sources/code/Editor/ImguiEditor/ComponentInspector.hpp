@@ -14,7 +14,7 @@ namespace Grindstone {
 		namespace ImguiEditor {
 			class ComponentInspector {
 			public:
-				void Render(ECS::ComponentRegistrar& registrar, ECS::Entity entity);
+				void Render(ECS::Entity entity);
 			private:
 				void RenderComponent(
 					const char* componentTypeName,

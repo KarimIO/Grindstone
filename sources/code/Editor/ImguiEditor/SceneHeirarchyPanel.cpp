@@ -18,7 +18,7 @@ namespace Grindstone {
 				ImguiEditor* editor
 			) : sceneManager(sceneManager), editor(editor) {}
 			
-			void SceneHeirarchyPanel::render() {
+			void SceneHeirarchyPanel::Render() {
 				if (isShowingPanel) {
 					ImGui::Begin("Scene Heirarchy", &isShowingPanel);
 
@@ -28,37 +28,36 @@ namespace Grindstone {
 					}
 					else if (numScenes == 1) {
 						auto sceneIterator = sceneManager->scenes.begin();
-						renderScene(sceneIterator->second);
+						RenderScene(sceneIterator->second);
 					}
 					else {
 						for (auto& scenePair : sceneManager->scenes) {
 							auto* scene = scenePair.second;
 							const char* sceneName = scene->GetName();
 							if (ImGui::TreeNode(sceneName)) {
-								renderScene(scene);
+								RenderScene(scene);
 								ImGui::TreePop();
 							}
 						}
 					}
 					
 					if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
-						editor->selectEntity(entt::null);
+						Editor::Manager::GetInstance().GetSelection().Clear();
 					}
 
 					ImGui::End();
 				}
 			}
 
-			const char* SceneHeirarchyPanel::getEntityTag(entt::registry& registry, entt::entity entity) {
-				if (registry.has<TagComponent>(entity)) {
-					TagComponent& tag = registry.get<TagComponent>(entity);
-					return tag.tag.c_str();
+			const char* SceneHeirarchyPanel::GetEntityTag(ECS::Entity entity) {
+				if (entity.HasComponent<TagComponent>()) {
+					return entity.GetComponent<TagComponent>().tag.c_str();
 				}
 
 				return "[Unnamed Entity]";
 			}
 
-			void SceneHeirarchyPanel::renderScene(SceneManagement::Scene* scene) {
+			void SceneHeirarchyPanel::RenderScene(SceneManagement::Scene* scene) {
 				auto& registry = scene->GetEntityRegistry();
 
 				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 1, 1, 0.1f));
@@ -66,30 +65,30 @@ namespace Grindstone {
 				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.2f));
 				registry.each(
 					[&](auto entity) {
-						renderEntity(registry, entity);
+						RenderEntity({ entity, scene });
 					}
 				);
 				ImGui::PopStyleColor(3);
 
 				if (ImGui::BeginPopupContextWindow(0, RIGHT_MOUSE_BUTTON, false)) {
 					if (ImGui::MenuItem("Add new entity")) {
-						Editor::Manager::GetInstance().getCommandList().AddNewEntity(scene);
+						Editor::Manager::GetInstance().GetCommandList().AddNewEntity(scene);
 					}
 					ImGui::EndPopup();
 				}
 			}
 
-			void SceneHeirarchyPanel::renderEntity(entt::registry& registry, entt::entity entity) {
+			void SceneHeirarchyPanel::RenderEntity(ECS::Entity entity) {
 				const float panelWidth = ImGui::GetContentRegionAvail().x;
 				ImGui::PushItemWidth(panelWidth);
 
-				const char* entityTag = getEntityTag(registry, entity);
+				const char* entityTag = GetEntityTag(entity);
 				if (entityToRename == entity) {
 					const auto flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
 					if (ImGui::InputText("##AssetRename", &entityRenameNewName, flags)) {
-						entityToRename = entt::null;
-						if (registry.has<TagComponent>(entity)) {
-							TagComponent& tag = registry.get<TagComponent>(entity);
+						entityToRename = ECS::Entity();
+						if (entity.HasComponent<TagComponent>()) {
+							TagComponent& tag = entity.GetComponent<TagComponent>();
 							tag.tag = entityRenameNewName;
 						}
 						entityRenameNewName = "";
@@ -98,7 +97,7 @@ namespace Grindstone {
 				else {
 					ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2{0, 0.5});
 					if (ImGui::Button(entityTag, {panelWidth, 0})) {
-						editor->selectEntity(entity);
+						Editor::Manager::GetInstance().GetSelection().SetSelectedEntity(entity);
 					}
 					if (ImGui::BeginPopupContextItem()) {
 						if (ImGui::MenuItem("Rename")) {
@@ -106,8 +105,8 @@ namespace Grindstone {
 							entityRenameNewName = entityTag;
 						}
 						if (ImGui::MenuItem("Delete")) {
-							editor->selectEntity(entt::null);
-							registry.destroy(entity);
+							Editor::Manager::GetInstance().GetSelection().RemoveEntity(entity);
+							entity.GetScene()->DestroyEntity(entity);
 						}
 						ImGui::EndPopup();
 					}

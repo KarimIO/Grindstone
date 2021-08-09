@@ -8,6 +8,7 @@
 #include "Editor/Converters/ShaderImporter.hpp"
 #include "Editor/Converters/ModelConverter.hpp"
 #include "Editor/Converters/TextureConverter.hpp"
+#include "Editor/EditorManager.hpp"
 #include "AssetBrowserPanel.hpp"
 #include "Common/Window/WindowManager.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
@@ -204,11 +205,11 @@ namespace Grindstone {
 							auto path = entry.path();
 							auto extension = path.extension();
 							if (extension == ".gmat") {
-								editor->selectFile("material", path.string());
+								Manager::GetInstance().GetSelection().SetSelectedFile(path);
 								return;
 							}
 						}
-						editor->deselectFromInspector();
+						Manager::GetInstance().GetSelection().Clear();
 					}
 				}
 			}

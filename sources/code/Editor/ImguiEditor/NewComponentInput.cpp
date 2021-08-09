@@ -13,7 +13,7 @@ namespace Grindstone {
 				
 				if (chosenItem != -1) {
 					std::string& componentToDeleteName = unusedComponentsItems[chosenItem];
-					auto& commandList = Manager::GetInstance().getCommandList();
+					auto& commandList = Manager::GetInstance().GetCommandList();
 					commandList.AddComponent(entity, componentToDeleteName.c_str());
 				}
 			}

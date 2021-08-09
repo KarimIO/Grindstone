@@ -80,10 +80,10 @@ void ImguiEditor::render() {
 	modelConverterModal->render();
 	imageConverterModal->render();
 	assetBrowserPanel->render();
-	sceneHeirarchyPanel->render();
+	sceneHeirarchyPanel->Render();
 	viewportPanel->render();
 	systemPanel->render();
-	inspectorPanel->render();
+	inspectorPanel->Render();
 }
 
 void ImguiEditor::showModelModal() {
@@ -92,19 +92,6 @@ void ImguiEditor::showModelModal() {
 
 void ImguiEditor::showImageModal() {
 	imageConverterModal->show();
-}
-
-void ImguiEditor::deselectFromInspector() {
-	inspectorPanel->deselect();
-}
-
-void ImguiEditor::selectFile(std::string selectedFileType, std::string selectedFilePath) {
-	inspectorPanel->selectFile(selectedFileType, selectedFilePath);
-}
-
-void ImguiEditor::selectEntity(entt::entity selectedEntity) {
-	this->selectedEntity = selectedEntity;
-	inspectorPanel->selectEntity(selectedEntity);
 }
 
 void ImguiEditor::importFile(const char* folderPathToImportTo) {

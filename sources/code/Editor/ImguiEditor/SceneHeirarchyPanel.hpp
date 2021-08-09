@@ -1,6 +1,6 @@
 #pragma once
 
-#include <entt/entt.hpp>
+#include "EngineCore/ECS/Entity.hpp"
 
 namespace Grindstone {
 	namespace SceneManagement {
@@ -15,16 +15,16 @@ namespace Grindstone {
 			class SceneHeirarchyPanel {
 			public:
 				SceneHeirarchyPanel(SceneManagement::SceneManager* sceneManager, ImguiEditor* editor);
-				void render();
+				void Render();
 			private:
-				const char* getEntityTag(entt::registry& registry, entt::entity entity);
-				void renderScene(SceneManagement::Scene* scene);
-				void renderEntity(entt::registry& registry, entt::entity entity);
+				const char* GetEntityTag(ECS::Entity entity);
+				void RenderScene(SceneManagement::Scene* scene);
+				void RenderEntity(ECS::Entity entity);
 			private:
 				bool isShowingPanel = true;
 				SceneManagement::SceneManager* sceneManager;
 				ImguiEditor* editor;
-				entt::entity entityToRename = entt::null;
+				ECS::Entity entityToRename;
 				std::string entityRenameNewName;
 			};
 		}

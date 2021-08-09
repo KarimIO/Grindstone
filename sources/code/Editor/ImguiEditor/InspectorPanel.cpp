@@ -3,6 +3,7 @@
 #include "ComponentInspector.hpp"
 #include "MaterialInspector.hpp"
 #include "InspectorPanel.hpp"
+#include "Editor/EditorManager.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/Scenes/Scene.hpp"
 #include "EngineCore/EngineCore.hpp"
@@ -15,51 +16,19 @@ namespace Grindstone {
 				materialInspector = new MaterialInspector(engineCore);
 			}
 
-			void InspectorPanel::deselect() {
-				selectedFileType = "";
-				selectedFilePath = "";
-				selectedEntity = entt::null;
-			}
-
-			void InspectorPanel::selectFile(std::string selectedFileType, std::string selectedFilePath) {
-				this->selectedFileType = selectedFileType;
-				this->selectedFilePath = selectedFilePath;
-				selectedEntity = entt::null;
-
-				if (selectedFileType == "material") {
-					materialInspector->setMaterialPath(selectedFilePath.c_str());
-				}
-			}
-
-			void InspectorPanel::selectEntity(entt::entity selectedEntity) {
-				this->selectedEntity = selectedEntity;
-				selectedFileType = "";
-				selectedFilePath = "";
-			}
-			
-			void InspectorPanel::render() {
+			void InspectorPanel::Render() {
 				if (isShowingPanel) {
 					ImGui::Begin("Inspector", &isShowingPanel);
-
-					if (selectedFileType != "") {
+					
+					Selection& selection = Editor::Manager::GetInstance().GetSelection();
+					if (selection.HasSingleSelectedFile()) {
 						materialInspector->render();
 					}
+					else if (selection.HasSingleSelectedEntity()) {
+						componentInspector->Render(selection.GetSingleSelectedEntity());
+					}
 					else {
-						auto sceneManager = engineCore->getSceneManager();
-						auto numScenes = sceneManager->scenes.size();
-						if (numScenes == 0) {
-							ImGui::Text("No entities in this scene.");
-						}
-						else if (selectedEntity != entt::null) {
-							auto sceneIterator = sceneManager->scenes.begin();
-							SceneManagement::Scene* scene = sceneIterator->second;
-							auto& registrar = *scene->GetComponentRegistrar();
-							auto& registry = scene->GetEntityRegistry();
-							componentInspector->Render(registrar, { selectedEntity, scene });
-						}
-						else {
-							ImGui::Text("No entity selected.");
-						}
+						ImGui::Text("Nothing selected.");
 					}
 
 					ImGui::End();

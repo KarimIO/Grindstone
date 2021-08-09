@@ -34,7 +34,7 @@ namespace Grindstone {
 			}
 			template<typename ComponentType, typename... Args>
 			ComponentType& GetComponent() {
-				return scene->GetEntityRegistry().has<ComponentType>(entityId);
+				return scene->GetEntityRegistry().get<ComponentType>(entityId);
 			}
 			template<typename ComponentType, typename... Args>
 			bool TryGetComponent(ComponentType* outComponent) {
@@ -51,20 +51,32 @@ namespace Grindstone {
 				return scene->GetEntityRegistry().remove<ComponentType>(entityId);
 			}
 
-			virtual EntityHandle GetHandle() {
+			virtual EntityHandle GetHandle() const {
 				return entityId;
 			}
 
-			virtual SceneManagement::Scene* GetScene() {
+			virtual SceneManagement::Scene* GetScene() const {
 				return scene;
 			}
 
 			operator bool() {
 				return entityId == entt::null;
 			}
+
+			bool Entity::operator==(const Entity other) {
+				return (entityId == other.entityId) && (scene = other.scene);
+			}
+
+			bool Entity::operator!=(const Entity other) {
+				return !(*this == other);
+			}
 		private:
 			EntityHandle entityId = entt::null;
 			SceneManagement::Scene* scene = nullptr;
 		};
+
+		inline bool operator< (const ECS::Entity& lhs, const ECS::Entity& rhs) {
+			return lhs.GetScene() < rhs.GetScene() && lhs.GetHandle() < rhs.GetHandle();
+		}
 	}
 }

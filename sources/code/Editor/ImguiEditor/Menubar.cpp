@@ -47,7 +47,7 @@ void Menubar::renderFileMenu() {
 }
 
 void Menubar::renderEditMenu() {
-	auto& commandList = Editor::Manager::GetInstance().getCommandList();
+	auto& commandList = Editor::Manager::GetInstance().GetCommandList();
 	if (ImGui::MenuItem("Undo", "", false, commandList.HasAvailableUndo())) {
 		commandList.Undo();
 	}
