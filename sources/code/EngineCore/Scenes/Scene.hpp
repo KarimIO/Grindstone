@@ -22,15 +22,14 @@ namespace Grindstone {
 			friend SceneLoaderJson;
 		public:
 			Scene(EngineCore*, ECS::ComponentRegistrar*, ECS::SystemRegistrar*);
-			virtual ECS::Entity createEntity();
-			virtual ECS::Entity createDefaultEntity();
-			virtual void* attachComponent(ECS::Entity entity, const char* componentName);
-			virtual bool tryGetComponent(const char* name, ECS::Entity entity, void*& outComponent);
-			virtual void detachComponent(ECS::Entity entity, const char* componentName);
-			virtual const char* getName();
-			virtual entt::registry* getEntityRegistry();
-			virtual ECS::ComponentRegistrar* getComponentRegistrar();
-			void update();
+			virtual ECS::Entity CreateEmptyEntity();
+			virtual ECS::Entity CreateEntity();
+			virtual void DestroyEntity(ECS::EntityHandle entityId);
+			virtual void DestroyEntity(ECS::Entity entity);
+			virtual const char* GetName();
+			virtual entt::registry& GetEntityRegistry();
+			virtual ECS::ComponentRegistrar* GetComponentRegistrar();
+			void Update();
 		private:
 			EngineCore* engineCore;
 			ECS::SystemRegistrar* systemRegistrar;

@@ -13,18 +13,10 @@ using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
 
 SceneLoaderJson::SceneLoaderJson(Scene* scene, const char* path) : scene(scene), path(path) {
-	load(path);
+	Load(path);
 }
 
-ECS::Entity SceneLoaderJson::createEntity() {
-	return scene->createEntity();
-}
-
-void* SceneLoaderJson::attachComponent(ECS::Entity entity, const char* componentName) {
-	return scene->attachComponent(entity, componentName);
-}
-
-bool SceneLoaderJson::load(const char* path) {
+bool SceneLoaderJson::Load(const char* path) {
 	if (!std::filesystem::exists(path)) {
 		return false;
 	}
@@ -54,14 +46,14 @@ void SceneLoaderJson::ProcessEntities() {
 		rapidjson::Value* entityIterator = entities.Begin();
 		entityIterator != entities.End();
 		++entityIterator
-		) {
+	) {
 		auto& entity = entityIterator->GetObject();
 		ProcessEntity(entity);
 	}
 }
 
 void SceneLoaderJson::ProcessEntity(rapidjson::GenericObject<false, rapidjson::Value>& entityJson) {
-	ECS::Entity entity = createEntity();
+	ECS::Entity entity = scene->CreateEntity();
 
 	auto& components = entityJson["components"].GetArray();
 	for (
@@ -79,11 +71,17 @@ void SceneLoaderJson::ProcessComponent(ECS::Entity entity, rapidjson::GenericObj
 
 	Reflection::TypeDescriptor_Struct reflectionData;
 	auto componentRegistrar = EngineCore::GetInstance().getComponentRegistrar();
-	if (!componentRegistrar->tryGetComponentReflectionData(componentType, reflectionData)) {
+	if (!componentRegistrar->TryGetComponentReflectionData(componentType, reflectionData)) {
 		return;
 	}
 
-	void* componentPtr = attachComponent(entity, componentType);
+	void* componentPtr = nullptr;
+	if (entity.HasComponent(componentType)) {
+		componentPtr = entity.GetComponent(componentType);
+	}
+	else {
+		componentPtr = entity.AddComponent(componentType);
+	}
 
 	if (!component.HasMember("params")) {
 		return;
@@ -94,7 +92,7 @@ void SceneLoaderJson::ProcessComponent(ECS::Entity entity, rapidjson::GenericObj
 		auto parameterIterator = parameters.MemberBegin();
 		parameterIterator != parameters.MemberEnd();
 		++parameterIterator
-		) {
+	) {
 		const char* paramKey = parameterIterator->name.GetString();
 		ProcessComponentParameter(entity, componentPtr, reflectionData, paramKey, parameterIterator->value);
 	}

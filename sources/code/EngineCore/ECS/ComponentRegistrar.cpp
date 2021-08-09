@@ -1,44 +1,53 @@
 #include "ComponentRegistrar.hpp"
 using namespace Grindstone::ECS;
 
-void ComponentRegistrar::registerComponent(const char *name, ComponentFunctions componentFunctions) {
+void ComponentRegistrar::RegisterComponent(const char *name, ComponentFunctions componentFunctions) {
 	componentFunctionsList.emplace(name, componentFunctions);
 }
 
-void* ComponentRegistrar::createComponent(const char *name, entt::registry& registry, ECS::Entity entity) {
+void* ComponentRegistrar::CreateComponent(const char *name, entt::registry& registry, ECS::EntityHandle entity) {
 	auto selectedFactory = componentFunctionsList.find(name);
 	if (selectedFactory == componentFunctionsList.end()) {
 		return nullptr;
 	}
 
-	return selectedFactory->second.createComponentFn(registry, entity);
+	return selectedFactory->second.CreateComponentFn(registry, entity);
 }
 
-void ComponentRegistrar::deleteComponent(const char *name, entt::registry& registry, ECS::Entity entity) {
+void ComponentRegistrar::RemoveComponent(const char *name, entt::registry& registry, ECS::EntityHandle entity) {
 	auto selectedFactory = componentFunctionsList.find(name);
 	if (selectedFactory == componentFunctionsList.end()) {
 		return;
 	}
 
-	return selectedFactory->second.deleteComponentFn(registry, entity);
+	return selectedFactory->second.RemoveComponentFn(registry, entity);
 }
 
-bool ComponentRegistrar::tryGetComponent(const char *name, entt::registry& registry, ECS::Entity entity, void*& outComponent) {
+bool ComponentRegistrar::HasComponent(const char* name, entt::registry& registry, ECS::EntityHandle entity) {
 	auto selectedFactory = componentFunctionsList.find(name);
 	if (selectedFactory == componentFunctionsList.end()) {
 		return false;
 	}
 
-	return selectedFactory->second.tryGetComponentFn(registry, entity, outComponent);
+	return selectedFactory->second.HasComponentFn(registry, entity);
 }
 
-bool ComponentRegistrar::tryGetComponentReflectionData(const char *name, Grindstone::Reflection::TypeDescriptor_Struct& outReflectionData) {
+bool ComponentRegistrar::TryGetComponent(const char* name, entt::registry& registry, ECS::EntityHandle entity, void*& outComponent) {
 	auto selectedFactory = componentFunctionsList.find(name);
 	if (selectedFactory == componentFunctionsList.end()) {
 		return false;
 	}
 
-	outReflectionData = selectedFactory->second.getComponentReflectionDataFn();
+	return selectedFactory->second.TryGetComponentFn(registry, entity, outComponent);
+}
+
+bool ComponentRegistrar::TryGetComponentReflectionData(const char *name, Grindstone::Reflection::TypeDescriptor_Struct& outReflectionData) {
+	auto selectedFactory = componentFunctionsList.find(name);
+	if (selectedFactory == componentFunctionsList.end()) {
+		return false;
+	}
+
+	outReflectionData = selectedFactory->second.GetComponentReflectionDataFn();
 	return true;
 }
 

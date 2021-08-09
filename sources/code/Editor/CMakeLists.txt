@@ -3,6 +3,7 @@ set(EDITOR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 file(GLOB_RECURSE SOURCE_MAIN
 	Main.cpp
 	../Common/Utilities/ModuleLoading.cpp
+	../EngineCore/ECS/Entity.cpp
 	EditorManager.cpp EditorManager.hpp
 	EditorCamera.cpp EditorCamera.hpp
 	Camera.cpp Camera.hpp

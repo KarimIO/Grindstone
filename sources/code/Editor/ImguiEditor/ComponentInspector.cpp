@@ -10,21 +10,20 @@
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
-			void ComponentInspector::render(
+			void ComponentInspector::Render(
 				ECS::ComponentRegistrar& registrar,
-				SceneManagement::Scene* scene,
-				entt::entity entity
+				ECS::Entity entity
 			) {
 				std::vector<std::string> unusedComponentsItems;
 				std::vector<ECS::ComponentFunctions> unusedComponentsFunctions;
 				for each (auto componentEntry in registrar) {
 					const char* componentTypeName = componentEntry.first.c_str();
-					auto componentReflectionData = componentEntry.second.getComponentReflectionDataFn();
-					auto tryGetComponentFn = componentEntry.second.tryGetComponentFn;
+					auto componentReflectionData = componentEntry.second.GetComponentReflectionDataFn();
+					auto tryGetComponentFn = componentEntry.second.TryGetComponentFn;
 
 					void* outComponent = nullptr;
-					if (scene->tryGetComponent(componentTypeName, entity, outComponent)) {
-						renderComponent(componentTypeName, componentReflectionData, outComponent);
+					if (entity.TryGetComponent(componentTypeName, outComponent)) {
+						RenderComponent(componentTypeName, componentReflectionData, outComponent);
 					}
 					else {
 						unusedComponentsItems.push_back(componentEntry.first);
@@ -35,14 +34,13 @@ namespace Grindstone {
 				ImGui::Separator();
 
 				ImGui::Text("Attach a component:");
-				newComponentInput.render(
-					scene,
+				newComponentInput.Render(
 					entity,
 					unusedComponentsItems
 				);
 			}
 
-			void ComponentInspector::renderComponent(
+			void ComponentInspector::RenderComponent(
 				const char* componentTypeName,
 				Grindstone::Reflection::TypeDescriptor_Struct& componentReflectionData,
 				void* entity
@@ -51,12 +49,12 @@ namespace Grindstone {
 					return;
 				}
 
-				renderComponentCategory(componentReflectionData.category, entity);
+				RenderComponentCategory(componentReflectionData.category, entity);
 
 				ImGui::TreePop();
 			}
 			
-			void ComponentInspector::renderComponentCategory(
+			void ComponentInspector::RenderComponentCategory(
 				Reflection::TypeDescriptor_Struct::Category& category,
 				void* entity
 			) {
@@ -65,17 +63,17 @@ namespace Grindstone {
 						return;
 					}
 
-					renderComponentCategory(subcategory, entity);
+					RenderComponentCategory(subcategory, entity);
 
 					ImGui::TreePop();
 				}
 
 				for each (auto member in category.members) {
-					renderComponentMember(member, entity);
+					RenderComponentMember(member, entity);
 				}
 			}
 
-			void ComponentInspector::renderComponentMember(
+			void ComponentInspector::RenderComponentMember(
 				Reflection::TypeDescriptor_Struct::Member& member,
 				void* entity
 			) {

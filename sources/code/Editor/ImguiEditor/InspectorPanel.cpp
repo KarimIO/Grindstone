@@ -53,9 +53,9 @@ namespace Grindstone {
 						else if (selectedEntity != entt::null) {
 							auto sceneIterator = sceneManager->scenes.begin();
 							SceneManagement::Scene* scene = sceneIterator->second;
-							auto& registrar = *scene->getComponentRegistrar();
-							auto& registry = *scene->getEntityRegistry();
-							componentInspector->render(registrar, scene, selectedEntity);
+							auto& registrar = *scene->GetComponentRegistrar();
+							auto& registry = scene->GetEntityRegistry();
+							componentInspector->Render(registrar, { selectedEntity, scene });
 						}
 						else {
 							ImGui::Text("No entity selected.");

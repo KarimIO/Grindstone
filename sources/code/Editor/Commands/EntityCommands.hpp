@@ -16,9 +16,9 @@ namespace Grindstone {
 			virtual void Redo() override;
 			virtual void Undo() override;
 			virtual ~AddEntityCommand() {}
-		private:
+		public:
 			SceneManagement::Scene* scene;
-			entt::entity entityId;
+			ECS::EntityHandle entityId;
 		};
 
 		class DeleteEntityCommand : public BaseCommand {
@@ -28,7 +28,7 @@ namespace Grindstone {
 			virtual ~DeleteEntityCommand() {}
 		private:
 			entt::registry& registry;
-			entt::entity entityId;
+			ECS::EntityHandle entityId;
 			std::vector<AddComponentCommand> componentCommands;
 		};
 	}

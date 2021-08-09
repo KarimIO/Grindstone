@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-#include <entt/entt.hpp>
+#include "EngineCore/ECS/Entity.hpp"
 
 namespace Grindstone {
 	namespace SceneManagement {
@@ -22,17 +22,25 @@ namespace Grindstone {
 			CommandList();
 			void AddNewEntity(SceneManagement::Scene* scene);
 			void AddComponent(
-				SceneManagement::Scene* scene,
-				entt::entity entityId,
+				ECS::Entity entity,
 				const char* componentName
 			);
 			void SetUndoCount(size_t undoCount);
 			void AddCommand(BaseCommand* command);
+			bool HasAvailableUndo();
+			bool HasAvailableRedo();
 			bool Redo();
 			bool Undo();
 		private:
+			size_t GetNextNumber(size_t originalNumber);
+			size_t GetPreviousNumber(size_t originalNumber);
+		private:
 			std::vector<BaseCommand*> commands;
-			size_t commandIterator = 0;
+			bool canUndo = false;
+			bool canRedo = false;
+			size_t commandIndex = 0;
+			size_t stackBeginIndex = 0;
+			size_t stackEndIndex = 0;
 			size_t usedCommandCount = 0;
 		};
 	}

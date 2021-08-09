@@ -14,19 +14,21 @@ namespace Grindstone {
 		class ComponentRegistrar {
 		public:
 			template<typename T>
-			void registerComponent(const char* name) {
-				registerComponent(name, {
-					&ECS::createComponent<T>,
-					&ECS::deleteComponent<T>,
-					&ECS::tryGetComponent<T>,
-					&ECS::getComponentReflectionData<T>
+			void RegisterComponent(const char* name) {
+				RegisterComponent(name, {
+					&ECS::CreateComponent<T>,
+					&ECS::RemoveComponent<T>,
+					&ECS::HasComponent<T>,
+					&ECS::TryGetComponent<T>,
+					&ECS::GetComponentReflectionData<T>
 				});
 			}
-			void registerComponent(const char *name, ComponentFunctions componentFunctions);
-			void* createComponent(const char *name, entt::registry& registry, ECS::Entity entity);
-			void deleteComponent(const char *name, entt::registry& registry, ECS::Entity entity);
-			bool tryGetComponent(const char *name, entt::registry& registry, ECS::Entity entity, void*& outComponent);
-			bool tryGetComponentReflectionData(const char *name, Grindstone::Reflection::TypeDescriptor_Struct& outReflectionData);
+			void RegisterComponent(const char *name, ComponentFunctions componentFunctions);
+			virtual void* CreateComponent(const char *name, entt::registry& registry, ECS::EntityHandle entity);
+			virtual void RemoveComponent(const char *name, entt::registry& registry, ECS::EntityHandle entity);
+			virtual bool HasComponent(const char* name, entt::registry& registry, ECS::EntityHandle entity);
+			virtual bool TryGetComponent(const char *name, entt::registry& registry, ECS::EntityHandle entity, void*& outComponent);
+			virtual bool TryGetComponentReflectionData(const char *name, Grindstone::Reflection::TypeDescriptor_Struct& outReflectionData);
 
 			using ComponentMap = std::unordered_map<std::string, ComponentFunctions>;
 			virtual ComponentMap::iterator begin();

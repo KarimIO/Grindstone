@@ -6,10 +6,6 @@
 #include "NewComponentInput.hpp"
 
 namespace Grindstone {
-	namespace SceneManagement {
-		class Scene;
-	}
-
 	namespace ECS {
 		class ComponentRegistrar;
 	}
@@ -18,18 +14,18 @@ namespace Grindstone {
 		namespace ImguiEditor {
 			class ComponentInspector {
 			public:
-				void render(ECS::ComponentRegistrar& registrar, SceneManagement::Scene* scene, entt::entity entity);
+				void Render(ECS::ComponentRegistrar& registrar, ECS::Entity entity);
 			private:
-				void renderComponent(
+				void RenderComponent(
 					const char* componentTypeName,
 					Reflection::TypeDescriptor_Struct& componentReflectionData,
 					void* entity
 				);
-				void renderComponentCategory(
+				void RenderComponentCategory(
 					Reflection::TypeDescriptor_Struct::Category& category,
 					void* entity
 				);
-				void renderComponentMember(
+				void RenderComponentMember(
 					Reflection::TypeDescriptor_Struct::Member& member,
 					void* entity
 				);

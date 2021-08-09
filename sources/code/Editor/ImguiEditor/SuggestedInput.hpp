@@ -11,9 +11,9 @@ namespace Grindstone {
 		namespace ImguiEditor {
 			class SuggestedInput {
 			public:
-				size_t render(std::vector<std::string>& unusedComponentsItems);
+				size_t Render(std::vector<std::string>& unusedComponentsItems);
 			private:
-				size_t renderSuggestions(
+				size_t RenderSuggestions(
 					std::vector<std::string>& unusedComponentsItems,
 					ImVec2 position,
 					float suggestionsWidth

@@ -1,22 +1,21 @@
 #pragma once
 
 #include "CommandList.hpp"
+#include "EngineCore/ECS/Entity.hpp"
 
 namespace Grindstone {
 	namespace Editor {
 		class AddComponentCommand : public BaseCommand {
 		public:
 			AddComponentCommand(
-				SceneManagement::Scene* scene,
-				entt::entity entityId,
+				ECS::Entity entity,
 				const char* componentName
 			);
 			virtual void Redo() override;
 			virtual void Undo() override;
 			virtual ~AddComponentCommand() {}
 		private:
-			SceneManagement::Scene* scene;
-			entt::entity entityId;
+			ECS::Entity entity;
 			std::string componentName;
 		};
 

@@ -7,7 +7,7 @@
 using namespace Grindstone;
 
 void Grindstone::setupCoreComponents(ECS::ComponentRegistrar* registrar) {
-	registrar->registerComponent<Grindstone::TagComponent>("Tag");
-	registrar->registerComponent<Grindstone::TransformComponent>("Transform");
-	registrar->registerComponent<Grindstone::CameraComponent>("Camera");
+	registrar->RegisterComponent<Grindstone::TagComponent>("Tag");
+	registrar->RegisterComponent<Grindstone::TransformComponent>("Transform");
+	registrar->RegisterComponent<Grindstone::CameraComponent>("Camera");
 }

@@ -47,11 +47,12 @@ void Menubar::renderFileMenu() {
 }
 
 void Menubar::renderEditMenu() {
-	if (ImGui::MenuItem("Undo", "", false)) {
-		Editor::Manager::GetInstance().getCommandList().Undo();
+	auto& commandList = Editor::Manager::GetInstance().getCommandList();
+	if (ImGui::MenuItem("Undo", "", false, commandList.HasAvailableUndo())) {
+		commandList.Undo();
 	}
-	if (ImGui::MenuItem("Redo", "", false)) {
-		Editor::Manager::GetInstance().getCommandList().Redo();
+	if (ImGui::MenuItem("Redo", "", false, commandList.HasAvailableRedo())) {
+		commandList.Redo();
 	}
 	ImGui::EndMenu();
 }

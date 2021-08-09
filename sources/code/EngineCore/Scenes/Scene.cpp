@@ -3,6 +3,7 @@
 
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
+#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "Scene.hpp"
 
 using namespace Grindstone;
@@ -14,42 +15,38 @@ Scene::Scene(
 	ECS::SystemRegistrar* systemRegistrar
 ) : engineCore(engineCore), componentRegistrar(componentRegistrar), systemRegistrar(systemRegistrar) {}
 
-ECS::Entity Scene::createEntity() {
-	return registry.create();
+ECS::Entity Scene::CreateEmptyEntity() {
+	entt::entity entityId = registry.create();
+	return { entityId, this };
 }
 
-void* Scene::attachComponent(ECS::Entity entity, const char* componentName) {
-	return componentRegistrar->createComponent(componentName, registry, entity);
+void Scene::DestroyEntity(ECS::EntityHandle entityId) {
+	registry.destroy(entityId);
 }
 
-bool Scene::tryGetComponent(const char* name, ECS::Entity entity, void*& outComponent) {
-	return componentRegistrar->tryGetComponent(name, registry, entity, outComponent);
+void Scene::DestroyEntity(ECS::Entity entity) {
+	DestroyEntity(entity.GetHandle());
 }
 
-void Scene::detachComponent(ECS::Entity entity, const char* componentName) {
-	componentRegistrar->deleteComponent(componentName, registry, entity);
-}
-
-ECS::Entity Grindstone::SceneManagement::Scene::createDefaultEntity() {
-	auto entity = createEntity();
-	auto tag = (TagComponent *)attachComponent(entity, "Tag");
-	tag->tag = "New Component";
-	attachComponent(entity, "Transform");
+ECS::Entity Grindstone::SceneManagement::Scene::CreateEntity() {
+	auto entity = CreateEmptyEntity();
+	entity.AddComponent<TagComponent>("New Entity");
+	entity.AddComponent<TransformComponent>();
 	return entity;
 }
 
-const char* Grindstone::SceneManagement::Scene::getName() {
+const char* Grindstone::SceneManagement::Scene::GetName() {
 	return name.c_str();
 }
 
-entt::registry* Scene::getEntityRegistry() {
-	return &registry;
+entt::registry& Scene::GetEntityRegistry() {
+	return registry;
 }
 
-ECS::ComponentRegistrar* Grindstone::SceneManagement::Scene::getComponentRegistrar() {
+ECS::ComponentRegistrar* Grindstone::SceneManagement::Scene::GetComponentRegistrar() {
 	return componentRegistrar;
 }
 
-void Scene::update() {
+void Scene::Update() {
 	systemRegistrar->Update(engineCore, registry);
 }

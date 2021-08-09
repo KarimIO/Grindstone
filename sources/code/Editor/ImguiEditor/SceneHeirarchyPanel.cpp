@@ -33,7 +33,7 @@ namespace Grindstone {
 					else {
 						for (auto& scenePair : sceneManager->scenes) {
 							auto* scene = scenePair.second;
-							const char* sceneName = scene->getName();
+							const char* sceneName = scene->GetName();
 							if (ImGui::TreeNode(sceneName)) {
 								renderScene(scene);
 								ImGui::TreePop();
@@ -59,7 +59,7 @@ namespace Grindstone {
 			}
 
 			void SceneHeirarchyPanel::renderScene(SceneManagement::Scene* scene) {
-				auto& registry = *scene->getEntityRegistry();
+				auto& registry = scene->GetEntityRegistry();
 
 				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 1, 1, 0.1f));
 				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.15f));

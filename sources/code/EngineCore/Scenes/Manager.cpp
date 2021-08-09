@@ -14,7 +14,7 @@ void SceneManager::loadDefaultScene() {
 
 void SceneManager::update() {
 	for (auto& scene : scenes) {
-		scene.second->update();
+		scene.second->Update();
 	}
 }
 

@@ -16,10 +16,7 @@ namespace Grindstone {
 		public:
 			SceneLoaderJson(Scene*, const char* path);
 		private:
-			ECS::Entity createEntity();
-			void* attachComponent(ECS::Entity entity, const char* componentName);
-			bool load(const char* path);
-		private:
+			bool Load(const char* path);
 			void ProcessMeta();
 			void ProcessEntities();
 			void ProcessEntity(rapidjson::GenericObject<false, rapidjson::Value>& entity);

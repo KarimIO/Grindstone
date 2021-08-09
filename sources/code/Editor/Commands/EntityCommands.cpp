@@ -4,19 +4,16 @@
 using namespace Grindstone::Editor;
 
 AddEntityCommand::AddEntityCommand(SceneManagement::Scene* scene) : scene(scene) {
-	entityId = scene->getEntityRegistry()->create();
-	auto tag = (TagComponent*)scene->attachComponent(entityId, "Tag");
-	tag->tag = "New Component";
+	Redo();
 }
 
 void AddEntityCommand::Redo() {
-	scene->getEntityRegistry()->create(entityId);
-	auto tag = (TagComponent*)scene->attachComponent(entityId, "Tag");
-	tag->tag = "New Component";
+	auto entity = scene->CreateEntity();
+	entityId = entity.GetHandle();
 }
 
 void AddEntityCommand::Undo() {
-	scene->getEntityRegistry()->destroy(entityId);
+	scene->DestroyEntity(entityId);
 }
 
 void DeleteEntityCommand::Redo() {

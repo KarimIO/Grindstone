@@ -19,14 +19,14 @@ std::string toLowerCase(std::string data) {
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
-			size_t SuggestedInput::render(std::vector<std::string>& unusedComponentsItems) {
+			size_t SuggestedInput::Render(std::vector<std::string>& unusedComponentsItems) {
 				float availableWidth = ImGui::GetContentRegionAvail().x;
 				ImGui::SetNextItemWidth(availableWidth);
 				ImGui::InputText("##SuggestedInput", &inputString);
 				if (inputString.size() > 0) {
 					ImVec2 suggestionsPosition{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y };
 					float suggestionsWidth = ImGui::GetItemRectSize().x;
-					return renderSuggestions(
+					return RenderSuggestions(
 						unusedComponentsItems,
 						suggestionsPosition,
 						suggestionsWidth
@@ -37,7 +37,7 @@ namespace Grindstone {
 				return -1;
 			}
 			
-			size_t SuggestedInput::renderSuggestions(
+			size_t SuggestedInput::RenderSuggestions(
 				std::vector<std::string>& unusedComponentsItems,
 				ImVec2 position,
 				float suggestionsWidth

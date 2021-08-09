@@ -5,16 +5,16 @@
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
-			void NewComponentInput::render(
-				SceneManagement::Scene* scene,
-				entt::entity entity,
+			void NewComponentInput::Render(
+				ECS::Entity entity,
 				std::vector<std::string>& unusedComponentsItems
 			) {
-				size_t chosenItem = suggestedInput.render(unusedComponentsItems);
+				size_t chosenItem = suggestedInput.Render(unusedComponentsItems);
 				
 				if (chosenItem != -1) {
 					std::string& componentToDeleteName = unusedComponentsItems[chosenItem];
-					Manager::GetInstance().getCommandList().AddComponent(scene, entity, componentToDeleteName.c_str());
+					auto& commandList = Manager::GetInstance().getCommandList();
+					commandList.AddComponent(entity, componentToDeleteName.c_str());
 				}
 			}
 		}
