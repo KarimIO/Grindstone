@@ -141,6 +141,7 @@ void AssetBrowserPanel::SetPath(std::filesystem::path path) {
 	currentPath = path;
 	pathToRename = "";
 	RefreshAssets();
+	Editor::Manager::GetInstance().GetSelection().ClearFiles();
 }
 
 void AssetBrowserPanel::RefreshAssetsIfNecessary() {
@@ -201,8 +202,13 @@ void AssetBrowserPanel::ProcessDirectoryEntryClicks(std::filesystem::directory_e
 		}
 		else if (ImGui::IsMouseClicked(0)) {
 			Selection& selection = Editor::Manager::GetInstance().GetSelection();
-			if (ImGui::GetIO().KeyShift) {
-				selection.AddFile(path);
+			if (ImGui::GetIO().KeyCtrl) {
+				if (selection.IsFileSelected(path)) {
+					selection.RemoveFile(path);
+				}
+				else {
+					selection.AddFile(path);
+				}
 			}
 			else {
 				selection.SetSelectedFile(path);
@@ -450,7 +456,7 @@ void AssetBrowserPanel::Render() {
 		RenderAssets();
 
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
-			if (!ImGui::GetIO().KeyShift) {
+			if (!ImGui::GetIO().KeyCtrl) {
 				Selection& selection = Editor::Manager::GetInstance().GetSelection();
 				selection.Clear();
 			}

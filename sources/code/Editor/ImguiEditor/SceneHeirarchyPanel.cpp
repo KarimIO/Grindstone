@@ -25,7 +25,7 @@ namespace Grindstone {
 					if (
 						ImGui::IsMouseDown(0) &&
 						ImGui::IsWindowHovered() &&
-						!ImGui::GetIO().KeyShift
+						!ImGui::GetIO().KeyCtrl
 						) {
 						Editor::Manager::GetInstance().GetSelection().Clear();
 					}
@@ -112,8 +112,13 @@ namespace Grindstone {
 				else {
 					ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2{0, 0.5});
 					if (ImGui::Button(entityTag, {panelWidth, 0})) {
-						if (ImGui::GetIO().KeyShift) {
-							selection.AddEntity(entity);
+						if (ImGui::GetIO().KeyCtrl) {
+							if (selection.IsEntitySelected(entity)) {
+								selection.RemoveEntity(entity);
+							}
+							else {
+								selection.AddEntity(entity);
+							}
 						}
 						else {
 							selection.SetSelectedEntity(entity);
