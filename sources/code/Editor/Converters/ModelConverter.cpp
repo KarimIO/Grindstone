@@ -13,7 +13,7 @@
 
 using namespace Grindstone::Converters;
 
-void PushVertex3dToVector(std::vector<float> targetVector, const aiVector3D* aiVertex) {
+void PushVertex3dToVector(std::vector<float>& targetVector, const aiVector3D* aiVertex) {
 	targetVector.push_back(aiVertex->x);
 	targetVector.push_back(aiVertex->y);
 	targetVector.push_back(aiVertex->z);
@@ -190,16 +190,29 @@ void ModelConverter::OutputPrefabs() {
 }
 
 void ModelConverter::OutputMeshes() {
-	std::string meshOutputPath = "";
+	std::string meshOutputPath = path.substr(0, path.find_last_of('.')) + ".gmf";
 
 	auto meshCount = outputData.meshes.size();
 
 	Grindstone::Formats::Model::Header::V1 outFormat;
+	outFormat.totalFileSize = sizeof(outFormat) + 
+		meshCount * sizeof(Submesh) +
+		outputData.vertexArray.position.size() * sizeof(float) +
+		outputData.vertexArray.normal.size() * sizeof(float) +
+		outputData.vertexArray.tangent.size() * sizeof(float) +
+		outputData.indices.size() * sizeof(uint32_t);
+	outFormat.hasVertexPositions = true;
+	outFormat.hasVertexNormals = true;
+	outFormat.hasVertexTangents = true;
 	outFormat.vertexCount = static_cast<uint64_t>(outputData.vertexCount);
 	outFormat.indexCount = static_cast<uint64_t>(outputData.indexCount);
 	outFormat.meshCount = static_cast<uint32_t>(meshCount);
 
 	std::ofstream output(meshOutputPath, std::ios::binary);
+
+	if (!output.is_open()) {
+		throw std::runtime_error(std::string("Failed to open ") + meshOutputPath);
+	}
 
 	//  - Output File MetaData
 	output.write("GMF", 3);
@@ -215,7 +228,7 @@ void ModelConverter::OutputMeshes() {
 	OutputVertexArray(output, outputData.vertexArray.tangent);
 
 	// - Output Indices
-	output.write(reinterpret_cast<const char*> (outputData.indices.data()), outputData.indices.size() * sizeof(uint32_t));
+	output.write(reinterpret_cast<const char*> (outputData.indices.data()), outputData.indices.size() * sizeof(uint16_t));
 
 	output.close();
 }

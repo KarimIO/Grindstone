@@ -328,7 +328,7 @@ namespace Grindstone {
 		}
 
 		void GLCore::BindVertexArrayObject(VertexArrayObject *vao) {
-			vao->bind();
+			vao->Bind();
 		}
 
 		GLenum GetGeomType(GeometryType geom_type) {

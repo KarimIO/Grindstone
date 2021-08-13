@@ -100,7 +100,7 @@ namespace Grindstone {
 
 			if (createInfo.vertexBindingsCount > 0) {
 				auto& vbd = createInfo.vertexBindings;
-				for (uint32_t i = 0; i < vbd->attribute_count; i++) {
+				for (uint32_t i = 0; i < vbd->attributeCount; i++) {
 					glBindAttribLocation(program_, vbd->attributes[i].location, vbd->attributes[i].name);
 				}
 			}

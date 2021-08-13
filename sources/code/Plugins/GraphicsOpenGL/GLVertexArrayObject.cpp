@@ -27,49 +27,49 @@ namespace Grindstone {
 			return 0;
 		};
 
-		GLVertexArrayObject::GLVertexArrayObject() : number_buffers_(0) {
-			glGenVertexArrays(1, &vertex_array_object_);
-			glBindVertexArray(vertex_array_object_);
+		GLVertexArrayObject::GLVertexArrayObject() {
+			glGenVertexArrays(1, &vertexArrayObject);
+			glBindVertexArray(vertexArrayObject);
 		}
 
-		GLVertexArrayObject::GLVertexArrayObject(CreateInfo& createInfo) : number_buffers_(0) {
-			glGenVertexArrays(1, &vertex_array_object_);
-			glBindVertexArray(vertex_array_object_);
+		GLVertexArrayObject::GLVertexArrayObject(CreateInfo& createInfo) {
+			glGenVertexArrays(1, &vertexArrayObject);
+			glBindVertexArray(vertexArrayObject);
 
-			for (size_t i = 0; i < createInfo.vertex_buffer_count; ++i) {
-				GLVertexBuffer* vbo = (GLVertexBuffer *)createInfo.vertex_buffers[i];
-				vbo->bind();
+			for (size_t i = 0; i < createInfo.vertexBufferCount; ++i) {
+				GLVertexBuffer* vbo = (GLVertexBuffer *)createInfo.vertexBuffers[i];
+				vbo->Bind();
 
-				const auto& layout = vbo->getLayout();
-				for (uint32_t j = 0; j < layout.attribute_count; ++j) {
-					VertexAttributeDescription &layout_element = layout.attributes[j];
-					GLenum vert_format = vertexFormatToOpenGLFormat(layout_element.format);
-					glEnableVertexAttribArray(number_buffers_);
-					glVertexAttribPointer(number_buffers_++,
-						layout_element.components_count,
+				const auto& layout = vbo->GetLayout();
+				for (uint32_t j = 0; j < layout.attributeCount; ++j) {
+					VertexAttributeDescription &layoutElement = layout.attributes[j];
+					GLenum vert_format = vertexFormatToOpenGLFormat(layoutElement.format);
+					glEnableVertexAttribArray(vertexBufferCount);
+					glVertexAttribPointer(vertexBufferCount++,
+						layoutElement.componentsCount,
 						vert_format,
-						layout_element.normalized ? GL_TRUE : GL_FALSE,
+						layoutElement.normalized ? GL_TRUE : GL_FALSE,
 						layout.stride,
-						(const void*)layout_element.offset);
+						(const void*)layoutElement.offset);
 				}
 			}
 
-			if (createInfo.index_buffer != nullptr) {
-				((GLIndexBuffer*)createInfo.index_buffer)->Bind();
+			if (createInfo.indexBuffer != nullptr) {
+				((GLIndexBuffer*)createInfo.indexBuffer)->Bind();
 			}
 
 			glBindVertexArray(0);
 		}
 
 		GLVertexArrayObject::~GLVertexArrayObject() {
-			glDeleteVertexArrays(1, &vertex_array_object_);
+			glDeleteVertexArrays(1, &vertexArrayObject);
 		}
 
-		void GLVertexArrayObject::bind() {
-			glBindVertexArray(vertex_array_object_);
+		void GLVertexArrayObject::Bind() {
+			glBindVertexArray(vertexArrayObject);
 		}
 
-		void GLVertexArrayObject::unbind() {
+		void GLVertexArrayObject::Unbind() {
 			glBindVertexArray(0);
 		}
 	}

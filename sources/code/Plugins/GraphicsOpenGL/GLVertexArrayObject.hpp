@@ -9,15 +9,15 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		class GLVertexArrayObject : public VertexArrayObject {
 		public:
-			GLuint vertex_array_object_;
-			uint32_t number_buffers_;
+			GLuint vertexArrayObject;
+			uint32_t vertexBufferCount = 0;
 		public:
 			GLVertexArrayObject();
 			GLVertexArrayObject(CreateInfo& createInfo);
 			virtual ~GLVertexArrayObject() override;
 
-			virtual void bind() override;
-			virtual void unbind() override;
+			virtual void Bind() override;
+			virtual void Unbind() override;
 		};
 	}
 }

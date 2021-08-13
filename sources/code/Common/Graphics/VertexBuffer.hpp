@@ -86,44 +86,44 @@ namespace Grindstone {
 		};
 
 		struct VertexAttributeDescription {
-			uint32_t location;
-			VertexFormat format;
-			uint32_t offset;
-			uint32_t size;
-			uint32_t components_count;
-			bool normalized;
+			uint32_t location = 0;
+			VertexFormat format = VertexFormat::Float;
+			uint32_t offset = 0;
+			uint32_t size = 0;
+			uint32_t componentsCount = 0;
+			bool normalized = false;
 
-			AttributeUsage usage;
-			const char *name;
+			AttributeUsage usage = AttributeUsage::Other;
+			const char *name = "";
 
-			VertexAttributeDescription() {}
+			VertexAttributeDescription() = default;
 
 			VertexAttributeDescription(VertexFormat _format, const char* _name, bool _normalized = false, AttributeUsage _usage = AttributeUsage::Other) :
-				format(_format), name(_name), usage(_usage), size(vertexFormatTypeSize(_format)), components_count(vertexFormatTypeComponents(_format)), normalized(_normalized), offset(0), location(0) {
+				format(_format), name(_name), usage(_usage), size(vertexFormatTypeSize(_format)), componentsCount(vertexFormatTypeComponents(_format)), normalized(_normalized), offset(0), location(0) {
 
 			}
 		};
 
 		struct VertexBufferLayout {
-			VertexBufferLayout() : stride(0), element_rate(false), attributes(0), attribute_count(0) {}
+			VertexBufferLayout() = default;
 			VertexBufferLayout(const std::initializer_list<VertexAttributeDescription>& elements, bool _element_rate = false)
-				: attribute_count((uint32_t)elements.size()), stride(0), element_rate(_element_rate), attributes(new VertexAttributeDescription[elements.size()]) {
+				: attributeCount((uint32_t)elements.size()), stride(0), elementRate(_element_rate), attributes(new VertexAttributeDescription[elements.size()]) {
 				memcpy(attributes, elements.begin(), sizeof(VertexAttributeDescription) * elements.size());
 
-				for (uint32_t i = 0; i < attribute_count; ++i) {
+				for (uint32_t i = 0; i < attributeCount; ++i) {
 					attributes[i].offset = stride;
 					stride += attributes[i].size;
 				}
 			}
-			uint32_t stride;
-			bool element_rate;
-			VertexAttributeDescription* attributes;
-			uint32_t attribute_count;
+			uint32_t stride = 0;
+			bool elementRate = false;
+			VertexAttributeDescription* attributes = nullptr;
+			uint32_t attributeCount = 0;
 		};
 
 		struct VertexArrayBindingLayout {
-			VertexBufferLayout* vertex_binding_descriptions;
-			uint32_t binding_count;
+			VertexBufferLayout* vertexBindingDescriptions;
+			uint32_t bindingCount;
 		};
 
 		class VertexBuffer {

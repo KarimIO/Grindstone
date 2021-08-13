@@ -10,14 +10,14 @@ namespace Grindstone {
 		class VertexArrayObject {
 		public:
 			struct CreateInfo {
-				VertexBuffer** vertex_buffers;
-				uint32_t vertex_buffer_count;
-				IndexBuffer* index_buffer;
+				VertexBuffer** vertexBuffers;
+				uint32_t vertexBufferCount;
+				IndexBuffer* indexBuffer;
 			};
 
 			virtual ~VertexArrayObject() {};
-			virtual void bind() = 0;
-			virtual void unbind() = 0;
+			virtual void Bind() = 0;
+			virtual void Unbind() = 0;
 		};
 	};
 };

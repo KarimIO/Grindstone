@@ -31,7 +31,7 @@ Window* WindowManager::GetWindowByIndex(unsigned int i) {
 }
 
 unsigned int WindowManager::GetNumWindows() {
-	return windows.size();
+	return (unsigned int)windows.size();
 }
 
 void WindowManager::UpdateWindows() {
