@@ -35,7 +35,7 @@ std::vector<char> readBinaryFile(const char* filename) {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
 	if (!file.is_open()) {
-		throw std::runtime_error("failed to open file!");
+		throw std::runtime_error(std::string("Failed to open file ") + filename);
 	}
 
 	size_t fileSize = (size_t)file.tellg();
@@ -51,6 +51,11 @@ std::vector<char> readBinaryFile(const char* filename) {
 
 std::string readTextFile(const char* filename) {
 	std::ifstream ifs(filename);
+
+	if (!ifs.is_open()) {
+		throw std::runtime_error(std::string("Failed to open file ") + filename);
+	}
+
 	std::string content((std::istreambuf_iterator<char>(ifs)),
 		(std::istreambuf_iterator<char>()));
 
@@ -123,17 +128,22 @@ namespace Grindstone {
 		ShaderImporter::ShaderImporter() : reflectionWriter(reflectionStringBuffer) {}
 
 		void ShaderImporter::convertFile(const char* filePath) {
-			path = filePath;
+			try {
+				path = filePath;
 
-			basePath = path;
-			auto lastPeriod = path.find_last_of('.');
-			if (lastPeriod != -1) {
-				basePath = path.substr(0, lastPeriod);
+				basePath = path;
+				auto lastPeriod = path.find_last_of('.');
+				if (lastPeriod != -1) {
+					basePath = path.substr(0, lastPeriod);
+				}
+
+				sourceFileContents = readTextFile(filePath);
+
+				process();
 			}
-
-			sourceFileContents = readTextFile(filePath);
-
-			process();
+			catch (std::runtime_error& e) {
+				std::cerr << e.what() << std::endl;
+			}
 		}
 
 		void ShaderImporter::process() {
@@ -329,7 +339,7 @@ namespace Grindstone {
 			);
 
 			if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
-				std::cerr << result.GetErrorMessage() << std::endl;
+				throw std::runtime_error(result.GetErrorMessage());
 			}
 
 			auto vkSpirv = std::vector<uint32_t>(result.cbegin(), result.cend());
@@ -365,7 +375,7 @@ namespace Grindstone {
 			);
 
 			if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
-				std::cerr << result.GetErrorMessage() << std::endl;
+				throw std::runtime_error(result.GetErrorMessage());
 			}
 
 			outputUint32ToFile((std::string(extension) + ".opengl.spv").c_str(), std::vector<uint32_t>(result.cbegin(), result.cend()));
