@@ -6,7 +6,7 @@
 #include "EngineCore/ECS/ComponentFunctions.hpp"
 using namespace Grindstone;
 
-void Grindstone::setupCoreComponents(ECS::ComponentRegistrar* registrar) {
+void Grindstone::SetupCoreComponents(ECS::ComponentRegistrar* registrar) {
 	registrar->RegisterComponent<Grindstone::TagComponent>("Tag");
 	registrar->RegisterComponent<Grindstone::TransformComponent>("Transform");
 	registrar->RegisterComponent<Grindstone::CameraComponent>("Camera");

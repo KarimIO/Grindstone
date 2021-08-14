@@ -92,7 +92,7 @@ void Grindstone::BaseRender(
 		myMaterial = &materialManager->LoadMaterial("../assets/New Material.gmat");
 #ifndef TESTING_MESH
 		Mesh3dManager* mesh3dManager = EngineCore::GetInstance().mesh3dManager;
-		mesh3d = &mesh3dManager->LoadMesh3d("../assets/models/sphere.gmf");
+		mesh3d = &mesh3dManager->LoadMesh3d("../assets/models/crytek-sponza/sponza.gmf");
 #endif
 		isFirst = false;
 	}
@@ -118,8 +118,10 @@ void Grindstone::BaseRender(
 	ubo->updateBuffer(&engineUboStruct);
 	ubo->bind();
 	mesh3d->vertexArrayObject->Bind();
-	Mesh3d::Submesh& submesh = mesh3d->submeshes[0];
-	core->DrawImmediateIndexed(GeometryType::Triangles, false, submesh.baseVertex, submesh.baseIndex, submesh.indexCount);
+	for (size_t i = 0; i < mesh3d->submeshes.size(); ++i) {
+		Mesh3d::Submesh& submesh = mesh3d->submeshes[i];
+		core->DrawImmediateIndexed(GeometryType::Triangles, false, submesh.baseVertex, submesh.baseIndex, submesh.indexCount);
+	}
 #endif
 	
 	// RenderLights();

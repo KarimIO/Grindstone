@@ -5,5 +5,5 @@ namespace Grindstone {
 		class ComponentRegistrar;
 	}
 
-	void setupCoreComponents(ECS::ComponentRegistrar* registrar);
+	void SetupCoreComponents(ECS::ComponentRegistrar* registrar);
 }

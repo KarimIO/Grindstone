@@ -60,16 +60,19 @@ void ModelConverter::ConvertMaterials() {
 		ConvertTexture(pMaterial, aiTextureType_SHININESS, baseOutputPath, newMaterial.roughnessPath);
 
 		aiColor4D diffuse_color;
-		if (AI_SUCCESS == aiGetMaterialColor(pMaterial, AI_MATKEY_COLOR_DIFFUSE, &diffuse_color))
+		if (AI_SUCCESS == aiGetMaterialColor(pMaterial, AI_MATKEY_COLOR_DIFFUSE, &diffuse_color)) {
 			memcpy(&newMaterial.albedoColor, &diffuse_color, sizeof(float) * 4);
+		}
 
 		aiColor4D metalness;
-		if (AI_SUCCESS == aiGetMaterialColor(pMaterial, AI_MATKEY_COLOR_SPECULAR, &metalness))
+		if (AI_SUCCESS == aiGetMaterialColor(pMaterial, AI_MATKEY_COLOR_SPECULAR, &metalness)) {
 			newMaterial.metalness = metalness.r;
+		}
 
 		aiColor4D roughness;
-		if (AI_SUCCESS == aiGetMaterialColor(pMaterial, AI_MATKEY_COLOR_AMBIENT, &roughness))
+		if (AI_SUCCESS == aiGetMaterialColor(pMaterial, AI_MATKEY_COLOR_AMBIENT, &roughness)) {
 			newMaterial.roughness = roughness.r;
+		}
 
 		std::string sanname = name.C_Str(); //sanitizeFileName(name.C_Str());
 
@@ -123,7 +126,7 @@ void ModelConverter::ProcessVertices() {
 	for (unsigned int meshIterator = 0; meshIterator < scene->mNumMeshes; meshIterator++) {
 		const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
 
-		auto &mesh = scene->mMeshes[meshIterator];
+		auto mesh = scene->mMeshes[meshIterator];
 
 		for (unsigned int vertexIterator = 0; vertexIterator < mesh->mNumVertices; vertexIterator++) {
 			const aiVector3D* aiPos = &(mesh->mVertices[vertexIterator]);

@@ -27,10 +27,10 @@
 
 using namespace Grindstone;
 
-bool EngineCore::Initialize(CreateInfo& create_info) {
+bool EngineCore::Initialize(CreateInfo& createInfo) {
 	Logger::init("../log/output.log");
 	GRIND_PROFILE_BEGIN_SESSION("Loading", "../log/grind-profile-load.json");
-	GRIND_LOG("Initializing {0}...", create_info.applicationTitle);
+	GRIND_LOG("Initializing {0}...", createInfo.applicationTitle);
 
 	// Load core (Logging, ECS and Plugin Manager)
 	pluginManager = new Plugins::Manager(this);
@@ -62,12 +62,12 @@ bool EngineCore::Initialize(CreateInfo& create_info) {
 	systemRegistrar = new ECS::SystemRegistrar();
 	SetupCoreSystems(systemRegistrar);
 	componentRegistrar = new ECS::ComponentRegistrar();
-	setupCoreComponents(componentRegistrar);
+	SetupCoreComponents(componentRegistrar);
 	sceneManager = new SceneManagement::SceneManager();
 
-	sceneManager->loadDefaultScene();
+	sceneManager->LoadDefaultScene();
 
-	GRIND_LOG("{0} Initialized.", create_info.applicationTitle);
+	GRIND_LOG("{0} Initialized.", createInfo.applicationTitle);
 	GRIND_PROFILE_END_SESSION();
 
 	return true;
@@ -86,7 +86,7 @@ void EngineCore::Run() {
 }
 
 void EngineCore::RunLoopIteration() {
-	sceneManager->update();
+	sceneManager->Update();
 }
 
 void EngineCore::UpdateWindows() {

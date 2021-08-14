@@ -11,10 +11,10 @@ namespace Grindstone {
 	namespace SceneManagement {
 		class SceneManager {
 		public:
-			void loadDefaultScene();
-			void update();
-			virtual Scene* loadScene(const char *path);
-			virtual Scene* addEmptyScene(const char *name);
+			void LoadDefaultScene();
+			void Update();
+			virtual Scene* LoadScene(const char *path);
+			virtual Scene* AddEmptyScene(const char *name);
 			std::unordered_map<std::string, Scene*> scenes;
 		};
 	}
