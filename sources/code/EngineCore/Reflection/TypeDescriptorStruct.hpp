@@ -43,20 +43,6 @@ namespace Grindstone {
 				size_t size,
 				const Category &init
 			) : TypeDescriptor{ nullptr, 0, ReflectionTypeData::Struct }, category{ init } {}
-
-			virtual void dump(const void* obj, int indentLevel) const override {
-				std::cout << name << " {" << std::endl;
-				for (const Member& member : category.members) {
-					std::cout << std::string(4 * (indentLevel + 1), ' ') << member.displayName;
-					if (member.metadata != Metadata::NoMetadata)
-						std::cout << " [" << stringifyMetadata(member.metadata) << "]";
-					std::cout << " = ";
-					member.type->dump((char*)obj + member.offset, indentLevel + 1);
-					std::cout << std::endl;
-				}
-				std::cout << std::string(4 * indentLevel, ' ') << "}";
-
-			}
 		};
 	}
 }

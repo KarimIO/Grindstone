@@ -4,11 +4,7 @@
 namespace Grindstone {
 	namespace Reflection {
 		struct TypeDescriptor_Bool : TypeDescriptor {
-			TypeDescriptor_Bool() : TypeDescriptor{ "bool", sizeof(bool), ReflectionTypeData::Bool } {
-			}
-			virtual void dump(const void* obj, int /* unused */) const override {
-				std::cout << "bool{" << *(const bool*)obj << "}";
-			}
+			TypeDescriptor_Bool() : TypeDescriptor{ "bool", sizeof(bool), ReflectionTypeData::Bool } {}
 		};
 
 		template <>

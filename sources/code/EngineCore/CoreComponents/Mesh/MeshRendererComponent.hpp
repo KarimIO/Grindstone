@@ -5,8 +5,8 @@
 
 namespace Grindstone {
 	struct MeshRendererComponent {
-		std::vector<std::string> materialPaths;
+		std::vector<int> materialPaths;
 
-		REFLECT("Camera")
+		REFLECT("MeshRenderer")
 	};
 }

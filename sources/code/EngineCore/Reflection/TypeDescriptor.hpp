@@ -32,7 +32,6 @@ namespace Grindstone {
 			TypeDescriptor(const char* name, size_t size, ReflectionTypeData t) : name{ name }, size{ size }, type{ t } {}
 			virtual ~TypeDescriptor() {}
 			virtual const char* getFullName() const { return name; }
-			virtual void dump(const void* obj, int indentLevel = 0) const = 0;
 		};
 	}
 }

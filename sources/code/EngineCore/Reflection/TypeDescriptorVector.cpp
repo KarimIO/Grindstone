@@ -29,31 +29,21 @@ namespace Grindstone {
 			virtual const char* getFullName() const override {
 				return name.c_str();
 			}
-			virtual void dump(const void* obj, int indentLevel) const override {
-				size_t numItems = getSize(obj);
-				std::cout << getFullName();
-				if (numItems == 0) {
-					std::cout << "{}";
-				}
-				else {
-					std::cout << "{" << std::endl;
-					for (size_t index = 0; index < numItems; index++) {
-						std::cout << std::string(4 * (indentLevel + 1), ' ') << "[" << index << "] ";
-						itemType->dump(getItem(obj, index), indentLevel + 1);
-						std::cout << std::endl;
-					}
-					std::cout << std::string(4 * indentLevel, ' ') << "}";
-				}
-			}
 		};
 
 		template <typename T>
 		class TypeResolver<std::vector<T>> {
 		public:
-			static TypeDescriptor* get() {
+			static TypeDescriptor* getPrimitiveDescriptor() {
 				static TypeDescriptor_StdVector typeDesc{ (T*) nullptr };
 				return &typeDesc;
 			}
 		};
+
+		template <typename T>
+		TypeDescriptor* getPrimitiveDescriptor<std::vector<T>>() {
+			static TypeDescriptor_StdVector typeDesc{ (T*) nullptr };
+			return &typeDesc;
+		}
 	}
 }

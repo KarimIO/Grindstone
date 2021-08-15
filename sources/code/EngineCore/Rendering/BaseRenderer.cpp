@@ -36,24 +36,15 @@ void Grindstone::BaseRender(
 		UniformBufferBinding::CreateInfo globalUniformBufferBindingCi{};
 		globalUniformBufferBindingCi.binding = 0;
 		globalUniformBufferBindingCi.shaderLocation = "EngineUbo";
-		globalUniformBufferBindingCi.size = sizeof(glm::mat4) * 3;
+		globalUniformBufferBindingCi.size = sizeof(EngineUboStruct);
 		globalUniformBufferBindingCi.stages = ShaderStageBit::AllGraphics;
 		globalUniformBufferBinding = core->CreateUniformBufferBinding(globalUniformBufferBindingCi);
 
-		UniformBuffer::CreateInfo ubCi{};
-		ubCi.binding = globalUniformBufferBinding;
-		ubCi.isDynamic = true;
-		ubCi.size = sizeof(glm::mat4) * 3;
-		globalUniformBufferObject = core->CreateUniformBuffer(ubCi);
-
-		auto& engineCore = EngineCore::GetInstance();
-		auto materialManager = engineCore.materialManager;
-		auto mesh3dRenderer = engineCore.mesh3dRenderer;
-		Material& myMaterial = materialManager->LoadMaterial(mesh3dRenderer, "../assets/New Material.gmat");
-
-		Mesh3dManager* mesh3dManager = EngineCore::GetInstance().mesh3dManager;
-		Mesh3d& mesh3d = mesh3dManager->LoadMesh3d("../assets/models/sphere.gmf");
-		myMaterial.renderables.push_back(&mesh3d.submeshes[0]);
+		UniformBuffer::CreateInfo globalUniformBufferObjectCi{};
+		globalUniformBufferObjectCi.binding = globalUniformBufferBinding;
+		globalUniformBufferObjectCi.isDynamic = true;
+		globalUniformBufferObjectCi.size = sizeof(EngineUboStruct);
+		globalUniformBufferObject = core->CreateUniformBuffer(globalUniformBufferObjectCi);
 
 		isFirst = false;
 	}

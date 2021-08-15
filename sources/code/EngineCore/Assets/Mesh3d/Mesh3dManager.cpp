@@ -111,6 +111,7 @@ void Mesh3dManager::LoadMeshImportSubmeshes(Mesh3d& mesh, Formats::Model::Header
 		dst.baseIndex = src.baseIndex;
 		dst.baseVertex = src.baseVertex;
 		dst.indexCount = src.indexCount;
+		dst.materialIndex = src.materialIndex;
 		dst.mesh = &mesh;
 	}
 

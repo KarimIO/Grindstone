@@ -4,11 +4,12 @@
 namespace Grindstone {
 	namespace Reflection {
 		struct TypeDescriptor_StdString : TypeDescriptor {
-			TypeDescriptor_StdString() : TypeDescriptor{ "std::string", sizeof(std::string), ReflectionTypeData::String } {
-			}
-			virtual void dump(const void* obj, int /* unused */) const override {
-				std::cout << "std::string{\"" << *(const std::string*) obj << "\"}";
-			}
+			TypeDescriptor_StdString()
+				: TypeDescriptor{
+					"std::string",
+					sizeof(std::string),
+					ReflectionTypeData::String
+				} {}
 		};
 
 		template <>

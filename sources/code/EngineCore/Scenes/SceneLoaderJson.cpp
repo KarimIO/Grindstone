@@ -10,7 +10,10 @@
 #include "Scene.hpp"
 
 #include "EngineCore/CoreComponents/Mesh/MeshComponent.hpp"
+#include "EngineCore/CoreComponents/Mesh/MeshRendererComponent.hpp"
 #include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
+#include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
+#include "EngineCore/Assets/Materials/MaterialManager.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
@@ -31,10 +34,50 @@ bool SceneLoaderJson::Load(const char* path) {
 	ProcessMeta();
 	ProcessEntities();
 
-	auto mesh3dManager = EngineCore::GetInstance().mesh3dManager;
-	auto& meshView = scene->GetEntityRegistry().view<const MeshComponent>();
-	meshView.each([&](const MeshComponent& meshComponent) {
-		mesh3dManager->LoadMesh3d(meshComponent.meshPath.c_str());
+	auto& engineCore = EngineCore::GetInstance();
+	auto materialManager = engineCore.materialManager;
+	auto mesh3dManager = engineCore.mesh3dManager;
+	auto mesh3dRenderer = engineCore.mesh3dRenderer;
+	auto& registry = scene->GetEntityRegistry();
+
+	auto& meshView = registry.view<MeshComponent>();
+	meshView.each([&](MeshComponent& meshComponent) {
+		meshComponent.mesh = &mesh3dManager->LoadMesh3d(meshComponent.meshPath.c_str());
+	});
+
+	// BEGIN TEST CODE. Remove this when materialPaths is working.
+	std::vector<Material*> materials;
+	materials.push_back(&materialManager->LoadMaterial(
+		mesh3dRenderer,
+		"../assets/New Material.gmat"
+	));
+	// END TEST CODE.
+
+	auto& meshAndMeshRendererView = registry.view<MeshComponent, MeshRendererComponent>();
+	meshAndMeshRendererView.each([&](
+		MeshComponent& meshComponent,
+		MeshRendererComponent& meshRendererComponent
+	) {
+#if 0
+		std::vector<Material*> materials;
+		materials.resize(meshRendererComponent.materialPaths.size());
+		for (size_t i = 0; i < meshRendererComponent.materialPaths.size(); ++i) {
+			auto& materialPath = meshRendererComponent.materialPaths[i];
+			materials[i] = &materialManager->LoadMaterial(
+				mesh3dRenderer,
+				materialPath.c_str()
+			);
+		}
+#endif
+
+		for (auto& submesh : meshComponent.mesh->submeshes) {
+			if (submesh.materialIndex >= materials.size()) {
+				continue;
+			}
+
+			Material* material = materials[submesh.materialIndex];
+			material->renderables.push_back(&submesh);
+		}
 	});
 
 	return true;
