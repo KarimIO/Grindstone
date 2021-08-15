@@ -17,17 +17,17 @@ void Mesh3dRenderer::RenderShader(Shader& shader) {
 }
 
 void Mesh3dRenderer::RenderMaterial(Material& material) {
-	material.shader->pipeline->bind();
 	if (material.uniformBufferObject) {
-		material.uniformBufferObject->updateBuffer(material.buffer);
-		material.uniformBufferObject->bind();
+		material.uniformBufferObject->UpdateBuffer(material.buffer);
+		material.uniformBufferObject->Bind();
 	}
 
 	GraphicsAPI::Core* core = EngineCore::GetInstance().GetGraphicsCore();
 	core->BindTexture(material.textureBinding);
 
-	for (void* submesh : material.renderables) {
-		RenderSubmesh(*(Mesh3d::Submesh*)submesh);
+	for (void* renderable : material.renderables) {
+		Mesh3d::Submesh& submesh = *(Mesh3d::Submesh *)renderable;
+		RenderSubmesh(submesh);
 	}
 }
 
@@ -38,7 +38,7 @@ void Mesh3dRenderer::RenderSubmesh(Mesh3d::Submesh& submesh3d) {
 	core->BindVertexArrayObject(mesh3d.vertexArrayObject);
 	core->DrawImmediateIndexed(
 		GraphicsAPI::GeometryType::Triangles,
-		true,
+		false,
 		submesh3d.baseVertex,
 		submesh3d.baseIndex,
 		submesh3d.indexCount

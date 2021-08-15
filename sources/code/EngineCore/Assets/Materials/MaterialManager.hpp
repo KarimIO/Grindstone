@@ -7,13 +7,20 @@
 #include "Material.hpp"
 
 namespace Grindstone {
+	class BaseAssetRenderer;
+
 	class MaterialManager {
 		public:
-			Material& LoadMaterial(const char* path);
+			Material& LoadMaterial(BaseAssetRenderer* assetRenderer, const char* path);
 			bool TryGetMaterial(const char* path, Material*& material);
 		private:
-			Material& CreateMaterialFromFile(const char* path);
-			Material CreateMaterialFromData(std::filesystem::path relativePath, const char* data);
+			Material& CreateMaterialFromFile(BaseAssetRenderer* assetRenderer, const char* path);
+			void CreateMaterialFromData(
+				std::filesystem::path relativePath,
+				Material& material,
+				BaseAssetRenderer* assetRenderer,
+				const char* data
+			);
 		private:
 			std::map<std::string, Material> materials;
 	};

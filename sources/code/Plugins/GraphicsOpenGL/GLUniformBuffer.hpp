@@ -16,15 +16,15 @@ namespace Grindstone {
 
 		class GLUniformBuffer : public UniformBuffer {
 		private:
-			GLuint ubo_;
-			GLuint binding_location_;
-			uint32_t size_;
+			GLuint uniformBufferObject;
+			GLuint bindingLocation;
+			uint32_t size;
 		public:
-			GLUniformBuffer(CreateInfo& ci);
-			virtual void bind() override;
+			GLUniformBuffer(CreateInfo& createInfo);
 			~GLUniformBuffer();
 
-			virtual void updateBuffer(void * content) override;
+			virtual void Bind() override;
+			virtual void UpdateBuffer(void *content) override;
 		};
 	}
 }

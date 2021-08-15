@@ -69,6 +69,11 @@ void ShaderReflectionLoader::ProcessMetadata() {
 	}
 	outData.name = document["name"].GetString();
 
+	if (!document.HasMember("renderQueue")) {
+		throw std::runtime_error("No renderQueue found in shader reflection.");
+	}
+	outData.renderQueue = document["renderQueue"].GetString();
+
 	if (!document.HasMember("shaderModules")) {
 		throw std::runtime_error("No shaderModules found in shader reflection.");
 	}

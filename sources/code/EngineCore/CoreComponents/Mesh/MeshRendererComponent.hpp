@@ -4,9 +4,9 @@
 #include "EngineCore/Reflection/ComponentReflection.hpp"
 
 namespace Grindstone {
-	struct TagComponent {
-		std::string tag;
+	struct MeshRendererComponent {
+		std::vector<std::string> materialPaths;
 
-		REFLECT("Tag")
+		REFLECT("Camera")
 	};
 }

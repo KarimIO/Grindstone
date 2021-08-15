@@ -9,6 +9,9 @@
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Scene.hpp"
 
+#include "EngineCore/CoreComponents/Mesh/MeshComponent.hpp"
+#include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
+
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
 
@@ -28,16 +31,19 @@ bool SceneLoaderJson::Load(const char* path) {
 	ProcessMeta();
 	ProcessEntities();
 
+	auto mesh3dManager = EngineCore::GetInstance().mesh3dManager;
+	auto& meshView = scene->GetEntityRegistry().view<const MeshComponent>();
+	meshView.each([&](const MeshComponent& meshComponent) {
+		mesh3dManager->LoadMesh3d(meshComponent.meshPath.c_str());
+	});
+
 	return true;
 }
 
 void SceneLoaderJson::ProcessMeta() {
-	if (document.HasMember("name")) {
-		scene->name = document["name"].GetString();
-	}
-	else {
-		scene->name = "Untitled Scene";
-	}
+	scene->name = document.HasMember("name")
+		? document["name"].GetString()
+		: "Untitled Scene";
 }
 
 void SceneLoaderJson::ProcessEntities() {
@@ -60,7 +66,7 @@ void SceneLoaderJson::ProcessEntity(rapidjson::GenericObject<false, rapidjson::V
 		rapidjson::Value* componentIterator = components.Begin();
 		componentIterator != components.End();
 		++componentIterator
-		) {
+	) {
 		auto& component = componentIterator->GetObject();
 		ProcessComponent(entity, component);
 	}

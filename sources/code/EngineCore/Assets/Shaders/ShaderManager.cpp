@@ -4,6 +4,7 @@
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Common/Graphics/Core.hpp"
 #include "ShaderReflectionLoader.hpp"
+#include "EngineCore/Assets/BaseAssetRenderer.hpp"
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
@@ -37,13 +38,15 @@ std::string GetShaderPath(const char* basePath, ShaderStage shaderStage, Graphic
 	return std::string(basePath) + shaderStageExtension + graphicsCore->GetDefaultShaderExtension();
 }
 
-Shader& ShaderManager::LoadShader(const char* path) {
+Shader& ShaderManager::LoadShader(BaseAssetRenderer* assetRenderer, const char* path) {
 	Shader* shader = nullptr;
-	if (TryGetShader(path, shader)) {
-		return *shader;
+	if (!TryGetShader(path, shader)) {
+		shader = &CreateShaderFromFile(path);
 	}
 
-	return CreateShaderFromFile(path);
+	assetRenderer->AddShaderToRenderQueue(shader);
+
+	return *shader;
 }
 
 bool ShaderManager::TryGetShader(const char* path, Shader*& shader) {

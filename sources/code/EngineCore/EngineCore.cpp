@@ -15,7 +15,6 @@
 #include "Common/Graphics/Core.hpp"
 #include "Common/Display/DisplayManager.hpp"
 #include "Common/Window/WindowManager.hpp"
-#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "Events/Dispatcher.hpp"
 
 #include "EngineCore/Assets/Materials/MaterialManager.hpp"
@@ -56,8 +55,10 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	textureManager = new TextureManager();
 	shaderManager = new ShaderManager();
 	mesh3dManager = new Mesh3dManager();
+	mesh3dRenderer = new Mesh3dRenderer();
 	assetRendererManager = new AssetRendererManager();
-	assetRendererManager->AddAssetRenderer(new Mesh3dRenderer());
+	assetRendererManager->AddAssetRenderer(mesh3dRenderer);
+	assetRendererManager->AddQueue("Opaque");
 
 	systemRegistrar = new ECS::SystemRegistrar();
 	SetupCoreSystems(systemRegistrar);

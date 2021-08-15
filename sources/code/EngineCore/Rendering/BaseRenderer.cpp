@@ -9,14 +9,13 @@
 #include "EngineCore/Utils/Utilities.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
+#include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
 #include "EngineCore/Assets/Shaders/Shader.hpp"
 #include "EngineCore/Assets/Materials/Material.hpp"
 #include "EngineCore/Assets/Materials/MaterialManager.hpp"
 #include "EngineCore/Assets/AssetRendererManager.hpp"
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
-
-// #define TESTING_MESH
 
 std::array<glm::vec3, 8> cubeVertexPositions = {
 	glm::vec3(-1, -1,  1), glm::vec3(1, -1,  1),
@@ -88,12 +87,15 @@ void Grindstone::BaseRender(
 		ubCi.size = sizeof(glm::mat4) * 3;
 		ubo = core->CreateUniformBuffer(ubCi);
 
-		auto materialManager = EngineCore::GetInstance().materialManager;
-		myMaterial = &materialManager->LoadMaterial("../assets/New Material.gmat");
-#ifndef TESTING_MESH
+		auto& engineCore = EngineCore::GetInstance();
+		auto materialManager = engineCore.materialManager;
+		auto mesh3dRenderer = engineCore.mesh3dRenderer;
+		myMaterial = &materialManager->LoadMaterial(mesh3dRenderer, "../assets/New Material.gmat");
+
 		Mesh3dManager* mesh3dManager = EngineCore::GetInstance().mesh3dManager;
-		mesh3d = &mesh3dManager->LoadMesh3d("../assets/models/crytek-sponza/sponza.gmf");
-#endif
+		mesh3d = &mesh3dManager->LoadMesh3d("../assets/models/sphere.gmf");
+		myMaterial->renderables.push_back(&mesh3d->submeshes[0]);
+
 		isFirst = false;
 	}
 
@@ -104,25 +106,30 @@ void Grindstone::BaseRender(
 
 	float clearColor[4] = { 0.3f, 0.6f, 0.9f, 1.f };
 	core->Clear(ClearMode::All, clearColor, 1);
-	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
 
-#ifndef TESTING_MESH
-	myMaterial->shader->pipeline->bind();
+	/*myMaterial->shader->pipeline->bind();
 	if (myMaterial->uniformBufferObject) {
-		myMaterial->uniformBufferObject->updateBuffer(myMaterial->buffer);
-		myMaterial->uniformBufferObject->bind();
-	}
+		myMaterial->uniformBufferObject->UpdateBuffer(myMaterial->buffer);
+		myMaterial->uniformBufferObject->Bind();
+	}*/
 	// core->BindTexture(myMaterial->textureBinding);
 
 	// pipeline->bind();
-	ubo->updateBuffer(&engineUboStruct);
-	ubo->bind();
-	mesh3d->vertexArrayObject->Bind();
+	ubo->UpdateBuffer(&engineUboStruct);
+	ubo->Bind();
+	EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
+	/*mesh3d->vertexArrayObject->Bind();
 	for (size_t i = 0; i < mesh3d->submeshes.size(); ++i) {
 		Mesh3d::Submesh& submesh = mesh3d->submeshes[i];
-		core->DrawImmediateIndexed(GeometryType::Triangles, false, submesh.baseVertex, submesh.baseIndex, submesh.indexCount);
-	}
-#endif
+
+		core->DrawImmediateIndexed(
+			GeometryType::Triangles,
+			false,
+			submesh.baseVertex,
+			submesh.baseIndex,
+			submesh.indexCount
+		);
+	}*/
 	
 	// RenderLights();
 	// PostProcess();

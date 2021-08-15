@@ -204,11 +204,12 @@ void Mesh3dManager::CreateMeshFromData(Mesh3d& mesh, std::vector<char>& fileCont
 }
 
 Mesh3d& Mesh3dManager::CreateMesh3dFromFile(const char* path) {
-	if (!std::filesystem::exists(path)) {
+	std::string completePath = std::string("../assets/") + path;
+	if (!std::filesystem::exists(completePath)) {
 		throw std::runtime_error("Mesh3dManager::CreateMesh3dFromFile failed to load model.");
 	}
 
-	auto fileContent = Utils::LoadFile(path);
+	auto fileContent = Utils::LoadFile(completePath.c_str());
 	Mesh3d& mesh = meshes[path];
 	CreateMeshFromData(mesh, fileContent);
 

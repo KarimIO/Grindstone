@@ -4,29 +4,29 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		GLUniformBuffer::GLUniformBuffer(CreateInfo& ci) : size_(ci.size) {
-			glGenBuffers(1, &ubo_);
-			glBindBuffer(GL_UNIFORM_BUFFER, ubo_);
-			glBufferData(GL_UNIFORM_BUFFER, size_, nullptr, ci.isDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+		GLUniformBuffer::GLUniformBuffer(CreateInfo& ci) : size(ci.size) {
+			glGenBuffers(1, &uniformBufferObject);
+			glBindBuffer(GL_UNIFORM_BUFFER, uniformBufferObject);
+			glBufferData(GL_UNIFORM_BUFFER, size, nullptr, ci.isDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 			glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 			GLUniformBufferBinding *ubb = (GLUniformBufferBinding *)ci.binding;
-			binding_location_ = ubb->GetBindingLocation();
-			glBindBufferBase(GL_UNIFORM_BUFFER, binding_location_, ubo_);
+			bindingLocation = ubb->GetBindingLocation();
+			glBindBufferBase(GL_UNIFORM_BUFFER, bindingLocation, uniformBufferObject);
 		}
 
-		void GLUniformBuffer::bind() {
-			glBindBufferBase(GL_UNIFORM_BUFFER, binding_location_, ubo_);
+		void GLUniformBuffer::Bind() {
+			glBindBufferBase(GL_UNIFORM_BUFFER, bindingLocation, uniformBufferObject);
 		}
 
 		GLUniformBuffer::~GLUniformBuffer() {
-			glDeleteBuffers(1, &ubo_);
+			glDeleteBuffers(1, &uniformBufferObject);
 		}
 
-		void GLUniformBuffer::updateBuffer(void * content) {
-			glBindBuffer(GL_UNIFORM_BUFFER, ubo_);
+		void GLUniformBuffer::UpdateBuffer(void * content) {
+			glBindBuffer(GL_UNIFORM_BUFFER, uniformBufferObject);
 			GLvoid* p = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
-			memcpy(p, content, size_);
+			memcpy(p, content, size);
 			glUnmapBuffer(GL_UNIFORM_BUFFER);
 		}
 

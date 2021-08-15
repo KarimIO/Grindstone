@@ -8,6 +8,7 @@ namespace Grindstone {
 	class AssetRendererManager {
 	public:
 		void AddAssetRenderer(BaseAssetRenderer* assetRenderer);
+		void AddQueue(const char* name);
 		void RenderQueue(const char* name);
 	private:
 		std::vector<BaseAssetRenderer*> assetRenderers;

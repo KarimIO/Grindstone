@@ -14,8 +14,8 @@ namespace Grindstone {
 		class ComponentRegistrar {
 		public:
 			template<typename T>
-			void RegisterComponent(const char* name) {
-				RegisterComponent(name, {
+			void RegisterComponent() {
+				RegisterComponent(T::getComponentName(), {
 					&ECS::CreateComponent<T>,
 					&ECS::RemoveComponent<T>,
 					&ECS::HasComponent<T>,

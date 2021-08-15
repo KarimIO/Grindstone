@@ -16,7 +16,7 @@ namespace Grindstone {
 		friend struct Grindstone::Reflection::DefaultResolver; \
 		static Grindstone::Reflection::TypeDescriptor_Struct reflectionInfo; \
 		static void initReflection(Grindstone::Reflection::TypeDescriptor_Struct*); \
-		static const char* getComponentName() { return "Transform";  };
+		static const char* getComponentName() { return name;  };
 
 #define REFLECT_STRUCT_BEGIN(type) \
 		Grindstone::Reflection::TypeDescriptor_Struct type::reflectionInfo{type::initReflection}; \

@@ -148,6 +148,7 @@ namespace Grindstone {
 
 		void ShaderImporter::process() {
 			shaderName = extractField("#name");
+			renderQueue = extractField("#renderQueue");
 			extractSubmodules();
 			writeReflectionDocument();
 		}
@@ -216,6 +217,9 @@ namespace Grindstone {
 
 			reflectionWriter.Key("name");
 			reflectionWriter.String(shaderName.c_str());
+
+			reflectionWriter.Key("renderQueue");
+			reflectionWriter.String(renderQueue.c_str());
 
 			reflectionWriter.Key("shaderModules");
 			reflectionWriter.StartArray();

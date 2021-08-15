@@ -7,9 +7,10 @@
 #include "Shader.hpp"
 
 namespace Grindstone {
+	class BaseAssetRenderer;
 	class ShaderManager {
 		public:
-			Shader& LoadShader(const char* path);
+			Shader& LoadShader(BaseAssetRenderer* assetRenderer, const char* path);
 		private:
 			bool TryGetShader(const char* path, Shader*& shader);
 			Shader& CreateShaderFromFile(const char* path);

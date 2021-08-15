@@ -38,6 +38,7 @@ namespace Grindstone {
 	class TextureManager;
 	class ShaderManager;
 	class Mesh3dManager;
+	class Mesh3dRenderer;
 
 	class EngineCore {
 	public:
@@ -68,6 +69,7 @@ namespace Grindstone {
 		TextureManager* textureManager = nullptr;
 		ShaderManager* shaderManager = nullptr;
 		Mesh3dManager* mesh3dManager = nullptr;
+		Mesh3dRenderer* mesh3dRenderer = nullptr;
 		AssetRendererManager* assetRendererManager = nullptr;
 	private:
 		SceneManagement::SceneManager* sceneManager = nullptr;

@@ -24,8 +24,8 @@ namespace Grindstone {
 				UniformBufferBinding* binding;
 			};
 
-			virtual void updateBuffer(void * content) = 0;
-			virtual void bind() = 0;
+			virtual void UpdateBuffer(void * content) = 0;
+			virtual void Bind() = 0;
 		};
 	};
 };

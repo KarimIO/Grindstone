@@ -8,13 +8,13 @@
 #include "Common/Graphics/Texture.hpp"
 using namespace Grindstone;
 
-Material& MaterialManager::LoadMaterial(const char* path) {
+Material& MaterialManager::LoadMaterial(BaseAssetRenderer* assetRenderer, const char* path) {
 	Material* material = nullptr;
-	if (TryGetMaterial(path, material)) {
-		return *material;
+	if (!TryGetMaterial(path, material)) {
+		material = &CreateMaterialFromFile(assetRenderer, path);
 	}
 
-	return CreateMaterialFromFile(path);
+	return *material;
 }
 
 bool MaterialManager::TryGetMaterial(const char* path, Material*& material) {
@@ -27,7 +27,12 @@ bool MaterialManager::TryGetMaterial(const char* path, Material*& material) {
 	return false;
 }
 
-Material MaterialManager::CreateMaterialFromData(std::filesystem::path relativePath, const char* data) {
+void MaterialManager::CreateMaterialFromData(
+	std::filesystem::path relativePath,
+	Material& material,
+	BaseAssetRenderer* assetRenderer,
+	const char* data
+) {
 	rapidjson::Document document;
 	document.Parse(data);
 
@@ -42,7 +47,8 @@ Material MaterialManager::CreateMaterialFromData(std::filesystem::path relativeP
 
 	std::string shaderPath = (relativePath / document["shader"].GetString()).string();
 	ShaderManager* shaderManager = EngineCore::GetInstance().shaderManager;
-	Shader* shader = &shaderManager->LoadShader(shaderPath.c_str());
+	Shader* shader = &shaderManager->LoadShader(assetRenderer, shaderPath.c_str());
+	shader->materials.push_back(&material);
 
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	GraphicsAPI::UniformBufferBinding* uniformBufferBinding = nullptr;
@@ -116,25 +122,24 @@ Material MaterialManager::CreateMaterialFromData(std::filesystem::path relativeP
 		}
 	}
 
-	return {
-		name,
-		shaderPath.c_str(),
-		shader,
-		textureBinding,
-		uniformBufferBinding,
-		uniformBufferObject,
-		bufferSpace
-	};
+	material.name = name;
+	material.shaderPath = shaderPath.c_str();
+	material.shader = shader;
+	material.textureBinding = textureBinding;
+	material.uniformBufferBinding = uniformBufferBinding;
+	material.uniformBufferObject = uniformBufferObject;
+	material.buffer = bufferSpace;
 }
 
-Material& MaterialManager::CreateMaterialFromFile(const char* path) {
+Material& MaterialManager::CreateMaterialFromFile(BaseAssetRenderer* assetRenderer, const char* path) {
 	if (!std::filesystem::exists(path)) {
 		throw std::runtime_error(std::string(path) + " material doesn't exist.");
 	}
 
 	std::filesystem::path parentDirectory = std::filesystem::path(path).parent_path();
 	std::string fileContent = Utils::LoadFileText(path);
-	materials[path] = CreateMaterialFromData(parentDirectory, fileContent.c_str());
+	Material& material = materials[path];
+	CreateMaterialFromData(parentDirectory, material, assetRenderer, fileContent.c_str());
 
-	return materials[path];
+	return material;
 }

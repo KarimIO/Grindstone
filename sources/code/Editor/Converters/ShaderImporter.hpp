@@ -80,6 +80,7 @@ namespace Grindstone {
 				std::string path;
 				std::string basePath;
 				std::string shaderName;
+				std::string renderQueue;
 				std::string sourceFileContents;
 				std::vector<ShaderType> shaderPasses;
 				std::vector<Texture> textures;
