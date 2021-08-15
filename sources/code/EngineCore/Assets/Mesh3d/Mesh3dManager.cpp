@@ -143,15 +143,9 @@ void Mesh3dManager::LoadMeshImportVertices(
 		sourcePtr += sizeof(float) * 3 * vertexCount;
 	}
 
-	if (header.hasVertexTexCoord0) {
+	if (header.vertexUvSetCount >= 1) {
 		auto uv0 = LoadVertexBufferVec(2, vertexCount, sourcePtr, vertexLayouts.uv0);
 		vertexBuffers.push_back(uv0);
-		sourcePtr += sizeof(float) * 2 * vertexCount;
-	}
-
-	if (header.hasVertexTexCoord1) {
-		auto uv1 = LoadVertexBufferVec(2, vertexCount, sourcePtr, vertexLayouts.uv1);
-		vertexBuffers.push_back(uv1);
 		sourcePtr += sizeof(float) * 2 * vertexCount;
 	}
 }

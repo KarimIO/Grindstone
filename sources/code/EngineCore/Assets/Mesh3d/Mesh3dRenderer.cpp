@@ -1,7 +1,12 @@
 #include "Mesh3dRenderer.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "Common/Graphics/Core.hpp"
+#include "EngineCore/Assets/Materials/MaterialManager.hpp"
 using namespace Grindstone;
+
+Grindstone::Mesh3dRenderer::Mesh3dRenderer() {
+	errorMaterial = &EngineCore::GetInstance().materialManager->LoadMaterial(this, "Error.gmat");
+}
 
 void Mesh3dRenderer::RenderQueue(RenderQueueContainer& renderQueue) {
 	for (Shader* shader : renderQueue.shaders) {

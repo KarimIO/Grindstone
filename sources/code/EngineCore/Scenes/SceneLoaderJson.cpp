@@ -61,11 +61,11 @@ bool SceneLoaderJson::Load(const char* path) {
 		}
 
 		for (auto& submesh : meshComponent.mesh->submeshes) {
-			if (submesh.materialIndex >= materials.size()) {
-				continue;
+			Material* material = mesh3dRenderer->GetErrorMaterial();
+			if (submesh.materialIndex < materials.size()) {
+				material = materials[submesh.materialIndex];
 			}
 
-			Material* material = materials[submesh.materialIndex];
 			material->renderables.push_back(&submesh);
 		}
 	});

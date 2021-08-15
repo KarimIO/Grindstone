@@ -12,9 +12,11 @@
 namespace Grindstone {
 	class Mesh3dRenderer : public BaseAssetRenderer {
 		public:
-			virtual void RenderQueue(RenderQueueContainer& renderQueue) override;
+			Mesh3dRenderer();
 			void RenderShader(Shader& shader);
 			void RenderMaterial(Material& material);
 			void RenderSubmesh(Mesh3d::Submesh& submesh3d);
+		private:
+			virtual void RenderQueue(RenderQueueContainer& renderQueue) override;
 	};
 }

@@ -150,10 +150,12 @@ namespace Grindstone {
 				case Reflection::TypeDescriptor::ReflectionTypeData::Vector:
 					std::vector<std::string>& vector = *(std::vector<std::string>*)offset;
 					ImGui::Text(displayName);
-					std::string buttonFieldName = std::string("Add Item##") + displayName;
+					ImGui::SameLine();
+					std::string buttonFieldName = std::string("+##") + displayName;
 					if (ImGui::Button(buttonFieldName.c_str())) {
 						vector.emplace_back();
 					}
+
 					for (size_t i = 0; i < vector.size(); ++i) {
 						std::string fieldName = std::string("##") + std::to_string(i) + displayName;
 						ImGui::InputText(fieldName.c_str(), &vector[i]);

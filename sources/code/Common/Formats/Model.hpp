@@ -21,8 +21,7 @@ namespace Grindstone {
 					bool hasVertexPositions = false;
 					bool hasVertexNormals = false;
 					bool hasVertexTangents = false;
-					bool hasVertexTexCoord0 = false;
-					bool hasVertexTexCoord1 = false;
+					uint32_t vertexUvSetCount = 0;
 				};
 			}
 		}

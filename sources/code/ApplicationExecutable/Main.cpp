@@ -27,7 +27,7 @@ int main() {
 	create_info.applicationModuleName = "ApplicationDLL";
 	create_info.applicationTitle = "Grindstone Sandbox";
 	EngineCore* engineCore = createEngineFn(create_info);
-	engineCore->run();
+	engineCore->Run();
 	
 	Grindstone::Utilities::Modules::unload(handle);
 	return 0;

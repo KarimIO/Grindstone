@@ -19,6 +19,11 @@ void PushVertex3dToVector(std::vector<float>& targetVector, const aiVector3D* ai
 	targetVector.push_back(aiVertex->z);
 }
 
+void PushVertex2dToVector(std::vector<float>& targetVector, const aiVector3D* aiVertex) {
+	targetVector.push_back(aiVertex->x);
+	targetVector.push_back(aiVertex->y);
+}
+
 void ModelConverter::ConvertMaterials() {
 	if (!scene->HasMaterials()) {
 		return;
@@ -119,6 +124,8 @@ void ModelConverter::InitSubmeshes() {
 	outputData.vertexArray.position.reserve(vertexCount * 3);
 	outputData.vertexArray.normal.reserve(vertexCount * 3);
 	outputData.vertexArray.tangent.reserve(vertexCount * 3);
+	outputData.vertexArray.texCoordArray.resize(1);
+	outputData.vertexArray.texCoordArray[0].reserve(vertexCount * 2);
 	outputData.indices.reserve(indexCount);
 }
 
@@ -140,7 +147,7 @@ void ModelConverter::ProcessVertices() {
 			PushVertex3dToVector(vertexArray.position, aiPos);
 			PushVertex3dToVector(vertexArray.normal, aiNormal);
 			PushVertex3dToVector(vertexArray.tangent, aiTangent);
-			// PushVertex2d({ pTexCoord->x, pTexCoord->y});
+			PushVertex2dToVector(vertexArray.texCoordArray[0], aiTexCoord);
 
 			// const float pos[3]{ pPos->x, pPos->y, pPos->z };
 			// bounding_shape_->TestBounding(pos);
@@ -207,6 +214,7 @@ void ModelConverter::OutputMeshes() {
 	outFormat.hasVertexPositions = true;
 	outFormat.hasVertexNormals = true;
 	outFormat.hasVertexTangents = true;
+	outFormat.vertexUvSetCount = 1;
 	outFormat.vertexCount = static_cast<uint64_t>(outputData.vertexCount);
 	outFormat.indexCount = static_cast<uint64_t>(outputData.indexCount);
 	outFormat.meshCount = static_cast<uint32_t>(meshCount);
@@ -229,6 +237,7 @@ void ModelConverter::OutputMeshes() {
 	OutputVertexArray(output, outputData.vertexArray.position);
 	OutputVertexArray(output, outputData.vertexArray.normal);
 	OutputVertexArray(output, outputData.vertexArray.tangent);
+	OutputVertexArray(output, outputData.vertexArray.texCoordArray[0]);
 
 	// - Output Indices
 	output.write(reinterpret_cast<const char*> (outputData.indices.data()), outputData.indices.size() * sizeof(uint16_t));

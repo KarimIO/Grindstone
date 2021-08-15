@@ -18,3 +18,7 @@ void BaseAssetRenderer::RenderQueue(const char* name) {
 
 	RenderQueue(renderQueueInMap->second);
 }
+
+Material* BaseAssetRenderer::GetErrorMaterial() {
+	return errorMaterial;
+}
