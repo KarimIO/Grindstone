@@ -101,25 +101,27 @@ void MaterialManager::CreateMaterialFromData(
 	if (textures.size() > 0 && hasSamplers) {
 		auto textureManager = EngineCore::GetInstance().textureManager;
 		auto& samplersJson = document["samplers"].GetObject();
-		for (auto& texture : textures) {
-			const char* textureName = texture.name.c_str();
+		std::vector<GraphicsAPI::SingleTextureBind> textureBinds;
+		textureBinds.resize(textures.size());
+		for (size_t i = 0; i < textures.size(); ++i) {
+			const char* textureName = textures[i].name.c_str();
 			if (samplersJson.HasMember(textureName)) {
 				const char* texturePath = samplersJson[textureName].GetString();
 				std::filesystem::path shaderPath = relativePath / texturePath;
 				TextureAsset& textureAsset = textureManager->LoadTexture(shaderPath.string().c_str());
 
-				GraphicsAPI::SingleTextureBind stb;
+				GraphicsAPI::SingleTextureBind& stb = textureBinds[i];
 				stb.texture = textureAsset.texture;
-				stb.address = 2;
-
-				GraphicsAPI::TextureBinding::CreateInfo textureBindingCreateInfo{};
-				textureBindingCreateInfo.textures = &stb;
-				textureBindingCreateInfo.textureCount = 1;
-				textureBindingCreateInfo.layout = shader->textureBindingLayout;
-				textureBinding = graphicsCore->CreateTextureBinding(textureBindingCreateInfo);
-				graphicsCore->BindTexture(textureBinding);
+				stb.address = textures[i].bindingId;
 			}
 		}
+
+		GraphicsAPI::TextureBinding::CreateInfo textureBindingCreateInfo{};
+		textureBindingCreateInfo.textures = textureBinds.data();
+		textureBindingCreateInfo.textureCount = textureBinds.size();
+		textureBindingCreateInfo.layout = shader->textureBindingLayout;
+		textureBinding = graphicsCore->CreateTextureBinding(textureBindingCreateInfo);
+		graphicsCore->BindTexture(textureBinding);
 	}
 
 	material.name = name;

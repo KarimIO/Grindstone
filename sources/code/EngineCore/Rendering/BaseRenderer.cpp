@@ -18,8 +18,11 @@ using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
 bool isFirst = true;
-UniformBufferBinding* globalUniformBufferBinding;
-UniformBuffer* globalUniformBufferObject;
+UniformBufferBinding* globalUniformBufferBinding = nullptr;
+UniformBuffer* globalUniformBufferObject = nullptr;
+Framebuffer* gbuffer = nullptr;
+RenderTarget* renderTargets = nullptr;
+DepthTarget* depthTarget = nullptr;
 
 struct EngineUboStruct {
 	glm::mat4 proj;
@@ -46,6 +49,25 @@ void Grindstone::BaseRender(
 		globalUniformBufferObjectCi.size = sizeof(EngineUboStruct);
 		globalUniformBufferObject = core->CreateUniformBuffer(globalUniformBufferObjectCi);
 
+		const uint32_t width = 800;
+		const uint32_t height = 600;
+		std::vector<Grindstone::GraphicsAPI::RenderTarget::CreateInfo> gbufferImagesCreateInfo;
+		gbufferImagesCreateInfo.reserve(3);
+		gbufferImagesCreateInfo.emplace_back(Grindstone::GraphicsAPI::ColorFormat::R8G8B8A8, width, height); // R  G  B matID
+		gbufferImagesCreateInfo.emplace_back(Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height); // nX nY nZ
+		gbufferImagesCreateInfo.emplace_back(Grindstone::GraphicsAPI::ColorFormat::R8G8B8A8, width, height); // sR sG sB Roughness
+		renderTargets = core->CreateRenderTarget(gbufferImagesCreateInfo.data(), (uint32_t)gbufferImagesCreateInfo.size());
+
+		Grindstone::GraphicsAPI::DepthTarget::CreateInfo depthImageCreateInfo(Grindstone::GraphicsAPI::DepthFormat::D24_STENCIL_8, width, height, false, false);
+		depthTarget = core->CreateDepthTarget(depthImageCreateInfo);
+
+		Grindstone::GraphicsAPI::Framebuffer::CreateInfo gbufferCreateInfo{};
+		gbufferCreateInfo.renderTargetLists = &renderTargets;
+		gbufferCreateInfo.numRenderTargetLists = 1;
+		gbufferCreateInfo.depthTarget = depthTarget;
+		gbufferCreateInfo.renderPass = nullptr;
+		gbuffer = core->CreateFramebuffer(gbufferCreateInfo);
+
 		isFirst = false;
 	}
 
@@ -54,12 +76,16 @@ void Grindstone::BaseRender(
 	engineUboStruct.view = viewMatrix;
 	engineUboStruct.model = glm::scale(glm::vec3(0.05f)) * glm::mat4(1);
 
+	gbuffer->Bind(true);
+
 	float clearColor[4] = { 0.3f, 0.6f, 0.9f, 1.f };
 	core->Clear(ClearMode::All, clearColor, 1);
 
 	globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
 	globalUniformBufferObject->Bind();
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
+
+	gbuffer->Unbind();
 	
 	// RenderLights();
 	// PostProcess();
