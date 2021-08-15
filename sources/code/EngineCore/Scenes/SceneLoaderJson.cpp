@@ -45,20 +45,11 @@ bool SceneLoaderJson::Load(const char* path) {
 		meshComponent.mesh = &mesh3dManager->LoadMesh3d(meshComponent.meshPath.c_str());
 	});
 
-	// BEGIN TEST CODE. Remove this when materialPaths is working.
-	std::vector<Material*> materials;
-	materials.push_back(&materialManager->LoadMaterial(
-		mesh3dRenderer,
-		"../assets/New Material.gmat"
-	));
-	// END TEST CODE.
-
 	auto& meshAndMeshRendererView = registry.view<MeshComponent, MeshRendererComponent>();
 	meshAndMeshRendererView.each([&](
 		MeshComponent& meshComponent,
 		MeshRendererComponent& meshRendererComponent
 	) {
-#if 0
 		std::vector<Material*> materials;
 		materials.resize(meshRendererComponent.materialPaths.size());
 		for (size_t i = 0; i < meshRendererComponent.materialPaths.size(); ++i) {
@@ -68,7 +59,6 @@ bool SceneLoaderJson::Load(const char* path) {
 				materialPath.c_str()
 			);
 		}
-#endif
 
 		for (auto& submesh : meshComponent.mesh->submeshes) {
 			if (submesh.materialIndex >= materials.size()) {
@@ -171,7 +161,20 @@ void SceneLoaderJson::ProcessComponentParameter(
 	char* memberPtr = (char*)componentPtr + offset;
 
 	switch(member->type->type) {
-		case ReflectionTypeData::Vector:
+		case ReflectionTypeData::Vector: {
+			auto srcArray = parameter.GetArray();
+			std::vector<std::string>& vector = *(std::vector<std::string>*)memberPtr;
+			vector.reserve(srcArray.Size());
+
+			for (
+				rapidjson::Value* elementIterator = srcArray.Begin();
+				elementIterator != srcArray.End();
+				++elementIterator
+			) {
+				vector.push_back(elementIterator->GetString());
+			}
+			break;
+		}
 		case ReflectionTypeData::String: {
 			std::string& str = *(std::string*)memberPtr;
 			str = parameter.GetString();

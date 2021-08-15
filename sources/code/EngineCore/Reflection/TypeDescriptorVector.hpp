@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <vector>
 #include "TypeDescriptor.hpp"
@@ -13,16 +15,17 @@ namespace Grindstone {
 
 			template <typename ItemType>
 			TypeDescriptor_StdVector(ItemType*)
-				: TypeDescriptor{ "std::vector<>", sizeof(std::vector<ItemType>), ReflectionTypeData::ReflVector },
-				name{ (std::string("std::vector<") + itemType->getFullName() + ">").c_str() },
-				itemType{ TypeResolver<ItemType>::get() } {
+				: TypeDescriptor{ "std::vector<>", sizeof(std::vector<ItemType>), ReflectionTypeData::Vector },
+				itemType{ TypeResolver<ItemType>::get()},
+				name{ (std::string("std::vector<") + TypeResolver<ItemType>::get()->getFullName() + ">").c_str() }
+			{
 				getSize = [](const void* vecPtr) -> size_t {
 					const auto& vec = *(const std::vector<ItemType>*) vecPtr;
 					return vec.size();
 				};
 				getItem = [](const void* vecPtr, size_t index) -> const void* {
 					const auto& vec = *(const std::vector<ItemType>*) vecPtr;
-					return &vec[index];
+					return (void*)&vec[index];
 				};
 			}
 
@@ -34,16 +37,16 @@ namespace Grindstone {
 		template <typename T>
 		class TypeResolver<std::vector<T>> {
 		public:
-			static TypeDescriptor* getPrimitiveDescriptor() {
+			static TypeDescriptor* get() {
 				static TypeDescriptor_StdVector typeDesc{ (T*) nullptr };
 				return &typeDesc;
 			}
 		};
 
-		template <typename T>
+		/*template <typename T>
 		TypeDescriptor* getPrimitiveDescriptor<std::vector<T>>() {
 			static TypeDescriptor_StdVector typeDesc{ (T*) nullptr };
 			return &typeDesc;
-		}
+		}*/
 	}
 }

@@ -7,6 +7,7 @@
 #include "TypeResolver.hpp"
 #include "DefaultResolver.hpp"
 #include "TypeDescriptorStruct.hpp"
+#include "TypeDescriptorVector.hpp"
 #include "PrintReflectionData.hpp"
 
 namespace Grindstone {

@@ -132,12 +132,13 @@ void MaterialManager::CreateMaterialFromData(
 }
 
 Material& MaterialManager::CreateMaterialFromFile(BaseAssetRenderer* assetRenderer, const char* path) {
-	if (!std::filesystem::exists(path)) {
-		throw std::runtime_error(std::string(path) + " material doesn't exist.");
+	std::filesystem::path completePath = std::filesystem::path("../assets") / path;
+	if (!std::filesystem::exists(completePath)) {
+		throw std::runtime_error(completePath.string() + " material doesn't exist.");
 	}
 
-	std::filesystem::path parentDirectory = std::filesystem::path(path).parent_path();
-	std::string fileContent = Utils::LoadFileText(path);
+	std::filesystem::path parentDirectory = completePath.parent_path();
+	std::string fileContent = Utils::LoadFileText(completePath.string().c_str());
 	Material& material = materials[path];
 	CreateMaterialFromData(parentDirectory, material, assetRenderer, fileContent.c_str());
 
