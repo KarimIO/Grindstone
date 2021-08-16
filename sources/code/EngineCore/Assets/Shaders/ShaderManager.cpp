@@ -44,7 +44,9 @@ Shader& ShaderManager::LoadShader(BaseAssetRenderer* assetRenderer, const char* 
 		shader = &CreateShaderFromFile(path);
 	}
 
-	assetRenderer->AddShaderToRenderQueue(shader);
+	if (assetRenderer) {
+		assetRenderer->AddShaderToRenderQueue(shader);
+	}
 
 	return *shader;
 }

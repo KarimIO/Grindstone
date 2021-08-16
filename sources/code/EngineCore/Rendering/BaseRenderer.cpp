@@ -11,11 +11,24 @@
 #include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
 #include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
 #include "EngineCore/Assets/Shaders/Shader.hpp"
+#include "EngineCore/Assets/Shaders/ShaderManager.hpp"
 #include "EngineCore/Assets/Materials/Material.hpp"
 #include "EngineCore/Assets/Materials/MaterialManager.hpp"
 #include "EngineCore/Assets/AssetRendererManager.hpp"
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
+
+float lightPositions[] = {
+	-1.0f, -1.0f,
+	-1.0f,  1.0f,
+	 1.0f,  1.0f,
+	 1.0f, -1.0f
+};
+
+uint16_t lightIndices[] = {
+	0, 1, 2,
+	3, 2, 0
+};
 
 bool isFirst = true;
 UniformBufferBinding* globalUniformBufferBinding = nullptr;
@@ -29,6 +42,28 @@ struct EngineUboStruct {
 	glm::mat4 view;
 	glm::mat4 model;
 };
+
+struct LightmapStruct {
+	glm::mat4 proj;
+	glm::mat4 view;
+	glm::mat4 model;
+};
+VertexArrayObject* lightVao = nullptr;
+Pipeline* lightPipeline = nullptr;
+
+void RenderLights() {
+	auto core = EngineCore::GetInstance().GetGraphicsCore();
+
+	float clearColor[4] = { 0.3f, 0.6f, 0.9f, 1.f };
+	core->Clear(ClearMode::All, clearColor, 1);
+
+	core->BindDefaultFramebuffer(true);
+	gbuffer->BindRead();
+	lightVao->Bind();
+	gbuffer->BindTextures(0);
+	core->BindPipeline(lightPipeline);
+	core->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
+}
 
 void Grindstone::BaseRender(
 	GraphicsAPI::Core *core,
@@ -68,6 +103,38 @@ void Grindstone::BaseRender(
 		gbufferCreateInfo.renderPass = nullptr;
 		gbuffer = core->CreateFramebuffer(gbufferCreateInfo);
 
+		// ========= Light Stuff
+		VertexBufferLayout vertexLightPositionLayout({
+			{
+				Grindstone::GraphicsAPI::VertexFormat::Float2,
+				"vertexPosition",
+				false,
+				Grindstone::GraphicsAPI::AttributeUsage::Position
+			}
+		});
+
+		VertexBuffer::CreateInfo vboCi{};
+		vboCi.content = lightPositions;
+		vboCi.count = sizeof(lightPositions) / (sizeof(float) * 2);
+		vboCi.size = sizeof(lightPositions);
+		vboCi.layout = &vertexLightPositionLayout;
+		VertexBuffer* vbo = core->CreateVertexBuffer(vboCi);
+
+		IndexBuffer::CreateInfo iboCi{};
+		iboCi.content = lightIndices;
+		iboCi.count = sizeof(lightIndices) / sizeof(lightIndices[0]);
+		iboCi.size = sizeof(lightIndices);
+		IndexBuffer* ibo = core->CreateIndexBuffer(iboCi);
+
+		VertexArrayObject::CreateInfo vaoCi{};
+		vaoCi.vertexBufferCount = 1;
+		vaoCi.vertexBuffers = &vbo;
+		vaoCi.indexBuffer = ibo;
+		lightVao = core->CreateVertexArrayObject(vaoCi);
+
+		auto shaderManager = EngineCore::GetInstance().shaderManager;
+		lightPipeline = shaderManager->LoadShader(nullptr, "../assets/coreAssets/pointLight").pipeline;
+
 		isFirst = false;
 	}
 
@@ -76,9 +143,9 @@ void Grindstone::BaseRender(
 	engineUboStruct.view = viewMatrix;
 	engineUboStruct.model = glm::scale(glm::vec3(0.05f)) * glm::mat4(1);
 
-	gbuffer->Bind(true);
+	gbuffer->BindWrite(true);
 
-	float clearColor[4] = { 0.3f, 0.6f, 0.9f, 1.f };
+	float clearColor[4] = {0.3f, 0.6f, 0.9f, 1.f};
 	core->Clear(ClearMode::All, clearColor, 1);
 
 	globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
@@ -87,6 +154,6 @@ void Grindstone::BaseRender(
 
 	gbuffer->Unbind();
 	
-	// RenderLights();
+	RenderLights();
 	// PostProcess();
 }
