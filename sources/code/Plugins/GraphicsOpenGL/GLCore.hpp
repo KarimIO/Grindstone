@@ -80,8 +80,8 @@ namespace Grindstone {
 			virtual void DrawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) override;
 			virtual void SetImmediateBlending(BlendMode) override;
 			virtual void EnableDepth(bool state) override;
-			virtual void BindDefaultFramebuffer(bool depth) override;
-			virtual void BindDefaultFramebufferWrite() override;
+			virtual void BindDefaultFramebuffer(bool isUsingDepth) override;
+			virtual void BindDefaultFramebufferWrite(bool isUsingDepth) override;
 			virtual void BindDefaultFramebufferRead() override;
 			virtual void SetColorMask(ColorMask mask) override;
 		private:

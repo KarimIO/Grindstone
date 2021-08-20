@@ -85,8 +85,8 @@ namespace Grindstone {
 			virtual const bool SupportsComputeShader() = 0;
 			virtual const bool SupportsMultiDrawIndirect() = 0;
 
-			virtual void BindDefaultFramebuffer(bool depth) = 0;
-			virtual void BindDefaultFramebufferWrite() = 0;
+			virtual void BindDefaultFramebuffer(bool isUsingDepth) = 0;
+			virtual void BindDefaultFramebufferWrite(bool isUsingDepth) = 0;
 			virtual void BindDefaultFramebufferRead() = 0;
 
 			virtual void WaitUntilIdle() = 0;

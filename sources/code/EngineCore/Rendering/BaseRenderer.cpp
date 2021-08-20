@@ -37,7 +37,9 @@ UniformBuffer* globalUniformBufferObject = nullptr;
 UniformBufferBinding* lightUniformBufferBinding = nullptr;
 UniformBuffer* lightUniformBufferObject = nullptr;
 Framebuffer* gbuffer = nullptr;
+Framebuffer* litHdrFramebuffer = nullptr;
 RenderTarget* renderTargets = nullptr;
+RenderTarget* litHdrImages = nullptr;
 DepthTarget* depthTarget = nullptr;
 
 struct EngineUboStruct {
@@ -53,15 +55,15 @@ struct LightmapStruct {
 	glm::vec3 lightPosition = glm::vec3(1, 2, 1);
 	float lightIntensity = 40.0f;
 };
-VertexArrayObject* lightVao = nullptr;
+VertexArrayObject* planePostProcessVao = nullptr;
 Pipeline* lightPipeline = nullptr;
+Pipeline* tonemapPipeline = nullptr;
 
 void RenderLights(entt::registry& registry) {
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
 
 	core->BindPipeline(lightPipeline);
-
-	core->BindDefaultFramebufferWrite();
+	litHdrFramebuffer->BindWrite(false);
 
 	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.f };
 	core->Clear(ClearMode::ColorAndDepth, clearColor, 1);
@@ -79,9 +81,24 @@ void RenderLights(entt::registry& registry) {
 
 		lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
 		lightUniformBufferObject->Bind();
-		lightVao->Bind();
+		planePostProcessVao->Bind();
 		core->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
 	});
+}
+
+void PostProcess() {
+	auto core = EngineCore::GetInstance().GetGraphicsCore();
+
+	core->BindPipeline(tonemapPipeline);
+	core->BindDefaultFramebufferWrite(true);
+	litHdrFramebuffer->BindRead();
+
+	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.f };
+	core->Clear(ClearMode::ColorAndDepth, clearColor, 1);
+	core->SetImmediateBlending(BlendMode::None);
+	litHdrFramebuffer->BindTextures(1);
+	planePostProcessVao->Bind();
+	core->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
 }
 
 void Grindstone::BaseRender(
@@ -125,6 +142,18 @@ void Grindstone::BaseRender(
 		gbufferCreateInfo.depthTarget = depthTarget;
 		gbufferCreateInfo.renderPass = nullptr;
 		gbuffer = core->CreateFramebuffer(gbufferCreateInfo);
+
+		Grindstone::GraphicsAPI::RenderTarget::CreateInfo litHdrImagesCreateInfo
+			= { Grindstone::GraphicsAPI::ColorFormat::R32G32B32, width, height };
+		litHdrImages = core->CreateRenderTarget(&litHdrImagesCreateInfo, 1);
+
+		Grindstone::GraphicsAPI::Framebuffer::CreateInfo litHdrFramebufferCreateInfo{};
+		litHdrFramebufferCreateInfo.debugName = "Lit HDR Framebuffer";
+		litHdrFramebufferCreateInfo.renderTargetLists = &litHdrImages;
+		litHdrFramebufferCreateInfo.numRenderTargetLists = 1;
+		litHdrFramebufferCreateInfo.depthTarget = nullptr;
+		litHdrFramebufferCreateInfo.renderPass = nullptr;
+		litHdrFramebuffer = core->CreateFramebuffer(litHdrFramebufferCreateInfo);
 
 		// ========= Light Stuff =========
 		UniformBufferBinding::CreateInfo lightUniformBufferBindingCi{};
@@ -173,12 +202,11 @@ void Grindstone::BaseRender(
 		vaoCi.vertexBufferCount = 1;
 		vaoCi.vertexBuffers = &vbo;
 		vaoCi.indexBuffer = ibo;
-		lightVao = core->CreateVertexArrayObject(vaoCi);
+		planePostProcessVao = core->CreateVertexArrayObject(vaoCi);
 		
 		auto shaderManager = EngineCore::GetInstance().shaderManager;
 		lightPipeline = shaderManager->LoadShader(nullptr, "../assets/coreAssets/pointLight").pipeline;
-		
-		gbuffer->BindRead();
+		tonemapPipeline = shaderManager->LoadShader(nullptr, "../assets/coreAssets/tonemap").pipeline;
 		
 		isFirst = false;
 	}
@@ -190,6 +218,7 @@ void Grindstone::BaseRender(
 	engineUboStruct.eyePos = eyePos;
 
 	gbuffer->BindWrite(true);
+	gbuffer->BindRead();
 
 	float clearColor[4] = {0.3f, 0.6f, 0.9f, 1.f};
 	core->Clear(ClearMode::ColorAndDepth, clearColor, 1);
@@ -200,5 +229,5 @@ void Grindstone::BaseRender(
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
 
 	RenderLights(registry);
-	// PostProcess();
+	PostProcess();
 }

@@ -378,12 +378,13 @@ namespace Grindstone {
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 		}
 
-		void GLCore::BindDefaultFramebufferWrite() {
+		void GLCore::BindDefaultFramebufferWrite(bool isDepth) {
+			glDepthMask(isDepth ? GL_TRUE : GL_FALSE);
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 		}
 
-		void GLCore::BindDefaultFramebuffer(bool depth) {
-			glDepthMask(depth ? GL_TRUE : GL_FALSE);
+		void GLCore::BindDefaultFramebuffer(bool isDepth) {
+			glDepthMask(isDepth ? GL_TRUE : GL_FALSE);
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
 
