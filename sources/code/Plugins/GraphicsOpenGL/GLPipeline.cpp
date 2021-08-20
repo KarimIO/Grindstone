@@ -11,7 +11,7 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		GLuint GLPipeline::createShaderModule(ShaderStageCreateInfo createInfo) {
+		GLuint GLPipeline::CreateShaderModule(ShaderStageCreateInfo createInfo) {
 			int shaderType;
 			switch (createInfo.type) {
 			default:
@@ -33,6 +33,9 @@ namespace Grindstone {
 			}
 
 			GLuint shader = glCreateShader(shaderType);
+			if (createInfo.fileName != nullptr) {
+				glObjectLabel(GL_SHADER, shader, -1, createInfo.fileName);
+			}
 
 			bool shouldUseTextShaders = false;
 
@@ -63,28 +66,29 @@ namespace Grindstone {
 				// glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
 			}
 
-			glAttachShader(program_, shader);
+			glAttachShader(program, shader);
 
 			return shader;
 		}
 
 		GLPipeline::GLPipeline(CreateInfo& createInfo) {
-			primitive_type_ = GetGeomType(createInfo.primitiveType);
+			primitiveType = GetGeomType(createInfo.primitiveType);
 
-			width_ = createInfo.width;
-			height_ = createInfo.height;
-			scissor_w_ = createInfo.scissorW;
-			scissor_h_ = createInfo.scissorH;
-			scissor_x_ = createInfo.scissorX;
-			scissor_y_ = createInfo.scissorY;
-			cull_mode_ = createInfo.cullMode;
+			width = createInfo.width;
+			height = createInfo.height;
+			scissorWidth = createInfo.scissorW;
+			scissorHeight = createInfo.scissorH;
+			scissorX = createInfo.scissorX;
+			scissorY = createInfo.scissorY;
+			cullMode = createInfo.cullMode;
 
-			program_ = glCreateProgram();
+			program = glCreateProgram();
+			glObjectLabel(GL_PROGRAM, program, -1, createInfo.shaderName);
 
 			uint32_t shaderNum = createInfo.shaderStageCreateInfoCount;
 			GLuint *shaders = new GLuint[shaderNum];
 			for (uint32_t i = 0; i < shaderNum; i++) {
-				shaders[i] = createShaderModule(createInfo.shaderStageCreateInfos[i]);
+				shaders[i] = CreateShaderModule(createInfo.shaderStageCreateInfos[i]);
 			}
 
 			/*glValidateProgram(program);
@@ -98,63 +102,68 @@ namespace Grindstone {
 				//return;
 			}*/
 
-			if (createInfo.vertexBindingsCount > 0) {
+			/*if (createInfo.vertexBindingsCount > 0) {
 				auto& vbd = createInfo.vertexBindings;
 				for (uint32_t i = 0; i < vbd->attributeCount; i++) {
-					glBindAttribLocation(program_, vbd->attributes[i].location, vbd->attributes[i].name);
+					glBindAttribLocation(program, vbd->attributes[i].location, vbd->attributes[i].name);
 				}
-			}
+			}*/
 
 			GLint result = 0;
-			glLinkProgram(program_);
-			glGetProgramiv(program_, GL_LINK_STATUS, &result);
-			if (!result) {
-				int maxLength = 0;
-				glGetProgramiv(program_, GL_INFO_LOG_LENGTH, &maxLength);
+			glLinkProgram(program);
+
+			GLint isLinked;
+			glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
+			if (isLinked == GL_FALSE) {
+				printf("Link failed for program: %s", createInfo.shaderName);
+				/*GLint maxLength;
+				glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+
 				std::vector<GLchar> infoLog(maxLength);
-				glGetProgramInfoLog(program_, maxLength, &maxLength, infoLog.data());
-				fprintf(stderr, "Error linking shader program: '%s'\n", infoLog.data());
-				return;
+				glGetProgramInfoLog(program, maxLength, &maxLength, infoLog.data());
+				printf("Shader linking failed %s\n", infoLog.data());
+
+				glDeleteProgram(program);*/
 			}
 
 			// Detach Shaders (Remove their references)
 			for (size_t i = 0; i < shaderNum; i++) {
-				glDetachShader(program_, shaders[i]);
+				// glDetachShader(program, shaders[i]);
 				glDeleteShader(shaders[i]);
 			}
 
 			delete[] shaders;
 
 			// TODO: Properly do this:
-			glUseProgram(program_);
+			// glUseProgram(program);
 
-			for (size_t i = 0; i < createInfo.uniformBufferBindingCount; i++) {
+			/*for (size_t i = 0; i < createInfo.uniformBufferBindingCount; i++) {
 				GLUniformBufferBinding *ubb = (GLUniformBufferBinding *)createInfo.uniformBufferBindings[i];
-				glUniformBlockBinding(program_, ubb->GetBindingLocation(), ubb->GetBindingLocation());
-				/*GLuint index = glGetUniformBlockIndex(program_, ubb->GetUniformName());
+				glUniformBlockBinding(program, ubb->GetBindingLocation(), ubb->GetBindingLocation());
+				GLuint index = glGetUniformBlockIndex(program, ubb->GetUniformName());
 				if (index != GL_INVALID_INDEX) {
 				}
 				else {
 					std::cout << "Couldn't attach Uniform Buffer" << ubb->GetUniformName() << std::endl;
-				}*/
-			}
+				}
+			}*/
 
 			/*for (uint32_t i = 0; i < createInfo.textureBindingCount; i++) {
 				GLTextureBindingLayout *texbinding = (GLTextureBindingLayout *)createInfo.textureBindings[i];
 				for (uint32_t j = 0; j < texbinding->getNumSubBindings(); j++) {
 					TextureSubBinding sub = texbinding->getSubBinding(j);
-					int loc = glGetUniformLocation(program_, sub.shaderLocation);
+					int loc = glGetUniformLocation(program, sub.shaderLocation);
 					glUniform1i(loc, sub.textureLocation);
 				}
 			}*/
 		}
 
-		void GLPipeline::bind() {
-			glUseProgram(program_);
+		void GLPipeline::Bind() {
+			glUseProgram(program);
 
-			glViewport(0, 0, (GLsizei)width_, (GLsizei)height_);
+			glViewport(0, 0, (GLsizei)width, (GLsizei)height);
 			// glScissor(scissor_x_, scissor_y_, scissor_w_, scissor_h_);
-			switch (cull_mode_) {
+			switch (cullMode) {
 			case CullMode::None:
 				glDisable(GL_CULL_FACE);
 				break;
@@ -173,13 +182,13 @@ namespace Grindstone {
 			}
 		}
 
-		GLuint GLPipeline::getPrimitiveType() {
-			return primitive_type_;
+		GLuint GLPipeline::GetPrimitiveType() {
+			return primitiveType;
 		}
 
 		GLPipeline::~GLPipeline() {
 			glUseProgram(0);
-			glDeleteProgram(program_);
+			glDeleteProgram(program);
 		}
 	}
 }

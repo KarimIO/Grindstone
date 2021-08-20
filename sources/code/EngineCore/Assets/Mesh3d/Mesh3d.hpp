@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include <string>
+#include <filesystem>
 #include "Common/Graphics/VertexArrayObject.hpp"
 #include "Common/Graphics/VertexBuffer.hpp"
 #include "Common/Graphics/IndexBuffer.hpp"
@@ -31,7 +31,7 @@ namespace Grindstone {
 			Mesh3d* mesh = nullptr;
 		};
 		
-		std::string path;
+		std::filesystem::path path;
 		GraphicsAPI::VertexArrayObject* vertexArrayObject = nullptr;
 		std::vector<Submesh> submeshes;
 	};

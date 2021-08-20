@@ -10,9 +10,10 @@ namespace Grindstone {
 		class VertexArrayObject {
 		public:
 			struct CreateInfo {
-				VertexBuffer** vertexBuffers;
-				uint32_t vertexBufferCount;
-				IndexBuffer* indexBuffer;
+				const char* debugName = nullptr;
+				VertexBuffer** vertexBuffers = nullptr;
+				uint32_t vertexBufferCount = 0;
+				IndexBuffer* indexBuffer = nullptr;
 			};
 
 			virtual ~VertexArrayObject() {};

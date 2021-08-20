@@ -13,6 +13,7 @@ struct SourceSubmesh {
 };
 
 GraphicsAPI::VertexBuffer* LoadVertexBufferVec(
+	std::string& fileName,
 	size_t vertexSize,
 	uint64_t vertexCount,
 	void* sourcePtr,
@@ -23,7 +24,9 @@ GraphicsAPI::VertexBuffer* LoadVertexBufferVec(
 	vertices.resize(vertexCount * vertexSize);
 	std::memcpy(vertices.data(), sourcePtr, size);
 
+	std::string debugName = fileName + " " + vertexLayout.attributes[0].name;
 	GraphicsAPI::VertexBuffer::CreateInfo vertexBufferCreateInfo;
+	vertexBufferCreateInfo.debugName = debugName.c_str();
 	vertexBufferCreateInfo.content = vertices.data();
 	vertexBufferCreateInfo.size = size;
 	vertexBufferCreateInfo.layout = &vertexLayout;
@@ -38,8 +41,9 @@ Mesh3dManager::Mesh3dManager() {
 void Mesh3dManager::PrepareLayouts() {
 	vertexLayouts.positions = {
 		{
+			(uint32_t)Mesh3dLayoutIndex::Position,
 			Grindstone::GraphicsAPI::VertexFormat::Float3,
-			"vertexPositions",
+			"vertexPosition",
 			false,
 			Grindstone::GraphicsAPI::AttributeUsage::Position
 		}
@@ -47,8 +51,9 @@ void Mesh3dManager::PrepareLayouts() {
 	
 	vertexLayouts.normals = {
 		{
+			(uint32_t)Mesh3dLayoutIndex::Normal,
 			Grindstone::GraphicsAPI::VertexFormat::Float3,
-			"vertexNormals",
+			"vertexNormal",
 			false,
 			Grindstone::GraphicsAPI::AttributeUsage::Normal
 		}
@@ -56,8 +61,9 @@ void Mesh3dManager::PrepareLayouts() {
 
 	vertexLayouts.tangents = {
 		{
+			(uint32_t)Mesh3dLayoutIndex::Tangent,
 			Grindstone::GraphicsAPI::VertexFormat::Float3,
-			"vertexTangents",
+			"vertexTangent",
 			false,
 			Grindstone::GraphicsAPI::AttributeUsage::Tangent
 		}
@@ -65,8 +71,9 @@ void Mesh3dManager::PrepareLayouts() {
 
 	vertexLayouts.uv0 = {
 		{
+			(uint32_t)Mesh3dLayoutIndex::Uv0,
 			Grindstone::GraphicsAPI::VertexFormat::Float2,
-			"vertexUv0",
+			"vertexTexCoord0",
 			false,
 			Grindstone::GraphicsAPI::AttributeUsage::TexCoord0
 		}
@@ -74,8 +81,9 @@ void Mesh3dManager::PrepareLayouts() {
 
 	vertexLayouts.uv1 = {
 		{
+			(uint32_t)Mesh3dLayoutIndex::Uv1,
 			Grindstone::GraphicsAPI::VertexFormat::Float2,
-			"vertexUv1",
+			"vertexTexCoord1",
 			false,
 			Grindstone::GraphicsAPI::AttributeUsage::TexCoord1
 		}
@@ -124,27 +132,28 @@ void Mesh3dManager::LoadMeshImportVertices(
 	char*& sourcePtr,
 	std::vector<GraphicsAPI::VertexBuffer*>& vertexBuffers
 ) {
+	auto& fileName = mesh.path.filename().string();
 	auto vertexCount = header.vertexCount;
 	if (header.hasVertexPositions) {
-		auto positions = LoadVertexBufferVec(3, vertexCount, sourcePtr, vertexLayouts.positions);
+		auto positions = LoadVertexBufferVec(fileName, 3, vertexCount, sourcePtr, vertexLayouts.positions);
 		vertexBuffers.push_back(positions);
 		sourcePtr += sizeof(float) * 3 * vertexCount;
 	}
 
 	if (header.hasVertexNormals) {
-		auto normals = LoadVertexBufferVec(3, vertexCount, sourcePtr, vertexLayouts.normals);
+		auto normals = LoadVertexBufferVec(fileName, 3, vertexCount, sourcePtr, vertexLayouts.normals);
 		vertexBuffers.push_back(normals);
 		sourcePtr += sizeof(float) * 3 * vertexCount;
 	}
 
 	if (header.hasVertexTangents) {
-		auto tangents = LoadVertexBufferVec(3, vertexCount, sourcePtr, vertexLayouts.tangents);
+		auto tangents = LoadVertexBufferVec(fileName, 3, vertexCount, sourcePtr, vertexLayouts.tangents);
 		vertexBuffers.push_back(tangents);
 		sourcePtr += sizeof(float) * 3 * vertexCount;
 	}
 
 	if (header.vertexUvSetCount >= 1) {
-		auto uv0 = LoadVertexBufferVec(2, vertexCount, sourcePtr, vertexLayouts.uv0);
+		auto uv0 = LoadVertexBufferVec(fileName, 2, vertexCount, sourcePtr, vertexLayouts.uv0);
 		vertexBuffers.push_back(uv0);
 		sourcePtr += sizeof(float) * 2 * vertexCount;
 	}
@@ -163,7 +172,10 @@ void Mesh3dManager::LoadMeshImportIndices(
 	memcpy(indices.data(), sourcePtr, indexSize);
 	sourcePtr += indexSize;
 
+	std::string& fileName = mesh.path.filename().string();
+	std::string debugName = fileName + " Index Buffer";
 	GraphicsAPI::IndexBuffer::CreateInfo indexBufferCreateInfo{};
+	indexBufferCreateInfo.debugName = debugName.c_str();
 	indexBufferCreateInfo.content = indices.data();
 	indexBufferCreateInfo.count = indices.size();
 	indexBufferCreateInfo.size = indices.size() * sizeof(indices[0]);
@@ -191,7 +203,10 @@ void Mesh3dManager::CreateMeshFromData(Mesh3d& mesh, std::vector<char>& fileCont
 	LoadMeshImportVertices(mesh, header, srcPtr, vertexBuffers);
 	LoadMeshImportIndices(mesh, header, srcPtr, indexBuffer);
 
+	std::string& fileName = mesh.path.filename().string();
+	std::string debugName = fileName + " Vertex Array Object";
 	GraphicsAPI::VertexArrayObject::CreateInfo vaoCi{};
+	vaoCi.debugName = debugName.c_str();
 	vaoCi.indexBuffer = indexBuffer;
 	vaoCi.vertexBuffers = vertexBuffers.data();
 	vaoCi.vertexBufferCount = vertexBuffers.size();
@@ -206,6 +221,7 @@ Mesh3d& Mesh3dManager::CreateMesh3dFromFile(const char* path) {
 
 	auto fileContent = Utils::LoadFile(completePath.c_str());
 	Mesh3d& mesh = meshes[path];
+	mesh.path = path;
 	CreateMeshFromData(mesh, fileContent);
 
 	return mesh;

@@ -362,6 +362,8 @@ namespace Grindstone {
 
 			std::string openglGlsl = glslTranspiler.compile();
 
+			outputStringToFile((std::string(extension) + ".opengl.glsl").c_str(), openglGlsl.c_str());
+
 			return openglGlsl;
 		}
 

@@ -8,9 +8,10 @@ namespace Grindstone {
 		class IndexBuffer {
 		public:
 			struct CreateInfo {
-				const void* content;
-				uint32_t size;
-				uint32_t count;
+				const char* debugName = nullptr;
+				const void* content = nullptr;
+				uint32_t size = 0;
+				uint32_t count = 0;
 			};
 
 			virtual ~IndexBuffer() {};

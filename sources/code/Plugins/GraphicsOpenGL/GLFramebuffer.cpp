@@ -8,6 +8,10 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		GLFramebuffer::GLFramebuffer(CreateInfo& createInfo) {
+			if (createInfo.debugName != nullptr) {
+				debugName = createInfo.debugName;
+			}
+
 			renderTargetLists = new GLRenderTarget*[createInfo.numRenderTargetLists];
 			numRenderTargetLists = createInfo.numRenderTargetLists;
 			depthTarget = (GLDepthTarget *)createInfo.depthTarget;
@@ -22,13 +26,16 @@ namespace Grindstone {
 		}
 		
 		void GLFramebuffer::CreateFramebuffer() {
-			if (fbo_) {
-				// glDeleteFramebuffers(1, &fbo_);
-				fbo_ = 0;
+			if (framebuffer) {
+				// glDeleteFramebuffers(1, &framebuffer);
+				framebuffer = 0;
 			}
 
-			glGenFramebuffers(1, &fbo_);
-			glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
+			glGenFramebuffers(1, &framebuffer);
+			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+			if (!debugName.empty()) {
+				glObjectLabel(GL_FRAMEBUFFER, framebuffer, -1, debugName.c_str());
+			}
 
 			GLenum *DrawBuffers = new GLenum[numTotalRenderTargets];
 			GLenum k = 0;
@@ -74,8 +81,8 @@ namespace Grindstone {
 		}
 
 		GLFramebuffer::~GLFramebuffer() {
-			if (fbo_ != 0) {
-				glDeleteFramebuffers(1, &fbo_);
+			if (framebuffer != 0) {
+				glDeleteFramebuffers(1, &framebuffer);
 			}
 		}
 
@@ -84,7 +91,7 @@ namespace Grindstone {
 		}
 		
 		void GLFramebuffer::Resize(uint32_t width, uint32_t height) {
-			for (int i = 0; i < numRenderTargetLists; ++i) {
+			for (uint32_t i = 0; i < numRenderTargetLists; ++i) {
 				RenderTarget* renderTargetList = renderTargetLists[i];
 				renderTargetList->Resize(width, height);
 			}
@@ -112,17 +119,17 @@ namespace Grindstone {
 		}
 
 		void GLFramebuffer::Bind(bool depth) {
-			glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
+			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 			glDepthMask(depth ? GL_TRUE : GL_FALSE);
 		}
 
 		void GLFramebuffer::BindWrite(bool depth) {
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
 			glDepthMask(depth ? GL_TRUE : GL_FALSE);
 		}
 
 		void GLFramebuffer::BindRead() {
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_);
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
 		}
 
 		void GLFramebuffer::BindTextures(int k) {

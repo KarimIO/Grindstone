@@ -13,30 +13,32 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		GLTexture::GLTexture(CreateInfo& ci) {
-			if (ci.isCubemap) {
-				is_cubemap_ = true;
-				glGenTextures(1, &handle_);
-
-				glBindTexture(GL_TEXTURE_CUBE_MAP, handle_);
+		GLTexture::GLTexture(CreateInfo& createInfo) {
+			if (createInfo.isCubemap) {
+				isCubemap = true;
+				glGenTextures(1, &textureHandle);
+				glBindTexture(GL_TEXTURE_CUBE_MAP, textureHandle);
+				if (createInfo.debugName != nullptr) {
+					glObjectLabel(GL_TEXTURE, textureHandle, -1, createInfo.debugName);
+				}
 
 				GLint internalFormat;
 				GLenum format;
-				bool is_compressed;
-				translateColorFormats(ci.format, is_compressed, format, internalFormat);
+				bool isCompressed;
+				translateColorFormats(createInfo.format, isCompressed, format, internalFormat);
 
 
-				const char *buffer = ci.data;
-				unsigned int blockSize = (ci.format == ColorFormat::SRGB_DXT1 || ci.format == ColorFormat::SRGB_ALPHA_DXT1
-					|| ci.format == ColorFormat::RGB_DXT1 || ci.format == ColorFormat::RGBA_DXT1) ? 8 : 16;
+				const char *buffer = createInfo.data;
+				unsigned int blockSize = (createInfo.format == ColorFormat::SRGB_DXT1 || createInfo.format == ColorFormat::SRGB_ALPHA_DXT1
+					|| createInfo.format == ColorFormat::RGB_DXT1 || createInfo.format == ColorFormat::RGBA_DXT1) ? 8 : 16;
 
 				gl3wGetProcAddress("GL_COMPRESSED_RGBA_S3TC_DXT1_EXT");
 
 				for (size_t i = 0; i < 6; i++) {
-					uint32_t width = ci.width;
-					uint32_t height = ci.height;
+					uint32_t width = createInfo.width;
+					uint32_t height = createInfo.height;
 
-					for (uint32_t j = 0; j <= ci.mipmaps; j++) {
+					for (uint32_t j = 0; j <= createInfo.mipmaps; j++) {
 						unsigned int size = ((width + 3) / 4)*((height + 3) / 4)*blockSize;
 						glCompressedTexImage2D(
 							(GLenum) GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
@@ -55,44 +57,46 @@ namespace Grindstone {
 					}
 				}
 
-				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, translateTexWrap(ci.options.wrapModeU));
-				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, translateTexWrap(ci.options.wrapModeV));
-				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, translateTexWrap(ci.options.wrapModeW));
-				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, translateTexFilter(ci.options.magFilter));
-				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, translateTexFilter(ci.options.minFilter));
+				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, translateTexWrap(createInfo.options.wrapModeU));
+				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, translateTexWrap(createInfo.options.wrapModeV));
+				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, translateTexWrap(createInfo.options.wrapModeW));
+				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, translateTexFilter(createInfo.options.magFilter));
+				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, translateTexFilter(createInfo.options.minFilter));
 
 				glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 			}
 			else {
-				is_cubemap_ = false;
-				glGenTextures(1, &handle_);
-
-				glBindTexture(GL_TEXTURE_2D, handle_);
+				isCubemap = false;
+				glGenTextures(1, &textureHandle);
+				glBindTexture(GL_TEXTURE_2D, textureHandle);
+				if (createInfo.debugName != nullptr) {
+					glObjectLabel(GL_TEXTURE, textureHandle, -1, createInfo.debugName);
+				}
 
 				GLint internalFormat;
 				GLenum format;
-				bool is_compressed;
-				translateColorFormats(ci.format, is_compressed, format, internalFormat);
+				bool isCompressed;
+				translateColorFormats(createInfo.format, isCompressed, format, internalFormat);
 
-				if (!is_compressed) {
-					glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, ci.width, ci.height, 0, format, GL_UNSIGNED_BYTE, ci.data);
+				if (!isCompressed) {
+					glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, createInfo.width, createInfo.height, 0, format, GL_UNSIGNED_BYTE, createInfo.data);
 
-					if (ci.options.shouldGenerateMipmaps)
+					if (createInfo.options.shouldGenerateMipmaps)
 						glGenerateMipmap(GL_TEXTURE_2D);
 				}
 				else {
-					unsigned int blockSize = (ci.format == ColorFormat::SRGB_DXT1 || ci.format == ColorFormat::SRGB_ALPHA_DXT1
-						|| ci.format == ColorFormat::RGB_DXT1 || ci.format == ColorFormat::RGBA_DXT1) ? 8 : 16;
+					unsigned int blockSize = (createInfo.format == ColorFormat::SRGB_DXT1 || createInfo.format == ColorFormat::SRGB_ALPHA_DXT1
+						|| createInfo.format == ColorFormat::RGB_DXT1 || createInfo.format == ColorFormat::RGBA_DXT1) ? 8 : 16;
 
-					uint32_t width = ci.width;
-					uint32_t height = ci.height;
+					uint32_t width = createInfo.width;
+					uint32_t height = createInfo.height;
 
-					const char *buffer = ci.data;
+					const char *buffer = createInfo.data;
 
 					gl3wGetProcAddress("GL_COMPRESSED_RGBA_S3TC_DXT1_EXT");
 					gl3wGetProcAddress("GL_EXT_texture_sRGB");
 
-					for (uint32_t i = 0; i <= ci.mipmaps; i++) {
+					for (uint32_t i = 0; i <= createInfo.mipmaps; i++) {
 						unsigned int size = ((width + 3) / 4)*((height + 3) / 4)*blockSize;
 						glCompressedTexImage2D(GL_TEXTURE_2D, i, format, width, height,
 							0, size, buffer);
@@ -103,12 +107,12 @@ namespace Grindstone {
 					}
 				}
 
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, translateTexWrap(ci.options.wrapModeU));
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, translateTexWrap(ci.options.wrapModeV));
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, translateTexFilter(ci.options.magFilter));
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, translateTexFilter(ci.options.minFilter));
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, translateTexWrap(createInfo.options.wrapModeU));
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, translateTexWrap(createInfo.options.wrapModeV));
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, translateTexFilter(createInfo.options.magFilter));
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, translateTexFilter(createInfo.options.minFilter));
 
-				if (ci.options.shouldGenerateMipmaps)
+				if (createInfo.options.shouldGenerateMipmaps)
 					glGenerateMipmap(GL_TEXTURE_2D);
 
 				glBindTexture(GL_TEXTURE_2D, 0);
@@ -116,13 +120,15 @@ namespace Grindstone {
 		}
 
 		unsigned int GLTexture::getTexture() {
-			return handle_;
+			return textureHandle;
 		}
 
 		GLenum GLTexture::translateTexWrap(TextureWrapMode m) {
 			switch (m) {
 			default:
 				printf("Invalid Texture Wrap Mode!\r\n");
+				return GL_REPEAT;
+
 			case TextureWrapMode::Repeat:
 				return GL_REPEAT;
 
@@ -144,6 +150,8 @@ namespace Grindstone {
 			switch (m) {
 			default:
 				printf("Invalid Filter!\r\n");
+				return GL_NEAREST;
+
 			case TextureFilter::Nearest:
 				return GL_NEAREST;
 
@@ -164,109 +172,108 @@ namespace Grindstone {
 			}
 		}
 
-		GLTexture::GLTexture(CubemapCreateInfo& ci) {
-			is_cubemap_ = true;
-			glGenTextures(1, &handle_);
+		GLTexture::GLTexture(CubemapCreateInfo& createInfo) {
+			isCubemap = true;
+			glGenTextures(1, &textureHandle);
 
-			glBindTexture(GL_TEXTURE_CUBE_MAP, handle_);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, textureHandle);
 
 			GLint internalFormat;
 			GLenum format;
-			bool is_compressed;
-			translateColorFormats(ci.format, is_compressed, format, internalFormat);
+			bool isCompressed;
+			translateColorFormats(createInfo.format, isCompressed, format, internalFormat);
 
 			for (size_t i = 0; i < 6; i++) {
 				glTexImage2D(
 					(GLenum) GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
 					0,
 					internalFormat,
-					ci.width,
-					ci.height,
+					createInfo.width,
+					createInfo.height,
 					0,
 					format,
 					GL_UNSIGNED_BYTE,
-					ci.data[i]
+					createInfo.data[i]
 				);
 			}
 
-			if (ci.options.shouldGenerateMipmaps)
+			if (createInfo.options.shouldGenerateMipmaps)
 				glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, translateTexWrap(ci.options.wrapModeU));
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, translateTexWrap(ci.options.wrapModeV));
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, translateTexWrap(ci.options.wrapModeW));
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, translateTexFilter(ci.options.magFilter));
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, translateTexFilter(ci.options.minFilter));
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, translateTexWrap(createInfo.options.wrapModeU));
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, translateTexWrap(createInfo.options.wrapModeV));
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, translateTexWrap(createInfo.options.wrapModeW));
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, translateTexFilter(createInfo.options.magFilter));
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, translateTexFilter(createInfo.options.minFilter));
 
 			glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 		}
 
 		void GLTexture::bind(int i) {
-			if (glIsTexture(handle_)) {
+			if (glIsTexture(textureHandle)) {
 				glActiveTexture(GL_TEXTURE0 + i);
-				glBindTexture(is_cubemap_ ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D, handle_);
+				glBindTexture(isCubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D, textureHandle);
 			}
 			else {
-				std::cout << "Invalid texture handle_: " << handle_ << std::endl;
+				std::cout << "Invalid texture textureHandle: " << textureHandle << std::endl;
 			}
 		}
 
 		GLTexture::~GLTexture() {
-			glDeleteTextures(1, &handle_);
+			glDeleteTextures(1, &textureHandle);
 		}
 
-		GLTextureBinding::GLTextureBinding(CreateInfo& ci) {
-			textures_.reserve(ci.textureCount);
-			targets_.reserve(ci.textureCount);
-			for (uint32_t i = 0; i < ci.textureCount; i++) {
-				GLTexture *t = (GLTexture *)(ci.textures[i].texture);
+		GLTextureBinding::GLTextureBinding(CreateInfo& createInfo) {
+			textures.reserve(createInfo.textureCount);
+			targets.reserve(createInfo.textureCount);
+			for (uint32_t i = 0; i < createInfo.textureCount; i++) {
+				GLTexture *t = (GLTexture *)(createInfo.textures[i].texture);
 				if (t) {
-					textures_.push_back(t);
-					targets_.push_back(ci.textures[i].address);
+					textures.push_back(t);
+					targets.push_back(createInfo.textures[i].address);
 				}
 			}
 		}
 
 		void GLTextureBinding::bind() {
-			for (int i = 0; i < textures_.size(); i++) {
-				if (textures_[i])
-					textures_[i]->bind(targets_[i]);
+			for (int i = 0; i < textures.size(); i++) {
+				if (textures[i])
+					textures[i]->bind(targets[i]);
 			}
 		}
 
 		GLTextureBindingLayout::GLTextureBindingLayout(CreateInfo& createInfo) {
-			subbindings_ = createInfo.bindings;
-			subbinding_count_ = createInfo.bindingCount;
+			subbindings = createInfo.bindings;
+			subbindingCount = createInfo.bindingCount;
 		}
 
 		TextureSubBinding GLTextureBindingLayout::getSubBinding(uint32_t i) {
-			return subbindings_[i];
+			return subbindings[i];
 		}
 
 		uint32_t GLTextureBindingLayout::getNumSubBindings() {
-			return subbinding_count_;
+			return subbindingCount;
 		}
 
-		void translateColorFormats(ColorFormat inFormat, bool &is_compressed, GLenum &format, GLint &internalFormat) {
-
-			is_compressed = false;
+		void translateColorFormats(ColorFormat inFormat, bool &isCompressed, GLenum &format, GLint &internalFormat) {
+			isCompressed = false;
 
 			switch (inFormat) {
 			case ColorFormat::RGB_DXT1:
 				format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-				is_compressed = true;
+				isCompressed = true;
 				break;
 			case ColorFormat::RGBA_DXT1:
 				format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-				is_compressed = true;
+				isCompressed = true;
 				break;
 			case ColorFormat::RGBA_DXT3:
 				format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-				is_compressed = true;
+				isCompressed = true;
 				break;
 			case ColorFormat::RGBA_DXT5:
 				format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-				is_compressed = true;
+				isCompressed = true;
 				break;
 			case ColorFormat::R10G10B10A2:
 				internalFormat = GL_RGB10_A2;

@@ -13,7 +13,7 @@ namespace Grindstone {
 		private:
 			bool TryGetTexture(const char* path, TextureAsset*& material);
 			TextureAsset& CreateTextureFromFile(const char* path);
-			TextureAsset CreateFromDds(const char* data, size_t fileSize);
+			TextureAsset CreateFromDds(const char* filenName, const char* data, size_t fileSize);
 			std::map<std::string, TextureAsset> textures;
 	};
 }

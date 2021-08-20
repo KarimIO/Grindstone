@@ -29,6 +29,7 @@ namespace Grindstone {
 		class Pipeline {
 		public:
 			struct CreateInfo {
+				const char* shaderName;
 				GeometryType primitiveType;
 				CullMode cullMode;
 				RenderPass* renderPass;
@@ -48,7 +49,6 @@ namespace Grindstone {
 				uint32_t vertexBindingsCount;
 			};
 
-			virtual void bind() {};
 			virtual ~Pipeline() {}
 		};
 	}

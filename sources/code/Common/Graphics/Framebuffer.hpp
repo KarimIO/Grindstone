@@ -13,6 +13,7 @@ namespace Grindstone {
 		enum class ClearMode : uint8_t {
 			Color = 1,
 			Depth = 2,
+			ColorAndDepth = 3,
 			Stencil = 4,
 			All = 7
 		};
@@ -28,6 +29,7 @@ namespace Grindstone {
 			};
 
 			struct CreateInfo {
+				const char* debugName;
 				RenderPass* renderPass;
 
 				RenderTarget** renderTargetLists;

@@ -15,7 +15,8 @@ void Mesh3dRenderer::RenderQueue(RenderQueueContainer& renderQueue) {
 }
 
 void Mesh3dRenderer::RenderShader(Shader& shader) {
-	shader.pipeline->bind();
+	GraphicsAPI::Core* core = EngineCore::GetInstance().GetGraphicsCore();
+	core->BindPipeline(shader.pipeline);
 	for (auto& material : shader.materials) {
 		RenderMaterial(*material);
 	}

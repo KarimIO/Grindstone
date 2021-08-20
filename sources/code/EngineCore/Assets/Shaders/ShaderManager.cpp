@@ -83,8 +83,10 @@ void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& s
 	shaderStages.resize(numShaderStages);
 	size_t currentShaderStage = 0;
 
+	std::vector<std::string> fileNames;
+	fileNames.resize(numShaderStages);
 	std::vector<std::vector<char>> fileData;
-	fileData.resize(2);
+	fileData.resize(numShaderStages);
 	size_t fileDataIterator = 0;
 
 	for(
@@ -98,11 +100,11 @@ void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& s
 		}
 
 		auto& stageCreateInfo = shaderStages[currentShaderStage++];
-		std::string path = GetShaderPath(basePath, stage, graphicsCore);
+		auto& path = fileNames[fileDataIterator] = GetShaderPath(basePath, stage, graphicsCore);
 		stageCreateInfo.fileName = path.c_str();
 
 		if (!std::filesystem::exists(path)) {
-			throw std::runtime_error(std::string(path) + " shader not found.");
+			throw std::runtime_error(path + " shader not found.");
 		}
 
 		fileData[fileDataIterator] = Utils::LoadFile(path.c_str());
@@ -115,6 +117,7 @@ void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& s
 	}
 
 	Pipeline::CreateInfo pipelineCi{};
+	pipelineCi.shaderName = shader.reflectionData.name.c_str();
 	pipelineCi.primitiveType = GeometryType::Triangles;
 	pipelineCi.cullMode = CullMode::None;
 	pipelineCi.renderPass;

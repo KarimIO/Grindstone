@@ -26,7 +26,8 @@ namespace Grindstone {
 		private:
 			void CreateFramebuffer();
 		private:
-			GLuint fbo_ = 0;
+			std::string debugName;
+			GLuint framebuffer = 0;
 			uint32_t numRenderTargetLists = 0;
 			uint32_t numTotalRenderTargets = 0;
 			GLRenderTarget **renderTargetLists = nullptr;

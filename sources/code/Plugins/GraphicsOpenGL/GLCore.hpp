@@ -81,6 +81,8 @@ namespace Grindstone {
 			virtual void SetImmediateBlending(BlendMode) override;
 			virtual void EnableDepth(bool state) override;
 			virtual void BindDefaultFramebuffer(bool depth) override;
+			virtual void BindDefaultFramebufferWrite() override;
+			virtual void BindDefaultFramebufferRead() override;
 			virtual void SetColorMask(ColorMask mask) override;
 		private:
 			std::string vendorName;

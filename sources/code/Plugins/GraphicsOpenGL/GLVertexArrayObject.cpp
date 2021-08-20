@@ -35,6 +35,9 @@ namespace Grindstone {
 		GLVertexArrayObject::GLVertexArrayObject(CreateInfo& createInfo) {
 			glGenVertexArrays(1, &vertexArrayObject);
 			glBindVertexArray(vertexArrayObject);
+			if (createInfo.debugName != nullptr) {
+				glObjectLabel(GL_VERTEX_ARRAY, vertexArrayObject, -1, createInfo.debugName);
+			}
 
 			for (size_t i = 0; i < createInfo.vertexBufferCount; ++i) {
 				GLVertexBuffer* vbo = (GLVertexBuffer *)createInfo.vertexBuffers[i];
@@ -43,12 +46,13 @@ namespace Grindstone {
 				const auto& layout = vbo->GetLayout();
 				for (uint32_t j = 0; j < layout.attributeCount; ++j) {
 					VertexAttributeDescription &layoutElement = layout.attributes[j];
-					GLenum vert_format = vertexFormatToOpenGLFormat(layoutElement.format);
-					glEnableVertexAttribArray(vertexBufferCount);
-					glVertexAttribPointer(vertexBufferCount++,
+					GLenum vertexFormat = vertexFormatToOpenGLFormat(layoutElement.format);
+					glEnableVertexAttribArray(layoutElement.location);
+					glVertexAttribPointer(
+						layoutElement.location,
 						layoutElement.componentsCount,
-						vert_format,
-						layoutElement.normalized ? GL_TRUE : GL_FALSE,
+						vertexFormat,
+						layoutElement.isNormalized ? GL_TRUE : GL_FALSE,
 						layout.stride,
 						(const void*)layoutElement.offset);
 				}

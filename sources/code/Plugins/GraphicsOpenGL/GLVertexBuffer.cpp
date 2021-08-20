@@ -4,10 +4,13 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		GLVertexBuffer::GLVertexBuffer(CreateInfo& ci) : size(ci.size), vertexLayout(*ci.layout){
+		GLVertexBuffer::GLVertexBuffer(CreateInfo& createInfo) : size(createInfo.size), vertexLayout(*createInfo.layout){
 			glGenBuffers(1, &vertexBuffer);
 			glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-			glBufferData(GL_ARRAY_BUFFER, ci.size, ci.content, GL_STATIC_DRAW);
+			if (createInfo.debugName != nullptr) {
+				glObjectLabel(GL_BUFFER, vertexBuffer, -1, createInfo.debugName);
+			}
+			glBufferData(GL_ARRAY_BUFFER, createInfo.size, createInfo.content, GL_STATIC_DRAW);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 		}
 

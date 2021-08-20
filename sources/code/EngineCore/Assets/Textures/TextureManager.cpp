@@ -25,7 +25,7 @@ bool TextureManager::TryGetTexture(const char* path, TextureAsset*& texture) {
 	return false;
 }
 
-TextureAsset TextureManager::CreateFromDds(const char* data, size_t fileSize) {
+TextureAsset TextureManager::CreateFromDds(const char* fileName, const char* data, size_t fileSize) {
 	if (strncmp(data, "DDS ", 4) != 0) {
 		throw std::runtime_error("Invalid DDS file: No magic 'DDS' keyword.");
 	}
@@ -54,6 +54,7 @@ TextureAsset TextureManager::CreateFromDds(const char* data, size_t fileSize) {
 
 	const char* imgPtr = data + 4 + sizeof(DDSHeader);
 	Grindstone::GraphicsAPI::Texture::CreateInfo createInfo;
+	createInfo.debugName = fileName;
 	createInfo.data = imgPtr;
 	createInfo.mipmaps = (uint16_t)header.dwMipMapCount;
 	createInfo.format = format;
@@ -68,12 +69,15 @@ TextureAsset TextureManager::CreateFromDds(const char* data, size_t fileSize) {
 }
 
 TextureAsset& TextureManager::CreateTextureFromFile(const char* path) {
-	if (!std::filesystem::exists(path)) {
+	std::filesystem::path filePath = path;
+	std::string& fileName = filePath.filename().string();
+
+	if (!std::filesystem::exists(filePath)) {
 		throw std::runtime_error("Failed to load texture!");
 	}
 
 	std::vector<char> file = Utils::LoadFile(path);
-	textures[path] = CreateFromDds(file.data(), file.size());
+	textures[path] = CreateFromDds(fileName.c_str(), file.data(), file.size());
 
 	return textures[path];
 }

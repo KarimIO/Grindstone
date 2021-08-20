@@ -57,6 +57,7 @@ namespace Grindstone {
 		class Texture {
 		public:
 			struct CreateInfo {
+				const char* debugName;
 				const char* data;
 				uint32_t width, height;
 				uint16_t mipmaps;

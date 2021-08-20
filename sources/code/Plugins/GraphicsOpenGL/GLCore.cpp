@@ -324,7 +324,7 @@ namespace Grindstone {
 
 		void GLCore::BindPipeline(Pipeline* pipeline) {
 			GLPipeline* p = (GLPipeline*)pipeline;
-			p->bind();
+			p->Bind();
 		}
 
 		void GLCore::BindVertexArrayObject(VertexArrayObject *vao) {
@@ -372,6 +372,14 @@ namespace Grindstone {
 
 		void GLCore::EnableDepth(bool state) {
 			glDepthMask(state);
+		}
+
+		void GLCore::BindDefaultFramebufferRead() {
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+		}
+
+		void GLCore::BindDefaultFramebufferWrite() {
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 		}
 
 		void GLCore::BindDefaultFramebuffer(bool depth) {

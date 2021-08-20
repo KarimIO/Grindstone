@@ -91,15 +91,15 @@ namespace Grindstone {
 			uint32_t offset = 0;
 			uint32_t size = 0;
 			uint32_t componentsCount = 0;
-			bool normalized = false;
+			bool isNormalized = false;
 
 			AttributeUsage usage = AttributeUsage::Other;
 			const char *name = "";
 
 			VertexAttributeDescription() = default;
 
-			VertexAttributeDescription(VertexFormat _format, const char* _name, bool _normalized = false, AttributeUsage _usage = AttributeUsage::Other) :
-				format(_format), name(_name), usage(_usage), size(vertexFormatTypeSize(_format)), componentsCount(vertexFormatTypeComponents(_format)), normalized(_normalized), offset(0), location(0) {
+			VertexAttributeDescription(uint32_t location, VertexFormat _format, const char* _name, bool _normalized = false, AttributeUsage _usage = AttributeUsage::Other) :
+				location(location), format(_format), name(_name), usage(_usage), size(vertexFormatTypeSize(_format)), componentsCount(vertexFormatTypeComponents(_format)), isNormalized(isNormalized), offset(0) {
 
 			}
 		};
@@ -129,7 +129,8 @@ namespace Grindstone {
 		class VertexBuffer {
 		public:
 			struct CreateInfo {
-				VertexBufferLayout* layout;
+				const char* debugName = nullptr;
+				VertexBufferLayout* layout = nullptr;
 				const void* content = 0;
 				uint32_t size = 0;
 				uint32_t count = 0;

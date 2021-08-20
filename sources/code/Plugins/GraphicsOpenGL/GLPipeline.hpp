@@ -5,19 +5,19 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		class GLPipeline : public Pipeline {
-			GLuint program_;
-			GLuint primitive_type_;
+			GLuint program;
+			GLuint primitiveType;
 
-			float width_, height_;
-			int32_t scissor_x_, scissor_y_;
-			uint32_t scissor_w_, scissor_h_;
-			CullMode cull_mode_;
+			float width, height;
+			int32_t scissorX, scissorY;
+			uint32_t scissorWidth, scissorHeight;
+			CullMode cullMode;
 
-			GLuint createShaderModule(ShaderStageCreateInfo shaderStageCreateInfo);
+			GLuint CreateShaderModule(ShaderStageCreateInfo shaderStageCreateInfo);
 		public:
 			GLPipeline(Pipeline::CreateInfo& createInfo);
-			void bind();
-			GLuint getPrimitiveType();
+			void Bind();
+			GLuint GetPrimitiveType();
 			~GLPipeline();
 		};
 	}

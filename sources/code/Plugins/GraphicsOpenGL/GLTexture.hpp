@@ -11,8 +11,8 @@ namespace Grindstone {
 		void translateDepthFormats(DepthFormat inFormat, GLenum &format, GLint &internalFormat);
 
 		class GLTexture : public Texture {
-			GLuint handle_;
-			bool is_cubemap_;
+			GLuint textureHandle;
+			bool isCubemap;
 		public:
 			GLTexture(CreateInfo& ci);
 			GLTexture(CubemapCreateInfo& ci);
@@ -27,8 +27,8 @@ namespace Grindstone {
 		};
 
 		class GLTextureBinding : public TextureBinding {
-			std::vector<GLTexture *> textures_;
-			std::vector<uint32_t> targets_;
+			std::vector<GLTexture *> textures;
+			std::vector<uint32_t> targets;
 		public:
 			GLTextureBinding(CreateInfo& ci);
 			void bind();
@@ -36,8 +36,8 @@ namespace Grindstone {
 
 		class GLTextureBindingLayout : public TextureBindingLayout {
 		public:
-			TextureSubBinding *subbindings_;
-			uint32_t subbinding_count_;
+			TextureSubBinding *subbindings;
+			uint32_t subbindingCount;
 			GLTextureBindingLayout(CreateInfo& ci);
 			TextureSubBinding getSubBinding(uint32_t i);
 			uint32_t getNumSubBindings();
