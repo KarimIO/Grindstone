@@ -1,5 +1,6 @@
 #pragma once
 
+#include <entt/entt.hpp>
 #include <glm/glm.hpp>
 
 namespace Grindstone {
@@ -8,8 +9,9 @@ namespace Grindstone {
 	}
 
 	void BaseRender(
-		GraphicsAPI::Core *core,
+		entt::registry& registry,
 		glm::mat4 projectionMatrix,
-		glm::mat4 viewMatrix
+		glm::mat4 viewMatrix,
+		glm::vec3 eyePos
 	);
 }

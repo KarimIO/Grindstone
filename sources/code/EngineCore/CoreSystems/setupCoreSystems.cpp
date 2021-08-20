@@ -6,5 +6,4 @@ using namespace Grindstone;
 
 void Grindstone::SetupCoreSystems(ECS::SystemRegistrar* registrar) {
 	registrar->RegisterSystem("Render", RenderSystem);
-	registrar->RegisterSystem("Example", ExampleSystem);
 }

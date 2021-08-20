@@ -137,6 +137,30 @@ void SceneLoaderJson::ProcessComponent(ECS::Entity entity, rapidjson::GenericObj
 	}
 }
 
+void CopyDataArrayFloat(rapidjson::Value& srcParameter, float* dstArray, size_t count) {
+	auto srcArray = srcParameter.GetArray();
+
+	for (size_t i = 0; i < count; ++i) {
+		dstArray[i] = srcArray[i].GetFloat();
+	}
+}
+
+void CopyDataArrayDouble(rapidjson::Value& srcParameter, double* dstArray, size_t count) {
+	auto srcArray = srcParameter.GetArray();
+
+	for (size_t i = 0; i < count; ++i) {
+		dstArray[i] = srcArray[i].GetFloat();
+	}
+}
+
+void CopyDataArrayInt(rapidjson::Value& srcParameter, int* dstArray, size_t count) {
+	auto srcArray = srcParameter.GetArray();
+
+	for (size_t i = 0; i < count; ++i) {
+		dstArray[i] = srcArray[i].GetFloat();
+	}
+}
+
 using ReflectionTypeData = Reflection::TypeDescriptor_Struct::ReflectionTypeData;
 void SceneLoaderJson::ProcessComponentParameter(
 	ECS::Entity entity,
@@ -191,24 +215,41 @@ void SceneLoaderJson::ProcessComponentParameter(
 			break;
 		}
 		case ReflectionTypeData::Int2:
+			CopyDataArrayInt(parameter, (int*)memberPtr, 2);
+			break;
 		case ReflectionTypeData::Int3:
+			CopyDataArrayInt(parameter, (int*)memberPtr, 3);
+			break;
 		case ReflectionTypeData::Int4:
+			CopyDataArrayInt(parameter, (int*)memberPtr, 4);
+			break;
 		case ReflectionTypeData::Float: {
 			float& str = *(float*)memberPtr;
 			str = parameter.GetFloat();
 			break;
 		}
 		case ReflectionTypeData::Float2:
+			CopyDataArrayFloat(parameter, (float*)memberPtr, 2);
+			break;
 		case ReflectionTypeData::Float3:
+			CopyDataArrayFloat(parameter, (float*)memberPtr, 3);
+			break;
 		case ReflectionTypeData::Float4:
+			CopyDataArrayFloat(parameter, (float*)memberPtr, 4);
+			break;
 		case ReflectionTypeData::Double: {
 			double& str = *(double*)memberPtr;
 			str = parameter.GetDouble();
 			break;
 		}
 		case ReflectionTypeData::Double2:
+			CopyDataArrayDouble(parameter, (double*)memberPtr, 2);
+			break;
 		case ReflectionTypeData::Double3:
+			CopyDataArrayDouble(parameter, (double*)memberPtr, 3);
+			break;
 		case ReflectionTypeData::Double4:
+			CopyDataArrayDouble(parameter, (double*)memberPtr, 4);
 			break;
 	}
 }

@@ -57,9 +57,10 @@ namespace Grindstone {
 			);
 
 			BaseRender(
-				engineCore.GetGraphicsCore(),
+				registry,
 				projectionMatrix,
-				viewMatrix
+				viewMatrix,
+				pos
 			);
 		});
 	}

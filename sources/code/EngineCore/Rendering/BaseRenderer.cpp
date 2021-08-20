@@ -1,5 +1,4 @@
 #include <array>
-#include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include "Common/Graphics/Core.hpp"
@@ -15,6 +14,8 @@
 #include "EngineCore/Assets/Materials/Material.hpp"
 #include "EngineCore/Assets/Materials/MaterialManager.hpp"
 #include "EngineCore/Assets/AssetRendererManager.hpp"
+#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
+#include "EngineCore/CoreComponents/Lights/PointLightComponent.hpp"
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
@@ -43,6 +44,7 @@ struct EngineUboStruct {
 	glm::mat4 proj;
 	glm::mat4 view;
 	glm::mat4 model;
+	glm::vec3 eyePos;
 };
 
 struct LightmapStruct {
@@ -54,27 +56,41 @@ struct LightmapStruct {
 VertexArrayObject* lightVao = nullptr;
 Pipeline* lightPipeline = nullptr;
 
-void RenderLights() {
+void RenderLights(entt::registry& registry) {
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
 
 	core->BindPipeline(lightPipeline);
 
 	core->BindDefaultFramebufferWrite();
 
-	float clearColor[4] = { 0.3f, 0.6f, 0.9f, 1.f };
+	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.f };
 	core->Clear(ClearMode::ColorAndDepth, clearColor, 1);
-
-	lightUniformBufferObject->Bind();
-	lightVao->Bind();
+	core->SetImmediateBlending(BlendMode::Additive);
 	gbuffer->BindTextures(2);
-	core->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
+
+	auto view = registry.view<const TransformComponent, const PointLightComponent>();
+	view.each([&](const TransformComponent& transformComponent, const PointLightComponent& pointLightComponent) {
+		LightmapStruct lightmapStruct {
+			pointLightComponent.color,
+			pointLightComponent.attenuationRadius,
+			transformComponent.position,
+			pointLightComponent.intensity,
+		};
+
+		lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
+		lightUniformBufferObject->Bind();
+		lightVao->Bind();
+		core->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
+	});
 }
 
 void Grindstone::BaseRender(
-	GraphicsAPI::Core *core,
+	entt::registry& registry,
 	glm::mat4 projectionMatrix,
-	glm::mat4 viewMatrix
+	glm::mat4 viewMatrix,
+	glm::vec3 eyePos
 ) {
+	auto core = EngineCore::GetInstance().GetGraphicsCore();
 	if (isFirst) {
 		UniformBufferBinding::CreateInfo globalUniformBufferBindingCi{};
 		globalUniformBufferBindingCi.binding = 0;
@@ -171,16 +187,18 @@ void Grindstone::BaseRender(
 	engineUboStruct.proj = projectionMatrix;
 	engineUboStruct.view = viewMatrix;
 	engineUboStruct.model = glm::scale(glm::vec3(0.05f)) * glm::mat4(1);
+	engineUboStruct.eyePos = eyePos;
 
 	gbuffer->BindWrite(true);
 
 	float clearColor[4] = {0.3f, 0.6f, 0.9f, 1.f};
 	core->Clear(ClearMode::ColorAndDepth, clearColor, 1);
+	core->SetImmediateBlending(BlendMode::None);
 
 	globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
 	globalUniformBufferObject->Bind();
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
 
-	RenderLights();
+	RenderLights(registry);
 	// PostProcess();
 }
