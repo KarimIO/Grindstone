@@ -4,7 +4,11 @@
 #include "Mesh/MeshComponent.hpp"
 #include "Mesh/MeshRendererComponent.hpp"
 #include "Lights/PointLightComponent.hpp"
+#include "Audio/AudioListenerComponent.hpp"
+#include "Audio/AudioSourceComponent.hpp"
+
 #include "setupCoreComponents.hpp"
+
 #include "../ECS/ComponentRegistrar.hpp"
 #include "EngineCore/ECS/ComponentFunctions.hpp"
 using namespace Grindstone;
@@ -16,4 +20,6 @@ void Grindstone::SetupCoreComponents(ECS::ComponentRegistrar* registrar) {
 	registrar->RegisterComponent<Grindstone::MeshComponent>();
 	registrar->RegisterComponent<Grindstone::MeshRendererComponent>();
 	registrar->RegisterComponent<Grindstone::PointLightComponent>();
+	registrar->RegisterComponent<Grindstone::AudioListenerComponent>();
+	registrar->RegisterComponent<Grindstone::AudioSourceComponent>();
 }

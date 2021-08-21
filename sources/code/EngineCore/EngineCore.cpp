@@ -23,6 +23,9 @@
 #include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
 #include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
 #include "EngineCore/Assets/AssetRendererManager.hpp"
+#include "EngineCore/Audio/AudioClip.hpp"
+#include "EngineCore/Audio/AudioCore.hpp"
+#include "EngineCore/Audio/AudioSource.hpp"
 
 using namespace Grindstone;
 
@@ -70,6 +73,15 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 	GRIND_LOG("{0} Initialized.", createInfo.applicationTitle);
 	GRIND_PROFILE_END_SESSION();
+
+	Audio::Core* core = new Audio::Core();
+	Audio::Clip* clip = core->CreateClip("../assets/asexpected.wav");
+	Audio::Source::CreateInfo audioSourceCreateInfo{};
+	audioSourceCreateInfo.audioClip = clip;
+	audioSourceCreateInfo.isLooping = true;
+	Audio::Source* source = core->CreateSource(audioSourceCreateInfo);
+
+	source->Play();
 
 	return true;
 }

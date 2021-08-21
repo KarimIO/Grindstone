@@ -25,6 +25,11 @@ file(GLOB_RECURSE HEADER_ASSETS_MESHES_3D "${ENGINE_CORE_DIR}/Assets/Mesh3d/*.hp
 source_group("Assets\\Mesh3d\\Source Files" FILES ${SOURCE_ASSETS_MESHES_3D})
 source_group("Assets\\Mesh3d\\Header Files" FILES ${HEADER_ASSETS_MESHES_3D})
 
+file(GLOB_RECURSE SOURCE_AUDIO "${ENGINE_CORE_DIR}/Audio/*.cpp")
+file(GLOB_RECURSE HEADER_AUDIO "${ENGINE_CORE_DIR}/Audio/*.hpp")
+source_group("Audio\\Source Files" FILES ${SOURCE_AUDIO})
+source_group("Audio\\Header Files" FILES ${HEADER_AUDIO})
+
 file(GLOB_RECURSE SOURCE_BUILD_SETTINGS "${ENGINE_CORE_DIR}/BuildSettings/*.cpp")
 file(GLOB_RECURSE HEADER_BUILD_SETTINGS "${ENGINE_CORE_DIR}/BuildSettings/*.hpp")
 source_group("BuildSettings\\Source Files" FILES ${SOURCE_BUILD_SETTINGS})
@@ -86,6 +91,7 @@ set(ENGINE_CORE_SOURCES
 	${SOURCE_ASSETS_TEXTURES}
 	${SOURCE_ASSETS_MATERIALS}
 	${SOURCE_ASSETS_MESHES_3D}
+	${SOURCE_AUDIO}
 	${SOURCE_PLUGIN_SYSTEM}
 	${SOURCE_ECS}
 	${SOURCE_COMMON_UTILS}
@@ -105,6 +111,7 @@ set(ENGINE_CORE_HEADERS
 	${HEADER_ASSETS_TEXTURES}
 	${HEADER_ASSETS_MATERIALS}
 	${HEADER_ASSETS_MESHES_3D}
+	${HEADER_AUDIO}
 	${HEADER_PLUGIN_SYSTEM}
 	${HEADER_ECS}
 	${HEADER_COMMON_UTILS}
@@ -119,10 +126,10 @@ set(ENGINE_CORE_HEADERS
 
 add_library(EngineCore MODULE ${ENGINE_CORE_SOURCES} ${ENGINE_CORE_HEADERS})
 
+find_package(OpenAL) 
+
 target_compile_features(EngineCore PRIVATE cxx_std_17)
-
 target_compile_definitions(EngineCore PUBLIC ENGINE_CORE)
-
 target_include_directories(EngineCore
     PUBLIC
     ../
@@ -130,7 +137,9 @@ target_include_directories(EngineCore
 	${RAPIDJSON_PATH}
     ${DEPS_DIR}/spdlog/include/
     ${DEPS_DIR}/entt/src
+	${OPENAL_INCLUDE_DIR}
 )
 
-target_precompile_headers(EngineCore
-    PUBLIC pch.hpp)
+target_link_libraries(EngineCore ${OPENAL_LIBRARY})
+
+target_precompile_headers(EngineCore PUBLIC pch.hpp)

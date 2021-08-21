@@ -124,18 +124,18 @@ void Grindstone::BaseRender(
 
 		const uint32_t width = 800;
 		const uint32_t height = 600;
-		std::vector<Grindstone::GraphicsAPI::RenderTarget::CreateInfo> gbufferImagesCreateInfo;
+		std::vector<RenderTarget::CreateInfo> gbufferImagesCreateInfo;
 		gbufferImagesCreateInfo.reserve(4);
-		gbufferImagesCreateInfo.emplace_back(Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height); // X Y Z
-		gbufferImagesCreateInfo.emplace_back(Grindstone::GraphicsAPI::ColorFormat::R8G8B8A8, width, height); // R  G  B matID
-		gbufferImagesCreateInfo.emplace_back(Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height); // nX nY nZ
-		gbufferImagesCreateInfo.emplace_back(Grindstone::GraphicsAPI::ColorFormat::R8G8B8A8, width, height); // sR sG sB Roughness
+		gbufferImagesCreateInfo.emplace_back(ColorFormat::R16G16B16A16, width, height); // X Y Z
+		gbufferImagesCreateInfo.emplace_back(ColorFormat::R8G8B8A8, width, height); // R  G  B matID
+		gbufferImagesCreateInfo.emplace_back(ColorFormat::R16G16B16A16, width, height); // nX nY nZ
+		gbufferImagesCreateInfo.emplace_back(ColorFormat::R8G8B8A8, width, height); // sR sG sB Roughness
 		renderTargets = core->CreateRenderTarget(gbufferImagesCreateInfo.data(), (uint32_t)gbufferImagesCreateInfo.size());
 
-		Grindstone::GraphicsAPI::DepthTarget::CreateInfo depthImageCreateInfo(Grindstone::GraphicsAPI::DepthFormat::D24_STENCIL_8, width, height, false, false);
+		DepthTarget::CreateInfo depthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false);
 		depthTarget = core->CreateDepthTarget(depthImageCreateInfo);
 
-		Grindstone::GraphicsAPI::Framebuffer::CreateInfo gbufferCreateInfo{};
+		Framebuffer::CreateInfo gbufferCreateInfo{};
 		gbufferCreateInfo.debugName = "G-Buffer Framebuffer";
 		gbufferCreateInfo.renderTargetLists = &renderTargets;
 		gbufferCreateInfo.numRenderTargetLists = 1;
@@ -143,11 +143,11 @@ void Grindstone::BaseRender(
 		gbufferCreateInfo.renderPass = nullptr;
 		gbuffer = core->CreateFramebuffer(gbufferCreateInfo);
 
-		Grindstone::GraphicsAPI::RenderTarget::CreateInfo litHdrImagesCreateInfo
+		RenderTarget::CreateInfo litHdrImagesCreateInfo
 			= { Grindstone::GraphicsAPI::ColorFormat::R32G32B32, width, height };
 		litHdrImages = core->CreateRenderTarget(&litHdrImagesCreateInfo, 1);
 
-		Grindstone::GraphicsAPI::Framebuffer::CreateInfo litHdrFramebufferCreateInfo{};
+		Framebuffer::CreateInfo litHdrFramebufferCreateInfo{};
 		litHdrFramebufferCreateInfo.debugName = "Lit HDR Framebuffer";
 		litHdrFramebufferCreateInfo.renderTargetLists = &litHdrImages;
 		litHdrFramebufferCreateInfo.numRenderTargetLists = 1;

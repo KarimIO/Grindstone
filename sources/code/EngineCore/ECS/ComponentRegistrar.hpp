@@ -15,7 +15,7 @@ namespace Grindstone {
 		public:
 			template<typename T>
 			void RegisterComponent() {
-				RegisterComponent(T::getComponentName(), {
+				RegisterComponent(T::GetComponentName(), {
 					&ECS::CreateComponent<T>,
 					&ECS::RemoveComponent<T>,
 					&ECS::HasComponent<T>,

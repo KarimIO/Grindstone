@@ -31,6 +31,7 @@ add_subdirectory(sources/code/ApplicationExecutable)
 
 set(PLUGIN_DIR sources/code/Plugins)
 
+add_subdirectory(${PLUGIN_DIR}/AudioOpenAL)
 add_subdirectory(${PLUGIN_DIR}/GraphicsOpenGL)
 add_subdirectory(${PLUGIN_DIR}/GraphicsVulkan)
 add_subdirectory(${PLUGIN_DIR}/Camera)
