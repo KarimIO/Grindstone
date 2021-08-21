@@ -8,7 +8,7 @@ Source::Source() {
 Source::Source(CreateInfo& createInfo) {
 	alGenSources(1, &source);
 	alSourcef(source, AL_PITCH, createInfo.pitch);
-	alSourcef(source, AL_GAIN, createInfo.gain);
+	alSourcef(source, AL_GAIN, createInfo.volume);
 	alSource3f(source, AL_POSITION, createInfo.position[0], createInfo.position[1], createInfo.position[2]);
 	alSource3f(source, AL_VELOCITY, createInfo.velocity[0], createInfo.velocity[1], createInfo.velocity[2]);
 	alSourcei(source, AL_LOOPING, createInfo.isLooping ? AL_TRUE : AL_FALSE);
@@ -31,8 +31,8 @@ void Source::SetPitch(float pitch) {
 	alSourcef(source, AL_PITCH, pitch);
 }
 
-void Source::SetGain(float gain) {
-	alSourcef(source, AL_GAIN, gain);
+void Source::SetVolume(float volume) {
+	alSourcef(source, AL_GAIN, volume);
 }
 
 void Source::SetPosition(float x, float y, float z) {

@@ -58,7 +58,7 @@ void Clip::LoadFromPath(const char* path) {
 void Clip::LoadWavFromPath(const char* path) {
 	drwav* wav = drwav_open_file(path);
 	if (wav == NULL) {
-		throw std::runtime_error("Error opening and reading WAV file.");
+		throw std::runtime_error(std::string("Clip::LoadWavFromPath - Failed to load file:") + path);
 	}
 
 	channelCount = wav->channels;

@@ -9,11 +9,16 @@
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Scene.hpp"
 
+#include "EngineCore/CoreComponents/Audio/AudioSourceComponent.hpp"
 #include "EngineCore/CoreComponents/Mesh/MeshComponent.hpp"
 #include "EngineCore/CoreComponents/Mesh/MeshRendererComponent.hpp"
 #include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
 #include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
 #include "EngineCore/Assets/Materials/MaterialManager.hpp"
+
+#include "EngineCore/Audio/AudioClip.hpp"
+#include "EngineCore/Audio/AudioCore.hpp"
+#include "EngineCore/Audio/AudioSource.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
@@ -68,6 +73,21 @@ bool SceneLoaderJson::Load(const char* path) {
 
 			material->renderables.push_back(&submesh);
 		}
+	});
+
+	Audio::Core* core = new Audio::Core();
+	auto& audioView = registry.view<const AudioSourceComponent>();
+	audioView.each([&](const AudioSourceComponent& audioSource) {
+		std::string path = std::string("../assets/") + audioSource.audioClipPath;
+		Audio::Clip* clip = core->CreateClip(path.c_str());
+		Audio::Source::CreateInfo audioSourceCreateInfo{};
+		audioSourceCreateInfo.audioClip = clip;
+		audioSourceCreateInfo.isLooping = audioSource.isLooping;
+		audioSourceCreateInfo.volume = audioSource.volume;
+		audioSourceCreateInfo.pitch = audioSource.pitch;
+		Audio::Source* source = core->CreateSource(audioSourceCreateInfo);
+
+		source->Play();
 	});
 
 	return true;
