@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <chrono>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -64,6 +65,9 @@ namespace Grindstone {
 		virtual ECS::ComponentRegistrar* GetComponentRegistrar();
 		virtual GraphicsAPI::Core* GetGraphicsCore();
 		virtual BaseRenderer* CreateRenderer();
+
+		virtual void CalculateDeltaTime();
+		virtual double GetDeltaTime();
 	public:
 		DisplayManager* displayManager;
 		WindowManager* windowManager;
@@ -74,6 +78,8 @@ namespace Grindstone {
 		Mesh3dRenderer* mesh3dRenderer = nullptr;
 		AssetRendererManager* assetRendererManager = nullptr;
 	private:
+		double deltaTime = 0.0;
+		std::chrono::steady_clock::time_point lastFrameTime;
 		SceneManagement::SceneManager* sceneManager = nullptr;
 		ECS::ComponentRegistrar* componentRegistrar = nullptr;
 		ECS::SystemRegistrar* systemRegistrar = nullptr;

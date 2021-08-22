@@ -49,6 +49,50 @@ void EditorCamera::Render() {
 	framebuffer->Unbind();
 }
 
+void EditorCamera::OffsetRotation(float pitch, float yaw) {
+	float deltaTime = (float)Editor::Manager::GetInstance().GetEngineCore().GetDeltaTime();
+
+	float sensitivity = 2.f;
+	eulerAngles.x += pitch * sensitivity * deltaTime;
+	eulerAngles.y -= yaw * sensitivity * deltaTime;
+
+	if (eulerAngles.x < -3.1f / 2) {
+		eulerAngles.x = -3.1f / 2;
+	}
+	else if (eulerAngles.x > 3.1f / 2) {
+		eulerAngles.x = 3.1f / 2;
+	}
+
+	rotation = glm::quat(eulerAngles);
+	UpdateViewMatrix();
+}
+
+void EditorCamera::OffsetPosition(float x, float y, float z) {
+	float deltaTime = (float)Editor::Manager::GetInstance().GetEngineCore().GetDeltaTime();
+
+	float speed = 45.f;
+	position += (
+		GetForward() * z +
+		GetRight() * x +
+		GetUp() * y
+	) * deltaTime * speed;
+
+	UpdateViewMatrix();
+}
+
+glm::vec3 EditorCamera::GetForward() {
+	return rotation * glm::vec3(0.0f, 0.0f, 1.0f);
+}
+
+glm::vec3 EditorCamera::GetRight() {
+	return rotation * glm::vec3(-1.0f, 0.0f, 0.0f);
+}
+
+glm::vec3 EditorCamera::GetUp() {
+	return rotation * glm::vec3(0.0f, 1.0f, 0.0f);
+}
+
+
 void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 	if (this->width == width && this->height == height) {
 		return;
@@ -68,12 +112,8 @@ void EditorCamera::UpdateProjectionMatrix() {
 }
 
 void EditorCamera::UpdateViewMatrix() {
-	glm::vec3 origin = glm::vec3(4, 3, 3);
-	glm::vec3 forward = glm::vec3(-1, -1, -1);
 	glm::vec3 up = glm::vec3(0, 1, 0);
-	
-	glm::vec3 target = origin + forward;
-
-	view = glm::lookAt(origin, target, up);
+	glm::vec3 target = position + GetForward();
+	view = glm::lookAt(position, target, up);
 }
 

@@ -21,7 +21,6 @@
 using namespace Grindstone::Editor::ImguiEditor;
 
 ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
-
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;

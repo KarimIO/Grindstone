@@ -89,6 +89,7 @@ void EngineCore::Run() {
 }
 
 void EngineCore::RunLoopIteration() {
+	CalculateDeltaTime();
 	sceneManager->Update();
 }
 
@@ -138,4 +139,17 @@ Events::Dispatcher* EngineCore::GetEventDispatcher() {
 
 BaseRenderer* EngineCore::CreateRenderer() {
 	return new DeferredRenderer();
+}
+
+void EngineCore::CalculateDeltaTime() {
+	auto now = std::chrono::steady_clock::now();
+	auto elapsedTime = now - lastFrameTime;
+	auto elapsedNs = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(elapsedTime).count();
+	deltaTime = elapsedNs * 0.000000001;
+
+	lastFrameTime = now;
+}
+
+double EngineCore::GetDeltaTime() {
+	return deltaTime;
 }

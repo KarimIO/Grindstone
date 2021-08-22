@@ -20,7 +20,6 @@
 
 const std::filesystem::path ASSET_FOLDER_PATH = "..\\assets";
 const double REFRESH_INTERVAL = 1.0;
-const bool RIGHT_MOUSE_BUTTON = 1;
 const float PADDING = 8.0f;
 const float ENTRY_SIZE = 80.0f;
 const float THUMBNAIL_SIZE = 64.0f;
@@ -190,7 +189,7 @@ void AssetBrowserPanel::RefreshAssets() {
 void AssetBrowserPanel::ProcessDirectoryEntryClicks(std::filesystem::directory_entry entry) {
 	auto path = entry.path();
 	if (ImGui::IsItemHovered()) {
-		if (ImGui::IsMouseDoubleClicked(0)) {
+		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
 			if (entry.is_directory()) {
 				SetPath(entry.path());
 			}
@@ -200,7 +199,7 @@ void AssetBrowserPanel::ProcessDirectoryEntryClicks(std::filesystem::directory_e
 				window->OpenFileUsingDefaultProgram(path.string().c_str());
 			}
 		}
-		else if (ImGui::IsMouseClicked(0)) {
+		else if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
 			Selection& selection = Editor::Manager::GetInstance().GetSelection();
 			if (ImGui::GetIO().KeyCtrl) {
 				if (selection.IsFileSelected(path)) {
@@ -455,7 +454,7 @@ void AssetBrowserPanel::Render() {
 
 		RenderAssets();
 
-		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
+		if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered()) {
 			if (!ImGui::GetIO().KeyCtrl) {
 				Selection& selection = Editor::Manager::GetInstance().GetSelection();
 				selection.Clear();

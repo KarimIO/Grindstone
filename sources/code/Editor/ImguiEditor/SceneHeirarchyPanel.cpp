@@ -8,8 +8,6 @@
 #include "ImguiEditor.hpp"
 #include "SceneHeirarchyPanel.hpp"
 
-const bool RIGHT_MOUSE_BUTTON = 1;
-
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
@@ -23,7 +21,7 @@ namespace Grindstone {
 					ImGui::Begin("Scene Heirarchy", &isShowingPanel);
 
 					if (
-						ImGui::IsMouseDown(0) &&
+						ImGui::IsMouseDown(ImGuiMouseButton_Left) &&
 						ImGui::IsWindowHovered() &&
 						!ImGui::GetIO().KeyCtrl
 						) {
@@ -70,7 +68,7 @@ namespace Grindstone {
 					}
 				);
 
-				if (ImGui::BeginPopupContextWindow(0, RIGHT_MOUSE_BUTTON, false)) {
+				if (ImGui::BeginPopupContextWindow(0, ImGuiMouseButton_Right, false)) {
 					if (ImGui::MenuItem("Add new entity")) {
 						Editor::Manager::GetInstance().GetCommandList().AddNewEntity(scene);
 					}
