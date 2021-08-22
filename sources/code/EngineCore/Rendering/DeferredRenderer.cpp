@@ -69,6 +69,13 @@ DeferredRenderer::~DeferredRenderer() {
 	core->DeletePipeline(tonemapPipeline);
 }
 
+void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
+	this->width = width;
+	this->height = height;
+	gbuffer->Resize(width, height);
+	litHdrFramebuffer->Resize(width, height);
+}
+
 // NOTE: Make these objects static
 void DeferredRenderer::CreateDeferredRendererStaticObjects() {
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
@@ -232,6 +239,7 @@ void DeferredRenderer::Render(
 	GraphicsAPI::Framebuffer* outputFramebuffer
 ) {
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
+	core->ResizeViewport(width, height);
 
 	EngineUboStruct engineUboStruct;
 	engineUboStruct.proj = projectionMatrix;

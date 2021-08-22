@@ -16,7 +16,7 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		GLenum GetGeomType(GeometryType geom_type);
+		GLenum GetGeomType(GeometryType geometryType);
 
 		class GLCore : public Core {
 		public:
@@ -84,6 +84,7 @@ namespace Grindstone {
 			virtual void BindDefaultFramebufferWrite(bool isUsingDepth) override;
 			virtual void BindDefaultFramebufferRead() override;
 			virtual void SetColorMask(ColorMask mask) override;
+			virtual void ResizeViewport(uint32_t w, uint32_t h) override;
 		private:
 			std::string vendorName;
 			std::string adapterName;

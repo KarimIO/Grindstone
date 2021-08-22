@@ -17,6 +17,7 @@ namespace Grindstone {
 	public:
 		DeferredRenderer();
 		virtual ~DeferredRenderer();
+		virtual void Resize(uint32_t width, uint32_t height) override;
 		virtual void Render(
 			entt::registry& registry,
 			glm::mat4 projectionMatrix,
@@ -30,6 +31,9 @@ namespace Grindstone {
 
 		void CreateDeferredRendererInstanceObjects();
 		void CreateDeferredRendererStaticObjects();
+
+		uint32_t width = 800;
+		uint32_t height = 600;
 
 		GraphicsAPI::UniformBufferBinding* globalUniformBufferBinding = nullptr;
 		GraphicsAPI::UniformBuffer* globalUniformBufferObject = nullptr;

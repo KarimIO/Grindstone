@@ -161,7 +161,7 @@ namespace Grindstone {
 		void GLPipeline::Bind() {
 			glUseProgram(program);
 
-			glViewport(0, 0, (GLsizei)width, (GLsizei)height);
+			// glViewport(0, 0, (GLsizei)width, (GLsizei)height);
 			// glScissor(scissor_x_, scissor_y_, scissor_w_, scissor_h_);
 			switch (cullMode) {
 			case CullMode::None:

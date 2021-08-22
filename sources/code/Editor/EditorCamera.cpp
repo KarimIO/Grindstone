@@ -57,6 +57,7 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 	this->width = width;
 	this->height = height;
 	framebuffer->Resize(width, height);
+	renderer->Resize(width, height);
 
 	UpdateProjectionMatrix();
 }

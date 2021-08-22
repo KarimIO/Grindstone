@@ -99,6 +99,7 @@ namespace Grindstone {
 			virtual void SetImmediateBlending(BlendMode) = 0;
 			virtual void EnableDepth(bool state) = 0;
 			virtual void SetColorMask(ColorMask mask) = 0;
+			virtual void ResizeViewport(uint32_t w, uint32_t h) = 0;
 
 			const char* GetVendorNameFromID(uint32_t vendorID) {
 				switch (vendorID) {

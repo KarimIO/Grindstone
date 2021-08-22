@@ -112,6 +112,10 @@ namespace Grindstone {
 			return true;
 		}
 
+		void GLCore::ResizeViewport(uint32_t w, uint32_t h) {
+			glViewport(0, 0, w, h);
+		}
+
 		void GLCore::Clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) {
 			if (clear_color == nullptr) {
 				glClearColor(0, 0, 0, 1);
