@@ -17,6 +17,8 @@
 #include "Common/Window/WindowManager.hpp"
 #include "Events/Dispatcher.hpp"
 
+#include "Rendering/DeferredRenderer.hpp"
+
 #include "EngineCore/Assets/Materials/MaterialManager.hpp"
 #include "EngineCore/Assets/Textures/TextureManager.hpp"
 #include "EngineCore/Assets/Shaders/ShaderManager.hpp"
@@ -132,4 +134,8 @@ ECS::SystemRegistrar* EngineCore::GetSystemRegistrar() {
 
 Events::Dispatcher* EngineCore::GetEventDispatcher() {
 	return eventDispatcher;
+}
+
+BaseRenderer* EngineCore::CreateRenderer() {
+	return new DeferredRenderer();
 }

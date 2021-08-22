@@ -56,11 +56,12 @@ namespace Grindstone {
 				cameraComponent.far
 			);
 
-			BaseRender(
+			cameraComponent.renderer->Render(
 				registry,
 				projectionMatrix,
 				viewMatrix,
-				pos
+				pos,
+				nullptr
 			);
 		});
 	}

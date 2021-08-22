@@ -53,7 +53,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	imageConverterModal = new ImageConverterModal();
 	inspectorPanel = new InspectorPanel(engineCore);
 	assetBrowserPanel = new AssetBrowserPanel(engineCore, this);
-	viewportPanel = new ViewportPanel(engineCore->GetGraphicsCore());
+	viewportPanel = new ViewportPanel();
 	systemPanel = new SystemPanel(engineCore->GetSystemRegistrar());
 	menubar = new Menubar(this);
 }

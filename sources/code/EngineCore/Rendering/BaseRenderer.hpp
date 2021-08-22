@@ -5,13 +5,18 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		class Core;
+		class Framebuffer;
 	}
 
-	void BaseRender(
-		entt::registry& registry,
-		glm::mat4 projectionMatrix,
-		glm::mat4 viewMatrix,
-		glm::vec3 eyePos
-	);
+	class BaseRenderer {
+	public:
+		virtual ~BaseRenderer() {};
+		virtual void Render(
+			entt::registry& registry,
+			glm::mat4 projectionMatrix,
+			glm::mat4 viewMatrix,
+			glm::vec3 eyePos,
+			GraphicsAPI::Framebuffer* outputFramebuffer = nullptr // If nullptr, use default framebuffer
+		) = 0;
+	};
 }

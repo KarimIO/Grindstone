@@ -39,6 +39,7 @@ namespace Grindstone {
 	class ShaderManager;
 	class Mesh3dManager;
 	class Mesh3dRenderer;
+	class BaseRenderer;
 
 	class EngineCore {
 	public:
@@ -62,6 +63,7 @@ namespace Grindstone {
 		virtual Events::Dispatcher* GetEventDispatcher();
 		virtual ECS::ComponentRegistrar* GetComponentRegistrar();
 		virtual GraphicsAPI::Core* GetGraphicsCore();
+		virtual BaseRenderer* CreateRenderer();
 	public:
 		DisplayManager* displayManager;
 		WindowManager* windowManager;

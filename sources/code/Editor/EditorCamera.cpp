@@ -1,14 +1,19 @@
 #include <glm/gtx/transform.hpp>
+#include "EditorManager.hpp"
+#include "EngineCore/EngineCore.hpp"
 #include "Common/Graphics/Framebuffer.hpp"
 #include "Common/Graphics/Core.hpp"
 #include "EditorCamera.hpp"
+#include "EngineCore/Rendering/BaseRenderer.hpp"
+#include "EngineCore/Scenes/Manager.hpp"
 using namespace Grindstone::Editor;
 using namespace Grindstone;
 
-EditorCamera::EditorCamera(GraphicsAPI::Core *core) : core(core) {
+EditorCamera::EditorCamera() {
+	GraphicsAPI::Core* core = Editor::Manager::GetInstance().GetEngineCore().GetGraphicsCore();
 	GraphicsAPI::RenderTarget::CreateInfo renderTargetCreateInfo;
-	renderTargetCreateInfo.width = 1;
-	renderTargetCreateInfo.height = 1;
+	renderTargetCreateInfo.width = 800;
+	renderTargetCreateInfo.height = 600;
 	renderTargetCreateInfo.format = GraphicsAPI::ColorFormat::R8G8B8;
 	auto* renderTarget = core->CreateRenderTarget(&renderTargetCreateInfo, 1, false);
 
@@ -16,6 +21,10 @@ EditorCamera::EditorCamera(GraphicsAPI::Core *core) : core(core) {
 	framebufferCreateInfo.renderTargetLists = &renderTarget;
 	framebufferCreateInfo.numRenderTargetLists = 1;
 	framebuffer = core->CreateFramebuffer(framebufferCreateInfo);
+
+	EngineCore& engineCore = Editor::Manager::GetInstance().GetEngineCore();
+	renderer = engineCore.CreateRenderer();
+	UpdateViewMatrix();
 }
 
 int EditorCamera::GetPrimaryFramebufferAttachment() {
@@ -23,13 +32,19 @@ int EditorCamera::GetPrimaryFramebufferAttachment() {
 }
 
 void EditorCamera::Render() {
-	framebuffer->Bind(false);
-	float clearColor[4] = { 0.1f, 0.1f, 0.1f, 1.f };
-	core->Clear(GraphicsAPI::ClearMode::Color, clearColor);
+	EngineCore& engineCore = Editor::Manager::GetInstance().GetEngineCore();
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	auto sceneManager = engineCore.GetSceneManager();
+	auto scene = sceneManager->scenes.begin()->second;
+	auto& registry = scene->GetEntityRegistry();
 
-	// Cull
-
-	// Render
+	renderer->Render(
+		registry,
+		projection,
+		view,
+		position,
+		framebuffer
+	);
 
 	framebuffer->Unbind();
 }

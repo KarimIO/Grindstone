@@ -1,10 +1,14 @@
 #include <imgui/imgui.h>
 #include "ViewportPanel.hpp"
 #include "../EditorCamera.hpp"
+#include "../EditorManager.hpp"
+#include "EngineCore/CoreComponents/Camera/CameraComponent.hpp"
+#include "EngineCore/Scenes/Manager.hpp"
+#include "EngineCore/EngineCore.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
-ViewportPanel::ViewportPanel(GraphicsAPI::Core* graphicsCore) {
-	camera = new EditorCamera(graphicsCore);
+ViewportPanel::ViewportPanel() {
+	camera = new EditorCamera();
 }
 
 void ViewportPanel::Render() {

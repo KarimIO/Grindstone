@@ -11,7 +11,7 @@ namespace Grindstone {
 		namespace ImguiEditor {
 			class ViewportPanel {
 			public:
-				ViewportPanel(GraphicsAPI::Core* graphicsCore);
+				ViewportPanel();
 				void Render();
 			private:
 				bool isShowingPanel = true;

@@ -10,6 +10,7 @@
 #include "Scene.hpp"
 
 #include "EngineCore/CoreComponents/Audio/AudioSourceComponent.hpp"
+#include "EngineCore/CoreComponents/Camera/CameraComponent.hpp"
 #include "EngineCore/CoreComponents/Mesh/MeshComponent.hpp"
 #include "EngineCore/CoreComponents/Mesh/MeshRendererComponent.hpp"
 #include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
@@ -88,6 +89,11 @@ bool SceneLoaderJson::Load(const char* path) {
 		Audio::Source* source = core->CreateSource(audioSourceCreateInfo);
 
 		source->Play();
+	});
+
+	auto& cameraView = registry.view<CameraComponent>();
+	cameraView.each([&](CameraComponent& cameraComponent) {
+		cameraComponent.renderer = EngineCore::GetInstance().CreateRenderer();
 	});
 
 	return true;
