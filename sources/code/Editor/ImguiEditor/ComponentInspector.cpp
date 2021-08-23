@@ -13,6 +13,8 @@ namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
 			void ComponentInspector::Render(ECS::Entity entity) {
+				ImGui::Text("Entity ID: %u", (uint32_t)entity.GetHandle());
+
 				auto& editorManager = Editor::Manager::GetInstance();
 				ECS::ComponentRegistrar& componentRegistrar = *editorManager.GetEngineCore().GetComponentRegistrar();
 				std::vector<std::string> unusedComponentsItems;

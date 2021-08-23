@@ -22,8 +22,8 @@ namespace Grindstone {
 			friend SceneLoaderJson;
 		public:
 			Scene() = default;
-			virtual ECS::Entity CreateEmptyEntity();
-			virtual ECS::Entity CreateEntity();
+			virtual ECS::Entity CreateEmptyEntity(entt::entity entityToUse = entt::null);
+			virtual ECS::Entity CreateEntity(entt::entity entityToUse = entt::null);
 			virtual void DestroyEntity(ECS::EntityHandle entityId);
 			virtual void DestroyEntity(ECS::Entity entity);
 			virtual const char* GetName();

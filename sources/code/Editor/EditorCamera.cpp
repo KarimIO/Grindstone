@@ -49,18 +49,19 @@ void EditorCamera::Render() {
 	framebuffer->Unbind();
 }
 
+const float maxAngle = 1.55f;
 void EditorCamera::OffsetRotation(float pitch, float yaw) {
 	float deltaTime = (float)Editor::Manager::GetInstance().GetEngineCore().GetDeltaTime();
 
-	float sensitivity = 2.f;
-	eulerAngles.x += pitch * sensitivity * deltaTime;
-	eulerAngles.y -= yaw * sensitivity * deltaTime;
+	const float mouseSensitivity = 2.f;
+	eulerAngles.x += pitch * mouseSensitivity * deltaTime;
+	eulerAngles.y -= yaw * mouseSensitivity * deltaTime;
 
-	if (eulerAngles.x < -3.1f / 2) {
-		eulerAngles.x = -3.1f / 2;
+	if (eulerAngles.x < -maxAngle) {
+		eulerAngles.x = -maxAngle;
 	}
-	else if (eulerAngles.x > 3.1f / 2) {
-		eulerAngles.x = 3.1f / 2;
+	else if (eulerAngles.x > maxAngle) {
+		eulerAngles.x = maxAngle;
 	}
 
 	rotation = glm::quat(eulerAngles);
@@ -70,7 +71,7 @@ void EditorCamera::OffsetRotation(float pitch, float yaw) {
 void EditorCamera::OffsetPosition(float x, float y, float z) {
 	float deltaTime = (float)Editor::Manager::GetInstance().GetEngineCore().GetDeltaTime();
 
-	float speed = 45.f;
+	const float speed = 45.f;
 	position += (
 		GetForward() * z +
 		GetRight() * x +

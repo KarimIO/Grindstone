@@ -1,7 +1,6 @@
 #include "../ECS/SystemRegistrar.hpp"
-#include "setupCoreSystems.hpp"
-#include "renderSystem.hpp"
-#include "exampleSystem.hpp"
+#include "SetupCoreSystems.hpp"
+#include "RenderSystem.hpp"
 using namespace Grindstone;
 
 void Grindstone::SetupCoreSystems(ECS::SystemRegistrar* registrar) {

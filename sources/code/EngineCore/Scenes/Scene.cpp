@@ -11,8 +11,13 @@
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
 
-ECS::Entity Scene::CreateEmptyEntity() {
-	entt::entity entityId = registry.create();
+ECS::Entity Scene::CreateEmptyEntity(entt::entity entityToUse) {
+	if (entityToUse == entt::null) {
+		entt::entity entityId = registry.create();
+		return { entityId, this };
+	}
+
+	entt::entity entityId = registry.create(entityToUse);
 	return { entityId, this };
 }
 
@@ -24,8 +29,8 @@ void Scene::DestroyEntity(ECS::Entity entity) {
 	DestroyEntity(entity.GetHandle());
 }
 
-ECS::Entity Grindstone::SceneManagement::Scene::CreateEntity() {
-	auto entity = CreateEmptyEntity();
+ECS::Entity Grindstone::SceneManagement::Scene::CreateEntity(entt::entity entityToUse) {
+	auto entity = CreateEmptyEntity(entityToUse);
 	entity.AddComponent<TagComponent>("New Entity");
 	entity.AddComponent<TransformComponent>();
 	return entity;

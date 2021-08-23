@@ -118,7 +118,8 @@ void SceneLoaderJson::ProcessEntities() {
 }
 
 void SceneLoaderJson::ProcessEntity(rapidjson::GenericObject<false, rapidjson::Value>& entityJson) {
-	ECS::Entity entity = scene->CreateEntity();
+	auto entityId = entityJson["entityId"].GetUint();
+	ECS::Entity entity = scene->CreateEntity((entt::entity)entityId);
 
 	auto& components = entityJson["components"].GetArray();
 	for (

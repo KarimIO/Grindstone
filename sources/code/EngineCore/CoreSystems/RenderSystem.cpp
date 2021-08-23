@@ -3,7 +3,7 @@
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include "renderSystem.hpp"
+#include "RenderSystem.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "EngineCore/CoreComponents/Camera/CameraComponent.hpp"
 #include "EngineCore/Rendering/BaseRenderer.hpp"
