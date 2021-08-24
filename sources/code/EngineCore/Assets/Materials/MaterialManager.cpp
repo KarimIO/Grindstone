@@ -62,7 +62,7 @@ void MaterialManager::CreateMaterialFromData(
 		}
 
 		GraphicsAPI::UniformBufferBinding::CreateInfo ubbCi{};
-		ubbCi.binding = 1;
+		ubbCi.binding = 2;
 		ubbCi.shaderLocation = "MaterialUbo";
 		ubbCi.size = (uint32_t)uniformBuffer.bufferSize;
 		ubbCi.stages = (GraphicsAPI::ShaderStageBit)uniformBuffer.shaderStagesBitMask;

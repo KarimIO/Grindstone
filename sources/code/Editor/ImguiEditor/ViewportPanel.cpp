@@ -16,6 +16,10 @@ ViewportPanel::ViewportPanel() {
 }
 
 void ViewportPanel::HandleInput() {
+	if (!ImGui::IsWindowHovered()) {
+		return;
+	}
+
 	auto& io = ImGui::GetIO();
 
 	ImVec2 viewportPanelPosition = ImVec2(

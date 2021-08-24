@@ -34,7 +34,6 @@ uint16_t lightIndices[] = {
 struct EngineUboStruct {
 	glm::mat4 proj;
 	glm::mat4 view;
-	glm::mat4 model;
 	glm::vec3 eyePos;
 };
 
@@ -244,7 +243,6 @@ void DeferredRenderer::Render(
 	EngineUboStruct engineUboStruct;
 	engineUboStruct.proj = projectionMatrix;
 	engineUboStruct.view = viewMatrix;
-	engineUboStruct.model = glm::scale(glm::vec3(0.05f)) * glm::mat4(1);
 	engineUboStruct.eyePos = eyePos;
 
 	gbuffer->BindWrite(true);

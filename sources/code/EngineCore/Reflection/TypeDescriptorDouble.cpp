@@ -1,4 +1,3 @@
-#include <iostream>
 #include "TypeResolver.hpp"
 #include "Common/Math.hpp"
 

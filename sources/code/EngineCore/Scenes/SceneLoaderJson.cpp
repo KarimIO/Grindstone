@@ -47,8 +47,9 @@ bool SceneLoaderJson::Load(const char* path) {
 	auto& registry = scene->GetEntityRegistry();
 
 	auto& meshView = registry.view<MeshComponent>();
-	meshView.each([&](MeshComponent& meshComponent) {
+	meshView.each([&](entt::entity entity, MeshComponent& meshComponent) {
 		meshComponent.mesh = &mesh3dManager->LoadMesh3d(meshComponent.meshPath.c_str());
+		meshComponent.mesh->rendererEntities.emplace_back(entity, scene);
 	});
 
 	auto& meshAndMeshRendererView = registry.view<MeshComponent, MeshRendererComponent>();
@@ -164,27 +165,27 @@ void SceneLoaderJson::ProcessComponent(ECS::Entity entity, rapidjson::GenericObj
 	}
 }
 
-void CopyDataArrayFloat(rapidjson::Value& srcParameter, float* dstArray, size_t count) {
+void CopyDataArrayFloat(rapidjson::Value& srcParameter, float* dstArray, rapidjson::SizeType count) {
 	auto srcArray = srcParameter.GetArray();
 
-	for (size_t i = 0; i < count; ++i) {
+	for (rapidjson::SizeType i = 0; i < count; ++i) {
 		dstArray[i] = srcArray[i].GetFloat();
 	}
 }
 
-void CopyDataArrayDouble(rapidjson::Value& srcParameter, double* dstArray, size_t count) {
+void CopyDataArrayDouble(rapidjson::Value& srcParameter, double* dstArray, rapidjson::SizeType count) {
 	auto srcArray = srcParameter.GetArray();
 
-	for (size_t i = 0; i < count; ++i) {
-		dstArray[i] = srcArray[i].GetFloat();
+	for (rapidjson::SizeType i = 0; i < count; ++i) {
+		dstArray[i] = srcArray[i].GetDouble();
 	}
 }
 
-void CopyDataArrayInt(rapidjson::Value& srcParameter, int* dstArray, size_t count) {
+void CopyDataArrayInt(rapidjson::Value& srcParameter, int* dstArray, rapidjson::SizeType count) {
 	auto srcArray = srcParameter.GetArray();
 
-	for (size_t i = 0; i < count; ++i) {
-		dstArray[i] = srcArray[i].GetFloat();
+	for (rapidjson::SizeType i = 0; i < count; ++i) {
+		dstArray[i] = srcArray[i].GetInt();
 	}
 }
 

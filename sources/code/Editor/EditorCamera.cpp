@@ -53,7 +53,7 @@ const float maxAngle = 1.55f;
 void EditorCamera::OffsetRotation(float pitch, float yaw) {
 	float deltaTime = (float)Editor::Manager::GetInstance().GetEngineCore().GetDeltaTime();
 
-	const float mouseSensitivity = 2.f;
+	const float mouseSensitivity = 1.f;
 	eulerAngles.x += pitch * mouseSensitivity * deltaTime;
 	eulerAngles.y -= yaw * mouseSensitivity * deltaTime;
 

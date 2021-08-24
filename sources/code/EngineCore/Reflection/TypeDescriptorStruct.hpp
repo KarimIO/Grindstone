@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <vector>
 #include "TypeDescriptor.hpp"
 #include "Metadata.hpp"

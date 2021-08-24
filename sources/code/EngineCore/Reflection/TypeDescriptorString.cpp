@@ -1,4 +1,3 @@
-#include <iostream>
 #include "TypeResolver.hpp"
 
 namespace Grindstone {
