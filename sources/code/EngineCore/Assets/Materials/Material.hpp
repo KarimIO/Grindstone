@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include "EngineCore/ECS/Entity.hpp"
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -18,6 +19,6 @@ namespace Grindstone {
 		GraphicsAPI::UniformBufferBinding* uniformBufferBinding;
 		GraphicsAPI::UniformBuffer* uniformBufferObject;
 		char* buffer;
-		std::vector<void*> renderables;
+		std::vector<std::pair<ECS::Entity, void*>> renderables;
 	};
 }

@@ -57,34 +57,34 @@ void Mesh3dRenderer::RenderMaterial(Material& material) {
 	GraphicsAPI::Core* core = EngineCore::GetInstance().GetGraphicsCore();
 	core->BindTexture(material.textureBinding);
 
-	for (void* renderable : material.renderables) {
-		Mesh3d::Submesh& submesh = *(Mesh3d::Submesh *)renderable;
-		RenderSubmesh(submesh);
+	for (auto& renderable : material.renderables) {
+		ECS::Entity entity = renderable.first;
+		Mesh3d::Submesh& submesh = *(Mesh3d::Submesh*)renderable.second;
+		RenderSubmesh(entity, submesh);
 	}
 }
 
-void Mesh3dRenderer::RenderSubmesh(Mesh3d::Submesh& submesh3d) {
+// TODO: Bind vao once for multiple MeshRenderers
+void Mesh3dRenderer::RenderSubmesh(ECS::Entity rendererEntity, Mesh3d::Submesh& submesh3d) {
 	Mesh3d& mesh3d = *submesh3d.mesh;
 
 	GraphicsAPI::Core* core = EngineCore::GetInstance().GetGraphicsCore();
 
 	core->BindVertexArrayObject(mesh3d.vertexArrayObject);
-	for (const ECS::Entity& rendererEntity : mesh3d.rendererEntities) {
-		auto& registry = rendererEntity.GetScene()->GetEntityRegistry();
-		entt::entity entity = rendererEntity.GetHandle();
-		auto& transformComponent = registry.get<TransformComponent>(entity);
-		glm::mat4 modelMatrix = 
-			glm::translate(transformComponent.position) *
-			glm::toMat4(transformComponent.rotation) *
-			glm::scale(transformComponent.scale);
-		mesh3dBufferObject->UpdateBuffer(&modelMatrix);
+	auto& registry = rendererEntity.GetScene()->GetEntityRegistry();
+	entt::entity entity = rendererEntity.GetHandle();
+	auto& transformComponent = registry.get<TransformComponent>(entity);
+	glm::mat4 modelMatrix = 
+		glm::translate(transformComponent.position) *
+		glm::toMat4(transformComponent.rotation) *
+		glm::scale(transformComponent.scale);
+	mesh3dBufferObject->UpdateBuffer(&modelMatrix);
 
-		core->DrawImmediateIndexed(
-			GraphicsAPI::GeometryType::Triangles,
-			false,
-			submesh3d.baseVertex,
-			submesh3d.baseIndex,
-			submesh3d.indexCount
-		);
-	}
+	core->DrawImmediateIndexed(
+		GraphicsAPI::GeometryType::Triangles,
+		false,
+		submesh3d.baseVertex,
+		submesh3d.baseIndex,
+		submesh3d.indexCount
+	);
 }

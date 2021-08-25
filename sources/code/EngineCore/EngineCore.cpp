@@ -61,6 +61,8 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	assetRendererManager = new AssetRendererManager();
 	assetRendererManager->AddAssetRenderer(mesh3dRenderer);
 	assetRendererManager->AddQueue("Opaque");
+	assetRendererManager->AddQueue("Transparent");
+	assetRendererManager->AddQueue("Unlit");
 
 	systemRegistrar = new ECS::SystemRegistrar();
 	SetupCoreSystems(systemRegistrar);

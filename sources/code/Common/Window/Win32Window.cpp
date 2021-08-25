@@ -134,20 +134,29 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-void Win32Window::CopyStringToClipboard(const std::string& stringToCopy) {
+bool Win32Window::CopyStringToClipboard(const std::string& stringToCopy) {
 	const size_t sizeOfStringWithNullTerminator = stringToCopy.size() + 1;
 	OpenClipboard(windowHandle);
 	EmptyClipboard();
 	HGLOBAL hg = GlobalAlloc(GMEM_MOVEABLE, sizeOfStringWithNullTerminator);
 	if (!hg) {
 		CloseClipboard();
-		return;
+		return false;
 	}
-	memcpy(GlobalLock(hg), stringToCopy.c_str(), sizeOfStringWithNullTerminator);
+
+	const char* stringToCopyCstr = stringToCopy.c_str();
+	HGLOBAL clipboard = GlobalLock(hg);
+	if (clipboard == NULL) {
+		return false;
+	}
+
+	memcpy(clipboard, stringToCopyCstr, sizeOfStringWithNullTerminator);
 	GlobalUnlock(hg);
 	SetClipboardData(CF_TEXT, hg);
 	CloseClipboard();
 	GlobalFree(hg);
+
+	return true;
 }
 
 std::string Win32Window::OpenFileDialogue(const char* filter) {
@@ -257,15 +266,10 @@ bool Win32Window::Initialize(CreateInfo& createInfo) {
 	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.style = CS_HREDRAW | CS_VREDRAW;
 	wc.lpfnWndProc = Win32Window::sWndProc;
-	wc.cbClsExtra = NULL;
-	wc.cbWndExtra = NULL;
 	wc.hInstance = hInstance;
-	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)(COLOR_BACKGROUND + 1);
-	wc.lpszMenuName = NULL;
 	wc.lpszClassName = createInfo.title;
-	wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
 
 	if (!RegisterClassEx(&wc)) {
 		MessageBox(NULL, _T("Error registering class"),
@@ -306,15 +310,15 @@ bool Win32Window::ShouldClose() {
 }
 
 bool Win32Window::HandleEvents() {
-	MSG msg;
+	MSG eventMessage;
 
-	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-		// Translate the message and dispatch it to WindowProc()
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-
-		if (msg.message == WM_QUIT)
+	while (PeekMessage(&eventMessage, NULL, 0, 0, PM_REMOVE)) {
+		if (eventMessage.message == WM_QUIT) {
 			return false;
+		}
+
+		TranslateMessage(&eventMessage);
+		DispatchMessage(&eventMessage);
 	}
 
 	return true;
@@ -393,9 +397,7 @@ void Win32Window::SetWindowSize(unsigned int width, unsigned int height) {
 }
 
 void Win32Window::SetMousePos(unsigned int x, unsigned int y) {
-	POINT pt;
-	pt.x = (LONG)x;
-	pt.y = (LONG)y;
+	POINT pt = { (LONG)x, (LONG)y };
 	ClientToScreen(windowHandle, &pt);
 	SetCursorPos(pt.x, pt.y);
 }

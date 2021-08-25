@@ -7,7 +7,7 @@ void Rendering::RenderPathDeferred::initialize() {
     Renderer::MaterialManager* manager;
     manager->addQueue("Unlit");
     manager->addQueue("Opaque");
-    manager->addQueue("Transparency");
+    manager->addQueue("Transparent");
 }
 
 void Rendering::RenderPathDeferred::render() {

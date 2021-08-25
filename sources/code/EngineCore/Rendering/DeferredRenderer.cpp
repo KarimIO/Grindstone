@@ -250,12 +250,20 @@ void DeferredRenderer::Render(
 
 	float clearColor[4] = {0.3f, 0.6f, 0.9f, 1.f};
 	core->Clear(ClearMode::ColorAndDepth, clearColor, 1);
-	core->SetImmediateBlending(BlendMode::None);
 
 	globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
 	globalUniformBufferObject->Bind();
+
+	core->SetImmediateBlending(BlendMode::None);
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
 
 	RenderLights(registry);
+
+	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Unlit");
+
+	litHdrFramebuffer->Bind(true);
+	core->SetImmediateBlending(BlendMode::AdditiveAlpha);
+	EngineCore::GetInstance().assetRendererManager->RenderQueue("Transparent");
+
 	PostProcess(outputFramebuffer);
 }

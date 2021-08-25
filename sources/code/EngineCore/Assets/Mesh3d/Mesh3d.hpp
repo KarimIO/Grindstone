@@ -35,6 +35,5 @@ namespace Grindstone {
 		std::filesystem::path path;
 		GraphicsAPI::VertexArrayObject* vertexArrayObject = nullptr;
 		std::vector<Submesh> submeshes;
-		std::vector<ECS::Entity> rendererEntities;
 	};
 }

@@ -47,13 +47,13 @@ bool SceneLoaderJson::Load(const char* path) {
 	auto& registry = scene->GetEntityRegistry();
 
 	auto& meshView = registry.view<MeshComponent>();
-	meshView.each([&](entt::entity entity, MeshComponent& meshComponent) {
+	meshView.each([&](MeshComponent& meshComponent) {
 		meshComponent.mesh = &mesh3dManager->LoadMesh3d(meshComponent.meshPath.c_str());
-		meshComponent.mesh->rendererEntities.emplace_back(entity, scene);
 	});
 
 	auto& meshAndMeshRendererView = registry.view<MeshComponent, MeshRendererComponent>();
 	meshAndMeshRendererView.each([&](
+		entt::entity entity,
 		MeshComponent& meshComponent,
 		MeshRendererComponent& meshRendererComponent
 	) {
@@ -73,7 +73,7 @@ bool SceneLoaderJson::Load(const char* path) {
 				material = materials[submesh.materialIndex];
 			}
 
-			material->renderables.push_back(&submesh);
+			material->renderables.emplace_back(std::make_pair(ECS::Entity(entity, scene), &submesh));
 		}
 	});
 

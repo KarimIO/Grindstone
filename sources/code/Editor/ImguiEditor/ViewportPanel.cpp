@@ -27,14 +27,12 @@ void ViewportPanel::HandleInput() {
 		(ImGui::GetWindowContentRegionMin().y + ImGui::GetWindowPos().y)
 	); 
 	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-	ImVec2 viewportCenter = ImVec2(
-		(int)(viewportPanelPosition.x + (viewportPanelSize.x / 2.f)),
-		(int)(viewportPanelPosition.y + (viewportPanelSize.y / 2.f))
-	);
+	unsigned int viewportCenterX = (unsigned int)(viewportPanelPosition.x + (viewportPanelSize.x / 2.f));
+	unsigned int viewportCenterY = (unsigned int)(viewportPanelPosition.y + (viewportPanelSize.y / 2.f));
 
 	if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
 		auto window = Editor::Manager::GetInstance().GetEngineCore().windowManager->GetWindowByIndex(0);
-		window->SetMousePos(viewportCenter.x, viewportCenter.y);
+		window->SetMousePos(viewportCenterX, viewportCenterY);
 	}
 	else if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
 		bool isWPressed = io.KeysDown[(int)Grindstone::Events::KeyPressCode::W];
@@ -51,11 +49,11 @@ void ViewportPanel::HandleInput() {
 		float yOffset = (isSpacePressed ? 1.f : 0.f) + (isCtrlPressed ? -1.f : 0.f);
 
 		ImVec2 mousePos = ImGui::GetMousePos();
-		float mouseX = mousePos.x - viewportCenter.x;
-		float mouseY = mousePos.y - viewportCenter.y;
+		float mouseX = mousePos.x - (float)viewportCenterX;
+		float mouseY = mousePos.y - (float)viewportCenterY;
 
 		auto window = Editor::Manager::GetInstance().GetEngineCore().windowManager->GetWindowByIndex(0);
-		window->SetMousePos(viewportCenter.x, viewportCenter.y);
+		window->SetMousePos(viewportCenterX, viewportCenterY);
 
 		camera->OffsetRotation(mouseY, mouseX);
 		camera->OffsetPosition(xOffset, yOffset, zOffset);
@@ -68,12 +66,12 @@ void ViewportPanel::Render() {
 		ImGui::Begin("Viewport", &isShowingPanel);
 
 		ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-		camera->ResizeViewport(viewportPanelSize.x, viewportPanelSize.y);
+		camera->ResizeViewport((uint32_t)viewportPanelSize.x, (uint32_t)viewportPanelSize.y);
 		HandleInput();
 		camera->Render();
 
 		int textureID = camera->GetPrimaryFramebufferAttachment();
-		auto texturePtr = reinterpret_cast<void*>(textureID);
+		ImTextureID texturePtr = (ImTextureID) textureID;
 		auto size = ImVec2{ viewportPanelSize.x, viewportPanelSize.y };
 		auto uv0 = ImVec2{ 0, 1 };
 		auto uv1 = ImVec2{ 1, 0 };

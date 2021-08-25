@@ -27,7 +27,7 @@ EditorCamera::EditorCamera() {
 	UpdateViewMatrix();
 }
 
-int EditorCamera::GetPrimaryFramebufferAttachment() {
+uint32_t EditorCamera::GetPrimaryFramebufferAttachment() {
 	return framebuffer->GetAttachment(0);
 }
 

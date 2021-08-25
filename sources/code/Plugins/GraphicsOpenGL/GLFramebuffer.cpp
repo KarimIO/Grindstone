@@ -86,7 +86,7 @@ namespace Grindstone {
 			}
 		}
 
-		int GLFramebuffer::GetAttachment(int attachmentIndex) {
+		uint32_t GLFramebuffer::GetAttachment(uint32_t attachmentIndex) {
 			return renderTargetLists[0]->GetHandle(attachmentIndex);
 		}
 		

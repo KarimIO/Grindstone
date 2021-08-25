@@ -15,7 +15,7 @@ namespace Grindstone {
 		class EditorCamera {
 		public:
 			EditorCamera();
-			int GetPrimaryFramebufferAttachment();
+			uint32_t GetPrimaryFramebufferAttachment();
 			void Render();
 			void OffsetRotation(float pitch, float yaw);
 			void OffsetPosition(float x, float y, float z);
