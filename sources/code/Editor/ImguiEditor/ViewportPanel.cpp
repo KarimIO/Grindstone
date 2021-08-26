@@ -60,22 +60,29 @@ void ViewportPanel::HandleInput() {
 	}
 }
 
+void ViewportPanel::RenderCamera() {
+	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+	camera->ResizeViewport((uint32_t)viewportPanelSize.x, (uint32_t)viewportPanelSize.y);
+	camera->Render();
+}
+
+void ViewportPanel::DisplayCameraToPanel() {
+	int textureID = camera->GetPrimaryFramebufferAttachment();
+	ImTextureID texturePtr = (ImTextureID)textureID;
+	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+	auto uv0 = ImVec2{ 0, 1 };
+	auto uv1 = ImVec2{ 1, 0 };
+	ImGui::Image(texturePtr, viewportPanelSize, uv0, uv1);
+}
+
 void ViewportPanel::Render() {
 	if (isShowingPanel) {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
 		ImGui::Begin("Viewport", &isShowingPanel);
 
-		ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-		camera->ResizeViewport((uint32_t)viewportPanelSize.x, (uint32_t)viewportPanelSize.y);
+		RenderCamera();
 		HandleInput();
-		camera->Render();
-
-		int textureID = camera->GetPrimaryFramebufferAttachment();
-		ImTextureID texturePtr = (ImTextureID) textureID;
-		auto size = ImVec2{ viewportPanelSize.x, viewportPanelSize.y };
-		auto uv0 = ImVec2{ 0, 1 };
-		auto uv1 = ImVec2{ 1, 0 };
-		ImGui::Image(texturePtr, size, uv0, uv1);
+		DisplayCameraToPanel();
 
 		ImGui::End();
 		ImGui::PopStyleVar();
