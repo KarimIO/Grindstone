@@ -309,8 +309,8 @@ namespace Grindstone {
 			delete (GLVertexArrayObject *)ptr;
 		}
 
-		void GLCore::CopyToDepthBuffer(DepthTarget *p) {
-			glBlitFramebuffer(0, 0, 1920, 1080, 0, 0, 1920, 1080, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+		void GLCore::CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) {
+			glBlitFramebuffer(0, 0, srcWidth, srcHeight, 0, 0, dstWidth, dstHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 		}
 
 		void GLCore::WaitUntilIdle() {
@@ -374,21 +374,19 @@ namespace Grindstone {
 			glDrawArrays(GetGeomType(geom_type), base, count);
 		}
 
-		void GLCore::EnableDepth(bool state) {
-			glDepthMask(state);
+		void GLCore::EnableDepthWrite(bool isDepthEnabled) {
+			glDepthMask(isDepthEnabled ? GL_TRUE : GL_FALSE);
 		}
 
 		void GLCore::BindDefaultFramebufferRead() {
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 		}
 
-		void GLCore::BindDefaultFramebufferWrite(bool isDepth) {
-			glDepthMask(isDepth ? GL_TRUE : GL_FALSE);
+		void GLCore::BindDefaultFramebufferWrite() {
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 		}
 
-		void GLCore::BindDefaultFramebuffer(bool isDepth) {
-			glDepthMask(isDepth ? GL_TRUE : GL_FALSE);
+		void GLCore::BindDefaultFramebuffer() {
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
 

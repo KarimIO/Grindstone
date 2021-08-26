@@ -62,7 +62,7 @@ namespace Grindstone {
 			virtual RenderTarget *CreateRenderTarget(RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) override;
 			virtual DepthTarget *CreateDepthTarget(DepthTarget::CreateInfo& rt) override;
 
-			virtual void CopyToDepthBuffer(DepthTarget *p) override;
+			virtual void CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) override;
 
 			virtual const bool ShouldUseImmediateMode() override;
 			virtual const bool SupportsCommandBuffers() override;
@@ -79,9 +79,9 @@ namespace Grindstone {
 			virtual void DrawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) override;
 			virtual void DrawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) override;
 			virtual void SetImmediateBlending(BlendMode) override;
-			virtual void EnableDepth(bool state) override;
-			virtual void BindDefaultFramebuffer(bool isUsingDepth) override;
-			virtual void BindDefaultFramebufferWrite(bool isUsingDepth) override;
+			virtual void EnableDepthWrite(bool state) override;
+			virtual void BindDefaultFramebuffer() override;
+			virtual void BindDefaultFramebufferWrite() override;
 			virtual void BindDefaultFramebufferRead() override;
 			virtual void SetColorMask(ColorMask mask) override;
 			virtual void ResizeViewport(uint32_t w, uint32_t h) override;

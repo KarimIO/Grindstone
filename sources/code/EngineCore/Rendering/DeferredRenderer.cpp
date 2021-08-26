@@ -57,11 +57,12 @@ DeferredRenderer::~DeferredRenderer() {
 	core->DeleteUniformBuffer(lightUniformBufferObject);
 
 	core->DeleteFramebuffer(gbuffer);
-	core->DeleteFramebuffer(litHdrFramebuffer);
+	core->DeleteRenderTarget(gbufferRenderTargets);
+	core->DeleteDepthTarget(gbufferDepthTarget);
 
-	core->DeleteRenderTarget(renderTargets);
-	core->DeleteRenderTarget(litHdrImages);
-	core->DeleteDepthTarget(depthTarget);
+	core->DeleteFramebuffer(litHdrFramebuffer);
+	core->DeleteRenderTarget(litHdrRenderTarget);
+	core->DeleteDepthTarget(litHdrDepthTarget);
 
 	core->DeleteVertexArrayObject(planePostProcessVao);
 	core->DeletePipeline(lightPipeline);
@@ -153,28 +154,31 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	gbufferImagesCreateInfo.emplace_back(ColorFormat::R8G8B8A8, width, height); // R  G  B matID
 	gbufferImagesCreateInfo.emplace_back(ColorFormat::R16G16B16A16, width, height); // nX nY nZ
 	gbufferImagesCreateInfo.emplace_back(ColorFormat::R8G8B8A8, width, height); // sR sG sB Roughness
-	renderTargets = core->CreateRenderTarget(gbufferImagesCreateInfo.data(), (uint32_t)gbufferImagesCreateInfo.size());
+	gbufferRenderTargets = core->CreateRenderTarget(gbufferImagesCreateInfo.data(), (uint32_t)gbufferImagesCreateInfo.size());
 
-	DepthTarget::CreateInfo depthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false);
-	depthTarget = core->CreateDepthTarget(depthImageCreateInfo);
+	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false);
+	gbufferDepthTarget = core->CreateDepthTarget(gbufferDepthImageCreateInfo);
 
 	Framebuffer::CreateInfo gbufferCreateInfo{};
 	gbufferCreateInfo.debugName = "G-Buffer Framebuffer";
-	gbufferCreateInfo.renderTargetLists = &renderTargets;
+	gbufferCreateInfo.renderTargetLists = &gbufferRenderTargets;
 	gbufferCreateInfo.numRenderTargetLists = 1;
-	gbufferCreateInfo.depthTarget = depthTarget;
+	gbufferCreateInfo.depthTarget = gbufferDepthTarget;
 	gbufferCreateInfo.renderPass = nullptr;
 	gbuffer = core->CreateFramebuffer(gbufferCreateInfo);
 
 	RenderTarget::CreateInfo litHdrImagesCreateInfo
 		= { Grindstone::GraphicsAPI::ColorFormat::R32G32B32, width, height };
-	litHdrImages = core->CreateRenderTarget(&litHdrImagesCreateInfo, 1);
+	litHdrRenderTarget = core->CreateRenderTarget(&litHdrImagesCreateInfo, 1);
+
+	DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false);
+	litHdrDepthTarget = core->CreateDepthTarget(litHdrDepthImageCreateInfo);
 
 	Framebuffer::CreateInfo litHdrFramebufferCreateInfo{};
 	litHdrFramebufferCreateInfo.debugName = "Lit HDR Framebuffer";
-	litHdrFramebufferCreateInfo.renderTargetLists = &litHdrImages;
+	litHdrFramebufferCreateInfo.renderTargetLists = &litHdrRenderTarget;
 	litHdrFramebufferCreateInfo.numRenderTargetLists = 1;
-	litHdrFramebufferCreateInfo.depthTarget = nullptr;
+	litHdrFramebufferCreateInfo.depthTarget = litHdrDepthTarget;
 	litHdrFramebufferCreateInfo.renderPass = nullptr;
 	litHdrFramebuffer = core->CreateFramebuffer(litHdrFramebufferCreateInfo);
 	
@@ -187,7 +191,8 @@ void DeferredRenderer::RenderLights(entt::registry& registry) {
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
 
 	core->BindPipeline(lightPipeline);
-	litHdrFramebuffer->BindWrite(false);
+	core->EnableDepthWrite(false);
+	litHdrFramebuffer->BindWrite();
 
 	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.f };
 	core->Clear(ClearMode::ColorAndDepth, clearColor, 1);
@@ -214,11 +219,12 @@ void DeferredRenderer::PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer) 
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
 
 	core->BindPipeline(tonemapPipeline);
+	core->EnableDepthWrite(true);
 	if (outputFramebuffer == nullptr) {
-		core->BindDefaultFramebufferWrite(true);
+		core->BindDefaultFramebufferWrite();
 	}
 	else {
-		outputFramebuffer->BindWrite(true);
+		outputFramebuffer->BindWrite();
 	}
 	litHdrFramebuffer->BindRead();
 
@@ -245,7 +251,7 @@ void DeferredRenderer::Render(
 	engineUboStruct.view = viewMatrix;
 	engineUboStruct.eyePos = eyePos;
 
-	gbuffer->BindWrite(true);
+	gbuffer->BindWrite();
 	gbuffer->BindRead();
 
 	float clearColor[4] = {0.3f, 0.6f, 0.9f, 1.f};
@@ -254,6 +260,7 @@ void DeferredRenderer::Render(
 	globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
 	globalUniformBufferObject->Bind();
 
+	core->EnableDepthWrite(true);
 	core->SetImmediateBlending(BlendMode::None);
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
 
@@ -261,7 +268,8 @@ void DeferredRenderer::Render(
 
 	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Unlit");
 
-	litHdrFramebuffer->Bind(true);
+	core->EnableDepthWrite(false);
+	core->CopyDepthBufferFromReadToWrite(width, height, width, height);
 	core->SetImmediateBlending(BlendMode::AdditiveAlpha);
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Transparent");
 

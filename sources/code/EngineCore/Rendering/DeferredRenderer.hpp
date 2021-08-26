@@ -41,9 +41,10 @@ namespace Grindstone {
 		GraphicsAPI::UniformBuffer* lightUniformBufferObject = nullptr;
 		GraphicsAPI::Framebuffer* gbuffer = nullptr;
 		GraphicsAPI::Framebuffer* litHdrFramebuffer = nullptr;
-		GraphicsAPI::RenderTarget* renderTargets = nullptr;
-		GraphicsAPI::RenderTarget* litHdrImages = nullptr;
-		GraphicsAPI::DepthTarget* depthTarget = nullptr;
+		GraphicsAPI::RenderTarget* gbufferRenderTargets = nullptr;
+		GraphicsAPI::RenderTarget* litHdrRenderTarget = nullptr;
+		GraphicsAPI::DepthTarget* gbufferDepthTarget = nullptr;
+		GraphicsAPI::DepthTarget* litHdrDepthTarget = nullptr;
 
 		GraphicsAPI::VertexArrayObject* planePostProcessVao = nullptr;
 		GraphicsAPI::Pipeline* lightPipeline = nullptr;

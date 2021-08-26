@@ -25,7 +25,7 @@ namespace Grindstone {
 			struct DefaultFramebufferCreateInfo {
 				uint32_t width;
 				uint32_t height;
-				RenderPass* renderPass;
+				RenderPass* renderPass = nullptr;
 			};
 
 			struct CreateInfo {
@@ -41,9 +41,9 @@ namespace Grindstone {
 			virtual void Resize(uint32_t width, uint32_t height) = 0;
 			virtual void Clear(ClearMode mask) = 0;
 			virtual void CopyFrom(Framebuffer *) = 0;
-			virtual void BindWrite(bool depth) = 0;
 			virtual void BindTextures(int i) = 0;
-			virtual void Bind(bool depth) = 0;
+			virtual void Bind() = 0;
+			virtual void BindWrite() = 0;
 			virtual void BindRead() = 0;
 			virtual void Unbind() = 0;
 			virtual ~Framebuffer() {};

@@ -76,7 +76,7 @@ namespace Grindstone {
 			virtual RenderTarget* CreateRenderTarget(RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) = 0;
 			virtual DepthTarget* CreateDepthTarget(DepthTarget::CreateInfo& rt) = 0;
 
-			virtual void CopyToDepthBuffer(DepthTarget* p) = 0;
+			virtual void CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) = 0;
 
 			virtual const bool ShouldUseImmediateMode() = 0;
 			virtual const bool SupportsCommandBuffers() = 0;
@@ -85,8 +85,8 @@ namespace Grindstone {
 			virtual const bool SupportsComputeShader() = 0;
 			virtual const bool SupportsMultiDrawIndirect() = 0;
 
-			virtual void BindDefaultFramebuffer(bool isUsingDepth) = 0;
-			virtual void BindDefaultFramebufferWrite(bool isUsingDepth) = 0;
+			virtual void BindDefaultFramebuffer() = 0;
+			virtual void BindDefaultFramebufferWrite() = 0;
 			virtual void BindDefaultFramebufferRead() = 0;
 
 			virtual void WaitUntilIdle() = 0;
@@ -97,7 +97,7 @@ namespace Grindstone {
 			virtual	void DrawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) = 0;
 			virtual void DrawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) = 0;
 			virtual void SetImmediateBlending(BlendMode) = 0;
-			virtual void EnableDepth(bool state) = 0;
+			virtual void EnableDepthWrite(bool isDepthEnabled) = 0;
 			virtual void SetColorMask(ColorMask mask) = 0;
 			virtual void ResizeViewport(uint32_t w, uint32_t h) = 0;
 
