@@ -266,7 +266,7 @@ void DeferredRenderer::Render(
 
 	RenderLights(registry);
 
-	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Unlit");
+	EngineCore::GetInstance().assetRendererManager->RenderQueue("Unlit");
 
 	core->EnableDepthWrite(false);
 	core->CopyDepthBufferFromReadToWrite(width, height, width, height);

@@ -8,7 +8,7 @@ namespace Grindstone {
 	struct TransformComponent {
 		glm::quat rotation;
 		Math::Float3 position;
-		Math::Float3 scale;
+		Math::Float3 scale = Math::Float3(1.f,1.f,1.f);
 
 		REFLECT("Transform")
 	};

@@ -54,8 +54,10 @@ void Mesh3dRenderer::RenderMaterial(Material& material) {
 		material.uniformBufferObject->Bind();
 	}
 
-	GraphicsAPI::Core* core = EngineCore::GetInstance().GetGraphicsCore();
-	core->BindTexture(material.textureBinding);
+	if (material.textureBinding) {
+		GraphicsAPI::Core* core = EngineCore::GetInstance().GetGraphicsCore();
+		core->BindTexture(material.textureBinding);
+	}
 
 	for (auto& renderable : material.renderables) {
 		ECS::Entity entity = renderable.first;
