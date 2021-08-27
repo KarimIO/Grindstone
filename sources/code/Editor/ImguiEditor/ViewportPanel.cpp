@@ -31,7 +31,7 @@ void ViewportPanel::HandleInput() {
 	unsigned int viewportCenterY = (unsigned int)(viewportPanelPosition.y + (viewportPanelSize.y / 2.f));
 
 	if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
-		auto window = Editor::Manager::GetInstance().GetEngineCore().windowManager->GetWindowByIndex(0);
+		auto window = Editor::Manager::GetEngineCore().windowManager->GetWindowByIndex(0);
 		window->SetMousePos(viewportCenterX, viewportCenterY);
 	}
 	else if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
@@ -52,7 +52,7 @@ void ViewportPanel::HandleInput() {
 		float mouseX = mousePos.x - (float)viewportCenterX;
 		float mouseY = mousePos.y - (float)viewportCenterY;
 
-		auto window = Editor::Manager::GetInstance().GetEngineCore().windowManager->GetWindowByIndex(0);
+		auto window = Editor::Manager::GetEngineCore().windowManager->GetWindowByIndex(0);
 		window->SetMousePos(viewportCenterX, viewportCenterY);
 
 		camera->OffsetRotation(mouseY, mouseX);

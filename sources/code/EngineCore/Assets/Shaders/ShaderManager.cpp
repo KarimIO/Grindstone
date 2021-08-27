@@ -39,9 +39,12 @@ std::string GetShaderPath(const char* basePath, ShaderStage shaderStage, Graphic
 }
 
 Shader& ShaderManager::LoadShader(BaseAssetRenderer* assetRenderer, const char* path) {
+	std::string fixedPath = path;
+	Utils::FixStringSlashes(fixedPath);
+
 	Shader* shader = nullptr;
-	if (!TryGetShader(path, shader)) {
-		shader = &CreateShaderFromFile(path);
+	if (!TryGetShader(fixedPath.c_str(), shader)) {
+		shader = &CreateNewShaderFromFile(fixedPath);
 	}
 
 	if (assetRenderer) {
@@ -49,6 +52,16 @@ Shader& ShaderManager::LoadShader(BaseAssetRenderer* assetRenderer, const char* 
 	}
 
 	return *shader;
+}
+
+void ShaderManager::ReloadShaderIfLoaded(const char* path) {
+	std::string fixedPath = path;
+	Utils::FixStringSlashes(fixedPath);
+
+	Shader* shader = nullptr;
+	if (TryGetShader(fixedPath.c_str(), shader)) {
+		LoadShaderFromFile(true, fixedPath, *shader);
+	}
 }
 
 bool ShaderManager::TryGetShader(const char* path, Shader*& shader) {
@@ -61,11 +74,14 @@ bool ShaderManager::TryGetShader(const char* path, Shader*& shader) {
 	return false;
 }
 
-Shader& ShaderManager::CreateShaderFromFile(const char* path) {
-	shaders[path] = Shader{ path };
-	auto& shader = shaders[path];
-	CreateReflectionDataForShader(path, shader);
-	CreateShaderGraphicsPipeline(path, shader);
+void ShaderManager::LoadShaderFromFile(bool isReloading, std::string& path, Shader& shaderAsset) {
+	CreateReflectionDataForShader(path.c_str(), shaderAsset);
+	CreateShaderGraphicsPipeline(isReloading, path.c_str(), shaderAsset);
+}
+
+Shader& ShaderManager::CreateNewShaderFromFile(std::string& path) {
+	Shader& shader = shaders[path] = Shader{ path };
+	LoadShaderFromFile(false, path, shader);
 
 	return shader;
 }
@@ -74,7 +90,7 @@ void ShaderManager::CreateReflectionDataForShader(const char* path, Shader& shad
 	LoadShaderReflection(path, shader.reflectionData);
 }
 
-void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& shader) {
+void ShaderManager::CreateShaderGraphicsPipeline(bool isReloading, const char* basePath, Shader& shader) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	auto& shaderStagesBitMask = shader.reflectionData.shaderStagesBitMask;
@@ -116,19 +132,19 @@ void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& s
 		++fileDataIterator;
 	}
 
-	Pipeline::CreateInfo pipelineCi{};
-	pipelineCi.shaderName = shader.reflectionData.name.c_str();
-	pipelineCi.primitiveType = GeometryType::Triangles;
-	pipelineCi.cullMode = CullMode::None;
-	pipelineCi.renderPass;
-	pipelineCi.width = 800;
-	pipelineCi.height = 600;
-	pipelineCi.scissorX = 0;
-	pipelineCi.scissorY = 0;
-	pipelineCi.scissorW = 800;
-	pipelineCi.scissorH = 600;
-	pipelineCi.shaderStageCreateInfos = shaderStages.data();
-	pipelineCi.shaderStageCreateInfoCount = (uint32_t)shaderStages.size();
+	Pipeline::CreateInfo pipelineCreateInfo{};
+	pipelineCreateInfo.shaderName = shader.reflectionData.name.c_str();
+	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
+	pipelineCreateInfo.cullMode = CullMode::None;
+	pipelineCreateInfo.renderPass;
+	pipelineCreateInfo.width = 800;
+	pipelineCreateInfo.height = 600;
+	pipelineCreateInfo.scissorX = 0;
+	pipelineCreateInfo.scissorY = 0;
+	pipelineCreateInfo.scissorW = 800;
+	pipelineCreateInfo.scissorH = 600;
+	pipelineCreateInfo.shaderStageCreateInfos = shaderStages.data();
+	pipelineCreateInfo.shaderStageCreateInfoCount = (uint32_t)shaderStages.size();
 
 	std::vector<GraphicsAPI::UniformBufferBinding*> ubbs;
 	ubbs.reserve(shader.reflectionData.uniformBuffers.size());
@@ -142,8 +158,8 @@ void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& s
 		ubbs.push_back(graphicsCore->CreateUniformBufferBinding(ubbCi));
 	}
 
-	pipelineCi.uniformBufferBindings = ubbs.data();
-	pipelineCi.uniformBufferBindingCount = (uint32_t)ubbs.size();
+	pipelineCreateInfo.uniformBufferBindings = ubbs.data();
+	pipelineCreateInfo.uniformBufferBindingCount = (uint32_t)ubbs.size();
 
 	GraphicsAPI::TextureSubBinding sub;
 	sub.shaderLocation = "texSampler";
@@ -157,10 +173,16 @@ void ShaderManager::CreateShaderGraphicsPipeline(const char* basePath, Shader& s
 	auto textureBindingLayout = graphicsCore->CreateTextureBindingLayout(textureBindingLayoutCreateInfo);
 	shader.textureBindingLayout = textureBindingLayout;
 
-	pipelineCi.textureBindings = &textureBindingLayout;
-	pipelineCi.textureBindingCount = 1;
+	pipelineCreateInfo.textureBindings = &textureBindingLayout;
+	pipelineCreateInfo.textureBindingCount = 1;
 
-	pipelineCi.vertexBindings = nullptr;
-	pipelineCi.vertexBindingsCount = 0;
-	shader.pipeline = graphicsCore->CreatePipeline(pipelineCi);
+	pipelineCreateInfo.vertexBindings = nullptr;
+	pipelineCreateInfo.vertexBindingsCount = 0;
+
+	if (isReloading) {
+		shader.pipeline->Recreate(pipelineCreateInfo);
+	}
+	else {
+		shader.pipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
+	}
 }

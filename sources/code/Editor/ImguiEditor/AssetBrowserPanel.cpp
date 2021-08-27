@@ -15,10 +15,11 @@
 #include "EngineCore/Scenes/Scene.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/Assets/Textures/TextureManager.hpp"
+#include "EngineCore/Assets/Shaders/ShaderManager.hpp"
 #include "Plugins/GraphicsOpenGL/GLTexture.hpp"
 #include "ImguiEditor.hpp"
 
-const std::filesystem::path ASSET_FOLDER_PATH = "..\\assets";
+const std::filesystem::path ASSET_FOLDER_PATH = "../assets";
 const double REFRESH_INTERVAL = 1.0;
 const float PADDING = 8.0f;
 const float ENTRY_SIZE = 80.0f;
@@ -52,7 +53,7 @@ std::filesystem::path CreateDefaultMaterial(std::filesystem::path& currentPath) 
 
 ImTextureID GetIdFromTexture(GraphicsAPI::Texture* texture) {
 	GraphicsAPI::GLTexture* glTex = (GraphicsAPI::GLTexture*)texture;
-	return (ImTextureID)glTex->getTexture();
+	return (ImTextureID)glTex->GetTexture();
 }
 
 void TextCenter(std::string text) {
@@ -113,14 +114,14 @@ ImTextureID AssetBrowserPanel::GetIcon(const std::filesystem::directory_entry& d
 		firstDotExtension == ".tga" ||
 		firstDotExtension == ".bmp" ||
 		firstDotExtension == ".png"
-		) {
+	) {
 		return iconIds.image;
 	}
 	else if (
 		firstDotExtension == ".fbx" ||
 		firstDotExtension == ".obj" ||
 		firstDotExtension == ".dae"
-		) {
+	) {
 		return iconIds.model;
 	}
 	else if (firstDotExtension == ".gmat") {
@@ -239,7 +240,7 @@ void AssetBrowserPanel::RenderPath() {
 	ImGui::Text(finalPart.c_str());
 }
 
-void AssetBrowserPanel::RenderContextMenuConvertButton(std::filesystem::directory_entry entry) {
+void AssetBrowserPanel::RenderContextMenuFileTypeSpecificEntries(std::filesystem::directory_entry entry) {
 	if (entry.is_directory()) {
 		return;
 	}
@@ -247,12 +248,19 @@ void AssetBrowserPanel::RenderContextMenuConvertButton(std::filesystem::director
 	auto path = entry.path().string();
 	size_t firstDot = path.find_last_of('.');
 	std::string firstDotExtension = path.substr(firstDot);
+	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	// size_t secondDot = path.find_last_of('.', firstDot - 1);
 	// std::string secondDotExtension = path.substr(secondDot);
 
 	if (firstDotExtension == ".glsl") {
 		if (ImGui::MenuItem("Convert")) {
 			Grindstone::Converters::ImportShadersFromGlsl(path.c_str());
+			std::string pathWithoutExtension = path.substr(0, firstDot);
+			engineCore.shaderManager->ReloadShaderIfLoaded(pathWithoutExtension.c_str());
+		}
+		if (ImGui::MenuItem("Reimport")) {
+			std::string pathWithoutExtension = path.substr(0, firstDot);
+			engineCore.shaderManager->ReloadShaderIfLoaded(pathWithoutExtension.c_str());
 		}
 	}
 	else if (
@@ -264,6 +272,14 @@ void AssetBrowserPanel::RenderContextMenuConvertButton(std::filesystem::director
 	) {
 		if (ImGui::MenuItem("Convert")) {
 			Grindstone::Converters::ImportTexture(path.c_str());
+
+			std::string pathDDS = path + ".dds";
+			engineCore.textureManager->ReloadTextureIfLoaded(pathDDS.c_str());
+		}
+	}
+	else if (firstDotExtension == ".dds") {
+		if (ImGui::MenuItem("Reimport")) {
+			engineCore.textureManager->ReloadTextureIfLoaded(path.c_str());
 		}
 	}
 	else if (
@@ -280,7 +296,7 @@ void AssetBrowserPanel::RenderContextMenuConvertButton(std::filesystem::director
 void AssetBrowserPanel::RenderAssetContextMenu(std::filesystem::directory_entry entry) {
 	if (ImGui::BeginPopupContextItem()) {
 		auto path = entry.path();
-		RenderContextMenuConvertButton(entry);
+		RenderContextMenuFileTypeSpecificEntries(entry);
 		if (ImGui::MenuItem("Rename")) {
 			pathToRename = path;
 			pathRenameNewName = entry.path().filename().string();

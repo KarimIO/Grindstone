@@ -10,7 +10,7 @@ using namespace Grindstone::Editor;
 using namespace Grindstone;
 
 EditorCamera::EditorCamera() {
-	GraphicsAPI::Core* core = Editor::Manager::GetInstance().GetEngineCore().GetGraphicsCore();
+	GraphicsAPI::Core* core = Editor::Manager::GetEngineCore().GetGraphicsCore();
 	GraphicsAPI::RenderTarget::CreateInfo renderTargetCreateInfo;
 	renderTargetCreateInfo.width = 800;
 	renderTargetCreateInfo.height = 600;
@@ -22,7 +22,7 @@ EditorCamera::EditorCamera() {
 	framebufferCreateInfo.numRenderTargetLists = 1;
 	framebuffer = core->CreateFramebuffer(framebufferCreateInfo);
 
-	EngineCore& engineCore = Editor::Manager::GetInstance().GetEngineCore();
+	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	renderer = engineCore.CreateRenderer();
 	UpdateViewMatrix();
 }
@@ -51,7 +51,7 @@ void EditorCamera::Render() {
 
 const float maxAngle = 1.55f;
 void EditorCamera::OffsetRotation(float pitch, float yaw) {
-	float deltaTime = (float)Editor::Manager::GetInstance().GetEngineCore().GetDeltaTime();
+	float deltaTime = (float)Editor::Manager::GetEngineCore().GetDeltaTime();
 
 	const float mouseSensitivity = 1.f;
 	eulerAngles.x += pitch * mouseSensitivity * deltaTime;
@@ -69,7 +69,7 @@ void EditorCamera::OffsetRotation(float pitch, float yaw) {
 }
 
 void EditorCamera::OffsetPosition(float x, float y, float z) {
-	float deltaTime = (float)Editor::Manager::GetInstance().GetEngineCore().GetDeltaTime();
+	float deltaTime = (float)Editor::Manager::GetEngineCore().GetDeltaTime();
 
 	const float speed = 45.f;
 	position += (

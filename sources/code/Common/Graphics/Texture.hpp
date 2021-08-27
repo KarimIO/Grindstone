@@ -73,6 +73,8 @@ namespace Grindstone {
 				ColorFormat format;
 				TextureOptions options;
 			};
+
+			virtual void RecreateTexture(CreateInfo& createInfo) = 0;
 		};
 
 		struct SingleTextureBind {

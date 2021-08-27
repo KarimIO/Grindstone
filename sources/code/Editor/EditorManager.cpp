@@ -20,7 +20,7 @@ Selection& Manager::GetSelection() {
 }
 
 EngineCore& Manager::GetEngineCore() {
-	return *engineCore;
+	return *GetInstance().engineCore;
 }
 
 bool Manager::Initialize() {

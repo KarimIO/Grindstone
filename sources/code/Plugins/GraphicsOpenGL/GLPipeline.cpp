@@ -11,6 +11,53 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
+		GLPipeline::GLPipeline(CreateInfo& createInfo) {
+			CreatePipeline(createInfo);
+		}
+
+		void GLPipeline::Recreate(CreateInfo& createInfo) {
+			glUseProgram(0);
+			glDeleteProgram(program);
+
+			CreatePipeline(createInfo);
+		}
+
+		void GLPipeline::CreatePipeline(CreateInfo& createInfo) {
+			primitiveType = GetGeomType(createInfo.primitiveType);
+
+			width = createInfo.width;
+			height = createInfo.height;
+			scissorWidth = createInfo.scissorW;
+			scissorHeight = createInfo.scissorH;
+			scissorX = createInfo.scissorX;
+			scissorY = createInfo.scissorY;
+			cullMode = createInfo.cullMode;
+
+			program = glCreateProgram();
+			glObjectLabel(GL_PROGRAM, program, -1, createInfo.shaderName);
+
+			uint32_t shaderNum = createInfo.shaderStageCreateInfoCount;
+			GLuint* shaders = new GLuint[shaderNum];
+			for (uint32_t i = 0; i < shaderNum; i++) {
+				shaders[i] = CreateShaderModule(createInfo.shaderStageCreateInfos[i]);
+			}
+
+			GLint result = 0;
+			glLinkProgram(program);
+
+			GLint isLinked;
+			glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
+			if (isLinked == GL_FALSE) {
+				printf("Link failed for program: %s", createInfo.shaderName);
+			}
+
+			for (size_t i = 0; i < shaderNum; i++) {
+				glDeleteShader(shaders[i]);
+			}
+
+			delete[] shaders;
+		}
+
 		GLuint GLPipeline::CreateShaderModule(ShaderStageCreateInfo createInfo) {
 			int shaderType;
 			switch (createInfo.type) {
@@ -61,101 +108,11 @@ namespace Grindstone {
 			else {
 				glShaderBinary(1, &shader, GL_SHADER_BINARY_FORMAT_SPIR_V_ARB, createInfo.content, createInfo.size);
 				glSpecializeShader(shader, "main", 0, 0, 0);
-
-				// int compiled = 0;
-				// glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
 			}
 
 			glAttachShader(program, shader);
 
 			return shader;
-		}
-
-		GLPipeline::GLPipeline(CreateInfo& createInfo) {
-			primitiveType = GetGeomType(createInfo.primitiveType);
-
-			width = createInfo.width;
-			height = createInfo.height;
-			scissorWidth = createInfo.scissorW;
-			scissorHeight = createInfo.scissorH;
-			scissorX = createInfo.scissorX;
-			scissorY = createInfo.scissorY;
-			cullMode = createInfo.cullMode;
-
-			program = glCreateProgram();
-			glObjectLabel(GL_PROGRAM, program, -1, createInfo.shaderName);
-
-			uint32_t shaderNum = createInfo.shaderStageCreateInfoCount;
-			GLuint *shaders = new GLuint[shaderNum];
-			for (uint32_t i = 0; i < shaderNum; i++) {
-				shaders[i] = CreateShaderModule(createInfo.shaderStageCreateInfos[i]);
-			}
-
-			/*glValidateProgram(program);
-			glGetProgramiv(program, GL_VALIDATE_STATUS, &result);
-			if (!result) {
-				int maxLength = 0;
-				glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
-				std::vector<GLchar> infoLog(maxLength);
-				glGetProgramInfoLog(program, maxLength, &maxLength, infoLog.data());
-				fprintf(stderr, "Invalid shader program: '%s'\n", infoLog.data());
-				//return;
-			}*/
-
-			/*if (createInfo.vertexBindingsCount > 0) {
-				auto& vbd = createInfo.vertexBindings;
-				for (uint32_t i = 0; i < vbd->attributeCount; i++) {
-					glBindAttribLocation(program, vbd->attributes[i].location, vbd->attributes[i].name);
-				}
-			}*/
-
-			GLint result = 0;
-			glLinkProgram(program);
-
-			GLint isLinked;
-			glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
-			if (isLinked == GL_FALSE) {
-				printf("Link failed for program: %s", createInfo.shaderName);
-				/*GLint maxLength;
-				glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
-
-				std::vector<GLchar> infoLog(maxLength);
-				glGetProgramInfoLog(program, maxLength, &maxLength, infoLog.data());
-				printf("Shader linking failed %s\n", infoLog.data());
-
-				glDeleteProgram(program);*/
-			}
-
-			// Detach Shaders (Remove their references)
-			for (size_t i = 0; i < shaderNum; i++) {
-				// glDetachShader(program, shaders[i]);
-				glDeleteShader(shaders[i]);
-			}
-
-			delete[] shaders;
-
-			// TODO: Properly do this:
-			// glUseProgram(program);
-
-			/*for (size_t i = 0; i < createInfo.uniformBufferBindingCount; i++) {
-				GLUniformBufferBinding *ubb = (GLUniformBufferBinding *)createInfo.uniformBufferBindings[i];
-				glUniformBlockBinding(program, ubb->GetBindingLocation(), ubb->GetBindingLocation());
-				GLuint index = glGetUniformBlockIndex(program, ubb->GetUniformName());
-				if (index != GL_INVALID_INDEX) {
-				}
-				else {
-					std::cout << "Couldn't attach Uniform Buffer" << ubb->GetUniformName() << std::endl;
-				}
-			}*/
-
-			/*for (uint32_t i = 0; i < createInfo.textureBindingCount; i++) {
-				GLTextureBindingLayout *texbinding = (GLTextureBindingLayout *)createInfo.textureBindings[i];
-				for (uint32_t j = 0; j < texbinding->getNumSubBindings(); j++) {
-					TextureSubBinding sub = texbinding->getSubBinding(j);
-					int loc = glGetUniformLocation(program, sub.shaderLocation);
-					glUniform1i(loc, sub.textureLocation);
-				}
-			}*/
 		}
 
 		void GLPipeline::Bind() {

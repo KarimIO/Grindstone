@@ -7,15 +7,28 @@
 using namespace Grindstone;
 
 TextureAsset& TextureManager::LoadTexture(const char* path) {
+	std::string fixedPath = path;
+	Utils::FixStringSlashes(fixedPath);
+
 	TextureAsset* texture = nullptr;
-	if (TryGetTexture(path, texture)) {
+	if (TryGetTexture(fixedPath, texture)) {
 		return *texture;
 	}
 
-	return CreateTextureFromFile(path);
+	return CreateNewTextureFromFile(fixedPath);
 }
 
-bool TextureManager::TryGetTexture(const char* path, TextureAsset*& texture) {
+void TextureManager::ReloadTextureIfLoaded(const char* path) {
+	std::string fixedPath = path;
+	Utils::FixStringSlashes(fixedPath);
+
+	TextureAsset* texture = nullptr;
+	if (TryGetTexture(fixedPath, texture)) {
+		LoadTextureFromFile(true, fixedPath, *texture);
+	}
+}
+
+bool TextureManager::TryGetTexture(std::string& path, TextureAsset*& texture) {
 	auto& textureInMap = textures.find(path);
 	if (textureInMap != textures.end()) {
 		texture = &textureInMap->second;
@@ -25,7 +38,7 @@ bool TextureManager::TryGetTexture(const char* path, TextureAsset*& texture) {
 	return false;
 }
 
-TextureAsset TextureManager::CreateFromDds(const char* fileName, const char* data, size_t fileSize) {
+void TextureManager::CreateFromDds(bool isReloading, TextureAsset& textureAsset, const char* fileName, const char* data, size_t fileSize) {
 	if (strncmp(data, "DDS ", 4) != 0) {
 		throw std::runtime_error("Invalid DDS file: No magic 'DDS' keyword.");
 	}
@@ -62,13 +75,18 @@ TextureAsset TextureManager::CreateFromDds(const char* fileName, const char* dat
 	createInfo.height = header.dwHeight;
 	createInfo.isCubemap = false;
 
-	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	Grindstone::GraphicsAPI::Texture* texture = graphicsCore->CreateTexture(createInfo);
+	if (isReloading) {
+		textureAsset.texture->RecreateTexture(createInfo);
+	}
+	else {
+		GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+		Grindstone::GraphicsAPI::Texture* texture = graphicsCore->CreateTexture(createInfo);
 	
-	return TextureAsset{texture};
+		textureAsset.texture = texture;
+	}
 }
 
-TextureAsset& TextureManager::CreateTextureFromFile(const char* path) {
+void TextureManager::LoadTextureFromFile(bool isReloading, std::string& path, TextureAsset& textureAsset) {
 	std::filesystem::path filePath = path;
 	std::string& fileName = filePath.filename().string();
 
@@ -76,8 +94,13 @@ TextureAsset& TextureManager::CreateTextureFromFile(const char* path) {
 		throw std::runtime_error("Failed to load texture!");
 	}
 
-	std::vector<char> file = Utils::LoadFile(path);
-	textures[path] = CreateFromDds(fileName.c_str(), file.data(), file.size());
+	std::vector<char> file = Utils::LoadFile(path.c_str());
+	CreateFromDds(isReloading, textureAsset, fileName.c_str(), file.data(), file.size());
+}
 
-	return textures[path];
+TextureAsset& TextureManager::CreateNewTextureFromFile(std::string& path) {
+	TextureAsset& textureAsset = textures[path];
+	LoadTextureFromFile(false, path, textureAsset);
+
+	return textureAsset;
 }

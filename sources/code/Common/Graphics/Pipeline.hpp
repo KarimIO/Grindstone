@@ -49,7 +49,7 @@ namespace Grindstone {
 				uint32_t vertexBindingsCount;
 			};
 
-			virtual ~Pipeline() {}
+			virtual void Recreate(CreateInfo& createInfo) = 0;
 		};
 	}
 }

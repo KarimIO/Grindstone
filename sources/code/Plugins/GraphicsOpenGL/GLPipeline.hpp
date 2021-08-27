@@ -5,6 +5,16 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		class GLPipeline : public Pipeline {
+		public:
+			GLPipeline(CreateInfo& createInfo);
+			virtual void Recreate(CreateInfo& createInfo) override;
+			void Bind();
+			GLuint GetPrimitiveType();
+			~GLPipeline();
+		private:
+			void CreatePipeline(CreateInfo& createInfo);
+			GLuint CreateShaderModule(ShaderStageCreateInfo shaderStageCreateInfo);
+
 			GLuint program;
 			GLuint primitiveType;
 
@@ -12,13 +22,6 @@ namespace Grindstone {
 			int32_t scissorX, scissorY;
 			uint32_t scissorWidth, scissorHeight;
 			CullMode cullMode;
-
-			GLuint CreateShaderModule(ShaderStageCreateInfo shaderStageCreateInfo);
-		public:
-			GLPipeline(Pipeline::CreateInfo& createInfo);
-			void Bind();
-			GLuint GetPrimitiveType();
-			~GLPipeline();
 		};
 	}
 }

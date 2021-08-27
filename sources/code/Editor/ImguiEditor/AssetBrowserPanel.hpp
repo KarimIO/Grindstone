@@ -29,7 +29,7 @@ namespace Grindstone {
 				void ProcessDirectoryEntryClicks(std::filesystem::directory_entry entry);
 				void ClickDirectoryEntry(std::filesystem::directory_entry entry);
 				void RenderPath();
-				void RenderContextMenuConvertButton(std::filesystem::directory_entry entry);
+				void RenderContextMenuFileTypeSpecificEntries(std::filesystem::directory_entry entry);
 				void RenderAssetContextMenu(std::filesystem::directory_entry entry);
 				void RenderCurrentDirectoryContextMenu();
 				void TryRenameFile();

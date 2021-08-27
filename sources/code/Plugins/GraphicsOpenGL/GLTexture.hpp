@@ -16,12 +16,14 @@ namespace Grindstone {
 		public:
 			GLTexture(CreateInfo& ci);
 			GLTexture(CubemapCreateInfo& ci);
-			void bind(int i);
+			virtual void RecreateTexture(CreateInfo& createInfo) override;
+			void CreateTexture(CreateInfo& createInfo);
+			void Bind(int i);
 
-			virtual unsigned int getTexture();
+			virtual unsigned int GetTexture();
 
-			GLenum translateTexWrap(TextureWrapMode);
-			GLenum translateTexFilter(TextureFilter);
+			GLenum TranslateTexWrap(TextureWrapMode);
+			GLenum TranslateTexFilter(TextureFilter);
 
 			~GLTexture();
 		};
@@ -31,7 +33,7 @@ namespace Grindstone {
 			std::vector<uint32_t> targets;
 		public:
 			GLTextureBinding(CreateInfo& ci);
-			void bind();
+			void Bind();
 		};
 
 		class GLTextureBindingLayout : public TextureBindingLayout {
@@ -39,8 +41,8 @@ namespace Grindstone {
 			TextureSubBinding *subbindings;
 			uint32_t subbindingCount;
 			GLTextureBindingLayout(CreateInfo& ci);
-			TextureSubBinding getSubBinding(uint32_t i);
-			uint32_t getNumSubBindings();
+			TextureSubBinding GetSubBinding(uint32_t i);
+			uint32_t GetNumSubBindings();
 		};
 	}
 }

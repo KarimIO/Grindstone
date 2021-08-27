@@ -323,7 +323,7 @@ namespace Grindstone {
 
 		void GLCore::BindTexture(TextureBinding* binding) {
 			GLTextureBinding* b = (GLTextureBinding*)binding;
-			b->bind();
+			b->Bind();
 		}
 
 		void GLCore::BindPipeline(Pipeline* pipeline) {

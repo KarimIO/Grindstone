@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <fstream>
 
 #include "Utilities.hpp"
@@ -30,4 +31,8 @@ std::string Utils::LoadFileText(const char* inputPath) {
 		(std::istreambuf_iterator<char>()));
 
 	return content;
+}
+
+void Utils::FixStringSlashes(std::string& path) {
+	return std::replace(path.begin(), path.end(), '\\', '/');
 }

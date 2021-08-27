@@ -10,12 +10,14 @@ namespace Grindstone {
 	class BaseAssetRenderer;
 	class ShaderManager {
 		public:
-			Shader& LoadShader(BaseAssetRenderer* assetRenderer, const char* path);
+			virtual Shader& LoadShader(BaseAssetRenderer* assetRenderer, const char* path);
+			virtual void ReloadShaderIfLoaded(const char* path);
 		private:
 			bool TryGetShader(const char* path, Shader*& shader);
-			Shader& CreateShaderFromFile(const char* path);
+			void LoadShaderFromFile(bool isReloading, std::string& path, Shader& shaderAsset);
+			Shader& CreateNewShaderFromFile(std::string& path);
 			void CreateReflectionDataForShader(const char* path, Shader& shader);
-			void CreateShaderGraphicsPipeline(const char* path, Shader& shader);
+			void CreateShaderGraphicsPipeline(bool isReloading, const char* path, Shader& shader);
 		private:
 			std::map<std::string, Shader> shaders;
 	};

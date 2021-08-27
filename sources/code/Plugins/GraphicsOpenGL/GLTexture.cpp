@@ -14,6 +14,15 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		GLTexture::GLTexture(CreateInfo& createInfo) {
+			CreateTexture(createInfo);
+		}
+
+		void GLTexture::RecreateTexture(CreateInfo& createInfo) {
+			glDeleteTextures(1, &textureHandle);
+			CreateTexture(createInfo);
+		}
+
+		void GLTexture::CreateTexture(CreateInfo& createInfo) {
 			if (createInfo.isCubemap) {
 				isCubemap = true;
 				glGenTextures(1, &textureHandle);
@@ -57,11 +66,11 @@ namespace Grindstone {
 					}
 				}
 
-				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, translateTexWrap(createInfo.options.wrapModeU));
-				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, translateTexWrap(createInfo.options.wrapModeV));
-				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, translateTexWrap(createInfo.options.wrapModeW));
-				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, translateTexFilter(createInfo.options.magFilter));
-				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, translateTexFilter(createInfo.options.minFilter));
+				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, TranslateTexWrap(createInfo.options.wrapModeU));
+				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, TranslateTexWrap(createInfo.options.wrapModeV));
+				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, TranslateTexWrap(createInfo.options.wrapModeW));
+				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, TranslateTexFilter(createInfo.options.magFilter));
+				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, TranslateTexFilter(createInfo.options.minFilter));
 
 				glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 			}
@@ -107,10 +116,10 @@ namespace Grindstone {
 					}
 				}
 
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, translateTexWrap(createInfo.options.wrapModeU));
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, translateTexWrap(createInfo.options.wrapModeV));
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, translateTexFilter(createInfo.options.magFilter));
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, translateTexFilter(createInfo.options.minFilter));
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TranslateTexWrap(createInfo.options.wrapModeU));
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, TranslateTexWrap(createInfo.options.wrapModeV));
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TranslateTexFilter(createInfo.options.magFilter));
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TranslateTexFilter(createInfo.options.minFilter));
 
 				if (createInfo.options.shouldGenerateMipmaps)
 					glGenerateMipmap(GL_TEXTURE_2D);
@@ -119,11 +128,11 @@ namespace Grindstone {
 			}
 		}
 
-		unsigned int GLTexture::getTexture() {
+		unsigned int GLTexture::GetTexture() {
 			return textureHandle;
 		}
 
-		GLenum GLTexture::translateTexWrap(TextureWrapMode m) {
+		GLenum GLTexture::TranslateTexWrap(TextureWrapMode m) {
 			switch (m) {
 			default:
 				printf("Invalid Texture Wrap Mode!\r\n");
@@ -146,7 +155,7 @@ namespace Grindstone {
 			}
 		}
 
-		GLenum GLTexture::translateTexFilter(TextureFilter m) {
+		GLenum GLTexture::TranslateTexFilter(TextureFilter m) {
 			switch (m) {
 			default:
 				printf("Invalid Filter!\r\n");
@@ -200,16 +209,16 @@ namespace Grindstone {
 			if (createInfo.options.shouldGenerateMipmaps)
 				glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, translateTexWrap(createInfo.options.wrapModeU));
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, translateTexWrap(createInfo.options.wrapModeV));
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, translateTexWrap(createInfo.options.wrapModeW));
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, translateTexFilter(createInfo.options.magFilter));
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, translateTexFilter(createInfo.options.minFilter));
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, TranslateTexWrap(createInfo.options.wrapModeU));
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, TranslateTexWrap(createInfo.options.wrapModeV));
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, TranslateTexWrap(createInfo.options.wrapModeW));
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, TranslateTexFilter(createInfo.options.magFilter));
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, TranslateTexFilter(createInfo.options.minFilter));
 
 			glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 		}
 
-		void GLTexture::bind(int i) {
+		void GLTexture::Bind(int i) {
 			if (glIsTexture(textureHandle)) {
 				glActiveTexture(GL_TEXTURE0 + i);
 				glBindTexture(isCubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D, textureHandle);
@@ -235,10 +244,10 @@ namespace Grindstone {
 			}
 		}
 
-		void GLTextureBinding::bind() {
+		void GLTextureBinding::Bind() {
 			for (int i = 0; i < textures.size(); i++) {
 				if (textures[i])
-					textures[i]->bind(targets[i]);
+					textures[i]->Bind(targets[i]);
 			}
 		}
 
@@ -247,11 +256,11 @@ namespace Grindstone {
 			subbindingCount = createInfo.bindingCount;
 		}
 
-		TextureSubBinding GLTextureBindingLayout::getSubBinding(uint32_t i) {
+		TextureSubBinding GLTextureBindingLayout::GetSubBinding(uint32_t i) {
 			return subbindings[i];
 		}
 
-		uint32_t GLTextureBindingLayout::getNumSubBindings() {
+		uint32_t GLTextureBindingLayout::GetNumSubBindings() {
 			return subbindingCount;
 		}
 
