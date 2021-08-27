@@ -17,6 +17,8 @@ Material& MaterialManager::LoadMaterial(BaseAssetRenderer* assetRenderer, const 
 	return *material;
 }
 
+void MaterialManager::ReloadMaterialIfLoaded(const char* path) {}
+
 bool MaterialManager::TryGetMaterial(const char* path, Material*& material) {
 	auto& materialInMap = materials.find(path);
 	if (materialInMap != materials.end()) {

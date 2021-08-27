@@ -11,9 +11,10 @@ namespace Grindstone {
 
 	class MaterialManager {
 		public:
-			Material& LoadMaterial(BaseAssetRenderer* assetRenderer, const char* path);
-			bool TryGetMaterial(const char* path, Material*& material);
+			virtual Material& LoadMaterial(BaseAssetRenderer* assetRenderer, const char* path);
+			virtual void ReloadMaterialIfLoaded(const char* path);
 		private:
+			bool TryGetMaterial(const char* path, Material*& material);
 			Material& CreateMaterialFromFile(BaseAssetRenderer* assetRenderer, const char* path);
 			void CreateMaterialFromData(
 				std::filesystem::path relativePath,

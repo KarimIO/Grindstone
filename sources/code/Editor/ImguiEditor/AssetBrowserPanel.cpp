@@ -16,6 +16,7 @@
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/Assets/Textures/TextureManager.hpp"
 #include "EngineCore/Assets/Shaders/ShaderManager.hpp"
+#include "EngineCore/Assets/Materials/MaterialManager.hpp"
 #include "Plugins/GraphicsOpenGL/GLTexture.hpp"
 #include "ImguiEditor.hpp"
 
@@ -275,6 +276,11 @@ void AssetBrowserPanel::RenderContextMenuFileTypeSpecificEntries(std::filesystem
 
 			std::string pathDDS = path + ".dds";
 			engineCore.textureManager->ReloadTextureIfLoaded(pathDDS.c_str());
+		}
+	}
+	else if (firstDotExtension == ".gmat") {
+		if (ImGui::MenuItem("Reimport")) {
+			engineCore.materialManager->ReloadMaterialIfLoaded(path.c_str());
 		}
 	}
 	else if (firstDotExtension == ".dds") {

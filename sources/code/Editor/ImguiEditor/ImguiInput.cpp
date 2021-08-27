@@ -6,19 +6,18 @@
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/Events/Dispatcher.hpp"
 #include "ImguiInput.hpp"
+using namespace std::placeholders;
 using namespace Grindstone::Editor::ImguiEditor;
 using namespace Grindstone::Events;
 
-bool OnMouseMove(BaseEvent* ev, void* data) {
-	ImGuiIO* io = (ImGuiIO*)data;
+bool ImguiInput::OnMouseMove(BaseEvent* ev) {
 	MouseMovedEvent* evCast = (MouseMovedEvent*)ev;
-	io->MousePos.x = (float)evCast->mouseX;
-	io->MousePos.y = (float)evCast->mouseY;
+	io.MousePos.x = (float)evCast->mouseX;
+	io.MousePos.y = (float)evCast->mouseY;
 	return true;
 }
 
-bool OnMousePressed(BaseEvent* ev, void* data) {
-	ImGuiIO* io = (ImGuiIO*)data;
+bool ImguiInput::OnMousePressed(BaseEvent* ev) {
 	MousePressEvent* evCast = (MousePressEvent*)ev;
 	int mouseBtn = (int)evCast->code;
 	if (mouseBtn == 2) {
@@ -28,45 +27,43 @@ bool OnMousePressed(BaseEvent* ev, void* data) {
 		mouseBtn = 2;
 	}
 
-	io->MouseDown[mouseBtn] = evCast->isPressed;
+	io.MouseDown[mouseBtn] = evCast->isPressed;
 	return true;
 }
 
-bool OnMouseScrolled(BaseEvent* ev, void* data) {
-	ImGuiIO* io = (ImGuiIO*)data;
+bool ImguiInput::OnMouseScrolled(BaseEvent* ev) {
 	MouseScrolledEvent* evCast = (MouseScrolledEvent*)ev;
-	io->MouseWheel = evCast->scrollY;
-	io->MouseWheelH = evCast->scrollX;
+	io.MouseWheel = evCast->scrollY;
+	io.MouseWheelH = evCast->scrollX;
 	return true;
 }
 
-bool OnKeyPressed(BaseEvent* ev, void* data) {
-	ImGuiIO* io = (ImGuiIO*)data;
+bool ImguiInput::OnKeyPressed(BaseEvent* ev) {
 	KeyPressEvent* evCast = (KeyPressEvent*)ev;
-	io->KeysDown[(int)evCast->code] = evCast->isPressed;
+	io.KeysDown[(int)evCast->code] = evCast->isPressed;
 
-	io->KeyCtrl = io->KeysDown[(int)KeyPressCode::LeftControl] || io->KeysDown[(int)KeyPressCode::Control];
-	io->KeyShift = io->KeysDown[(int)KeyPressCode::LeftShift] || io->KeysDown[(int)KeyPressCode::Shift];
-	io->KeyAlt = io->KeysDown[(int)KeyPressCode::LeftAlt] || io->KeysDown[(int)KeyPressCode::Alt];
-	// io->KeySuper = io->KeysDown[(int)KeyPressCode:] || io->KeysDown[(int)KeyPressCode::RIGHT_SUPER];
+	io.KeyCtrl = io.KeysDown[(int)KeyPressCode::LeftControl] || io.KeysDown[(int)KeyPressCode::Control];
+	io.KeyShift = io.KeysDown[(int)KeyPressCode::LeftShift] || io.KeysDown[(int)KeyPressCode::Shift];
+	io.KeyAlt = io.KeysDown[(int)KeyPressCode::LeftAlt] || io.KeysDown[(int)KeyPressCode::Alt];
+	// io.KeySuper = io.KeysDown[(int)KeyPressCode:] || io.KeysDown[(int)KeyPressCode::RIGHT_SUPER];
 
 	return true;
 }
 
-bool OnCharacterTyped(BaseEvent* ev, void* data) {
-	ImGuiIO* io = (ImGuiIO*)data;
+bool ImguiInput::OnCharacterTyped(BaseEvent* ev) {
 	CharacterTypedEvent* evCast = (CharacterTypedEvent*)ev;
-	io->AddInputCharacter(evCast->character);
+	io.AddInputCharacter(evCast->character);
 	return true;
 }
 
 ImguiInput::ImguiInput(ImGuiIO& io, EngineCore* engineCore) : io(io) {
 	auto eventDispatcher = engineCore->GetEventDispatcher();
-	eventDispatcher->AddEventListener(EventType::MouseMoved, &OnMouseMove, &io);
-	eventDispatcher->AddEventListener(EventType::MouseButton, &OnMousePressed, &io);
-	eventDispatcher->AddEventListener(EventType::MouseScrolled, &OnMouseScrolled, &io);
-	eventDispatcher->AddEventListener(EventType::KeyPress, &OnKeyPressed, &io);
-	eventDispatcher->AddEventListener(EventType::CharacterTyped, &OnCharacterTyped, &io);
+
+	eventDispatcher->AddEventListener(EventType::MouseMoved, std::bind(&ImguiInput::OnMouseMove, this, _1));
+	eventDispatcher->AddEventListener(EventType::MouseButton, std::bind(&ImguiInput::OnMousePressed, this, _1));
+	eventDispatcher->AddEventListener(EventType::MouseScrolled, std::bind(&ImguiInput::OnMouseScrolled, this, _1));
+	eventDispatcher->AddEventListener(EventType::KeyPress, std::bind(&ImguiInput::OnKeyPressed, this, _1));
+	eventDispatcher->AddEventListener(EventType::CharacterTyped, std::bind(&ImguiInput::OnCharacterTyped, this, _1));
 
 	io.KeyMap[ImGuiKey_Tab] = (int)Events::KeyPressCode::Tab;
 	io.KeyMap[ImGuiKey_LeftArrow] = (int)Events::KeyPressCode::ArrowLeft;

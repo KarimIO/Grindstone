@@ -15,7 +15,6 @@ namespace Grindstone {
 			virtual uint32_t GetAttachment(uint32_t attachmentIndex) override;
 			virtual void Clear(ClearMode mask) override;
 			virtual void Resize(uint32_t width, uint32_t height) override;
-			virtual void CopyFrom(Framebuffer *) override;
 			virtual void Bind() override;
 			virtual void BindWrite() override;
 			virtual void BindRead() override;

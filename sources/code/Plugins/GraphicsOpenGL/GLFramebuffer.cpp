@@ -91,6 +91,9 @@ namespace Grindstone {
 		}
 		
 		void GLFramebuffer::Resize(uint32_t width, uint32_t height) {
+			width = std::max(width, 1u);
+			height = std::max(height, 1u);
+
 			for (uint32_t i = 0; i < numRenderTargetLists; ++i) {
 				RenderTarget* renderTargetList = renderTargetLists[i];
 				renderTargetList->Resize(width, height);
@@ -112,10 +115,6 @@ namespace Grindstone {
 		void GLFramebuffer::Blit(uint32_t i, uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 			glReadBuffer(GL_COLOR_ATTACHMENT0 + i);
 			glBlitFramebuffer(x, y, x + w, y + h, x, y, x + w, y + h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-		}
-
-		void GLFramebuffer::CopyFrom(Framebuffer *) {
-
 		}
 
 		void GLFramebuffer::Bind() {

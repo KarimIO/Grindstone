@@ -6,6 +6,10 @@
 namespace Grindstone {
 	class BaseRenderer;
 
+	namespace Events {
+		struct BaseEvent;
+	}
+
 	struct CameraComponent {
 		bool isOrthographic = false;
 		float near = 0.1f;
@@ -13,6 +17,8 @@ namespace Grindstone {
 		float fov = glm::radians(90.0f);
 		float aspectRatio = 800.0f / 600.0f;
 		BaseRenderer* renderer = nullptr;
+
+		bool OnWindowResize(Events::BaseEvent* ev);
 
 		REFLECT("Camera")
 	};

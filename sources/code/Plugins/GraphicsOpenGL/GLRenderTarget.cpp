@@ -9,8 +9,8 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		GLRenderTarget::GLRenderTarget(CreateInfo* createInfoList, uint32_t createInfoCount, bool isCubemap) {
 			renderTargetCount = createInfoCount;
-			width = createInfoList[0].width;
-			height = createInfoList[0].height;
+			width = std::max(createInfoList[0].width, 1u);
+			height = std::max(createInfoList[0].height, 1u);
 			this->isCubemap = isCubemap;
 
 			renderTargetHandles = new uint32_t[renderTargetCount];

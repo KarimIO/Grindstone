@@ -16,6 +16,7 @@
 #include "EngineCore/Assets/AssetRendererManager.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "EngineCore/CoreComponents/Lights/PointLightComponent.hpp"
+#include "Common/Event/WindowEvent.hpp"
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
@@ -67,6 +68,15 @@ DeferredRenderer::~DeferredRenderer() {
 	core->DeleteVertexArrayObject(planePostProcessVao);
 	core->DeletePipeline(lightPipeline);
 	core->DeletePipeline(tonemapPipeline);
+}
+
+bool DeferredRenderer::OnWindowResize(Events::BaseEvent* ev) {
+	if (ev->GetEventType() == Events::EventType::WindowResize) {
+		Events::WindowResizeEvent* winResizeEvent = (Events::WindowResizeEvent*)ev;
+		Resize(winResizeEvent->width, winResizeEvent->height);
+	}
+
+	return false;
 }
 
 void DeferredRenderer::Resize(uint32_t width, uint32_t height) {

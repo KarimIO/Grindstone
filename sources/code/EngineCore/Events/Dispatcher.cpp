@@ -11,8 +11,8 @@ Dispatcher::Dispatcher() {
 	}
 }
 
-void Dispatcher::AddEventListener(EventType eventType, bool (*fn)(BaseEvent*, void*), void* data) {
-	eventListeners[eventType]->emplace_back(EventCallback{fn, data});
+void Dispatcher::AddEventListener(EventType eventType, std::function<bool(BaseEvent*)> function) {
+	eventListeners[eventType]->emplace_back(function);
 }
 
 void Dispatcher::Dispatch(BaseEvent* event) {
@@ -29,9 +29,8 @@ void Dispatcher::HandleEvents() {
 
 void Dispatcher::HandleEvent(BaseEvent* eventToHandle) {
 	EventListenerList* eventListenerList = eventListeners[eventToHandle->GetEventType()];
-	for (EventCallback& eventCallback : *eventListenerList) {
-		bool (*methodPtr)(BaseEvent*) = (bool (*)(BaseEvent*))eventCallback.fn;
-		bool isEventHandled = eventCallback.fn(eventToHandle, eventCallback.data);
+	for (auto& eventCallback : *eventListenerList) {
+		bool isEventHandled = eventCallback(eventToHandle);
 
 		if (isEventHandled) {
 			return;

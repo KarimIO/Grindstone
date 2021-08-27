@@ -8,9 +8,14 @@ namespace Grindstone {
 		class Framebuffer;
 	}
 
+	namespace Events {
+		struct BaseEvent;
+	}
+
 	class BaseRenderer {
 	public:
 		virtual ~BaseRenderer() {};
+		virtual bool OnWindowResize(Events::BaseEvent*) = 0;
 		virtual void Resize(uint32_t width, uint32_t height) = 0;
 		virtual void Render(
 			entt::registry& registry,

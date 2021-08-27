@@ -62,7 +62,9 @@ void ViewportPanel::HandleInput() {
 
 void ViewportPanel::RenderCamera() {
 	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-	camera->ResizeViewport((uint32_t)viewportPanelSize.x, (uint32_t)viewportPanelSize.y);
+	uint32_t width = std::max((int)viewportPanelSize.x, 1);
+	uint32_t height = std::max((int)viewportPanelSize.y, 1);
+	camera->ResizeViewport(width, height);
 	camera->Render();
 }
 

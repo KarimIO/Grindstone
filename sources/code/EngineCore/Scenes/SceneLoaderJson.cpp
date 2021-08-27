@@ -16,6 +16,8 @@
 #include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
 #include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
 #include "EngineCore/Assets/Materials/MaterialManager.hpp"
+#include "EngineCore/Events/Dispatcher.hpp"
+#include "EngineCore/Rendering/BaseRenderer.hpp"
 
 #include "EngineCore/Audio/AudioClip.hpp"
 #include "EngineCore/Audio/AudioCore.hpp"
@@ -92,9 +94,19 @@ bool SceneLoaderJson::Load(const char* path) {
 		source->Play();
 	});
 
+	auto eventDispatcher = engineCore.GetEventDispatcher();
 	auto& cameraView = registry.view<CameraComponent>();
 	cameraView.each([&](CameraComponent& cameraComponent) {
 		cameraComponent.renderer = EngineCore::GetInstance().CreateRenderer();
+		eventDispatcher->AddEventListener(
+			Events::EventType::WindowResize,
+			std::bind(&BaseRenderer::OnWindowResize, cameraComponent.renderer, std::placeholders::_1)
+		);
+
+		eventDispatcher->AddEventListener(
+			Events::EventType::WindowResize,
+			std::bind(&CameraComponent::OnWindowResize, &cameraComponent, std::placeholders::_1)
+		);
 	});
 
 	return true;
