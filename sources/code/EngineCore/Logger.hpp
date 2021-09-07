@@ -7,6 +7,7 @@
 class Logger {
 public:
 	static void init(std::string path);
+	~Logger();
 		
 	static spdlog::logger *get();
 
