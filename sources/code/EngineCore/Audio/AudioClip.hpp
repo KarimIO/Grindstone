@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "AL/al.h"
+#include "al.h"
 
 namespace Grindstone {
 	namespace Audio {

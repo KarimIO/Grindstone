@@ -2,8 +2,8 @@
 #include <fstream>
 #include <vector>
 #include <bit>
-#include "AL/al.h"
-#include "AL/alc.h"
+#include "al.h"
+#include "alc.h"
 #define DR_WAV_IMPLEMENTATION
 #include "dr_wav.h"
 
