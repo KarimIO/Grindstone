@@ -3,23 +3,55 @@
 
 #include <string>
 #include <spdlog/spdlog.h>
+#include "Common/Logging.hpp"
 
-class Logger {
-public:
-	static void init(std::string path);
-	~Logger();
-		
-	static spdlog::logger *get();
+namespace Grindstone {
+	class Logger {
+	public:
+		static void Initialize(std::string path);
 
-private:
-	static spdlog::logger *debugLogger;
-};
+		template<typename... Args>
+		static void Print(const char* fmt, const Args &... args) {
+			logger->info(fmt, args...);
+		}
 
-// Client log macros
-#define GRIND_TRC(...)			Logger::get()->trace(__VA_ARGS__)
-#define GRIND_LOG(...)			Logger::get()->info(__VA_ARGS__)
-#define GRIND_WARN(...)			Logger::get()->warn(__VA_ARGS__)
-#define GRIND_ERROR(...)		Logger::get()->error(__VA_ARGS__)
-#define GRIND_FATAL(...)		GRIND_ERROR(__VA_ARGS__)
-//Logger::getDebugLogger()->fatal(__VA_ARGS__)
+		template<typename... Args>
+		static void PrintTrace(const char* fmt, const Args &... args) {
+			logger->trace(fmt, args...);
+		}
+
+		template<typename... Args>
+		static void PrintWarning(const char* fmt, const Args &... args) {
+			logger->warn(fmt, args...);
+		}
+
+		template<typename... Args>
+		static void PrintError(const char* fmt, const Args &... args) {
+			logger->error(fmt, args...);
+		}
+
+		template<typename... Args>
+		static void Print(LogSeverity logSeverity, const char* fmt, const Args &... args) {
+			switch (logSeverity) {
+			case LogSeverity::Info:
+				logger->info(fmt, args...);
+				break;
+			case LogSeverity::Trace:
+				logger->trace(fmt, args...);
+				break;
+			case LogSeverity::Warning:
+				logger->warn(fmt, args...);
+				break;
+			case LogSeverity::Error:
+				logger->error(fmt, args...);
+				break;
+			}
+		}
+		~Logger();
+
+	private:
+		static spdlog::logger *logger;
+	};
+}
+
 #endif

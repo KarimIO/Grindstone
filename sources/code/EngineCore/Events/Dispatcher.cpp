@@ -6,7 +6,7 @@
 using namespace Grindstone::Events;
 
 Dispatcher::Dispatcher() {
-	for (size_t i = 0; i <= (size_t)Events::EventType::MouseScrolled; i++) {
+	for (size_t i = 0; i < (size_t)Events::EventType::Last; i++) {
 		eventListeners[(Events::EventType)i] = (EventListenerList*)new std::vector<EventListener*>();
 	}
 }

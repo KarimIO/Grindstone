@@ -14,7 +14,9 @@ namespace Grindstone {
 
 			MouseButton,
 			MouseMoved,
-			MouseScrolled
+			MouseScrolled,
+			PrintMessage,
+			Last
 		}; // enum class EventType
 	} // namespace Events
 } // namespace Grindstone

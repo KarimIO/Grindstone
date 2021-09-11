@@ -392,11 +392,11 @@ void AssetBrowserPanel::TryRenameFile() {
 			pathRenameNewName = "";
 		}
 		catch (std::filesystem::filesystem_error error) {
-			std::cerr << error.what() << std::endl;
+			Editor::Manager::Print(LogSeverity::Error, "Rename failed: %s!", error.what());
 		}
 	}
 	else {
-		std::cerr << "This name is already used." << std::endl;
+		Editor::Manager::Print(LogSeverity::Error, "Could not rename file, this name is already used.");
 	}
 }
 

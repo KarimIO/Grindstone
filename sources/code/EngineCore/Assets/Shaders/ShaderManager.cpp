@@ -5,6 +5,7 @@
 #include "Common/Graphics/Core.hpp"
 #include "ShaderReflectionLoader.hpp"
 #include "EngineCore/Assets/BaseAssetRenderer.hpp"
+#include "EngineCore/Logger.hpp"
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
@@ -31,7 +32,7 @@ std::string GetShaderPath(const char* basePath, ShaderStage shaderStage, Graphic
 		shaderStageExtension = ".comp";
 		break;
 	default:
-		std::cout << "Incorrect shader stage" << std::endl;
+		Logger::PrintError("Incorrect shader stage");
 		break;
 	}
 

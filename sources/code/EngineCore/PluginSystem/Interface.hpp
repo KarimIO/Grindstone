@@ -4,6 +4,7 @@
 #include "EngineCore/ECS/SystemFactory.hpp"
 #include "EngineCore/ECS/ComponentFunctions.hpp"
 #include "Common/Window/Window.hpp"
+#include "Common/Logging.hpp"
 
 namespace Grindstone {
     class EngineCore;
@@ -27,9 +28,33 @@ namespace Grindstone {
         public:
             Interface(Manager* manager);
 
+            template<typename... Args>
+            static void Print(const char* fmt, const Args &... args) {
+                Logger::Print(fmt, args...);
+            }
+
+            template<typename... Args>
+            static void PrintTrace(const char* fmt, const Args &... args) {
+                Logger::PrintTrace(fmt, args...);
+            }
+
+            template<typename... Args>
+            static void PrintWarning(const char* fmt, const Args &... args) {
+                Logger::PrintWarning(fmt, args...);
+            }
+
+            template<typename... Args>
+            static void PrintError(const char* fmt, const Args &... args) {
+                Logger::PrintError(fmt, args...);
+            }
+
+            template<typename... Args>
+            static void Print(LogSeverity logSeverity, const char* fmt, const Args &... args) {
+                Logger::Print(logSeverity, fmt, args...);
+            }
+
             virtual EngineCore* getEngineCore();
             virtual GraphicsAPI::Core* getGraphicsCore();
-            virtual void log(const char* msg);
             virtual bool loadPlugin(const char* name);
             virtual void loadPluginCritical(const char* name);
             virtual void registerGraphicsCore(Grindstone::GraphicsAPI::Core* core);

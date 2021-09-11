@@ -29,15 +29,16 @@
 using namespace Grindstone;
 
 bool EngineCore::Initialize(CreateInfo& createInfo) {
-	Logger::init("../log/output.log");
+	eventDispatcher = new Events::Dispatcher();
+
+	Logger::Initialize("../log/output.log");
 	GRIND_PROFILE_BEGIN_SESSION("Loading", "../log/grind-profile-load.json");
-	GRIND_LOG("Initializing {0}...", createInfo.applicationTitle);
+	Logger::Print("Initializing {0}...", createInfo.applicationTitle);
 
 	// Load core (Logging, ECS and Plugin Manager)
 	pluginManager = new Plugins::Manager(this);
 	pluginManager->load("PluginGraphicsOpenGL");
 
-	eventDispatcher = new Events::Dispatcher();
 	inputManager = new Input::Manager(eventDispatcher);
 
 	Window::CreateInfo windowCreationInfo;
@@ -72,7 +73,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 	sceneManager->LoadDefaultScene();
 
-	GRIND_LOG("{0} Initialized.", createInfo.applicationTitle);
+	Logger::Print("{0} Initialized.", createInfo.applicationTitle);
 	GRIND_PROFILE_END_SESSION();
 
 	return true;
@@ -101,10 +102,10 @@ void EngineCore::UpdateWindows() {
 }
 
 EngineCore::~EngineCore() {
-	GRIND_LOG("Closing...");
+	Logger::Print("Closing...");
 	delete componentRegistrar;
 	delete systemRegistrar;
-	GRIND_LOG("Closed.");
+	Logger::Print("Closed.");
 }
 
 void EngineCore::RegisterGraphicsCore(GraphicsAPI::Core* graphicsCore) {
@@ -154,4 +155,11 @@ void EngineCore::CalculateDeltaTime() {
 
 double EngineCore::GetDeltaTime() {
 	return deltaTime;
+}
+
+void EngineCore::Print(LogSeverity logSeverity, const char* textFormat, ...) {
+	va_list args;
+	va_start(args, textFormat);
+	Logger::Print(logSeverity, textFormat, args);
+	va_end(args);
 }

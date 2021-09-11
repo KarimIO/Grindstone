@@ -17,10 +17,6 @@ GraphicsAPI::Core* Plugins::Interface::getGraphicsCore() {
 	return graphicsCore;
 }
 
-void Plugins::Interface::log(const char* msg) {
-	GRIND_LOG(msg);
-}
-
 bool Plugins::Interface::loadPlugin(const char* name) {
 	return manager->load(name);
 }

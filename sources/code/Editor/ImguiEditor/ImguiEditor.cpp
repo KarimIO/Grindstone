@@ -8,10 +8,12 @@
 
 #include "Common/Window/WindowManager.hpp"
 #include "EngineCore/EngineCore.hpp"
+#include "Editor/EditorManager.hpp"
 #include "Modals/ModelConverterModal.hpp"
 #include "Modals/ImageConverterModal.hpp"
 #include "ViewportPanel.hpp"
 #include "ImguiEditor.hpp"
+#include "ConsolePanel.hpp"
 #include "SystemPanel.hpp"
 #include "InspectorPanel.hpp"
 #include "AssetBrowserPanel.hpp"
@@ -32,11 +34,11 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	ImGui::StyleColorsDark();
 
 	if (gl3wInit()) {
-		fprintf(stderr, "failed to initialize OpenGL\n");
+		Editor::Manager::Print(LogSeverity::Error, "Failed to initialize OpenGL");
 		return;
 	}
 	if (!gl3wIsSupported(3, 2)) {
-		fprintf(stderr, "OpenGL 3.2 not supported\n");
+		Editor::Manager::Print(LogSeverity::Error, "OpenGL 3.2 not supported\n");
 		return;
 	}
 
@@ -53,6 +55,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	inspectorPanel = new InspectorPanel(engineCore);
 	assetBrowserPanel = new AssetBrowserPanel(engineCore, this);
 	viewportPanel = new ViewportPanel();
+	consolePanel = new ConsolePanel();
 	systemPanel = new SystemPanel(engineCore->GetSystemRegistrar());
 	menubar = new Menubar(this);
 }
@@ -81,6 +84,7 @@ void ImguiEditor::Render() {
 	assetBrowserPanel->Render();
 	sceneHeirarchyPanel->Render();
 	viewportPanel->Render();
+	consolePanel->Render();
 	systemPanel->Render();
 	inspectorPanel->Render();
 }

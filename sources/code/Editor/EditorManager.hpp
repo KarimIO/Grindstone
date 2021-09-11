@@ -2,6 +2,7 @@
 
 #include "Commands/CommandList.hpp"
 #include "Selection.hpp"
+#include "Common/Logging.hpp"
 
 namespace Grindstone {
 	class EngineCore;
@@ -23,6 +24,7 @@ namespace Grindstone {
 			bool Initialize();
 			~Manager();
 			void Run();
+			static void Print(LogSeverity logSeverity, const char* msg, ...);
 		private:
 			bool LoadEngine();
 			bool SetupImguiEditor();

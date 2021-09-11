@@ -1,31 +1,32 @@
 #include <iostream>
+#include "EngineCore/Logger.hpp"
 #include "AudioCore.hpp"
+using namespace Grindstone;
 using namespace Grindstone::Audio;
 
 bool CheckOpenALErrors(const std::string& filename, const std::uint_fast32_t line) {
 	ALenum error = alGetError();
 	if (error != AL_NO_ERROR) {
-		std::cerr << "***ERROR*** (" << filename << ": " << line << ")\n";
+		Logger::PrintError("***ERROR*** ({0}: {1})", filename, line);
 		switch (error) {
 		case AL_INVALID_NAME:
-			std::cerr << "AL_INVALID_NAME: a bad name (ID) was passed to an OpenAL function";
+			Logger::PrintError("AL_INVALID_NAME: a bad name (ID) was passed to an OpenAL function");
 			break;
 		case AL_INVALID_ENUM:
-			std::cerr << "AL_INVALID_ENUM: an invalid enum value was passed to an OpenAL function";
+			Logger::PrintError("AL_INVALID_ENUM: an invalid enum value was passed to an OpenAL function");
 			break;
 		case AL_INVALID_VALUE:
-			std::cerr << "AL_INVALID_VALUE: an invalid value was passed to an OpenAL function";
+			Logger::PrintError("AL_INVALID_VALUE: an invalid value was passed to an OpenAL function");
 			break;
 		case AL_INVALID_OPERATION:
-			std::cerr << "AL_INVALID_OPERATION: the requested operation is not valid";
+			Logger::PrintError("AL_INVALID_OPERATION: the requested operation is not valid");
 			break;
 		case AL_OUT_OF_MEMORY:
-			std::cerr << "AL_OUT_OF_MEMORY: the requested operation resulted in OpenAL running out of memory";
+			Logger::PrintError("AL_OUT_OF_MEMORY: the requested operation resulted in OpenAL running out of memory");
 			break;
 		default:
-			std::cerr << "UNKNOWN AL ERROR: " << error;
+			Logger::PrintError("UNKNOWN AL ERROR: {0}", error);
 		}
-		std::cerr << std::endl;
 		return false;
 	}
 	return true;
@@ -55,7 +56,7 @@ Core::~Core() {
 
 	if (device) {
 		if (alcCloseDevice(device)) {
-			std::cout << "Could not close OpenAL Device.\n";
+			Logger::PrintError("Could not close OpenAL Device.");
 		}
 	}
 }

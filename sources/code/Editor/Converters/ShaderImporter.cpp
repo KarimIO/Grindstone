@@ -128,22 +128,17 @@ namespace Grindstone {
 		ShaderImporter::ShaderImporter() : reflectionWriter(reflectionStringBuffer) {}
 
 		void ShaderImporter::convertFile(const char* filePath) {
-			try {
-				path = filePath;
+			path = filePath;
 
-				basePath = path;
-				auto lastPeriod = path.find_last_of('.');
-				if (lastPeriod != -1) {
-					basePath = path.substr(0, lastPeriod);
-				}
-
-				sourceFileContents = readTextFile(filePath);
-
-				process();
+			basePath = path;
+			auto lastPeriod = path.find_last_of('.');
+			if (lastPeriod != -1) {
+				basePath = path.substr(0, lastPeriod);
 			}
-			catch (std::runtime_error& e) {
-				std::cerr << e.what() << std::endl;
-			}
+
+			sourceFileContents = readTextFile(filePath);
+
+			process();
 		}
 
 		void ShaderImporter::process() {
@@ -152,6 +147,7 @@ namespace Grindstone {
 			extractSubmodules();
 			writeReflectionDocument();
 		}
+
 		void ShaderImporter::writeReflectionStruct(std::vector<UniformBuffer>& structs) {
 			reflectionWriter.StartArray();
 			for each (auto & structMeta in structs) {

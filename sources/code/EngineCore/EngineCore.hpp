@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <chrono>
+#include "Common/Logging.hpp"
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -65,6 +66,8 @@ namespace Grindstone {
 		virtual ECS::ComponentRegistrar* GetComponentRegistrar();
 		virtual GraphicsAPI::Core* GetGraphicsCore();
 		virtual BaseRenderer* CreateRenderer();
+
+		virtual void Print(LogSeverity logSeverity, const char* msg, ...);
 
 		virtual void CalculateDeltaTime();
 		virtual double GetDeltaTime();

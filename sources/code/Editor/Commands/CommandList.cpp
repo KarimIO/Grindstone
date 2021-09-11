@@ -53,20 +53,12 @@ namespace Grindstone {
 			canUndo = true;
 			canRedo = false;
 
-			printf(
-				"i: %i, s: %i, e: %i, count: %i\n", 
-				(int)commandIndex,
-				(int)stackBeginIndex,
-				(int)stackEndIndex,
-				(int)usedCommandCount
-			);
 			auto ac = (AddEntityCommand*)commands[0];
 			uint32_t a = ac ? (std::uint32_t)ac->entityId : 69;
 			auto bc = (AddEntityCommand*)commands[1];
 			uint32_t b = bc ? (std::uint32_t)bc->entityId : 69;
 			auto cc = (AddEntityCommand*)commands[2];
 			uint32_t c = cc ? (std::uint32_t)cc->entityId : 69;
-			printf("a: %i, b: %i, c: %i\n", a, b, c);
 		}
 
 		bool CommandList::HasAvailableRedo() {
