@@ -22,10 +22,6 @@ spdlog::logger *Logger::logger;
 class EditorSink : public spdlog::sinks::base_sink<std::mutex> {
 protected:
 	void sink_it_(const spdlog::details::log_msg& msg) override {
-		// log_msg is a struct containing the log entry info like level, timestamp, thread id etc.
-		// msg.raw contains pre formatted log
-
-		// If needed (very likely but not mandatory), the sink formats the message before sending it to its final destination:
 		fmt::memory_buffer formatted;
 		base_sink<std::mutex>::formatter_->format(msg, formatted);
 
@@ -36,9 +32,7 @@ protected:
 		dispatcher->Dispatch(ev);
 	}
 
-	void flush_() override {
-		//std::cout << std::flush;
-	}
+	void flush_() override {}
 };
 
 void Logger::Initialize(std::string path) {
@@ -46,13 +40,13 @@ void Logger::Initialize(std::string path) {
 	
 	auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 	consoleSink->set_level(spdlog::level::trace);
-	//consoleSink->set_pattern("[multi_sink_example] [%^%l%$] %v");
 
 	auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path, true);
 	fileSink->set_level(spdlog::level::trace);
 
 	auto editorSink = std::make_shared<EditorSink>();
 	editorSink->set_level(spdlog::level::trace);
+	editorSink->set_pattern("[%I:%M:%S:%e %p] [%l] %v");
 
 	logger = new spdlog::logger("Debug Logger", { consoleSink, fileSink, editorSink });
 	logger->set_level(spdlog::level::trace);
