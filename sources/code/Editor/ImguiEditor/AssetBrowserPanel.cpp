@@ -524,7 +524,7 @@ void AssetBrowserPanel::RenderAssets() {
 	RefreshAssetsIfNecessary();
 
 	auto assetPanel = ImGui::GetID("#assetspanel");
-	ImGui::BeginChildFrame(assetPanel, ImVec2(0, 0), ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground);
+	ImGui::BeginChildFrame(assetPanel, ImVec2(0, 0), ImGuiWindowFlags_NoBackground);
 
 	if (ImGui::BeginTable("assetTable", columnCount)) {
 		RenderAssetSet(sortedDirectories);
@@ -546,6 +546,8 @@ void AssetBrowserPanel::RenderAssets() {
 }
 
 void AssetBrowserPanel::RenderSidebar() {
+	auto sidebarId = ImGui::GetID("#assetSidebar");
+	ImGui::BeginChildFrame(sidebarId, ImVec2(0, 0), ImGuiWindowFlags_NoBackground);
 	if (rootDirectory.subdirectories.empty()) {
 		ImGui::Text("No items in directory.");
 		return;
@@ -554,6 +556,7 @@ void AssetBrowserPanel::RenderSidebar() {
 	for (auto directory : rootDirectory.subdirectories) {
 		RenderSidebarSubdirectory(directory);
 	}
+	ImGui::EndChildFrame();
 }
 
 void AssetBrowserPanel::RenderSidebarSubdirectory(Directory& directory) {
@@ -587,21 +590,21 @@ void AssetBrowserPanel::Render() {
 
 		RenderTopBar();
 
-		if (ImGui::BeginTable("assetBrowserSplit", 2, ImGuiTableFlags_Resizable)) {
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
+		if (ImGui::BeginTable("assetBrowserSplit", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX)) {
 			ImGui::TableNextColumn();
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
 			RenderSidebar();
+			ImGui::PopStyleVar();
 
 			ImGui::TableNextColumn();
 			RenderCurrentDirectoryContextMenu();
 			RenderPath();
 			RenderAssets();
 
-			ImGui::PopStyleVar();
 
 			ImGui::EndTable();
 		}
-	
+
 		ImGui::End();
 		ImGui::PopStyleVar();
 	}
