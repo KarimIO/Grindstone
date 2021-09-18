@@ -16,3 +16,6 @@
 [submodule "sources/deps/shaderc"]
 	path = sources/deps/shaderc
 	url = https://github.com/google/shaderc.git
+[submodule "sources/deps/efsw"]
+	path = sources/deps/efsw
+	url = https://github.com/SpartanJ/efsw.git

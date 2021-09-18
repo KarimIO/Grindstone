@@ -42,20 +42,20 @@ void Selection::ClearFiles() {
 	selectedFiles.clear();
 }
 
-void Selection::SetSelectedFile(const std::filesystem::path& path) {
+void Selection::SetSelectedFile(const std::filesystem::directory_entry& path) {
 	Clear();
 	AddFile(path);
 }
 
-void Selection::AddFile(const std::filesystem::path& path) {
+void Selection::AddFile(const std::filesystem::directory_entry& path) {
 	selectedFiles.insert(path);
 }
 
-bool Selection::IsFileSelected(const std::filesystem::path& path) {
+bool Selection::IsFileSelected(const std::filesystem::directory_entry& path) {
 	return selectedFiles.find(path) != selectedFiles.end();
 }
 
-void Selection::RemoveFile(const std::filesystem::path& path) {
+void Selection::RemoveFile(const std::filesystem::directory_entry& path) {
 	selectedFiles.erase(selectedFiles.find(path));
 }
 
@@ -63,6 +63,6 @@ size_t Selection::GetSelectedFileCount() {
 	return selectedFiles.size();
 }
 
-std::filesystem::path Selection::GetSingleSelectedFile() {
+std::filesystem::directory_entry Selection::GetSingleSelectedFile() {
 	return *selectedFiles.begin();
 }

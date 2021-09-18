@@ -79,4 +79,4 @@ target_include_directories(Editor
 
 set(SHADERC_LIBRARY "" CACHE STRING "Location of ShaderC Library")
 
-target_link_libraries(Editor ${SHADERC_LIBRARY} ${assimp_LIBRARIES} ${OPENGL_gl_LIBRARY} ${CMAKE_DL_LIBS})
+target_link_libraries(Editor ${DEPS_DIR}/efsw/Debug/efsw.lib ${SHADERC_LIBRARY} ${assimp_LIBRARIES} ${OPENGL_gl_LIBRARY} ${CMAKE_DL_LIBS})

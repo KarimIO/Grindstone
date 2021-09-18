@@ -16,6 +16,7 @@ namespace Grindstone {
 				InspectorPanel(EngineCore* engineCore);
 				void Render();
 			private:
+				void RenderContents();
 				bool isShowingPanel = true;
 				EngineCore* engineCore = nullptr;
 				ComponentInspector* componentInspector = nullptr;

@@ -12,5 +12,6 @@ namespace Grindstone {
 
 	struct ConsoleMessage {
 		std::string message;
+		LogSeverity logSeverity;
 	};
 };

@@ -22,12 +22,22 @@ namespace Grindstone {
 				AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor);
 				void Render();
 			private:
+				struct Directory {
+					std::filesystem::directory_entry path;
+					std::vector<Directory> subdirectories;
+					std::vector<std::filesystem::directory_entry> files;
+
+					Directory() = default;
+					Directory(std::filesystem::directory_entry path) : path(path) {}
+				};
+
+				void CreateInitialFileStructure(Directory& directory, std::filesystem::directory_iterator);
 				void SetPath(std::filesystem::path path);
 				void RefreshAssetsIfNecessary();
 				void SortAlphabetically(std::vector<std::filesystem::directory_entry> entries);
 				void RefreshAssets();
 				void ProcessDirectoryEntryClicks(std::filesystem::directory_entry entry);
-				void ClickDirectoryEntry(std::filesystem::directory_entry entry);
+				void RenderTopBar();
 				void RenderPath();
 				void RenderContextMenuFileTypeSpecificEntries(std::filesystem::directory_entry entry);
 				void RenderAssetContextMenu(std::filesystem::directory_entry entry);
@@ -35,9 +45,12 @@ namespace Grindstone {
 				void TryRenameFile();
 				void RenderAssetSet(std::vector<std::filesystem::directory_entry> entries);
 				void RenderAssets();
+				void RenderSidebar();
+				void RenderSidebarSubdirectory(Directory& directory);
 				void AfterCreate(std::filesystem::path path);
 				ImTextureID GetIcon(const std::filesystem::directory_entry& directoryEntry);
 			private:
+				Directory rootDirectory;
 				std::vector<std::filesystem::directory_entry> sortedDirectories;
 				std::vector<std::filesystem::directory_entry> sortedFiles;
 
@@ -74,6 +87,7 @@ namespace Grindstone {
 				ImguiEditor* editor = nullptr;
 				std::filesystem::path pathToRename;
 				std::string pathRenameNewName;
+				std::string searchText;
 				std::filesystem::path currentPath;
 				std::chrono::time_point<std::chrono::system_clock> lastRefreshedAssetsTime;
 			};

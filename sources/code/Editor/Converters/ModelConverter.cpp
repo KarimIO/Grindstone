@@ -45,11 +45,7 @@ void ModelConverter::ConvertMaterials() {
 	aiMaterial *pMaterial;
 	aiString Path;
 	for (uint32_t i = 0; i < materialCount; i++) {
-		StandardMaterialCreateInfo newMaterial;
-		newMaterial.albedoPath = "";
-		newMaterial.normalPath = "";
-		newMaterial.specularPath = "";
-		newMaterial.roughnessPath = "";
+		Materials::StandardMaterialCreateInfo newMaterial;
 		pMaterial = materials[i];
 
 		aiString name;
@@ -79,9 +75,9 @@ void ModelConverter::ConvertMaterials() {
 			newMaterial.roughness = roughness.r;
 		}
 
-		std::string sanname = name.C_Str(); //sanitizeFileName(name.C_Str());
+		std::string fileName = name.C_Str(); //sanitizeFileName(name.C_Str());
 
-		std::string outputMaterialPath = baseOutputPath + sanname + ".gmat";
+		std::string outputMaterialPath = baseOutputPath + fileName + ".gmat";
 		outputData.materialNames[i] = outputMaterialPath;
 
 		CreateStandardMaterial(newMaterial, outputMaterialPath);
@@ -186,7 +182,7 @@ void ModelConverter::Convert(const char* path) {
 
 	ProcessNodeTree(scene->mRootNode);
 	InitSubmeshes();
-	// ConvertMaterials();
+	ConvertMaterials();
 	ProcessVertices();
 
 	importer.FreeScene();

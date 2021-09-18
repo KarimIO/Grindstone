@@ -7,74 +7,46 @@
 #include "Editor/EditorManager.hpp"
 #include "MaterialCreator.hpp"
 using namespace Grindstone;
+using namespace Grindstone::Converters;
 
-bool CreateStandardMaterial(StandardMaterialCreateInfo ci, std::string path) {
+bool CreateStandardOrCutoutMaterial(Materials::StandardMaterialCreateInfo createInfo, std::string path, bool isCutout) {
 	std::ofstream output(path);
-	output << "shader: ../assets/shaders/materials/standard_metalness/standard_metalness.json\n";
-	if (ci.albedoPath != "") {
-		output << "albedoTexture: " << ci.albedoPath << "\n";
+
+	output << "{\n";
+	
+	output << "\t\"name\: \"" << createInfo.materialName << "\",\n";
+
+	if (isCutout) {
+		output << "\t\"shader\": \"cutout\",\n";
 	}
-	output << "hasAlbedoTexture: " << (ci.albedoPath != "" ? "true" : "false") << "\n";
-
-	if (ci.normalPath != "") {
-		output << "normalTexture: " << ci.normalPath << "\n";
+	else {
+		output << "\t\"shader\": \"test\",\n";
 	}
-	output << "hasNormalTexture: " << (ci.normalPath != "" ? "true" : "false") << "\n";
 
-	if (ci.roughnessPath != "") {
-		output << "roughnessTexture: " << ci.roughnessPath << "\n";
+	{
+		output << "\t\"parameters\": {\n";
+		output << "\t\t\"color\": [1, 1, 1, 1]\n";
+		output << "\t},\n";
 	}
-	output << "hasRoughTexture: " << (ci.roughnessPath != "" ? "true" : "false") << "\n";
-
-	if (ci.specularPath != "") {
-		output << "metalnessTexture: " << ci.specularPath << "\n";
+	
+	{
+		output << "\t\"samplers\": {";
+		output << "\t\t\"albedoTexture\": \"" << createInfo.albedoPath << "\"\n,";
+		output << "\t\t\"normalTexture\": \"" << createInfo.normalPath << "\"\n,";
+		output << "\t\t\"metalnessTexture\": \"" << createInfo.specularPath << "\"\n,";
+		output << "\t\t\"roughnessTexture\": \"" << createInfo.roughnessPath << "\"\n";
+		output << "\t}\n";
 	}
-	output << "hasMetalTexture: " << (ci.specularPath != "" ? "true" : "false") << "\n";
 
-	output << "albedoConstant: " << ci.albedoColor[0] << " " << ci.albedoColor[1] << " " << ci.albedoColor[2] << " " << ci.albedoColor[3] << "\n";
-	output << "metalnessConstant: " << ci.metalness << "\n";
-	output << "roughnessConstant: " << ci.roughness << "\n";
-
+	output << "}";
 	output.close();
 	return false;
 }
 
-bool LoadMaterial(std::string path) {
-	std::string mainPath = path + ".gmat";
-	std::ifstream input(mainPath, std::ios::ate | std::ios::binary);
+bool Materials::CreateStandardMaterial(StandardMaterialCreateInfo ci, std::string path) {
+	return CreateStandardOrCutoutMaterial(ci, path, false);
+}
 
-	if (!input.is_open()) {
-		Editor::Manager::Print(LogSeverity::Error, "Failed to open file: %s!", mainPath.c_str());
-		return false;
-	}
-
-	Editor::Manager::Print(LogSeverity::Info, "Material reading from: %s!", mainPath.c_str());
-
-	size_t fileSize = (size_t)input.tellg();
-	std::vector<char> buffer(fileSize);
-
-	input.seekg(0);
-	input.read(buffer.data(), fileSize);
-
-	StandardMaterialCreateInfo ci;
-
-	// Extend shader info here
-	char *words = buffer.data();
-	std::string shader = words;
-	words = strchr(words, '\0') + 1;
-	ci.albedoPath = words;
-	words = strchr(words, '\0') + 1;
-	ci.normalPath = words;
-	words = strchr(words, '\0') + 1;
-	ci.roughnessPath = words;
-	words = strchr(words, '\0') + 1;
-	ci.specularPath = words;
-
-	Editor::Manager::Print(LogSeverity::Info, shader.c_str());
-	Editor::Manager::Print(LogSeverity::Info, ci.albedoPath.c_str());
-	Editor::Manager::Print(LogSeverity::Info, ci.normalPath.c_str());
-	Editor::Manager::Print(LogSeverity::Info, ci.roughnessPath.c_str());
-	Editor::Manager::Print(LogSeverity::Info, ci.specularPath.c_str());
-
-	return true;
+bool Materials::CreateCutoutMaterial(StandardMaterialCreateInfo ci, std::string path) {
+	return CreateStandardOrCutoutMaterial(ci, path, true);
 }
