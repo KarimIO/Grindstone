@@ -21,7 +21,13 @@
 #include "ImguiEditor.hpp"
 #include <efsw/include/efsw/efsw.hpp>
 
-const std::filesystem::path ASSET_FOLDER_PATH = "../assets";
+const std::filesystem::path ASSET_FOLDER_PATH =
+#ifdef _WIN32
+	"..\\assets";
+#else
+	"../assets";
+#endif
+
 const double REFRESH_INTERVAL = 1.0;
 const float PADDING = 8.0f;
 const float ENTRY_SIZE = 80.0f;
@@ -74,15 +80,15 @@ void PrepareIcon(Grindstone::TextureManager* textureManager, const char* path, G
 	id = GetIdFromTexture(texture);
 }
 
-class UpdateListener : public efsw::FileWatchListener
-{
+class UpdateListener : public efsw::FileWatchListener {
 public:
 	UpdateListener() {}
 
-	void handleFileAction(efsw::WatchID watchid, const std::string& dir, const std::string& filename, efsw::Action action, std::string oldFilename = "")
-	{
-		switch (action)
-		{
+	void handleFileAction(efsw::WatchID watchid, const std::string& dir, const std::string& filename, efsw::Action action, std::string oldFilename = "") override {
+		std::filesystem::path path = std::filesystem::path(dir) / filename;
+		std::filesystem::directory_entry entry = std::filesystem::directory_entry(path);
+		
+		switch (action) {
 		case efsw::Actions::Add:
 			Editor::Manager::Print(LogSeverity::Info, "DIR {0} FILE {1} has event Added", dir.c_str(), filename.c_str());
 			break;
@@ -104,11 +110,10 @@ public:
 #define PREPARE_ICON(type) PrepareIcon(textureManager, "../engineassets/editor/assetIcons/" #type ".dds", iconTextures.type, iconIds.type)
 
 using namespace Grindstone::Editor::ImguiEditor;
-AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore) {
-	currentPath = ASSET_FOLDER_PATH;
+AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore), currentDirectory(rootDirectory) {
 	pathToRename = "";
 
-	std::filesystem::create_directories(currentPath);
+	std::filesystem::create_directories(ASSET_FOLDER_PATH);
 
 	auto textureManager = engineCore->textureManager;
 	PREPARE_ICON(folder);
@@ -124,17 +129,24 @@ AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor
 
 	efsw::FileWatcher* fileWatcher = new efsw::FileWatcher();
 	UpdateListener* listener = new UpdateListener();
-	efsw::WatchID watchID = fileWatcher->addWatch(currentPath.string().c_str(), listener, true);
+	efsw::WatchID watchID = fileWatcher->addWatch(ASSET_FOLDER_PATH.string().c_str(), listener, true);
 	fileWatcher->watch();
 
-	CreateInitialFileStructure(rootDirectory, std::filesystem::directory_iterator(currentPath));
+	rootDirectory.path = std::filesystem::directory_entry(ASSET_FOLDER_PATH);
+	rootDirectory.parentDirectory = nullptr;
+	CreateInitialFileStructure(rootDirectory, std::filesystem::directory_iterator(rootDirectory.path));
 }
 
-void AssetBrowserPanel::CreateInitialFileStructure(Directory& directory, std::filesystem::directory_iterator path) {
-	for (const auto& directoryEntry : path) {
+void AssetBrowserPanel::CreateInitialFileStructure(Directory& directory, std::filesystem::directory_iterator directoryIterator) {
+	for (const auto& directoryEntry : directoryIterator) {
 		if (directoryEntry.is_directory()) {
-			directory.subdirectories.emplace_back(directoryEntry);
-			CreateInitialFileStructure(directory.subdirectories.back(), std::filesystem::directory_iterator(directoryEntry));
+			Directory* newDirectory = new Directory(directoryEntry, &directory);
+			directory.subdirectories.push_back(newDirectory);
+			auto directoryIterator = std::filesystem::directory_iterator(directoryEntry);
+			CreateInitialFileStructure(*newDirectory, directoryIterator);
+		}
+		else {
+			directory.files.emplace_back(directoryEntry);
 		}
 	}
 }
@@ -182,65 +194,20 @@ ImTextureID AssetBrowserPanel::GetIcon(const std::filesystem::directory_entry& d
 	return iconIds.file;
 }
 			
-void AssetBrowserPanel::SetPath(std::filesystem::path path) {
-	currentPath = path;
+void AssetBrowserPanel::SetCurrentAssetDirectory(Directory& newDirectory) {
+	currentDirectory = newDirectory;
 	pathToRename = "";
-	RefreshAssets();
 	Editor::Manager::GetInstance().GetSelection().ClearFiles();
 }
 
-void AssetBrowserPanel::RefreshAssetsIfNecessary() {
-	auto currentTime = std::chrono::system_clock::now();
-	std::chrono::duration<double> elapsedSeconds = currentTime - lastRefreshedAssetsTime;
-	if (elapsedSeconds.count() > REFRESH_INTERVAL) {
-		RefreshAssets();
-	}
-}
-
-void AssetBrowserPanel::SortAlphabetically(std::vector<std::filesystem::directory_entry> entries) {
-	std::sort(
-		entries.begin(),
-		entries.end(),
-		[](const std::filesystem::directory_entry lhsEntry, const std::filesystem::directory_entry rhsEntry) {
-			const auto lhs = lhsEntry.path().filename().string();
-			const auto rhs = rhsEntry.path().filename().string();
-			const auto result = std::mismatch(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend(), [](const unsigned char lhs, const unsigned char rhs) { return tolower(lhs) == tolower(rhs); });
-
-			return result.second != rhs.cend() &&
-				(result.first == lhs.cend() || tolower(*result.first) < tolower(*result.second));
-		}
-	);
-}
-
-void AssetBrowserPanel::RefreshAssets() {
-	sortedDirectories.clear();
-	sortedFiles.clear();
-
-	for (const auto& directoryEntry : std::filesystem::directory_iterator(currentPath)) {
-		if (directoryEntry.is_directory()) {
-			sortedDirectories.push_back(directoryEntry);
-		}
-		else {
-			sortedFiles.push_back(directoryEntry);
-		}
-	}
-
-	SortAlphabetically(sortedDirectories);
-	SortAlphabetically(sortedFiles);
-
-	auto currentTime = std::chrono::system_clock::now();
-	lastRefreshedAssetsTime = currentTime;
-}
-
-void AssetBrowserPanel::ProcessDirectoryEntryClicks(std::filesystem::directory_entry entry) {
+void AssetBrowserPanel::ProcessDirectoryEntryClicks(std::filesystem::directory_entry entry, Directory* directory) {
 	auto path = entry.path();
 	if (ImGui::IsItemHovered()) {
 		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-			if (entry.is_directory()) {
-				SetPath(entry.path());
+			if (entry.is_directory() && directory) {
+				SetCurrentAssetDirectory(*directory);
 			}
 			else {
-				// Open File
 				auto window = engineCore->windowManager->GetWindowByIndex(0);
 				window->OpenFileUsingDefaultProgram(path.string().c_str());
 			}
@@ -273,33 +240,33 @@ void AssetBrowserPanel::RenderTopBar() {
 	ImGui::PopStyleColor();
 }
 
+void AssetBrowserPanel::RenderPathPart(Directory* directory) {
+	if (directory == nullptr) {
+		return;
+	}
+
+	// RenderPathPart(directory->parentDirectory);
+
+	std::string pathPart = directory->path.path().filename().string() + "##PathPart";
+	if (ImGui::Button(pathPart.c_str())) {
+		SetCurrentAssetDirectory(*directory);
+	}
+	ImGui::SameLine();
+	ImGui::Text("/");
+}
+
 void AssetBrowserPanel::RenderPath() {
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2());
 	ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.3f, 0.6f, 0.9f, 0.05f));
 	auto assetPathPanel = ImGui::GetID("#assetpathpanel");
 	ImGui::BeginChildFrame(assetPathPanel, ImVec2(0, 25), ImGuiWindowFlags_NoScrollbar);
 
-	std::string path = currentPath.string();
-	size_t previousSlash = 2;
-	size_t newSlash = path.find('\\', 3);
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.05f));
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.1f));
-	while(newSlash != -1) {
-		std::string pathSoFar = path.substr(0, newSlash);
-		std::string pathPart = path.substr(previousSlash + 1, newSlash - previousSlash - 1) + "##PathPart";
-		ImGui::SameLine();
-		if (ImGui::Button(pathPart.c_str())) {
-			SetPath(pathSoFar);
-		}
-		ImGui::SameLine();
-		ImGui::Text("/");
-
-		previousSlash = newSlash;
-		newSlash = path.find('\\', newSlash + 1);
-	}
+	RenderPathPart(currentDirectory.parentDirectory);
 	ImGui::SameLine();
-	std::string finalPart = path.substr(previousSlash + 1, newSlash - previousSlash - 1);
+	std::string finalPart = currentDirectory.path.path().filename().string() + "##PathPart";
 	ImGui::Button(finalPart.c_str());
 	ImGui::PopStyleColor(3);
 
@@ -376,7 +343,6 @@ void AssetBrowserPanel::RenderAssetContextMenu(std::filesystem::directory_entry 
 		}
 		if (ImGui::MenuItem("Delete")) {
 			std::filesystem::remove_all(path);
-			RefreshAssets();
 		}
 		ImGui::Separator();
 		if (ImGui::BeginMenu("Copy path to file")) {
@@ -407,6 +373,7 @@ void AssetBrowserPanel::RenderAssetContextMenu(std::filesystem::directory_entry 
 }
 
 void AssetBrowserPanel::RenderCurrentDirectoryContextMenu() {
+	auto currentPath = currentDirectory.path.path();
 	if (ImGui::BeginPopupContextWindow()) {
 		if (ImGui::BeginMenu("Create")) {
 			if (ImGui::MenuItem("New Folder")) {
@@ -446,15 +413,13 @@ void AssetBrowserPanel::RenderCurrentDirectoryContextMenu() {
 void AssetBrowserPanel::AfterCreate(std::filesystem::path path) {
 	pathToRename = path;
 	pathRenameNewName = path.filename().string();
-RefreshAssets();
 }
 
 void AssetBrowserPanel::TryRenameFile() {
-	std::filesystem::path newPath = currentPath / pathRenameNewName;
+	std::filesystem::path newPath = currentDirectory.path / pathRenameNewName;
 	if (!std::filesystem::exists(newPath)) {
 		try {
 			std::filesystem::rename(pathToRename, newPath);
-			RefreshAssets();
 			pathToRename = "";
 			pathRenameNewName = "";
 		}
@@ -467,8 +432,53 @@ void AssetBrowserPanel::TryRenameFile() {
 	}
 }
 
-void AssetBrowserPanel::RenderAssetSet(std::vector<std::filesystem::directory_entry> entries) {
-	for (const auto& directoryEntry : entries) {
+void AssetBrowserPanel::RenderFolders() {
+	for (Directory* subdirectory : currentDirectory.subdirectories) {
+		auto directoryEntry = subdirectory->path;
+		ImGui::TableNextColumn();
+
+		const auto& path = directoryEntry.path();
+		std::string filenameString = path.filename().string();
+		std::string buttonString = filenameString + "##AssetButton";
+
+		bool isSelected = Editor::Manager::GetInstance().GetSelection().IsFileSelected(directoryEntry);
+		ImVec4 mainColor = isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.3f) : ImVec4(0.f, 0.f, 0.f, 0.f);
+		ImGui::PushStyleColor(ImGuiCol_Button, mainColor);
+		ImGui::PushStyleColor(
+			ImGuiCol_ButtonHovered,
+			isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.4f) : ImVec4(1, 1, 1, 0.05f)
+		);
+		ImGui::PushStyleColor(
+			ImGuiCol_ButtonActive,
+			isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.5f) : ImVec4(1, 1, 1, 0.1f)
+		);
+
+		ImTextureID icon = GetIcon(directoryEntry);
+		ImGui::PushID(buttonString.c_str());
+		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
+		ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
+		ImGui::PopID();
+
+		RenderAssetContextMenu(directoryEntry);
+		ProcessDirectoryEntryClicks(directoryEntry, subdirectory);
+
+		ImGui::PopStyleColor(3);
+
+		if (pathToRename == path) {
+			ImGui::PushItemWidth(ENTRY_SIZE);
+			const auto flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
+			if (ImGui::InputText("##AssetRename", &pathRenameNewName, flags)) {
+				TryRenameFile();
+			}
+		}
+		else {
+			ImGui::TextWrapped(filenameString.c_str());
+		}
+	}
+}
+
+void AssetBrowserPanel::RenderFiles() {
+	for (const auto& directoryEntry : currentDirectory.files) {
 		ImGui::TableNextColumn();
 
 		const auto& path = directoryEntry.path();
@@ -521,14 +531,12 @@ void AssetBrowserPanel::RenderAssets() {
 		columnCount = 1;
 	}
 
-	RefreshAssetsIfNecessary();
-
 	auto assetPanel = ImGui::GetID("#assetspanel");
 	ImGui::BeginChildFrame(assetPanel, ImVec2(0, 0), ImGuiWindowFlags_NoBackground);
 
 	if (ImGui::BeginTable("assetTable", columnCount)) {
-		RenderAssetSet(sortedDirectories);
-		RenderAssetSet(sortedFiles);
+		RenderFolders();
+		RenderFiles();
 
 		ImGui::EndTable();
 	}
@@ -554,7 +562,7 @@ void AssetBrowserPanel::RenderSidebar() {
 	}
 
 	for (auto directory : rootDirectory.subdirectories) {
-		RenderSidebarSubdirectory(directory);
+		RenderSidebarSubdirectory(*directory);
 	}
 	ImGui::EndChildFrame();
 }
@@ -569,17 +577,17 @@ void AssetBrowserPanel::RenderSidebarSubdirectory(Directory& directory) {
 
 	if (ImGui::TreeNodeEx(path.c_str(), nodeFlags)) {
 		if (ImGui::IsItemClicked()) {
-			SetPath(directory.path);
+			SetCurrentAssetDirectory(directory);
 		}
 
 		for (auto directory : directory.subdirectories) {
-			RenderSidebarSubdirectory(directory);
+			RenderSidebarSubdirectory(*directory);
 		}
 
 		ImGui::TreePop();
 	}
 	else if (ImGui::IsItemClicked()) {
-		SetPath(directory.path);
+		SetCurrentAssetDirectory(directory);
 	}
 }
 			
@@ -598,7 +606,7 @@ void AssetBrowserPanel::Render() {
 
 			ImGui::TableNextColumn();
 			RenderCurrentDirectoryContextMenu();
-			RenderPath();
+			// RenderPath();
 			RenderAssets();
 
 

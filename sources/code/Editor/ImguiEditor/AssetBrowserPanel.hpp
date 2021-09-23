@@ -23,27 +23,29 @@ namespace Grindstone {
 				void Render();
 			private:
 				struct Directory {
+					Directory* parentDirectory = nullptr;
 					std::filesystem::directory_entry path;
-					std::vector<Directory> subdirectories;
+					std::vector<Directory*> subdirectories;
 					std::vector<std::filesystem::directory_entry> files;
 
 					Directory() = default;
-					Directory(std::filesystem::directory_entry path) : path(path) {}
+					Directory(std::filesystem::directory_entry path, Directory* parentDirectory) :
+						path(path),
+						parentDirectory(parentDirectory) {}
 				};
 
 				void CreateInitialFileStructure(Directory& directory, std::filesystem::directory_iterator);
-				void SetPath(std::filesystem::path path);
-				void RefreshAssetsIfNecessary();
-				void SortAlphabetically(std::vector<std::filesystem::directory_entry> entries);
-				void RefreshAssets();
-				void ProcessDirectoryEntryClicks(std::filesystem::directory_entry entry);
+				void SetCurrentAssetDirectory(Directory& directory);
+				void ProcessDirectoryEntryClicks(std::filesystem::directory_entry entry, Directory* directory = nullptr);
 				void RenderTopBar();
+				void RenderPathPart(Directory* path);
 				void RenderPath();
 				void RenderContextMenuFileTypeSpecificEntries(std::filesystem::directory_entry entry);
 				void RenderAssetContextMenu(std::filesystem::directory_entry entry);
 				void RenderCurrentDirectoryContextMenu();
 				void TryRenameFile();
-				void RenderAssetSet(std::vector<std::filesystem::directory_entry> entries);
+				void RenderFolders();
+				void RenderFiles();
 				void RenderAssets();
 				void RenderSidebar();
 				void RenderSidebarSubdirectory(Directory& directory);
@@ -51,8 +53,7 @@ namespace Grindstone {
 				ImTextureID GetIcon(const std::filesystem::directory_entry& directoryEntry);
 			private:
 				Directory rootDirectory;
-				std::vector<std::filesystem::directory_entry> sortedDirectories;
-				std::vector<std::filesystem::directory_entry> sortedFiles;
+				Directory& currentDirectory;
 
 				struct Icons {
 					GraphicsAPI::Texture* folder;
@@ -88,7 +89,6 @@ namespace Grindstone {
 				std::filesystem::path pathToRename;
 				std::string pathRenameNewName;
 				std::string searchText;
-				std::filesystem::path currentPath;
 				std::chrono::time_point<std::chrono::system_clock> lastRefreshedAssetsTime;
 			};
 		}
