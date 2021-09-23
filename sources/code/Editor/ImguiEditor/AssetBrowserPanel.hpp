@@ -53,7 +53,7 @@ namespace Grindstone {
 				ImTextureID GetIcon(const std::filesystem::directory_entry& directoryEntry);
 			private:
 				Directory rootDirectory;
-				Directory& currentDirectory;
+				Directory* currentDirectory;
 
 				struct Icons {
 					GraphicsAPI::Texture* folder;

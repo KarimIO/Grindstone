@@ -110,7 +110,7 @@ public:
 #define PREPARE_ICON(type) PrepareIcon(textureManager, "../engineassets/editor/assetIcons/" #type ".dds", iconTextures.type, iconIds.type)
 
 using namespace Grindstone::Editor::ImguiEditor;
-AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore), currentDirectory(rootDirectory) {
+AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore), currentDirectory(&rootDirectory) {
 	pathToRename = "";
 
 	std::filesystem::create_directories(ASSET_FOLDER_PATH);
@@ -195,7 +195,7 @@ ImTextureID AssetBrowserPanel::GetIcon(const std::filesystem::directory_entry& d
 }
 			
 void AssetBrowserPanel::SetCurrentAssetDirectory(Directory& newDirectory) {
-	currentDirectory = newDirectory;
+	currentDirectory = &newDirectory;
 	pathToRename = "";
 	Editor::Manager::GetInstance().GetSelection().ClearFiles();
 }
@@ -245,7 +245,7 @@ void AssetBrowserPanel::RenderPathPart(Directory* directory) {
 		return;
 	}
 
-	// RenderPathPart(directory->parentDirectory);
+	RenderPathPart(directory->parentDirectory);
 
 	std::string pathPart = directory->path.path().filename().string() + "##PathPart";
 	if (ImGui::Button(pathPart.c_str())) {
@@ -253,6 +253,7 @@ void AssetBrowserPanel::RenderPathPart(Directory* directory) {
 	}
 	ImGui::SameLine();
 	ImGui::Text("/");
+	ImGui::SameLine();
 }
 
 void AssetBrowserPanel::RenderPath() {
@@ -264,9 +265,9 @@ void AssetBrowserPanel::RenderPath() {
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.05f));
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.1f));
-	RenderPathPart(currentDirectory.parentDirectory);
+	RenderPathPart(currentDirectory->parentDirectory);
 	ImGui::SameLine();
-	std::string finalPart = currentDirectory.path.path().filename().string() + "##PathPart";
+	std::string finalPart = currentDirectory->path.path().filename().string() + "##PathPart";
 	ImGui::Button(finalPart.c_str());
 	ImGui::PopStyleColor(3);
 
@@ -373,7 +374,7 @@ void AssetBrowserPanel::RenderAssetContextMenu(std::filesystem::directory_entry 
 }
 
 void AssetBrowserPanel::RenderCurrentDirectoryContextMenu() {
-	auto currentPath = currentDirectory.path.path();
+	auto currentPath = currentDirectory->path.path();
 	if (ImGui::BeginPopupContextWindow()) {
 		if (ImGui::BeginMenu("Create")) {
 			if (ImGui::MenuItem("New Folder")) {
@@ -416,7 +417,7 @@ void AssetBrowserPanel::AfterCreate(std::filesystem::path path) {
 }
 
 void AssetBrowserPanel::TryRenameFile() {
-	std::filesystem::path newPath = currentDirectory.path / pathRenameNewName;
+	std::filesystem::path newPath = currentDirectory->path / pathRenameNewName;
 	if (!std::filesystem::exists(newPath)) {
 		try {
 			std::filesystem::rename(pathToRename, newPath);
@@ -433,7 +434,7 @@ void AssetBrowserPanel::TryRenameFile() {
 }
 
 void AssetBrowserPanel::RenderFolders() {
-	for (Directory* subdirectory : currentDirectory.subdirectories) {
+	for (Directory* subdirectory : currentDirectory->subdirectories) {
 		auto directoryEntry = subdirectory->path;
 		ImGui::TableNextColumn();
 
@@ -478,7 +479,7 @@ void AssetBrowserPanel::RenderFolders() {
 }
 
 void AssetBrowserPanel::RenderFiles() {
-	for (const auto& directoryEntry : currentDirectory.files) {
+	for (const auto& directoryEntry : currentDirectory->files) {
 		ImGui::TableNextColumn();
 
 		const auto& path = directoryEntry.path();
@@ -556,14 +557,14 @@ void AssetBrowserPanel::RenderAssets() {
 void AssetBrowserPanel::RenderSidebar() {
 	auto sidebarId = ImGui::GetID("#assetSidebar");
 	ImGui::BeginChildFrame(sidebarId, ImVec2(0, 0), ImGuiWindowFlags_NoBackground);
+
 	if (rootDirectory.subdirectories.empty()) {
 		ImGui::Text("No items in directory.");
-		return;
+	}
+	else {
+		RenderSidebarSubdirectory(rootDirectory);
 	}
 
-	for (auto directory : rootDirectory.subdirectories) {
-		RenderSidebarSubdirectory(*directory);
-	}
 	ImGui::EndChildFrame();
 }
 
@@ -573,6 +574,10 @@ void AssetBrowserPanel::RenderSidebarSubdirectory(Directory& directory) {
 	ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow;
 	if (directory.subdirectories.empty()) {
 		nodeFlags |= ImGuiTreeNodeFlags_Leaf;
+	}
+
+	if (currentDirectory == &directory) {
+		nodeFlags |= ImGuiTreeNodeFlags_Selected;
 	}
 
 	if (ImGui::TreeNodeEx(path.c_str(), nodeFlags)) {
@@ -606,7 +611,7 @@ void AssetBrowserPanel::Render() {
 
 			ImGui::TableNextColumn();
 			RenderCurrentDirectoryContextMenu();
-			// RenderPath();
+			RenderPath();
 			RenderAssets();
 
 
