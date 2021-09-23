@@ -375,6 +375,7 @@ void AssetBrowserPanel::RenderAssetContextMenu(std::filesystem::directory_entry 
 
 void AssetBrowserPanel::RenderCurrentDirectoryContextMenu() {
 	auto currentPath = currentDirectory->path.path();
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
 	if (ImGui::BeginPopupContextWindow()) {
 		if (ImGui::BeginMenu("Create")) {
 			if (ImGui::MenuItem("New Folder")) {
@@ -409,6 +410,7 @@ void AssetBrowserPanel::RenderCurrentDirectoryContextMenu() {
 		}
 		ImGui::EndPopup();
 	}
+	ImGui::PopStyleVar();
 }
 
 void AssetBrowserPanel::AfterCreate(std::filesystem::path path) {
@@ -534,6 +536,7 @@ void AssetBrowserPanel::RenderAssets() {
 
 	auto assetPanel = ImGui::GetID("#assetspanel");
 	ImGui::BeginChildFrame(assetPanel, ImVec2(0, 0), ImGuiWindowFlags_NoBackground);
+	RenderCurrentDirectoryContextMenu();
 
 	if (ImGui::BeginTable("assetTable", columnCount)) {
 		RenderFolders();
@@ -610,7 +613,6 @@ void AssetBrowserPanel::Render() {
 			ImGui::PopStyleVar();
 
 			ImGui::TableNextColumn();
-			RenderCurrentDirectoryContextMenu();
 			RenderPath();
 			RenderAssets();
 
