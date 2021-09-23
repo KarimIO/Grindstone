@@ -4,6 +4,7 @@ file(GLOB_RECURSE SOURCE_MAIN
 	Main.cpp
 	../Common/Utilities/ModuleLoading.cpp
 	../EngineCore/ECS/Entity.cpp
+	FileManager.cpp FileManager.hpp FileDirectory.hpp
 	EditorManager.cpp EditorManager.hpp
 	Selection.cpp Selection.hpp
 	EditorCamera.cpp EditorCamera.hpp

@@ -22,18 +22,6 @@ namespace Grindstone {
 				AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor);
 				void Render();
 			private:
-				struct Directory {
-					Directory* parentDirectory = nullptr;
-					std::filesystem::directory_entry path;
-					std::vector<Directory*> subdirectories;
-					std::vector<std::filesystem::directory_entry> files;
-
-					Directory() = default;
-					Directory(std::filesystem::directory_entry path, Directory* parentDirectory) :
-						path(path),
-						parentDirectory(parentDirectory) {}
-				};
-
 				void CreateInitialFileStructure(Directory& directory, std::filesystem::directory_iterator);
 				void SetCurrentAssetDirectory(Directory& directory);
 				void ProcessDirectoryEntryClicks(std::filesystem::directory_entry entry, Directory* directory = nullptr);
@@ -52,7 +40,7 @@ namespace Grindstone {
 				void AfterCreate(std::filesystem::path path);
 				ImTextureID GetIcon(const std::filesystem::directory_entry& directoryEntry);
 			private:
-				Directory rootDirectory;
+				Directory& rootDirectory;
 				Directory* currentDirectory;
 
 				struct Icons {

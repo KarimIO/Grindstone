@@ -19,12 +19,17 @@ Selection& Manager::GetSelection() {
 	return selection;
 }
 
+FileManager& Manager::GetFileManager() {
+	return GetInstance().fileManager;
+}
+
 EngineCore& Manager::GetEngineCore() {
 	return *GetInstance().engineCore;
 }
 
 bool Manager::Initialize() {
 	if (!LoadEngine())			return false;
+	fileManager.Initialize();
 	if (!SetupImguiEditor())	return false;
 
 	return true;

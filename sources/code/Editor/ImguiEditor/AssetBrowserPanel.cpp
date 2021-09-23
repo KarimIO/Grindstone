@@ -5,6 +5,7 @@
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include <entt/entt.hpp>
 #include "ComponentInspector.hpp"
+#include "Editor/ImguiEditor/ImguiEditor.hpp"
 #include "Editor/Converters/ShaderImporter.hpp"
 #include "Editor/Converters/ModelConverter.hpp"
 #include "Editor/Converters/TextureConverter.hpp"
@@ -18,15 +19,7 @@
 #include "EngineCore/Assets/Shaders/ShaderManager.hpp"
 #include "EngineCore/Assets/Materials/MaterialManager.hpp"
 #include "Plugins/GraphicsOpenGL/GLTexture.hpp"
-#include "ImguiEditor.hpp"
-#include <efsw/include/efsw/efsw.hpp>
-
-const std::filesystem::path ASSET_FOLDER_PATH =
-#ifdef _WIN32
-	"..\\assets";
-#else
-	"../assets";
-#endif
+using namespace Grindstone::Editor::ImguiEditor;
 
 const double REFRESH_INTERVAL = 1.0;
 const float PADDING = 8.0f;
@@ -80,37 +73,9 @@ void PrepareIcon(Grindstone::TextureManager* textureManager, const char* path, G
 	id = GetIdFromTexture(texture);
 }
 
-class UpdateListener : public efsw::FileWatchListener {
-public:
-	UpdateListener() {}
-
-	void handleFileAction(efsw::WatchID watchid, const std::string& dir, const std::string& filename, efsw::Action action, std::string oldFilename = "") override {
-		std::filesystem::path path = std::filesystem::path(dir) / filename;
-		std::filesystem::directory_entry entry = std::filesystem::directory_entry(path);
-		
-		switch (action) {
-		case efsw::Actions::Add:
-			Editor::Manager::Print(LogSeverity::Info, "DIR {0} FILE {1} has event Added", dir.c_str(), filename.c_str());
-			break;
-		case efsw::Actions::Delete:
-			Editor::Manager::Print(LogSeverity::Info, "DIR {0} FILE {1} has event Delete", dir.c_str(), filename.c_str());
-			break;
-		case efsw::Actions::Modified:
-			Editor::Manager::Print(LogSeverity::Info, "DIR {0} FILE {1} has event Modified", dir.c_str(), filename.c_str());
-			break;
-		case efsw::Actions::Moved:
-			Editor::Manager::Print(LogSeverity::Info, "DIR {0} FILE {1} has event Moved from", dir.c_str(), filename.c_str());
-			break;
-		default:
-			Editor::Manager::Print(LogSeverity::Info, "Invalid filesystem event!");
-		}
-	}
-};
-
 #define PREPARE_ICON(type) PrepareIcon(textureManager, "../engineassets/editor/assetIcons/" #type ".dds", iconTextures.type, iconIds.type)
 
-using namespace Grindstone::Editor::ImguiEditor;
-AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore), currentDirectory(&rootDirectory) {
+AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore), rootDirectory(Editor::Manager::GetFileManager().GetRootDirectory()) {
 	pathToRename = "";
 
 	std::filesystem::create_directories(ASSET_FOLDER_PATH);
@@ -127,28 +92,8 @@ AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor
 	PREPARE_ICON(text);
 	PREPARE_ICON(video);
 
-	efsw::FileWatcher* fileWatcher = new efsw::FileWatcher();
-	UpdateListener* listener = new UpdateListener();
-	efsw::WatchID watchID = fileWatcher->addWatch(ASSET_FOLDER_PATH.string().c_str(), listener, true);
-	fileWatcher->watch();
 
-	rootDirectory.path = std::filesystem::directory_entry(ASSET_FOLDER_PATH);
-	rootDirectory.parentDirectory = nullptr;
-	CreateInitialFileStructure(rootDirectory, std::filesystem::directory_iterator(rootDirectory.path));
-}
-
-void AssetBrowserPanel::CreateInitialFileStructure(Directory& directory, std::filesystem::directory_iterator directoryIterator) {
-	for (const auto& directoryEntry : directoryIterator) {
-		if (directoryEntry.is_directory()) {
-			Directory* newDirectory = new Directory(directoryEntry, &directory);
-			directory.subdirectories.push_back(newDirectory);
-			auto directoryIterator = std::filesystem::directory_iterator(directoryEntry);
-			CreateInitialFileStructure(*newDirectory, directoryIterator);
-		}
-		else {
-			directory.files.emplace_back(directoryEntry);
-		}
-	}
+	currentDirectory = &rootDirectory;
 }
 
 ImTextureID AssetBrowserPanel::GetIcon(const std::filesystem::directory_entry& directoryEntry) {

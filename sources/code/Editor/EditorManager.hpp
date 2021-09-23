@@ -1,8 +1,10 @@
 #pragma once
 
-#include "Commands/CommandList.hpp"
-#include "Selection.hpp"
 #include "Common/Logging.hpp"
+
+#include "Commands/CommandList.hpp"
+#include "FileManager.hpp"
+#include "Selection.hpp"
 
 namespace Grindstone {
 	class EngineCore;
@@ -20,6 +22,7 @@ namespace Grindstone {
 			static Manager& GetInstance();
 			CommandList& GetCommandList();
 			Selection& GetSelection();
+			static FileManager& GetFileManager();
 			static EngineCore& GetEngineCore();
 			bool Initialize();
 			~Manager();
@@ -33,6 +36,7 @@ namespace Grindstone {
 			ImguiEditor::ImguiEditor* imguiEditor = nullptr;
 			CommandList commandList;
 			Selection selection;
+			FileManager fileManager;
 		};
 	}
 }
