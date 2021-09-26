@@ -31,7 +31,7 @@ namespace Grindstone {
 			}
 			template<typename ComponentType>
 			bool HasComponent() {
-				return scene->GetEntityRegistry().has<ComponentType>(entityId);
+				return scene->GetEntityRegistry().all_of<ComponentType>(entityId);
 			}
 			template<typename ComponentType>
 			ComponentType& GetComponent() {
@@ -40,7 +40,7 @@ namespace Grindstone {
 			template<typename ComponentType>
 			bool TryGetComponent(ComponentType*& outComponent) {
 				auto& registry = scene->GetEntityRegistry();
-				if (registry.has<ComponentType>(entityId)) {
+				if (registry.all_of<ComponentType>(entityId)) {
 					outComponent = &registry.get<ComponentType>(entityId);
 					return true;
 				}

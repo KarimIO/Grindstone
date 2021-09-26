@@ -19,7 +19,7 @@ namespace Grindstone {
 
 		template<typename T>
 		void RemoveComponent(entt::registry& registry, entt::entity entity) {
-			if (registry.has<T>(entity)) {
+			if (registry.all_of<T>(entity)) {
 				registry.remove<T>(entity);
 			}
 		}
@@ -31,7 +31,7 @@ namespace Grindstone {
 
 		template<typename T>
 		bool TryGetComponent(entt::registry& registry, entt::entity entity, void*& outEntity) {
-			if (registry.has<T>(entity)) {
+			if (registry.all_of<T>(entity)) {
 				outEntity = &registry.get<T>(entity);
 				return true;
 			}
@@ -42,7 +42,7 @@ namespace Grindstone {
 
 		template<typename T>
 		bool HasComponent(entt::registry& registry, entt::entity entity) {
-			return registry.has<T>(entity);
+			return registry.all_of<T>(entity);
 		}
 		
 		class ComponentFunctions {

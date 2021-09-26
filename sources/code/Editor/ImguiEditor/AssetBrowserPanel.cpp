@@ -57,16 +57,6 @@ ImTextureID GetIdFromTexture(GraphicsAPI::Texture* texture) {
 	return (ImTextureID)glTex->GetTexture();
 }
 
-void TextCenter(std::string text) {
-	float font_size = ImGui::GetFontSize() * text.size() / 2;
-	ImGui::SameLine(
-		ImGui::GetWindowSize().x / 2 -
-		font_size + (font_size / 2)
-	);
-
-	ImGui::Text(text.c_str());
-}
-
 void PrepareIcon(Grindstone::TextureManager* textureManager, const char* path, GraphicsAPI::Texture*& texture, ImTextureID& id) {
 	auto& textureAsset = textureManager->LoadTexture(path);
 	texture = textureAsset.texture;
@@ -91,7 +81,6 @@ AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor
 	PREPARE_ICON(sound);
 	PREPARE_ICON(text);
 	PREPARE_ICON(video);
-
 
 	currentDirectory = &rootDirectory;
 }
