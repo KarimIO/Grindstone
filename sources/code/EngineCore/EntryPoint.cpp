@@ -1,5 +1,10 @@
 #include "pch.hpp"
 #include "EngineCore.hpp"
+
+#ifdef _MSC_VER
+#include <debugapi.h>
+#endif
+
 using namespace Grindstone;
 
 extern "C" {
@@ -11,6 +16,11 @@ extern "C" {
 			return &core;
 		}
 		catch (std::runtime_error& e) {
+
+#ifdef _MSC_VER
+			OutputDebugString(e.what());
+#endif
+
 			std::cerr << e.what() << std::endl;
 			return nullptr;
 		}

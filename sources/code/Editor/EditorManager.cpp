@@ -78,7 +78,7 @@ bool Manager::LoadEngine() {
 	createInfo.applicationTitle = "Grindstone Editor";
 	engineCore = createEngineFn(createInfo);
 
-	return true;
+	return engineCore != nullptr;
 }
 
 Manager::~Manager() {

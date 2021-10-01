@@ -54,6 +54,21 @@ protected:
 	void flush_() override {}
 };
 
+#ifdef _MSC_VER
+class VisualStudioOutputSink : public spdlog::sinks::base_sink<std::mutex> {
+protected:
+	void sink_it_(const spdlog::details::log_msg& msg) override {
+		fmt::memory_buffer formatted;
+		base_sink<std::mutex>::formatter_->format(msg, formatted);
+
+		std::string str = fmt::to_string(formatted);
+		OutputDebugString(str.c_str());
+	}
+
+	void flush_() override {}
+};
+#endif
+
 void Logger::Initialize(std::string path) {
 	std::filesystem::create_directories(std::filesystem::path(path).parent_path());
 	
@@ -67,7 +82,20 @@ void Logger::Initialize(std::string path) {
 	editorSink->set_level(spdlog::level::trace);
 	editorSink->set_pattern("[%I:%M:%S:%e %p] [%l] %v");
 
-	logger = new spdlog::logger("Debug Logger", { consoleSink, fileSink, editorSink });
+#ifdef _MSC_VER
+	auto visualStudioOutputSink = std::make_shared<VisualStudioOutputSink>();
+	visualStudioOutputSink->set_level(spdlog::level::trace);
+	visualStudioOutputSink->set_pattern("[%I:%M:%S:%e %p] [%l] %v");
+#endif
+
+	logger = new spdlog::logger("Debug Logger", {
+		consoleSink,
+		fileSink,
+		editorSink,
+#ifdef _MSC_VER
+		visualStudioOutputSink
+#endif
+	});
 	logger->set_level(spdlog::level::trace);
 	logger->flush_on(spdlog::level::trace);
 }
