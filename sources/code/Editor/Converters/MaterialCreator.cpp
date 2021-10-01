@@ -14,7 +14,7 @@ bool CreateStandardOrCutoutMaterial(Materials::StandardMaterialCreateInfo create
 
 	output << "{\n";
 	
-	output << "\t\"name\: \"" << createInfo.materialName << "\",\n";
+	output << "\t\"name\": \"" << createInfo.materialName << "\",\n";
 
 	if (isCutout) {
 		output << "\t\"shader\": \"cutout\",\n";
