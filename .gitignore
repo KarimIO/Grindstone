@@ -48,6 +48,7 @@ build/*
 .vs/*
 .vscode/*
 assets/*
+compiledAssets/*
 settings.ini
 log/*
 

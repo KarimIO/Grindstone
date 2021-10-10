@@ -214,7 +214,7 @@ void Mesh3dManager::CreateMeshFromData(Mesh3d& mesh, std::vector<char>& fileCont
 }
 
 Mesh3d& Mesh3dManager::CreateMesh3dFromFile(const char* path) {
-	std::string completePath = std::string("../assets/") + path;
+	std::string completePath = std::string("../compiledAssets/") + path;
 	if (!std::filesystem::exists(completePath)) {
 		throw std::runtime_error("Mesh3dManager::CreateMesh3dFromFile failed to load model.");
 	}

@@ -2,7 +2,7 @@
 #include "EngineCore.hpp"
 
 #ifdef _MSC_VER
-#include <debugapi.h>
+#include <Windows.h>
 #endif
 
 using namespace Grindstone;
