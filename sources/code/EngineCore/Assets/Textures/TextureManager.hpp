@@ -11,6 +11,7 @@ namespace Grindstone {
 		public:
 			virtual TextureAsset& LoadTexture(const char* path);
 			virtual void ReloadTextureIfLoaded(const char* path);
+			TextureAsset& GetDefaultTexture();
 		private:
 			bool TryGetTexture(std::string& path, TextureAsset*& material);
 			void LoadTextureFromFile(bool isReloading, std::string& path, TextureAsset& textureAsset);

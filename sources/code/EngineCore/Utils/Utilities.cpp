@@ -33,6 +33,12 @@ std::string Utils::LoadFileText(const char* inputPath) {
 	return content;
 }
 
+std::string Utils::FixStringSlashesReturn(std::string path) {
+	std::string swappedPath = path;
+	std::replace(swappedPath.begin(), swappedPath.end(), '\\', '/');
+	return swappedPath;
+}
+
 void Utils::FixStringSlashes(std::string& path) {
-	return std::replace(path.begin(), path.end(), '\\', '/');
+	std::replace(path.begin(), path.end(), '\\', '/');
 }

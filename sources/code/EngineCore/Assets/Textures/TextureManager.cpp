@@ -10,6 +10,10 @@ TextureAsset& TextureManager::LoadTexture(const char* path) {
 	std::string fixedPath = path;
 	Utils::FixStringSlashes(fixedPath);
 
+	if (fixedPath.empty()) {
+		return errorTexture;
+	}
+
 	TextureAsset* texture = nullptr;
 	if (TryGetTexture(fixedPath, texture)) {
 		return *texture;
@@ -26,6 +30,10 @@ void TextureManager::ReloadTextureIfLoaded(const char* path) {
 	if (TryGetTexture(fixedPath, texture)) {
 		LoadTextureFromFile(true, fixedPath, *texture);
 	}
+}
+
+TextureAsset& Grindstone::TextureManager::GetDefaultTexture() {
+	return errorTexture;
 }
 
 bool TextureManager::TryGetTexture(std::string& path, TextureAsset*& texture) {

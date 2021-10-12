@@ -6,10 +6,15 @@
 
 #include "Editor/EditorManager.hpp"
 #include "MaterialCreator.hpp"
+#include "EngineCore/Utils/Utilities.hpp"
+
 using namespace Grindstone;
 using namespace Grindstone::Converters;
 
 bool CreateStandardOrCutoutMaterial(Materials::StandardMaterialCreateInfo createInfo, std::string path, bool isCutout) {
+	std::filesystem::path p = path;
+	std::filesystem::path pathToShader = std::filesystem::relative("../assets/test", p.parent_path());
+
 	std::ofstream output(path);
 
 	output << "{\n";
@@ -20,7 +25,7 @@ bool CreateStandardOrCutoutMaterial(Materials::StandardMaterialCreateInfo create
 		output << "\t\"shader\": \"cutout\",\n";
 	}
 	else {
-		output << "\t\"shader\": \"test\",\n";
+		output << "\t\"shader\": \"" << Utils::FixStringSlashesReturn(pathToShader.string()) << "\",\n";
 	}
 
 	{
@@ -30,11 +35,20 @@ bool CreateStandardOrCutoutMaterial(Materials::StandardMaterialCreateInfo create
 	}
 	
 	{
-		output << "\t\"samplers\": {";
-		output << "\t\t\"albedoTexture\": \"" << createInfo.albedoPath << "\"\n,";
-		output << "\t\t\"normalTexture\": \"" << createInfo.normalPath << "\"\n,";
-		output << "\t\t\"metalnessTexture\": \"" << createInfo.specularPath << "\"\n,";
-		output << "\t\t\"roughnessTexture\": \"" << createInfo.roughnessPath << "\"\n";
+		output << "\t\"samplers\": {\n";
+
+		std::filesystem::path albedo = std::filesystem::relative(createInfo.albedoPath, p.parent_path());
+		output << "\t\t\"albedoTexture\": \"" << Utils::FixStringSlashesReturn(albedo.string()) << "\",\n";
+
+		std::filesystem::path normal = std::filesystem::relative(createInfo.normalPath, p.parent_path());
+		output << "\t\t\"normalTexture\": \"" << Utils::FixStringSlashesReturn(normal.string()) << "\",\n";
+
+		std::filesystem::path specular = std::filesystem::relative(createInfo.specularPath, p.parent_path());
+		output << "\t\t\"metalnessTexture\": \"" << Utils::FixStringSlashesReturn(specular.string()) << "\",\n";
+
+		std::filesystem::path roughness = std::filesystem::relative(createInfo.roughnessPath, p.parent_path());
+		output << "\t\t\"roughnessTexture\": \"" << Utils::FixStringSlashesReturn(roughness.string()) << "\"\n";
+
 		output << "\t}\n";
 	}
 

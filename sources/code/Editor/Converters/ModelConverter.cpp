@@ -10,6 +10,8 @@
 #include <chrono>
 
 #include "Common/Formats/Model.hpp"
+#include "Editor/EditorManager.hpp"
+#include "EngineCore/Utils/Utilities.hpp"
 
 using namespace Grindstone::Converters;
 
@@ -32,9 +34,6 @@ void ModelConverter::ConvertMaterials() {
 	outputData.materialNames.resize(scene->mNumMaterials);
 	uint32_t materialCount = scene->mNumMaterials;
 	aiMaterial **materials = scene->mMaterials;
-
-	std::string finalDir = path;
-	finalDir = finalDir.substr(0, finalDir.find_last_of('/') + 1);
 
 	std::string folderName = "";
 	std::string baseOutputPath = "../assets/materials/" + folderName + "/";
@@ -75,12 +74,13 @@ void ModelConverter::ConvertMaterials() {
 			newMaterial.roughness = roughness.r;
 		}
 
-		std::string fileName = name.C_Str(); //sanitizeFileName(name.C_Str());
+		std::string fileName = name.C_Str();
+		std::filesystem::path outputMaterialPath = baseFolderPath / (fileName + ".gmat");
+		outputData.materialNames[i] = outputMaterialPath.string();
 
-		std::string outputMaterialPath = baseOutputPath + fileName + ".gmat";
-		outputData.materialNames[i] = outputMaterialPath;
+		Editor::Manager::Print(LogSeverity::Trace, outputMaterialPath.string().c_str());
 
-		CreateStandardMaterial(newMaterial, outputMaterialPath);
+		CreateStandardMaterial(newMaterial, outputMaterialPath.string());
 	}
 }
 
@@ -89,12 +89,9 @@ void ModelConverter::ConvertTexture(aiMaterial* pMaterial, aiTextureType type, s
 		aiString aiPath;
 		if (pMaterial->GetTexture(type, 0, &aiPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 			std::string fullPath = aiPath.data;
-			// switchSlashes(FullPath);
-			std::string name = fullPath.substr(fullPath.find_last_of("/") + 1);
-			// name = SwapExtension(name, "dds");
-			std::string finaloutpath = baseOutputPath + name;
-			Grindstone::Converters::ImportTexture(/*finalDir +*/ fullPath.c_str());
-			outPath = name;
+			std::filesystem::path texturePath = baseFolderPath / fullPath;
+			Grindstone::Converters::ImportTexture(texturePath.string().c_str());
+			outPath = texturePath.string() + ".dds";
 		}
 	}
 }
@@ -117,11 +114,12 @@ void ModelConverter::InitSubmeshes() {
 		indexCount += mesh.indexCount;
 	}
 
-	outputData.vertexArray.position.reserve(vertexCount * 3);
-	outputData.vertexArray.normal.reserve(vertexCount * 3);
-	outputData.vertexArray.tangent.reserve(vertexCount * 3);
+	size_t vertexCountSizeT = vertexCount;
+	outputData.vertexArray.position.reserve(vertexCountSizeT * 3);
+	outputData.vertexArray.normal.reserve(vertexCountSizeT * 3);
+	outputData.vertexArray.tangent.reserve(vertexCountSizeT * 3);
 	outputData.vertexArray.texCoordArray.resize(1);
-	outputData.vertexArray.texCoordArray[0].reserve(vertexCount * 2);
+	outputData.vertexArray.texCoordArray[0].reserve(vertexCountSizeT * 2);
 	outputData.indices.reserve(indexCount);
 }
 
@@ -168,6 +166,8 @@ void ModelConverter::ProcessNodeTree(aiNode* node) {
 
 void ModelConverter::Convert(const char* path) {
 	this->path = path;
+	this->baseFolderPath = this->path.parent_path();
+
 	Assimp::Importer importer;
 	scene = importer.ReadFile(
 		path,
@@ -196,7 +196,7 @@ void ModelConverter::OutputPrefabs() {
 }
 
 void ModelConverter::OutputMeshes() {
-	std::string meshOutputPath = path.substr(0, path.find_last_of('.')) + ".gmf";
+	std::filesystem::path meshOutputPath = path.replace_extension("gmf");
 
 	auto meshCount = outputData.meshes.size();
 
@@ -218,7 +218,7 @@ void ModelConverter::OutputMeshes() {
 	std::ofstream output(meshOutputPath, std::ios::binary);
 
 	if (!output.is_open()) {
-		throw std::runtime_error(std::string("Failed to open ") + meshOutputPath);
+		throw std::runtime_error(std::string("Failed to open ") + meshOutputPath.string());
 	}
 
 	//  - Output File MetaData

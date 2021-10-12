@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <string>
 #include <vector>
 #include <map>
@@ -38,7 +39,8 @@ namespace Grindstone {
 			void OutputVertexArray(std::ofstream& output, std::vector<float>& vertexArray);
 
 			// Members
-			std::string path;
+			std::filesystem::path path;
+			std::filesystem::path baseFolderPath;
 			const aiScene* scene;
 
 			struct OutputData {

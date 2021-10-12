@@ -110,7 +110,9 @@ void MaterialManager::CreateMaterialFromData(
 			if (samplersJson.HasMember(textureName)) {
 				const char* texturePath = samplersJson[textureName].GetString();
 				std::filesystem::path shaderPath = relativePath / texturePath;
-				TextureAsset& textureAsset = textureManager->LoadTexture(shaderPath.string().c_str());
+				TextureAsset& textureAsset = strcmp(texturePath, "") != 0
+					? textureManager->LoadTexture(shaderPath.string().c_str())
+					: textureManager->GetDefaultTexture();
 
 				GraphicsAPI::SingleTextureBind& stb = textureBinds[i];
 				stb.texture = textureAsset.texture;
