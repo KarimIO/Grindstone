@@ -46,10 +46,10 @@ Shader& ShaderManager::LoadShader(BaseAssetRenderer* assetRenderer, const char* 
 	Shader* shader = nullptr;
 	if (!TryGetShader(fixedPath.c_str(), shader)) {
 		shader = &CreateNewShaderFromFile(fixedPath);
-	}
 
-	if (assetRenderer) {
-		assetRenderer->AddShaderToRenderQueue(shader);
+		if (assetRenderer) {
+			assetRenderer->AddShaderToRenderQueue(shader);
+		}
 	}
 
 	return *shader;
