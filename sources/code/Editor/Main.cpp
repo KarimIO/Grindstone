@@ -1,6 +1,5 @@
 #include <iostream>
 #include "EditorManager.hpp"
-#include "Converters/ShaderImporter.hpp"
 using namespace Grindstone;
 
 #ifdef _WIN32

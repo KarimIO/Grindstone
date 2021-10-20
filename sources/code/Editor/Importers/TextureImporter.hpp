@@ -1,9 +1,10 @@
 #pragma once
 
 #include <string>
+#include "Importer.hpp"
 
 namespace Grindstone {
-	namespace Converters {
+	namespace Importers {
 		enum class Compression {
 			Detect = 0,
 			Uncompressed,
@@ -15,9 +16,9 @@ namespace Grindstone {
 			BC7
 		};
 
-		class TextureConverter {
+		class TextureImporter : public Importer {
 		public:
-			void Convert(const char* path);
+			void Import(std::filesystem::path& path) override;
 		private:
 			unsigned char CombinePixels(unsigned char* pixelSrc);
 			unsigned char* CreateMip(unsigned char* pixel, int width, int height);
@@ -29,12 +30,12 @@ namespace Grindstone {
 			void OutputDds(unsigned char* outPixels, int contentSize);
 			int CalculateMipMapLevelCount(int width, int height);
 
-			std::string path;
+			std::filesystem::path path;
 			Compression compression;
 			unsigned char* sourcePixels;
 			int texWidth, texHeight, texChannels;
 		};
 
-		void ImportTexture(const char* inputPath);
+		void ImportTexture(std::filesystem::path& inputPath);
 	}
 }

@@ -6,9 +6,13 @@
 #include "rapidjson/document.h"
 #include "rapidjson/prettywriter.h"
 
+#include "Importer.hpp"
+
 namespace Grindstone {
-	namespace Converters {
-		class ShaderImporter {
+	namespace Importers {
+		class ShaderImporter : public Importer {
+			public:
+				void Import(std::filesystem::path& path) override;
 			public:
 				enum class ShaderType {
 					Vertex,
@@ -57,8 +61,6 @@ namespace Grindstone {
 						size_t buffserSize
 					) : name(name), binding(binding), buffserSize(buffserSize) {}
 				};
-				ShaderImporter();
-				void convertFile(const char* filePath);
 			private:
 				void process();
 				void writeReflectionStruct(std::vector<UniformBuffer>& structs);
@@ -77,7 +79,7 @@ namespace Grindstone {
 				const char* getShaderTypeExtension(ShaderType);
 				const char* getShaderTypeAsString(ShaderType);
 		private:
-				std::string path;
+				std::filesystem::path path;
 				std::string basePath;
 				std::string shaderName;
 				std::string renderQueue;
@@ -87,9 +89,9 @@ namespace Grindstone {
 				std::vector<Texture> samplers;
 				std::vector<UniformBuffer> uniformBuffers;
 				rapidjson::StringBuffer reflectionStringBuffer;
-				rapidjson::PrettyWriter<rapidjson::StringBuffer> reflectionWriter;
+				rapidjson::PrettyWriter<rapidjson::StringBuffer> reflectionWriter = rapidjson::PrettyWriter<rapidjson::StringBuffer>(reflectionStringBuffer);
 		};
 
-		void ImportShadersFromGlsl(const char* filePath);
+		void ImportShadersFromGlsl(std::filesystem::path& path);
 	}
 }

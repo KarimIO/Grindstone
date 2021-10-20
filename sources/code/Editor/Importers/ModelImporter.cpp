@@ -1,6 +1,6 @@
-#include "ModelConverter.hpp"
-#include "MaterialCreator.hpp"
-#include "TextureConverter.hpp"
+#include "ModelImporter.hpp"
+#include "MaterialImporter.hpp"
+#include "TextureImporter.hpp"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -13,7 +13,7 @@
 #include "Editor/EditorManager.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 
-using namespace Grindstone::Converters;
+using namespace Grindstone::Importers;
 
 void PushVertex3dToVector(std::vector<float>& targetVector, const aiVector3D* aiVertex) {
 	targetVector.push_back(aiVertex->x);
@@ -26,7 +26,7 @@ void PushVertex2dToVector(std::vector<float>& targetVector, const aiVector3D* ai
 	targetVector.push_back(aiVertex->y);
 }
 
-void ModelConverter::ConvertMaterials() {
+void ModelImporter::ConvertMaterials() {
 	if (!scene->HasMaterials()) {
 		return;
 	}
@@ -84,19 +84,19 @@ void ModelConverter::ConvertMaterials() {
 	}
 }
 
-void ModelConverter::ConvertTexture(aiMaterial* pMaterial, aiTextureType type, std::string baseOutputPath, std::string& outPath) {
+void ModelImporter::ConvertTexture(aiMaterial* pMaterial, aiTextureType type, std::string baseOutputPath, std::string& outPath) {
 	if (pMaterial->GetTextureCount(type) > 0) {
 		aiString aiPath;
 		if (pMaterial->GetTexture(type, 0, &aiPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 			std::string fullPath = aiPath.data;
 			std::filesystem::path texturePath = baseFolderPath / fullPath;
-			Grindstone::Converters::ImportTexture(texturePath.string().c_str());
+			Grindstone::Importers::ImportTexture(texturePath);
 			outPath = texturePath.string() + ".dds";
 		}
 	}
 }
 
-void ModelConverter::InitSubmeshes() {
+void ModelImporter::InitSubmeshes() {
 	auto& vertexCount = outputData.vertexCount;
 	auto& indexCount = outputData.indexCount;
 
@@ -123,7 +123,7 @@ void ModelConverter::InitSubmeshes() {
 	outputData.indices.reserve(indexCount);
 }
 
-void ModelConverter::ProcessVertices() {
+void ModelImporter::ProcessVertices() {
 	for (unsigned int meshIterator = 0; meshIterator < scene->mNumMeshes; meshIterator++) {
 		const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
 
@@ -156,7 +156,7 @@ void ModelConverter::ProcessVertices() {
 	}
 }
 
-void ModelConverter::ProcessNodeTree(aiNode* node) {
+void ModelImporter::ProcessNodeTree(aiNode* node) {
 	node->mMeshes;
 
 	for (unsigned int childIterator = 0; childIterator < node->mNumChildren; ++childIterator) {
@@ -164,13 +164,13 @@ void ModelConverter::ProcessNodeTree(aiNode* node) {
 	}
 }
 
-void ModelConverter::Convert(const char* path) {
+void ModelImporter::Import(std::filesystem::path& path) {
 	this->path = path;
 	this->baseFolderPath = this->path.parent_path();
 
 	Assimp::Importer importer;
 	scene = importer.ReadFile(
-		path,
+		path.string(),
 		aiProcess_CalcTangentSpace |
 		aiProcess_GenSmoothNormals |
 		aiProcess_Triangulate
@@ -191,11 +191,11 @@ void ModelConverter::Convert(const char* path) {
 	OutputMeshes();
 }
 
-void ModelConverter::OutputPrefabs() {
+void ModelImporter::OutputPrefabs() {
 
 }
 
-void ModelConverter::OutputMeshes() {
+void ModelImporter::OutputMeshes() {
 	std::filesystem::path meshOutputPath = path.replace_extension("gmf");
 
 	auto meshCount = outputData.meshes.size();
@@ -241,14 +241,14 @@ void ModelConverter::OutputMeshes() {
 	output.close();
 }
 
-void ModelConverter::OutputVertexArray(std::ofstream& output, std::vector<float>& vertexArray) {
+void ModelImporter::OutputVertexArray(std::ofstream& output, std::vector<float>& vertexArray) {
 	output.write(
 		reinterpret_cast<const char*> (vertexArray.data()),
 		vertexArray.size() * sizeof(float)
 	);
 }
 
-void Grindstone::Converters::ImportModel(const char* path) {
-	ModelConverter m;
-	m.Convert(path);
+void Grindstone::Importers::ImportModel(std::filesystem::path& path) {
+	ModelImporter modelImporter;
+	modelImporter.Import(path);
 }

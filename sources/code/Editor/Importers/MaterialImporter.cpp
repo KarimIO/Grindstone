@@ -5,11 +5,11 @@
 #include <string.h>
 
 #include "Editor/EditorManager.hpp"
-#include "MaterialCreator.hpp"
+#include "MaterialImporter.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 
 using namespace Grindstone;
-using namespace Grindstone::Converters;
+using namespace Grindstone::Importers;
 
 bool CreateStandardOrCutoutMaterial(Materials::StandardMaterialCreateInfo createInfo, std::string path, bool isCutout) {
 	std::filesystem::path p = path;

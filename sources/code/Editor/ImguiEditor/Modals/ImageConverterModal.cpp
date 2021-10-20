@@ -1,6 +1,6 @@
 #include <imgui/imgui.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
-#include "Editor/Converters/TextureConverter.hpp"
+#include "Editor/Importers/TextureImporter.hpp"
 #include "ImageConverterModal.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
@@ -46,9 +46,9 @@ void ImageConverterModal::Show() {
 
 void ImageConverterModal::ConvertFile() {
 	isProcessing = true;
-	auto inputPath = GetInputPathWithProperSlashes();
+	std::filesystem::path inputPath = GetInputPathWithProperSlashes();
 	try {
-		Grindstone::Converters::ImportTexture(inputPath.c_str());
+		Grindstone::Importers::ImportTexture(inputPath);
 	}
 	catch (const char* error) {
 		this->error = error;

@@ -6,11 +6,13 @@
 #include <map>
 #include <assimp/scene.h>
 
+#include "Importer.hpp"
+
 namespace Grindstone {
-	namespace Converters {
-		class ModelConverter {
+	namespace Importers {
+		class ModelImporter : public Importer {
 		public:
-			void Convert(const char* path);
+			void Import(std::filesystem::path& path) override;
 		private:
 			struct Prefab {
 
@@ -58,6 +60,6 @@ namespace Grindstone {
 			} outputData;
 		};
 
-		void ImportModel(const char* path);
+		void ImportModel(std::filesystem::path& path);
 	}
 }

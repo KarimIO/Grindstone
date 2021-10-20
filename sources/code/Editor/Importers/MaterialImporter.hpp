@@ -3,7 +3,7 @@
 #include <string>
 
 namespace Grindstone {
-	namespace Converters {
+	namespace Importers {
 		namespace Materials {
 			struct StandardMaterialCreateInfo {
 				std::string materialName = "";

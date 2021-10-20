@@ -1,6 +1,6 @@
 #include <imgui/imgui.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
-#include "Editor/Converters/ModelConverter.hpp"
+#include "Editor/Importers/ModelImporter.hpp"
 #include "ModelConverterModal.hpp"
 
 const ImVec2 IMG_CONVERTER_WINDOW_SIZE = { 300.f, 100.f };

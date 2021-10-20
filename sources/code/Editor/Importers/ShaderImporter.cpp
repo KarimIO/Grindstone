@@ -63,8 +63,8 @@ std::string readTextFile(const char* filename) {
 }
 
 void reflectImages(
-	Grindstone::Converters::ShaderImporter::ShaderType shaderType,
-	std::vector<Grindstone::Converters::ShaderImporter::Texture>& textures,
+	Grindstone::Importers::ShaderImporter::ShaderType shaderType,
+	std::vector<Grindstone::Importers::ShaderImporter::Texture>& textures,
 	spirv_cross::Compiler& compiler,
 	spirv_cross::SmallVector<spirv_cross::Resource>& resourceList
 ) {
@@ -77,8 +77,8 @@ void reflectImages(
 }
 
 void reflectStruct(
-	Grindstone::Converters::ShaderImporter::ShaderType shaderType,
-	std::vector<Grindstone::Converters::ShaderImporter::UniformBuffer>& uniformBuffers,
+	Grindstone::Importers::ShaderImporter::ShaderType shaderType,
+	std::vector<Grindstone::Importers::ShaderImporter::UniformBuffer>& uniformBuffers,
 	spirv_cross::Compiler& compiler,
 	spirv_cross::SmallVector<spirv_cross::Resource>& resourceList
 ) {
@@ -108,10 +108,10 @@ void reflectStruct(
 }
 
 namespace Grindstone {
-	namespace Converters {
-		void ImportShadersFromGlsl(const char* filePath) {
-			Converters::ShaderImporter importer;
-			importer.convertFile(filePath);
+	namespace Importers {
+		void ImportShadersFromGlsl(std::filesystem::path& filePath) {
+			Importers::ShaderImporter importer;
+			importer.Import(filePath);
 		}
 
 		shaderc_shader_kind getShaderTypeForShaderc(ShaderImporter::ShaderType type) {
@@ -125,18 +125,16 @@ namespace Grindstone {
 			}
 		}
 
-		ShaderImporter::ShaderImporter() : reflectionWriter(reflectionStringBuffer) {}
+		void ShaderImporter::Import(std::filesystem::path& path) {
+			this->path = path;
 
-		void ShaderImporter::convertFile(const char* filePath) {
-			path = filePath;
-
-			basePath = path;
-			auto lastPeriod = path.find_last_of('.');
+			basePath = path.string();
+			auto lastPeriod = basePath.find_last_of('.');
 			if (lastPeriod != -1) {
-				basePath = path.substr(0, lastPeriod);
+				basePath = basePath.substr(0, lastPeriod);
 			}
 
-			sourceFileContents = readTextFile(filePath);
+			sourceFileContents = readTextFile(path.string().c_str());
 
 			process();
 		}
@@ -334,7 +332,7 @@ namespace Grindstone {
 			auto result = compiler.CompileGlslToSpv(
 				shaderModuleGlsl,
 				getShaderTypeForShaderc(shaderType),
-				path.c_str(),
+				path.string().c_str(),
 				options
 			);
 
@@ -372,7 +370,7 @@ namespace Grindstone {
 			auto result = compiler.CompileGlslToSpv(
 				opengGlsl,
 				getShaderTypeForShaderc(shaderType),
-				path.c_str(),
+				path.string().c_str(),
 				options
 			);
 

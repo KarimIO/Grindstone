@@ -11,6 +11,10 @@ Manager& Manager::GetInstance() {
 	return manager;
 }
 
+Importers::ImporterManager& Manager::GetImporterManager() {
+	return importerManager;
+}
+
 CommandList& Manager::GetCommandList() {
 	return commandList;
 }

@@ -6,9 +6,9 @@
 #include <entt/entt.hpp>
 #include "ComponentInspector.hpp"
 #include "Editor/ImguiEditor/ImguiEditor.hpp"
-#include "Editor/Converters/ShaderImporter.hpp"
-#include "Editor/Converters/ModelConverter.hpp"
-#include "Editor/Converters/TextureConverter.hpp"
+#include "Editor/Importers/ShaderImporter.hpp"
+#include "Editor/Importers/ModelImporter.hpp"
+#include "Editor/Importers/TextureImporter.hpp"
 #include "Editor/EditorManager.hpp"
 #include "AssetBrowserPanel.hpp"
 #include "Common/Window/WindowManager.hpp"
@@ -215,55 +215,36 @@ void AssetBrowserPanel::RenderContextMenuFileTypeSpecificEntries(std::filesystem
 		return;
 	}
 
-	auto path = entry.path().string();
-	size_t firstDot = path.find_last_of('.');
-	std::string firstDotExtension = path.substr(firstDot);
+	auto path = entry.path();
+	auto pathStr = path.string();
+	size_t firstDot = pathStr.find_last_of('.') + 1;
+	std::string firstDotExtension = pathStr.substr(firstDot);
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	// size_t secondDot = path.find_last_of('.', firstDot - 1);
 	// std::string secondDotExtension = path.substr(secondDot);
 
-	if (firstDotExtension == ".glsl") {
+	auto& importerManager = Editor::Manager::GetInstance().GetImporterManager();
+	auto importerFactory = importerManager.GetImporterFactoryByExtension(firstDotExtension);
+	if (importerFactory != nullptr) {
 		if (ImGui::MenuItem("Convert")) {
-			Grindstone::Converters::ImportShadersFromGlsl(path.c_str());
-			std::string pathWithoutExtension = path.substr(0, firstDot);
-			engineCore.shaderManager->ReloadShaderIfLoaded(pathWithoutExtension.c_str());
-		}
-		if (ImGui::MenuItem("Reimport")) {
-			std::string pathWithoutExtension = path.substr(0, firstDot);
-			engineCore.shaderManager->ReloadShaderIfLoaded(pathWithoutExtension.c_str());
+			importerFactory(path);
 		}
 	}
-	else if (
-		firstDotExtension == ".jpg" ||
-		firstDotExtension == ".jpeg" ||
-		firstDotExtension == ".tga" ||
-		firstDotExtension == ".bmp" ||
-		firstDotExtension == ".png"
-	) {
-		if (ImGui::MenuItem("Convert")) {
-			Grindstone::Converters::ImportTexture(path.c_str());
 
-			std::string pathDDS = path + ".dds";
-			engineCore.textureManager->ReloadTextureIfLoaded(pathDDS.c_str());
-		}
-	}
-	else if (firstDotExtension == ".gmat") {
+	if (firstDotExtension == "glsl") {
 		if (ImGui::MenuItem("Reimport")) {
-			engineCore.materialManager->ReloadMaterialIfLoaded(path.c_str());
+			std::string pathWithoutExtension = pathStr.substr(0, firstDot);
+			engineCore.shaderManager->ReloadShaderIfLoaded(pathWithoutExtension.c_str());
 		}
 	}
-	else if (firstDotExtension == ".dds") {
+	else if (firstDotExtension == "gmat") {
 		if (ImGui::MenuItem("Reimport")) {
-			engineCore.textureManager->ReloadTextureIfLoaded(path.c_str());
+			engineCore.materialManager->ReloadMaterialIfLoaded(pathStr.c_str());
 		}
 	}
-	else if (
-		firstDotExtension == ".fbx" ||
-		firstDotExtension == ".obj" ||
-		firstDotExtension == ".dae"
-	) {
-		if (ImGui::MenuItem("Convert")) {
-			Grindstone::Converters::ImportModel(path.c_str());
+	else if (firstDotExtension == "dds") {
+		if (ImGui::MenuItem("Reimport")) {
+			engineCore.textureManager->ReloadTextureIfLoaded(pathStr.c_str());
 		}
 	}
 }

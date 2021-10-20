@@ -11,12 +11,12 @@
 #include <stb/stb_image_resize.h>
 
 #include "Common/Formats/Dds.hpp"
-#include "TextureConverter.hpp"
-using namespace Grindstone::Converters;
+#include "TextureImporter.hpp"
+using namespace Grindstone::Importers;
 
 const unsigned int blockWidth = 4;
 
-void TextureConverter::ExtractBlock(
+void TextureImporter::ExtractBlock(
 	const unsigned char* inPtr,
 	unsigned char* colorBlock
 ) {
@@ -27,9 +27,9 @@ void TextureConverter::ExtractBlock(
 }
 
 
-void TextureConverter::Convert(const char* path) {
+void TextureImporter::Import(std::filesystem::path& path) {
 	this->path = path;
-	sourcePixels = stbi_load(path, &texWidth, &texHeight, &texChannels, 4);
+	sourcePixels = stbi_load(path.string().c_str(), &texWidth, &texHeight, &texChannels, 4);
 	if (!sourcePixels) {
 		throw std::runtime_error("Unable to load texture!");
 	}
@@ -55,11 +55,11 @@ void TextureConverter::Convert(const char* path) {
 	delete sourcePixels;
 }
 
-unsigned char TextureConverter::CombinePixels(unsigned char* pixelSrc) {
+unsigned char TextureImporter::CombinePixels(unsigned char* pixelSrc) {
 	return (*pixelSrc + *(pixelSrc + 4) + *(pixelSrc + 8) + *(pixelSrc + 12)) / 4;
 }
 
-unsigned char *TextureConverter::CreateMip(unsigned char *pixel, int width, int height) {
+unsigned char *TextureImporter::CreateMip(unsigned char *pixel, int width, int height) {
 	int size = width * height * texChannels;
 	unsigned char *mip = new unsigned char[size];
 	int dst = -1;
@@ -76,7 +76,7 @@ unsigned char *TextureConverter::CreateMip(unsigned char *pixel, int width, int 
 	return mip;
 }
 
-void TextureConverter::ConvertBC123() {
+void TextureImporter::ConvertBC123() {
 	bool isSixSidedCubemap = false;
 	// if (isSixSidedCubemap)
 	// 	size *= 6;
@@ -152,7 +152,7 @@ void TextureConverter::ConvertBC123() {
 	OutputDds(outData, outputContentSize);
 }
 
-void TextureConverter::OutputDds(unsigned char* outData, int contentSize) {
+void TextureImporter::OutputDds(unsigned char* outData, int contentSize) {
 	bool shouldGenerateMips = false;
 
 	DDSHeader outHeader;
@@ -184,7 +184,7 @@ void TextureConverter::OutputDds(unsigned char* outData, int contentSize) {
 	char mark[] = { 'G', 'R', 'I', 'N', 'D', 'S', 'T', 'O', 'N', 'E' };
 	std::memcpy(&outHeader.dwReserved1, mark, sizeof(mark));
 
-	std::string outputPath = path + ".dds";
+	std::string outputPath = path.string() + ".dds";
 	std::ofstream out(outputPath, std::ios::binary);
 	if (out.fail()) {
 		throw std::runtime_error("Failed to output texture!");
@@ -198,12 +198,12 @@ void TextureConverter::OutputDds(unsigned char* outData, int contentSize) {
 	delete[] outData;
 }
 
-int TextureConverter::CalculateMipMapLevelCount(int width, int height) {
+int TextureImporter::CalculateMipMapLevelCount(int width, int height) {
 	int size = std::min(width, height);
 	return (int)std::log2(size) - 1;
 }
 
-void Grindstone::Converters::ImportTexture(const char* inputPath) {
-	TextureConverter textureConverter;
-	textureConverter.Convert(inputPath);
+void Grindstone::Importers::ImportTexture(std::filesystem::path& inputPath) {
+	TextureImporter TextureImporter;
+	TextureImporter.Import(inputPath);
 }

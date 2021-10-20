@@ -3,6 +3,7 @@
 #include "Common/Logging.hpp"
 
 #include "Commands/CommandList.hpp"
+#include "Importers/ImporterManager.hpp"
 #include "FileManager.hpp"
 #include "Selection.hpp"
 
@@ -20,6 +21,7 @@ namespace Grindstone {
 		public:
 			Manager() = default;
 			static Manager& GetInstance();
+			Importers::ImporterManager& GetImporterManager();
 			CommandList& GetCommandList();
 			Selection& GetSelection();
 			static FileManager& GetFileManager();
@@ -37,6 +39,7 @@ namespace Grindstone {
 			CommandList commandList;
 			Selection selection;
 			FileManager fileManager;
+			Importers::ImporterManager importerManager;
 		};
 	}
 }
