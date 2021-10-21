@@ -140,7 +140,13 @@ namespace Grindstone {
 				case Reflection::TypeDescriptor::ReflectionTypeData::Float4:
 					ImGui::InputFloat4(
 						displayName,
-						(float *)offset
+						(float*)offset
+					);
+					break;
+				case Reflection::TypeDescriptor::ReflectionTypeData::Quaternion:
+					ImGui::InputFloat4(
+						displayName,
+						(float*)offset
 					);
 					break;
 				case Reflection::TypeDescriptor::ReflectionTypeData::Double:

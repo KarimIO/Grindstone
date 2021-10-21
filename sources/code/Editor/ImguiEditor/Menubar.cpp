@@ -3,6 +3,9 @@
 #include "ImguiEditor.hpp"
 #include "../EditorManager.hpp"
 #include "Menubar.hpp"
+
+#include "EngineCore/EngineCore.hpp"
+#include "EngineCore/Scenes/Manager.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
 Menubar::Menubar(ImguiEditor* editor) : editor(editor) {}
@@ -32,8 +35,19 @@ void Menubar::Render() {
 }
 
 void Menubar::RenderFileMenu() {
+	auto& engineCore = Editor::Manager::GetEngineCore();
+
 	if (ImGui::MenuItem("New", "Ctrl+N", false)) {}
-	if (ImGui::MenuItem("Save", "Ctrl+S", false)) {}
+	if (ImGui::MenuItem("Save", "Ctrl+S", false)) {
+		auto* sceneManager = engineCore.GetSceneManager();
+		if (sceneManager->scenes.empty()) {
+			Editor::Manager::Print(Grindstone::LogSeverity::Error, "No active scenes.");
+		}
+		else {
+			SceneManagement::Scene* scene = sceneManager->scenes.begin()->second;
+			sceneManager->SaveScene(scene->GetPath(), scene);
+		}
+	}
 	if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S", false)) {}
 	ImGui::Separator();
 	if (ImGui::MenuItem("Reload", "", false)) {}

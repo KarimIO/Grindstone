@@ -29,15 +29,19 @@ void Scene::DestroyEntity(ECS::Entity entity) {
 	DestroyEntity(entity.GetHandle());
 }
 
-ECS::Entity Grindstone::SceneManagement::Scene::CreateEntity(entt::entity entityToUse) {
+ECS::Entity Scene::CreateEntity(entt::entity entityToUse) {
 	auto entity = CreateEmptyEntity(entityToUse);
 	entity.AddComponent<TagComponent>("New Entity");
 	entity.AddComponent<TransformComponent>();
 	return entity;
 }
 
-const char* Grindstone::SceneManagement::Scene::GetName() {
+const char* Scene::GetName() {
 	return name.c_str();
+}
+
+const char* Scene::GetPath() {
+	return path.c_str();
 }
 
 // Made so that entities can access componentregistrat without requiring enginecore.

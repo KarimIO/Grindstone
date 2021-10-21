@@ -27,6 +27,7 @@ namespace Grindstone {
 			virtual void DestroyEntity(ECS::EntityHandle entityId);
 			virtual void DestroyEntity(ECS::Entity entity);
 			virtual const char* GetName();
+			virtual const char* GetPath();
 			virtual ECS::ComponentRegistrar* GetComponentRegistrar() const;
 			virtual entt::registry& GetEntityRegistry();
 			void Update();

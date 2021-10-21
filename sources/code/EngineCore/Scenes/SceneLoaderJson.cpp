@@ -244,6 +244,9 @@ void SceneLoaderJson::ProcessComponentParameter(
 			str = parameter.GetString();
 			break;
 		}
+		case Reflection::TypeDescriptor::ReflectionTypeData::Quaternion:
+			CopyDataArrayFloat(parameter, (float*)memberPtr, 4);
+			break;
 		case ReflectionTypeData::Bool: {
 			bool& str = *(bool*)memberPtr;
 			str = parameter.GetBool();
