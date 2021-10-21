@@ -1,6 +1,7 @@
 #include <imgui/imgui.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include <entt/entt.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include "ComponentInspector.hpp"
 #include "Editor/EditorManager.hpp"
 #include "EngineCore/EngineCore.hpp"
@@ -143,12 +144,17 @@ namespace Grindstone {
 						(float*)offset
 					);
 					break;
-				case Reflection::TypeDescriptor::ReflectionTypeData::Quaternion:
-					ImGui::InputFloat4(
+				case Reflection::TypeDescriptor::ReflectionTypeData::Quaternion: {
+					glm::quat* quaternion = (glm::quat*)offset;
+					glm::vec3 euler = glm::degrees(glm::eulerAngles(*quaternion));
+					if (ImGui::InputFloat3(
 						displayName,
-						(float*)offset
-					);
+						&euler[0]
+					)) {
+						*quaternion = glm::quat(glm::radians(euler));
+					}
 					break;
+				}
 				case Reflection::TypeDescriptor::ReflectionTypeData::Double:
 					ImGui::InputDouble(
 						displayName,
