@@ -10,6 +10,7 @@
 #include <stb/stb_dxt.h>
 #include <stb/stb_image_resize.h>
 
+#include "Common/ResourcePipeline/MetaFile.hpp"
 #include "Common/Formats/Dds.hpp"
 #include "TextureImporter.hpp"
 using namespace Grindstone::Importers;
@@ -33,6 +34,8 @@ void TextureImporter::Import(std::filesystem::path& path) {
 	if (!sourcePixels) {
 		throw std::runtime_error("Unable to load texture!");
 	}
+
+	metaFile = new MetaFile(path);
 
 	Compression compression;
 	if (texChannels == 4) {
@@ -184,7 +187,10 @@ void TextureImporter::OutputDds(unsigned char* outData, int contentSize) {
 	char mark[] = { 'G', 'R', 'I', 'N', 'D', 'S', 'T', 'O', 'N', 'E' };
 	std::memcpy(&outHeader.dwReserved1, mark, sizeof(mark));
 
-	std::string outputPath = path.string() + ".dds";
+	std::string basePath = "../compiledAssets/";
+	std::string subassetName = "texture";
+	Uuid outUuid = metaFile->GetOrCreateSubassetUuid(subassetName);
+	std::string outputPath = basePath + outUuid.ToString();
 	std::ofstream out(outputPath, std::ios::binary);
 	if (out.fail()) {
 		throw std::runtime_error("Failed to output texture!");
@@ -194,6 +200,8 @@ void TextureImporter::OutputDds(unsigned char* outData, int contentSize) {
 	out.write((const char*)&outHeader, sizeof(outHeader));
 	out.write((const char*)outData, contentSize);
 	out.close();
+
+	metaFile->Save();
 
 	delete[] outData;
 }

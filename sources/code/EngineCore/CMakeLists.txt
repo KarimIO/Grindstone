@@ -129,7 +129,7 @@ add_library(EngineCore MODULE ${ENGINE_CORE_SOURCES} ${ENGINE_CORE_HEADERS})
 find_package(OpenAL) 
 
 target_compile_features(EngineCore PRIVATE cxx_std_17)
-target_compile_definitions(EngineCore PUBLIC ENGINE_CORE)
+target_compile_definitions(EngineCore PUBLIC ENGINE_CORE NOMINMAX)
 target_include_directories(EngineCore
     PUBLIC
     ../

@@ -44,7 +44,7 @@ void ModelImporter::ConvertMaterials() {
 	aiMaterial *pMaterial;
 	aiString Path;
 	for (uint32_t i = 0; i < materialCount; i++) {
-		Materials::StandardMaterialCreateInfo newMaterial;
+		StandardMaterialCreateInfo newMaterial;
 		pMaterial = materials[i];
 
 		aiString name;

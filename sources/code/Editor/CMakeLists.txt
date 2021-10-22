@@ -66,7 +66,7 @@ set(EDITOR_HEADERS
 add_executable(Editor WIN32 ${EDITOR_HEADERS} ${EDITOR_SOURCES})
 
 set_property(TARGET Editor PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${BUILD_DIRECTORY})
-
+target_compile_definitions(Editor PUBLIC NOMINMAX)
 target_include_directories(Editor
     PUBLIC
 	../

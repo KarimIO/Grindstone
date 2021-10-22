@@ -168,7 +168,7 @@ void AssetBrowserPanel::RenderTopBar() {
 	ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.3f, 0.6f, 0.9f, 0.1f));
 	ImGui::BeginChildFrame(assetTopBar, ImVec2(0, 25), ImGuiWindowFlags_NoScrollbar);
 	float availWidth = ImGui::GetContentRegionAvailWidth();
-	ImGui::PushItemWidth(min(160.0f, availWidth / 2.0f));
+	ImGui::PushItemWidth(std::min(160.0f, availWidth / 2.0f));
 	ImGui::InputText("Search", &searchText);
 	ImGui::EndChildFrame();
 	ImGui::PopStyleColor();
@@ -226,24 +226,25 @@ void AssetBrowserPanel::RenderContextMenuFileTypeSpecificEntries(std::filesystem
 	auto& importerManager = Editor::Manager::GetInstance().GetImporterManager();
 	auto importerFactory = importerManager.GetImporterFactoryByExtension(firstDotExtension);
 	if (importerFactory != nullptr) {
-		if (ImGui::MenuItem("Convert")) {
+		if (ImGui::MenuItem("Import")) {
 			importerFactory(path);
 		}
 	}
 
+	// TODO: Get uuids from meta file so I can reload them
 	if (firstDotExtension == "glsl") {
-		if (ImGui::MenuItem("Reimport")) {
+		if (ImGui::MenuItem("Reload")) {
 			std::string pathWithoutExtension = pathStr.substr(0, firstDot);
 			engineCore.shaderManager->ReloadShaderIfLoaded(pathWithoutExtension.c_str());
 		}
 	}
 	else if (firstDotExtension == "gmat") {
-		if (ImGui::MenuItem("Reimport")) {
+		if (ImGui::MenuItem("Reload")) {
 			engineCore.materialManager->ReloadMaterialIfLoaded(pathStr.c_str());
 		}
 	}
 	else if (firstDotExtension == "dds") {
-		if (ImGui::MenuItem("Reimport")) {
+		if (ImGui::MenuItem("Reload")) {
 			engineCore.textureManager->ReloadTextureIfLoaded(pathStr.c_str());
 		}
 	}

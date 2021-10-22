@@ -6,12 +6,25 @@
 namespace Grindstone {
 	class MetaFile {
 	public:
-		~MetaFile();
+		MetaFile() = default;
+		MetaFile(std::filesystem::path);
 
-		bool LoadOrCreateFromSourcePath(std::filesystem::path);
-		std::filesystem::path GetCompiledFileFromUuid(Uuid uuid);
-		void AddSubResource();
-		void UpdateHash();
-		void UpdateWriteDate();
+		void Load(std::filesystem::path);
+		void Save();
+		Uuid GetOrCreateSubassetUuid(std::string& subassetName);
+		bool TryGetSubassetUuid(std::string& subassetName, Uuid& outUuid);
+	public:
+		struct Subasset {
+			std::string name;
+			Uuid uuid;
+
+			Subasset(
+				std::string name,
+				Uuid uuid
+			) : name(name), uuid(uuid) {}
+		};
+	private:
+		std::vector<Subasset> subassets;
+		std::filesystem::path path;
 	};
 }

@@ -7,11 +7,12 @@
 #include "Editor/EditorManager.hpp"
 #include "MaterialImporter.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
+#include "Common/ResourcePipeline/MetaFile.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::Importers;
 
-bool CreateStandardOrCutoutMaterial(Materials::StandardMaterialCreateInfo createInfo, std::string path, bool isCutout) {
+bool CreateStandardOrCutoutMaterial(StandardMaterialCreateInfo createInfo, std::filesystem::path path, bool isCutout) {
 	std::filesystem::path p = path;
 	std::filesystem::path pathToShader = std::filesystem::relative("../assets/test", p.parent_path());
 
@@ -57,10 +58,28 @@ bool CreateStandardOrCutoutMaterial(Materials::StandardMaterialCreateInfo create
 	return false;
 }
 
-bool Materials::CreateStandardMaterial(StandardMaterialCreateInfo ci, std::string path) {
-	return CreateStandardOrCutoutMaterial(ci, path, false);
+bool Importers::CreateStandardMaterial(StandardMaterialCreateInfo ci, std::filesystem::path path) {
+	bool response = CreateStandardOrCutoutMaterial(ci, path, false);
+	ImportMaterial(path);
+	return response;
 }
 
-bool Materials::CreateCutoutMaterial(StandardMaterialCreateInfo ci, std::string path) {
-	return CreateStandardOrCutoutMaterial(ci, path, true);
+bool Importers::CreateCutoutMaterial(StandardMaterialCreateInfo ci, std::filesystem::path path) {
+	bool response = CreateStandardOrCutoutMaterial(ci, path, true);
+	ImportMaterial(path);
+	return response;
+}
+
+void MaterialImporter::Import(std::filesystem::path& path) {
+	metaFile = new MetaFile(path);
+	std::string subassetName = "material";
+	Uuid uuid = metaFile->GetOrCreateSubassetUuid(subassetName);
+
+	std::filesystem::copy(path, std::string("../compiledAssets/") + uuid.ToString());
+	metaFile->Save();
+}
+
+void Importers::ImportMaterial(std::filesystem::path& inputPath) {
+	MaterialImporter TextureImporter;
+	TextureImporter.Import(inputPath);
 }

@@ -1,8 +1,8 @@
 #include "ImporterManager.hpp"
-#include "ModelImporter.hpp";
-#include "ShaderImporter.hpp";
-#include "TextureImporter.hpp";
-#include "MaterialImporter.hpp";
+#include "ModelImporter.hpp"
+#include "ShaderImporter.hpp"
+#include "TextureImporter.hpp"
+#include "MaterialImporter.hpp"
 using namespace Grindstone::Importers;
 
 ImporterManager::ImporterManager() {
@@ -10,12 +10,14 @@ ImporterManager::ImporterManager() {
 	AddImporterFactory("dae", ImportModel);
 	AddImporterFactory("obj", ImportModel);
 
-	AddImporterFactory("png", ImportTexture);
+	AddImporterFactory("jpeg",ImportTexture);
 	AddImporterFactory("jpg", ImportTexture);
+	AddImporterFactory("png", ImportTexture);
 	AddImporterFactory("tga", ImportTexture);
-	AddImporterFactory("jpeg", ImportTexture);
 	AddImporterFactory("bmp", ImportTexture);
 	AddImporterFactory("psd", ImportTexture);
+
+	AddImporterFactory("gmat", ImportMaterial);
 
 	AddImporterFactory("glsl", ImportShadersFromGlsl);
 }
@@ -27,6 +29,7 @@ bool ImporterManager::Import(std::filesystem::path& path) {
 	}
 
 	importerFactory(path);
+	return true;
 }
 
 void ImporterManager::AddImporterFactory(std::string extension, ImporterFactory importerFactory) {
