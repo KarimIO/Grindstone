@@ -12,11 +12,11 @@
 using namespace Grindstone;
 using namespace Grindstone::Importers;
 
-bool CreateStandardOrCutoutMaterial(StandardMaterialCreateInfo createInfo, std::filesystem::path path, bool isCutout) {
-	std::filesystem::path p = path;
+bool CreateStandardOrCutoutMaterial(StandardMaterialCreateInfo createInfo, std::filesystem::path outputPath, bool isCutout) {
+	std::filesystem::path p = outputPath;
 	std::filesystem::path pathToShader = std::filesystem::relative("../assets/test", p.parent_path());
 
-	std::ofstream output(path);
+	std::ofstream output(outputPath);
 
 	output << "{\n";
 	

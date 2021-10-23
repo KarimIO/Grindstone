@@ -81,10 +81,10 @@ void ImguiEditor::Render() {
 	RenderDockspace();
 	modelConverterModal->Render();
 	imageConverterModal->Render();
-	assetBrowserPanel->Render();
 	sceneHeirarchyPanel->Render();
 	viewportPanel->Render();
 	consolePanel->Render();
+	assetBrowserPanel->Render();
 	systemPanel->Render();
 	inspectorPanel->Render();
 }

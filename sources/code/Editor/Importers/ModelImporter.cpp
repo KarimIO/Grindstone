@@ -12,6 +12,7 @@
 #include "Common/Formats/Model.hpp"
 #include "Editor/EditorManager.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
+#include "Common/ResourcePipeline/MetaFile.hpp"
 
 using namespace Grindstone::Importers;
 
@@ -74,13 +75,13 @@ void ModelImporter::ConvertMaterials() {
 			newMaterial.roughness = roughness.r;
 		}
 
-		std::string fileName = name.C_Str();
-		std::filesystem::path outputMaterialPath = baseFolderPath / (fileName + ".gmat");
-		outputData.materialNames[i] = outputMaterialPath.string();
+		std::string materialName = name.C_Str();
+		Uuid uuid = metaFile->GetOrCreateSubassetUuid(materialName);
+		std::string uuidString = outputData.materialNames[i] = uuid.ToString();
 
-		Editor::Manager::Print(LogSeverity::Trace, outputMaterialPath.string().c_str());
+		Editor::Manager::Print(LogSeverity::Trace, uuidString.c_str());
 
-		CreateStandardMaterial(newMaterial, outputMaterialPath.string());
+		CreateStandardMaterial(newMaterial, "../compiledAssets" + uuidString);
 	}
 }
 
@@ -180,6 +181,8 @@ void ModelImporter::Import(std::filesystem::path& path) {
 		throw std::runtime_error(importer.GetErrorString());
 	}
 
+	metaFile = new MetaFile(path);
+
 	ProcessNodeTree(scene->mRootNode);
 	InitSubmeshes();
 	ConvertMaterials();
@@ -189,6 +192,8 @@ void ModelImporter::Import(std::filesystem::path& path) {
 
 	OutputPrefabs();
 	OutputMeshes();
+
+	metaFile->Save();
 }
 
 void ModelImporter::OutputPrefabs() {
@@ -196,7 +201,10 @@ void ModelImporter::OutputPrefabs() {
 }
 
 void ModelImporter::OutputMeshes() {
-	std::filesystem::path meshOutputPath = path.replace_extension("gmf");
+	std::string subassetName = "mesh";
+	Uuid outUuid = metaFile->GetOrCreateSubassetUuid(subassetName);
+
+	std::string meshOutputPath = "../compiledAssets" + outUuid.ToString();
 
 	auto meshCount = outputData.meshes.size();
 
@@ -218,7 +226,7 @@ void ModelImporter::OutputMeshes() {
 	std::ofstream output(meshOutputPath, std::ios::binary);
 
 	if (!output.is_open()) {
-		throw std::runtime_error(std::string("Failed to open ") + meshOutputPath.string());
+		throw std::runtime_error(std::string("Failed to open ") + meshOutputPath);
 	}
 
 	//  - Output File MetaData
