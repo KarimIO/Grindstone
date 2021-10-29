@@ -1,5 +1,5 @@
-#include <imgui/imgui.h>
-#include <imgui/misc/cpp/imgui_stdlib.h>
+#include <imgui.h>
+#include <imgui_stdlib.h>
 #include "Editor/Importers/TextureImporter.hpp"
 #include "ImageConverterModal.hpp"
 using namespace Grindstone::Editor::ImguiEditor;

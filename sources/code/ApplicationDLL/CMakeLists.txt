@@ -10,10 +10,6 @@ add_library(ApplicationDLL MODULE ${ENGINE_CORE_SOURCES} ${ENGINE_CORE_HEADERS})
 
 target_compile_definitions(ApplicationDLL PUBLIC APP_DLL)
 
-target_include_directories(ApplicationDLL
-    PUBLIC ../
-    ${DEPS_DIR}/entt/src
-)
+target_include_directories(ApplicationDLL PUBLIC ${CODE_DIR} ${VCPKG_INCLUDE_DIR})
 
-target_precompile_headers(ApplicationDLL
-    PUBLIC pch.hpp)
+target_precompile_headers(ApplicationDLL PUBLIC pch.hpp)

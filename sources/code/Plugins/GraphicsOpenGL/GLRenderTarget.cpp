@@ -2,7 +2,7 @@
 #include <GL/gl3w.h>
 #include <cmath>
 #include "GLTexture.hpp"
-#include <../deps/glm/glm.hpp>
+#include <glm/glm.hpp>
 #include <iostream>
 
 namespace Grindstone {
@@ -77,7 +77,7 @@ namespace Grindstone {
 		bool GLRenderTarget::IsCubemap() {
 			return isCubemap;
 		}
-		
+
 		void GLRenderTarget::Resize(uint32_t width, uint32_t height) {
 			this->width = width;
 			this->height = height;

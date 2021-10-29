@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <string>
-#include <imgui/imgui.h>
+#include <imgui.h>
 
 namespace Grindstone {
 	class EngineCore;

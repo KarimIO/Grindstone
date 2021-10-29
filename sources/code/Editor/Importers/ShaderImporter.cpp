@@ -1,8 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <shaderc/shaderc.hpp>
-#include <spirv-cross/spirv_cross.hpp>
-#include <spirv-cross/spirv_glsl.hpp>
+#include <spirv_cross.hpp>
+#include <spirv_glsl.hpp>
 #include "ShaderImporter.hpp"
 
 std::string getDataTypeName(spirv_cross::SPIRType::BaseType type) {

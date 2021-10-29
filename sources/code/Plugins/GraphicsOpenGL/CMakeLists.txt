@@ -1,7 +1,6 @@
 set(GRAPHICS_DIR "${COMMON_DIR}/Graphics")
 
-set(GL_CORE_SOURCES ${DEPS_DIR}/GL/gl3w.cpp ${GRAPHICS_DIR}/Formats.cpp GLCore.cpp EntryPoint.cpp)
-set(GL_CORE_HEADERS ${DEPS_DIR}/GL/gl3w.h glcorearb.hpp GLCore.hpp)
+set(GL_CORE_SOURCES ${GRAPHICS_DIR}/Formats.cpp GLCore.cpp EntryPoint.cpp)
 set(GL_OBJ_SOURCES GLDepthTarget.cpp GLRenderTarget.cpp GLFramebuffer.cpp GLPipeline.cpp GLTexture.cpp GLVertexArrayObject.cpp GLVertexBuffer.cpp GLIndexBuffer.cpp GLUniformBuffer.cpp)
 set(GL_OBJ_HEADERS GLDepthTarget.hpp GLRenderTarget.hpp GLFramebuffer.hpp GLPipeline.hpp GLTexture.hpp GLVertexArrayObject.hpp GLVertexBuffer.hpp GLIndexBuffer.hpp GLUniformBuffer.hpp)
 set(GL_WINDOW_SOURCES ${COMMON_DIR}/Window/WindowManager.cpp)
@@ -37,28 +36,14 @@ source_group("Header Files\\Display" FILES ${GL_DISPLAY_HEADERS})
 
 add_library(PluginGraphicsOpenGL MODULE ${GL_SOURCES} ${GL_HEADERS})
 
-target_include_directories(PluginGraphicsOpenGL PUBLIC ${GLM_DIR} ${DEPS_DIR})
-
 target_compile_features(PluginGraphicsOpenGL PRIVATE cxx_std_17)
 
 target_compile_definitions(PluginGraphicsOpenGL PUBLIC GRAPHICS_OPENGL GRAPHICS_DLL)
-
-target_include_directories(PluginGraphicsOpenGL
-    PUBLIC
-	${CODE_DIR}
-	${DEPS_DIR}
-    ${DEPS_DIR}/entt/src
-)
+target_include_directories(PluginGraphicsOpenGL PUBLIC ${CODE_DIR})
 
 target_precompile_headers(PluginGraphicsOpenGL
     PUBLIC pch.hpp
 )
 
-find_package(OpenGL) 
-target_link_libraries(PluginGraphicsOpenGL ${OPENGL_gl_LIBRARY})
-
-if (APPLE)
-    target_link_directories(PluginGraphicsOpenGL ${GLFW_DIR}/lib)
-    target_link_libraries(PluginGraphicsOpenGL glfw3)
-    target_include_directories(PluginGraphicsOpenGL PUBLIC ${GLFW_DIR}/include)
-endif(APPLE)
+find_package(gl3w CONFIG REQUIRED)
+target_link_libraries(PluginGraphicsOpenGL unofficial::gl3w::gl3w glm::glm opengl32)

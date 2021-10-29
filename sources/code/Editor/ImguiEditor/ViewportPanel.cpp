@@ -1,4 +1,4 @@
-#include <imgui/imgui.h>
+#include <imgui.h>
 
 #include "Common/Input.hpp"
 #include "EngineCore/CoreComponents/Camera/CameraComponent.hpp"

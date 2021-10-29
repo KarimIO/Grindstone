@@ -4,14 +4,14 @@
 using namespace Grindstone;
 
 void Rendering::RenderPathDeferred::initialize() {
-    Renderer::MaterialManager* manager;
-    manager->addQueue("Unlit");
-    manager->addQueue("Opaque");
-    manager->addQueue("Transparent");
+	Renderer::MaterialManager* manager;
+	manager->addQueue("Unlit");
+	manager->addQueue("Opaque");
+	manager->addQueue("Transparent");
 }
 
 void Rendering::RenderPathDeferred::render() {
-    Renderer::MaterialManager* manager;
+	Renderer::MaterialManager* manager;
 
 	// Cull Geometry
 
@@ -27,7 +27,7 @@ void Rendering::RenderPathDeferred::render() {
 }
 
 void Rendering::RenderPathDeferred::renderGeometryQueueOpaque(uint32_t id) {
-    Renderer::MaterialManager* manager;
+	Renderer::MaterialManager* manager;
 	GraphicsAPI::Core* core;
 	
 	// Sorting front to back

@@ -1,0 +1,27 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "(Windows) Application Launch",
+			"type": "cppvsdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/build/Application.exe",
+			"args": [],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/build",
+			"environment": [],
+			"console": "externalTerminal"
+		},
+		{
+			"name": "(Windows) Editor Launch",
+			"type": "cppvsdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/build/Editor.exe",
+			"args": [],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/build",
+			"environment": [],
+			"console": "externalTerminal"
+		}
+	]
+}

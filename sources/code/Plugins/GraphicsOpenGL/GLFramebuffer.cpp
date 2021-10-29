@@ -3,7 +3,7 @@
 #include "GLFramebuffer.hpp"
 #include "GLTexture.hpp"
 #include <cmath>
-#include <../deps/glm/glm.hpp>
+#include <glm/glm.hpp>
 
 namespace Grindstone {
 	namespace GraphicsAPI {

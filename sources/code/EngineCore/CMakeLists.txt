@@ -126,20 +126,13 @@ set(ENGINE_CORE_HEADERS
 
 add_library(EngineCore MODULE ${ENGINE_CORE_SOURCES} ${ENGINE_CORE_HEADERS})
 
-find_package(OpenAL) 
-
 target_compile_features(EngineCore PRIVATE cxx_std_17)
 target_compile_definitions(EngineCore PUBLIC ENGINE_CORE NOMINMAX)
-target_include_directories(EngineCore
-    PUBLIC
-    ../
-	${DEPS_DIR}
-	${RAPIDJSON_PATH}
-    ${DEPS_DIR}/spdlog/include/
-    ${DEPS_DIR}/entt/src
-	${OPENAL_INCLUDE_DIR}
-)
 
-target_link_libraries(EngineCore ${OPENAL_LIBRARY})
+find_package(OpenAL CONFIG REQUIRED)
+find_path(DRLIBS_INCLUDE_DIRS "dr_flac.h")
+
+target_include_directories(EngineCore PUBLIC ../ ${DRLIBS_INCLUDE_DIRS})
+target_link_libraries(EngineCore rapidjson OpenAL::OpenAL spdlog::spdlog spdlog::spdlog_header_only)
 
 target_precompile_headers(EngineCore PUBLIC pch.hpp)

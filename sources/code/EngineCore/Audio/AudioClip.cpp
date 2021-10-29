@@ -65,7 +65,7 @@ void Clip::LoadWavFromPath(const char* path) {
 	bitsPerSample= wav->bitsPerSample;
 	sampleRate = wav->sampleRate;
 
-	size_t fileSize = wav->totalSampleCount * wav->bytesPerSample;
+	size_t fileSize = wav->bytesRemaining;
 	char* fileData = (char*)malloc(fileSize);
 	drwav_read_raw(wav, fileSize, fileData);
 	CreateOpenALBuffer(fileData, fileSize);

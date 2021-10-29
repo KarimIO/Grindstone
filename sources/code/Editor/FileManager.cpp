@@ -1,5 +1,5 @@
 #include <filesystem>
-#include <efsw/include/efsw/efsw.hpp>
+#include <efsw/efsw.hpp>
 #include "FileManager.hpp"
 #include "EditorManager.hpp"
 #include "Common/Logging.hpp"

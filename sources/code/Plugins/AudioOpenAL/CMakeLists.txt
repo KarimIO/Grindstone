@@ -26,5 +26,4 @@ target_include_directories(PluginAudioOpenAL
 
 target_precompile_headers(PluginAudioOpenAL PUBLIC pch.hpp )
 
-find_package(OpenAL) 
-target_link_libraries(PluginAudioOpenAL ${OPENAL_LIBRARY})
+target_link_libraries(PluginAudioOpenAL)

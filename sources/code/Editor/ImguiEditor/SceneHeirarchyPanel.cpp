@@ -1,5 +1,5 @@
-#include <imgui/imgui.h>
-#include <imgui/misc/cpp/imgui_stdlib.h>
+#include <imgui.h>
+#include <imgui_stdlib.h>
 #include <entt/entt.hpp>
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/CoreComponents/Tag/TagComponent.hpp"

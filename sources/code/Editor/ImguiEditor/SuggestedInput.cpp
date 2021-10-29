@@ -1,7 +1,7 @@
 #include <string>
 #include <algorithm>
-#include <imgui/imgui.h>
-#include <imgui/misc/cpp/imgui_stdlib.h>
+#include <imgui.h>
+#include <imgui_stdlib.h>
 #include "SuggestedInput.hpp"
 
 std::string toLowerCase(std::string data) {

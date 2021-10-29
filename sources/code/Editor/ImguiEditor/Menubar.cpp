@@ -1,5 +1,5 @@
 #include <iostream>
-#include <imgui/imgui.h>
+#include <imgui.h>
 #include "ImguiEditor.hpp"
 #include "../EditorManager.hpp"
 #include "Menubar.hpp"

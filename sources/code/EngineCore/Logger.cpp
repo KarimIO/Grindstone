@@ -3,6 +3,9 @@
 #include <iostream>
 #include <filesystem>
 #include <stdarg.h>
+#ifdef _MSC_VER
+#include <windows.h>
+#endif
 namespace fs = std::filesystem;
 
 #include "spdlog/sinks/stdout_color_sinks.h"
@@ -40,7 +43,7 @@ LogSeverity SpdLogLevelToGrindstoneLevel(spdlog::level::level_enum level) {
 class EditorSink : public spdlog::sinks::base_sink<std::mutex> {
 protected:
 	void sink_it_(const spdlog::details::log_msg& msg) override {
-		fmt::memory_buffer formatted;
+		spdlog::memory_buf_t formatted;
 		base_sink<std::mutex>::formatter_->format(msg, formatted);
 
 		auto level = SpdLogLevelToGrindstoneLevel(msg.level);
@@ -58,11 +61,13 @@ protected:
 class VisualStudioOutputSink : public spdlog::sinks::base_sink<std::mutex> {
 protected:
 	void sink_it_(const spdlog::details::log_msg& msg) override {
-		fmt::memory_buffer formatted;
+		spdlog::memory_buf_t formatted;
 		base_sink<std::mutex>::formatter_->format(msg, formatted);
 
 		std::string str = fmt::to_string(formatted);
+#ifdef OutputDebugString
 		OutputDebugString(str.c_str());
+#endif
 	}
 
 	void flush_() override {}

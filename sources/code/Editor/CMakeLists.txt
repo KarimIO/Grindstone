@@ -27,33 +27,12 @@ file(GLOB_RECURSE HEADER_IMGUI_EDITOR "${EDITOR_DIR}/ImguiEditor/*.hpp")
 source_group("Imgui Editor\\Source Files" FILES ${SOURCE_IMGUI_EDITOR})
 source_group("Imgui Editor\\Header Files" FILES ${HEADER_IMGUI_EDITOR})
 
-file(GLOB_RECURSE SOURCE_SPIRV_CROSS "${DEPS_DIR}/spirv-cross/spirv_*.cpp")
-source_group("spirv-cross\\Source Files" FILES ${SOURCE_SPIRV_CROSS})
-
-set(SOURCE_IMGUI
-	${DEPS_DIR}/GL/gl3w.cpp
-	${DEPS_DIR}/GL/gl3w.h
-	${DEPS_DIR}/GL/glcorearb.h
-	${DEPS_DIR}/imgui/imgui.cpp
-	${DEPS_DIR}/imgui/imgui_demo.cpp
-	${DEPS_DIR}/imgui/imgui_draw.cpp
-	${DEPS_DIR}/imgui/imgui_tables.cpp
-	${DEPS_DIR}/imgui/imgui_widgets.cpp
-	${DEPS_DIR}/imgui/backends/imgui_impl_win32.cpp
-	${DEPS_DIR}/imgui/backends/imgui_impl_opengl3.cpp
-	${DEPS_DIR}/imgui/misc/cpp/imgui_stdlib.cpp
-)
 source_group("Imgui Editor\\Imgui\\Source Files" FILES ${SOURCES_IMGUI})
-
-find_package(assimp REQUIRED)
 
 set(EDITOR_SOURCES
 	${SOURCE_MAIN}
-	${SOURCE_IMGUI}
 	${SOURCE_IMGUI_EDITOR}
 	${SOURCE_IMPORTERS}
-	${SOURCE_SPIRV_CROSS}
-	${SOURCE_SHADER_C}
 	${SOURCE_EDITOR_COMMANDS}
 )
 
@@ -63,22 +42,89 @@ set(EDITOR_HEADERS
 	${HEADER_EDITOR_COMMANDS}
 )
 
+find_package(Assimp CONFIG REQUIRED)
+find_package(efsw CONFIG REQUIRED)
+find_package(gl3w CONFIG REQUIRED)
+find_package(glslang CONFIG REQUIRED)
+find_package(imgui CONFIG REQUIRED)
+find_path(STB_INCLUDE_DIRS "stb.h")
+
+find_package(spirv_cross_core CONFIG REQUIRED)
+find_package(spirv_cross_glsl CONFIG REQUIRED)
+find_package(spirv_cross_hlsl CONFIG REQUIRED)
+find_package(spirv_cross_msl CONFIG REQUIRED)
+find_package(spirv_cross_reflect CONFIG REQUIRED)
+find_package(spirv_cross_cpp CONFIG REQUIRED)
+find_package(spirv_cross_c CONFIG REQUIRED)
+
 add_executable(Editor WIN32 ${EDITOR_HEADERS} ${EDITOR_SOURCES})
 
 set_property(TARGET Editor PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${BUILD_DIRECTORY})
 target_compile_definitions(Editor PUBLIC NOMINMAX)
-target_include_directories(Editor
-    PUBLIC
-	../
-	${ASSIMP_INCLUDE_DIR}
-	${RAPIDJSON_PATH}
-	${DEPS_DIR}
-	${DEPS_DIR}/shaderc/
-	${DEPS_DIR}/shaderc/libshaderc/include
-	${DEPS_DIR}/imgui
-	${DEPS_DIR}/entt/src
+target_include_directories(Editor PUBLIC ${CODE_DIR})
+
+find_library(SHADERC_LIBRARY
+	NAMES
+		shaderc
+	HINTS
+		${CMAKE_FIND_ROOT_PATH}
+	PATHS
+		${CMAKE_FIND_ROOT_PATH}
+	PATH_SUFFIXES
+		"debug/lib"
+		"lib"
+		"local/lib"
 )
 
-set(SHADERC_LIBRARY "" CACHE STRING "Location of ShaderC Library")
+find_library(SHADERC_UTIL_LIBRARY
+	NAMES
+		shaderc_util
+	HINTS
+		${CMAKE_FIND_ROOT_PATH}
+	PATHS
+		${CMAKE_FIND_ROOT_PATH}
+	PATH_SUFFIXES
+		"debug/lib"
+		"lib"
+		"local/lib"
+)
 
-target_link_libraries(Editor Rpcrt4.lib ${DEPS_DIR}/efsw/bin/efsw.lib ${SHADERC_LIBRARY} ${assimp_LIBRARIES} ${OPENGL_gl_LIBRARY} ${CMAKE_DL_LIBS})
+find_library(SPIRV_Tools
+	NAMES
+		SPIRV-Tools
+	HINTS
+		${CMAKE_FIND_ROOT_PATH}
+	PATHS
+		${CMAKE_FIND_ROOT_PATH}
+	PATH_SUFFIXES
+		"debug/lib"
+		"lib"
+		"local/lib"
+)
+
+find_library(SPIRV_Tools_Opt
+	NAMES
+		SPIRV-Tools-opt
+	HINTS
+		${CMAKE_FIND_ROOT_PATH}
+	PATHS
+		${CMAKE_FIND_ROOT_PATH}
+	PATH_SUFFIXES
+		"debug/lib"
+		"lib"
+		"local/lib"
+)
+
+target_link_libraries(
+	Editor
+	Rpcrt4.lib
+	efsw::efsw
+	spirv-cross-c spirv-cross-core spirv-cross-cpp spirv-cross-glsl spirv-cross-reflect
+	HLSL SPIRV glslang OGLCompiler
+	${SHADERC_LIBRARY} ${SHADERC_UTIL_LIBRARY} ${SPIRV_Tools} ${SPIRV_Tools_Opt}
+	spirv-cross-reflect
+	assimp::assimp
+	unofficial::gl3w::gl3w glm::glm opengl32
+	imgui::imgui
+	${CMAKE_DL_LIBS}
+)

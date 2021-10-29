@@ -1,0 +1,29 @@
+{
+	"name": "grindstone",
+	"version": "0.15.2",
+	"dependencies": [
+		"assimp",
+		"entt",
+		"efsw",
+		"drlibs",
+		"glslang",
+		"gl3w",
+		"glm",
+		{
+			"name": "imgui",
+			"features": [
+				"docking-experimental",
+				"win32-binding",
+				"opengl3-binding"
+			]
+		},
+		"openal-soft",
+		"opengl",
+		"opengl-registry",
+		"rapidjson",
+		"shaderc",
+		"spdlog",
+		"spirv-cross",
+		"stb"
+	]
+}

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <imgui/imgui.h>
 
 namespace Grindstone {
 	class EngineCore;

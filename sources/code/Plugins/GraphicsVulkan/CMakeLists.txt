@@ -36,8 +36,8 @@ source_group("Source Files\\Display" FILES ${Vk_DISPLAY_SOURCES})
 source_group("Header Files\\Display" FILES ${Vk_DISPLAY_HEADERS})
 
 add_library(PluginGraphicsVulkan MODULE ${Vk_SOURCES} ${Vk_HEADERS})
-    
-find_package(Vulkan) 
+
+find_package(Vulkan CONFIG REQUIRED)
 
 target_include_directories(PluginGraphicsVulkan PUBLIC ${CODE_DIR} ${DEPS_DIR} ${Vulkan_INCLUDE_DIR})
 
@@ -51,7 +51,7 @@ if (WIN32)
     target_compile_definitions(PluginGraphicsVulkan PRIVATE Vk_USE_PLATFORM_WIN32_KHR)
 else()
     SET(Vk_PLATFORM "Vk_USE_PLATFORM_WIN32_KHR" CACHE STRING "Vulkan platform to use")
-    SET_PROPERTY(CACHE Vk_PLATFORM PROPERTY STRINGS Vk_USE_PLATFORM_WIN32_KHR Vk_KHR_XCB_SURFACE_EXTENSION_NAME  Vk_USE_PLATFORM_XLIB_KHR Vk_USE_PLATFORM_ANDROID_KHR) 
+    SET_PROPERTY(CACHE Vk_PLATFORM PROPERTY STRINGS Vk_USE_PLATFORM_WIN32_KHR Vk_KHR_XCB_SURFACE_EXTENSION_NAME  Vk_USE_PLATFORM_XLIB_KHR Vk_USE_PLATFORM_ANDROID_KHR)
 
     target_compile_definitions(PluginGraphicsVulkan PRIVATE ${Vk_PLATFORM})
 endif()

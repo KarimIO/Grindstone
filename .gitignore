@@ -1,3 +1,25 @@
+# Project Files
+*.sln
+*.tlog
+*.vcxproj*
+x64/*
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
 # Prerequisites
 *.d
 
@@ -36,27 +58,32 @@ build/*
 *.exe
 *.out
 *.app
-Grindstone
-
-# Dependencies
-Sources/include/
-Sources/lib/
-Sources/Obj/
 
 build/*
 !build/readme.md
-.vs/*
-.vscode/*
 assets/*
 compiledAssets/*
 settings.ini
 log/*
+*.log
+
+# vcpkg
+vcpkg_installed/*
+
+# Visual Studio
+.vs/*
+
+# Visual Studio Code
+.vscode/*
+!.vscode/launch.json
 
 # Cmake
+.cmake/*
 *CMakeCache.txt
 *cmake_install.cmake
 *CTestTestfile.cmake
 *CMakeFiles*
+
+# Makefiles
 Makefile
 */Makefile
-output.log

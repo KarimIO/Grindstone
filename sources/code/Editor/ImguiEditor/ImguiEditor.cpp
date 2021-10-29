@@ -1,7 +1,7 @@
 #include <iostream>
-#include <imgui/imgui.h>
-#include <imgui/backends/imgui_impl_opengl3.h>
-#include <imgui/backends/imgui_impl_win32.h>
+#include <imgui.h>
+#include <imgui_impl_opengl3.h>
+#include <imgui_impl_win32.h>
 #include <Windows.h>
 #include <Winuser.h>
 #include "GL/gl3w.h"

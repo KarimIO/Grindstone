@@ -1,6 +1,6 @@
 #include <filesystem>
-#include <imgui/imgui.h>
-#include <imgui/misc/cpp/imgui_stdlib.h>
+#include <imgui.h>
+#include <imgui_stdlib.h>
 #include "BrowseFile.hpp"
 #include "Common/Window/WindowManager.hpp"
 #include "EngineCore/EngineCore.hpp"

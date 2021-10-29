@@ -6,9 +6,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_DXT_IMPLEMENTATION
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include <stb/stb_image.h>
-#include <stb/stb_dxt.h>
-#include <stb/stb_image_resize.h>
+#include <stb_image.h>
+#include <stb_dxt.h>
+#include <stb_image_resize.h>
 
 #include "Common/ResourcePipeline/MetaFile.hpp"
 #include "Common/Formats/Dds.hpp"

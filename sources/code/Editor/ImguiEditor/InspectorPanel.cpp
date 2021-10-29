@@ -1,4 +1,4 @@
-#include <imgui/imgui.h>
+#include <imgui.h>
 #include <entt/entt.hpp>
 #include "ComponentInspector.hpp"
 #include "MaterialInspector.hpp"
