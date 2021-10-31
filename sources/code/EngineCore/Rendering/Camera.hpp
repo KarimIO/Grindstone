@@ -19,6 +19,6 @@ namespace Grindstone {
 		uint32_t height;
 		float fov;
 		float near = 0.1f;
-		float far = 100.f;
+		float far = 200.f;
 	};
 }

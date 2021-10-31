@@ -13,7 +13,7 @@ namespace Grindstone {
 	struct CameraComponent {
 		bool isOrthographic = false;
 		float near = 0.1f;
-		float far = 80.0f;
+		float far = 200.0f;
 		float fov = glm::radians(90.0f);
 		float aspectRatio = 800.0f / 600.0f;
 		BaseRenderer* renderer = nullptr;
