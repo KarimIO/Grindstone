@@ -24,10 +24,10 @@ TestSys::TestSys(Scene* s) : transform_array_(*(ECS::ComponentArray<TransformCom
 
 void TestSys::update() {
     return;
-    std::cout << "TesSys (" << transform_array_.getCount() << ")\r\n";
+    std::cout << "TesSys (" << transform_array_.getCount() << ")\n";
     for (size_t i = 0; i < transform_array_.getCount(); ++i) {
         auto& comp = transform_array_[i];
-        std::cout << "\t" << comp.position_[0] << " " << comp.position_[1] << " " << comp.position_[2] << "\r\n";
+        std::cout << "\t" << comp.position_[0] << " " << comp.position_[1] << " " << comp.position_[2] << "\n";
     }
 }
 
@@ -47,7 +47,7 @@ extern "C" {
         else {
             plugin_interface->loadPluginCritical("PluginGraphicsVulkan");
         }
-        
+
         plugin_interface->loadPluginCritical("PluginInputSystem");
         /*
         plugin_interface->loadPluginCritical("PluginMaterials");
@@ -71,14 +71,14 @@ extern "C" {
 
         auto gw = plugin_interface->getGraphicsCore();
         gw->initialize(gw_create_info);
-        std::cout << "Grindstone Graphics: \r\n\t" << gw->getVendorName() << "\r\n\t" << gw->getAdapterName() << "\r\n\t" << gw->getAPIName() << " " << gw->getAPIVersion() << "\r\n===============================\r\n" << std::endl;
+        std::cout << "Grindstone Graphics: \n\t" << gw->getVendorName() << "\n\t" << gw->getAdapterName() << "\n\t" << gw->getAPIName() << " " << gw->getAPIVersion() << "\n===============================\n" << std::endl;
 
         //float clr_color[4] = { 0.f, 0.f, 0.f, 0.f };
         //gw->clear(GraphicsAPI::ClearMode::Color, clr_color);
 
         win->show();
         plugin_interface->addWindow(win);
-        
+
         // --- For each component
 
         // Register Components
@@ -101,5 +101,5 @@ extern "C" {
 
     APP_API void releaseModule(Plugins::Interface* plugin_interface) {
     }
-    
+
 }

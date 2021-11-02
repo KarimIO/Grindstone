@@ -135,7 +135,7 @@ namespace Grindstone {
 		GLenum GLTexture::TranslateTexWrap(TextureWrapMode m) {
 			switch (m) {
 			default:
-				printf("Invalid Texture Wrap Mode!\r\n");
+				printf("Invalid Texture Wrap Mode!\n");
 				return GL_REPEAT;
 
 			case TextureWrapMode::Repeat:
@@ -158,7 +158,7 @@ namespace Grindstone {
 		GLenum GLTexture::TranslateTexFilter(TextureFilter m) {
 			switch (m) {
 			default:
-				printf("Invalid Filter!\r\n");
+				printf("Invalid Filter!\n");
 				return GL_NEAREST;
 
 			case TextureFilter::Nearest:

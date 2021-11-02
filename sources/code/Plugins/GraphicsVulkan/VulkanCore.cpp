@@ -143,7 +143,7 @@ namespace Grindstone {
 				throw std::runtime_error("failed to set up debug messenger!");
 			}
 		}
-		
+
 		void VulkanCore::pickPhysicalDevice() {
 			uint32_t deviceCount = 0;
 			vkEnumeratePhysicalDevices(instance_, &deviceCount, nullptr);
@@ -157,7 +157,7 @@ namespace Grindstone {
 
 			int scoreMax = 0;
 
-			std::cout << "Available Devices:\r\n";
+			std::cout << "Available Devices:\n";
 			for (const auto& device : devices) {
 				int score = scoreDevice(device);
 				if (score > scoreMax) {
@@ -370,7 +370,7 @@ namespace Grindstone {
 			vkDestroyInstance(instance_, nullptr);
 
 		}
-		
+
 		void VulkanCore::WaitUntilIdle() {
 			vkDeviceWaitIdle(device_);
 		}
