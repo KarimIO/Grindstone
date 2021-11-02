@@ -120,13 +120,11 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 		input->SetIsFocused(true);
 		break;
 	case WM_CLOSE:
-		if (MessageBox(NULL, _T("Are you sure you want to cancel?"), _T("Error!"), MB_ICONEXCLAMATION | MB_YESNO)) {
-			shouldClose = true;
-			DestroyWindow(hwnd);
-		}
+		input->TryQuit(this);
+		DestroyWindow(hwnd);
 		break;
 	case WM_DESTROY:
-		shouldClose = true;
+		input->ForceQuit(this);
 		PostQuitMessage(0);
 		break;
 	}

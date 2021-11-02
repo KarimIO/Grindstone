@@ -54,7 +54,7 @@ std::filesystem::path CreateDefaultMaterial(std::filesystem::path& currentPath) 
 
 ImTextureID GetIdFromTexture(GraphicsAPI::Texture* texture) {
 	GraphicsAPI::GLTexture* glTex = (GraphicsAPI::GLTexture*)texture;
-	return (ImTextureID)glTex->GetTexture();
+	return (ImTextureID)(uint64_t)glTex->GetTexture();
 }
 
 void PrepareIcon(Grindstone::TextureManager* textureManager, const char* path, GraphicsAPI::Texture*& texture, ImTextureID& id) {

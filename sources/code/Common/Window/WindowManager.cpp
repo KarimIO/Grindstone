@@ -34,9 +34,23 @@ unsigned int WindowManager::GetNumWindows() {
 	return (unsigned int)windows.size();
 }
 
+void WindowManager::CloseWindow(Grindstone::Window* window) {
+	window->Close();
+
+	for (size_t i = 0; i < windows.size(); ++i) {
+		if (windows[i] == window) {
+			windows.erase(windows.begin() + i);
+		}
+	}
+}
+
 void WindowManager::UpdateWindows() {
 	for (auto window : windows) {
 		window->ImmediateSwapBuffers();
 		window->HandleEvents();
 	}
+}
+
+bool WindowManager::AreAllWindowsClosed() {
+	return windows.empty();
 }

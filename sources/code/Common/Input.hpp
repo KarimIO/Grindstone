@@ -4,6 +4,8 @@
 #include "Event/MouseButtonCode.hpp"
 
 namespace Grindstone {
+	class Window;
+
 	namespace Input {
 		class Interface {
 		public:
@@ -18,8 +20,8 @@ namespace Grindstone {
 			virtual void SetKeyPressed(Events::KeyPressCode, bool) = 0;
 			virtual bool IsKeyPressed(Events::KeyPressCode) = 0;
 			virtual void AddCharacterTyped(unsigned short character) = 0;
-			virtual void Quit() = 0;
-			virtual void ForceQuit() = 0;
+			virtual void TryQuit(Grindstone::Window* window) = 0;
+			virtual void ForceQuit(Grindstone::Window* window) = 0;
 		}; // class Interface
 	} // namespace Input
 } // namespace Grindstone

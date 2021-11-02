@@ -69,7 +69,7 @@ void ViewportPanel::RenderCamera() {
 }
 
 void ViewportPanel::DisplayCameraToPanel() {
-	int textureID = camera->GetPrimaryFramebufferAttachment();
+	uint64_t textureID = (uint64_t)camera->GetPrimaryFramebufferAttachment();
 	ImTextureID texturePtr = (ImTextureID)textureID;
 	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 	auto uv0 = ImVec2{ 0, 1 };

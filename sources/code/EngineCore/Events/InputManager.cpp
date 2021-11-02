@@ -73,12 +73,13 @@ bool Manager::IsKeyPressed(Events::KeyPressCode code) {
 	return keyPressed[(int)code];
 }
 
-void Manager::Quit() {
-	WindowCloseEvent* ev = new WindowCloseEvent();
+void Manager::TryQuit(Grindstone::Window* window) {
+	WindowTryQuitEvent* ev = new WindowTryQuitEvent(window);
 	dispatcher->Dispatch(ev);
 }
 
-void Manager::ForceQuit() {
-
+void Manager::ForceQuit(Grindstone::Window* window) {
+	WindowForceQuitEvent* ev = new WindowForceQuitEvent(window);
+	dispatcher->Dispatch(ev);
 }
 

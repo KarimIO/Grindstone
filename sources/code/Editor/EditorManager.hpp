@@ -10,6 +10,10 @@
 namespace Grindstone {
 	class EngineCore;
 
+	namespace Events {
+		struct BaseEvent;
+	}
+
 	namespace Editor {
 		namespace ImguiEditor {
 			class ImguiEditor;
@@ -27,13 +31,17 @@ namespace Grindstone {
 			static FileManager& GetFileManager();
 			static EngineCore& GetEngineCore();
 			bool Initialize();
+			void InitializeQuitCommands();
 			~Manager();
 			void Run();
+			bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
+			bool OnForceQuit(Grindstone::Events::BaseEvent* ev);
 			static void Print(LogSeverity logSeverity, const char* msg, ...);
 		private:
 			bool LoadEngine();
 			bool SetupImguiEditor();
 		private:
+			bool shouldClose = false;
 			EngineCore* engineCore = nullptr;
 			ImguiEditor::ImguiEditor* imguiEditor = nullptr;
 			CommandList commandList;

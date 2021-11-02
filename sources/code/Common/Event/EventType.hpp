@@ -3,7 +3,8 @@
 namespace Grindstone {
 	namespace Events {
 		enum class EventType {
-			WindowClose = 0,
+			WindowTryQuit = 0,
+			WindowForceQuit,
 			WindowResize,
 			WindowStartFocus,
 			WindowKillFocus,

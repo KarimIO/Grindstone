@@ -16,6 +16,7 @@
 #include "Common/Display/DisplayManager.hpp"
 #include "Common/Window/WindowManager.hpp"
 #include "Events/Dispatcher.hpp"
+#include "Common/Event/WindowEvent.hpp"
 
 #include "Rendering/DeferredRenderer.hpp"
 
@@ -49,6 +50,8 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	windowCreationInfo.engineCore = this;
 	displayManager->GetMainDisplay();
 	auto win = windowManager->Create(windowCreationInfo);
+	eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&EngineCore::OnTryQuit, this, std::placeholders::_1));
+	eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&EngineCore::OnForceQuit, this, std::placeholders::_1));
 
 	GraphicsAPI::Core::CreateInfo graphicsCoreInfo{ win, true };
 	graphicsCore->Initialize(graphicsCoreInfo);
@@ -142,6 +145,22 @@ Events::Dispatcher* EngineCore::GetEventDispatcher() {
 
 BaseRenderer* EngineCore::CreateRenderer() {
 	return new DeferredRenderer();
+}
+
+bool EngineCore::OnTryQuit(Grindstone::Events::BaseEvent* ev) {
+	auto castedEv = (Grindstone::Events::WindowTryQuitEvent*)ev;
+	shouldClose = true;
+	windowManager->CloseWindow(castedEv->window);
+
+	return false;
+}
+
+bool EngineCore::OnForceQuit(Grindstone::Events::BaseEvent* ev) {
+	auto castedEv = (Grindstone::Events::WindowTryQuitEvent*)ev;
+	shouldClose = true;
+	windowManager->CloseWindow(castedEv->window);
+
+	return false;
 }
 
 void EngineCore::CalculateDeltaTime() {

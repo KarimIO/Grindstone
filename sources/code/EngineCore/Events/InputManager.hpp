@@ -25,8 +25,8 @@ namespace Grindstone {
 			virtual void MouseScroll(float, float) override;
 			virtual void SetKeyPressed(Events::KeyPressCode, bool) override;
 			virtual void AddCharacterTyped(unsigned short character) override;
-			virtual void Quit() override;
-			virtual void ForceQuit() override;
+			virtual void TryQuit(Grindstone::Window* window) override;
+			virtual void ForceQuit(Grindstone::Window* window) override;
 		private:
 			Events::Dispatcher* dispatcher = nullptr;
 

@@ -28,9 +28,10 @@ namespace Grindstone {
 	}
 
 	namespace Events {
+		struct BaseEvent;
 		class Dispatcher;
 	}
-	
+
 	class Window;
 	class DisplayManager;
 	class WindowManager;
@@ -69,6 +70,8 @@ namespace Grindstone {
 
 		virtual void Print(LogSeverity logSeverity, const char* msg, ...);
 
+		virtual bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
+		virtual bool OnForceQuit(Grindstone::Events::BaseEvent* ev);
 		virtual void CalculateDeltaTime();
 		virtual double GetDeltaTime();
 	public:

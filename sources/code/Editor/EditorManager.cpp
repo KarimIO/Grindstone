@@ -1,8 +1,10 @@
 #include <iostream>
 #include <Common/Utilities/ModuleLoading.hpp>
 #include "EngineCore/EngineCore.hpp"
+#include "EngineCore/Events/Dispatcher.hpp"
 #include "EditorManager.hpp"
 #include "ImguiEditor/ImguiEditor.hpp"
+#include "Common/Event/WindowEvent.hpp"
 using namespace Grindstone;
 using namespace Grindstone::Editor;
 
@@ -35,8 +37,15 @@ bool Manager::Initialize() {
 	if (!LoadEngine())			return false;
 	fileManager.Initialize();
 	if (!SetupImguiEditor())	return false;
+	InitializeQuitCommands();
 
 	return true;
+}
+
+void Manager::InitializeQuitCommands() {
+	auto dispatcher = engineCore->GetEventDispatcher();
+	dispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&Manager::OnTryQuit, this, std::placeholders::_1));
+	dispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&Manager::OnForceQuit, this, std::placeholders::_1));
 }
 
 bool Manager::SetupImguiEditor() {
@@ -45,11 +54,25 @@ bool Manager::SetupImguiEditor() {
 }
 
 void Manager::Run() {
-	while (true) {
+	while (!shouldClose) {
 		engineCore->RunLoopIteration();
 		imguiEditor->Update();
 		engineCore->UpdateWindows();
 	}
+}
+
+bool Manager::OnTryQuit(Grindstone::Events::BaseEvent* ev) {
+	auto castedEv = (Grindstone::Events::WindowTryQuitEvent*)ev;
+	shouldClose = true;
+
+	return false;
+}
+
+bool Manager::OnForceQuit(Grindstone::Events::BaseEvent* ev) {
+	auto castedEv = (Grindstone::Events::WindowTryQuitEvent*)ev;
+	shouldClose = true;
+
+	return false;
 }
 
 void Manager::Print(LogSeverity logSeverity, const char* textFormat, ...) {

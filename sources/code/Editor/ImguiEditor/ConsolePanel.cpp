@@ -28,7 +28,7 @@ namespace Grindstone {
 						return ImColor(0.6f, 0.3f, 0.3f, 1.f);
 				}
 			}
-			
+
 			void ConsolePanel::Render() {
 				if (isShowingPanel) {
 					ImGui::Begin("Console", &isShowingPanel);

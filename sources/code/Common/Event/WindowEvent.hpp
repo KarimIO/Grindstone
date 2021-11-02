@@ -4,10 +4,22 @@
 #include "KeyPressCode.hpp"
 
 namespace Grindstone {
+	class Window;
+
 	namespace Events {
-		struct WindowCloseEvent : public BaseEvent {
-			SETUP_EVENT(WindowClose)
-		}; // struct WindowClose
+		struct WindowTryQuitEvent : public BaseEvent {
+			WindowTryQuitEvent(Grindstone::Window* window)
+				: window(window) {}
+			Grindstone::Window* window;
+			SETUP_EVENT(WindowTryQuit)
+		}; // struct WindowTryQuitEvent
+
+		struct WindowForceQuitEvent : public BaseEvent {
+			WindowForceQuitEvent(Grindstone::Window* window)
+				: window(window) {}
+			Grindstone::Window* window;
+			SETUP_EVENT(WindowForceQuit)
+		}; // struct WindowForceQuitEvent
 
 		struct WindowResizeEvent : public BaseEvent {
 			WindowResizeEvent(int width, int height)
