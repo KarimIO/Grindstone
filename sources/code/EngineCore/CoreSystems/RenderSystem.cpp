@@ -30,39 +30,45 @@ namespace Grindstone {
 		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 		double time = millis / 1000.0;
 
-		view.each([&](
-			const TransformComponent& transformComponent,
-			const CameraComponent& cameraComponent
-		) {
-			// const glm::vec3 forwardVector = eulerToForward(transformComponent.angles);
-			// const glm::vec3 pos = transformComponent.position;
-			const glm::vec3 pos = glm::vec3(
-				12 * glm::cos(time * 2),
-				3,
-				3 * glm::sin(time * 2)
-			);
-			//transformComponent.position;
+		view.each(
+			[&](
+				const TransformComponent& transformComponent,
+				const CameraComponent& cameraComponent
+			) {
+				if (std::isnan(cameraComponent.aspectRatio)) {
+					return;
+				}
 
-			const auto viewMatrix = glm::lookAt(
-				pos,
-				glm::vec3(),
-				upVector
-			);
+				// const glm::vec3 forwardVector = eulerToForward(transformComponent.angles);
+				// const glm::vec3 pos = transformComponent.position;
+				const glm::vec3 pos = glm::vec3(
+					12 * glm::cos(time * 2),
+					3,
+					3 * glm::sin(time * 2)
+				);
+				//transformComponent.position;
 
-			const auto projectionMatrix = glm::perspective(
-				cameraComponent.fov,
-				cameraComponent.aspectRatio,
-				cameraComponent.near,
-				cameraComponent.far
-			);
+				const auto viewMatrix = glm::lookAt(
+					pos,
+					glm::vec3(),
+					upVector
+				);
 
-			cameraComponent.renderer->Render(
-				registry,
-				projectionMatrix,
-				viewMatrix,
-				pos,
-				nullptr
-			);
-		});
+				const auto projectionMatrix = glm::perspective(
+					cameraComponent.fov,
+					cameraComponent.aspectRatio,
+					cameraComponent.near,
+					cameraComponent.far
+				);
+
+				cameraComponent.renderer->Render(
+					registry,
+					projectionMatrix,
+					viewMatrix,
+					pos,
+					nullptr
+				);
+			}
+		);
 	}
 }
