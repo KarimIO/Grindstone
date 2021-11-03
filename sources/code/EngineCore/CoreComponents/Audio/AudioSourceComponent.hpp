@@ -6,7 +6,7 @@
 
 namespace Grindstone {
 	struct AudioSourceComponent {
-		std::string audioClipPath;
+		std::string audioClip;
 		bool isLooping = false;
 		float volume = 1.f;
 		float pitch = 1.f;

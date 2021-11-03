@@ -34,9 +34,9 @@ namespace Grindstone {
 			int CalculateMipMapLevelCount(int width, int height);
 
 			std::filesystem::path path;
-			Compression compression;
-			unsigned char* sourcePixels;
-			int texWidth, texHeight, texChannels;
+			Compression compression = Compression::Uncompressed;
+			unsigned char* sourcePixels = nullptr;
+			int texWidth = 0, texHeight = 0, texChannels = 0;
 		};
 
 		void ImportTexture(std::filesystem::path& inputPath);

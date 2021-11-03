@@ -2,6 +2,7 @@
 #include "ModelImporter.hpp"
 #include "ShaderImporter.hpp"
 #include "TextureImporter.hpp"
+#include "AudioImporter.hpp"
 #include "MaterialImporter.hpp"
 using namespace Grindstone::Importers;
 
@@ -20,6 +21,8 @@ ImporterManager::ImporterManager() {
 	AddImporterFactory("gmat", ImportMaterial);
 
 	AddImporterFactory("glsl", ImportShadersFromGlsl);
+
+	AddImporterFactory("wav", ImportAudio);
 }
 
 bool ImporterManager::Import(std::filesystem::path& path) {

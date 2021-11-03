@@ -3,7 +3,7 @@
 using namespace Grindstone;
 
 REFLECT_STRUCT_BEGIN(AudioSourceComponent)
-	REFLECT_STRUCT_MEMBER(audioClipPath)
+	REFLECT_STRUCT_MEMBER(audioClip)
 	REFLECT_STRUCT_MEMBER(isLooping)
 	REFLECT_STRUCT_MEMBER(volume)
 	REFLECT_STRUCT_MEMBER(pitch)
