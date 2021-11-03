@@ -95,6 +95,11 @@ void EngineCore::Run() {
 	}
 }
 
+void EngineCore::RunEditorLoopIteration() {
+	CalculateDeltaTime();
+	sceneManager->EditorUpdate();
+}
+
 void EngineCore::RunLoopIteration() {
 	CalculateDeltaTime();
 	sceneManager->Update();

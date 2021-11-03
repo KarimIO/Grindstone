@@ -12,10 +12,13 @@ namespace Grindstone {
 		class SystemRegistrar {
 		public:
 			SystemRegistrar();
-			void RegisterSystem(const char *name, SystemFactory factory);
+			void RegisterSystem(const char* name, SystemFactory factory);
+			void RegisterEditorSystem(const char* name, SystemFactory factory);
 			void Update(entt::registry& registry);
+			void EditorUpdate(entt::registry& registry);
 			~SystemRegistrar();
 			std::unordered_map<std::string, SystemFactory> systemFactories;
+			std::unordered_map<std::string, SystemFactory> editorSystemFactories;
 		private:
 		};
 	}

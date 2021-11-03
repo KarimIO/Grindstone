@@ -31,6 +31,7 @@ namespace Grindstone {
 			virtual ECS::ComponentRegistrar* GetComponentRegistrar() const;
 			virtual entt::registry& GetEntityRegistry();
 			void Update();
+			void EditorUpdate();
 		private:
 			entt::registry registry;
 			std::string name;

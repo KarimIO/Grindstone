@@ -11,6 +11,12 @@ void SceneManager::LoadDefaultScene() {
 	LoadScene(defaultPath);
 }
 
+void SceneManager::EditorUpdate() {
+	for (auto& scene : scenes) {
+		scene.second->EditorUpdate();
+	}
+}
+
 void SceneManager::Update() {
 	for (auto& scene : scenes) {
 		scene.second->Update();

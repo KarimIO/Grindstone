@@ -12,6 +12,7 @@ namespace Grindstone {
 		class SceneManager {
 		public:
 			void LoadDefaultScene();
+			void EditorUpdate();
 			void Update();
 			virtual void SaveScene(const char* path, Scene* scene);
 			virtual Scene* LoadScene(const char *path);

@@ -56,6 +56,7 @@ namespace Grindstone {
 		bool Initialize(CreateInfo& ci);
 		~EngineCore();
 		virtual void Run();
+		virtual void RunEditorLoopIteration();
 		virtual void RunLoopIteration();
 		virtual void UpdateWindows();
 		void RegisterGraphicsCore(GraphicsAPI::Core*);

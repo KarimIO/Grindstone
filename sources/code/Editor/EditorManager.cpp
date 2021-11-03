@@ -55,7 +55,7 @@ bool Manager::SetupImguiEditor() {
 
 void Manager::Run() {
 	while (!shouldClose) {
-		engineCore->RunLoopIteration();
+		engineCore->RunEditorLoopIteration();
 		imguiEditor->Update();
 		engineCore->UpdateWindows();
 	}

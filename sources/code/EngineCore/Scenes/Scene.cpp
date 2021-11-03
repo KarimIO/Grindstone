@@ -56,3 +56,7 @@ entt::registry& Scene::GetEntityRegistry() {
 void Scene::Update() {
 	EngineCore::GetInstance().GetSystemRegistrar()->Update(registry);
 }
+
+void Scene::EditorUpdate() {
+	EngineCore::GetInstance().GetSystemRegistrar()->EditorUpdate(registry);
+}
