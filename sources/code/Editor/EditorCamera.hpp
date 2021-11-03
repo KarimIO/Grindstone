@@ -31,9 +31,9 @@ namespace Grindstone {
 			BaseRenderer* renderer = nullptr;
 			glm::mat4 projection;
 			glm::mat4 view;
-			glm::vec3 position;
-			glm::vec3 eulerAngles;
-			glm::quat rotation;
+			glm::vec3 position = glm::vec3();
+			glm::vec3 eulerAngles = glm::vec3();
+			glm::quat rotation = glm::quat();
 			uint32_t width = 800;
 			uint32_t height = 600;
 			float fov = glm::radians(80.0f);
