@@ -71,7 +71,9 @@ void FileManager::CreateInitialFileStructure(Directory& directory, std::filesyst
 			CreateInitialFileStructure(*newDirectory, directoryIterator);
 		}
 		else {
-			directory.files.emplace_back(directoryEntry);
+			if (directoryEntry.path().extension().string() != ".meta") {
+				directory.files.emplace_back(directoryEntry);
+			}
 		}
 	}
 }
