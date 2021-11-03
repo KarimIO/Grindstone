@@ -10,8 +10,8 @@ namespace Grindstone {
 		class RenderTarget {
 		public:
 			struct CreateInfo {
-				ColorFormat format;
-				uint32_t width, height;
+				ColorFormat format = ColorFormat::Invalid;
+				uint32_t width = 0, height = 0;
 				CreateInfo() {};
 				CreateInfo(ColorFormat colorFormat, uint32_t width, uint32_t height) :
 					format(colorFormat),

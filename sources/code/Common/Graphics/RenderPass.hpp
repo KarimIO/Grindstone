@@ -14,19 +14,19 @@ namespace Grindstone {
 		} ClearColorValue;
 
 		struct ClearDepthStencil {
-			bool hasDepthStencilAttachment;
-			float       depth;
-			uint32_t    stencil;
+			bool hasDepthStencilAttachment = false;
+			float       depth = 0.f;
+			uint32_t    stencil = 0;
 		};
 
 		class RenderPass {
 		public:
 			struct CreateInfo {
-				uint32_t width_;
-				uint32_t height_;
-				ColorFormat* color_formats_;
-				uint32_t color_format_count_;
-				DepthFormat depth_format_;
+				uint32_t width = 0;
+				uint32_t height = 0;
+				ColorFormat* colorFormats = nullptr;
+				uint32_t colorFormatCount = 0;
+				DepthFormat depthFormat = DepthFormat::None;
 			};
 
 			virtual ~RenderPass() {};

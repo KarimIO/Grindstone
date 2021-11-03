@@ -99,9 +99,7 @@ namespace Grindstone {
 			VertexAttributeDescription() = default;
 
 			VertexAttributeDescription(uint32_t location, VertexFormat _format, const char* _name, bool _normalized = false, AttributeUsage _usage = AttributeUsage::Other) :
-				location(location), format(_format), name(_name), usage(_usage), size(vertexFormatTypeSize(_format)), componentsCount(vertexFormatTypeComponents(_format)), isNormalized(isNormalized), offset(0) {
-
-			}
+				location(location), format(_format), name(_name), usage(_usage), size(vertexFormatTypeSize(_format)), componentsCount(vertexFormatTypeComponents(_format)), isNormalized(_normalized), offset(0) {}
 		};
 
 		struct VertexBufferLayout {

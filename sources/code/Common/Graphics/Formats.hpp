@@ -5,7 +5,9 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		enum class ColorFormat : uint8_t {
-			R8 = 0,
+			Invalid = 0,
+
+			R8,
 			R8G8,
 			R8G8B8,
 			R8G8B8A8,

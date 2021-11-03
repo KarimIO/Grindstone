@@ -10,10 +10,10 @@ namespace Grindstone {
 		class DepthTarget {
 		public:
 			struct CreateInfo {
-				DepthFormat format;
-				uint32_t width, height;
-				bool isShadowMap;
-				bool isCubemap;
+				DepthFormat format = DepthFormat::None;
+				uint32_t width = 0, height = 0;
+				bool isShadowMap = false;
+				bool isCubemap = false;
 				CreateInfo() {};
 				CreateInfo(DepthFormat depthFormat, uint32_t width, uint32_t height, bool isShadowMap, bool isCubeMap) :
 					format(depthFormat),

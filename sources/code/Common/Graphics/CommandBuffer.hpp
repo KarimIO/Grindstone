@@ -38,8 +38,8 @@ namespace Grindstone {
 			};
 
 			struct CommandCallCmdBuffer : public Command {
-				CommandBuffer **commandBuffers;
-				uint32_t commandBuffersCount;
+				CommandBuffer **commandBuffers = nullptr;
+				uint32_t commandBuffersCount = 0;
 				CommandCallCmdBuffer() {};
 				CommandCallCmdBuffer(CommandBuffer **_commandBuffers, uint32_t _commandBuffersCount) {
 					commandBuffers = _commandBuffers;
@@ -49,11 +49,11 @@ namespace Grindstone {
 			};
 
 			struct CommandBindRenderPass : public Command {
-				RenderPass *renderPass;
-				Framebuffer *framebuffer;
-				uint32_t width, height;
-				ClearColorValue *colorClearValues;
-				uint32_t colorClearCount;
+				RenderPass *renderPass = nullptr;
+				Framebuffer *framebuffer = nullptr;
+				uint32_t width = 0, height = 0;
+				ClearColorValue *colorClearValues = nullptr;
+				uint32_t colorClearCount = 0;
 				ClearDepthStencil depthStencilClearValue;
 
 				CommandBindRenderPass() {};
@@ -88,7 +88,7 @@ namespace Grindstone {
 			};
 
 			struct CommandBindPipeline : public Command {
-				Pipeline *graphicsPipeline;
+				Pipeline *graphicsPipeline = nullptr;
 				CommandBindPipeline() {};
 				CommandBindPipeline(Pipeline *gp) {
 					graphicsPipeline = gp;
@@ -97,11 +97,11 @@ namespace Grindstone {
 			};
 
 			struct CommandBindDescriptorSets : public Command {
-				Pipeline *graphicsPipeline;
-				UniformBuffer **uniformBuffers;
-				uint32_t uniformBufferCount;
-				TextureBinding **textureBindings;
-				uint32_t textureCount;
+				Pipeline *graphicsPipeline = nullptr;
+				UniformBuffer **uniformBuffers = nullptr;
+				uint32_t uniformBufferCount = 0;
+				TextureBinding **textureBindings = nullptr;
+				uint32_t textureCount = 0;
 				CommandBindDescriptorSets() {};
 				CommandBindDescriptorSets(Pipeline *gp, UniformBuffer **ubs, uint32_t _uboCount, TextureBinding **_textureBindings, uint32_t _textureCount) {
 					graphicsPipeline = gp;
@@ -114,8 +114,8 @@ namespace Grindstone {
 			};
 
 			struct CommandBindVBOs : public Command {
-				VertexBuffer **vertexBuffer;
-				uint32_t vertexBufferCount;
+				VertexBuffer **vertexBuffer = nullptr;
+				uint32_t vertexBufferCount = 0;
 				CommandBindVBOs() {};
 				CommandBindVBOs(VertexBuffer **vb, uint32_t count) {
 					vertexBuffer = vb;
@@ -125,8 +125,8 @@ namespace Grindstone {
 			};
 
 			struct CommandBindIBO : public Command {
-				IndexBuffer  *indexBuffer;
-				bool useLargeBuffer;
+				IndexBuffer *indexBuffer = nullptr;
+				bool useLargeBuffer = false;
 				CommandBindIBO() {};
 				CommandBindIBO(IndexBuffer *ib, bool _useLargeBuffer) {
 					indexBuffer = ib;
@@ -136,8 +136,8 @@ namespace Grindstone {
 			};
 
 			struct CommandDrawVertices : public Command {
-				uint32_t count;
-				uint32_t numInstances;
+				uint32_t count = 0;
+				uint32_t numInstances = 1;
 				CommandDrawVertices() {};
 				CommandDrawVertices(uint32_t _count, uint32_t _numInstances) {
 					count = _count;
@@ -147,10 +147,10 @@ namespace Grindstone {
 			};
 
 			struct CommandDrawIndices : public Command {
-				uint32_t indexStart;
-				uint32_t count;
-				uint32_t numInstances;
-				int32_t baseVertex;
+				uint32_t indexStart = 0;
+				uint32_t count = 0;
+				uint32_t numInstances = 1;
+				int32_t baseVertex = 0;
 				CommandDrawIndices() {};
 				CommandDrawIndices(int32_t _baseVertex, uint32_t _indexStart, uint32_t _count, uint32_t _numInstances) {
 					indexStart = _indexStart;
