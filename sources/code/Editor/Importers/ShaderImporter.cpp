@@ -4,8 +4,9 @@
 #include <spirv_cross.hpp>
 #include <spirv_glsl.hpp>
 #include "ShaderImporter.hpp"
+#include "Common/ResourcePipeline/MetaFile.hpp"
 
-std::string getDataTypeName(spirv_cross::SPIRType::BaseType type) {
+std::string GetDataTypeName(spirv_cross::SPIRType::BaseType type) {
 	switch (type) {
 		case spirv_cross::SPIRType::BaseType::Void: return "Void";
 		case spirv_cross::SPIRType::BaseType::Boolean: return "Boolean";
@@ -31,7 +32,7 @@ std::string getDataTypeName(spirv_cross::SPIRType::BaseType type) {
 	}
 }
 
-std::vector<char> readBinaryFile(const char* filename) {
+std::vector<char> ReadBinaryFile(const char* filename) {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
 	if (!file.is_open()) {
@@ -49,7 +50,7 @@ std::vector<char> readBinaryFile(const char* filename) {
 	return buffer;
 }
 
-std::string readTextFile(const char* filename) {
+std::string ReadTextFile(const char* filename) {
 	std::ifstream ifs(filename);
 
 	if (!ifs.is_open()) {
@@ -62,7 +63,7 @@ std::string readTextFile(const char* filename) {
 	return content;
 }
 
-void reflectImages(
+void ReflectImages(
 	Grindstone::Importers::ShaderImporter::ShaderType shaderType,
 	std::vector<Grindstone::Importers::ShaderImporter::Texture>& textures,
 	spirv_cross::Compiler& compiler,
@@ -70,13 +71,13 @@ void reflectImages(
 ) {
 	for (const auto& resource : resourceList) {
 		uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-		auto resourceName = resource.name;
+		auto& resourceName = resource.name;
 		textures.emplace_back(resourceName, binding);
 		textures.back().shaderPasses.push_back(shaderType);
 	}
 }
 
-void reflectStruct(
+void ReflectStruct(
 	Grindstone::Importers::ShaderImporter::ShaderType shaderType,
 	std::vector<Grindstone::Importers::ShaderImporter::UniformBuffer>& uniformBuffers,
 	spirv_cross::Compiler& compiler,
@@ -87,7 +88,7 @@ void reflectStruct(
 		uint32_t bufferSize = compiler.get_declared_struct_size(bufferType);
 		uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
 		int memberCount = bufferType.member_types.size();
-		auto resourceName = resource.name;
+		auto& resourceName = resource.name;
 
 		uniformBuffers.emplace_back(resourceName.c_str(), binding, bufferSize);
 		auto& uniformBuffer = uniformBuffers.back();
@@ -98,7 +99,7 @@ void reflectStruct(
 			size_t memberSize = compiler.get_declared_struct_member_size(bufferType, i);
 			size_t offset = compiler.type_struct_member_offset(bufferType, i);
 			const std::string& name = compiler.get_member_name(bufferType.self, i);
-			auto& typeStr = getDataTypeName(memberType.basetype);
+			auto& typeStr = GetDataTypeName(memberType.basetype);
 			memberType.vecsize;
 			memberType.columns;
 
@@ -125,28 +126,30 @@ namespace Grindstone {
 			}
 		}
 
-		void ShaderImporter::Import(std::filesystem::path& path) {
-			this->path = path;
+		void ShaderImporter::Import(std::filesystem::path& inputPath) {
+			this->inputPath = inputPath;
 
-			basePath = path.string();
-			auto lastPeriod = basePath.find_last_of('.');
-			if (lastPeriod != -1) {
-				basePath = basePath.substr(0, lastPeriod);
-			}
+			metaFile = new MetaFile();
+			metaFile->Load(inputPath);
+			std::string subassetName = "shader";
+			Uuid uuid = metaFile->GetOrCreateSubassetUuid(subassetName);
+			basePath = std::string("../compiledAssets/") + uuid.ToString();
 
-			sourceFileContents = readTextFile(path.string().c_str());
+			metaFile->Save();
 
-			process();
+			sourceFileContents = ReadTextFile(inputPath.string().c_str());
+
+			Process();
 		}
 
-		void ShaderImporter::process() {
-			shaderName = extractField("#name");
-			renderQueue = extractField("#renderQueue");
-			extractSubmodules();
-			writeReflectionDocument();
+		void ShaderImporter::Process() {
+			shaderName = ExtractField("#name");
+			renderQueue = ExtractField("#renderQueue");
+			ExtractSubmodules();
+			WriteReflectionDocument();
 		}
 
-		void ShaderImporter::writeReflectionStruct(std::vector<UniformBuffer>& structs) {
+		void ShaderImporter::WriteReflectionStruct(std::vector<UniformBuffer>& structs) {
 			reflectionWriter.StartArray();
 			for each (auto & structMeta in structs) {
 				reflectionWriter.StartObject();
@@ -159,8 +162,8 @@ namespace Grindstone {
 
 				reflectionWriter.Key("usedIn");
 				reflectionWriter.StartArray();
-				for each (auto & shaderPass in structMeta.shaderPasses) {
-					reflectionWriter.String(getShaderTypeAsString(shaderPass));
+				for (auto & shaderPass : structMeta.shaderPasses) {
+					reflectionWriter.String(GetShaderTypeAsString(shaderPass));
 				}
 				reflectionWriter.EndArray();
 
@@ -185,9 +188,9 @@ namespace Grindstone {
 			reflectionWriter.EndArray();
 		}
 
-		void ShaderImporter::writeReflectionImage(std::vector<Texture>& resources) {
+		void ShaderImporter::WriteReflectionImage(std::vector<Texture>& resources) {
 			reflectionWriter.StartArray();
-			for each (auto & resource in resources) {
+			for (auto & resource : resources) {
 				reflectionWriter.StartObject();
 				reflectionWriter.Key("name");
 				reflectionWriter.String(resource.name.c_str());
@@ -197,7 +200,7 @@ namespace Grindstone {
 				reflectionWriter.Key("usedIn");
 				reflectionWriter.StartArray();
 				for each (auto & shaderPass in resource.shaderPasses) {
-					reflectionWriter.String(getShaderTypeAsString(shaderPass));
+					reflectionWriter.String(GetShaderTypeAsString(shaderPass));
 				}
 				reflectionWriter.EndArray();
 
@@ -206,7 +209,7 @@ namespace Grindstone {
 			reflectionWriter.EndArray();
 		}
 
-		void ShaderImporter::writeReflectionDocument() {
+		void ShaderImporter::WriteReflectionDocument() {
 			reflectionWriter.StartObject();
 
 			reflectionWriter.Key("name");
@@ -217,33 +220,33 @@ namespace Grindstone {
 
 			reflectionWriter.Key("shaderModules");
 			reflectionWriter.StartArray();
-			for each (auto & shaderPass in shaderPasses) {
-				reflectionWriter.String(getShaderTypeAsString(shaderPass));
+			for (auto & shaderPass : shaderPasses) {
+				reflectionWriter.String(GetShaderTypeAsString(shaderPass));
 			}
 			reflectionWriter.EndArray();
 
 			reflectionWriter.Key("uniformBuffers");
-			writeReflectionStruct(uniformBuffers);
+			WriteReflectionStruct(uniformBuffers);
 
 			reflectionWriter.Key("textures");
-			writeReflectionImage(textures);
+			WriteReflectionImage(textures);
 
 			reflectionWriter.Key("samplers");
-			writeReflectionImage(samplers);
+			WriteReflectionImage(samplers);
 
 			reflectionWriter.EndObject();
 
-			outputStringToFile(".reflect.json", reflectionStringBuffer.GetString());
+			OutputStringToFile("", reflectionStringBuffer.GetString());
 		}
 
-		std::string ShaderImporter::extractField(const char* fieldKey) {
+		std::string ShaderImporter::ExtractField(const char* fieldKey) {
 			auto fieldPos = sourceFileContents.find(fieldKey);
 			auto newLinePos = sourceFileContents.find('\n', fieldPos);
 			auto valuePos = fieldPos + strlen(fieldKey) + 1;
 			return sourceFileContents.substr(valuePos, newLinePos - valuePos);
 		}
 		
-		void ShaderImporter::extractSubmodules() {
+		void ShaderImporter::ExtractSubmodules() {
 			const char* fieldKey = "#shaderModule";
 			const size_t fieldKeyLength = strlen(fieldKey) + 1;
 
@@ -262,16 +265,16 @@ namespace Grindstone {
 				size_t endPos = sourceFileContents.find("#endShaderModule", newLinePos);
 
 				std::string shaderTypeString = sourceFileContents.substr(valuePos, newLinePos - valuePos);
-				auto shaderType = getShaderTypeFromString(shaderTypeString);
+				auto shaderType = GetShaderTypeFromString(shaderTypeString);
 				std::string glsl = sourceFileContents.substr(beginPos, endPos - beginPos);
-				std::string extension = getShaderTypeExtension(shaderType);
-				processSubmodule(shaderType, extension.c_str(), glsl.c_str());
+				std::string extension = GetShaderTypeExtension(shaderType);
+				ProcessSubmodule(shaderType, extension.c_str(), glsl.c_str());
 
 				beginSearchPos = endPos;
 			}
 		}
 
-		ShaderImporter::ShaderType ShaderImporter::getShaderTypeFromString(std::string& str) {
+		ShaderImporter::ShaderType ShaderImporter::GetShaderTypeFromString(std::string& str) {
 			if (str == "vertex") {
 				return ShaderType::Vertex;
 			}
@@ -294,7 +297,7 @@ namespace Grindstone {
 			throw std::runtime_error("Invalid Shader Type!");
 		}
 
-		const char* ShaderImporter::getShaderTypeExtension(ShaderType type) {
+		const char* ShaderImporter::GetShaderTypeExtension(ShaderType type) {
 			switch(type) {
 			case ShaderType::Vertex: return ".vert";
 			case ShaderType::Fragment: return ".frag";
@@ -305,7 +308,7 @@ namespace Grindstone {
 			}
 		}
 		
-		const char* ShaderImporter::getShaderTypeAsString(ShaderType type) {
+		const char* ShaderImporter::GetShaderTypeAsString(ShaderType type) {
 			switch(type) {
 			case ShaderType::Vertex: return "vertex";
 			case ShaderType::Fragment: return "fragment";
@@ -316,23 +319,23 @@ namespace Grindstone {
 			}
 		}
 
-		void ShaderImporter::processSubmodule(ShaderType shaderType, const char* extension, const char* glslSource) {
-			std::vector<uint32_t> vkSpirv = convertToSpirv(shaderType, extension, glslSource);
+		void ShaderImporter::ProcessSubmodule(ShaderType shaderType, const char* extension, const char* glslSource) {
+			std::vector<uint32_t> vkSpirv = ConvertToSpirv(shaderType, extension, glslSource);
 			{
-				auto opengGlsl = convertToOpenglGlsl(extension, vkSpirv);
-				convertToOpenglSpirv(shaderType, extension, glslSource);
+				auto opengGlsl = ConvertToOpenglGlsl(extension, vkSpirv);
+				ConvertToOpenglSpirv(shaderType, extension, glslSource);
 			}
-			reflectResources(shaderType, vkSpirv);
+			ReflectResources(shaderType, vkSpirv);
 		}
 
-		std::vector<uint32_t> ShaderImporter::convertToSpirv(ShaderType shaderType, const char* extension, const char* shaderModuleGlsl) {
+		std::vector<uint32_t> ShaderImporter::ConvertToSpirv(ShaderType shaderType, const char* extension, const char* shaderModuleGlsl) {
 			shaderc::Compiler compiler;
 			shaderc::CompileOptions options;
 
 			auto result = compiler.CompileGlslToSpv(
 				shaderModuleGlsl,
 				getShaderTypeForShaderc(shaderType),
-				path.string().c_str(),
+				inputPath.string().c_str(),
 				options
 			);
 
@@ -342,12 +345,12 @@ namespace Grindstone {
 
 			auto vkSpirv = std::vector<uint32_t>(result.cbegin(), result.cend());
 
-			outputUint32ToFile((std::string(extension) + ".vulkan.spv").c_str(), vkSpirv);
+			OutputUint32ToFile((std::string(extension) + ".vk.spv").c_str(), vkSpirv);
 
 			return vkSpirv;
 		}
 
-		std::string ShaderImporter::convertToOpenglGlsl(const char* extension, std::vector<uint32_t>& vkSpirv) {
+		std::string ShaderImporter::ConvertToOpenglGlsl(const char* extension, std::vector<uint32_t>& vkSpirv) {
 			spirv_cross::CompilerGLSL glslTranspiler(vkSpirv);
 
 			spirv_cross::CompilerGLSL::Options glslTranspilerOptions;
@@ -356,12 +359,12 @@ namespace Grindstone {
 
 			std::string openglGlsl = glslTranspiler.compile();
 
-			outputStringToFile((std::string(extension) + ".opengl.glsl").c_str(), openglGlsl.c_str());
+			OutputStringToFile((std::string(extension) + ".ogl.glsl").c_str(), openglGlsl.c_str());
 
 			return openglGlsl;
 		}
 
-		void ShaderImporter::convertToOpenglSpirv(ShaderType shaderType, const char* extension, const char* opengGlsl) {
+		void ShaderImporter::ConvertToOpenglSpirv(ShaderType shaderType, const char* extension, const char* opengGlsl) {
 			shaderc::Compiler compiler;
 			shaderc::CompileOptions options;
 			options.SetTargetEnvironment(shaderc_target_env_opengl, shaderc_env_version_opengl_4_5);
@@ -370,7 +373,7 @@ namespace Grindstone {
 			auto result = compiler.CompileGlslToSpv(
 				opengGlsl,
 				getShaderTypeForShaderc(shaderType),
-				path.string().c_str(),
+				inputPath.string().c_str(),
 				options
 			);
 
@@ -378,10 +381,10 @@ namespace Grindstone {
 				throw std::runtime_error(result.GetErrorMessage());
 			}
 
-			outputUint32ToFile((std::string(extension) + ".opengl.spv").c_str(), std::vector<uint32_t>(result.cbegin(), result.cend()));
+			OutputUint32ToFile((std::string(extension) + ".ogl.spv").c_str(), std::vector<uint32_t>(result.cbegin(), result.cend()));
 		}
 
-		void ShaderImporter::reflectResources(ShaderType shaderType, std::vector<uint32_t>& vkSpirv) {
+		void ShaderImporter::ReflectResources(ShaderType shaderType, std::vector<uint32_t>& vkSpirv) {
 			spirv_cross::Compiler compiler(vkSpirv);
 			spirv_cross::ShaderResources resources = compiler.get_shader_resources();
 
@@ -389,20 +392,20 @@ namespace Grindstone {
 
 			std::string resourcesStr;
 			if (resources.uniform_buffers.size()) {
-				reflectStruct(shaderType, uniformBuffers, compiler, resources.uniform_buffers);
+				ReflectStruct(shaderType, uniformBuffers, compiler, resources.uniform_buffers);
 			}
 			if (resources.push_constant_buffers.size()) {
 				// reflectStruct(shaderType, pushConstants, compiler, resources.push_constant_buffers);
 			}
 			if (resources.sampled_images.size()) {
-				reflectImages(shaderType, samplers, compiler, resources.sampled_images);
+				ReflectImages(shaderType, samplers, compiler, resources.sampled_images);
 			}
 			if (resources.separate_images.size()) {
-				reflectImages(shaderType, textures, compiler, resources.separate_images);
+				ReflectImages(shaderType, textures, compiler, resources.separate_images);
 			}
 		}
 
-		void ShaderImporter::outputStringToFile(const char* extension, const char* content) {
+		void ShaderImporter::OutputStringToFile(const char* extension, const char* content) {
 			std::string outputFilename = basePath + extension;
 			std::ofstream file(outputFilename);
 			file.write((const char*)content, strlen(content));
@@ -410,7 +413,7 @@ namespace Grindstone {
 			file.close();
 		}
 
-		void ShaderImporter::outputUint32ToFile(const char* extension, std::vector<uint32_t>& content) {
+		void ShaderImporter::OutputUint32ToFile(const char* extension, std::vector<uint32_t>& content) {
 			std::string outputFilename = basePath + extension;
 			std::ofstream file(outputFilename, std::ios::out | std::ios::binary);
 			auto fileSize = sizeof(uint32_t) * content.size();

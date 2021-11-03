@@ -20,7 +20,7 @@ namespace Grindstone {
 
 		std::string ToString() {
 			unsigned char* uuidCstr;
-			UuidToStringA ( &uuid, &uuidCstr );
+			UuidToString( &uuid, &uuidCstr );
 			std::string uuidStr( (char*) uuidCstr );
 			RpcStringFreeA ( &uuidCstr );
 

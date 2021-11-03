@@ -39,13 +39,11 @@ std::string GetShaderPath(const char* basePath, ShaderStage shaderStage, Graphic
 	return std::string(basePath) + shaderStageExtension + graphicsCore->GetDefaultShaderExtension();
 }
 
-Shader& ShaderManager::LoadShader(BaseAssetRenderer* assetRenderer, const char* path) {
-	std::string fixedPath = path;
-	Utils::FixStringSlashes(fixedPath);
-
+Shader& ShaderManager::LoadShader(BaseAssetRenderer* assetRenderer, const char* uuid) {
 	Shader* shader = nullptr;
-	if (!TryGetShader(fixedPath.c_str(), shader)) {
-		shader = &CreateNewShaderFromFile(fixedPath);
+	if (!TryGetShader(uuid, shader)) {
+		std::string uuidStr = uuid;
+		shader = &CreateNewShaderFromFile(uuidStr);
 
 		if (assetRenderer) {
 			assetRenderer->AddShaderToRenderQueue(shader);
@@ -80,8 +78,9 @@ void ShaderManager::LoadShaderFromFile(bool isReloading, std::string& path, Shad
 	CreateShaderGraphicsPipeline(isReloading, path.c_str(), shaderAsset);
 }
 
-Shader& ShaderManager::CreateNewShaderFromFile(std::string& path) {
-	Shader& shader = shaders[path] = Shader{ path };
+Shader& ShaderManager::CreateNewShaderFromFile(std::string& uuid) {
+	std::string path = "../compiledAssets/" + uuid;
+	Shader& shader = shaders[uuid] = Shader{ path };
 	LoadShaderFromFile(false, path, shader);
 
 	return shader;

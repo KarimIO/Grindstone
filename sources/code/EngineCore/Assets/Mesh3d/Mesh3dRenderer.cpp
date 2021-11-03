@@ -14,9 +14,7 @@ struct Mesh3dUbo {
 	glm::mat4 modelMatrix;
 };
 
-Grindstone::Mesh3dRenderer::Mesh3dRenderer() {
-	errorMaterial = &EngineCore::GetInstance().materialManager->LoadMaterial(this, "Error.gmat");
-
+Mesh3dRenderer::Mesh3dRenderer() {
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
 
 	UniformBufferBinding::CreateInfo mesh3dBufferBindingCi{};
@@ -31,6 +29,11 @@ Grindstone::Mesh3dRenderer::Mesh3dRenderer() {
 	mesh3dBufferObjectCi.isDynamic = true;
 	mesh3dBufferObjectCi.size = sizeof(Mesh3dUbo);
 	mesh3dBufferObject = core->CreateUniformBuffer(mesh3dBufferObjectCi);
+}
+
+void Mesh3dRenderer::AddErrorMaterial() {
+	auto materialManager = EngineCore::GetInstance().materialManager;
+	errorMaterial = &materialManager->LoadMaterial(this, "792d934c-78d5-4445-b0e8-fc2828eed098");
 }
 
 void Mesh3dRenderer::RenderQueue(RenderQueueContainer& renderQueue) {

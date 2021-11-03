@@ -47,7 +47,7 @@ void MaterialManager::CreateMaterialFromData(
 		throw std::runtime_error("No shader found in material.");
 	}
 
-	std::string shaderPath = (relativePath / document["shader"].GetString()).string();
+	std::string shaderPath = document["shader"].GetString();
 	ShaderManager* shaderManager = EngineCore::GetInstance().shaderManager;
 	Shader* shader = &shaderManager->LoadShader(assetRenderer, shaderPath.c_str());
 	shader->materials.push_back(&material);
@@ -138,7 +138,7 @@ void MaterialManager::CreateMaterialFromData(
 }
 
 Material& MaterialManager::CreateMaterialFromFile(BaseAssetRenderer* assetRenderer, const char* path) {
-	std::filesystem::path completePath = std::filesystem::path("../assets") / path;
+	std::filesystem::path completePath = std::filesystem::path("../compiledAssets/") / path;
 	if (!std::filesystem::exists(completePath)) {
 		throw std::runtime_error(completePath.string() + " material doesn't exist.");
 	}

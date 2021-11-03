@@ -58,6 +58,10 @@ void TextureImporter::Import(std::filesystem::path& path) {
 	delete sourcePixels;
 }
 
+Grindstone::Uuid TextureImporter::GetUuid() {
+	return uuid;
+}
+
 unsigned char TextureImporter::CombinePixels(unsigned char* pixelSrc) {
 	return (*pixelSrc + *(pixelSrc + 4) + *(pixelSrc + 8) + *(pixelSrc + 12)) / 4;
 }
@@ -189,8 +193,8 @@ void TextureImporter::OutputDds(unsigned char* outData, int contentSize) {
 
 	std::string basePath = "../compiledAssets/";
 	std::string subassetName = "texture";
-	Uuid outUuid = metaFile->GetOrCreateSubassetUuid(subassetName);
-	std::string outputPath = basePath + outUuid.ToString();
+	uuid = metaFile->GetOrCreateSubassetUuid(subassetName);
+	std::string outputPath = basePath + uuid.ToString();
 	std::ofstream out(outputPath, std::ios::binary);
 	if (out.fail()) {
 		throw std::runtime_error("Failed to output texture!");

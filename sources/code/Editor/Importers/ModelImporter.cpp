@@ -55,10 +55,10 @@ void ModelImporter::ConvertMaterials() {
 			name = "Material_" + std::to_string(i);
 		}
 
-		ConvertTexture(pMaterial, aiTextureType_DIFFUSE, baseOutputPath, newMaterial.albedoPath);
-		ConvertTexture(pMaterial, aiTextureType_NORMALS, baseOutputPath, newMaterial.normalPath);
-		ConvertTexture(pMaterial, aiTextureType_AMBIENT, baseOutputPath, newMaterial.specularPath);
-		ConvertTexture(pMaterial, aiTextureType_SHININESS, baseOutputPath, newMaterial.roughnessPath);
+		newMaterial.albedoPath = GetTexturePath(pMaterial, aiTextureType_DIFFUSE);
+		newMaterial.normalPath = GetTexturePath(pMaterial, aiTextureType_NORMALS);
+		newMaterial.specularPath = GetTexturePath(pMaterial, aiTextureType_AMBIENT);
+		newMaterial.roughnessPath = GetTexturePath(pMaterial, aiTextureType_SHININESS);
 
 		aiColor4D diffuse_color;
 		if (AI_SUCCESS == aiGetMaterialColor(pMaterial, AI_MATKEY_COLOR_DIFFUSE, &diffuse_color)) {
@@ -80,21 +80,20 @@ void ModelImporter::ConvertMaterials() {
 		std::string uuidString = outputData.materialNames[i] = uuid.ToString();
 
 		Editor::Manager::Print(LogSeverity::Trace, uuidString.c_str());
-
-		CreateStandardMaterial(newMaterial, "../compiledAssets" + uuidString);
+		CreateStandardMaterial(newMaterial, "../compiledAssets/" + uuidString);
 	}
 }
 
-void ModelImporter::ConvertTexture(aiMaterial* pMaterial, aiTextureType type, std::string baseOutputPath, std::string& outPath) {
+std::filesystem::path ModelImporter::GetTexturePath(aiMaterial* pMaterial, aiTextureType type) {
 	if (pMaterial->GetTextureCount(type) > 0) {
 		aiString aiPath;
 		if (pMaterial->GetTexture(type, 0, &aiPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 			std::string fullPath = aiPath.data;
-			std::filesystem::path texturePath = baseFolderPath / fullPath;
-			Grindstone::Importers::ImportTexture(texturePath);
-			outPath = texturePath.string() + ".dds";
+			return baseFolderPath / fullPath;
 		}
 	}
+
+	return "";
 }
 
 void ModelImporter::InitSubmeshes() {

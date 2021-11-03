@@ -18,6 +18,7 @@ namespace Grindstone {
 	class Mesh3dRenderer : public BaseAssetRenderer {
 		public:
 			Mesh3dRenderer();
+			void AddErrorMaterial();
 			void RenderShader(Shader& shader);
 			void RenderMaterial(Material& material);
 			void RenderSubmesh(ECS::Entity entity, Mesh3d::Submesh& submesh3d);

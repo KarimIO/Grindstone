@@ -45,7 +45,7 @@ ShaderReflectionLoader::ShaderReflectionLoader(
 	const char* basePath,
 	ShaderReflectionData& data
 ) : outData(data) {
-	std::string path = std::string(basePath) + ".reflect.json";
+	std::string path = basePath;
 
 	if (!std::filesystem::exists(path)) {
 		throw std::runtime_error(path + " not found!");

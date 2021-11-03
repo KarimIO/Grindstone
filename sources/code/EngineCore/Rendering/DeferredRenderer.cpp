@@ -193,11 +193,15 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	litHdrFramebuffer = core->CreateFramebuffer(litHdrFramebufferCreateInfo);
 	
 	auto shaderManager = EngineCore::GetInstance().shaderManager;
-	lightPipeline = shaderManager->LoadShader(nullptr, "../assets/coreAssets/pointLight").pipeline;
-	tonemapPipeline = shaderManager->LoadShader(nullptr, "../assets/coreAssets/tonemap").pipeline;
+	lightPipeline = shaderManager->LoadShader(nullptr, "5537b925-96bc-4e1f-8e2a-d66d6dd9bed1").pipeline;
+	tonemapPipeline = shaderManager->LoadShader(nullptr, "30e9223e-1753-4a7a-acac-8488c75bb1ef").pipeline;
 }
 
 void DeferredRenderer::RenderLights(entt::registry& registry) {
+	if (lightPipeline == nullptr) {
+		return;
+	}
+
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
 
 	core->BindPipeline(lightPipeline);
@@ -226,6 +230,10 @@ void DeferredRenderer::RenderLights(entt::registry& registry) {
 }
 
 void DeferredRenderer::PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer) {
+	if (tonemapPipeline == nullptr) {
+		return;
+	}
+
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
 
 	core->BindPipeline(tonemapPipeline);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include "Common/ResourcePipeline/Uuid.hpp"
 #include "Importer.hpp"
 
 namespace Grindstone {
@@ -19,7 +20,9 @@ namespace Grindstone {
 		class TextureImporter : public Importer {
 		public:
 			void Import(std::filesystem::path& path) override;
+			Uuid GetUuid();
 		private:
+			Uuid uuid;
 			unsigned char CombinePixels(unsigned char* pixelSrc);
 			unsigned char* CreateMip(unsigned char* pixel, int width, int height);
 			void ExtractBlock(

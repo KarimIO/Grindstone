@@ -159,7 +159,7 @@ namespace Grindstone {
 		}
 
 		const char* GLCore::GetDefaultShaderExtension() {
-			return ".opengl.spv";
+			return ".ogl.spv";
 		}
 
 		const char* GLCore::GetAPIVersion() {

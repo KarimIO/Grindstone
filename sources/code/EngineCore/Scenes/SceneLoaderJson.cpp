@@ -60,9 +60,9 @@ bool SceneLoaderJson::Load(const char* path) {
 		MeshRendererComponent& meshRendererComponent
 	) {
 		std::vector<Material*> materials;
-		materials.resize(meshRendererComponent.materialPaths.size());
-		for (size_t i = 0; i < meshRendererComponent.materialPaths.size(); ++i) {
-			auto& materialPath = meshRendererComponent.materialPaths[i];
+		materials.resize(meshRendererComponent.materials.size());
+		for (size_t i = 0; i < meshRendererComponent.materials.size(); ++i) {
+			auto& materialPath = meshRendererComponent.materials[i];
 			materials[i] = &materialManager->LoadMaterial(
 				mesh3dRenderer,
 				materialPath.c_str()

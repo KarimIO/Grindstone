@@ -30,7 +30,7 @@ namespace Grindstone {
 				std::string slashSwappedStr = modelPath;
 				std::replace(slashSwappedStr.begin(), slashSwappedStr.end(), '\\', '/');
 				std::string outputPath = GetGmfPath(GetModelAssetPath(slashSwappedStr));
-				//ConvertTexture(slashSwappedStr, false, outputPath);
+				//GetTexturePath(slashSwappedStr, false, outputPath);
 				isProcessing = false;
 				Close();
 			}

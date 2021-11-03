@@ -62,24 +62,24 @@ namespace Grindstone {
 					) : name(name), binding(binding), buffserSize(buffserSize) {}
 				};
 			private:
-				void process();
-				void writeReflectionStruct(std::vector<UniformBuffer>& structs);
-				void writeReflectionImage(std::vector<Texture>& resources);
-				void writeReflectionDocument();
-				std::string extractField(const char* fieldKey);
-				void extractSubmodules();
-				void processSubmodule(ShaderType shaderType, const char* extension, const char* glslSource);
-				std::vector<uint32_t> convertToSpirv(ShaderType, const char* extension, const char* shaderModuleGlsl);
-				std::string convertToOpenglGlsl(const char* extension, std::vector<uint32_t>&);
-				void convertToOpenglSpirv(ShaderType, const char* extension, const char* openglGlsl);
-				void reflectResources(ShaderType shaderType, std::vector<uint32_t>&);
-				void outputStringToFile(const char* extension, const char* content);
-				void outputUint32ToFile(const char* extension, std::vector<uint32_t>& content);
-				ShaderType getShaderTypeFromString(std::string& str);
-				const char* getShaderTypeExtension(ShaderType);
-				const char* getShaderTypeAsString(ShaderType);
+				void Process();
+				void WriteReflectionStruct(std::vector<UniformBuffer>& structs);
+				void WriteReflectionImage(std::vector<Texture>& resources);
+				void WriteReflectionDocument();
+				std::string ExtractField(const char* fieldKey);
+				void ExtractSubmodules();
+				void ProcessSubmodule(ShaderType shaderType, const char* extension, const char* glslSource);
+				std::vector<uint32_t> ConvertToSpirv(ShaderType, const char* extension, const char* shaderModuleGlsl);
+				std::string ConvertToOpenglGlsl(const char* extension, std::vector<uint32_t>&);
+				void ConvertToOpenglSpirv(ShaderType, const char* extension, const char* openglGlsl);
+				void ReflectResources(ShaderType shaderType, std::vector<uint32_t>&);
+				void OutputStringToFile(const char* extension, const char* content);
+				void OutputUint32ToFile(const char* extension, std::vector<uint32_t>& content);
+				ShaderType GetShaderTypeFromString(std::string& str);
+				const char* GetShaderTypeExtension(ShaderType);
+				const char* GetShaderTypeAsString(ShaderType);
 		private:
-				std::filesystem::path path;
+				std::filesystem::path inputPath;
 				std::string basePath;
 				std::string shaderName;
 				std::string renderQueue;

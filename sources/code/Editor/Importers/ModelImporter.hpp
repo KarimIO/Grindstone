@@ -32,7 +32,7 @@ namespace Grindstone {
 		private:
 			void ProcessNodeTree(aiNode* node);
 			void ConvertMaterials();
-			void ConvertTexture(aiMaterial* pMaterial, aiTextureType type, std::string basePath, std::string& outPath);
+			std::filesystem::path GetTexturePath(aiMaterial* pMaterial, aiTextureType type);
 			void InitSubmeshes();
 			void ProcessVertices();
 
