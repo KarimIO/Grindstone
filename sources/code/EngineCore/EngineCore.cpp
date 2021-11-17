@@ -74,6 +74,8 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	SetupCoreComponents(componentRegistrar);
 	sceneManager = new SceneManagement::SceneManager();
 
+	pluginManager->load("PluginBulletPhysics");
+
 	sceneManager->LoadDefaultScene();
 
 	Logger::Print("{0} Initialized.", createInfo.applicationTitle);

@@ -23,7 +23,7 @@ namespace Grindstone {
 					&ECS::GetComponentReflectionData<T>
 				});
 			}
-			void RegisterComponent(const char *name, ComponentFunctions componentFunctions);
+			virtual void RegisterComponent(const char *name, ComponentFunctions componentFunctions);
 			virtual void* CreateComponent(const char *name, entt::registry& registry, ECS::EntityHandle entity);
 			virtual void RemoveComponent(const char *name, entt::registry& registry, ECS::EntityHandle entity);
 			virtual bool HasComponent(const char* name, entt::registry& registry, ECS::EntityHandle entity);

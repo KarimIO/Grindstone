@@ -72,7 +72,3 @@ void Plugins::Interface::enumerateDisplays(Display* displays) {
 void Plugins::Interface::registerSystem(const char* name, ECS::SystemFactory factory) {
 	// ecsCore->registerSystem(name, factory);
 }
-
-void Plugins::Interface::registerComponentType(const char* name, ECS::ComponentFunctions functions) {
-	// ecsCore->registerComponentType(name, factory);
-}
