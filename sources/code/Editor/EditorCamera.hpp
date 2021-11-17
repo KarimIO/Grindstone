@@ -36,9 +36,9 @@ namespace Grindstone {
 			glm::quat rotation = glm::quat();
 			uint32_t width = 800;
 			uint32_t height = 600;
-			float fov = glm::radians(80.0f);
-			float near = 0.1f;
-			float far = 100.f;
+			float fieldOfView = glm::radians(80.0f);
+			float nearPlaneDistance = 0.1f;
+			float farPlaneDistance = 150.f;
 		};
 	}
 }

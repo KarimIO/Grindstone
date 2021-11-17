@@ -2,13 +2,11 @@
 
 #include <string>
 #include "EngineCore/Reflection/ComponentReflection.hpp"
+#include "EngineCore/Assets/AssetFile.hpp"
 
 namespace Grindstone {
-	struct Mesh3d;
-
 	struct MeshComponent {
-		Mesh3d* mesh;
-		std::string meshPath;
+		MeshReference mesh;
 
 		REFLECT("Mesh")
 	};

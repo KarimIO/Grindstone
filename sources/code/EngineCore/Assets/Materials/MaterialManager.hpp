@@ -13,6 +13,7 @@ namespace Grindstone {
 		public:
 			virtual Material& LoadMaterial(BaseAssetRenderer* assetRenderer, const char* path);
 			virtual void ReloadMaterialIfLoaded(const char* path);
+			virtual void RemoveRenderableFromMaterial(std::string uuid, ECS::Entity entity, void* renderable);
 		private:
 			bool TryGetMaterial(const char* path, Material*& material);
 			Material& CreateMaterialFromFile(BaseAssetRenderer* assetRenderer, const char* path);

@@ -10,25 +10,37 @@ namespace Grindstone {
 
 			Directory& GetRootDirectory();
 
-			void AddPath(std::filesystem::directory_entry directoryEntry);
-			void AddFolder(std::filesystem::path folderPath);
-			void AddFile(std::filesystem::path filePath);
+			void HandleAddPath(std::filesystem::directory_entry directoryEntry);
+			void HandleAddFolder(std::filesystem::directory_entry folderPath);
+			void HandleAddMetaFile(std::filesystem::directory_entry filePath);
+			void HandleAddFile(std::filesystem::directory_entry filePath);
 
-			void ModifyPath(std::filesystem::directory_entry directoryEntry);
-			void ModifyFolder(std::filesystem::path folderPath);
-			void ModifyFile(std::filesystem::path filePath);
+			void HandleModifyPath(std::filesystem::directory_entry directoryEntry);
+			void HandleModifyFolder(std::filesystem::directory_entry folderPath);
+			void HandleModifyMetaFile(std::filesystem::directory_entry filePath);
+			void HandleModifyFile(std::filesystem::directory_entry filePath);
 
-			void MovePath(std::filesystem::directory_entry directoryEntry);
-			void MoveFolder(std::filesystem::path folderPath);
-			void MoveFile(std::filesystem::path filePath);
+			void HandleMovePath(std::filesystem::directory_entry directoryEntry, std::string oldFilename);
+			void HandleMoveFolder(std::filesystem::directory_entry folderPath, std::string oldFilename);
+			void HandleMoveMetaFile(std::filesystem::directory_entry filePath, std::string oldFilename);
+			void HandleMoveFile(std::filesystem::directory_entry filePath, std::string oldFilename);
 
-			void DeletePath(std::filesystem::directory_entry directoryEntry);
-			void DeleteFolder(std::filesystem::path folderPath);
-			void DeleteFile(std::filesystem::path filePath);
-
-			void GetClosestDirectory(std::filesystem::path path);
+			void HandleDeletePath(std::filesystem::directory_entry directoryEntry);
+			void HandleDeleteFolder(std::filesystem::directory_entry folderPath);
+			void HandleDeleteMetaFile(std::filesystem::directory_entry filePath);
+			void HandleDeleteFile(std::filesystem::directory_entry filePath);
 		private:
+			using FolderIterator = std::vector<Directory*>::iterator;
+			using FileIterator = std::vector<File*>::iterator;
+			FolderIterator GetSubdirectoryInDirectory(Directory* directory, std::string filename);
+			FileIterator GetFileInDirectory(Directory* directory, std::string filename);
+			Directory* GetOrMakeSubdirectory(Directory* currentDirectory, std::string subdirectoryName);
+			Directory* GetFolderForPath(std::filesystem::path path);
 			void CreateInitialFileStructure(Directory& directory, std::filesystem::directory_iterator directoryIterator);
+			bool CheckIfCompiledFileNeedsToBeUpdated(std::filesystem::path path);
+			void UpdateCompiledFileIfNecessary(std::filesystem::path path);
+			void RemoveFileFromManager(std::filesystem::directory_entry);
+			std::filesystem::directory_entry GetFileFromMetaPath(std::filesystem::directory_entry);
 
 			Directory rootDirectory;
 		};

@@ -1,5 +1,5 @@
 #include <glm/gtx/quaternion.hpp>
-#include "TypeResolver.hpp"
+#include "DefaultResolver.hpp"
 #include "Common/Math.hpp"
 
 namespace Grindstone {

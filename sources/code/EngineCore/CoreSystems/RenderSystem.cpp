@@ -55,10 +55,10 @@ namespace Grindstone {
 				);
 
 				const auto projectionMatrix = glm::perspective(
-					cameraComponent.fov,
+					cameraComponent.fieldOfView,
 					cameraComponent.aspectRatio,
-					cameraComponent.near,
-					cameraComponent.far
+					cameraComponent.nearPlaneDistance,
+					cameraComponent.farPlaneDistance
 				);
 
 				cameraComponent.renderer->Render(

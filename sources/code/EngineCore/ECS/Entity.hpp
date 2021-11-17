@@ -1,6 +1,7 @@
 #pragma once
 
 #include <entt/entt.hpp>
+#include "EntityHandle.hpp"
 
 namespace Grindstone {
 	namespace SceneManagement {
@@ -8,14 +9,11 @@ namespace Grindstone {
 	}
 
 	namespace ECS {
-		using EntityHandle = entt::entity;
-		const auto EmptyEntityHandle = entt::null;
-
 		class Entity {
 		public:
 			Entity() = default;
 			Entity(const Entity& other) = default;
-			Entity::Entity(entt::entity entityId, SceneManagement::Scene * scene)
+			Entity(entt::entity entityId, SceneManagement::Scene * scene)
 				: entityId(entityId), scene(scene) {}
 
 			virtual void* AddComponent(const char* componentType);
@@ -24,22 +22,26 @@ namespace Grindstone {
 			virtual bool TryGetComponent(const char* componentType, void*& outComponent);
 			virtual void RemoveComponent(const char* componentType);
 			virtual void Destroy();
+			virtual entt::registry& GetSceneEntityRegistry();
 
 			template<typename ComponentType, typename... Args>
 			ComponentType& AddComponent(Args&&... args) {
-				return scene->GetEntityRegistry().emplace<ComponentType>(entityId, std::forward<Args>(args)...);
+				return GetSceneEntityRegistry().emplace<ComponentType>(entityId, std::forward<Args>(args)...);
 			}
+
 			template<typename ComponentType>
 			bool HasComponent() {
-				return scene->GetEntityRegistry().all_of<ComponentType>(entityId);
+				return GetSceneEntityRegistry().all_of<ComponentType>(entityId);
 			}
+
 			template<typename ComponentType>
 			ComponentType& GetComponent() {
-				return scene->GetEntityRegistry().get<ComponentType>(entityId);
+				return GetSceneEntityRegistry().get<ComponentType>(entityId);
 			}
+
 			template<typename ComponentType>
 			bool TryGetComponent(ComponentType*& outComponent) {
-				auto& registry = scene->GetEntityRegistry();
+				auto& registry = GetSceneEntityRegistry();
 				if (registry.all_of<ComponentType>(entityId)) {
 					outComponent = &registry.get<ComponentType>(entityId);
 					return true;
@@ -48,9 +50,10 @@ namespace Grindstone {
 				outComponent = nullptr;
 				return false;
 			}
+
 			template<typename ComponentType>
 			void RemoveComponent(const char* componentType) {
-				return scene->GetEntityRegistry().remove<ComponentType>(entityId);
+				return GetSceneEntityRegistry().remove<ComponentType>(entityId);
 			}
 
 			virtual EntityHandle GetHandle() const {
@@ -72,6 +75,7 @@ namespace Grindstone {
 			bool Entity::operator!=(const Entity other) {
 				return !(*this == other);
 			}
+
 		private:
 			EntityHandle entityId = entt::null;
 			SceneManagement::Scene* scene = nullptr;

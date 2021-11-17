@@ -8,34 +8,41 @@ class InputInterface;
 namespace Grindstone {
 	class X11Window : public Grindstone::Window {
 	public:
-		virtual bool initialize(CreateInfo create_info) override;
-		virtual void show() override;
-		virtual bool shouldClose() override;
-		virtual bool handleEvents() override;
-		virtual void setFullscreen(FullscreenMode mode) override;
-		virtual void getWindowRect(unsigned int& left, unsigned int& top, unsigned int& right, unsigned int& bottom) override;
-		virtual void getWindowSize(unsigned int& width, unsigned int& height) override;
-		virtual void setWindowSize(unsigned int width, unsigned int height) override;
-		virtual void setMousePos(unsigned int x, unsigned int y) override;
-		virtual void getMousePos(unsigned int& x, unsigned int& y) override;
-		virtual void setWindowPos(unsigned int x, unsigned int y) override;
-		virtual void getWindowPos(unsigned int& x, unsigned int& y) override;
-		virtual void setWindowFocus() override;
-		virtual bool getWindowFocus() override;
-		virtual bool getWindowMinimized() override;
-		virtual void setWindowTitle(const char* title) override;
-		virtual void setWindowAlpha(float alpha) override;
-		virtual float getWindowDpiScale() override;
-		virtual void close() override;
+		virtual bool Initialize(CreateInfo& createInfo) override;
+		virtual void Show() override;
+		virtual bool ShouldClose() override;
+		virtual void HandleEvents() override;
+		virtual void SetFullscreen(FullscreenMode mode) override;
+		virtual void GetWindowRect(unsigned int& left, unsigned int& top, unsigned int& right, unsigned int& bottom) override;
+		virtual void GetWindowSize(unsigned int& width, unsigned int& height) override;
+		virtual void SetWindowSize(unsigned int width, unsigned int height) override;
+		virtual void SetMousePos(unsigned int x, unsigned int y) override;
+		virtual void GetMousePos(unsigned int& x, unsigned int& y) override;
+		virtual void SetWindowPos(unsigned int x, unsigned int y) override;
+		virtual void GetWindowPos(unsigned int& x, unsigned int& y) override;
+		virtual void SetWindowFocus() override;
+		virtual bool GetWindowFocus() override;
+		virtual bool GetWindowMinimized() override;
+		virtual void SetWindowTitle(const char* title) override;
+		virtual void SetWindowAlpha(float alpha) override;
+		virtual float GetWindowDpiScale() override;
+		virtual void Close() override;
+
+		virtual bool CopyStringToClipboard(const std::string& stringToCopy) override;
+		virtual std::string OpenFileDialogue(const char* filter) override;
+		virtual std::string SaveFileDialogue(const char* filter) override;
+		virtual void ExplorePath(const char* path) override;
+		virtual void OpenFileUsingDefaultProgram(const char* path) override;
 	public:
-		XID getHandle();
+		::Window GetHandle();
 
 	private:
-		XID w;
-		unsigned int width_;
-		unsigned int height_;
-		FullscreenMode fullscreen_mode_;
-		InputInterface* input_;
-		bool should_close_;
+		::Display* xDisplay;
+		::Window xWindow;
+		unsigned int width;
+		unsigned int height;
+		FullscreenMode fullscreenMode;
+		EngineCore* engineCore = nullptr;
+		bool shouldClose;
 	};
 };

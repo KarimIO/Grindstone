@@ -2,10 +2,8 @@
 
 #include <string>
 #include <map>
-#include <entt/entt.hpp>
 
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
-#include "EngineCore/ECS/SystemRegistrar.hpp"
 #include "EngineCore/ECS/Entity.hpp"
 
 namespace Grindstone {
@@ -22,10 +20,10 @@ namespace Grindstone {
 			friend SceneLoaderJson;
 		public:
 			Scene() = default;
-			virtual ECS::Entity CreateEmptyEntity(entt::entity entityToUse = entt::null);
-			virtual ECS::Entity CreateEntity(entt::entity entityToUse = entt::null);
-			virtual void DestroyEntity(ECS::EntityHandle entityId);
-			virtual void DestroyEntity(ECS::Entity entity);
+			virtual Grindstone::ECS::Entity CreateEmptyEntity(entt::entity entityToUse = entt::null);
+			virtual Grindstone::ECS::Entity CreateEntity(entt::entity entityToUse = entt::null);
+			virtual void DestroyEntity(Grindstone::ECS::EntityHandle entityId);
+			virtual void DestroyEntity(Grindstone::ECS::Entity entity);
 			virtual const char* GetName();
 			virtual const char* GetPath();
 			virtual ECS::ComponentRegistrar* GetComponentRegistrar() const;

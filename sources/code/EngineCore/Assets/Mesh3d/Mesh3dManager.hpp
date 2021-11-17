@@ -12,9 +12,10 @@ namespace Grindstone {
 		public:
 			Mesh3dManager();
 			void PrepareLayouts();
-			Mesh3d& LoadMesh3d(const char* path);
+			virtual Mesh3d& LoadMesh3d(Uuid uuid);
+			virtual void DecrementMeshCount(ECS::Entity entity, Uuid uuid);
 		private:
-			bool TryGetMesh3d(const char* path, Mesh3d*& mesh3d);
+			bool TryGetMesh3d(Uuid uuid, Mesh3d*& mesh3d);
 			void LoadMeshImportSubmeshes(
 				Mesh3d& mesh,
 				Formats::Model::Header::V1& header,
@@ -32,10 +33,10 @@ namespace Grindstone {
 				char*& sourcePtr,
 				GraphicsAPI::IndexBuffer*& indexBuffer
 			);
-			Mesh3d& CreateMesh3dFromFile(const char* path);
+			Mesh3d& CreateMesh3dFromFile(Uuid uuid);
 			void CreateMeshFromData(Mesh3d& mesh, std::vector<char>& fileContent);
 		private:
-			std::map<std::string, Mesh3d> meshes;
+			std::map<Uuid, Mesh3d> meshes;
 			struct VertexLayouts {
 				GraphicsAPI::VertexBufferLayout positions;
 				GraphicsAPI::VertexBufferLayout normals;

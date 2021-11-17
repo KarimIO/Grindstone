@@ -130,7 +130,7 @@ namespace Grindstone {
 
 			Space,
 			Last,
-			None = Last
+			Invalid = Last
 		}; // enum class KeyPressCode
 	} // namespace Events
 } // namespace Grindstone

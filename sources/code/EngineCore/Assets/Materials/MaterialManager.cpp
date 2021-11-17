@@ -2,6 +2,7 @@
 #include "rapidjson/document.h"
 #include "EngineCore/Assets/Shaders/ShaderManager.hpp"
 #include "EngineCore/Assets/Textures/TextureManager.hpp"
+#include "EngineCore/Assets/BaseAssetRenderer.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "Common/Graphics/Core.hpp"
@@ -9,18 +10,43 @@
 using namespace Grindstone;
 
 Material& MaterialManager::LoadMaterial(BaseAssetRenderer* assetRenderer, const char* path) {
-	Material* material = nullptr;
-	if (!TryGetMaterial(path, material)) {
-		material = &CreateMaterialFromFile(assetRenderer, path);
-	}
+	try {
+		Material* material = nullptr;
+		if (!TryGetMaterial(path, material)) {
+			material = &CreateMaterialFromFile(assetRenderer, path);
+		}
 
-	return *material;
+		return *material;
+	}
+	catch (std::runtime_error& e) {
+		EngineCore::GetInstance().Print(LogSeverity::Error, e.what());
+		return *assetRenderer->GetErrorMaterial();
+	}
 }
 
 void MaterialManager::ReloadMaterialIfLoaded(const char* path) {}
 
+void MaterialManager::RemoveRenderableFromMaterial(std::string uuid, ECS::Entity entity, void* renderable) {
+	auto materialInMap = materials.find(uuid);
+	if (materialInMap != materials.end()) {
+		auto material = &materialInMap->second;
+		for (
+			auto renderableIterator = material->renderables.begin();
+			renderableIterator != material->renderables.end();
+			++renderableIterator
+		) {
+			if (
+				renderableIterator->first == entity && 
+				renderableIterator->second == renderable
+			) {
+				material->renderables.erase(renderableIterator);
+			}
+		}
+	}
+}
+
 bool MaterialManager::TryGetMaterial(const char* path, Material*& material) {
-	auto& materialInMap = materials.find(path);
+	auto materialInMap = materials.find(path);
 	if (materialInMap != materials.end()) {
 		material = &materialInMap->second;
 		return true;
@@ -82,9 +108,9 @@ void MaterialManager::CreateMaterialFromData(
 		else {
 			bufferSpace = new char[uniformBuffer.bufferSize];
 
-			auto& parametersJson = document["parameters"].GetObject();
+			auto& parametersJson = document["parameters"];
 			for (auto& member : uniformBuffer.members) {
-				auto& params = parametersJson[member.name.c_str()].GetArray();
+				rapidjson::Value& params = parametersJson[member.name.c_str()];
 				std::vector<float> paramArray;
 				paramArray.resize(params.Size());
 				for (rapidjson::SizeType i = 0; i < params.Size(); ++i) {
@@ -102,7 +128,7 @@ void MaterialManager::CreateMaterialFromData(
 	bool hasSamplers = document.HasMember("samplers");
 	if (textures.size() > 0 && hasSamplers) {
 		auto textureManager = EngineCore::GetInstance().textureManager;
-		auto& samplersJson = document["samplers"].GetObject();
+		auto& samplersJson = document["samplers"];
 		std::vector<GraphicsAPI::SingleTextureBind> textureBinds;
 		textureBinds.resize(textures.size());
 		for (size_t i = 0; i < textures.size(); ++i) {
@@ -146,6 +172,7 @@ Material& MaterialManager::CreateMaterialFromFile(BaseAssetRenderer* assetRender
 	std::filesystem::path parentDirectory = completePath.parent_path();
 	std::string fileContent = Utils::LoadFileText(completePath.string().c_str());
 	Material& material = materials[path];
+	material.uuid = Uuid(path);
 	CreateMaterialFromData(parentDirectory, material, assetRenderer, fileContent.c_str());
 
 	return material;

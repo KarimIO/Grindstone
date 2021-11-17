@@ -2,6 +2,7 @@
 
 #include <string>
 #include "EngineCore/ECS/Entity.hpp"
+#include "Common/ResourcePipeline/Uuid.hpp"
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -13,6 +14,7 @@ namespace Grindstone {
 	struct Shader;
 	struct Material {
 		std::string name;
+		Uuid uuid;
 		std::string shaderPath;
 		Shader* shader;
 		GraphicsAPI::TextureBinding* textureBinding;

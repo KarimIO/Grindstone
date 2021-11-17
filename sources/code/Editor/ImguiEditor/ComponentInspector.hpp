@@ -19,15 +19,18 @@ namespace Grindstone {
 				void RenderComponent(
 					const char* componentTypeName,
 					Reflection::TypeDescriptor_Struct& componentReflectionData,
-					void* entity
+					void* componentPtr,
+					ECS::Entity entity
 				);
 				void RenderComponentCategory(
 					Reflection::TypeDescriptor_Struct::Category& category,
-					void* entity
+					void* componentPtr,
+					ECS::Entity entity
 				);
 				void RenderComponentMember(
 					Reflection::TypeDescriptor_Struct::Member& member,
-					void* entity
+					void* componentPtr,
+					ECS::Entity entity
 				);
 				NewComponentInput newComponentInput;
 			};

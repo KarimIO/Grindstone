@@ -1,4 +1,4 @@
-#include "TypeResolver.hpp"
+#include "DefaultResolver.hpp"
 
 namespace Grindstone {
 	namespace Reflection {

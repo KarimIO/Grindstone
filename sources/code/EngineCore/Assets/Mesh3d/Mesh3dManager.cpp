@@ -1,5 +1,6 @@
 #include <filesystem>
 #include "Mesh3dManager.hpp"
+#include "EngineCore/Assets/Materials/MaterialManager.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Common/Graphics/Core.hpp"
@@ -9,7 +10,7 @@ struct SourceSubmesh {
 	uint32_t indexCount = 0;
 	uint32_t baseVertex = 0;
 	uint32_t baseIndex = 0;
-	uint32_t materialIndex = UINT32_MAX;
+uint32_t materialIndex = UINT32_MAX;
 };
 
 GraphicsAPI::VertexBuffer* LoadVertexBufferVec(
@@ -48,7 +49,7 @@ void Mesh3dManager::PrepareLayouts() {
 			Grindstone::GraphicsAPI::AttributeUsage::Position
 		}
 	};
-	
+
 	vertexLayouts.normals = {
 		{
 			(uint32_t)Mesh3dLayoutIndex::Normal,
@@ -90,17 +91,39 @@ void Mesh3dManager::PrepareLayouts() {
 	};
 }
 
-Mesh3d& Mesh3dManager::LoadMesh3d(const char* path) {
+Mesh3d& Mesh3dManager::LoadMesh3d(Uuid uuid) {
 	Mesh3d* mesh = nullptr;
-	if (TryGetMesh3d(path, mesh)) {
+	if (TryGetMesh3d(uuid, mesh)) {
+		mesh->useCount++;
 		return *mesh;
 	}
 
-	return CreateMesh3dFromFile(path);
+	return CreateMesh3dFromFile(uuid);
 }
 
-bool Mesh3dManager::TryGetMesh3d(const char* path, Mesh3d*& mesh) {
-	auto& meshInMap = meshes.find(path);
+void Mesh3dManager::DecrementMeshCount(ECS::Entity entity, Uuid uuid) {
+	auto meshInMap = meshes.find(uuid);
+	if (meshInMap != meshes.end()) {
+		auto mesh = &meshInMap->second;
+		mesh->useCount -= 1;
+
+		auto materialManager = EngineCore::GetInstance().materialManager;
+		for (auto& submesh : mesh->submeshes) {
+			for (auto& material : submesh.materials) {
+				materialManager->RemoveRenderableFromMaterial(material, entity, &submesh);
+			}
+		}
+
+		if (mesh->useCount == 0) {
+			auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+			graphicsCore->DeleteVertexArrayObject(mesh->vertexArrayObject);
+			meshes.erase(meshInMap);
+		}
+	}
+}
+
+bool Mesh3dManager::TryGetMesh3d(Uuid uuid, Mesh3d*& mesh) {
+	auto meshInMap = meshes.find(uuid);
 	if (meshInMap != meshes.end()) {
 		mesh = &meshInMap->second;
 		return true;
@@ -132,7 +155,7 @@ void Mesh3dManager::LoadMeshImportVertices(
 	char*& sourcePtr,
 	std::vector<GraphicsAPI::VertexBuffer*>& vertexBuffers
 ) {
-	auto& fileName = mesh.path.filename().string();
+	auto fileName = mesh.uuid.ToString();
 	auto vertexCount = header.vertexCount;
 	if (header.hasVertexPositions) {
 		auto positions = LoadVertexBufferVec(fileName, 3, vertexCount, sourcePtr, vertexLayouts.positions);
@@ -172,7 +195,7 @@ void Mesh3dManager::LoadMeshImportIndices(
 	memcpy(indices.data(), sourcePtr, indexSize);
 	sourcePtr += indexSize;
 
-	std::string& fileName = mesh.path.filename().string();
+	std::string fileName = mesh.uuid.ToString();
 	std::string debugName = fileName + " Index Buffer";
 	GraphicsAPI::IndexBuffer::CreateInfo indexBufferCreateInfo{};
 	indexBufferCreateInfo.debugName = debugName.c_str();
@@ -193,17 +216,17 @@ void Mesh3dManager::CreateMeshFromData(Mesh3d& mesh, std::vector<char>& fileCont
 	}
 	char* headerPtr = fileContent.data() + 3;
 	header = *(Formats::Model::Header::V1*)headerPtr;
-	
+
 	char* srcPtr = headerPtr + sizeof(header);
 
 	std::vector<GraphicsAPI::VertexBuffer*> vertexBuffers;
 	GraphicsAPI::IndexBuffer* indexBuffer = nullptr;
-	
+
 	LoadMeshImportSubmeshes(mesh, header, srcPtr);
 	LoadMeshImportVertices(mesh, header, srcPtr, vertexBuffers);
 	LoadMeshImportIndices(mesh, header, srcPtr, indexBuffer);
 
-	std::string& fileName = mesh.path.filename().string();
+	std::string fileName = mesh.uuid.ToString();
 	std::string debugName = fileName + " Vertex Array Object";
 	GraphicsAPI::VertexArrayObject::CreateInfo vaoCi{};
 	vaoCi.debugName = debugName.c_str();
@@ -213,15 +236,15 @@ void Mesh3dManager::CreateMeshFromData(Mesh3d& mesh, std::vector<char>& fileCont
 	mesh.vertexArrayObject = graphicsCore->CreateVertexArrayObject(vaoCi);
 }
 
-Mesh3d& Mesh3dManager::CreateMesh3dFromFile(const char* path) {
-	std::string completePath = std::string("../compiledAssets/") + path;
+Mesh3d& Mesh3dManager::CreateMesh3dFromFile(Uuid uuid) {
+	std::string completePath = std::string("../compiledAssets/") + uuid.ToString();
 	if (!std::filesystem::exists(completePath)) {
 		throw std::runtime_error("Mesh3dManager::CreateMesh3dFromFile failed to load model.");
 	}
 
 	auto fileContent = Utils::LoadFile(completePath.c_str());
-	Mesh3d& mesh = meshes[path];
-	mesh.path = path;
+	Mesh3d& mesh = meshes[uuid];
+	mesh.uuid = uuid;
 	CreateMeshFromData(mesh, fileContent);
 
 	return mesh;

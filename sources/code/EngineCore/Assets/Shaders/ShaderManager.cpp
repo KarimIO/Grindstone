@@ -64,7 +64,7 @@ void ShaderManager::ReloadShaderIfLoaded(const char* path) {
 }
 
 bool ShaderManager::TryGetShader(const char* path, Shader*& shader) {
-	auto& foundShader = shaders.find(path);
+	auto foundShader = shaders.find(path);
 	if (foundShader != shaders.end()) {
 		shader = &foundShader->second;
 		return true;
@@ -136,7 +136,7 @@ void ShaderManager::CreateShaderGraphicsPipeline(bool isReloading, const char* b
 	pipelineCreateInfo.shaderName = shader.reflectionData.name.c_str();
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
 	pipelineCreateInfo.cullMode = CullMode::None;
-	pipelineCreateInfo.renderPass;
+	// TODO: pipelineCreateInfo.renderPass;
 	pipelineCreateInfo.width = 800;
 	pipelineCreateInfo.height = 600;
 	pipelineCreateInfo.scissorX = 0;

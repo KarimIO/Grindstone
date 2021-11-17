@@ -5,9 +5,12 @@
 #include "ComponentInspector.hpp"
 #include "Editor/EditorManager.hpp"
 #include "EngineCore/EngineCore.hpp"
+#include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "EngineCore/Reflection/TypeDescriptor.hpp"
+#include "EngineCore/Assets/AssetFile.hpp"
+#include "EngineCore/Assets/Mesh3d/Mesh3d.hpp"
 #include "Common/Math.hpp"
 
 namespace Grindstone {
@@ -27,7 +30,7 @@ namespace Grindstone {
 
 					void* outComponent = nullptr;
 					if (entity.TryGetComponent(componentTypeName, outComponent)) {
-						RenderComponent(componentTypeName, componentReflectionData, outComponent);
+						RenderComponent(componentTypeName, componentReflectionData, outComponent, entity);
 					}
 					else {
 						unusedComponentsItems.push_back(componentEntry.first);
@@ -47,42 +50,45 @@ namespace Grindstone {
 			void ComponentInspector::RenderComponent(
 				const char* componentTypeName,
 				Grindstone::Reflection::TypeDescriptor_Struct& componentReflectionData,
-				void* entity
+				void* componentPtr,
+				ECS::Entity entity
 			) {
 				if (!ImGui::TreeNode(componentTypeName)) {
 					return;
 				}
 
-				RenderComponentCategory(componentReflectionData.category, entity);
+				RenderComponentCategory(componentReflectionData.category, componentPtr, entity);
 
 				ImGui::TreePop();
 			}
 			
 			void ComponentInspector::RenderComponentCategory(
 				Reflection::TypeDescriptor_Struct::Category& category,
-				void* entity
+				void* componentPtr,
+				ECS::Entity entity
 			) {
 				for each (auto subcategory in category.categories) {
 					if (!ImGui::TreeNode(subcategory.name.c_str())) {
 						return;
 					}
 
-					RenderComponentCategory(subcategory, entity);
+					RenderComponentCategory(subcategory, componentPtr, entity);
 
 					ImGui::TreePop();
 				}
 
 				for each (auto member in category.members) {
-					RenderComponentMember(member, entity);
+					RenderComponentMember(member, componentPtr, entity);
 				}
 			}
 
 			void ComponentInspector::RenderComponentMember(
 				Reflection::TypeDescriptor_Struct::Member& member,
-				void* entity
+				void* componentPtr,
+				ECS::Entity entity
 			) {
 				const char* displayName = member.displayName.c_str();
-				char* offset = ((char*)entity + member.offset);
+				char* offset = ((char*)componentPtr + member.offset);
 				switch(member.type->type) {
 				case Reflection::TypeDescriptor::ReflectionTypeData::Bool:
 					ImGui::Checkbox(
@@ -90,6 +96,28 @@ namespace Grindstone {
 						(bool*)offset
 					);
 					break;
+				case Reflection::TypeDescriptor::ReflectionTypeData::AssetReference: {
+					MeshReference meshReference = *(MeshReference*)offset;
+					if (meshReference == nullptr) {
+						ImGui::Text("Invalid mesh");
+					}
+					else {
+						ImGui::Button(
+							meshReference->uuid.ToString().c_str()
+						);
+						if (ImGui::BeginDragDropTarget()) {
+							if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_UUID")) {
+								auto& engineCore = Editor::Manager::GetEngineCore();
+								auto mesh3dManager = engineCore.mesh3dManager;
+								mesh3dManager->DecrementMeshCount(entity, meshReference->uuid);
+								meshReference = nullptr;
+								// meshReference = &mesh3dManager->LoadMesh3d((const char*)payload->Data);
+							}
+							ImGui::EndDragDropTarget();
+						}
+					}
+					break;
+				}
 				case Reflection::TypeDescriptor::ReflectionTypeData::String:
 					ImGui::InputText(
 						displayName,

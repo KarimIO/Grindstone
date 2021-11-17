@@ -1,7 +1,7 @@
 set(ENGINE_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 file(GLOB_RECURSE SOURCE_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetRendererManager.cpp ${ENGINE_CORE_DIR}/Assets/BaseAssetRenderer.cpp)
-file(GLOB_RECURSE HEADER_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetRendererManager.hpp ${ENGINE_CORE_DIR}/Assets/BaseAssetRenderer.hpp)
+file(GLOB_RECURSE HEADER_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetRendererManager.hpp ${ENGINE_CORE_DIR}/Assets/BaseAssetRenderer.hpp ${ENGINE_CORE_DIR}/Assets/AssetFile.hpp)
 source_group("Assets\\Source Files" FILES ${SOURCE_ASSETS_BASE})
 source_group("Assets\\Header Files" FILES ${HEADER_ASSETS_BASE})
 
@@ -70,8 +70,8 @@ file(GLOB_RECURSE HEADER_EVENTS "${ENGINE_CORE_DIR}/Events/*.hpp")
 source_group("Events\\Source Files" FILES ${SOURCE_EVENTS})
 source_group("Events\\Header Files" FILES ${HEADER_EVENTS})
 
-file(GLOB_RECURSE SOURCE_COMMON_UTILS ${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINE_CORE_DIR}/Utils/Utilities.cpp)
-file(GLOB_RECURSE HEADER_COMMON_UTILS ${COMMON_DIR}/Utilities/ModuleLoading.hpp ${ENGINE_CORE_DIR}/Utils/Utilities.hpp)
+file(GLOB_RECURSE SOURCE_COMMON_UTILS ${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINE_CORE_DIR}/Utils/Utilities.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.cpp)
+file(GLOB_RECURSE HEADER_COMMON_UTILS ${COMMON_DIR}/Utilities/ModuleLoading.hpp ${ENGINE_CORE_DIR}/Utils/Utilities.hpp ${COMMON_DIR}/ResourcePipeline/Uuid.hpp)
 source_group("Utilities\\Source Files" FILES ${SOURCE_COMMON_UTILS})
 source_group("Utilities\\Header Files" FILES ${HEADER_COMMON_UTILS})
 
@@ -133,6 +133,6 @@ find_package(OpenAL CONFIG REQUIRED)
 find_path(DRLIBS_INCLUDE_DIRS "dr_flac.h")
 
 target_include_directories(EngineCore PUBLIC ../ ${DRLIBS_INCLUDE_DIRS})
-target_link_libraries(EngineCore rapidjson OpenAL::OpenAL spdlog::spdlog spdlog::spdlog_header_only)
+target_link_libraries(EngineCore Rpcrt4.lib rapidjson OpenAL::OpenAL spdlog::spdlog spdlog::spdlog_header_only)
 
 target_precompile_headers(EngineCore PUBLIC pch.hpp)

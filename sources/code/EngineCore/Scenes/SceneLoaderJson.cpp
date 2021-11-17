@@ -48,17 +48,16 @@ bool SceneLoaderJson::Load(const char* path) {
 	auto mesh3dRenderer = engineCore.mesh3dRenderer;
 	auto& registry = scene->GetEntityRegistry();
 
-	auto& meshView = registry.view<MeshComponent>();
-	meshView.each([&](MeshComponent& meshComponent) {
-		meshComponent.mesh = &mesh3dManager->LoadMesh3d(meshComponent.meshPath.c_str());
-	});
-
-	auto& meshAndMeshRendererView = registry.view<MeshComponent, MeshRendererComponent>();
+	auto meshAndMeshRendererView = registry.view<MeshComponent, MeshRendererComponent>();
 	meshAndMeshRendererView.each([&](
 		entt::entity entity,
 		MeshComponent& meshComponent,
 		MeshRendererComponent& meshRendererComponent
 	) {
+		if (meshComponent.mesh == nullptr) {
+			return;
+		}
+
 		std::vector<Material*> materials;
 		materials.resize(meshRendererComponent.materials.size());
 		for (size_t i = 0; i < meshRendererComponent.materials.size(); ++i) {
@@ -75,27 +74,33 @@ bool SceneLoaderJson::Load(const char* path) {
 				material = materials[submesh.materialIndex];
 			}
 
+			submesh.materials.emplace_back(material->uuid);
 			material->renderables.emplace_back(std::make_pair(ECS::Entity(entity, scene), &submesh));
 		}
 	});
 
 	Audio::Core* core = new Audio::Core();
-	auto& audioView = registry.view<const AudioSourceComponent>();
+	auto audioView = registry.view<const AudioSourceComponent>();
 	audioView.each([&](const AudioSourceComponent& audioSource) {
-		std::string path = std::string("../compiledAssets/") + audioSource.audioClip;
-		Audio::Clip* clip = core->CreateClip(path.c_str());
-		Audio::Source::CreateInfo audioSourceCreateInfo{};
-		audioSourceCreateInfo.audioClip = clip;
-		audioSourceCreateInfo.isLooping = audioSource.isLooping;
-		audioSourceCreateInfo.volume = audioSource.volume;
-		audioSourceCreateInfo.pitch = audioSource.pitch;
-		Audio::Source* source = core->CreateSource(audioSourceCreateInfo);
+		try {
+			std::string path = std::string("../compiledAssets/") + audioSource.audioClip;
+			Audio::Clip* clip = core->CreateClip(path.c_str());
+			Audio::Source::CreateInfo audioSourceCreateInfo{};
+			audioSourceCreateInfo.audioClip = clip;
+			audioSourceCreateInfo.isLooping = audioSource.isLooping;
+			audioSourceCreateInfo.volume = audioSource.volume;
+			audioSourceCreateInfo.pitch = audioSource.pitch;
+			Audio::Source* source = core->CreateSource(audioSourceCreateInfo);
 
-		source->Play();
+			source->Play();
+		}
+		catch (std::runtime_error& e) {
+			EngineCore::GetInstance().Print(LogSeverity::Error, e.what());
+		}
 	});
 
 	auto eventDispatcher = engineCore.GetEventDispatcher();
-	auto& cameraView = registry.view<CameraComponent>();
+	auto cameraView = registry.view<CameraComponent>();
 	cameraView.each([&](CameraComponent& cameraComponent) {
 		cameraComponent.renderer = EngineCore::GetInstance().CreateRenderer();
 		eventDispatcher->AddEventListener(
@@ -119,33 +124,21 @@ void SceneLoaderJson::ProcessMeta() {
 }
 
 void SceneLoaderJson::ProcessEntities() {
-	auto& entities = document["entities"].GetArray();
-	for (
-		rapidjson::Value* entityIterator = entities.Begin();
-		entityIterator != entities.End();
-		++entityIterator
-	) {
-		auto& entity = entityIterator->GetObject();
+	for (auto& entity : document["entities"].GetArray()) {
 		ProcessEntity(entity);
 	}
 }
 
-void SceneLoaderJson::ProcessEntity(rapidjson::GenericObject<false, rapidjson::Value>& entityJson) {
+void SceneLoaderJson::ProcessEntity(rapidjson::Value& entityJson) {
 	auto entityId = entityJson["entityId"].GetUint();
 	ECS::Entity entity = scene->CreateEntity((entt::entity)entityId);
 
-	auto& components = entityJson["components"].GetArray();
-	for (
-		rapidjson::Value* componentIterator = components.Begin();
-		componentIterator != components.End();
-		++componentIterator
-	) {
-		auto& component = componentIterator->GetObject();
+	for (auto& component : entityJson["components"].GetArray()) {
 		ProcessComponent(entity, component);
 	}
 }
 
-void SceneLoaderJson::ProcessComponent(ECS::Entity entity, rapidjson::GenericObject<false, rapidjson::Value>& component) {
+void SceneLoaderJson::ProcessComponent(ECS::Entity entity, rapidjson::Value& component) {
 	const char* componentType = component["component"].GetString();
 
 	Reflection::TypeDescriptor_Struct reflectionData;
@@ -165,15 +158,20 @@ void SceneLoaderJson::ProcessComponent(ECS::Entity entity, rapidjson::GenericObj
 	if (!component.HasMember("params")) {
 		return;
 	}
+	
+	auto& parameterList = component["params"];
 
-	auto& parameters = component["params"].GetObject();
+	if (!parameterList.IsObject()) {
+		return;
+	}
+
 	for (
-		auto parameterIterator = parameters.MemberBegin();
-		parameterIterator != parameters.MemberEnd();
-		++parameterIterator
+		auto& parameter = parameterList.MemberBegin();
+		parameter != parameterList.MemberEnd();
+		parameter++
 	) {
-		const char* paramKey = parameterIterator->name.GetString();
-		ProcessComponentParameter(entity, componentPtr, reflectionData, paramKey, parameterIterator->value);
+		const char* paramKey = parameter->name.GetString();
+		ProcessComponentParameter(entity, componentPtr, reflectionData, paramKey, parameter->value);
 	}
 }
 
@@ -224,7 +222,12 @@ void SceneLoaderJson::ProcessComponentParameter(
 	auto offset = member->offset;
 	char* memberPtr = (char*)componentPtr + offset;
 
-	switch(member->type->type) {
+	switch (member->type->type) {
+		case ReflectionTypeData::Struct: {
+			// TODO: Implement this
+			EngineCore::GetInstance().Print(LogSeverity::Warning, "Unhandled Struct in SceneLoaderJson!");
+			break;
+		}
 		case ReflectionTypeData::Vector: {
 			auto srcArray = parameter.GetArray();
 			std::vector<std::string>& vector = *(std::vector<std::string>*)memberPtr;
@@ -293,6 +296,17 @@ void SceneLoaderJson::ProcessComponentParameter(
 			break;
 		case ReflectionTypeData::Double4:
 			CopyDataArrayDouble(parameter, (double*)memberPtr, 4);
+			break;
+		case Reflection::TypeDescriptor::ReflectionTypeData::AssetReference:
+			try {
+				auto& engineCore = EngineCore::GetInstance();
+				auto mesh3dManager = engineCore.mesh3dManager;
+				MeshReference& reference = *(MeshReference*)memberPtr;
+				reference = &mesh3dManager->LoadMesh3d(Uuid(parameter.GetString()));
+			}
+			catch (std::runtime_error& e) {
+				EngineCore::GetInstance().Print(LogSeverity::Error, e.what());
+			}
 			break;
 	}
 }

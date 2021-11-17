@@ -8,12 +8,12 @@ namespace Grindstone {
 		struct KeyPressEvent : public BaseEvent {
 			KeyPressEvent(KeyPressCode code, bool isPressed)
 				: code(code), isPressed(isPressed) {}
-			KeyPressCode code = KeyPressCode::None;
+			KeyPressCode code = KeyPressCode::Invalid;
 			bool isPressed = false;
 
 			SETUP_EVENT(KeyPress)
 		}; // struct KeyPressEvent
-		
+
 		struct CharacterTypedEvent : public BaseEvent {
 			CharacterTypedEvent(unsigned short character)
 				: character(character) {}

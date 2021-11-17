@@ -14,7 +14,7 @@ struct Mesh3dUbo {
 	glm::mat4 modelMatrix;
 };
 
-Mesh3dRenderer::Mesh3dRenderer() {
+Grindstone::Mesh3dRenderer::Mesh3dRenderer() {
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
 
 	UniformBufferBinding::CreateInfo mesh3dBufferBindingCi{};

@@ -307,19 +307,17 @@ bool Win32Window::ShouldClose() {
 	return shouldClose;
 }
 
-bool Win32Window::HandleEvents() {
+void Win32Window::HandleEvents() {
 	MSG eventMessage;
 
 	while (PeekMessage(&eventMessage, NULL, 0, 0, PM_REMOVE)) {
 		if (eventMessage.message == WM_QUIT) {
-			return false;
+			return;
 		}
 
 		TranslateMessage(&eventMessage);
 		DispatchMessage(&eventMessage);
 	}
-
-	return true;
 }
 
 void Win32Window::SetFullscreen(FullscreenMode mode) {
@@ -615,5 +613,5 @@ Events::KeyPressCode TranslateKey(int key) {
 	case VK_RWIN:			return Events::KeyPressCode::Window;
 	}
 
-	return Events::KeyPressCode::None;
+	return Events::KeyPressCode::Invalid;
 }

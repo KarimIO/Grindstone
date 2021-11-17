@@ -6,17 +6,15 @@
 #include <windows.h>
 #include <Common/Input.hpp>
 
-class InputInterface;
-
 namespace Grindstone {
 	class EngineCore;
 
 	class Win32Window : public Window {
 	public:
-		virtual bool Initialize(CreateInfo& create_info) override;
+		virtual bool Initialize(CreateInfo& createInfo) override;
 		virtual void Show() override;
 		virtual bool ShouldClose() override;
-		virtual bool HandleEvents() override;
+		virtual void HandleEvents() override;
 		virtual void SetFullscreen(FullscreenMode mode) override;
 		virtual void GetWindowRect(unsigned int& left, unsigned int& top, unsigned int& right, unsigned int& bottom) override;
 		virtual void GetWindowSize(unsigned int& width, unsigned int& height) override;

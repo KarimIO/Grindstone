@@ -201,9 +201,9 @@ void ModelImporter::OutputPrefabs() {
 
 void ModelImporter::OutputMeshes() {
 	std::string subassetName = "mesh";
-	Uuid outUuid = metaFile->GetOrCreateSubassetUuid(subassetName);
+	Uuid outUuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
 
-	std::string meshOutputPath = "../compiledAssets" + outUuid.ToString();
+	std::string meshOutputPath = "../compiledAssets/" + outUuid.ToString();
 
 	auto meshCount = outputData.meshes.size();
 

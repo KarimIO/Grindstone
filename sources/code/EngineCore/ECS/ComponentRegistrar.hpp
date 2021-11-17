@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <string>
 
-#include "EngineCore/ECS/Entity.hpp"
+#include "EngineCore/ECS/EntityHandle.hpp"
 #include "EngineCore/Reflection/ComponentReflection.hpp"
 #include "ComponentFunctions.hpp"
 using namespace Grindstone;

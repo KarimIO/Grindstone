@@ -7,6 +7,7 @@ using CreateEngineFunction = EngineCore*(EngineCore::CreateInfo&);
 
 #ifdef _WIN32
 extern "C" {
+	// Request High-Performance GPU for Nvidia and AMD
 	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
 	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
@@ -34,7 +35,9 @@ int main() {
 	create_info.applicationModuleName = "ApplicationDLL";
 	create_info.applicationTitle = "Grindstone Sandbox";
 	EngineCore* engineCore = createEngineFn(create_info);
-	engineCore->Run();
+	if (engineCore) {
+		engineCore->Run();
+	}
 	
 	Grindstone::Utilities::Modules::unload(handle);
 	return 0;

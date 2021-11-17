@@ -16,7 +16,7 @@ void Camera::ResizeViewport(uint32_t width, uint32_t height) {
 
 void Camera::UpdateProjectionMatrix() {
 	float aspectRatio = (float)width / (float)height;
-	projection = glm::perspective(fov, aspectRatio, near, far);
+	projection = glm::perspective(fieldOfView, aspectRatio, nearPlaneDistance, farPlaneDistance);
 }
 
 void Camera::UpdateViewMatrix() {

@@ -3,9 +3,9 @@
 	"configurations": [
 		{
 			"name": "(Windows) Application Launch",
-			"type": "cppvsdbg",
+			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/build/Application.exe",
+			"program": "${workspaceFolder}/build/Application",
 			"args": [],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}/build",
@@ -14,9 +14,9 @@
 		},
 		{
 			"name": "(Windows) Editor Launch",
-			"type": "cppvsdbg",
+			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/build/Editor.exe",
+			"program": "${workspaceFolder}/build/Editor",
 			"args": [],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}/build",

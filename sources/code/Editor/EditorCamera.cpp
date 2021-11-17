@@ -1,9 +1,9 @@
 #include <glm/gtx/transform.hpp>
+#include "EditorCamera.hpp"
 #include "EditorManager.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "Common/Graphics/Framebuffer.hpp"
 #include "Common/Graphics/Core.hpp"
-#include "EditorCamera.hpp"
 #include "EngineCore/Rendering/BaseRenderer.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
 using namespace Grindstone::Editor;
@@ -109,7 +109,7 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 
 void EditorCamera::UpdateProjectionMatrix() {
 	float aspectRatio = (float)width / (float)height;
-	projection = glm::perspective(fov, aspectRatio, near, far);
+	projection = glm::perspective(fieldOfView, aspectRatio, nearPlaneDistance, farPlaneDistance);
 }
 
 void EditorCamera::UpdateViewMatrix() {

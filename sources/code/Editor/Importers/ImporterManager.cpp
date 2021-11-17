@@ -58,7 +58,7 @@ ImporterManager::ImporterFactory ImporterManager::GetImporterFactoryByExtension(
 }
 
 ImporterManager::ImporterFactory ImporterManager::GetImporterFactoryByPath(std::filesystem::path& path) {
-	std::string extension = path.extension().string();
+	std::string extension = path.extension().string().substr(1);
 	return GetImporterFactoryByExtension(extension);
 }
 
@@ -68,6 +68,6 @@ bool ImporterManager::HasImporter(std::string& extension) {
 }
 
 bool ImporterManager::HasImporter(std::filesystem::path& path) {
-	std::string extension = path.extension().string();
+	std::string extension = path.extension().string().substr(1);
 	return HasImporter(extension);
 }

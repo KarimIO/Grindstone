@@ -1,8 +1,10 @@
 #pragma once
 
-#include <Common/Graphics/CommandBuffer.hpp>
-
 namespace Grindstone {
+	namespace GraphicsAPI {
+		class CommandBuffer;
+	}
+
 	class Window;
 
 	namespace GraphicsAPI {

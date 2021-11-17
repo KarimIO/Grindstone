@@ -4,6 +4,10 @@
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 using namespace Grindstone::ECS;
 
+entt::registry& Entity::GetSceneEntityRegistry() {
+	return scene->GetEntityRegistry();
+}
+
 void* Entity::AddComponent(const char* componentType) {
 	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
 	auto& entityRegistry = scene->GetEntityRegistry();

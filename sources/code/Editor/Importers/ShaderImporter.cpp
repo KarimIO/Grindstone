@@ -115,7 +115,7 @@ namespace Grindstone {
 			importer.Import(filePath);
 		}
 
-		shaderc_shader_kind getShaderTypeForShaderc(ShaderImporter::ShaderType type) {
+		shaderc_shader_kind GetShaderTypeForShaderc(ShaderImporter::ShaderType type) {
 			switch(type) {
 			case ShaderImporter::ShaderType::Vertex: return shaderc_glsl_vertex_shader;
 			case ShaderImporter::ShaderType::Fragment: return shaderc_glsl_fragment_shader;
@@ -132,7 +132,7 @@ namespace Grindstone {
 			metaFile = new MetaFile();
 			metaFile->Load(inputPath);
 			std::string subassetName = "shader";
-			Uuid uuid = metaFile->GetOrCreateSubassetUuid(subassetName);
+			Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
 			basePath = std::string("../compiledAssets/") + uuid.ToString();
 
 			metaFile->Save();
@@ -334,7 +334,7 @@ namespace Grindstone {
 
 			auto result = compiler.CompileGlslToSpv(
 				shaderModuleGlsl,
-				getShaderTypeForShaderc(shaderType),
+				GetShaderTypeForShaderc(shaderType),
 				inputPath.string().c_str(),
 				options
 			);
@@ -372,7 +372,7 @@ namespace Grindstone {
 
 			auto result = compiler.CompileGlslToSpv(
 				opengGlsl,
-				getShaderTypeForShaderc(shaderType),
+				GetShaderTypeForShaderc(shaderType),
 				inputPath.string().c_str(),
 				options
 			);

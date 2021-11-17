@@ -5,6 +5,9 @@
 
 namespace Grindstone {
 	namespace Reflection {
+		template <typename T>
+		TypeDescriptor* getPrimitiveDescriptor();
+
 		struct DefaultResolver {
 			template <typename T> static char func(decltype(&T::Reflection));
 			template <typename T> static int func(...);

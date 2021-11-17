@@ -4,8 +4,6 @@
 #include <Common/Graphics/WindowGraphicsBinding.hpp>
 #include <Common/Display/Display.hpp>
 
-class InputInterface;
-
 namespace Grindstone {
 	class EngineCore;
 
@@ -26,10 +24,10 @@ namespace Grindstone {
 			const char* title;
 		};
 	public:
-		static Window* Create(CreateInfo& create_info);
+		static Grindstone::Window* Create(CreateInfo& createInfo);
 		virtual void Show() = 0;
 		virtual bool ShouldClose() = 0;
-		virtual bool HandleEvents() = 0;
+		virtual void HandleEvents() = 0;
 		virtual void SetFullscreen(FullscreenMode mode) = 0;
 		virtual void GetWindowRect(unsigned int& left, unsigned int& top, unsigned int& right, unsigned int& bottom) = 0;
 		virtual void GetWindowSize(unsigned int& width, unsigned int& height) = 0;

@@ -77,7 +77,7 @@ void ShaderReflectionLoader::ProcessMetadata() {
 	if (!document.HasMember("shaderModules")) {
 		throw std::runtime_error("No shaderModules found in shader reflection.");
 	}
-	auto& shader = document["shaderModules"].GetArray();
+	auto shader = document["shaderModules"].GetArray();
 	outData.numShaderStages = shader.Size();
 	outData.shaderStagesBitMask = GetShaderBitMaskFromArray(shader);
 }
@@ -94,22 +94,17 @@ void ShaderReflectionLoader::ProcessUniformBuffers() {
 		itr != uniformBuffers.End();
 		++itr
 	) {
-		auto& uniformBuffer = itr->GetObject();
+		auto& uniformBuffer = *itr;
 		auto name = uniformBuffer["name"].GetString();
 		size_t bindingId = uniformBuffer["binding"].GetUint();
 		size_t bufferSize = uniformBuffer["bufferSize"].GetUint();
-		auto& shaderModules = document["shaderModules"].GetArray();
-		uint8_t shaderModulesBits = GetShaderBitMaskFromArray(shaderModules);
+		auto shaderModulesArray = document["shaderModules"].GetArray();
+		uint8_t shaderModulesBits = GetShaderBitMaskFromArray(shaderModulesArray);
 		outData.uniformBuffers.emplace_back(name, bindingId, bufferSize, shaderModulesBits);
-		auto& memberSource = uniformBuffer["members"];
+		auto& memberSourceArray = uniformBuffer["members"];
 		auto& memberList = outData.uniformBuffers.back().members;
-		memberList.reserve(memberSource.Size());
-		for (
-			rapidjson::Value* memberItr = memberSource.Begin();
-			memberItr != memberSource.End();
-			++memberItr
-		) {
-			auto& memberData = memberItr->GetObject();
+		memberList.reserve(memberSourceArray.Size());
+		for (rapidjson::Value& memberData : memberSourceArray.GetArray()) {
 			auto name = memberData["name"].GetString();
 			size_t offset = memberData["offset"].GetUint();
 			size_t memberSize = memberData["memberSize"].GetUint();
@@ -123,18 +118,13 @@ void ShaderReflectionLoader::ProcessTextures() {
 		return;
 	}
 
-	auto& resources = document["samplers"];
-	outData.textures.reserve(resources.Size());
-	for (
-		rapidjson::Value* itr = resources.Begin();
-		itr != resources.End();
-		++itr
-	) {
-		auto& texture = itr->GetObject();
+	auto& resourcesArray = document["samplers"];
+	outData.textures.reserve(resourcesArray.Size());
+	for (rapidjson::Value& texture : resourcesArray.GetArray()) {
 		auto name = texture["name"].GetString();
 		size_t bindingId = texture["binding"].GetUint();
-		auto& shaderModules = document["shaderModules"].GetArray();
-		uint8_t shaderModulesBits = GetShaderBitMaskFromArray(shaderModules);
+		auto shaderModulesArray = document["shaderModules"].GetArray();
+		uint8_t shaderModulesBits = GetShaderBitMaskFromArray(shaderModulesArray);
 		outData.textures.emplace_back(name, bindingId, shaderModulesBits);
 	}
 }

@@ -17,6 +17,11 @@ void MetaFile::Load(std::filesystem::path baseAssetPath) {
 	rapidjson::Document document;
 	document.Parse(fileContents.c_str());
 
+	Uuid defaultUuid;
+	if (document.HasMember("defaultUuid")) {
+		defaultUuid = document["defaultUuid"].GetString();
+	}
+
 	rapidjson::Value subassetsArray = document["subassets"].GetArray();
 	for (
 		rapidjson::Value* elementIterator = subassetsArray.Begin();
@@ -26,7 +31,14 @@ void MetaFile::Load(std::filesystem::path baseAssetPath) {
 		rapidjson::Value& subasset = *elementIterator;
 		std::string name = subasset["name"].GetString();
 		Uuid uuid(subasset["uuid"].GetString());
-		subassets.emplace_back(name, uuid);
+
+		if (defaultUuid == uuid) {
+			defaultSubasset.name = name;
+			defaultSubasset.uuid = uuid;
+		}
+		else {
+			subassets.emplace_back(name, uuid);
+		}
 	}
 }
 
@@ -35,8 +47,20 @@ void MetaFile::Save() {
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> documentWriter = rapidjson::PrettyWriter<rapidjson::StringBuffer>(documentStringBuffer);
 
 	documentWriter.StartObject();
+	documentWriter.Key("defaultUuid");
+	documentWriter.String(defaultSubasset.uuid.ToString().c_str());
 	documentWriter.Key("subassets");
 	documentWriter.StartArray();
+
+	if (defaultSubasset.name != "") {
+		documentWriter.StartObject();
+		documentWriter.Key("name");
+		documentWriter.String(defaultSubasset.name.c_str());
+		documentWriter.Key("uuid");
+		documentWriter.String(defaultSubasset.uuid.ToString().c_str());
+		documentWriter.EndObject();
+	}
+
 	for (auto& subasset : subassets) {
 		documentWriter.StartObject();
 		documentWriter.Key("name");
@@ -53,6 +77,25 @@ void MetaFile::Save() {
 	file.write((const char*)content, strlen(content));
 	file.flush();
 	file.close();
+}
+
+bool MetaFile::TryGetDefaultSubassetUuid(Uuid& outUuid) {
+	if (defaultSubasset.name != "") {
+		outUuid = defaultSubasset.uuid;
+		return true;
+	}
+
+	return false;
+}
+
+Uuid Grindstone::MetaFile::GetOrCreateDefaultSubassetUuid(std::string& subassetName) {
+	Uuid uuid;
+	if (defaultSubasset.uuid.ToString() != "") {
+		defaultSubasset.name = subassetName;
+		defaultSubasset.uuid = uuid;
+	}
+
+	return uuid;
 }
 
 bool MetaFile::TryGetSubassetUuid(std::string& subassetName, Uuid& outUuid) {
@@ -73,6 +116,22 @@ Uuid MetaFile::GetOrCreateSubassetUuid(std::string& subassetName) {
 	}
 
 	return uuid;
+}
+
+MetaFile::Iterator MetaFile::begin() noexcept {
+	return subassets.begin();
+}
+
+MetaFile::ConstIterator MetaFile::begin() const noexcept {
+	return subassets.begin();
+}
+
+MetaFile::Iterator MetaFile::end() noexcept {
+	return subassets.end();
+}
+
+MetaFile::ConstIterator MetaFile::end() const noexcept {
+	return subassets.end();
 }
 
 MetaFile::MetaFile(std::filesystem::path path) {

@@ -6,6 +6,7 @@
 #include "Common/Graphics/VertexArrayObject.hpp"
 #include "Common/Graphics/VertexBuffer.hpp"
 #include "Common/Graphics/IndexBuffer.hpp"
+#include "Common/ResourcePipeline/Uuid.hpp"
 
 namespace Grindstone {
 	struct Vertex {
@@ -30,9 +31,11 @@ namespace Grindstone {
 			uint32_t baseIndex = 0;
 			uint32_t materialIndex = UINT32_MAX;
 			Mesh3d* mesh = nullptr;
+			std::vector<std::string> materials;
 		};
-		
-		std::filesystem::path path;
+
+		uint32_t useCount = 1;
+		Uuid uuid;
 		GraphicsAPI::VertexArrayObject* vertexArrayObject = nullptr;
 		std::vector<Submesh> submeshes;
 	};

@@ -193,7 +193,7 @@ void TextureImporter::OutputDds(unsigned char* outData, int contentSize) {
 
 	std::string basePath = "../compiledAssets/";
 	std::string subassetName = "texture";
-	uuid = metaFile->GetOrCreateSubassetUuid(subassetName);
+	uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
 	std::string outputPath = basePath + uuid.ToString();
 	std::ofstream out(outputPath, std::ios::binary);
 	if (out.fail()) {

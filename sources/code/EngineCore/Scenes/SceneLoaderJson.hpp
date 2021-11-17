@@ -19,8 +19,8 @@ namespace Grindstone {
 			bool Load(const char* path);
 			void ProcessMeta();
 			void ProcessEntities();
-			void ProcessEntity(rapidjson::GenericObject<false, rapidjson::Value>& entity);
-			void ProcessComponent(ECS::Entity entity, rapidjson::GenericObject<false, rapidjson::Value>& component);
+			void ProcessEntity(rapidjson::Value& entity);
+			void ProcessComponent(ECS::Entity entity, rapidjson::Value& component);
 			void ProcessComponentParameter(
 				ECS::Entity entity,
 				void* componentPtr,

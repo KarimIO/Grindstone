@@ -146,7 +146,7 @@ void AssetBrowserPanel::ProcessDirectoryEntryClicks(std::filesystem::directory_e
 				window->OpenFileUsingDefaultProgram(path.string().c_str());
 			}
 		}
-		else if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+		else if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
 			Selection& selection = Editor::Manager::GetInstance().GetSelection();
 			if (ImGui::GetIO().KeyCtrl) {
 				if (selection.IsFileSelected(entry)) {
@@ -340,14 +340,14 @@ void AssetBrowserPanel::TryRenameFile() {
 		try {
 			std::filesystem::rename(pathToRename, newPath);
 			pathToRename = "";
-			pathRenameNewName = "";
+pathRenameNewName = "";
 		}
 		catch (std::filesystem::filesystem_error error) {
 			Editor::Manager::Print(LogSeverity::Error, "Rename failed: %s!", error.what());
 		}
 	}
 	else {
-		Editor::Manager::Print(LogSeverity::Error, "Could not rename file, this name is already used.");
+	Editor::Manager::Print(LogSeverity::Error, "Could not rename file, this name is already used.");
 	}
 }
 
@@ -397,14 +397,14 @@ void AssetBrowserPanel::RenderFolders() {
 }
 
 void AssetBrowserPanel::RenderFiles() {
-	for (const auto& directoryEntry : currentDirectory->files) {
+	for (auto file : currentDirectory->files) {
 		ImGui::TableNextColumn();
 
-		const auto& path = directoryEntry.path();
+		const auto& path = file->directoryEntry.path();
 		std::string filenameString = path.filename().string();
 		std::string buttonString = filenameString + "##AssetButton";
 
-		bool isSelected = Editor::Manager::GetInstance().GetSelection().IsFileSelected(directoryEntry);
+		bool isSelected = Editor::Manager::GetInstance().GetSelection().IsFileSelected(file->directoryEntry);
 		ImVec4 mainColor = isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.3f) : ImVec4(0.f, 0.f, 0.f, 0.f);
 		ImGui::PushStyleColor(ImGuiCol_Button, mainColor);
 		ImGui::PushStyleColor(
@@ -416,14 +416,25 @@ void AssetBrowserPanel::RenderFiles() {
 			isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.5f) : ImVec4(1, 1, 1, 0.1f)
 		);
 
-		ImTextureID icon = GetIcon(directoryEntry);
+		ImTextureID icon = GetIcon(file->directoryEntry);
 		ImGui::PushID(buttonString.c_str());
 		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
 		ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
 		ImGui::PopID();
 
-		RenderAssetContextMenu(directoryEntry);
-		ProcessDirectoryEntryClicks(directoryEntry);
+		RenderAssetContextMenu(file->directoryEntry);
+		ProcessDirectoryEntryClicks(file->directoryEntry);
+
+		Uuid myUuid;
+		if (
+			file->metaFile.TryGetDefaultSubassetUuid(myUuid) &&
+			ImGui::BeginDragDropSource()
+		) {
+			std::string myUuidAsString = myUuid.ToString();
+			ImGui::SetDragDropPayload("_UUID", myUuidAsString.data(), myUuidAsString.size() + 1);
+			ImGui::Text("This is a drag and drop source");
+			ImGui::EndDragDropSource();
+		}
 
 		ImGui::PopStyleColor(3);
 

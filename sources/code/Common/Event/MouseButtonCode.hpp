@@ -10,7 +10,7 @@ namespace Grindstone {
 			Mouse4,
 			Mouse5,
 			Last,
-			None = Last
+			Invalid = Last
 		}; // enum class MouseButtonCode
 	} // namespace Events
 } // namespace Grindstone

@@ -15,6 +15,7 @@ namespace Grindstone {
 			class ViewportPanel;
 			class ConsolePanel;
 			class SystemPanel;
+			class StatsPanel;
 			class Menubar;
 			class ImguiInput;
 
@@ -34,11 +35,12 @@ namespace Grindstone {
 				ImageConverterModal* imageConverterModal = nullptr;
 				ModelConverterModal* modelConverterModal = nullptr;
 				SceneHeirarchyPanel* sceneHeirarchyPanel = nullptr;
-				InspectorPanel* inspectorPanel = nullptr;
 				AssetBrowserPanel* assetBrowserPanel = nullptr;
+				InspectorPanel* inspectorPanel = nullptr;
 				ViewportPanel* viewportPanel = nullptr;
 				ConsolePanel* consolePanel = nullptr;
 				SystemPanel* systemPanel = nullptr;
+				StatsPanel* statsPanel = nullptr;
 				Menubar* menubar = nullptr;
 			};
 		}

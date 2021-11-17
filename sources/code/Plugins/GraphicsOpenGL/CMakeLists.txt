@@ -45,5 +45,6 @@ target_precompile_headers(PluginGraphicsOpenGL
     PUBLIC pch.hpp
 )
 
+find_package(OpenGL REQUIRED)
 find_package(gl3w CONFIG REQUIRED)
-target_link_libraries(PluginGraphicsOpenGL unofficial::gl3w::gl3w glm::glm opengl32)
+target_link_libraries(PluginGraphicsOpenGL unofficial::gl3w::gl3w glm::glm ${OPENGL_gl_LIBRARY} spdlog::spdlog spdlog::spdlog_header_only)

@@ -14,12 +14,18 @@ TextureAsset& TextureManager::LoadTexture(const char* path) {
 		return errorTexture;
 	}
 
-	TextureAsset* texture = nullptr;
-	if (TryGetTexture(fixedPath, texture)) {
-		return *texture;
-	}
+	try {
+		TextureAsset* texture = nullptr;
+		if (TryGetTexture(fixedPath, texture)) {
+			return *texture;
+		}
 
-	return CreateNewTextureFromFile(fixedPath);
+		return CreateNewTextureFromFile(fixedPath);
+	}
+	catch (std::runtime_error& e) {
+		EngineCore::GetInstance().Print(LogSeverity::Info, e.what());
+		return errorTexture;
+	}
 }
 
 void TextureManager::ReloadTextureIfLoaded(const char* path) {

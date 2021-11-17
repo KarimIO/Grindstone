@@ -25,7 +25,8 @@ namespace Grindstone {
 				Double2,
 				Double3,
 				Double4,
-				Quaternion
+				Quaternion,
+				AssetReference
 			};
 			ReflectionTypeData type;
 

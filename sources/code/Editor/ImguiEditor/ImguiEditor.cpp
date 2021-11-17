@@ -18,6 +18,7 @@
 #include "InspectorPanel.hpp"
 #include "AssetBrowserPanel.hpp"
 #include "SceneHeirarchyPanel.hpp"
+#include "StatsPanel.hpp"
 #include "Menubar.hpp"
 #include "ImguiInput.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
@@ -56,6 +57,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	assetBrowserPanel = new AssetBrowserPanel(engineCore, this);
 	viewportPanel = new ViewportPanel();
 	consolePanel = new ConsolePanel();
+	statsPanel = new StatsPanel();
 	systemPanel = new SystemPanel(engineCore->GetSystemRegistrar());
 	menubar = new Menubar(this);
 }
@@ -87,6 +89,7 @@ void ImguiEditor::Render() {
 	assetBrowserPanel->Render();
 	systemPanel->Render();
 	inspectorPanel->Render();
+	statsPanel->Render();
 }
 
 void ImguiEditor::ShowModelModal() {

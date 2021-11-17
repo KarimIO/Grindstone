@@ -48,7 +48,6 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	windowCreationInfo.width = 800;
 	windowCreationInfo.height = 600;
 	windowCreationInfo.engineCore = this;
-	displayManager->GetMainDisplay();
 	auto win = windowManager->Create(windowCreationInfo);
 	eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&EngineCore::OnTryQuit, this, std::placeholders::_1));
 	eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&EngineCore::OnForceQuit, this, std::placeholders::_1));

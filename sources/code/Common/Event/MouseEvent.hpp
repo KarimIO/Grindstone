@@ -8,12 +8,12 @@ namespace Grindstone {
 		struct MousePressEvent : public BaseEvent {
 			MousePressEvent(MouseButtonCode code, bool isPressed)
 				: code(code), isPressed(isPressed) {}
-			MouseButtonCode code = MouseButtonCode::None;
+			MouseButtonCode code = MouseButtonCode::Invalid;
 			bool isPressed = false;
 
 			SETUP_EVENT(MouseButton)
 		}; // struct MousePressEvent
-		
+
 		struct MouseMovedEvent : public BaseEvent {
 			MouseMovedEvent(int mouseX, int mouseY)
 				: mouseX(mouseX), mouseY(mouseY) {}
@@ -22,7 +22,7 @@ namespace Grindstone {
 
 			SETUP_EVENT(MouseMoved)
 		}; // struct MouseMovedEvent
-		
+
 		struct MouseScrolledEvent : public BaseEvent {
 			MouseScrolledEvent(float scrollX, float scrollY)
 				: scrollX(scrollX), scrollY(scrollY) {}
