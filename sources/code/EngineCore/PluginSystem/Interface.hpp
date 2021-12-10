@@ -79,6 +79,8 @@ namespace Grindstone {
             Grindstone::Display(*getMainDisplayFn)() = nullptr;
             uint8_t (*countDisplaysFn)() = nullptr;
             void    (*enumerateDisplaysFn)(Grindstone::Display*) = nullptr;
+
+			friend class Manager;
         };
 	}
 }

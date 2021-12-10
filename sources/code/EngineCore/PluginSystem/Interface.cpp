@@ -18,11 +18,11 @@ GraphicsAPI::Core* Plugins::Interface::getGraphicsCore() {
 }
 
 bool Plugins::Interface::loadPlugin(const char* name) {
-	return manager->load(name);
+	return manager->Load(name);
 }
 
 void Plugins::Interface::loadPluginCritical(const char* name) {
-	manager->loadCritical(name);
+	manager->LoadCritical(name);
 }
 
 void Plugins::Interface::registerGraphicsCore(GraphicsAPI::Core* gw) {
