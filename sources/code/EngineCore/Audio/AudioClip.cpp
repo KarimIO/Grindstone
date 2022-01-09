@@ -56,21 +56,20 @@ void Clip::LoadFromPath(const char* path) {
 }
 
 void Clip::LoadWavFromPath(const char* path) {
-	drwav* wav = drwav_open_file(path);
-	if (wav == NULL) {
+	drwav wav;
+	if (!drwav_init_file(&wav, path, nullptr)) {
 		throw std::runtime_error(std::string("Clip::LoadWavFromPath - Failed to load file:") + path);
 	}
 
-	channelCount = wav->channels;
-	bitsPerSample= wav->bitsPerSample;
-	sampleRate = wav->sampleRate;
+	channelCount = wav.channels;
+	bitsPerSample= wav.bitsPerSample;
+	sampleRate = wav.sampleRate;
 
-	size_t fileSize = wav->bytesRemaining;
+	size_t fileSize = wav.bytesRemaining;
 	char* fileData = (char*)malloc(fileSize);
-	drwav_read_raw(wav, fileSize, fileData);
 	CreateOpenALBuffer(fileData, fileSize);
 
-	drwav_free(fileData);
+	drwav_free(fileData, nullptr);
 }
 
 Clip::~Clip() {

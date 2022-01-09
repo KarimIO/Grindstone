@@ -24,7 +24,7 @@ namespace Grindstone {
 			float restitution = 0.0f;
 			float dampingLinear = 0.0f;
 			float dampingRotational = 0.0f;
-
+		public:
 			btRigidBody* rigidBody = nullptr;
 
 			REFLECT("RigidBody")
