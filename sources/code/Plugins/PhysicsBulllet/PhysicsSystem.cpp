@@ -4,6 +4,48 @@
 #include "Components/RigidBodyComponent.hpp"
 #include "Components/PhysicsWorldComponent.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
+using namespace Grindstone;
+using namespace Grindstone::Physics;
+
+btDynamicsWorld* currentDynamicsWorld = nullptr;
+
+void SimulatePhysicsForObject(
+	ColliderComponent& colliderComponent,
+	RigidBodyComponent& rigidBodyComponent,
+	TransformComponent& transformComponent
+) {
+		if (colliderComponent.collisionShape == nullptr) {
+			colliderComponent.Initialize();
+		}
+
+		if (rigidBodyComponent.rigidBody == nullptr) {
+			btScalar mass = 4.0f;
+			btQuaternion quaternion;
+			btVector3 position(
+				transformComponent.position.x,
+				transformComponent.position.y,
+				transformComponent.position.z
+			);
+			btTransform trans(quaternion, position);
+			btDefaultMotionState* motionState = new btDefaultMotionState(trans);
+			rigidBodyComponent.rigidBody = new btRigidBody(
+				mass,
+				motionState,
+				colliderComponent.collisionShape
+			);
+
+			currentDynamicsWorld->addRigidBody(rigidBodyComponent.rigidBody);
+		}
+
+		btTransform rigidBodyTransform;
+		auto motionState = rigidBodyComponent.rigidBody->getMotionState();
+		motionState->getWorldTransform(rigidBodyTransform);
+		auto position = rigidBodyTransform.getOrigin();
+		auto rotation = rigidBodyTransform.getRotation();
+
+		transformComponent.position = { position.x(), position.y(), position.z() };
+		transformComponent.rotation = { rotation.x(), rotation.y(), rotation.z(), rotation.w() };
+}
 
 namespace Grindstone {
 	void PhysicsBulletSystem(entt::registry& registry) {
@@ -35,50 +77,23 @@ namespace Grindstone {
 			physicsWorld->dynamicsWorld->setGravity(btVector3(0, -9.81f, 0));
 		}
 
-		/**/
+		currentDynamicsWorld = physicsWorld->dynamicsWorld;
 
 		btScalar dt = 1.0f / 30.0f;
-		physicsWorld->dynamicsWorld->stepSimulation(dt, 10);
+		currentDynamicsWorld->stepSimulation(dt, 10);
 
-		auto view = registry.view<Physics::SphereColliderComponent, Physics::RigidBodyComponent, TransformComponent>();
-		view.each(
-			[&](
-				Physics::ColliderComponent& colliderComponent,
-				Physics::RigidBodyComponent& rigidBodyComponent,
-				TransformComponent& transformComponent
-			) {
-				if (colliderComponent.collisionShape == nullptr) {
-					colliderComponent.Initialize();
-				}
+		registry.view<Physics::SphereColliderComponent, Physics::RigidBodyComponent, TransformComponent>()
+			.each(SimulatePhysicsForObject);
 
-				if (rigidBodyComponent.rigidBody == nullptr) {
-					btScalar mass = 4.0f;
-					btQuaternion quaternion;
-					btVector3 position(
-						transformComponent.position.x,
-						transformComponent.position.y,
-						transformComponent.position.z
-					);
-					btTransform trans(quaternion, position);
-					btDefaultMotionState* motionState = new btDefaultMotionState(trans);
-					rigidBodyComponent.rigidBody = new btRigidBody(
-						mass,
-						motionState,
-						colliderComponent.collisionShape
-					);
+		registry.view<Physics::PlaneColliderComponent, Physics::RigidBodyComponent, TransformComponent>()
+			.each(SimulatePhysicsForObject);
 
-					physicsWorld->dynamicsWorld->addRigidBody(rigidBodyComponent.rigidBody);
-				}
+		registry.view<Physics::CapsuleColliderComponent, Physics::RigidBodyComponent, TransformComponent>()
+			.each(SimulatePhysicsForObject);
 
-				btTransform rigidBodyTransform;
-				auto motionState = rigidBodyComponent.rigidBody->getMotionState();
-				motionState->getWorldTransform(rigidBodyTransform);
-				auto position = rigidBodyTransform.getOrigin();
-				auto rotation = rigidBodyTransform.getRotation();
+		registry.view<Physics::BoxColliderComponent, Physics::RigidBodyComponent, TransformComponent>()
+			.each(SimulatePhysicsForObject);
 
-				transformComponent.position = { position.x(), position.y(), position.z() };
-				transformComponent.rotation = { rotation.x(), rotation.y(), rotation.z(), rotation.w() };
-			}
-		);
+		currentDynamicsWorld = nullptr;
 	}
 }
