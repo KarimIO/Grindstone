@@ -1,9 +1,10 @@
 #pragma once
 
 #include "Common/Math.hpp"
-#include <bullet/btBulletDynamicsCommon.h>
 #include "EngineCore/Reflection/ComponentReflection.hpp"
 #include "ColliderComponent.hpp"
+
+class btRigidBody;
 
 namespace Grindstone {
 	namespace Physics {

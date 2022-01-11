@@ -12,8 +12,8 @@ namespace Grindstone {
 		class SystemRegistrar {
 		public:
 			SystemRegistrar();
-			void RegisterSystem(const char* name, SystemFactory factory);
-			void RegisterEditorSystem(const char* name, SystemFactory factory);
+			virtual void RegisterSystem(const char* name, SystemFactory factory);
+			virtual void RegisterEditorSystem(const char* name, SystemFactory factory);
 			void Update(entt::registry& registry);
 			void EditorUpdate(entt::registry& registry);
 			~SystemRegistrar();

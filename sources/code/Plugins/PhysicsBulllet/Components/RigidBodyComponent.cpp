@@ -1,3 +1,4 @@
+#include <bullet/btBulletDynamicsCommon.h>
 #include "RigidBodyComponent.hpp"
 using namespace Grindstone::Physics;
 using namespace Grindstone::Math;

@@ -13,6 +13,14 @@ SphereColliderComponent::SphereColliderComponent(float radius)
 	collisionShape = new btSphereShape(radius);
 }
 
+void SphereColliderComponent::Initialize() {
+	if (collisionShape) {
+		delete collisionShape;
+	}
+
+	collisionShape = new btSphereShape(radius);
+}
+
 void SphereColliderComponent::SetRadius(float radius) {
 	delete collisionShape;
 	collisionShape = new btSphereShape(radius);
@@ -32,6 +40,21 @@ REFLECT_STRUCT_END()
 
 PlaneColliderComponent::PlaneColliderComponent(Float3 planeNormal, float positionAlongNormal)
 	: planeNormal(planeNormal), positionAlongNormal(positionAlongNormal) {
+	collisionShape = new btStaticPlaneShape(
+		btVector3(
+			planeNormal.x,
+			planeNormal.y,
+			planeNormal.z
+		),
+		positionAlongNormal
+	);
+}
+
+void PlaneColliderComponent::Initialize() {
+	if (collisionShape) {
+		delete collisionShape;
+	}
+
 	collisionShape = new btStaticPlaneShape(
 		btVector3(
 			planeNormal.x,
@@ -81,6 +104,20 @@ BoxColliderComponent::BoxColliderComponent(Float3 size)
 	);
 }
 
+void BoxColliderComponent::Initialize() {
+	if (collisionShape) {
+		delete collisionShape;
+	}
+
+	collisionShape = new btBoxShape(
+		btVector3(
+			size.x / 2.0f,
+			size.y / 2.0f,
+			size.z / 2.0f
+		)
+	);
+}
+
 void BoxColliderComponent::SetSize(Float3 size) {
 	delete collisionShape;
 	collisionShape = new btBoxShape(
@@ -106,6 +143,14 @@ REFLECT_STRUCT_END()
 
 CapsuleColliderComponent::CapsuleColliderComponent(float radius, float height)
 	: radius(radius), height(height) {
+	collisionShape = new btCapsuleShape(radius, height);
+}
+
+void CapsuleColliderComponent::Initialize() {
+	if (collisionShape) {
+		delete collisionShape;
+	}
+
 	collisionShape = new btCapsuleShape(radius, height);
 }
 

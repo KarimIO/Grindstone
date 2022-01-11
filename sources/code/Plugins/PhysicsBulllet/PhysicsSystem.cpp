@@ -1,41 +1,75 @@
+#include <bullet/btBulletDynamicsCommon.h>
+
 #include "PhysicsSystem.hpp"
 #include "Components/RigidBodyComponent.hpp"
+#include "Components/PhysicsWorldComponent.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 
 namespace Grindstone {
 	void PhysicsBulletSystem(entt::registry& registry) {
-		auto broadphase = new btDbvtBroadphase();
-
-		auto collisionConfiguration = new btDefaultCollisionConfiguration();
-		auto dispatcher = new btCollisionDispatcher(collisionConfiguration);
-
-		auto solver = new btSequentialImpulseConstraintSolver;
-
-		auto dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
-
-		dynamicsWorld->setGravity(btVector3(0, -9.81f, 0));
-
-		/*btScalar mass = 4.0f;
-		btSphereShape* collisionShape = new btSphereShape(4.0f);
-		btQuaternion quaternion;
-		btVector3 position(0.0f, 2.0f, 0.0f);
-		btTransform trans(quaternion, position);
-		btDefaultMotionState* motionState = new btDefaultMotionState(trans);
-		btRigidBody* rbody = new btRigidBody(
-			mass,
-			motionState,
-			collisionShape
+		Grindstone::Physics::PhysicsWorldComponent* physicsWorld = nullptr;
+		auto physicsWorldView = registry.view<Grindstone::Physics::PhysicsWorldComponent>();
+		physicsWorldView.each(
+			[&](
+				Grindstone::Physics::PhysicsWorldComponent& physicsWorldComponent
+			) {
+				physicsWorld = &physicsWorldComponent;
+			}
 		);
-		dynamicsWorld->addRigidBody(rbody);*/
 
-		auto view = registry.view<const Physics::RigidBodyComponent, TransformComponent>();
+		if (physicsWorld == nullptr) {
+			return;
+		}
+
+		if (physicsWorld->dynamicsWorld == nullptr) {
+			physicsWorld->broadphase = new btDbvtBroadphase();
+			physicsWorld->collisionConfiguration = new btDefaultCollisionConfiguration();
+			physicsWorld->dispatcher = new btCollisionDispatcher(physicsWorld->collisionConfiguration);
+			physicsWorld->solver = new btSequentialImpulseConstraintSolver();
+			physicsWorld->dynamicsWorld = new btDiscreteDynamicsWorld(
+				physicsWorld->dispatcher,
+				physicsWorld->broadphase,
+				physicsWorld->solver,
+				physicsWorld->collisionConfiguration
+			);
+			physicsWorld->dynamicsWorld->setGravity(btVector3(0, -9.81f, 0));
+		}
+
+		/**/
+
+		btScalar dt = 1.0f / 30.0f;
+		physicsWorld->dynamicsWorld->stepSimulation(dt, 10);
+
+		auto view = registry.view<Physics::SphereColliderComponent, Physics::RigidBodyComponent, TransformComponent>();
 		view.each(
 			[&](
-				const Physics::RigidBodyComponent& rigidBodyComponent,
+				Physics::ColliderComponent& colliderComponent,
+				Physics::RigidBodyComponent& rigidBodyComponent,
 				TransformComponent& transformComponent
 			) {
-				btScalar dt = 1.0f / 30.0f;
-				dynamicsWorld->stepSimulation(dt, 10);
+				if (colliderComponent.collisionShape == nullptr) {
+					colliderComponent.Initialize();
+				}
+
+				if (rigidBodyComponent.rigidBody == nullptr) {
+					btScalar mass = 4.0f;
+					btQuaternion quaternion;
+					btVector3 position(
+						transformComponent.position.x,
+						transformComponent.position.y,
+						transformComponent.position.z
+					);
+					btTransform trans(quaternion, position);
+					btDefaultMotionState* motionState = new btDefaultMotionState(trans);
+					rigidBodyComponent.rigidBody = new btRigidBody(
+						mass,
+						motionState,
+						colliderComponent.collisionShape
+					);
+
+					physicsWorld->dynamicsWorld->addRigidBody(rigidBodyComponent.rigidBody);
+				}
+
 				btTransform rigidBodyTransform;
 				auto motionState = rigidBodyComponent.rigidBody->getMotionState();
 				motionState->getWorldTransform(rigidBodyTransform);

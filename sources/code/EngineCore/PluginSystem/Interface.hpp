@@ -71,10 +71,10 @@ namespace Grindstone {
 				componentRegistrar->RegisterComponent<T>();
 			}
             ECS::ComponentRegistrar* componentRegistrar = nullptr;
+            ECS::SystemRegistrar* systemRegistrar = nullptr;
         private:
             Manager*    manager = nullptr;
             GraphicsAPI::Core* graphicsCore = nullptr;
-            ECS::SystemRegistrar* systemRegistrar = nullptr;
             Grindstone::Window* (*windowFactoryFn)(Grindstone::Window::CreateInfo&) = nullptr;
             Grindstone::Display(*getMainDisplayFn)() = nullptr;
             uint8_t (*countDisplaysFn)() = nullptr;

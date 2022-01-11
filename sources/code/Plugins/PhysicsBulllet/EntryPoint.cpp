@@ -4,19 +4,25 @@
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <btBulletDynamicsCommon.h>
 #include "EngineCore/EngineCore.hpp"
+#include "EngineCore/ECS/SystemRegistrar.hpp"
+#include "Components/PhysicsWorldComponent.hpp"
 #include "Components/ColliderComponent.hpp"
 #include "Components/RigidBodyComponent.hpp"
+#include "PhysicsSystem.hpp"
 using namespace Grindstone::Physics;
 
 extern "C" {
 	BULLET_PHYSICS_EXPORT void initializeModule(Plugins::Interface* pluginInterface) {
+		pluginInterface->componentRegistrar->RegisterComponent<PhysicsWorldComponent>();
+
 		pluginInterface->componentRegistrar->RegisterComponent<RigidBodyComponent>();
-		/*
+		
 		pluginInterface->componentRegistrar->RegisterComponent<BoxColliderComponent>();
 		pluginInterface->componentRegistrar->RegisterComponent<SphereColliderComponent>();
 		pluginInterface->componentRegistrar->RegisterComponent<PlaneColliderComponent>();
 		pluginInterface->componentRegistrar->RegisterComponent<CapsuleColliderComponent>();
-		*/
+
+		pluginInterface->systemRegistrar->RegisterSystem("PhysicsSystem", PhysicsBulletSystem);
 		
 		/*auto broadphase = new btDbvtBroadphase();
 
