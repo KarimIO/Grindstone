@@ -23,7 +23,7 @@ namespace Grindstone {
 		Grindstone::Reflection::TypeDescriptor_Struct type::reflectionInfo{type::InitializeReflection}; \
 		void type::InitializeReflection(Grindstone::Reflection::TypeDescriptor_Struct* typeDesc) { \
 			using T = type; \
-			typeDesc->name = "aaa"; \
+			typeDesc->name = #type; \
 			typeDesc->size = sizeof(T); \
 			typeDesc->category = { "", {
 

@@ -3,6 +3,7 @@
 	"version": "0.15.2",
 	"dependencies": [
 		"assimp",
+		"bullet3",
 		"entt",
 		"efsw",
 		"drlibs",

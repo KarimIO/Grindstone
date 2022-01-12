@@ -38,7 +38,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 	// Load core (Logging, ECS and Plugin Manager)
 	pluginManager = new Plugins::Manager(this);
-	pluginManager->load("PluginGraphicsOpenGL");
+	pluginManager->Load("PluginGraphicsOpenGL");
 
 	inputManager = new Input::Manager(eventDispatcher);
 
@@ -73,6 +73,9 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	componentRegistrar = new ECS::ComponentRegistrar();
 	SetupCoreComponents(componentRegistrar);
 	sceneManager = new SceneManagement::SceneManager();
+	pluginManager->SetupManagers();
+
+	pluginManager->Load("PluginBulletPhysics");
 
 	sceneManager->LoadDefaultScene();
 

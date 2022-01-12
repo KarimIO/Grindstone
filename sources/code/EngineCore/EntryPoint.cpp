@@ -8,7 +8,7 @@
 using namespace Grindstone;
 
 extern "C" {
-    ENGINE_CORE_API EngineCore* createEngine(EngineCore::CreateInfo& ci) {
+	ENGINE_CORE_API EngineCore* createEngine(EngineCore::CreateInfo& ci) {
 		try {
 			EngineCore& core = EngineCore::GetInstance();
 			core.Initialize(ci);

@@ -23,6 +23,10 @@ set(CODE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/sources/code")
 set(COMMON_DIR "${CODE_DIR}/Common")
 set(BUILD_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build)
 
+set(ENGINE_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/sources/code/EngineCore)
+file(GLOB_RECURSE SOURCE_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.cpp")
+file(GLOB_RECURSE HEADER_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.hpp")
+
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BUILD_DIRECTORY})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BUILD_DIRECTORY})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BUILD_DIRECTORY})
@@ -40,12 +44,17 @@ add_subdirectory(sources/code/ApplicationExecutable)
 
 set(PLUGIN_DIR sources/code/Plugins)
 
-option(USE_OPENGL "Should the OpenGL Project be inclued?" ON)
-option(USE_VULKAN "Should the Vulkan Project be inclued?" OFF)
-
+option(USE_OPENGL "Include OpenGL?" ON)
 if (USE_OPENGL)
-	add_subdirectory(${PLUGIN_DIR}/GraphicsOpenGL)
+add_subdirectory(${PLUGIN_DIR}/GraphicsOpenGL)
 endif()
+
+option(USE_VULKAN "Include Vulkan?" OFF)
 if (USE_VULKAN)
 	add_subdirectory(${PLUGIN_DIR}/GraphicsVulkan)
+endif()
+
+option(USE_BULLET_PHYSICS "Include Bullet Physics?" OFF)
+if (USE_BULLET_PHYSICS)
+	add_subdirectory(${PLUGIN_DIR}/PhysicsBulllet)
 endif()

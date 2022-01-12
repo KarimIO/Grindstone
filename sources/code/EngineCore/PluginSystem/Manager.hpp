@@ -15,11 +15,13 @@ namespace Grindstone {
 		public:
 			Manager(EngineCore* engineCore);
 			~Manager();
-			
-			bool load(const char* name);
-			void loadCritical(const char* name);
 
-			void remove(const char* name);
+			void SetupManagers();
+			
+			bool Load(const char* name);
+			void LoadCritical(const char* name);
+
+			void Remove(const char* name);
 		private:
 			Interface pluginInterface;
 			EngineCore *engineCore;

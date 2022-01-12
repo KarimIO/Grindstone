@@ -1,4 +1,5 @@
 #include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 namespace Grindstone {
 	namespace Math {

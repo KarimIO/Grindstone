@@ -1,6 +1,7 @@
 #include "Manager.hpp"
 #include "Interface.hpp"
 #include "../Profiling.hpp"
+#include "EngineCore/EngineCore.hpp"
 
 namespace Grindstone {
 	namespace Plugins {
@@ -21,7 +22,13 @@ namespace Grindstone {
 			}
 		}
 
-		bool Manager::load(const char *path) {
+		void Manager::SetupManagers() {
+			auto& engineCore = EngineCore::GetInstance();
+			pluginInterface.systemRegistrar = engineCore.GetSystemRegistrar();
+			pluginInterface.componentRegistrar = engineCore.GetComponentRegistrar();
+		}
+
+		bool Manager::Load(const char *path) {
 #ifdef _DEBUG
 			std::string profile_str = std::string("Loading module ") + path;
 			GRIND_PROFILE_SCOPE(profile_str.c_str());
@@ -54,13 +61,13 @@ namespace Grindstone {
 			return false;
 		}
 
-		void Manager::loadCritical(const char* path) {
-			if (!load(path)) {
+		void Manager::LoadCritical(const char* path) {
+			if (!Load(path)) {
 				throw std::runtime_error(std::string("Failed to load module: ") + path);
 			}
 		}
 
-		void Manager::remove(const char* name) {
+		void Manager::Remove(const char* name) {
 			auto it = plugins.find(name);
 			if (it != plugins.end()) {
 				auto handle = it->second;

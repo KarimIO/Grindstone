@@ -1,5 +1,3 @@
-set(ENGINE_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-
 file(GLOB_RECURSE SOURCE_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetRendererManager.cpp ${ENGINE_CORE_DIR}/Assets/BaseAssetRenderer.cpp)
 file(GLOB_RECURSE HEADER_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetRendererManager.hpp ${ENGINE_CORE_DIR}/Assets/BaseAssetRenderer.hpp ${ENGINE_CORE_DIR}/Assets/AssetFile.hpp)
 source_group("Assets\\Source Files" FILES ${SOURCE_ASSETS_BASE})
@@ -60,11 +58,6 @@ file(GLOB_RECURSE HEADER_PLUGIN_SYSTEM "${ENGINE_CORE_DIR}/PluginSystem/*.hpp")
 source_group("Plugin System\\Source Files" FILES ${SOURCE_PLUGIN_SYSTEM})
 source_group("Plugin System\\Header Files" FILES ${HEADER_PLUGIN_SYSTEM})
 
-file(GLOB_RECURSE SOURCE_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.cpp")
-file(GLOB_RECURSE HEADER_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.hpp")
-source_group("Reflection\\Source Files" FILES ${SOURCE_REFLECTION})
-source_group("Reflection\\Header Files" FILES ${HEADER_REFLECTION})
-
 file(GLOB_RECURSE SOURCE_EVENTS "${ENGINE_CORE_DIR}/Events/*.cpp")
 file(GLOB_RECURSE HEADER_EVENTS "${ENGINE_CORE_DIR}/Events/*.hpp")
 source_group("Events\\Source Files" FILES ${SOURCE_EVENTS})
@@ -75,11 +68,13 @@ file(GLOB_RECURSE HEADER_COMMON_UTILS ${COMMON_DIR}/Utilities/ModuleLoading.hpp 
 source_group("Utilities\\Source Files" FILES ${SOURCE_COMMON_UTILS})
 source_group("Utilities\\Header Files" FILES ${HEADER_COMMON_UTILS})
 
-
 file(GLOB_RECURSE SOURCE_RENDERING "${ENGINE_CORE_DIR}/Rendering/*.cpp")
 file(GLOB_RECURSE HEADER_RENDERING "${ENGINE_CORE_DIR}/Rendering/*.hpp")
 source_group("Rendering\\Source Files" FILES ${SOURCE_RENDERING})
 source_group("Rendering\\Header Files" FILES ${HEADER_RENDERING})
+
+source_group("Reflection\\Source Files" FILES ${SOURCE_REFLECTION})
+source_group("Reflection\\Header Files" FILES ${HEADER_REFLECTION})
 
 file(GLOB_RECURSE SOURCE_MAIN EngineCore.cpp EntryPoint.cpp Logger.cpp Profiling.cpp)
 file(GLOB_RECURSE HEADER_MAIN EngineCore.hpp pch.hpp Logger.hpp Profiling.hpp ${COMMON_DIR}/Display/Display.hpp)

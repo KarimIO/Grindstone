@@ -2,7 +2,7 @@
 
 #include "../pch.hpp"
 #include "EngineCore/ECS/SystemFactory.hpp"
-#include "EngineCore/ECS/ComponentFunctions.hpp"
+#include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "Common/Window/Window.hpp"
 #include "Common/Logging.hpp"
 
@@ -15,7 +15,6 @@ namespace Grindstone {
 
     namespace ECS {
         class SystemRegistrar;
-        class ComponentRegistrar;
     }
 
     class WindowManager;
@@ -66,16 +65,22 @@ namespace Grindstone {
             virtual void enumerateDisplays(Display*displays);
            
             virtual void registerSystem(const char* name, ECS::SystemFactory factory);
-            virtual void registerComponentType(const char* name, ECS::ComponentFunctions factory);
+
+			template<typename T>
+			void RegisterComponent() {
+				componentRegistrar->RegisterComponent<T>();
+			}
+            ECS::ComponentRegistrar* componentRegistrar = nullptr;
+            ECS::SystemRegistrar* systemRegistrar = nullptr;
         private:
             Manager*    manager = nullptr;
             GraphicsAPI::Core* graphicsCore = nullptr;
-            ECS::SystemRegistrar* systemRegistrar = nullptr;
-            ECS::ComponentRegistrar* componentRegistrar = nullptr;
             Grindstone::Window* (*windowFactoryFn)(Grindstone::Window::CreateInfo&) = nullptr;
             Grindstone::Display(*getMainDisplayFn)() = nullptr;
             uint8_t (*countDisplaysFn)() = nullptr;
             void    (*enumerateDisplaysFn)(Grindstone::Display*) = nullptr;
+
+			friend class Manager;
         };
 	}
 }
