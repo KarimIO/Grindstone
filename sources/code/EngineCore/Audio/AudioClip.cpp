@@ -62,14 +62,17 @@ void Clip::LoadWavFromPath(const char* path) {
 	}
 
 	channelCount = wav.channels;
-	bitsPerSample= wav.bitsPerSample;
+	bitsPerSample = wav.bitsPerSample;
 	sampleRate = wav.sampleRate;
 
 	size_t fileSize = wav.bytesRemaining;
-	char* fileData = (char*)malloc(fileSize);
-	CreateOpenALBuffer(fileData, fileSize);
+	char* memoryBuffer = (char*)malloc(fileSize);
+	size_t numberOfSamplesActuallyDecoded = drwav_read_raw(&wav, fileSize, memoryBuffer);
 
-	drwav_free(fileData, nullptr);
+	CreateOpenALBuffer(memoryBuffer, fileSize);
+
+	drwav_free(memoryBuffer, nullptr);
+	drwav_uninit(&wav);
 }
 
 Clip::~Clip() {
