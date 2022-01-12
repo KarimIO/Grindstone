@@ -45,6 +45,27 @@ void RigidBodyComponent::ApplyCentralImpulse(Float3 force) {
 	rigidBody->applyCentralForce(btVector3(force.x, force.y, force.z));
 }
 
+
+float RigidBodyComponent::GetMass() {
+	return mass;
+}
+
+float RigidBodyComponent::GetFriction() {
+	return friction;
+}
+
+float RigidBodyComponent::GetRestitution() {
+	return restitution;
+}
+
+float RigidBodyComponent::GetDampingLinear() {
+	return dampingLinear;
+}
+
+float RigidBodyComponent::GetDampingRotational() {
+	return dampingRotational;
+}
+
 REFLECT_STRUCT_BEGIN(RigidBodyComponent)
 	REFLECT_STRUCT_MEMBER(mass)
 	REFLECT_STRUCT_MEMBER(friction)

@@ -11,14 +11,22 @@ namespace Grindstone {
 		struct RigidBodyComponent {
 			RigidBodyComponent() = default;
 			RigidBodyComponent(float mass, ColliderComponent* colliderComponent);
+
 			void SetCollisionShape(ColliderComponent* colliderComponent);
 			void SetFriction(float friction);
 			void SetRestitution(float restitution);
 			void SetDamping(float linear, float rotational);
+
 			void ApplyForce(Math::Float3 pos, Math::Float3 force);
 			void ApplyCentralForce(Math::Float3 force);
 			void ApplyImpulse(Math::Float3 pos, Math::Float3 force);
 			void ApplyCentralImpulse(Math::Float3 force);
+
+			float GetMass();
+			float GetFriction();
+			float GetRestitution();
+			float GetDampingLinear();
+			float GetDampingRotational();
 		private:
 			float mass = 0.0f;
 			float friction = 0.0f;
