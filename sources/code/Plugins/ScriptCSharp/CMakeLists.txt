@@ -1,0 +1,45 @@
+set(CSHARP_SOURCES CSharpManager.cpp CSharpSystem.cpp EntryPoint.cpp)
+set(CSHARP_HEADERS CSharpManager.hpp CSharpSystem.hpp)
+
+file(GLOB_RECURSE CSHARP_COMPONENTS_SOURCES "Components/*.cpp")
+file(GLOB_RECURSE CSHARP_COMPONENTS_HEADER "Components/*.hpp")
+source_group("Components\\Source Files" FILES ${CSHARP_COMPONENTS_SOURCES})
+source_group("Components\\Header Files" FILES ${CSHARP_COMPONENTS_HEADER})
+
+source_group("Reflection\\Source Files" FILES ${SOURCE_REFLECTION})
+source_group("Reflection\\Header Files" FILES ${HEADER_REFLECTION})
+
+add_library(
+	ScriptCSharp MODULE
+	${CSHARP_SOURCES}
+	${CSHARP_HEADERS}
+	${CSHARP_COMPONENTS_SOURCES}
+	${CSHARP_COMPONENTS_HEADER}
+	${SOURCE_REFLECTION}
+	${HEADER_REFLECTION}
+)
+
+target_compile_features(ScriptCSharp PRIVATE cxx_std_17)
+
+find_path(ENTT_INCLUDE_DIRS "entt/entt.hpp")
+set(MONO_PATH CACHE PATH "Mono Path")
+
+target_compile_definitions(ScriptCSharp PUBLIC CSHARP_DLL)
+
+target_link_libraries(ScriptCSharp
+	mono-2.0-sgen.lib
+)
+
+target_include_directories(ScriptCSharp PUBLIC
+	${CODE_DIR}
+	${MONO_PATH}/include/mono-2.0
+	${ENTT_INCLUDE_DIRS}
+)
+
+target_link_directories(ScriptCSharp PUBLIC
+	${MONO_PATH}/lib
+)
+
+target_precompile_headers(ScriptCSharp
+    PUBLIC pch.hpp
+)

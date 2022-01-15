@@ -58,3 +58,8 @@ option(USE_BULLET_PHYSICS "Include Bullet Physics?" OFF)
 if (USE_BULLET_PHYSICS)
 	add_subdirectory(${PLUGIN_DIR}/PhysicsBulllet)
 endif()
+
+option(USE_CSHARP "Include CSharp?" OFF)
+if (USE_CSHARP)
+	add_subdirectory(${PLUGIN_DIR}/ScriptCSharp)
+endif()
