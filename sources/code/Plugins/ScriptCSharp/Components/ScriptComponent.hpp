@@ -1,16 +1,18 @@
 #pragma once
 
-#include "EngineCore/Reflection/ComponentReflection.hpp"
 #include <string>
-#include "mono/metadata/object-forward.h"
+#include "EngineCore/Reflection/ComponentReflection.hpp"
+#include "Plugins/ScriptCSharp/ScriptClass.hpp"
 
 namespace Grindstone {
 	namespace Scripting {
 		namespace CSharp {
 			struct ScriptComponent {
-				std::string componentName;
-				MonoClass* monoClass = nullptr;
-				void* scriptObject = nullptr;;
+				std::string assembly;
+				std::string scriptNamespace;
+				std::string scriptClass;
+				ScriptClass* monoClass = nullptr;
+				void* scriptObject = nullptr;
 
 				REFLECT("ScriptComponent")
 			};
