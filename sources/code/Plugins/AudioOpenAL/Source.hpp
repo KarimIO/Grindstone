@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AudioClip.hpp"
+#include "Clip.hpp"
 #include "al.h"
 #include "alc.h"
 

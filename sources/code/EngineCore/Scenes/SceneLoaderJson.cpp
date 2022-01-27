@@ -9,7 +9,6 @@
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Scene.hpp"
 
-#include "EngineCore/CoreComponents/Audio/AudioSourceComponent.hpp"
 #include "EngineCore/CoreComponents/Camera/CameraComponent.hpp"
 #include "EngineCore/CoreComponents/Mesh/MeshComponent.hpp"
 #include "EngineCore/CoreComponents/Mesh/MeshRendererComponent.hpp"

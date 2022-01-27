@@ -32,10 +32,6 @@ namespace Grindstone {
 		class Dispatcher;
 	}
 
-	namespace Audio {
-		class Core;
-	}
-
 	class Window;
 	class DisplayManager;
 	class WindowManager;
@@ -80,7 +76,6 @@ namespace Grindstone {
 		virtual void CalculateDeltaTime();
 		virtual double GetDeltaTime();
 	public:
-		Audio::Core* audioCore = nullptr;
 		DisplayManager* displayManager = nullptr;
 		WindowManager* windowManager = nullptr;
 		MaterialManager* materialManager = nullptr;

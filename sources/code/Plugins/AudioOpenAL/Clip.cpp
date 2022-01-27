@@ -9,7 +9,7 @@
 
 #include "EngineCore/Utils/Utilities.hpp"
 
-#include "AudioClip.hpp"
+#include "Clip.hpp"
 using namespace Grindstone::Audio;
 
 Clip::Clip(const char* path) {

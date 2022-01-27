@@ -14,7 +14,6 @@ using namespace Grindstone::Scripting::CSharp;
 extern "C" {
 	CSHARP_EXPORT void initializeModule(Plugins::Interface* pluginInterface) {
 		pluginInterface->componentRegistrar->RegisterComponent<ScriptComponent>();
-
 		pluginInterface->systemRegistrar->RegisterSystem("Scripting::CSharp::Update", UpdateSystem);
 	}
 

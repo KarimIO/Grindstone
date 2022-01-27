@@ -1,29 +1,32 @@
-file(GLOB_RECURSE OPENAL_COMPONENTS_SOURCES "Components/*.cpp")
-file(GLOB_RECURSE OPENAL_COMPONENTS_HEADERS "Components/*.hpp")
-source_group("Components\\Source Files" FILES ${OPENAL_COMPONENTS_SOURCES})
-source_group("Components\\Header Files" FILES ${OPENAL_COMPONENTS_HEADERS})
+set(AUDIO_OPENAL_SOURCES Core.cpp Source.cpp Clip.cpp EntryPoint.cpp)
+set(AUDIO_OPENAL_HEADERS Core.hpp Source.hpp Clip.hpp)
 
-set(OPENAL_MAIN_SOURCES Core.cpp Entrypoint.cpp)
-set(OPENAL_MAIN_HEADERS Core.hpp pch.hpp)
+file(GLOB_RECURSE AUDIO_OPENAL_COMPONENTS_SOURCES "Components/*.cpp")
+file(GLOB_RECURSE AUDIO_OPENAL_COMPONENTS_HEADER "Components/*.hpp")
+source_group("Components\\Source Files" FILES ${AUDIO_OPENAL_COMPONENTS_SOURCES})
+source_group("Components\\Header Files" FILES ${AUDIO_OPENAL_COMPONENTS_HEADER})
 
-set(OPENAL_SOURCES ${OPENAL_MAIN_SOURCES} ${OPENAL_COMPONENTS_SOURCES})
-set(OPENAL_HEADERS ${OPENAL_MAIN_HEADERS} ${OPENAL_COMPONENTS_HEADERS})
+source_group("Reflection\\Source Files" FILES ${SOURCE_REFLECTION})
+source_group("Reflection\\Header Files" FILES ${HEADER_REFLECTION})
 
-add_library(PluginAudioOpenAL MODULE ${OPENAL_SOURCES} ${OPENAL_HEADERS})
-
-target_include_directories(PluginAudioOpenAL PUBLIC ${GLM_DIR} ${DEPS_DIR})
-
-target_compile_features(PluginAudioOpenAL PRIVATE cxx_std_17)
-
-target_compile_definitions(PluginAudioOpenAL PUBLIC AUDIO_OPENAL AUDIO_DLL)
-
-target_include_directories(PluginAudioOpenAL
-	PUBLIC
-	${CODE_DIR}
-	${DEPS_DIR}
-	${DEPS_DIR}/entt/src
+add_library(
+	AudioOpenAL MODULE
+	${AUDIO_OPENAL_SOURCES}
+	${AUDIO_OPENAL_HEADERS}
+	${AUDIO_OPENAL_COMPONENTS_SOURCES}
+	${AUDIO_OPENAL_COMPONENTS_HEADER}
+	${SOURCE_REFLECTION}
+	${HEADER_REFLECTION}
 )
 
-target_precompile_headers(PluginAudioOpenAL PUBLIC pch.hpp )
+target_compile_features(AudioOpenAL PRIVATE cxx_std_17)
 
-target_link_libraries(PluginAudioOpenAL)
+find_path(ENTT_INCLUDE_DIRS "entt/entt.hpp")
+find_package(OpenAL CONFIG REQUIRED)
+find_path(DRLIBS_INCLUDE_DIRS "dr_flac.h")
+target_compile_definitions(AudioOpenAL PUBLIC AUDIO_OPENAL AUDIO_DLL)
+target_include_directories(AudioOpenAL PUBLIC ${CODE_DIR} ${ENTT_INCLUDE_DIRS} ${DRLIBS_INCLUDE_DIRS})
+
+target_precompile_headers(AudioOpenAL PUBLIC pch.hpp)
+
+target_link_libraries(AudioOpenAL fmt::fmt OpenAL::OpenAL)

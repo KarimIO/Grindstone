@@ -5,6 +5,7 @@
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "Common/Window/Window.hpp"
 #include "Common/Logging.hpp"
+#include <EngineCore/ECS/ComponentFunctions.hpp>
 
 namespace Grindstone {
     class EngineCore;
@@ -67,8 +68,8 @@ namespace Grindstone {
             virtual void registerSystem(const char* name, ECS::SystemFactory factory);
 
 			template<typename T>
-			void RegisterComponent() {
-				componentRegistrar->RegisterComponent<T>();
+			void RegisterComponent(ECS::SetupComponentFn setupComponentFn = nullptr) {
+				componentRegistrar->RegisterComponent<T>(setupComponentFn);
 			}
             ECS::ComponentRegistrar* componentRegistrar = nullptr;
             ECS::SystemRegistrar* systemRegistrar = nullptr;

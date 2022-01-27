@@ -10,7 +10,6 @@
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Scene.hpp"
 
-#include "EngineCore/CoreComponents/Audio/AudioSourceComponent.hpp"
 #include "EngineCore/CoreComponents/Camera/CameraComponent.hpp"
 #include "EngineCore/CoreComponents/Mesh/MeshComponent.hpp"
 #include "EngineCore/CoreComponents/Mesh/MeshRendererComponent.hpp"
@@ -19,10 +18,6 @@
 #include "EngineCore/Assets/Materials/MaterialManager.hpp"
 #include "EngineCore/Events/Dispatcher.hpp"
 #include "EngineCore/Rendering/BaseRenderer.hpp"
-
-#include "EngineCore/Audio/AudioClip.hpp"
-#include "EngineCore/Audio/AudioCore.hpp"
-#include "EngineCore/Audio/AudioSource.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;

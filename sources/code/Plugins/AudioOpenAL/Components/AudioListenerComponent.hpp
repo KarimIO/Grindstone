@@ -5,6 +5,8 @@
 
 namespace Grindstone {
 	struct AudioListenerComponent {
+		char garbage; // Remove this but this won't compile without it
+
 		REFLECT("AudioListener")
 	};
 }

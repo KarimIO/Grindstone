@@ -59,6 +59,11 @@ if (USE_BULLET_PHYSICS)
 	add_subdirectory(${PLUGIN_DIR}/PhysicsBulllet)
 endif()
 
+option(USE_AUDIO_OPENAL "Include OpenAL Audio?" OFF)
+if (USE_AUDIO_OPENAL)
+	add_subdirectory(${PLUGIN_DIR}/AudioOpenAL)
+endif()
+
 option(USE_CSHARP "Include CSharp?" OFF)
 if (USE_CSHARP)
 	add_subdirectory(${PLUGIN_DIR}/ScriptCSharp)
