@@ -85,7 +85,7 @@ void Manager::Print(LogSeverity logSeverity, const char* textFormat, ...) {
 using CreateEngineFunction = EngineCore*(EngineCore::CreateInfo&);
 bool Manager::LoadEngine() {
 	Grindstone::Utilities::Modules::Handle handle;
-	handle = Grindstone::Utilities::Modules::load("EngineCore");
+	handle = Grindstone::Utilities::Modules::Load("EngineCore");
 
 	if (handle == nullptr) {
 		std::cerr << "Failed to load EngineCore Module.\n";
@@ -93,9 +93,9 @@ bool Manager::LoadEngine() {
 	}
 	
 	CreateEngineFunction* createEngineFn =
-		(CreateEngineFunction*)Utilities::Modules::getFunction(handle, "createEngine");
+		(CreateEngineFunction*)Utilities::Modules::GetFunction(handle, "CreateEngine");
 	if (createEngineFn == nullptr) {
-		std::cerr << "Failed to load runEngine in EngineCore Module.\n";
+		std::cerr << "Failed to load CreateEngine in EngineCore Module.\n";
 		return false;
 	}
 

@@ -20,7 +20,20 @@ void CSharpManager::CallFnInAllComponents(entt::registry& registry) { \
 	registry.view<ScriptComponent>().each(fnCall); \
 }
 
+CSharpManager::CSharpManager() {
+	Initialize();
+}
+
+CSharpManager& CSharpManager::GetInstance() {
+	static CSharpManager instance;
+	return instance;
+}
+
 void CSharpManager::Initialize() {
+	mono_set_dirs(
+		"C:\\Program Files\\Mono\\lib",
+		"C:\\Program Files\\Mono\\etc"
+	);
 	scriptDomain = mono_jit_init_version("grindstone_mono_domain", "v4.0.30319");
 
 	LoadAssembly("../build/CSharpModule.dll");
@@ -59,6 +72,7 @@ ScriptClass* CSharpManager::SetupClass(const char* assemblyName, const char* nam
 	ScriptClass* scriptClass = new ScriptClass();
 	auto& methods = scriptClass->methods;
 	MonoClass* monoClass = mono_class_from_name(scriptImage, namespaceName, className);
+	scriptClass->monoClass = monoClass;
 	methods.onAttachComponent = mono_class_get_method_from_name(monoClass, "OnAttachComponent", 0);
 	methods.onStart = mono_class_get_method_from_name(monoClass, "OnStart", 0);
 	methods.onUpdate = mono_class_get_method_from_name(monoClass, "OnUpdate", 0);
@@ -74,10 +88,13 @@ FUNCTION_CALL_LIST_IMPL(CallDeleteInAllComponents, CallDeleteInComponent, onDele
 
 void CSharpManager::CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset) {
 	MonoObject* exception = nullptr;
-	MonoMethod* targetMethod = (MonoMethod*)(&scriptComponent.monoClass->methods + fnOffset);
-	mono_runtime_invoke(targetMethod, scriptComponent.scriptObject, nullptr, &exception);
+	char* methodsPtr = (char*)&scriptComponent.monoClass->methods;
+	MonoMethod* targetMethod = *(MonoMethod**)(methodsPtr + fnOffset);
+	if (targetMethod) {
+		mono_runtime_invoke(targetMethod, scriptComponent.scriptObject, nullptr, &exception);
 
-	if (exception) {
-		std::cout << mono_string_to_utf8(mono_object_to_string(exception, nullptr)) << std::endl;
+		if (exception) {
+			std::cout << mono_string_to_utf8(mono_object_to_string(exception, nullptr)) << std::endl;
+		}
 	}
 }

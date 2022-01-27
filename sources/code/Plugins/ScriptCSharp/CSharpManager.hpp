@@ -13,6 +13,8 @@ namespace Grindstone {
 
 			class CSharpManager {
 			public:
+				CSharpManager();
+				static CSharpManager& GetInstance();
 				virtual void Initialize();
 				virtual void LoadAssembly(const char* path);
 				virtual void SetupComponent(ScriptComponent& component);

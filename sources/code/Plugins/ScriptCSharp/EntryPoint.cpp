@@ -12,11 +12,11 @@
 using namespace Grindstone::Scripting::CSharp;
 
 extern "C" {
-	CSHARP_EXPORT void initializeModule(Plugins::Interface* pluginInterface) {
-		pluginInterface->componentRegistrar->RegisterComponent<ScriptComponent>();
-		pluginInterface->systemRegistrar->RegisterSystem("Scripting::CSharp::Update", UpdateSystem);
+	CSHARP_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
+		pluginInterface->RegisterComponent<ScriptComponent>(SetupCSharpScriptComponent);
+		pluginInterface->RegisterSystem("Scripting::CSharp::Update", UpdateSystem);
 	}
 
-	CSHARP_EXPORT void releaseModule(Plugins::Interface* pluginInterface) {
+	CSHARP_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
 	}
 }

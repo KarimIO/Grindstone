@@ -9,18 +9,18 @@
 #endif
 
 namespace Grindstone {
-    namespace Utilities {
-        namespace Modules {
+	namespace Utilities {
+		namespace Modules {
 #if defined(_WIN32)
-            typedef HMODULE Handle;
+			typedef HMODULE Handle;
 #elif defined(__linux__)
-            typedef void* Handle;
+			typedef void* Handle;
 #endif
 
-            Grindstone::Utilities::Modules::Handle load(std::string name);
-            void unload(Grindstone::Utilities::Modules::Handle handle);
+			Grindstone::Utilities::Modules::Handle Load(std::string name);
+			void Unload(Grindstone::Utilities::Modules::Handle handle);
 
-            void* getFunction(Grindstone::Utilities::Modules::Handle handle, const char *name);
-        }
-    }
+			void* GetFunction(Grindstone::Utilities::Modules::Handle handle, const char *name);
+		}
+	}
 }

@@ -10,7 +10,7 @@ source_group("Reflection\\Source Files" FILES ${SOURCE_REFLECTION})
 source_group("Reflection\\Header Files" FILES ${HEADER_REFLECTION})
 
 add_library(
-	ScriptCSharp MODULE
+	PluginScriptCSharp MODULE
 	${CSHARP_SOURCES}
 	${CSHARP_HEADERS}
 	${CSHARP_COMPONENTS_SOURCES}
@@ -19,27 +19,19 @@ add_library(
 	${HEADER_REFLECTION}
 )
 
-target_compile_features(ScriptCSharp PRIVATE cxx_std_17)
+target_compile_features(PluginScriptCSharp PRIVATE cxx_std_17)
 
 find_path(ENTT_INCLUDE_DIRS "entt/entt.hpp")
 set(MONO_PATH CACHE PATH "Mono Path")
 
-target_compile_definitions(ScriptCSharp PUBLIC CSHARP_DLL)
+target_compile_definitions(PluginScriptCSharp PUBLIC CSHARP_DLL)
+target_link_libraries(PluginScriptCSharp PUBLIC mono-2.0-sgen.lib)
 
-target_link_libraries(ScriptCSharp
-	mono-2.0-sgen.lib
-)
-
-target_include_directories(ScriptCSharp PUBLIC
+target_include_directories(PluginScriptCSharp PUBLIC
 	${CODE_DIR}
 	${MONO_PATH}/include/mono-2.0
 	${ENTT_INCLUDE_DIRS}
 )
 
-target_link_directories(ScriptCSharp PUBLIC
-	${MONO_PATH}/lib
-)
-
-target_precompile_headers(ScriptCSharp
-    PUBLIC pch.hpp
-)
+target_link_directories(PluginScriptCSharp PUBLIC ${MONO_PATH}/lib)
+target_precompile_headers(PluginScriptCSharp PUBLIC pch.hpp)

@@ -2,6 +2,7 @@
 #include "Manager.hpp"
 #include "../EngineCore.hpp"
 #include "../Logger.hpp"
+#include "EngineCore/ECS/SystemRegistrar.hpp"
 #include <Common/Window/Window.hpp>
 using namespace Grindstone;
 
@@ -9,36 +10,36 @@ Plugins::Interface::Interface(Manager* manager)
 	: manager(manager) {
 }
 
-EngineCore* Plugins::Interface::getEngineCore() {
+EngineCore* Plugins::Interface::GetEngineCore() {
 	return manager->engineCore;
 }
 
-GraphicsAPI::Core* Plugins::Interface::getGraphicsCore() {
+GraphicsAPI::Core* Plugins::Interface::GetGraphicsCore() {
 	return graphicsCore;
 }
 
-bool Plugins::Interface::loadPlugin(const char* name) {
+bool Plugins::Interface::LoadPlugin(const char* name) {
 	return manager->Load(name);
 }
 
-void Plugins::Interface::loadPluginCritical(const char* name) {
+void Plugins::Interface::LoadPluginCritical(const char* name) {
 	manager->LoadCritical(name);
 }
 
-void Plugins::Interface::registerGraphicsCore(GraphicsAPI::Core* gw) {
+void Plugins::Interface::RegisterGraphicsCore(GraphicsAPI::Core* gw) {
 	graphicsCore = gw;
 	manager->engineCore->RegisterGraphicsCore(gw);
 }
 
-void Plugins::Interface::registerWindowManager(WindowManager* windowManager) {
-	getEngineCore()->windowManager = windowManager;
+void Plugins::Interface::RegisterWindowManager(WindowManager* windowManager) {
+	GetEngineCore()->windowManager = windowManager;
 }
 
-void Plugins::Interface::registerDisplayManager(DisplayManager* displayManager) {
-	getEngineCore()->displayManager = displayManager;
+void Plugins::Interface::RegisterDisplayManager(DisplayManager* displayManager) {
+	GetEngineCore()->displayManager = displayManager;
 }
 
-Window* Plugins::Interface::createWindow(Window::CreateInfo& ci) {
+Window* Plugins::Interface::CreateDisplayWindow(Window::CreateInfo& ci) {
 	if (windowFactoryFn) {
 		return windowFactoryFn(ci);
 	}
@@ -46,7 +47,7 @@ Window* Plugins::Interface::createWindow(Window::CreateInfo& ci) {
 	return nullptr;
 }
 
-Display Plugins::Interface::getMainDisplay() {
+Display Plugins::Interface::GetMainDisplay() {
 	if (!getMainDisplayFn) {
 		return Display();
 	}
@@ -54,7 +55,7 @@ Display Plugins::Interface::getMainDisplay() {
 	return getMainDisplayFn();
 }
 
-uint8_t Plugins::Interface::countDisplays() {
+uint8_t Plugins::Interface::CountDisplays() {
 	if (!countDisplaysFn) {
 		return -1;
 	}
@@ -63,12 +64,12 @@ uint8_t Plugins::Interface::countDisplays() {
 }
 
 
-void Plugins::Interface::enumerateDisplays(Display* displays) {
+void Plugins::Interface::EnumerateDisplays(Display* displays) {
 	if (enumerateDisplaysFn) {
 		enumerateDisplaysFn(displays);
 	}
 }
 
-void Plugins::Interface::registerSystem(const char* name, ECS::SystemFactory factory) {
-	// ecsCore->registerSystem(name, factory);
+void Plugins::Interface::RegisterSystem(const char* name, ECS::SystemFactory factory) {
+	systemRegistrar->RegisterSystem(name, factory);
 }

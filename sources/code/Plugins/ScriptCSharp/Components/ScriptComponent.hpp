@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <entt/entt.hpp>
 #include "EngineCore/Reflection/ComponentReflection.hpp"
 #include "Plugins/ScriptCSharp/ScriptClass.hpp"
 
@@ -14,8 +15,10 @@ namespace Grindstone {
 				ScriptClass* monoClass = nullptr;
 				void* scriptObject = nullptr;
 
-				REFLECT("ScriptComponent")
+				REFLECT("CSharpScript")
 			};
+
+			void SetupCSharpScriptComponent(entt::registry& registry, entt::entity entity, void* componentPtr);
 		}
 	}
 }

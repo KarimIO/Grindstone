@@ -2,6 +2,7 @@
 
 #include "EngineCore/Reflection/ComponentReflection.hpp"
 #include "Common/Math.hpp"
+#include <entt/entt.hpp>
 #include "../Source.hpp"
 
 namespace Grindstone {
@@ -14,4 +15,6 @@ namespace Grindstone {
 
 		REFLECT("AudioSource")
 	};
+
+	void SetupAudioSourceComponent(entt::registry& registry, entt::entity entity, void* componentPtr);
 }

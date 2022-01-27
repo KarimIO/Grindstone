@@ -75,8 +75,9 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	sceneManager = new SceneManagement::SceneManager();
 	pluginManager->SetupManagers();
 
-	pluginManager->Load("AudioOpenAL");
+	pluginManager->Load("PluginAudioOpenAL");
 	pluginManager->Load("PluginBulletPhysics");
+	pluginManager->Load("PluginScriptCSharp");
 
 	sceneManager->LoadDefaultScene();
 

@@ -6,13 +6,13 @@
 using namespace Grindstone;
 
 extern "C" {
-	GRAPHICS_OPENGL_API void initializeModule(Plugins::Interface* pluginInterface) {
-		pluginInterface->registerGraphicsCore(new GraphicsAPI::GLCore());
-		pluginInterface->registerWindowManager(new WindowManager());
-		pluginInterface->registerDisplayManager(new DisplayManager());
+	GRAPHICS_OPENGL_API void InitializeModule(Plugins::Interface* pluginInterface) {
+		pluginInterface->RegisterGraphicsCore(new GraphicsAPI::GLCore());
+		pluginInterface->RegisterWindowManager(new WindowManager());
+		pluginInterface->RegisterDisplayManager(new DisplayManager());
 	}
 
-	GRAPHICS_OPENGL_API void releaseModule(Plugins::Interface* pluginInterface) {
-		delete pluginInterface->getGraphicsCore();
+	GRAPHICS_OPENGL_API void ReleaseModule(Plugins::Interface* pluginInterface) {
+		delete pluginInterface->GetGraphicsCore();
 	}
 }

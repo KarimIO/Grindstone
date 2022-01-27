@@ -15,7 +15,7 @@ extern "C" {
 
 int main() {
 	Grindstone::Utilities::Modules::Handle handle;
-	handle = Grindstone::Utilities::Modules::load("EngineCore");
+	handle = Grindstone::Utilities::Modules::Load("EngineCore");
 
 	if (handle == nullptr) {
 		std::cerr << "Failed to load EngineCore Module.";
@@ -23,10 +23,10 @@ int main() {
 	};
 
 	CreateEngineFunction* createEngineFn =
-		(CreateEngineFunction*)Utilities::Modules::getFunction(handle, "createEngine");
+		(CreateEngineFunction*)Utilities::Modules::GetFunction(handle, "CreateEngine");
 
 	if (createEngineFn == nullptr) {
-		std::cerr << "Failed to load runEngine in EngineCore Module.";
+		std::cerr << "Failed to load CreateEngine in EngineCore Module.";
 		return 1;
 	}
 
@@ -39,6 +39,6 @@ int main() {
 		engineCore->Run();
 	}
 	
-	Grindstone::Utilities::Modules::unload(handle);
+	Grindstone::Utilities::Modules::Unload(handle);
 	return 0;
 }
