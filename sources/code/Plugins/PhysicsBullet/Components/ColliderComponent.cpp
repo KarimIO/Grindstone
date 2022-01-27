@@ -1,5 +1,7 @@
 #include "Common/Math.hpp"
+#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "ColliderComponent.hpp"
+#include "RigidBodyComponent.hpp"
 using namespace Grindstone::Physics;
 using namespace Grindstone::Math;
 
@@ -7,6 +9,25 @@ REFLECT_STRUCT_BEGIN(SphereColliderComponent)
 	REFLECT_STRUCT_MEMBER(radius)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
+
+void Grindstone::Physics::SetupColliderComponent(entt::registry& registry, entt::entity entity, void* componentPtr) {
+	auto colliderComponent = (ColliderComponent *)componentPtr;
+
+	if (colliderComponent->collisionShape == nullptr) {
+		colliderComponent->Initialize();
+		colliderComponent->collisionShape->setUserPointer(colliderComponent);
+	}
+
+	auto rigidBodyComponent = registry.try_get<RigidBodyComponent>(entity);
+	auto transformComponent = registry.try_get<TransformComponent>(entity);
+	if (rigidBodyComponent && transformComponent) {
+		SetupRigidBodyComponentWithCollider(
+			rigidBodyComponent,
+			transformComponent,
+			colliderComponent
+		);
+	}
+}
 
 SphereColliderComponent::SphereColliderComponent(float radius)
 	: radius(radius) {

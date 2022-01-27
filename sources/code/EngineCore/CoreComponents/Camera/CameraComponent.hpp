@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include "EngineCore/Reflection/ComponentReflection.hpp"
+#include <entt/entt.hpp>
 
 namespace Grindstone {
 	class BaseRenderer;
@@ -22,4 +23,6 @@ namespace Grindstone {
 
 		REFLECT("Camera")
 	};
+
+	void SetupCameraComponent(entt::registry& registry, entt::entity entity, void* componentPtr);
 }

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "EngineCore/Reflection/ComponentReflection.hpp"
-
 struct btDbvtBroadphase;
 class btDefaultCollisionConfiguration;
 class btCollisionDispatcher;
@@ -10,14 +8,16 @@ class btDiscreteDynamicsWorld;
 
 namespace Grindstone {
 	namespace Physics {
-		struct PhysicsWorldComponent {
+		class Core {
+		public:
+			Core();
+			static Core& GetInstance();
+
 			btDbvtBroadphase* broadphase = nullptr;
 			btDefaultCollisionConfiguration* collisionConfiguration = nullptr;
 			btCollisionDispatcher* dispatcher = nullptr;
 			btSequentialImpulseConstraintSolver* solver = nullptr;
 			btDiscreteDynamicsWorld* dynamicsWorld = nullptr;
-
-			REFLECT("PhysicsWorld")
 		};
 	}
 }

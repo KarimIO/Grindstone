@@ -1,13 +1,20 @@
 #pragma once
 
 #include "Common/Math.hpp"
+#include <entt/entt.hpp>
 #include "EngineCore/Reflection/ComponentReflection.hpp"
 #include "ColliderComponent.hpp"
 
 class btRigidBody;
 
 namespace Grindstone {
+	struct TransformComponent;
+
 	namespace Physics {
+		struct ColliderComponent;
+
+		void SetupRigidBodyComponent(entt::registry& registry, entt::entity entity, void* componentPtr);
+
 		struct RigidBodyComponent {
 			RigidBodyComponent() = default;
 			RigidBodyComponent(float mass, ColliderComponent* colliderComponent);
@@ -38,5 +45,11 @@ namespace Grindstone {
 
 			REFLECT("RigidBody")
 		};
+
+		void SetupRigidBodyComponentWithCollider(
+			RigidBodyComponent* rigidBodyComponent,
+			TransformComponent* transformComponent,
+			ColliderComponent* colliderComponent
+		);
 	}
 }

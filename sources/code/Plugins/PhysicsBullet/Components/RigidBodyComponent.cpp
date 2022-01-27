@@ -1,7 +1,70 @@
 #include <bullet/btBulletDynamicsCommon.h>
+#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
+#include "Plugins/PhysicsBullet/Core.hpp"
 #include "RigidBodyComponent.hpp"
 using namespace Grindstone::Physics;
 using namespace Grindstone::Math;
+
+ColliderComponent* GetCollider(entt::registry& registry, entt::entity entity) {
+	auto sphere = registry.try_get<SphereColliderComponent>(entity);
+	if (sphere) {
+		return sphere;
+	}
+
+	auto box = registry.try_get<BoxColliderComponent>(entity);
+	if (box) {
+		return box;
+	}
+
+	auto plane = registry.try_get<PlaneColliderComponent>(entity);
+	if (plane) {
+		return plane;
+	}
+
+	auto capsule = registry.try_get<CapsuleColliderComponent>(entity);
+	if (capsule) {
+		return capsule;
+	}
+
+	return nullptr;
+}
+
+void Grindstone::Physics::SetupRigidBodyComponent(entt::registry& registry, entt::entity entity, void* componentPtr) {
+	ColliderComponent* colliderComponent = GetCollider(registry, entity);
+	if (colliderComponent == nullptr) {
+		return;
+	}
+
+	RigidBodyComponent* rigidBodyComponent = (RigidBodyComponent*)componentPtr;
+	TransformComponent* transformComponent = &registry.get<TransformComponent>(entity);
+
+	SetupRigidBodyComponentWithCollider(rigidBodyComponent, transformComponent, colliderComponent);
+}
+
+void Grindstone::Physics::SetupRigidBodyComponentWithCollider(
+	RigidBodyComponent* rigidBodyComponent,
+	TransformComponent* transformComponent,
+	ColliderComponent* colliderComponent
+) {
+	btScalar mass = rigidBodyComponent->GetMass();
+	btQuaternion quaternion;
+	btVector3 position(
+		transformComponent->position.x,
+		transformComponent->position.y,
+		transformComponent->position.z
+	);
+	btTransform transformMatrix(quaternion, position);
+
+	rigidBodyComponent->rigidBody = new btRigidBody(
+		rigidBodyComponent->GetMass(),
+		new btDefaultMotionState(transformMatrix),
+		colliderComponent->collisionShape
+	);
+	rigidBodyComponent->rigidBody->setUserPointer(&rigidBodyComponent);
+
+	auto& core = Physics::Core::GetInstance();
+	core.dynamicsWorld->addRigidBody(rigidBodyComponent->rigidBody);
+}
 
 RigidBodyComponent::RigidBodyComponent(float mass, ColliderComponent* colliderComponent) : mass(mass) {
 	btDefaultMotionState* motionState = new btDefaultMotionState();
@@ -44,7 +107,6 @@ void RigidBodyComponent::ApplyImpulse(Float3 pos, Float3 force) {
 void RigidBodyComponent::ApplyCentralImpulse(Float3 force) {
 	rigidBody->applyCentralForce(btVector3(force.x, force.y, force.z));
 }
-
 
 float RigidBodyComponent::GetMass() {
 	return mass;

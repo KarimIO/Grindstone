@@ -1,6 +1,11 @@
 #include "EngineCore/Reflection/ComponentReflection.hpp"
 #include "CameraComponent.hpp"
 #include "Common/Event/WindowEvent.hpp"
+
+#include "EngineCore/EngineCore.hpp"
+#include "EngineCore/Events/Dispatcher.hpp"
+#include "EngineCore/Rendering/BaseRenderer.hpp"
+
 using namespace Grindstone;
 
 REFLECT_STRUCT_BEGIN(CameraComponent)
@@ -19,4 +24,22 @@ bool CameraComponent::OnWindowResize(Events::BaseEvent* ev) {
 	}
 
 	return false;
+}
+
+void Grindstone::SetupCameraComponent(entt::registry& registry, entt::entity entity, void* componentPtr) {
+	auto& engineCore = EngineCore::GetInstance();
+	auto eventDispatcher = engineCore.GetEventDispatcher();
+
+	CameraComponent& cameraComponent = *(CameraComponent*)componentPtr;
+
+	cameraComponent.renderer = engineCore.CreateRenderer();
+	eventDispatcher->AddEventListener(
+		Events::EventType::WindowResize,
+		std::bind(&BaseRenderer::OnWindowResize, cameraComponent.renderer, std::placeholders::_1)
+	);
+
+	eventDispatcher->AddEventListener(
+		Events::EventType::WindowResize,
+		std::bind(&CameraComponent::OnWindowResize, &cameraComponent, std::placeholders::_1)
+	);
 }

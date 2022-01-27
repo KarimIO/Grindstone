@@ -56,7 +56,7 @@ endif()
 
 option(USE_BULLET_PHYSICS "Include Bullet Physics?" OFF)
 if (USE_BULLET_PHYSICS)
-	add_subdirectory(${PLUGIN_DIR}/PhysicsBulllet)
+	add_subdirectory(${PLUGIN_DIR}/PhysicsBullet)
 endif()
 
 option(USE_AUDIO_OPENAL "Include OpenAL Audio?" OFF)

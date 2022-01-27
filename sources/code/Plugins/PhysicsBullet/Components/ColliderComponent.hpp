@@ -2,15 +2,19 @@
 
 #include <bullet/btBulletCollisionCommon.h>
 #include "Common/Math.hpp"
+#include <entt/entt.hpp>
 #include "EngineCore/Reflection/ComponentReflection.hpp"
 
 namespace Grindstone {
 	namespace Physics {
+		void SetupColliderComponent(entt::registry& registry, entt::entity entity, void* componentPtr);
+
 		struct ColliderComponent {
 			virtual void Initialize() = 0;
 
 			btCollisionShape* collisionShape = nullptr;
 		};
+
 
 		struct SphereColliderComponent : public ColliderComponent {
 			SphereColliderComponent() = default;
