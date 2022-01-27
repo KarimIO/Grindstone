@@ -11,6 +11,12 @@ entt::registry& Entity::GetSceneEntityRegistry() {
 void* Entity::AddComponent(const char* componentType) {
 	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
 	auto& entityRegistry = scene->GetEntityRegistry();
+	return componentRegistrar->CreateComponentWithSetup(componentType, entityRegistry, entityId);
+}
+
+void* Entity::AddComponentWithoutSetup(const char* componentType) {
+	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
+	auto& entityRegistry = scene->GetEntityRegistry();
 	return componentRegistrar->CreateComponent(componentType, entityRegistry, entityId);
 }
 

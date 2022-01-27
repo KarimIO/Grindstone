@@ -35,7 +35,7 @@ namespace Grindstone {
 				const TransformComponent& transformComponent,
 				const CameraComponent& cameraComponent
 			) {
-				if (std::isnan(cameraComponent.aspectRatio)) {
+				if (std::isnan(cameraComponent.aspectRatio) || cameraComponent.renderer == nullptr) {
 					return;
 				}
 

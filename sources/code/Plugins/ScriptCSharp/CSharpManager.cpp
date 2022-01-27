@@ -16,7 +16,8 @@ void CSharpManager::CallFnInComponent(ScriptComponent& scriptComponent) { \
 #define FUNCTION_CALL_LIST_IMPL(CallFnInAllComponents, CallFnInComponent, scriptMethod) \
 FUNCTION_CALL_IMPL(CallFnInComponent, scriptMethod) \
 void CSharpManager::CallFnInAllComponents(entt::registry& registry) { \
-	registry.view<ScriptComponent>().each([&](ScriptComponent& scriptComponent) { CallFnInComponent(scriptComponent); }); \
+	auto fnCall = [&](ScriptComponent& scriptComponent) { CallFnInComponent(scriptComponent); }; \
+	registry.view<ScriptComponent>().each(fnCall); \
 }
 
 void CSharpManager::Initialize() {
@@ -43,6 +44,8 @@ void CSharpManager::SetupComponent(ScriptComponent& component) {
 	if (component.monoClass) {
 		component.scriptObject = mono_object_new(scriptDomain, component.monoClass->monoClass);
 	}
+
+	CallInitializeInComponent(component);
 }
 
 ScriptClass* CSharpManager::SetupClass(const char* assemblyName, const char* namespaceName, const char* className) {
@@ -63,7 +66,6 @@ ScriptClass* CSharpManager::SetupClass(const char* assemblyName, const char* nam
 
 	return scriptClass;
 }
-
 
 FUNCTION_CALL_IMPL(CallInitializeInComponent, onAttachComponent)
 FUNCTION_CALL_LIST_IMPL(CallStartInAllComponents, CallStartInComponent, onStart)

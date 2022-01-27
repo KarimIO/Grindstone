@@ -17,6 +17,7 @@ namespace Grindstone {
 				: entityId(entityId), scene(scene) {}
 
 			virtual void* AddComponent(const char* componentType);
+			virtual void* AddComponentWithoutSetup(const char* componentType);
 			virtual bool HasComponent(const char* componentType);
 			virtual void* GetComponent(const char* componentType);
 			virtual bool TryGetComponent(const char* componentType, void*& outComponent);

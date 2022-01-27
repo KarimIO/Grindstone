@@ -6,6 +6,7 @@ using namespace Grindstone;
 
 namespace Grindstone {
 	namespace ECS {
+		using SetupComponentFn = void(*)(entt::registry& registry, entt::entity entity, void* componentPtr);
 		using GetComponentReflectionDataFn = Grindstone::Reflection::TypeDescriptor_Struct(*)();
 		using TryGetComponentFn = bool(*)(entt::registry& registry, entt::entity entity, void*& outEntity);
 		using HasComponentFn = bool(*)(entt::registry& registry, entt::entity entity);
@@ -47,11 +48,12 @@ namespace Grindstone {
 		
 		class ComponentFunctions {
 		public:
-			CreateComponentFn CreateComponentFn;
-			RemoveComponentFn RemoveComponentFn;
-			HasComponentFn HasComponentFn;
-			TryGetComponentFn TryGetComponentFn;
-			GetComponentReflectionDataFn GetComponentReflectionDataFn;
+			SetupComponentFn SetupComponentFn = nullptr;
+			CreateComponentFn CreateComponentFn = nullptr;
+			RemoveComponentFn RemoveComponentFn = nullptr;
+			HasComponentFn HasComponentFn = nullptr;
+			TryGetComponentFn TryGetComponentFn = nullptr;
+			GetComponentReflectionDataFn GetComponentReflectionDataFn = nullptr;
 		};
 	}
 }

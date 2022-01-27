@@ -16,12 +16,6 @@
 #include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
 #include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
 #include "EngineCore/Assets/Materials/MaterialManager.hpp"
-#include "EngineCore/Events/Dispatcher.hpp"
-#include "EngineCore/Rendering/BaseRenderer.hpp"
-
-#include "EngineCore/Audio/AudioClip.hpp"
-#include "EngineCore/Audio/AudioCore.hpp"
-#include "EngineCore/Audio/AudioSource.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
@@ -79,41 +73,6 @@ bool SceneLoaderJson::Load(const char* path) {
 		}
 	});
 
-	Audio::Core* core = new Audio::Core();
-	auto audioView = registry.view<const AudioSourceComponent>();
-	audioView.each([&](const AudioSourceComponent& audioSource) {
-		try {
-			std::string path = std::string("../compiledAssets/") + audioSource.audioClip;
-			Audio::Clip* clip = core->CreateClip(path.c_str());
-			Audio::Source::CreateInfo audioSourceCreateInfo{};
-			audioSourceCreateInfo.audioClip = clip;
-			audioSourceCreateInfo.isLooping = audioSource.isLooping;
-			audioSourceCreateInfo.volume = audioSource.volume;
-			audioSourceCreateInfo.pitch = audioSource.pitch;
-			Audio::Source* source = core->CreateSource(audioSourceCreateInfo);
-
-			source->Play();
-		}
-		catch (std::runtime_error& e) {
-			EngineCore::GetInstance().Print(LogSeverity::Error, e.what());
-		}
-	});
-
-	auto eventDispatcher = engineCore.GetEventDispatcher();
-	auto cameraView = registry.view<CameraComponent>();
-	cameraView.each([&](CameraComponent& cameraComponent) {
-		cameraComponent.renderer = EngineCore::GetInstance().CreateRenderer();
-		eventDispatcher->AddEventListener(
-			Events::EventType::WindowResize,
-			std::bind(&BaseRenderer::OnWindowResize, cameraComponent.renderer, std::placeholders::_1)
-		);
-
-		eventDispatcher->AddEventListener(
-			Events::EventType::WindowResize,
-			std::bind(&CameraComponent::OnWindowResize, &cameraComponent, std::placeholders::_1)
-		);
-	});
-
 	return true;
 }
 
@@ -152,27 +111,25 @@ void SceneLoaderJson::ProcessComponent(ECS::Entity entity, rapidjson::Value& com
 		componentPtr = entity.GetComponent(componentType);
 	}
 	else {
-		componentPtr = entity.AddComponent(componentType);
+		componentPtr = entity.AddComponentWithoutSetup(componentType);
 	}
 
-	if (!component.HasMember("params")) {
-		return;
-	}
-	
-	auto& parameterList = component["params"];
+	if (component.HasMember("params")) {
+		auto& parameterList = component["params"];
 
-	if (!parameterList.IsObject()) {
-		return;
+		if (parameterList.IsObject()) {
+			for (
+				auto& parameter = parameterList.MemberBegin();
+				parameter != parameterList.MemberEnd();
+				parameter++
+				) {
+				const char* paramKey = parameter->name.GetString();
+				ProcessComponentParameter(entity, componentPtr, reflectionData, paramKey, parameter->value);
+			}
+		}
 	}
 
-	for (
-		auto& parameter = parameterList.MemberBegin();
-		parameter != parameterList.MemberEnd();
-		parameter++
-	) {
-		const char* paramKey = parameter->name.GetString();
-		ProcessComponentParameter(entity, componentPtr, reflectionData, paramKey, parameter->value);
-	}
+	componentRegistrar->SetupComponent(componentType, entity.GetSceneEntityRegistry(), entity.GetHandle(), componentPtr);
 }
 
 void CopyDataArrayFloat(rapidjson::Value& srcParameter, float* dstArray, rapidjson::SizeType count) {

@@ -26,6 +26,7 @@
 #include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
 #include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
 #include "EngineCore/Assets/AssetRendererManager.hpp"
+#include "EngineCore/Audio/AudioCore.hpp"
 
 using namespace Grindstone;
 
@@ -56,6 +57,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	graphicsCore->Initialize(graphicsCoreInfo);
 	win->Show();
 
+	audioCore = new Audio::Core();
 	materialManager = new MaterialManager();
 	textureManager = new TextureManager();
 	shaderManager = new ShaderManager();
