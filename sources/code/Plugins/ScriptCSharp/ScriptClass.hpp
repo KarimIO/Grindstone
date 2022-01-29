@@ -9,6 +9,7 @@ namespace Grindstone {
 				MonoClass* monoClass = nullptr;
 
 				struct Methods {
+					MonoMethod* constructor = nullptr;
 					MonoMethod* onAttachComponent = nullptr;
 					MonoMethod* onStart = nullptr;
 					MonoMethod* onUpdate = nullptr;

@@ -58,7 +58,8 @@ void CSharpManager::SetupComponent(ScriptComponent& component) {
 		component.scriptObject = mono_object_new(scriptDomain, component.monoClass->monoClass);
 	}
 
-	CallInitializeInComponent(component);
+	CallConstructorInComponent(component);
+	CallAttachComponentInComponent(component);
 }
 
 ScriptClass* CSharpManager::SetupClass(const char* assemblyName, const char* namespaceName, const char* className) {
@@ -73,15 +74,28 @@ ScriptClass* CSharpManager::SetupClass(const char* assemblyName, const char* nam
 	auto& methods = scriptClass->methods;
 	MonoClass* monoClass = mono_class_from_name(scriptImage, namespaceName, className);
 	scriptClass->monoClass = monoClass;
+	methods.constructor = mono_class_get_method_from_name(monoClass, ".ctor", 0);
 	methods.onAttachComponent = mono_class_get_method_from_name(monoClass, "OnAttachComponent", 0);
 	methods.onStart = mono_class_get_method_from_name(monoClass, "OnStart", 0);
 	methods.onUpdate = mono_class_get_method_from_name(monoClass, "OnUpdate", 0);
 	methods.onDelete = mono_class_get_method_from_name(monoClass, "OnDelete", 0);
 
+	// TODO: Get Member Variables
+	/*
+	MonoClassField* rawField = NULL;
+	void* iter = NULL;
+	while ((rawField = mono_class_get_fields(monoClass, &iter)) != NULL) {
+		const char* fieldName = mono_field_get_name(rawField);
+		MonoType* type = mono_field_get_type(rawField);
+		MonoTypeEnum monoType = (MonoTypeEnum)mono_type_get_type(type);
+	}
+	*/
+
 	return scriptClass;
 }
 
-FUNCTION_CALL_IMPL(CallInitializeInComponent, onAttachComponent)
+FUNCTION_CALL_IMPL(CallConstructorInComponent, constructor)
+FUNCTION_CALL_IMPL(CallAttachComponentInComponent, onAttachComponent)
 FUNCTION_CALL_LIST_IMPL(CallStartInAllComponents, CallStartInComponent, onStart)
 FUNCTION_CALL_LIST_IMPL(CallUpdateInAllComponents, CallUpdateInComponent, onUpdate)
 FUNCTION_CALL_LIST_IMPL(CallDeleteInAllComponents, CallDeleteInComponent, onDelete)

@@ -23,7 +23,8 @@ namespace Grindstone {
 				virtual void CallDeleteInAllComponents(entt::registry& registry);
 			private:
 				void CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset);
-				void CallInitializeInComponent(ScriptComponent& scriptComponent);
+				void CallConstructorInComponent(ScriptComponent& scriptComponent);
+				void CallAttachComponentInComponent(ScriptComponent& scriptComponent);
 				void CallStartInComponent(ScriptComponent& scriptComponent);
 				void CallUpdateInComponent(ScriptComponent& scriptComponent);
 				void CallDeleteInComponent(ScriptComponent& scriptComponent);
