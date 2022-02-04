@@ -68,6 +68,11 @@ bool ImporterManager::HasImporter(std::string& extension) {
 }
 
 bool ImporterManager::HasImporter(std::filesystem::path& path) {
-	std::string extension = path.extension().string().substr(1);
+	std::string extension = path.extension().string();
+	if (extension.empty()) {
+		return false;
+	}
+
+	std::string extensionWithoutDot = extension.substr(1);
 	return HasImporter(extension);
 }

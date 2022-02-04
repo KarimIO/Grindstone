@@ -33,9 +33,11 @@ EngineCore& Manager::GetEngineCore() {
 	return *GetInstance().engineCore;
 }
 
-bool Manager::Initialize() {
+bool Manager::Initialize(const char* projectPath) {
+	this->projectPath = projectPath;
+	assetsPath = this->projectPath / "assets";
 	if (!LoadEngine())			return false;
-	fileManager.Initialize();
+	fileManager.Initialize(assetsPath);
 	if (!SetupImguiEditor())	return false;
 	InitializeQuitCommands();
 
@@ -59,6 +61,14 @@ void Manager::Run() {
 		imguiEditor->Update();
 		engineCore->UpdateWindows();
 	}
+}
+
+std::filesystem::path Manager::GetProjectPath() {
+	return projectPath;
+}
+
+std::filesystem::path Manager::GetAssetsPath() {
+	return assetsPath;
 }
 
 bool Manager::OnTryQuit(Grindstone::Events::BaseEvent* ev) {
@@ -101,8 +111,12 @@ bool Manager::LoadEngine() {
 
 	EngineCore::CreateInfo createInfo;
 	createInfo.isEditor = true;
-	createInfo.applicationModuleName = "ApplicationDLL";
-	createInfo.applicationTitle = "Grindstone Editor";
+	createInfo.applicationModuleName = "GrindstoneGameEditor";
+	createInfo.applicationTitle = "Grindstone Game Editor";
+	createInfo.scenePath = "";
+	createInfo.shouldLoadSceneFromDefaults = true;
+	std::string projectPathAsStr = projectPath.string();
+	createInfo.projectPath = projectPathAsStr.c_str();
 	engineCore = createEngineFn(createInfo);
 
 	return engineCore != nullptr;

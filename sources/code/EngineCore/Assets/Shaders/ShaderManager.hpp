@@ -12,6 +12,7 @@ namespace Grindstone {
 		public:
 			virtual Shader& LoadShader(BaseAssetRenderer* assetRenderer, const char* path);
 			virtual void ReloadShaderIfLoaded(const char* path);
+			virtual void RemoveMaterialFromShader(Shader* shader, Material* material);
 		private:
 			bool TryGetShader(const char* path, Shader*& shader);
 			void LoadShaderFromFile(bool isReloading, std::string& path, Shader& shaderAsset);

@@ -45,13 +45,15 @@ public:
 	}
 };
 
-void FileManager::Initialize() {
+void FileManager::Initialize(std::filesystem::path projectPath) {
+	std::filesystem::create_directories(projectPath);
+
 	efsw::FileWatcher* fileWatcher = new efsw::FileWatcher();
 	UpdateListener* listener = new UpdateListener(this);
-	efsw::WatchID watchID = fileWatcher->addWatch(ASSET_FOLDER_PATH.string().c_str(), listener, true);
+	efsw::WatchID watchID = fileWatcher->addWatch(projectPath.string().c_str(), listener, true);
 	fileWatcher->watch();
 
-	rootDirectory.path = std::filesystem::directory_entry(ASSET_FOLDER_PATH);
+	rootDirectory.path = std::filesystem::directory_entry(projectPath);
 	rootDirectory.parentDirectory = nullptr;
 	CreateInitialFileStructure(rootDirectory, std::filesystem::directory_iterator(rootDirectory.path));
 }
@@ -139,7 +141,7 @@ Directory* FileManager::GetOrMakeSubdirectory(Directory* currentDirectory, std::
 }
 
 Directory* FileManager::GetFolderForPath(std::filesystem::path path) {
-	std::string pathAsString = std::filesystem::relative(path, ASSET_FOLDER_PATH).string();
+	std::string pathAsString = std::filesystem::relative(path, Editor::Manager::GetInstance().GetAssetsPath()).string();
 	std::replace(pathAsString.begin(), pathAsString.end(), '\\', '/');
 
 	Directory* currentDirectory = &rootDirectory;

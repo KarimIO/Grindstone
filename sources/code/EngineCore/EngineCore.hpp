@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <vector>
 #include <chrono>
 #include "Common/Logging.hpp"
@@ -51,6 +52,9 @@ namespace Grindstone {
 			bool isEditor = false;
 			const char* applicationModuleName = nullptr;
 			const char* applicationTitle = nullptr;
+			bool shouldLoadSceneFromDefaults;
+			const char* scenePath = nullptr;
+			const char* projectPath = nullptr;
 		};
 
 		bool Initialize(CreateInfo& ci);
@@ -63,11 +67,15 @@ namespace Grindstone {
 		virtual void RegisterInputManager(Input::Interface*);
 		virtual Input::Interface* GetInputManager();
 		virtual SceneManagement::SceneManager* GetSceneManager();
+		virtual Plugins::Manager* GetPluginManager();
 		virtual ECS::SystemRegistrar* GetSystemRegistrar();
 		virtual Events::Dispatcher* GetEventDispatcher();
 		virtual ECS::ComponentRegistrar* GetComponentRegistrar();
 		virtual GraphicsAPI::Core* GetGraphicsCore();
 		virtual BaseRenderer* CreateRenderer();
+		virtual std::filesystem::path GetProjectPath();
+		virtual std::filesystem::path GetAssetsPath();
+		virtual std::filesystem::path GetAssetPath(std::string subPath);
 
 		virtual void Print(LogSeverity logSeverity, const char* msg, ...);
 
@@ -96,5 +104,7 @@ namespace Grindstone {
 		Input::Interface* inputManager = nullptr;
 		ECS::Core* ecsCore = nullptr;
 		bool shouldClose = false;
+		std::filesystem::path projectPath;
+		std::filesystem::path assetsPath;
 	};
 }

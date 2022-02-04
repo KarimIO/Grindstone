@@ -1,12 +1,14 @@
 #include "Manager.hpp"
 #include "Interface.hpp"
 #include "../Profiling.hpp"
+#include "EngineCore/Utils/Utilities.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/Logger.hpp"
 using namespace Grindstone::Plugins;
 using namespace Grindstone::Utilities;
 
 Manager::Manager(EngineCore* engineCore) : pluginInterface(this), engineCore(engineCore) {
+	SetupInterfacePointers();
 }
 
 Manager::~Manager() {
@@ -25,7 +27,32 @@ Manager::~Manager() {
 	}
 }
 
-void Manager::SetupManagers() {
+void Manager::LoadPluginList() {
+	auto& engineCore = EngineCore::GetInstance();
+	std::filesystem::path prefabListFile = engineCore.GetProjectPath() / "buildSettings/pluginsManifest.txt";
+	auto prefabListFilePath = prefabListFile.string();
+	auto fileContents = Utils::LoadFileText(prefabListFilePath.c_str());
+
+	size_t start = 0, end;
+	std::string pluginName;
+	while (true) {
+		end = fileContents.find("\n", start);
+		if (end == std::string::npos) {
+			pluginName = fileContents.substr(start);
+			if (!pluginName.empty()) {
+				Load(pluginName.c_str());
+			}
+
+			break;
+		}
+
+		pluginName = fileContents.substr(start, end - start);
+		Load(pluginName.c_str());
+		start = end + 1;
+	}
+}
+
+void Manager::SetupInterfacePointers() {
 	auto& engineCore = EngineCore::GetInstance();
 	pluginInterface.systemRegistrar = engineCore.GetSystemRegistrar();
 	pluginInterface.componentRegistrar = engineCore.GetComponentRegistrar();

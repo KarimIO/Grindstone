@@ -2,16 +2,16 @@
 using namespace Grindstone::BuildSettings;
 
 SceneBuildSettings::SceneBuildSettings() {
-	load();
+	Load();
 }
 
-void SceneBuildSettings::load() {
+void SceneBuildSettings::Load() {
 	const char *path = "../BuildSettings/BuildSettings.json";
 
 	scenes.push_back("../assets/scenes/test.scene.json");
 }
 
-const char* SceneBuildSettings::getDefaultScene() {
+const char* SceneBuildSettings::GetDefaultScene() {
 	if (scenes.size() == 0) {
 		return nullptr;
 	}

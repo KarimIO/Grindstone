@@ -11,6 +11,7 @@ using namespace Grindstone;
 
 extern "C" {
 	AUDIO_OPENAL_API void InitializeModule(Plugins::Interface* pluginInterface) {
+		Audio::Core::GetInstance().SetEngineCorePtr(pluginInterface->GetEngineCore());
 		pluginInterface->RegisterComponent<AudioListenerComponent>();
 		pluginInterface->RegisterComponent<AudioSourceComponent>(SetupAudioSourceComponent);
 	}

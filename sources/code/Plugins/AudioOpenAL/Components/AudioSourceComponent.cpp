@@ -16,7 +16,7 @@ void Grindstone::SetupAudioSourceComponent(entt::registry& registry, entt::entit
 
 	auto audioSource = (AudioSourceComponent*)componentPtr;
 
-	std::string path = std::string("../compiledAssets/") + audioSource->audioClip;
+	std::string path = core.GetAssetPath(audioSource->audioClip).string();
 	Audio::Clip* clip = core.CreateClip(path.c_str());
 
 	Audio::Source::CreateInfo audioSourceCreateInfo{};

@@ -1,12 +1,13 @@
 #pragma once
 
+#include <filesystem>
 #include "FileDirectory.hpp"
 
 namespace Grindstone {
 	namespace Editor {
 		class FileManager {
 		public:
-			void Initialize();
+			void Initialize(std::filesystem::path projectPath);
 
 			Directory& GetRootDirectory();
 

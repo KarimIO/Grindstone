@@ -16,8 +16,9 @@ namespace Grindstone {
 			Manager(EngineCore* engineCore);
 			~Manager();
 
-			void SetupManagers();
+			void SetupInterfacePointers();
 			
+			virtual void LoadPluginList();
 			bool Load(const char* name);
 			void LoadCritical(const char* name);
 

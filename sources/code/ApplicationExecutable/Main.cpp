@@ -30,11 +30,14 @@ int main() {
 		return 1;
 	}
 
-	EngineCore::CreateInfo create_info;
-	create_info.isEditor = false;
-	create_info.applicationModuleName = "ApplicationDLL";
-	create_info.applicationTitle = "Grindstone Sandbox";
-	EngineCore* engineCore = createEngineFn(create_info);
+	EngineCore::CreateInfo createInfo;
+	createInfo.isEditor = false;
+	createInfo.applicationModuleName = "ApplicationDLL";
+	createInfo.applicationTitle = "Grindstone Sandbox";
+	createInfo.shouldLoadSceneFromDefaults = true;
+	createInfo.scenePath = "";
+	createInfo.projectPath = "..";
+	EngineCore* engineCore = createEngineFn(createInfo);
 	if (engineCore) {
 		engineCore->Run();
 	}

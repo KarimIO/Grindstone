@@ -15,7 +15,7 @@ namespace Grindstone {
 				SceneManagement::SceneManager* sceneManager,
 				ImguiEditor* editor
 			) : sceneManager(sceneManager), editor(editor) {}
-			
+
 			void SceneHeirarchyPanel::Render() {
 				if (isShowingPanel) {
 					ImGui::Begin("Scene Heirarchy", &isShowingPanel);
@@ -61,6 +61,10 @@ namespace Grindstone {
 
 			void SceneHeirarchyPanel::RenderScene(SceneManagement::Scene* scene) {
 				auto& registry = scene->GetEntityRegistry();
+
+				if (registry.empty()) {
+					ImGui::Text("No entities in scene.");
+				}
 
 				registry.each(
 					[&](auto entity) {

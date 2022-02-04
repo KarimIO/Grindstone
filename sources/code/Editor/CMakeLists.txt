@@ -22,6 +22,11 @@ file(GLOB_RECURSE HEADER_IMPORTERS "${EDITOR_DIR}/Importers/*.hpp")
 source_group("Importers\\Source Files" FILES ${SOURCE_IMPORTERS})
 source_group("Importers\\Header Files" FILES ${HEADER_IMPORTERS})
 
+file(GLOB_RECURSE SOURCE_IMGUI_PREFS_EDITOR "${EDITOR_DIR}/ImguiEditor/Preferences/*.cpp")
+file(GLOB_RECURSE HEADER_IMGUI_PREFS_EDITOR "${EDITOR_DIR}/ImguiEditor/Preferences/*.hpp")
+source_group("Imgui Editor\\Preferences\\Source Files" FILES ${SOURCE_IMGUI_PREFS_EDITOR})
+source_group("Imgui Editor\\Preferences\\Header Files" FILES ${HEADER_IMGUI_PREFS_EDITOR})
+
 file(GLOB_RECURSE SOURCE_IMGUI_EDITOR "${EDITOR_DIR}/ImguiEditor/*.cpp")
 file(GLOB_RECURSE HEADER_IMGUI_EDITOR "${EDITOR_DIR}/ImguiEditor/*.hpp")
 source_group("Imgui Editor\\Source Files" FILES ${SOURCE_IMGUI_EDITOR})
@@ -34,12 +39,14 @@ set(EDITOR_SOURCES
 	${SOURCE_IMGUI_EDITOR}
 	${SOURCE_IMPORTERS}
 	${SOURCE_EDITOR_COMMANDS}
+	${SOURCE_IMGUI_PREFS_EDITOR}
 )
 
 set(EDITOR_HEADERS
 	${HEADER_IMGUI_EDITOR}
 	${HEADER_IMPORTERS}
 	${HEADER_EDITOR_COMMANDS}
+	${HEADER_IMGUI_PREFS_EDITOR}
 )
 
 find_package(Assimp CONFIG REQUIRED)

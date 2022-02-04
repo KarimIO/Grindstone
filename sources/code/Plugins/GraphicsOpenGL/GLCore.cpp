@@ -364,10 +364,10 @@ namespace Grindstone {
 			throw std::runtime_error("Invalid Geometry Type");
 		}
 
-		void GLCore::DrawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
+		void GLCore::DrawImmediateIndexed(GeometryType geometryType, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
 			uint32_t size = largeBuffer ? sizeof(uint32_t) : sizeof(uint16_t);
 			void *ptr = reinterpret_cast<void *>(indexOffsetPtr * size);
-			glDrawElementsBaseVertex(GetGeomType(geom_type), indexCount, largeBuffer ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, ptr, baseVertex);
+			glDrawElementsBaseVertex(GetGeomType(geometryType), indexCount, largeBuffer ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, ptr, baseVertex);
 		}
 
 		void GLCore::DrawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) {

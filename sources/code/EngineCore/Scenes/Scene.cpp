@@ -8,8 +8,30 @@
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "Scene.hpp"
 
+#include "EngineCore/CoreComponents/Mesh/MeshComponent.hpp"
+#include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
+
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
+
+Scene::~Scene() {
+	EngineCore& engineCore = EngineCore::GetInstance();
+	auto mesh3dManager = engineCore.mesh3dManager;
+
+	auto meshAndMeshRendererView = registry.view<MeshComponent>();
+	meshAndMeshRendererView.each([&](
+		entt::entity entity,
+		MeshComponent& meshComponent
+	) {
+		if (meshComponent.mesh == nullptr) {
+			return;
+		}
+
+		mesh3dManager->DecrementMeshCount(ECS::Entity{ entity, this }, meshComponent.mesh->uuid);
+	});
+
+	registry.clear();
+}
 
 ECS::Entity Scene::CreateEmptyEntity(entt::entity entityToUse) {
 	if (entityToUse == entt::null) {
