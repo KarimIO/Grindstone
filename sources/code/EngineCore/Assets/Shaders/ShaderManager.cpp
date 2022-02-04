@@ -63,6 +63,14 @@ void ShaderManager::ReloadShaderIfLoaded(const char* path) {
 	}
 }
 
+void ShaderManager::RemoveMaterialFromShader(Shader* shader, Material *material) {
+	for (size_t i = 0; i < shader->materials.size(); ++i) {
+		if (shader->materials[i] == material) {
+			shader->materials.erase(shader->materials.begin() + i);
+		}
+	}
+}
+
 bool ShaderManager::TryGetShader(const char* path, Shader*& shader) {
 	auto foundShader = shaders.find(path);
 	if (foundShader != shaders.end()) {
@@ -79,7 +87,7 @@ void ShaderManager::LoadShaderFromFile(bool isReloading, std::string& path, Shad
 }
 
 Shader& ShaderManager::CreateNewShaderFromFile(std::string& uuid) {
-	std::string path = "../compiledAssets/" + uuid;
+	std::string path = EngineCore::GetInstance().GetAssetPath(uuid).string();
 	Shader& shader = shaders[uuid] = Shader{ path };
 	LoadShaderFromFile(false, path, shader);
 

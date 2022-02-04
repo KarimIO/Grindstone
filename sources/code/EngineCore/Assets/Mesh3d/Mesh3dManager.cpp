@@ -237,12 +237,12 @@ void Mesh3dManager::CreateMeshFromData(Mesh3d& mesh, std::vector<char>& fileCont
 }
 
 Mesh3d& Mesh3dManager::CreateMesh3dFromFile(Uuid uuid) {
-	std::string completePath = std::string("../compiledAssets/") + uuid.ToString();
+	std::filesystem::path completePath = EngineCore::GetInstance().GetAssetPath(uuid.ToString());
 	if (!std::filesystem::exists(completePath)) {
 		throw std::runtime_error("Mesh3dManager::CreateMesh3dFromFile failed to load model.");
 	}
 
-	auto fileContent = Utils::LoadFile(completePath.c_str());
+	auto fileContent = Utils::LoadFile(completePath.string().c_str());
 	Mesh3d& mesh = meshes[uuid];
 	mesh.uuid = uuid;
 	CreateMeshFromData(mesh, fileContent);

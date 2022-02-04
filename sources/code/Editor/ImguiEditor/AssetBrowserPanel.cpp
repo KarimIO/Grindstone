@@ -68,8 +68,6 @@ void PrepareIcon(Grindstone::TextureManager* textureManager, const char* path, G
 AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore), rootDirectory(Editor::Manager::GetFileManager().GetRootDirectory()) {
 	pathToRename = "";
 
-	std::filesystem::create_directories(ASSET_FOLDER_PATH);
-
 	auto textureManager = engineCore->textureManager;
 	PREPARE_ICON(folder);
 	PREPARE_ICON(file);
@@ -94,7 +92,7 @@ ImTextureID AssetBrowserPanel::GetIcon(const std::filesystem::directory_entry& d
 	size_t firstDot = path.find_last_of('.');
 	std::string firstDotExtension = path.substr(firstDot);
 	size_t secondDot = path.find_last_of('.', firstDot - 1);
-	std::string secondDotExtension = path.substr(secondDot);
+	std::string secondDotExtension = secondDot == std::string::npos ? "" : path.substr(secondDot);
 
 	if (firstDotExtension == ".glsl") {
 		return iconIds.shader;
@@ -465,7 +463,10 @@ void AssetBrowserPanel::RenderAssets() {
 	ImGui::BeginChildFrame(assetPanel, ImVec2(0, 0), ImGuiWindowFlags_NoBackground);
 	RenderCurrentDirectoryContextMenu();
 
-	if (ImGui::BeginTable("assetTable", columnCount)) {
+	if (currentDirectory->subdirectories.empty() && currentDirectory->files.empty()) {
+		ImGui::Text("This folder is empty.");
+	}
+	else if (ImGui::BeginTable("assetTable", columnCount)) {
 		RenderFolders();
 		RenderFiles();
 
@@ -489,7 +490,7 @@ void AssetBrowserPanel::RenderSidebar() {
 	ImGui::BeginChildFrame(sidebarId, ImVec2(0, 0), ImGuiWindowFlags_NoBackground);
 
 	if (rootDirectory.subdirectories.empty()) {
-		ImGui::Text("No items in directory.");
+		ImGui::Text("This folder is empty.");
 	}
 	else {
 		RenderSidebarSubdirectory(rootDirectory);
@@ -500,6 +501,10 @@ void AssetBrowserPanel::RenderSidebar() {
 
 void AssetBrowserPanel::RenderSidebarSubdirectory(Directory& directory) {
 	std::string path = directory.path.path().filename().string();
+
+	if (path.empty()) {
+		return;
+	}
 
 	ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow;
 	if (directory.subdirectories.empty()) {

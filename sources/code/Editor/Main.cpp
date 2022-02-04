@@ -14,8 +14,10 @@ int WINAPI WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 #else
 int main() {
 #endif
+	std::string projectPath = "D:/Work/InOrdinate/Grindstone/Sandbox/";
+
 	Editor::Manager& editorManager = Editor::Manager::GetInstance();
-	if (editorManager.Initialize()) {
+	if (editorManager.Initialize(projectPath.c_str())) {
 		editorManager.Run();
 	}
 

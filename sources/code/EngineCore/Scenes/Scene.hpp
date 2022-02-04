@@ -20,6 +20,7 @@ namespace Grindstone {
 			friend SceneLoaderJson;
 		public:
 			Scene() = default;
+			~Scene();
 			virtual Grindstone::ECS::Entity CreateEmptyEntity(entt::entity entityToUse = entt::null);
 			virtual Grindstone::ECS::Entity CreateEntity(entt::entity entityToUse = entt::null);
 			virtual void DestroyEntity(Grindstone::ECS::EntityHandle entityId);

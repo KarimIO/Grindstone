@@ -8,8 +8,8 @@ namespace Grindstone {
 		class SceneBuildSettings {
 		public:
 			SceneBuildSettings();
-			void load();
-			const char* getDefaultScene();
+			void Load();
+			const char* GetDefaultScene();
 		private:
 			std::vector<std::string> scenes;
 		};

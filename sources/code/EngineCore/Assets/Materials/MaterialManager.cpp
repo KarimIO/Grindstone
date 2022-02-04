@@ -30,17 +30,29 @@ void MaterialManager::RemoveRenderableFromMaterial(std::string uuid, ECS::Entity
 	auto materialInMap = materials.find(uuid);
 	if (materialInMap != materials.end()) {
 		auto material = &materialInMap->second;
-		for (
-			auto renderableIterator = material->renderables.begin();
-			renderableIterator != material->renderables.end();
-			++renderableIterator
-		) {
+
+		size_t size = material->renderables.size();
+		size_t numItemsToDelete = 0;
+		for (size_t i = 0; i < size - numItemsToDelete; ++i) {
+			auto& renderablePair = material->renderables[i];
 			if (
-				renderableIterator->first == entity && 
-				renderableIterator->second == renderable
+				renderablePair.first == entity && 
+				renderablePair.second == renderable
 			) {
-				material->renderables.erase(renderableIterator);
+				++numItemsToDelete;
+				material->renderables[i] = material->renderables[size - numItemsToDelete];
 			}
+		}
+
+		if (numItemsToDelete > 0) {
+			material->renderables.erase(material->renderables.end() - numItemsToDelete);
+		}
+
+		if (material->renderables.size() == 0) {
+			ShaderManager* shaderManager = EngineCore::GetInstance().shaderManager;
+			shaderManager->RemoveMaterialFromShader(material->shader, material);
+
+			materials.erase(materialInMap);
 		}
 	}
 }
@@ -164,7 +176,7 @@ void MaterialManager::CreateMaterialFromData(
 }
 
 Material& MaterialManager::CreateMaterialFromFile(BaseAssetRenderer* assetRenderer, const char* path) {
-	std::filesystem::path completePath = std::filesystem::path("../compiledAssets/") / path;
+	std::filesystem::path completePath = EngineCore::GetInstance().GetAssetPath(path);
 	if (!std::filesystem::exists(completePath)) {
 		throw std::runtime_error(completePath.string() + " material doesn't exist.");
 	}

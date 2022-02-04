@@ -4,13 +4,6 @@
 #include <filesystem>
 #include "Common/ResourcePipeline/MetaFile.hpp"
 
-const std::filesystem::path ASSET_FOLDER_PATH =
-#ifdef _WIN32
-	"..\\assets";
-#else
-	"../assets";
-#endif
-
 namespace Grindstone {
 	namespace Editor {
 		struct File {

@@ -30,10 +30,12 @@ namespace Grindstone {
 			Selection& GetSelection();
 			static FileManager& GetFileManager();
 			static EngineCore& GetEngineCore();
-			bool Initialize();
+			bool Initialize(const char* projectPath);
 			void InitializeQuitCommands();
 			~Manager();
 			void Run();
+			std::filesystem::path GetProjectPath();
+			std::filesystem::path GetAssetsPath();
 			bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
 			bool OnForceQuit(Grindstone::Events::BaseEvent* ev);
 			static void Print(LogSeverity logSeverity, const char* msg, ...);
@@ -41,6 +43,8 @@ namespace Grindstone {
 			bool LoadEngine();
 			bool SetupImguiEditor();
 		private:
+			std::filesystem::path projectPath;
+			std::filesystem::path assetsPath;
 			bool shouldClose = false;
 			EngineCore* engineCore = nullptr;
 			ImguiEditor::ImguiEditor* imguiEditor = nullptr;

@@ -1,5 +1,6 @@
 #include <iostream>
 #include "Core.hpp"
+#include "EngineCore/EngineCore.hpp"
 using namespace Grindstone;
 using namespace Grindstone::Audio;
 
@@ -58,6 +59,14 @@ Core::~Core() {
 			// Logger::PrintError("Could not close OpenAL Device.");
 		}
 	}
+}
+
+void Core::SetEngineCorePtr(EngineCore* engineCore) {
+	this->engineCore = engineCore;
+}
+
+std::filesystem::path Core::GetAssetPath(std::string filename) {
+	return engineCore->GetAssetPath(filename);
 }
 
 Core& Core::GetInstance() {

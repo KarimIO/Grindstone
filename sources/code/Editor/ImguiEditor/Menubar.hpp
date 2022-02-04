@@ -16,7 +16,18 @@ namespace Grindstone {
 				void RenderViewMenu();
 				void RenderConvertMenu();
 			private:
-				ImguiEditor* editor;
+				void OnNewFile();
+				void OnSaveFile();
+				void OnSaveAsFile();
+				void OnReloadFile();
+				void OnLoadFile();
+				void OnBuild();
+				void OnImportFile();
+				void OnProjectSettings();
+				void OnExit();
+
+				void SaveFile(const char* path);
+				ImguiEditor* editor = nullptr;
 			};
 		}
 	}

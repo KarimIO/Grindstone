@@ -30,11 +30,19 @@
 using namespace Grindstone;
 
 bool EngineCore::Initialize(CreateInfo& createInfo) {
+	projectPath = createInfo.projectPath;
+	assetsPath = std::string(createInfo.projectPath) + "/compiledAssets/";
 	eventDispatcher = new Events::Dispatcher();
 
 	Logger::Initialize("../log/output.log");
 	GRIND_PROFILE_BEGIN_SESSION("Loading", "../log/grind-profile-load.json");
 	Logger::Print("Initializing {0}...", createInfo.applicationTitle);
+
+	systemRegistrar = new ECS::SystemRegistrar();
+	SetupCoreSystems(systemRegistrar);
+	componentRegistrar = new ECS::ComponentRegistrar();
+	SetupCoreComponents(componentRegistrar);
+	sceneManager = new SceneManagement::SceneManager();
 
 	// Load core (Logging, ECS and Plugin Manager)
 	pluginManager = new Plugins::Manager(this);
@@ -68,18 +76,17 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	assetRendererManager->AddQueue("Unlit");
 	mesh3dRenderer->AddErrorMaterial();
 
-	systemRegistrar = new ECS::SystemRegistrar();
-	SetupCoreSystems(systemRegistrar);
-	componentRegistrar = new ECS::ComponentRegistrar();
-	SetupCoreComponents(componentRegistrar);
-	sceneManager = new SceneManagement::SceneManager();
-	pluginManager->SetupManagers();
+	pluginManager->LoadPluginList();
 
-	pluginManager->Load("PluginAudioOpenAL");
-	pluginManager->Load("PluginBulletPhysics");
-	pluginManager->Load("PluginScriptCSharp");
-
-	sceneManager->LoadDefaultScene();
+	if (createInfo.shouldLoadSceneFromDefaults) {
+		sceneManager->LoadDefaultScene();
+	}
+	else if (strcmp(createInfo.scenePath, "") == 0) {
+		sceneManager->AddEmptyScene("Untitled");
+	}
+	else {
+		sceneManager->LoadScene(createInfo.scenePath);
+	}
 
 	Logger::Print("{0} Initialized.", createInfo.applicationTitle);
 	GRIND_PROFILE_END_SESSION();
@@ -137,6 +144,11 @@ SceneManagement::SceneManager* EngineCore::GetSceneManager() {
 	return sceneManager;
 }
 
+
+Plugins::Manager* EngineCore::GetPluginManager() {
+	return pluginManager;
+}
+
 ECS::ComponentRegistrar* EngineCore::GetComponentRegistrar() {
 	return componentRegistrar;
 }
@@ -155,6 +167,18 @@ Events::Dispatcher* EngineCore::GetEventDispatcher() {
 
 BaseRenderer* EngineCore::CreateRenderer() {
 	return new DeferredRenderer();
+}
+
+std::filesystem::path EngineCore::GetProjectPath() {
+	return projectPath;
+}
+
+std::filesystem::path EngineCore::GetAssetsPath() {
+	return assetsPath;
+}
+
+std::filesystem::path EngineCore::GetAssetPath(std::string subPath) {
+	return assetsPath / subPath;
 }
 
 bool EngineCore::OnTryQuit(Grindstone::Events::BaseEvent* ev) {

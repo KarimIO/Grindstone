@@ -5,6 +5,7 @@
 #include <GL/gl3w.h>
 #include <GL/wglext.h>
 #include <Windowsx.h>
+#include <ShlObj_core.h>
 
 #include <iostream>
 #include <assert.h>
@@ -155,6 +156,42 @@ bool Win32Window::CopyStringToClipboard(const std::string& stringToCopy) {
 	GlobalFree(hg);
 
 	return true;
+}
+
+static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData) {
+	if (uMsg == BFFM_INITIALIZED) {
+		std::string tmp = (const char*)lpData;
+		std::cout << "path: " << tmp << std::endl;
+		SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpData);
+	}
+
+	return 0;
+}
+
+std::string Win32Window::BrowseFolder(std::string defaultPath) {
+	TCHAR path[MAX_PATH];
+
+	BROWSEINFO bi = { 0 };
+	bi.lpszTitle = ("Browse for folder...");
+	bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
+	bi.lpfn = BrowseCallbackProc;
+	bi.lParam = (LPARAM)defaultPath.c_str();
+
+	LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+
+	if (pidl != 0) {
+		SHGetPathFromIDList(pidl, path);
+
+		IMalloc* imalloc = 0;
+		if (SUCCEEDED(SHGetMalloc(&imalloc))) {
+			imalloc->Free(pidl);
+			imalloc->Release();
+		}
+
+		return path;
+	}
+
+	return "";
 }
 
 std::string Win32Window::OpenFileDialogue(const char* filter) {

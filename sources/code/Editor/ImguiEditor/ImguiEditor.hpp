@@ -7,6 +7,10 @@ namespace Grindstone {
 
 	namespace Editor {
 		namespace ImguiEditor {
+			namespace Preferences {
+				class PreferencesWindow;
+			}
+
 			class SceneHeirarchyPanel;
 			class ModelConverterModal;
 			class ImageConverterModal;
@@ -16,16 +20,20 @@ namespace Grindstone {
 			class ConsolePanel;
 			class SystemPanel;
 			class StatsPanel;
+			class BuildPopup;
 			class Menubar;
 			class ImguiInput;
 
 			class ImguiEditor {
 			public:
+				friend Menubar;
+
 				ImguiEditor(EngineCore* engineCore);
 				void Update();
 				void Render();
 				void ShowModelModal();
 				void ShowImageModal();
+				void StartBuild();
 				void ImportFile(const char* folderPathToImportTo = "");
 			private:
 				void RenderDockspace();
@@ -36,11 +44,13 @@ namespace Grindstone {
 				ModelConverterModal* modelConverterModal = nullptr;
 				SceneHeirarchyPanel* sceneHeirarchyPanel = nullptr;
 				AssetBrowserPanel* assetBrowserPanel = nullptr;
+				Preferences::PreferencesWindow* projectSettingsWindow = nullptr;
 				InspectorPanel* inspectorPanel = nullptr;
 				ViewportPanel* viewportPanel = nullptr;
 				ConsolePanel* consolePanel = nullptr;
 				SystemPanel* systemPanel = nullptr;
 				StatsPanel* statsPanel = nullptr;
+				BuildPopup* buildPopup = nullptr;
 				Menubar* menubar = nullptr;
 			};
 		}

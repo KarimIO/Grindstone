@@ -45,6 +45,7 @@ namespace Grindstone {
 		virtual void Close() = 0;
 
 		virtual bool CopyStringToClipboard(const std::string& stringToCopy) = 0;
+		virtual std::string BrowseFolder(std::string defaultPath) = 0;
 		virtual std::string OpenFileDialogue(const char* filter = "All Files (*.*)\0*.*\0") = 0;
 		virtual std::string SaveFileDialogue(const char* filter = "All Files (*.*)\0*.*\0") = 0;
 		virtual void ExplorePath(const char* path) = 0;

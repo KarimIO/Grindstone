@@ -18,7 +18,9 @@
 #include "InspectorPanel.hpp"
 #include "AssetBrowserPanel.hpp"
 #include "SceneHeirarchyPanel.hpp"
+#include "Preferences/PreferencesWindow.hpp"
 #include "StatsPanel.hpp"
+#include "BuildPopup.hpp"
 #include "Menubar.hpp"
 #include "ImguiInput.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
@@ -55,9 +57,11 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	imageConverterModal = new ImageConverterModal();
 	inspectorPanel = new InspectorPanel(engineCore);
 	assetBrowserPanel = new AssetBrowserPanel(engineCore, this);
+	projectSettingsWindow = new Preferences::PreferencesWindow();
 	viewportPanel = new ViewportPanel();
 	consolePanel = new ConsolePanel();
 	statsPanel = new StatsPanel();
+	buildPopup = new BuildPopup();
 	systemPanel = new SystemPanel(engineCore->GetSystemRegistrar());
 	menubar = new Menubar(this);
 }
@@ -88,8 +92,10 @@ void ImguiEditor::Render() {
 	consolePanel->Render();
 	assetBrowserPanel->Render();
 	systemPanel->Render();
-	inspectorPanel->Render();
 	statsPanel->Render();
+	inspectorPanel->Render();
+	buildPopup->Render();
+	projectSettingsWindow->Render();
 }
 
 void ImguiEditor::ShowModelModal() {
@@ -98,6 +104,10 @@ void ImguiEditor::ShowModelModal() {
 
 void ImguiEditor::ShowImageModal() {
 	imageConverterModal->Show();
+}
+
+void ImguiEditor::StartBuild() {
+	buildPopup->StartBuild();
 }
 
 void ImguiEditor::ImportFile(const char* folderPathToImportTo) {
