@@ -4,6 +4,7 @@
 
 #include "Commands/CommandList.hpp"
 #include "Importers/ImporterManager.hpp"
+#include "ScriptBuilder/CSharpBuildManager.hpp"
 #include "FileManager.hpp"
 #include "Selection.hpp"
 
@@ -28,6 +29,7 @@ namespace Grindstone {
 			Importers::ImporterManager& GetImporterManager();
 			CommandList& GetCommandList();
 			Selection& GetSelection();
+			ScriptBuilder::CSharpBuildManager& GetCSharpBuildManager();
 			static FileManager& GetFileManager();
 			static EngineCore& GetEngineCore();
 			bool Initialize(const char* projectPath);
@@ -48,6 +50,7 @@ namespace Grindstone {
 			bool shouldClose = false;
 			EngineCore* engineCore = nullptr;
 			ImguiEditor::ImguiEditor* imguiEditor = nullptr;
+			ScriptBuilder::CSharpBuildManager csharpBuildManager;
 			CommandList commandList;
 			Selection selection;
 			FileManager fileManager;

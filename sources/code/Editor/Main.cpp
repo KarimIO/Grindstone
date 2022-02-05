@@ -11,10 +11,15 @@ extern "C" {
 }
 
 int WINAPI WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PSTR lpCmdLine, _In_ INT nCmdShow) {
+	std::string projectPath = lpCmdLine;
 #else
-int main() {
+int main(int argc, char* argv[]) {
+	if (argc < 2) {
+		return 0;
+	}
+
+	std::string projectPath = argv[1];
 #endif
-	std::string projectPath = "D:/Work/InOrdinate/Grindstone/Sandbox/";
 
 	Editor::Manager& editorManager = Editor::Manager::GetInstance();
 	if (editorManager.Initialize(projectPath.c_str())) {

@@ -29,6 +29,10 @@ FileManager& Manager::GetFileManager() {
 	return GetInstance().fileManager;
 }
 
+ScriptBuilder::CSharpBuildManager& Manager::GetCSharpBuildManager() {
+	return csharpBuildManager;
+}
+
 EngineCore& Manager::GetEngineCore() {
 	return *GetInstance().engineCore;
 }
@@ -38,6 +42,7 @@ bool Manager::Initialize(const char* projectPath) {
 	assetsPath = this->projectPath / "assets";
 	if (!LoadEngine())			return false;
 	fileManager.Initialize(assetsPath);
+	csharpBuildManager.FinishInitialFileProcessing();
 	if (!SetupImguiEditor())	return false;
 	InitializeQuitCommands();
 

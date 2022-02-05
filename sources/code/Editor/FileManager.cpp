@@ -5,6 +5,7 @@
 #include "Common/Logging.hpp"
 #include "Common/ResourcePipeline/MetaFile.hpp"
 #include "Importers/ImporterManager.hpp"
+#include "ScriptBuilder/CSharpBuildManager.hpp"
 using namespace Grindstone;
 using namespace Grindstone::Editor;
 
@@ -71,9 +72,17 @@ void FileManager::CreateInitialFileStructure(Directory& directory, std::filesyst
 			CreateInitialFileStructure(*newDirectory, directoryIterator);
 		}
 		else {
-			if (directoryEntry.path().extension().string() != ".meta") {
+			const std::filesystem::path& filePath = directoryEntry.path();
+			std::string extension = filePath.extension().string();
+			if (extension != ".meta") {
+				if (extension == ".cs") {
+
+					auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
+					csharpBuildManager.AddFileInitial(filePath);
+				}
+
 				directory.files.emplace_back(new File(directoryEntry));
-				UpdateCompiledFileIfNecessary(directoryEntry.path());
+				UpdateCompiledFileIfNecessary(filePath);
 			}
 		}
 	}
