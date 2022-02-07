@@ -2,20 +2,19 @@
 
 #include <vector>
 #include <string>
-#include "BasePreferencesPage.hpp"
+#include "../Settings/BaseSettingsPage.hpp"
 
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
-			namespace Preferences {
-				class Plugins : public BasePage {
+			namespace Settings {
+				class Build : public BasePage {
 				public:
 					virtual void Open() override;
 					virtual void Render() override;
 				private:
 					void WriteFile();
-					std::vector<std::string> pluginList;
-					bool hasPluginsChanged = false;
+					std::vector<std::string> sceneList;
 				};
 			}
 		}

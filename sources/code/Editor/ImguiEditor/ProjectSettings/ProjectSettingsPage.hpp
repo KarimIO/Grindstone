@@ -3,8 +3,9 @@
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
-			enum class PreferencesPage {
+			enum class ProjectSettingsPage {
 				Build = 0,
+				Platforms,
 				Plugins
 			};
 		}

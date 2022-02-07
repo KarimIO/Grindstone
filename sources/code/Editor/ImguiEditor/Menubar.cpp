@@ -2,7 +2,8 @@
 #include <imgui.h>
 #include "ImguiEditor.hpp"
 
-#include "Preferences/PreferencesWindow.hpp"
+#include "UserSettings/UserSettingsWindow.hpp"
+#include "ProjectSettings/ProjectSettingsWindow.hpp"
 #include "Common/Window/WindowManager.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/EngineCore.hpp"
@@ -64,6 +65,9 @@ void Menubar::RenderFileMenu() {
 	}
 	if (ImGui::MenuItem("Import...", "Ctrl+I", false)) {
 		OnImportFile();
+	}
+	if (ImGui::MenuItem("User Settings...", "Ctrl+Shift+P", false)) {
+		OnUserSettings();
 	}
 	if (ImGui::MenuItem("Project Settings...", "Ctrl+P", false)) {
 		OnProjectSettings();
@@ -145,6 +149,10 @@ void Menubar::OnBuild() {
 
 void Menubar::OnImportFile() {
 	editor->ImportFile();
+}
+
+void Menubar::OnUserSettings() {
+	editor->userSettingsWindow->Open();
 }
 
 void Menubar::OnProjectSettings() {

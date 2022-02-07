@@ -7,8 +7,9 @@ namespace Grindstone {
 
 	namespace Editor {
 		namespace ImguiEditor {
-			namespace Preferences {
-				class PreferencesWindow;
+			namespace Settings {
+				class UserSettingsWindow;
+				class ProjectSettingsWindow;
 			}
 
 			class SceneHeirarchyPanel;
@@ -44,7 +45,8 @@ namespace Grindstone {
 				ModelConverterModal* modelConverterModal = nullptr;
 				SceneHeirarchyPanel* sceneHeirarchyPanel = nullptr;
 				AssetBrowserPanel* assetBrowserPanel = nullptr;
-				Preferences::PreferencesWindow* projectSettingsWindow = nullptr;
+				Settings::UserSettingsWindow* userSettingsWindow = nullptr;
+				Settings::ProjectSettingsWindow* projectSettingsWindow = nullptr;
 				InspectorPanel* inspectorPanel = nullptr;
 				ViewportPanel* viewportPanel = nullptr;
 				ConsolePanel* consolePanel = nullptr;

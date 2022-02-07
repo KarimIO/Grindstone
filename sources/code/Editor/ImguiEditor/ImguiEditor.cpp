@@ -18,7 +18,8 @@
 #include "InspectorPanel.hpp"
 #include "AssetBrowserPanel.hpp"
 #include "SceneHeirarchyPanel.hpp"
-#include "Preferences/PreferencesWindow.hpp"
+#include "UserSettings/UserSettingsWindow.hpp"
+#include "ProjectSettings/ProjectSettingsWindow.hpp"
 #include "StatsPanel.hpp"
 #include "BuildPopup.hpp"
 #include "Menubar.hpp"
@@ -57,7 +58,8 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	imageConverterModal = new ImageConverterModal();
 	inspectorPanel = new InspectorPanel(engineCore);
 	assetBrowserPanel = new AssetBrowserPanel(engineCore, this);
-	projectSettingsWindow = new Preferences::PreferencesWindow();
+	userSettingsWindow = new Settings::UserSettingsWindow();
+	projectSettingsWindow = new Settings::ProjectSettingsWindow();
 	viewportPanel = new ViewportPanel();
 	consolePanel = new ConsolePanel();
 	statsPanel = new StatsPanel();
@@ -95,6 +97,7 @@ void ImguiEditor::Render() {
 	statsPanel->Render();
 	inspectorPanel->Render();
 	buildPopup->Render();
+	userSettingsWindow->Render();
 	projectSettingsWindow->Render();
 }
 

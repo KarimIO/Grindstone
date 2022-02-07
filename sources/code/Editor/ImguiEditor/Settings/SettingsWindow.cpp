@@ -1,23 +1,13 @@
 #include <imgui.h>
-#include "BasePreferencesPage.hpp"
-#include "PreferencesWindow.hpp"
-#include "PreferencesSidebar.hpp"
-#include "Build.hpp"
-#include "Plugins.hpp"
-using namespace Grindstone::Editor::ImguiEditor::Preferences;
+#include "BaseSettingsPage.hpp"
+#include "SettingsWindow.hpp"
+using namespace Grindstone::Editor::ImguiEditor::Settings;
 
-PreferencesWindow::PreferencesWindow() {
-	preferencesSidebar = new Sidebar(this);
-
-	pages.push_back(new Build());
-	pages.push_back(new Plugins());
-}
-
-void PreferencesWindow::Open() {
+void SettingsWindow::Open() {
 	isOpen = true;
 }
 
-void PreferencesWindow::OpenPage(PreferencesPage preferencesPage) {
+void SettingsWindow::OpenPage(int preferencesPage) {
 	int preferencesPageIndex = (int)preferencesPage;
 	if (preferencesPageIndex < 0 || preferencesPageIndex >= pages.size()) {
 		return;
@@ -27,22 +17,22 @@ void PreferencesWindow::OpenPage(PreferencesPage preferencesPage) {
 	pages[preferenceIndex]->Open();
 }
 
-void PreferencesWindow::Render() {
+void SettingsWindow::Render() {
 	if (!isOpen) {
 		return;
 	}
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2());
 
-	if (ImGui::Begin("Preferences", &isOpen, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoScrollbar)) {
+	if (ImGui::Begin(settingsTitle.c_str(), &isOpen, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoScrollbar)) {
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
 
-		if (ImGui::BeginTable("preferencesSplit", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX)) {
+		if (ImGui::BeginTable("SettingsSplit", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX)) {
 			ImGui::TableNextColumn();
-			preferencesSidebar->Render();
+			RenderSideBar();
 			ImGui::TableNextColumn();
-			RenderPreferencesPage();
+			RenderSettingsPage();
 
 			ImGui::EndTable();
 		}
@@ -54,15 +44,15 @@ void PreferencesWindow::Render() {
 	ImGui::PopStyleVar();
 }
 
-void PreferencesWindow::RenderPreferencesPage() {
-	auto assetTopBar = ImGui::GetID("#preferencesWindow");
+void SettingsWindow::RenderSettingsPage() {
+	auto assetTopBar = ImGui::GetID("#SettingsWindow");
 	ImGui::BeginChildFrame(assetTopBar, ImVec2{}, ImGuiWindowFlags_NoBackground);
 	float availWidth = ImGui::GetContentRegionAvailWidth();
 	ImVec2 size = ImVec2{ availWidth , 0 };
 
 	if (preferenceIndex < 0 || preferenceIndex >= pages.size()) {
 		if (pages.size() == 0) {
-			ImGui::Text("No valid preferences file");
+			ImGui::Text("No valid settings page.");
 			ImGui::EndChildFrame();
 		}
 		else {

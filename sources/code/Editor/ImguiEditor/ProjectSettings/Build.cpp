@@ -5,7 +5,8 @@
 #include "Build.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Editor/EditorManager.hpp"
-using namespace Grindstone::Editor::ImguiEditor::Preferences;
+#include "Editor/ImguiEditor/Components/ListEditor.hpp"
+using namespace Grindstone::Editor::ImguiEditor::Settings;
 
 void Build::Open() {
 	sceneList.clear();
@@ -37,25 +38,7 @@ void Build::Render() {
 	ImGui::Separator();
 
 	ImGui::Text("Included Scenes:");
-	if (ImGui::Button("+ Add Item")) {
-		sceneList.emplace_back();
-	}
-
-	int itemToRemove = -1;
-	for (auto i = 0; i < sceneList.size(); ++i) {
-		std::string buttonLabel = std::string("-##PrefSceneRemBtn") + std::to_string(i);
-		if (ImGui::Button(buttonLabel.c_str())) {
-			itemToRemove = i;
-		}
-
-		ImGui::SameLine();
-		std::string label = std::string("##PrefSceneField") + std::to_string(i);
-		ImGui::InputText(label.c_str(), &sceneList[i]);
-	}
-
-	if (itemToRemove > -1) {
-		sceneList.erase(sceneList.begin() + itemToRemove);
-	}
+	Components::ListEditor(sceneList, "PrefScene");
 
 	if (ImGui::Button("Save")) {
 		WriteFile();

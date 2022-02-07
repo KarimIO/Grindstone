@@ -1,26 +1,25 @@
 #pragma once
 
 #include <vector>
-#include "PreferencesPage.hpp"
+#include <string>
 
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
-			namespace Preferences {
-				class Sidebar;
+			namespace Settings {
 				class BasePage;
 
-				class PreferencesWindow {
+				class SettingsWindow {
 				public:
-					PreferencesWindow();
 					void Open();
-					void OpenPage(PreferencesPage preferencesPage);
+					void OpenPage(int preferencesPage);
 					void Render();
-					void RenderPreferencesPage();
-				private:
+					void RenderSettingsPage();
+					virtual void RenderSideBar() = 0;
+				protected:
 					bool isOpen = false;
 					int preferenceIndex = 0;
-					Sidebar* preferencesSidebar;
+					std::string settingsTitle;
 					std::vector<BasePage*> pages;
 				};
 			}

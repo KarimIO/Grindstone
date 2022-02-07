@@ -4,13 +4,14 @@
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/PluginSystem/Manager.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
+#include "Editor/ImguiEditor/Components/ListEditor.hpp"
 
 #include "Editor/EditorManager.hpp"
 
 #include "Plugins.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
-void Preferences::Plugins::Open() {
+void Settings::Plugins::Open() {
 	pluginList.clear();
 	std::filesystem::path pluginListFile = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings/pluginsManifest.txt";
 	auto pluginListFilePath = pluginListFile.string();
@@ -35,29 +36,11 @@ void Preferences::Plugins::Open() {
 	}
 }
 
-void Preferences::Plugins::Render() {
+void Settings::Plugins::Render() {
 	ImGui::Text("Plugins Page");
 	ImGui::Separator();
 
-	if (ImGui::Button("+ Add Item")) {
-		pluginList.emplace_back();
-	}
-
-	int itemToRemove = -1;
-	for (auto i = 0; i < pluginList.size(); ++i) {
-		std::string buttonLabel = std::string("-##PrefPluginRemBtn") + std::to_string(i);
-		if (ImGui::Button(buttonLabel.c_str())) {
-			itemToRemove = i;
-		}
-
-		ImGui::SameLine();
-		std::string label = std::string("##PrefPluginField") + std::to_string(i);
-		ImGui::InputText(label.c_str(), &pluginList[i]);
-	}
-
-	if (itemToRemove > -1) {
-		pluginList.erase(pluginList.begin() + itemToRemove);
-	}
+	Components::ListEditor(pluginList, "PluginManifest");
 
 	if (ImGui::Button("Save")) {
 		hasPluginsChanged = true;
@@ -70,7 +53,7 @@ void Preferences::Plugins::Render() {
 	}
 }
 
-void Preferences::Plugins::WriteFile() {
+void Settings::Plugins::WriteFile() {
 	std::string contents = "";
 	for (auto i = 0; i < pluginList.size() - 1; ++i) {
 		contents += pluginList[i] + "\n";

@@ -49,12 +49,15 @@ void CSharpProjectBuilder::OutputFile(std::string& outputContent) {
 }
 	
 void CSharpProjectBuilder::WriteProjectInfo(std::string& output) {
+	std::string dotNetVersion = "v4.7.2";
+
 	output += "\t<PropertyGroup>\n"
 		"\t\t<AssemblyName>" + assemblyName + "</AssemblyName>\n"
 		"\t\t<OutputType>Library</OutputType>\n"
 		"\t\t<ProjectGuid>{" + guid + "}</ProjectGuid>\n"
-		"\t\t<BaseDirectory>.</BaseDirectory>\n"
+		"\t\t<BaseDirectory>.\\assets</BaseDirectory>\n"
 		"\t\t<OutputPath>bin\\</OutputPath>\n"
+		"\t\t<TargetFrameworkVersion>" + dotNetVersion + "</TargetFrameworkVersion>\n"
 		"\t</PropertyGroup>\n";
 }
 

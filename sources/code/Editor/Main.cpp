@@ -21,6 +21,10 @@ int main(int argc, char* argv[]) {
 	std::string projectPath = argv[1];
 #endif
 
+	if (projectPath.empty()) {
+		return 0;
+	}
+
 	Editor::Manager& editorManager = Editor::Manager::GetInstance();
 	if (editorManager.Initialize(projectPath.c_str())) {
 		editorManager.Run();

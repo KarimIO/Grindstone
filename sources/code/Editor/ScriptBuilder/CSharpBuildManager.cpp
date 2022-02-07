@@ -56,11 +56,12 @@ void CSharpBuildManager::BuildProject() {
 	std::string filename = "Application-CSharp.csproj";
 	auto outputFilePath = Editor::Manager::GetInstance().GetProjectPath() / filename;
 	std::string path = outputFilePath.string();
+	std::string msBuildPath = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Msbuild\\Current\\Bin\\MSBuild.exe";
 
 	ShellExecute(
 		NULL,
 		NULL,
-		"msbuild",
+		msBuildPath.c_str(),
 		path.c_str(),
 		NULL,
 		SW_HIDE

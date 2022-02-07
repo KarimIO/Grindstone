@@ -3,7 +3,7 @@
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
-			namespace Preferences {
+			namespace Settings {
 				class BasePage {
 				public:
 					virtual void Open() = 0;

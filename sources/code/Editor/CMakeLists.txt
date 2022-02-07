@@ -27,10 +27,25 @@ file(GLOB_RECURSE HEADER_IMPORTERS "${EDITOR_DIR}/Importers/*.hpp")
 source_group("Importers\\Source Files" FILES ${SOURCE_IMPORTERS})
 source_group("Importers\\Header Files" FILES ${HEADER_IMPORTERS})
 
-file(GLOB_RECURSE SOURCE_IMGUI_PREFS_EDITOR "${EDITOR_DIR}/ImguiEditor/Preferences/*.cpp")
-file(GLOB_RECURSE HEADER_IMGUI_PREFS_EDITOR "${EDITOR_DIR}/ImguiEditor/Preferences/*.hpp")
-source_group("Imgui Editor\\Preferences\\Source Files" FILES ${SOURCE_IMGUI_PREFS_EDITOR})
-source_group("Imgui Editor\\Preferences\\Header Files" FILES ${HEADER_IMGUI_PREFS_EDITOR})
+file(GLOB_RECURSE SOURCE_IMGUI_PREFS_EDITOR "${EDITOR_DIR}/ImguiEditor/Settings/*.cpp")
+file(GLOB_RECURSE HEADER_IMGUI_PREFS_EDITOR "${EDITOR_DIR}/ImguiEditor/Settings/*.hpp")
+source_group("Imgui Editor\\Settings\\Source Files" FILES ${SOURCE_IMGUI_PREFS_EDITOR})
+source_group("Imgui Editor\\Settings\\Header Files" FILES ${HEADER_IMGUI_PREFS_EDITOR})
+
+file(GLOB_RECURSE SOURCE_IMGUI_PREFS_USER_EDITOR "${EDITOR_DIR}/ImguiEditor/UserSettings/*.cpp")
+file(GLOB_RECURSE HEADER_IMGUI_PREFS_USER_EDITOR "${EDITOR_DIR}/ImguiEditor/UserSettings/*.hpp")
+source_group("Imgui Editor\\Settings\\User\\Source Files" FILES ${SOURCE_IMGUI_PREFS_USER_EDITOR})
+source_group("Imgui Editor\\Settings\\User\\Header Files" FILES ${HEADER_IMGUI_PREFS_USER_EDITOR})
+
+file(GLOB_RECURSE SOURCE_IMGUI_PREFS_PROJECT_EDITOR "${EDITOR_DIR}/ImguiEditor/ProjectSettings/*.cpp")
+file(GLOB_RECURSE HEADER_IMGUI_PREFS_PROJECT_EDITOR "${EDITOR_DIR}/ImguiEditor/ProjectSettings/*.hpp")
+source_group("Imgui Editor\\Settings\\Project\\Source Files" FILES ${SOURCE_IMGUI_PREFS_PROJECT_EDITOR})
+source_group("Imgui Editor\\Settings\\Project\\Header Files" FILES ${HEADER_IMGUI_PREFS_PROJECT_EDITOR})
+
+file(GLOB_RECURSE SOURCE_IMGUI_COMPONENtS_EDITOR "${EDITOR_DIR}/ImguiEditor/Components/*.cpp")
+file(GLOB_RECURSE HEADER_IMGUI_COMPONENtS_EDITOR "${EDITOR_DIR}/ImguiEditor/Components/*.hpp")
+source_group("Imgui Editor\\Components\\Source Files" FILES ${SOURCE_IMGUI_COMPONENtS_EDITOR})
+source_group("Imgui Editor\\Components\\Header Files" FILES ${HEADER_IMGUI_COMPONENtS_EDITOR})
 
 file(GLOB_RECURSE SOURCE_IMGUI_EDITOR "${EDITOR_DIR}/ImguiEditor/*.cpp")
 file(GLOB_RECURSE HEADER_IMGUI_EDITOR "${EDITOR_DIR}/ImguiEditor/*.hpp")
@@ -41,19 +56,25 @@ source_group("Imgui Editor\\Imgui\\Source Files" FILES ${SOURCES_IMGUI})
 
 set(EDITOR_SOURCES
 	${SOURCE_MAIN}
-	${SOURCE_IMGUI_EDITOR}
 	${SOURCE_IMPORTERS}
 	${SOURCE_EDITOR_COMMANDS}
 	${SOURCE_IMGUI_PREFS_EDITOR}
+	${SOURCE_IMGUI_PREFS_USER_EDITOR}
+	${SOURCE_IMGUI_PREFS_PROJECT_EDITOR}
+	${SOURCE_IMGUI_COMPONENTS_EDITOR}
 	${SOURCE_SCRIPT_BUILDER_EDITOR}
+	${SOURCE_IMGUI_EDITOR}
 )
 
 set(EDITOR_HEADERS
-	${HEADER_IMGUI_EDITOR}
-	${HEADER_IMPORTERS}
-	${HEADER_EDITOR_COMMANDS}
-	${HEADER_IMGUI_PREFS_EDITOR}
+${HEADER_IMPORTERS}
+${HEADER_EDITOR_COMMANDS}
+${HEADER_IMGUI_PREFS_EDITOR}
+${HEADER_IMGUI_PREFS_USER_EDITOR}
+	${HEADER_IMGUI_PREFS_PROJECT_EDITOR}
+	${HEADER_IMGUI_COMPONENTS_EDITOR}
 	${HEADER_SCRIPT_BUILDER_EDITOR}
+	${HEADER_IMGUI_EDITOR}
 )
 
 find_package(Assimp CONFIG REQUIRED)

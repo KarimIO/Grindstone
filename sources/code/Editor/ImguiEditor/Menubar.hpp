@@ -23,6 +23,7 @@ namespace Grindstone {
 				void OnLoadFile();
 				void OnBuild();
 				void OnImportFile();
+				void OnUserSettings();
 				void OnProjectSettings();
 				void OnExit();
 
