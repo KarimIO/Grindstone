@@ -4,9 +4,10 @@
 	"dependencies": [
 		"assimp",
 		"bullet3",
+		"drlibs",
 		"entt",
 		"efsw",
-		"drlibs",
+		"fmt",
 		"glslang",
 		"gl3w",
 		"glm",

@@ -51,21 +51,97 @@ void CSharpBuildManager::OnFileModified(const std::filesystem::path& path) {
 	BuildProject();
 }
 
+HANDLE g_hChildStd_OUT_Rd = NULL;
+HANDLE g_hChildStd_OUT_Wr = NULL;
+
+void ReadFromPipe(void) {
+	constexpr int BUFSIZE = 4096;
+
+	DWORD dwRead;
+	CHAR chBuf[BUFSIZE];
+	BOOL bSuccess = FALSE;
+	HANDLE hParentStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	std::string content = "";
+	for (;;)
+	{
+		std::memset(chBuf, 0, sizeof(chBuf));
+		bSuccess = ReadFile(g_hChildStd_OUT_Rd, chBuf, BUFSIZE, &dwRead, NULL);
+		if (!bSuccess || dwRead == 0) break;
+
+		content += chBuf;
+	}
+
+	Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Info, "Error building C# project:\n{}", content.c_str());
+}
+
+void CreateChildProcess()
+// Create a child process that uses the previously created pipes for STDIN and STDOUT.
+{
+	std::string filename = "Application-CSharp.csproj";
+	auto outputFilePath = Grindstone::Editor::Manager::GetInstance().GetProjectPath() / filename;
+	std::string path = outputFilePath.string();
+	std::string msBuildPath = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Msbuild\\Current\\Bin\\MSBuild.exe";
+
+	std::string command = msBuildPath + " " + path;
+
+	PROCESS_INFORMATION piProcInfo;
+	STARTUPINFO siStartInfo;
+	BOOL bSuccess = FALSE;
+
+	// Set up members of the PROCESS_INFORMATION structure. 
+
+	ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
+
+	// Set up members of the STARTUPINFO structure. 
+	// This structure specifies the STDIN and STDOUT handles for redirection.
+
+	ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
+	siStartInfo.cb = sizeof(STARTUPINFO);
+	siStartInfo.hStdError = g_hChildStd_OUT_Wr;
+	siStartInfo.hStdOutput = g_hChildStd_OUT_Wr;
+	siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
+
+	// Create the child process. 
+
+	bSuccess = CreateProcess(NULL,
+		(LPSTR)command.c_str(),     // command line 
+		NULL,          // process security attributes 
+		NULL,          // primary thread security attributes 
+		TRUE,          // handles are inherited 
+		CREATE_NO_WINDOW,             // creation flags 
+		NULL,          // use parent's environment 
+		NULL,          // use parent's current directory 
+		&siStartInfo,  // STARTUPINFO pointer 
+		&piProcInfo);  // receives PROCESS_INFORMATION 
+
+	 // If an error occurs, exit the application. 
+	if (!bSuccess)
+		return;
+	else
+	{
+		CloseHandle(piProcInfo.hProcess);
+		CloseHandle(piProcInfo.hThread);
+
+		CloseHandle(g_hChildStd_OUT_Wr);
+	}
+}
+
 void CSharpBuildManager::BuildProject() {
 #ifdef _MSC_VER
-	std::string filename = "Application-CSharp.csproj";
-	auto outputFilePath = Editor::Manager::GetInstance().GetProjectPath() / filename;
-	std::string path = outputFilePath.string();
-	std::string msBuildPath = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Msbuild\\Current\\Bin\\MSBuild.exe";
+	SECURITY_ATTRIBUTES saAttr;
+	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+	saAttr.bInheritHandle = TRUE;
+	saAttr.lpSecurityDescriptor = NULL;
 
-	ShellExecute(
-		NULL,
-		NULL,
-		msBuildPath.c_str(),
-		path.c_str(),
-		NULL,
-		SW_HIDE
-	);
+	if (!CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0))
+		return;
+
+	if (!SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0))
+		return;
+
+	CreateChildProcess();
+	ReadFromPipe();
 #endif
 }
 

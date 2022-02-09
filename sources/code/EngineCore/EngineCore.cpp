@@ -181,6 +181,10 @@ std::filesystem::path EngineCore::GetAssetPath(std::string subPath) {
 	return assetsPath / subPath;
 }
 
+void EngineCore::Print(LogSeverity logSeverity, const char* str) {
+	Logger::Print(logSeverity, str);
+}
+
 bool EngineCore::OnTryQuit(Grindstone::Events::BaseEvent* ev) {
 	auto castedEv = (Grindstone::Events::WindowTryQuitEvent*)ev;
 	shouldClose = true;
@@ -208,11 +212,4 @@ void EngineCore::CalculateDeltaTime() {
 
 double EngineCore::GetDeltaTime() {
 	return deltaTime;
-}
-
-void EngineCore::Print(LogSeverity logSeverity, const char* textFormat, ...) {
-	va_list args;
-	va_start(args, textFormat);
-	Logger::Print(logSeverity, textFormat, args);
-	va_end(args);
 }

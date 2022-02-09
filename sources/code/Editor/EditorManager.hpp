@@ -1,7 +1,9 @@
 #pragma once
 
+#include <fmt/format.h>
 #include "Common/Logging.hpp"
 
+#include "EngineCore/EngineCore.hpp"
 #include "Commands/CommandList.hpp"
 #include "Importers/ImporterManager.hpp"
 #include "ScriptBuilder/CSharpBuildManager.hpp"
@@ -9,8 +11,6 @@
 #include "Selection.hpp"
 
 namespace Grindstone {
-	class EngineCore;
-
 	namespace Events {
 		struct BaseEvent;
 	}
@@ -40,7 +40,11 @@ namespace Grindstone {
 			std::filesystem::path GetAssetsPath();
 			bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
 			bool OnForceQuit(Grindstone::Events::BaseEvent* ev);
-			static void Print(LogSeverity logSeverity, const char* msg, ...);
+			template<typename... Args>
+			static void Print(LogSeverity logSeverity, fmt::format_string<Args...> fmt, Args &&...args) {
+				std::string outStr = fmt::format(fmt, std::forward<Args>(args)...);
+				GetInstance().engineCore->Print(logSeverity, outStr.c_str());
+			}
 		private:
 			bool LoadEngine();
 			bool SetupImguiEditor();

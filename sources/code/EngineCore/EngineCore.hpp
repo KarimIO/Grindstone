@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fmt/format.h>
 #include <filesystem>
 #include <vector>
 #include <chrono>
@@ -77,7 +78,12 @@ namespace Grindstone {
 		virtual std::filesystem::path GetAssetsPath();
 		virtual std::filesystem::path GetAssetPath(std::string subPath);
 
-		virtual void Print(LogSeverity logSeverity, const char* msg, ...);
+		template<typename... Args>
+		void Print(LogSeverity logSeverity, fmt::format_string<Args...> fmt, Args &&...args) {
+			GetInstance().engineCore->Print(logSeverity, textFormat, args);
+			va_end(args);
+		}
+		virtual void Print(LogSeverity logSeverity, const char* str);
 
 		virtual bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
 		virtual bool OnForceQuit(Grindstone::Events::BaseEvent* ev);

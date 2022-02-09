@@ -90,13 +90,6 @@ bool Manager::OnForceQuit(Grindstone::Events::BaseEvent* ev) {
 	return false;
 }
 
-void Manager::Print(LogSeverity logSeverity, const char* textFormat, ...) {
-	va_list args;
-	va_start(args, textFormat);
-	GetInstance().engineCore->Print(logSeverity, textFormat, args);
-	va_end(args);
-}
-
 using CreateEngineFunction = EngineCore*(EngineCore::CreateInfo&);
 bool Manager::LoadEngine() {
 	Grindstone::Utilities::Modules::Handle handle;

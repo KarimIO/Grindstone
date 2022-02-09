@@ -125,13 +125,14 @@ target_compile_features(EngineCore PRIVATE cxx_std_17)
 target_compile_definitions(EngineCore PUBLIC ENGINE_CORE NOMINMAX)
 
 find_package(OpenAL CONFIG REQUIRED)
-find_path(DRLIBS_INCLUDE_DIRS "dr_flac.h")
+find_package(fmt CONFIG REQUIRED)
 
-target_include_directories(EngineCore PUBLIC ../ ${DRLIBS_INCLUDE_DIRS})
+target_include_directories(EngineCore PUBLIC ../ ${FMT_INCLUDE_DIRS})
 
 target_link_libraries(EngineCore
 	Rpcrt4.lib
 	rapidjson
+	fmt::fmt
 	OpenAL::OpenAL
 	spdlog::spdlog
 	spdlog::spdlog_header_only

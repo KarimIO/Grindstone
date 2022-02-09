@@ -105,6 +105,23 @@ void Logger::Initialize(std::string path) {
 	logger->flush_on(spdlog::level::trace);
 }
 
+void Logger::Print(LogSeverity logSeverity, const char* str) {
+	switch (logSeverity) {
+	case LogSeverity::Info:
+		logger->info(str);
+		break;
+	case LogSeverity::Trace:
+		logger->trace(str);
+		break;
+	case LogSeverity::Warning:
+		logger->warn(str);
+		break;
+	case LogSeverity::Error:
+		logger->error(str);
+		break;
+	}
+}
+
 Logger::~Logger() {
 	logger->flush();
 }

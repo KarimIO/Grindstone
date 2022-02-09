@@ -67,10 +67,10 @@ set(EDITOR_SOURCES
 )
 
 set(EDITOR_HEADERS
-${HEADER_IMPORTERS}
-${HEADER_EDITOR_COMMANDS}
-${HEADER_IMGUI_PREFS_EDITOR}
-${HEADER_IMGUI_PREFS_USER_EDITOR}
+	${HEADER_IMPORTERS}
+	${HEADER_EDITOR_COMMANDS}
+	${HEADER_IMGUI_PREFS_EDITOR}
+	${HEADER_IMGUI_PREFS_USER_EDITOR}
 	${HEADER_IMGUI_PREFS_PROJECT_EDITOR}
 	${HEADER_IMGUI_COMPONENTS_EDITOR}
 	${HEADER_SCRIPT_BUILDER_EDITOR}
@@ -83,6 +83,7 @@ find_package(gl3w CONFIG REQUIRED)
 find_package(glslang CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_path(STB_INCLUDE_DIRS "stb.h")
+find_path(FMT_INCLUDE_DIRS "fmt/format.h")
 
 find_package(spirv_cross_core CONFIG REQUIRED)
 find_package(spirv_cross_glsl CONFIG REQUIRED)
@@ -96,7 +97,7 @@ add_executable(Editor WIN32 ${EDITOR_HEADERS} ${EDITOR_SOURCES})
 
 set_property(TARGET Editor PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${BUILD_DIRECTORY})
 target_compile_definitions(Editor PUBLIC NOMINMAX)
-target_include_directories(Editor PUBLIC ${CODE_DIR})
+target_include_directories(Editor PUBLIC ${CODE_DIR} ${STB_INCLUDE_DIRS} ${FMT_INCLUDE_DIRS})
 
 find_library(SHADERC_LIBRARY
 	NAMES
@@ -150,10 +151,13 @@ find_library(SPIRV_Tools_Opt
 		"local/lib"
 )
 
+find_package(fmt CONFIG REQUIRED)
+
 target_link_libraries(
 	Editor
 	Rpcrt4.lib
 	efsw::efsw
+	fmt::fmt
 	spirv-cross-c spirv-cross-core spirv-cross-cpp spirv-cross-glsl spirv-cross-reflect
 	HLSL SPIRV glslang OGLCompiler
 	${SHADERC_LIBRARY} ${SHADERC_UTIL_LIBRARY} ${SPIRV_Tools} ${SPIRV_Tools_Opt}

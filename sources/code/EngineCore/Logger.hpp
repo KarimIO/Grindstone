@@ -9,6 +9,7 @@ namespace Grindstone {
 	class Logger {
 	public:
 		static void Initialize(std::string path);
+		static void Print(LogSeverity logSeverity, const char* str);
 
 		template<typename... Args>
 		static void Print(const char* fmt, const Args &... args) {
