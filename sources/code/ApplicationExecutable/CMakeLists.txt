@@ -12,5 +12,6 @@ set_property(TARGET ApplicationExecutable PROPERTY VS_DEBUGGER_WORKING_DIRECTORY
 target_include_directories(ApplicationExecutable
     PUBLIC ../
 )
+find_package(fmt CONFIG REQUIRED)
 
-target_link_libraries(ApplicationExecutable ${CMAKE_DL_LIBS})
+target_link_libraries(ApplicationExecutable ${CMAKE_DL_LIBS} fmt::fmt)

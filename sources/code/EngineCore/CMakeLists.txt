@@ -127,7 +127,7 @@ target_compile_definitions(EngineCore PUBLIC ENGINE_CORE NOMINMAX)
 find_package(OpenAL CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 
-target_include_directories(EngineCore PUBLIC ../ ${FMT_INCLUDE_DIRS})
+target_include_directories(EngineCore PUBLIC ../)
 
 target_link_libraries(EngineCore
 	Rpcrt4.lib

@@ -1,5 +1,6 @@
 #include "CSharpManager.hpp"
 
+#include "EngineCore/EngineCore.hpp"
 #include "Components/ScriptComponent.hpp"
 
 #include <mono/jit/jit.h>
@@ -20,23 +21,22 @@ void CSharpManager::CallFnInAllComponents(entt::registry& registry) { \
 	registry.view<ScriptComponent>().each(fnCall); \
 }
 
-CSharpManager::CSharpManager() {
-	Initialize();
-}
-
 CSharpManager& CSharpManager::GetInstance() {
 	static CSharpManager instance;
 	return instance;
 }
 
-void CSharpManager::Initialize() {
+void CSharpManager::Initialize(EngineCore* engineCore) {
+	this->engineCore = engineCore;
+
 	mono_set_dirs(
 		"C:\\Program Files\\Mono\\lib",
 		"C:\\Program Files\\Mono\\etc"
 	);
 	scriptDomain = mono_jit_init_version("grindstone_mono_domain", "v4.0.30319");
 
-	LoadAssembly("../build/CSharpModule.dll");
+	auto dllPath = (engineCore->GetBinaryPath() / "Application-CSharp.dll").string();
+	LoadAssembly(dllPath.c_str());
 }
 
 void CSharpManager::LoadAssembly(const char* path) {
@@ -78,6 +78,7 @@ ScriptClass* CSharpManager::SetupClass(const char* assemblyName, const char* nam
 	methods.onAttachComponent = mono_class_get_method_from_name(monoClass, "OnAttachComponent", 0);
 	methods.onStart = mono_class_get_method_from_name(monoClass, "OnStart", 0);
 	methods.onUpdate = mono_class_get_method_from_name(monoClass, "OnUpdate", 0);
+	methods.onEditorUpdate = mono_class_get_method_from_name(monoClass, "OnEditorUpdate", 0);
 	methods.onDelete = mono_class_get_method_from_name(monoClass, "OnDelete", 0);
 
 	// TODO: Get Member Variables
@@ -98,6 +99,7 @@ FUNCTION_CALL_IMPL(CallConstructorInComponent, constructor)
 FUNCTION_CALL_IMPL(CallAttachComponentInComponent, onAttachComponent)
 FUNCTION_CALL_LIST_IMPL(CallStartInAllComponents, CallStartInComponent, onStart)
 FUNCTION_CALL_LIST_IMPL(CallUpdateInAllComponents, CallUpdateInComponent, onUpdate)
+FUNCTION_CALL_LIST_IMPL(CallEditorUpdateInAllComponents, CallEditorUpdateInComponent, onEditorUpdate)
 FUNCTION_CALL_LIST_IMPL(CallDeleteInAllComponents, CallDeleteInComponent, onDelete)
 
 void CSharpManager::CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset) {

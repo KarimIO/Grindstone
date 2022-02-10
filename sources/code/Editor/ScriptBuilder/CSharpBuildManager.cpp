@@ -104,7 +104,8 @@ void CreateChildProcess()
 
 	// Create the child process. 
 
-	bSuccess = CreateProcess(NULL,
+	bSuccess = CreateProcess(
+		NULL,
 		(LPSTR)command.c_str(),     // command line 
 		NULL,          // process security attributes 
 		NULL,          // primary thread security attributes 
@@ -113,7 +114,8 @@ void CreateChildProcess()
 		NULL,          // use parent's environment 
 		NULL,          // use parent's current directory 
 		&siStartInfo,  // STARTUPINFO pointer 
-		&piProcInfo);  // receives PROCESS_INFORMATION 
+		&piProcInfo
+	);  // receives PROCESS_INFORMATION 
 
 	 // If an error occurs, exit the application. 
 	if (!bSuccess)

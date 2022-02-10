@@ -10,6 +10,10 @@ Plugins::Interface::Interface(Manager* manager)
 	: manager(manager) {
 }
 
+void Plugins::Interface::Print(LogSeverity logSeverity, const char* message) {
+	Logger::Print(logSeverity, message);
+}
+
 EngineCore* Plugins::Interface::GetEngineCore() {
 	return manager->engineCore;
 }

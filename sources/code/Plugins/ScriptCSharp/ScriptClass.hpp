@@ -13,6 +13,7 @@ namespace Grindstone {
 					MonoMethod* onAttachComponent = nullptr;
 					MonoMethod* onStart = nullptr;
 					MonoMethod* onUpdate = nullptr;
+					MonoMethod* onEditorUpdate = nullptr;
 					MonoMethod* onDelete = nullptr;
 				} methods;
 			};

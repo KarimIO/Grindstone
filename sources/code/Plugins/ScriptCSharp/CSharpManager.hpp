@@ -6,6 +6,8 @@
 #include "mono/metadata/object-forward.h"
 
 namespace Grindstone {
+	class EngineCore;
+
 	namespace Scripting {
 		namespace CSharp {
 			struct ScriptComponent;
@@ -13,13 +15,13 @@ namespace Grindstone {
 
 			class CSharpManager {
 			public:
-				CSharpManager();
 				static CSharpManager& GetInstance();
-				virtual void Initialize();
+				virtual void Initialize(EngineCore* engineCore);
 				virtual void LoadAssembly(const char* path);
 				virtual void SetupComponent(ScriptComponent& component);
 				virtual void CallStartInAllComponents(entt::registry& registry);
 				virtual void CallUpdateInAllComponents(entt::registry& registry);
+				virtual void CallEditorUpdateInAllComponents(entt::registry& registry);
 				virtual void CallDeleteInAllComponents(entt::registry& registry);
 			private:
 				void CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset);
@@ -27,6 +29,7 @@ namespace Grindstone {
 				void CallAttachComponentInComponent(ScriptComponent& scriptComponent);
 				void CallStartInComponent(ScriptComponent& scriptComponent);
 				void CallUpdateInComponent(ScriptComponent& scriptComponent);
+				void CallEditorUpdateInComponent(ScriptComponent& scriptComponent);
 				void CallDeleteInComponent(ScriptComponent& scriptComponent);
 				ScriptClass* SetupClass(const char* assemblyName, const char* namespaceName, const char* className);
 
@@ -36,6 +39,7 @@ namespace Grindstone {
 				};
 
 				MonoDomain* scriptDomain = nullptr;
+				EngineCore *engineCore = nullptr;
 				std::map<std::string, AssemblyData> assemblies;
 			};
 		}

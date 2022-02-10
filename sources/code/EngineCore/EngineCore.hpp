@@ -75,6 +75,7 @@ namespace Grindstone {
 		virtual GraphicsAPI::Core* GetGraphicsCore();
 		virtual BaseRenderer* CreateRenderer();
 		virtual std::filesystem::path GetProjectPath();
+		virtual std::filesystem::path GetBinaryPath();
 		virtual std::filesystem::path GetAssetsPath();
 		virtual std::filesystem::path GetAssetPath(std::string subPath);
 
@@ -111,6 +112,7 @@ namespace Grindstone {
 		ECS::Core* ecsCore = nullptr;
 		bool shouldClose = false;
 		std::filesystem::path projectPath;
+		std::filesystem::path binaryPath;
 		std::filesystem::path assetsPath;
 	};
 }

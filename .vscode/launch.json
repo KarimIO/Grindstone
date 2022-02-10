@@ -5,10 +5,10 @@
 			"name": "(Windows) Application Launch",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/build/Application",
+			"program": "${workspaceFolder}/bin/Application",
 			"args": [],
 			"stopAtEntry": false,
-			"cwd": "${workspaceFolder}/build",
+			"cwd": "${workspaceFolder}/bin",
 			"environment": [],
 			"console": "externalTerminal"
 		},
@@ -16,10 +16,10 @@
 			"name": "(Windows) Editor Launch",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/build/Editor",
+			"program": "${workspaceFolder}/bin/Editor",
 			"args": [],
 			"stopAtEntry": false,
-			"cwd": "${workspaceFolder}/build",
+			"cwd": "${workspaceFolder}/bin",
 			"environment": [],
 			"console": "externalTerminal"
 		}

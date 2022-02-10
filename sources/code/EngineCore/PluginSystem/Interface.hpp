@@ -27,32 +27,7 @@ namespace Grindstone {
 		class ENGINE_CORE_API Interface {
 		public:
 			Interface(Manager* manager);
-
-			template<typename... Args>
-			static void Print(const char* fmt, const Args &... args) {
-				Logger::Print(fmt, args...);
-			}
-
-			template<typename... Args>
-			static void PrintTrace(const char* fmt, const Args &... args) {
-				Logger::PrintTrace(fmt, args...);
-			}
-
-			template<typename... Args>
-			static void PrintWarning(const char* fmt, const Args &... args) {
-				Logger::PrintWarning(fmt, args...);
-			}
-
-			template<typename... Args>
-			static void PrintError(const char* fmt, const Args &... args) {
-				Logger::PrintError(fmt, args...);
-			}
-
-			template<typename... Args>
-			static void Print(LogSeverity logSeverity, const char* fmt, const Args &... args) {
-				Logger::Print(logSeverity, fmt, args...);
-			}
-
+			virtual void Print(LogSeverity logSeverity, const char* message);
 			virtual EngineCore* GetEngineCore();
 			virtual GraphicsAPI::Core* GetGraphicsCore();
 			virtual bool LoadPlugin(const char* name);
