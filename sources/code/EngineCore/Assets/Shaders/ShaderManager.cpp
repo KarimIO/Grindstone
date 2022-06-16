@@ -5,6 +5,7 @@
 #include "Common/Graphics/Core.hpp"
 #include "ShaderReflectionLoader.hpp"
 #include "EngineCore/Assets/BaseAssetRenderer.hpp"
+#include "EngineCore/Rendering/DeferredRenderer.hpp"
 #include "EngineCore/Logger.hpp"
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
@@ -144,7 +145,7 @@ void ShaderManager::CreateShaderGraphicsPipeline(bool isReloading, const char* b
 	pipelineCreateInfo.shaderName = shader.reflectionData.name.c_str();
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
 	pipelineCreateInfo.cullMode = CullMode::None;
-	// TODO: pipelineCreateInfo.renderPass;
+	pipelineCreateInfo.renderPass = DeferredRenderer::gbufferRenderPass;
 	pipelineCreateInfo.width = 800;
 	pipelineCreateInfo.height = 600;
 	pipelineCreateInfo.scissorX = 0;

@@ -26,6 +26,8 @@
 		"shaderc",
 		"spdlog",
 		"spirv-cross",
-		"stb"
+		"stb",
+		"vulkan",
+		"vulkan-headers"
 	]
 }

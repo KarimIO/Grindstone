@@ -23,45 +23,45 @@ namespace Grindstone {
 			virtual bool Initialize(Core::CreateInfo& ci) override;
 			~VulkanCore();
 
-			static VulkanCore *graphics_wrapper_;
-			static VulkanCore &get();
+			static VulkanCore * graphicsWrapper;
+			static VulkanCore &Get();
 			virtual void RegisterWindow(Window* window) override;
 		public:
-			QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
-			uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-			VkInstance getInstance();
-			VkDevice getDevice();
-			VkPhysicalDevice getPhysicalDevice();
-			VkCommandPool getGraphicsCommandPool();
+			QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
+			uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+			VkInstance GetInstance();
+			VkDevice GetDevice();
+			VkPhysicalDevice GetPhysicalDevice();
+			VkCommandPool GetGraphicsCommandPool();
 		private:
-			VkInstance instance_;
-			VkDevice device_;
-			VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
-			VkDebugUtilsMessengerEXT debug_messenger_;
+			VkInstance instance;
+			VkDevice device;
+			VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+			VkDebugUtilsMessengerEXT debugMessenger;
 			std::vector<VkSemaphore> imageAvailableSemaphores;
 			std::vector<VkSemaphore> renderFinishedSemaphores;
 			std::vector<VkFence> inFlightFences;
 			std::vector<VkFence> imagesInFlight;
 			size_t currentFrame = 0;
 		public:
-			VkQueue graphics_queue_;
-			VkQueue present_queue_;
-			uint32_t graphics_family_;
-			uint32_t present_family_;
-			VkCommandPool command_pool_graphics_;
-			VkDescriptorPool descriptor_pool_;
+			VkQueue graphicsQueue;
+			VkQueue presentQueue;
+			uint32_t graphicsFamily;
+			uint32_t presentFamily;
+			VkCommandPool commandPoolGraphics;
+			VkDescriptorPool descriptorPool;
 		private:
-			void createInstance();
-			void setupDebugMessenger();
-			void pickPhysicalDevice();
-			void createLogicalDevice();
-			void createCommandPool();
-			void createDescriptorPool();
+			void CreateInstance();
+			void SetupDebugMessenger();
+			void PickPhysicalDevice();
+			void CreateLogicalDevice();
+			void CreateCommandPool();
+			void CreateDescriptorPool();
 		private:
-			uint16_t scoreDevice(VkPhysicalDevice device);
-			bool checkValidationLayerSupport();
-			std::vector<const char*> getRequiredExtensions();
-			void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+			uint16_t ScoreDevice(VkPhysicalDevice device);
+			bool CheckValidationLayerSupport();
+			std::vector<const char*> GetRequiredExtensions();
+			void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 		public:
 			virtual const char* GetVendorName() override;
 			virtual const char* GetAdapterName() override;
@@ -118,17 +118,23 @@ namespace Grindstone {
 			virtual	void DrawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) override;
 			virtual void DrawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) override;
 			virtual void SetImmediateBlending(BlendMode) override;
-			virtual void EnableDepth(bool state) override;
+			virtual void EnableDepthWrite(bool state) override;
 			virtual void SetColorMask(ColorMask mask) override;
-			virtual void CopyToDepthBuffer(DepthTarget *p) override;
-			virtual void BindDefaultFramebuffer(bool depth) override;
 		private:
-			std::string vendor_name_;
-			std::string adapter_name_;
-			std::string api_version_;
+			std::string vendorName;
+			std::string adapterName;
+			std::string apiVersion;
 
-			Window* primary_window_;
-		};
+			Window* primaryWindow;
+
+			// Inherited via Core
+			virtual const char* GetDefaultShaderExtension() override;
+			virtual void CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) override;
+			virtual void BindDefaultFramebuffer() override;
+			virtual void BindDefaultFramebufferWrite() override;
+			virtual void BindDefaultFramebufferRead() override;
+			virtual void ResizeViewport(uint32_t w, uint32_t h) override;
+};
 
 		/*extern "C" {
 			GRAPHICS_EXPORT GraphicsWrapper* createGraphics(InstanceCreateInfo createInfo);

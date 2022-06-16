@@ -18,8 +18,11 @@ namespace Grindstone {
 
 		class Scene {
 			friend SceneLoaderJson;
+		private:
+			char* name;
+			char* path;
+			entt::registry registry;
 		public:
-			Scene() = default;
 			~Scene();
 			virtual Grindstone::ECS::Entity CreateEmptyEntity(entt::entity entityToUse = entt::null);
 			virtual Grindstone::ECS::Entity CreateEntity(entt::entity entityToUse = entt::null);
@@ -31,10 +34,6 @@ namespace Grindstone {
 			virtual entt::registry& GetEntityRegistry();
 			void Update();
 			void EditorUpdate();
-		private:
-			entt::registry registry;
-			std::string name;
-			std::string path;
 		};
 	}
 }

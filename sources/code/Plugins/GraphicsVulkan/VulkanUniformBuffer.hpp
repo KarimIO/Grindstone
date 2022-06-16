@@ -10,9 +10,9 @@ namespace Grindstone {
 			VulkanUniformBufferBinding(UniformBufferBinding::CreateInfo& ci);
 			virtual ~VulkanUniformBufferBinding();
 		public:
-			VkDescriptorSetLayout getDescriptorSetLayout();
+			VkDescriptorSetLayout GetDescriptorSetLayout();
 		private:
-			VkDescriptorSetLayout descriptor_set_layout_;
+			VkDescriptorSetLayout descriptorSetLayout;
 		};
 
 		class VulkanUniformBuffer : public UniformBuffer {
@@ -20,15 +20,15 @@ namespace Grindstone {
 			VulkanUniformBuffer(UniformBuffer::CreateInfo& ci);
 			virtual ~VulkanUniformBuffer();
 		public:
-			VkDescriptorSet getDescriptorSet();
+			VkDescriptorSet GetDescriptorSet();
 		public:
-			virtual void updateBuffer(void * content) override;
-			virtual void bind() override;
+			virtual void UpdateBuffer(void *content) override;
+			virtual void Bind() override;
 		private:
-			VkDescriptorSet descriptor_set_;
-			VkBuffer buffer_;
-			VkDeviceMemory memory_;
-			uint32_t size_;
+			VkDescriptorSet descriptorSet;
+			VkBuffer buffer;
+			VkDeviceMemory memory;
+			uint32_t size;
 		};
 	};
 };

@@ -11,26 +11,26 @@ entt::registry& Entity::GetSceneEntityRegistry() {
 void* Entity::AddComponent(const char* componentType) {
 	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
 	auto& entityRegistry = scene->GetEntityRegistry();
-	return componentRegistrar->CreateComponentWithSetup(componentType, entityRegistry, entityId);
+	return componentRegistrar->CreateComponentWithSetup(componentType, *this);
 }
 
 void* Entity::AddComponentWithoutSetup(const char* componentType) {
 	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
 	auto& entityRegistry = scene->GetEntityRegistry();
-	return componentRegistrar->CreateComponent(componentType, entityRegistry, entityId);
+	return componentRegistrar->CreateComponent(componentType, *this);
 }
 
 bool Entity::HasComponent(const char* componentType) {
 	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
 	auto& entityRegistry = scene->GetEntityRegistry();
-	return componentRegistrar->HasComponent(componentType, entityRegistry, entityId);
+	return componentRegistrar->HasComponent(componentType, *this);
 }
 
 void* Entity::GetComponent(const char* componentType) {
 	void* outComponent = nullptr;
 	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
 	auto& entityRegistry = scene->GetEntityRegistry();
-	componentRegistrar->TryGetComponent(componentType, entityRegistry, entityId, outComponent);
+	componentRegistrar->TryGetComponent(componentType, *this, outComponent);
 
 	return outComponent;
 }
@@ -38,13 +38,13 @@ void* Entity::GetComponent(const char* componentType) {
 bool Entity::TryGetComponent(const char* componentType, void*& outComponent) {
 	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
 	auto& entityRegistry = scene->GetEntityRegistry();
-	return componentRegistrar->TryGetComponent(componentType, entityRegistry, entityId, outComponent);
+	return componentRegistrar->TryGetComponent(componentType, *this, outComponent);
 }
 
 void Entity::RemoveComponent(const char* componentType) {
 	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
 	auto& entityRegistry = scene->GetEntityRegistry();
-	componentRegistrar->RemoveComponent(componentType, entityRegistry, entityId);
+	componentRegistrar->RemoveComponent(componentType, *this);
 }
 
 void Entity::Destroy() {

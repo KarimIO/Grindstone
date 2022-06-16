@@ -9,9 +9,9 @@ namespace Grindstone {
 		public:
 			VulkanTextureBindingLayout(TextureBindingLayout::CreateInfo& ci);
 			~VulkanTextureBindingLayout();
-			VkDescriptorSetLayout getDescriptorSetLayout();
+			VkDescriptorSetLayout GetDescriptorSetLayout();
 		private:
-			VkDescriptorSetLayout descriptor_set_layout_;
+			VkDescriptorSetLayout descriptorSetLayout;
 		};
 
 		class VulkanTexture : public Texture {
@@ -19,16 +19,17 @@ namespace Grindstone {
 			VulkanTexture(Texture::CreateInfo& ci);
 			virtual ~VulkanTexture();
 		public:
-			VkImageView getImageView();
-			VkSampler getSampler();
-			void createTextureImage(Texture::CreateInfo &ci, uint32_t &mipLevels);
-			void createTextureSampler(Texture::CreateInfo &ci, uint32_t mipLevels);
+			VkImageView GetImageView();
+			VkSampler GetSampler();
+			void CreateTextureImage(Texture::CreateInfo &ci, uint32_t &mipLevels);
+			void CreateTextureSampler(Texture::CreateInfo &ci, uint32_t mipLevels);
+			virtual void RecreateTexture(CreateInfo& createInfo) override;
 		private:
-			VkImage image_;
-			VkDeviceMemory image_memory_;
-			VkImageView image_view_;
-			VkSampler sampler_;
-			VkFormat format_;
+			VkImage image;
+			VkDeviceMemory imageMemory;
+			VkImageView imageView;
+			VkSampler sampler;
+			VkFormat format;
 		};
 
 		class VulkanTextureBinding : public TextureBinding {
@@ -36,9 +37,9 @@ namespace Grindstone {
 			VulkanTextureBinding(TextureBinding::CreateInfo& ci);
 			~VulkanTextureBinding();
 		public:
-			VkDescriptorSet getDescriptorSet();
+			VkDescriptorSet GetDescriptorSet();
 		private:
-			VkDescriptorSet descriptor_set_;
+			VkDescriptorSet descriptorSet;
 		};
 	};
 };

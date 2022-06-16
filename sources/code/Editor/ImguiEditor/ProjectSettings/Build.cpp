@@ -46,6 +46,15 @@ void Build::Render() {
 }
 
 void Build::WriteFile() {
+	std::filesystem::path sceneListFile = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings/scenesManifest.txt";
+	std::filesystem::create_directories(sceneListFile.parent_path());
+	auto sceneListPath = sceneListFile.string();
+	std::ofstream outputFile(sceneListPath.c_str());
+
+	if (!outputFile.is_open()) {
+		return;
+	}
+
 	std::string contents = "";
 	for (auto i = 0; i < sceneList.size() - 1; ++i) {
 		contents += sceneList[i] + "\n";
@@ -55,14 +64,7 @@ void Build::WriteFile() {
 		contents += sceneList[sceneList.size() - 1];
 	}
 
-	std::filesystem::path sceneListFile = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings/scenesManifest.txt";
-	std::filesystem::create_directories(sceneListFile.parent_path());
-	auto sceneListPath = sceneListFile.string();
-	std::ofstream outputFile(sceneListPath.c_str());
-
-	if (outputFile) {
-		outputFile.clear();
-		outputFile << contents;
-		outputFile.close();
-	}
+	outputFile.clear();
+	outputFile << contents;
+	outputFile.close();
 }

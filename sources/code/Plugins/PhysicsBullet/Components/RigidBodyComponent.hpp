@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Common/Math.hpp"
-#include <entt/entt.hpp>
+#include "EngineCore/ECS/Entity.hpp"
 #include "EngineCore/Reflection/ComponentReflection.hpp"
 #include "ColliderComponent.hpp"
 
@@ -13,7 +13,7 @@ namespace Grindstone {
 	namespace Physics {
 		struct ColliderComponent;
 
-		void SetupRigidBodyComponent(entt::registry& registry, entt::entity entity, void* componentPtr);
+		void SetupRigidBodyComponent(ECS::Entity& entity, void* componentPtr);
 
 		struct RigidBodyComponent {
 			RigidBodyComponent() = default;

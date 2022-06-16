@@ -2,6 +2,7 @@
 #include "CSharpBuildManager.hpp"
 #include "CSharpProjectBuilder.hpp"
 #include "SolutionBuilder.hpp"
+#include "EngineCore/Utils/Utilities.hpp"
 
 #ifdef _MSC_VER
 #include <Windows.h>
@@ -75,13 +76,19 @@ void ReadFromPipe(void) {
 	Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Info, "Error building C# project:\n{}", content.c_str());
 }
 
-void CreateChildProcess()
+std::string GetMsBuildPath() {
+	std::filesystem::path settingsFile = Grindstone::Editor::Manager::GetInstance().GetProjectPath() / "userSettings/codeToolsPath.txt";
+	std::filesystem::create_directories(settingsFile.parent_path());
+	auto settingsPath = settingsFile.string();
+	return Grindstone::Utils::LoadFileText(settingsPath.c_str());
+}
+
+void CreateChildProcess() {
 // Create a child process that uses the previously created pipes for STDIN and STDOUT.
-{
 	std::string filename = "Application-CSharp.csproj";
 	auto outputFilePath = Grindstone::Editor::Manager::GetInstance().GetProjectPath() / filename;
 	std::string path = outputFilePath.string();
-	std::string msBuildPath = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Msbuild\\Current\\Bin\\MSBuild.exe";
+	std::string msBuildPath = GetMsBuildPath();
 
 	std::string command = msBuildPath + " " + path;
 
@@ -130,6 +137,7 @@ void CreateChildProcess()
 }
 
 void CSharpBuildManager::BuildProject() {
+	UnloadCsharpBinaries();
 #ifdef _MSC_VER
 	SECURITY_ATTRIBUTES saAttr;
 	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -145,9 +153,24 @@ void CSharpBuildManager::BuildProject() {
 	CreateChildProcess();
 	ReadFromPipe();
 #endif
+	ReloadCsharpBinaries();
+}
+
+void CSharpBuildManager::UnloadCsharpBinaries() {
+	// Editor::Manager::GetEngineCore().UnloadCsharpBinaries();
+}
+
+void CSharpBuildManager::ReloadCsharpBinaries() {
+	// Editor::Manager::GetEngineCore().ReloadCsharpBinaries();
 }
 
 void CSharpBuildManager::CreateProjectsAndSolution() {
+	std::string msBuildPath = GetMsBuildPath();
+	if (msBuildPath.empty() || !std::filesystem::exists(msBuildPath.c_str())) {
+		Grindstone::Editor::Manager::GetInstance().Print(Grindstone::LogSeverity::Error, "Invalid MsBuild Path");
+		return;
+	}
+
 	CreateProject();
 	CreateSolution();
 

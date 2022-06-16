@@ -70,31 +70,31 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		VulkanCore *VulkanCore::Graphics_wrapper_ = nullptr;
+		VulkanCore *VulkanCore::graphicsWrapper = nullptr;
 
 		bool VulkanCore::Initialize(Core::CreateInfo& ci) {
-			api_type_ = API::Vulkan;
-			graphics_wrapper_ = this;
-			debug_ = ci.debug;
-			primary_window_ = ci.window;
+			apiType = API::Vulkan;
+			graphicsWrapper = this;
+			debug = ci.debug;
+			primaryWindow = ci.window;
 
-			createInstance();
+			CreateInstance();
 			auto wgb = new VulkanWindowGraphicsBinding();
-			primary_window_->addBinding(wgb);
-			wgb->initialize(primary_window_);
+			primaryWindow->AddBinding(wgb);
+			wgb->Initialize(primaryWindow);
 			if (ci.debug)
-				setupDebugMessenger();
-			pickPhysicalDevice();
-			createLogicalDevice();
-			wgb->createSwapChain();
-			createCommandPool();
-			createDescriptorPool();
+				SetupDebugMessenger();
+			PickPhysicalDevice();
+			CreateLogicalDevice();
+			wgb->CreateSwapChain();
+			CreateCommandPool();
+			CreateDescriptorPool();
 
 			return true;
 		}
 
 		void VulkanCore::CreateInstance() {
-			if (enableValidationLayers && !checkValidationLayerSupport()) {
+			if (enableValidationLayers && !CheckValidationLayerSupport()) {
 				throw std::runtime_error("validation layers requested, but not available!");
 			}
 
@@ -110,7 +110,7 @@ namespace Grindstone {
 			createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 			createInfo.pApplicationInfo = &appInfo;
 
-			auto extensions = getRequiredExtensions();
+			auto extensions = GetRequiredExtensions();
 			createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 			createInfo.ppEnabledExtensionNames = extensions.data();
 
@@ -119,7 +119,7 @@ namespace Grindstone {
 				createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 				createInfo.ppEnabledLayerNames = validationLayers.data();
 
-				populateDebugMessengerCreateInfo(debugCreateInfo);
+				PopulateDebugMessengerCreateInfo(debugCreateInfo);
 				createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 			}
 			else {
@@ -128,7 +128,7 @@ namespace Grindstone {
 				createInfo.pNext = nullptr;
 			}
 
-			if (vkCreateInstance(&createInfo, nullptr, &instance_) != VK_SUCCESS) {
+			if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create instance!");
 			}
 		}
@@ -137,63 +137,63 @@ namespace Grindstone {
 			if (!enableValidationLayers) return;
 
 			VkDebugUtilsMessengerCreateInfoEXT createInfo;
-			populateDebugMessengerCreateInfo(createInfo);
+			PopulateDebugMessengerCreateInfo(createInfo);
 
-			if (CreateDebugUtilsMessengerEXT(instance_, &createInfo, nullptr, &debug_messenger_) != VK_SUCCESS) {
+			if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
 				throw std::runtime_error("failed to set up debug messenger!");
 			}
 		}
 
-		void VulkanCore::pickPhysicalDevice() {
+		void VulkanCore::PickPhysicalDevice() {
 			uint32_t deviceCount = 0;
-			vkEnumeratePhysicalDevices(instance_, &deviceCount, nullptr);
+			vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
 			if (deviceCount == 0) {
 				throw std::runtime_error("failed to find GPUs with Vulkan support!");
 			}
 
 			std::vector<VkPhysicalDevice> devices(deviceCount);
-			vkEnumeratePhysicalDevices(instance_, &deviceCount, devices.data());
+			vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
 			int scoreMax = 0;
 
 			std::cout << "Available Devices:\n";
 			for (const auto& device : devices) {
-				int score = scoreDevice(device);
+				int score = ScoreDevice(device);
 				if (score > scoreMax) {
-					physical_device_ = device;
+					physicalDevice = device;
 				}
 				break;
 			}
 
-			if (physical_device_ == VK_NULL_HANDLE) {
+			if (physicalDevice == VK_NULL_HANDLE) {
 				throw std::runtime_error("Vulkan: Failed to find a suitable GPU!");
 			}
 
 			VkPhysicalDeviceProperties properties;
-			vkGetPhysicalDeviceProperties(physical_device_, &properties);
-			const char *vendor_name = getVendorNameFromID(properties.vendorID);
-			if (vendor_name == 0) {
-				vendor_name_ = std::string("Unknown Vendor(") + std::to_string(properties.vendorID) + ")";
+			vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+			const char *vendorName = GetVendorNameFromID(properties.vendorID);
+			if (vendorName == nullptr) {
+				this->vendorName = std::string("Unknown Vendor(") + std::to_string(properties.vendorID) + ")";
 			}
 			else {
-				vendor_name_ = vendor_name;
+				this->vendorName = vendorName;
 			}
-			adapter_name_ = properties.deviceName;
+			adapterName = properties.deviceName;
 
 			unsigned int ver_maj = (properties.apiVersion >> 22) & 0x3FF;
 			unsigned int ver_min = (properties.apiVersion >> 12) & 0x3FF;
 			unsigned int ver_patch = (properties.apiVersion) & 0xfff;
-			api_version_ = std::to_string(ver_maj)+"."+ std::to_string(ver_min) + "." + std::to_string(ver_patch);
+			apiVersion = std::to_string(ver_maj)+"."+ std::to_string(ver_min) + "." + std::to_string(ver_patch);
 
-			QueueFamilyIndices indices = findQueueFamilies(physical_device_);
-			graphics_family_ = indices.graphicsFamily;
-			present_family_ = indices.presentFamily;
+			QueueFamilyIndices indices = FindQueueFamilies(physicalDevice);
+			graphicsFamily = indices.graphicsFamily;
+			presentFamily = indices.presentFamily;
 		}
 
 		void VulkanCore::CreateLogicalDevice() {
 			std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-			std::set<uint32_t> uniqueQueueFamilies = { graphics_family_, present_family_ };
+			std::set<uint32_t> uniqueQueueFamilies = { graphicsFamily, presentFamily };
 
 			float queuePriority = 1.0f;
 			for (uint32_t queueFamily : uniqueQueueFamilies) {
@@ -227,20 +227,20 @@ namespace Grindstone {
 				createInfo.enabledLayerCount = 0;
 			}
 
-			if (vkCreateDevice(physical_device_, &createInfo, nullptr, &device_) != VK_SUCCESS) {
+			if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create logical device!");
 			}
 
-			vkGetDeviceQueue(device_, graphics_family_, 0, &graphics_queue_);
-			vkGetDeviceQueue(device_, present_family_, 0, &present_queue_);
+			vkGetDeviceQueue(device, graphicsFamily, 0, &graphicsQueue);
+			vkGetDeviceQueue(device, presentFamily, 0, &presentQueue);
 		}
 
 		void VulkanCore::CreateCommandPool() {
 			VkCommandPoolCreateInfo pool_info = {};
 			pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-			pool_info.queueFamilyIndex = graphics_family_;
+			pool_info.queueFamilyIndex = graphicsFamily;
 
-			if (vkCreateCommandPool(device_, &pool_info, nullptr, &command_pool_graphics_) != VK_SUCCESS) {
+			if (vkCreateCommandPool(device, &pool_info, nullptr, &commandPoolGraphics) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create graphics command pool!");
 			}
 		}
@@ -270,7 +270,7 @@ namespace Grindstone {
 			return true;
 		}
 
-		QueueFamilyIndices VulkanCore::findQueueFamilies(VkPhysicalDevice device) {
+		QueueFamilyIndices VulkanCore::FindQueueFamilies(VkPhysicalDevice device) {
 			QueueFamilyIndices indices;
 
 			uint32_t queueFamilyCount = 0;
@@ -278,7 +278,7 @@ namespace Grindstone {
 
 			std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
 			vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-			auto wgb = ((VulkanWindowGraphicsBinding*)primary_window_->getWindowGraphicsBinding());
+			auto wgb = ((VulkanWindowGraphicsBinding*)primaryWindow->GetWindowGraphicsBinding());
 
 			int i = 0;
 			for (const auto& queueFamily : queueFamilies) {
@@ -288,7 +288,7 @@ namespace Grindstone {
 				}
 
 				VkBool32 presentSupport = false;
-				vkGetPhysicalDeviceSurfaceSupportKHR(device, i, wgb->getSurface(), &presentSupport);
+				vkGetPhysicalDeviceSurfaceSupportKHR(device, i, wgb->GetSurface(), &presentSupport);
 
 				if (presentSupport) {
 					indices.presentFamily = i;
@@ -323,7 +323,7 @@ namespace Grindstone {
 			return extensions;
 		}
 
-		void VulkanCore::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
+		void VulkanCore::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
 			createInfo = {};
 			createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
 			createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
@@ -335,7 +335,7 @@ namespace Grindstone {
 			//VkPhysicalDeviceProperties pProperties;
 			//vkGetPhysicalDeviceProperties(device, &pProperties);
 
-			QueueFamilyIndices indices = findQueueFamilies(device);
+			QueueFamilyIndices indices = FindQueueFamilies(device);
 
 			/*bool extensionsSupported = checkDeviceExtensionSupport(device);
 
@@ -353,26 +353,26 @@ namespace Grindstone {
 
 		VulkanCore::~VulkanCore() {
 			for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-				vkDestroySemaphore(device_, renderFinishedSemaphores[i], nullptr);
-				vkDestroySemaphore(device_, imageAvailableSemaphores[i], nullptr);
-				vkDestroyFence(device_, inFlightFences[i], nullptr);
+				vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
+				vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
+				vkDestroyFence(device, inFlightFences[i], nullptr);
 			}
 
-			vkDestroyCommandPool(device_, command_pool_graphics_, nullptr);
-			vkDestroyDescriptorPool(device_, descriptor_pool_, nullptr);
+			vkDestroyCommandPool(device, commandPoolGraphics, nullptr);
+			vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 
-			vkDestroyDevice(device_, nullptr);
+			vkDestroyDevice(device, nullptr);
 
 			if (enableValidationLayers) {
-				DestroyDebugUtilsMessengerEXT(instance_, debug_messenger_, nullptr);
+				DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 			}
 
-			vkDestroyInstance(instance_, nullptr);
+			vkDestroyInstance(instance, nullptr);
 
 		}
 
 		void VulkanCore::WaitUntilIdle() {
-			vkDeviceWaitIdle(device_);
+			vkDeviceWaitIdle(device);
 		}
 
 		void VulkanCore::CreateDescriptorPool() {
@@ -388,25 +388,25 @@ namespace Grindstone {
 			poolInfo.pPoolSizes = poolSizes.data();
 			poolInfo.maxSets = 20;
 
-			if (vkCreateDescriptorPool(device_, &poolInfo, nullptr, &descriptor_pool_) != VK_SUCCESS) {
+			if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create descriptor pool!");
 			}
 		}
 
 		VulkanCore &VulkanCore::Get() {
-			return *graphics_wrapper_;
+			return *graphicsWrapper;
 		}
 
-		void VulkanCore::registerWindow(Window* window) {
+		void VulkanCore::RegisterWindow(Window* window) {
 			auto wgb = new VulkanWindowGraphicsBinding();
-			window->addBinding(wgb);
-			wgb->initialize(window);
+			window->AddBinding(wgb);
+			wgb->Initialize(window);
 			//wgb->shareLists((VulkanWindowGraphicsBinding*)primary_window_->getWindowGraphicsBinding());
 		}
 
-		uint32_t VulkanCore::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+		uint32_t VulkanCore::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 			VkPhysicalDeviceMemoryProperties memProperties;
-			vkGetPhysicalDeviceMemoryProperties(physical_device_, &memProperties);
+			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
 
 			for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
 				if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
@@ -418,19 +418,19 @@ namespace Grindstone {
 		}
 
 		VkInstance VulkanCore::GetInstance() {
-			return instance_;
+			return instance;
 		}
 
 		VkDevice VulkanCore::GetDevice() {
-			return device_;
+			return device;
 		}
 
 		VkPhysicalDevice VulkanCore::GetPhysicalDevice() {
-			return physical_device_;
+			return physicalDevice;
 		}
 
 		VkCommandPool VulkanCore::GetGraphicsCommandPool() {
-			return command_pool_graphics_;
+			return commandPoolGraphics;
 		}
 
 
@@ -442,11 +442,11 @@ namespace Grindstone {
 		// Get Text Metainfo
 		//==================================
 		const char* VulkanCore::GetVendorName() {
-			return vendor_name_.c_str();
+			return vendorName.c_str();
 		}
 
 		const char* VulkanCore::GetAdapterName() {
-			return adapter_name_.c_str();
+			return adapterName.c_str();
 		}
 
 		const char* VulkanCore::GetAPIName() {
@@ -454,7 +454,11 @@ namespace Grindstone {
 		}
 
 		const char* VulkanCore::GetAPIVersion() {
-			return api_version_.c_str();
+			return apiVersion.c_str();
+		}
+
+		const char* VulkanCore::GetDefaultShaderExtension() {
+			return ".vk.spv";
 		}
 
 		//==================================
@@ -597,16 +601,16 @@ namespace Grindstone {
 			std::cout << "VulkanCore::Clear is not used.\n";
 			assert(false);
 		}
-		void VulkanCore::bindTexture(TextureBinding *) {
-			std::cout << "VulkanCore::bindTexture is not used.\n";
+		void VulkanCore::BindTexture(TextureBinding *) {
+			std::cout << "VulkanCore::BindTexture is not used.\n";
 			assert(false);
 		}
-		void VulkanCore::bindPipeline(Pipeline*) {
-			std::cout << "VulkanCore::bindPipeline is not used.\n";
+		void VulkanCore::BindPipeline(Pipeline*) {
+			std::cout << "VulkanCore::BindPipeline is not used.\n";
 			assert(false);
 		}
-		void VulkanCore::bindVertexArrayObject(VertexArrayObject *) {
-			std::cout << "VulkanCore::bindVertexArrayObject is not used.\n";
+		void VulkanCore::BindVertexArrayObject(VertexArrayObject *) {
+			std::cout << "VulkanCore::BindVertexArrayObject is not used.\n";
 			assert(false);
 		}
 		void VulkanCore::DrawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
@@ -621,21 +625,28 @@ namespace Grindstone {
 			std::cout << "VulkanCore::SetImmediateBlending is not used.\n";
 			assert(false);
 		}
-		void VulkanCore::enableDepth(bool state) {
-			std::cout << "VulkanCore::enableDepth is not used.\n";
+		void VulkanCore::EnableDepthWrite(bool state) {
+			std::cout << "VulkanCore::EnableDepthWrite is not used.\n";
 			assert(false);
 		}
 		void VulkanCore::SetColorMask(ColorMask mask) {
 			std::cout << "VulkanCore::SetColorMask is not used.\n";
 			assert(false);
 		}
-		void VulkanCore::CopyToDepthBuffer(DepthTarget * p) {
-			std::cout << "VulkanCore::CopyToDepthBuffer is not used.\n";
-			assert(false);
+
+		void VulkanCore::CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) {
 		}
-		void VulkanCore::bindDefaultFramebuffer(bool depth) {
-			std::cout << "VulkanCore::bindDefaultFramebuffer is not used.\n";
-			assert(false);
+
+		void VulkanCore::BindDefaultFramebuffer() {
+		}
+
+		void VulkanCore::BindDefaultFramebufferWrite() {
+		}
+
+		void VulkanCore::BindDefaultFramebufferRead() {
+		}
+
+		void VulkanCore::ResizeViewport(uint32_t w, uint32_t h) {
 		}
 	}
 }

@@ -26,7 +26,7 @@ bool CameraComponent::OnWindowResize(Events::BaseEvent* ev) {
 	return false;
 }
 
-void Grindstone::SetupCameraComponent(entt::registry& registry, entt::entity entity, void* componentPtr) {
+void Grindstone::SetupCameraComponent(ECS::Entity& entity, void* componentPtr) {
 	auto& engineCore = EngineCore::GetInstance();
 	auto eventDispatcher = engineCore.GetEventDispatcher();
 

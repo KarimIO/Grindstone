@@ -40,9 +40,11 @@ EngineCore& Manager::GetEngineCore() {
 bool Manager::Initialize(const char* projectPath) {
 	this->projectPath = projectPath;
 	assetsPath = this->projectPath / "assets";
+	engineBinariesPath = std::filesystem::current_path();
+
 	if (!LoadEngine())			return false;
 	fileManager.Initialize(assetsPath);
-	csharpBuildManager.FinishInitialFileProcessing();
+	// csharpBuildManager.FinishInitialFileProcessing();
 	if (!SetupImguiEditor())	return false;
 	InitializeQuitCommands();
 
@@ -74,6 +76,10 @@ std::filesystem::path Manager::GetProjectPath() {
 
 std::filesystem::path Manager::GetAssetsPath() {
 	return assetsPath;
+}
+
+std::filesystem::path Grindstone::Editor::Manager::GetEngineBinariesPath() {
+	return engineBinariesPath;
 }
 
 bool Manager::OnTryQuit(Grindstone::Events::BaseEvent* ev) {

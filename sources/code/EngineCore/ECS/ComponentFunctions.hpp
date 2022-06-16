@@ -1,27 +1,30 @@
 #pragma once
 
 #include <entt/entt.hpp>
+#include "EngineCore/ECS/Entity.hpp"
 #include "EngineCore/Reflection/TypeDescriptorStruct.hpp"
 using namespace Grindstone;
 
 namespace Grindstone {
 	namespace ECS {
-		using SetupComponentFn = void(*)(entt::registry& registry, entt::entity entity, void* componentPtr);
+		using SetupComponentFn = void(*)(ECS::Entity& entity, void* componentPtr);
 		using GetComponentReflectionDataFn = Grindstone::Reflection::TypeDescriptor_Struct(*)();
-		using TryGetComponentFn = bool(*)(entt::registry& registry, entt::entity entity, void*& outEntity);
-		using HasComponentFn = bool(*)(entt::registry& registry, entt::entity entity);
-		using CreateComponentFn = void*(*)(entt::registry& registry, entt::entity entity);
-		using RemoveComponentFn = void(*)(entt::registry& registry, entt::entity entity);
+		using TryGetComponentFn = bool(*)(ECS::Entity& entity, void*& outEntity);
+		using HasComponentFn = bool(*)(ECS::Entity& entity);
+		using CreateComponentFn = void*(*)(ECS::Entity& entity);
+		using RemoveComponentFn = void(*)(ECS::Entity& entity);
 
 		template<typename T>
-		void* CreateComponent(entt::registry& registry, entt::entity entity) {
-			return &registry.emplace<T>(entity);
+		void* CreateComponent(ECS::Entity& entity) {
+			return &entity.GetSceneEntityRegistry().emplace<T>(entity.GetHandle());
 		}
 
 		template<typename T>
-		void RemoveComponent(entt::registry& registry, entt::entity entity) {
-			if (registry.all_of<T>(entity)) {
-				registry.remove<T>(entity);
+		void RemoveComponent(ECS::Entity& entity) {
+			auto& registry = entity.GetSceneEntityRegistry();
+			auto entityHandle = entity.GetHandle();
+			if (registry.any_of<T>(entityHandle)) {
+				registry.remove<T>(entityHandle);
 			}
 		}
 
@@ -31,19 +34,23 @@ namespace Grindstone {
 		}
 
 		template<typename T>
-		bool TryGetComponent(entt::registry& registry, entt::entity entity, void*& outEntity) {
-			if (registry.all_of<T>(entity)) {
-				outEntity = &registry.get<T>(entity);
+		bool TryGetComponent(ECS::Entity& entity, void*& outComponent) {
+			auto& registry = entity.GetSceneEntityRegistry();
+			auto entityHandle = entity.GetHandle();
+			if (registry.any_of<T>(entityHandle)) {
+				outComponent = &registry.get<T>(entityHandle);
 				return true;
 			}
 
-			outEntity = nullptr;
+			outComponent = nullptr;
 			return false;
 		}
 
 		template<typename T>
-		bool HasComponent(entt::registry& registry, entt::entity entity) {
-			return registry.all_of<T>(entity);
+		bool HasComponent(ECS::Entity& entity) {
+			auto& registry = entity.GetSceneEntityRegistry();
+			auto entityHandle = entity.GetHandle();
+			return registry.all_of<T>(entityHandle);
 		}
 		
 		class ComponentFunctions {

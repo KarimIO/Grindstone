@@ -1,6 +1,8 @@
+#include <string>
 #include "CSharpManager.hpp"
 
 #include "EngineCore/EngineCore.hpp"
+#include "EngineCore/ECS/Entity.hpp"
 #include "Components/ScriptComponent.hpp"
 
 #include <mono/jit/jit.h>
@@ -47,19 +49,34 @@ void CSharpManager::LoadAssembly(const char* path) {
 	assemblyData.image = image;
 }
 
-void CSharpManager::SetupComponent(ScriptComponent& component) {
+struct CompactEntityData {
+	entt::entity entityHandle;
+	Grindstone::SceneManagement::Scene* scene;
+};
+
+void CSharpManager::SetupComponent(ECS::Entity& entity, ScriptComponent& component) {
 	component.monoClass = SetupClass(
 		component.assembly.c_str(),
 		component.scriptNamespace.c_str(),
 		component.scriptClass.c_str()
 	);
 
-	if (component.monoClass) {
-		component.scriptObject = mono_object_new(scriptDomain, component.monoClass->monoClass);
+	if (component.monoClass == nullptr || component.monoClass->monoClass == nullptr) {
+		return;
 	}
+
+	component.scriptObject = mono_object_new(scriptDomain, component.monoClass->monoClass);
+
+	SetupEntityDataInComponent(entity, component);
 
 	CallConstructorInComponent(component);
 	CallAttachComponentInComponent(component);
+}
+
+void CSharpManager::SetupEntityDataInComponent(ECS::Entity& entity, ScriptComponent& component) {
+	MonoClassField* field = mono_class_get_field_from_name(component.monoClass->monoClass, "entity");
+	CompactEntityData outEnt = { entity.GetHandle(), entity.GetScene()  };
+	mono_field_set_value((MonoObject*)component.scriptObject, field, &outEnt);
 }
 
 ScriptClass* CSharpManager::SetupClass(const char* assemblyName, const char* namespaceName, const char* className) {

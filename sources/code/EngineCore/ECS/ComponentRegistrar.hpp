@@ -25,13 +25,13 @@ namespace Grindstone {
 				});
 			}
 			virtual void RegisterComponent(const char *name, ComponentFunctions componentFunctions);
-			virtual void* CreateComponentWithSetup(const char* name, entt::registry& registry, ECS::EntityHandle entity);
-			virtual void* CreateComponent(const char *name, entt::registry& registry, ECS::EntityHandle entity);
-			virtual void RemoveComponent(const char *name, entt::registry& registry, ECS::EntityHandle entity);
-			virtual bool HasComponent(const char* name, entt::registry& registry, ECS::EntityHandle entity);
-			virtual bool TryGetComponent(const char *name, entt::registry& registry, ECS::EntityHandle entity, void*& outComponent);
+			virtual void* CreateComponentWithSetup(const char* name, ECS::Entity& entity);
+			virtual void* CreateComponent(const char *name, ECS::Entity& entity);
+			virtual void RemoveComponent(const char *name, ECS::Entity& entity);
+			virtual bool HasComponent(const char* name, ECS::Entity& entity);
+			virtual bool TryGetComponent(const char *name, ECS::Entity&, void*& outComponent);
 			virtual bool TryGetComponentReflectionData(const char *name, Grindstone::Reflection::TypeDescriptor_Struct& outReflectionData);
-			virtual void SetupComponent(const char* componentType, entt::registry& registry, ECS::EntityHandle entity, void* componentPtr);
+			virtual void SetupComponent(const char* componentType, ECS::Entity& entity, void* componentPtr);
 
 			using ComponentMap = std::unordered_map<std::string, ComponentFunctions>;
 			virtual ComponentMap::iterator begin();

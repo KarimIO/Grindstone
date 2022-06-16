@@ -10,7 +10,7 @@ endif()
 
 include("${CMAKE_TOOLCHAIN_FILE}")
 
-project(Grindstone VERSION 1.0.0 LANGUAGES CXX)
+project(Grindstone VERSION 1.0.0 LANGUAGES CXX CSharp)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -67,4 +67,8 @@ endif()
 option(USE_CSHARP "Include CSharp?" OFF)
 if (USE_CSHARP)
 	add_subdirectory(${PLUGIN_DIR}/ScriptCSharp)
+	include_external_msproject(
+		GrindstoneCSharpCore GrindstoneCore.csproj
+		TYPE FAE04EC0-301F-11D3-BF4B-00C04F79EFBC
+	)
 endif()

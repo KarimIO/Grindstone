@@ -8,6 +8,10 @@
 namespace Grindstone {
 	class EngineCore;
 
+	namespace ECS {
+		class Entity;
+	}
+
 	namespace Scripting {
 		namespace CSharp {
 			struct ScriptComponent;
@@ -18,12 +22,13 @@ namespace Grindstone {
 				static CSharpManager& GetInstance();
 				virtual void Initialize(EngineCore* engineCore);
 				virtual void LoadAssembly(const char* path);
-				virtual void SetupComponent(ScriptComponent& component);
+				virtual void SetupComponent(ECS::Entity& entity, ScriptComponent& component);
 				virtual void CallStartInAllComponents(entt::registry& registry);
 				virtual void CallUpdateInAllComponents(entt::registry& registry);
 				virtual void CallEditorUpdateInAllComponents(entt::registry& registry);
 				virtual void CallDeleteInAllComponents(entt::registry& registry);
 			private:
+				void SetupEntityDataInComponent(ECS::Entity& entity, ScriptComponent& component);
 				void CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset);
 				void CallConstructorInComponent(ScriptComponent& scriptComponent);
 				void CallAttachComponentInComponent(ScriptComponent& scriptComponent);

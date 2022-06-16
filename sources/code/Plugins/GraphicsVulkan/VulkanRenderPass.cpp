@@ -5,17 +5,17 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		VulkanRenderPass::VulkanRenderPass(RenderPass::CreateInfo& ci) : width_(ci.width_), height_(ci.height_) {
-			uint32_t total = ci.color_format_count_;
-			total += (ci.depth_format_ != DepthFormat::None) ? 1 : 0;
+		VulkanRenderPass::VulkanRenderPass(RenderPass::CreateInfo& ci) : width(ci.width), height(ci.height) {
+			uint32_t total = ci.colorFormatCount;
+			total += (ci.depthFormat != DepthFormat::None) ? 1 : 0;
 
 			VkAttachmentDescription *attachmentDescs = new VkAttachmentDescription[total];
-			VkAttachmentReference *attachmentsRef = new VkAttachmentReference[ci.color_format_count_];
+			VkAttachmentReference *attachmentsRef = new VkAttachmentReference[ci.colorFormatCount];
 			
-			for (uint32_t i = 0; i < ci.color_format_count_; ++i) {
+			for (uint32_t i = 0; i < ci.colorFormatCount; ++i) {
 				VkAttachmentDescription &colorAttachment = attachmentDescs[i];
 				uint8_t channels;
-				colorAttachment.format = TranslateColorFormatToVulkan(ci.color_formats_[i], channels);
+				colorAttachment.format = TranslateColorFormatToVulkan(ci.colorFormats[i], channels);
 				colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 				colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 				colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -30,9 +30,9 @@ namespace Grindstone {
 			}
 			VkAttachmentReference *depthAttachmentRefPtr = nullptr;
 			VkAttachmentReference depthAttachmentRef = {};
-			if (ci.depth_format_ != DepthFormat::None) {
-				VkAttachmentDescription &depthAttachment = attachmentDescs[ci.color_format_count_];
-				depthAttachment.format = TranslateDepthFormatToVulkan(ci.depth_format_);
+			if (ci.depthFormat != DepthFormat::None) {
+				VkAttachmentDescription &depthAttachment = attachmentDescs[ci.colorFormatCount];
+				depthAttachment.format = TranslateDepthFormatToVulkan(ci.depthFormat);
 				depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 				depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 				depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -42,14 +42,14 @@ namespace Grindstone {
 				depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 				depthAttachment.flags = 0;
 
-				depthAttachmentRef.attachment = ci.color_format_count_;
+				depthAttachmentRef.attachment = ci.colorFormatCount;
 				depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 				depthAttachmentRefPtr = &depthAttachmentRef;
 			}
 
 			VkSubpassDescription subpass = {};
 			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-			subpass.colorAttachmentCount = ci.color_format_count_;
+			subpass.colorAttachmentCount = ci.colorFormatCount;
 			subpass.pColorAttachments = attachmentsRef;
 			subpass.pDepthStencilAttachment = depthAttachmentRefPtr;
 
@@ -70,25 +70,25 @@ namespace Grindstone {
 			renderPassInfo.dependencyCount = 1;
 			renderPassInfo.pDependencies = &dependency;
 
-			if (vkCreateRenderPass(VulkanCore::get().getDevice(), &renderPassInfo, nullptr, &render_pass_) != VK_SUCCESS) {
+			if (vkCreateRenderPass(VulkanCore::Get().GetDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create render pass!");
 			}
 		}
 
 		VulkanRenderPass::~VulkanRenderPass() {
-			vkDestroyRenderPass(VulkanCore::get().getDevice(), render_pass_, nullptr);
+			vkDestroyRenderPass(VulkanCore::Get().GetDevice(), renderPass, nullptr);
 		}
 
-		VkRenderPass VulkanRenderPass::getRenderPassHandle() {
-			return render_pass_;
+		VkRenderPass VulkanRenderPass::GetRenderPassHandle() {
+			return renderPass;
 		}
 
-		uint32_t VulkanRenderPass::getWidth() {
-			return width_;
+		uint32_t VulkanRenderPass::GetWidth() {
+			return width;
 		}
 
-		uint32_t VulkanRenderPass::getHeight() {
-			return height_;
+		uint32_t VulkanRenderPass::GetHeight() {
+			return height;
 		}
 	}
 }

@@ -89,6 +89,7 @@ namespace Grindstone {
 		virtual bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
 		virtual bool OnForceQuit(Grindstone::Events::BaseEvent* ev);
 		virtual void CalculateDeltaTime();
+		virtual double GetTimeSinceLaunch();
 		virtual double GetDeltaTime();
 	public:
 		DisplayManager* displayManager = nullptr;
@@ -100,7 +101,9 @@ namespace Grindstone {
 		Mesh3dRenderer* mesh3dRenderer = nullptr;
 		AssetRendererManager* assetRendererManager = nullptr;
 	private:
+		double currentTime = 0.0;
 		double deltaTime = 0.0;
+		std::chrono::steady_clock::time_point firstFrameTime;
 		std::chrono::steady_clock::time_point lastFrameTime;
 		SceneManagement::SceneManager* sceneManager = nullptr;
 		ECS::ComponentRegistrar* componentRegistrar = nullptr;

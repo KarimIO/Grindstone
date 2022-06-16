@@ -26,6 +26,7 @@ namespace Grindstone {
 			glm::vec3 eyePos,
 			GraphicsAPI::Framebuffer* outputFramebuffer
 		) override;
+		static GraphicsAPI::RenderPass* gbufferRenderPass;
 	private:
 		void RenderLights(entt::registry& registry);
 		void PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer);
@@ -46,6 +47,7 @@ namespace Grindstone {
 		GraphicsAPI::RenderTarget* litHdrRenderTarget = nullptr;
 		GraphicsAPI::DepthTarget* gbufferDepthTarget = nullptr;
 		GraphicsAPI::DepthTarget* litHdrDepthTarget = nullptr;
+		GraphicsAPI::RenderPass* mainRenderPass = nullptr;
 
 		GraphicsAPI::VertexArrayObject* planePostProcessVao = nullptr;
 		GraphicsAPI::Pipeline* lightPipeline = nullptr;

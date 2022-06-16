@@ -17,17 +17,17 @@ namespace Grindstone {
 			layoutInfo.bindingCount = 1;
 			layoutInfo.pBindings = &uboLayoutBinding;
 
-			if (vkCreateDescriptorSetLayout(VulkanCore::get().getDevice(), &layoutInfo, nullptr, &descriptor_set_layout_) != VK_SUCCESS) {
+			if (vkCreateDescriptorSetLayout(VulkanCore::Get().GetDevice(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create descriptor set layout!");
 			}
 		}
 
 		VulkanUniformBufferBinding::~VulkanUniformBufferBinding() {
-			vkDestroyDescriptorSetLayout(VulkanCore::get().getDevice(), descriptor_set_layout_, nullptr);
+			vkDestroyDescriptorSetLayout(VulkanCore::Get().GetDevice(), descriptorSetLayout, nullptr);
 		}
 
-		VkDescriptorSetLayout VulkanUniformBufferBinding::getDescriptorSetLayout() {
-			return descriptor_set_layout_;
+		VkDescriptorSetLayout VulkanUniformBufferBinding::GetDescriptorSetLayout() {
+			return descriptorSetLayout;
 		}
 
 
@@ -35,54 +35,54 @@ namespace Grindstone {
 
 
 		VulkanUniformBuffer::VulkanUniformBuffer(UniformBuffer::CreateInfo& ci) {
-			size_ = ci.size;
-			createBuffer(size_, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, buffer_, memory_);
+			size = ci.size;
+			CreateBuffer(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, buffer, memory);
 			
-			VkDescriptorSetLayout layouts = ((VulkanUniformBufferBinding *)ci.binding)->getDescriptorSetLayout();
+			VkDescriptorSetLayout layouts = ((VulkanUniformBufferBinding *)ci.binding)->GetDescriptorSetLayout();
 
 			VkDescriptorSetAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			allocInfo.descriptorPool = VulkanCore::get().descriptor_pool_;
+			allocInfo.descriptorPool = VulkanCore::Get().descriptorPool;
 			allocInfo.descriptorSetCount = 1;
 			allocInfo.pSetLayouts = &layouts;
 
-			if (vkAllocateDescriptorSets(VulkanCore::get().getDevice(), &allocInfo, &descriptor_set_) != VK_SUCCESS) {
+			if (vkAllocateDescriptorSets(VulkanCore::Get().GetDevice(), &allocInfo, &descriptorSet) != VK_SUCCESS) {
 				throw std::runtime_error("failed to allocate descriptor sets!");
 			}
 
 			VkDescriptorBufferInfo bufferInfo = {};
-			bufferInfo.buffer = buffer_;
+			bufferInfo.buffer = buffer;
 			bufferInfo.offset = 0;
 			bufferInfo.range = ci.size;
 
 			VkWriteDescriptorSet descriptorWrites = {};
 			descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrites.dstSet = descriptor_set_;
+			descriptorWrites.dstSet = descriptorSet;
 			descriptorWrites.dstBinding = 0;
 			descriptorWrites.dstArrayElement = 0;
 			descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			descriptorWrites.descriptorCount = 1;
 			descriptorWrites.pBufferInfo = &bufferInfo;
 
-			vkUpdateDescriptorSets(VulkanCore::get().getDevice(), 1, &descriptorWrites, 0, nullptr);
+			vkUpdateDescriptorSets(VulkanCore::Get().GetDevice(), 1, &descriptorWrites, 0, nullptr);
 		}
 
 		VulkanUniformBuffer::~VulkanUniformBuffer() {
 		}
 
-		VkDescriptorSet VulkanUniformBuffer::getDescriptorSet() {
-			return descriptor_set_;
+		VkDescriptorSet VulkanUniformBuffer::GetDescriptorSet() {
+			return descriptorSet;
 		}
 		
-		void VulkanUniformBuffer::updateBuffer(void * content) {
-			VkDevice device = VulkanCore::get().getDevice();
+		void VulkanUniformBuffer::UpdateBuffer(void * content) {
+			VkDevice device = VulkanCore::Get().GetDevice();
 			void* data;
-			vkMapMemory(device, memory_, 0, size_, 0, &data);
-			memcpy(data, content, size_);
-			vkUnmapMemory(device, memory_);
+			vkMapMemory(device, memory, 0, size, 0, &data);
+			memcpy(data, content, size);
+			vkUnmapMemory(device, memory);
 		};
 		
-		void VulkanUniformBuffer::bind() {
+		void VulkanUniformBuffer::Bind() {
 		};
 		
 	};

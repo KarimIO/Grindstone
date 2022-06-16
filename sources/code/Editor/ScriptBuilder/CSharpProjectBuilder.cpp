@@ -49,7 +49,7 @@ void CSharpProjectBuilder::OutputFile(std::string& outputContent) {
 }
 	
 void CSharpProjectBuilder::WriteProjectInfo(std::string& output) {
-	std::string dotNetVersion = "v4.7.2";
+	std::string dotNetVersion = "v4.7.1";
 
 	output += "\t<PropertyGroup>\n"
 		"\t\t<AssemblyName>" + assemblyName + "</AssemblyName>\n"
@@ -76,9 +76,22 @@ void CSharpProjectBuilder::WriteCodeFiles(std::string& output) {
 		output += "\t\t<Compile Include=\"" + filename + "\" />\n";
 	}
 
+	WriteDllReference(output, "GrindstoneCSharpCore.dll");
+
 	output += "\t</ItemGroup>\n";
 }
 
+void CSharpProjectBuilder::WriteDllReferenceByFilename(std::string& output, std::string path) {
+	std::filesystem::path fullPath = Editor::Manager::GetInstance().GetEngineBinariesPath() / path;
+	WriteDllReference(output, fullPath.string());
+}
+
+void CSharpProjectBuilder::WriteDllReference(std::string& output, std::string path) {
+	output += "\t\t<Reference Include=\"GrindstoneCSharpCore\">" \
+		"\t\t\t<HintPath>" + path + "</HintPath>" \
+		"\t\t</Reference>";
+}
+
 void CSharpProjectBuilder::WriteTargets(std::string& output) {
-	output += "\t<Import Project=\"$(MSBuildToolsPath)\\Microsoft.CSharp.targets\" />";
+	output += "\t<Import Project=\"$(MSBuildToolsPath)\\Microsoft.CSharp.targets\" />\n";
 }

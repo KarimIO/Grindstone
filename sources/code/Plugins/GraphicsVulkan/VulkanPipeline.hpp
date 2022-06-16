@@ -11,16 +11,17 @@ namespace Grindstone {
 		class VulkanPipeline : public Pipeline {
 		public:
 			VulkanPipeline(Pipeline::CreateInfo& ci);
-			virtual ~VulkanPipeline() override;
-			VkPipeline getGraphicsPipeline();
-			VkPipelineLayout getGraphicsPipelineLayout();
+			~VulkanPipeline();
+			VkPipeline GetGraphicsPipeline();
+			VkPipelineLayout GetGraphicsPipelineLayout();
 		public:
 			virtual void Bind() {};
+			virtual void Recreate(CreateInfo& createInfo) override;
 		private:
-			void createShaderModule(ShaderStageCreateInfo &ci, VkPipelineShaderStageCreateInfo &out);
+			void CreateShaderModule(ShaderStageCreateInfo &ci, VkPipelineShaderStageCreateInfo &out);
 		private:
-			VkPipelineLayout pipeline_layout_;
-			VkPipeline graphics_pipeline_;
+			VkPipelineLayout pipelineLayout;
+			VkPipeline graphicsPipeline;
 		};
 	}
 }

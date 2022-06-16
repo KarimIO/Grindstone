@@ -38,6 +38,7 @@ namespace Grindstone {
 			void Run();
 			std::filesystem::path GetProjectPath();
 			std::filesystem::path GetAssetsPath();
+			std::filesystem::path GetEngineBinariesPath();
 			bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
 			bool OnForceQuit(Grindstone::Events::BaseEvent* ev);
 			template<typename... Args>
@@ -51,6 +52,7 @@ namespace Grindstone {
 		private:
 			std::filesystem::path projectPath;
 			std::filesystem::path assetsPath;
+			std::filesystem::path engineBinariesPath;
 			bool shouldClose = false;
 			EngineCore* engineCore = nullptr;
 			ImguiEditor::ImguiEditor* imguiEditor = nullptr;

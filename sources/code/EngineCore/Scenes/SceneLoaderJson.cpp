@@ -28,7 +28,9 @@ bool SceneLoaderJson::Load(const char* path) {
 		return false;
 	}
 
-	scene->path = path;
+	size_t strLen = strlen(path) + 1;
+	scene->path = (char*)malloc(strLen);
+	strcpy_s(scene->path, strLen, path);
 	std::string fileContents = Utils::LoadFileText(path);
 	document.Parse(fileContents.c_str());
 
@@ -76,9 +78,13 @@ bool SceneLoaderJson::Load(const char* path) {
 }
 
 void SceneLoaderJson::ProcessMeta() {
-	scene->name = document.HasMember("name")
+	const char* name = document.HasMember("name")
 		? document["name"].GetString()
 		: "Untitled Scene";
+
+	size_t strLen = strlen(path) + 1;
+	scene->name = (char*)malloc(strLen);
+	strcpy_s(scene->name, strLen, name);
 }
 
 void SceneLoaderJson::ProcessEntities() {
@@ -128,7 +134,7 @@ void SceneLoaderJson::ProcessComponent(ECS::Entity entity, rapidjson::Value& com
 		}
 	}
 
-	componentRegistrar->SetupComponent(componentType, entity.GetSceneEntityRegistry(), entity.GetHandle(), componentPtr);
+	componentRegistrar->SetupComponent(componentType, entity, componentPtr);
 }
 
 void CopyDataArrayFloat(rapidjson::Value& srcParameter, float* dstArray, rapidjson::SizeType count) {

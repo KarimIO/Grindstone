@@ -5,6 +5,18 @@
 #include "Manager.hpp"
 using namespace Grindstone::SceneManagement;
 
+extern "C" {
+	ENGINE_CORE_API Scene* SceneManagerGetActiveScene() {
+		auto sceneManager = EngineCore::GetInstance().GetSceneManager();
+		if (sceneManager->scenes.empty()) {
+			return nullptr;
+		}
+
+		auto scene = sceneManager->scenes.begin()->second;
+		return scene;
+	}
+}
+
 void SceneManager::LoadDefaultScene() {
 	BuildSettings::SceneBuildSettings settings; 
 	const char* defaultPath = settings.GetDefaultScene();
@@ -24,18 +36,18 @@ void SceneManager::Update() {
 }
 
 Scene* SceneManager::LoadScene(const char* path) {
-	Scene* newScene = new Scene();
-	SceneLoaderJson sceneLoader(newScene, path);
 	CloseActiveScenes();
+	Scene* newScene = new Scene();
 	scenes[path] = newScene;
+	SceneLoaderJson sceneLoader(newScene, path);
 
 	return newScene;
 }
 
 Scene* SceneManager::LoadSceneAdditively(const char* path) {
 	Scene* newScene = new Scene();
-	SceneLoaderJson sceneLoader(newScene, path);
 	scenes[path] = newScene;
+	SceneLoaderJson sceneLoader(newScene, path);
 
 	return newScene;
 }

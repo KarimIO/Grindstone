@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <entt/entt.hpp>
+#include "EngineCore/ECS/Entity.hpp"
 #include "EngineCore/Reflection/ComponentReflection.hpp"
 #include "Plugins/ScriptCSharp/ScriptClass.hpp"
 
@@ -18,7 +18,7 @@ namespace Grindstone {
 				REFLECT("CSharpScript")
 			};
 
-			void SetupCSharpScriptComponent(entt::registry& registry, entt::entity entity, void* componentPtr);
+			void SetupCSharpScriptComponent(ECS::Entity& entity, void* componentPtr);
 		}
 	}
 }
