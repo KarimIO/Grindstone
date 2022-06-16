@@ -10,6 +10,9 @@ namespace Grindstone {
 
 	namespace ECS {
 		class Entity {
+		private:
+			EntityHandle entityId = entt::null;
+			SceneManagement::Scene* scene = nullptr;
 		public:
 			Entity() = default;
 			Entity(const Entity& other) = default;
@@ -76,10 +79,6 @@ namespace Grindstone {
 			bool Entity::operator!=(const Entity other) {
 				return !(*this == other);
 			}
-
-		private:
-			EntityHandle entityId = entt::null;
-			SceneManagement::Scene* scene = nullptr;
 		};
 
 		inline bool operator< (const ECS::Entity& lhs, const ECS::Entity& rhs) {

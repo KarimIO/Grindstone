@@ -19,6 +19,8 @@ namespace Grindstone {
 				void OutputFile(std::string& output);
 				void WriteProjectInfo(std::string& output);
 				void WriteCodeFiles(std::string& output);
+				void WriteDllReferenceByFilename(std::string& output, std::string path);
+				void WriteDllReference(std::string& output, std::string path);
 				void WriteTargets(std::string& output);
 				
 				std::string assemblyName;

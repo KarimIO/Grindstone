@@ -57,11 +57,11 @@ namespace Grindstone {
 		}
 
 		VulkanCommandBuffer::VulkanCommandBuffer(CommandBuffer::CreateInfo& ci) {
-			VkDevice device = VulkanCore::get().getDevice();
+			VkDevice device = VulkanCore::Get().GetDevice();
 
 			VkCommandBufferAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-			allocInfo.commandPool = VulkanCore::get().getGraphicsCommandPool();
+			allocInfo.commandPool = VulkanCore::Get().GetGraphicsCommandPool();
 			allocInfo.level = ci.secondaryInfo.isSecondary ? VK_COMMAND_BUFFER_LEVEL_SECONDARY : VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 			allocInfo.commandBufferCount = 1;
 
@@ -82,8 +82,8 @@ namespace Grindstone {
 					VulkanFramebuffer *fb = static_cast<VulkanFramebuffer *>(ci.secondaryInfo.framebuffer);
 					VulkanRenderPass *rp = static_cast<VulkanRenderPass *>(ci.secondaryInfo.renderPass);
 					inheritenceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
-					inheritenceInfo.framebuffer = fb->getFramebuffer();
-					inheritenceInfo.renderPass = rp->getRenderPassHandle();
+					inheritenceInfo.framebuffer = fb->GetFramebuffer();
+					inheritenceInfo.renderPass = rp->GetRenderPassHandle();
 					inheritenceInfo.occlusionQueryEnable = VK_FALSE;
 					inheritenceInfo.pipelineStatistics = 0;
 					inheritenceInfo.pNext = nullptr;
@@ -111,8 +111,8 @@ namespace Grindstone {
 			VulkanFramebuffer *fb = (VulkanFramebuffer *)(ci->framebuffer);
 			VkRenderPassBeginInfo renderPassInfo = {};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = rp->getRenderPassHandle();
-			renderPassInfo.framebuffer = fb->getFramebuffer();
+			renderPassInfo.renderPass = rp->GetRenderPassHandle();
+			renderPassInfo.framebuffer = fb->GetFramebuffer();
 			renderPassInfo.renderArea.offset = { 0, 0 };
 			renderPassInfo.renderArea.extent = { ci->width, ci->height };
 
@@ -139,15 +139,15 @@ namespace Grindstone {
 			descriptorSets.reserve(ci->uniformBufferCount + ci->textureCount);
 			for (uint32_t i = 0; i < ci->uniformBufferCount; i++) {
 				VulkanUniformBuffer *vkub = (VulkanUniformBuffer *)(ci->uniformBuffers[i]);
-				descriptorSets.push_back(vkub->getDescriptorSet());
+				descriptorSets.push_back(vkub->GetDescriptorSet());
 			}
 
 			for (uint32_t i = 0; i < ci->textureCount; i++) {
 				VulkanTextureBinding *vktex = (VulkanTextureBinding *)(ci->textureBindings[i]);
-				descriptorSets.push_back(vktex->getDescriptorSet());
+				descriptorSets.push_back(vktex->GetDescriptorSet());
 			}
 
-			vkCmdBindDescriptorSets(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->getGraphicsPipelineLayout(), 0, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, nullptr);
+			vkCmdBindDescriptorSets(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->GetGraphicsPipelineLayout(), 0, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, nullptr);
 		}
 
 		void VulkanCommandBuffer::uploadCmdBindCommandBuffers(CommandCallCmdBuffer * ci) {
@@ -164,7 +164,7 @@ namespace Grindstone {
 
 		void VulkanCommandBuffer::uploadCmdBindPipeline(CommandBindPipeline * ci) {
 			VulkanPipeline *pipeline = (VulkanPipeline *)(ci->graphicsPipeline);
-			vkCmdBindPipeline(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getGraphicsPipeline());
+			vkCmdBindPipeline(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetGraphicsPipeline());
 		}
 
 		void VulkanCommandBuffer::uploadCmdBindVertexBuffers(CommandBindVBOs* ci) {

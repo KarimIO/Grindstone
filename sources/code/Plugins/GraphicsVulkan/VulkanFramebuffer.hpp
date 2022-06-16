@@ -13,18 +13,18 @@ namespace Grindstone {
 			VulkanFramebuffer(Framebuffer::CreateInfo& ci);
 			virtual ~VulkanFramebuffer() override;
 		public:
-			VkFramebuffer getFramebuffer();
+			VkFramebuffer GetFramebuffer();
 		public:
-			virtual float getExposure(int i) override;
+			virtual uint32_t GetAttachment(uint32_t attachmentIndex) override;
+			virtual void Resize(uint32_t width, uint32_t height) override;
 			virtual void Clear(ClearMode mask) override;
-			virtual void CopyFrom(Framebuffer *) override;
-			virtual void BindWrite(bool depth) override;
 			virtual void BindTextures(int i) override;
-			virtual void Bind(bool depth) override;
+			virtual void Bind() override;
+			virtual void BindWrite() override;
 			virtual void BindRead() override;
 			virtual void Unbind() override;
 		private:
-			VkFramebuffer framebuffer_;
+			VkFramebuffer framebuffer;
 		};
 	}
 }

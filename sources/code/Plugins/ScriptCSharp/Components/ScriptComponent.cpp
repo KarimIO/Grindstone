@@ -11,11 +11,10 @@ REFLECT_STRUCT_BEGIN(ScriptComponent)
 REFLECT_STRUCT_END()
 
 void Grindstone::Scripting::CSharp::SetupCSharpScriptComponent(
-	entt::registry& registry,
-	entt::entity entity,
+	ECS::Entity& entity,
 	void* componentPtr
 ) {
 	CSharpManager& csManager = CSharpManager::GetInstance();
 	auto& component = *(ScriptComponent*)componentPtr;
-	csManager.SetupComponent(component);
+	csManager.SetupComponent(entity, component);
 }

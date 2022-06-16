@@ -14,6 +14,24 @@
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
 
+extern "C" {
+	ENGINE_CORE_API const char* SceneGetName(Scene* scene) {
+		return scene->GetName();
+	}
+
+	ENGINE_CORE_API const char* SceneGetPath(Scene* scene) {
+		return scene->GetPath();
+	}
+
+	ENGINE_CORE_API entt::entity SceneCreateEntity(Scene* scene) {
+		return scene->CreateEntity().GetHandle();
+	}
+
+	ENGINE_CORE_API void SceneDestroyEntity(Scene* scene, entt::entity entityHandle) {
+		scene->DestroyEntity((ECS::EntityHandle)entityHandle);
+	}
+}
+
 Scene::~Scene() {
 	EngineCore& engineCore = EngineCore::GetInstance();
 	auto mesh3dManager = engineCore.mesh3dManager;
@@ -59,11 +77,11 @@ ECS::Entity Scene::CreateEntity(entt::entity entityToUse) {
 }
 
 const char* Scene::GetName() {
-	return name.c_str();
+	return name;
 }
 
 const char* Scene::GetPath() {
-	return path.c_str();
+	return path;
 }
 
 // Made so that entities can access componentregistrat without requiring enginecore.

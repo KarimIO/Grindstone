@@ -35,6 +35,8 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	assetsPath = std::string(createInfo.projectPath) + "/compiledAssets/";
 	eventDispatcher = new Events::Dispatcher();
 
+	firstFrameTime = std::chrono::steady_clock::now();
+
 	Logger::Initialize("../log/output.log");
 	GRIND_PROFILE_BEGIN_SESSION("Loading", "../log/grind-profile-load.json");
 	Logger::Print("Initializing {0}...", createInfo.applicationTitle);
@@ -75,7 +77,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	assetRendererManager->AddQueue("Opaque");
 	assetRendererManager->AddQueue("Transparent");
 	assetRendererManager->AddQueue("Unlit");
-	mesh3dRenderer->AddErrorMaterial();
+	// mesh3dRenderer->AddErrorMaterial();
 
 	pluginManager->LoadPluginList();
 
@@ -145,7 +147,6 @@ SceneManagement::SceneManager* EngineCore::GetSceneManager() {
 	return sceneManager;
 }
 
-
 Plugins::Manager* EngineCore::GetPluginManager() {
 	return pluginManager;
 }
@@ -208,13 +209,32 @@ bool EngineCore::OnForceQuit(Grindstone::Events::BaseEvent* ev) {
 
 void EngineCore::CalculateDeltaTime() {
 	auto now = std::chrono::steady_clock::now();
-	auto elapsedTime = now - lastFrameTime;
-	auto elapsedNs = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(elapsedTime).count();
-	deltaTime = elapsedNs * 0.000000001;
+
+	auto elapsedTimeSinceLastFrame = now - lastFrameTime;
+	auto elapsedNsSinceLastFrame = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(elapsedTimeSinceLastFrame).count();
+	deltaTime = elapsedNsSinceLastFrame * 0.000000001;
+
+	auto elapsedTimeSinceFirstTime = now - lastFrameTime;
+	auto elapsedNsSinceFirstTime = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(now - firstFrameTime).count();
+	currentTime = elapsedNsSinceFirstTime * 0.000000001;
 
 	lastFrameTime = now;
 }
 
+double EngineCore::GetTimeSinceLaunch() {
+	return currentTime;
+}
+
 double EngineCore::GetDeltaTime() {
 	return deltaTime;
+}
+
+extern "C" {
+	ENGINE_CORE_API double TimeGetTimeSinceLaunch() {
+		return EngineCore::GetInstance().GetTimeSinceLaunch();
+	}
+
+	ENGINE_CORE_API double TimeGetDeltaTime() {
+		return EngineCore::GetInstance().GetDeltaTime();
+	}
 }

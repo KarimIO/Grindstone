@@ -10,7 +10,7 @@ REFLECT_STRUCT_BEGIN(SphereColliderComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::Physics::SetupColliderComponent(entt::registry& registry, entt::entity entity, void* componentPtr) {
+void Grindstone::Physics::SetupColliderComponent(ECS::Entity& entity, void* componentPtr) {
 	auto colliderComponent = (ColliderComponent *)componentPtr;
 
 	if (colliderComponent->collisionShape == nullptr) {
@@ -18,8 +18,10 @@ void Grindstone::Physics::SetupColliderComponent(entt::registry& registry, entt:
 		colliderComponent->collisionShape->setUserPointer(colliderComponent);
 	}
 
-	auto rigidBodyComponent = registry.try_get<RigidBodyComponent>(entity);
-	auto transformComponent = registry.try_get<TransformComponent>(entity);
+	auto& registry = entity.GetSceneEntityRegistry();
+	auto entityHandle = entity.GetHandle();
+	auto rigidBodyComponent = registry.try_get<RigidBodyComponent>(entityHandle);
+	auto transformComponent = registry.try_get<TransformComponent>(entityHandle);
 	if (rigidBodyComponent && transformComponent) {
 		SetupRigidBodyComponentWithCollider(
 			rigidBodyComponent,

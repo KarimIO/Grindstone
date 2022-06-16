@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "VulkanTexture.hpp"
 #include "VulkanUtils.hpp"
 #include "VulkanFormat.hpp"
@@ -19,40 +20,40 @@ namespace Grindstone {
 			layoutInfo.bindingCount = 1;
 			layoutInfo.pBindings = &samplerLayoutBinding;
 
-			if (vkCreateDescriptorSetLayout(VulkanCore::get().getDevice(), &layoutInfo, nullptr, &descriptor_set_layout_) != VK_SUCCESS) {
+			if (vkCreateDescriptorSetLayout(VulkanCore::Get().GetDevice(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create descriptor set layout!");
 			}
 		}
 
 		VulkanTextureBindingLayout::~VulkanTextureBindingLayout() {
-			vkDestroyDescriptorSetLayout(VulkanCore::get().getDevice(), descriptor_set_layout_, nullptr);
+			vkDestroyDescriptorSetLayout(VulkanCore::Get().GetDevice(), descriptorSetLayout, nullptr);
 		}
 
-		VkDescriptorSetLayout VulkanTextureBindingLayout::getDescriptorSetLayout() {
-			return descriptor_set_layout_;
+		VkDescriptorSetLayout VulkanTextureBindingLayout::GetDescriptorSetLayout() {
+			return descriptorSetLayout;
 		}
 
 		VulkanTexture::VulkanTexture(Texture::CreateInfo& ci) {
 			uint32_t mipLevels;
-			createTextureImage(ci, mipLevels);
-			image_view_ = createImageView(image_, format_, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
-			createTextureSampler(ci, mipLevels);
+			CreateTextureImage(ci, mipLevels);
+			imageView = CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+			CreateTextureSampler(ci, mipLevels);
 		}
 
 		VulkanTexture::~VulkanTexture() {
-			VkDevice device = VulkanCore::get().getDevice();
-			vkDestroySampler(device, sampler_, nullptr);
-			vkDestroyImageView(device, image_view_, nullptr);
+			VkDevice device = VulkanCore::Get().GetDevice();
+			vkDestroySampler(device, sampler, nullptr);
+			vkDestroyImageView(device, imageView, nullptr);
 
-			vkDestroyImage(device, image_, nullptr);
-			vkFreeMemory(device, image_memory_, nullptr);
+			vkDestroyImage(device, image, nullptr);
+			vkFreeMemory(device, imageMemory, nullptr);
 		}
 
-		void VulkanTexture::createTextureImage(Texture::CreateInfo& ci, uint32_t &mipLevels) {
-			VkDevice device = VulkanCore::get().getDevice();
+		void VulkanTexture::CreateTextureImage(Texture::CreateInfo& ci, uint32_t &mipLevels) {
+			VkDevice device = VulkanCore::Get().GetDevice();
 
 			uint8_t channels = 4;
-			format_ = VK_FORMAT_R8G8B8A8_UNORM;
+			format = VK_FORMAT_R8G8B8A8_UNORM;
 			//TranslateColorFormatToVulkan(ci.format, channels);
 
 			mipLevels = std::floor(std::log2((ci.width > ci.height) ? ci.width : ci.height));
@@ -61,18 +62,18 @@ namespace Grindstone {
 
 			VkBuffer stagingBuffer;
 			VkDeviceMemory stagingBufferMemory;
-			createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+			CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 			void* data;
 			vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
 			memcpy(data, ci.data, static_cast<size_t>(imageSize));
 			vkUnmapMemory(device, stagingBufferMemory);
 
-			createImage(ci.width, ci.height, mipLevels, format_, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image_, image_memory_);
+			CreateImage(ci.width, ci.height, mipLevels, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
 
-			transitionImageLayout(image_, format_, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
-			copyBufferToImage(stagingBuffer, image_, static_cast<uint32_t>(ci.width), static_cast<uint32_t>(ci.height));
-			transitionImageLayout(image_, format_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels);
+			TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
+			CopyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(ci.width), static_cast<uint32_t>(ci.height));
+			TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels);
 
 			vkDestroyBuffer(device, stagingBuffer, nullptr);
 			vkFreeMemory(device, stagingBufferMemory, nullptr);
@@ -81,14 +82,14 @@ namespace Grindstone {
 			//	generateMipmaps(image_, VK_FORMAT_R8G8B8A8_UNORM, ci.width, ci.height, mipLevels);
 		}
 
-		void VulkanTexture::createTextureSampler(Texture::CreateInfo &ci, uint32_t mipLevels) {
+		void VulkanTexture::CreateTextureSampler(Texture::CreateInfo &ci, uint32_t mipLevels) {
 			VkSamplerCreateInfo samplerInfo = {};
 			samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-			samplerInfo.magFilter = TranslateFilterToVulkan(ci.options.mag_filter);
-			samplerInfo.minFilter = TranslateFilterToVulkan(ci.options.min_filter);
-			samplerInfo.addressModeU = TranslateWrapToVulkan(ci.options.wrap_mode_u);
-			samplerInfo.addressModeV = TranslateWrapToVulkan(ci.options.wrap_mode_v);
-			samplerInfo.addressModeW = TranslateWrapToVulkan(ci.options.wrap_mode_w);
+			samplerInfo.magFilter = TranslateFilterToVulkan(ci.options.magFilter);
+			samplerInfo.minFilter = TranslateFilterToVulkan(ci.options.minFilter);
+			samplerInfo.addressModeU = TranslateWrapToVulkan(ci.options.wrapModeU);
+			samplerInfo.addressModeV = TranslateWrapToVulkan(ci.options.wrapModeV);
+			samplerInfo.addressModeW = TranslateWrapToVulkan(ci.options.wrapModeW);
 			samplerInfo.anisotropyEnable = VK_TRUE;
 			samplerInfo.maxAnisotropy = 16;
 			samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
@@ -100,55 +101,60 @@ namespace Grindstone {
 			samplerInfo.maxLod = static_cast<float>(mipLevels);
 			samplerInfo.mipLodBias = 0;
 
-			if (vkCreateSampler(VulkanCore::get().getDevice(), &samplerInfo, nullptr, &sampler_) != VK_SUCCESS) {
+			if (vkCreateSampler(VulkanCore::Get().GetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create texture sampler!");
 			}
 		}
 
-		VkImageView VulkanTexture::getImageView() {
-			return image_view_;
+		void VulkanTexture::RecreateTexture(CreateInfo& createInfo) {
+			std::cout << "VulkanTexture::RecreateTexture is not used\n";
+			assert(false);
 		}
 
-		VkSampler VulkanTexture::getSampler() {
-			return sampler_;
+		VkImageView VulkanTexture::GetImageView() {
+			return imageView;
+		}
+
+		VkSampler VulkanTexture::GetSampler() {
+			return sampler;
 		}
 
 		VulkanTextureBinding::VulkanTextureBinding(TextureBinding::CreateInfo& ci) {
-			VkDescriptorSetLayout layouts = ((VulkanTextureBindingLayout *)ci.layout)->getDescriptorSetLayout();
+			VkDescriptorSetLayout layouts = ((VulkanTextureBindingLayout *)ci.layout)->GetDescriptorSetLayout();
 
 			VkDescriptorSetAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			allocInfo.descriptorPool = VulkanCore::get().descriptor_pool_;
+			allocInfo.descriptorPool = VulkanCore::Get().descriptorPool;
 			allocInfo.descriptorSetCount = 1;
 			allocInfo.pSetLayouts = &layouts;
 
-			if (vkAllocateDescriptorSets(VulkanCore::get().getDevice(), &allocInfo, &descriptor_set_) != VK_SUCCESS) {
+			if (vkAllocateDescriptorSets(VulkanCore::Get().GetDevice(), &allocInfo, &descriptorSet) != VK_SUCCESS) {
 				throw std::runtime_error("failed to allocate descriptor sets!");
 			}
 
 			VulkanTexture *tex = (VulkanTexture *)ci.textures->texture;
 			VkDescriptorImageInfo imageInfo = {};
 			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imageInfo.imageView = tex->getImageView();
-			imageInfo.sampler = tex->getSampler();
+			imageInfo.imageView = tex->GetImageView();
+			imageInfo.sampler = tex->GetSampler();
 
 			VkWriteDescriptorSet descriptorWrites = {};
 			descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrites.dstSet = descriptor_set_;
+			descriptorWrites.dstSet = descriptorSet;
 			descriptorWrites.dstBinding = 0;
 			descriptorWrites.dstArrayElement = 0;
 			descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			descriptorWrites.descriptorCount = 1;
 			descriptorWrites.pImageInfo = &imageInfo;
 
-			vkUpdateDescriptorSets(VulkanCore::get().getDevice(), 1, &descriptorWrites, 0, nullptr);
+			vkUpdateDescriptorSets(VulkanCore::Get().GetDevice(), 1, &descriptorWrites, 0, nullptr);
 		}
 
 		VulkanTextureBinding::~VulkanTextureBinding() {
 		}
 
-		VkDescriptorSet VulkanTextureBinding::getDescriptorSet() {
-			return descriptor_set_;
+		VkDescriptorSet VulkanTextureBinding::GetDescriptorSet() {
+			return descriptorSet;
 		}
 	};
 };

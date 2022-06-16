@@ -11,13 +11,14 @@ namespace Grindstone {
 			VulkanDepthTarget(DepthTarget::CreateInfo& ci);
 			virtual ~VulkanDepthTarget() override;
 		public:
-			VkImageView getImageView();
+			VkImageView GetImageView();
 		public:
+			virtual void Resize(uint32_t width, uint32_t height) override;
 			virtual void BindFace(int k);
 		private:
-			VkImage image_;
-			VkDeviceMemory  image_memory_;
-			VkImageView image_view_;
+			VkImage image;
+			VkDeviceMemory  imageMemory;
+			VkImageView imageView;
 		};
 	};
 };

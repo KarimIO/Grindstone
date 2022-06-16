@@ -5,23 +5,25 @@
 using namespace Grindstone::Physics;
 using namespace Grindstone::Math;
 
-ColliderComponent* GetCollider(entt::registry& registry, entt::entity entity) {
-	auto sphere = registry.try_get<SphereColliderComponent>(entity);
+ColliderComponent* GetCollider(Grindstone::ECS::Entity& entity) {
+	auto& registry = entity.GetSceneEntityRegistry();
+	auto entityHandle = entity.GetHandle();
+	auto sphere = registry.try_get<SphereColliderComponent>(entityHandle);
 	if (sphere) {
 		return sphere;
 	}
 
-	auto box = registry.try_get<BoxColliderComponent>(entity);
+	auto box = registry.try_get<BoxColliderComponent>(entityHandle);
 	if (box) {
 		return box;
 	}
 
-	auto plane = registry.try_get<PlaneColliderComponent>(entity);
+	auto plane = registry.try_get<PlaneColliderComponent>(entityHandle);
 	if (plane) {
 		return plane;
 	}
 
-	auto capsule = registry.try_get<CapsuleColliderComponent>(entity);
+	auto capsule = registry.try_get<CapsuleColliderComponent>(entityHandle);
 	if (capsule) {
 		return capsule;
 	}
@@ -29,14 +31,17 @@ ColliderComponent* GetCollider(entt::registry& registry, entt::entity entity) {
 	return nullptr;
 }
 
-void Grindstone::Physics::SetupRigidBodyComponent(entt::registry& registry, entt::entity entity, void* componentPtr) {
-	ColliderComponent* colliderComponent = GetCollider(registry, entity);
+void Grindstone::Physics::SetupRigidBodyComponent(ECS::Entity& entity, void* componentPtr) {
+	auto& registry = entity.GetSceneEntityRegistry();
+	auto entityHandle = entity.GetHandle();
+
+	ColliderComponent* colliderComponent = GetCollider(entity);
 	if (colliderComponent == nullptr) {
 		return;
 	}
 
 	RigidBodyComponent* rigidBodyComponent = (RigidBodyComponent*)componentPtr;
-	TransformComponent* transformComponent = &registry.get<TransformComponent>(entity);
+	TransformComponent* transformComponent = &registry.get<TransformComponent>(entityHandle);
 
 	SetupRigidBodyComponentWithCollider(rigidBodyComponent, transformComponent, colliderComponent);
 }

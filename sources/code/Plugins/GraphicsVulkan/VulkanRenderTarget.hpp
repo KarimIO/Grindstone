@@ -7,18 +7,18 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		class VulkanRenderTarget : public RenderTarget {
 		public:
-			VulkanRenderTarget(VkImage swapchain_image, VkFormat); // Build from swapchain
+			VulkanRenderTarget(VkImage swapchainImage, VkFormat); // Build from swapchain
 			VulkanRenderTarget(RenderTarget::CreateInfo& ci);
 			virtual ~VulkanRenderTarget() override;
 		public:
-			VkImageView getImageView();
+			VkImageView GetImageView();
 		public:
-			virtual float getAverageValue(uint32_t i) override;
+			virtual void Resize(uint32_t width, uint32_t height) override;
 			virtual void RenderScreen(unsigned int i, unsigned int resx, unsigned int resy, unsigned char *data) override;
 		private:
-			VkImage image_;
-			VkImageView image_view_;
-			VkDeviceMemory image_memory_;
+			VkImage image;
+			VkImageView imageView;
+			VkDeviceMemory imageMemory;
 		};
 	}
 }

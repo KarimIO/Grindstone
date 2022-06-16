@@ -5,56 +5,56 @@ void ComponentRegistrar::RegisterComponent(const char *name, ComponentFunctions 
 	componentFunctionsList.emplace(name, componentFunctions);
 }
 
-void* ComponentRegistrar::CreateComponentWithSetup(const char* name, entt::registry& registry, ECS::EntityHandle entity) {
+void* ComponentRegistrar::CreateComponentWithSetup(const char* name, ECS::Entity& entity) {
 	auto selectedFactory = componentFunctionsList.find(name);
 	if (selectedFactory == componentFunctionsList.end()) {
 		return nullptr;
 	}
 
 	auto& fns = selectedFactory->second;
-	auto comp = fns.CreateComponentFn(registry, entity);
+	auto comp = fns.CreateComponentFn(entity);
 
 	if (fns.SetupComponentFn) {
-		fns.SetupComponentFn(registry, entity, comp);
+		fns.SetupComponentFn(entity, comp);
 	}
 
 	return comp;
 }
 
-void* ComponentRegistrar::CreateComponent(const char* name, entt::registry& registry, ECS::EntityHandle entity) {
+void* ComponentRegistrar::CreateComponent(const char* name, ECS::Entity& entity) {
 	auto selectedFactory = componentFunctionsList.find(name);
 	if (selectedFactory == componentFunctionsList.end()) {
 		return nullptr;
 	}
 
-	return selectedFactory->second.CreateComponentFn(registry, entity);
+	return selectedFactory->second.CreateComponentFn(entity);
 }
 
-void ComponentRegistrar::RemoveComponent(const char *name, entt::registry& registry, ECS::EntityHandle entity) {
+void ComponentRegistrar::RemoveComponent(const char *name, ECS::Entity& entity) {
 	auto selectedFactory = componentFunctionsList.find(name);
 	if (selectedFactory == componentFunctionsList.end()) {
 		return;
 	}
 
-	return selectedFactory->second.RemoveComponentFn(registry, entity);
+	return selectedFactory->second.RemoveComponentFn(entity);
 }
 
-bool ComponentRegistrar::HasComponent(const char* name, entt::registry& registry, ECS::EntityHandle entity) {
+bool ComponentRegistrar::HasComponent(const char* name, ECS::Entity& entity) {
 	auto selectedFactory = componentFunctionsList.find(name);
 	if (selectedFactory == componentFunctionsList.end()) {
 		return false;
 	}
 
-	return selectedFactory->second.HasComponentFn(registry, entity);
+	return selectedFactory->second.HasComponentFn(entity);
 }
 
-bool ComponentRegistrar::TryGetComponent(const char* name, entt::registry& registry, ECS::EntityHandle entity, void*& outComponent) {
+bool ComponentRegistrar::TryGetComponent(const char* name, ECS::Entity& entity, void*& outComponent) {
 	auto selectedFactory = componentFunctionsList.find(name);
 	if (selectedFactory == componentFunctionsList.end()) {
 		return false;
 	}
 
-	return selectedFactory->second.TryGetComponentFn(registry, entity, outComponent);
+	return selectedFactory->second.TryGetComponentFn(entity, outComponent);
 }
 
 bool ComponentRegistrar::TryGetComponentReflectionData(const char *name, Grindstone::Reflection::TypeDescriptor_Struct& outReflectionData) {
@@ -67,7 +67,7 @@ bool ComponentRegistrar::TryGetComponentReflectionData(const char *name, Grindst
 	return true;
 }
 
-void ComponentRegistrar::SetupComponent(const char* componentType, entt::registry& registry, ECS::EntityHandle entity, void* componentPtr) {
+void ComponentRegistrar::SetupComponent(const char* componentType, ECS::Entity& entity, void* componentPtr) {
 	auto selectedFactory = componentFunctionsList.find(componentType);
 	if (selectedFactory == componentFunctionsList.end()) {
 		return;
@@ -75,7 +75,7 @@ void ComponentRegistrar::SetupComponent(const char* componentType, entt::registr
 
 	auto& fns = selectedFactory->second;
 	if (fns.SetupComponentFn) {
-		fns.SetupComponentFn(registry, entity, componentPtr);
+		fns.SetupComponentFn(entity, componentPtr);
 	}
 }
 

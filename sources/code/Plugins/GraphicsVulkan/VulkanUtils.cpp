@@ -3,7 +3,7 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels) {
+		VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels) {
 			VkImageViewCreateInfo viewInfo = {};
 			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 			viewInfo.image = image;
@@ -16,15 +16,15 @@ namespace Grindstone {
 			viewInfo.subresourceRange.layerCount = 1;
 
 			VkImageView imageView;
-			if (vkCreateImageView(VulkanCore::get().getDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
+			if (vkCreateImageView(VulkanCore::Get().GetDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create texture image view!");
 			}
 
 			return imageView;
 		}
 
-		void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
-			VkDevice device = VulkanCore::get().getDevice();
+		void CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
+			VkDevice device = VulkanCore::Get().GetDevice();
 			
 			VkImageCreateInfo imageInfo = {};
 			imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -51,7 +51,7 @@ namespace Grindstone {
 			VkMemoryAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 			allocInfo.allocationSize = memRequirements.size;
-			allocInfo.memoryTypeIndex = VulkanCore::get().findMemoryType(memRequirements.memoryTypeBits, properties);
+			allocInfo.memoryTypeIndex = VulkanCore::Get().FindMemoryType(memRequirements.memoryTypeBits, properties);
 
 			if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
 				throw std::runtime_error("failed to allocate image memory!");
@@ -60,8 +60,8 @@ namespace Grindstone {
 			vkBindImageMemory(device, image, imageMemory, 0);
 		}
 
-		void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
-			VkDevice device = VulkanCore::get().getDevice();
+		void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
+			VkDevice device = VulkanCore::Get().GetDevice();
 			VkBufferCreateInfo bufferInfo = {};
 			bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 			bufferInfo.size = size;
@@ -78,7 +78,7 @@ namespace Grindstone {
 			VkMemoryAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 			allocInfo.allocationSize = memRequirements.size;
-			allocInfo.memoryTypeIndex = VulkanCore::get().findMemoryType(memRequirements.memoryTypeBits, properties);
+			allocInfo.memoryTypeIndex = VulkanCore::Get().FindMemoryType(memRequirements.memoryTypeBits, properties);
 
 			if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
 				throw std::runtime_error("failed to allocate buffer memory!");
@@ -87,12 +87,12 @@ namespace Grindstone {
 			vkBindBufferMemory(device, buffer, bufferMemory, 0);
 		}
 
-		VkCommandBuffer beginSingleTimeCommands() {
-			VkDevice device = VulkanCore::get().getDevice();
+		VkCommandBuffer BeginSingleTimeCommands() {
+			VkDevice device = VulkanCore::Get().GetDevice();
 			VkCommandBufferAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-			allocInfo.commandPool = VulkanCore::get().getGraphicsCommandPool();
+			allocInfo.commandPool = VulkanCore::Get().GetGraphicsCommandPool();
 			allocInfo.commandBufferCount = 1;
 
 			VkCommandBuffer commandBuffer;
@@ -107,9 +107,9 @@ namespace Grindstone {
 			return commandBuffer;
 		}
 
-		void endSingleTimeCommands(VkCommandBuffer commandBuffer) {
-			VkDevice device = VulkanCore::get().getDevice();
-			auto graphicsQueue = VulkanCore::get().graphics_queue_;
+		void EndSingleTimeCommands(VkCommandBuffer commandBuffer) {
+			VkDevice device = VulkanCore::Get().GetDevice();
+			auto graphicsQueue = VulkanCore::Get().graphicsQueue;
 			vkEndCommandBuffer(commandBuffer);
 
 			VkSubmitInfo submitInfo = {};
@@ -120,21 +120,21 @@ namespace Grindstone {
 			vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 			vkQueueWaitIdle(graphicsQueue);
 
-			vkFreeCommandBuffers(device, VulkanCore::get().getGraphicsCommandPool(), 1, &commandBuffer);
+			vkFreeCommandBuffers(device, VulkanCore::Get().GetGraphicsCommandPool(), 1, &commandBuffer);
 		}
 
-		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
-			VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+			VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
 			VkBufferCopy copyRegion = {};
 			copyRegion.size = size;
 			vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
-			endSingleTimeCommands(commandBuffer);
+			EndSingleTimeCommands(commandBuffer);
 		}
 
-		void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels) {
-			VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+		void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels) {
+			VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
 			VkImageMemoryBarrier barrier = {};
 			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -179,11 +179,11 @@ namespace Grindstone {
 				1, &barrier
 			);
 
-			endSingleTimeCommands(commandBuffer);
+			EndSingleTimeCommands(commandBuffer);
 		}
 
-		void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) {
-			VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+		void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) {
+			VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
 			VkBufferImageCopy region = {};
 			region.bufferOffset = 0;
@@ -202,7 +202,7 @@ namespace Grindstone {
 
 			vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-			endSingleTimeCommands(commandBuffer);
+			EndSingleTimeCommands(commandBuffer);
 		}
 	}
 }

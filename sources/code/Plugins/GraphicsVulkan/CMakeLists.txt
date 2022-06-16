@@ -37,13 +37,14 @@ source_group("Header Files\\Display" FILES ${Vk_DISPLAY_HEADERS})
 
 add_library(PluginGraphicsVulkan MODULE ${Vk_SOURCES} ${Vk_HEADERS})
 
-find_package(Vulkan CONFIG REQUIRED)
+find_path(VULKAN_HEADERS_INCLUDE_DIRS "vk_video/vulkan_video_codec_h264std.h")
+find_package(Vulkan REQUIRED)
 
-target_include_directories(PluginGraphicsVulkan PUBLIC ${CODE_DIR} ${DEPS_DIR} ${Vulkan_INCLUDE_DIR})
+target_include_directories(PluginGraphicsVulkan PUBLIC ${CODE_DIR} ${DEPS_DIR} ${VULKAN_HEADERS_INCLUDE_DIRS})
 
 target_compile_definitions(PluginGraphicsVulkan PRIVATE GRAPHICS_DLL)
 
-target_link_libraries(PluginGraphicsVulkan ${Vulkan_LIBRARIES})
+target_link_libraries(PluginGraphicsVulkan Vulkan::Vulkan)
 
 target_compile_features(PluginGraphicsVulkan PRIVATE cxx_std_17)
 

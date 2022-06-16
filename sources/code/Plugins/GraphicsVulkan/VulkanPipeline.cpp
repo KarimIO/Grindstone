@@ -37,7 +37,7 @@ namespace Grindstone {
 				createInfo.pCode = reinterpret_cast<const uint32_t*>(ci.shaderStageCreateInfos[i].content);
 				
 				VkShaderModule shaderModule;
-				if (vkCreateShaderModule(VulkanCore::get().getDevice(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+				if (vkCreateShaderModule(VulkanCore::Get().GetDevice(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
 					throw std::runtime_error("failed to create shader module!");
 				}
 
@@ -50,27 +50,27 @@ namespace Grindstone {
 			
 			VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 			vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-			vertexInputInfo.vertexBindingDescriptionCount = ci.vertex_bindings_count;
-			vertexInputInfo.pVertexBindingDescriptions = new VkVertexInputBindingDescription[ci.vertex_bindings_count];
+			vertexInputInfo.vertexBindingDescriptionCount = ci.vertexBindingsCount;
+			vertexInputInfo.pVertexBindingDescriptions = new VkVertexInputBindingDescription[ci.vertexBindingsCount];
 			uint32_t vad_count = 0;
-			for (uint32_t i = 0; i < ci.vertex_bindings_count; ++i) {
-				auto& vb = ci.vertex_bindings[i];
+			for (uint32_t i = 0; i < ci.vertexBindingsCount; ++i) {
+				auto& vb = ci.vertexBindings[i];
 				VkVertexInputBindingDescription &vbd = (VkVertexInputBindingDescription &)vertexInputInfo.pVertexBindingDescriptions[i];
 				vbd = {};
 				vbd.binding = i; // ci.bindings[i].binding;
-				vbd.inputRate = vb.element_rate ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
+				vbd.inputRate = vb.elementRate ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
 				vbd.stride = vb.stride;
-				vad_count += vb.attribute_count;
+				vad_count += vb.attributeCount;
 			}
 
 			vertexInputInfo.vertexAttributeDescriptionCount = vad_count;
 			VkVertexInputAttributeDescription *vads = new VkVertexInputAttributeDescription[vad_count];
 			vad_count = 0;
 
-			for (uint32_t i = 0; i < ci.vertex_bindings_count; ++i) {
-				auto& vb = ci.vertex_bindings[i];
+			for (uint32_t i = 0; i < ci.vertexBindingsCount; ++i) {
+				auto& vb = ci.vertexBindings[i];
 
-				for (uint32_t j = 0; j < vb.attribute_count; ++j) {
+				for (uint32_t j = 0; j < vb.attributeCount; ++j) {
 					auto& va = vb.attributes[j];
 					VkVertexInputAttributeDescription &vad = vads[vad_count++];
 					vad.binding = i;
@@ -161,12 +161,12 @@ namespace Grindstone {
 			layouts.reserve(ci.uniformBufferBindingCount + ci.textureBindingCount);
 
 			for (uint32_t i = 0; i < ci.uniformBufferBindingCount; ++i) {
-				auto ubb = ((VulkanUniformBufferBinding *)ci.uniformBufferBindings[i])->getDescriptorSetLayout();
+				auto ubb = ((VulkanUniformBufferBinding *)ci.uniformBufferBindings[i])->GetDescriptorSetLayout();
 				layouts.push_back(ubb);
 			}
 
 			for (uint32_t i = 0; i < ci.textureBindingCount; ++i) {
-				auto tex = ((VulkanTextureBindingLayout *)ci.textureBindings[i])->getDescriptorSetLayout();
+				auto tex = ((VulkanTextureBindingLayout *)ci.textureBindings[i])->GetDescriptorSetLayout();
 				layouts.push_back(tex);
 			}
 
@@ -176,7 +176,7 @@ namespace Grindstone {
 			pipelineLayoutInfo.pSetLayouts = layouts.data();
 			pipelineLayoutInfo.pushConstantRangeCount = 0;
 
-			if (vkCreatePipelineLayout(VulkanCore::get().getDevice(), &pipelineLayoutInfo, nullptr, &pipeline_layout_) != VK_SUCCESS) {
+			if (vkCreatePipelineLayout(VulkanCore::Get().GetDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create pipeline layout!");
 			}
 
@@ -193,43 +193,46 @@ namespace Grindstone {
 			pipelineInfo.pMultisampleState = &multisampling;
 			pipelineInfo.pDepthStencilState = &depthStencil;
 			pipelineInfo.pColorBlendState = &colorBlending;
-			pipelineInfo.layout = pipeline_layout_;
-			pipelineInfo.renderPass = rp->getRenderPassHandle();
+			pipelineInfo.layout = pipelineLayout;
+			pipelineInfo.renderPass = rp->GetRenderPassHandle();
 			pipelineInfo.subpass = 0;
 			pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-			if (vkCreateGraphicsPipelines(VulkanCore::get().getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphics_pipeline_) != VK_SUCCESS) {
+			if (vkCreateGraphicsPipelines(VulkanCore::Get().GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create graphics pipeline!");
 			}
 
 			delete[] vads;
 
 			for (uint32_t i = 0; i < ci.shaderStageCreateInfoCount; ++i) {
-				vkDestroyShaderModule(VulkanCore::get().getDevice(), shaderStages[i].module, nullptr);
+				vkDestroyShaderModule(VulkanCore::Get().GetDevice(), shaderStages[i].module, nullptr);
 			}
 		}
 
 		VulkanPipeline::~VulkanPipeline() {
-			vkDestroyPipeline(VulkanCore::get().getDevice(), graphics_pipeline_, nullptr);
-			vkDestroyPipelineLayout(VulkanCore::get().getDevice(), pipeline_layout_, nullptr);
+			vkDestroyPipeline(VulkanCore::Get().GetDevice(), graphicsPipeline, nullptr);
+			vkDestroyPipelineLayout(VulkanCore::Get().GetDevice(), pipelineLayout, nullptr);
 		}
 
-		VkPipeline VulkanPipeline::getGraphicsPipeline() {
-			return graphics_pipeline_;
+		VkPipeline VulkanPipeline::GetGraphicsPipeline() {
+			return graphicsPipeline;
 		}
 
-		VkPipelineLayout VulkanPipeline::getGraphicsPipelineLayout() {
-			return pipeline_layout_;
+		VkPipelineLayout VulkanPipeline::GetGraphicsPipelineLayout() {
+			return pipelineLayout;
 		}
 
-		void VulkanPipeline::createShaderModule(ShaderStageCreateInfo &ci, VkPipelineShaderStageCreateInfo &out) {
+		void VulkanPipeline::Recreate(CreateInfo& createInfo) {
+		}
+
+		void VulkanPipeline::CreateShaderModule(ShaderStageCreateInfo &ci, VkPipelineShaderStageCreateInfo &out) {
 			VkShaderModuleCreateInfo createInfo = {};
 			createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 			createInfo.codeSize = ci.size;
 			createInfo.pCode = reinterpret_cast<const uint32_t*>(ci.content);
 
 			VkShaderModule shaderModule;
-			if (vkCreateShaderModule(VulkanCore::get().getDevice(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+			if (vkCreateShaderModule(VulkanCore::Get().GetDevice(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create shader module!");
 			}
 

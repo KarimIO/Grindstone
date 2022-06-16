@@ -20,6 +20,8 @@
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
+GraphicsAPI::RenderPass* DeferredRenderer::gbufferRenderPass = nullptr;
+
 float lightPositions[] = {
 	-1.0f, -1.0f,
 	-1.0f,  1.0f,
@@ -166,15 +168,29 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	gbufferImagesCreateInfo.emplace_back(ColorFormat::R8G8B8A8, width, height); // sR sG sB Roughness
 	gbufferRenderTargets = core->CreateRenderTarget(gbufferImagesCreateInfo.data(), (uint32_t)gbufferImagesCreateInfo.size());
 
-	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false);
+	std::vector<ColorFormat> colorFormats;
+	colorFormats.reserve(gbufferImagesCreateInfo.size());
+	for (size_t i = 0; i < colorFormats.size(); ++i) {
+		colorFormats.emplace_back(gbufferImagesCreateInfo[i].format);
+	}
+
+	RenderPass::CreateInfo gbufferRenderPassCreateInfo{};
+	gbufferRenderPassCreateInfo.width = width;
+	gbufferRenderPassCreateInfo.height = height;
+	gbufferRenderPassCreateInfo.colorFormats = colorFormats.data();
+	gbufferRenderPassCreateInfo.colorFormatCount = colorFormats.size();
+	gbufferRenderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
+	gbufferRenderPass = core->CreateRenderPass(gbufferRenderPassCreateInfo);
+
+	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(gbufferRenderPassCreateInfo.depthFormat, width, height, false, false);
 	gbufferDepthTarget = core->CreateDepthTarget(gbufferDepthImageCreateInfo);
 
 	Framebuffer::CreateInfo gbufferCreateInfo{};
 	gbufferCreateInfo.debugName = "G-Buffer Framebuffer";
+	gbufferCreateInfo.renderPass = gbufferRenderPass;
 	gbufferCreateInfo.renderTargetLists = &gbufferRenderTargets;
 	gbufferCreateInfo.numRenderTargetLists = 1;
 	gbufferCreateInfo.depthTarget = gbufferDepthTarget;
-	gbufferCreateInfo.renderPass = nullptr;
 	gbuffer = core->CreateFramebuffer(gbufferCreateInfo);
 
 	RenderTarget::CreateInfo litHdrImagesCreateInfo
@@ -184,12 +200,20 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false);
 	litHdrDepthTarget = core->CreateDepthTarget(litHdrDepthImageCreateInfo);
 
+	RenderPass::CreateInfo mainRenderPassCreateInfo{};
+	mainRenderPassCreateInfo.width = width;
+	mainRenderPassCreateInfo.height = height;
+	mainRenderPassCreateInfo.colorFormats = &litHdrImagesCreateInfo.format;
+	mainRenderPassCreateInfo.colorFormatCount = 1;
+	mainRenderPassCreateInfo.depthFormat = litHdrDepthImageCreateInfo.format;
+	mainRenderPass = core->CreateRenderPass(mainRenderPassCreateInfo);
+
 	Framebuffer::CreateInfo litHdrFramebufferCreateInfo{};
 	litHdrFramebufferCreateInfo.debugName = "Lit HDR Framebuffer";
 	litHdrFramebufferCreateInfo.renderTargetLists = &litHdrRenderTarget;
 	litHdrFramebufferCreateInfo.numRenderTargetLists = 1;
 	litHdrFramebufferCreateInfo.depthTarget = litHdrDepthTarget;
-	litHdrFramebufferCreateInfo.renderPass = nullptr;
+	litHdrFramebufferCreateInfo.renderPass = mainRenderPass;
 	litHdrFramebuffer = core->CreateFramebuffer(litHdrFramebufferCreateInfo);
 	
 	auto shaderManager = EngineCore::GetInstance().shaderManager;
