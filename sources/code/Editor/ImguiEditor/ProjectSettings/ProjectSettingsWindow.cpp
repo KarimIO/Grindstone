@@ -26,7 +26,7 @@ void ProjectSettingsWindow::OpenPage(ProjectSettingsPage preferencesPage) {
 void ProjectSettingsWindow::RenderSideBar() {
 	auto assetTopBar = ImGui::GetID("#ProjectSettingsSidebar");
 	ImGui::BeginChildFrame(assetTopBar, ImVec2(), ImGuiWindowFlags_NoBackground);
-	float availWidth = ImGui::GetContentRegionAvailWidth();
+	float availWidth = ImGui::GetContentRegionAvail().x;
 	ImVec2 size = ImVec2{ availWidth , 0 };
 
 	if (ImGui::Button("Build Settings", size)) {

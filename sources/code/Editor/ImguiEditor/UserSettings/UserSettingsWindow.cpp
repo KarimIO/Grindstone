@@ -21,7 +21,7 @@ void UserSettingsWindow::OpenPage(UserSettingsPage preferencesPage) {
 void UserSettingsWindow::RenderSideBar() {
 	auto assetTopBar = ImGui::GetID("#UserSettingsSidebar");
 	ImGui::BeginChildFrame(assetTopBar, ImVec2(), ImGuiWindowFlags_NoBackground);
-	float availWidth = ImGui::GetContentRegionAvailWidth();
+	float availWidth = ImGui::GetContentRegionAvail().x;
 	ImVec2 size = ImVec2{ availWidth , 0 };
 
 	if (ImGui::Button("Code Tools", size)) {

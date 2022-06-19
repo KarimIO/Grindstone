@@ -82,7 +82,7 @@ find_package(efsw CONFIG REQUIRED)
 find_package(gl3w CONFIG REQUIRED)
 find_package(glslang CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
-find_path(STB_INCLUDE_DIRS "stb.h")
+find_path(STB_INCLUDE_DIRS "stb_include.h")
 find_path(FMT_INCLUDE_DIRS "fmt/format.h")
 
 find_package(spirv_cross_core CONFIG REQUIRED)

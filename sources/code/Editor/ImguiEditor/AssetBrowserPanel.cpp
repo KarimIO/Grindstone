@@ -165,7 +165,7 @@ void AssetBrowserPanel::RenderTopBar() {
 	auto assetTopBar = ImGui::GetID("#assettopbar");
 	ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.3f, 0.6f, 0.9f, 0.1f));
 	ImGui::BeginChildFrame(assetTopBar, ImVec2(0, 25), ImGuiWindowFlags_NoScrollbar);
-	float availWidth = ImGui::GetContentRegionAvailWidth();
+	float availWidth = ImGui::GetContentRegionAvail().x;
 	ImGui::PushItemWidth(std::min(160.0f, availWidth / 2.0f));
 	ImGui::InputText("Search", &searchText);
 	ImGui::EndChildFrame();

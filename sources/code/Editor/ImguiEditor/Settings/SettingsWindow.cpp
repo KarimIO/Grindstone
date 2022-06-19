@@ -47,7 +47,7 @@ void SettingsWindow::Render() {
 void SettingsWindow::RenderSettingsPage() {
 	auto assetTopBar = ImGui::GetID("#SettingsWindow");
 	ImGui::BeginChildFrame(assetTopBar, ImVec2{}, ImGuiWindowFlags_NoBackground);
-	float availWidth = ImGui::GetContentRegionAvailWidth();
+	float availWidth = ImGui::GetContentRegionAvail().x;
 	ImVec2 size = ImVec2{ availWidth , 0 };
 
 	if (preferenceIndex < 0 || preferenceIndex >= pages.size()) {
