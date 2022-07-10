@@ -3,12 +3,12 @@ using System.Runtime.InteropServices;
 namespace Grindstone {
 	[System.Serializable]
 	public struct Entity {
-		#region Public Member Variables
+		#region Public Fields
 		public uint entityHandle;
 		public Scene scene;
 		#endregion
 
-		#region Static Member Variables
+		#region Static Fields
 		public static uint InvalidHandle = uint.MaxValue;
 		#endregion
 

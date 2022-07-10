@@ -2,13 +2,16 @@ using System.Runtime.InteropServices;
 
 namespace Grindstone {
 	public class Logger {
+		#region Enums
 		public enum LogSeverity {
 			Info,
 			Trace,
 			Warning,
 			Error
 		};
+		#endregion
 
+		#region Static Methods
 		public static void Print(LogSeverity logSeverity, string message) {
 			LoggerLog((int)logSeverity, message);
 		}
@@ -32,8 +35,11 @@ namespace Grindstone {
 		public static void PrintError(string message) {
 			LoggerLog((int)LogSeverity.Error, message);
 		}
+		#endregion
 
+		#region DllImports
 		[DllImport("PluginScriptCSharp")]
 		private static extern void LoggerLog(int logSeverity, string message);
+		#endregion
 	}
 }

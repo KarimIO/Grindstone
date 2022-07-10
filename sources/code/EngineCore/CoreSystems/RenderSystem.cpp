@@ -9,7 +9,7 @@
 #include "EngineCore/Rendering/BaseRenderer.hpp"
 #include "EngineCore/EngineCore.hpp"
 
-glm::vec3 eulerToForward(glm::vec3 eulerAngle) {
+glm::vec3 EulerToForward(glm::vec3 eulerAngle) {
 	float pitch = eulerAngle.x;
 	float yaw = eulerAngle.y;
 
@@ -39,18 +39,12 @@ namespace Grindstone {
 					return;
 				}
 
-				// const glm::vec3 forwardVector = eulerToForward(transformComponent.angles);
-				// const glm::vec3 pos = transformComponent.position;
-				const glm::vec3 pos = glm::vec3(
-					16,
-					10,
-					10
-				);
-				//transformComponent.position;
+				const glm::vec3 forwardVector = EulerToForward(glm::eulerAngles(transformComponent.rotation));
+				const glm::vec3 pos = transformComponent.position;
 
 				const auto viewMatrix = glm::lookAt(
 					pos,
-					glm::vec3(),
+					pos + forwardVector,
 					upVector
 				);
 

@@ -1,12 +1,14 @@
 namespace Grindstone {
 	public class SmartComponent {
 		public readonly Entity entity;
-
-		public virtual void OnStart() {}
-		public virtual void OnAttachComponent() {}
+		#region Public Methods
+		#region Public Virtual Methods
+		public virtual void OnStart() { }
+		public virtual void OnAttachComponent() { }
 		public virtual void OnUpdate() { }
 		public virtual void OnEditorUpdate() { }
-		public virtual void OnDestroy() {}
+		public virtual void OnDestroy() { }
+		#endregion
 
 		public void Print(Logger.LogSeverity severity, string message) {
 			Logger.Print(severity, message);
@@ -31,5 +33,6 @@ namespace Grindstone {
 		public TransformComponent GetTransform() {
 			return GetComponent<TransformComponent>();
 		}
+		#endregion
 	}
 }

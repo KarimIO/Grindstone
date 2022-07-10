@@ -1,12 +1,27 @@
 #include "InputManager.hpp"
 #include "EngineCore/Events/Dispatcher.hpp"
+#include "EngineCore/EngineCore.hpp"
 #include "Common/Event/MouseEvent.hpp"
 #include "Common/Event/KeyEvent.hpp"
 #include "Common/Event/WindowEvent.hpp"
+#include <iostream>
 using namespace Grindstone::Input;
 using namespace Grindstone::Events;
 
-Manager::Manager(Events::Dispatcher* dispatcher) : dispatcher(dispatcher) {}
+extern "C" {
+	ENGINE_CORE_API bool InputManagerIsKeyDown(int keyboardKey) {
+		return Grindstone::EngineCore::GetInstance().GetInputManager()->IsKeyPressed((KeyPressCode)keyboardKey);
+	}
+
+	ENGINE_CORE_API bool InputManagerIsMouseButtonDown(int mouseButton) {
+		return Grindstone::EngineCore::GetInstance().GetInputManager()->IsMouseButtonPressed((MouseButtonCode)mouseButton);
+	}
+}
+
+Manager::Manager(Events::Dispatcher* dispatcher) : dispatcher(dispatcher) {
+	std::memset(keyPressed, 0, sizeof(keyPressed));
+	std::memset(mousePressed, 0, sizeof(mousePressed));
+}
 
 void Manager::ResizeEvent(int width, int height) {
 	WindowResizeEvent* ev = new WindowResizeEvent{width, height};
@@ -82,4 +97,3 @@ void Manager::ForceQuit(Grindstone::Window* window) {
 	WindowForceQuitEvent* ev = new WindowForceQuitEvent(window);
 	dispatcher->Dispatch(ev);
 }
-

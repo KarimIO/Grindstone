@@ -4,9 +4,12 @@ namespace Grindstone {
 	namespace Math {
 		[System.Serializable, StructLayout(LayoutKind.Sequential)]
 		public class Quaternion {
+			#region Public Fields
 			[MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
 			protected float[] array = new float[4];
+			#endregion
 
+			#region Constructor Methods
 			public Quaternion() {
 				array[0] = 0;
 				array[1] = 0;
@@ -28,8 +31,11 @@ namespace Grindstone {
 				array[2] = sy * cr * cp - cy * sr * sp;
 				array[3] = cy * cr * cp + sy * sr * sp;
 			}
+			#endregion
 
+			#region Public Methods
 			public override string ToString() => $"Quaternion({array[0]}, {array[1]}, {array[2]}, {array[3]})";
+			#endregion
 		}
 	}
 }

@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace Grindstone {
 	public struct Scene {
-		#region Private Member Variables
+		#region Private Fields
 		public System.IntPtr sceneIntPtr;
 		#endregion
 
