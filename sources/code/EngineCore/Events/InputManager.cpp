@@ -16,6 +16,19 @@ extern "C" {
 	ENGINE_CORE_API bool InputManagerIsMouseButtonDown(int mouseButton) {
 		return Grindstone::EngineCore::GetInstance().GetInputManager()->IsMouseButtonPressed((MouseButtonCode)mouseButton);
 	}
+
+	ENGINE_CORE_API void InputManagerSetMousePos(float* mousePos) {
+		Grindstone::EngineCore::GetInstance().GetInputManager()->SetMousePosition((int)mousePos[0], (int)mousePos[1]);
+	}
+
+	float* arr = new float[2];
+	ENGINE_CORE_API float* InputManagerGetMousePos() {
+		int x, y;
+		Grindstone::EngineCore::GetInstance().GetInputManager()->GetMousePosition(x, y);
+		arr[0] = (float)x;
+		arr[1] = (float)y;
+		return &arr[0];
+	}
 }
 
 Manager::Manager(Events::Dispatcher* dispatcher) : dispatcher(dispatcher) {

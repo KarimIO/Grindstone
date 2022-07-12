@@ -85,6 +85,7 @@ namespace Grindstone.Math {
 		#endregion
 	}
 
+	[System.Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct Float3 {
 		#region Public Fields
 		public float x;
@@ -184,6 +185,7 @@ namespace Grindstone.Math {
 		#endregion
 	}
 
+	[System.Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct Float4 {
 		#region Public Fields
 		public float x;

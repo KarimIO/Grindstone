@@ -1,3 +1,4 @@
+using Grindstone.Math;
 using System.Runtime.InteropServices;
 
 namespace Grindstone.Input {
@@ -10,6 +11,11 @@ namespace Grindstone.Input {
 		public static bool IsMouseButtonDown(MouseButton mouseButton) {
 			return InputManagerIsMouseButtonDown((int)mouseButton);
 		}
+
+		public static Float2 MousePosition {
+			get => InputManagerGetMousePos();
+			set => InputManagerSetMousePos(value);
+		}
 		#endregion
 
 		#region DllImports
@@ -18,6 +24,12 @@ namespace Grindstone.Input {
 
 		[DllImport("EngineCore")]
 		private static extern bool InputManagerIsMouseButtonDown(int mouseButton);
+
+		[DllImport("EngineCore")]
+		private static extern Float2 InputManagerGetMousePos();
+
+		[DllImport("EngineCore")]
+		private static extern void InputManagerSetMousePos(Float2 mousePos);
 		#endregion
 	}
 }
