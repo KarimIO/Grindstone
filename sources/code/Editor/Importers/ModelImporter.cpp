@@ -27,6 +27,15 @@ void PushVertex2dToVector(std::vector<float>& targetVector, const aiVector3D* ai
 	targetVector.push_back(aiVertex->y);
 }
 
+glm::mat4 AiMatToGlm(aiMatrix4x4& matrix) {
+	return glm::mat4(
+		matrix.a1, matrix.a2, matrix.a3, matrix.a4,
+		matrix.b1, matrix.b2, matrix.b3, matrix.b4,
+		matrix.c1, matrix.c2, matrix.c3, matrix.c4,
+		matrix.d1, matrix.d2, matrix.d3, matrix.d4
+	);
+}
+
 void ModelImporter::ConvertMaterials() {
 	if (!scene->HasMaterials()) {
 		return;
@@ -120,12 +129,14 @@ void ModelImporter::InitSubmeshes() {
 	outputData.vertexArray.tangent.reserve(vertexCountSizeT * 3);
 	outputData.vertexArray.texCoordArray.resize(1);
 	outputData.vertexArray.texCoordArray[0].reserve(vertexCountSizeT * 2);
+	outputData.vertexArray.boneIds.resize(vertexCountSizeT * NUM_BONES_PER_VERTEX);
+	outputData.vertexArray.boneWeights.resize(vertexCountSizeT * NUM_BONES_PER_VERTEX);
 	outputData.indices.reserve(indexCount);
 }
 
 void ModelImporter::ProcessVertices() {
 	for (unsigned int meshIterator = 0; meshIterator < scene->mNumMeshes; meshIterator++) {
-		const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
+		const aiVector3D zero3D(0.0f, 0.0f, 0.0f);
 
 		auto mesh = scene->mMeshes[meshIterator];
 
@@ -135,7 +146,7 @@ void ModelImporter::ProcessVertices() {
 			const aiVector3D* aiTangent = &(mesh->mTangents[vertexIterator]);
 			const aiVector3D* aiTexCoord = mesh->HasTextureCoords(0)
 				? &(mesh->mTextureCoords[0][vertexIterator])
-				: &Zero3D;
+				: &zero3D;
 
 			auto& vertexArray = outputData.vertexArray;
 			PushVertex3dToVector(vertexArray.position, aiPos);
@@ -156,11 +167,116 @@ void ModelImporter::ProcessVertices() {
 	}
 }
 
-void ModelImporter::ProcessNodeTree(aiNode* node) {
-	node->mMeshes;
+// Make a list of used bones so we can remove unnecessary bones, and get offset Matrix
+void ModelImporter::PreprocessBones() {
+for (unsigned int meshIterator = 0; meshIterator < scene->mNumMeshes; meshIterator++) {
+	auto mesh = scene->mMeshes[meshIterator];
+
+	for (unsigned int boneIterator = 0; boneIterator < mesh->mNumBones; boneIterator++) {
+		auto bone = mesh->mBones[boneIterator];
+		std::string boneName(bone->mName.data);
+
+		tempOffsetMatrices[boneName] = AiMatToGlm(bone->mOffsetMatrix);
+	}
+}
+}
+
+void ModelImporter::ProcessNodeTree(aiNode* node, uint16_t parentIndex) {
+	std::string name(node->mName.data);
+
+	uint16_t currentBone = outputData.boneCount++;
+	auto boneOffsetMatrixIterator = tempOffsetMatrices.find(name);
+	bool isBone = boneOffsetMatrixIterator == tempOffsetMatrices.end();
+	if (isBone) {
+		glm::mat4 inverseMatrix = glm::inverse(AiMatToGlm(node->mTransformation));
+		glm::mat4& offsetMatrix = boneOffsetMatrixIterator->second;
+		outputData.boneNames.push_back(name);
+		outputData.bones.emplace_back(parentIndex, offsetMatrix, inverseMatrix);
+		boneMapping.emplace(currentBone);
+	}
 
 	for (unsigned int childIterator = 0; childIterator < node->mNumChildren; ++childIterator) {
-		ProcessNodeTree(node->mChildren[childIterator]);
+		ProcessNodeTree(node->mChildren[childIterator], currentBone);
+	}
+}
+
+void ModelImporter::ProcessVertexBoneWeights() {
+	for (unsigned int meshIterator = 0; meshIterator < scene->mNumMeshes; meshIterator++) {
+		auto mesh = scene->mMeshes[meshIterator];
+
+		for (unsigned int boneIterator = 0; boneIterator < mesh->mNumBones; boneIterator++) {
+			auto bone = mesh->mBones[boneIterator];
+			std::string boneName(bone->mName.data);
+			unsigned int boneId = boneMapping[boneName];
+
+			for (unsigned int weightIterator = 0; weightIterator < bone->mNumWeights; weightIterator++) {
+				auto& weight = bone->mWeights[weightIterator];
+
+				auto vertexId = weight.mVertexId;
+				auto vertexWeight = weight.mWeight;
+				AddBoneData(vertexId, boneId, vertexWeight);
+			}
+		}
+	}
+
+	if (hasExtraWeights) {
+		NormalizeBoneWeights();
+	}
+}
+
+void ModelImporter::NormalizeBoneWeights() {
+	for (size_t i = 0; i < outputData.vertexArray.boneWeights.size(); i += NUM_BONES_PER_VERTEX) {
+		float w0 = outputData.vertexArray.boneWeights[i];
+		float w1 = outputData.vertexArray.boneWeights[i + 1];
+		float w2 = outputData.vertexArray.boneWeights[i + 2];
+		float w3 = outputData.vertexArray.boneWeights[i + 3];
+		float total = w0 + w1 + w2 + w3;
+
+		outputData.vertexArray.boneWeights[i] = w0 / total;
+		outputData.vertexArray.boneWeights[i + 1] = w1 / total;
+		outputData.vertexArray.boneWeights[i + 2] = w2 / total;
+		outputData.vertexArray.boneWeights[i + 3] = w3 / total;
+	}
+}
+
+void ModelImporter::AddBoneData(unsigned int vertexId, unsigned int boneId, unsigned int vertexWeight) {
+	unsigned int baseIndex = vertexId * NUM_BONES_PER_VERTEX;
+	unsigned int lastIndex = baseIndex + NUM_BONES_PER_VERTEX;
+	for (unsigned int i = baseIndex; i < lastIndex; i++) {
+		if (outputData.vertexArray.boneWeights[i] == 0.0f) {
+			outputData.vertexArray.boneIds[i] = boneId;
+			outputData.vertexArray.boneWeights[i] = vertexWeight;
+			return;
+		}
+	}
+
+	// Too many boneweights - replace the smallest one
+	hasExtraWeights = true;
+	unsigned int lowestIndex = baseIndex;
+	float lowestWeight = outputData.vertexArray.boneWeights[lowestIndex];
+	for (unsigned int i = baseIndex; i < lastIndex; i++) {
+		float currentWeight = outputData.vertexArray.boneWeights[i];
+		if (currentWeight < lowestWeight) {
+			lowestIndex = i;
+			lowestWeight = currentWeight;
+		}
+	}
+
+	if (lowestWeight < vertexWeight) {
+		outputData.vertexArray.boneIds[lowestIndex] = boneId;
+		outputData.vertexArray.boneWeights[lowestIndex] = vertexWeight;
+	}
+}
+
+void ModelImporter::ProcessAnimations() {
+	for (unsigned int i = 0; i < scene->mNumAnimations; ++i) {
+		auto animation = scene->mAnimations[i];
+		std::string animationName(animation->mName.data);
+
+		float ticksPerSecond = animation->mTicksPerSecond != 0
+			? animation->mTicksPerSecond
+			: 25.0f;
+		float duration = animation->mDuration;
 	}
 }
 
@@ -181,11 +297,29 @@ void ModelImporter::Import(std::filesystem::path& path) {
 	}
 
 	metaFile = new MetaFile(path);
+	// Set to false, will check if true later.
+	bool isSkeletalMesh = true;
+	bool shouldImportAnimations = true;
 
-	ProcessNodeTree(scene->mRootNode);
 	InitSubmeshes();
 	ConvertMaterials();
 	ProcessVertices();
+
+	if (isSkeletalMesh) {
+		PreprocessBones();
+		ProcessNodeTree(scene->mRootNode, -1);
+		ProcessVertexBoneWeights();
+	}
+	/*
+	TODO: Process lights, etc here
+	else {
+		ProcessNodeTree(scene->mRootNode, -1);
+	}
+	*/
+
+	if (shouldImportAnimations) {
+		ProcessAnimations();
+	}
 
 	importer.FreeScene();
 
@@ -241,11 +375,25 @@ void ModelImporter::OutputMeshes() {
 	OutputVertexArray(output, outputData.vertexArray.normal);
 	OutputVertexArray(output, outputData.vertexArray.tangent);
 	OutputVertexArray(output, outputData.vertexArray.texCoordArray[0]);
+	OutputVertexArray(output, outputData.vertexArray.boneIds);
+	OutputVertexArray(output, outputData.vertexArray.boneWeights);
 
 	// - Output Indices
 	output.write(reinterpret_cast<const char*> (outputData.indices.data()), outputData.indices.size() * sizeof(uint16_t));
+	
+	// - Output Bone Names
+	for (auto& name : outputData.boneNames) {
+		output.write(name.data(), name.size() + 1); // size + 1 to include null terminated character
+	}
 
 	output.close();
+}
+
+void ModelImporter::OutputVertexArray(std::ofstream& output, std::vector<uint16_t>& vertexArray) {
+	output.write(
+		reinterpret_cast<const char*> (vertexArray.data()),
+		vertexArray.size() * sizeof(float)
+	);
 }
 
 void ModelImporter::OutputVertexArray(std::ofstream& output, std::vector<float>& vertexArray) {
