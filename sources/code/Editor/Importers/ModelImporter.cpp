@@ -10,6 +10,7 @@
 #include <chrono>
 
 #include "Common/Formats/Model.hpp"
+#include "Common/Formats/Animation.hpp"
 #include "Editor/EditorManager.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Common/ResourcePipeline/MetaFile.hpp"
@@ -277,6 +278,59 @@ void ModelImporter::ProcessAnimations() {
 			? animation->mTicksPerSecond
 			: 25.0f;
 		float duration = animation->mDuration;
+
+		Formats::Animation::V1::Header animationHeader;
+		animationHeader.animationDuration = animation->mDuration;
+		animationHeader.channelCount = animation->mNumChannels;
+		animationHeader.ticksPerSecond = animation->mTicksPerSecond != 0
+			? animation->mTicksPerSecond
+			: 25.0f;
+
+		std::vector<Formats::Animation::V1::Channel> channels;
+		channels.resize(animation->mNumChannels);
+		std::vector<Formats::Animation::V1::ChannelData> channelData;
+		channels.resize(animation->mNumChannels);
+
+		std::ofstream output(meshOutputPath, std::ios::binary);
+
+		if (!output.is_open()) {
+			throw std::runtime_error(std::string("Failed to open ") + meshOutputPath);
+		}
+
+		//  - Output File MetaData
+		output.write("GAF", 3);
+
+		for (unsigned int channelIndex = 0; channelIndex < animation->mNumChannels; ++channelIndex) {
+			Formats::Animation::V1::Channel& dstChannel = channels[channelIndex];
+			Formats::Animation::V1::ChannelData& dstChannelData = channelData[channelIndex];
+			auto srcChannel = animation->mChannels[channelIndex];
+			std::string channelName(srcChannel->mNodeName.data);
+			auto boneIterator = boneMapping.find(channelName);
+			bool isBone = boneIterator == boneMapping.end();
+
+			if (isBone) {
+				dstChannel.boneIndex = boneIterator->second;
+
+				dstChannel.positionCount = srcChannel->mNumPositionKeys;
+				dstChannel.rotationCount = srcChannel->mNumRotationKeys;
+				dstChannel.scaleCount = srcChannel->mNumScalingKeys;
+
+				dstChannelData.positions.reserve(srcChannel->mNumPositionKeys);
+				for (unsigned int i = 0; i < srcChannel->mNumPositionKeys; ++i) {
+					dstChannelData.positions.emplace_back(srcChannel->mPositionKeys[i].mTime, srcChannel->mPositionKeys[i].mValue);
+				}
+
+				dstChannelData.rotations.reserve(srcChannel->mNumRotationKeys);
+				for (unsigned int i = 0; i < srcChannel->mNumRotationKeys; ++i) {
+					dstChannelData.rotations.emplace_back(srcChannel->mRotationKeys[i].mTime, srcChannel->mRotationKeys[i].mValue);
+				}
+
+				dstChannelData.scales.reserve(srcChannel->mNumScalingKeys);
+				for (unsigned int i = 0; i < srcChannel->mNumScalingKeys; ++i) {
+					dstChannelData.scales.emplace_back(srcChannel->mScalingKeys[i].mTime, srcChannel->mScalingKeys[i].mValue);
+				}
+			}
+		}
 	}
 }
 
@@ -341,7 +395,7 @@ void ModelImporter::OutputMeshes() {
 
 	auto meshCount = outputData.meshes.size();
 
-	Grindstone::Formats::Model::Header::V1 outFormat;
+	Grindstone::Formats::Model::V1::Header outFormat;
 	outFormat.totalFileSize = sizeof(outFormat) + 
 		meshCount * sizeof(Submesh) +
 		outputData.vertexArray.position.size() * sizeof(float) +
@@ -366,7 +420,7 @@ void ModelImporter::OutputMeshes() {
 	output.write("GMF", 3);
 
 	//	- Output Header
-	output.write(reinterpret_cast<const char*> (&outFormat), sizeof(Grindstone::Formats::Model::Header::V1));
+	output.write(reinterpret_cast<const char*> (&outFormat), sizeof(Grindstone::Formats::Model::V1::Header));
 
 	//	- Output Meshes
 	output.write(reinterpret_cast<const char*> (outputData.meshes.data()), meshCount * sizeof(Submesh));

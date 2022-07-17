@@ -10,10 +10,10 @@ namespace Grindstone {
 				Bit32
 			};
 
-			namespace Header {
-				struct V1 {
+			namespace V1 {
+				struct Header {
 					uint32_t totalFileSize = 0;
-					uint32_t version = 0;
+					uint32_t version = 1;
 					uint32_t meshCount = 0;
 					uint64_t vertexCount = 0;
 					uint64_t indexCount = 0;
