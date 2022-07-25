@@ -39,10 +39,10 @@ namespace Grindstone {
 	class WindowManager;
 
 	class AssetRendererManager;
-	class MaterialManager;
-	class TextureManager;
-	class ShaderManager;
-	class Mesh3dManager;
+	class MaterialImporter;
+	class TextureImporter;
+	class ShaderImporter;
+	class Mesh3dImporter;
 	class Mesh3dRenderer;
 	class BaseRenderer;
 
@@ -94,10 +94,10 @@ namespace Grindstone {
 	public:
 		DisplayManager* displayManager = nullptr;
 		WindowManager* windowManager = nullptr;
-		MaterialManager* materialManager = nullptr;
-		TextureManager* textureManager = nullptr;
-		ShaderManager* shaderManager = nullptr;
-		Mesh3dManager* mesh3dManager = nullptr;
+		MaterialImporter* materialImporter = nullptr;
+		TextureImporter* textureImporter = nullptr;
+		ShaderImporter* shaderImporter = nullptr;
+		Mesh3dImporter* mesh3dImporter = nullptr;
 		Mesh3dRenderer* mesh3dRenderer = nullptr;
 		AssetRendererManager* assetRendererManager = nullptr;
 	private:

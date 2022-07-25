@@ -1,7 +1,7 @@
-#include "MaterialManager.hpp"
+#include "MaterialImporter.hpp"
 #include "rapidjson/document.h"
-#include "EngineCore/Assets/Shaders/ShaderManager.hpp"
-#include "EngineCore/Assets/Textures/TextureManager.hpp"
+#include "EngineCore/Assets/Shaders/ShaderImporter.hpp"
+#include "EngineCore/Assets/Textures/TextureImporter.hpp"
 #include "EngineCore/Assets/BaseAssetRenderer.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "EngineCore/EngineCore.hpp"
@@ -9,7 +9,13 @@
 #include "Common/Graphics/Texture.hpp"
 using namespace Grindstone;
 
-Material& MaterialManager::LoadMaterial(BaseAssetRenderer* assetRenderer, const char* path) {
+void MaterialImporter::Load(Uuid& uuid) {
+}
+
+void MaterialImporter::LazyLoad(Uuid& uuid) {
+}
+
+Material& MaterialImporter::LoadMaterial(BaseAssetRenderer* assetRenderer, const char* path) {
 	try {
 		Material* material = nullptr;
 		if (!TryGetMaterial(path, material)) {
@@ -24,9 +30,9 @@ Material& MaterialManager::LoadMaterial(BaseAssetRenderer* assetRenderer, const 
 	}
 }
 
-void MaterialManager::ReloadMaterialIfLoaded(const char* path) {}
+void MaterialImporter::ReloadMaterialIfLoaded(const char* path) {}
 
-void MaterialManager::RemoveRenderableFromMaterial(std::string uuid, ECS::Entity entity, void* renderable) {
+void MaterialImporter::RemoveRenderableFromMaterial(std::string uuid, ECS::Entity entity, void* renderable) {
 	auto materialInMap = materials.find(uuid);
 	if (materialInMap != materials.end()) {
 		auto material = &materialInMap->second;
@@ -49,15 +55,15 @@ void MaterialManager::RemoveRenderableFromMaterial(std::string uuid, ECS::Entity
 		}
 
 		if (material->renderables.size() == 0) {
-			ShaderManager* shaderManager = EngineCore::GetInstance().shaderManager;
-			shaderManager->RemoveMaterialFromShader(material->shader, material);
+			ShaderImporter* shaderImporter = EngineCore::GetInstance().shaderImporter;
+			shaderImporter->RemoveMaterialFromShader(material->shader, material);
 
 			materials.erase(materialInMap);
 		}
 	}
 }
 
-bool MaterialManager::TryGetMaterial(const char* path, Material*& material) {
+bool MaterialImporter::TryGetMaterial(const char* path, Material*& material) {
 	auto materialInMap = materials.find(path);
 	if (materialInMap != materials.end()) {
 		material = &materialInMap->second;
@@ -67,7 +73,7 @@ bool MaterialManager::TryGetMaterial(const char* path, Material*& material) {
 	return false;
 }
 
-void MaterialManager::CreateMaterialFromData(
+void MaterialImporter::CreateMaterialFromData(
 	std::filesystem::path relativePath,
 	Material& material,
 	BaseAssetRenderer* assetRenderer,
@@ -86,8 +92,8 @@ void MaterialManager::CreateMaterialFromData(
 	}
 
 	std::string shaderPath = document["shader"].GetString();
-	ShaderManager* shaderManager = EngineCore::GetInstance().shaderManager;
-	Shader* shader = &shaderManager->LoadShader(assetRenderer, shaderPath.c_str());
+	ShaderImporter* shaderImporter = EngineCore::GetInstance().shaderImporter;
+	Shader* shader = &shaderImporter->LoadShader(assetRenderer, shaderPath.c_str());
 	shader->materials.push_back(&material);
 
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
@@ -139,7 +145,7 @@ void MaterialManager::CreateMaterialFromData(
 	auto& textures = shader->reflectionData.textures;
 	bool hasSamplers = document.HasMember("samplers");
 	if (textures.size() > 0 && hasSamplers) {
-		auto textureManager = EngineCore::GetInstance().textureManager;
+		auto textureManager = EngineCore::GetInstance().textureImporter;
 		auto& samplersJson = document["samplers"];
 		std::vector<GraphicsAPI::SingleTextureBind> textureBinds;
 		textureBinds.resize(textures.size());
@@ -175,7 +181,7 @@ void MaterialManager::CreateMaterialFromData(
 	material.buffer = bufferSpace;
 }
 
-Material& MaterialManager::CreateMaterialFromFile(BaseAssetRenderer* assetRenderer, const char* path) {
+Material& MaterialImporter::CreateMaterialFromFile(BaseAssetRenderer* assetRenderer, const char* path) {
 	std::filesystem::path completePath = EngineCore::GetInstance().GetAssetPath(path);
 	if (!std::filesystem::exists(completePath)) {
 		throw std::runtime_error(completePath.string() + " material doesn't exist.");

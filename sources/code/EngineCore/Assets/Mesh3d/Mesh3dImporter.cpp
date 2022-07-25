@@ -1,6 +1,6 @@
 #include <filesystem>
-#include "Mesh3dManager.hpp"
-#include "EngineCore/Assets/Materials/MaterialManager.hpp"
+#include "Mesh3dImporter.hpp"
+#include "EngineCore/Assets/Materials/MaterialImporter.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Common/Graphics/Core.hpp"
@@ -35,11 +35,17 @@ GraphicsAPI::VertexBuffer* LoadVertexBufferVec(
 	return EngineCore::GetInstance().GetGraphicsCore()->CreateVertexBuffer(vertexBufferCreateInfo);
 }
 
-Mesh3dManager::Mesh3dManager() {
+Mesh3dImporter::Mesh3dImporter() {
 	PrepareLayouts();
 }
 
-void Mesh3dManager::PrepareLayouts() {
+void Mesh3dImporter::Load(Uuid& uuid) {
+}
+
+void Mesh3dImporter::LazyLoad(Uuid& uuid) {
+}
+
+void Mesh3dImporter::PrepareLayouts() {
 	vertexLayouts.positions = {
 		{
 			(uint32_t)Mesh3dLayoutIndex::Position,
@@ -91,7 +97,7 @@ void Mesh3dManager::PrepareLayouts() {
 	};
 }
 
-Mesh3d& Mesh3dManager::LoadMesh3d(Uuid uuid) {
+Mesh3d& Mesh3dImporter::LoadMesh3d(Uuid uuid) {
 	Mesh3d* mesh = nullptr;
 	if (TryGetMesh3d(uuid, mesh)) {
 		mesh->useCount++;
@@ -101,13 +107,13 @@ Mesh3d& Mesh3dManager::LoadMesh3d(Uuid uuid) {
 	return CreateMesh3dFromFile(uuid);
 }
 
-void Mesh3dManager::DecrementMeshCount(ECS::Entity entity, Uuid uuid) {
+void Mesh3dImporter::DecrementMeshCount(ECS::Entity entity, Uuid uuid) {
 	auto meshInMap = meshes.find(uuid);
 	if (meshInMap != meshes.end()) {
 		auto mesh = &meshInMap->second;
 		mesh->useCount -= 1;
 
-		auto materialManager = EngineCore::GetInstance().materialManager;
+		auto materialManager = EngineCore::GetInstance().materialImporter;
 		for (auto& submesh : mesh->submeshes) {
 			for (auto& material : submesh.materials) {
 				materialManager->RemoveRenderableFromMaterial(material, entity, &submesh);
@@ -122,7 +128,7 @@ void Mesh3dManager::DecrementMeshCount(ECS::Entity entity, Uuid uuid) {
 	}
 }
 
-bool Mesh3dManager::TryGetMesh3d(Uuid uuid, Mesh3d*& mesh) {
+bool Mesh3dImporter::TryGetMesh3d(Uuid uuid, Mesh3d*& mesh) {
 	auto meshInMap = meshes.find(uuid);
 	if (meshInMap != meshes.end()) {
 		mesh = &meshInMap->second;
@@ -132,7 +138,7 @@ bool Mesh3dManager::TryGetMesh3d(Uuid uuid, Mesh3d*& mesh) {
 	return false;
 }
 
-void Mesh3dManager::LoadMeshImportSubmeshes(Mesh3d& mesh, Formats::Model::Header::V1& header, char*& sourcePtr) {
+void Mesh3dImporter::LoadMeshImportSubmeshes(Mesh3d& mesh, Formats::Model::V1::Header& header, char*& sourcePtr) {
 	SourceSubmesh* sourceSubmeshes = (SourceSubmesh*)sourcePtr;
 	mesh.submeshes.resize(header.meshCount);
 
@@ -149,9 +155,9 @@ void Mesh3dManager::LoadMeshImportSubmeshes(Mesh3d& mesh, Formats::Model::Header
 	sourcePtr += header.meshCount * sizeof(SourceSubmesh);
 }
 
-void Mesh3dManager::LoadMeshImportVertices(
+void Mesh3dImporter::LoadMeshImportVertices(
 	Mesh3d& mesh,
-	Formats::Model::Header::V1& header,
+	Formats::Model::V1::Header& header,
 	char*& sourcePtr,
 	std::vector<GraphicsAPI::VertexBuffer*>& vertexBuffers
 ) {
@@ -182,9 +188,9 @@ void Mesh3dManager::LoadMeshImportVertices(
 	}
 }
 
-void Mesh3dManager::LoadMeshImportIndices(
+void Mesh3dImporter::LoadMeshImportIndices(
 	Mesh3d& mesh,
-	Formats::Model::Header::V1& header,
+	Formats::Model::V1::Header& header,
 	char*& sourcePtr,
 	GraphicsAPI::IndexBuffer*& indexBuffer
 ) {
@@ -205,17 +211,17 @@ void Mesh3dManager::LoadMeshImportIndices(
 	indexBuffer = graphicsCore->CreateIndexBuffer(indexBufferCreateInfo);
 }
 
-void Mesh3dManager::CreateMeshFromData(Mesh3d& mesh, std::vector<char>& fileContent) {
+void Mesh3dImporter::CreateMeshFromData(Mesh3d& mesh, std::vector<char>& fileContent) {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	if (fileContent.size() < 3 && strncmp("GMF", fileContent.data(), 3) != 0) {
-		throw std::runtime_error("Mesh3dManager::CreateMeshFromData GMF magic code wasn't matched.");
+		throw std::runtime_error("Mesh3dImporter::CreateMeshFromData GMF magic code wasn't matched.");
 	}
-	Formats::Model::Header::V1 header;
+	Formats::Model::V1::Header header;
 	if (fileContent.size() < (3 + sizeof(header))) {
-		throw std::runtime_error("Mesh3dManager::CreateMeshFromData file not big enough to fit header.");
+		throw std::runtime_error("Mesh3dImporter::CreateMeshFromData file not big enough to fit header.");
 	}
 	char* headerPtr = fileContent.data() + 3;
-	header = *(Formats::Model::Header::V1*)headerPtr;
+	header = *(Formats::Model::V1::Header*)headerPtr;
 
 	char* srcPtr = headerPtr + sizeof(header);
 
@@ -236,10 +242,10 @@ void Mesh3dManager::CreateMeshFromData(Mesh3d& mesh, std::vector<char>& fileCont
 	mesh.vertexArrayObject = graphicsCore->CreateVertexArrayObject(vaoCi);
 }
 
-Mesh3d& Mesh3dManager::CreateMesh3dFromFile(Uuid uuid) {
+Mesh3d& Mesh3dImporter::CreateMesh3dFromFile(Uuid uuid) {
 	std::filesystem::path completePath = EngineCore::GetInstance().GetAssetPath(uuid.ToString());
 	if (!std::filesystem::exists(completePath)) {
-		throw std::runtime_error("Mesh3dManager::CreateMesh3dFromFile failed to load model.");
+		throw std::runtime_error("Mesh3dImporter::CreateMesh3dFromFile failed to load model.");
 	}
 
 	auto fileContent = Utils::LoadFile(completePath.string().c_str());

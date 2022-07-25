@@ -24,12 +24,6 @@ namespace Grindstone {
 					uint16_t rotationCount;
 				};
 
-				struct ChannelData {
-					std::vector<PositionKeyframe> positions;
-					std::vector<ScaleKeyframe> scales;
-					std::vector<RotationKeyframe> rotations;
-				};
-
 				struct PositionKeyframe {
 					float time;
 					Math::Float3 value;
@@ -43,6 +37,12 @@ namespace Grindstone {
 				struct RotationKeyframe {
 					float time;
 					Math::Quaternion value;
+				};
+
+				struct ChannelData {
+					std::vector<PositionKeyframe> positions;
+					std::vector<ScaleKeyframe> scales;
+					std::vector<RotationKeyframe> rotations;
 				};
 			}
 		}

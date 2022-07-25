@@ -2,7 +2,7 @@
 
 #include <string>
 #include "EngineCore/Reflection/ComponentReflection.hpp"
-#include "EngineCore/Assets/AssetFile.hpp"
+#include "EngineCore/Assets/Asset.hpp"
 
 namespace Grindstone {
 	struct MeshComponent {

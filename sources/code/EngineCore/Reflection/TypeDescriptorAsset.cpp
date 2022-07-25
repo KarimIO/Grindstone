@@ -1,5 +1,5 @@
 #include "DefaultResolver.hpp"
-#include "EngineCore/Assets/AssetFile.hpp"
+#include "EngineCore/Assets/Asset.hpp"
 
 namespace Grindstone {
 	namespace Reflection {
@@ -23,20 +23,5 @@ namespace Grindstone {
 				loaderFn(uuid);
 			}
 		};
-
-		struct TypeDescriptor_MeshReference : public TypeDescriptor_AssetReference {
-			TypeDescriptor_MeshReference() :
-			TypeDescriptor_AssetReference(
-				AssetType::Mesh,
-				"Mesh Reference",
-				sizeof(MeshReference)
-			) {}
-		};
-
-		template <>
-		TypeDescriptor* GetPrimitiveDescriptor<MeshReference>() {
-			static TypeDescriptor_MeshReference typeDesc;
-			return &typeDesc;
-		}
 	}
 }

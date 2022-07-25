@@ -9,7 +9,7 @@
 #include "Scene.hpp"
 
 #include "EngineCore/CoreComponents/Mesh/MeshComponent.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
+#include "EngineCore/Assets/Mesh3d/Mesh3dImporter.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
@@ -34,7 +34,7 @@ extern "C" {
 
 Scene::~Scene() {
 	EngineCore& engineCore = EngineCore::GetInstance();
-	auto mesh3dManager = engineCore.mesh3dManager;
+	auto mesh3dManager = engineCore.mesh3dImporter;
 
 	auto meshAndMeshRendererView = registry.view<MeshComponent>();
 	meshAndMeshRendererView.each([&](

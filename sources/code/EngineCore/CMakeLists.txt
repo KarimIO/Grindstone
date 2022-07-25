@@ -1,32 +1,37 @@
-file(GLOB_RECURSE SOURCE_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetRendererManager.cpp ${ENGINE_CORE_DIR}/Assets/BaseAssetRenderer.cpp)
-file(GLOB_RECURSE HEADER_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetRendererManager.hpp ${ENGINE_CORE_DIR}/Assets/BaseAssetRenderer.hpp ${ENGINE_CORE_DIR}/Assets/AssetFile.hpp)
+file(GLOB_RECURSE SOURCE_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetRendererManager.cpp ${ENGINE_CORE_DIR}/Assets/BaseAssetRenderer.cpp ${ENGINE_CORE_DIR}/Assets/AssetManager.cpp)
+file(GLOB_RECURSE HEADER_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetRendererManager.hpp ${ENGINE_CORE_DIR}/Assets/BaseAssetRenderer.hpp ${ENGINE_CORE_DIR}/Assets/AssetManager.hpp ${ENGINE_CORE_DIR}/Assets/AssetImporter.hpp ${ENGINE_CORE_DIR}/Assets/Asset.hpp)
 source_group("Assets\\Source Files" FILES ${SOURCE_ASSETS_BASE})
 source_group("Assets\\Header Files" FILES ${HEADER_ASSETS_BASE})
 
-file(GLOB_RECURSE SOURCE_ASSETS_ANIMATIONCLIP "${ENGINE_CORE_DIR}/Assets/AnimationClip/*.cpp")
-file(GLOB_RECURSE HEADER_ASSETS_ANIMATIONCLIP "${ENGINE_CORE_DIR}/Assets/AnimationClip/*.hpp")
-source_group("Assets\\Animation Clip\\Source Files" FILES ${SOURCE_ASSETS_ANIMATIONCLIP})
-source_group("Assets\\Animation Clip\\Header Files" FILES ${HEADER_ASSETS_ANIMATIONCLIP})
-
-file(GLOB_RECURSE SOURCE_ASSETS_SHADERS "${ENGINE_CORE_DIR}/Assets/Shaders/*.cpp")
-file(GLOB_RECURSE HEADER_ASSETS_SHADERS "${ENGINE_CORE_DIR}/Assets/Shaders/*.hpp")
-source_group("Assets\\Shaders\\Source Files" FILES ${SOURCE_ASSETS_SHADERS})
-source_group("Assets\\Shaders\\Header Files" FILES ${HEADER_ASSETS_SHADERS})
+file(GLOB_RECURSE SOURCE_ASSETS_ANIMATION_CLIP "${ENGINE_CORE_DIR}/Assets/AnimationClip/*.cpp")
+file(GLOB_RECURSE HEADER_ASSETS_ANIMATION_CLIP "${ENGINE_CORE_DIR}/Assets/AnimationClip/*.hpp")
+source_group("Assets\\Animation Clip\\Source Files" FILES ${SOURCE_ASSETS_ANIMATION_CLIP})
+source_group("Assets\\Animation Clip\\Header Files" FILES ${HEADER_ASSETS_ANIMATION_CLIP})
 
 file(GLOB_RECURSE SOURCE_ASSETS_MATERIALS "${ENGINE_CORE_DIR}/Assets/Materials/*.cpp")
 file(GLOB_RECURSE HEADER_ASSETS_MATERIALS "${ENGINE_CORE_DIR}/Assets/Materials/*.hpp")
 source_group("Assets\\Materials\\Source Files" FILES ${SOURCE_ASSETS_MATERIALS})
 source_group("Assets\\Materials\\Header Files" FILES ${HEADER_ASSETS_MATERIALS})
 
-file(GLOB_RECURSE SOURCE_ASSETS_TEXTURES "${ENGINE_CORE_DIR}/Assets/Textures/*.cpp")
-file(GLOB_RECURSE HEADER_ASSETS_TEXTURES "${ENGINE_CORE_DIR}/Assets/Textures/*.hpp")
-source_group("Assets\\Textures\\Source Files" FILES ${SOURCE_ASSETS_TEXTURES})
-source_group("Assets\\Textures\\Header Files" FILES ${HEADER_ASSETS_TEXTURES})
-
 file(GLOB_RECURSE SOURCE_ASSETS_MESHES_3D "${ENGINE_CORE_DIR}/Assets/Mesh3d/*.cpp")
 file(GLOB_RECURSE HEADER_ASSETS_MESHES_3D "${ENGINE_CORE_DIR}/Assets/Mesh3d/*.hpp")
 source_group("Assets\\Mesh3d\\Source Files" FILES ${SOURCE_ASSETS_MESHES_3D})
 source_group("Assets\\Mesh3d\\Header Files" FILES ${HEADER_ASSETS_MESHES_3D})
+
+file(GLOB_RECURSE SOURCE_ASSETS_RIG "${ENGINE_CORE_DIR}/Assets/Rig/*.cpp")
+file(GLOB_RECURSE HEADER_ASSETS_RIG "${ENGINE_CORE_DIR}/Assets/Rig/*.hpp")
+source_group("Assets\\Rig\\Source Files" FILES ${SOURCE_ASSETS_RIG})
+source_group("Assets\\Rig\\Header Files" FILES ${HEADER_ASSETS_RIG})
+
+file(GLOB_RECURSE SOURCE_ASSETS_SHADERS "${ENGINE_CORE_DIR}/Assets/Shaders/*.cpp")
+file(GLOB_RECURSE HEADER_ASSETS_SHADERS "${ENGINE_CORE_DIR}/Assets/Shaders/*.hpp")
+source_group("Assets\\Shaders\\Source Files" FILES ${SOURCE_ASSETS_SHADERS})
+source_group("Assets\\Shaders\\Header Files" FILES ${HEADER_ASSETS_SHADERS})
+
+file(GLOB_RECURSE SOURCE_ASSETS_TEXTURES "${ENGINE_CORE_DIR}/Assets/Textures/*.cpp")
+file(GLOB_RECURSE HEADER_ASSETS_TEXTURES "${ENGINE_CORE_DIR}/Assets/Textures/*.hpp")
+source_group("Assets\\Textures\\Source Files" FILES ${SOURCE_ASSETS_TEXTURES})
+source_group("Assets\\Textures\\Header Files" FILES ${HEADER_ASSETS_TEXTURES})
 
 file(GLOB_RECURSE SOURCE_AUDIO "${ENGINE_CORE_DIR}/Audio/*.cpp")
 file(GLOB_RECURSE HEADER_AUDIO "${ENGINE_CORE_DIR}/Audio/*.hpp")
@@ -87,11 +92,12 @@ file(GLOB_RECURSE HEADER_MAIN EngineCore.hpp pch.hpp Logger.hpp Profiling.hpp ${
 set(ENGINE_CORE_SOURCES
 	${SOURCE_MAIN}
 	${SOURCE_ASSETS_BASE}
-	${SOURCE_ASSETS_ANIMATIONCLIP}
-	${SOURCE_ASSETS_SHADERS}
-	${SOURCE_ASSETS_TEXTURES}
+	${SOURCE_ASSETS_ANIMATION_CLIP}
 	${SOURCE_ASSETS_MATERIALS}
 	${SOURCE_ASSETS_MESHES_3D}
+	${SOURCE_ASSETS_RIG}
+	${SOURCE_ASSETS_SHADERS}
+	${SOURCE_ASSETS_TEXTURES}
 	${SOURCE_AUDIO}
 	${SOURCE_PLUGIN_SYSTEM}
 	${SOURCE_ECS}
@@ -108,11 +114,12 @@ set(ENGINE_CORE_SOURCES
 set(ENGINE_CORE_HEADERS
 	${HEADER_MAIN}
 	${HEADER_ASSETS_BASE}
-	${HEADER_ASSETS_ANIMATIONCLIP}
-	${HEADER_ASSETS_SHADERS}
-	${HEADER_ASSETS_TEXTURES}
+	${HEADER_ASSETS_ANIMATION_CLIP}
 	${HEADER_ASSETS_MATERIALS}
 	${HEADER_ASSETS_MESHES_3D}
+	${HEADER_ASSETS_RIG}
+	${HEADER_ASSETS_SHADERS}
+	${HEADER_ASSETS_TEXTURES}
 	${HEADER_AUDIO}
 	${HEADER_PLUGIN_SYSTEM}
 	${HEADER_ECS}

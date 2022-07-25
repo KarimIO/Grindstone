@@ -27,11 +27,12 @@ E CalculateKeyframeData(float time, std::vector<T> &keyframes) {
 	auto& nextKeyframe = keyframes[prevKeyframeIndex + 1];
 	float dt = nextKeyframe.time - prevKeyframe.time;
 	float factor = (time - prevKeyframe.time) / dt;
-	return glm::lerp((E)prevKeyframe.value, (E)nextKeyframe.value, factor);
+	return glm::mix((E)prevKeyframe.value, (E)nextKeyframe.value, factor);
 }
 
 void Grindstone::AnimationClip::GetFrameMatrices(
 	float time,
+	Rig* rig,
 	std::vector<glm::mat4>& finalTransformations
 ) {
 	size_t boneCount = rig->bones.size();

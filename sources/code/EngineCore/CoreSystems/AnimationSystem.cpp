@@ -5,6 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "AnimationSystem.hpp"
 #include "EngineCore/CoreComponents/AnimatorComponent/AnimatorComponent.hpp"
+#include "EngineCore/Assets/Rig/Rig.hpp"
 #include "EngineCore/EngineCore.hpp"
 
 void AnimationSystem(entt::registry& registry) {
@@ -14,9 +15,11 @@ void AnimationSystem(entt::registry& registry) {
 			[&](
 				Grindstone::AnimatorComponent& animatorComponent
 			) {
+				Grindstone::Rig* rig = nullptr;
 				animatorComponent.time += 1.0f / 60.0f;
 				animatorComponent.animationClip->GetFrameMatrices(
 					animatorComponent.time,
+					rig,
 					animatorComponent.boneTransformations
 				);
 			}

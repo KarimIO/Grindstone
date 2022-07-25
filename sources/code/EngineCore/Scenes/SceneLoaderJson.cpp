@@ -12,9 +12,9 @@
 #include "EngineCore/CoreComponents/Camera/CameraComponent.hpp"
 #include "EngineCore/CoreComponents/Mesh/MeshComponent.hpp"
 #include "EngineCore/CoreComponents/Mesh/MeshRendererComponent.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
+#include "EngineCore/Assets/Mesh3d/Mesh3dImporter.hpp"
 #include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
-#include "EngineCore/Assets/Materials/MaterialManager.hpp"
+#include "EngineCore/Assets/Materials/MaterialImporter.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
@@ -38,8 +38,8 @@ bool SceneLoaderJson::Load(const char* path) {
 	ProcessEntities();
 
 	auto& engineCore = EngineCore::GetInstance();
-	auto materialManager = engineCore.materialManager;
-	auto mesh3dManager = engineCore.mesh3dManager;
+	auto materialManager = engineCore.materialImporter;
+	auto mesh3dManager = engineCore.mesh3dImporter;
 	auto mesh3dRenderer = engineCore.mesh3dRenderer;
 	auto& registry = scene->GetEntityRegistry();
 
@@ -264,7 +264,7 @@ void SceneLoaderJson::ProcessComponentParameter(
 				Uuid uuid(parameter.GetString());
 				MeshReference& reference = *(MeshReference*)memberPtr;
 				((Asset*)member->type);
-				Grindstone::Reflection::TypeDescriptor_Asset
+				// Grindstone::Reflection::TypeDescriptor_Asset
 			}
 	}
 }

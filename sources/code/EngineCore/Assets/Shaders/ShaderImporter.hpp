@@ -4,12 +4,15 @@
 #include <map>
 #include <fstream>
 
+#include "EngineCore/Assets/AssetImporter.hpp"
 #include "Shader.hpp"
 
 namespace Grindstone {
 	class BaseAssetRenderer;
-	class ShaderManager {
+	class ShaderImporter : public AssetImporter {
 		public:
+			virtual void Load(Uuid& uuid) override;
+			virtual void LazyLoad(Uuid& uuid) override;
 			virtual Shader& LoadShader(BaseAssetRenderer* assetRenderer, const char* path);
 			virtual void ReloadShaderIfLoaded(const char* path);
 			virtual void RemoveMaterialFromShader(Shader* shader, Material* material);

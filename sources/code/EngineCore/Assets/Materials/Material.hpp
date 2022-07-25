@@ -1,8 +1,9 @@
 #pragma once
 
 #include <string>
-#include "EngineCore/ECS/Entity.hpp"
 #include "Common/ResourcePipeline/Uuid.hpp"
+#include "EngineCore/Assets/Asset.hpp"
+#include "EngineCore/ECS/Entity.hpp"
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -12,7 +13,7 @@ namespace Grindstone {
 	}
 
 	struct Shader;
-	struct Material {
+	struct Material : public Asset {
 		std::string name;
 		Uuid uuid;
 		std::string shaderPath;

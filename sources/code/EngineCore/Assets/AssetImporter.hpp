@@ -6,6 +6,7 @@
 namespace Grindstone {
 	class AssetImporter {
 	public:
-		virtual void LoadFile(Uuid uuid) = 0;
+		virtual void Load(Uuid& uuid) = 0;
+		virtual void LazyLoad(Uuid& uuid) = 0;
 	};
 }

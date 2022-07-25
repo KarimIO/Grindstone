@@ -2,15 +2,16 @@
 
 #include <vector>
 #include <string>
-#include "AssetFile.hpp"
+#include "Asset.hpp"
 #include "AssetImporter.hpp"
 
 namespace Grindstone {
 	class AssetManager {
 	public:
+		AssetManager();
 		virtual void LoadFile(AssetType assetType, Uuid& uuid);
 		virtual void LazyLoadFile(AssetType assetType, Uuid& uuid);
-		const char* GetTypeName(AssetType assetType);
+		std::string& GetTypeName(AssetType assetType);
 
 		template <typename AssetType, typename AssetImporterType>
 		void RegisterNewType() {

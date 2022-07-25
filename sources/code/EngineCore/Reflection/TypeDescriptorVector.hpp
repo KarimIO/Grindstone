@@ -15,8 +15,8 @@ namespace Grindstone {
 			template <typename ItemType>
 			TypeDescriptor_StdVector(ItemType*)
 				: TypeDescriptor{ "std::vector<>", sizeof(std::vector<ItemType>), ReflectionTypeData::Vector },
-				itemType{ TypeResolver<ItemType>::get()},
-				name{ (std::string("std::vector<") + TypeResolver<ItemType>::get()->getFullName() + ">").c_str() }
+				itemType{ TypeResolver<ItemType>::Get()},
+				name{ (std::string("std::vector<") + TypeResolver<ItemType>::Get()->GetFullName() + ">").c_str() }
 			{
 				getSize = [](const void* vecPtr) -> size_t {
 					const auto& vec = *(const std::vector<ItemType>*) vecPtr;
@@ -28,7 +28,7 @@ namespace Grindstone {
 				};
 			}
 
-			virtual const char* getFullName() const override {
+			virtual const char* GetFullName() const override {
 				return name.c_str();
 			}
 		};
@@ -36,7 +36,7 @@ namespace Grindstone {
 		template <typename T>
 		class TypeResolver<std::vector<T>> {
 		public:
-			static TypeDescriptor* get() {
+			static TypeDescriptor* Get() {
 				static TypeDescriptor_StdVector typeDesc{ (T*) nullptr };
 				return &typeDesc;
 			}

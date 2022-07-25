@@ -3,10 +3,16 @@
 #include "Common/Graphics/Core.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
-#include "TextureManager.hpp"
+#include "TextureImporter.hpp"
 using namespace Grindstone;
 
-TextureAsset& TextureManager::LoadTexture(const char* path) {
+void TextureImporter::Load(Uuid& uuid) {
+}
+
+void TextureImporter::LazyLoad(Uuid& uuid) {
+}
+
+TextureAsset& TextureImporter::LoadTexture(const char* path) {
 	std::string fixedPath = path;
 	Utils::FixStringSlashes(fixedPath);
 
@@ -28,7 +34,7 @@ TextureAsset& TextureManager::LoadTexture(const char* path) {
 	}
 }
 
-void TextureManager::ReloadTextureIfLoaded(const char* path) {
+void TextureImporter::ReloadTextureIfLoaded(const char* path) {
 	std::string fixedPath = path;
 	Utils::FixStringSlashes(fixedPath);
 
@@ -38,11 +44,11 @@ void TextureManager::ReloadTextureIfLoaded(const char* path) {
 	}
 }
 
-TextureAsset& Grindstone::TextureManager::GetDefaultTexture() {
+TextureAsset& Grindstone::TextureImporter::GetDefaultTexture() {
 	return errorTexture;
 }
 
-bool TextureManager::TryGetTexture(std::string& path, TextureAsset*& texture) {
+bool TextureImporter::TryGetTexture(std::string& path, TextureAsset*& texture) {
 	auto& textureInMap = textures.find(path);
 	if (textureInMap != textures.end()) {
 		texture = &textureInMap->second;
@@ -52,7 +58,7 @@ bool TextureManager::TryGetTexture(std::string& path, TextureAsset*& texture) {
 	return false;
 }
 
-void TextureManager::CreateFromDds(bool isReloading, TextureAsset& textureAsset, const char* fileName, const char* data, size_t fileSize) {
+void TextureImporter::CreateFromDds(bool isReloading, TextureAsset& textureAsset, const char* fileName, const char* data, size_t fileSize) {
 	if (strncmp(data, "DDS ", 4) != 0) {
 		throw std::runtime_error("Invalid DDS file: No magic 'DDS' keyword.");
 	}
@@ -100,7 +106,7 @@ void TextureManager::CreateFromDds(bool isReloading, TextureAsset& textureAsset,
 	}
 }
 
-void TextureManager::LoadTextureFromFile(bool isReloading, std::string& path, TextureAsset& textureAsset) {
+void TextureImporter::LoadTextureFromFile(bool isReloading, std::string& path, TextureAsset& textureAsset) {
 	std::filesystem::path filePath = path;
 	std::string& fileName = filePath.filename().string();
 
@@ -112,7 +118,7 @@ void TextureManager::LoadTextureFromFile(bool isReloading, std::string& path, Te
 	CreateFromDds(isReloading, textureAsset, fileName.c_str(), file.data(), file.size());
 }
 
-TextureAsset& TextureManager::CreateNewTextureFromFile(std::string& path) {
+TextureAsset& TextureImporter::CreateNewTextureFromFile(std::string& path) {
 	TextureAsset& textureAsset = textures[path];
 	LoadTextureFromFile(false, path, textureAsset);
 

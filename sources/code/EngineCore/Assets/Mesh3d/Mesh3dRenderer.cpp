@@ -4,7 +4,7 @@
 #include "Mesh3dRenderer.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "Common/Graphics/Core.hpp"
-#include "EngineCore/Assets/Materials/MaterialManager.hpp"
+#include "EngineCore/Assets/Materials/MaterialImporter.hpp"
 #include "EngineCore/Scenes/Scene.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 using namespace Grindstone;
@@ -32,8 +32,8 @@ Grindstone::Mesh3dRenderer::Mesh3dRenderer() {
 }
 
 void Mesh3dRenderer::AddErrorMaterial() {
-	auto materialManager = EngineCore::GetInstance().materialManager;
-	errorMaterial = &materialManager->LoadMaterial(this, "792d934c-78d5-4445-b0e8-fc2828eed098");
+	auto materialImporter = EngineCore::GetInstance().materialImporter;
+	errorMaterial = &materialImporter->LoadMaterial(this, "792d934c-78d5-4445-b0e8-fc2828eed098");
 }
 
 void Mesh3dRenderer::RenderQueue(RenderQueueContainer& renderQueue) {

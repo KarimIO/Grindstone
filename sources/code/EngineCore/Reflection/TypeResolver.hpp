@@ -7,8 +7,8 @@ namespace Grindstone {
 	namespace Reflection {
 		template <typename T>
 		struct TypeResolver {
-			static TypeDescriptor* get() {
-				return DefaultResolver::get<T>();
+			static TypeDescriptor* Get() {
+				return DefaultResolver::Get<T>();
 			}
 		};
 	}

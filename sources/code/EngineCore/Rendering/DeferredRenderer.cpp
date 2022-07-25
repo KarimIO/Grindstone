@@ -7,12 +7,12 @@
 #include "DeferredRenderer.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "EngineCore/EngineCore.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
+#include "EngineCore/Assets/Mesh3d/Mesh3dImporter.hpp"
 #include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
 #include "EngineCore/Assets/Shaders/Shader.hpp"
-#include "EngineCore/Assets/Shaders/ShaderManager.hpp"
+#include "EngineCore/Assets/Shaders/ShaderImporter.hpp"
 #include "EngineCore/Assets/Materials/Material.hpp"
-#include "EngineCore/Assets/Materials/MaterialManager.hpp"
+#include "EngineCore/Assets/Materials/MaterialImporter.hpp"
 #include "EngineCore/Assets/AssetRendererManager.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "EngineCore/CoreComponents/Lights/PointLightComponent.hpp"
@@ -178,7 +178,7 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	gbufferRenderPassCreateInfo.width = width;
 	gbufferRenderPassCreateInfo.height = height;
 	gbufferRenderPassCreateInfo.colorFormats = colorFormats.data();
-	gbufferRenderPassCreateInfo.colorFormatCount = colorFormats.size();
+	gbufferRenderPassCreateInfo.colorFormatCount = (uint32_t)colorFormats.size();
 	gbufferRenderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
 	gbufferRenderPass = core->CreateRenderPass(gbufferRenderPassCreateInfo);
 
@@ -216,7 +216,7 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	litHdrFramebufferCreateInfo.renderPass = mainRenderPass;
 	litHdrFramebuffer = core->CreateFramebuffer(litHdrFramebufferCreateInfo);
 	
-	auto shaderManager = EngineCore::GetInstance().shaderManager;
+	auto shaderManager = EngineCore::GetInstance().shaderImporter;
 	lightPipeline = shaderManager->LoadShader(nullptr, "5537b925-96bc-4e1f-8e2a-d66d6dd9bed1").pipeline;
 	tonemapPipeline = shaderManager->LoadShader(nullptr, "30e9223e-1753-4a7a-acac-8488c75bb1ef").pipeline;
 }

@@ -5,10 +5,14 @@
 #include <map>
 
 #include "Texture.hpp"
+#include "EngineCore/Assets/AssetImporter.hpp"
 
 namespace Grindstone {
-	class TextureManager {
+	class TextureImporter : public AssetImporter {
 		public:
+			virtual void Load(Uuid& uuid) override;
+			virtual void LazyLoad(Uuid& uuid) override;
+			
 			virtual TextureAsset& LoadTexture(const char* path);
 			virtual void ReloadTextureIfLoaded(const char* path);
 			TextureAsset& GetDefaultTexture();

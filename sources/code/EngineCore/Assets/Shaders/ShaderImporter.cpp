@@ -1,5 +1,5 @@
 #include <filesystem>
-#include "ShaderManager.hpp"
+#include "ShaderImporter.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Common/Graphics/Core.hpp"
@@ -40,7 +40,13 @@ std::string GetShaderPath(const char* basePath, ShaderStage shaderStage, Graphic
 	return std::string(basePath) + shaderStageExtension + graphicsCore->GetDefaultShaderExtension();
 }
 
-Shader& ShaderManager::LoadShader(BaseAssetRenderer* assetRenderer, const char* uuid) {
+void ShaderImporter::Load(Uuid& uuid) {
+}
+
+void ShaderImporter::LazyLoad(Uuid& uuid) {
+}
+
+Shader& ShaderImporter::LoadShader(BaseAssetRenderer* assetRenderer, const char* uuid) {
 	Shader* shader = nullptr;
 	if (!TryGetShader(uuid, shader)) {
 		std::string uuidStr = uuid;
@@ -54,7 +60,7 @@ Shader& ShaderManager::LoadShader(BaseAssetRenderer* assetRenderer, const char* 
 	return *shader;
 }
 
-void ShaderManager::ReloadShaderIfLoaded(const char* path) {
+void ShaderImporter::ReloadShaderIfLoaded(const char* path) {
 	std::string fixedPath = path;
 	Utils::FixStringSlashes(fixedPath);
 
@@ -64,7 +70,7 @@ void ShaderManager::ReloadShaderIfLoaded(const char* path) {
 	}
 }
 
-void ShaderManager::RemoveMaterialFromShader(Shader* shader, Material *material) {
+void ShaderImporter::RemoveMaterialFromShader(Shader* shader, Material *material) {
 	for (size_t i = 0; i < shader->materials.size(); ++i) {
 		if (shader->materials[i] == material) {
 			shader->materials.erase(shader->materials.begin() + i);
@@ -72,7 +78,7 @@ void ShaderManager::RemoveMaterialFromShader(Shader* shader, Material *material)
 	}
 }
 
-bool ShaderManager::TryGetShader(const char* path, Shader*& shader) {
+bool ShaderImporter::TryGetShader(const char* path, Shader*& shader) {
 	auto foundShader = shaders.find(path);
 	if (foundShader != shaders.end()) {
 		shader = &foundShader->second;
@@ -82,24 +88,25 @@ bool ShaderManager::TryGetShader(const char* path, Shader*& shader) {
 	return false;
 }
 
-void ShaderManager::LoadShaderFromFile(bool isReloading, std::string& path, Shader& shaderAsset) {
+void ShaderImporter::LoadShaderFromFile(bool isReloading, std::string& path, Shader& shaderAsset) {
 	CreateReflectionDataForShader(path.c_str(), shaderAsset);
 	CreateShaderGraphicsPipeline(isReloading, path.c_str(), shaderAsset);
 }
 
-Shader& ShaderManager::CreateNewShaderFromFile(std::string& uuid) {
+Shader& ShaderImporter::CreateNewShaderFromFile(std::string& uuid) {
 	std::string path = EngineCore::GetInstance().GetAssetPath(uuid).string();
-	Shader& shader = shaders[uuid] = Shader{ path };
+	Shader& shader = shaders[uuid] = Shader();
+	shader.uuid = uuid;
 	LoadShaderFromFile(false, path, shader);
 
 	return shader;
 }
 
-void ShaderManager::CreateReflectionDataForShader(const char* path, Shader& shader) {
+void ShaderImporter::CreateReflectionDataForShader(const char* path, Shader& shader) {
 	LoadShaderReflection(path, shader.reflectionData);
 }
 
-void ShaderManager::CreateShaderGraphicsPipeline(bool isReloading, const char* basePath, Shader& shader) {
+void ShaderImporter::CreateShaderGraphicsPipeline(bool isReloading, const char* basePath, Shader& shader) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	auto& shaderStagesBitMask = shader.reflectionData.shaderStagesBitMask;

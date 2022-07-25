@@ -6,11 +6,14 @@
 
 #include "Mesh3d.hpp"
 #include "Common/Formats/Model.hpp"
+#include "EngineCore/Assets/AssetImporter.hpp"
 
 namespace Grindstone {
-	class Mesh3dManager {
+	class Mesh3dImporter : public AssetImporter {
 		public:
-			Mesh3dManager();
+			Mesh3dImporter();
+			virtual void Load(Uuid& uuid) override;
+			virtual void LazyLoad(Uuid& uuid) override;
 			void PrepareLayouts();
 			virtual Mesh3d& LoadMesh3d(Uuid uuid);
 			virtual void DecrementMeshCount(ECS::Entity entity, Uuid uuid);
@@ -18,18 +21,18 @@ namespace Grindstone {
 			bool TryGetMesh3d(Uuid uuid, Mesh3d*& mesh3d);
 			void LoadMeshImportSubmeshes(
 				Mesh3d& mesh,
-				Formats::Model::Header::V1& header,
+				Formats::Model::V1::Header& header,
 				char*& sourcePtr
 			);
 			void LoadMeshImportVertices(
 				Mesh3d& mesh,
-				Formats::Model::Header::V1& header,
+				Formats::Model::V1::Header& header,
 				char*& sourcePtr,
 				std::vector<GraphicsAPI::VertexBuffer*>& vertexBuffers
 			);
 			void LoadMeshImportIndices(
 				Mesh3d& mesh,
-				Formats::Model::Header::V1& header,
+				Formats::Model::V1::Header& header,
 				char*& sourcePtr,
 				GraphicsAPI::IndexBuffer*& indexBuffer
 			);

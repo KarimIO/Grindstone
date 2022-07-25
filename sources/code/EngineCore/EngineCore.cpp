@@ -20,10 +20,10 @@
 
 #include "Rendering/DeferredRenderer.hpp"
 
-#include "EngineCore/Assets/Materials/MaterialManager.hpp"
-#include "EngineCore/Assets/Textures/TextureManager.hpp"
-#include "EngineCore/Assets/Shaders/ShaderManager.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
+#include "EngineCore/Assets/Materials/MaterialImporter.hpp"
+#include "EngineCore/Assets/Textures/TextureImporter.hpp"
+#include "EngineCore/Assets/Shaders/ShaderImporter.hpp"
+#include "EngineCore/Assets/Mesh3d/Mesh3dImporter.hpp"
 #include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
 #include "EngineCore/Assets/AssetRendererManager.hpp"
 
@@ -67,17 +67,16 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	graphicsCore->Initialize(graphicsCoreInfo);
 	win->Show();
 
-	materialManager = new MaterialManager();
-	textureManager = new TextureManager();
-	shaderManager = new ShaderManager();
-	mesh3dManager = new Mesh3dManager();
+	materialImporter = new MaterialImporter();
+	textureImporter = new TextureImporter();
+	shaderImporter = new ShaderImporter();
+	mesh3dImporter = new Mesh3dImporter();
 	mesh3dRenderer = new Mesh3dRenderer();
 	assetRendererManager = new AssetRendererManager();
 	assetRendererManager->AddAssetRenderer(mesh3dRenderer);
 	assetRendererManager->AddQueue("Opaque");
 	assetRendererManager->AddQueue("Transparent");
 	assetRendererManager->AddQueue("Unlit");
-	// mesh3dRenderer->AddErrorMaterial();
 
 	pluginManager->LoadPluginList();
 

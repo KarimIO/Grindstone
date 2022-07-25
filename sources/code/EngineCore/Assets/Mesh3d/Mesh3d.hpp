@@ -3,6 +3,7 @@
 #include <vector>
 #include <filesystem>
 #include "EngineCore/ECS/Entity.hpp"
+#include "EngineCore/Assets/Asset.hpp"
 #include "Common/Graphics/VertexArrayObject.hpp"
 #include "Common/Graphics/VertexBuffer.hpp"
 #include "Common/Graphics/IndexBuffer.hpp"
@@ -24,7 +25,7 @@ namespace Grindstone {
 		Last
 	};
 
-	struct Mesh3d {
+	struct Mesh3d : public Asset {
 		struct Submesh {
 			uint32_t indexCount = 0;
 			uint32_t baseVertex = 0;

@@ -2,7 +2,7 @@
 
 namespace Grindstone {
 	namespace Reflection {
-		std::string ParseStoredName(std::string& displayName, std::string memberName) {
+		std::string ParseStoredName(std::string displayName, std::string memberName) {
 			if (displayName != "") return displayName;
 
 			// Remove suffix _ if necessary
@@ -16,7 +16,7 @@ namespace Grindstone {
 			return memberName;
 		}
 
-		std::string ParseDisplayName(std::string& displayName, std::string memberName) {
+		std::string ParseDisplayName(std::string displayName, std::string memberName) {
 			if (displayName != "") return displayName;
 
 			auto p = memberName.find_last_of('.');
