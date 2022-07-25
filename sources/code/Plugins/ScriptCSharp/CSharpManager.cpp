@@ -3,11 +3,13 @@
 
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/ECS/Entity.hpp"
+#include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "Components/ScriptComponent.hpp"
 
 #include <mono/jit/jit.h>
 #include <mono/metadata/assembly.h>
 
+using namespace Grindstone;
 using namespace Grindstone::Scripting::CSharp;
 
 #define FUNCTION_CALL_IMPL(CallFnInComponent, scriptMethod) \
@@ -35,10 +37,10 @@ void CSharpManager::Initialize(EngineCore* engineCore) {
 		"C:\\Program Files\\Mono\\lib",
 		"C:\\Program Files\\Mono\\etc"
 	);
-	scriptDomain = mono_jit_init_version("grindstone_mono_domain", "v4.0.30319");
+scriptDomain = mono_jit_init_version("grindstone_mono_domain", "v4.0.30319");
 
-	auto dllPath = (engineCore->GetBinaryPath() / "Application-CSharp.dll").string();
-	LoadAssembly(dllPath.c_str());
+auto dllPath = (engineCore->GetBinaryPath() / "Application-CSharp.dll").string();
+LoadAssembly(dllPath.c_str());
 }
 
 void CSharpManager::LoadAssembly(const char* path) {
@@ -75,7 +77,7 @@ void CSharpManager::SetupComponent(ECS::Entity& entity, ScriptComponent& compone
 
 void CSharpManager::SetupEntityDataInComponent(ECS::Entity& entity, ScriptComponent& component) {
 	MonoClassField* field = mono_class_get_field_from_name(component.monoClass->monoClass, "entity");
-	CompactEntityData outEnt = { entity.GetHandle(), entity.GetScene()  };
+	CompactEntityData outEnt = { entity.GetHandle(), entity.GetScene() };
 	mono_field_set_value((MonoObject*)component.scriptObject, field, &outEnt);
 }
 
@@ -129,5 +131,26 @@ void CSharpManager::CallFunctionInComponent(ScriptComponent& scriptComponent, si
 		if (exception) {
 			std::cout << mono_string_to_utf8(mono_object_to_string(exception, nullptr)) << std::endl;
 		}
+	}
+}
+
+void CSharpManager::RegisterComponents() {
+	auto& componentRegistrar = *EngineCore::GetInstance().GetComponentRegistrar();
+	for (auto& component : componentRegistrar) {
+		auto name = component.first;
+		auto fns = component.second;
+	}
+}
+
+void RegisterComponent(std::string csharpClass, ECS::ComponentFunctions& fns) {
+	MonoType* managedType = mono_reflection_type_from_name((char*)csharpClass.c_str(), ScriptEngineInternal::GetHazelCoreAssemblyInfo()->AssemblyImage);
+	if (managedType) {
+		createComponentFuncs[managedType] = fns.CreateComponentFn;
+		tryGetComponentFuncs[managedType] = fns.TryGetComponentFn;
+		hasComponentFuncs[managedType] = fns.HasComponentFn;
+		removeComponentFuncs[managedType] = fns.RemoveComponentFn;
+	}
+	else {
+		HZ_CORE_ASSERT(false, "No C# component class found for " #Type "!");\
 	}
 }

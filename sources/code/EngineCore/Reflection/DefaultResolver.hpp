@@ -6,7 +6,7 @@
 namespace Grindstone {
 	namespace Reflection {
 		template <typename T>
-		TypeDescriptor* getPrimitiveDescriptor();
+		TypeDescriptor* GetPrimitiveDescriptor();
 
 		struct DefaultResolver {
 			template <typename T> static char func(decltype(&T::Reflection));
@@ -18,14 +18,14 @@ namespace Grindstone {
 
 			// This version is called if T has a static member named "Reflection":
 			template <typename T, typename std::enable_if<IsReflected<T>::value, int>::type = 0>
-			static TypeDescriptor* get() {
+			static TypeDescriptor* Get() {
 				return &T::Reflection;
 			}
 
 			// This version is called otherwise:
 			template <typename T, typename std::enable_if<!IsReflected<T>::value, int>::type = 0>
-			static TypeDescriptor* get() {
-				return getPrimitiveDescriptor<T>();
+			static TypeDescriptor* Get() {
+				return GetPrimitiveDescriptor<T>();
 			}
 		};
 	}

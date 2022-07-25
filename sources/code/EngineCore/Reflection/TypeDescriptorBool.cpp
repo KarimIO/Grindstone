@@ -7,7 +7,7 @@ namespace Grindstone {
 		};
 
 		template <>
-		TypeDescriptor* getPrimitiveDescriptor<bool>() {
+		TypeDescriptor* GetPrimitiveDescriptor<bool>() {
 			static TypeDescriptor_Bool typeDesc;
 			return &typeDesc;
 		}

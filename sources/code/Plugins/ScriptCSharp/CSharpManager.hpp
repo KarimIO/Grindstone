@@ -37,6 +37,7 @@ namespace Grindstone {
 				void CallEditorUpdateInComponent(ScriptComponent& scriptComponent);
 				void CallDeleteInComponent(ScriptComponent& scriptComponent);
 				ScriptClass* SetupClass(const char* assemblyName, const char* namespaceName, const char* className);
+				void RegisterComponents();
 
 				struct AssemblyData {
 					MonoAssembly* assembly = nullptr;

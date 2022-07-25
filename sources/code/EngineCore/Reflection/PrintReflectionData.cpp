@@ -2,44 +2,45 @@
 
 namespace Grindstone {
 	namespace Reflection {
-		std::string parseStoredName(std::string v, std::string n) {
-			if (v != "") return v;
+		std::string ParseStoredName(std::string& displayName, std::string memberName) {
+			if (displayName != "") return displayName;
+
 			// Remove suffix _ if necessary
-			if (n[n.size() - 1] == '_')
-				n.erase(n.end() - 1);
+			if (memberName[memberName.size() - 1] == '_')
+				memberName.erase(memberName.end() - 1);
 
-			auto p = n.find_last_of('.');
+			auto p = memberName.find_last_of('.');
 			if (p != std::string::npos)
-				n = n.substr(p + 1);
+				memberName = memberName.substr(p + 1);
 
-			return n;
+			return memberName;
 		}
 
-		std::string parseDisplayName(std::string v, std::string n) {
-			if (v != "") return v;
+		std::string ParseDisplayName(std::string& displayName, std::string memberName) {
+			if (displayName != "") return displayName;
 
-			auto p = n.find_last_of('.');
+			auto p = memberName.find_last_of('.');
 			if (p != std::string::npos)
-				n = n.substr(p + 1);
+				memberName = memberName.substr(p + 1);
 
 			bool first = true;
 			bool symbols = false;
-			for (int i = 0; i < n.size(); ++i) {
-				if (!isalnum(n[i])) {
+			for (int i = 0; i < memberName.size(); ++i) {
+				if (!isalnum(memberName[i])) {
 					symbols = true;
-					n[i] = ' ';
+					memberName[i] = ' ';
 				}
-				else {	
-					if (isalpha(n[i])) {
+				else {
+					if (isalpha(memberName[i])) {
 						if (first) {
-							n[i] = toupper(n[i]);
+							memberName[i] = toupper(memberName[i]);
 							first = false;
 						}
 						else if (symbols) {
-							n[i] = toupper(n[i]);
+							memberName[i] = toupper(memberName[i]);
 						}
-						else if (isupper(n[i])) {
-							n.insert(i, " ");
+						else if (isupper(memberName[i])) {
+							memberName.insert(i, " ");
 							++i;
 						}
 					}
@@ -47,19 +48,19 @@ namespace Grindstone {
 				}
 			}
 
-			for (size_t i = n.size() - 1u; i > 0u; i--) {
-				if (n[i] == ' '&&n[i] == n[i - 1]) {
-					n.erase(n.begin() + i);
+			for (size_t i = memberName.size() - 1u; i > 0u; i--) {
+				if (memberName[i] == ' ' && memberName[i] == memberName[i - 1]) {
+					memberName.erase(memberName.begin() + i);
 				}
 			}
 
-			if (n[0] == ' ') n.erase(n.begin());
-			if (n[n.size() - 1] == ' ') n.erase(n.end() - 1);
+			if (memberName[0] == ' ') memberName.erase(memberName.begin());
+			if (memberName[memberName.size() - 1] == ' ') memberName.erase(memberName.end() - 1);
 
-			return n;
+			return memberName;
 		}
 
-		std::string stringifyMetadata(Metadata m) {
+		std::string StringifyMetadata(Metadata m) {
 			short mval = (short)m;
 			std::string o;
 			if (mval & (short)Metadata::ViewInEditor)

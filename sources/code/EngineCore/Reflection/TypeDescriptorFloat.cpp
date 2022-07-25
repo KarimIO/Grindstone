@@ -8,7 +8,7 @@ namespace Grindstone {
 		};
 
 		template <>
-		TypeDescriptor* getPrimitiveDescriptor<float>() {
+		TypeDescriptor* GetPrimitiveDescriptor<float>() {
 			static TypeDescriptor_Float typeDesc;
 			return &typeDesc;
 		}
@@ -18,7 +18,7 @@ namespace Grindstone {
 		};
 
 		template <>
-		TypeDescriptor* getPrimitiveDescriptor<Math::Float2>() {
+		TypeDescriptor* GetPrimitiveDescriptor<Math::Float2>() {
 			static TypeDescriptor_Float2 typeDesc;
 			return &typeDesc;
 		}
@@ -28,7 +28,7 @@ namespace Grindstone {
 		};
 
 		template <>
-		TypeDescriptor* getPrimitiveDescriptor<Math::Float3>() {
+		TypeDescriptor* GetPrimitiveDescriptor<Math::Float3>() {
 			static TypeDescriptor_Float3 typeDesc;
 			return &typeDesc;
 		}
@@ -38,7 +38,7 @@ namespace Grindstone {
 		};
 
 		template <>
-		TypeDescriptor* getPrimitiveDescriptor<Math::Float4>() {
+		TypeDescriptor* GetPrimitiveDescriptor<Math::Float4>() {
 			static TypeDescriptor_Float4 typeDesc;
 			return &typeDesc;
 		}

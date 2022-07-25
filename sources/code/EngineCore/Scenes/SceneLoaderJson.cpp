@@ -127,7 +127,7 @@ void SceneLoaderJson::ProcessComponent(ECS::Entity entity, rapidjson::Value& com
 				auto& parameter = parameterList.MemberBegin();
 				parameter != parameterList.MemberEnd();
 				parameter++
-				) {
+			) {
 				const char* paramKey = parameter->name.GetString();
 				ProcessComponentParameter(entity, componentPtr, reflectionData, paramKey, parameter->value);
 			}
@@ -259,16 +259,12 @@ void SceneLoaderJson::ProcessComponentParameter(
 		case ReflectionTypeData::Double4:
 			CopyDataArrayDouble(parameter, (double*)memberPtr, 4);
 			break;
-		case Reflection::TypeDescriptor::ReflectionTypeData::AssetReference:
-			try {
-				auto& engineCore = EngineCore::GetInstance();
-				auto mesh3dManager = engineCore.mesh3dManager;
+		case ReflectionTypeData::AssetReference:
+			{
+				Uuid uuid(parameter.GetString());
 				MeshReference& reference = *(MeshReference*)memberPtr;
-				reference = &mesh3dManager->LoadMesh3d(Uuid(parameter.GetString()));
+				((Asset*)member->type);
+				Grindstone::Reflection::TypeDescriptor_Asset
 			}
-			catch (std::runtime_error& e) {
-				EngineCore::GetInstance().Print(LogSeverity::Error, e.what());
-			}
-			break;
 	}
 }

@@ -27,8 +27,8 @@ namespace Grindstone {
 			typeDesc->size = sizeof(T); \
 			typeDesc->category = { "", {
 
-#define REFLECT_STRUCT_MEMBER_D(name, display_name, stored_name, mods, callback) \
-			{#name, Grindstone::Reflection::parseDisplayName(display_name, #name), Grindstone::Reflection::parseStoredName(stored_name, #name), offsetof(T, name), mods, Grindstone::Reflection::TypeResolver<decltype(T::name)>::get(), callback},
+#define REFLECT_STRUCT_MEMBER_D(name, displayName, storedName, mods, callback) \
+			{#name, Grindstone::Reflection::ParseDisplayName(displayName, #name), Grindstone::Reflection::ParseStoredName(storedName, #name), offsetof(T, name), mods, Grindstone::Reflection::TypeResolver<decltype(T::name)>::get(), callback},
 
 #define REFLECT_STRUCT_MEMBER(name) REFLECT_STRUCT_MEMBER_D(name, "", "", Grindstone::Reflection::Metadata::SaveSetAndView, nullptr)
 

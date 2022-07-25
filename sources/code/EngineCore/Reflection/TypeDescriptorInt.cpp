@@ -8,7 +8,7 @@ namespace Grindstone {
 		};
 
 		template <>
-		TypeDescriptor* getPrimitiveDescriptor<int>() {
+		TypeDescriptor* GetPrimitiveDescriptor<int>() {
 			static TypeDescriptor_Int typeDesc;
 			return &typeDesc;
 		}
@@ -18,7 +18,7 @@ namespace Grindstone {
 		};
 
 		template <>
-		TypeDescriptor* getPrimitiveDescriptor<Math::Int2>() {
+		TypeDescriptor* GetPrimitiveDescriptor<Math::Int2>() {
 			static TypeDescriptor_Int2 typeDesc;
 			return &typeDesc;
 		}
@@ -28,7 +28,7 @@ namespace Grindstone {
 		};
 
 		template <>
-		TypeDescriptor* getPrimitiveDescriptor<Math::Int3>() {
+		TypeDescriptor* GetPrimitiveDescriptor<Math::Int3>() {
 			static TypeDescriptor_Int3 typeDesc;
 			return &typeDesc;
 		}
@@ -38,7 +38,7 @@ namespace Grindstone {
 		};
 
 		template <>
-		TypeDescriptor* getPrimitiveDescriptor<Math::Int4>() {
+		TypeDescriptor* GetPrimitiveDescriptor<Math::Int4>() {
 			static TypeDescriptor_Int4 typeDesc;
 			return &typeDesc;
 		}

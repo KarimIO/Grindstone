@@ -43,7 +43,7 @@ namespace Grindstone {
 		};
 
 		/*template <typename T>
-		TypeDescriptor* getPrimitiveDescriptor<std::vector<T>>() {
+		TypeDescriptor* GetPrimitiveDescriptor<std::vector<T>>() {
 			static TypeDescriptor_StdVector typeDesc{ (T*) nullptr };
 			return &typeDesc;
 		}*/

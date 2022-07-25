@@ -4,26 +4,24 @@
 namespace Grindstone {
 	namespace Reflection {
 		struct TypeDescriptor_AssetReference : TypeDescriptor {
-			enum class AssetType {
-				Text = 0,
-				Mesh,
-				Material,
-				Texture,
-				Audio,
-			};
-
 			TypeDescriptor_AssetReference(
 				AssetType assetType,
 				const char* name,
-				size_t size
+				size_t size,
+				void(*loaderFn)(Uuid uuid)
 			) :
 			TypeDescriptor{
 				"Asset Reference",
 				sizeof(MeshReference),
 				ReflectionTypeData::AssetReference
-			}, assetType(assetType) {}
+			}, assetType(assetType), loaderFn(loaderFn) {}
 
 			AssetType assetType;
+			void(*loaderFn)(Uuid uuid);
+
+			void LoadFile(Uuid& uuid) {
+				loaderFn(uuid);
+			}
 		};
 
 		struct TypeDescriptor_MeshReference : public TypeDescriptor_AssetReference {
@@ -36,7 +34,7 @@ namespace Grindstone {
 		};
 
 		template <>
-		TypeDescriptor* getPrimitiveDescriptor<MeshReference>() {
+		TypeDescriptor* GetPrimitiveDescriptor<MeshReference>() {
 			static TypeDescriptor_MeshReference typeDesc;
 			return &typeDesc;
 		}
