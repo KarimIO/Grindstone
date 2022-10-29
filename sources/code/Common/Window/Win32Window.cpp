@@ -58,7 +58,7 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 		input->ResizeEvent(LOWORD(lParam), HIWORD(lParam));
 		break;
 	case WM_MOUSEMOVE:
-		input->SetMousePosition(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		input->OnMouseMoved(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		break;
 	case WM_SETFOCUS:
 		input->SetIsFocused(true);

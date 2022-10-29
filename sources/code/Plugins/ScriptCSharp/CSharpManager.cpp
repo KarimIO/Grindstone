@@ -85,6 +85,11 @@ void CSharpManager::SetupComponent(ECS::Entity& entity, ScriptComponent& compone
 
 void CSharpManager::SetupEntityDataInComponent(ECS::Entity& entity, ScriptComponent& component) {
 	MonoClassField* field = mono_class_get_field_from_name(component.monoClass->monoClass, "entity");
+
+	if (field == nullptr) {
+		return;
+	}
+
 	CompactEntityData outEnt = { entity.GetHandle(), entity.GetScene() };
 	mono_field_set_value((MonoObject*)component.scriptObject, field, &outEnt);
 }

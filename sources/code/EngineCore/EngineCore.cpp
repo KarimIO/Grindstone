@@ -67,6 +67,8 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	graphicsCore->Initialize(graphicsCoreInfo);
 	win->Show();
 
+	inputManager->SetMainWindow(win);
+
 	materialImporter = new MaterialImporter();
 	textureImporter = new TextureImporter();
 	shaderImporter = new ShaderImporter();
