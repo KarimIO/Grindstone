@@ -9,24 +9,24 @@ extern "C" {
 		return &reg.get<TransformComponent>((entt::entity)entity);
 	}
 
-	ENGINE_CORE_API float* TransformComponentGetRotation(TransformComponent& component) {
-		return &component.rotation.x;
+	ENGINE_CORE_API void TransformComponentGetRotation(TransformComponent& component, Math::Quaternion* outQuat) {
+		*outQuat = component.rotation;
 	}
 
 	ENGINE_CORE_API void TransformComponentSetRotation(TransformComponent& component, Math::Quaternion rotation) {
 		component.rotation = rotation;
 	}
 
-	ENGINE_CORE_API float* TransformComponentGetPosition(TransformComponent& component) {
-		return &component.position.x;
+	ENGINE_CORE_API void TransformComponentGetPosition(TransformComponent& component, glm::vec3* outPos) {
+		*outPos = component.position;
 	}
 
 	ENGINE_CORE_API void TransformComponentSetPosition(TransformComponent& component, Math::Float3 position) {
 		component.position = position;
 	}
 
-	ENGINE_CORE_API float* TransformComponentGetScale(TransformComponent& component) {
-		return &component.scale.x;
+	ENGINE_CORE_API void TransformComponentGetScale(TransformComponent& component, glm::vec3* outScale) {
+		*outScale = component.scale;
 	}
 
 	ENGINE_CORE_API void TransformComponentSetScale(TransformComponent& component, Math::Float3 scale) {

@@ -25,13 +25,10 @@ extern "C" {
 		Grindstone::EngineCore::GetInstance().GetInputManager()->SetMousePosition((int)mpx, (int)mpy);
 	}
 
-	float arr[2];
-	ENGINE_CORE_API float* InputManagerGetMousePos() {
+	ENGINE_CORE_API void InputManagerGetMousePos(glm::vec2* position) {
 		int x, y;
 		Grindstone::EngineCore::GetInstance().GetInputManager()->GetMousePosition(x, y);
-		arr[0] = (float)x;
-		arr[1] = (float)y;
-		return arr;
+		*position = { (int)x, (int)y };
 	}
 }
 
