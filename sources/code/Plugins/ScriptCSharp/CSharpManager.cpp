@@ -37,18 +37,26 @@ void CSharpManager::Initialize(EngineCore* engineCore) {
 		"C:\\Program Files\\Mono\\lib",
 		"C:\\Program Files\\Mono\\etc"
 	);
-scriptDomain = mono_jit_init_version("grindstone_mono_domain", "v4.0.30319");
 
-auto dllPath = (engineCore->GetBinaryPath() / "Application-CSharp.dll").string();
-LoadAssembly(dllPath.c_str());
+	scriptDomain = mono_jit_init_version("grindstone_mono_domain", "v4.0.30319");
+
+	auto coreDllPath = (engineCore->GetBinaryPath() / "GrindstoneCSharpCore.dll").string();
+	LoadAssembly(coreDllPath.c_str(), grindsoneCoreDll);
+
+	auto dllPath = (engineCore->GetBinaryPath() / "Application-CSharp.dll").string();
+	LoadAssemblyIntoMap(dllPath.c_str());
 }
 
-void CSharpManager::LoadAssembly(const char* path) {
+void CSharpManager::LoadAssembly(const char* path, AssemblyData& outAssemblyData) {
 	MonoAssembly* assembly = mono_domain_assembly_open(scriptDomain, path);
 	MonoImage* image = mono_assembly_get_image(assembly);
+	outAssemblyData.assembly = assembly;
+	outAssemblyData.image = image;
+}
+
+void CSharpManager::LoadAssemblyIntoMap(const char* path) {
 	auto& assemblyData = assemblies[path];
-	assemblyData.assembly = assembly;
-	assemblyData.image = image;
+	LoadAssembly(path, assemblyData);
 }
 
 struct CompactEntityData {
@@ -135,22 +143,46 @@ void CSharpManager::CallFunctionInComponent(ScriptComponent& scriptComponent, si
 }
 
 void CSharpManager::RegisterComponents() {
-	auto& componentRegistrar = *EngineCore::GetInstance().GetComponentRegistrar();
+	auto& componentRegistrar = *engineCore->GetComponentRegistrar();
 	for (auto& component : componentRegistrar) {
-		auto name = component.first;
+		auto& componentName = (std::string&)component.first;
 		auto fns = component.second;
+		RegisterComponent(componentName, fns);
 	}
 }
 
-void RegisterComponent(std::string csharpClass, ECS::ComponentFunctions& fns) {
-	MonoType* managedType = mono_reflection_type_from_name((char*)csharpClass.c_str(), ScriptEngineInternal::GetHazelCoreAssemblyInfo()->AssemblyImage);
-	if (managedType) {
-		createComponentFuncs[managedType] = fns.CreateComponentFn;
-		tryGetComponentFuncs[managedType] = fns.TryGetComponentFn;
-		hasComponentFuncs[managedType] = fns.HasComponentFn;
-		removeComponentFuncs[managedType] = fns.RemoveComponentFn;
+void CSharpManager::RegisterComponent(std::string& componentName, ECS::ComponentFunctions& fns) {
+	std::string csharpClass = "Grindstone." + componentName + "Component";
+	MonoImage* image = grindsoneCoreDll.image;
+	MonoType* managedType = mono_reflection_type_from_name((char*)csharpClass.c_str(), image);
+	if (managedType == nullptr) {
+		return;
 	}
-	else {
-		HZ_CORE_ASSERT(false, "No C# component class found for " #Type "!");\
+
+	createComponentFuncs[managedType] = fns.CreateComponentFn;
+	tryGetComponentFuncs[managedType] = fns.TryGetComponentFn;
+	hasComponentFuncs[managedType] = fns.HasComponentFn;
+	removeComponentFuncs[managedType] = fns.RemoveComponentFn;
+}
+
+void CSharpManager::CallCreateComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType) {
+	auto iterator = createComponentFuncs.find(monoType);
+	if (iterator == createComponentFuncs.end()) {
+		iterator->second(ECS::Entity(entityHandle, scene));
 	}
+}
+
+void CSharpManager::CallHasComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType) {
+	auto iterator = hasComponentFuncs.find(monoType);
+	if (iterator == hasComponentFuncs.end()) {
+		iterator->second(ECS::Entity(entityHandle, scene));
+	}
+}
+
+void CSharpManager::CallRemoveComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType) {
+	auto iterator = removeComponentFuncs.find(monoType);
+	if (iterator == removeComponentFuncs.end()) {
+		iterator->second(ECS::Entity(entityHandle, scene));
+	}
+
 }

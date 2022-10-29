@@ -7,6 +7,7 @@
 #include "EngineCore/ECS/EntityHandle.hpp"
 #include "EngineCore/Reflection/ComponentReflection.hpp"
 #include "ComponentFunctions.hpp"
+#include "ComponentFunctionsDefinitions.hpp"
 using namespace Grindstone;
 
 namespace Grindstone {

@@ -25,11 +25,6 @@ namespace Grindstone {
 
 			};
 
-			struct BoneData {
-				uint16_t ids[NUM_BONES_PER_VERTEX];
-				float weights[NUM_BONES_PER_VERTEX];
-			};
-
 			struct Submesh {
 				uint32_t indexCount = 0;
 				uint32_t baseVertex = 0;

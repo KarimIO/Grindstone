@@ -5,11 +5,11 @@
 #include "ComponentInspector.hpp"
 #include "Editor/EditorManager.hpp"
 #include "EngineCore/EngineCore.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
+#include "EngineCore/Assets/Mesh3d/Mesh3dImporter.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "EngineCore/Reflection/TypeDescriptor.hpp"
-#include "EngineCore/Assets/AssetFile.hpp"
+#include "EngineCore/Assets/Asset.hpp"
 #include "EngineCore/Assets/Mesh3d/Mesh3d.hpp"
 #include "Common/Math.hpp"
 
