@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 
-#include "../BaseAssetRenderer.hpp"
+#include "EngineCore/AssetRenderer/BaseAssetRenderer.hpp"
 #include "../Shaders/Shader.hpp"
 #include "../Materials/Material.hpp"
 #include "Mesh3d.hpp"
@@ -26,6 +26,6 @@ namespace Grindstone {
 			virtual void RenderQueue(RenderQueueContainer& renderQueue) override;
 
 			GraphicsAPI::UniformBufferBinding* mesh3dBufferBinding = nullptr;
-			GraphicsAPI::UniformBuffer* mesh3dBufferObject = nullptr;;
+			GraphicsAPI::UniformBuffer* mesh3dBufferObject = nullptr;
 	};
 }

@@ -10,15 +10,6 @@
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Scene.hpp"
 
-#include "EngineCore/CoreComponents/Camera/CameraComponent.hpp"
-#include "EngineCore/CoreComponents/Mesh/MeshComponent.hpp"
-#include "EngineCore/CoreComponents/Mesh/MeshRendererComponent.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dImporter.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
-#include "EngineCore/Assets/Materials/MaterialImporter.hpp"
-#include "EngineCore/Events/Dispatcher.hpp"
-#include "EngineCore/Rendering/BaseRenderer.hpp"
-
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
 

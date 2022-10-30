@@ -39,11 +39,7 @@ namespace Grindstone {
 	class WindowManager;
 
 	class AssetRendererManager;
-	class MaterialImporter;
-	class TextureImporter;
-	class ShaderImporter;
-	class Mesh3dImporter;
-	class Mesh3dRenderer;
+	class AssetManager;
 	class BaseRenderer;
 
 	class EngineCore {
@@ -94,11 +90,7 @@ namespace Grindstone {
 	public:
 		DisplayManager* displayManager = nullptr;
 		WindowManager* windowManager = nullptr;
-		MaterialImporter* materialImporter = nullptr;
-		TextureImporter* textureImporter = nullptr;
-		ShaderImporter* shaderImporter = nullptr;
-		Mesh3dImporter* mesh3dImporter = nullptr;
-		Mesh3dRenderer* mesh3dRenderer = nullptr;
+		AssetManager* assetManager = nullptr;
 		AssetRendererManager* assetRendererManager = nullptr;
 	private:
 		double currentTime = 0.0;

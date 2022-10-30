@@ -1,10 +1,11 @@
 #pragma once
 
+#include <vector>
 #include "Common/Math.hpp"
 #include "EngineCore/Assets/Asset.hpp"
 
 namespace Grindstone {
-	struct Rig : public Asset {
+	struct RigAsset : public Asset {
 		struct Bone {
 			size_t parentBoneIndex;
 			Math::Matrix4 localMatrix;
@@ -12,5 +13,7 @@ namespace Grindstone {
 		};
 
 		std::vector<Bone> bones;
+
+		DEFINE_ASSET_TYPE
 	};
 }

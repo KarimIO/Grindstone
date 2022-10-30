@@ -4,8 +4,6 @@
 #include <Common/ResourcePipeline/Uuid.hpp>
 
 namespace Grindstone {
-	struct Mesh3d;
-	using MeshReference = Mesh3d*;
 	using AssetType = uint16_t;
 
 	struct Asset {
@@ -24,11 +22,7 @@ namespace Grindstone {
 		}
 	};
 
-	#define DEFINE_ASSET_TYPE static AssetType assetType; \
+	#define DEFINE_ASSET_TYPE static AssetType assetType; /* Assigned from AssetImporter.hpp */ \
 		static AssetType GetStaticAssetType() { return assetType; } \
 		virtual AssetType GetAssetType() const override { return GetStaticType(); }
-
-	struct MeshAsset : public Asset {
-		DEFINE_ASSET_TYPE
-	};
 }

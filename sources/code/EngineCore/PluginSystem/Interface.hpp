@@ -5,6 +5,7 @@
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "Common/Window/Window.hpp"
 #include "Common/Logging.hpp"
+#include "EngineCore/Assets/AssetManager.hpp"
 #include <EngineCore/ECS/ComponentFunctions.hpp>
 
 namespace Grindstone {
@@ -20,6 +21,7 @@ namespace Grindstone {
 
 	class WindowManager;
 	class DisplayManager;
+	class BaseAssetRenderer;
 
 	namespace Plugins {
 		class Manager;
@@ -38,9 +40,14 @@ namespace Grindstone {
 			virtual Window* CreateDisplayWindow(Window::CreateInfo&);
 			virtual Display GetMainDisplay();
 			virtual uint8_t CountDisplays();
-			virtual void EnumerateDisplays(Display*displays);
-		   
+			virtual void EnumerateDisplays(Display* displays);
 			virtual void RegisterSystem(const char* name, ECS::SystemFactory factory);
+			virtual void RegisterAssetRenderer(BaseAssetRenderer* assetRenderer);
+
+			template<typename AssetT, typename ImporterT>
+			void RegisterAssetType() {
+				EngineCore::GetInstance().assetManager->RegisterAssetType(AssetT::assetType, new ImporterT());
+			}
 
 			template<typename T>
 			void RegisterComponent(ECS::SetupComponentFn setupComponentFn = nullptr) {
@@ -49,7 +56,7 @@ namespace Grindstone {
 			ECS::ComponentRegistrar* componentRegistrar = nullptr;
 			ECS::SystemRegistrar* systemRegistrar = nullptr;
 		private:
-			Manager*    manager = nullptr;
+			Manager* manager = nullptr;
 			GraphicsAPI::Core* graphicsCore = nullptr;
 			Grindstone::Window* (*windowFactoryFn)(Grindstone::Window::CreateInfo&) = nullptr;
 			Grindstone::Display(*getMainDisplayFn)() = nullptr;

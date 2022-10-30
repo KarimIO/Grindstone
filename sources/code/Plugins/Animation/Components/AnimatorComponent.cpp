@@ -6,7 +6,7 @@ using namespace Grindstone;
 extern "C" {
 	ENGINE_CORE_API void* EntityGetAnimatorComponent(Grindstone::SceneManagement::Scene* scene, uint32_t entity) {
 		entt::registry& reg = scene->GetEntityRegistry();
-		return &reg.get<AnimatorComponent>((entt::entity)entity);
+		return &reg.Get<AnimatorComponent>((entt::entity)entity);
 	}
 }
 

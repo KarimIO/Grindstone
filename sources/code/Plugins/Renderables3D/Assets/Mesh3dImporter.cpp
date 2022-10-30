@@ -39,10 +39,7 @@ Mesh3dImporter::Mesh3dImporter() {
 	PrepareLayouts();
 }
 
-void Mesh3dImporter::Load(Uuid& uuid) {
-}
-
-void Mesh3dImporter::LazyLoad(Uuid& uuid) {
+void Mesh3dImporter::Load(Uuid uuid) {
 }
 
 void Mesh3dImporter::PrepareLayouts() {
@@ -97,8 +94,8 @@ void Mesh3dImporter::PrepareLayouts() {
 	};
 }
 
-Mesh3d& Mesh3dImporter::LoadMesh3d(Uuid uuid) {
-	Mesh3d* mesh = nullptr;
+Mesh3dAsset& Mesh3dImporter::LoadMesh3d(Uuid uuid) {
+	Mesh3dAsset* mesh = nullptr;
 	if (TryGetMesh3d(uuid, mesh)) {
 		mesh->useCount++;
 		return *mesh;
@@ -128,7 +125,7 @@ void Mesh3dImporter::DecrementMeshCount(ECS::Entity entity, Uuid uuid) {
 	}
 }
 
-bool Mesh3dImporter::TryGetMesh3d(Uuid uuid, Mesh3d*& mesh) {
+bool Mesh3dImporter::TryGetMesh3d(Uuid uuid, Mesh3dAsset*& mesh) {
 	auto meshInMap = meshes.find(uuid);
 	if (meshInMap != meshes.end()) {
 		mesh = &meshInMap->second;
@@ -138,12 +135,12 @@ bool Mesh3dImporter::TryGetMesh3d(Uuid uuid, Mesh3d*& mesh) {
 	return false;
 }
 
-void Mesh3dImporter::LoadMeshImportSubmeshes(Mesh3d& mesh, Formats::Model::V1::Header& header, char*& sourcePtr) {
+void Mesh3dImporter::LoadMeshImportSubmeshes(Mesh3dAsset& mesh, Formats::Model::V1::Header& header, char*& sourcePtr) {
 	SourceSubmesh* sourceSubmeshes = (SourceSubmesh*)sourcePtr;
 	mesh.submeshes.resize(header.meshCount);
 
 	for (uint32_t i = 0; i < header.meshCount; ++i) {
-		Mesh3d::Submesh& dst = mesh.submeshes[i];
+		Mesh3dAsset::Submesh& dst = mesh.submeshes[i];
 		SourceSubmesh& src = sourceSubmeshes[i];
 		dst.baseIndex = src.baseIndex;
 		dst.baseVertex = src.baseVertex;
@@ -156,7 +153,7 @@ void Mesh3dImporter::LoadMeshImportSubmeshes(Mesh3d& mesh, Formats::Model::V1::H
 }
 
 void Mesh3dImporter::LoadMeshImportVertices(
-	Mesh3d& mesh,
+	Mesh3dAsset& mesh,
 	Formats::Model::V1::Header& header,
 	char*& sourcePtr,
 	std::vector<GraphicsAPI::VertexBuffer*>& vertexBuffers
@@ -189,7 +186,7 @@ void Mesh3dImporter::LoadMeshImportVertices(
 }
 
 void Mesh3dImporter::LoadMeshImportIndices(
-	Mesh3d& mesh,
+	Mesh3dAsset& mesh,
 	Formats::Model::V1::Header& header,
 	char*& sourcePtr,
 	GraphicsAPI::IndexBuffer*& indexBuffer
@@ -211,7 +208,7 @@ void Mesh3dImporter::LoadMeshImportIndices(
 	indexBuffer = graphicsCore->CreateIndexBuffer(indexBufferCreateInfo);
 }
 
-void Mesh3dImporter::CreateMeshFromData(Mesh3d& mesh, std::vector<char>& fileContent) {
+void Mesh3dImporter::CreateMeshFromData(Mesh3dAsset& mesh, std::vector<char>& fileContent) {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	if (fileContent.size() < 3 && strncmp("GMF", fileContent.data(), 3) != 0) {
 		throw std::runtime_error("Mesh3dImporter::CreateMeshFromData GMF magic code wasn't matched.");
@@ -242,14 +239,14 @@ void Mesh3dImporter::CreateMeshFromData(Mesh3d& mesh, std::vector<char>& fileCon
 	mesh.vertexArrayObject = graphicsCore->CreateVertexArrayObject(vaoCi);
 }
 
-Mesh3d& Mesh3dImporter::CreateMesh3dFromFile(Uuid uuid) {
+Mesh3dAsset& Mesh3dImporter::CreateMesh3dFromFile(Uuid uuid) {
 	std::filesystem::path completePath = EngineCore::GetInstance().GetAssetPath(uuid.ToString());
 	if (!std::filesystem::exists(completePath)) {
 		throw std::runtime_error("Mesh3dImporter::CreateMesh3dFromFile failed to load model.");
 	}
 
 	auto fileContent = Utils::LoadFile(completePath.string().c_str());
-	Mesh3d& mesh = meshes[uuid];
+	Mesh3dAsset& mesh = meshes[uuid];
 	mesh.uuid = uuid;
 	CreateMeshFromData(mesh, fileContent);
 

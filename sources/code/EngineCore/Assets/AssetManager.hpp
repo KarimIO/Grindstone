@@ -9,15 +9,19 @@ namespace Grindstone {
 	class AssetManager {
 	public:
 		AssetManager();
-		virtual void LoadFile(AssetType assetType, Uuid& uuid);
-		virtual void LazyLoadFile(AssetType assetType, Uuid& uuid);
+		virtual void LoadFile(AssetType assetType, Uuid uuid);
 		std::string& GetTypeName(AssetType assetType);
 
-		template <typename AssetType, typename AssetImporterType>
-		void RegisterNewType() {
-			T::assetType = assetTypeNames.size();
-			assetTypeNames.emplace_back(typeid(AssetType).name());
-			assetTypeImporters.emplace_back(new AssetImporterType());
+		template<typename T>
+		void LoadFile(Uuid uuid) {
+			LoadFile(T::assetType, uuid);
+		}
+
+		// TODO: Register these into a file, so we can refer to types by number, and
+		// if there is a new type, we can change all assetTypes in meta files.
+		template <typename AssetT, typename AssetImporterT>
+		void RegisterAssetType() {
+			AssetT::assetType = (AssetType)assetTypeNames.size();
 		}
 	private:
 		std::vector<std::string> assetTypeNames;

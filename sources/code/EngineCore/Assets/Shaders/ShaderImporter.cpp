@@ -4,12 +4,15 @@
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Common/Graphics/Core.hpp"
 #include "ShaderReflectionLoader.hpp"
-#include "EngineCore/Assets/BaseAssetRenderer.hpp"
 #include "EngineCore/Rendering/DeferredRenderer.hpp"
 #include "EngineCore/Logger.hpp"
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
+void ShaderImporter::Load(Uuid uuid) {
+}
+
+#if 0
 std::string GetShaderPath(const char* basePath, ShaderStage shaderStage, GraphicsAPI::Core* graphicsCore) {
 	const char* shaderStageExtension = "";
 
@@ -38,12 +41,6 @@ std::string GetShaderPath(const char* basePath, ShaderStage shaderStage, Graphic
 	}
 
 	return std::string(basePath) + shaderStageExtension + graphicsCore->GetDefaultShaderExtension();
-}
-
-void ShaderImporter::Load(Uuid& uuid) {
-}
-
-void ShaderImporter::LazyLoad(Uuid& uuid) {
 }
 
 Shader& ShaderImporter::LoadShader(BaseAssetRenderer* assetRenderer, const char* uuid) {
@@ -202,3 +199,5 @@ void ShaderImporter::CreateShaderGraphicsPipeline(bool isReloading, const char* 
 		shader.pipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	}
 }
+
+#endif

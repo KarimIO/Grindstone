@@ -4,9 +4,10 @@
 #include <vector>
 #include <map>
 
-#include "Shaders/Shader.hpp"
-
 namespace Grindstone {
+	struct Shader;
+	struct Material;
+
 	struct RenderQueueContainer {
 		std::vector<Shader*> shaders;
 	};

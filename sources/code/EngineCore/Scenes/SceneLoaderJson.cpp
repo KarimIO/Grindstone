@@ -9,13 +9,6 @@
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Scene.hpp"
 
-#include "EngineCore/CoreComponents/Camera/CameraComponent.hpp"
-#include "EngineCore/CoreComponents/Mesh/MeshComponent.hpp"
-#include "EngineCore/CoreComponents/Mesh/MeshRendererComponent.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dImporter.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
-#include "EngineCore/Assets/Materials/MaterialImporter.hpp"
-
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
 
@@ -36,43 +29,6 @@ bool SceneLoaderJson::Load(const char* path) {
 
 	ProcessMeta();
 	ProcessEntities();
-
-	auto& engineCore = EngineCore::GetInstance();
-	auto materialManager = engineCore.materialImporter;
-	auto mesh3dManager = engineCore.mesh3dImporter;
-	auto mesh3dRenderer = engineCore.mesh3dRenderer;
-	auto& registry = scene->GetEntityRegistry();
-
-	auto meshAndMeshRendererView = registry.view<MeshComponent, MeshRendererComponent>();
-	meshAndMeshRendererView.each([&](
-		entt::entity entity,
-		MeshComponent& meshComponent,
-		MeshRendererComponent& meshRendererComponent
-	) {
-		if (meshComponent.mesh == nullptr) {
-			return;
-		}
-
-		std::vector<Material*> materials;
-		materials.resize(meshRendererComponent.materials.size());
-		for (size_t i = 0; i < meshRendererComponent.materials.size(); ++i) {
-			auto& materialPath = meshRendererComponent.materials[i];
-			materials[i] = &materialManager->LoadMaterial(
-				mesh3dRenderer,
-				materialPath.c_str()
-			);
-		}
-
-		for (auto& submesh : meshComponent.mesh->submeshes) {
-			Material* material = mesh3dRenderer->GetErrorMaterial();
-			if (submesh.materialIndex < materials.size()) {
-				material = materials[submesh.materialIndex];
-			}
-
-			submesh.materials.emplace_back(material->uuid);
-			material->renderables.emplace_back(std::make_pair(ECS::Entity(entity, scene), &submesh));
-		}
-	});
 
 	return true;
 }
@@ -259,12 +215,5 @@ void SceneLoaderJson::ProcessComponentParameter(
 		case ReflectionTypeData::Double4:
 			CopyDataArrayDouble(parameter, (double*)memberPtr, 4);
 			break;
-		case ReflectionTypeData::AssetReference:
-			{
-				Uuid uuid(parameter.GetString());
-				MeshReference& reference = *(MeshReference*)memberPtr;
-				((Asset*)member->type);
-				// Grindstone::Reflection::TypeDescriptor_Asset
-			}
 	}
 }

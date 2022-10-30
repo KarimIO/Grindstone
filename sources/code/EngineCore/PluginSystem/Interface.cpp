@@ -4,6 +4,7 @@
 #include "../Logger.hpp"
 #include "EngineCore/ECS/SystemRegistrar.hpp"
 #include <Common/Window/Window.hpp>
+#include "EngineCore/AssetRenderer/AssetRendererManager.hpp"
 using namespace Grindstone;
 
 Plugins::Interface::Interface(Manager* manager) 
@@ -76,4 +77,8 @@ void Plugins::Interface::EnumerateDisplays(Display* displays) {
 
 void Plugins::Interface::RegisterSystem(const char* name, ECS::SystemFactory factory) {
 	systemRegistrar->RegisterSystem(name, factory);
+}
+
+void Plugins::Interface::RegisterAssetRenderer(BaseAssetRenderer* assetRenderer) {
+	EngineCore::GetInstance().assetRendererManager->AddAssetRenderer(assetRenderer);
 }

@@ -6,8 +6,6 @@
 
 namespace Grindstone {
 	struct MeshComponent {
-		MeshReference mesh;
-
 		REFLECT("Mesh")
 	};
 }

@@ -291,10 +291,14 @@ void ModelImporter::ProcessAnimations() {
 		std::vector<Formats::Animation::V1::ChannelData> channelData;
 		channels.resize(animation->mNumChannels);
 
-		std::ofstream output(meshOutputPath, std::ios::binary);
+		std::string subassetName = "anim-" + animationName;
+		Uuid outUuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
+
+		std::string outputPath = "../compiledAssets/" + outUuid.ToString();
+		std::ofstream output(outputPath, std::ios::binary);
 
 		if (!output.is_open()) {
-			throw std::runtime_error(std::string("Failed to open ") + meshOutputPath);
+			throw std::runtime_error(std::string("Failed to open ") + outputPath);
 		}
 
 		//  - Output File MetaData

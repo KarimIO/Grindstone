@@ -64,6 +64,16 @@ if (USE_AUDIO_OPENAL)
 	add_subdirectory(${PLUGIN_DIR}/AudioOpenAL)
 endif()
 
+option(USE_ANIMATION "Include Animation?" OFF)
+if (USE_ANIMATION)
+	add_subdirectory(${PLUGIN_DIR}/Animation)
+endif()
+
+option(USE_RENDERABLES_3D "Include Renderables 3D?" OFF)
+if (USE_RENDERABLES_3D)
+	add_subdirectory(${PLUGIN_DIR}/Renderables3D)
+endif()
+
 option(USE_CSHARP "Include CSharp?" OFF)
 if (USE_CSHARP)
 	add_subdirectory(${PLUGIN_DIR}/ScriptCSharp)

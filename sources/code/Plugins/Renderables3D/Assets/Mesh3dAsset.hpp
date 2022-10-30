@@ -10,13 +10,6 @@
 #include "Common/ResourcePipeline/Uuid.hpp"
 
 namespace Grindstone {
-	struct Vertex {
-		float positions[3];
-		float normal[3];
-		float tangent[3];
-		float texCoord[2];
-	};
-
 	enum class VertexBuffers {
 		Vertex = 0,
 		Normal,
@@ -25,19 +18,17 @@ namespace Grindstone {
 		Last
 	};
 
-	struct Mesh3d : public Asset {
+	struct Mesh3dAsset : public Asset {
 		struct Submesh {
 			uint32_t indexCount = 0;
 			uint32_t baseVertex = 0;
 			uint32_t baseIndex = 0;
 			uint32_t materialIndex = UINT32_MAX;
-			Mesh3d* mesh = nullptr;
 			std::vector<std::string> materials;
 		};
 
-		uint32_t useCount = 1;
-		Uuid uuid;
-		GraphicsAPI::VertexArrayObject* vertexArrayObject = nullptr;
 		std::vector<Submesh> submeshes;
+
+		DEFINE_ASSET_TYPE
 	};
 }

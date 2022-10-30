@@ -23,9 +23,7 @@
 #include "EngineCore/Assets/Materials/MaterialImporter.hpp"
 #include "EngineCore/Assets/Textures/TextureImporter.hpp"
 #include "EngineCore/Assets/Shaders/ShaderImporter.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dImporter.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
-#include "EngineCore/Assets/AssetRendererManager.hpp"
+#include "EngineCore/AssetRenderer/AssetRendererManager.hpp"
 
 using namespace Grindstone;
 
@@ -61,7 +59,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	windowCreationInfo.engineCore = this;
 	auto win = windowManager->Create(windowCreationInfo);
 	eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&EngineCore::OnTryQuit, this, std::placeholders::_1));
-	eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&EngineCore::OnForceQuit, this, std::placeholders::_1));
+	eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowForceQuit, std::bind(&EngineCore::OnForceQuit, this, std::placeholders::_1));
 
 	GraphicsAPI::Core::CreateInfo graphicsCoreInfo{ win, true };
 	graphicsCore->Initialize(graphicsCoreInfo);
@@ -69,13 +67,8 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 	inputManager->SetMainWindow(win);
 
-	materialImporter = new MaterialImporter();
-	textureImporter = new TextureImporter();
-	shaderImporter = new ShaderImporter();
-	mesh3dImporter = new Mesh3dImporter();
-	mesh3dRenderer = new Mesh3dRenderer();
+	assetManager = new AssetManager();
 	assetRendererManager = new AssetRendererManager();
-	assetRendererManager->AddAssetRenderer(mesh3dRenderer);
 	assetRendererManager->AddQueue("Opaque");
 	assetRendererManager->AddQueue("Transparent");
 	assetRendererManager->AddQueue("Unlit");
@@ -86,7 +79,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 		sceneManager->LoadDefaultScene();
 	}
 	else if (strcmp(createInfo.scenePath, "") == 0) {
-		sceneManager->AddEmptyScene("Untitled");
+		sceneManager->CreateEmptyScene("Untitled");
 	}
 	else {
 		sceneManager->LoadScene(createInfo.scenePath);

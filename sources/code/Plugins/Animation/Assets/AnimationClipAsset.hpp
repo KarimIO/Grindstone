@@ -4,16 +4,14 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#include "EngineCore/ECS/Entity.hpp"
-#include "Common/ResourcePipeline/Uuid.hpp"
-#include "EngineCore/Assets/Rig/Rig.hpp"
 #include "EngineCore/Assets/Asset.hpp"
 
 #include "Common/Formats/Animation.hpp"
 #include "Common/Math.hpp"
 
 namespace Grindstone {
-	struct AnimationClip : public Asset {
+	class* RigAsset;
+	struct AnimationClipAsset : public Asset {
 		struct PositionKeyframe {
 			float time;
 			Math::Float3 value;
@@ -28,7 +26,7 @@ namespace Grindstone {
 			float time;
 			Math::Quaternion value;
 		};
-		
+
 		struct Channel {
 			size_t boneIndex;
 			std::vector<PositionKeyframe> positions;
@@ -41,11 +39,14 @@ namespace Grindstone {
 		std::vector<Channel> channels;
 		void GetFrameMatrices(
 			float time,
-			Rig* rig,
+			RigAsset* rig,
 			std::vector<glm::mat4>& transformations
 		);
+
 		inline glm::vec3 CalculatePosition(float time, Channel& channel);
 		inline glm::quat CalculateRotation(float time, Channel& channel);
 		inline glm::vec3 CalculateScale(float time, Channel& channel);
+
+		DEFINE_ASSET_TYPE
 	};
 }

@@ -2,19 +2,17 @@
 #include "rapidjson/document.h"
 #include "EngineCore/Assets/Shaders/ShaderImporter.hpp"
 #include "EngineCore/Assets/Textures/TextureImporter.hpp"
-#include "EngineCore/Assets/BaseAssetRenderer.hpp"
+#include "EngineCore/AssetRenderer/BaseAssetRenderer.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "Common/Graphics/Core.hpp"
 #include "Common/Graphics/Texture.hpp"
 using namespace Grindstone;
 
-void MaterialImporter::Load(Uuid& uuid) {
+void MaterialImporter::Load(Uuid uuid) {
 }
 
-void MaterialImporter::LazyLoad(Uuid& uuid) {
-}
-
+#if 0
 Material& MaterialImporter::LoadMaterial(BaseAssetRenderer* assetRenderer, const char* path) {
 	try {
 		Material* material = nullptr;
@@ -42,7 +40,7 @@ void MaterialImporter::RemoveRenderableFromMaterial(std::string uuid, ECS::Entit
 		for (size_t i = 0; i < size - numItemsToDelete; ++i) {
 			auto& renderablePair = material->renderables[i];
 			if (
-				renderablePair.first == entity && 
+				renderablePair.first == entity &&
 				renderablePair.second == renderable
 			) {
 				++numItemsToDelete;
@@ -195,3 +193,4 @@ Material& MaterialImporter::CreateMaterialFromFile(BaseAssetRenderer* assetRende
 
 	return material;
 }
+#endif

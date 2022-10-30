@@ -2,8 +2,8 @@
 using namespace Grindstone;
 
 void BaseAssetRenderer::AddShaderToRenderQueue(Shader* shader) {
-	const char* renderQueue = shader->reflectionData.renderQueue.c_str();
-	renderQueues[renderQueue].shaders.push_back(shader);
+	// const char* renderQueue = shader->reflectionData.renderQueue.c_str();
+	// renderQueues[renderQueue].shaders.push_back(shader);
 }
 
 void BaseAssetRenderer::AddQueue(const char* name) {

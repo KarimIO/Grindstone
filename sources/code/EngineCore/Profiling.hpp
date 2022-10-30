@@ -25,19 +25,19 @@ namespace Grindstone {
 			int profileCount;
 		public:
 			Manager();
-			void beginSession(const std::string& name, const std::string& filepath = "results.json");
-			void endSession();
-			void writeProfile(const Result& result);
-			void writeHeader();
-			void writeFooter();
-			static Manager& get();
+			void BeginSession(const std::string& name, const std::string& filepath = "results.json");
+			void EndSession();
+			void WriteProfile(const Result& result);
+			void WriteHeader();
+			void WriteFooter();
+			static Manager& Get();
 		};
 
 		class Timer {
 		public:
 			Timer(const char* name);
 			~Timer();
-			void stop();
+			void Stop();
 		private:
 			const char* name;
 			std::chrono::time_point<std::chrono::high_resolution_clock> start_time_;
@@ -47,8 +47,8 @@ namespace Grindstone {
 }
 
 #ifdef _DEBUG
-	#define GRIND_PROFILE_BEGIN_SESSION(name, filepath) Grindstone::Profiler::Manager::get().beginSession(name, filepath)
-	#define GRIND_PROFILE_END_SESSION() Grindstone::Profiler::Manager::get().endSession()
+	#define GRIND_PROFILE_BEGIN_SESSION(name, filepath) Grindstone::Profiler::Manager::Get().BeginSession(name, filepath)
+	#define GRIND_PROFILE_END_SESSION() Grindstone::Profiler::Manager::Get().EndSession()
 	#define GRIND_PROFILE_SCOPE(name) Grindstone::Profiler::Timer grindstone_profiler_timer_##__LINE__(name)
 	#define GRIND_PROFILE_FUNC() GRIND_PROFILE_SCOPE(__FUNCSIG__)
 #else

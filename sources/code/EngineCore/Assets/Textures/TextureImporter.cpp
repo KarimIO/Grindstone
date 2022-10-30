@@ -6,12 +6,10 @@
 #include "TextureImporter.hpp"
 using namespace Grindstone;
 
-void TextureImporter::Load(Uuid& uuid) {
+void TextureImporter::Load(Uuid uuid) {
 }
 
-void TextureImporter::LazyLoad(Uuid& uuid) {
-}
-
+#if 0
 TextureAsset& TextureImporter::LoadTexture(const char* path) {
 	std::string fixedPath = path;
 	Utils::FixStringSlashes(fixedPath);
@@ -101,7 +99,7 @@ void TextureImporter::CreateFromDds(bool isReloading, TextureAsset& textureAsset
 	else {
 		GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 		Grindstone::GraphicsAPI::Texture* texture = graphicsCore->CreateTexture(createInfo);
-	
+
 		textureAsset.texture = texture;
 	}
 }
@@ -124,3 +122,4 @@ TextureAsset& TextureImporter::CreateNewTextureFromFile(std::string& path) {
 
 	return textureAsset;
 }
+#endif

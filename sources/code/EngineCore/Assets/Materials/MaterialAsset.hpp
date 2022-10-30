@@ -13,9 +13,7 @@ namespace Grindstone {
 	}
 
 	struct Shader;
-	struct Material : public Asset {
-		std::string name;
-		Uuid uuid;
+	struct MaterialAsset : public Asset {
 		std::string shaderPath;
 		Shader* shader;
 		GraphicsAPI::TextureBinding* textureBinding;
@@ -23,5 +21,7 @@ namespace Grindstone {
 		GraphicsAPI::UniformBuffer* uniformBufferObject;
 		char* buffer;
 		std::vector<std::pair<ECS::Entity, void*>> renderables;
+
+		DEFINE_ASSET_TYPE
 	};
 }

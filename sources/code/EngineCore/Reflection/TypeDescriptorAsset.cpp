@@ -12,7 +12,7 @@ namespace Grindstone {
 			) :
 			TypeDescriptor{
 				"Asset Reference",
-				sizeof(MeshReference),
+				sizeof(int), // TODO: Change to sizeof the AssetReference
 				ReflectionTypeData::AssetReference
 			}, assetType(assetType), loaderFn(loaderFn) {}
 
