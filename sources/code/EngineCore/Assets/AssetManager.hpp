@@ -6,25 +6,30 @@
 #include "AssetImporter.hpp"
 
 namespace Grindstone {
-	class AssetManager {
-	public:
-		AssetManager();
-		virtual void LoadFile(AssetType assetType, Uuid uuid);
-		std::string& GetTypeName(AssetType assetType);
+	namespace Assets {
+		class AssetLoader;
 
-		template<typename T>
-		void LoadFile(Uuid uuid) {
-			LoadFile(T::assetType, uuid);
-		}
+		class AssetManager {
+		public:
+			AssetManager();
+			virtual void* GetAsset(AssetType assetType, Uuid uuid);
+			std::string& GetTypeName(AssetType assetType);
 
-		// TODO: Register these into a file, so we can refer to types by number, and
-		// if there is a new type, we can change all assetTypes in meta files.
-		template <typename AssetT, typename AssetImporterT>
-		void RegisterAssetType() {
-			AssetT::assetType = (AssetType)assetTypeNames.size();
-		}
-	private:
-		std::vector<std::string> assetTypeNames;
-		std::vector<AssetImporter*> assetTypeImporters;
-	};
+			template<typename T>
+			T GetAsset(Uuid uuid) {
+				return *GetAsset(T::assetType, uuid);
+			}
+
+			// TODO: Register these into a file, so we can refer to types by number, and
+			// if there is a new type, we can change all assetTypes in meta files.
+			template <typename AssetT, typename AssetImporterT>
+			void RegisterAssetType() {
+				AssetT::assetType = (AssetType)assetTypeNames.size();
+			}
+		private:
+			AssetLoader* assetLoader = nullptr;
+			std::vector<std::string> assetTypeNames;
+			std::vector<AssetImporter*> assetTypeImporters;
+		};
+	}
 }

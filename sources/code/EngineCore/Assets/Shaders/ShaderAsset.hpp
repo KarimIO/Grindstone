@@ -10,6 +10,8 @@ namespace Grindstone {
 	struct Material;
 	struct ShaderAsset : public Asset {
 		ShaderReflectionData reflectionData;
+		GraphicsAPI::Pipeline* pipeline = nullptr;
+		GraphicsAPI::TextureBindingLayout* textureBindingLayout = nullptr;
 
 		DEFINE_ASSET_TYPE
 	};

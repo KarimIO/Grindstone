@@ -6,6 +6,7 @@
 namespace Grindstone {
 	class AssetImporter {
 	public:
-		virtual void Load(Uuid uuid) = 0;
+		virtual void* ProcessLoadedFile(Uuid uuid, std::vector<char>& contents) = 0;
+		virtual bool TryGetIfLoaded(Uuid uuid, void*& output) = 0;
 	};
 }

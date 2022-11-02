@@ -3,10 +3,11 @@
 #include <string>
 #include <vector>
 #include "EngineCore/Reflection/ComponentReflection.hpp"
+#include "EngineCore/Assets/Materials/MaterialAsset.hpp"
 
 namespace Grindstone {
 	struct MeshRendererComponent {
-		std::vector<std::string> materials;
+		std::vector<AssetReference<MaterialAsset>> materials;
 
 		REFLECT("MeshRenderer")
 	};

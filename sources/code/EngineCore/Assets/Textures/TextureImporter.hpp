@@ -4,12 +4,15 @@
 #include <vector>
 #include <map>
 
-#include "Texture.hpp"
+#include "TextureAsset.hpp"
 #include "EngineCore/Assets/AssetImporter.hpp"
 
 namespace Grindstone {
 	class TextureImporter : public AssetImporter {
-		public:
-			virtual void Load(Uuid uuid) override;
+	public:
+		virtual void* ProcessLoadedFile(Uuid uuid, std::vector<char>& contents) override;
+		virtual bool TryGetIfLoaded(Uuid uuid, void*& output) override;
+	private:
+		std::map<Uuid, TextureAsset> textures;
 	};
 }

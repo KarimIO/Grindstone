@@ -1,12 +1,17 @@
+file(GLOB_RECURSE SOURCE_ASSET_RENDERER "${ENGINE_CORE_DIR}/AssetRenderer/*.cpp")
+file(GLOB_RECURSE HEADER_ASSET_RENDERER "${ENGINE_CORE_DIR}/AssetRenderer/*.hpp")
+source_group("AssetRenderer\\Source Files" FILES ${SOURCE_ASSET_RENDERER})
+source_group("AssetRenderer\\Header Files" FILES ${HEADER_ASSET_RENDERER})
+
 file(GLOB_RECURSE SOURCE_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetManager.cpp)
 file(GLOB_RECURSE HEADER_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetManager.hpp ${ENGINE_CORE_DIR}/Assets/AssetImporter.hpp ${ENGINE_CORE_DIR}/Assets/Asset.hpp)
 source_group("Assets\\Source Files" FILES ${SOURCE_ASSETS_BASE})
 source_group("Assets\\Header Files" FILES ${HEADER_ASSETS_BASE})
 
-file(GLOB_RECURSE SOURCE_ASSET_RENDERER "${ENGINE_CORE_DIR}/AssetRenderer/*.cpp")
-file(GLOB_RECURSE HEADER_ASSET_RENDERER "${ENGINE_CORE_DIR}/AssetRenderer/*.hpp")
-source_group("AssetRenderer\\Source Files" FILES ${SOURCE_ASSET_RENDERER})
-source_group("AssetRenderer\\Header Files" FILES ${HEADER_ASSET_RENDERER})
+file(GLOB_RECURSE SOURCE_ASSET_LOADERS ${ENGINE_CORE_DIR}/Assets/Loaders/FileAssetLoader.cpp)
+file(GLOB_RECURSE HEADER_ASSET_LOADERS ${ENGINE_CORE_DIR}/Assets/Loaders/FileAssetLoader.hpp ${ENGINE_CORE_DIR}/Assets/Loaders/AssetLoader.hpp)
+source_group("Assets\\Loaders\\Source Files" FILES ${SOURCE_ASSET_LOADERS})
+source_group("Assets\\Loaders\\Header Files" FILES ${HEADER_ASSET_LOADERS})
 
 file(GLOB_RECURSE SOURCE_ASSETS_MATERIALS "${ENGINE_CORE_DIR}/Assets/Materials/*.cpp")
 file(GLOB_RECURSE HEADER_ASSETS_MATERIALS "${ENGINE_CORE_DIR}/Assets/Materials/*.hpp")
@@ -92,6 +97,7 @@ file(GLOB_RECURSE HEADER_MAIN EngineCore.hpp pch.hpp Logger.hpp Profiling.hpp ${
 set(ENGINE_CORE_SOURCES
 	${SOURCE_MAIN}
 	${SOURCE_ASSET_RENDERER}
+	${SOURCE_ASSET_LOADERS}
 	${SOURCE_ASSETS_BASE}
 	${SOURCE_ASSETS_ANIMATION_CLIP}
 	${SOURCE_ASSETS_MATERIALS}
@@ -115,6 +121,7 @@ set(ENGINE_CORE_SOURCES
 set(ENGINE_CORE_HEADERS
 	${HEADER_MAIN}
 	${HEADER_ASSET_RENDERER}
+	${HEADER_ASSET_LOADERS}
 	${HEADER_ASSETS_BASE}
 	${HEADER_ASSETS_ANIMATION_CLIP}
 	${HEADER_ASSETS_MATERIALS}

@@ -11,6 +11,7 @@ namespace Grindstone {
 	class BaseAssetRenderer;
 	class ShaderImporter : public AssetImporter {
 		public:
-			virtual void Load(Uuid uuid) override;
+			virtual void* ProcessLoadedFile(Uuid uuid, std::vector<char>& contents) override;
+			virtual bool TryGetIfLoaded(Uuid uuid, void*& output) override;
 	};
 }

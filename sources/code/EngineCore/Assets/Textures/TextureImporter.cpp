@@ -6,63 +6,13 @@
 #include "TextureImporter.hpp"
 using namespace Grindstone;
 
-void TextureImporter::Load(Uuid uuid) {
-}
-
-#if 0
-TextureAsset& TextureImporter::LoadTexture(const char* path) {
-	std::string fixedPath = path;
-	Utils::FixStringSlashes(fixedPath);
-
-	if (fixedPath.empty()) {
-		return errorTexture;
-	}
-
-	try {
-		TextureAsset* texture = nullptr;
-		if (TryGetTexture(fixedPath, texture)) {
-			return *texture;
-		}
-
-		return CreateNewTextureFromFile(fixedPath);
-	}
-	catch (std::runtime_error& e) {
-		EngineCore::GetInstance().Print(LogSeverity::Info, e.what());
-		return errorTexture;
-	}
-}
-
-void TextureImporter::ReloadTextureIfLoaded(const char* path) {
-	std::string fixedPath = path;
-	Utils::FixStringSlashes(fixedPath);
-
-	TextureAsset* texture = nullptr;
-	if (TryGetTexture(fixedPath, texture)) {
-		LoadTextureFromFile(true, fixedPath, *texture);
-	}
-}
-
-TextureAsset& Grindstone::TextureImporter::GetDefaultTexture() {
-	return errorTexture;
-}
-
-bool TextureImporter::TryGetTexture(std::string& path, TextureAsset*& texture) {
-	auto& textureInMap = textures.find(path);
-	if (textureInMap != textures.end()) {
-		texture = &textureInMap->second;
-		return true;
-	}
-
-	return false;
-}
-
-void TextureImporter::CreateFromDds(bool isReloading, TextureAsset& textureAsset, const char* fileName, const char* data, size_t fileSize) {
-	if (strncmp(data, "DDS ", 4) != 0) {
+void* TextureImporter::ProcessLoadedFile(Uuid uuid, std::vector<char>& contents) {
+	if (strncmp(contents.data(), "DDS ", 4) != 0) {
 		throw std::runtime_error("Invalid DDS file: No magic 'DDS' keyword.");
 	}
 
 	DDSHeader header;
-	std::memcpy(&header, data + 4, sizeof(header));
+	std::memcpy(&header, contents.data() + 4, sizeof(header));
 
 	bool hasAlpha = header.ddspf.dwFlags & DDPF_ALPHAPIXELS;
 
@@ -83,9 +33,11 @@ void TextureImporter::CreateFromDds(bool isReloading, TextureAsset& textureAsset
 		throw std::runtime_error("Invalid FourCC in texture");
 	}
 
-	const char* imgPtr = data + 4 + sizeof(DDSHeader);
+	std::string debugName = uuid.ToString();
+
+	const char* imgPtr = contents.data() + 4 + sizeof(DDSHeader);
 	Grindstone::GraphicsAPI::Texture::CreateInfo createInfo;
-	createInfo.debugName = fileName;
+	createInfo.debugName = debugName.c_str();
 	createInfo.data = imgPtr;
 	createInfo.mipmaps = (uint16_t)header.dwMipMapCount;
 	createInfo.format = format;
@@ -93,33 +45,19 @@ void TextureImporter::CreateFromDds(bool isReloading, TextureAsset& textureAsset
 	createInfo.height = header.dwHeight;
 	createInfo.isCubemap = false;
 
-	if (isReloading) {
-		textureAsset.texture->RecreateTexture(createInfo);
-	}
-	else {
-		GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-		Grindstone::GraphicsAPI::Texture* texture = graphicsCore->CreateTexture(createInfo);
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	Grindstone::GraphicsAPI::Texture* texture = graphicsCore->CreateTexture(createInfo);
 
-		textureAsset.texture = texture;
-	}
+	auto asset = textures.emplace(uuid, texture);
+	return &asset.second;
 }
 
-void TextureImporter::LoadTextureFromFile(bool isReloading, std::string& path, TextureAsset& textureAsset) {
-	std::filesystem::path filePath = path;
-	std::string& fileName = filePath.filename().string();
-
-	if (!std::filesystem::exists(filePath)) {
-		throw std::runtime_error("Failed to load texture!");
+bool TextureImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
+	auto& textureInMap = textures.find(uuid);
+	if (textureInMap != textures.end()) {
+		output = &textureInMap->second;
+		return true;
 	}
 
-	std::vector<char> file = Utils::LoadFile(path.c_str());
-	CreateFromDds(isReloading, textureAsset, fileName.c_str(), file.data(), file.size());
+	return false;
 }
-
-TextureAsset& TextureImporter::CreateNewTextureFromFile(std::string& path) {
-	TextureAsset& textureAsset = textures[path];
-	LoadTextureFromFile(false, path, textureAsset);
-
-	return textureAsset;
-}
-#endif

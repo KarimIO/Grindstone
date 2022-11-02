@@ -9,7 +9,10 @@
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
-void ShaderImporter::Load(Uuid uuid) {
+void* ShaderImporter::ProcessLoadedFile(Uuid uuid, std::vector<char>& contents) {
+}
+
+bool ShaderImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
 }
 
 #if 0

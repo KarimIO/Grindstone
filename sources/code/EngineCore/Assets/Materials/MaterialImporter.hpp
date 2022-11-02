@@ -11,7 +11,10 @@ namespace Grindstone {
 	class BaseAssetRenderer;
 
 	class MaterialImporter : public AssetImporter {
-		public:
-			virtual void Load(Uuid uuid) override;
+	public:
+		virtual void* ProcessLoadedFile(Uuid uuid, std::vector<char>& contents) override;
+		virtual bool TryGetIfLoaded(Uuid uuid, void*& output) override;
+	private:
+		std::map<Uuid, MaterialAsset> materials;
 	};
 }

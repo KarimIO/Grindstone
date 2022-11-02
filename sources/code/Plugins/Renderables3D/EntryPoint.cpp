@@ -12,10 +12,11 @@ using namespace Grindstone;
 
 extern "C" {
 	RENDERABLES_3D_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
-		pluginInterface->RegisterComponent<Grindstone::MeshComponent>();
-		pluginInterface->RegisterComponent<Grindstone::MeshRendererComponent>();
+		pluginInterface->RegisterComponent<MeshComponent>();
+		pluginInterface->RegisterComponent<MeshRendererComponent>();
 		pluginInterface->RegisterAssetType<Mesh3dAsset, Mesh3dImporter>();
 		pluginInterface->RegisterAssetType<RigAsset, RigImporter>();
+		pluginInterface->RegisterAssetRenderer(new Mesh3dRenderer());
 	}
 
 	RENDERABLES_3D_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {

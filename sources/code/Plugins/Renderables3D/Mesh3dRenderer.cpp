@@ -78,7 +78,7 @@ void Mesh3dRenderer::RenderSubmesh(ECS::Entity rendererEntity, Mesh3d::Submesh& 
 	core->BindVertexArrayObject(mesh3d.vertexArrayObject);
 	auto& registry = rendererEntity.GetScene()->GetEntityRegistry();
 	entt::entity entity = rendererEntity.GetHandle();
-	auto& transformComponent = registry.Get<TransformComponent>(entity);
+	auto& transformComponent = registry.get<TransformComponent>(entity);
 	glm::mat4 modelMatrix = 
 		glm::translate(transformComponent.position) *
 		glm::toMat4(transformComponent.rotation) *

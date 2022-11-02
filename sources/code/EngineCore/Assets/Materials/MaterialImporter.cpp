@@ -5,80 +5,14 @@
 #include "EngineCore/AssetRenderer/BaseAssetRenderer.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "EngineCore/EngineCore.hpp"
+#include "EngineCore/Assets/AssetManager.hpp"
 #include "Common/Graphics/Core.hpp"
 #include "Common/Graphics/Texture.hpp"
 using namespace Grindstone;
 
-void MaterialImporter::Load(Uuid uuid) {
-}
-
-#if 0
-Material& MaterialImporter::LoadMaterial(BaseAssetRenderer* assetRenderer, const char* path) {
-	try {
-		Material* material = nullptr;
-		if (!TryGetMaterial(path, material)) {
-			material = &CreateMaterialFromFile(assetRenderer, path);
-		}
-
-		return *material;
-	}
-	catch (std::runtime_error& e) {
-		EngineCore::GetInstance().Print(LogSeverity::Error, e.what());
-		return *assetRenderer->GetErrorMaterial();
-	}
-}
-
-void MaterialImporter::ReloadMaterialIfLoaded(const char* path) {}
-
-void MaterialImporter::RemoveRenderableFromMaterial(std::string uuid, ECS::Entity entity, void* renderable) {
-	auto materialInMap = materials.find(uuid);
-	if (materialInMap != materials.end()) {
-		auto material = &materialInMap->second;
-
-		size_t size = material->renderables.size();
-		size_t numItemsToDelete = 0;
-		for (size_t i = 0; i < size - numItemsToDelete; ++i) {
-			auto& renderablePair = material->renderables[i];
-			if (
-				renderablePair.first == entity &&
-				renderablePair.second == renderable
-			) {
-				++numItemsToDelete;
-				material->renderables[i] = material->renderables[size - numItemsToDelete];
-			}
-		}
-
-		if (numItemsToDelete > 0) {
-			material->renderables.erase(material->renderables.end() - numItemsToDelete);
-		}
-
-		if (material->renderables.size() == 0) {
-			ShaderImporter* shaderImporter = EngineCore::GetInstance().shaderImporter;
-			shaderImporter->RemoveMaterialFromShader(material->shader, material);
-
-			materials.erase(materialInMap);
-		}
-	}
-}
-
-bool MaterialImporter::TryGetMaterial(const char* path, Material*& material) {
-	auto materialInMap = materials.find(path);
-	if (materialInMap != materials.end()) {
-		material = &materialInMap->second;
-		return true;
-	}
-
-	return false;
-}
-
-void MaterialImporter::CreateMaterialFromData(
-	std::filesystem::path relativePath,
-	Material& material,
-	BaseAssetRenderer* assetRenderer,
-	const char* data
-) {
+void* MaterialImporter::ProcessLoadedFile(Uuid uuid, std::vector<char>& contents) {
 	rapidjson::Document document;
-	document.Parse(data);
+	document.Parse(contents.data());
 
 	if (!document.HasMember("name")) {
 		throw std::runtime_error("No name found in material.");
@@ -90,8 +24,8 @@ void MaterialImporter::CreateMaterialFromData(
 	}
 
 	std::string shaderPath = document["shader"].GetString();
-	ShaderImporter* shaderImporter = EngineCore::GetInstance().shaderImporter;
-	Shader* shader = &shaderImporter->LoadShader(assetRenderer, shaderPath.c_str());
+	auto assetManager = EngineCore::GetInstance().assetManager;
+	assetManager.
 	shader->materials.push_back(&material);
 
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
@@ -177,6 +111,83 @@ void MaterialImporter::CreateMaterialFromData(
 	material.uniformBufferBinding = uniformBufferBinding;
 	material.uniformBufferObject = uniformBufferObject;
 	material.buffer = bufferSpace;
+}
+
+bool MaterialImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
+	auto materialInMap = materials.find(uuid);
+	if (materialInMap != materials.end()) {
+		output = &materialInMap->second;
+		return true;
+	}
+
+	return false;
+}
+
+#if 0
+Material& MaterialImporter::LoadMaterial(BaseAssetRenderer* assetRenderer, const char* path) {
+	try {
+		Material* material = nullptr;
+		if (!TryGetMaterial(path, material)) {
+			material = &CreateMaterialFromFile(assetRenderer, path);
+		}
+
+		return *material;
+	}
+	catch (std::runtime_error& e) {
+		EngineCore::GetInstance().Print(LogSeverity::Error, e.what());
+		return *assetRenderer->GetErrorMaterial();
+	}
+}
+
+void MaterialImporter::ReloadMaterialIfLoaded(const char* path) {}
+
+void MaterialImporter::RemoveRenderableFromMaterial(std::string uuid, ECS::Entity entity, void* renderable) {
+	auto materialInMap = materials.find(uuid);
+	if (materialInMap != materials.end()) {
+		auto material = &materialInMap->second;
+
+		size_t size = material->renderables.size();
+		size_t numItemsToDelete = 0;
+		for (size_t i = 0; i < size - numItemsToDelete; ++i) {
+			auto& renderablePair = material->renderables[i];
+			if (
+				renderablePair.first == entity &&
+				renderablePair.second == renderable
+			) {
+				++numItemsToDelete;
+				material->renderables[i] = material->renderables[size - numItemsToDelete];
+			}
+		}
+
+		if (numItemsToDelete > 0) {
+			material->renderables.erase(material->renderables.end() - numItemsToDelete);
+		}
+
+		if (material->renderables.size() == 0) {
+			ShaderImporter* shaderImporter = EngineCore::GetInstance().shaderImporter;
+			shaderImporter->RemoveMaterialFromShader(material->shader, material);
+
+			materials.erase(materialInMap);
+		}
+	}
+}
+
+bool MaterialImporter::TryGetMaterial(const char* path, Material*& material) {
+	auto materialInMap = materials.find(path);
+	if (materialInMap != materials.end()) {
+		material = &materialInMap->second;
+		return true;
+	}
+
+	return false;
+}
+
+void MaterialImporter::CreateMaterialFromData(
+	std::filesystem::path relativePath,
+	Material& material,
+	BaseAssetRenderer* assetRenderer,
+	const char* data
+) {
 }
 
 Material& MaterialImporter::CreateMaterialFromFile(BaseAssetRenderer* assetRenderer, const char* path) {

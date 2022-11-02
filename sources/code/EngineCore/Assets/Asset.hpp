@@ -22,6 +22,12 @@ namespace Grindstone {
 		}
 	};
 
+	template<typename T>
+	struct AssetReference {
+		Uuid uuid;
+		T* asset = nullptr;
+	};
+
 	#define DEFINE_ASSET_TYPE static AssetType assetType; /* Assigned from AssetImporter.hpp */ \
 		static AssetType GetStaticAssetType() { return assetType; } \
 		virtual AssetType GetAssetType() const override { return GetStaticType(); }
