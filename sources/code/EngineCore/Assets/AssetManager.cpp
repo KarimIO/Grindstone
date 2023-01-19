@@ -27,11 +27,9 @@ AssetManager::AssetManager() {
 
 void* AssetManager::GetAsset(AssetType assetType, Uuid uuid) {
 	if (assetType < 1 || assetType >= assetTypeImporters.size()) {
-		return;
+		return nullptr;
 	}
 
-	// TODO: Load file using the appropriate loader (file, asset pack, etc)
-	// and pass the binary data to the importer.
 	AssetImporter* assetImporter = assetTypeImporters[assetType];
 
 	void* loadedAsset = nullptr;
@@ -39,9 +37,17 @@ void* AssetManager::GetAsset(AssetType assetType, Uuid uuid) {
 		return loadedAsset;
 	}
 	else {
-		std::vector<char> fileContents;
-		assetLoader->Load(uuid, fileContents);
-		return assetTypeImporters[assetType]->Load(uuid);
+		// TODO: Load file using the appropriate loader (file, asset pack, etc)
+		// and pass the binary data to the importer.
+		char* fileData = nullptr;
+		size_t fileSize = 0;
+		assetLoader->Load(uuid, fileData, fileSize);
+
+		if (fileData == nullptr) {
+			return nullptr;
+		}
+
+		return assetTypeImporters[assetType]->ProcessLoadedFile(uuid, fileData, fileSize);
 	}
 }
 

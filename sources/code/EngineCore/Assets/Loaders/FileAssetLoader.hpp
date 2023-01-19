@@ -6,7 +6,7 @@ namespace Grindstone {
 	namespace Assets {
 		class FileAssetLoader : public AssetLoader {
 		public:
-			virtual void Load(Uuid uuid, std::vector<char>& outContents) override;
+			virtual void Load(Uuid uuid, char*& outContents, size_t& fileSize) override;
 		};
 	}
 }

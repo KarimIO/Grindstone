@@ -6,13 +6,14 @@
 #include "TextureImporter.hpp"
 using namespace Grindstone;
 
-void* TextureImporter::ProcessLoadedFile(Uuid uuid, std::vector<char>& contents) {
-	if (strncmp(contents.data(), "DDS ", 4) != 0) {
-		throw std::runtime_error("Invalid DDS file: No magic 'DDS' keyword.");
+void* TextureImporter::ProcessLoadedFile(Uuid uuid, char* fileContents, size_t fileSize) {
+	if (strncmp(fileContents, "DDS ", 4) != 0) {
+		// throw std::runtime_error("Invalid DDS file: No magic 'DDS' keyword.");
+		return nullptr;
 	}
 
 	DDSHeader header;
-	std::memcpy(&header, contents.data() + 4, sizeof(header));
+	std::memcpy(&header, fileContents + 4, sizeof(header));
 
 	bool hasAlpha = header.ddspf.dwFlags & DDPF_ALPHAPIXELS;
 
@@ -35,7 +36,7 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, std::vector<char>& contents)
 
 	std::string debugName = uuid.ToString();
 
-	const char* imgPtr = contents.data() + 4 + sizeof(DDSHeader);
+	const char* imgPtr = fileContents + 4 + sizeof(DDSHeader);
 	Grindstone::GraphicsAPI::Texture::CreateInfo createInfo;
 	createInfo.debugName = debugName.c_str();
 	createInfo.data = imgPtr;
@@ -48,8 +49,8 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, std::vector<char>& contents)
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	Grindstone::GraphicsAPI::Texture* texture = graphicsCore->CreateTexture(createInfo);
 
-	auto asset = textures.emplace(uuid, texture);
-	return &asset.second;
+	auto asset = textures.emplace(uuid, TextureAsset(uuid, debugName, texture));
+	return &asset.first->second;
 }
 
 bool TextureImporter::TryGetIfLoaded(Uuid uuid, void*& output) {

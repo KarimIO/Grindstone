@@ -20,10 +20,8 @@
 
 #include "Rendering/DeferredRenderer.hpp"
 
-#include "EngineCore/Assets/Materials/MaterialImporter.hpp"
-#include "EngineCore/Assets/Textures/TextureImporter.hpp"
-#include "EngineCore/Assets/Shaders/ShaderImporter.hpp"
 #include "EngineCore/AssetRenderer/AssetRendererManager.hpp"
+#include "Assets/AssetManager.hpp"
 
 using namespace Grindstone;
 
@@ -67,7 +65,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 	inputManager->SetMainWindow(win);
 
-	assetManager = new AssetManager();
+	assetManager = new Assets::AssetManager();
 	assetRendererManager = new AssetRendererManager();
 	assetRendererManager->AddQueue("Opaque");
 	assetRendererManager->AddQueue("Transparent");

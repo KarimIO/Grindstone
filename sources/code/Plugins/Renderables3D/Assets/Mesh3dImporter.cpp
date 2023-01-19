@@ -39,7 +39,11 @@ Mesh3dImporter::Mesh3dImporter() {
 	PrepareLayouts();
 }
 
-void Mesh3dImporter::Load(Uuid uuid) {
+void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid, std::vector<char>& contents) {
+}
+
+bool Grindstone::Mesh3dImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
+	return false;
 }
 
 void Mesh3dImporter::PrepareLayouts() {
@@ -97,7 +101,7 @@ void Mesh3dImporter::PrepareLayouts() {
 Mesh3dAsset& Mesh3dImporter::LoadMesh3d(Uuid uuid) {
 	Mesh3dAsset* mesh = nullptr;
 	if (TryGetMesh3d(uuid, mesh)) {
-		mesh->useCount++;
+		mesh->referenceCount++;
 		return *mesh;
 	}
 
@@ -106,22 +110,24 @@ Mesh3dAsset& Mesh3dImporter::LoadMesh3d(Uuid uuid) {
 
 void Mesh3dImporter::DecrementMeshCount(ECS::Entity entity, Uuid uuid) {
 	auto meshInMap = meshes.find(uuid);
-	if (meshInMap != meshes.end()) {
-		auto mesh = &meshInMap->second;
-		mesh->useCount -= 1;
+	if (meshInMap == meshes.end()) {
+		return;
+	}
 
-		auto materialManager = EngineCore::GetInstance().materialImporter;
-		for (auto& submesh : mesh->submeshes) {
-			for (auto& material : submesh.materials) {
-				materialManager->RemoveRenderableFromMaterial(material, entity, &submesh);
-			}
-		}
+	auto mesh = &meshInMap->second;
+	mesh->referenceCount -= 1;
 
-		if (mesh->useCount == 0) {
-			auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-			graphicsCore->DeleteVertexArrayObject(mesh->vertexArrayObject);
-			meshes.erase(meshInMap);
+	auto materialManager = EngineCore::GetInstance().materialImporter;
+	for (auto& submesh : mesh->submeshes) {
+		for (auto& material : submesh.materials) {
+			materialManager->RemoveRenderableFromMaterial(material, entity, &submesh);
 		}
+	}
+
+	if (mesh->referenceCount == 0) {
+		auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+		graphicsCore->DeleteVertexArrayObject(mesh->vertexArrayObject);
+		meshes.erase(meshInMap);
 	}
 }
 

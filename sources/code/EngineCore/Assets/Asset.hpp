@@ -7,8 +7,11 @@ namespace Grindstone {
 	using AssetType = uint16_t;
 
 	struct Asset {
+		Asset(Uuid uuid, std::string_view name) : uuid(uuid), name(name) {}
+
 		Uuid uuid;
 		std::string name;
+		size_t referenceCount = 0;
 
 		static AssetType GetStaticType() { return 0; }
 		virtual AssetType GetAssetType() const { return GetStaticType(); }
@@ -29,6 +32,6 @@ namespace Grindstone {
 	};
 
 	#define DEFINE_ASSET_TYPE static AssetType assetType; /* Assigned from AssetImporter.hpp */ \
-		static AssetType GetStaticAssetType() { return assetType; } \
+		static AssetType GetStaticType() { return assetType; } \
 		virtual AssetType GetAssetType() const override { return GetStaticType(); }
 }

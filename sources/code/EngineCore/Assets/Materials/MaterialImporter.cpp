@@ -10,7 +10,9 @@
 #include "Common/Graphics/Texture.hpp"
 using namespace Grindstone;
 
-void* MaterialImporter::ProcessLoadedFile(Uuid uuid, std::vector<char>& contents) {
+void* MaterialImporter::ProcessLoadedFile(Uuid uuid, char* fileContents, size_t fileSize) {
+	return nullptr;
+#if 0
 	rapidjson::Document document;
 	document.Parse(contents.data());
 
@@ -111,9 +113,12 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid, std::vector<char>& contents
 	material.uniformBufferBinding = uniformBufferBinding;
 	material.uniformBufferObject = uniformBufferObject;
 	material.buffer = bufferSpace;
+#endif
 }
 
 bool MaterialImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
+	return false;
+#if 0
 	auto materialInMap = materials.find(uuid);
 	if (materialInMap != materials.end()) {
 		output = &materialInMap->second;
@@ -121,6 +126,7 @@ bool MaterialImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
 	}
 
 	return false;
+#endif
 }
 
 #if 0

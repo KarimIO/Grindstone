@@ -2,9 +2,11 @@
 
 #include "Common/Graphics/Texture.hpp"
 #include "EngineCore/Assets/Asset.hpp"
+using namespace Grindstone::GraphicsAPI;
 
 namespace Grindstone {
 	struct TextureAsset : public Asset {
-		Grindstone::GraphicsAPI::Texture* texture;
+		TextureAsset(Uuid uuid, std::string_view name, Texture* texture) : Asset(uuid, name), texture(texture) {}
+		Texture* texture = nullptr;
 	};
 }

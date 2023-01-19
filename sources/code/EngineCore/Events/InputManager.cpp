@@ -20,8 +20,8 @@ extern "C" {
 	}
 
 	ENGINE_CORE_API void InputManagerSetMousePos(Grindstone::Math::Float2 mousePos) {
-		float mpx = (int)mousePos[0];
-		float mpy = (int)mousePos[1];
+		int mpx = (int)mousePos[0];
+		int mpy = (int)mousePos[1];
 		Grindstone::EngineCore::GetInstance().GetInputManager()->SetMousePosition((int)mpx, (int)mpy);
 	}
 

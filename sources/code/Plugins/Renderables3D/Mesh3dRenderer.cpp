@@ -31,11 +31,6 @@ Grindstone::Mesh3dRenderer::Mesh3dRenderer() {
 	mesh3dBufferObject = core->CreateUniformBuffer(mesh3dBufferObjectCi);
 }
 
-void Mesh3dRenderer::AddErrorMaterial() {
-	auto materialImporter = EngineCore::GetInstance().materialImporter;
-	errorMaterial = &materialImporter->LoadMaterial(this, "792d934c-78d5-4445-b0e8-fc2828eed098");
-}
-
 void Mesh3dRenderer::RenderQueue(RenderQueueContainer& renderQueue) {
 	for (Shader* shader : renderQueue.shaders) {
 		RenderShader(*shader);
@@ -64,13 +59,13 @@ void Mesh3dRenderer::RenderMaterial(Material& material) {
 
 	for (auto& renderable : material.renderables) {
 		ECS::Entity entity = renderable.first;
-		Mesh3d::Submesh& submesh = *(Mesh3d::Submesh*)renderable.second;
+		Mesh3d::Submesh& submesh = *(Mesh3dAsset::Submesh*)renderable.second;
 		RenderSubmesh(entity, submesh);
 	}
 }
 
 // TODO: Bind vao once for multiple MeshRenderers
-void Mesh3dRenderer::RenderSubmesh(ECS::Entity rendererEntity, Mesh3d::Submesh& submesh3d) {
+void Mesh3dRenderer::RenderSubmesh(ECS::Entity rendererEntity, Mesh3dAsset::Submesh& submesh3d) {
 	Mesh3d& mesh3d = *submesh3d.mesh;
 
 	GraphicsAPI::Core* core = EngineCore::GetInstance().GetGraphicsCore();

@@ -5,9 +5,9 @@
 #include <map>
 
 #include "EngineCore/AssetRenderer/BaseAssetRenderer.hpp"
-#include "../Shaders/Shader.hpp"
-#include "../Materials/Material.hpp"
-#include "Mesh3d.hpp"
+// #include "../Shaders/Shader.hpp"
+// #include "../Materials/Material.hpp"
+#include "Assets/Mesh3dAsset.hpp"
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -18,10 +18,9 @@ namespace Grindstone {
 	class Mesh3dRenderer : public BaseAssetRenderer {
 		public:
 			Mesh3dRenderer();
-			void AddErrorMaterial();
 			void RenderShader(Shader& shader);
 			void RenderMaterial(Material& material);
-			void RenderSubmesh(ECS::Entity entity, Mesh3d::Submesh& submesh3d);
+			void RenderSubmesh(ECS::Entity entity, Mesh3dAsset::Submesh& submesh3d);
 		private:
 			virtual void RenderQueue(RenderQueueContainer& renderQueue) override;
 

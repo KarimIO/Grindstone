@@ -34,12 +34,15 @@ namespace Grindstone {
 		class Dispatcher;
 	}
 
+	namespace Assets {
+		class AssetManager;
+	}
+
 	class Window;
 	class DisplayManager;
 	class WindowManager;
 
 	class AssetRendererManager;
-	class AssetManager;
 	class BaseRenderer;
 
 	class EngineCore {
@@ -90,7 +93,7 @@ namespace Grindstone {
 	public:
 		DisplayManager* displayManager = nullptr;
 		WindowManager* windowManager = nullptr;
-		AssetManager* assetManager = nullptr;
+		Assets::AssetManager* assetManager = nullptr;
 		AssetRendererManager* assetRendererManager = nullptr;
 	private:
 		double currentTime = 0.0;

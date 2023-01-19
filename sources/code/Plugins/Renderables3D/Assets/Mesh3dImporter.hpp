@@ -12,12 +12,12 @@ namespace Grindstone {
 	class Mesh3dImporter : public AssetImporter {
 		public:
 			Mesh3dImporter();
-			virtual void Load(Uuid uuid) override;
+			virtual void* ProcessLoadedFile(Uuid uuid, std::vector<char>& contents) override;
+			virtual bool TryGetIfLoaded(Uuid uuid, void*& output) override;
 			void PrepareLayouts();
 			virtual Mesh3dAsset& LoadMesh3d(Uuid uuid);
 			virtual void DecrementMeshCount(ECS::Entity entity, Uuid uuid);
 		private:
-			bool TryGetMesh3d(Uuid uuid, Mesh3dAsset*& mesh3d);
 			void LoadMeshImportSubmeshes(
 				Mesh3dAsset& mesh,
 				Formats::Model::V1::Header& header,

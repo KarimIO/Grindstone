@@ -4,6 +4,7 @@
 #include "Common/ResourcePipeline/Uuid.hpp"
 #include "EngineCore/Assets/Asset.hpp"
 #include "EngineCore/ECS/Entity.hpp"
+#include "EngineCore/Assets/Shaders/ShaderAsset.hpp"
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -12,14 +13,13 @@ namespace Grindstone {
 		class UniformBuffer;
 	}
 
-	struct Shader;
 	struct MaterialAsset : public Asset {
-		std::string shaderPath;
-		Shader* shader;
-		GraphicsAPI::TextureBinding* textureBinding;
-		GraphicsAPI::UniformBufferBinding* uniformBufferBinding;
-		GraphicsAPI::UniformBuffer* uniformBufferObject;
-		char* buffer;
+		MaterialAsset(Uuid uuid, std::string_view name, ShaderAsset& shader) : Asset(uuid, name), shaderAsset(shader) {}
+		ShaderAsset& shaderAsset;
+		GraphicsAPI::TextureBinding* textureBinding = nullptr;
+		GraphicsAPI::UniformBufferBinding* uniformBufferBinding = nullptr;
+		GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
+		char* buffer = nullptr;
 		std::vector<std::pair<ECS::Entity, void*>> renderables;
 
 		DEFINE_ASSET_TYPE
