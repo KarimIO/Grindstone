@@ -27,8 +27,8 @@ using namespace Grindstone;
 
 bool EngineCore::Initialize(CreateInfo& createInfo) {
 	projectPath = createInfo.projectPath;
-	binaryPath = std::string(createInfo.projectPath) + "/bin/";
-	assetsPath = std::string(createInfo.projectPath) + "/compiledAssets/";
+	binaryPath = projectPath / "bin/";
+	assetsPath = projectPath / "compiledAssets/";
 	eventDispatcher = new Events::Dispatcher();
 
 	firstFrameTime = std::chrono::steady_clock::now();

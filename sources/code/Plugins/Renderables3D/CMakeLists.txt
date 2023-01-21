@@ -1,4 +1,4 @@
-set(RENDERABLES_3D_SOURCES Mesh3dRenderer.cpp EntryPoint.cpp)
+set(RENDERABLES_3D_SOURCES Mesh3dRenderer.cpp EntryPoint.cpp ../../EngineCore/ECS/Entity.cpp ../../Common/ResourcePipeline/Uuid.hpp)
 set(RENDERABLES_3D_HEADERS Mesh3dRenderer.hpp)
 
 file(GLOB_RECURSE RENDERABLES_3D_ASSETS_SOURCES "Assets/*.cpp")

@@ -43,7 +43,8 @@ Scene* SceneManager::LoadScene(const char* path) {
 Scene* SceneManager::LoadSceneAdditively(const char* path) {
 	Scene* newScene = new Scene();
 	scenes[path] = newScene;
-	SceneLoaderJson sceneLoader(newScene, path);
+	std::string filepath = Grindstone::EngineCore::GetInstance().GetAssetPath(path).string();
+	SceneLoaderJson sceneLoader(newScene, filepath.c_str());
 	ProcessSceneAfterLoading(newScene);
 
 	return newScene;

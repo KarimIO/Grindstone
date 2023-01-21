@@ -18,6 +18,8 @@ SceneLoaderJson::SceneLoaderJson(Scene* scene, const char* path) : scene(scene),
 
 bool SceneLoaderJson::Load(const char* path) {
 	if (!std::filesystem::exists(path)) {
+		std::string printMsg = std::string("Error loading scene: ") + path;
+		EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, printMsg.c_str());
 		return false;
 	}
 
@@ -26,6 +28,9 @@ bool SceneLoaderJson::Load(const char* path) {
 	strcpy_s(scene->path, strLen, path);
 	std::string fileContents = Utils::LoadFileText(path);
 	document.Parse(fileContents.c_str());
+
+	std::string printMsg = std::string("Loading scene: ") + path;
+	EngineCore::GetInstance().Print(Grindstone::LogSeverity::Info, printMsg.c_str());
 
 	ProcessMeta();
 	ProcessEntities();
@@ -141,6 +146,9 @@ void SceneLoaderJson::ProcessComponentParameter(
 	char* memberPtr = (char*)componentPtr + offset;
 
 	switch (member->type->type) {
+		default:
+			EngineCore::GetInstance().Print(LogSeverity::Warning, "Unhandled reflection type in SceneLoaderJson!");
+			break;
 		case ReflectionTypeData::Struct: {
 			// TODO: Implement this
 			EngineCore::GetInstance().Print(LogSeverity::Warning, "Unhandled Struct in SceneLoaderJson!");

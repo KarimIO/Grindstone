@@ -8,7 +8,7 @@
 using namespace Grindstone;
 
 Plugins::Interface::Interface(Manager* manager) 
-	: manager(manager) {
+	: manager(manager), engineCore(&EngineCore::GetInstance()) {
 }
 
 void Plugins::Interface::Print(LogSeverity logSeverity, const char* message) {

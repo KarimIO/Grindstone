@@ -39,16 +39,17 @@ void* AssetManager::GetAsset(AssetType assetType, Uuid uuid) {
 	else {
 		// TODO: Load file using the appropriate loader (file, asset pack, etc)
 		// and pass the binary data to the importer.
-		char* fileData = nullptr;
-		size_t fileSize = 0;
-		assetLoader->Load(uuid, fileData, fileSize);
-
-		if (fileData == nullptr) {
-			return nullptr;
-		}
-
-		return assetTypeImporters[assetType]->ProcessLoadedFile(uuid, fileData, fileSize);
+		return assetTypeImporters[assetType]->ProcessLoadedFile(uuid);
 	}
+}
+
+// Loads an actual file, not an asset. The file still needs to be imported and handled.
+// Make loading indirect to conceal how files are loading from asset importers
+// This allows multiple files to be imported per asset, and allows different types of loading depending on the
+// asset, such as shaders loading from a file if it's not compiled yet, or loading a compiled shader if it is loaded
+bool Grindstone::Assets::AssetManager::LoadFile(Uuid uuid, char*& fileData, size_t& fileSize) {
+	assetLoader->Load(uuid, fileData, fileSize);
+	return fileData != nullptr;
 }
 
 std::string& AssetManager::GetTypeName(AssetType assetType) {

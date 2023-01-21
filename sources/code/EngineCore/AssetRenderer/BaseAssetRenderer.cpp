@@ -1,7 +1,7 @@
 #include "BaseAssetRenderer.hpp"
 using namespace Grindstone;
 
-void BaseAssetRenderer::AddShaderToRenderQueue(Shader* shader) {
+void BaseAssetRenderer::AddShaderToRenderQueue(ShaderAsset* shader) {
 	// const char* renderQueue = shader->reflectionData.renderQueue.c_str();
 	// renderQueues[renderQueue].shaders.push_back(shader);
 }
@@ -17,8 +17,4 @@ void BaseAssetRenderer::RenderQueue(const char* name) {
 	}
 
 	RenderQueue(renderQueueInMap->second);
-}
-
-Material* BaseAssetRenderer::GetErrorMaterial() {
-	return errorMaterial;
 }

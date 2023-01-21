@@ -19,6 +19,7 @@ namespace Grindstone {
 	};
 
 	struct Mesh3dAsset : public Asset {
+		Mesh3dAsset(Uuid uuid, std::string_view name) : Asset(uuid, name) {}
 		struct Submesh {
 			uint32_t indexCount = 0;
 			uint32_t baseVertex = 0;
@@ -27,6 +28,7 @@ namespace Grindstone {
 			std::vector<std::string> materials;
 		};
 
+		GraphicsAPI::VertexArrayObject* vertexArrayObject = nullptr;
 		std::vector<Submesh> submeshes;
 
 		DEFINE_ASSET_TYPE

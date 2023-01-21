@@ -135,6 +135,7 @@ FUNCTION_CALL_LIST_IMPL(CallEditorUpdateInAllComponents, CallEditorUpdateInCompo
 FUNCTION_CALL_LIST_IMPL(CallDeleteInAllComponents, CallDeleteInComponent, onDelete)
 
 void CSharpManager::CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset) {
+	return;
 	MonoObject* exception = nullptr;
 	char* methodsPtr = (char*)&scriptComponent.monoClass->methods;
 	MonoMethod* targetMethod = *(MonoMethod**)(methodsPtr + fnOffset);

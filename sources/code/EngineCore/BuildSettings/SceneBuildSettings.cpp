@@ -8,7 +8,7 @@ SceneBuildSettings::SceneBuildSettings() {
 void SceneBuildSettings::Load() {
 	const char *path = "../BuildSettings/BuildSettings.json";
 
-	scenes.push_back("../assets/scenes/test.scene.json");
+	scenes.push_back("scenes/test.scene.json");
 }
 
 const char* SceneBuildSettings::GetDefaultScene() {

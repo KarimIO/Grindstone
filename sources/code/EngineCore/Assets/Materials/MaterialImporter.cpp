@@ -10,7 +10,7 @@
 #include "Common/Graphics/Texture.hpp"
 using namespace Grindstone;
 
-void* MaterialImporter::ProcessLoadedFile(Uuid uuid, char* fileContents, size_t fileSize) {
+void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	return nullptr;
 #if 0
 	rapidjson::Document document;

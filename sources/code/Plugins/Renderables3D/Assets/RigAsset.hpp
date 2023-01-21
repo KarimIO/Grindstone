@@ -1,3 +1,4 @@
+#if 0
 #pragma once
 
 #include <vector>
@@ -17,3 +18,4 @@ namespace Grindstone {
 		DEFINE_ASSET_TYPE
 	};
 }
+#endif

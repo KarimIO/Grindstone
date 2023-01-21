@@ -42,18 +42,10 @@ uint8_t GetShaderBitMaskFromArray(rapidjson::GenericArray<false, rapidjson::Valu
 }
 
 ShaderReflectionLoader::ShaderReflectionLoader(
-	const char* basePath,
+	const char* content,
 	ShaderReflectionData& data
 ) : outData(data) {
-	std::string path = basePath;
-
-	if (!std::filesystem::exists(path)) {
-		throw std::runtime_error(path + " not found!");
-	}
-
-	std::string content = Utils::LoadFileText(path.c_str());
-	document.Parse(content.c_str());
-
+	document.Parse(content);
 	Process();
 }
 

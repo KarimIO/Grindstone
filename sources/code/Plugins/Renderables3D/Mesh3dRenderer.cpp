@@ -5,6 +5,7 @@
 #include "EngineCore/EngineCore.hpp"
 #include "Common/Graphics/Core.hpp"
 #include "EngineCore/Assets/Materials/MaterialImporter.hpp"
+#include "EngineCore/Assets/Shaders/ShaderAsset.hpp"
 #include "EngineCore/Scenes/Scene.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 using namespace Grindstone;
@@ -15,62 +16,59 @@ struct Mesh3dUbo {
 };
 
 Grindstone::Mesh3dRenderer::Mesh3dRenderer() {
-	auto core = EngineCore::GetInstance().GetGraphicsCore();
-
 	UniformBufferBinding::CreateInfo mesh3dBufferBindingCi{};
 	mesh3dBufferBindingCi.binding = 1;
 	mesh3dBufferBindingCi.shaderLocation = "MeshUbo";
 	mesh3dBufferBindingCi.size = sizeof(Mesh3dUbo);
 	mesh3dBufferBindingCi.stages = ShaderStageBit::AllGraphics;
-	mesh3dBufferBinding = core->CreateUniformBufferBinding(mesh3dBufferBindingCi);
+	mesh3dBufferBinding = graphicsCore->CreateUniformBufferBinding(mesh3dBufferBindingCi);
 
 	UniformBuffer::CreateInfo mesh3dBufferObjectCi{};
 	mesh3dBufferObjectCi.binding = mesh3dBufferBinding;
 	mesh3dBufferObjectCi.isDynamic = true;
 	mesh3dBufferObjectCi.size = sizeof(Mesh3dUbo);
-	mesh3dBufferObject = core->CreateUniformBuffer(mesh3dBufferObjectCi);
+	mesh3dBufferObject = graphicsCore->CreateUniformBuffer(mesh3dBufferObjectCi);
 }
 
 void Mesh3dRenderer::RenderQueue(RenderQueueContainer& renderQueue) {
-	for (Shader* shader : renderQueue.shaders) {
+	for (ShaderAsset* shader : renderQueue.shaders) {
 		RenderShader(*shader);
 	}
 }
 
-void Mesh3dRenderer::RenderShader(Shader& shader) {
-	GraphicsAPI::Core* core = EngineCore::GetInstance().GetGraphicsCore();
-	core->BindPipeline(shader.pipeline);
+void Mesh3dRenderer::RenderShader(ShaderAsset& shader) {
+#if 0
+	graphicsCore->BindPipeline(shader.pipeline);
 	mesh3dBufferObject->Bind();
 	for (auto& material : shader.materials) {
 		RenderMaterial(*material);
 	}
+#endif
 }
 
-void Mesh3dRenderer::RenderMaterial(Material& material) {
+void Mesh3dRenderer::RenderMaterial(MaterialAsset& material) {
 	if (material.uniformBufferObject) {
 		material.uniformBufferObject->UpdateBuffer(material.buffer);
 		material.uniformBufferObject->Bind();
 	}
 
 	if (material.textureBinding) {
-		GraphicsAPI::Core* core = EngineCore::GetInstance().GetGraphicsCore();
-		core->BindTexture(material.textureBinding);
+		graphicsCore->BindTexture(material.textureBinding);
 	}
 
 	for (auto& renderable : material.renderables) {
 		ECS::Entity entity = renderable.first;
-		Mesh3d::Submesh& submesh = *(Mesh3dAsset::Submesh*)renderable.second;
+		Mesh3dAsset::Submesh& submesh = *(Mesh3dAsset::Submesh*)renderable.second;
 		RenderSubmesh(entity, submesh);
 	}
 }
 
 // TODO: Bind vao once for multiple MeshRenderers
 void Mesh3dRenderer::RenderSubmesh(ECS::Entity rendererEntity, Mesh3dAsset::Submesh& submesh3d) {
-	Mesh3d& mesh3d = *submesh3d.mesh;
+#if 0
+	Mesh3dAsset& mesh3d = *submesh3d.mesh;
 
-	GraphicsAPI::Core* core = EngineCore::GetInstance().GetGraphicsCore();
-
-	core->BindVertexArrayObject(mesh3d.vertexArrayObject);
+	graphicsCore->BindVertexArrayObject(mesh3d.vertexArrayObject);
 	auto& registry = rendererEntity.GetScene()->GetEntityRegistry();
 	entt::entity entity = rendererEntity.GetHandle();
 	auto& transformComponent = registry.get<TransformComponent>(entity);
@@ -80,11 +78,12 @@ void Mesh3dRenderer::RenderSubmesh(ECS::Entity rendererEntity, Mesh3dAsset::Subm
 		glm::scale(transformComponent.scale);
 	mesh3dBufferObject->UpdateBuffer(&modelMatrix);
 
-	core->DrawImmediateIndexed(
+	graphicsCore->DrawImmediateIndexed(
 		GraphicsAPI::GeometryType::Triangles,
 		false,
 		submesh3d.baseVertex,
 		submesh3d.baseIndex,
 		submesh3d.indexCount
 	);
+#endif
 }

@@ -9,7 +9,7 @@
 namespace Grindstone {
 	struct Material;
 	struct ShaderAsset : public Asset {
-		ShaderAsset(Uuid uuid, std::string_view name) : Asset(uuid, name) {}
+		ShaderAsset(Uuid uuid, std::string_view name, GraphicsAPI::Pipeline* pipeline) : Asset(uuid, name), pipeline(pipeline) {}
 		ShaderReflectionData reflectionData;
 		GraphicsAPI::Pipeline* pipeline = nullptr;
 		GraphicsAPI::TextureBindingLayout* textureBindingLayout = nullptr;

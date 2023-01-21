@@ -9,13 +9,14 @@
 #include "EngineCore/Assets/AssetImporter.hpp"
 
 namespace Grindstone {
+	class EngineCore;
+
 	class Mesh3dImporter : public AssetImporter {
 		public:
 			Mesh3dImporter();
-			virtual void* ProcessLoadedFile(Uuid uuid, std::vector<char>& contents) override;
+			virtual void* ProcessLoadedFile(Uuid uuid) override;
 			virtual bool TryGetIfLoaded(Uuid uuid, void*& output) override;
 			void PrepareLayouts();
-			virtual Mesh3dAsset& LoadMesh3d(Uuid uuid);
 			virtual void DecrementMeshCount(ECS::Entity entity, Uuid uuid);
 		private:
 			void LoadMeshImportSubmeshes(
@@ -35,8 +36,8 @@ namespace Grindstone {
 				char*& sourcePtr,
 				GraphicsAPI::IndexBuffer*& indexBuffer
 			);
-			Mesh3dAsset& CreateMesh3dFromFile(Uuid uuid);
-			void CreateMeshFromData(Mesh3dAsset& mesh, std::vector<char>& fileContent);
+		public:
+			static EngineCore* engineCore;
 		private:
 			std::map<Uuid, Mesh3dAsset> meshes;
 			struct VertexLayouts {

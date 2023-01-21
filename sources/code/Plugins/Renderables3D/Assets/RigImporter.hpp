@@ -1,3 +1,4 @@
+#if 0
 #pragma once
 
 #include "EngineCore/Assets/AssetImporter.hpp"
@@ -9,3 +10,4 @@ namespace Grindstone {
 		virtual void Load(Uuid uuid) override;
 	};
 }
+#endif

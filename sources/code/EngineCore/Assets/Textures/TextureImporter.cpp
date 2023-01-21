@@ -3,10 +3,18 @@
 #include "Common/Graphics/Core.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
+#include "EngineCore/Assets/AssetManager.hpp"
 #include "TextureImporter.hpp"
 using namespace Grindstone;
 
-void* TextureImporter::ProcessLoadedFile(Uuid uuid, char* fileContents, size_t fileSize) {
+void* TextureImporter::ProcessLoadedFile(Uuid uuid) {
+	char* fileContents;
+	size_t fileSize;
+
+	if (EngineCore::GetInstance().assetManager->LoadFile(uuid, fileContents, fileSize)) {
+		return nullptr;
+	}
+
 	if (strncmp(fileContents, "DDS ", 4) != 0) {
 		// throw std::runtime_error("Invalid DDS file: No magic 'DDS' keyword.");
 		return nullptr;

@@ -6,13 +6,57 @@
 #include "ShaderReflectionLoader.hpp"
 #include "EngineCore/Rendering/DeferredRenderer.hpp"
 #include "EngineCore/Logger.hpp"
+#include "EngineCore/Assets/AssetManager.hpp"
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
-void* ShaderImporter::ProcessLoadedFile(Uuid uuid, char* fileContents, size_t fileSize) {
+std::string GetShaderPath(const char* basePath, ShaderStage shaderStage, GraphicsAPI::Core* graphicsCore) {
+	const char* shaderStageExtension = "";
+
+	switch (shaderStage) {
+	case ShaderStage::Vertex:
+		shaderStageExtension = ".vert";
+		break;
+	case ShaderStage::Fragment:
+		shaderStageExtension = ".frag";
+		break;
+	case ShaderStage::TesselationEvaluation:
+		shaderStageExtension = ".eval";
+		break;
+	case ShaderStage::TesselationControl:
+		shaderStageExtension = ".ctrl";
+		break;
+	case ShaderStage::Geometry:
+		shaderStageExtension = ".geom";
+		break;
+	case ShaderStage::Compute:
+		shaderStageExtension = ".comp";
+		break;
+	default:
+		Logger::PrintError("Incorrect shader stage");
+		break;
+	}
+
+	return std::string(basePath) + shaderStageExtension + graphicsCore->GetDefaultShaderExtension();
+}
+
+void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
+	// TODO: Check shader cache before loading and compiling again
+	// The shader cache includes shaders precompiled for consoles, or compiled once per driver update on computers
+	// if shaderCache has shader with this uuid
+	//		return shader
+
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
+
+	char* reflectionDataContent = nullptr;
+	size_t reflectionDataSize;
+	if (assetManager->LoadFile(uuid, reflectionDataContent, reflectionDataSize)) {
+		return nullptr;
+	}
 
 	ShaderReflectionData reflectionData;
+	ShaderReflectionLoader loader(reflectionDataContent, reflectionData);
 	auto& shaderStagesBitMask = reflectionData.shaderStagesBitMask;
 	size_t numShaderStages = reflectionData.numShaderStages;
 	std::vector<ShaderStageCreateInfo> shaderStages;
@@ -25,18 +69,20 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid, char* fileContents, size_t fi
 	fileData.resize(numShaderStages);
 	size_t fileDataIterator = 0;
 
+	std::string basePath = EngineCore::GetInstance().GetAssetsPath().string();
+
 	for (
 		ShaderStage stage = ShaderStage::Vertex;
 		stage < ShaderStage::Compute;
 		stage = (ShaderStage)((uint8_t)stage + 1)
-	) {
+		) {
 		uint8_t stageBit = (1 << (uint8_t)stage);
 		if ((stageBit & shaderStagesBitMask) != stageBit) {
 			continue;
 		}
 
 		auto& stageCreateInfo = shaderStages[currentShaderStage++];
-		auto& path = fileNames[fileDataIterator] = GetShaderPath(basePath, stage, graphicsCore);
+		auto& path = fileNames[fileDataIterator] = GetShaderPath(basePath.c_str(), stage, graphicsCore);
 		stageCreateInfo.fileName = path.c_str();
 
 		if (!std::filesystem::exists(path)) {
@@ -105,6 +151,8 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid, char* fileContents, size_t fi
 	auto& shaderAsset = asset.first->second;
 	shaderAsset.textureBindingLayout = textureBindingLayout;
 
+	// TODO: Save compiled shader into ShaderCache
+
 	return &shaderAsset;
 }
 
@@ -116,36 +164,6 @@ bool ShaderImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
 	}
 
 	return false;
-}
-
-std::string GetShaderPath(const char* basePath, ShaderStage shaderStage, GraphicsAPI::Core* graphicsCore) {
-	const char* shaderStageExtension = "";
-
-	switch (shaderStage) {
-	case ShaderStage::Vertex:
-		shaderStageExtension = ".vert";
-		break;
-	case ShaderStage::Fragment:
-		shaderStageExtension = ".frag";
-		break;
-	case ShaderStage::TesselationEvaluation:
-		shaderStageExtension = ".eval";
-		break;
-	case ShaderStage::TesselationControl:
-		shaderStageExtension = ".ctrl";
-		break;
-	case ShaderStage::Geometry:
-		shaderStageExtension = ".geom";
-		break;
-	case ShaderStage::Compute:
-		shaderStageExtension = ".comp";
-		break;
-	default:
-		Logger::PrintError("Incorrect shader stage");
-		break;
-	}
-
-	return std::string(basePath) + shaderStageExtension + graphicsCore->GetDefaultShaderExtension();
 }
 
 #if 0

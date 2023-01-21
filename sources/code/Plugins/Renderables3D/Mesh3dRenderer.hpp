@@ -5,12 +5,13 @@
 #include <map>
 
 #include "EngineCore/AssetRenderer/BaseAssetRenderer.hpp"
-// #include "../Shaders/Shader.hpp"
-// #include "../Materials/Material.hpp"
+#include "EngineCore/Assets/Shaders/ShaderAsset.hpp"
+#include "EngineCore/Assets/Materials/MaterialAsset.hpp"
 #include "Assets/Mesh3dAsset.hpp"
 
 namespace Grindstone {
 	namespace GraphicsAPI {
+		class Core;
 		class UniformBufferBinding;
 		class UniformBuffer;
 	}
@@ -18,9 +19,11 @@ namespace Grindstone {
 	class Mesh3dRenderer : public BaseAssetRenderer {
 		public:
 			Mesh3dRenderer();
-			void RenderShader(Shader& shader);
-			void RenderMaterial(Material& material);
+			void RenderShader(ShaderAsset& shader);
+			void RenderMaterial(MaterialAsset& material);
 			void RenderSubmesh(ECS::Entity entity, Mesh3dAsset::Submesh& submesh3d);
+
+			static GraphicsAPI::Core* graphicsCore;
 		private:
 			virtual void RenderQueue(RenderQueueContainer& renderQueue) override;
 

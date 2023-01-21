@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../pch.hpp"
+#include "EngineCore/EngineCore.hpp"
+#include "EngineCore/Assets/AssetManager.hpp"
 #include "EngineCore/ECS/SystemFactory.hpp"
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "Common/Window/Window.hpp"
@@ -9,7 +11,6 @@
 #include <EngineCore/ECS/ComponentFunctions.hpp>
 
 namespace Grindstone {
-	class EngineCore;
 
 	namespace GraphicsAPI {
 		class Core;
@@ -46,7 +47,7 @@ namespace Grindstone {
 
 			template<typename AssetT, typename ImporterT>
 			void RegisterAssetType() {
-				EngineCore::GetInstance().assetManager->RegisterAssetType(AssetT::assetType, new ImporterT());
+				engineCore->assetManager->RegisterAssetType<AssetT, ImporterT>();
 			}
 
 			template<typename T>
@@ -56,6 +57,7 @@ namespace Grindstone {
 			ECS::ComponentRegistrar* componentRegistrar = nullptr;
 			ECS::SystemRegistrar* systemRegistrar = nullptr;
 		private:
+			EngineCore* engineCore = nullptr;
 			Manager* manager = nullptr;
 			GraphicsAPI::Core* graphicsCore = nullptr;
 			Grindstone::Window* (*windowFactoryFn)(Grindstone::Window::CreateInfo&) = nullptr;

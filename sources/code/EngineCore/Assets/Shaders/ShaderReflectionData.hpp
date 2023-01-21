@@ -58,8 +58,8 @@ namespace Grindstone {
 
 		std::string name;
 		std::string renderQueue;
-		uint8_t shaderStagesBitMask;
-		size_t numShaderStages;
+		uint8_t shaderStagesBitMask = 0;
+		size_t numShaderStages = 0;
 		ShaderReflectionData() = default;
 		ShaderReflectionData(
 			std::string name,
