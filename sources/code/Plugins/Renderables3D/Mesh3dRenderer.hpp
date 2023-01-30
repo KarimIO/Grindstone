@@ -18,15 +18,15 @@ namespace Grindstone {
 
 	class Mesh3dRenderer : public BaseAssetRenderer {
 		public:
-			Mesh3dRenderer();
+			Mesh3dRenderer(GraphicsAPI::Core* graphicsCore);
 			void RenderShader(ShaderAsset& shader);
 			void RenderMaterial(MaterialAsset& material);
 			void RenderSubmesh(ECS::Entity entity, Mesh3dAsset::Submesh& submesh3d);
 
-			static GraphicsAPI::Core* graphicsCore;
 		private:
 			virtual void RenderQueue(RenderQueueContainer& renderQueue) override;
 
+			GraphicsAPI::Core* graphicsCore;
 			GraphicsAPI::UniformBufferBinding* mesh3dBufferBinding = nullptr;
 			GraphicsAPI::UniformBuffer* mesh3dBufferObject = nullptr;
 	};

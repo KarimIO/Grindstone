@@ -13,8 +13,8 @@ namespace Grindstone {
 		public:
 			AssetManager();
 			virtual void* GetAsset(AssetType assetType, Uuid uuid);
-			bool LoadFile(Uuid uuid, char*& dataPtr, size_t& fileSize);
-			std::string& GetTypeName(AssetType assetType);
+			virtual bool LoadFile(Uuid uuid, char*& dataPtr, size_t& fileSize);
+			virtual std::string& GetTypeName(AssetType assetType);
 
 			template<typename T>
 			T GetAsset(Uuid uuid) {

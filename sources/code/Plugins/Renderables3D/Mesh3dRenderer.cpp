@@ -15,7 +15,9 @@ struct Mesh3dUbo {
 	glm::mat4 modelMatrix;
 };
 
-Grindstone::Mesh3dRenderer::Mesh3dRenderer() {
+Grindstone::Mesh3dRenderer::Mesh3dRenderer(GraphicsAPI::Core* graphicsCore) {
+	this->graphicsCore = graphicsCore;
+
 	UniformBufferBinding::CreateInfo mesh3dBufferBindingCi{};
 	mesh3dBufferBindingCi.binding = 1;
 	mesh3dBufferBindingCi.shaderLocation = "MeshUbo";
