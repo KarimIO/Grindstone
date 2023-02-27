@@ -27,16 +27,31 @@ namespace Grindstone {
 				struct PositionKeyframe {
 					float time;
 					Math::Float3 value;
+
+					PositionKeyframe(float time, Math::Float3 value) {
+						this->time = time;
+						this->value = value;
+					}
 				};
 
 				struct ScaleKeyframe {
 					float time;
 					Math::Float3 value;
+
+					ScaleKeyframe(float time, Math::Float3 value) {
+						this->time = time;
+						this->value = value;
+					}
 				};
 
 				struct RotationKeyframe {
 					float time;
 					Math::Quaternion value;
+
+					RotationKeyframe(float time, Math::Quaternion value) {
+						this->time = time;
+						this->value = value;
+					}
 				};
 
 				struct ChannelData {

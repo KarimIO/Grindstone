@@ -109,7 +109,7 @@ void Menubar::RenderConvertMenu() {
 
 void Menubar::OnNewFile() {
 	auto* sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
-	sceneManager->AddEmptyScene("Untitled Scene");
+	sceneManager->CreateEmptyScene("Untitled Scene");
 }
 
 void Menubar::OnSaveFile() {

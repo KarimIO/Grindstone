@@ -58,9 +58,11 @@ ImTextureID GetIdFromTexture(GraphicsAPI::Texture* texture) {
 }
 
 void PrepareIcon(Grindstone::TextureImporter* TextureImporter, const char* path, GraphicsAPI::Texture*& texture, ImTextureID& id) {
+	/*
 	auto& textureAsset = TextureImporter->LoadTexture(path);
 	texture = textureAsset.texture;
 	id = GetIdFromTexture(texture);
+	*/
 }
 
 #define PREPARE_ICON(type) PrepareIcon(textureImporter, "../engineassets/editor/assetIcons/" #type ".dds", iconTextures.type, iconIds.type)
@@ -68,7 +70,7 @@ void PrepareIcon(Grindstone::TextureImporter* TextureImporter, const char* path,
 AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore), rootDirectory(Editor::Manager::GetFileManager().GetRootDirectory()) {
 	pathToRename = "";
 
-	auto textureImporter = engineCore->textureImporter;
+	Grindstone::TextureImporter* textureImporter = nullptr; //engineCore->textureImporter;
 	PREPARE_ICON(folder);
 	PREPARE_ICON(file);
 	PREPARE_ICON(image);
@@ -230,6 +232,7 @@ void AssetBrowserPanel::RenderContextMenuFileTypeSpecificEntries(std::filesystem
 	}
 
 	// TODO: Get uuids from meta file so I can reload them
+	/*
 	if (firstDotExtension == "glsl") {
 		if (ImGui::MenuItem("Reload")) {
 			std::string pathWithoutExtension = pathStr.substr(0, firstDot);
@@ -246,6 +249,7 @@ void AssetBrowserPanel::RenderContextMenuFileTypeSpecificEntries(std::filesystem
 			engineCore.shaderImporter->ReloadTextureIfLoaded(pathStr.c_str());
 		}
 	}
+	*/
 }
 
 void AssetBrowserPanel::RenderAssetContextMenu(std::filesystem::directory_entry entry) {

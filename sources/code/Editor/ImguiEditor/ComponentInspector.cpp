@@ -5,12 +5,12 @@
 #include "ComponentInspector.hpp"
 #include "Editor/EditorManager.hpp"
 #include "EngineCore/EngineCore.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dImporter.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "EngineCore/Reflection/TypeDescriptor.hpp"
 #include "EngineCore/Assets/Asset.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3d.hpp"
+// #include "EngineCore/Assets/Mesh3d/Mesh3"
+// #include "EngineCore/Assets/Mesh3d/Mesh3d.hpp"
 #include "Common/Math.hpp"
 
 namespace Grindstone {
@@ -96,7 +96,7 @@ namespace Grindstone {
 						(bool*)offset
 					);
 					break;
-				case Reflection::TypeDescriptor::ReflectionTypeData::AssetReference: {
+				/*case Reflection::TypeDescriptor::ReflectionTypeData::AssetReference: {
 					MeshReference meshReference = *(MeshReference*)offset;
 					if (meshReference == nullptr) {
 						ImGui::Text("Invalid mesh");
@@ -117,7 +117,7 @@ namespace Grindstone {
 						}
 					}
 					break;
-				}
+				}*/
 				case Reflection::TypeDescriptor::ReflectionTypeData::String:
 					ImGui::InputText(
 						displayName,

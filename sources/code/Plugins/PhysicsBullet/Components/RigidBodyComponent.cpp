@@ -41,7 +41,7 @@ void Grindstone::Physics::SetupRigidBodyComponent(ECS::Entity& entity, void* com
 	}
 
 	RigidBodyComponent* rigidBodyComponent = (RigidBodyComponent*)componentPtr;
-	TransformComponent* transformComponent = &registry.Get<TransformComponent>(entityHandle);
+	TransformComponent* transformComponent = &registry.get<TransformComponent>(entityHandle);
 
 	SetupRigidBodyComponentWithCollider(rigidBodyComponent, transformComponent, colliderComponent);
 }

@@ -40,14 +40,14 @@ namespace Grindstone {
 
 			template<typename ComponentType>
 			ComponentType& GetComponent() {
-				return GetSceneEntityRegistry().Get<ComponentType>(entityId);
+				return GetSceneEntityRegistry().get<ComponentType>(entityId);
 			}
 
 			template<typename ComponentType>
 			bool TryGetComponent(ComponentType*& outComponent) {
 				auto& registry = GetSceneEntityRegistry();
 				if (registry.all_of<ComponentType>(entityId)) {
-					outComponent = &registry.Get<ComponentType>(entityId);
+					outComponent = &registry.get<ComponentType>(entityId);
 					return true;
 				}
 

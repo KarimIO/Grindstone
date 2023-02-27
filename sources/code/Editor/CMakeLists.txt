@@ -96,8 +96,6 @@ find_package(spirv_cross_c CONFIG REQUIRED)
 add_executable(Editor WIN32 ${EDITOR_HEADERS} ${EDITOR_SOURCES})
 
 set_property(TARGET Editor PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${BUILD_DIRECTORY})
-target_compile_definitions(Editor PUBLIC NOMINMAX)
-target_include_directories(Editor PUBLIC ${CODE_DIR} ${STB_INCLUDE_DIRS} ${FMT_INCLUDE_DIRS})
 
 find_library(SHADERC_LIBRARY
 	NAMES
@@ -153,13 +151,16 @@ find_library(SPIRV_Tools_Opt
 
 find_package(fmt CONFIG REQUIRED)
 
+target_compile_definitions(Editor PUBLIC NOMINMAX)
+target_include_directories(Editor PUBLIC ${CODE_DIR} ${STB_INCLUDE_DIRS} ${FMT_INCLUDE_DIRS})
+
 target_link_libraries(
 	Editor
 	Rpcrt4.lib
 	efsw::efsw
 	fmt::fmt
 	spirv-cross-c spirv-cross-core spirv-cross-cpp spirv-cross-glsl spirv-cross-reflect
-	HLSL SPIRV glslang OGLCompiler
+	glslang::SPIRV glslang::HLSL glslang::glslang glslang::OGLCompiler
 	${SHADERC_LIBRARY} ${SHADERC_UTIL_LIBRARY} ${SPIRV_Tools} ${SPIRV_Tools_Opt}
 	spirv-cross-reflect
 	assimp::assimp

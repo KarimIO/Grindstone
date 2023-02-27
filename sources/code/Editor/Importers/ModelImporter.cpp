@@ -193,7 +193,7 @@ void ModelImporter::ProcessNodeTree(aiNode* node, uint16_t parentIndex) {
 		glm::mat4& offsetMatrix = boneOffsetMatrixIterator->second;
 		outputData.boneNames.push_back(name);
 		outputData.bones.emplace_back(parentIndex, offsetMatrix, inverseMatrix);
-		boneMapping.emplace(currentBone);
+		boneMapping[name.c_str()] = currentBone;
 	}
 
 	for (unsigned int childIterator = 0; childIterator < node->mNumChildren; ++childIterator) {
@@ -321,17 +321,26 @@ void ModelImporter::ProcessAnimations() {
 
 				dstChannelData.positions.reserve(srcChannel->mNumPositionKeys);
 				for (unsigned int i = 0; i < srcChannel->mNumPositionKeys; ++i) {
-					dstChannelData.positions.emplace_back(srcChannel->mPositionKeys[i].mTime, srcChannel->mPositionKeys[i].mValue);
+					float time = srcChannel->mPositionKeys[i].mTime;
+					aiVector3D& srcValue = srcChannel->mPositionKeys[i].mValue;
+					Math::Float3 value = Math::Float3(srcValue.x, srcValue.y, srcValue.z);
+					dstChannelData.positions.emplace_back(srcChannel->mPositionKeys[i].mTime, value);
 				}
 
 				dstChannelData.rotations.reserve(srcChannel->mNumRotationKeys);
 				for (unsigned int i = 0; i < srcChannel->mNumRotationKeys; ++i) {
-					dstChannelData.rotations.emplace_back(srcChannel->mRotationKeys[i].mTime, srcChannel->mRotationKeys[i].mValue);
+					float time = srcChannel->mRotationKeys[i].mTime;
+					aiQuaternion& srcValue = srcChannel->mRotationKeys[i].mValue;
+					Math::Quaternion value = Math::Quaternion(srcValue.x, srcValue.y, srcValue.z, srcValue.w);
+					dstChannelData.rotations.emplace_back(time, value);
 				}
 
 				dstChannelData.scales.reserve(srcChannel->mNumScalingKeys);
 				for (unsigned int i = 0; i < srcChannel->mNumScalingKeys; ++i) {
-					dstChannelData.scales.emplace_back(srcChannel->mScalingKeys[i].mTime, srcChannel->mScalingKeys[i].mValue);
+					float time = srcChannel->mScalingKeys[i].mTime;
+					aiVector3D& srcValue = srcChannel->mScalingKeys[i].mValue;
+					Math::Float3 value = Math::Float3(srcValue.x, srcValue.y, srcValue.z);
+					dstChannelData.scales.emplace_back(srcChannel->mScalingKeys[i].mTime, value);
 				}
 			}
 		}
