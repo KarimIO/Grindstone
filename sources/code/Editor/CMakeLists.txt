@@ -93,7 +93,7 @@ find_package(spirv_cross_reflect CONFIG REQUIRED)
 find_package(spirv_cross_cpp CONFIG REQUIRED)
 find_package(spirv_cross_c CONFIG REQUIRED)
 
-add_executable(Editor WIN32 ${EDITOR_HEADERS} ${EDITOR_SOURCES})
+add_executable(Editor ${EDITOR_HEADERS} ${EDITOR_SOURCES})
 
 set_property(TARGET Editor PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${BUILD_DIRECTORY})
 

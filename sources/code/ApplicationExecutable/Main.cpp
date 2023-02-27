@@ -14,10 +14,10 @@ extern "C" {
 #endif
 
 int main(int argc, char** argv) {
-	std::string projectpath = "..";
+	std::string projectPath = "..";
 	for (int i = 1; i < argc; ++i) {
 		if (strcmp(argv[i], "-projectpath") == 0 && argc > i + 1) {
-			projectpath = argv[i + 1];
+			projectPath = argv[i + 1];
 		}
 	}
 
@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
 	createInfo.applicationTitle = "Grindstone Sandbox";
 	createInfo.shouldLoadSceneFromDefaults = true;
 	createInfo.scenePath = "";
-	createInfo.projectPath = projectpath.c_str();
+	createInfo.projectPath = projectPath.c_str();
 	EngineCore* engineCore = createEngineFn(createInfo);
 	if (engineCore) {
 		engineCore->Run();
