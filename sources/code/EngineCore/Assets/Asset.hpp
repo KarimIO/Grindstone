@@ -25,10 +25,14 @@ namespace Grindstone {
 		}
 	};
 
-	template<typename T>
 	struct AssetReference {
 		Uuid uuid;
-		T* asset = nullptr;
+		void* asset = nullptr;
+
+		template<typename T>
+		T* Get() {
+			return (T*)asset;
+		}
 	};
 
 	#define DEFINE_ASSET_TYPE static AssetType assetType; /* Assigned from AssetImporter.hpp */ \

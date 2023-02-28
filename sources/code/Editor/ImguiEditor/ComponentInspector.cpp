@@ -96,28 +96,25 @@ namespace Grindstone {
 						(bool*)offset
 					);
 					break;
-				/*case Reflection::TypeDescriptor::ReflectionTypeData::AssetReference: {
-					MeshReference meshReference = *(MeshReference*)offset;
-					if (meshReference == nullptr) {
-						ImGui::Text("Invalid mesh");
+				case Reflection::TypeDescriptor::ReflectionTypeData::AssetReference: {
+					AssetReference assetReference = *(AssetReference*)offset;
+					if (assetReference.asset == nullptr) {
+						ImGui::Text("Invalid asset.");
 					}
 					else {
 						ImGui::Button(
-							meshReference->uuid.ToString().c_str()
+							assetReference.uuid.ToString().c_str()
 						);
+
 						if (ImGui::BeginDragDropTarget()) {
 							if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_UUID")) {
 								auto& engineCore = Editor::Manager::GetEngineCore();
-								auto mesh3dManager = engineCore.mesh3dManager;
-								mesh3dManager->DecrementMeshCount(entity, meshReference->uuid);
-								meshReference = nullptr;
-								// meshReference = &mesh3dManager->LoadMesh3d((const char*)payload->Data);
 							}
 							ImGui::EndDragDropTarget();
 						}
 					}
 					break;
-				}*/
+				}
 				case Reflection::TypeDescriptor::ReflectionTypeData::String:
 					ImGui::InputText(
 						displayName,
