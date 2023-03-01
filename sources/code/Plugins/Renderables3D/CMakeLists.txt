@@ -22,6 +22,10 @@ add_library(
 	${RENDERABLES_3D_COMPONENTS_HEADER}
 )
 
+target_link_libraries(PluginRenderables3D
+	Rpcrt4.lib
+)
+
 target_compile_definitions(PluginRenderables3D PUBLIC RENDERABLES_3D_DLL)
 
 find_path(GLM_INCLUDE_DIRS "glm/glm.hpp")

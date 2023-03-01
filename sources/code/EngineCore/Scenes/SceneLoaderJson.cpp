@@ -5,6 +5,8 @@
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
+#include "EngineCore/Assets/AssetManager.hpp"
+#include "EngineCore/Reflection/TypeDescriptorAsset.hpp"
 #include "SceneLoaderJson.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Scene.hpp"
@@ -149,11 +151,21 @@ void SceneLoaderJson::ProcessComponentParameter(
 		default:
 			EngineCore::GetInstance().Print(LogSeverity::Warning, "Unhandled reflection type in SceneLoaderJson!");
 			break;
-		case ReflectionTypeData::Struct: {
+		case ReflectionTypeData::AssetReference: {
+			auto type = (Grindstone::Reflection::TypeDescriptor_AssetReference*)member->type;
+			AssetType assetType = type->assetType;
+			std::cout << type->name << ": " << assetType << std::endl;
+			GenericAssetReference& assetReference = *(GenericAssetReference*)memberPtr;
+			std::string uuidAsString = parameter.GetString();
+			Uuid uuid = Uuid(uuidAsString);
+			void* asset = EngineCore::GetInstance().assetManager->GetAsset(assetType, uuid);
+			assetReference = GenericAssetReference{uuid, asset};
+			break;
+		}
+		case ReflectionTypeData::Struct:
 			// TODO: Implement this
 			EngineCore::GetInstance().Print(LogSeverity::Warning, "Unhandled Struct in SceneLoaderJson!");
 			break;
-		}
 		case ReflectionTypeData::Vector: {
 			auto srcArray = parameter.GetArray();
 			std::vector<std::string>& vector = *(std::vector<std::string>*)memberPtr;

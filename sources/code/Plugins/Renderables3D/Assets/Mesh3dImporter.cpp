@@ -11,7 +11,7 @@ struct SourceSubmesh {
 	uint32_t indexCount = 0;
 	uint32_t baseVertex = 0;
 	uint32_t baseIndex = 0;
-uint32_t materialIndex = UINT32_MAX;
+	uint32_t materialIndex = UINT32_MAX;
 };
 
 GraphicsAPI::VertexBuffer* LoadVertexBufferVec(
@@ -243,3 +243,6 @@ void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
 
 	return &mesh;
 }
+
+EngineCore* Mesh3dImporter::engineCore;
+AssetType Mesh3dAsset::assetType;

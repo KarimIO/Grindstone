@@ -25,17 +25,21 @@ namespace Grindstone {
 		}
 	};
 
-	struct AssetReference {
+	struct GenericAssetReference {
 		Uuid uuid;
 		void* asset = nullptr;
+	};
 
-		template<typename T>
-		T* Get() {
-			return (T*)asset;
+	template<typename T>
+	struct AssetReference : public GenericAssetReference {
+		inline T& Get() {
+			return *asset;
 		}
 	};
 
-	#define DEFINE_ASSET_TYPE static AssetType assetType; /* Assigned from AssetImporter.hpp */ \
+	#define DEFINE_ASSET_TYPE(name) \
+		static std::string GetAssetTypeName() { return name; }\
+		static AssetType assetType; /* Assigned from AssetImporter.hpp */ \
 		static AssetType GetStaticType() { return assetType; } \
 		virtual AssetType GetAssetType() const override { return GetStaticType(); }
 }

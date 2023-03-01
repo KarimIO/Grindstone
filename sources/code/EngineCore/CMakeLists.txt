@@ -18,16 +18,6 @@ file(GLOB_RECURSE HEADER_ASSETS_MATERIALS "${ENGINE_CORE_DIR}/Assets/Materials/*
 source_group("Assets\\Materials\\Source Files" FILES ${SOURCE_ASSETS_MATERIALS})
 source_group("Assets\\Materials\\Header Files" FILES ${HEADER_ASSETS_MATERIALS})
 
-file(GLOB_RECURSE SOURCE_ASSETS_MESHES_3D "${ENGINE_CORE_DIR}/Assets/Mesh3d/*.cpp")
-file(GLOB_RECURSE HEADER_ASSETS_MESHES_3D "${ENGINE_CORE_DIR}/Assets/Mesh3d/*.hpp")
-source_group("Assets\\Mesh3d\\Source Files" FILES ${SOURCE_ASSETS_MESHES_3D})
-source_group("Assets\\Mesh3d\\Header Files" FILES ${HEADER_ASSETS_MESHES_3D})
-
-file(GLOB_RECURSE SOURCE_ASSETS_RIGS "${ENGINE_CORE_DIR}/Assets/Rigs/*.cpp")
-file(GLOB_RECURSE HEADER_ASSETS_RIGS "${ENGINE_CORE_DIR}/Assets/Rigs/*.hpp")
-source_group("Assets\\Rigs\\Source Files" FILES ${SOURCE_ASSETS_RIGS})
-source_group("Assets\\Rigs\\Header Files" FILES ${HEADER_ASSETS_RIGS})
-
 file(GLOB_RECURSE SOURCE_ASSETS_SHADERS "${ENGINE_CORE_DIR}/Assets/Shaders/*.cpp")
 file(GLOB_RECURSE HEADER_ASSETS_SHADERS "${ENGINE_CORE_DIR}/Assets/Shaders/*.hpp")
 source_group("Assets\\Shaders\\Source Files" FILES ${SOURCE_ASSETS_SHADERS})
@@ -101,8 +91,6 @@ set(ENGINE_CORE_SOURCES
 	${SOURCE_ASSETS_BASE}
 	${SOURCE_ASSETS_ANIMATION_CLIP}
 	${SOURCE_ASSETS_MATERIALS}
-	${SOURCE_ASSETS_MESHES_3D}
-	${SOURCE_ASSETS_RIGS}
 	${SOURCE_ASSETS_SHADERS}
 	${SOURCE_ASSETS_TEXTURES}
 	${SOURCE_AUDIO}

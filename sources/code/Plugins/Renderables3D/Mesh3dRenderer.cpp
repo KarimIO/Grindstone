@@ -89,3 +89,5 @@ void Mesh3dRenderer::RenderSubmesh(ECS::Entity rendererEntity, Mesh3dAsset::Subm
 	);
 #endif
 }
+
+GraphicsAPI::Core* Mesh3dRenderer::graphicsCore;

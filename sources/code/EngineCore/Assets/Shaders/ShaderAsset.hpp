@@ -14,6 +14,6 @@ namespace Grindstone {
 		GraphicsAPI::Pipeline* pipeline = nullptr;
 		GraphicsAPI::TextureBindingLayout* textureBindingLayout = nullptr;
 
-		DEFINE_ASSET_TYPE
+		DEFINE_ASSET_TYPE("Shader")
 	};
 }

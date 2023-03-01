@@ -97,7 +97,7 @@ namespace Grindstone {
 					);
 					break;
 				case Reflection::TypeDescriptor::ReflectionTypeData::AssetReference: {
-					AssetReference assetReference = *(AssetReference*)offset;
+					GenericAssetReference assetReference = *(GenericAssetReference*)offset;
 					if (assetReference.asset == nullptr) {
 						ImGui::Text("Invalid asset.");
 					}

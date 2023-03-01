@@ -22,6 +22,6 @@ namespace Grindstone {
 		char* buffer = nullptr;
 		std::vector<std::pair<ECS::Entity, void*>> renderables;
 
-		DEFINE_ASSET_TYPE
+		DEFINE_ASSET_TYPE("Material")
 	};
 }

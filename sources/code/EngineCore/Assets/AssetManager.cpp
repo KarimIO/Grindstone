@@ -37,8 +37,6 @@ void* AssetManager::GetAsset(AssetType assetType, Uuid uuid) {
 		return loadedAsset;
 	}
 	else {
-		// TODO: Load file using the appropriate loader (file, asset pack, etc)
-		// and pass the binary data to the importer.
 		return assetTypeImporters[assetType]->ProcessLoadedFile(uuid);
 	}
 }

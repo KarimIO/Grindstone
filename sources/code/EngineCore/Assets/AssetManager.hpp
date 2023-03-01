@@ -26,6 +26,7 @@ namespace Grindstone {
 			template <typename AssetT, typename AssetImporterT>
 			void RegisterAssetType() {
 				AssetT::assetType = (AssetType)assetTypeNames.size();
+				assetTypeNames.emplace_back(AssetT::GetAssetTypeName());
 			}
 		private:
 			AssetLoader* assetLoader = nullptr;

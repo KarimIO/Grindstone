@@ -17,6 +17,7 @@ extern "C" {
 		pluginInterface->RegisterComponent<MeshComponent>();
 		pluginInterface->RegisterComponent<MeshRendererComponent>();
 		pluginInterface->RegisterAssetType<Mesh3dAsset, Mesh3dImporter>();
+
 		// pluginInterface->RegisterAssetType<RigAsset, RigImporter>();
 		pluginInterface->RegisterAssetRenderer(new Mesh3dRenderer(pluginInterface->GetGraphicsCore()));
 	}
