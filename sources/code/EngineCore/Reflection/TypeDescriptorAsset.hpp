@@ -11,14 +11,14 @@ namespace Grindstone {
 			AssetType assetType;
 
 			template <typename ItemType>
-			TypeDescriptor_AssetReference(ItemType*)
+			TypeDescriptor_AssetReference(ItemType* itemType)
 				: TypeDescriptor {
 					"AssetReference<>",
 					sizeof(Grindstone::GenericAssetReference),
 					ReflectionTypeData::AssetReference
 				},
-				assetType(ItemType::GetStaticType()),
-				name((std::string("AssetReference<") + ItemType::GetAssetTypeName() + ">").c_str())
+				assetType(itemType->GetAssetType()),
+				name((std::string("AssetReference<") + ItemType::GetStaticTypeName() + ">").c_str())
 			{}
 
 			virtual const char* GetFullName() const override {

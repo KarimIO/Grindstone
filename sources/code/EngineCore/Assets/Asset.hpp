@@ -38,8 +38,11 @@ namespace Grindstone {
 	};
 
 	#define DEFINE_ASSET_TYPE(name) \
-		static std::string GetAssetTypeName() { return name; }\
+		static std::string GetStaticTypeName() { return name; }\
+		virtual std::string GetAssetTypeName() { return name; }\
 		static AssetType assetType; /* Assigned from AssetImporter.hpp */ \
 		static AssetType GetStaticType() { return assetType; } \
-		virtual AssetType GetAssetType() const override { return GetStaticType(); }
+		virtual AssetType GetAssetType() const override { return GetStaticType(); } \
+		static size_t GetStaticAssetTypeHash() { return std::hash<std::string>()(name); } \
+		virtual size_t GetAssetTypeHash() { return GetStaticAssetTypeHash(); }
 }
