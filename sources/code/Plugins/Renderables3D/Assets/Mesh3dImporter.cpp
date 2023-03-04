@@ -245,4 +245,3 @@ void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
 }
 
 EngineCore* Mesh3dImporter::engineCore;
-AssetType Mesh3dAsset::assetType;

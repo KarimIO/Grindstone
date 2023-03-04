@@ -18,16 +18,12 @@ namespace Grindstone {
 
 			template<typename T>
 			T GetAsset(Uuid uuid) {
-				return *GetAsset(T::assetType, uuid);
+				return *GetAsset(T::GetStaticType(), uuid);
 			}
 
 			// TODO: Register these into a file, so we can refer to types by number, and
 			// if there is a new type, we can change all assetTypes in meta files.
-			template <typename AssetT, typename AssetImporterT>
-			void RegisterAssetType() {
-				AssetT::assetType = (AssetType)assetTypeNames.size();
-				assetTypeNames.emplace_back(AssetT::GetStaticTypeName());
-			}
+			virtual void RegisterAssetType(AssetType assetType, const char* typeName, AssetImporter* importer);
 		private:
 			AssetLoader* assetLoader = nullptr;
 			std::vector<std::string> assetTypeNames;

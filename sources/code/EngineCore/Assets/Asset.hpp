@@ -2,10 +2,9 @@
 
 #include <string>
 #include <Common/ResourcePipeline/Uuid.hpp>
+#include "AssetType.hpp"
 
 namespace Grindstone {
-	using AssetType = uint16_t;
-
 	struct Asset {
 		Asset(Uuid uuid, std::string_view name) : uuid(uuid), name(name) {}
 
@@ -13,7 +12,7 @@ namespace Grindstone {
 		std::string name;
 		size_t referenceCount = 0;
 
-		static AssetType GetStaticType() { return 0; }
+		static AssetType GetStaticType() { return AssetType::Undefined; }
 		virtual AssetType GetAssetType() const { return GetStaticType(); }
 
 		virtual bool operator==(const Asset& other) const {
@@ -37,12 +36,11 @@ namespace Grindstone {
 		}
 	};
 
-	#define DEFINE_ASSET_TYPE(name) \
+	#define DEFINE_ASSET_TYPE(name, assetType) \
 		static std::string GetStaticTypeName() { return name; }\
 		virtual std::string GetAssetTypeName() { return name; }\
-		static AssetType assetType; /* Assigned from AssetImporter.hpp */ \
 		static AssetType GetStaticType() { return assetType; } \
-		virtual AssetType GetAssetType() const override { return GetStaticType(); } \
+		virtual AssetType GetAssetType() const override { return assetType; } \
 		static size_t GetStaticAssetTypeHash() { return std::hash<std::string>()(name); } \
 		virtual size_t GetAssetTypeHash() { return GetStaticAssetTypeHash(); }
 }

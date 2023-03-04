@@ -374,7 +374,7 @@ void AssetBrowserPanel::RenderFolders() {
 			isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.5f) : ImVec4(1, 1, 1, 0.1f)
 		);
 
-		ImTextureID icon = GetIcon(directoryEntry);
+		ImTextureID icon = 0; //GetIcon(directoryEntry);
 		ImGui::PushID(buttonString.c_str());
 		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
 		ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
@@ -418,7 +418,7 @@ void AssetBrowserPanel::RenderFiles() {
 			isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.5f) : ImVec4(1, 1, 1, 0.1f)
 		);
 
-		ImTextureID icon = GetIcon(file->directoryEntry);
+		ImTextureID icon = 0; //GetIcon(file->directoryEntry);
 		ImGui::PushID(buttonString.c_str());
 		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
 		ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);

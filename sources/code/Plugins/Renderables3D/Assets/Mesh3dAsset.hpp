@@ -31,6 +31,6 @@ namespace Grindstone {
 		GraphicsAPI::VertexArrayObject* vertexArrayObject = nullptr;
 		std::vector<Submesh> submeshes;
 
-		DEFINE_ASSET_TYPE("Mesh3dAsset")
+		DEFINE_ASSET_TYPE("Mesh3dAsset", AssetType::Mesh3d)
 	};
 }

@@ -8,5 +8,7 @@ namespace Grindstone {
 	struct TextureAsset : public Asset {
 		TextureAsset(Uuid uuid, std::string_view name, Texture* texture) : Asset(uuid, name), texture(texture) {}
 		Texture* texture = nullptr;
+
+		DEFINE_ASSET_TYPE("Texture", AssetType::Texture)
 	};
 }

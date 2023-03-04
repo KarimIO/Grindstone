@@ -3,8 +3,8 @@ file(GLOB_RECURSE HEADER_ASSET_RENDERER "${ENGINE_CORE_DIR}/AssetRenderer/*.hpp"
 source_group("AssetRenderer\\Source Files" FILES ${SOURCE_ASSET_RENDERER})
 source_group("AssetRenderer\\Header Files" FILES ${HEADER_ASSET_RENDERER})
 
-file(GLOB_RECURSE SOURCE_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetManager.cpp)
-file(GLOB_RECURSE HEADER_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetManager.hpp ${ENGINE_CORE_DIR}/Assets/AssetImporter.hpp ${ENGINE_CORE_DIR}/Assets/Asset.hpp)
+file(GLOB_RECURSE SOURCE_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetManager.cpp ${ENGINE_CORE_DIR}/Assets/Assets.cpp)
+file(GLOB_RECURSE HEADER_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetManager.hpp ${ENGINE_CORE_DIR}/Assets/AssetImporter.hpp ${ENGINE_CORE_DIR}/Assets/Asset.hpp ${ENGINE_CORE_DIR}/Assets/AssetType.hpp)
 source_group("Assets\\Source Files" FILES ${SOURCE_ASSETS_BASE})
 source_group("Assets\\Header Files" FILES ${HEADER_ASSETS_BASE})
 

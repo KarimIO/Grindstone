@@ -154,7 +154,6 @@ void SceneLoaderJson::ProcessComponentParameter(
 		case ReflectionTypeData::AssetReference: {
 			auto type = (Grindstone::Reflection::TypeDescriptor_AssetReference*)member->type;
 			AssetType assetType = type->assetType;
-			std::cout << type->name << ": " << assetType << std::endl;
 			GenericAssetReference& assetReference = *(GenericAssetReference*)memberPtr;
 			std::string uuidAsString = parameter.GetString();
 			Uuid uuid = Uuid(uuidAsString);

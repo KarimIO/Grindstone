@@ -44,11 +44,7 @@ namespace Grindstone {
 			virtual void EnumerateDisplays(Display* displays);
 			virtual void RegisterSystem(const char* name, ECS::SystemFactory factory);
 			virtual void RegisterAssetRenderer(BaseAssetRenderer* assetRenderer);
-
-			template<typename AssetT, typename ImporterT>
-			void RegisterAssetType() {
-				engineCore->assetManager->RegisterAssetType<AssetT, ImporterT>();
-			}
+			virtual void RegisterAssetType(AssetType assetType, const char* typeName, AssetImporter* assetImporter);
 
 			template<typename T>
 			void RegisterComponent(ECS::SetupComponentFn setupComponentFn = nullptr) {

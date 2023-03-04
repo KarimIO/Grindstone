@@ -17,7 +17,7 @@ namespace Grindstone {
 					sizeof(Grindstone::GenericAssetReference),
 					ReflectionTypeData::AssetReference
 				},
-				assetType(itemType->GetAssetType()),
+				assetType(ItemType::GetStaticType()),
 				name((std::string("AssetReference<") + ItemType::GetStaticTypeName() + ">").c_str())
 			{}
 

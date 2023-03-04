@@ -12,5 +12,6 @@ namespace Grindstone {
 		void RenderQueue(const char* name);
 	private:
 		std::vector<BaseAssetRenderer*> assetRenderers;
+		std::vector<const char*> assetQueuesNames;
 	};
 }

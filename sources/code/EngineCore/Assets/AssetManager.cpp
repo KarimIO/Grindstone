@@ -8,36 +8,38 @@
 #include "Shaders/ShaderAsset.hpp"
 #include "Shaders/ShaderImporter.hpp"
 #include "Textures/TextureAsset.hpp"
+#include "Textures/TextureImporter.hpp"
 #include "Shaders/ShaderAsset.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::Assets;
 
-AssetType ShaderAsset::assetType;
-AssetType MaterialAsset::assetType;
-
 AssetManager::AssetManager() {
 	assetLoader = new FileAssetLoader();
-	assetTypeNames.emplace_back("Undefined");
-	assetTypeImporters.emplace_back(nullptr);
 
-	RegisterAssetType<ShaderAsset, ShaderImporter>();
-	RegisterAssetType<MaterialAsset, MaterialImporter>();
+	size_t count = static_cast<size_t>(AssetType::Count);
+	assetTypeNames.resize(count);
+	assetTypeImporters.resize(count);
+	RegisterAssetType(AssetType::Undefined, "Undefined", nullptr);
+	RegisterAssetType(ShaderAsset::GetStaticType(), "ShaderAsset", new ShaderImporter());
+	RegisterAssetType(TextureAsset::GetStaticType(), "TextureAsset", new TextureImporter());
+	RegisterAssetType(MaterialAsset::GetStaticType(), "MaterialAsset", new MaterialImporter());
 }
 
 void* AssetManager::GetAsset(AssetType assetType, Uuid uuid) {
-	if (assetType < 1 || assetType >= assetTypeImporters.size()) {
+	size_t assetTypeSizeT = static_cast<size_t>(assetType);
+	if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
 		return nullptr;
 	}
 
-	AssetImporter* assetImporter = assetTypeImporters[assetType];
+	AssetImporter* assetImporter = assetTypeImporters[assetTypeSizeT];
 
 	void* loadedAsset = nullptr;
 	if (assetImporter->TryGetIfLoaded(uuid, loadedAsset)) {
 		return loadedAsset;
 	}
 	else {
-		return assetTypeImporters[assetType]->ProcessLoadedFile(uuid);
+		return assetTypeImporters[assetTypeSizeT]->ProcessLoadedFile(uuid);
 	}
 }
 
@@ -51,5 +53,10 @@ bool Grindstone::Assets::AssetManager::LoadFile(Uuid uuid, char*& fileData, size
 }
 
 std::string& AssetManager::GetTypeName(AssetType assetType) {
-	return assetTypeNames[assetType];
+	return assetTypeNames[static_cast<size_t>(assetType)];
+}
+
+void AssetManager::RegisterAssetType(AssetType assetType, const char* typeName, AssetImporter* importer) {
+	assetTypeNames[static_cast<size_t>(assetType)] = typeName;
+	assetTypeImporters[static_cast<size_t>(assetType)] = importer;
 }

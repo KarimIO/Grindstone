@@ -9,7 +9,7 @@
 
 namespace Grindstone {
 	struct MeshComponent {
-		AssetReference<ShaderAsset> mesh;
+		AssetReference<Mesh3dAsset> mesh;
 		REFLECT("Mesh")
 	};
 }

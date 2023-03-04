@@ -82,3 +82,7 @@ void Plugins::Interface::RegisterSystem(const char* name, ECS::SystemFactory fac
 void Plugins::Interface::RegisterAssetRenderer(BaseAssetRenderer* assetRenderer) {
 	EngineCore::GetInstance().assetRendererManager->AddAssetRenderer(assetRenderer);
 }
+
+void Plugins::Interface::RegisterAssetType(AssetType assetType, const char* typeName, AssetImporter* assetImporter) {
+	engineCore->assetManager->RegisterAssetType(assetType, typeName, assetImporter);
+}
