@@ -17,8 +17,9 @@ namespace Grindstone {
 			virtual std::string& GetTypeName(AssetType assetType);
 
 			template<typename T>
-			T GetAsset(Uuid uuid) {
-				return *GetAsset(T::GetStaticType(), uuid);
+			T& GetAsset(Uuid uuid) {
+				void* assetPtr = GetAsset(T::GetStaticType(), uuid);
+				return *static_cast<T*>(assetPtr);
 			}
 
 			// TODO: Register these into a file, so we can refer to types by number, and

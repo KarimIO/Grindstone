@@ -25,7 +25,7 @@ namespace Grindstone {
 			uint32_t baseVertex = 0;
 			uint32_t baseIndex = 0;
 			uint32_t materialIndex = UINT32_MAX;
-			std::vector<std::string> materials;
+			GraphicsAPI::VertexArrayObject* vertexArrayObject = nullptr;
 		};
 
 		GraphicsAPI::VertexArrayObject* vertexArrayObject = nullptr;

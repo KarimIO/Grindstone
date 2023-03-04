@@ -11,10 +11,17 @@
 using namespace Grindstone;
 
 void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
-	return nullptr;
-#if 0
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
+
+	char* contentData = nullptr;
+	size_t contentsSize;
+	if (assetManager->LoadFile(uuid, contentData, contentsSize)) {
+		return nullptr;
+	}
+
 	rapidjson::Document document;
-	document.Parse(contents.data());
+	document.Parse(contentData);
 
 	if (!document.HasMember("name")) {
 		throw std::runtime_error("No name found in material.");
@@ -25,17 +32,16 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 		throw std::runtime_error("No shader found in material.");
 	}
 
-	std::string shaderPath = document["shader"].GetString();
-	auto assetManager = EngineCore::GetInstance().assetManager;
-	assetManager.
-	shader->materials.push_back(&material);
+	Uuid shaderUuid(document["shader"].GetString());
+	ShaderAsset& shaderAsset = assetManager->GetAsset<ShaderAsset>(shaderUuid);
+	shaderAsset.materials.emplace_back(MaterialAsset(uuid, name, &shaderAsset));
+	MaterialAsset& materialAsset = *shaderAsset.materials.end();
 
-	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	GraphicsAPI::UniformBufferBinding* uniformBufferBinding = nullptr;
 	GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
 	char* bufferSpace = nullptr;
 
-	auto& uniformBuffers = shader->reflectionData.uniformBuffers;
+	auto& uniformBuffers = shaderAsset.reflectionData.uniformBuffers;
 	for (auto& uniformBuffer : uniformBuffers) {
 		if (uniformBuffer.name != "MaterialUbo") {
 			continue;
@@ -76,21 +82,20 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	}
 
 	GraphicsAPI::TextureBinding* textureBinding = nullptr;
-	auto& textures = shader->reflectionData.textures;
+	auto& textures = shaderAsset.reflectionData.textures;
 	bool hasSamplers = document.HasMember("samplers");
 	if (textures.size() > 0 && hasSamplers) {
-		auto textureManager = EngineCore::GetInstance().textureImporter;
 		auto& samplersJson = document["samplers"];
 		std::vector<GraphicsAPI::SingleTextureBind> textureBinds;
 		textureBinds.resize(textures.size());
 		for (size_t i = 0; i < textures.size(); ++i) {
 			const char* textureName = textures[i].name.c_str();
 			if (samplersJson.HasMember(textureName)) {
-				const char* texturePath = samplersJson[textureName].GetString();
-				std::filesystem::path shaderPath = relativePath / texturePath;
-				TextureAsset& textureAsset = strcmp(texturePath, "") != 0
-					? textureManager->LoadTexture(shaderPath.string().c_str())
-					: textureManager->GetDefaultTexture();
+				const char* textureUuidAsString = samplersJson[textureName].GetString();
+				Uuid textureUuid(textureUuidAsString);
+
+				// TODO: Handle if texture isn't set
+				TextureAsset& textureAsset = assetManager->GetAsset<TextureAsset>(textureUuid);
 
 				GraphicsAPI::SingleTextureBind& stb = textureBinds[i];
 				stb.texture = textureAsset.texture;
@@ -101,24 +106,20 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 		GraphicsAPI::TextureBinding::CreateInfo textureBindingCreateInfo{};
 		textureBindingCreateInfo.textures = textureBinds.data();
 		textureBindingCreateInfo.textureCount = textureBinds.size();
-		textureBindingCreateInfo.layout = shader->textureBindingLayout;
+		textureBindingCreateInfo.layout = shaderAsset.textureBindingLayout;
 		textureBinding = graphicsCore->CreateTextureBinding(textureBindingCreateInfo);
 		graphicsCore->BindTexture(textureBinding);
 	}
 
-	material.name = name;
-	material.shaderPath = shaderPath.c_str();
-	material.shader = shader;
-	material.textureBinding = textureBinding;
-	material.uniformBufferBinding = uniformBufferBinding;
-	material.uniformBufferObject = uniformBufferObject;
-	material.buffer = bufferSpace;
-#endif
+	materialAsset.textureBinding = textureBinding;
+	materialAsset.uniformBufferBinding = uniformBufferBinding;
+	materialAsset.uniformBufferObject = uniformBufferObject;
+	materialAsset.buffer = bufferSpace;
+
+	return &materialAsset;
 }
 
 bool MaterialImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
-	return false;
-#if 0
 	auto materialInMap = materials.find(uuid);
 	if (materialInMap != materials.end()) {
 		output = &materialInMap->second;
@@ -126,7 +127,6 @@ bool MaterialImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
 	}
 
 	return false;
-#endif
 }
 
 #if 0

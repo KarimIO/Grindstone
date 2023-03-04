@@ -39,13 +39,11 @@ void Mesh3dRenderer::RenderQueue(RenderQueueContainer& renderQueue) {
 }
 
 void Mesh3dRenderer::RenderShader(ShaderAsset& shader) {
-#if 0
 	graphicsCore->BindPipeline(shader.pipeline);
 	mesh3dBufferObject->Bind();
 	for (auto& material : shader.materials) {
-		RenderMaterial(*material);
+		RenderMaterial(material);
 	}
-#endif
 }
 
 void Mesh3dRenderer::RenderMaterial(MaterialAsset& material) {
@@ -65,12 +63,8 @@ void Mesh3dRenderer::RenderMaterial(MaterialAsset& material) {
 	}
 }
 
-// TODO: Bind vao once for multiple MeshRenderers
 void Mesh3dRenderer::RenderSubmesh(ECS::Entity rendererEntity, Mesh3dAsset::Submesh& submesh3d) {
-#if 0
-	Mesh3dAsset& mesh3d = *submesh3d.mesh;
-
-	graphicsCore->BindVertexArrayObject(mesh3d.vertexArrayObject);
+	graphicsCore->BindVertexArrayObject(submesh3d.vertexArrayObject);
 	auto& registry = rendererEntity.GetScene()->GetEntityRegistry();
 	entt::entity entity = rendererEntity.GetHandle();
 	auto& transformComponent = registry.get<TransformComponent>(entity);
@@ -87,5 +81,4 @@ void Mesh3dRenderer::RenderSubmesh(ECS::Entity rendererEntity, Mesh3dAsset::Subm
 		submesh3d.baseIndex,
 		submesh3d.indexCount
 	);
-#endif
 }
