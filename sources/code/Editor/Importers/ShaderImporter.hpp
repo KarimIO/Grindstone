@@ -51,15 +51,15 @@ namespace Grindstone {
 
 					std::string name;
 					size_t binding;
-					size_t buffserSize;
+					size_t bufferSize;
 					std::vector<ShaderType> shaderPasses;
 					std::vector<Member> members;
 					UniformBuffer() = default;
 					UniformBuffer(
 						std::string name,
 						size_t binding,
-						size_t buffserSize
-					) : name(name), binding(binding), buffserSize(buffserSize) {}
+						size_t bufferSize
+					) : name(name), binding(binding), bufferSize(bufferSize) {}
 				};
 			private:
 				void Process();
