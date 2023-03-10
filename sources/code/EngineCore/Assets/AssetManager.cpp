@@ -52,6 +52,14 @@ bool Grindstone::Assets::AssetManager::LoadFile(Uuid uuid, char*& fileData, size
 	return fileData != nullptr;
 }
 
+// Loads an actual file, not an asset. The file still needs to be imported and handled.
+// Make loading indirect to conceal how files are loading from asset importers
+// This allows multiple files to be imported per asset, and allows different types of loading depending on the
+// asset, such as shaders loading from a file if it's not compiled yet, or loading a compiled shader if it is loaded
+bool Grindstone::Assets::AssetManager::LoadFileText(Uuid uuid, std::string& fileData) {
+	return assetLoader->LoadText(uuid, fileData);
+}
+
 std::string& AssetManager::GetTypeName(AssetType assetType) {
 	return assetTypeNames[static_cast<size_t>(assetType)];
 }

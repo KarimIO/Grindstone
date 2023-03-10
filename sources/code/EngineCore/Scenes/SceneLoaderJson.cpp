@@ -9,6 +9,7 @@
 #include "EngineCore/Reflection/TypeDescriptorAsset.hpp"
 #include "SceneLoaderJson.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
+#include "Common/Math.hpp"
 #include "Scene.hpp"
 
 using namespace Grindstone;
@@ -146,93 +147,177 @@ void SceneLoaderJson::ProcessComponentParameter(
 
 	auto offset = member->offset;
 	char* memberPtr = (char*)componentPtr + offset;
+	ParseMember(memberPtr, member->type, parameter);
+}
 
-	switch (member->type->type) {
-		default:
-			EngineCore::GetInstance().Print(LogSeverity::Warning, "Unhandled reflection type in SceneLoaderJson!");
-			break;
-		case ReflectionTypeData::AssetReference: {
-			auto type = (Grindstone::Reflection::TypeDescriptor_AssetReference*)member->type;
-			AssetType assetType = type->assetType;
-			GenericAssetReference& assetReference = *(GenericAssetReference*)memberPtr;
-			std::string uuidAsString = parameter.GetString();
-			Uuid uuid = Uuid(uuidAsString);
-			void* asset = EngineCore::GetInstance().assetManager->GetAsset(assetType, uuid);
-			assetReference = GenericAssetReference{uuid, asset};
-			break;
-		}
-		case ReflectionTypeData::Struct:
-			// TODO: Implement this
-			EngineCore::GetInstance().Print(LogSeverity::Warning, "Unhandled Struct in SceneLoaderJson!");
-			break;
-		case ReflectionTypeData::Vector: {
-			auto srcArray = parameter.GetArray();
-			std::vector<std::string>& vector = *(std::vector<std::string>*)memberPtr;
-			vector.reserve(srcArray.Size());
+void SceneLoaderJson::ParseMember(
+	void* memberPtr,
+	Reflection::TypeDescriptor* member,
+	rapidjson::Value& parameter
+) {
+	switch (member->type) {
+	default:
+		EngineCore::GetInstance().Print(LogSeverity::Warning, "Unhandled reflection type in SceneLoaderJson!");
+		break;
+	case ReflectionTypeData::AssetReference: {
+		auto type = (Grindstone::Reflection::TypeDescriptor_AssetReference*)member;
+		AssetType assetType = type->assetType;
+		GenericAssetReference& assetReference = *(GenericAssetReference*)memberPtr;
+		std::string uuidAsString = parameter.GetString();
+		Uuid uuid = Uuid(uuidAsString);
+		void* asset = EngineCore::GetInstance().assetManager->GetAsset(assetType, uuid);
+		assetReference = GenericAssetReference{ uuid, asset };
+		break;
+	}
+	case ReflectionTypeData::Struct:
+		// TODO: Implement this
+		EngineCore::GetInstance().Print(LogSeverity::Warning, "Unhandled Struct in SceneLoaderJson!");
+		break;
+	case ReflectionTypeData::Vector: {
+		ParseArray(memberPtr, member, parameter);
+		break;
+	}
+	case ReflectionTypeData::String: {
+		std::string& str = *(std::string*)memberPtr;
+		str = parameter.GetString();
+		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::Quaternion:
+		CopyDataArrayFloat(parameter, (float*)memberPtr, 4);
+		break;
+	case ReflectionTypeData::Bool: {
+		bool& str = *(bool*)memberPtr;
+		str = parameter.GetBool();
+		break;
+	}
+	case ReflectionTypeData::Int: {
+		int& str = *(int*)memberPtr;
+		str = parameter.GetInt();
+		break;
+	}
+	case ReflectionTypeData::Int2:
+		CopyDataArrayInt(parameter, (int*)memberPtr, 2);
+		break;
+	case ReflectionTypeData::Int3:
+		CopyDataArrayInt(parameter, (int*)memberPtr, 3);
+		break;
+	case ReflectionTypeData::Int4:
+		CopyDataArrayInt(parameter, (int*)memberPtr, 4);
+		break;
+	case ReflectionTypeData::Float: {
+		float& str = *(float*)memberPtr;
+		str = parameter.GetFloat();
+		break;
+	}
+	case ReflectionTypeData::Float2:
+		CopyDataArrayFloat(parameter, (float*)memberPtr, 2);
+		break;
+	case ReflectionTypeData::Float3:
+		CopyDataArrayFloat(parameter, (float*)memberPtr, 3);
+		break;
+	case ReflectionTypeData::Float4:
+		CopyDataArrayFloat(parameter, (float*)memberPtr, 4);
+		break;
+	case ReflectionTypeData::Double: {
+		double& str = *(double*)memberPtr;
+		str = parameter.GetDouble();
+		break;
+	}
+	case ReflectionTypeData::Double2:
+		CopyDataArrayDouble(parameter, (double*)memberPtr, 2);
+		break;
+	case ReflectionTypeData::Double3:
+		CopyDataArrayDouble(parameter, (double*)memberPtr, 3);
+		break;
+	case ReflectionTypeData::Double4:
+		CopyDataArrayDouble(parameter, (double*)memberPtr, 4);
+		break;
+	}
+}
 
-			for (
-				rapidjson::Value* elementIterator = srcArray.Begin();
-				elementIterator != srcArray.End();
-				++elementIterator
-			) {
-				vector.push_back(elementIterator->GetString());
-			}
+template<typename T>
+inline size_t SetupArray(void* memberPtr, size_t arraySize) {
+	std::vector<T>& vector = *(std::vector<T>*)memberPtr;
+	vector.reserve(arraySize);
+	return sizeof(T);
+}
+
+void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* member, rapidjson::Value& parameter) {
+	Reflection::TypeDescriptor_StdVector* vectorTypeDescriptor = static_cast<Reflection::TypeDescriptor_StdVector*>(member);
+	auto srcArray = parameter.GetArray();
+	size_t elementSize = 0;
+	size_t arraySize = static_cast<size_t>(srcArray.Size());
+
+	switch (member->type) {
+		case ReflectionTypeData::Struct: break;
+		case ReflectionTypeData::AssetReference:
+			elementSize = SetupArray<GenericAssetReference>(memberPtr, arraySize);
 			break;
-		}
-		case ReflectionTypeData::String: {
-			std::string& str = *(std::string*)memberPtr;
-			str = parameter.GetString();
+		case ReflectionTypeData::Bool:
+			elementSize = SetupArray<bool>(memberPtr, arraySize);
 			break;
-		}
-		case Reflection::TypeDescriptor::ReflectionTypeData::Quaternion:
-			CopyDataArrayFloat(parameter, (float*)memberPtr, 4);
+		case ReflectionTypeData::Quaternion:
+			elementSize = SetupArray<Math::Quaternion>(memberPtr, arraySize);
 			break;
-		case ReflectionTypeData::Bool: {
-			bool& str = *(bool*)memberPtr;
-			str = parameter.GetBool();
+		case ReflectionTypeData::String:
+			elementSize = SetupArray<std::string>(memberPtr, arraySize);
 			break;
-		}
-		case ReflectionTypeData::Int: {
-			int& str = *(int*)memberPtr;
-			str = parameter.GetInt();
+		case ReflectionTypeData::Vector:
+			elementSize = SetupArray<std::vector<char>>(memberPtr, arraySize);
 			break;
-		}
-		case ReflectionTypeData::Int2:
-			CopyDataArrayInt(parameter, (int*)memberPtr, 2);
+		case ReflectionTypeData::Double:
+			elementSize = SetupArray<Math::Double>(memberPtr, arraySize);
 			break;
-		case ReflectionTypeData::Int3:
-			CopyDataArrayInt(parameter, (int*)memberPtr, 3);
-			break;
-		case ReflectionTypeData::Int4:
-			CopyDataArrayInt(parameter, (int*)memberPtr, 4);
-			break;
-		case ReflectionTypeData::Float: {
-			float& str = *(float*)memberPtr;
-			str = parameter.GetFloat();
-			break;
-		}
-		case ReflectionTypeData::Float2:
-			CopyDataArrayFloat(parameter, (float*)memberPtr, 2);
-			break;
-		case ReflectionTypeData::Float3:
-			CopyDataArrayFloat(parameter, (float*)memberPtr, 3);
-			break;
-		case ReflectionTypeData::Float4:
-			CopyDataArrayFloat(parameter, (float*)memberPtr, 4);
-			break;
-		case ReflectionTypeData::Double: {
-			double& str = *(double*)memberPtr;
-			str = parameter.GetDouble();
-			break;
-		}
 		case ReflectionTypeData::Double2:
-			CopyDataArrayDouble(parameter, (double*)memberPtr, 2);
+			elementSize = SetupArray<Math::Double2>(memberPtr, arraySize);
 			break;
 		case ReflectionTypeData::Double3:
-			CopyDataArrayDouble(parameter, (double*)memberPtr, 3);
+			elementSize = SetupArray<Math::Double3>(memberPtr, arraySize);
 			break;
 		case ReflectionTypeData::Double4:
-			CopyDataArrayDouble(parameter, (double*)memberPtr, 4);
+			elementSize = SetupArray<Math::Double4>(memberPtr, arraySize);
 			break;
+		case ReflectionTypeData::Int:
+			elementSize = SetupArray<Math::Int>(memberPtr, arraySize);
+			break;
+		case ReflectionTypeData::Int2:
+			elementSize = SetupArray<Math::Int2>(memberPtr, arraySize);
+			break;
+		case ReflectionTypeData::Int3:
+			elementSize = SetupArray<Math::Int3>(memberPtr, arraySize);
+			break;
+		case ReflectionTypeData::Int4:
+			elementSize = SetupArray<Math::Int4>(memberPtr, arraySize);
+			break;
+		case ReflectionTypeData::Float:
+			elementSize = SetupArray<Math::Float>(memberPtr, arraySize);
+			break;
+		case ReflectionTypeData::Float2:
+			elementSize = SetupArray<Math::Float2>(memberPtr, arraySize);
+			break;
+		case ReflectionTypeData::Float3:
+			elementSize = SetupArray<Math::Float3>(memberPtr, arraySize);
+			break;
+		case ReflectionTypeData::Float4:
+			elementSize = SetupArray<Math::Float4>(memberPtr, arraySize);
+			break;
+	}
+
+	// Cast to a char even if it's not a char, we just want the dataPtr.
+	std::vector<char>& vector = *(std::vector<char>*)memberPtr;
+	char* elementPtr = vector.data();
+
+	for (
+		rapidjson::Value* elementIterator = srcArray.Begin();
+		elementIterator != srcArray.End();
+		++elementIterator
+	) {
+		ParseMember(
+			memberPtr,
+			vectorTypeDescriptor->itemType,
+			*elementIterator
+		);
+
+		elementPtr += elementSize;
 	}
 }

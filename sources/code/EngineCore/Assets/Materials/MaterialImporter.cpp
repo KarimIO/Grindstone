@@ -14,14 +14,13 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
 
-	char* contentData = nullptr;
-	size_t contentsSize;
-	if (assetManager->LoadFile(uuid, contentData, contentsSize)) {
+	std::string contentData;
+	if (!assetManager->LoadFileText(uuid, contentData)) {
 		return nullptr;
 	}
 
 	rapidjson::Document document;
-	document.Parse(contentData);
+	document.Parse(contentData.data());
 
 	if (!document.HasMember("name")) {
 		throw std::runtime_error("No name found in material.");

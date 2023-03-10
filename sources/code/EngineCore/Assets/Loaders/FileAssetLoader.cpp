@@ -27,3 +27,17 @@ void FileAssetLoader::Load(Uuid uuid, char*& outContents, size_t& fileSize) {
 	outContents = new char[fileSize];
 	file.read(outContents, fileSize);
 }
+
+bool FileAssetLoader::LoadText(Uuid uuid, std::string& outContents) {
+	std::filesystem::path path = EngineCore::GetInstance().GetAssetPath(uuid.ToString());
+
+	if (!std::filesystem::exists(path)) {
+		return false;
+	}
+
+	std::ifstream ifs(path);
+	outContents = std::string((std::istreambuf_iterator<char>(ifs)),
+		(std::istreambuf_iterator<char>()));
+
+	return true;
+}

@@ -29,6 +29,9 @@ namespace Grindstone {
 				const char* parameterKey,
 				rapidjson::Value& parameter
 			);
+			void ParseMember(void* memberPtr, Reflection::TypeDescriptor* member, rapidjson::Value& parameter);
+			void ParseArray(void* memberPtr, Reflection::TypeDescriptor* member, rapidjson::Value& parameter);
+		private:
 			Scene* scene;
 			rapidjson::Document document;
 			const char* path;

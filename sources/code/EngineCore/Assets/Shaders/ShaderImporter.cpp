@@ -49,14 +49,13 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
 
-	char* reflectionDataContent = nullptr;
-	size_t reflectionDataSize;
-	if (assetManager->LoadFile(uuid, reflectionDataContent, reflectionDataSize)) {
+	std::string outContent;
+	if (!assetManager->LoadFileText(uuid, outContent)) {
 		return nullptr;
 	}
 
 	ShaderReflectionData reflectionData;
-	ShaderReflectionLoader loader(reflectionDataContent, reflectionData);
+	ShaderReflectionLoader loader(outContent.data(), reflectionData);
 	auto& shaderStagesBitMask = reflectionData.shaderStagesBitMask;
 	size_t numShaderStages = reflectionData.numShaderStages;
 	std::vector<ShaderStageCreateInfo> shaderStages;
