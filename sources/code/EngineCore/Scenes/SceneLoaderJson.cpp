@@ -305,8 +305,6 @@ void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* me
 			break;
 	}
 
-	std::vector<GenericAssetReference>* ar = (std::vector<GenericAssetReference>*)memberPtr;
-
 	for (
 		rapidjson::Value* elementIterator = srcArray.Begin();
 		elementIterator != srcArray.End();
@@ -320,6 +318,4 @@ void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* me
 
 		elementPtr = (char*)elementPtr + elementSize;
 	}
-
-	std::cout << ar->size() << std::endl;
 }

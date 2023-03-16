@@ -11,7 +11,7 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid) {
 	char* fileContents;
 	size_t fileSize;
 
-	if (EngineCore::GetInstance().assetManager->LoadFile(uuid, fileContents, fileSize)) {
+	if (!EngineCore::GetInstance().assetManager->LoadFile(uuid, fileContents, fileSize)) {
 		return nullptr;
 	}
 
