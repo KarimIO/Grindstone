@@ -95,10 +95,11 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 
 				// TODO: Handle if texture isn't set
 				TextureAsset* textureAsset = assetManager->GetAsset<TextureAsset>(textureUuid);
-
-				GraphicsAPI::SingleTextureBind& stb = textureBinds[i];
-				stb.texture = textureAsset->texture;
-				stb.address = textures[i].bindingId;
+				if (textureAsset != nullptr) {
+					GraphicsAPI::SingleTextureBind& stb = textureBinds[i];
+					stb.texture = textureAsset->texture;
+					stb.address = textures[i].bindingId;
+				}
 			}
 		}
 

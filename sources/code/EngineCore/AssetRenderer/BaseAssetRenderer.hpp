@@ -16,7 +16,7 @@ namespace Grindstone {
 	class BaseAssetRenderer {
 	public:
 		void AddShaderToRenderQueue(ShaderAsset* shader) {
-			const char* renderQueue = "Opaque"; //shader->reflectionData.renderQueue.c_str();
+			const char* renderQueue = shader->reflectionData.renderQueue.c_str();
 			renderQueues[renderQueue].shaders.push_back(shader);
 		}
 		void AddQueue(const char* name);

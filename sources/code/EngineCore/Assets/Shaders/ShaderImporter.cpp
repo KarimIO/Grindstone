@@ -148,6 +148,7 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	auto shader = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	auto asset = shaders.emplace(uuid, ShaderAsset(uuid, debugName, shader));
 	auto& shaderAsset = asset.first->second;
+	shaderAsset.reflectionData = reflectionData;
 	shaderAsset.textureBindingLayout = textureBindingLayout;
 
 	// TODO: Save compiled shader into ShaderCache
