@@ -4,6 +4,8 @@
 #include <vector>
 #include <map>
 
+#include "EngineCore/Assets/Shaders/ShaderAsset.hpp"
+
 namespace Grindstone {
 	struct ShaderAsset;
 
@@ -13,7 +15,10 @@ namespace Grindstone {
 
 	class BaseAssetRenderer {
 	public:
-		void AddShaderToRenderQueue(ShaderAsset* shader);
+		void AddShaderToRenderQueue(ShaderAsset* shader) {
+			const char* renderQueue = "Opaque"; //shader->reflectionData.renderQueue.c_str();
+			renderQueues[renderQueue].shaders.push_back(shader);
+		}
 		void AddQueue(const char* name);
 		void RenderQueue(const char* name);
 	private:

@@ -68,13 +68,13 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	fileData.resize(numShaderStages);
 	size_t fileDataIterator = 0;
 
-	std::string basePath = EngineCore::GetInstance().GetAssetsPath().string();
+	std::string basePath = EngineCore::GetInstance().GetAssetsPath().string() + uuid.ToString();
 
 	for (
 		ShaderStage stage = ShaderStage::Vertex;
 		stage < ShaderStage::Compute;
 		stage = (ShaderStage)((uint8_t)stage + 1)
-		) {
+	) {
 		uint8_t stageBit = (1 << (uint8_t)stage);
 		if ((stageBit & shaderStagesBitMask) != stageBit) {
 			continue;

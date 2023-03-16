@@ -1,4 +1,5 @@
 #include "EngineCore/Reflection/ComponentReflection.hpp"
+#include "EngineCore/EngineCore.hpp"
 #include "MeshRendererComponent.hpp"
 using namespace Grindstone;
 

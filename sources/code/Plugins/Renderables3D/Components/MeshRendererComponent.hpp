@@ -6,6 +6,8 @@
 #include "EngineCore/Assets/Materials/MaterialAsset.hpp"
 
 namespace Grindstone {
+	class EngineCore;
+
 	struct MeshRendererComponent {
 		std::vector<AssetReference<MaterialAsset>> materials;
 

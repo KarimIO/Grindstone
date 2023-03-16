@@ -37,7 +37,7 @@ GraphicsAPI::VertexBuffer* LoadVertexBufferVec(
 	return graphicsCore->CreateVertexBuffer(vertexBufferCreateInfo);
 }
 
-Mesh3dImporter::Mesh3dImporter() {
+Mesh3dImporter::Mesh3dImporter(EngineCore* engineCore) : engineCore(engineCore) {
 	PrepareLayouts();
 }
 
@@ -244,5 +244,3 @@ void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
 
 	return &mesh;
 }
-
-EngineCore* Mesh3dImporter::engineCore;

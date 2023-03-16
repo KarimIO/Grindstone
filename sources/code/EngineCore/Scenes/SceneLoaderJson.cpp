@@ -236,10 +236,11 @@ void SceneLoaderJson::ParseMember(
 }
 
 template<typename T>
-inline size_t SetupArray(void* memberPtr, size_t arraySize) {
+inline void SetupArray(void* memberPtr, size_t arraySize, void*& elementPtr, size_t& elementSize) {
 	std::vector<T>& vector = *(std::vector<T>*)memberPtr;
-	vector.reserve(arraySize);
-	return sizeof(T);
+	vector.resize(arraySize);
+	elementSize = sizeof(T);
+	elementPtr = (void*)&vector[0];
 }
 
 void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* member, rapidjson::Value& parameter) {
@@ -247,65 +248,64 @@ void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* me
 	auto srcArray = parameter.GetArray();
 	size_t elementSize = 0;
 	size_t arraySize = static_cast<size_t>(srcArray.Size());
+	void* elementPtr = nullptr;
 
-	switch (member->type) {
+	switch (vectorTypeDescriptor->itemType->type) {
 		case ReflectionTypeData::Struct: break;
 		case ReflectionTypeData::AssetReference:
-			elementSize = SetupArray<GenericAssetReference>(memberPtr, arraySize);
+			SetupArray<GenericAssetReference>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Bool:
-			elementSize = SetupArray<bool>(memberPtr, arraySize);
+			SetupArray<bool>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Quaternion:
-			elementSize = SetupArray<Math::Quaternion>(memberPtr, arraySize);
+			SetupArray<Math::Quaternion>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::String:
-			elementSize = SetupArray<std::string>(memberPtr, arraySize);
+			SetupArray<std::string>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Vector:
-			elementSize = SetupArray<std::vector<char>>(memberPtr, arraySize);
+			SetupArray<std::vector<char>>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Double:
-			elementSize = SetupArray<Math::Double>(memberPtr, arraySize);
+			SetupArray<Math::Double>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Double2:
-			elementSize = SetupArray<Math::Double2>(memberPtr, arraySize);
+			SetupArray<Math::Double2>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Double3:
-			elementSize = SetupArray<Math::Double3>(memberPtr, arraySize);
+			SetupArray<Math::Double3>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Double4:
-			elementSize = SetupArray<Math::Double4>(memberPtr, arraySize);
+			SetupArray<Math::Double4>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Int:
-			elementSize = SetupArray<Math::Int>(memberPtr, arraySize);
+			SetupArray<Math::Int>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Int2:
-			elementSize = SetupArray<Math::Int2>(memberPtr, arraySize);
+			SetupArray<Math::Int2>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Int3:
-			elementSize = SetupArray<Math::Int3>(memberPtr, arraySize);
+			SetupArray<Math::Int3>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Int4:
-			elementSize = SetupArray<Math::Int4>(memberPtr, arraySize);
+			SetupArray<Math::Int4>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Float:
-			elementSize = SetupArray<Math::Float>(memberPtr, arraySize);
+			SetupArray<Math::Float>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Float2:
-			elementSize = SetupArray<Math::Float2>(memberPtr, arraySize);
+			SetupArray<Math::Float2>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Float3:
-			elementSize = SetupArray<Math::Float3>(memberPtr, arraySize);
+			SetupArray<Math::Float3>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Float4:
-			elementSize = SetupArray<Math::Float4>(memberPtr, arraySize);
+			SetupArray<Math::Float4>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 	}
 
-	// Cast to a char even if it's not a char, we just want the dataPtr.
-	std::vector<char>& vector = *(std::vector<char>*)memberPtr;
-	char* elementPtr = vector.data();
+	std::vector<GenericAssetReference>* ar = (std::vector<GenericAssetReference>*)memberPtr;
 
 	for (
 		rapidjson::Value* elementIterator = srcArray.Begin();
@@ -313,11 +313,13 @@ void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* me
 		++elementIterator
 	) {
 		ParseMember(
-			memberPtr,
+			elementPtr,
 			vectorTypeDescriptor->itemType,
 			*elementIterator
 		);
 
-		elementPtr += elementSize;
+		elementPtr = (char*)elementPtr + elementSize;
 	}
+
+	std::cout << ar->size() << std::endl;
 }

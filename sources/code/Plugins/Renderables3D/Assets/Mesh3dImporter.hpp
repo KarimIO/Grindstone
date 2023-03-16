@@ -13,7 +13,7 @@ namespace Grindstone {
 
 	class Mesh3dImporter : public AssetImporter {
 		public:
-			Mesh3dImporter();
+			Mesh3dImporter(EngineCore* engineCore);
 			virtual void* ProcessLoadedFile(Uuid uuid) override;
 			virtual bool TryGetIfLoaded(Uuid uuid, void*& output) override;
 			void PrepareLayouts();
@@ -37,7 +37,7 @@ namespace Grindstone {
 				GraphicsAPI::IndexBuffer*& indexBuffer
 			);
 		public:
-			static EngineCore* engineCore;
+			EngineCore* engineCore;
 		private:
 			std::map<Uuid, Mesh3dAsset> meshes;
 			struct VertexLayouts {

@@ -32,15 +32,15 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	}
 
 	Uuid shaderUuid(document["shader"].GetString());
-	ShaderAsset& shaderAsset = assetManager->GetAsset<ShaderAsset>(shaderUuid);
-	shaderAsset.materials.emplace_back(MaterialAsset(uuid, name, &shaderAsset));
-	MaterialAsset& materialAsset = *shaderAsset.materials.end();
+	ShaderAsset* shaderAsset = assetManager->GetAsset<ShaderAsset>(shaderUuid);
+	shaderAsset->materials.emplace_back(MaterialAsset(uuid, name, shaderAsset));
+	MaterialAsset* materialAsset = &shaderAsset->materials[shaderAsset->materials.size() - 1];
 
 	GraphicsAPI::UniformBufferBinding* uniformBufferBinding = nullptr;
 	GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
 	char* bufferSpace = nullptr;
 
-	auto& uniformBuffers = shaderAsset.reflectionData.uniformBuffers;
+	auto& uniformBuffers = shaderAsset->reflectionData.uniformBuffers;
 	for (auto& uniformBuffer : uniformBuffers) {
 		if (uniformBuffer.name != "MaterialUbo") {
 			continue;
@@ -81,7 +81,7 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	}
 
 	GraphicsAPI::TextureBinding* textureBinding = nullptr;
-	auto& textures = shaderAsset.reflectionData.textures;
+	auto& textures = shaderAsset->reflectionData.textures;
 	bool hasSamplers = document.HasMember("samplers");
 	if (textures.size() > 0 && hasSamplers) {
 		auto& samplersJson = document["samplers"];
@@ -94,10 +94,10 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 				Uuid textureUuid(textureUuidAsString);
 
 				// TODO: Handle if texture isn't set
-				TextureAsset& textureAsset = assetManager->GetAsset<TextureAsset>(textureUuid);
+				TextureAsset* textureAsset = assetManager->GetAsset<TextureAsset>(textureUuid);
 
 				GraphicsAPI::SingleTextureBind& stb = textureBinds[i];
-				stb.texture = textureAsset.texture;
+				stb.texture = textureAsset->texture;
 				stb.address = textures[i].bindingId;
 			}
 		}
@@ -105,17 +105,17 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 		GraphicsAPI::TextureBinding::CreateInfo textureBindingCreateInfo{};
 		textureBindingCreateInfo.textures = textureBinds.data();
 		textureBindingCreateInfo.textureCount = textureBinds.size();
-		textureBindingCreateInfo.layout = shaderAsset.textureBindingLayout;
+		textureBindingCreateInfo.layout = shaderAsset->textureBindingLayout;
 		textureBinding = graphicsCore->CreateTextureBinding(textureBindingCreateInfo);
 		graphicsCore->BindTexture(textureBinding);
 	}
 
-	materialAsset.textureBinding = textureBinding;
-	materialAsset.uniformBufferBinding = uniformBufferBinding;
-	materialAsset.uniformBufferObject = uniformBufferObject;
-	materialAsset.buffer = bufferSpace;
+	materialAsset->textureBinding = textureBinding;
+	materialAsset->uniformBufferBinding = uniformBufferBinding;
+	materialAsset->uniformBufferObject = uniformBufferObject;
+	materialAsset->buffer = bufferSpace;
 
-	return &materialAsset;
+	return materialAsset;
 }
 
 bool MaterialImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
