@@ -139,7 +139,7 @@ void Mesh3dImporter::LoadMeshImportSubmeshes(Mesh3dAsset& mesh, Formats::Model::
 		dst.baseVertex = src.baseVertex;
 		dst.indexCount = src.indexCount;
 		dst.materialIndex = src.materialIndex;
-		dst.vertexArrayObject = mesh.vertexArrayObject;
+		dst.vertexArrayObject = nullptr;
 	}
 
 	sourcePtr += header.meshCount * sizeof(SourceSubmesh);
@@ -229,6 +229,7 @@ void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
 	Mesh3dAsset& mesh = meshIterator.first->second;
 
 	Mesh3dAsset* meshAsset = nullptr;
+	LoadMeshImportSubmeshes(mesh, header, srcPtr);
 	LoadMeshImportVertices(mesh, header, srcPtr, vertexBuffers);
 	LoadMeshImportIndices(mesh, header, srcPtr, indexBuffer);
 
@@ -240,7 +241,11 @@ void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
 	vaoCi.vertexBuffers = vertexBuffers.data();
 	vaoCi.vertexBufferCount = vertexBuffers.size();
 	mesh.vertexArrayObject = graphicsCore->CreateVertexArrayObject(vaoCi);
-	LoadMeshImportSubmeshes(mesh, header, srcPtr);
+
+	for (size_t i = 0; i < mesh.submeshes.size(); ++i)
+	{
+		mesh.submeshes[i].vertexArrayObject = mesh.vertexArrayObject;
+	}
 
 	return &mesh;
 }
