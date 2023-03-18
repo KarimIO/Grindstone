@@ -7,6 +7,7 @@
 #include "DeferredRenderer.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "EngineCore/EngineCore.hpp"
+#include "EngineCore/Assets/AssetManager.hpp"
 #include "EngineCore/Assets/Shaders/ShaderImporter.hpp"
 #include "EngineCore/Assets/Materials/MaterialImporter.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
@@ -212,9 +213,9 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	litHdrFramebufferCreateInfo.renderPass = mainRenderPass;
 	litHdrFramebuffer = core->CreateFramebuffer(litHdrFramebufferCreateInfo);
 	
-	// auto shaderManager = EngineCore::GetInstance().shaderImporter;
-	// lightPipeline = shaderManager->LoadShader(nullptr, "5537b925-96bc-4e1f-8e2a-d66d6dd9bed1").pipeline;
-	// tonemapPipeline = shaderManager->LoadShader(nullptr, "30e9223e-1753-4a7a-acac-8488c75bb1ef").pipeline;
+	auto assetManager = EngineCore::GetInstance().assetManager;
+	lightPipeline = assetManager->GetAsset<ShaderAsset>(Uuid("5537b925-96bc-4e1f-8e2a-d66d6dd9bed1"))->pipeline;
+	tonemapPipeline = assetManager->GetAsset<ShaderAsset>(Uuid("30e9223e-1753-4a7a-acac-8488c75bb1ef"))->pipeline;
 }
 
 void DeferredRenderer::RenderLights(entt::registry& registry) {
