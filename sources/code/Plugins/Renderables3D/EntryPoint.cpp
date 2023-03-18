@@ -12,15 +12,34 @@
 using namespace Grindstone;
 
 Mesh3dRenderer* assetRenderer = nullptr;
+Mesh3dImporter* meshImporter = nullptr;
 
 void SetupMeshRendererComponent(ECS::Entity& entity, void* componentPtr) {
 	MeshRendererComponent* meshRenderer = (MeshRendererComponent*)componentPtr;
+
+	if (!entity.HasComponent<MeshComponent>()) {
+		return;
+	}
+
+	MeshComponent& meshComponent = entity.GetComponent<MeshComponent>();
+	Mesh3dAsset* meshAsset = static_cast<Mesh3dAsset*>(meshComponent.mesh.asset);
+
+	if (meshAsset == nullptr) {
+		return;
+	}
+
+	auto& submeshes = meshAsset->submeshes;
 
 	for (size_t i = 0; i < meshRenderer->materials.size(); ++i) {
 		MaterialAsset* materialAsset = static_cast<MaterialAsset*>(meshRenderer->materials[i].asset);
 		ShaderAsset* shaderAsset = materialAsset->shaderAsset;
 		assetRenderer->AddShaderToRenderQueue(shaderAsset);
-		materialAsset->renderables.emplace_back(entity, componentPtr);
+	}
+
+	for (size_t i = 0; i < submeshes.size(); ++i) {
+		int materialIndex = submeshes[i].materialIndex;
+		MaterialAsset* materialAsset = static_cast<MaterialAsset*>(meshRenderer->materials[materialIndex].asset);
+		materialAsset->renderables.emplace_back(entity, &submeshes[i]);
 	}
 }
 
@@ -28,7 +47,7 @@ extern "C" {
 	RENDERABLES_3D_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
 		EngineCore* engineCore = pluginInterface->GetEngineCore();
 		assetRenderer = new Mesh3dRenderer(pluginInterface->GetGraphicsCore());
-		Mesh3dImporter* meshImporter = new Mesh3dImporter(engineCore);
+		meshImporter = new Mesh3dImporter(engineCore);
 
 		pluginInterface->RegisterComponent<MeshComponent>();
 		pluginInterface->RegisterComponent<MeshRendererComponent>(SetupMeshRendererComponent);

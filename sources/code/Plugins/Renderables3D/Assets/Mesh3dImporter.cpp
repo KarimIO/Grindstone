@@ -228,7 +228,6 @@ void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
 	auto& meshIterator = meshes.emplace(uuid, Mesh3dAsset(uuid, uuid.ToString()));
 	Mesh3dAsset& mesh = meshIterator.first->second;
 
-	Mesh3dAsset* meshAsset = nullptr;
 	LoadMeshImportSubmeshes(mesh, header, srcPtr);
 	LoadMeshImportVertices(mesh, header, srcPtr, vertexBuffers);
 	LoadMeshImportIndices(mesh, header, srcPtr, indexBuffer);
