@@ -187,7 +187,7 @@ void ModelImporter::ProcessNodeTree(aiNode* node, uint16_t parentIndex) {
 
 	uint16_t currentBone = outputData.boneCount++;
 	auto boneOffsetMatrixIterator = tempOffsetMatrices.find(name);
-	bool isBone = boneOffsetMatrixIterator == tempOffsetMatrices.end();
+	bool isBone = boneOffsetMatrixIterator != tempOffsetMatrices.end();
 	if (isBone) {
 		glm::mat4 inverseMatrix = glm::inverse(AiMatToGlm(node->mTransformation));
 		glm::mat4& offsetMatrix = boneOffsetMatrixIterator->second;
