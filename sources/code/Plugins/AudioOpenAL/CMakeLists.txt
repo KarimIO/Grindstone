@@ -1,5 +1,5 @@
-set(AUDIO_OPENAL_SOURCES Core.cpp Source.cpp Clip.cpp EntryPoint.cpp)
-set(AUDIO_OPENAL_HEADERS Core.hpp Source.hpp Clip.hpp)
+set(AUDIO_OPENAL_SOURCES Core.cpp Source.cpp AudioClipImporter.cpp EntryPoint.cpp ../../Common/ResourcePipeline/Uuid.cpp)
+set(AUDIO_OPENAL_HEADERS Core.hpp Source.hpp AudioClipImporter.hpp AudioClip.hpp)
 
 file(GLOB_RECURSE AUDIO_OPENAL_COMPONENTS_SOURCES "Components/*.cpp")
 file(GLOB_RECURSE AUDIO_OPENAL_COMPONENTS_HEADER "Components/*.hpp")
@@ -29,4 +29,8 @@ target_include_directories(PluginAudioOpenAL PUBLIC ${CODE_DIR} ${ENTT_INCLUDE_D
 
 target_precompile_headers(PluginAudioOpenAL PUBLIC pch.hpp)
 
-target_link_libraries(PluginAudioOpenAL fmt::fmt OpenAL::OpenAL)
+target_link_libraries(PluginAudioOpenAL
+	fmt::fmt
+	OpenAL::OpenAL
+	Rpcrt4.lib
+)

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Clip.hpp"
+#include "AudioClip.hpp"
 #include "al.h"
 #include "alc.h"
 
@@ -13,7 +13,7 @@ namespace Grindstone {
 				float pitch = 1.f;
 				float position[3];
 				float velocity[3];
-				Audio::Clip* audioClip = nullptr;
+				Audio::AudioClipAsset* audioClip = nullptr;
 				bool isLooping = false;
 			};
 		public:
@@ -26,7 +26,7 @@ namespace Grindstone {
 			void SetPitch(float pitch);
 			void SetPosition(float x, float y, float z);
 			void SetVelocity(float x, float y, float z);
-			void SetBuffer(Audio::Clip* audioClip);
+			void SetBuffer(Audio::AudioClipAsset* audioClip);
 			void SetIsLooping(bool isLooping);
 			bool IsPlaying();
 		private:

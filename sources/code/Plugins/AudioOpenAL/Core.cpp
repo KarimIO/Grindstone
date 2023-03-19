@@ -65,10 +65,6 @@ void Core::SetEngineCorePtr(EngineCore* engineCore) {
 	this->engineCore = engineCore;
 }
 
-std::filesystem::path Core::GetAssetPath(std::string filename) {
-	return engineCore->GetAssetPath(filename);
-}
-
 Core& Core::GetInstance() {
 	static Core instance;
 	return instance;
@@ -89,10 +85,6 @@ bool Core::GetAvailableDevices(std::vector<std::string>& devicesVec, ALCdevice* 
 	} while (*(ptr + 1) != '\0');
 
 	return true;
-}
-
-Clip* Core::CreateClip(const char* path) {
-	return new Audio::Clip(path);
 }
 
 Source* Core::CreateSource(Audio::Source::CreateInfo& createInfo) {

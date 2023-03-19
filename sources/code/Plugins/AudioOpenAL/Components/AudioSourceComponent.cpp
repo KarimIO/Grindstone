@@ -16,11 +16,12 @@ void Grindstone::SetupAudioSourceComponent(ECS::Entity& entity, void* componentP
 
 	auto audioSource = (AudioSourceComponent*)componentPtr;
 
-	std::string path = core.GetAssetPath(audioSource->audioClip).string();
-	Audio::Clip* clip = core.CreateClip(path.c_str());
+	if (audioSource->audioClip.asset == nullptr) {
+		return;
+	}
 
 	Audio::Source::CreateInfo audioSourceCreateInfo{};
-	audioSourceCreateInfo.audioClip = clip;
+	audioSourceCreateInfo.audioClip = static_cast<Audio::AudioClipAsset*>(audioSource->audioClip.asset);
 	audioSourceCreateInfo.isLooping = audioSource->isLooping;
 	audioSourceCreateInfo.volume = audioSource->volume;
 	audioSourceCreateInfo.pitch = audioSource->pitch;
