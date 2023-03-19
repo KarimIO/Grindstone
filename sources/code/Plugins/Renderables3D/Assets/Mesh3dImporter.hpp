@@ -19,6 +19,7 @@ namespace Grindstone {
 			void PrepareLayouts();
 			virtual void DecrementMeshCount(ECS::Entity entity, Uuid uuid);
 		private:
+			uint64_t GetTotalFileSize(Formats::Model::V1::Header& header);
 			void LoadMeshImportSubmeshes(
 				Mesh3dAsset& mesh,
 				Formats::Model::V1::Header& header,

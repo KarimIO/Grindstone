@@ -16,6 +16,7 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 
 	std::string contentData;
 	if (!assetManager->LoadFileText(uuid, contentData)) {
+		EngineCore::GetInstance().Print(LogSeverity::Error, "Could not find material by file.");
 		return nullptr;
 	}
 
@@ -23,16 +24,24 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	document.Parse(contentData.data());
 
 	if (!document.HasMember("name")) {
-		throw std::runtime_error("No name found in material.");
+		EngineCore::GetInstance().Print(LogSeverity::Error, "No name found in material.");
+		return nullptr;
 	}
 	const char* name = document["name"].GetString();
 
 	if (!document.HasMember("shader")) {
-		throw std::runtime_error("No shader found in material.");
+		EngineCore::GetInstance().Print(LogSeverity::Error, "No shader found in material.");
+		return nullptr;
 	}
 
 	Uuid shaderUuid(document["shader"].GetString());
 	ShaderAsset* shaderAsset = assetManager->GetAsset<ShaderAsset>(shaderUuid);
+
+	if (shaderAsset == nullptr) {
+		EngineCore::GetInstance().Print(LogSeverity::Error, "Failed to load shader.");
+		return nullptr;
+	}
+
 	shaderAsset->materials.emplace_back(MaterialAsset(uuid, name, shaderAsset));
 	MaterialAsset* materialAsset = &shaderAsset->materials[shaderAsset->materials.size() - 1];
 

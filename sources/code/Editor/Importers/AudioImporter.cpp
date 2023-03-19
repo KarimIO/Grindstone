@@ -1,6 +1,7 @@
 #include "AudioImporter.hpp"
 #include "Common/ResourcePipeline/MetaFile.hpp"
 #include "Common/ResourcePipeline/Uuid.hpp"
+#include "Editor/EditorManager.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::Importers;
@@ -10,7 +11,8 @@ void AudioImporter::Import(std::filesystem::path& path) {
 	std::string subassetName = "audioClip";
 	Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
 
-	std::filesystem::copy(path, std::string("../compiledAssets/") + uuid.ToString(), std::filesystem::copy_options::overwrite_existing);
+	std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
+	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
 	metaFile->Save();
 }
 

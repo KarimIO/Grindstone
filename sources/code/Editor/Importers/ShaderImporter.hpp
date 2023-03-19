@@ -80,7 +80,7 @@ namespace Grindstone {
 				const char* GetShaderTypeAsString(ShaderType);
 		private:
 				std::filesystem::path inputPath;
-				std::string basePath;
+				std::string baseOutputPath;
 				std::string shaderName;
 				std::string renderQueue;
 				std::string sourceFileContents;

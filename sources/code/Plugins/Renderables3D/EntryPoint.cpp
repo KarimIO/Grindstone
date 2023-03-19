@@ -30,16 +30,29 @@ void SetupMeshRendererComponent(ECS::Entity& entity, void* componentPtr) {
 
 	auto& submeshes = meshAsset->submeshes;
 
+	if (meshRenderer->materials.size() == 0) {
+		return;
+	}
+
 	for (size_t i = 0; i < meshRenderer->materials.size(); ++i) {
 		MaterialAsset* materialAsset = static_cast<MaterialAsset*>(meshRenderer->materials[i].asset);
 		ShaderAsset* shaderAsset = materialAsset->shaderAsset;
-		assetRenderer->AddShaderToRenderQueue(shaderAsset);
+		if (materialAsset && shaderAsset) {
+			assetRenderer->AddShaderToRenderQueue(shaderAsset);
+		}
 	}
 
 	for (size_t i = 0; i < submeshes.size(); ++i) {
 		int materialIndex = submeshes[i].materialIndex;
+
+		if (materialIndex > meshRenderer->materials.size()) {
+			materialIndex = 0;
+		}
+
 		MaterialAsset* materialAsset = static_cast<MaterialAsset*>(meshRenderer->materials[materialIndex].asset);
-		materialAsset->renderables.emplace_back(entity, &submeshes[i]);
+		if (materialAsset != nullptr) {
+			materialAsset->renderables.emplace_back(entity, &submeshes[i]);
+		}
 	}
 }
 

@@ -51,6 +51,8 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 
 	std::string outContent;
 	if (!assetManager->LoadFileText(uuid, outContent)) {
+		std::string errorMsg = uuid.ToString() + " shader reflection file not found.";
+		EngineCore::GetInstance().Print(LogSeverity::Error, errorMsg.c_str());
 		return nullptr;
 	}
 
@@ -85,7 +87,9 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 		stageCreateInfo.fileName = path.c_str();
 
 		if (!std::filesystem::exists(path)) {
-			throw std::runtime_error(path + " shader not found.");
+			std::string errorMsg = path + " shader not found.";
+			EngineCore::GetInstance().Print(LogSeverity::Error, errorMsg.c_str());
+			return nullptr;
 		}
 
 		fileData[fileDataIterator] = Utils::LoadFile(path.c_str());

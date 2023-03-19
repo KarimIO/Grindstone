@@ -214,8 +214,21 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	litHdrFramebuffer = core->CreateFramebuffer(litHdrFramebufferCreateInfo);
 	
 	auto assetManager = EngineCore::GetInstance().assetManager;
-	lightPipeline = assetManager->GetAsset<ShaderAsset>(Uuid("5537b925-96bc-4e1f-8e2a-d66d6dd9bed1"))->pipeline;
-	tonemapPipeline = assetManager->GetAsset<ShaderAsset>(Uuid("30e9223e-1753-4a7a-acac-8488c75bb1ef"))->pipeline;
+	ShaderAsset* lightShaderAsset = assetManager->GetAsset<ShaderAsset>(Uuid("5537b925-96bc-4e1f-8e2a-d66d6dd9bed1"));
+	if (lightShaderAsset == nullptr) {
+		EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load point light shader.");
+	}
+	else {
+		lightPipeline = lightShaderAsset->pipeline;
+	}
+
+	ShaderAsset* tonemapShaderAsset = assetManager->GetAsset<ShaderAsset>(Uuid("30e9223e-1753-4a7a-acac-8488c75bb1ef"));
+	if (tonemapShaderAsset == nullptr) {
+		EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load tonemap shader.");
+	}
+	else {
+		tonemapPipeline = tonemapShaderAsset->pipeline;
+	}
 }
 
 void DeferredRenderer::RenderLights(entt::registry& registry) {

@@ -22,6 +22,7 @@ namespace Grindstone {
 					bool hasVertexNormals = false;
 					bool hasVertexTangents = false;
 					uint32_t vertexUvSetCount = 0;
+					int numWeightPerBone = 4;
 				};
 			}
 		}

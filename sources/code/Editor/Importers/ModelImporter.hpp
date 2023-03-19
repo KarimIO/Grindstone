@@ -36,7 +36,7 @@ namespace Grindstone {
 			void ProcessNodeTree(aiNode* node, uint16_t parentIndex);
 			void ConvertMaterials();
 			std::filesystem::path GetTexturePath(aiMaterial* pMaterial, aiTextureType type);
-			void InitSubmeshes();
+			void InitSubmeshes(bool hasBones);
 			void ProcessVertices();
 			void PreprocessBones();
 			void ProcessVertexBoneWeights();
@@ -56,6 +56,7 @@ namespace Grindstone {
 			std::map<std::string, unsigned int> boneMapping;
 			const aiScene* scene;
 			bool hasExtraWeights = false;
+			bool isSkeletalMesh = false;
 
 			struct BoneData {
 				uint16_t parentIndex;

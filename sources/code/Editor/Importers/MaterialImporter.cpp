@@ -73,7 +73,8 @@ void MaterialImporter::Import(std::filesystem::path& path) {
 	std::string subassetName = "material";
 	uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
 
-	std::filesystem::copy(path, std::string("../compiledAssets/") + uuid.ToString(), std::filesystem::copy_options::overwrite_existing);
+	std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
+	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
 	metaFile->Save();
 }
 

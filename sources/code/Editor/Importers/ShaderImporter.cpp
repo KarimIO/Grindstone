@@ -5,6 +5,7 @@
 #include <spirv_glsl.hpp>
 #include "ShaderImporter.hpp"
 #include "Common/ResourcePipeline/MetaFile.hpp"
+#include "Editor/EditorManager.hpp"
 
 std::string GetDataTypeName(spirv_cross::SPIRType::BaseType type) {
 	switch (type) {
@@ -133,7 +134,7 @@ namespace Grindstone {
 			metaFile->Load(inputPath);
 			std::string subassetName = "shader";
 			Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
-			basePath = std::string("../compiledAssets/") + uuid.ToString();
+			baseOutputPath = (Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString()).string();
 
 			metaFile->Save();
 
@@ -406,7 +407,7 @@ namespace Grindstone {
 		}
 
 		void ShaderImporter::OutputStringToFile(const char* extension, const char* content) {
-			std::string outputFilename = basePath + extension;
+			std::string outputFilename = baseOutputPath + extension;
 			std::ofstream file(outputFilename);
 			file.write((const char*)content, strlen(content));
 			file.flush();
@@ -414,7 +415,7 @@ namespace Grindstone {
 		}
 
 		void ShaderImporter::OutputUint32ToFile(const char* extension, std::vector<uint32_t>& content) {
-			std::string outputFilename = basePath + extension;
+			std::string outputFilename = baseOutputPath + extension;
 			std::ofstream file(outputFilename, std::ios::out | std::ios::binary);
 			auto fileSize = sizeof(uint32_t) * content.size();
 			file.write((const char*)content.data(), fileSize);

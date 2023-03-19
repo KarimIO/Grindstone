@@ -48,6 +48,9 @@ void* AssetManager::GetAsset(AssetType assetType, Uuid uuid) {
 // This allows multiple files to be imported per asset, and allows different types of loading depending on the
 // asset, such as shaders loading from a file if it's not compiled yet, or loading a compiled shader if it is loaded
 bool Grindstone::Assets::AssetManager::LoadFile(Uuid uuid, char*& fileData, size_t& fileSize) {
+	fileData = nullptr;
+	fileSize = 0;
+
 	assetLoader->Load(uuid, fileData, fileSize);
 	return fileData != nullptr;
 }

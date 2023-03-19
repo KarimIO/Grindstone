@@ -206,21 +206,35 @@ void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
 	char* fileContent;
 	size_t fileSize;
 	if (!engineCore->assetManager->LoadFile(uuid, fileContent, fileSize)) {
+		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile Unable to load file with id " + uuid.ToString() + ".";
+		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
 		return nullptr;
 	}
 
 	auto graphicsCore = engineCore->GetGraphicsCore();
 	if (fileSize < 3 && strncmp("GMF", fileContent, 3) != 0) {
-		throw std::runtime_error("Mesh3dImporter::CreateMeshFromData GMF magic code wasn't matched.");
+		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile GMF magic code wasn't matched.";
+		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+		return nullptr;
 	}
+
 	Formats::Model::V1::Header header;
 	if (fileSize < (3 + sizeof(header))) {
-		throw std::runtime_error("Mesh3dImporter::CreateMeshFromData file not big enough to fit header.");
+		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile file not big enough to fit header.";
+		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+		return nullptr;
 	}
 	char* headerPtr = fileContent + 3;
 	header = *(Formats::Model::V1::Header*)headerPtr;
 
 	char* srcPtr = headerPtr + sizeof(header);
+
+	uint64_t totalFileExpectedSize = GetTotalFileSize(header);
+	if (totalFileExpectedSize > fileSize || header.totalFileSize > fileSize) {
+		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile file not big enough to fit all contents.";
+		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+		return nullptr;
+	}
 
 	std::vector<GraphicsAPI::VertexBuffer*> vertexBuffers;
 	GraphicsAPI::IndexBuffer* indexBuffer = nullptr;
@@ -247,4 +261,30 @@ void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
 	}
 
 	return &mesh;
+}
+
+uint64_t Mesh3dImporter::GetTotalFileSize(Formats::Model::V1::Header& header) {
+	uint64_t totalFileExpectedSize = 3 + sizeof(header);
+
+	if (header.hasVertexPositions) {
+		totalFileExpectedSize += header.vertexCount * 3 * sizeof(float);
+	}
+
+	if (header.hasVertexNormals) {
+		totalFileExpectedSize += header.vertexCount * 3 * sizeof(float);
+	}
+
+	if (header.hasVertexTangents) {
+		totalFileExpectedSize += header.vertexCount * 3 * sizeof(float);
+	}
+
+	totalFileExpectedSize += header.vertexCount * header.vertexUvSetCount * 2 * sizeof(float);
+
+	if (header.numWeightPerBone) {
+		totalFileExpectedSize += header.vertexCount * 4 * sizeof(float);
+	}
+
+	totalFileExpectedSize += header.indexCount * sizeof(uint16_t);
+
+	return totalFileExpectedSize;
 }
