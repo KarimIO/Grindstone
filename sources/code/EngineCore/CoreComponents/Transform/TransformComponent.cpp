@@ -17,7 +17,7 @@ extern "C" {
 		component.rotation = rotation;
 	}
 
-	ENGINE_CORE_API glm::vec3 TransformComponentGetPosition(TransformComponent& component) {
+	ENGINE_CORE_API Math::Float3 TransformComponentGetPosition(TransformComponent& component) {
 		return component.position;
 	}
 
@@ -25,12 +25,24 @@ extern "C" {
 		component.position = position;
 	}
 
-	ENGINE_CORE_API glm::vec3 TransformComponentGetScale(TransformComponent& component) {
+	ENGINE_CORE_API Math::Float3 TransformComponentGetScale(TransformComponent& component) {
 		return component.scale;
 	}
 
 	ENGINE_CORE_API void TransformComponentSetScale(TransformComponent& component, Math::Float3 scale) {
 		component.scale = scale;
+	}
+
+	ENGINE_CORE_API Math::Float3 TransformComponentGetForward(TransformComponent& component) {
+		return component.GetForward();
+	}
+
+	ENGINE_CORE_API Math::Float3 TransformComponentGetRight(TransformComponent& component) {
+		return component.GetRight();
+	}
+
+	ENGINE_CORE_API Math::Float3 TransformComponentGetUp(TransformComponent& component) {
+		return component.GetUp();
 	}
 }
 

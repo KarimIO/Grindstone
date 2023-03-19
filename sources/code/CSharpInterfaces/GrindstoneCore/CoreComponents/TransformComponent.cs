@@ -30,7 +30,32 @@ namespace Grindstone
 			set => TransformComponentSetScale(componentPtr, value);
 		}
 
+		public Float3 Forward
+		{
+			get => TransformComponentGetForward(componentPtr);
+		}
+
+		public Float3 Right
+		{
+			get => TransformComponentGetRight(componentPtr);
+		}
+
+		public Float3 Up
+		{
+			get => TransformComponentGetUp(componentPtr);
+		}
+
+
 		#region DllImports
+		[DllImport("EngineCore")]
+		static extern Float3 TransformComponentGetForward(System.IntPtr comp);
+
+		[DllImport("EngineCore")]
+		static extern Float3 TransformComponentGetRight(System.IntPtr comp);
+
+		[DllImport("EngineCore")]
+		static extern Float3 TransformComponentGetUp(System.IntPtr comp);
+
 		[DllImport("EngineCore")]
 		static extern Quaternion TransformComponentGetRotation(System.IntPtr comp);
 
