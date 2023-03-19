@@ -45,7 +45,7 @@ void SetupMeshRendererComponent(ECS::Entity& entity, void* componentPtr) {
 	for (size_t i = 0; i < submeshes.size(); ++i) {
 		int materialIndex = submeshes[i].materialIndex;
 
-		if (materialIndex > meshRenderer->materials.size()) {
+		if (materialIndex >= meshRenderer->materials.size()) {
 			materialIndex = 0;
 		}
 

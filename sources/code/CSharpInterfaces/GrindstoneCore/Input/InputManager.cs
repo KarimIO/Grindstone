@@ -18,11 +18,7 @@ namespace Grindstone.Input
 
 		public static Float2 MousePosition
 		{
-			get
-			{
-				InputManagerGetMousePos(out Float2 position);
-				return position;
-			}
+			get => InputManagerGetMousePos();
 			set => InputManagerSetMousePos(value);
 		}
 		#endregion
@@ -35,7 +31,7 @@ namespace Grindstone.Input
 		private static extern bool InputManagerIsMouseButtonDown(int mouseButton);
 
 		[DllImport("EngineCore")]
-		private static extern void InputManagerGetMousePos(out Float2 position);
+		private static extern Float2 InputManagerGetMousePos();
 
 		[DllImport("EngineCore")]
 		private static extern void InputManagerSetMousePos(Float2 mousePos);

@@ -14,49 +14,37 @@ namespace Grindstone
 
 		public Quaternion Rotation
 		{
-			get
-			{
-				TransformComponentGetRotation(componentPtr, out Quaternion rotation);
-				return rotation;
-			}
+			get => TransformComponentGetRotation(componentPtr);
 			set => TransformComponentSetRotation(componentPtr, value);
 		}
 
 		public Float3 Position
 		{
-			get
-			{
-				TransformComponentGetPosition(componentPtr, out Float3 pos);
-				return pos;
-			}
+			get => TransformComponentGetPosition(componentPtr);
 			set => TransformComponentSetPosition(componentPtr, value);
 		}
 
 		public Float3 Scale
 		{
-			get
-			{
-				TransformComponentGetScale(componentPtr, out Float3 scale);
-				return scale;
-			}
+			get => TransformComponentGetScale(componentPtr);
 			set => TransformComponentSetScale(componentPtr, value);
 		}
 
 		#region DllImports
 		[DllImport("EngineCore")]
-		static extern Quaternion TransformComponentGetRotation(System.IntPtr comp, out Quaternion rotation);
+		static extern Quaternion TransformComponentGetRotation(System.IntPtr comp);
 
 		[DllImport("EngineCore")]
 		static extern void TransformComponentSetRotation(System.IntPtr comp, Quaternion rotation);
 
 		[DllImport("EngineCore")]
-		static extern void TransformComponentGetPosition(System.IntPtr comp, out Float3 position);
+		static extern Float3 TransformComponentGetPosition(System.IntPtr comp);
 
 		[DllImport("EngineCore")]
 		static extern void TransformComponentSetPosition(System.IntPtr comp, Float3 position);
 
 		[DllImport("EngineCore")]
-		static extern Float3 TransformComponentGetScale(System.IntPtr comp, out Float3 scale);
+		static extern Float3 TransformComponentGetScale(System.IntPtr comp);
 
 		[DllImport("EngineCore")]
 		static extern void TransformComponentSetScale(System.IntPtr comp, Float3 scale);
