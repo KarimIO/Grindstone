@@ -437,7 +437,8 @@ void Win32Window::SetMousePos(unsigned int x, unsigned int y) {
 
 void Win32Window::GetMousePos(unsigned int& x, unsigned int& y) {
 	POINT point;
-	GetCursorPos(&point);
+	::GetCursorPos(&point);
+	::ScreenToClient(windowHandle, &point);
 
 	x = point.x;
 	y = point.y;
