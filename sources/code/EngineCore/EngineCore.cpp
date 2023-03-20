@@ -122,8 +122,13 @@ void EngineCore::UpdateWindows() {
 
 EngineCore::~EngineCore() {
 	Logger::Print("Closing...");
+	delete sceneManager;
 	delete componentRegistrar;
 	delete systemRegistrar;
+	delete eventDispatcher;
+	delete inputManager;
+	delete ecsCore;
+	delete pluginManager;
 	Logger::Print("Closed.");
 }
 
