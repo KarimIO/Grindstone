@@ -95,9 +95,7 @@ EngineCore& EngineCore::GetInstance() {
 }
 
 void EngineCore::Run() {
-	//while (!shouldClose) {
-	for (size_t i = 0; i < 80; ++i)
-	{
+	while (!shouldClose) {
 		RunLoopIteration();
 		UpdateWindows();
 	}

@@ -17,7 +17,10 @@ namespace Grindstone {
 	public:
 		void AddShaderToRenderQueue(ShaderAsset* shader) {
 			const char* renderQueue = shader->reflectionData.renderQueue.c_str();
-			renderQueues[renderQueue].shaders.push_back(shader);
+			auto& shaders = renderQueues[renderQueue].shaders;
+			if (std::find(shaders.begin(), shaders.end(), shader) == shaders.end()) {
+				shaders.push_back(shader);
+			}
 		}
 		void AddQueue(const char* name);
 		void RenderQueue(const char* name);
