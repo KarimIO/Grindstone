@@ -83,18 +83,15 @@ void* AudioClipImporter::ProcessLoadedFile(Uuid uuid) {
 
 	alBufferData(buffer, format, memoryBuffer, fileSize, sampleRate);
 
-	audioClips.emplace(
+	auto& asset = audioClips.emplace(
 		uuid,
 		AudioClipAsset(uuid, uuid.ToString(), buffer, channelCount, sampleRate, bitsPerSample)
 	);
 
-	size_t it = audioClips.size() - 1;
-	AudioClipAsset* asset = &audioClips.end()->second;
-
 	drwav_free(memoryBuffer, nullptr);
 	drwav_uninit(&wav);
 
-	return asset;
+	return &asset.first->second;
 }
 
 bool AudioClipImporter::TryGetIfLoaded(Uuid uuid, void*& audioClip) {
