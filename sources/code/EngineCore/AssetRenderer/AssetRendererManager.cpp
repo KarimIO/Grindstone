@@ -1,4 +1,5 @@
 #include "AssetRendererManager.hpp"
+#include "EngineCore/Profiling.hpp"
 using namespace Grindstone;
 
 void AssetRendererManager::AddAssetRenderer(BaseAssetRenderer* assetRenderer) {
@@ -18,6 +19,8 @@ void AssetRendererManager::AddQueue(const char* name) {
 }
 
 void AssetRendererManager::RenderQueue(const char* name) {
+	std::string profileScope = std::string("AssetRendererManager::RenderQueue(") + name + ")";
+	GRIND_PROFILE_SCOPE(profileScope.c_str());
 	for (BaseAssetRenderer* assetRenderer : assetRenderers) {
 		assetRenderer->RenderQueue(name);
 	}

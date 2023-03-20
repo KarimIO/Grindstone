@@ -6,7 +6,8 @@ using namespace Grindstone::Profiler;
 
 Manager::Manager() : currentSession(nullptr), profileCount(0) {}
 
-void Manager::BeginSession(const std::string& name, const std::string& filepath) {
+void Manager::BeginSession(const std::string& name, const std::filesystem::path filepath) {
+	std::filesystem::create_directories(filepath.parent_path());
 	outputStream.open(filepath);
 	WriteHeader();
 	currentSession = new InstrumentationSession{ name };

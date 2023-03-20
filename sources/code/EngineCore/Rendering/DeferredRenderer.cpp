@@ -14,6 +14,7 @@
 #include "EngineCore/CoreComponents/Lights/PointLightComponent.hpp"
 #include "EngineCore/AssetRenderer/AssetRendererManager.hpp"
 #include "Common/Event/WindowEvent.hpp"
+#include "EngineCore/Profiling.hpp"
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
@@ -232,6 +233,7 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 }
 
 void DeferredRenderer::RenderLights(entt::registry& registry) {
+	GRIND_PROFILE_FUNC();
 	if (lightPipeline == nullptr) {
 		return;
 	}
@@ -264,6 +266,7 @@ void DeferredRenderer::RenderLights(entt::registry& registry) {
 }
 
 void DeferredRenderer::PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer) {
+	GRIND_PROFILE_FUNC();
 	if (tonemapPipeline == nullptr) {
 		return;
 	}

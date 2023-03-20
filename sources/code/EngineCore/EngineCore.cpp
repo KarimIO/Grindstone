@@ -34,7 +34,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	firstFrameTime = std::chrono::steady_clock::now();
 
 	Logger::Initialize("../log/output.log");
-	GRIND_PROFILE_BEGIN_SESSION("Loading", "../log/grind-profile-load.json");
+	GRIND_PROFILE_BEGIN_SESSION("Grindstone Loading", projectPath / "log/grind-profile-load.json");
 	Logger::Print("Initializing {0}...", createInfo.applicationTitle);
 
 	systemRegistrar = new ECS::SystemRegistrar();
@@ -95,20 +95,26 @@ EngineCore& EngineCore::GetInstance() {
 }
 
 void EngineCore::Run() {
-	while (!shouldClose) {
+	//while (!shouldClose) {
+	for (size_t i = 0; i < 80; ++i)
+	{
 		RunLoopIteration();
 		UpdateWindows();
 	}
 }
 
 void EngineCore::RunEditorLoopIteration() {
+	GRIND_PROFILE_BEGIN_SESSION("Grindstone Running", projectPath / "log/grind-profile-run.json");
 	CalculateDeltaTime();
 	sceneManager->EditorUpdate();
+	GRIND_PROFILE_END_SESSION();
 }
 
 void EngineCore::RunLoopIteration() {
+	GRIND_PROFILE_BEGIN_SESSION("Grindstone Running", projectPath / "log/grind-profile-run.json");
 	CalculateDeltaTime();
 	sceneManager->Update();
+	GRIND_PROFILE_END_SESSION();
 }
 
 void EngineCore::UpdateWindows() {
@@ -200,6 +206,7 @@ bool EngineCore::OnForceQuit(Grindstone::Events::BaseEvent* ev) {
 }
 
 void EngineCore::CalculateDeltaTime() {
+	GRIND_PROFILE_FUNC();
 	auto now = std::chrono::steady_clock::now();
 
 	auto elapsedTimeSinceLastFrame = now - lastFrameTime;

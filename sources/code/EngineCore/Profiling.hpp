@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <chrono>
+#include <filesystem>
 
 namespace Grindstone {
 	namespace Profiler {
@@ -25,7 +26,7 @@ namespace Grindstone {
 			int profileCount;
 		public:
 			Manager();
-			void BeginSession(const std::string& name, const std::string& filepath = "results.json");
+			void BeginSession(const std::string& name, const std::filesystem::path filepath = "results.json");
 			void EndSession();
 			void WriteProfile(const Result& result);
 			void WriteHeader();
