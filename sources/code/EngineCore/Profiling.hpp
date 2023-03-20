@@ -11,7 +11,7 @@ namespace Grindstone {
 		struct Result {
 			std::string name;
 			long long start, end;
-			uint32_t threadID;
+			uint32_t threadId;
 		};
 
 		struct InstrumentationSession {
@@ -41,7 +41,7 @@ namespace Grindstone {
 			void Stop();
 		private:
 			const char* name;
-			std::chrono::time_point<std::chrono::high_resolution_clock> start_time_;
+			std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
 			bool stopped;
 		};
 	}

@@ -11,6 +11,7 @@ void Manager::BeginSession(const std::string& name, const std::filesystem::path 
 	outputStream.open(filepath);
 	WriteHeader();
 	currentSession = new InstrumentationSession{ name };
+	profileCount = 0;
 }
 
 void Manager::EndSession() {
@@ -30,26 +31,20 @@ void Manager::WriteProfile(const Result& result) {
 
 	long long duration = result.end - result.start;
 
-	outputStream << "\t\t{\n";
-	outputStream << "\t\t\t\"cat\":\"function\",\n";
-	outputStream << "\t\t\t\"dur\":" << duration << ",\n";
-	outputStream << "\t\t\t\"name\":\"" << name << "\",\n";
-	outputStream << "\t\t\t\"ph\":\"X\",\n";
-	outputStream << "\t\t\t\"pid\":0,\n";
-	outputStream << "\t\t\t\"tid\":" << result.threadID << ",\n";
-	outputStream << "\t\t\t\"ts\":" << result.start << "\n";
-	outputStream << "\t\t}\n";
+	outputStream << "{\"cat\":\"function\",\"dur\":" << duration
+		<< ",\"name\":\"" << name << "\",\"ph\":\"X\",\"pid\":0,\"tid\":" << result.threadId
+		<< ",\"ts\":" << result.start << "}";
 
 	outputStream.flush();
 }
 
 void Manager::WriteHeader() {
-	outputStream << "{\n\t\"otherData\": {},\n\t\"traceEvents\":[\n";
+	outputStream << "{\"otherData\":{},\"traceEvents\":[";
 	outputStream.flush();
 }
 
 void Manager::WriteFooter() {
-	outputStream << "\t]\n}\n";
+	outputStream << "]}";
 	outputStream.flush();
 }
 
@@ -59,7 +54,7 @@ Manager& Manager::Get() {
 }
 
 Timer::Timer(const char *name) : name(name), stopped(false) {
-	start_time_ = std::chrono::high_resolution_clock::now();
+	startTime = std::chrono::high_resolution_clock::now();
 }
 
 Timer::~Timer() {
@@ -70,7 +65,7 @@ Timer::~Timer() {
 void Timer::Stop() {
 	auto end_time = std::chrono::high_resolution_clock::now();
 
-	long long start = std::chrono::time_point_cast<std::chrono::microseconds>(start_time_).time_since_epoch().count();
+	long long start = std::chrono::time_point_cast<std::chrono::microseconds>(startTime).time_since_epoch().count();
 	long long end = std::chrono::time_point_cast<std::chrono::microseconds>(end_time).time_since_epoch().count();
 
 	uint32_t threadID = (uint32_t)std::hash<std::thread::id>{}(std::this_thread::get_id());
