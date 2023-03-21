@@ -129,7 +129,6 @@ EngineCore::~EngineCore() {
 	delete inputManager;
 	delete ecsCore;
 	delete pluginManager;
-	Logger::Print("Closed.");
 }
 
 void EngineCore::RegisterGraphicsCore(GraphicsAPI::Core* graphicsCore) {
