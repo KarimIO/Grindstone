@@ -124,6 +124,7 @@ namespace Grindstone {
 			case ShaderImporter::ShaderType::Compute: return shaderc_glsl_compute_shader;
 			case ShaderImporter::ShaderType::TesselationControl: return shaderc_glsl_tess_control_shader;
 			case ShaderImporter::ShaderType::TesselationEvaluation: return shaderc_glsl_tess_evaluation_shader;
+			default: throw std::runtime_error("Invalid Shader Type!");
 			}
 		}
 
@@ -306,6 +307,7 @@ namespace Grindstone {
 			case ShaderType::Compute: return ".comp";
 			case ShaderType::TesselationControl: return ".ctrl";
 			case ShaderType::TesselationEvaluation: return ".eval";
+			default: throw std::runtime_error("Invalid Shader Type!");
 			}
 		}
 		
@@ -317,6 +319,7 @@ namespace Grindstone {
 			case ShaderType::Compute: return "compute";
 			case ShaderType::TesselationControl: return "tesselationControl";
 			case ShaderType::TesselationEvaluation: return "tesselationEvaluation";
+			default: throw std::runtime_error("Invalid Shader Type!");
 			}
 		}
 
