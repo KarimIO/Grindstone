@@ -41,7 +41,7 @@ void Menubar::Render() {
 void Menubar::RenderFileMenu() {
 	auto& engineCore = Editor::Manager::GetEngineCore();
 	SceneManagement::Scene* scene = engineCore.GetSceneManager()->scenes.begin()->second;
-	bool doesSceneHavePath = scene && strlen(scene->GetPath());
+	bool doesSceneHavePath = scene && scene->GetPath() != nullptr && strlen(scene->GetPath()) > 0;
 
 	if (ImGui::MenuItem("New", "Ctrl+N", false)) {
 		OnNewFile();
