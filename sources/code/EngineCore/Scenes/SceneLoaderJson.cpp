@@ -246,6 +246,11 @@ inline void SetupArray(void* memberPtr, size_t arraySize, void*& elementPtr, siz
 void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* member, rapidjson::Value& parameter) {
 	Reflection::TypeDescriptor_StdVector* vectorTypeDescriptor = static_cast<Reflection::TypeDescriptor_StdVector*>(member);
 	auto srcArray = parameter.GetArray();
+
+	if (srcArray.Size() == 0) {
+		return;
+	}
+
 	size_t elementSize = 0;
 	size_t arraySize = static_cast<size_t>(srcArray.Size());
 	void* elementPtr = nullptr;
