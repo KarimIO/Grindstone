@@ -20,6 +20,12 @@ extern "C" {
 void SceneManager::LoadDefaultScene() {
 	BuildSettings::SceneBuildSettings settings; 
 	const char* defaultPath = settings.GetDefaultScene();
+
+	if (defaultPath == nullptr || strlen(defaultPath) == 0) {
+		CreateEmptyScene("Untitled Scene");
+		return;
+	}
+
 	LoadScene(defaultPath);
 }
 
