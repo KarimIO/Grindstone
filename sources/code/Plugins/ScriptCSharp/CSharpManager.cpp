@@ -49,7 +49,21 @@ void CSharpManager::Initialize(EngineCore* engineCore) {
 
 void CSharpManager::LoadAssembly(const char* path, AssemblyData& outAssemblyData) {
 	MonoAssembly* assembly = mono_domain_assembly_open(scriptDomain, path);
+
+	if (assembly == nullptr) {
+		std::string errorMsg = std::string("Could not load image from C# Assembly: ") + path;
+		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+		return;
+	}
+
 	MonoImage* image = mono_assembly_get_image(assembly);
+
+	if (assembly == nullptr) {
+		std::string errorMsg = std::string("Could not load image from C# Assembly: ") + path;
+		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+		return;
+	}
+
 	outAssemblyData.assembly = assembly;
 	outAssemblyData.image = image;
 }
@@ -102,6 +116,10 @@ ScriptClass* CSharpManager::SetupClass(const char* assemblyName, const char* nam
 
 	auto scriptImage = assemblyIterator->second.image;
 
+	if (scriptImage == nullptr) {
+		return nullptr;
+	}
+
 	ScriptClass* scriptClass = new ScriptClass();
 	auto& methods = scriptClass->methods;
 	MonoClass* monoClass = mono_class_from_name(scriptImage, namespaceName, className);
@@ -136,6 +154,10 @@ FUNCTION_CALL_LIST_IMPL(CallDeleteInAllComponents, CallDeleteInComponent, onDele
 
 
 void CSharpManager::CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset) {
+	if (scriptComponent.monoClass == nullptr) {
+		return;
+	}
+
 	MonoObject* exception = nullptr;
 	char* methodsPtr = (char*)&scriptComponent.monoClass->methods;
 	MonoMethod* targetMethod = *(MonoMethod**)(methodsPtr + fnOffset);
