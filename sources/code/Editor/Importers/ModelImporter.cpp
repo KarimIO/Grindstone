@@ -130,7 +130,7 @@ void ModelImporter::InitSubmeshes(bool hasBones) {
 	outputData.vertexArray.tangent.reserve(vertexCountSizeT * 3);
 	outputData.vertexArray.texCoordArray.resize(1);
 	outputData.vertexArray.texCoordArray[0].reserve(vertexCountSizeT * 2);
-	int boneWeightCount = hasBones
+	size_t boneWeightCount = hasBones
 		? vertexCountSizeT * NUM_BONES_PER_VERTEX
 		: 0;
 	outputData.vertexArray.boneIds.resize(boneWeightCount);
@@ -217,7 +217,7 @@ void ModelImporter::ProcessVertexBoneWeights() {
 				auto& weight = bone->mWeights[weightIterator];
 
 				auto vertexId = weight.mVertexId;
-				auto vertexWeight = weight.mWeight;
+				float vertexWeight = weight.mWeight;
 				AddBoneData(vertexId, boneId, vertexWeight);
 			}
 		}
@@ -243,7 +243,7 @@ void ModelImporter::NormalizeBoneWeights() {
 	}
 }
 
-void ModelImporter::AddBoneData(unsigned int vertexId, unsigned int boneId, unsigned int vertexWeight) {
+void ModelImporter::AddBoneData(unsigned int vertexId, unsigned int boneId, float vertexWeight) {
 	unsigned int baseIndex = vertexId * NUM_BONES_PER_VERTEX;
 	unsigned int lastIndex = baseIndex + NUM_BONES_PER_VERTEX;
 	for (unsigned int i = baseIndex; i < lastIndex; i++) {
@@ -277,17 +277,15 @@ void ModelImporter::ProcessAnimations() {
 		auto animation = scene->mAnimations[i];
 		std::string animationName(animation->mName.data);
 
-		float ticksPerSecond = animation->mTicksPerSecond != 0
+		double ticksPerSecond = animation->mTicksPerSecond != 0
 			? animation->mTicksPerSecond
 			: 25.0f;
-		float duration = animation->mDuration;
+		double duration = animation->mDuration;
 
 		Formats::Animation::V1::Header animationHeader;
-		animationHeader.animationDuration = animation->mDuration;
-		animationHeader.channelCount = animation->mNumChannels;
-		animationHeader.ticksPerSecond = animation->mTicksPerSecond != 0
-			? animation->mTicksPerSecond
-			: 25.0f;
+		animationHeader.animationDuration = duration;
+		animationHeader.channelCount = static_cast<uint16_t>(animation->mNumChannels);
+		animationHeader.ticksPerSecond = ticksPerSecond;
 
 		std::vector<Formats::Animation::V1::Channel> channels;
 		channels.resize(animation->mNumChannels);
@@ -324,15 +322,15 @@ void ModelImporter::ProcessAnimations() {
 
 				dstChannelData.positions.reserve(srcChannel->mNumPositionKeys);
 				for (unsigned int i = 0; i < srcChannel->mNumPositionKeys; ++i) {
-					float time = srcChannel->mPositionKeys[i].mTime;
+					double time = srcChannel->mPositionKeys[i].mTime;
 					aiVector3D& srcValue = srcChannel->mPositionKeys[i].mValue;
 					Math::Float3 value = Math::Float3(srcValue.x, srcValue.y, srcValue.z);
-					dstChannelData.positions.emplace_back(srcChannel->mPositionKeys[i].mTime, value);
+					dstChannelData.positions.emplace_back(time, value);
 				}
 
 				dstChannelData.rotations.reserve(srcChannel->mNumRotationKeys);
 				for (unsigned int i = 0; i < srcChannel->mNumRotationKeys; ++i) {
-					float time = srcChannel->mRotationKeys[i].mTime;
+					double time = srcChannel->mRotationKeys[i].mTime;
 					aiQuaternion& srcValue = srcChannel->mRotationKeys[i].mValue;
 					Math::Quaternion value = Math::Quaternion(srcValue.x, srcValue.y, srcValue.z, srcValue.w);
 					dstChannelData.rotations.emplace_back(time, value);
@@ -340,10 +338,10 @@ void ModelImporter::ProcessAnimations() {
 
 				dstChannelData.scales.reserve(srcChannel->mNumScalingKeys);
 				for (unsigned int i = 0; i < srcChannel->mNumScalingKeys; ++i) {
-					float time = srcChannel->mScalingKeys[i].mTime;
+					double time = srcChannel->mScalingKeys[i].mTime;
 					aiVector3D& srcValue = srcChannel->mScalingKeys[i].mValue;
 					Math::Float3 value = Math::Float3(srcValue.x, srcValue.y, srcValue.z);
-					dstChannelData.scales.emplace_back(srcChannel->mScalingKeys[i].mTime, value);
+					dstChannelData.scales.emplace_back(time, value);
 				}
 			}
 		}
@@ -412,7 +410,7 @@ void ModelImporter::OutputMeshes() {
 	auto meshCount = outputData.meshes.size();
 
 	Grindstone::Formats::Model::V1::Header outFormat;
-	outFormat.totalFileSize =
+	outFormat.totalFileSize = static_cast<uint32_t>(
 		3 +
 		sizeof(outFormat) + 
 		meshCount * sizeof(Submesh) +
@@ -420,7 +418,8 @@ void ModelImporter::OutputMeshes() {
 		outputData.vertexArray.normal.size() * sizeof(float) +
 		outputData.vertexArray.tangent.size() * sizeof(float) +
 		outputData.vertexArray.texCoordArray[0].size() * sizeof(float) +
-		outputData.indices.size() * sizeof(uint16_t);
+		outputData.indices.size() * sizeof(uint16_t)
+	);
 	outFormat.hasVertexPositions = true;
 	outFormat.hasVertexNormals = true;
 	outFormat.hasVertexTangents = true;
@@ -431,9 +430,10 @@ void ModelImporter::OutputMeshes() {
 	outFormat.meshCount = static_cast<uint32_t>(meshCount);
 
 	if (isSkeletalMesh) {
-		outFormat.totalFileSize +=
+		outFormat.totalFileSize += static_cast<uint32_t>(
 			outputData.vertexArray.boneIds.size() * sizeof(uint16_t) +
-			outputData.vertexArray.boneWeights.size() * sizeof(float);
+			outputData.vertexArray.boneWeights.size() * sizeof(float)
+		);
 	}
 
 	std::ofstream output(meshOutputPath, std::ios::binary);

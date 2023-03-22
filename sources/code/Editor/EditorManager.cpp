@@ -37,7 +37,7 @@ EngineCore& Manager::GetEngineCore() {
 	return *GetInstance().engineCore;
 }
 
-bool Manager::Initialize(const char* projectPath) {
+bool Manager::Initialize(std::filesystem::path projectPath) {
 	this->projectPath = projectPath;
 	assetsPath = this->projectPath / "assets";
 	compiledAssetsPath = this->projectPath / "compiledAssets";

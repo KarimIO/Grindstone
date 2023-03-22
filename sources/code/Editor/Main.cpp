@@ -12,8 +12,8 @@ extern "C" {
 	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 
-std::string FindFolder() {
-	std::string outString;
+std::filesystem::path FindFolder() {
+	std::filesystem::path outPath;
 
 	HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED |
 		COINIT_DISABLE_OLE1DDE);
@@ -50,7 +50,7 @@ std::string FindFolder() {
 					if (SUCCEEDED(hr))
 					{
 						std::wstring tempWStr(pszFilePath);
-						outString = std::string(tempWStr.begin(), tempWStr.end());
+						outPath = std::filesystem::path(tempWStr);
 						CoTaskMemFree(pszFilePath);
 					}
 					pItem->Release();
@@ -61,14 +61,18 @@ std::string FindFolder() {
 		CoUninitialize();
 	}
 
-	return outString;
+	return outPath;
 }
 
-std::string CreateNewProject() {
+std::filesystem::path CreateNewProject() {
 	std::filesystem::path basePath;
 
 	do {
 		basePath = FindFolder();
+
+		if (basePath.empty()) {
+			return basePath;
+		}
 	} while (!std::filesystem::is_empty(basePath));
 
 	std::filesystem::create_directories(basePath / "assets");
@@ -77,17 +81,16 @@ std::string CreateNewProject() {
 	std::filesystem::create_directories(basePath / "compiledAssets");
 	std::filesystem::create_directories(basePath / "userSettings");
 
-	return basePath.string();
+	return basePath;
 }
 
-std::string OpenExistingProject() {
+std::filesystem::path OpenExistingProject() {
 	return FindFolder();
-
 }
 #endif
 
 int main(int argc, char* argv[]) {
-	std::string projectPath;
+	std::filesystem::path projectPath;
 	for (int i = 1; i < argc; ++i) {
 		if (strcmp(argv[i], "-projectpath") == 0 && argc > i + 1) {
 			projectPath = argv[i + 1];
@@ -98,7 +101,7 @@ int main(int argc, char* argv[]) {
 #if _WIN32
 		int msgboxID = MessageBox(
 			NULL,
-			"Do you want to open an existing project? Press no to create a new project.",
+			"Do you want to create a new project? Press no to open an existing project.",
 			"Project Setup",
 			MB_ICONEXCLAMATION | MB_YESNOCANCEL
 		);
@@ -113,6 +116,11 @@ int main(int argc, char* argv[]) {
 		case IDCANCEL:
 			return 1;
 		}
+
+		if (projectPath.empty()) {
+			std::cerr << "Unable to launch Grindstone Editor - no path set." << std::endl;
+			return 1;
+		}
 #else
 		std::cerr << "Unable to launch Grindstone Editor - no path set." << std::endl;
 		return 1;
@@ -120,7 +128,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	Editor::Manager& editorManager = Editor::Manager::GetInstance();
-	if (editorManager.Initialize(projectPath.c_str())) {
+	if (editorManager.Initialize(projectPath)) {
 		editorManager.Run();
 	}
 

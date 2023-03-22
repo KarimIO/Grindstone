@@ -42,7 +42,7 @@ namespace Grindstone {
 			void ProcessVertexBoneWeights();
 			void NormalizeBoneWeights();
 			void ProcessAnimations();
-			void AddBoneData(unsigned int vertexId, unsigned int boneId, unsigned int vertexWeight);
+			void AddBoneData(unsigned int vertexId, unsigned int boneId, float vertexWeight);
 
 			void OutputPrefabs();
 			void OutputMeshes();

@@ -12,8 +12,8 @@ namespace Grindstone {
 				struct Header {
 					uint32_t totalFileSize = 0;
 					uint32_t version = 1;
-					float animationDuration = 1.f;
-					float ticksPerSecond = 0.25f;
+					double animationDuration = 1.f;
+					double ticksPerSecond = 0.25f;
 					uint16_t channelCount = 0;
 				};
 
@@ -25,30 +25,30 @@ namespace Grindstone {
 				};
 
 				struct PositionKeyframe {
-					float time;
+					double time;
 					Math::Float3 value;
 
-					PositionKeyframe(float time, Math::Float3 value) {
+					PositionKeyframe(double time, Math::Float3 value) {
 						this->time = time;
 						this->value = value;
 					}
 				};
 
 				struct ScaleKeyframe {
-					float time;
+					double time;
 					Math::Float3 value;
 
-					ScaleKeyframe(float time, Math::Float3 value) {
+					ScaleKeyframe(double time, Math::Float3 value) {
 						this->time = time;
 						this->value = value;
 					}
 				};
 
 				struct RotationKeyframe {
-					float time;
+					double time;
 					Math::Quaternion value;
 
-					RotationKeyframe(float time, Math::Quaternion value) {
+					RotationKeyframe(double time, Math::Quaternion value) {
 						this->time = time;
 						this->value = value;
 					}

@@ -32,7 +32,7 @@ namespace Grindstone {
 			ScriptBuilder::CSharpBuildManager& GetCSharpBuildManager();
 			static FileManager& GetFileManager();
 			static EngineCore& GetEngineCore();
-			bool Initialize(const char* projectPath);
+			bool Initialize(std::filesystem::path projectPath);
 			void InitializeQuitCommands();
 			~Manager();
 			void Run();
