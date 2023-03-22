@@ -54,7 +54,7 @@ namespace Grindstone {
 			std::filesystem::path baseFolderPath;
 			std::map<std::string, glm::mat4> tempOffsetMatrices; // Save string->offset matrix so we can use it when constructing the bone data
 			std::map<std::string, unsigned int> boneMapping;
-			const aiScene* scene;
+			const aiScene* scene = nullptr;
 			bool hasExtraWeights = false;
 			bool isSkeletalMesh = false;
 

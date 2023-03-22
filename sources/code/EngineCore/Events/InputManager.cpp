@@ -33,8 +33,8 @@ extern "C" {
 	ENGINE_CORE_API Float2 InputManagerGetMousePos() {
 		int x, y;
 		Grindstone::EngineCore::GetInstance().GetInputManager()->GetMousePosition(x, y);
-		savedMousePos.x = x;
-		savedMousePos.y = y;
+		savedMousePos.x = static_cast<float>(x);
+		savedMousePos.y = static_cast<float>(y);
 
 		return savedMousePos;
 	}

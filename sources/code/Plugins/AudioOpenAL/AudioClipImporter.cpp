@@ -81,7 +81,7 @@ void* AudioClipImporter::ProcessLoadedFile(Uuid uuid) {
 		);
 	}
 
-	alBufferData(buffer, format, memoryBuffer, fileSize, sampleRate);
+	alBufferData(buffer, format, memoryBuffer, static_cast<ALsizei>(fileSize), sampleRate);
 
 	auto& asset = audioClips.emplace(
 		uuid,
