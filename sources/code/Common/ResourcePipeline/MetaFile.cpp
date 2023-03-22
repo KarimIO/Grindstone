@@ -89,13 +89,16 @@ bool MetaFile::TryGetDefaultSubassetUuid(Uuid& outUuid) {
 }
 
 Uuid Grindstone::MetaFile::GetOrCreateDefaultSubassetUuid(std::string& subassetName) {
-	Uuid uuid;
-	if (defaultSubasset.uuid.ToString() != "") {
+	if (defaultSubasset.uuid.ToString() == "") {
 		defaultSubasset.name = subassetName;
-		defaultSubasset.uuid = uuid;
+		defaultSubasset.uuid = Uuid();
+	}
+	else
+	{
+		defaultSubasset.name = subassetName;
 	}
 
-	return uuid;
+	return defaultSubasset.uuid;
 }
 
 bool MetaFile::TryGetSubassetUuid(std::string& subassetName, Uuid& outUuid) {
@@ -110,11 +113,14 @@ bool MetaFile::TryGetSubassetUuid(std::string& subassetName, Uuid& outUuid) {
 }
 
 Uuid MetaFile::GetOrCreateSubassetUuid(std::string& subassetName) {
-	Uuid uuid;
-	if (!TryGetSubassetUuid(subassetName, uuid)) {
-		subassets.emplace_back(subassetName, uuid);
+	for (auto& subasset : subassets) {
+		if (subasset.name == subassetName) {
+			return subasset.uuid;
+		}
 	}
 
+	Uuid uuid;
+	subassets.emplace_back(subassetName, uuid);
 	return uuid;
 }
 
