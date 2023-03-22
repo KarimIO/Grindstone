@@ -192,9 +192,9 @@ void TextureImporter::OutputDds(unsigned char* outData, int contentSize) {
 	char mark[] = { 'G', 'R', 'I', 'N', 'D', 'S', 'T', 'O', 'N', 'E' };
 	std::memcpy(&outHeader.dwReserved1, mark, sizeof(mark));
 
-	std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
 	std::string subassetName = "texture";
 	uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
+	std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
 	std::ofstream out(outputPath, std::ios::binary);
 	if (out.fail()) {
 		throw std::runtime_error("Failed to output texture!");
