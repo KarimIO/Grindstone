@@ -11,12 +11,16 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid) {
 	char* fileContents;
 	size_t fileSize;
 
-	if (!EngineCore::GetInstance().assetManager->LoadFile(uuid, fileContents, fileSize)) {
+	EngineCore& engineCore = EngineCore::GetInstance();
+	if (!engineCore.assetManager->LoadFile(uuid, fileContents, fileSize)) {
+		std::string errorMsg = "Unable to load texture: " + uuid.ToString();
+		engineCore.Print(LogSeverity::Warning, errorMsg.c_str());
 		return nullptr;
 	}
 
 	if (strncmp(fileContents, "DDS ", 4) != 0) {
-		// throw std::runtime_error("Invalid DDS file: No magic 'DDS' keyword.");
+		std::string errorMsg = "Invalid texture file: " + uuid.ToString();
+		engineCore.Print(LogSeverity::Warning, errorMsg.c_str());
 		return nullptr;
 	}
 
@@ -54,7 +58,7 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid) {
 	createInfo.height = header.dwHeight;
 	createInfo.isCubemap = false;
 
-	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	Grindstone::GraphicsAPI::Texture* texture = graphicsCore->CreateTexture(createInfo);
 
 	auto asset = textures.emplace(uuid, TextureAsset(uuid, debugName, texture));

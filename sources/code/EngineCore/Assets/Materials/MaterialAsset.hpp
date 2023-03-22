@@ -15,8 +15,8 @@ namespace Grindstone {
 	struct ShaderAsset;
 
 	struct MaterialAsset : public Asset {
-		MaterialAsset(Uuid uuid, std::string_view name, ShaderAsset* shader) : Asset(uuid, name), shaderAsset(shader) {}
-		ShaderAsset* shaderAsset;
+		MaterialAsset(Uuid uuid, std::string_view name, Uuid shaderUuid) : Asset(uuid, name), shaderUuid(shaderUuid) {}
+		Uuid shaderUuid;
 		GraphicsAPI::TextureBinding* textureBinding = nullptr;
 		GraphicsAPI::UniformBufferBinding* uniformBufferBinding = nullptr;
 		GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;

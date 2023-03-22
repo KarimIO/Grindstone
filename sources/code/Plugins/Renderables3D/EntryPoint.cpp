@@ -7,10 +7,12 @@
 #include "Assets/RigImporter.hpp"
 #include "Mesh3dRenderer.hpp"
 #include "EngineCore/Assets/Shaders/ShaderAsset.hpp"
+#include "EngineCore/Assets/AssetManager.hpp"
 #include "Components/MeshComponent.hpp"
 #include "Components/MeshRendererComponent.hpp"
 using namespace Grindstone;
 
+Assets::AssetManager* assetManager = nullptr;
 Mesh3dRenderer* assetRenderer = nullptr;
 Mesh3dImporter* meshImporter = nullptr;
 
@@ -34,11 +36,14 @@ void SetupMeshRendererComponent(ECS::Entity& entity, void* componentPtr) {
 		return;
 	}
 
+	std::vector<MaterialAsset*> materialAssets(meshRenderer->materials.size());
 	for (size_t i = 0; i < meshRenderer->materials.size(); ++i) {
-		MaterialAsset* materialAsset = static_cast<MaterialAsset*>(meshRenderer->materials[i].asset);
-		ShaderAsset* shaderAsset = materialAsset->shaderAsset;
-		if (materialAsset && shaderAsset) {
-			assetRenderer->AddShaderToRenderQueue(shaderAsset);
+		Uuid materialUuid = meshRenderer->materials[i].uuid;
+		MaterialAsset* materialAsset = assetManager->GetAsset<MaterialAsset>(materialUuid);
+		materialAssets[i] = materialAsset;
+		const char* renderQueue = "Opaque";
+		if (materialAsset != nullptr) {
+			assetRenderer->AddShaderToRenderQueue(materialAsset->shaderUuid, renderQueue);
 		}
 	}
 
@@ -49,7 +54,7 @@ void SetupMeshRendererComponent(ECS::Entity& entity, void* componentPtr) {
 			materialIndex = 0;
 		}
 
-		MaterialAsset* materialAsset = static_cast<MaterialAsset*>(meshRenderer->materials[materialIndex].asset);
+		MaterialAsset* materialAsset = materialAssets[materialIndex];
 		if (materialAsset != nullptr) {
 			materialAsset->renderables.emplace_back(entity, &submeshes[i]);
 		}
@@ -59,7 +64,8 @@ void SetupMeshRendererComponent(ECS::Entity& entity, void* componentPtr) {
 extern "C" {
 	RENDERABLES_3D_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
 		EngineCore* engineCore = pluginInterface->GetEngineCore();
-		assetRenderer = new Mesh3dRenderer(pluginInterface->GetGraphicsCore());
+		assetManager = engineCore->assetManager;
+		assetRenderer = new Mesh3dRenderer(pluginInterface->GetEngineCore());
 		meshImporter = new Mesh3dImporter(engineCore);
 
 		pluginInterface->RegisterComponent<MeshComponent>();

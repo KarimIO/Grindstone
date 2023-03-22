@@ -15,8 +15,9 @@ struct Mesh3dUbo {
 	glm::mat4 modelMatrix;
 };
 
-Grindstone::Mesh3dRenderer::Mesh3dRenderer(GraphicsAPI::Core* graphicsCore) {
-	this->graphicsCore = graphicsCore;
+Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
+	this->engineCore = engineCore;
+	auto graphicsCore = engineCore->GetGraphicsCore();
 
 	UniformBufferBinding::CreateInfo mesh3dBufferBindingCi{};
 	mesh3dBufferBindingCi.binding = 1;
@@ -33,20 +34,24 @@ Grindstone::Mesh3dRenderer::Mesh3dRenderer(GraphicsAPI::Core* graphicsCore) {
 }
 
 void Mesh3dRenderer::RenderQueue(RenderQueueContainer& renderQueue) {
-	for (ShaderAsset* shader : renderQueue.shaders) {
-		RenderShader(*shader);
+	for (Uuid shaderUuid : renderQueue.shaders) {
+		ShaderAsset& shader = *engineCore->assetManager->GetAsset<ShaderAsset>(shaderUuid);
+		RenderShader(shader);
 	}
 }
 
 void Mesh3dRenderer::RenderShader(ShaderAsset& shader) {
+	auto graphicsCore = engineCore->GetGraphicsCore();
 	graphicsCore->BindPipeline(shader.pipeline);
 	mesh3dBufferObject->Bind();
-	for (auto& material : shader.materials) {
+	for (auto materialUuid : shader.materials) {
+		MaterialAsset& material = *engineCore->assetManager->GetAsset<MaterialAsset>( materialUuid);
 		RenderMaterial(material);
 	}
 }
 
 void Mesh3dRenderer::RenderMaterial(MaterialAsset& material) {
+	auto graphicsCore = engineCore->GetGraphicsCore();
 	if (material.uniformBufferObject) {
 		material.uniformBufferObject->UpdateBuffer(material.buffer);
 		material.uniformBufferObject->Bind();
@@ -64,6 +69,7 @@ void Mesh3dRenderer::RenderMaterial(MaterialAsset& material) {
 }
 
 void Mesh3dRenderer::RenderSubmesh(ECS::Entity rendererEntity, Mesh3dAsset::Submesh& submesh3d) {
+	auto graphicsCore = engineCore->GetGraphicsCore();
 	graphicsCore->BindVertexArrayObject(submesh3d.vertexArrayObject);
 	auto& registry = rendererEntity.GetScene()->GetEntityRegistry();
 	entt::entity entity = rendererEntity.GetHandle();

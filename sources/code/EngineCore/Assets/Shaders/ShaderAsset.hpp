@@ -13,7 +13,7 @@ namespace Grindstone {
 		ShaderReflectionData reflectionData;
 		GraphicsAPI::Pipeline* pipeline = nullptr;
 		GraphicsAPI::TextureBindingLayout* textureBindingLayout = nullptr;
-		std::vector<MaterialAsset> materials;
+		std::vector<Uuid> materials;
 
 		DEFINE_ASSET_TYPE("Shader", AssetType::Shader)
 	};

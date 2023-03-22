@@ -5,21 +5,21 @@
 #include <map>
 
 #include "EngineCore/Assets/Shaders/ShaderAsset.hpp"
+#include "EngineCore/Assets/AssetManager.hpp"
 
 namespace Grindstone {
 	struct ShaderAsset;
 
 	struct RenderQueueContainer {
-		std::vector<ShaderAsset*> shaders;
+		std::vector<Uuid> shaders;
 	};
 
 	class BaseAssetRenderer {
 	public:
-		void AddShaderToRenderQueue(ShaderAsset* shader) {
-			const char* renderQueue = shader->reflectionData.renderQueue.c_str();
+		void AddShaderToRenderQueue(Uuid shaderUuid, const char* renderQueue) {
 			auto& shaders = renderQueues[renderQueue].shaders;
-			if (std::find(shaders.begin(), shaders.end(), shader) == shaders.end()) {
-				shaders.push_back(shader);
+			if (std::find(shaders.begin(), shaders.end(), shaderUuid) == shaders.end()) {
+				shaders.push_back(shaderUuid);
 			}
 		}
 		void AddQueue(const char* name);

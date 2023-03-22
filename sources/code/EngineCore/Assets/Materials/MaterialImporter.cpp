@@ -42,8 +42,9 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 		return nullptr;
 	}
 
-	shaderAsset->materials.emplace_back(MaterialAsset(uuid, name, shaderAsset));
-	MaterialAsset* materialAsset = &shaderAsset->materials[shaderAsset->materials.size() - 1];
+	shaderAsset->materials.emplace_back(uuid);
+	auto& material = materials.emplace(uuid, MaterialAsset(uuid, name, shaderUuid));
+	MaterialAsset* materialAsset = &material.first->second;
 
 	GraphicsAPI::UniformBufferBinding* uniformBufferBinding = nullptr;
 	GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
