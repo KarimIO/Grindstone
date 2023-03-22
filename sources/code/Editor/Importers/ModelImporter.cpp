@@ -84,8 +84,8 @@ void ModelImporter::ConvertMaterials() {
 			newMaterial.roughness = roughness.r;
 		}
 
-		std::string materialName = name.C_Str();
-		Uuid uuid = metaFile->GetOrCreateSubassetUuid(materialName);
+		newMaterial.materialName = name.C_Str();
+		Uuid uuid = metaFile->GetOrCreateSubassetUuid(newMaterial.materialName);
 		std::string uuidString = outputData.materialNames[i] = uuid.ToString();
 
 		Editor::Manager::Print(LogSeverity::Trace, uuidString.c_str());
