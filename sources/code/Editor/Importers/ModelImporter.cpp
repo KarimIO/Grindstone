@@ -88,7 +88,6 @@ void ModelImporter::ConvertMaterials() {
 		Uuid uuid = metaFile->GetOrCreateSubassetUuid(newMaterial.materialName);
 		std::string uuidString = outputData.materialNames[i] = uuid.ToString();
 
-		Editor::Manager::Print(LogSeverity::Trace, uuidString.c_str());
 		std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuidString;
 		CreateStandardMaterial(newMaterial, outputPath);
 	}

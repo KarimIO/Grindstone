@@ -171,10 +171,14 @@ void TextureImporter::OutputDds(unsigned char* outData, int contentSize) {
 	outHeader.dwHeight = texHeight;
 	outHeader.dwWidth = texWidth;
 	outHeader.dwDepth = 0;
-	outHeader.dwCaps = DDSCAPS_COMPLEX | DDSCAPS_TEXTURE | DDSCAPS_MIPMAP;
-	outHeader.dwMipMapCount = shouldGenerateMips
-		? DWORD(CalculateMipMapLevelCount(texWidth, texHeight))
-		: 0;
+	outHeader.dwCaps = DDSCAPS_COMPLEX | DDSCAPS_TEXTURE;
+	outHeader.dwMipMapCount = 0;
+
+	if (shouldGenerateMips) {
+		outHeader.dwCaps |= DDSCAPS_MIPMAP;
+		outHeader.dwMipMapCount = DWORD(CalculateMipMapLevelCount(texWidth, texHeight));
+	}
+
 	// if (isSixSidedCubemap)
 	// 	outHeader.dwCaps2 = DDS_CUBEMAP_ALLFACES;
 

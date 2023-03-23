@@ -98,6 +98,8 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 		std::vector<GraphicsAPI::SingleTextureBind> textureBinds;
 		textureBinds.resize(textures.size());
 		for (size_t i = 0; i < textures.size(); ++i) {
+			GraphicsAPI::SingleTextureBind& stb = textureBinds[i];
+			stb.address = textures[i].bindingId;
 			const char* textureName = textures[i].name.c_str();
 			if (samplersJson.HasMember(textureName)) {
 				const char* textureUuidAsString = samplersJson[textureName].GetString();
@@ -106,10 +108,14 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 				// TODO: Handle if texture isn't set
 				TextureAsset* textureAsset = assetManager->GetAsset<TextureAsset>(textureUuid);
 				if (textureAsset != nullptr) {
-					GraphicsAPI::SingleTextureBind& stb = textureBinds[i];
 					stb.texture = textureAsset->texture;
-					stb.address = textures[i].bindingId;
 				}
+				else {
+					stb.texture = nullptr;
+				}
+			}
+			else {
+				stb.texture = nullptr;
 			}
 		}
 
