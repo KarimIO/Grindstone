@@ -20,25 +20,21 @@
 
 #include "Rendering/DeferredRenderer.hpp"
 
-#include "EngineCore/Assets/Materials/MaterialManager.hpp"
-#include "EngineCore/Assets/Textures/TextureManager.hpp"
-#include "EngineCore/Assets/Shaders/ShaderManager.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
-#include "EngineCore/Assets/AssetRendererManager.hpp"
+#include "EngineCore/AssetRenderer/AssetRendererManager.hpp"
+#include "Assets/AssetManager.hpp"
 
 using namespace Grindstone;
 
 bool EngineCore::Initialize(CreateInfo& createInfo) {
 	projectPath = createInfo.projectPath;
-	binaryPath = std::string(createInfo.projectPath) + "/bin/";
-	assetsPath = std::string(createInfo.projectPath) + "/compiledAssets/";
+	binaryPath = projectPath / "bin/";
+	assetsPath = projectPath / "compiledAssets/";
 	eventDispatcher = new Events::Dispatcher();
 
 	firstFrameTime = std::chrono::steady_clock::now();
 
 	Logger::Initialize("../log/output.log");
-	GRIND_PROFILE_BEGIN_SESSION("Loading", "../log/grind-profile-load.json");
+	GRIND_PROFILE_BEGIN_SESSION("Grindstone Loading", projectPath / "log/grind-profile-load.json");
 	Logger::Print("Initializing {0}...", createInfo.applicationTitle);
 
 	systemRegistrar = new ECS::SystemRegistrar();
@@ -61,23 +57,19 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	windowCreationInfo.engineCore = this;
 	auto win = windowManager->Create(windowCreationInfo);
 	eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&EngineCore::OnTryQuit, this, std::placeholders::_1));
-	eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&EngineCore::OnForceQuit, this, std::placeholders::_1));
+	eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowForceQuit, std::bind(&EngineCore::OnForceQuit, this, std::placeholders::_1));
 
 	GraphicsAPI::Core::CreateInfo graphicsCoreInfo{ win, true };
 	graphicsCore->Initialize(graphicsCoreInfo);
 	win->Show();
 
-	materialManager = new MaterialManager();
-	textureManager = new TextureManager();
-	shaderManager = new ShaderManager();
-	mesh3dManager = new Mesh3dManager();
-	mesh3dRenderer = new Mesh3dRenderer();
+	inputManager->SetMainWindow(win);
+
+	assetManager = new Assets::AssetManager();
 	assetRendererManager = new AssetRendererManager();
-	assetRendererManager->AddAssetRenderer(mesh3dRenderer);
 	assetRendererManager->AddQueue("Opaque");
 	assetRendererManager->AddQueue("Transparent");
 	assetRendererManager->AddQueue("Unlit");
-	// mesh3dRenderer->AddErrorMaterial();
 
 	pluginManager->LoadPluginList();
 
@@ -85,7 +77,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 		sceneManager->LoadDefaultScene();
 	}
 	else if (strcmp(createInfo.scenePath, "") == 0) {
-		sceneManager->AddEmptyScene("Untitled");
+		sceneManager->CreateEmptyScene("Untitled");
 	}
 	else {
 		sceneManager->LoadScene(createInfo.scenePath);
@@ -110,13 +102,17 @@ void EngineCore::Run() {
 }
 
 void EngineCore::RunEditorLoopIteration() {
+	GRIND_PROFILE_BEGIN_SESSION("Grindstone Running", projectPath / "log/grind-profile-run.json");
 	CalculateDeltaTime();
 	sceneManager->EditorUpdate();
+	GRIND_PROFILE_END_SESSION();
 }
 
 void EngineCore::RunLoopIteration() {
+	GRIND_PROFILE_BEGIN_SESSION("Grindstone Running", projectPath / "log/grind-profile-run.json");
 	CalculateDeltaTime();
 	sceneManager->Update();
+	GRIND_PROFILE_END_SESSION();
 }
 
 void EngineCore::UpdateWindows() {
@@ -126,9 +122,13 @@ void EngineCore::UpdateWindows() {
 
 EngineCore::~EngineCore() {
 	Logger::Print("Closing...");
+	delete sceneManager;
 	delete componentRegistrar;
 	delete systemRegistrar;
-	Logger::Print("Closed.");
+	delete eventDispatcher;
+	delete inputManager;
+	delete ecsCore;
+	delete pluginManager;
 }
 
 void EngineCore::RegisterGraphicsCore(GraphicsAPI::Core* graphicsCore) {
@@ -208,6 +208,7 @@ bool EngineCore::OnForceQuit(Grindstone::Events::BaseEvent* ev) {
 }
 
 void EngineCore::CalculateDeltaTime() {
+	GRIND_PROFILE_FUNC();
 	auto now = std::chrono::steady_clock::now();
 
 	auto elapsedTimeSinceLastFrame = now - lastFrameTime;

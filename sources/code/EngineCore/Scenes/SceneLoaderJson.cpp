@@ -5,16 +5,12 @@
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
+#include "EngineCore/Assets/AssetManager.hpp"
+#include "EngineCore/Reflection/TypeDescriptorAsset.hpp"
 #include "SceneLoaderJson.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
+#include "Common/Math.hpp"
 #include "Scene.hpp"
-
-#include "EngineCore/CoreComponents/Camera/CameraComponent.hpp"
-#include "EngineCore/CoreComponents/Mesh/MeshComponent.hpp"
-#include "EngineCore/CoreComponents/Mesh/MeshRendererComponent.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
-#include "EngineCore/Assets/Materials/MaterialManager.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
@@ -25,6 +21,8 @@ SceneLoaderJson::SceneLoaderJson(Scene* scene, const char* path) : scene(scene),
 
 bool SceneLoaderJson::Load(const char* path) {
 	if (!std::filesystem::exists(path)) {
+		std::string printMsg = std::string("Error loading scene: ") + path;
+		EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, printMsg.c_str());
 		return false;
 	}
 
@@ -34,45 +32,11 @@ bool SceneLoaderJson::Load(const char* path) {
 	std::string fileContents = Utils::LoadFileText(path);
 	document.Parse(fileContents.c_str());
 
+	std::string printMsg = std::string("Loading scene: ") + path;
+	EngineCore::GetInstance().Print(Grindstone::LogSeverity::Info, printMsg.c_str());
+
 	ProcessMeta();
 	ProcessEntities();
-
-	auto& engineCore = EngineCore::GetInstance();
-	auto materialManager = engineCore.materialManager;
-	auto mesh3dManager = engineCore.mesh3dManager;
-	auto mesh3dRenderer = engineCore.mesh3dRenderer;
-	auto& registry = scene->GetEntityRegistry();
-
-	auto meshAndMeshRendererView = registry.view<MeshComponent, MeshRendererComponent>();
-	meshAndMeshRendererView.each([&](
-		entt::entity entity,
-		MeshComponent& meshComponent,
-		MeshRendererComponent& meshRendererComponent
-	) {
-		if (meshComponent.mesh == nullptr) {
-			return;
-		}
-
-		std::vector<Material*> materials;
-		materials.resize(meshRendererComponent.materials.size());
-		for (size_t i = 0; i < meshRendererComponent.materials.size(); ++i) {
-			auto& materialPath = meshRendererComponent.materials[i];
-			materials[i] = &materialManager->LoadMaterial(
-				mesh3dRenderer,
-				materialPath.c_str()
-			);
-		}
-
-		for (auto& submesh : meshComponent.mesh->submeshes) {
-			Material* material = mesh3dRenderer->GetErrorMaterial();
-			if (submesh.materialIndex < materials.size()) {
-				material = materials[submesh.materialIndex];
-			}
-
-			submesh.materials.emplace_back(material->uuid);
-			material->renderables.emplace_back(std::make_pair(ECS::Entity(entity, scene), &submesh));
-		}
-	});
 
 	return true;
 }
@@ -127,7 +91,7 @@ void SceneLoaderJson::ProcessComponent(ECS::Entity entity, rapidjson::Value& com
 				auto& parameter = parameterList.MemberBegin();
 				parameter != parameterList.MemberEnd();
 				parameter++
-				) {
+			) {
 				const char* paramKey = parameter->name.GetString();
 				ProcessComponentParameter(entity, componentPtr, reflectionData, paramKey, parameter->value);
 			}
@@ -183,92 +147,180 @@ void SceneLoaderJson::ProcessComponentParameter(
 
 	auto offset = member->offset;
 	char* memberPtr = (char*)componentPtr + offset;
+	ParseMember(memberPtr, member->type, parameter);
+}
 
-	switch (member->type->type) {
-		case ReflectionTypeData::Struct: {
-			// TODO: Implement this
-			EngineCore::GetInstance().Print(LogSeverity::Warning, "Unhandled Struct in SceneLoaderJson!");
-			break;
-		}
-		case ReflectionTypeData::Vector: {
-			auto srcArray = parameter.GetArray();
-			std::vector<std::string>& vector = *(std::vector<std::string>*)memberPtr;
-			vector.reserve(srcArray.Size());
+void SceneLoaderJson::ParseMember(
+	void* memberPtr,
+	Reflection::TypeDescriptor* member,
+	rapidjson::Value& parameter
+) {
+	switch (member->type) {
+	default:
+		EngineCore::GetInstance().Print(LogSeverity::Warning, "Unhandled reflection type in SceneLoaderJson!");
+		break;
+	case ReflectionTypeData::AssetReference: {
+		auto type = (Grindstone::Reflection::TypeDescriptor_AssetReference*)member;
+		AssetType assetType = type->assetType;
+		GenericAssetReference& assetReference = *(GenericAssetReference*)memberPtr;
+		std::string uuidAsString = parameter.GetString();
+		Uuid uuid = Uuid(uuidAsString);
+		void* asset = EngineCore::GetInstance().assetManager->GetAsset(assetType, uuid);
+		assetReference = GenericAssetReference{ uuid, asset };
+		break;
+	}
+	case ReflectionTypeData::Struct:
+		// TODO: Implement this
+		EngineCore::GetInstance().Print(LogSeverity::Warning, "Unhandled Struct in SceneLoaderJson!");
+		break;
+	case ReflectionTypeData::Vector: {
+		ParseArray(memberPtr, member, parameter);
+		break;
+	}
+	case ReflectionTypeData::String: {
+		std::string& str = *(std::string*)memberPtr;
+		str = parameter.GetString();
+		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::Quaternion:
+		CopyDataArrayFloat(parameter, (float*)memberPtr, 4);
+		break;
+	case ReflectionTypeData::Bool: {
+		bool& str = *(bool*)memberPtr;
+		str = parameter.GetBool();
+		break;
+	}
+	case ReflectionTypeData::Int: {
+		int& str = *(int*)memberPtr;
+		str = parameter.GetInt();
+		break;
+	}
+	case ReflectionTypeData::Int2:
+		CopyDataArrayInt(parameter, (int*)memberPtr, 2);
+		break;
+	case ReflectionTypeData::Int3:
+		CopyDataArrayInt(parameter, (int*)memberPtr, 3);
+		break;
+	case ReflectionTypeData::Int4:
+		CopyDataArrayInt(parameter, (int*)memberPtr, 4);
+		break;
+	case ReflectionTypeData::Float: {
+		float& str = *(float*)memberPtr;
+		str = parameter.GetFloat();
+		break;
+	}
+	case ReflectionTypeData::Float2:
+		CopyDataArrayFloat(parameter, (float*)memberPtr, 2);
+		break;
+	case ReflectionTypeData::Float3:
+		CopyDataArrayFloat(parameter, (float*)memberPtr, 3);
+		break;
+	case ReflectionTypeData::Float4:
+		CopyDataArrayFloat(parameter, (float*)memberPtr, 4);
+		break;
+	case ReflectionTypeData::Double: {
+		double& str = *(double*)memberPtr;
+		str = parameter.GetDouble();
+		break;
+	}
+	case ReflectionTypeData::Double2:
+		CopyDataArrayDouble(parameter, (double*)memberPtr, 2);
+		break;
+	case ReflectionTypeData::Double3:
+		CopyDataArrayDouble(parameter, (double*)memberPtr, 3);
+		break;
+	case ReflectionTypeData::Double4:
+		CopyDataArrayDouble(parameter, (double*)memberPtr, 4);
+		break;
+	}
+}
 
-			for (
-				rapidjson::Value* elementIterator = srcArray.Begin();
-				elementIterator != srcArray.End();
-				++elementIterator
-			) {
-				vector.push_back(elementIterator->GetString());
-			}
+template<typename T>
+inline void SetupArray(void* memberPtr, size_t arraySize, void*& elementPtr, size_t& elementSize) {
+	std::vector<T>& vector = *(std::vector<T>*)memberPtr;
+	vector.resize(arraySize);
+	elementSize = sizeof(T);
+	elementPtr = (void*)&vector[0];
+}
+
+void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* member, rapidjson::Value& parameter) {
+	Reflection::TypeDescriptor_StdVector* vectorTypeDescriptor = static_cast<Reflection::TypeDescriptor_StdVector*>(member);
+	auto srcArray = parameter.GetArray();
+
+	if (srcArray.Size() == 0) {
+		return;
+	}
+
+	size_t elementSize = 0;
+	size_t arraySize = static_cast<size_t>(srcArray.Size());
+	void* elementPtr = nullptr;
+
+	switch (vectorTypeDescriptor->itemType->type) {
+		case ReflectionTypeData::Struct: break;
+		case ReflectionTypeData::AssetReference:
+			SetupArray<GenericAssetReference>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
-		}
-		case ReflectionTypeData::String: {
-			std::string& str = *(std::string*)memberPtr;
-			str = parameter.GetString();
+		case ReflectionTypeData::Bool:
+			SetupArray<bool>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
-		}
-		case Reflection::TypeDescriptor::ReflectionTypeData::Quaternion:
-			CopyDataArrayFloat(parameter, (float*)memberPtr, 4);
+		case ReflectionTypeData::Quaternion:
+			SetupArray<Math::Quaternion>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
-		case ReflectionTypeData::Bool: {
-			bool& str = *(bool*)memberPtr;
-			str = parameter.GetBool();
+		case ReflectionTypeData::String:
+			SetupArray<std::string>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
-		}
-		case ReflectionTypeData::Int: {
-			int& str = *(int*)memberPtr;
-			str = parameter.GetInt();
+		case ReflectionTypeData::Vector:
+			SetupArray<std::vector<char>>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
-		}
-		case ReflectionTypeData::Int2:
-			CopyDataArrayInt(parameter, (int*)memberPtr, 2);
+		case ReflectionTypeData::Double:
+			SetupArray<Math::Double>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
-		case ReflectionTypeData::Int3:
-			CopyDataArrayInt(parameter, (int*)memberPtr, 3);
-			break;
-		case ReflectionTypeData::Int4:
-			CopyDataArrayInt(parameter, (int*)memberPtr, 4);
-			break;
-		case ReflectionTypeData::Float: {
-			float& str = *(float*)memberPtr;
-			str = parameter.GetFloat();
-			break;
-		}
-		case ReflectionTypeData::Float2:
-			CopyDataArrayFloat(parameter, (float*)memberPtr, 2);
-			break;
-		case ReflectionTypeData::Float3:
-			CopyDataArrayFloat(parameter, (float*)memberPtr, 3);
-			break;
-		case ReflectionTypeData::Float4:
-			CopyDataArrayFloat(parameter, (float*)memberPtr, 4);
-			break;
-		case ReflectionTypeData::Double: {
-			double& str = *(double*)memberPtr;
-			str = parameter.GetDouble();
-			break;
-		}
 		case ReflectionTypeData::Double2:
-			CopyDataArrayDouble(parameter, (double*)memberPtr, 2);
+			SetupArray<Math::Double2>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Double3:
-			CopyDataArrayDouble(parameter, (double*)memberPtr, 3);
+			SetupArray<Math::Double3>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Double4:
-			CopyDataArrayDouble(parameter, (double*)memberPtr, 4);
+			SetupArray<Math::Double4>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
-		case Reflection::TypeDescriptor::ReflectionTypeData::AssetReference:
-			try {
-				auto& engineCore = EngineCore::GetInstance();
-				auto mesh3dManager = engineCore.mesh3dManager;
-				MeshReference& reference = *(MeshReference*)memberPtr;
-				reference = &mesh3dManager->LoadMesh3d(Uuid(parameter.GetString()));
-			}
-			catch (std::runtime_error& e) {
-				EngineCore::GetInstance().Print(LogSeverity::Error, e.what());
-			}
+		case ReflectionTypeData::Int:
+			SetupArray<Math::Int>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
+		case ReflectionTypeData::Int2:
+			SetupArray<Math::Int2>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::Int3:
+			SetupArray<Math::Int3>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::Int4:
+			SetupArray<Math::Int4>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::Float:
+			SetupArray<Math::Float>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::Float2:
+			SetupArray<Math::Float2>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::Float3:
+			SetupArray<Math::Float3>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::Float4:
+			SetupArray<Math::Float4>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+	}
+
+	for (
+		rapidjson::Value* elementIterator = srcArray.Begin();
+		elementIterator != srcArray.End();
+		++elementIterator
+	) {
+		ParseMember(
+			elementPtr,
+			vectorTypeDescriptor->itemType,
+			*elementIterator
+		);
+
+		elementPtr = (char*)elementPtr + elementSize;
 	}
 }

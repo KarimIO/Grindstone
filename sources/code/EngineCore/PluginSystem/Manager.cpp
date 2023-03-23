@@ -29,8 +29,8 @@ Manager::~Manager() {
 
 void Manager::LoadPluginList() {
 	auto& engineCore = EngineCore::GetInstance();
-	std::filesystem::path prefabListFile = engineCore.GetProjectPath() / "buildSettings/pluginsManifest.txt";
-	auto prefabListFilePath = prefabListFile.string();
+	std::filesystem::path pluginListFIle = engineCore.GetProjectPath() / "buildSettings/pluginsManifest.txt";
+	auto prefabListFilePath = pluginListFIle.string();
 	auto fileContents = Utils::LoadFileText(prefabListFilePath.c_str());
 
 	size_t start = 0, end;
@@ -97,6 +97,7 @@ bool Manager::Load(const char *path) {
 #else
 	Logger::Print(LogSeverity::Error, "Unable to load plugin: {0}", path);
 #endif
+
 	return false;
 }
 

@@ -12,6 +12,7 @@
 
 #include "Common/ResourcePipeline/MetaFile.hpp"
 #include "Common/Formats/Dds.hpp"
+#include "Editor/EditorManager.hpp"
 #include "TextureImporter.hpp"
 using namespace Grindstone::Importers;
 
@@ -170,10 +171,14 @@ void TextureImporter::OutputDds(unsigned char* outData, int contentSize) {
 	outHeader.dwHeight = texHeight;
 	outHeader.dwWidth = texWidth;
 	outHeader.dwDepth = 0;
-	outHeader.dwCaps = DDSCAPS_COMPLEX | DDSCAPS_TEXTURE | DDSCAPS_MIPMAP;
-	outHeader.dwMipMapCount = shouldGenerateMips
-		? DWORD(CalculateMipMapLevelCount(texWidth, texHeight))
-		: 0;
+	outHeader.dwCaps = DDSCAPS_COMPLEX | DDSCAPS_TEXTURE;
+	outHeader.dwMipMapCount = 0;
+
+	if (shouldGenerateMips) {
+		outHeader.dwCaps |= DDSCAPS_MIPMAP;
+		outHeader.dwMipMapCount = DWORD(CalculateMipMapLevelCount(texWidth, texHeight));
+	}
+
 	// if (isSixSidedCubemap)
 	// 	outHeader.dwCaps2 = DDS_CUBEMAP_ALLFACES;
 
@@ -191,10 +196,9 @@ void TextureImporter::OutputDds(unsigned char* outData, int contentSize) {
 	char mark[] = { 'G', 'R', 'I', 'N', 'D', 'S', 'T', 'O', 'N', 'E' };
 	std::memcpy(&outHeader.dwReserved1, mark, sizeof(mark));
 
-	std::string basePath = "../compiledAssets/";
 	std::string subassetName = "texture";
 	uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
-	std::string outputPath = basePath + uuid.ToString();
+	std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
 	std::ofstream out(outputPath, std::ios::binary);
 	if (out.fail()) {
 		throw std::runtime_error("Failed to output texture!");

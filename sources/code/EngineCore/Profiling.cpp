@@ -6,72 +6,70 @@ using namespace Grindstone::Profiler;
 
 Manager::Manager() : currentSession(nullptr), profileCount(0) {}
 
-void Manager::beginSession(const std::string& name, const std::string& filepath) {
+void Manager::BeginSession(const std::string& name, const std::filesystem::path filepath) {
+	std::filesystem::create_directories(filepath.parent_path());
 	outputStream.open(filepath);
-	writeHeader();
+	WriteHeader();
 	currentSession = new InstrumentationSession{ name };
+	profileCount = 0;
 }
 
-void Manager::endSession() {
-	writeFooter();
+void Manager::EndSession() {
+	WriteFooter();
 	outputStream.close();
 	delete currentSession;
 	currentSession = nullptr;
 	profileCount = 0;
 }
 
-void Manager::writeProfile(const Result& result) {
+void Manager::WriteProfile(const Result& result) {
 	if (profileCount++ > 0)
 		outputStream << ",";
 
 	std::string name = result.name;
 	std::replace(name.begin(), name.end(), '"', '\'');
 
-	outputStream << "\t{";
-	outputStream << "\t\t\"cat\":\"function\",";
-	outputStream << "\t\t\"dur\":" << (result.end - result.start) << ',';
-	outputStream << "\t\t\"name\":\"" << name << "\",";
-	outputStream << "\t\t\"ph\":\"X\",";
-	outputStream << "\t\t\"pid\":0,";
-	outputStream << "\t\t\"tid\":" << result.threadID << ",";
-	outputStream << "\t\t\"ts\":" << result.start;
-	outputStream << "\t}";
+	long long duration = result.end - result.start;
+
+	outputStream << "{\"cat\":\"function\",\"dur\":" << duration
+		<< ",\"name\":\"" << name << "\",\"ph\":\"X\",\"pid\":0,\"tid\":" << result.threadId
+		<< ",\"ts\":" << result.start << "}";
 
 	outputStream.flush();
 }
 
-void Manager::writeHeader() {
-	outputStream << "{\"otherData\": {},\"traceEvents\":[";
+void Manager::WriteHeader() {
+	outputStream << "{\"otherData\":{},\"traceEvents\":[";
 	outputStream.flush();
 }
 
-void Manager::writeFooter() {
+void Manager::WriteFooter() {
 	outputStream << "]}";
 	outputStream.flush();
 }
 
-Manager& Manager::get() {
+Manager& Manager::Get() {
 	static Manager instance;
 	return instance;
 }
 
 Timer::Timer(const char *name) : name(name), stopped(false) {
-	start_time_ = std::chrono::high_resolution_clock::now();
+	startTime = std::chrono::high_resolution_clock::now();
 }
 
 Timer::~Timer() {
 	if (!stopped)
-		stop();
+		Stop();
 }
 
-void Timer::stop() {
+void Timer::Stop() {
 	auto end_time = std::chrono::high_resolution_clock::now();
 
-	long long start = std::chrono::time_point_cast<std::chrono::microseconds>(start_time_).time_since_epoch().count();
+	long long start = std::chrono::time_point_cast<std::chrono::microseconds>(startTime).time_since_epoch().count();
 	long long end = std::chrono::time_point_cast<std::chrono::microseconds>(end_time).time_since_epoch().count();
 
 	uint32_t threadID = (uint32_t)std::hash<std::thread::id>{}(std::this_thread::get_id());
-	Manager::get().writeProfile({ name, start, end, threadID });
+	Manager::Get().WriteProfile({ name, start, end, threadID });
 
 	stopped = true;
 }

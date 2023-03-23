@@ -13,16 +13,15 @@
 using namespace Grindstone;
 using namespace Grindstone::Importers;
 
-std::string ImportTextureAndMakeOutputStr(std::string textureName, std::filesystem::path& inputTexturePath, bool isLast) {
+void ImportTextureAndMakeOutputStr(std::string textureName, std::filesystem::path& inputTexturePath, std::vector<std::string>& arr) {
 	if (inputTexturePath == "") {
-		return "";
+		return;
 	}
 
 	TextureImporter textureImporter;
 	textureImporter.Import(inputTexturePath);
 
-	return "\t\t\"" + textureName + "\": \"" + textureImporter.GetUuid().ToString() +
-		(isLast ? "\"\n" : "\",\n");
+	arr.push_back("\t\t\"" + textureName + "\": \"" + textureImporter.GetUuid().ToString());
 }
 
 void CreateStandardOrCutoutMaterial(StandardMaterialCreateInfo& createInfo, std::filesystem::path outputPath, bool isCutout) {
@@ -49,10 +48,22 @@ void CreateStandardOrCutoutMaterial(StandardMaterialCreateInfo& createInfo, std:
 	
 	output << "\t\"samplers\": {\n";
 	{
-		output << ImportTextureAndMakeOutputStr("albedoTexture", createInfo.albedoPath, false);
-		output << ImportTextureAndMakeOutputStr("normalTexture", createInfo.normalPath, false);
-		output << ImportTextureAndMakeOutputStr("metalnessTexture", createInfo.specularPath, false);
-		output << ImportTextureAndMakeOutputStr("roughnessTexture", createInfo.roughnessPath, true);
+		std::vector<std::string> textures;
+		ImportTextureAndMakeOutputStr("albedoTexture", createInfo.albedoPath, textures);
+		ImportTextureAndMakeOutputStr("normalTexture", createInfo.normalPath, textures);
+		ImportTextureAndMakeOutputStr("metalnessTexture", createInfo.specularPath, textures);
+		ImportTextureAndMakeOutputStr("roughnessTexture", createInfo.roughnessPath, textures);
+
+		for (size_t i = 0; i < textures.size(); ++i) {
+			output << textures[i];
+
+			if (i != textures.size() - 1) {
+				output << "\",\n";
+			}
+			else {
+				output << "\"\n";
+			}
+		}
 	}
 	output << "\t}\n";
 
@@ -73,7 +84,8 @@ void MaterialImporter::Import(std::filesystem::path& path) {
 	std::string subassetName = "material";
 	uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
 
-	std::filesystem::copy(path, std::string("../compiledAssets/") + uuid.ToString(), std::filesystem::copy_options::overwrite_existing);
+	std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
+	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
 	metaFile->Save();
 }
 

@@ -4,6 +4,8 @@
 #include "Common/Event/MouseEvent.hpp"
 #include "Common/Event/KeyEvent.hpp"
 #include "Common/Event/WindowEvent.hpp"
+#include "Common/Math.hpp"
+#include "Common/Window/Window.hpp"
 #include <iostream>
 using namespace Grindstone::Input;
 using namespace Grindstone::Events;
@@ -17,17 +19,24 @@ extern "C" {
 		return Grindstone::EngineCore::GetInstance().GetInputManager()->IsMouseButtonPressed((MouseButtonCode)mouseButton);
 	}
 
-	ENGINE_CORE_API void InputManagerSetMousePos(float* mousePos) {
-		Grindstone::EngineCore::GetInstance().GetInputManager()->SetMousePosition((int)mousePos[0], (int)mousePos[1]);
+	ENGINE_CORE_API void InputManagerSetMousePos(Grindstone::Math::Float2 mousePos) {
+		int mpx = (int)mousePos[0];
+		int mpy = (int)mousePos[1];
+		Grindstone::EngineCore::GetInstance().GetInputManager()->SetMousePosition((int)mpx, (int)mpy);
 	}
 
-	float* arr = new float[2];
-	ENGINE_CORE_API float* InputManagerGetMousePos() {
+	struct Float2 {
+		float x, y;
+	};
+
+	Float2 savedMousePos;
+	ENGINE_CORE_API Float2 InputManagerGetMousePos() {
 		int x, y;
 		Grindstone::EngineCore::GetInstance().GetInputManager()->GetMousePosition(x, y);
-		arr[0] = (float)x;
-		arr[1] = (float)y;
-		return &arr[0];
+		savedMousePos.x = static_cast<float>(x);
+		savedMousePos.y = static_cast<float>(y);
+
+		return savedMousePos;
 	}
 }
 
@@ -36,8 +45,12 @@ Manager::Manager(Events::Dispatcher* dispatcher) : dispatcher(dispatcher) {
 	std::memset(mousePressed, 0, sizeof(mousePressed));
 }
 
+void Manager::SetMainWindow(Grindstone::Window* window) {
+	this->window = window;
+}
+
 void Manager::ResizeEvent(int width, int height) {
-	WindowResizeEvent* ev = new WindowResizeEvent{width, height};
+	WindowResizeEvent* ev = new WindowResizeEvent{ width, height };
 	dispatcher->Dispatch(ev);
 }
 
@@ -52,16 +65,22 @@ bool Manager::IsMouseButtonPressed(Events::MouseButtonCode code) {
 	return mousePressed[(int)code];
 }
 
-void Manager::SetMousePosition(int x, int y) {
+void Manager::OnMouseMoved(int x, int y) {
 	MouseMovedEvent* ev = new MouseMovedEvent{x, y};
 	mousePositionX = x;
 	mousePositionY = y;
 	dispatcher->Dispatch(ev);
 }
 
+void Manager::SetMousePosition(int x, int y) {
+	window->SetMousePos(x, y);
+}
+
 void Manager::GetMousePosition(int&x, int&y) {
-	x = mousePositionX;
-	y = mousePositionY;
+	unsigned int ux, uy;
+	window->GetMousePos(ux, uy);
+	x = ux;
+	y = uy;
 }
 
 void Manager::SetIsFocused(bool isFocused) {

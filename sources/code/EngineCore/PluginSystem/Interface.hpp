@@ -1,14 +1,16 @@
 #pragma once
 
 #include "../pch.hpp"
+#include "EngineCore/EngineCore.hpp"
+#include "EngineCore/Assets/AssetManager.hpp"
 #include "EngineCore/ECS/SystemFactory.hpp"
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "Common/Window/Window.hpp"
 #include "Common/Logging.hpp"
+#include "EngineCore/Assets/AssetManager.hpp"
 #include <EngineCore/ECS/ComponentFunctions.hpp>
 
 namespace Grindstone {
-	class EngineCore;
 
 	namespace GraphicsAPI {
 		class Core;
@@ -20,6 +22,7 @@ namespace Grindstone {
 
 	class WindowManager;
 	class DisplayManager;
+	class BaseAssetRenderer;
 
 	namespace Plugins {
 		class Manager;
@@ -38,9 +41,10 @@ namespace Grindstone {
 			virtual Window* CreateDisplayWindow(Window::CreateInfo&);
 			virtual Display GetMainDisplay();
 			virtual uint8_t CountDisplays();
-			virtual void EnumerateDisplays(Display*displays);
-		   
+			virtual void EnumerateDisplays(Display* displays);
 			virtual void RegisterSystem(const char* name, ECS::SystemFactory factory);
+			virtual void RegisterAssetRenderer(BaseAssetRenderer* assetRenderer);
+			virtual void RegisterAssetType(AssetType assetType, const char* typeName, AssetImporter* assetImporter);
 
 			template<typename T>
 			void RegisterComponent(ECS::SetupComponentFn setupComponentFn = nullptr) {
@@ -49,7 +53,8 @@ namespace Grindstone {
 			ECS::ComponentRegistrar* componentRegistrar = nullptr;
 			ECS::SystemRegistrar* systemRegistrar = nullptr;
 		private:
-			Manager*    manager = nullptr;
+			EngineCore* engineCore = nullptr;
+			Manager* manager = nullptr;
 			GraphicsAPI::Core* graphicsCore = nullptr;
 			Grindstone::Window* (*windowFactoryFn)(Grindstone::Window::CreateInfo&) = nullptr;
 			Grindstone::Display(*getMainDisplayFn)() = nullptr;

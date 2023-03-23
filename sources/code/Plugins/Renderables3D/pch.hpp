@@ -8,10 +8,10 @@
 
 #ifdef _WIN32
     #ifdef RENDERABLES_3D_DLL
-        #define RENDERABLES_3D_API __declspec(dllexport)
+        #define RENDERABLES_3D_EXPORT __declspec(dllexport)
     #else
-        #define RENDERABLES_3D_API __declspec(dllimport)
+        #define RENDERABLES_3D_EXPORT __declspec(dllimport)
     #endif
 #else
-    #define RENDERABLES_3D_API
+    #define RENDERABLES_3D_EXPORT
 #endif

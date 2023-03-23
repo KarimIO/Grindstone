@@ -3,11 +3,13 @@
 
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/ECS/Entity.hpp"
+#include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "Components/ScriptComponent.hpp"
 
 #include <mono/jit/jit.h>
 #include <mono/metadata/assembly.h>
 
+using namespace Grindstone;
 using namespace Grindstone::Scripting::CSharp;
 
 #define FUNCTION_CALL_IMPL(CallFnInComponent, scriptMethod) \
@@ -35,18 +37,40 @@ void CSharpManager::Initialize(EngineCore* engineCore) {
 		"C:\\Program Files\\Mono\\lib",
 		"C:\\Program Files\\Mono\\etc"
 	);
+
 	scriptDomain = mono_jit_init_version("grindstone_mono_domain", "v4.0.30319");
 
+	auto coreDllPath = (engineCore->GetBinaryPath() / "GrindstoneCSharpCore.dll").string();
+	LoadAssembly(coreDllPath.c_str(), grindsoneCoreDll);
+
 	auto dllPath = (engineCore->GetBinaryPath() / "Application-CSharp.dll").string();
-	LoadAssembly(dllPath.c_str());
+	LoadAssemblyIntoMap(dllPath.c_str());
 }
 
-void CSharpManager::LoadAssembly(const char* path) {
+void CSharpManager::LoadAssembly(const char* path, AssemblyData& outAssemblyData) {
 	MonoAssembly* assembly = mono_domain_assembly_open(scriptDomain, path);
+
+	if (assembly == nullptr) {
+		std::string errorMsg = std::string("Could not load image from C# Assembly: ") + path;
+		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+		return;
+	}
+
 	MonoImage* image = mono_assembly_get_image(assembly);
+
+	if (assembly == nullptr) {
+		std::string errorMsg = std::string("Could not load image from C# Assembly: ") + path;
+		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+		return;
+	}
+
+	outAssemblyData.assembly = assembly;
+	outAssemblyData.image = image;
+}
+
+void CSharpManager::LoadAssemblyIntoMap(const char* path) {
 	auto& assemblyData = assemblies[path];
-	assemblyData.assembly = assembly;
-	assemblyData.image = image;
+	LoadAssembly(path, assemblyData);
 }
 
 struct CompactEntityData {
@@ -75,7 +99,12 @@ void CSharpManager::SetupComponent(ECS::Entity& entity, ScriptComponent& compone
 
 void CSharpManager::SetupEntityDataInComponent(ECS::Entity& entity, ScriptComponent& component) {
 	MonoClassField* field = mono_class_get_field_from_name(component.monoClass->monoClass, "entity");
-	CompactEntityData outEnt = { entity.GetHandle(), entity.GetScene()  };
+
+	if (field == nullptr) {
+		return;
+	}
+
+	CompactEntityData outEnt = { entity.GetHandle(), entity.GetScene() };
 	mono_field_set_value((MonoObject*)component.scriptObject, field, &outEnt);
 }
 
@@ -86,6 +115,10 @@ ScriptClass* CSharpManager::SetupClass(const char* assemblyName, const char* nam
 	}
 
 	auto scriptImage = assemblyIterator->second.image;
+
+	if (scriptImage == nullptr) {
+		return nullptr;
+	}
 
 	ScriptClass* scriptClass = new ScriptClass();
 	auto& methods = scriptClass->methods;
@@ -119,7 +152,12 @@ FUNCTION_CALL_LIST_IMPL(CallUpdateInAllComponents, CallUpdateInComponent, onUpda
 FUNCTION_CALL_LIST_IMPL(CallEditorUpdateInAllComponents, CallEditorUpdateInComponent, onEditorUpdate)
 FUNCTION_CALL_LIST_IMPL(CallDeleteInAllComponents, CallDeleteInComponent, onDelete)
 
+
 void CSharpManager::CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset) {
+	if (scriptComponent.monoClass == nullptr) {
+		return;
+	}
+
 	MonoObject* exception = nullptr;
 	char* methodsPtr = (char*)&scriptComponent.monoClass->methods;
 	MonoMethod* targetMethod = *(MonoMethod**)(methodsPtr + fnOffset);
@@ -130,4 +168,49 @@ void CSharpManager::CallFunctionInComponent(ScriptComponent& scriptComponent, si
 			std::cout << mono_string_to_utf8(mono_object_to_string(exception, nullptr)) << std::endl;
 		}
 	}
+}
+
+void CSharpManager::RegisterComponents() {
+	auto& componentRegistrar = *engineCore->GetComponentRegistrar();
+	for (auto& component : componentRegistrar) {
+		auto& componentName = (std::string&)component.first;
+		auto fns = component.second;
+		RegisterComponent(componentName, fns);
+	}
+}
+
+void CSharpManager::RegisterComponent(std::string& componentName, ECS::ComponentFunctions& fns) {
+	std::string csharpClass = "Grindstone." + componentName + "Component";
+	MonoImage* image = grindsoneCoreDll.image;
+	MonoType* managedType = mono_reflection_type_from_name((char*)csharpClass.c_str(), image);
+	if (managedType == nullptr) {
+		return;
+	}
+
+	createComponentFuncs[managedType] = fns.CreateComponentFn;
+	tryGetComponentFuncs[managedType] = fns.TryGetComponentFn;
+	hasComponentFuncs[managedType] = fns.HasComponentFn;
+	removeComponentFuncs[managedType] = fns.RemoveComponentFn;
+}
+
+void CSharpManager::CallCreateComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType) {
+	auto iterator = createComponentFuncs.find(monoType);
+	if (iterator == createComponentFuncs.end()) {
+		iterator->second(ECS::Entity(entityHandle, scene));
+	}
+}
+
+void CSharpManager::CallHasComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType) {
+	auto iterator = hasComponentFuncs.find(monoType);
+	if (iterator == hasComponentFuncs.end()) {
+		iterator->second(ECS::Entity(entityHandle, scene));
+	}
+}
+
+void CSharpManager::CallRemoveComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType) {
+	auto iterator = removeComponentFuncs.find(monoType);
+	if (iterator == removeComponentFuncs.end()) {
+		iterator->second(ECS::Entity(entityHandle, scene));
+	}
+
 }

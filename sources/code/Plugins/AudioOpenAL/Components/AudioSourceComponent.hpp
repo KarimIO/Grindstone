@@ -4,10 +4,11 @@
 #include "EngineCore/ECS/Entity.hpp"
 #include "Common/Math.hpp"
 #include "../Source.hpp"
+#include "../AudioClip.hpp"
 
 namespace Grindstone {
 	struct AudioSourceComponent {
-		std::string audioClip;
+		AssetReference<Audio::AudioClipAsset> audioClip;
 		bool isLooping = false;
 		float volume = 1.f;
 		float pitch = 1.f;

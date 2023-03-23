@@ -12,7 +12,7 @@ Source::Source(CreateInfo& createInfo) {
 	alSource3f(source, AL_POSITION, createInfo.position[0], createInfo.position[1], createInfo.position[2]);
 	alSource3f(source, AL_VELOCITY, createInfo.velocity[0], createInfo.velocity[1], createInfo.velocity[2]);
 	alSourcei(source, AL_LOOPING, createInfo.isLooping ? AL_TRUE : AL_FALSE);
-	alSourcei(source, AL_BUFFER, createInfo.audioClip->GetOpenALBuffer());
+	alSourcei(source, AL_BUFFER, createInfo.audioClip->buffer);
 }
 
 Source::~Source() {
@@ -43,8 +43,8 @@ void Source::SetVelocity(float x, float y, float z) {
 	alSource3f(source, AL_VELOCITY, x, y, z);
 }
 
-void Source::SetBuffer(Audio::Clip* audioClip) {
-	alSourcei(source, AL_BUFFER, audioClip->GetOpenALBuffer());
+void Source::SetBuffer(Audio::AudioClipAsset* audioClip) {
+	alSourcei(source, AL_BUFFER, audioClip->buffer);
 }
 
 void Source::SetIsLooping(bool isLooping) {

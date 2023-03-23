@@ -47,7 +47,6 @@ void ModelImporter::ConvertMaterials() {
 	aiMaterial **materials = scene->mMaterials;
 
 	std::string folderName = "";
-	std::string baseOutputPath = "../assets/materials/" + folderName + "/";
 	/*if (!CreateFolder(outPath.c_str())) {
 		outPath = "../assets/materials/";
 	}*/
@@ -85,12 +84,12 @@ void ModelImporter::ConvertMaterials() {
 			newMaterial.roughness = roughness.r;
 		}
 
-		std::string materialName = name.C_Str();
-		Uuid uuid = metaFile->GetOrCreateSubassetUuid(materialName);
+		newMaterial.materialName = name.C_Str();
+		Uuid uuid = metaFile->GetOrCreateSubassetUuid(newMaterial.materialName);
 		std::string uuidString = outputData.materialNames[i] = uuid.ToString();
 
-		Editor::Manager::Print(LogSeverity::Trace, uuidString.c_str());
-		CreateStandardMaterial(newMaterial, "../compiledAssets/" + uuidString);
+		std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuidString;
+		CreateStandardMaterial(newMaterial, outputPath);
 	}
 }
 
@@ -106,7 +105,7 @@ std::filesystem::path ModelImporter::GetTexturePath(aiMaterial* pMaterial, aiTex
 	return "";
 }
 
-void ModelImporter::InitSubmeshes() {
+void ModelImporter::InitSubmeshes(bool hasBones) {
 	auto& vertexCount = outputData.vertexCount;
 	auto& indexCount = outputData.indexCount;
 
@@ -130,8 +129,11 @@ void ModelImporter::InitSubmeshes() {
 	outputData.vertexArray.tangent.reserve(vertexCountSizeT * 3);
 	outputData.vertexArray.texCoordArray.resize(1);
 	outputData.vertexArray.texCoordArray[0].reserve(vertexCountSizeT * 2);
-	outputData.vertexArray.boneIds.resize(vertexCountSizeT * NUM_BONES_PER_VERTEX);
-	outputData.vertexArray.boneWeights.resize(vertexCountSizeT * NUM_BONES_PER_VERTEX);
+	size_t boneWeightCount = hasBones
+		? vertexCountSizeT * NUM_BONES_PER_VERTEX
+		: 0;
+	outputData.vertexArray.boneIds.resize(boneWeightCount);
+	outputData.vertexArray.boneWeights.resize(boneWeightCount);
 	outputData.indices.reserve(indexCount);
 }
 
@@ -170,16 +172,16 @@ void ModelImporter::ProcessVertices() {
 
 // Make a list of used bones so we can remove unnecessary bones, and get offset Matrix
 void ModelImporter::PreprocessBones() {
-for (unsigned int meshIterator = 0; meshIterator < scene->mNumMeshes; meshIterator++) {
-	auto mesh = scene->mMeshes[meshIterator];
+	for (unsigned int meshIterator = 0; meshIterator < scene->mNumMeshes; meshIterator++) {
+		auto mesh = scene->mMeshes[meshIterator];
 
-	for (unsigned int boneIterator = 0; boneIterator < mesh->mNumBones; boneIterator++) {
-		auto bone = mesh->mBones[boneIterator];
-		std::string boneName(bone->mName.data);
+		for (unsigned int boneIterator = 0; boneIterator < mesh->mNumBones; boneIterator++) {
+			auto bone = mesh->mBones[boneIterator];
+			std::string boneName(bone->mName.data);
 
-		tempOffsetMatrices[boneName] = AiMatToGlm(bone->mOffsetMatrix);
+			tempOffsetMatrices[boneName] = AiMatToGlm(bone->mOffsetMatrix);
+		}
 	}
-}
 }
 
 void ModelImporter::ProcessNodeTree(aiNode* node, uint16_t parentIndex) {
@@ -187,13 +189,13 @@ void ModelImporter::ProcessNodeTree(aiNode* node, uint16_t parentIndex) {
 
 	uint16_t currentBone = outputData.boneCount++;
 	auto boneOffsetMatrixIterator = tempOffsetMatrices.find(name);
-	bool isBone = boneOffsetMatrixIterator == tempOffsetMatrices.end();
+	bool isBone = boneOffsetMatrixIterator != tempOffsetMatrices.end();
 	if (isBone) {
 		glm::mat4 inverseMatrix = glm::inverse(AiMatToGlm(node->mTransformation));
 		glm::mat4& offsetMatrix = boneOffsetMatrixIterator->second;
 		outputData.boneNames.push_back(name);
 		outputData.bones.emplace_back(parentIndex, offsetMatrix, inverseMatrix);
-		boneMapping.emplace(currentBone);
+		boneMapping[name.c_str()] = currentBone;
 	}
 
 	for (unsigned int childIterator = 0; childIterator < node->mNumChildren; ++childIterator) {
@@ -214,7 +216,7 @@ void ModelImporter::ProcessVertexBoneWeights() {
 				auto& weight = bone->mWeights[weightIterator];
 
 				auto vertexId = weight.mVertexId;
-				auto vertexWeight = weight.mWeight;
+				float vertexWeight = weight.mWeight;
 				AddBoneData(vertexId, boneId, vertexWeight);
 			}
 		}
@@ -240,7 +242,7 @@ void ModelImporter::NormalizeBoneWeights() {
 	}
 }
 
-void ModelImporter::AddBoneData(unsigned int vertexId, unsigned int boneId, unsigned int vertexWeight) {
+void ModelImporter::AddBoneData(unsigned int vertexId, unsigned int boneId, float vertexWeight) {
 	unsigned int baseIndex = vertexId * NUM_BONES_PER_VERTEX;
 	unsigned int lastIndex = baseIndex + NUM_BONES_PER_VERTEX;
 	for (unsigned int i = baseIndex; i < lastIndex; i++) {
@@ -274,27 +276,29 @@ void ModelImporter::ProcessAnimations() {
 		auto animation = scene->mAnimations[i];
 		std::string animationName(animation->mName.data);
 
-		float ticksPerSecond = animation->mTicksPerSecond != 0
+		double ticksPerSecond = animation->mTicksPerSecond != 0
 			? animation->mTicksPerSecond
 			: 25.0f;
-		float duration = animation->mDuration;
+		double duration = animation->mDuration;
 
 		Formats::Animation::V1::Header animationHeader;
-		animationHeader.animationDuration = animation->mDuration;
-		animationHeader.channelCount = animation->mNumChannels;
-		animationHeader.ticksPerSecond = animation->mTicksPerSecond != 0
-			? animation->mTicksPerSecond
-			: 25.0f;
+		animationHeader.animationDuration = duration;
+		animationHeader.channelCount = static_cast<uint16_t>(animation->mNumChannels);
+		animationHeader.ticksPerSecond = ticksPerSecond;
 
 		std::vector<Formats::Animation::V1::Channel> channels;
 		channels.resize(animation->mNumChannels);
 		std::vector<Formats::Animation::V1::ChannelData> channelData;
 		channels.resize(animation->mNumChannels);
 
-		std::ofstream output(meshOutputPath, std::ios::binary);
+		std::string subassetName = "anim-" + animationName;
+		Uuid outUuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
+
+		std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / outUuid.ToString();
+		std::ofstream output(outputPath, std::ios::binary);
 
 		if (!output.is_open()) {
-			throw std::runtime_error(std::string("Failed to open ") + meshOutputPath);
+			throw std::runtime_error(std::string("Failed to open ") + outputPath.string());
 		}
 
 		//  - Output File MetaData
@@ -317,17 +321,26 @@ void ModelImporter::ProcessAnimations() {
 
 				dstChannelData.positions.reserve(srcChannel->mNumPositionKeys);
 				for (unsigned int i = 0; i < srcChannel->mNumPositionKeys; ++i) {
-					dstChannelData.positions.emplace_back(srcChannel->mPositionKeys[i].mTime, srcChannel->mPositionKeys[i].mValue);
+					double time = srcChannel->mPositionKeys[i].mTime;
+					aiVector3D& srcValue = srcChannel->mPositionKeys[i].mValue;
+					Math::Float3 value = Math::Float3(srcValue.x, srcValue.y, srcValue.z);
+					dstChannelData.positions.emplace_back(time, value);
 				}
 
 				dstChannelData.rotations.reserve(srcChannel->mNumRotationKeys);
 				for (unsigned int i = 0; i < srcChannel->mNumRotationKeys; ++i) {
-					dstChannelData.rotations.emplace_back(srcChannel->mRotationKeys[i].mTime, srcChannel->mRotationKeys[i].mValue);
+					double time = srcChannel->mRotationKeys[i].mTime;
+					aiQuaternion& srcValue = srcChannel->mRotationKeys[i].mValue;
+					Math::Quaternion value = Math::Quaternion(srcValue.x, srcValue.y, srcValue.z, srcValue.w);
+					dstChannelData.rotations.emplace_back(time, value);
 				}
 
 				dstChannelData.scales.reserve(srcChannel->mNumScalingKeys);
 				for (unsigned int i = 0; i < srcChannel->mNumScalingKeys; ++i) {
-					dstChannelData.scales.emplace_back(srcChannel->mScalingKeys[i].mTime, srcChannel->mScalingKeys[i].mValue);
+					double time = srcChannel->mScalingKeys[i].mTime;
+					aiVector3D& srcValue = srcChannel->mScalingKeys[i].mValue;
+					Math::Float3 value = Math::Float3(srcValue.x, srcValue.y, srcValue.z);
+					dstChannelData.scales.emplace_back(time, value);
 				}
 			}
 		}
@@ -352,10 +365,10 @@ void ModelImporter::Import(std::filesystem::path& path) {
 
 	metaFile = new MetaFile(path);
 	// Set to false, will check if true later.
-	bool isSkeletalMesh = true;
-	bool shouldImportAnimations = true;
+	bool shouldImportAnimations = false;
+	isSkeletalMesh = false;
 
-	InitSubmeshes();
+	InitSubmeshes(isSkeletalMesh);
 	ConvertMaterials();
 	ProcessVertices();
 
@@ -391,29 +404,41 @@ void ModelImporter::OutputMeshes() {
 	std::string subassetName = "mesh";
 	Uuid outUuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
 
-	std::string meshOutputPath = "../compiledAssets/" + outUuid.ToString();
+	std::filesystem::path meshOutputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / outUuid.ToString();
 
 	auto meshCount = outputData.meshes.size();
 
 	Grindstone::Formats::Model::V1::Header outFormat;
-	outFormat.totalFileSize = sizeof(outFormat) + 
+	outFormat.totalFileSize = static_cast<uint32_t>(
+		3 +
+		sizeof(outFormat) + 
 		meshCount * sizeof(Submesh) +
 		outputData.vertexArray.position.size() * sizeof(float) +
 		outputData.vertexArray.normal.size() * sizeof(float) +
 		outputData.vertexArray.tangent.size() * sizeof(float) +
-		outputData.indices.size() * sizeof(uint32_t);
+		outputData.vertexArray.texCoordArray[0].size() * sizeof(float) +
+		outputData.indices.size() * sizeof(uint16_t)
+	);
 	outFormat.hasVertexPositions = true;
 	outFormat.hasVertexNormals = true;
 	outFormat.hasVertexTangents = true;
 	outFormat.vertexUvSetCount = 1;
+	outFormat.numWeightPerBone = isSkeletalMesh ? 4 : 0;
 	outFormat.vertexCount = static_cast<uint64_t>(outputData.vertexCount);
 	outFormat.indexCount = static_cast<uint64_t>(outputData.indexCount);
 	outFormat.meshCount = static_cast<uint32_t>(meshCount);
 
+	if (isSkeletalMesh) {
+		outFormat.totalFileSize += static_cast<uint32_t>(
+			outputData.vertexArray.boneIds.size() * sizeof(uint16_t) +
+			outputData.vertexArray.boneWeights.size() * sizeof(float)
+		);
+	}
+
 	std::ofstream output(meshOutputPath, std::ios::binary);
 
 	if (!output.is_open()) {
-		throw std::runtime_error(std::string("Failed to open ") + meshOutputPath);
+		throw std::runtime_error(std::string("Failed to open ") + meshOutputPath.string());
 	}
 
 	//  - Output File MetaData
@@ -429,8 +454,11 @@ void ModelImporter::OutputMeshes() {
 	OutputVertexArray(output, outputData.vertexArray.normal);
 	OutputVertexArray(output, outputData.vertexArray.tangent);
 	OutputVertexArray(output, outputData.vertexArray.texCoordArray[0]);
-	OutputVertexArray(output, outputData.vertexArray.boneIds);
-	OutputVertexArray(output, outputData.vertexArray.boneWeights);
+
+	if (isSkeletalMesh) {
+		OutputVertexArray(output, outputData.vertexArray.boneIds);
+		OutputVertexArray(output, outputData.vertexArray.boneWeights);
+	}
 
 	// - Output Indices
 	output.write(reinterpret_cast<const char*> (outputData.indices.data()), outputData.indices.size() * sizeof(uint16_t));
@@ -446,7 +474,7 @@ void ModelImporter::OutputMeshes() {
 void ModelImporter::OutputVertexArray(std::ofstream& output, std::vector<uint16_t>& vertexArray) {
 	output.write(
 		reinterpret_cast<const char*> (vertexArray.data()),
-		vertexArray.size() * sizeof(float)
+		vertexArray.size() * sizeof(uint16_t)
 	);
 }
 

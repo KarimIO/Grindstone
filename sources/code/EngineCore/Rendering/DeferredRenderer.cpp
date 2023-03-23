@@ -7,16 +7,14 @@
 #include "DeferredRenderer.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "EngineCore/EngineCore.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dManager.hpp"
-#include "EngineCore/Assets/Mesh3d/Mesh3dRenderer.hpp"
-#include "EngineCore/Assets/Shaders/Shader.hpp"
-#include "EngineCore/Assets/Shaders/ShaderManager.hpp"
-#include "EngineCore/Assets/Materials/Material.hpp"
-#include "EngineCore/Assets/Materials/MaterialManager.hpp"
-#include "EngineCore/Assets/AssetRendererManager.hpp"
+#include "EngineCore/Assets/AssetManager.hpp"
+#include "EngineCore/Assets/Shaders/ShaderImporter.hpp"
+#include "EngineCore/Assets/Materials/MaterialImporter.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "EngineCore/CoreComponents/Lights/PointLightComponent.hpp"
+#include "EngineCore/AssetRenderer/AssetRendererManager.hpp"
 #include "Common/Event/WindowEvent.hpp"
+#include "EngineCore/Profiling.hpp"
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
@@ -178,7 +176,7 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	gbufferRenderPassCreateInfo.width = width;
 	gbufferRenderPassCreateInfo.height = height;
 	gbufferRenderPassCreateInfo.colorFormats = colorFormats.data();
-	gbufferRenderPassCreateInfo.colorFormatCount = colorFormats.size();
+	gbufferRenderPassCreateInfo.colorFormatCount = (uint32_t)colorFormats.size();
 	gbufferRenderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
 	gbufferRenderPass = core->CreateRenderPass(gbufferRenderPassCreateInfo);
 
@@ -216,12 +214,26 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	litHdrFramebufferCreateInfo.renderPass = mainRenderPass;
 	litHdrFramebuffer = core->CreateFramebuffer(litHdrFramebufferCreateInfo);
 	
-	auto shaderManager = EngineCore::GetInstance().shaderManager;
-	lightPipeline = shaderManager->LoadShader(nullptr, "5537b925-96bc-4e1f-8e2a-d66d6dd9bed1").pipeline;
-	tonemapPipeline = shaderManager->LoadShader(nullptr, "30e9223e-1753-4a7a-acac-8488c75bb1ef").pipeline;
+	auto assetManager = EngineCore::GetInstance().assetManager;
+	ShaderAsset* lightShaderAsset = assetManager->GetAsset<ShaderAsset>(Uuid("5537b925-96bc-4e1f-8e2a-d66d6dd9bed1"));
+	if (lightShaderAsset == nullptr) {
+		EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load point light shader.");
+	}
+	else {
+		lightPipeline = lightShaderAsset->pipeline;
+	}
+
+	ShaderAsset* tonemapShaderAsset = assetManager->GetAsset<ShaderAsset>(Uuid("30e9223e-1753-4a7a-acac-8488c75bb1ef"));
+	if (tonemapShaderAsset == nullptr) {
+		EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load tonemap shader.");
+	}
+	else {
+		tonemapPipeline = tonemapShaderAsset->pipeline;
+	}
 }
 
 void DeferredRenderer::RenderLights(entt::registry& registry) {
+	GRIND_PROFILE_FUNC();
 	if (lightPipeline == nullptr) {
 		return;
 	}
@@ -254,6 +266,7 @@ void DeferredRenderer::RenderLights(entt::registry& registry) {
 }
 
 void DeferredRenderer::PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer) {
+	GRIND_PROFILE_FUNC();
 	if (tonemapPipeline == nullptr) {
 		return;
 	}

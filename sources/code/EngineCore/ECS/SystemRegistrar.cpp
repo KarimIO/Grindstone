@@ -1,4 +1,5 @@
 #include "SystemRegistrar.hpp"
+#include "EngineCore/Profiling.hpp"
 using namespace Grindstone::ECS;
 
 SystemRegistrar::SystemRegistrar() {
@@ -13,14 +14,18 @@ void SystemRegistrar::RegisterSystem(const char* name, SystemFactory factory) {
 }
 
 void SystemRegistrar::Update(entt::registry& registry) {
+	GRIND_PROFILE_FUNC();
 	for each (auto systemFactory in systemFactories) {
+		GRIND_PROFILE_SCOPE(systemFactory.first.c_str());
 		auto systemFn = systemFactory.second;
 		systemFn(registry);
 	}
 }
 
 void SystemRegistrar::EditorUpdate(entt::registry& registry) {
+	GRIND_PROFILE_FUNC();
 	for each (auto systemFactory in editorSystemFactories) {
+		GRIND_PROFILE_SCOPE(systemFactory.first.c_str());
 		auto systemFn = systemFactory.second;
 		systemFn(registry);
 	}

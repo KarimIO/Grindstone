@@ -9,7 +9,7 @@ namespace Grindstone {
 		};
 
 		template <>
-		TypeDescriptor* getPrimitiveDescriptor<glm::quat>() {
+		TypeDescriptor* GetPrimitiveDescriptor<glm::quat>() {
 			static TypeDescriptor_Quat typeDesc;
 			return &typeDesc;
 		}

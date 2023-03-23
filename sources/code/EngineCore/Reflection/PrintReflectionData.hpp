@@ -5,8 +5,8 @@
 
 namespace Grindstone {
 	namespace Reflection {
-		std::string parseDisplayName(std::string v, std::string n);
-		std::string parseStoredName(std::string v, std::string n);
-		std::string stringifyMetadata(Metadata m);
+		std::string ParseDisplayName(std::string v, std::string n);
+		std::string ParseStoredName(std::string v, std::string n);
+		std::string StringifyMetadata(Metadata m);
 	}
 }

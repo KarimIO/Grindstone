@@ -5,6 +5,7 @@
 #include <spirv_glsl.hpp>
 #include "ShaderImporter.hpp"
 #include "Common/ResourcePipeline/MetaFile.hpp"
+#include "Editor/EditorManager.hpp"
 
 std::string GetDataTypeName(spirv_cross::SPIRType::BaseType type) {
 	switch (type) {
@@ -84,20 +85,20 @@ void ReflectStruct(
 	spirv_cross::SmallVector<spirv_cross::Resource>& resourceList
 ) {
 	for (const auto& resource : resourceList) {
-		const auto& bufferType = compiler.get_type(resource.base_type_id);
-		uint32_t bufferSize = compiler.get_declared_struct_size(bufferType);
+		spirv_cross::SPIRType bufferType = compiler.get_type(resource.base_type_id);
+		size_t bufferSize = compiler.get_declared_struct_size(bufferType);
 		uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-		int memberCount = bufferType.member_types.size();
+		uint32_t memberCount = static_cast<uint32_t>(bufferType.member_types.size());
 		auto& resourceName = resource.name;
 
 		uniformBuffers.emplace_back(resourceName.c_str(), binding, bufferSize);
 		auto& uniformBuffer = uniformBuffers.back();
 		uniformBuffer.shaderPasses.push_back(shaderType);
 
-		for (unsigned i = 0; i < memberCount; i++) {
+		for (uint32_t i = 0; i < memberCount; i++) {
 			auto& memberType = compiler.get_type(bufferType.member_types[i]);
 			size_t memberSize = compiler.get_declared_struct_member_size(bufferType, i);
-			size_t offset = compiler.type_struct_member_offset(bufferType, i);
+			uint32_t offset = compiler.type_struct_member_offset(bufferType, i);
 			const std::string& name = compiler.get_member_name(bufferType.self, i);
 			auto& typeStr = GetDataTypeName(memberType.basetype);
 			memberType.vecsize;
@@ -123,6 +124,7 @@ namespace Grindstone {
 			case ShaderImporter::ShaderType::Compute: return shaderc_glsl_compute_shader;
 			case ShaderImporter::ShaderType::TesselationControl: return shaderc_glsl_tess_control_shader;
 			case ShaderImporter::ShaderType::TesselationEvaluation: return shaderc_glsl_tess_evaluation_shader;
+			default: throw std::runtime_error("Invalid Shader Type!");
 			}
 		}
 
@@ -133,7 +135,7 @@ namespace Grindstone {
 			metaFile->Load(inputPath);
 			std::string subassetName = "shader";
 			Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
-			basePath = std::string("../compiledAssets/") + uuid.ToString();
+			baseOutputPath = (Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString()).string();
 
 			metaFile->Save();
 
@@ -156,9 +158,9 @@ namespace Grindstone {
 				reflectionWriter.Key("name");
 				reflectionWriter.String(structMeta.name.c_str());
 				reflectionWriter.Key("binding");
-				reflectionWriter.Uint(structMeta.binding);
+				reflectionWriter.Uint(static_cast<unsigned int>(structMeta.binding));
 				reflectionWriter.Key("bufferSize");
-				reflectionWriter.Uint(structMeta.buffserSize);
+				reflectionWriter.Uint(static_cast<unsigned int>(structMeta.bufferSize));
 
 				reflectionWriter.Key("usedIn");
 				reflectionWriter.StartArray();
@@ -174,9 +176,9 @@ namespace Grindstone {
 					reflectionWriter.Key("name");
 					reflectionWriter.String(member.name.c_str());
 					reflectionWriter.Key("offset");
-					reflectionWriter.Uint(member.offset);
+					reflectionWriter.Uint(static_cast<unsigned int>(member.offset));
 					reflectionWriter.Key("memberSize");
-					reflectionWriter.Uint(member.memberSize);
+					reflectionWriter.Uint(static_cast<unsigned int>(member.memberSize));
 					reflectionWriter.Key("type");
 					reflectionWriter.String(member.type.c_str());
 					reflectionWriter.EndObject();
@@ -195,7 +197,7 @@ namespace Grindstone {
 				reflectionWriter.Key("name");
 				reflectionWriter.String(resource.name.c_str());
 				reflectionWriter.Key("binding");
-				reflectionWriter.Uint(resource.binding);
+				reflectionWriter.Uint(static_cast<unsigned int>(resource.binding));
 
 				reflectionWriter.Key("usedIn");
 				reflectionWriter.StartArray();
@@ -305,6 +307,7 @@ namespace Grindstone {
 			case ShaderType::Compute: return ".comp";
 			case ShaderType::TesselationControl: return ".ctrl";
 			case ShaderType::TesselationEvaluation: return ".eval";
+			default: throw std::runtime_error("Invalid Shader Type!");
 			}
 		}
 		
@@ -316,6 +319,7 @@ namespace Grindstone {
 			case ShaderType::Compute: return "compute";
 			case ShaderType::TesselationControl: return "tesselationControl";
 			case ShaderType::TesselationEvaluation: return "tesselationEvaluation";
+			default: throw std::runtime_error("Invalid Shader Type!");
 			}
 		}
 
@@ -406,7 +410,7 @@ namespace Grindstone {
 		}
 
 		void ShaderImporter::OutputStringToFile(const char* extension, const char* content) {
-			std::string outputFilename = basePath + extension;
+			std::string outputFilename = baseOutputPath + extension;
 			std::ofstream file(outputFilename);
 			file.write((const char*)content, strlen(content));
 			file.flush();
@@ -414,7 +418,7 @@ namespace Grindstone {
 		}
 
 		void ShaderImporter::OutputUint32ToFile(const char* extension, std::vector<uint32_t>& content) {
-			std::string outputFilename = basePath + extension;
+			std::string outputFilename = baseOutputPath + extension;
 			std::ofstream file(outputFilename, std::ios::out | std::ios::binary);
 			auto fileSize = sizeof(uint32_t) * content.size();
 			file.write((const char*)content.data(), fileSize);

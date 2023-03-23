@@ -4,6 +4,7 @@
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/ECS/SystemRegistrar.hpp"
+#include "EngineCore/Scenes/Scene.hpp"
 
 #include "CSharpSystem.hpp"
 #include "CSharpManager.hpp"
@@ -18,6 +19,21 @@ extern "C" {
 		globalPluginInterface->Print((LogSeverity)logSeverity, message);
 	}
 
+	CSHARP_EXPORT void EntityCreateComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType) {
+		entt::registry& reg = scene->GetEntityRegistry();
+		CSharpManager::GetInstance().CallCreateComponent(scene, entityHandle, monoType);
+	}
+
+	CSHARP_EXPORT void EntityHasComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType) {
+		entt::registry& reg = scene->GetEntityRegistry();
+		CSharpManager::GetInstance().CallHasComponent(scene, entityHandle, monoType);
+	}
+
+	CSHARP_EXPORT void EntityRemoveComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType) {
+		entt::registry& reg = scene->GetEntityRegistry();
+		CSharpManager::GetInstance().CallRemoveComponent(scene, entityHandle, monoType);
+	}
+
 	CSHARP_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
 		auto& manager = CSharpManager::GetInstance();
 		manager.Initialize(pluginInterface->GetEngineCore());
@@ -25,6 +41,8 @@ extern "C" {
 		pluginInterface->RegisterComponent<ScriptComponent>(SetupCSharpScriptComponent);
 		pluginInterface->RegisterSystem("Scripting::CSharp::Update", UpdateSystem);
 		pluginInterface->systemRegistrar->RegisterEditorSystem("Scripting::CSharp::UpdateEditor", UpdateEditorSystem);
+
+		manager.RegisterComponents();
 	}
 
 	CSHARP_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {

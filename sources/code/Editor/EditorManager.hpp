@@ -32,12 +32,13 @@ namespace Grindstone {
 			ScriptBuilder::CSharpBuildManager& GetCSharpBuildManager();
 			static FileManager& GetFileManager();
 			static EngineCore& GetEngineCore();
-			bool Initialize(const char* projectPath);
+			bool Initialize(std::filesystem::path projectPath);
 			void InitializeQuitCommands();
 			~Manager();
 			void Run();
 			std::filesystem::path GetProjectPath();
 			std::filesystem::path GetAssetsPath();
+			std::filesystem::path GetCompiledAssetsPath();
 			std::filesystem::path GetEngineBinariesPath();
 			bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
 			bool OnForceQuit(Grindstone::Events::BaseEvent* ev);
@@ -52,6 +53,7 @@ namespace Grindstone {
 		private:
 			std::filesystem::path projectPath;
 			std::filesystem::path assetsPath;
+			std::filesystem::path compiledAssetsPath;
 			std::filesystem::path engineBinariesPath;
 			bool shouldClose = false;
 			EngineCore* engineCore = nullptr;

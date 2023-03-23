@@ -20,6 +20,12 @@ extern "C" {
 void SceneManager::LoadDefaultScene() {
 	BuildSettings::SceneBuildSettings settings; 
 	const char* defaultPath = settings.GetDefaultScene();
+
+	if (defaultPath == nullptr || strlen(defaultPath) == 0) {
+		CreateEmptyScene("Untitled Scene");
+		return;
+	}
+
 	LoadScene(defaultPath);
 }
 
@@ -37,19 +43,27 @@ void SceneManager::Update() {
 
 Scene* SceneManager::LoadScene(const char* path) {
 	CloseActiveScenes();
-	Scene* newScene = new Scene();
-	scenes[path] = newScene;
-	SceneLoaderJson sceneLoader(newScene, path);
-
-	return newScene;
+	return LoadSceneAdditively(path);
 }
 
 Scene* SceneManager::LoadSceneAdditively(const char* path) {
 	Scene* newScene = new Scene();
 	scenes[path] = newScene;
-	SceneLoaderJson sceneLoader(newScene, path);
+	std::string filepath = Grindstone::EngineCore::GetInstance().GetAssetPath(path).string();
+	SceneLoaderJson sceneLoader(newScene, filepath.c_str());
+	ProcessSceneAfterLoading(newScene);
 
 	return newScene;
+}
+
+void SceneManager::AddPostLoadProcess(std::function<void(Scene*)> fn) {
+	postLoadProcesses.push_back(fn);
+}
+
+void SceneManager::ProcessSceneAfterLoading(Scene* scene) {
+	for each (auto fn in postLoadProcesses) {
+		fn(scene);
+	}
 }
 
 void SceneManager::SaveScene(const char* path, Scene* scene) {
@@ -58,10 +72,10 @@ void SceneManager::SaveScene(const char* path, Scene* scene) {
 
 Scene* SceneManager::CreateEmptyScene(const char* name) {
 	CloseActiveScenes();
-	return nullptr;
+	return CreateEmptySceneAdditively(name);
 }
 
-Scene* SceneManager::AddEmptyScene(const char *name) {
+Scene* SceneManager::CreateEmptySceneAdditively(const char *name) {
 	Scene* newScene = new Scene();
 	scenes[name] = newScene;
 

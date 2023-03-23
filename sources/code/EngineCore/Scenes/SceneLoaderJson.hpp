@@ -19,6 +19,7 @@ namespace Grindstone {
 			bool Load(const char* path);
 			void ProcessMeta();
 			void ProcessEntities();
+
 			void ProcessEntity(rapidjson::Value& entity);
 			void ProcessComponent(ECS::Entity entity, rapidjson::Value& component);
 			void ProcessComponentParameter(
@@ -28,6 +29,9 @@ namespace Grindstone {
 				const char* parameterKey,
 				rapidjson::Value& parameter
 			);
+			void ParseMember(void* memberPtr, Reflection::TypeDescriptor* member, rapidjson::Value& parameter);
+			void ParseArray(void* memberPtr, Reflection::TypeDescriptor* member, rapidjson::Value& parameter);
+		private:
 			Scene* scene;
 			rapidjson::Document document;
 			const char* path;

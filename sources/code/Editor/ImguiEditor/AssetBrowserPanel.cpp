@@ -15,9 +15,9 @@
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/Scenes/Scene.hpp"
 #include "EngineCore/EngineCore.hpp"
-#include "EngineCore/Assets/Textures/TextureManager.hpp"
-#include "EngineCore/Assets/Shaders/ShaderManager.hpp"
-#include "EngineCore/Assets/Materials/MaterialManager.hpp"
+#include "EngineCore/Assets/Textures/TextureImporter.hpp"
+#include "EngineCore/Assets/Shaders/ShaderImporter.hpp"
+#include "EngineCore/Assets/Materials/MaterialImporter.hpp"
 #include "Plugins/GraphicsOpenGL/GLTexture.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
@@ -57,18 +57,20 @@ ImTextureID GetIdFromTexture(GraphicsAPI::Texture* texture) {
 	return (ImTextureID)(uint64_t)glTex->GetTexture();
 }
 
-void PrepareIcon(Grindstone::TextureManager* textureManager, const char* path, GraphicsAPI::Texture*& texture, ImTextureID& id) {
-	auto& textureAsset = textureManager->LoadTexture(path);
+void PrepareIcon(Grindstone::TextureImporter* TextureImporter, const char* path, GraphicsAPI::Texture*& texture, ImTextureID& id) {
+	/*
+	auto& textureAsset = TextureImporter->LoadTexture(path);
 	texture = textureAsset.texture;
 	id = GetIdFromTexture(texture);
+	*/
 }
 
-#define PREPARE_ICON(type) PrepareIcon(textureManager, "../engineassets/editor/assetIcons/" #type ".dds", iconTextures.type, iconIds.type)
+#define PREPARE_ICON(type) PrepareIcon(textureImporter, "../engineassets/editor/assetIcons/" #type ".dds", iconTextures.type, iconIds.type)
 
 AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore), rootDirectory(Editor::Manager::GetFileManager().GetRootDirectory()) {
 	pathToRename = "";
 
-	auto textureManager = engineCore->textureManager;
+	Grindstone::TextureImporter* textureImporter = nullptr; //engineCore->textureImporter;
 	PREPARE_ICON(folder);
 	PREPARE_ICON(file);
 	PREPARE_ICON(image);
@@ -230,22 +232,24 @@ void AssetBrowserPanel::RenderContextMenuFileTypeSpecificEntries(std::filesystem
 	}
 
 	// TODO: Get uuids from meta file so I can reload them
+	/*
 	if (firstDotExtension == "glsl") {
 		if (ImGui::MenuItem("Reload")) {
 			std::string pathWithoutExtension = pathStr.substr(0, firstDot);
-			engineCore.shaderManager->ReloadShaderIfLoaded(pathWithoutExtension.c_str());
+			engineCore.shaderImporter->ReloadShaderIfLoaded(pathWithoutExtension.c_str());
 		}
 	}
 	else if (firstDotExtension == "gmat") {
 		if (ImGui::MenuItem("Reload")) {
-			engineCore.materialManager->ReloadMaterialIfLoaded(pathStr.c_str());
+			engineCore.shaderImporter->ReloadMaterialIfLoaded(pathStr.c_str());
 		}
 	}
 	else if (firstDotExtension == "dds") {
 		if (ImGui::MenuItem("Reload")) {
-			engineCore.textureManager->ReloadTextureIfLoaded(pathStr.c_str());
+			engineCore.shaderImporter->ReloadTextureIfLoaded(pathStr.c_str());
 		}
 	}
+	*/
 }
 
 void AssetBrowserPanel::RenderAssetContextMenu(std::filesystem::directory_entry entry) {
@@ -370,7 +374,7 @@ void AssetBrowserPanel::RenderFolders() {
 			isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.5f) : ImVec4(1, 1, 1, 0.1f)
 		);
 
-		ImTextureID icon = GetIcon(directoryEntry);
+		ImTextureID icon = 0; //GetIcon(directoryEntry);
 		ImGui::PushID(buttonString.c_str());
 		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
 		ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
@@ -414,7 +418,7 @@ void AssetBrowserPanel::RenderFiles() {
 			isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.5f) : ImVec4(1, 1, 1, 0.1f)
 		);
 
-		ImTextureID icon = GetIcon(file->directoryEntry);
+		ImTextureID icon = 0; //GetIcon(file->directoryEntry);
 		ImGui::PushID(buttonString.c_str());
 		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
 		ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);

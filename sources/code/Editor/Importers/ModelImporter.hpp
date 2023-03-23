@@ -25,11 +25,6 @@ namespace Grindstone {
 
 			};
 
-			struct BoneData {
-				uint16_t ids[NUM_BONES_PER_VERTEX];
-				float weights[NUM_BONES_PER_VERTEX];
-			};
-
 			struct Submesh {
 				uint32_t indexCount = 0;
 				uint32_t baseVertex = 0;
@@ -41,13 +36,13 @@ namespace Grindstone {
 			void ProcessNodeTree(aiNode* node, uint16_t parentIndex);
 			void ConvertMaterials();
 			std::filesystem::path GetTexturePath(aiMaterial* pMaterial, aiTextureType type);
-			void InitSubmeshes();
+			void InitSubmeshes(bool hasBones);
 			void ProcessVertices();
 			void PreprocessBones();
 			void ProcessVertexBoneWeights();
 			void NormalizeBoneWeights();
 			void ProcessAnimations();
-			void AddBoneData(unsigned int vertexId, unsigned int boneId, unsigned int vertexWeight);
+			void AddBoneData(unsigned int vertexId, unsigned int boneId, float vertexWeight);
 
 			void OutputPrefabs();
 			void OutputMeshes();
@@ -59,8 +54,9 @@ namespace Grindstone {
 			std::filesystem::path baseFolderPath;
 			std::map<std::string, glm::mat4> tempOffsetMatrices; // Save string->offset matrix so we can use it when constructing the bone data
 			std::map<std::string, unsigned int> boneMapping;
-			const aiScene* scene;
+			const aiScene* scene = nullptr;
 			bool hasExtraWeights = false;
+			bool isSkeletalMesh = false;
 
 			struct BoneData {
 				uint16_t parentIndex;

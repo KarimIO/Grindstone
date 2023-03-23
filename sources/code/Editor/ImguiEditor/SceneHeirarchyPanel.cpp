@@ -72,7 +72,7 @@ namespace Grindstone {
 					}
 				);
 
-				if (ImGui::BeginPopupContextWindow(0, ImGuiMouseButton_Right, false)) {
+				if (ImGui::BeginPopupContextWindow(0, ImGuiMouseButton_Right)) {
 					if (ImGui::MenuItem("Add new entity")) {
 						Editor::Manager::GetInstance().GetCommandList().AddNewEntity(scene);
 					}

@@ -12,7 +12,7 @@ namespace Grindstone {
 		};
 
 		template <>
-		TypeDescriptor* getPrimitiveDescriptor<std::string>() {
+		TypeDescriptor* GetPrimitiveDescriptor<std::string>() {
 			static TypeDescriptor_StdString typeDesc;
 			return &typeDesc;
 		}
