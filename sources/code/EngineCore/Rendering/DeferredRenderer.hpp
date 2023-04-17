@@ -43,7 +43,7 @@ namespace Grindstone {
 		GraphicsAPI::UniformBuffer* lightUniformBufferObject = nullptr;
 		GraphicsAPI::Framebuffer* gbuffer = nullptr;
 		GraphicsAPI::Framebuffer* litHdrFramebuffer = nullptr;
-		GraphicsAPI::RenderTarget* gbufferRenderTargets = nullptr;
+		std::vector<GraphicsAPI::RenderTarget*> gbufferRenderTargets;
 		GraphicsAPI::RenderTarget* litHdrRenderTarget = nullptr;
 		GraphicsAPI::DepthTarget* gbufferDepthTarget = nullptr;
 		GraphicsAPI::DepthTarget* litHdrDepthTarget = nullptr;

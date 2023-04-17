@@ -105,7 +105,7 @@ namespace Grindstone {
 				return VK_FORMAT_B8G8R8A8_UNORM;
 			case ColorFormat::R16G16B16A16:
 				channels = 4;
-				return VK_FORMAT_R16G16B16A16_UNORM;
+				return VK_FORMAT_R16G16B16A16_SFLOAT;
 			case ColorFormat::R32G32B32:
 				channels = 4;
 				return VK_FORMAT_R32G32B32_SFLOAT;

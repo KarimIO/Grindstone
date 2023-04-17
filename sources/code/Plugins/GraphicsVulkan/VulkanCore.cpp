@@ -512,8 +512,12 @@ namespace Grindstone {
 			return static_cast<TextureBindingLayout *>(new VulkanTextureBindingLayout(ci));
 		}
 
-		RenderTarget * VulkanCore::CreateRenderTarget(RenderTarget::CreateInfo* ci, uint32_t rc, bool cube) {
-			return static_cast<RenderTarget *>(new VulkanRenderTarget(*ci));
+		RenderTarget* VulkanCore::CreateRenderTarget(RenderTarget::CreateInfo& ci) {
+			return static_cast<RenderTarget*>(new VulkanRenderTarget(ci));
+		}
+
+		RenderTarget* VulkanCore::CreateRenderTarget(RenderTarget::CreateInfo* ci, uint32_t rc, bool cube) {
+			return static_cast<RenderTarget*>(new VulkanRenderTarget(*ci));
 		}
 
 		DepthTarget * VulkanCore::CreateDepthTarget(DepthTarget::CreateInfo& ci) {

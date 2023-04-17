@@ -56,7 +56,7 @@ namespace Grindstone {
 			format = VK_FORMAT_R8G8B8A8_UNORM;
 			//TranslateColorFormatToVulkan(ci.format, channels);
 
-			mipLevels = std::floor(std::log2((ci.width > ci.height) ? ci.width : ci.height));
+			mipLevels = static_cast<uint32_t>(std::floor(std::log2((ci.width > ci.height) ? ci.width : ci.height)));
 
 			uint32_t imageSize = ci.width * ci.height * channels;
 

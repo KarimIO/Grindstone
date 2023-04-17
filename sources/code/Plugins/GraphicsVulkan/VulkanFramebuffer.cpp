@@ -9,16 +9,16 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		VulkanFramebuffer::VulkanFramebuffer(Framebuffer::CreateInfo& ci) {
-			uint32_t total_views = ci.numRenderTargetLists;
-			total_views += (ci.depthTarget != nullptr) ? 1 : 0;
+			uint32_t totalViews = ci.numRenderTargetLists;
+			totalViews += (ci.depthTarget != nullptr) ? 1 : 0;
 
-			VkImageView *attachments = new VkImageView[total_views];
+			VkImageView *attachments = new VkImageView[totalViews];
 			for (uint32_t i = 0; i < ci.numRenderTargetLists; ++i) {
 				attachments[i] = ((VulkanRenderTarget *)ci.renderTargetLists[i])->GetImageView();
 			}
 
 			if (ci.depthTarget != nullptr) {
-				attachments[total_views - 1] = ((VulkanDepthTarget *)ci.depthTarget)->GetImageView();
+				attachments[totalViews - 1] = ((VulkanDepthTarget *)ci.depthTarget)->GetImageView();
 			}
 
 			VulkanRenderPass *rp = (VulkanRenderPass *)ci.renderPass;
@@ -26,7 +26,7 @@ namespace Grindstone {
 			VkFramebufferCreateInfo framebufferInfo = {};
 			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 			framebufferInfo.renderPass = rp->GetRenderPassHandle();
-			framebufferInfo.attachmentCount = total_views;
+			framebufferInfo.attachmentCount = totalViews;
 			framebufferInfo.pAttachments = attachments;
 			framebufferInfo.width = rp->GetWidth();
 			framebufferInfo.height = rp->GetHeight();
@@ -49,7 +49,7 @@ namespace Grindstone {
 		uint32_t VulkanFramebuffer::GetAttachment(uint32_t attachmentIndex) {
 			std::cout << "VulkanFramebuffer::GetAttachment is not used.\n";
 			assert(false);
-			return 0.0f;
+			return 0;
 		}
 
 		void VulkanFramebuffer::Resize(uint32_t width, uint32_t height) {

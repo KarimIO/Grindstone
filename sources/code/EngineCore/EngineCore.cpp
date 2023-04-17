@@ -45,7 +45,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 	// Load core (Logging, ECS and Plugin Manager)
 	pluginManager = new Plugins::Manager(this);
-	pluginManager->Load("PluginGraphicsOpenGL");
+	pluginManager->Load("PluginGraphicsVulkan");
 
 	inputManager = new Input::Manager(eventDispatcher);
 
