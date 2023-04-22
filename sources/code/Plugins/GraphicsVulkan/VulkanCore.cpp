@@ -100,17 +100,19 @@ namespace Grindstone {
 
 			VkApplicationInfo appInfo = {};
 			appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-			appInfo.pApplicationName = "Hello Triangle";
+			appInfo.pApplicationName = "Grindstone";
 			appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-			appInfo.pEngineName = "No Engine";
+			appInfo.pEngineName = "Grindstone Engine";
 			appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-			appInfo.apiVersion = VK_API_VERSION_1_0;
+			appInfo.apiVersion = VK_API_VERSION_1_3;
 
 			VkInstanceCreateInfo createInfo = {};
 			createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 			createInfo.pApplicationInfo = &appInfo;
 
 			auto extensions = GetRequiredExtensions();
+			extensions.push_back(VK_NV_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
+
 			createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 			createInfo.ppEnabledExtensionNames = extensions.data();
 
@@ -157,7 +159,6 @@ namespace Grindstone {
 
 			int scoreMax = 0;
 
-			std::cout << "Available Devices:\n";
 			for (const auto& device : devices) {
 				int score = ScoreDevice(device);
 				if (score > scoreMax) {
@@ -169,6 +170,11 @@ namespace Grindstone {
 			if (physicalDevice == VK_NULL_HANDLE) {
 				throw std::runtime_error("Vulkan: Failed to find a suitable GPU!");
 			}
+
+			VkPhysicalDeviceProperties gpuProps{};
+			vkGetPhysicalDeviceProperties(physicalDevice, &gpuProps);
+
+			std::cout << "Using Device: " << gpuProps.deviceName << '\n';
 
 			VkPhysicalDeviceProperties properties;
 			vkGetPhysicalDeviceProperties(physicalDevice, &properties);
