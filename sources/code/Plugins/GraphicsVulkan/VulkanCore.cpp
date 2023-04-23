@@ -67,7 +67,6 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 	}
 }
 
-
 namespace Grindstone {
 	namespace GraphicsAPI {
 		VulkanCore *VulkanCore::graphicsWrapper = nullptr;
@@ -439,7 +438,6 @@ namespace Grindstone {
 			return commandPoolGraphics;
 		}
 
-
 		void VulkanCore::AdjustPerspective(float *perspective) {
 			perspective[1*4 + 1] *= -1;
 		}
@@ -471,35 +469,35 @@ namespace Grindstone {
 		// Creators
 		//==================================
 		Framebuffer *VulkanCore::CreateFramebuffer(Framebuffer::CreateInfo& ci) {
-			return static_cast<Framebuffer *>(new VulkanFramebuffer(ci));
+			return static_cast<Framebuffer*>(new VulkanFramebuffer(ci));
 		}
 
 		RenderPass * VulkanCore::CreateRenderPass(RenderPass::CreateInfo& ci) {
-			return static_cast<RenderPass *>(new VulkanRenderPass(ci));
+			return static_cast<RenderPass*>(new VulkanRenderPass(ci));
 		}
 
 		Pipeline* VulkanCore::CreatePipeline(Pipeline::CreateInfo& ci) {
-			return static_cast<Pipeline *>(new VulkanPipeline(ci));
+			return static_cast<Pipeline*>(new VulkanPipeline(ci));
 		}
 
 		CommandBuffer * VulkanCore::CreateCommandBuffer(CommandBuffer::CreateInfo& ci) {
-			return static_cast<CommandBuffer *>(new VulkanCommandBuffer(ci));
+			return static_cast<CommandBuffer*>(new VulkanCommandBuffer(ci));
 		}
 
 		VertexBuffer * VulkanCore::CreateVertexBuffer(VertexBuffer::CreateInfo& ci) {
-			return static_cast<VertexBuffer *>(new VulkanVertexBuffer(ci));
+			return static_cast<VertexBuffer*>(new VulkanVertexBuffer(ci));
 		}
 
 		IndexBuffer * VulkanCore::CreateIndexBuffer(IndexBuffer::CreateInfo& ci) {
-			return static_cast<IndexBuffer *>(new VulkanIndexBuffer(ci));
+			return static_cast<IndexBuffer*>(new VulkanIndexBuffer(ci));
 		}
 
 		UniformBuffer * VulkanCore::CreateUniformBuffer(UniformBuffer::CreateInfo& ci) {
-			return static_cast<UniformBuffer *>(new VulkanUniformBuffer(ci));
+			return static_cast<UniformBuffer*>(new VulkanUniformBuffer(ci));
 		}
 
 		UniformBufferBinding * VulkanCore::CreateUniformBufferBinding(UniformBufferBinding::CreateInfo& ci) {
-			return static_cast<UniformBufferBinding *>(new VulkanUniformBufferBinding(ci));
+			return static_cast<UniformBufferBinding*>(new VulkanUniformBufferBinding(ci));
 		}
 
 		Texture* VulkanCore::CreateCubemap(Texture::CubemapCreateInfo& createInfo) {
@@ -507,15 +505,15 @@ namespace Grindstone {
 		}
 
 		Texture * VulkanCore::CreateTexture(Texture::CreateInfo& ci) {
-			return static_cast<Texture *>(new VulkanTexture(ci));
+			return static_cast<Texture*>(new VulkanTexture(ci));
 		}
 
 		TextureBinding * VulkanCore::CreateTextureBinding(TextureBinding::CreateInfo& ci) {
-			return static_cast<TextureBinding *>(new VulkanTextureBinding(ci));
+			return static_cast<TextureBinding*>(new VulkanTextureBinding(ci));
 		}
 
 		TextureBindingLayout * VulkanCore::CreateTextureBindingLayout(TextureBindingLayout::CreateInfo& ci) {
-			return static_cast<TextureBindingLayout *>(new VulkanTextureBindingLayout(ci));
+			return static_cast<TextureBindingLayout*>(new VulkanTextureBindingLayout(ci));
 		}
 
 		RenderTarget* VulkanCore::CreateRenderTarget(RenderTarget::CreateInfo& ci) {
@@ -527,50 +525,50 @@ namespace Grindstone {
 		}
 
 		DepthTarget * VulkanCore::CreateDepthTarget(DepthTarget::CreateInfo& ci) {
-			return static_cast<DepthTarget *>(new VulkanDepthTarget(ci));
+			return static_cast<DepthTarget*>(new VulkanDepthTarget(ci));
 		}
 
 		//==================================
 		// Deleters
 		//==================================
 		void VulkanCore::DeleteRenderTarget(RenderTarget * ptr) {
-			delete (VulkanRenderTarget *)ptr;
+			delete static_cast<VulkanRenderTarget*>(ptr);
 		}
 		void VulkanCore::DeleteDepthTarget(DepthTarget * ptr) {
-			delete (VulkanDepthTarget *)ptr;
+			delete static_cast<VulkanDepthTarget*>(ptr);
 		}
 		void VulkanCore::DeleteFramebuffer(Framebuffer *ptr) {
-			delete (VulkanFramebuffer *)ptr;
+			delete static_cast<VulkanFramebuffer*>(ptr);
 		}
 		void VulkanCore::DeleteVertexBuffer(VertexBuffer *ptr) {
-			delete (VulkanVertexBuffer *)ptr;
+			delete static_cast<VulkanVertexBuffer*>(ptr);
 		}
 		void VulkanCore::DeleteIndexBuffer(IndexBuffer *ptr) {
-			delete (VulkanIndexBuffer *)ptr;
+			delete static_cast<VulkanIndexBuffer*>(ptr);
 		}
 		void VulkanCore::DeleteUniformBuffer(UniformBuffer *ptr) {
-			delete (VulkanUniformBuffer *)ptr;
+			delete static_cast<VulkanUniformBuffer*>(ptr);
 		}
 		void VulkanCore::DeleteUniformBufferBinding(UniformBufferBinding * ptr) {
-			delete (VulkanUniformBufferBinding *)ptr;
+			delete static_cast<VulkanUniformBufferBinding*>(ptr);
 		}
 		void VulkanCore::DeletePipeline(Pipeline *ptr) {
-			delete (VulkanPipeline *)ptr;
+			delete static_cast<VulkanPipeline*>(ptr);
 		}
 		void VulkanCore::DeleteRenderPass(RenderPass *ptr) {
-			delete (VulkanRenderPass *)ptr;
+			delete static_cast<VulkanRenderPass*>(ptr);
 		}
 		void VulkanCore::DeleteTexture(Texture * ptr) {
-			delete (VulkanTexture *)ptr;
+			delete static_cast<VulkanTexture*>(ptr);
 		}
 		void VulkanCore::DeleteTextureBinding(TextureBinding * ptr) {
-			delete (VulkanTextureBinding *)ptr;
+			delete static_cast<VulkanTextureBinding*>(ptr);
 		}
 		void VulkanCore::DeleteTextureBindingLayout(TextureBindingLayout * ptr) {
-			delete (VulkanTextureBindingLayout *)ptr;
+			delete static_cast<VulkanTextureBindingLayout*>(ptr);
 		}
 		void VulkanCore::DeleteCommandBuffer(CommandBuffer *ptr) {
-			delete (VulkanCommandBuffer *)ptr;
+			delete static_cast<VulkanCommandBuffer*>(ptr);
 		}
 
 		//==================================
@@ -600,12 +598,10 @@ namespace Grindstone {
 		//==================================
 		VertexArrayObject * VulkanCore::CreateVertexArrayObject(VertexArrayObject::CreateInfo& ci) {
 			std::cout << "VulkanCore::CreateVertexArrayObject is not used.\n";
-			assert(false);
 			return nullptr;
 		}
 		void VulkanCore::DeleteVertexArrayObject(VertexArrayObject * ptr) {
 			std::cout << "VulkanCore::DeleteVertexArrayObject is not used\n";
-			assert(false);
 		}
 		void VulkanCore::Clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) {
 			std::cout << "VulkanCore::Clear is not used.\n";

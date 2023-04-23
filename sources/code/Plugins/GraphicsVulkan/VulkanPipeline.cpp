@@ -161,12 +161,14 @@ namespace Grindstone {
 			layouts.reserve(ci.uniformBufferBindingCount + ci.textureBindingCount);
 
 			for (uint32_t i = 0; i < ci.uniformBufferBindingCount; ++i) {
-				auto ubb = ((VulkanUniformBufferBinding *)ci.uniformBufferBindings[i])->GetDescriptorSetLayout();
+				VulkanUniformBufferBinding* uboBinding = static_cast<VulkanUniformBufferBinding*>(ci.uniformBufferBindings[i]);
+				VkDescriptorSetLayout ubb = uboBinding->GetDescriptorSetLayout();
 				layouts.push_back(ubb);
 			}
 
 			for (uint32_t i = 0; i < ci.textureBindingCount; ++i) {
-				auto tex = ((VulkanTextureBindingLayout *)ci.textureBindings[i])->GetDescriptorSetLayout();
+				VulkanTextureBindingLayout* textureBinding = static_cast<VulkanTextureBindingLayout*>(ci.textureBindings[i]);
+				VkDescriptorSetLayout tex = textureBinding->GetDescriptorSetLayout();
 				layouts.push_back(tex);
 			}
 
@@ -180,7 +182,7 @@ namespace Grindstone {
 				throw std::runtime_error("failed to create pipeline layout!");
 			}
 
-			VulkanRenderPass *rp = (VulkanRenderPass *)ci.renderPass;
+			VulkanRenderPass * renderPass = static_cast<VulkanRenderPass*>(ci.renderPass);
 
 			VkGraphicsPipelineCreateInfo pipelineInfo = {};
 			pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -194,7 +196,7 @@ namespace Grindstone {
 			pipelineInfo.pDepthStencilState = &depthStencil;
 			pipelineInfo.pColorBlendState = &colorBlending;
 			pipelineInfo.layout = pipelineLayout;
-			pipelineInfo.renderPass = rp->GetRenderPassHandle();
+			pipelineInfo.renderPass = renderPass->GetRenderPassHandle();
 			pipelineInfo.subpass = 0;
 			pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
