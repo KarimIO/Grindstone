@@ -124,7 +124,6 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 		textureBindingCreateInfo.textureCount = textureBinds.size();
 		textureBindingCreateInfo.layout = shaderAsset->textureBindingLayout;
 		textureBinding = graphicsCore->CreateTextureBinding(textureBindingCreateInfo);
-		graphicsCore->BindTexture(textureBinding);
 	}
 
 	materialAsset->textureBinding = textureBinding;

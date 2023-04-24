@@ -53,12 +53,11 @@ namespace Grindstone {
 			VkDevice device = VulkanCore::Get().GetDevice();
 
 			uint8_t channels = 4;
-			format = VK_FORMAT_R8G8B8A8_UNORM;
-			//TranslateColorFormatToVulkan(ci.format, channels);
+			format = TranslateColorFormatToVulkan(ci.format, channels);
 
-			mipLevels = static_cast<uint32_t>(std::floor(std::log2((ci.width > ci.height) ? ci.width : ci.height)));
+			mipLevels = ci.mipmaps;
 
-			uint32_t imageSize = ci.width * ci.height * channels;
+			uint32_t imageSize = ci.size;
 
 			VkBuffer stagingBuffer;
 			VkDeviceMemory stagingBufferMemory;
