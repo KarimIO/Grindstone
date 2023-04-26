@@ -54,7 +54,7 @@ namespace Grindstone {
 
 		void VulkanFramebuffer::Resize(uint32_t width, uint32_t height) {
 			std::cout << "VulkanFramebuffer::Resize is not used.\n";
-			assert(false);
+			// assert(false);
 		}
 
 		void VulkanFramebuffer::Clear(ClearMode mask) {

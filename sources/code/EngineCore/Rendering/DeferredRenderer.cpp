@@ -242,6 +242,8 @@ void DeferredRenderer::RenderLights(entt::registry& registry) {
 
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
 
+	/*
+	TODO: Bind only do this if not using modern Graphics API
 	core->BindPipeline(lightPipeline);
 	core->EnableDepthWrite(false);
 	litHdrFramebuffer->BindWrite();
@@ -265,6 +267,7 @@ void DeferredRenderer::RenderLights(entt::registry& registry) {
 		planePostProcessVao->Bind();
 		core->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
 	});
+	*/
 }
 
 void DeferredRenderer::PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer) {
@@ -275,6 +278,8 @@ void DeferredRenderer::PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer) 
 
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
 
+	/*
+	TODO: Bind only do this if not using modern Graphics API
 	core->BindPipeline(tonemapPipeline);
 	core->EnableDepthWrite(true);
 	if (outputFramebuffer == nullptr) {
@@ -291,6 +296,7 @@ void DeferredRenderer::PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer) 
 	litHdrFramebuffer->BindTextures(1);
 	planePostProcessVao->Bind();
 	core->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
+	*/
 }
 
 void DeferredRenderer::Render(
@@ -303,31 +309,31 @@ void DeferredRenderer::Render(
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
 	core->ResizeViewport(width, height);
 
-	EngineUboStruct engineUboStruct;
+	EngineUboStruct engineUboStruct{};
 	engineUboStruct.proj = projectionMatrix;
 	engineUboStruct.view = viewMatrix;
 	engineUboStruct.eyePos = eyePos;
 
-	gbuffer->BindWrite();
-	gbuffer->BindRead();
-
-	float clearColor[4] = {0.3f, 0.6f, 0.9f, 1.f};
-	core->Clear(ClearMode::ColorAndDepth, clearColor, 1);
-
-	globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
-	globalUniformBufferObject->Bind();
-
-	core->EnableDepthWrite(true);
-	core->SetImmediateBlending(BlendMode::None);
+	// TODO: Bind only do this if not using modern Graphics API
+	// gbuffer->BindWrite();
+	// gbuffer->BindRead();
+	// float clearColor[4] = {0.3f, 0.6f, 0.9f, 1.f};
+	// core->Clear(ClearMode::ColorAndDepth, clearColor, 1);
+	// globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
+	// globalUniformBufferObject->Bind();
+	// core->EnableDepthWrite(true);
+	// core->SetImmediateBlending(BlendMode::None);
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
 
 	RenderLights(registry);
 
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Unlit");
 
-	core->EnableDepthWrite(false);
-	core->CopyDepthBufferFromReadToWrite(width, height, width, height);
-	core->SetImmediateBlending(BlendMode::AdditiveAlpha);
+	// TODO: Bind only do this if not using modern Graphics API
+	// core->EnableDepthWrite(false);
+	// core->CopyDepthBufferFromReadToWrite(width, height, width, height);
+	// core->SetImmediateBlending(BlendMode::AdditiveAlpha);
+
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Transparent");
 
 	PostProcess(outputFramebuffer);
