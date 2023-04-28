@@ -288,3 +288,5 @@ uint64_t Mesh3dImporter::GetTotalFileSize(Formats::Model::V1::Header& header) {
 
 	return totalFileExpectedSize;
 }
+
+Grindstone::Mesh3dImporter::VertexLayouts Mesh3dImporter::vertexLayouts;

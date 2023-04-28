@@ -133,9 +133,11 @@ namespace Grindstone {
 
 			VulkanTexture *tex = (VulkanTexture *)ci.textures->texture;
 			VkDescriptorImageInfo imageInfo = {};
-			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imageInfo.imageView = tex->GetImageView();
-			imageInfo.sampler = tex->GetSampler();
+			if (tex != nullptr) {
+				imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				imageInfo.imageView = tex->GetImageView();
+				imageInfo.sampler = tex->GetSampler();
+			}
 
 			VkWriteDescriptorSet descriptorWrites = {};
 			descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

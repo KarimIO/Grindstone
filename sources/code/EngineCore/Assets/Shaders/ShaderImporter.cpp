@@ -136,15 +136,17 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	sub.shaderLocation = "texSampler";
 	sub.textureLocation = 2;
 
+	/*
 	GraphicsAPI::TextureBindingLayout::CreateInfo textureBindingLayoutCreateInfo{};
 	textureBindingLayoutCreateInfo.bindingLocation = 2;
 	textureBindingLayoutCreateInfo.bindingCount = 1;
 	textureBindingLayoutCreateInfo.bindings = &sub;
 	textureBindingLayoutCreateInfo.stages = GraphicsAPI::ShaderStageBit::All;
 	auto textureBindingLayout = graphicsCore->CreateTextureBindingLayout(textureBindingLayoutCreateInfo);
+	*/
 
-	pipelineCreateInfo.textureBindings = &textureBindingLayout;
-	pipelineCreateInfo.textureBindingCount = 1;
+	pipelineCreateInfo.textureBindings = nullptr; //textureBindingLayout;
+	pipelineCreateInfo.textureBindingCount = 0;
 
 	pipelineCreateInfo.vertexBindings = nullptr;
 	pipelineCreateInfo.vertexBindingsCount = 0;
@@ -153,7 +155,7 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	auto asset = shaders.emplace(uuid, ShaderAsset(uuid, debugName, shader));
 	auto& shaderAsset = asset.first->second;
 	shaderAsset.reflectionData = reflectionData;
-	shaderAsset.textureBindingLayout = textureBindingLayout;
+	shaderAsset.textureBindingLayout = nullptr;
 
 	// TODO: Save compiled shader into ShaderCache
 
