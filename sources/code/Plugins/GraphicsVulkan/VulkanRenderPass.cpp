@@ -9,8 +9,8 @@ namespace Grindstone {
 			uint32_t total = ci.colorFormatCount;
 			total += (ci.depthFormat != DepthFormat::None) ? 1 : 0;
 
-			VkAttachmentDescription *attachmentDescs = new VkAttachmentDescription[total];
-			VkAttachmentReference *attachmentsRef = new VkAttachmentReference[ci.colorFormatCount];
+			std::vector<VkAttachmentDescription> attachmentDescs(total);
+			std::vector<VkAttachmentReference> attachmentRefs(ci.colorFormatCount);
 			
 			for (uint32_t i = 0; i < ci.colorFormatCount; ++i) {
 				VkAttachmentDescription &colorAttachment = attachmentDescs[i];
@@ -25,8 +25,8 @@ namespace Grindstone {
 				colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 				colorAttachment.flags = 0;
 
-				attachmentsRef[i].attachment = i;
-				attachmentsRef[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				attachmentRefs[i].attachment = i;
+				attachmentRefs[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 			}
 			VkAttachmentReference *depthAttachmentRefPtr = nullptr;
 			VkAttachmentReference depthAttachmentRef = {};
@@ -49,8 +49,8 @@ namespace Grindstone {
 
 			VkSubpassDescription subpass = {};
 			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-			subpass.colorAttachmentCount = ci.colorFormatCount;
-			subpass.pColorAttachments = attachmentsRef;
+			subpass.colorAttachmentCount = attachmentRefs.size();
+			subpass.pColorAttachments = attachmentRefs.data();
 			subpass.pDepthStencilAttachment = depthAttachmentRefPtr;
 
 			VkSubpassDependency dependency = {};
@@ -63,8 +63,8 @@ namespace Grindstone {
 
 			VkRenderPassCreateInfo renderPassInfo = {};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-			renderPassInfo.attachmentCount = total;
-			renderPassInfo.pAttachments = attachmentDescs;
+			renderPassInfo.attachmentCount = attachmentDescs.size();
+			renderPassInfo.pAttachments = attachmentDescs.data();
 			renderPassInfo.subpassCount = 1;
 			renderPassInfo.pSubpasses = &subpass;
 			renderPassInfo.dependencyCount = 1;
