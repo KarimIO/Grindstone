@@ -52,7 +52,7 @@ namespace Grindstone {
 			vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 			vertexInputInfo.vertexBindingDescriptionCount = ci.vertexBindingsCount;
 			vertexInputInfo.pVertexBindingDescriptions = new VkVertexInputBindingDescription[ci.vertexBindingsCount];
-			uint32_t vad_count = 0;
+			uint32_t vertexAttributeDescriptorCount = 0;
 			for (uint32_t i = 0; i < ci.vertexBindingsCount; ++i) {
 				auto& vb = ci.vertexBindings[i];
 				VkVertexInputBindingDescription &vbd = (VkVertexInputBindingDescription &)vertexInputInfo.pVertexBindingDescriptions[i];
@@ -60,19 +60,19 @@ namespace Grindstone {
 				vbd.binding = i; // ci.bindings[i].binding;
 				vbd.inputRate = vb.elementRate ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
 				vbd.stride = vb.stride;
-				vad_count += vb.attributeCount;
+				vertexAttributeDescriptorCount += vb.attributeCount;
 			}
 
-			vertexInputInfo.vertexAttributeDescriptionCount = vad_count;
-			VkVertexInputAttributeDescription *vads = new VkVertexInputAttributeDescription[vad_count];
-			vad_count = 0;
+			vertexInputInfo.vertexAttributeDescriptionCount = vertexAttributeDescriptorCount;
+			std::vector<VkVertexInputAttributeDescription> vertexAttribDescriptors(vertexAttributeDescriptorCount);
+			vertexAttributeDescriptorCount = 0;
 
 			for (uint32_t i = 0; i < ci.vertexBindingsCount; ++i) {
 				auto& vb = ci.vertexBindings[i];
 
 				for (uint32_t j = 0; j < vb.attributeCount; ++j) {
 					auto& va = vb.attributes[j];
-					VkVertexInputAttributeDescription &vad = vads[vad_count++];
+					VkVertexInputAttributeDescription &vad = vertexAttribDescriptors[vertexAttributeDescriptorCount++];
 					vad.binding = i;
 					vad.location = j;
 					vad.format = TranslateVertexFormatsToVulkan(va.format);
@@ -80,7 +80,7 @@ namespace Grindstone {
 				}
 			}
 
-			vertexInputInfo.pVertexAttributeDescriptions = vads;
+			vertexInputInfo.pVertexAttributeDescriptions = vertexAttribDescriptors.data();
 
 			VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
 			inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -206,8 +206,6 @@ namespace Grindstone {
 			if (vkCreateGraphicsPipelines(VulkanCore::Get().GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create graphics pipeline!");
 			}
-
-			delete[] vads;
 
 			for (uint32_t i = 0; i < ci.shaderStageCreateInfoCount; ++i) {
 				vkDestroyShaderModule(VulkanCore::Get().GetDevice(), shaderStages[i].module, nullptr);
