@@ -1,8 +1,14 @@
-# The Grindstone Engine
-_A complete game engine and toolkit._
+<div align="center">
 
-## Synopsis
-The Grindstone Engine is an afforadable, extensible engine that contains all tools necessary to create modern games. It was created to compete with the huge amount of tools used today.
+<img src="readmeImages/grindstoneLogo.png" alt="Logo" width="120"/>
+
+# The Grindstone Engine
+
+The Grindstone Engine is an extensible engine that contains all tools to create modern games. It includes a C# Scripting Engine, IBL and PBR-based graphics, a visual editor, and more.
+
+</div>
+
+![Runtime](readmeImages/grindstone.jpg)
 
 ## Building
 ### All OSs
@@ -12,9 +18,7 @@ The Grindstone Engine is an afforadable, extensible engine that contains all too
  - Copy mono-2.0-sgen.dll to the bin folder
  - Just run Cmake!
 
-## Assets
-### File Formats
-All file formats are discussed [here.](formats.md)
+![Editor](readmeImages/editor.jpg)
 
 ## License
 This is closed source, at least for now. Only using repository for internal usage! Do not leak or distribute the code.
