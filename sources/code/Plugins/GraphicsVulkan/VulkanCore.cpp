@@ -45,7 +45,24 @@ const bool enableValidationLayers = true;
 #endif
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-	std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+	Grindstone::GraphicsAPI::VulkanCore* vk = static_cast<Grindstone::GraphicsAPI::VulkanCore*>(pUserData);
+
+	Grindstone::LogSeverity logSeverity = Grindstone::LogSeverity::Info;
+	switch (messageSeverity) {
+	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+		logSeverity = Grindstone::LogSeverity::Error;
+		break;
+	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+		logSeverity = Grindstone::LogSeverity::Warning;
+		break;
+	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+		logSeverity = Grindstone::LogSeverity::Info;
+		break;
+	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+		logSeverity = Grindstone::LogSeverity::Trace;
+		break;
+	}
+	vk->logFunction(logSeverity, pCallbackData->pMessage);
 
 	return VK_FALSE;
 }
@@ -70,6 +87,8 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 namespace Grindstone {
 	namespace GraphicsAPI {
 		VulkanCore *VulkanCore::graphicsWrapper = nullptr;
+
+		VulkanCore::VulkanCore(std::function<void(LogSeverity, const char*)> logFunction) : logFunction(logFunction) {}
 
 		bool VulkanCore::Initialize(Core::CreateInfo& ci) {
 			apiType = API::Vulkan;
@@ -103,7 +122,7 @@ namespace Grindstone {
 			appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 			appInfo.pEngineName = "Grindstone Engine";
 			appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-			appInfo.apiVersion = VK_API_VERSION_1_3;
+			appInfo.apiVersion = VK_API_VERSION_1_2;
 
 			VkInstanceCreateInfo createInfo = {};
 			createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -173,7 +192,8 @@ namespace Grindstone {
 			VkPhysicalDeviceProperties gpuProps{};
 			vkGetPhysicalDeviceProperties(physicalDevice, &gpuProps);
 
-			std::cout << "Using Device: " << gpuProps.deviceName << '\n';
+			std::string output = std::string("Using Device: ") + gpuProps.deviceName + '\n';
+			logFunction(LogSeverity::Info, output.c_str());
 
 			VkPhysicalDeviceProperties properties;
 			vkGetPhysicalDeviceProperties(physicalDevice, &properties);
@@ -334,6 +354,7 @@ namespace Grindstone {
 			createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 			createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 			createInfo.pfnUserCallback = debugCallback;
+			createInfo.pUserData = this;
 		}
 
 		uint16_t VulkanCore::ScoreDevice(VkPhysicalDevice device) {

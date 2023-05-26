@@ -33,7 +33,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 	firstFrameTime = std::chrono::steady_clock::now();
 
-	Logger::Initialize("../log/output.log");
+	Logger::Initialize(projectPath / "log/output.log");
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Loading", projectPath / "log/grind-profile-load.json");
 	Logger::Print("Initializing {0}...", createInfo.applicationTitle);
 
@@ -127,7 +127,6 @@ EngineCore::~EngineCore() {
 	delete systemRegistrar;
 	delete eventDispatcher;
 	delete inputManager;
-	delete ecsCore;
 	delete pluginManager;
 }
 

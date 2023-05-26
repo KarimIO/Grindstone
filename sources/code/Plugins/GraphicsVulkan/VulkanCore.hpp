@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+#include <Common/Logging.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <Common/Graphics/DLLDefs.hpp>
 #include <vulkan/vulkan.h>
@@ -20,6 +22,7 @@ namespace Grindstone {
 
 		class VulkanCore : public Core {
 		public:
+			VulkanCore(std::function<void(LogSeverity, const char*)> logFunction);
 			virtual bool Initialize(Core::CreateInfo& ci) override;
 			~VulkanCore();
 
@@ -33,7 +36,9 @@ namespace Grindstone {
 			VkDevice GetDevice();
 			VkPhysicalDevice GetPhysicalDevice();
 			VkCommandPool GetGraphicsCommandPool();
+			std::function<void(LogSeverity, const char*)> logFunction;
 		private:
+
 			VkInstance instance;
 			VkDevice device;
 			VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;

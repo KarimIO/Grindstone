@@ -107,7 +107,6 @@ namespace Grindstone {
 		Plugins::Manager* pluginManager = nullptr;
 		GraphicsAPI::Core* graphicsCore = nullptr;
 		Input::Interface* inputManager = nullptr;
-		ECS::Core* ecsCore = nullptr;
 		bool shouldClose = false;
 		std::filesystem::path projectPath;
 		std::filesystem::path binaryPath;
