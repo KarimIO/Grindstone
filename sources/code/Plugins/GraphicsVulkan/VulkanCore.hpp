@@ -39,8 +39,8 @@ namespace Grindstone {
 			std::function<void(LogSeverity, const char*)> logFunction;
 		private:
 
-			VkInstance instance;
-			VkDevice device;
+			VkInstance instance = nullptr;
+			VkDevice device = nullptr;
 			VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 			VkDebugUtilsMessengerEXT debugMessenger;
 			std::vector<VkSemaphore> imageAvailableSemaphores;
@@ -49,12 +49,12 @@ namespace Grindstone {
 			std::vector<VkFence> imagesInFlight;
 			size_t currentFrame = 0;
 		public:
-			VkQueue graphicsQueue;
-			VkQueue presentQueue;
+			VkQueue graphicsQueue = nullptr;
+			VkQueue presentQueue = nullptr;
 			uint32_t graphicsFamily;
 			uint32_t presentFamily;
-			VkCommandPool commandPoolGraphics;
-			VkDescriptorPool descriptorPool;
+			VkCommandPool commandPoolGraphics = nullptr;
+			VkDescriptorPool descriptorPool = nullptr;
 		private:
 			void CreateInstance();
 			void SetupDebugMessenger();
@@ -131,7 +131,7 @@ namespace Grindstone {
 			std::string adapterName;
 			std::string apiVersion;
 
-			Window* primaryWindow;
+			Window* primaryWindow = nullptr;
 
 			// Inherited via Core
 			virtual const char* GetDefaultShaderExtension() override;
@@ -140,11 +140,6 @@ namespace Grindstone {
 			virtual void BindDefaultFramebufferWrite() override;
 			virtual void BindDefaultFramebufferRead() override;
 			virtual void ResizeViewport(uint32_t w, uint32_t h) override;
-};
-
-		/*extern "C" {
-			GRAPHICS_EXPORT GraphicsWrapper* createGraphics(InstanceCreateInfo createInfo);
-			GRAPHICS_EXPORT void DeleteGraphics(void *ptr);
-		}*/
+		};
 	}
 }
