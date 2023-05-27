@@ -10,7 +10,7 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		class VulkanFramebuffer : public Framebuffer {
 		public:
-			VulkanFramebuffer(Framebuffer::CreateInfo& ci);
+			VulkanFramebuffer(Framebuffer::CreateInfo& createInfo);
 			virtual ~VulkanFramebuffer() override;
 		public:
 			VkFramebuffer GetFramebuffer();
@@ -24,7 +24,7 @@ namespace Grindstone {
 			virtual void BindRead() override;
 			virtual void Unbind() override;
 		private:
-			VkFramebuffer framebuffer;
+			VkFramebuffer framebuffer = nullptr;
 		};
 	}
 }

@@ -7,7 +7,7 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		VulkanTextureBindingLayout::VulkanTextureBindingLayout(TextureBindingLayout::CreateInfo& ci) {
+		VulkanTextureBindingLayout::VulkanTextureBindingLayout(TextureBindingLayout::CreateInfo& createInfo) {
 			VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
 			samplerLayoutBinding.binding = 0;
 			samplerLayoutBinding.descriptorCount = 1;
@@ -49,15 +49,15 @@ namespace Grindstone {
 			vkFreeMemory(device, imageMemory, nullptr);
 		}
 
-		void VulkanTexture::CreateTextureImage(Texture::CreateInfo& ci, uint32_t &mipLevels) {
+		void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t &mipLevels) {
 			VkDevice device = VulkanCore::Get().GetDevice();
 
 			uint8_t channels = 4;
-			format = TranslateColorFormatToVulkan(ci.format, channels);
+			format = TranslateColorFormatToVulkan(createInfo.format, channels);
 
-			mipLevels = ci.mipmaps;
+			mipLevels = createInfo.mipmaps;
 
-			uint32_t imageSize = ci.size;
+			uint32_t imageSize = createInfo.size;
 
 			VkBuffer stagingBuffer;
 			VkDeviceMemory stagingBufferMemory;
@@ -65,30 +65,30 @@ namespace Grindstone {
 
 			void* data;
 			vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
-			memcpy(data, ci.data, static_cast<size_t>(imageSize));
+			memcpy(data, createInfo.data, static_cast<size_t>(imageSize));
 			vkUnmapMemory(device, stagingBufferMemory);
 
-			CreateImage(ci.width, ci.height, mipLevels, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
+			CreateImage(createInfo.width, createInfo.height, mipLevels, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
 
 			TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
-			CopyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(ci.width), static_cast<uint32_t>(ci.height));
+			CopyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(createInfo.width), static_cast<uint32_t>(createInfo.height));
 			TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels);
 
 			vkDestroyBuffer(device, stagingBuffer, nullptr);
 			vkFreeMemory(device, stagingBufferMemory, nullptr);
 
-			//if (ci.options.generate_mipmaps)
-			//	generateMipmaps(image_, VK_FORMAT_R8G8B8A8_UNORM, ci.width, ci.height, mipLevels);
+			//if (createInfo.options.generate_mipmaps)
+			//	generateMipmaps(image_, VK_FORMAT_R8G8B8A8_UNORM, createInfo.width, createInfo.height, mipLevels);
 		}
 
-		void VulkanTexture::CreateTextureSampler(Texture::CreateInfo &ci, uint32_t mipLevels) {
+		void VulkanTexture::CreateTextureSampler(Texture::CreateInfo &createInfo, uint32_t mipLevels) {
 			VkSamplerCreateInfo samplerInfo = {};
 			samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-			samplerInfo.magFilter = TranslateFilterToVulkan(ci.options.magFilter);
-			samplerInfo.minFilter = TranslateFilterToVulkan(ci.options.minFilter);
-			samplerInfo.addressModeU = TranslateWrapToVulkan(ci.options.wrapModeU);
-			samplerInfo.addressModeV = TranslateWrapToVulkan(ci.options.wrapModeV);
-			samplerInfo.addressModeW = TranslateWrapToVulkan(ci.options.wrapModeW);
+			samplerInfo.magFilter = TranslateFilterToVulkan(createInfo.options.magFilter);
+			samplerInfo.minFilter = TranslateFilterToVulkan(createInfo.options.minFilter);
+			samplerInfo.addressModeU = TranslateWrapToVulkan(createInfo.options.wrapModeU);
+			samplerInfo.addressModeV = TranslateWrapToVulkan(createInfo.options.wrapModeV);
+			samplerInfo.addressModeW = TranslateWrapToVulkan(createInfo.options.wrapModeW);
 			samplerInfo.anisotropyEnable = VK_TRUE;
 			samplerInfo.maxAnisotropy = 16;
 			samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
@@ -118,8 +118,8 @@ namespace Grindstone {
 			return sampler;
 		}
 
-		VulkanTextureBinding::VulkanTextureBinding(TextureBinding::CreateInfo& ci) {
-			VkDescriptorSetLayout layouts = ((VulkanTextureBindingLayout *)ci.layout)->GetDescriptorSetLayout();
+		VulkanTextureBinding::VulkanTextureBinding(TextureBinding::CreateInfo& createInfo) {
+			VkDescriptorSetLayout layouts = ((VulkanTextureBindingLayout *)createInfo.layout)->GetDescriptorSetLayout();
 
 			VkDescriptorSetAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -131,7 +131,7 @@ namespace Grindstone {
 				throw std::runtime_error("failed to allocate descriptor sets!");
 			}
 
-			VulkanTexture *tex = (VulkanTexture *)ci.textures->texture;
+			VulkanTexture *tex = (VulkanTexture *)createInfo.textures->texture;
 			VkDescriptorImageInfo imageInfo = {};
 			if (tex != nullptr) {
 				imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;

@@ -22,7 +22,7 @@ GraphicsAPI::VertexBuffer* LoadVertexBufferVec(
 	void* sourcePtr,
 	GraphicsAPI::VertexBufferLayout& vertexLayout
 ) {
-	size_t size = sizeof(float) * vertexSize * vertexCount;
+	uint64_t size = sizeof(float) * vertexSize * vertexCount;
 	std::vector<float> vertices;
 	vertices.resize(vertexCount * vertexSize);
 	std::memcpy(vertices.data(), sourcePtr, size);
@@ -31,9 +31,9 @@ GraphicsAPI::VertexBuffer* LoadVertexBufferVec(
 	GraphicsAPI::VertexBuffer::CreateInfo vertexBufferCreateInfo;
 	vertexBufferCreateInfo.debugName = debugName.c_str();
 	vertexBufferCreateInfo.content = vertices.data();
-	vertexBufferCreateInfo.size = size;
+	vertexBufferCreateInfo.size = static_cast<uint32_t>(size);
 	vertexBufferCreateInfo.layout = &vertexLayout;
-	vertexBufferCreateInfo.count = vertexCount;
+	vertexBufferCreateInfo.count = static_cast<uint32_t>(vertexCount);
 	return graphicsCore->CreateVertexBuffer(vertexBufferCreateInfo);
 }
 
@@ -188,7 +188,7 @@ void Mesh3dImporter::LoadMeshImportIndices(
 	auto graphicsCore = engineCore->GetGraphicsCore();
 	std::vector<uint16_t> indices;
 	indices.resize(header.indexCount);
-	uint32_t indexSize = header.indexCount * sizeof(uint16_t);
+	uint64_t indexSize = header.indexCount * sizeof(uint16_t);
 	memcpy(indices.data(), sourcePtr, indexSize);
 	sourcePtr += indexSize;
 
@@ -197,8 +197,8 @@ void Mesh3dImporter::LoadMeshImportIndices(
 	GraphicsAPI::IndexBuffer::CreateInfo indexBufferCreateInfo{};
 	indexBufferCreateInfo.debugName = debugName.c_str();
 	indexBufferCreateInfo.content = indices.data();
-	indexBufferCreateInfo.count = indices.size();
-	indexBufferCreateInfo.size = indices.size() * sizeof(indices[0]);
+	indexBufferCreateInfo.count = static_cast<uint32_t>(indices.size());
+	indexBufferCreateInfo.size = static_cast<uint32_t>(indices.size() * sizeof(indices[0]));
 	indexBuffer = graphicsCore->CreateIndexBuffer(indexBufferCreateInfo);
 }
 
@@ -252,7 +252,7 @@ void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
 	vaoCi.debugName = debugName.c_str();
 	vaoCi.indexBuffer = indexBuffer;
 	vaoCi.vertexBuffers = vertexBuffers.data();
-	vaoCi.vertexBufferCount = vertexBuffers.size();
+	vaoCi.vertexBufferCount = static_cast<uint32_t>(vertexBuffers.size());
 	mesh.vertexArrayObject = graphicsCore->CreateVertexArrayObject(vaoCi);
 
 	for (size_t i = 0; i < mesh.submeshes.size(); ++i)

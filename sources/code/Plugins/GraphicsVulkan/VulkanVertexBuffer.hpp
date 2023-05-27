@@ -7,13 +7,13 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		class VulkanVertexBuffer : public VertexBuffer {
 		public:
-			VulkanVertexBuffer(VertexBuffer::CreateInfo& ci);
+			VulkanVertexBuffer(VertexBuffer::CreateInfo& createInfo);
 			virtual ~VulkanVertexBuffer() override;
 		public:
-			VkBuffer getBuffer();
+			VkBuffer GetBuffer();
 		private:
-			VkBuffer buffer_;
-			VkDeviceMemory memory_;
+			VkBuffer buffer = nullptr;
+			VkDeviceMemory memory = nullptr;
 		};
 	};
 };
