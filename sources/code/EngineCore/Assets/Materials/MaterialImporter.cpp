@@ -99,7 +99,7 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 		textureBinds.resize(textures.size());
 		for (size_t i = 0; i < textures.size(); ++i) {
 			GraphicsAPI::SingleTextureBind& stb = textureBinds[i];
-			stb.address = textures[i].bindingId;
+			stb.address = static_cast<uint8_t>(textures[i].bindingId);
 			const char* textureName = textures[i].name.c_str();
 			if (samplersJson.HasMember(textureName)) {
 				const char* textureUuidAsString = samplersJson[textureName].GetString();
@@ -121,7 +121,7 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 
 		GraphicsAPI::TextureBinding::CreateInfo textureBindingCreateInfo{};
 		textureBindingCreateInfo.textures = textureBinds.data();
-		textureBindingCreateInfo.textureCount = textureBinds.size();
+		textureBindingCreateInfo.textureCount = static_cast<uint8_t>(textureBinds.size());
 		textureBindingCreateInfo.layout = shaderAsset->textureBindingLayout;
 		textureBinding = graphicsCore->CreateTextureBinding(textureBindingCreateInfo);
 	}

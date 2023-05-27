@@ -49,7 +49,7 @@ namespace Grindstone {
 
 			VkSubpassDescription subpass = {};
 			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-			subpass.colorAttachmentCount = attachmentRefs.size();
+			subpass.colorAttachmentCount = static_cast<uint32_t>(attachmentRefs.size());
 			subpass.pColorAttachments = attachmentRefs.data();
 			subpass.pDepthStencilAttachment = depthAttachmentRefPtr;
 
@@ -63,7 +63,7 @@ namespace Grindstone {
 
 			VkRenderPassCreateInfo renderPassInfo = {};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-			renderPassInfo.attachmentCount = attachmentDescs.size();
+			renderPassInfo.attachmentCount = static_cast<uint32_t>(attachmentDescs.size());
 			renderPassInfo.pAttachments = attachmentDescs.data();
 			renderPassInfo.subpassCount = 1;
 			renderPassInfo.pSubpasses = &subpass;
