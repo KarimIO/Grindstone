@@ -62,6 +62,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityF
 		logSeverity = Grindstone::LogSeverity::Trace;
 		break;
 	}
+
 	vk->logFunction(logSeverity, pCallbackData->pMessage);
 
 	return VK_FALSE;
@@ -192,7 +193,7 @@ namespace Grindstone {
 			VkPhysicalDeviceProperties gpuProps{};
 			vkGetPhysicalDeviceProperties(physicalDevice, &gpuProps);
 
-			std::string output = std::string("Using Device: ") + gpuProps.deviceName + '\n';
+			std::string output = std::string("Using Device: ") + gpuProps.deviceName;
 			logFunction(LogSeverity::Info, output.c_str());
 
 			VkPhysicalDeviceProperties properties;
