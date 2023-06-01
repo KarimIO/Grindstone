@@ -28,24 +28,10 @@ namespace Grindstone {
 		}
 
 		VulkanPipeline::VulkanPipeline(Pipeline::CreateInfo& createInfo) {
-			VkPipelineShaderStageCreateInfo *shaderStages = new VkPipelineShaderStageCreateInfo[createInfo.shaderStageCreateInfoCount];
+			std::vector<VkPipelineShaderStageCreateInfo> shaderStages(createInfo.shaderStageCreateInfoCount);
 			
 			for (uint32_t i = 0; i < createInfo.shaderStageCreateInfoCount; ++i) {
-				VkShaderModuleCreateInfo shaderModuleCreateInfo = {};
-				shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-				shaderModuleCreateInfo.codeSize = createInfo.shaderStageCreateInfos[i].size;
-				shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(createInfo.shaderStageCreateInfos[i].content);
-				
-				VkShaderModule shaderModule;
-				if (vkCreateShaderModule(VulkanCore::Get().GetDevice(), &shaderModuleCreateInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-					throw std::runtime_error("failed to create shader module!");
-				}
-
-				shaderStages[i] = {};
-				shaderStages[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-				shaderStages[i].stage = TranslateShaderStageToVulkanBit(createInfo.shaderStageCreateInfos[i].type);
-				shaderStages[i].module = shaderModule;
-				shaderStages[i].pName = "main";
+				CreateShaderModule(createInfo.shaderStageCreateInfos[i], shaderStages[i]);
 			}
 			
 			VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
@@ -57,7 +43,7 @@ namespace Grindstone {
 				auto& vb = createInfo.vertexBindings[i];
 				VkVertexInputBindingDescription &vbd = (VkVertexInputBindingDescription &)vertexInputInfo.pVertexBindingDescriptions[i];
 				vbd = {};
-				vbd.binding = i; // createInfo.bindings[i].binding;
+				vbd.binding = i;
 				vbd.inputRate = vb.elementRate ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
 				vbd.stride = vb.stride;
 				vertexAttributeDescriptorCount += vb.attributeCount;
@@ -189,8 +175,8 @@ namespace Grindstone {
 
 			VkGraphicsPipelineCreateInfo pipelineInfo = {};
 			pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-			pipelineInfo.stageCount = createInfo.shaderStageCreateInfoCount;
-			pipelineInfo.pStages = shaderStages;
+			pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
+			pipelineInfo.pStages = shaderStages.data();
 			pipelineInfo.pVertexInputState = &vertexInputInfo;
 			pipelineInfo.pInputAssemblyState = &inputAssembly;
 			pipelineInfo.pViewportState = &viewportState;
@@ -239,6 +225,7 @@ namespace Grindstone {
 				throw std::runtime_error("failed to create shader module!");
 			}
 
+			out = {};
 			out.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			out.stage = TranslateShaderStageToVulkanBit(createInfo.type);
 			out.module = shaderModule;
