@@ -123,6 +123,37 @@ namespace Grindstone {
 			vkFreeCommandBuffers(device, VulkanCore::Get().GetGraphicsCommandPool(), 1, &commandBuffer);
 		}
 
+		VkShaderStageFlags TranslateShaderStageBits(ShaderStageBit shaderStageBits) {
+			VkShaderStageFlags outputStages = 0;
+
+			uint8_t bit = static_cast<uint8_t>(shaderStageBits);
+			if (bit & static_cast<uint8_t>(ShaderStageBit::Vertex)) {
+				outputStages |= VK_SHADER_STAGE_VERTEX_BIT;
+			}
+
+			if (bit & static_cast<uint8_t>(ShaderStageBit::Fragment)) {
+				outputStages |= VK_SHADER_STAGE_FRAGMENT_BIT;
+			}
+
+			if (bit & static_cast<uint8_t>(ShaderStageBit::Compute)) {
+				outputStages |= VK_SHADER_STAGE_COMPUTE_BIT;
+			}
+
+			if (bit & static_cast<uint8_t>(ShaderStageBit::Geometry)) {
+				outputStages |= VK_SHADER_STAGE_GEOMETRY_BIT;
+			}
+
+			if (bit & static_cast<uint8_t>(ShaderStageBit::TesselationControl)) {
+				outputStages |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+			}
+
+			if (bit & static_cast<uint8_t>(ShaderStageBit::TesselationEvaluation)) {
+				outputStages |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+			}
+
+			return outputStages;
+		}
+
 		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
 			VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 

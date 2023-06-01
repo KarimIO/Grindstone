@@ -167,7 +167,6 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	gbufferColorFormats.emplace_back(ColorFormat::R16G16B16A16); // nX nY nZ
 	gbufferColorFormats.emplace_back(ColorFormat::R8G8B8A8); // sR sG sB Roughness
 
-
 	gbufferRenderTargets.reserve(gbufferColorFormats.size());
 	for (size_t i = 0; i < gbufferColorFormats.size(); ++i) {
 		RenderTarget::CreateInfo gbufferRtCreateInfo{ gbufferColorFormats[i], width, height };
@@ -193,8 +192,7 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	gbufferCreateInfo.depthTarget = gbufferDepthTarget;
 	gbuffer = core->CreateFramebuffer(gbufferCreateInfo);
 
-	RenderTarget::CreateInfo litHdrImagesCreateInfo
-		= { Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height };
+	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height };
 	litHdrRenderTarget = core->CreateRenderTarget(&litHdrImagesCreateInfo, 1);
 
 	DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false);
@@ -215,7 +213,9 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	litHdrFramebufferCreateInfo.depthTarget = litHdrDepthTarget;
 	litHdrFramebufferCreateInfo.renderPass = mainRenderPass;
 	litHdrFramebuffer = core->CreateFramebuffer(litHdrFramebufferCreateInfo);
-	
+
+	EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "============== Loading Light Shader ==============");
+	EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "====== 5537b925-96bc-4e1f-8e2a-d66d6dd9bed1 ======");
 	auto assetManager = EngineCore::GetInstance().assetManager;
 	ShaderAsset* lightShaderAsset = assetManager->GetAsset<ShaderAsset>(Uuid("5537b925-96bc-4e1f-8e2a-d66d6dd9bed1"));
 	if (lightShaderAsset == nullptr) {
@@ -224,7 +224,10 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	else {
 		lightPipeline = lightShaderAsset->pipeline;
 	}
+	EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "==================================================");
 
+	EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "============= Loading Tonemap Shader =============");
+	EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "====== 30e9223e-1753-4a7a-acac-8488c75bb1ef ======");
 	ShaderAsset* tonemapShaderAsset = assetManager->GetAsset<ShaderAsset>(Uuid("30e9223e-1753-4a7a-acac-8488c75bb1ef"));
 	if (tonemapShaderAsset == nullptr) {
 		EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load tonemap shader.");
@@ -232,6 +235,7 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	else {
 		tonemapPipeline = tonemapShaderAsset->pipeline;
 	}
+	EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "==================================================");
 }
 
 void DeferredRenderer::RenderLights(entt::registry& registry) {

@@ -122,15 +122,15 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 
 	for (auto& uniform : reflectionData.uniformBuffers) {
 		GraphicsAPI::UniformBufferBinding::CreateInfo ubbCi{};
-		ubbCi.binding = (uint32_t)uniform.bindingId;
+		ubbCi.binding = static_cast<uint32_t>(uniform.bindingId);
 		ubbCi.shaderLocation = uniform.name.c_str();
-		ubbCi.size = (uint32_t)uniform.bufferSize;
-		ubbCi.stages = (GraphicsAPI::ShaderStageBit)uniform.shaderStagesBitMask;
+		ubbCi.size = static_cast<uint32_t>(uniform.bufferSize);
+		ubbCi.stages = static_cast<GraphicsAPI::ShaderStageBit>(uniform.shaderStagesBitMask);
 		ubbs.push_back(graphicsCore->CreateUniformBufferBinding(ubbCi));
 	}
 
 	pipelineCreateInfo.uniformBufferBindings = ubbs.data();
-	pipelineCreateInfo.uniformBufferBindingCount = (uint32_t)ubbs.size();
+	pipelineCreateInfo.uniformBufferBindingCount = static_cast<uint32_t>(ubbs.size());
 
 	GraphicsAPI::TextureSubBinding sub;
 	sub.shaderLocation = "texSampler";
