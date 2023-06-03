@@ -225,6 +225,10 @@ namespace Grindstone {
 			return static_cast<RenderTarget*>(new GLRenderTarget(rt, rc, cube));
 		}
 
+		RenderTarget* GLCore::CreateRenderTarget(RenderTarget::CreateInfo& rt) {
+			return static_cast<RenderTarget*>(new GLRenderTarget(rt));
+		}
+
 		DepthTarget* GLCore::CreateDepthTarget(DepthTarget::CreateInfo& rt) {
 			return static_cast<DepthTarget*>(new GLDepthTarget(rt));
 		}
@@ -366,7 +370,8 @@ namespace Grindstone {
 
 		void GLCore::DrawImmediateIndexed(GeometryType geometryType, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
 			uint32_t size = largeBuffer ? sizeof(uint32_t) : sizeof(uint16_t);
-			void *ptr = reinterpret_cast<void *>(indexOffsetPtr * size);
+			uint64_t finalPtrUint = indexOffsetPtr * size;
+			void *ptr = reinterpret_cast<void *>(finalPtrUint);
 			glDrawElementsBaseVertex(GetGeomType(geometryType), indexCount, largeBuffer ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, ptr, baseVertex);
 		}
 

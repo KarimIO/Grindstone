@@ -58,9 +58,7 @@ DeferredRenderer::~DeferredRenderer() {
 	core->DeleteUniformBuffer(lightUniformBufferObject);
 
 	core->DeleteFramebuffer(gbuffer);
-	for (size_t i = 0; i < gbufferRenderTargets.size(); ++i) {
-		core->DeleteRenderTarget(gbufferRenderTargets[i]);
-	}
+	core->DeleteRenderTarget(gbufferRenderTargets);
 	core->DeleteDepthTarget(gbufferDepthTarget);
 
 	core->DeleteFramebuffer(litHdrFramebuffer);
@@ -160,24 +158,25 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 
 	const uint32_t width = 800;
 	const uint32_t height = 600;
-	std::vector<ColorFormat> gbufferColorFormats;
-	gbufferColorFormats.reserve(4);
-	gbufferColorFormats.emplace_back(ColorFormat::R16G16B16A16); // X Y Z
-	gbufferColorFormats.emplace_back(ColorFormat::R8G8B8A8); // R  G  B matID
-	gbufferColorFormats.emplace_back(ColorFormat::R16G16B16A16); // nX nY nZ
-	gbufferColorFormats.emplace_back(ColorFormat::R8G8B8A8); // sR sG sB Roughness
+	std::vector<RenderTarget::CreateInfo> gbufferImagesCreateInfo;
+	gbufferImagesCreateInfo.reserve(4);
+	gbufferImagesCreateInfo.emplace_back(ColorFormat::R16G16B16A16, width, height); // X Y Z
+	gbufferImagesCreateInfo.emplace_back(ColorFormat::R8G8B8A8, width, height); // R  G  B matID
+	gbufferImagesCreateInfo.emplace_back(ColorFormat::R16G16B16A16, width, height); // nX nY nZ
+	gbufferImagesCreateInfo.emplace_back(ColorFormat::R8G8B8A8, width, height); // sR sG sB Roughness
+	gbufferRenderTargets = core->CreateRenderTarget(gbufferImagesCreateInfo.data(), (uint32_t)gbufferImagesCreateInfo.size());
 
-	gbufferRenderTargets.reserve(gbufferColorFormats.size());
-	for (size_t i = 0; i < gbufferColorFormats.size(); ++i) {
-		RenderTarget::CreateInfo gbufferRtCreateInfo{ gbufferColorFormats[i], width, height };
-		gbufferRenderTargets.emplace_back(core->CreateRenderTarget(gbufferRtCreateInfo));
+	std::vector<ColorFormat> colorFormats;
+	colorFormats.reserve(gbufferImagesCreateInfo.size());
+	for (size_t i = 0; i < colorFormats.size(); ++i) {
+		colorFormats.emplace_back(gbufferImagesCreateInfo[i].format);
 	}
 
 	RenderPass::CreateInfo gbufferRenderPassCreateInfo{};
 	gbufferRenderPassCreateInfo.width = width;
 	gbufferRenderPassCreateInfo.height = height;
-	gbufferRenderPassCreateInfo.colorFormats = gbufferColorFormats.data();
-	gbufferRenderPassCreateInfo.colorFormatCount = static_cast<uint32_t>(gbufferColorFormats.size());
+	gbufferRenderPassCreateInfo.colorFormats = colorFormats.data();
+	gbufferRenderPassCreateInfo.colorFormatCount = (uint32_t)colorFormats.size();
 	gbufferRenderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
 	gbufferRenderPass = core->CreateRenderPass(gbufferRenderPassCreateInfo);
 
@@ -187,12 +186,13 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	Framebuffer::CreateInfo gbufferCreateInfo{};
 	gbufferCreateInfo.debugName = "G-Buffer Framebuffer";
 	gbufferCreateInfo.renderPass = gbufferRenderPass;
-	gbufferCreateInfo.renderTargetLists = gbufferRenderTargets.data();
-	gbufferCreateInfo.numRenderTargetLists = static_cast<uint32_t>(gbufferColorFormats.size());
+	gbufferCreateInfo.renderTargetLists = &gbufferRenderTargets;
+	gbufferCreateInfo.numRenderTargetLists = 1;
 	gbufferCreateInfo.depthTarget = gbufferDepthTarget;
 	gbuffer = core->CreateFramebuffer(gbufferCreateInfo);
 
-	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height };
+	RenderTarget::CreateInfo litHdrImagesCreateInfo
+		= { Grindstone::GraphicsAPI::ColorFormat::R32G32B32, width, height };
 	litHdrRenderTarget = core->CreateRenderTarget(&litHdrImagesCreateInfo, 1);
 
 	DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false);
@@ -213,9 +213,7 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	litHdrFramebufferCreateInfo.depthTarget = litHdrDepthTarget;
 	litHdrFramebufferCreateInfo.renderPass = mainRenderPass;
 	litHdrFramebuffer = core->CreateFramebuffer(litHdrFramebufferCreateInfo);
-
-	EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "============== Loading Light Shader ==============");
-	EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "====== 5537b925-96bc-4e1f-8e2a-d66d6dd9bed1 ======");
+	
 	auto assetManager = EngineCore::GetInstance().assetManager;
 	ShaderAsset* lightShaderAsset = assetManager->GetAsset<ShaderAsset>(Uuid("5537b925-96bc-4e1f-8e2a-d66d6dd9bed1"));
 	if (lightShaderAsset == nullptr) {
@@ -224,10 +222,7 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	else {
 		lightPipeline = lightShaderAsset->pipeline;
 	}
-	EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "==================================================");
 
-	EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "============= Loading Tonemap Shader =============");
-	EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "====== 30e9223e-1753-4a7a-acac-8488c75bb1ef ======");
 	ShaderAsset* tonemapShaderAsset = assetManager->GetAsset<ShaderAsset>(Uuid("30e9223e-1753-4a7a-acac-8488c75bb1ef"));
 	if (tonemapShaderAsset == nullptr) {
 		EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load tonemap shader.");
@@ -235,7 +230,6 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	else {
 		tonemapPipeline = tonemapShaderAsset->pipeline;
 	}
-	EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "==================================================");
 }
 
 void DeferredRenderer::RenderLights(entt::registry& registry) {
@@ -246,8 +240,6 @@ void DeferredRenderer::RenderLights(entt::registry& registry) {
 
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
 
-	/*
-	TODO: Bind only do this if not using modern Graphics API
 	core->BindPipeline(lightPipeline);
 	core->EnableDepthWrite(false);
 	litHdrFramebuffer->BindWrite();
@@ -271,7 +263,6 @@ void DeferredRenderer::RenderLights(entt::registry& registry) {
 		planePostProcessVao->Bind();
 		core->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
 	});
-	*/
 }
 
 void DeferredRenderer::PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer) {
@@ -282,8 +273,6 @@ void DeferredRenderer::PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer) 
 
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
 
-	/*
-	TODO: Bind only do this if not using modern Graphics API
 	core->BindPipeline(tonemapPipeline);
 	core->EnableDepthWrite(true);
 	if (outputFramebuffer == nullptr) {
@@ -300,7 +289,6 @@ void DeferredRenderer::PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer) 
 	litHdrFramebuffer->BindTextures(1);
 	planePostProcessVao->Bind();
 	core->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
-	*/
 }
 
 void DeferredRenderer::Render(
@@ -313,31 +301,31 @@ void DeferredRenderer::Render(
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
 	core->ResizeViewport(width, height);
 
-	EngineUboStruct engineUboStruct{};
+	EngineUboStruct engineUboStruct;
 	engineUboStruct.proj = projectionMatrix;
 	engineUboStruct.view = viewMatrix;
 	engineUboStruct.eyePos = eyePos;
 
-	// TODO: Bind only do this if not using modern Graphics API
-	// gbuffer->BindWrite();
-	// gbuffer->BindRead();
-	// float clearColor[4] = {0.3f, 0.6f, 0.9f, 1.f};
-	// core->Clear(ClearMode::ColorAndDepth, clearColor, 1);
-	// globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
-	// globalUniformBufferObject->Bind();
-	// core->EnableDepthWrite(true);
-	// core->SetImmediateBlending(BlendMode::None);
+	gbuffer->BindWrite();
+	gbuffer->BindRead();
+
+	float clearColor[4] = {0.3f, 0.6f, 0.9f, 1.f};
+	core->Clear(ClearMode::ColorAndDepth, clearColor, 1);
+
+	globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
+	globalUniformBufferObject->Bind();
+
+	core->EnableDepthWrite(true);
+	core->SetImmediateBlending(BlendMode::None);
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
 
 	RenderLights(registry);
 
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Unlit");
 
-	// TODO: Bind only do this if not using modern Graphics API
-	// core->EnableDepthWrite(false);
-	// core->CopyDepthBufferFromReadToWrite(width, height, width, height);
-	// core->SetImmediateBlending(BlendMode::AdditiveAlpha);
-
+	core->EnableDepthWrite(false);
+	core->CopyDepthBufferFromReadToWrite(width, height, width, height);
+	core->SetImmediateBlending(BlendMode::AdditiveAlpha);
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Transparent");
 
 	PostProcess(outputFramebuffer);

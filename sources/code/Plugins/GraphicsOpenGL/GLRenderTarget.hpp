@@ -8,6 +8,7 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		class GLRenderTarget : public RenderTarget {
 		public:
+			GLRenderTarget(CreateInfo& createInfoList);
 			GLRenderTarget(CreateInfo *createInfoList, uint32_t createInfoCount, bool isCcubemap);
 			virtual uint32_t GetHandle();
 			virtual uint32_t GetHandle(uint32_t i);

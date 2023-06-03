@@ -136,17 +136,15 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	sub.shaderLocation = "texSampler";
 	sub.textureLocation = 2;
 
-	/*
 	GraphicsAPI::TextureBindingLayout::CreateInfo textureBindingLayoutCreateInfo{};
 	textureBindingLayoutCreateInfo.bindingLocation = 2;
 	textureBindingLayoutCreateInfo.bindingCount = 1;
 	textureBindingLayoutCreateInfo.bindings = &sub;
 	textureBindingLayoutCreateInfo.stages = GraphicsAPI::ShaderStageBit::All;
 	auto textureBindingLayout = graphicsCore->CreateTextureBindingLayout(textureBindingLayoutCreateInfo);
-	*/
-
-	pipelineCreateInfo.textureBindings = nullptr; //textureBindingLayout;
-	pipelineCreateInfo.textureBindingCount = 0;
+	
+	pipelineCreateInfo.textureBindings = &textureBindingLayout;
+	pipelineCreateInfo.textureBindingCount = 1;
 
 	pipelineCreateInfo.vertexBindings = nullptr;
 	pipelineCreateInfo.vertexBindingsCount = 0;
