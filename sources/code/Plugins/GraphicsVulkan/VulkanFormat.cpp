@@ -99,16 +99,59 @@ namespace Grindstone {
 				return VK_FORMAT_R8G8_UNORM;
 			case ColorFormat::R8G8B8:
 				channels = 3;
-				return VK_FORMAT_B8G8R8_UINT;
+				return VK_FORMAT_B8G8R8_UNORM;
 			case ColorFormat::R8G8B8A8:
 				channels = 4;
 				return VK_FORMAT_B8G8R8A8_UNORM;
+
+			case ColorFormat::R10G10B10A2:
+				channels = 4;
+				return VK_FORMAT_A2R10G10B10_UNORM_PACK32;
+
+			case ColorFormat::R16:
+				channels = 1;
+				return VK_FORMAT_R16_SFLOAT;
+			case ColorFormat::R16G16:
+				channels = 2;
+				return VK_FORMAT_R16G16_SFLOAT;
+			case ColorFormat::R16G16B16:
+				channels = 3;
+				return VK_FORMAT_R16G16B16_SFLOAT;
 			case ColorFormat::R16G16B16A16:
 				channels = 4;
-				return VK_FORMAT_R16G16B16A16_UNORM;
+				return VK_FORMAT_R16G16B16A16_SFLOAT;
+
 			case ColorFormat::R32G32B32:
-				channels = 4;
+				channels = 3;
 				return VK_FORMAT_R32G32B32_SFLOAT;
+			case ColorFormat::R32G32B32A32:
+				channels = 4;
+				return VK_FORMAT_R32G32B32A32_SFLOAT;
+
+			case ColorFormat::RGB_DXT1:
+				channels = 4;
+				return VK_FORMAT_BC1_RGB_UNORM_BLOCK;
+			case ColorFormat::RGBA_DXT1:
+				channels = 4;
+				return VK_FORMAT_BC1_RGBA_UNORM_BLOCK;
+			case ColorFormat::RGBA_DXT3:
+				channels = 4;
+				return VK_FORMAT_BC2_UNORM_BLOCK;
+			case ColorFormat::RGBA_DXT5:
+				channels = 4;
+				return VK_FORMAT_BC3_UNORM_BLOCK;
+			case ColorFormat::SRGB_DXT1:
+				channels = 3;
+				return VK_FORMAT_BC1_RGB_SRGB_BLOCK;
+			case ColorFormat::SRGB_ALPHA_DXT1:
+				channels = 4;
+				return VK_FORMAT_BC1_RGBA_SRGB_BLOCK;
+			case ColorFormat::SRGB_ALPHA_DXT3:
+				channels = 4;
+				return VK_FORMAT_BC2_SRGB_BLOCK;
+			case ColorFormat::SRGB_ALPHA_DXT5:
+				channels = 4;
+				return VK_FORMAT_BC3_SRGB_BLOCK;
 			default:
 				printf("Invalid color format!");
 				assert(false);

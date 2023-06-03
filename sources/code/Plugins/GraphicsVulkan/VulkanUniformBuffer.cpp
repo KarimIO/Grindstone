@@ -4,13 +4,13 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		VulkanUniformBufferBinding::VulkanUniformBufferBinding(UniformBufferBinding::CreateInfo& ci) {
+		VulkanUniformBufferBinding::VulkanUniformBufferBinding(UniformBufferBinding::CreateInfo& createInfo) {
 			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
 			uboLayoutBinding.binding = 0;
 			uboLayoutBinding.descriptorCount = 1;
 			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			uboLayoutBinding.pImmutableSamplers = nullptr;
-			uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+			uboLayoutBinding.stageFlags = TranslateShaderStageBits(createInfo.stages);
 
 			VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -34,11 +34,11 @@ namespace Grindstone {
 		//==========================
 
 
-		VulkanUniformBuffer::VulkanUniformBuffer(UniformBuffer::CreateInfo& ci) {
-			size = ci.size;
+		VulkanUniformBuffer::VulkanUniformBuffer(UniformBuffer::CreateInfo& createInfo) {
+			size = createInfo.size;
 			CreateBuffer(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, buffer, memory);
 			
-			VkDescriptorSetLayout layouts = ((VulkanUniformBufferBinding *)ci.binding)->GetDescriptorSetLayout();
+			VkDescriptorSetLayout layouts = static_cast<VulkanUniformBufferBinding*>(createInfo.binding)->GetDescriptorSetLayout();
 
 			VkDescriptorSetAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -53,7 +53,7 @@ namespace Grindstone {
 			VkDescriptorBufferInfo bufferInfo = {};
 			bufferInfo.buffer = buffer;
 			bufferInfo.offset = 0;
-			bufferInfo.range = ci.size;
+			bufferInfo.range = createInfo.size;
 
 			VkWriteDescriptorSet descriptorWrites = {};
 			descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

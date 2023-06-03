@@ -47,7 +47,9 @@ namespace Grindstone {
 				GraphicsAPI::VertexBufferLayout tangents;
 				GraphicsAPI::VertexBufferLayout uv0;
 				GraphicsAPI::VertexBufferLayout uv1;
-			} vertexLayouts;
+			};
+
+			static VertexLayouts vertexLayouts;
 
 			enum class Mesh3dLayoutIndex {
 				Position = 0,

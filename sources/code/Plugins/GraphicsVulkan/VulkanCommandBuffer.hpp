@@ -10,20 +10,20 @@ namespace Grindstone {
 			VulkanCommandBuffer(CommandBuffer::CreateInfo& createInfo);
 			virtual ~VulkanCommandBuffer() override;
 		public:
-			void handleStep(CommandBuffer::Command* step);
-			VkCommandBuffer getCommandBuffer();
+			void HandleStep(CommandBuffer::Command* step);
+			VkCommandBuffer GetCommandBuffer();
 		private:
-			void uploadCmdBindRenderPass(CommandBindRenderPass *ci);
-			void uploadCmdUnbindRenderPass(CommandUnbindRenderPass *ci);
-			void uploadCmdBindDescriptorSet(CommandBindDescriptorSets *ci);
-			void uploadCmdBindCommandBuffers(CommandCallCmdBuffer *ci);
-			void uploadCmdBindPipeline(CommandBindPipeline *ci);
-			void uploadCmdBindVertexBuffers(CommandBindVBOs *ci);
-			void uploadCmdBindIndexBuffer(CommandBindIBO *ci);
-			void uploadCmdDrawVertices(CommandDrawVertices *ci);
-			void uploadCmdDrawIndices(CommandDrawIndices *ci);
+			void UploadCmdBindRenderPass(CommandBindRenderPass *ci);
+			void UploadCmdUnbindRenderPass(CommandUnbindRenderPass *ci);
+			void UploadCmdBindDescriptorSet(CommandBindDescriptorSets *ci);
+			void UploadCmdBindCommandBuffers(CommandCallCmdBuffer *ci);
+			void UploadCmdBindPipeline(CommandBindPipeline *ci);
+			void UploadCmdBindVertexBuffers(CommandBindVBOs *ci);
+			void UploadCmdBindIndexBuffer(CommandBindIBO *ci);
+			void UploadCmdDrawVertices(CommandDrawVertices *ci);
+			void UploadCmdDrawIndices(CommandDrawIndices *ci);
 		private:
-			VkCommandBuffer command_buffer_;
+			VkCommandBuffer commandBuffer;
 
 			CommandBufferSecondaryInfo secondaryInfo;
 		};

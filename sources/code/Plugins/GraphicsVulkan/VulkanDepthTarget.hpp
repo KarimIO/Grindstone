@@ -16,9 +16,9 @@ namespace Grindstone {
 			virtual void Resize(uint32_t width, uint32_t height) override;
 			virtual void BindFace(int k);
 		private:
-			VkImage image;
-			VkDeviceMemory  imageMemory;
-			VkImageView imageView;
+			VkImage image = nullptr;
+			VkImageView imageView = nullptr;
+			VkDeviceMemory imageMemory = nullptr;
 		};
 	};
 };

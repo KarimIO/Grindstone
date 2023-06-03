@@ -21,7 +21,7 @@ namespace Grindstone {
 			~VulkanWindowGraphicsBinding();
 		public:
 			VkSurfaceKHR GetSurface();
-			void GetSwapChainRenderTargets(RenderTarget**& rts, uint32_t& rt_count);
+			void GetSwapChainRenderTargets(RenderTarget**& renderTargets, uint32_t& renderTargetCount);
 			ColorFormat GetDeviceColorFormat();
 			SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
 			VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
@@ -29,21 +29,22 @@ namespace Grindstone {
 			VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 			void CreateSwapChain();
 			void CreateSyncObjects();
-			void PresentCommandBuffer(CommandBuffer** buffers, uint32_t num_buffers) override;
+			void PresentCommandBuffer(CommandBuffer** buffers, uint32_t bufferCount) override;
 		private:
-			Window* window;
+			Window* window = nullptr;
 			
-			ColorFormat swapchainFormat;
+			ColorFormat swapchainFormat = ColorFormat::Invalid;
 
-			VkSurfaceKHR surface;
-			VkSwapchainKHR swapChain;
+			VkSurfaceKHR surface = nullptr;
+			VkSwapchainKHR swapChain = nullptr;
 			std::vector<RenderTarget*> swapChainTargets;
 
 			std::vector<VkSemaphore> imageAvailableSemaphores;
 			std::vector<VkSemaphore> renderFinishedSemaphores;
 			std::vector<VkFence> inFlightFences;
 			std::vector<VkFence> imagesInFlight;
-			uint32_t currentFrame, maxFramesInFlight;
+			uint32_t currentFrame = 0;
+			uint32_t maxFramesInFlight = 0;
 		};
 	};
 };

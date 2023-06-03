@@ -97,21 +97,17 @@ namespace Grindstone {
 					);
 					break;
 				case Reflection::TypeDescriptor::ReflectionTypeData::AssetReference: {
-					GenericAssetReference assetReference = *(GenericAssetReference*)offset;
-					if (assetReference.asset == nullptr) {
-						ImGui::Text("Invalid asset.");
-					}
-					else {
-						ImGui::Button(
-							assetReference.uuid.ToString().c_str()
-						);
+					GenericAssetReference& assetReference = *(GenericAssetReference*)offset;
 
-						if (ImGui::BeginDragDropTarget()) {
-							if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_UUID")) {
-								auto& engineCore = Editor::Manager::GetEngineCore();
-							}
-							ImGui::EndDragDropTarget();
+					ImGui::Button(
+						assetReference.uuid.ToString().c_str()
+					);
+
+					if (ImGui::BeginDragDropTarget()) {
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_UUID")) {
+							assetReference.asset = payload->Data;
 						}
+						ImGui::EndDragDropTarget();
 					}
 					break;
 				}
@@ -194,7 +190,7 @@ namespace Grindstone {
 					if (ImGui::Button(buttonFieldName.c_str())) {
 						vector.emplace_back();
 					}
-
+					/*
 					for (size_t i = 0; i < vector.size(); ++i) {
 						std::string fieldName = std::string("##") + std::to_string(i) + displayName;
 						ImGui::InputText(fieldName.c_str(), &vector[i]);
@@ -204,6 +200,7 @@ namespace Grindstone {
 							vector.erase(vector.begin() + i);
 						}
 					}
+					*/
 					break;
 				}
 			}

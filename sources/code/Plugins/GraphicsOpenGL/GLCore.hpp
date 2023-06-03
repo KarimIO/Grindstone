@@ -59,7 +59,8 @@ namespace Grindstone {
 			virtual Texture *CreateTexture(Texture::CreateInfo& createInfo) override;
 			virtual TextureBinding *CreateTextureBinding(TextureBinding::CreateInfo& createInfo) override;
 			virtual TextureBindingLayout *CreateTextureBindingLayout(TextureBindingLayout::CreateInfo& createInfo) override;
-			virtual RenderTarget *CreateRenderTarget(RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) override;
+			virtual RenderTarget* CreateRenderTarget(RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) override;
+			virtual RenderTarget* CreateRenderTarget(RenderTarget::CreateInfo& rt) override;
 			virtual DepthTarget *CreateDepthTarget(DepthTarget::CreateInfo& rt) override;
 
 			virtual void CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) override;

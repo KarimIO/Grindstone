@@ -17,19 +17,16 @@ std::filesystem::path FindFolder() {
 
 	HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED |
 		COINIT_DISABLE_OLE1DDE);
-	if (SUCCEEDED(hr))
-	{
+	if (SUCCEEDED(hr)) {
 		IFileOpenDialog* pFileOpen = nullptr;
 
 		// Create the FileOpenDialog object.
 		hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL,
 			IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpen));
 
-		if (SUCCEEDED(hr))
-		{
+		if (SUCCEEDED(hr)) {
 			DWORD dwOptions;
-			if (SUCCEEDED(pFileOpen->GetOptions(&dwOptions)))
-			{
+			if (SUCCEEDED(pFileOpen->GetOptions(&dwOptions))) {
 				pFileOpen->SetOptions(dwOptions | FOS_PICKFOLDERS);
 			}
 
@@ -37,18 +34,15 @@ std::filesystem::path FindFolder() {
 			hr = pFileOpen->Show(NULL);
 
 			// Get the file name from the dialog box.
-			if (SUCCEEDED(hr))
-			{
+			if (SUCCEEDED(hr)) {
 				IShellItem* pItem;
 				hr = pFileOpen->GetResult(&pItem);
-				if (SUCCEEDED(hr))
-				{
+				if (SUCCEEDED(hr)) {
 					PWSTR pszFilePath;
 					hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
 
 					// Display the file name to the user.
-					if (SUCCEEDED(hr))
-					{
+					if (SUCCEEDED(hr)) {
 						std::wstring tempWStr(pszFilePath);
 						outPath = std::filesystem::path(tempWStr);
 						CoTaskMemFree(pszFilePath);

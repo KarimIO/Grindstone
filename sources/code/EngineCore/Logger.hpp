@@ -2,13 +2,14 @@
 #define _LOGGER_H
 
 #include <string>
+#include <filesystem>
 #include <spdlog/spdlog.h>
 #include "Common/Logging.hpp"
 
 namespace Grindstone {
 	class Logger {
 	public:
-		static void Initialize(std::string path);
+		static void Initialize(std::filesystem::path path);
 		static void Print(LogSeverity logSeverity, const char* str);
 
 		template<typename... Args>

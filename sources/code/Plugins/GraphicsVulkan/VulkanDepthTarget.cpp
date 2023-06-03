@@ -10,7 +10,7 @@ namespace Grindstone {
 			VkFormat depthFormat = TranslateDepthFormatToVulkan(ci.format);
 
 			CreateImage(ci.width, ci.height, 1, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
-			imageView = CreateImageView(image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+			imageView = CreateImageView(image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, 1);
 		}
 		
 		VulkanDepthTarget::~VulkanDepthTarget() {

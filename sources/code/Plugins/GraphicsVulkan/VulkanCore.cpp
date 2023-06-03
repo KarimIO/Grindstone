@@ -45,7 +45,25 @@ const bool enableValidationLayers = true;
 #endif
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-	std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+	Grindstone::GraphicsAPI::VulkanCore* vk = static_cast<Grindstone::GraphicsAPI::VulkanCore*>(pUserData);
+
+	Grindstone::LogSeverity logSeverity = Grindstone::LogSeverity::Info;
+	switch (messageSeverity) {
+	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+		logSeverity = Grindstone::LogSeverity::Error;
+		break;
+	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+		logSeverity = Grindstone::LogSeverity::Warning;
+		break;
+	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+		logSeverity = Grindstone::LogSeverity::Info;
+		break;
+	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+		logSeverity = Grindstone::LogSeverity::Trace;
+		break;
+	}
+
+	vk->logFunction(logSeverity, pCallbackData->pMessage);
 
 	return VK_FALSE;
 }
@@ -67,10 +85,11 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 	}
 }
 
-
 namespace Grindstone {
 	namespace GraphicsAPI {
 		VulkanCore *VulkanCore::graphicsWrapper = nullptr;
+
+		VulkanCore::VulkanCore(std::function<void(LogSeverity, const char*)> logFunction) : logFunction(logFunction) {}
 
 		bool VulkanCore::Initialize(Core::CreateInfo& ci) {
 			apiType = API::Vulkan;
@@ -100,17 +119,19 @@ namespace Grindstone {
 
 			VkApplicationInfo appInfo = {};
 			appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-			appInfo.pApplicationName = "Hello Triangle";
+			appInfo.pApplicationName = "Grindstone";
 			appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-			appInfo.pEngineName = "No Engine";
+			appInfo.pEngineName = "Grindstone Engine";
 			appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-			appInfo.apiVersion = VK_API_VERSION_1_0;
+			appInfo.apiVersion = VK_API_VERSION_1_2;
 
 			VkInstanceCreateInfo createInfo = {};
 			createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 			createInfo.pApplicationInfo = &appInfo;
 
 			auto extensions = GetRequiredExtensions();
+			extensions.push_back(VK_NV_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
+
 			createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 			createInfo.ppEnabledExtensionNames = extensions.data();
 
@@ -157,7 +178,6 @@ namespace Grindstone {
 
 			int scoreMax = 0;
 
-			std::cout << "Available Devices:\n";
 			for (const auto& device : devices) {
 				int score = ScoreDevice(device);
 				if (score > scoreMax) {
@@ -169,6 +189,12 @@ namespace Grindstone {
 			if (physicalDevice == VK_NULL_HANDLE) {
 				throw std::runtime_error("Vulkan: Failed to find a suitable GPU!");
 			}
+
+			VkPhysicalDeviceProperties gpuProps{};
+			vkGetPhysicalDeviceProperties(physicalDevice, &gpuProps);
+
+			std::string output = std::string("Using Device: ") + gpuProps.deviceName;
+			logFunction(LogSeverity::Info, output.c_str());
 
 			VkPhysicalDeviceProperties properties;
 			vkGetPhysicalDeviceProperties(physicalDevice, &properties);
@@ -329,6 +355,7 @@ namespace Grindstone {
 			createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 			createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 			createInfo.pfnUserCallback = debugCallback;
+			createInfo.pUserData = this;
 		}
 
 		uint16_t VulkanCore::ScoreDevice(VkPhysicalDevice device) {
@@ -433,7 +460,6 @@ namespace Grindstone {
 			return commandPoolGraphics;
 		}
 
-
 		void VulkanCore::AdjustPerspective(float *perspective) {
 			perspective[1*4 + 1] *= -1;
 		}
@@ -465,35 +491,35 @@ namespace Grindstone {
 		// Creators
 		//==================================
 		Framebuffer *VulkanCore::CreateFramebuffer(Framebuffer::CreateInfo& ci) {
-			return static_cast<Framebuffer *>(new VulkanFramebuffer(ci));
+			return static_cast<Framebuffer*>(new VulkanFramebuffer(ci));
 		}
 
 		RenderPass * VulkanCore::CreateRenderPass(RenderPass::CreateInfo& ci) {
-			return static_cast<RenderPass *>(new VulkanRenderPass(ci));
+			return static_cast<RenderPass*>(new VulkanRenderPass(ci));
 		}
 
 		Pipeline* VulkanCore::CreatePipeline(Pipeline::CreateInfo& ci) {
-			return static_cast<Pipeline *>(new VulkanPipeline(ci));
+			return static_cast<Pipeline*>(new VulkanPipeline(ci));
 		}
 
 		CommandBuffer * VulkanCore::CreateCommandBuffer(CommandBuffer::CreateInfo& ci) {
-			return static_cast<CommandBuffer *>(new VulkanCommandBuffer(ci));
+			return static_cast<CommandBuffer*>(new VulkanCommandBuffer(ci));
 		}
 
 		VertexBuffer * VulkanCore::CreateVertexBuffer(VertexBuffer::CreateInfo& ci) {
-			return static_cast<VertexBuffer *>(new VulkanVertexBuffer(ci));
+			return static_cast<VertexBuffer*>(new VulkanVertexBuffer(ci));
 		}
 
 		IndexBuffer * VulkanCore::CreateIndexBuffer(IndexBuffer::CreateInfo& ci) {
-			return static_cast<IndexBuffer *>(new VulkanIndexBuffer(ci));
+			return static_cast<IndexBuffer*>(new VulkanIndexBuffer(ci));
 		}
 
 		UniformBuffer * VulkanCore::CreateUniformBuffer(UniformBuffer::CreateInfo& ci) {
-			return static_cast<UniformBuffer *>(new VulkanUniformBuffer(ci));
+			return static_cast<UniformBuffer*>(new VulkanUniformBuffer(ci));
 		}
 
 		UniformBufferBinding * VulkanCore::CreateUniformBufferBinding(UniformBufferBinding::CreateInfo& ci) {
-			return static_cast<UniformBufferBinding *>(new VulkanUniformBufferBinding(ci));
+			return static_cast<UniformBufferBinding*>(new VulkanUniformBufferBinding(ci));
 		}
 
 		Texture* VulkanCore::CreateCubemap(Texture::CubemapCreateInfo& createInfo) {
@@ -501,66 +527,70 @@ namespace Grindstone {
 		}
 
 		Texture * VulkanCore::CreateTexture(Texture::CreateInfo& ci) {
-			return static_cast<Texture *>(new VulkanTexture(ci));
+			return static_cast<Texture*>(new VulkanTexture(ci));
 		}
 
 		TextureBinding * VulkanCore::CreateTextureBinding(TextureBinding::CreateInfo& ci) {
-			return static_cast<TextureBinding *>(new VulkanTextureBinding(ci));
+			return static_cast<TextureBinding*>(new VulkanTextureBinding(ci));
 		}
 
 		TextureBindingLayout * VulkanCore::CreateTextureBindingLayout(TextureBindingLayout::CreateInfo& ci) {
-			return static_cast<TextureBindingLayout *>(new VulkanTextureBindingLayout(ci));
+			return static_cast<TextureBindingLayout*>(new VulkanTextureBindingLayout(ci));
 		}
 
-		RenderTarget * VulkanCore::CreateRenderTarget(RenderTarget::CreateInfo* ci, uint32_t rc, bool cube) {
-			return static_cast<RenderTarget *>(new VulkanRenderTarget(*ci));
+		RenderTarget* VulkanCore::CreateRenderTarget(RenderTarget::CreateInfo& ci) {
+			return static_cast<RenderTarget*>(new VulkanRenderTarget(ci));
+		}
+
+		RenderTarget* VulkanCore::CreateRenderTarget(RenderTarget::CreateInfo* ci, uint32_t rc, bool cube) {
+			return static_cast<RenderTarget*>(new VulkanRenderTarget(*ci));
 		}
 
 		DepthTarget * VulkanCore::CreateDepthTarget(DepthTarget::CreateInfo& ci) {
-			return static_cast<DepthTarget *>(new VulkanDepthTarget(ci));
+			return static_cast<DepthTarget*>(new VulkanDepthTarget(ci));
 		}
 
 		//==================================
 		// Deleters
 		//==================================
 		void VulkanCore::DeleteRenderTarget(RenderTarget * ptr) {
-			delete (VulkanRenderTarget *)ptr;
+			delete static_cast<VulkanRenderTarget*>(ptr);
 		}
 		void VulkanCore::DeleteDepthTarget(DepthTarget * ptr) {
-			delete (VulkanDepthTarget *)ptr;
+			delete static_cast<VulkanDepthTarget*>(ptr);
 		}
 		void VulkanCore::DeleteFramebuffer(Framebuffer *ptr) {
-			delete (VulkanFramebuffer *)ptr;
+			delete static_cast<VulkanFramebuffer*>(ptr);
 		}
 		void VulkanCore::DeleteVertexBuffer(VertexBuffer *ptr) {
-			delete (VulkanVertexBuffer *)ptr;
+			delete static_cast<VulkanVertexBuffer*>(ptr);
 		}
 		void VulkanCore::DeleteIndexBuffer(IndexBuffer *ptr) {
-			delete (VulkanIndexBuffer *)ptr;
+			delete static_cast<VulkanIndexBuffer*>(ptr);
 		}
 		void VulkanCore::DeleteUniformBuffer(UniformBuffer *ptr) {
-			delete (VulkanUniformBuffer *)ptr;
+			delete static_cast<VulkanUniformBuffer*>(ptr);
 		}
 		void VulkanCore::DeleteUniformBufferBinding(UniformBufferBinding * ptr) {
-			delete (VulkanUniformBufferBinding *)ptr;
+			delete static_cast<VulkanUniformBufferBinding*>(ptr);
 		}
 		void VulkanCore::DeletePipeline(Pipeline *ptr) {
-			delete (VulkanPipeline *)ptr;
+			delete static_cast<VulkanPipeline*>(ptr);
 		}
 		void VulkanCore::DeleteRenderPass(RenderPass *ptr) {
-			delete (VulkanRenderPass *)ptr;
+			delete static_cast<VulkanRenderPass*>(ptr);
 		}
 		void VulkanCore::DeleteTexture(Texture * ptr) {
-			delete (VulkanTexture *)ptr;
+			delete static_cast<VulkanTexture*>(ptr);
 		}
 		void VulkanCore::DeleteTextureBinding(TextureBinding * ptr) {
-			delete (VulkanTextureBinding *)ptr;
+			delete static_cast<VulkanTextureBinding*>(ptr);
 		}
 		void VulkanCore::DeleteTextureBindingLayout(TextureBindingLayout * ptr) {
-			delete (VulkanTextureBindingLayout *)ptr;
+			delete static_cast<VulkanTextureBindingLayout*>(ptr);
 		}
 		void VulkanCore::DeleteCommandBuffer(CommandBuffer *ptr) {
-			delete (VulkanCommandBuffer *)ptr;
+			delete static_cast<VulkanCommandBuffer*>(ptr);
 		}
 
 		//==================================
@@ -590,12 +620,10 @@ namespace Grindstone {
 		//==================================
 		VertexArrayObject * VulkanCore::CreateVertexArrayObject(VertexArrayObject::CreateInfo& ci) {
 			std::cout << "VulkanCore::CreateVertexArrayObject is not used.\n";
-			assert(false);
 			return nullptr;
 		}
 		void VulkanCore::DeleteVertexArrayObject(VertexArrayObject * ptr) {
 			std::cout << "VulkanCore::DeleteVertexArrayObject is not used\n";
-			assert(false);
 		}
 		void VulkanCore::Clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) {
 			std::cout << "VulkanCore::Clear is not used.\n";

@@ -20,16 +20,19 @@ namespace Grindstone {
 			maxFramesInFlight = 3;
 
 #ifdef VK_USE_PLATFORM_WIN32_KHR
-			VkWin32SurfaceCreateInfoKHR surfaceCreateInfo;
+			VkWin32SurfaceCreateInfoKHR surfaceCreateInfo{};
 			surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 			surfaceCreateInfo.hinstance = GetModuleHandle(NULL);
-			surfaceCreateInfo.hwnd = ((Win32Window *)window)->GetHandle();
+			surfaceCreateInfo.hwnd = static_cast<Win32Window *>(window)->GetHandle();
 			surfaceCreateInfo.pNext = VK_NULL_HANDLE;
 			surfaceCreateInfo.flags = 0;
 
-			if (vkCreateWin32SurfaceKHR(VulkanCore::Get().GetInstance(), &surfaceCreateInfo, nullptr, &surface) != VK_SUCCESS)
+			if (vkCreateWin32SurfaceKHR(VulkanCore::Get().GetInstance(), &surfaceCreateInfo, nullptr, &surface) != VK_SUCCESS) {
 				return false;
+			}
+
 #elif defined(VK_USE_PLATFORM_XLIB_KHR)
+
 			VkXlibSurfaceCreateInfoKHR surfaceCreateInfo;
 			surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
 			surfaceCreateInfo.hinstance = GetModuleHandle(NULL);
@@ -38,28 +41,29 @@ namespace Grindstone {
 			surfaceCreateInfo.pNext = VK_NULL_HANDLE;
 			surfaceCreateInfo.flags = 0;
 
-			if (vkCreateXlibSurfaceKHR(instance_, &surfaceCreateInfo, nullptr, &surface_) != VK_SUCCESS)
+			if (vkCreateXlibSurfaceKHR(instance_, &surfaceCreateInfo, nullptr, &surface_) != VK_SUCCESS) {
 				return false;
+			}
 #endif
 
 			return true;
 		}
 
 		VulkanWindowGraphicsBinding::~VulkanWindowGraphicsBinding() {
-			auto gw = VulkanCore::Get();
+			VulkanCore& vkCore = VulkanCore::Get();
 			
 			// Delete rt imageview
-			vkDestroySwapchainKHR(gw.GetDevice(), swapChain, nullptr);
-			vkDestroySurfaceKHR(gw.GetInstance(), surface, nullptr);
+			vkDestroySwapchainKHR(vkCore.GetDevice(), swapChain, nullptr);
+			vkDestroySurfaceKHR(vkCore.GetInstance(), surface, nullptr);
 		}
 
 		VkSurfaceKHR VulkanWindowGraphicsBinding::GetSurface() {
 			return surface;
 		}
 
-		void VulkanWindowGraphicsBinding::GetSwapChainRenderTargets(RenderTarget**& rts, uint32_t& rt_count) {
-			rts = swapChainTargets.data();
-			rt_count = swapChainTargets.size();
+		void VulkanWindowGraphicsBinding::GetSwapChainRenderTargets(RenderTarget**& renderTargets, uint32_t& renderTargetCounts) {
+			renderTargets = swapChainTargets.data();
+			renderTargetCounts = static_cast<uint32_t>(swapChainTargets.size());
 		}
 
 		ColorFormat VulkanWindowGraphicsBinding::GetDeviceColorFormat() {
@@ -130,8 +134,6 @@ namespace Grindstone {
 			}
 		}
 
-
-
 		void VulkanWindowGraphicsBinding::CreateSyncObjects() {
 			auto device = VulkanCore::Get().GetDevice();
 
@@ -157,11 +159,11 @@ namespace Grindstone {
 			}
 		}
 
-		void VulkanWindowGraphicsBinding::PresentCommandBuffer(CommandBuffer** buffers, uint32_t num_buffers) {
-			auto vkgw = VulkanCore::Get();
-			auto device = vkgw.GetDevice();
-			auto graphics_queue = vkgw.graphicsQueue;
-			auto present_queue = vkgw.presentQueue;
+		void VulkanWindowGraphicsBinding::PresentCommandBuffer(CommandBuffer** buffers, uint32_t bufferCount) {
+			auto& vkCore = VulkanCore::Get();
+			auto device = vkCore.GetDevice();
+			auto graphicsQueue = vkCore.graphicsQueue;
+			auto presentQueue = vkCore.presentQueue;
 
 			vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -177,7 +179,7 @@ namespace Grindstone {
 			VkSubmitInfo submitInfo = {};
 			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-			VkCommandBuffer cmd = ((VulkanCommandBuffer*)buffers[imageIndex])->getCommandBuffer();
+			VkCommandBuffer cmd = static_cast<VulkanCommandBuffer*>(buffers[imageIndex])->GetCommandBuffer();
 
 			VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
 			VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -193,7 +195,7 @@ namespace Grindstone {
 
 			vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
-			if (vkQueueSubmit(graphics_queue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
+			if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
 				throw std::runtime_error("failed to submit draw command buffer!");
 			}
 
@@ -209,16 +211,16 @@ namespace Grindstone {
 
 			presentInfo.pImageIndices = &imageIndex;
 
-			vkQueuePresentKHR(present_queue, &presentInfo);
+			vkQueuePresentKHR(presentQueue, &presentInfo);
 
 			currentFrame = (currentFrame + 1) % maxFramesInFlight;
 		}
 
 		void VulkanWindowGraphicsBinding::CreateSwapChain() {
-			auto physical_device = VulkanCore::Get().GetPhysicalDevice();
+			auto physicalDevice = VulkanCore::Get().GetPhysicalDevice();
 			auto device = VulkanCore::Get().GetDevice();
 
-			SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(physical_device);
+			SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(physicalDevice);
 
 			VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
 			VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
@@ -240,7 +242,7 @@ namespace Grindstone {
 			createInfo.imageArrayLayers = 1;
 			createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-			QueueFamilyIndices indices = VulkanCore::Get().FindQueueFamilies(physical_device);
+			QueueFamilyIndices indices = VulkanCore::Get().FindQueueFamilies(physicalDevice);
 			uint32_t queueFamilyIndices[] = { indices.graphicsFamily, indices.presentFamily };
 
 			if (indices.graphicsFamily != indices.presentFamily) {

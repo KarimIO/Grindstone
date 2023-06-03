@@ -59,7 +59,7 @@ namespace Grindstone {
 			struct CreateInfo {
 				const char* debugName;
 				const char* data;
-				uint32_t width, height;
+				uint32_t width, height, size;
 				uint16_t mipmaps;
 				bool isCubemap;
 				ColorFormat format;

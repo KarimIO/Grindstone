@@ -73,6 +73,7 @@ namespace Grindstone {
 			virtual Texture* CreateTexture(Texture::CreateInfo& createInfo) = 0;
 			virtual TextureBinding* CreateTextureBinding(TextureBinding::CreateInfo& ci) = 0;
 			virtual TextureBindingLayout* CreateTextureBindingLayout(TextureBindingLayout::CreateInfo& createInfo) = 0;
+			virtual RenderTarget* CreateRenderTarget(RenderTarget::CreateInfo& rt) = 0;
 			virtual RenderTarget* CreateRenderTarget(RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) = 0;
 			virtual DepthTarget* CreateDepthTarget(DepthTarget::CreateInfo& rt) = 0;
 

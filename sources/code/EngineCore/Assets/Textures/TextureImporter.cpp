@@ -52,6 +52,7 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid) {
 	Grindstone::GraphicsAPI::Texture::CreateInfo createInfo;
 	createInfo.debugName = debugName.c_str();
 	createInfo.data = imgPtr;
+	createInfo.size = header.dwSize;
 	createInfo.mipmaps = (uint16_t)header.dwMipMapCount;
 	createInfo.format = format;
 	createInfo.width = header.dwWidth;

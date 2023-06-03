@@ -74,13 +74,14 @@ protected:
 };
 #endif
 
-void Logger::Initialize(std::string path) {
-	std::filesystem::create_directories(std::filesystem::path(path).parent_path());
+void Logger::Initialize(std::filesystem::path path) {
+	std::filesystem::create_directories(path.parent_path());
 	
 	auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 	consoleSink->set_level(spdlog::level::trace);
 
-	auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path, true);
+	std::string pathAsString = path.string();
+	auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(pathAsString, true);
 	fileSink->set_level(spdlog::level::trace);
 
 	auto editorSink = std::make_shared<EditorSink>();

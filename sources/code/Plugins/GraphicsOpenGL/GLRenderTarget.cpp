@@ -7,6 +7,24 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
+		GLRenderTarget::GLRenderTarget(CreateInfo& createInfoList) {
+			renderTargetCount = 1;
+			width = std::max(createInfoList.width, 1u);
+			height = std::max(createInfoList.height, 1u);
+			this->isCubemap = isCubemap;
+
+			renderTargetHandles = new uint32_t[renderTargetCount];
+			formats = new GLenum[renderTargetCount];
+			internalFormats = new GLint[renderTargetCount];
+
+			for (uint32_t i = 0; i < renderTargetCount; i++) {
+				bool isCompressed;
+				translateColorFormats(createInfoList.format, isCompressed, formats[i], internalFormats[i]);
+			}
+
+			CreateRenderTargets();
+		}
+
 		GLRenderTarget::GLRenderTarget(CreateInfo* createInfoList, uint32_t createInfoCount, bool isCubemap) {
 			renderTargetCount = createInfoCount;
 			width = std::max(createInfoList[0].width, 1u);

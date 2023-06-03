@@ -11,11 +11,11 @@ namespace Grindstone {
 			imageView = CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 		}
 
-		VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& ci) {
+		VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& createInfo) {
 			uint8_t channels;
-			VkFormat renderFormat = TranslateColorFormatToVulkan(ci.format, channels);
+			VkFormat renderFormat = TranslateColorFormatToVulkan(createInfo.format, channels);
 
-			CreateImage(ci.width, ci.height, 1, renderFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
+			CreateImage(createInfo.width, createInfo.height, 1, renderFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
 			imageView = CreateImageView(image, renderFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 		}
 
