@@ -9,8 +9,10 @@ namespace Grindstone {
 		struct TypeDescriptor_StdVector : TypeDescriptor {
 			std::string name;
 			TypeDescriptor* itemType;
-			size_t(*getSize)(const void*);
-			const void* (*getItem)(const void*, size_t);
+			size_t (*getSize)(const void*);
+			void* (*getItem)(const void*, size_t);
+			void (*erase)(void*, size_t indexs);
+			void (*emplaceBack)(void*);
 
 			template <typename ItemType>
 			TypeDescriptor_StdVector(ItemType*)
@@ -22,9 +24,20 @@ namespace Grindstone {
 					const auto& vec = *(const std::vector<ItemType>*) vecPtr;
 					return vec.size();
 				};
+
 				getItem = [](const void* vecPtr, size_t index) -> const void* {
 					const auto& vec = *(const std::vector<ItemType>*) vecPtr;
 					return (void*)&vec[index];
+				};
+
+				erase = [](void* vecPtr, size_t index) -> void {
+					auto& vec = *(std::vector<ItemType>*) vecPtr;
+					vec.erase(vec.begin() + index);
+				};
+
+				emplaceBack = [](void* vecPtr) -> void {
+					auto& vec = *(std::vector<ItemType>*) vecPtr;
+					vec.emplace_back();
 				};
 			}
 
@@ -41,11 +54,5 @@ namespace Grindstone {
 				return &typeDesc;
 			}
 		};
-
-		/*template <typename T>
-		TypeDescriptor* GetPrimitiveDescriptor<std::vector<T>>() {
-			static TypeDescriptor_StdVector typeDesc{ (T*) nullptr };
-			return &typeDesc;
-		}*/
 	}
 }

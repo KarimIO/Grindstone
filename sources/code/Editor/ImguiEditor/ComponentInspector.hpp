@@ -32,6 +32,7 @@ namespace Grindstone {
 					void* componentPtr,
 					ECS::Entity entity
 				);
+				void RenderComponentMember(std::string_view displayName, Reflection::TypeDescriptor* itemType, void* offset, ECS::Entity entity);
 				NewComponentInput newComponentInput;
 			};
 		}

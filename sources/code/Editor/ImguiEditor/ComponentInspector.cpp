@@ -87,12 +87,17 @@ namespace Grindstone {
 				void* componentPtr,
 				ECS::Entity entity
 			) {
-				const char* displayName = member.displayName.c_str();
-				char* offset = ((char*)componentPtr + member.offset);
-				switch(member.type->type) {
+				void* offset = ((char*)componentPtr + member.offset);
+				RenderComponentMember(std::string_view(member.displayName), member.type, offset, entity);
+			}
+
+			void ComponentInspector::RenderComponentMember(std::string_view displayName, Reflection::TypeDescriptor* itemType, void* offset, ECS::Entity entity) {
+				const char* displayNamePtr = displayName.data();
+
+				switch (itemType->type) {
 				case Reflection::TypeDescriptor::ReflectionTypeData::Bool:
 					ImGui::Checkbox(
-						displayName,
+						displayNamePtr,
 						(bool*)offset
 					);
 					break;
@@ -113,55 +118,55 @@ namespace Grindstone {
 				}
 				case Reflection::TypeDescriptor::ReflectionTypeData::String:
 					ImGui::InputText(
-						displayName,
+						displayNamePtr,
 						(std::string *)offset
 					);
 					break;
 				case Reflection::TypeDescriptor::ReflectionTypeData::Int:
 					ImGui::InputInt(
-						displayName,
+						displayNamePtr,
 						(int*)offset
 					);
 					break;
 				case Reflection::TypeDescriptor::ReflectionTypeData::Int2:
 					ImGui::InputInt2(
-						displayName,
+						displayNamePtr,
 						(int *)offset
 					);
 					break;
 				case Reflection::TypeDescriptor::ReflectionTypeData::Int3:
 					ImGui::InputInt3(
-						displayName,
+						displayNamePtr,
 						(int *)offset
 					);
 					break;
 				case Reflection::TypeDescriptor::ReflectionTypeData::Int4:
 					ImGui::InputInt4(
-						displayName,
+						displayNamePtr,
 						(int *)offset
 					);
 					break;
 				case Reflection::TypeDescriptor::ReflectionTypeData::Float:
 					ImGui::InputFloat(
-						displayName,
+						displayNamePtr,
 						(float*)offset
 					);
 					break;
 				case Reflection::TypeDescriptor::ReflectionTypeData::Float2:
 					ImGui::InputFloat2(
-						displayName,
+						displayNamePtr,
 						(float *)offset
 					);
 					break;
 				case Reflection::TypeDescriptor::ReflectionTypeData::Float3:
 					ImGui::InputFloat3(
-						displayName,
+						displayNamePtr,
 						(float *)offset
 					);
 					break;
 				case Reflection::TypeDescriptor::ReflectionTypeData::Float4:
 					ImGui::InputFloat4(
-						displayName,
+						displayNamePtr,
 						(float*)offset
 					);
 					break;
@@ -169,7 +174,7 @@ namespace Grindstone {
 					glm::quat* quaternion = (glm::quat*)offset;
 					glm::vec3 euler = glm::degrees(glm::eulerAngles(*quaternion));
 					if (ImGui::InputFloat3(
-						displayName,
+						displayNamePtr,
 						&euler[0]
 					)) {
 						*quaternion = glm::quat(glm::radians(euler));
@@ -178,29 +183,32 @@ namespace Grindstone {
 				}
 				case Reflection::TypeDescriptor::ReflectionTypeData::Double:
 					ImGui::InputDouble(
-						displayName,
+						displayNamePtr,
 						(double*)offset
 					);
 					break;
 				case Reflection::TypeDescriptor::ReflectionTypeData::Vector:
-					std::vector<std::string>& vector = *(std::vector<std::string>*)offset;
-					ImGui::Text(displayName);
+					ImGui::Text(displayNamePtr);
 					ImGui::SameLine();
-					std::string buttonFieldName = std::string("+##") + displayName;
+					const void* vector = static_cast<const void*>(offset);
+					auto vectorType = static_cast<Reflection::TypeDescriptor_StdVector*>(itemType);
+					size_t vectorSize = vectorType->getSize(offset);
+
+					std::string buttonFieldName = std::string("+##") + displayNamePtr;
 					if (ImGui::Button(buttonFieldName.c_str())) {
-						vector.emplace_back();
+						vectorType->emplaceBack(offset);
 					}
-					/*
-					for (size_t i = 0; i < vector.size(); ++i) {
-						std::string fieldName = std::string("##") + std::to_string(i) + displayName;
-						ImGui::InputText(fieldName.c_str(), &vector[i]);
+
+					for (size_t i = 0; i < vectorSize; ++i) {
+						std::string fieldName = std::string("##") + std::to_string(i) + displayNamePtr;
+						RenderComponentMember(std::string_view(fieldName), vectorType->itemType, vectorType->getItem(offset, i), entity);
 						ImGui::SameLine();
 						std::string eraseFieldName = std::string("-") + fieldName;
 						if (ImGui::Button(eraseFieldName.c_str())) {
-							vector.erase(vector.begin() + i);
+							vectorType->erase(offset, i);
 						}
 					}
-					*/
+
 					break;
 				}
 			}

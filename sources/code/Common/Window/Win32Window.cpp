@@ -161,7 +161,6 @@ bool Win32Window::CopyStringToClipboard(const std::string& stringToCopy) {
 static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData) {
 	if (uMsg == BFFM_INITIALIZED) {
 		std::string tmp = (const char*)lpData;
-		std::cout << "path: " << tmp << std::endl;
 		SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpData);
 	}
 
