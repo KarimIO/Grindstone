@@ -32,7 +32,7 @@ void BuildPopup::Render() {
 
 void BuildPopup::CopyBinaries() {
 	sourceBuildPath = "";
-	targetBuildPath = targetPath / "build";
+	targetBuildPath = targetPath / "bin";
 	std::filesystem::create_directories(targetBuildPath);
 	CopyExecutableFile("Application");
 	CopyDLLFile("EngineCore");
@@ -42,8 +42,9 @@ void BuildPopup::CopyBinaries() {
 	CopyDLLFile("OpenAL32");
 	CopyDLLFile("spdlogd");
 
-	// TODO: Buildl from assets folders
-	CopyDLLFile("CSharpModule");
+	// TODO: Build from assets folders
+	CopyDLLFile("Application-CSharp");
+	CopyDLLFile("GrindstoneCSharpCore");
 
 	// TODO: Build with all necessary graphics dlls
 	CopyDLLFile("PluginGraphicsOpenGL");
@@ -82,10 +83,15 @@ void BuildPopup::CopyMetaData() {
 	std::filesystem::create_directories(targetBuildPath);
 
 	CopyBuildFile("pluginsManifest.txt");
+	CopyBuildFile("scenesManifest.txt");
 }
 
 void BuildPopup::CopyBuildFile(std::string filename) {
 	std::filesystem::path src = sourceBuildPath / filename;
+	if (!std::filesystem::exists(src)) {
+		return;
+	}
+
 	std::filesystem::path dst = targetBuildPath / filename;
 	std::filesystem::copy(src, dst, std::filesystem::copy_options::update_existing);
 }
