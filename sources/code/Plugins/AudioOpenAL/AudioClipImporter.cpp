@@ -2,7 +2,6 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <bit>
 #include "al.h"
 #include "alc.h"
 #define DR_WAV_IMPLEMENTATION
