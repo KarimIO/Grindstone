@@ -37,51 +37,76 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Loading", projectPath / "log/grind-profile-load.json");
 	Logger::Print("Initializing {0}...", createInfo.applicationTitle);
 
-	systemRegistrar = new ECS::SystemRegistrar();
-	SetupCoreSystems(systemRegistrar);
-	componentRegistrar = new ECS::ComponentRegistrar();
-	SetupCoreComponents(componentRegistrar);
-	sceneManager = new SceneManagement::SceneManager();
+	{
+		GRIND_PROFILE_SCOPE("Setup Core Systems");
+		systemRegistrar = new ECS::SystemRegistrar();
+		SetupCoreSystems(systemRegistrar);
+	}
+
+	{
+		GRIND_PROFILE_SCOPE("Setup Core Components");
+		componentRegistrar = new ECS::ComponentRegistrar();
+		SetupCoreComponents(componentRegistrar);
+	}
 
 	// Load core (Logging, ECS and Plugin Manager)
 	pluginManager = new Plugins::Manager(this);
 	pluginManager->Load("PluginGraphicsOpenGL");
 
-	inputManager = new Input::Manager(eventDispatcher);
+	Grindstone::Window* win = nullptr;
+	{
+		GRIND_PROFILE_SCOPE("Set up InputManager and Window");
+		inputManager = new Input::Manager(eventDispatcher);
 
-	Window::CreateInfo windowCreationInfo;
-	windowCreationInfo.fullscreen = Window::FullscreenMode::Windowed;
-	windowCreationInfo.title = "Sandbox";
-	windowCreationInfo.width = 800;
-	windowCreationInfo.height = 600;
-	windowCreationInfo.engineCore = this;
-	auto win = windowManager->Create(windowCreationInfo);
-	eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&EngineCore::OnTryQuit, this, std::placeholders::_1));
-	eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowForceQuit, std::bind(&EngineCore::OnForceQuit, this, std::placeholders::_1));
+		Window::CreateInfo windowCreationInfo;
+		windowCreationInfo.fullscreen = Window::FullscreenMode::Windowed;
+		windowCreationInfo.title = "Sandbox";
+		windowCreationInfo.width = 800;
+		windowCreationInfo.height = 600;
+		windowCreationInfo.engineCore = this;
+		win = windowManager->Create(windowCreationInfo);
+		eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&EngineCore::OnTryQuit, this, std::placeholders::_1));
+		eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowForceQuit, std::bind(&EngineCore::OnForceQuit, this, std::placeholders::_1));
+	}
 
-	GraphicsAPI::Core::CreateInfo graphicsCoreInfo{ win, true };
-	graphicsCore->Initialize(graphicsCoreInfo);
+	{
+		GRIND_PROFILE_SCOPE("Initialize Graphics Core");
+		GraphicsAPI::Core::CreateInfo graphicsCoreInfo{ win, true };
+		graphicsCore->Initialize(graphicsCoreInfo);
+
+		inputManager->SetMainWindow(win);
+	}
+
+
+	{
+		GRIND_PROFILE_SCOPE("Initialize Graphics Core");
+		assetManager = new Assets::AssetManager();
+		assetRendererManager = new AssetRendererManager();
+		assetRendererManager->AddQueue("Opaque");
+		assetRendererManager->AddQueue("Transparent");
+		assetRendererManager->AddQueue("Unlit");
+	}
+
+	{
+		GRIND_PROFILE_SCOPE("Load Plugin List");
+		pluginManager->LoadPluginList();
+	}
+
+	{
+		GRIND_PROFILE_SCOPE("Loading Default Scene");
+		sceneManager = new SceneManagement::SceneManager();
+		if (createInfo.shouldLoadSceneFromDefaults) {
+			sceneManager->LoadDefaultScene();
+		}
+		else if (strcmp(createInfo.scenePath, "") == 0) {
+			sceneManager->CreateEmptyScene("Untitled");
+		}
+		else {
+			sceneManager->LoadScene(createInfo.scenePath);
+		}
+	}
+
 	win->Show();
-
-	inputManager->SetMainWindow(win);
-
-	assetManager = new Assets::AssetManager();
-	assetRendererManager = new AssetRendererManager();
-	assetRendererManager->AddQueue("Opaque");
-	assetRendererManager->AddQueue("Transparent");
-	assetRendererManager->AddQueue("Unlit");
-
-	pluginManager->LoadPluginList();
-
-	if (createInfo.shouldLoadSceneFromDefaults) {
-		sceneManager->LoadDefaultScene();
-	}
-	else if (strcmp(createInfo.scenePath, "") == 0) {
-		sceneManager->CreateEmptyScene("Untitled");
-	}
-	else {
-		sceneManager->LoadScene(createInfo.scenePath);
-	}
 
 	Logger::Print("{0} Initialized.", createInfo.applicationTitle);
 	GRIND_PROFILE_END_SESSION();

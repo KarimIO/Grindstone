@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <iostream>
 
+#include "EngineCore/Profiling.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
@@ -59,10 +60,17 @@ void SceneLoaderJson::ProcessEntities() {
 
 void SceneLoaderJson::ProcessEntity(rapidjson::Value& entityJson) {
 	auto entityId = entityJson["entityId"].GetUint();
-	ECS::Entity entity = scene->CreateEntity((entt::entity)entityId);
 
-	for (auto& component : entityJson["components"].GetArray()) {
-		ProcessComponent(entity, component);
+	{
+#if _DEBUG
+		std::string scopeName = "Loading entity with id: " + std::to_string(entityId);
+		GRIND_PROFILE_SCOPE(scopeName.c_str());
+#endif
+		ECS::Entity entity = scene->CreateEntity((entt::entity)entityId);
+
+		for (auto& component : entityJson["components"].GetArray()) {
+			ProcessComponent(entity, component);
+		}
 	}
 }
 
