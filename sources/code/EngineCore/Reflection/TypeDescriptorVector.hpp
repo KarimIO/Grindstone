@@ -25,8 +25,8 @@ namespace Grindstone {
 					return vec.size();
 				};
 
-				getItem = [](const void* vecPtr, size_t index) -> const void* {
-					const auto& vec = *(const std::vector<ItemType>*) vecPtr;
+				getItem = [](const void* vecPtr, size_t index) -> void* {
+					auto& vec = *(std::vector<ItemType>*) vecPtr;
 					return (void*)&vec[index];
 				};
 

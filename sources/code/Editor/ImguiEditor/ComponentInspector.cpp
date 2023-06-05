@@ -199,14 +199,21 @@ namespace Grindstone {
 						vectorType->emplaceBack(offset);
 					}
 
+					size_t itemToDelete = -1;
 					for (size_t i = 0; i < vectorSize; ++i) {
 						std::string fieldName = std::string("##") + std::to_string(i) + displayNamePtr;
 						RenderComponentMember(std::string_view(fieldName), vectorType->itemType, vectorType->getItem(offset, i), entity);
 						ImGui::SameLine();
 						std::string eraseFieldName = std::string("-") + fieldName;
 						if (ImGui::Button(eraseFieldName.c_str())) {
-							vectorType->erase(offset, i);
+							itemToDelete = i;
+
+							// TODO: Handle effects of remove?
 						}
+					}
+
+					if (itemToDelete != -1) {
+						vectorType->erase(offset, itemToDelete);
 					}
 
 					break;

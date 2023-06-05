@@ -24,7 +24,7 @@ namespace Grindstone {
 						ImGui::IsMouseDown(ImGuiMouseButton_Left) &&
 						ImGui::IsWindowHovered() &&
 						!ImGui::GetIO().KeyCtrl
-						) {
+					) {
 						Editor::Manager::GetInstance().GetSelection().Clear();
 					}
 
