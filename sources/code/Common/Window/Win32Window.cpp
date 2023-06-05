@@ -444,6 +444,19 @@ void Win32Window::GetMousePos(unsigned int& x, unsigned int& y) {
 	y = point.y;
 }
 
+void Win32Window::SetCursorIsVisible(bool isVisible) {
+	::ShowCursor(false);
+}
+
+bool Win32Window::GetCursorIsVisible() {
+	PCURSORINFO pci{};
+	if (::GetCursorInfo(pci) == false) {
+		return false;
+	}
+
+	return pci->flags == 0x00000001;
+}
+
 void Win32Window::SetWindowPos(unsigned int x, unsigned int y) {
 	RECT rect = { (LONG)x, (LONG)y, (LONG)x, (LONG)y };
 	::AdjustWindowRectEx(&rect, style, FALSE, extendedStyle);

@@ -13,6 +13,8 @@ namespace Grindstone {
 		class Manager : public Interface {
 		public:
 			Manager(Events::Dispatcher* dispatcher);
+			virtual bool IsCursorVisible() override;
+			virtual void SetIsCursorVisible(bool) override;
 			virtual void SetMainWindow(Grindstone::Window* window) override;
 			virtual bool IsMouseButtonPressed(Events::MouseButtonCode) override;
 			virtual void SetMousePosition(int, int) override;

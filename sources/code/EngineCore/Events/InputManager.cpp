@@ -11,6 +11,18 @@ using namespace Grindstone::Input;
 using namespace Grindstone::Events;
 
 extern "C" {
+	ENGINE_CORE_API bool InputManagerGetIsCursorVisible() {
+		return Grindstone::EngineCore::GetInstance().GetInputManager()->IsCursorVisible();
+	}
+
+	ENGINE_CORE_API void InputManagerSetIsCursorVisible(bool isVisible) {
+		return Grindstone::EngineCore::GetInstance().GetInputManager()->SetIsCursorVisible(isVisible);
+	}
+
+	ENGINE_CORE_API bool InputManagerGetIsWindowFocused() {
+		return Grindstone::EngineCore::GetInstance().GetInputManager()->IsFocused();
+	}
+
 	ENGINE_CORE_API bool InputManagerIsKeyDown(int keyboardKey) {
 		return Grindstone::EngineCore::GetInstance().GetInputManager()->IsKeyPressed((KeyPressCode)keyboardKey);
 	}
@@ -43,6 +55,14 @@ extern "C" {
 Manager::Manager(Events::Dispatcher* dispatcher) : dispatcher(dispatcher) {
 	std::memset(keyPressed, 0, sizeof(keyPressed));
 	std::memset(mousePressed, 0, sizeof(mousePressed));
+}
+
+bool Manager::IsCursorVisible() {
+	return window->GetCursorIsVisible();
+}
+
+void Manager::SetIsCursorVisible(bool isVisible) {
+	return window->SetCursorIsVisible(isVisible);
 }
 
 void Manager::SetMainWindow(Grindstone::Window* window) {

@@ -9,6 +9,8 @@ namespace Grindstone {
 	namespace Input {
 		class Interface {
 		public:
+			virtual bool IsCursorVisible() = 0;
+			virtual void SetIsCursorVisible(bool) = 0;
 			virtual void SetMainWindow(Grindstone::Window* window) = 0;
 			virtual void ResizeEvent(int, int) = 0;
 			virtual void SetMouseButton(Events::MouseButtonCode, bool) = 0;

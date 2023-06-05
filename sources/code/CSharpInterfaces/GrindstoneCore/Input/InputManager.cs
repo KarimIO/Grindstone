@@ -21,9 +21,26 @@ namespace Grindstone.Input
 			get => InputManagerGetMousePos();
 			set => InputManagerSetMousePos(value);
 		}
+
+		public static bool IsWindowFocused => InputManagerGetIsWindowFocused();
+
+		public static bool IsCursorVisible
+		{
+			get => InputManagerGetIsCursorVisible();
+			set => InputManagerSetIsCursorVisible(value);
+		}
 		#endregion
 
 		#region DllImports
+		[DllImport("EngineCore")]
+		private static extern bool InputManagerGetIsCursorVisible();
+
+		[DllImport("EngineCore")]
+		private static extern bool InputManagerSetIsCursorVisible(bool isVisible);
+
+		[DllImport("EngineCore")]
+		private static extern bool InputManagerGetIsWindowFocused();
+
 		[DllImport("EngineCore")]
 		private static extern bool InputManagerIsKeyDown(int keyboardKey);
 

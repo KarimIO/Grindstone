@@ -21,6 +21,8 @@ namespace Grindstone {
 		virtual void SetWindowSize(unsigned int width, unsigned int height) override;
 		virtual void SetMousePos(unsigned int x, unsigned int y) override;
 		virtual void GetMousePos(unsigned int& x, unsigned int& y) override;
+		virtual void SetCursorIsVisible(bool isVisible) override;
+		virtual bool GetCursorIsVisible() override;
 		virtual void SetWindowPos(unsigned int x, unsigned int y) override;
 		virtual void GetWindowPos(unsigned int& x, unsigned int& y) override;
 		virtual void SetWindowFocus() override;

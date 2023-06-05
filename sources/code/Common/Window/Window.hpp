@@ -34,6 +34,8 @@ namespace Grindstone {
 		virtual void SetWindowSize(unsigned int width, unsigned int height) = 0;
 		virtual void GetMousePos(unsigned int& x, unsigned int& y) = 0;
 		virtual void SetMousePos(unsigned int x, unsigned int y) = 0;
+		virtual void SetCursorIsVisible(bool isVisible) = 0;
+		virtual bool GetCursorIsVisible() = 0;
 		virtual void SetWindowPos(unsigned int x, unsigned int y) = 0;
 		virtual void GetWindowPos(unsigned int& x, unsigned int& y) = 0;
 		virtual void SetWindowFocus() = 0;
