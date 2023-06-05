@@ -9,16 +9,15 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		VulkanFramebuffer::VulkanFramebuffer(Framebuffer::CreateInfo& ci) {
-			uint32_t totalViews = ci.numRenderTargetLists;
-			totalViews += (ci.depthTarget != nullptr) ? 1 : 0;
-
-			VkImageView *attachments = new VkImageView[totalViews];
+			std::vector<VkImageView> attachments;
 			for (uint32_t i = 0; i < ci.numRenderTargetLists; ++i) {
-				attachments[i] = ((VulkanRenderTarget *)ci.renderTargetLists[i])->GetImageView();
+				VulkanRenderTarget* renderTarget = static_cast<VulkanRenderTarget*>(ci.renderTargetLists[i]);
+				attachments.emplace_back(renderTarget->GetImageView());
 			}
 
 			if (ci.depthTarget != nullptr) {
-				attachments[totalViews - 1] = ((VulkanDepthTarget *)ci.depthTarget)->GetImageView();
+				VulkanDepthTarget* depthTarget = static_cast<VulkanDepthTarget*>(ci.depthTarget);
+				attachments.emplace_back(depthTarget->GetImageView());
 			}
 
 			VulkanRenderPass *rp = (VulkanRenderPass *)ci.renderPass;
@@ -26,8 +25,8 @@ namespace Grindstone {
 			VkFramebufferCreateInfo framebufferInfo = {};
 			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 			framebufferInfo.renderPass = rp->GetRenderPassHandle();
-			framebufferInfo.attachmentCount = totalViews;
-			framebufferInfo.pAttachments = attachments;
+			framebufferInfo.pAttachments = attachments.data();
+			framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 			framebufferInfo.width = rp->GetWidth();
 			framebufferInfo.height = rp->GetHeight();
 			framebufferInfo.layers = 1;

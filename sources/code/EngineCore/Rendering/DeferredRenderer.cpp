@@ -168,7 +168,7 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 
 	std::vector<ColorFormat> colorFormats;
 	colorFormats.reserve(gbufferImagesCreateInfo.size());
-	for (size_t i = 0; i < colorFormats.size(); ++i) {
+	for (size_t i = 0; i < gbufferImagesCreateInfo.size(); ++i) {
 		colorFormats.emplace_back(gbufferImagesCreateInfo[i].format);
 	}
 
@@ -176,7 +176,7 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	gbufferRenderPassCreateInfo.width = width;
 	gbufferRenderPassCreateInfo.height = height;
 	gbufferRenderPassCreateInfo.colorFormats = colorFormats.data();
-	gbufferRenderPassCreateInfo.colorFormatCount = (uint32_t)colorFormats.size();
+	gbufferRenderPassCreateInfo.colorFormatCount = static_cast<uint32_t>(colorFormats.size());
 	gbufferRenderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
 	gbufferRenderPass = core->CreateRenderPass(gbufferRenderPassCreateInfo);
 
@@ -251,7 +251,7 @@ void DeferredRenderer::RenderLights(entt::registry& registry) {
 
 	auto view = registry.view<const TransformComponent, const PointLightComponent>();
 	view.each([&](const TransformComponent& transformComponent, const PointLightComponent& pointLightComponent) {
-		LightmapStruct lightmapStruct {
+		LightmapStruct lightmapStruct{
 			pointLightComponent.color,
 			pointLightComponent.attenuationRadius,
 			transformComponent.position,
@@ -301,7 +301,7 @@ void DeferredRenderer::Render(
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
 	core->ResizeViewport(width, height);
 
-	EngineUboStruct engineUboStruct;
+	EngineUboStruct engineUboStruct{};
 	engineUboStruct.proj = projectionMatrix;
 	engineUboStruct.view = viewMatrix;
 	engineUboStruct.eyePos = eyePos;
@@ -309,7 +309,7 @@ void DeferredRenderer::Render(
 	gbuffer->BindWrite();
 	gbuffer->BindRead();
 
-	float clearColor[4] = {0.3f, 0.6f, 0.9f, 1.f};
+	float clearColor[4] = { 0.3f, 0.6f, 0.9f, 1.f };
 	core->Clear(ClearMode::ColorAndDepth, clearColor, 1);
 
 	globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
