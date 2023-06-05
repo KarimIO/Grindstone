@@ -192,7 +192,7 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	gbufferCreateInfo.depthTarget = gbufferDepthTarget;
 	gbuffer = core->CreateFramebuffer(gbufferCreateInfo);
 
-	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::R32G32B32, width, height };
+	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height };
 	litHdrRenderTarget = core->CreateRenderTarget(litHdrImagesCreateInfo);
 
 	DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false);
