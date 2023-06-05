@@ -11,7 +11,7 @@ namespace Grindstone {
 			renderTargetCount = 1;
 			width = std::max(createInfoList.width, 1u);
 			height = std::max(createInfoList.height, 1u);
-			this->isCubemap = isCubemap;
+			this->isCubemap = false;
 
 			renderTargetHandles = new uint32_t[renderTargetCount];
 			formats = new GLenum[renderTargetCount];

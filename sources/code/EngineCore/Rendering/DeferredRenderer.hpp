@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include "BaseRenderer.hpp"
 
 namespace Grindstone {
@@ -37,13 +38,14 @@ namespace Grindstone {
 		uint32_t width = 800;
 		uint32_t height = 600;
 
+		std::vector<GraphicsAPI::RenderTarget*> gbufferRenderTargets;
+
 		GraphicsAPI::UniformBufferBinding* globalUniformBufferBinding = nullptr;
 		GraphicsAPI::UniformBuffer* globalUniformBufferObject = nullptr;
 		GraphicsAPI::UniformBufferBinding* lightUniformBufferBinding = nullptr;
 		GraphicsAPI::UniformBuffer* lightUniformBufferObject = nullptr;
 		GraphicsAPI::Framebuffer* gbuffer = nullptr;
 		GraphicsAPI::Framebuffer* litHdrFramebuffer = nullptr;
-		GraphicsAPI::RenderTarget* gbufferRenderTargets = nullptr;
 		GraphicsAPI::RenderTarget* litHdrRenderTarget = nullptr;
 		GraphicsAPI::DepthTarget* gbufferDepthTarget = nullptr;
 		GraphicsAPI::DepthTarget* litHdrDepthTarget = nullptr;

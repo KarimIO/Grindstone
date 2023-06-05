@@ -58,7 +58,9 @@ DeferredRenderer::~DeferredRenderer() {
 	core->DeleteUniformBuffer(lightUniformBufferObject);
 
 	core->DeleteFramebuffer(gbuffer);
-	core->DeleteRenderTarget(gbufferRenderTargets);
+	for (size_t i = 0; i < gbufferRenderTargets.size(); ++i) {
+		core->DeleteRenderTarget(gbufferRenderTargets[i]);
+	}
 	core->DeleteDepthTarget(gbufferDepthTarget);
 
 	core->DeleteFramebuffer(litHdrFramebuffer);
@@ -158,25 +160,24 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 
 	const uint32_t width = 800;
 	const uint32_t height = 600;
-	std::vector<RenderTarget::CreateInfo> gbufferImagesCreateInfo;
-	gbufferImagesCreateInfo.reserve(4);
-	gbufferImagesCreateInfo.emplace_back(ColorFormat::R16G16B16A16, width, height); // X Y Z
-	gbufferImagesCreateInfo.emplace_back(ColorFormat::R8G8B8A8, width, height); // R  G  B matID
-	gbufferImagesCreateInfo.emplace_back(ColorFormat::R16G16B16A16, width, height); // nX nY nZ
-	gbufferImagesCreateInfo.emplace_back(ColorFormat::R8G8B8A8, width, height); // sR sG sB Roughness
-	gbufferRenderTargets = core->CreateRenderTarget(gbufferImagesCreateInfo.data(), (uint32_t)gbufferImagesCreateInfo.size());
+	std::vector<ColorFormat> gbufferColorFormats;
+	gbufferColorFormats.reserve(4);
+	gbufferColorFormats.emplace_back(ColorFormat::R16G16B16A16); // X Y Z
+	gbufferColorFormats.emplace_back(ColorFormat::R8G8B8A8); // R  G  B matID
+	gbufferColorFormats.emplace_back(ColorFormat::R16G16B16A16); // nX nY nZ
+	gbufferColorFormats.emplace_back(ColorFormat::R8G8B8A8); // sR sG sB Roughness
 
-	std::vector<ColorFormat> colorFormats;
-	colorFormats.reserve(gbufferImagesCreateInfo.size());
-	for (size_t i = 0; i < gbufferImagesCreateInfo.size(); ++i) {
-		colorFormats.emplace_back(gbufferImagesCreateInfo[i].format);
+	gbufferRenderTargets.reserve(gbufferColorFormats.size());
+	for (size_t i = 0; i < gbufferColorFormats.size(); ++i) {
+		RenderTarget::CreateInfo gbufferRtCreateInfo{ gbufferColorFormats[i], width, height };
+		gbufferRenderTargets.emplace_back(core->CreateRenderTarget(gbufferRtCreateInfo));
 	}
 
 	RenderPass::CreateInfo gbufferRenderPassCreateInfo{};
 	gbufferRenderPassCreateInfo.width = width;
 	gbufferRenderPassCreateInfo.height = height;
-	gbufferRenderPassCreateInfo.colorFormats = colorFormats.data();
-	gbufferRenderPassCreateInfo.colorFormatCount = static_cast<uint32_t>(colorFormats.size());
+	gbufferRenderPassCreateInfo.colorFormats = gbufferColorFormats.data();
+	gbufferRenderPassCreateInfo.colorFormatCount = static_cast<uint32_t>(gbufferColorFormats.size());
 	gbufferRenderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
 	gbufferRenderPass = core->CreateRenderPass(gbufferRenderPassCreateInfo);
 
@@ -186,14 +187,13 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	Framebuffer::CreateInfo gbufferCreateInfo{};
 	gbufferCreateInfo.debugName = "G-Buffer Framebuffer";
 	gbufferCreateInfo.renderPass = gbufferRenderPass;
-	gbufferCreateInfo.renderTargetLists = &gbufferRenderTargets;
-	gbufferCreateInfo.numRenderTargetLists = 1;
+	gbufferCreateInfo.renderTargetLists = gbufferRenderTargets.data();
+	gbufferCreateInfo.numRenderTargetLists = static_cast<uint32_t>(gbufferRenderTargets.size());
 	gbufferCreateInfo.depthTarget = gbufferDepthTarget;
 	gbuffer = core->CreateFramebuffer(gbufferCreateInfo);
 
-	RenderTarget::CreateInfo litHdrImagesCreateInfo
-		= { Grindstone::GraphicsAPI::ColorFormat::R32G32B32, width, height };
-	litHdrRenderTarget = core->CreateRenderTarget(&litHdrImagesCreateInfo, 1);
+	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::R32G32B32, width, height };
+	litHdrRenderTarget = core->CreateRenderTarget(litHdrImagesCreateInfo);
 
 	DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false);
 	litHdrDepthTarget = core->CreateDepthTarget(litHdrDepthImageCreateInfo);
