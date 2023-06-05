@@ -26,6 +26,7 @@ namespace Grindstone {
 	public:
 		static Grindstone::Window* Create(CreateInfo& createInfo);
 		virtual void Show() = 0;
+		virtual void Hide() = 0;
 		virtual bool ShouldClose() = 0;
 		virtual void HandleEvents() = 0;
 		virtual void SetFullscreen(FullscreenMode mode) = 0;
@@ -38,10 +39,11 @@ namespace Grindstone {
 		virtual bool GetCursorIsVisible() = 0;
 		virtual void SetWindowPos(unsigned int x, unsigned int y) = 0;
 		virtual void GetWindowPos(unsigned int& x, unsigned int& y) = 0;
-		virtual void SetWindowFocus() = 0;
+		virtual void SetWindowFocus(bool isFocused) = 0;
 		virtual bool GetWindowFocus() = 0;
 		virtual bool GetWindowMinimized() = 0;
-		virtual void SetWindowTitle(const char* title) = 0;
+		virtual void GetTitle(char* allocatedBuffer) = 0;
+		virtual void SetTitle(const char* title) = 0;
 		virtual void SetWindowAlpha(float alpha) = 0;
 		virtual float GetWindowDpiScale() = 0;
 		virtual void Close() = 0;

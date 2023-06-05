@@ -340,6 +340,11 @@ void Win32Window::Show() {
 	UpdateWindow(windowHandle);
 }
 
+void Win32Window::Hide() {
+	ShowWindow(windowHandle, SW_HIDE);
+	UpdateWindow(windowHandle);
+}
+
 bool Win32Window::ShouldClose() {
 	return shouldClose;
 }
@@ -450,7 +455,7 @@ void Win32Window::SetCursorIsVisible(bool isVisible) {
 
 bool Win32Window::GetCursorIsVisible() {
 	PCURSORINFO pci{};
-	if (::GetCursorInfo(pci) == false) {
+	if (::GetCursorInfo(pci) == false || pci == 0) {
 		return false;
 	}
 
@@ -479,10 +484,15 @@ HWND Win32Window::GetHandle() {
 	return windowHandle;
 }
 
-void Win32Window::SetWindowFocus() {
-	::BringWindowToTop(windowHandle);
-	::SetForegroundWindow(windowHandle);
-	::SetFocus(windowHandle);
+void Win32Window::SetWindowFocus(bool isFocused) {
+	if (isFocused) {
+		::BringWindowToTop(windowHandle);
+		::SetForegroundWindow(windowHandle);
+		::SetFocus(windowHandle);
+	}
+	else {
+		::SetFocus(nullptr);
+	}
 }
 
 bool Win32Window::GetWindowFocus() {
@@ -493,7 +503,11 @@ bool Win32Window::GetWindowMinimized() {
 	return ::IsIconic(windowHandle) != 0;
 }
 
-void Win32Window::SetWindowTitle(const char* title) {
+void Win32Window::GetTitle(char* allocatedBuffer) {
+	::GetWindowText(windowHandle, allocatedBuffer, sizeof(allocatedBuffer));
+}
+
+void Win32Window::SetTitle(const char* title) {
 	// ::SetWindowTextA() doesn't properly handle UTF-8 so we explicitely convert our string.
 	int n = ::MultiByteToWideChar(CP_UTF8, 0, title, -1, NULL, 0);
 	std::vector<wchar_t> title_w;

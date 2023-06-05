@@ -13,6 +13,7 @@ namespace Grindstone {
 	public:
 		virtual bool Initialize(CreateInfo& createInfo) override;
 		virtual void Show() override;
+		virtual void Hide() override;
 		virtual bool ShouldClose() override;
 		virtual void HandleEvents() override;
 		virtual void SetFullscreen(FullscreenMode mode) override;
@@ -25,10 +26,11 @@ namespace Grindstone {
 		virtual bool GetCursorIsVisible() override;
 		virtual void SetWindowPos(unsigned int x, unsigned int y) override;
 		virtual void GetWindowPos(unsigned int& x, unsigned int& y) override;
-		virtual void SetWindowFocus() override;
 		virtual bool GetWindowFocus() override;
+		virtual void SetWindowFocus(bool isFocused) override;
 		virtual bool GetWindowMinimized() override;
-		virtual void SetWindowTitle(const char* title) override;
+		virtual void GetTitle(char* allocatedBuffer) override;
+		virtual void SetTitle(const char* title) override;
 		virtual void SetWindowAlpha(float alpha) override;
 		virtual float GetWindowDpiScale() override;
 		virtual void Close() override;

@@ -21,7 +21,7 @@ namespace Grindstone {
 		static extern System.IntPtr TagComponentGetTag(System.IntPtr comp);
 
 		[DllImport("EngineCore")]
-		static extern void TagComponentSetTag(System.IntPtr comp, string rotation);
+		static extern void TagComponentSetTag(System.IntPtr comp, string tag);
 		#endregion
 	}
 }
