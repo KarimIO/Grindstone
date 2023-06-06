@@ -77,6 +77,7 @@ namespace Grindstone {
 				std::filesystem::path pathToRename;
 				std::string pathRenameNewName;
 				std::string searchText;
+				std::set<Uuid> expandedAssetUuidsWithSubassets;
 				std::chrono::time_point<std::chrono::system_clock> lastRefreshedAssetsTime;
 			};
 		}

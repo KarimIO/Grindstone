@@ -13,6 +13,7 @@ namespace Grindstone {
 		void Save();
 		Uuid GetOrCreateDefaultSubassetUuid(std::string& subassetName);
 		Uuid GetOrCreateSubassetUuid(std::string& subassetName);
+		size_t GetSubassetCount();
 		bool TryGetDefaultSubassetUuid(Uuid& outUuid);
 		bool TryGetSubassetUuid(std::string& subassetName, Uuid& outUuid);
 	public:

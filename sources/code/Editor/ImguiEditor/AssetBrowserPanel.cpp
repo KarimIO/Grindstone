@@ -418,10 +418,15 @@ void AssetBrowserPanel::RenderFiles() {
 			isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.5f) : ImVec4(1, 1, 1, 0.1f)
 		);
 
+		float cursorX = ImGui::GetCursorPosX();
+		float cursorY = ImGui::GetCursorPosY();
+
 		ImTextureID icon = 0; //GetIcon(file->directoryEntry);
 		ImGui::PushID(buttonString.c_str());
-		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
+		ImGui::SetCursorPosX(cursorX + THUMBNAIL_SPACING);
 		ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
+		ImVec2 rectMin = ImGui::GetItemRectMin();
+		ImVec2 rectMax = ImGui::GetItemRectMin();
 		ImGui::PopID();
 
 		RenderAssetContextMenu(file->directoryEntry);
@@ -449,6 +454,43 @@ void AssetBrowserPanel::RenderFiles() {
 		}
 		else {
 			ImGui::TextWrapped(filenameString.c_str());
+		}
+
+		if (file->metaFile.GetSubassetCount() > 0) {
+			bool isExpanded = expandedAssetUuidsWithSubassets.find(myUuid) != expandedAssetUuidsWithSubassets.end();
+			ImGui::SetCursorPosX(cursorX + THUMBNAIL_SIZE + THUMBNAIL_PADDING);
+			ImGui::SetCursorPosY(cursorY + (THUMBNAIL_SIZE / 2.0f) - 5.0f);
+
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 10.0f);
+			std::string expandButton = isExpanded
+				? std::string("<##") + buttonString
+				: std::string(">##") + buttonString;
+
+			if (ImGui::Button(expandButton.c_str(), ImVec2(20, 20))) {
+				if (isExpanded) {
+					expandedAssetUuidsWithSubassets.erase(myUuid);
+				}
+				else {
+					expandedAssetUuidsWithSubassets.emplace(myUuid);
+				}
+			}
+
+			ImGui::PopStyleVar();
+
+			ImGui::SetCursorPosX(cursorX);
+			ImGui::SetCursorPosY(cursorY);
+
+			if (isExpanded) {
+				for (auto& subasset : file->metaFile) {
+					ImGui::TableNextColumn();
+					ImTextureID icon = 0; //GetIcon(file->directoryEntry);
+					ImGui::PushID(buttonString.c_str());
+					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
+					ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
+					ImGui::PopID();
+					ImGui::TextWrapped(subasset.name.c_str());
+				}
+			}
 		}
 	}
 }

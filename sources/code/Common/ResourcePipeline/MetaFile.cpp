@@ -124,6 +124,10 @@ Uuid MetaFile::GetOrCreateSubassetUuid(std::string& subassetName) {
 	return uuid;
 }
 
+size_t MetaFile::GetSubassetCount() {
+	return subassets.size();
+}
+
 MetaFile::Iterator MetaFile::begin() noexcept {
 	return subassets.begin();
 }
