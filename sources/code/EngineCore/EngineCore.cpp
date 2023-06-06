@@ -77,9 +77,8 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 		inputManager->SetMainWindow(win);
 	}
 
-
 	{
-		GRIND_PROFILE_SCOPE("Initialize Graphics Core");
+		GRIND_PROFILE_SCOPE("Initialize Asset Managers");
 		assetManager = new Assets::AssetManager();
 		assetRendererManager = new AssetRendererManager();
 		assetRendererManager->AddQueue("Opaque");
@@ -229,6 +228,12 @@ bool EngineCore::OnForceQuit(Grindstone::Events::BaseEvent* ev) {
 	windowManager->CloseWindow(castedEv->window);
 
 	return false;
+}
+
+void EngineCore::ReloadCsharpBinaries() {
+	if (callbackReloadCsharp) {
+		callbackReloadCsharp();
+	}
 }
 
 void EngineCore::CalculateDeltaTime() {

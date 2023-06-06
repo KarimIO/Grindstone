@@ -40,6 +40,7 @@ namespace Grindstone {
 				void CallCreateComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType);
 				void CallHasComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoTypes);
 				void CallRemoveComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType);
+				void Reload();
 			private:
 				void SetupEntityDataInComponent(ECS::Entity& entity, ScriptComponent& component);
 				void CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset);

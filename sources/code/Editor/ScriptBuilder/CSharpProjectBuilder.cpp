@@ -76,7 +76,7 @@ void CSharpProjectBuilder::WriteCodeFiles(std::string& output) {
 		output += "\t\t<Compile Include=\"" + filename + "\" />\n";
 	}
 
-	WriteDllReference(output, "GrindstoneCSharpCore.dll");
+	WriteDllReferenceByFilename(output, "GrindstoneCSharpCore.dll");
 
 	output += "\t</ItemGroup>\n";
 }
@@ -87,9 +87,9 @@ void CSharpProjectBuilder::WriteDllReferenceByFilename(std::string& output, std:
 }
 
 void CSharpProjectBuilder::WriteDllReference(std::string& output, std::string path) {
-	output += "\t\t<Reference Include=\"GrindstoneCSharpCore\">" \
-		"\t\t\t<HintPath>" + path + "</HintPath>" \
-		"\t\t</Reference>";
+	output += "\t\t<Reference Include=\"GrindstoneCSharpCore\">\n" \
+		"\t\t\t<HintPath>" + path + "</HintPath>\n" \
+		"\t\t</Reference>\n";
 }
 
 void CSharpProjectBuilder::WriteTargets(std::string& output) {

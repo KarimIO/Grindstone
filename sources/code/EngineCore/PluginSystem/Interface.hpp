@@ -45,6 +45,7 @@ namespace Grindstone {
 			virtual void RegisterSystem(const char* name, ECS::SystemFactory factory);
 			virtual void RegisterAssetRenderer(BaseAssetRenderer* assetRenderer);
 			virtual void RegisterAssetType(AssetType assetType, const char* typeName, AssetImporter* assetImporter);
+			virtual void SetReloadCsharpCallback(std::function<void()> callback);
 
 			template<typename T>
 			void RegisterComponent(ECS::SetupComponentFn setupComponentFn = nullptr) {

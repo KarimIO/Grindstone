@@ -6,8 +6,12 @@
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "Components/ScriptComponent.hpp"
 
+#include <EngineCore/Utils/Utilities.hpp>
+
 #include <mono/jit/jit.h>
 #include <mono/metadata/assembly.h>
+#include <mono/metadata/mono-debug.h>
+#include <mono/metadata/threads.h>
 
 using namespace Grindstone;
 using namespace Grindstone::Scripting::CSharp;
@@ -45,27 +49,44 @@ void CSharpManager::Initialize(EngineCore* engineCore) {
 
 	auto dllPath = (engineCore->GetBinaryPath() / "Application-CSharp.dll").string();
 	LoadAssemblyIntoMap(dllPath.c_str());
+
+	mono_thread_set_main(mono_thread_current());
 }
 
 void CSharpManager::LoadAssembly(const char* path, AssemblyData& outAssemblyData) {
-	MonoAssembly* assembly = mono_domain_assembly_open(scriptDomain, path);
+	std::vector<char> assemblyData = Grindstone::Utils::LoadFile(path);
 
-	if (assembly == nullptr) {
-		std::string errorMsg = std::string("Could not load image from C# Assembly: ") + path;
-		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+	MonoImageOpenStatus status;
+	MonoImage* image = mono_image_open_from_data_full(assemblyData.data(), static_cast<uint32_t>(assemblyData.size()), true, &status, false);
+
+	if (image == nullptr || status != MONO_IMAGE_OK) {
+		const char* errorMessage = mono_image_strerror(status);
+		engineCore->Print(LogSeverity::Error, errorMessage);
 		return;
 	}
 
-	MonoImage* image = mono_assembly_get_image(assembly);
+#if _DEBUG
+	std::filesystem::path pdbPath = path;
+	pdbPath.replace_extension(".pdb");
 
-	if (assembly == nullptr) {
-		std::string errorMsg = std::string("Could not load image from C# Assembly: ") + path;
-		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+	if (std::filesystem::exists(pdbPath)) {
+		std::vector<char> debugData = Grindstone::Utils::LoadFile(path);
+		mono_debug_open_image_from_memory(image, (const mono_byte*)debugData.data(), static_cast<uint32_t>(assemblyData.size()));
+	}
+#endif
+
+	MonoAssembly* assembly = mono_assembly_load_from_full(image, path, &status, false);
+
+	if (assembly == nullptr || status != MONO_IMAGE_OK) {
+		const char* errorMessage = mono_image_strerror(status);
+		engineCore->Print(LogSeverity::Error, errorMessage);
 		return;
 	}
+
+	mono_image_close(image);
 
 	outAssemblyData.assembly = assembly;
-	outAssemblyData.image = image;
+	outAssemblyData.image = mono_assembly_get_image(assembly);
 }
 
 void CSharpManager::LoadAssemblyIntoMap(const char* path) {
@@ -212,5 +233,19 @@ void CSharpManager::CallRemoveComponent(SceneManagement::Scene* scene, entt::ent
 	if (iterator == removeComponentFuncs.end()) {
 		iterator->second(ECS::Entity(entityHandle, scene));
 	}
+}
 
+void CSharpManager::Reload() {
+	mono_image_close(grindsoneCoreDll.image);
+	mono_assembly_close(grindsoneCoreDll.assembly);
+
+	mono_domain_set(mono_get_root_domain(), false);
+	mono_domain_unload(scriptDomain);
+
+	auto coreDllPath = (engineCore->GetBinaryPath() / "GrindstoneCSharpCore.dll").string();
+	LoadAssembly(coreDllPath.c_str(), grindsoneCoreDll);
+
+	auto dllPath = (engineCore->GetBinaryPath() / "Application-CSharp.dll").string();
+	assemblies.clear();
+	LoadAssemblyIntoMap(dllPath.c_str());
 }

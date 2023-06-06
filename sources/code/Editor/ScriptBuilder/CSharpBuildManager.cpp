@@ -4,6 +4,9 @@
 #include "SolutionBuilder.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 
+#include <thread>
+#include<algorithm>
+
 #ifdef _MSC_VER
 #include <Windows.h>
 #endif
@@ -52,29 +55,11 @@ void CSharpBuildManager::OnFileModified(const std::filesystem::path& path) {
 	BuildProject();
 }
 
+#ifdef _MSC_VER
+std::thread newThread;
+PROCESS_INFORMATION processInfo;
 HANDLE g_hChildStd_OUT_Rd = NULL;
 HANDLE g_hChildStd_OUT_Wr = NULL;
-
-void ReadFromPipe(void) {
-	constexpr int BUFSIZE = 4096;
-
-	DWORD dwRead;
-	CHAR chBuf[BUFSIZE];
-	BOOL bSuccess = FALSE;
-	HANDLE hParentStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-
-	std::string content = "";
-	for (;;)
-	{
-		std::memset(chBuf, 0, sizeof(chBuf));
-		bSuccess = ReadFile(g_hChildStd_OUT_Rd, chBuf, BUFSIZE, &dwRead, NULL);
-		if (!bSuccess || dwRead == 0) break;
-
-		content += chBuf;
-	}
-
-	Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Info, "Error building C# project:\n{}", content.c_str());
-}
 
 std::string GetMsBuildPath() {
 	std::filesystem::path settingsFile = Grindstone::Editor::Manager::GetInstance().GetProjectPath() / "userSettings/codeToolsPath.txt";
@@ -83,85 +68,90 @@ std::string GetMsBuildPath() {
 	return Grindstone::Utils::LoadFileText(settingsPath.c_str());
 }
 
-void CreateChildProcess() {
-// Create a child process that uses the previously created pipes for STDIN and STDOUT.
+DWORD __stdcall ReadDataFromExtProgram(void* argh) {
+	constexpr int BUFSIZE = 4096;
+
+	DWORD dwRead;
+	CHAR chBuf[BUFSIZE];
+	memset(chBuf, 0, BUFSIZE);
+	BOOL bSuccess = FALSE;
+
+	Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Info, "Building...", chBuf);
+
+	for (;;)
+	{
+		bSuccess = ReadFile(g_hChildStd_OUT_Rd, chBuf, BUFSIZE, &dwRead, NULL);
+		if (!bSuccess || dwRead == 0) continue;
+
+		// Log chBuf
+		Grindstone::LogSeverity severity = Grindstone::LogSeverity::Info;
+		if (strstr(chBuf, "error")) {
+			severity = Grindstone::LogSeverity::Error;
+		}
+
+		if (strstr(chBuf, "warn")) {
+			severity = Grindstone::LogSeverity::Warning;
+		}
+
+		Grindstone::Editor::Manager::Print(severity, "{}", chBuf);
+
+		if (!bSuccess) break;
+	}
+
+	Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Info, "Done building.", chBuf);
+	CloseHandle(processInfo.hProcess);
+	CloseHandle(processInfo.hThread);
+
+	Grindstone::Editor::Manager::GetEngineCore().ReloadCsharpBinaries();
+
+	return 0;
+}
+
+bool CreateChildProcess() {
+	// Create a child process that uses the previously created pipes for STDIN and STDOUT.
+	std::string parameters = "-noLogo -noAutoRsp -verbosity:minimal";
 	std::string filename = "Application-CSharp.csproj";
 	auto outputFilePath = Grindstone::Editor::Manager::GetInstance().GetProjectPath() / filename;
 	std::string path = outputFilePath.string();
+	LPSTR pathLpcstr = const_cast<char*>(path.c_str());
 	std::string msBuildPath = GetMsBuildPath();
 
-	std::string command = msBuildPath + " " + path;
+	std::string command = std::string("\"") + msBuildPath + "\" " + parameters + " \"" + path + "\"";
 
-	PROCESS_INFORMATION piProcInfo;
-	STARTUPINFO siStartInfo;
+	processInfo = {};
+	STARTUPINFO startInfo{};
 	BOOL bSuccess = FALSE;
+	startInfo.cb = sizeof(STARTUPINFO);
+	startInfo.hStdError = g_hChildStd_OUT_Wr;
+	startInfo.hStdOutput = g_hChildStd_OUT_Wr;
+	startInfo.dwFlags |= STARTF_USESTDHANDLES;
 
-	// Set up members of the PROCESS_INFORMATION structure. 
-
-	ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
-
-	// Set up members of the STARTUPINFO structure. 
-	// This structure specifies the STDIN and STDOUT handles for redirection.
-
-	ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
-	siStartInfo.cb = sizeof(STARTUPINFO);
-	siStartInfo.hStdError = g_hChildStd_OUT_Wr;
-	siStartInfo.hStdOutput = g_hChildStd_OUT_Wr;
-	siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
-
-	// Create the child process. 
-
-	bSuccess = CreateProcess(
-		NULL,
-		(LPSTR)command.c_str(),     // command line 
-		NULL,          // process security attributes 
-		NULL,          // primary thread security attributes 
-		TRUE,          // handles are inherited 
-		CREATE_NO_WINDOW,             // creation flags 
-		NULL,          // use parent's environment 
-		NULL,          // use parent's current directory 
-		&siStartInfo,  // STARTUPINFO pointer 
-		&piProcInfo
-	);  // receives PROCESS_INFORMATION 
-
-	 // If an error occurs, exit the application. 
-	if (!bSuccess)
-		return;
-	else
-	{
-		CloseHandle(piProcInfo.hProcess);
-		CloseHandle(piProcInfo.hThread);
-
-		CloseHandle(g_hChildStd_OUT_Wr);
+	if (CreateProcess(NULL, (TCHAR*)command.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &startInfo, &processInfo)) {
+		CreateThread(0, 0, ReadDataFromExtProgram, NULL, 0, NULL);
+		return true;
 	}
+
+	return false;
 }
+#endif
 
 void CSharpBuildManager::BuildProject() {
-	UnloadCsharpBinaries();
 #ifdef _MSC_VER
-	SECURITY_ATTRIBUTES saAttr;
+	SECURITY_ATTRIBUTES saAttr{};
 	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
 	saAttr.bInheritHandle = TRUE;
 	saAttr.lpSecurityDescriptor = NULL;
 
-	if (!CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0))
+	if (!CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0)) {
 		return;
+	}
 
-	if (!SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0))
+	if (!SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0)) {
 		return;
+	}
 
 	CreateChildProcess();
-	ReadFromPipe();
 #endif
-	ReloadCsharpBinaries();
-}
-
-void CSharpBuildManager::UnloadCsharpBinaries() {
-	// Editor::Manager::GetEngineCore().UnloadCsharpBinaries();
-}
-
-void CSharpBuildManager::ReloadCsharpBinaries() {
-	// Editor::Manager::GetEngineCore().ReloadCsharpBinaries();
 }
 
 void CSharpBuildManager::CreateProjectsAndSolution() {
@@ -171,15 +161,14 @@ void CSharpBuildManager::CreateProjectsAndSolution() {
 		return;
 	}
 
-	CreateProject();
-	CreateSolution();
+	CSharpProjectMetaData metaData("Application-CSharp", "64EE0D0C-BB03-4061-B3DE-AADE8705E344");
+	CreateProject(metaData);
+	CreateSolution(metaData);
 
 	BuildProject();
 }
 
-void CSharpBuildManager::CreateProject() {
-	CSharpProjectMetaData metaData("Application-CSharp", "64EE0D0C-BB03-4061-B3DE-AADE8705E344");
-	
+void CSharpBuildManager::CreateProject(CSharpProjectMetaData metaData) {
 	CSharpProjectBuilder projectBuilder(metaData);
 
 	for (auto& path : files) {
@@ -189,9 +178,7 @@ void CSharpBuildManager::CreateProject() {
 	projectBuilder.CreateProject();
 }
 
-void CSharpBuildManager::CreateSolution() {
-	CSharpProjectMetaData metaData("Application-CSharp", "64EE0D0C-BB03-4061-B3DE-AADE8705E344");
-
+void CSharpBuildManager::CreateSolution(CSharpProjectMetaData metaData) {
 	SolutionBuilder solutionBuilder;
 	solutionBuilder.AddProject(metaData);
 	solutionBuilder.CreateSolution();

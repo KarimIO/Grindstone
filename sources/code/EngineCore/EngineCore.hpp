@@ -3,6 +3,7 @@
 #include <fmt/format.h>
 #include <filesystem>
 #include <vector>
+#include <functional>
 #include <chrono>
 #include "Common/Logging.hpp"
 
@@ -77,6 +78,7 @@ namespace Grindstone {
 		virtual std::filesystem::path GetBinaryPath();
 		virtual std::filesystem::path GetAssetsPath();
 		virtual std::filesystem::path GetAssetPath(std::string subPath);
+		virtual void ReloadCsharpBinaries();
 
 		template<typename... Args>
 		void Print(LogSeverity logSeverity, fmt::format_string<Args...> fmt, Args &&...args) {
@@ -95,6 +97,7 @@ namespace Grindstone {
 		WindowManager* windowManager = nullptr;
 		Assets::AssetManager* assetManager = nullptr;
 		AssetRendererManager* assetRendererManager = nullptr;
+		std::function<void()> callbackReloadCsharp;
 	private:
 		double currentTime = 0.0;
 		double deltaTime = 0.0;

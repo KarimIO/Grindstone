@@ -1,4 +1,4 @@
-set(CSHARP_SOURCES CSharpManager.cpp CSharpSystem.cpp ScriptClass.cpp EntryPoint.cpp ../../EngineCore/ECS/Entity.cpp)
+set(CSHARP_SOURCES CSharpManager.cpp CSharpSystem.cpp ScriptClass.cpp EntryPoint.cpp ../../EngineCore/ECS/Entity.cpp ../../EngineCore/Utils/Utilities.cpp)
 set(CSHARP_HEADERS CSharpManager.hpp CSharpSystem.hpp ScriptClass.hpp)
 
 file(GLOB_RECURSE CSHARP_COMPONENTS_SOURCES "Components/*.cpp")

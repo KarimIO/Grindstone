@@ -22,6 +22,8 @@ std::vector<char> Utils::LoadFile(const char* inputPath) {
 		std::istream_iterator<char>()
 	);
 
+	file.close();
+
 	return fileData;
 }
 

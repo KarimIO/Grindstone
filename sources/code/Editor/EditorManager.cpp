@@ -45,7 +45,7 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 
 	if (!LoadEngine())			return false;
 	fileManager.Initialize(assetsPath);
-	// csharpBuildManager.FinishInitialFileProcessing();
+	csharpBuildManager.FinishInitialFileProcessing();
 	if (!SetupImguiEditor())	return false;
 	InitializeQuitCommands();
 

@@ -21,11 +21,9 @@ namespace Grindstone {
 				void OnFileModified(const std::filesystem::path& path);
 			private:
 				void BuildProject();
-				void UnloadCsharpBinaries();
-				void ReloadCsharpBinaries();
 				void CreateProjectsAndSolution();
-				void CreateProject();
-				void CreateSolution();
+				void CreateProject(CSharpProjectMetaData metaData);
+				void CreateSolution(CSharpProjectMetaData metaData);
 
 				std::vector<std::filesystem::path> files;
 			};
