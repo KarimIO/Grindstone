@@ -132,6 +132,7 @@ void AssetBrowserPanel::SetCurrentAssetDirectory(Directory& newDirectory) {
 	currentDirectory = &newDirectory;
 	pathToRename = "";
 	Editor::Manager::GetInstance().GetSelection().ClearFiles();
+	expandedAssetUuidsWithSubassets.clear();
 }
 
 void AssetBrowserPanel::ProcessDirectoryEntryClicks(std::filesystem::directory_entry entry, Directory* directory) {
@@ -342,7 +343,7 @@ void AssetBrowserPanel::TryRenameFile() {
 		try {
 			std::filesystem::rename(pathToRename, newPath);
 			pathToRename = "";
-pathRenameNewName = "";
+			pathRenameNewName = "";
 		}
 		catch (std::filesystem::filesystem_error error) {
 			Editor::Manager::Print(LogSeverity::Error, "Rename failed: %s!", error.what());
@@ -408,15 +409,11 @@ void AssetBrowserPanel::RenderFiles() {
 
 		bool isSelected = Editor::Manager::GetInstance().GetSelection().IsFileSelected(file->directoryEntry);
 		ImVec4 mainColor = isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.3f) : ImVec4(0.f, 0.f, 0.f, 0.f);
+		ImVec4 hoverColor = isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.4f) : ImVec4(1, 1, 1, 0.05f);
+		ImVec4 activeColor = isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.5f) : ImVec4(1, 1, 1, 0.1f);
 		ImGui::PushStyleColor(ImGuiCol_Button, mainColor);
-		ImGui::PushStyleColor(
-			ImGuiCol_ButtonHovered,
-			isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.4f) : ImVec4(1, 1, 1, 0.05f)
-		);
-		ImGui::PushStyleColor(
-			ImGuiCol_ButtonActive,
-			isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.5f) : ImVec4(1, 1, 1, 0.1f)
-		);
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoverColor);
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, activeColor);
 
 		float cursorX = ImGui::GetCursorPosX();
 		float cursorY = ImGui::GetCursorPosY();
@@ -439,7 +436,7 @@ void AssetBrowserPanel::RenderFiles() {
 		) {
 			std::string myUuidAsString = myUuid.ToString();
 			ImGui::SetDragDropPayload("_UUID", myUuidAsString.data(), myUuidAsString.size() + 1);
-			ImGui::Text("This is a drag and drop source");
+			ImGui::Text("%s", filenameString.c_str());
 			ImGui::EndDragDropSource();
 		}
 
@@ -484,10 +481,20 @@ void AssetBrowserPanel::RenderFiles() {
 				for (auto& subasset : file->metaFile) {
 					ImGui::TableNextColumn();
 					ImTextureID icon = 0; //GetIcon(file->directoryEntry);
+					buttonString = filenameString + subasset.uuid.ToString();
 					ImGui::PushID(buttonString.c_str());
 					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
 					ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
 					ImGui::PopID();
+
+					if (ImGui::BeginDragDropSource()) {
+						Uuid myUuid = subasset.uuid;
+						std::string myUuidAsString = myUuid.ToString();
+						ImGui::SetDragDropPayload("_UUID", myUuidAsString.data(), myUuidAsString.size() + 1);
+						ImGui::Text(subasset.name.c_str());
+						ImGui::EndDragDropSource();
+					}
+
 					ImGui::TextWrapped(subasset.name.c_str());
 				}
 			}
