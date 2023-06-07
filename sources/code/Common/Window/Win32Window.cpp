@@ -167,36 +167,55 @@ static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 	return 0;
 }
 
-std::string Win32Window::BrowseFolder(std::string defaultPath) {
-	TCHAR path[MAX_PATH];
+std::filesystem::path Win32Window::BrowseFolder(std::filesystem::path& defaultPath) {
+	std::filesystem::path outPath;
 
-	BROWSEINFO bi = { 0 };
-	bi.lpszTitle = ("Browse for folder...");
-	bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
-	bi.lpfn = BrowseCallbackProc;
-	bi.lParam = (LPARAM)defaultPath.c_str();
+	HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED |
+		COINIT_DISABLE_OLE1DDE);
+	if (SUCCEEDED(hr)) {
+		IFileOpenDialog* pFileOpen = nullptr;
 
-	LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+		// Create the FileOpenDialog object.
+		hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL,
+			IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpen));
 
-	if (pidl != 0) {
-		SHGetPathFromIDList(pidl, path);
+		if (SUCCEEDED(hr)) {
+			DWORD dwOptions;
+			if (SUCCEEDED(pFileOpen->GetOptions(&dwOptions))) {
+				pFileOpen->SetOptions(dwOptions | FOS_PICKFOLDERS);
+			}
 
-		IMalloc* imalloc = 0;
-		if (SUCCEEDED(SHGetMalloc(&imalloc))) {
-			imalloc->Free(pidl);
-			imalloc->Release();
+			// Show the Open dialog box.
+			hr = pFileOpen->Show(NULL);
+
+			// Get the file name from the dialog box.
+			if (SUCCEEDED(hr)) {
+				IShellItem* pItem;
+				hr = pFileOpen->GetResult(&pItem);
+				if (SUCCEEDED(hr)) {
+					PWSTR pszFilePath;
+					hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
+
+					// Display the file name to the user.
+					if (SUCCEEDED(hr)) {
+						std::wstring tempWStr(pszFilePath);
+						outPath = std::filesystem::path(tempWStr);
+						CoTaskMemFree(pszFilePath);
+					}
+					pItem->Release();
+				}
+			}
+			pFileOpen->Release();
 		}
-
-		return path;
+		CoUninitialize();
 	}
 
-	return "";
+	return outPath;
 }
 
-std::string Win32Window::OpenFileDialogue(const char* filter) {
-	OPENFILENAME ofn;
+std::filesystem::path Win32Window::OpenFileDialogue(const char* filter) {
+	OPENFILENAME ofn{};
 	char fileName[MAX_PATH] = "";
-	ZeroMemory(&ofn, sizeof(ofn));
 
 	ofn.lStructSize = sizeof(OPENFILENAME);
 	ofn.hwndOwner = windowHandle;
@@ -213,7 +232,7 @@ std::string Win32Window::OpenFileDialogue(const char* filter) {
 	return "";
 }
 
-std::string Win32Window::SaveFileDialogue(const char* filter) {
+std::filesystem::path Win32Window::SaveFileDialogue(const char* filter) {
 	OPENFILENAME ofn;
 	char fileName[MAX_PATH] = "";
 	ZeroMemory(&ofn, sizeof(ofn));

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <filesystem>
 #include <Common/Graphics/WindowGraphicsBinding.hpp>
 #include <Common/Display/Display.hpp>
 
@@ -49,9 +50,9 @@ namespace Grindstone {
 		virtual void Close() = 0;
 
 		virtual bool CopyStringToClipboard(const std::string& stringToCopy) = 0;
-		virtual std::string BrowseFolder(std::string defaultPath) = 0;
-		virtual std::string OpenFileDialogue(const char* filter = "All Files (*.*)\0*.*\0") = 0;
-		virtual std::string SaveFileDialogue(const char* filter = "All Files (*.*)\0*.*\0") = 0;
+		virtual std::filesystem::path BrowseFolder(std::filesystem::path& defaultPath) = 0;
+		virtual std::filesystem::path OpenFileDialogue(const char* filter = "All Files (*.*)\0*.*\0") = 0;
+		virtual std::filesystem::path SaveFileDialogue(const char* filter = "All Files (*.*)\0*.*\0") = 0;
 		virtual void ExplorePath(const char* path) = 0;
 		virtual void OpenFileUsingDefaultProgram(const char* path) = 0;
 	public:

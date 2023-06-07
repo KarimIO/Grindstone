@@ -122,7 +122,7 @@ void Menubar::OnSaveAsFile() {
 	auto filePath = window->SaveFileDialogue("Scene File (.json)\0*.json\0");
 
 	if (!filePath.empty()) {
-		SaveFile(filePath.c_str());
+		SaveFile(filePath.string().c_str());
 	}
 }
 
@@ -139,7 +139,7 @@ void Menubar::OnLoadFile() {
 
 	if (!filePath.empty()) {
 		auto* sceneManager = engineCore.GetSceneManager();
-		sceneManager->LoadScene(filePath.c_str());
+		sceneManager->LoadScene(filePath.string().c_str());
 	}
 }
 

@@ -10,7 +10,13 @@ using namespace Grindstone::Editor::ImguiEditor;
 void BuildPopup::StartBuild() {
 	auto windowManager = Editor::Manager::GetEngineCore().windowManager;
 	auto window = windowManager->GetWindowByIndex(0);
-	auto defaultBuildPath = Editor::Manager::GetInstance().GetProjectPath().string();
+
+	if (window == nullptr) {
+		Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Error, "BuildPopup::StartBuild - Could not get window.");
+		return;
+	}
+
+	auto defaultBuildPath = Editor::Manager::GetInstance().GetProjectPath();
 	targetPath = window->BrowseFolder(defaultBuildPath);
 
 	if (targetPath.empty()) {

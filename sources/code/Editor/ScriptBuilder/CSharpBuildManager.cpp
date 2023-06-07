@@ -5,7 +5,7 @@
 #include "EngineCore/Utils/Utilities.hpp"
 
 #include <thread>
-#include<algorithm>
+#include <algorithm>
 
 #ifdef _MSC_VER
 #include <Windows.h>
@@ -108,8 +108,15 @@ DWORD __stdcall ReadDataFromExtProgram(void* argh) {
 }
 
 bool CreateChildProcess() {
-	// Create a child process that uses the previously created pipes for STDIN and STDOUT.
-	std::string parameters = "-noLogo -noAutoRsp -verbosity:minimal";
+	bool isDebug = true;
+	std::string parameters = "-noLogo -noAutoRsp -verbosity:minimal /p:Configuration=";
+	if (isDebug) {
+		parameters += "Debug";
+	}
+	else {
+		parameters += "Release";
+	}
+
 	std::string filename = "Application-CSharp.csproj";
 	auto outputFilePath = Grindstone::Editor::Manager::GetInstance().GetProjectPath() / filename;
 	std::string path = outputFilePath.string();
