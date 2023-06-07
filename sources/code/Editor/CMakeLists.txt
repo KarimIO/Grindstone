@@ -92,64 +92,16 @@ find_package(spirv_cross_msl CONFIG REQUIRED)
 find_package(spirv_cross_reflect CONFIG REQUIRED)
 find_package(spirv_cross_cpp CONFIG REQUIRED)
 find_package(spirv_cross_c CONFIG REQUIRED)
+find_package(SPIRV-Tools-opt CONFIG REQUIRED)
+find_package(SPIRV-Tools CONFIG REQUIRED)
+add_library(SPIRV-Tools ALIAS SPIRV-Tools-static)
+find_package(unofficial-shaderc_util CONFIG REQUIRED)
+find_package(unofficial-shaderc CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 
 add_executable(Editor ${EDITOR_HEADERS} ${EDITOR_SOURCES})
 
 set_property(TARGET Editor PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${BUILD_DIRECTORY})
-
-find_library(SHADERC_LIBRARY
-	NAMES
-		shaderc
-	HINTS
-		${CMAKE_FIND_ROOT_PATH}
-	PATHS
-		${CMAKE_FIND_ROOT_PATH}
-	PATH_SUFFIXES
-		"debug/lib"
-		"lib"
-		"local/lib"
-)
-
-find_library(SHADERC_UTIL_LIBRARY
-	NAMES
-		shaderc_util
-	HINTS
-		${CMAKE_FIND_ROOT_PATH}
-	PATHS
-		${CMAKE_FIND_ROOT_PATH}
-	PATH_SUFFIXES
-		"debug/lib"
-		"lib"
-		"local/lib"
-)
-
-find_library(SPIRV_Tools
-	NAMES
-		SPIRV-Tools
-	HINTS
-		${CMAKE_FIND_ROOT_PATH}
-	PATHS
-		${CMAKE_FIND_ROOT_PATH}
-	PATH_SUFFIXES
-		"debug/lib"
-		"lib"
-		"local/lib"
-)
-
-find_library(SPIRV_Tools_Opt
-	NAMES
-		SPIRV-Tools-opt
-	HINTS
-		${CMAKE_FIND_ROOT_PATH}
-	PATHS
-		${CMAKE_FIND_ROOT_PATH}
-	PATH_SUFFIXES
-		"debug/lib"
-		"lib"
-		"local/lib"
-)
-
-find_package(fmt CONFIG REQUIRED)
 
 target_compile_definitions(Editor PUBLIC NOMINMAX)
 target_include_directories(Editor PUBLIC ${CODE_DIR} ${STB_INCLUDE_DIRS} ${FMT_INCLUDE_DIRS})
@@ -161,7 +113,8 @@ target_link_libraries(
 	fmt::fmt
 	spirv-cross-c spirv-cross-core spirv-cross-cpp spirv-cross-glsl spirv-cross-reflect
 	glslang::SPIRV glslang::HLSL glslang::glslang glslang::OGLCompiler
-	${SHADERC_LIBRARY} ${SHADERC_UTIL_LIBRARY} ${SPIRV_Tools} ${SPIRV_Tools_Opt}
+	unofficial::shaderc::shaderc unofficial::shaderc_util::shaderc_util
+	SPIRV-Tools-opt SPIRV-Tools-static
 	spirv-cross-reflect
 	assimp::assimp
 	unofficial::gl3w::gl3w glm::glm opengl32
