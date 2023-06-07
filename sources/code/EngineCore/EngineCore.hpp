@@ -56,6 +56,7 @@ namespace Grindstone {
 			bool shouldLoadSceneFromDefaults;
 			const char* scenePath = nullptr;
 			const char* projectPath = nullptr;
+			const char* engineBinaryPath = nullptr;
 		};
 
 		bool Initialize(CreateInfo& ci);
@@ -76,6 +77,7 @@ namespace Grindstone {
 		virtual BaseRenderer* CreateRenderer();
 		virtual std::filesystem::path GetProjectPath();
 		virtual std::filesystem::path GetBinaryPath();
+		virtual std::filesystem::path GetEngineBinaryPath();
 		virtual std::filesystem::path GetAssetsPath();
 		virtual std::filesystem::path GetAssetPath(std::string subPath);
 		virtual void ReloadCsharpBinaries();
@@ -113,6 +115,7 @@ namespace Grindstone {
 		bool shouldClose = false;
 		std::filesystem::path projectPath;
 		std::filesystem::path binaryPath;
+		std::filesystem::path engineBinaryPath;
 		std::filesystem::path assetsPath;
 	};
 }

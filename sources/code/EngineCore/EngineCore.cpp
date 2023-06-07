@@ -27,6 +27,7 @@ using namespace Grindstone;
 
 bool EngineCore::Initialize(CreateInfo& createInfo) {
 	projectPath = createInfo.projectPath;
+	engineBinaryPath = createInfo.engineBinaryPath;
 	binaryPath = projectPath / "bin/";
 	assetsPath = projectPath / "compiledAssets/";
 	eventDispatcher = new Events::Dispatcher();
@@ -200,6 +201,10 @@ std::filesystem::path EngineCore::GetProjectPath() {
 
 std::filesystem::path EngineCore::GetBinaryPath() {
 	return binaryPath;
+}
+
+std::filesystem::path EngineCore::GetEngineBinaryPath() {
+	return engineBinaryPath;
 }
 
 std::filesystem::path EngineCore::GetAssetsPath() {

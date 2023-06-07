@@ -1,10 +1,15 @@
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 
 #include "Utilities.hpp"
 
 using namespace Grindstone;
 std::vector<char> Utils::LoadFile(const char* inputPath) {
+	if (!std::filesystem::exists(inputPath)) {
+		return {};
+	}
+
 	std::ifstream file(inputPath, std::ios::binary);
 	file.unsetf(std::ios::skipws);
 

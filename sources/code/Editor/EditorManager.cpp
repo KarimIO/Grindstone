@@ -126,6 +126,9 @@ bool Manager::LoadEngine() {
 	createInfo.shouldLoadSceneFromDefaults = true;
 	std::string projectPathAsStr = projectPath.string();
 	createInfo.projectPath = projectPathAsStr.c_str();
+
+	std::string currentPath = std::filesystem::current_path().string();
+	createInfo.engineBinaryPath = currentPath.c_str();
 	engineCore = createEngineFn(createInfo);
 
 	return engineCore != nullptr;

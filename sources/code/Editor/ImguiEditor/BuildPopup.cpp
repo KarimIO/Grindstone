@@ -17,6 +17,19 @@ void BuildPopup::StartBuild() {
 		return;
 	}
 
+	auto& engine = Grindstone::Editor::Manager::GetEngineCore();
+	engineBinPath = engine.GetEngineBinaryPath();
+	projectBinPath = engine.GetBinaryPath();
+	targetBinPath = targetPath / "bin";
+	sourceCompiledAssetsPath = engine.GetAssetsPath();
+	targetCompiledAssetsPath = targetPath / "compiledAssets";
+	sourceBuildSettingsPath = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings";
+	targetBuildSettingsPath = targetPath / "buildSettings";
+
+	std::filesystem::create_directories(targetBinPath);
+	std::filesystem::create_directories(targetBuildSettingsPath);
+	std::filesystem::create_directories(targetCompiledAssetsPath);
+
 	CopyBinaries();
 	CopyMetaData();
 	CopyCompiledAssets();
@@ -31,23 +44,21 @@ void BuildPopup::Render() {
 }
 
 void BuildPopup::CopyBinaries() {
-	sourceBuildPath = "";
-	targetBuildPath = targetPath / "bin";
-	std::filesystem::create_directories(targetBuildPath);
 	CopyExecutableFile("Application");
-	CopyDLLFile("EngineCore");
-	CopyDLLFile("fmtd");
-	CopyDLLFile("gl3w");
-	CopyDLLFile("mono-2.0-sgen");
-	CopyDLLFile("OpenAL32");
-	CopyDLLFile("spdlogd");
+	CopyEngineDLLFile("EngineCore");
+	CopyEngineDLLFile("fmtd");
+	CopyEngineDLLFile("gl3w");
+	CopyEngineDLLFile("mono-2.0-sgen");
+	CopyEngineDLLFile("OpenAL32");
+	CopyEngineDLLFile("spdlogd");
 
 	// TODO: Build from assets folders
-	CopyDLLFile("Application-CSharp");
-	CopyDLLFile("GrindstoneCSharpCore");
+	CopyProjectDLLFile("Application-CSharp");
+	CopyEngineDLLFile("GrindstoneCSharpCore");
 
 	// TODO: Build with all necessary graphics dlls
-	CopyDLLFile("PluginGraphicsOpenGL");
+	CopyEngineDLLFile("PluginGraphicsOpenGL");
+	CopyEngineDLLFile("PluginGraphicsVulkan");
 
 	CopyPlugins();
 }
@@ -65,43 +76,47 @@ void BuildPopup::CopyPlugins() {
 		if (end == std::string::npos) {
 			pluginName = fileContents.substr(start);
 			if (!pluginName.empty()) {
-				CopyDLLFile(pluginName);
+				CopyEngineDLLFile(pluginName);
 			}
 
 			break;
 		}
 
 		pluginName = fileContents.substr(start, end - start);
-		CopyDLLFile(pluginName.c_str());
+		CopyEngineDLLFile(pluginName.c_str());
 		start = end + 1;
 	}
 }
 
 void BuildPopup::CopyMetaData() {
-	sourceBuildPath = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings";
-	targetBuildPath = targetPath / "buildSettings";
-	std::filesystem::create_directories(targetBuildPath);
-
-	CopyBuildFile("pluginsManifest.txt");
-	CopyBuildFile("scenesManifest.txt");
+	CopyFile(sourceBuildSettingsPath, targetBuildSettingsPath, "pluginsManifest.txt");
+	CopyFile(sourceBuildSettingsPath, targetBuildSettingsPath, "scenesManifest.txt");
 }
 
-void BuildPopup::CopyBuildFile(std::string filename) {
-	std::filesystem::path src = sourceBuildPath / filename;
+void BuildPopup::CopyFile(std::filesystem::path srcBase, std::filesystem::path dstBase, const char* file) {
+	std::filesystem::path src = srcBase / file;
+	std::filesystem::path dst = dstBase / file;
+
 	if (!std::filesystem::exists(src)) {
 		return;
 	}
 
-	std::filesystem::path dst = targetBuildPath / filename;
 	std::filesystem::copy(src, dst, std::filesystem::copy_options::update_existing);
 }
 
 void BuildPopup::CopyExecutableFile(std::string filename) {
-	CopyBuildFile(filename + ".exe");
+	std::string filenameWithExtension = filename + ".exe";
+	CopyFile(engineBinPath, targetBinPath, filenameWithExtension.c_str());
 }
 
-void BuildPopup::CopyDLLFile(std::string filename) {
-	CopyBuildFile(filename + ".dll");
+void BuildPopup::CopyEngineDLLFile(std::string filename) {
+	std::string filenameWithExtension = filename + ".dll";
+	CopyFile(engineBinPath, targetBinPath, filenameWithExtension.c_str());
+}
+
+void BuildPopup::CopyProjectDLLFile(std::string filename) {
+	std::string filenameWithExtension = filename + ".dll";
+	CopyFile(projectBinPath, targetBinPath, filenameWithExtension.c_str());
 }
 
 void BuildPopup::CopyCompiledAssets() {

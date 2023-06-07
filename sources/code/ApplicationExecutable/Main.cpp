@@ -44,6 +44,8 @@ int main(int argc, char** argv) {
 	createInfo.shouldLoadSceneFromDefaults = true;
 	createInfo.scenePath = "";
 	createInfo.projectPath = projectPath.c_str();
+	std::string currentPath = (std::filesystem::path(projectPath) / "bin").string();
+	createInfo.engineBinaryPath = currentPath.c_str();
 	EngineCore* engineCore = createEngineFn(createInfo);
 	if (engineCore) {
 		engineCore->Run();
