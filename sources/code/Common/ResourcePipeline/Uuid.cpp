@@ -1,12 +1,6 @@
 #include "Uuid.hpp"
 
-#ifdef _WIN32
-#include <Rpc.h>
-#else
-#include <uuid/uuid.h>
-#endif
-
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <Rpc.h>
 
 Grindstone::Uuid::Uuid() {
@@ -19,13 +13,15 @@ void Grindstone::Uuid::FromString(std::string str) {
 
 std::string Grindstone::Uuid::ToString() {
 	unsigned char* uuidCstr;
-	UuidToString((UUID*)&uuid, &uuidCstr );
+	UuidToString((UUID*)&uuid, &uuidCstr);
 	std::string uuidStr( (char*) uuidCstr );
 	RpcStringFreeA ( &uuidCstr );
 
 	return uuidStr;
 }
 #else
+#include <uuid/uuid.h>
+
 Grindstone::Uuid::Uuid() {
 	uuid_generate_random((uuid_t)uuid);
 }
@@ -33,7 +29,6 @@ Grindstone::Uuid::Uuid() {
 void Grindstone::Uuid::FromString(std::string str) {
 	uuint_t uuid;
 	uuid_parse(str.c_str(), uuid);
-	return uuid;
 }
 
 std::string Grindstone::Uuid::ToString() {
