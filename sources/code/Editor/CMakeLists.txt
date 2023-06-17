@@ -95,7 +95,6 @@ find_package(spirv_cross_c CONFIG REQUIRED)
 find_package(SPIRV-Tools-opt CONFIG REQUIRED)
 find_package(SPIRV-Tools CONFIG REQUIRED)
 add_library(SPIRV-Tools ALIAS SPIRV-Tools-static)
-find_package(unofficial-shaderc_util CONFIG REQUIRED)
 find_package(unofficial-shaderc CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 
@@ -113,7 +112,7 @@ target_link_libraries(
 	fmt::fmt
 	spirv-cross-c spirv-cross-core spirv-cross-cpp spirv-cross-glsl spirv-cross-reflect
 	glslang::SPIRV glslang::HLSL glslang::glslang glslang::OGLCompiler
-	unofficial::shaderc::shaderc unofficial::shaderc_util::shaderc_util
+	unofficial::shaderc::shaderc
 	SPIRV-Tools-opt SPIRV-Tools-static
 	spirv-cross-reflect
 	assimp::assimp
