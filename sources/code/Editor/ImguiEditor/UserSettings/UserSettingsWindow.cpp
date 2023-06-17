@@ -6,6 +6,7 @@ using namespace Grindstone::Editor::ImguiEditor::Settings;
 UserSettingsWindow::UserSettingsWindow() {
 	settingsTitle = "User Settings";
 	pages.push_back(new CodeTools());
+	OpenPage(UserSettingsPage::CodeTools);
 }
 
 void UserSettingsWindow::OpenPage(UserSettingsPage preferencesPage) {
