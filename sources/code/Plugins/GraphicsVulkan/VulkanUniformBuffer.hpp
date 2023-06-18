@@ -11,8 +11,10 @@ namespace Grindstone {
 			virtual ~VulkanUniformBufferBinding();
 		public:
 			VkDescriptorSetLayout GetDescriptorSetLayout();
+			uint32_t GetBinding();
 		private:
 			VkDescriptorSetLayout descriptorSetLayout = nullptr;
+			uint32_t binding = -1;
 		};
 
 		class VulkanUniformBuffer : public UniformBuffer {

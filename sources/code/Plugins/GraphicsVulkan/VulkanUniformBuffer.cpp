@@ -6,7 +6,7 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		VulkanUniformBufferBinding::VulkanUniformBufferBinding(UniformBufferBinding::CreateInfo& createInfo) {
 			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-			uboLayoutBinding.binding = 0;
+			uboLayoutBinding.binding = createInfo.binding;
 			uboLayoutBinding.descriptorCount = 1;
 			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			uboLayoutBinding.pImmutableSamplers = nullptr;
@@ -16,6 +16,8 @@ namespace Grindstone {
 			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 			layoutInfo.bindingCount = 1;
 			layoutInfo.pBindings = &uboLayoutBinding;
+
+			binding = createInfo.binding;
 
 			if (vkCreateDescriptorSetLayout(VulkanCore::Get().GetDevice(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create descriptor set layout!");
@@ -30,6 +32,10 @@ namespace Grindstone {
 			return descriptorSetLayout;
 		}
 
+		uint32_t VulkanUniformBufferBinding::GetBinding() {
+			return binding;
+		}
+
 
 		//==========================
 
@@ -37,8 +43,9 @@ namespace Grindstone {
 		VulkanUniformBuffer::VulkanUniformBuffer(UniformBuffer::CreateInfo& createInfo) {
 			size = createInfo.size;
 			CreateBuffer(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, buffer, memory);
-			
-			VkDescriptorSetLayout layouts = static_cast<VulkanUniformBufferBinding*>(createInfo.binding)->GetDescriptorSetLayout();
+
+			auto binding = static_cast<VulkanUniformBufferBinding*>(createInfo.binding);
+			VkDescriptorSetLayout layouts = binding->GetDescriptorSetLayout();
 
 			VkDescriptorSetAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -58,7 +65,7 @@ namespace Grindstone {
 			VkWriteDescriptorSet descriptorWrites = {};
 			descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorWrites.dstSet = descriptorSet;
-			descriptorWrites.dstBinding = 0;
+			descriptorWrites.dstBinding = binding->GetBinding();
 			descriptorWrites.dstArrayElement = 0;
 			descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			descriptorWrites.descriptorCount = 1;
