@@ -43,6 +43,7 @@ void CSharpManager::Initialize(EngineCore* engineCore) {
 	);
 
 	scriptDomain = mono_jit_init_version("grindstone_mono_domain", "v4.0.30319");
+	mono_domain_set(scriptDomain, false);
 
 	auto coreDllPath = (engineCore->GetEngineBinaryPath() / "GrindstoneCSharpCore.dll").string();
 	LoadAssembly(coreDllPath.c_str(), grindsoneCoreDll);
@@ -237,10 +238,15 @@ void CSharpManager::CallRemoveComponent(SceneManagement::Scene* scene, entt::ent
 
 void CSharpManager::Reload() {
 	mono_image_close(grindsoneCoreDll.image);
-	mono_assembly_close(grindsoneCoreDll.assembly);
 
-	mono_domain_set(mono_get_root_domain(), false);
-	mono_domain_unload(scriptDomain);
+	MonoDomain* domainToUnload = mono_domain_get();
+	if (domainToUnload && domainToUnload != mono_get_root_domain())
+	{
+		mono_domain_set(mono_get_root_domain(), false);
+		mono_domain_unload(domainToUnload);
+	}
+
+	mono_assembly_close(grindsoneCoreDll.assembly);
 
 	auto coreDllPath = (engineCore->GetEngineBinaryPath() / "GrindstoneCSharpCore.dll").string();
 	LoadAssembly(coreDllPath.c_str(), grindsoneCoreDll);

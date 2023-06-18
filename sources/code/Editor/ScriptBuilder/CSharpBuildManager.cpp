@@ -68,34 +68,32 @@ std::string GetMsBuildPath() {
 	return Grindstone::Utils::LoadFileText(settingsPath.c_str());
 }
 
-DWORD __stdcall ReadDataFromExtProgram(void* argh) {
+// Multithreaded: DWORD __stdcall ReadDataFromExtProgram(void* argh) {
+DWORD ReadDataFromExtProgram() {
 	constexpr int BUFSIZE = 4096;
 
-	DWORD dwRead;
 	CHAR chBuf[BUFSIZE];
 	memset(chBuf, 0, BUFSIZE);
 	BOOL bSuccess = FALSE;
 
+	CloseHandle(g_hChildStd_OUT_Wr);
 	Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Info, "Building...", chBuf);
 
 	for (;;)
 	{
-		bSuccess = ReadFile(g_hChildStd_OUT_Rd, chBuf, BUFSIZE, &dwRead, NULL);
-		if (!bSuccess || dwRead == 0) continue;
-
-		// Log chBuf
-		Grindstone::LogSeverity severity = Grindstone::LogSeverity::Info;
-		if (strstr(chBuf, "error")) {
-			severity = Grindstone::LogSeverity::Error;
+		DWORD bytesAvail = 0;
+		if (!PeekNamedPipe(g_hChildStd_OUT_Rd, NULL, 0, NULL, &bytesAvail, NULL)) {
+			break;
 		}
-
-		if (strstr(chBuf, "warn")) {
-			severity = Grindstone::LogSeverity::Warning;
+		if (bytesAvail) {
+			CHAR buf[BUFSIZE];
+			DWORD n;
+			BOOL success = ReadFile(g_hChildStd_OUT_Rd, buf, BUFSIZE, &n, NULL);
+			if (!success || n == 0) {
+				Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Error, "Failed to call ReadFile");
+			}
+			Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Info, std::string(buf, buf + n));
 		}
-
-		Grindstone::Editor::Manager::Print(severity, "{}", chBuf);
-
-		if (!bSuccess) break;
 	}
 
 	Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Info, "Done building.", chBuf);
@@ -134,7 +132,8 @@ bool CreateChildProcess() {
 	startInfo.dwFlags |= STARTF_USESTDHANDLES;
 
 	if (CreateProcess(NULL, (TCHAR*)command.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &startInfo, &processInfo)) {
-		CreateThread(0, 0, ReadDataFromExtProgram, NULL, 0, NULL);
+		// Multithreaded: CreateThread(0, 0, ReadDataFromExtProgram, NULL, 0, NULL);
+		ReadDataFromExtProgram();
 		return true;
 	}
 
