@@ -76,7 +76,6 @@ void FileManager::CreateInitialFileStructure(Directory& directory, std::filesyst
 			std::string extension = filePath.extension().string();
 			if (extension != ".meta") {
 				if (extension == ".cs") {
-
 					auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
 					csharpBuildManager.AddFileInitial(filePath);
 				}
@@ -208,6 +207,10 @@ void FileManager::HandleModifyPath(std::filesystem::directory_entry directoryEnt
 	if (directoryEntry.is_directory()) {
 		HandleModifyFolder(directoryEntry);
 	}
+	else if (directoryEntry.path().extension() == ".cs") {
+		auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
+		csharpBuildManager.OnFileModified(directoryEntry);
+	}
 	else if (directoryEntry.path().extension() == ".meta") {
 		HandleModifyMetaFile(directoryEntry);
 	}
@@ -230,6 +233,10 @@ void FileManager::HandleModifyFile(std::filesystem::directory_entry filePath) {
 void FileManager::HandleMovePath(std::filesystem::directory_entry directoryEntry, std::string oldFilename) {
 	if (directoryEntry.is_directory()) {
 		HandleMoveFolder(directoryEntry, oldFilename);
+	}
+	else if (directoryEntry.path().extension() == ".cs") {
+		auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
+		csharpBuildManager.OnFileMoved(directoryEntry, oldFilename);
 	}
 	else if (directoryEntry.path().extension() == ".meta") {
 		HandleMoveMetaFile(directoryEntry, oldFilename);
@@ -296,6 +303,11 @@ void FileManager::HandleDeleteFile(std::filesystem::directory_entry fileDirector
 	RemoveFileFromManager(fileDirectoryEntry);
 
 	std::filesystem::path path = fileDirectoryEntry.path();
+	if (path.extension() == ".cs") {
+		auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
+		csharpBuildManager.OnFileDeleted(path);
+	}
+
 	std::string metaFilePath = path.string() + ".meta";
 	if (std::filesystem::exists(metaFilePath)) {
 		std::filesystem::remove(metaFilePath);

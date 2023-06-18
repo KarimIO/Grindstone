@@ -28,6 +28,7 @@ namespace Grindstone {
 
 				static CSharpManager& GetInstance();
 				virtual void Initialize(EngineCore* engineCore);
+				virtual void CreateDomain();
 				virtual void LoadAssembly(const char* path, AssemblyData& outAssemblyData);
 				virtual void LoadAssemblyIntoMap(const char* path);
 				virtual void SetupComponent(ECS::Entity& entity, ScriptComponent& component);
