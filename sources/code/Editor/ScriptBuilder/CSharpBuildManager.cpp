@@ -27,8 +27,8 @@ void CSharpBuildManager::OnFileAdded(const std::filesystem::path& path) {
 }
 
 void CSharpBuildManager::OnFileMoved(
-	const std::filesystem::path& originalPath,
-	const std::filesystem::path& updatedPath
+	const std::filesystem::path& updatedPath,
+	const std::filesystem::path& originalPath
 ) {
 	for (int i = 0; i < files.size(); ++i) {
 		auto& file = files[i];
