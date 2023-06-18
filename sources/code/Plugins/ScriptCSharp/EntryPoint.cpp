@@ -51,5 +51,7 @@ extern "C" {
 	}
 
 	CSHARP_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
+		auto& manager = CSharpManager::GetInstance();
+		manager.Cleanup();
 	}
 }
