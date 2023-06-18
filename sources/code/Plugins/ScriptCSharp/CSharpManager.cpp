@@ -42,10 +42,12 @@ void CSharpManager::Initialize(EngineCore* engineCore) {
 		"C:\\Program Files\\Mono\\etc"
 	);
 
+	rootDomain = mono_jit_init("grindstone_mono_domain");
+
 	CreateDomain();
 
 	auto coreDllPath = (engineCore->GetEngineBinaryPath() / "GrindstoneCSharpCore.dll").string();
-	LoadAssembly(coreDllPath.c_str(), grindsoneCoreDll);
+	LoadAssembly(coreDllPath.c_str(), grindstoneCoreDll);
 
 	auto dllPath = (engineCore->GetBinaryPath() / "Application-CSharp.dll").string();
 	LoadAssemblyIntoMap(dllPath.c_str());
@@ -53,9 +55,19 @@ void CSharpManager::Initialize(EngineCore* engineCore) {
 	mono_thread_set_main(mono_thread_current());
 }
 
+void CSharpManager::Cleanup() {
+	mono_domain_set(mono_get_root_domain(), false);
+
+	mono_domain_unload(scriptDomain);
+	scriptDomain = nullptr;
+
+	mono_jit_cleanup(rootDomain);
+	rootDomain = nullptr;
+}
+
 void CSharpManager::CreateDomain() {
-	scriptDomain = mono_jit_init_version("grindstone_mono_domain", "v4.0.30319");
-	mono_domain_set(scriptDomain, false);
+	scriptDomain = mono_domain_create_appdomain("grindstone_mono_domain", nullptr);
+	mono_domain_set(scriptDomain, true);
 }
 
 void CSharpManager::LoadAssembly(const char* path, AssemblyData& outAssemblyData) {
@@ -207,7 +219,7 @@ void CSharpManager::RegisterComponents() {
 
 void CSharpManager::RegisterComponent(std::string& componentName, ECS::ComponentFunctions& fns) {
 	std::string csharpClass = "Grindstone." + componentName + "Component";
-	MonoImage* image = grindsoneCoreDll.image;
+	MonoImage* image = grindstoneCoreDll.image;
 	MonoType* managedType = mono_reflection_type_from_name((char*)csharpClass.c_str(), image);
 	if (managedType == nullptr) {
 		return;
@@ -241,19 +253,13 @@ void CSharpManager::CallRemoveComponent(SceneManagement::Scene* scene, entt::ent
 }
 
 void CSharpManager::Reload() {
-	mono_image_close(grindsoneCoreDll.image);
-
-	MonoDomain* domainToUnload = mono_domain_get();
-	if (domainToUnload && domainToUnload != mono_get_root_domain())
-	{
-		mono_domain_set(mono_get_root_domain(), false);
-		mono_domain_unload(domainToUnload);
-	}
+	mono_domain_set(rootDomain, false);
+	mono_domain_unload(scriptDomain);
 
 	CreateDomain();
 
 	auto coreDllPath = (engineCore->GetEngineBinaryPath() / "GrindstoneCSharpCore.dll").string();
-	LoadAssembly(coreDllPath.c_str(), grindsoneCoreDll);
+	LoadAssembly(coreDllPath.c_str(), grindstoneCoreDll);
 
 	auto dllPath = (engineCore->GetBinaryPath() / "Application-CSharp.dll").string();
 	assemblies.clear();
