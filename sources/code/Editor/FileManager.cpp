@@ -1,5 +1,5 @@
 #include <filesystem>
-#include <efsw/efsw.hpp>
+#include <efsw/efsw.h>
 #include "FileManager.hpp"
 #include "EditorManager.hpp"
 #include "Common/Logging.hpp"
@@ -9,50 +9,55 @@
 using namespace Grindstone;
 using namespace Grindstone::Editor;
 
-class UpdateListener : public efsw::FileWatchListener {
-private:
-	FileManager* fileManager = nullptr;
-public:
-	UpdateListener(FileManager* fileManager) : fileManager(fileManager) {}
-
-	void handleFileAction(efsw::WatchID watchid, const std::string& dir, const std::string& filename, efsw::Action action, std::string oldFilename = "") override {
-		std::filesystem::path path = std::filesystem::path(dir) / filename;
-		std::filesystem::directory_entry entry = std::filesystem::directory_entry(path);
-		
-		switch (action) {
-		case efsw::Actions::Add:
-			if (fileManager) {
-				fileManager->HandleAddPath(entry);
-			}
-			break;
-		case efsw::Actions::Delete:
-			if (fileManager) {
-				fileManager->HandleDeletePath(entry);
-			}
-			break;
-		case efsw::Actions::Modified:
-			if (fileManager) {
-				fileManager->HandleModifyPath(entry);
-			}
-			break;
-		case efsw::Actions::Moved:
-			if (fileManager) {
-				fileManager->HandleMovePath(entry, oldFilename);
-			}
-			break;
-		default:
-			Editor::Manager::Print(LogSeverity::Info, "Invalid filesystem event!");
-		}
+void FileWatcherCallback(
+	efsw_watcher watcher,
+	efsw_watchid watchid,
+	const char* dir,
+	const char* filename,
+	enum efsw_action action,
+	const char* oldFilename,
+	void* param
+) {
+	if (param == nullptr) {
+		return;
 	}
-};
+
+	FileManager* fileManager = static_cast<FileManager*>(param);
+
+	std::filesystem::path path = std::filesystem::path(dir) / filename;
+	std::filesystem::directory_entry entry = std::filesystem::directory_entry(path);
+		
+	switch (action) {
+	case EFSW_ADD:
+		fileManager->HandleAddPath(entry);
+		break;
+	case EFSW_DELETE:
+		fileManager->HandleDeletePath(entry);
+		break;
+	case EFSW_MODIFIED:
+		fileManager->HandleModifyPath(entry);
+		break;
+	case EFSW_MOVED:
+		fileManager->HandleMovePath(entry, oldFilename);
+		break;
+	default:
+		Editor::Manager::Print(LogSeverity::Info, "Invalid filesystem event!");
+	}
+}
 
 void FileManager::Initialize(std::filesystem::path projectPath) {
 	std::filesystem::create_directories(projectPath);
 
-	efsw::FileWatcher* fileWatcher = new efsw::FileWatcher();
-	UpdateListener* listener = new UpdateListener(this);
-	efsw::WatchID watchID = fileWatcher->addWatch(projectPath.string().c_str(), listener, true);
-	fileWatcher->watch();
+	efsw_watcher watcher = {};
+	watcher = efsw_create(1);
+	efsw_watchid watchID = efsw_addwatch(watcher, projectPath.string().c_str(), FileWatcherCallback, 1, this);
+
+	if (watchID < 0) {
+		Grindstone::Editor::Manager::Print(LogSeverity::Error, "Failed to watch path: {}", efsw_getlasterror());
+	}
+	else {
+		efsw_watch(watcher);
+	}
 
 	rootDirectory.path = std::filesystem::directory_entry(projectPath);
 	rootDirectory.parentDirectory = nullptr;
@@ -191,9 +196,15 @@ void FileManager::HandleAddFolder(std::filesystem::directory_entry folderPath) {
 }
 
 void FileManager::HandleAddFile(std::filesystem::directory_entry filePath) {
+
 	Directory* entry = GetFolderForPath(filePath);
 	entry->files.emplace_back(new File(filePath));
 	UpdateCompiledFileIfNecessary(filePath);
+
+	if (filePath.path().extension() == ".cs") {
+		auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
+		csharpBuildManager.OnFileAdded(filePath);
+	}
 }
 
 void FileManager::HandleAddMetaFile(std::filesystem::directory_entry fileDirectoryEntry) {
@@ -206,10 +217,6 @@ void FileManager::HandleAddMetaFile(std::filesystem::directory_entry fileDirecto
 void FileManager::HandleModifyPath(std::filesystem::directory_entry directoryEntry) {
 	if (directoryEntry.is_directory()) {
 		HandleModifyFolder(directoryEntry);
-	}
-	else if (directoryEntry.path().extension() == ".cs") {
-		auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
-		csharpBuildManager.OnFileModified(directoryEntry);
 	}
 	else if (directoryEntry.path().extension() == ".meta") {
 		HandleModifyMetaFile(directoryEntry);
@@ -227,16 +234,17 @@ void FileManager::HandleModifyMetaFile(std::filesystem::directory_entry fileDire
 }
 
 void FileManager::HandleModifyFile(std::filesystem::directory_entry filePath) {
+	if (filePath.path().extension() == ".cs") {
+		auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
+		csharpBuildManager.OnFileModified(filePath);
+	}
+
 	UpdateCompiledFileIfNecessary(filePath);
 }
 
 void FileManager::HandleMovePath(std::filesystem::directory_entry directoryEntry, std::string oldFilename) {
 	if (directoryEntry.is_directory()) {
 		HandleMoveFolder(directoryEntry, oldFilename);
-	}
-	else if (directoryEntry.path().extension() == ".cs") {
-		auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
-		csharpBuildManager.OnFileMoved(directoryEntry, oldFilename);
 	}
 	else if (directoryEntry.path().extension() == ".meta") {
 		HandleMoveMetaFile(directoryEntry, oldFilename);
@@ -263,6 +271,11 @@ void FileManager::HandleMoveFile(std::filesystem::directory_entry filePath, std:
 
 	Directory* entry = GetFolderForPath(filePath);
 	entry->files.emplace_back(new File(filePath));
+
+	if (filePath.path().extension() == ".cs") {
+		auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
+		csharpBuildManager.OnFileMoved(filePath, oldFilename);
+	}
 
 	std::string metaFilePath = filePath.path().string() + ".meta";
 	std::string oldMetaFilePath = oldFilename + ".meta";

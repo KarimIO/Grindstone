@@ -42,7 +42,9 @@ namespace Grindstone {
 				void CallCreateComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType);
 				void CallHasComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoTypes);
 				void CallRemoveComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType);
-				void Reload();
+				void QueueReload();
+				void PerformReload();
+				void EditorUpdate(entt::registry& registry);
 			private:
 				void SetupEntityDataInComponent(ECS::Entity& entity, ScriptComponent& component);
 				void CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset);
@@ -59,6 +61,7 @@ namespace Grindstone {
 				EngineCore *engineCore = nullptr;
 				std::map<std::string, AssemblyData> assemblies;
 				AssemblyData grindstoneCoreDll;
+				bool isReloadQueued = false;
 
 				std::map<MonoType*, ECS::CreateComponentFn> createComponentFuncs;
 				std::map<MonoType*, ECS::TryGetComponentFn> tryGetComponentFuncs;
