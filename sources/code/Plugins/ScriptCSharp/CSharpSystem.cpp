@@ -7,5 +7,5 @@ void CSharp::UpdateSystem(entt::registry& registry) {
 }
 
 void CSharp::UpdateEditorSystem(entt::registry& registry) {
-	CSharpManager::GetInstance().CallEditorUpdateInAllComponents(registry);
+	CSharpManager::GetInstance().EditorUpdate(registry);
 }

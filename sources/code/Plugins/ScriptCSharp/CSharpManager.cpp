@@ -53,6 +53,7 @@ void CSharpManager::Initialize(EngineCore* engineCore) {
 	LoadAssemblyIntoMap(dllPath.c_str());
 
 	mono_thread_set_main(mono_thread_current());
+	RegisterComponents();
 }
 
 void CSharpManager::Cleanup() {
@@ -133,6 +134,15 @@ void CSharpManager::SetupComponent(ECS::Entity& entity, ScriptComponent& compone
 
 	CallConstructorInComponent(component);
 	CallAttachComponentInComponent(component);
+}
+
+void CSharpManager::EditorUpdate(entt::registry& registry) {
+	if (isReloadQueued) {
+		PerformReload();
+		return;
+	}
+
+	CallEditorUpdateInAllComponents(registry);
 }
 
 void CSharpManager::SetupEntityDataInComponent(ECS::Entity& entity, ScriptComponent& component) {
@@ -252,9 +262,14 @@ void CSharpManager::CallRemoveComponent(SceneManagement::Scene* scene, entt::ent
 	}
 }
 
-void CSharpManager::Reload() {
-	mono_domain_set(rootDomain, false);
-	mono_domain_unload(scriptDomain);
+void CSharpManager::QueueReload() {
+	isReloadQueued = true;
+}
+
+void CSharpManager::PerformReload() {
+	engineCore->Print(LogSeverity::Info, "Reloading CSharp Binaries...");
+	mono_domain_set(mono_get_root_domain(), false);
+	// mono_domain_unload(scriptDomain);
 
 	CreateDomain();
 
@@ -264,4 +279,7 @@ void CSharpManager::Reload() {
 	auto dllPath = (engineCore->GetBinaryPath() / "Application-CSharp.dll").string();
 	assemblies.clear();
 	LoadAssemblyIntoMap(dllPath.c_str());
+	RegisterComponents();
+	isReloadQueued = false;
+	engineCore->Print(LogSeverity::Info, "Reloaded CSharp Binaries.");
 }

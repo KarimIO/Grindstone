@@ -34,8 +34,8 @@ extern "C" {
 		CSharpManager::GetInstance().CallRemoveComponent(scene, entityHandle, monoType);
 	}
 
-	void ReloadCsharp() {
-		CSharpManager::GetInstance().Reload();
+	void QueueReloadCsharp() {
+		CSharpManager::GetInstance().QueueReload();
 	}
 
 	CSHARP_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
@@ -45,9 +45,7 @@ extern "C" {
 		pluginInterface->RegisterComponent<ScriptComponent>(SetupCSharpScriptComponent);
 		pluginInterface->RegisterSystem("Scripting::CSharp::Update", UpdateSystem);
 		pluginInterface->systemRegistrar->RegisterEditorSystem("Scripting::CSharp::UpdateEditor", UpdateEditorSystem);
-		pluginInterface->SetReloadCsharpCallback(ReloadCsharp);
-
-		manager.RegisterComponents();
+		pluginInterface->SetReloadCsharpCallback(QueueReloadCsharp);
 	}
 
 	CSHARP_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
