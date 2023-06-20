@@ -97,6 +97,7 @@ find_package(SPIRV-Tools CONFIG REQUIRED)
 add_library(SPIRV-Tools ALIAS SPIRV-Tools-static)
 find_package(unofficial-shaderc CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
+find_package(imguizmo CONFIG REQUIRED)
 
 add_executable(Editor ${EDITOR_HEADERS} ${EDITOR_SOURCES})
 
@@ -117,6 +118,6 @@ target_link_libraries(
 	spirv-cross-reflect
 	assimp::assimp
 	unofficial::gl3w::gl3w glm::glm opengl32
-	imgui::imgui
+	imgui::imgui imguizmo::imguizmo
 	${CMAKE_DL_LIBS}
 )

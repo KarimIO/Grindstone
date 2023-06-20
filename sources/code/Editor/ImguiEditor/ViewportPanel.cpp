@@ -1,4 +1,7 @@
 #include <imgui.h>
+#include <ImGuizmo.h>
+
+#include <glm/gtc/type_ptr.hpp>
 
 #include "Common/Input.hpp"
 #include "EngineCore/CoreComponents/Camera/CameraComponent.hpp"
@@ -8,6 +11,7 @@
 
 #include "../EditorCamera.hpp"
 #include "../EditorManager.hpp"
+#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "ViewportPanel.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
@@ -25,7 +29,7 @@ void ViewportPanel::HandleInput() {
 	ImVec2 viewportPanelPosition = ImVec2(
 		(ImGui::GetWindowContentRegionMin().x + ImGui::GetWindowPos().x),
 		(ImGui::GetWindowContentRegionMin().y + ImGui::GetWindowPos().y)
-	); 
+	);
 	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 	unsigned int viewportCenterX = (unsigned int)(viewportPanelPosition.x + (viewportPanelSize.x / 2.f));
 	unsigned int viewportCenterY = (unsigned int)(viewportPanelPosition.y + (viewportPanelSize.y / 2.f));
@@ -60,6 +64,47 @@ void ViewportPanel::HandleInput() {
 	}
 }
 
+void ViewportPanel::HandleSelection() {
+	Selection& selection = Editor::Manager::GetInstance().GetSelection();
+	if (selection.GetSelectedEntityCount() == 1 && selection.GetSelectedFileCount() == 0) {
+		ImGuizmo::SetOrthographic(false);
+		ImGuizmo::SetDrawlist();
+
+		auto pos = ImGui::GetWindowPos();
+		ImGuizmo::SetRect(pos.x, pos.y, ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
+
+		ECS::Entity selectedEntity = selection.GetSingleSelectedEntity();
+		TransformComponent* transformComponent = nullptr;
+		if (!selectedEntity.TryGetComponent<TransformComponent>(transformComponent)) {
+			return;
+		}
+
+		glm::mat4 viewMatrix = camera->GetViewMatrix();
+		glm::mat4& projectionMatrix = camera->GetProjectionMatrix();
+		glm::mat4 transformMatrix = transformComponent->GetTransformMatrix();
+
+		ImGuizmo::Manipulate(
+			glm::value_ptr(viewMatrix),
+			glm::value_ptr(projectionMatrix),
+			ImGuizmo::TRANSLATE,
+			ImGuizmo::LOCAL,
+			glm::value_ptr(transformMatrix),
+			nullptr,
+			nullptr
+		);
+
+		if (ImGuizmo::IsUsing())
+		{
+			glm::vec3 translation, rotation, scale;
+			ImGuizmo::DecomposeMatrixToComponents(&transformMatrix[0][0], &translation[0], &rotation[0], &scale[0]);
+
+			transformComponent->position = translation;
+			transformComponent->rotation = glm::quat(rotation);
+			transformComponent->scale = scale;
+		}
+	}
+}
+
 void ViewportPanel::RenderCamera() {
 	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 	uint32_t width = std::max((int)viewportPanelSize.x, 1);
@@ -85,6 +130,7 @@ void ViewportPanel::Render() {
 		RenderCamera();
 		HandleInput();
 		DisplayCameraToPanel();
+		HandleSelection();
 
 		ImGui::End();
 		ImGui::PopStyleVar();

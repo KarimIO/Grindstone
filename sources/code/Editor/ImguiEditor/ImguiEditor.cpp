@@ -1,5 +1,6 @@
 #include <iostream>
 #include <imgui.h>
+#include <ImGuizmo.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_win32.h>
 #include <Windows.h>
@@ -72,6 +73,7 @@ void ImguiEditor::Update() {
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
+	ImGuizmo::BeginFrame();
 
 	glViewport(0, 0, 800, 600);
 	glClear(GL_COLOR_BUFFER_BIT);
