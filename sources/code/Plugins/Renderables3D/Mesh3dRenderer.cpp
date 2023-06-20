@@ -74,10 +74,7 @@ void Mesh3dRenderer::RenderSubmesh(ECS::Entity rendererEntity, Mesh3dAsset::Subm
 	auto& registry = rendererEntity.GetScene()->GetEntityRegistry();
 	entt::entity entity = rendererEntity.GetHandle();
 	auto& transformComponent = registry.get<TransformComponent>(entity);
-	glm::mat4 modelMatrix = 
-		glm::translate(transformComponent.position) *
-		glm::toMat4(transformComponent.rotation) *
-		glm::scale(transformComponent.scale);
+	glm::mat4 modelMatrix = transformComponent.GetTransformMatrix();
 	mesh3dBufferObject->UpdateBuffer(&modelMatrix);
 
 	graphicsCore->DrawImmediateIndexed(

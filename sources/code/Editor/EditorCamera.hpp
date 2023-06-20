@@ -22,6 +22,8 @@ namespace Grindstone {
 			void ResizeViewport(uint32_t width, uint32_t height);
 			void UpdateProjectionMatrix();
 			void UpdateViewMatrix();
+			glm::mat4& GetProjectionMatrix();
+			glm::mat4& GetViewMatrix();
 		private:
 			glm::vec3 GetForward();
 			glm::vec3 GetRight();

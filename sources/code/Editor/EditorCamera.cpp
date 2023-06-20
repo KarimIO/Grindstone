@@ -93,7 +93,6 @@ glm::vec3 EditorCamera::GetUp() {
 	return rotation * glm::vec3(0.0f, 1.0f, 0.0f);
 }
 
-
 void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 	if (this->width == width && this->height == height) {
 		return;
@@ -118,3 +117,10 @@ void EditorCamera::UpdateViewMatrix() {
 	view = glm::lookAt(position, target, up);
 }
 
+glm::mat4& EditorCamera::GetProjectionMatrix() {
+	return projection;
+}
+
+glm::mat4& EditorCamera::GetViewMatrix() {
+	return view;
+}

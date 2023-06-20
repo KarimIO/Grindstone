@@ -19,6 +19,7 @@
 				"opengl3-binding"
 			]
 		},
+		"imguizmo",
 		"openal-soft",
 		"opengl",
 		"opengl-registry",

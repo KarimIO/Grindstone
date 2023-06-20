@@ -17,6 +17,7 @@ namespace Grindstone {
 				void RenderCamera();
 				void DisplayCameraToPanel();
 				void HandleInput();
+				void HandleSelection();
 				bool isShowingPanel = true;
 				EditorCamera* camera;
 			};
