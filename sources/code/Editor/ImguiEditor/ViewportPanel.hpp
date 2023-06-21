@@ -15,7 +15,8 @@ namespace Grindstone {
 				void Render();
 			private:
 				void RenderCamera();
-				void DisplayCameraToPanel();
+				void DisplayInGameCamera();
+				void DisplayCameraToPanel(uint64_t textureID);
 				void HandleInput();
 				void HandleSelection();
 				bool isShowingPanel = true;

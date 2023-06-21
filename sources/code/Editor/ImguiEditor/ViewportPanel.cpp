@@ -5,6 +5,7 @@
 
 #include "Common/Input.hpp"
 #include "EngineCore/CoreComponents/Camera/CameraComponent.hpp"
+#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "Common/Window/WindowManager.hpp"
@@ -133,8 +134,7 @@ void ViewportPanel::RenderCamera() {
 	camera->Render();
 }
 
-void ViewportPanel::DisplayCameraToPanel() {
-	uint64_t textureID = (uint64_t)camera->GetPrimaryFramebufferAttachment();
+void ViewportPanel::DisplayCameraToPanel(uint64_t textureID) {
 	ImTextureID texturePtr = (ImTextureID)textureID;
 	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 	auto uv0 = ImVec2{ 0, 1 };
@@ -142,15 +142,57 @@ void ViewportPanel::DisplayCameraToPanel() {
 	ImGui::Image(texturePtr, viewportPanelSize, uv0, uv1);
 }
 
+void ViewportPanel::DisplayInGameCamera() {
+	auto sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
+
+	if (sceneManager == nullptr) {
+		return;
+	}
+
+	if (sceneManager->scenes.size() == 0) {
+		return;
+	}
+
+	entt::registry& registry = sceneManager->scenes.begin()->second->GetEntityRegistry();
+	TransformComponent* transformComponent = nullptr;
+	CameraComponent* cameraComponent = nullptr;
+	auto view = registry.view<TransformComponent, CameraComponent>();
+	view.each(
+		[&](
+			TransformComponent& currentTransform,
+			CameraComponent& currentCamera
+		) {
+			transformComponent = &currentTransform;
+			cameraComponent = &currentCamera;
+		}
+	);
+
+	if (cameraComponent == nullptr || cameraComponent->renderer == nullptr) {
+		return;
+	}
+
+	camera->RenderPlayModeCamera(*transformComponent, *cameraComponent);
+
+	uint64_t textureID = (uint64_t)camera->GetPrimaryFramebufferAttachment();
+	DisplayCameraToPanel(textureID);
+}
+
 void ViewportPanel::Render() {
 	if (isShowingPanel) {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
 		ImGui::Begin("Viewport", &isShowingPanel);
 
-		RenderCamera();
-		HandleInput();
-		DisplayCameraToPanel();
-		HandleSelection();
+		PlayMode playMode = Editor::Manager::GetInstance().GetPlayMode();
+		if (playMode == PlayMode::Editor) {
+			HandleInput();
+			RenderCamera();
+			uint64_t textureID = (uint64_t)camera->GetPrimaryFramebufferAttachment();
+			DisplayCameraToPanel(textureID);
+			HandleSelection();
+		}
+		else {
+			DisplayInGameCamera();
+		}
 
 		ImGui::End();
 		ImGui::PopStyleVar();

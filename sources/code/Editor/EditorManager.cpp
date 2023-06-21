@@ -65,10 +65,26 @@ bool Manager::SetupImguiEditor() {
 
 void Manager::Run() {
 	while (!shouldClose) {
-		engineCore->RunEditorLoopIteration();
+		switch (playMode) {
+		case PlayMode::Editor:
+			engineCore->RunEditorLoopIteration();
+			break;
+		case PlayMode::Play:
+			engineCore->RunLoopIteration();
+			break;
+		}
+
 		imguiEditor->Update();
 		engineCore->UpdateWindows();
 	}
+}
+
+void Manager::SetPlayMode(PlayMode newPlayMode) {
+	playMode = newPlayMode;
+}
+
+PlayMode Manager::GetPlayMode() {
+	return playMode;
 }
 
 std::filesystem::path Manager::GetProjectPath() {
