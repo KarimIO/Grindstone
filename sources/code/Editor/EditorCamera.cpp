@@ -5,6 +5,8 @@
 #include "Common/Graphics/Framebuffer.hpp"
 #include "Common/Graphics/Core.hpp"
 #include "EngineCore/Rendering/BaseRenderer.hpp"
+#include "EngineCore/CoreComponents/Camera/CameraComponent.hpp"
+#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
 using namespace Grindstone::Editor;
 using namespace Grindstone;
@@ -43,6 +45,41 @@ void EditorCamera::Render() {
 		projection,
 		view,
 		position,
+		framebuffer
+	);
+
+	framebuffer->Unbind();
+}
+
+void EditorCamera::RenderPlayModeCamera(TransformComponent& transform, CameraComponent& camera) {
+	EngineCore& engineCore = Editor::Manager::GetInstance().GetEngineCore();
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	auto sceneManager = engineCore.GetSceneManager();
+	auto scene = sceneManager->scenes.begin()->second;
+	auto& registry = scene->GetEntityRegistry();
+
+	camera.aspectRatio = static_cast<float>(width) / height;
+	camera.renderer->Resize(width, height);
+
+	glm::vec3 pos = transform.position;
+	const auto viewMatrix = glm::lookAt(
+		pos,
+		pos + transform.GetForward(),
+		transform.GetUp()
+	);
+
+	const auto projectionMatrix = glm::perspective(
+		camera.fieldOfView,
+		camera.aspectRatio,
+		camera.nearPlaneDistance,
+		camera.farPlaneDistance
+	);
+
+	renderer->Render(
+		registry,
+		projectionMatrix,
+		viewMatrix,
+		pos,
 		framebuffer
 	);
 

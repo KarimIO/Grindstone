@@ -28,6 +28,12 @@ namespace Grindstone {
 			Scale
 		};
 
+		enum class PlayMode {
+			Editor,
+			Play,
+			Pause
+		};
+
 		class Manager {
 		public:
 			Manager() = default;
@@ -42,6 +48,8 @@ namespace Grindstone {
 			void InitializeQuitCommands();
 			~Manager();
 			void Run();
+			void SetPlayMode(PlayMode newPlayMode);
+			PlayMode GetPlayMode();
 			std::filesystem::path GetProjectPath();
 			std::filesystem::path GetAssetsPath();
 			std::filesystem::path GetCompiledAssetsPath();
@@ -68,6 +76,7 @@ namespace Grindstone {
 			ImguiEditor::ImguiEditor* imguiEditor = nullptr;
 			ScriptBuilder::CSharpBuildManager csharpBuildManager;
 			CommandList commandList;
+			PlayMode playMode;
 			Selection selection;
 			FileManager fileManager;
 			Importers::ImporterManager importerManager;

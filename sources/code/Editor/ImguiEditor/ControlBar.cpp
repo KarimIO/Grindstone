@@ -13,13 +13,17 @@ ControlBar::ControlBar() {
 void ControlBar::Render() {
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollWithMouse;
 	if (ImGui::Begin("ControlBar", nullptr, flags)) {
-		/*
+		Editor::Manager& editorManager = Grindstone::Editor::Manager::GetInstance();
+
+		PlayMode playMode = editorManager.GetPlayMode();
+		bool isPlayMode = playMode == PlayMode::Play;
+		const char* playModeText = isPlayMode ? "Quit Play Mode" : "Enter Play";
 		if (ImGui::Button("Play")) {
+			PlayMode newMode = isPlayMode ? PlayMode::Editor : PlayMode::Play;
+			editorManager.SetPlayMode(newMode);
 		}
 		ImGui::SameLine();
-		*/
 
-		Editor::Manager& editorManager = Grindstone::Editor::Manager::GetInstance();
 		ManipulationMode& manipulationMode = editorManager.manipulationMode;
 		if (ImGui::RadioButton("Translate", manipulationMode == ManipulationMode::Translate)) {
 			manipulationMode = ManipulationMode::Translate;

@@ -6,6 +6,8 @@
 
 namespace Grindstone {
 	class BaseRenderer;
+	struct TransformComponent;
+	struct CameraComponent;
 
 	namespace GraphicsAPI {
 		class Framebuffer;
@@ -17,6 +19,7 @@ namespace Grindstone {
 			EditorCamera();
 			uint32_t GetPrimaryFramebufferAttachment();
 			void Render();
+			void RenderPlayModeCamera(TransformComponent& transform, CameraComponent& camera);
 			void OffsetRotation(float pitch, float yaw);
 			void OffsetPosition(float x, float y, float z);
 			void ResizeViewport(uint32_t width, uint32_t height);
