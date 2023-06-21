@@ -24,12 +24,14 @@ namespace Grindstone {
 			class BuildPopup;
 			class Menubar;
 			class ImguiInput;
+			class ControlBar;
 
 			class ImguiEditor {
 			public:
 				friend Menubar;
 
 				ImguiEditor(EngineCore* engineCore);
+				~ImguiEditor();
 				void Update();
 				void Render();
 				void ShowModelModal();
@@ -53,6 +55,7 @@ namespace Grindstone {
 				SystemPanel* systemPanel = nullptr;
 				StatsPanel* statsPanel = nullptr;
 				BuildPopup* buildPopup = nullptr;
+				ControlBar* controlBar = nullptr;
 				Menubar* menubar = nullptr;
 			};
 		}
