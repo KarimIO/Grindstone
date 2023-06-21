@@ -15,6 +15,17 @@
 #include "ViewportPanel.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
+ImGuizmo::OPERATION ConvertManipulationModeToImGuizmoOperation(Editor::ManipulationMode mode) {
+	switch (mode) {
+	case Editor::ManipulationMode::Rotate:
+		return ImGuizmo::ROTATE;
+	case Editor::ManipulationMode::Scale:
+		return ImGuizmo::SCALE;
+	default:
+		return ImGuizmo::TRANSLATE;
+	}
+}
+
 ViewportPanel::ViewportPanel() {
 	camera = new EditorCamera();
 }
@@ -65,7 +76,8 @@ void ViewportPanel::HandleInput() {
 }
 
 void ViewportPanel::HandleSelection() {
-	Selection& selection = Editor::Manager::GetInstance().GetSelection();
+	auto& editorManager = Editor::Manager::GetInstance();
+	Selection& selection = editorManager.GetSelection();
 	if (selection.GetSelectedEntityCount() == 1 && selection.GetSelectedFileCount() == 0) {
 		ImGuizmo::SetOrthographic(false);
 		ImGuizmo::SetDrawlist();
@@ -79,15 +91,15 @@ void ViewportPanel::HandleSelection() {
 			return;
 		}
 
-		glm::mat4 viewMatrix = camera->GetViewMatrix();
-		glm::mat4& projectionMatrix = camera->GetProjectionMatrix();
 		glm::mat4 transformMatrix = transformComponent->GetTransformMatrix();
+		glm::mat4& viewMatrix = camera->GetViewMatrix();
+		glm::mat4& projectionMatrix = camera->GetProjectionMatrix();
 
 		ImGuizmo::Manipulate(
 			glm::value_ptr(viewMatrix),
 			glm::value_ptr(projectionMatrix),
-			ImGuizmo::TRANSLATE,
-			ImGuizmo::LOCAL,
+			ConvertManipulationModeToImGuizmoOperation(editorManager.manipulationMode),
+			editorManager.isManipulatingInWorldSpace ? ImGuizmo::WORLD : ImGuizmo::LOCAL,
 			glm::value_ptr(transformMatrix),
 			nullptr,
 			nullptr
@@ -96,8 +108,16 @@ void ViewportPanel::HandleSelection() {
 		if (ImGuizmo::IsUsing())
 		{
 			glm::vec3 translation, rotation, scale;
-			ImGuizmo::DecomposeMatrixToComponents(&transformMatrix[0][0], &translation[0], &rotation[0], &scale[0]);
+			ImGuizmo::DecomposeMatrixToComponents(
+				glm::value_ptr(transformMatrix),
+				glm::value_ptr(translation),
+				glm::value_ptr(rotation),
+				glm::value_ptr(scale)
+			);
 
+			rotation *= glm::pi<float>() / 180.0f;
+			glm::vec3 originalEuler = glm::eulerAngles(transformComponent->rotation);
+			glm::vec3 deltaRotation = rotation - originalEuler;
 			transformComponent->position = translation;
 			transformComponent->rotation = glm::quat(rotation);
 			transformComponent->scale = scale;

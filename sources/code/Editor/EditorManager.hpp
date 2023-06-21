@@ -22,6 +22,12 @@ namespace Grindstone {
 
 		class IEditor;
 
+		enum class ManipulationMode {
+			Translate,
+			Rotate,
+			Scale
+		};
+
 		class Manager {
 		public:
 			Manager() = default;
@@ -47,6 +53,8 @@ namespace Grindstone {
 				std::string outStr = fmt::format(fmt, std::forward<Args>(args)...);
 				GetInstance().engineCore->Print(logSeverity, outStr.c_str());
 			}
+			ManipulationMode manipulationMode = ManipulationMode::Translate;
+			bool isManipulatingInWorldSpace = false;
 		private:
 			bool LoadEngine();
 			bool SetupImguiEditor();

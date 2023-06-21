@@ -23,6 +23,7 @@
 #include "ProjectSettings/ProjectSettingsWindow.hpp"
 #include "StatsPanel.hpp"
 #include "BuildPopup.hpp"
+#include "ControlBar.hpp"
 #include "Menubar.hpp"
 #include "ImguiInput.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
@@ -66,7 +67,25 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	statsPanel = new StatsPanel();
 	buildPopup = new BuildPopup();
 	systemPanel = new SystemPanel(engineCore->GetSystemRegistrar());
+	controlBar = new ControlBar();
 	menubar = new Menubar(this);
+}
+
+ImguiEditor::~ImguiEditor() {
+	delete sceneHeirarchyPanel;
+	delete modelConverterModal;
+	delete imageConverterModal;
+	delete inspectorPanel;
+	delete assetBrowserPanel;
+	delete userSettingsWindow;
+	delete projectSettingsWindow;
+	delete viewportPanel;
+	delete consolePanel;
+	delete statsPanel;
+	delete buildPopup;
+	delete systemPanel;
+	delete controlBar;
+	delete menubar;
 }
 
 void ImguiEditor::Update() {
@@ -101,6 +120,7 @@ void ImguiEditor::Render() {
 	buildPopup->Render();
 	userSettingsWindow->Render();
 	projectSettingsWindow->Render();
+	controlBar->Render();
 }
 
 void ImguiEditor::ShowModelModal() {
