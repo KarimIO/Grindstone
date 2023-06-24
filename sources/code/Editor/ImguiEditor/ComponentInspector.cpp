@@ -9,6 +9,7 @@
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "EngineCore/Reflection/TypeDescriptor.hpp"
 #include "EngineCore/Assets/Asset.hpp"
+#include "Plugins/ScriptCSharp/Components/ScriptComponent.hpp"
 // #include "EngineCore/Assets/Mesh3d/Mesh3"
 // #include "EngineCore/Assets/Mesh3d/Mesh3d.hpp"
 #include "Common/Math.hpp"
@@ -20,7 +21,8 @@ namespace Grindstone {
 				ImGui::Text("Entity ID: %u", (uint32_t)entity.GetHandle());
 
 				auto& editorManager = Editor::Manager::GetInstance();
-				ECS::ComponentRegistrar& componentRegistrar = *editorManager.GetEngineCore().GetComponentRegistrar();
+				auto& engineCore = editorManager.GetEngineCore();
+				ECS::ComponentRegistrar& componentRegistrar = *engineCore.GetComponentRegistrar();
 				std::vector<std::string> unusedComponentsItems;
 				std::vector<ECS::ComponentFunctions> unusedComponentsFunctions;
 				for each (auto componentEntry in componentRegistrar) {
@@ -53,13 +55,39 @@ namespace Grindstone {
 				void* componentPtr,
 				ECS::Entity entity
 			) {
-				if (!ImGui::TreeNode(componentTypeName)) {
+				if (!ImGui::TreeNodeEx(componentTypeName, ImGuiTreeNodeFlags_FramePadding)) {
 					return;
 				}
 
-				RenderComponentCategory(componentReflectionData.category, componentPtr, entity);
+				if (strcmp(componentTypeName, "CSharpScript") == 0) {
+					RenderCSharpScript(componentPtr, entity);
+				}
+				else {
+					RenderComponentCategory(componentReflectionData.category, componentPtr, entity);
+				}
 
 				ImGui::TreePop();
+			}
+
+			void ComponentInspector::RenderCSharpScript(
+				void* componentPtr,
+				ECS::Entity entity
+			) {
+				auto component = static_cast<Grindstone::Scripting::CSharp::ScriptComponent*>(componentPtr);
+
+				if (component == nullptr || component->monoClass == nullptr) {
+					return;
+				}
+
+				ImGui::Text("%s", component->monoClass->scriptClassname.c_str());
+				size_t i = 0;
+				for(auto& field : component->monoClass->fields) {
+					float val = 0.0f;
+					field.second.Get((MonoObject*)component->scriptObject, &val);
+					if (ImGui::InputFloat(field.first.c_str(), &val)) {
+						field.second.Set((MonoObject*)component->scriptObject, &val);
+					}
+				}
 			}
 			
 			void ComponentInspector::RenderComponentCategory(
@@ -68,7 +96,7 @@ namespace Grindstone {
 				ECS::Entity entity
 			) {
 				for each (auto subcategory in category.categories) {
-					if (!ImGui::TreeNode(subcategory.name.c_str())) {
+					if (!ImGui::TreeNodeEx(subcategory.name.c_str(), ImGuiTreeNodeFlags_FramePadding)) {
 						return;
 					}
 

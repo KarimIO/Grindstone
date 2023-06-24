@@ -46,6 +46,7 @@ namespace Grindstone {
 				void PerformReload();
 				void EditorUpdate(entt::registry& registry);
 			private:
+				void LoadAssemblyClasses();
 				void SetupEntityDataInComponent(ECS::Entity& entity, ScriptComponent& component);
 				void CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset);
 				void CallConstructorInComponent(ScriptComponent& scriptComponent);
@@ -60,6 +61,7 @@ namespace Grindstone {
 				MonoDomain* scriptDomain = nullptr;
 				EngineCore *engineCore = nullptr;
 				std::map<std::string, AssemblyData> assemblies;
+				std::map<std::string, ScriptClass*> smartComponents;
 				AssemblyData grindstoneCoreDll;
 				bool isReloadQueued = false;
 

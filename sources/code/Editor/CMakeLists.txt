@@ -98,13 +98,19 @@ add_library(SPIRV-Tools ALIAS SPIRV-Tools-static)
 find_package(unofficial-shaderc CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(imguizmo CONFIG REQUIRED)
+set(MONO_PATH CACHE PATH "Mono Path")
 
 add_executable(Editor ${EDITOR_HEADERS} ${EDITOR_SOURCES})
 
 set_property(TARGET Editor PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${BUILD_DIRECTORY})
 
 target_compile_definitions(Editor PUBLIC NOMINMAX)
-target_include_directories(Editor PUBLIC ${CODE_DIR} ${STB_INCLUDE_DIRS} ${FMT_INCLUDE_DIRS})
+target_include_directories(Editor PUBLIC
+	${MONO_PATH}/include/mono-2.0
+	${CODE_DIR}
+	${STB_INCLUDE_DIRS}
+	${FMT_INCLUDE_DIRS}
+)
 
 target_link_libraries(
 	Editor
