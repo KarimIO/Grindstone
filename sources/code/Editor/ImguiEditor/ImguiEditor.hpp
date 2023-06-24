@@ -25,6 +25,7 @@ namespace Grindstone {
 			class Menubar;
 			class ImguiInput;
 			class ControlBar;
+			class StatusBar;
 
 			class ImguiEditor {
 			public:
@@ -40,6 +41,9 @@ namespace Grindstone {
 				void ImportFile(const char* folderPathToImportTo = "");
 			private:
 				void RenderDockspace();
+				void SetupFonts();
+				void SetupStyles();
+				void SetupColors();
 			private:
 				EngineCore* engineCore = nullptr;
 				ImguiInput* input = nullptr;
@@ -56,6 +60,7 @@ namespace Grindstone {
 				StatsPanel* statsPanel = nullptr;
 				BuildPopup* buildPopup = nullptr;
 				ControlBar* controlBar = nullptr;
+				StatusBar* statusBar = nullptr;
 				Menubar* menubar = nullptr;
 			};
 		}

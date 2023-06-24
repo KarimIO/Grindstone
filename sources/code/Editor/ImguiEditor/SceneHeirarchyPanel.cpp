@@ -86,17 +86,18 @@ namespace Grindstone {
 
 				Selection& selection = Editor::Manager::GetInstance().GetSelection();
 				bool isSelected = selection.IsEntitySelected(entity);
+				auto& colors = ImGui::GetStyle().Colors;
 				ImGui::PushStyleColor(
 					ImGuiCol_Button,
-					isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.4f) : ImVec4(1, 1, 1, 0.05f)
+					isSelected ? colors[ImGuiCol_Button] : ImVec4(1, 1, 1, 0.05f)
 				);
 				ImGui::PushStyleColor(
 					ImGuiCol_ButtonHovered,
-					isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.45f) : ImVec4(1, 1, 1, 0.15f)
+					isSelected ? colors[ImGuiCol_ButtonHovered] : ImVec4(1, 1, 1, 0.15f)
 				);
 				ImGui::PushStyleColor(
 					ImGuiCol_ButtonActive,
-					isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.5f) : ImVec4(1, 1, 1, 0.2f)
+					isSelected ? colors[ImGuiCol_ButtonActive] : ImVec4(1, 1, 1, 0.2f)
 				);
 
 				const char* entityTag = GetEntityTag(entity);

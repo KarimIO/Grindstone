@@ -166,13 +166,13 @@ void AssetBrowserPanel::ProcessDirectoryEntryClicks(std::filesystem::directory_e
 
 void AssetBrowserPanel::RenderTopBar() {
 	auto assetTopBar = ImGui::GetID("#assettopbar");
-	ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.3f, 0.6f, 0.9f, 0.1f));
-	ImGui::BeginChildFrame(assetTopBar, ImVec2(0, 25), ImGuiWindowFlags_NoScrollbar);
+	ImGui::PushStyleColor(ImGuiCol_FrameBg, ImGui::GetStyle().Colors[ImGuiCol_FrameBgHovered]);
+	ImGui::BeginChildFrame(assetTopBar, ImVec2(0, 32), ImGuiWindowFlags_NoScrollbar);
+	ImGui::PopStyleColor();
 	float availWidth = ImGui::GetContentRegionAvail().x;
 	ImGui::PushItemWidth(std::min(160.0f, availWidth / 2.0f));
 	ImGui::InputText("Search", &searchText);
 	ImGui::EndChildFrame();
-	ImGui::PopStyleColor();
 }
 
 void AssetBrowserPanel::RenderPathPart(Directory* directory) {
@@ -192,14 +192,16 @@ void AssetBrowserPanel::RenderPathPart(Directory* directory) {
 }
 
 void AssetBrowserPanel::RenderPath() {
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2());
-	ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.3f, 0.6f, 0.9f, 0.05f));
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+	ImGui::PushStyleColor(ImGuiCol_FrameBg, ImGui::GetStyle().Colors[ImGuiCol_FrameBgActive]);
 	auto assetPathPanel = ImGui::GetID("#assetpathpanel");
-	ImGui::BeginChildFrame(assetPathPanel, ImVec2(0, 25), ImGuiWindowFlags_NoScrollbar);
+	ImGui::BeginChildFrame(assetPathPanel, ImVec2(0, 32), ImGuiWindowFlags_NoScrollbar);
+	ImGui::PopStyleVar(1);
+	ImGui::PopStyleColor();
 
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.05f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.1f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered]);
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyle().Colors[ImGuiCol_ButtonActive]);
 	RenderPathPart(currentDirectory->parentDirectory);
 	ImGui::SameLine();
 	std::string finalPart = currentDirectory->path.path().filename().string() + "##PathPart";
@@ -207,8 +209,6 @@ void AssetBrowserPanel::RenderPath() {
 	ImGui::PopStyleColor(3);
 
 	ImGui::EndChildFrame();
-	ImGui::PopStyleColor();
-	ImGui::PopStyleVar();
 }
 
 void AssetBrowserPanel::RenderContextMenuFileTypeSpecificEntries(std::filesystem::directory_entry entry) {
@@ -364,16 +364,12 @@ void AssetBrowserPanel::RenderFolders() {
 		std::string buttonString = filenameString + "##AssetButton";
 
 		bool isSelected = Editor::Manager::GetInstance().GetSelection().IsFileSelected(directoryEntry);
-		ImVec4 mainColor = isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.3f) : ImVec4(0.f, 0.f, 0.f, 0.f);
+		ImVec4 mainColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_Button] : ImVec4(1.f, 1.f, 1.f, 0.f);
+		ImVec4 hoveredColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered] : ImVec4(1.f, 1.f, 1.f, 0.05f);
+		ImVec4 activeColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_ButtonActive] : ImVec4(1.f, 1.f, 1.f, 0.1f);
 		ImGui::PushStyleColor(ImGuiCol_Button, mainColor);
-		ImGui::PushStyleColor(
-			ImGuiCol_ButtonHovered,
-			isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.4f) : ImVec4(1, 1, 1, 0.05f)
-		);
-		ImGui::PushStyleColor(
-			ImGuiCol_ButtonActive,
-			isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.5f) : ImVec4(1, 1, 1, 0.1f)
-		);
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoveredColor);
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, activeColor);
 
 		ImTextureID icon = 0; //GetIcon(directoryEntry);
 		ImGui::PushID(buttonString.c_str());
@@ -408,11 +404,11 @@ void AssetBrowserPanel::RenderFiles() {
 		std::string buttonString = filenameString + "##AssetButton";
 
 		bool isSelected = Editor::Manager::GetInstance().GetSelection().IsFileSelected(file->directoryEntry);
-		ImVec4 mainColor = isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.3f) : ImVec4(0.f, 0.f, 0.f, 0.f);
-		ImVec4 hoverColor = isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.4f) : ImVec4(1, 1, 1, 0.05f);
-		ImVec4 activeColor = isSelected ? ImVec4(0.6f, 0.8f, 1.f, 0.5f) : ImVec4(1, 1, 1, 0.1f);
+		ImVec4 mainColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_Button] : ImVec4(1.f, 1.f, 1.f, 0.f);
+		ImVec4 hoveredColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered] : ImVec4(1.f, 1.f, 1.f, 0.05f);
+		ImVec4 activeColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_ButtonActive] : ImVec4(1.f, 1.f, 1.f, 0.1f);
 		ImGui::PushStyleColor(ImGuiCol_Button, mainColor);
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoverColor);
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoveredColor);
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, activeColor);
 
 		float cursorX = ImGui::GetCursorPosX();
@@ -512,14 +508,14 @@ void AssetBrowserPanel::RenderAssets() {
 		columnCount = 1;
 	}
 
-	auto assetPanel = ImGui::GetID("#assetspanel");
+	auto assetPanel = ImGui::GetID("#assetsPanel");
 	ImGui::BeginChildFrame(assetPanel, ImVec2(0, 0), ImGuiWindowFlags_NoBackground);
 	RenderCurrentDirectoryContextMenu();
 
 	if (currentDirectory->subdirectories.empty() && currentDirectory->files.empty()) {
 		ImGui::Text("This folder is empty.");
 	}
-	else if (ImGui::BeginTable("assetTable", columnCount)) {
+	else if (ImGui::BeginTable("##assetTable", columnCount, ImGuiTableFlags_NoSavedSettings)) {
 		RenderFolders();
 		RenderFiles();
 
@@ -600,7 +596,6 @@ void AssetBrowserPanel::Render() {
 			ImGui::TableNextColumn();
 			RenderPath();
 			RenderAssets();
-
 
 			ImGui::EndTable();
 		}

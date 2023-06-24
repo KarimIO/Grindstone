@@ -3,7 +3,7 @@
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
-			class ControlBar {
+			class StatusBar {
 			public:
 				void Render();
 			};

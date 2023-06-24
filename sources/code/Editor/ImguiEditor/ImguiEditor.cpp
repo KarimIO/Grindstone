@@ -1,8 +1,9 @@
 #include <iostream>
 #include <imgui.h>
-#include <ImGuizmo.h>
+#include <imgui_internal.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_win32.h>
+#include <ImGuizmo.h>
 #include <Windows.h>
 #include <Winuser.h>
 #include "GL/gl3w.h"
@@ -24,6 +25,7 @@
 #include "StatsPanel.hpp"
 #include "BuildPopup.hpp"
 #include "ControlBar.hpp"
+#include "StatusBar.hpp"
 #include "Menubar.hpp"
 #include "ImguiInput.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
@@ -35,9 +37,9 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	// io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-
-	// Setup Dear ImGui style
-	ImGui::StyleColorsDark();
+	SetupFonts();
+	SetupStyles();
+	SetupColors();
 
 	if (gl3wInit()) {
 		Editor::Manager::Print(LogSeverity::Error, "Failed to initialize OpenGL");
@@ -69,6 +71,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	systemPanel = new SystemPanel(engineCore->GetSystemRegistrar());
 	controlBar = new ControlBar();
 	menubar = new Menubar(this);
+	statusBar = new StatusBar();
 }
 
 ImguiEditor::~ImguiEditor() {
@@ -86,6 +89,121 @@ ImguiEditor::~ImguiEditor() {
 	delete systemPanel;
 	delete controlBar;
 	delete menubar;
+	delete statusBar;
+}
+
+void ImguiEditor::SetupFonts() {
+	auto& io = ImGui::GetIO();
+
+	std::filesystem::path fontFolder = engineCore->GetEngineBinaryPath().parent_path() / "engineassets/editor/fonts";
+	std::filesystem::path robotoBoldPath = fontFolder / "OpenSans-Bold.ttf";
+	std::filesystem::path robotoRegularPath = fontFolder / "OpenSans-Regular.ttf";
+
+	float fontSize = 14.0f;
+	io.Fonts->AddFontFromFileTTF(robotoBoldPath.string().c_str(), fontSize);
+	io.FontDefault = io.Fonts->AddFontFromFileTTF(robotoRegularPath.string().c_str(), fontSize);
+}
+
+void ImguiEditor::SetupColors() {
+	ImGui::StyleColorsDark();
+
+	auto& colors = ImGui::GetStyle().Colors;
+
+	// Swatches
+	ImVec4 bgColor = ImVec4(0.1f, 0.11f, 0.12f, 1.00f);
+	ImVec4 highlightColor0 = ImVec4(0.35f, 0.18f, 0.40f, 1.00f);
+	ImVec4 highlightColor1 = ImVec4(0.47f, 0.28f, 0.54f, 1.00f);
+	ImVec4 highlightColor2 = ImVec4(0.56f, 0.36f, 0.64f, 1.00f);
+
+	// Backgrounds
+	colors[ImGuiCol_WindowBg] = bgColor;
+	colors[ImGuiCol_ChildBg] = bgColor;
+	colors[ImGuiCol_PopupBg] = bgColor;
+	colors[ImGuiCol_MenuBarBg] = bgColor;
+
+	// Text
+	colors[ImGuiCol_Text] = ImVec4(0.95f, 0.95f, 0.95f, 1.00f);
+	colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
+	colors[ImGuiCol_TextSelectedBg] = highlightColor0;
+
+	// Border
+	colors[ImGuiCol_Border] = ImVec4(0.2f, 0.24f, 0.26f, 0.50f);
+	colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+
+	// Frame
+	colors[ImGuiCol_FrameBg] = ImVec4(0.08f, 0.09f, 0.1f, 1.00f);
+	colors[ImGuiCol_FrameBgHovered] = ImVec4(0.14f, 0.15f, 0.16f, 1.00f);
+	colors[ImGuiCol_FrameBgActive] = ImVec4(0.22f, 0.23f, 0.24f, 0.39f);
+
+	// Title
+	colors[ImGuiCol_TitleBg] = ImVec4(0.08f, 0.09f, 0.1f, 1.00f);
+	colors[ImGuiCol_TitleBgActive] = colors[ImGuiCol_TitleBg];
+	colors[ImGuiCol_TitleBgCollapsed] = colors[ImGuiCol_TitleBg];
+
+	// Scrollbar
+	colors[ImGuiCol_ScrollbarBg] = ImVec4(0.02f, 0.04f, 0.06f, 0.53f);
+	colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.28f, 0.32f, 0.36f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.40f, 0.42f, 0.44f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.46f, 0.50f, 0.54f, 1.00f);
+
+	// Slider
+	colors[ImGuiCol_SliderGrab] = highlightColor0;
+	colors[ImGuiCol_SliderGrabActive] = highlightColor2;
+
+	// Button
+	colors[ImGuiCol_Button] = highlightColor0;
+	colors[ImGuiCol_ButtonHovered] = highlightColor1;
+	colors[ImGuiCol_ButtonActive] = highlightColor2;
+
+	// Header
+	colors[ImGuiCol_Header] = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
+	colors[ImGuiCol_HeaderHovered] = ImVec4(0.25f, 0.25f, 0.25f, 1.00f);
+	colors[ImGuiCol_HeaderActive] = ImVec4(0.67f, 0.67f, 0.67f, 0.39f);
+
+	// Separator
+	colors[ImGuiCol_Separator] = colors[ImGuiCol_Border];
+	colors[ImGuiCol_SeparatorHovered] = highlightColor0;
+	colors[ImGuiCol_SeparatorActive] = highlightColor2;
+
+	// Resize Grip
+	colors[ImGuiCol_ResizeGrip] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+	colors[ImGuiCol_ResizeGripHovered] = highlightColor0;
+	colors[ImGuiCol_ResizeGripActive] = highlightColor2;
+
+	// Tabs
+	colors[ImGuiCol_Tab] = ImVec4(0.1f, 0.12f, 0.14f, 0.83f);
+	colors[ImGuiCol_TabHovered] = ImVec4(0.33f, 0.34f, 0.36f, 0.83f);
+	colors[ImGuiCol_TabActive] = highlightColor0;
+	colors[ImGuiCol_TabUnfocused] = ImVec4(0.08f, 0.08f, 0.09f, 1.00f);
+	colors[ImGuiCol_TabUnfocusedActive] = bgColor;
+
+	// Docking
+	colors[ImGuiCol_DockingPreview] = ImVec4(0.26f, 0.59f, 0.98f, 0.70f);
+	colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+
+	// Plots
+	colors[ImGuiCol_PlotLines] = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
+	colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
+	colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
+	colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
+
+	// Nav
+	colors[ImGuiCol_NavHighlight] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+	colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
+	colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
+
+	// Misc
+	colors[ImGuiCol_DragDropTarget] = highlightColor0;
+	colors[ImGuiCol_CheckMark] = highlightColor0;
+	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);;
+}
+
+void ImguiEditor::SetupStyles() {
+	auto& style = ImGui::GetStyle();
+	style.FramePadding = ImVec2(5.0f, 5.0f);
+	style.TabRounding = 4.0f;
+	style.GrabRounding = 4.0f;
+	style.FrameRounding = 4.0f;
 }
 
 void ImguiEditor::Update() {
@@ -108,6 +226,7 @@ void ImguiEditor::Update() {
 
 void ImguiEditor::Render() {
 	RenderDockspace();
+	controlBar->Render();
 	modelConverterModal->Render();
 	imageConverterModal->Render();
 	sceneHeirarchyPanel->Render();
@@ -120,7 +239,7 @@ void ImguiEditor::Render() {
 	buildPopup->Render();
 	userSettingsWindow->Render();
 	projectSettingsWindow->Render();
-	controlBar->Render();
+	statusBar->Render();
 }
 
 void ImguiEditor::ShowModelModal() {
