@@ -1,5 +1,4 @@
 #include <iostream>
-#include <Common/Utilities/ModuleLoading.hpp>
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/Events/Dispatcher.hpp"
 #include "EditorManager.hpp"
@@ -55,7 +54,7 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 void Manager::InitializeQuitCommands() {
 	auto dispatcher = engineCore->GetEventDispatcher();
 	dispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&Manager::OnTryQuit, this, std::placeholders::_1));
-	dispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&Manager::OnForceQuit, this, std::placeholders::_1));
+	dispatcher->AddEventListener(Grindstone::Events::EventType::WindowForceQuit, std::bind(&Manager::OnForceQuit, this, std::placeholders::_1));
 }
 
 bool Manager::SetupImguiEditor() {
@@ -104,31 +103,28 @@ std::filesystem::path Grindstone::Editor::Manager::GetEngineBinariesPath() {
 }
 
 bool Manager::OnTryQuit(Grindstone::Events::BaseEvent* ev) {
-	auto castedEv = (Grindstone::Events::WindowTryQuitEvent*)ev;
 	shouldClose = true;
 
 	return false;
 }
 
 bool Manager::OnForceQuit(Grindstone::Events::BaseEvent* ev) {
-	auto castedEv = (Grindstone::Events::WindowTryQuitEvent*)ev;
 	shouldClose = true;
 
-	return false;
+	return true;
 }
 
 using CreateEngineFunction = EngineCore*(EngineCore::CreateInfo&);
 bool Manager::LoadEngine() {
-	Grindstone::Utilities::Modules::Handle handle;
-	handle = Grindstone::Utilities::Modules::Load("EngineCore");
+	engineCoreLibraryHandle = Grindstone::Utilities::Modules::Load("EngineCore");
 
-	if (handle == nullptr) {
+	if (engineCoreLibraryHandle == nullptr) {
 		std::cerr << "Failed to load EngineCore Module.\n";
 		return false;
 	}
 	
 	CreateEngineFunction* createEngineFn =
-		(CreateEngineFunction*)Utilities::Modules::GetFunction(handle, "CreateEngine");
+		(CreateEngineFunction*)Utilities::Modules::GetFunction(engineCoreLibraryHandle, "CreateEngine");
 	if (createEngineFn == nullptr) {
 		std::cerr << "Failed to load CreateEngine in EngineCore Module.\n";
 		return false;
@@ -151,8 +147,8 @@ bool Manager::LoadEngine() {
 }
 
 Manager::~Manager() {
-	/*if (handle) {
-		Grindstone::Utilities::Modules::unload(handle);
-		handle = 0;
-	}*/
+	if (engineCoreLibraryHandle) {
+		Grindstone::Utilities::Modules::Unload(engineCoreLibraryHandle);
+		engineCoreLibraryHandle = 0;
+	}
 }

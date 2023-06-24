@@ -1,7 +1,8 @@
 #pragma once
 
 #include <fmt/format.h>
-#include "Common/Logging.hpp"
+#include <Common/Logging.hpp>
+#include <Common/Utilities/ModuleLoading.hpp>
 
 #include "EngineCore/EngineCore.hpp"
 #include "Commands/CommandList.hpp"
@@ -79,6 +80,7 @@ namespace Grindstone {
 			PlayMode playMode;
 			Selection selection;
 			FileManager fileManager;
+			Grindstone::Utilities::Modules::Handle engineCoreLibraryHandle;
 			Importers::ImporterManager importerManager;
 		};
 	}
