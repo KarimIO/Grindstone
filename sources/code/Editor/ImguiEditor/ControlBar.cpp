@@ -6,19 +6,15 @@ using namespace Grindstone;
 using namespace Grindstone::Editor;
 using namespace Grindstone::Editor::ImguiEditor;
 
-ControlBar::ControlBar() {
-
-}
-
 void ControlBar::Render() {
-	ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollWithMouse;
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 	if (ImGui::Begin("ControlBar", nullptr, flags)) {
 		Editor::Manager& editorManager = Grindstone::Editor::Manager::GetInstance();
 
 		PlayMode playMode = editorManager.GetPlayMode();
 		bool isPlayMode = playMode == PlayMode::Play;
-		const char* playModeText = isPlayMode ? "Quit Play Mode" : "Enter Play";
-		if (ImGui::Button("Play")) {
+		const char* playModeText = isPlayMode ? "Quit Play Mode" : "Enter Play Mode";
+		if (ImGui::Button(playModeText)) {
 			PlayMode newMode = isPlayMode ? PlayMode::Editor : PlayMode::Play;
 			editorManager.SetPlayMode(newMode);
 		}
