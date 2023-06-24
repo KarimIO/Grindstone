@@ -48,7 +48,11 @@ namespace Grindstone {
 			GLint isLinked;
 			glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
 			if (isLinked == GL_FALSE) {
-				printf("Link failed for program: %s", createInfo.shaderName);
+				GLsizei infoLength;
+				glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLength);
+				std::vector<char> programLinkErrorMessage(infoLength + 1);
+				glGetProgramInfoLog(program, infoLength, NULL, programLinkErrorMessage.data());
+				printf("%s\n", programLinkErrorMessage.data());
 			}
 
 			for (size_t i = 0; i < shaderNum; i++) {

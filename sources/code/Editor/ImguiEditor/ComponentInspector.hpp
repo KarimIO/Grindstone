@@ -22,6 +22,7 @@ namespace Grindstone {
 					void* componentPtr,
 					ECS::Entity entity
 				);
+				void RenderCSharpScript(void* componentPtr, ECS::Entity entity);
 				void RenderComponentCategory(
 					Reflection::TypeDescriptor_Struct::Category& category,
 					void* componentPtr,
