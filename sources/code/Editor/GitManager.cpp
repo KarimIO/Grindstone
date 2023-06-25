@@ -1,7 +1,9 @@
 #include <git2/repository.h>
 #include <git2/refs.h>
+#include <git2/graph.h>
 #include <git2/errors.h>
 #include <git2/global.h>
+#include <git2/remote.h>
 #include <git2/branch.h>
 
 #include "GitManager.hpp"
@@ -25,12 +27,12 @@ GitRepoStatus GitManager::GetGitRepoStatus() {
 
 void GitManager::UpdateBranchName() {
 	currentBranchName = "";
-	git_reference *reference = nullptr;
+	git_reference* reference = nullptr;
 	if (git_repository_head(&reference, repo) != 0) {
 		return;
 	}
 
-	const char *branchName = nullptr;
+	const char* branchName = nullptr;
 	if (git_branch_name(&branchName, reference) != 0) {
 		return;
 	}
@@ -55,11 +57,21 @@ void GitManager::UpdateGit() {
 
 	UpdateBranchName();
 	Fetch();
-	repoStatus = GitRepoStatus::RepoFetched;
 }
 
 void GitManager::Fetch() {
+	git_oid local, upstream;
+	git_reference_name_to_id(&local, repo, "refs/heads/master");
+	git_reference_name_to_id(&upstream, repo, "refs/remotes/origin/master");
 
+	size_t ahead, behind;
+	if (git_graph_ahead_behind(&ahead, &behind, repo, &local, &upstream) != 0) {
+		return;
+	}
+
+	aheadCount = static_cast<uint32_t>(ahead);
+	behindCount = static_cast<uint32_t>(behind);
+	repoStatus = GitRepoStatus::RepoFetched;
 }
 
 void GitManager::Pull() {

@@ -47,11 +47,18 @@ void StatusBar::RenderGit() {
 		return;
 	}
 
+	RenderGitWhenLoaded();
+}
+
+void StatusBar::RenderGitWhenLoaded() {
+	GitManager& gitManager = Manager::GetInstance().GetGitManager();
+
 	std::string gitBranchName = gitManager.GetBranchName();
 	uint32_t behindCount = gitManager.GetBehindCount();
 	uint32_t aheadCount = gitManager.GetAheadCount();
 	uint32_t changesCount = gitManager.GetChangesCount();
-	ImGui::Text(gitBranchName.c_str());
-	ImGui::Text("%u/%u", aheadCount, behindCount);
-	ImGui::Text("%u", changesCount);
+
+	ImGui::Text("Ahead: %u / Behind: %u", aheadCount, behindCount);
+	ImGui::Text("Changes: %u", changesCount);
+	ImGui::Text("Branch: %s", gitBranchName.c_str());
 }
