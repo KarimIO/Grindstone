@@ -33,30 +33,25 @@ void StatusBar::RenderGit() {
 	GitRepoStatus gitRepoStatus = gitManager.GetGitRepoStatus();
 
 	if (gitRepoStatus == GitRepoStatus::NeedCheck) {
-		ImGui::Text("Checking for git repository...");
+		ImGui::Text("Checking for git repo...");
 		return;
 	}
 
 	if (gitRepoStatus == GitRepoStatus::NoRepo) {
-		ImGui::Text("No git repository found");
+		ImGui::Text("No git repo found");
 		return;
 	}
 
-	if (gitRepoStatus == GitRepoStatus::RepoUnmatched) {
-		std::string gitBranchName = gitManager.GetBranchName();
-		ImGui::Text(gitBranchName.c_str());
-
-		ImGui::Text("Git repository is not matched");
+	if (gitRepoStatus == GitRepoStatus::RepoInitializedButUnfetched) {
+		ImGui::Text("Checking git...");
 		return;
 	}
 
-	if (gitRepoStatus == GitRepoStatus::RepoMatched) {
-		std::string gitBranchName = gitManager.GetBranchName();
-		ImGui::Text(gitBranchName.c_str());
-
-		ImGui::Text("Git repository is up to date");
-		return;
-	}
-
-	ImGui::Text("Git repository has not been checked");
+	std::string gitBranchName = gitManager.GetBranchName();
+	uint32_t behindCount = gitManager.GetBehindCount();
+	uint32_t aheadCount = gitManager.GetAheadCount();
+	uint32_t changesCount = gitManager.GetChangesCount();
+	ImGui::Text(gitBranchName.c_str());
+	ImGui::Text("%u/%u", aheadCount, behindCount);
+	ImGui::Text("%u", changesCount);
 }

@@ -55,7 +55,7 @@ void GitManager::UpdateGit() {
 
 	UpdateBranchName();
 	Fetch();
-	repoStatus = GitRepoStatus::RepoMatched;
+	repoStatus = GitRepoStatus::RepoFetched;
 }
 
 void GitManager::Fetch() {
@@ -85,7 +85,7 @@ bool GitManager::OpenRepository() {
 
 	if (isSuccessful) {
 		repo = newRepo;
-		repoStatus = GitRepoStatus::RepoInitializedButUnchecked;
+		repoStatus = GitRepoStatus::RepoInitializedButUnfetched;
 	}
 	else {
 		repoStatus = GitRepoStatus::NoRepo;
@@ -98,4 +98,16 @@ void GitManager::CloseRepository() {
 	git_repository_free(repo);
 	repoStatus = GitRepoStatus::NeedCheck;
 	repo = nullptr;
+}
+
+uint32_t GitManager::GetBehindCount() {
+	return behindCount;
+}
+
+uint32_t GitManager::GetAheadCount() {
+	return aheadCount;
+}
+
+uint32_t GitManager::GetChangesCount() {
+	return changesCount;
 }
