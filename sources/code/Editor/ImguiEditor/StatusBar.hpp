@@ -12,6 +12,8 @@ namespace Grindstone {
 			private:
 				void RenderGit();
 				void RenderGitWhenLoaded();
+				void AlignToRight(float space);
+				void RightAlignedText(const char* text);
 			};
 		}
 	}

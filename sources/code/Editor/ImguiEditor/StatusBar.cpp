@@ -19,6 +19,7 @@ void StatusBar::Render() {
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 	if (ImGui::BeginViewportSideBar("##MainStatusBar", viewport, ImGuiDir_Down, height, windowFlags)) {
 		if (ImGui::BeginMenuBar()) {
+			ImGui::Text("Ready");
 			RenderGit();
 			ImGui::EndMenuBar();
 		}
@@ -33,17 +34,17 @@ void StatusBar::RenderGit() {
 	GitRepoStatus gitRepoStatus = gitManager.GetGitRepoStatus();
 
 	if (gitRepoStatus == GitRepoStatus::NeedCheck) {
-		ImGui::Text("Checking for git repo...");
+		RightAlignedText("Checking for git repo...");
 		return;
 	}
 
 	if (gitRepoStatus == GitRepoStatus::NoRepo) {
-		ImGui::Text("No git repo found");
+		RightAlignedText("No git repo found");
 		return;
 	}
 
 	if (gitRepoStatus == GitRepoStatus::RepoInitializedButUnfetched) {
-		ImGui::Text("Checking git...");
+		RightAlignedText("Checking git...");
 		return;
 	}
 
@@ -58,7 +59,26 @@ void StatusBar::RenderGitWhenLoaded() {
 	uint32_t aheadCount = gitManager.GetAheadCount();
 	uint32_t changesCount = gitManager.GetChangesCount();
 
-	ImGui::Text("Ahead: %u / Behind: %u", aheadCount, behindCount);
-	ImGui::Text("Changes: %u", changesCount);
-	ImGui::Text("Branch: %s", gitBranchName.c_str());
+	std::string aheadBehindText = fmt::format("Ahead: {} / Behind: {}", aheadCount, behindCount);
+	// std::string changesText = fmt::format("Changes: {}", changesCount);
+	std::string branchText = fmt::format("Branch: {}", gitBranchName.c_str());
+
+	float allWidth = ImGui::GetStyle().FramePadding.x * 4.f +
+		ImGui::CalcTextSize(aheadBehindText.c_str()).x +
+		// ImGui::CalcTextSize(changesText.c_str()).x +
+		ImGui::CalcTextSize(branchText.c_str()).x;
+	AlignToRight(allWidth);
+
+	ImGui::Text(aheadBehindText.c_str());
+	// ImGui::Text(changesText.c_str());
+	ImGui::Text(branchText.c_str());
+}
+
+void StatusBar::AlignToRight(float widthNeeded) {
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - widthNeeded);
+}
+
+void StatusBar::RightAlignedText(const char* text) {
+	AlignToRight(ImGui::CalcTextSize(text).x + ImGui::GetStyle().FramePadding.x * 2.f);
+	ImGui::Text(text);
 }
