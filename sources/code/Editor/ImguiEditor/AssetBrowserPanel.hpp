@@ -37,6 +37,9 @@ namespace Grindstone {
 				void RenderAssets();
 				void RenderSidebar();
 				void RenderSidebarSubdirectory(Directory& directory);
+				void RenderFile(File* file);
+				void FilterSearch(Directory& dir);
+				void FilterSearch();
 				void AfterCreate(std::filesystem::path path);
 				ImTextureID GetIcon(const std::filesystem::directory_entry& directoryEntry);
 			private:
@@ -77,7 +80,9 @@ namespace Grindstone {
 				std::filesystem::path pathToRename;
 				std::string pathRenameNewName;
 				std::string searchText;
+				std::string searchTextLower;
 				std::set<Uuid> expandedAssetUuidsWithSubassets;
+				std::vector<File*> searchedFiles;
 				std::chrono::time_point<std::chrono::system_clock> lastRefreshedAssetsTime;
 			};
 		}
