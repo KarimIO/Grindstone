@@ -61,8 +61,10 @@ void GitManager::UpdateGit() {
 
 void GitManager::Fetch() {
 	git_oid local, upstream;
-	git_reference_name_to_id(&local, repo, "refs/heads/master");
-	git_reference_name_to_id(&upstream, repo, "refs/remotes/origin/master");
+	std::string localName = "refs/heads/" + currentBranchName;
+	std::string upstreamName = "refs/remotes/origin/" + currentBranchName;
+	git_reference_name_to_id(&local, repo, localName.c_str());
+	git_reference_name_to_id(&upstream, repo, upstreamName.c_str());
 
 	size_t ahead, behind;
 	if (git_graph_ahead_behind(&ahead, &behind, repo, &local, &upstream) != 0) {
