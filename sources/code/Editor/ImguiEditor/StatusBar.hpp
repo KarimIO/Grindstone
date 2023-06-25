@@ -11,6 +11,7 @@ namespace Grindstone {
 				void Render();
 			private:
 				void RenderGit();
+				void RenderGitWhenLoaded();
 			};
 		}
 	}
