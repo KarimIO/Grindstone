@@ -321,6 +321,10 @@ void ImguiEditor::RenderDockspace() {
 		ImGui::DockBuilderDockWindow("Stats", dockIdInspectorArea);
 		ImGui::DockBuilderDockWindow("Systems", dockIdInspectorArea);
 
+		ImGuiDockNode* node = ImGui::DockBuilderGetNode(dockIdControlbarArea);
+		node->LocalFlags |= ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoResize;
+		ImGui::DockBuilderSetNodeSize(dockIdControlbarArea, ImVec2(1.0f, 4.0f));
+
 		ImGui::DockBuilderFinish(dockspaceId);
 	}
 }
