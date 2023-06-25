@@ -20,6 +20,10 @@ CommandList& Manager::GetCommandList() {
 	return commandList;
 }
 
+GitManager& Manager::GetGitManager() {
+	return gitManager;
+}
+
 Selection& Manager::GetSelection() {
 	return selection;
 }
@@ -44,6 +48,7 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 
 	if (!LoadEngine())			return false;
 	fileManager.Initialize(assetsPath);
+	gitManager.Initialize();
 	csharpBuildManager.FinishInitialFileProcessing();
 	if (!SetupImguiEditor())	return false;
 	InitializeQuitCommands();

@@ -9,6 +9,7 @@
 #include "Importers/ImporterManager.hpp"
 #include "ScriptBuilder/CSharpBuildManager.hpp"
 #include "FileManager.hpp"
+#include "GitManager.hpp"
 #include "Selection.hpp"
 
 namespace Grindstone {
@@ -41,6 +42,7 @@ namespace Grindstone {
 			static Manager& GetInstance();
 			Importers::ImporterManager& GetImporterManager();
 			CommandList& GetCommandList();
+			GitManager& GetGitManager();
 			Selection& GetSelection();
 			ScriptBuilder::CSharpBuildManager& GetCSharpBuildManager();
 			static FileManager& GetFileManager();
@@ -80,6 +82,7 @@ namespace Grindstone {
 			PlayMode playMode;
 			Selection selection;
 			FileManager fileManager;
+			GitManager gitManager;
 			Grindstone::Utilities::Modules::Handle engineCoreLibraryHandle;
 			Importers::ImporterManager importerManager;
 		};
