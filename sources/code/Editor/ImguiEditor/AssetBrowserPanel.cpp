@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <fstream>
 #include <string>
+#include <cctype>
 #include <imgui.h>
 #include <imgui_stdlib.h>
 #include <entt/entt.hpp>
@@ -89,7 +90,7 @@ ImTextureID AssetBrowserPanel::GetIcon(const std::filesystem::directory_entry& d
 	if (directoryEntry.is_directory()) {
 		return iconIds.folder;
 	}
-				
+
 	const std::string& path = directoryEntry.path().string();
 	size_t firstDot = path.find_last_of('.');
 	std::string firstDotExtension = path.substr(firstDot);
@@ -105,14 +106,14 @@ ImTextureID AssetBrowserPanel::GetIcon(const std::filesystem::directory_entry& d
 		firstDotExtension == ".tga" ||
 		firstDotExtension == ".bmp" ||
 		firstDotExtension == ".png"
-	) {
+		) {
 		return iconIds.image;
 	}
 	else if (
 		firstDotExtension == ".fbx" ||
 		firstDotExtension == ".obj" ||
 		firstDotExtension == ".dae"
-	) {
+		) {
 		return iconIds.model;
 	}
 	else if (firstDotExtension == ".gmat") {
@@ -124,13 +125,15 @@ ImTextureID AssetBrowserPanel::GetIcon(const std::filesystem::directory_entry& d
 	else if (firstDotExtension == ".txt") {
 		return iconIds.text;
 	}
-				
+
 	return iconIds.file;
 }
-			
+
 void AssetBrowserPanel::SetCurrentAssetDirectory(Directory& newDirectory) {
 	currentDirectory = &newDirectory;
 	pathToRename = "";
+	searchText = "";
+	searchedFiles.clear();
 	Editor::Manager::GetInstance().GetSelection().ClearFiles();
 	expandedAssetUuidsWithSubassets.clear();
 }
@@ -165,13 +168,31 @@ void AssetBrowserPanel::ProcessDirectoryEntryClicks(std::filesystem::directory_e
 }
 
 void AssetBrowserPanel::RenderTopBar() {
-	auto assetTopBar = ImGui::GetID("#assettopbar");
-	ImGui::PushStyleColor(ImGuiCol_FrameBg, ImGui::GetStyle().Colors[ImGuiCol_FrameBgActive]);
-	ImGui::BeginChildFrame(assetTopBar, ImVec2(0, 32), ImGuiWindowFlags_NoScrollbar);
-	ImGui::PopStyleColor();
-	float availWidth = ImGui::GetContentRegionAvail().x;
-	ImGui::PushItemWidth(std::min(160.0f, availWidth / 2.0f));
-	ImGui::InputText("Search", &searchText);
+	ImGui::BeginChildFrame(ImGui::GetID("#assetpathbar"), ImVec2(0, 32), ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground);
+	
+	RenderPath();
+
+	float totalAvailWidth = ImGui::GetContentRegionAvail().x;
+	const float searchWidth = 160.0f;
+	const float searchX = totalAvailWidth - searchWidth;
+
+	ImGui::SameLine(totalAvailWidth - 160.0f);
+	ImGui::PushItemWidth(searchWidth);
+	if (ImGui::InputTextWithHint("##Search", "Search", &searchText)) {
+		if (searchText.empty()) {
+			currentDirectory = &rootDirectory;
+		}
+		else {
+			searchTextLower.resize(searchText.size());
+			std::transform(
+				searchText.begin(),
+				searchText.end(),
+				searchTextLower.begin(),
+				::tolower
+			);
+			FilterSearch();
+		}
+	}
 	ImGui::EndChildFrame();
 }
 
@@ -192,12 +213,9 @@ void AssetBrowserPanel::RenderPathPart(Directory* directory) {
 }
 
 void AssetBrowserPanel::RenderPath() {
-	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
-	ImGui::PushStyleColor(ImGuiCol_FrameBg, ImGui::GetStyle().Colors[ImGuiCol_FrameBgActive]);
-	auto assetPathPanel = ImGui::GetID("#assetpathpanel");
-	ImGui::BeginChildFrame(assetPathPanel, ImVec2(0, 32), ImGuiWindowFlags_NoScrollbar);
-	ImGui::PopStyleVar(1);
-	ImGui::PopStyleColor();
+	if (currentDirectory == nullptr) {
+		return;
+	}
 
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered]);
@@ -207,8 +225,6 @@ void AssetBrowserPanel::RenderPath() {
 	std::string finalPart = currentDirectory->path.path().filename().string() + "##PathPart";
 	ImGui::Button(finalPart.c_str());
 	ImGui::PopStyleColor(3);
-
-	ImGui::EndChildFrame();
 }
 
 void AssetBrowserPanel::RenderContextMenuFileTypeSpecificEntries(std::filesystem::directory_entry entry) {
@@ -293,6 +309,10 @@ void AssetBrowserPanel::RenderAssetContextMenu(std::filesystem::directory_entry 
 }
 
 void AssetBrowserPanel::RenderCurrentDirectoryContextMenu() {
+	if (currentDirectory == nullptr) {
+		return;
+	}
+
 	auto currentPath = currentDirectory->path.path();
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
 	if (ImGui::BeginPopupContextWindow()) {
@@ -350,11 +370,15 @@ void AssetBrowserPanel::TryRenameFile() {
 		}
 	}
 	else {
-	Editor::Manager::Print(LogSeverity::Error, "Could not rename file, this name is already used.");
+		Editor::Manager::Print(LogSeverity::Error, "Could not rename file, this name is already used.");
 	}
 }
 
 void AssetBrowserPanel::RenderFolders() {
+	if (currentDirectory == nullptr) {
+		return;
+	}
+
 	for (Directory* subdirectory : currentDirectory->subdirectories) {
 		auto directoryEntry = subdirectory->path;
 		ImGui::TableNextColumn();
@@ -396,103 +420,114 @@ void AssetBrowserPanel::RenderFolders() {
 }
 
 void AssetBrowserPanel::RenderFiles() {
+	if (!searchText.empty()) {
+		for (auto file : searchedFiles) {
+			RenderFile(file);
+		}
+		return;
+	}
+
 	for (auto file : currentDirectory->files) {
-		ImGui::TableNextColumn();
+		RenderFile(file);
+	}
+}
 
-		const auto& path = file->directoryEntry.path();
-		std::string filenameString = path.filename().string();
-		std::string buttonString = filenameString + "##AssetButton";
+void AssetBrowserPanel::RenderFile(File* file) {
+	ImGui::TableNextColumn();
 
-		bool isSelected = Editor::Manager::GetInstance().GetSelection().IsFileSelected(file->directoryEntry);
-		ImVec4 mainColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_Button] : ImVec4(1.f, 1.f, 1.f, 0.f);
-		ImVec4 hoveredColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered] : ImVec4(1.f, 1.f, 1.f, 0.05f);
-		ImVec4 activeColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_ButtonActive] : ImVec4(1.f, 1.f, 1.f, 0.1f);
-		ImGui::PushStyleColor(ImGuiCol_Button, mainColor);
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoveredColor);
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, activeColor);
+	const auto& path = file->directoryEntry.path();
+	std::string filenameString = path.filename().string();
+	std::string buttonString = filenameString + "##AssetButton";
 
-		float cursorX = ImGui::GetCursorPosX();
-		float cursorY = ImGui::GetCursorPosY();
+	bool isSelected = Editor::Manager::GetInstance().GetSelection().IsFileSelected(file->directoryEntry);
+	ImVec4 mainColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_Button] : ImVec4(1.f, 1.f, 1.f, 0.f);
+	ImVec4 hoveredColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered] : ImVec4(1.f, 1.f, 1.f, 0.05f);
+	ImVec4 activeColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_ButtonActive] : ImVec4(1.f, 1.f, 1.f, 0.1f);
+	ImGui::PushStyleColor(ImGuiCol_Button, mainColor);
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoveredColor);
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, activeColor);
 
-		ImTextureID icon = 0; //GetIcon(file->directoryEntry);
-		ImGui::PushID(buttonString.c_str());
-		ImGui::SetCursorPosX(cursorX + THUMBNAIL_SPACING);
-		ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
-		ImVec2 rectMin = ImGui::GetItemRectMin();
-		ImVec2 rectMax = ImGui::GetItemRectMin();
-		ImGui::PopID();
+	float cursorX = ImGui::GetCursorPosX();
+	float cursorY = ImGui::GetCursorPosY();
 
-		RenderAssetContextMenu(file->directoryEntry);
-		ProcessDirectoryEntryClicks(file->directoryEntry);
+	ImTextureID icon = 0; //GetIcon(file->directoryEntry);
+	ImGui::PushID(buttonString.c_str());
+	ImGui::SetCursorPosX(cursorX + THUMBNAIL_SPACING);
+	ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
+	ImVec2 rectMin = ImGui::GetItemRectMin();
+	ImVec2 rectMax = ImGui::GetItemRectMin();
+	ImGui::PopID();
 
-		Uuid myUuid;
-		if (
-			file->metaFile.TryGetDefaultSubassetUuid(myUuid) &&
-			ImGui::BeginDragDropSource()
-		) {
-			std::string myUuidAsString = myUuid.ToString();
-			ImGui::SetDragDropPayload("_UUID", myUuidAsString.data(), myUuidAsString.size() + 1);
-			ImGui::Text("%s", filenameString.c_str());
-			ImGui::EndDragDropSource();
+	RenderAssetContextMenu(file->directoryEntry);
+	ProcessDirectoryEntryClicks(file->directoryEntry);
+
+	Uuid myUuid;
+	if (
+		file->metaFile.TryGetDefaultSubassetUuid(myUuid) &&
+		ImGui::BeginDragDropSource()
+	) {
+		std::string myUuidAsString = myUuid.ToString();
+		ImGui::SetDragDropPayload("_UUID", myUuidAsString.data(), myUuidAsString.size() + 1);
+		ImGui::Text("%s", filenameString.c_str());
+		ImGui::EndDragDropSource();
+	}
+
+	ImGui::PopStyleColor(3);
+
+	if (pathToRename == path) {
+		ImGui::PushItemWidth(ENTRY_SIZE);
+		const auto flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
+		if (ImGui::InputText("##AssetRename", &pathRenameNewName, flags)) {
+			TryRenameFile();
 		}
+	}
+	else {
+		ImGui::TextWrapped(filenameString.c_str());
+	}
 
-		ImGui::PopStyleColor(3);
+	if (file->metaFile.GetSubassetCount() > 0) {
+		bool isExpanded = expandedAssetUuidsWithSubassets.find(myUuid) != expandedAssetUuidsWithSubassets.end();
+		ImGui::SetCursorPosX(cursorX + THUMBNAIL_SIZE + THUMBNAIL_PADDING);
+		ImGui::SetCursorPosY(cursorY + (THUMBNAIL_SIZE / 2.0f) - 5.0f);
 
-		if (pathToRename == path) {
-			ImGui::PushItemWidth(ENTRY_SIZE);
-			const auto flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
-			if (ImGui::InputText("##AssetRename", &pathRenameNewName, flags)) {
-				TryRenameFile();
-			}
-		}
-		else {
-			ImGui::TextWrapped(filenameString.c_str());
-		}
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 10.0f);
+		std::string expandButton = isExpanded
+			? std::string("<##") + buttonString
+			: std::string(">##") + buttonString;
 
-		if (file->metaFile.GetSubassetCount() > 0) {
-			bool isExpanded = expandedAssetUuidsWithSubassets.find(myUuid) != expandedAssetUuidsWithSubassets.end();
-			ImGui::SetCursorPosX(cursorX + THUMBNAIL_SIZE + THUMBNAIL_PADDING);
-			ImGui::SetCursorPosY(cursorY + (THUMBNAIL_SIZE / 2.0f) - 5.0f);
-
-			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 10.0f);
-			std::string expandButton = isExpanded
-				? std::string("<##") + buttonString
-				: std::string(">##") + buttonString;
-
-			if (ImGui::Button(expandButton.c_str(), ImVec2(20, 20))) {
-				if (isExpanded) {
-					expandedAssetUuidsWithSubassets.erase(myUuid);
-				}
-				else {
-					expandedAssetUuidsWithSubassets.emplace(myUuid);
-				}
-			}
-
-			ImGui::PopStyleVar();
-
-			ImGui::SetCursorPosX(cursorX);
-			ImGui::SetCursorPosY(cursorY);
-
+		if (ImGui::Button(expandButton.c_str(), ImVec2(20, 20))) {
 			if (isExpanded) {
-				for (auto& subasset : file->metaFile) {
-					ImGui::TableNextColumn();
-					ImTextureID icon = 0; //GetIcon(file->directoryEntry);
-					buttonString = filenameString + subasset.uuid.ToString();
-					ImGui::PushID(buttonString.c_str());
-					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
-					ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
-					ImGui::PopID();
+				expandedAssetUuidsWithSubassets.erase(myUuid);
+			}
+			else {
+				expandedAssetUuidsWithSubassets.emplace(myUuid);
+			}
+		}
 
-					if (ImGui::BeginDragDropSource()) {
-						Uuid myUuid = subasset.uuid;
-						std::string myUuidAsString = myUuid.ToString();
-						ImGui::SetDragDropPayload("_UUID", myUuidAsString.data(), myUuidAsString.size() + 1);
-						ImGui::Text(subasset.name.c_str());
-						ImGui::EndDragDropSource();
-					}
+		ImGui::PopStyleVar();
 
-					ImGui::TextWrapped(subasset.name.c_str());
+		ImGui::SetCursorPosX(cursorX);
+		ImGui::SetCursorPosY(cursorY);
+
+		if (isExpanded) {
+			for (auto& subasset : file->metaFile) {
+				ImGui::TableNextColumn();
+				ImTextureID icon = 0; //GetIcon(file->directoryEntry);
+				buttonString = filenameString + subasset.uuid.ToString();
+				ImGui::PushID(buttonString.c_str());
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
+				ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
+				ImGui::PopID();
+
+				if (ImGui::BeginDragDropSource()) {
+					Uuid myUuid = subasset.uuid;
+					std::string myUuidAsString = myUuid.ToString();
+					ImGui::SetDragDropPayload("_UUID", myUuidAsString.data(), myUuidAsString.size() + 1);
+					ImGui::Text(subasset.name.c_str());
+					ImGui::EndDragDropSource();
 				}
+
+				ImGui::TextWrapped(subasset.name.c_str());
 			}
 		}
 	}
@@ -512,8 +547,11 @@ void AssetBrowserPanel::RenderAssets() {
 	ImGui::BeginChildFrame(assetPanel, ImVec2(0, 0), ImGuiWindowFlags_NoBackground);
 	RenderCurrentDirectoryContextMenu();
 
-	if (currentDirectory->subdirectories.empty() && currentDirectory->files.empty()) {
+	if (currentDirectory != nullptr && currentDirectory->subdirectories.empty() && currentDirectory->files.empty()) {
 		ImGui::Text("This folder is empty.");
+	}
+	else if (!searchText.empty() && searchedFiles.size() == 0) {
+		ImGui::Text("Search could not find any results.");
 	}
 	else if (ImGui::BeginTable("##assetTable", columnCount, ImGuiTableFlags_NoSavedSettings)) {
 		RenderFolders();
@@ -536,7 +574,9 @@ void AssetBrowserPanel::RenderAssets() {
 
 void AssetBrowserPanel::RenderSidebar() {
 	auto sidebarId = ImGui::GetID("#assetSidebar");
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
 	ImGui::BeginChildFrame(sidebarId, ImVec2(0, 0), ImGuiWindowFlags_NoBackground);
+	ImGui::PopStyleVar();
 
 	if (rootDirectory.subdirectories.empty()) {
 		ImGui::Text("This folder is empty.");
@@ -579,7 +619,7 @@ void AssetBrowserPanel::RenderSidebarSubdirectory(Directory& directory) {
 		SetCurrentAssetDirectory(directory);
 	}
 }
-			
+
 void AssetBrowserPanel::Render() {
 	if (isShowingPanel) {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2());
@@ -587,20 +627,52 @@ void AssetBrowserPanel::Render() {
 
 		RenderTopBar();
 
-		if (ImGui::BeginTable("assetBrowserSplit", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX)) {
+		bool isInTable = ImGui::BeginTable("assetBrowserSplit", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX);
+
+		if (isInTable) {
+			ImGui::TableNextRow();
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, ImGui::GetColorU32(ImGui::GetStyleColorVec4(ImGuiCol_TitleBg)));
 			ImGui::TableNextColumn();
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
 			RenderSidebar();
-			ImGui::PopStyleVar();
-
 			ImGui::TableNextColumn();
-			RenderPath();
 			RenderAssets();
-
 			ImGui::EndTable();
 		}
 
 		ImGui::End();
 		ImGui::PopStyleVar();
 	}
+}
+
+void AssetBrowserPanel::FilterSearch(Directory& dir) {
+	for (auto file : dir.files) {
+		std::string fileName = file->directoryEntry.path().filename().string();
+		std::string fileNameLower;
+		fileNameLower.resize(fileName.size());
+		std::transform(
+			fileName.begin(),
+			fileName.end(),
+			fileNameLower.begin(),
+			::tolower
+		);
+
+		if (fileNameLower.find(searchTextLower) != std::string::npos) {
+			searchedFiles.push_back(file);
+		}
+	}
+
+	for (auto subdir : dir.subdirectories) {
+		FilterSearch(*subdir);
+	}
+}
+
+void AssetBrowserPanel::FilterSearch() {
+	currentDirectory = nullptr;
+	pathToRename = "";
+	searchedFiles.clear();
+	Editor::Manager::GetInstance().GetSelection().ClearFiles();
+	expandedAssetUuidsWithSubassets.clear();
+
+	searchedFiles.clear();
+	FilterSearch(rootDirectory);
 }
