@@ -166,7 +166,7 @@ void AssetBrowserPanel::ProcessDirectoryEntryClicks(std::filesystem::directory_e
 
 void AssetBrowserPanel::RenderTopBar() {
 	auto assetTopBar = ImGui::GetID("#assettopbar");
-	ImGui::PushStyleColor(ImGuiCol_FrameBg, ImGui::GetStyle().Colors[ImGuiCol_FrameBgHovered]);
+	ImGui::PushStyleColor(ImGuiCol_FrameBg, ImGui::GetStyle().Colors[ImGuiCol_FrameBgActive]);
 	ImGui::BeginChildFrame(assetTopBar, ImVec2(0, 32), ImGuiWindowFlags_NoScrollbar);
 	ImGui::PopStyleColor();
 	float availWidth = ImGui::GetContentRegionAvail().x;

@@ -116,86 +116,86 @@ void ImguiEditor::SetupColors() {
 	ImVec4 highlightColor2 = ImVec4(0.56f, 0.36f, 0.64f, 1.00f);
 
 	// Backgrounds
-	colors[ImGuiCol_WindowBg] = bgColor;
-	colors[ImGuiCol_ChildBg] = bgColor;
-	colors[ImGuiCol_PopupBg] = bgColor;
-	colors[ImGuiCol_MenuBarBg] = bgColor;
+	colors[ImGuiCol_WindowBg]			= bgColor;
+	colors[ImGuiCol_ChildBg]			= bgColor;
+	colors[ImGuiCol_PopupBg]			= bgColor;
+	colors[ImGuiCol_MenuBarBg]			= bgColor;
 
 	// Text
-	colors[ImGuiCol_Text] = ImVec4(0.95f, 0.95f, 0.95f, 1.00f);
-	colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-	colors[ImGuiCol_TextSelectedBg] = highlightColor0;
+	colors[ImGuiCol_Text]				= ImVec4(0.95f, 0.95f, 0.95f, 1.00f);
+	colors[ImGuiCol_TextDisabled]		= ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
+	colors[ImGuiCol_TextSelectedBg]		= highlightColor0;
 
 	// Border
-	colors[ImGuiCol_Border] = ImVec4(0.2f, 0.24f, 0.26f, 0.50f);
-	colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+	colors[ImGuiCol_Border]				= ImVec4(0.2f, 0.24f, 0.26f, 0.50f);
+	colors[ImGuiCol_BorderShadow]		= ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
 
 	// Frame
-	colors[ImGuiCol_FrameBg] = ImVec4(0.08f, 0.09f, 0.1f, 1.00f);
-	colors[ImGuiCol_FrameBgHovered] = ImVec4(0.14f, 0.15f, 0.16f, 1.00f);
-	colors[ImGuiCol_FrameBgActive] = ImVec4(0.22f, 0.23f, 0.24f, 0.39f);
+	colors[ImGuiCol_FrameBg]			= ImVec4(0.05f, 0.055f, 0.06f, 1.00f);
+	colors[ImGuiCol_FrameBgHovered]		= ImVec4(0.033f, 0.0363f, 0.0396f, 1.00f);
+	colors[ImGuiCol_FrameBgActive]		= ImVec4(0.033f, 0.0363f, 0.0396f, 0.45f);
 
 	// Title
-	colors[ImGuiCol_TitleBg] = ImVec4(0.08f, 0.09f, 0.1f, 1.00f);
-	colors[ImGuiCol_TitleBgActive] = colors[ImGuiCol_TitleBg];
-	colors[ImGuiCol_TitleBgCollapsed] = colors[ImGuiCol_TitleBg];
+	colors[ImGuiCol_TitleBg]			= ImVec4(0.08f, 0.09f, 0.1f, 1.00f);
+	colors[ImGuiCol_TitleBgActive]		= colors[ImGuiCol_TitleBg];
+	colors[ImGuiCol_TitleBgCollapsed]	= colors[ImGuiCol_TitleBg];
 
 	// Scrollbar
-	colors[ImGuiCol_ScrollbarBg] = ImVec4(0.02f, 0.04f, 0.06f, 0.53f);
-	colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.28f, 0.32f, 0.36f, 1.00f);
-	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.40f, 0.42f, 0.44f, 1.00f);
-	colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.46f, 0.50f, 0.54f, 1.00f);
+	colors[ImGuiCol_ScrollbarBg]			= ImVec4(0.02f, 0.04f, 0.06f, 0.53f);
+	colors[ImGuiCol_ScrollbarGrab]			= ImVec4(0.28f, 0.32f, 0.36f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrabHovered]	= ImVec4(0.40f, 0.42f, 0.44f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrabActive]	= ImVec4(0.46f, 0.50f, 0.54f, 1.00f);
 
 	// Slider
-	colors[ImGuiCol_SliderGrab] = highlightColor0;
-	colors[ImGuiCol_SliderGrabActive] = highlightColor2;
+	colors[ImGuiCol_SliderGrab]			= highlightColor0;
+	colors[ImGuiCol_SliderGrabActive]	= highlightColor2;
 
 	// Button
-	colors[ImGuiCol_Button] = highlightColor0;
-	colors[ImGuiCol_ButtonHovered] = highlightColor1;
-	colors[ImGuiCol_ButtonActive] = highlightColor2;
+	colors[ImGuiCol_Button]				= highlightColor0;
+	colors[ImGuiCol_ButtonHovered]		= highlightColor1;
+	colors[ImGuiCol_ButtonActive]		= highlightColor2;
 
 	// Header
-	colors[ImGuiCol_Header] = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
-	colors[ImGuiCol_HeaderHovered] = ImVec4(0.25f, 0.25f, 0.25f, 1.00f);
-	colors[ImGuiCol_HeaderActive] = ImVec4(0.67f, 0.67f, 0.67f, 0.39f);
+	colors[ImGuiCol_Header]				= ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
+	colors[ImGuiCol_HeaderHovered]		= ImVec4(0.25f, 0.25f, 0.25f, 1.00f);
+	colors[ImGuiCol_HeaderActive]		= ImVec4(0.67f, 0.67f, 0.67f, 0.39f);
 
 	// Separator
-	colors[ImGuiCol_Separator] = colors[ImGuiCol_Border];
-	colors[ImGuiCol_SeparatorHovered] = highlightColor0;
-	colors[ImGuiCol_SeparatorActive] = highlightColor2;
+	colors[ImGuiCol_Separator]			= colors[ImGuiCol_Border];
+	colors[ImGuiCol_SeparatorHovered]	= highlightColor0;
+	colors[ImGuiCol_SeparatorActive]	= highlightColor2;
 
 	// Resize Grip
-	colors[ImGuiCol_ResizeGrip] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-	colors[ImGuiCol_ResizeGripHovered] = highlightColor0;
-	colors[ImGuiCol_ResizeGripActive] = highlightColor2;
+	colors[ImGuiCol_ResizeGrip]			= ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+	colors[ImGuiCol_ResizeGripHovered]	= highlightColor0;
+	colors[ImGuiCol_ResizeGripActive]	= highlightColor2;
 
 	// Tabs
-	colors[ImGuiCol_Tab] = ImVec4(0.1f, 0.12f, 0.14f, 0.83f);
-	colors[ImGuiCol_TabHovered] = ImVec4(0.33f, 0.34f, 0.36f, 0.83f);
-	colors[ImGuiCol_TabActive] = highlightColor0;
-	colors[ImGuiCol_TabUnfocused] = ImVec4(0.08f, 0.08f, 0.09f, 1.00f);
+	colors[ImGuiCol_Tab]				= ImVec4(0.1f, 0.12f, 0.14f, 1.f);
+	colors[ImGuiCol_TabHovered]			= ImVec4(0.14f, 0.168f, 0.196f, 1.f);
+	colors[ImGuiCol_TabActive]			= highlightColor0;
+	colors[ImGuiCol_TabUnfocused]		= ImVec4(0.08f, 0.09f, 0.1f, 1.f);
 	colors[ImGuiCol_TabUnfocusedActive] = bgColor;
 
 	// Docking
-	colors[ImGuiCol_DockingPreview] = ImVec4(0.26f, 0.59f, 0.98f, 0.70f);
-	colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+	colors[ImGuiCol_DockingPreview]		= ImVec4(0.26f, 0.59f, 0.98f, 0.70f);
+	colors[ImGuiCol_DockingEmptyBg]		= ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
 
 	// Plots
-	colors[ImGuiCol_PlotLines] = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
-	colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
-	colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
-	colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
+	colors[ImGuiCol_PlotLines]				= ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
+	colors[ImGuiCol_PlotLinesHovered]		= ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
+	colors[ImGuiCol_PlotHistogram]			= ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
+	colors[ImGuiCol_PlotHistogramHovered]	= ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
 
 	// Nav
-	colors[ImGuiCol_NavHighlight] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-	colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
-	colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
+	colors[ImGuiCol_NavHighlight]			= ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+	colors[ImGuiCol_NavWindowingHighlight]	= ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
+	colors[ImGuiCol_NavWindowingDimBg]		= ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
 
 	// Misc
-	colors[ImGuiCol_DragDropTarget] = highlightColor0;
-	colors[ImGuiCol_CheckMark] = highlightColor0;
-	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);;
+	colors[ImGuiCol_DragDropTarget]		= highlightColor0;
+	colors[ImGuiCol_CheckMark]			= highlightColor0;
+	colors[ImGuiCol_ModalWindowDimBg]	= ImVec4(0.80f, 0.80f, 0.80f, 0.35f);;
 }
 
 void ImguiEditor::SetupStyles() {
@@ -290,4 +290,37 @@ void ImguiEditor::RenderDockspace() {
 	menubar->Render();
 
 	ImGui::End();
+
+	static bool sFirstFrame = true;
+	if (sFirstFrame) {
+		sFirstFrame = false;
+
+		ImGui::DockBuilderRemoveNode(dockspaceId);
+		ImGui::DockBuilderAddNode(dockspaceId, ImGuiDockNodeFlags_None);
+
+		ImGuiID dockIdControlbarArea;
+		ImGuiID dockIdAboveConsoleArea;
+		ImGuiID dockIdViewportArea;
+		ImGuiID dockIdConsoleArea;
+		ImGuiID dockIdSceneHeirarchyArea;
+		ImGuiID dockIdInspectorArea;
+		ImGuiID dockIdViewportAndSceneHeirarchy;
+		ImGuiID dockIdMain;
+
+		ImGui::DockBuilderSplitNode(dockspaceId, ImGuiDir_Up, 0.1f, &dockIdControlbarArea, &dockIdMain);
+		ImGui::DockBuilderSplitNode(dockIdMain, ImGuiDir_Down, 0.3f, &dockIdConsoleArea, &dockIdAboveConsoleArea);
+		ImGui::DockBuilderSplitNode(dockIdAboveConsoleArea, ImGuiDir_Right, 0.3f, &dockIdInspectorArea, &dockIdViewportAndSceneHeirarchy);
+		ImGui::DockBuilderSplitNode(dockIdViewportAndSceneHeirarchy, ImGuiDir_Left, 0.3f, &dockIdSceneHeirarchyArea, &dockIdViewportArea);
+
+		ImGui::DockBuilderDockWindow("ControlBar", dockIdControlbarArea);
+		ImGui::DockBuilderDockWindow("Viewport", dockIdViewportArea);
+		ImGui::DockBuilderDockWindow("Console", dockIdConsoleArea);
+		ImGui::DockBuilderDockWindow("Asset Browser", dockIdConsoleArea);
+		ImGui::DockBuilderDockWindow("Scene Heirarchy", dockIdSceneHeirarchyArea);
+		ImGui::DockBuilderDockWindow("Inspector", dockIdInspectorArea);
+		ImGui::DockBuilderDockWindow("Stats", dockIdInspectorArea);
+		ImGui::DockBuilderDockWindow("Systems", dockIdInspectorArea);
+
+		ImGui::DockBuilderFinish(dockspaceId);
+	}
 }
