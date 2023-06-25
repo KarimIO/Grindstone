@@ -5,7 +5,7 @@ file(GLOB_RECURSE SOURCE_MAIN
 	../Common/Utilities/ModuleLoading.cpp ../EngineCore/Utils/Utilities.cpp
 	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp ${COMMON_DIR}/ResourcePipeline/MetaFile.hpp ${COMMON_DIR}/ResourcePipeline/Uuid.hpp  ${COMMON_DIR}/ResourcePipeline/Uuid.cpp
 	../EngineCore/ECS/Entity.cpp
-	FileManager.cpp FileManager.hpp FileDirectory.hpp
+	FileManager.cpp FileManager.hpp GitManager.cpp GitManager.hpp FileDirectory.hpp
 	EditorManager.cpp EditorManager.hpp
 	Selection.cpp Selection.hpp
 	EditorCamera.cpp EditorCamera.hpp
@@ -98,6 +98,7 @@ add_library(SPIRV-Tools ALIAS SPIRV-Tools-static)
 find_package(unofficial-shaderc CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(imguizmo CONFIG REQUIRED)
+find_package(unofficial-git2 CONFIG REQUIRED)
 set(MONO_PATH CACHE PATH "Mono Path")
 
 add_executable(Editor ${EDITOR_HEADERS} ${EDITOR_SOURCES})
@@ -120,6 +121,7 @@ target_link_libraries(
 	spirv-cross-c spirv-cross-core spirv-cross-cpp spirv-cross-glsl spirv-cross-reflect
 	glslang::SPIRV glslang::HLSL glslang::glslang glslang::OGLCompiler
 	unofficial::shaderc::shaderc
+	unofficial::git2::libgit2package
 	SPIRV-Tools-opt SPIRV-Tools-static
 	spirv-cross-reflect
 	assimp::assimp
