@@ -10,7 +10,13 @@ using namespace Grindstone::Assets;
 //	- fileSize should be 0
 void FileAssetLoader::Load(Uuid uuid, char*& outContents, size_t& fileSize) {
 	std::filesystem::path path = EngineCore::GetInstance().GetAssetPath(uuid.ToString());
+	Load(path, outContents, fileSize);
+}
 
+// Out:
+//	- outContents should be nullptr
+//	- fileSize should be 0
+void FileAssetLoader::Load(std::filesystem::path path, char*& outContents, size_t& fileSize) {
 	if (!std::filesystem::exists(path)) {
 		return;
 	}

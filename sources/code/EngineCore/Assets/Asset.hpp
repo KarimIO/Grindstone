@@ -6,6 +6,7 @@
 
 namespace Grindstone {
 	struct Asset {
+		Asset() = default;
 		Asset(Uuid uuid, std::string_view name) : uuid(uuid), name(name) {}
 
 		Uuid uuid;

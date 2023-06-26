@@ -16,6 +16,7 @@
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/Scenes/Scene.hpp"
 #include "EngineCore/EngineCore.hpp"
+#include "EngineCore/Assets/AssetManager.hpp"
 #include "EngineCore/Assets/Textures/TextureImporter.hpp"
 #include "EngineCore/Assets/Shaders/ShaderImporter.hpp"
 #include "EngineCore/Assets/Materials/MaterialImporter.hpp"
@@ -58,20 +59,23 @@ ImTextureID GetIdFromTexture(GraphicsAPI::Texture* texture) {
 	return (ImTextureID)(uint64_t)glTex->GetTexture();
 }
 
-void PrepareIcon(Grindstone::TextureImporter* TextureImporter, const char* path, GraphicsAPI::Texture*& texture, ImTextureID& id) {
-	/*
-	auto& textureAsset = TextureImporter->LoadTexture(path);
-	texture = textureAsset.texture;
+void PrepareIcon(Grindstone::Assets::AssetManager* assetManager, const char* path, GraphicsAPI::Texture*& texture, ImTextureID& id) {
+	auto textureAsset = static_cast<TextureAsset*>(assetManager->GetAsset(Grindstone::AssetType::Texture, path));
+
+	if (textureAsset == nullptr) {
+		return;
+	}
+
+	texture = textureAsset->texture;
 	id = GetIdFromTexture(texture);
-	*/
 }
 
-#define PREPARE_ICON(type) PrepareIcon(textureImporter, "../engineassets/editor/assetIcons/" #type ".dds", iconTextures.type, iconIds.type)
+#define PREPARE_ICON(type) PrepareIcon(assetManager, "../engineassets/editor/assetIcons/" #type ".dds", iconTextures.type, iconIds.type)
 
 AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore), rootDirectory(Editor::Manager::GetFileManager().GetRootDirectory()) {
 	pathToRename = "";
 
-	Grindstone::TextureImporter* textureImporter = nullptr; //engineCore->textureImporter;
+	auto assetManager = engineCore->assetManager;
 	PREPARE_ICON(folder);
 	PREPARE_ICON(file);
 	PREPARE_ICON(image);
@@ -213,11 +217,12 @@ void AssetBrowserPanel::RenderPathPart(Directory* directory) {
 }
 
 void AssetBrowserPanel::RenderPath() {
-	if (currentDirectory == nullptr) {
+	if (!searchText.empty()) {
+		ImGui::Text("Showing search results:");
 		return;
 	}
 
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 1.0f, 1.0f, 0.15f));
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered]);
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyle().Colors[ImGuiCol_ButtonActive]);
 	RenderPathPart(currentDirectory->parentDirectory);
@@ -395,7 +400,7 @@ void AssetBrowserPanel::RenderFolders() {
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoveredColor);
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, activeColor);
 
-		ImTextureID icon = 0; //GetIcon(directoryEntry);
+		ImTextureID icon = GetIcon(directoryEntry);
 		ImGui::PushID(buttonString.c_str());
 		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
 		ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
@@ -450,7 +455,7 @@ void AssetBrowserPanel::RenderFile(File* file) {
 	float cursorX = ImGui::GetCursorPosX();
 	float cursorY = ImGui::GetCursorPosY();
 
-	ImTextureID icon = 0; //GetIcon(file->directoryEntry);
+	ImTextureID icon = GetIcon(file->directoryEntry);
 	ImGui::PushID(buttonString.c_str());
 	ImGui::SetCursorPosX(cursorX + THUMBNAIL_SPACING);
 	ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);

@@ -6,6 +6,7 @@ using namespace Grindstone::GraphicsAPI;
 
 namespace Grindstone {
 	struct TextureAsset : public Asset {
+		TextureAsset() = default;
 		TextureAsset(Uuid uuid, std::string_view name, Texture* texture) : Asset(uuid, name), texture(texture) {}
 		Texture* texture = nullptr;
 

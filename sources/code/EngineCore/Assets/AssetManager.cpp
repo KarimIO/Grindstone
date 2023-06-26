@@ -26,6 +26,23 @@ AssetManager::AssetManager() {
 	RegisterAssetType(MaterialAsset::GetStaticType(), "MaterialAsset", new MaterialImporter());
 }
 
+void* AssetManager::GetAsset(AssetType assetType, const char* path) {
+	size_t assetTypeSizeT = static_cast<size_t>(assetType);
+	if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
+		return nullptr;
+	}
+
+	AssetImporter* assetImporter = assetTypeImporters[assetTypeSizeT];
+
+	void* loadedAsset = nullptr;
+	if (assetImporter->TryGetIfLoaded(path, loadedAsset)) {
+		return loadedAsset;
+	}
+	else {
+		return assetTypeImporters[assetTypeSizeT]->ProcessLoadedFile(path);
+	}
+}
+
 void* AssetManager::GetAsset(AssetType assetType, Uuid uuid) {
 	size_t assetTypeSizeT = static_cast<size_t>(assetType);
 	if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
@@ -41,6 +58,14 @@ void* AssetManager::GetAsset(AssetType assetType, Uuid uuid) {
 	else {
 		return assetTypeImporters[assetTypeSizeT]->ProcessLoadedFile(uuid);
 	}
+}
+
+bool AssetManager::LoadFile(const char* path, char*& fileData, size_t& fileSize) {
+	fileData = nullptr;
+	fileSize = 0;
+
+	assetLoader->Load(path, fileData, fileSize);
+	return fileData != nullptr;
 }
 
 // Loads an actual file, not an asset. The file still needs to be imported and handled.
