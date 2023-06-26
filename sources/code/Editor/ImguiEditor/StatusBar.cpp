@@ -1,13 +1,21 @@
 #include <imgui.h>
 #include <imgui_internal.h>
+
 #include "StatusBar.hpp"
 #include "Editor/GitManager.hpp"
 #include "Editor/EditorManager.hpp"
+#include "EngineCore/Assets/AssetManager.hpp"
+#include "EngineCore/Assets/Textures/TextureAsset.hpp"
+#include "Plugins/GraphicsOpenGL/GLTexture.hpp"
+
 using namespace Grindstone;
 using namespace Grindstone::Editor;
 using namespace Grindstone::Editor::ImguiEditor;
 
 StatusBar::StatusBar() {
+	gitBranchIcon = GetTexture("GitBranch.dds");
+	gitAheadBehindIcon = GetTexture("GitAheadBehind.dds");
+	gitChangesIcon = GetTexture("GitChanges.dds");
 }
 
 void StatusBar::Render() {
@@ -27,6 +35,19 @@ void StatusBar::Render() {
 	}
 	ImGui::PopStyleVar();
 	ImGui::PopStyleColor();
+}
+
+ImTextureID StatusBar::GetTexture(std::string fileName) {
+	std::string path = std::string("../engineassets/editor/gitIcons/") + fileName;
+	auto assetManager = Editor::Manager::GetEngineCore().assetManager;
+	auto textureAsset = static_cast<TextureAsset*>(assetManager->GetAsset(Grindstone::AssetType::Texture, path.c_str()));
+
+	if (textureAsset == nullptr) {
+		return 0;
+	}
+
+	GraphicsAPI::GLTexture* glTex = (GraphicsAPI::GLTexture*)textureAsset->texture;
+	return (ImTextureID)(uint64_t)glTex->GetTexture();
 }
 
 void StatusBar::RenderGit() {
@@ -59,19 +80,35 @@ void StatusBar::RenderGitWhenLoaded() {
 	uint32_t aheadCount = gitManager.GetAheadCount();
 	uint32_t changesCount = gitManager.GetChangesCount();
 
-	std::string aheadBehindText = fmt::format("Ahead: {} / Behind: {}", aheadCount, behindCount);
-	// std::string changesText = fmt::format("Changes: {}", changesCount);
-	std::string branchText = fmt::format("Branch: {}", gitBranchName.c_str());
+	std::string aheadBehindText = fmt::format("{} / {}", aheadCount, behindCount);
+	std::string changesText = std::to_string(changesCount);
 
-	float allWidth = ImGui::GetStyle().FramePadding.x * 4.f +
+	const float iconSize = 20.0f;
+
+	float allWidth = iconSize * 3 +
+		ImGui::GetStyle().FramePadding.x * 8.f +
 		ImGui::CalcTextSize(aheadBehindText.c_str()).x +
-		// ImGui::CalcTextSize(changesText.c_str()).x +
-		ImGui::CalcTextSize(branchText.c_str()).x;
+		ImGui::CalcTextSize(changesText.c_str()).x +
+		ImGui::CalcTextSize(gitBranchName.c_str()).x;
+
 	AlignToRight(allWidth);
 
+	float cursorY = ImGui::GetCursorPosY();
+	float iconY = cursorY + 2.0f;
+
+	ImGui::SetCursorPosY(iconY);
+	ImGui::Image(gitAheadBehindIcon, ImVec2(iconSize, iconSize));
+	ImGui::SetCursorPosY(cursorY);
 	ImGui::Text(aheadBehindText.c_str());
-	// ImGui::Text(changesText.c_str());
-	ImGui::Text(branchText.c_str());
+	ImGui::SetCursorPosY(iconY);
+	ImGui::Image(gitChangesIcon, ImVec2(iconSize, iconSize));
+	ImGui::SetCursorPosY(cursorY);
+	ImGui::Text(changesText.c_str());
+	ImGui::SetCursorPosY(iconY);
+	ImGui::Image(gitBranchIcon, ImVec2(iconSize, iconSize));
+	ImGui::SetCursorPosY(cursorY);
+	ImGui::Text(gitBranchName.c_str());
+	ImGui::SetCursorPosY(cursorY);
 }
 
 void StatusBar::AlignToRight(float widthNeeded) {
