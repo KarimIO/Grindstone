@@ -34,8 +34,8 @@ namespace Grindstone {
 				void TryRenameFile();
 				void RenderFolders();
 				void RenderFiles();
-				void RenderAssets();
-				void RenderSidebar();
+				void RenderAssets(float height);
+				void RenderSidebar(float height);
 				void RenderSidebarSubdirectory(Directory& directory);
 				void RenderFile(File* file);
 				void FilterSearch(Directory& dir);

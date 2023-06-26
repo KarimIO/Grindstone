@@ -538,7 +538,7 @@ void AssetBrowserPanel::RenderFile(File* file) {
 	}
 }
 
-void AssetBrowserPanel::RenderAssets() {
+void AssetBrowserPanel::RenderAssets(float height) {
 	const float cellSize = ENTRY_SIZE + PADDING;
 
 	const float panelWidth = ImGui::GetContentRegionAvail().x;
@@ -549,7 +549,7 @@ void AssetBrowserPanel::RenderAssets() {
 	}
 
 	auto assetPanel = ImGui::GetID("#assetsPanel");
-	ImGui::BeginChildFrame(assetPanel, ImVec2(0, 0), ImGuiWindowFlags_NoBackground);
+	ImGui::BeginChildFrame(assetPanel, ImVec2(0, height), ImGuiWindowFlags_NoBackground);
 	RenderCurrentDirectoryContextMenu();
 
 	if (currentDirectory != nullptr && currentDirectory->subdirectories.empty() && currentDirectory->files.empty()) {
@@ -577,10 +577,10 @@ void AssetBrowserPanel::RenderAssets() {
 	ImGui::EndChildFrame();
 }
 
-void AssetBrowserPanel::RenderSidebar() {
+void AssetBrowserPanel::RenderSidebar(float height) {
 	auto sidebarId = ImGui::GetID("#assetSidebar");
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
-	ImGui::BeginChildFrame(sidebarId, ImVec2(0, 0), ImGuiWindowFlags_NoBackground);
+	ImGui::BeginChildFrame(sidebarId, ImVec2(0, height), ImGuiWindowFlags_NoBackground);
 	ImGui::PopStyleVar();
 
 	if (rootDirectory.subdirectories.empty()) {
@@ -637,10 +637,11 @@ void AssetBrowserPanel::Render() {
 		if (isInTable) {
 			ImGui::TableNextRow();
 			ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, ImGui::GetColorU32(ImGui::GetStyleColorVec4(ImGuiCol_TitleBg)));
+			float height = ImGui::GetContentRegionAvail().y - 4.0f;
 			ImGui::TableNextColumn();
-			RenderSidebar();
+			RenderSidebar(height);
 			ImGui::TableNextColumn();
-			RenderAssets();
+			RenderAssets(height);
 			ImGui::EndTable();
 		}
 
