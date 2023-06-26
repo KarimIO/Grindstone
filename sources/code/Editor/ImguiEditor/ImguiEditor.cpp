@@ -192,6 +192,10 @@ void ImguiEditor::SetupColors() {
 	colors[ImGuiCol_NavWindowingHighlight]	= ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
 	colors[ImGuiCol_NavWindowingDimBg]		= ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
 
+	// Table
+	colors[ImGuiCol_TableRowBg] = bgColor;
+	colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.08f, 0.09f, 0.1f, 1.00f);
+
 	// Misc
 	colors[ImGuiCol_DragDropTarget]		= highlightColor0;
 	colors[ImGuiCol_CheckMark]			= highlightColor0;

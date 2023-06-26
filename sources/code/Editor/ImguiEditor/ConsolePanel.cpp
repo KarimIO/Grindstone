@@ -7,57 +7,88 @@
 #include "Editor/EditorManager.hpp"
 #include "ConsolePanel.hpp"
 
-namespace Grindstone {
-	namespace Editor {
-		namespace ImguiEditor {
-			ConsolePanel::ConsolePanel() {
-				auto dispatcher = Editor::Manager::GetEngineCore().GetEventDispatcher();
-				dispatcher->AddEventListener(Events::EventType::PrintMessage, std::bind(&ConsolePanel::AddConsoleMessage, this, std::placeholders::_1));
-			}
+#include "EngineCore/Assets/AssetManager.hpp"
+#include "EngineCore/Assets/Textures/TextureAsset.hpp"
+#include "Plugins/GraphicsOpenGL/GLTexture.hpp"
 
-			ImVec4 GetLogSeverityColor(LogSeverity severity) {
-				switch (severity) {
-					default:
-					case LogSeverity::Info:
-						return ImColor(1.f, 1.f, 1.f, 1.f);
-					case LogSeverity::Trace:
-						return ImColor(0.38f, 0.6f, 0.75f, 1.f);
-					case LogSeverity::Warning:
-						return ImColor(0.75f, 0.65f, 0.4f, 1.f);
-					case LogSeverity::Error:
-						return ImColor(0.6f, 0.3f, 0.3f, 1.f);
-				}
-			}
+using namespace Grindstone;
+using namespace Grindstone::Editor::ImguiEditor;
 
-			void ConsolePanel::Render() {
-				if (isShowingPanel) {
-					ImGui::Begin("Console", &isShowingPanel);
+ConsolePanel::ConsolePanel() {
+	consoleErrorIcon = GetTexture("ConsoleError.dds");
+	consoleWarningIcon = GetTexture("ConsoleWarning.dds");
+	consoleTraceIcon = GetTexture("ConsoleTrace.dds");
+	consoleInfoIcon = GetTexture("ConsoleInfo.dds");
 
-					if (messageQueue.size() == 0) {
-						ImGui::Text("No console messages found.");
-					}
+	auto dispatcher = Editor::Manager::GetEngineCore().GetEventDispatcher();
+	dispatcher->AddEventListener(Events::EventType::PrintMessage, std::bind(&ConsolePanel::AddConsoleMessage, this, std::placeholders::_1));
+}
 
-					for(auto &msg : messageQueue) {
-						auto color = GetLogSeverityColor(msg.logSeverity);
-						ImGui::PushStyleColor(ImGuiCol_Text, color);
-						ImGui::Text("%s", msg.message.c_str());
-						ImGui::PopStyleColor();
-					}
-
-					ImGui::End();
-				}
-			}
-
-			bool ConsolePanel::AddConsoleMessage(Grindstone::Events::BaseEvent* ev) {
-				auto printMsg = (Events::PrintMessageEvent*)ev;
-				messageQueue.push_front(printMsg->message);
-
-				while (messageQueue.size() > 100) {
-					messageQueue.pop_back();
-				}
-
-				return true;
-			}
-		}
+ImTextureID ConsolePanel::GetLogSeverityIcon(LogSeverity severity) {
+	switch (severity) {
+		default:
+		case LogSeverity::Info:
+			return consoleInfoIcon;
+		case LogSeverity::Trace:
+			return consoleTraceIcon;
+		case LogSeverity::Warning:
+			return consoleWarningIcon;
+		case LogSeverity::Error:
+			return consoleErrorIcon;
 	}
+}
+
+void ConsolePanel::Render() {
+	if (isShowingPanel) {
+		ImGui::Begin("Console", &isShowingPanel);
+
+		if (messageQueue.size() == 0) {
+			ImGui::Text("No console messages found.");
+		}
+
+		bool isInTable = ImGui::BeginTable("assetBrowserSplit", 2);
+
+		if (isInTable) {
+			ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 24.0f);
+			ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
+			size_t i = 0;
+			for (auto& msg : messageQueue) {
+				ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::GetColorU32(++i % 2 ? ImGuiCol_TableRowBgAlt : ImGuiCol_TableRowBg));
+				ImGui::TableNextRow(ImGuiTableRowFlags_None, 24.0f);
+				ImGui::TableNextColumn();
+				auto icon = GetLogSeverityIcon(msg.logSeverity);
+				ImGui::Image(icon, ImVec2(20.0f, 20.0f));
+				ImGui::TableNextColumn();
+				ImGui::TextWrapped(msg.message.c_str());
+			}
+
+			ImGui::EndTable();
+		}
+
+		ImGui::End();
+	}
+}
+
+bool ConsolePanel::AddConsoleMessage(Grindstone::Events::BaseEvent* ev) {
+	auto printMsg = (Events::PrintMessageEvent*)ev;
+	messageQueue.push_front(printMsg->message);
+
+	while (messageQueue.size() > 100) {
+		messageQueue.pop_back();
+	}
+
+	return true;
+}
+
+ImTextureID ConsolePanel::GetTexture(std::string fileName) {
+	std::string path = std::string("../engineassets/editor/consoleIcons/") + fileName;
+	auto assetManager = Editor::Manager::GetEngineCore().assetManager;
+	auto textureAsset = static_cast<TextureAsset*>(assetManager->GetAsset(Grindstone::AssetType::Texture, path.c_str()));
+
+	if (textureAsset == nullptr) {
+		return 0;
+	}
+
+	GraphicsAPI::GLTexture* glTex = (GraphicsAPI::GLTexture*)textureAsset->texture;
+	return (ImTextureID)(uint64_t)glTex->GetTexture();
 }

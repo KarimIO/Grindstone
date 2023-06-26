@@ -629,6 +629,7 @@ void AssetBrowserPanel::Render() {
 	if (isShowingPanel) {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2());
 		ImGui::Begin("Asset Browser", &isShowingPanel);
+		ImGui::PopStyleVar();
 
 		RenderTopBar();
 
@@ -646,7 +647,6 @@ void AssetBrowserPanel::Render() {
 		}
 
 		ImGui::End();
-		ImGui::PopStyleVar();
 	}
 }
 
