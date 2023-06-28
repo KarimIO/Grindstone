@@ -105,11 +105,12 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(std::filesystem::path path
 
 	auto metaFileLastWriteTime = std::filesystem::last_write_time(metaFilePath);
 	auto assetFileLastWriteTime = std::filesystem::last_write_time(path);
-	if (metaFileLastWriteTime > assetFileLastWriteTime) {
-		return false;
+	if (assetFileLastWriteTime > metaFileLastWriteTime) {
+		return true;
 	}
 
-	return true;
+	MetaFile metaFile(path);
+	return metaFile.IsOutdatedVersion();
 }
 
 void FileManager::UpdateCompiledFileIfNecessary(std::filesystem::path path) {

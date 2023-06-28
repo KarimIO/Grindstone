@@ -41,37 +41,19 @@ namespace Grindstone {
 				void FilterSearch(Directory& dir);
 				void FilterSearch();
 				void AfterCreate(std::filesystem::path path);
-				ImTextureID GetIcon(const std::filesystem::directory_entry& directoryEntry);
+				ImTextureID GetIcon(const AssetType assetType);
 			private:
 				Directory& rootDirectory;
 				Directory* currentDirectory;
 
 				struct Icons {
-					GraphicsAPI::Texture* folder;
-					GraphicsAPI::Texture* file;
-					GraphicsAPI::Texture* font;
-					GraphicsAPI::Texture* image;
-					GraphicsAPI::Texture* material;
-					GraphicsAPI::Texture* model;
-					GraphicsAPI::Texture* scene;
-					GraphicsAPI::Texture* shader;
-					GraphicsAPI::Texture* sound;
-					GraphicsAPI::Texture* text;
-					GraphicsAPI::Texture* video;
+					GraphicsAPI::Texture* folderTexture;
+					GraphicsAPI::Texture* fileTextures[static_cast<uint16_t>(AssetType::Count)];
 				} iconTextures;
 
 				struct IconsIds {
-					ImTextureID folder;
-					ImTextureID file;
-					ImTextureID font;
-					ImTextureID image;
-					ImTextureID material;
-					ImTextureID model;
-					ImTextureID scene;
-					ImTextureID shader;
-					ImTextureID sound;
-					ImTextureID text;
-					ImTextureID video;
+					ImTextureID folderIcon;
+					ImTextureID fileIcons[static_cast<uint16_t>(AssetType::Count)];
 				} iconIds;
 
 				bool isShowingPanel = true;

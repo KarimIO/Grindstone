@@ -12,6 +12,7 @@
 #include "Editor/Importers/TextureImporter.hpp"
 #include "Editor/EditorManager.hpp"
 #include "AssetBrowserPanel.hpp"
+#include "Common/ResourcePipeline/AssetType.hpp"
 #include "Common/Window/WindowManager.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/Scenes/Scene.hpp"
@@ -59,8 +60,8 @@ ImTextureID GetIdFromTexture(GraphicsAPI::Texture* texture) {
 	return (ImTextureID)(uint64_t)glTex->GetTexture();
 }
 
-void PrepareIcon(Grindstone::Assets::AssetManager* assetManager, const char* path, GraphicsAPI::Texture*& texture, ImTextureID& id) {
-	auto textureAsset = static_cast<TextureAsset*>(assetManager->GetAsset(Grindstone::AssetType::Texture, path));
+void PrepareIcon(Grindstone::Assets::AssetManager* assetManager, std::string path, GraphicsAPI::Texture*& texture, ImTextureID& id) {
+	auto textureAsset = static_cast<TextureAsset*>(assetManager->GetAsset(Grindstone::AssetType::Texture, path.c_str()));
 
 	if (textureAsset == nullptr) {
 		return;
@@ -70,67 +71,35 @@ void PrepareIcon(Grindstone::Assets::AssetManager* assetManager, const char* pat
 	id = GetIdFromTexture(texture);
 }
 
-#define PREPARE_ICON(type) PrepareIcon(assetManager, "../engineassets/editor/assetIcons/" #type ".dds", iconTextures.type, iconIds.type)
+#define PREPARE_ICON(assetType) PrepareIcon(assetManager, std::string("../engineassets/editor/assetIcons/") + GetAssetTypeToString(assetType) + ".dds", iconTextures.fileTextures[static_cast<uint16_t>(assetType)], iconIds.fileIcons[static_cast<uint16_t>(assetType)])
 
 AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore), rootDirectory(Editor::Manager::GetFileManager().GetRootDirectory()) {
 	pathToRename = "";
 
 	auto assetManager = engineCore->assetManager;
-	PREPARE_ICON(folder);
-	PREPARE_ICON(file);
-	PREPARE_ICON(image);
-	PREPARE_ICON(material);
-	PREPARE_ICON(model);
-	PREPARE_ICON(shader);
-	PREPARE_ICON(scene);
-	PREPARE_ICON(sound);
-	PREPARE_ICON(text);
-	PREPARE_ICON(video);
+	PrepareIcon(assetManager, "../engineassets/editor/assetIcons/Folder.dds", iconTextures.folderTexture, iconIds.folderIcon);
+
+	PREPARE_ICON(AssetType::Undefined);
+	PREPARE_ICON(AssetType::Texture);
+	PREPARE_ICON(AssetType::Shader);
+	PREPARE_ICON(AssetType::Material);
+	PREPARE_ICON(AssetType::AudioClip);
+	PREPARE_ICON(AssetType::Mesh3d);
+	PREPARE_ICON(AssetType::Rig);
+	PREPARE_ICON(AssetType::Animation);
+	PREPARE_ICON(AssetType::Script);
+	PREPARE_ICON(AssetType::Scene);
 
 	currentDirectory = &rootDirectory;
 }
 
-ImTextureID AssetBrowserPanel::GetIcon(const std::filesystem::directory_entry& directoryEntry) {
-	if (directoryEntry.is_directory()) {
-		return iconIds.folder;
+ImTextureID AssetBrowserPanel::GetIcon(const AssetType assetType) {
+	uint16_t uintType = static_cast<uint16_t>(assetType);
+	if (uintType >= static_cast<uint16_t>(AssetType::Count)) {
+		return iconIds.fileIcons[static_cast<uint16_t>(AssetType::Undefined)];
 	}
 
-	const std::string& path = directoryEntry.path().string();
-	size_t firstDot = path.find_last_of('.');
-	std::string firstDotExtension = path.substr(firstDot);
-	size_t secondDot = path.find_last_of('.', firstDot - 1);
-	std::string secondDotExtension = secondDot == std::string::npos ? "" : path.substr(secondDot);
-
-	if (firstDotExtension == ".glsl") {
-		return iconIds.shader;
-	}
-	else if (
-		firstDotExtension == ".jpg" ||
-		firstDotExtension == ".jpeg" ||
-		firstDotExtension == ".tga" ||
-		firstDotExtension == ".bmp" ||
-		firstDotExtension == ".png"
-		) {
-		return iconIds.image;
-	}
-	else if (
-		firstDotExtension == ".fbx" ||
-		firstDotExtension == ".obj" ||
-		firstDotExtension == ".dae"
-		) {
-		return iconIds.model;
-	}
-	else if (firstDotExtension == ".gmat") {
-		return iconIds.material;
-	}
-	else if (secondDotExtension == ".scene.json") {
-		return iconIds.scene;
-	}
-	else if (firstDotExtension == ".txt") {
-		return iconIds.text;
-	}
-
-	return iconIds.file;
+	return iconIds.fileIcons[uintType];
 }
 
 void AssetBrowserPanel::SetCurrentAssetDirectory(Directory& newDirectory) {
@@ -400,7 +369,7 @@ void AssetBrowserPanel::RenderFolders() {
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoveredColor);
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, activeColor);
 
-		ImTextureID icon = GetIcon(directoryEntry);
+		ImTextureID icon = iconIds.folderIcon;
 		ImGui::PushID(buttonString.c_str());
 		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
 		ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
@@ -455,7 +424,17 @@ void AssetBrowserPanel::RenderFile(File* file) {
 	float cursorX = ImGui::GetCursorPosX();
 	float cursorY = ImGui::GetCursorPosY();
 
-	ImTextureID icon = GetIcon(file->directoryEntry);
+	bool hasDefaultAsset = false;
+	MetaFile::Subasset subasset;
+	AssetType assetType = AssetType::Undefined;
+	Uuid myUuid;
+	if (file->metaFile.TryGetDefaultSubasset(subasset)) {
+		hasDefaultAsset = true;
+		assetType = subasset.assetType;
+		myUuid = subasset.uuid;
+	}
+
+	ImTextureID icon = GetIcon(assetType);
 	ImGui::PushID(buttonString.c_str());
 	ImGui::SetCursorPosX(cursorX + THUMBNAIL_SPACING);
 	ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
@@ -466,11 +445,7 @@ void AssetBrowserPanel::RenderFile(File* file) {
 	RenderAssetContextMenu(file->directoryEntry);
 	ProcessDirectoryEntryClicks(file->directoryEntry);
 
-	Uuid myUuid;
-	if (
-		file->metaFile.TryGetDefaultSubassetUuid(myUuid) &&
-		ImGui::BeginDragDropSource()
-	) {
+	if (hasDefaultAsset && ImGui::BeginDragDropSource()) {
 		std::string myUuidAsString = myUuid.ToString();
 		ImGui::SetDragDropPayload("_UUID", myUuidAsString.data(), myUuidAsString.size() + 1);
 		ImGui::Text("%s", filenameString.c_str());
@@ -517,7 +492,7 @@ void AssetBrowserPanel::RenderFile(File* file) {
 		if (isExpanded) {
 			for (auto& subasset : file->metaFile) {
 				ImGui::TableNextColumn();
-				ImTextureID icon = 0; //GetIcon(file->directoryEntry);
+				ImTextureID icon = GetIcon(subasset.assetType);
 				buttonString = filenameString + subasset.uuid.ToString();
 				ImGui::PushID(buttonString.c_str());
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);

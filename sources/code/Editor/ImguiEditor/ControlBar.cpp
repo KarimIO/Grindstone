@@ -51,7 +51,6 @@ void ControlBar::Render() {
 		ImGui::SetCursorPosX(centerX);
 		PlayMode playMode = editorManager.GetPlayMode();
 		bool isPlayMode = playMode == PlayMode::Play;
-		const char* playModeText = isPlayMode ? "Quit Play Mode" : "Enter Play Mode";
 		if (RenderButton(playIcon, isPlayMode)) {
 			PlayMode newMode = isPlayMode ? PlayMode::Editor : PlayMode::Play;
 			editorManager.SetPlayMode(newMode);

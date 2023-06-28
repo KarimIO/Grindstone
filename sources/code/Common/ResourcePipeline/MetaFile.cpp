@@ -6,6 +6,8 @@
 #include "MetaFile.hpp"
 using namespace Grindstone;
 
+const uint32_t currentMetaFileVersion = 1;
+
 void MetaFile::Load(std::filesystem::path baseAssetPath) {
 	path = baseAssetPath.string() + ".meta";
 	if (!std::filesystem::exists(path)) {
@@ -16,6 +18,11 @@ void MetaFile::Load(std::filesystem::path baseAssetPath) {
 
 	rapidjson::Document document;
 	document.Parse(fileContents.c_str());
+
+	version = 0;
+	if (document.HasMember("version")) {
+		version = document["version"].GetUint();
+	}
 
 	Uuid defaultUuid;
 	if (document.HasMember("defaultUuid")) {
@@ -31,13 +38,19 @@ void MetaFile::Load(std::filesystem::path baseAssetPath) {
 		rapidjson::Value& subasset = *elementIterator;
 		std::string name = subasset["name"].GetString();
 		Uuid uuid(subasset["uuid"].GetString());
+		AssetType assetType = AssetType::Undefined;
+		if (subasset.HasMember("type")) {
+			const char* assetTypeStr = subasset["type"].GetString();
+			assetType = GetAssetTypeFromString(assetTypeStr);
+		}
 
 		if (defaultUuid == uuid) {
 			defaultSubasset.name = name;
 			defaultSubasset.uuid = uuid;
+			defaultSubasset.assetType = assetType;
 		}
 		else {
-			subassets.emplace_back(name, uuid);
+			subassets.emplace_back(name, uuid, assetType);
 		}
 	}
 }
@@ -47,6 +60,8 @@ void MetaFile::Save() {
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> documentWriter = rapidjson::PrettyWriter<rapidjson::StringBuffer>(documentStringBuffer);
 
 	documentWriter.StartObject();
+	documentWriter.Key("version");
+	documentWriter.Uint(currentMetaFileVersion);
 	documentWriter.Key("defaultUuid");
 	documentWriter.String(defaultSubasset.uuid.ToString().c_str());
 	documentWriter.Key("subassets");
@@ -58,6 +73,8 @@ void MetaFile::Save() {
 		documentWriter.String(defaultSubasset.name.c_str());
 		documentWriter.Key("uuid");
 		documentWriter.String(defaultSubasset.uuid.ToString().c_str());
+		documentWriter.Key("type");
+		documentWriter.String(GetAssetTypeToString(defaultSubasset.assetType));
 		documentWriter.EndObject();
 	}
 
@@ -67,6 +84,8 @@ void MetaFile::Save() {
 		documentWriter.String(subasset.name.c_str());
 		documentWriter.Key("uuid");
 		documentWriter.String(subasset.uuid.ToString().c_str());
+		documentWriter.Key("type");
+		documentWriter.String(GetAssetTypeToString(subasset.assetType));
 		documentWriter.EndObject();
 	}
 	documentWriter.EndArray();
@@ -79,6 +98,15 @@ void MetaFile::Save() {
 	file.close();
 }
 
+bool MetaFile::TryGetDefaultSubasset(MetaFile::Subasset& subasset) {
+	if (defaultSubasset.name != "") {
+		subasset = defaultSubasset;
+		return true;
+	}
+
+	return false;
+}
+
 bool MetaFile::TryGetDefaultSubassetUuid(Uuid& outUuid) {
 	if (defaultSubasset.name != "") {
 		outUuid = defaultSubasset.uuid;
@@ -88,13 +116,15 @@ bool MetaFile::TryGetDefaultSubassetUuid(Uuid& outUuid) {
 	return false;
 }
 
-Uuid Grindstone::MetaFile::GetOrCreateDefaultSubassetUuid(std::string& subassetName) {
+Uuid Grindstone::MetaFile::GetOrCreateDefaultSubassetUuid(std::string& subassetName, AssetType assetType) {
 	if (defaultSubasset.uuid.ToString() == "") {
+		defaultSubasset.assetType = assetType;
 		defaultSubasset.name = subassetName;
 		defaultSubasset.uuid = Uuid();
 	}
 	else
 	{
+		defaultSubasset.assetType = assetType;
 		defaultSubasset.name = subassetName;
 	}
 
@@ -112,15 +142,20 @@ bool MetaFile::TryGetSubassetUuid(std::string& subassetName, Uuid& outUuid) {
 	return false;
 }
 
-Uuid MetaFile::GetOrCreateSubassetUuid(std::string& subassetName) {
+bool MetaFile::IsOutdatedVersion() {
+	return version < currentMetaFileVersion;
+}
+
+Uuid MetaFile::GetOrCreateSubassetUuid(std::string& subassetName, AssetType assetType) {
 	for (auto& subasset : subassets) {
 		if (subasset.name == subassetName) {
+			subasset.assetType = assetType;
 			return subasset.uuid;
 		}
 	}
 
 	Uuid uuid;
-	subassets.emplace_back(subassetName, uuid);
+	subassets.emplace_back(subassetName, uuid, assetType);
 	return uuid;
 }
 

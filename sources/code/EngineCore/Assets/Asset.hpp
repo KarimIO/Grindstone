@@ -2,7 +2,7 @@
 
 #include <string>
 #include <Common/ResourcePipeline/Uuid.hpp>
-#include "AssetType.hpp"
+#include "Common/ResourcePipeline/AssetType.hpp"
 
 namespace Grindstone {
 	struct Asset {

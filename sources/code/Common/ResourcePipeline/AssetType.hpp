@@ -13,6 +13,10 @@ namespace Grindstone {
 		Rig,
 		Animation,
 		Script,
+		Scene,
 		Count
 	};
+
+	const char* GetAssetTypeToString(AssetType type);
+	AssetType GetAssetTypeFromString(const char* type);
 }

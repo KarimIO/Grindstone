@@ -134,7 +134,7 @@ namespace Grindstone {
 			metaFile = new MetaFile();
 			metaFile->Load(inputPath);
 			std::string subassetName = "shader";
-			Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
+			Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Shader);
 			baseOutputPath = (Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString()).string();
 
 			metaFile->Save();

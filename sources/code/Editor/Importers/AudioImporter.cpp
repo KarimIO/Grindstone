@@ -9,7 +9,7 @@ using namespace Grindstone::Importers;
 void AudioImporter::Import(std::filesystem::path& path) {
 	metaFile = new MetaFile(path);
 	std::string subassetName = "audioClip";
-	Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
+	Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::AudioClip);
 
 	std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
 	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);

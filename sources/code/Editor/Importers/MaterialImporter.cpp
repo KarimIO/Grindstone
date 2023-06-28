@@ -82,7 +82,7 @@ void Importers::CreateCutoutMaterial(StandardMaterialCreateInfo& ci, std::filesy
 void MaterialImporter::Import(std::filesystem::path& path) {
 	metaFile = new MetaFile(path);
 	std::string subassetName = "material";
-	uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
+	uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Material);
 
 	std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
 	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);

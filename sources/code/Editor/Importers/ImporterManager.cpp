@@ -74,5 +74,5 @@ bool ImporterManager::HasImporter(std::filesystem::path& path) {
 	}
 
 	std::string extensionWithoutDot = extension.substr(1);
-	return HasImporter(extension);
+	return HasImporter(extensionWithoutDot);
 }

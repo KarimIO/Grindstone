@@ -85,7 +85,7 @@ void ModelImporter::ConvertMaterials() {
 		}
 
 		newMaterial.materialName = name.C_Str();
-		Uuid uuid = metaFile->GetOrCreateSubassetUuid(newMaterial.materialName);
+		Uuid uuid = metaFile->GetOrCreateSubassetUuid(newMaterial.materialName, AssetType::Material);
 		std::string uuidString = outputData.materialNames[i] = uuid.ToString();
 
 		std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuidString;
@@ -292,7 +292,7 @@ void ModelImporter::ProcessAnimations() {
 		channels.resize(animation->mNumChannels);
 
 		std::string subassetName = "anim-" + animationName;
-		Uuid outUuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
+		Uuid outUuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Animation);
 
 		std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / outUuid.ToString();
 		std::ofstream output(outputPath, std::ios::binary);
@@ -402,7 +402,7 @@ void ModelImporter::OutputPrefabs() {
 
 void ModelImporter::OutputMeshes() {
 	std::string subassetName = "mesh";
-	Uuid outUuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName);
+	Uuid outUuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Mesh3d);
 
 	std::filesystem::path meshOutputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / outUuid.ToString();
 
