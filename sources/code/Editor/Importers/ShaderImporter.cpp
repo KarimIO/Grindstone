@@ -64,6 +64,19 @@ std::string ReadTextFile(const char* filename) {
 	return content;
 }
 
+Grindstone::Importers::ShaderImporter::Texture* FindTextureAlreadyReflected(
+	std::vector<Grindstone::Importers::ShaderImporter::Texture>& textures,
+	const std::string& resourceName
+) {
+	for (size_t i = 0; i < textures.size(); ++i) {
+		if (textures[i].name == resourceName) {
+			return &textures[i];
+		}
+	}
+
+	return nullptr;
+}
+
 void ReflectImages(
 	Grindstone::Importers::ShaderImporter::ShaderType shaderType,
 	std::vector<Grindstone::Importers::ShaderImporter::Texture>& textures,
@@ -73,9 +86,29 @@ void ReflectImages(
 	for (const auto& resource : resourceList) {
 		uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
 		auto& resourceName = resource.name;
+
+		auto textureReflected = FindTextureAlreadyReflected(textures, resourceName);
+		if (textureReflected != nullptr) {
+			textureReflected->shaderPasses.push_back(shaderType);
+			continue;
+		}
+
 		textures.emplace_back(resourceName, binding);
 		textures.back().shaderPasses.push_back(shaderType);
 	}
+}
+
+Grindstone::Importers::ShaderImporter::UniformBuffer* FindUniformAlreadyReflected(
+	std::vector<Grindstone::Importers::ShaderImporter::UniformBuffer>& uniformBuffers,
+	const std::string& resourceName
+) {
+	for (size_t i = 0; i < uniformBuffers.size(); ++i) {
+		if (uniformBuffers[i].name == resourceName) {
+			return &uniformBuffers[i];
+		}
+	}
+
+	return nullptr;
 }
 
 void ReflectStruct(
@@ -90,6 +123,12 @@ void ReflectStruct(
 		uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
 		uint32_t memberCount = static_cast<uint32_t>(bufferType.member_types.size());
 		auto& resourceName = resource.name;
+
+		auto ubReflected = FindUniformAlreadyReflected(uniformBuffers, resourceName);
+		if (ubReflected != nullptr) {
+			ubReflected->shaderPasses.push_back(shaderType);
+			continue;
+		}
 
 		uniformBuffers.emplace_back(resourceName.c_str(), binding, bufferSize);
 		auto& uniformBuffer = uniformBuffers.back();
