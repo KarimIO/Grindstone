@@ -1,8 +1,8 @@
 set(GRAPHICS_DIR "${COMMON_DIR}/Graphics")
 
 set(GL_CORE_SOURCES ${GRAPHICS_DIR}/Formats.cpp GLCore.cpp EntryPoint.cpp)
-set(GL_OBJ_SOURCES GLDepthTarget.cpp GLRenderTarget.cpp GLFramebuffer.cpp GLPipeline.cpp GLTexture.cpp GLVertexArrayObject.cpp GLVertexBuffer.cpp GLIndexBuffer.cpp GLUniformBuffer.cpp)
-set(GL_OBJ_HEADERS GLDepthTarget.hpp GLRenderTarget.hpp GLFramebuffer.hpp GLPipeline.hpp GLTexture.hpp GLVertexArrayObject.hpp GLVertexBuffer.hpp GLIndexBuffer.hpp GLUniformBuffer.hpp)
+set(GL_OBJ_SOURCES GLDepthTarget.cpp GLRenderTarget.cpp GLFramebuffer.cpp GLPipeline.cpp GLTexture.cpp GLVertexArrayObject.cpp GLVertexBuffer.cpp GLIndexBuffer.cpp GLUniformBuffer.cpp GLDescriptorSet.cpp GLDescriptorSetLayout.cpp)
+set(GL_OBJ_HEADERS GLDepthTarget.hpp GLRenderTarget.hpp GLFramebuffer.hpp GLPipeline.hpp GLTexture.hpp GLVertexArrayObject.hpp GLVertexBuffer.hpp GLIndexBuffer.hpp GLUniformBuffer.hpp GLDescriptorSet.hpp GLDescriptorSetLayout.hpp)
 set(GL_WINDOW_SOURCES ${COMMON_DIR}/Window/WindowManager.cpp)
 set(GL_WINDOW_HEADERS ${COMMON_DIR}/Window/WindowManager.hpp ${COMMON_DIR}/Window/Window.hpp)
 set(GL_DISPLAY_SOURCES ${COMMON_DIR}/Display/DisplayManager.cpp)

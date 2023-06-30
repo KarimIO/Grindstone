@@ -37,12 +37,11 @@ namespace Grindstone {
 			virtual void DeleteVertexBuffer(VertexBuffer *ptr) override;
 			virtual void DeleteIndexBuffer(IndexBuffer *ptr) override;
 			virtual void DeleteUniformBuffer(UniformBuffer * ptr) override;
-			virtual void DeleteUniformBufferBinding(UniformBufferBinding * ptr) override;
 			virtual void DeletePipeline(Pipeline *ptr) override;
 			virtual void DeleteRenderPass(RenderPass *ptr) override;
 			virtual void DeleteTexture(Texture *ptr) override;
-			virtual void DeleteTextureBinding(TextureBinding *ptr) override;
-			virtual void DeleteTextureBindingLayout(TextureBindingLayout *ptr) override;
+			virtual void DeleteDescriptorSet(DescriptorSet *ptr) override;
+			virtual void DeleteDescriptorSetLayout(DescriptorSetLayout *ptr) override;
 			virtual void DeleteCommandBuffer(CommandBuffer * ptr) override;
 			virtual void DeleteVertexArrayObject(VertexArrayObject *ptr) override;
 
@@ -54,11 +53,10 @@ namespace Grindstone {
 			virtual VertexBuffer *CreateVertexBuffer(VertexBuffer::CreateInfo& ci) override;
 			virtual IndexBuffer *CreateIndexBuffer(IndexBuffer::CreateInfo& ci) override;
 			virtual UniformBuffer *CreateUniformBuffer(UniformBuffer::CreateInfo& ci) override;
-			virtual UniformBufferBinding *CreateUniformBufferBinding(UniformBufferBinding::CreateInfo& ci) override;
 			virtual Texture *CreateCubemap(Texture::CubemapCreateInfo& createInfo) override;
 			virtual Texture *CreateTexture(Texture::CreateInfo& createInfo) override;
-			virtual TextureBinding *CreateTextureBinding(TextureBinding::CreateInfo& createInfo) override;
-			virtual TextureBindingLayout *CreateTextureBindingLayout(TextureBindingLayout::CreateInfo& createInfo) override;
+			virtual DescriptorSet *CreateDescriptorSet(DescriptorSet::CreateInfo& createInfo) override;
+			virtual DescriptorSetLayout *CreateDescriptorSetLayout(DescriptorSetLayout::CreateInfo& createInfo) override;
 			virtual RenderTarget* CreateRenderTarget(RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) override;
 			virtual RenderTarget* CreateRenderTarget(RenderTarget::CreateInfo& rt) override;
 			virtual DepthTarget *CreateDepthTarget(DepthTarget::CreateInfo& rt) override;
@@ -74,7 +72,6 @@ namespace Grindstone {
 
 			virtual void WaitUntilIdle() override;
 
-			virtual void BindTexture(TextureBinding *) override;
 			virtual void BindPipeline(Pipeline* pipeline) override;
 			virtual void BindVertexArrayObject(VertexArrayObject *) override;
 			virtual void DrawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) override;

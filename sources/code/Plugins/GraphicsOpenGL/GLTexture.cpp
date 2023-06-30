@@ -43,14 +43,14 @@ namespace Grindstone {
 
 				gl3wGetProcAddress("GL_COMPRESSED_RGBA_S3TC_DXT1_EXT");
 
-				for (size_t i = 0; i < 6; i++) {
+				for (GLenum i = 0; i < 6; i++) {
 					uint32_t width = createInfo.width;
 					uint32_t height = createInfo.height;
 
-					for (uint32_t j = 0; j <= createInfo.mipmaps; j++) {
+					for (GLint j = 0; j <= createInfo.mipmaps; j++) {
 						unsigned int size = ((width + 3) / 4)*((height + 3) / 4)*blockSize;
 						glCompressedTexImage2D(
-							(GLenum) GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+							GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
 							j,
 							format,
 							width,
@@ -192,9 +192,9 @@ namespace Grindstone {
 			bool isCompressed;
 			translateColorFormats(createInfo.format, isCompressed, format, internalFormat);
 
-			for (size_t i = 0; i < 6; i++) {
+			for (GLenum i = 0; i < 6; i++) {
 				glTexImage2D(
-					(GLenum) GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+					GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
 					0,
 					internalFormat,
 					createInfo.width,
@@ -230,38 +230,6 @@ namespace Grindstone {
 
 		GLTexture::~GLTexture() {
 			glDeleteTextures(1, &textureHandle);
-		}
-
-		GLTextureBinding::GLTextureBinding(CreateInfo& createInfo) {
-			textures.reserve(createInfo.textureCount);
-			targets.reserve(createInfo.textureCount);
-			for (uint32_t i = 0; i < createInfo.textureCount; i++) {
-				GLTexture *t = (GLTexture *)(createInfo.textures[i].texture);
-				if (t) {
-					textures.push_back(t);
-					targets.push_back(createInfo.textures[i].address);
-				}
-			}
-		}
-
-		void GLTextureBinding::Bind() {
-			for (int i = 0; i < textures.size(); i++) {
-				if (textures[i])
-					textures[i]->Bind(targets[i]);
-			}
-		}
-
-		GLTextureBindingLayout::GLTextureBindingLayout(CreateInfo& createInfo) {
-			subbindings = createInfo.bindings;
-			subbindingCount = createInfo.bindingCount;
-		}
-
-		TextureSubBinding GLTextureBindingLayout::GetSubBinding(uint32_t i) {
-			return subbindings[i];
-		}
-
-		uint32_t GLTextureBindingLayout::GetNumSubBindings() {
-			return subbindingCount;
 		}
 
 		void translateColorFormats(ColorFormat inFormat, bool &isCompressed, GLenum &format, GLint &internalFormat) {

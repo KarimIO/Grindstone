@@ -14,7 +14,6 @@
 #include "VulkanCore.hpp"
 #include "VulkanCommandBuffer.hpp"
 #include "VulkanDepthTarget.hpp"
-#include "VulkanDescriptors.hpp"
 #include "VulkanFramebuffer.hpp"
 #include "VulkanPipeline.hpp"
 #include "VulkanIndexBuffer.hpp"
@@ -23,6 +22,8 @@
 #include "VulkanTexture.hpp"
 #include "VulkanUniformBuffer.hpp"
 #include "VulkanVertexBuffer.hpp"
+#include "VulkanDescriptorSet.hpp"
+#include "VulkanDescriptorSetLayout.hpp"
 #include "VulkanFormat.hpp"
 #include <set>
 #include <algorithm>
@@ -518,24 +519,20 @@ namespace Grindstone {
 			return static_cast<UniformBuffer*>(new VulkanUniformBuffer(ci));
 		}
 
-		UniformBufferBinding * VulkanCore::CreateUniformBufferBinding(UniformBufferBinding::CreateInfo& ci) {
-			return static_cast<UniformBufferBinding*>(new VulkanUniformBufferBinding(ci));
-		}
-
 		Texture* VulkanCore::CreateCubemap(Texture::CubemapCreateInfo& createInfo) {
 			return nullptr; // static_cast<Texture*>(new VulkanTexture(ci));
 		}
 
-		Texture * VulkanCore::CreateTexture(Texture::CreateInfo& ci) {
+		Texture* VulkanCore::CreateTexture(Texture::CreateInfo& ci) {
 			return static_cast<Texture*>(new VulkanTexture(ci));
 		}
 
-		TextureBinding * VulkanCore::CreateTextureBinding(TextureBinding::CreateInfo& ci) {
-			return static_cast<TextureBinding*>(new VulkanTextureBinding(ci));
+		DescriptorSet* VulkanCore::CreateDescriptorSet(DescriptorSet::CreateInfo& ci) {
+			return static_cast<DescriptorSet*>(new VulkanDescriptorSet(ci));
 		}
 
-		TextureBindingLayout * VulkanCore::CreateTextureBindingLayout(TextureBindingLayout::CreateInfo& ci) {
-			return static_cast<TextureBindingLayout*>(new VulkanTextureBindingLayout(ci));
+		DescriptorSetLayout* VulkanCore::CreateDescriptorSetLayout(DescriptorSetLayout::CreateInfo& ci) {
+			return static_cast<DescriptorSetLayout*>(new VulkanDescriptorSetLayout(ci));
 		}
 
 		RenderTarget* VulkanCore::CreateRenderTarget(RenderTarget::CreateInfo& ci) {
@@ -571,9 +568,6 @@ namespace Grindstone {
 		void VulkanCore::DeleteUniformBuffer(UniformBuffer *ptr) {
 			delete static_cast<VulkanUniformBuffer*>(ptr);
 		}
-		void VulkanCore::DeleteUniformBufferBinding(UniformBufferBinding * ptr) {
-			delete static_cast<VulkanUniformBufferBinding*>(ptr);
-		}
 		void VulkanCore::DeletePipeline(Pipeline *ptr) {
 			delete static_cast<VulkanPipeline*>(ptr);
 		}
@@ -583,11 +577,11 @@ namespace Grindstone {
 		void VulkanCore::DeleteTexture(Texture * ptr) {
 			delete static_cast<VulkanTexture*>(ptr);
 		}
-		void VulkanCore::DeleteTextureBinding(TextureBinding * ptr) {
-			delete static_cast<VulkanTextureBinding*>(ptr);
+		void VulkanCore::DeleteDescriptorSet(DescriptorSet* ptr) {
+			delete static_cast<VulkanDescriptorSet*>(ptr);
 		}
-		void VulkanCore::DeleteTextureBindingLayout(TextureBindingLayout * ptr) {
-			delete static_cast<VulkanTextureBindingLayout*>(ptr);
+		void VulkanCore::DeleteDescriptorSetLayout(DescriptorSetLayout * ptr) {
+			delete static_cast<VulkanDescriptorSetLayout*>(ptr);
 		}
 		void VulkanCore::DeleteCommandBuffer(CommandBuffer *ptr) {
 			delete static_cast<VulkanCommandBuffer*>(ptr);
@@ -627,10 +621,6 @@ namespace Grindstone {
 		}
 		void VulkanCore::Clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) {
 			std::cout << "VulkanCore::Clear is not used.\n";
-			assert(false);
-		}
-		void VulkanCore::BindTexture(TextureBinding *) {
-			std::cout << "VulkanCore::BindTexture is not used.\n";
 			assert(false);
 		}
 		void VulkanCore::BindPipeline(Pipeline*) {

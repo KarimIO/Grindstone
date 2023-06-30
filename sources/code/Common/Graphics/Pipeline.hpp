@@ -1,17 +1,16 @@
 #pragma once
 
-#include "RenderPass.hpp"
-#include "VertexBuffer.hpp"
-#include "UniformBuffer.hpp"
 #include <string>
 #include <vector>
 #include <iostream>
-#include "Texture.hpp"
-#include "UniformBuffer.hpp"
 #include "Formats.hpp"
 
 namespace Grindstone {
 	namespace GraphicsAPI {
+		class RenderPass;
+		class DescriptorSetLayout;
+		struct VertexBufferLayout;
+
 		struct ShaderStageCreateInfo {
 			const char *fileName;
 			const char *content;
@@ -38,13 +37,8 @@ namespace Grindstone {
 				uint32_t scissorW, scissorH;
 				ShaderStageCreateInfo* shaderStageCreateInfos;
 				uint32_t shaderStageCreateInfoCount;
-
-				UniformBufferBinding** uniformBufferBindings;
-				uint32_t uniformBufferBindingCount;
-
-				TextureBindingLayout** textureBindings;
-				uint32_t textureBindingCount;
-
+				DescriptorSetLayout** descriptorSetLayouts;
+				uint32_t descriptorSetLayoutCount;
 				VertexBufferLayout* vertexBindings;
 				uint32_t vertexBindingsCount;
 			};

@@ -7,6 +7,8 @@
 #include "VulkanCore.hpp"
 #include "VulkanUniformBuffer.hpp"
 #include "VulkanTexture.hpp"
+#include "VulkanDescriptorSet.hpp"
+#include "VulkanDescriptorSetLayout.hpp"
 #include <cstring>
 
 namespace Grindstone {
@@ -146,18 +148,13 @@ namespace Grindstone {
 
 		void VulkanCommandBuffer::UploadCmdBindDescriptorSet(CommandBindDescriptorSets * createInfo) {
 			VulkanPipeline *graphicsPipeline = static_cast<VulkanPipeline *>(createInfo->graphicsPipeline);
-			size_t descriptorSetCount = static_cast<size_t>(createInfo->uniformBufferCount + createInfo->textureCount);
+			size_t descriptorSetCount = static_cast<size_t>(createInfo->descriptorSetCount);
 
 			std::vector<VkDescriptorSet> descriptorSets;
 			descriptorSets.reserve(descriptorSetCount);
-			for (uint32_t i = 0; i < createInfo->uniformBufferCount; i++) {
-				VulkanUniformBuffer *vkub = (VulkanUniformBuffer *)(createInfo->uniformBuffers[i]);
+			for (uint32_t i = 0; i < createInfo->descriptorSetCount; i++) {
+				VulkanDescriptorSet* vkub = (VulkanDescriptorSet *)(createInfo->descriptorSets[i]);
 				descriptorSets.push_back(vkub->GetDescriptorSet());
-			}
-
-			for (uint32_t i = 0; i < createInfo->textureCount; i++) {
-				VulkanTextureBinding *vktex = static_cast<VulkanTextureBinding *>(createInfo->textureBindings[i]);
-				descriptorSets.push_back(vktex->GetDescriptorSet());
 			}
 
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->GetGraphicsPipelineLayout(), 0, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, nullptr);

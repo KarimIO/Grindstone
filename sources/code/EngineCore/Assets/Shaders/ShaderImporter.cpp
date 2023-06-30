@@ -117,20 +117,20 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	pipelineCreateInfo.shaderStageCreateInfos = shaderStages.data();
 	pipelineCreateInfo.shaderStageCreateInfoCount = (uint32_t)shaderStages.size();
 
-	std::vector<GraphicsAPI::UniformBufferBinding*> ubbs;
-	ubbs.reserve(reflectionData.uniformBuffers.size());
+	std::vector<GraphicsAPI::DescriptorSetLayout*> descriptorSetLayouts;
+	descriptorSetLayouts.reserve(reflectionData.uniformBuffers.size());
 
 	for (auto& uniform : reflectionData.uniformBuffers) {
-		GraphicsAPI::UniformBufferBinding::CreateInfo ubbCi{};
-		ubbCi.binding = static_cast<uint32_t>(uniform.bindingId);
-		ubbCi.shaderLocation = uniform.name.c_str();
-		ubbCi.size = static_cast<uint32_t>(uniform.bufferSize);
-		ubbCi.stages = static_cast<GraphicsAPI::ShaderStageBit>(uniform.shaderStagesBitMask);
-		ubbs.push_back(graphicsCore->CreateUniformBufferBinding(ubbCi));
+		GraphicsAPI::DescriptorSetLayout::CreateInfo layoutCi{};
+		layoutCi.binding = static_cast<uint32_t>(uniform.bindingId);
+		layoutCi.shaderLocation = uniform.name.c_str();
+		layoutCi.size = static_cast<uint32_t>(uniform.bufferSize);
+		layoutCi.stages = static_cast<GraphicsAPI::ShaderStageBit>(uniform.shaderStagesBitMask);
+		descriptorSetLayouts.push_back(graphicsCore->CreateUniformBufferBinding(layoutCi));
 	}
 
-	pipelineCreateInfo.uniformBufferBindings = ubbs.data();
-	pipelineCreateInfo.uniformBufferBindingCount = static_cast<uint32_t>(ubbs.size());
+	pipelineCreateInfo.descriptorSetLayouts = descriptorSetLayouts.data();
+	pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
 
 	GraphicsAPI::TextureSubBinding sub;
 	sub.shaderLocation = "texSampler";

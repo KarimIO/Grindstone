@@ -1,6 +1,8 @@
 #include <GL/gl3w.h>
 #include "GLCore.hpp"
 
+#include "GLDescriptorSet.hpp"
+#include "GLDescriptorSetLayout.hpp"
 #include "GLVertexArrayObject.hpp"
 #include "GLVertexBuffer.hpp"
 #include "GLIndexBuffer.hpp"
@@ -169,12 +171,12 @@ namespace Grindstone {
 		//==================================
 		// Creators
 		//==================================
-		TextureBinding* GLCore::CreateTextureBinding(TextureBinding::CreateInfo& createInfo) {
-			return static_cast<TextureBinding*>(new GLTextureBinding(createInfo));
+		DescriptorSet* GLCore::CreateDescriptorSet(DescriptorSet::CreateInfo& createInfo) {
+			return static_cast<DescriptorSet*>(new GLDescriptorSet(createInfo));
 		}
 
-		TextureBindingLayout* GLCore::CreateTextureBindingLayout(TextureBindingLayout::CreateInfo& createInfo) {
-			return static_cast<TextureBindingLayout*>(new GLTextureBindingLayout(createInfo));
+		DescriptorSetLayout* GLCore::CreateDescriptorSetLayout(DescriptorSetLayout::CreateInfo& createInfo) {
+			return static_cast<DescriptorSetLayout*>(new GLDescriptorSetLayout(createInfo));
 		}
 
 		Framebuffer* GLCore::CreateFramebuffer(Framebuffer::CreateInfo& ci) {
@@ -207,10 +209,6 @@ namespace Grindstone {
 
 		UniformBuffer* GLCore::CreateUniformBuffer(UniformBuffer::CreateInfo& ci) {
 			return static_cast<UniformBuffer*>(new GLUniformBuffer(ci));
-		}
-
-		UniformBufferBinding* GLCore::CreateUniformBufferBinding(UniformBufferBinding::CreateInfo& ci) {
-			return static_cast<UniformBufferBinding*>(new GLUniformBufferBinding(ci));
 		}
 
 		Texture* GLCore::CreateCubemap(Texture::CubemapCreateInfo& ci) {
@@ -282,10 +280,6 @@ namespace Grindstone {
 			delete (GLUniformBuffer *)ptr;
 		}
 
-		void GLCore::DeleteUniformBufferBinding(UniformBufferBinding * ptr) {
-			delete (GLUniformBufferBinding *)ptr;
-		}
-
 		void GLCore::DeletePipeline(Pipeline*ptr) {
 			delete (GLPipeline *)ptr;
 		}
@@ -298,12 +292,12 @@ namespace Grindstone {
 			delete (GLTexture *)ptr;
 		}
 
-		void GLCore::DeleteTextureBinding(TextureBinding *ptr) {
-			delete (GLTextureBinding *)ptr;
+		void GLCore::DeleteDescriptorSet(DescriptorSet *ptr) {
+			delete (GLDescriptorSet *)ptr;
 		}
 
-		void GLCore::DeleteTextureBindingLayout(TextureBindingLayout *ptr) {
-			delete (GLTextureBindingLayout *)ptr;
+		void GLCore::DeleteDescriptorSetLayout(DescriptorSetLayout *ptr) {
+			delete (GLDescriptorSetLayout *)ptr;
 		}
 
 		void GLCore::DeleteCommandBuffer(CommandBuffer * ptr) {
@@ -323,11 +317,6 @@ namespace Grindstone {
 
 		void GLCore::SetColorMask(ColorMask mask) {
 			glColorMask((GLboolean)(mask & ColorMask::Red), (GLboolean)(mask & ColorMask::Blue), (GLboolean)(mask & ColorMask::Green), (GLboolean)(mask & ColorMask::Alpha));
-		}
-
-		void GLCore::BindTexture(TextureBinding* binding) {
-			GLTextureBinding* b = (GLTextureBinding*)binding;
-			b->Bind();
 		}
 
 		void GLCore::BindPipeline(Pipeline* pipeline) {

@@ -5,27 +5,16 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-
-		class UniformBufferBinding {
-		public:
-			struct CreateInfo {
-				const char* shaderLocation;
-				uint32_t binding;
-				ShaderStageBit stages;
-				uint32_t size;
-			};
-		};
-
 		class UniformBuffer {
 		public:
 			struct CreateInfo {
+				const char* debugName;
 				bool isDynamic;
 				uint32_t size;
-				UniformBufferBinding* binding;
 			};
 
 			virtual void UpdateBuffer(void * content) = 0;
-			virtual void Bind() = 0;
+			virtual uint32_t GetSize() = 0;
 		};
 	};
 };

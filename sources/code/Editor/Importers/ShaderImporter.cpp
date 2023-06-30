@@ -85,6 +85,7 @@ void ReflectImages(
 ) {
 	for (const auto& resource : resourceList) {
 		uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+		uint32_t descriptorSet = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
 		auto& resourceName = resource.name;
 
 		auto textureReflected = FindTextureAlreadyReflected(textures, resourceName);
@@ -93,7 +94,7 @@ void ReflectImages(
 			continue;
 		}
 
-		textures.emplace_back(resourceName, binding);
+		textures.emplace_back(resourceName, binding, descriptorSet);
 		textures.back().shaderPasses.push_back(shaderType);
 	}
 }
@@ -121,6 +122,7 @@ void ReflectStruct(
 		spirv_cross::SPIRType bufferType = compiler.get_type(resource.base_type_id);
 		size_t bufferSize = compiler.get_declared_struct_size(bufferType);
 		uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+		uint32_t descriptorSet = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
 		uint32_t memberCount = static_cast<uint32_t>(bufferType.member_types.size());
 		auto& resourceName = resource.name;
 
@@ -130,7 +132,7 @@ void ReflectStruct(
 			continue;
 		}
 
-		uniformBuffers.emplace_back(resourceName.c_str(), binding, bufferSize);
+		uniformBuffers.emplace_back(resourceName.c_str(), binding, descriptorSet, bufferSize);
 		auto& uniformBuffer = uniformBuffers.back();
 		uniformBuffer.shaderPasses.push_back(shaderType);
 
@@ -198,6 +200,8 @@ namespace Grindstone {
 				reflectionWriter.String(structMeta.name.c_str());
 				reflectionWriter.Key("binding");
 				reflectionWriter.Uint(static_cast<unsigned int>(structMeta.binding));
+				reflectionWriter.Key("descriptorSet");
+				reflectionWriter.Uint(static_cast<unsigned int>(structMeta.descriptorSet));
 				reflectionWriter.Key("bufferSize");
 				reflectionWriter.Uint(static_cast<unsigned int>(structMeta.bufferSize));
 
@@ -237,6 +241,8 @@ namespace Grindstone {
 				reflectionWriter.String(resource.name.c_str());
 				reflectionWriter.Key("binding");
 				reflectionWriter.Uint(static_cast<unsigned int>(resource.binding));
+				reflectionWriter.Key("descriptorSet");
+				reflectionWriter.Uint(static_cast<unsigned int>(resource.descriptorSet));
 
 				reflectionWriter.Key("usedIn");
 				reflectionWriter.StartArray();

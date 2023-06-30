@@ -11,6 +11,9 @@
 #include "CommandBuffer.hpp"
 #include "VertexArrayObject.hpp"
 #include "DepthTarget.hpp"
+#include "Texture.hpp"
+#include "DescriptorSet.hpp"
+#include "DescriptorSetLayout.hpp"
 
 namespace Grindstone {
 	class Window;
@@ -51,12 +54,11 @@ namespace Grindstone {
 			virtual void DeleteVertexBuffer(VertexBuffer* ptr) = 0;
 			virtual void DeleteIndexBuffer(IndexBuffer* ptr) = 0;
 			virtual void DeleteUniformBuffer(UniformBuffer* ptr) = 0;
-			virtual void DeleteUniformBufferBinding(UniformBufferBinding* ptr) = 0;
 			virtual void DeletePipeline(Pipeline* ptr) = 0;
 			virtual void DeleteRenderPass(RenderPass* ptr) = 0;
 			virtual void DeleteTexture(Texture* ptr) = 0;
-			virtual void DeleteTextureBinding(TextureBinding* ptr) = 0;
-			virtual void DeleteTextureBindingLayout(TextureBindingLayout* ptr) = 0;
+			virtual void DeleteDescriptorSet(DescriptorSet* ptr) = 0;
+			virtual void DeleteDescriptorSetLayout(DescriptorSetLayout* ptr) = 0;
 			virtual void DeleteCommandBuffer(CommandBuffer* ptr) = 0;
 			virtual void DeleteVertexArrayObject(VertexArrayObject* ptr) = 0;
 
@@ -68,11 +70,10 @@ namespace Grindstone {
 			virtual VertexBuffer* CreateVertexBuffer(VertexBuffer::CreateInfo& ci) = 0;
 			virtual IndexBuffer* CreateIndexBuffer(IndexBuffer::CreateInfo& ci) = 0;
 			virtual UniformBuffer* CreateUniformBuffer(UniformBuffer::CreateInfo& ci) = 0;
-			virtual UniformBufferBinding* CreateUniformBufferBinding(UniformBufferBinding::CreateInfo& ci) = 0;
 			virtual Texture* CreateCubemap(Texture::CubemapCreateInfo& createInfo) = 0;
 			virtual Texture* CreateTexture(Texture::CreateInfo& createInfo) = 0;
-			virtual TextureBinding* CreateTextureBinding(TextureBinding::CreateInfo& ci) = 0;
-			virtual TextureBindingLayout* CreateTextureBindingLayout(TextureBindingLayout::CreateInfo& createInfo) = 0;
+			virtual DescriptorSet* CreateDescriptorSet(DescriptorSet::CreateInfo& ci) = 0;
+			virtual DescriptorSetLayout* CreateDescriptorSetLayout(DescriptorSetLayout::CreateInfo& ci) = 0;
 			virtual RenderTarget* CreateRenderTarget(RenderTarget::CreateInfo& rt) = 0;
 			virtual RenderTarget* CreateRenderTarget(RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) = 0;
 			virtual DepthTarget* CreateDepthTarget(DepthTarget::CreateInfo& rt) = 0;
@@ -92,7 +93,6 @@ namespace Grindstone {
 
 			virtual void WaitUntilIdle() = 0;
 
-			virtual void BindTexture(TextureBinding*) = 0;
 			virtual void BindPipeline(Pipeline* pipeline) = 0;
 			virtual void BindVertexArrayObject(VertexArrayObject*) = 0;
 			virtual	void DrawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) = 0;

@@ -6,7 +6,6 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-
 		class DepthTarget {
 		public:
 			struct CreateInfo {
