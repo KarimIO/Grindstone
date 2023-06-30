@@ -26,12 +26,14 @@ namespace Grindstone {
 				struct Texture {
 					std::string name;
 					size_t binding;
+					size_t descriptorSet;
 					std::vector<ShaderType> shaderPasses;
 					Texture() = default;
 					Texture(
 						std::string name,
-						size_t binding
-					) : name(name), binding(binding) {}
+						size_t binding,
+						size_t descriptorSet
+					) : name(name), binding(binding), descriptorSet(descriptorSet) {}
 				};
 
 				struct UniformBuffer {
@@ -51,6 +53,7 @@ namespace Grindstone {
 
 					std::string name;
 					size_t binding;
+					size_t descriptorSet;
 					size_t bufferSize;
 					std::vector<ShaderType> shaderPasses;
 					std::vector<Member> members;
@@ -58,8 +61,9 @@ namespace Grindstone {
 					UniformBuffer(
 						std::string name,
 						size_t binding,
-						size_t bufferSize
-					) : name(name), binding(binding), bufferSize(bufferSize) {}
+						size_t bufferSize,
+						size_t descriptorSet
+					) : name(name), binding(binding), descriptorSet(descriptorSet), bufferSize(bufferSize) {}
 				};
 			private:
 				void Process();

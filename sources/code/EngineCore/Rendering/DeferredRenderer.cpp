@@ -52,9 +52,7 @@ DeferredRenderer::DeferredRenderer() {
 
 DeferredRenderer::~DeferredRenderer() {
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
-	core->DeleteUniformBufferBinding(globalUniformBufferBinding);
 	core->DeleteUniformBuffer(globalUniformBufferObject);
-	core->DeleteUniformBufferBinding(lightUniformBufferBinding);
 	core->DeleteUniformBuffer(lightUniformBufferObject);
 
 	core->DeleteFramebuffer(gbuffer);
@@ -92,32 +90,57 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 void DeferredRenderer::CreateDeferredRendererStaticObjects() {
 	auto core = EngineCore::GetInstance().GetGraphicsCore();
 
-	UniformBufferBinding::CreateInfo globalUniformBufferBindingCi{};
-	globalUniformBufferBindingCi.binding = 0;
-	globalUniformBufferBindingCi.shaderLocation = "EngineUbo";
-	globalUniformBufferBindingCi.size = sizeof(EngineUboStruct);
-	globalUniformBufferBindingCi.stages = ShaderStageBit::AllGraphics;
-	globalUniformBufferBinding = core->CreateUniformBufferBinding(globalUniformBufferBindingCi);
-
 	UniformBuffer::CreateInfo globalUniformBufferObjectCi{};
-	globalUniformBufferObjectCi.binding = globalUniformBufferBinding;
+	globalUniformBufferObjectCi.debugName = "EngineUbo";
 	globalUniformBufferObjectCi.isDynamic = true;
 	globalUniformBufferObjectCi.size = sizeof(EngineUboStruct);
 	globalUniformBufferObject = core->CreateUniformBuffer(globalUniformBufferObjectCi);
 
-	// ========= Light Stuff =========
-	UniformBufferBinding::CreateInfo lightUniformBufferBindingCi{};
-	lightUniformBufferBindingCi.binding = 1;
-	lightUniformBufferBindingCi.shaderLocation = "LightUbo";
-	lightUniformBufferBindingCi.size = sizeof(LightmapStruct);
-	lightUniformBufferBindingCi.stages = ShaderStageBit::AllGraphics;
-	lightUniformBufferBinding = core->CreateUniformBufferBinding(lightUniformBufferBindingCi);
-
 	UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
-	lightUniformBufferObjectCi.binding = lightUniformBufferBinding;
+	lightUniformBufferObjectCi.debugName = "LightUbo";
 	lightUniformBufferObjectCi.isDynamic = true;
 	lightUniformBufferObjectCi.size = sizeof(LightmapStruct);
 	lightUniformBufferObject = core->CreateUniformBuffer(lightUniformBufferObjectCi);
+
+	auto stages = static_cast<ShaderStageBit>(static_cast<uint8_t>(ShaderStageBit::Vertex) | static_cast<uint8_t>(ShaderStageBit::Fragment));
+
+	DescriptorSetLayout::CreateInfo::Binding engineUboBinding;
+	engineUboBinding.bindingId = 0;
+	engineUboBinding.count = 1;
+	engineUboBinding.type = BindingType::UniformBuffer;
+	engineUboBinding.stages = stages;
+
+	DescriptorSetLayout::CreateInfo::Binding lightUboBinding;
+	lightUboBinding.bindingId = 1;
+	lightUboBinding.count = 1;
+	lightUboBinding.type = BindingType::UniformBuffer;
+	lightUboBinding.stages = stages;
+
+	std::vector<DescriptorSetLayout::CreateInfo::Binding> tonemapDescriptorSetLayoutBindings;
+	tonemapDescriptorSetLayoutBindings[0] = engineUboBinding;
+
+	std::vector<DescriptorSetLayout::CreateInfo::Binding> tonemapDescriptorSetLayoutBindings;
+	DescriptorSetLayout::CreateInfo tonemapDescriptorSetLayoutCreateInfo{};
+	tonemapDescriptorSetLayoutCreateInfo.bindingCount = tonemapDescriptorSetLayoutBindings.size();
+	tonemapDescriptorSetLayoutCreateInfo.bindings = tonemapDescriptorSetLayoutBindings.data();
+	tonemapDescriptorSetLayout = core->CreateDescriptorSetLayout(tonemapDescriptorSetLayoutCreateInfo);
+
+	std::vector<DescriptorSetLayout::CreateInfo::Binding> lightingDescriptorSetLayoutBindings;
+	lightingDescriptorSetLayoutBindings[0] = engineUboBinding;
+	lightingDescriptorSetLayoutBindings[1] = lightUboBinding;
+
+	DescriptorSetLayout::CreateInfo lightingDescriptorSetLayoutCreateInfo{};
+	lightingDescriptorSetLayoutCreateInfo.bindingCount = lightingDescriptorSetLayoutBindings.size();
+	lightingDescriptorSetLayoutCreateInfo.bindings = lightingDescriptorSetLayoutBindings.data();
+	lightingDescriptorSetLayout = core->CreateDescriptorSetLayout(lightingDescriptorSetLayoutCreateInfo);
+
+	DescriptorSet::CreateInfo tonemapDescriptorSetCreateInfo{};
+	tonemapDescriptorSetCreateInfo.layout = tonemapDescriptorSetLayout;
+	tonemapDescriptorSet = core->CreateDescriptorSet(tonemapDescriptorSetCreateInfo);
+
+	DescriptorSet::CreateInfo lightingDescriptorSetCreateInfo{};
+	lightingDescriptorSetCreateInfo.layout = tonemapDescriptorSetLayout;
+	lightingDescriptorSet = core->CreateDescriptorSet(lightingDescriptorSetCreateInfo);
 
 	LightmapStruct lightmapStruct;
 	lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
@@ -259,7 +282,7 @@ void DeferredRenderer::RenderLights(entt::registry& registry) {
 		};
 
 		lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
-		lightUniformBufferObject->Bind();
+		// TODO: lightUniformBufferObject->Bind();
 		planePostProcessVao->Bind();
 		core->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
 	});
@@ -313,7 +336,7 @@ void DeferredRenderer::Render(
 	core->Clear(ClearMode::ColorAndDepth, clearColor, 1);
 
 	globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
-	globalUniformBufferObject->Bind();
+	// TODO: globalUniformBufferObject->Bind();
 
 	core->EnableDepthWrite(true);
 	core->SetImmediateBlending(BlendMode::None);

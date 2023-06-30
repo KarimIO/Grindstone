@@ -89,10 +89,11 @@ void ShaderReflectionLoader::ProcessUniformBuffers() {
 		auto& uniformBuffer = *itr;
 		auto name = uniformBuffer["name"].GetString();
 		size_t bindingId = uniformBuffer["binding"].GetUint();
+		size_t descriptorSetId = uniformBuffer["descriptorSet"].GetUint();
 		size_t bufferSize = uniformBuffer["bufferSize"].GetUint();
 		auto shaderModulesArray = document["shaderModules"].GetArray();
 		uint8_t shaderModulesBits = GetShaderBitMaskFromArray(shaderModulesArray);
-		outData.uniformBuffers.emplace_back(name, bindingId, bufferSize, shaderModulesBits);
+		outData.uniformBuffers.emplace_back(name, bindingId, descriptorSetId, bufferSize, shaderModulesBits);
 		auto& memberSourceArray = uniformBuffer["members"];
 		auto& memberList = outData.uniformBuffers.back().members;
 		memberList.reserve(memberSourceArray.Size());
@@ -115,9 +116,10 @@ void ShaderReflectionLoader::ProcessTextures() {
 	for (rapidjson::Value& texture : resourcesArray.GetArray()) {
 		auto name = texture["name"].GetString();
 		size_t bindingId = texture["binding"].GetUint();
+		size_t descriptorSetId = texture["descriptorSet"].GetUint();
 		auto shaderModulesArray = document["shaderModules"].GetArray();
 		uint8_t shaderModulesBits = GetShaderBitMaskFromArray(shaderModulesArray);
-		outData.textures.emplace_back(name, bindingId, shaderModulesBits);
+		outData.textures.emplace_back(name, bindingId, descriptorSetId, shaderModulesBits);
 	}
 }
 

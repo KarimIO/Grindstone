@@ -2,11 +2,6 @@
 
 #include <vector>
 #include "Framebuffer.hpp"
-#include "RenderPass.hpp"
-#include "Pipeline.hpp"
-#include "VertexBuffer.hpp"
-#include "IndexBuffer.hpp"
-#include "UniformBuffer.hpp"
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -21,6 +16,13 @@ namespace Grindstone {
 			DrawVertices,
 			DrawVerticesIndices
 		};
+
+		class RenderPass;
+		class Framebuffer;
+		class DescriptorSet;
+		class Pipeline;
+		class VertexBuffer;
+		class IndexBuffer;
 
 		class CommandBuffer {
 		public:
@@ -98,25 +100,26 @@ namespace Grindstone {
 
 			struct CommandBindDescriptorSets : public Command {
 				Pipeline *graphicsPipeline = nullptr;
-				UniformBuffer **uniformBuffers = nullptr;
-				uint32_t uniformBufferCount = 0;
-				TextureBinding **textureBindings = nullptr;
-				uint32_t textureCount = 0;
-				CommandBindDescriptorSets() {};
-				CommandBindDescriptorSets(Pipeline *gp, UniformBuffer **ubs, uint32_t _uboCount, TextureBinding **_textureBindings, uint32_t _textureCount) {
-					graphicsPipeline = gp;
-					uniformBuffers = ubs;
-					uniformBufferCount = _uboCount;
-					textureBindings = _textureBindings;
-					textureCount = _textureCount;
+				DescriptorSet **descriptorSets = nullptr;
+				uint32_t descriptorSetCount = 0;
+				CommandBindDescriptorSets() = default;
+				CommandBindDescriptorSets(
+					Pipeline* graphicsPipeline,
+					DescriptorSet** descriptorSets,
+					uint32_t descriptorSetCount
+				) :
+					graphicsPipeline(graphicsPipeline),
+					descriptorSets(descriptorSets),
+					descriptorSetCount(descriptorSetCount)
+				{
 					type = CommandBufferType::BindDescriptorSet;
-				};
+				}
 			};
 
 			struct CommandBindVBOs : public Command {
 				VertexBuffer **vertexBuffer = nullptr;
 				uint32_t vertexBufferCount = 0;
-				CommandBindVBOs() {};
+				CommandBindVBOs() = default;
 				CommandBindVBOs(VertexBuffer **vb, uint32_t count) {
 					vertexBuffer = vb;
 					vertexBufferCount = count;
@@ -127,7 +130,7 @@ namespace Grindstone {
 			struct CommandBindIBO : public Command {
 				IndexBuffer *indexBuffer = nullptr;
 				bool useLargeBuffer = false;
-				CommandBindIBO() {};
+				CommandBindIBO() = default;
 				CommandBindIBO(IndexBuffer *ib, bool _useLargeBuffer) {
 					indexBuffer = ib;
 					useLargeBuffer = _useLargeBuffer;
@@ -138,7 +141,7 @@ namespace Grindstone {
 			struct CommandDrawVertices : public Command {
 				uint32_t count = 0;
 				uint32_t numInstances = 1;
-				CommandDrawVertices() {};
+				CommandDrawVertices() = default;
 				CommandDrawVertices(uint32_t _count, uint32_t _numInstances) {
 					count = _count;
 					numInstances = _numInstances;
@@ -151,7 +154,7 @@ namespace Grindstone {
 				uint32_t count = 0;
 				uint32_t numInstances = 1;
 				int32_t baseVertex = 0;
-				CommandDrawIndices() {};
+				CommandDrawIndices() = default;
 				CommandDrawIndices(int32_t _baseVertex, uint32_t _indexStart, uint32_t _count, uint32_t _numInstances) {
 					indexStart = _indexStart;
 					count = _count;

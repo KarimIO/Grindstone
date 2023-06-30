@@ -24,7 +24,8 @@ namespace Grindstone {
 					memberSize(memberSize) {}
 			};
 			std::string name;
-			size_t bindingId = 0;
+			uint32_t bindingId = 0;
+			uint32_t setId = 0;
 			size_t bufferSize = 0;
 			uint8_t shaderStagesBitMask = 0;
 			std::vector<MemberData> members;
@@ -32,27 +33,32 @@ namespace Grindstone {
 			StructData() = default;
 			StructData(
 				std::string name,
-				size_t bindingId,
-				size_t bufferSize,
+				uint32_t bindingId,
+				uint32_t setId,
+				uint32_t bufferSize,
 				uint8_t shaderStagesBitMask
 			) : name(name),
 				bindingId(bindingId),
+				setId(setId),
 				bufferSize(bufferSize),
 				shaderStagesBitMask(shaderStagesBitMask) {}
 		};
 
 		struct TextureData {
 			std::string name;
-			size_t bindingId = 0;
+			uint32_t bindingId = 0;
+			uint32_t setId = 0;
 			uint8_t shaderStagesBitMask = 0;
 
 			TextureData() = default;
 			TextureData(
 				std::string name,
-				size_t bindingId,
+				uint32_t bindingId,
+				uint32_t setId,
 				uint8_t shaderStagesBitMask
 			) : name(name),
 				bindingId(bindingId),
+				setId(setId),
 				shaderStagesBitMask(shaderStagesBitMask) {}
 		};
 

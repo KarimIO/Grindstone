@@ -27,23 +27,6 @@ namespace Grindstone {
 
 			~GLTexture();
 		};
-
-		class GLTextureBinding : public TextureBinding {
-			std::vector<GLTexture *> textures;
-			std::vector<uint32_t> targets;
-		public:
-			GLTextureBinding(CreateInfo& ci);
-			void Bind();
-		};
-
-		class GLTextureBindingLayout : public TextureBindingLayout {
-		public:
-			TextureSubBinding *subbindings;
-			uint32_t subbindingCount;
-			GLTextureBindingLayout(CreateInfo& ci);
-			TextureSubBinding GetSubBinding(uint32_t i);
-			uint32_t GetNumSubBindings();
-		};
 	}
 }
 

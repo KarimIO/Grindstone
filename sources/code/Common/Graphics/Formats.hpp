@@ -65,6 +65,11 @@ namespace Grindstone {
 			All = 0x3F
 		};
 
+		enum class BindingType {
+			UniformBuffer,
+			Texture
+		};
+
 		const uint8_t numShaderGraphicStage = 5;
 		const uint8_t numShaderTotalStage = 6;
 

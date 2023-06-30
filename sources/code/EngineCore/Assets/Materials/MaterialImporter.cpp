@@ -50,33 +50,30 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
 	char* bufferSpace = nullptr;
 
+	ShaderReflectionData::StructData* materialUniformBuffer = nullptr;
 	auto& uniformBuffers = shaderAsset->reflectionData.uniformBuffers;
 	for (auto& uniformBuffer : uniformBuffers) {
 		if (uniformBuffer.name != "MaterialUbo") {
 			continue;
 		}
 
-		GraphicsAPI::UniformBufferBinding::CreateInfo ubbCi{};
-		ubbCi.binding = 2;
-		ubbCi.shaderLocation = "MaterialUbo";
-		ubbCi.size = (uint32_t)uniformBuffer.bufferSize;
-		ubbCi.stages = (GraphicsAPI::ShaderStageBit)uniformBuffer.shaderStagesBitMask;
-		uniformBufferBinding = graphicsCore->CreateUniformBufferBinding(ubbCi);
+		materialUniformBuffer = &uniformBuffer;
+	}
 
+	if (materialUniformBuffer != nullptr) {
 		GraphicsAPI::UniformBuffer::CreateInfo ubCi{};
-		ubCi.binding = uniformBufferBinding;
 		ubCi.isDynamic = true;
-		ubCi.size = (uint32_t)uniformBuffer.bufferSize;
+		ubCi.size = static_cast<uint32_t>(materialUniformBuffer->bufferSize);
 		uniformBufferObject = graphicsCore->CreateUniformBuffer(ubCi);
 
-		if (uniformBuffer.bufferSize == 0) {
+		if (ubCi.size == 0) {
 			bufferSpace = nullptr;
 		}
 		else {
-			bufferSpace = new char[uniformBuffer.bufferSize];
+			bufferSpace = new char[ubCi.size];
 
 			auto& parametersJson = document["parameters"];
-			for (auto& member : uniformBuffer.members) {
+			for (auto& member : materialUniformBuffer->members) {
 				rapidjson::Value& params = parametersJson[member.name.c_str()];
 				std::vector<float> paramArray;
 				paramArray.resize(params.Size());

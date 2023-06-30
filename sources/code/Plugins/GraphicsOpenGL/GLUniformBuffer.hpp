@@ -5,26 +5,18 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		class GLUniformBufferBinding : public UniformBufferBinding {
-			const char *uniformName;
-			GLuint bindingLocation;
-		public:
-			GLUniformBufferBinding(CreateInfo& ci);
-			const char *GetUniformName();
-			GLuint GetBindingLocation();
-		};
-
 		class GLUniformBuffer : public UniformBuffer {
-		private:
-			GLuint uniformBufferObject;
-			GLuint bindingLocation;
-			uint32_t size;
 		public:
 			GLUniformBuffer(CreateInfo& createInfo);
 			~GLUniformBuffer();
 
-			virtual void Bind() override;
+			// Inherited via UniformBuffer
 			virtual void UpdateBuffer(void *content) override;
+			virtual uint32_t GetSize() override;
+		private:
+			GLuint uniformBufferObject;
+			GLuint bindingLocation;
+			uint32_t size;
 		};
 	}
 }

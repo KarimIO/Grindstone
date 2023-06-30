@@ -4,6 +4,7 @@
 #include "VulkanFormat.hpp"
 #include "VulkanUniformBuffer.hpp"
 #include "VulkanTexture.hpp"
+#include "VulkanDescriptorSetLayout.hpp"
 
 #include <vulkan/vulkan.h>
 
@@ -147,18 +148,12 @@ namespace Grindstone {
 			colorBlending.blendConstants[3] = 0.0f;
 
 			std::vector<VkDescriptorSetLayout> layouts;
-			layouts.reserve(createInfo.uniformBufferBindingCount + createInfo.textureBindingCount);
+			layouts.reserve(createInfo.descriptorSetLayoutCount);
 
-			for (uint32_t i = 0; i < createInfo.uniformBufferBindingCount; ++i) {
-				VulkanUniformBufferBinding* uboBinding = static_cast<VulkanUniformBufferBinding*>(createInfo.uniformBufferBindings[i]);
-				VkDescriptorSetLayout ubb = uboBinding->GetDescriptorSetLayout();
+			for (uint32_t i = 0; i < createInfo.descriptorSetLayoutCount; ++i) {
+				VulkanDescriptorSetLayout* uboBinding = static_cast<VulkanDescriptorSetLayout*>(createInfo.descriptorSetLayouts[i]);
+				VkDescriptorSetLayout ubb = uboBinding->GetInternalLayout();
 				layouts.push_back(ubb);
-			}
-
-			for (uint32_t i = 0; i < createInfo.textureBindingCount; ++i) {
-				VulkanTextureBindingLayout* textureBinding = static_cast<VulkanTextureBindingLayout*>(createInfo.textureBindings[i]);
-				VkDescriptorSetLayout tex = textureBinding->GetDescriptorSetLayout();
-				layouts.push_back(tex);
 			}
 
 			VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
