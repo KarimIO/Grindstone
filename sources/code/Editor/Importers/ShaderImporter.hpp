@@ -61,8 +61,8 @@ namespace Grindstone {
 					UniformBuffer(
 						std::string name,
 						size_t binding,
-						size_t bufferSize,
-						size_t descriptorSet
+						size_t descriptorSet,
+						size_t bufferSize
 					) : name(name), binding(binding), descriptorSet(descriptorSet), bufferSize(bufferSize) {}
 				};
 			private:

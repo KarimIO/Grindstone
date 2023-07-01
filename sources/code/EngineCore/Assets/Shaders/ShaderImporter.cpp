@@ -121,22 +121,30 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	std::array<std::vector<GraphicsAPI::DescriptorSetLayout::Binding>, descriptorSetCount> descriptorSetBindings;
 
 	for (auto& uniform : reflectionData.uniformBuffers) {
+		uint32_t set = uniform.setId;
+		if (set >= descriptorSetCount) {
+			continue;
+		}
+
 		GraphicsAPI::DescriptorSetLayout::Binding layoutBindingCi{};
 		layoutBindingCi.bindingId = static_cast<uint32_t>(uniform.bindingId);
 		layoutBindingCi.type = BindingType::UniformBuffer;
 		layoutBindingCi.stages = static_cast<GraphicsAPI::ShaderStageBit>(uniform.shaderStagesBitMask);
 		layoutBindingCi.count = 1;
-		uint32_t set = uniform.setId;
 		descriptorSetBindings[set].emplace_back(layoutBindingCi);
 	}
 
 	for (auto& textureBinding : reflectionData.textures) {
+		uint32_t set = textureBinding.setId;
+		if (set >= descriptorSetCount) {
+			continue;
+		}
+
 		GraphicsAPI::DescriptorSetLayout::Binding layoutBindingCi{};
 		layoutBindingCi.bindingId = static_cast<uint32_t>(textureBinding.bindingId);
 		layoutBindingCi.type = BindingType::Texture;
 		layoutBindingCi.count = 1;
 		layoutBindingCi.stages = static_cast<GraphicsAPI::ShaderStageBit>(textureBinding.shaderStagesBitMask);
-		uint32_t set = textureBinding.setId;
 		descriptorSetBindings[set].emplace_back(layoutBindingCi);
 	}
 
