@@ -21,7 +21,7 @@ VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(DescriptorSetLayout::Create
 	bindingLayouts.reserve(createInfo.bindingCount);
 
 	for (uint32_t i = 0; i < createInfo.bindingCount; ++i) {
-		DescriptorSetLayout::CreateInfo::Binding& sourceBinding = createInfo.bindings[i];
+		DescriptorSetLayout::Binding& sourceBinding = createInfo.bindings[i];
 
 		VkDescriptorSetLayoutBinding binding = {};
 		binding.binding = sourceBinding.bindingId;

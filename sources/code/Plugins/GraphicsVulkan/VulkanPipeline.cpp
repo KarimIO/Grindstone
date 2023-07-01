@@ -161,6 +161,7 @@ namespace Grindstone {
 			pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(layouts.size());
 			pipelineLayoutInfo.pSetLayouts = layouts.data();
 			pipelineLayoutInfo.pushConstantRangeCount = 0;
+			pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
 			if (vkCreatePipelineLayout(VulkanCore::Get().GetDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create pipeline layout!");

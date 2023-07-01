@@ -26,7 +26,7 @@ namespace Grindstone {
 			std::string name;
 			uint32_t bindingId = 0;
 			uint32_t setId = 0;
-			size_t bufferSize = 0;
+			uint32_t bufferSize = 0;
 			uint8_t shaderStagesBitMask = 0;
 			std::vector<MemberData> members;
 
