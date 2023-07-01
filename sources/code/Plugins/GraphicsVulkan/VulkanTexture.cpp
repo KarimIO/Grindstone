@@ -29,9 +29,12 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 	uint8_t channels = 4;
 	format = TranslateColorFormatToVulkan(createInfo.format, channels);
 
-	mipLevels = createInfo.mipmaps;
+	uint32_t blockSize = (createInfo.format == ColorFormat::SRGB_DXT1 || createInfo.format == ColorFormat::SRGB_ALPHA_DXT1
+		|| createInfo.format == ColorFormat::RGB_DXT1 || createInfo.format == ColorFormat::RGBA_DXT1) ? 8 : 16;
 
-	uint32_t imageSize = createInfo.size;
+	uint32_t imageSize = ((createInfo.width + 3) / 4) * ((createInfo.height + 3) / 4) * blockSize;
+
+	mipLevels = createInfo.mipmaps > 0 ? createInfo.mipmaps : 1;
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
