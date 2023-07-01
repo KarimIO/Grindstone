@@ -19,18 +19,34 @@ Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
 	this->engineCore = engineCore;
 	auto graphicsCore = engineCore->GetGraphicsCore();
 
-	UniformBufferBinding::CreateInfo mesh3dBufferBindingCi{};
-	mesh3dBufferBindingCi.binding = 1;
-	mesh3dBufferBindingCi.shaderLocation = "MeshUbo";
-	mesh3dBufferBindingCi.size = sizeof(Mesh3dUbo);
-	mesh3dBufferBindingCi.stages = ShaderStageBit::AllGraphics;
-	mesh3dBufferBinding = graphicsCore->CreateUniformBufferBinding(mesh3dBufferBindingCi);
-
 	UniformBuffer::CreateInfo mesh3dBufferObjectCi{};
-	mesh3dBufferObjectCi.binding = mesh3dBufferBinding;
+	mesh3dBufferObjectCi.debugName = "Mesh Uniform Buffer";
 	mesh3dBufferObjectCi.isDynamic = true;
 	mesh3dBufferObjectCi.size = sizeof(Mesh3dUbo);
 	mesh3dBufferObject = graphicsCore->CreateUniformBuffer(mesh3dBufferObjectCi);
+
+	DescriptorSet::Binding meshUniformBufferBinding{};
+	meshUniformBufferBinding.bindingIndex = 1;
+	meshUniformBufferBinding.bindingType = BindingType::UniformBuffer;
+	meshUniformBufferBinding.count = 1;
+	meshUniformBufferBinding.itemPtr = mesh3dBufferObject;
+
+	DescriptorSetLayout::Binding meshDescriptorLayoutBinding{};
+	meshDescriptorLayoutBinding.bindingId = 1;
+	meshDescriptorLayoutBinding.count = 1;
+	meshDescriptorLayoutBinding.type = BindingType::UniformBuffer;
+	meshDescriptorLayoutBinding.stages = ShaderStageBit::AllGraphics;
+
+	DescriptorSetLayout::CreateInfo meshDescriptorSetLayoutCi{};
+	meshDescriptorSetLayoutCi.bindingCount = 1;
+	meshDescriptorSetLayoutCi.bindings = &meshDescriptorLayoutBinding;
+	DescriptorSetLayout* meshDescriptorLayout = graphicsCore->CreateDescriptorSetLayout(meshDescriptorSetLayoutCi);
+
+	DescriptorSet::CreateInfo meshUniformBufferCi{};
+	meshUniformBufferCi.bindingCount = 1;
+	meshUniformBufferCi.bindings = &meshUniformBufferBinding;
+	meshUniformBufferCi.layout = meshDescriptorLayout;
+	DescriptorSet* meshDescriptor = graphicsCore->CreateDescriptorSet(meshUniformBufferCi);
 }
 
 void Mesh3dRenderer::RenderQueue(RenderQueueContainer& renderQueue) {
@@ -43,23 +59,25 @@ void Mesh3dRenderer::RenderQueue(RenderQueueContainer& renderQueue) {
 void Mesh3dRenderer::RenderShader(ShaderAsset& shader) {
 	auto graphicsCore = engineCore->GetGraphicsCore();
 	graphicsCore->BindPipeline(shader.pipeline);
-	mesh3dBufferObject->Bind();
+	// mesh3dBufferObject->Bind();
 	for (auto materialUuid : shader.materials) {
-		MaterialAsset& material = *engineCore->assetManager->GetAsset<MaterialAsset>( materialUuid);
+		MaterialAsset& material = *engineCore->assetManager->GetAsset<MaterialAsset>(materialUuid);
 		RenderMaterial(material);
 	}
 }
 
 void Mesh3dRenderer::RenderMaterial(MaterialAsset& material) {
 	auto graphicsCore = engineCore->GetGraphicsCore();
+	/*
 	if (material.uniformBufferObject) {
-		material.uniformBufferObject->UpdateBuffer(material.buffer);
 		material.uniformBufferObject->Bind();
 	}
-
+	*/
+	/*
 	if (material.textureBinding) {
 		graphicsCore->BindTexture(material.textureBinding);
 	}
+	*/
 
 	for (auto& renderable : material.renderables) {
 		ECS::Entity entity = renderable.first;

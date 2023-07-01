@@ -117,34 +117,40 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	pipelineCreateInfo.shaderStageCreateInfos = shaderStages.data();
 	pipelineCreateInfo.shaderStageCreateInfoCount = (uint32_t)shaderStages.size();
 
-	std::vector<GraphicsAPI::DescriptorSetLayout*> descriptorSetLayouts;
-	descriptorSetLayouts.reserve(reflectionData.uniformBuffers.size());
+	const size_t descriptorSetCount = 3;
+	std::array<std::vector<GraphicsAPI::DescriptorSetLayout::Binding>, descriptorSetCount> descriptorSetBindings;
 
 	for (auto& uniform : reflectionData.uniformBuffers) {
+		GraphicsAPI::DescriptorSetLayout::Binding layoutBindingCi{};
+		layoutBindingCi.bindingId = static_cast<uint32_t>(uniform.bindingId);
+		layoutBindingCi.type = BindingType::UniformBuffer;
+		layoutBindingCi.stages = static_cast<GraphicsAPI::ShaderStageBit>(uniform.shaderStagesBitMask);
+		layoutBindingCi.count = 1;
+		uint32_t set = uniform.setId;
+		descriptorSetBindings[set].emplace_back(layoutBindingCi);
+	}
+
+	for (auto& textureBinding : reflectionData.textures) {
+		GraphicsAPI::DescriptorSetLayout::Binding layoutBindingCi{};
+		layoutBindingCi.bindingId = static_cast<uint32_t>(textureBinding.bindingId);
+		layoutBindingCi.type = BindingType::Texture;
+		layoutBindingCi.count = 1;
+		layoutBindingCi.stages = static_cast<GraphicsAPI::ShaderStageBit>(textureBinding.shaderStagesBitMask);
+		uint32_t set = textureBinding.setId;
+		descriptorSetBindings[set].emplace_back(layoutBindingCi);
+	}
+
+	std::array<GraphicsAPI::DescriptorSetLayout*, descriptorSetCount> descriptorSetLayouts;
+	for (size_t i = 0; i < descriptorSetCount; ++i) {
+		auto& bindings = descriptorSetBindings[i];
 		GraphicsAPI::DescriptorSetLayout::CreateInfo layoutCi{};
-		layoutCi.binding = static_cast<uint32_t>(uniform.bindingId);
-		layoutCi.shaderLocation = uniform.name.c_str();
-		layoutCi.size = static_cast<uint32_t>(uniform.bufferSize);
-		layoutCi.stages = static_cast<GraphicsAPI::ShaderStageBit>(uniform.shaderStagesBitMask);
-		descriptorSetLayouts.push_back(graphicsCore->CreateUniformBufferBinding(layoutCi));
+		layoutCi.bindingCount = static_cast<uint32_t>(bindings.size());
+		layoutCi.bindings = bindings.data();
+		descriptorSetLayouts[i] = graphicsCore->CreateDescriptorSetLayout(layoutCi);
 	}
 
 	pipelineCreateInfo.descriptorSetLayouts = descriptorSetLayouts.data();
 	pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
-
-	GraphicsAPI::TextureSubBinding sub;
-	sub.shaderLocation = "texSampler";
-	sub.textureLocation = 2;
-
-	GraphicsAPI::TextureBindingLayout::CreateInfo textureBindingLayoutCreateInfo{};
-	textureBindingLayoutCreateInfo.bindingLocation = 2;
-	textureBindingLayoutCreateInfo.bindingCount = 1;
-	textureBindingLayoutCreateInfo.bindings = &sub;
-	textureBindingLayoutCreateInfo.stages = GraphicsAPI::ShaderStageBit::All;
-	auto textureBindingLayout = graphicsCore->CreateTextureBindingLayout(textureBindingLayoutCreateInfo);
-	
-	pipelineCreateInfo.textureBindings = &textureBindingLayout;
-	pipelineCreateInfo.textureBindingCount = 1;
 
 	pipelineCreateInfo.vertexBindings = nullptr;
 	pipelineCreateInfo.vertexBindingsCount = 0;
@@ -153,7 +159,7 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	auto asset = shaders.emplace(uuid, ShaderAsset(uuid, debugName, shader));
 	auto& shaderAsset = asset.first->second;
 	shaderAsset.reflectionData = reflectionData;
-	shaderAsset.textureBindingLayout = nullptr;
+	shaderAsset.descriptorSetLayout = pipelineCreateInfo.descriptorSetLayouts[1];
 
 	// TODO: Save compiled shader into ShaderCache
 
@@ -169,31 +175,3 @@ bool ShaderImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
 
 	return false;
 }
-
-#if 0
-void ShaderImporter::RemoveMaterialFromShader(Shader* shader, Material *material) {
-	for (size_t i = 0; i < shader->materials.size(); ++i) {
-		if (shader->materials[i] == material) {
-			shader->materials.erase(shader->materials.begin() + i);
-		}
-	}
-}
-
-void ShaderImporter::LoadShaderFromFile(bool isReloading, std::string& path, Shader& shaderAsset) {
-	CreateReflectionDataForShader(path.c_str(), shaderAsset);
-	CreateShaderGraphicsPipeline(isReloading, path.c_str(), shaderAsset);
-}
-
-Shader& ShaderImporter::CreateNewShaderFromFile(std::string& uuid) {
-	std::string path = EngineCore::GetInstance().GetAssetPath(uuid).string();
-	Shader& shader = shaders[uuid] = Shader();
-	shader.uuid = uuid;
-	LoadShaderFromFile(false, path, shader);
-
-	return shader;
-}
-
-void ShaderImporter::CreateReflectionDataForShader(const char* path, Shader& shader) {
-	LoadShaderReflection(path, shader.reflectionData);
-}
-#endif

@@ -46,9 +46,10 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	auto& material = materials.emplace(uuid, MaterialAsset(uuid, name, shaderUuid));
 	MaterialAsset* materialAsset = &material.first->second;
 
-	GraphicsAPI::UniformBufferBinding* uniformBufferBinding = nullptr;
 	GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
 	char* bufferSpace = nullptr;
+
+	std::vector<DescriptorSet::Binding> bindings;
 
 	ShaderReflectionData::StructData* materialUniformBuffer = nullptr;
 	auto& uniformBuffers = shaderAsset->reflectionData.uniformBuffers;
@@ -65,6 +66,13 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 		ubCi.isDynamic = true;
 		ubCi.size = static_cast<uint32_t>(materialUniformBuffer->bufferSize);
 		uniformBufferObject = graphicsCore->CreateUniformBuffer(ubCi);
+
+		DescriptorSet::Binding uniformBufferBinding{};
+		uniformBufferBinding.bindingIndex = materialUniformBuffer->bindingId;
+		uniformBufferBinding.bindingType = BindingType::Texture;
+		uniformBufferBinding.itemPtr = uniformBufferObject;
+		uniformBufferBinding.count = 1;
+		bindings.push_back(uniformBufferBinding);
 
 		if (ubCi.size == 0) {
 			bufferSpace = nullptr;
@@ -87,17 +95,15 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 		}
 	}
 
-	GraphicsAPI::TextureBinding* textureBinding = nullptr;
-	auto& textures = shaderAsset->reflectionData.textures;
+
+	auto& textureReferencesFromMaterial = shaderAsset->reflectionData.textures;
 	bool hasSamplers = document.HasMember("samplers");
-	if (textures.size() > 0 && hasSamplers) {
+	if (textureReferencesFromMaterial.size() > 0 && hasSamplers) {
 		auto& samplersJson = document["samplers"];
-		std::vector<GraphicsAPI::SingleTextureBind> textureBinds;
-		textureBinds.resize(textures.size());
-		for (size_t i = 0; i < textures.size(); ++i) {
-			GraphicsAPI::SingleTextureBind& stb = textureBinds[i];
-			stb.address = static_cast<uint8_t>(textures[i].bindingId);
-			const char* textureName = textures[i].name.c_str();
+		std::vector<GraphicsAPI::Texture*> textures;
+		textures.resize(textureReferencesFromMaterial.size());
+		for (size_t i = 0; i < textureReferencesFromMaterial.size(); ++i) {
+			const char* textureName = textureReferencesFromMaterial[i].name.c_str();
 			if (samplersJson.HasMember(textureName)) {
 				const char* textureUuidAsString = samplersJson[textureName].GetString();
 				Uuid textureUuid(textureUuidAsString);
@@ -105,26 +111,24 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 				// TODO: Handle if texture isn't set
 				TextureAsset* textureAsset = assetManager->GetAsset<TextureAsset>(textureUuid);
 				if (textureAsset != nullptr) {
-					stb.texture = textureAsset->texture;
+					DescriptorSet::Binding uniformBufferBinding{};
+					uniformBufferBinding.bindingIndex = materialUniformBuffer->bindingId;
+					uniformBufferBinding.bindingType = BindingType::Texture;
+					uniformBufferBinding.itemPtr = uniformBufferObject;
+					uniformBufferBinding.count = 1;
+					bindings.push_back(uniformBufferBinding);
 				}
-				else {
-					stb.texture = nullptr;
-				}
-			}
-			else {
-				stb.texture = nullptr;
 			}
 		}
-
-		GraphicsAPI::TextureBinding::CreateInfo textureBindingCreateInfo{};
-		textureBindingCreateInfo.textures = textureBinds.data();
-		textureBindingCreateInfo.textureCount = static_cast<uint8_t>(textureBinds.size());
-		textureBindingCreateInfo.layout = shaderAsset->textureBindingLayout;
-		textureBinding = graphicsCore->CreateTextureBinding(textureBindingCreateInfo);
 	}
 
-	materialAsset->textureBinding = textureBinding;
-	materialAsset->uniformBufferBinding = uniformBufferBinding;
+	GraphicsAPI::DescriptorSet::CreateInfo materialDescriptorSetCreateInfo{};
+	materialDescriptorSetCreateInfo.bindings = bindings.data();
+	materialDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+	materialDescriptorSetCreateInfo.layout = shaderAsset->descriptorSetLayout;
+	DescriptorSet* materialDescriptorSet = graphicsCore->CreateDescriptorSet(materialDescriptorSetCreateInfo);
+
+	materialAsset->descriptorSet = materialDescriptorSet;
 	materialAsset->uniformBufferObject = uniformBufferObject;
 	materialAsset->buffer = bufferSpace;
 

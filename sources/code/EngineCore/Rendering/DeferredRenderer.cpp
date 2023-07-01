@@ -104,33 +104,37 @@ void DeferredRenderer::CreateDeferredRendererStaticObjects() {
 
 	auto stages = static_cast<ShaderStageBit>(static_cast<uint8_t>(ShaderStageBit::Vertex) | static_cast<uint8_t>(ShaderStageBit::Fragment));
 
-	DescriptorSetLayout::CreateInfo::Binding engineUboBinding;
+	DescriptorSetLayout::Binding engineUboBinding;
 	engineUboBinding.bindingId = 0;
 	engineUboBinding.count = 1;
 	engineUboBinding.type = BindingType::UniformBuffer;
 	engineUboBinding.stages = stages;
 
-	DescriptorSetLayout::CreateInfo::Binding lightUboBinding;
+	DescriptorSetLayout::Binding lightUboBinding;
 	lightUboBinding.bindingId = 1;
 	lightUboBinding.count = 1;
 	lightUboBinding.type = BindingType::UniformBuffer;
 	lightUboBinding.stages = stages;
 
-	std::vector<DescriptorSetLayout::CreateInfo::Binding> tonemapDescriptorSetLayoutBindings;
+	DescriptorSetLayout* tonemapDescriptorSetLayout = nullptr;
+	DescriptorSetLayout* lightingDescriptorSetLayout = nullptr;
+	DescriptorSet* tonemapDescriptorSet = nullptr;
+	DescriptorSet* lightingDescriptorSet = nullptr;
+
+	std::array<DescriptorSetLayout::Binding, 1> tonemapDescriptorSetLayoutBindings;
 	tonemapDescriptorSetLayoutBindings[0] = engineUboBinding;
 
-	std::vector<DescriptorSetLayout::CreateInfo::Binding> tonemapDescriptorSetLayoutBindings;
 	DescriptorSetLayout::CreateInfo tonemapDescriptorSetLayoutCreateInfo{};
-	tonemapDescriptorSetLayoutCreateInfo.bindingCount = tonemapDescriptorSetLayoutBindings.size();
+	tonemapDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(tonemapDescriptorSetLayoutBindings.size());
 	tonemapDescriptorSetLayoutCreateInfo.bindings = tonemapDescriptorSetLayoutBindings.data();
 	tonemapDescriptorSetLayout = core->CreateDescriptorSetLayout(tonemapDescriptorSetLayoutCreateInfo);
 
-	std::vector<DescriptorSetLayout::CreateInfo::Binding> lightingDescriptorSetLayoutBindings;
+	std::array<DescriptorSetLayout::Binding, 2> lightingDescriptorSetLayoutBindings;
 	lightingDescriptorSetLayoutBindings[0] = engineUboBinding;
 	lightingDescriptorSetLayoutBindings[1] = lightUboBinding;
 
 	DescriptorSetLayout::CreateInfo lightingDescriptorSetLayoutCreateInfo{};
-	lightingDescriptorSetLayoutCreateInfo.bindingCount = lightingDescriptorSetLayoutBindings.size();
+	lightingDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightingDescriptorSetLayoutBindings.size());
 	lightingDescriptorSetLayoutCreateInfo.bindings = lightingDescriptorSetLayoutBindings.data();
 	lightingDescriptorSetLayout = core->CreateDescriptorSetLayout(lightingDescriptorSetLayoutCreateInfo);
 
