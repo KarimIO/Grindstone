@@ -5,7 +5,6 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		class UniformBufferBinding;
 		class UniformBuffer;
 		class Framebuffer;
 		class RenderTarget;
@@ -35,7 +34,10 @@ namespace Grindstone {
 		void CreateGbufferFramebuffer();
 		void CreateLitHDRFramebuffer();
 		void CreatePipelines();
-		void CreateDeferredRendererStaticObjects();
+		void CreateDescriptorSetLayouts();
+		void CreateDescriptorSets();
+		void CreateUniformBuffers();
+		void CreateVertexAndIndexBuffersAndLayouts();
 
 		uint32_t width = 800;
 		uint32_t height = 600;
@@ -49,9 +51,7 @@ namespace Grindstone {
 		GraphicsAPI::DescriptorSet* tonemapDescriptorSet = nullptr;
 		GraphicsAPI::DescriptorSet* lightingDescriptorSet = nullptr;
 
-		GraphicsAPI::UniformBufferBinding* globalUniformBufferBinding = nullptr;
 		GraphicsAPI::UniformBuffer* globalUniformBufferObject = nullptr;
-		GraphicsAPI::UniformBufferBinding* lightUniformBufferBinding = nullptr;
 		GraphicsAPI::UniformBuffer* lightUniformBufferObject = nullptr;
 		GraphicsAPI::Framebuffer* gbuffer = nullptr;
 		GraphicsAPI::Framebuffer* litHdrFramebuffer = nullptr;

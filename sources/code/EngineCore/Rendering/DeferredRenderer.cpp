@@ -46,9 +46,12 @@ struct LightmapStruct {
 };
 
 DeferredRenderer::DeferredRenderer() {
+	CreateVertexAndIndexBuffersAndLayouts();
 	CreateGbufferFramebuffer();
 	CreateLitHDRFramebuffer();
-	CreateDeferredRendererStaticObjects();
+	CreateUniformBuffers();
+	CreateDescriptorSetLayouts();
+	CreateDescriptorSets();
 	CreatePipelines();
 }
 
@@ -88,8 +91,7 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 	litHdrFramebuffer->Resize(width, height);
 }
 
-// NOTE: Make these objects static
-void DeferredRenderer::CreateDeferredRendererStaticObjects() {
+void DeferredRenderer::CreateUniformBuffers() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	UniformBuffer::CreateInfo globalUniformBufferObjectCi{};
@@ -103,6 +105,14 @@ void DeferredRenderer::CreateDeferredRendererStaticObjects() {
 	lightUniformBufferObjectCi.isDynamic = true;
 	lightUniformBufferObjectCi.size = sizeof(LightmapStruct);
 	lightUniformBufferObject = graphicsCore->CreateUniformBuffer(lightUniformBufferObjectCi);
+
+	LightmapStruct lightmapStruct;
+	lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
+
+}
+
+void DeferredRenderer::CreateDescriptorSetLayouts() {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	DescriptorSetLayout::Binding engineUboBinding{};
 	engineUboBinding.bindingId = 0;
@@ -146,12 +156,6 @@ void DeferredRenderer::CreateDeferredRendererStaticObjects() {
 	gbuffer3Binding.type = BindingType::Texture;
 	gbuffer3Binding.stages = ShaderStageBit::Fragment;
 
-	DescriptorSetLayout::Binding gbuffer4Binding{};
-	gbuffer4Binding.bindingId = 6;
-	gbuffer4Binding.count = 1;
-	gbuffer4Binding.type = BindingType::Texture;
-	gbuffer4Binding.stages = ShaderStageBit::Fragment;
-
 	std::array<DescriptorSetLayout::Binding, 2> tonemapDescriptorSetLayoutBindings{};
 	tonemapDescriptorSetLayoutBindings[0] = engineUboBinding;
 	tonemapDescriptorSetLayoutBindings[1] = litHdrRenderTargetBinding;
@@ -161,30 +165,92 @@ void DeferredRenderer::CreateDeferredRendererStaticObjects() {
 	tonemapDescriptorSetLayoutCreateInfo.bindings = tonemapDescriptorSetLayoutBindings.data();
 	tonemapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(tonemapDescriptorSetLayoutCreateInfo);
 
-	std::array<DescriptorSetLayout::Binding, 7> lightingDescriptorSetLayoutBindings{};
+	std::array<DescriptorSetLayout::Binding, 6> lightingDescriptorSetLayoutBindings{};
 	lightingDescriptorSetLayoutBindings[0] = engineUboBinding;
 	lightingDescriptorSetLayoutBindings[1] = lightUboBinding;
 	lightingDescriptorSetLayoutBindings[2] = gbuffer0Binding;
 	lightingDescriptorSetLayoutBindings[3] = gbuffer1Binding;
 	lightingDescriptorSetLayoutBindings[4] = gbuffer2Binding;
 	lightingDescriptorSetLayoutBindings[5] = gbuffer3Binding;
-	lightingDescriptorSetLayoutBindings[6] = gbuffer4Binding;
 
 	DescriptorSetLayout::CreateInfo lightingDescriptorSetLayoutCreateInfo{};
 	lightingDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightingDescriptorSetLayoutBindings.size());
 	lightingDescriptorSetLayoutCreateInfo.bindings = lightingDescriptorSetLayoutBindings.data();
 	lightingDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(lightingDescriptorSetLayoutCreateInfo);
+}
+
+void DeferredRenderer::CreateDescriptorSets() {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+
+	DescriptorSet::Binding engineUboBinding{};
+	engineUboBinding.bindingIndex = 0;
+	engineUboBinding.count = 1;
+	engineUboBinding.bindingType = BindingType::UniformBuffer;
+	engineUboBinding.itemPtr = globalUniformBufferObject;
+
+	DescriptorSet::Binding lightUboBinding{};
+	lightUboBinding.bindingIndex = 1;
+	lightUboBinding.count = 1;
+	lightUboBinding.bindingType = BindingType::UniformBuffer;
+	lightUboBinding.itemPtr = lightUniformBufferObject;
+
+	DescriptorSet::Binding litHdrRenderTargetBinding{};
+	litHdrRenderTargetBinding.bindingIndex = 1;
+	litHdrRenderTargetBinding.count = 1;
+	litHdrRenderTargetBinding.bindingType = BindingType::RenderTexture;
+	litHdrRenderTargetBinding.itemPtr = litHdrRenderTarget;
+
+	DescriptorSet::Binding gbuffer0Binding{};
+	gbuffer0Binding.bindingIndex = 2;
+	gbuffer0Binding.count = 1;
+	gbuffer0Binding.bindingType = BindingType::RenderTexture;
+	gbuffer0Binding.itemPtr = gbufferRenderTargets[0];
+
+	DescriptorSet::Binding gbuffer1Binding{};
+	gbuffer1Binding.bindingIndex = 3;
+	gbuffer1Binding.count = 1;
+	gbuffer1Binding.bindingType = BindingType::RenderTexture;
+	gbuffer1Binding.itemPtr = gbufferRenderTargets[1];
+
+	DescriptorSet::Binding gbuffer2Binding{};
+	gbuffer2Binding.bindingIndex = 4;
+	gbuffer2Binding.count = 1;
+	gbuffer2Binding.bindingType = BindingType::RenderTexture;
+	gbuffer2Binding.itemPtr = gbufferRenderTargets[2];
+
+	DescriptorSet::Binding gbuffer3Binding{};
+	gbuffer3Binding.bindingIndex = 5;
+	gbuffer3Binding.count = 1;
+	gbuffer3Binding.bindingType = BindingType::RenderTexture;
+	gbuffer3Binding.itemPtr = gbufferRenderTargets[3];
+
+	std::array<DescriptorSet::Binding, 2> tonemapDescriptorSetBindings{};
+	tonemapDescriptorSetBindings[0] = engineUboBinding;
+	tonemapDescriptorSetBindings[1] = litHdrRenderTargetBinding;
+
+	std::array<DescriptorSet::Binding, 6> lightingDescriptorSetBindings{};
+	lightingDescriptorSetBindings[0] = engineUboBinding;
+	lightingDescriptorSetBindings[1] = lightUboBinding;
+	lightingDescriptorSetBindings[2] = gbuffer0Binding;
+	lightingDescriptorSetBindings[3] = gbuffer1Binding;
+	lightingDescriptorSetBindings[4] = gbuffer2Binding;
+	lightingDescriptorSetBindings[5] = gbuffer3Binding;
 
 	DescriptorSet::CreateInfo tonemapDescriptorSetCreateInfo{};
 	tonemapDescriptorSetCreateInfo.layout = tonemapDescriptorSetLayout;
+	tonemapDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(tonemapDescriptorSetBindings.size());
+	tonemapDescriptorSetCreateInfo.bindings = tonemapDescriptorSetBindings.data();
 	tonemapDescriptorSet = graphicsCore->CreateDescriptorSet(tonemapDescriptorSetCreateInfo);
 
 	DescriptorSet::CreateInfo lightingDescriptorSetCreateInfo{};
 	lightingDescriptorSetCreateInfo.layout = lightingDescriptorSetLayout;
+	lightingDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(lightingDescriptorSetBindings.size());
+	lightingDescriptorSetCreateInfo.bindings = lightingDescriptorSetBindings.data();
 	lightingDescriptorSet = graphicsCore->CreateDescriptorSet(lightingDescriptorSetCreateInfo);
+}
 
-	LightmapStruct lightmapStruct;
-	lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
+void DeferredRenderer::CreateVertexAndIndexBuffersAndLayouts() {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	vertexLightPositionLayout = {
 		{
