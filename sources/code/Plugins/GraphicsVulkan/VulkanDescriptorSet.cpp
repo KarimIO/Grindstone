@@ -1,6 +1,7 @@
 #include "VulkanDescriptorSetLayout.hpp"
 #include "VulkanDescriptorSet.hpp"
 #include "VulkanUniformBuffer.hpp"
+#include "VulkanRenderTarget.hpp"
 #include "VulkanTexture.hpp"
 #include "VulkanCore.hpp"
 
@@ -26,6 +27,24 @@ void AttachUniformBuffer(std::vector<VkWriteDescriptorSet>& writeVector, Descrip
 
 void AttachTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
 	VulkanTexture* texture = static_cast<VulkanTexture*>(binding.itemPtr);
+
+	VkDescriptorImageInfo imageInfo = {};
+	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo.imageView = texture->GetImageView();
+	imageInfo.sampler = texture->GetSampler();
+
+	VkWriteDescriptorSet descriptorWrites = {};
+	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites.dstSet = descriptorSet;
+	descriptorWrites.dstBinding = 0;
+	descriptorWrites.dstArrayElement = 0;
+	descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorWrites.descriptorCount = binding.count;
+	descriptorWrites.pImageInfo = &imageInfo;
+}
+
+void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
+	VulkanRenderTarget* texture = static_cast<VulkanRenderTarget*>(binding.itemPtr);
 
 	VkDescriptorImageInfo imageInfo = {};
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -73,6 +92,8 @@ void VulkanDescriptorSet::ChangeBindings(Binding* bindings, uint32_t bindingCoun
 			break;
 		case BindingType::Texture:
 			AttachTexture(descriptorWrites, binding, descriptorSet);
+		case BindingType::RenderTexture:
+			AttachRenderTexture(descriptorWrites, binding, descriptorSet);
 			break;
 		}
 	}

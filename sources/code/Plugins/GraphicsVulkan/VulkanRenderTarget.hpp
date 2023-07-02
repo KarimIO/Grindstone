@@ -12,10 +12,14 @@ namespace Grindstone {
 			virtual ~VulkanRenderTarget() override;
 		public:
 			VkImageView GetImageView();
+			VkSampler GetSampler();
 		public:
 			virtual void Resize(uint32_t width, uint32_t height) override;
 			virtual void RenderScreen(unsigned int i, unsigned int width, unsigned int height, unsigned char *data) override;
 		private:
+			void CreateTextureSampler();
+		private:
+			VkSampler sampler = nullptr;
 			VkImage image = nullptr;
 			VkImageView imageView = nullptr;
 			VkDeviceMemory imageMemory = nullptr;

@@ -61,8 +61,8 @@ namespace Grindstone {
 				for (uint32_t j = 0; j < vb.attributeCount; ++j) {
 					auto& va = vb.attributes[j];
 					VkVertexInputAttributeDescription &vad = vertexAttribDescriptors[vertexAttributeDescriptorCount++];
-					vad.binding = j;
-					vad.location = i;
+					vad.binding = i;
+					vad.location = va.location;
 					vad.format = TranslateVertexFormatsToVulkan(va.format);
 					vad.offset = va.offset;
 				}
