@@ -54,14 +54,15 @@ namespace Grindstone {
 			std::vector<VkVertexInputAttributeDescription> vertexAttribDescriptors(vertexAttributeDescriptorCount);
 			vertexAttributeDescriptorCount = 0;
 
+			// TODO: We should reinvestigate setting the binding and locations
 			for (uint32_t i = 0; i < createInfo.vertexBindingsCount; ++i) {
 				auto& vb = createInfo.vertexBindings[i];
 
 				for (uint32_t j = 0; j < vb.attributeCount; ++j) {
 					auto& va = vb.attributes[j];
 					VkVertexInputAttributeDescription &vad = vertexAttribDescriptors[vertexAttributeDescriptorCount++];
-					vad.binding = i;
-					vad.location = j;
+					vad.binding = j;
+					vad.location = i;
 					vad.format = TranslateVertexFormatsToVulkan(va.format);
 					vad.offset = va.offset;
 				}

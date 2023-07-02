@@ -65,6 +65,8 @@ namespace Grindstone {
 			All = 0x3F
 		};
 
+		ShaderStageBit operator |(ShaderStageBit a, ShaderStageBit b);
+
 		enum class BindingType {
 			UniformBuffer,
 			Texture
