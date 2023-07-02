@@ -12,6 +12,7 @@ namespace Grindstone {
 		public:
 			VkCommandBuffer GetCommandBuffer();
 		private:
+			virtual void BeginCommandBuffer() override;
 			virtual void BindRenderPass(
 				RenderPass* renderPass,
 				Framebuffer* framebuffer,
@@ -36,7 +37,7 @@ namespace Grindstone {
 			virtual void EndCommandBuffer() override;
 		private:
 			VkCommandBuffer commandBuffer;
-
+			VkCommandBufferBeginInfo beginInfo;
 			CommandBufferSecondaryInfo secondaryInfo;
 		};
 	};

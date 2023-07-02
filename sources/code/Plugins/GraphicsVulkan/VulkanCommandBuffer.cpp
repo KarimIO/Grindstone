@@ -34,7 +34,7 @@ namespace Grindstone {
 
 			secondaryInfo = createInfo.secondaryInfo;
 
-			VkCommandBufferBeginInfo beginInfo = {};
+			beginInfo = {};
 			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
@@ -52,11 +52,13 @@ namespace Grindstone {
 				inheritenceInfo.subpass = 0;
 				beginInfo.pInheritanceInfo = &inheritenceInfo;
 			}
-
-			vkBeginCommandBuffer(commandBuffer, &beginInfo);
 		}
 
 		VulkanCommandBuffer::~VulkanCommandBuffer() {
+		}
+
+		void VulkanCommandBuffer::BeginCommandBuffer() {
+			vkBeginCommandBuffer(commandBuffer, &beginInfo);
 		}
 
 		void VulkanCommandBuffer::BindRenderPass(

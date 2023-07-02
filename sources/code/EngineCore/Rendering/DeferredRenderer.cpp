@@ -274,20 +274,20 @@ void DeferredRenderer::CreateVertexAndIndexBuffersAndLayouts() {
 	vboCi.count = sizeof(lightPositions) / (sizeof(float) * 2);
 	vboCi.size = sizeof(lightPositions);
 	vboCi.layout = &vertexLightPositionLayout;
-	VertexBuffer* vbo = graphicsCore->CreateVertexBuffer(vboCi);
+	vertexBuffer = graphicsCore->CreateVertexBuffer(vboCi);
 
 	IndexBuffer::CreateInfo iboCi{};
 	iboCi.debugName = "Light Index Buffer";
 	iboCi.content = lightIndices;
 	iboCi.count = sizeof(lightIndices) / sizeof(lightIndices[0]);
 	iboCi.size = sizeof(lightIndices);
-	IndexBuffer* ibo = graphicsCore->CreateIndexBuffer(iboCi);
+	indexBuffer = graphicsCore->CreateIndexBuffer(iboCi);
 
 	VertexArrayObject::CreateInfo vaoCi{};
 	vaoCi.debugName = "Light Vertex Array Object";
 	vaoCi.vertexBufferCount = 1;
-	vaoCi.vertexBuffers = &vbo;
-	vaoCi.indexBuffer = ibo;
+	vaoCi.vertexBuffers = &vertexBuffer;
+	vaoCi.indexBuffer = indexBuffer;
 	planePostProcessVao = graphicsCore->CreateVertexArrayObject(vaoCi);
 }
 
@@ -436,6 +436,8 @@ void DeferredRenderer::RenderLights(entt::registry& registry) {
 	graphicsCore->Clear(ClearMode::ColorAndDepth, clearColor, 1);
 	graphicsCore->SetImmediateBlending(BlendMode::Additive);
 	gbuffer->BindTextures(2);
+	lightUniformBufferObject->Bind();
+	planePostProcessVao->Bind();
 
 	auto view = registry.view<const TransformComponent, const PointLightComponent>();
 	view.each([&](const TransformComponent& transformComponent, const PointLightComponent& pointLightComponent) {
@@ -447,8 +449,6 @@ void DeferredRenderer::RenderLights(entt::registry& registry) {
 		};
 
 		lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
-		lightUniformBufferObject->Bind();
-		planePostProcessVao->Bind();
 		graphicsCore->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
 	});
 }
@@ -461,22 +461,26 @@ void DeferredRenderer::PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer) 
 
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	graphicsCore->BindPipeline(tonemapPipeline);
-	graphicsCore->EnableDepthWrite(true);
+	tonemapCommandBuffer->BeginCommandBuffer();
 	if (outputFramebuffer == nullptr) {
-		graphicsCore->BindDefaultFramebufferWrite();
+		// tonemapCommandBuffer->BindDefaultRenderPass();
 	}
 	else {
-		outputFramebuffer->BindWrite();
+		// tonemapCommandBuffer->BindRenderPass();
 	}
-	litHdrFramebuffer->BindRead();
 
-	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.f };
-	graphicsCore->Clear(ClearMode::ColorAndDepth, clearColor, 1);
-	graphicsCore->SetImmediateBlending(BlendMode::None);
-	litHdrFramebuffer->BindTextures(1);
-	planePostProcessVao->Bind();
-	graphicsCore->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
+	tonemapCommandBuffer->BindDescriptorSet(tonemapPipeline, &tonemapDescriptorSet, 1);
+	tonemapCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
+	tonemapCommandBuffer->BindIndexBuffer(indexBuffer, false);
+
+	{
+		// Tonemapping
+		tonemapCommandBuffer->BindPipeline(tonemapPipeline);
+		tonemapCommandBuffer->DrawIndices(0, 6, 1, 0);
+	}
+
+	tonemapCommandBuffer->UnbindRenderPass();
+	tonemapCommandBuffer->EndCommandBuffer();
 }
 
 void DeferredRenderer::Render(
@@ -486,13 +490,48 @@ void DeferredRenderer::Render(
 	glm::vec3 eyePos,
 	GraphicsAPI::Framebuffer* outputFramebuffer
 ) {
-	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	graphicsCore->ResizeViewport(width, height);
-
 	EngineUboStruct engineUboStruct{};
 	engineUboStruct.proj = projectionMatrix;
 	engineUboStruct.view = viewMatrix;
 	engineUboStruct.eyePos = eyePos;
+	globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
+
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	if (graphicsCore->ShouldUseImmediateMode()) {
+		RenderImmediate(
+			registry,
+			outputFramebuffer
+		);
+	}
+	else {
+		RenderCommandBuffer(
+			registry,
+			outputFramebuffer
+		);
+	}
+}
+
+void DeferredRenderer::RenderCommandBuffer(
+	entt::registry& registry,
+	GraphicsAPI::Framebuffer* outputFramebuffer
+) {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+
+	float clearColor[4] = { 0.3f, 0.6f, 0.9f, 1.f };
+	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
+	// RenderLights(registry);
+	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Unlit");
+	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Transparent");
+
+	PostProcess(outputFramebuffer);
+}
+
+void DeferredRenderer::RenderImmediate(
+	entt::registry& registry,
+	GraphicsAPI::Framebuffer* outputFramebuffer
+) {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	graphicsCore->ResizeViewport(width, height);
 
 	gbuffer->BindWrite();
 	gbuffer->BindRead();
@@ -500,7 +539,6 @@ void DeferredRenderer::Render(
 	float clearColor[4] = { 0.3f, 0.6f, 0.9f, 1.f };
 	graphicsCore->Clear(ClearMode::ColorAndDepth, clearColor, 1);
 
-	globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
 	globalUniformBufferObject->Bind();
 
 	graphicsCore->EnableDepthWrite(true);
