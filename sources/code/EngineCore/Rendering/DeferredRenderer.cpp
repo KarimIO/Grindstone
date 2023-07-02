@@ -46,6 +46,12 @@ struct LightmapStruct {
 };
 
 DeferredRenderer::DeferredRenderer() {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+
+	GraphicsAPI::CommandBuffer::CreateInfo commandBufferCreateInfo{};
+	pointLightCommandBuffer = graphicsCore->CreateCommandBuffer(commandBufferCreateInfo);
+	tonemapCommandBuffer = graphicsCore->CreateCommandBuffer(commandBufferCreateInfo);
+
 	CreateVertexAndIndexBuffersAndLayouts();
 	CreateGbufferFramebuffer();
 	CreateLitHDRFramebuffer();
@@ -87,6 +93,7 @@ bool DeferredRenderer::OnWindowResize(Events::BaseEvent* ev) {
 void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 	this->width = width;
 	this->height = height;
+	return;
 	gbuffer->Resize(width, height);
 	litHdrFramebuffer->Resize(width, height);
 }
@@ -108,7 +115,6 @@ void DeferredRenderer::CreateUniformBuffers() {
 
 	LightmapStruct lightmapStruct;
 	lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
-
 }
 
 void DeferredRenderer::CreateDescriptorSetLayouts() {
@@ -441,7 +447,7 @@ void DeferredRenderer::RenderLights(entt::registry& registry) {
 		};
 
 		lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
-		// TODO: lightUniformBufferObject->Bind();
+		lightUniformBufferObject->Bind();
 		planePostProcessVao->Bind();
 		graphicsCore->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
 	});
@@ -495,7 +501,7 @@ void DeferredRenderer::Render(
 	graphicsCore->Clear(ClearMode::ColorAndDepth, clearColor, 1);
 
 	globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
-	// TODO: globalUniformBufferObject->Bind();
+	globalUniformBufferObject->Bind();
 
 	graphicsCore->EnableDepthWrite(true);
 	graphicsCore->SetImmediateBlending(BlendMode::None);

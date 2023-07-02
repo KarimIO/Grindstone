@@ -13,47 +13,6 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		void VulkanCommandBuffer::HandleStep(Command* ci) {
-			switch (ci->type) {
-			case CommandBufferType::CallCommandBuffer: {
-				UploadCmdBindCommandBuffers(static_cast<CommandCallCmdBuffer *>(ci));
-				return;
-			}
-			case CommandBufferType::BindRenderPass: {
-				UploadCmdBindRenderPass(static_cast<CommandBindRenderPass *>(ci));
-				return;
-			}
-			case CommandBufferType::UnbindRenderPass: {
-				UploadCmdUnbindRenderPass(static_cast<CommandUnbindRenderPass *>(ci));
-				return;
-			}
-			case CommandBufferType::BindVertexBuffers: {
-				UploadCmdBindVertexBuffers(static_cast<CommandBindVBOs *>(ci));
-				return;
-			}
-			case CommandBufferType::BindIndexBuffer: {
-				UploadCmdBindIndexBuffer(static_cast<CommandBindIBO *>(ci));
-				return;
-			}
-			case CommandBufferType::BindPipeline: {
-				UploadCmdBindPipeline(static_cast<CommandBindPipeline *>(ci));
-				return;
-			}
-			case CommandBufferType::BindDescriptorSet: {
-				UploadCmdBindDescriptorSet(static_cast<CommandBindDescriptorSets *>(ci));
-				return;
-			}
-			case CommandBufferType::DrawVertices: {
-				UploadCmdDrawVertices(static_cast<CommandDrawVertices *>(ci));
-				return;
-			}
-			case CommandBufferType::DrawVerticesIndices: {
-				UploadCmdDrawIndices(static_cast<CommandDrawIndices *>(ci));
-				return;
-			}
-			}
-		}
-
 		VkCommandBuffer VulkanCommandBuffer::GetCommandBuffer()	{
 			return commandBuffer;
 		}
@@ -75,64 +34,62 @@ namespace Grindstone {
 
 			secondaryInfo = createInfo.secondaryInfo;
 
-			if (createInfo.count > 0) {
-				VkCommandBufferBeginInfo beginInfo = {};
-				beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-				beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+			VkCommandBufferBeginInfo beginInfo = {};
+			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-				if (createInfo.secondaryInfo.isSecondary) {
-					beginInfo.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
-					VkCommandBufferInheritanceInfo inheritenceInfo = {};
-					VulkanFramebuffer * framebuffer = static_cast<VulkanFramebuffer *>(createInfo.secondaryInfo.framebuffer);
-					VulkanRenderPass *renderPass = static_cast<VulkanRenderPass *>(createInfo.secondaryInfo.renderPass);
-					inheritenceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
-					inheritenceInfo.framebuffer = framebuffer->GetFramebuffer();
-					inheritenceInfo.renderPass = renderPass->GetRenderPassHandle();
-					inheritenceInfo.occlusionQueryEnable = VK_FALSE;
-					inheritenceInfo.pipelineStatistics = 0;
-					inheritenceInfo.pNext = nullptr;
-					inheritenceInfo.subpass = 0;
-					beginInfo.pInheritanceInfo = &inheritenceInfo;
-				}
-
-				vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
-				for (uint32_t j = 0; j < createInfo.count; j++) {
-					HandleStep(createInfo.steps[j]);
-				}
-
-				if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-					throw std::runtime_error("failed to record command buffer!");
-				}
+			if (createInfo.secondaryInfo.isSecondary) {
+				beginInfo.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
+				VkCommandBufferInheritanceInfo inheritenceInfo = {};
+				VulkanFramebuffer * framebuffer = static_cast<VulkanFramebuffer *>(createInfo.secondaryInfo.framebuffer);
+				VulkanRenderPass *renderPass = static_cast<VulkanRenderPass *>(createInfo.secondaryInfo.renderPass);
+				inheritenceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
+				inheritenceInfo.framebuffer = framebuffer->GetFramebuffer();
+				inheritenceInfo.renderPass = renderPass->GetRenderPassHandle();
+				inheritenceInfo.occlusionQueryEnable = VK_FALSE;
+				inheritenceInfo.pipelineStatistics = 0;
+				inheritenceInfo.pNext = nullptr;
+				inheritenceInfo.subpass = 0;
+				beginInfo.pInheritanceInfo = &inheritenceInfo;
 			}
+
+			vkBeginCommandBuffer(commandBuffer, &beginInfo);
 		}
 
 		VulkanCommandBuffer::~VulkanCommandBuffer() {
 		}
 
-		void VulkanCommandBuffer::UploadCmdBindRenderPass(CommandBindRenderPass * createInfo) {
-			VulkanRenderPass *renderPass = (VulkanRenderPass *)(createInfo->renderPass);
-			VulkanFramebuffer *framebuffer = (VulkanFramebuffer *)(createInfo->framebuffer);
+		void VulkanCommandBuffer::BindRenderPass(
+			RenderPass* renderPass,
+			Framebuffer* framebuffer,
+			uint32_t width,
+			uint32_t height,
+			ClearColorValue* colorClearValues,
+			uint32_t colorClearCount,
+			ClearDepthStencil depthStencilClearValue
+		) {
+			VulkanRenderPass *vulkanRenderPass = static_cast<VulkanRenderPass*>(renderPass);
+			VulkanFramebuffer *vulkanFramebuffer = static_cast<VulkanFramebuffer*>(framebuffer);
 			VkRenderPassBeginInfo renderPassInfo = {};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = renderPass->GetRenderPassHandle();
-			renderPassInfo.framebuffer = framebuffer->GetFramebuffer();
+			renderPassInfo.renderPass = vulkanRenderPass->GetRenderPassHandle();
+			renderPassInfo.framebuffer = vulkanFramebuffer->GetFramebuffer();
 			renderPassInfo.renderArea.offset = { 0, 0 };
-			renderPassInfo.renderArea.extent = { createInfo->width, createInfo->height };
+			renderPassInfo.renderArea.extent = { width, height };
 
-			size_t clearColorCount = createInfo->colorClearCount;
-			clearColorCount += createInfo->depthStencilClearValue.hasDepthStencilAttachment ? 1 : 0;
+			size_t clearColorCount = colorClearCount;
+			clearColorCount += depthStencilClearValue.hasDepthStencilAttachment ? 1 : 0;
 
 			std::vector<VkClearValue> clearColor;
 			clearColor.resize(clearColorCount);
-			for (size_t i = 0; i < createInfo->colorClearCount; i++) {
-				std::memcpy(&clearColor[i].color, &createInfo->colorClearValues[i], sizeof(VkClearColorValue));
+			for (size_t i = 0; i < colorClearCount; i++) {
+				std::memcpy(&clearColor[i].color, &colorClearValues[i], sizeof(VkClearColorValue));
 			}
 
-			if (createInfo->depthStencilClearValue.hasDepthStencilAttachment) {
-				clearColor[createInfo->colorClearCount].depthStencil = {
-					createInfo->depthStencilClearValue.depth,
-					createInfo->depthStencilClearValue.stencil
+			if (depthStencilClearValue.hasDepthStencilAttachment) {
+				clearColor[colorClearCount].depthStencil = {
+					depthStencilClearValue.depth,
+					depthStencilClearValue.stencil
 				};
 			}
 
@@ -142,59 +99,88 @@ namespace Grindstone {
 			vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		}
 
-		void VulkanCommandBuffer::UploadCmdUnbindRenderPass(CommandUnbindRenderPass * createInfo) {
+		void VulkanCommandBuffer::UnbindRenderPass() {
 			vkCmdEndRenderPass(commandBuffer);
 		}
 
-		void VulkanCommandBuffer::UploadCmdBindDescriptorSet(CommandBindDescriptorSets * createInfo) {
-			VulkanPipeline *graphicsPipeline = static_cast<VulkanPipeline *>(createInfo->graphicsPipeline);
-			size_t descriptorSetCount = static_cast<size_t>(createInfo->descriptorSetCount);
+		void VulkanCommandBuffer::BindDescriptorSet(Pipeline* graphicsPipeline, DescriptorSet** descriptorSets, uint32_t descriptorSetCount) {
+			VulkanPipeline *vkPipeline = static_cast<VulkanPipeline *>(graphicsPipeline);
 
-			std::vector<VkDescriptorSet> descriptorSets;
-			descriptorSets.reserve(descriptorSetCount);
-			for (uint32_t i = 0; i < createInfo->descriptorSetCount; i++) {
-				VulkanDescriptorSet* vkub = (VulkanDescriptorSet *)(createInfo->descriptorSets[i]);
-				descriptorSets.push_back(vkub->GetDescriptorSet());
+			std::vector<VkDescriptorSet> vkDescriptorSets;
+			vkDescriptorSets.reserve(descriptorSetCount);
+			for (uint32_t i = 0; i < descriptorSetCount; i++) {
+				VulkanDescriptorSet* desc = static_cast<VulkanDescriptorSet*>(descriptorSets[i]);
+				vkDescriptorSets.push_back(desc->GetDescriptorSet());
 			}
 
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->GetGraphicsPipelineLayout(), 0, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, nullptr);
+			vkCmdBindDescriptorSets(
+				commandBuffer,
+				VK_PIPELINE_BIND_POINT_GRAPHICS,
+				vkPipeline->GetGraphicsPipelineLayout(),
+				0,
+				static_cast<uint32_t>(vkDescriptorSets.size()),
+				vkDescriptorSets.data(),
+				0,
+				nullptr
+			);
 		}
 
-		void VulkanCommandBuffer::UploadCmdBindCommandBuffers(CommandCallCmdBuffer * createInfo) {
-			std::vector<VkCommandBuffer> commandBuffers;
-			commandBuffers.reserve(createInfo->commandBuffersCount);
-			for (size_t i = 0; i < createInfo->commandBuffersCount; i++) {
-				VkCommandBuffer cmd = static_cast<VulkanCommandBuffer *>(createInfo->commandBuffers[i])->GetCommandBuffer();
-				commandBuffers.push_back(cmd);
+		void VulkanCommandBuffer::BindCommandBuffers(CommandBuffer** commandBuffers, uint32_t commandBuffersCount) {
+			std::vector<VkCommandBuffer> vkCommandBuffers;
+			vkCommandBuffers.reserve(commandBuffersCount);
+			for (size_t i = 0; i < commandBuffersCount; i++) {
+				VkCommandBuffer cmd = static_cast<VulkanCommandBuffer *>(commandBuffers[i])->GetCommandBuffer();
+				vkCommandBuffers.push_back(cmd);
 			}
 
-			vkCmdExecuteCommands(commandBuffer, (uint32_t)commandBuffers.size(), commandBuffers.data());
-
+			vkCmdExecuteCommands(
+				commandBuffer,
+				static_cast<uint32_t>(vkCommandBuffers.size()),
+				vkCommandBuffers.data()
+			);
 		}
 
-		void VulkanCommandBuffer::UploadCmdBindPipeline(CommandBindPipeline * ci) {
-			VulkanPipeline *pipeline = (VulkanPipeline *)(ci->graphicsPipeline);
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetGraphicsPipeline());
+		void VulkanCommandBuffer::BindPipeline(Pipeline* pipeline) {
+			VulkanPipeline *vulkanPipeline = static_cast<VulkanPipeline*>(pipeline);
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanPipeline->GetGraphicsPipeline());
 		}
 
-		void VulkanCommandBuffer::UploadCmdBindVertexBuffers(CommandBindVBOs* ci) {
-			VulkanVertexBuffer *vertexBuffer = static_cast<VulkanVertexBuffer *>(ci->vertexBuffer[0]);
-			VkBuffer vertexBuffers[] = { vertexBuffer->GetBuffer() };
-			VkDeviceSize offsets[] = { 0 };
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+		void VulkanCommandBuffer::BindVertexBuffers(VertexBuffer** vertexBuffers, uint32_t vertexBufferCount) {
+			std::vector<VkBuffer> buffers;
+			std::vector<VkDeviceSize> offsets;
+			buffers.resize(vertexBufferCount);
+			offsets.resize(vertexBufferCount);
+
+			for (uint32_t i = 0; i < vertexBufferCount; ++i) {
+				VulkanVertexBuffer *vb = static_cast<VulkanVertexBuffer *>(vertexBuffers[i]);
+				buffers[i] = vb->GetBuffer();
+				offsets[i] = 0;
+			}
+
+			vkCmdBindVertexBuffers(
+				commandBuffer,
+				0,
+				vertexBufferCount,
+				buffers.data(),
+				offsets.data()
+			);
 		}
 
-		void VulkanCommandBuffer::UploadCmdBindIndexBuffer(CommandBindIBO * ci) {
-			VulkanIndexBuffer *indexBuffer = static_cast<VulkanIndexBuffer *>(ci->indexBuffer);
-			vkCmdBindIndexBuffer(commandBuffer, indexBuffer->GetBuffer(), 0, ci->useLargeBuffer ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16);
+		void VulkanCommandBuffer::BindIndexBuffer(IndexBuffer* indexBuffer, bool useLargeBuffer) {
+			VulkanIndexBuffer *vulkanIndexBuffer = static_cast<VulkanIndexBuffer *>(indexBuffer);
+			vkCmdBindIndexBuffer(commandBuffer, vulkanIndexBuffer->GetBuffer(), 0, useLargeBuffer ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16);
 		}
 
-		void VulkanCommandBuffer::UploadCmdDrawVertices(CommandDrawVertices * ci) {
-			vkCmdDraw(commandBuffer, ci->count, ci->numInstances, 0, 0);
+		void VulkanCommandBuffer::DrawVertices(uint32_t vertexCount, uint32_t instanceCount) {
+			vkCmdDraw(commandBuffer, vertexCount, instanceCount, 0, 0);
 		}
 
-		void VulkanCommandBuffer::UploadCmdDrawIndices(CommandDrawIndices * ci){
-			vkCmdDrawIndexed(commandBuffer, ci->count, ci->numInstances, ci->indexStart, ci->baseVertex, 0);
+		void VulkanCommandBuffer::DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t instanceCount, int32_t vertexOffset) {
+			vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, 0);
+		}
+
+		void VulkanCommandBuffer::EndCommandBuffer() {
+			vkEndCommandBuffer(commandBuffer);
 		}
 	}
 }

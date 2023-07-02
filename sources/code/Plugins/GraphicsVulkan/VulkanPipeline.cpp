@@ -78,8 +78,8 @@ namespace Grindstone {
 			VkViewport viewport = {};
 			viewport.x = 0.0f;
 			viewport.y = 0.0f;
-			viewport.width = (float)createInfo.width;
-			viewport.height = (float)createInfo.height;
+			viewport.width = createInfo.width;
+			viewport.height = createInfo.height;
 			viewport.minDepth = 0.0f;
 			viewport.maxDepth = 1.0f;
 

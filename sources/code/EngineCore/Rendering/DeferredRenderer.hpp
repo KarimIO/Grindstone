@@ -63,5 +63,8 @@ namespace Grindstone {
 		GraphicsAPI::VertexArrayObject* planePostProcessVao = nullptr;
 		GraphicsAPI::Pipeline* pointLightPipeline = nullptr;
 		GraphicsAPI::Pipeline* tonemapPipeline = nullptr;
+
+		GraphicsAPI::CommandBuffer* pointLightCommandBuffer = nullptr;
+		GraphicsAPI::CommandBuffer* tonemapCommandBuffer = nullptr;
 	};
 }
