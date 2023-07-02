@@ -10,6 +10,21 @@
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
+// TODO : Remove ShaderLayoutIndex and ShaderVertexLayouts, insert them via plugins, and search via dictionary
+enum class ShaderLayoutIndex {
+	Position = 0,
+	Normal,
+	Tangent,
+	Uv0
+};
+
+struct ShaderVertexLayouts {
+	GraphicsAPI::VertexBufferLayout positions;
+	GraphicsAPI::VertexBufferLayout normals;
+	GraphicsAPI::VertexBufferLayout tangents;
+	GraphicsAPI::VertexBufferLayout uv0;
+};
+
 void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	// TODO: Check shader cache before loading and compiling again
 	// The shader cache includes shaders precompiled for consoles, or compiled once per driver update on computers
@@ -100,8 +115,49 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	pipelineCreateInfo.descriptorSetLayouts = descriptorSetLayouts.data();
 	pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
 
-	pipelineCreateInfo.vertexBindings = nullptr;
-	pipelineCreateInfo.vertexBindingsCount = 0;
+	ShaderVertexLayouts vertexLayouts;
+	vertexLayouts.positions = {
+		{
+			(uint32_t)ShaderLayoutIndex::Position,
+			Grindstone::GraphicsAPI::VertexFormat::Float3,
+			"vertexPosition",
+			false,
+			Grindstone::GraphicsAPI::AttributeUsage::Position
+		}
+	};
+
+	vertexLayouts.normals = {
+		{
+			(uint32_t)ShaderLayoutIndex::Normal,
+			Grindstone::GraphicsAPI::VertexFormat::Float3,
+			"vertexNormal",
+			false,
+			Grindstone::GraphicsAPI::AttributeUsage::Normal
+		}
+	};
+
+	vertexLayouts.tangents = {
+		{
+			(uint32_t)ShaderLayoutIndex::Tangent,
+			Grindstone::GraphicsAPI::VertexFormat::Float3,
+			"vertexTangent",
+			false,
+			Grindstone::GraphicsAPI::AttributeUsage::Tangent
+		}
+	};
+
+	vertexLayouts.uv0 = {
+		{
+			(uint32_t)ShaderLayoutIndex::Uv0,
+			Grindstone::GraphicsAPI::VertexFormat::Float2,
+			"vertexTexCoord0",
+			false,
+			Grindstone::GraphicsAPI::AttributeUsage::TexCoord0
+		}
+	};
+
+	pipelineCreateInfo.vertexBindings = &vertexLayouts.positions;
+	pipelineCreateInfo.vertexBindingsCount = 4; // Would be 5, but uv1 is not yet used
 
 	auto shader = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	auto asset = shaders.emplace(uuid, ShaderAsset(uuid, debugName, shader));
