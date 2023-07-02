@@ -12,6 +12,7 @@ namespace Grindstone {
 
 			virtual void UpdateBuffer(void* content) override;
 			virtual uint32_t GetSize() override;
+			virtual void Bind() override;
 
 			virtual VkBuffer GetBuffer();
 		private:

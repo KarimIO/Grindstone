@@ -13,6 +13,7 @@ namespace Grindstone {
 			// Inherited via UniformBuffer
 			virtual void UpdateBuffer(void *content) override;
 			virtual uint32_t GetSize() override;
+			virtual void Bind() override;
 		private:
 			GLuint uniformBufferObject;
 			GLuint bindingLocation;

@@ -11,8 +11,7 @@ namespace Grindstone {
 			glObjectLabel(GL_BUFFER, uniformBufferObject, -1, ci.debugName);
 			glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-			bindingLocation = 0; // binding location
-			glBindBufferBase(GL_UNIFORM_BUFFER, bindingLocation, uniformBufferObject);
+			glBindBufferBase(GL_UNIFORM_BUFFER, 0, uniformBufferObject);
 		}
 
 		GLUniformBuffer::~GLUniformBuffer() {
@@ -29,5 +28,10 @@ namespace Grindstone {
 		uint32_t GLUniformBuffer::GetSize() {
 			return size;
 		}
+
+		void GLUniformBuffer::Bind() {
+			glBindBufferBase(GL_UNIFORM_BUFFER, bindingLocation, uniformBufferObject);
+		}
+
 	}
 }

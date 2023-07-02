@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "VulkanUniformBuffer.hpp"
 #include "VulkanCore.hpp"
 #include "VulkanUtils.hpp"
@@ -41,4 +42,9 @@ uint32_t VulkanUniformBuffer::GetSize() {
 
 VkBuffer VulkanUniformBuffer::GetBuffer() {
 	return buffer;
+}
+
+void VulkanUniformBuffer::Bind() {
+	std::cout << "VulkanUniformBuffer::Bind is not used.\n";
+	assert(false);
 }
