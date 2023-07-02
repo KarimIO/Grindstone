@@ -10,36 +10,6 @@
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
-std::string GetShaderPath(const char* basePath, ShaderStage shaderStage, GraphicsAPI::Core* graphicsCore) {
-	const char* shaderStageExtension = "";
-
-	switch (shaderStage) {
-	case ShaderStage::Vertex:
-		shaderStageExtension = ".vert";
-		break;
-	case ShaderStage::Fragment:
-		shaderStageExtension = ".frag";
-		break;
-	case ShaderStage::TesselationEvaluation:
-		shaderStageExtension = ".eval";
-		break;
-	case ShaderStage::TesselationControl:
-		shaderStageExtension = ".ctrl";
-		break;
-	case ShaderStage::Geometry:
-		shaderStageExtension = ".geom";
-		break;
-	case ShaderStage::Compute:
-		shaderStageExtension = ".comp";
-		break;
-	default:
-		Logger::PrintError("Incorrect shader stage");
-		break;
-	}
-
-	return std::string(basePath) + shaderStageExtension + graphicsCore->GetDefaultShaderExtension();
-}
-
 void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	// TODO: Check shader cache before loading and compiling again
 	// The shader cache includes shaders precompiled for consoles, or compiled once per driver update on computers
@@ -58,47 +28,17 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 
 	ShaderReflectionData reflectionData;
 	ShaderReflectionLoader loader(outContent.data(), reflectionData);
-	auto& shaderStagesBitMask = reflectionData.shaderStagesBitMask;
-	size_t numShaderStages = reflectionData.numShaderStages;
-	std::vector<ShaderStageCreateInfo> shaderStages;
-	shaderStages.resize(numShaderStages);
-	size_t currentShaderStage = 0;
-
-	std::vector<std::string> fileNames;
-	fileNames.resize(numShaderStages);
+	std::vector<ShaderStageCreateInfo> shaderStageCreateInfos;
 	std::vector<std::vector<char>> fileData;
-	fileData.resize(numShaderStages);
-	size_t fileDataIterator = 0;
 
-	std::string basePath = EngineCore::GetInstance().GetAssetsPath().string() + uuid.ToString();
-
-	for (
-		ShaderStage stage = ShaderStage::Vertex;
-		stage < ShaderStage::Compute;
-		stage = (ShaderStage)((uint8_t)stage + 1)
-	) {
-		uint8_t stageBit = (1 << (uint8_t)stage);
-		if ((stageBit & shaderStagesBitMask) != stageBit) {
-			continue;
-		}
-
-		auto& stageCreateInfo = shaderStages[currentShaderStage++];
-		auto& path = fileNames[fileDataIterator] = GetShaderPath(basePath.c_str(), stage, graphicsCore);
-		stageCreateInfo.fileName = path.c_str();
-
-		if (!std::filesystem::exists(path)) {
-			std::string errorMsg = path + " shader not found.";
-			EngineCore::GetInstance().Print(LogSeverity::Error, errorMsg.c_str());
-			return nullptr;
-		}
-
-		fileData[fileDataIterator] = Utils::LoadFile(path.c_str());
-		auto& file = fileData[fileDataIterator];
-		stageCreateInfo.content = file.data();
-		stageCreateInfo.size = (uint32_t)file.size();
-		stageCreateInfo.type = stage;
-
-		++fileDataIterator;
+	if (!assetManager->LoadShaderSet(
+		uuid,
+		reflectionData.shaderStagesBitMask,
+		reflectionData.numShaderStages,
+		shaderStageCreateInfos,
+		fileData
+	)) {
+		return nullptr;
 	}
 
 	std::string debugName = reflectionData.name;
@@ -114,8 +54,8 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	pipelineCreateInfo.scissorY = 0;
 	pipelineCreateInfo.scissorW = 800;
 	pipelineCreateInfo.scissorH = 600;
-	pipelineCreateInfo.shaderStageCreateInfos = shaderStages.data();
-	pipelineCreateInfo.shaderStageCreateInfoCount = (uint32_t)shaderStages.size();
+	pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
+	pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
 
 	const size_t descriptorSetCount = 3;
 	std::array<std::vector<GraphicsAPI::DescriptorSetLayout::Binding>, descriptorSetCount> descriptorSetBindings;
@@ -148,7 +88,7 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 		descriptorSetBindings[set].emplace_back(layoutBindingCi);
 	}
 
-	std::array<GraphicsAPI::DescriptorSetLayout*, descriptorSetCount> descriptorSetLayouts;
+	std::array<GraphicsAPI::DescriptorSetLayout*, descriptorSetCount> descriptorSetLayouts{};
 	for (size_t i = 0; i < descriptorSetCount; ++i) {
 		auto& bindings = descriptorSetBindings[i];
 		GraphicsAPI::DescriptorSetLayout::CreateInfo layoutCi{};

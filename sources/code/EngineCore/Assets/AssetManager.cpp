@@ -88,6 +88,39 @@ bool AssetManager::LoadFileText(Uuid uuid, std::string& fileData) {
 	return assetLoader->LoadText(uuid, fileData);
 }
 
+bool AssetManager::LoadShaderSet(
+	Uuid uuid,
+	uint8_t shaderStagesBitMask,
+	size_t numShaderStages,
+	std::vector<ShaderStageCreateInfo>& shaderStageCreateInfos,
+	std::vector<std::vector<char>>& fileData
+) {
+	shaderStageCreateInfos.resize(numShaderStages);
+	fileData.resize(numShaderStages);
+
+	uint8_t shaderStagesBitMaskAsUint = static_cast<uint8_t>(shaderStagesBitMask);
+
+	size_t shaderIterator = 0;
+	for (
+		ShaderStage stage = ShaderStage::Vertex;
+		stage < ShaderStage::Compute;
+		stage = (ShaderStage)((uint8_t)stage + 1)
+	) {
+		uint8_t stageBit = (1 << (uint8_t)stage);
+		if ((stageBit & shaderStagesBitMaskAsUint) != stageBit) {
+			continue;
+		}
+
+		if (!assetLoader->LoadShaderStage(uuid, stage, shaderStageCreateInfos[shaderIterator], fileData[shaderIterator])) {
+			return false;
+		}
+
+		++shaderIterator;
+	}
+
+	return true;
+}
+
 std::string& AssetManager::GetTypeName(AssetType assetType) {
 	return assetTypeNames[static_cast<size_t>(assetType)];
 }
