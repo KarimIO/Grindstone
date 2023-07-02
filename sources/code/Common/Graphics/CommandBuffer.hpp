@@ -16,6 +16,7 @@ namespace Grindstone {
 		public:
 			virtual ~CommandBuffer() {};
 
+			virtual void BeginCommandBuffer() = 0;
 			virtual void BindRenderPass(
 				RenderPass* renderPass,
 				Framebuffer* framebuffer,

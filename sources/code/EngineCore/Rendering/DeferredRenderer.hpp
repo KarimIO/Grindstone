@@ -28,6 +28,14 @@ namespace Grindstone {
 		) override;
 		static GraphicsAPI::RenderPass* gbufferRenderPass;
 	private:
+		void RenderCommandBuffer(
+			entt::registry& registry,
+			GraphicsAPI::Framebuffer* outputFramebuffer
+		);
+		void RenderImmediate(
+			entt::registry& registry,
+			GraphicsAPI::Framebuffer* outputFramebuffer
+		);
 		void RenderLights(entt::registry& registry);
 		void PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer);
 
@@ -60,7 +68,10 @@ namespace Grindstone {
 		GraphicsAPI::DepthTarget* litHdrDepthTarget = nullptr;
 		GraphicsAPI::RenderPass* mainRenderPass = nullptr;
 
+		GraphicsAPI::VertexBuffer* vertexBuffer;
+		GraphicsAPI::IndexBuffer* indexBuffer;
 		GraphicsAPI::VertexArrayObject* planePostProcessVao = nullptr;
+
 		GraphicsAPI::Pipeline* pointLightPipeline = nullptr;
 		GraphicsAPI::Pipeline* tonemapPipeline = nullptr;
 
