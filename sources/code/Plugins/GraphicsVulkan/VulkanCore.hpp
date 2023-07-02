@@ -70,7 +70,6 @@ namespace Grindstone {
 			void CreateDescriptorPool();
 		private:
 			uint16_t ScoreDevice(VkPhysicalDevice device);
-			SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
 			bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
 			bool CheckValidationLayerSupport();
 			std::vector<const char*> GetRequiredExtensions();
