@@ -31,6 +31,15 @@
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
+const float B_IN_KB = 1024;
+const float KB_IN_MB = 1024;
+const float MB_IN_GB = 1024;
+const float HEAP_SIZE_IN_GB_MULTIPLIER = 1.0f / B_IN_KB / KB_IN_MB / MB_IN_GB;
+
+const size_t DISCRETE_GPU_BONUS = 200;
+const size_t INTEGRATED_GPU_BONUS = 100;
+const float HEAP_SCORE_MULTIPLIER = 10.0f;
+
 const std::vector<const char*> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"
 };
@@ -322,7 +331,7 @@ namespace Grindstone {
 					indices.hasPresentFamily = true;
 				}
 
-				if (indices.isComplete()) {
+				if (indices.IsComplete()) {
 					break;
 				}
 
@@ -360,23 +369,89 @@ namespace Grindstone {
 		}
 
 		uint16_t VulkanCore::ScoreDevice(VkPhysicalDevice device) {
-			//VkPhysicalDeviceProperties pProperties;
-			//vkGetPhysicalDeviceProperties(device, &pProperties);
-
 			QueueFamilyIndices indices = FindQueueFamilies(device);
 
-			/*bool extensionsSupported = checkDeviceExtensionSupport(device);
+			bool extensionsSupported = CheckDeviceExtensionSupport(device);
 
 			bool swapChainAdequate = false;
 			if (extensionsSupported) {
-				SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
+				SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(device);
 				swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
-			}*/
+			}
 
-			VkPhysicalDeviceFeatures supportedFeatures;
-			vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+			if (!indices.IsComplete() || !extensionsSupported || !swapChainAdequate) {
+				return 0;
+			}
 
-			return (indices.isComplete() /*&& extensionsSupported && swapChainAdequate*/  && supportedFeatures.samplerAnisotropy) * 100;
+			VkPhysicalDeviceProperties gpuProps{};
+			vkGetPhysicalDeviceProperties(device, &gpuProps);
+
+			size_t gpuTypeScore = 0;
+			if (gpuProps.deviceType == VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+				gpuTypeScore += DISCRETE_GPU_BONUS;
+			}
+			else if (gpuProps.deviceType == VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) {
+				gpuTypeScore += INTEGRATED_GPU_BONUS;
+			}
+
+			VkPhysicalDeviceMemoryProperties memoryProps{};
+			vkGetPhysicalDeviceMemoryProperties(device, &memoryProps);
+
+			auto heapsPointer = memoryProps.memoryHeaps;
+			auto heaps = std::vector<VkMemoryHeap>(heapsPointer, heapsPointer + memoryProps.memoryHeapCount);
+
+			float heapScore = 0;
+			for (const auto& heap : heaps) {
+				if (heap.flags & VkMemoryHeapFlagBits::VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) {
+					heapScore += heap.size * HEAP_SIZE_IN_GB_MULTIPLIER * HEAP_SCORE_MULTIPLIER;
+					break;
+				}
+			}
+
+			return static_cast<uint16_t>(heapScore + gpuTypeScore);
+		}
+
+		SwapChainSupportDetails VulkanCore::QuerySwapChainSupport(VkPhysicalDevice device) {
+			SwapChainSupportDetails details;
+
+			auto wgb = ((VulkanWindowGraphicsBinding*)primaryWindow->GetWindowGraphicsBinding());
+			auto surface = wgb->GetSurface();
+
+			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
+
+			uint32_t formatCount;
+			vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
+
+			if (formatCount != 0) {
+				details.formats.resize(formatCount);
+				vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
+			}
+
+			uint32_t presentModeCount;
+			vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
+
+			if (presentModeCount != 0) {
+				details.presentModes.resize(presentModeCount);
+				vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
+			}
+
+			return details;
+		}
+
+		bool VulkanCore::CheckDeviceExtensionSupport(VkPhysicalDevice device) {
+			uint32_t extensionCount;
+			vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+			std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+			vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+			std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+
+			for (const auto& extension : availableExtensions) {
+				requiredExtensions.erase(extension.extensionName);
+			}
+
+			return requiredExtensions.empty();
 		}
 
 		VulkanCore::~VulkanCore() {

@@ -4,17 +4,12 @@
 #include <Common/Window/Window.hpp>
 #include <Common/Graphics/WindowGraphicsBinding.hpp>
 
+#include "VulkanCore.hpp"
 #include "VulkanRenderTarget.hpp"
 #include <vector>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		struct SwapChainSupportDetails {
-			VkSurfaceCapabilitiesKHR capabilities;
-			std::vector<VkSurfaceFormatKHR> formats;
-			std::vector<VkPresentModeKHR> presentModes;
-		};
-
 		class VulkanWindowGraphicsBinding : public WindowGraphicsBinding {
 		public:
 			virtual bool Initialize(Window *window) override;
