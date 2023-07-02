@@ -2,6 +2,9 @@
 
 #include <vector>
 #include <string>
+
+#include "Common/Graphics/Pipeline.hpp"
+
 #include "Asset.hpp"
 #include "AssetImporter.hpp"
 
@@ -17,6 +20,13 @@ namespace Grindstone {
 			virtual bool LoadFile(const char* path, char*& dataPtr, size_t& fileSize);
 			virtual bool LoadFile(Uuid uuid, char*& dataPtr, size_t& fileSize);
 			virtual bool LoadFileText(Uuid uuid, std::string& dataPtr);
+			virtual bool LoadShaderSet(
+				Uuid uuid,
+				uint8_t shaderStagesBitMask,
+				size_t numShaderStages,
+				std::vector<GraphicsAPI::ShaderStageCreateInfo>& shaderStageCreateInfos,
+				std::vector<std::vector<char>>& fileData
+			);
 			virtual std::string& GetTypeName(AssetType assetType);
 
 			template<typename T>

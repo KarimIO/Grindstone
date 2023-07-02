@@ -2,6 +2,8 @@
 #include <filesystem>
 #include <EngineCore/Utils/Utilities.hpp>
 #include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Logger.hpp>
+#include <Common/Graphics/Core.hpp>
 #include "FileAssetLoader.hpp"
 using namespace Grindstone::Assets;
 
@@ -46,4 +48,61 @@ bool FileAssetLoader::LoadText(Uuid uuid, std::string& outContents) {
 		(std::istreambuf_iterator<char>()));
 
 	return true;
+}
+
+bool FileAssetLoader::LoadShaderStage(
+	Uuid uuid,
+	GraphicsAPI::ShaderStage shaderStage,
+	GraphicsAPI::ShaderStageCreateInfo& stageCreateInfo,
+	std::vector<char>& fileData
+) {
+	auto& path = GetShaderPath(uuid, shaderStage);
+	stageCreateInfo.fileName = path.c_str();
+
+	if (!std::filesystem::exists(path)) {
+		std::string errorMsg = path + " shader not found.";
+		EngineCore::GetInstance().Print(LogSeverity::Error, errorMsg.c_str());
+		return false;
+	}
+
+	fileData = Utils::LoadFile(path.c_str());
+	stageCreateInfo.content = fileData.data();
+	stageCreateInfo.size = static_cast<uint32_t>(fileData.size());
+	stageCreateInfo.type = shaderStage;
+
+	return true;
+}
+
+std::string FileAssetLoader::GetShaderPath(
+	Uuid uuid,
+	GraphicsAPI::ShaderStage shaderStage
+) {
+	const char* shaderStageExtension = "";
+
+	switch (shaderStage) {
+	case GraphicsAPI::ShaderStage::Vertex:
+		shaderStageExtension = ".vert";
+		break;
+	case GraphicsAPI::ShaderStage::Fragment:
+		shaderStageExtension = ".frag";
+		break;
+	case GraphicsAPI::ShaderStage::TesselationEvaluation:
+		shaderStageExtension = ".eval";
+		break;
+	case GraphicsAPI::ShaderStage::TesselationControl:
+		shaderStageExtension = ".ctrl";
+		break;
+	case GraphicsAPI::ShaderStage::Geometry:
+		shaderStageExtension = ".geom";
+		break;
+	case GraphicsAPI::ShaderStage::Compute:
+		shaderStageExtension = ".comp";
+		break;
+	default:
+		Grindstone::Logger::PrintError("Incorrect shader stage");
+		break;
+	}
+
+	std::filesystem::path path = EngineCore::GetInstance().GetAssetPath(uuid.ToString());
+	return path.string() + shaderStageExtension + EngineCore::GetInstance().GetGraphicsCore()->GetDefaultShaderExtension();
 }
