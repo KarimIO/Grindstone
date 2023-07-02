@@ -186,14 +186,14 @@ namespace Grindstone {
 			std::vector<VkPhysicalDevice> devices(deviceCount);
 			vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
-			int scoreMax = 0;
+			uint16_t scoreMax = 0;
 
 			for (const auto& device : devices) {
-				int score = ScoreDevice(device);
+				uint16_t score = ScoreDevice(device);
 				if (score > scoreMax) {
 					physicalDevice = device;
+					scoreMax = score;
 				}
-				break;
 			}
 
 			if (physicalDevice == VK_NULL_HANDLE) {
@@ -217,10 +217,10 @@ namespace Grindstone {
 			}
 			adapterName = properties.deviceName;
 
-			unsigned int ver_maj = (properties.apiVersion >> 22) & 0x3FF;
-			unsigned int ver_min = (properties.apiVersion >> 12) & 0x3FF;
-			unsigned int ver_patch = (properties.apiVersion) & 0xfff;
-			apiVersion = std::to_string(ver_maj)+"."+ std::to_string(ver_min) + "." + std::to_string(ver_patch);
+			unsigned int versionMajor = (properties.apiVersion >> 22) & 0x3FF;
+			unsigned int versionMinor = (properties.apiVersion >> 12) & 0x3FF;
+			unsigned int versionPatch = (properties.apiVersion) & 0xfff;
+			apiVersion = std::to_string(versionMajor)+"."+ std::to_string(versionMinor) + "." + std::to_string(versionPatch);
 
 			QueueFamilyIndices indices = FindQueueFamilies(physicalDevice);
 			graphicsFamily = indices.graphicsFamily;
@@ -375,7 +375,8 @@ namespace Grindstone {
 
 			bool swapChainAdequate = false;
 			if (extensionsSupported) {
-				SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(device);
+				auto wgb = static_cast<VulkanWindowGraphicsBinding*>(primaryWindow->GetWindowGraphicsBinding());
+				SwapChainSupportDetails swapChainSupport = wgb->QuerySwapChainSupport(device);
 				swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 			}
 
@@ -409,33 +410,6 @@ namespace Grindstone {
 			}
 
 			return static_cast<uint16_t>(heapScore + gpuTypeScore);
-		}
-
-		SwapChainSupportDetails VulkanCore::QuerySwapChainSupport(VkPhysicalDevice device) {
-			SwapChainSupportDetails details;
-
-			auto wgb = ((VulkanWindowGraphicsBinding*)primaryWindow->GetWindowGraphicsBinding());
-			auto surface = wgb->GetSurface();
-
-			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
-
-			uint32_t formatCount;
-			vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
-
-			if (formatCount != 0) {
-				details.formats.resize(formatCount);
-				vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
-			}
-
-			uint32_t presentModeCount;
-			vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
-
-			if (presentModeCount != 0) {
-				details.presentModes.resize(presentModeCount);
-				vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
-			}
-
-			return details;
 		}
 
 		bool VulkanCore::CheckDeviceExtensionSupport(VkPhysicalDevice device) {
