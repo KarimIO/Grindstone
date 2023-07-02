@@ -104,13 +104,13 @@ void DeferredRenderer::CreateDeferredRendererStaticObjects() {
 
 	auto stages = static_cast<ShaderStageBit>(static_cast<uint8_t>(ShaderStageBit::Vertex) | static_cast<uint8_t>(ShaderStageBit::Fragment));
 
-	DescriptorSetLayout::Binding engineUboBinding;
+	DescriptorSetLayout::Binding engineUboBinding{};
 	engineUboBinding.bindingId = 0;
 	engineUboBinding.count = 1;
 	engineUboBinding.type = BindingType::UniformBuffer;
 	engineUboBinding.stages = stages;
 
-	DescriptorSetLayout::Binding lightUboBinding;
+	DescriptorSetLayout::Binding lightUboBinding{};
 	lightUboBinding.bindingId = 1;
 	lightUboBinding.count = 1;
 	lightUboBinding.type = BindingType::UniformBuffer;
@@ -121,7 +121,7 @@ void DeferredRenderer::CreateDeferredRendererStaticObjects() {
 	DescriptorSet* tonemapDescriptorSet = nullptr;
 	DescriptorSet* lightingDescriptorSet = nullptr;
 
-	std::array<DescriptorSetLayout::Binding, 1> tonemapDescriptorSetLayoutBindings;
+	std::array<DescriptorSetLayout::Binding, 1> tonemapDescriptorSetLayoutBindings{};
 	tonemapDescriptorSetLayoutBindings[0] = engineUboBinding;
 
 	DescriptorSetLayout::CreateInfo tonemapDescriptorSetLayoutCreateInfo{};
@@ -129,7 +129,7 @@ void DeferredRenderer::CreateDeferredRendererStaticObjects() {
 	tonemapDescriptorSetLayoutCreateInfo.bindings = tonemapDescriptorSetLayoutBindings.data();
 	tonemapDescriptorSetLayout = core->CreateDescriptorSetLayout(tonemapDescriptorSetLayoutCreateInfo);
 
-	std::array<DescriptorSetLayout::Binding, 2> lightingDescriptorSetLayoutBindings;
+	std::array<DescriptorSetLayout::Binding, 2> lightingDescriptorSetLayoutBindings{};
 	lightingDescriptorSetLayoutBindings[0] = engineUboBinding;
 	lightingDescriptorSetLayoutBindings[1] = lightUboBinding;
 
