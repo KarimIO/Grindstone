@@ -8,6 +8,12 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
+		struct SwapChainSupportDetails {
+			VkSurfaceCapabilitiesKHR capabilities;
+			std::vector<VkSurfaceFormatKHR> formats;
+			std::vector<VkPresentModeKHR> presentModes;
+		};
+
 		struct QueueFamilyIndices {
 			uint32_t graphicsFamily = 0;
 			uint32_t presentFamily = 0;
@@ -15,7 +21,7 @@ namespace Grindstone {
 			bool hasGraphicsFamily = false;
 			bool hasPresentFamily = false;
 
-			bool isComplete() {
+			bool IsComplete() {
 				return hasGraphicsFamily && hasPresentFamily;
 			}
 		};
@@ -64,6 +70,8 @@ namespace Grindstone {
 			void CreateDescriptorPool();
 		private:
 			uint16_t ScoreDevice(VkPhysicalDevice device);
+			SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
+			bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
 			bool CheckValidationLayerSupport();
 			std::vector<const char*> GetRequiredExtensions();
 			void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
