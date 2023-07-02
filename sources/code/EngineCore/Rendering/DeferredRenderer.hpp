@@ -32,13 +32,22 @@ namespace Grindstone {
 		void RenderLights(entt::registry& registry);
 		void PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer);
 
-		void CreateDeferredRendererInstanceObjects();
+		void CreateGbufferFramebuffer();
+		void CreateLitHDRFramebuffer();
+		void CreatePipelines();
 		void CreateDeferredRendererStaticObjects();
 
 		uint32_t width = 800;
 		uint32_t height = 600;
 
 		std::vector<GraphicsAPI::RenderTarget*> gbufferRenderTargets;
+
+		GraphicsAPI::VertexBufferLayout vertexLightPositionLayout{};
+
+		GraphicsAPI::DescriptorSetLayout* tonemapDescriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSetLayout* lightingDescriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSet* tonemapDescriptorSet = nullptr;
+		GraphicsAPI::DescriptorSet* lightingDescriptorSet = nullptr;
 
 		GraphicsAPI::UniformBufferBinding* globalUniformBufferBinding = nullptr;
 		GraphicsAPI::UniformBuffer* globalUniformBufferObject = nullptr;
@@ -52,7 +61,7 @@ namespace Grindstone {
 		GraphicsAPI::RenderPass* mainRenderPass = nullptr;
 
 		GraphicsAPI::VertexArrayObject* planePostProcessVao = nullptr;
-		GraphicsAPI::Pipeline* lightPipeline = nullptr;
+		GraphicsAPI::Pipeline* pointLightPipeline = nullptr;
 		GraphicsAPI::Pipeline* tonemapPipeline = nullptr;
 	};
 }
