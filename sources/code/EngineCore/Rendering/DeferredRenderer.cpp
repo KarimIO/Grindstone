@@ -46,28 +46,30 @@ struct LightmapStruct {
 };
 
 DeferredRenderer::DeferredRenderer() {
-	CreateDeferredRendererInstanceObjects();
+	CreateGbufferFramebuffer();
+	CreateLitHDRFramebuffer();
 	CreateDeferredRendererStaticObjects();
+	CreatePipelines();
 }
 
 DeferredRenderer::~DeferredRenderer() {
-	auto core = EngineCore::GetInstance().GetGraphicsCore();
-	core->DeleteUniformBuffer(globalUniformBufferObject);
-	core->DeleteUniformBuffer(lightUniformBufferObject);
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	graphicsCore->DeleteUniformBuffer(globalUniformBufferObject);
+	graphicsCore->DeleteUniformBuffer(lightUniformBufferObject);
 
-	core->DeleteFramebuffer(gbuffer);
+	graphicsCore->DeleteFramebuffer(gbuffer);
 	for (size_t i = 0; i < gbufferRenderTargets.size(); ++i) {
-		core->DeleteRenderTarget(gbufferRenderTargets[i]);
+		graphicsCore->DeleteRenderTarget(gbufferRenderTargets[i]);
 	}
-	core->DeleteDepthTarget(gbufferDepthTarget);
+	graphicsCore->DeleteDepthTarget(gbufferDepthTarget);
 
-	core->DeleteFramebuffer(litHdrFramebuffer);
-	core->DeleteRenderTarget(litHdrRenderTarget);
-	core->DeleteDepthTarget(litHdrDepthTarget);
+	graphicsCore->DeleteFramebuffer(litHdrFramebuffer);
+	graphicsCore->DeleteRenderTarget(litHdrRenderTarget);
+	graphicsCore->DeleteDepthTarget(litHdrDepthTarget);
 
-	core->DeleteVertexArrayObject(planePostProcessVao);
-	core->DeletePipeline(lightPipeline);
-	core->DeletePipeline(tonemapPipeline);
+	graphicsCore->DeleteVertexArrayObject(planePostProcessVao);
+	graphicsCore->DeletePipeline(pointLightPipeline);
+	graphicsCore->DeletePipeline(tonemapPipeline);
 }
 
 bool DeferredRenderer::OnWindowResize(Events::BaseEvent* ev) {
@@ -88,68 +90,103 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 
 // NOTE: Make these objects static
 void DeferredRenderer::CreateDeferredRendererStaticObjects() {
-	auto core = EngineCore::GetInstance().GetGraphicsCore();
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	UniformBuffer::CreateInfo globalUniformBufferObjectCi{};
 	globalUniformBufferObjectCi.debugName = "EngineUbo";
 	globalUniformBufferObjectCi.isDynamic = true;
 	globalUniformBufferObjectCi.size = sizeof(EngineUboStruct);
-	globalUniformBufferObject = core->CreateUniformBuffer(globalUniformBufferObjectCi);
+	globalUniformBufferObject = graphicsCore->CreateUniformBuffer(globalUniformBufferObjectCi);
 
 	UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
 	lightUniformBufferObjectCi.debugName = "LightUbo";
 	lightUniformBufferObjectCi.isDynamic = true;
 	lightUniformBufferObjectCi.size = sizeof(LightmapStruct);
-	lightUniformBufferObject = core->CreateUniformBuffer(lightUniformBufferObjectCi);
-
-	auto stages = static_cast<ShaderStageBit>(static_cast<uint8_t>(ShaderStageBit::Vertex) | static_cast<uint8_t>(ShaderStageBit::Fragment));
+	lightUniformBufferObject = graphicsCore->CreateUniformBuffer(lightUniformBufferObjectCi);
 
 	DescriptorSetLayout::Binding engineUboBinding{};
 	engineUboBinding.bindingId = 0;
 	engineUboBinding.count = 1;
 	engineUboBinding.type = BindingType::UniformBuffer;
-	engineUboBinding.stages = stages;
+	engineUboBinding.stages = ShaderStageBit::Vertex | ShaderStageBit::Fragment;
 
 	DescriptorSetLayout::Binding lightUboBinding{};
 	lightUboBinding.bindingId = 1;
 	lightUboBinding.count = 1;
 	lightUboBinding.type = BindingType::UniformBuffer;
-	lightUboBinding.stages = stages;
+	lightUboBinding.stages = ShaderStageBit::Fragment;
 
-	DescriptorSetLayout* tonemapDescriptorSetLayout = nullptr;
-	DescriptorSetLayout* lightingDescriptorSetLayout = nullptr;
-	DescriptorSet* tonemapDescriptorSet = nullptr;
-	DescriptorSet* lightingDescriptorSet = nullptr;
+	DescriptorSetLayout::Binding litHdrRenderTargetBinding{};
+	litHdrRenderTargetBinding.bindingId = 1;
+	litHdrRenderTargetBinding.count = 1;
+	litHdrRenderTargetBinding.type = BindingType::Texture;
+	litHdrRenderTargetBinding.stages = ShaderStageBit::Fragment;
 
-	std::array<DescriptorSetLayout::Binding, 1> tonemapDescriptorSetLayoutBindings{};
+	DescriptorSetLayout::Binding gbuffer0Binding{};
+	gbuffer0Binding.bindingId = 2;
+	gbuffer0Binding.count = 1;
+	gbuffer0Binding.type = BindingType::Texture;
+	gbuffer0Binding.stages = ShaderStageBit::Fragment;
+
+	DescriptorSetLayout::Binding gbuffer1Binding{};
+	gbuffer1Binding.bindingId = 3;
+	gbuffer1Binding.count = 1;
+	gbuffer1Binding.type = BindingType::Texture;
+	gbuffer1Binding.stages = ShaderStageBit::Fragment;
+
+	DescriptorSetLayout::Binding gbuffer2Binding{};
+	gbuffer2Binding.bindingId = 4;
+	gbuffer2Binding.count = 1;
+	gbuffer2Binding.type = BindingType::Texture;
+	gbuffer2Binding.stages = ShaderStageBit::Fragment;
+
+	DescriptorSetLayout::Binding gbuffer3Binding{};
+	gbuffer3Binding.bindingId = 5;
+	gbuffer3Binding.count = 1;
+	gbuffer3Binding.type = BindingType::Texture;
+	gbuffer3Binding.stages = ShaderStageBit::Fragment;
+
+	DescriptorSetLayout::Binding gbuffer4Binding{};
+	gbuffer4Binding.bindingId = 6;
+	gbuffer4Binding.count = 1;
+	gbuffer4Binding.type = BindingType::Texture;
+	gbuffer4Binding.stages = ShaderStageBit::Fragment;
+
+	std::array<DescriptorSetLayout::Binding, 2> tonemapDescriptorSetLayoutBindings{};
 	tonemapDescriptorSetLayoutBindings[0] = engineUboBinding;
+	tonemapDescriptorSetLayoutBindings[1] = litHdrRenderTargetBinding;
 
 	DescriptorSetLayout::CreateInfo tonemapDescriptorSetLayoutCreateInfo{};
 	tonemapDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(tonemapDescriptorSetLayoutBindings.size());
 	tonemapDescriptorSetLayoutCreateInfo.bindings = tonemapDescriptorSetLayoutBindings.data();
-	tonemapDescriptorSetLayout = core->CreateDescriptorSetLayout(tonemapDescriptorSetLayoutCreateInfo);
+	tonemapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(tonemapDescriptorSetLayoutCreateInfo);
 
-	std::array<DescriptorSetLayout::Binding, 2> lightingDescriptorSetLayoutBindings{};
+	std::array<DescriptorSetLayout::Binding, 7> lightingDescriptorSetLayoutBindings{};
 	lightingDescriptorSetLayoutBindings[0] = engineUboBinding;
 	lightingDescriptorSetLayoutBindings[1] = lightUboBinding;
+	lightingDescriptorSetLayoutBindings[2] = gbuffer0Binding;
+	lightingDescriptorSetLayoutBindings[3] = gbuffer1Binding;
+	lightingDescriptorSetLayoutBindings[4] = gbuffer2Binding;
+	lightingDescriptorSetLayoutBindings[5] = gbuffer3Binding;
+	lightingDescriptorSetLayoutBindings[6] = gbuffer4Binding;
 
 	DescriptorSetLayout::CreateInfo lightingDescriptorSetLayoutCreateInfo{};
 	lightingDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightingDescriptorSetLayoutBindings.size());
 	lightingDescriptorSetLayoutCreateInfo.bindings = lightingDescriptorSetLayoutBindings.data();
-	lightingDescriptorSetLayout = core->CreateDescriptorSetLayout(lightingDescriptorSetLayoutCreateInfo);
+	lightingDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(lightingDescriptorSetLayoutCreateInfo);
 
 	DescriptorSet::CreateInfo tonemapDescriptorSetCreateInfo{};
 	tonemapDescriptorSetCreateInfo.layout = tonemapDescriptorSetLayout;
-	tonemapDescriptorSet = core->CreateDescriptorSet(tonemapDescriptorSetCreateInfo);
+	tonemapDescriptorSet = graphicsCore->CreateDescriptorSet(tonemapDescriptorSetCreateInfo);
 
 	DescriptorSet::CreateInfo lightingDescriptorSetCreateInfo{};
-	lightingDescriptorSetCreateInfo.layout = tonemapDescriptorSetLayout;
-	lightingDescriptorSet = core->CreateDescriptorSet(lightingDescriptorSetCreateInfo);
+	lightingDescriptorSetCreateInfo.layout = lightingDescriptorSetLayout;
+	lightingDescriptorSet = graphicsCore->CreateDescriptorSet(lightingDescriptorSetCreateInfo);
 
 	LightmapStruct lightmapStruct;
 	lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
 
-	VertexBufferLayout vertexLightPositionLayout({
+	vertexLightPositionLayout = {
 		{
 			0,
 			Grindstone::GraphicsAPI::VertexFormat::Float2,
@@ -157,7 +194,7 @@ void DeferredRenderer::CreateDeferredRendererStaticObjects() {
 			false,
 			Grindstone::GraphicsAPI::AttributeUsage::Position
 		}
-	});
+	};
 
 	VertexBuffer::CreateInfo vboCi{};
 	vboCi.debugName = "Light Vertex Position Buffer";
@@ -165,28 +202,26 @@ void DeferredRenderer::CreateDeferredRendererStaticObjects() {
 	vboCi.count = sizeof(lightPositions) / (sizeof(float) * 2);
 	vboCi.size = sizeof(lightPositions);
 	vboCi.layout = &vertexLightPositionLayout;
-	VertexBuffer* vbo = core->CreateVertexBuffer(vboCi);
+	VertexBuffer* vbo = graphicsCore->CreateVertexBuffer(vboCi);
 
 	IndexBuffer::CreateInfo iboCi{};
 	iboCi.debugName = "Light Index Buffer";
 	iboCi.content = lightIndices;
 	iboCi.count = sizeof(lightIndices) / sizeof(lightIndices[0]);
 	iboCi.size = sizeof(lightIndices);
-	IndexBuffer* ibo = core->CreateIndexBuffer(iboCi);
+	IndexBuffer* ibo = graphicsCore->CreateIndexBuffer(iboCi);
 
 	VertexArrayObject::CreateInfo vaoCi{};
 	vaoCi.debugName = "Light Vertex Array Object";
 	vaoCi.vertexBufferCount = 1;
 	vaoCi.vertexBuffers = &vbo;
 	vaoCi.indexBuffer = ibo;
-	planePostProcessVao = core->CreateVertexArrayObject(vaoCi);
+	planePostProcessVao = graphicsCore->CreateVertexArrayObject(vaoCi);
 }
 
-void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
-	auto core = EngineCore::GetInstance().GetGraphicsCore();
+void DeferredRenderer::CreateGbufferFramebuffer() {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	const uint32_t width = 800;
-	const uint32_t height = 600;
 	std::vector<ColorFormat> gbufferColorFormats;
 	gbufferColorFormats.reserve(4);
 	gbufferColorFormats.emplace_back(ColorFormat::R16G16B16A16); // X Y Z
@@ -197,7 +232,7 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	gbufferRenderTargets.reserve(gbufferColorFormats.size());
 	for (size_t i = 0; i < gbufferColorFormats.size(); ++i) {
 		RenderTarget::CreateInfo gbufferRtCreateInfo{ gbufferColorFormats[i], width, height };
-		gbufferRenderTargets.emplace_back(core->CreateRenderTarget(gbufferRtCreateInfo));
+		gbufferRenderTargets.emplace_back(graphicsCore->CreateRenderTarget(gbufferRtCreateInfo));
 	}
 
 	RenderPass::CreateInfo gbufferRenderPassCreateInfo{};
@@ -206,10 +241,10 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	gbufferRenderPassCreateInfo.colorFormats = gbufferColorFormats.data();
 	gbufferRenderPassCreateInfo.colorFormatCount = static_cast<uint32_t>(gbufferColorFormats.size());
 	gbufferRenderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
-	gbufferRenderPass = core->CreateRenderPass(gbufferRenderPassCreateInfo);
+	gbufferRenderPass = graphicsCore->CreateRenderPass(gbufferRenderPassCreateInfo);
 
 	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(gbufferRenderPassCreateInfo.depthFormat, width, height, false, false);
-	gbufferDepthTarget = core->CreateDepthTarget(gbufferDepthImageCreateInfo);
+	gbufferDepthTarget = graphicsCore->CreateDepthTarget(gbufferDepthImageCreateInfo);
 
 	Framebuffer::CreateInfo gbufferCreateInfo{};
 	gbufferCreateInfo.debugName = "G-Buffer Framebuffer";
@@ -217,13 +252,17 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	gbufferCreateInfo.renderTargetLists = gbufferRenderTargets.data();
 	gbufferCreateInfo.numRenderTargetLists = static_cast<uint32_t>(gbufferRenderTargets.size());
 	gbufferCreateInfo.depthTarget = gbufferDepthTarget;
-	gbuffer = core->CreateFramebuffer(gbufferCreateInfo);
+	gbuffer = graphicsCore->CreateFramebuffer(gbufferCreateInfo);
+}
+
+void DeferredRenderer::CreateLitHDRFramebuffer() {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height };
-	litHdrRenderTarget = core->CreateRenderTarget(litHdrImagesCreateInfo);
+	litHdrRenderTarget = graphicsCore->CreateRenderTarget(litHdrImagesCreateInfo);
 
 	DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false);
-	litHdrDepthTarget = core->CreateDepthTarget(litHdrDepthImageCreateInfo);
+	litHdrDepthTarget = graphicsCore->CreateDepthTarget(litHdrDepthImageCreateInfo);
 
 	RenderPass::CreateInfo mainRenderPassCreateInfo{};
 	mainRenderPassCreateInfo.width = width;
@@ -231,7 +270,7 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	mainRenderPassCreateInfo.colorFormats = &litHdrImagesCreateInfo.format;
 	mainRenderPassCreateInfo.colorFormatCount = 1;
 	mainRenderPassCreateInfo.depthFormat = litHdrDepthImageCreateInfo.format;
-	mainRenderPass = core->CreateRenderPass(mainRenderPassCreateInfo);
+	mainRenderPass = graphicsCore->CreateRenderPass(mainRenderPassCreateInfo);
 
 	Framebuffer::CreateInfo litHdrFramebufferCreateInfo{};
 	litHdrFramebufferCreateInfo.debugName = "Lit HDR Framebuffer";
@@ -239,41 +278,91 @@ void DeferredRenderer::CreateDeferredRendererInstanceObjects() {
 	litHdrFramebufferCreateInfo.numRenderTargetLists = 1;
 	litHdrFramebufferCreateInfo.depthTarget = litHdrDepthTarget;
 	litHdrFramebufferCreateInfo.renderPass = mainRenderPass;
-	litHdrFramebuffer = core->CreateFramebuffer(litHdrFramebufferCreateInfo);
-	
+	litHdrFramebuffer = graphicsCore->CreateFramebuffer(litHdrFramebufferCreateInfo);
+}
+
+void DeferredRenderer::CreatePipelines() {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+
+	Pipeline::CreateInfo pipelineCreateInfo{};
+	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
+	pipelineCreateInfo.cullMode = CullMode::None;
+	pipelineCreateInfo.width = 800;
+	pipelineCreateInfo.height = 600;
+	pipelineCreateInfo.scissorX = 0;
+	pipelineCreateInfo.scissorY = 0;
+	pipelineCreateInfo.scissorW = 800;
+	pipelineCreateInfo.scissorH = 600;
+	pipelineCreateInfo.vertexBindings = &vertexLightPositionLayout;
+	pipelineCreateInfo.vertexBindingsCount = 1;
+
+	std::vector<ShaderStageCreateInfo> shaderStageCreateInfos;
+	std::vector<std::vector<char>> fileData;
+
 	auto assetManager = EngineCore::GetInstance().assetManager;
-	ShaderAsset* lightShaderAsset = assetManager->GetAsset<ShaderAsset>(Uuid("5537b925-96bc-4e1f-8e2a-d66d6dd9bed1"));
-	if (lightShaderAsset == nullptr) {
-		EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load point light shader.");
-	}
-	else {
-		lightPipeline = lightShaderAsset->pipeline;
+	uint8_t shaderBits = static_cast<uint8_t>(ShaderStageBit::Vertex) | static_cast<uint8_t>(ShaderStageBit::Fragment);
+
+	{
+		if (!assetManager->LoadShaderSet(
+			Uuid("5537b925-96bc-4e1f-8e2a-d66d6dd9bed1"),
+			shaderBits,
+			2,
+			shaderStageCreateInfos,
+			fileData
+		)) {
+			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load point light shaders.");
+			return;
+		}
+
+		pipelineCreateInfo.shaderName = "Point Light Pipeline";
+		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
+		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
+		pipelineCreateInfo.descriptorSetLayouts = &lightingDescriptorSetLayout;
+		pipelineCreateInfo.descriptorSetLayoutCount = 1;
+		pipelineCreateInfo.renderPass = DeferredRenderer::gbufferRenderPass;
+		pointLightPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	}
 
-	ShaderAsset* tonemapShaderAsset = assetManager->GetAsset<ShaderAsset>(Uuid("30e9223e-1753-4a7a-acac-8488c75bb1ef"));
-	if (tonemapShaderAsset == nullptr) {
-		EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load tonemap shader.");
-	}
-	else {
-		tonemapPipeline = tonemapShaderAsset->pipeline;
+	shaderStageCreateInfos.clear();
+	fileData.clear();
+
+	{
+		if (!assetManager->LoadShaderSet(
+			Uuid("30e9223e-1753-4a7a-acac-8488c75bb1ef"),
+			shaderBits,
+			2,
+			shaderStageCreateInfos,
+			fileData
+		)) {
+			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load tonemapping shaders.");
+			return;
+		}
+
+		pipelineCreateInfo.shaderName = "Tonemapping Pipeline";
+		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
+		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
+		pipelineCreateInfo.descriptorSetLayouts = &tonemapDescriptorSetLayout;
+		pipelineCreateInfo.descriptorSetLayoutCount = 1;
+		pipelineCreateInfo.renderPass = DeferredRenderer::gbufferRenderPass;
+		tonemapPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	}
 }
 
 void DeferredRenderer::RenderLights(entt::registry& registry) {
 	GRIND_PROFILE_FUNC();
-	if (lightPipeline == nullptr) {
+	if (pointLightPipeline == nullptr) {
 		return;
 	}
 
-	auto core = EngineCore::GetInstance().GetGraphicsCore();
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	core->BindPipeline(lightPipeline);
-	core->EnableDepthWrite(false);
+	graphicsCore->BindPipeline(pointLightPipeline);
+	graphicsCore->EnableDepthWrite(false);
 	litHdrFramebuffer->BindWrite();
 
 	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.f };
-	core->Clear(ClearMode::ColorAndDepth, clearColor, 1);
-	core->SetImmediateBlending(BlendMode::Additive);
+	graphicsCore->Clear(ClearMode::ColorAndDepth, clearColor, 1);
+	graphicsCore->SetImmediateBlending(BlendMode::Additive);
 	gbuffer->BindTextures(2);
 
 	auto view = registry.view<const TransformComponent, const PointLightComponent>();
@@ -288,7 +377,7 @@ void DeferredRenderer::RenderLights(entt::registry& registry) {
 		lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
 		// TODO: lightUniformBufferObject->Bind();
 		planePostProcessVao->Bind();
-		core->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
+		graphicsCore->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
 	});
 }
 
@@ -298,12 +387,12 @@ void DeferredRenderer::PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer) 
 		return;
 	}
 
-	auto core = EngineCore::GetInstance().GetGraphicsCore();
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	core->BindPipeline(tonemapPipeline);
-	core->EnableDepthWrite(true);
+	graphicsCore->BindPipeline(tonemapPipeline);
+	graphicsCore->EnableDepthWrite(true);
 	if (outputFramebuffer == nullptr) {
-		core->BindDefaultFramebufferWrite();
+		graphicsCore->BindDefaultFramebufferWrite();
 	}
 	else {
 		outputFramebuffer->BindWrite();
@@ -311,11 +400,11 @@ void DeferredRenderer::PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer) 
 	litHdrFramebuffer->BindRead();
 
 	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.f };
-	core->Clear(ClearMode::ColorAndDepth, clearColor, 1);
-	core->SetImmediateBlending(BlendMode::None);
+	graphicsCore->Clear(ClearMode::ColorAndDepth, clearColor, 1);
+	graphicsCore->SetImmediateBlending(BlendMode::None);
 	litHdrFramebuffer->BindTextures(1);
 	planePostProcessVao->Bind();
-	core->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
+	graphicsCore->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
 }
 
 void DeferredRenderer::Render(
@@ -325,8 +414,8 @@ void DeferredRenderer::Render(
 	glm::vec3 eyePos,
 	GraphicsAPI::Framebuffer* outputFramebuffer
 ) {
-	auto core = EngineCore::GetInstance().GetGraphicsCore();
-	core->ResizeViewport(width, height);
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	graphicsCore->ResizeViewport(width, height);
 
 	EngineUboStruct engineUboStruct{};
 	engineUboStruct.proj = projectionMatrix;
@@ -337,22 +426,22 @@ void DeferredRenderer::Render(
 	gbuffer->BindRead();
 
 	float clearColor[4] = { 0.3f, 0.6f, 0.9f, 1.f };
-	core->Clear(ClearMode::ColorAndDepth, clearColor, 1);
+	graphicsCore->Clear(ClearMode::ColorAndDepth, clearColor, 1);
 
 	globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
 	// TODO: globalUniformBufferObject->Bind();
 
-	core->EnableDepthWrite(true);
-	core->SetImmediateBlending(BlendMode::None);
+	graphicsCore->EnableDepthWrite(true);
+	graphicsCore->SetImmediateBlending(BlendMode::None);
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
 
 	RenderLights(registry);
 
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Unlit");
 
-	core->EnableDepthWrite(false);
-	core->CopyDepthBufferFromReadToWrite(width, height, width, height);
-	core->SetImmediateBlending(BlendMode::AdditiveAlpha);
+	graphicsCore->EnableDepthWrite(false);
+	graphicsCore->CopyDepthBufferFromReadToWrite(width, height, width, height);
+	graphicsCore->SetImmediateBlending(BlendMode::AdditiveAlpha);
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Transparent");
 
 	PostProcess(outputFramebuffer);
