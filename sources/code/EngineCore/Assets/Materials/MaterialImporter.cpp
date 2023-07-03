@@ -102,6 +102,7 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 		auto& samplersJson = document["samplers"];
 		std::vector<GraphicsAPI::Texture*> textures;
 		textures.resize(textureReferencesFromMaterial.size());
+		Texture* validTexture = nullptr;
 		for (size_t i = 0; i < textureReferencesFromMaterial.size(); ++i) {
 			const char* textureName = textureReferencesFromMaterial[i].name.c_str();
 			if (samplersJson.HasMember(textureName)) {
@@ -110,14 +111,26 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 
 				// TODO: Handle if texture isn't set
 				TextureAsset* textureAsset = assetManager->GetAsset<TextureAsset>(textureUuid);
+				DescriptorSet::Binding textureBinding{};
+				textureBinding.bindingIndex = textureReferencesFromMaterial[i].bindingId;
+				textureBinding.bindingType = BindingType::Texture;
+				textureBinding.itemPtr = textureAsset != nullptr
+					? textureAsset->texture
+					: validTexture;
+				textureBinding.count = 1;
+				bindings.push_back(textureBinding);
+
 				if (textureAsset != nullptr) {
-					DescriptorSet::Binding textureBinding{};
-					textureBinding.bindingIndex = textureReferencesFromMaterial[i].bindingId;
-					textureBinding.bindingType = BindingType::Texture;
-					textureBinding.itemPtr = textureAsset->texture;
-					textureBinding.count = 1;
-					bindings.push_back(textureBinding);
+					validTexture = textureAsset->texture;
 				}
+			}
+			else {
+				DescriptorSet::Binding textureBinding{};
+				textureBinding.bindingIndex = textureReferencesFromMaterial[i].bindingId;
+				textureBinding.bindingType = BindingType::Texture;
+				textureBinding.itemPtr = validTexture;
+				textureBinding.count = 1;
+				bindings.push_back(textureBinding);
 			}
 		}
 	}
