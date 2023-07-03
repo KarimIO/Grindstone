@@ -109,5 +109,12 @@ namespace Grindstone {
 		ColorMask operator~(const ColorMask& f);
 		ColorMask operator|(const ColorMask& a, const ColorMask& b);
 		ColorMask operator&(const ColorMask& a, const ColorMask& b);
+
+		enum class CullMode : uint8_t {
+			None = 0,
+			Front,
+			Back,
+			Both
+		};
 	};
 };
