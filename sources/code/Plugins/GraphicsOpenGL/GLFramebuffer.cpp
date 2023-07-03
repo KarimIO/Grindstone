@@ -12,6 +12,7 @@ namespace Grindstone {
 				debugName = createInfo.debugName;
 			}
 
+			renderPass = createInfo.renderPass;
 			renderTargetLists = new GLRenderTarget*[createInfo.numRenderTargetLists];
 			numRenderTargetLists = createInfo.numRenderTargetLists;
 			depthTarget = (GLDepthTarget *)createInfo.depthTarget;
@@ -78,6 +79,10 @@ namespace Grindstone {
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 			delete[] DrawBuffers;
+		}
+
+		RenderPass* GLFramebuffer::GetRenderPass() {
+			return renderPass;
 		}
 
 		GLFramebuffer::~GLFramebuffer() {
