@@ -161,6 +161,7 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	pipelineCreateInfo.colorAttachmentCount = 4;
 	pipelineCreateInfo.blendMode = BlendMode::None;
 
+
 	auto shader = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	auto asset = shaders.emplace(uuid, ShaderAsset(uuid, debugName, shader));
 	auto& shaderAsset = asset.first->second;
