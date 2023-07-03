@@ -144,6 +144,7 @@ void VulkanCore::CreateInstance() {
 	createInfo.pApplicationInfo = &appInfo;
 
 	auto extensions = GetRequiredExtensions();
+	extensions.push_back(VK_NV_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
 
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	createInfo.ppEnabledExtensionNames = extensions.data();

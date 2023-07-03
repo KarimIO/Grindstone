@@ -541,7 +541,7 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	auto& imageSet = deferredRendererImageSets[imageIndex];
 
-	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
+	ClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 0.f };
 	ClearDepthStencil clearDepthStencil;
 	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
@@ -685,7 +685,7 @@ void DeferredRenderer::RenderCommandBuffer(
 	assetManager->SetEngineDescriptorSet(imageSet.engineDescriptorSet);
 
 	currentCommandBuffer->BindRenderPass(gbufferRenderPass, imageSet.gbuffer, 800, 600, clearColors, 4, clearDepthStencil);
-	// assetManager->RenderQueue(currentCommandBuffer, "Opaque");
+	assetManager->RenderQueue(currentCommandBuffer, "Opaque");
 	currentCommandBuffer->UnbindRenderPass();
 	RenderLightsCommandBuffer(imageIndex, currentCommandBuffer, registry);
 	// assetManager->RenderQueue("Unlit");

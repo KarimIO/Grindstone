@@ -38,11 +38,13 @@ Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
 	meshDescriptorLayoutBinding.stages = ShaderStageBit::Vertex | ShaderStageBit::Fragment;
 
 	DescriptorSetLayout::CreateInfo meshDescriptorSetLayoutCi{};
+	meshDescriptorSetLayoutCi.debugName = "Mesh3d Descriptor Set Layout";
 	meshDescriptorSetLayoutCi.bindingCount = 1;
 	meshDescriptorSetLayoutCi.bindings = &meshDescriptorLayoutBinding;
 	meshDescriptorLayout = graphicsCore->CreateDescriptorSetLayout(meshDescriptorSetLayoutCi);
 
 	DescriptorSet::CreateInfo meshUniformBufferCi{};
+	meshUniformBufferCi.debugName = "Mesh3d Descriptor Set";
 	meshUniformBufferCi.bindingCount = 1;
 	meshUniformBufferCi.bindings = &meshUniformBufferBinding;
 	meshUniformBufferCi.layout = meshDescriptorLayout;
