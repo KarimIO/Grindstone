@@ -37,8 +37,10 @@ namespace Grindstone {
 			GraphicsAPI::Framebuffer* outputFramebuffer
 		);
 		void RenderLights(entt::registry& registry);
-		void PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer);
+		void PostProcessImmediate(GraphicsAPI::Framebuffer* outputFramebuffer);
+		void PostProcessCommandBuffer(GraphicsAPI::RenderPass* renderPass, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer);
 
+		void CreateCommandBuffers();
 		void CreateGbufferFramebuffer();
 		void CreateLitHDRFramebuffer();
 		void CreatePipelines();
@@ -75,7 +77,6 @@ namespace Grindstone {
 		GraphicsAPI::Pipeline* pointLightPipeline = nullptr;
 		GraphicsAPI::Pipeline* tonemapPipeline = nullptr;
 
-		GraphicsAPI::CommandBuffer* pointLightCommandBuffer = nullptr;
-		GraphicsAPI::CommandBuffer* tonemapCommandBuffer = nullptr;
+		std::vector<GraphicsAPI::CommandBuffer*> commandBuffers;
 	};
 }

@@ -6,7 +6,7 @@
 #include "BrowseFile.hpp"
 using namespace rapidjson;
 
-std::string readTextFileMat(const char* filename) {
+std::string ReadTextFileMat(const char* filename) {
 	std::ifstream ifs(filename);
 	std::string content((std::istreambuf_iterator<char>(ifs)),
 		(std::istreambuf_iterator<char>()));
@@ -48,7 +48,7 @@ namespace Grindstone {
 					return;
 				}
 
-				std::string buffer = readTextFileMat("..\\test.reflect.json");
+				std::string buffer = ReadTextFileMat("..\\test.reflect.json");
 				rapidjson::Document document;
 				document.Parse(buffer.c_str());
 				shaderName = document["name"].GetString();

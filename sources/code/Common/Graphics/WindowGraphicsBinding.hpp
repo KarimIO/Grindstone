@@ -12,11 +12,15 @@ namespace Grindstone {
 		public:
 			~WindowGraphicsBinding() {};
 			virtual bool Initialize(Window *window) = 0;
-			virtual void ImmediateSetContext() {};
-			virtual void ImmediateSwapBuffers() {};
-			virtual void PresentCommandBuffer(CommandBuffer**buffers, uint32_t num_buffers) {};
-			virtual RenderPass* GetRenderPass() { return nullptr; };
-			virtual Framebuffer* GetCurrentFramebuffer() { return nullptr; };
+			virtual void ImmediateSetContext() = 0;
+			virtual void ImmediateSwapBuffers() = 0;
+			virtual void AcquireNextImage() = 0;
+			virtual void SubmitCommandBuffer(CommandBuffer* buffers) = 0;
+			virtual void PresentSwapchain() = 0;
+			virtual RenderPass* GetRenderPass() = 0;
+			virtual Framebuffer* GetCurrentFramebuffer() = 0;
+			virtual uint32_t GetCurrentImageIndex() = 0;
+			virtual uint32_t GetMaxFramesInFlight() = 0;
 		};
 	};
 };
