@@ -398,7 +398,7 @@ void DeferredRenderer::CreatePipelines() {
 	std::vector<std::vector<char>> fileData;
 
 	auto assetManager = EngineCore::GetInstance().assetManager;
-	uint8_t shaderBits = static_cast<uint8_t>(ShaderStageBit::Vertex) | static_cast<uint8_t>(ShaderStageBit::Fragment);
+	uint8_t shaderBits = static_cast<uint8_t>(ShaderStageBit::Vertex | ShaderStageBit::Fragment);
 
 	{
 		if (!assetManager->LoadShaderSet(
@@ -419,8 +419,8 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.descriptorSetLayoutCount = 1;
 		pipelineCreateInfo.colorAttachmentCount = 1;
 		pipelineCreateInfo.blendMode = BlendMode::Additive;
-		pipelineCreateInfo.renderPass = DeferredRenderer::gbufferRenderPass;
-		// pointLightPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
+		pipelineCreateInfo.renderPass = mainRenderPass;
+		pointLightPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	}
 
 	shaderStageCreateInfos.clear();
@@ -495,10 +495,10 @@ void DeferredRenderer::RenderLightsCommandBuffer(GraphicsAPI::CommandBuffer* cur
 
 	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
 	ClearDepthStencil clearDepthStencil;
-	clearDepthStencil.depth = 0.0f;
+	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
-	clearDepthStencil.hasDepthStencilAttachment = false;
-	currentCommandBuffer->BindRenderPass(gbufferRenderPass, litHdrFramebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
+	clearDepthStencil.hasDepthStencilAttachment = true;
+	currentCommandBuffer->BindRenderPass(mainRenderPass, litHdrFramebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
 
 	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	currentCommandBuffer->BindIndexBuffer(indexBuffer);
@@ -610,11 +610,11 @@ void DeferredRenderer::RenderCommandBuffer(
 	ClearDepthStencil clearDepthStencil;
 	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
-	clearDepthStencil.hasDepthStencilAttachment = false;
-	currentCommandBuffer->BindRenderPass(gbufferRenderPass, gbuffer, 800, 600, clearColors, 5, clearDepthStencil);
-
+	clearDepthStencil.hasDepthStencilAttachment = true;
 	assetManager->SetEngineDescriptorSet(engineDescriptorSet);
-	assetManager->RenderQueue(currentCommandBuffer, "Opaque");
+	currentCommandBuffer->BindRenderPass(gbufferRenderPass, gbuffer, 800, 600, clearColors, 5, clearDepthStencil);
+	// assetManager->RenderQueue(currentCommandBuffer, "Opaque");
+	currentCommandBuffer->UnbindRenderPass();
 	RenderLightsCommandBuffer(currentCommandBuffer, registry);
 	// assetManager->RenderQueue("Unlit");
 	// assetManager->RenderQueue("Transparent");
