@@ -58,6 +58,7 @@ namespace Grindstone {
 		}
 
 		void VulkanCommandBuffer::BeginCommandBuffer() {
+			vkResetCommandBuffer(commandBuffer, 0);
 			vkBeginCommandBuffer(commandBuffer, &beginInfo);
 		}
 

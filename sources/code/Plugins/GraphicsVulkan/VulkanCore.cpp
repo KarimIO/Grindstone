@@ -272,11 +272,12 @@ namespace Grindstone {
 		}
 
 		void VulkanCore::CreateCommandPool() {
-			VkCommandPoolCreateInfo pool_info = {};
-			pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-			pool_info.queueFamilyIndex = graphicsFamily;
+			VkCommandPoolCreateInfo poolCreateInfo = {};
+			poolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+			poolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+			poolCreateInfo.queueFamilyIndex = graphicsFamily;
 
-			if (vkCreateCommandPool(device, &pool_info, nullptr, &commandPoolGraphics) != VK_SUCCESS) {
+			if (vkCreateCommandPool(device, &poolCreateInfo, nullptr, &commandPoolGraphics) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create graphics command pool!");
 			}
 		}
