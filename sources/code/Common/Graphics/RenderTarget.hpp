@@ -11,12 +11,14 @@ namespace Grindstone {
 		public:
 			struct CreateInfo {
 				ColorFormat format = ColorFormat::Invalid;
+				bool isSampled;
 				uint32_t width = 0, height = 0;
 				CreateInfo() {};
-				CreateInfo(ColorFormat colorFormat, uint32_t width, uint32_t height) :
+				CreateInfo(ColorFormat colorFormat, uint32_t width, uint32_t height, bool isSampled) :
 					format(colorFormat),
 					width(width),
-					height(height) {}
+					height(height),
+					isSampled(isSampled) {}
 			};
 
 			virtual void Resize(uint32_t width, uint32_t height) = 0;

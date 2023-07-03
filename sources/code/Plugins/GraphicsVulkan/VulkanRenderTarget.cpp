@@ -15,9 +15,36 @@ VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& createInfo) {
 	uint8_t channels;
 	VkFormat renderFormat = TranslateColorFormatToVulkan(createInfo.format, channels);
 
-	CreateImage(createInfo.width, createInfo.height, 1, renderFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
-	imageView = CreateImageView(image, renderFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
-	CreateTextureSampler();
+	uint32_t mipLevels = 1;
+
+	VkImageUsageFlags imageUsageFlags = createInfo.isSampled
+		? VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
+		: VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+	CreateImage(
+		createInfo.width,
+		createInfo.height,
+		mipLevels,
+		renderFormat,
+		VK_IMAGE_TILING_OPTIMAL,
+		imageUsageFlags,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		image,
+		imageMemory
+	);
+	imageView = CreateImageView(image, renderFormat, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+
+	if (createInfo.isSampled) {
+		TransitionImageLayout(
+			image,
+			VK_FORMAT_R8G8B8A8_UNORM,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_GENERAL,
+			mipLevels
+		);
+
+		CreateTextureSampler();
+	}
 }
 
 VulkanRenderTarget::~VulkanRenderTarget() {
