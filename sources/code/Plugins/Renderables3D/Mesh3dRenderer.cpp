@@ -35,7 +35,7 @@ Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
 	meshDescriptorLayoutBinding.bindingId = 0;
 	meshDescriptorLayoutBinding.count = 1;
 	meshDescriptorLayoutBinding.type = BindingType::UniformBuffer;
-	meshDescriptorLayoutBinding.stages = ShaderStageBit::AllGraphics;
+	meshDescriptorLayoutBinding.stages = ShaderStageBit::Vertex | ShaderStageBit::Fragment;
 
 	DescriptorSetLayout::CreateInfo meshDescriptorSetLayoutCi{};
 	meshDescriptorSetLayoutCi.bindingCount = 1;
