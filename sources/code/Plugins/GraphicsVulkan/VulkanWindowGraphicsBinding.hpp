@@ -15,22 +15,30 @@ namespace Grindstone {
 
 		class VulkanWindowGraphicsBinding : public WindowGraphicsBinding {
 		public:
-			virtual bool Initialize(Window *window) override;
 			~VulkanWindowGraphicsBinding();
-		public:
+
+			void CreateSwapChain();
 			VkSurfaceKHR GetSurface();
+			SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
+
+			// Inherited via WindowGraphicsBinding
+			virtual bool Initialize(Window *window) override;
+			virtual void AcquireNextImage() override;
+			virtual void SubmitCommandBuffer(CommandBuffer* buffers) override;
+			virtual void PresentSwapchain() override;
+			virtual RenderPass* GetRenderPass() override;
+			virtual Framebuffer* GetCurrentFramebuffer() override;
+			virtual uint32_t GetCurrentImageIndex() override;
+			virtual uint32_t GetMaxFramesInFlight() override;
+			virtual void ImmediateSetContext() override;
+			virtual void ImmediateSwapBuffers() override;
+		private:
 			void GetSwapChainRenderTargets(RenderTarget**& renderTargets, uint32_t& renderTargetCount);
 			ColorFormat GetDeviceColorFormat();
-			SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
 			VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 			VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 			VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
-			void CreateSwapChain();
 			void CreateSyncObjects();
-			void PresentCommandBuffer(CommandBuffer** buffers, uint32_t bufferCount) override;
-			virtual RenderPass* GetRenderPass() override;
-			virtual Framebuffer* GetCurrentFramebuffer() override;
-		private:
 			void CreateRenderPass();
 			void CreateFramebuffers();
 		private:
@@ -52,6 +60,7 @@ namespace Grindstone {
 			std::vector<VkFence> imagesInFlight;
 			uint32_t currentFrame = 0;
 			uint32_t maxFramesInFlight = 0;
+			uint32_t currentSwapchainImageIndex = 0;
 		};
 	};
 };

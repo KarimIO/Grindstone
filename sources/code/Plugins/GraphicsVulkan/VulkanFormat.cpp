@@ -180,7 +180,7 @@ namespace Grindstone {
 			//	return VK_FORMAT_S8_UINT;
 			}
 
-			assert(false && "TranslateDepthFormatToVulkan: Invalid depth format!");
+			assert(false && "TranslateDepthFormatToVulkan: Invalid DepthFormat!");
 			return VK_FORMAT_D32_SFLOAT_S8_UINT;
 		}
 
@@ -196,7 +196,7 @@ namespace Grindstone {
 				return VK_CULL_MODE_FRONT_AND_BACK;
 			}
 
-			assert(false && "TranslateDepthFormatToVulkan: Invalid depth format!");
+			assert(false && "TranslateCullModeToVulkan: Invalid CullMode format!");
 			return VK_CULL_MODE_NONE;
 		}
 	}

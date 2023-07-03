@@ -49,10 +49,7 @@ struct LightmapStruct {
 DeferredRenderer::DeferredRenderer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	GraphicsAPI::CommandBuffer::CreateInfo commandBufferCreateInfo{};
-	pointLightCommandBuffer = graphicsCore->CreateCommandBuffer(commandBufferCreateInfo);
-	tonemapCommandBuffer = graphicsCore->CreateCommandBuffer(commandBufferCreateInfo);
-
+	CreateCommandBuffers();
 	CreateVertexAndIndexBuffersAndLayouts();
 	CreateGbufferFramebuffer();
 	CreateLitHDRFramebuffer();
@@ -72,6 +69,10 @@ DeferredRenderer::~DeferredRenderer() {
 		graphicsCore->DeleteRenderTarget(gbufferRenderTargets[i]);
 	}
 	graphicsCore->DeleteDepthTarget(gbufferDepthTarget);
+
+	for (size_t i = 0; i < commandBuffers.size(); ++i) {
+		graphicsCore->DeleteCommandBuffer(commandBuffers[i]);
+	}
 
 	graphicsCore->DeleteFramebuffer(litHdrFramebuffer);
 	graphicsCore->DeleteRenderTarget(litHdrRenderTarget);
@@ -97,6 +98,19 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 	return;
 	gbuffer->Resize(width, height);
 	litHdrFramebuffer->Resize(width, height);
+}
+
+void DeferredRenderer::CreateCommandBuffers() {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+
+	GraphicsAPI::CommandBuffer::CreateInfo commandBufferCreateInfo{};
+	uint32_t maxFramesInFlight = wgb->GetMaxFramesInFlight();
+	commandBuffers.resize(maxFramesInFlight);
+
+	for (size_t i = 0; i < maxFramesInFlight; ++i) {
+		commandBuffers[i] = graphicsCore->CreateCommandBuffer(commandBufferCreateInfo);
+	}
 }
 
 void DeferredRenderer::CreateUniformBuffers() {
@@ -460,46 +474,34 @@ void DeferredRenderer::RenderLights(entt::registry& registry) {
 	});
 }
 
-void DeferredRenderer::PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer) {
+void DeferredRenderer::PostProcessImmediate(GraphicsAPI::Framebuffer* outputFramebuffer) {
+
+}
+
+void DeferredRenderer::PostProcessCommandBuffer(GraphicsAPI::RenderPass* renderPass, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer) {
 	GRIND_PROFILE_FUNC();
-	if (tonemapPipeline == nullptr) {
-		return;
-	}
 
-	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
-
-	tonemapCommandBuffer->BeginCommandBuffer();
-	if (outputFramebuffer == nullptr) {
-		auto renderpass = wgb->GetRenderPass();
-		auto framebuffer = wgb->GetCurrentFramebuffer();
-
-		ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
-		ClearDepthStencil clearDepthStencil;
-		clearDepthStencil.depth = 0.0f;
-		clearDepthStencil.stencil = 0;
-		clearDepthStencil.hasDepthStencilAttachment = false;
-
-		tonemapCommandBuffer->BindRenderPass(renderpass, framebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
-	}
-	else {
-		// tonemapCommandBuffer->BindRenderPass();
-	}
-
-	tonemapCommandBuffer->BindDescriptorSet(tonemapPipeline, &tonemapDescriptorSet, 1);
-	tonemapCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
-	tonemapCommandBuffer->BindIndexBuffer(indexBuffer, false);
+	currentCommandBuffer->BeginCommandBuffer();
+	
+	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
+	ClearDepthStencil clearDepthStencil;
+	clearDepthStencil.depth = 0.0f;
+	clearDepthStencil.stencil = 0;
+	clearDepthStencil.hasDepthStencilAttachment = false;
+	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
+	
+	currentCommandBuffer->BindDescriptorSet(tonemapPipeline, &tonemapDescriptorSet, 1);
+	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
+	currentCommandBuffer->BindIndexBuffer(indexBuffer, false);
 
 	{
 		// Tonemapping
-		tonemapCommandBuffer->BindPipeline(tonemapPipeline);
-		tonemapCommandBuffer->DrawIndices(0, 6, 1, 0);
+		currentCommandBuffer->BindPipeline(tonemapPipeline);
+		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 	}
 
-	tonemapCommandBuffer->UnbindRenderPass();
-	tonemapCommandBuffer->EndCommandBuffer();
-
-	wgb->PresentCommandBuffer(&tonemapCommandBuffer, 1);
+	currentCommandBuffer->UnbindRenderPass();
+	currentCommandBuffer->EndCommandBuffer();
 }
 
 void DeferredRenderer::Render(
@@ -535,13 +537,27 @@ void DeferredRenderer::RenderCommandBuffer(
 	GraphicsAPI::Framebuffer* outputFramebuffer
 ) {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	wgb->AcquireNextImage();
+
+	GraphicsAPI::RenderPass* targetRenderPass = nullptr;
+	GraphicsAPI::Framebuffer* targetFramebuffer = outputFramebuffer;
+	if (outputFramebuffer == nullptr) {
+		targetRenderPass = wgb->GetRenderPass();
+		targetFramebuffer = wgb->GetCurrentFramebuffer();
+	}
+
+	auto currentCommandBuffer = commandBuffers[wgb->GetCurrentImageIndex()];
 
 	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
 	// RenderLights(registry);
 	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Unlit");
 	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Transparent");
 
-	PostProcess(outputFramebuffer);
+	PostProcessCommandBuffer(targetRenderPass, targetFramebuffer, currentCommandBuffer);
+
+	wgb->SubmitCommandBuffer(currentCommandBuffer);
+	wgb->PresentSwapchain();
 }
 
 void DeferredRenderer::RenderImmediate(
@@ -572,5 +588,5 @@ void DeferredRenderer::RenderImmediate(
 	graphicsCore->SetImmediateBlending(BlendMode::AdditiveAlpha);
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Transparent");
 
-	PostProcess(outputFramebuffer);
+	PostProcessImmediate(outputFramebuffer);
 }
