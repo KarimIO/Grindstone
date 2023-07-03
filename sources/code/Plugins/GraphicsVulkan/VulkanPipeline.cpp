@@ -30,11 +30,11 @@ namespace Grindstone {
 
 		VulkanPipeline::VulkanPipeline(Pipeline::CreateInfo& createInfo) {
 			std::vector<VkPipelineShaderStageCreateInfo> shaderStages(createInfo.shaderStageCreateInfoCount);
-			
+
 			for (uint32_t i = 0; i < createInfo.shaderStageCreateInfoCount; ++i) {
 				CreateShaderModule(createInfo.shaderStageCreateInfos[i], shaderStages[i]);
 			}
-			
+
 			VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 			vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 			vertexInputInfo.vertexBindingDescriptionCount = createInfo.vertexBindingsCount;
@@ -42,7 +42,7 @@ namespace Grindstone {
 			uint32_t vertexAttributeDescriptorCount = 0;
 			for (uint32_t i = 0; i < createInfo.vertexBindingsCount; ++i) {
 				auto& vb = createInfo.vertexBindings[i];
-				VkVertexInputBindingDescription &vbd = (VkVertexInputBindingDescription &)vertexInputInfo.pVertexBindingDescriptions[i];
+				VkVertexInputBindingDescription& vbd = (VkVertexInputBindingDescription&)vertexInputInfo.pVertexBindingDescriptions[i];
 				vbd = {};
 				vbd.binding = i;
 				vbd.inputRate = vb.elementRate ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
@@ -60,7 +60,7 @@ namespace Grindstone {
 
 				for (uint32_t j = 0; j < vb.attributeCount; ++j) {
 					auto& va = vb.attributes[j];
-					VkVertexInputAttributeDescription &vad = vertexAttribDescriptors[vertexAttributeDescriptorCount++];
+					VkVertexInputAttributeDescription& vad = vertexAttribDescriptors[vertexAttributeDescriptorCount++];
 					vad.binding = i;
 					vad.location = va.location;
 					vad.format = TranslateVertexFormatsToVulkan(va.format);
@@ -100,20 +100,7 @@ namespace Grindstone {
 			rasterizer.rasterizerDiscardEnable = VK_FALSE;
 			rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 			rasterizer.lineWidth = 1.0f;
-			switch (createInfo.cullMode) {
-			case CullMode::None:
-				rasterizer.cullMode = VK_CULL_MODE_NONE;
-				break;
-			case CullMode::Front:
-				rasterizer.cullMode = VK_CULL_MODE_FRONT_BIT;
-				break;
-			case CullMode::Back:
-				rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-				break;
-			case CullMode::Both:
-				rasterizer.cullMode = VK_CULL_MODE_FRONT_AND_BACK;
-				break;
-			}
+			rasterizer.cullMode = TranslateCullModeToVulkan(createInfo.cullMode);
 			rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 			rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -130,18 +117,40 @@ namespace Grindstone {
 			depthStencil.depthBoundsTestEnable = VK_FALSE;
 			depthStencil.stencilTestEnable = VK_FALSE;
 
-			std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(1);
-
-			for (size_t i = 0; i < colorBlendAttachments.size(); ++i) {
+			std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(createInfo.colorAttachmentCount);
+			for (size_t i = 0; i < createInfo.colorAttachmentCount; ++i) {
+				auto& attachment = colorBlendAttachments[i];
 				colorBlendAttachments[i].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-				colorBlendAttachments[i].blendEnable = VK_FALSE;
+				switch (createInfo.blendMode) {
+				default:
+					attachment.blendEnable = VK_FALSE;
+					break;
+				case BlendMode::Additive:
+					attachment.blendEnable = VK_TRUE;
+					attachment.colorBlendOp = VK_BLEND_OP_ADD;
+					attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+					attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+					attachment.alphaBlendOp = VK_BLEND_OP_ADD;
+					attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+					attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+					break;
+				case BlendMode::AdditiveAlpha:
+					attachment.blendEnable = VK_TRUE;
+					attachment.colorBlendOp = VK_BLEND_OP_ADD;
+					attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+					attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+					attachment.alphaBlendOp = VK_BLEND_OP_ADD;
+					attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+					attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+					break;
+				}
 			}
 
 			VkPipelineColorBlendStateCreateInfo colorBlending = {};
 			colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 			colorBlending.logicOpEnable = VK_FALSE;
 			colorBlending.logicOp = VK_LOGIC_OP_COPY;
-			colorBlending.attachmentCount = static_cast<uint32_t>(colorBlendAttachments.size());
+			colorBlending.attachmentCount = createInfo.colorAttachmentCount;
 			colorBlending.pAttachments = colorBlendAttachments.data();
 			colorBlending.blendConstants[0] = 0.0f;
 			colorBlending.blendConstants[1] = 0.0f;

@@ -18,13 +18,6 @@ namespace Grindstone {
 			ShaderStage type;
 		};
 
-		enum class CullMode {
-			None = 0,
-			Front,
-			Back,
-			Both
-		};
-
 		class Pipeline {
 		public:
 			struct CreateInfo {
@@ -41,6 +34,8 @@ namespace Grindstone {
 				uint32_t descriptorSetLayoutCount;
 				VertexBufferLayout* vertexBindings;
 				uint32_t vertexBindingsCount;
+				BlendMode blendMode;
+				uint32_t colorAttachmentCount;
 			};
 
 			virtual void Recreate(CreateInfo& createInfo) = 0;

@@ -14,5 +14,6 @@ namespace Grindstone {
 		DepthFormat TranslateDepthFormatFromVulkan(VkFormat format);
 		VkFormat TranslateColorFormatToVulkan(ColorFormat, uint8_t &channels);
 		VkFormat TranslateDepthFormatToVulkan(DepthFormat);
+		VkCullModeFlags TranslateCullModeToVulkan(CullMode cullMode);
 	}
 }

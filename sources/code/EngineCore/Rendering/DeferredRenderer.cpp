@@ -304,7 +304,7 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 
 	gbufferRenderTargets.reserve(gbufferColorFormats.size());
 	for (size_t i = 0; i < gbufferColorFormats.size(); ++i) {
-		RenderTarget::CreateInfo gbufferRtCreateInfo{ gbufferColorFormats[i], width, height };
+		RenderTarget::CreateInfo gbufferRtCreateInfo{ gbufferColorFormats[i], width, height, true };
 		gbufferRenderTargets.emplace_back(graphicsCore->CreateRenderTarget(gbufferRtCreateInfo));
 	}
 
@@ -331,7 +331,7 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 void DeferredRenderer::CreateLitHDRFramebuffer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height };
+	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height, true };
 	litHdrRenderTarget = graphicsCore->CreateRenderTarget(litHdrImagesCreateInfo);
 
 	DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false);
@@ -392,6 +392,8 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
 		pipelineCreateInfo.descriptorSetLayouts = &lightingDescriptorSetLayout;
 		pipelineCreateInfo.descriptorSetLayoutCount = 1;
+		pipelineCreateInfo.colorAttachmentCount = 1;
+		pipelineCreateInfo.blendMode = BlendMode::Additive;
 		pipelineCreateInfo.renderPass = DeferredRenderer::gbufferRenderPass;
 		// pointLightPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	}
@@ -418,6 +420,8 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
 		pipelineCreateInfo.descriptorSetLayouts = &tonemapDescriptorSetLayout;
 		pipelineCreateInfo.descriptorSetLayoutCount = 1;
+		pipelineCreateInfo.colorAttachmentCount = 1;
+		pipelineCreateInfo.blendMode = BlendMode::None;
 		pipelineCreateInfo.renderPass = wgb->GetRenderPass();
 		tonemapPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	}

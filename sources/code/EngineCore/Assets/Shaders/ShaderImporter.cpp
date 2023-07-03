@@ -158,6 +158,8 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 
 	pipelineCreateInfo.vertexBindings = &vertexLayouts.positions;
 	pipelineCreateInfo.vertexBindingsCount = 4; // Would be 5, but uv1 is not yet used
+	pipelineCreateInfo.colorAttachmentCount = 4;
+	pipelineCreateInfo.blendMode = BlendMode::None;
 
 	auto shader = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	auto asset = shaders.emplace(uuid, ShaderAsset(uuid, debugName, shader));

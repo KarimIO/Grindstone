@@ -183,5 +183,21 @@ namespace Grindstone {
 			assert(false && "TranslateDepthFormatToVulkan: Invalid depth format!");
 			return VK_FORMAT_D32_SFLOAT_S8_UINT;
 		}
+
+		VkCullModeFlags TranslateCullModeToVulkan(CullMode cullMode) {
+			switch (cullMode) {
+			case CullMode::None:
+				return VK_CULL_MODE_NONE;
+			case CullMode::Front:
+				return VK_CULL_MODE_FRONT_BIT;
+			case CullMode::Back:
+				return VK_CULL_MODE_BACK_BIT;
+			case CullMode::Both:
+				return VK_CULL_MODE_FRONT_AND_BACK;
+			}
+
+			assert(false && "TranslateDepthFormatToVulkan: Invalid depth format!");
+			return VK_CULL_MODE_NONE;
+		}
 	}
 }
