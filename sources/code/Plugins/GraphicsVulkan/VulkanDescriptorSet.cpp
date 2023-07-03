@@ -10,10 +10,11 @@ using namespace Grindstone::GraphicsAPI;
 void AttachUniformBuffer(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
 	VulkanUniformBuffer* uniformBuffer = static_cast<VulkanUniformBuffer*>(binding.itemPtr);
 
-	VkDescriptorBufferInfo bufferInfo = {};
-	bufferInfo.buffer = uniformBuffer->GetBuffer();
-	bufferInfo.offset = 0;
-	bufferInfo.range = uniformBuffer->GetSize();
+	// TODO: Handle this lifetime
+	VkDescriptorBufferInfo* bufferInfo = new VkDescriptorBufferInfo();
+	bufferInfo->buffer = uniformBuffer->GetBuffer();
+	bufferInfo->offset = 0;
+	bufferInfo->range = uniformBuffer->GetSize();
 
 	VkWriteDescriptorSet descriptorWrites = {};
 	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -22,43 +23,48 @@ void AttachUniformBuffer(std::vector<VkWriteDescriptorSet>& writeVector, Descrip
 	descriptorWrites.dstArrayElement = 0;
 	descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorWrites.descriptorCount = binding.count;
-	descriptorWrites.pBufferInfo = &bufferInfo;
+	descriptorWrites.pBufferInfo = bufferInfo;
+	writeVector.push_back(descriptorWrites);
 }
 
 void AttachTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
 	VulkanTexture* texture = static_cast<VulkanTexture*>(binding.itemPtr);
 
-	VkDescriptorImageInfo imageInfo = {};
-	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo.imageView = texture->GetImageView();
-	imageInfo.sampler = texture->GetSampler();
+	// TODO: Handle this lifetime
+	VkDescriptorImageInfo* imageInfo = new VkDescriptorImageInfo();
+	imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo->imageView = texture->GetImageView();
+	imageInfo->sampler = texture->GetSampler();
 
 	VkWriteDescriptorSet descriptorWrites = {};
 	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites.dstSet = descriptorSet;
-	descriptorWrites.dstBinding = 0;
+	descriptorWrites.dstBinding = binding.bindingIndex;
 	descriptorWrites.dstArrayElement = 0;
 	descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptorWrites.descriptorCount = binding.count;
-	descriptorWrites.pImageInfo = &imageInfo;
+	descriptorWrites.pImageInfo = imageInfo;
+	writeVector.push_back(descriptorWrites);
 }
 
 void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
 	VulkanRenderTarget* texture = static_cast<VulkanRenderTarget*>(binding.itemPtr);
 
-	VkDescriptorImageInfo imageInfo = {};
-	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo.imageView = texture->GetImageView();
-	imageInfo.sampler = texture->GetSampler();
+	// TODO: Handle this lifetime
+	VkDescriptorImageInfo* imageInfo = new VkDescriptorImageInfo();
+	imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo->imageView = texture->GetImageView();
+	imageInfo->sampler = texture->GetSampler();
 
 	VkWriteDescriptorSet descriptorWrites = {};
 	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites.dstSet = descriptorSet;
-	descriptorWrites.dstBinding = 0;
+	descriptorWrites.dstBinding = binding.bindingIndex;
 	descriptorWrites.dstArrayElement = 0;
 	descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptorWrites.descriptorCount = binding.count;
-	descriptorWrites.pImageInfo = &imageInfo;
+	descriptorWrites.pImageInfo = imageInfo;
+	writeVector.push_back(descriptorWrites);
 }
 
 VulkanDescriptorSet::VulkanDescriptorSet(DescriptorSet::CreateInfo& createInfo) {
@@ -74,6 +80,8 @@ VulkanDescriptorSet::VulkanDescriptorSet(DescriptorSet::CreateInfo& createInfo) 
 	if (vkAllocateDescriptorSets(VulkanCore::Get().GetDevice(), &allocInfo, &descriptorSet) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate descriptor sets!");
 	}
+
+	ChangeBindings(createInfo.bindings, createInfo.bindingCount);
 }
 
 void VulkanDescriptorSet::ChangeBindings(Binding* bindings, uint32_t bindingCount) {
@@ -92,6 +100,7 @@ void VulkanDescriptorSet::ChangeBindings(Binding* bindings, uint32_t bindingCoun
 			break;
 		case BindingType::Texture:
 			AttachTexture(descriptorWrites, binding, descriptorSet);
+			break;
 		case BindingType::RenderTexture:
 			AttachRenderTexture(descriptorWrites, binding, descriptorSet);
 			break;

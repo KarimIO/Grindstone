@@ -8,6 +8,10 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
+		VulkanFramebuffer::VulkanFramebuffer(VkFramebuffer framebuffer) {
+			this->framebuffer = framebuffer;
+		}
+
 		VulkanFramebuffer::VulkanFramebuffer(Framebuffer::CreateInfo& ci) {
 			std::vector<VkImageView> attachments;
 			for (uint32_t i = 0; i < ci.numRenderTargetLists; ++i) {

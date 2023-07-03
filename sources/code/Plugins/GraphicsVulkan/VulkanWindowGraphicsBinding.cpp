@@ -10,14 +10,16 @@
 #include "VulkanWindowGraphicsBinding.hpp"
 #include "VulkanCore.hpp"
 #include "VulkanFormat.hpp"
+#include "VulkanRenderPass.hpp"
+#include "VulkanFramebuffer.hpp"
 #include "VulkanCommandBuffer.hpp"
 #include <Common/Window/Win32Window.hpp>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
 		bool VulkanWindowGraphicsBinding::Initialize(Window *window) {
-			window = window;
-			maxFramesInFlight = 3;
+			this->window = window;
+			maxFramesInFlight = 1;
 
 #ifdef VK_USE_PLATFORM_WIN32_KHR
 			VkWin32SurfaceCreateInfoKHR surfaceCreateInfo{};
@@ -169,7 +171,7 @@ namespace Grindstone {
 
 			uint32_t imageIndex = 0;
 			vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
-
+			imageIndex = 0;
 			if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
 				vkWaitForFences(device, 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
 			}
@@ -224,7 +226,7 @@ namespace Grindstone {
 
 			VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
 			VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
-			VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities);
+			swapExtent = ChooseSwapExtent(swapChainSupport.capabilities);
 
 			uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
 			if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
@@ -238,7 +240,7 @@ namespace Grindstone {
 			createInfo.minImageCount = imageCount;
 			createInfo.imageFormat = surfaceFormat.format;
 			createInfo.imageColorSpace = surfaceFormat.colorSpace;
-			createInfo.imageExtent = extent;
+			createInfo.imageExtent = swapExtent;
 			createInfo.imageArrayLayers = 1;
 			createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
@@ -274,8 +276,94 @@ namespace Grindstone {
 			}
 
 			swapchainFormat = TranslateColorFormatFromVulkan(surfaceFormat.format);
-
+			swapchainVulkanFormat = surfaceFormat.format;
+			CreateRenderPass();
+			CreateFramebuffers();
 			CreateSyncObjects();
+		}
+
+		void VulkanWindowGraphicsBinding::CreateRenderPass() {
+			VkAttachmentDescription colorAttachment{};
+			colorAttachment.format = swapchainVulkanFormat;
+			colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+			colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+			VkAttachmentReference colorAttachmentRef{};
+			colorAttachmentRef.attachment = 0;
+			colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+			VkSubpassDescription subpass{};
+			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+			subpass.colorAttachmentCount = 1;
+			subpass.pColorAttachments = &colorAttachmentRef;
+
+			VkSubpassDependency dependency{};
+			dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+			dependency.dstSubpass = 0;
+			dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			dependency.srcAccessMask = 0;
+			dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+			VkRenderPassCreateInfo renderPassInfo{};
+			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+			renderPassInfo.attachmentCount = 1;
+			renderPassInfo.pAttachments = &colorAttachment;
+			renderPassInfo.subpassCount = 1;
+			renderPassInfo.pSubpasses = &subpass;
+			renderPassInfo.dependencyCount = 1;
+			renderPassInfo.pDependencies = &dependency;
+
+			auto device = VulkanCore::Get().GetDevice();
+			VkRenderPass vkRenderPass = nullptr;
+			if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &vkRenderPass) != VK_SUCCESS) {
+				throw std::runtime_error("failed to create render pass!");
+			}
+
+			renderPass = new VulkanRenderPass(vkRenderPass, swapExtent.width, swapExtent.height);
+		}
+
+		void VulkanWindowGraphicsBinding::CreateFramebuffers() {
+			auto device = VulkanCore::Get().GetDevice();
+			framebuffers.resize(swapChainTargets.size());
+			VkRenderPass vkRenderPass = static_cast<VulkanRenderPass*>(renderPass)->GetRenderPassHandle();
+
+			for (size_t i = 0; i < swapChainTargets.size(); i++) {
+				VulkanRenderTarget* rt = static_cast<VulkanRenderTarget*>(swapChainTargets[i]);
+
+				VkImageView attachments[] = {
+					rt->GetImageView()
+				};
+
+				VkFramebufferCreateInfo framebufferInfo{};
+				framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+				framebufferInfo.renderPass = vkRenderPass;
+				framebufferInfo.attachmentCount = 1;
+				framebufferInfo.pAttachments = attachments;
+				framebufferInfo.width = swapExtent.width;
+				framebufferInfo.height = swapExtent.height;
+				framebufferInfo.layers = 1;
+
+				VkFramebuffer vkFramebuffer = nullptr;
+				if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &vkFramebuffer) != VK_SUCCESS) {
+					throw std::runtime_error("failed to create framebuffer!");
+				}
+
+				framebuffers[i] = new VulkanFramebuffer(vkFramebuffer);
+			}
+		}
+
+		RenderPass* VulkanWindowGraphicsBinding::GetRenderPass() {
+			return renderPass;
+		}
+
+		Framebuffer* VulkanWindowGraphicsBinding::GetCurrentFramebuffer() {
+			return framebuffers[currentFrame];
 		}
 	};
 };
