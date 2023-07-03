@@ -33,11 +33,13 @@ namespace Grindstone {
 				throw std::runtime_error("failed to allocate command buffers!");
 			}
 
+			VulkanCore::Get().NameObject(VK_OBJECT_TYPE_COMMAND_BUFFER, commandBuffer, createInfo.debugName);
+
 			secondaryInfo = createInfo.secondaryInfo;
 
 			beginInfo = {};
 			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+			beginInfo.flags = 0; //VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
 			if (createInfo.secondaryInfo.isSecondary) {
 				beginInfo.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;

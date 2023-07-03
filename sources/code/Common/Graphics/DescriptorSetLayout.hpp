@@ -14,8 +14,9 @@ namespace Grindstone {
 			};
 
 			struct CreateInfo {
-				Binding* bindings;
-				uint32_t bindingCount;
+				const char* debugName = nullptr;
+				Binding* bindings = nullptr;
+				uint32_t bindingCount = 0;
 			};
 		};
 	}

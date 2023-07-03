@@ -12,6 +12,13 @@ VulkanTexture::VulkanTexture(Texture::CreateInfo& ci) {
 	CreateTextureImage(ci, mipLevels);
 	imageView = CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
 	CreateTextureSampler(ci, mipLevels);
+
+	std::string debugName = ci.debugName;
+	std::string imageViewDebugName = debugName + " View";
+	std::string imageSamplerDebugName = debugName + " Sampler";
+	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, ci.debugName);
+	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
+	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_SAMPLER, sampler, imageSamplerDebugName.c_str());
 }
 
 VulkanTexture::~VulkanTexture() {
@@ -38,7 +45,7 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
-	CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+	CreateBuffer(createInfo.debugName, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 	void* data;
 	vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);

@@ -199,6 +199,8 @@ namespace Grindstone {
 				throw std::runtime_error("failed to create graphics pipeline!");
 			}
 
+			VulkanCore::Get().NameObject(VK_OBJECT_TYPE_PIPELINE, graphicsPipeline, createInfo.shaderName);
+
 			for (uint32_t i = 0; i < createInfo.shaderStageCreateInfoCount; ++i) {
 				vkDestroyShaderModule(VulkanCore::Get().GetDevice(), shaderStages[i].module, nullptr);
 			}

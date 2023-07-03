@@ -62,7 +62,9 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	}
 
 	if (materialUniformBuffer != nullptr) {
+		std::string uniformBufferName = (materialAsset->name + " Material Uniform Buffer");
 		GraphicsAPI::UniformBuffer::CreateInfo ubCi{};
+		ubCi.debugName = uniformBufferName.c_str();
 		ubCi.isDynamic = true;
 		ubCi.size = static_cast<uint32_t>(materialUniformBuffer->bufferSize);
 		uniformBufferObject = graphicsCore->CreateUniformBuffer(ubCi);

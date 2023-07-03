@@ -47,18 +47,19 @@ namespace Grindstone {
 
 			VkInstance instance = nullptr;
 			VkDevice device = nullptr;
-			VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-			VkDebugUtilsMessengerEXT debugMessenger;
+			VkPhysicalDevice physicalDevice = nullptr;
+			VkDebugUtilsMessengerEXT debugMessenger = nullptr;
 			std::vector<VkSemaphore> imageAvailableSemaphores;
 			std::vector<VkSemaphore> renderFinishedSemaphores;
 			std::vector<VkFence> inFlightFences;
 			std::vector<VkFence> imagesInFlight;
 			size_t currentFrame = 0;
+			PFN_vkSetDebugUtilsObjectNameEXT pfnDebugUtilsSetObjectName = nullptr;
 		public:
 			VkQueue graphicsQueue = nullptr;
 			VkQueue presentQueue = nullptr;
-			uint32_t graphicsFamily;
-			uint32_t presentFamily;
+			uint32_t graphicsFamily = 0;
+			uint32_t presentFamily = 0;
 			VkCommandPool commandPoolGraphics = nullptr;
 			VkDescriptorPool descriptorPool = nullptr;
 		private:
@@ -75,6 +76,8 @@ namespace Grindstone {
 			std::vector<const char*> GetRequiredExtensions();
 			void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 		public:
+			void NameObject(VkObjectType objectType, void* object, const char* objectName);
+
 			virtual const char* GetVendorName() override;
 			virtual const char* GetAdapterName() override;
 			virtual const char* GetAPIName() override;
