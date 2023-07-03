@@ -22,6 +22,7 @@ namespace Grindstone {
 		class RenderPass {
 		public:
 			struct CreateInfo {
+				const char* debugName = nullptr;
 				uint32_t width = 0;
 				uint32_t height = 0;
 				ColorFormat* colorFormats = nullptr;

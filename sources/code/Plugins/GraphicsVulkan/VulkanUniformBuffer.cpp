@@ -8,6 +8,7 @@ using namespace Grindstone::GraphicsAPI;
 VulkanUniformBuffer::VulkanUniformBuffer(UniformBuffer::CreateInfo& createInfo) {
 	size = createInfo.size;
 	CreateBuffer(
+		createInfo.debugName,
 		size,
 		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,

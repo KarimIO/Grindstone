@@ -10,15 +10,17 @@ namespace Grindstone {
 		class RenderTarget {
 		public:
 			struct CreateInfo {
+				const char* debugName;
 				ColorFormat format = ColorFormat::Invalid;
-				bool isSampled;
+				bool isSampled = false;
 				uint32_t width = 0, height = 0;
 				CreateInfo() {};
-				CreateInfo(ColorFormat colorFormat, uint32_t width, uint32_t height, bool isSampled) :
+				CreateInfo(ColorFormat colorFormat, uint32_t width, uint32_t height, bool isSampled, const char* name) :
 					format(colorFormat),
 					width(width),
 					height(height),
-					isSampled(isSampled) {}
+					isSampled(isSampled),
+					debugName(name) {}
 			};
 
 			virtual void Resize(uint32_t width, uint32_t height) = 0;

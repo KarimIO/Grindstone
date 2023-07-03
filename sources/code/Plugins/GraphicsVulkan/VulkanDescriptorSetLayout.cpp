@@ -41,6 +41,8 @@ VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(DescriptorSetLayout::Create
 	if (vkCreateDescriptorSetLayout(VulkanCore::Get().GetDevice(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor set layout!");
 	}
+
+	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, descriptorSetLayout, createInfo.debugName);
 }
 
 VkDescriptorSetLayout Grindstone::GraphicsAPI::VulkanDescriptorSetLayout::GetInternalLayout() {

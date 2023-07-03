@@ -15,9 +15,10 @@ namespace Grindstone {
 			};
 
 			struct CreateInfo {
-				DescriptorSetLayout* layout;
-				Binding* bindings;
-				uint32_t bindingCount;
+				const char* debugName = nullptr;
+				DescriptorSetLayout* layout = nullptr;
+				Binding* bindings = nullptr;
+				uint32_t bindingCount = 0;
 			};
 		public:
 			virtual void ChangeBindings(Binding* bindings, uint32_t bindingCount) = 0;

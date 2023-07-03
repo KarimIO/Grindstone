@@ -34,16 +34,22 @@ VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& createInfo) {
 	);
 	imageView = CreateImageView(image, renderFormat, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
 
+	std::string debugName = createInfo.debugName;
+	std::string imageViewDebugName = debugName + " View";
+	std::string imageSamplerDebugName = debugName + " Sampler";
+	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, createInfo.debugName);
+	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
 	if (createInfo.isSampled) {
 		TransitionImageLayout(
 			image,
-			VK_FORMAT_R8G8B8A8_UNORM,
+			renderFormat,
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_GENERAL,
 			mipLevels
 		);
 
 		CreateTextureSampler();
+		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_SAMPLER, sampler, imageSamplerDebugName.c_str());
 	}
 }
 

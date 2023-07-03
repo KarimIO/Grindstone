@@ -60,7 +60,7 @@ namespace Grindstone {
 			vkBindImageMemory(device, image, imageMemory, 0);
 		}
 
-		void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
+		void CreateBuffer(const char* debugName, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
 			VkDevice device = VulkanCore::Get().GetDevice();
 			VkBufferCreateInfo bufferInfo = {};
 			bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -71,6 +71,8 @@ namespace Grindstone {
 			if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create buffer!");
 			}
+
+			VulkanCore::Get().NameObject(VK_OBJECT_TYPE_BUFFER, buffer, debugName);
 
 			VkMemoryRequirements memRequirements;
 			vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
@@ -83,6 +85,9 @@ namespace Grindstone {
 			if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
 				throw std::runtime_error("failed to allocate buffer memory!");
 			}
+
+			std::string memoryName = std::string(debugName) + " Memory";
+			VulkanCore::Get().NameObject(VK_OBJECT_TYPE_DEVICE_MEMORY, bufferMemory, memoryName.c_str());
 
 			vkBindBufferMemory(device, buffer, bufferMemory, 0);
 		}

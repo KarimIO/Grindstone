@@ -195,6 +195,7 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	gbuffer3Binding.stages = ShaderStageBit::Fragment;
 
 	DescriptorSetLayout::CreateInfo engineDescriptorSetLayoutCreateInfo{};
+	engineDescriptorSetLayoutCreateInfo.debugName = "Engine UBO Set Layout";
 	engineDescriptorSetLayoutCreateInfo.bindingCount = 1;
 	engineDescriptorSetLayoutCreateInfo.bindings = &engineUboBinding;
 	engineDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(engineDescriptorSetLayoutCreateInfo);
@@ -204,6 +205,7 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	tonemapDescriptorSetLayoutBindings[1] = litHdrRenderTargetBinding;
 
 	DescriptorSetLayout::CreateInfo tonemapDescriptorSetLayoutCreateInfo{};
+	tonemapDescriptorSetLayoutCreateInfo.debugName = "Tonemap Descriptor Set Layout";
 	tonemapDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(tonemapDescriptorSetLayoutBindings.size());
 	tonemapDescriptorSetLayoutCreateInfo.bindings = tonemapDescriptorSetLayoutBindings.data();
 	tonemapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(tonemapDescriptorSetLayoutCreateInfo);
@@ -217,6 +219,7 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	lightingDescriptorSetLayoutBindings[5] = gbuffer3Binding;
 
 	DescriptorSetLayout::CreateInfo lightingDescriptorSetLayoutCreateInfo{};
+	lightingDescriptorSetLayoutCreateInfo.debugName = "Pointlight Descriptor Set Layout";
 	lightingDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightingDescriptorSetLayoutBindings.size());
 	lightingDescriptorSetLayoutCreateInfo.bindings = lightingDescriptorSetLayoutBindings.data();
 	lightingDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(lightingDescriptorSetLayoutCreateInfo);
@@ -268,6 +271,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	gbuffer3Binding.itemPtr = imageSet.gbufferRenderTargets[3];
 
 	DescriptorSet::CreateInfo engineDescriptorSetCreateInfo{};
+	engineDescriptorSetCreateInfo.debugName = "Engine UBO Descriptor Set";
 	engineDescriptorSetCreateInfo.layout = engineDescriptorSetLayout;
 	engineDescriptorSetCreateInfo.bindingCount = 1;
 	engineDescriptorSetCreateInfo.bindings = &engineUboBinding;
@@ -278,6 +282,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	tonemapDescriptorSetBindings[1] = litHdrRenderTargetBinding;
 
 	DescriptorSet::CreateInfo tonemapDescriptorSetCreateInfo{};
+	tonemapDescriptorSetCreateInfo.debugName = "Tonemap Descriptor Set";
 	tonemapDescriptorSetCreateInfo.layout = tonemapDescriptorSetLayout;
 	tonemapDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(tonemapDescriptorSetBindings.size());
 	tonemapDescriptorSetCreateInfo.bindings = tonemapDescriptorSetBindings.data();
@@ -292,6 +297,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	lightingDescriptorSetBindings[5] = gbuffer3Binding;
 
 	DescriptorSet::CreateInfo lightingDescriptorSetCreateInfo{};
+	lightingDescriptorSetCreateInfo.debugName = "Point Light Descriptor Set";
 	lightingDescriptorSetCreateInfo.layout = lightingDescriptorSetLayout;
 	lightingDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(lightingDescriptorSetBindings.size());
 	lightingDescriptorSetCreateInfo.bindings = lightingDescriptorSetBindings.data();
@@ -337,12 +343,18 @@ void DeferredRenderer::CreateVertexAndIndexBuffersAndLayouts() {
 void DeferredRenderer::CreateGbufferFramebuffer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	std::vector<ColorFormat> gbufferColorFormats;
-	gbufferColorFormats.reserve(4);
-	gbufferColorFormats.emplace_back(ColorFormat::R16G16B16A16); // X Y Z
-	gbufferColorFormats.emplace_back(ColorFormat::R8G8B8A8); // R  G  B matID
-	gbufferColorFormats.emplace_back(ColorFormat::R16G16B16A16); // nX nY nZ
-	gbufferColorFormats.emplace_back(ColorFormat::R8G8B8A8); // sR sG sB Roughness
+	const int gbufferColorCount = 4;
+	std::array<ColorFormat, gbufferColorCount> gbufferColorFormats;
+	gbufferColorFormats[0] = ColorFormat::R16G16B16A16; // X Y Z
+	gbufferColorFormats[1] = ColorFormat::R8G8B8A8; // R  G  B matID
+	gbufferColorFormats[2] = ColorFormat::R16G16B16A16; // nX nY nZ
+	gbufferColorFormats[3] = ColorFormat::R8G8B8A8; // sR sG sB Roughness
+
+	std::array<const char*, gbufferColorCount> gbufferColorAttachmentNames;
+	gbufferColorAttachmentNames[0] = "GBuffer Position Image";
+	gbufferColorAttachmentNames[1] = "GBuffer Albedo Image";
+	gbufferColorAttachmentNames[2] = "GBuffer Normal Image";
+	gbufferColorAttachmentNames[3] = "GBuffer Speclar + Roughness Image";
 
 	RenderPass::CreateInfo gbufferRenderPassCreateInfo{};
 	gbufferRenderPassCreateInfo.width = width;
@@ -352,14 +364,14 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 	gbufferRenderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
 	gbufferRenderPass = graphicsCore->CreateRenderPass(gbufferRenderPassCreateInfo);
 
-	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(gbufferRenderPassCreateInfo.depthFormat, width, height, false, false);
+	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(gbufferRenderPassCreateInfo.depthFormat, width, height, false, false, "GBuffer Depth Image");
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		auto& imageSet = deferredRendererImageSets[i];
 
 		imageSet.gbufferRenderTargets.reserve(gbufferColorFormats.size());
 		for (size_t i = 0; i < gbufferColorFormats.size(); ++i) {
-			RenderTarget::CreateInfo gbufferRtCreateInfo{ gbufferColorFormats[i], width, height, true };
+			RenderTarget::CreateInfo gbufferRtCreateInfo{ gbufferColorFormats[i], width, height, true, gbufferColorAttachmentNames[i] };
 			imageSet.gbufferRenderTargets.emplace_back(graphicsCore->CreateRenderTarget(gbufferRtCreateInfo));
 		}
 
@@ -379,10 +391,11 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 void DeferredRenderer::CreateLitHDRFramebuffer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height, true };
-	DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false);
+	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height, true, "Lit HDR Color Image" };
+	DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false, "Lit HDR Depth Image");
 
 	RenderPass::CreateInfo mainRenderPassCreateInfo{};
+	mainRenderPassCreateInfo.debugName = "Main HDR Render Pass";
 	mainRenderPassCreateInfo.width = width;
 	mainRenderPassCreateInfo.height = height;
 	mainRenderPassCreateInfo.colorFormats = &litHdrImagesCreateInfo.format;
@@ -396,8 +409,9 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 		imageSet.litHdrRenderTarget = graphicsCore->CreateRenderTarget(litHdrImagesCreateInfo);
 		imageSet.litHdrDepthTarget = graphicsCore->CreateDepthTarget(litHdrDepthImageCreateInfo);
 
+		std::string framebufferName = std::string("Main HDR Framebuffer ") + std::to_string(i);
 		Framebuffer::CreateInfo litHdrFramebufferCreateInfo{};
-		litHdrFramebufferCreateInfo.debugName = "Lit HDR Framebuffer";
+		litHdrFramebufferCreateInfo.debugName = framebufferName.c_str();
 		litHdrFramebufferCreateInfo.renderTargetLists = &imageSet.litHdrRenderTarget;
 		litHdrFramebufferCreateInfo.numRenderTargetLists = 1;
 		litHdrFramebufferCreateInfo.depthTarget = imageSet.litHdrDepthTarget;
@@ -661,7 +675,6 @@ void DeferredRenderer::RenderCommandBuffer(
 		ClearColorValue{0.3f, 0.6f, 0.9f, 1.f},
 		ClearColorValue{0.0f, 0.0f, 0.0f, 1.f},
 		ClearColorValue{0.0f, 0.0f, 0.0f, 1.f},
-		ClearColorValue{0.0f, 0.0f, 0.0f, 1.f},
 		ClearColorValue{0.0f, 0.0f, 0.0f, 1.f}
 	};
 
@@ -671,7 +684,7 @@ void DeferredRenderer::RenderCommandBuffer(
 	clearDepthStencil.hasDepthStencilAttachment = true;
 	assetManager->SetEngineDescriptorSet(imageSet.engineDescriptorSet);
 
-	currentCommandBuffer->BindRenderPass(gbufferRenderPass, imageSet.gbuffer, 800, 600, clearColors, 5, clearDepthStencil);
+	currentCommandBuffer->BindRenderPass(gbufferRenderPass, imageSet.gbuffer, 800, 600, clearColors, 4, clearDepthStencil);
 	// assetManager->RenderQueue(currentCommandBuffer, "Opaque");
 	currentCommandBuffer->UnbindRenderPass();
 	RenderLightsCommandBuffer(imageIndex, currentCommandBuffer, registry);

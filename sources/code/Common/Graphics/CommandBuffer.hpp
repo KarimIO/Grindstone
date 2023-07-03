@@ -43,13 +43,14 @@ namespace Grindstone {
 			virtual void EndCommandBuffer() = 0;
 
 			struct CommandBufferSecondaryInfo {
-				bool isSecondary;
-				Framebuffer *framebuffer;
-				RenderPass *renderPass;
+				bool isSecondary = false;
+				Framebuffer *framebuffer = nullptr;
+				RenderPass *renderPass = nullptr;
 			};
 
 			struct CreateInfo {
-				CommandBufferSecondaryInfo secondaryInfo;
+				const char* debugName = nullptr;
+				CommandBufferSecondaryInfo secondaryInfo{};
 			};
 		};
 	};

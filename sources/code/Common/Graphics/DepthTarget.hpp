@@ -9,16 +9,18 @@ namespace Grindstone {
 		class DepthTarget {
 		public:
 			struct CreateInfo {
+				const char* debugName;
 				DepthFormat format = DepthFormat::None;
 				uint32_t width = 0, height = 0;
 				bool isShadowMap = false;
 				bool isCubemap = false;
 				CreateInfo() {};
-				CreateInfo(DepthFormat depthFormat, uint32_t width, uint32_t height, bool isShadowMap, bool isCubeMap) :
+				CreateInfo(DepthFormat depthFormat, uint32_t width, uint32_t height, bool isShadowMap, bool isCubeMap, const char* debugName) :
 					format(depthFormat),
 					width(width), height(height),
 					isShadowMap(isShadowMap),
-					isCubemap(isCubeMap) {}
+					isCubemap(isCubeMap),
+					debugName(debugName) {}
 			};
 
 			virtual void Resize(uint32_t width, uint32_t height) = 0;
