@@ -177,6 +177,11 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	gbuffer3Binding.type = BindingType::Texture;
 	gbuffer3Binding.stages = ShaderStageBit::Fragment;
 
+	DescriptorSetLayout::CreateInfo engineDescriptorSetLayoutCreateInfo{};
+	engineDescriptorSetLayoutCreateInfo.bindingCount = 1;
+	engineDescriptorSetLayoutCreateInfo.bindings = &engineUboBinding;
+	engineDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(engineDescriptorSetLayoutCreateInfo);
+
 	std::array<DescriptorSetLayout::Binding, 2> tonemapDescriptorSetLayoutBindings{};
 	tonemapDescriptorSetLayoutBindings[0] = engineUboBinding;
 	tonemapDescriptorSetLayoutBindings[1] = litHdrRenderTargetBinding;
@@ -245,9 +250,21 @@ void DeferredRenderer::CreateDescriptorSets() {
 	gbuffer3Binding.bindingType = BindingType::RenderTexture;
 	gbuffer3Binding.itemPtr = gbufferRenderTargets[3];
 
+	DescriptorSet::CreateInfo engineDescriptorSetCreateInfo{};
+	engineDescriptorSetCreateInfo.layout = engineDescriptorSetLayout;
+	engineDescriptorSetCreateInfo.bindingCount = 1;
+	engineDescriptorSetCreateInfo.bindings = &engineUboBinding;
+	engineDescriptorSet = graphicsCore->CreateDescriptorSet(engineDescriptorSetCreateInfo);
+
 	std::array<DescriptorSet::Binding, 2> tonemapDescriptorSetBindings{};
 	tonemapDescriptorSetBindings[0] = engineUboBinding;
 	tonemapDescriptorSetBindings[1] = litHdrRenderTargetBinding;
+
+	DescriptorSet::CreateInfo tonemapDescriptorSetCreateInfo{};
+	tonemapDescriptorSetCreateInfo.layout = tonemapDescriptorSetLayout;
+	tonemapDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(tonemapDescriptorSetBindings.size());
+	tonemapDescriptorSetCreateInfo.bindings = tonemapDescriptorSetBindings.data();
+	tonemapDescriptorSet = graphicsCore->CreateDescriptorSet(tonemapDescriptorSetCreateInfo);
 
 	std::array<DescriptorSet::Binding, 6> lightingDescriptorSetBindings{};
 	lightingDescriptorSetBindings[0] = engineUboBinding;
@@ -256,12 +273,6 @@ void DeferredRenderer::CreateDescriptorSets() {
 	lightingDescriptorSetBindings[3] = gbuffer1Binding;
 	lightingDescriptorSetBindings[4] = gbuffer2Binding;
 	lightingDescriptorSetBindings[5] = gbuffer3Binding;
-
-	DescriptorSet::CreateInfo tonemapDescriptorSetCreateInfo{};
-	tonemapDescriptorSetCreateInfo.layout = tonemapDescriptorSetLayout;
-	tonemapDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(tonemapDescriptorSetBindings.size());
-	tonemapDescriptorSetCreateInfo.bindings = tonemapDescriptorSetBindings.data();
-	tonemapDescriptorSet = graphicsCore->CreateDescriptorSet(tonemapDescriptorSetCreateInfo);
 
 	DescriptorSet::CreateInfo lightingDescriptorSetCreateInfo{};
 	lightingDescriptorSetCreateInfo.layout = lightingDescriptorSetLayout;
@@ -523,7 +534,7 @@ void DeferredRenderer::PostProcessCommandBuffer(GraphicsAPI::RenderPass* renderP
 	
 	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
 	ClearDepthStencil clearDepthStencil;
-	clearDepthStencil.depth = 0.0f;
+	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = false;
 	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
@@ -574,6 +585,7 @@ void DeferredRenderer::RenderCommandBuffer(
 	GraphicsAPI::Framebuffer* outputFramebuffer
 ) {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	auto assetManager = EngineCore::GetInstance().assetRendererManager;
 	auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	wgb->AcquireNextImage();
 
@@ -587,17 +599,25 @@ void DeferredRenderer::RenderCommandBuffer(
 	auto currentCommandBuffer = commandBuffers[wgb->GetCurrentImageIndex()];
 	currentCommandBuffer->BeginCommandBuffer();
 
-	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
+	ClearColorValue clearColors[] = {
+		ClearColorValue{0.3f, 0.6f, 0.9f, 1.f},
+		ClearColorValue{0.0f, 0.0f, 0.0f, 1.f},
+		ClearColorValue{0.0f, 0.0f, 0.0f, 1.f},
+		ClearColorValue{0.0f, 0.0f, 0.0f, 1.f},
+		ClearColorValue{0.0f, 0.0f, 0.0f, 1.f}
+	};
+
 	ClearDepthStencil clearDepthStencil;
-	clearDepthStencil.depth = 0.0f;
+	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = false;
-	currentCommandBuffer->BindRenderPass(gbufferRenderPass, gbuffer, 800, 600, &clearColor, 1, clearDepthStencil);
+	currentCommandBuffer->BindRenderPass(gbufferRenderPass, gbuffer, 800, 600, clearColors, 5, clearDepthStencil);
 
-	EngineCore::GetInstance().assetRendererManager->RenderQueue(currentCommandBuffer, "Opaque");
+	assetManager->SetEngineDescriptorSet(engineDescriptorSet);
+	assetManager->RenderQueue(currentCommandBuffer, "Opaque");
 	RenderLightsCommandBuffer(currentCommandBuffer, registry);
-	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Unlit");
-	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Transparent");
+	// assetManager->RenderQueue("Unlit");
+	// assetManager->RenderQueue("Transparent");
 
 	PostProcessCommandBuffer(targetRenderPass, targetFramebuffer, currentCommandBuffer);
 
@@ -611,6 +631,7 @@ void DeferredRenderer::RenderImmediate(
 	GraphicsAPI::Framebuffer* outputFramebuffer
 ) {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	auto assetManager = EngineCore::GetInstance().assetRendererManager;
 	graphicsCore->ResizeViewport(width, height);
 
 	gbuffer->BindWrite();
@@ -620,6 +641,7 @@ void DeferredRenderer::RenderImmediate(
 	graphicsCore->Clear(ClearMode::ColorAndDepth, clearColor, 1);
 
 	globalUniformBufferObject->Bind();
+	assetManager->SetEngineDescriptorSet(engineDescriptorSet);
 
 	graphicsCore->EnableDepthWrite(true);
 	graphicsCore->SetImmediateBlending(BlendMode::None);

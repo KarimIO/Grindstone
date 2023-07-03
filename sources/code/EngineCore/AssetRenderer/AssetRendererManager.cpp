@@ -18,6 +18,12 @@ void AssetRendererManager::AddQueue(const char* name) {
 	}
 }
 
+void AssetRendererManager::SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) {
+	for (BaseAssetRenderer* assetRenderer : assetRenderers) {
+		assetRenderer->SetEngineDescriptorSet(descriptorSet);
+	}
+}
+
 void AssetRendererManager::RenderQueue(
 	GraphicsAPI::CommandBuffer* commandBuffer,
 	const char* name

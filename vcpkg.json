@@ -16,7 +16,8 @@
 			"features": [
 				"docking-experimental",
 				"win32-binding",
-				"opengl3-binding"
+				"opengl3-binding",
+				"vulkan-binding"
 			]
 		},
 		"imguizmo",

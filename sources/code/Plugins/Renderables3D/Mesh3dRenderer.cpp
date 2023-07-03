@@ -26,13 +26,13 @@ Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
 	mesh3dBufferObject = graphicsCore->CreateUniformBuffer(mesh3dBufferObjectCi);
 
 	DescriptorSet::Binding meshUniformBufferBinding{};
-	meshUniformBufferBinding.bindingIndex = 1;
+	meshUniformBufferBinding.bindingIndex = 0;
 	meshUniformBufferBinding.bindingType = BindingType::UniformBuffer;
 	meshUniformBufferBinding.count = 1;
 	meshUniformBufferBinding.itemPtr = mesh3dBufferObject;
 
 	DescriptorSetLayout::Binding meshDescriptorLayoutBinding{};
-	meshDescriptorLayoutBinding.bindingId = 1;
+	meshDescriptorLayoutBinding.bindingId = 0;
 	meshDescriptorLayoutBinding.count = 1;
 	meshDescriptorLayoutBinding.type = BindingType::UniformBuffer;
 	meshDescriptorLayoutBinding.stages = ShaderStageBit::AllGraphics;
@@ -40,13 +40,17 @@ Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
 	DescriptorSetLayout::CreateInfo meshDescriptorSetLayoutCi{};
 	meshDescriptorSetLayoutCi.bindingCount = 1;
 	meshDescriptorSetLayoutCi.bindings = &meshDescriptorLayoutBinding;
-	DescriptorSetLayout* meshDescriptorLayout = graphicsCore->CreateDescriptorSetLayout(meshDescriptorSetLayoutCi);
+	meshDescriptorLayout = graphicsCore->CreateDescriptorSetLayout(meshDescriptorSetLayoutCi);
 
 	DescriptorSet::CreateInfo meshUniformBufferCi{};
 	meshUniformBufferCi.bindingCount = 1;
 	meshUniformBufferCi.bindings = &meshUniformBufferBinding;
 	meshUniformBufferCi.layout = meshDescriptorLayout;
-	DescriptorSet* meshDescriptor = graphicsCore->CreateDescriptorSet(meshUniformBufferCi);
+	meshDescriptor = graphicsCore->CreateDescriptorSet(meshUniformBufferCi);
+}
+
+void Mesh3dRenderer::SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) {
+	engineDescriptorSet = descriptorSet;
 }
 
 void Mesh3dRenderer::RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, RenderQueueContainer& renderQueue) {
@@ -65,13 +69,17 @@ void Mesh3dRenderer::RenderQueueImmediate(RenderQueueContainer& renderQueue) {
 
 void Mesh3dRenderer::RenderShader(GraphicsAPI::CommandBuffer* commandBuffer, ShaderAsset& shader) {
 	commandBuffer->BindPipeline(shader.pipeline);
+
 	for (auto materialUuid : shader.materials) {
 		MaterialAsset& material = *engineCore->assetManager->GetAsset<MaterialAsset>(materialUuid);
-		RenderMaterial(commandBuffer, material);
+		RenderMaterial(commandBuffer, shader.pipeline, material);
 	}
 }
 
-void Mesh3dRenderer::RenderMaterial(GraphicsAPI::CommandBuffer* commandBuffer, MaterialAsset& material) {
+void Mesh3dRenderer::RenderMaterial(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::Pipeline* pipeline, MaterialAsset& material) {
+	std::vector<GraphicsAPI::DescriptorSet*> descriptors = { material.descriptorSet, engineDescriptorSet, meshDescriptor };
+	commandBuffer->BindDescriptorSet(pipeline, descriptors.data(), descriptors.size());
+
 	for (auto& renderable : material.renderables) {
 		ECS::Entity entity = renderable.first;
 		Mesh3dAsset::Submesh& submesh = *(Mesh3dAsset::Submesh*)renderable.second;

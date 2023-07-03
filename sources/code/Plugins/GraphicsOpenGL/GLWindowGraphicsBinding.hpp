@@ -11,10 +11,19 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		class GLWindowGraphicsBinding : public WindowGraphicsBinding {
 		public:
-			virtual bool Initialize(Window *window) override;
+			~GLWindowGraphicsBinding();
+
+			// Inherited via WindowGraphicsBinding
+			virtual bool Initialize(Window* window) override;
 			virtual void ImmediateSetContext() override;
 			virtual void ImmediateSwapBuffers() override;
-			~GLWindowGraphicsBinding();
+			virtual void AcquireNextImage() override;
+			virtual void SubmitCommandBuffer(CommandBuffer* buffers) override;
+			virtual void PresentSwapchain() override;
+			virtual RenderPass* GetRenderPass() override;
+			virtual Framebuffer* GetCurrentFramebuffer() override;
+			virtual uint32_t GetCurrentImageIndex() override;
+			virtual uint32_t GetMaxFramesInFlight() override;
 		public:
 			void ShareLists(GLWindowGraphicsBinding* binding_to_copy_from);
 		private:

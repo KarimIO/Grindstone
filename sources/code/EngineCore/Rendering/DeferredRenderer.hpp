@@ -59,8 +59,10 @@ namespace Grindstone {
 
 		GraphicsAPI::DescriptorSetLayout* tonemapDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingDescriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSetLayout* engineDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSet* tonemapDescriptorSet = nullptr;
 		GraphicsAPI::DescriptorSet* lightingDescriptorSet = nullptr;
+		GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
 
 		GraphicsAPI::UniformBuffer* globalUniformBufferObject = nullptr;
 		GraphicsAPI::UniformBuffer* lightUniformBufferObject = nullptr;

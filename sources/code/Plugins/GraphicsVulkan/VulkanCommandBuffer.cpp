@@ -113,8 +113,11 @@ namespace Grindstone {
 			std::vector<VkDescriptorSet> vkDescriptorSets;
 			vkDescriptorSets.reserve(descriptorSetCount);
 			for (uint32_t i = 0; i < descriptorSetCount; i++) {
-				VulkanDescriptorSet* desc = static_cast<VulkanDescriptorSet*>(descriptorSets[i]);
-				vkDescriptorSets.push_back(desc->GetDescriptorSet());
+				auto descriptorPtr = descriptorSets[i];
+				VkDescriptorSet desc = descriptorPtr != nullptr
+					? static_cast<VulkanDescriptorSet*>(descriptorPtr)->GetDescriptorSet()
+					: nullptr;
+				vkDescriptorSets.push_back(desc);
 			}
 
 			vkCmdBindDescriptorSets(

@@ -69,7 +69,7 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 
 		DescriptorSet::Binding uniformBufferBinding{};
 		uniformBufferBinding.bindingIndex = materialUniformBuffer->bindingId;
-		uniformBufferBinding.bindingType = BindingType::Texture;
+		uniformBufferBinding.bindingType = BindingType::UniformBuffer;
 		uniformBufferBinding.itemPtr = uniformBufferObject;
 		uniformBufferBinding.count = 1;
 		bindings.push_back(uniformBufferBinding);
@@ -111,12 +111,12 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 				// TODO: Handle if texture isn't set
 				TextureAsset* textureAsset = assetManager->GetAsset<TextureAsset>(textureUuid);
 				if (textureAsset != nullptr) {
-					DescriptorSet::Binding uniformBufferBinding{};
-					uniformBufferBinding.bindingIndex = materialUniformBuffer->bindingId;
-					uniformBufferBinding.bindingType = BindingType::Texture;
-					uniformBufferBinding.itemPtr = uniformBufferObject;
-					uniformBufferBinding.count = 1;
-					bindings.push_back(uniformBufferBinding);
+					DescriptorSet::Binding textureBinding{};
+					textureBinding.bindingIndex = textureReferencesFromMaterial[i].bindingId;
+					textureBinding.bindingType = BindingType::Texture;
+					textureBinding.itemPtr = textureAsset->texture;
+					textureBinding.count = 1;
+					bindings.push_back(textureBinding);
 				}
 			}
 		}

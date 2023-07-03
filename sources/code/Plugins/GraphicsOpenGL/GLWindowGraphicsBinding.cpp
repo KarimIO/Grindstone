@@ -97,6 +97,28 @@ namespace Grindstone {
 #endif
 		}
 
+		void GLWindowGraphicsBinding::AcquireNextImage() {}
+
+		void GLWindowGraphicsBinding::SubmitCommandBuffer(CommandBuffer* buffers) {}
+
+		void GLWindowGraphicsBinding::PresentSwapchain() {}
+
+		RenderPass* GLWindowGraphicsBinding::GetRenderPass() {
+			return nullptr;
+		}
+
+		Framebuffer* GLWindowGraphicsBinding::GetCurrentFramebuffer() {
+			return nullptr;
+		}
+
+		uint32_t GLWindowGraphicsBinding::GetCurrentImageIndex() {
+			return 0;
+		}
+
+		uint32_t GLWindowGraphicsBinding::GetMaxFramesInFlight() {
+			return 0;
+		}
+
 		void GLWindowGraphicsBinding::ImmediateSetContext() {
 #ifdef _WIN32
 			wglMakeCurrent(windowDeviceContext, windowRenderContext);
