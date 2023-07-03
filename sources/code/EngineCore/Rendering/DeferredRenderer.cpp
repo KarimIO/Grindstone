@@ -441,7 +441,7 @@ void DeferredRenderer::CreatePipelines() {
 	}
 }
 
-void DeferredRenderer::RenderLights(entt::registry& registry) {
+void DeferredRenderer::RenderLightsImmediate(entt::registry& registry) {
 	GRIND_PROFILE_FUNC();
 	if (pointLightPipeline == nullptr) {
 		return;
@@ -471,7 +471,47 @@ void DeferredRenderer::RenderLights(entt::registry& registry) {
 
 		lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
 		graphicsCore->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
-	});
+		});
+}
+
+void DeferredRenderer::RenderLightsCommandBuffer(GraphicsAPI::CommandBuffer* currentCommandBuffer, entt::registry& registry) {
+	GRIND_PROFILE_FUNC();
+	if (pointLightPipeline == nullptr) {
+		return;
+	}
+
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+
+	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
+	ClearDepthStencil clearDepthStencil;
+	clearDepthStencil.depth = 0.0f;
+	clearDepthStencil.stencil = 0;
+	clearDepthStencil.hasDepthStencilAttachment = false;
+	currentCommandBuffer->BindRenderPass(gbufferRenderPass, litHdrFramebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
+
+	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
+	currentCommandBuffer->BindIndexBuffer(indexBuffer, false);
+
+	{
+		// Point Lights
+		currentCommandBuffer->BindPipeline(pointLightPipeline);
+		currentCommandBuffer->BindDescriptorSet(pointLightPipeline, &lightingDescriptorSet, 1);
+
+		auto view = registry.view<const TransformComponent, const PointLightComponent>();
+		view.each([&](const TransformComponent& transformComponent, const PointLightComponent& pointLightComponent) {
+			LightmapStruct lightmapStruct{
+				pointLightComponent.color,
+				pointLightComponent.attenuationRadius,
+				transformComponent.position,
+				pointLightComponent.intensity,
+			};
+
+			lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
+			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+		});
+	}
+
+	currentCommandBuffer->UnbindRenderPass();
 }
 
 void DeferredRenderer::PostProcessImmediate(GraphicsAPI::Framebuffer* outputFramebuffer) {
@@ -480,8 +520,6 @@ void DeferredRenderer::PostProcessImmediate(GraphicsAPI::Framebuffer* outputFram
 
 void DeferredRenderer::PostProcessCommandBuffer(GraphicsAPI::RenderPass* renderPass, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer) {
 	GRIND_PROFILE_FUNC();
-
-	currentCommandBuffer->BeginCommandBuffer();
 	
 	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
 	ClearDepthStencil clearDepthStencil;
@@ -501,7 +539,6 @@ void DeferredRenderer::PostProcessCommandBuffer(GraphicsAPI::RenderPass* renderP
 	}
 
 	currentCommandBuffer->UnbindRenderPass();
-	currentCommandBuffer->EndCommandBuffer();
 }
 
 void DeferredRenderer::Render(
@@ -548,14 +585,16 @@ void DeferredRenderer::RenderCommandBuffer(
 	}
 
 	auto currentCommandBuffer = commandBuffers[wgb->GetCurrentImageIndex()];
+	currentCommandBuffer->BeginCommandBuffer();
 
 	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
-	// RenderLights(registry);
+	RenderLightsCommandBuffer(currentCommandBuffer, registry);
 	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Unlit");
 	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Transparent");
 
 	PostProcessCommandBuffer(targetRenderPass, targetFramebuffer, currentCommandBuffer);
 
+	currentCommandBuffer->EndCommandBuffer();
 	wgb->SubmitCommandBuffer(currentCommandBuffer);
 	wgb->PresentSwapchain();
 }
@@ -579,7 +618,7 @@ void DeferredRenderer::RenderImmediate(
 	graphicsCore->SetImmediateBlending(BlendMode::None);
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
 
-	RenderLights(registry);
+	RenderLightsImmediate(registry);
 
 	EngineCore::GetInstance().assetRendererManager->RenderQueue("Unlit");
 

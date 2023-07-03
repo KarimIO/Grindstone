@@ -36,9 +36,10 @@ namespace Grindstone {
 			entt::registry& registry,
 			GraphicsAPI::Framebuffer* outputFramebuffer
 		);
-		void RenderLights(entt::registry& registry);
-		void PostProcessImmediate(GraphicsAPI::Framebuffer* outputFramebuffer);
+		void RenderLightsCommandBuffer(GraphicsAPI::CommandBuffer* currentCommandBuffer, entt::registry& registry);
+		void RenderLightsImmediate(entt::registry& registry);
 		void PostProcessCommandBuffer(GraphicsAPI::RenderPass* renderPass, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer);
+		void PostProcessImmediate(GraphicsAPI::Framebuffer* outputFramebuffer);
 
 		void CreateCommandBuffers();
 		void CreateGbufferFramebuffer();
