@@ -361,7 +361,7 @@ namespace Grindstone {
 					throw std::runtime_error("failed to create framebuffer!");
 				}
 
-				framebuffers[i] = new VulkanFramebuffer(vkFramebuffer);
+				framebuffers[i] = new VulkanFramebuffer(renderPass, vkFramebuffer);
 			}
 		}
 

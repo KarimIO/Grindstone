@@ -38,6 +38,7 @@ namespace Grindstone {
 			};
 
 			virtual uint32_t GetAttachment(uint32_t attachmentIndex) = 0;
+			virtual RenderPass* GetRenderPass() = 0;
 			virtual void Resize(uint32_t width, uint32_t height) = 0;
 			virtual void Clear(ClearMode mask) = 0;
 			virtual void BindTextures(int i) = 0;

@@ -28,49 +28,61 @@ namespace Grindstone {
 		) override;
 		static GraphicsAPI::RenderPass* gbufferRenderPass;
 	private:
+		struct DeferredRendererImageSet {
+			GraphicsAPI::Framebuffer* gbuffer = nullptr;
+			std::vector<GraphicsAPI::RenderTarget*> gbufferRenderTargets;
+			GraphicsAPI::DepthTarget* gbufferDepthTarget = nullptr;
+			GraphicsAPI::Framebuffer* litHdrFramebuffer = nullptr;
+			GraphicsAPI::RenderTarget* litHdrRenderTarget = nullptr;
+			GraphicsAPI::DepthTarget* litHdrDepthTarget = nullptr;
+			GraphicsAPI::CommandBuffer* commandBuffer = nullptr;
+
+			GraphicsAPI::UniformBuffer* globalUniformBufferObject = nullptr;
+			GraphicsAPI::UniformBuffer* lightUniformBufferObject = nullptr;
+
+			GraphicsAPI::DescriptorSet* tonemapDescriptorSet = nullptr;
+			GraphicsAPI::DescriptorSet* lightingDescriptorSet = nullptr;
+			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
+		};
+
 		void RenderCommandBuffer(
 			entt::registry& registry,
+			glm::mat4 projectionMatrix,
+			glm::mat4 viewMatrix,
+			glm::vec3 eyePos,
 			GraphicsAPI::Framebuffer* outputFramebuffer
 		);
 		void RenderImmediate(
 			entt::registry& registry,
+			glm::mat4 projectionMatrix,
+			glm::mat4 viewMatrix,
+			glm::vec3 eyePos,
 			GraphicsAPI::Framebuffer* outputFramebuffer
 		);
-		void RenderLightsCommandBuffer(GraphicsAPI::CommandBuffer* currentCommandBuffer, entt::registry& registry);
+		void RenderLightsCommandBuffer(uint32_t imageIndex, GraphicsAPI::CommandBuffer* currentCommandBuffer, entt::registry& registry);
 		void RenderLightsImmediate(entt::registry& registry);
-		void PostProcessCommandBuffer(GraphicsAPI::RenderPass* renderPass, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer);
+		void PostProcessCommandBuffer(uint32_t imageIndex, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer);
 		void PostProcessImmediate(GraphicsAPI::Framebuffer* outputFramebuffer);
 
+		void CreatePipelines();
+		void CreateDescriptorSetLayouts();
 		void CreateCommandBuffers();
 		void CreateGbufferFramebuffer();
 		void CreateLitHDRFramebuffer();
-		void CreatePipelines();
-		void CreateDescriptorSetLayouts();
-		void CreateDescriptorSets();
+		void CreateDescriptorSets(DeferredRendererImageSet& imageSet);
 		void CreateUniformBuffers();
 		void CreateVertexAndIndexBuffersAndLayouts();
 
 		uint32_t width = 800;
 		uint32_t height = 600;
 
-		std::vector<GraphicsAPI::RenderTarget*> gbufferRenderTargets;
+		std::vector<DeferredRendererImageSet> deferredRendererImageSets;
 
 		GraphicsAPI::VertexBufferLayout vertexLightPositionLayout{};
 
 		GraphicsAPI::DescriptorSetLayout* tonemapDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* engineDescriptorSetLayout = nullptr;
-		GraphicsAPI::DescriptorSet* tonemapDescriptorSet = nullptr;
-		GraphicsAPI::DescriptorSet* lightingDescriptorSet = nullptr;
-		GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
-
-		GraphicsAPI::UniformBuffer* globalUniformBufferObject = nullptr;
-		GraphicsAPI::UniformBuffer* lightUniformBufferObject = nullptr;
-		GraphicsAPI::Framebuffer* gbuffer = nullptr;
-		GraphicsAPI::Framebuffer* litHdrFramebuffer = nullptr;
-		GraphicsAPI::RenderTarget* litHdrRenderTarget = nullptr;
-		GraphicsAPI::DepthTarget* gbufferDepthTarget = nullptr;
-		GraphicsAPI::DepthTarget* litHdrDepthTarget = nullptr;
 		GraphicsAPI::RenderPass* mainRenderPass = nullptr;
 
 		GraphicsAPI::VertexBuffer* vertexBuffer;
@@ -79,7 +91,5 @@ namespace Grindstone {
 
 		GraphicsAPI::Pipeline* pointLightPipeline = nullptr;
 		GraphicsAPI::Pipeline* tonemapPipeline = nullptr;
-
-		std::vector<GraphicsAPI::CommandBuffer*> commandBuffers;
 	};
 }

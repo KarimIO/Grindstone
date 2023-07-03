@@ -48,6 +48,9 @@ struct LightmapStruct {
 
 DeferredRenderer::DeferredRenderer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	uint32_t maxFramesInFlight = wgb->GetMaxFramesInFlight();
+	deferredRendererImageSets.resize(maxFramesInFlight);
 
 	CreateCommandBuffers();
 	CreateVertexAndIndexBuffersAndLayouts();
@@ -55,32 +58,45 @@ DeferredRenderer::DeferredRenderer() {
 	CreateLitHDRFramebuffer();
 	CreateUniformBuffers();
 	CreateDescriptorSetLayouts();
-	CreateDescriptorSets();
+	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
+		CreateDescriptorSets(deferredRendererImageSets[i]);
+	}
+
 	CreatePipelines();
 }
 
 DeferredRenderer::~DeferredRenderer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	graphicsCore->DeleteUniformBuffer(globalUniformBufferObject);
-	graphicsCore->DeleteUniformBuffer(lightUniformBufferObject);
 
-	graphicsCore->DeleteFramebuffer(gbuffer);
-	for (size_t i = 0; i < gbufferRenderTargets.size(); ++i) {
-		graphicsCore->DeleteRenderTarget(gbufferRenderTargets[i]);
-	}
-	graphicsCore->DeleteDepthTarget(gbufferDepthTarget);
-
-	for (size_t i = 0; i < commandBuffers.size(); ++i) {
-		graphicsCore->DeleteCommandBuffer(commandBuffers[i]);
-	}
-
-	graphicsCore->DeleteFramebuffer(litHdrFramebuffer);
-	graphicsCore->DeleteRenderTarget(litHdrRenderTarget);
-	graphicsCore->DeleteDepthTarget(litHdrDepthTarget);
-
-	graphicsCore->DeleteVertexArrayObject(planePostProcessVao);
 	graphicsCore->DeletePipeline(pointLightPipeline);
 	graphicsCore->DeletePipeline(tonemapPipeline);
+
+	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
+		auto& imageSet = deferredRendererImageSets[i];
+
+		graphicsCore->DeleteUniformBuffer(imageSet.globalUniformBufferObject);
+		graphicsCore->DeleteUniformBuffer(imageSet.lightUniformBufferObject);
+
+		graphicsCore->DeleteFramebuffer(imageSet.gbuffer);
+		for (size_t i = 0; i < imageSet.gbufferRenderTargets.size(); ++i) {
+			graphicsCore->DeleteRenderTarget(imageSet.gbufferRenderTargets[i]);
+		}
+		graphicsCore->DeleteDepthTarget(imageSet.gbufferDepthTarget);
+		graphicsCore->DeleteFramebuffer(imageSet.litHdrFramebuffer);
+		graphicsCore->DeleteRenderTarget(imageSet.litHdrRenderTarget);
+		graphicsCore->DeleteDepthTarget(imageSet.litHdrDepthTarget);
+		graphicsCore->DeleteCommandBuffer(imageSet.commandBuffer);
+
+		graphicsCore->DeleteDescriptorSet(imageSet.engineDescriptorSet);
+		graphicsCore->DeleteDescriptorSet(imageSet.tonemapDescriptorSet);
+		graphicsCore->DeleteDescriptorSet(imageSet.lightingDescriptorSet);
+	}
+
+	graphicsCore->DeleteDescriptorSetLayout(engineDescriptorSetLayout);
+	graphicsCore->DeleteDescriptorSetLayout(tonemapDescriptorSetLayout);
+	graphicsCore->DeleteDescriptorSetLayout(lightingDescriptorSetLayout);
+
+	graphicsCore->DeleteVertexArrayObject(planePostProcessVao);
 }
 
 bool DeferredRenderer::OnWindowResize(Events::BaseEvent* ev) {
@@ -96,40 +112,41 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 	this->width = width;
 	this->height = height;
 	return;
-	gbuffer->Resize(width, height);
-	litHdrFramebuffer->Resize(width, height);
+	// gbuffer->Resize(width, height);
+	// litHdrFramebuffer->Resize(width, height);
 }
 
 void DeferredRenderer::CreateCommandBuffers() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 
 	GraphicsAPI::CommandBuffer::CreateInfo commandBufferCreateInfo{};
-	uint32_t maxFramesInFlight = wgb->GetMaxFramesInFlight();
-	commandBuffers.resize(maxFramesInFlight);
 
-	for (size_t i = 0; i < maxFramesInFlight; ++i) {
-		commandBuffers[i] = graphicsCore->CreateCommandBuffer(commandBufferCreateInfo);
+	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
+		deferredRendererImageSets[i].commandBuffer = graphicsCore->CreateCommandBuffer(commandBufferCreateInfo);
 	}
 }
 
 void DeferredRenderer::CreateUniformBuffers() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	UniformBuffer::CreateInfo globalUniformBufferObjectCi{};
-	globalUniformBufferObjectCi.debugName = "EngineUbo";
-	globalUniformBufferObjectCi.isDynamic = true;
-	globalUniformBufferObjectCi.size = sizeof(EngineUboStruct);
-	globalUniformBufferObject = graphicsCore->CreateUniformBuffer(globalUniformBufferObjectCi);
+	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
+		auto& imageSet = deferredRendererImageSets[i];
 
-	UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
-	lightUniformBufferObjectCi.debugName = "LightUbo";
-	lightUniformBufferObjectCi.isDynamic = true;
-	lightUniformBufferObjectCi.size = sizeof(LightmapStruct);
-	lightUniformBufferObject = graphicsCore->CreateUniformBuffer(lightUniformBufferObjectCi);
+		UniformBuffer::CreateInfo globalUniformBufferObjectCi{};
+		globalUniformBufferObjectCi.debugName = "EngineUbo";
+		globalUniformBufferObjectCi.isDynamic = true;
+		globalUniformBufferObjectCi.size = sizeof(EngineUboStruct);
+		imageSet.globalUniformBufferObject = graphicsCore->CreateUniformBuffer(globalUniformBufferObjectCi);
 
-	LightmapStruct lightmapStruct;
-	lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
+		UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
+		lightUniformBufferObjectCi.debugName = "LightUbo";
+		lightUniformBufferObjectCi.isDynamic = true;
+		lightUniformBufferObjectCi.size = sizeof(LightmapStruct);
+		imageSet.lightUniformBufferObject = graphicsCore->CreateUniformBuffer(lightUniformBufferObjectCi);
+
+		LightmapStruct lightmapStruct;
+		imageSet.lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
+	}
 }
 
 void DeferredRenderer::CreateDescriptorSetLayouts() {
@@ -205,56 +222,56 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	lightingDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(lightingDescriptorSetLayoutCreateInfo);
 }
 
-void DeferredRenderer::CreateDescriptorSets() {
+void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	DescriptorSet::Binding engineUboBinding{};
 	engineUboBinding.bindingIndex = 0;
 	engineUboBinding.count = 1;
 	engineUboBinding.bindingType = BindingType::UniformBuffer;
-	engineUboBinding.itemPtr = globalUniformBufferObject;
+	engineUboBinding.itemPtr = imageSet.globalUniformBufferObject;
 
 	DescriptorSet::Binding lightUboBinding{};
 	lightUboBinding.bindingIndex = 1;
 	lightUboBinding.count = 1;
 	lightUboBinding.bindingType = BindingType::UniformBuffer;
-	lightUboBinding.itemPtr = lightUniformBufferObject;
+	lightUboBinding.itemPtr = imageSet.lightUniformBufferObject;
 
 	DescriptorSet::Binding litHdrRenderTargetBinding{};
 	litHdrRenderTargetBinding.bindingIndex = 1;
 	litHdrRenderTargetBinding.count = 1;
 	litHdrRenderTargetBinding.bindingType = BindingType::RenderTexture;
-	litHdrRenderTargetBinding.itemPtr = litHdrRenderTarget;
+	litHdrRenderTargetBinding.itemPtr = imageSet.litHdrRenderTarget;
 
 	DescriptorSet::Binding gbuffer0Binding{};
 	gbuffer0Binding.bindingIndex = 2;
 	gbuffer0Binding.count = 1;
 	gbuffer0Binding.bindingType = BindingType::RenderTexture;
-	gbuffer0Binding.itemPtr = gbufferRenderTargets[0];
+	gbuffer0Binding.itemPtr = imageSet.gbufferRenderTargets[0];
 
 	DescriptorSet::Binding gbuffer1Binding{};
 	gbuffer1Binding.bindingIndex = 3;
 	gbuffer1Binding.count = 1;
 	gbuffer1Binding.bindingType = BindingType::RenderTexture;
-	gbuffer1Binding.itemPtr = gbufferRenderTargets[1];
+	gbuffer1Binding.itemPtr = imageSet.gbufferRenderTargets[1];
 
 	DescriptorSet::Binding gbuffer2Binding{};
 	gbuffer2Binding.bindingIndex = 4;
 	gbuffer2Binding.count = 1;
 	gbuffer2Binding.bindingType = BindingType::RenderTexture;
-	gbuffer2Binding.itemPtr = gbufferRenderTargets[2];
+	gbuffer2Binding.itemPtr = imageSet.gbufferRenderTargets[2];
 
 	DescriptorSet::Binding gbuffer3Binding{};
 	gbuffer3Binding.bindingIndex = 5;
 	gbuffer3Binding.count = 1;
 	gbuffer3Binding.bindingType = BindingType::RenderTexture;
-	gbuffer3Binding.itemPtr = gbufferRenderTargets[3];
+	gbuffer3Binding.itemPtr = imageSet.gbufferRenderTargets[3];
 
 	DescriptorSet::CreateInfo engineDescriptorSetCreateInfo{};
 	engineDescriptorSetCreateInfo.layout = engineDescriptorSetLayout;
 	engineDescriptorSetCreateInfo.bindingCount = 1;
 	engineDescriptorSetCreateInfo.bindings = &engineUboBinding;
-	engineDescriptorSet = graphicsCore->CreateDescriptorSet(engineDescriptorSetCreateInfo);
+	imageSet.engineDescriptorSet = graphicsCore->CreateDescriptorSet(engineDescriptorSetCreateInfo);
 
 	std::array<DescriptorSet::Binding, 2> tonemapDescriptorSetBindings{};
 	tonemapDescriptorSetBindings[0] = engineUboBinding;
@@ -264,7 +281,7 @@ void DeferredRenderer::CreateDescriptorSets() {
 	tonemapDescriptorSetCreateInfo.layout = tonemapDescriptorSetLayout;
 	tonemapDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(tonemapDescriptorSetBindings.size());
 	tonemapDescriptorSetCreateInfo.bindings = tonemapDescriptorSetBindings.data();
-	tonemapDescriptorSet = graphicsCore->CreateDescriptorSet(tonemapDescriptorSetCreateInfo);
+	imageSet.tonemapDescriptorSet = graphicsCore->CreateDescriptorSet(tonemapDescriptorSetCreateInfo);
 
 	std::array<DescriptorSet::Binding, 6> lightingDescriptorSetBindings{};
 	lightingDescriptorSetBindings[0] = engineUboBinding;
@@ -278,7 +295,7 @@ void DeferredRenderer::CreateDescriptorSets() {
 	lightingDescriptorSetCreateInfo.layout = lightingDescriptorSetLayout;
 	lightingDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(lightingDescriptorSetBindings.size());
 	lightingDescriptorSetCreateInfo.bindings = lightingDescriptorSetBindings.data();
-	lightingDescriptorSet = graphicsCore->CreateDescriptorSet(lightingDescriptorSetCreateInfo);
+	imageSet.lightingDescriptorSet = graphicsCore->CreateDescriptorSet(lightingDescriptorSetCreateInfo);
 }
 
 void DeferredRenderer::CreateVertexAndIndexBuffersAndLayouts() {
@@ -327,12 +344,6 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 	gbufferColorFormats.emplace_back(ColorFormat::R16G16B16A16); // nX nY nZ
 	gbufferColorFormats.emplace_back(ColorFormat::R8G8B8A8); // sR sG sB Roughness
 
-	gbufferRenderTargets.reserve(gbufferColorFormats.size());
-	for (size_t i = 0; i < gbufferColorFormats.size(); ++i) {
-		RenderTarget::CreateInfo gbufferRtCreateInfo{ gbufferColorFormats[i], width, height, true };
-		gbufferRenderTargets.emplace_back(graphicsCore->CreateRenderTarget(gbufferRtCreateInfo));
-	}
-
 	RenderPass::CreateInfo gbufferRenderPassCreateInfo{};
 	gbufferRenderPassCreateInfo.width = width;
 	gbufferRenderPassCreateInfo.height = height;
@@ -342,25 +353,34 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 	gbufferRenderPass = graphicsCore->CreateRenderPass(gbufferRenderPassCreateInfo);
 
 	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(gbufferRenderPassCreateInfo.depthFormat, width, height, false, false);
-	gbufferDepthTarget = graphicsCore->CreateDepthTarget(gbufferDepthImageCreateInfo);
 
-	Framebuffer::CreateInfo gbufferCreateInfo{};
-	gbufferCreateInfo.debugName = "G-Buffer Framebuffer";
-	gbufferCreateInfo.renderPass = gbufferRenderPass;
-	gbufferCreateInfo.renderTargetLists = gbufferRenderTargets.data();
-	gbufferCreateInfo.numRenderTargetLists = static_cast<uint32_t>(gbufferRenderTargets.size());
-	gbufferCreateInfo.depthTarget = gbufferDepthTarget;
-	gbuffer = graphicsCore->CreateFramebuffer(gbufferCreateInfo);
+	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
+		auto& imageSet = deferredRendererImageSets[i];
+
+		imageSet.gbufferRenderTargets.reserve(gbufferColorFormats.size());
+		for (size_t i = 0; i < gbufferColorFormats.size(); ++i) {
+			RenderTarget::CreateInfo gbufferRtCreateInfo{ gbufferColorFormats[i], width, height, true };
+			imageSet.gbufferRenderTargets.emplace_back(graphicsCore->CreateRenderTarget(gbufferRtCreateInfo));
+		}
+
+		imageSet.gbufferDepthTarget = graphicsCore->CreateDepthTarget(gbufferDepthImageCreateInfo);
+
+		Framebuffer::CreateInfo gbufferCreateInfo{};
+		gbufferCreateInfo.debugName = "G-Buffer Framebuffer";
+		gbufferCreateInfo.renderPass = gbufferRenderPass;
+		gbufferCreateInfo.renderTargetLists = imageSet.gbufferRenderTargets.data();
+		gbufferCreateInfo.numRenderTargetLists = static_cast<uint32_t>(imageSet.gbufferRenderTargets.size());
+		gbufferCreateInfo.depthTarget = imageSet.gbufferDepthTarget;
+
+		imageSet.gbuffer = graphicsCore->CreateFramebuffer(gbufferCreateInfo);
+	}
 }
 
 void DeferredRenderer::CreateLitHDRFramebuffer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height, true };
-	litHdrRenderTarget = graphicsCore->CreateRenderTarget(litHdrImagesCreateInfo);
-
 	DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false);
-	litHdrDepthTarget = graphicsCore->CreateDepthTarget(litHdrDepthImageCreateInfo);
 
 	RenderPass::CreateInfo mainRenderPassCreateInfo{};
 	mainRenderPassCreateInfo.width = width;
@@ -370,13 +390,20 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 	mainRenderPassCreateInfo.depthFormat = litHdrDepthImageCreateInfo.format;
 	mainRenderPass = graphicsCore->CreateRenderPass(mainRenderPassCreateInfo);
 
-	Framebuffer::CreateInfo litHdrFramebufferCreateInfo{};
-	litHdrFramebufferCreateInfo.debugName = "Lit HDR Framebuffer";
-	litHdrFramebufferCreateInfo.renderTargetLists = &litHdrRenderTarget;
-	litHdrFramebufferCreateInfo.numRenderTargetLists = 1;
-	litHdrFramebufferCreateInfo.depthTarget = litHdrDepthTarget;
-	litHdrFramebufferCreateInfo.renderPass = mainRenderPass;
-	litHdrFramebuffer = graphicsCore->CreateFramebuffer(litHdrFramebufferCreateInfo);
+	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
+		auto& imageSet = deferredRendererImageSets[i];
+
+		imageSet.litHdrRenderTarget = graphicsCore->CreateRenderTarget(litHdrImagesCreateInfo);
+		imageSet.litHdrDepthTarget = graphicsCore->CreateDepthTarget(litHdrDepthImageCreateInfo);
+
+		Framebuffer::CreateInfo litHdrFramebufferCreateInfo{};
+		litHdrFramebufferCreateInfo.debugName = "Lit HDR Framebuffer";
+		litHdrFramebufferCreateInfo.renderTargetLists = &imageSet.litHdrRenderTarget;
+		litHdrFramebufferCreateInfo.numRenderTargetLists = 1;
+		litHdrFramebufferCreateInfo.depthTarget = imageSet.litHdrDepthTarget;
+		litHdrFramebufferCreateInfo.renderPass = mainRenderPass;
+		imageSet.litHdrFramebuffer = graphicsCore->CreateFramebuffer(litHdrFramebufferCreateInfo);
+	}
 }
 
 void DeferredRenderer::CreatePipelines() {
@@ -453,6 +480,7 @@ void DeferredRenderer::CreatePipelines() {
 }
 
 void DeferredRenderer::RenderLightsImmediate(entt::registry& registry) {
+#if 0
 	GRIND_PROFILE_FUNC();
 	if (pointLightPipeline == nullptr) {
 		return;
@@ -482,23 +510,29 @@ void DeferredRenderer::RenderLightsImmediate(entt::registry& registry) {
 
 		lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
 		graphicsCore->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
-		});
+	});
+#endif
 }
 
-void DeferredRenderer::RenderLightsCommandBuffer(GraphicsAPI::CommandBuffer* currentCommandBuffer, entt::registry& registry) {
+void DeferredRenderer::RenderLightsCommandBuffer(
+	uint32_t imageIndex,
+	GraphicsAPI::CommandBuffer* currentCommandBuffer,
+	entt::registry& registry
+) {
 	GRIND_PROFILE_FUNC();
 	if (pointLightPipeline == nullptr) {
 		return;
 	}
 
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	auto& imageSet = deferredRendererImageSets[imageIndex];
 
 	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
 	ClearDepthStencil clearDepthStencil;
 	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = true;
-	currentCommandBuffer->BindRenderPass(mainRenderPass, litHdrFramebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
+	currentCommandBuffer->BindRenderPass(mainRenderPass, imageSet.litHdrFramebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
 
 	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	currentCommandBuffer->BindIndexBuffer(indexBuffer);
@@ -506,10 +540,16 @@ void DeferredRenderer::RenderLightsCommandBuffer(GraphicsAPI::CommandBuffer* cur
 	{
 		// Point Lights
 		currentCommandBuffer->BindPipeline(pointLightPipeline);
-		currentCommandBuffer->BindDescriptorSet(pointLightPipeline, &lightingDescriptorSet, 1);
+		currentCommandBuffer->BindDescriptorSet(pointLightPipeline, &imageSet.lightingDescriptorSet, 1);
+
+		size_t i = 0;
 
 		auto view = registry.view<const TransformComponent, const PointLightComponent>();
 		view.each([&](const TransformComponent& transformComponent, const PointLightComponent& pointLightComponent) {
+			if (i > 0) {
+				return;
+			}
+
 			LightmapStruct lightmapStruct{
 				pointLightComponent.color,
 				pointLightComponent.attenuationRadius,
@@ -517,8 +557,10 @@ void DeferredRenderer::RenderLightsCommandBuffer(GraphicsAPI::CommandBuffer* cur
 				pointLightComponent.intensity,
 			};
 
-			lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
+			imageSet.lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+
+			i++;
 		});
 	}
 
@@ -529,17 +571,23 @@ void DeferredRenderer::PostProcessImmediate(GraphicsAPI::Framebuffer* outputFram
 
 }
 
-void DeferredRenderer::PostProcessCommandBuffer(GraphicsAPI::RenderPass* renderPass, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer) {
+void DeferredRenderer::PostProcessCommandBuffer(
+	uint32_t imageIndex,
+	GraphicsAPI::Framebuffer* framebuffer,
+	GraphicsAPI::CommandBuffer* currentCommandBuffer
+) {
 	GRIND_PROFILE_FUNC();
+
+	auto& imageSet = deferredRendererImageSets[imageIndex];
 	
 	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
 	ClearDepthStencil clearDepthStencil;
 	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = false;
-	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
+	currentCommandBuffer->BindRenderPass(framebuffer->GetRenderPass(), framebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
 	
-	currentCommandBuffer->BindDescriptorSet(tonemapPipeline, &tonemapDescriptorSet, 1);
+	currentCommandBuffer->BindDescriptorSet(tonemapPipeline, &imageSet.tonemapDescriptorSet, 1);
 	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	currentCommandBuffer->BindIndexBuffer(indexBuffer);
 
@@ -559,22 +607,22 @@ void DeferredRenderer::Render(
 	glm::vec3 eyePos,
 	GraphicsAPI::Framebuffer* outputFramebuffer
 ) {
-	EngineUboStruct engineUboStruct{};
-	engineUboStruct.proj = projectionMatrix;
-	engineUboStruct.view = viewMatrix;
-	engineUboStruct.eyePos = eyePos;
-	globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
-
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	if (graphicsCore->ShouldUseImmediateMode()) {
 		RenderImmediate(
 			registry,
+			projectionMatrix,
+			viewMatrix,
+			eyePos,
 			outputFramebuffer
 		);
 	}
 	else {
 		RenderCommandBuffer(
 			registry,
+			projectionMatrix,
+			viewMatrix,
+			eyePos,
 			outputFramebuffer
 		);
 	}
@@ -582,6 +630,9 @@ void DeferredRenderer::Render(
 
 void DeferredRenderer::RenderCommandBuffer(
 	entt::registry& registry,
+	glm::mat4 projectionMatrix,
+	glm::mat4 viewMatrix,
+	glm::vec3 eyePos,
 	GraphicsAPI::Framebuffer* outputFramebuffer
 ) {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
@@ -589,14 +640,21 @@ void DeferredRenderer::RenderCommandBuffer(
 	auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	wgb->AcquireNextImage();
 
-	GraphicsAPI::RenderPass* targetRenderPass = nullptr;
 	GraphicsAPI::Framebuffer* targetFramebuffer = outputFramebuffer;
 	if (outputFramebuffer == nullptr) {
-		targetRenderPass = wgb->GetRenderPass();
 		targetFramebuffer = wgb->GetCurrentFramebuffer();
 	}
 
-	auto currentCommandBuffer = commandBuffers[wgb->GetCurrentImageIndex()];
+	uint32_t imageIndex = wgb->GetCurrentImageIndex();
+	auto& imageSet = deferredRendererImageSets[imageIndex];
+
+	EngineUboStruct engineUboStruct{};
+	engineUboStruct.proj = projectionMatrix;
+	engineUboStruct.view = viewMatrix;
+	engineUboStruct.eyePos = eyePos;
+	imageSet.globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
+
+	auto currentCommandBuffer = imageSet.commandBuffer;
 	currentCommandBuffer->BeginCommandBuffer();
 
 	ClearColorValue clearColors[] = {
@@ -611,15 +669,16 @@ void DeferredRenderer::RenderCommandBuffer(
 	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = true;
-	assetManager->SetEngineDescriptorSet(engineDescriptorSet);
-	currentCommandBuffer->BindRenderPass(gbufferRenderPass, gbuffer, 800, 600, clearColors, 5, clearDepthStencil);
+	assetManager->SetEngineDescriptorSet(imageSet.engineDescriptorSet);
+
+	currentCommandBuffer->BindRenderPass(gbufferRenderPass, imageSet.gbuffer, 800, 600, clearColors, 5, clearDepthStencil);
 	// assetManager->RenderQueue(currentCommandBuffer, "Opaque");
 	currentCommandBuffer->UnbindRenderPass();
-	RenderLightsCommandBuffer(currentCommandBuffer, registry);
+	RenderLightsCommandBuffer(imageIndex, currentCommandBuffer, registry);
 	// assetManager->RenderQueue("Unlit");
 	// assetManager->RenderQueue("Transparent");
 
-	PostProcessCommandBuffer(targetRenderPass, targetFramebuffer, currentCommandBuffer);
+	PostProcessCommandBuffer(imageIndex, targetFramebuffer, currentCommandBuffer);
 
 	currentCommandBuffer->EndCommandBuffer();
 	wgb->SubmitCommandBuffer(currentCommandBuffer);
@@ -628,8 +687,12 @@ void DeferredRenderer::RenderCommandBuffer(
 
 void DeferredRenderer::RenderImmediate(
 	entt::registry& registry,
+	glm::mat4 projectionMatrix,
+	glm::mat4 viewMatrix,
+	glm::vec3 eyePos,
 	GraphicsAPI::Framebuffer* outputFramebuffer
 ) {
+#if 0
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	auto assetManager = EngineCore::GetInstance().assetRendererManager;
 	graphicsCore->ResizeViewport(width, height);
@@ -657,4 +720,5 @@ void DeferredRenderer::RenderImmediate(
 	EngineCore::GetInstance().assetRendererManager->RenderQueueImmediate("Transparent");
 
 	PostProcessImmediate(outputFramebuffer);
+#endif
 }
