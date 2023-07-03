@@ -490,7 +490,7 @@ void DeferredRenderer::RenderLightsCommandBuffer(GraphicsAPI::CommandBuffer* cur
 	currentCommandBuffer->BindRenderPass(gbufferRenderPass, litHdrFramebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
 
 	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
-	currentCommandBuffer->BindIndexBuffer(indexBuffer, false);
+	currentCommandBuffer->BindIndexBuffer(indexBuffer);
 
 	{
 		// Point Lights
@@ -530,7 +530,7 @@ void DeferredRenderer::PostProcessCommandBuffer(GraphicsAPI::RenderPass* renderP
 	
 	currentCommandBuffer->BindDescriptorSet(tonemapPipeline, &tonemapDescriptorSet, 1);
 	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
-	currentCommandBuffer->BindIndexBuffer(indexBuffer, false);
+	currentCommandBuffer->BindIndexBuffer(indexBuffer);
 
 	{
 		// Tonemapping
@@ -587,7 +587,14 @@ void DeferredRenderer::RenderCommandBuffer(
 	auto currentCommandBuffer = commandBuffers[wgb->GetCurrentImageIndex()];
 	currentCommandBuffer->BeginCommandBuffer();
 
-	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
+	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
+	ClearDepthStencil clearDepthStencil;
+	clearDepthStencil.depth = 0.0f;
+	clearDepthStencil.stencil = 0;
+	clearDepthStencil.hasDepthStencilAttachment = false;
+	currentCommandBuffer->BindRenderPass(gbufferRenderPass, gbuffer, 800, 600, &clearColor, 1, clearDepthStencil);
+
+	EngineCore::GetInstance().assetRendererManager->RenderQueue(currentCommandBuffer, "Opaque");
 	RenderLightsCommandBuffer(currentCommandBuffer, registry);
 	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Unlit");
 	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Transparent");
@@ -616,16 +623,16 @@ void DeferredRenderer::RenderImmediate(
 
 	graphicsCore->EnableDepthWrite(true);
 	graphicsCore->SetImmediateBlending(BlendMode::None);
-	EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
+	EngineCore::GetInstance().assetRendererManager->RenderQueueImmediate("Opaque");
 
 	RenderLightsImmediate(registry);
 
-	EngineCore::GetInstance().assetRendererManager->RenderQueue("Unlit");
+	EngineCore::GetInstance().assetRendererManager->RenderQueueImmediate("Unlit");
 
 	graphicsCore->EnableDepthWrite(false);
 	graphicsCore->CopyDepthBufferFromReadToWrite(width, height, width, height);
 	graphicsCore->SetImmediateBlending(BlendMode::AdditiveAlpha);
-	EngineCore::GetInstance().assetRendererManager->RenderQueue("Transparent");
+	EngineCore::GetInstance().assetRendererManager->RenderQueueImmediate("Transparent");
 
 	PostProcessImmediate(outputFramebuffer);
 }

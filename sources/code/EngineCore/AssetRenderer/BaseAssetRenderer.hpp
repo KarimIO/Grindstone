@@ -8,6 +8,10 @@
 #include "EngineCore/Assets/AssetManager.hpp"
 
 namespace Grindstone {
+	namespace GraphicsAPI {
+		class CommandBuffer;
+	}
+
 	struct ShaderAsset;
 
 	struct RenderQueueContainer {
@@ -23,9 +27,11 @@ namespace Grindstone {
 			}
 		}
 		void AddQueue(const char* name);
-		void RenderQueue(const char* name);
+		void RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, const char* name);
+		void RenderQueueImmediate(const char* name);
 	private:
-		virtual void RenderQueue(RenderQueueContainer& renderQueueContainer) = 0;
+		virtual void RenderQueueImmediate(RenderQueueContainer& renderQueue) = 0;
+		virtual void RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, RenderQueueContainer& renderQueue) = 0;
 		std::map<std::string, RenderQueueContainer> renderQueues;
 	};
 }

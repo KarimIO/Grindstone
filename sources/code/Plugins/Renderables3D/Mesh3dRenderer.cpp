@@ -49,24 +49,65 @@ Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
 	DescriptorSet* meshDescriptor = graphicsCore->CreateDescriptorSet(meshUniformBufferCi);
 }
 
-void Mesh3dRenderer::RenderQueue(RenderQueueContainer& renderQueue) {
+void Mesh3dRenderer::RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, RenderQueueContainer& renderQueue) {
 	for (Uuid shaderUuid : renderQueue.shaders) {
 		ShaderAsset& shader = *engineCore->assetManager->GetAsset<ShaderAsset>(shaderUuid);
-		RenderShader(shader);
+		RenderShader(commandBuffer, shader);
 	}
 }
 
-void Mesh3dRenderer::RenderShader(ShaderAsset& shader) {
+void Mesh3dRenderer::RenderQueueImmediate(RenderQueueContainer& renderQueue) {
+	for (Uuid shaderUuid : renderQueue.shaders) {
+		ShaderAsset& shader = *engineCore->assetManager->GetAsset<ShaderAsset>(shaderUuid);
+		RenderShaderImmediate(shader);
+	}
+}
+
+void Mesh3dRenderer::RenderShader(GraphicsAPI::CommandBuffer* commandBuffer, ShaderAsset& shader) {
+	commandBuffer->BindPipeline(shader.pipeline);
+	for (auto materialUuid : shader.materials) {
+		MaterialAsset& material = *engineCore->assetManager->GetAsset<MaterialAsset>(materialUuid);
+		RenderMaterial(commandBuffer, material);
+	}
+}
+
+void Mesh3dRenderer::RenderMaterial(GraphicsAPI::CommandBuffer* commandBuffer, MaterialAsset& material) {
+	for (auto& renderable : material.renderables) {
+		ECS::Entity entity = renderable.first;
+		Mesh3dAsset::Submesh& submesh = *(Mesh3dAsset::Submesh*)renderable.second;
+		RenderSubmesh(commandBuffer, entity, submesh);
+	}
+}
+
+void Mesh3dRenderer::RenderSubmesh(GraphicsAPI::CommandBuffer* commandBuffer, ECS::Entity rendererEntity, Mesh3dAsset::Submesh& submesh3d) {
+	auto graphicsCore = engineCore->GetGraphicsCore();
+	commandBuffer->BindVertexArrayObject(submesh3d.vertexArrayObject);
+
+	auto& registry = rendererEntity.GetScene()->GetEntityRegistry();
+	entt::entity entity = rendererEntity.GetHandle();
+	auto& transformComponent = registry.get<TransformComponent>(entity);
+	glm::mat4 modelMatrix = transformComponent.GetTransformMatrix();
+	mesh3dBufferObject->UpdateBuffer(&modelMatrix);
+
+	commandBuffer->DrawIndices(
+		0,
+		submesh3d.indexCount,
+		1,
+		submesh3d.baseVertex
+	);
+}
+
+void Mesh3dRenderer::RenderShaderImmediate(ShaderAsset& shader) {
 	auto graphicsCore = engineCore->GetGraphicsCore();
 	graphicsCore->BindPipeline(shader.pipeline);
 	// mesh3dBufferObject->Bind();
 	for (auto materialUuid : shader.materials) {
 		MaterialAsset& material = *engineCore->assetManager->GetAsset<MaterialAsset>(materialUuid);
-		RenderMaterial(material);
+		RenderMaterialImmediate(material);
 	}
 }
 
-void Mesh3dRenderer::RenderMaterial(MaterialAsset& material) {
+void Mesh3dRenderer::RenderMaterialImmediate(MaterialAsset& material) {
 	auto graphicsCore = engineCore->GetGraphicsCore();
 	/*
 	if (material.uniformBufferObject) {
@@ -82,11 +123,11 @@ void Mesh3dRenderer::RenderMaterial(MaterialAsset& material) {
 	for (auto& renderable : material.renderables) {
 		ECS::Entity entity = renderable.first;
 		Mesh3dAsset::Submesh& submesh = *(Mesh3dAsset::Submesh*)renderable.second;
-		RenderSubmesh(entity, submesh);
+		RenderSubmeshImmediate(entity, submesh);
 	}
 }
 
-void Mesh3dRenderer::RenderSubmesh(ECS::Entity rendererEntity, Mesh3dAsset::Submesh& submesh3d) {
+void Mesh3dRenderer::RenderSubmeshImmediate(ECS::Entity rendererEntity, Mesh3dAsset::Submesh& submesh3d) {
 	auto graphicsCore = engineCore->GetGraphicsCore();
 	graphicsCore->BindVertexArrayObject(submesh3d.vertexArrayObject);
 	auto& registry = rendererEntity.GetScene()->GetEntityRegistry();

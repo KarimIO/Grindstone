@@ -21,6 +21,7 @@
 #include "VulkanRenderTarget.hpp"
 #include "VulkanTexture.hpp"
 #include "VulkanUniformBuffer.hpp"
+#include "VulkanVertexArrayObject.hpp"
 #include "VulkanVertexBuffer.hpp"
 #include "VulkanDescriptorSet.hpp"
 #include "VulkanDescriptorSetLayout.hpp"
@@ -557,6 +558,10 @@ namespace Grindstone {
 			return static_cast<CommandBuffer*>(new VulkanCommandBuffer(ci));
 		}
 
+		VertexArrayObject* VulkanCore::CreateVertexArrayObject(VertexArrayObject::CreateInfo& ci) {
+			return static_cast<VertexArrayObject*>(new VulkanVertexArrayObject(ci));
+		}
+
 		VertexBuffer * VulkanCore::CreateVertexBuffer(VertexBuffer::CreateInfo& ci) {
 			return static_cast<VertexBuffer*>(new VulkanVertexBuffer(ci));
 		}
@@ -608,6 +613,9 @@ namespace Grindstone {
 		}
 		void VulkanCore::DeleteFramebuffer(Framebuffer *ptr) {
 			delete static_cast<VulkanFramebuffer*>(ptr);
+		}
+		void VulkanCore::DeleteVertexArrayObject(VertexArrayObject* ptr) {
+			delete static_cast<VulkanVertexArrayObject*>(ptr);
 		}
 		void VulkanCore::DeleteVertexBuffer(VertexBuffer *ptr) {
 			delete static_cast<VulkanVertexBuffer*>(ptr);
@@ -662,13 +670,6 @@ namespace Grindstone {
 		//==================================
 		// Unused
 		//==================================
-		VertexArrayObject * VulkanCore::CreateVertexArrayObject(VertexArrayObject::CreateInfo& ci) {
-			std::cout << "VulkanCore::CreateVertexArrayObject is not used.\n";
-			return nullptr;
-		}
-		void VulkanCore::DeleteVertexArrayObject(VertexArrayObject * ptr) {
-			std::cout << "VulkanCore::DeleteVertexArrayObject is not used\n";
-		}
 		void VulkanCore::Clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) {
 			std::cout << "VulkanCore::Clear is not used.\n";
 			assert(false);

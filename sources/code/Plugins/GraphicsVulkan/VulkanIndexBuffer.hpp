@@ -11,9 +11,11 @@ namespace Grindstone {
 			virtual ~VulkanIndexBuffer() override;
 		public:
 			VkBuffer GetBuffer();
+			bool Is32Bit();
 		private:
 			VkBuffer buffer = nullptr;
 			VkDeviceMemory memory = nullptr;
+			bool is32Bit = false;
 		};
 	}
 }

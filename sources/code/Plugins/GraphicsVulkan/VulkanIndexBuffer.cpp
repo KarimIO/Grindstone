@@ -5,6 +5,8 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		VulkanIndexBuffer::VulkanIndexBuffer(IndexBuffer::CreateInfo& createInfo) {
+			is32Bit = createInfo.is32Bit;
+
 			VkDevice device = VulkanCore::Get().GetDevice();
 
 			VkDeviceSize bufferSize = createInfo.size;
@@ -34,6 +36,10 @@ namespace Grindstone {
 
 		VkBuffer VulkanIndexBuffer::GetBuffer() {
 			return buffer;
+		}
+
+		bool VulkanIndexBuffer::Is32Bit() {
+			return is32Bit;
 		}
 	}
 }

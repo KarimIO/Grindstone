@@ -9,6 +9,7 @@ namespace Grindstone {
 		class Framebuffer;
 		class DescriptorSet;
 		class Pipeline;
+		class VertexArrayObject;
 		class VertexBuffer;
 		class IndexBuffer;
 
@@ -34,8 +35,9 @@ namespace Grindstone {
 			) = 0;
 			virtual void BindCommandBuffers(CommandBuffer** commandBuffers, uint32_t commandBuffersCount) = 0;
 			virtual void BindPipeline(Pipeline* pipeline) = 0;
+			virtual void BindVertexArrayObject(VertexArrayObject* vertexArrayObject) = 0;
 			virtual void BindVertexBuffers(VertexBuffer** vb, uint32_t count) = 0;
-			virtual void BindIndexBuffer(IndexBuffer* indexBuffer, bool useLargeBuffer) = 0;
+			virtual void BindIndexBuffer(IndexBuffer* indexBuffer) = 0;
 			virtual void DrawVertices(uint32_t vertexCount, uint32_t instanceCount) = 0;
 			virtual void DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t instanceCount, int32_t vertexOffset) = 0;
 			virtual void EndCommandBuffer() = 0;

@@ -18,10 +18,21 @@ void AssetRendererManager::AddQueue(const char* name) {
 	}
 }
 
-void AssetRendererManager::RenderQueue(const char* name) {
+void AssetRendererManager::RenderQueue(
+	GraphicsAPI::CommandBuffer* commandBuffer,
+	const char* name
+) {
 	std::string profileScope = std::string("AssetRendererManager::RenderQueue(") + name + ")";
 	GRIND_PROFILE_SCOPE(profileScope.c_str());
 	for (BaseAssetRenderer* assetRenderer : assetRenderers) {
-		assetRenderer->RenderQueue(name);
+		assetRenderer->RenderQueue(commandBuffer, name);
+	}
+}
+
+void AssetRendererManager::RenderQueueImmediate(const char* name) {
+	std::string profileScope = std::string("AssetRendererManager::RenderQueue(") + name + ")";
+	GRIND_PROFILE_SCOPE(profileScope.c_str());
+	for (BaseAssetRenderer* assetRenderer : assetRenderers) {
+		assetRenderer->RenderQueueImmediate(name);
 	}
 }

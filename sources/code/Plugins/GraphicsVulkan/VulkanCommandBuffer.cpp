@@ -2,6 +2,7 @@
 #include "VulkanRenderPass.hpp"
 #include "VulkanPipeline.hpp"
 #include "VulkanFramebuffer.hpp"
+#include "VulkanVertexArrayObject.hpp"
 #include "VulkanVertexBuffer.hpp"
 #include "VulkanIndexBuffer.hpp"
 #include "VulkanCore.hpp"
@@ -148,6 +149,14 @@ namespace Grindstone {
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanPipeline->GetGraphicsPipeline());
 		}
 
+		void VulkanCommandBuffer::BindVertexArrayObject(VertexArrayObject* vertexArrayObject) {
+			VulkanVertexArrayObject* vkVao = static_cast<VulkanVertexArrayObject*>(vertexArrayObject);
+			auto& vkVertexBuffers = vkVao->GetVertexBuffers();
+
+			BindVertexBuffers(vkVertexBuffers.data(), static_cast<uint32_t>(vkVertexBuffers.size()));
+			BindIndexBuffer(vkVao->GetIndexBuffer());
+		}
+
 		void VulkanCommandBuffer::BindVertexBuffers(VertexBuffer** vertexBuffers, uint32_t vertexBufferCount) {
 			std::vector<VkBuffer> buffers;
 			std::vector<VkDeviceSize> offsets;
@@ -169,9 +178,9 @@ namespace Grindstone {
 			);
 		}
 
-		void VulkanCommandBuffer::BindIndexBuffer(IndexBuffer* indexBuffer, bool useLargeBuffer) {
+		void VulkanCommandBuffer::BindIndexBuffer(IndexBuffer* indexBuffer) {
 			VulkanIndexBuffer *vulkanIndexBuffer = static_cast<VulkanIndexBuffer *>(indexBuffer);
-			vkCmdBindIndexBuffer(commandBuffer, vulkanIndexBuffer->GetBuffer(), 0, useLargeBuffer ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16);
+			vkCmdBindIndexBuffer(commandBuffer, vulkanIndexBuffer->GetBuffer(), 0, vulkanIndexBuffer->Is32Bit() ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16);
 		}
 
 		void VulkanCommandBuffer::DrawVertices(uint32_t vertexCount, uint32_t instanceCount) {

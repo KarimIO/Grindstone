@@ -30,8 +30,9 @@ namespace Grindstone {
 			) override;
 			virtual void BindCommandBuffers(CommandBuffer** commandBuffers, uint32_t commandBuffersCount) override;
 			virtual void BindPipeline(Pipeline* pipeline) override;
+			virtual void BindVertexArrayObject(VertexArrayObject* vertexArrayObject) override;
 			virtual void BindVertexBuffers(VertexBuffer** vb, uint32_t count) override;
-			virtual void BindIndexBuffer(IndexBuffer* indexBuffer, bool useLargeBuffer) override;
+			virtual void BindIndexBuffer(IndexBuffer* indexBuffer) override;
 			virtual void DrawVertices(uint32_t vertexCount, uint32_t instanceCount) override;
 			virtual void DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t instanceCount, int32_t vertexOffset) override;
 			virtual void EndCommandBuffer() override;
