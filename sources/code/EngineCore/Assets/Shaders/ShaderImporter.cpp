@@ -158,15 +158,14 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 
 	pipelineCreateInfo.vertexBindings = &vertexLayouts.positions;
 	pipelineCreateInfo.vertexBindingsCount = 4; // Would be 5, but uv1 is not yet used
-	pipelineCreateInfo.colorAttachmentCount = 4;
-	pipelineCreateInfo.blendMode = BlendMode::None;
-
+	pipelineCreateInfo.colorAttachmentCount = 4; // TODO: Collor Attachments depending on stage and renderer type
+	pipelineCreateInfo.blendMode = BlendMode::None; // TODO: Support Blending
 
 	auto shader = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	auto asset = shaders.emplace(uuid, ShaderAsset(uuid, debugName, shader));
 	auto& shaderAsset = asset.first->second;
 	shaderAsset.reflectionData = reflectionData;
-	shaderAsset.descriptorSetLayout = pipelineCreateInfo.descriptorSetLayouts[1];
+	shaderAsset.descriptorSetLayout = pipelineCreateInfo.descriptorSetLayouts[0];
 
 	// TODO: Save compiled shader into ShaderCache
 

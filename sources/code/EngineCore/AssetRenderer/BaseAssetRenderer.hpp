@@ -10,6 +10,7 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		class CommandBuffer;
+		class DescriptorSet;
 	}
 
 	struct ShaderAsset;
@@ -29,6 +30,8 @@ namespace Grindstone {
 		void AddQueue(const char* name);
 		void RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, const char* name);
 		void RenderQueueImmediate(const char* name);
+
+		virtual void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) = 0;
 	private:
 		virtual void RenderQueueImmediate(RenderQueueContainer& renderQueue) = 0;
 		virtual void RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, RenderQueueContainer& renderQueue) = 0;

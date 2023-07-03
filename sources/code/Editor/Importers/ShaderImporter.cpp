@@ -370,10 +370,12 @@ namespace Grindstone {
 
 		void ShaderImporter::ProcessSubmodule(ShaderType shaderType, const char* extension, const char* glslSource) {
 			std::vector<uint32_t> vkSpirv = ConvertToSpirv(shaderType, extension, glslSource);
+			/* TODO: Re-implement this by using preprocessing to handle the descriptor set issue
 			{
 				auto opengGlsl = ConvertToOpenglGlsl(extension, vkSpirv);
 				ConvertToOpenglSpirv(shaderType, extension, glslSource);
 			}
+			*/
 			ReflectResources(shaderType, vkSpirv);
 		}
 

@@ -6,9 +6,8 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		class RenderPass;
-		class Framebuffer;
 		class CommandBuffer;
+		class DescriptorSet;
 	}
 
 	class AssetRendererManager {
@@ -19,6 +18,7 @@ namespace Grindstone {
 			GraphicsAPI::CommandBuffer* commandBuffer,
 			const char* name
 		);
+		void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet);
 		void RenderQueueImmediate(const char* name);
 	private:
 		std::vector<BaseAssetRenderer*> assetRenderers;
