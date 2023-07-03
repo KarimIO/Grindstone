@@ -8,11 +8,14 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		VulkanFramebuffer::VulkanFramebuffer(VkFramebuffer framebuffer) {
+		VulkanFramebuffer::VulkanFramebuffer(RenderPass* renderPass, VkFramebuffer framebuffer) {
+			this->renderPass = renderPass;
 			this->framebuffer = framebuffer;
 		}
 
 		VulkanFramebuffer::VulkanFramebuffer(Framebuffer::CreateInfo& ci) {
+			renderPass = ci.renderPass;
+
 			std::vector<VkImageView> attachments;
 			for (uint32_t i = 0; i < ci.numRenderTargetLists; ++i) {
 				VulkanRenderTarget* renderTarget = static_cast<VulkanRenderTarget*>(ci.renderTargetLists[i]);
@@ -48,6 +51,9 @@ namespace Grindstone {
 			return framebuffer;
 		}
 
+		RenderPass* VulkanFramebuffer::GetRenderPass() {
+			return renderPass;
+		}
 
 		uint32_t VulkanFramebuffer::GetAttachment(uint32_t attachmentIndex) {
 			std::cout << "VulkanFramebuffer::GetAttachment is not used.\n";
