@@ -130,7 +130,7 @@ namespace Grindstone {
 			depthStencil.depthBoundsTestEnable = VK_FALSE;
 			depthStencil.stencilTestEnable = VK_FALSE;
 
-			std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(4);
+			std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(1);
 
 			for (size_t i = 0; i < colorBlendAttachments.size(); ++i) {
 				colorBlendAttachments[i].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;

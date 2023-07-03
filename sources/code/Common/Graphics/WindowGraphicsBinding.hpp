@@ -1,13 +1,13 @@
 #pragma once
 
 namespace Grindstone {
-	namespace GraphicsAPI {
-		class CommandBuffer;
-	}
-
 	class Window;
 
 	namespace GraphicsAPI {
+		class CommandBuffer;
+		class RenderPass;
+		class Framebuffer;
+
 		class WindowGraphicsBinding {
 		public:
 			~WindowGraphicsBinding() {};
@@ -15,6 +15,8 @@ namespace Grindstone {
 			virtual void ImmediateSetContext() {};
 			virtual void ImmediateSwapBuffers() {};
 			virtual void PresentCommandBuffer(CommandBuffer**buffers, uint32_t num_buffers) {};
+			virtual RenderPass* GetRenderPass() { return nullptr; };
+			virtual Framebuffer* GetCurrentFramebuffer() { return nullptr; };
 		};
 	};
 };

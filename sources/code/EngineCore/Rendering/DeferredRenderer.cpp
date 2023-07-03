@@ -15,6 +15,7 @@
 #include "EngineCore/AssetRenderer/AssetRendererManager.hpp"
 #include "Common/Event/WindowEvent.hpp"
 #include "EngineCore/Profiling.hpp"
+#include <Common/Window/WindowManager.hpp>
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
@@ -392,7 +393,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.descriptorSetLayouts = &lightingDescriptorSetLayout;
 		pipelineCreateInfo.descriptorSetLayoutCount = 1;
 		pipelineCreateInfo.renderPass = DeferredRenderer::gbufferRenderPass;
-		pointLightPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
+		// pointLightPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	}
 
 	shaderStageCreateInfos.clear();
@@ -410,12 +411,14 @@ void DeferredRenderer::CreatePipelines() {
 			return;
 		}
 
+		auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+
 		pipelineCreateInfo.shaderName = "Tonemapping Pipeline";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
 		pipelineCreateInfo.descriptorSetLayouts = &tonemapDescriptorSetLayout;
 		pipelineCreateInfo.descriptorSetLayoutCount = 1;
-		pipelineCreateInfo.renderPass = DeferredRenderer::gbufferRenderPass;
+		pipelineCreateInfo.renderPass = wgb->GetRenderPass();
 		tonemapPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	}
 }
@@ -460,10 +463,20 @@ void DeferredRenderer::PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer) 
 	}
 
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 
 	tonemapCommandBuffer->BeginCommandBuffer();
 	if (outputFramebuffer == nullptr) {
-		// tonemapCommandBuffer->BindDefaultRenderPass();
+		auto renderpass = wgb->GetRenderPass();
+		auto framebuffer = wgb->GetCurrentFramebuffer();
+
+		ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
+		ClearDepthStencil clearDepthStencil;
+		clearDepthStencil.depth = 0.0f;
+		clearDepthStencil.stencil = 0;
+		clearDepthStencil.hasDepthStencilAttachment = false;
+
+		tonemapCommandBuffer->BindRenderPass(renderpass, framebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
 	}
 	else {
 		// tonemapCommandBuffer->BindRenderPass();
@@ -481,6 +494,8 @@ void DeferredRenderer::PostProcess(GraphicsAPI::Framebuffer* outputFramebuffer) 
 
 	tonemapCommandBuffer->UnbindRenderPass();
 	tonemapCommandBuffer->EndCommandBuffer();
+
+	wgb->PresentCommandBuffer(&tonemapCommandBuffer, 1);
 }
 
 void DeferredRenderer::Render(
@@ -517,7 +532,6 @@ void DeferredRenderer::RenderCommandBuffer(
 ) {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	float clearColor[4] = { 0.3f, 0.6f, 0.9f, 1.f };
 	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Opaque");
 	// RenderLights(registry);
 	// EngineCore::GetInstance().assetRendererManager->RenderQueue("Unlit");

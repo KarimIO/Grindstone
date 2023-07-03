@@ -10,6 +10,9 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
+		class Framebuffer;
+		class RenderPass;
+
 		class VulkanWindowGraphicsBinding : public WindowGraphicsBinding {
 		public:
 			virtual bool Initialize(Window *window) override;
@@ -25,15 +28,24 @@ namespace Grindstone {
 			void CreateSwapChain();
 			void CreateSyncObjects();
 			void PresentCommandBuffer(CommandBuffer** buffers, uint32_t bufferCount) override;
+			virtual RenderPass* GetRenderPass() override;
+			virtual Framebuffer* GetCurrentFramebuffer() override;
+		private:
+			void CreateRenderPass();
+			void CreateFramebuffers();
 		private:
 			Window* window = nullptr;
+			RenderPass* renderPass = nullptr;
+			std::vector<Framebuffer*> framebuffers;
 			
 			ColorFormat swapchainFormat = ColorFormat::Invalid;
+			VkFormat swapchainVulkanFormat;
 
 			VkSurfaceKHR surface = nullptr;
 			VkSwapchainKHR swapChain = nullptr;
 			std::vector<RenderTarget*> swapChainTargets;
 
+			VkExtent2D swapExtent;
 			std::vector<VkSemaphore> imageAvailableSemaphores;
 			std::vector<VkSemaphore> renderFinishedSemaphores;
 			std::vector<VkFence> inFlightFences;

@@ -5,6 +5,10 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
+		VulkanRenderPass::VulkanRenderPass(VkRenderPass renderPass, uint32_t width, uint32_t height)
+			: renderPass(renderPass), width(width), height(height) {
+		}
+
 		VulkanRenderPass::VulkanRenderPass(RenderPass::CreateInfo& ci) : width(ci.width), height(ci.height) {
 			uint32_t total = ci.colorFormatCount;
 			total += (ci.depthFormat != DepthFormat::None) ? 1 : 0;
