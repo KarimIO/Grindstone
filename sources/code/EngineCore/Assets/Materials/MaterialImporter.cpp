@@ -62,7 +62,7 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	}
 
 	if (materialUniformBuffer != nullptr) {
-		std::string uniformBufferName = (materialAsset->name + " Material Uniform Buffer");
+		std::string uniformBufferName = (materialAsset->name + " MaterialUbo");
 		GraphicsAPI::UniformBuffer::CreateInfo ubCi{};
 		ubCi.debugName = uniformBufferName.c_str();
 		ubCi.isDynamic = true;
@@ -94,6 +94,8 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 				// char* memberPos = bufferSpace + member.offset;
 				memcpy(bufferSpace, paramArray.data(), member.memberSize);
 			}
+
+			uniformBufferObject->UpdateBuffer(bufferSpace);
 		}
 	}
 
@@ -137,7 +139,9 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 		}
 	}
 
+	std::string descriptorSetName = (materialAsset->name + " Material Descriptor Set");
 	GraphicsAPI::DescriptorSet::CreateInfo materialDescriptorSetCreateInfo{};
+	materialDescriptorSetCreateInfo.debugName = descriptorSetName.c_str();
 	materialDescriptorSetCreateInfo.bindings = bindings.data();
 	materialDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
 	materialDescriptorSetCreateInfo.layout = shaderAsset->descriptorSetLayout;
