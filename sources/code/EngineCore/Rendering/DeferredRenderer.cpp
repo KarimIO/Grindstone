@@ -556,14 +556,8 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 		currentCommandBuffer->BindPipeline(pointLightPipeline);
 		currentCommandBuffer->BindDescriptorSet(pointLightPipeline, &imageSet.lightingDescriptorSet, 1);
 
-		size_t i = 0;
-
 		auto view = registry.view<const TransformComponent, const PointLightComponent>();
 		view.each([&](const TransformComponent& transformComponent, const PointLightComponent& pointLightComponent) {
-			if (i > 0) {
-				return;
-			}
-
 			LightmapStruct lightmapStruct{
 				pointLightComponent.color,
 				pointLightComponent.attenuationRadius,
@@ -573,8 +567,6 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 
 			imageSet.lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
-
-			i++;
 		});
 	}
 
