@@ -109,12 +109,9 @@ void VulkanDescriptorSet::ChangeBindings(Binding* bindings, uint32_t bindingCoun
 		}
 	}
 
-	// We use this instead of bindingCount in case any bindings are invalid
-	uint32_t descriptorWriteCount = static_cast<uint32_t>(descriptorWrites.size());
-
 	vkUpdateDescriptorSets(
 		VulkanCore::Get().GetDevice(),
-		descriptorWriteCount,
+		static_cast<uint32_t>(descriptorWrites.size()),
 		descriptorWrites.data(),
 		0,
 		nullptr

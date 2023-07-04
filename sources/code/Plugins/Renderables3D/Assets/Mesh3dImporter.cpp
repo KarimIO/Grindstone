@@ -199,6 +199,7 @@ void Mesh3dImporter::LoadMeshImportIndices(
 	indexBufferCreateInfo.content = indices.data();
 	indexBufferCreateInfo.count = static_cast<uint32_t>(indices.size());
 	indexBufferCreateInfo.size = static_cast<uint32_t>(indices.size() * sizeof(indices[0]));
+	indexBufferCreateInfo.is32Bit = false;
 	indexBuffer = graphicsCore->CreateIndexBuffer(indexBufferCreateInfo);
 }
 

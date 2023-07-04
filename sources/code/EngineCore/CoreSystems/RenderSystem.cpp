@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "RenderSystem.hpp"
+#include <Common/Graphics/Core.hpp>
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "EngineCore/CoreComponents/Camera/CameraComponent.hpp"
 #include "EngineCore/Rendering/BaseRenderer.hpp"
@@ -48,12 +49,14 @@ namespace Grindstone {
 					upVector
 				);
 
-				const auto projectionMatrix = glm::perspective(
+				auto projectionMatrix = glm::perspective(
 					cameraComponent.fieldOfView,
 					cameraComponent.aspectRatio,
 					cameraComponent.nearPlaneDistance,
 					cameraComponent.farPlaneDistance
 				);
+
+				engineCore.GetGraphicsCore()->AdjustPerspective(&projectionMatrix[0][0]);
 
 				cameraComponent.renderer->Render(
 					registry,
