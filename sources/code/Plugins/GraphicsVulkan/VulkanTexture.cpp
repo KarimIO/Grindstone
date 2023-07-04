@@ -137,7 +137,8 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 
 	uint32_t blockSize = (isDXT) ? 8 : 16;
 
-	uint32_t imageSize = ((createInfo.width + 3) / 4) * ((createInfo.height + 3) / 4) * blockSize;
+	uint32_t baseMipSize = ((createInfo.width + 3) / 4) * ((createInfo.height + 3) / 4) * blockSize;
+	uint32_t totalImageSize = 0;
 
 	bool shouldGenerateMipmaps = createInfo.options.shouldGenerateMipmaps;
 	if (shouldGenerateMipmaps) {
@@ -154,29 +155,85 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 
 		uint32_t width = createInfo.width;
 		uint32_t height = createInfo.height;
-		for (size_t i = 0; i < mipLevels; ++i) {
+		for (uint32_t i = 0; i < mipLevels; ++i) {
+			uint32_t mipSize = ((width + 3) / 4) * ((height + 3) / 4) * blockSize;
 			width /= 2;
 			height /= 2;
-
-			imageSize += ((width + 3) / 4) * ((height + 3) / 4) * blockSize;
+			totalImageSize += mipSize;
 		}
 	}
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
-	CreateBuffer(createInfo.debugName, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+	CreateBuffer(
+		createInfo.debugName,
+		totalImageSize,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		stagingBuffer,
+		stagingBufferMemory
+	);
 
 	void* data;
-	vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
-	memcpy(data, createInfo.data, static_cast<size_t>(imageSize));
+	vkMapMemory(device, stagingBufferMemory, 0, totalImageSize, 0, &data);
+	memcpy(data, createInfo.data, static_cast<size_t>(totalImageSize));
 	vkUnmapMemory(device, stagingBufferMemory);
 
-	CreateImage(createInfo.width, createInfo.height, mipLevels, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
+	CreateImage(
+		createInfo.width,
+		createInfo.height,
+		mipLevels,
+		format,
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		image,
+		imageMemory
+	);
 
 	TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
-	CopyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(createInfo.width), static_cast<uint32_t>(createInfo.height));
-	TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels);
 
+	if (shouldGenerateMipmaps) {
+		CopyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(createInfo.width), static_cast<uint32_t>(createInfo.height));
+	}
+	else {
+		VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+		uint32_t offset = 0;
+		uint32_t mipWidth = createInfo.width;
+		uint32_t mipHeight = createInfo.height;
+
+		std::vector<VkBufferImageCopy> regions;
+		regions.resize(mipLevels);
+		for (uint32_t i = 0; i < mipLevels; ++i) {
+			VkBufferImageCopy& region = regions[i];
+			region.bufferOffset = offset;
+			region.bufferRowLength = 0;
+			region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			region.imageSubresource.mipLevel = i;
+			region.imageSubresource.layerCount = 1;
+			region.imageExtent.width = mipWidth;
+			region.imageExtent.height = mipHeight;
+			region.imageExtent.depth = 1;
+
+			uint32_t mipSize = ((mipWidth + 3) / 4) * ((mipHeight + 3) / 4) * blockSize;
+			offset += mipSize;
+			mipWidth /= 2;
+			mipHeight /= 2;
+		}
+
+		vkCmdCopyBufferToImage(
+			commandBuffer,
+			stagingBuffer,
+			image,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			static_cast<uint32_t>(regions.size()),
+			regions.data()
+		);
+
+		EndSingleTimeCommands(commandBuffer);
+		TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels);
+	}
+	
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 
