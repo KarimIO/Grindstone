@@ -23,20 +23,27 @@ namespace Grindstone {
 			Uuid GetUuid();
 		private:
 			Uuid uuid;
-			unsigned char CombinePixels(unsigned char* pixelSrc);
-			unsigned char* CreateMip(unsigned char* pixel, int width, int height);
+			void GenerateFaceBC123(uint32_t minMipLevel, uint32_t faceIterator, uint8_t* outData);
+			void GenerateFaceBC4(uint32_t minMipLevel, uint32_t faceIterator, uint8_t* outData);
+			uint8_t CombinePixels(uint8_t* pixelSrc, uint64_t index, uint64_t pitch);
+			uint8_t* CreateMip(uint8_t* pixel, uint32_t width, uint32_t height);
 			void ExtractBlock(
-				const unsigned char* inPtr,
-				unsigned char* colorBlock
+				const uint8_t* inPtr,
+				const uint32_t levelWidth,
+				uint8_t* colorBlock
 			);
 			void ConvertBC123();
-			void OutputDds(unsigned char* outPixels, int contentSize);
-			int CalculateMipMapLevelCount(int width, int height);
+			void ConvertBC4();
+			void GenerateMipList(uint32_t minMipLevel, std::vector<uint8_t*>& uncompressedMips);
+			void OutputDds(uint8_t* outPixels, uint32_t contentSize);
+			uint32_t CalculateMipMapLevelCount(uint32_t width, uint32_t height);
 
 			std::filesystem::path path;
 			Compression compression = Compression::Uncompressed;
-			unsigned char* sourcePixels = nullptr;
-			int texWidth = 0, texHeight = 0, texChannels = 0;
+			uint8_t* sourcePixels = nullptr;
+			uint32_t texWidth = 0;
+			uint32_t texHeight = 0;
+			uint32_t texChannels = 0;
 		};
 
 		void ImportTexture(std::filesystem::path& inputPath);
