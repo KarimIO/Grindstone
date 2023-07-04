@@ -121,8 +121,9 @@ namespace Grindstone {
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TranslateTexFilter(createInfo.options.magFilter));
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TranslateTexFilter(createInfo.options.minFilter));
 
-				if (createInfo.options.shouldGenerateMipmaps)
+				if (createInfo.options.shouldGenerateMipmaps) {
 					glGenerateMipmap(GL_TEXTURE_2D);
+				}
 
 				glBindTexture(GL_TEXTURE_2D, 0);
 			}

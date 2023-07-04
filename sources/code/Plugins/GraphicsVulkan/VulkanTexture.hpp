@@ -12,10 +12,12 @@ namespace Grindstone {
 		public:
 			VkImageView GetImageView();
 			VkSampler GetSampler();
-			void CreateTextureImage(Texture::CreateInfo &createInfo, uint32_t &mipLevels);
-			void CreateTextureSampler(Texture::CreateInfo &createInfo, uint32_t mipLevels);
 			virtual void RecreateTexture(CreateInfo& createInfo) override;
 		private:
+			void CreateTextureImage(Texture::CreateInfo &createInfo, uint32_t &mipLevels);
+			void CreateTextureSampler(Texture::CreateInfo &createInfo, uint32_t mipLevels);
+			void GenerateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
+
 			VkDeviceMemory imageMemory = nullptr;
 			VkImageView imageView = nullptr;
 			VkSampler sampler = nullptr;

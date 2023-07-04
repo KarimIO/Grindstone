@@ -25,11 +25,6 @@ Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
 	mesh3dBufferObjectCi.size = sizeof(Mesh3dUbo);
 	mesh3dBufferObject = graphicsCore->CreateUniformBuffer(mesh3dBufferObjectCi);
 
-	Mesh3dUbo modelMatrix{};
-	modelMatrix.modelMatrix = glm::mat4(1.0f);
-	modelMatrix.modelMatrix = glm::scale(modelMatrix.modelMatrix, glm::vec3(0.01f));
-	mesh3dBufferObject->UpdateBuffer(&modelMatrix);
-
 	DescriptorSet::Binding meshUniformBufferBinding{};
 	meshUniformBufferBinding.bindingIndex = 0;
 	meshUniformBufferBinding.bindingType = BindingType::UniformBuffer;
