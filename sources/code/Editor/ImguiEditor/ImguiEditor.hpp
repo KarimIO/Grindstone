@@ -62,6 +62,9 @@ namespace Grindstone {
 				ControlBar* controlBar = nullptr;
 				StatusBar* statusBar = nullptr;
 				Menubar* menubar = nullptr;
+
+				VkDescriptorPool imguiPool = nullptr;
+				VkRenderPass renderPass = nullptr;
 			};
 		}
 	}

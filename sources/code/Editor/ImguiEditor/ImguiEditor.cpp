@@ -1,12 +1,17 @@
 #include <iostream>
 #include <imgui.h>
 #include <imgui_internal.h>
+#if EDITOR_USE_OPENGL
 #include <imgui_impl_opengl3.h>
+#include "GL/gl3w.h"
+#else
+#include <imgui_impl_vulkan.h>
+#endif
 #include <imgui_impl_win32.h>
 #include <ImGuizmo.h>
 #include <Windows.h>
 #include <Winuser.h>
-#include "GL/gl3w.h"
+#include <Plugins/GraphicsVulkan/VulkanCore.hpp>
 
 #include "Common/Window/WindowManager.hpp"
 #include "EngineCore/EngineCore.hpp"
@@ -41,6 +46,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	SetupStyles();
 	SetupColors();
 
+#if EDITOR_USE_OPENGL
 	if (gl3wInit()) {
 		Editor::Manager::Print(LogSeverity::Error, "Failed to initialize OpenGL");
 		return;
@@ -53,9 +59,56 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	HWND win = GetActiveWindow();
 	ImGui_ImplWin32_Init(win);
 
-	input = new ImguiInput(io, engineCore);
-
 	ImGui_ImplOpenGL3_Init("#version 150");
+#else
+	VkDescriptorPoolSize poolSizes[] = {
+		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+	};
+
+	VkDescriptorPoolCreateInfo poolInfo = {};
+	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+	poolInfo.maxSets = 1000;
+	poolInfo.poolSizeCount = std::size(poolSizes);
+	poolInfo.pPoolSizes = poolSizes;
+
+	auto vulkanCore = static_cast<GraphicsAPI::VulkanCore*>(engineCore->GetGraphicsCore());
+
+	if (vkCreateDescriptorPool(vulkanCore->GetDevice(), &poolInfo, nullptr, &imguiPool) != VK_SUCCESS) {
+		throw std::runtime_error("failed to allocate imgui descriptor pool!");
+	}
+
+	ImGui_ImplVulkan_InitInfo imguiInitInfo{};
+	imguiInitInfo.Instance = vulkanCore->GetInstance();
+	imguiInitInfo.PhysicalDevice = vulkanCore->GetPhysicalDevice();
+	imguiInitInfo.Device = vulkanCore->GetDevice();
+	imguiInitInfo.Queue = vulkanCore->graphicsQueue;
+	imguiInitInfo.DescriptorPool = imguiPool;
+	imguiInitInfo.MinImageCount = 3;
+	imguiInitInfo.ImageCount = 3;
+	imguiInitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+
+	ImGui_ImplVulkan_Init(&imguiInitInfo, renderPass);
+
+	/*
+	VkCommandBuffer commandBuffer = vulkanCore->BeginSingleTimeCommands();
+	ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
+	vulkanCore->EndSingleTimeCommands(commandBuffer);
+	*/
+
+#endif
+
+	input = new ImguiInput(io, engineCore);
 
 	sceneHeirarchyPanel = new SceneHeirarchyPanel(engineCore->GetSceneManager(), this);
 	modelConverterModal = new ModelConverterModal();
@@ -211,19 +264,29 @@ void ImguiEditor::SetupStyles() {
 }
 
 void ImguiEditor::Update() {
+#if EDITOR_USE_OPENGL
 	ImGui_ImplOpenGL3_NewFrame();
+#else
+	ImGui_ImplVulkan_NewFrame();
+#endif
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 	ImGuizmo::BeginFrame();
 
+#if EDITOR_USE_OPENGL
 	glViewport(0, 0, 800, 600);
 	glClear(GL_COLOR_BUFFER_BIT);
+#endif
 
 	Render();
 
 	// Rendering
 	ImGui::Render();
+#if EDITOR_USE_OPENGL
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#else
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+#endif
 	ImGui::UpdatePlatformWindows();
 	ImGui::RenderPlatformWindowsDefault();
 }
