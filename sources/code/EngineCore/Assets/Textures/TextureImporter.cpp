@@ -80,6 +80,7 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, const char* fileContents, si
 	createInfo.width = header.dwWidth;
 	createInfo.height = header.dwHeight;
 	createInfo.isCubemap = false;
+	createInfo.options.shouldGenerateMipmaps = false;
 
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	Grindstone::GraphicsAPI::Texture* texture = graphicsCore->CreateTexture(createInfo);
