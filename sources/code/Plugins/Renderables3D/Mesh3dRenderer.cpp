@@ -106,6 +106,7 @@ void Mesh3dRenderer::RenderSubmesh(GraphicsAPI::CommandBuffer* commandBuffer, EC
 	entt::entity entity = rendererEntity.GetHandle();
 	auto& transformComponent = registry.get<TransformComponent>(entity);
 	glm::mat4 modelMatrix = transformComponent.GetTransformMatrix();
+	mesh3dBufferObject->UpdateBuffer(&modelMatrix);
 
 	commandBuffer->DrawIndices(
 		submesh3d.baseIndex,
