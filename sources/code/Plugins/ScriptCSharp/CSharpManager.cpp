@@ -55,6 +55,7 @@ void CSharpManager::Initialize(EngineCore* engineCore) {
 	auto dllPath = (engineCore->GetBinaryPath() / "Application-CSharp.dll").string();
 	LoadAssemblyIntoMap(dllPath.c_str());
 
+	LoadAssemblyClasses();
 	RegisterComponents();
 }
 
