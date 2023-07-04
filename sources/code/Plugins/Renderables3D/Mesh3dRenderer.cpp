@@ -25,6 +25,11 @@ Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
 	mesh3dBufferObjectCi.size = sizeof(Mesh3dUbo);
 	mesh3dBufferObject = graphicsCore->CreateUniformBuffer(mesh3dBufferObjectCi);
 
+	Mesh3dUbo modelMatrix{};
+	modelMatrix.modelMatrix = glm::mat4(1.0f);
+	modelMatrix.modelMatrix = glm::scale(modelMatrix.modelMatrix, glm::vec3(0.01f));
+	mesh3dBufferObject->UpdateBuffer(&modelMatrix);
+
 	DescriptorSet::Binding meshUniformBufferBinding{};
 	meshUniformBufferBinding.bindingIndex = 0;
 	meshUniformBufferBinding.bindingType = BindingType::UniformBuffer;
@@ -80,7 +85,11 @@ void Mesh3dRenderer::RenderShader(GraphicsAPI::CommandBuffer* commandBuffer, Sha
 
 void Mesh3dRenderer::RenderMaterial(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::Pipeline* pipeline, MaterialAsset& material) {
 	std::vector<GraphicsAPI::DescriptorSet*> descriptors = { material.descriptorSet, engineDescriptorSet, meshDescriptor };
-	commandBuffer->BindDescriptorSet(pipeline, descriptors.data(), descriptors.size());
+	commandBuffer->BindDescriptorSet(
+		pipeline,
+		descriptors.data(),
+		static_cast<uint32_t>(descriptors.size())
+	);
 
 	for (auto& renderable : material.renderables) {
 		ECS::Entity entity = renderable.first;
@@ -97,10 +106,9 @@ void Mesh3dRenderer::RenderSubmesh(GraphicsAPI::CommandBuffer* commandBuffer, EC
 	entt::entity entity = rendererEntity.GetHandle();
 	auto& transformComponent = registry.get<TransformComponent>(entity);
 	glm::mat4 modelMatrix = transformComponent.GetTransformMatrix();
-	mesh3dBufferObject->UpdateBuffer(&modelMatrix);
 
 	commandBuffer->DrawIndices(
-		0,
+		submesh3d.baseIndex,
 		submesh3d.indexCount,
 		1,
 		submesh3d.baseVertex
