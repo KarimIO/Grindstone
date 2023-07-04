@@ -151,6 +151,15 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 	}
 	else {
 		mipLevels = createInfo.mipmaps > 0 ? createInfo.mipmaps : 1;
+
+		uint32_t width = createInfo.width;
+		uint32_t height = createInfo.height;
+		for (size_t i = 0; i < mipLevels; ++i) {
+			width /= 2;
+			height /= 2;
+
+			imageSize += ((width + 3) / 4) * ((height + 3) / 4) * blockSize;
+		}
 	}
 
 	VkBuffer stagingBuffer;

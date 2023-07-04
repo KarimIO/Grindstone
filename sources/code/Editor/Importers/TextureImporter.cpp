@@ -25,13 +25,19 @@ void TextureImporter::ExtractBlock(
 	const uint32_t levelWidth,
 	uint8_t* colorBlock
 ) {
-	for (uint32_t dstRow = 0; dstRow < 4; dstRow++) {
+	/*for (uint32_t dstRow = 0; dstRow < 4; dstRow++) {
 		for (uint32_t dstCol = 0; dstCol < 4; dstCol++) {
 			for (uint32_t dstChannel = 0; dstChannel < texChannels; dstChannel++) {
 				uint32_t srcIndex = ((dstRow * levelWidth + dstCol) * texChannels) + dstChannel;
 				uint32_t dstIndex = ((dstRow * 4 + dstCol) * texChannels) + dstChannel;
 				colorBlock[dstIndex] = inPtr[srcIndex];
 			}
+		}
+	}*/
+
+	for (uint32_t dstRow = 0; dstRow < 4; dstRow++) {
+		for (uint32_t dstCol = 0; dstCol < 4; dstCol++) {
+			memcpy(colorBlock + (dstRow * 4 + dstCol) * texChannels, inPtr + (dstRow * levelWidth + dstCol) * 4, texChannels);
 		}
 	}
 }
@@ -59,7 +65,7 @@ void TextureImporter::Import(std::filesystem::path& path) {
 		compression = Compression::BC4;
 	}
 	else {
-		compression = Compression::BC1;
+		compression = Compression::BC3;
 	}
 
 	switch (compression) {
@@ -115,8 +121,8 @@ void TextureImporter::ConvertBC123() {
 	// 	size *= 6;
 
 	bool shouldGenerateMips = true;
-	int mipMapCount = shouldGenerateMips ?
-		CalculateMipMapLevelCount(texWidth, texHeight)
+	int mipMapCount = shouldGenerateMips
+		? CalculateMipMapLevelCount(texWidth, texHeight)
 		: 1;
 
 	int outputContentSize = 0;
@@ -135,7 +141,7 @@ void TextureImporter::ConvertBC123() {
 	outputContentSize *= faceCount;
 
 	uint8_t* outData = new uint8_t[outputContentSize];
-	int minMipLevel = std::max(mipMapCount - 2, 1);
+	int minMipLevel = std::max(mipMapCount, 1);
 	for (int faceIterator = 0; faceIterator < faceCount; faceIterator++) {
 		GenerateFaceBC123(minMipLevel, faceIterator, outData);
 	}
@@ -200,6 +206,7 @@ void TextureImporter::GenerateMipList(uint32_t minMipLevel, std::vector<uint8_t*
 }
 
 void TextureImporter::GenerateFaceBC123(uint32_t minMipLevel, uint32_t faceIterator, uint8_t* outData) {
+	uint32_t blockSize = (compression == Compression::BC1) ? 8 : 16;
 	uint32_t dstOffset = 0;
 	uint8_t block[64];
 
@@ -214,11 +221,10 @@ void TextureImporter::GenerateFaceBC123(uint32_t minMipLevel, uint32_t faceItera
 		uint8_t* mipSource = uncompressedMips[mipLevelIterator];
 
 		for (uint32_t mipRow = 0; mipRow < levelHeight; mipRow += blockWidth) {
-			uint8_t* ptr = mipSource + (mipRow * levelWidth * texChannels);
 			for (uint32_t mipCol = 0; mipCol < levelWidth; mipCol += blockWidth) {
+				uint8_t* ptr = mipSource + ((mipRow * levelWidth + mipCol) * texChannels);
 				ExtractBlock(ptr, levelWidth, block);
-				stb_compress_dxt_block(&outData[dstOffset], block, hasAlpha, STB_DXT_NORMAL);
-				ptr += blockWidth * texChannels;
+				stb_compress_dxt_block(outData + dstOffset, block, false, STB_DXT_NORMAL);
 				dstOffset += 8;
 			}
 		}
@@ -257,7 +263,7 @@ void TextureImporter::GenerateFaceBC4(uint32_t minMipLevel, uint32_t faceIterato
 }
 
 void TextureImporter::OutputDds(uint8_t* outData, uint32_t contentSize) {
-	bool shouldGenerateMips = false;
+	bool shouldGenerateMips = true;
 
 	DDSHeader outHeader;
 	std::memset(&outHeader, 0, sizeof(outHeader));
