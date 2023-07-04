@@ -6,7 +6,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_DXT_IMPLEMENTATION
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image.h>
+#include <stb_image_write.h>
 #include <stb_dxt.h>
 #include <stb_image_resize.h>
 
@@ -16,31 +18,45 @@
 #include "TextureImporter.hpp"
 using namespace Grindstone::Importers;
 
-const unsigned int blockWidth = 4;
+const uint32_t blockWidth = 4;
 
 void TextureImporter::ExtractBlock(
-	const unsigned char* inPtr,
-	unsigned char* colorBlock
+	const uint8_t* inPtr,
+	const uint32_t levelWidth,
+	uint8_t* colorBlock
 ) {
-	for (int j = 0; j < 4; j++) {
-		memcpy(&colorBlock[j * texChannels * blockWidth], inPtr, texChannels * blockWidth);
-		inPtr += texWidth * texChannels;
+	for (uint32_t dstRow = 0; dstRow < 4; dstRow++) {
+		for (uint32_t dstCol = 0; dstCol < 4; dstCol++) {
+			for (uint32_t dstChannel = 0; dstChannel < texChannels; dstChannel++) {
+				uint32_t srcIndex = ((dstRow * levelWidth + dstCol) * texChannels) + dstChannel;
+				uint32_t dstIndex = ((dstRow * 4 + dstCol) * texChannels) + dstChannel;
+				colorBlock[dstIndex] = inPtr[srcIndex];
+			}
+		}
 	}
 }
 
 
 void TextureImporter::Import(std::filesystem::path& path) {
 	this->path = path;
-	sourcePixels = stbi_load(path.string().c_str(), &texWidth, &texHeight, &texChannels, 4);
+	int width, height, channels;
+	sourcePixels = stbi_load(path.string().c_str(), &width, &height, &channels, 4);
 	if (!sourcePixels) {
 		throw std::runtime_error("Unable to load texture!");
 	}
+
+	texWidth = static_cast<uint32_t>(width);
+	texHeight = static_cast<uint32_t>(height);
+	texChannels = static_cast<uint32_t>(channels);
 
 	metaFile = new MetaFile(path);
 
 	Compression compression;
 	if (texChannels == 4) {
 		compression = Compression::BC3;
+	}
+	if (texChannels == 1) {
+		compression = Compression::BC4;
 	}
 	else {
 		compression = Compression::BC1;
@@ -50,6 +66,9 @@ void TextureImporter::Import(std::filesystem::path& path) {
 	case Compression::BC1:
 	case Compression::BC3:
 		ConvertBC123();
+		break;
+	case Compression::BC4:
+		ConvertBC4();
 		break;
 	default:
 		delete sourcePixels;
@@ -63,21 +82,27 @@ Grindstone::Uuid TextureImporter::GetUuid() {
 	return uuid;
 }
 
-unsigned char TextureImporter::CombinePixels(unsigned char* pixelSrc) {
-	return (*pixelSrc + *(pixelSrc + 4) + *(pixelSrc + 8) + *(pixelSrc + 12)) / 4;
+uint8_t TextureImporter::CombinePixels(uint8_t* pixelSrc, uint64_t index, uint64_t pitch) {
+	uint32_t pixelA = static_cast<uint8_t>(*(pixelSrc + index));
+	uint32_t pixelB = static_cast<uint8_t>(*(pixelSrc + (index + texChannels)));
+	uint32_t pixelC = static_cast<uint8_t>(*(pixelSrc + (index + pitch)));
+	uint32_t pixelD = static_cast<uint8_t>(*(pixelSrc + (index + pitch + texChannels)));
+	uint32_t average = (pixelA + pixelB + pixelC + pixelD) / 4;
+	return static_cast<uint8_t>(average);
 }
 
-unsigned char *TextureImporter::CreateMip(unsigned char *pixel, int width, int height) {
-	int size = width * height * texChannels;
-	unsigned char *mip = new unsigned char[size];
-	int dst = -1;
-	for (int srcRow = 0; srcRow < height; srcRow++) {
-		for (int srcCol = 0; srcCol < width; srcCol++) {
-			int src = (srcRow * width + srcCol) * texChannels;
-			mip[++dst] = CombinePixels(pixel + src);
-			mip[++dst] = CombinePixels(pixel + src + 1);
-			mip[++dst] = CombinePixels(pixel + src + 2);
-			mip[++dst] = CombinePixels(pixel + src + 3);
+uint8_t *TextureImporter::CreateMip(uint8_t *pixel, uint32_t width, uint32_t height) {
+	uint64_t pitch = static_cast<uint64_t>(width * 2 * texChannels);
+	uint64_t size = static_cast<uint64_t>(pitch * height * 2);
+	uint8_t *mip = new uint8_t[size];
+	uint64_t dst = 0;
+	for (uint64_t srcRow = 0; srcRow < height; srcRow++) {
+		for (uint64_t srcCol = 0; srcCol < width; srcCol++) {
+			uint64_t index = (srcRow * pitch) + (srcCol * texChannels);
+			uint8_t* src = pixel + index;
+			for (uint64_t channelIndex = 0; channelIndex < texChannels; ++channelIndex) {
+				mip[dst++] = CombinePixels(src, index + channelIndex, pitch);
+			}
 		}
 	}
 
@@ -89,13 +114,13 @@ void TextureImporter::ConvertBC123() {
 	// if (isSixSidedCubemap)
 	// 	size *= 6;
 
-	bool shouldGenerateMips = false;
+	bool shouldGenerateMips = true;
 	int mipMapCount = shouldGenerateMips ?
 		CalculateMipMapLevelCount(texWidth, texHeight)
 		: 1;
 
 	int outputContentSize = 0;
-	unsigned int blockSize = (compression == Compression::BC1) ? 8 : 16;
+	uint32_t blockSize = (compression == Compression::BC1) ? 8 : 16;
 	int mipWidth = texWidth;
 	int mipHeight = texHeight;
 	for (int i = 0; i < mipMapCount; i++) {
@@ -106,61 +131,132 @@ void TextureImporter::ConvertBC123() {
 		mipHeight /= 2;
 	}
 
-	unsigned char* outData = new unsigned char[outputContentSize];
-	int dstOffset = 0;
-	unsigned char block[64];
-
-	int minMipLevel = std::max(mipMapCount - 2, 1);
 	int faceCount = isSixSidedCubemap ? 6 : 1;
-	int levelWidth = texWidth;
-	int levelHeight = texHeight;
+	outputContentSize *= faceCount;
+
+	uint8_t* outData = new uint8_t[outputContentSize];
+	int minMipLevel = std::max(mipMapCount - 2, 1);
 	for (int faceIterator = 0; faceIterator < faceCount; faceIterator++) {
-		unsigned char* mipSourcePtr = sourcePixels;
-		for (int mipLevelIterator = 0; mipLevelIterator < minMipLevel; mipLevelIterator++) {
-			if (!shouldGenerateMips) {
-				mipSourcePtr = &sourcePixels[mipLevelIterator];
-			}
-
-			for (int mipRow = 0; mipRow < levelHeight; mipRow += blockWidth) {
-				unsigned char *ptr = mipSourcePtr + (mipRow * levelWidth * texChannels);
-				for (int mipCol = 0; mipCol < levelWidth; mipCol += blockWidth) {
-					ExtractBlock(ptr, block);
-					stb_compress_dxt_block(&outData[dstOffset], block, false, STB_DXT_NORMAL);
-					ptr += blockWidth * texChannels;
-					dstOffset += 8;
-				}
-			}
-
-			levelWidth /= 2;
-			levelHeight /= 2;
-
-			if (shouldGenerateMips) {
-				unsigned char *temp_mip = mipSourcePtr;
-
-				if (mipLevelIterator - 1 != minMipLevel) {
-					mipSourcePtr = CreateMip(temp_mip, levelWidth, levelHeight);
-				}
-
-				if (mipLevelIterator != 0) {
-					delete[] temp_mip;
-				}
-			}
-
-			if (levelWidth < 4) {
-				break;
-			}
-		}
-
-		/*memcpy(&outData[offset], &outData[offset], 8); // 2x2
-		offset += 8;
-		memcpy(&outData[offset], &outData[offset], 8); // 1x1
-		offset += 8;*/
+		GenerateFaceBC123(minMipLevel, faceIterator, outData);
 	}
 
 	OutputDds(outData, outputContentSize);
 }
 
-void TextureImporter::OutputDds(unsigned char* outData, int contentSize) {
+
+void TextureImporter::ConvertBC4() {
+	bool isSixSidedCubemap = false;
+	// if (isSixSidedCubemap)
+	// 	size *= 6;
+
+	bool shouldGenerateMips = true;
+	int mipMapCount = shouldGenerateMips ?
+		CalculateMipMapLevelCount(texWidth, texHeight)
+		: 1;
+
+	int outputContentSize = 0;
+	uint32_t blockSize = 8;
+	int mipWidth = texWidth;
+	int mipHeight = texHeight;
+	for (int i = 0; i < mipMapCount; i++) {
+		int mipsize = ((mipWidth + 3) / 4) * ((mipHeight + 3) / 4) * blockSize;
+		outputContentSize += mipsize;
+
+		mipWidth /= 2;
+		mipHeight /= 2;
+	}
+
+	int faceCount = isSixSidedCubemap ? 6 : 1;
+	outputContentSize *= faceCount;
+
+	uint8_t* outData = new uint8_t[outputContentSize];
+	int minMipLevel = std::max(mipMapCount, 1);
+	for (int faceIterator = 0; faceIterator < faceCount; faceIterator++) {
+		GenerateFaceBC4(minMipLevel, faceIterator, outData);
+	}
+
+	OutputDds(outData, outputContentSize);
+}
+
+void TextureImporter::GenerateMipList(uint32_t minMipLevel, std::vector<uint8_t*>& uncompressedMips) {
+	uint32_t levelWidth = texWidth;
+	uint32_t levelHeight = texHeight;
+
+	uncompressedMips.resize(minMipLevel);
+	uncompressedMips[0] = sourcePixels;
+	std::filesystem::path filename = std::filesystem::path("D:/MipGen") / path.filename();
+	stbi_write_tga(filename.string().c_str(), levelWidth, levelHeight, texChannels, uncompressedMips[0]);
+	for (uint32_t mipLevelIterator = 1; mipLevelIterator < minMipLevel; mipLevelIterator++) {
+		levelWidth /= 2;
+		levelHeight /= 2;
+
+		uncompressedMips[mipLevelIterator] = CreateMip(uncompressedMips[mipLevelIterator - 1], levelWidth, levelHeight);
+
+		std::string extension = "_mip" + std::to_string(mipLevelIterator) + ".tga";
+		std::string fileName = path.filename().replace_extension("").string() + extension;
+		std::filesystem::path filename = std::filesystem::path("D:/MipGen") / fileName;
+		stbi_write_tga(filename.string().c_str(), levelWidth, levelHeight, texChannels, uncompressedMips[mipLevelIterator]);
+	}
+}
+
+void TextureImporter::GenerateFaceBC123(uint32_t minMipLevel, uint32_t faceIterator, uint8_t* outData) {
+	uint32_t dstOffset = 0;
+	uint8_t block[64];
+
+	std::vector<uint8_t*> uncompressedMips;
+	GenerateMipList(minMipLevel, uncompressedMips);
+
+	uint32_t levelWidth = texWidth;
+	uint32_t levelHeight = texHeight;
+
+	bool hasAlpha = texChannels == 4;
+	for (uint32_t mipLevelIterator = 0; mipLevelIterator < minMipLevel; mipLevelIterator++) {
+		uint8_t* mipSource = uncompressedMips[mipLevelIterator];
+
+		for (uint32_t mipRow = 0; mipRow < levelHeight; mipRow += blockWidth) {
+			uint8_t* ptr = mipSource + (mipRow * levelWidth * texChannels);
+			for (uint32_t mipCol = 0; mipCol < levelWidth; mipCol += blockWidth) {
+				ExtractBlock(ptr, levelWidth, block);
+				stb_compress_dxt_block(&outData[dstOffset], block, hasAlpha, STB_DXT_NORMAL);
+				ptr += blockWidth * texChannels;
+				dstOffset += 8;
+			}
+		}
+
+		levelWidth /= 2;
+		levelHeight /= 2;
+	}
+}
+
+void TextureImporter::GenerateFaceBC4(uint32_t minMipLevel, uint32_t faceIterator, uint8_t* outData) {
+	uint32_t dstOffset = 0;
+	uint8_t block[64];
+
+	std::vector<uint8_t*> uncompressedMips;
+	GenerateMipList(minMipLevel, uncompressedMips);
+
+	uint32_t levelWidth = texWidth;
+	uint32_t levelHeight = texHeight;
+
+	for (uint32_t mipLevelIterator = 0; mipLevelIterator < minMipLevel; mipLevelIterator++) {
+		uint8_t* mipSource = uncompressedMips[mipLevelIterator];
+
+		for (uint32_t mipRow = 0; mipRow < levelHeight; mipRow += blockWidth) {
+			uint8_t* ptr = mipSource + (mipRow * levelWidth * texChannels);
+			for (uint32_t mipCol = 0; mipCol < levelWidth; mipCol += blockWidth) {
+				ExtractBlock(ptr, levelWidth, block);
+				stb_compress_bc4_block(&outData[dstOffset], block);
+				ptr += blockWidth * texChannels;
+				dstOffset += 8;
+			}
+		}
+
+		levelWidth /= 2;
+		levelHeight /= 2;
+	}
+}
+
+void TextureImporter::OutputDds(uint8_t* outData, uint32_t contentSize) {
 	bool shouldGenerateMips = false;
 
 	DDSHeader outHeader;
@@ -192,6 +288,10 @@ void TextureImporter::OutputDds(unsigned char* outData, int contentSize) {
 		outHeader.dwPitchOrLinearSize = texWidth * texHeight;
 		outHeader.ddspf.dwFourCC = FOURCC_DXT5;
 		break;
+	case Compression::BC4:
+		outHeader.dwPitchOrLinearSize = texWidth * texHeight / 2;
+		outHeader.ddspf.dwFourCC = FOURCC_BC4;
+		break;
 	}
 	char mark[] = { 'G', 'R', 'I', 'N', 'D', 'S', 'T', 'O', 'N', 'E' };
 	std::memcpy(&outHeader.dwReserved1, mark, sizeof(mark));
@@ -214,9 +314,9 @@ void TextureImporter::OutputDds(unsigned char* outData, int contentSize) {
 	delete[] outData;
 }
 
-int TextureImporter::CalculateMipMapLevelCount(int width, int height) {
-	int size = std::min(width, height);
-	return (int)std::log2(size) - 1;
+uint32_t TextureImporter::CalculateMipMapLevelCount(uint32_t width, uint32_t height) {
+	uint32_t size = std::min(width, height);
+	return static_cast<uint32_t>(std::log2(size) - 1);
 }
 
 void Grindstone::Importers::ImportTexture(std::filesystem::path& inputPath) {
