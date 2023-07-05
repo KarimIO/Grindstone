@@ -136,7 +136,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore), graph
 	systemPanel = new SystemPanel(engineCore->GetSystemRegistrar());
 	controlBar = nullptr; //new ControlBar();
 	menubar = new Menubar(this);
-	statusBar = nullptr; //new StatusBar();
+	statusBar = new StatusBar();
 }
 
 ImguiEditor::~ImguiEditor() {
@@ -337,7 +337,7 @@ void ImguiEditor::Render() {
 	buildPopup->Render();
 	userSettingsWindow->Render();
 	projectSettingsWindow->Render();
-	// statusBar->Render();
+	statusBar->Render();
 }
 
 void ImguiEditor::ShowModelModal() {
