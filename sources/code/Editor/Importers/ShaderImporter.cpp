@@ -33,24 +33,6 @@ std::string GetDataTypeName(spirv_cross::SPIRType::BaseType type) {
 	}
 }
 
-std::vector<char> ReadBinaryFile(const char* filename) {
-	std::ifstream file(filename, std::ios::ate | std::ios::binary);
-
-	if (!file.is_open()) {
-		throw std::runtime_error(std::string("Failed to open file ") + filename);
-	}
-
-	size_t fileSize = (size_t)file.tellg();
-	std::vector<char> buffer(fileSize);
-
-	file.seekg(0);
-	file.read(buffer.data(), fileSize);
-
-	file.close();
-
-	return buffer;
-}
-
 std::string ReadTextFile(const char* filename) {
 	std::ifstream ifs(filename);
 
@@ -370,6 +352,11 @@ namespace Grindstone {
 
 		void ShaderImporter::ProcessSubmodule(ShaderType shaderType, const char* extension, const char* glslSource) {
 			std::vector<uint32_t> vkSpirv = ConvertToSpirv(shaderType, extension, glslSource);
+
+			if (vkSpirv.size() == 0) {
+				return;
+			}
+
 			/* TODO: Re-implement this by using preprocessing to handle the descriptor set issue
 			{
 				auto opengGlsl = ConvertToOpenglGlsl(extension, vkSpirv);
@@ -391,7 +378,8 @@ namespace Grindstone {
 			);
 
 			if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
-				throw std::runtime_error(result.GetErrorMessage());
+				Editor::Manager::Print(LogSeverity::Error, "{}", result.GetErrorMessage().c_str());
+				return std::vector<uint32_t>();
 			}
 
 			auto vkSpirv = std::vector<uint32_t>(result.cbegin(), result.cend());
@@ -429,7 +417,8 @@ namespace Grindstone {
 			);
 
 			if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
-				throw std::runtime_error(result.GetErrorMessage());
+				Editor::Manager::Print(LogSeverity::Error, result.GetErrorMessage().c_str());
+				return;
 			}
 
 			OutputUint32ToFile((std::string(extension) + ".ogl.spv").c_str(), std::vector<uint32_t>(result.cbegin(), result.cend()));

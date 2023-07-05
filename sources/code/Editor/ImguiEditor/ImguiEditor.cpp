@@ -45,7 +45,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	// io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-	// SetupFonts();
+	SetupFonts();
 	SetupStyles();
 	SetupColors();
 
