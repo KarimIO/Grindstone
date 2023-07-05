@@ -5,12 +5,13 @@
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
+			class ImguiRenderer;
+
 			class StatusBar {
 			public:
-				StatusBar();
+				StatusBar(ImguiRenderer* imguiRenderer);
 				void Render();
 			private:
-				ImTextureID GetTexture(std::string path);
 				void RenderGit();
 				void RenderGitWhenLoaded();
 				void AlignToRight(float space);
