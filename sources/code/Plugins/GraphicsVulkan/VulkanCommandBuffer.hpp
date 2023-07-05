@@ -10,7 +10,7 @@ namespace Grindstone {
 			VulkanCommandBuffer(CommandBuffer::CreateInfo& createInfo);
 			virtual ~VulkanCommandBuffer() override;
 		public:
-			VkCommandBuffer GetCommandBuffer();
+			virtual VkCommandBuffer GetCommandBuffer();
 		private:
 			virtual void BeginCommandBuffer() override;
 			virtual void BindRenderPass(

@@ -98,10 +98,6 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(std::filesystem::path path
 		return false;
 	}
 
-	if (path.extension().string() == ".glsl") {
-		return true;
-	}
-
 	std::filesystem::path metaFilePath = path.string() + ".meta";
 	if (!std::filesystem::exists(metaFilePath)) {
 		return true;

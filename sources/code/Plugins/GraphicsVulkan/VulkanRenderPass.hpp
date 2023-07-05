@@ -11,7 +11,7 @@ namespace Grindstone {
 			VulkanRenderPass(RenderPass::CreateInfo& createInfo);
 			virtual ~VulkanRenderPass() override;
 		public:
-			VkRenderPass GetRenderPassHandle();
+			virtual VkRenderPass GetRenderPassHandle();
 			uint32_t GetWidth();
 			uint32_t GetHeight();
 		private:

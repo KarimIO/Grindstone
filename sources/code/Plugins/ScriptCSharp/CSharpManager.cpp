@@ -248,6 +248,13 @@ void CSharpManager::LoadAssemblyClasses() {
 
 		ScriptClass* scriptClass = new ScriptClass(classNamespace, className, monoClass);
 		smartComponents[scriptName] = scriptClass;
+		auto& methods = scriptClass->methods;
+		methods.constructor = mono_class_get_method_from_name(monoClass, ".ctor", 0);
+		methods.onAttachComponent = mono_class_get_method_from_name(monoClass, "OnAttachComponent", 0);
+		methods.onStart = mono_class_get_method_from_name(monoClass, "OnStart", 0);
+		methods.onUpdate = mono_class_get_method_from_name(monoClass, "OnUpdate", 0);
+		methods.onEditorUpdate = mono_class_get_method_from_name(monoClass, "OnEditorUpdate", 0);
+		methods.onDelete = mono_class_get_method_from_name(monoClass, "OnDelete", 0);
 
 		int fieldCount = mono_class_num_fields(monoClass);
 		void* iterator = nullptr;
@@ -343,7 +350,7 @@ void CSharpManager::CallRemoveComponent(SceneManagement::Scene* scene, entt::ent
 }
 
 void CSharpManager::QueueReload() {
-	isReloadQueued = true;
+	isReloadQueued = false; // TODO: make true, but it's causing an error
 }
 
 void CSharpManager::PerformReload() {
