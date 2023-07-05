@@ -7,6 +7,9 @@
 #include "EngineCore/Assets/AssetManager.hpp"
 #include "EngineCore/Assets/Textures/TextureAsset.hpp"
 #include "Plugins/GraphicsOpenGL/GLTexture.hpp"
+#include "Plugins/GraphicsVulkan/VulkanTexture.hpp"
+#include "Plugins/GraphicsVulkan/VulkanDescriptorSet.hpp"
+#include "Common/Graphics/Core.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::Editor;
@@ -46,8 +49,39 @@ ImTextureID StatusBar::GetTexture(std::string fileName) {
 		return 0;
 	}
 
-	GraphicsAPI::GLTexture* glTex = (GraphicsAPI::GLTexture*)textureAsset->texture;
+#if 0
+	GraphicsAPI::GLTexture* glTex = static_cast<GraphicsAPI::GLTexture*>(textureAsset->texture);
 	return (ImTextureID)(uint64_t)glTex->GetTexture();
+#else
+	GraphicsAPI::DescriptorSetLayout::Binding layoutBinding{};
+	layoutBinding.bindingId = 0;
+	layoutBinding.type = BindingType::Texture;
+	layoutBinding.count = 1;
+	layoutBinding.stages = ShaderStageBit::Fragment;
+
+	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
+	descriptorSetLayoutCreateInfo.debugName = "Layout";
+	descriptorSetLayoutCreateInfo.bindingCount = 1;
+	descriptorSetLayoutCreateInfo.bindings = &layoutBinding;
+	auto layout = Editor::Manager::GetEngineCore().GetGraphicsCore()->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+
+	GraphicsAPI::DescriptorSet::Binding binding{};
+	binding.bindingIndex = 0;
+	binding.bindingType = BindingType::Texture;
+	binding.count = 1;
+	binding.itemPtr = textureAsset->texture;
+
+	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
+	descriptorSetCreateInfo.debugName = fileName.c_str();
+	descriptorSetCreateInfo.bindings = &binding;
+	descriptorSetCreateInfo.bindingCount = 1;
+	descriptorSetCreateInfo.layout = layout;
+	auto dset = Editor::Manager::GetEngineCore().GetGraphicsCore()->CreateDescriptorSet(descriptorSetCreateInfo);
+
+	auto descriptor = static_cast<VulkanDescriptorSet*>(dset)->GetDescriptorSet();
+
+	return (ImTextureID)(uint64_t)descriptor;
+#endif
 }
 
 void StatusBar::RenderGit() {

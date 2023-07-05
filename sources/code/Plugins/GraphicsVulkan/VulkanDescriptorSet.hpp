@@ -11,7 +11,7 @@ namespace Grindstone {
 			~VulkanDescriptorSet();
 
 			virtual void ChangeBindings(Binding* bindings, uint32_t bindingCount) override;
-			VkDescriptorSet GetDescriptorSet();
+			virtual VkDescriptorSet GetDescriptorSet();
 		private:
 			VkDescriptorSet descriptorSet = nullptr;
 		};

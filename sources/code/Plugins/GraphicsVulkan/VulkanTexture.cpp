@@ -125,17 +125,19 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 	uint8_t channels = 4;
 	format = TranslateColorFormatToVulkan(createInfo.format, channels);
 
-	bool isDXT =
+	bool isSmallCompressedFormat =
 		createInfo.format == ColorFormat::SRGB_DXT1 ||
 		createInfo.format == ColorFormat::SRGB_ALPHA_DXT1 ||
 		createInfo.format == ColorFormat::RGB_DXT1 ||
-		createInfo.format == ColorFormat::RGBA_DXT1 ||
+		createInfo.format == ColorFormat::RGBA_DXT1;
+	bool isLargeCompressedFormat =
 		createInfo.format == ColorFormat::SRGB_ALPHA_DXT3 ||
 		createInfo.format == ColorFormat::SRGB_ALPHA_DXT5 ||
 		createInfo.format == ColorFormat::RGBA_DXT3 ||
 		createInfo.format == ColorFormat::RGBA_DXT5;
+	bool isDXT = isSmallCompressedFormat || isLargeCompressedFormat;
 
-	uint32_t blockSize = (isDXT) ? 8 : 16;
+	uint32_t blockSize = (isSmallCompressedFormat) ? 8 : 16;
 
 	uint32_t baseMipSize = ((createInfo.width + 3) / 4) * ((createInfo.height + 3) / 4) * blockSize;
 	uint32_t totalImageSize = 0;
@@ -151,7 +153,8 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 		}
 	}
 	else {
-		mipLevels = createInfo.mipmaps > 0 ? createInfo.mipmaps : 1;
+		uint16_t baseMipLevels = createInfo.mipmaps - 2;
+		mipLevels = baseMipLevels > 0 ? baseMipLevels : 1;
 
 		uint32_t width = createInfo.width;
 		uint32_t height = createInfo.height;
