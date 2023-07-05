@@ -1,20 +1,18 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 #include "ControlBar.hpp"
-#include "EngineCore/Assets/AssetManager.hpp"
-#include "EngineCore/Assets/Textures/TextureAsset.hpp"
-#include "Plugins/GraphicsOpenGL/GLTexture.hpp"
+#include "ImguiRenderer.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::Editor;
 using namespace Grindstone::Editor::ImguiEditor;
 
-ControlBar::ControlBar() {
-	pauseIcon = GetTexture("PauseButton.dds");
-	playIcon = GetTexture("PlayButton.dds");
-	translateIcon = GetTexture("Translate.dds");
-	rotateIcon = GetTexture("Rotate.dds");
-	scaleIcon = GetTexture("Scale.dds");
+ControlBar::ControlBar(ImguiRenderer* imguiRenderer) {
+	pauseIcon = imguiRenderer->CreateTexture("controlbarIcons/PauseButton.dds");
+	playIcon = imguiRenderer->CreateTexture("controlbarIcons/PlayButton.dds");
+	translateIcon = imguiRenderer->CreateTexture("controlbarIcons/Translate.dds");
+	rotateIcon = imguiRenderer->CreateTexture("controlbarIcons/Rotate.dds");
+	scaleIcon = imguiRenderer->CreateTexture("controlbarIcons/Scale.dds");
 }
 
 void ControlBar::Render() {
@@ -76,17 +74,4 @@ void ControlBar::RenderManipulationButton(ImTextureID icon, ManipulationMode& se
 	if (RenderButton(icon, buttonMode == selectedMode)) {
 		selectedMode = buttonMode;
 	}
-}
-
-ImTextureID ControlBar::GetTexture(std::string fileName) {
-	std::string path = std::string("../engineassets/editor/controlbarIcons/") + fileName;
-	auto assetManager = Editor::Manager::GetEngineCore().assetManager;
-	auto textureAsset = static_cast<TextureAsset*>(assetManager->GetAsset(Grindstone::AssetType::Texture, path.c_str()));
-
-	if (textureAsset == nullptr) {
-		return 0;
-	}
-
-	GraphicsAPI::GLTexture* glTex = (GraphicsAPI::GLTexture*)textureAsset->texture;
-	return (ImTextureID)(uint64_t)glTex->GetTexture();
 }

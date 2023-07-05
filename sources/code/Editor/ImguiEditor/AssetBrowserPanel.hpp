@@ -17,9 +17,10 @@ namespace Grindstone {
 
 		namespace ImguiEditor {
 			class ImguiEditor;
+			class ImguiRenderer;
 			class AssetBrowserPanel {
 			public:
-				AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor);
+				AssetBrowserPanel(ImguiRenderer* imguiRenderer, EngineCore* engineCore, ImguiEditor* editor);
 				void Render();
 			private:
 				void CreateInitialFileStructure(Directory& directory, std::filesystem::directory_iterator);
@@ -45,11 +46,6 @@ namespace Grindstone {
 			private:
 				Directory& rootDirectory;
 				Directory* currentDirectory;
-
-				struct Icons {
-					GraphicsAPI::Texture* folderTexture;
-					GraphicsAPI::Texture* fileTextures[static_cast<uint16_t>(AssetType::Count)];
-				} iconTextures;
 
 				struct IconsIds {
 					ImTextureID folderIcon;

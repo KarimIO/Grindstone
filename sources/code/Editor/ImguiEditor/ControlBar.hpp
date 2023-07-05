@@ -5,15 +5,16 @@
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
+			class ImguiRenderer;
+
 			class ControlBar {
 			public:
-				ControlBar();
+				ControlBar(ImguiRenderer* imguiRenderer);
 				void Render();
 			private:
 				bool RenderButton(ImTextureID icon, bool isSelected);
 				void RenderManipulationButton(ImTextureID icon, ManipulationMode& selectedMode, ManipulationMode buttonMode);
-				ImTextureID GetTexture(std::string fileName);
-
+				
 				ImVec4 selectedColor;
 				ImVec4 deselectedColor;
 				ImVec4 selectedHighlightColor;

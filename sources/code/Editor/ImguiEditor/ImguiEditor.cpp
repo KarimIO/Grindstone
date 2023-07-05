@@ -35,9 +35,10 @@
 #include "StatusBar.hpp"
 #include "Menubar.hpp"
 #include "ImguiInput.hpp"
+#include "ImguiRenderer.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
-ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore), graphicsCore(engineCore->GetGraphicsCore()) {
+ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -48,77 +49,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore), graph
 	SetupStyles();
 	SetupColors();
 
-	HWND win = GetActiveWindow();
-	ImGui_ImplWin32_Init(win);
-
-#if EDITOR_USE_OPENGL
-	if (gl3wInit()) {
-		Editor::Manager::Print(LogSeverity::Error, "Failed to initialize OpenGL");
-		return;
-	}
-	if (!gl3wIsSupported(3, 2)) {
-		Editor::Manager::Print(LogSeverity::Error, "OpenGL 3.2 not supported\n");
-		return;
-	}
-
-	ImGui_ImplOpenGL3_Init("#version 150");
-#else
-	VkDescriptorPoolSize poolSizes[] = {
-		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
-	};
-
-	VkDescriptorPoolCreateInfo poolInfo = {};
-	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-	poolInfo.maxSets = 1000;
-	poolInfo.poolSizeCount = static_cast<uint32_t>(std::size(poolSizes));
-	poolInfo.pPoolSizes = poolSizes;
-
-	auto vulkanCore = static_cast<GraphicsAPI::VulkanCore*>(graphicsCore);
-
-	if (vkCreateDescriptorPool(vulkanCore->GetDevice(), &poolInfo, nullptr, &imguiPool) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate imgui descriptor pool!");
-	}
-
-	ImGui_ImplVulkan_InitInfo imguiInitInfo{};
-	imguiInitInfo.Instance = vulkanCore->GetInstance();
-	imguiInitInfo.PhysicalDevice = vulkanCore->GetPhysicalDevice();
-	imguiInitInfo.Device = vulkanCore->GetDevice();
-	imguiInitInfo.Queue = vulkanCore->graphicsQueue;
-	imguiInitInfo.DescriptorPool = imguiPool;
-	imguiInitInfo.MinImageCount = 3;
-	imguiInitInfo.ImageCount = 3;
-	imguiInitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-
-	auto window = engineCore->windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
-	auto vulkanRenderPass = static_cast<GraphicsAPI::VulkanRenderPass*>(window->GetRenderPass());
-	ImGui_ImplVulkan_Init(&imguiInitInfo, vulkanRenderPass->GetRenderPassHandle());
-
-	GraphicsAPI::CommandBuffer::CreateInfo commandBufferCreateInfo{};
-
-	commandBuffers.resize(window->GetMaxFramesInFlight());
-	for (size_t i = 0; i < commandBuffers.size(); ++i) {
-		commandBuffers[i] = graphicsCore->CreateCommandBuffer(commandBufferCreateInfo);
-	}
-
-	VkCommandBuffer commandBuffer = vulkanCore->BeginSingleTimeCommands();
-	ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
-	vulkanCore->EndSingleTimeCommands(commandBuffer);
-
-
-	ImGui_ImplVulkan_DestroyFontUploadObjects();
-
-#endif
+	imguiRenderer = ImguiRenderer::Create();
 
 	input = new ImguiInput(io, engineCore);
 
@@ -126,20 +57,23 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore), graph
 	modelConverterModal = new ModelConverterModal();
 	imageConverterModal = new ImageConverterModal();
 	inspectorPanel = new InspectorPanel(engineCore);
-	assetBrowserPanel = nullptr; //new AssetBrowserPanel(engineCore, this);
+	assetBrowserPanel = new AssetBrowserPanel(imguiRenderer, engineCore, this);
 	userSettingsWindow = new Settings::UserSettingsWindow();
 	projectSettingsWindow = new Settings::ProjectSettingsWindow();
 	viewportPanel = nullptr; //new ViewportPanel();
-	consolePanel = nullptr; //new ConsolePanel();
+	consolePanel = new ConsolePanel(imguiRenderer);
 	statsPanel = new StatsPanel();
 	buildPopup = new BuildPopup();
 	systemPanel = new SystemPanel(engineCore->GetSystemRegistrar());
-	controlBar = nullptr; //new ControlBar();
+	controlBar = new ControlBar(imguiRenderer);
 	menubar = new Menubar(this);
-	statusBar = new StatusBar();
+	statusBar = new StatusBar(imguiRenderer);
 }
 
 ImguiEditor::~ImguiEditor() {
+	delete imguiRenderer;
+	delete input;
+
 	delete sceneHeirarchyPanel;
 	delete modelConverterModal;
 	delete imageConverterModal;
@@ -276,61 +210,20 @@ void ImguiEditor::SetupStyles() {
 }
 
 void ImguiEditor::Update() {
-	auto window = engineCore->windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
-	window->AcquireNextImage();
-	auto renderPass = window->GetRenderPass();
-	auto framebuffer = window->GetCurrentFramebuffer();
-	auto currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
-
-	GraphicsAPI::ClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 0.f };
-	GraphicsAPI::ClearDepthStencil clearDepthStencil;
-	clearDepthStencil.depth = 1.0f;
-	clearDepthStencil.stencil = 0;
-	clearDepthStencil.hasDepthStencilAttachment = true;
-
-	currentCommandBuffer->BeginCommandBuffer();
-	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
-
-#if EDITOR_USE_OPENGL
-	ImGui_ImplOpenGL3_NewFrame();
-#else
-	ImGui_ImplVulkan_NewFrame();
-#endif
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-	ImGuizmo::BeginFrame();
-
-#if EDITOR_USE_OPENGL
-	glViewport(0, 0, 800, 600);
-	glClear(GL_COLOR_BUFFER_BIT);
-#endif
-
+	imguiRenderer->PreRender();
 	Render();
-
-	ImGui::Render();
-#if EDITOR_USE_OPENGL
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-#else
-	auto vkCB = static_cast<GraphicsAPI::VulkanCommandBuffer*>(currentCommandBuffer);
-	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vkCB->GetCommandBuffer());
-#endif
-	ImGui::UpdatePlatformWindows();
-	ImGui::RenderPlatformWindowsDefault();
-	currentCommandBuffer->UnbindRenderPass();
-	currentCommandBuffer->EndCommandBuffer();
-	window->SubmitCommandBuffer(currentCommandBuffer);
-	window->PresentSwapchain();
+	imguiRenderer->PostRender();
 }
 
 void ImguiEditor::Render() {
 	RenderDockspace();
-	// controlBar->Render();
+	controlBar->Render();
 	modelConverterModal->Render();
 	imageConverterModal->Render();
 	sceneHeirarchyPanel->Render();
 	// viewportPanel->Render();
-	// consolePanel->Render();
-	// assetBrowserPanel->Render();
+	consolePanel->Render();
+	assetBrowserPanel->Render();
 	systemPanel->Render();
 	statsPanel->Render();
 	inspectorPanel->Render();

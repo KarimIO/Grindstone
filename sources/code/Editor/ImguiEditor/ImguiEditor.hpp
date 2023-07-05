@@ -7,13 +7,10 @@
 namespace Grindstone {
 	class EngineCore;
 
-	namespace GraphicsAPI {
-		class Core;
-		class CommandBuffer;
-	}
-
 	namespace Editor {
 		namespace ImguiEditor {
+			class ImguiRenderer;
+
 			namespace Settings {
 				class UserSettingsWindow;
 				class ProjectSettingsWindow;
@@ -53,7 +50,6 @@ namespace Grindstone {
 				void SetupColors();
 			private:
 				EngineCore* engineCore = nullptr;
-				GraphicsAPI::Core* graphicsCore = nullptr;
 				ImguiInput* input = nullptr;
 				ImageConverterModal* imageConverterModal = nullptr;
 				ModelConverterModal* modelConverterModal = nullptr;
@@ -70,9 +66,7 @@ namespace Grindstone {
 				ControlBar* controlBar = nullptr;
 				StatusBar* statusBar = nullptr;
 				Menubar* menubar = nullptr;
-
-				VkDescriptorPool imguiPool = nullptr;
-				std::vector<GraphicsAPI::CommandBuffer*> commandBuffers;
+				ImguiRenderer* imguiRenderer = nullptr;
 			};
 		}
 	}

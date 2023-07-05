@@ -7,18 +7,16 @@
 #include "Editor/EditorManager.hpp"
 #include "ConsolePanel.hpp"
 
-#include "EngineCore/Assets/AssetManager.hpp"
-#include "EngineCore/Assets/Textures/TextureAsset.hpp"
-#include "Plugins/GraphicsOpenGL/GLTexture.hpp"
+#include "ImguiRenderer.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::Editor::ImguiEditor;
 
-ConsolePanel::ConsolePanel() {
-	consoleErrorIcon = GetTexture("ConsoleError.dds");
-	consoleWarningIcon = GetTexture("ConsoleWarning.dds");
-	consoleTraceIcon = GetTexture("ConsoleTrace.dds");
-	consoleInfoIcon = GetTexture("ConsoleInfo.dds");
+ConsolePanel::ConsolePanel(ImguiRenderer* imguiRenderer) {
+	consoleErrorIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleError.dds");
+	consoleWarningIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleWarning.dds");
+	consoleTraceIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleTrace.dds");
+	consoleInfoIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleInfo.dds");
 
 	auto dispatcher = Editor::Manager::GetEngineCore().GetEventDispatcher();
 	dispatcher->AddEventListener(Events::EventType::PrintMessage, std::bind(&ConsolePanel::AddConsoleMessage, this, std::placeholders::_1));
@@ -78,17 +76,4 @@ bool ConsolePanel::AddConsoleMessage(Grindstone::Events::BaseEvent* ev) {
 	}
 
 	return true;
-}
-
-ImTextureID ConsolePanel::GetTexture(std::string fileName) {
-	std::string path = std::string("../engineassets/editor/consoleIcons/") + fileName;
-	auto assetManager = Editor::Manager::GetEngineCore().assetManager;
-	auto textureAsset = static_cast<TextureAsset*>(assetManager->GetAsset(Grindstone::AssetType::Texture, path.c_str()));
-
-	if (textureAsset == nullptr) {
-		return 0;
-	}
-
-	GraphicsAPI::GLTexture* glTex = (GraphicsAPI::GLTexture*)textureAsset->texture;
-	return (ImTextureID)(uint64_t)glTex->GetTexture();
 }

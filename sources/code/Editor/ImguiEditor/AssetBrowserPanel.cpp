@@ -21,7 +21,7 @@
 #include "EngineCore/Assets/Textures/TextureImporter.hpp"
 #include "EngineCore/Assets/Shaders/ShaderImporter.hpp"
 #include "EngineCore/Assets/Materials/MaterialImporter.hpp"
-#include "Plugins/GraphicsOpenGL/GLTexture.hpp"
+#include "ImguiRenderer.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
 const double REFRESH_INTERVAL = 1.0;
@@ -55,40 +55,16 @@ std::filesystem::path CreateDefaultMaterial(std::filesystem::path& currentPath) 
 	return path;
 }
 
-ImTextureID GetIdFromTexture(GraphicsAPI::Texture* texture) {
-	GraphicsAPI::GLTexture* glTex = (GraphicsAPI::GLTexture*)texture;
-	return (ImTextureID)(uint64_t)glTex->GetTexture();
-}
-
-void PrepareIcon(Grindstone::Assets::AssetManager* assetManager, std::string path, GraphicsAPI::Texture*& texture, ImTextureID& id) {
-	auto textureAsset = static_cast<TextureAsset*>(assetManager->GetAsset(Grindstone::AssetType::Texture, path.c_str()));
-
-	if (textureAsset == nullptr) {
-		return;
-	}
-
-	texture = textureAsset->texture;
-	id = GetIdFromTexture(texture);
-}
-
-#define PREPARE_ICON(assetType) PrepareIcon(assetManager, std::string("../engineassets/editor/assetIcons/") + GetAssetTypeToString(assetType) + ".dds", iconTextures.fileTextures[static_cast<uint16_t>(assetType)], iconIds.fileIcons[static_cast<uint16_t>(assetType)])
-
-AssetBrowserPanel::AssetBrowserPanel(EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore), rootDirectory(Editor::Manager::GetFileManager().GetRootDirectory()) {
+AssetBrowserPanel::AssetBrowserPanel(ImguiRenderer* imguiRenderer, EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore), rootDirectory(Editor::Manager::GetFileManager().GetRootDirectory()) {
 	pathToRename = "";
 
-	auto assetManager = engineCore->assetManager;
-	PrepareIcon(assetManager, "../engineassets/editor/assetIcons/Folder.dds", iconTextures.folderTexture, iconIds.folderIcon);
+	iconIds.folderIcon = imguiRenderer->CreateTexture("assetIcons/Folder.dds");
 
-	PREPARE_ICON(AssetType::Undefined);
-	PREPARE_ICON(AssetType::Texture);
-	PREPARE_ICON(AssetType::Shader);
-	PREPARE_ICON(AssetType::Material);
-	PREPARE_ICON(AssetType::AudioClip);
-	PREPARE_ICON(AssetType::Mesh3d);
-	PREPARE_ICON(AssetType::Rig);
-	PREPARE_ICON(AssetType::Animation);
-	PREPARE_ICON(AssetType::Script);
-	PREPARE_ICON(AssetType::Scene);
+	for (uint16_t i = 0; i < static_cast<uint16_t>(AssetType::Count); ++i) {
+		auto assetType = static_cast<AssetType>(i);
+
+		iconIds.fileIcons[i] = imguiRenderer->CreateTexture(std::string("assetIcons/") + std::string(GetAssetTypeToString(assetType)) + ".dds");
+	}
 
 	currentDirectory = &rootDirectory;
 }

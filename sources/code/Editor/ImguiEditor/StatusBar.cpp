@@ -4,21 +4,16 @@
 #include "StatusBar.hpp"
 #include "Editor/GitManager.hpp"
 #include "Editor/EditorManager.hpp"
-#include "EngineCore/Assets/AssetManager.hpp"
-#include "EngineCore/Assets/Textures/TextureAsset.hpp"
-#include "Plugins/GraphicsOpenGL/GLTexture.hpp"
-#include "Plugins/GraphicsVulkan/VulkanTexture.hpp"
-#include "Plugins/GraphicsVulkan/VulkanDescriptorSet.hpp"
-#include "Common/Graphics/Core.hpp"
+#include "ImguiRenderer.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::Editor;
 using namespace Grindstone::Editor::ImguiEditor;
 
-StatusBar::StatusBar() {
-	gitBranchIcon = GetTexture("GitBranch.dds");
-	gitAheadBehindIcon = GetTexture("GitAheadBehind.dds");
-	gitChangesIcon = GetTexture("GitChanges.dds");
+StatusBar::StatusBar(ImguiRenderer* imguiRenderer) {
+	gitBranchIcon = imguiRenderer->CreateTexture("gitIcons/GitBranch.dds");
+	gitAheadBehindIcon = imguiRenderer->CreateTexture("gitIcons/GitAheadBehind.dds");
+	gitChangesIcon = imguiRenderer->CreateTexture("gitIcons/GitChanges.dds");
 }
 
 void StatusBar::Render() {
@@ -38,50 +33,6 @@ void StatusBar::Render() {
 	}
 	ImGui::PopStyleVar();
 	ImGui::PopStyleColor();
-}
-
-ImTextureID StatusBar::GetTexture(std::string fileName) {
-	std::string path = std::string("../engineassets/editor/gitIcons/") + fileName;
-	auto assetManager = Editor::Manager::GetEngineCore().assetManager;
-	auto textureAsset = static_cast<TextureAsset*>(assetManager->GetAsset(Grindstone::AssetType::Texture, path.c_str()));
-
-	if (textureAsset == nullptr) {
-		return 0;
-	}
-
-#if 0
-	GraphicsAPI::GLTexture* glTex = static_cast<GraphicsAPI::GLTexture*>(textureAsset->texture);
-	return (ImTextureID)(uint64_t)glTex->GetTexture();
-#else
-	GraphicsAPI::DescriptorSetLayout::Binding layoutBinding{};
-	layoutBinding.bindingId = 0;
-	layoutBinding.type = BindingType::Texture;
-	layoutBinding.count = 1;
-	layoutBinding.stages = ShaderStageBit::Fragment;
-
-	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
-	descriptorSetLayoutCreateInfo.debugName = "Layout";
-	descriptorSetLayoutCreateInfo.bindingCount = 1;
-	descriptorSetLayoutCreateInfo.bindings = &layoutBinding;
-	auto layout = Editor::Manager::GetEngineCore().GetGraphicsCore()->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
-
-	GraphicsAPI::DescriptorSet::Binding binding{};
-	binding.bindingIndex = 0;
-	binding.bindingType = BindingType::Texture;
-	binding.count = 1;
-	binding.itemPtr = textureAsset->texture;
-
-	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
-	descriptorSetCreateInfo.debugName = fileName.c_str();
-	descriptorSetCreateInfo.bindings = &binding;
-	descriptorSetCreateInfo.bindingCount = 1;
-	descriptorSetCreateInfo.layout = layout;
-	auto dset = Editor::Manager::GetEngineCore().GetGraphicsCore()->CreateDescriptorSet(descriptorSetCreateInfo);
-
-	auto descriptor = static_cast<VulkanDescriptorSet*>(dset)->GetDescriptorSet();
-
-	return (ImTextureID)(uint64_t)descriptor;
-#endif
 }
 
 void StatusBar::RenderGit() {
