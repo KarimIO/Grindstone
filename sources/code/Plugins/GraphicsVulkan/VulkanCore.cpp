@@ -26,6 +26,7 @@
 #include "VulkanDescriptorSet.hpp"
 #include "VulkanDescriptorSetLayout.hpp"
 #include "VulkanFormat.hpp"
+#include "VulkanUtils.hpp"
 #include <set>
 #include <algorithm>
 #include <array>
@@ -508,6 +509,14 @@ VkDevice VulkanCore::GetDevice() {
 
 VkPhysicalDevice VulkanCore::GetPhysicalDevice() {
 	return physicalDevice;
+}
+
+VkCommandBuffer VulkanCore::BeginSingleTimeCommands() {
+	return GraphicsAPI::BeginSingleTimeCommands();
+}
+
+void VulkanCore::EndSingleTimeCommands(VkCommandBuffer commandBuffer) {
+	GraphicsAPI::EndSingleTimeCommands(commandBuffer);
 }
 
 VkCommandPool VulkanCore::GetGraphicsCommandPool() {

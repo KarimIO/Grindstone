@@ -1,9 +1,16 @@
 #pragma once
 
+#include <vector>
 #include <entt/entt.hpp>
+#include <vulkan/vulkan.h>
 
 namespace Grindstone {
 	class EngineCore;
+
+	namespace GraphicsAPI {
+		class Core;
+		class CommandBuffer;
+	}
 
 	namespace Editor {
 		namespace ImguiEditor {
@@ -46,6 +53,7 @@ namespace Grindstone {
 				void SetupColors();
 			private:
 				EngineCore* engineCore = nullptr;
+				GraphicsAPI::Core* graphicsCore = nullptr;
 				ImguiInput* input = nullptr;
 				ImageConverterModal* imageConverterModal = nullptr;
 				ModelConverterModal* modelConverterModal = nullptr;
@@ -64,7 +72,7 @@ namespace Grindstone {
 				Menubar* menubar = nullptr;
 
 				VkDescriptorPool imguiPool = nullptr;
-				VkRenderPass renderPass = nullptr;
+				std::vector<GraphicsAPI::CommandBuffer*> commandBuffers;
 			};
 		}
 	}

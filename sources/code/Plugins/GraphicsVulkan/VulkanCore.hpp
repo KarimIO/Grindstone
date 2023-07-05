@@ -38,9 +38,11 @@ namespace Grindstone {
 		public:
 			QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 			uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-			VkInstance GetInstance();
-			VkDevice GetDevice();
-			VkPhysicalDevice GetPhysicalDevice();
+			virtual VkInstance GetInstance();
+			virtual VkDevice GetDevice();
+			virtual VkPhysicalDevice GetPhysicalDevice();
+			virtual VkCommandBuffer BeginSingleTimeCommands();
+			virtual void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
 			VkCommandPool GetGraphicsCommandPool();
 			std::function<void(LogSeverity, const char*)> logFunction;
 		private:

@@ -6,12 +6,14 @@
 #include "GL/gl3w.h"
 #else
 #include <imgui_impl_vulkan.h>
+#include <Plugins/GraphicsVulkan/VulkanCore.hpp>
+#include <Plugins/GraphicsVulkan/VulkanRenderPass.hpp>
+#include <Plugins/GraphicsVulkan/VulkanCommandBuffer.hpp>
 #endif
 #include <imgui_impl_win32.h>
 #include <ImGuizmo.h>
 #include <Windows.h>
 #include <Winuser.h>
-#include <Plugins/GraphicsVulkan/VulkanCore.hpp>
 
 #include "Common/Window/WindowManager.hpp"
 #include "EngineCore/EngineCore.hpp"
@@ -35,16 +37,19 @@
 #include "ImguiInput.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
-ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
+ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore), graphicsCore(engineCore->GetGraphicsCore()) {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	// io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-	SetupFonts();
+	// SetupFonts();
 	SetupStyles();
 	SetupColors();
+
+	HWND win = GetActiveWindow();
+	ImGui_ImplWin32_Init(win);
 
 #if EDITOR_USE_OPENGL
 	if (gl3wInit()) {
@@ -55,9 +60,6 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 		Editor::Manager::Print(LogSeverity::Error, "OpenGL 3.2 not supported\n");
 		return;
 	}
-
-	HWND win = GetActiveWindow();
-	ImGui_ImplWin32_Init(win);
 
 	ImGui_ImplOpenGL3_Init("#version 150");
 #else
@@ -79,10 +81,10 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 	poolInfo.maxSets = 1000;
-	poolInfo.poolSizeCount = std::size(poolSizes);
+	poolInfo.poolSizeCount = static_cast<uint32_t>(std::size(poolSizes));
 	poolInfo.pPoolSizes = poolSizes;
 
-	auto vulkanCore = static_cast<GraphicsAPI::VulkanCore*>(engineCore->GetGraphicsCore());
+	auto vulkanCore = static_cast<GraphicsAPI::VulkanCore*>(graphicsCore);
 
 	if (vkCreateDescriptorPool(vulkanCore->GetDevice(), &poolInfo, nullptr, &imguiPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate imgui descriptor pool!");
@@ -98,13 +100,23 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	imguiInitInfo.ImageCount = 3;
 	imguiInitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-	ImGui_ImplVulkan_Init(&imguiInitInfo, renderPass);
+	auto window = engineCore->windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	auto vulkanRenderPass = static_cast<GraphicsAPI::VulkanRenderPass*>(window->GetRenderPass());
+	ImGui_ImplVulkan_Init(&imguiInitInfo, vulkanRenderPass->GetRenderPassHandle());
 
-	/*
+	GraphicsAPI::CommandBuffer::CreateInfo commandBufferCreateInfo{};
+
+	commandBuffers.resize(window->GetMaxFramesInFlight());
+	for (size_t i = 0; i < commandBuffers.size(); ++i) {
+		commandBuffers[i] = graphicsCore->CreateCommandBuffer(commandBufferCreateInfo);
+	}
+
 	VkCommandBuffer commandBuffer = vulkanCore->BeginSingleTimeCommands();
 	ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
 	vulkanCore->EndSingleTimeCommands(commandBuffer);
-	*/
+
+
+	ImGui_ImplVulkan_DestroyFontUploadObjects();
 
 #endif
 
@@ -114,17 +126,17 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	modelConverterModal = new ModelConverterModal();
 	imageConverterModal = new ImageConverterModal();
 	inspectorPanel = new InspectorPanel(engineCore);
-	assetBrowserPanel = new AssetBrowserPanel(engineCore, this);
+	assetBrowserPanel = nullptr; //new AssetBrowserPanel(engineCore, this);
 	userSettingsWindow = new Settings::UserSettingsWindow();
 	projectSettingsWindow = new Settings::ProjectSettingsWindow();
-	viewportPanel = new ViewportPanel();
-	consolePanel = new ConsolePanel();
+	viewportPanel = nullptr; //new ViewportPanel();
+	consolePanel = nullptr; //new ConsolePanel();
 	statsPanel = new StatsPanel();
 	buildPopup = new BuildPopup();
 	systemPanel = new SystemPanel(engineCore->GetSystemRegistrar());
-	controlBar = new ControlBar();
+	controlBar = nullptr; //new ControlBar();
 	menubar = new Menubar(this);
-	statusBar = new StatusBar();
+	statusBar = nullptr; //new StatusBar();
 }
 
 ImguiEditor::~ImguiEditor() {
@@ -264,6 +276,21 @@ void ImguiEditor::SetupStyles() {
 }
 
 void ImguiEditor::Update() {
+	auto window = engineCore->windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	window->AcquireNextImage();
+	auto renderPass = window->GetRenderPass();
+	auto framebuffer = window->GetCurrentFramebuffer();
+	auto currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
+
+	GraphicsAPI::ClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 0.f };
+	GraphicsAPI::ClearDepthStencil clearDepthStencil;
+	clearDepthStencil.depth = 1.0f;
+	clearDepthStencil.stencil = 0;
+	clearDepthStencil.hasDepthStencilAttachment = true;
+
+	currentCommandBuffer->BeginCommandBuffer();
+	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
+
 #if EDITOR_USE_OPENGL
 	ImGui_ImplOpenGL3_NewFrame();
 #else
@@ -280,33 +307,37 @@ void ImguiEditor::Update() {
 
 	Render();
 
-	// Rendering
 	ImGui::Render();
 #if EDITOR_USE_OPENGL
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 #else
-	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+	auto vkCB = static_cast<GraphicsAPI::VulkanCommandBuffer*>(currentCommandBuffer);
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vkCB->GetCommandBuffer());
 #endif
 	ImGui::UpdatePlatformWindows();
 	ImGui::RenderPlatformWindowsDefault();
+	currentCommandBuffer->UnbindRenderPass();
+	currentCommandBuffer->EndCommandBuffer();
+	window->SubmitCommandBuffer(currentCommandBuffer);
+	window->PresentSwapchain();
 }
 
 void ImguiEditor::Render() {
 	RenderDockspace();
-	controlBar->Render();
+	// controlBar->Render();
 	modelConverterModal->Render();
 	imageConverterModal->Render();
 	sceneHeirarchyPanel->Render();
-	viewportPanel->Render();
-	consolePanel->Render();
-	assetBrowserPanel->Render();
+	// viewportPanel->Render();
+	// consolePanel->Render();
+	// assetBrowserPanel->Render();
 	systemPanel->Render();
 	statsPanel->Render();
 	inspectorPanel->Render();
 	buildPopup->Render();
 	userSettingsWindow->Render();
 	projectSettingsWindow->Render();
-	statusBar->Render();
+	// statusBar->Render();
 }
 
 void ImguiEditor::ShowModelModal() {
