@@ -135,11 +135,13 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 		createInfo.format == ColorFormat::SRGB_ALPHA_DXT5 ||
 		createInfo.format == ColorFormat::RGBA_DXT3 ||
 		createInfo.format == ColorFormat::RGBA_DXT5;
-	bool isDXT = isSmallCompressedFormat || isLargeCompressedFormat;
+	bool isCompressedFormat = isSmallCompressedFormat || isLargeCompressedFormat;
 
 	uint32_t blockSize = (isSmallCompressedFormat) ? 8 : 16;
 
-	uint32_t baseMipSize = ((createInfo.width + 3) / 4) * ((createInfo.height + 3) / 4) * blockSize;
+	uint32_t baseMipSize = isCompressedFormat
+		? ((createInfo.width + 3) / 4) * ((createInfo.height + 3) / 4) * blockSize
+		: createInfo.width * createInfo.height * channels;
 	uint32_t totalImageSize = 0;
 
 	bool shouldGenerateMipmaps = createInfo.options.shouldGenerateMipmaps;
@@ -147,19 +149,20 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 		mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(createInfo.width, createInfo.height)))) + 1;
 
 		// If we're DXT, we can't generate mipmaps
-		if (isDXT) {
+		if (isCompressedFormat) {
 			shouldGenerateMipmaps = false;
 			mipLevels = 1;
 		}
 	}
 	else {
-		uint16_t baseMipLevels = createInfo.mipmaps - 2;
-		mipLevels = baseMipLevels > 0 ? baseMipLevels : 1;
+		mipLevels = (createInfo.mipmaps > 2) ? (createInfo.mipmaps - 2) : 1;
 
 		uint32_t width = createInfo.width;
 		uint32_t height = createInfo.height;
 		for (uint32_t i = 0; i < mipLevels; ++i) {
-			uint32_t mipSize = ((width + 3) / 4) * ((height + 3) / 4) * blockSize;
+			uint32_t mipSize = isCompressedFormat
+				? ((width + 3) / 4) * ((width + 3) / 4) * blockSize
+				: height * height * channels;
 			width /= 2;
 			height /= 2;
 			totalImageSize += mipSize;
@@ -218,7 +221,9 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 			region.imageExtent.height = mipHeight;
 			region.imageExtent.depth = 1;
 
-			uint32_t mipSize = ((mipWidth + 3) / 4) * ((mipHeight + 3) / 4) * blockSize;
+			uint32_t mipSize = isCompressedFormat
+				? ((mipWidth + 3) / 4) * ((mipHeight + 3) / 4) * blockSize
+				: mipWidth * mipHeight * channels;
 			offset += mipSize;
 			mipWidth /= 2;
 			mipHeight /= 2;
