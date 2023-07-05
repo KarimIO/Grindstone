@@ -12,6 +12,8 @@
 #include "EngineCore/Assets/Materials/MaterialImporter.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "EngineCore/CoreComponents/Lights/PointLightComponent.hpp"
+#include "EngineCore/CoreComponents/Lights/SpotLightComponent.hpp"
+#include "EngineCore/CoreComponents/Lights/DirectionalLightComponent.hpp"
 #include "EngineCore/AssetRenderer/AssetRendererManager.hpp"
 #include "Common/Event/WindowEvent.hpp"
 #include "EngineCore/Profiling.hpp"
@@ -141,12 +143,6 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	engineUboBinding.type = BindingType::UniformBuffer;
 	engineUboBinding.stages = ShaderStageBit::Vertex | ShaderStageBit::Fragment;
 
-	DescriptorSetLayout::Binding lightUboBinding{};
-	lightUboBinding.bindingId = 0;
-	lightUboBinding.count = 1;
-	lightUboBinding.type = BindingType::UniformBuffer;
-	lightUboBinding.stages = ShaderStageBit::Fragment;
-
 	DescriptorSetLayout::Binding litHdrRenderTargetBinding{};
 	litHdrRenderTargetBinding.bindingId = 1;
 	litHdrRenderTargetBinding.count = 1;
@@ -205,6 +201,12 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	lightingDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightingDescriptorSetLayoutBindings.size());
 	lightingDescriptorSetLayoutCreateInfo.bindings = lightingDescriptorSetLayoutBindings.data();
 	lightingDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(lightingDescriptorSetLayoutCreateInfo);
+
+	DescriptorSetLayout::Binding lightUboBinding{};
+	lightUboBinding.bindingId = 0;
+	lightUboBinding.count = 1;
+	lightUboBinding.type = BindingType::UniformBuffer;
+	lightUboBinding.stages = ShaderStageBit::Fragment;
 
 	DescriptorSetLayout::CreateInfo lightingUBODescriptorSetLayoutCreateInfo{};
 	lightingUBODescriptorSetLayoutCreateInfo.debugName = "Pointlight UBO Descriptor Set Layout";
@@ -423,13 +425,7 @@ void DeferredRenderer::CreatePipelines() {
 	uint8_t shaderBits = static_cast<uint8_t>(ShaderStageBit::Vertex | ShaderStageBit::Fragment);
 
 	{
-		if (!assetManager->LoadShaderSet(
-			Uuid("5537b925-96bc-4e1f-8e2a-d66d6dd9bed1"),
-			shaderBits,
-			2,
-			shaderStageCreateInfos,
-			fileData
-		)) {
+		if (!assetManager->LoadShaderSet(Uuid("5537b925-96bc-4e1f-8e2a-d66d6dd9bed1"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
 			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load point light shaders.");
 			return;
 		}
@@ -450,6 +446,60 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.blendMode = BlendMode::Additive;
 		pipelineCreateInfo.renderPass = mainRenderPass;
 		pointLightPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
+	}
+
+	shaderStageCreateInfos.clear();
+	fileData.clear();
+
+	{
+		if (!assetManager->LoadShaderSet(Uuid("31cc60ab-59cb-43b5-94bb-3951844c8f76"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
+			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load spot light shaders.");
+			return;
+		}
+
+		std::array<GraphicsAPI::DescriptorSetLayout*, 2> spotLightLayouts{};
+		spotLightLayouts[0] = lightingDescriptorSetLayout;
+		spotLightLayouts[1] = lightingUBODescriptorSetLayout;
+
+		pipelineCreateInfo.shaderName = "Spot Light Pipeline";
+		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
+		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
+		pipelineCreateInfo.descriptorSetLayouts = spotLightLayouts.data();
+		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(spotLightLayouts.size());
+		pipelineCreateInfo.colorAttachmentCount = 1;
+		pipelineCreateInfo.isDepthWriteEnabled = false;
+		pipelineCreateInfo.isDepthTestEnabled = false;
+		pipelineCreateInfo.isStencilEnabled = false;
+		pipelineCreateInfo.blendMode = BlendMode::Additive;
+		pipelineCreateInfo.renderPass = mainRenderPass;
+		spotLightPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
+	}
+
+	shaderStageCreateInfos.clear();
+	fileData.clear();
+
+	{
+		if (!assetManager->LoadShaderSet(Uuid("94dcc829-3b58-45fb-809a-6800a23eab45"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
+			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load directional light shaders.");
+			return;
+		}
+
+		std::array<GraphicsAPI::DescriptorSetLayout*, 2> directionalLightLayouts{};
+		directionalLightLayouts[0] = lightingDescriptorSetLayout;
+		directionalLightLayouts[1] = lightingUBODescriptorSetLayout;
+
+		pipelineCreateInfo.shaderName = "Directional Light Pipeline";
+		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
+		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
+		pipelineCreateInfo.descriptorSetLayouts = directionalLightLayouts.data();
+		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(directionalLightLayouts.size());
+		pipelineCreateInfo.colorAttachmentCount = 1;
+		pipelineCreateInfo.isDepthWriteEnabled = false;
+		pipelineCreateInfo.isDepthTestEnabled = false;
+		pipelineCreateInfo.isStencilEnabled = false;
+		pipelineCreateInfo.blendMode = BlendMode::Additive;
+		pipelineCreateInfo.renderPass = mainRenderPass;
+		directionalLightPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	}
 
 	shaderStageCreateInfos.clear();
@@ -552,12 +602,68 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 				pointLightComponent.color,
 				pointLightComponent.attenuationRadius,
 				transformComponent.position,
-				pointLightComponent.intensity,
+				pointLightComponent.intensity
 			};
 
 			pointLightDescriptors[1] = pointLightComponent.descriptorSet;
 			pointLightComponent.uniformBufferObject->UpdateBuffer(&lightmapStruct);
 			currentCommandBuffer->BindDescriptorSet(pointLightPipeline, pointLightDescriptors.data(), static_cast<uint32_t>(pointLightDescriptors.size()));
+			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+		});
+	}
+
+	{
+		// Spot Lights
+		currentCommandBuffer->BindPipeline(spotLightPipeline);
+
+		std::array<GraphicsAPI::DescriptorSet*, 2> spotLightDescriptors{};
+		spotLightDescriptors[0] = imageSet.lightingDescriptorSet;
+
+		auto view = registry.view<const TransformComponent, SpotLightComponent>();
+		view.each([&](const TransformComponent& transformComponent, SpotLightComponent& spotLightComponent) {
+			Math::Matrix4 shadowMatrix = glm::mat4(1.0f);
+			SpotLightComponent::UniformStruct lightStruct {
+				shadowMatrix,
+				spotLightComponent.color,
+				spotLightComponent.attenuationRadius,
+				transformComponent.position,
+				spotLightComponent.intensity,
+				transformComponent.GetForward(),
+				spotLightComponent.innerAngle,
+				spotLightComponent.outerAngle,
+				spotLightComponent.shadowResolution
+			};
+
+			spotLightDescriptors[1] = spotLightComponent.descriptorSet;
+			spotLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
+			currentCommandBuffer->BindDescriptorSet(spotLightPipeline, spotLightDescriptors.data(), static_cast<uint32_t>(spotLightDescriptors.size()));
+			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+		});
+	}
+
+	{
+		// Directional Lights
+		currentCommandBuffer->BindPipeline(directionalLightPipeline);
+
+		std::array<GraphicsAPI::DescriptorSet*, 2> directionalLightDescriptors{};
+		directionalLightDescriptors[0] = imageSet.lightingDescriptorSet;
+
+		auto view = registry.view<const TransformComponent, DirectionalLightComponent>();
+		view.each([&](const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
+			Math::Matrix4 shadowMatrix = glm::mat4(1.0f);
+
+			DirectionalLightComponent::UniformStruct lightStruct{
+				shadowMatrix,
+				directionalLightComponent.color,
+				directionalLightComponent.sourceRadius,
+				transformComponent.GetForward(),
+				directionalLightComponent.intensity,
+				directionalLightComponent.shadowResolution
+			};
+
+			directionalLightDescriptors[1] = directionalLightComponent.descriptorSet;
+			directionalLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
+			currentCommandBuffer->BindDescriptorSet(directionalLightPipeline, directionalLightDescriptors.data(), static_cast<uint32_t>(directionalLightDescriptors.size()));
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 		});
 	}

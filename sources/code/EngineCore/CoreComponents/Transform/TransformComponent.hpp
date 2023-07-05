@@ -11,21 +11,21 @@ namespace Grindstone {
 		Math::Float3 position = Math::Float3(0.0f, 0.0f, 0.0f);
 		Math::Float3 scale = Math::Float3(1.f, 1.f, 1.f);
 
-		Math::Matrix4 GetTransformMatrix() {
+		Math::Matrix4 GetTransformMatrix() const {
 			return glm::translate(position) *
 				glm::toMat4(rotation) *
 				glm::scale(scale);
 		}
 
-		Math::Float3 GetForward() {
+		Math::Float3 GetForward() const {
 			return rotation * Math::Float3(0.0f, 0.0f,-1.0f);
 		}
 
-		Math::Float3 GetRight() {
+		Math::Float3 GetRight() const {
 			return rotation * Math::Float3(1.0f, 0.0f, 0.0f);
 		}
 
-		Math::Float3 GetUp() {
+		Math::Float3 GetUp() const {
 			return rotation * Math::Float3(0.0f, 1.0f, 0.0f);
 		}
 

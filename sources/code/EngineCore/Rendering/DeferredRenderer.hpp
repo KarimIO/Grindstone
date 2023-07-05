@@ -82,6 +82,7 @@ namespace Grindstone {
 		GraphicsAPI::DescriptorSetLayout* tonemapDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingUBODescriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSetLayout* lightingWithShadowUBODescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* engineDescriptorSetLayout = nullptr;
 		GraphicsAPI::RenderPass* mainRenderPass = nullptr;
 
@@ -89,7 +90,9 @@ namespace Grindstone {
 		GraphicsAPI::IndexBuffer* indexBuffer;
 		GraphicsAPI::VertexArrayObject* planePostProcessVao = nullptr;
 
+		GraphicsAPI::Pipeline* spotLightPipeline = nullptr;
 		GraphicsAPI::Pipeline* pointLightPipeline = nullptr;
+		GraphicsAPI::Pipeline* directionalLightPipeline = nullptr;
 		GraphicsAPI::Pipeline* tonemapPipeline = nullptr;
 	};
 }
