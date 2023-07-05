@@ -10,6 +10,22 @@
 #include "Common/Graphics/Texture.hpp"
 using namespace Grindstone;
 
+MaterialImporter::MaterialImporter() {
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+
+	uint32_t whiteColorData = UINT32_MAX;
+	GraphicsAPI::Texture::CreateInfo whiteTextureCreateInfo{};
+	whiteTextureCreateInfo.debugName = "White Missing Texture";
+	whiteTextureCreateInfo.data = reinterpret_cast<const char*>(&whiteColorData);
+	whiteTextureCreateInfo.size = sizeof(whiteColorData);
+	whiteTextureCreateInfo.width = 1;
+	whiteTextureCreateInfo.height = 1;
+	whiteTextureCreateInfo.format = ColorFormat::R8G8B8A8;
+	whiteTextureCreateInfo.mipmaps = 1;
+	whiteTextureCreateInfo.options.shouldGenerateMipmaps = false;
+	whiteTexture = graphicsCore->CreateTexture(whiteTextureCreateInfo);
+}
+
 void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
@@ -106,33 +122,27 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 		auto& samplersJson = document["samplers"];
 		std::vector<GraphicsAPI::Texture*> textures;
 		textures.resize(textureReferencesFromMaterial.size());
-		Texture* validTexture = nullptr;
 		for (size_t i = 0; i < textureReferencesFromMaterial.size(); ++i) {
 			const char* textureName = textureReferencesFromMaterial[i].name.c_str();
 			if (samplersJson.HasMember(textureName)) {
 				const char* textureUuidAsString = samplersJson[textureName].GetString();
 				Uuid textureUuid(textureUuidAsString);
 
-				// TODO: Handle if texture isn't set
 				TextureAsset* textureAsset = assetManager->GetAsset<TextureAsset>(textureUuid);
 				DescriptorSet::Binding textureBinding{};
 				textureBinding.bindingIndex = textureReferencesFromMaterial[i].bindingId;
 				textureBinding.bindingType = BindingType::Texture;
 				textureBinding.itemPtr = textureAsset != nullptr
 					? textureAsset->texture
-					: validTexture;
+					: whiteTexture;
 				textureBinding.count = 1;
 				bindings.push_back(textureBinding);
-
-				if (textureAsset != nullptr) {
-					validTexture = textureAsset->texture;
-				}
 			}
 			else {
 				DescriptorSet::Binding textureBinding{};
 				textureBinding.bindingIndex = textureReferencesFromMaterial[i].bindingId;
 				textureBinding.bindingType = BindingType::Texture;
-				textureBinding.itemPtr = validTexture;
+				textureBinding.itemPtr = whiteTexture;
 				textureBinding.count = 1;
 				bindings.push_back(textureBinding);
 			}
@@ -163,86 +173,3 @@ bool MaterialImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
 
 	return false;
 }
-
-#if 0
-Material& MaterialImporter::LoadMaterial(BaseAssetRenderer* assetRenderer, const char* path) {
-	try {
-		Material* material = nullptr;
-		if (!TryGetMaterial(path, material)) {
-			material = &CreateMaterialFromFile(assetRenderer, path);
-		}
-
-		return *material;
-	}
-	catch (std::runtime_error& e) {
-		EngineCore::GetInstance().Print(LogSeverity::Error, e.what());
-		return *assetRenderer->GetErrorMaterial();
-	}
-}
-
-void MaterialImporter::ReloadMaterialIfLoaded(const char* path) {}
-
-void MaterialImporter::RemoveRenderableFromMaterial(std::string uuid, ECS::Entity entity, void* renderable) {
-	auto materialInMap = materials.find(uuid);
-	if (materialInMap != materials.end()) {
-		auto material = &materialInMap->second;
-
-		size_t size = material->renderables.size();
-		size_t numItemsToDelete = 0;
-		for (size_t i = 0; i < size - numItemsToDelete; ++i) {
-			auto& renderablePair = material->renderables[i];
-			if (
-				renderablePair.first == entity &&
-				renderablePair.second == renderable
-			) {
-				++numItemsToDelete;
-				material->renderables[i] = material->renderables[size - numItemsToDelete];
-			}
-		}
-
-		if (numItemsToDelete > 0) {
-			material->renderables.erase(material->renderables.end() - numItemsToDelete);
-		}
-
-		if (material->renderables.size() == 0) {
-			ShaderImporter* shaderImporter = EngineCore::GetInstance().shaderImporter;
-			shaderImporter->RemoveMaterialFromShader(material->shader, material);
-
-			materials.erase(materialInMap);
-		}
-	}
-}
-
-bool MaterialImporter::TryGetMaterial(const char* path, Material*& material) {
-	auto materialInMap = materials.find(path);
-	if (materialInMap != materials.end()) {
-		material = &materialInMap->second;
-		return true;
-	}
-
-	return false;
-}
-
-void MaterialImporter::CreateMaterialFromData(
-	std::filesystem::path relativePath,
-	Material& material,
-	BaseAssetRenderer* assetRenderer,
-	const char* data
-) {
-}
-
-Material& MaterialImporter::CreateMaterialFromFile(BaseAssetRenderer* assetRenderer, const char* path) {
-	std::filesystem::path completePath = EngineCore::GetInstance().GetAssetPath(path);
-	if (!std::filesystem::exists(completePath)) {
-		throw std::runtime_error(completePath.string() + " material doesn't exist.");
-	}
-
-	std::filesystem::path parentDirectory = completePath.parent_path();
-	std::string fileContent = Utils::LoadFileText(completePath.string().c_str());
-	Material& material = materials[path];
-	material.uuid = Uuid(path);
-	CreateMaterialFromData(parentDirectory, material, assetRenderer, fileContent.c_str());
-
-	return material;
-}
-#endif
