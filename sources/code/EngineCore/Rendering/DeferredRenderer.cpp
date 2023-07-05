@@ -39,13 +39,6 @@ struct EngineUboStruct {
 	glm::vec3 eyePos;
 };
 
-struct LightmapStruct {
-	glm::vec3 lightColor = glm::vec3(3, 0.8, 0.4);
-	float lightAttenuationRadius = 40.0f;
-	glm::vec3 lightPosition = glm::vec3(1, 2, 1);
-	float lightIntensity = 40.0f;
-};
-
 DeferredRenderer::DeferredRenderer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
@@ -75,7 +68,6 @@ DeferredRenderer::~DeferredRenderer() {
 		auto& imageSet = deferredRendererImageSets[i];
 
 		graphicsCore->DeleteUniformBuffer(imageSet.globalUniformBufferObject);
-		graphicsCore->DeleteUniformBuffer(imageSet.lightUniformBufferObject);
 
 		graphicsCore->DeleteFramebuffer(imageSet.gbuffer);
 		for (size_t i = 0; i < imageSet.gbufferRenderTargets.size(); ++i) {
@@ -137,15 +129,6 @@ void DeferredRenderer::CreateUniformBuffers() {
 		globalUniformBufferObjectCi.isDynamic = true;
 		globalUniformBufferObjectCi.size = sizeof(EngineUboStruct);
 		imageSet.globalUniformBufferObject = graphicsCore->CreateUniformBuffer(globalUniformBufferObjectCi);
-
-		UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
-		lightUniformBufferObjectCi.debugName = "LightUbo";
-		lightUniformBufferObjectCi.isDynamic = true;
-		lightUniformBufferObjectCi.size = sizeof(LightmapStruct);
-		imageSet.lightUniformBufferObject = graphicsCore->CreateUniformBuffer(lightUniformBufferObjectCi);
-
-		LightmapStruct lightmapStruct;
-		imageSet.lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
 	}
 }
 
@@ -159,7 +142,7 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	engineUboBinding.stages = ShaderStageBit::Vertex | ShaderStageBit::Fragment;
 
 	DescriptorSetLayout::Binding lightUboBinding{};
-	lightUboBinding.bindingId = 1;
+	lightUboBinding.bindingId = 0;
 	lightUboBinding.count = 1;
 	lightUboBinding.type = BindingType::UniformBuffer;
 	lightUboBinding.stages = ShaderStageBit::Fragment;
@@ -171,25 +154,25 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	litHdrRenderTargetBinding.stages = ShaderStageBit::Fragment;
 
 	DescriptorSetLayout::Binding gbuffer0Binding{};
-	gbuffer0Binding.bindingId = 2;
+	gbuffer0Binding.bindingId = 1;
 	gbuffer0Binding.count = 1;
 	gbuffer0Binding.type = BindingType::Texture;
 	gbuffer0Binding.stages = ShaderStageBit::Fragment;
 
 	DescriptorSetLayout::Binding gbuffer1Binding{};
-	gbuffer1Binding.bindingId = 3;
+	gbuffer1Binding.bindingId = 2;
 	gbuffer1Binding.count = 1;
 	gbuffer1Binding.type = BindingType::Texture;
 	gbuffer1Binding.stages = ShaderStageBit::Fragment;
 
 	DescriptorSetLayout::Binding gbuffer2Binding{};
-	gbuffer2Binding.bindingId = 4;
+	gbuffer2Binding.bindingId = 3;
 	gbuffer2Binding.count = 1;
 	gbuffer2Binding.type = BindingType::Texture;
 	gbuffer2Binding.stages = ShaderStageBit::Fragment;
 
 	DescriptorSetLayout::Binding gbuffer3Binding{};
-	gbuffer3Binding.bindingId = 5;
+	gbuffer3Binding.bindingId = 4;
 	gbuffer3Binding.count = 1;
 	gbuffer3Binding.type = BindingType::Texture;
 	gbuffer3Binding.stages = ShaderStageBit::Fragment;
@@ -210,19 +193,24 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	tonemapDescriptorSetLayoutCreateInfo.bindings = tonemapDescriptorSetLayoutBindings.data();
 	tonemapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(tonemapDescriptorSetLayoutCreateInfo);
 
-	std::array<DescriptorSetLayout::Binding, 6> lightingDescriptorSetLayoutBindings{};
+	std::array<DescriptorSetLayout::Binding, 5> lightingDescriptorSetLayoutBindings{};
 	lightingDescriptorSetLayoutBindings[0] = engineUboBinding;
-	lightingDescriptorSetLayoutBindings[1] = lightUboBinding;
-	lightingDescriptorSetLayoutBindings[2] = gbuffer0Binding;
-	lightingDescriptorSetLayoutBindings[3] = gbuffer1Binding;
-	lightingDescriptorSetLayoutBindings[4] = gbuffer2Binding;
-	lightingDescriptorSetLayoutBindings[5] = gbuffer3Binding;
+	lightingDescriptorSetLayoutBindings[1] = gbuffer0Binding;
+	lightingDescriptorSetLayoutBindings[2] = gbuffer1Binding;
+	lightingDescriptorSetLayoutBindings[3] = gbuffer2Binding;
+	lightingDescriptorSetLayoutBindings[4] = gbuffer3Binding;
 
 	DescriptorSetLayout::CreateInfo lightingDescriptorSetLayoutCreateInfo{};
 	lightingDescriptorSetLayoutCreateInfo.debugName = "Pointlight Descriptor Set Layout";
 	lightingDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightingDescriptorSetLayoutBindings.size());
 	lightingDescriptorSetLayoutCreateInfo.bindings = lightingDescriptorSetLayoutBindings.data();
 	lightingDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(lightingDescriptorSetLayoutCreateInfo);
+
+	DescriptorSetLayout::CreateInfo lightingUBODescriptorSetLayoutCreateInfo{};
+	lightingUBODescriptorSetLayoutCreateInfo.debugName = "Pointlight UBO Descriptor Set Layout";
+	lightingUBODescriptorSetLayoutCreateInfo.bindingCount = 1;
+	lightingUBODescriptorSetLayoutCreateInfo.bindings = &lightUboBinding;
+	lightingUBODescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(lightingUBODescriptorSetLayoutCreateInfo);
 }
 
 void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) {
@@ -234,12 +222,6 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	engineUboBinding.bindingType = BindingType::UniformBuffer;
 	engineUboBinding.itemPtr = imageSet.globalUniformBufferObject;
 
-	DescriptorSet::Binding lightUboBinding{};
-	lightUboBinding.bindingIndex = 1;
-	lightUboBinding.count = 1;
-	lightUboBinding.bindingType = BindingType::UniformBuffer;
-	lightUboBinding.itemPtr = imageSet.lightUniformBufferObject;
-
 	DescriptorSet::Binding litHdrRenderTargetBinding{};
 	litHdrRenderTargetBinding.bindingIndex = 1;
 	litHdrRenderTargetBinding.count = 1;
@@ -247,25 +229,25 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	litHdrRenderTargetBinding.itemPtr = imageSet.litHdrRenderTarget;
 
 	DescriptorSet::Binding gbuffer0Binding{};
-	gbuffer0Binding.bindingIndex = 2;
+	gbuffer0Binding.bindingIndex = 1;
 	gbuffer0Binding.count = 1;
 	gbuffer0Binding.bindingType = BindingType::RenderTexture;
 	gbuffer0Binding.itemPtr = imageSet.gbufferRenderTargets[0];
 
 	DescriptorSet::Binding gbuffer1Binding{};
-	gbuffer1Binding.bindingIndex = 3;
+	gbuffer1Binding.bindingIndex = 2;
 	gbuffer1Binding.count = 1;
 	gbuffer1Binding.bindingType = BindingType::RenderTexture;
 	gbuffer1Binding.itemPtr = imageSet.gbufferRenderTargets[1];
 
 	DescriptorSet::Binding gbuffer2Binding{};
-	gbuffer2Binding.bindingIndex = 4;
+	gbuffer2Binding.bindingIndex = 3;
 	gbuffer2Binding.count = 1;
 	gbuffer2Binding.bindingType = BindingType::RenderTexture;
 	gbuffer2Binding.itemPtr = imageSet.gbufferRenderTargets[2];
 
 	DescriptorSet::Binding gbuffer3Binding{};
-	gbuffer3Binding.bindingIndex = 5;
+	gbuffer3Binding.bindingIndex = 4;
 	gbuffer3Binding.count = 1;
 	gbuffer3Binding.bindingType = BindingType::RenderTexture;
 	gbuffer3Binding.itemPtr = imageSet.gbufferRenderTargets[3];
@@ -288,13 +270,12 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	tonemapDescriptorSetCreateInfo.bindings = tonemapDescriptorSetBindings.data();
 	imageSet.tonemapDescriptorSet = graphicsCore->CreateDescriptorSet(tonemapDescriptorSetCreateInfo);
 
-	std::array<DescriptorSet::Binding, 6> lightingDescriptorSetBindings{};
+	std::array<DescriptorSet::Binding, 5> lightingDescriptorSetBindings{};
 	lightingDescriptorSetBindings[0] = engineUboBinding;
-	lightingDescriptorSetBindings[1] = lightUboBinding;
-	lightingDescriptorSetBindings[2] = gbuffer0Binding;
-	lightingDescriptorSetBindings[3] = gbuffer1Binding;
-	lightingDescriptorSetBindings[4] = gbuffer2Binding;
-	lightingDescriptorSetBindings[5] = gbuffer3Binding;
+	lightingDescriptorSetBindings[1] = gbuffer0Binding;
+	lightingDescriptorSetBindings[2] = gbuffer1Binding;
+	lightingDescriptorSetBindings[3] = gbuffer2Binding;
+	lightingDescriptorSetBindings[4] = gbuffer3Binding;
 
 	DescriptorSet::CreateInfo lightingDescriptorSetCreateInfo{};
 	lightingDescriptorSetCreateInfo.debugName = "Point Light Descriptor Set";
@@ -344,13 +325,13 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	const int gbufferColorCount = 4;
-	std::array<ColorFormat, gbufferColorCount> gbufferColorFormats;
+	std::array<ColorFormat, gbufferColorCount> gbufferColorFormats{};
 	gbufferColorFormats[0] = ColorFormat::R16G16B16A16; // X Y Z
 	gbufferColorFormats[1] = ColorFormat::R8G8B8A8; // R  G  B matID
 	gbufferColorFormats[2] = ColorFormat::R16G16B16A16; // nX nY nZ
 	gbufferColorFormats[3] = ColorFormat::R8G8B8A8; // sR sG sB Roughness
 
-	std::array<const char*, gbufferColorCount> gbufferColorAttachmentNames;
+	std::array<const char*, gbufferColorCount> gbufferColorAttachmentNames{};
 	gbufferColorAttachmentNames[0] = "GBuffer Position Image";
 	gbufferColorAttachmentNames[1] = "GBuffer Albedo Image";
 	gbufferColorAttachmentNames[2] = "GBuffer Normal Image";
@@ -453,12 +434,19 @@ void DeferredRenderer::CreatePipelines() {
 			return;
 		}
 
+		std::array<GraphicsAPI::DescriptorSetLayout*, 2> pointLightLayouts{};
+		pointLightLayouts[0] = lightingDescriptorSetLayout;
+		pointLightLayouts[1] = lightingUBODescriptorSetLayout;
+
 		pipelineCreateInfo.shaderName = "Point Light Pipeline";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineCreateInfo.descriptorSetLayouts = &lightingDescriptorSetLayout;
-		pipelineCreateInfo.descriptorSetLayoutCount = 1;
+		pipelineCreateInfo.descriptorSetLayouts = pointLightLayouts.data();
+		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(pointLightLayouts.size());
 		pipelineCreateInfo.colorAttachmentCount = 1;
+		pipelineCreateInfo.isDepthWriteEnabled = false;
+		pipelineCreateInfo.isDepthTestEnabled = false;
+		pipelineCreateInfo.isStencilEnabled = false;
 		pipelineCreateInfo.blendMode = BlendMode::Additive;
 		pipelineCreateInfo.renderPass = mainRenderPass;
 		pointLightPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
@@ -554,18 +542,22 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 	{
 		// Point Lights
 		currentCommandBuffer->BindPipeline(pointLightPipeline);
-		currentCommandBuffer->BindDescriptorSet(pointLightPipeline, &imageSet.lightingDescriptorSet, 1);
 
-		auto view = registry.view<const TransformComponent, const PointLightComponent>();
-		view.each([&](const TransformComponent& transformComponent, const PointLightComponent& pointLightComponent) {
-			LightmapStruct lightmapStruct{
+		std::array<GraphicsAPI::DescriptorSet*, 2> pointLightDescriptors{};
+		pointLightDescriptors[0] = imageSet.lightingDescriptorSet;
+
+		auto view = registry.view<const TransformComponent, PointLightComponent>();
+		view.each([&](const TransformComponent& transformComponent, PointLightComponent& pointLightComponent) {
+			PointLightComponent::UniformStruct lightmapStruct{
 				pointLightComponent.color,
 				pointLightComponent.attenuationRadius,
 				transformComponent.position,
 				pointLightComponent.intensity,
 			};
 
-			imageSet.lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
+			pointLightDescriptors[1] = pointLightComponent.descriptorSet;
+			pointLightComponent.uniformBufferObject->UpdateBuffer(&lightmapStruct);
+			currentCommandBuffer->BindDescriptorSet(pointLightPipeline, pointLightDescriptors.data(), static_cast<uint32_t>(pointLightDescriptors.size()));
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 		});
 	}

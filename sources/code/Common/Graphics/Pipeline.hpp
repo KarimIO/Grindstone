@@ -36,6 +36,9 @@ namespace Grindstone {
 				uint32_t vertexBindingsCount;
 				BlendMode blendMode;
 				uint32_t colorAttachmentCount;
+				bool isDepthTestEnabled = true;
+				bool isDepthWriteEnabled = true;
+				bool isStencilEnabled = false;
 			};
 
 			virtual void Recreate(CreateInfo& createInfo) = 0;

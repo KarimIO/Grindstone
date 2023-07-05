@@ -160,6 +160,9 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	pipelineCreateInfo.vertexBindingsCount = 4; // Would be 5, but uv1 is not yet used
 	pipelineCreateInfo.colorAttachmentCount = 4; // TODO: Collor Attachments depending on stage and renderer type
 	pipelineCreateInfo.blendMode = BlendMode::None; // TODO: Support Blending
+	pipelineCreateInfo.isDepthTestEnabled = true;
+	pipelineCreateInfo.isDepthWriteEnabled = true;
+	pipelineCreateInfo.isStencilEnabled = false;
 
 	auto shader = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	auto asset = shaders.emplace(uuid, ShaderAsset(uuid, debugName, shader));

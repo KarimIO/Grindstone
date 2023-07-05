@@ -12,5 +12,5 @@ void Grindstone::SetupCoreComponents(ECS::ComponentRegistrar* registrar) {
 	registrar->RegisterComponent<Grindstone::TagComponent>();
 	registrar->RegisterComponent<Grindstone::TransformComponent>();
 	registrar->RegisterComponent<Grindstone::CameraComponent>(SetupCameraComponent);
-	registrar->RegisterComponent<Grindstone::PointLightComponent>();
+	registrar->RegisterComponent<Grindstone::PointLightComponent>(SetupPointLightComponent);
 }
