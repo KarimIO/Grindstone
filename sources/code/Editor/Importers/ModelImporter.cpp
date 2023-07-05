@@ -356,7 +356,8 @@ void ModelImporter::Import(std::filesystem::path& path) {
 		path.string(),
 		aiProcess_CalcTangentSpace |
 		aiProcess_GenSmoothNormals |
-		aiProcess_Triangulate
+		aiProcess_Triangulate |
+		aiProcess_FlipUVs
 	);
 
 	if (!scene) {
