@@ -28,11 +28,12 @@ namespace Grindstone {
 			}
 		}
 		void AddQueue(const char* name);
+		virtual void RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet) = 0;
 		void RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, const char* name);
 		void RenderQueueImmediate(const char* name);
 
 		virtual void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) = 0;
-	private:
+	protected:
 		virtual void RenderQueueImmediate(RenderQueueContainer& renderQueue) = 0;
 		virtual void RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, RenderQueueContainer& renderQueue) = 0;
 		std::map<std::string, RenderQueueContainer> renderQueues;

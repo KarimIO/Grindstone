@@ -24,37 +24,93 @@ void Grindstone::SetupDirectionalLightComponent(ECS::Entity& entity, void* compo
 
 	DirectionalLightComponent& directionalLightComponent = *static_cast<DirectionalLightComponent*>(componentPtr);
 
-	UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
-	lightUniformBufferObjectCi.debugName = "LightUbo";
-	lightUniformBufferObjectCi.isDynamic = true;
-	lightUniformBufferObjectCi.size = sizeof(DirectionalLightComponent::UniformStruct);
-	directionalLightComponent.uniformBufferObject = graphicsCore->CreateUniformBuffer(lightUniformBufferObjectCi);
+	uint32_t shadowResolution = static_cast<uint32_t>(directionalLightComponent.shadowResolution);
 
-	DirectionalLightComponent::UniformStruct lightStruct{};
-	directionalLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
+	RenderPass::CreateInfo renderPassCreateInfo{};
+	renderPassCreateInfo.width = shadowResolution;
+	renderPassCreateInfo.height = shadowResolution;
+	renderPassCreateInfo.colorFormats = nullptr;
+	renderPassCreateInfo.colorFormatCount = 0;
+	renderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
+	directionalLightComponent.renderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
-	DescriptorSetLayout::Binding lightUboBindingLayout{};
-	lightUboBindingLayout.bindingId = 0;
-	lightUboBindingLayout.count = 1;
-	lightUboBindingLayout.type = BindingType::UniformBuffer;
-	lightUboBindingLayout.stages = ShaderStageBit::Fragment;
+	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(renderPassCreateInfo.depthFormat, shadowResolution, shadowResolution, false, false, "Shadow Map Depth Image");
+	directionalLightComponent.depthTarget = graphicsCore->CreateDepthTarget(gbufferDepthImageCreateInfo);
 
-	DescriptorSetLayout::CreateInfo engineDescriptorSetLayoutCreateInfo{};
-	engineDescriptorSetLayoutCreateInfo.debugName = "Light UBO Descriptor Set Layout";
-	engineDescriptorSetLayoutCreateInfo.bindingCount = 1;
-	engineDescriptorSetLayoutCreateInfo.bindings = &lightUboBindingLayout;
-	directionalLightComponent.descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(engineDescriptorSetLayoutCreateInfo);
+	Framebuffer::CreateInfo gbufferCreateInfo{};
+	gbufferCreateInfo.debugName = "G-Buffer Framebuffer";
+	gbufferCreateInfo.renderPass = directionalLightComponent.renderPass;
+	gbufferCreateInfo.renderTargetLists = nullptr;
+	gbufferCreateInfo.numRenderTargetLists = 0;
+	gbufferCreateInfo.depthTarget = directionalLightComponent.depthTarget;
+	directionalLightComponent.framebuffer = graphicsCore->CreateFramebuffer(gbufferCreateInfo);
 
-	DescriptorSet::Binding lightUboBinding{};
-	lightUboBinding.bindingIndex = 0;
-	lightUboBinding.count = 1;
-	lightUboBinding.bindingType = BindingType::UniformBuffer;
-	lightUboBinding.itemPtr = directionalLightComponent.uniformBufferObject;
+	{
+		UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
+		lightUniformBufferObjectCi.debugName = "LightUbo";
+		lightUniformBufferObjectCi.isDynamic = true;
+		lightUniformBufferObjectCi.size = sizeof(DirectionalLightComponent::UniformStruct);
+		directionalLightComponent.uniformBufferObject = graphicsCore->CreateUniformBuffer(lightUniformBufferObjectCi);
 
-	DescriptorSet::CreateInfo engineDescriptorSetCreateInfo{};
-	engineDescriptorSetCreateInfo.debugName = "Light UBO Descriptor Set";
-	engineDescriptorSetCreateInfo.layout = directionalLightComponent.descriptorSetLayout;
-	engineDescriptorSetCreateInfo.bindingCount = 1;
-	engineDescriptorSetCreateInfo.bindings = &lightUboBinding;
-	directionalLightComponent.descriptorSet = graphicsCore->CreateDescriptorSet(engineDescriptorSetCreateInfo);
+		DirectionalLightComponent::UniformStruct lightStruct{};
+		directionalLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
+
+		DescriptorSetLayout::Binding lightUboBindingLayout{};
+		lightUboBindingLayout.bindingId = 0;
+		lightUboBindingLayout.count = 1;
+		lightUboBindingLayout.type = BindingType::UniformBuffer;
+		lightUboBindingLayout.stages = ShaderStageBit::Fragment;
+
+		DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
+		descriptorSetLayoutCreateInfo.debugName = "Light UBO Descriptor Set Layout";
+		descriptorSetLayoutCreateInfo.bindingCount = 1;
+		descriptorSetLayoutCreateInfo.bindings = &lightUboBindingLayout;
+		directionalLightComponent.descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+
+		DescriptorSet::Binding lightUboBinding{};
+		lightUboBinding.bindingIndex = 0;
+		lightUboBinding.count = 1;
+		lightUboBinding.bindingType = BindingType::UniformBuffer;
+		lightUboBinding.itemPtr = directionalLightComponent.uniformBufferObject;
+
+		DescriptorSet::CreateInfo descriptorSetCreateInfo{};
+		descriptorSetCreateInfo.debugName = "Light UBO Descriptor Set";
+		descriptorSetCreateInfo.layout = directionalLightComponent.descriptorSetLayout;
+		descriptorSetCreateInfo.bindingCount = 1;
+		descriptorSetCreateInfo.bindings = &lightUboBinding;
+		directionalLightComponent.descriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
+	}
+
+	{
+		UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
+		lightUniformBufferObjectCi.debugName = "Directional Shadow Map";
+		lightUniformBufferObjectCi.isDynamic = true;
+		lightUniformBufferObjectCi.size = sizeof(DirectionalLightComponent::UniformStruct);
+		directionalLightComponent.shadowMapUniformBufferObject = graphicsCore->CreateUniformBuffer(lightUniformBufferObjectCi);
+
+		DescriptorSetLayout::Binding lightUboBindingLayout{};
+		lightUboBindingLayout.bindingId = 0;
+		lightUboBindingLayout.count = 1;
+		lightUboBindingLayout.type = BindingType::UniformBuffer;
+		lightUboBindingLayout.stages = ShaderStageBit::Vertex;
+
+		DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
+		descriptorSetLayoutCreateInfo.debugName = "Light UBO Descriptor Set Layout";
+		descriptorSetLayoutCreateInfo.bindingCount = 1;
+		descriptorSetLayoutCreateInfo.bindings = &lightUboBindingLayout;
+		directionalLightComponent.shadowMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+
+		DescriptorSet::Binding lightUboBinding{};
+		lightUboBinding.bindingIndex = 0;
+		lightUboBinding.count = 1;
+		lightUboBinding.bindingType = BindingType::UniformBuffer;
+		lightUboBinding.itemPtr = directionalLightComponent.shadowMapUniformBufferObject;
+
+		DescriptorSet::CreateInfo descriptorSetCreateInfo{};
+		descriptorSetCreateInfo.debugName = "Shadow Map Descriptor Set";
+		descriptorSetCreateInfo.layout = directionalLightComponent.shadowMapDescriptorSetLayout;
+		descriptorSetCreateInfo.bindingCount = 1;
+		descriptorSetCreateInfo.bindings = &lightUboBinding;
+		directionalLightComponent.shadowMapDescriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
+	}
 }

@@ -24,6 +24,15 @@ void AssetRendererManager::SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* de
 	}
 }
 
+void AssetRendererManager::RenderShadowMap(
+	GraphicsAPI::CommandBuffer* commandBuffer,
+	GraphicsAPI::DescriptorSet* lightingDescriptorSet
+) {
+	for (BaseAssetRenderer* assetRenderer : assetRenderers) {
+		assetRenderer->RenderShadowMap(commandBuffer, lightingDescriptorSet);
+	}
+}
+
 void AssetRendererManager::RenderQueue(
 	GraphicsAPI::CommandBuffer* commandBuffer,
 	const char* name

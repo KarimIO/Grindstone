@@ -47,6 +47,14 @@ DeferredRenderer::DeferredRenderer() {
 	uint32_t maxFramesInFlight = wgb->GetMaxFramesInFlight();
 	deferredRendererImageSets.resize(maxFramesInFlight);
 
+	RenderPass::CreateInfo renderPassCreateInfo{};
+	renderPassCreateInfo.width = 1024;
+	renderPassCreateInfo.height = 1024;
+	renderPassCreateInfo.colorFormats = nullptr;
+	renderPassCreateInfo.colorFormatCount = 0;
+	renderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
+	shadowMapRenderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
+
 	CreateCommandBuffers();
 	CreateVertexAndIndexBuffersAndLayouts();
 	CreateGbufferFramebuffer();
@@ -213,6 +221,18 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	lightingUBODescriptorSetLayoutCreateInfo.bindingCount = 1;
 	lightingUBODescriptorSetLayoutCreateInfo.bindings = &lightUboBinding;
 	lightingUBODescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(lightingUBODescriptorSetLayoutCreateInfo);
+
+	DescriptorSetLayout::Binding shadowMapMatrixBinding{};
+	shadowMapMatrixBinding.bindingId = 0;
+	shadowMapMatrixBinding.count = 1;
+	shadowMapMatrixBinding.type = BindingType::UniformBuffer;
+	shadowMapMatrixBinding.stages = ShaderStageBit::Vertex;
+
+	DescriptorSetLayout::CreateInfo shadowMapDescriptorSetLayoutCreateInfo{};
+	shadowMapDescriptorSetLayoutCreateInfo.debugName = "Shadow Map Descriptor Set Layout";
+	shadowMapDescriptorSetLayoutCreateInfo.bindingCount = 1;
+	shadowMapDescriptorSetLayoutCreateInfo.bindings = &shadowMapMatrixBinding;
+	shadowMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(shadowMapDescriptorSetLayoutCreateInfo);
 }
 
 void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) {
@@ -527,7 +547,53 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.colorAttachmentCount = 1;
 		pipelineCreateInfo.blendMode = BlendMode::None;
 		pipelineCreateInfo.renderPass = wgb->GetRenderPass();
+		pipelineCreateInfo.isDepthWriteEnabled = true;
+		pipelineCreateInfo.isDepthTestEnabled = true;
+		pipelineCreateInfo.isStencilEnabled = true;
 		tonemapPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
+	}
+
+	shaderStageCreateInfos.clear();
+	fileData.clear();
+
+	{
+		if (!assetManager->LoadShaderSet(
+			Uuid("fc5b427f-7847-419d-a34d-2a55778eccbd"),
+			shaderBits,
+			2,
+			shaderStageCreateInfos,
+			fileData
+		)) {
+			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load shadow mapping shaders.");
+			return;
+		}
+
+		Grindstone::GraphicsAPI::VertexBufferLayout shadowMapPositionLayout = {
+		{
+			0,
+			Grindstone::GraphicsAPI::VertexFormat::Float3,
+			"vertexPosition",
+			false,
+			Grindstone::GraphicsAPI::AttributeUsage::Position
+		}
+		};
+
+		auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+
+		pipelineCreateInfo.vertexBindings = &shadowMapPositionLayout;
+		pipelineCreateInfo.vertexBindingsCount = 1;
+		pipelineCreateInfo.shaderName = "Shadow Mapping Pipeline";
+		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
+		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
+		pipelineCreateInfo.descriptorSetLayouts = &shadowMapDescriptorSetLayout;
+		pipelineCreateInfo.descriptorSetLayoutCount = 1;
+		pipelineCreateInfo.colorAttachmentCount = 1;
+		pipelineCreateInfo.blendMode = BlendMode::None;
+		pipelineCreateInfo.renderPass = shadowMapRenderPass;
+		pipelineCreateInfo.isDepthWriteEnabled = true;
+		pipelineCreateInfo.isDepthTestEnabled = true;
+		pipelineCreateInfo.isStencilEnabled = false;
+		shadowMappingPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	}
 }
 
@@ -650,25 +716,55 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 
 		auto view = registry.view<const TransformComponent, DirectionalLightComponent>();
 		view.each([&](const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
-			Math::Matrix4 shadowMatrix = glm::mat4(1.0f);
-
-			DirectionalLightComponent::UniformStruct lightStruct{
-				shadowMatrix,
-				directionalLightComponent.color,
-				directionalLightComponent.sourceRadius,
-				transformComponent.GetForward(),
-				directionalLightComponent.intensity,
-				directionalLightComponent.shadowResolution
-			};
-
 			directionalLightDescriptors[1] = directionalLightComponent.descriptorSet;
-			directionalLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
 			currentCommandBuffer->BindDescriptorSet(directionalLightPipeline, directionalLightDescriptors.data(), static_cast<uint32_t>(directionalLightDescriptors.size()));
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 		});
 	}
 
 	currentCommandBuffer->UnbindRenderPass();
+}
+
+void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::registry& registry) {
+	auto assetManager = EngineCore::GetInstance().assetRendererManager;
+
+	ClearDepthStencil clearDepthStencil{};
+	clearDepthStencil.depth = 1.0f;
+	clearDepthStencil.stencil = 0;
+	clearDepthStencil.hasDepthStencilAttachment = true;
+
+	commandBuffer->BindPipeline(shadowMappingPipeline);
+
+	auto view = registry.view<const TransformComponent, DirectionalLightComponent>();
+	view.each([&](const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
+		glm::mat4 shadowMatrix = glm::ortho<float>(-10, 10, -10, 10, -10, 30);
+		shadowMatrix[1][1] *= -1; // Flip y axis for Vulkan
+
+		directionalLightComponent.shadowMatrix = shadowMatrix * glm::lookAt(
+			transformComponent.GetForward() * 20.0f,
+			glm::vec3(0, 0, 0),
+			glm::vec3(0, 1, 0)
+		);
+
+		uint32_t resolution = static_cast<uint32_t>(directionalLightComponent.shadowResolution);
+
+		directionalLightComponent.shadowMapUniformBufferObject->UpdateBuffer(&directionalLightComponent.shadowMatrix);
+
+		commandBuffer->BindRenderPass(
+			directionalLightComponent.renderPass,
+			directionalLightComponent.framebuffer,
+			resolution,
+			resolution,
+			nullptr,
+			0,
+			clearDepthStencil
+		);
+
+		commandBuffer->BindDescriptorSet(shadowMappingPipeline, &directionalLightComponent.shadowMapDescriptorSet, 1);
+		assetManager->RenderShadowMap(commandBuffer, directionalLightComponent.shadowMapDescriptorSet);
+
+		commandBuffer->UnbindRenderPass();
+	});
 }
 
 void DeferredRenderer::PostProcessImmediate(GraphicsAPI::Framebuffer* outputFramebuffer) {
@@ -760,6 +856,8 @@ void DeferredRenderer::RenderCommandBuffer(
 
 	auto currentCommandBuffer = imageSet.commandBuffer;
 	currentCommandBuffer->BeginCommandBuffer();
+
+	RenderShadowMaps(currentCommandBuffer, registry);
 
 	ClearColorValue clearColors[] = {
 		ClearColorValue{0.3f, 0.6f, 0.9f, 1.f},

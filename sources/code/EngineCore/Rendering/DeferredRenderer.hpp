@@ -58,6 +58,8 @@ namespace Grindstone {
 			glm::vec3 eyePos,
 			GraphicsAPI::Framebuffer* outputFramebuffer
 		);
+
+		void RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffer, entt::registry& registry);
 		void RenderLightsCommandBuffer(uint32_t imageIndex, GraphicsAPI::CommandBuffer* currentCommandBuffer, entt::registry& registry);
 		void RenderLightsImmediate(entt::registry& registry);
 		void PostProcessCommandBuffer(uint32_t imageIndex, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer);
@@ -84,7 +86,12 @@ namespace Grindstone {
 		GraphicsAPI::DescriptorSetLayout* lightingUBODescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingWithShadowUBODescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* engineDescriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSetLayout* shadowMapDescriptorSetLayout = nullptr;
+
+		GraphicsAPI::DescriptorSet* shadowMapDescriptorSet = nullptr;
+
 		GraphicsAPI::RenderPass* mainRenderPass = nullptr;
+		GraphicsAPI::RenderPass* shadowMapRenderPass = nullptr;
 
 		GraphicsAPI::VertexBuffer* vertexBuffer;
 		GraphicsAPI::IndexBuffer* indexBuffer;
@@ -94,5 +101,6 @@ namespace Grindstone {
 		GraphicsAPI::Pipeline* pointLightPipeline = nullptr;
 		GraphicsAPI::Pipeline* directionalLightPipeline = nullptr;
 		GraphicsAPI::Pipeline* tonemapPipeline = nullptr;
+		GraphicsAPI::Pipeline* shadowMappingPipeline = nullptr;
 	};
 }

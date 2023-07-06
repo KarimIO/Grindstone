@@ -24,6 +24,7 @@ namespace Grindstone {
 			float shadowResolution;
 		};
 
+		Math::Matrix4 shadowMatrix;
 		Math::Float3 color;
 		float attenuationRadius;
 		float intensity;

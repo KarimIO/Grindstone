@@ -9,6 +9,9 @@ namespace Grindstone {
 		class UniformBuffer;
 		class DescriptorSet;
 		class DescriptorSetLayout;
+		class RenderPass;
+		class Framebuffer;
+		class DepthTarget;
 	}
 
 	struct DirectionalLightComponent {
@@ -21,14 +24,23 @@ namespace Grindstone {
 			float shadowResolution;
 		};
 
+		Math::Matrix4 shadowMatrix;
 		Math::Float3 color;
 		float sourceRadius;
 		float intensity;
 		float shadowResolution;
 
+		GraphicsAPI::RenderPass* renderPass = nullptr;
+		GraphicsAPI::Framebuffer* framebuffer = nullptr;
+		GraphicsAPI::DepthTarget* depthTarget = nullptr;
+
 		GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
 		GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
 		GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
+
+		GraphicsAPI::UniformBuffer* shadowMapUniformBufferObject = nullptr;
+		GraphicsAPI::DescriptorSet* shadowMapDescriptorSet = nullptr;
+		GraphicsAPI::DescriptorSetLayout* shadowMapDescriptorSetLayout = nullptr;
 
 		REFLECT("DirectionalLight")
 	};

@@ -30,9 +30,10 @@ namespace Grindstone {
 			void RenderSubmesh(GraphicsAPI::CommandBuffer* commandBuffer, ECS::Entity entity, Mesh3dAsset::Submesh& submesh3d);
 
 		private:
-			virtual void RenderQueueImmediate(RenderQueueContainer& renderQueue) override;
 			virtual void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) override;
+			virtual void RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet) override;
 			virtual void RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, RenderQueueContainer& renderQueue) override;
+			virtual void RenderQueueImmediate(RenderQueueContainer& renderQueue) override;
 
 			EngineCore* engineCore = nullptr;
 			GraphicsAPI::UniformBuffer* mesh3dBufferObject = nullptr;
