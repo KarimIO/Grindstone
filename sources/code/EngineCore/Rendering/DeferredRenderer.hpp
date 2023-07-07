@@ -84,6 +84,7 @@ namespace Grindstone {
 		GraphicsAPI::DescriptorSetLayout* tonemapDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingUBODescriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSetLayout* shadowMappedLightDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingWithShadowUBODescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* engineDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* shadowMapDescriptorSetLayout = nullptr;

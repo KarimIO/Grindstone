@@ -197,7 +197,7 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 		imageMemory
 	);
 
-	TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
+	TransitionImageLayout(image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
 
 	if (shouldGenerateMipmaps) {
 		CopyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(createInfo.width), static_cast<uint32_t>(createInfo.height));
@@ -239,7 +239,7 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 		);
 
 		EndSingleTimeCommands(commandBuffer);
-		TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels);
+		TransitionImageLayout(image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels);
 	}
 	
 	vkDestroyBuffer(device, stagingBuffer, nullptr);

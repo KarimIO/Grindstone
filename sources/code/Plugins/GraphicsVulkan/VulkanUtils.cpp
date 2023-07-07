@@ -169,7 +169,7 @@ namespace Grindstone {
 			EndSingleTimeCommands(commandBuffer);
 		}
 
-		void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels) {
+		void TransitionImageLayout(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels) {
 			VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
 			VkImageMemoryBarrier barrier = {};
@@ -179,7 +179,7 @@ namespace Grindstone {
 			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 			barrier.image = image;
-			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			barrier.subresourceRange.aspectMask = aspectFlags;
 			barrier.subresourceRange.baseMipLevel = 0;
 			barrier.subresourceRange.levelCount = mipLevels;
 			barrier.subresourceRange.baseArrayLayer = 0;

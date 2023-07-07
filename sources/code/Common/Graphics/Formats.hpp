@@ -70,7 +70,8 @@ namespace Grindstone {
 		enum class BindingType {
 			UniformBuffer,
 			Texture,
-			RenderTexture
+			RenderTexture,
+			DepthTexture
 		};
 
 		const uint8_t numShaderGraphicStage = 5;

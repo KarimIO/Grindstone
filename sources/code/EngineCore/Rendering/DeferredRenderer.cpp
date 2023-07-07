@@ -52,7 +52,7 @@ DeferredRenderer::DeferredRenderer() {
 	renderPassCreateInfo.height = 1024;
 	renderPassCreateInfo.colorFormats = nullptr;
 	renderPassCreateInfo.colorFormatCount = 0;
-	renderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
+	renderPassCreateInfo.depthFormat = DepthFormat::D32;
 	shadowMapRenderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
 	CreateCommandBuffers();
@@ -222,6 +222,23 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	lightingUBODescriptorSetLayoutCreateInfo.bindings = &lightUboBinding;
 	lightingUBODescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(lightingUBODescriptorSetLayoutCreateInfo);
 
+	std::array<DescriptorSetLayout::Binding, 2> shadowMappedLightBindings{};
+	shadowMappedLightBindings[0].bindingId = 0;
+	shadowMappedLightBindings[0].count = 1;
+	shadowMappedLightBindings[0].type = BindingType::UniformBuffer;
+	shadowMappedLightBindings[0].stages = ShaderStageBit::Fragment;
+
+	shadowMappedLightBindings[1].bindingId = 1;
+	shadowMappedLightBindings[1].count = 1;
+	shadowMappedLightBindings[1].type = BindingType::DepthTexture;
+	shadowMappedLightBindings[1].stages = ShaderStageBit::Fragment;
+
+	DescriptorSetLayout::CreateInfo shadowMappedLightDescriptorSetLayoutCreateInfo{};
+	shadowMappedLightDescriptorSetLayoutCreateInfo.debugName = "Shadowmapped Light Descriptor Set Layout";
+	shadowMappedLightDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(shadowMappedLightBindings.size());
+	shadowMappedLightDescriptorSetLayoutCreateInfo.bindings = shadowMappedLightBindings.data();
+	shadowMappedLightDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(shadowMappedLightDescriptorSetLayoutCreateInfo);
+
 	DescriptorSetLayout::Binding shadowMapMatrixBinding{};
 	shadowMapMatrixBinding.bindingId = 0;
 	shadowMapMatrixBinding.count = 1;
@@ -367,7 +384,7 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 	gbufferRenderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
 	gbufferRenderPass = graphicsCore->CreateRenderPass(gbufferRenderPassCreateInfo);
 
-	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(gbufferRenderPassCreateInfo.depthFormat, width, height, false, false, "GBuffer Depth Image");
+	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(gbufferRenderPassCreateInfo.depthFormat, width, height, false, false, false, "GBuffer Depth Image");
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		auto& imageSet = deferredRendererImageSets[i];
@@ -395,7 +412,7 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height, true, "Lit HDR Color Image" };
-	DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false, "Lit HDR Depth Image");
+	DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false, false, "Lit HDR Depth Image");
 
 	RenderPass::CreateInfo mainRenderPassCreateInfo{};
 	mainRenderPassCreateInfo.debugName = "Main HDR Render Pass";
@@ -506,7 +523,7 @@ void DeferredRenderer::CreatePipelines() {
 
 		std::array<GraphicsAPI::DescriptorSetLayout*, 2> directionalLightLayouts{};
 		directionalLightLayouts[0] = lightingDescriptorSetLayout;
-		directionalLightLayouts[1] = lightingUBODescriptorSetLayout;
+		directionalLightLayouts[1] = shadowMappedLightDescriptorSetLayout;
 
 		pipelineCreateInfo.shaderName = "Directional Light Pipeline";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
@@ -716,6 +733,17 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 
 		auto view = registry.view<const TransformComponent, DirectionalLightComponent>();
 		view.each([&](const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
+			DirectionalLightComponent::UniformStruct lightStruct{
+				directionalLightComponent.shadowMatrix,
+				directionalLightComponent.color,
+				directionalLightComponent.sourceRadius,
+				transformComponent.GetForward(),
+				directionalLightComponent.intensity,
+				directionalLightComponent.shadowResolution
+			};
+
+			directionalLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
+
 			directionalLightDescriptors[1] = directionalLightComponent.descriptorSet;
 			currentCommandBuffer->BindDescriptorSet(directionalLightPipeline, directionalLightDescriptors.data(), static_cast<uint32_t>(directionalLightDescriptors.size()));
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
@@ -733,11 +761,10 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = true;
 
-	commandBuffer->BindPipeline(shadowMappingPipeline);
-
 	auto view = registry.view<const TransformComponent, DirectionalLightComponent>();
 	view.each([&](const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
-		glm::mat4 shadowMatrix = glm::ortho<float>(-10, 10, -10, 10, -10, 30);
+		const float shadowHalfSize = 2.0f;
+		glm::mat4 shadowMatrix = glm::ortho<float>(-shadowHalfSize, shadowHalfSize, -shadowHalfSize, shadowHalfSize, -10, 30);
 		shadowMatrix[1][1] *= -1; // Flip y axis for Vulkan
 
 		directionalLightComponent.shadowMatrix = shadowMatrix * glm::lookAt(
@@ -759,6 +786,8 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 			0,
 			clearDepthStencil
 		);
+
+		commandBuffer->BindPipeline(shadowMappingPipeline);
 
 		commandBuffer->BindDescriptorSet(shadowMappingPipeline, &directionalLightComponent.shadowMapDescriptorSet, 1);
 		assetManager->RenderShadowMap(commandBuffer, directionalLightComponent.shadowMapDescriptorSet);

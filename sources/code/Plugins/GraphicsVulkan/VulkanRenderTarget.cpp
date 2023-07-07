@@ -43,6 +43,7 @@ VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& createInfo) {
 		TransitionImageLayout(
 			image,
 			renderFormat,
+			VK_IMAGE_ASPECT_COLOR_BIT,
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			mipLevels
