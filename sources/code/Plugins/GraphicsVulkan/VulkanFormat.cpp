@@ -152,6 +152,9 @@ namespace Grindstone {
 			case ColorFormat::SRGB_ALPHA_DXT5:
 				channels = 4;
 				return VK_FORMAT_BC3_SRGB_BLOCK;
+			case ColorFormat::BC4:
+				channels = 1;
+				return VK_FORMAT_BC4_UNORM_BLOCK;
 			default:
 				printf("Invalid color format!");
 				assert(false);

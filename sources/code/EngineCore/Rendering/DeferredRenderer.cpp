@@ -654,7 +654,9 @@ void DeferredRenderer::RenderLightsImmediate(entt::registry& registry) {
 #endif
 }
 
-bool showSpot = true;
+bool showPoint = true;
+bool showSpot = false;
+bool showDirect = false;
 
 void DeferredRenderer::RenderLightsCommandBuffer(
 	uint32_t imageIndex,
@@ -686,7 +688,7 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 		0.5f, 0.5f, 0.0f, 1.0f
 	);
 
-	if (false) {
+	if (showPoint) {
 		// Point Lights
 		currentCommandBuffer->BindPipeline(pointLightPipeline);
 
@@ -738,7 +740,7 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 		});
 	}
 
-	if (!showSpot) {
+	if (showDirect) {
 		// Directional Lights
 		currentCommandBuffer->BindPipeline(directionalLightPipeline);
 
@@ -830,15 +832,15 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 		});
 	}
 
-	if (!showSpot) {
+	if (showDirect) {
 		auto view = registry.view<const TransformComponent, DirectionalLightComponent>();
 		view.each([&](const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
 			const float shadowHalfSize = 40.0f;
 			glm::mat4 projectionMatrix = glm::ortho<float>(-shadowHalfSize, shadowHalfSize, -shadowHalfSize, shadowHalfSize, 0, 40);
-			/// projectionMatrix[1][1] *= -1; // Flip y axis for Vulkan
+			graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
 
 			glm::mat4 viewMatrix = glm::lookAt(
-				transformComponent.GetForward() * -30.0f,
+				transformComponent.GetForward() * -40.0f,
 				glm::vec3(0, 0, 0),
 				transformComponent.GetUp()
 			);

@@ -18,6 +18,8 @@
 #include "TextureImporter.hpp"
 using namespace Grindstone::Importers;
 
+#define SHOULD_EXPORT_NORMAL_IMAGES
+
 const uint32_t blockWidth = 4;
 
 void TextureImporter::ExtractBlock(
@@ -35,9 +37,19 @@ void TextureImporter::ExtractBlock(
 		}
 	}*/
 
-	for (uint32_t dstRow = 0; dstRow < 4; dstRow++) {
-		for (uint32_t dstCol = 0; dstCol < 4; dstCol++) {
-			memcpy(colorBlock + (dstRow * 4 + dstCol) * texChannels, inPtr + (dstRow * levelWidth + dstCol) * 4, texChannels);
+	if (texChannels == 3) {
+		for (uint32_t dstRow = 0; dstRow < blockWidth; dstRow++) {
+			for (uint32_t dstCol = 0; dstCol < blockWidth; dstCol++) {
+				memcpy(colorBlock + (dstRow * blockWidth + dstCol) * 4, inPtr + (dstRow * levelWidth + dstCol) * texChannels, texChannels);
+				colorBlock[(dstRow * blockWidth + dstCol) * 4 + 3] = 255;
+			}
+		}
+		return;
+	}
+
+	for (uint32_t dstRow = 0; dstRow < blockWidth; dstRow++) {
+		for (uint32_t dstCol = 0; dstCol < blockWidth; dstCol++) {
+			memcpy(colorBlock + (dstRow * blockWidth + dstCol) * texChannels, inPtr + (dstRow * levelWidth + dstCol) * texChannels, texChannels);
 		}
 	}
 }
@@ -46,7 +58,7 @@ void TextureImporter::ExtractBlock(
 void TextureImporter::Import(std::filesystem::path& path) {
 	this->path = path;
 	int width, height, channels;
-	sourcePixels = stbi_load(path.string().c_str(), &width, &height, &channels, 4);
+	sourcePixels = stbi_load(path.string().c_str(), &width, &height, &channels, 0);
 	if (!sourcePixels) {
 		throw std::runtime_error("Unable to load texture!");
 	}
@@ -54,15 +66,18 @@ void TextureImporter::Import(std::filesystem::path& path) {
 	texWidth = static_cast<uint32_t>(width);
 	texHeight = static_cast<uint32_t>(height);
 	texChannels = static_cast<uint32_t>(channels);
+	targetTexChannels = texChannels;
 
 	metaFile = new MetaFile(path);
 
-	Compression compression;
-	if (texChannels == 4) {
-		compression = Compression::BC3;
-	}
 	if (texChannels == 1) {
 		compression = Compression::BC4;
+	}
+	else if (texChannels == 3) {
+		compression = Compression::BC1;
+	}
+	else if (texChannels == 4) {
+		compression = Compression::BC3;
 	}
 	else {
 		compression = Compression::BC3;
@@ -190,18 +205,22 @@ void TextureImporter::GenerateMipList(uint32_t minMipLevel, std::vector<uint8_t*
 
 	uncompressedMips.resize(minMipLevel);
 	uncompressedMips[0] = sourcePixels;
+#ifdef SHOULD_EXPORT_NORMAL_IMAGES
 	std::filesystem::path filename = std::filesystem::path("D:/MipGen") / path.filename();
 	stbi_write_tga(filename.string().c_str(), levelWidth, levelHeight, texChannels, uncompressedMips[0]);
+#endif
 	for (uint32_t mipLevelIterator = 1; mipLevelIterator < minMipLevel; mipLevelIterator++) {
 		levelWidth /= 2;
 		levelHeight /= 2;
 
 		uncompressedMips[mipLevelIterator] = CreateMip(uncompressedMips[mipLevelIterator - 1], levelWidth, levelHeight);
 
+#ifdef SHOULD_EXPORT_NORMAL_IMAGES
 		std::string extension = "_mip" + std::to_string(mipLevelIterator) + ".tga";
 		std::string fileName = path.filename().replace_extension("").string() + extension;
 		std::filesystem::path filename = std::filesystem::path("D:/MipGen") / fileName;
 		stbi_write_tga(filename.string().c_str(), levelWidth, levelHeight, texChannels, uncompressedMips[mipLevelIterator]);
+#endif
 	}
 }
 
@@ -224,8 +243,8 @@ void TextureImporter::GenerateFaceBC123(uint32_t minMipLevel, uint32_t faceItera
 			for (uint32_t mipCol = 0; mipCol < levelWidth; mipCol += blockWidth) {
 				uint8_t* ptr = mipSource + ((mipRow * levelWidth + mipCol) * texChannels);
 				ExtractBlock(ptr, levelWidth, block);
-				stb_compress_dxt_block(outData + dstOffset, block, false, STB_DXT_NORMAL);
-				dstOffset += 8;
+				stb_compress_dxt_block(outData + dstOffset, block, hasAlpha, STB_DXT_NORMAL);
+				dstOffset += blockSize;
 			}
 		}
 

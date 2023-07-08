@@ -30,6 +30,8 @@ namespace Grindstone {
 			SRGB_ALPHA_DXT1,
 			SRGB_ALPHA_DXT3,
 			SRGB_ALPHA_DXT5,
+
+			BC4
 		};
 
 		enum class DepthFormat : uint8_t {
