@@ -13,7 +13,7 @@ namespace Grindstone {
 		ColorFormat TranslateColorFormatFromVulkan(VkFormat format);
 		DepthFormat TranslateDepthFormatFromVulkan(VkFormat format);
 		VkFormat TranslateColorFormatToVulkan(ColorFormat, uint8_t &channels);
-		VkFormat TranslateDepthFormatToVulkan(DepthFormat);
+		VkFormat TranslateDepthFormatToVulkan(DepthFormat, bool& hasStencil);
 		VkCullModeFlags TranslateCullModeToVulkan(CullMode cullMode);
 	}
 }

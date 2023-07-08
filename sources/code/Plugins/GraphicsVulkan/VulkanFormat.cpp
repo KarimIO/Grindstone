@@ -152,6 +152,9 @@ namespace Grindstone {
 			case ColorFormat::SRGB_ALPHA_DXT5:
 				channels = 4;
 				return VK_FORMAT_BC3_SRGB_BLOCK;
+			case ColorFormat::BC4:
+				channels = 1;
+				return VK_FORMAT_BC4_UNORM_BLOCK;
 			default:
 				printf("Invalid color format!");
 				assert(false);
@@ -162,17 +165,22 @@ namespace Grindstone {
 			return VK_FORMAT_B8G8R8A8_UNORM;
 		}
 
-		VkFormat TranslateDepthFormatToVulkan(DepthFormat in) {
+		VkFormat TranslateDepthFormatToVulkan(DepthFormat in, bool& hasStencil) {
 			switch (in) {
 			case DepthFormat::D16:
+				hasStencil = false;
 				return VK_FORMAT_D16_UNORM;
 			case DepthFormat::D24:
+				hasStencil = false;
 				return VK_FORMAT_X8_D24_UNORM_PACK32;
 			case DepthFormat::D32:
+				hasStencil = false;
 				return VK_FORMAT_D32_SFLOAT;
 			case DepthFormat::D24_STENCIL_8:
+				hasStencil = true;
 				return VK_FORMAT_D24_UNORM_S8_UINT;
 			case DepthFormat::D32_STENCIL_8:
+				hasStencil = true;
 				return VK_FORMAT_D32_SFLOAT_S8_UINT;
 			//case DepthFormat::D16_STENCIL_8:
 			//		return VK_FORMAT_D16_UNORM_S8_UINT;
@@ -181,6 +189,7 @@ namespace Grindstone {
 			}
 
 			assert(false && "TranslateDepthFormatToVulkan: Invalid DepthFormat!");
+			hasStencil = true;
 			return VK_FORMAT_D32_SFLOAT_S8_UINT;
 		}
 

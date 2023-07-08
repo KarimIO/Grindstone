@@ -2,6 +2,7 @@
 #include "VulkanDescriptorSet.hpp"
 #include "VulkanUniformBuffer.hpp"
 #include "VulkanRenderTarget.hpp"
+#include "VulkanDepthTarget.hpp"
 #include "VulkanTexture.hpp"
 #include "VulkanCore.hpp"
 
@@ -67,6 +68,26 @@ void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, Descrip
 	writeVector.push_back(descriptorWrites);
 }
 
+void AttachDepthTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
+	VulkanDepthTarget* texture = static_cast<VulkanDepthTarget*>(binding.itemPtr);
+
+	// TODO: Handle this lifetime
+	VkDescriptorImageInfo* imageInfo = new VkDescriptorImageInfo();
+	imageInfo->imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+	imageInfo->imageView = texture->GetImageView();
+	imageInfo->sampler = texture->GetSampler();
+
+	VkWriteDescriptorSet descriptorWrites = {};
+	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites.dstSet = descriptorSet;
+	descriptorWrites.dstBinding = binding.bindingIndex;
+	descriptorWrites.dstArrayElement = 0;
+	descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorWrites.descriptorCount = binding.count;
+	descriptorWrites.pImageInfo = imageInfo;
+	writeVector.push_back(descriptorWrites);
+}
+
 VulkanDescriptorSet::VulkanDescriptorSet(DescriptorSet::CreateInfo& createInfo) {
 	VulkanDescriptorSetLayout* layout = static_cast<VulkanDescriptorSetLayout*>(createInfo.layout);
 	VkDescriptorSetLayout internalLayout = layout->GetInternalLayout();
@@ -105,6 +126,9 @@ void VulkanDescriptorSet::ChangeBindings(Binding* bindings, uint32_t bindingCoun
 			break;
 		case BindingType::RenderTexture:
 			AttachRenderTexture(descriptorWrites, binding, descriptorSet);
+			break;
+		case BindingType::DepthTexture:
+			AttachDepthTexture(descriptorWrites, binding, descriptorSet);
 			break;
 		}
 	}

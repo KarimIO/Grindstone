@@ -30,6 +30,8 @@ namespace Grindstone {
 			SRGB_ALPHA_DXT1,
 			SRGB_ALPHA_DXT3,
 			SRGB_ALPHA_DXT5,
+
+			BC4
 		};
 
 		enum class DepthFormat : uint8_t {
@@ -70,7 +72,8 @@ namespace Grindstone {
 		enum class BindingType {
 			UniformBuffer,
 			Texture,
-			RenderTexture
+			RenderTexture,
+			DepthTexture
 		};
 
 		const uint8_t numShaderGraphicStage = 5;

@@ -47,6 +47,14 @@ DeferredRenderer::DeferredRenderer() {
 	uint32_t maxFramesInFlight = wgb->GetMaxFramesInFlight();
 	deferredRendererImageSets.resize(maxFramesInFlight);
 
+	RenderPass::CreateInfo renderPassCreateInfo{};
+	renderPassCreateInfo.width = 1024;
+	renderPassCreateInfo.height = 1024;
+	renderPassCreateInfo.colorFormats = nullptr;
+	renderPassCreateInfo.colorFormatCount = 0;
+	renderPassCreateInfo.depthFormat = DepthFormat::D32;
+	shadowMapRenderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
+
 	CreateCommandBuffers();
 	CreateVertexAndIndexBuffersAndLayouts();
 	CreateGbufferFramebuffer();
@@ -213,6 +221,35 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	lightingUBODescriptorSetLayoutCreateInfo.bindingCount = 1;
 	lightingUBODescriptorSetLayoutCreateInfo.bindings = &lightUboBinding;
 	lightingUBODescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(lightingUBODescriptorSetLayoutCreateInfo);
+
+	std::array<DescriptorSetLayout::Binding, 2> shadowMappedLightBindings{};
+	shadowMappedLightBindings[0].bindingId = 0;
+	shadowMappedLightBindings[0].count = 1;
+	shadowMappedLightBindings[0].type = BindingType::UniformBuffer;
+	shadowMappedLightBindings[0].stages = ShaderStageBit::Fragment;
+
+	shadowMappedLightBindings[1].bindingId = 1;
+	shadowMappedLightBindings[1].count = 1;
+	shadowMappedLightBindings[1].type = BindingType::DepthTexture;
+	shadowMappedLightBindings[1].stages = ShaderStageBit::Fragment;
+
+	DescriptorSetLayout::CreateInfo shadowMappedLightDescriptorSetLayoutCreateInfo{};
+	shadowMappedLightDescriptorSetLayoutCreateInfo.debugName = "Shadowmapped Light Descriptor Set Layout";
+	shadowMappedLightDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(shadowMappedLightBindings.size());
+	shadowMappedLightDescriptorSetLayoutCreateInfo.bindings = shadowMappedLightBindings.data();
+	shadowMappedLightDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(shadowMappedLightDescriptorSetLayoutCreateInfo);
+
+	DescriptorSetLayout::Binding shadowMapMatrixBinding{};
+	shadowMapMatrixBinding.bindingId = 0;
+	shadowMapMatrixBinding.count = 1;
+	shadowMapMatrixBinding.type = BindingType::UniformBuffer;
+	shadowMapMatrixBinding.stages = ShaderStageBit::Vertex;
+
+	DescriptorSetLayout::CreateInfo shadowMapDescriptorSetLayoutCreateInfo{};
+	shadowMapDescriptorSetLayoutCreateInfo.debugName = "Shadow Map Descriptor Set Layout";
+	shadowMapDescriptorSetLayoutCreateInfo.bindingCount = 1;
+	shadowMapDescriptorSetLayoutCreateInfo.bindings = &shadowMapMatrixBinding;
+	shadowMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(shadowMapDescriptorSetLayoutCreateInfo);
 }
 
 void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) {
@@ -347,7 +384,7 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 	gbufferRenderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
 	gbufferRenderPass = graphicsCore->CreateRenderPass(gbufferRenderPassCreateInfo);
 
-	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(gbufferRenderPassCreateInfo.depthFormat, width, height, false, false, "GBuffer Depth Image");
+	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(gbufferRenderPassCreateInfo.depthFormat, width, height, false, false, false, "GBuffer Depth Image");
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		auto& imageSet = deferredRendererImageSets[i];
@@ -375,7 +412,7 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height, true, "Lit HDR Color Image" };
-	DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false, "Lit HDR Depth Image");
+	DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false, false, "Lit HDR Depth Image");
 
 	RenderPass::CreateInfo mainRenderPassCreateInfo{};
 	mainRenderPassCreateInfo.debugName = "Main HDR Render Pass";
@@ -459,7 +496,7 @@ void DeferredRenderer::CreatePipelines() {
 
 		std::array<GraphicsAPI::DescriptorSetLayout*, 2> spotLightLayouts{};
 		spotLightLayouts[0] = lightingDescriptorSetLayout;
-		spotLightLayouts[1] = lightingUBODescriptorSetLayout;
+		spotLightLayouts[1] = shadowMappedLightDescriptorSetLayout;
 
 		pipelineCreateInfo.shaderName = "Spot Light Pipeline";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
@@ -486,7 +523,7 @@ void DeferredRenderer::CreatePipelines() {
 
 		std::array<GraphicsAPI::DescriptorSetLayout*, 2> directionalLightLayouts{};
 		directionalLightLayouts[0] = lightingDescriptorSetLayout;
-		directionalLightLayouts[1] = lightingUBODescriptorSetLayout;
+		directionalLightLayouts[1] = shadowMappedLightDescriptorSetLayout;
 
 		pipelineCreateInfo.shaderName = "Directional Light Pipeline";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
@@ -527,7 +564,60 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.colorAttachmentCount = 1;
 		pipelineCreateInfo.blendMode = BlendMode::None;
 		pipelineCreateInfo.renderPass = wgb->GetRenderPass();
+		pipelineCreateInfo.isDepthWriteEnabled = true;
+		pipelineCreateInfo.isDepthTestEnabled = true;
+		pipelineCreateInfo.isStencilEnabled = true;
 		tonemapPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
+	}
+
+	shaderStageCreateInfos.clear();
+	fileData.clear();
+
+	{
+		if (!assetManager->LoadShaderSet(
+			Uuid("fc5b427f-7847-419d-a34d-2a55778eccbd"),
+			shaderBits,
+			2,
+			shaderStageCreateInfos,
+			fileData
+		)) {
+			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load shadow mapping shaders.");
+			return;
+		}
+
+		Grindstone::GraphicsAPI::VertexBufferLayout shadowMapPositionLayout = {
+		{
+			0,
+			Grindstone::GraphicsAPI::VertexFormat::Float3,
+			"vertexPosition",
+			false,
+			Grindstone::GraphicsAPI::AttributeUsage::Position
+		}
+		};
+
+		auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+
+		pipelineCreateInfo.width = 600;
+		pipelineCreateInfo.height = 600;
+		pipelineCreateInfo.scissorW = 600;
+		pipelineCreateInfo.scissorH = 600;
+
+		pipelineCreateInfo.vertexBindings = &shadowMapPositionLayout;
+		pipelineCreateInfo.vertexBindingsCount = 1;
+		pipelineCreateInfo.shaderName = "Shadow Mapping Pipeline";
+		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
+		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
+		pipelineCreateInfo.descriptorSetLayouts = &shadowMapDescriptorSetLayout;
+		pipelineCreateInfo.descriptorSetLayoutCount = 1;
+		pipelineCreateInfo.colorAttachmentCount = 1;
+		pipelineCreateInfo.blendMode = BlendMode::None;
+		pipelineCreateInfo.renderPass = shadowMapRenderPass;
+		pipelineCreateInfo.isDepthWriteEnabled = true;
+		pipelineCreateInfo.isDepthTestEnabled = true;
+		pipelineCreateInfo.isStencilEnabled = false;
+		pipelineCreateInfo.hasDynamicScissor = true;
+		pipelineCreateInfo.hasDynamicViewport = true;
+		shadowMappingPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	}
 }
 
@@ -566,6 +656,10 @@ void DeferredRenderer::RenderLightsImmediate(entt::registry& registry) {
 #endif
 }
 
+bool showPoint = true;
+bool showSpot = true;
+bool showDirect = true;
+
 void DeferredRenderer::RenderLightsCommandBuffer(
 	uint32_t imageIndex,
 	GraphicsAPI::CommandBuffer* currentCommandBuffer,
@@ -589,7 +683,14 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	currentCommandBuffer->BindIndexBuffer(indexBuffer);
 
-	{
+	const glm::mat4 bias = glm::mat4(
+		0.5f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.5f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.0f, 1.0f
+	);
+
+	if (showPoint) {
 		// Point Lights
 		currentCommandBuffer->BindPipeline(pointLightPipeline);
 
@@ -612,7 +713,7 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 		});
 	}
 
-	{
+	if (showSpot) {
 		// Spot Lights
 		currentCommandBuffer->BindPipeline(spotLightPipeline);
 
@@ -621,9 +722,8 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 
 		auto view = registry.view<const TransformComponent, SpotLightComponent>();
 		view.each([&](const TransformComponent& transformComponent, SpotLightComponent& spotLightComponent) {
-			Math::Matrix4 shadowMatrix = glm::mat4(1.0f);
 			SpotLightComponent::UniformStruct lightStruct {
-				shadowMatrix,
+				bias * spotLightComponent.shadowMatrix,
 				spotLightComponent.color,
 				spotLightComponent.attenuationRadius,
 				transformComponent.position,
@@ -634,14 +734,15 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 				spotLightComponent.shadowResolution
 			};
 
-			spotLightDescriptors[1] = spotLightComponent.descriptorSet;
 			spotLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
+
+			spotLightDescriptors[1] = spotLightComponent.descriptorSet;
 			currentCommandBuffer->BindDescriptorSet(spotLightPipeline, spotLightDescriptors.data(), static_cast<uint32_t>(spotLightDescriptors.size()));
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 		});
 	}
 
-	{
+	if (showDirect) {
 		// Directional Lights
 		currentCommandBuffer->BindPipeline(directionalLightPipeline);
 
@@ -650,10 +751,8 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 
 		auto view = registry.view<const TransformComponent, DirectionalLightComponent>();
 		view.each([&](const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
-			Math::Matrix4 shadowMatrix = glm::mat4(1.0f);
-
 			DirectionalLightComponent::UniformStruct lightStruct{
-				shadowMatrix,
+				bias * directionalLightComponent.shadowMatrix,
 				directionalLightComponent.color,
 				directionalLightComponent.sourceRadius,
 				transformComponent.GetForward(),
@@ -661,14 +760,124 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 				directionalLightComponent.shadowResolution
 			};
 
-			directionalLightDescriptors[1] = directionalLightComponent.descriptorSet;
 			directionalLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
+
+			directionalLightDescriptors[1] = directionalLightComponent.descriptorSet;
 			currentCommandBuffer->BindDescriptorSet(directionalLightPipeline, directionalLightDescriptors.data(), static_cast<uint32_t>(directionalLightDescriptors.size()));
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 		});
 	}
 
 	currentCommandBuffer->UnbindRenderPass();
+}
+
+void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::registry& registry) {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	auto assetManager = EngineCore::GetInstance().assetRendererManager;
+
+	ClearDepthStencil clearDepthStencil{};
+	clearDepthStencil.depth = 1.0f;
+	clearDepthStencil.stencil = 0;
+	clearDepthStencil.hasDepthStencilAttachment = true;
+
+	if (showSpot) {
+		auto view = registry.view<const TransformComponent, SpotLightComponent>();
+		view.each([&](const TransformComponent& transformComponent, SpotLightComponent& spotLightComponent) {
+			float fov = glm::radians(90.0f); //spotLightComponent.outerAngle * 2.0f;
+			float farDist = spotLightComponent.attenuationRadius;
+
+			const glm::vec3 forwardVector = transformComponent.GetForward();
+			const glm::vec3 pos = transformComponent.position;
+
+			const auto viewMatrix = glm::lookAt(
+				pos,
+				pos + forwardVector,
+				transformComponent.GetUp()
+			);
+
+			auto projectionMatrix = glm::perspective(
+				fov,
+				1.0f,
+				0.1f,
+				farDist
+			);
+
+			graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
+
+			spotLightComponent.shadowMatrix = projectionMatrix * viewMatrix;
+			glm::mat4 shadowPass = spotLightComponent.shadowMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
+			spotLightComponent.shadowMatrix = spotLightComponent.shadowMatrix * glm::mat4(1.0f);
+
+			uint32_t resolution = static_cast<uint32_t>(spotLightComponent.shadowResolution);
+
+			spotLightComponent.shadowMapUniformBufferObject->UpdateBuffer(&shadowPass);
+
+			commandBuffer->BindRenderPass(
+				spotLightComponent.renderPass,
+				spotLightComponent.framebuffer,
+				resolution,
+				resolution,
+				nullptr,
+				0,
+				clearDepthStencil
+			);
+
+			commandBuffer->BindPipeline(shadowMappingPipeline);
+
+			float resF = static_cast<float>(resolution);
+			commandBuffer->SetViewport(0.0f, 0.0f, resF, resF);
+			commandBuffer->SetScissor(0, 0, resolution, resolution);
+
+			commandBuffer->BindDescriptorSet(shadowMappingPipeline, &spotLightComponent.shadowMapDescriptorSet, 1);
+			assetManager->RenderShadowMap(commandBuffer, spotLightComponent.shadowMapDescriptorSet);
+
+			commandBuffer->UnbindRenderPass();
+		});
+	}
+
+	if (showDirect) {
+		auto view = registry.view<const TransformComponent, DirectionalLightComponent>();
+		view.each([&](const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
+			const float shadowHalfSize = 40.0f;
+			glm::mat4 projectionMatrix = glm::ortho<float>(-shadowHalfSize, shadowHalfSize, -shadowHalfSize, shadowHalfSize, 0, 80);
+			graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
+
+			glm::mat4 viewMatrix = glm::lookAt(
+				transformComponent.GetForward() * -70.0f,
+				glm::vec3(0, 0, 0),
+				transformComponent.GetUp()
+			);
+
+			glm::mat4 projView = projectionMatrix * viewMatrix;
+			glm::mat4 shadowPass = projView * glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
+			directionalLightComponent.shadowMatrix = projView * glm::mat4(1.0f);
+
+			uint32_t resolution = static_cast<uint32_t>(directionalLightComponent.shadowResolution);
+
+			directionalLightComponent.shadowMapUniformBufferObject->UpdateBuffer(&shadowPass);
+
+			commandBuffer->BindRenderPass(
+				directionalLightComponent.renderPass,
+				directionalLightComponent.framebuffer,
+				resolution,
+				resolution,
+				nullptr,
+				0,
+				clearDepthStencil
+			);
+
+			commandBuffer->BindPipeline(shadowMappingPipeline);
+
+			float resF = static_cast<float>(resolution);
+			commandBuffer->SetViewport(0.0f, 0.0f, resF, resF);
+			commandBuffer->SetScissor(0, 0, resolution, resolution);
+
+			commandBuffer->BindDescriptorSet(shadowMappingPipeline, &directionalLightComponent.shadowMapDescriptorSet, 1);
+			assetManager->RenderShadowMap(commandBuffer, directionalLightComponent.shadowMapDescriptorSet);
+
+			commandBuffer->UnbindRenderPass();
+		});
+	}
 }
 
 void DeferredRenderer::PostProcessImmediate(GraphicsAPI::Framebuffer* outputFramebuffer) {
@@ -760,6 +969,8 @@ void DeferredRenderer::RenderCommandBuffer(
 
 	auto currentCommandBuffer = imageSet.commandBuffer;
 	currentCommandBuffer->BeginCommandBuffer();
+
+	RenderShadowMaps(currentCommandBuffer, registry);
 
 	ClearColorValue clearColors[] = {
 		ClearColorValue{0.3f, 0.6f, 0.9f, 1.f},

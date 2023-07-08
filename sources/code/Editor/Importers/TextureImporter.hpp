@@ -44,6 +44,7 @@ namespace Grindstone {
 			uint32_t texWidth = 0;
 			uint32_t texHeight = 0;
 			uint32_t texChannels = 0;
+			uint32_t targetTexChannels = 0;
 		};
 
 		void ImportTexture(std::filesystem::path& inputPath);

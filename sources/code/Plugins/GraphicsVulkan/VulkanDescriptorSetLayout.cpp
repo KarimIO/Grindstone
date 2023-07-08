@@ -11,6 +11,7 @@ VkDescriptorType GetDescriptorType(BindingType bindingType) {
 		return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	case BindingType::Texture:
 	case BindingType::RenderTexture:
+	case BindingType::DepthTexture:
 		return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	}
 

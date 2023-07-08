@@ -64,6 +64,9 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, const char* fileContents, si
 	case FOURCC_DXT5:
 		format = Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT5;
 		break;
+	case FOURCC_BC4:
+		format = Grindstone::GraphicsAPI::ColorFormat::BC4;
+		break;
 	default:
 		throw std::runtime_error("Invalid FourCC in texture");
 	}

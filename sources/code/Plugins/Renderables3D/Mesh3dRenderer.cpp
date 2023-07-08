@@ -55,6 +55,37 @@ void Mesh3dRenderer::SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descript
 	engineDescriptorSet = descriptorSet;
 }
 
+void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet) {
+	for (auto& renderQueue : renderQueues) {
+		for (auto& shaderUuid : renderQueue.second.shaders) {
+			ShaderAsset& shader = *engineCore->assetManager->GetAsset<ShaderAsset>(shaderUuid);
+			for (auto& materialUuid : shader.materials) {
+				MaterialAsset& material = *engineCore->assetManager->GetAsset<MaterialAsset>(materialUuid);
+				for (auto& renderable : material.renderables) {
+					ECS::Entity entity = renderable.first;
+					Mesh3dAsset::Submesh& submesh = *(Mesh3dAsset::Submesh*)renderable.second;
+
+					auto graphicsCore = engineCore->GetGraphicsCore();
+					commandBuffer->BindVertexArrayObject(submesh.vertexArrayObject);
+
+					auto& registry = entity.GetScene()->GetEntityRegistry();
+					entt::entity entityHandle = entity.GetHandle();
+					auto& transformComponent = registry.get<TransformComponent>(entityHandle);
+					glm::mat4 modelMatrix = transformComponent.GetTransformMatrix();
+					mesh3dBufferObject->UpdateBuffer(&modelMatrix);
+
+					commandBuffer->DrawIndices(
+						submesh.baseIndex,
+						submesh.indexCount,
+						1,
+						submesh.baseVertex
+					);
+				}
+			}
+		}
+	}
+}
+
 void Mesh3dRenderer::RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, RenderQueueContainer& renderQueue) {
 	for (Uuid shaderUuid : renderQueue.shaders) {
 		ShaderAsset& shader = *engineCore->assetManager->GetAsset<ShaderAsset>(shaderUuid);

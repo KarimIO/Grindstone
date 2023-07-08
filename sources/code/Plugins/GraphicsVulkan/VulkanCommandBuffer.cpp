@@ -149,6 +149,34 @@ namespace Grindstone {
 			);
 		}
 
+		void VulkanCommandBuffer::SetDepthBias(float biasConstantFactor, float biasSlopeFactor) {
+			vkCmdSetDepthBias(
+				commandBuffer,
+				biasConstantFactor,
+				0.0f,
+				biasSlopeFactor
+			);
+		}
+
+		void VulkanCommandBuffer::SetViewport(float offsetX, float offsetY, float width, float height, float depthMin, float depthMax) {
+			VkViewport viewport{};
+			viewport.x = offsetX;
+			viewport.y = offsetY;
+			viewport.width = (float)width;
+			viewport.height = (float)height;
+			viewport.minDepth = depthMin;
+			viewport.maxDepth = depthMax;
+			vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+		}
+
+		void VulkanCommandBuffer::SetScissor(int32_t offsetX, int32_t offsetY, uint32_t width, uint32_t height) {
+			VkRect2D scissor{};
+			scissor.offset = { 0, 0 };
+			scissor.extent.width = width;
+			scissor.extent.height = height;
+			vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+		}
+
 		void VulkanCommandBuffer::BindPipeline(Pipeline* pipeline) {
 			VulkanPipeline *vulkanPipeline = static_cast<VulkanPipeline*>(pipeline);
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanPipeline->GetGraphicsPipeline());
