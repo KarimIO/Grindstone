@@ -1,13 +1,18 @@
 #pragma once
 
-#include "VulkanFramebuffer.hpp"
-#include <vulkan/vulkan.h>
+#include <string>
 #include <vector>
 #include <stdint.h>
 
+#include <Common/Graphics/Framebuffer.hpp>
+#include <Common/Graphics/Formats.hpp>
+#include <vulkan/vulkan.h>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
+		class VulkanRenderTarget;
+		class VulkanDepthTarget;
+
 		class VulkanFramebuffer : public Framebuffer {
 		public:
 			VulkanFramebuffer(RenderPass* renderPass, VkFramebuffer framebuffer);
@@ -26,6 +31,13 @@ namespace Grindstone {
 			virtual void BindRead() override;
 			virtual void Unbind() override;
 		private:
+			void Create();
+			void Cleanup();
+
+			std::string debugName;
+			std::vector<VulkanRenderTarget*> colorAttachments;
+			VulkanDepthTarget* depthAttachment = nullptr;
+
 			VkFramebuffer framebuffer = nullptr;
 			RenderPass* renderPass = nullptr;
 		};

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <stdint.h>
 #include <Common/Graphics/DepthTarget.hpp>
 #include <vulkan/vulkan.h>
@@ -18,11 +19,21 @@ namespace Grindstone {
 			virtual void BindFace(int k);
 		private:
 			void CreateTextureSampler();
-
+			void Cleanup();
+			void Create();
+		private:
 			VkImage image = nullptr;
 			VkSampler sampler = nullptr;
 			VkImageView imageView = nullptr;
 			VkDeviceMemory imageMemory = nullptr;
+
+			std::string debugName;
+			DepthFormat format = DepthFormat::None;
+			uint32_t width = 0;
+			uint32_t height = 0;
+			bool isShadowMap = false;
+			bool isCubemap = false;
+			bool isSampled = false;
 		};
 	};
 };

@@ -10,16 +10,30 @@ namespace Grindstone {
 		}
 
 		VulkanRenderPass::VulkanRenderPass(RenderPass::CreateInfo& createInfo) : width(createInfo.width), height(createInfo.height) {
-			uint32_t total = createInfo.colorFormatCount;
-			total += (createInfo.depthFormat != DepthFormat::None) ? 1 : 0;
+			if (createInfo.debugName != nullptr) {
+				debugName = createInfo.debugName;
+			}
+
+			for (uint32_t i = 0; i < createInfo.colorFormatCount; ++i) {
+				colorFormats.push_back(createInfo.colorFormats[i]);
+			}
+
+			depthFormat = createInfo.depthFormat;
+
+			Create();
+		}
+
+		void VulkanRenderPass::Create() {
+			uint32_t total = static_cast<uint32_t>(colorFormats.size());
+			total += (depthFormat != DepthFormat::None) ? 1 : 0;
 
 			std::vector<VkAttachmentDescription> attachmentDescs(total);
-			std::vector<VkAttachmentReference> attachmentRefs(createInfo.colorFormatCount);
+			std::vector<VkAttachmentReference> attachmentRefs(colorFormats.size());
 			
-			for (uint32_t i = 0; i < createInfo.colorFormatCount; ++i) {
+			for (uint32_t i = 0; i < colorFormats.size(); ++i) {
 				VkAttachmentDescription &colorAttachment = attachmentDescs[i];
 				uint8_t channels;
-				colorAttachment.format = TranslateColorFormatToVulkan(createInfo.colorFormats[i], channels);
+				colorAttachment.format = TranslateColorFormatToVulkan(colorFormats[i], channels);
 				colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 				colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 				colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -34,21 +48,26 @@ namespace Grindstone {
 			}
 			VkAttachmentReference *depthAttachmentRefPtr = nullptr;
 			VkAttachmentReference depthAttachmentRef = {};
-			if (createInfo.depthFormat != DepthFormat::None) {
-				bool hasStencil;
-				VkAttachmentDescription &depthAttachment = attachmentDescs[createInfo.colorFormatCount];
-				depthAttachment.format = TranslateDepthFormatToVulkan(createInfo.depthFormat, hasStencil);
+			if (depthFormat != DepthFormat::None) {
+				VkAttachmentDescription &depthAttachment = attachmentDescs[colorFormats.size()];
+				bool hasStencil = true;
+				depthAttachment.format = TranslateDepthFormatToVulkan(depthFormat, hasStencil);
+				hasStencil = true;
 				depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 				depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 				depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 				depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 				depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 				depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-				depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+				depthAttachment.finalLayout = hasStencil
+					? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+					: VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL;
 				depthAttachment.flags = 0;
 
-				depthAttachmentRef.attachment = createInfo.colorFormatCount;
-				depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+				depthAttachmentRef.attachment = static_cast<uint32_t>(colorFormats.size());
+				depthAttachmentRef.layout = hasStencil
+					? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+					: VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
 				depthAttachmentRefPtr = &depthAttachmentRef;
 			}
 
@@ -79,11 +98,28 @@ namespace Grindstone {
 				throw std::runtime_error("failed to create render pass!");
 			}
 
-			VulkanCore::Get().NameObject(VK_OBJECT_TYPE_RENDER_PASS, renderPass, createInfo.debugName);
+			if (!debugName.empty()) {
+				VulkanCore::Get().NameObject(VK_OBJECT_TYPE_RENDER_PASS, renderPass, debugName.c_str());
+			}
 		}
 
 		VulkanRenderPass::~VulkanRenderPass() {
-			vkDestroyRenderPass(VulkanCore::Get().GetDevice(), renderPass, nullptr);
+			Cleanup();
+		}
+
+		void VulkanRenderPass::Cleanup() {
+			if (renderPass != nullptr) {
+				vkDestroyRenderPass(VulkanCore::Get().GetDevice(), renderPass, nullptr);
+				renderPass = nullptr;
+			}
+		}
+
+		void VulkanRenderPass::Resize(uint32_t width, uint32_t height) {
+			this->width = width;
+			this->height = height;
+
+			Cleanup();
+			Create();
 		}
 
 		VkRenderPass VulkanRenderPass::GetRenderPassHandle() {

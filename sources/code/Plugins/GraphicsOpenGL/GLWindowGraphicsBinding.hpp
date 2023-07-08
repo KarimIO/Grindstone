@@ -17,13 +17,14 @@ namespace Grindstone {
 			virtual bool Initialize(Window* window) override;
 			virtual void ImmediateSetContext() override;
 			virtual void ImmediateSwapBuffers() override;
-			virtual void AcquireNextImage() override;
+			virtual bool AcquireNextImage() override;
 			virtual void SubmitCommandBuffer(CommandBuffer* buffers) override;
-			virtual void PresentSwapchain() override;
+			virtual bool PresentSwapchain() override;
 			virtual RenderPass* GetRenderPass() override;
 			virtual Framebuffer* GetCurrentFramebuffer() override;
 			virtual uint32_t GetCurrentImageIndex() override;
 			virtual uint32_t GetMaxFramesInFlight() override;
+			virtual void Resize(uint32_t width, uint32_t height) override;
 		public:
 			void ShareLists(GLWindowGraphicsBinding* binding_to_copy_from);
 		private:

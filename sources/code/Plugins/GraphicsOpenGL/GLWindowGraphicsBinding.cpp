@@ -97,11 +97,11 @@ namespace Grindstone {
 #endif
 		}
 
-		void GLWindowGraphicsBinding::AcquireNextImage() {}
+		bool GLWindowGraphicsBinding::AcquireNextImage() { return true; }
 
 		void GLWindowGraphicsBinding::SubmitCommandBuffer(CommandBuffer* buffers) {}
 
-		void GLWindowGraphicsBinding::PresentSwapchain() {}
+		bool GLWindowGraphicsBinding::PresentSwapchain() { return true; }
 
 		RenderPass* GLWindowGraphicsBinding::GetRenderPass() {
 			return nullptr;
@@ -118,6 +118,8 @@ namespace Grindstone {
 		uint32_t GLWindowGraphicsBinding::GetMaxFramesInFlight() {
 			return 0;
 		}
+
+		void GLWindowGraphicsBinding::Resize(uint32_t width, uint32_t height) {}
 
 		void GLWindowGraphicsBinding::ImmediateSetContext() {
 #ifdef _WIN32

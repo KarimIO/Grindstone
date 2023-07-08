@@ -65,12 +65,14 @@ namespace Grindstone {
 		void PostProcessCommandBuffer(uint32_t imageIndex, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer);
 		void PostProcessImmediate(GraphicsAPI::Framebuffer* outputFramebuffer);
 
+		void CleanupPipelines();
 		void CreatePipelines();
 		void CreateDescriptorSetLayouts();
 		void CreateCommandBuffers();
 		void CreateGbufferFramebuffer();
 		void CreateLitHDRFramebuffer();
 		void CreateDescriptorSets(DeferredRendererImageSet& imageSet);
+		void UpdateDescriptorSets(DeferredRendererImageSet& imageSet);
 		void CreateUniformBuffers();
 		void CreateVertexAndIndexBuffersAndLayouts();
 

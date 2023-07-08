@@ -58,19 +58,22 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 
 	std::string debugName = reflectionData.name;
 
+	auto renderPass = DeferredRenderer::gbufferRenderPass;
 	Pipeline::CreateInfo pipelineCreateInfo{};
 	pipelineCreateInfo.shaderName = debugName.c_str();
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
 	pipelineCreateInfo.cullMode = CullMode::None;
-	pipelineCreateInfo.renderPass = DeferredRenderer::gbufferRenderPass;
-	pipelineCreateInfo.width = 800;
-	pipelineCreateInfo.height = 600;
+	pipelineCreateInfo.renderPass = renderPass;
+	pipelineCreateInfo.width = renderPass->GetWidth();
+	pipelineCreateInfo.height = renderPass->GetHeight();
 	pipelineCreateInfo.scissorX = 0;
 	pipelineCreateInfo.scissorY = 0;
-	pipelineCreateInfo.scissorW = 800;
-	pipelineCreateInfo.scissorH = 600;
+	pipelineCreateInfo.scissorW = renderPass->GetWidth();
+	pipelineCreateInfo.scissorH = renderPass->GetHeight();
 	pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 	pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
+	pipelineCreateInfo.hasDynamicViewport = true;
+	pipelineCreateInfo.hasDynamicScissor = true;
 
 	const size_t descriptorSetCount = 3;
 	std::array<std::vector<GraphicsAPI::DescriptorSetLayout::Binding>, descriptorSetCount> descriptorSetBindings;

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include <Common/Graphics/RenderPass.hpp>
 #include <vulkan/vulkan.h>
 
@@ -10,11 +13,18 @@ namespace Grindstone {
 			VulkanRenderPass(VkRenderPass renderPass, uint32_t width, uint32_t height);
 			VulkanRenderPass(RenderPass::CreateInfo& createInfo);
 			virtual ~VulkanRenderPass() override;
+			virtual void Resize(uint32_t width, uint32_t height) override;
+			virtual uint32_t GetWidth() override;
+			virtual uint32_t GetHeight() override;
 		public:
 			virtual VkRenderPass GetRenderPassHandle();
-			uint32_t GetWidth();
-			uint32_t GetHeight();
 		private:
+			void Create();
+			void Cleanup();
+
+			std::string debugName;
+			std::vector<ColorFormat> colorFormats;
+			DepthFormat depthFormat = DepthFormat::None;
 			VkRenderPass renderPass = nullptr;
 			uint32_t width = 0;
 			uint32_t height = 0;

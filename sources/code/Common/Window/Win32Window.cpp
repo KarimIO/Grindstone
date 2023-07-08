@@ -54,9 +54,13 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 	}
 
 	switch (msg) {
-	case WM_SIZE:
-		input->ResizeEvent(LOWORD(lParam), HIWORD(lParam));
+	case WM_SIZE: {
+		int width = LOWORD(lParam);
+		int height = HIWORD(lParam);
+		input->ResizeEvent(width, height);
+		windowsGraphicsBinding->Resize(static_cast<uint32_t>(width), static_cast<uint32_t>(height));
 		break;
+	}
 	case WM_MOUSEMOVE:
 		input->OnMouseMoved(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		break;

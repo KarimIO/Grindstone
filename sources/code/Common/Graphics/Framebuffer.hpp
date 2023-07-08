@@ -10,14 +10,6 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		enum class ClearMode : uint8_t {
-			Color = 1,
-			Depth = 2,
-			ColorAndDepth = 3,
-			Stencil = 4,
-			All = 7
-		};
-
 		class RenderPass;
 
 		class Framebuffer {

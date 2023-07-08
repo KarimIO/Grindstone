@@ -71,8 +71,7 @@ DeferredRenderer::DeferredRenderer() {
 DeferredRenderer::~DeferredRenderer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	graphicsCore->DeletePipeline(pointLightPipeline);
-	graphicsCore->DeletePipeline(tonemapPipeline);
+	CleanupPipelines();
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		auto& imageSet = deferredRendererImageSets[i];
@@ -101,6 +100,15 @@ DeferredRenderer::~DeferredRenderer() {
 	graphicsCore->DeleteVertexArrayObject(planePostProcessVao);
 }
 
+void DeferredRenderer::CleanupPipelines() {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	graphicsCore->DeletePipeline(pointLightPipeline);
+	graphicsCore->DeletePipeline(spotLightPipeline);
+	graphicsCore->DeletePipeline(directionalLightPipeline);
+	graphicsCore->DeletePipeline(shadowMappingPipeline);
+	graphicsCore->DeletePipeline(tonemapPipeline);
+}
+
 bool DeferredRenderer::OnWindowResize(Events::BaseEvent* ev) {
 	if (ev->GetEventType() == Events::EventType::WindowResize) {
 		Events::WindowResizeEvent* winResizeEvent = (Events::WindowResizeEvent*)ev;
@@ -113,9 +121,35 @@ bool DeferredRenderer::OnWindowResize(Events::BaseEvent* ev) {
 void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 	this->width = width;
 	this->height = height;
-	return;
-	// gbuffer->Resize(width, height);
-	// litHdrFramebuffer->Resize(width, height);
+
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	graphicsCore->WaitUntilIdle();
+
+	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
+		auto& imageSet = deferredRendererImageSets[i];
+
+		for (auto gbufferRenderTarget : imageSet.gbufferRenderTargets) {
+			gbufferRenderTarget->Resize(width, height);
+		}
+
+		mainRenderPass->Resize(width, height);
+		gbufferRenderPass->Resize(width, height);
+
+		imageSet.gbufferDepthTarget->Resize(width, height);
+		imageSet.gbuffer->Resize(width, height);
+		imageSet.litHdrRenderTarget->Resize(width, height);
+		imageSet.litHdrDepthTarget->Resize(width, height);
+		imageSet.litHdrFramebuffer->Resize(width, height);
+
+		UpdateDescriptorSets(imageSet);
+
+		graphicsCore->DeletePipeline(pointLightPipeline);
+		graphicsCore->DeletePipeline(spotLightPipeline);
+		graphicsCore->DeletePipeline(directionalLightPipeline);
+		graphicsCore->DeletePipeline(shadowMappingPipeline);
+		graphicsCore->DeletePipeline(tonemapPipeline);
+		CreatePipelines();
+	}
 }
 
 void DeferredRenderer::CreateCommandBuffers() {
@@ -140,6 +174,8 @@ void DeferredRenderer::CreateUniformBuffers() {
 		globalUniformBufferObjectCi.size = sizeof(EngineUboStruct);
 		imageSet.globalUniformBufferObject = graphicsCore->CreateUniformBuffer(globalUniformBufferObjectCi);
 	}
+
+	CreateDescriptorSetLayouts();
 }
 
 void DeferredRenderer::CreateDescriptorSetLayouts() {
@@ -324,6 +360,63 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	imageSet.lightingDescriptorSet = graphicsCore->CreateDescriptorSet(lightingDescriptorSetCreateInfo);
 }
 
+void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+
+	DescriptorSet::Binding engineUboBinding{};
+	engineUboBinding.bindingIndex = 0;
+	engineUboBinding.count = 1;
+	engineUboBinding.bindingType = BindingType::UniformBuffer;
+	engineUboBinding.itemPtr = imageSet.globalUniformBufferObject;
+
+	DescriptorSet::Binding litHdrRenderTargetBinding{};
+	litHdrRenderTargetBinding.bindingIndex = 1;
+	litHdrRenderTargetBinding.count = 1;
+	litHdrRenderTargetBinding.bindingType = BindingType::RenderTexture;
+	litHdrRenderTargetBinding.itemPtr = imageSet.litHdrRenderTarget;
+
+	DescriptorSet::Binding gbuffer0Binding{};
+	gbuffer0Binding.bindingIndex = 1;
+	gbuffer0Binding.count = 1;
+	gbuffer0Binding.bindingType = BindingType::RenderTexture;
+	gbuffer0Binding.itemPtr = imageSet.gbufferRenderTargets[0];
+
+	DescriptorSet::Binding gbuffer1Binding{};
+	gbuffer1Binding.bindingIndex = 2;
+	gbuffer1Binding.count = 1;
+	gbuffer1Binding.bindingType = BindingType::RenderTexture;
+	gbuffer1Binding.itemPtr = imageSet.gbufferRenderTargets[1];
+
+	DescriptorSet::Binding gbuffer2Binding{};
+	gbuffer2Binding.bindingIndex = 3;
+	gbuffer2Binding.count = 1;
+	gbuffer2Binding.bindingType = BindingType::RenderTexture;
+	gbuffer2Binding.itemPtr = imageSet.gbufferRenderTargets[2];
+
+	DescriptorSet::Binding gbuffer3Binding{};
+	gbuffer3Binding.bindingIndex = 4;
+	gbuffer3Binding.count = 1;
+	gbuffer3Binding.bindingType = BindingType::RenderTexture;
+	gbuffer3Binding.itemPtr = imageSet.gbufferRenderTargets[3];
+
+	imageSet.engineDescriptorSet->ChangeBindings(&engineUboBinding, 1);
+
+	std::array<DescriptorSet::Binding, 2> tonemapDescriptorSetBindings{};
+	tonemapDescriptorSetBindings[0] = engineUboBinding;
+	tonemapDescriptorSetBindings[1] = litHdrRenderTargetBinding;
+
+	imageSet.tonemapDescriptorSet->ChangeBindings(tonemapDescriptorSetBindings.data(), static_cast<uint32_t>(tonemapDescriptorSetBindings.size()));
+
+	std::array<DescriptorSet::Binding, 5> lightingDescriptorSetBindings{};
+	lightingDescriptorSetBindings[0] = engineUboBinding;
+	lightingDescriptorSetBindings[1] = gbuffer0Binding;
+	lightingDescriptorSetBindings[2] = gbuffer1Binding;
+	lightingDescriptorSetBindings[3] = gbuffer2Binding;
+	lightingDescriptorSetBindings[4] = gbuffer3Binding;
+
+	imageSet.lightingDescriptorSet->ChangeBindings(lightingDescriptorSetBindings.data(), static_cast<uint32_t>(lightingDescriptorSetBindings.size()));
+}
+
 void DeferredRenderer::CreateVertexAndIndexBuffersAndLayouts() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
@@ -446,12 +539,12 @@ void DeferredRenderer::CreatePipelines() {
 	Pipeline::CreateInfo pipelineCreateInfo{};
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
 	pipelineCreateInfo.cullMode = CullMode::None;
-	pipelineCreateInfo.width = 800;
-	pipelineCreateInfo.height = 600;
+	pipelineCreateInfo.width = static_cast<float>(mainRenderPass->GetWidth());
+	pipelineCreateInfo.height = static_cast<float>(mainRenderPass->GetHeight());
 	pipelineCreateInfo.scissorX = 0;
 	pipelineCreateInfo.scissorY = 0;
-	pipelineCreateInfo.scissorW = 800;
-	pipelineCreateInfo.scissorH = 600;
+	pipelineCreateInfo.scissorW = mainRenderPass->GetWidth();
+	pipelineCreateInfo.scissorH = mainRenderPass->GetHeight();
 	pipelineCreateInfo.vertexBindings = &vertexLightPositionLayout;
 	pipelineCreateInfo.vertexBindingsCount = 1;
 
@@ -678,7 +771,7 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = true;
-	currentCommandBuffer->BindRenderPass(mainRenderPass, imageSet.litHdrFramebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
+	currentCommandBuffer->BindRenderPass(mainRenderPass, imageSet.litHdrFramebuffer, mainRenderPass->GetWidth(), mainRenderPass->GetHeight(), &clearColor, 1, clearDepthStencil);
 
 	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	currentCommandBuffer->BindIndexBuffer(indexBuffer);
@@ -898,7 +991,8 @@ void DeferredRenderer::PostProcessCommandBuffer(
 	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = false;
-	currentCommandBuffer->BindRenderPass(framebuffer->GetRenderPass(), framebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
+	auto renderPass = framebuffer->GetRenderPass();
+	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, renderPass->GetWidth(), renderPass->GetHeight(), &clearColor, 1, clearDepthStencil);
 	
 	currentCommandBuffer->BindDescriptorSet(tonemapPipeline, &imageSet.tonemapDescriptorSet, 1);
 	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
@@ -951,7 +1045,9 @@ void DeferredRenderer::RenderCommandBuffer(
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	auto assetManager = EngineCore::GetInstance().assetRendererManager;
 	auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
-	wgb->AcquireNextImage();
+	if (!wgb->AcquireNextImage()) {
+		return;
+	}
 
 	GraphicsAPI::Framebuffer* targetFramebuffer = outputFramebuffer;
 	if (outputFramebuffer == nullptr) {
@@ -985,7 +1081,11 @@ void DeferredRenderer::RenderCommandBuffer(
 	clearDepthStencil.hasDepthStencilAttachment = true;
 	assetManager->SetEngineDescriptorSet(imageSet.engineDescriptorSet);
 
-	currentCommandBuffer->BindRenderPass(gbufferRenderPass, imageSet.gbuffer, 800, 600, clearColors, 4, clearDepthStencil);
+	currentCommandBuffer->BindRenderPass(gbufferRenderPass, imageSet.gbuffer, gbufferRenderPass->GetWidth(), gbufferRenderPass->GetHeight(), clearColors, 4, clearDepthStencil);
+
+	currentCommandBuffer->SetViewport(0.0f, 0.0f, gbufferRenderPass->GetWidth(), gbufferRenderPass->GetHeight());
+	currentCommandBuffer->SetScissor(0, 0, static_cast<float>(gbufferRenderPass->GetWidth()), static_cast<float>(gbufferRenderPass->GetHeight()));
+
 	assetManager->RenderQueue(currentCommandBuffer, "Opaque");
 	currentCommandBuffer->UnbindRenderPass();
 	RenderLightsCommandBuffer(imageIndex, currentCommandBuffer, registry);

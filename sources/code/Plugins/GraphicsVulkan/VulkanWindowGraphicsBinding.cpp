@@ -161,18 +161,36 @@ namespace Grindstone {
 			}
 		}
 
-		void VulkanWindowGraphicsBinding::AcquireNextImage() {
+		bool VulkanWindowGraphicsBinding::AcquireNextImage() {
 			auto& vkCore = VulkanCore::Get();
 			auto device = vkCore.GetDevice();
 
 			vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
-			vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &currentSwapchainImageIndex);
+			VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &currentSwapchainImageIndex);
+			if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+				return false;
+			}
+
 			if (imagesInFlight[currentSwapchainImageIndex] != VK_NULL_HANDLE) {
 				vkWaitForFences(device, 1, &imagesInFlight[currentSwapchainImageIndex], VK_TRUE, UINT64_MAX);
 			}
 
 			vkResetFences(device, 1, &inFlightFences[currentFrame]);
+			return true;
+		}
+
+		void VulkanWindowGraphicsBinding::Resize(uint32_t width, uint32_t height) {
+			auto& vkCore = VulkanCore::Get();
+			vkCore.WaitUntilIdle();
+			vkDestroySwapchainKHR(vkCore.GetDevice(), swapChain, nullptr);
+
+			for (size_t i = 0; i < swapChainTargets.size(); i++) {
+				delete framebuffers[i];
+			}
+			delete renderPass;
+
+			CreateSwapChain();
 		}
 
 		void VulkanWindowGraphicsBinding::SubmitCommandBuffer(CommandBuffer* buffer) {
@@ -203,7 +221,7 @@ namespace Grindstone {
 			}
 		}
 
-		void VulkanWindowGraphicsBinding::PresentSwapchain() {
+		bool VulkanWindowGraphicsBinding::PresentSwapchain() {
 			auto& vkCore = VulkanCore::Get();
 			auto presentQueue = vkCore.presentQueue;
 
@@ -219,9 +237,15 @@ namespace Grindstone {
 
 			presentInfo.pImageIndices = &currentSwapchainImageIndex;
 
-			vkQueuePresentKHR(presentQueue, &presentInfo);
+			VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
+
+			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+				return false;
+			}
 
 			currentFrame = (currentFrame + 1) % maxFramesInFlight;
+
+			return true;
 		}
 
 		void VulkanWindowGraphicsBinding::CreateSwapChain() {

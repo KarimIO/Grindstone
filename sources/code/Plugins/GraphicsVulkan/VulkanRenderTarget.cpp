@@ -11,19 +11,27 @@ VulkanRenderTarget::VulkanRenderTarget(VkImage swapchainImage, VkFormat format) 
 	imageView = CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 }
 
-VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& createInfo) {
+VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& createInfo) : format(createInfo.format), width(createInfo.width), height(createInfo.height), isSampled(createInfo.isSampled) {
+	if (createInfo.debugName != nullptr) {
+		debugName = createInfo.debugName;
+	}
+
+	Create();
+}
+
+void VulkanRenderTarget::Create() {
 	uint8_t channels;
-	VkFormat renderFormat = TranslateColorFormatToVulkan(createInfo.format, channels);
+	VkFormat renderFormat = TranslateColorFormatToVulkan(format, channels);
 
 	uint32_t mipLevels = 1;
 
-	VkImageUsageFlags imageUsageFlags = createInfo.isSampled
+	VkImageUsageFlags imageUsageFlags = isSampled
 		? VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
 		: VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
 	CreateImage(
-		createInfo.width,
-		createInfo.height,
+		width,
+		height,
 		mipLevels,
 		renderFormat,
 		VK_IMAGE_TILING_OPTIMAL,
@@ -34,12 +42,13 @@ VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& createInfo) {
 	);
 	imageView = CreateImageView(image, renderFormat, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
 
-	std::string debugName = createInfo.debugName;
-	std::string imageViewDebugName = debugName + " View";
-	std::string imageSamplerDebugName = debugName + " Sampler";
-	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, createInfo.debugName);
-	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
-	if (createInfo.isSampled) {
+	if (!debugName.empty()) {
+		std::string imageViewDebugName = debugName + " View";
+		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, debugName.c_str());
+		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
+	}
+
+	if (isSampled) {
 		TransitionImageLayout(
 			image,
 			renderFormat,
@@ -50,15 +59,40 @@ VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& createInfo) {
 		);
 
 		CreateTextureSampler();
-		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_SAMPLER, sampler, imageSamplerDebugName.c_str());
+
+		if (!debugName.empty()) {
+			std::string imageSamplerDebugName = debugName + " Sampler";
+			VulkanCore::Get().NameObject(VK_OBJECT_TYPE_SAMPLER, sampler, imageSamplerDebugName.c_str());
+		}
 	}
 }
 
 VulkanRenderTarget::~VulkanRenderTarget() {
+	Cleanup();
+}
+
+void VulkanRenderTarget::Cleanup() {
 	VkDevice device = VulkanCore::Get().GetDevice();
-	vkDestroyImageView(device, imageView, nullptr);
-	vkDestroyImage(device, image, nullptr);
-	vkFreeMemory(device, imageMemory, nullptr);
+
+	if (sampler != nullptr) {
+		vkDestroySampler(device, sampler, nullptr);
+		sampler = nullptr;
+	}
+
+	if (imageView != nullptr) {
+		vkDestroyImageView(device, imageView, nullptr);
+		imageView = nullptr;
+	}
+
+	if (image != nullptr) {
+		vkDestroyImage(device, image, nullptr);
+		image = nullptr;
+	}
+
+	if (imageMemory != nullptr) {
+		vkFreeMemory(device, imageMemory, nullptr);
+		imageMemory = nullptr;
+	}
 }
 
 void VulkanRenderTarget::CreateTextureSampler() {
@@ -94,6 +128,11 @@ VkSampler VulkanRenderTarget::GetSampler() {
 }
 
 void VulkanRenderTarget::Resize(uint32_t width, uint32_t height) {
+	this->width = width;
+	this->height = height;
+
+	Cleanup();
+	Create();
 }
 
 void VulkanRenderTarget::RenderScreen(unsigned int i, unsigned int resx, unsigned int resy, unsigned char * data) {

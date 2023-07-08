@@ -6,27 +6,36 @@
 
 using namespace Grindstone::GraphicsAPI;
 
-VulkanDepthTarget::VulkanDepthTarget(DepthTarget::CreateInfo& createInfo) {
+VulkanDepthTarget::VulkanDepthTarget(DepthTarget::CreateInfo& createInfo) : format(createInfo.format), width(createInfo.width), height(createInfo.height), isShadowMap(createInfo.isShadowMap), isCubemap(createInfo.isCubemap), isSampled(createInfo.isSampled) {
+	if (createInfo.debugName != nullptr) {
+		debugName = createInfo.debugName;
+	}
+
+	Create();
+}
+
+void VulkanDepthTarget::Create() {
 	bool hasStencil = false;
-	VkFormat depthFormat = TranslateDepthFormatToVulkan(createInfo.format, hasStencil);
+	VkFormat depthFormat = TranslateDepthFormatToVulkan(format, hasStencil);
 
 	VkImageAspectFlags aspectFlags = hasStencil
 		? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
 		: VK_IMAGE_ASPECT_DEPTH_BIT;
 
-	VkImageUsageFlags imageUsageFlags = createInfo.isSampled
+	VkImageUsageFlags imageUsageFlags = isSampled
 		? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
 		: VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
-	CreateImage(createInfo.width, createInfo.height, 1, depthFormat, VK_IMAGE_TILING_OPTIMAL, imageUsageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
+	CreateImage(width, height, 1, depthFormat, VK_IMAGE_TILING_OPTIMAL, imageUsageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
 	imageView = CreateImageView(image, depthFormat, aspectFlags, 1);
 
-	std::string debugName = createInfo.debugName;
-	std::string imageViewDebugName = debugName + " View";
-	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, createInfo.debugName);
-	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
+	if (!debugName.empty()) {
+		std::string imageViewDebugName = debugName + " View";
+		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, debugName.c_str());
+		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
+	}
 
-	if (createInfo.isSampled) {
+	if (isSampled) {
 		TransitionImageLayout(
 			image,
 			depthFormat,
@@ -37,16 +46,39 @@ VulkanDepthTarget::VulkanDepthTarget(DepthTarget::CreateInfo& createInfo) {
 		);
 
 		CreateTextureSampler();
-		std::string imageSamplerDebugName = debugName + " Sampler";
-		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_SAMPLER, sampler, imageViewDebugName.c_str());
+
+		if (!debugName.empty()) {
+			std::string imageSamplerDebugName = debugName + " Sampler";
+			VulkanCore::Get().NameObject(VK_OBJECT_TYPE_SAMPLER, sampler, debugName.c_str());
+		}
 	}
 }
 		
 VulkanDepthTarget::~VulkanDepthTarget() {
+	Cleanup();
+}
+
+void VulkanDepthTarget::Cleanup() {
 	VkDevice device = VulkanCore::Get().GetDevice();
-	vkDestroyImageView(device, imageView, nullptr);
-	vkDestroyImage(device, image, nullptr);
-	vkFreeMemory(device, imageMemory, nullptr);
+	if (sampler != nullptr) {
+		vkDestroySampler(device, sampler, nullptr);
+		sampler = nullptr;
+	}
+
+	if (imageView != nullptr) {
+		vkDestroyImageView(device, imageView, nullptr);
+		imageView = nullptr;
+	}
+
+	if (image != nullptr) {
+		vkDestroyImage(device, image, nullptr);
+		image = nullptr;
+	}
+
+	if (imageMemory != nullptr) {
+		vkFreeMemory(device, imageMemory, nullptr);
+		imageMemory = nullptr;
+	}
 }
 
 void VulkanDepthTarget::CreateTextureSampler() {
@@ -82,8 +114,10 @@ VkSampler VulkanDepthTarget::GetSampler() {
 }
 
 void VulkanDepthTarget::Resize(uint32_t width, uint32_t height) {
-	std::cout << "VulkanDepthTarget::BindFace is not used.\n";
-	assert(false);
+	this->width = width;
+	this->height = height;
+	Cleanup();
+	Create();
 }
 
 void VulkanDepthTarget::BindFace(int k) {
