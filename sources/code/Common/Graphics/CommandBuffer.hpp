@@ -34,6 +34,9 @@ namespace Grindstone {
 				uint32_t descriptorSetCount
 			) = 0;
 			virtual void BindCommandBuffers(CommandBuffer** commandBuffers, uint32_t commandBuffersCount) = 0;
+			virtual void SetViewport(float offsetX, float offsetY, float width, float height, float depthMin = 0.0f, float depthMax = 1.0f) = 0;
+			virtual void SetScissor(int32_t offsetX, int32_t offsetY, uint32_t width, uint32_t height) = 0;
+			virtual void SetDepthBias(float biasConstantFactor, float biasSlopeFactor) = 0;
 			virtual void BindPipeline(Pipeline* pipeline) = 0;
 			virtual void BindVertexArrayObject(VertexArrayObject* vertexArrayObject) = 0;
 			virtual void BindVertexBuffers(VertexBuffer** vb, uint32_t count) = 0;

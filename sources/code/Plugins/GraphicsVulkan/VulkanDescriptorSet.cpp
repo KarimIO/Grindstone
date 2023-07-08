@@ -73,7 +73,7 @@ void AttachDepthTexture(std::vector<VkWriteDescriptorSet>& writeVector, Descript
 
 	// TODO: Handle this lifetime
 	VkDescriptorImageInfo* imageInfo = new VkDescriptorImageInfo();
-	imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo->imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 	imageInfo->imageView = texture->GetImageView();
 	imageInfo->sampler = texture->GetSampler();
 

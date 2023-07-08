@@ -8,6 +8,9 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		class UniformBuffer;
 		class DescriptorSet;
+		class RenderPass;
+		class DepthTarget;
+		class Framebuffer;
 		class DescriptorSetLayout;
 	}
 
@@ -32,9 +35,17 @@ namespace Grindstone {
 		float outerAngle;
 		float shadowResolution;
 
+		GraphicsAPI::RenderPass* renderPass = nullptr;
+		GraphicsAPI::Framebuffer* framebuffer = nullptr;
+		GraphicsAPI::DepthTarget* depthTarget = nullptr;
+
 		GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
 		GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
 		GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
+
+		GraphicsAPI::UniformBuffer* shadowMapUniformBufferObject = nullptr;
+		GraphicsAPI::DescriptorSet* shadowMapDescriptorSet = nullptr;
+		GraphicsAPI::DescriptorSetLayout* shadowMapDescriptorSetLayout = nullptr;
 
 		REFLECT("SpotLight")
 	};

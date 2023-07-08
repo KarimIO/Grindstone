@@ -496,7 +496,7 @@ void DeferredRenderer::CreatePipelines() {
 
 		std::array<GraphicsAPI::DescriptorSetLayout*, 2> spotLightLayouts{};
 		spotLightLayouts[0] = lightingDescriptorSetLayout;
-		spotLightLayouts[1] = lightingUBODescriptorSetLayout;
+		spotLightLayouts[1] = shadowMappedLightDescriptorSetLayout;
 
 		pipelineCreateInfo.shaderName = "Spot Light Pipeline";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
@@ -597,6 +597,11 @@ void DeferredRenderer::CreatePipelines() {
 
 		auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 
+		pipelineCreateInfo.width = 600;
+		pipelineCreateInfo.height = 600;
+		pipelineCreateInfo.scissorW = 600;
+		pipelineCreateInfo.scissorH = 600;
+
 		pipelineCreateInfo.vertexBindings = &shadowMapPositionLayout;
 		pipelineCreateInfo.vertexBindingsCount = 1;
 		pipelineCreateInfo.shaderName = "Shadow Mapping Pipeline";
@@ -649,6 +654,8 @@ void DeferredRenderer::RenderLightsImmediate(entt::registry& registry) {
 #endif
 }
 
+bool showSpot = true;
+
 void DeferredRenderer::RenderLightsCommandBuffer(
 	uint32_t imageIndex,
 	GraphicsAPI::CommandBuffer* currentCommandBuffer,
@@ -672,7 +679,14 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	currentCommandBuffer->BindIndexBuffer(indexBuffer);
 
-	{
+	const glm::mat4 bias = glm::mat4(
+		0.5f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.5f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.0f, 1.0f
+	);
+
+	if (false) {
 		// Point Lights
 		currentCommandBuffer->BindPipeline(pointLightPipeline);
 
@@ -695,7 +709,7 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 		});
 	}
 
-	{
+	if (showSpot) {
 		// Spot Lights
 		currentCommandBuffer->BindPipeline(spotLightPipeline);
 
@@ -704,9 +718,8 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 
 		auto view = registry.view<const TransformComponent, SpotLightComponent>();
 		view.each([&](const TransformComponent& transformComponent, SpotLightComponent& spotLightComponent) {
-			Math::Matrix4 shadowMatrix = glm::mat4(1.0f);
 			SpotLightComponent::UniformStruct lightStruct {
-				shadowMatrix,
+				bias * spotLightComponent.shadowMatrix,
 				spotLightComponent.color,
 				spotLightComponent.attenuationRadius,
 				transformComponent.position,
@@ -717,14 +730,15 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 				spotLightComponent.shadowResolution
 			};
 
-			spotLightDescriptors[1] = spotLightComponent.descriptorSet;
 			spotLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
+
+			spotLightDescriptors[1] = spotLightComponent.descriptorSet;
 			currentCommandBuffer->BindDescriptorSet(spotLightPipeline, spotLightDescriptors.data(), static_cast<uint32_t>(spotLightDescriptors.size()));
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 		});
 	}
 
-	{
+	if (!showSpot) {
 		// Directional Lights
 		currentCommandBuffer->BindPipeline(directionalLightPipeline);
 
@@ -734,7 +748,7 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 		auto view = registry.view<const TransformComponent, DirectionalLightComponent>();
 		view.each([&](const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
 			DirectionalLightComponent::UniformStruct lightStruct{
-				directionalLightComponent.shadowMatrix,
+				bias * directionalLightComponent.shadowMatrix,
 				directionalLightComponent.color,
 				directionalLightComponent.sourceRadius,
 				transformComponent.GetForward(),
@@ -754,6 +768,7 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 }
 
 void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::registry& registry) {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	auto assetManager = EngineCore::GetInstance().assetRendererManager;
 
 	ClearDepthStencil clearDepthStencil{};
@@ -761,39 +776,99 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = true;
 
-	auto view = registry.view<const TransformComponent, DirectionalLightComponent>();
-	view.each([&](const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
-		const float shadowHalfSize = 2.0f;
-		glm::mat4 shadowMatrix = glm::ortho<float>(-shadowHalfSize, shadowHalfSize, -shadowHalfSize, shadowHalfSize, -10, 30);
-		shadowMatrix[1][1] *= -1; // Flip y axis for Vulkan
+	if (showSpot) {
+		auto view = registry.view<const TransformComponent, SpotLightComponent>();
+		view.each([&](const TransformComponent& transformComponent, SpotLightComponent& spotLightComponent) {
+			float fov = glm::radians(90.0f); //spotLightComponent.outerAngle * 2.0f;
+			float farDist = spotLightComponent.attenuationRadius;
 
-		directionalLightComponent.shadowMatrix = shadowMatrix * glm::lookAt(
-			transformComponent.GetForward() * 20.0f,
-			glm::vec3(0, 0, 0),
-			glm::vec3(0, 1, 0)
-		);
+			const glm::vec3 forwardVector = transformComponent.GetForward();
+			const glm::vec3 pos = transformComponent.position;
 
-		uint32_t resolution = static_cast<uint32_t>(directionalLightComponent.shadowResolution);
+			const auto viewMatrix = glm::lookAt(
+				pos,
+				pos + forwardVector,
+				transformComponent.GetUp()
+			);
 
-		directionalLightComponent.shadowMapUniformBufferObject->UpdateBuffer(&directionalLightComponent.shadowMatrix);
+			auto projectionMatrix = glm::perspective(
+				fov,
+				1.0f,
+				0.1f,
+				farDist
+			);
 
-		commandBuffer->BindRenderPass(
-			directionalLightComponent.renderPass,
-			directionalLightComponent.framebuffer,
-			resolution,
-			resolution,
-			nullptr,
-			0,
-			clearDepthStencil
-		);
+			graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
 
-		commandBuffer->BindPipeline(shadowMappingPipeline);
+			spotLightComponent.shadowMatrix = projectionMatrix * viewMatrix;
+			glm::mat4 shadowPass = spotLightComponent.shadowMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
+			spotLightComponent.shadowMatrix = spotLightComponent.shadowMatrix * glm::mat4(1.0f);
 
-		commandBuffer->BindDescriptorSet(shadowMappingPipeline, &directionalLightComponent.shadowMapDescriptorSet, 1);
-		assetManager->RenderShadowMap(commandBuffer, directionalLightComponent.shadowMapDescriptorSet);
+			uint32_t resolution = static_cast<uint32_t>(spotLightComponent.shadowResolution);
 
-		commandBuffer->UnbindRenderPass();
-	});
+			spotLightComponent.shadowMapUniformBufferObject->UpdateBuffer(&shadowPass);
+
+			commandBuffer->BindRenderPass(
+				spotLightComponent.renderPass,
+				spotLightComponent.framebuffer,
+				resolution,
+				resolution,
+				nullptr,
+				0,
+				clearDepthStencil
+			);
+
+			float resF = static_cast<float>(resolution);
+			commandBuffer->BindPipeline(shadowMappingPipeline);
+
+			// commandBuffer->SetDepthBias(1.25f, 1.75f);
+
+			commandBuffer->BindDescriptorSet(shadowMappingPipeline, &spotLightComponent.shadowMapDescriptorSet, 1);
+			assetManager->RenderShadowMap(commandBuffer, spotLightComponent.shadowMapDescriptorSet);
+
+			commandBuffer->UnbindRenderPass();
+		});
+	}
+
+	if (!showSpot) {
+		auto view = registry.view<const TransformComponent, DirectionalLightComponent>();
+		view.each([&](const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
+			const float shadowHalfSize = 40.0f;
+			glm::mat4 projectionMatrix = glm::ortho<float>(-shadowHalfSize, shadowHalfSize, -shadowHalfSize, shadowHalfSize, 0, 40);
+			/// projectionMatrix[1][1] *= -1; // Flip y axis for Vulkan
+
+			glm::mat4 viewMatrix = glm::lookAt(
+				transformComponent.GetForward() * -30.0f,
+				glm::vec3(0, 0, 0),
+				transformComponent.GetUp()
+			);
+
+			directionalLightComponent.shadowMatrix = projectionMatrix * viewMatrix;
+			glm::mat4 shadowPass = directionalLightComponent.shadowMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
+			directionalLightComponent.shadowMatrix = directionalLightComponent.shadowMatrix * glm::mat4(1.0f);
+
+			uint32_t resolution = static_cast<uint32_t>(directionalLightComponent.shadowResolution);
+
+			directionalLightComponent.shadowMapUniformBufferObject->UpdateBuffer(&shadowPass);
+
+			commandBuffer->BindRenderPass(
+				directionalLightComponent.renderPass,
+				directionalLightComponent.framebuffer,
+				resolution,
+				resolution,
+				nullptr,
+				0,
+				clearDepthStencil
+			);
+
+			commandBuffer->BindPipeline(shadowMappingPipeline);
+
+			commandBuffer->BindDescriptorSet(shadowMappingPipeline, &directionalLightComponent.shadowMapDescriptorSet, 1);
+			assetManager->RenderShadowMap(commandBuffer, directionalLightComponent.shadowMapDescriptorSet);
+
+			commandBuffer->UnbindRenderPass();
+		});
+	}
 }
 
 void DeferredRenderer::PostProcessImmediate(GraphicsAPI::Framebuffer* outputFramebuffer) {

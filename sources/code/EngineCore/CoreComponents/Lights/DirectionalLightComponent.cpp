@@ -95,7 +95,7 @@ void Grindstone::SetupDirectionalLightComponent(ECS::Entity& entity, void* compo
 		UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
 		lightUniformBufferObjectCi.debugName = "Directional Shadow Map";
 		lightUniformBufferObjectCi.isDynamic = true;
-		lightUniformBufferObjectCi.size = sizeof(DirectionalLightComponent::UniformStruct);
+		lightUniformBufferObjectCi.size = sizeof(glm::mat4);
 		directionalLightComponent.shadowMapUniformBufferObject = graphicsCore->CreateUniformBuffer(lightUniformBufferObjectCi);
 
 		DescriptorSetLayout::Binding lightUboBindingLayout{};
