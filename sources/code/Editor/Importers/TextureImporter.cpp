@@ -18,8 +18,6 @@
 #include "TextureImporter.hpp"
 using namespace Grindstone::Importers;
 
-#define SHOULD_EXPORT_NORMAL_IMAGES
-
 const uint32_t blockWidth = 4;
 
 void TextureImporter::ExtractBlock(
@@ -27,16 +25,6 @@ void TextureImporter::ExtractBlock(
 	const uint32_t levelWidth,
 	uint8_t* colorBlock
 ) {
-	/*for (uint32_t dstRow = 0; dstRow < 4; dstRow++) {
-		for (uint32_t dstCol = 0; dstCol < 4; dstCol++) {
-			for (uint32_t dstChannel = 0; dstChannel < texChannels; dstChannel++) {
-				uint32_t srcIndex = ((dstRow * levelWidth + dstCol) * texChannels) + dstChannel;
-				uint32_t dstIndex = ((dstRow * 4 + dstCol) * texChannels) + dstChannel;
-				colorBlock[dstIndex] = inPtr[srcIndex];
-			}
-		}
-	}*/
-
 	if (texChannels == 3) {
 		for (uint32_t dstRow = 0; dstRow < blockWidth; dstRow++) {
 			for (uint32_t dstCol = 0; dstCol < blockWidth; dstCol++) {
