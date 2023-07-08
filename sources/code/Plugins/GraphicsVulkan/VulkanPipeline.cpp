@@ -179,6 +179,19 @@ VulkanPipeline::VulkanPipeline(Pipeline::CreateInfo& createInfo) {
 
 	VulkanRenderPass * renderPass = static_cast<VulkanRenderPass*>(createInfo.renderPass);
 
+	std::vector<VkDynamicState> dynamicStates;
+	if (createInfo.hasDynamicViewport) {
+		dynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+	}
+	if (createInfo.hasDynamicScissor) {
+		dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
+	}
+
+	VkPipelineDynamicStateCreateInfo dynamicInfo{};
+	dynamicInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicInfo.pDynamicStates = dynamicStates.data();
+	dynamicInfo.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
@@ -193,6 +206,7 @@ VulkanPipeline::VulkanPipeline(Pipeline::CreateInfo& createInfo) {
 	pipelineInfo.layout = pipelineLayout;
 	pipelineInfo.renderPass = renderPass->GetRenderPassHandle();
 	pipelineInfo.subpass = 0;
+	pipelineInfo.pDynamicState = &dynamicInfo;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
 	if (vkCreateGraphicsPipelines(VulkanCore::Get().GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {

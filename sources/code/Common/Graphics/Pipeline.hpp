@@ -39,6 +39,8 @@ namespace Grindstone {
 				bool isDepthTestEnabled = true;
 				bool isDepthWriteEnabled = true;
 				bool isStencilEnabled = false;
+				bool hasDynamicViewport = false;
+				bool hasDynamicScissor = false;
 			};
 
 			virtual void Recreate(CreateInfo& createInfo) = 0;

@@ -615,6 +615,8 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.isDepthWriteEnabled = true;
 		pipelineCreateInfo.isDepthTestEnabled = true;
 		pipelineCreateInfo.isStencilEnabled = false;
+		pipelineCreateInfo.hasDynamicScissor = true;
+		pipelineCreateInfo.hasDynamicViewport = true;
 		shadowMappingPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
 	}
 }
@@ -820,10 +822,11 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 				clearDepthStencil
 			);
 
-			float resF = static_cast<float>(resolution);
 			commandBuffer->BindPipeline(shadowMappingPipeline);
 
-			// commandBuffer->SetDepthBias(1.25f, 1.75f);
+			float resF = static_cast<float>(resolution);
+			commandBuffer->SetViewport(0.0f, 0.0f, resF, resF);
+			commandBuffer->SetScissor(0, 0, resolution, resolution);
 
 			commandBuffer->BindDescriptorSet(shadowMappingPipeline, &spotLightComponent.shadowMapDescriptorSet, 1);
 			assetManager->RenderShadowMap(commandBuffer, spotLightComponent.shadowMapDescriptorSet);
@@ -864,6 +867,10 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 			);
 
 			commandBuffer->BindPipeline(shadowMappingPipeline);
+
+			float resF = static_cast<float>(resolution);
+			commandBuffer->SetViewport(0.0f, 0.0f, resF, resF);
+			commandBuffer->SetScissor(0, 0, resolution, resolution);
 
 			commandBuffer->BindDescriptorSet(shadowMappingPipeline, &directionalLightComponent.shadowMapDescriptorSet, 1);
 			assetManager->RenderShadowMap(commandBuffer, directionalLightComponent.shadowMapDescriptorSet);
