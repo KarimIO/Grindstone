@@ -655,8 +655,8 @@ void DeferredRenderer::RenderLightsImmediate(entt::registry& registry) {
 }
 
 bool showPoint = true;
-bool showSpot = false;
-bool showDirect = false;
+bool showSpot = true;
+bool showDirect = true;
 
 void DeferredRenderer::RenderLightsCommandBuffer(
 	uint32_t imageIndex,
@@ -836,18 +836,18 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 		auto view = registry.view<const TransformComponent, DirectionalLightComponent>();
 		view.each([&](const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
 			const float shadowHalfSize = 40.0f;
-			glm::mat4 projectionMatrix = glm::ortho<float>(-shadowHalfSize, shadowHalfSize, -shadowHalfSize, shadowHalfSize, 0, 40);
+			glm::mat4 projectionMatrix = glm::ortho<float>(-shadowHalfSize, shadowHalfSize, -shadowHalfSize, shadowHalfSize, 0, 80);
 			graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
 
 			glm::mat4 viewMatrix = glm::lookAt(
-				transformComponent.GetForward() * -40.0f,
+				transformComponent.GetForward() * -70.0f,
 				glm::vec3(0, 0, 0),
 				transformComponent.GetUp()
 			);
 
-			directionalLightComponent.shadowMatrix = projectionMatrix * viewMatrix;
-			glm::mat4 shadowPass = directionalLightComponent.shadowMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
-			directionalLightComponent.shadowMatrix = directionalLightComponent.shadowMatrix * glm::mat4(1.0f);
+			glm::mat4 projView = projectionMatrix * viewMatrix;
+			glm::mat4 shadowPass = projView * glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
+			directionalLightComponent.shadowMatrix = projView * glm::mat4(1.0f);
 
 			uint32_t resolution = static_cast<uint32_t>(directionalLightComponent.shadowResolution);
 
