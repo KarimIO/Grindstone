@@ -12,6 +12,7 @@ namespace Grindstone {
 			VulkanRenderTarget(RenderTarget::CreateInfo& createInfo);
 			virtual ~VulkanRenderTarget() override;
 		public:
+			void UpdateSwapChainImage(VkImage swapchainImage);
 			VkImageView GetImageView();
 			VkSampler GetSampler();
 		public:
@@ -32,6 +33,7 @@ namespace Grindstone {
 			uint32_t width = 0;
 			uint32_t height = 0;
 			bool isSampled = false;
+			bool isOwnedBySwapchain = false;
 		};
 	}
 }

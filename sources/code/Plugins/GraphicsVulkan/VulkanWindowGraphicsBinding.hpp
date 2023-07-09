@@ -39,6 +39,7 @@ namespace Grindstone {
 			VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 			VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 			VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+			void CreateSwapChainImages();
 			void CreateSyncObjects();
 			void CreateRenderPass();
 			void CreateFramebuffers();

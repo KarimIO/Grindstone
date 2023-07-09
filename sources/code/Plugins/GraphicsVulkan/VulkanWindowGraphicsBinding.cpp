@@ -182,15 +182,27 @@ namespace Grindstone {
 
 		void VulkanWindowGraphicsBinding::Resize(uint32_t width, uint32_t height) {
 			auto& vkCore = VulkanCore::Get();
-			vkCore.WaitUntilIdle();
-			vkDestroySwapchainKHR(vkCore.GetDevice(), swapChain, nullptr);
+			VkDevice device = vkCore.GetDevice();
 
-			for (size_t i = 0; i < swapChainTargets.size(); i++) {
-				delete framebuffers[i];
+			if (swapChain != nullptr) {
+				vkCore.WaitUntilIdle();
+				vkDestroySwapchainKHR(device, swapChain, nullptr);
+				swapChain = nullptr;
+
+				for (size_t i = 0; i < framebuffers.size(); i++) {
+					delete framebuffers[i];
+				}
+				framebuffers.clear();
+
+				for (uint32_t i = 0; i < swapChainTargets.size(); ++i) {
+					delete static_cast<VulkanRenderTarget*>(swapChainTargets[i]);
+				}
+				swapChainTargets.clear();
+
+				delete renderPass;
+
+				CreateSwapChain();
 			}
-			delete renderPass;
-
-			CreateSwapChain();
 		}
 
 		void VulkanWindowGraphicsBinding::SubmitCommandBuffer(CommandBuffer* buffer) {
@@ -267,8 +279,11 @@ namespace Grindstone {
 			createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 			createInfo.surface = surface;
 
+			swapchainVulkanFormat = surfaceFormat.format;
+			swapchainFormat = TranslateColorFormatFromVulkan(swapchainVulkanFormat);
+
 			createInfo.minImageCount = imageCount;
-			createInfo.imageFormat = surfaceFormat.format;
+			createInfo.imageFormat = swapchainVulkanFormat;
 			createInfo.imageColorSpace = surfaceFormat.colorSpace;
 			createInfo.imageExtent = swapExtent;
 			createInfo.imageArrayLayers = 1;
@@ -295,22 +310,25 @@ namespace Grindstone {
 				throw std::runtime_error("failed to create swap chain!");
 			}
 
-			std::vector<VkImage> swapChainImages;
+			CreateSwapChainImages();
+			CreateRenderPass();
+			CreateFramebuffers();
+			CreateSyncObjects();
+		}
+
+		void VulkanWindowGraphicsBinding::CreateSwapChainImages() {
+			auto device = VulkanCore::Get().GetDevice();
+
+			uint32_t imageCount;
 			vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+			std::vector<VkImage> swapChainImages;
 			swapChainImages.resize(imageCount);
 			vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
 
 			swapChainTargets.resize(imageCount);
 			for (uint32_t i = 0; i < imageCount; ++i) {
-				swapChainTargets[i] = new VulkanRenderTarget(swapChainImages[i], surfaceFormat.format);
+				swapChainTargets[i] = new VulkanRenderTarget(swapChainImages[i], swapchainVulkanFormat);
 			}
-
-			swapchainFormat = TranslateColorFormatFromVulkan(surfaceFormat.format);
-			swapchainVulkanFormat = surfaceFormat.format;
-
-			CreateRenderPass();
-			CreateFramebuffers();
-			CreateSyncObjects();
 		}
 
 		void VulkanWindowGraphicsBinding::CreateRenderPass() {

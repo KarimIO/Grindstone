@@ -7,11 +7,11 @@
 
 using namespace Grindstone::GraphicsAPI;
 
-VulkanRenderTarget::VulkanRenderTarget(VkImage swapchainImage, VkFormat format) : image(swapchainImage) {
+VulkanRenderTarget::VulkanRenderTarget(VkImage swapchainImage, VkFormat format) : image(swapchainImage), isOwnedBySwapchain(true) {
 	imageView = CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 }
 
-VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& createInfo) : format(createInfo.format), width(createInfo.width), height(createInfo.height), isSampled(createInfo.isSampled) {
+VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& createInfo) : format(createInfo.format), width(createInfo.width), height(createInfo.height), isSampled(createInfo.isSampled), isOwnedBySwapchain(false){
 	if (createInfo.debugName != nullptr) {
 		debugName = createInfo.debugName;
 	}
@@ -84,14 +84,16 @@ void VulkanRenderTarget::Cleanup() {
 		imageView = nullptr;
 	}
 
-	if (image != nullptr) {
-		vkDestroyImage(device, image, nullptr);
-		image = nullptr;
-	}
+	if (!isOwnedBySwapchain) {
+		if (image != nullptr) {
+			vkDestroyImage(device, image, nullptr);
+			image = nullptr;
+		}
 
-	if (imageMemory != nullptr) {
-		vkFreeMemory(device, imageMemory, nullptr);
-		imageMemory = nullptr;
+		if (imageMemory != nullptr) {
+			vkFreeMemory(device, imageMemory, nullptr);
+			imageMemory = nullptr;
+		}
 	}
 }
 
@@ -116,6 +118,17 @@ void VulkanRenderTarget::CreateTextureSampler() {
 
 	if (vkCreateSampler(VulkanCore::Get().GetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create texture sampler!");
+	}
+}
+
+void VulkanRenderTarget::UpdateSwapChainImage(VkImage swapchainImage) {
+	image = swapchainImage;
+
+	VkDevice device = VulkanCore::Get().GetDevice();
+
+	if (imageView != nullptr) {
+		vkDestroyImageView(device, imageView, nullptr);
+		imageView = nullptr;
 	}
 }
 
