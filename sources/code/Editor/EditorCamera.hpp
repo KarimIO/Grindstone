@@ -11,6 +11,8 @@ namespace Grindstone {
 
 	namespace GraphicsAPI {
 		class Framebuffer;
+		class CommandBuffer;
+		class DescriptorSet;
 	}
 
 	namespace Editor {
@@ -18,7 +20,7 @@ namespace Grindstone {
 		public:
 			EditorCamera();
 			uint32_t GetPrimaryFramebufferAttachment();
-			void Render();
+			void Render(GraphicsAPI::CommandBuffer* commandBuffer);
 			void RenderPlayModeCamera(TransformComponent& transform, CameraComponent& camera);
 			void OffsetRotation(float pitch, float yaw);
 			void OffsetPosition(float x, float y, float z);
@@ -33,6 +35,7 @@ namespace Grindstone {
 			glm::vec3 GetUp();
 
 			GraphicsAPI::Framebuffer* framebuffer = nullptr;
+			GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
 			BaseRenderer* renderer = nullptr;
 			glm::mat4 projection;
 			glm::mat4 view;

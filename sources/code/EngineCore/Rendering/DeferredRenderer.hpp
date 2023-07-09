@@ -11,6 +11,7 @@ namespace Grindstone {
 		class DepthTarget;
 		class VertexArrayObject;
 		class Pipeline;
+		class CommandBuffer;
 	};
 
 	class DeferredRenderer : public BaseRenderer {
@@ -20,6 +21,7 @@ namespace Grindstone {
 		virtual bool OnWindowResize(Events::BaseEvent*) override;
 		virtual void Resize(uint32_t width, uint32_t height) override;
 		virtual void Render(
+			GraphicsAPI::CommandBuffer* commandBuffer,
 			entt::registry& registry,
 			glm::mat4 projectionMatrix,
 			glm::mat4 viewMatrix,
@@ -35,7 +37,6 @@ namespace Grindstone {
 			GraphicsAPI::Framebuffer* litHdrFramebuffer = nullptr;
 			GraphicsAPI::RenderTarget* litHdrRenderTarget = nullptr;
 			GraphicsAPI::DepthTarget* litHdrDepthTarget = nullptr;
-			GraphicsAPI::CommandBuffer* commandBuffer = nullptr;
 
 			GraphicsAPI::UniformBuffer* globalUniformBufferObject = nullptr;
 
@@ -45,6 +46,7 @@ namespace Grindstone {
 		};
 
 		void RenderCommandBuffer(
+			GraphicsAPI::CommandBuffer* commandBuffer,
 			entt::registry& registry,
 			glm::mat4 projectionMatrix,
 			glm::mat4 viewMatrix,

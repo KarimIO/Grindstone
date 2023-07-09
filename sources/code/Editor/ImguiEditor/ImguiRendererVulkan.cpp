@@ -83,10 +83,24 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 
 ImguiRendererVulkan::~ImguiRendererVulkan() {}
 
+Grindstone::GraphicsAPI::CommandBuffer* ImguiRendererVulkan::GetCommandBuffer() {
+	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
+	auto window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	return commandBuffers[window->GetCurrentImageIndex()];
+}
+
 void ImguiRendererVulkan::PreRender() {
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
 	auto window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	window->AcquireNextImage();
+	auto currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
+
+	currentCommandBuffer->BeginCommandBuffer();
+}
+
+void ImguiRendererVulkan::PrepareImguiRendering() {
+	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
+	auto window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	auto renderPass = window->GetRenderPass();
 	auto framebuffer = window->GetCurrentFramebuffer();
 	auto currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
@@ -97,7 +111,6 @@ void ImguiRendererVulkan::PreRender() {
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = true;
 
-	currentCommandBuffer->BeginCommandBuffer();
 	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
 
 	ImGui_ImplVulkan_NewFrame();

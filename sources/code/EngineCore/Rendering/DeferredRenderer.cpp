@@ -55,7 +55,6 @@ DeferredRenderer::DeferredRenderer() {
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;
 	shadowMapRenderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
-	CreateCommandBuffers();
 	CreateVertexAndIndexBuffersAndLayouts();
 	CreateGbufferFramebuffer();
 	CreateLitHDRFramebuffer();
@@ -86,7 +85,6 @@ DeferredRenderer::~DeferredRenderer() {
 		graphicsCore->DeleteFramebuffer(imageSet.litHdrFramebuffer);
 		graphicsCore->DeleteRenderTarget(imageSet.litHdrRenderTarget);
 		graphicsCore->DeleteDepthTarget(imageSet.litHdrDepthTarget);
-		graphicsCore->DeleteCommandBuffer(imageSet.commandBuffer);
 
 		graphicsCore->DeleteDescriptorSet(imageSet.engineDescriptorSet);
 		graphicsCore->DeleteDescriptorSet(imageSet.tonemapDescriptorSet);
@@ -149,16 +147,6 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 		graphicsCore->DeletePipeline(shadowMappingPipeline);
 		graphicsCore->DeletePipeline(tonemapPipeline);
 		CreatePipelines();
-	}
-}
-
-void DeferredRenderer::CreateCommandBuffers() {
-	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-
-	GraphicsAPI::CommandBuffer::CreateInfo commandBufferCreateInfo{};
-
-	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
-		deferredRendererImageSets[i].commandBuffer = graphicsCore->CreateCommandBuffer(commandBufferCreateInfo);
 	}
 }
 
@@ -1008,6 +996,7 @@ void DeferredRenderer::PostProcessCommandBuffer(
 }
 
 void DeferredRenderer::Render(
+	GraphicsAPI::CommandBuffer* commandBuffer,
 	entt::registry& registry,
 	glm::mat4 projectionMatrix,
 	glm::mat4 viewMatrix,
@@ -1026,6 +1015,7 @@ void DeferredRenderer::Render(
 	}
 	else {
 		RenderCommandBuffer(
+			commandBuffer,
 			registry,
 			projectionMatrix,
 			viewMatrix,
@@ -1036,6 +1026,7 @@ void DeferredRenderer::Render(
 }
 
 void DeferredRenderer::RenderCommandBuffer(
+	GraphicsAPI::CommandBuffer* commandBuffer,
 	entt::registry& registry,
 	glm::mat4 projectionMatrix,
 	glm::mat4 viewMatrix,
@@ -1045,14 +1036,6 @@ void DeferredRenderer::RenderCommandBuffer(
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	auto assetManager = EngineCore::GetInstance().assetRendererManager;
 	auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
-	if (!wgb->AcquireNextImage()) {
-		return;
-	}
-
-	GraphicsAPI::Framebuffer* targetFramebuffer = outputFramebuffer;
-	if (outputFramebuffer == nullptr) {
-		targetFramebuffer = wgb->GetCurrentFramebuffer();
-	}
 
 	uint32_t imageIndex = wgb->GetCurrentImageIndex();
 	auto& imageSet = deferredRendererImageSets[imageIndex];
@@ -1063,10 +1046,8 @@ void DeferredRenderer::RenderCommandBuffer(
 	engineUboStruct.eyePos = eyePos;
 	imageSet.globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
 
-	auto currentCommandBuffer = imageSet.commandBuffer;
-	currentCommandBuffer->BeginCommandBuffer();
 
-	RenderShadowMaps(currentCommandBuffer, registry);
+	RenderShadowMaps(commandBuffer, registry);
 
 	ClearColorValue clearColors[] = {
 		ClearColorValue{0.3f, 0.6f, 0.9f, 1.f},
@@ -1081,22 +1062,18 @@ void DeferredRenderer::RenderCommandBuffer(
 	clearDepthStencil.hasDepthStencilAttachment = true;
 	assetManager->SetEngineDescriptorSet(imageSet.engineDescriptorSet);
 
-	currentCommandBuffer->BindRenderPass(gbufferRenderPass, imageSet.gbuffer, gbufferRenderPass->GetWidth(), gbufferRenderPass->GetHeight(), clearColors, 4, clearDepthStencil);
+	commandBuffer->BindRenderPass(gbufferRenderPass, imageSet.gbuffer, gbufferRenderPass->GetWidth(), gbufferRenderPass->GetHeight(), clearColors, 4, clearDepthStencil);
 
-	currentCommandBuffer->SetViewport(0.0f, 0.0f, gbufferRenderPass->GetWidth(), gbufferRenderPass->GetHeight());
-	currentCommandBuffer->SetScissor(0, 0, static_cast<float>(gbufferRenderPass->GetWidth()), static_cast<float>(gbufferRenderPass->GetHeight()));
+	commandBuffer->SetViewport(0.0f, 0.0f, gbufferRenderPass->GetWidth(), gbufferRenderPass->GetHeight());
+	commandBuffer->SetScissor(0, 0, static_cast<float>(gbufferRenderPass->GetWidth()), static_cast<float>(gbufferRenderPass->GetHeight()));
 
-	assetManager->RenderQueue(currentCommandBuffer, "Opaque");
-	currentCommandBuffer->UnbindRenderPass();
-	RenderLightsCommandBuffer(imageIndex, currentCommandBuffer, registry);
+	assetManager->RenderQueue(commandBuffer, "Opaque");
+	commandBuffer->UnbindRenderPass();
+	RenderLightsCommandBuffer(imageIndex, commandBuffer, registry);
 	// assetManager->RenderQueue("Unlit");
 	// assetManager->RenderQueue("Transparent");
 
-	PostProcessCommandBuffer(imageIndex, targetFramebuffer, currentCommandBuffer);
-
-	currentCommandBuffer->EndCommandBuffer();
-	wgb->SubmitCommandBuffer(currentCommandBuffer);
-	wgb->PresentSwapchain();
+	PostProcessCommandBuffer(imageIndex, outputFramebuffer, commandBuffer);
 }
 
 void DeferredRenderer::RenderImmediate(

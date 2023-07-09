@@ -211,6 +211,8 @@ void ImguiEditor::SetupStyles() {
 
 void ImguiEditor::Update() {
 	imguiRenderer->PreRender();
+	viewportPanel->RenderCamera(imguiRenderer->GetCommandBuffer());
+	imguiRenderer->PrepareImguiRendering();
 	Render();
 	imguiRenderer->PostRender();
 }

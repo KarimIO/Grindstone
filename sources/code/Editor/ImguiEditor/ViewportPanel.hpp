@@ -13,8 +13,8 @@ namespace Grindstone {
 			public:
 				ViewportPanel();
 				void Render();
+				void RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer);
 			private:
-				void RenderCamera();
 				void DisplayInGameCamera();
 				void DisplayCameraToPanel(uint64_t textureID);
 				void HandleInput();
