@@ -16,7 +16,7 @@ namespace Grindstone {
 
 	class DeferredRenderer : public BaseRenderer {
 	public:
-		DeferredRenderer();
+		DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass);
 		virtual ~DeferredRenderer();
 		virtual bool OnWindowResize(Events::BaseEvent*) override;
 		virtual void Resize(uint32_t width, uint32_t height) override;
@@ -70,7 +70,6 @@ namespace Grindstone {
 		void CleanupPipelines();
 		void CreatePipelines();
 		void CreateDescriptorSetLayouts();
-		void CreateCommandBuffers();
 		void CreateGbufferFramebuffer();
 		void CreateLitHDRFramebuffer();
 		void CreateDescriptorSets(DeferredRendererImageSet& imageSet);
@@ -97,6 +96,7 @@ namespace Grindstone {
 
 		GraphicsAPI::RenderPass* mainRenderPass = nullptr;
 		GraphicsAPI::RenderPass* shadowMapRenderPass = nullptr;
+		GraphicsAPI::RenderPass* targetRenderPass = nullptr;
 
 		GraphicsAPI::VertexBuffer* vertexBuffer;
 		GraphicsAPI::IndexBuffer* indexBuffer;

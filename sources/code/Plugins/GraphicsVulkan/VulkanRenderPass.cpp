@@ -23,6 +23,12 @@ namespace Grindstone {
 			Create();
 		}
 
+		void VulkanRenderPass::Update(VkRenderPass renderPass, uint32_t width, uint32_t height) {
+			this->renderPass = renderPass;
+			this->width = width;
+			this->height = height;
+		}
+
 		void VulkanRenderPass::Create() {
 			uint32_t total = static_cast<uint32_t>(colorFormats.size());
 			total += (depthFormat != DepthFormat::None) ? 1 : 0;

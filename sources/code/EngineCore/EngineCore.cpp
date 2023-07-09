@@ -191,8 +191,8 @@ Events::Dispatcher* EngineCore::GetEventDispatcher() {
 	return eventDispatcher;
 }
 
-BaseRenderer* EngineCore::CreateRenderer() {
-	return new DeferredRenderer();
+BaseRenderer* EngineCore::CreateRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
+	return new DeferredRenderer(targetRenderPass);
 }
 
 std::filesystem::path EngineCore::GetProjectPath() {

@@ -210,7 +210,10 @@ void ImguiEditor::SetupStyles() {
 }
 
 void ImguiEditor::Update() {
-	imguiRenderer->PreRender();
+	if (!imguiRenderer->PreRender()) {
+		return;
+	}
+
 	viewportPanel->RenderCamera(imguiRenderer->GetCommandBuffer());
 	imguiRenderer->PrepareImguiRendering();
 	Render();

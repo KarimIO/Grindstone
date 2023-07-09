@@ -20,7 +20,9 @@ namespace Grindstone {
 				void HandleInput();
 				void HandleSelection();
 				bool isShowingPanel = true;
-				EditorCamera* camera;
+				EditorCamera* camera = nullptr;
+				uint32_t width = 1;
+				uint32_t height = 1;
 			};
 		}
 	}

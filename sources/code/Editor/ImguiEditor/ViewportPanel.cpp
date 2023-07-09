@@ -127,7 +127,10 @@ void ViewportPanel::HandleSelection() {
 }
 
 void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
-	camera->Render(commandBuffer);
+	if (isShowingPanel && width > 0 && height > 0) {
+		camera->ResizeViewport(width, height);
+		camera->Render(commandBuffer);
+	}
 }
 
 void ViewportPanel::DisplayCameraToPanel(uint64_t textureID) {
@@ -169,8 +172,8 @@ void ViewportPanel::DisplayInGameCamera() {
 
 	camera->RenderPlayModeCamera(*transformComponent, *cameraComponent);
 
-	//uint64_t textureID = (uint64_t)camera->GetPrimaryFramebufferAttachment();
-	//DisplayCameraToPanel(textureID);
+	uint64_t textureID = camera->GetRenderOutput();
+	DisplayCameraToPanel(textureID);
 }
 
 void ViewportPanel::Render() {
@@ -179,15 +182,14 @@ void ViewportPanel::Render() {
 		ImGui::Begin("Viewport", &isShowingPanel);
 
 		ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-		uint32_t width = std::max((int)viewportPanelSize.x, 1);
-		uint32_t height = std::max((int)viewportPanelSize.y, 1);
-		camera->ResizeViewport(width, height);
+		width = std::max((int)viewportPanelSize.x, 1);
+		height = std::max((int)viewportPanelSize.y, 1);
 
 		PlayMode playMode = Editor::Manager::GetInstance().GetPlayMode();
 		if (playMode == PlayMode::Editor) {
 			HandleInput();
-			// uint64_t textureID = (uint64_t)camera->GetPrimaryFramebufferAttachment();
-			//DisplayCameraToPanel(0);
+			uint64_t textureID = camera->GetRenderOutput();
+			DisplayCameraToPanel(textureID);
 			HandleSelection();
 		}
 		else {

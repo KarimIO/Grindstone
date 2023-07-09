@@ -24,7 +24,7 @@ EditorCamera::EditorCamera() {
 	renderTargetCreateInfo.height = 600;
 	renderTargetCreateInfo.format = GraphicsAPI::ColorFormat::R8G8B8A8;
 	renderTargetCreateInfo.isSampled = true;
-	auto* renderTarget = core->CreateRenderTarget(&renderTargetCreateInfo, 1, false);
+	renderTarget = core->CreateRenderTarget(&renderTargetCreateInfo, 1, false);
 
 	/*
 	GraphicsAPI::DepthTarget::CreateInfo depthTargetCreateInfo{};
@@ -42,8 +42,8 @@ EditorCamera::EditorCamera() {
 	renderPassCreateInfo.height = 600;
 	renderPassCreateInfo.colorFormats = &renderTargetCreateInfo.format;
 	renderPassCreateInfo.depthFormat = GraphicsAPI::DepthFormat::None;
-	auto renderPass = core->CreateRenderPass(renderPassCreateInfo);
-
+	renderPass = core->CreateRenderPass(renderPassCreateInfo);
+	
 	GraphicsAPI::Framebuffer::CreateInfo framebufferCreateInfo{};
 	framebufferCreateInfo.debugName = "Editor Framebuffer";
 	framebufferCreateInfo.renderTargetLists = &renderTarget;
@@ -62,7 +62,7 @@ EditorCamera::EditorCamera() {
 	descriptorSetLayoutCreateInfo.debugName = "Editor Viewport Descriptor Set Layout";
 	descriptorSetLayoutCreateInfo.bindingCount = 1;
 	descriptorSetLayoutCreateInfo.bindings = &descriptorSetLayoutBinding;
-	auto descriptorSetLayout = core->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+	descriptorSetLayout = core->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
 	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding{};
 	descriptorSetBinding.bindingIndex = 0;
@@ -78,12 +78,12 @@ EditorCamera::EditorCamera() {
 	descriptorSet = core->CreateDescriptorSet(descriptorSetCreateInfo);
 
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
-	renderer = engineCore.CreateRenderer();
+	renderer = engineCore.CreateRenderer(renderPass);
 	UpdateViewMatrix();
 }
 
-uint32_t EditorCamera::GetPrimaryFramebufferAttachment() {
-	return (uint32_t)static_cast<GraphicsAPI::VulkanDescriptorSet*>(descriptorSet)->GetDescriptorSet();
+uint64_t EditorCamera::GetRenderOutput() {
+	return (uint64_t)(static_cast<GraphicsAPI::VulkanDescriptorSet*>(descriptorSet)->GetDescriptorSet());
 }
 
 void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
@@ -186,11 +186,28 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 	if (this->width == width && this->height == height) {
 		return;
 	}
-	
-	this->width = width;
-	this->height = height;
+
+	GraphicsAPI::Core* core = Editor::Manager::GetEngineCore().GetGraphicsCore();
+	this->width = width == 0 ? 1 : width;
+	this->height = height == 0 ? 1 : height;
+
+	renderPass->Resize(width, height);
+	renderTarget->Resize(width, height);
 	framebuffer->Resize(width, height);
 	renderer->Resize(width, height);
+
+	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding{};
+	descriptorSetBinding.bindingIndex = 0;
+	descriptorSetBinding.bindingType = GraphicsAPI::BindingType::RenderTexture;
+	descriptorSetBinding.count = 1;
+	descriptorSetBinding.itemPtr = renderTarget;
+
+	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
+	descriptorSetCreateInfo.debugName = "Editor Viewport Descriptor Set";
+	descriptorSetCreateInfo.bindingCount = 1;
+	descriptorSetCreateInfo.bindings = &descriptorSetBinding;
+	descriptorSetCreateInfo.layout = descriptorSetLayout;
+	descriptorSet = core->CreateDescriptorSet(descriptorSetCreateInfo);
 
 	UpdateProjectionMatrix();
 }

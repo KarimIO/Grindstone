@@ -17,6 +17,7 @@ namespace Grindstone {
 			virtual uint32_t GetWidth() override;
 			virtual uint32_t GetHeight() override;
 		public:
+			void Update(VkRenderPass renderPass, uint32_t width, uint32_t height);
 			virtual VkRenderPass GetRenderPassHandle();
 		private:
 			void Create();

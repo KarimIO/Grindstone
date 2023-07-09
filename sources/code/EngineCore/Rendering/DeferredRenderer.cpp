@@ -41,7 +41,10 @@ struct EngineUboStruct {
 	glm::vec3 eyePos;
 };
 
-DeferredRenderer::DeferredRenderer() {
+DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : targetRenderPass(targetRenderPass) {
+	width = targetRenderPass->GetWidth();
+	height = targetRenderPass->GetHeight();
+
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	uint32_t maxFramesInFlight = wgb->GetMaxFramesInFlight();
@@ -635,8 +638,6 @@ void DeferredRenderer::CreatePipelines() {
 			return;
 		}
 
-		auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
-
 		pipelineCreateInfo.shaderName = "Tonemapping Pipeline";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
@@ -644,7 +645,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.descriptorSetLayoutCount = 1;
 		pipelineCreateInfo.colorAttachmentCount = 1;
 		pipelineCreateInfo.blendMode = BlendMode::None;
-		pipelineCreateInfo.renderPass = wgb->GetRenderPass();
+		pipelineCreateInfo.renderPass = targetRenderPass;
 		pipelineCreateInfo.isDepthWriteEnabled = true;
 		pipelineCreateInfo.isDepthTestEnabled = true;
 		pipelineCreateInfo.isStencilEnabled = true;

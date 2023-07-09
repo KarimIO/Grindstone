@@ -36,13 +36,14 @@ CommandBuffer* ImguiRendererOpenGL::GetCommandBuffer() {
 	return nullptr;
 }
 
-void ImguiRendererOpenGL::PreRender() {
+bool ImguiRendererOpenGL::PreRender() {
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
 	glViewport(0, 0, 800, 600);
 	glClear(GL_COLOR_BUFFER_BIT);
+	return true;
 }
 
 void ImguiRendererOpenGL::PrepareImguiRendering() {

@@ -5,6 +5,7 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
+		class RenderPass;
 		class Framebuffer;
 		class CommandBuffer;
 	}

@@ -199,8 +199,6 @@ namespace Grindstone {
 				}
 				swapChainTargets.clear();
 
-				delete renderPass;
-
 				CreateSwapChain();
 			}
 		}
@@ -374,7 +372,12 @@ namespace Grindstone {
 				throw std::runtime_error("failed to create render pass!");
 			}
 
-			renderPass = new VulkanRenderPass(vkRenderPass, swapExtent.width, swapExtent.height);
+			if (renderPass == nullptr) {
+				renderPass = new VulkanRenderPass(vkRenderPass, swapExtent.width, swapExtent.height);
+			}
+			else {
+				static_cast<VulkanRenderPass*>(renderPass)->Update(vkRenderPass, swapExtent.width, swapExtent.height);
+			}
 		}
 
 		void VulkanWindowGraphicsBinding::CreateFramebuffers() {

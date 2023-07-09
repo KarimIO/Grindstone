@@ -64,8 +64,8 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
 	pipelineCreateInfo.cullMode = CullMode::None;
 	pipelineCreateInfo.renderPass = renderPass;
-	pipelineCreateInfo.width = renderPass->GetWidth();
-	pipelineCreateInfo.height = renderPass->GetHeight();
+	pipelineCreateInfo.width = static_cast<float>(renderPass->GetWidth());
+	pipelineCreateInfo.height = static_cast<float>(renderPass->GetHeight());
 	pipelineCreateInfo.scissorX = 0;
 	pipelineCreateInfo.scissorY = 0;
 	pipelineCreateInfo.scissorW = renderPass->GetWidth();

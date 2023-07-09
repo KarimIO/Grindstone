@@ -1,6 +1,7 @@
 #include "EngineCore/Reflection/ComponentReflection.hpp"
 #include "CameraComponent.hpp"
 #include "Common/Event/WindowEvent.hpp"
+#include "Common/Window/WindowManager.hpp"
 
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/Events/Dispatcher.hpp"
@@ -28,11 +29,12 @@ bool CameraComponent::OnWindowResize(Events::BaseEvent* ev) {
 
 void Grindstone::SetupCameraComponent(ECS::Entity& entity, void* componentPtr) {
 	auto& engineCore = EngineCore::GetInstance();
+	auto wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	auto eventDispatcher = engineCore.GetEventDispatcher();
 
 	CameraComponent& cameraComponent = *(CameraComponent*)componentPtr;
 
-	cameraComponent.renderer = engineCore.CreateRenderer();
+	cameraComponent.renderer = engineCore.CreateRenderer(wgb->GetRenderPass());
 	eventDispatcher->AddEventListener(
 		Events::EventType::WindowResize,
 		std::bind(&BaseRenderer::OnWindowResize, cameraComponent.renderer, std::placeholders::_1)

@@ -10,6 +10,7 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		class Core;
+		class RenderPass;
 	};
 
 	namespace Input {
@@ -74,7 +75,7 @@ namespace Grindstone {
 		virtual Events::Dispatcher* GetEventDispatcher();
 		virtual ECS::ComponentRegistrar* GetComponentRegistrar();
 		virtual GraphicsAPI::Core* GetGraphicsCore();
-		virtual BaseRenderer* CreateRenderer();
+		virtual BaseRenderer* CreateRenderer(GraphicsAPI::RenderPass* targetRenderPass);
 		virtual std::filesystem::path GetProjectPath();
 		virtual std::filesystem::path GetBinaryPath();
 		virtual std::filesystem::path GetEngineBinaryPath();
