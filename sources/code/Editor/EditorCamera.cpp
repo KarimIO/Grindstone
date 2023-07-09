@@ -13,15 +13,36 @@ using namespace Grindstone;
 
 EditorCamera::EditorCamera() {
 	GraphicsAPI::Core* core = Editor::Manager::GetEngineCore().GetGraphicsCore();
-	GraphicsAPI::RenderTarget::CreateInfo renderTargetCreateInfo;
+
+	GraphicsAPI::RenderTarget::CreateInfo renderTargetCreateInfo{};
+	renderTargetCreateInfo.debugName = "Editor Viewport Color Image";
 	renderTargetCreateInfo.width = 800;
 	renderTargetCreateInfo.height = 600;
-	renderTargetCreateInfo.format = GraphicsAPI::ColorFormat::R8G8B8;
+	renderTargetCreateInfo.format = GraphicsAPI::ColorFormat::R8G8B8A8;
 	auto* renderTarget = core->CreateRenderTarget(&renderTargetCreateInfo, 1, false);
 
+	GraphicsAPI::DepthTarget::CreateInfo depthTargetCreateInfo{};
+	depthTargetCreateInfo.debugName = "Editor Viewport Depth Image";
+	depthTargetCreateInfo.width = 800;
+	depthTargetCreateInfo.height = 600;
+	depthTargetCreateInfo.format = GraphicsAPI::DepthFormat::D24_STENCIL_8;
+	auto* depthTarget = core->CreateDepthTarget(depthTargetCreateInfo);
+
+	GraphicsAPI::RenderPass::CreateInfo renderPassCreateInfo{};
+	renderPassCreateInfo.debugName = "Editor RenderPass";
+	renderPassCreateInfo.colorFormatCount = 1;
+	renderPassCreateInfo.width = 800;
+	renderPassCreateInfo.height = 600;
+	renderPassCreateInfo.colorFormats = &renderTargetCreateInfo.format;
+	renderPassCreateInfo.depthFormat = depthTargetCreateInfo.format;
+	auto renderPass = core->CreateRenderPass(renderPassCreateInfo);
+
 	GraphicsAPI::Framebuffer::CreateInfo framebufferCreateInfo{};
+	framebufferCreateInfo.debugName = "Editor Framebuffer";
 	framebufferCreateInfo.renderTargetLists = &renderTarget;
 	framebufferCreateInfo.numRenderTargetLists = 1;
+	framebufferCreateInfo.depthTarget = depthTarget;
+	framebufferCreateInfo.renderPass = renderPass;
 	framebuffer = core->CreateFramebuffer(framebufferCreateInfo);
 
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
@@ -39,7 +60,7 @@ void EditorCamera::Render() {
 	auto sceneManager = engineCore.GetSceneManager();
 	auto scene = sceneManager->scenes.begin()->second;
 	auto& registry = scene->GetEntityRegistry();
-
+	/*
 	renderer->Render(
 		registry,
 		projection,
@@ -48,7 +69,7 @@ void EditorCamera::Render() {
 		framebuffer
 	);
 
-	framebuffer->Unbind();
+	framebuffer->Unbind();*/
 }
 
 void EditorCamera::RenderPlayModeCamera(TransformComponent& transform, CameraComponent& camera) {
@@ -57,7 +78,7 @@ void EditorCamera::RenderPlayModeCamera(TransformComponent& transform, CameraCom
 	auto sceneManager = engineCore.GetSceneManager();
 	auto scene = sceneManager->scenes.begin()->second;
 	auto& registry = scene->GetEntityRegistry();
-
+	/*
 	camera.aspectRatio = static_cast<float>(width) / height;
 	camera.renderer->Resize(width, height);
 
@@ -83,7 +104,7 @@ void EditorCamera::RenderPlayModeCamera(TransformComponent& transform, CameraCom
 		framebuffer
 	);
 
-	framebuffer->Unbind();
+	framebuffer->Unbind();*/
 }
 
 const float maxAngle = 1.55f;

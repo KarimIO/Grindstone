@@ -60,7 +60,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	assetBrowserPanel = new AssetBrowserPanel(imguiRenderer, engineCore, this);
 	userSettingsWindow = new Settings::UserSettingsWindow();
 	projectSettingsWindow = new Settings::ProjectSettingsWindow();
-	viewportPanel = nullptr; //new ViewportPanel();
+	viewportPanel = new ViewportPanel();
 	consolePanel = new ConsolePanel(imguiRenderer);
 	statsPanel = new StatsPanel();
 	buildPopup = new BuildPopup();
@@ -221,7 +221,7 @@ void ImguiEditor::Render() {
 	modelConverterModal->Render();
 	imageConverterModal->Render();
 	sceneHeirarchyPanel->Render();
-	// viewportPanel->Render();
+	viewportPanel->Render();
 	consolePanel->Render();
 	assetBrowserPanel->Render();
 	systemPanel->Render();

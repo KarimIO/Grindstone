@@ -173,8 +173,8 @@ void ViewportPanel::DisplayInGameCamera() {
 
 	camera->RenderPlayModeCamera(*transformComponent, *cameraComponent);
 
-	uint64_t textureID = (uint64_t)camera->GetPrimaryFramebufferAttachment();
-	DisplayCameraToPanel(textureID);
+	//uint64_t textureID = (uint64_t)camera->GetPrimaryFramebufferAttachment();
+	//DisplayCameraToPanel(textureID);
 }
 
 void ViewportPanel::Render() {
@@ -186,8 +186,8 @@ void ViewportPanel::Render() {
 		if (playMode == PlayMode::Editor) {
 			HandleInput();
 			RenderCamera();
-			uint64_t textureID = (uint64_t)camera->GetPrimaryFramebufferAttachment();
-			DisplayCameraToPanel(textureID);
+			// uint64_t textureID = (uint64_t)camera->GetPrimaryFramebufferAttachment();
+			//DisplayCameraToPanel(0);
 			HandleSelection();
 		}
 		else {
