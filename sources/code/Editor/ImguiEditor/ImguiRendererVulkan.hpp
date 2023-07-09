@@ -11,7 +11,9 @@ namespace Grindstone {
 				ImguiRendererVulkan();
 				~ImguiRendererVulkan();
 
-				virtual void PreRender() override;
+				virtual GraphicsAPI::CommandBuffer* GetCommandBuffer() override;
+				virtual bool PreRender() override;
+				virtual void PrepareImguiRendering() override;
 				virtual void PostRender() override;
 				virtual ImTextureID CreateTexture(std::filesystem::path path) override;
 			private:

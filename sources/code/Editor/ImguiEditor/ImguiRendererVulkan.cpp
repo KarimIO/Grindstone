@@ -83,10 +83,28 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 
 ImguiRendererVulkan::~ImguiRendererVulkan() {}
 
-void ImguiRendererVulkan::PreRender() {
+Grindstone::GraphicsAPI::CommandBuffer* ImguiRendererVulkan::GetCommandBuffer() {
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
 	auto window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
-	window->AcquireNextImage();
+	return commandBuffers[window->GetCurrentImageIndex()];
+}
+
+bool ImguiRendererVulkan::PreRender() {
+	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
+	auto window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	if (!window->AcquireNextImage()) {
+		return false;
+	}
+
+	auto currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
+
+	currentCommandBuffer->BeginCommandBuffer();
+	return true;
+}
+
+void ImguiRendererVulkan::PrepareImguiRendering() {
+	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
+	auto window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	auto renderPass = window->GetRenderPass();
 	auto framebuffer = window->GetCurrentFramebuffer();
 	auto currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
@@ -97,7 +115,6 @@ void ImguiRendererVulkan::PreRender() {
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = true;
 
-	currentCommandBuffer->BeginCommandBuffer();
 	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
 
 	ImGui_ImplVulkan_NewFrame();
@@ -150,8 +167,9 @@ ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {
 	binding.count = 1;
 	binding.itemPtr = textureAsset->texture;
 
+	auto pathAsStr = path.filename().string();
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
-	descriptorSetCreateInfo.debugName = path.filename().string().c_str();
+	descriptorSetCreateInfo.debugName = pathAsStr.c_str();
 	descriptorSetCreateInfo.bindings = &binding;
 	descriptorSetCreateInfo.bindingCount = 1;
 	descriptorSetCreateInfo.layout = layout;

@@ -32,13 +32,22 @@ ImguiRendererOpenGL::ImguiRendererOpenGL() {
 	ImGui_ImplOpenGL3_Init("#version 150");
 }
 
-void ImguiRendererOpenGL::PreRender() {
+CommandBuffer* ImguiRendererOpenGL::GetCommandBuffer() {
+	return nullptr;
+}
+
+bool ImguiRendererOpenGL::PreRender() {
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
 	glViewport(0, 0, 800, 600);
 	glClear(GL_COLOR_BUFFER_BIT);
+	return true;
+}
+
+void ImguiRendererOpenGL::PrepareImguiRendering() {
+
 }
 
 void ImguiRendererOpenGL::PostRender() {

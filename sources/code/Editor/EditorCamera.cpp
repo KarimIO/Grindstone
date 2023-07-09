@@ -1,54 +1,106 @@
 #include <glm/gtx/transform.hpp>
+
+#include <Common/Graphics/Framebuffer.hpp>
+#include <Common/Graphics/Core.hpp>
+#include <EngineCore/Rendering/BaseRenderer.hpp>
+#include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
+#include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
+#include <EngineCore/Scenes/Manager.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <Plugins/GraphicsVulkan/VulkanDescriptorSet.hpp>
+
 #include "EditorCamera.hpp"
 #include "EditorManager.hpp"
-#include "EngineCore/EngineCore.hpp"
-#include "Common/Graphics/Framebuffer.hpp"
-#include "Common/Graphics/Core.hpp"
-#include "EngineCore/Rendering/BaseRenderer.hpp"
-#include "EngineCore/CoreComponents/Camera/CameraComponent.hpp"
-#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
-#include "EngineCore/Scenes/Manager.hpp"
+
 using namespace Grindstone::Editor;
 using namespace Grindstone;
 
 EditorCamera::EditorCamera() {
 	GraphicsAPI::Core* core = Editor::Manager::GetEngineCore().GetGraphicsCore();
-	GraphicsAPI::RenderTarget::CreateInfo renderTargetCreateInfo;
+
+	GraphicsAPI::RenderTarget::CreateInfo renderTargetCreateInfo{};
+	renderTargetCreateInfo.debugName = "Editor Viewport Color Image";
 	renderTargetCreateInfo.width = 800;
 	renderTargetCreateInfo.height = 600;
-	renderTargetCreateInfo.format = GraphicsAPI::ColorFormat::R8G8B8;
-	auto* renderTarget = core->CreateRenderTarget(&renderTargetCreateInfo, 1, false);
+	renderTargetCreateInfo.format = GraphicsAPI::ColorFormat::R8G8B8A8;
+	renderTargetCreateInfo.isSampled = true;
+	renderTarget = core->CreateRenderTarget(&renderTargetCreateInfo, 1, false);
 
+	/*
+	GraphicsAPI::DepthTarget::CreateInfo depthTargetCreateInfo{};
+	depthTargetCreateInfo.debugName = "Editor Viewport Depth Image";
+	depthTargetCreateInfo.width = 800;
+	depthTargetCreateInfo.height = 600;
+	depthTargetCreateInfo.format = GraphicsAPI::DepthFormat::D24_STENCIL_8;
+	auto* depthTarget = core->CreateDepthTarget(depthTargetCreateInfo);
+	*/
+
+	GraphicsAPI::RenderPass::CreateInfo renderPassCreateInfo{};
+	renderPassCreateInfo.debugName = "Editor RenderPass";
+	renderPassCreateInfo.colorFormatCount = 1;
+	renderPassCreateInfo.width = 800;
+	renderPassCreateInfo.height = 600;
+	renderPassCreateInfo.colorFormats = &renderTargetCreateInfo.format;
+	renderPassCreateInfo.depthFormat = GraphicsAPI::DepthFormat::None;
+	renderPass = core->CreateRenderPass(renderPassCreateInfo);
+	
 	GraphicsAPI::Framebuffer::CreateInfo framebufferCreateInfo{};
+	framebufferCreateInfo.debugName = "Editor Framebuffer";
 	framebufferCreateInfo.renderTargetLists = &renderTarget;
 	framebufferCreateInfo.numRenderTargetLists = 1;
+	framebufferCreateInfo.depthTarget = nullptr;
+	framebufferCreateInfo.renderPass = renderPass;
 	framebuffer = core->CreateFramebuffer(framebufferCreateInfo);
 
+	GraphicsAPI::DescriptorSetLayout::Binding descriptorSetLayoutBinding{};
+	descriptorSetLayoutBinding.bindingId = 0;
+	descriptorSetLayoutBinding.type = GraphicsAPI::BindingType::RenderTexture;
+	descriptorSetLayoutBinding.count = 1;
+	descriptorSetLayoutBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
+
+	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
+	descriptorSetLayoutCreateInfo.debugName = "Editor Viewport Descriptor Set Layout";
+	descriptorSetLayoutCreateInfo.bindingCount = 1;
+	descriptorSetLayoutCreateInfo.bindings = &descriptorSetLayoutBinding;
+	descriptorSetLayout = core->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+
+	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding{};
+	descriptorSetBinding.bindingIndex = 0;
+	descriptorSetBinding.bindingType = GraphicsAPI::BindingType::RenderTexture;
+	descriptorSetBinding.count = 1;
+	descriptorSetBinding.itemPtr = renderTarget;
+
+	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
+	descriptorSetCreateInfo.debugName = "Editor Viewport Descriptor Set";
+	descriptorSetCreateInfo.bindingCount = 1;
+	descriptorSetCreateInfo.bindings = &descriptorSetBinding;
+	descriptorSetCreateInfo.layout = descriptorSetLayout;
+	descriptorSet = core->CreateDescriptorSet(descriptorSetCreateInfo);
+
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
-	renderer = engineCore.CreateRenderer();
+	renderer = engineCore.CreateRenderer(renderPass);
 	UpdateViewMatrix();
 }
 
-uint32_t EditorCamera::GetPrimaryFramebufferAttachment() {
-	return framebuffer->GetAttachment(0);
+uint64_t EditorCamera::GetRenderOutput() {
+	return (uint64_t)(static_cast<GraphicsAPI::VulkanDescriptorSet*>(descriptorSet)->GetDescriptorSet());
 }
 
-void EditorCamera::Render() {
+void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 	EngineCore& engineCore = Editor::Manager::GetInstance().GetEngineCore();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	auto sceneManager = engineCore.GetSceneManager();
 	auto scene = sceneManager->scenes.begin()->second;
 	auto& registry = scene->GetEntityRegistry();
-
+	
 	renderer->Render(
+		commandBuffer,
 		registry,
 		projection,
 		view,
 		position,
 		framebuffer
 	);
-
-	framebuffer->Unbind();
 }
 
 void EditorCamera::RenderPlayModeCamera(TransformComponent& transform, CameraComponent& camera) {
@@ -57,7 +109,7 @@ void EditorCamera::RenderPlayModeCamera(TransformComponent& transform, CameraCom
 	auto sceneManager = engineCore.GetSceneManager();
 	auto scene = sceneManager->scenes.begin()->second;
 	auto& registry = scene->GetEntityRegistry();
-
+	/*
 	camera.aspectRatio = static_cast<float>(width) / height;
 	camera.renderer->Resize(width, height);
 
@@ -83,7 +135,7 @@ void EditorCamera::RenderPlayModeCamera(TransformComponent& transform, CameraCom
 		framebuffer
 	);
 
-	framebuffer->Unbind();
+	framebuffer->Unbind();*/
 }
 
 const float maxAngle = 1.55f;
@@ -134,11 +186,28 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 	if (this->width == width && this->height == height) {
 		return;
 	}
-	
-	this->width = width;
-	this->height = height;
+
+	GraphicsAPI::Core* core = Editor::Manager::GetEngineCore().GetGraphicsCore();
+	this->width = width == 0 ? 1 : width;
+	this->height = height == 0 ? 1 : height;
+
+	renderPass->Resize(width, height);
+	renderTarget->Resize(width, height);
 	framebuffer->Resize(width, height);
 	renderer->Resize(width, height);
+
+	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding{};
+	descriptorSetBinding.bindingIndex = 0;
+	descriptorSetBinding.bindingType = GraphicsAPI::BindingType::RenderTexture;
+	descriptorSetBinding.count = 1;
+	descriptorSetBinding.itemPtr = renderTarget;
+
+	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
+	descriptorSetCreateInfo.debugName = "Editor Viewport Descriptor Set";
+	descriptorSetCreateInfo.bindingCount = 1;
+	descriptorSetCreateInfo.bindings = &descriptorSetBinding;
+	descriptorSetCreateInfo.layout = descriptorSetLayout;
+	descriptorSet = core->CreateDescriptorSet(descriptorSetCreateInfo);
 
 	UpdateProjectionMatrix();
 }
