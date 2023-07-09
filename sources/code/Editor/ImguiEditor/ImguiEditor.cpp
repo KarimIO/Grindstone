@@ -1,22 +1,14 @@
 #include <iostream>
 #include <imgui.h>
 #include <imgui_internal.h>
-#if EDITOR_USE_OPENGL
-#include <imgui_impl_opengl3.h>
-#include "GL/gl3w.h"
-#else
-#include <imgui_impl_vulkan.h>
-#include <Plugins/GraphicsVulkan/VulkanCore.hpp>
-#include <Plugins/GraphicsVulkan/VulkanRenderPass.hpp>
-#include <Plugins/GraphicsVulkan/VulkanCommandBuffer.hpp>
-#endif
-#include <imgui_impl_win32.h>
 #include <ImGuizmo.h>
 #include <Windows.h>
 #include <Winuser.h>
 
 #include "Common/Window/WindowManager.hpp"
 #include "EngineCore/EngineCore.hpp"
+#include "EngineCore/Events/Dispatcher.hpp"
+#include "Common/Event/WindowEvent.hpp"
 #include "Editor/EditorManager.hpp"
 #include "Modals/ModelConverterModal.hpp"
 #include "Modals/ImageConverterModal.hpp"
@@ -68,6 +60,12 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	controlBar = new ControlBar(imguiRenderer);
 	menubar = new Menubar(this);
 	statusBar = new StatusBar(imguiRenderer);
+
+	auto eventDispatcher = engineCore->GetEventDispatcher();
+	eventDispatcher->AddEventListener(
+		Events::EventType::WindowResize,
+		std::bind(&ImguiEditor::OnWindowResize, this, std::placeholders::_1)
+	);
 }
 
 ImguiEditor::~ImguiEditor() {
@@ -89,6 +87,20 @@ ImguiEditor::~ImguiEditor() {
 	delete controlBar;
 	delete menubar;
 	delete statusBar;
+}
+
+void ImguiEditor::PerformResize() {
+	queueResize = false;
+	imguiRenderer->Resize();
+}
+
+bool ImguiEditor::OnWindowResize(Events::BaseEvent* ev) {
+	if (ev->GetEventType() == Events::EventType::WindowResize) {
+		Events::WindowResizeEvent* winResizeEvent = (Events::WindowResizeEvent*)ev;
+		queueResize = true;
+	}
+
+	return false;
 }
 
 void ImguiEditor::SetupFonts() {
@@ -210,6 +222,11 @@ void ImguiEditor::SetupStyles() {
 }
 
 void ImguiEditor::Update() {
+	if (queueResize) {
+		PerformResize();
+		return;
+	}
+
 	if (!imguiRenderer->PreRender()) {
 		return;
 	}

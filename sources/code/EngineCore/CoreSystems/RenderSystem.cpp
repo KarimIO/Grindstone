@@ -17,10 +17,12 @@ glm::vec3 EulerToForward(glm::vec3 eulerAngle) {
 	float pitch = eulerAngle.x;
 	float yaw = eulerAngle.y;
 
-	glm::vec3 forwardVector;
-	forwardVector.x = cos(yaw) * cos(pitch);
-	forwardVector.y = sin(pitch);
-	forwardVector.z = sin(yaw) * cos(pitch);
+	glm::vec3 forwardVector {
+		cos(yaw)* cos(pitch),
+		sin(pitch),
+		sin(yaw)* cos(pitch)
+	};
+
 	return glm::normalize(forwardVector);
 }
 

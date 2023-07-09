@@ -515,6 +515,10 @@ VkCommandBuffer VulkanCore::BeginSingleTimeCommands() {
 	return GraphicsAPI::BeginSingleTimeCommands();
 }
 
+uint32_t VulkanCore::GetGraphicsFamily() {
+	return graphicsFamily;
+}
+
 void VulkanCore::EndSingleTimeCommands(VkCommandBuffer commandBuffer) {
 	GraphicsAPI::EndSingleTimeCommands(commandBuffer);
 }

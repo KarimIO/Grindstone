@@ -42,6 +42,7 @@ namespace Grindstone {
 			virtual VkDevice GetDevice();
 			virtual VkPhysicalDevice GetPhysicalDevice();
 			virtual VkCommandBuffer BeginSingleTimeCommands();
+			virtual uint32_t GetGraphicsFamily();
 			virtual void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
 			VkCommandPool GetGraphicsCommandPool();
 			std::function<void(LogSeverity, const char*)> logFunction;

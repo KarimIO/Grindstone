@@ -4,6 +4,8 @@
 #include <entt/entt.hpp>
 #include <vulkan/vulkan.h>
 
+#include <Common/Event/BaseEvent.hpp>
+
 namespace Grindstone {
 	class EngineCore;
 
@@ -48,7 +50,10 @@ namespace Grindstone {
 				void SetupFonts();
 				void SetupStyles();
 				void SetupColors();
+				bool OnWindowResize(Events::BaseEvent* ev);
+				void PerformResize();
 			private:
+				bool queueResize = false;
 				EngineCore* engineCore = nullptr;
 				ImguiInput* input = nullptr;
 				ImageConverterModal* imageConverterModal = nullptr;

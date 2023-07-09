@@ -6,6 +6,7 @@
 #include <Windows.h>
 
 #include <Common/Window/WindowManager.hpp>
+#include <Common/Window/Win32Window.hpp>
 #include <Editor/EditorManager.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Assets/Textures/TextureAsset.hpp>
@@ -138,6 +139,13 @@ void ImguiRendererVulkan::PostRender() {
 	currentCommandBuffer->EndCommandBuffer();
 	window->SubmitCommandBuffer(currentCommandBuffer);
 	window->PresentSwapchain();
+}
+
+void ImguiRendererVulkan::Resize() {
+	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
+	auto vulkanCore = static_cast<Grindstone::GraphicsAPI::VulkanCore*>(engineCore.GetGraphicsCore());
+	auto window = static_cast<Win32Window*>(engineCore.windowManager->GetWindowByIndex(0));
+	auto wgb = window->GetWindowGraphicsBinding();
 }
 
 ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {

@@ -58,6 +58,10 @@ void ImguiRendererOpenGL::PostRender() {
 	ImGui::RenderPlatformWindowsDefault();
 }
 
+void ImguiRendererOpenGL::Resize() {
+
+}
+
 ImTextureID ImguiRendererOpenGL::CreateTexture(std::filesystem::path path) {
 	std::filesystem::path fullPath = "../engineassets/editor/" / path;
 	auto assetManager = Editor::Manager::GetEngineCore().assetManager;
