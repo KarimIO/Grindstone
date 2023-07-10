@@ -51,8 +51,8 @@ void TextureImporter::Import(std::filesystem::path& path) {
 		throw std::runtime_error("Unable to load texture!");
 	}
 
-	texWidth = static_cast<uint32_t>(width);
-	texHeight = static_cast<uint32_t>(height);
+	sourceWidth = static_cast<uint32_t>(width);
+	sourceHeight = static_cast<uint32_t>(height);
 	texChannels = static_cast<uint32_t>(channels);
 	targetTexChannels = texChannels;
 
@@ -69,20 +69,14 @@ void TextureImporter::Import(std::filesystem::path& path) {
 	}
 	else {
 		compression = Compression::BC3;
+		throw std::runtime_error("Invalid compression type!");
 	}
 
-	switch (compression) {
-	case Compression::BC1:
-	case Compression::BC3:
-		ConvertBC123();
-		break;
-	case Compression::BC4:
-		ConvertBC4();
-		break;
-	default:
-		delete sourcePixels;
-		throw "Invalid compression type!";
-	}
+	isSixSidedCubemap = (width / 4 == height / 3);
+	texWidth = isSixSidedCubemap ? sourceWidth / 4 : sourceWidth;
+	texHeight = isSixSidedCubemap ? sourceHeight / 3 : sourceHeight;
+
+	Convert();
 
 	delete sourcePixels;
 }
@@ -118,84 +112,78 @@ uint8_t *TextureImporter::CreateMip(uint8_t *pixel, uint32_t width, uint32_t hei
 	return mip;
 }
 
-void TextureImporter::ConvertBC123() {
-	bool isSixSidedCubemap = false;
-	// if (isSixSidedCubemap)
-	// 	size *= 6;
-
-	bool shouldGenerateMips = true;
+void TextureImporter::Convert() {
 	int mipMapCount = shouldGenerateMips
 		? CalculateMipMapLevelCount(texWidth, texHeight)
 		: 1;
 
-	int outputContentSize = 0;
-	uint32_t blockSize = (compression == Compression::BC1) ? 8 : 16;
+	uint64_t outputFaceSize = 0;
+	uint32_t blockSize = (compression == Compression::BC3) ? 16 : 8;
 	int mipWidth = texWidth;
 	int mipHeight = texHeight;
 	for (int i = 0; i < mipMapCount; i++) {
 		int mipsize = ((mipWidth + 3) / 4) * ((mipHeight + 3) / 4) * blockSize;
-		outputContentSize += mipsize;
+		outputFaceSize += mipsize;
 
 		mipWidth /= 2;
 		mipHeight /= 2;
 	}
 
 	int faceCount = isSixSidedCubemap ? 6 : 1;
-	outputContentSize *= faceCount;
+	uint32_t outputTotalSize = outputFaceSize * faceCount;
 
-	uint8_t* outData = new uint8_t[outputContentSize];
+	uint8_t* outData = new uint8_t[outputTotalSize];
 	int minMipLevel = std::max(mipMapCount, 1);
 	for (int faceIterator = 0; faceIterator < faceCount; faceIterator++) {
-		GenerateFaceBC123(minMipLevel, faceIterator, outData);
+		GenerateFace(minMipLevel, faceIterator, blockSize, outData + (outputFaceSize * faceIterator));
 	}
 
-	OutputDds(outData, outputContentSize);
+	OutputDds(outData, outputTotalSize);
 }
 
+uint64_t cubemapX[6] = {2, 0, 1, 1, 3, 1};
+uint64_t cubemapY[6] = {1, 1, 0, 2, 1, 1};
 
-void TextureImporter::ConvertBC4() {
-	bool isSixSidedCubemap = false;
-	// if (isSixSidedCubemap)
-	// 	size *= 6;
+uint8_t* TextureImporter::ExtractFirstFace(uint8_t faceIndex) {
+	uint64_t sourcePitch = static_cast<uint64_t>(sourceWidth * texChannels);
+	uint64_t targetPitch = static_cast<uint64_t>(texWidth * texChannels);
+	uint64_t targetSize = static_cast<uint64_t>(targetPitch * texHeight);
+	uint8_t* faceOutput = new uint8_t[targetSize];
 
-	bool shouldGenerateMips = true;
-	int mipMapCount = shouldGenerateMips ?
-		CalculateMipMapLevelCount(texWidth, texHeight)
-		: 1;
+	uint64_t firstPixelOffset = isSixSidedCubemap
+		? (cubemapY[faceIndex] * texHeight * sourcePitch) + (cubemapX[faceIndex] * targetPitch)
+		: 0;
+	uint8_t* firstPixel = sourcePixels + firstPixelOffset;
 
-	int outputContentSize = 0;
-	uint32_t blockSize = 8;
-	int mipWidth = texWidth;
-	int mipHeight = texHeight;
-	for (int i = 0; i < mipMapCount; i++) {
-		int mipsize = ((mipWidth + 3) / 4) * ((mipHeight + 3) / 4) * blockSize;
-		outputContentSize += mipsize;
-
-		mipWidth /= 2;
-		mipHeight /= 2;
+	uint64_t dst = 0;
+	for (uint64_t targetRow = 0; targetRow < texHeight; targetRow++) {
+		for (uint64_t targetCol = 0; targetCol < texWidth; targetCol++) {
+			uint64_t sourceIndex = (targetRow * sourcePitch) + (targetCol * texChannels);
+			for (uint64_t channelIndex = 0; channelIndex < texChannels; ++channelIndex) {
+				faceOutput[dst++] = CombinePixels(firstPixel, sourceIndex + channelIndex, sourcePitch);
+			}
+		}
 	}
 
-	int faceCount = isSixSidedCubemap ? 6 : 1;
-	outputContentSize *= faceCount;
-
-	uint8_t* outData = new uint8_t[outputContentSize];
-	int minMipLevel = std::max(mipMapCount, 1);
-	for (int faceIterator = 0; faceIterator < faceCount; faceIterator++) {
-		GenerateFaceBC4(minMipLevel, faceIterator, outData);
-	}
-
-	OutputDds(outData, outputContentSize);
+	return faceOutput;
 }
 
-void TextureImporter::GenerateMipList(uint32_t minMipLevel, std::vector<uint8_t*>& uncompressedMips) {
+void TextureImporter::GenerateMipList(uint8_t faceIndex, uint32_t minMipLevel, std::vector<uint8_t*>& uncompressedMips) {
 	uint32_t levelWidth = texWidth;
 	uint32_t levelHeight = texHeight;
 
 	uncompressedMips.resize(minMipLevel);
-	uncompressedMips[0] = sourcePixels;
-#ifdef SHOULD_EXPORT_NORMAL_IMAGES
-	std::filesystem::path filename = std::filesystem::path("D:/MipGen") / path.filename();
-	stbi_write_tga(filename.string().c_str(), levelWidth, levelHeight, texChannels, uncompressedMips[0]);
+	uncompressedMips[0] = isSixSidedCubemap
+		? ExtractFirstFace(faceIndex)
+		: sourcePixels;
+
+#if true
+	std::string fileName = isSixSidedCubemap
+		? path.filename().replace_extension("").string() + "_face" + std::to_string(faceIndex)
+		: path.filename().replace_extension("").string();
+	std::string extension = path.extension().string();
+	std::filesystem::path mainFaceFilePath = std::filesystem::path("D:/MipGen") / (fileName + extension);
+	stbi_write_tga(mainFaceFilePath.string().c_str(), levelWidth, levelHeight, texChannels, uncompressedMips[0]);
 #endif
 	for (uint32_t mipLevelIterator = 1; mipLevelIterator < minMipLevel; mipLevelIterator++) {
 		levelWidth /= 2;
@@ -203,22 +191,19 @@ void TextureImporter::GenerateMipList(uint32_t minMipLevel, std::vector<uint8_t*
 
 		uncompressedMips[mipLevelIterator] = CreateMip(uncompressedMips[mipLevelIterator - 1], levelWidth, levelHeight);
 
-#ifdef SHOULD_EXPORT_NORMAL_IMAGES
-		std::string extension = "_mip" + std::to_string(mipLevelIterator) + ".tga";
-		std::string fileName = path.filename().replace_extension("").string() + extension;
-		std::filesystem::path filename = std::filesystem::path("D:/MipGen") / fileName;
-		stbi_write_tga(filename.string().c_str(), levelWidth, levelHeight, texChannels, uncompressedMips[mipLevelIterator]);
+#if true
+		std::filesystem::path faceMipFilePath = std::filesystem::path("D:/MipGen") / (fileName + "_mip" + std::to_string(mipLevelIterator) + extension);
+		stbi_write_tga(faceMipFilePath.string().c_str(), levelWidth, levelHeight, texChannels, uncompressedMips[mipLevelIterator]);
 #endif
 	}
 }
 
-void TextureImporter::GenerateFaceBC123(uint32_t minMipLevel, uint32_t faceIterator, uint8_t* outData) {
-	uint32_t blockSize = (compression == Compression::BC1) ? 8 : 16;
+void TextureImporter::GenerateFace(uint32_t minMipLevel, uint32_t faceIterator, uint32_t blockSize, uint8_t* outData) {
 	uint32_t dstOffset = 0;
 	uint8_t block[64];
 
 	std::vector<uint8_t*> uncompressedMips;
-	GenerateMipList(minMipLevel, uncompressedMips);
+	GenerateMipList(faceIterator, minMipLevel, uncompressedMips);
 
 	uint32_t levelWidth = texWidth;
 	uint32_t levelHeight = texHeight;
@@ -231,7 +216,12 @@ void TextureImporter::GenerateFaceBC123(uint32_t minMipLevel, uint32_t faceItera
 			for (uint32_t mipCol = 0; mipCol < levelWidth; mipCol += blockWidth) {
 				uint8_t* ptr = mipSource + ((mipRow * levelWidth + mipCol) * texChannels);
 				ExtractBlock(ptr, levelWidth, block);
-				stb_compress_dxt_block(outData + dstOffset, block, hasAlpha, STB_DXT_NORMAL);
+				if (compression == Compression::BC4) {
+					stb_compress_bc4_block(&outData[dstOffset], block);
+				}
+				else {
+					stb_compress_dxt_block(outData + dstOffset, block, hasAlpha, STB_DXT_NORMAL);
+				}
 				dstOffset += blockSize;
 			}
 		}
@@ -241,37 +231,7 @@ void TextureImporter::GenerateFaceBC123(uint32_t minMipLevel, uint32_t faceItera
 	}
 }
 
-void TextureImporter::GenerateFaceBC4(uint32_t minMipLevel, uint32_t faceIterator, uint8_t* outData) {
-	uint32_t dstOffset = 0;
-	uint8_t block[64];
-
-	std::vector<uint8_t*> uncompressedMips;
-	GenerateMipList(minMipLevel, uncompressedMips);
-
-	uint32_t levelWidth = texWidth;
-	uint32_t levelHeight = texHeight;
-
-	for (uint32_t mipLevelIterator = 0; mipLevelIterator < minMipLevel; mipLevelIterator++) {
-		uint8_t* mipSource = uncompressedMips[mipLevelIterator];
-
-		for (uint32_t mipRow = 0; mipRow < levelHeight; mipRow += blockWidth) {
-			uint8_t* ptr = mipSource + (mipRow * levelWidth * texChannels);
-			for (uint32_t mipCol = 0; mipCol < levelWidth; mipCol += blockWidth) {
-				ExtractBlock(ptr, levelWidth, block);
-				stb_compress_bc4_block(&outData[dstOffset], block);
-				ptr += blockWidth * texChannels;
-				dstOffset += 8;
-			}
-		}
-
-		levelWidth /= 2;
-		levelHeight /= 2;
-	}
-}
-
 void TextureImporter::OutputDds(uint8_t* outData, uint32_t contentSize) {
-	bool shouldGenerateMips = true;
-
 	DDSHeader outHeader;
 	std::memset(&outHeader, 0, sizeof(outHeader));
 	outHeader.dwSize = 124;
@@ -288,8 +248,9 @@ void TextureImporter::OutputDds(uint8_t* outData, uint32_t contentSize) {
 		outHeader.dwMipMapCount = DWORD(CalculateMipMapLevelCount(texWidth, texHeight));
 	}
 
-	// if (isSixSidedCubemap)
-	// 	outHeader.dwCaps2 = DDS_CUBEMAP_ALLFACES;
+	if (isSixSidedCubemap) {
+		outHeader.dwCaps2 = DDS_CUBEMAP_ALLFACES;
+	}
 
 	switch (compression) {
 	default:
@@ -306,6 +267,7 @@ void TextureImporter::OutputDds(uint8_t* outData, uint32_t contentSize) {
 		outHeader.ddspf.dwFourCC = FOURCC_BC4;
 		break;
 	}
+
 	char mark[] = { 'G', 'R', 'I', 'N', 'D', 'S', 'T', 'O', 'N', 'E' };
 	std::memcpy(&outHeader.dwReserved1, mark, sizeof(mark));
 
