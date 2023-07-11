@@ -27,18 +27,17 @@ namespace Grindstone {
 			void RenderSubmeshImmediate(ECS::Entity entity, Mesh3dAsset::Submesh& submesh3d);
 			void RenderShader(GraphicsAPI::CommandBuffer* commandBuffer, ShaderAsset& shader);
 			void RenderMaterial(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::Pipeline* pipeline, MaterialAsset& material);
-			void RenderSubmesh(GraphicsAPI::CommandBuffer* commandBuffer, ECS::Entity entity, Mesh3dAsset::Submesh& submesh3d);
+			void RenderSubmesh(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::Pipeline* pipeline, GraphicsAPI::DescriptorSet* materialDescriptorSet, ECS::Entity entity, Mesh3dAsset::Submesh& submesh3d);
 
 		private:
+			virtual std::string& GetName() override;
 			virtual void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) override;
 			virtual void RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet) override;
 			virtual void RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, RenderQueueContainer& renderQueue) override;
 			virtual void RenderQueueImmediate(RenderQueueContainer& renderQueue) override;
 
 			EngineCore* engineCore = nullptr;
-			GraphicsAPI::UniformBuffer* mesh3dBufferObject = nullptr;
-			GraphicsAPI::DescriptorSetLayout* meshDescriptorLayout = nullptr;
-			GraphicsAPI::DescriptorSet* meshDescriptor = nullptr;
+			std::string rendererName = "Mesh3d";
 			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
 	};
 }

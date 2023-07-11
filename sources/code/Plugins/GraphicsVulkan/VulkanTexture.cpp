@@ -9,8 +9,10 @@ using namespace Grindstone::GraphicsAPI;
 
 VulkanTexture::VulkanTexture(Texture::CreateInfo& createInfo) {
 	uint32_t mipLevels;
-	CreateTextureImage(createInfo, mipLevels);
-	imageView = CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+	CreateTextureImage(createInfo, mipLevels, createInfo.isCubemap ? 6 : 1);
+	imageView = createInfo.isCubemap
+		? CreateCubemapView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels)
+		: CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
 	CreateTextureSampler(createInfo, mipLevels);
 
 	std::string debugName = createInfo.debugName;
@@ -119,7 +121,7 @@ VulkanTexture::~VulkanTexture() {
 	vkFreeMemory(device, imageMemory, nullptr);
 }
 
-void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t& mipLevels) {
+void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t& mipLevels, uint32_t layerCount) {
 	VkDevice device = VulkanCore::Get().GetDevice();
 
 	uint8_t channels = 4;
@@ -170,6 +172,8 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 		}
 	}
 
+	totalImageSize *= layerCount;
+
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
 	CreateBuffer(
@@ -195,10 +199,12 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		image,
-		imageMemory
+		imageMemory,
+		layerCount,
+		layerCount == 6 ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0
 	);
 
-	TransitionImageLayout(image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
+	TransitionImageLayout(image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels, layerCount);
 
 	if (shouldGenerateMipmaps) {
 		CopyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(createInfo.width), static_cast<uint32_t>(createInfo.height));
@@ -206,41 +212,44 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 	else {
 		VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 		uint32_t offset = 0;
-		uint32_t mipWidth = createInfo.width;
-		uint32_t mipHeight = createInfo.height;
+		for (uint32_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
+			uint32_t mipWidth = createInfo.width;
+			uint32_t mipHeight = createInfo.height;
 
-		std::vector<VkBufferImageCopy> regions;
-		regions.resize(mipLevels);
-		for (uint32_t i = 0; i < mipLevels; ++i) {
-			VkBufferImageCopy& region = regions[i];
-			region.bufferOffset = offset;
-			region.bufferRowLength = 0;
-			region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			region.imageSubresource.mipLevel = i;
-			region.imageSubresource.layerCount = 1;
-			region.imageExtent.width = mipWidth;
-			region.imageExtent.height = mipHeight;
-			region.imageExtent.depth = 1;
+			std::vector<VkBufferImageCopy> regions;
+			regions.resize(mipLevels);
+			for (uint32_t mipIndex = 0; mipIndex < mipLevels; ++mipIndex) {
+				VkBufferImageCopy& region = regions[mipIndex];
+				region.bufferOffset = offset;
+				region.bufferRowLength = 0;
+				region.imageSubresource.baseArrayLayer = layerIndex;
+				region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				region.imageSubresource.mipLevel = mipIndex;
+				region.imageSubresource.layerCount = 1;
+				region.imageExtent.width = mipWidth;
+				region.imageExtent.height = mipHeight;
+				region.imageExtent.depth = 1;
 
-			uint32_t mipSize = isCompressedFormat
-				? ((mipWidth + 3) / 4) * ((mipHeight + 3) / 4) * blockSize
-				: mipWidth * mipHeight * channels;
-			offset += mipSize;
-			mipWidth /= 2;
-			mipHeight /= 2;
+				uint32_t mipSize = isCompressedFormat
+					? ((mipWidth + 3) / 4) * ((mipHeight + 3) / 4) * blockSize
+					: mipWidth * mipHeight * channels;
+				offset += mipSize;
+				mipWidth /= 2;
+				mipHeight /= 2;
+			}
+
+			vkCmdCopyBufferToImage(
+				commandBuffer,
+				stagingBuffer,
+				image,
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				static_cast<uint32_t>(regions.size()),
+				regions.data()
+			);
 		}
 
-		vkCmdCopyBufferToImage(
-			commandBuffer,
-			stagingBuffer,
-			image,
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			static_cast<uint32_t>(regions.size()),
-			regions.data()
-		);
-
 		EndSingleTimeCommands(commandBuffer);
-		TransitionImageLayout(image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels);
+		TransitionImageLayout(image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels, layerCount);
 	}
 	
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
@@ -261,10 +270,10 @@ void VulkanTexture::CreateTextureSampler(Texture::CreateInfo &createInfo, uint32
 	samplerInfo.addressModeW = TranslateWrapToVulkan(createInfo.options.wrapModeW);
 	samplerInfo.anisotropyEnable = VK_TRUE;
 	samplerInfo.maxAnisotropy = 16;
-	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
 	samplerInfo.compareEnable = VK_FALSE;
-	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	samplerInfo.compareOp = VK_COMPARE_OP_NEVER;
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	samplerInfo.minLod = 0;
 	samplerInfo.maxLod = static_cast<float>(mipLevels);

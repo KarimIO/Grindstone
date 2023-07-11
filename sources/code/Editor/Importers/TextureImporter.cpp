@@ -177,11 +177,11 @@ void TextureImporter::GenerateMipList(uint8_t faceIndex, uint32_t minMipLevel, s
 		? ExtractFirstFace(faceIndex)
 		: sourcePixels;
 
-#if true
+#if false
 	std::string fileName = isSixSidedCubemap
 		? path.filename().replace_extension("").string() + "_face" + std::to_string(faceIndex)
 		: path.filename().replace_extension("").string();
-	std::string extension = path.extension().string();
+	std::string extension = ".tga"; //path.extension().string();
 	std::filesystem::path mainFaceFilePath = std::filesystem::path("D:/MipGen") / (fileName + extension);
 	stbi_write_tga(mainFaceFilePath.string().c_str(), levelWidth, levelHeight, texChannels, uncompressedMips[0]);
 #endif
@@ -191,7 +191,7 @@ void TextureImporter::GenerateMipList(uint8_t faceIndex, uint32_t minMipLevel, s
 
 		uncompressedMips[mipLevelIterator] = CreateMip(uncompressedMips[mipLevelIterator - 1], levelWidth, levelHeight);
 
-#if true
+#if false
 		std::filesystem::path faceMipFilePath = std::filesystem::path("D:/MipGen") / (fileName + "_mip" + std::to_string(mipLevelIterator) + extension);
 		stbi_write_tga(faceMipFilePath.string().c_str(), levelWidth, levelHeight, texChannels, uncompressedMips[mipLevelIterator]);
 #endif

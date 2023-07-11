@@ -4,12 +4,13 @@
 #include <filesystem>
 #include "EngineCore/ECS/Entity.hpp"
 #include "EngineCore/Assets/Asset.hpp"
-#include "Common/Graphics/VertexArrayObject.hpp"
-#include "Common/Graphics/VertexBuffer.hpp"
-#include "Common/Graphics/IndexBuffer.hpp"
 #include "Common/ResourcePipeline/Uuid.hpp"
 
 namespace Grindstone {
+	namespace GraphicsAPI {
+		class VertexArrayObject;
+	}
+
 	enum class VertexBuffers {
 		Vertex = 0,
 		Normal,

@@ -29,6 +29,7 @@ namespace Grindstone {
 			GraphicsAPI::Framebuffer* outputFramebuffer
 		) override;
 		static GraphicsAPI::RenderPass* gbufferRenderPass;
+		static GraphicsAPI::RenderPass* mainRenderPass;
 	private:
 		struct DeferredRendererImageSet {
 			GraphicsAPI::Framebuffer* gbuffer = nullptr;
@@ -94,7 +95,6 @@ namespace Grindstone {
 
 		GraphicsAPI::DescriptorSet* shadowMapDescriptorSet = nullptr;
 
-		GraphicsAPI::RenderPass* mainRenderPass = nullptr;
 		GraphicsAPI::RenderPass* shadowMapRenderPass = nullptr;
 		GraphicsAPI::RenderPass* targetRenderPass = nullptr;
 

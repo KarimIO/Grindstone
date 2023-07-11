@@ -170,6 +170,9 @@ namespace Grindstone {
 		void ShaderImporter::Process() {
 			shaderName = ExtractField("#name");
 			renderQueue = ExtractField("#renderQueue");
+			geometryRenderer = ExtractField("#geometryRenderer");
+			transparencyMode = ExtractField("#transparencyMode");
+			cullMode = ExtractField("#cullMode");
 			ExtractSubmodules();
 			WriteReflectionDocument();
 		}
@@ -244,8 +247,17 @@ namespace Grindstone {
 			reflectionWriter.Key("name");
 			reflectionWriter.String(shaderName.c_str());
 
+			reflectionWriter.Key("geometryRenderer");
+			reflectionWriter.String(geometryRenderer.c_str());
+
 			reflectionWriter.Key("renderQueue");
 			reflectionWriter.String(renderQueue.c_str());
+
+			reflectionWriter.Key("transparencyMode");
+			reflectionWriter.String(transparencyMode.c_str());
+
+			reflectionWriter.Key("cullMode");
+			reflectionWriter.String(cullMode.c_str());
 
 			reflectionWriter.Key("shaderModules");
 			reflectionWriter.StartArray();
@@ -270,6 +282,11 @@ namespace Grindstone {
 
 		std::string ShaderImporter::ExtractField(const char* fieldKey) {
 			auto fieldPos = sourceFileContents.find(fieldKey);
+
+			if (fieldPos == std::string::npos) {
+				return "";
+			}
+
 			auto newLinePos = sourceFileContents.find('\n', fieldPos);
 			auto valuePos = fieldPos + strlen(fieldKey) + 1;
 			return sourceFileContents.substr(valuePos, newLinePos - valuePos);

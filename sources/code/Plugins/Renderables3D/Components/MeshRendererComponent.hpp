@@ -6,10 +6,16 @@
 #include "EngineCore/Assets/Materials/MaterialAsset.hpp"
 
 namespace Grindstone {
-	class EngineCore;
+	namespace GraphicsAPI {
+		class UniformBuffer;
+		class DescriptorSet;
+	}
 
 	struct MeshRendererComponent {
 		std::vector<AssetReference<MaterialAsset>> materials;
+
+		GraphicsAPI::UniformBuffer* perDrawUniformBuffer = nullptr;
+		GraphicsAPI::DescriptorSet* perDrawDescriptorSet = nullptr;
 
 		REFLECT("MeshRenderer")
 	};

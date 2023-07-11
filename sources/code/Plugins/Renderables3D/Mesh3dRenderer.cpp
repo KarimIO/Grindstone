@@ -8,6 +8,7 @@
 #include "EngineCore/Assets/Shaders/ShaderAsset.hpp"
 #include "EngineCore/Scenes/Scene.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
+#include "Components/MeshRendererComponent.hpp"
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
@@ -17,46 +18,22 @@ struct Mesh3dUbo {
 
 Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
 	this->engineCore = engineCore;
-	auto graphicsCore = engineCore->GetGraphicsCore();
-
-	UniformBuffer::CreateInfo mesh3dBufferObjectCi{};
-	mesh3dBufferObjectCi.debugName = "Mesh Uniform Buffer";
-	mesh3dBufferObjectCi.isDynamic = true;
-	mesh3dBufferObjectCi.size = sizeof(Mesh3dUbo);
-	mesh3dBufferObject = graphicsCore->CreateUniformBuffer(mesh3dBufferObjectCi);
-
-	DescriptorSet::Binding meshUniformBufferBinding{};
-	meshUniformBufferBinding.bindingIndex = 0;
-	meshUniformBufferBinding.bindingType = BindingType::UniformBuffer;
-	meshUniformBufferBinding.count = 1;
-	meshUniformBufferBinding.itemPtr = mesh3dBufferObject;
-
-	DescriptorSetLayout::Binding meshDescriptorLayoutBinding{};
-	meshDescriptorLayoutBinding.bindingId = 0;
-	meshDescriptorLayoutBinding.count = 1;
-	meshDescriptorLayoutBinding.type = BindingType::UniformBuffer;
-	meshDescriptorLayoutBinding.stages = ShaderStageBit::Vertex | ShaderStageBit::Fragment;
-
-	DescriptorSetLayout::CreateInfo meshDescriptorSetLayoutCi{};
-	meshDescriptorSetLayoutCi.debugName = "Mesh3d Descriptor Set Layout";
-	meshDescriptorSetLayoutCi.bindingCount = 1;
-	meshDescriptorSetLayoutCi.bindings = &meshDescriptorLayoutBinding;
-	meshDescriptorLayout = graphicsCore->CreateDescriptorSetLayout(meshDescriptorSetLayoutCi);
-
-	DescriptorSet::CreateInfo meshUniformBufferCi{};
-	meshUniformBufferCi.debugName = "Mesh3d Descriptor Set";
-	meshUniformBufferCi.bindingCount = 1;
-	meshUniformBufferCi.bindings = &meshUniformBufferBinding;
-	meshUniformBufferCi.layout = meshDescriptorLayout;
-	meshDescriptor = graphicsCore->CreateDescriptorSet(meshUniformBufferCi);
 }
 
 void Mesh3dRenderer::SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) {
 	engineDescriptorSet = descriptorSet;
 }
 
+std::string& Mesh3dRenderer::GetName() {
+	return rendererName;
+}
+
 void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet) {
 	for (auto& renderQueue : renderQueues) {
+		if (renderQueue.first == "Skybox") {
+			continue;
+		}
+
 		for (auto& shaderUuid : renderQueue.second.shaders) {
 			ShaderAsset& shader = *engineCore->assetManager->GetAsset<ShaderAsset>(shaderUuid);
 			for (auto& materialUuid : shader.materials) {
@@ -71,8 +48,15 @@ void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, 
 					auto& registry = entity.GetScene()->GetEntityRegistry();
 					entt::entity entityHandle = entity.GetHandle();
 					auto& transformComponent = registry.get<TransformComponent>(entityHandle);
+					auto& meshRendererComponent = registry.get<MeshRendererComponent>(entityHandle);
 					glm::mat4 modelMatrix = transformComponent.GetTransformMatrix();
-					mesh3dBufferObject->UpdateBuffer(&modelMatrix);
+					meshRendererComponent.perDrawUniformBuffer->UpdateBuffer(&modelMatrix);
+					/*std::vector<GraphicsAPI::DescriptorSet*> descriptors = {material.descriptorSet, engineDescriptorSet, meshRendererComponent.perDrawDescriptorSet};
+					commandBuffer->BindDescriptorSet(
+						shader.pipeline,
+						descriptors.data(),
+						static_cast<uint32_t>(descriptors.size())
+					);*/
 
 					commandBuffer->DrawIndices(
 						submesh.baseIndex,
@@ -110,29 +94,29 @@ void Mesh3dRenderer::RenderShader(GraphicsAPI::CommandBuffer* commandBuffer, Sha
 }
 
 void Mesh3dRenderer::RenderMaterial(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::Pipeline* pipeline, MaterialAsset& material) {
-	std::vector<GraphicsAPI::DescriptorSet*> descriptors = { material.descriptorSet, engineDescriptorSet, meshDescriptor };
-	commandBuffer->BindDescriptorSet(
-		pipeline,
-		descriptors.data(),
-		static_cast<uint32_t>(descriptors.size())
-	);
-
 	for (auto& renderable : material.renderables) {
 		ECS::Entity entity = renderable.first;
 		Mesh3dAsset::Submesh& submesh = *(Mesh3dAsset::Submesh*)renderable.second;
-		RenderSubmesh(commandBuffer, entity, submesh);
+		RenderSubmesh(commandBuffer, pipeline, material.descriptorSet, entity, submesh);
 	}
 }
 
-void Mesh3dRenderer::RenderSubmesh(GraphicsAPI::CommandBuffer* commandBuffer, ECS::Entity rendererEntity, Mesh3dAsset::Submesh& submesh3d) {
+void Mesh3dRenderer::RenderSubmesh(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::Pipeline* pipeline, GraphicsAPI::DescriptorSet* materialDescriptorSet, ECS::Entity rendererEntity, Mesh3dAsset::Submesh& submesh3d) {
 	auto graphicsCore = engineCore->GetGraphicsCore();
 	commandBuffer->BindVertexArrayObject(submesh3d.vertexArrayObject);
 
 	auto& registry = rendererEntity.GetScene()->GetEntityRegistry();
 	entt::entity entity = rendererEntity.GetHandle();
 	auto& transformComponent = registry.get<TransformComponent>(entity);
+	auto& meshRendererComponent = registry.get<MeshRendererComponent>(entity);
 	glm::mat4 modelMatrix = transformComponent.GetTransformMatrix();
-	mesh3dBufferObject->UpdateBuffer(&modelMatrix);
+	meshRendererComponent.perDrawUniformBuffer->UpdateBuffer(&modelMatrix);
+	std::vector<GraphicsAPI::DescriptorSet*> descriptors = { materialDescriptorSet, engineDescriptorSet, meshRendererComponent.perDrawDescriptorSet };
+	commandBuffer->BindDescriptorSet(
+		pipeline,
+		descriptors.data(),
+		static_cast<uint32_t>(descriptors.size())
+	);
 
 	commandBuffer->DrawIndices(
 		submesh3d.baseIndex,
@@ -178,8 +162,9 @@ void Mesh3dRenderer::RenderSubmeshImmediate(ECS::Entity rendererEntity, Mesh3dAs
 	auto& registry = rendererEntity.GetScene()->GetEntityRegistry();
 	entt::entity entity = rendererEntity.GetHandle();
 	auto& transformComponent = registry.get<TransformComponent>(entity);
+	auto& meshRendererComponent = registry.get<MeshRendererComponent>(entity);
 	glm::mat4 modelMatrix = transformComponent.GetTransformMatrix();
-	mesh3dBufferObject->UpdateBuffer(&modelMatrix);
+	meshRendererComponent.perDrawUniformBuffer->UpdateBuffer(&modelMatrix);
 
 	graphicsCore->DrawImmediateIndexed(
 		GraphicsAPI::GeometryType::Triangles,

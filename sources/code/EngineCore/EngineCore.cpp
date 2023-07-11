@@ -85,6 +85,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 		assetRendererManager->AddQueue("Opaque");
 		assetRendererManager->AddQueue("Transparent");
 		assetRendererManager->AddQueue("Unlit");
+		assetRendererManager->AddQueue("Skybox");
 	}
 
 	{

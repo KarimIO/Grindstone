@@ -82,8 +82,14 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, const char* fileContents, si
 	createInfo.format = format;
 	createInfo.width = header.dwWidth;
 	createInfo.height = header.dwHeight;
-	createInfo.isCubemap = false;
+	createInfo.isCubemap = (header.dwCaps2 & DDS_CUBEMAP_ALLFACES);
 	createInfo.options.shouldGenerateMipmaps = false;
+	if (createInfo.isCubemap) {
+		createInfo.options.wrapModeU =
+			createInfo.options.wrapModeV =
+			createInfo.options.wrapModeW =
+			TextureWrapMode::ClampToEdge;
+	}
 
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	Grindstone::GraphicsAPI::Texture* texture = graphicsCore->CreateTexture(createInfo);

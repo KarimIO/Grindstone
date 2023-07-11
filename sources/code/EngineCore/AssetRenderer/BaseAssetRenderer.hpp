@@ -32,6 +32,7 @@ namespace Grindstone {
 		void RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, const char* name);
 		void RenderQueueImmediate(const char* name);
 
+		virtual std::string& GetName() = 0;
 		virtual void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) = 0;
 	protected:
 		virtual void RenderQueueImmediate(RenderQueueContainer& renderQueue) = 0;

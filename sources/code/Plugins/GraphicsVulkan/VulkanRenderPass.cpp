@@ -9,7 +9,7 @@ namespace Grindstone {
 			: renderPass(renderPass), width(width), height(height) {
 		}
 
-		VulkanRenderPass::VulkanRenderPass(RenderPass::CreateInfo& createInfo) : width(createInfo.width), height(createInfo.height) {
+		VulkanRenderPass::VulkanRenderPass(RenderPass::CreateInfo& createInfo) : width(createInfo.width), height(createInfo.height), shouldClearDepthOnLoad(createInfo.shouldClearDepthOnLoad) {
 			if (createInfo.debugName != nullptr) {
 				debugName = createInfo.debugName;
 			}
@@ -60,11 +60,11 @@ namespace Grindstone {
 				depthAttachment.format = TranslateDepthFormatToVulkan(depthFormat, hasStencil);
 				hasStencil = true;
 				depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-				depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+				depthAttachment.loadOp = shouldClearDepthOnLoad ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
 				depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 				depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 				depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-				depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+				depthAttachment.initialLayout = VK_IMAGE_LAYOUT_GENERAL;
 				depthAttachment.finalLayout = hasStencil
 					? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
 					: VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL;

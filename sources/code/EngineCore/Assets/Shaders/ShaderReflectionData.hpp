@@ -64,6 +64,9 @@ namespace Grindstone {
 
 		std::string name;
 		std::string renderQueue;
+		std::string geometryRenderer;
+		std::string transparencyMode;
+		std::string cullMode;
 		uint8_t shaderStagesBitMask = 0;
 		size_t numShaderStages = 0;
 		ShaderReflectionData() = default;

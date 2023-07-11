@@ -66,6 +66,18 @@ void ShaderReflectionLoader::ProcessMetadata() {
 	}
 	outData.renderQueue = document["renderQueue"].GetString();
 
+	if (document.HasMember("geometryRenderer")) {
+		outData.geometryRenderer = document["geometryRenderer"].GetString();
+	}
+
+	if (document.HasMember("transparencyMode")) {
+		outData.transparencyMode = document["transparencyMode"].GetString();
+	}
+
+	if (document.HasMember("cullMode")) {
+		outData.cullMode = document["cullMode"].GetString();
+	}
+
 	if (!document.HasMember("shaderModules")) {
 		throw std::runtime_error("No shaderModules found in shader reflection.");
 	}

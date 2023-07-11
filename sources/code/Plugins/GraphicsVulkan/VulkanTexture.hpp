@@ -14,7 +14,7 @@ namespace Grindstone {
 			VkSampler GetSampler();
 			virtual void RecreateTexture(CreateInfo& createInfo) override;
 		private:
-			void CreateTextureImage(Texture::CreateInfo &createInfo, uint32_t &mipLevels);
+			void CreateTextureImage(Texture::CreateInfo &createInfo, uint32_t &mipLevels, uint32_t layerCount);
 			void CreateTextureSampler(Texture::CreateInfo &createInfo, uint32_t mipLevels);
 			void GenerateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 

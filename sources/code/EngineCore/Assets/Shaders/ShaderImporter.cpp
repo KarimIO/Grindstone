@@ -7,6 +7,7 @@
 #include "EngineCore/Rendering/DeferredRenderer.hpp"
 #include "EngineCore/Logger.hpp"
 #include "EngineCore/Assets/AssetManager.hpp"
+#include "EngineCore/AssetRenderer/AssetRendererManager.hpp"
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
@@ -33,6 +34,7 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
+	AssetRendererManager* assetRendererManager = EngineCore::GetInstance().assetRendererManager;
 
 	std::string outContent;
 	if (!assetManager->LoadFileText(uuid, outContent)) {
@@ -58,7 +60,11 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 
 	std::string debugName = reflectionData.name;
 
-	auto renderPass = DeferredRenderer::gbufferRenderPass;
+	bool usesGbuffer = reflectionData.renderQueue != "Skybox";
+
+	auto renderPass = usesGbuffer
+		? DeferredRenderer::gbufferRenderPass
+		: DeferredRenderer::mainRenderPass;
 	Pipeline::CreateInfo pipelineCreateInfo{};
 	pipelineCreateInfo.shaderName = debugName.c_str();
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
@@ -161,17 +167,21 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 
 	pipelineCreateInfo.vertexBindings = &vertexLayouts.positions;
 	pipelineCreateInfo.vertexBindingsCount = 4; // Would be 5, but uv1 is not yet used
-	pipelineCreateInfo.colorAttachmentCount = 4; // TODO: Collor Attachments depending on stage and renderer type
+	pipelineCreateInfo.colorAttachmentCount = usesGbuffer ? 4 : 1; // TODO: Collor Attachments depending on stage and renderer type
 	pipelineCreateInfo.blendMode = BlendMode::None; // TODO: Support Blending
 	pipelineCreateInfo.isDepthTestEnabled = true;
 	pipelineCreateInfo.isDepthWriteEnabled = true;
 	pipelineCreateInfo.isStencilEnabled = false;
 
-	auto shader = graphicsCore->CreatePipeline(pipelineCreateInfo);
-	auto asset = shaders.emplace(uuid, ShaderAsset(uuid, debugName, shader));
+	auto pipeine = graphicsCore->CreatePipeline(pipelineCreateInfo);
+	auto asset = shaders.emplace(uuid, ShaderAsset(uuid, debugName, pipeine));
 	auto& shaderAsset = asset.first->second;
 	shaderAsset.reflectionData = reflectionData;
 	shaderAsset.descriptorSetLayout = pipelineCreateInfo.descriptorSetLayouts[0];
+
+	std::string& renderQueue = shaderAsset.reflectionData.renderQueue;
+	std::string& geometryType = shaderAsset.reflectionData.geometryRenderer;
+	assetRendererManager->RegisterShader(geometryType, renderQueue, uuid);
 
 	// TODO: Save compiled shader into ShaderCache
 

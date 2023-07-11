@@ -27,6 +27,7 @@ namespace Grindstone {
 				ColorFormat* colorFormats = nullptr;
 				uint32_t colorFormatCount = 0;
 				DepthFormat depthFormat = DepthFormat::None;
+				bool shouldClearDepthOnLoad = true;
 			};
 
 			virtual void Resize(uint32_t width, uint32_t height) = 0;

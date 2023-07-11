@@ -22,8 +22,28 @@ namespace Grindstone {
 
 			return imageView;
 		}
+		
+		VkImageView CreateCubemapView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels) {
+			VkImageViewCreateInfo viewInfo = {};
+			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			viewInfo.image = image;
+			viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+			viewInfo.format = format;
+			viewInfo.subresourceRange.aspectMask = aspectFlags;
+			viewInfo.subresourceRange.baseMipLevel = 0;
+			viewInfo.subresourceRange.levelCount = mipLevels;
+			viewInfo.subresourceRange.baseArrayLayer = 0;
+			viewInfo.subresourceRange.layerCount = 6;
 
-		void CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
+			VkImageView imageView;
+			if (vkCreateImageView(VulkanCore::Get().GetDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
+				throw std::runtime_error("failed to create texture image view!");
+			}
+
+			return imageView;
+		}
+
+		void CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, uint32_t layerCount, VkImageCreateFlags flags) {
 			VkDevice device = VulkanCore::Get().GetDevice();
 			
 			VkImageCreateInfo imageInfo = {};
@@ -33,13 +53,14 @@ namespace Grindstone {
 			imageInfo.extent.height = height;
 			imageInfo.extent.depth = 1;
 			imageInfo.mipLevels = mipLevels;
-			imageInfo.arrayLayers = 1;
+			imageInfo.arrayLayers = layerCount;
 			imageInfo.format = format;
 			imageInfo.tiling = tiling;
 			imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			imageInfo.usage = usage;
 			imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			imageInfo.flags = flags;
 
 			if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create image!");
@@ -169,7 +190,7 @@ namespace Grindstone {
 			EndSingleTimeCommands(commandBuffer);
 		}
 
-		void TransitionImageLayout(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels) {
+		void TransitionImageLayout(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t layerCount) {
 			VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
 			VkImageMemoryBarrier barrier = {};
@@ -183,7 +204,7 @@ namespace Grindstone {
 			barrier.subresourceRange.baseMipLevel = 0;
 			barrier.subresourceRange.levelCount = mipLevels;
 			barrier.subresourceRange.baseArrayLayer = 0;
-			barrier.subresourceRange.layerCount = 1;
+			barrier.subresourceRange.layerCount = layerCount;
 
 			VkPipelineStageFlags sourceStage;
 			VkPipelineStageFlags destinationStage;

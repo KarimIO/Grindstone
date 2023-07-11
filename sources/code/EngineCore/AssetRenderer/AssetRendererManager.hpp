@@ -14,6 +14,7 @@ namespace Grindstone {
 	public:
 		void AddAssetRenderer(BaseAssetRenderer* assetRenderer);
 		void AddQueue(const char* name);
+		void RegisterShader(std::string& geometryType, std::string& renderQueue, Uuid shaderUuid);
 		void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet);
 		void RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet);
 		void RenderQueue(
@@ -22,7 +23,7 @@ namespace Grindstone {
 		);
 		void RenderQueueImmediate(const char* name);
 	private:
-		std::vector<BaseAssetRenderer*> assetRenderers;
+		std::map<std::string, BaseAssetRenderer*> assetRenderers;
 		std::vector<const char*> assetQueuesNames;
 	};
 }

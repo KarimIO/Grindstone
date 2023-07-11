@@ -4,11 +4,16 @@
 #include <vector>
 #include <map>
 
+#include <Common/Formats/Model.hpp>
+#include <Common/Graphics/VertexBuffer.hpp>
+#include <EngineCore/Assets/AssetImporter.hpp>
 #include "Mesh3dAsset.hpp"
-#include "Common/Formats/Model.hpp"
-#include "EngineCore/Assets/AssetImporter.hpp"
 
 namespace Grindstone {
+	namespace GraphicsAPI {
+		class IndexBuffer;
+	}
+
 	class EngineCore;
 
 	class Mesh3dImporter : public AssetImporter {

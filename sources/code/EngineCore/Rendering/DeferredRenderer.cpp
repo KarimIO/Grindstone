@@ -22,6 +22,7 @@ using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
 GraphicsAPI::RenderPass* DeferredRenderer::gbufferRenderPass = nullptr;
+GraphicsAPI::RenderPass* DeferredRenderer::mainRenderPass = nullptr;
 
 float lightPositions[] = {
 	-1.0f, -1.0f,
@@ -87,7 +88,7 @@ DeferredRenderer::~DeferredRenderer() {
 		graphicsCore->DeleteDepthTarget(imageSet.gbufferDepthTarget);
 		graphicsCore->DeleteFramebuffer(imageSet.litHdrFramebuffer);
 		graphicsCore->DeleteRenderTarget(imageSet.litHdrRenderTarget);
-		graphicsCore->DeleteDepthTarget(imageSet.litHdrDepthTarget);
+		// graphicsCore->DeleteDepthTarget(imageSet.litHdrDepthTarget);
 
 		graphicsCore->DeleteDescriptorSet(imageSet.engineDescriptorSet);
 		graphicsCore->DeleteDescriptorSet(imageSet.tonemapDescriptorSet);
@@ -139,16 +140,10 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 		imageSet.gbufferDepthTarget->Resize(width, height);
 		imageSet.gbuffer->Resize(width, height);
 		imageSet.litHdrRenderTarget->Resize(width, height);
-		imageSet.litHdrDepthTarget->Resize(width, height);
 		imageSet.litHdrFramebuffer->Resize(width, height);
 
 		UpdateDescriptorSets(imageSet);
-
-		graphicsCore->DeletePipeline(pointLightPipeline);
-		graphicsCore->DeletePipeline(spotLightPipeline);
-		graphicsCore->DeletePipeline(directionalLightPipeline);
-		graphicsCore->DeletePipeline(shadowMappingPipeline);
-		graphicsCore->DeletePipeline(tonemapPipeline);
+		CleanupPipelines();
 		CreatePipelines();
 	}
 }
@@ -496,7 +491,7 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height, true, "Lit HDR Color Image" };
-	DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false, false, "Lit HDR Depth Image");
+	// DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false, false, "Lit HDR Depth Image");
 
 	RenderPass::CreateInfo mainRenderPassCreateInfo{};
 	mainRenderPassCreateInfo.debugName = "Main HDR Render Pass";
@@ -504,21 +499,21 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 	mainRenderPassCreateInfo.height = height;
 	mainRenderPassCreateInfo.colorFormats = &litHdrImagesCreateInfo.format;
 	mainRenderPassCreateInfo.colorFormatCount = 1;
-	mainRenderPassCreateInfo.depthFormat = litHdrDepthImageCreateInfo.format;
+	mainRenderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
+	mainRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 	mainRenderPass = graphicsCore->CreateRenderPass(mainRenderPassCreateInfo);
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		auto& imageSet = deferredRendererImageSets[i];
 
 		imageSet.litHdrRenderTarget = graphicsCore->CreateRenderTarget(litHdrImagesCreateInfo);
-		imageSet.litHdrDepthTarget = graphicsCore->CreateDepthTarget(litHdrDepthImageCreateInfo);
 
 		std::string framebufferName = std::string("Main HDR Framebuffer ") + std::to_string(i);
 		Framebuffer::CreateInfo litHdrFramebufferCreateInfo{};
 		litHdrFramebufferCreateInfo.debugName = framebufferName.c_str();
 		litHdrFramebufferCreateInfo.renderTargetLists = &imageSet.litHdrRenderTarget;
 		litHdrFramebufferCreateInfo.numRenderTargetLists = 1;
-		litHdrFramebufferCreateInfo.depthTarget = imageSet.litHdrDepthTarget;
+		litHdrFramebufferCreateInfo.depthTarget = imageSet.gbufferDepthTarget;
 		litHdrFramebufferCreateInfo.renderPass = mainRenderPass;
 		imageSet.litHdrFramebuffer = graphicsCore->CreateFramebuffer(litHdrFramebufferCreateInfo);
 	}
@@ -754,14 +749,6 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	auto& imageSet = deferredRendererImageSets[imageIndex];
-
-	ClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 0.f };
-	ClearDepthStencil clearDepthStencil;
-	clearDepthStencil.depth = 1.0f;
-	clearDepthStencil.stencil = 0;
-	clearDepthStencil.hasDepthStencilAttachment = true;
-	currentCommandBuffer->BindRenderPass(mainRenderPass, imageSet.litHdrFramebuffer, mainRenderPass->GetWidth(), mainRenderPass->GetHeight(), &clearColor, 1, clearDepthStencil);
-
 	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	currentCommandBuffer->BindIndexBuffer(indexBuffer);
 
@@ -849,8 +836,6 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 		});
 	}
-
-	currentCommandBuffer->UnbindRenderPass();
 }
 
 void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::registry& registry) {
@@ -1049,30 +1034,43 @@ void DeferredRenderer::RenderCommandBuffer(
 
 
 	RenderShadowMaps(commandBuffer, registry);
-
-	ClearColorValue clearColors[] = {
-		ClearColorValue{0.3f, 0.6f, 0.9f, 1.f},
-		ClearColorValue{0.0f, 0.0f, 0.0f, 1.f},
-		ClearColorValue{0.0f, 0.0f, 0.0f, 1.f},
-		ClearColorValue{0.0f, 0.0f, 0.0f, 1.f}
-	};
-
-	ClearDepthStencil clearDepthStencil;
-	clearDepthStencil.depth = 1.0f;
-	clearDepthStencil.stencil = 0;
-	clearDepthStencil.hasDepthStencilAttachment = true;
 	assetManager->SetEngineDescriptorSet(imageSet.engineDescriptorSet);
 
-	commandBuffer->BindRenderPass(gbufferRenderPass, imageSet.gbuffer, gbufferRenderPass->GetWidth(), gbufferRenderPass->GetHeight(), clearColors, 4, clearDepthStencil);
+	{
+		ClearColorValue clearColors[] = {
+			ClearColorValue{0.3f, 0.6f, 0.9f, 1.f},
+			ClearColorValue{0.0f, 0.0f, 0.0f, 1.f},
+			ClearColorValue{0.0f, 0.0f, 0.0f, 1.f},
+			ClearColorValue{0.0f, 0.0f, 0.0f, 1.f}
+		};
 
-	commandBuffer->SetViewport(0.0f, 0.0f, gbufferRenderPass->GetWidth(), gbufferRenderPass->GetHeight());
-	commandBuffer->SetScissor(0, 0, static_cast<float>(gbufferRenderPass->GetWidth()), static_cast<float>(gbufferRenderPass->GetHeight()));
+		ClearDepthStencil clearDepthStencil;
+		clearDepthStencil.depth = 1.0f;
+		clearDepthStencil.stencil = 0;
+		clearDepthStencil.hasDepthStencilAttachment = true;
+
+		commandBuffer->BindRenderPass(gbufferRenderPass, imageSet.gbuffer, gbufferRenderPass->GetWidth(), gbufferRenderPass->GetHeight(), clearColors, 4, clearDepthStencil);
+	}
+
+	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(gbufferRenderPass->GetWidth()), static_cast<float>(gbufferRenderPass->GetHeight()));
+	commandBuffer->SetScissor(0, 0, gbufferRenderPass->GetWidth(), gbufferRenderPass->GetHeight());
 
 	assetManager->RenderQueue(commandBuffer, "Opaque");
 	commandBuffer->UnbindRenderPass();
+
+	{
+		ClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 0.f };
+		ClearDepthStencil clearDepthStencil;
+		clearDepthStencil.depth = 1.0f;
+		clearDepthStencil.stencil = 0;
+		clearDepthStencil.hasDepthStencilAttachment = true;
+		commandBuffer->BindRenderPass(mainRenderPass, imageSet.litHdrFramebuffer, mainRenderPass->GetWidth(), mainRenderPass->GetHeight(), &clearColor, 1, clearDepthStencil);
+	}
+
 	RenderLightsCommandBuffer(imageIndex, commandBuffer, registry);
 	// assetManager->RenderQueue("Unlit");
-	// assetManager->RenderQueue("Transparent");
+	assetManager->RenderQueue(commandBuffer, "Skybox");
+	commandBuffer->UnbindRenderPass();
 
 	PostProcessCommandBuffer(imageIndex, outputFramebuffer, commandBuffer);
 }
