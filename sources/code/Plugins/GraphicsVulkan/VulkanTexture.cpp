@@ -158,7 +158,7 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 		}
 	}
 	else {
-		mipLevels = (createInfo.mipmaps > 2) ? (createInfo.mipmaps - 2) : 1;
+		mipLevels = (createInfo.mipmaps > 2) ? (createInfo.mipmaps) : 1;
 
 		uint32_t width = createInfo.width;
 		uint32_t height = createInfo.height;

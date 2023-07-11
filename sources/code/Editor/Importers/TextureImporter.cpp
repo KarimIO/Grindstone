@@ -130,7 +130,7 @@ void TextureImporter::Convert() {
 	}
 
 	int faceCount = isSixSidedCubemap ? 6 : 1;
-	uint32_t outputTotalSize = outputFaceSize * faceCount;
+	uint64_t outputTotalSize = outputFaceSize * faceCount;
 
 	uint8_t* outData = new uint8_t[outputTotalSize];
 	int minMipLevel = std::max(mipMapCount, 1);
@@ -141,7 +141,7 @@ void TextureImporter::Convert() {
 	OutputDds(outData, outputTotalSize);
 }
 
-uint64_t cubemapX[6] = {2, 0, 1, 1, 3, 1};
+uint64_t cubemapX[6] = {2, 0, 1, 1, 1, 3};
 uint64_t cubemapY[6] = {1, 1, 0, 2, 1, 1};
 
 uint8_t* TextureImporter::ExtractFirstFace(uint8_t faceIndex) {
@@ -231,7 +231,7 @@ void TextureImporter::GenerateFace(uint32_t minMipLevel, uint32_t faceIterator, 
 	}
 }
 
-void TextureImporter::OutputDds(uint8_t* outData, uint32_t contentSize) {
+void TextureImporter::OutputDds(uint8_t* outData, uint64_t contentSize) {
 	DDSHeader outHeader;
 	std::memset(&outHeader, 0, sizeof(outHeader));
 	outHeader.dwSize = 124;

@@ -34,7 +34,7 @@ namespace Grindstone {
 			void Convert();
 			uint8_t* ExtractFirstFace(uint8_t faceIndex);
 			void GenerateMipList(uint8_t faceIndex, uint32_t minMipLevel, std::vector<uint8_t*>& uncompressedMips);
-			void OutputDds(uint8_t* outPixels, uint32_t contentSize);
+			void OutputDds(uint8_t* outPixels, uint64_t contentSize);
 			uint32_t CalculateMipMapLevelCount(uint32_t width, uint32_t height);
 
 			std::filesystem::path path;
