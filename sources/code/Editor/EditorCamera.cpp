@@ -22,7 +22,7 @@ EditorCamera::EditorCamera() {
 	renderTargetCreateInfo.debugName = "Editor Viewport Color Image";
 	renderTargetCreateInfo.width = 800;
 	renderTargetCreateInfo.height = 600;
-	renderTargetCreateInfo.format = GraphicsAPI::ColorFormat::R8G8B8A8;
+	renderTargetCreateInfo.format = GraphicsAPI::ColorFormat::RGBA8;
 	renderTargetCreateInfo.isSampled = true;
 	renderTarget = core->CreateRenderTarget(&renderTargetCreateInfo, 1, false);
 

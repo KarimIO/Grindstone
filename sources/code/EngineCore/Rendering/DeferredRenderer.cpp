@@ -444,10 +444,10 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 
 	const int gbufferColorCount = 4;
 	std::array<ColorFormat, gbufferColorCount> gbufferColorFormats{};
-	gbufferColorFormats[0] = ColorFormat::R16G16B16A16; // X Y Z
-	gbufferColorFormats[1] = ColorFormat::R8G8B8A8; // R  G  B matID
-	gbufferColorFormats[2] = ColorFormat::R16G16B16A16; // nX nY nZ
-	gbufferColorFormats[3] = ColorFormat::R8G8B8A8; // sR sG sB Roughness
+	gbufferColorFormats[0] = ColorFormat::RGBA16; // X Y Z
+	gbufferColorFormats[1] = ColorFormat::RGBA8; // R  G  B matID
+	gbufferColorFormats[2] = ColorFormat::RGBA16; // nX nY nZ
+	gbufferColorFormats[3] = ColorFormat::RGBA8; // sR sG sB Roughness
 
 	std::array<const char*, gbufferColorCount> gbufferColorAttachmentNames{};
 	gbufferColorAttachmentNames[0] = "GBuffer Position Image";
@@ -490,7 +490,7 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 void DeferredRenderer::CreateLitHDRFramebuffer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::R16G16B16A16, width, height, true, "Lit HDR Color Image" };
+	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::RGBA16, width, height, true, "Lit HDR Color Image" };
 	// DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false, false, "Lit HDR Depth Image");
 
 	RenderPass::CreateInfo mainRenderPassCreateInfo{};

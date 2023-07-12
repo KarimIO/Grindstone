@@ -132,7 +132,8 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 		createInfo.format == ColorFormat::SRGB_ALPHA_DXT1 ||
 		createInfo.format == ColorFormat::RGB_DXT1 ||
 		createInfo.format == ColorFormat::RGBA_DXT1 ||
-		createInfo.format == ColorFormat::BC4;
+		createInfo.format == ColorFormat::BC4 ||
+		createInfo.format == ColorFormat::BC6H;
 	bool isLargeCompressedFormat =
 		createInfo.format == ColorFormat::SRGB_ALPHA_DXT3 ||
 		createInfo.format == ColorFormat::SRGB_ALPHA_DXT5 ||

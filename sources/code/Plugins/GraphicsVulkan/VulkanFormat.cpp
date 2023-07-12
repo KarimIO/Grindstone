@@ -55,16 +55,16 @@ namespace Grindstone {
 			case VK_FORMAT_R8_UNORM:
 				return ColorFormat::R8;
 			case VK_FORMAT_R8G8_UNORM:
-				return ColorFormat::R8G8;
+				return ColorFormat::RG8;
 			case VK_FORMAT_B8G8R8_UINT:
-				return ColorFormat::R8G8B8;
+				return ColorFormat::RGB8;
 			case VK_FORMAT_R8G8B8A8_UNORM:
 			case VK_FORMAT_B8G8R8A8_UNORM:
-				return ColorFormat::R8G8B8A8;
+				return ColorFormat::RGBA8;
 			}
 
 			assert(false && "TranslateColorFormatFromVulkan: Invalid color format!");
-			return ColorFormat::R8G8B8A8;
+			return ColorFormat::RGBA8;
 		}
 		
 		DepthFormat TranslateDepthFormatFromVulkan(VkFormat format) {
@@ -94,13 +94,13 @@ namespace Grindstone {
 			case ColorFormat::R8:
 				channels = 1;
 				return VK_FORMAT_R8_UNORM;
-			case ColorFormat::R8G8:
+			case ColorFormat::RG8:
 				channels = 2;
 				return VK_FORMAT_R8G8_UNORM;
-			case ColorFormat::R8G8B8:
+			case ColorFormat::RGB8:
 				channels = 3;
 				return VK_FORMAT_B8G8R8_UNORM;
-			case ColorFormat::R8G8B8A8:
+			case ColorFormat::RGBA8:
 				channels = 4;
 				return VK_FORMAT_B8G8R8A8_UNORM;
 
@@ -111,20 +111,20 @@ namespace Grindstone {
 			case ColorFormat::R16:
 				channels = 1;
 				return VK_FORMAT_R16_SFLOAT;
-			case ColorFormat::R16G16:
+			case ColorFormat::RG16:
 				channels = 2;
 				return VK_FORMAT_R16G16_SFLOAT;
-			case ColorFormat::R16G16B16:
+			case ColorFormat::RGB16:
 				channels = 3;
 				return VK_FORMAT_R16G16B16_SFLOAT;
-			case ColorFormat::R16G16B16A16:
+			case ColorFormat::RGBA16:
 				channels = 4;
 				return VK_FORMAT_R16G16B16A16_SFLOAT;
 
-			case ColorFormat::R32G32B32:
+			case ColorFormat::RGB32:
 				channels = 3;
 				return VK_FORMAT_R32G32B32_SFLOAT;
-			case ColorFormat::R32G32B32A32:
+			case ColorFormat::RGBA32:
 				channels = 4;
 				return VK_FORMAT_R32G32B32A32_SFLOAT;
 
@@ -155,6 +155,9 @@ namespace Grindstone {
 			case ColorFormat::BC4:
 				channels = 1;
 				return VK_FORMAT_BC4_UNORM_BLOCK;
+			case ColorFormat::BC6H:
+				channels = 3;
+				return VK_FORMAT_BC6H_UFLOAT_BLOCK;
 			default:
 				printf("Invalid color format!");
 				assert(false);

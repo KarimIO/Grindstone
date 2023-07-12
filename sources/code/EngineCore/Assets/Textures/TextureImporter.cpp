@@ -51,7 +51,8 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, const char* fileContents, si
 
 	bool hasAlpha = header.ddspf.dwFlags & DDPF_ALPHAPIXELS;
 
-	Grindstone::GraphicsAPI::ColorFormat format;
+	bool useDxgi = false;
+	Grindstone::GraphicsAPI::ColorFormat format = GraphicsAPI::ColorFormat::Invalid;
 	switch (header.ddspf.dwFourCC) {
 	case FOURCC_DXT1:
 		format = hasAlpha
@@ -67,18 +68,34 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, const char* fileContents, si
 	case FOURCC_BC4:
 		format = Grindstone::GraphicsAPI::ColorFormat::BC4;
 		break;
+	case FOURCC_DXGI:
+		useDxgi = true;
+		break;
 	default:
 		throw std::runtime_error("Invalid FourCC in texture");
 	}
 
+	const char* imgPtr = fileContents + 4 + sizeof(DDSHeader);
+	if (useDxgi) {
+		DDSHeaderExtended extendedHeader;
+		std::memcpy(&extendedHeader, imgPtr, sizeof(DDSHeaderExtended));
+		if (extendedHeader.dxgiFormat == DxgiFormat::DXGI_FORMAT_BC6H_TYPELESS || extendedHeader.dxgiFormat == DxgiFormat::DXGI_FORMAT_BC6H_UF16 || extendedHeader.dxgiFormat == DxgiFormat::DXGI_FORMAT_BC6H_SF16) {
+			format = Grindstone::GraphicsAPI::ColorFormat::BC6H;
+		}
+		else {
+			throw std::runtime_error("Invalid extended DXGI format!");
+		}
+
+		imgPtr += sizeof(DDSHeaderExtended);
+	}
+
 	std::string debugName = uuid.ToString();
 
-	const char* imgPtr = fileContents + 4 + sizeof(DDSHeader);
 	Grindstone::GraphicsAPI::Texture::CreateInfo createInfo;
 	createInfo.debugName = debugName.c_str();
 	createInfo.data = imgPtr;
 	createInfo.size = header.dwSize;
-	createInfo.mipmaps = (uint16_t)header.dwMipMapCount;
+	createInfo.mipmaps = static_cast<uint16_t>(header.dwMipMapCount);
 	createInfo.format = format;
 	createInfo.width = header.dwWidth;
 	createInfo.height = header.dwHeight;

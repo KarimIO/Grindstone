@@ -16,18 +16,18 @@ namespace Grindstone {
 			Invalid = 0,
 
 			R8,
-			R8G8,
-			R8G8B8,
-			R8G8B8A8,
+			RG8,
+			RGB8,
+			RGBA8,
 
 			R10G10B10A2,
 
 			R16,
-			R16G16,
-			R16G16B16,
-			R16G16B16A16,
-			R32G32B32,
-			R32G32B32A32,
+			RG16,
+			RGB16,
+			RGBA16,
+			RGB32,
+			RGBA32,
 
 			RGB_DXT1,
 			RGBA_DXT1,
@@ -39,7 +39,8 @@ namespace Grindstone {
 			SRGB_ALPHA_DXT3,
 			SRGB_ALPHA_DXT5,
 
-			BC4
+			BC4,
+			BC6H
 		};
 
 		enum class DepthFormat : uint8_t {

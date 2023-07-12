@@ -261,15 +261,15 @@ namespace Grindstone {
 				internalFormat = GL_R8;
 				format = GL_RED;
 				break;
-			case ColorFormat::R8G8:
+			case ColorFormat::RG8:
 				internalFormat = GL_RG8;
 				format = GL_RG;
 				break;
-			case ColorFormat::R8G8B8:
+			case ColorFormat::RGB8:
 				internalFormat = GL_RGB8;
 				format = GL_RGB;
 				break;
-			case ColorFormat::R8G8B8A8:
+			case ColorFormat::RGBA8:
 				internalFormat = GL_RGBA8;
 				format = GL_RGBA;
 				break;
@@ -277,23 +277,23 @@ namespace Grindstone {
 				internalFormat = GL_R16F;
 				format = GL_RED;
 				break;
-			case ColorFormat::R16G16:
+			case ColorFormat::RG16:
 				internalFormat = GL_RG16F;
 				format = GL_RG;
 				break;
-			case ColorFormat::R16G16B16:
+			case ColorFormat::RGB16:
 				internalFormat = GL_RGB16F;
 				format = GL_RGB;
 				break;
-			case ColorFormat::R16G16B16A16:
+			case ColorFormat::RGBA16:
 				internalFormat = GL_RGBA16F;
 				format = GL_RGBA;
 				break;
-			case ColorFormat::R32G32B32:
+			case ColorFormat::RGB32:
 				internalFormat = GL_RGB32F;
 				format = GL_RGBA;
 				break;
-			case ColorFormat::R32G32B32A32:
+			case ColorFormat::RGBA32:
 				internalFormat = GL_RGBA32F;
 				format = GL_RGBA;
 				break;

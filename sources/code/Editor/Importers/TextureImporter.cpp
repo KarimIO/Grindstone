@@ -4,13 +4,16 @@
 #include <cstring>
 
 #define STB_IMAGE_IMPLEMENTATION
-#define STB_DXT_IMPLEMENTATION
-#define STB_IMAGE_RESIZE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image.h>
-#include <stb_image_write.h>
+#define STB_DXT_IMPLEMENTATION
 #include <stb_dxt.h>
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+
+#define BC6H_ENC_IMPLEMENTATION
+#include "bc6h_enc.h"
 
 #include "Common/ResourcePipeline/MetaFile.hpp"
 #include "Common/Formats/Dds.hpp"
@@ -28,8 +31,10 @@ void TextureImporter::ExtractBlock(
 	if (texChannels == 3) {
 		for (uint32_t dstRow = 0; dstRow < blockWidth; dstRow++) {
 			for (uint32_t dstCol = 0; dstCol < blockWidth; dstCol++) {
-				memcpy(colorBlock + (dstRow * blockWidth + dstCol) * 4, inPtr + (dstRow * levelWidth + dstCol) * texChannels, texChannels);
-				colorBlock[(dstRow * blockWidth + dstCol) * 4 + 3] = 255;
+				memcpy(colorBlock + (dstRow * blockWidth + dstCol) * 4 * sourceSizePerPixel, inPtr + (dstRow * levelWidth + dstCol) * texChannels * sourceSizePerPixel, texChannels * sourceSizePerPixel);
+				if (sourceSizePerPixel == 1) {
+					colorBlock[(dstRow * blockWidth + dstCol) * 4 + 3] = 255;
+				}
 			}
 		}
 		return;
@@ -37,7 +42,7 @@ void TextureImporter::ExtractBlock(
 
 	for (uint32_t dstRow = 0; dstRow < blockWidth; dstRow++) {
 		for (uint32_t dstCol = 0; dstCol < blockWidth; dstCol++) {
-			memcpy(colorBlock + (dstRow * blockWidth + dstCol) * texChannels, inPtr + (dstRow * levelWidth + dstCol) * texChannels, texChannels);
+			memcpy(colorBlock + (dstRow * blockWidth + dstCol) * texChannels * sourceSizePerPixel, inPtr + (dstRow * levelWidth + dstCol) * texChannels * sourceSizePerPixel, texChannels * sourceSizePerPixel);
 		}
 	}
 }
@@ -45,8 +50,18 @@ void TextureImporter::ExtractBlock(
 
 void TextureImporter::Import(std::filesystem::path& path) {
 	this->path = path;
-	int width, height, channels;
-	sourcePixels = stbi_load(path.string().c_str(), &width, &height, &channels, 0);
+	int width = 0, height = 0, channels = 0;
+
+	bool isHDR = path.extension() == ".hdr";
+	if (isHDR) {
+		sourcePixels = reinterpret_cast<uint8_t*>(stbi_loadf(path.string().c_str(), &width, &height, &channels, 0));
+		sourceSizePerPixel = 2;
+	}
+	else {
+		sourcePixels = stbi_load(path.string().c_str(), &width, &height, &channels, 0);
+		sourceSizePerPixel = 1;
+	}
+
 	if (!sourcePixels) {
 		throw std::runtime_error("Unable to load texture!");
 	}
@@ -56,29 +71,34 @@ void TextureImporter::Import(std::filesystem::path& path) {
 	texChannels = static_cast<uint32_t>(channels);
 	targetTexChannels = texChannels;
 
-	metaFile = new MetaFile(path);
-
-	if (texChannels == 1) {
-		compression = Compression::BC4;
-	}
-	else if (texChannels == 3) {
-		compression = Compression::BC1;
-	}
-	else if (texChannels == 4) {
-		compression = Compression::BC3;
-	}
-	else {
-		compression = Compression::BC3;
-		throw std::runtime_error("Invalid compression type!");
-	}
-
 	isSixSidedCubemap = (width / 4 == height / 3);
 	texWidth = isSixSidedCubemap ? sourceWidth / 4 : sourceWidth;
 	texHeight = isSixSidedCubemap ? sourceHeight / 3 : sourceHeight;
 
+	metaFile = new MetaFile(path);
+
+	shouldGenerateMips = true;
+	if (isHDR) {
+		outputFormat = OutputFormat::BC6H;
+		shouldGenerateMips = false;
+	}
+	else if (texChannels == 1) {
+		outputFormat = OutputFormat::BC4;
+	}
+	else if (texChannels == 3) {
+		outputFormat = OutputFormat::BC1;
+	}
+	else if (texChannels == 4) {
+		outputFormat = OutputFormat::BC3;
+	}
+	else {
+		outputFormat = OutputFormat::BC3;
+		throw std::runtime_error("Invalid compression type!");
+	}
+
 	Convert();
 
-	delete sourcePixels;
+	stbi_image_free(sourcePixels);
 }
 
 Grindstone::Uuid TextureImporter::GetUuid() {
@@ -86,10 +106,10 @@ Grindstone::Uuid TextureImporter::GetUuid() {
 }
 
 uint8_t TextureImporter::CombinePixels(uint8_t* pixelSrc, uint64_t index, uint64_t pitch) {
-	uint32_t pixelA = static_cast<uint8_t>(*(pixelSrc + index));
-	uint32_t pixelB = static_cast<uint8_t>(*(pixelSrc + (index + texChannels)));
-	uint32_t pixelC = static_cast<uint8_t>(*(pixelSrc + (index + pitch)));
-	uint32_t pixelD = static_cast<uint8_t>(*(pixelSrc + (index + pitch + texChannels)));
+	uint32_t pixelA = static_cast<uint32_t>(*(pixelSrc + index));
+	uint32_t pixelB = static_cast<uint32_t>(*(pixelSrc + (index + texChannels)));
+	uint32_t pixelC = static_cast<uint32_t>(*(pixelSrc + (index + pitch)));
+	uint32_t pixelD = static_cast<uint32_t>(*(pixelSrc + (index + pitch + texChannels)));
 	uint32_t average = (pixelA + pixelB + pixelC + pixelD) / 4;
 	return static_cast<uint8_t>(average);
 }
@@ -118,7 +138,7 @@ void TextureImporter::Convert() {
 		: 1;
 
 	uint64_t outputFaceSize = 0;
-	uint32_t blockSize = (compression == Compression::BC3) ? 16 : 8;
+	uint32_t blockSize = (outputFormat == OutputFormat::BC3 || outputFormat == OutputFormat::BC6H) ? 16 : 8;
 	int mipWidth = texWidth;
 	int mipHeight = texHeight;
 	for (int i = 0; i < mipMapCount; i++) {
@@ -145,8 +165,8 @@ uint64_t cubemapX[6] = {2, 0, 1, 1, 1, 3};
 uint64_t cubemapY[6] = {1, 1, 0, 2, 1, 1};
 
 uint8_t* TextureImporter::ExtractFirstFace(uint8_t faceIndex) {
-	uint64_t sourcePitch = static_cast<uint64_t>(sourceWidth * texChannels);
-	uint64_t targetPitch = static_cast<uint64_t>(texWidth * texChannels);
+	uint64_t sourcePitch = static_cast<uint64_t>(sourceWidth * texChannels * sourceSizePerPixel);
+	uint64_t targetPitch = static_cast<uint64_t>(texWidth * texChannels * sourceSizePerPixel);
 	uint64_t targetSize = static_cast<uint64_t>(targetPitch * texHeight);
 	uint8_t* faceOutput = new uint8_t[targetSize];
 
@@ -200,7 +220,8 @@ void TextureImporter::GenerateMipList(uint8_t faceIndex, uint32_t minMipLevel, s
 
 void TextureImporter::GenerateFace(uint32_t minMipLevel, uint32_t faceIterator, uint32_t blockSize, uint8_t* outData) {
 	uint32_t dstOffset = 0;
-	uint8_t block[64];
+	std::vector<uint8_t> inputBlockSize;
+	inputBlockSize.resize(outputFormat == OutputFormat::BC6H ? 192 : 64);
 
 	std::vector<uint8_t*> uncompressedMips;
 	GenerateMipList(faceIterator, minMipLevel, uncompressedMips);
@@ -215,12 +236,15 @@ void TextureImporter::GenerateFace(uint32_t minMipLevel, uint32_t faceIterator, 
 		for (uint32_t mipRow = 0; mipRow < levelHeight; mipRow += blockWidth) {
 			for (uint32_t mipCol = 0; mipCol < levelWidth; mipCol += blockWidth) {
 				uint8_t* ptr = mipSource + ((mipRow * levelWidth + mipCol) * texChannels);
-				ExtractBlock(ptr, levelWidth, block);
-				if (compression == Compression::BC4) {
-					stb_compress_bc4_block(&outData[dstOffset], block);
+				ExtractBlock(ptr, levelWidth, inputBlockSize.data());
+				if (outputFormat == OutputFormat::BC4) {
+					stb_compress_bc4_block(&outData[dstOffset], inputBlockSize.data());
+				}
+				else if (outputFormat == OutputFormat::BC6H) {
+					bc6h_enc::EncodeBC6HU(&outData[dstOffset], inputBlockSize.data());
 				}
 				else {
-					stb_compress_dxt_block(outData + dstOffset, block, hasAlpha, STB_DXT_NORMAL);
+					stb_compress_dxt_block(&outData[dstOffset], inputBlockSize.data(), hasAlpha, STB_DXT_NORMAL);
 				}
 				dstOffset += blockSize;
 			}
@@ -239,9 +263,9 @@ void TextureImporter::OutputDds(uint8_t* outData, uint64_t contentSize) {
 	outHeader.dwFlags = DDSD_REQUIRED | DDSD_MIPMAPCOUNT;
 	outHeader.dwHeight = texHeight;
 	outHeader.dwWidth = texWidth;
-	outHeader.dwDepth = 0;
+	outHeader.dwDepth = 0;	
 	outHeader.dwCaps = DDSCAPS_COMPLEX | DDSCAPS_TEXTURE;
-	outHeader.dwMipMapCount = 0;
+	outHeader.dwMipMapCount = 1;
 
 	if (shouldGenerateMips) {
 		outHeader.dwCaps |= DDSCAPS_MIPMAP;
@@ -252,19 +276,23 @@ void TextureImporter::OutputDds(uint8_t* outData, uint64_t contentSize) {
 		outHeader.dwCaps2 = DDS_CUBEMAP_ALLFACES;
 	}
 
-	switch (compression) {
+	switch (outputFormat) {
 	default:
-	case Compression::BC1:
+	case OutputFormat::BC1:
 		outHeader.dwPitchOrLinearSize = texWidth * texHeight / 2;
 		outHeader.ddspf.dwFourCC = FOURCC_DXT1;
 		break;
-	case Compression::BC3:
+	case OutputFormat::BC3:
 		outHeader.dwPitchOrLinearSize = texWidth * texHeight;
 		outHeader.ddspf.dwFourCC = FOURCC_DXT5;
 		break;
-	case Compression::BC4:
+	case OutputFormat::BC4:
 		outHeader.dwPitchOrLinearSize = texWidth * texHeight / 2;
 		outHeader.ddspf.dwFourCC = FOURCC_BC4;
+		break;
+	case OutputFormat::BC6H:
+		outHeader.dwPitchOrLinearSize = texWidth * texHeight;
+		outHeader.ddspf.dwFourCC = FOURCC_DXGI;
 		break;
 	}
 

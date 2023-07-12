@@ -11,7 +11,8 @@ ImporterManager::ImporterManager() {
 	AddImporterFactory("dae", ImportModel);
 	AddImporterFactory("obj", ImportModel);
 
-	AddImporterFactory("jpeg",ImportTexture);
+	AddImporterFactory("hdr", ImportTexture);
+	AddImporterFactory("jpeg", ImportTexture);
 	AddImporterFactory("jpg", ImportTexture);
 	AddImporterFactory("png", ImportTexture);
 	AddImporterFactory("tga", ImportTexture);

@@ -20,7 +20,7 @@ MaterialImporter::MaterialImporter() {
 	whiteTextureCreateInfo.size = sizeof(whiteColorData);
 	whiteTextureCreateInfo.width = 1;
 	whiteTextureCreateInfo.height = 1;
-	whiteTextureCreateInfo.format = ColorFormat::R8G8B8A8;
+	whiteTextureCreateInfo.format = ColorFormat::RGBA8;
 	whiteTextureCreateInfo.mipmaps = 1;
 	whiteTextureCreateInfo.options.shouldGenerateMipmaps = false;
 	whiteTexture = graphicsCore->CreateTexture(whiteTextureCreateInfo);
