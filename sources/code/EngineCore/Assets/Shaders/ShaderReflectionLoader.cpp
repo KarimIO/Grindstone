@@ -129,7 +129,7 @@ void ShaderReflectionLoader::ProcessTextures() {
 	outData.textures.reserve(resourcesArray.Size());
 	for (rapidjson::Value& texture : resourcesArray.GetArray()) {
 		auto name = texture["name"].GetString();
-		size_t bindingId = texture["binding"].GetUint();
+		uint32_t bindingId = texture["binding"].GetUint();
 		uint32_t descriptorSetId = texture.HasMember("descriptorSet")
 			? texture["descriptorSet"].GetUint()
 			: 0;

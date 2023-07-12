@@ -20,8 +20,18 @@ void Dispatcher::Dispatch(BaseEvent* event) {
 }
 
 void Dispatcher::HandleEvents() {
-	for (BaseEvent* eventToHandle : eventsToHandle) {
-		HandleEvent(eventToHandle);
+	for (int i = static_cast<int>(eventsToHandle.size() - 1); i >= 0; --i) {
+		EventListenerList* eventListenerList = eventListeners[eventsToHandle[i]->GetEventType()];
+		for (auto& eventCallback : *eventListenerList) {
+			bool isEventHandled = eventCallback(eventsToHandle[i]);
+
+			if (isEventHandled) {
+				break;
+			}
+		}
+
+		delete eventsToHandle[i];
+		eventsToHandle[i] = nullptr;
 	}
 
 	eventsToHandle.clear();

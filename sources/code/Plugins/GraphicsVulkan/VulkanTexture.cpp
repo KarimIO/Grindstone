@@ -159,14 +159,15 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 		}
 	}
 	else {
-		mipLevels = (createInfo.mipmaps > 2) ? (createInfo.mipmaps) : 1;
+		uint32_t maxMipMaps = static_cast<uint32_t>(std::floor(std::log2(std::max(createInfo.width, createInfo.height)))) - 1;
+		mipLevels = (createInfo.mipmaps > maxMipMaps) ? maxMipMaps : createInfo.mipmaps;
 
 		uint32_t width = createInfo.width;
 		uint32_t height = createInfo.height;
 		for (uint32_t i = 0; i < mipLevels; ++i) {
 			uint32_t mipSize = isCompressedFormat
 				? ((width + 3) / 4) * ((width + 3) / 4) * blockSize
-				: height * height * channels;
+				: width * height * channels * (createInfo.format == ColorFormat::RG32 ? 4 : 1);
 			width /= 2;
 			height /= 2;
 			totalImageSize += mipSize;
@@ -233,7 +234,7 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 
 				uint32_t mipSize = isCompressedFormat
 					? ((mipWidth + 3) / 4) * ((mipHeight + 3) / 4) * blockSize
-					: mipWidth * mipHeight * channels;
+					: mipWidth * mipHeight * channels * (createInfo.format == ColorFormat::RG32 ? 4 : 1);
 				offset += mipSize;
 				mipWidth /= 2;
 				mipHeight /= 2;

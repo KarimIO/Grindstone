@@ -1,4 +1,5 @@
 #include <array>
+#include <random>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include "Common/Graphics/Core.hpp"
@@ -42,6 +43,13 @@ struct EngineUboStruct {
 	glm::vec3 eyePos;
 };
 
+const size_t ssaoKernelSize = 64;
+struct SsaoUboStruct {
+	glm::vec4 kernels[ssaoKernelSize];
+	float radius;
+	float bias;
+};
+
 DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : targetRenderPass(targetRenderPass) {
 	width = targetRenderPass->GetWidth();
 	height = targetRenderPass->GetHeight();
@@ -59,6 +67,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;
 	shadowMapRenderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
+	CreateSsaoKernelAndNoise();
 	CreateVertexAndIndexBuffersAndLayouts();
 	CreateGbufferFramebuffer();
 	CreateLitHDRFramebuffer();
@@ -100,6 +109,134 @@ DeferredRenderer::~DeferredRenderer() {
 	graphicsCore->DeleteDescriptorSetLayout(lightingDescriptorSetLayout);
 
 	graphicsCore->DeleteVertexArrayObject(planePostProcessVao);
+
+	graphicsCore->DeleteUniformBuffer(ssaoUniformBuffer);
+	graphicsCore->DeleteTexture(ssaoNoiseTexture);
+	graphicsCore->DeleteDescriptorSetLayout(ssaoDescriptorSetLayout);
+	graphicsCore->DeleteDescriptorSet(ssaoDescriptorSet);
+}
+
+void DeferredRenderer::CreateSsaoKernelAndNoise() {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
+	std::default_random_engine generator;
+
+	{
+		SsaoUboStruct ssaoUboStruct{};
+		ssaoUboStruct.bias = 0.025f;
+		ssaoUboStruct.radius = 0.5f;
+
+		for (size_t i = 0; i < ssaoKernelSize; ++i)
+		{
+			glm::vec4 sample(
+				randomFloats(generator) * 2.0 - 1.0,
+				randomFloats(generator) * 2.0 - 1.0,
+				randomFloats(generator),
+				0.0f
+			);
+			sample = glm::normalize(sample);
+			sample *= randomFloats(generator);
+			ssaoUboStruct.kernels[i] = sample;
+		}
+
+		GraphicsAPI::UniformBuffer::CreateInfo ssaoUniformBufferObjectCi{};
+		ssaoUniformBufferObjectCi.debugName = "SSAO Uniform Buffer";
+		ssaoUniformBufferObjectCi.isDynamic = false;
+		ssaoUniformBufferObjectCi.size = sizeof(SsaoUboStruct);
+		ssaoUniformBuffer = graphicsCore->CreateUniformBuffer(ssaoUniformBufferObjectCi);
+		ssaoUniformBuffer->UpdateBuffer(&ssaoUboStruct);
+	}
+
+	{
+		constexpr size_t ssaoNoiseDimSize = 4;
+		std::array<glm::vec2, ssaoNoiseDimSize * ssaoNoiseDimSize> ssaoNoise{};
+		for (size_t i = 0; i < ssaoNoise.size(); i++) {
+			ssaoNoise[i] = glm::vec2(
+				randomFloats(generator) * 2.0 - 1.0,
+				randomFloats(generator) * 2.0 - 1.0
+			);
+		}
+
+		GraphicsAPI::Texture::CreateInfo ssaoNoiseCreateInfo{};
+		ssaoNoiseCreateInfo.debugName = "SSAO Noise Texture";
+		ssaoNoiseCreateInfo.data = reinterpret_cast<const char*>(ssaoNoise.data());
+		ssaoNoiseCreateInfo.size = static_cast<uint32_t>(sizeof(ssaoNoise));
+		ssaoNoiseCreateInfo.format = GraphicsAPI::ColorFormat::RG32;
+		ssaoNoiseCreateInfo.width = ssaoNoiseCreateInfo.height = ssaoNoiseDimSize;
+		ssaoNoiseCreateInfo.isCubemap = false;
+		ssaoNoiseCreateInfo.mipmaps = 1;
+		ssaoNoiseCreateInfo.options.shouldGenerateMipmaps = false;
+		ssaoNoiseCreateInfo.options.magFilter = TextureFilter::Nearest;
+		ssaoNoiseCreateInfo.options.minFilter = TextureFilter::Nearest;
+		ssaoNoiseCreateInfo.options.wrapModeU = TextureWrapMode::Repeat;
+		ssaoNoiseCreateInfo.options.wrapModeV = TextureWrapMode::Repeat;
+		ssaoNoiseCreateInfo.options.wrapModeW = TextureWrapMode::Repeat;
+		ssaoNoiseTexture = graphicsCore->CreateTexture(ssaoNoiseCreateInfo);
+	}
+
+	{
+		std::array<DescriptorSetLayout::Binding, 2> ssaoLayoutBindings{};
+		ssaoLayoutBindings[0].bindingId = 0;
+		ssaoLayoutBindings[0].count = 1;
+		ssaoLayoutBindings[0].type = BindingType::UniformBuffer;
+		ssaoLayoutBindings[0].stages = GraphicsAPI::ShaderStageBit::Fragment;
+
+		ssaoLayoutBindings[1].bindingId = 1;
+		ssaoLayoutBindings[1].count = 1;
+		ssaoLayoutBindings[1].type = BindingType::Texture;
+		ssaoLayoutBindings[1].stages = GraphicsAPI::ShaderStageBit::Fragment;
+
+		DescriptorSetLayout::CreateInfo ssaoDescriptorSetLayoutCreateInfo{};
+		ssaoDescriptorSetLayoutCreateInfo.debugName = "SSAO Descriptor Set Layout";
+		ssaoDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(ssaoLayoutBindings.size());
+		ssaoDescriptorSetLayoutCreateInfo.bindings = ssaoLayoutBindings.data();
+		ssaoDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ssaoDescriptorSetLayoutCreateInfo);
+	}
+
+	{
+		std::array<DescriptorSet::Binding, 2> ssaoLayoutBindings{};
+		ssaoLayoutBindings[0].bindingIndex = 0;
+		ssaoLayoutBindings[0].count = 1;
+		ssaoLayoutBindings[0].bindingType = BindingType::UniformBuffer;
+		ssaoLayoutBindings[0].itemPtr = ssaoUniformBuffer;
+
+		ssaoLayoutBindings[1].bindingIndex = 1;
+		ssaoLayoutBindings[1].count = 1;
+		ssaoLayoutBindings[1].bindingType = BindingType::Texture;
+		ssaoLayoutBindings[1].itemPtr = ssaoNoiseTexture;
+
+		DescriptorSet::CreateInfo engineDescriptorSetCreateInfo{};
+		engineDescriptorSetCreateInfo.debugName = "SSAO Descriptor Set";
+		engineDescriptorSetCreateInfo.layout = ssaoDescriptorSetLayout;
+		engineDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(ssaoLayoutBindings.size());
+		engineDescriptorSetCreateInfo.bindings = ssaoLayoutBindings.data();
+		ssaoDescriptorSet = graphicsCore->CreateDescriptorSet(engineDescriptorSetCreateInfo);
+	}
+
+	{
+		uint32_t halfWidth = width / 2;
+		uint32_t halfHeight = height / 2;
+		GraphicsAPI::RenderTarget::CreateInfo ssaoRenderTargetCreateInfo{ GraphicsAPI::ColorFormat::R8, halfWidth, halfHeight, true, "SSAO Render Target" };
+		ssaoRenderTarget = graphicsCore->CreateRenderTarget(ssaoRenderTargetCreateInfo);
+		
+		GraphicsAPI::RenderPass::CreateInfo ssaoRenderPassCreateInfo{};
+		ssaoRenderPassCreateInfo.debugName = "SSAO Renderpass";
+		ssaoRenderPassCreateInfo.width = halfWidth;
+		ssaoRenderPassCreateInfo.height = halfHeight;
+		ssaoRenderPassCreateInfo.colorFormats = &ssaoRenderTargetCreateInfo.format;
+		ssaoRenderPassCreateInfo.colorFormatCount = 1;
+		ssaoRenderPassCreateInfo.depthFormat = DepthFormat::None;
+		ssaoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
+		ssaoRenderPass = graphicsCore->CreateRenderPass(ssaoRenderPassCreateInfo);
+
+		GraphicsAPI::Framebuffer::CreateInfo ssaoFramebufferCreateInfo{};
+		ssaoFramebufferCreateInfo.debugName = "SSAO Framebuffer";
+		ssaoFramebufferCreateInfo.renderTargetLists = &ssaoRenderTarget;
+		ssaoFramebufferCreateInfo.numRenderTargetLists = 1;
+		ssaoFramebufferCreateInfo.depthTarget = nullptr;
+		ssaoFramebufferCreateInfo.renderPass = ssaoRenderPass;
+		ssaoFramebuffer = graphicsCore->CreateFramebuffer(ssaoFramebufferCreateInfo);
+	}
 }
 
 void DeferredRenderer::CleanupPipelines() {
@@ -126,6 +263,13 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	graphicsCore->WaitUntilIdle();
+
+	uint32_t halfWidth = width / 2;
+	uint32_t halfHeight = height / 2;
+
+	ssaoRenderTarget->Resize(halfWidth, halfHeight);
+	ssaoRenderPass->Resize(halfWidth, halfHeight);
+	ssaoFramebuffer->Resize(halfWidth, halfHeight);
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		auto& imageSet = deferredRendererImageSets[i];
@@ -344,6 +488,31 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	lightingDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(lightingDescriptorSetBindings.size());
 	lightingDescriptorSetCreateInfo.bindings = lightingDescriptorSetBindings.data();
 	imageSet.lightingDescriptorSet = graphicsCore->CreateDescriptorSet(lightingDescriptorSetCreateInfo);
+
+	DescriptorSetLayout::Binding ssaoInputLayoutBinding{};
+	ssaoInputLayoutBinding.bindingId = 0;
+	ssaoInputLayoutBinding.count = 1;
+	ssaoInputLayoutBinding.type = BindingType::RenderTexture;
+	ssaoInputLayoutBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
+
+	DescriptorSetLayout::CreateInfo ssaoInputLayoutCreateInfo{};
+	ssaoInputLayoutCreateInfo.debugName = "SSAO Descriptor Set Layout";
+	ssaoInputLayoutCreateInfo.bindingCount = 1;
+	ssaoInputLayoutCreateInfo.bindings = &ssaoInputLayoutBinding;
+	ssaoInputDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ssaoInputLayoutCreateInfo);
+
+	DescriptorSet::Binding ssaoInputBinding{};
+	ssaoInputBinding.bindingIndex = 0;
+	ssaoInputBinding.count = 1;
+	ssaoInputBinding.bindingType = BindingType::RenderTexture;
+	ssaoInputBinding.itemPtr = ssaoRenderTarget;
+
+	DescriptorSet::CreateInfo ssaoInputCreateInfo{};
+	ssaoInputCreateInfo.debugName = "SSAO Descriptor Set";
+	ssaoInputCreateInfo.layout = ssaoInputDescriptorSetLayout;
+	ssaoInputCreateInfo.bindingCount = 1;
+	ssaoInputCreateInfo.bindings = &ssaoInputBinding;
+	ssaoInputDescriptorSet = graphicsCore->CreateDescriptorSet(ssaoInputCreateInfo);
 }
 
 void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) {
@@ -401,6 +570,14 @@ void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	lightingDescriptorSetBindings[4] = gbuffer3Binding;
 
 	imageSet.lightingDescriptorSet->ChangeBindings(lightingDescriptorSetBindings.data(), static_cast<uint32_t>(lightingDescriptorSetBindings.size()));
+
+	DescriptorSet::Binding ssaoInputBinding{};
+	ssaoInputBinding.bindingIndex = 0;
+	ssaoInputBinding.count = 1;
+	ssaoInputBinding.bindingType = BindingType::RenderTexture;
+	ssaoInputBinding.itemPtr = ssaoRenderTarget;
+
+	ssaoInputDescriptorSet->ChangeBindings(&ssaoInputBinding, 1);
 }
 
 void DeferredRenderer::CreateVertexAndIndexBuffersAndLayouts() {
@@ -525,12 +702,8 @@ void DeferredRenderer::CreatePipelines() {
 	Pipeline::CreateInfo pipelineCreateInfo{};
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
 	pipelineCreateInfo.cullMode = CullMode::None;
-	pipelineCreateInfo.width = static_cast<float>(mainRenderPass->GetWidth());
-	pipelineCreateInfo.height = static_cast<float>(mainRenderPass->GetHeight());
 	pipelineCreateInfo.scissorX = 0;
 	pipelineCreateInfo.scissorY = 0;
-	pipelineCreateInfo.scissorW = mainRenderPass->GetWidth();
-	pipelineCreateInfo.scissorH = mainRenderPass->GetHeight();
 	pipelineCreateInfo.vertexBindings = &vertexLightPositionLayout;
 	pipelineCreateInfo.vertexBindingsCount = 1;
 
@@ -539,6 +712,69 @@ void DeferredRenderer::CreatePipelines() {
 
 	auto assetManager = EngineCore::GetInstance().assetManager;
 	uint8_t shaderBits = static_cast<uint8_t>(ShaderStageBit::Vertex | ShaderStageBit::Fragment);
+
+	{
+		if (!assetManager->LoadShaderSet(Uuid("3b3bc2c8-ac88-4fba-b9f9-704f86c1278c"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
+			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load ssao shaders.");
+			return;
+		}
+
+		std::array<GraphicsAPI::DescriptorSetLayout*, 2> ssaoLayouts{};
+		ssaoLayouts[0] = lightingDescriptorSetLayout;
+		ssaoLayouts[1] = ssaoDescriptorSetLayout;
+
+		pipelineCreateInfo.shaderName = "SSAO Pipeline";
+		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
+		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
+		pipelineCreateInfo.descriptorSetLayouts = ssaoLayouts.data();
+		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(ssaoLayouts.size());
+		pipelineCreateInfo.colorAttachmentCount = 1;
+		pipelineCreateInfo.isDepthWriteEnabled = false;
+		pipelineCreateInfo.isDepthTestEnabled = false;
+		pipelineCreateInfo.isStencilEnabled = false;
+		pipelineCreateInfo.blendMode = BlendMode::None;
+		pipelineCreateInfo.renderPass = ssaoRenderPass;
+		pipelineCreateInfo.width = static_cast<float>(ssaoRenderPass->GetWidth());
+		pipelineCreateInfo.height = static_cast<float>(ssaoRenderPass->GetHeight());
+		pipelineCreateInfo.scissorW = ssaoRenderPass->GetWidth();
+		pipelineCreateInfo.scissorH = ssaoRenderPass->GetHeight();
+		ssaoPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
+	}
+
+	shaderStageCreateInfos.clear();
+	fileData.clear();
+
+	pipelineCreateInfo.width = static_cast<float>(mainRenderPass->GetWidth());
+	pipelineCreateInfo.height = static_cast<float>(mainRenderPass->GetHeight());
+	pipelineCreateInfo.scissorW = mainRenderPass->GetWidth();
+	pipelineCreateInfo.scissorH = mainRenderPass->GetHeight();
+
+	{
+		if (!assetManager->LoadShaderSet(Uuid("5227a9a2-4a62-4f1b-9906-2b6acbf1b8d3"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
+			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load image based lighting shaders.");
+			return;
+		}
+
+		std::array<GraphicsAPI::DescriptorSetLayout*, 2> iblLayouts{};
+		iblLayouts[0] = lightingDescriptorSetLayout;
+		iblLayouts[1] = ssaoInputDescriptorSetLayout;
+
+		pipelineCreateInfo.shaderName = "Image Based Lighting Pipeline";
+		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
+		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
+		pipelineCreateInfo.descriptorSetLayouts = iblLayouts.data();
+		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(iblLayouts.size());
+		pipelineCreateInfo.colorAttachmentCount = 1;
+		pipelineCreateInfo.isDepthWriteEnabled = false;
+		pipelineCreateInfo.isDepthTestEnabled = false;
+		pipelineCreateInfo.isStencilEnabled = false;
+		pipelineCreateInfo.blendMode = BlendMode::Additive;
+		pipelineCreateInfo.renderPass = mainRenderPass;
+		imageBasedLightingPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
+	}
+
+	shaderStageCreateInfos.clear();
+	fileData.clear();
 
 	{
 		if (!assetManager->LoadShaderSet(Uuid("5537b925-96bc-4e1f-8e2a-d66d6dd9bed1"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
@@ -759,6 +995,17 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 		0.5f, 0.5f, 0.0f, 1.0f
 	);
 
+	{
+		// Image Based Lighting Lights
+		currentCommandBuffer->BindPipeline(imageBasedLightingPipeline);
+
+		std::array<GraphicsAPI::DescriptorSet*, 2> iblDescriptors{};
+		iblDescriptors[0] = imageSet.lightingDescriptorSet;
+		iblDescriptors[1] = ssaoInputDescriptorSet;
+		currentCommandBuffer->BindDescriptorSet(imageBasedLightingPipeline, iblDescriptors.data(), static_cast<uint32_t>(iblDescriptors.size()));
+		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+	}
+
 	if (showPoint) {
 		// Point Lights
 		currentCommandBuffer->BindPipeline(pointLightPipeline);
@@ -836,6 +1083,39 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 		});
 	}
+}
+
+void DeferredRenderer::RenderSsao(uint32_t imageIndex, GraphicsAPI::CommandBuffer* commandBuffer) {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	auto& imageSet = deferredRendererImageSets[imageIndex];
+
+	ClearColorValue clearColorAttachment = { 16.0f, 16.0f, 16.0f, 16.0f };
+	ClearDepthStencil clearDepthStencil{};
+	clearDepthStencil.depth = 1.0f;
+	clearDepthStencil.stencil = 0;
+	clearDepthStencil.hasDepthStencilAttachment = false;
+
+	commandBuffer->BindRenderPass(
+		ssaoRenderPass,
+		ssaoFramebuffer,
+		ssaoRenderPass->GetWidth(),
+		ssaoRenderPass->GetHeight(),
+		&clearColorAttachment,
+		1,
+		clearDepthStencil
+	);
+
+	commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
+	commandBuffer->BindIndexBuffer(indexBuffer);
+
+	std::array<GraphicsAPI::DescriptorSet*, 2> ssaoDescriptors{};
+	ssaoDescriptors[0] = imageSet.lightingDescriptorSet;
+	ssaoDescriptors[1] = ssaoDescriptorSet;
+
+	commandBuffer->BindPipeline(ssaoPipeline);
+	commandBuffer->BindDescriptorSet(ssaoPipeline, ssaoDescriptors.data(), static_cast<uint32_t>(ssaoDescriptors.size()));
+	commandBuffer->DrawIndices(0, 6, 1, 0);
+	commandBuffer->UnbindRenderPass();
 }
 
 void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::registry& registry) {
@@ -1032,7 +1312,6 @@ void DeferredRenderer::RenderCommandBuffer(
 	engineUboStruct.eyePos = eyePos;
 	imageSet.globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
 
-
 	RenderShadowMaps(commandBuffer, registry);
 	assetManager->SetEngineDescriptorSet(imageSet.engineDescriptorSet);
 
@@ -1057,6 +1336,8 @@ void DeferredRenderer::RenderCommandBuffer(
 
 	assetManager->RenderQueue(commandBuffer, "Opaque");
 	commandBuffer->UnbindRenderPass();
+
+	RenderSsao(imageIndex, commandBuffer);
 
 	{
 		ClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 0.f };

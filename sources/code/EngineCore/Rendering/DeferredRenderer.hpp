@@ -62,12 +62,14 @@ namespace Grindstone {
 			GraphicsAPI::Framebuffer* outputFramebuffer
 		);
 
+		void RenderSsao(uint32_t imageIndex, GraphicsAPI::CommandBuffer* commandBuffer);
 		void RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffer, entt::registry& registry);
 		void RenderLightsCommandBuffer(uint32_t imageIndex, GraphicsAPI::CommandBuffer* currentCommandBuffer, entt::registry& registry);
 		void RenderLightsImmediate(entt::registry& registry);
 		void PostProcessCommandBuffer(uint32_t imageIndex, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer);
 		void PostProcessImmediate(GraphicsAPI::Framebuffer* outputFramebuffer);
 
+		void CreateSsaoKernelAndNoise();
 		void CleanupPipelines();
 		void CreatePipelines();
 		void CreateDescriptorSetLayouts();
@@ -82,6 +84,16 @@ namespace Grindstone {
 		uint32_t height = 600;
 
 		std::vector<DeferredRendererImageSet> deferredRendererImageSets;
+
+		GraphicsAPI::RenderPass* ssaoRenderPass = nullptr;
+		GraphicsAPI::Framebuffer* ssaoFramebuffer = nullptr;
+		GraphicsAPI::RenderTarget* ssaoRenderTarget = nullptr;
+		GraphicsAPI::UniformBuffer* ssaoUniformBuffer = nullptr;
+		GraphicsAPI::Texture* ssaoNoiseTexture = nullptr;
+		GraphicsAPI::DescriptorSetLayout* ssaoInputDescriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSet* ssaoInputDescriptorSet = nullptr;
+		GraphicsAPI::DescriptorSetLayout* ssaoDescriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSet* ssaoDescriptorSet = nullptr;
 
 		GraphicsAPI::VertexBufferLayout vertexLightPositionLayout{};
 
@@ -102,6 +114,8 @@ namespace Grindstone {
 		GraphicsAPI::IndexBuffer* indexBuffer;
 		GraphicsAPI::VertexArrayObject* planePostProcessVao = nullptr;
 
+		GraphicsAPI::Pipeline* ssaoPipeline = nullptr;
+		GraphicsAPI::Pipeline* imageBasedLightingPipeline = nullptr;
 		GraphicsAPI::Pipeline* spotLightPipeline = nullptr;
 		GraphicsAPI::Pipeline* pointLightPipeline = nullptr;
 		GraphicsAPI::Pipeline* directionalLightPipeline = nullptr;
