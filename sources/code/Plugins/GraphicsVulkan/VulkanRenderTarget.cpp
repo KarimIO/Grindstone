@@ -11,7 +11,7 @@ VulkanRenderTarget::VulkanRenderTarget(VkImage swapchainImage, VkFormat format) 
 	imageView = CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 }
 
-VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& createInfo) : format(createInfo.format), width(createInfo.width), height(createInfo.height), isSampled(createInfo.isSampled), isOwnedBySwapchain(false){
+VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& createInfo) : format(createInfo.format), width(createInfo.width), height(createInfo.height), isSampled(createInfo.isSampled), isOwnedBySwapchain(false), isWrittenByCompute(isWrittenByCompute), hasMipChain(hasMipChain){
 	if (createInfo.debugName != nullptr) {
 		debugName = createInfo.debugName;
 	}
@@ -25,9 +25,15 @@ void VulkanRenderTarget::Create() {
 
 	uint32_t mipLevels = 1;
 
-	VkImageUsageFlags imageUsageFlags = isSampled
-		? VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
-		: VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	VkImageUsageFlags imageUsageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+	if (isSampled) {
+		imageUsageFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
+	}
+
+	if (isWrittenByCompute) {
+		imageUsageFlags |= VK_IMAGE_USAGE_STORAGE_BIT;
+	}
 
 	CreateImage(
 		width,

@@ -33,6 +33,8 @@ namespace Grindstone {
 			uint32_t width = 0;
 			uint32_t height = 0;
 			bool isSampled = false;
+			bool isWrittenByCompute = false;
+			bool hasMipChain = false;
 			bool isOwnedBySwapchain = false;
 		};
 	}

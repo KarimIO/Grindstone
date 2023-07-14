@@ -42,12 +42,13 @@ namespace Grindstone {
 
 			GraphicsAPI::UniformBuffer* globalUniformBufferObject = nullptr;
 
+			GraphicsAPI::DescriptorSet* bloomDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* tonemapDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* lightingDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
 		};
 
-		void RenderBloom();
+		void RenderBloom(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer);
 
 		void RenderCommandBuffer(
 			GraphicsAPI::CommandBuffer* commandBuffer,
@@ -93,8 +94,6 @@ namespace Grindstone {
 		GraphicsAPI::Framebuffer* bloomFramebuffer = nullptr;
 		GraphicsAPI::RenderTarget* bloomRenderTarget = nullptr;
 		GraphicsAPI::UniformBuffer* bloomUniformBuffer = nullptr;
-		GraphicsAPI::DescriptorSetLayout* bloomDescriptorSetLayout = nullptr;
-		GraphicsAPI::DescriptorSet* bloomDescriptorSet = nullptr;
 
 		GraphicsAPI::RenderPass* ssaoRenderPass = nullptr;
 		GraphicsAPI::Framebuffer* ssaoFramebuffer = nullptr;
@@ -108,6 +107,7 @@ namespace Grindstone {
 
 		GraphicsAPI::VertexBufferLayout vertexLightPositionLayout{};
 
+		GraphicsAPI::DescriptorSetLayout* bloomDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* tonemapDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingUBODescriptorSetLayout = nullptr;
