@@ -26,8 +26,8 @@ namespace Grindstone {
 			void RenderMaterialImmediate(MaterialAsset& material);
 			void RenderSubmeshImmediate(ECS::Entity entity, Mesh3dAsset::Submesh& submesh3d);
 			void RenderShader(GraphicsAPI::CommandBuffer* commandBuffer, ShaderAsset& shader);
-			void RenderMaterial(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::Pipeline* pipeline, MaterialAsset& material);
-			void RenderSubmesh(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::Pipeline* pipeline, GraphicsAPI::DescriptorSet* materialDescriptorSet, ECS::Entity entity, Mesh3dAsset::Submesh& submesh3d);
+			void RenderMaterial(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::GraphicsPipeline* pipeline, MaterialAsset& material);
+			void RenderSubmesh(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::GraphicsPipeline* pipeline, GraphicsAPI::DescriptorSet* materialDescriptorSet, ECS::Entity entity, Mesh3dAsset::Submesh& submesh3d);
 
 		private:
 			virtual std::string& GetName() override;

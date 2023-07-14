@@ -94,7 +94,8 @@ namespace Grindstone {
 			virtual void DeleteVertexBuffer(VertexBuffer *ptr) override;
 			virtual void DeleteIndexBuffer(IndexBuffer *ptr) override;
 			virtual void DeleteUniformBuffer(UniformBuffer * ptr) override;
-			virtual void DeletePipeline(Pipeline *ptr) override;
+			virtual void DeleteGraphicsPipeline(GraphicsPipeline* ptr) override;
+			virtual void DeleteComputePipeline(ComputePipeline* ptr) override;
 			virtual void DeleteRenderPass(RenderPass *ptr) override;
 			virtual void DeleteTexture(Texture* ptr) override;
 			virtual void DeleteDescriptorSet(DescriptorSet* ptr) override;
@@ -104,7 +105,8 @@ namespace Grindstone {
 
 			virtual Framebuffer *CreateFramebuffer(Framebuffer::CreateInfo& ci) override;
 			virtual RenderPass *CreateRenderPass(RenderPass::CreateInfo& ci) override;
-			virtual Pipeline *CreatePipeline(Pipeline::CreateInfo& ci) override;
+			virtual GraphicsPipeline* CreateGraphicsPipeline(GraphicsPipeline::CreateInfo& ci) override;
+			virtual ComputePipeline* CreateComputePipeline(ComputePipeline::CreateInfo& ci) override;
 			virtual CommandBuffer *CreateCommandBuffer(CommandBuffer::CreateInfo& ci) override;
 			virtual VertexArrayObject *CreateVertexArrayObject(VertexArrayObject::CreateInfo& ci) override;
 			virtual VertexBuffer *CreateVertexBuffer(VertexBuffer::CreateInfo& ci) override;
@@ -129,7 +131,7 @@ namespace Grindstone {
 
 			// Unused
 			virtual void Clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) override;
-			virtual void BindPipeline(Pipeline*) override;
+			virtual void BindGraphicsPipeline(GraphicsPipeline*) override;
 			virtual void BindVertexArrayObject(VertexArrayObject *) override;
 			virtual	void DrawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) override;
 			virtual void DrawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) override;

@@ -15,7 +15,8 @@
 #include "VulkanCommandBuffer.hpp"
 #include "VulkanDepthTarget.hpp"
 #include "VulkanFramebuffer.hpp"
-#include "VulkanPipeline.hpp"
+#include "VulkanGraphicsPipeline.hpp"
+#include "VulkanComputePipeline.hpp"
 #include "VulkanIndexBuffer.hpp"
 #include "VulkanRenderPass.hpp"
 #include "VulkanRenderTarget.hpp"
@@ -578,8 +579,12 @@ RenderPass * VulkanCore::CreateRenderPass(RenderPass::CreateInfo& ci) {
 	return static_cast<RenderPass*>(new VulkanRenderPass(ci));
 }
 
-Pipeline* VulkanCore::CreatePipeline(Pipeline::CreateInfo& ci) {
-	return static_cast<Pipeline*>(new VulkanPipeline(ci));
+ComputePipeline* VulkanCore::CreateComputePipeline(ComputePipeline::CreateInfo& ci) {
+	return static_cast<ComputePipeline*>(new VulkanComputePipeline(ci));
+}
+
+GraphicsPipeline* VulkanCore::CreateGraphicsPipeline(GraphicsPipeline::CreateInfo& ci) {
+	return static_cast<GraphicsPipeline*>(new VulkanGraphicsPipeline(ci));
 }
 
 CommandBuffer * VulkanCore::CreateCommandBuffer(CommandBuffer::CreateInfo& ci) {
@@ -654,8 +659,11 @@ void VulkanCore::DeleteIndexBuffer(IndexBuffer *ptr) {
 void VulkanCore::DeleteUniformBuffer(UniformBuffer *ptr) {
 	delete static_cast<VulkanUniformBuffer*>(ptr);
 }
-void VulkanCore::DeletePipeline(Pipeline *ptr) {
-	delete static_cast<VulkanPipeline*>(ptr);
+void VulkanCore::DeleteComputePipeline(ComputePipeline* ptr) {
+	delete static_cast<VulkanComputePipeline*>(ptr);
+}
+void VulkanCore::DeleteGraphicsPipeline(GraphicsPipeline *ptr) {
+	delete static_cast<VulkanGraphicsPipeline*>(ptr);
 }
 void VulkanCore::DeleteRenderPass(RenderPass *ptr) {
 	delete static_cast<VulkanRenderPass*>(ptr);
@@ -702,8 +710,8 @@ void VulkanCore::Clear(ClearMode mask, float clear_color[4], float clear_depth, 
 	std::cout << "VulkanCore::Clear is not used.\n";
 	assert(false);
 }
-void VulkanCore::BindPipeline(Pipeline*) {
-	std::cout << "VulkanCore::BindPipeline is not used.\n";
+void VulkanCore::BindGraphicsPipeline(GraphicsPipeline*) {
+	std::cout << "VulkanCore::BindGraphicsPipeline is not used.\n";
 	assert(false);
 }
 void VulkanCore::BindVertexArrayObject(VertexArrayObject *) {

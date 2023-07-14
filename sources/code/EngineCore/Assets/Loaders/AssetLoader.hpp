@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <vector>
 
-#include <Common/Graphics/Pipeline.hpp>
+#include <Common/Graphics/GraphicsPipeline.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
 
 namespace Grindstone {

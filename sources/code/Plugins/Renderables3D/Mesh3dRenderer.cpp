@@ -85,7 +85,7 @@ void Mesh3dRenderer::RenderQueueImmediate(RenderQueueContainer& renderQueue) {
 }
 
 void Mesh3dRenderer::RenderShader(GraphicsAPI::CommandBuffer* commandBuffer, ShaderAsset& shader) {
-	commandBuffer->BindPipeline(shader.pipeline);
+	commandBuffer->BindGraphicsPipeline(shader.pipeline);
 
 	for (auto materialUuid : shader.materials) {
 		MaterialAsset& material = *engineCore->assetManager->GetAsset<MaterialAsset>(materialUuid);
@@ -93,7 +93,7 @@ void Mesh3dRenderer::RenderShader(GraphicsAPI::CommandBuffer* commandBuffer, Sha
 	}
 }
 
-void Mesh3dRenderer::RenderMaterial(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::Pipeline* pipeline, MaterialAsset& material) {
+void Mesh3dRenderer::RenderMaterial(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::GraphicsPipeline* pipeline, MaterialAsset& material) {
 	for (auto& renderable : material.renderables) {
 		ECS::Entity entity = renderable.first;
 		Mesh3dAsset::Submesh& submesh = *(Mesh3dAsset::Submesh*)renderable.second;
@@ -101,7 +101,7 @@ void Mesh3dRenderer::RenderMaterial(GraphicsAPI::CommandBuffer* commandBuffer, G
 	}
 }
 
-void Mesh3dRenderer::RenderSubmesh(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::Pipeline* pipeline, GraphicsAPI::DescriptorSet* materialDescriptorSet, ECS::Entity rendererEntity, Mesh3dAsset::Submesh& submesh3d) {
+void Mesh3dRenderer::RenderSubmesh(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::GraphicsPipeline* pipeline, GraphicsAPI::DescriptorSet* materialDescriptorSet, ECS::Entity rendererEntity, Mesh3dAsset::Submesh& submesh3d) {
 	auto graphicsCore = engineCore->GetGraphicsCore();
 	commandBuffer->BindVertexArrayObject(submesh3d.vertexArrayObject);
 
@@ -112,7 +112,7 @@ void Mesh3dRenderer::RenderSubmesh(GraphicsAPI::CommandBuffer* commandBuffer, Gr
 	glm::mat4 modelMatrix = transformComponent.GetTransformMatrix();
 	meshRendererComponent.perDrawUniformBuffer->UpdateBuffer(&modelMatrix);
 	std::vector<GraphicsAPI::DescriptorSet*> descriptors = { materialDescriptorSet, engineDescriptorSet, meshRendererComponent.perDrawDescriptorSet };
-	commandBuffer->BindDescriptorSet(
+	commandBuffer->BindGraphicsDescriptorSet(
 		pipeline,
 		descriptors.data(),
 		static_cast<uint32_t>(descriptors.size())
@@ -128,7 +128,7 @@ void Mesh3dRenderer::RenderSubmesh(GraphicsAPI::CommandBuffer* commandBuffer, Gr
 
 void Mesh3dRenderer::RenderShaderImmediate(ShaderAsset& shader) {
 	auto graphicsCore = engineCore->GetGraphicsCore();
-	graphicsCore->BindPipeline(shader.pipeline);
+	graphicsCore->BindGraphicsPipeline(shader.pipeline);
 	// mesh3dBufferObject->Bind();
 	for (auto materialUuid : shader.materials) {
 		MaterialAsset& material = *engineCore->assetManager->GetAsset<MaterialAsset>(materialUuid);

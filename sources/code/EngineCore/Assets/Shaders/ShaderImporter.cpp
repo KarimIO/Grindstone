@@ -65,8 +65,8 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	auto renderPass = usesGbuffer
 		? DeferredRenderer::gbufferRenderPass
 		: DeferredRenderer::mainRenderPass;
-	Pipeline::CreateInfo pipelineCreateInfo{};
-	pipelineCreateInfo.shaderName = debugName.c_str();
+	GraphicsPipeline::CreateInfo pipelineCreateInfo{};
+	pipelineCreateInfo.debugName = debugName.c_str();
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
 	pipelineCreateInfo.cullMode = CullMode::None;
 	pipelineCreateInfo.renderPass = renderPass;
@@ -173,7 +173,7 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	pipelineCreateInfo.isDepthWriteEnabled = true;
 	pipelineCreateInfo.isStencilEnabled = false;
 
-	auto pipeine = graphicsCore->CreatePipeline(pipelineCreateInfo);
+	auto pipeine = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	auto asset = shaders.emplace(uuid, ShaderAsset(uuid, debugName, pipeine));
 	auto& shaderAsset = asset.first->second;
 	shaderAsset.reflectionData = reflectionData;

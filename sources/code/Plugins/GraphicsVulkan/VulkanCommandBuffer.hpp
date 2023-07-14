@@ -23,8 +23,13 @@ namespace Grindstone {
 				ClearDepthStencil depthStencilClearValue
 			) override;
 			virtual void UnbindRenderPass() override;
-			virtual void BindDescriptorSet(
-				Pipeline* graphicsPipeline,
+			virtual void BindGraphicsDescriptorSet(
+				GraphicsPipeline* graphicsPipeline,
+				DescriptorSet** descriptorSets,
+				uint32_t descriptorSetCount
+			) override;
+			virtual void BindComputeDescriptorSet(
+				ComputePipeline* graphicsPipeline,
 				DescriptorSet** descriptorSets,
 				uint32_t descriptorSetCount
 			) override;
@@ -32,14 +37,23 @@ namespace Grindstone {
 			virtual void SetViewport(float offsetX, float offsetY, float width, float height, float depthMin = 0.0f, float depthMax = 1.0f) override;
 			virtual void SetScissor(int32_t offsetX, int32_t offsetY, uint32_t width, uint32_t height) override;
 			virtual void SetDepthBias(float biasConstantFactor, float biasSlopeFactor) override;
-			virtual void BindPipeline(Pipeline* pipeline) override;
+			virtual void BindGraphicsPipeline(GraphicsPipeline* pipeline) override;
+			virtual void BindComputePipeline(ComputePipeline* pipeline) override;
 			virtual void BindVertexArrayObject(VertexArrayObject* vertexArrayObject) override;
 			virtual void BindVertexBuffers(VertexBuffer** vb, uint32_t count) override;
 			virtual void BindIndexBuffer(IndexBuffer* indexBuffer) override;
 			virtual void DrawVertices(uint32_t vertexCount, uint32_t instanceCount) override;
 			virtual void DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t instanceCount, int32_t vertexOffset) override;
+			virtual void DispatchCompute(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) override;
 			virtual void EndCommandBuffer() override;
 		private:
+			virtual void BindDescriptorSet(
+				VkPipelineLayout pipelineLayout,
+				VkPipelineBindPoint bindPoint,
+				DescriptorSet** descriptorSets,
+				uint32_t descriptorSetCount
+			);
+
 			VkCommandBuffer commandBuffer;
 			VkCommandBufferBeginInfo beginInfo;
 			CommandBufferSecondaryInfo secondaryInfo;

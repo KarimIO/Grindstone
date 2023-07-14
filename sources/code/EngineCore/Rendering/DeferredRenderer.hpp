@@ -10,7 +10,8 @@ namespace Grindstone {
 		class RenderTarget;
 		class DepthTarget;
 		class VertexArrayObject;
-		class Pipeline;
+		class GraphicsPipeline;
+		class ComputePipeline;
 		class CommandBuffer;
 	};
 
@@ -46,6 +47,8 @@ namespace Grindstone {
 			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
 		};
 
+		void RenderBloom();
+
 		void RenderCommandBuffer(
 			GraphicsAPI::CommandBuffer* commandBuffer,
 			entt::registry& registry,
@@ -69,6 +72,7 @@ namespace Grindstone {
 		void PostProcessCommandBuffer(uint32_t imageIndex, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer);
 		void PostProcessImmediate(GraphicsAPI::Framebuffer* outputFramebuffer);
 
+		void CreateBloomResources();
 		void CreateSsaoKernelAndNoise();
 		void CleanupPipelines();
 		void CreatePipelines();
@@ -84,6 +88,13 @@ namespace Grindstone {
 		uint32_t height = 600;
 
 		std::vector<DeferredRendererImageSet> deferredRendererImageSets;
+
+		GraphicsAPI::RenderPass* bloomRenderPass = nullptr;
+		GraphicsAPI::Framebuffer* bloomFramebuffer = nullptr;
+		GraphicsAPI::RenderTarget* bloomRenderTarget = nullptr;
+		GraphicsAPI::UniformBuffer* bloomUniformBuffer = nullptr;
+		GraphicsAPI::DescriptorSetLayout* bloomDescriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSet* bloomDescriptorSet = nullptr;
 
 		GraphicsAPI::RenderPass* ssaoRenderPass = nullptr;
 		GraphicsAPI::Framebuffer* ssaoFramebuffer = nullptr;
@@ -114,12 +125,14 @@ namespace Grindstone {
 		GraphicsAPI::IndexBuffer* indexBuffer;
 		GraphicsAPI::VertexArrayObject* planePostProcessVao = nullptr;
 
-		GraphicsAPI::Pipeline* ssaoPipeline = nullptr;
-		GraphicsAPI::Pipeline* imageBasedLightingPipeline = nullptr;
-		GraphicsAPI::Pipeline* spotLightPipeline = nullptr;
-		GraphicsAPI::Pipeline* pointLightPipeline = nullptr;
-		GraphicsAPI::Pipeline* directionalLightPipeline = nullptr;
-		GraphicsAPI::Pipeline* tonemapPipeline = nullptr;
-		GraphicsAPI::Pipeline* shadowMappingPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* ssaoPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* imageBasedLightingPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* spotLightPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* pointLightPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* directionalLightPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* tonemapPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* shadowMappingPipeline = nullptr;
+
+		GraphicsAPI::ComputePipeline* bloomPipeline = nullptr;
 	};
 }

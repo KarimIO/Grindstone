@@ -4,7 +4,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include "Common/Graphics/Core.hpp"
 #include "Common/Graphics/VertexArrayObject.hpp"
-#include "Common/Graphics/Pipeline.hpp"
+#include "Common/Graphics/GraphicsPipeline.hpp"
 #include "DeferredRenderer.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "EngineCore/EngineCore.hpp"
@@ -50,6 +50,12 @@ struct SsaoUboStruct {
 	float bias;
 };
 
+struct BloomUboStruct {
+	glm::vec4 thresholdParameters; // (x) threshold, (y) threshold - knee, (z) knee * 2, (w) 0.25 / knee
+	float levelOfDetail;
+	int mode;
+};
+
 DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : targetRenderPass(targetRenderPass) {
 	width = targetRenderPass->GetWidth();
 	height = targetRenderPass->GetHeight();
@@ -67,6 +73,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;
 	shadowMapRenderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
+	CreateBloomResources();
 	CreateSsaoKernelAndNoise();
 	CreateVertexAndIndexBuffersAndLayouts();
 	CreateGbufferFramebuffer();
@@ -114,6 +121,71 @@ DeferredRenderer::~DeferredRenderer() {
 	graphicsCore->DeleteTexture(ssaoNoiseTexture);
 	graphicsCore->DeleteDescriptorSetLayout(ssaoDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSet(ssaoDescriptorSet);
+}
+
+void DeferredRenderer::CreateBloomResources() {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+
+	{
+		float threshold = 1.0f;
+		float knee = 0.1f;
+
+		BloomUboStruct bloomUboStruct{};
+		bloomUboStruct.thresholdParameters = { threshold, threshold - knee, knee * 2.0f, 0.25f / knee };
+		bloomUboStruct.levelOfDetail = 0.0f;
+		bloomUboStruct.mode = 0;
+
+		GraphicsAPI::UniformBuffer::CreateInfo bloomUniformBufferObjectCreateInfo{};
+		bloomUniformBufferObjectCreateInfo.debugName = "Bloom Uniform Buffer";
+		bloomUniformBufferObjectCreateInfo.isDynamic = true;
+		bloomUniformBufferObjectCreateInfo.size = sizeof(SsaoUboStruct);
+		bloomUniformBuffer = graphicsCore->CreateUniformBuffer(bloomUniformBufferObjectCreateInfo);
+		bloomUniformBuffer->UpdateBuffer(&bloomUboStruct);
+	}
+
+	{
+		GraphicsAPI::RenderTarget::CreateInfo bloomRenderTargetCreateInfo{ GraphicsAPI::ColorFormat::RGBA32, width, height, true, "Bloom Render Target" };
+		bloomRenderTarget = graphicsCore->CreateRenderTarget(bloomRenderTargetCreateInfo);
+	}
+
+	{
+		std::array<DescriptorSetLayout::Binding, 2> bloomLayoutBindings{};
+		bloomLayoutBindings[0].bindingId = 0;
+		bloomLayoutBindings[0].count = 1;
+		bloomLayoutBindings[0].type = BindingType::UniformBuffer;
+		bloomLayoutBindings[0].stages = GraphicsAPI::ShaderStageBit::Fragment;
+
+		bloomLayoutBindings[1].bindingId = 1;
+		bloomLayoutBindings[1].count = 1;
+		bloomLayoutBindings[1].type = BindingType::Texture;
+		bloomLayoutBindings[1].stages = GraphicsAPI::ShaderStageBit::Fragment;
+
+		DescriptorSetLayout::CreateInfo bloomDescriptorSetLayoutCreateInfo{};
+		bloomDescriptorSetLayoutCreateInfo.debugName = "Bloom Descriptor Set Layout";
+		bloomDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(bloomLayoutBindings.size());
+		bloomDescriptorSetLayoutCreateInfo.bindings = bloomLayoutBindings.data();
+		bloomDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(bloomDescriptorSetLayoutCreateInfo);
+	}
+
+	{
+		std::array<DescriptorSet::Binding, 2> bloomLayoutBindings{};
+		bloomLayoutBindings[0].bindingIndex = 0;
+		bloomLayoutBindings[0].count = 1;
+		bloomLayoutBindings[0].bindingType = BindingType::UniformBuffer;
+		bloomLayoutBindings[0].itemPtr = bloomUniformBuffer;
+
+		bloomLayoutBindings[1].bindingIndex = 1;
+		bloomLayoutBindings[1].count = 1;
+		bloomLayoutBindings[1].bindingType = BindingType::RenderTexture;
+		bloomLayoutBindings[1].itemPtr = bloomRenderTarget;
+
+		DescriptorSet::CreateInfo engineDescriptorSetCreateInfo{};
+		engineDescriptorSetCreateInfo.debugName = "Bloom Descriptor Set";
+		engineDescriptorSetCreateInfo.layout = bloomDescriptorSetLayout;
+		engineDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(bloomLayoutBindings.size());
+		engineDescriptorSetCreateInfo.bindings = bloomLayoutBindings.data();
+		bloomDescriptorSet = graphicsCore->CreateDescriptorSet(engineDescriptorSetCreateInfo);
+	}
 }
 
 void DeferredRenderer::CreateSsaoKernelAndNoise() {
@@ -241,11 +313,11 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 
 void DeferredRenderer::CleanupPipelines() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	graphicsCore->DeletePipeline(pointLightPipeline);
-	graphicsCore->DeletePipeline(spotLightPipeline);
-	graphicsCore->DeletePipeline(directionalLightPipeline);
-	graphicsCore->DeletePipeline(shadowMappingPipeline);
-	graphicsCore->DeletePipeline(tonemapPipeline);
+	graphicsCore->DeleteGraphicsPipeline(pointLightPipeline);
+	graphicsCore->DeleteGraphicsPipeline(spotLightPipeline);
+	graphicsCore->DeleteGraphicsPipeline(directionalLightPipeline);
+	graphicsCore->DeleteGraphicsPipeline(shadowMappingPipeline);
+	graphicsCore->DeleteGraphicsPipeline(tonemapPipeline);
 }
 
 bool DeferredRenderer::OnWindowResize(Events::BaseEvent* ev) {
@@ -699,7 +771,7 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 void DeferredRenderer::CreatePipelines() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	Pipeline::CreateInfo pipelineCreateInfo{};
+	GraphicsPipeline::CreateInfo pipelineCreateInfo{};
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
 	pipelineCreateInfo.cullMode = CullMode::None;
 	pipelineCreateInfo.scissorX = 0;
@@ -723,7 +795,7 @@ void DeferredRenderer::CreatePipelines() {
 		ssaoLayouts[0] = lightingDescriptorSetLayout;
 		ssaoLayouts[1] = ssaoDescriptorSetLayout;
 
-		pipelineCreateInfo.shaderName = "SSAO Pipeline";
+		pipelineCreateInfo.debugName = "SSAO Pipeline";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
 		pipelineCreateInfo.descriptorSetLayouts = ssaoLayouts.data();
@@ -738,7 +810,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.height = static_cast<float>(ssaoRenderPass->GetHeight());
 		pipelineCreateInfo.scissorW = ssaoRenderPass->GetWidth();
 		pipelineCreateInfo.scissorH = ssaoRenderPass->GetHeight();
-		ssaoPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
+		ssaoPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
 
 	shaderStageCreateInfos.clear();
@@ -750,6 +822,32 @@ void DeferredRenderer::CreatePipelines() {
 	pipelineCreateInfo.scissorH = mainRenderPass->GetHeight();
 
 	{
+		ShaderStageCreateInfo bloomShaderStageCreateInfo;
+		std::vector<char> bloomFileData;
+
+		if (!assetManager->LoadShaderStage(Uuid("5227a9a2-4a62-4f1b-9906-2b6acbf1b8d3"), ShaderStage::Compute, bloomShaderStageCreateInfo, bloomFileData)) {
+			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load bloom compute shader.");
+			return;
+		}
+
+		std::array<GraphicsAPI::DescriptorSetLayout*, 2> bloomLayouts{};
+		bloomLayouts[0] = lightingDescriptorSetLayout;
+		bloomLayouts[1] = ssaoInputDescriptorSetLayout;
+
+		ComputePipeline::CreateInfo computePipelineCreateInfo{};
+		computePipelineCreateInfo.debugName = "Bloom Compute Pipeline";
+		computePipelineCreateInfo.shaderFileName = bloomShaderStageCreateInfo.fileName;
+		computePipelineCreateInfo.shaderContent = bloomFileData.data();
+		computePipelineCreateInfo.shaderSize = static_cast<uint32_t>(bloomFileData.size());
+		computePipelineCreateInfo.descriptorSetLayouts = bloomLayouts.data();
+		computePipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(bloomLayouts.size());
+		bloomPipeline = graphicsCore->CreateComputePipeline(computePipelineCreateInfo);
+	}
+
+	shaderStageCreateInfos.clear();
+	fileData.clear();
+
+	{
 		if (!assetManager->LoadShaderSet(Uuid("5227a9a2-4a62-4f1b-9906-2b6acbf1b8d3"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
 			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load image based lighting shaders.");
 			return;
@@ -759,7 +857,7 @@ void DeferredRenderer::CreatePipelines() {
 		iblLayouts[0] = lightingDescriptorSetLayout;
 		iblLayouts[1] = ssaoInputDescriptorSetLayout;
 
-		pipelineCreateInfo.shaderName = "Image Based Lighting Pipeline";
+		pipelineCreateInfo.debugName = "Image Based Lighting Pipeline";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
 		pipelineCreateInfo.descriptorSetLayouts = iblLayouts.data();
@@ -770,7 +868,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.isStencilEnabled = false;
 		pipelineCreateInfo.blendMode = BlendMode::Additive;
 		pipelineCreateInfo.renderPass = mainRenderPass;
-		imageBasedLightingPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
+		imageBasedLightingPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
 
 	shaderStageCreateInfos.clear();
@@ -786,7 +884,7 @@ void DeferredRenderer::CreatePipelines() {
 		pointLightLayouts[0] = lightingDescriptorSetLayout;
 		pointLightLayouts[1] = lightingUBODescriptorSetLayout;
 
-		pipelineCreateInfo.shaderName = "Point Light Pipeline";
+		pipelineCreateInfo.debugName = "Point Light Pipeline";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
 		pipelineCreateInfo.descriptorSetLayouts = pointLightLayouts.data();
@@ -797,7 +895,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.isStencilEnabled = false;
 		pipelineCreateInfo.blendMode = BlendMode::Additive;
 		pipelineCreateInfo.renderPass = mainRenderPass;
-		pointLightPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
+		pointLightPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
 
 	shaderStageCreateInfos.clear();
@@ -813,7 +911,7 @@ void DeferredRenderer::CreatePipelines() {
 		spotLightLayouts[0] = lightingDescriptorSetLayout;
 		spotLightLayouts[1] = shadowMappedLightDescriptorSetLayout;
 
-		pipelineCreateInfo.shaderName = "Spot Light Pipeline";
+		pipelineCreateInfo.debugName = "Spot Light Pipeline";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
 		pipelineCreateInfo.descriptorSetLayouts = spotLightLayouts.data();
@@ -824,7 +922,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.isStencilEnabled = false;
 		pipelineCreateInfo.blendMode = BlendMode::Additive;
 		pipelineCreateInfo.renderPass = mainRenderPass;
-		spotLightPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
+		spotLightPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
 
 	shaderStageCreateInfos.clear();
@@ -840,7 +938,7 @@ void DeferredRenderer::CreatePipelines() {
 		directionalLightLayouts[0] = lightingDescriptorSetLayout;
 		directionalLightLayouts[1] = shadowMappedLightDescriptorSetLayout;
 
-		pipelineCreateInfo.shaderName = "Directional Light Pipeline";
+		pipelineCreateInfo.debugName = "Directional Light Pipeline";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
 		pipelineCreateInfo.descriptorSetLayouts = directionalLightLayouts.data();
@@ -851,7 +949,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.isStencilEnabled = false;
 		pipelineCreateInfo.blendMode = BlendMode::Additive;
 		pipelineCreateInfo.renderPass = mainRenderPass;
-		directionalLightPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
+		directionalLightPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
 
 	shaderStageCreateInfos.clear();
@@ -869,7 +967,7 @@ void DeferredRenderer::CreatePipelines() {
 			return;
 		}
 
-		pipelineCreateInfo.shaderName = "Tonemapping Pipeline";
+		pipelineCreateInfo.debugName = "Tonemapping Pipeline";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
 		pipelineCreateInfo.descriptorSetLayouts = &tonemapDescriptorSetLayout;
@@ -880,7 +978,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.isDepthWriteEnabled = true;
 		pipelineCreateInfo.isDepthTestEnabled = true;
 		pipelineCreateInfo.isStencilEnabled = true;
-		tonemapPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
+		tonemapPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
 
 	shaderStageCreateInfos.clear();
@@ -917,7 +1015,7 @@ void DeferredRenderer::CreatePipelines() {
 
 		pipelineCreateInfo.vertexBindings = &shadowMapPositionLayout;
 		pipelineCreateInfo.vertexBindingsCount = 1;
-		pipelineCreateInfo.shaderName = "Shadow Mapping Pipeline";
+		pipelineCreateInfo.debugName = "Shadow Mapping Pipeline";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
 		pipelineCreateInfo.descriptorSetLayouts = &shadowMapDescriptorSetLayout;
@@ -930,7 +1028,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.isStencilEnabled = false;
 		pipelineCreateInfo.hasDynamicScissor = true;
 		pipelineCreateInfo.hasDynamicViewport = true;
-		shadowMappingPipeline = graphicsCore->CreatePipeline(pipelineCreateInfo);
+		shadowMappingPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
 }
 
@@ -943,7 +1041,7 @@ void DeferredRenderer::RenderLightsImmediate(entt::registry& registry) {
 
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	graphicsCore->BindPipeline(pointLightPipeline);
+	graphicsCore->BindGraphicsPipeline(pointLightPipeline);
 	graphicsCore->EnableDepthWrite(false);
 	litHdrFramebuffer->BindWrite();
 
@@ -969,9 +1067,9 @@ void DeferredRenderer::RenderLightsImmediate(entt::registry& registry) {
 #endif
 }
 
-bool showPoint = true;
-bool showSpot = true;
-bool showDirect = true;
+void DeferredRenderer::RenderBloom() {
+
+}
 
 void DeferredRenderer::RenderLightsCommandBuffer(
 	uint32_t imageIndex,
@@ -979,9 +1077,6 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 	entt::registry& registry
 ) {
 	GRIND_PROFILE_FUNC();
-	if (pointLightPipeline == nullptr) {
-		return;
-	}
 
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	auto& imageSet = deferredRendererImageSets[imageIndex];
@@ -995,20 +1090,20 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 		0.5f, 0.5f, 0.0f, 1.0f
 	);
 
-	{
+	if (imageBasedLightingPipeline != nullptr) {
 		// Image Based Lighting Lights
-		currentCommandBuffer->BindPipeline(imageBasedLightingPipeline);
+		currentCommandBuffer->BindGraphicsPipeline(imageBasedLightingPipeline);
 
 		std::array<GraphicsAPI::DescriptorSet*, 2> iblDescriptors{};
 		iblDescriptors[0] = imageSet.lightingDescriptorSet;
 		iblDescriptors[1] = ssaoInputDescriptorSet;
-		currentCommandBuffer->BindDescriptorSet(imageBasedLightingPipeline, iblDescriptors.data(), static_cast<uint32_t>(iblDescriptors.size()));
+		currentCommandBuffer->BindGraphicsDescriptorSet(imageBasedLightingPipeline, iblDescriptors.data(), static_cast<uint32_t>(iblDescriptors.size()));
 		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 	}
 
-	if (showPoint) {
+	if (pointLightPipeline != nullptr) {
 		// Point Lights
-		currentCommandBuffer->BindPipeline(pointLightPipeline);
+		currentCommandBuffer->BindGraphicsPipeline(pointLightPipeline);
 
 		std::array<GraphicsAPI::DescriptorSet*, 2> pointLightDescriptors{};
 		pointLightDescriptors[0] = imageSet.lightingDescriptorSet;
@@ -1024,14 +1119,14 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 
 			pointLightDescriptors[1] = pointLightComponent.descriptorSet;
 			pointLightComponent.uniformBufferObject->UpdateBuffer(&lightmapStruct);
-			currentCommandBuffer->BindDescriptorSet(pointLightPipeline, pointLightDescriptors.data(), static_cast<uint32_t>(pointLightDescriptors.size()));
+			currentCommandBuffer->BindGraphicsDescriptorSet(pointLightPipeline, pointLightDescriptors.data(), static_cast<uint32_t>(pointLightDescriptors.size()));
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 		});
 	}
 
-	if (showSpot) {
+	if (spotLightPipeline != nullptr) {
 		// Spot Lights
-		currentCommandBuffer->BindPipeline(spotLightPipeline);
+		currentCommandBuffer->BindGraphicsPipeline(spotLightPipeline);
 
 		std::array<GraphicsAPI::DescriptorSet*, 2> spotLightDescriptors{};
 		spotLightDescriptors[0] = imageSet.lightingDescriptorSet;
@@ -1053,14 +1148,14 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 			spotLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
 
 			spotLightDescriptors[1] = spotLightComponent.descriptorSet;
-			currentCommandBuffer->BindDescriptorSet(spotLightPipeline, spotLightDescriptors.data(), static_cast<uint32_t>(spotLightDescriptors.size()));
+			currentCommandBuffer->BindGraphicsDescriptorSet(spotLightPipeline, spotLightDescriptors.data(), static_cast<uint32_t>(spotLightDescriptors.size()));
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 		});
 	}
 
-	if (showDirect) {
+	if (directionalLightPipeline != nullptr) {
 		// Directional Lights
-		currentCommandBuffer->BindPipeline(directionalLightPipeline);
+		currentCommandBuffer->BindGraphicsPipeline(directionalLightPipeline);
 
 		std::array<GraphicsAPI::DescriptorSet*, 2> directionalLightDescriptors{};
 		directionalLightDescriptors[0] = imageSet.lightingDescriptorSet;
@@ -1079,7 +1174,7 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 			directionalLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
 
 			directionalLightDescriptors[1] = directionalLightComponent.descriptorSet;
-			currentCommandBuffer->BindDescriptorSet(directionalLightPipeline, directionalLightDescriptors.data(), static_cast<uint32_t>(directionalLightDescriptors.size()));
+			currentCommandBuffer->BindGraphicsDescriptorSet(directionalLightPipeline, directionalLightDescriptors.data(), static_cast<uint32_t>(directionalLightDescriptors.size()));
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 		});
 	}
@@ -1112,8 +1207,8 @@ void DeferredRenderer::RenderSsao(uint32_t imageIndex, GraphicsAPI::CommandBuffe
 	ssaoDescriptors[0] = imageSet.lightingDescriptorSet;
 	ssaoDescriptors[1] = ssaoDescriptorSet;
 
-	commandBuffer->BindPipeline(ssaoPipeline);
-	commandBuffer->BindDescriptorSet(ssaoPipeline, ssaoDescriptors.data(), static_cast<uint32_t>(ssaoDescriptors.size()));
+	commandBuffer->BindGraphicsPipeline(ssaoPipeline);
+	commandBuffer->BindGraphicsDescriptorSet(ssaoPipeline, ssaoDescriptors.data(), static_cast<uint32_t>(ssaoDescriptors.size()));
 	commandBuffer->DrawIndices(0, 6, 1, 0);
 	commandBuffer->UnbindRenderPass();
 }
@@ -1127,10 +1222,10 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = true;
 
-	if (showSpot) {
+	{
 		auto view = registry.view<const TransformComponent, SpotLightComponent>();
 		view.each([&](const TransformComponent& transformComponent, SpotLightComponent& spotLightComponent) {
-			float fov = glm::radians(90.0f); //spotLightComponent.outerAngle * 2.0f;
+			constexpr float fov = glm::radians(90.0f); //spotLightComponent.outerAngle * 2.0f;
 			float farDist = spotLightComponent.attenuationRadius;
 
 			const glm::vec3 forwardVector = transformComponent.GetForward();
@@ -1169,20 +1264,20 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 				clearDepthStencil
 			);
 
-			commandBuffer->BindPipeline(shadowMappingPipeline);
+			commandBuffer->BindGraphicsPipeline(shadowMappingPipeline);
 
 			float resF = static_cast<float>(resolution);
 			commandBuffer->SetViewport(0.0f, 0.0f, resF, resF);
 			commandBuffer->SetScissor(0, 0, resolution, resolution);
 
-			commandBuffer->BindDescriptorSet(shadowMappingPipeline, &spotLightComponent.shadowMapDescriptorSet, 1);
+			commandBuffer->BindGraphicsDescriptorSet(shadowMappingPipeline, &spotLightComponent.shadowMapDescriptorSet, 1);
 			assetManager->RenderShadowMap(commandBuffer, spotLightComponent.shadowMapDescriptorSet);
 
 			commandBuffer->UnbindRenderPass();
 		});
 	}
 
-	if (showDirect) {
+	{
 		auto view = registry.view<const TransformComponent, DirectionalLightComponent>();
 		view.each([&](const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
 			const float shadowHalfSize = 40.0f;
@@ -1213,13 +1308,13 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 				clearDepthStencil
 			);
 
-			commandBuffer->BindPipeline(shadowMappingPipeline);
+			commandBuffer->BindGraphicsPipeline(shadowMappingPipeline);
 
 			float resF = static_cast<float>(resolution);
 			commandBuffer->SetViewport(0.0f, 0.0f, resF, resF);
 			commandBuffer->SetScissor(0, 0, resolution, resolution);
 
-			commandBuffer->BindDescriptorSet(shadowMappingPipeline, &directionalLightComponent.shadowMapDescriptorSet, 1);
+			commandBuffer->BindGraphicsDescriptorSet(shadowMappingPipeline, &directionalLightComponent.shadowMapDescriptorSet, 1);
 			assetManager->RenderShadowMap(commandBuffer, directionalLightComponent.shadowMapDescriptorSet);
 
 			commandBuffer->UnbindRenderPass();
@@ -1239,6 +1334,8 @@ void DeferredRenderer::PostProcessCommandBuffer(
 	GRIND_PROFILE_FUNC();
 
 	auto& imageSet = deferredRendererImageSets[imageIndex];
+
+	RenderBloom();
 	
 	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
 	ClearDepthStencil clearDepthStencil;
@@ -1248,13 +1345,13 @@ void DeferredRenderer::PostProcessCommandBuffer(
 	auto renderPass = framebuffer->GetRenderPass();
 	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, renderPass->GetWidth(), renderPass->GetHeight(), &clearColor, 1, clearDepthStencil);
 	
-	currentCommandBuffer->BindDescriptorSet(tonemapPipeline, &imageSet.tonemapDescriptorSet, 1);
+	currentCommandBuffer->BindGraphicsDescriptorSet(tonemapPipeline, &imageSet.tonemapDescriptorSet, 1);
 	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	currentCommandBuffer->BindIndexBuffer(indexBuffer);
 
 	{
 		// Tonemapping
-		currentCommandBuffer->BindPipeline(tonemapPipeline);
+		currentCommandBuffer->BindGraphicsPipeline(tonemapPipeline);
 		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 	}
 
