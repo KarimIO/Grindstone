@@ -47,6 +47,7 @@ namespace Grindstone {
 			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
 		};
 
+		void CreateBloomRenderTargetsAndDescriptorSets();
 		void RenderBloom(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer);
 
 		void RenderCommandBuffer(
@@ -93,6 +94,7 @@ namespace Grindstone {
 		GraphicsAPI::RenderPass* bloomRenderPass = nullptr;
 		GraphicsAPI::Framebuffer* bloomFramebuffer = nullptr;
 		std::vector<GraphicsAPI::RenderTarget*> bloomRenderTargets;
+		std::vector<GraphicsAPI::DescriptorSet*> bloomDescriptorSets;
 		GraphicsAPI::UniformBuffer* bloomUniformBuffer = nullptr;
 
 		GraphicsAPI::RenderPass* ssaoRenderPass = nullptr;
@@ -116,7 +118,6 @@ namespace Grindstone {
 		GraphicsAPI::DescriptorSetLayout* engineDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* shadowMapDescriptorSetLayout = nullptr;
 
-		GraphicsAPI::DescriptorSet* bloomDescriptorSet = nullptr;
 		GraphicsAPI::DescriptorSet* shadowMapDescriptorSet = nullptr;
 
 		GraphicsAPI::RenderPass* shadowMapRenderPass = nullptr;

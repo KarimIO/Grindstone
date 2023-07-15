@@ -53,7 +53,9 @@ void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, Descrip
 
 	// TODO: Handle this lifetime
 	VkDescriptorImageInfo* imageInfo = new VkDescriptorImageInfo();
-	imageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+	imageInfo->imageLayout = isStorage
+		? VK_IMAGE_LAYOUT_GENERAL
+		: VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	imageInfo->imageView = texture->GetImageView();
 	imageInfo->sampler = texture->GetSampler();
 

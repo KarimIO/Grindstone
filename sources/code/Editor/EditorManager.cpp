@@ -50,6 +50,10 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	fileManager.Initialize(assetsPath);
 	gitManager.Initialize();
 	csharpBuildManager.FinishInitialFileProcessing();
+
+	engineCore->InitializeScene(true);
+	engineCore->ShowMainWindow();
+
 	if (!SetupImguiEditor())	return false;
 	InitializeQuitCommands();
 
@@ -139,8 +143,6 @@ bool Manager::LoadEngine() {
 	createInfo.isEditor = true;
 	createInfo.applicationModuleName = "GrindstoneGameEditor";
 	createInfo.applicationTitle = "Grindstone Game Editor";
-	createInfo.scenePath = "";
-	createInfo.shouldLoadSceneFromDefaults = true;
 	std::string projectPathAsStr = projectPath.string();
 	createInfo.projectPath = projectPathAsStr.c_str();
 

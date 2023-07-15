@@ -13,6 +13,7 @@ namespace Grindstone {
 			virtual ~VulkanRenderTarget() override;
 		public:
 			void UpdateSwapChainImage(VkImage swapchainImage);
+			VkImage GetImage();
 			VkImageView GetImageView();
 			VkSampler GetSampler();
 		public:

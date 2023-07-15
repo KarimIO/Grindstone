@@ -54,13 +54,14 @@ namespace Grindstone {
 			bool isEditor = false;
 			const char* applicationModuleName = nullptr;
 			const char* applicationTitle = nullptr;
-			bool shouldLoadSceneFromDefaults;
-			const char* scenePath = nullptr;
 			const char* projectPath = nullptr;
 			const char* engineBinaryPath = nullptr;
 		};
 
 		bool Initialize(CreateInfo& ci);
+		virtual void InitializeScene(bool shouldLoadSceneFromDefaults, const char* scenePath = nullptr);
+		virtual void ShowMainWindow();
+
 		~EngineCore();
 		virtual void Run();
 		virtual void RunEditorLoopIteration();

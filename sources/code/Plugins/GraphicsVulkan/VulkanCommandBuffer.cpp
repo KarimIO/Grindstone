@@ -1,5 +1,6 @@
 #include "VulkanCommandBuffer.hpp"
 #include "VulkanRenderPass.hpp"
+#include "VulkanRenderTarget.hpp"
 #include "VulkanGraphicsPipeline.hpp"
 #include "VulkanComputePipeline.hpp"
 #include "VulkanFramebuffer.hpp"
@@ -240,6 +241,27 @@ void VulkanCommandBuffer::DrawIndices(uint32_t firstIndex, uint32_t indexCount, 
 
 void VulkanCommandBuffer::DispatchCompute(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) {
 	vkCmdDispatch(commandBuffer, groupCountX, groupCountY, groupCountZ);
+}
+
+void VulkanCommandBuffer::WaitForComputeMemoryBarrier(GraphicsAPI::RenderTarget* renderTarget) {
+	GraphicsAPI::VulkanRenderTarget* vulkanRenderTarget = static_cast<GraphicsAPI::VulkanRenderTarget*>(renderTarget);
+	VkImageMemoryBarrier imageMemoryBarrier = {};
+	imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
+	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+	imageMemoryBarrier.image = vulkanRenderTarget->GetImage();
+	imageMemoryBarrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+	imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+	imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	vkCmdPipelineBarrier(
+		commandBuffer,
+		VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+		VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+		0,
+		0, nullptr,
+		0, nullptr,
+		1, &imageMemoryBarrier
+	);
 }
 
 void VulkanCommandBuffer::EndCommandBuffer() {

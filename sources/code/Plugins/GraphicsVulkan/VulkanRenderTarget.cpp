@@ -139,6 +139,10 @@ void VulkanRenderTarget::UpdateSwapChainImage(VkImage swapchainImage) {
 	}
 }
 
+VkImage VulkanRenderTarget::GetImage() {
+	return image;
+}
+
 VkImageView VulkanRenderTarget::GetImageView() {
 	return imageView;
 }

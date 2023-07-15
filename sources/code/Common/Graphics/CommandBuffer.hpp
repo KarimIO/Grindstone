@@ -51,6 +51,9 @@ namespace Grindstone {
 			virtual void DrawVertices(uint32_t vertexCount, uint32_t instanceCount) = 0;
 			virtual void DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t instanceCount, int32_t vertexOffset) = 0;
 			virtual void DispatchCompute(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) = 0;
+
+			virtual void WaitForComputeMemoryBarrier(RenderTarget* renderTarget) = 0;
+
 			virtual void EndCommandBuffer() = 0;
 
 			struct CommandBufferSecondaryInfo {
