@@ -459,17 +459,19 @@ void VulkanCore::WaitUntilIdle() {
 }
 
 void VulkanCore::CreateDescriptorPool() {
-	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
+	std::array<VkDescriptorPoolSize, 3> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = 200; // static_cast<uint32_t>(swapChainImages.size());
+	poolSizes[0].descriptorCount = 1000; // static_cast<uint32_t>(swapChainImages.size());
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[1].descriptorCount = 200; //static_cast<uint32_t>(swapChainImages.size());
+	poolSizes[1].descriptorCount = 1000; //static_cast<uint32_t>(swapChainImages.size());
+	poolSizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	poolSizes[2].descriptorCount = 1000; //static_cast<uint32_t>(swapChainImages.size());
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = 400;
+	poolInfo.maxSets = 3000;
 
 	if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor pool!");
