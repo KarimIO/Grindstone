@@ -95,7 +95,7 @@ namespace Grindstone {
 		GraphicsAPI::Framebuffer* bloomFramebuffer = nullptr;
 		std::vector<GraphicsAPI::RenderTarget*> bloomRenderTargets;
 		std::vector<GraphicsAPI::DescriptorSet*> bloomDescriptorSets;
-		GraphicsAPI::UniformBuffer* bloomUniformBuffer = nullptr;
+		std::vector<GraphicsAPI::UniformBuffer*> bloomUniformBuffers;
 
 		GraphicsAPI::RenderPass* ssaoRenderPass = nullptr;
 		GraphicsAPI::Framebuffer* ssaoFramebuffer = nullptr;
