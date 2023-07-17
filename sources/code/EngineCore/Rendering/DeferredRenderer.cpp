@@ -80,8 +80,8 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;
 	shadowMapRenderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
-	float maxDimension = static_cast<float>(glm::max(width, height));
-	mipLevelCount = static_cast<uint32_t>(glm::log2(maxDimension)) + 1;
+	float minDimension = static_cast<float>(glm::min(width, height));
+	mipLevelCount = static_cast<uint32_t>(glm::log2(minDimension)) + 1;
 
 	CreateSsaoKernelAndNoise();
 	CreateVertexAndIndexBuffersAndLayouts();
@@ -90,7 +90,9 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	CreateUniformBuffers();
 	CreateDescriptorSetLayouts();
 	CreateBloomResources();
+	CreateBloomUniformBuffers();
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
+		CreateBloomRenderTargetsAndDescriptorSets(deferredRendererImageSets[i], i);
 		CreateDescriptorSets(deferredRendererImageSets[i]);
 	}
 
@@ -164,8 +166,6 @@ void DeferredRenderer::CreateBloomResources() {
 		bloomDescriptorSetLayoutCreateInfo.bindings = bloomLayoutBindings.data();
 		bloomDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(bloomDescriptorSetLayoutCreateInfo);
 	}
-
-	CreateBloomRenderTargetsAndDescriptorSets();
 }
 
 void DeferredRenderer::CreateSsaoKernelAndNoise() {
@@ -323,8 +323,10 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 	ssaoRenderPass->Resize(halfWidth, halfHeight);
 	ssaoFramebuffer->Resize(halfWidth, halfHeight);
 
-	float maxDimension = static_cast<float>(glm::max(width, height));
-	mipLevelCount = static_cast<uint32_t>(glm::log2(maxDimension)) + 1;
+	float minDimension = static_cast<float>(glm::min(width, height));
+	mipLevelCount = static_cast<uint32_t>(glm::log2(minDimension)) + 1;
+
+	CreateBloomUniformBuffers();
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		auto& imageSet = deferredRendererImageSets[i];
@@ -343,47 +345,56 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 
 		CleanupPipelines();
 		CreatePipelines();
-	}
 
-	CreateBloomRenderTargetsAndDescriptorSets();
-
-	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
-		auto& imageSet = deferredRendererImageSets[i];
+		CreateBloomRenderTargetsAndDescriptorSets(imageSet, i);
 		UpdateDescriptorSets(imageSet);
 	}
 }
 
-void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets() {
+void DeferredRenderer::CreateBloomUniformBuffers() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-
-	for (size_t i = 0; i < bloomRenderTargets.size(); ++i) {
-		if (bloomRenderTargets[i] != nullptr) {
-			graphicsCore->DeleteRenderTarget(bloomRenderTargets[i]);
-		}
-	}
-
-	for (size_t i = 0; i < bloomDescriptorSets.size(); ++i) {
-		if (bloomDescriptorSets[i] != nullptr) {
-			graphicsCore->DeleteDescriptorSet(bloomDescriptorSets[i]);
-		}
-	}
-
 	for (size_t i = 0; i < bloomUniformBuffers.size(); ++i) {
 		if (bloomUniformBuffers[i] != nullptr) {
 			graphicsCore->DeleteUniformBuffer(bloomUniformBuffers[i]);
 		}
 	}
 
-	bloomRenderTargets.resize(mipLevelCount * 2);
-	bloomDescriptorSets.resize(mipLevelCount * 2 - 2);
 	bloomUniformBuffers.resize(mipLevelCount * 2 - 2);
+
+	GraphicsAPI::UniformBuffer::CreateInfo uniformBufferCreateInfo{};
+	uniformBufferCreateInfo.debugName = "Bloom Uniform Buffer";
+	uniformBufferCreateInfo.isDynamic = true;
+	uniformBufferCreateInfo.size = sizeof(BloomUboStruct);
+
+	for (size_t i = 0; i < bloomUniformBuffers.size(); ++i) {
+		bloomUniformBuffers[i] = graphicsCore->CreateUniformBuffer(uniformBufferCreateInfo);
+	}
+}
+
+void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendererImageSet& imageSet, size_t imageSetIndex) {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+
+	for (size_t i = 0; i < imageSet.bloomRenderTargets.size(); ++i) {
+		if (imageSet.bloomRenderTargets[i] != nullptr) {
+			graphicsCore->DeleteRenderTarget(imageSet.bloomRenderTargets[i]);
+		}
+	}
+
+	for (size_t i = 0; i < imageSet.bloomDescriptorSets.size(); ++i) {
+		if (imageSet.bloomDescriptorSets[i] != nullptr) {
+			graphicsCore->DeleteDescriptorSet(imageSet.bloomDescriptorSets[i]);
+		}
+	}
+
+	imageSet.bloomRenderTargets.resize(mipLevelCount * 2);
+	imageSet.bloomDescriptorSets.resize(mipLevelCount * 2 - 2);
 
 	GraphicsAPI::RenderTarget::CreateInfo bloomRenderTargetCreateInfo{ GraphicsAPI::ColorFormat::RGBA32, width, height, true, true, "Bloom Render Target" };
 
 	for (uint32_t i = 0; i < mipLevelCount; ++i) {
 		std::string bloomRenderTargetName = std::string("Bloom Render Target Downscale Mip ") + std::to_string(i);
 		bloomRenderTargetCreateInfo.debugName = bloomRenderTargetName.c_str();
-		bloomRenderTargets[i] = graphicsCore->CreateRenderTarget(bloomRenderTargetCreateInfo);
+		imageSet.bloomRenderTargets[i] = graphicsCore->CreateRenderTarget(bloomRenderTargetCreateInfo);
 		bloomRenderTargetCreateInfo.width = bloomRenderTargetCreateInfo.width / 2;
 		bloomRenderTargetCreateInfo.height = bloomRenderTargetCreateInfo.height / 2;
 	}
@@ -394,7 +405,7 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets() {
 	for (uint32_t i = 0; i < mipLevelCount; ++i) {
 		std::string bloomRenderTargetName = std::string("Bloom Render Target Upscale Mip ") + std::to_string(i);
 		bloomRenderTargetCreateInfo.debugName = bloomRenderTargetName.c_str();
-		bloomRenderTargets[mipLevelCount + i] = graphicsCore->CreateRenderTarget(bloomRenderTargetCreateInfo);
+		imageSet.bloomRenderTargets[mipLevelCount + i] = graphicsCore->CreateRenderTarget(bloomRenderTargetCreateInfo);
 		bloomRenderTargetCreateInfo.width = bloomRenderTargetCreateInfo.width / 2;
 		bloomRenderTargetCreateInfo.height = bloomRenderTargetCreateInfo.height / 2;
 	}
@@ -416,7 +427,7 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets() {
 	descriptorBindings[3].bindingType = BindingType::RenderTexture;
 	descriptorBindings[3].count = 1;
 
-	descriptorBindings[3].itemPtr = bloomRenderTargets[0];
+	descriptorBindings[3].itemPtr = imageSet.bloomRenderTargets[0];
 
 	// Threshold values sourced from: https://catlikecoding.com/unity/tutorials/advanced-rendering/bloom/
 	float threshold = 1.0f;
@@ -436,50 +447,49 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets() {
 
 	uint32_t bloomDescriptorSetIndex = 0;
 
-	GraphicsAPI::UniformBuffer::CreateInfo uniformBufferCreateInfo{};
-	uniformBufferCreateInfo.debugName = "Bloom Uniform Buffer";
-	uniformBufferCreateInfo.isDynamic = true;
-	uniformBufferCreateInfo.size = sizeof(BloomUboStruct);
-
-	for (size_t i = 0; i < bloomUniformBuffers.size(); ++i) {
-		bloomUniformBuffers[i] = graphicsCore->CreateUniformBuffer(uniformBufferCreateInfo);
-	}
-
 	bloomUboStruct.stage = BloomStage::Filter;
 	if (mipLevelCount > 1) {
+		std::string bloomDescriptorName = fmt::format("Bloom DS Filter [{}]", imageSetIndex);
+		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UpdateBuffer(&bloomUboStruct);
 		descriptorBindings[0].itemPtr = bloomUniformBuffers[bloomDescriptorSetIndex];
-		descriptorBindings[1].itemPtr = bloomRenderTargets[1];
+		descriptorBindings[1].itemPtr = imageSet.bloomRenderTargets[1];
 		descriptorBindings[2].itemPtr = deferredRendererImageSets[0].litHdrRenderTarget;
-		bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
+		imageSet.bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 
 	bloomUboStruct.stage = BloomStage::Downsample;
 	for (size_t i = 1; i < mipLevelCount - 1; ++i) {
+		std::string bloomDescriptorName = fmt::format("Bloom DS Upsample [{}]({})", imageSetIndex, i);
+		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UpdateBuffer(&bloomUboStruct);
 		descriptorBindings[0].itemPtr = bloomUniformBuffers[bloomDescriptorSetIndex];
-		descriptorBindings[1].itemPtr = bloomRenderTargets[i + 1];
-		descriptorBindings[2].itemPtr = bloomRenderTargets[i];
-		bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
+		descriptorBindings[1].itemPtr = imageSet.bloomRenderTargets[i + 1];
+		descriptorBindings[2].itemPtr = imageSet.bloomRenderTargets[i];
+		imageSet.bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 
 	bloomUboStruct.stage = BloomStage::Upsample;
 	for (int i = mipLevelCount - 2; i >= 1; --i) {
+		std::string bloomDescriptorName = fmt::format("Bloom DS Upsample [{}]({})", imageSetIndex, i);
+		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UpdateBuffer(&bloomUboStruct);
 		descriptorBindings[0].itemPtr = bloomUniformBuffers[bloomDescriptorSetIndex];
-		descriptorBindings[1].itemPtr = bloomRenderTargets[mipLevelCount + i];
-		descriptorBindings[3].itemPtr = bloomRenderTargets[i];
-		descriptorBindings[2].itemPtr = bloomRenderTargets[mipLevelCount + i + 1];
-		bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
+		descriptorBindings[1].itemPtr = imageSet.bloomRenderTargets[mipLevelCount + i];
+		descriptorBindings[3].itemPtr = imageSet.bloomRenderTargets[i];
+		descriptorBindings[2].itemPtr = imageSet.bloomRenderTargets[mipLevelCount + i + 1];
+		imageSet.bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 
 	bloomUboStruct.stage = BloomStage::Apply;
 	if (mipLevelCount > 1) {
+		std::string bloomDescriptorName = fmt::format("Bloom DS Apply [{}]", imageSetIndex);
+		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UpdateBuffer(&bloomUboStruct);
 		descriptorBindings[0].itemPtr = bloomUniformBuffers[bloomDescriptorSetIndex];
-		descriptorBindings[1].itemPtr = bloomRenderTargets[mipLevelCount + 0];
-		descriptorBindings[2].itemPtr = bloomRenderTargets[mipLevelCount + 1];
-		bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
+		descriptorBindings[1].itemPtr = imageSet.bloomRenderTargets[mipLevelCount + 0];
+		descriptorBindings[2].itemPtr = imageSet.bloomRenderTargets[mipLevelCount + 1];
+		imageSet.bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 }
 
@@ -666,7 +676,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	bloomBindingForTonemap.bindingIndex = 2;
 	bloomBindingForTonemap.count = 1;
 	bloomBindingForTonemap.bindingType = BindingType::RenderTexture;
-	bloomBindingForTonemap.itemPtr = bloomRenderTargets[mipLevelCount];
+	bloomBindingForTonemap.itemPtr = imageSet.bloomRenderTargets[mipLevelCount];
 
 	std::array<DescriptorSet::Binding, 3> tonemapDescriptorSetBindings{};
 	tonemapDescriptorSetBindings[0] = engineUboBinding;
@@ -766,7 +776,7 @@ void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) 
 		bloomDescriptorSetBinding.bindingIndex = 2;
 		bloomDescriptorSetBinding.count = 1;
 		bloomDescriptorSetBinding.bindingType = BindingType::RenderTexture;
-		bloomDescriptorSetBinding.itemPtr = bloomRenderTargets[mipLevelCount];
+		bloomDescriptorSetBinding.itemPtr = imageSet.bloomRenderTargets[mipLevelCount];
 
 		std::array<DescriptorSet::Binding, 3> tonemapDescriptorSetBindings{};
 		tonemapDescriptorSetBindings[0] = engineUboBinding;
@@ -848,7 +858,7 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 	gbufferColorAttachmentNames[0] = "GBuffer Position Image";
 	gbufferColorAttachmentNames[1] = "GBuffer Albedo Image";
 	gbufferColorAttachmentNames[2] = "GBuffer Normal Image";
-	gbufferColorAttachmentNames[3] = "GBuffer Speclar + Roughness Image";
+	gbufferColorAttachmentNames[3] = "GBuffer Specular + Roughness Image";
 
 	RenderPass::CreateInfo gbufferRenderPassCreateInfo{};
 	gbufferRenderPassCreateInfo.width = width;
@@ -1218,9 +1228,9 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 	uint32_t descriptorSetIndex = 0;
 
 	{
-		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &bloomDescriptorSets[descriptorSetIndex++], 1);
+		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(bloomRenderTargets[0]);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[0]);
 	}
 
 	uint32_t mipWidth = static_cast<uint32_t>(width);
@@ -1240,18 +1250,18 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidth / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeight / 4.0f));
 
-		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &bloomDescriptorSets[descriptorSetIndex++], 1);
+		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(bloomRenderTargets[i]);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[i]);
 	}
 	
 	{
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidth / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeight / 4.0f));
 
-		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &bloomDescriptorSets[descriptorSetIndex++], 1);
+		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(bloomRenderTargets[mipLevelCount + mipLevelCount - 2]);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[mipLevelCount + mipLevelCount - 2]);
 	}
 
 	for (int i = mipLevelCount - 3; i >= 1; --i) {
@@ -1260,9 +1270,9 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidth / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeight / 4.0f));
 
-		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &bloomDescriptorSets[descriptorSetIndex++], 1);
+		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(bloomRenderTargets[mipLevelCount + i - 1]);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[mipLevelCount + i - 1]);
 	}
 }
 
@@ -1530,7 +1540,7 @@ void DeferredRenderer::PostProcessCommandBuffer(
 
 	auto& imageSet = deferredRendererImageSets[imageIndex];
 
-	RenderBloom(imageSet, currentCommandBuffer);
+	//RenderBloom(imageSet, currentCommandBuffer);
 	
 	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
 	ClearDepthStencil clearDepthStencil;
