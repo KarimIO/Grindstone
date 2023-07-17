@@ -13,17 +13,17 @@ using namespace Grindstone;
 MaterialImporter::MaterialImporter() {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	uint32_t whiteColorData = UINT32_MAX;
-	GraphicsAPI::Texture::CreateInfo whiteTextureCreateInfo{};
-	whiteTextureCreateInfo.debugName = "White Missing Texture";
-	whiteTextureCreateInfo.data = reinterpret_cast<const char*>(&whiteColorData);
-	whiteTextureCreateInfo.size = sizeof(whiteColorData);
-	whiteTextureCreateInfo.width = 1;
-	whiteTextureCreateInfo.height = 1;
-	whiteTextureCreateInfo.format = ColorFormat::RGBA8;
-	whiteTextureCreateInfo.mipmaps = 1;
-	whiteTextureCreateInfo.options.shouldGenerateMipmaps = false;
-	whiteTexture = graphicsCore->CreateTexture(whiteTextureCreateInfo);
+	uint32_t blackColorData = 0;
+	GraphicsAPI::Texture::CreateInfo blackTextureCreateInfo{};
+	blackTextureCreateInfo.debugName = "Black Missing Texture";
+	blackTextureCreateInfo.data = reinterpret_cast<const char*>(&blackColorData);
+	blackTextureCreateInfo.size = sizeof(blackColorData);
+	blackTextureCreateInfo.width = 1;
+	blackTextureCreateInfo.height = 1;
+	blackTextureCreateInfo.format = ColorFormat::RGBA8;
+	blackTextureCreateInfo.mipmaps = 1;
+	blackTextureCreateInfo.options.shouldGenerateMipmaps = false;
+	missingTexture = graphicsCore->CreateTexture(blackTextureCreateInfo);
 }
 
 void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
@@ -134,7 +134,7 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 				textureBinding.bindingType = BindingType::Texture;
 				textureBinding.itemPtr = textureAsset != nullptr
 					? textureAsset->texture
-					: whiteTexture;
+					: missingTexture;
 				textureBinding.count = 1;
 				bindings.push_back(textureBinding);
 			}
@@ -142,7 +142,7 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 				DescriptorSet::Binding textureBinding{};
 				textureBinding.bindingIndex = textureReferencesFromMaterial[i].bindingId;
 				textureBinding.bindingType = BindingType::Texture;
-				textureBinding.itemPtr = whiteTexture;
+				textureBinding.itemPtr = missingTexture;
 				textureBinding.count = 1;
 				bindings.push_back(textureBinding);
 			}

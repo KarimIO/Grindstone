@@ -1540,7 +1540,7 @@ void DeferredRenderer::PostProcessCommandBuffer(
 
 	auto& imageSet = deferredRendererImageSets[imageIndex];
 
-	//RenderBloom(imageSet, currentCommandBuffer);
+	RenderBloom(imageSet, currentCommandBuffer);
 	
 	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
 	ClearDepthStencil clearDepthStencil;
