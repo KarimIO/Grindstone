@@ -127,7 +127,7 @@ void ViewportPanel::HandleSelection() {
 }
 
 void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
-	if (isShowingPanel && width > 0 && height > 0) {
+	if (isShowingPanel && width >= 4 && height >= 4) {
 		camera->ResizeViewport(width, height);
 		camera->Render(commandBuffer);
 	}
