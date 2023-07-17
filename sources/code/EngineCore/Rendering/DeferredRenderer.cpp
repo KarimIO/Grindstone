@@ -12,6 +12,7 @@
 #include "EngineCore/Assets/Shaders/ShaderImporter.hpp"
 #include "EngineCore/Assets/Materials/MaterialImporter.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
+#include "EngineCore/CoreComponents/EnvironmentMap/EnvironmentMapComponent.hpp"
 #include "EngineCore/CoreComponents/Lights/PointLightComponent.hpp"
 #include "EngineCore/CoreComponents/Lights/SpotLightComponent.hpp"
 #include "EngineCore/CoreComponents/Lights/DirectionalLightComponent.hpp"
@@ -82,6 +83,8 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 
 	float minDimension = static_cast<float>(glm::min(width, height));
 	mipLevelCount = static_cast<uint32_t>(glm::log2(minDimension)) + 1;
+
+	brdfLut = EngineCore::GetInstance().assetManager->GetAsset<TextureAsset>(Uuid("7707483a-9379-4e81-9e15-0e5acf20e9d6"))->texture;
 
 	CreateSsaoKernelAndNoise();
 	CreateVertexAndIndexBuffersAndLayouts();
@@ -704,30 +707,73 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	lightingDescriptorSetCreateInfo.bindings = lightingDescriptorSetBindings.data();
 	imageSet.lightingDescriptorSet = graphicsCore->CreateDescriptorSet(lightingDescriptorSetCreateInfo);
 
-	DescriptorSetLayout::Binding ssaoInputLayoutBinding{};
-	ssaoInputLayoutBinding.bindingId = 0;
-	ssaoInputLayoutBinding.count = 1;
-	ssaoInputLayoutBinding.type = BindingType::RenderTexture;
-	ssaoInputLayoutBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
+	{
+		std::array<DescriptorSetLayout::Binding, 2> ssaoInputLayoutBinding;
+		ssaoInputLayoutBinding[0].bindingId = 0;
+		ssaoInputLayoutBinding[0].count = 1;
+		ssaoInputLayoutBinding[0].type = BindingType::RenderTexture;
+		ssaoInputLayoutBinding[0].stages = GraphicsAPI::ShaderStageBit::Fragment;
 
-	DescriptorSetLayout::CreateInfo ssaoInputLayoutCreateInfo{};
-	ssaoInputLayoutCreateInfo.debugName = "SSAO Descriptor Set Layout";
-	ssaoInputLayoutCreateInfo.bindingCount = 1;
-	ssaoInputLayoutCreateInfo.bindings = &ssaoInputLayoutBinding;
-	ssaoInputDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ssaoInputLayoutCreateInfo);
+		ssaoInputLayoutBinding[1].bindingId = 1;
+		ssaoInputLayoutBinding[1].count = 1;
+		ssaoInputLayoutBinding[1].type = BindingType::Texture;
+		ssaoInputLayoutBinding[1].stages = GraphicsAPI::ShaderStageBit::Fragment;
 
-	DescriptorSet::Binding ssaoInputBinding{};
-	ssaoInputBinding.bindingIndex = 0;
-	ssaoInputBinding.count = 1;
-	ssaoInputBinding.bindingType = BindingType::RenderTexture;
-	ssaoInputBinding.itemPtr = ssaoRenderTarget;
+		DescriptorSetLayout::CreateInfo ssaoInputLayoutCreateInfo{};
+		ssaoInputLayoutCreateInfo.debugName = "SSAO Descriptor Set Layout";
+		ssaoInputLayoutCreateInfo.bindingCount = static_cast<uint32_t>(ssaoInputLayoutBinding.size());
+		ssaoInputLayoutCreateInfo.bindings = ssaoInputLayoutBinding.data();
+		ssaoInputDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ssaoInputLayoutCreateInfo);
+	}
 
-	DescriptorSet::CreateInfo ssaoInputCreateInfo{};
-	ssaoInputCreateInfo.debugName = "SSAO Descriptor Set";
-	ssaoInputCreateInfo.layout = ssaoInputDescriptorSetLayout;
-	ssaoInputCreateInfo.bindingCount = 1;
-	ssaoInputCreateInfo.bindings = &ssaoInputBinding;
-	ssaoInputDescriptorSet = graphicsCore->CreateDescriptorSet(ssaoInputCreateInfo);
+	{
+		std::array<DescriptorSet::Binding, 2> ssaoInputBinding;
+		ssaoInputBinding[0].bindingIndex = 0;
+		ssaoInputBinding[0].count = 1;
+		ssaoInputBinding[0].bindingType = BindingType::RenderTexture;
+		ssaoInputBinding[0].itemPtr = ssaoRenderTarget;
+
+		ssaoInputBinding[1].bindingIndex = 1;
+		ssaoInputBinding[1].count = 1;
+		ssaoInputBinding[1].bindingType = BindingType::Texture;
+		ssaoInputBinding[1].itemPtr = brdfLut;
+
+		DescriptorSet::CreateInfo ssaoInputCreateInfo{};
+		ssaoInputCreateInfo.debugName = "SSAO Descriptor Set";
+		ssaoInputCreateInfo.layout = ssaoInputDescriptorSetLayout;
+		ssaoInputCreateInfo.bindingCount = static_cast<uint32_t>(ssaoInputBinding.size());
+		ssaoInputCreateInfo.bindings = ssaoInputBinding.data();
+		ssaoInputDescriptorSet = graphicsCore->CreateDescriptorSet(ssaoInputCreateInfo);
+	}
+
+	{
+		DescriptorSetLayout::Binding environmentMapLayoutBinding{};
+		environmentMapLayoutBinding.bindingId = 0;
+		environmentMapLayoutBinding.count = 1;
+		environmentMapLayoutBinding.type = BindingType::Texture;
+		environmentMapLayoutBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
+
+		DescriptorSetLayout::CreateInfo ssaoInputLayoutCreateInfo{};
+		ssaoInputLayoutCreateInfo.debugName = "SSAO Descriptor Set Layout";
+		ssaoInputLayoutCreateInfo.bindingCount = 1;
+		ssaoInputLayoutCreateInfo.bindings = &environmentMapLayoutBinding;
+		environmentMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ssaoInputLayoutCreateInfo);
+	}
+
+	{
+		DescriptorSet::Binding environmentMapBinding{};
+		environmentMapBinding.bindingIndex = 0;
+		environmentMapBinding.count = 1;
+		environmentMapBinding.bindingType = BindingType::RenderTexture;
+		environmentMapBinding.itemPtr = ssaoRenderTarget;
+
+		DescriptorSet::CreateInfo ssaoInputCreateInfo{};
+		ssaoInputCreateInfo.debugName = "SSAO Descriptor Set";
+		ssaoInputCreateInfo.layout = environmentMapDescriptorSetLayout;
+		ssaoInputCreateInfo.bindingCount = 1;
+		ssaoInputCreateInfo.bindings = &environmentMapBinding;
+		environmentMapDescriptorSet = graphicsCore->CreateDescriptorSet(ssaoInputCreateInfo);
+	}
 }
 
 void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) {
@@ -1005,9 +1051,10 @@ void DeferredRenderer::CreatePipelines() {
 			return;
 		}
 
-		std::array<GraphicsAPI::DescriptorSetLayout*, 2> iblLayouts{};
+		std::array<GraphicsAPI::DescriptorSetLayout*, 3> iblLayouts{};
 		iblLayouts[0] = lightingDescriptorSetLayout;
 		iblLayouts[1] = ssaoInputDescriptorSetLayout;
+		iblLayouts[2] = environmentMapDescriptorSetLayout;
 
 		pipelineCreateInfo.debugName = "Image Based Lighting Pipeline";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
@@ -1299,9 +1346,25 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 		// Image Based Lighting Lights
 		currentCommandBuffer->BindGraphicsPipeline(imageBasedLightingPipeline);
 
-		std::array<GraphicsAPI::DescriptorSet*, 2> iblDescriptors{};
+		auto view = registry.view<const EnvironmentMapComponent>();
+		view.each([&](const EnvironmentMapComponent& environmentMapComponent) {
+			auto texAsset = static_cast<TextureAsset*>(environmentMapComponent.specularTexture.asset);
+			if (texAsset != nullptr) {
+				auto tex = texAsset->texture;
+
+				GraphicsAPI::DescriptorSet::Binding binding{};
+				binding.bindingIndex = 0;
+				binding.bindingType = GraphicsAPI::BindingType::Texture;
+				binding.count = 1;
+				binding.itemPtr = tex;
+
+				environmentMapDescriptorSet->ChangeBindings(&binding, 1);
+			}
+		});
+		std::array<GraphicsAPI::DescriptorSet*, 3> iblDescriptors{};
 		iblDescriptors[0] = imageSet.lightingDescriptorSet;
 		iblDescriptors[1] = ssaoInputDescriptorSet;
+		iblDescriptors[2] = environmentMapDescriptorSet;
 		currentCommandBuffer->BindGraphicsDescriptorSet(imageBasedLightingPipeline, iblDescriptors.data(), static_cast<uint32_t>(iblDescriptors.size()));
 		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 	}

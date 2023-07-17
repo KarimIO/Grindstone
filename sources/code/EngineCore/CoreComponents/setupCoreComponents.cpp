@@ -2,6 +2,7 @@
 #include "setupCoreComponents.hpp"
 
 #include "Tag/TagComponent.hpp"
+#include "EnvironmentMap/EnvironmentMapComponent.hpp"
 #include "Camera/CameraComponent.hpp"
 #include "Transform/TransformComponent.hpp"
 #include "Lights/PointLightComponent.hpp"
@@ -17,4 +18,5 @@ void Grindstone::SetupCoreComponents(ECS::ComponentRegistrar* registrar) {
 	registrar->RegisterComponent<Grindstone::SpotLightComponent>(SetupSpotLightComponent);
 	registrar->RegisterComponent<Grindstone::PointLightComponent>(SetupPointLightComponent);
 	registrar->RegisterComponent<Grindstone::DirectionalLightComponent>(SetupDirectionalLightComponent);
+	registrar->RegisterComponent<Grindstone::EnvironmentMapComponent>(SetupEnvironmentMapComponent);
 }

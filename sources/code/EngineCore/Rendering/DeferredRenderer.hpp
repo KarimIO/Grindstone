@@ -92,6 +92,7 @@ namespace Grindstone {
 		uint32_t width = 800;
 		uint32_t height = 600;
 		uint32_t mipLevelCount = 0;
+		Grindstone::GraphicsAPI::Texture* brdfLut = nullptr;
 
 		std::vector<DeferredRendererImageSet> deferredRendererImageSets;
 		std::vector<GraphicsAPI::UniformBuffer*> bloomUniformBuffers;
@@ -105,6 +106,9 @@ namespace Grindstone {
 		GraphicsAPI::DescriptorSet* ssaoInputDescriptorSet = nullptr;
 		GraphicsAPI::DescriptorSetLayout* ssaoDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSet* ssaoDescriptorSet = nullptr;
+
+		GraphicsAPI::DescriptorSetLayout* environmentMapDescriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSet* environmentMapDescriptorSet = nullptr;
 
 		GraphicsAPI::VertexBufferLayout vertexLightPositionLayout{};
 
