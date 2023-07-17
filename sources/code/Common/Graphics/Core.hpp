@@ -7,7 +7,8 @@
 #include "Framebuffer.hpp"
 #include "VertexBuffer.hpp"
 #include "UniformBuffer.hpp"
-#include "Pipeline.hpp"
+#include "GraphicsPipeline.hpp"
+#include "ComputePipeline.hpp"
 #include "CommandBuffer.hpp"
 #include "VertexArrayObject.hpp"
 #include "DepthTarget.hpp"
@@ -54,7 +55,8 @@ namespace Grindstone {
 			virtual void DeleteVertexBuffer(VertexBuffer* ptr) = 0;
 			virtual void DeleteIndexBuffer(IndexBuffer* ptr) = 0;
 			virtual void DeleteUniformBuffer(UniformBuffer* ptr) = 0;
-			virtual void DeletePipeline(Pipeline* ptr) = 0;
+			virtual void DeleteGraphicsPipeline(GraphicsPipeline* ptr) = 0;
+			virtual void DeleteComputePipeline(ComputePipeline* ptr) = 0;
 			virtual void DeleteRenderPass(RenderPass* ptr) = 0;
 			virtual void DeleteTexture(Texture* ptr) = 0;
 			virtual void DeleteDescriptorSet(DescriptorSet* ptr) = 0;
@@ -64,7 +66,8 @@ namespace Grindstone {
 
 			virtual Framebuffer* CreateFramebuffer(Framebuffer::CreateInfo& ci) = 0;
 			virtual RenderPass* CreateRenderPass(RenderPass::CreateInfo& ci) = 0;
-			virtual Pipeline* CreatePipeline(Pipeline::CreateInfo& ci) = 0;
+			virtual GraphicsPipeline* CreateGraphicsPipeline(GraphicsPipeline::CreateInfo& ci) = 0;
+			virtual ComputePipeline* CreateComputePipeline(ComputePipeline::CreateInfo& ci) = 0;
 			virtual CommandBuffer* CreateCommandBuffer(CommandBuffer::CreateInfo& ci) = 0;
 			virtual VertexArrayObject* CreateVertexArrayObject(VertexArrayObject::CreateInfo& ci) = 0;
 			virtual VertexBuffer* CreateVertexBuffer(VertexBuffer::CreateInfo& ci) = 0;
@@ -93,7 +96,7 @@ namespace Grindstone {
 
 			virtual void WaitUntilIdle() = 0;
 
-			virtual void BindPipeline(Pipeline* pipeline) = 0;
+			virtual void BindGraphicsPipeline(GraphicsPipeline* pipeline) = 0;
 			virtual void BindVertexArrayObject(VertexArrayObject*) = 0;
 			virtual	void DrawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) = 0;
 			virtual void DrawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) = 0;

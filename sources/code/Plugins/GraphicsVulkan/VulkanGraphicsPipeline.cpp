@@ -1,4 +1,4 @@
-#include "VulkanPipeline.hpp"
+#include "VulkanGraphicsPipeline.hpp"
 #include "VulkanRenderPass.hpp"
 #include "VulkanCore.hpp"
 #include "VulkanFormat.hpp"
@@ -28,7 +28,7 @@ VkShaderStageFlagBits TranslateShaderStageToVulkanBit(ShaderStage stage) {
 	}
 }
 
-VulkanPipeline::VulkanPipeline(Pipeline::CreateInfo& createInfo) {
+VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& createInfo) {
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStages(createInfo.shaderStageCreateInfoCount);
 
 	for (uint32_t i = 0; i < createInfo.shaderStageCreateInfoCount; ++i) {
@@ -213,30 +213,38 @@ VulkanPipeline::VulkanPipeline(Pipeline::CreateInfo& createInfo) {
 		throw std::runtime_error("failed to create graphics pipeline!");
 	}
 
-	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_PIPELINE, graphicsPipeline, createInfo.shaderName);
+	if (createInfo.debugName != nullptr) {
+		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_PIPELINE, graphicsPipeline, createInfo.debugName);
+	}
 
 	for (uint32_t i = 0; i < createInfo.shaderStageCreateInfoCount; ++i) {
 		vkDestroyShaderModule(VulkanCore::Get().GetDevice(), shaderStages[i].module, nullptr);
 	}
 }
 
-VulkanPipeline::~VulkanPipeline() {
-	vkDestroyPipeline(VulkanCore::Get().GetDevice(), graphicsPipeline, nullptr);
-	vkDestroyPipelineLayout(VulkanCore::Get().GetDevice(), pipelineLayout, nullptr);
+VulkanGraphicsPipeline::~VulkanGraphicsPipeline() {
+	VkDevice device = VulkanCore::Get().GetDevice();
+	if (graphicsPipeline != nullptr) {
+		vkDestroyPipeline(device, graphicsPipeline, nullptr);
+	}
+
+	if (pipelineLayout != nullptr) {
+		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+	}
 }
 
-VkPipeline VulkanPipeline::GetGraphicsPipeline() {
+VkPipeline VulkanGraphicsPipeline::GetGraphicsPipeline() {
 	return graphicsPipeline;
 }
 
-VkPipelineLayout VulkanPipeline::GetGraphicsPipelineLayout() {
+VkPipelineLayout VulkanGraphicsPipeline::GetGraphicsPipelineLayout() {
 	return pipelineLayout;
 }
 
-void VulkanPipeline::Recreate(CreateInfo& createInfo) {
+void VulkanGraphicsPipeline::Recreate(CreateInfo& createInfo) {
 }
 
-void VulkanPipeline::CreateShaderModule(ShaderStageCreateInfo & createInfo, VkPipelineShaderStageCreateInfo &out) {
+void VulkanGraphicsPipeline::CreateShaderModule(ShaderStageCreateInfo & createInfo, VkPipelineShaderStageCreateInfo &out) {
 	VkShaderModuleCreateInfo shaderModuleCreateInfo = {};
 	shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	shaderModuleCreateInfo.codeSize = createInfo.size;

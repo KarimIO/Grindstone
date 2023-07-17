@@ -10,7 +10,8 @@ namespace Grindstone {
 		class RenderTarget;
 		class DepthTarget;
 		class VertexArrayObject;
-		class Pipeline;
+		class GraphicsPipeline;
+		class ComputePipeline;
 		class CommandBuffer;
 	};
 
@@ -44,7 +45,14 @@ namespace Grindstone {
 			GraphicsAPI::DescriptorSet* tonemapDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* lightingDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
+
+			std::vector<GraphicsAPI::RenderTarget*> bloomRenderTargets;
+			std::vector<GraphicsAPI::DescriptorSet*> bloomDescriptorSets;
 		};
+
+		void CreateBloomUniformBuffers();
+		void CreateBloomRenderTargetsAndDescriptorSets(DeferredRendererImageSet& imageSet, size_t imageSetIndex);
+		void RenderBloom(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer);
 
 		void RenderCommandBuffer(
 			GraphicsAPI::CommandBuffer* commandBuffer,
@@ -69,6 +77,7 @@ namespace Grindstone {
 		void PostProcessCommandBuffer(uint32_t imageIndex, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer);
 		void PostProcessImmediate(GraphicsAPI::Framebuffer* outputFramebuffer);
 
+		void CreateBloomResources();
 		void CreateSsaoKernelAndNoise();
 		void CleanupPipelines();
 		void CreatePipelines();
@@ -82,8 +91,10 @@ namespace Grindstone {
 
 		uint32_t width = 800;
 		uint32_t height = 600;
+		uint32_t mipLevelCount = 0;
 
 		std::vector<DeferredRendererImageSet> deferredRendererImageSets;
+		std::vector<GraphicsAPI::UniformBuffer*> bloomUniformBuffers;
 
 		GraphicsAPI::RenderPass* ssaoRenderPass = nullptr;
 		GraphicsAPI::Framebuffer* ssaoFramebuffer = nullptr;
@@ -97,6 +108,7 @@ namespace Grindstone {
 
 		GraphicsAPI::VertexBufferLayout vertexLightPositionLayout{};
 
+		GraphicsAPI::DescriptorSetLayout* bloomDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* tonemapDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingUBODescriptorSetLayout = nullptr;
@@ -114,12 +126,14 @@ namespace Grindstone {
 		GraphicsAPI::IndexBuffer* indexBuffer;
 		GraphicsAPI::VertexArrayObject* planePostProcessVao = nullptr;
 
-		GraphicsAPI::Pipeline* ssaoPipeline = nullptr;
-		GraphicsAPI::Pipeline* imageBasedLightingPipeline = nullptr;
-		GraphicsAPI::Pipeline* spotLightPipeline = nullptr;
-		GraphicsAPI::Pipeline* pointLightPipeline = nullptr;
-		GraphicsAPI::Pipeline* directionalLightPipeline = nullptr;
-		GraphicsAPI::Pipeline* tonemapPipeline = nullptr;
-		GraphicsAPI::Pipeline* shadowMappingPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* ssaoPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* imageBasedLightingPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* spotLightPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* pointLightPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* directionalLightPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* tonemapPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* shadowMappingPipeline = nullptr;
+
+		GraphicsAPI::ComputePipeline* bloomPipeline = nullptr;
 	};
 }

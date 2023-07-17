@@ -18,10 +18,10 @@ namespace Grindstone {
 			ShaderStage type;
 		};
 
-		class Pipeline {
+		class GraphicsPipeline {
 		public:
 			struct CreateInfo {
-				const char* shaderName;
+				const char* debugName;
 				GeometryType primitiveType;
 				CullMode cullMode;
 				RenderPass* renderPass;

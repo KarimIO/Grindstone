@@ -21,6 +21,6 @@ namespace Grindstone {
 		virtual bool TryGetIfLoaded(Uuid uuid, void*& output) override;
 	private:
 		std::map<Uuid, MaterialAsset> materials;
-		GraphicsAPI::Texture* whiteTexture = nullptr;
+		GraphicsAPI::Texture* missingTexture = nullptr;
 	};
 }

@@ -41,12 +41,14 @@ int main(int argc, char** argv) {
 	createInfo.isEditor = false;
 	createInfo.applicationModuleName = "ApplicationDLL";
 	createInfo.applicationTitle = "Grindstone Sandbox";
-	createInfo.shouldLoadSceneFromDefaults = true;
-	createInfo.scenePath = "";
 	createInfo.projectPath = projectPath.c_str();
 	std::string currentPath = (std::filesystem::path(projectPath) / "bin").string();
 	createInfo.engineBinaryPath = currentPath.c_str();
 	EngineCore* engineCore = createEngineFn(createInfo);
+
+	engineCore->InitializeScene(true);
+	engineCore->ShowMainWindow();
+
 	if (engineCore) {
 		engineCore->Run();
 	}

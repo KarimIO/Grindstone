@@ -6,7 +6,8 @@
 #include "GLVertexArrayObject.hpp"
 #include "GLVertexBuffer.hpp"
 #include "GLIndexBuffer.hpp"
-#include "GLPipeline.hpp"
+#include "GLGraphicsPipeline.hpp"
+#include "GLComputePipeline.hpp"
 #include "GLRenderTarget.hpp"
 #include "GLWindowGraphicsBinding.hpp"
 #include <iostream>
@@ -18,6 +19,8 @@
 	#include <GL/wglext.h>
 	#include <Common/Window/Win32Window.hpp>
 #endif
+
+using namespace Grindstone::GraphicsAPI;
 
 void APIENTRY glDebugOutput(GLenum source,
 	GLenum type,
@@ -65,344 +68,347 @@ void APIENTRY glDebugOutput(GLenum source,
 	std::cout << "\n\n";
 }
 
-namespace Grindstone {
-	namespace GraphicsAPI {
-		bool GLCore::Initialize(Core::CreateInfo& ci) {
-			apiType = API::OpenGL;
-			debug = ci.debug;
-			primaryWindow = ci.window;
+bool GLCore::Initialize(Core::CreateInfo& ci) {
+	apiType = API::OpenGL;
+	debug = ci.debug;
+	primaryWindow = ci.window;
 
-			auto wgb = new GLWindowGraphicsBinding();
-			ci.window->AddBinding(wgb);
-			wgb->Initialize(ci.window);
+	auto wgb = new GLWindowGraphicsBinding();
+	ci.window->AddBinding(wgb);
+	wgb->Initialize(ci.window);
 
-			if (gl3wInit()) {
-				printf("Failed to initialize GL3W. Returning...\n");
-				return false;
-			}
+	if (gl3wInit()) {
+		printf("Failed to initialize GL3W. Returning...\n");
+		return false;
+	}
 
-			if (!gl3wIsSupported(4, 6)) {
-				printf("OpenGL %i.%i or more required for Grindstone Engine.\n", 4, 6);
-				printf("Your Graphics Card only supports version %s. Quitting...\n\n", glGetString(GL_VERSION));
-				return false;
-			}
+	if (!gl3wIsSupported(4, 6)) {
+		printf("OpenGL %i.%i or more required for Grindstone Engine.\n", 4, 6);
+		printf("Your Graphics Card only supports version %s. Quitting...\n\n", glGetString(GL_VERSION));
+		return false;
+	}
 
-			vendorName		= (const char *)glGetString(GL_VENDOR);
-			adapterName		= (const char *)glGetString(GL_RENDERER);
-			apiVersion		= (const char *)glGetString(GL_VERSION);
+	vendorName		= (const char *)glGetString(GL_VENDOR);
+	adapterName		= (const char *)glGetString(GL_RENDERER);
+	apiVersion		= (const char *)glGetString(GL_VERSION);
 
-			if (debug) {
-				GLint flags;
-				glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
-				if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
-					glEnable(GL_DEBUG_OUTPUT);
-					glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-					glDebugMessageCallback((GLDEBUGPROC)glDebugOutput, nullptr);
-					glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-				}
-			}
-
-			glDepthMask(GL_TRUE);
-			glClearDepth(1.0f);
-			glEnable(GL_DEPTH_TEST);
-			glDepthFunc(GL_LEQUAL);
-
-			unsigned int w, h;
-			primaryWindow->GetWindowSize(w, h);
-			glViewport(0, 0, w, h);
-
-			return true;
+	if (debug) {
+		GLint flags;
+		glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+		if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
+			glEnable(GL_DEBUG_OUTPUT);
+			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+			glDebugMessageCallback((GLDEBUGPROC)glDebugOutput, nullptr);
+			glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 		}
+	}
 
-		void GLCore::ResizeViewport(uint32_t w, uint32_t h) {
-			glViewport(0, 0, w, h);
-		}
+	glDepthMask(GL_TRUE);
+	glClearDepth(1.0f);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
 
-		void GLCore::Clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) {
-			if (clear_color == nullptr) {
-				glClearColor(0, 0, 0, 1);
-			}
-			else {
-				glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
-			}
+	unsigned int w, h;
+	primaryWindow->GetWindowSize(w, h);
+	glViewport(0, 0, w, h);
+
+	return true;
+}
+
+void GLCore::ResizeViewport(uint32_t w, uint32_t h) {
+	glViewport(0, 0, w, h);
+}
+
+void GLCore::Clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) {
+	if (clear_color == nullptr) {
+		glClearColor(0, 0, 0, 1);
+	}
+	else {
+		glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
+	}
 			
-			glClearDepthf(clear_depth);
-			glClearStencil(clear_stencil);
+	glClearDepthf(clear_depth);
+	glClearStencil(clear_stencil);
 
-			int m = (((uint8_t)mask & (uint8_t)ClearMode::Color) != 0) ? GL_COLOR_BUFFER_BIT : 0;
-			m = m | ((((uint8_t)mask & (uint8_t)ClearMode::Depth) != 0) ? GL_DEPTH_BUFFER_BIT : 0);
-			m = m | ((((uint8_t)mask & (uint8_t)ClearMode::Stencil) != 0) ? GL_STENCIL_BUFFER_BIT : 0);
-			glClear(m);
-		}
+	int m = (((uint8_t)mask & (uint8_t)ClearMode::Color) != 0) ? GL_COLOR_BUFFER_BIT : 0;
+	m = m | ((((uint8_t)mask & (uint8_t)ClearMode::Depth) != 0) ? GL_DEPTH_BUFFER_BIT : 0);
+	m = m | ((((uint8_t)mask & (uint8_t)ClearMode::Stencil) != 0) ? GL_STENCIL_BUFFER_BIT : 0);
+	glClear(m);
+}
 
-		void GLCore::AdjustPerspective(float *perspective) {
-		}
+void GLCore::AdjustPerspective(float *perspective) {
+}
 
-		void GLCore::RegisterWindow(Window* window) {
-			auto wgb = new GLWindowGraphicsBinding();
-			window->AddBinding(wgb);
-			wgb->Initialize(window);
-			wgb->ShareLists((GLWindowGraphicsBinding *)primaryWindow->GetWindowGraphicsBinding());
-		}
+void GLCore::RegisterWindow(Window* window) {
+	auto wgb = new GLWindowGraphicsBinding();
+	window->AddBinding(wgb);
+	wgb->Initialize(window);
+	wgb->ShareLists((GLWindowGraphicsBinding *)primaryWindow->GetWindowGraphicsBinding());
+}
 
-		//==================================
-		// Get Text Metainfo
-		//==================================
-		const char* GLCore::GetVendorName() {
-			return vendorName.c_str();
-		}
+//==================================
+// Get Text Metainfo
+//==================================
+const char* GLCore::GetVendorName() {
+	return vendorName.c_str();
+}
 
-		const char* GLCore::GetAdapterName() {
-			return adapterName.c_str();
-		}
+const char* GLCore::GetAdapterName() {
+	return adapterName.c_str();
+}
 
-		const char* GLCore::GetAPIName() {
-			return "OpenGL";
-		}
+const char* GLCore::GetAPIName() {
+	return "OpenGL";
+}
 
-		const char* GLCore::GetDefaultShaderExtension() {
-			return ".ogl.spv";
-		}
+const char* GLCore::GetDefaultShaderExtension() {
+	return ".ogl.spv";
+}
 
-		const char* GLCore::GetAPIVersion() {
-			return apiVersion.c_str();
-		}
+const char* GLCore::GetAPIVersion() {
+	return apiVersion.c_str();
+}
 
-		//==================================
-		// Creators
-		//==================================
-		DescriptorSet* GLCore::CreateDescriptorSet(DescriptorSet::CreateInfo& createInfo) {
-			return static_cast<DescriptorSet*>(new GLDescriptorSet(createInfo));
-		}
+//==================================
+// Creators
+//==================================
+DescriptorSet* GLCore::CreateDescriptorSet(DescriptorSet::CreateInfo& createInfo) {
+	return static_cast<DescriptorSet*>(new GLDescriptorSet(createInfo));
+}
 
-		DescriptorSetLayout* GLCore::CreateDescriptorSetLayout(DescriptorSetLayout::CreateInfo& createInfo) {
-			return static_cast<DescriptorSetLayout*>(new GLDescriptorSetLayout(createInfo));
-		}
+DescriptorSetLayout* GLCore::CreateDescriptorSetLayout(DescriptorSetLayout::CreateInfo& createInfo) {
+	return static_cast<DescriptorSetLayout*>(new GLDescriptorSetLayout(createInfo));
+}
 
-		Framebuffer* GLCore::CreateFramebuffer(Framebuffer::CreateInfo& ci) {
-			return static_cast<Framebuffer*>(new GLFramebuffer(ci));
-		}
+Framebuffer* GLCore::CreateFramebuffer(Framebuffer::CreateInfo& ci) {
+	return static_cast<Framebuffer*>(new GLFramebuffer(ci));
+}
 
-		RenderPass* GLCore::CreateRenderPass(RenderPass::CreateInfo& ci) {
-			return 0;
-		}
+RenderPass* GLCore::CreateRenderPass(RenderPass::CreateInfo& ci) {
+	return 0;
+}
 
-		Pipeline* GLCore::CreatePipeline(Pipeline::CreateInfo& ci) {
-			return static_cast<Pipeline*>(new GLPipeline(ci));
-		}
+ComputePipeline* GLCore::CreateComputePipeline(ComputePipeline::CreateInfo& ci) {
+	return static_cast<ComputePipeline*>(new GLComputePipeline(ci));
+}
 
-		VertexArrayObject* GLCore::CreateVertexArrayObject(VertexArrayObject::CreateInfo& ci) {
-			return static_cast<VertexArrayObject*>(new GLVertexArrayObject(ci));
-		}
+GraphicsPipeline* GLCore::CreateGraphicsPipeline(GraphicsPipeline::CreateInfo& ci) {
+	return static_cast<GraphicsPipeline*>(new GLGraphicsPipeline(ci));
+}
 
-		CommandBuffer* GLCore::CreateCommandBuffer(CommandBuffer::CreateInfo& ci) {
-			return 0;
-		}
+VertexArrayObject* GLCore::CreateVertexArrayObject(VertexArrayObject::CreateInfo& ci) {
+	return static_cast<VertexArrayObject*>(new GLVertexArrayObject(ci));
+}
 
-		VertexBuffer* GLCore::CreateVertexBuffer(VertexBuffer::CreateInfo& ci) {
-			return static_cast<VertexBuffer*>(new GLVertexBuffer(ci));
-		}
+CommandBuffer* GLCore::CreateCommandBuffer(CommandBuffer::CreateInfo& ci) {
+	return 0;
+}
 
-		IndexBuffer* GLCore::CreateIndexBuffer(IndexBuffer::CreateInfo& ci) {
-			return static_cast<IndexBuffer*>(new GLIndexBuffer(ci));
-		}
+VertexBuffer* GLCore::CreateVertexBuffer(VertexBuffer::CreateInfo& ci) {
+	return static_cast<VertexBuffer*>(new GLVertexBuffer(ci));
+}
 
-		UniformBuffer* GLCore::CreateUniformBuffer(UniformBuffer::CreateInfo& ci) {
-			return static_cast<UniformBuffer*>(new GLUniformBuffer(ci));
-		}
+IndexBuffer* GLCore::CreateIndexBuffer(IndexBuffer::CreateInfo& ci) {
+	return static_cast<IndexBuffer*>(new GLIndexBuffer(ci));
+}
 
-		Texture* GLCore::CreateCubemap(Texture::CubemapCreateInfo& ci) {
-			return static_cast<Texture*>(new GLTexture(ci));
-		}
+UniformBuffer* GLCore::CreateUniformBuffer(UniformBuffer::CreateInfo& ci) {
+	return static_cast<UniformBuffer*>(new GLUniformBuffer(ci));
+}
 
-		Texture* GLCore::CreateTexture(Texture::CreateInfo& ci) {
-			return static_cast<Texture*>(new GLTexture(ci));
-		}
+Texture* GLCore::CreateCubemap(Texture::CubemapCreateInfo& ci) {
+	return static_cast<Texture*>(new GLTexture(ci));
+}
 
-		RenderTarget* GLCore::CreateRenderTarget(RenderTarget::CreateInfo* rt, uint32_t rc, bool cube) {
-			return static_cast<RenderTarget*>(new GLRenderTarget(rt, rc, cube));
-		}
+Texture* GLCore::CreateTexture(Texture::CreateInfo& ci) {
+	return static_cast<Texture*>(new GLTexture(ci));
+}
 
-		RenderTarget* GLCore::CreateRenderTarget(RenderTarget::CreateInfo& rt) {
-			return static_cast<RenderTarget*>(new GLRenderTarget(rt));
-		}
+RenderTarget* GLCore::CreateRenderTarget(RenderTarget::CreateInfo* rt, uint32_t rc, bool cube) {
+	return static_cast<RenderTarget*>(new GLRenderTarget(rt, rc, cube));
+}
 
-		DepthTarget* GLCore::CreateDepthTarget(DepthTarget::CreateInfo& rt) {
-			return static_cast<DepthTarget*>(new GLDepthTarget(rt));
-		}
+RenderTarget* GLCore::CreateRenderTarget(RenderTarget::CreateInfo& rt) {
+	return static_cast<RenderTarget*>(new GLRenderTarget(rt));
+}
 
-		//==================================
-		// Booleans
-		//==================================
-		const bool GLCore::ShouldUseImmediateMode() {
-			return true;
-		}
-		const bool GLCore::SupportsCommandBuffers() {
-			return false;
-		}
-		const bool GLCore::SupportsTesselation() {
-			return gl3wIsSupported(4, 0) ? true : false;
-		}
-		const bool GLCore::SupportsGeometryShader() {
-			return gl3wIsSupported(3, 2) ? true : false;
-		}
-		const bool GLCore::SupportsComputeShader() {
-			return gl3wIsSupported(4, 3) ? true : false;
-		}
-		const bool GLCore::SupportsMultiDrawIndirect() {
-			return gl3wIsSupported(4, 3) ? true : false;
-		}
+DepthTarget* GLCore::CreateDepthTarget(DepthTarget::CreateInfo& rt) {
+	return static_cast<DepthTarget*>(new GLDepthTarget(rt));
+}
 
-		//==================================
-		// Deleters
-		//==================================
-		void GLCore::DeleteRenderTarget(RenderTarget *ptr) {
-			delete (GLRenderTarget *)ptr;
-		}
+//==================================
+// Booleans
+//==================================
+const bool GLCore::ShouldUseImmediateMode() {
+	return true;
+}
+const bool GLCore::SupportsCommandBuffers() {
+	return false;
+}
+const bool GLCore::SupportsTesselation() {
+	return gl3wIsSupported(4, 0) ? true : false;
+}
+const bool GLCore::SupportsGeometryShader() {
+	return gl3wIsSupported(3, 2) ? true : false;
+}
+const bool GLCore::SupportsComputeShader() {
+	return gl3wIsSupported(4, 3) ? true : false;
+}
+const bool GLCore::SupportsMultiDrawIndirect() {
+	return gl3wIsSupported(4, 3) ? true : false;
+}
 
-		void GLCore::DeleteDepthTarget(DepthTarget *ptr) {
-			delete (GLDepthTarget *)ptr;
-		}
+//==================================
+// Deleters
+//==================================
+void GLCore::DeleteRenderTarget(RenderTarget *ptr) {
+	delete (GLRenderTarget *)ptr;
+}
 
-		void GLCore::DeleteFramebuffer(Framebuffer *ptr) {
-			delete (GLFramebuffer *)ptr;
-		}
+void GLCore::DeleteDepthTarget(DepthTarget *ptr) {
+	delete (GLDepthTarget *)ptr;
+}
 
-		void GLCore::DeleteVertexBuffer(VertexBuffer *ptr) {
-			delete (GLVertexBuffer *)ptr;
-		}
+void GLCore::DeleteFramebuffer(Framebuffer *ptr) {
+	delete (GLFramebuffer *)ptr;
+}
 
-		void GLCore::DeleteIndexBuffer(IndexBuffer *ptr) {
-			delete (GLIndexBuffer *)ptr;
-		}
+void GLCore::DeleteVertexBuffer(VertexBuffer *ptr) {
+	delete (GLVertexBuffer *)ptr;
+}
 
-		void GLCore::DeleteUniformBuffer(UniformBuffer * ptr) {
-			delete (GLUniformBuffer *)ptr;
-		}
+void GLCore::DeleteIndexBuffer(IndexBuffer *ptr) {
+	delete (GLIndexBuffer *)ptr;
+}
 
-		void GLCore::DeletePipeline(Pipeline*ptr) {
-			delete (GLPipeline *)ptr;
-		}
+void GLCore::DeleteUniformBuffer(UniformBuffer * ptr) {
+	delete (GLUniformBuffer *)ptr;
+}
 
-		void GLCore::DeleteRenderPass(RenderPass *ptr) {
-			//delete (GLRenderPass *)ptr;
-		}
+void GLCore::DeleteComputePipeline(ComputePipeline* ptr) {
+	delete (GLComputePipeline*)ptr;
+}
 
-		void GLCore::DeleteTexture(Texture *ptr) {
-			delete (GLTexture *)ptr;
-		}
+void GLCore::DeleteGraphicsPipeline(GraphicsPipeline* ptr) {
+	delete (GLGraphicsPipeline *)ptr;
+}
 
-		void GLCore::DeleteDescriptorSet(DescriptorSet *ptr) {
-			delete (GLDescriptorSet *)ptr;
-		}
+void GLCore::DeleteRenderPass(RenderPass *ptr) {
+	//delete (GLRenderPass *)ptr;
+}
 
-		void GLCore::DeleteDescriptorSetLayout(DescriptorSetLayout *ptr) {
-			delete (GLDescriptorSetLayout *)ptr;
-		}
+void GLCore::DeleteTexture(Texture *ptr) {
+	delete (GLTexture *)ptr;
+}
 
-		void GLCore::DeleteCommandBuffer(CommandBuffer * ptr) {
-		}
+void GLCore::DeleteDescriptorSet(DescriptorSet *ptr) {
+	delete (GLDescriptorSet *)ptr;
+}
 
-		void GLCore::DeleteVertexArrayObject(VertexArrayObject * ptr) {
-			delete (GLVertexArrayObject *)ptr;
-		}
+void GLCore::DeleteDescriptorSetLayout(DescriptorSetLayout *ptr) {
+	delete (GLDescriptorSetLayout *)ptr;
+}
 
-		void GLCore::CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) {
-			glBlitFramebuffer(0, 0, srcWidth, srcHeight, 0, 0, dstWidth, dstHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-		}
+void GLCore::DeleteCommandBuffer(CommandBuffer * ptr) {
+}
 
-		void GLCore::WaitUntilIdle() {
+void GLCore::DeleteVertexArrayObject(VertexArrayObject * ptr) {
+	delete (GLVertexArrayObject *)ptr;
+}
 
-		}
+void GLCore::CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) {
+	glBlitFramebuffer(0, 0, srcWidth, srcHeight, 0, 0, dstWidth, dstHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+}
 
-		void GLCore::SetColorMask(ColorMask mask) {
-			glColorMask((GLboolean)(mask & ColorMask::Red), (GLboolean)(mask & ColorMask::Blue), (GLboolean)(mask & ColorMask::Green), (GLboolean)(mask & ColorMask::Alpha));
-		}
+void GLCore::WaitUntilIdle() {
 
-		void GLCore::BindPipeline(Pipeline* pipeline) {
-			GLPipeline* p = (GLPipeline*)pipeline;
-			p->Bind();
-		}
+}
 
-		void GLCore::BindVertexArrayObject(VertexArrayObject *vao) {
-			vao->Bind();
-		}
+void GLCore::SetColorMask(ColorMask mask) {
+	glColorMask((GLboolean)(mask & ColorMask::Red), (GLboolean)(mask & ColorMask::Blue), (GLboolean)(mask & ColorMask::Green), (GLboolean)(mask & ColorMask::Alpha));
+}
 
-		GLenum GetGeomType(GeometryType geom_type) {
-			switch (geom_type) {
-			case GeometryType::Points:
-				return GL_POINTS;
-			case GeometryType::Lines:
-				return GL_LINES;
-			case GeometryType::LineStrips:
-				return GL_LINE_STRIP;
-			case GeometryType::LineLoops:
-				return GL_LINE_LOOP;
-			case GeometryType::TriangleStrips:
-				return GL_TRIANGLE_STRIP;
-			case GeometryType::TriangleFans:
-				return GL_TRIANGLE_FAN;
-			case GeometryType::Triangles:
-				return GL_TRIANGLES;
-			case GeometryType::LinesAdjacency:
-				return GL_LINES_ADJACENCY;
-			case GeometryType::TrianglesAdjacency:
-				return GL_TRIANGLES_ADJACENCY;
-			case GeometryType::TriangleStripsAdjacency:
-				return GL_TRIANGLE_STRIP_ADJACENCY;
-			case GeometryType::Patches:
-				return GL_PATCHES;
-			}
+void GLCore::BindGraphicsPipeline(GraphicsPipeline* pipeline) {
+	GLGraphicsPipeline* p = (GLGraphicsPipeline*)pipeline;
+	p->Bind();
+}
 
-			throw std::runtime_error("Invalid Geometry Type");
-		}
+void GLCore::BindVertexArrayObject(VertexArrayObject *vao) {
+	vao->Bind();
+}
 
-		void GLCore::DrawImmediateIndexed(GeometryType geometryType, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
-			uint32_t size = largeBuffer ? sizeof(uint32_t) : sizeof(uint16_t);
-			uint64_t finalPtrUint = indexOffsetPtr * size;
-			void *ptr = reinterpret_cast<void *>(finalPtrUint);
-			glDrawElementsBaseVertex(GetGeomType(geometryType), indexCount, largeBuffer ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, ptr, baseVertex);
-		}
+GLenum Grindstone::GraphicsAPI::GetGeomType(GeometryType geomType) {
+	switch (geomType) {
+	case GeometryType::Points:
+		return GL_POINTS;
+	case GeometryType::Lines:
+		return GL_LINES;
+	case GeometryType::LineStrips:
+		return GL_LINE_STRIP;
+	case GeometryType::LineLoops:
+		return GL_LINE_LOOP;
+	case GeometryType::TriangleStrips:
+		return GL_TRIANGLE_STRIP;
+	case GeometryType::TriangleFans:
+		return GL_TRIANGLE_FAN;
+	case GeometryType::Triangles:
+		return GL_TRIANGLES;
+	case GeometryType::LinesAdjacency:
+		return GL_LINES_ADJACENCY;
+	case GeometryType::TrianglesAdjacency:
+		return GL_TRIANGLES_ADJACENCY;
+	case GeometryType::TriangleStripsAdjacency:
+		return GL_TRIANGLE_STRIP_ADJACENCY;
+	case GeometryType::Patches:
+		return GL_PATCHES;
+	}
 
-		void GLCore::DrawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) {
-			glDrawArrays(GetGeomType(geom_type), base, count);
-		}
+	throw std::runtime_error("Invalid Geometry Type");
+}
 
-		void GLCore::EnableDepthWrite(bool isDepthEnabled) {
-			glDepthMask(isDepthEnabled ? GL_TRUE : GL_FALSE);
-		}
+void GLCore::DrawImmediateIndexed(GeometryType geometryType, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
+	uint32_t size = largeBuffer ? sizeof(uint32_t) : sizeof(uint16_t);
+	uint64_t finalPtrUint = indexOffsetPtr * size;
+	void *ptr = reinterpret_cast<void *>(finalPtrUint);
+	glDrawElementsBaseVertex(GetGeomType(geometryType), indexCount, largeBuffer ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, ptr, baseVertex);
+}
 
-		void GLCore::BindDefaultFramebufferRead() {
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-		}
+void GLCore::DrawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) {
+	glDrawArrays(GetGeomType(geom_type), base, count);
+}
 
-		void GLCore::BindDefaultFramebufferWrite() {
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		}
+void GLCore::EnableDepthWrite(bool isDepthEnabled) {
+	glDepthMask(isDepthEnabled ? GL_TRUE : GL_FALSE);
+}
 
-		void GLCore::BindDefaultFramebuffer() {
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		}
+void GLCore::BindDefaultFramebufferRead() {
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+}
 
-		void GLCore::SetImmediateBlending(BlendMode mode) {
-			switch (mode) {
-			case BlendMode::None:
-			default:
-				glDisable(GL_BLEND);
-				break;
-			case BlendMode::Additive:
-				glEnable(GL_BLEND);
-				glBlendEquation(GL_FUNC_ADD);
-				glBlendFunc(GL_ONE, GL_ONE);
-				break;
-			case BlendMode::AdditiveAlpha:
-				glEnable(GL_BLEND);
-				glBlendEquation(GL_FUNC_ADD);
-				glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-				break;
-			}
-		}
+void GLCore::BindDefaultFramebufferWrite() {
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+}
 
+void GLCore::BindDefaultFramebuffer() {
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void GLCore::SetImmediateBlending(BlendMode mode) {
+	switch (mode) {
+	case BlendMode::None:
+	default:
+		glDisable(GL_BLEND);
+		break;
+	case BlendMode::Additive:
+		glEnable(GL_BLEND);
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendFunc(GL_ONE, GL_ONE);
+		break;
+	case BlendMode::AdditiveAlpha:
+		glEnable(GL_BLEND);
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+		break;
 	}
 }
 

@@ -83,7 +83,8 @@ namespace Grindstone {
 			UniformBuffer,
 			Texture,
 			RenderTexture,
-			DepthTexture
+			DepthTexture,
+			RenderTextureStorageImage
 		};
 
 		const uint8_t numShaderGraphicStage = 5;

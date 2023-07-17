@@ -1,18 +1,18 @@
 #pragma once
 
-#include <Common/Graphics/Pipeline.hpp>
+#include <Common/Graphics/GraphicsPipeline.hpp>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		class GLPipeline : public Pipeline {
+		class GLGraphicsPipeline : public GraphicsPipeline {
 		public:
-			GLPipeline(CreateInfo& createInfo);
-			virtual void Recreate(CreateInfo& createInfo) override;
+			GLGraphicsPipeline(GraphicsPipeline::CreateInfo& createInfo);
+			virtual void Recreate(GraphicsPipeline::CreateInfo& createInfo) override;
 			void Bind();
 			GLuint GetPrimitiveType();
-			~GLPipeline();
+			~GLGraphicsPipeline();
 		private:
-			void CreatePipeline(CreateInfo& createInfo);
+			void CreatePipeline(GraphicsPipeline::CreateInfo& createInfo);
 			GLuint CreateShaderModule(ShaderStageCreateInfo shaderStageCreateInfo);
 
 			GLuint program;

@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-#include "Common/Graphics/Pipeline.hpp"
+#include "Common/Graphics/GraphicsPipeline.hpp"
 
 #include "Asset.hpp"
 #include "AssetImporter.hpp"
@@ -26,6 +26,12 @@ namespace Grindstone {
 				size_t numShaderStages,
 				std::vector<GraphicsAPI::ShaderStageCreateInfo>& shaderStageCreateInfos,
 				std::vector<std::vector<char>>& fileData
+			);
+			virtual bool LoadShaderStage(
+				Uuid uuid,
+				GraphicsAPI::ShaderStage shaderStage,
+				GraphicsAPI::ShaderStageCreateInfo& stageCreateInfo,
+				std::vector<char>& fileData
 			);
 			virtual std::string& GetTypeName(AssetType assetType);
 

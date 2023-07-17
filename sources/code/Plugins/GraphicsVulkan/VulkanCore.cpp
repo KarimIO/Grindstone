@@ -15,7 +15,8 @@
 #include "VulkanCommandBuffer.hpp"
 #include "VulkanDepthTarget.hpp"
 #include "VulkanFramebuffer.hpp"
-#include "VulkanPipeline.hpp"
+#include "VulkanGraphicsPipeline.hpp"
+#include "VulkanComputePipeline.hpp"
 #include "VulkanIndexBuffer.hpp"
 #include "VulkanRenderPass.hpp"
 #include "VulkanRenderTarget.hpp"
@@ -458,17 +459,19 @@ void VulkanCore::WaitUntilIdle() {
 }
 
 void VulkanCore::CreateDescriptorPool() {
-	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
+	std::array<VkDescriptorPoolSize, 3> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = 200; // static_cast<uint32_t>(swapChainImages.size());
+	poolSizes[0].descriptorCount = 1000; // static_cast<uint32_t>(swapChainImages.size());
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[1].descriptorCount = 200; //static_cast<uint32_t>(swapChainImages.size());
+	poolSizes[1].descriptorCount = 1000; //static_cast<uint32_t>(swapChainImages.size());
+	poolSizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	poolSizes[2].descriptorCount = 1000; //static_cast<uint32_t>(swapChainImages.size());
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = 400;
+	poolInfo.maxSets = 3000;
 
 	if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor pool!");
@@ -578,8 +581,12 @@ RenderPass * VulkanCore::CreateRenderPass(RenderPass::CreateInfo& ci) {
 	return static_cast<RenderPass*>(new VulkanRenderPass(ci));
 }
 
-Pipeline* VulkanCore::CreatePipeline(Pipeline::CreateInfo& ci) {
-	return static_cast<Pipeline*>(new VulkanPipeline(ci));
+ComputePipeline* VulkanCore::CreateComputePipeline(ComputePipeline::CreateInfo& ci) {
+	return static_cast<ComputePipeline*>(new VulkanComputePipeline(ci));
+}
+
+GraphicsPipeline* VulkanCore::CreateGraphicsPipeline(GraphicsPipeline::CreateInfo& ci) {
+	return static_cast<GraphicsPipeline*>(new VulkanGraphicsPipeline(ci));
 }
 
 CommandBuffer * VulkanCore::CreateCommandBuffer(CommandBuffer::CreateInfo& ci) {
@@ -654,8 +661,11 @@ void VulkanCore::DeleteIndexBuffer(IndexBuffer *ptr) {
 void VulkanCore::DeleteUniformBuffer(UniformBuffer *ptr) {
 	delete static_cast<VulkanUniformBuffer*>(ptr);
 }
-void VulkanCore::DeletePipeline(Pipeline *ptr) {
-	delete static_cast<VulkanPipeline*>(ptr);
+void VulkanCore::DeleteComputePipeline(ComputePipeline* ptr) {
+	delete static_cast<VulkanComputePipeline*>(ptr);
+}
+void VulkanCore::DeleteGraphicsPipeline(GraphicsPipeline *ptr) {
+	delete static_cast<VulkanGraphicsPipeline*>(ptr);
 }
 void VulkanCore::DeleteRenderPass(RenderPass *ptr) {
 	delete static_cast<VulkanRenderPass*>(ptr);
@@ -702,8 +712,8 @@ void VulkanCore::Clear(ClearMode mask, float clear_color[4], float clear_depth, 
 	std::cout << "VulkanCore::Clear is not used.\n";
 	assert(false);
 }
-void VulkanCore::BindPipeline(Pipeline*) {
-	std::cout << "VulkanCore::BindPipeline is not used.\n";
+void VulkanCore::BindGraphicsPipeline(GraphicsPipeline*) {
+	std::cout << "VulkanCore::BindGraphicsPipeline is not used.\n";
 	assert(false);
 }
 void VulkanCore::BindVertexArrayObject(VertexArrayObject *) {

@@ -48,12 +48,14 @@ void AttachTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet
 	writeVector.push_back(descriptorWrites);
 }
 
-void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
+void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet, bool isStorage) {
 	VulkanRenderTarget* texture = static_cast<VulkanRenderTarget*>(binding.itemPtr);
 
 	// TODO: Handle this lifetime
 	VkDescriptorImageInfo* imageInfo = new VkDescriptorImageInfo();
-	imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo->imageLayout = isStorage
+		? VK_IMAGE_LAYOUT_GENERAL
+		: VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	imageInfo->imageView = texture->GetImageView();
 	imageInfo->sampler = texture->GetSampler();
 
@@ -62,7 +64,9 @@ void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, Descrip
 	descriptorWrites.dstSet = descriptorSet;
 	descriptorWrites.dstBinding = binding.bindingIndex;
 	descriptorWrites.dstArrayElement = 0;
-	descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorWrites.descriptorType = isStorage
+		? VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
+		: VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptorWrites.descriptorCount = binding.count;
 	descriptorWrites.pImageInfo = imageInfo;
 	writeVector.push_back(descriptorWrites);
@@ -125,7 +129,8 @@ void VulkanDescriptorSet::ChangeBindings(Binding* bindings, uint32_t bindingCoun
 			AttachTexture(descriptorWrites, binding, descriptorSet);
 			break;
 		case BindingType::RenderTexture:
-			AttachRenderTexture(descriptorWrites, binding, descriptorSet);
+		case BindingType::RenderTextureStorageImage:
+			AttachRenderTexture(descriptorWrites, binding, descriptorSet, binding.bindingType == BindingType::RenderTextureStorageImage);
 			break;
 		case BindingType::DepthTexture:
 			AttachDepthTexture(descriptorWrites, binding, descriptorSet);

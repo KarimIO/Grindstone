@@ -121,6 +121,10 @@ bool AssetManager::LoadShaderSet(
 	return true;
 }
 
+bool AssetManager::LoadShaderStage(Uuid uuid, GraphicsAPI::ShaderStage shaderStage, GraphicsAPI::ShaderStageCreateInfo& stageCreateInfo, std::vector<char>& fileData) {
+	return assetLoader->LoadShaderStage(uuid, shaderStage, stageCreateInfo, fileData);
+}
+
 std::string& AssetManager::GetTypeName(AssetType assetType) {
 	return assetTypeNames[static_cast<size_t>(assetType)];
 }

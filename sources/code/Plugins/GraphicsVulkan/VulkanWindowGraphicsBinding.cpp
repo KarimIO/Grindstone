@@ -181,6 +181,7 @@ namespace Grindstone {
 		}
 
 		void VulkanWindowGraphicsBinding::Resize(uint32_t width, uint32_t height) {
+			return;
 			auto& vkCore = VulkanCore::Get();
 			VkDevice device = vkCore.GetDevice();
 

@@ -93,26 +93,28 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 		pluginManager->LoadPluginList();
 	}
 
-	{
-		GRIND_PROFILE_SCOPE("Loading Default Scene");
-		sceneManager = new SceneManagement::SceneManager();
-		if (createInfo.shouldLoadSceneFromDefaults) {
-			sceneManager->LoadDefaultScene();
-		}
-		else if (strcmp(createInfo.scenePath, "") == 0) {
-			sceneManager->CreateEmptyScene("Untitled");
-		}
-		else {
-			sceneManager->LoadScene(createInfo.scenePath);
-		}
-	}
-
-	win->Show();
-
 	Logger::Print("{0} Initialized.", createInfo.applicationTitle);
 	GRIND_PROFILE_END_SESSION();
 
 	return true;
+}
+
+void EngineCore::InitializeScene(bool shouldLoadSceneFromDefaults, const char* scenePath) {
+	GRIND_PROFILE_SCOPE("Loading Default Scene");
+	sceneManager = new SceneManagement::SceneManager();
+	if (shouldLoadSceneFromDefaults) {
+		sceneManager->LoadDefaultScene();
+	}
+	else if (strcmp(scenePath, "") == 0) {
+		sceneManager->CreateEmptyScene("Untitled");
+	}
+	else {
+		sceneManager->LoadScene(scenePath);
+	}
+}
+
+void EngineCore::ShowMainWindow() {
+	windowManager->GetWindowByIndex(0)->Show();
 }
 
 EngineCore& EngineCore::GetInstance() {
