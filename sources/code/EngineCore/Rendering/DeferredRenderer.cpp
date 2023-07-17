@@ -80,6 +80,9 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;
 	shadowMapRenderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
+	float maxDimension = static_cast<float>(glm::max(width, height));
+	mipLevelCount = static_cast<uint32_t>(glm::log2(maxDimension)) + 1;
+
 	CreateSsaoKernelAndNoise();
 	CreateVertexAndIndexBuffersAndLayouts();
 	CreateGbufferFramebuffer();
@@ -320,6 +323,9 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 	ssaoRenderPass->Resize(halfWidth, halfHeight);
 	ssaoFramebuffer->Resize(halfWidth, halfHeight);
 
+	float maxDimension = static_cast<float>(glm::max(width, height));
+	mipLevelCount = static_cast<uint32_t>(glm::log2(maxDimension)) + 1;
+
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		auto& imageSet = deferredRendererImageSets[i];
 
@@ -368,18 +374,27 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets() {
 		}
 	}
 
-	float maxDimension = static_cast<float>(glm::max(width, height));
-	mipLevelCount = static_cast<uint32_t>(glm::log2(maxDimension)) + 1;
-	bloomRenderTargets.resize(mipLevelCount);
+	bloomRenderTargets.resize(mipLevelCount * 2);
 	bloomDescriptorSets.resize(mipLevelCount * 2 - 2);
 	bloomUniformBuffers.resize(mipLevelCount * 2 - 2);
 
 	GraphicsAPI::RenderTarget::CreateInfo bloomRenderTargetCreateInfo{ GraphicsAPI::ColorFormat::RGBA32, width, height, true, true, "Bloom Render Target" };
 
 	for (uint32_t i = 0; i < mipLevelCount; ++i) {
-		std::string bloomRenderTargetName = std::string("Bloom Render Target Mip ") + std::to_string(i);
+		std::string bloomRenderTargetName = std::string("Bloom Render Target Downscale Mip ") + std::to_string(i);
 		bloomRenderTargetCreateInfo.debugName = bloomRenderTargetName.c_str();
 		bloomRenderTargets[i] = graphicsCore->CreateRenderTarget(bloomRenderTargetCreateInfo);
+		bloomRenderTargetCreateInfo.width = bloomRenderTargetCreateInfo.width / 2;
+		bloomRenderTargetCreateInfo.height = bloomRenderTargetCreateInfo.height / 2;
+	}
+
+	bloomRenderTargetCreateInfo.width = width;
+	bloomRenderTargetCreateInfo.height = height;
+
+	for (uint32_t i = 0; i < mipLevelCount; ++i) {
+		std::string bloomRenderTargetName = std::string("Bloom Render Target Upscale Mip ") + std::to_string(i);
+		bloomRenderTargetCreateInfo.debugName = bloomRenderTargetName.c_str();
+		bloomRenderTargets[mipLevelCount + i] = graphicsCore->CreateRenderTarget(bloomRenderTargetCreateInfo);
 		bloomRenderTargetCreateInfo.width = bloomRenderTargetCreateInfo.width / 2;
 		bloomRenderTargetCreateInfo.height = bloomRenderTargetCreateInfo.height / 2;
 	}
@@ -452,9 +467,9 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets() {
 	for (int i = mipLevelCount - 2; i >= 1; --i) {
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UpdateBuffer(&bloomUboStruct);
 		descriptorBindings[0].itemPtr = bloomUniformBuffers[bloomDescriptorSetIndex];
-		descriptorBindings[1].itemPtr = bloomRenderTargets[i];
-		descriptorBindings[2].itemPtr = bloomRenderTargets[i + 1];
+		descriptorBindings[1].itemPtr = bloomRenderTargets[mipLevelCount + i];
 		descriptorBindings[3].itemPtr = bloomRenderTargets[i];
+		descriptorBindings[2].itemPtr = bloomRenderTargets[mipLevelCount + i + 1];
 		bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 
@@ -462,8 +477,8 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets() {
 	if (mipLevelCount > 1) {
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UpdateBuffer(&bloomUboStruct);
 		descriptorBindings[0].itemPtr = bloomUniformBuffers[bloomDescriptorSetIndex];
-		descriptorBindings[1].itemPtr = bloomRenderTargets[0];
-		descriptorBindings[2].itemPtr = bloomRenderTargets[1];
+		descriptorBindings[1].itemPtr = bloomRenderTargets[mipLevelCount + 0];
+		descriptorBindings[2].itemPtr = bloomRenderTargets[mipLevelCount + 1];
 		bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 }
@@ -651,7 +666,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	bloomBindingForTonemap.bindingIndex = 2;
 	bloomBindingForTonemap.count = 1;
 	bloomBindingForTonemap.bindingType = BindingType::RenderTexture;
-	bloomBindingForTonemap.itemPtr = bloomRenderTargets[1];
+	bloomBindingForTonemap.itemPtr = bloomRenderTargets[mipLevelCount];
 
 	std::array<DescriptorSet::Binding, 3> tonemapDescriptorSetBindings{};
 	tonemapDescriptorSetBindings[0] = engineUboBinding;
@@ -751,7 +766,7 @@ void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) 
 		bloomDescriptorSetBinding.bindingIndex = 2;
 		bloomDescriptorSetBinding.count = 1;
 		bloomDescriptorSetBinding.bindingType = BindingType::RenderTexture;
-		bloomDescriptorSetBinding.itemPtr = bloomRenderTargets[0];
+		bloomDescriptorSetBinding.itemPtr = bloomRenderTargets[mipLevelCount];
 
 		std::array<DescriptorSet::Binding, 3> tonemapDescriptorSetBindings{};
 		tonemapDescriptorSetBindings[0] = engineUboBinding;
@@ -1236,7 +1251,7 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &bloomDescriptorSets[descriptorSetIndex++], 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(bloomRenderTargets[mipLevelCount - 2]);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(bloomRenderTargets[mipLevelCount + mipLevelCount - 2]);
 	}
 
 	for (int i = mipLevelCount - 3; i >= 1; --i) {
@@ -1247,7 +1262,7 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &bloomDescriptorSets[descriptorSetIndex++], 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(bloomRenderTargets[i - 1]);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(bloomRenderTargets[mipLevelCount + i - 1]);
 	}
 }
 
