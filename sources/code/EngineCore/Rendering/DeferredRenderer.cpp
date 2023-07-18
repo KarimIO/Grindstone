@@ -457,7 +457,7 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UpdateBuffer(&bloomUboStruct);
 		descriptorBindings[0].itemPtr = bloomUniformBuffers[bloomDescriptorSetIndex];
 		descriptorBindings[1].itemPtr = imageSet.bloomRenderTargets[1];
-		descriptorBindings[2].itemPtr = deferredRendererImageSets[0].litHdrRenderTarget;
+		descriptorBindings[2].itemPtr = imageSet.litHdrRenderTarget;
 		imageSet.bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 
