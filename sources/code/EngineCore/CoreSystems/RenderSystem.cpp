@@ -80,8 +80,6 @@ namespace Grindstone {
 					cameraComponent.farPlaneDistance
 				);
 
-				engineCore.GetGraphicsCore()->AdjustPerspective(&projectionMatrix[0][0]);
-
 				cameraComponent.renderer->Render(
 					currentCommandBuffer,
 					registry,

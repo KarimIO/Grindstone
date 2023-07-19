@@ -136,8 +136,8 @@ void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 void ViewportPanel::DisplayCameraToPanel(uint64_t textureID) {
 	ImTextureID texturePtr = (ImTextureID)textureID;
 	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-	auto uv0 = ImVec2{ 0, 1 };
-	auto uv1 = ImVec2{ 1, 0 };
+	auto uv0 = ImVec2{ 0, 0 };
+	auto uv1 = ImVec2{ 1, 1 };
 	ImGui::Image(texturePtr, viewportPanelSize, uv0, uv1);
 }
 

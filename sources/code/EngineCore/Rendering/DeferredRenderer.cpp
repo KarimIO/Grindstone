@@ -1675,6 +1675,8 @@ void DeferredRenderer::RenderCommandBuffer(
 	auto assetManager = EngineCore::GetInstance().assetRendererManager;
 	auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 
+	graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
+
 	uint32_t imageIndex = wgb->GetCurrentImageIndex();
 	auto& imageSet = deferredRendererImageSets[imageIndex];
 
