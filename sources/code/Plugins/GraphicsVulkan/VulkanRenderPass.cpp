@@ -64,10 +64,12 @@ namespace Grindstone {
 				depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 				depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 				depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-				depthAttachment.initialLayout = VK_IMAGE_LAYOUT_GENERAL;
 				depthAttachment.finalLayout = hasStencil
 					? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
 					: VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL;
+				depthAttachment.initialLayout = shouldClearDepthOnLoad
+					? VK_IMAGE_LAYOUT_GENERAL
+					: depthAttachment.finalLayout;
 				depthAttachment.flags = 0;
 
 				depthAttachmentRef.attachment = static_cast<uint32_t>(colorFormats.size());

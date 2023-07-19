@@ -243,16 +243,16 @@ void VulkanCommandBuffer::DispatchCompute(uint32_t groupCountX, uint32_t groupCo
 	vkCmdDispatch(commandBuffer, groupCountX, groupCountY, groupCountZ);
 }
 
-void VulkanCommandBuffer::WaitForComputeMemoryBarrier(GraphicsAPI::RenderTarget* renderTarget) {
+void VulkanCommandBuffer::WaitForComputeMemoryBarrier(GraphicsAPI::RenderTarget* renderTarget, bool shouldMakeWritable) {
 	GraphicsAPI::VulkanRenderTarget* vulkanRenderTarget = static_cast<GraphicsAPI::VulkanRenderTarget*>(renderTarget);
 	VkImageMemoryBarrier imageMemoryBarrier = {};
 	imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
-	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+	imageMemoryBarrier.oldLayout = shouldMakeWritable ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_GENERAL;
+	imageMemoryBarrier.newLayout = shouldMakeWritable ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	imageMemoryBarrier.image = vulkanRenderTarget->GetImage();
 	imageMemoryBarrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-	imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-	imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	imageMemoryBarrier.srcAccessMask = shouldMakeWritable ? VK_ACCESS_SHADER_READ_BIT : VK_ACCESS_SHADER_WRITE_BIT;
+	imageMemoryBarrier.dstAccessMask = shouldMakeWritable ? VK_ACCESS_SHADER_WRITE_BIT : VK_ACCESS_SHADER_READ_BIT;
 	vkCmdPipelineBarrier(
 		commandBuffer,
 		VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,

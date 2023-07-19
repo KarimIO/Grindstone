@@ -1278,6 +1278,7 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 	uint32_t descriptorSetIndex = 0;
 
 	{
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[1], true);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
@@ -1299,16 +1300,18 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidth / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeight / 4.0f));
 
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[i]);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[i], false);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[i + 1], true);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
 	
 	{
-		groupCountX = static_cast<uint32_t>(std::ceil(mipWidths[bloomMipLevelCount - 2] / 4.0f));
-		groupCountY = static_cast<uint32_t>(std::ceil(mipHeights[bloomMipLevelCount- 2] / 4.0f));
+		groupCountX = static_cast<uint32_t>(std::ceil(mipWidths[bloomMipLevelCount  - 2] / 4.0f));
+		groupCountY = static_cast<uint32_t>(std::ceil(mipHeights[bloomMipLevelCount - 2] / 4.0f));
 
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + bloomMipLevelCount - 1]);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount - 1], true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + bloomMipLevelCount - 1], false);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
@@ -1319,11 +1322,12 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidth / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeight / 4.0f));
 
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + i + 1]);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + i], true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + i + 1], false);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
-	currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + 1]);
+	currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + 1], false);
 }
 
 void DeferredRenderer::RenderLightsCommandBuffer(
