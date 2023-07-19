@@ -1319,11 +1319,11 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidth / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeight / 4.0f));
 
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + i - 1]);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + i + 1]);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
-	currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + i]);
+	currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + 1]);
 }
 
 void DeferredRenderer::RenderLightsCommandBuffer(
