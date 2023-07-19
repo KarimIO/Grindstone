@@ -96,6 +96,8 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	Logger::Print("{0} Initialized.", createInfo.applicationTitle);
 	GRIND_PROFILE_END_SESSION();
 
+	lastFrameTime = std::chrono::steady_clock::now();
+
 	return true;
 }
 
