@@ -37,7 +37,7 @@ float lightPositions[] = {
 
 uint16_t lightIndices[] = {
 	0, 1, 2,
-	3, 2, 0
+	3, 0, 2
 };
 
 struct EngineUboStruct {
@@ -978,7 +978,7 @@ void DeferredRenderer::CreatePipelines() {
 
 	GraphicsPipeline::CreateInfo pipelineCreateInfo{};
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
-	pipelineCreateInfo.cullMode = CullMode::None;
+	pipelineCreateInfo.cullMode = CullMode::Back;
 	pipelineCreateInfo.scissorX = 0;
 	pipelineCreateInfo.scissorY = 0;
 	pipelineCreateInfo.vertexBindings = &vertexLightPositionLayout;

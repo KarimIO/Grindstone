@@ -26,6 +26,20 @@ struct ShaderVertexLayouts {
 	GraphicsAPI::VertexBufferLayout uv0;
 };
 
+Grindstone::GraphicsAPI::CullMode TranslateCullMode(std::string& cullMode) {
+	if (cullMode == "Front") {
+		return CullMode::Front;
+	}
+	if (cullMode == "None") {
+		return CullMode::None;
+	}
+	if (cullMode == "Both") {
+		return CullMode::Both;
+	}
+
+	return CullMode::Back;
+}
+
 void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	// TODO: Check shader cache before loading and compiling again
 	// The shader cache includes shaders precompiled for consoles, or compiled once per driver update on computers
@@ -68,7 +82,7 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	GraphicsPipeline::CreateInfo pipelineCreateInfo{};
 	pipelineCreateInfo.debugName = debugName.c_str();
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
-	pipelineCreateInfo.cullMode = CullMode::None;
+	pipelineCreateInfo.cullMode = TranslateCullMode(reflectionData.cullMode);
 	pipelineCreateInfo.renderPass = renderPass;
 	pipelineCreateInfo.width = static_cast<float>(renderPass->GetWidth());
 	pipelineCreateInfo.height = static_cast<float>(renderPass->GetHeight());
