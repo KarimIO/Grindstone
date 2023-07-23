@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <imgui_stdlib.h>
 #include "rapidjson/document.h"
+#include "rapidjson/prettywriter.h"
 #include "MaterialInspector.hpp"
 #include "BrowseFile.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
@@ -17,6 +18,8 @@ void MaterialInspector::SetMaterialPath(const std::filesystem::path& materialPat
 		return;
 	}
 
+	samplers.clear();
+	parameters.clear();
 	hasBeenChanged = false;
 	this->materialPath = materialPath;
 	filename = materialPath.filename().string();
@@ -218,4 +221,38 @@ void MaterialInspector::RenderParameter(MaterialParameter& parameter) {
 
 void MaterialInspector::SaveMaterial() {
 	hasBeenChanged = false;
+
+	rapidjson::StringBuffer documentStringBuffer;
+	rapidjson::PrettyWriter<rapidjson::StringBuffer> documentWriter = rapidjson::PrettyWriter<rapidjson::StringBuffer>(documentStringBuffer);
+
+	documentWriter.StartObject();
+	{
+		documentWriter.Key("name");
+		documentWriter.String(materialName.c_str());
+	}
+	{
+		documentWriter.Key("shader");
+		documentWriter.String(materialName.c_str());
+	}
+	{
+		documentWriter.Key("parameters");
+		documentWriter.StartArray();
+		documentWriter.EndArray();
+	}
+	{
+		documentWriter.Key("samplers");
+		documentWriter.StartArray();
+		for (auto& sampler : samplers) {
+			documentWriter.Key(sampler.name.c_str());
+			documentWriter.String(sampler.value.ToString().c_str());
+		}
+		documentWriter.EndArray();
+	}
+	documentWriter.EndObject();
+
+	const char* content = documentStringBuffer.GetString();
+	std::ofstream file(materialPath);
+	file.write(content, strlen(content));
+	file.flush();
+	file.close();
 }
