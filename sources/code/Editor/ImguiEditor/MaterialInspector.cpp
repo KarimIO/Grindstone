@@ -29,7 +29,7 @@ void MaterialInspector::SetMaterialPath(const std::filesystem::path& materialPat
 	rapidjson::Document document;
 	document.Parse(contentData.data());
 
-	if (!document.HasMember("name")) {
+	if (document.HasMember("name")) {
 		materialName = document["name"].GetString();
 	}
 	else {
