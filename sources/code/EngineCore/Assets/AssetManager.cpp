@@ -64,7 +64,7 @@ bool AssetManager::LoadFile(const char* path, char*& fileData, size_t& fileSize)
 	fileData = nullptr;
 	fileSize = 0;
 
-	assetLoader->Load(path, fileData, fileSize);
+	assetLoader->Load(std::filesystem::path(path), fileData, fileSize);
 	return fileData != nullptr;
 }
 

@@ -33,11 +33,11 @@ namespace Grindstone {
 				if (selectedEntityCount == 0 && selectedFileCount == 1) {
 					auto entry = selection.GetSingleSelectedFile();
 					if (!entry.is_directory()) {
-						auto stringPath = entry.path().string();
-						size_t dotPosition = stringPath.find_last_of('.');
-						std::string extension = stringPath.substr(dotPosition);
+						auto& stringPath = entry.path();
+						std::string extension = stringPath.extension().string();
 
 						if (extension == ".gmat") {
+							materialInspector->SetMaterialPath(stringPath);
 							materialInspector->Render();
 							return;
 						}

@@ -24,7 +24,7 @@ void MetaFile::Load(std::filesystem::path baseAssetPath) {
 		version = document["version"].GetUint();
 	}
 
-	Uuid defaultUuid;
+	Uuid defaultUuid = Uuid::CreateRandom();
 	if (document.HasMember("defaultUuid")) {
 		defaultUuid = document["defaultUuid"].GetString();
 	}
@@ -154,7 +154,7 @@ Uuid MetaFile::GetOrCreateSubassetUuid(std::string& subassetName, AssetType asse
 		}
 	}
 
-	Uuid uuid;
+	Uuid uuid = Uuid::CreateRandom();
 	subassets.emplace_back(subassetName, uuid, assetType);
 	return uuid;
 }

@@ -86,7 +86,8 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	float minDimension = static_cast<float>(glm::min(width, height));
 	bloomMipLevelCount = glm::min(static_cast<uint32_t>(glm::log2(minDimension)) - 1, MAX_BLOOM_MIPS);
 
-	brdfLut = EngineCore::GetInstance().assetManager->GetAsset<TextureAsset>(Uuid("7707483a-9379-4e81-9e15-0e5acf20e9d6"))->texture;
+	Uuid brdfAssetUuid("7707483a-9379-4e81-9e15-0e5acf20e9d6");
+	brdfLut = EngineCore::GetInstance().assetManager->GetAsset<TextureAsset>(brdfAssetUuid)->texture;
 
 	CreateSsaoKernelAndNoise();
 	CreateVertexAndIndexBuffersAndLayouts();
