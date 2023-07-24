@@ -42,13 +42,14 @@ namespace Grindstone {
 					InvalidShader,
 					ValidShader
 				};
+				void ReloadAvailableShaders();
 				bool TryLoadShaderReflection(Uuid& shaderUuid);
 				void LoadShaderTextures(rapidjson::Value& texturesArray);
 				void LoadShaderUniformBuffers(rapidjson::Value& uniformBuffers);
 				void LoadMaterialSamplers(rapidjson::Value& samplers);
 				void RenderTextures();
 				void RenderParameters();
-				void OnSelectedTexture(Uuid uuid, std::filesystem::path path);
+				void OnSelectedTexture(Uuid uuid, std::string name);
 				void RenderTexture(Sampler& sampler);
 				void RenderParameter(MaterialParameter& parameter);
 				void SaveMaterial();
@@ -59,6 +60,7 @@ namespace Grindstone {
 				std::string shaderName;
 				std::vector<Sampler> samplers;
 				std::vector<MaterialParameter> parameters;
+				std::vector<AssetRegistry::Entry> availableShaders;
 				EngineCore* engineCore;
 				ImguiEditor* imguiEditor = nullptr;
 				Sampler* selectedSampler = nullptr;

@@ -20,6 +20,8 @@ void MaterialInspector::SetMaterialPath(const std::filesystem::path& materialPat
 		return;
 	}
 
+	ReloadAvailableShaders();
+
 	samplers.clear();
 	parameters.clear();
 	hasBeenChanged = false;
@@ -44,6 +46,7 @@ void MaterialInspector::SetMaterialPath(const std::filesystem::path& materialPat
 	}
 
 	shaderUuid = Uuid(document["shader"].GetString());
+
 	TryLoadShaderReflection(shaderUuid);
 
 	if (document.HasMember("samplers")) {
@@ -51,16 +54,36 @@ void MaterialInspector::SetMaterialPath(const std::filesystem::path& materialPat
 	}
 }
 
+void MaterialInspector::ReloadAvailableShaders() {
+	AssetRegistry& registry = Editor::Manager::GetInstance().GetAssetRegistry();
+	registry.FindAllFilesOfType(AssetType::Shader, availableShaders);
+
+	std::sort(
+		availableShaders.begin(), availableShaders.end(),
+		[](AssetRegistry::Entry& a, AssetRegistry::Entry& b) {
+			return a.name < b.name;
+		}
+	);
+}
+
 void MaterialInspector::Render() {
 	ImGui::Text("Editing Material: %s", filename.c_str());
 	ImGui::InputText("Material Name", &materialName);
 
+	if (ImGui::BeginCombo("Shader", shaderName.c_str())) {
+		for (size_t i = 0; i < availableShaders.size(); ++i) {
+			bool isCurrentShader = availableShaders[i].uuid == shaderUuid;
+			if (ImGui::Selectable(availableShaders[i].name.c_str(), isCurrentShader)) {
+				shaderName = availableShaders[i].name;
+				shaderUuid = availableShaders[i].uuid;
+			}
+		}
+		ImGui::EndCombo();
+	}
+
 	if (shaderLoadStatus != ShaderLoadStatus::ValidShader) {
 		ImGui::Text("Shader not loaded");
 		return;
-	}
-	else {
-		ImGui::Text("Using shader: %s", shaderName.c_str());
 	}
 
 	RenderTextures();
@@ -162,7 +185,7 @@ void MaterialInspector::LoadMaterialSamplers(rapidjson::Value& samplers) {
 			AssetRegistry::Entry entry;
 			if (Editor::Manager::GetInstance().GetAssetRegistry().TryGetAssetData(uuid, entry)) {
 				shaderSampler.value = uuid;
-				shaderSampler.valueName = entry.path.filename().string();
+				shaderSampler.valueName = entry.name;
 				hasBeenChanged = false;
 			}
 		}
@@ -177,7 +200,7 @@ void MaterialInspector::RenderTextures() {
 	ImGui::Separator();
 	ImGui::Text("Textures:");
 
-	if (ImGui::BeginTable("MaterialTextureSplots", 2)) {
+	if (ImGui::BeginTable("MaterialTextureSlots", 2)) {
 		for (auto& sampler : samplers) {
 			RenderTexture(sampler);
 		}
@@ -207,9 +230,9 @@ void MaterialInspector::RenderParameters() {
 	}
 }
 
-void MaterialInspector::OnSelectedTexture(Uuid uuid, std::filesystem::path path) {
+void MaterialInspector::OnSelectedTexture(Uuid uuid, std::string name) {
 	selectedSampler->value = uuid;
-	selectedSampler->valueName = path.filename().string();
+	selectedSampler->valueName = name;
 	hasBeenChanged = true;
 }
 
@@ -225,7 +248,7 @@ void MaterialInspector::RenderTexture(Sampler& sampler) {
 	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.0f, 0.5f));
 	if (ImGui::Button(buttonText.c_str(), buttonSize)) {
 		selectedSampler = &sampler;
-		std::function<void(Uuid, std::filesystem::path)> callback = [this](Uuid uuid, std::filesystem::path path) { OnSelectedTexture(uuid, path); };
+		std::function<void(Uuid, std::string)> callback = [this](Uuid uuid, std::string path) { OnSelectedTexture(uuid, path); };
 		imguiEditor->PromptAssetPicker(AssetType::Texture, callback);
 	}
 

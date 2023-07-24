@@ -21,6 +21,12 @@ void AssetPicker::OpenPrompt(AssetType assetType, AssetPickerCallback callback) 
 	assets.clear();
 	AssetRegistry& registry = Editor::Manager::GetInstance().GetAssetRegistry();
 	registry.FindAllFilesOfType(assetType, assets);
+	std::sort(
+		assets.begin(), assets.end(),
+		[](AssetRegistry::Entry&a, AssetRegistry::Entry& b) {
+			return a.name < b.name;
+		}
+	);
 }
 
 void AssetPicker::Render() {
@@ -50,9 +56,8 @@ void AssetPicker::Render() {
 				ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::GetColorU32(++i % 2 ? ImGuiCol_TableRowBgAlt : ImGuiCol_TableRowBg));
 				ImGui::TableNextRow(ImGuiTableRowFlags_None, 24.0f);
 				ImGui::TableNextColumn();
-				std::string filename = asset.path.filename().string();
-				if (ImGui::Button(filename.c_str(), btnSize)) {
-					callback(asset.uuid, asset.path);
+				if (ImGui::Button(asset.name.c_str(), btnSize)) {
+					callback(asset.uuid, asset.name);
 					ImGui::CloseCurrentPopup();
 				}
 			}

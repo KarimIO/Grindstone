@@ -8,7 +8,7 @@
 namespace Grindstone::Editor::ImguiEditor {
 	class AssetPicker {
 	public:
-		using AssetPickerCallback = std::function<void(Uuid, std::filesystem::path)>;
+		using AssetPickerCallback = std::function<void(Uuid, std::string)>;
 
 		void OpenPrompt(AssetType assetType, AssetPickerCallback callback);
 		void Render();
