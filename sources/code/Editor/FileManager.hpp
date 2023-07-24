@@ -39,6 +39,7 @@ namespace Grindstone {
 			Directory* GetFolderForPath(std::filesystem::path path);
 			void CreateInitialFileStructure(Directory& directory, std::filesystem::directory_iterator directoryIterator);
 			bool CheckIfCompiledFileNeedsToBeUpdated(std::filesystem::path path);
+			void UpdateCompiledFileIfNecessaryOnInitialize(std::filesystem::path path);
 			void UpdateCompiledFileIfNecessary(std::filesystem::path path);
 			void RemoveFileFromManager(std::filesystem::directory_entry);
 			std::filesystem::directory_entry GetFileFromMetaPath(std::filesystem::directory_entry);

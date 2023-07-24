@@ -14,6 +14,7 @@ namespace Grindstone {
 			struct Sampler {
 				std::string name;
 				Uuid value;
+				std::string valueName;
 				bool isSet;
 
 				Sampler(const char* samplerName) : name(samplerName), isSet(false) {}

@@ -16,6 +16,10 @@ Importers::ImporterManager& Manager::GetImporterManager() {
 	return importerManager;
 }
 
+AssetRegistry& Grindstone::Editor::Manager::GetAssetRegistry() {
+	return assetRegistry;
+}
+
 CommandList& Manager::GetCommandList() {
 	return commandList;
 }
@@ -46,7 +50,10 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	compiledAssetsPath = this->projectPath / "compiledAssets";
 	engineBinariesPath = std::filesystem::current_path();
 
-	if (!LoadEngine())			return false;
+	if (!LoadEngine()) {
+		return false;
+	}
+	assetRegistry.Initialize(projectPath);
 	fileManager.Initialize(assetsPath);
 	gitManager.Initialize();
 	csharpBuildManager.FinishInitialFileProcessing();
@@ -54,7 +61,10 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	engineCore->InitializeScene(true);
 	engineCore->ShowMainWindow();
 
-	if (!SetupImguiEditor())	return false;
+	if (!SetupImguiEditor()) {
+		return false;
+	}
+
 	InitializeQuitCommands();
 
 	return true;

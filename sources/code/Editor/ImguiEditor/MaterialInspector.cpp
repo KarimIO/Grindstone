@@ -154,7 +154,13 @@ void MaterialInspector::LoadMaterialSamplers(rapidjson::Value& samplers) {
 		const char* samplerName = shaderSampler.name.c_str();
 		if (samplers.HasMember(samplerName)) {
 			const char* samplerValue = samplers[samplerName].GetString();
-			shaderSampler.value = Uuid(samplerValue);
+			Uuid uuid = samplerValue;
+			AssetRegistry::Entry entry;
+			if (Editor::Manager::GetInstance().GetAssetRegistry().TryGetAssetData(uuid, entry)) {
+				shaderSampler.value = uuid;
+				shaderSampler.valueName = entry.path.filename().string();
+				hasBeenChanged = false;
+			}
 		}
 	}
 }
@@ -189,19 +195,24 @@ void MaterialInspector::RenderParameters() {
 	ImGui::Separator();
 	ImGui::Text("Parameters:");
 
-	for(auto parameter : parameters) {
+	for(auto& parameter : parameters) {
 		RenderParameter(parameter);
 	}
 }
 
 void MaterialInspector::RenderTexture(Sampler& sampler) {
-	std::string buttonText = (sampler.value.ToString() + "#" + sampler.name);
+	std::string buttonText = (sampler.valueName + "##" + sampler.name);
 	ImGui::Button(buttonText.c_str());
 
 	if (ImGui::BeginDragDropTarget()) {
-		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_UUID")) {
-			sampler.value = *static_cast<Uuid*>(payload->Data);
-			hasBeenChanged = true;
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Texture")) {
+			Uuid uuid = *static_cast<Uuid*>(payload->Data);
+			AssetRegistry::Entry entry;
+			if (Editor::Manager::GetInstance().GetAssetRegistry().TryGetAssetData(uuid, entry)) {
+				sampler.value = uuid;
+				sampler.valueName = entry.path.filename().string();
+				hasBeenChanged = true;
+			}
 		}
 
 		ImGui::EndDragDropTarget();
