@@ -8,11 +8,13 @@
 #include "BrowseFile.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Editor/EditorManager.hpp"
+#include "Editor/ImguiEditor/ImguiEditor.hpp"
 using namespace rapidjson;
 
 using namespace Grindstone::Editor::ImguiEditor;
 
-MaterialInspector::MaterialInspector(EngineCore* engineCore) : engineCore(engineCore) {}
+MaterialInspector::MaterialInspector(EngineCore* engineCore, ImguiEditor* imguiEditor) : engineCore(engineCore), imguiEditor(imguiEditor) {}
+
 void MaterialInspector::SetMaterialPath(const std::filesystem::path& materialPath) {
 	if (this->materialPath == materialPath) {
 		return;
@@ -64,14 +66,16 @@ void MaterialInspector::Render() {
 	RenderTextures();
 	RenderParameters();
 
+	ImVec2 buttonSize = { ImGui::GetContentRegionAvail().x, 24 };
+
 	if (hasBeenChanged) {
-		if (ImGui::Button("Apply")) {
+		if (ImGui::Button("Apply", buttonSize)) {
 			SaveMaterial();
 		}
 	}
 	else {
 		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-		ImGui::Button("Apply");
+		ImGui::Button("Apply", buttonSize);
 		ImGui::PopStyleVar();
 	}
 }
@@ -173,8 +177,11 @@ void MaterialInspector::RenderTextures() {
 	ImGui::Separator();
 	ImGui::Text("Textures:");
 
-	for (auto& sampler : samplers) {
-		RenderTexture(sampler);
+	if (ImGui::BeginTable("MaterialTextureSplots", 2)) {
+		for (auto& sampler : samplers) {
+			RenderTexture(sampler);
+		}
+		ImGui::EndTable();
 	}
 }
 
@@ -200,9 +207,27 @@ void MaterialInspector::RenderParameters() {
 	}
 }
 
+void MaterialInspector::OnSelectedTexture(Uuid uuid, std::filesystem::path path) {
+	selectedSampler->value = uuid;
+	selectedSampler->valueName = path.filename().string();
+	hasBeenChanged = true;
+}
+
 void MaterialInspector::RenderTexture(Sampler& sampler) {
+	ImGui::TableNextRow();
+	ImGui::TableNextColumn();
+	ImGui::Text(sampler.name.c_str());
+
+	ImGui::TableNextColumn();
+
 	std::string buttonText = (sampler.valueName + "##" + sampler.name);
-	ImGui::Button(buttonText.c_str());
+	ImVec2 buttonSize = { ImGui::GetContentRegionAvail().x, 24 };
+	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.0f, 0.5f));
+	if (ImGui::Button(buttonText.c_str(), buttonSize)) {
+		selectedSampler = &sampler;
+		std::function<void(Uuid, std::filesystem::path)> callback = [this](Uuid uuid, std::filesystem::path path) { OnSelectedTexture(uuid, path); };
+		imguiEditor->PromptAssetPicker(AssetType::Texture, callback);
+	}
 
 	if (ImGui::BeginDragDropTarget()) {
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Texture")) {
@@ -217,6 +242,7 @@ void MaterialInspector::RenderTexture(Sampler& sampler) {
 
 		ImGui::EndDragDropTarget();
 	}
+	ImGui::PopStyleVar();
 }
 
 void MaterialInspector::RenderParameter(MaterialParameter& parameter) {
@@ -243,21 +269,21 @@ void MaterialInspector::SaveMaterial() {
 	}
 	{
 		documentWriter.Key("shader");
-		documentWriter.String(materialName.c_str());
+		documentWriter.String(shaderUuid.ToString().c_str());
 	}
 	{
 		documentWriter.Key("parameters");
-		documentWriter.StartArray();
-		documentWriter.EndArray();
+		documentWriter.StartObject();
+		documentWriter.EndObject();
 	}
 	{
 		documentWriter.Key("samplers");
-		documentWriter.StartArray();
+		documentWriter.StartObject();
 		for (auto& sampler : samplers) {
 			documentWriter.Key(sampler.name.c_str());
 			documentWriter.String(sampler.value.ToString().c_str());
 		}
-		documentWriter.EndArray();
+		documentWriter.EndObject();
 	}
 	documentWriter.EndObject();
 

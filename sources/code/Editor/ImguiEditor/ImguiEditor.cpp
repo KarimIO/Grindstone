@@ -26,6 +26,7 @@
 #include "ControlBar.hpp"
 #include "StatusBar.hpp"
 #include "Menubar.hpp"
+#include "AssetPicker.hpp"
 #include "ImguiInput.hpp"
 #include "ImguiRenderer.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
@@ -48,7 +49,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	sceneHeirarchyPanel = new SceneHeirarchyPanel(engineCore->GetSceneManager(), this);
 	modelConverterModal = new ModelConverterModal();
 	imageConverterModal = new ImageConverterModal();
-	inspectorPanel = new InspectorPanel(engineCore);
+	inspectorPanel = new InspectorPanel(engineCore, this);
 	assetBrowserPanel = new AssetBrowserPanel(imguiRenderer, engineCore, this);
 	userSettingsWindow = new Settings::UserSettingsWindow();
 	projectSettingsWindow = new Settings::ProjectSettingsWindow();
@@ -59,6 +60,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	systemPanel = new SystemPanel(engineCore->GetSystemRegistrar());
 	controlBar = new ControlBar(imguiRenderer);
 	menubar = new Menubar(this);
+	assetPicker = new AssetPicker();
 	statusBar = new StatusBar(imguiRenderer);
 
 	auto eventDispatcher = engineCore->GetEventDispatcher();
@@ -86,6 +88,7 @@ ImguiEditor::~ImguiEditor() {
 	delete systemPanel;
 	delete controlBar;
 	delete menubar;
+	delete assetPicker;
 	delete statusBar;
 }
 
@@ -253,6 +256,7 @@ void ImguiEditor::Render() {
 	userSettingsWindow->Render();
 	projectSettingsWindow->Render();
 	statusBar->Render();
+	assetPicker->Render();
 }
 
 void ImguiEditor::ShowModelModal() {
@@ -261,6 +265,10 @@ void ImguiEditor::ShowModelModal() {
 
 void ImguiEditor::ShowImageModal() {
 	imageConverterModal->Show();
+}
+
+void ImguiEditor::PromptAssetPicker(AssetType assetType, AssetPicker::AssetPickerCallback callback) {
+	assetPicker->OpenPrompt(assetType, callback);
 }
 
 void ImguiEditor::StartBuild() {

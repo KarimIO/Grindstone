@@ -73,7 +73,7 @@ void AssetRegistry::ReadFile() {
 		rapidjson::Value* assetIterator = document.Begin();
 		assetIterator != document.End();
 		++assetIterator
-	) {
+		) {
 		rapidjson::Value& asset = *assetIterator;
 		const char* name = asset["name"].GetString();
 		const char* path = asset["path"].GetString();
@@ -101,4 +101,12 @@ bool AssetRegistry::TryGetAssetData(Uuid uuid, AssetRegistry::Entry& outEntry) {
 
 	outEntry = assetIterator->second;
 	return true;
+}
+
+void AssetRegistry::FindAllFilesOfType(AssetType assetType, std::vector<Entry>& outEntries) {
+	for (auto& entry : assets) {
+		if (entry.second.assetType == assetType) {
+			outEntries.push_back(entry.second);
+		}
+	}
 }

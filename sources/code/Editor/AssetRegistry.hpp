@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <map>
 #include <filesystem>
 
@@ -24,6 +25,8 @@ namespace Grindstone::Editor {
 
 		bool HasAsset(Uuid uuid);
 		bool TryGetAssetData(Uuid uuid, AssetRegistry::Entry& outEntry);
+
+		void FindAllFilesOfType(AssetType assetType, std::vector<Entry>& outEntries);
 	private:
 		std::map<Uuid, Entry> assets;
 		std::filesystem::path assetsPath;

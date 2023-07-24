@@ -3,14 +3,19 @@
 #include <filesystem>
 #include <string>
 #include <vector>
-#include "rapidjson/document.h"
+
+#include <rapidjson/document.h>
+
 #include <Common/ResourcePipeline/Uuid.hpp>
+#include <Editor/AssetRegistry.hpp>
 
 namespace Grindstone {
 	class EngineCore;
 
 	namespace Editor {
 		namespace ImguiEditor {
+			class ImguiEditor;
+
 			struct Sampler {
 				std::string name;
 				Uuid value;
@@ -26,7 +31,7 @@ namespace Grindstone {
 
 			class MaterialInspector {
 			public:
-				MaterialInspector(EngineCore* engineCore);
+				MaterialInspector(EngineCore* engineCore, ImguiEditor* imguiEditor);
 				void SetMaterialPath(const std::filesystem::path& materialPath);
 				void Render();
 			private:
@@ -43,6 +48,7 @@ namespace Grindstone {
 				void LoadMaterialSamplers(rapidjson::Value& samplers);
 				void RenderTextures();
 				void RenderParameters();
+				void OnSelectedTexture(Uuid uuid, std::filesystem::path path);
 				void RenderTexture(Sampler& sampler);
 				void RenderParameter(MaterialParameter& parameter);
 				void SaveMaterial();
@@ -54,6 +60,8 @@ namespace Grindstone {
 				std::vector<Sampler> samplers;
 				std::vector<MaterialParameter> parameters;
 				EngineCore* engineCore;
+				ImguiEditor* imguiEditor = nullptr;
+				Sampler* selectedSampler = nullptr;
 				ShaderLoadStatus shaderLoadStatus = ShaderLoadStatus::Unassigned;
 				bool hasBeenChanged = false;
 
