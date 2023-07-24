@@ -15,7 +15,7 @@ void SystemRegistrar::RegisterSystem(const char* name, SystemFactory factory) {
 
 void SystemRegistrar::Update(entt::registry& registry) {
 	GRIND_PROFILE_FUNC();
-	for each (auto systemFactory in systemFactories) {
+	for (auto& systemFactory : systemFactories) {
 		GRIND_PROFILE_SCOPE(systemFactory.first.c_str());
 		auto systemFn = systemFactory.second;
 		systemFn(registry);
@@ -24,7 +24,7 @@ void SystemRegistrar::Update(entt::registry& registry) {
 
 void SystemRegistrar::EditorUpdate(entt::registry& registry) {
 	GRIND_PROFILE_FUNC();
-	for each (auto systemFactory in editorSystemFactories) {
+	for (auto& systemFactory : editorSystemFactories) {
 		GRIND_PROFILE_SCOPE(systemFactory.first.c_str());
 		auto systemFn = systemFactory.second;
 		systemFn(registry);

@@ -25,7 +25,7 @@ namespace Grindstone {
 				ECS::ComponentRegistrar& componentRegistrar = *engineCore.GetComponentRegistrar();
 				std::vector<std::string> unusedComponentsItems;
 				std::vector<ECS::ComponentFunctions> unusedComponentsFunctions;
-				for each (auto componentEntry in componentRegistrar) {
+				for (auto componentEntry : componentRegistrar) {
 					const char* componentTypeName = componentEntry.first.c_str();
 					auto componentReflectionData = componentEntry.second.GetComponentReflectionDataFn();
 					auto tryGetComponentFn = componentEntry.second.TryGetComponentFn;
@@ -95,7 +95,7 @@ namespace Grindstone {
 				void* componentPtr,
 				ECS::Entity entity
 			) {
-				for each (auto subcategory in category.categories) {
+				for (auto& subcategory : category.categories) {
 					if (!ImGui::TreeNodeEx(subcategory.name.c_str(), ImGuiTreeNodeFlags_FramePadding)) {
 						return;
 					}
@@ -105,7 +105,7 @@ namespace Grindstone {
 					ImGui::TreePop();
 				}
 
-				for each (auto member in category.members) {
+				for (auto& member : category.members) {
 					RenderComponentMember(member, componentPtr, entity);
 				}
 			}

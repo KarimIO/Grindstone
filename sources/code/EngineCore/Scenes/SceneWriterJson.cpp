@@ -68,7 +68,7 @@ void SceneWriterJson::ProcessEntity(entt::registry& registry, ECS::Entity entity
 
 	auto& engineCore = EngineCore::GetInstance();
 	ECS::ComponentRegistrar componentRegistrar = *engineCore.GetComponentRegistrar();
-	for each (auto componentEntry in componentRegistrar) {
+	for (auto& componentEntry : componentRegistrar) {
 		const char* componentTypeName = componentEntry.first.c_str();
 		auto componentReflectionData = componentEntry.second.GetComponentReflectionDataFn();
 		auto tryGetComponentFn = componentEntry.second.TryGetComponentFn;

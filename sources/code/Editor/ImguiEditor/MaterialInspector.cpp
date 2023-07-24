@@ -173,9 +173,9 @@ void MaterialInspector::RenderTextures() {
 }
 
 void MaterialInspector::RenderParameters() {
-	for each (auto & uniformBuffer in materialUniformBuffers) {
+	for (auto & uniformBuffer : materialUniformBuffers) {
 		if (ImGui::TreeNode(uniformBuffer.name.c_str())) {
-			for each (auto & member in uniformBuffer.members) {
+			for (auto & member : uniformBuffer.members) {
 				ImGui::Text(member.name.c_str());
 			}
 			ImGui::TreePop();
@@ -189,7 +189,7 @@ void MaterialInspector::RenderParameters() {
 	ImGui::Separator();
 	ImGui::Text("Parameters:");
 
-	for each(auto parameter in parameters) {
+	for(auto parameter : parameters) {
 		RenderParameter(parameter);
 	}
 }
@@ -209,9 +209,9 @@ void MaterialInspector::RenderTexture(Sampler& sampler) {
 }
 
 void MaterialInspector::RenderParameter(MaterialParameter& parameter) {
-	for each (auto& uniformBuffer in materialUniformBuffers) {
+	for (auto& uniformBuffer : materialUniformBuffers) {
 		if (ImGui::TreeNode(uniformBuffer.name.c_str())) {
-			for each (auto& member in uniformBuffer.members) {
+			for (auto& member : uniformBuffer.members) {
 				ImGui::Text(member.name.c_str());
 			}
 			ImGui::TreePop();
