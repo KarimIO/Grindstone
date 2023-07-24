@@ -124,7 +124,7 @@ bool MetaFile::TryGetDefaultSubassetUuid(Uuid& outUuid) {
 }
 
 Uuid Grindstone::MetaFile::GetOrCreateDefaultSubassetUuid(std::string& subassetName, AssetType assetType) {
-	if (defaultSubasset.uuid.ToString() == "") {
+	if (!defaultSubasset.uuid.IsValid()) {
 		defaultSubasset.assetType = assetType;
 		defaultSubasset.name = subassetName;
 		defaultSubasset.uuid = Uuid();

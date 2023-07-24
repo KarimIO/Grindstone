@@ -402,7 +402,12 @@ void ModelImporter::OutputPrefabs() {
 }
 
 void ModelImporter::OutputMeshes() {
-	std::string subassetName = "mesh";
+	std::string subassetName = path.filename().string();
+	size_t dotPos = subassetName.find('.');
+	if (dotPos != std::string::npos) {
+		subassetName = subassetName.substr(0, dotPos);
+	}
+
 	Uuid outUuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Mesh3d);
 
 	std::filesystem::path meshOutputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / outUuid.ToString();

@@ -49,6 +49,11 @@ Grindstone::Uuid::Uuid() {
 
 Grindstone::Uuid::Uuid(std::string str) : Uuid(str.c_str()) {}
 
+bool Grindstone::Uuid::IsValid() {
+	uint64_t* uuidCasted = reinterpret_cast<uint64_t*>(&uuid[0]);
+	return uuidCasted[0] != 0 || uuidCasted[1] != 0;
+}
+
 Grindstone::Uuid::operator std::string() {
 	return ToString();
 }

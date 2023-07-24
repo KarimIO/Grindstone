@@ -156,19 +156,17 @@ namespace Grindstone {
 
 			metaFile = new MetaFile();
 			metaFile->Load(inputPath);
-			std::string subassetName = "shader";
-			Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Shader);
-			baseOutputPath = (Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString()).string();
-
-			metaFile->Save();
-
 			sourceFileContents = ReadTextFile(inputPath.string().c_str());
 
 			Process();
+			metaFile->Save();
 		}
 
 		void ShaderImporter::Process() {
 			shaderName = ExtractField("#name");
+			Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(shaderName, AssetType::Shader);
+			baseOutputPath = (Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString()).string();
+
 			renderQueue = ExtractField("#renderQueue");
 			geometryRenderer = ExtractField("#geometryRenderer");
 			transparencyMode = ExtractField("#transparencyMode");

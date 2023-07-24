@@ -299,7 +299,11 @@ void TextureImporter::OutputDds(uint8_t* outData, uint64_t contentSize) {
 	char mark[] = { 'G', 'R', 'I', 'N', 'D', 'S', 'T', 'O', 'N', 'E' };
 	std::memcpy(&outHeader.dwReserved1, mark, sizeof(mark));
 
-	std::string subassetName = "texture";
+	std::string subassetName = path.filename().string();
+	size_t dotPos = subassetName.find('.');
+	if (dotPos != std::string::npos) {
+		subassetName = subassetName.substr(0, dotPos);
+	}
 	uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Texture);
 	std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
 	std::ofstream out(outputPath, std::ios::binary);
