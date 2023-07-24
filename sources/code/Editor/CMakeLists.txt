@@ -11,6 +11,7 @@ file(GLOB_RECURSE SOURCE_MAIN
 	Selection.cpp Selection.hpp
 	EditorCamera.cpp EditorCamera.hpp
 	Camera.cpp Camera.hpp
+	AssetRegistry.cpp AssetRegistry.hpp
 )
 
 file(GLOB_RECURSE SOURCE_SCRIPT_BUILDER_EDITOR "${EDITOR_DIR}/ScriptBuilder/*.cpp")
