@@ -3,32 +3,36 @@
 #if defined(_WIN32)
 #include <Rpc.h>
 
-Grindstone::Uuid::Uuid() {
-	UuidCreate( (UUID*)&uuid );
+Grindstone::Uuid Grindstone::Uuid::CreateRandom() {
+	Uuid newUuid;
+	UuidCreate((UUID*)&(newUuid.uuid));
+
+	return newUuid;
 }
 
-void Grindstone::Uuid::FromString(std::string str) {
-	UuidFromString((unsigned char*)str.c_str(), (UUID*)&uuid);
+Grindstone::Uuid::Uuid(const char* str) {
+	UuidFromString((unsigned char*)str, (UUID*)&uuid);
 }
 
 std::string Grindstone::Uuid::ToString() {
 	unsigned char* uuidCstr;
 	UuidToString((UUID*)&uuid, &uuidCstr);
 	std::string uuidStr( (char*) uuidCstr );
-	RpcStringFreeA ( &uuidCstr );
+	RpcStringFreeA(&uuidCstr);
 
 	return uuidStr;
 }
 #else
 #include <uuid/uuid.h>
 
-Grindstone::Uuid::Uuid() {
-	uuid_generate_random((uuid_t)uuid);
+Grindstone::Uuid Grindstone::Uuid::CreateRandom() {
+	Uuid newUuid();
+	uuid_generate_random((uuid_t)newUuid.uuid);
+	return newUuid;
 }
 
-void Grindstone::Uuid::FromString(std::string str) {
-	uuint_t uuid;
-	uuid_parse(str.c_str(), uuid);
+Grindstone::Uuid::Uuid(const char* str) {
+	uuid_parse(str, (uuint_t)uuid);
 }
 
 std::string Grindstone::Uuid::ToString() {
@@ -39,8 +43,15 @@ std::string Grindstone::Uuid::ToString() {
 }
 #endif
 
-Grindstone::Uuid::Uuid(std::string str) {
-	FromString(str);
+Grindstone::Uuid::Uuid() {
+	memset(uuid, 0, sizeof(uuid));
+}
+
+Grindstone::Uuid::Uuid(std::string str) : Uuid(str.c_str()) {}
+
+bool Grindstone::Uuid::IsValid() {
+	uint64_t* uuidCasted = reinterpret_cast<uint64_t*>(&uuid[0]);
+	return uuidCasted[0] != 0 || uuidCasted[1] != 0;
 }
 
 Grindstone::Uuid::operator std::string() {
@@ -51,10 +62,18 @@ bool Grindstone::Uuid::operator==(const Uuid& other) const {
 	return std::memcmp(other.uuid, uuid, sizeof(uuid)) == 0;
 }
 
+bool Grindstone::Uuid::operator!=(const Uuid& other) const {
+	return std::memcmp(other.uuid, uuid, sizeof(uuid)) != 0;
+}
+
 bool Grindstone::Uuid::operator<(const Uuid& other) const {
 	return std::memcmp(other.uuid, uuid, sizeof(uuid)) < 0;
 }
 
 void Grindstone::Uuid::operator=(const char *str) {
-	FromString(str);
+	*this = Uuid(str);
+}
+
+void Grindstone::Uuid::operator=(const Uuid& other) {
+	std::memcpy(uuid, other.uuid, sizeof(uuid));
 }

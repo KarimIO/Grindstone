@@ -423,7 +423,8 @@ void AssetBrowserPanel::RenderFile(File* file) {
 
 	if (hasDefaultAsset && ImGui::BeginDragDropSource()) {
 		std::string myUuidAsString = myUuid.ToString();
-		ImGui::SetDragDropPayload("_UUID", myUuidAsString.data(), myUuidAsString.size() + 1);
+		std::string assetTypeStr = GetAssetTypeToString(assetType);
+		ImGui::SetDragDropPayload(assetTypeStr.c_str(), &myUuid, sizeof(Uuid));
 		ImGui::Text("%s", filenameString.c_str());
 		ImGui::EndDragDropSource();
 	}

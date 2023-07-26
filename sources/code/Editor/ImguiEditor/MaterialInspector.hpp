@@ -1,16 +1,28 @@
 #pragma once
 
+#include <filesystem>
 #include <string>
 #include <vector>
-#include "rapidjson/document.h"
+
+#include <rapidjson/document.h>
+
+#include <Common/ResourcePipeline/Uuid.hpp>
+#include <Editor/AssetRegistry.hpp>
 
 namespace Grindstone {
 	class EngineCore;
 
 	namespace Editor {
 		namespace ImguiEditor {
-			struct MaterialTexture {
-				std::string path;
+			class ImguiEditor;
+
+			struct Sampler {
+				std::string name;
+				Uuid value;
+				std::string valueName;
+				bool isSet;
+
+				Sampler(const char* samplerName) : name(samplerName), isSet(false) {}
 			};
 
 			struct MaterialParameter {
@@ -19,24 +31,41 @@ namespace Grindstone {
 
 			class MaterialInspector {
 			public:
-				MaterialInspector(EngineCore* engineCore);
-				void SetMaterialPath(const char* materialPath);
+				MaterialInspector(EngineCore* engineCore, ImguiEditor* imguiEditor);
+				void SetMaterialPath(const std::filesystem::path& materialPath);
 				void Render();
 			private:
-				void TryLoadShaderReflection();
-				void LoadShaderUniformBuffers(rapidjson::Document& document);
+				enum class ShaderLoadStatus {
+					Unassigned = 0,
+					InvalidPath,
+					NoFileFound,
+					InvalidShader,
+					ValidShader
+				};
+				void ReloadAvailableShaders();
+				bool TryLoadShaderReflection(Uuid& shaderUuid);
+				void LoadShaderTextures(rapidjson::Value& texturesArray);
+				void LoadShaderUniformBuffers(rapidjson::Value& uniformBuffers);
+				void LoadMaterialSamplers(rapidjson::Value& samplers);
 				void RenderTextures();
 				void RenderParameters();
-				void RenderTexture(MaterialTexture& texture);
+				void OnSelectedTexture(Uuid uuid, std::string name);
+				void RenderTexture(Sampler& sampler);
 				void RenderParameter(MaterialParameter& parameter);
-				std::string materialPath;
+				void SaveMaterial();
+				std::filesystem::path materialPath;
+				std::string filename;
 				std::string materialName;
-				std::string shaderPath;
+				Uuid shaderUuid;
 				std::string shaderName;
-				std::vector<MaterialTexture> textures;
+				std::vector<Sampler> samplers;
 				std::vector<MaterialParameter> parameters;
+				std::vector<AssetRegistry::Entry> availableShaders;
 				EngineCore* engineCore;
-				bool hasLoadFile = true;
+				ImguiEditor* imguiEditor = nullptr;
+				Sampler* selectedSampler = nullptr;
+				ShaderLoadStatus shaderLoadStatus = ShaderLoadStatus::Unassigned;
+				bool hasBeenChanged = false;
 
 				struct MaterialUniformBuffer {
 					struct Member {

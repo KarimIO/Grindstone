@@ -134,3 +134,30 @@ bool TextureImporter::TryGetIfLoaded(const char* path, void*& output) {
 
 	return false;
 }
+
+void TextureImporter::ReloadAsset(Uuid uuid) {
+	auto& textureInMap = textures.find(uuid);
+	if (textureInMap == textures.end()) {
+		return;
+	}
+
+	EngineCore& engineCore = EngineCore::GetInstance();
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+
+	Texture*& texture = textureInMap->second.texture;
+	if (textureInMap->second.texture != nullptr) {
+		graphicsCore->DeleteTexture(texture);
+		texture = nullptr;
+	}
+
+	char* fileContents;
+	size_t fileSize;
+
+	if (!engineCore.assetManager->LoadFile(uuid, fileContents, fileSize)) {
+		std::string errorMsg = "Unable to load texture: " + uuid.ToString();
+		engineCore.Print(LogSeverity::Warning, errorMsg.c_str());
+		return;
+	}
+
+	ProcessLoadedFile(uuid, fileContents, fileSize, textureInMap->second);
+}

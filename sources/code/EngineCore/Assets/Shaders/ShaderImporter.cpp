@@ -41,6 +41,17 @@ Grindstone::GraphicsAPI::CullMode TranslateCullMode(std::string& cullMode) {
 }
 
 void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
+	auto asset = shaders.emplace(uuid, ShaderAsset(uuid));
+	ShaderAsset& shaderAsset = asset.first->second;
+
+	if (!ImportShader(shaderAsset)) {
+		return nullptr;
+	}
+
+	return &shaderAsset;
+}
+
+bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 	// TODO: Check shader cache before loading and compiling again
 	// The shader cache includes shaders precompiled for consoles, or compiled once per driver update on computers
 	// if shaderCache has shader with this uuid
@@ -51,10 +62,10 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	AssetRendererManager* assetRendererManager = EngineCore::GetInstance().assetRendererManager;
 
 	std::string outContent;
-	if (!assetManager->LoadFileText(uuid, outContent)) {
-		std::string errorMsg = uuid.ToString() + " shader reflection file not found.";
+	if (!assetManager->LoadFileText(shaderAsset.uuid, outContent)) {
+		std::string errorMsg = shaderAsset.uuid.ToString() + " shader reflection file not found.";
 		EngineCore::GetInstance().Print(LogSeverity::Error, errorMsg.c_str());
-		return nullptr;
+		return false;
 	}
 
 	ShaderReflectionData reflectionData;
@@ -63,13 +74,13 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	std::vector<std::vector<char>> fileData;
 
 	if (!assetManager->LoadShaderSet(
-		uuid,
+		shaderAsset.uuid,
 		reflectionData.shaderStagesBitMask,
 		reflectionData.numShaderStages,
 		shaderStageCreateInfos,
 		fileData
 	)) {
-		return nullptr;
+		return false;
 	}
 
 	std::string debugName = reflectionData.name;
@@ -187,19 +198,18 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	pipelineCreateInfo.isDepthWriteEnabled = true;
 	pipelineCreateInfo.isStencilEnabled = false;
 
-	auto pipeine = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
-	auto asset = shaders.emplace(uuid, ShaderAsset(uuid, debugName, pipeine));
-	auto& shaderAsset = asset.first->second;
+	GraphicsPipeline* pipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	shaderAsset.reflectionData = reflectionData;
 	shaderAsset.descriptorSetLayout = pipelineCreateInfo.descriptorSetLayouts[0];
+	shaderAsset.pipeline = pipeline;
 
 	std::string& renderQueue = shaderAsset.reflectionData.renderQueue;
 	std::string& geometryType = shaderAsset.reflectionData.geometryRenderer;
-	assetRendererManager->RegisterShader(geometryType, renderQueue, uuid);
+	assetRendererManager->RegisterShader(geometryType, renderQueue, shaderAsset.uuid);
 
 	// TODO: Save compiled shader into ShaderCache
 
-	return &shaderAsset;
+	return true;
 }
 
 bool ShaderImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
@@ -210,4 +220,20 @@ bool ShaderImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
 	}
 
 	return false;
+}
+
+void ShaderImporter::ReloadAsset(Uuid uuid) {
+	auto& shaderInMap = shaders.find(uuid);
+	if (shaderInMap == shaders.end()) {
+		return;
+	}
+
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	GraphicsPipeline*& pipeline = shaderInMap->second.pipeline;
+	if (pipeline == nullptr) {
+		graphicsCore->DeleteGraphicsPipeline(pipeline);
+		pipeline = nullptr;
+	}
+
+	ImportShader(shaderInMap->second);
 }

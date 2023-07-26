@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <rapidjson/document.h>
+
+#include <EngineCore/Assets/AssetManager.hpp>
 #include "Editor/EditorManager.hpp"
 #include "MaterialImporter.hpp"
 #include "TextureImporter.hpp"
@@ -81,12 +84,29 @@ void Importers::CreateCutoutMaterial(StandardMaterialCreateInfo& ci, std::filesy
 
 void MaterialImporter::Import(std::filesystem::path& path) {
 	metaFile = new MetaFile(path);
-	std::string subassetName = "material";
+
+	std::string contentData = Grindstone::Utils::LoadFileText(path.string().c_str());
+	rapidjson::Document document;
+	document.Parse(contentData.data());
+
+	std::string subassetName = "";
+	if (document.HasMember("name")) {
+		subassetName = document["name"].GetString();
+	}
+	else {
+		subassetName = path.filename().string();
+		size_t dotPos = subassetName.find('.');
+		if (dotPos != std::string::npos) {
+			subassetName = subassetName.substr(0, dotPos);
+		}
+	}
+
 	uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Material);
 
 	std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
 	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
 	metaFile->Save();
+	Editor::Manager::GetEngineCore().assetManager->ReloadAsset(AssetType::Material, uuid);
 }
 
 Uuid MaterialImporter::GetUuidAfterImport() {

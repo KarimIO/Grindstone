@@ -13,7 +13,10 @@ namespace Grindstone {
 		public:
 			virtual void* ProcessLoadedFile(Uuid uuid) override;
 			virtual bool TryGetIfLoaded(Uuid uuid, void*& output) override;
+			virtual void ReloadAsset(Uuid uuid) override;
 		private:
+			bool ImportShader(ShaderAsset& shaderAsset);
+
 			std::map<Uuid, ShaderAsset> shaders;
 	};
 }

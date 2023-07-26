@@ -1,11 +1,15 @@
 #include <filesystem>
+
 #include <efsw/efsw.h>
+
+#include <Common/Logging.hpp>
+#include <Common/ResourcePipeline/MetaFile.hpp>
+
+#include <Editor/Importers/ImporterManager.hpp>
+#include <Editor/ScriptBuilder/CSharpBuildManager.hpp>
 #include "FileManager.hpp"
 #include "EditorManager.hpp"
-#include "Common/Logging.hpp"
-#include "Common/ResourcePipeline/MetaFile.hpp"
-#include "Importers/ImporterManager.hpp"
-#include "ScriptBuilder/CSharpBuildManager.hpp"
+
 using namespace Grindstone;
 using namespace Grindstone::Editor;
 
@@ -62,6 +66,7 @@ void FileManager::Initialize(std::filesystem::path projectPath) {
 	rootDirectory.path = std::filesystem::directory_entry(projectPath);
 	rootDirectory.parentDirectory = nullptr;
 	CreateInitialFileStructure(rootDirectory, std::filesystem::directory_iterator(rootDirectory.path));
+	Editor::Manager::GetInstance().GetAssetRegistry().WriteFile();
 }
 
 Directory& Grindstone::Editor::FileManager::GetRootDirectory() {
@@ -86,7 +91,7 @@ void FileManager::CreateInitialFileStructure(Directory& directory, std::filesyst
 				}
 
 				directory.files.emplace_back(new File(directoryEntry));
-				UpdateCompiledFileIfNecessary(filePath);
+				UpdateCompiledFileIfNecessaryOnInitialize(filePath);
 			}
 		}
 	}
@@ -113,10 +118,19 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(std::filesystem::path path
 	return metaFile.IsOutdatedVersion();
 }
 
+void FileManager::UpdateCompiledFileIfNecessaryOnInitialize(std::filesystem::path path) {
+	if (CheckIfCompiledFileNeedsToBeUpdated(path)) {
+		auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
+		importManager.Import(path);
+	}
+}
+
 void FileManager::UpdateCompiledFileIfNecessary(std::filesystem::path path) {
 	if (CheckIfCompiledFileNeedsToBeUpdated(path)) {
 		auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
 		importManager.Import(path);
+		auto& editorManager = Editor::Manager::GetInstance();
+		editorManager.GetAssetRegistry().WriteFile();
 	}
 }
 

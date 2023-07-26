@@ -103,6 +103,70 @@ bool AudioClipImporter::TryGetIfLoaded(Uuid uuid, void*& audioClip) {
 	return false;
 }
 
+void AudioClipImporter::ReloadAsset(Uuid uuid) {
+	auto audioClipInMap = audioClips.find(uuid);
+	if (audioClipInMap == audioClips.end()) {
+		return;
+	}
+
+	std::filesystem::path path = engineCore->GetAssetPath(uuid.ToString());
+	std::string pathString = path.string();
+	const char* pathCstr = pathString.c_str();
+	if (!std::filesystem::exists(path)) {
+		std::string errorMsg = std::string("AudioClipImporter::LoadFromPath - Could not find file:") + pathString;
+		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+		return;
+	}
+
+	drwav wav;
+	if (!drwav_init_file(&wav, pathCstr, nullptr)) {
+		std::string errorMsg = std::string("AudioClipImporter::LoadFromPath - Failed to load file:") + pathString;
+		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+		return;
+	}
+
+	drwav_uint16 channelCount = wav.channels;
+	drwav_uint16 bitsPerSample = wav.bitsPerSample;
+	drwav_uint32 sampleRate = wav.sampleRate;
+
+	size_t fileSize = wav.bytesRemaining;
+	char* memoryBuffer = (char*)malloc(fileSize);
+	size_t numberOfSamplesActuallyDecoded = drwav_read_raw(&wav, fileSize, memoryBuffer);
+
+	ALuint buffer;
+	alGenBuffers(1, &buffer);
+
+	ALenum format;
+	if (channelCount == 1 && bitsPerSample == 8) {
+		format = AL_FORMAT_MONO8;
+	}
+	else if (channelCount == 1 && bitsPerSample == 16) {
+		format = AL_FORMAT_MONO16;
+	}
+	else if (channelCount == 2 && bitsPerSample == 8) {
+		format = AL_FORMAT_STEREO8;
+	}
+	else if (channelCount == 2 && bitsPerSample == 16) {
+		format = AL_FORMAT_STEREO16;
+	}
+	else {
+		throw std::runtime_error(
+			std::string("ERROR: unrecognised wave format: ") +
+			std::to_string(channelCount) + " channels, " +
+			std::to_string(bitsPerSample) + " bits per sample."
+		);
+	}
+
+	alDeleteBuffers(1, &audioClipInMap->second.buffer);
+
+	alBufferData(buffer, format, memoryBuffer, static_cast<ALsizei>(fileSize), sampleRate);
+
+	audioClipInMap->second = AudioClipAsset(uuid, uuid.ToString(), buffer, channelCount, sampleRate, bitsPerSample);
+
+	drwav_free(memoryBuffer, nullptr);
+	drwav_uninit(&wav);
+}
+
 /*
 Clip::~Clip() {
 	alDeleteBuffers(1, &buffer);

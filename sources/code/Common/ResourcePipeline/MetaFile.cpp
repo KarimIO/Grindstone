@@ -2,13 +2,15 @@
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 
-#include "EngineCore/Utils/Utilities.hpp"
+#include <EngineCore/Utils/Utilities.hpp>
+#include <Editor/EditorManager.hpp>
 #include "MetaFile.hpp"
 using namespace Grindstone;
 
 const uint32_t currentMetaFileVersion = 1;
 
 void MetaFile::Load(std::filesystem::path baseAssetPath) {
+	this->baseAssetPath = baseAssetPath;
 	path = baseAssetPath.string() + ".meta";
 	if (!std::filesystem::exists(path)) {
 		return;
@@ -24,7 +26,7 @@ void MetaFile::Load(std::filesystem::path baseAssetPath) {
 		version = document["version"].GetUint();
 	}
 
-	Uuid defaultUuid;
+	Uuid defaultUuid = Uuid::CreateRandom();
 	if (document.HasMember("defaultUuid")) {
 		defaultUuid = document["defaultUuid"].GetString();
 	}
@@ -76,6 +78,8 @@ void MetaFile::Save() {
 		documentWriter.Key("type");
 		documentWriter.String(GetAssetTypeToString(defaultSubasset.assetType));
 		documentWriter.EndObject();
+
+		Editor::Manager::GetInstance().GetAssetRegistry().UpdateEntry(baseAssetPath, defaultSubasset.name, defaultSubasset.uuid, defaultSubasset.assetType);
 	}
 
 	for (auto& subasset : subassets) {
@@ -87,9 +91,12 @@ void MetaFile::Save() {
 		documentWriter.Key("type");
 		documentWriter.String(GetAssetTypeToString(subasset.assetType));
 		documentWriter.EndObject();
+
+		Editor::Manager::GetInstance().GetAssetRegistry().UpdateEntry(baseAssetPath, subasset.name, subasset.uuid, subasset.assetType);
 	}
 	documentWriter.EndArray();
 	documentWriter.EndObject();
+
 
 	const char* content = documentStringBuffer.GetString();
 	std::ofstream file(path);
@@ -117,7 +124,7 @@ bool MetaFile::TryGetDefaultSubassetUuid(Uuid& outUuid) {
 }
 
 Uuid Grindstone::MetaFile::GetOrCreateDefaultSubassetUuid(std::string& subassetName, AssetType assetType) {
-	if (defaultSubasset.uuid.ToString() == "") {
+	if (!defaultSubasset.uuid.IsValid()) {
 		defaultSubasset.assetType = assetType;
 		defaultSubasset.name = subassetName;
 		defaultSubasset.uuid = Uuid();
@@ -154,7 +161,7 @@ Uuid MetaFile::GetOrCreateSubassetUuid(std::string& subassetName, AssetType asse
 		}
 	}
 
-	Uuid uuid;
+	Uuid uuid = Uuid::CreateRandom();
 	subassets.emplace_back(subassetName, uuid, assetType);
 	return uuid;
 }

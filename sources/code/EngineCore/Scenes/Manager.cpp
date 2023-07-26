@@ -61,7 +61,7 @@ void SceneManager::AddPostLoadProcess(std::function<void(Scene*)> fn) {
 }
 
 void SceneManager::ProcessSceneAfterLoading(Scene* scene) {
-	for each (auto fn in postLoadProcesses) {
+	for (auto fn : postLoadProcesses) {
 		fn(scene);
 	}
 }

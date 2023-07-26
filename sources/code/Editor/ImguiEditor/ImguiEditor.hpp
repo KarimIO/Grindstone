@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 
 #include <Common/Event/BaseEvent.hpp>
+#include <Editor/ImguiEditor/AssetPicker.hpp>
 
 namespace Grindstone {
 	class EngineCore;
@@ -32,6 +33,7 @@ namespace Grindstone {
 			class ImguiInput;
 			class ControlBar;
 			class StatusBar;
+			class AssetPicker;
 
 			class ImguiEditor {
 			public:
@@ -43,6 +45,7 @@ namespace Grindstone {
 				void Render();
 				void ShowModelModal();
 				void ShowImageModal();
+				void PromptAssetPicker(AssetType assetType, AssetPicker::AssetPickerCallback callback);
 				void StartBuild();
 				void ImportFile(const char* folderPathToImportTo = "");
 			private:
@@ -60,6 +63,7 @@ namespace Grindstone {
 				ModelConverterModal* modelConverterModal = nullptr;
 				SceneHeirarchyPanel* sceneHeirarchyPanel = nullptr;
 				AssetBrowserPanel* assetBrowserPanel = nullptr;
+				AssetPicker* assetPicker = nullptr;
 				Settings::UserSettingsWindow* userSettingsWindow = nullptr;
 				Settings::ProjectSettingsWindow* projectSettingsWindow = nullptr;
 				InspectorPanel* inspectorPanel = nullptr;

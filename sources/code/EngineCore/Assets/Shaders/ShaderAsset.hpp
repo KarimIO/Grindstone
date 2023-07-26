@@ -13,6 +13,7 @@ namespace Grindstone {
 	}
 
 	struct ShaderAsset : public Asset {
+		ShaderAsset(Uuid uuid) : Asset(uuid, uuid.ToString()) {}
 		ShaderAsset(Uuid uuid, std::string_view name, GraphicsAPI::GraphicsPipeline* pipeline) : Asset(uuid, name), pipeline(pipeline) {}
 		ShaderReflectionData reflectionData;
 		GraphicsAPI::GraphicsPipeline* pipeline = nullptr;

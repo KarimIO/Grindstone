@@ -47,5 +47,6 @@ namespace Grindstone {
 		Subasset defaultSubasset;
 		std::vector<Subasset> subassets;
 		std::filesystem::path path;
+		std::filesystem::path baseAssetPath;
 	};
 }

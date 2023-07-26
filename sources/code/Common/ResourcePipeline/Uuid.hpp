@@ -7,14 +7,19 @@ namespace Grindstone {
 	public:
 		Uuid();
 		Uuid(std::string str);
-		void FromString(std::string str);
+		Uuid(const char* str);
 		std::string ToString();
 		void operator=(const char*);
+		void operator=(const Uuid& other);
 		bool operator==(const Uuid& other) const;
+		bool operator!=(const Uuid& other) const;
 		bool operator<(const Uuid& other) const;
+		bool IsValid();
 		operator std::string();
 
-	private:
+		static Uuid CreateRandom();
+
+	protected:
 		char uuid[16];
 	};
 }

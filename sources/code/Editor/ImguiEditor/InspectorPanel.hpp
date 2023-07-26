@@ -10,10 +10,11 @@ namespace Grindstone {
 		namespace ImguiEditor {
 			class ComponentInspector;
 			class MaterialInspector;
+			class v;
 
 			class InspectorPanel {
 			public:
-				InspectorPanel(EngineCore* engineCore);
+				InspectorPanel(EngineCore* engineCore, ImguiEditor* imguiEditor);
 				void Render();
 			private:
 				void RenderContents();

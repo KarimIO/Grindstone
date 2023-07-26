@@ -156,19 +156,17 @@ namespace Grindstone {
 
 			metaFile = new MetaFile();
 			metaFile->Load(inputPath);
-			std::string subassetName = "shader";
-			Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Shader);
-			baseOutputPath = (Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString()).string();
-
-			metaFile->Save();
-
 			sourceFileContents = ReadTextFile(inputPath.string().c_str());
 
 			Process();
+			metaFile->Save();
 		}
 
 		void ShaderImporter::Process() {
 			shaderName = ExtractField("#name");
+			Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(shaderName, AssetType::Shader);
+			baseOutputPath = (Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString()).string();
+
 			renderQueue = ExtractField("#renderQueue");
 			geometryRenderer = ExtractField("#geometryRenderer");
 			transparencyMode = ExtractField("#transparencyMode");
@@ -179,7 +177,7 @@ namespace Grindstone {
 
 		void ShaderImporter::WriteReflectionStruct(std::vector<UniformBuffer>& structs) {
 			reflectionWriter.StartArray();
-			for each (auto & structMeta in structs) {
+			for (auto& structMeta : structs) {
 				reflectionWriter.StartObject();
 				reflectionWriter.Key("name");
 				reflectionWriter.String(structMeta.name.c_str());
@@ -199,7 +197,7 @@ namespace Grindstone {
 
 				reflectionWriter.Key("members");
 				reflectionWriter.StartArray();
-				for each (auto & member in structMeta.members) {
+				for (auto& member : structMeta.members) {
 					reflectionWriter.StartObject();
 					reflectionWriter.Key("name");
 					reflectionWriter.String(member.name.c_str());
@@ -231,7 +229,7 @@ namespace Grindstone {
 
 				reflectionWriter.Key("usedIn");
 				reflectionWriter.StartArray();
-				for each (auto & shaderPass in resource.shaderPasses) {
+				for (auto& shaderPass : resource.shaderPasses) {
 					reflectionWriter.String(GetShaderTypeAsString(shaderPass));
 				}
 				reflectionWriter.EndArray();

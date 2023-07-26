@@ -26,6 +26,17 @@ AssetManager::AssetManager() {
 	RegisterAssetType(MaterialAsset::GetStaticType(), "MaterialAsset", new MaterialImporter());
 }
 
+void AssetManager::ReloadAsset(AssetType assetType, Uuid uuid) {
+	size_t assetTypeSizeT = static_cast<size_t>(assetType);
+	if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
+		return;
+	}
+
+	AssetImporter* assetImporter = assetTypeImporters[assetTypeSizeT];
+	assetImporter->ReloadAsset(uuid);
+
+}
+
 void* AssetManager::GetAsset(AssetType assetType, const char* path) {
 	size_t assetTypeSizeT = static_cast<size_t>(assetType);
 	if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
@@ -64,7 +75,7 @@ bool AssetManager::LoadFile(const char* path, char*& fileData, size_t& fileSize)
 	fileData = nullptr;
 	fileSize = 0;
 
-	assetLoader->Load(path, fileData, fileSize);
+	assetLoader->Load(std::filesystem::path(path), fileData, fileSize);
 	return fileData != nullptr;
 }
 
