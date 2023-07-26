@@ -62,6 +62,10 @@ bool Grindstone::Uuid::operator==(const Uuid& other) const {
 	return std::memcmp(other.uuid, uuid, sizeof(uuid)) == 0;
 }
 
+bool Grindstone::Uuid::operator!=(const Uuid& other) const {
+	return std::memcmp(other.uuid, uuid, sizeof(uuid)) != 0;
+}
+
 bool Grindstone::Uuid::operator<(const Uuid& other) const {
 	return std::memcmp(other.uuid, uuid, sizeof(uuid)) < 0;
 }

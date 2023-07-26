@@ -15,6 +15,7 @@ namespace Grindstone {
 		class AssetManager {
 		public:
 			AssetManager();
+			virtual void ReloadAsset(AssetType assetType, Uuid uuid);
 			virtual void* GetAsset(AssetType assetType, const char* path);
 			virtual void* GetAsset(AssetType assetType, Uuid uuid);
 			virtual bool LoadFile(const char* path, char*& dataPtr, size_t& fileSize);

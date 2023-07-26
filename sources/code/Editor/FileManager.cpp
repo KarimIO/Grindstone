@@ -1,11 +1,15 @@
 #include <filesystem>
+
 #include <efsw/efsw.h>
+
+#include <Common/Logging.hpp>
+#include <Common/ResourcePipeline/MetaFile.hpp>
+
+#include <Editor/Importers/ImporterManager.hpp>
+#include <Editor/ScriptBuilder/CSharpBuildManager.hpp>
 #include "FileManager.hpp"
 #include "EditorManager.hpp"
-#include "Common/Logging.hpp"
-#include "Common/ResourcePipeline/MetaFile.hpp"
-#include "Importers/ImporterManager.hpp"
-#include "ScriptBuilder/CSharpBuildManager.hpp"
+
 using namespace Grindstone;
 using namespace Grindstone::Editor;
 
@@ -125,7 +129,8 @@ void FileManager::UpdateCompiledFileIfNecessary(std::filesystem::path path) {
 	if (CheckIfCompiledFileNeedsToBeUpdated(path)) {
 		auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
 		importManager.Import(path);
-		Editor::Manager::GetInstance().GetAssetRegistry().WriteFile();
+		auto& editorManager = Editor::Manager::GetInstance();
+		editorManager.GetAssetRegistry().WriteFile();
 	}
 }
 

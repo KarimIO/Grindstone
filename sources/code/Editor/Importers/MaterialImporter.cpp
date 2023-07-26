@@ -6,6 +6,7 @@
 
 #include <rapidjson/document.h>
 
+#include <EngineCore/Assets/AssetManager.hpp>
 #include "Editor/EditorManager.hpp"
 #include "MaterialImporter.hpp"
 #include "TextureImporter.hpp"
@@ -84,7 +85,6 @@ void Importers::CreateCutoutMaterial(StandardMaterialCreateInfo& ci, std::filesy
 void MaterialImporter::Import(std::filesystem::path& path) {
 	metaFile = new MetaFile(path);
 
-
 	std::string contentData = Grindstone::Utils::LoadFileText(path.string().c_str());
 	rapidjson::Document document;
 	document.Parse(contentData.data());
@@ -106,6 +106,7 @@ void MaterialImporter::Import(std::filesystem::path& path) {
 	std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
 	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
 	metaFile->Save();
+	Editor::Manager::GetEngineCore().assetManager->ReloadAsset(AssetType::Material, uuid);
 }
 
 Uuid MaterialImporter::GetUuidAfterImport() {

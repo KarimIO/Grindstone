@@ -58,17 +58,112 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 		return nullptr;
 	}
 
+	auto& reflectionData = shaderAsset->reflectionData;
+
 	shaderAsset->materials.emplace_back(uuid);
 	auto& material = materials.emplace(uuid, MaterialAsset(uuid, name, shaderUuid));
 	MaterialAsset* materialAsset = &material.first->second;
 
+	std::vector<DescriptorSet::Binding> bindings;
+	SetupUniformBuffer(document, reflectionData, bindings, materialAsset->name, materialAsset);
+	SetupSamplers(document, reflectionData, bindings);
+
+	std::string descriptorSetName = (materialAsset->name + " Material Descriptor Set");
+
+	GraphicsAPI::DescriptorSet::CreateInfo materialDescriptorSetCreateInfo{};
+	materialDescriptorSetCreateInfo.debugName = descriptorSetName.c_str();
+	materialDescriptorSetCreateInfo.bindings = bindings.data();
+	materialDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+	materialDescriptorSetCreateInfo.layout = shaderAsset->descriptorSetLayout;
+	DescriptorSet* materialDescriptorSet = graphicsCore->CreateDescriptorSet(materialDescriptorSetCreateInfo);
+
+	materialAsset->descriptorSet = materialDescriptorSet;
+
+	return materialAsset;
+}
+
+void MaterialImporter::ReloadAsset(Uuid uuid) {
+	auto& materialIterator = materials.find(uuid);
+	if (materialIterator == materials.end()) {
+		return;
+	}
+
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
+	MaterialAsset* materialAsset = &materialIterator->second;
+
+	std::string contentData;
+	if (!assetManager->LoadFileText(uuid, contentData)) {
+		EngineCore::GetInstance().Print(LogSeverity::Error, "Could not find material by file.");
+		return;
+	}
+
+	rapidjson::Document document;
+	document.Parse(contentData.data());
+
+	if (!document.HasMember("name")) {
+		EngineCore::GetInstance().Print(LogSeverity::Error, "No name found in material.");
+		return;
+	}
+	const char* name = document["name"].GetString();
+
+	if (!document.HasMember("shader")) {
+		EngineCore::GetInstance().Print(LogSeverity::Error, "No shader found in material.");
+		return;
+	}
+
+	Uuid shaderUuid(document["shader"].GetString());
+	ShaderAsset* shaderAsset = assetManager->GetAsset<ShaderAsset>(shaderUuid);
+	// TODO: Handle swapping between shaders
+
+	if (materialAsset->buffer != nullptr) {
+		delete materialAsset->buffer;
+	}
+
+	if (materialAsset->buffer != nullptr) {
+		graphicsCore->DeleteDescriptorSet(materialAsset->descriptorSet);
+	}
+
+	if (materialAsset->buffer != nullptr) {
+		graphicsCore->DeleteUniformBuffer(materialAsset->uniformBufferObject);
+	}
+
+	auto& reflectionData = shaderAsset->reflectionData;
+
+	std::vector<DescriptorSet::Binding> bindings;
+	SetupUniformBuffer(document, reflectionData, bindings, materialAsset->name, materialAsset);
+	SetupSamplers(document, reflectionData, bindings);
+
+	std::string descriptorSetName = (materialAsset->name + " Material Descriptor Set");
+
+	GraphicsAPI::DescriptorSet::CreateInfo materialDescriptorSetCreateInfo{};
+	materialDescriptorSetCreateInfo.debugName = descriptorSetName.c_str();
+	materialDescriptorSetCreateInfo.bindings = bindings.data();
+	materialDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+	materialDescriptorSetCreateInfo.layout = shaderAsset->descriptorSetLayout;
+	DescriptorSet* materialDescriptorSet = graphicsCore->CreateDescriptorSet(materialDescriptorSetCreateInfo);
+
+	materialAsset->descriptorSet = materialDescriptorSet;
+}
+
+bool MaterialImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
+	auto materialInMap = materials.find(uuid);
+	if (materialInMap != materials.end()) {
+		output = &materialInMap->second;
+		return true;
+	}
+
+	return false;
+}
+
+void MaterialImporter::SetupUniformBuffer(rapidjson::Document& document, ShaderReflectionData& reflectionData, std::vector<DescriptorSet::Binding>& bindings, std::string name, MaterialAsset* materialAsset) {
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+
 	GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
 	char* bufferSpace = nullptr;
 
-	std::vector<DescriptorSet::Binding> bindings;
-
 	ShaderReflectionData::StructData* materialUniformBuffer = nullptr;
-	auto& uniformBuffers = shaderAsset->reflectionData.uniformBuffers;
+	auto& uniformBuffers = reflectionData.uniformBuffers;
 	for (auto& uniformBuffer : uniformBuffers) {
 		if (uniformBuffer.name != "MaterialUbo") {
 			continue;
@@ -78,7 +173,7 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	}
 
 	if (materialUniformBuffer != nullptr) {
-		std::string uniformBufferName = (materialAsset->name + " MaterialUbo");
+		std::string uniformBufferName = (name + " MaterialUbo");
 		GraphicsAPI::UniformBuffer::CreateInfo ubCi{};
 		ubCi.debugName = uniformBufferName.c_str();
 		ubCi.isDynamic = true;
@@ -115,8 +210,15 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 		}
 	}
 
+	materialAsset->uniformBufferObject = uniformBufferObject;
+	materialAsset->buffer = bufferSpace;
+}
 
-	auto& textureReferencesFromMaterial = shaderAsset->reflectionData.textures;
+void MaterialImporter::SetupSamplers(rapidjson::Document& document, ShaderReflectionData& reflectionData, std::vector<DescriptorSet::Binding>& bindings) {
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
+
+	auto& textureReferencesFromMaterial = reflectionData.textures;
 	bool hasSamplers = document.HasMember("samplers");
 	if (textureReferencesFromMaterial.size() > 0 && hasSamplers) {
 		auto& samplersJson = document["samplers"];
@@ -148,28 +250,4 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 			}
 		}
 	}
-
-	std::string descriptorSetName = (materialAsset->name + " Material Descriptor Set");
-	GraphicsAPI::DescriptorSet::CreateInfo materialDescriptorSetCreateInfo{};
-	materialDescriptorSetCreateInfo.debugName = descriptorSetName.c_str();
-	materialDescriptorSetCreateInfo.bindings = bindings.data();
-	materialDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	materialDescriptorSetCreateInfo.layout = shaderAsset->descriptorSetLayout;
-	DescriptorSet* materialDescriptorSet = graphicsCore->CreateDescriptorSet(materialDescriptorSetCreateInfo);
-
-	materialAsset->descriptorSet = materialDescriptorSet;
-	materialAsset->uniformBufferObject = uniformBufferObject;
-	materialAsset->buffer = bufferSpace;
-
-	return materialAsset;
-}
-
-bool MaterialImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
-	auto materialInMap = materials.find(uuid);
-	if (materialInMap != materials.end()) {
-		output = &materialInMap->second;
-		return true;
-	}
-
-	return false;
 }

@@ -12,6 +12,7 @@ namespace Grindstone {
 		void operator=(const char*);
 		void operator=(const Uuid& other);
 		bool operator==(const Uuid& other) const;
+		bool operator!=(const Uuid& other) const;
 		bool operator<(const Uuid& other) const;
 		bool IsValid();
 		operator std::string();

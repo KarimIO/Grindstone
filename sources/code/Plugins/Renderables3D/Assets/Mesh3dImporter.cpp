@@ -128,8 +128,25 @@ bool Mesh3dImporter::TryGetIfLoaded(Uuid uuid, void*& mesh) {
 	return false;
 }
 
+void Mesh3dImporter::ReloadAsset(Uuid uuid) {
+	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
+	auto meshInMap = meshes.find(uuid);
+	if (meshInMap == meshes.end()) {
+		return;
+	}
+
+	auto& meshAsset = meshInMap->second;
+	if (meshAsset.vertexArrayObject != nullptr) {
+		graphicsCore->DeleteVertexArrayObject(meshAsset.vertexArrayObject);
+	}
+
+	meshAsset.submeshes.clear();
+
+	ImportModelFile(meshAsset);
+}
+
 void Mesh3dImporter::LoadMeshImportSubmeshes(Mesh3dAsset& mesh, Formats::Model::V1::Header& header, char*& sourcePtr) {
-	SourceSubmesh* sourceSubmeshes = (SourceSubmesh*)sourcePtr;
+	SourceSubmesh* sourceSubmeshes = reinterpret_cast<SourceSubmesh*>(sourcePtr);
 	mesh.submeshes.resize(header.meshCount);
 
 	for (uint32_t i = 0; i < header.meshCount; ++i) {
@@ -204,26 +221,35 @@ void Mesh3dImporter::LoadMeshImportIndices(
 }
 
 void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
-	char* fileContent;
+	auto& meshIterator = meshes.emplace(uuid, Mesh3dAsset(uuid, uuid.ToString()));
+	Mesh3dAsset& mesh = meshIterator.first->second;
+
+	ImportModelFile(mesh);
+
+	return &mesh;
+}
+
+bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
+	char* fileContent = nullptr;
 	size_t fileSize;
-	if (!engineCore->assetManager->LoadFile(uuid, fileContent, fileSize)) {
-		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile Unable to load file with id " + uuid.ToString() + ".";
+	if (!engineCore->assetManager->LoadFile(mesh.uuid, fileContent, fileSize)) {
+		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile Unable to load file with id " + mesh.name + ".";
 		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
-		return nullptr;
+		return false;
 	}
 
 	auto graphicsCore = engineCore->GetGraphicsCore();
 	if (fileSize < 3 && strncmp("GMF", fileContent, 3) != 0) {
 		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile GMF magic code wasn't matched.";
 		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
-		return nullptr;
+		return false;
 	}
 
 	Formats::Model::V1::Header header;
 	if (fileSize < (3 + sizeof(header))) {
 		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile file not big enough to fit header.";
 		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
-		return nullptr;
+		return false;
 	}
 	char* headerPtr = fileContent + 3;
 	header = *(Formats::Model::V1::Header*)headerPtr;
@@ -234,14 +260,11 @@ void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
 	if (totalFileExpectedSize > fileSize || header.totalFileSize > fileSize) {
 		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile file not big enough to fit all contents.";
 		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
-		return nullptr;
+		return false;
 	}
 
 	std::vector<GraphicsAPI::VertexBuffer*> vertexBuffers;
 	GraphicsAPI::IndexBuffer* indexBuffer = nullptr;
-
-	auto& meshIterator = meshes.emplace(uuid, Mesh3dAsset(uuid, uuid.ToString()));
-	Mesh3dAsset& mesh = meshIterator.first->second;
 
 	LoadMeshImportSubmeshes(mesh, header, srcPtr);
 	LoadMeshImportVertices(mesh, header, srcPtr, vertexBuffers);
@@ -261,7 +284,7 @@ void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
 		mesh.submeshes[i].vertexArrayObject = mesh.vertexArrayObject;
 	}
 
-	return &mesh;
+	return true;
 }
 
 uint64_t Mesh3dImporter::GetTotalFileSize(Formats::Model::V1::Header& header) {
