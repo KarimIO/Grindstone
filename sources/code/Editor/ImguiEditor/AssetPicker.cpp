@@ -56,9 +56,10 @@ void AssetPicker::Render() {
 				ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::GetColorU32(++i % 2 ? ImGuiCol_TableRowBgAlt : ImGuiCol_TableRowBg));
 				ImGui::TableNextRow(ImGuiTableRowFlags_None, 24.0f);
 				ImGui::TableNextColumn();
-				if (ImGui::Button(asset.name.c_str(), btnSize)) {
+				if (ImGui::Button((asset.name + "##" + std::to_string(i)).c_str(), btnSize)) {
 					callback(asset.uuid, asset.name);
 					ImGui::CloseCurrentPopup();
+					isShowing = false;
 				}
 			}
 

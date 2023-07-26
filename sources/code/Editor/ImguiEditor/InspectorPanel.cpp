@@ -12,7 +12,7 @@ namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
 			InspectorPanel::InspectorPanel(EngineCore* engineCore, ImguiEditor* imguiEditor) : engineCore(engineCore) {
-				componentInspector = new ComponentInspector();
+				componentInspector = new ComponentInspector(imguiEditor);
 				materialInspector = new MaterialInspector(engineCore, imguiEditor);
 			}
 

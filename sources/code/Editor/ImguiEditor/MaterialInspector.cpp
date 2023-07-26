@@ -68,7 +68,9 @@ void MaterialInspector::ReloadAvailableShaders() {
 
 void MaterialInspector::Render() {
 	ImGui::Text("Editing Material: %s", filename.c_str());
-	ImGui::InputText("Material Name", &materialName);
+	if (ImGui::InputText("Material Name", &materialName)) {
+		hasBeenChanged = true;
+	}
 
 	if (ImGui::BeginCombo("Shader", shaderName.c_str())) {
 		for (size_t i = 0; i < availableShaders.size(); ++i) {
@@ -76,6 +78,7 @@ void MaterialInspector::Render() {
 			if (ImGui::Selectable(availableShaders[i].name.c_str(), isCurrentShader)) {
 				shaderName = availableShaders[i].name;
 				shaderUuid = availableShaders[i].uuid;
+				hasBeenChanged = true;
 			}
 		}
 		ImGui::EndCombo();
