@@ -1,12 +1,16 @@
 #include <imgui.h>
+#include <imgui_stdlib.h>
 #include <entt/entt.hpp>
-#include "Common/Event/PrintMessageEvent.hpp"
-#include "Common/Event/EventType.hpp"
-#include "EngineCore/Events/Dispatcher.hpp"
-#include "EngineCore/EngineCore.hpp"
-#include "Editor/EditorManager.hpp"
-#include "AssetPicker.hpp"
 
+#include <Common/Event/PrintMessageEvent.hpp>
+#include <Common/Event/EventType.hpp>
+
+#include <EngineCore/Events/Dispatcher.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Utils/Utilities.hpp>
+
+#include <Editor/EditorManager.hpp>
+#include "AssetPicker.hpp"
 #include "ImguiRenderer.hpp"
 
 using namespace Grindstone;
@@ -19,14 +23,20 @@ void AssetPicker::OpenPrompt(AssetType assetType, AssetPickerCallback callback) 
 	isShowing = true;
 
 	assets.clear();
+	filteredResults.clear();
 	AssetRegistry& registry = Editor::Manager::GetInstance().GetAssetRegistry();
 	registry.FindAllFilesOfType(assetType, assets);
 	std::sort(
 		assets.begin(), assets.end(),
-		[](AssetRegistry::Entry&a, AssetRegistry::Entry& b) {
+		[](AssetRegistry::Entry& a, AssetRegistry::Entry& b) {
 			return a.name < b.name;
 		}
 	);
+
+	filteredResults.reserve(assets.size());
+	for (size_t i = 0; i < assets.size(); ++i) {
+		filteredResults.push_back(assets[i]);
+	}
 }
 
 void AssetPicker::Render() {
@@ -38,9 +48,39 @@ void AssetPicker::Render() {
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
 	ImGui::SetNextWindowSize(ASSET_PICKER_WINDOW_SIZE);
 
+	ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+	ImVec2 windowPos = ImVec2(
+		(displaySize.x - ASSET_PICKER_WINDOW_SIZE.x) / 2.0f,
+		(displaySize.y - ASSET_PICKER_WINDOW_SIZE.y) / 2.0f
+	);
+	ImGui::SetNextWindowPos(windowPos);
+
 	if (ImGui::BeginPopupModal("Asset Picker", false, flags)) {
 		if (assets.size() == 0) {
 			ImGui::Text("No related files found.");
+			return;
+		}
+
+		if (ImGui::InputText("Search", &searchString)) {
+			std::string lowerSearch = Utils::ToLower(searchString);
+			lowerSearch = Utils::Trim(lowerSearch);
+
+			filteredResults.clear();
+			if (lowerSearch.size() == 0) {
+				filteredResults.reserve(assets.size());
+				for (size_t i = 0; i < assets.size(); ++i) {
+					filteredResults.push_back(assets[i]);
+				}
+			}
+			else {
+				for (size_t i = 0; i < assets.size(); ++i) {
+					const auto& asset = assets[i];
+					std::string assetName = Utils::ToLower(asset.name);
+					if (assetName.find(lowerSearch) != std::string::npos) {
+						filteredResults.push_back(asset);
+					}
+				}
+			}
 		}
 
 		bool isInTable = ImGui::BeginTable("assetBrowserSplit", 1);
@@ -52,7 +92,7 @@ void AssetPicker::Render() {
 		if (isInTable) {
 			ImVec2 btnSize = { ImGui::GetContentRegionAvail().x, 22.0f };
 			size_t i = 0;
-			for (auto& asset : assets) {
+			for (auto& asset : filteredResults) {
 				ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::GetColorU32(++i % 2 ? ImGuiCol_TableRowBgAlt : ImGuiCol_TableRowBg));
 				ImGui::TableNextRow(ImGuiTableRowFlags_None, 24.0f);
 				ImGui::TableNextColumn();

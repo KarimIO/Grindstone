@@ -49,3 +49,22 @@ std::string Utils::FixStringSlashesReturn(std::string path) {
 void Utils::FixStringSlashes(std::string& path) {
 	std::replace(path.begin(), path.end(), '\\', '/');
 }
+
+std::string Utils::ToLower(const std::string& source) {
+	std::string outString(source.length(), 0);
+	std::transform(source.begin(), source.end(), outString.begin(), ::tolower);
+	return outString;
+}
+
+std::string Utils::Trim(const std::string& source) {
+	std::string outString;
+
+	for (size_t i = 0; i < source.size(); ++i) {
+		char c = source[i];
+		if (c != ' ' && c != '\t' && c != '\n') {
+			outString += c;
+		}
+	}
+
+	return outString;
+}
