@@ -128,7 +128,7 @@ bool Mesh3dImporter::TryGetIfLoaded(Uuid uuid, void*& mesh) {
 	return false;
 }
 
-void Mesh3dImporter::ReloadAsset(Uuid uuid) {
+void Mesh3dImporter::QueueReloadAsset(Uuid uuid) {
 	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
 	auto meshInMap = meshes.find(uuid);
 	if (meshInMap == meshes.end()) {

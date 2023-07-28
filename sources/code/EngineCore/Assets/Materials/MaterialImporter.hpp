@@ -21,7 +21,7 @@ namespace Grindstone {
 	class MaterialImporter : public AssetImporter {
 	public:
 		MaterialImporter();
-		virtual void ReloadAsset(Uuid uuid) override;
+		virtual void QueueReloadAsset(Uuid uuid) override;
 		virtual void* ProcessLoadedFile(Uuid uuid) override;
 		virtual bool TryGetIfLoaded(Uuid uuid, void*& output) override;
 	private:

@@ -106,7 +106,7 @@ void MaterialImporter::Import(std::filesystem::path& path) {
 	std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
 	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
 	metaFile->Save();
-	Editor::Manager::GetEngineCore().assetManager->ReloadAsset(AssetType::Material, uuid);
+	Editor::Manager::GetEngineCore().assetManager->QueueReloadAsset(AssetType::Material, uuid);
 }
 
 Uuid MaterialImporter::GetUuidAfterImport() {

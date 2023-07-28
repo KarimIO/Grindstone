@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <mutex>
 
 #include "Common/Graphics/GraphicsPipeline.hpp"
 
@@ -15,7 +16,8 @@ namespace Grindstone {
 		class AssetManager {
 		public:
 			AssetManager();
-			virtual void ReloadAsset(AssetType assetType, Uuid uuid);
+			void ReloadQueuedAssets();
+			virtual void QueueReloadAsset(AssetType assetType, Uuid uuid);
 			virtual void* GetAsset(AssetType assetType, const char* path);
 			virtual void* GetAsset(AssetType assetType, Uuid uuid);
 			virtual bool LoadFile(const char* path, char*& dataPtr, size_t& fileSize);
@@ -49,6 +51,8 @@ namespace Grindstone {
 			AssetLoader* assetLoader = nullptr;
 			std::vector<std::string> assetTypeNames;
 			std::vector<AssetImporter*> assetTypeImporters;
+			std::vector<std::pair<AssetType, Uuid>> queuedAssetReloads;
+			std::mutex reloadMutex;
 		};
 	}
 }

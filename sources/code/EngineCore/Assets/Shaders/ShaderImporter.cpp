@@ -222,7 +222,7 @@ bool ShaderImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
 	return false;
 }
 
-void ShaderImporter::ReloadAsset(Uuid uuid) {
+void ShaderImporter::QueueReloadAsset(Uuid uuid) {
 	auto& shaderInMap = shaders.find(uuid);
 	if (shaderInMap == shaders.end()) {
 		return;
@@ -230,7 +230,7 @@ void ShaderImporter::ReloadAsset(Uuid uuid) {
 
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	GraphicsPipeline*& pipeline = shaderInMap->second.pipeline;
-	if (pipeline == nullptr) {
+	if (pipeline != nullptr) {
 		graphicsCore->DeleteGraphicsPipeline(pipeline);
 		pipeline = nullptr;
 	}

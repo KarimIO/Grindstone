@@ -26,15 +26,25 @@ AssetManager::AssetManager() {
 	RegisterAssetType(MaterialAsset::GetStaticType(), "MaterialAsset", new MaterialImporter());
 }
 
-void AssetManager::ReloadAsset(AssetType assetType, Uuid uuid) {
-	size_t assetTypeSizeT = static_cast<size_t>(assetType);
-	if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
-		return;
+void AssetManager::QueueReloadAsset(AssetType assetType, Uuid uuid) {
+	std::scoped_lock lk(reloadMutex);
+	queuedAssetReloads.emplace_back(assetType, uuid);
+}
+
+void AssetManager::ReloadQueuedAssets() {
+	std::scoped_lock lk(reloadMutex);
+
+	for (auto& assetSet : queuedAssetReloads) {
+		size_t assetTypeSizeT = static_cast<size_t>(assetSet.first);
+		if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
+			return;
+		}
+
+		AssetImporter* assetImporter = assetTypeImporters[assetTypeSizeT];
+		assetImporter->QueueReloadAsset(assetSet.second);
 	}
 
-	AssetImporter* assetImporter = assetTypeImporters[assetTypeSizeT];
-	assetImporter->ReloadAsset(uuid);
-
+	queuedAssetReloads.clear();
 }
 
 void* AssetManager::GetAsset(AssetType assetType, const char* path) {

@@ -103,7 +103,7 @@ bool AudioClipImporter::TryGetIfLoaded(Uuid uuid, void*& audioClip) {
 	return false;
 }
 
-void AudioClipImporter::ReloadAsset(Uuid uuid) {
+void AudioClipImporter::QueueReloadAsset(Uuid uuid) {
 	auto audioClipInMap = audioClips.find(uuid);
 	if (audioClipInMap == audioClips.end()) {
 		return;

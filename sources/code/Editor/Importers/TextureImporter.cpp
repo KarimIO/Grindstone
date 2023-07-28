@@ -15,6 +15,7 @@
 #define BC6H_ENC_IMPLEMENTATION
 #include "bc6h_enc.h"
 
+#include <EngineCore/Assets/AssetManager.hpp>
 #include "Common/ResourcePipeline/MetaFile.hpp"
 #include "Common/Formats/Dds.hpp"
 #include "Editor/EditorManager.hpp"
@@ -319,6 +320,8 @@ void TextureImporter::OutputDds(uint8_t* outData, uint64_t contentSize) {
 	metaFile->Save();
 
 	delete[] outData;
+
+	Editor::Manager::GetEngineCore().assetManager->QueueReloadAsset(AssetType::Texture, uuid);
 }
 
 uint32_t TextureImporter::CalculateMipMapLevelCount(uint32_t width, uint32_t height) {
