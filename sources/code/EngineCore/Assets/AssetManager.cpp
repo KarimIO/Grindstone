@@ -27,12 +27,12 @@ AssetManager::AssetManager() {
 }
 
 void AssetManager::QueueReloadAsset(AssetType assetType, Uuid uuid) {
-	std::scoped_lock lk(reloadMutex);
+	std::scoped_lock lock(reloadMutex);
 	queuedAssetReloads.emplace_back(assetType, uuid);
 }
 
 void AssetManager::ReloadQueuedAssets() {
-	std::scoped_lock lk(reloadMutex);
+	std::scoped_lock lock(reloadMutex);
 
 	for (auto& assetSet : queuedAssetReloads) {
 		size_t assetTypeSizeT = static_cast<size_t>(assetSet.first);

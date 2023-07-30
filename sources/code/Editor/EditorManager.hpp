@@ -12,6 +12,7 @@
 #include "AssetRegistry.hpp"
 #include "GitManager.hpp"
 #include "Selection.hpp"
+#include "TaskSystem.hpp"
 
 namespace Grindstone {
 	namespace Events {
@@ -46,6 +47,7 @@ namespace Grindstone {
 			CommandList& GetCommandList();
 			GitManager& GetGitManager();
 			Selection& GetSelection();
+			TaskSystem& GetTaskSystem();
 			ScriptBuilder::CSharpBuildManager& GetCSharpBuildManager();
 			static FileManager& GetFileManager();
 			static EngineCore& GetEngineCore();
@@ -84,6 +86,7 @@ namespace Grindstone {
 			PlayMode playMode;
 			Selection selection;
 			FileManager fileManager;
+			TaskSystem taskSystem;
 			AssetRegistry assetRegistry;
 			GitManager gitManager;
 			Grindstone::Utilities::Modules::Handle engineCoreLibraryHandle;
