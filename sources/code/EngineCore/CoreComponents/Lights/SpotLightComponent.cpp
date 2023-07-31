@@ -36,11 +36,11 @@ void Grindstone::SetupSpotLightComponent(ECS::Entity& entity, void* componentPtr
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;
 	spotLightComponent.renderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
-	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(renderPassCreateInfo.depthFormat, shadowResolution, shadowResolution, false, false, true, "Shadow Map Depth Image");
+	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(renderPassCreateInfo.depthFormat, shadowResolution, shadowResolution, false, false, true, "Spot Shadow Map Depth Image");
 	spotLightComponent.depthTarget = graphicsCore->CreateDepthTarget(gbufferDepthImageCreateInfo);
 
 	Framebuffer::CreateInfo gbufferCreateInfo{};
-	gbufferCreateInfo.debugName = "G-Buffer Framebuffer";
+	gbufferCreateInfo.debugName = "Spotlight Shadow Framebuffer";
 	gbufferCreateInfo.renderPass = spotLightComponent.renderPass;
 	gbufferCreateInfo.renderTargetLists = nullptr;
 	gbufferCreateInfo.numRenderTargetLists = 0;
@@ -69,7 +69,7 @@ void Grindstone::SetupSpotLightComponent(ECS::Entity& entity, void* componentPtr
 		lightLayoutBindings[1].stages = ShaderStageBit::Fragment;
 
 		DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
-		descriptorSetLayoutCreateInfo.debugName = "Light UBO Descriptor Set Layout";
+		descriptorSetLayoutCreateInfo.debugName = "Spotlight Descriptor Set Layout";
 		descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightLayoutBindings.size());
 		descriptorSetLayoutCreateInfo.bindings = lightLayoutBindings.data();
 		spotLightComponent.descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
@@ -86,7 +86,7 @@ void Grindstone::SetupSpotLightComponent(ECS::Entity& entity, void* componentPtr
 		lightBindings[1].itemPtr = spotLightComponent.depthTarget;
 
 		DescriptorSet::CreateInfo descriptorSetCreateInfo{};
-		descriptorSetCreateInfo.debugName = "Light UBO Descriptor Set";
+		descriptorSetCreateInfo.debugName = "Spotlight Descriptor Set";
 		descriptorSetCreateInfo.layout = spotLightComponent.descriptorSetLayout;
 		descriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(lightBindings.size());
 		descriptorSetCreateInfo.bindings = lightBindings.data();
@@ -107,7 +107,7 @@ void Grindstone::SetupSpotLightComponent(ECS::Entity& entity, void* componentPtr
 		lightUboBindingLayout.stages = ShaderStageBit::Vertex;
 
 		DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
-		descriptorSetLayoutCreateInfo.debugName = "Light UBO Descriptor Set Layout";
+		descriptorSetLayoutCreateInfo.debugName = "Spotlight Shadow Descriptor Set Layout";
 		descriptorSetLayoutCreateInfo.bindingCount = 1;
 		descriptorSetLayoutCreateInfo.bindings = &lightUboBindingLayout;
 		spotLightComponent.shadowMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
@@ -119,7 +119,7 @@ void Grindstone::SetupSpotLightComponent(ECS::Entity& entity, void* componentPtr
 		lightUboBinding.itemPtr = spotLightComponent.shadowMapUniformBufferObject;
 
 		DescriptorSet::CreateInfo descriptorSetCreateInfo{};
-		descriptorSetCreateInfo.debugName = "Shadow Map Descriptor Set";
+		descriptorSetCreateInfo.debugName = "Spotlight Shadow Descriptor Set";
 		descriptorSetCreateInfo.layout = spotLightComponent.shadowMapDescriptorSetLayout;
 		descriptorSetCreateInfo.bindingCount = 1;
 		descriptorSetCreateInfo.bindings = &lightUboBinding;
