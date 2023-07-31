@@ -188,6 +188,8 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 	}
 
 	GraphicsAPI::Core* core = Editor::Manager::GetEngineCore().GetGraphicsCore();
+	core->WaitUntilIdle();
+
 	this->width = width == 0 ? 1 : width;
 	this->height = height == 0 ? 1 : height;
 
