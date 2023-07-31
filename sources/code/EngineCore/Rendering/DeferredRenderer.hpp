@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <Common/ResourcePipeline/Uuid.hpp>
 #include "BaseRenderer.hpp"
 
 namespace Grindstone {
@@ -139,5 +140,8 @@ namespace Grindstone {
 		GraphicsAPI::GraphicsPipeline* shadowMappingPipeline = nullptr;
 
 		GraphicsAPI::ComputePipeline* bloomPipeline = nullptr;
+
+		// Used to check when environment map changes, so we can update it
+		Uuid currentEnvironmentMapUuid;
 	};
 }

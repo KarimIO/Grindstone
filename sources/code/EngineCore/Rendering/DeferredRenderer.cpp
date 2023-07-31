@@ -757,11 +757,11 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 		environmentMapLayoutBinding.type = BindingType::Texture;
 		environmentMapLayoutBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
 
-		DescriptorSetLayout::CreateInfo ssaoInputLayoutCreateInfo{};
-		ssaoInputLayoutCreateInfo.debugName = "SSAO Descriptor Set Layout";
-		ssaoInputLayoutCreateInfo.bindingCount = 1;
-		ssaoInputLayoutCreateInfo.bindings = &environmentMapLayoutBinding;
-		environmentMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ssaoInputLayoutCreateInfo);
+		DescriptorSetLayout::CreateInfo environmentMapLayoutCreateInfo{};
+		environmentMapLayoutCreateInfo.debugName = "Environment Map Input Descriptor Set Layout";
+		environmentMapLayoutCreateInfo.bindingCount = 1;
+		environmentMapLayoutCreateInfo.bindings = &environmentMapLayoutBinding;
+		environmentMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(environmentMapLayoutCreateInfo);
 	}
 
 	{
@@ -771,12 +771,12 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 		environmentMapBinding.bindingType = BindingType::RenderTexture;
 		environmentMapBinding.itemPtr = ssaoRenderTarget;
 
-		DescriptorSet::CreateInfo ssaoInputCreateInfo{};
-		ssaoInputCreateInfo.debugName = "SSAO Descriptor Set";
-		ssaoInputCreateInfo.layout = environmentMapDescriptorSetLayout;
-		ssaoInputCreateInfo.bindingCount = 1;
-		ssaoInputCreateInfo.bindings = &environmentMapBinding;
-		environmentMapDescriptorSet = graphicsCore->CreateDescriptorSet(ssaoInputCreateInfo);
+		DescriptorSet::CreateInfo environmentMapDescriptorCreateInfo{};
+		environmentMapDescriptorCreateInfo.debugName = "Environment Map Input Descriptor Set";
+		environmentMapDescriptorCreateInfo.layout = environmentMapDescriptorSetLayout;
+		environmentMapDescriptorCreateInfo.bindingCount = 1;
+		environmentMapDescriptorCreateInfo.bindings = &environmentMapBinding;
+		environmentMapDescriptorSet = graphicsCore->CreateDescriptorSet(environmentMapDescriptorCreateInfo);
 	}
 }
 
@@ -1356,6 +1356,11 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 
 		auto view = registry.view<const EnvironmentMapComponent>();
 		view.each([&](const EnvironmentMapComponent& environmentMapComponent) {
+			if (currentEnvironmentMapUuid == environmentMapComponent.specularTexture.uuid) {
+				return;
+			}
+
+			currentEnvironmentMapUuid = environmentMapComponent.specularTexture.uuid;
 			auto texAsset = static_cast<TextureAsset*>(environmentMapComponent.specularTexture.asset);
 			if (texAsset != nullptr) {
 				auto tex = texAsset->texture;
