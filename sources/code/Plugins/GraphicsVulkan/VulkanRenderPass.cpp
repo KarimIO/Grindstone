@@ -68,7 +68,7 @@ namespace Grindstone {
 					? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
 					: VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL;
 				depthAttachment.initialLayout = shouldClearDepthOnLoad
-					? VK_IMAGE_LAYOUT_GENERAL
+					? VK_IMAGE_LAYOUT_UNDEFINED
 					: depthAttachment.finalLayout;
 				depthAttachment.flags = 0;
 
