@@ -34,16 +34,16 @@ void Grindstone::SetupDirectionalLightComponent(ECS::Entity& entity, void* compo
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;
 	directionalLightComponent.renderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
-	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(renderPassCreateInfo.depthFormat, shadowResolution, shadowResolution, false, false, true, "Directional Shadow Map Depth Image");
-	directionalLightComponent.depthTarget = graphicsCore->CreateDepthTarget(gbufferDepthImageCreateInfo);
+	DepthTarget::CreateInfo shadowMapDepthImageCreateInfo(renderPassCreateInfo.depthFormat, shadowResolution, shadowResolution, false, false, true, "Directional Shadow Map Depth Image");
+	directionalLightComponent.depthTarget = graphicsCore->CreateDepthTarget(shadowMapDepthImageCreateInfo);
 
-	Framebuffer::CreateInfo gbufferCreateInfo{};
-	gbufferCreateInfo.debugName = "Directional Shadow Framebuffer";
-	gbufferCreateInfo.renderPass = directionalLightComponent.renderPass;
-	gbufferCreateInfo.renderTargetLists = nullptr;
-	gbufferCreateInfo.numRenderTargetLists = 0;
-	gbufferCreateInfo.depthTarget = directionalLightComponent.depthTarget;
-	directionalLightComponent.framebuffer = graphicsCore->CreateFramebuffer(gbufferCreateInfo);
+	Framebuffer::CreateInfo shadowMapCreateInfo{};
+	shadowMapCreateInfo.debugName = "Directional Shadow Framebuffer";
+	shadowMapCreateInfo.renderPass = directionalLightComponent.renderPass;
+	shadowMapCreateInfo.renderTargetLists = nullptr;
+	shadowMapCreateInfo.numRenderTargetLists = 0;
+	shadowMapCreateInfo.depthTarget = directionalLightComponent.depthTarget;
+	directionalLightComponent.framebuffer = graphicsCore->CreateFramebuffer(shadowMapCreateInfo);
 
 	{
 		UniformBuffer::CreateInfo lightUniformBufferObjectCi{};

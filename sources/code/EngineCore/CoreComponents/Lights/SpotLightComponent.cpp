@@ -36,16 +36,16 @@ void Grindstone::SetupSpotLightComponent(ECS::Entity& entity, void* componentPtr
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;
 	spotLightComponent.renderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
-	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(renderPassCreateInfo.depthFormat, shadowResolution, shadowResolution, false, false, true, "Spot Shadow Map Depth Image");
-	spotLightComponent.depthTarget = graphicsCore->CreateDepthTarget(gbufferDepthImageCreateInfo);
+	DepthTarget::CreateInfo shadowMapDepthImageCreateInfo(renderPassCreateInfo.depthFormat, shadowResolution, shadowResolution, false, false, true, "Spot Shadow Map Depth Image");
+	spotLightComponent.depthTarget = graphicsCore->CreateDepthTarget(shadowMapDepthImageCreateInfo);
 
-	Framebuffer::CreateInfo gbufferCreateInfo{};
-	gbufferCreateInfo.debugName = "Spotlight Shadow Framebuffer";
-	gbufferCreateInfo.renderPass = spotLightComponent.renderPass;
-	gbufferCreateInfo.renderTargetLists = nullptr;
-	gbufferCreateInfo.numRenderTargetLists = 0;
-	gbufferCreateInfo.depthTarget = spotLightComponent.depthTarget;
-	spotLightComponent.framebuffer = graphicsCore->CreateFramebuffer(gbufferCreateInfo);
+	Framebuffer::CreateInfo shadowMapCreateInfo{};
+	shadowMapCreateInfo.debugName = "Spotlight Shadow Framebuffer";
+	shadowMapCreateInfo.renderPass = spotLightComponent.renderPass;
+	shadowMapCreateInfo.renderTargetLists = nullptr;
+	shadowMapCreateInfo.numRenderTargetLists = 0;
+	shadowMapCreateInfo.depthTarget = spotLightComponent.depthTarget;
+	spotLightComponent.framebuffer = graphicsCore->CreateFramebuffer(shadowMapCreateInfo);
 
 	{
 		UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
