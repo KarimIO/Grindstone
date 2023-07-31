@@ -30,7 +30,7 @@ void FileWatcherCallback(
 
 	std::filesystem::path path = std::filesystem::path(dir) / filename;
 	std::filesystem::directory_entry entry = std::filesystem::directory_entry(path);
-		
+
 	switch (action) {
 	case EFSW_ADD:
 		fileManager->HandleAddPath(entry);
@@ -120,17 +120,29 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(std::filesystem::path path
 
 void FileManager::UpdateCompiledFileIfNecessaryOnInitialize(std::filesystem::path path) {
 	if (CheckIfCompiledFileNeedsToBeUpdated(path)) {
-		auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
-		importManager.Import(path);
+		TaskSystem& taskSystem = Editor::Manager::GetInstance().GetTaskSystem();
+
+		std::string jobName = "Importing " + path.filename().string();
+		taskSystem.Execute(jobName, [path] {
+			std::filesystem::path nPath = path;
+			auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
+			importManager.Import(nPath);
+		});
 	}
 }
 
 void FileManager::UpdateCompiledFileIfNecessary(std::filesystem::path path) {
 	if (CheckIfCompiledFileNeedsToBeUpdated(path)) {
-		auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
-		importManager.Import(path);
-		auto& editorManager = Editor::Manager::GetInstance();
-		editorManager.GetAssetRegistry().WriteFile();
+		TaskSystem& taskSystem = Editor::Manager::GetInstance().GetTaskSystem();
+
+		std::string jobName = "Importing " + path.filename().string();
+		taskSystem.Execute(jobName, [path] {
+			std::filesystem::path nPath = path;
+			auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
+			importManager.Import(nPath);
+			auto& editorManager = Editor::Manager::GetInstance();
+			editorManager.GetAssetRegistry().WriteFile();
+		});
 	}
 }
 

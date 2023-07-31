@@ -6,6 +6,7 @@
 #include "ShaderImporter.hpp"
 #include "Common/ResourcePipeline/MetaFile.hpp"
 #include "Editor/EditorManager.hpp"
+#include <EngineCore/Assets/AssetManager.hpp>
 
 std::string GetDataTypeName(spirv_cross::SPIRType::BaseType type) {
 	switch (type) {
@@ -160,6 +161,11 @@ namespace Grindstone {
 
 			Process();
 			metaFile->Save();
+
+			Uuid uuid;
+			if (metaFile->TryGetDefaultSubassetUuid(uuid)) {
+				Editor::Manager::GetEngineCore().assetManager->QueueReloadAsset(AssetType::Shader, uuid);
+			}
 		}
 
 		void ShaderImporter::Process() {

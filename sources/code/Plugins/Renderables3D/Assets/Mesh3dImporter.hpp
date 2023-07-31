@@ -21,7 +21,7 @@ namespace Grindstone {
 			Mesh3dImporter(EngineCore* engineCore);
 			virtual void* ProcessLoadedFile(Uuid uuid) override;
 			virtual bool TryGetIfLoaded(Uuid uuid, void*& output) override;
-			virtual void ReloadAsset(Uuid uuid) override;
+			virtual void QueueReloadAsset(Uuid uuid) override;
 			void PrepareLayouts();
 			virtual void DecrementMeshCount(ECS::Entity entity, Uuid uuid);
 		private:

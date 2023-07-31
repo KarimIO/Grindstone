@@ -32,6 +32,10 @@ Selection& Manager::GetSelection() {
 	return selection;
 }
 
+TaskSystem& Manager::GetTaskSystem() {
+	return taskSystem;
+}
+
 FileManager& Manager::GetFileManager() {
 	return GetInstance().fileManager;
 }

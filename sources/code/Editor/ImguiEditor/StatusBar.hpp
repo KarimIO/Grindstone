@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "TaskPanel.hpp"
+
 namespace Grindstone {
 	namespace Editor {
 		namespace ImguiEditor {
@@ -20,6 +22,8 @@ namespace Grindstone {
 				ImTextureID gitBranchIcon;
 				ImTextureID gitAheadBehindIcon;
 				ImTextureID gitChangesIcon;
+
+				TaskPanel taskPanel;
 			};
 		}
 	}

@@ -21,11 +21,15 @@ void StatusBar::Render() {
 	ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
 	float height = ImGui::GetFrameHeight();
 
+	taskPanel.FetchTasks();
+
 	ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImGui::GetStyle().Colors[ImGuiCol_CheckMark]);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 	if (ImGui::BeginViewportSideBar("##MainStatusBar", viewport, ImGuiDir_Down, height, windowFlags)) {
 		if (ImGui::BeginMenuBar()) {
-			ImGui::Text("Ready");
+			if (ImGui::Button(taskPanel.GetTaskButtonText().c_str())) {
+				taskPanel.ToggleVisibility();
+			}
 			RenderGit();
 			ImGui::EndMenuBar();
 		}
@@ -33,6 +37,8 @@ void StatusBar::Render() {
 	}
 	ImGui::PopStyleVar();
 	ImGui::PopStyleColor();
+
+	taskPanel.Render();
 }
 
 void StatusBar::RenderGit() {

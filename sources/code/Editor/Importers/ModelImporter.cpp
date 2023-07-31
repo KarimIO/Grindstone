@@ -9,6 +9,7 @@
 #include <fstream>
 #include <chrono>
 
+#include <EngineCore/Assets/AssetManager.hpp>
 #include "Common/Formats/Model.hpp"
 #include "Common/Formats/Animation.hpp"
 #include "Editor/EditorManager.hpp"
@@ -475,6 +476,8 @@ void ModelImporter::OutputMeshes() {
 	}
 
 	output.close();
+
+	Editor::Manager::GetEngineCore().assetManager->QueueReloadAsset(AssetType::Mesh3d, outUuid);
 }
 
 void ModelImporter::OutputVertexArray(std::ofstream& output, std::vector<uint16_t>& vertexArray) {

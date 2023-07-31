@@ -82,7 +82,7 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	return materialAsset;
 }
 
-void MaterialImporter::ReloadAsset(Uuid uuid) {
+void MaterialImporter::QueueReloadAsset(Uuid uuid) {
 	auto& materialIterator = materials.find(uuid);
 	if (materialIterator == materials.end()) {
 		return;

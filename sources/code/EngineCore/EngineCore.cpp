@@ -133,6 +133,7 @@ void EngineCore::Run() {
 
 void EngineCore::RunEditorLoopIteration() {
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Running", projectPath / "log/grind-profile-run.json");
+	assetManager->ReloadQueuedAssets();
 	CalculateDeltaTime();
 	sceneManager->EditorUpdate();
 	GRIND_PROFILE_END_SESSION();

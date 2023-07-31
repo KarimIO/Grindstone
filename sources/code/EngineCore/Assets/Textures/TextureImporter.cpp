@@ -135,7 +135,7 @@ bool TextureImporter::TryGetIfLoaded(const char* path, void*& output) {
 	return false;
 }
 
-void TextureImporter::ReloadAsset(Uuid uuid) {
+void TextureImporter::QueueReloadAsset(Uuid uuid) {
 	auto& textureInMap = textures.find(uuid);
 	if (textureInMap == textures.end()) {
 		return;

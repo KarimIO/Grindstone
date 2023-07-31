@@ -12,8 +12,10 @@ namespace Grindstone {
 
 	namespace Editor {
 		namespace ImguiEditor {
+			class ImguiEditor;
 			class ComponentInspector {
 			public:
+				ComponentInspector(ImguiEditor* editor);
 				void Render(ECS::Entity entity);
 			private:
 				void RenderComponent(
@@ -35,6 +37,8 @@ namespace Grindstone {
 				);
 				void RenderComponentMember(std::string_view displayName, Reflection::TypeDescriptor* itemType, void* offset, ECS::Entity entity);
 				NewComponentInput newComponentInput;
+
+				ImguiEditor* imguiEditor = nullptr;
 			};
 		}
 	}
