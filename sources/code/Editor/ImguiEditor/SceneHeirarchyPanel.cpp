@@ -65,12 +65,13 @@ namespace Grindstone {
 				if (registry.empty()) {
 					ImGui::Text("No entities in scene.");
 				}
-
-				registry.each(
-					[&](auto entity) {
-						RenderEntity({ entity, scene });
-					}
-				);
+				else {
+					registry.each(
+						[&](auto entity) {
+							RenderEntity({ entity, scene });
+						}
+					);
+				}
 
 				if (ImGui::BeginPopupContextWindow(0, ImGuiMouseButton_Right)) {
 					if (ImGui::MenuItem("Add new entity")) {

@@ -34,16 +34,16 @@ void Grindstone::SetupDirectionalLightComponent(ECS::Entity& entity, void* compo
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;
 	directionalLightComponent.renderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
-	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(renderPassCreateInfo.depthFormat, shadowResolution, shadowResolution, false, false, true, "Shadow Map Depth Image");
-	directionalLightComponent.depthTarget = graphicsCore->CreateDepthTarget(gbufferDepthImageCreateInfo);
+	DepthTarget::CreateInfo shadowMapDepthImageCreateInfo(renderPassCreateInfo.depthFormat, shadowResolution, shadowResolution, false, false, true, "Directional Shadow Map Depth Image");
+	directionalLightComponent.depthTarget = graphicsCore->CreateDepthTarget(shadowMapDepthImageCreateInfo);
 
-	Framebuffer::CreateInfo gbufferCreateInfo{};
-	gbufferCreateInfo.debugName = "G-Buffer Framebuffer";
-	gbufferCreateInfo.renderPass = directionalLightComponent.renderPass;
-	gbufferCreateInfo.renderTargetLists = nullptr;
-	gbufferCreateInfo.numRenderTargetLists = 0;
-	gbufferCreateInfo.depthTarget = directionalLightComponent.depthTarget;
-	directionalLightComponent.framebuffer = graphicsCore->CreateFramebuffer(gbufferCreateInfo);
+	Framebuffer::CreateInfo shadowMapCreateInfo{};
+	shadowMapCreateInfo.debugName = "Directional Shadow Framebuffer";
+	shadowMapCreateInfo.renderPass = directionalLightComponent.renderPass;
+	shadowMapCreateInfo.renderTargetLists = nullptr;
+	shadowMapCreateInfo.numRenderTargetLists = 0;
+	shadowMapCreateInfo.depthTarget = directionalLightComponent.depthTarget;
+	directionalLightComponent.framebuffer = graphicsCore->CreateFramebuffer(shadowMapCreateInfo);
 
 	{
 		UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
@@ -67,7 +67,7 @@ void Grindstone::SetupDirectionalLightComponent(ECS::Entity& entity, void* compo
 		lightLayoutBindings[1].stages = ShaderStageBit::Fragment;
 
 		DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
-		descriptorSetLayoutCreateInfo.debugName = "Light UBO Descriptor Set Layout";
+		descriptorSetLayoutCreateInfo.debugName = "Directional Light Descriptor Set Layout";
 		descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightLayoutBindings.size());
 		descriptorSetLayoutCreateInfo.bindings = lightLayoutBindings.data();
 		directionalLightComponent.descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
@@ -84,7 +84,7 @@ void Grindstone::SetupDirectionalLightComponent(ECS::Entity& entity, void* compo
 		lightBindings[1].itemPtr = directionalLightComponent.depthTarget;
 
 		DescriptorSet::CreateInfo descriptorSetCreateInfo{};
-		descriptorSetCreateInfo.debugName = "Light UBO Descriptor Set";
+		descriptorSetCreateInfo.debugName = "Directional Light Descriptor Set";
 		descriptorSetCreateInfo.layout = directionalLightComponent.descriptorSetLayout;
 		descriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(lightBindings.size());
 		descriptorSetCreateInfo.bindings = lightBindings.data();
@@ -93,7 +93,7 @@ void Grindstone::SetupDirectionalLightComponent(ECS::Entity& entity, void* compo
 
 	{
 		UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
-		lightUniformBufferObjectCi.debugName = "Directional Shadow Map";
+		lightUniformBufferObjectCi.debugName = "Directional Light Shadow Map";
 		lightUniformBufferObjectCi.isDynamic = true;
 		lightUniformBufferObjectCi.size = sizeof(glm::mat4);
 		directionalLightComponent.shadowMapUniformBufferObject = graphicsCore->CreateUniformBuffer(lightUniformBufferObjectCi);
@@ -105,7 +105,7 @@ void Grindstone::SetupDirectionalLightComponent(ECS::Entity& entity, void* compo
 		lightUboBindingLayout.stages = ShaderStageBit::Vertex;
 
 		DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
-		descriptorSetLayoutCreateInfo.debugName = "Light UBO Descriptor Set Layout";
+		descriptorSetLayoutCreateInfo.debugName = "Directional Light Shadow Descriptor Set Layout";
 		descriptorSetLayoutCreateInfo.bindingCount = 1;
 		descriptorSetLayoutCreateInfo.bindings = &lightUboBindingLayout;
 		directionalLightComponent.shadowMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
@@ -117,7 +117,7 @@ void Grindstone::SetupDirectionalLightComponent(ECS::Entity& entity, void* compo
 		lightUboBinding.itemPtr = directionalLightComponent.shadowMapUniformBufferObject;
 
 		DescriptorSet::CreateInfo descriptorSetCreateInfo{};
-		descriptorSetCreateInfo.debugName = "Shadow Map Descriptor Set";
+		descriptorSetCreateInfo.debugName = "Directional Light Shadow Descriptor Set";
 		descriptorSetCreateInfo.layout = directionalLightComponent.shadowMapDescriptorSetLayout;
 		descriptorSetCreateInfo.bindingCount = 1;
 		descriptorSetCreateInfo.bindings = &lightUboBinding;
