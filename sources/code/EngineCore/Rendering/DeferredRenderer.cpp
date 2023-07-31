@@ -1292,7 +1292,7 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 	mipWidths[0] = mipWidth;
 	mipHeights[0] = mipHeight;
 
-	for (uint32_t i = 1; i < bloomMipLevelCount; ++i) {
+	for (uint32_t i = 1; i < bloomMipLevelCount - 1; ++i) {
 		mipWidth /= 2;
 		mipHeight /= 2;
 		mipWidths[i] = mipWidth;
@@ -1311,20 +1311,20 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidths[bloomMipLevelCount  - 2] / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeights[bloomMipLevelCount - 2] / 4.0f));
 
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount - 1], true);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + bloomMipLevelCount - 1], false);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount * 2 - 1], true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount - 1], false);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
 
-	for (int i = bloomMipLevelCount - 3; i >= 1; --i) {
+	for (int i = bloomMipLevelCount - 3; i >= 0; --i) {
 		mipWidth = mipWidths[i];
 		mipHeight = mipHeights[i];
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidth / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeight / 4.0f));
 
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + i], true);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + i + 1], false);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + i + 1], true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + i + 2], false);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
