@@ -41,6 +41,7 @@ namespace Grindstone {
 				bool isStencilEnabled = false;
 				bool hasDynamicViewport = false;
 				bool hasDynamicScissor = false;
+				bool isDepthBiasEnabled = false;
 			};
 
 			virtual void Recreate(CreateInfo& createInfo) = 0;
