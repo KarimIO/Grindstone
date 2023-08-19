@@ -6,6 +6,9 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
+		class RenderPass;
+		class Framebuffer;
+		class DepthTarget;
 		class UniformBuffer;
 		class DescriptorSet;
 		class DescriptorSetLayout;
@@ -17,6 +20,7 @@ namespace Grindstone {
 			float lightAttenuationRadius = 40.0f;
 			glm::vec3 lightPosition = glm::vec3(1, 2, 1);
 			float lightIntensity = 40.0f;
+			// float shadowResolution;
 		};
 
 		Math::Float3 color;
@@ -26,6 +30,17 @@ namespace Grindstone {
 		GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
 		GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
 		GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
+
+		/* TODO: Re-add this when you come back to point light shadows
+		float shadowResolution;
+		GraphicsAPI::RenderPass* renderPass = nullptr;
+		GraphicsAPI::Framebuffer* framebuffer = nullptr;
+		GraphicsAPI::DepthTarget* depthTarget = nullptr;
+
+		GraphicsAPI::UniformBuffer* shadowMapUniformBufferObject = nullptr;
+		GraphicsAPI::DescriptorSet* shadowMapDescriptorSet = nullptr;
+		GraphicsAPI::DescriptorSetLayout* shadowMapDescriptorSetLayout = nullptr;
+		*/
 
 		REFLECT("PointLight")
 	};

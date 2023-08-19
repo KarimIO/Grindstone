@@ -102,7 +102,15 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = TranslateCullModeToVulkan(createInfo.cullMode);
 	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	rasterizer.depthBiasEnable = VK_FALSE;
+	if (createInfo.isDepthBiasEnabled) {
+		rasterizer.depthBiasEnable = VK_TRUE;
+		rasterizer.depthBiasConstantFactor = 1.25f;
+		rasterizer.depthBiasSlopeFactor = 1.75f;
+		rasterizer.depthBiasClamp = 0.0f;
+	}
+	else {
+		rasterizer.depthBiasEnable = VK_FALSE;
+	}
 
 	VkPipelineMultisampleStateCreateInfo multisampling = {};
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;

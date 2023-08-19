@@ -228,7 +228,7 @@ namespace Grindstone {
 			vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
 			if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
-				throw std::runtime_error("failed to submit draw command buffer!");
+				vkCore.logFunction(LogSeverity::Error, "Failed to submit draw command buffer!");
 			}
 		}
 

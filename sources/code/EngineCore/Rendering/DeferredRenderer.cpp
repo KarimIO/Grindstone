@@ -1231,8 +1231,10 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.isStencilEnabled = false;
 		pipelineCreateInfo.hasDynamicScissor = true;
 		pipelineCreateInfo.hasDynamicViewport = true;
+		pipelineCreateInfo.isDepthBiasEnabled = true;
 		shadowMappingPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
+	pipelineCreateInfo.isDepthBiasEnabled = false;
 }
 
 void DeferredRenderer::RenderLightsImmediate(entt::registry& registry) {
@@ -1412,6 +1414,7 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 		std::array<GraphicsAPI::DescriptorSet*, 2> spotLightDescriptors{};
 		spotLightDescriptors[0] = imageSet.lightingDescriptorSet;
 
+
 		auto view = registry.view<const TransformComponent, SpotLightComponent>();
 		view.each([&](const TransformComponent& transformComponent, SpotLightComponent& spotLightComponent) {
 			SpotLightComponent::UniformStruct lightStruct {
@@ -1421,8 +1424,8 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 				transformComponent.position,
 				spotLightComponent.intensity,
 				transformComponent.GetForward(),
-				spotLightComponent.innerAngle,
-				spotLightComponent.outerAngle,
+				glm::cos(glm::radians(spotLightComponent.innerAngle)),
+				glm::cos(glm::radians(spotLightComponent.outerAngle)),
 				spotLightComponent.shadowResolution
 			};
 
@@ -1503,10 +1506,66 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = true;
 
+	/* TODO: Finish with Point Light Shadows eventually 
+	{
+		auto view = registry.view<const TransformComponent, PointLightComponent>();
+		view.each([&](const TransformComponent& transformComponent, PointLightComponent& pointLightComponent) {
+			float farDist = pointLightComponent.attenuationRadius;
+
+			const glm::vec3 forwardVector = transformComponent.GetForward();
+			const glm::vec3 pos = transformComponent.position;
+
+			const auto viewMatrix = glm::lookAt(
+				pos,
+				pos + forwardVector,
+				transformComponent.GetUp()
+			);
+
+			constexpr float fov = 90.0f;
+			auto projectionMatrix = glm::perspective(
+				fov,
+				1.0f,
+				0.1f,
+				farDist
+			);
+
+			graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
+
+			glm::mat4 shadowPass = projectionMatrix * viewMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
+			// pointLightComponent.shadowMatrix = projectionMatrix * viewMatrix * glm::mat4(1.0f);
+
+			uint32_t resolution = static_cast<uint32_t>(pointLightComponent.shadowResolution);
+
+			pointLightComponent.shadowMapUniformBufferObject->UpdateBuffer(&shadowPass);
+
+			commandBuffer->BindRenderPass(
+				pointLightComponent.renderPass,
+				pointLightComponent.framebuffer,
+				resolution,
+				resolution,
+				nullptr,
+				0,
+				clearDepthStencil
+			);
+
+			commandBuffer->BindGraphicsPipeline(shadowMappingPipeline);
+
+			float resF = static_cast<float>(resolution);
+			commandBuffer->SetViewport(0.0f, 0.0f, resF, resF);
+			commandBuffer->SetScissor(0, 0, resolution, resolution);
+
+			commandBuffer->BindGraphicsDescriptorSet(shadowMappingPipeline, &pointLightComponent.shadowMapDescriptorSet, 1);
+			assetManager->RenderShadowMap(commandBuffer, pointLightComponent.shadowMapDescriptorSet);
+
+			commandBuffer->UnbindRenderPass();
+		});
+	}
+	*/
+
 	{
 		auto view = registry.view<const TransformComponent, SpotLightComponent>();
 		view.each([&](const TransformComponent& transformComponent, SpotLightComponent& spotLightComponent) {
-			constexpr float fov = glm::radians(90.0f); //spotLightComponent.outerAngle * 2.0f;
+			float fov = glm::radians(spotLightComponent.outerAngle * 2.0f);
 			float farDist = spotLightComponent.attenuationRadius;
 
 			const glm::vec3 forwardVector = transformComponent.GetForward();
@@ -1527,9 +1586,8 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 
 			graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
 
-			spotLightComponent.shadowMatrix = projectionMatrix * viewMatrix;
-			glm::mat4 shadowPass = spotLightComponent.shadowMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
-			spotLightComponent.shadowMatrix = spotLightComponent.shadowMatrix * glm::mat4(1.0f);
+			glm::mat4 shadowPass = projectionMatrix * viewMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
+			spotLightComponent.shadowMatrix = projectionMatrix * viewMatrix * glm::mat4(1.0f);
 
 			uint32_t resolution = static_cast<uint32_t>(spotLightComponent.shadowResolution);
 
@@ -1616,7 +1674,7 @@ void DeferredRenderer::PostProcessCommandBuffer(
 
 	auto& imageSet = deferredRendererImageSets[imageIndex];
 
-	RenderBloom(imageSet, currentCommandBuffer);
+	// RenderBloom(imageSet, currentCommandBuffer);
 	
 	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
 	ClearDepthStencil clearDepthStencil;

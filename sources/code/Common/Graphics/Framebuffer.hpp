@@ -27,6 +27,7 @@ namespace Grindstone {
 				RenderTarget** renderTargetLists;
 				uint32_t numRenderTargetLists;
 				DepthTarget* depthTarget;
+				bool isCubemap = false;
 			};
 
 			virtual uint32_t GetAttachment(uint32_t attachmentIndex) = 0;

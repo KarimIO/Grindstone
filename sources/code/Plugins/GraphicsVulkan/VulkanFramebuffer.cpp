@@ -13,12 +13,10 @@ VulkanFramebuffer::VulkanFramebuffer(RenderPass* renderPass, VkFramebuffer frame
 	this->framebuffer = framebuffer;
 }
 
-VulkanFramebuffer::VulkanFramebuffer(Framebuffer::CreateInfo& createInfo) {
+VulkanFramebuffer::VulkanFramebuffer(Framebuffer::CreateInfo& createInfo) : isCubemap(createInfo.isCubemap), renderPass(createInfo.renderPass) {
 	if (createInfo.debugName != nullptr) {
 		debugName = createInfo.debugName;
 	}
-
-	renderPass = createInfo.renderPass;
 
 	std::vector<VkImageView> attachments;
 	for (uint32_t i = 0; i < createInfo.numRenderTargetLists; ++i) {
@@ -88,7 +86,7 @@ void VulkanFramebuffer::Create() {
 	}
 
 	if (!debugName.empty()) {
-
+		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_FRAMEBUFFER, framebuffer, debugName.c_str());
 	}
 }
 

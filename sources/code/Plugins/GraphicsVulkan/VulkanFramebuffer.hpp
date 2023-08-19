@@ -40,6 +40,7 @@ namespace Grindstone {
 
 			VkFramebuffer framebuffer = nullptr;
 			RenderPass* renderPass = nullptr;
+			bool isCubemap = false;
 		};
 	}
 }
