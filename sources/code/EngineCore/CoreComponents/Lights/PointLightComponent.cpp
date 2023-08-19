@@ -13,7 +13,7 @@ REFLECT_STRUCT_BEGIN(PointLightComponent)
 	REFLECT_STRUCT_MEMBER(color)
 	REFLECT_STRUCT_MEMBER(attenuationRadius)
 	REFLECT_STRUCT_MEMBER(intensity)
-	REFLECT_STRUCT_MEMBER(shadowResolution)
+	// REFLECT_STRUCT_MEMBER(shadowResolution)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
@@ -24,6 +24,7 @@ void Grindstone::SetupPointLightComponent(ECS::Entity& entity, void* componentPt
 
 	PointLightComponent& pointLightComponent = *static_cast<PointLightComponent*>(componentPtr);
 
+	/* TODO: Re-add this when you come back to point light shadows
 	uint32_t shadowResolution = static_cast<uint32_t>(pointLightComponent.shadowResolution);
 
 	RenderPass::CreateInfo renderPassCreateInfo{};
@@ -43,7 +44,9 @@ void Grindstone::SetupPointLightComponent(ECS::Entity& entity, void* componentPt
 	shadowMapCreateInfo.renderTargetLists = nullptr;
 	shadowMapCreateInfo.numRenderTargetLists = 0;
 	shadowMapCreateInfo.depthTarget = pointLightComponent.depthTarget;
+	shadowMapCreateInfo.isCubemap = true;
 	pointLightComponent.framebuffer = graphicsCore->CreateFramebuffer(shadowMapCreateInfo);
+	*/
 
 	{
 		UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
@@ -57,30 +60,39 @@ void Grindstone::SetupPointLightComponent(ECS::Entity& entity, void* componentPt
 	}
 
 	{
-		DescriptorSetLayout::Binding lightUboBindingLayout{};
-		lightUboBindingLayout.bindingId = 0;
-		lightUboBindingLayout.count = 1;
-		lightUboBindingLayout.type = BindingType::UniformBuffer;
-		lightUboBindingLayout.stages = ShaderStageBit::Fragment;
+		std::array<DescriptorSetLayout::Binding, 1> lightBindings{};
+		lightBindings[0].bindingId = 0;
+		lightBindings[0].count = 1;
+		lightBindings[0].type = BindingType::UniformBuffer;
+		lightBindings[0].stages = ShaderStageBit::Fragment;
+
+		/* TODO: Re-add this when you come back to point light shadows
+		lightBindings[1].bindingId = 1;
+		lightBindings[1].count = 1;
+		lightBindings[1].type = BindingType::DepthTexture;
+		lightBindings[1].stages = ShaderStageBit::Fragment;
+		*/
 
 		DescriptorSetLayout::CreateInfo pointLightDescriptorSetLayoutCreateInfo{};
 		pointLightDescriptorSetLayoutCreateInfo.debugName = "Light UBO Descriptor Set Layout";
-		pointLightDescriptorSetLayoutCreateInfo.bindingCount = 1;
-		pointLightDescriptorSetLayoutCreateInfo.bindings = &lightUboBindingLayout;
+		pointLightDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightBindings.size());
+		pointLightDescriptorSetLayoutCreateInfo.bindings = lightBindings.data();
 		pointLightComponent.descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(pointLightDescriptorSetLayoutCreateInfo);
 	}
 
 	{
-		std::array<DescriptorSet::Binding, 2> lightBindings{};
+		std::array<DescriptorSet::Binding, 1> lightBindings{};
 		lightBindings[0].bindingIndex = 0;
 		lightBindings[0].count = 1;
 		lightBindings[0].bindingType = BindingType::UniformBuffer;
 		lightBindings[0].itemPtr = pointLightComponent.uniformBufferObject;
 
+		/* TODO: Re-add this when you come back to point light shadows
 		lightBindings[1].bindingIndex = 1;
 		lightBindings[1].count = 1;
 		lightBindings[1].bindingType = BindingType::DepthTexture;
 		lightBindings[1].itemPtr = pointLightComponent.depthTarget;
+		*/
 
 		DescriptorSet::CreateInfo pointLightDescriptorSetCreateInfo{};
 		pointLightDescriptorSetCreateInfo.debugName = "Light UBO Descriptor Set";
@@ -90,6 +102,7 @@ void Grindstone::SetupPointLightComponent(ECS::Entity& entity, void* componentPt
 		pointLightComponent.descriptorSet = graphicsCore->CreateDescriptorSet(pointLightDescriptorSetCreateInfo);
 	}
 
+	/* TODO: Re-add this when you come back to point light shadows
 	{
 		UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
 		lightUniformBufferObjectCi.debugName = "Point Shadow Map";
@@ -122,4 +135,5 @@ void Grindstone::SetupPointLightComponent(ECS::Entity& entity, void* componentPt
 		descriptorSetCreateInfo.bindings = &lightUboBinding;
 		pointLightComponent.shadowMapDescriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
+	*/
 }

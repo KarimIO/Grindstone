@@ -1352,7 +1352,6 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 		0.5f, 0.5f, 0.0f, 1.0f
 	);
 
-	/*
 	if (imageBasedLightingPipeline != nullptr) {
 		// Image Based Lighting Lights
 		currentCommandBuffer->BindGraphicsPipeline(imageBasedLightingPipeline);
@@ -1407,7 +1406,6 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 		});
 	}
-	*/
 
 	if (spotLightPipeline != nullptr) {
 		// Spot Lights
@@ -1439,7 +1437,6 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 		});
 	}
 
-	/*
 	if (directionalLightPipeline != nullptr) {
 		// Directional Lights
 		currentCommandBuffer->BindGraphicsPipeline(directionalLightPipeline);
@@ -1465,7 +1462,6 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 		});
 	}
-	*/
 }
 
 void DeferredRenderer::RenderSsao(uint32_t imageIndex, GraphicsAPI::CommandBuffer* commandBuffer) {
@@ -1509,6 +1505,62 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = true;
+
+	/* TODO: Finish with Point Light Shadows eventually 
+	{
+		auto view = registry.view<const TransformComponent, PointLightComponent>();
+		view.each([&](const TransformComponent& transformComponent, PointLightComponent& pointLightComponent) {
+			float farDist = pointLightComponent.attenuationRadius;
+
+			const glm::vec3 forwardVector = transformComponent.GetForward();
+			const glm::vec3 pos = transformComponent.position;
+
+			const auto viewMatrix = glm::lookAt(
+				pos,
+				pos + forwardVector,
+				transformComponent.GetUp()
+			);
+
+			constexpr float fov = 90.0f;
+			auto projectionMatrix = glm::perspective(
+				fov,
+				1.0f,
+				0.1f,
+				farDist
+			);
+
+			graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
+
+			glm::mat4 shadowPass = projectionMatrix * viewMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
+			// pointLightComponent.shadowMatrix = projectionMatrix * viewMatrix * glm::mat4(1.0f);
+
+			uint32_t resolution = static_cast<uint32_t>(pointLightComponent.shadowResolution);
+
+			pointLightComponent.shadowMapUniformBufferObject->UpdateBuffer(&shadowPass);
+
+			commandBuffer->BindRenderPass(
+				pointLightComponent.renderPass,
+				pointLightComponent.framebuffer,
+				resolution,
+				resolution,
+				nullptr,
+				0,
+				clearDepthStencil
+			);
+
+			commandBuffer->BindGraphicsPipeline(shadowMappingPipeline);
+
+			float resF = static_cast<float>(resolution);
+			commandBuffer->SetViewport(0.0f, 0.0f, resF, resF);
+			commandBuffer->SetScissor(0, 0, resolution, resolution);
+
+			commandBuffer->BindGraphicsDescriptorSet(shadowMappingPipeline, &pointLightComponent.shadowMapDescriptorSet, 1);
+			assetManager->RenderShadowMap(commandBuffer, pointLightComponent.shadowMapDescriptorSet);
+
+			commandBuffer->UnbindRenderPass();
+		});
+	}
+	*/
 
 	{
 		auto view = registry.view<const TransformComponent, SpotLightComponent>();
