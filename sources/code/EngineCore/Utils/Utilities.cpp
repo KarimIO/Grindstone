@@ -40,7 +40,7 @@ std::string Utils::LoadFileText(const char* inputPath) {
 	return content;
 }
 
-std::string Utils::FixStringSlashesReturn(std::string path) {
+std::string Utils::FixStringSlashesReturn(std::string& path) {
 	std::string swappedPath = path;
 	std::replace(swappedPath.begin(), swappedPath.end(), '\\', '/');
 	return swappedPath;
@@ -48,6 +48,18 @@ std::string Utils::FixStringSlashesReturn(std::string path) {
 
 void Utils::FixStringSlashes(std::string& path) {
 	std::replace(path.begin(), path.end(), '\\', '/');
+}
+
+std::filesystem::path Utils::FixPathSlashesReturn(std::filesystem::path& path) {
+	std::string swappedPath = path.string();
+	std::replace(swappedPath.begin(), swappedPath.end(), '\\', '/');
+	return swappedPath;
+}
+
+void Utils::FixPathSlashes(std::filesystem::path& path) {
+	std::string swappedPath = path.string();
+	std::replace(swappedPath.begin(), swappedPath.end(), '\\', '/');
+	path = swappedPath;
 }
 
 std::string Utils::ToLower(const std::string& source) {

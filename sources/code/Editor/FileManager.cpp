@@ -115,7 +115,18 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(std::filesystem::path path
 	}
 
 	MetaFile metaFile(path);
-	return metaFile.IsOutdatedVersion();
+	if (metaFile.IsOutdatedVersion()) {
+		return true;
+	}
+
+	auto& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
+	for (auto& subasset : metaFile) {
+		if (!assetRegistry.HasAsset(subasset.uuid)) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void FileManager::UpdateCompiledFileIfNecessaryOnInitialize(std::filesystem::path path) {
@@ -127,7 +138,7 @@ void FileManager::UpdateCompiledFileIfNecessaryOnInitialize(std::filesystem::pat
 			std::filesystem::path nPath = path;
 			auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
 			importManager.Import(nPath);
-		});
+			});
 	}
 }
 
@@ -142,7 +153,7 @@ void FileManager::UpdateCompiledFileIfNecessary(std::filesystem::path path) {
 			importManager.Import(nPath);
 			auto& editorManager = Editor::Manager::GetInstance();
 			editorManager.GetAssetRegistry().WriteFile();
-		});
+			});
 	}
 }
 

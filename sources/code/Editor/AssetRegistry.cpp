@@ -19,10 +19,13 @@ void AssetRegistry::Cleanup() {
 }
 
 void AssetRegistry::UpdateEntry(std::filesystem::path& path, std::string& name, Uuid& uuid, AssetType assetType) {
+	std::filesystem::path relativePath = std::filesystem::relative(path, assetsPath);
+	relativePath = Utils::FixPathSlashesReturn(relativePath);
+
 	assets[uuid] = Entry{
 		uuid,
 		name,
-		path,
+		relativePath,
 		assetType
 	};
 }
