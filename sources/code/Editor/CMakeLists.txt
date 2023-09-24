@@ -101,7 +101,7 @@ add_library(SPIRV-Tools ALIAS SPIRV-Tools-static)
 find_package(unofficial-shaderc CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(imguizmo CONFIG REQUIRED)
-find_package(unofficial-git2 CONFIG REQUIRED)
+find_package(unofficial-libgit2 CONFIG REQUIRED)
 set(MONO_PATH CACHE PATH "Mono Path")
 
 add_executable(Editor ${EDITOR_HEADERS} ${EDITOR_SOURCES})
@@ -118,13 +118,14 @@ target_include_directories(Editor PUBLIC
 
 target_link_libraries(
 	Editor
+	PUBLIC
 	Rpcrt4.lib
 	efsw::efsw
 	fmt::fmt
 	spirv-cross-c spirv-cross-core spirv-cross-cpp spirv-cross-glsl spirv-cross-reflect
 	glslang::SPIRV glslang::HLSL glslang::glslang glslang::OGLCompiler
 	unofficial::shaderc::shaderc
-	unofficial::git2::libgit2package
+	unofficial::libgit2::libgit2
 	SPIRV-Tools-opt SPIRV-Tools-static
 	spirv-cross-reflect
 	assimp::assimp
