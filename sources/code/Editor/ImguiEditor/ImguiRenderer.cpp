@@ -15,7 +15,7 @@ ImguiRenderer* ImguiRenderer::Create() {
 
 	switch (graphicsCore->GetAPI()) {
 		case Grindstone::GraphicsAPI::API::OpenGL:
-			return new ImguiRendererOpenGL();
+			throw new std::runtime_error("OpenGL is currently not supported.");
 		case Grindstone::GraphicsAPI::API::Vulkan:
 			return new ImguiRendererVulkan();
 	}

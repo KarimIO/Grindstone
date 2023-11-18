@@ -1,3 +1,4 @@
+#if 0
 #pragma once
 
 #include "ImguiRenderer.hpp"
@@ -20,3 +21,4 @@ namespace Grindstone {
 		}
 	}
 }
+#endif

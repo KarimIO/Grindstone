@@ -18,7 +18,8 @@ namespace Grindstone {
 			~VulkanWindowGraphicsBinding();
 
 			void CreateSwapChain();
-			VkSurfaceKHR GetSurface();
+			virtual VkSurfaceKHR GetSurface();
+			virtual VkSwapchainKHR GetSwapchain();
 			SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
 
 			// Inherited via WindowGraphicsBinding

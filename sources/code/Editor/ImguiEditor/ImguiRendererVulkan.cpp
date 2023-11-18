@@ -2,7 +2,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <imgui_impl_vulkan.h>
-#include <imgui_impl_win32.h>
+#include <imgui_impl_glfw.h>
 #include <Windows.h>
 
 #include <Common/Window/WindowManager.hpp>
@@ -14,18 +14,75 @@
 #include <Plugins/GraphicsVulkan/VulkanRenderPass.hpp>
 #include <Plugins/GraphicsVulkan/VulkanCommandBuffer.hpp>
 #include <Plugins/GraphicsVulkan/VulkanDescriptorSet.hpp>
+#include <Plugins/GraphicsVulkan/VulkanWindowGraphicsBinding.hpp>
 
 #include "ImguiRendererVulkan.hpp"
 
 using namespace Grindstone::GraphicsAPI;
 using namespace Grindstone::Editor::ImguiEditor;
 
+static ImGui_ImplVulkanH_Window g_MainWindowData;
+
+static void SetupVulkanWindow(
+	Grindstone::GraphicsAPI::VulkanCore* graphicsCore,
+	ImGui_ImplVulkanH_Window* wd,
+	Grindstone::GraphicsAPI::WindowGraphicsBinding* wgb,
+	int width,
+	int height
+) {
+	Grindstone::GraphicsAPI::VulkanWindowGraphicsBinding* vwgb = static_cast<Grindstone::GraphicsAPI::VulkanWindowGraphicsBinding*>(wgb);
+	VkSurfaceKHR surface = vwgb->GetSurface();
+	wd->Surface = surface;
+
+	auto physicalDevice = graphicsCore->GetPhysicalDevice();
+	auto graphicsFamily = graphicsCore->GetGraphicsFamily();
+
+	// Check for WSI support
+	VkBool32 res;
+	vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, graphicsFamily, wd->Surface, &res);
+	if (res != VK_TRUE)
+	{
+		fprintf(stderr, "Error no WSI support on physical device 0\n");
+		exit(-1);
+	}
+
+	// Select Surface Format
+	const VkFormat requestSurfaceImageFormat[] = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM };
+	const VkColorSpaceKHR requestSurfaceColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
+	wd->SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(physicalDevice, wd->Surface, requestSurfaceImageFormat, (size_t)IM_ARRAYSIZE(requestSurfaceImageFormat), requestSurfaceColorSpace);
+
+	// Select Present Mode
+#ifdef IMGUI_UNLIMITED_FRAME_RATE
+	VkPresentModeKHR present_modes[] = { VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_FIFO_KHR };
+#else
+	VkPresentModeKHR present_modes[] = { VK_PRESENT_MODE_FIFO_KHR };
+#endif
+	wd->PresentMode = ImGui_ImplVulkanH_SelectPresentMode(physicalDevice, wd->Surface, &present_modes[0], IM_ARRAYSIZE(present_modes));
+	//printf("[vulkan] Selected PresentMode = %d\n", wd->PresentMode);
+
+	VkInstance instance = graphicsCore->GetInstance();
+	VkDevice device = graphicsCore->GetDevice();
+
+	// Create SwapChain, RenderPass, Framebuffer, etc.
+	int minImageCount = wgb->GetMaxFramesInFlight();
+	IM_ASSERT(minImageCount >= 2);
+	wd->Swapchain = vwgb->GetSwapchain();
+	ImGui_ImplVulkanH_CreateOrResizeWindow(instance, physicalDevice, device, wd, graphicsFamily, nullptr, width, height, minImageCount);
+}
+
 ImguiRendererVulkan::ImguiRendererVulkan() {
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
 	auto graphicsCore = engineCore.GetGraphicsCore();
 
-	HWND win = GetActiveWindow();
-	ImGui_ImplWin32_Init(win);
+	Grindstone::Window* window = engineCore.windowManager->GetWindowByIndex(0);
+
+	unsigned int width, height;
+	window->GetWindowSize(width, height);
+
+	auto wgb = window->GetWindowGraphicsBinding();
+	
+	ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
+	SetupVulkanWindow(static_cast<GraphicsAPI::VulkanCore*>(graphicsCore), wd, wgb, width, height);
 
 	VkDescriptorPoolSize poolSizes[] = {
 		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1 }
@@ -54,13 +111,12 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	imguiInitInfo.ImageCount = 3;
 	imguiInitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-	auto window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
-	auto vulkanRenderPass = static_cast<Grindstone::GraphicsAPI::VulkanRenderPass*>(window->GetRenderPass());
+	auto vulkanRenderPass = static_cast<Grindstone::GraphicsAPI::VulkanRenderPass*>(wgb->GetRenderPass());
 	ImGui_ImplVulkan_Init(&imguiInitInfo, vulkanRenderPass->GetRenderPassHandle());
 
 	Grindstone::GraphicsAPI::CommandBuffer::CreateInfo commandBufferCreateInfo{};
 
-	commandBuffers.resize(window->GetMaxFramesInFlight());
+	commandBuffers.resize(wgb->GetMaxFramesInFlight());
 	for (size_t i = 0; i < commandBuffers.size(); ++i) {
 		commandBuffers[i] = graphicsCore->CreateCommandBuffer(commandBufferCreateInfo);
 	}
@@ -109,7 +165,7 @@ void ImguiRendererVulkan::PrepareImguiRendering() {
 	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
 
 	ImGui_ImplVulkan_NewFrame();
-	ImGui_ImplWin32_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 }
 
