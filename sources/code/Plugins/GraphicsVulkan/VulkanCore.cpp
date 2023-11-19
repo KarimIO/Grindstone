@@ -124,7 +124,9 @@ bool VulkanCore::Initialize(Core::CreateInfo& ci) {
 
 	pfnDebugUtilsSetObjectName = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(vkGetDeviceProcAddr(device, "vkSetDebugUtilsObjectNameEXT"));
 
-	wgb->CreateSwapChain();
+	// TODO: Disable swapchain so editor can control it, in the future make this editor only.
+	// wgb->CreateSwapChain();
+	wgb->CreateSyncObjects();
 	CreateCommandPool();
 	CreateDescriptorPool();
 

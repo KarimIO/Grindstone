@@ -3,10 +3,10 @@
 #include <imgui_internal.h>
 #include <imgui_impl_vulkan.h>
 #include <imgui_impl_glfw.h>
-#include <Windows.h>
+#include <GLFW/glfw3.h>
 
 #include <Common/Window/WindowManager.hpp>
-#include <Common/Window/Win32Window.hpp>
+#include <Common/Window/GlfwWindow.hpp>
 #include <Editor/EditorManager.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Assets/Textures/TextureAsset.hpp>
@@ -23,13 +23,13 @@ using namespace Grindstone::Editor::ImguiEditor;
 
 static ImGui_ImplVulkanH_Window g_MainWindowData;
 
-static void SetupVulkanWindow(
+void ImguiRendererVulkan::SetupVulkanWindow(
 	Grindstone::GraphicsAPI::VulkanCore* graphicsCore,
-	ImGui_ImplVulkanH_Window* wd,
 	Grindstone::GraphicsAPI::WindowGraphicsBinding* wgb,
 	int width,
 	int height
 ) {
+	ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
 	Grindstone::GraphicsAPI::VulkanWindowGraphicsBinding* vwgb = static_cast<Grindstone::GraphicsAPI::VulkanWindowGraphicsBinding*>(wgb);
 	VkSurfaceKHR surface = vwgb->GetSurface();
 	wd->Surface = surface;
@@ -53,11 +53,11 @@ static void SetupVulkanWindow(
 
 	// Select Present Mode
 #ifdef IMGUI_UNLIMITED_FRAME_RATE
-	VkPresentModeKHR present_modes[] = { VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_FIFO_KHR };
+	VkPresentModeKHR presentModes[] = { VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_FIFO_KHR };
 #else
-	VkPresentModeKHR present_modes[] = { VK_PRESENT_MODE_FIFO_KHR };
+	VkPresentModeKHR presentModes[] = { VK_PRESENT_MODE_FIFO_KHR };
 #endif
-	wd->PresentMode = ImGui_ImplVulkanH_SelectPresentMode(physicalDevice, wd->Surface, &present_modes[0], IM_ARRAYSIZE(present_modes));
+	wd->PresentMode = ImGui_ImplVulkanH_SelectPresentMode(physicalDevice, wd->Surface, &presentModes[0], IM_ARRAYSIZE(presentModes));
 	//printf("[vulkan] Selected PresentMode = %d\n", wd->PresentMode);
 
 	VkInstance instance = graphicsCore->GetInstance();
@@ -67,7 +67,7 @@ static void SetupVulkanWindow(
 	int minImageCount = wgb->GetMaxFramesInFlight();
 	IM_ASSERT(minImageCount >= 2);
 	wd->Swapchain = vwgb->GetSwapchain();
-	ImGui_ImplVulkanH_CreateOrResizeWindow(instance, physicalDevice, device, wd, graphicsFamily, nullptr, width, height, minImageCount);
+	CreateOrResizeWindow(graphicsCore, vwgb, width, height);
 }
 
 ImguiRendererVulkan::ImguiRendererVulkan() {
@@ -82,7 +82,7 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	auto wgb = window->GetWindowGraphicsBinding();
 	
 	ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
-	SetupVulkanWindow(static_cast<GraphicsAPI::VulkanCore*>(graphicsCore), wd, wgb, width, height);
+	SetupVulkanWindow(static_cast<GraphicsAPI::VulkanCore*>(graphicsCore), wgb, width, height);
 
 	VkDescriptorPoolSize poolSizes[] = {
 		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1 }
@@ -100,6 +100,8 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	if (vkCreateDescriptorPool(vulkanCore->GetDevice(), &poolInfo, nullptr, &imguiPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate imgui descriptor pool!");
 	}
+
+	ImGui_ImplGlfw_InitForVulkan(static_cast<Grindstone::GlfwWindow*>(window)->GetHandle(), true);
 
 	ImGui_ImplVulkan_InitInfo imguiInitInfo{};
 	imguiInitInfo.Instance = vulkanCore->GetInstance();
@@ -137,9 +139,25 @@ Grindstone::GraphicsAPI::CommandBuffer* ImguiRendererVulkan::GetCommandBuffer() 
 }
 
 bool ImguiRendererVulkan::PreRender() {
+	if (shouldRebuildSwapchain) {
+		Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
+		auto vulkanCore = static_cast<Grindstone::GraphicsAPI::VulkanCore*>(engineCore.GetGraphicsCore());
+		auto window = static_cast<GlfwWindow*>(engineCore.windowManager->GetWindowByIndex(0));
+
+		int width, height;
+		glfwGetFramebufferSize(window->GetHandle(), &width, &height);
+		if (width > 0 && height > 0)
+		{
+			g_MainWindowData.FrameIndex = 0;
+			CreateOrResizeWindow(vulkanCore, window->GetWindowGraphicsBinding(), width, height);
+			shouldRebuildSwapchain = false;
+		}
+	}
+
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
 	auto window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	if (!window->AcquireNextImage()) {
+		shouldRebuildSwapchain = true;
 		return false;
 	}
 
@@ -171,6 +189,10 @@ void ImguiRendererVulkan::PrepareImguiRendering() {
 
 
 void ImguiRendererVulkan::PostRender() {
+	if (shouldRebuildSwapchain) {
+		return;
+	}
+
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
 	auto window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	auto currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
@@ -188,10 +210,7 @@ void ImguiRendererVulkan::PostRender() {
 }
 
 void ImguiRendererVulkan::Resize() {
-	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
-	auto vulkanCore = static_cast<Grindstone::GraphicsAPI::VulkanCore*>(engineCore.GetGraphicsCore());
-	auto window = static_cast<Win32Window*>(engineCore.windowManager->GetWindowByIndex(0));
-	auto wgb = window->GetWindowGraphicsBinding();
+	shouldRebuildSwapchain = true;
 }
 
 ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {
@@ -232,4 +251,40 @@ ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {
 	auto descriptor = static_cast<VulkanDescriptorSet*>(dset)->GetDescriptorSet();
 
 	return (ImTextureID)(uint64_t)descriptor;
+}
+
+void ImguiRendererVulkan::CreateOrResizeWindow(
+	Grindstone::GraphicsAPI::VulkanCore* graphicsCore,
+	Grindstone::GraphicsAPI::WindowGraphicsBinding* wgb,
+	int width, int height
+) {
+	auto instance = graphicsCore->GetInstance();
+	auto physicalDevice = graphicsCore->GetPhysicalDevice();
+	auto device = graphicsCore->GetDevice();
+	auto graphicsFamily = graphicsCore->GetGraphicsFamily();
+
+	ImGui_ImplVulkanH_CreateOrResizeWindow(instance, physicalDevice, device, &g_MainWindowData, graphicsFamily, nullptr, width, height, wgb->GetMaxFramesInFlight());
+
+	// Send new imgui window data to window
+	std::vector<VulkanImageSetNative> imguiImageSets;
+	imguiImageSets.resize(g_MainWindowData.ImageCount);
+	for (uint32_t i = 0; i < g_MainWindowData.ImageCount; ++i) {
+		auto& imageSet = imguiImageSets[i];
+		ImGui_ImplVulkanH_Frame& imguiFrame = g_MainWindowData.Frames[i];
+
+		imageSet.image = imguiFrame.Backbuffer;
+		imageSet.imageView = imguiFrame.BackbufferView;
+		imageSet.framebuffer = imguiFrame.Framebuffer;
+	}
+
+	VulkanWindowBindingDataNative windowBindingData{};
+	windowBindingData.swapChain = g_MainWindowData.Swapchain;
+	windowBindingData.renderPass = g_MainWindowData.RenderPass;
+	windowBindingData.width = static_cast<uint32_t>(g_MainWindowData.Width);
+	windowBindingData.height = static_cast<uint32_t>(g_MainWindowData.Height);
+	windowBindingData.surfaceFormat = g_MainWindowData.SurfaceFormat;
+	windowBindingData.imageSetCount = g_MainWindowData.ImageCount;
+	windowBindingData.imageSets = imguiImageSets.data();
+
+	static_cast<VulkanWindowGraphicsBinding*>(wgb)->SubmitWindowObjects(windowBindingData);
 }

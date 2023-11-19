@@ -93,6 +93,8 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 		pluginManager->LoadPluginList();
 	}
 
+	sceneManager = new SceneManagement::SceneManager();
+
 	Logger::Print("{0} Initialized.", createInfo.applicationTitle);
 	GRIND_PROFILE_END_SESSION();
 
@@ -103,7 +105,6 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 void EngineCore::InitializeScene(bool shouldLoadSceneFromDefaults, const char* scenePath) {
 	GRIND_PROFILE_SCOPE("Loading Default Scene");
-	sceneManager = new SceneManagement::SceneManager();
 	if (shouldLoadSceneFromDefaults) {
 		sceneManager->LoadDefaultScene();
 	}

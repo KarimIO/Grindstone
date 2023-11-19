@@ -17,7 +17,25 @@
 
 using namespace Grindstone;
 
-Events::KeyPressCode TranslateKey(int key);
+static Events::KeyPressCode TranslateKeyboardButton(int key);
+static Events::MouseButtonCode TranslateMouseButton(int action);
+
+static Input::Interface* GetInputFromGrindstoneWindow(GlfwWindow* window) {
+	if (window && window->engineCore) {
+		return window->engineCore->GetInputManager();
+	}
+
+	return nullptr;
+}
+
+static Input::Interface* GetInput(GLFWwindow* window) {
+	GlfwWindow* win = static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
+	if (win) {
+		return GetInputFromGrindstoneWindow(win);
+	}
+
+	return nullptr;
+}
 
 /*
 LRESULT CALLBACK GlfwWindow::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -115,41 +133,58 @@ LRESULT CALLBACK GlfwWindow::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 }
 */
 
-void OnErrorCallback(int error, const char* description){
+static void OnErrorCallback(int error, const char* description) {
 	fprintf(stderr, "Error: %s\n", description);
 }
 
-void OnKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-	// input->SetKeyPressed(TranslateKey(int(wParam)), false);
+static void OnKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	if (Input::Interface* input = GetInput(window)) {
+		input->SetKeyPressed(TranslateKeyboardButton(key), action == GLFW_PRESS);
+	}
 }
 
-void OnCursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
-
+static void OnCursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
+	if (Input::Interface* input = GetInput(window)) {
+		input->SetMousePosition(static_cast<int>(xpos), static_cast<int>(ypos));
+	}
 }
 
-void OnMouseBtnCallback(GLFWwindow* window, int button, int action, int mods) {
-
+static void OnMouseBtnCallback(GLFWwindow* window, int button, int action, int mods) {
+	if (Input::Interface* input = GetInput(window)) {
+		input->SetMouseButton(TranslateMouseButton(button), action == GLFW_PRESS);
+	}
 }
 
-void OnWindowPosCallback(GLFWwindow* window, int xpos, int ypos) {
-
+static void OnWindowPosCallback(GLFWwindow* window, int xpos, int ypos) {
 }
 
-void OnWindowSizeCallback(GLFWwindow* window, int width, int height) {
+static void OnWindowSizeCallback(GLFWwindow* window, int width, int height) {
+	GlfwWindow* win = static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
 
+	if (Input::Interface* input = GetInputFromGrindstoneWindow(win)) {
+		input->ResizeEvent(width, height);
+	}
+
+	auto wgb = win->GetWindowGraphicsBinding();
+	if (wgb) {
+		wgb->Resize(static_cast<uint32_t>(width), static_cast<uint32_t>(height));
+	}
 }
 
-void OnWindowFocusCallback(GLFWwindow* window, int focused) {
-	// input->SetIsFocused(focused);
+static void OnWindowFocusCallback(GLFWwindow* window, int focused) {
+	if (Input::Interface* input = GetInput(window)) {
+		input->SetIsFocused(focused == GLFW_TRUE);
+	}
 }
 
-void OnWindowMinimizeCallback(GLFWwindow* window, int iconified) {
-
+static void OnWindowMinimizeCallback(GLFWwindow* window, int iconified) {
 }
 
-void OnWindowTryQuit(GLFWwindow* window) {
-	/*input->TryQuit(this);
-	DestroyWindow(hwnd);*/
+static void OnWindowTryQuit(GLFWwindow* window) {
+	GlfwWindow* win = static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
+	if (Input::Interface* input = GetInputFromGrindstoneWindow(win)) {
+		input->TryQuit(win);
+	}
 }
 
 bool GlfwWindow::CopyStringToClipboard(const std::string& stringToCopy) {
@@ -262,9 +297,6 @@ void GlfwWindow::OpenFileUsingDefaultProgram(const char* path) {
 }
 
 bool GlfwWindow::Initialize(CreateInfo& createInfo) {
-	auto hInstance = GetModuleHandle(NULL);
-
-	glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 	glfwSetErrorCallback(&OnErrorCallback);
 
 	if (!glfwInit()) {
@@ -273,13 +305,16 @@ bool GlfwWindow::Initialize(CreateInfo& createInfo) {
 
 	bool isVulkan = true;
 	bool isOpenGl = false;
+	engineCore = createInfo.engineCore;
 
 	if (isVulkan) {
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	}
 
+	glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 	windowHandle = glfwCreateWindow(createInfo.width, createInfo.height, createInfo.title, NULL, NULL);
 
+	glfwSetWindowUserPointer(windowHandle, this);
 	glfwSetKeyCallback(windowHandle, &OnKeyCallback);
 	glfwSetCursorPosCallback(windowHandle, &OnCursorPosCallback);
 	glfwSetMouseButtonCallback(windowHandle, &OnMouseBtnCallback);
@@ -434,7 +469,7 @@ float GlfwWindow::GetWindowDpiScale() {
 	return 1.0f;
 }
 
-Events::KeyPressCode TranslateKey(int key) {
+static Events::KeyPressCode TranslateKeyboardButton(int key) {
 	//static int keyCodes[] = { KEY_BACKSPACE, KEY_TAB, KEY_NONE, KEY_NONE, KEY_ENTER, KEY_NONE, KEY_NONE, KEY_SHIFT, KEY_CONTROL, KEY_ALT, KEY_PAUSE, KEY_CAPSLOCK, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_ESCAPE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_SPACE, KEY_PG_UP, KEY_PG_DOWN, KEY_END, KEY_HOME, KEY_LEFT, KEY_UP, KEY_RIGHT, KEY_DOWN, KEY_SELECT, KEY_PRINT, KEY_EXECUTE, KEY_PRINTSCR, KEY_DELETE, KEY_HELP, KEY_0, KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9, KEY_NONE, KEY_NONE, KEY_A, KEY_B, KEY_C, KEY_D, KEY_E, KEY_F, KEY_G, KEY_H, KEY_I, KEY_J, KEY_K, KEY_L, KEY_M, KEY_N, KEY_O, KEY_P, KEY_Q, KEY_R, KEY_S, KEY_T, KEY_U, KEY_V, KEY_W, KEY_X, KEY_Y, KEY_Z, KEY_LWINDOW, KEY_WINDOW, KEY_APPS, KEY_NONE, KEY_NONE, KEY_NUMPAD_0, KEY_NUMPAD_1, KEY_NUMPAD_2, KEY_NUMPAD_3, KEY_NUMPAD_4, KEY_NUMPAD_5, KEY_NUMPAD_6, KEY_NUMPAD_7, KEY_NUMPAD_8, KEY_NUMPAD_9, KEY_NUMPAD_MULTIPLY, KEY_NUMPAD_ADD, KEY_NUMPAD_ENTER, KEY_NUMPAD_SUBTRACT, KEY_NUMPAD_DOT, KEY_NUMPAD_DIVIDE, KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5, KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10, KEY_F11, KEY_F12, KEY_F13, KEY_F14, KEY_F15, KEY_F16, KEY_F17, KEY_F18, KEY_F19, KEY_F20, KEY_F21, KEY_F22, KEY_F23, KEY_F24, KEY_NONE, KEY_NUMPAD_NUMLOCK, KEY_SCROLL_LOCK, KEY_NONE, KEY_LSHIFT, KEY_LCONTROL, KEY_CONTROL, KEY_LALT, KEY_ALT, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE };
 	switch (key) {
 	case 0x41: return Events::KeyPressCode::A;
@@ -464,103 +499,120 @@ Events::KeyPressCode TranslateKey(int key) {
 	case 0x59: return Events::KeyPressCode::Y;
 	case 0x5A: return Events::KeyPressCode::Z;
 
-	case VK_ESCAPE: return Events::KeyPressCode::Escape;
-	case VK_TAB: return Events::KeyPressCode::Tab;
-	case VK_SPACE: return Events::KeyPressCode::Space;
-	case VK_LCONTROL: return Events::KeyPressCode::LeftControl;
-	case VK_CONTROL: return Events::KeyPressCode::Control;
-	case VK_LSHIFT: return Events::KeyPressCode::LeftShift;
-	case VK_SHIFT: return Events::KeyPressCode::Shift;
-	case VK_LMENU: return Events::KeyPressCode::LeftAlt;
-	case VK_MENU: return Events::KeyPressCode::Alt;
+	case GLFW_KEY_ESCAPE: return Events::KeyPressCode::Escape;
+	case GLFW_KEY_TAB: return Events::KeyPressCode::Tab;
+	case GLFW_KEY_SPACE: return Events::KeyPressCode::Space;
+	case GLFW_KEY_LEFT_CONTROL: return Events::KeyPressCode::LeftControl;
+	case GLFW_KEY_RIGHT_CONTROL: return Events::KeyPressCode::Control;
+	case GLFW_KEY_LEFT_SHIFT: return Events::KeyPressCode::LeftShift;
+	case GLFW_KEY_RIGHT_SHIFT: return Events::KeyPressCode::Shift;
+	case GLFW_KEY_LEFT_ALT: return Events::KeyPressCode::LeftAlt;
+	case GLFW_KEY_RIGHT_ALT: return Events::KeyPressCode::Alt;
 
-	case VK_LEFT:	return Events::KeyPressCode::ArrowLeft;
-	case VK_RIGHT:	return Events::KeyPressCode::ArrowRight;
-	case VK_UP:	return Events::KeyPressCode::ArrowUp;
-	case VK_DOWN:	return Events::KeyPressCode::ArrowDown;
+	case GLFW_KEY_LEFT:	return Events::KeyPressCode::ArrowLeft;
+	case GLFW_KEY_RIGHT:	return Events::KeyPressCode::ArrowRight;
+	case GLFW_KEY_UP:	return Events::KeyPressCode::ArrowUp;
+	case GLFW_KEY_DOWN:	return Events::KeyPressCode::ArrowDown;
 
-	case VK_NUMPAD0: return Events::KeyPressCode::Numpad0;
-	case VK_NUMPAD1: return Events::KeyPressCode::Numpad1;
-	case VK_NUMPAD2: return Events::KeyPressCode::Numpad2;
-	case VK_NUMPAD3: return Events::KeyPressCode::Numpad3;
-	case VK_NUMPAD4: return Events::KeyPressCode::Numpad4;
-	case VK_NUMPAD5: return Events::KeyPressCode::Numpad5;
-	case VK_NUMPAD6: return Events::KeyPressCode::Numpad6;
-	case VK_NUMPAD7: return Events::KeyPressCode::Numpad7;
-	case VK_NUMPAD8: return Events::KeyPressCode::Numpad8;
-	case VK_NUMPAD9: return Events::KeyPressCode::Numpad9;
+	case GLFW_KEY_KP_0: return Events::KeyPressCode::Numpad0;
+	case GLFW_KEY_KP_1: return Events::KeyPressCode::Numpad1;
+	case GLFW_KEY_KP_2: return Events::KeyPressCode::Numpad2;
+	case GLFW_KEY_KP_3: return Events::KeyPressCode::Numpad3;
+	case GLFW_KEY_KP_4: return Events::KeyPressCode::Numpad4;
+	case GLFW_KEY_KP_5: return Events::KeyPressCode::Numpad5;
+	case GLFW_KEY_KP_6: return Events::KeyPressCode::Numpad6;
+	case GLFW_KEY_KP_7: return Events::KeyPressCode::Numpad7;
+	case GLFW_KEY_KP_8: return Events::KeyPressCode::Numpad8;
+	case GLFW_KEY_KP_9: return Events::KeyPressCode::Numpad9;
 
-	case VK_NUMLOCK:	return Events::KeyPressCode::NumpadLock;
-	case VK_DIVIDE: 	return Events::KeyPressCode::NumpadDivide;
-	case VK_MULTIPLY: 	return Events::KeyPressCode::NumpadMultiply;
-	case VK_SUBTRACT: 	return Events::KeyPressCode::NumpadSubtract;
-	case VK_ADD: 		return Events::KeyPressCode::NumpadAdd;
-	case VK_SEPARATOR: 	return Events::KeyPressCode::NumpadEnter;
-	case VK_DECIMAL: 	return Events::KeyPressCode::NumpadDot;
+	case GLFW_KEY_NUM_LOCK:		return Events::KeyPressCode::NumpadLock;
+	case GLFW_KEY_KP_DIVIDE: 	return Events::KeyPressCode::NumpadDivide;
+	case GLFW_KEY_KP_MULTIPLY: 	return Events::KeyPressCode::NumpadMultiply;
+	case GLFW_KEY_KP_SUBTRACT: 	return Events::KeyPressCode::NumpadSubtract;
+	case GLFW_KEY_KP_ADD: 		return Events::KeyPressCode::NumpadAdd;
+	case GLFW_KEY_KP_ENTER:		return Events::KeyPressCode::NumpadEnter;
+	case GLFW_KEY_KP_DECIMAL: 	return Events::KeyPressCode::NumpadDot;
 
-	case VK_F1: return Events::KeyPressCode::F1;
-	case VK_F2: return Events::KeyPressCode::F2;
-	case VK_F3: return Events::KeyPressCode::F3;
-	case VK_F4: return Events::KeyPressCode::F4;
-	case VK_F5: return Events::KeyPressCode::F5;
-	case VK_F6: return Events::KeyPressCode::F6;
-	case VK_F7: return Events::KeyPressCode::F7;
-	case VK_F8: return Events::KeyPressCode::F8;
-	case VK_F9: return Events::KeyPressCode::F9;
-	case VK_F10:return Events::KeyPressCode::F10;
-	case VK_F11:return Events::KeyPressCode::F11;
-	case VK_F12:return Events::KeyPressCode::F12;
-	case VK_F13:return Events::KeyPressCode::F13;
-	case VK_F14:return Events::KeyPressCode::F14;
-	case VK_F15:return Events::KeyPressCode::F15;
-	case VK_F16:return Events::KeyPressCode::F16;
-	case VK_F17:return Events::KeyPressCode::F17;
-	case VK_F18:return Events::KeyPressCode::F18;
-	case VK_F19:return Events::KeyPressCode::F19;
-	case VK_F20:return Events::KeyPressCode::F20;
-	case VK_F21:return Events::KeyPressCode::F21;
-	case VK_F22:return Events::KeyPressCode::F22;
-	case VK_F23:return Events::KeyPressCode::F23;
-	case VK_F24:return Events::KeyPressCode::F24;
+	case GLFW_KEY_F1:	return Events::KeyPressCode::F1;
+	case GLFW_KEY_F2:	return Events::KeyPressCode::F2;
+	case GLFW_KEY_F3:	return Events::KeyPressCode::F3;
+	case GLFW_KEY_F4:	return Events::KeyPressCode::F4;
+	case GLFW_KEY_F5:	return Events::KeyPressCode::F5;
+	case GLFW_KEY_F6:	return Events::KeyPressCode::F6;
+	case GLFW_KEY_F7:	return Events::KeyPressCode::F7;
+	case GLFW_KEY_F8:	return Events::KeyPressCode::F8;
+	case GLFW_KEY_F9:	return Events::KeyPressCode::F9;
+	case GLFW_KEY_F10:	return Events::KeyPressCode::F10;
+	case GLFW_KEY_F11:	return Events::KeyPressCode::F11;
+	case GLFW_KEY_F12:	return Events::KeyPressCode::F12;
+	case GLFW_KEY_F13:	return Events::KeyPressCode::F13;
+	case GLFW_KEY_F14:	return Events::KeyPressCode::F14;
+	case GLFW_KEY_F15:	return Events::KeyPressCode::F15;
+	case GLFW_KEY_F16:	return Events::KeyPressCode::F16;
+	case GLFW_KEY_F17:	return Events::KeyPressCode::F17;
+	case GLFW_KEY_F18:	return Events::KeyPressCode::F18;
+	case GLFW_KEY_F19:	return Events::KeyPressCode::F19;
+	case GLFW_KEY_F20:	return Events::KeyPressCode::F20;
+	case GLFW_KEY_F21:	return Events::KeyPressCode::F21;
+	case GLFW_KEY_F22:	return Events::KeyPressCode::F22;
+	case GLFW_KEY_F23:	return Events::KeyPressCode::F23;
+	case GLFW_KEY_F24:	return Events::KeyPressCode::F24;
 
-	case 0x30:	return Events::KeyPressCode::Num0;
-	case 0x31:	return Events::KeyPressCode::Num1;
-	case 0x32:	return Events::KeyPressCode::Num2;
-	case 0x33:	return Events::KeyPressCode::Num3;
-	case 0x34:	return Events::KeyPressCode::Num4;
-	case 0x35:	return Events::KeyPressCode::Num5;
-	case 0x36:	return Events::KeyPressCode::Num6;
-	case 0x37:	return Events::KeyPressCode::Num7;
-	case 0x38:	return Events::KeyPressCode::Num8;
-	case 0x39:	return Events::KeyPressCode::Num9;
-	case VK_OEM_MINUS:	return Events::KeyPressCode::Dash;
-	case VK_OEM_PLUS:	return Events::KeyPressCode::Add;
+	case GLFW_KEY_0:		return Events::KeyPressCode::Num0;
+	case GLFW_KEY_1:		return Events::KeyPressCode::Num1;
+	case GLFW_KEY_2:		return Events::KeyPressCode::Num2;
+	case GLFW_KEY_3:		return Events::KeyPressCode::Num3;
+	case GLFW_KEY_4:		return Events::KeyPressCode::Num4;
+	case GLFW_KEY_5:		return Events::KeyPressCode::Num5;
+	case GLFW_KEY_6:		return Events::KeyPressCode::Num6;
+	case GLFW_KEY_7:		return Events::KeyPressCode::Num7;
+	case GLFW_KEY_8:		return Events::KeyPressCode::Num8;
+	case GLFW_KEY_9:		return Events::KeyPressCode::Num9;
+	case GLFW_KEY_MINUS:	return Events::KeyPressCode::Dash;
+	case GLFW_KEY_EQUAL:	return Events::KeyPressCode::Add;
 
-	case VK_INSERT:		return Events::KeyPressCode::Insert;
-	case VK_HOME:		return Events::KeyPressCode::Home;
-	case VK_NEXT:	return Events::KeyPressCode::PageUp;
-	case VK_PRIOR:	return Events::KeyPressCode::PageDown;
-	case VK_END:		return Events::KeyPressCode::End;
-	case VK_DELETE:	return Events::KeyPressCode::Delete;
-	case VK_PAUSE:		return Events::KeyPressCode::Pause;
-	case VK_CAPITAL:	return Events::KeyPressCode::CapsLock;
-	case VK_SCROLL:	return Events::KeyPressCode::ScrollLock;
+	case GLFW_KEY_INSERT:		return Events::KeyPressCode::Insert;
+	case GLFW_KEY_HOME:			return Events::KeyPressCode::Home;
+	case GLFW_KEY_PAGE_UP:		return Events::KeyPressCode::PageUp;
+	case GLFW_KEY_PAGE_DOWN:	return Events::KeyPressCode::PageDown;
+	case GLFW_KEY_END:			return Events::KeyPressCode::End;
+	case GLFW_KEY_DELETE:		return Events::KeyPressCode::Delete;
+	case GLFW_KEY_PAUSE:		return Events::KeyPressCode::Pause;
+	case GLFW_KEY_CAPS_LOCK:	return Events::KeyPressCode::CapsLock;
+	case GLFW_KEY_SCROLL_LOCK:	return Events::KeyPressCode::ScrollLock;
 
-	case VK_OEM_COMMA:		return Events::KeyPressCode::Comma;
-	case VK_OEM_PERIOD:		return Events::KeyPressCode::Period;
-	case VK_OEM_2:			return Events::KeyPressCode::ForwardSlash;
-	case VK_OEM_5:			return Events::KeyPressCode::BackSlash;
-	case VK_OEM_1:			return Events::KeyPressCode::Semicolon;
-	case VK_OEM_7:			return Events::KeyPressCode::Apostrophe;
-	case VK_OEM_4:			return Events::KeyPressCode::LeftBracket;
-	case VK_OEM_6:			return Events::KeyPressCode::RightBracket;
+	case GLFW_KEY_COMMA:		return Events::KeyPressCode::Comma;
+	case GLFW_KEY_PERIOD:		return Events::KeyPressCode::Period;
+	case GLFW_KEY_SLASH:		return Events::KeyPressCode::ForwardSlash;
+	case GLFW_KEY_BACKSLASH:	return Events::KeyPressCode::BackSlash;
+	case GLFW_KEY_SEMICOLON:	return Events::KeyPressCode::Semicolon;
+	case GLFW_KEY_APOSTROPHE:	return Events::KeyPressCode::Apostrophe;
+	case GLFW_KEY_LEFT_BRACKET:	return Events::KeyPressCode::LeftBracket;
+	case GLFW_KEY_RIGHT_BRACKET:return Events::KeyPressCode::RightBracket;
 
-	case VK_RETURN:			return Events::KeyPressCode::Enter;
-	case VK_BACK:			return Events::KeyPressCode::Backspace;
-	case VK_OEM_3:			return Events::KeyPressCode::Tilde;
-	case VK_LWIN:			return Events::KeyPressCode::Window;
-	case VK_RWIN:			return Events::KeyPressCode::Window;
+	case GLFW_KEY_ENTER:		return Events::KeyPressCode::Enter;
+	case GLFW_KEY_BACKSPACE:	return Events::KeyPressCode::Backspace;
+	case GLFW_KEY_GRAVE_ACCENT:	return Events::KeyPressCode::Tilde;
+	case GLFW_KEY_LEFT_SUPER:	return Events::KeyPressCode::Window;
+	case GLFW_KEY_RIGHT_SUPER:	return Events::KeyPressCode::Window;
 	}
 
 	return Events::KeyPressCode::Invalid;
+}
+
+static Events::MouseButtonCode TranslateMouseButton(int action) {
+	switch (action) {
+	case GLFW_MOUSE_BUTTON_LEFT:		return Events::MouseButtonCode::Left;
+	case GLFW_MOUSE_BUTTON_RIGHT:		return Events::MouseButtonCode::Right;
+	case GLFW_MOUSE_BUTTON_MIDDLE:		return Events::MouseButtonCode::Middle;
+	case GLFW_MOUSE_BUTTON_4:			return Events::MouseButtonCode::Mouse4;
+	case GLFW_MOUSE_BUTTON_5:			return Events::MouseButtonCode::Mouse5;
+
+	// TODO: Support 6 7 8?
+	default:
+	case GLFW_MOUSE_BUTTON_6:
+	case GLFW_MOUSE_BUTTON_7:
+	case GLFW_MOUSE_BUTTON_8:
+		return Events::MouseButtonCode::Invalid;
+	}
 }

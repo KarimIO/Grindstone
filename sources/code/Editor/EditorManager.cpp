@@ -62,12 +62,12 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	gitManager.Initialize();
 	csharpBuildManager.FinishInitialFileProcessing();
 
-	engineCore->InitializeScene(true);
-	engineCore->ShowMainWindow();
-
 	if (!SetupImguiEditor()) {
 		return false;
 	}
+
+	engineCore->InitializeScene(true);
+	engineCore->ShowMainWindow();
 
 	InitializeQuitCommands();
 

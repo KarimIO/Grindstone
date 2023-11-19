@@ -170,15 +170,15 @@ void EditorCamera::OffsetPosition(float x, float y, float z) {
 	UpdateViewMatrix();
 }
 
-glm::vec3 EditorCamera::GetForward() {
+glm::vec3 EditorCamera::GetForward() const {
 	return rotation * glm::vec3(0.0f, 0.0f, 1.0f);
 }
 
-glm::vec3 EditorCamera::GetRight() {
+glm::vec3 EditorCamera::GetRight() const {
 	return rotation * glm::vec3(-1.0f, 0.0f, 0.0f);
 }
 
-glm::vec3 EditorCamera::GetUp() {
+glm::vec3 EditorCamera::GetUp() const {
 	return rotation * glm::vec3(0.0f, 1.0f, 0.0f);
 }
 

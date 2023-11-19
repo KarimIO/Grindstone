@@ -46,9 +46,8 @@ namespace Grindstone {
 		virtual void ExplorePath(const char* path) override;
 		virtual void OpenFileUsingDefaultProgram(const char* path) override;
 	public:
-		GLFWwindow* GetHandle();
-	private:
-
+		virtual GLFWwindow* GetHandle();
+		EngineCore* engineCore = nullptr;
 	private:
 		GLFWwindow*	windowHandle;
 
@@ -59,7 +58,6 @@ namespace Grindstone {
 		FullscreenMode fullscreenMode;
 		DWORD style;
 		DWORD extendedStyle;
-		EngineCore* engineCore = nullptr;
 		bool shouldClose;
 		*/
 	};

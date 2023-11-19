@@ -33,9 +33,9 @@ namespace Grindstone {
 			glm::mat4& GetProjectionMatrix();
 			glm::mat4& GetViewMatrix();
 		private:
-			glm::vec3 GetForward();
-			glm::vec3 GetRight();
-			glm::vec3 GetUp();
+			glm::vec3 GetForward() const;
+			glm::vec3 GetRight() const;
+			glm::vec3 GetUp() const;
 
 			GraphicsAPI::RenderTarget* renderTarget = nullptr;
 			GraphicsAPI::RenderPass* renderPass = nullptr;

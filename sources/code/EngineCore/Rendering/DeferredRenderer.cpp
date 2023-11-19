@@ -911,6 +911,7 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 	gbufferColorAttachmentNames[3] = "GBuffer Specular + Roughness Image";
 
 	RenderPass::CreateInfo gbufferRenderPassCreateInfo{};
+	gbufferRenderPassCreateInfo.debugName = "GBuffer Render Pass";
 	gbufferRenderPassCreateInfo.width = width;
 	gbufferRenderPassCreateInfo.height = height;
 	gbufferRenderPassCreateInfo.colorFormats = gbufferColorFormats.data();

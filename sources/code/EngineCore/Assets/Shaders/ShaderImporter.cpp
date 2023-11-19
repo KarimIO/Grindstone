@@ -90,17 +90,24 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 	auto renderPass = usesGbuffer
 		? DeferredRenderer::gbufferRenderPass
 		: DeferredRenderer::mainRenderPass;
+
+	uint32_t width = 0;
+	uint32_t height = 0;
+	if (renderPass != nullptr) {
+		width = renderPass->GetWidth();
+		height = renderPass->GetHeight();
+	}
 	GraphicsPipeline::CreateInfo pipelineCreateInfo{};
 	pipelineCreateInfo.debugName = debugName.c_str();
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
 	pipelineCreateInfo.cullMode = TranslateCullMode(reflectionData.cullMode);
 	pipelineCreateInfo.renderPass = renderPass;
-	pipelineCreateInfo.width = static_cast<float>(renderPass->GetWidth());
-	pipelineCreateInfo.height = static_cast<float>(renderPass->GetHeight());
+	pipelineCreateInfo.width = static_cast<float>(width);
+	pipelineCreateInfo.height = static_cast<float>(height);
 	pipelineCreateInfo.scissorX = 0;
 	pipelineCreateInfo.scissorY = 0;
-	pipelineCreateInfo.scissorW = renderPass->GetWidth();
-	pipelineCreateInfo.scissorH = renderPass->GetHeight();
+	pipelineCreateInfo.scissorW = width;
+	pipelineCreateInfo.scissorH = height;
 	pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 	pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
 	pipelineCreateInfo.hasDynamicViewport = true;

@@ -77,12 +77,23 @@ VkSwapchainKHR VulkanWindowGraphicsBinding::GetSwapchain() {
 	return swapChain;
 }
 
-void VulkanWindowGraphicsBinding::GetSwapChainRenderTargets(RenderTarget**& renderTargets, uint32_t& renderTargetCounts) {
-	renderTargets = swapChainTargets.data();
-	renderTargetCounts = static_cast<uint32_t>(swapChainTargets.size());
-}
+void VulkanWindowGraphicsBinding::SubmitWindowObjects(VulkanWindowBindingDataNative& windowBindingData) {
+	swapChain = windowBindingData.swapChain;
+	renderPass = new VulkanRenderPass(windowBindingData.renderPass, windowBindingData.width, windowBindingData.height);
+	swapchainVulkanFormat = windowBindingData.surfaceFormat.format;
+	swapchainFormat = TranslateColorFormatFromVulkan(swapchainVulkanFormat);
 
-ColorFormat VulkanWindowGraphicsBinding::GetDeviceColorFormat() {
+
+	imageSets.resize(windowBindingData.imageSetCount);
+	for (uint32_t i = 0; i < windowBindingData.imageSetCount; ++i) {
+		auto& native = windowBindingData.imageSets[i];
+		auto& imageSet = imageSets[i];
+
+		imageSet.framebuffer = new VulkanFramebuffer(this->renderPass, native.framebuffer);
+		imageSet.swapChainTarget = new VulkanRenderTarget(native.image, native.imageView, swapchainVulkanFormat);
+	}
+}
+ColorFormat VulkanWindowGraphicsBinding::GetDeviceColorFormat() const {
 	return swapchainFormat;
 }
 
@@ -153,17 +164,16 @@ VkExtent2D VulkanWindowGraphicsBinding::ChooseSwapExtent(const VkSurfaceCapabili
 void VulkanWindowGraphicsBinding::CreateSyncObjects() {
 	auto device = VulkanCore::Get().GetDevice();
 
-	imageAvailableSemaphores.resize(maxFramesInFlight);
-	renderFinishedSemaphores.resize(maxFramesInFlight);
-	inFlightFences.resize(maxFramesInFlight);
-	imagesInFlight.resize(swapChainTargets.size(), VK_NULL_HANDLE);
-
 	VkSemaphoreCreateInfo semaphoreInfo = {};
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
 	VkFenceCreateInfo fenceInfo = {};
 	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+	imageAvailableSemaphores.resize(maxFramesInFlight);
+	renderFinishedSemaphores.resize(maxFramesInFlight);
+	inFlightFences.resize(maxFramesInFlight);
 
 	for (size_t i = 0; i < maxFramesInFlight; i++) {
 		if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
@@ -172,6 +182,43 @@ void VulkanWindowGraphicsBinding::CreateSyncObjects() {
 
 			throw std::runtime_error("Vulkan: Failed to create synchronization objects for a frame!");
 		}
+	}
+}
+
+void VulkanWindowGraphicsBinding::CreateImageSets() {
+	auto device = VulkanCore::Get().GetDevice();
+
+	uint32_t imageCount;
+	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+	std::vector<VkImage> swapChainImages;
+	swapChainImages.resize(imageCount);
+	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+
+	VkRenderPass vkRenderPass = static_cast<VulkanRenderPass*>(renderPass)->GetRenderPassHandle();
+
+	VkFramebufferCreateInfo framebufferInfo{};
+	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+	framebufferInfo.renderPass = vkRenderPass;
+	framebufferInfo.attachmentCount = 1;
+	framebufferInfo.width = swapExtent.width;
+	framebufferInfo.height = swapExtent.height;
+	framebufferInfo.layers = 1;
+
+	imageSets.resize(imageCount);
+	for (uint32_t i = 0; i < imageCount; ++i) {
+		VulkanRenderTarget* rt = new VulkanRenderTarget(swapChainImages[i], swapchainVulkanFormat);
+
+		VkImageView attachments[] = { rt->GetImageView() };
+
+		VkFramebuffer vkFramebuffer = nullptr;
+		if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &vkFramebuffer) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create framebuffer!");
+		}
+
+		auto& imageSet = imageSets[i];
+		imageSet.swapChainTarget = rt;
+		imageSet.framebuffer = new VulkanFramebuffer(renderPass, vkFramebuffer);
+		imageSet.fence = nullptr;
 	}
 }
 
@@ -186,8 +233,9 @@ bool VulkanWindowGraphicsBinding::AcquireNextImage() {
 		return false;
 	}
 
-	if (imagesInFlight[currentSwapchainImageIndex] != VK_NULL_HANDLE) {
-		vkWaitForFences(device, 1, &imagesInFlight[currentSwapchainImageIndex], VK_TRUE, UINT64_MAX);
+	auto& imageSet = imageSets[currentSwapchainImageIndex];
+	if (imageSet.fence != VK_NULL_HANDLE) {
+		vkWaitForFences(device, 1, &imageSet.fence, VK_TRUE, UINT64_MAX);
 	}
 
 	vkResetFences(device, 1, &inFlightFences[currentFrame]);
@@ -204,17 +252,12 @@ void VulkanWindowGraphicsBinding::Resize(uint32_t width, uint32_t height) {
 		vkDestroySwapchainKHR(device, swapChain, nullptr);
 		swapChain = nullptr;
 
-		for (size_t i = 0; i < framebuffers.size(); i++) {
-			delete framebuffers[i];
+		for (size_t i = 0; i < imageSets.size(); i++) {
+			delete imageSets[i].framebuffer;
+			delete imageSets[i].swapChainTarget;
 		}
-		framebuffers.clear();
 
-		for (uint32_t i = 0; i < swapChainTargets.size(); ++i) {
-			delete static_cast<VulkanRenderTarget*>(swapChainTargets[i]);
-		}
-		swapChainTargets.clear();
-
-		CreateSwapChain();
+		imageSets.clear();
 	}
 }
 
@@ -323,25 +366,9 @@ void VulkanWindowGraphicsBinding::CreateSwapChain() {
 		throw std::runtime_error("failed to create swap chain!");
 	}
 
-	CreateSwapChainImages();
 	CreateRenderPass();
-	CreateFramebuffers();
+	CreateImageSets();
 	CreateSyncObjects();
-}
-
-void VulkanWindowGraphicsBinding::CreateSwapChainImages() {
-	auto device = VulkanCore::Get().GetDevice();
-
-	uint32_t imageCount;
-	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
-	std::vector<VkImage> swapChainImages;
-	swapChainImages.resize(imageCount);
-	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
-
-	swapChainTargets.resize(imageCount);
-	for (uint32_t i = 0; i < imageCount; ++i) {
-		swapChainTargets[i] = new VulkanRenderTarget(swapChainImages[i], swapchainVulkanFormat);
-	}
 }
 
 void VulkanWindowGraphicsBinding::CreateRenderPass() {
@@ -395,42 +422,12 @@ void VulkanWindowGraphicsBinding::CreateRenderPass() {
 	}
 }
 
-void VulkanWindowGraphicsBinding::CreateFramebuffers() {
-	auto device = VulkanCore::Get().GetDevice();
-	framebuffers.resize(swapChainTargets.size());
-	VkRenderPass vkRenderPass = static_cast<VulkanRenderPass*>(renderPass)->GetRenderPassHandle();
-
-	for (size_t i = 0; i < swapChainTargets.size(); i++) {
-		VulkanRenderTarget* rt = static_cast<VulkanRenderTarget*>(swapChainTargets[i]);
-
-		VkImageView attachments[] = {
-			rt->GetImageView()
-		};
-
-		VkFramebufferCreateInfo framebufferInfo{};
-		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebufferInfo.renderPass = vkRenderPass;
-		framebufferInfo.attachmentCount = 1;
-		framebufferInfo.pAttachments = attachments;
-		framebufferInfo.width = swapExtent.width;
-		framebufferInfo.height = swapExtent.height;
-		framebufferInfo.layers = 1;
-
-		VkFramebuffer vkFramebuffer = nullptr;
-		if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &vkFramebuffer) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create framebuffer!");
-		}
-
-		framebuffers[i] = new VulkanFramebuffer(renderPass, vkFramebuffer);
-	}
-}
-
 RenderPass* VulkanWindowGraphicsBinding::GetRenderPass() {
 	return renderPass;
 }
 
 Framebuffer* VulkanWindowGraphicsBinding::GetCurrentFramebuffer() {
-	return framebuffers[currentFrame];
+	return imageSets[currentFrame].framebuffer;
 }
 
 uint32_t VulkanWindowGraphicsBinding::GetCurrentImageIndex() {
