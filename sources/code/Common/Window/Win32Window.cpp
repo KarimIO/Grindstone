@@ -1,7 +1,7 @@
 //#include "../Engine/Core/InputInterface.hpp"
 #include "Win32Window.hpp"
 #include <EngineCore/EngineCore.hpp>
-#include <Common/Input.hpp>
+#include <Common/Input/InputInterface.hpp>
 #include <GL/gl3w.h>
 #include <GL/wglext.h>
 #include <Windowsx.h>
@@ -433,7 +433,7 @@ void Win32Window::SetFullscreen(FullscreenMode mode) {
 }
 
 
-void Win32Window::GetWindowRect(unsigned int &left, unsigned int &top, unsigned int &right, unsigned int &bottom) {
+void Win32Window::GetWindowRect(unsigned int &left, unsigned int &top, unsigned int &right, unsigned int &bottom) const {
 	RECT rect;
 	::GetWindowRect(windowHandle, &rect);
 	left = rect.left;
@@ -442,7 +442,7 @@ void Win32Window::GetWindowRect(unsigned int &left, unsigned int &top, unsigned 
 	bottom = rect.bottom;
 }
 
-void Win32Window::GetWindowSize(unsigned int &width, unsigned int &height) {
+void Win32Window::GetWindowSize(unsigned int &width, unsigned int &height) const {
 	RECT rect;
 	::GetClientRect(windowHandle, &rect);
 	width = rect.right - rect.left;
@@ -462,7 +462,7 @@ void Win32Window::SetMousePos(unsigned int x, unsigned int y) {
 	SetCursorPos(pt.x, pt.y);
 }
 
-void Win32Window::GetMousePos(unsigned int& x, unsigned int& y) {
+void Win32Window::GetMousePos(unsigned int& x, unsigned int& y) const {
 	POINT point;
 	::GetCursorPos(&point);
 	::ScreenToClient(windowHandle, &point);
@@ -471,26 +471,13 @@ void Win32Window::GetMousePos(unsigned int& x, unsigned int& y) {
 	y = point.y;
 }
 
-void Win32Window::SetCursorIsVisible(bool isVisible) {
-	::ShowCursor(false);
-}
-
-bool Win32Window::GetCursorIsVisible() {
-	PCURSORINFO pci{};
-	if (::GetCursorInfo(pci) == false || pci == 0) {
-		return false;
-	}
-
-	return pci->flags == 0x00000001;
-}
-
 void Win32Window::SetWindowPos(unsigned int x, unsigned int y) {
 	RECT rect = { (LONG)x, (LONG)y, (LONG)x, (LONG)y };
 	::AdjustWindowRectEx(&rect, style, FALSE, extendedStyle);
 	::SetWindowPos(windowHandle, NULL, rect.left, rect.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 }
 
-void Win32Window::GetWindowPos(unsigned int& width, unsigned int& height) {
+void Win32Window::GetWindowPos(unsigned int& width, unsigned int& height) const {
 	POINT pos = { 0, 0 };
 	::ClientToScreen(windowHandle, &pos);
 	width = pos.x;
@@ -502,7 +489,7 @@ void Win32Window::Close() {
 	// UnregisterClassA("GameWindow", GetModuleHandle(NULL));
 }
 
-HWND Win32Window::GetHandle() {
+HWND Win32Window::GetHandle() const {
 	return windowHandle;
 }
 
@@ -517,15 +504,15 @@ void Win32Window::SetWindowFocus(bool isFocused) {
 	}
 }
 
-bool Win32Window::GetWindowFocus() {
+bool Win32Window::GetWindowFocus() const {
 	return ::GetForegroundWindow() == windowHandle;
 }
 
-bool Win32Window::GetWindowMinimized() {
+bool Win32Window::GetWindowMinimized() const {
 	return ::IsIconic(windowHandle) != 0;
 }
 
-void Win32Window::GetTitle(char* allocatedBuffer) {
+void Win32Window::GetTitle(char* allocatedBuffer) const {
 	::GetWindowText(windowHandle, allocatedBuffer, sizeof(allocatedBuffer));
 }
 
@@ -551,7 +538,7 @@ void Win32Window::SetWindowAlpha(float alpha) {
 	}
 }
 
-float Win32Window::GetWindowDpiScale() {
+float Win32Window::GetWindowDpiScale() const {
 	/*HMONITOR monitor = ::MonitorFromWindow(windowHandle, MONITOR_DEFAULTTONEAREST);
 	UINT xdpi = 96, ydpi = 96;
 	if (::IsWindows8Point1OrGreater())

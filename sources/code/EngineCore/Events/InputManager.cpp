@@ -1,22 +1,34 @@
-#include "InputManager.hpp"
-#include "EngineCore/Events/Dispatcher.hpp"
-#include "EngineCore/EngineCore.hpp"
-#include "Common/Event/MouseEvent.hpp"
-#include "Common/Event/KeyEvent.hpp"
-#include "Common/Event/WindowEvent.hpp"
-#include "Common/Math.hpp"
-#include "Common/Window/Window.hpp"
 #include <iostream>
+
+#include <EngineCore/Events/Dispatcher.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <Common/Event/MouseEvent.hpp>
+#include <Common/Event/KeyEvent.hpp>
+#include <Common/Event/WindowEvent.hpp>
+#include <Common/Math.hpp>
+#include <Common/Input/CursorMode.hpp>
+#include <Common/Window/Window.hpp>
+
+#include "InputManager.hpp"
+
 using namespace Grindstone::Input;
 using namespace Grindstone::Events;
 
 extern "C" {
-	ENGINE_CORE_API bool InputManagerGetIsCursorVisible() {
-		return Grindstone::EngineCore::GetInstance().GetInputManager()->IsCursorVisible();
+	ENGINE_CORE_API void InputManagerSetIsRawMode(bool isRawMode) {
+		Grindstone::EngineCore::GetInstance().GetInputManager()->SetCursorIsRawMotion(isRawMode);
 	}
 
-	ENGINE_CORE_API void InputManagerSetIsCursorVisible(bool isVisible) {
-		return Grindstone::EngineCore::GetInstance().GetInputManager()->SetIsCursorVisible(isVisible);
+	ENGINE_CORE_API bool InputManagerGetIsRawMode() {
+		return Grindstone::EngineCore::GetInstance().GetInputManager()->GetCursorIsRawMotion();
+	}
+
+	ENGINE_CORE_API void InputManagerSetCursorMode(uint8_t mode) {
+		Grindstone::EngineCore::GetInstance().GetInputManager()->SetCursorMode(static_cast<Grindstone::Input::CursorMode>(mode));
+	}
+
+	ENGINE_CORE_API uint8_t InputManagerGetCursorMode() {
+		return static_cast<uint8_t>(Grindstone::EngineCore::GetInstance().GetInputManager()->GetCursorMode());
 	}
 
 	ENGINE_CORE_API bool InputManagerGetIsWindowFocused() {
@@ -57,12 +69,20 @@ Manager::Manager(Events::Dispatcher* dispatcher) : dispatcher(dispatcher) {
 	std::memset(mousePressed, 0, sizeof(mousePressed));
 }
 
-bool Manager::IsCursorVisible() {
-	return window->GetCursorIsVisible();
+void Manager::SetCursorMode(CursorMode cursorMode) {
+	window->SetCursorMode(cursorMode);
 }
 
-void Manager::SetIsCursorVisible(bool isVisible) {
-	return window->SetCursorIsVisible(isVisible);
+CursorMode Manager::GetCursorMode() {
+	return window->GetCursorMode();
+}
+
+void Manager::SetCursorIsRawMotion(bool isRawMode) {
+	window->SetMouseIsRawMotion(isRawMode);
+}
+
+bool Manager::GetCursorIsRawMotion() {
+	return window->GetMouseIsRawMotion();
 }
 
 void Manager::SetMainWindow(Grindstone::Window* window) {

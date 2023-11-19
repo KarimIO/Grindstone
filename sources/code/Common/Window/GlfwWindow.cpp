@@ -4,7 +4,7 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #include <EngineCore/EngineCore.hpp>
-#include <Common/Input.hpp>
+#include <Common/Input/InputInterface.hpp>
 #include <GL/wglext.h>
 #include <Windowsx.h>
 #include <ShlObj_core.h>
@@ -37,121 +37,32 @@ static Input::Interface* GetInput(GLFWwindow* window) {
 	return nullptr;
 }
 
-/*
-LRESULT CALLBACK GlfwWindow::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-	Input::Interface* input = nullptr;
-	if (engineCore) {
-		input = engineCore->GetInputManager();
-		if (input == nullptr) {
-			return DefWindowProc(hwnd, msg, wParam, lParam);
-		}
-	}
-	else {
-		return DefWindowProc(hwnd, msg, wParam, lParam);
-	}
-
-	switch (msg) {
-	case WM_SIZE: {
-		int width = LOWORD(lParam);
-		int height = HIWORD(lParam);
-		input->ResizeEvent(width, height);
-		windowsGraphicsBinding->Resize(static_cast<uint32_t>(width), static_cast<uint32_t>(height));
-		break;
-	}
-	case WM_MOUSEMOVE:
-		input->OnMouseMoved(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		break;
-	case WM_SETFOCUS:
-		input->SetIsFocused(true);
-		break;
-	case WM_KILLFOCUS:
-		input->SetIsFocused(false);
-		break;
-	case WM_MOUSEHWHEEL: {
-		float delta = (float)GET_WHEEL_DELTA_WPARAM(wParam) / (float)WHEEL_DELTA;
-		input->MouseScroll(delta, 0);
-		break;
-	}
-	case WM_MOUSEWHEEL: {
-		float delta = (float)GET_WHEEL_DELTA_WPARAM(wParam) / (float)WHEEL_DELTA;
-		input->MouseScroll(0, delta);
-		break;
-	}
-	case WM_LBUTTONDOWN:
-		input->SetMouseButton(Events::MouseButtonCode::Left, true);
-		break;
-	case WM_LBUTTONUP:
-		input->SetMouseButton(Events::MouseButtonCode::Left, false);
-		break;
-	case WM_MBUTTONDOWN:
-		input->SetMouseButton(Events::MouseButtonCode::Middle, true);
-		break;
-	case WM_MBUTTONUP:
-		input->SetMouseButton(Events::MouseButtonCode::Middle, false);
-		break;
-	case WM_RBUTTONDOWN:
-		input->SetMouseButton(Events::MouseButtonCode::Right, true);
-		break;
-	case WM_RBUTTONUP:
-		input->SetMouseButton(Events::MouseButtonCode::Right, false);
-		break;
-	case WM_XBUTTONDOWN:
-		input->SetMouseButton(Events::MouseButtonCode::Mouse4, true); //MOUSE_MOUSE5 as well
-		break;
-	case WM_XBUTTONUP:
-		input->SetMouseButton(Events::MouseButtonCode::Mouse4, false);
-		break;
-	case WM_SYSCHAR:
-	case WM_CHAR:
-		if (wParam > 0 && wParam < 0x10000) {
-			input->AddCharacterTyped((unsigned short)wParam);
-		}
-		break;
-	case WM_KEYDOWN:
-	case WM_SYSKEYDOWN:
-		// Repeat Count
-		if ((HIWORD(lParam) & KF_REPEAT) == 0) {
-			input->SetKeyPressed(TranslateKey(int(wParam)), true);
-		}
-		break;
-	case WM_KEYUP:
-	case WM_SYSKEYUP:
-		input->SetKeyPressed(TranslateKey(int(wParam)), false);
-		break;
-	case WM_CREATE:
-		input->SetIsFocused(true);
-		break;
-	case WM_CLOSE:
-		break;
-	case WM_DESTROY:
-		input->ForceQuit(this);
-		PostQuitMessage(0);
-		break;
-	}
-
-	return DefWindowProc(hwnd, msg, wParam, lParam);
-}
-*/
-
+static Grindstone::EngineCore* g_engineCore = nullptr;
 static void OnErrorCallback(int error, const char* description) {
-	fprintf(stderr, "Error: %s\n", description);
+	g_engineCore->Print(Grindstone::LogSeverity::Error, description);
 }
 
 static void OnKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (Input::Interface* input = GetInput(window)) {
-		input->SetKeyPressed(TranslateKeyboardButton(key), action == GLFW_PRESS);
+		input->SetKeyPressed(TranslateKeyboardButton(key), action != GLFW_RELEASE);
 	}
 }
 
 static void OnCursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
 	if (Input::Interface* input = GetInput(window)) {
-		input->SetMousePosition(static_cast<int>(xpos), static_cast<int>(ypos));
+		input->OnMouseMoved(static_cast<int>(xpos), static_cast<int>(ypos));
 	}
 }
 
 static void OnMouseBtnCallback(GLFWwindow* window, int button, int action, int mods) {
 	if (Input::Interface* input = GetInput(window)) {
 		input->SetMouseButton(TranslateMouseButton(button), action == GLFW_PRESS);
+	}
+}
+
+static void OnMouseScrollCallback(GLFWwindow* window, double offsetX, double offsetY) {
+	if (Input::Interface* input = GetInput(window)) {
+		input->MouseScroll(static_cast<float>(offsetX), static_cast<float>(offsetY));
 	}
 }
 
@@ -166,7 +77,7 @@ static void OnWindowSizeCallback(GLFWwindow* window, int width, int height) {
 	}
 
 	auto wgb = win->GetWindowGraphicsBinding();
-	if (wgb) {
+	if (wgb && win->IsSwapchainControlledByEngine()) {
 		wgb->Resize(static_cast<uint32_t>(width), static_cast<uint32_t>(height));
 	}
 }
@@ -297,6 +208,7 @@ void GlfwWindow::OpenFileUsingDefaultProgram(const char* path) {
 }
 
 bool GlfwWindow::Initialize(CreateInfo& createInfo) {
+	g_engineCore = createInfo.engineCore;
 	glfwSetErrorCallback(&OnErrorCallback);
 
 	if (!glfwInit()) {
@@ -306,6 +218,7 @@ bool GlfwWindow::Initialize(CreateInfo& createInfo) {
 	bool isVulkan = true;
 	bool isOpenGl = false;
 	engineCore = createInfo.engineCore;
+	isSwapchainControlledByEngine = createInfo.isSwapchainControlledByEngine;
 
 	if (isVulkan) {
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -318,6 +231,7 @@ bool GlfwWindow::Initialize(CreateInfo& createInfo) {
 	glfwSetKeyCallback(windowHandle, &OnKeyCallback);
 	glfwSetCursorPosCallback(windowHandle, &OnCursorPosCallback);
 	glfwSetMouseButtonCallback(windowHandle, &OnMouseBtnCallback);
+	glfwSetScrollCallback(windowHandle, &OnMouseScrollCallback);
 	glfwSetWindowPosCallback(windowHandle, &OnWindowPosCallback);
 	glfwSetFramebufferSizeCallback(windowHandle, &OnWindowSizeCallback);
 	glfwSetWindowFocusCallback(windowHandle, &OnWindowFocusCallback);
@@ -344,25 +258,15 @@ bool GlfwWindow::ShouldClose() {
 }
 
 void GlfwWindow::HandleEvents() {
-	MSG eventMessage;
-
-	while (PeekMessage(&eventMessage, NULL, 0, 0, PM_REMOVE)) {
-		if (eventMessage.message == WM_QUIT) {
-			return;
-		}
-
-		TranslateMessage(&eventMessage);
-		DispatchMessage(&eventMessage);
-	}
+	glfwPollEvents();
 }
 
 void GlfwWindow::SetFullscreen(FullscreenMode mode) {
 	// TODO: Handle this
-	
+
 }
 
-
-void GlfwWindow::GetWindowRect(unsigned int &left, unsigned int &top, unsigned int &right, unsigned int &bottom) {
+void GlfwWindow::GetWindowRect(unsigned int &left, unsigned int &top, unsigned int &right, unsigned int &bottom) const {
 	int l, t, r, b;
 	glfwGetWindowFrameSize(windowHandle, &l, &t, &r, &b);
 
@@ -372,7 +276,7 @@ void GlfwWindow::GetWindowRect(unsigned int &left, unsigned int &top, unsigned i
 	bottom = static_cast<unsigned int>(b);
 }
 
-void GlfwWindow::GetWindowSize(unsigned int &width, unsigned int &height) {
+void GlfwWindow::GetWindowSize(unsigned int &width, unsigned int &height) const {
 	int w, h;
 	glfwGetWindowSize(windowHandle, &w, &h);
 	width = w;
@@ -387,7 +291,7 @@ void GlfwWindow::SetMousePos(unsigned int x, unsigned int y) {
 	glfwSetCursorPos(windowHandle, static_cast<double>(x), static_cast<double>(y));
 }
 
-void GlfwWindow::GetMousePos(unsigned int& x, unsigned int& y) {
+void GlfwWindow::GetMousePos(unsigned int& x, unsigned int& y) const {
 	double xpos, ypos;
 	glfwGetCursorPos(windowHandle, &xpos, &ypos);
 
@@ -395,19 +299,41 @@ void GlfwWindow::GetMousePos(unsigned int& x, unsigned int& y) {
 	y = static_cast<unsigned int>(ypos);
 }
 
-void GlfwWindow::SetCursorIsVisible(bool isVisible) {
-	glfwSetInputMode(windowHandle, GLFW_CURSOR, isVisible ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
+void GlfwWindow::SetCursorMode(Grindstone::Input::CursorMode cursorMode) {
+	const int cursorModes[] = { GLFW_CURSOR_NORMAL, GLFW_CURSOR_HIDDEN, GLFW_CURSOR_DISABLED };
+	return glfwSetInputMode(windowHandle, GLFW_CURSOR, cursorModes[(int)cursorMode]);
 }
 
-bool GlfwWindow::GetCursorIsVisible() {
-	return glfwGetInputMode(windowHandle, GLFW_CURSOR) == GLFW_CURSOR_NORMAL;
+Grindstone::Input::CursorMode GlfwWindow::GetCursorMode() const {
+	int mode = glfwGetInputMode(windowHandle, GLFW_CURSOR);
+
+	switch (mode) {
+	case GLFW_CURSOR_NORMAL:
+		return Grindstone::Input::CursorMode::Normal;
+	case GLFW_CURSOR_HIDDEN:
+		return Grindstone::Input::CursorMode::Hidden;
+	case GLFW_CURSOR_DISABLED:
+		return Grindstone::Input::CursorMode::Disabled;
+	default:
+		throw std::runtime_error("Invalid CursorMode!");
+	}
+}
+
+void GlfwWindow::SetMouseIsRawMotion(bool isRawMotion) {
+	if (glfwRawMouseMotionSupported()) {
+		glfwSetInputMode(windowHandle, GLFW_RAW_MOUSE_MOTION, isRawMotion ? GLFW_TRUE : GLFW_FALSE);
+	}
+}
+
+bool GlfwWindow::GetMouseIsRawMotion() const {
+	return glfwGetInputMode(windowHandle, GLFW_RAW_MOUSE_MOTION) == GLFW_TRUE;
 }
 
 void GlfwWindow::SetWindowPos(unsigned int x, unsigned int y) {
 	glfwSetWindowPos(windowHandle, static_cast<int>(x), static_cast<int>(y));
 }
 
-void GlfwWindow::GetWindowPos(unsigned int& x, unsigned int& y) {
+void GlfwWindow::GetWindowPos(unsigned int& x, unsigned int& y) const {
 	int xpos, ypos;
 	glfwGetWindowPos(windowHandle, &xpos, &ypos);
 	x = static_cast<unsigned int>(xpos);
@@ -418,7 +344,7 @@ void GlfwWindow::Close() {
 	glfwSetWindowShouldClose(windowHandle, GLFW_TRUE);
 }
 
-GLFWwindow* GlfwWindow::GetHandle() {
+GLFWwindow* GlfwWindow::GetHandle() const {
 	return windowHandle;
 }
 
@@ -428,15 +354,15 @@ void GlfwWindow::SetWindowFocus(bool isFocused) {
 	}
 }
 
-bool GlfwWindow::GetWindowFocus() {
+bool GlfwWindow::GetWindowFocus() const {
 	return glfwGetWindowAttrib(windowHandle, GLFW_FOCUSED) == GLFW_TRUE;
 }
 
-bool GlfwWindow::GetWindowMinimized() {
+bool GlfwWindow::GetWindowMinimized() const {
 	return glfwGetWindowAttrib(windowHandle, GLFW_ICONIFIED) == GLFW_TRUE;
 }
 
-void GlfwWindow::GetTitle(char* allocatedBuffer) {
+void GlfwWindow::GetTitle(char* allocatedBuffer) const {
 	// TODO: Implement this
 }
 
@@ -448,7 +374,7 @@ void GlfwWindow::SetWindowAlpha(float alpha) {
 	glfwSetWindowOpacity(windowHandle, alpha);
 }
 
-float GlfwWindow::GetWindowDpiScale() {
+float GlfwWindow::GetWindowDpiScale() const {
 	/*HMONITOR monitor = ::MonitorFromWindow(windowHandle, MONITOR_DEFAULTTONEAREST);
 	UINT xdpi = 96, ydpi = 96;
 	if (::IsWindows8Point1OrGreater())

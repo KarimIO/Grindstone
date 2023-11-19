@@ -209,6 +209,7 @@ void VulkanWindowGraphicsBinding::CreateImageSets() {
 		VulkanRenderTarget* rt = new VulkanRenderTarget(swapChainImages[i], swapchainVulkanFormat);
 
 		VkImageView attachments[] = { rt->GetImageView() };
+		framebufferInfo.pAttachments = attachments;
 
 		VkFramebuffer vkFramebuffer = nullptr;
 		if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &vkFramebuffer) != VK_SUCCESS) {
@@ -230,6 +231,7 @@ bool VulkanWindowGraphicsBinding::AcquireNextImage() {
 
 	VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &currentSwapchainImageIndex);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+		RecreateSwapchain();
 		return false;
 	}
 
@@ -243,11 +245,23 @@ bool VulkanWindowGraphicsBinding::AcquireNextImage() {
 }
 
 void VulkanWindowGraphicsBinding::Resize(uint32_t width, uint32_t height) {
-	return;
-	auto& vkCore = VulkanCore::Get();
-	VkDevice device = vkCore.GetDevice();
+	isSwapchainDirty = true;
+}
+
+void VulkanWindowGraphicsBinding::RecreateSwapchain() {
+	GLFWwindow* win = static_cast<GlfwWindow*>(window)->GetHandle();
+
+	int width = 0, height = 0;
+	glfwGetFramebufferSize(win, &width, &height);
+	while (width == 0 || height == 0) {
+		glfwGetFramebufferSize(win, & width, & height);
+		glfwWaitEvents();
+	}
 
 	if (swapChain != nullptr) {
+		auto& vkCore = VulkanCore::Get();
+		VkDevice device = vkCore.GetDevice();
+
 		vkCore.WaitUntilIdle();
 		vkDestroySwapchainKHR(device, swapChain, nullptr);
 		swapChain = nullptr;
@@ -259,6 +273,8 @@ void VulkanWindowGraphicsBinding::Resize(uint32_t width, uint32_t height) {
 
 		imageSets.clear();
 	}
+
+	CreateSwapChain();
 }
 
 void VulkanWindowGraphicsBinding::SubmitCommandBuffer(CommandBuffer* buffer) {
@@ -307,7 +323,9 @@ bool VulkanWindowGraphicsBinding::PresentSwapchain() {
 
 	VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
 
-	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || isSwapchainDirty) {
+		RecreateSwapchain();
+		isSwapchainDirty = false;
 		return false;
 	}
 
@@ -368,7 +386,6 @@ void VulkanWindowGraphicsBinding::CreateSwapChain() {
 
 	CreateRenderPass();
 	CreateImageSets();
-	CreateSyncObjects();
 }
 
 void VulkanWindowGraphicsBinding::CreateRenderPass() {

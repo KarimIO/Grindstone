@@ -9,7 +9,7 @@
 #include <cstring>
 
 #include "X11Window.hpp"
-#include <Common/Input.hpp>
+#include <Common/Input/InputInterface.hpp>
 #include <EngineCore/EngineCore.hpp>
 
 using namespace Grindstone;

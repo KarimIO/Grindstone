@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <Common/Graphics/WindowGraphicsBinding.hpp>
 #include <Common/Display/Display.hpp>
+#include <Common/Input/CursorMode.hpp>
 
 namespace Grindstone {
 	class EngineCore;
@@ -18,11 +19,12 @@ namespace Grindstone {
 
 		struct CreateInfo {
 			EngineCore* engineCore = nullptr;
-			FullscreenMode fullscreen;
+			FullscreenMode fullscreen = FullscreenMode::Windowed;
 			Grindstone::Display display;
-			unsigned int width;
-			unsigned int height;
-			const char* title;
+			unsigned int width = 0;
+			unsigned int height = 0;
+			const char* title = nullptr;
+			bool isSwapchainControlledByEngine = false;
 		};
 	public:
 		static Grindstone::Window* Create(CreateInfo& createInfo);
@@ -31,22 +33,24 @@ namespace Grindstone {
 		virtual bool ShouldClose() = 0;
 		virtual void HandleEvents() = 0;
 		virtual void SetFullscreen(FullscreenMode mode) = 0;
-		virtual void GetWindowRect(unsigned int& left, unsigned int& top, unsigned int& right, unsigned int& bottom) = 0;
-		virtual void GetWindowSize(unsigned int& width, unsigned int& height) = 0;
+		virtual void GetWindowRect(unsigned int& left, unsigned int& top, unsigned int& right, unsigned int& bottom) const = 0;
+		virtual void GetWindowSize(unsigned int& width, unsigned int& height) const = 0;
 		virtual void SetWindowSize(unsigned int width, unsigned int height) = 0;
-		virtual void GetMousePos(unsigned int& x, unsigned int& y) = 0;
+		virtual void GetMousePos(unsigned int& x, unsigned int& y) const = 0;
 		virtual void SetMousePos(unsigned int x, unsigned int y) = 0;
-		virtual void SetCursorIsVisible(bool isVisible) = 0;
-		virtual bool GetCursorIsVisible() = 0;
+		virtual void SetCursorMode(Grindstone::Input::CursorMode cursorMode) = 0;
+		virtual Grindstone::Input::CursorMode GetCursorMode() const = 0;
+		virtual void SetMouseIsRawMotion(bool isRawMotion) = 0;
+		virtual bool GetMouseIsRawMotion() const = 0;
 		virtual void SetWindowPos(unsigned int x, unsigned int y) = 0;
-		virtual void GetWindowPos(unsigned int& x, unsigned int& y) = 0;
+		virtual void GetWindowPos(unsigned int& x, unsigned int& y) const = 0;
 		virtual void SetWindowFocus(bool isFocused) = 0;
-		virtual bool GetWindowFocus() = 0;
-		virtual bool GetWindowMinimized() = 0;
-		virtual void GetTitle(char* allocatedBuffer) = 0;
+		virtual bool GetWindowFocus() const = 0;
+		virtual bool GetWindowMinimized() const = 0;
+		virtual void GetTitle(char* allocatedBuffer) const = 0;
 		virtual void SetTitle(const char* title) = 0;
 		virtual void SetWindowAlpha(float alpha) = 0;
-		virtual float GetWindowDpiScale() = 0;
+		virtual float GetWindowDpiScale() const = 0;
 		virtual void Close() = 0;
 
 		virtual bool CopyStringToClipboard(const std::string& stringToCopy) = 0;
@@ -56,7 +60,7 @@ namespace Grindstone {
 		virtual void ExplorePath(const char* path) = 0;
 		virtual void OpenFileUsingDefaultProgram(const char* path) = 0;
 	public:
-		inline Grindstone::GraphicsAPI::WindowGraphicsBinding* GetWindowGraphicsBinding() {
+		inline Grindstone::GraphicsAPI::WindowGraphicsBinding* GetWindowGraphicsBinding() const {
 			return windowsGraphicsBinding;
 		}
 
@@ -71,8 +75,13 @@ namespace Grindstone {
 		inline void ImmediateSwapBuffers() {
 			windowsGraphicsBinding->ImmediateSwapBuffers();
 		}
+
+		inline bool IsSwapchainControlledByEngine() const {
+			return isSwapchainControlledByEngine;
+		}
 	protected:
-		Grindstone::GraphicsAPI::WindowGraphicsBinding* windowsGraphicsBinding;
+		Grindstone::GraphicsAPI::WindowGraphicsBinding* windowsGraphicsBinding = nullptr;
+		bool isSwapchainControlledByEngine;
 	private:
 		virtual bool Initialize(CreateInfo& createInfo) = 0;
 	};

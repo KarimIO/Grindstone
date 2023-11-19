@@ -3,20 +3,20 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Common/Input.hpp"
-#include "EngineCore/CoreComponents/Camera/CameraComponent.hpp"
-#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
-#include "EngineCore/Scenes/Manager.hpp"
-#include "EngineCore/EngineCore.hpp"
-#include "Common/Window/WindowManager.hpp"
+#include <Common/Input/InputInterface.hpp>
+#include <Common/Window/WindowManager.hpp>
+#include <EngineCore/Events/Dispatcher.hpp>
+#include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
+#include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
+#include <EngineCore/Scenes/Manager.hpp>
+#include <EngineCore/EngineCore.hpp>
 
 #include "../EditorCamera.hpp"
 #include "../EditorManager.hpp"
-#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "ViewportPanel.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
-ImGuizmo::OPERATION ConvertManipulationModeToImGuizmoOperation(Editor::ManipulationMode mode) {
+static ImGuizmo::OPERATION ConvertManipulationModeToImGuizmoOperation(Editor::ManipulationMode mode) {
 	switch (mode) {
 	case Editor::ManipulationMode::Rotate:
 		return ImGuizmo::ROTATE;
@@ -29,6 +29,49 @@ ImGuizmo::OPERATION ConvertManipulationModeToImGuizmoOperation(Editor::Manipulat
 
 ViewportPanel::ViewportPanel() {
 	camera = new EditorCamera();
+
+	Grindstone::EngineCore& engineCore = Editor::Manager::GetEngineCore();
+	auto dispatcher = engineCore.GetEventDispatcher();
+	dispatcher->AddEventListener(Grindstone::Events::EventType::MouseButton, std::bind(&ViewportPanel::OnMouseButtonEvent, this, std::placeholders::_1));
+	dispatcher->AddEventListener(Grindstone::Events::EventType::MouseMoved, std::bind(&ViewportPanel::OnMouseMovedEvent, this, std::placeholders::_1));
+}
+
+bool ViewportPanel::OnMouseButtonEvent(Grindstone::Events::BaseEvent* baseEvent) {
+	Grindstone::Events::MousePressEvent* ev = static_cast<Grindstone::Events::MousePressEvent*>(baseEvent);
+
+	// On release right mouse button
+	if (isMovingCamera && ev != nullptr && ev->code == Grindstone::Events::MouseButtonCode::Right && !ev->isPressed) {
+		isMovingCamera = false;
+
+		Grindstone::EngineCore& engineCore = Editor::Manager::GetEngineCore();
+		Grindstone::Input::Interface* input = engineCore.GetInputManager();
+
+		input->SetCursorIsRawMotion(false);
+		input->SetCursorMode(Grindstone::Input::CursorMode::Normal);
+
+		return true;
+	}
+
+	return false;
+}
+
+bool ViewportPanel::OnMouseMovedEvent(Grindstone::Events::BaseEvent* baseEvent) {
+	Grindstone::Events::MouseMovedEvent* ev = static_cast<Grindstone::Events::MouseMovedEvent*>(baseEvent);
+
+	// On release right mouse button
+	if (isMovingCamera && ev != nullptr) {
+		float deltaX = static_cast<float>(ev->mouseX - startDragX);
+		float deltaY = static_cast<float>(ev->mouseY - startDragY);
+		camera->OffsetRotation(deltaX, deltaY);
+
+		Grindstone::EngineCore& engineCore = Editor::Manager::GetEngineCore();
+		Grindstone::Input::Interface* input = engineCore.GetInputManager();
+		input->SetMousePosition(startDragX, startDragY);
+
+		return true;
+	}
+
+	return false;
 }
 
 void ViewportPanel::HandleInput() {
@@ -37,41 +80,44 @@ void ViewportPanel::HandleInput() {
 	}
 
 	auto& io = ImGui::GetIO();
+	Grindstone::EngineCore& engineCore = Editor::Manager::GetEngineCore();
+	Grindstone::Input::Interface* input = engineCore.GetInputManager();
 
-	ImVec2 viewportPanelPosition = ImVec2(
-		(ImGui::GetWindowContentRegionMin().x + ImGui::GetWindowPos().x),
-		(ImGui::GetWindowContentRegionMin().y + ImGui::GetWindowPos().y)
-	);
-	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-	unsigned int viewportCenterX = (unsigned int)(viewportPanelPosition.x + (viewportPanelSize.x / 2.f));
-	unsigned int viewportCenterY = (unsigned int)(viewportPanelPosition.y + (viewportPanelSize.y / 2.f));
+	if (input == nullptr) {
+		return;
+	}
+
+	ImVec2 windowPos = ImGui::GetWindowPos();
+	ImVec2 viewportPanelRegionMin = ImGui::GetWindowContentRegionMin();
+	ImVec2 viewportPanelRegionMax = ImGui::GetWindowContentRegionMax();
+
+	unsigned int viewportCenterX = static_cast<unsigned int>((viewportPanelRegionMin.x + viewportPanelRegionMax.x) / 2 + windowPos.x);
+	unsigned int viewportCenterY = static_cast<unsigned int>((viewportPanelRegionMin.y + viewportPanelRegionMax.y) / 2 + windowPos.y);
 
 	if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
-		auto window = Editor::Manager::GetEngineCore().windowManager->GetWindowByIndex(0);
-		window->SetMousePos(viewportCenterX, viewportCenterY);
+		auto window = engineCore.windowManager->GetWindowByIndex(0);
+
+		input->GetMousePosition(startDragX, startDragY);
+
+		input->SetCursorIsRawMotion(true);
+		input->SetCursorMode(Grindstone::Input::CursorMode::Disabled);
+		isMovingCamera = true;
 	}
-	else if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
-		bool isWPressed = io.KeysDown[(int)Grindstone::Events::KeyPressCode::W];
-		bool isSPressed = io.KeysDown[(int)Grindstone::Events::KeyPressCode::S];
 
-		bool isDPressed = io.KeysDown[(int)Grindstone::Events::KeyPressCode::D];
-		bool isAPressed = io.KeysDown[(int)Grindstone::Events::KeyPressCode::A];
+	if (isMovingCamera) {
+		bool isWPressed = input->IsKeyPressed(Grindstone::Events::KeyPressCode::W);
+		bool isSPressed = input->IsKeyPressed(Grindstone::Events::KeyPressCode::S);
 
-		bool isSpacePressed = io.KeysDown[(int)Grindstone::Events::KeyPressCode::Space];
-		bool isCtrlPressed = io.KeyCtrl;
+		bool isDPressed = input->IsKeyPressed(Grindstone::Events::KeyPressCode::D);
+		bool isAPressed = input->IsKeyPressed(Grindstone::Events::KeyPressCode::A);
 
-		float xOffset = (isDPressed ? 1.f : 0.f) + (isAPressed ? -1.f : 0.f);
+		bool isSpacePressed = input->IsKeyPressed(Grindstone::Events::KeyPressCode::Space);
+		bool isCtrlPressed = input->IsKeyPressed(Grindstone::Events::KeyPressCode::LeftControl);
+
+		float xOffset = (isAPressed ? 1.f : 0.f) + (isDPressed ? -1.f : 0.f);
 		float zOffset = (isWPressed ? 1.f : 0.f) + (isSPressed ? -1.f : 0.f);
 		float yOffset = (isSpacePressed ? 1.f : 0.f) + (isCtrlPressed ? -1.f : 0.f);
 
-		ImVec2 mousePos = ImGui::GetMousePos();
-		float mouseX = mousePos.x - (float)viewportCenterX;
-		float mouseY = mousePos.y - (float)viewportCenterY;
-
-		auto window = Editor::Manager::GetEngineCore().windowManager->GetWindowByIndex(0);
-		window->SetMousePos(viewportCenterX, viewportCenterY);
-
-		camera->OffsetRotation(mouseY, mouseX);
 		camera->OffsetPosition(xOffset, yOffset, zOffset);
 	}
 }

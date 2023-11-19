@@ -18,7 +18,7 @@ namespace Grindstone {
 		}
 
 		Math::Float3 GetForward() const {
-			return rotation * Math::Float3(0.0f, 0.0f,-1.0f);
+			return rotation * Math::Float3(0.0f, 0.0f, 1.0f);
 		}
 
 		Math::Float3 GetRight() const {

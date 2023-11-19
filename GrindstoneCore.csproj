@@ -19,6 +19,7 @@
     <Compile Include="sources\code\CSharpInterfaces\GrindstoneCore\ECS\SmartComponent.cs" />
     <Compile Include="sources\code\CSharpInterfaces\GrindstoneCore\ECS\SystemRegistrar.cs" />
     <Compile Include="sources\code\CSharpInterfaces\GrindstoneCore\Input\InputManager.cs" />
+    <Compile Include="sources\code\CSharpInterfaces\GrindstoneCore\Input\CursorMode.cs" />
     <Compile Include="sources\code\CSharpInterfaces\GrindstoneCore\Input\KeyboardKey.cs" />
     <Compile Include="sources\code\CSharpInterfaces\GrindstoneCore\Input\MouseButton.cs" />
     <Compile Include="sources\code\CSharpInterfaces\GrindstoneCore\Input\GamepadButton.cs" />

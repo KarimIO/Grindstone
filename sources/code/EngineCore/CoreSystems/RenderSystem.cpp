@@ -64,7 +64,7 @@ namespace Grindstone {
 					return;
 				}
 
-				const glm::vec3 forwardVector = transformComponent.rotation * Math::Float3(0.0f, 0.0f, -1.0f);
+				const glm::vec3 forwardVector = transformComponent.GetForward();
 				const glm::vec3 pos = transformComponent.position;
 
 				const auto viewMatrix = glm::lookAt(

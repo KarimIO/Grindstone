@@ -2,7 +2,7 @@
 
 #include "Common/Event/KeyPressCode.hpp"
 #include "Common/Event/MouseButtonCode.hpp"
-#include "Common/Input.hpp"
+#include <Common/Input/InputInterface.hpp>
 
 namespace Grindstone {
 	namespace Events {
@@ -13,8 +13,10 @@ namespace Grindstone {
 		class Manager : public Interface {
 		public:
 			Manager(Events::Dispatcher* dispatcher);
-			virtual bool IsCursorVisible() override;
-			virtual void SetIsCursorVisible(bool) override;
+			virtual void SetCursorMode(CursorMode) override;
+			virtual CursorMode GetCursorMode() override;
+			virtual void SetCursorIsRawMotion(bool isRawMode) override;
+			virtual bool GetCursorIsRawMotion() override;
 			virtual void SetMainWindow(Grindstone::Window* window) override;
 			virtual bool IsMouseButtonPressed(Events::MouseButtonCode) override;
 			virtual void SetMousePosition(int, int) override;

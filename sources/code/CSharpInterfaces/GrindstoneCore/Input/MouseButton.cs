@@ -5,6 +5,9 @@ namespace Grindstone.Input {
 		Right,
 
 		Mouse4,
-		Mouse5
+		Mouse5,
+		Mouse6,
+		Mouse7,
+		Mouse8
 	}
 }

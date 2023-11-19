@@ -139,12 +139,12 @@ void EditorCamera::RenderPlayModeCamera(TransformComponent& transform, CameraCom
 }
 
 const float maxAngle = 1.55f;
-void EditorCamera::OffsetRotation(float pitch, float yaw) {
+void EditorCamera::OffsetRotation(float xOffset, float yOffset) {
 	float deltaTime = (float)Editor::Manager::GetEngineCore().GetDeltaTime();
 
 	const float mouseSensitivity = 30.0f;
-	eulerAngles.x += pitch * mouseSensitivity * deltaTime / width;
-	eulerAngles.y -= yaw * mouseSensitivity * deltaTime / height;
+	eulerAngles.x += yOffset * mouseSensitivity * deltaTime / width;
+	eulerAngles.y -= xOffset * mouseSensitivity * deltaTime / height;
 
 	if (eulerAngles.x < -maxAngle) {
 		eulerAngles.x = -maxAngle;
@@ -175,7 +175,7 @@ glm::vec3 EditorCamera::GetForward() const {
 }
 
 glm::vec3 EditorCamera::GetRight() const {
-	return rotation * glm::vec3(-1.0f, 0.0f, 0.0f);
+	return rotation * glm::vec3(1.0f, 0.0f, 0.0f);
 }
 
 glm::vec3 EditorCamera::GetUp() const {

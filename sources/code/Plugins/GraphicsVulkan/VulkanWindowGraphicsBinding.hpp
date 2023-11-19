@@ -65,7 +65,9 @@ namespace Grindstone {
 			VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 			void CreateImageSets();
 			void CreateRenderPass();
+			void RecreateSwapchain();
 		private:
+			bool isSwapchainDirty = false;
 			Window* window = nullptr;
 			RenderPass* renderPass = nullptr;
 			std::vector<VulkanImageSet> imageSets;
