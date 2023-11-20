@@ -234,8 +234,11 @@ bool VulkanWindowGraphicsBinding::AcquireNextImage() {
 		RecreateSwapchain();
 		return false;
 	}
+	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+		throw std::runtime_error("failed to acquire swap chain image!");
+	}
 
-	auto& imageSet = imageSets[currentSwapchainImageIndex];
+	auto& imageSet = imageSets[currentFrame];
 	if (imageSet.fence != VK_NULL_HANDLE) {
 		vkWaitForFences(device, 1, &imageSet.fence, VK_TRUE, UINT64_MAX);
 	}
@@ -249,7 +252,8 @@ void VulkanWindowGraphicsBinding::Resize(uint32_t width, uint32_t height) {
 }
 
 void VulkanWindowGraphicsBinding::RecreateSwapchain() {
-	GLFWwindow* win = static_cast<GlfwWindow*>(window)->GetHandle();
+	GlfwWindow* grindstoneGlfwWindow = static_cast<GlfwWindow*>(window);
+	GLFWwindow* win = grindstoneGlfwWindow->GetHandle();
 
 	int width = 0, height = 0;
 	glfwGetFramebufferSize(win, &width, &height);
@@ -258,30 +262,31 @@ void VulkanWindowGraphicsBinding::RecreateSwapchain() {
 		glfwWaitEvents();
 	}
 
-	if (swapChain != nullptr) {
-		auto& vkCore = VulkanCore::Get();
-		VkDevice device = vkCore.GetDevice();
+	auto& vkCore = VulkanCore::Get();
+	vkCore.WaitUntilIdle();
 
-		vkCore.WaitUntilIdle();
+	if (swapChain != nullptr) {
+		VkDevice device = vkCore.GetDevice();
 		vkDestroySwapchainKHR(device, swapChain, nullptr);
 		swapChain = nullptr;
 
-		for (size_t i = 0; i < imageSets.size(); i++) {
-			delete imageSets[i].framebuffer;
-			delete imageSets[i].swapChainTarget;
-		}
-
-		imageSets.clear();
 	}
 
+	for (size_t i = 0; i < imageSets.size(); i++) {
+		delete imageSets[i].framebuffer;
+		delete imageSets[i].swapChainTarget;
+	}
+	imageSets.clear();
+
 	CreateSwapChain();
+
+	grindstoneGlfwWindow->OnSwapchainResized(width, height);
 }
 
 void VulkanWindowGraphicsBinding::SubmitCommandBuffer(CommandBuffer* buffer) {
 	auto& vkCore = VulkanCore::Get();
 	auto device = vkCore.GetDevice();
 	auto graphicsQueue = vkCore.graphicsQueue;
-	auto presentQueue = vkCore.presentQueue;
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

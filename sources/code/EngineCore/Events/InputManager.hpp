@@ -41,7 +41,7 @@ namespace Grindstone {
 			int mousePositionY = 0;
 			bool keyPressed[(int)Events::KeyPressCode::Last];
 			bool mousePressed[(int)Events::MouseButtonCode::Last];
-			Grindstone::Window* window;
+			Grindstone::Window* window = nullptr;
 		}; // class Manager
 	} // namespace Input
 } // namespace Grindstone

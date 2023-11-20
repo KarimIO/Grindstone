@@ -41,6 +41,8 @@ namespace Grindstone {
 		virtual float GetWindowDpiScale() const override;
 		virtual void Close() override;
 
+		virtual void OnSwapchainResized(int width, int height);
+
 		virtual bool CopyStringToClipboard(const std::string& stringToCopy) override;
 		virtual std::filesystem::path BrowseFolder(std::filesystem::path& defaultPath) override;
 		virtual std::filesystem::path OpenFileDialogue(const char* filter) override;

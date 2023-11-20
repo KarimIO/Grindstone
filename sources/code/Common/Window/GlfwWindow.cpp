@@ -72,10 +72,6 @@ static void OnWindowPosCallback(GLFWwindow* window, int xpos, int ypos) {
 static void OnWindowSizeCallback(GLFWwindow* window, int width, int height) {
 	GlfwWindow* win = static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
 
-	if (Input::Interface* input = GetInputFromGrindstoneWindow(win)) {
-		input->ResizeEvent(width, height);
-	}
-
 	auto wgb = win->GetWindowGraphicsBinding();
 	if (wgb && win->IsSwapchainControlledByEngine()) {
 		wgb->Resize(static_cast<uint32_t>(width), static_cast<uint32_t>(height));
@@ -393,6 +389,12 @@ float GlfwWindow::GetWindowDpiScale() const {
 	IM_ASSERT(xdpi == ydpi); // Please contact me if you hit this assert!
 	return xdpi / 96.0f;*/
 	return 1.0f;
+}
+
+void GlfwWindow::OnSwapchainResized(int width, int height) {
+	if (Input::Interface* input = GetInputFromGrindstoneWindow(this)) {
+		input->ResizeEvent(width, height);
+	}
 }
 
 static Events::KeyPressCode TranslateKeyboardButton(int key) {

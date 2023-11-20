@@ -152,8 +152,7 @@ void ViewportPanel::HandleSelection() {
 			nullptr
 		);
 
-		if (ImGuizmo::IsUsing())
-		{
+		if (ImGuizmo::IsUsing()) {
 			glm::vec3 translation, rotation, scale;
 			ImGuizmo::DecomposeMatrixToComponents(
 				glm::value_ptr(transformMatrix),

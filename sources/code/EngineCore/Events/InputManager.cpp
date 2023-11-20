@@ -15,11 +15,11 @@ using namespace Grindstone::Input;
 using namespace Grindstone::Events;
 
 extern "C" {
-	ENGINE_CORE_API void InputManagerSetIsRawMode(bool isRawMode) {
+	ENGINE_CORE_API void InputManagerSetMouseIsRawMotion(bool isRawMode) {
 		Grindstone::EngineCore::GetInstance().GetInputManager()->SetCursorIsRawMotion(isRawMode);
 	}
 
-	ENGINE_CORE_API bool InputManagerGetIsRawMode() {
+	ENGINE_CORE_API bool InputManagerGetMouseIsRawMotion() {
 		return Grindstone::EngineCore::GetInstance().GetInputManager()->GetCursorIsRawMotion();
 	}
 
