@@ -23,6 +23,7 @@ namespace Grindstone {
 				virtual void Resize() override;
 				virtual ImTextureID CreateTexture(std::filesystem::path path) override;
 			private:
+				void WaitForResizeAndRecreateSwapchain();
 				void SetupVulkanWindow(
 					Grindstone::GraphicsAPI::VulkanCore* graphicsCore,
 					Grindstone::GraphicsAPI::WindowGraphicsBinding* wgb,

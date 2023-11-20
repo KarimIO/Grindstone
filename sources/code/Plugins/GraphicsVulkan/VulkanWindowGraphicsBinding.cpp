@@ -83,6 +83,12 @@ void VulkanWindowGraphicsBinding::SubmitWindowObjects(VulkanWindowBindingDataNat
 	swapchainVulkanFormat = windowBindingData.surfaceFormat.format;
 	swapchainFormat = TranslateColorFormatFromVulkan(swapchainVulkanFormat);
 
+	for (uint32_t i = 0; i < imageSets.size(); ++i) {
+		auto& imageSet = imageSets[i];
+
+		delete imageSet.framebuffer;
+		delete imageSet.swapChainTarget;
+	}
 
 	imageSets.resize(windowBindingData.imageSetCount);
 	for (uint32_t i = 0; i < windowBindingData.imageSetCount; ++i) {
@@ -252,6 +258,10 @@ void VulkanWindowGraphicsBinding::Resize(uint32_t width, uint32_t height) {
 }
 
 void VulkanWindowGraphicsBinding::RecreateSwapchain() {
+	if (!window->IsSwapchainControlledByEngine()) {
+		return;
+	}
+
 	GlfwWindow* grindstoneGlfwWindow = static_cast<GlfwWindow*>(window);
 	GLFWwindow* win = grindstoneGlfwWindow->GetHandle();
 

@@ -139,25 +139,10 @@ Grindstone::GraphicsAPI::CommandBuffer* ImguiRendererVulkan::GetCommandBuffer() 
 }
 
 bool ImguiRendererVulkan::PreRender() {
-	if (shouldRebuildSwapchain) {
-		Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
-		auto vulkanCore = static_cast<Grindstone::GraphicsAPI::VulkanCore*>(engineCore.GetGraphicsCore());
-		auto window = static_cast<GlfwWindow*>(engineCore.windowManager->GetWindowByIndex(0));
-
-		int width, height;
-		glfwGetFramebufferSize(window->GetHandle(), &width, &height);
-		if (width > 0 && height > 0)
-		{
-			g_MainWindowData.FrameIndex = 0;
-			CreateOrResizeWindow(vulkanCore, window->GetWindowGraphicsBinding(), width, height);
-			shouldRebuildSwapchain = false;
-		}
-	}
-
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
 	auto window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	if (!window->AcquireNextImage()) {
-		shouldRebuildSwapchain = true;
+		WaitForResizeAndRecreateSwapchain();
 		return false;
 	}
 
@@ -165,6 +150,21 @@ bool ImguiRendererVulkan::PreRender() {
 
 	currentCommandBuffer->BeginCommandBuffer();
 	return true;
+}
+
+void ImguiRendererVulkan::WaitForResizeAndRecreateSwapchain() {
+	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
+	auto vulkanCore = static_cast<Grindstone::GraphicsAPI::VulkanCore*>(engineCore.GetGraphicsCore());
+	auto window = static_cast<GlfwWindow*>(engineCore.windowManager->GetWindowByIndex(0));
+	GLFWwindow* winHandle = window->GetHandle();
+	int width = 0, height = 0;
+	glfwGetFramebufferSize(winHandle, &width, &height);
+	while (width == 0 || height == 0) {
+		glfwGetFramebufferSize(winHandle, &width, &height);
+		glfwWaitEvents();
+	}
+
+	CreateOrResizeWindow(vulkanCore, window->GetWindowGraphicsBinding(), width, height);
 }
 
 void ImguiRendererVulkan::PrepareImguiRendering() {
@@ -187,12 +187,7 @@ void ImguiRendererVulkan::PrepareImguiRendering() {
 	ImGui::NewFrame();
 }
 
-
 void ImguiRendererVulkan::PostRender() {
-	if (shouldRebuildSwapchain) {
-		return;
-	}
-
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
 	auto window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	auto currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
@@ -206,7 +201,10 @@ void ImguiRendererVulkan::PostRender() {
 	currentCommandBuffer->UnbindRenderPass();
 	currentCommandBuffer->EndCommandBuffer();
 	window->SubmitCommandBuffer(currentCommandBuffer);
-	window->PresentSwapchain();
+	if (!window->PresentSwapchain() || shouldRebuildSwapchain) {
+		WaitForResizeAndRecreateSwapchain();
+		shouldRebuildSwapchain = false;
+	}
 }
 
 void ImguiRendererVulkan::Resize() {

@@ -31,7 +31,7 @@ const float THUMBNAIL_SIZE = 64.0f;
 const float THUMBNAIL_PADDING = 4.0f;
 const float THUMBNAIL_SPACING = (ENTRY_SIZE - THUMBNAIL_SIZE - THUMBNAIL_PADDING) / 2.0f;
 
-std::filesystem::path GetNewDefaultPath(std::filesystem::path basePath, std::string fileName, std::string extension) {
+static std::filesystem::path GetNewDefaultPath(const std::filesystem::path& basePath, std::string fileName, std::string extension) {
 	std::filesystem::path finalPath = basePath / (fileName + extension);
 	if (!std::filesystem::exists(finalPath)) {
 		return finalPath;
@@ -46,7 +46,7 @@ std::filesystem::path GetNewDefaultPath(std::filesystem::path basePath, std::str
 	}
 }
 
-std::filesystem::path CreateDefaultMaterial(std::filesystem::path& currentPath) {
+static std::filesystem::path CreateDefaultMaterial(const std::filesystem::path& currentPath) {
 	std::filesystem::path path = GetNewDefaultPath(currentPath, "New Material", ".gmat");
 	std::ofstream output(path);
 	output << "{\n\t\"name\": \"New Material\"\n\t\"shader\": \"\"\n}";
@@ -69,7 +69,7 @@ AssetBrowserPanel::AssetBrowserPanel(ImguiRenderer* imguiRenderer, EngineCore* e
 	currentDirectory = &rootDirectory;
 }
 
-ImTextureID AssetBrowserPanel::GetIcon(const AssetType assetType) {
+ImTextureID AssetBrowserPanel::GetIcon(const AssetType assetType) const {
 	uint16_t uintType = static_cast<uint16_t>(assetType);
 	if (uintType >= static_cast<uint16_t>(AssetType::Count)) {
 		return iconIds.fileIcons[static_cast<uint16_t>(AssetType::Undefined)];
@@ -88,7 +88,7 @@ void AssetBrowserPanel::SetCurrentAssetDirectory(Directory& newDirectory) {
 }
 
 void AssetBrowserPanel::ProcessDirectoryEntryClicks(std::filesystem::directory_entry entry, Directory* directory) {
-	auto path = entry.path();
+	auto& path = entry.path();
 	if (ImGui::IsItemHovered()) {
 		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
 			if (entry.is_directory() && directory) {
@@ -182,7 +182,7 @@ void AssetBrowserPanel::RenderContextMenuFileTypeSpecificEntries(std::filesystem
 		return;
 	}
 
-	auto path = entry.path();
+	auto& path = entry.path();
 	auto pathStr = path.string();
 	size_t firstDot = pathStr.find_last_of('.') + 1;
 	std::string firstDotExtension = pathStr.substr(firstDot);
@@ -221,7 +221,7 @@ void AssetBrowserPanel::RenderContextMenuFileTypeSpecificEntries(std::filesystem
 
 void AssetBrowserPanel::RenderAssetContextMenu(std::filesystem::directory_entry entry) {
 	if (ImGui::BeginPopupContextItem()) {
-		auto path = entry.path();
+		auto& path = entry.path();
 		RenderContextMenuFileTypeSpecificEntries(entry);
 		if (ImGui::MenuItem("Rename")) {
 			pathToRename = path;
@@ -263,7 +263,7 @@ void AssetBrowserPanel::RenderCurrentDirectoryContextMenu() {
 		return;
 	}
 
-	auto currentPath = currentDirectory->path.path();
+	auto& currentPath = currentDirectory->path.path();
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
 	if (ImGui::BeginPopupContextWindow()) {
 		if (ImGui::BeginMenu("Create")) {
@@ -330,7 +330,7 @@ void AssetBrowserPanel::RenderFolders() {
 	}
 
 	for (Directory* subdirectory : currentDirectory->subdirectories) {
-		auto directoryEntry = subdirectory->path;
+		auto& directoryEntry = subdirectory->path;
 		ImGui::TableNextColumn();
 
 		const auto& path = directoryEntry.path();
