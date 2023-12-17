@@ -18,6 +18,14 @@ struct Mesh3dUbo {
 	glm::mat4 modelMatrix;
 };
 
+static int CompareRenderSort(const RenderSortData& a, const RenderSortData& b) {
+	return a.sortData > b.sortData;
+}
+
+static int CompareReverseRenderSort(const RenderSortData& a, const RenderSortData& b) {
+	return a.sortData < b.sortData;
+}
+
 void Mesh3dRenderer::AddQueue(const char* queueName, DrawSortMode drawSortMode) {
 	RenderQueueIndex index = static_cast<RenderQueueIndex>(renderQueues.size());
 	RenderQueueContainer& queue = renderQueues.emplace_back(drawSortMode);
@@ -36,42 +44,97 @@ std::string Mesh3dRenderer::GetName() const {
 	return rendererName;
 }
 
-void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet) {
-	return;
-	/*
-	for (auto& renderQueue : renderQueues) {
-		if (renderQueue.first == "Skybox") {
-			continue;
+void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet, entt::registry& registry, glm::vec3 lightSourcePosition) {
+	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
+	Assets::AssetManager* assetManager = engineCore->assetManager;
+
+	auto skybox = renderQueueMap.find("Skybox");
+	RenderQueueIndex renderQueueSkyIndex = INVALID_RENDER_QUEUE;
+	if (skybox == renderQueueMap.end()) {
+		renderQueueSkyIndex = skybox->second;
+	}
+
+	std::vector<RenderTask> renderTasks;
+	std::vector<RenderSortData> renderSortData;
+
+	auto view = registry.view<const TransformComponent, const MeshComponent, const MeshRendererComponent>();
+	view.each(
+		[&](
+			const TransformComponent& transformComponent,
+			const MeshComponent& meshComponent,
+			const MeshRendererComponent& meshRenderComponent
+		) {
+		// Add to Render Queue
+		Mesh3dAsset* meshAsset = assetManager->GetAsset(meshComponent.mesh);
+
+		if (meshAsset == nullptr) {
+			return;
 		}
 
-		for (auto& shaderUuid : renderQueue.second.shaders) {
-			ShaderAsset& shader = *engineCore->assetManager->GetAsset<ShaderAsset>(shaderUuid);
-			for (auto& materialUuid : shader.materials) {
-				MaterialAsset& material = *engineCore->assetManager->GetAsset<MaterialAsset>(materialUuid);
-				for (auto& renderable : material.renderables) {
-					ECS::Entity entity = renderable.first;
-					Mesh3dAsset::Submesh& submesh = *(Mesh3dAsset::Submesh*)renderable.second;
+		// Early Frustum Cull
 
-					auto graphicsCore = engineCore->GetGraphicsCore();
-					commandBuffer->BindVertexArrayObject(submesh.vertexArrayObject);
+		Math::Matrix4 transform = transformComponent.GetTransformMatrix();
+		meshRenderComponent.perDrawUniformBuffer->UpdateBuffer(&transform);
 
-					auto& registry = entity.GetScene()->GetEntityRegistry();
-					entt::entity entityHandle = entity.GetHandle();
-					auto& transformComponent = registry.get<TransformComponent>(entityHandle);
-					auto& meshRendererComponent = registry.get<MeshRendererComponent>(entityHandle);
-					glm::mat4 modelMatrix = transformComponent.GetTransformMatrix();
-					meshRendererComponent.perDrawUniformBuffer->UpdateBuffer(&modelMatrix);
+		glm::vec3 offset = transformComponent.position - lightSourcePosition;
+		// Multiply because this will be simplified to an int.
+		const float distanceMultiplier = 100.0f;
+		// Distance squared is used to sort. It's squared because we don't need exact distance to sort, and it's an expensive function.
+		float distanceSquared = (offset.x * offset.x) + (offset.y * offset.y) + (offset.z * offset.z);
+		distanceSquared *= distanceMultiplier;
+		uint32_t sortData = static_cast<uint32_t>(distanceSquared);
 
-					commandBuffer->DrawIndices(
-						submesh.baseIndex,
-						submesh.indexCount,
-						1,
-						submesh.baseVertex
-					);
-				}
+		const std::vector<Grindstone::AssetReference<Grindstone::MaterialAsset>>& materials = meshRenderComponent.materials;
+		for (const Grindstone::Mesh3dAsset::Submesh& submesh : meshAsset->submeshes) {
+			if (submesh.materialIndex > materials.size()) {
+				continue;
 			}
+
+			MaterialAsset* materialAsset = assetManager->GetAsset(materials[submesh.materialIndex]);
+			if (materialAsset == nullptr) {
+				continue;
+			}
+
+			ShaderAsset* shaderAsset = assetManager->GetAsset<ShaderAsset>(materialAsset->shaderUuid);
+			if (shaderAsset == nullptr) {
+				continue;
+			}
+
+			RenderTask renderTask{};
+			renderTask.materialDescriptorSet = materialAsset->descriptorSet;
+			renderTask.pipeline = shaderAsset->pipeline;
+			renderTask.vertexArrayObject = meshAsset->vertexArrayObject;
+			renderTask.indexCount = submesh.indexCount;
+			renderTask.baseVertex = submesh.baseVertex;
+			renderTask.baseIndex = submesh.baseIndex;
+			renderTask.perDrawDescriptorSet = meshRenderComponent.perDrawDescriptorSet;
+			renderTask.sortData = sortData;
+
+			renderTasks.emplace_back(renderTask);
 		}
-	}*/
+	});
+
+	renderSortData.resize(renderTasks.size());
+	for (size_t i = 0; i < renderSortData.size(); ++i) {
+		renderSortData[i].renderTaskIndex = i;
+		renderSortData[i].sortData = renderTasks[i].sortData;
+	}
+
+	std::sort(renderSortData.begin(), renderSortData.end(), CompareRenderSort);
+
+	for (size_t sortIndex = 0; sortIndex < renderSortData.size(); ++sortIndex) {
+		size_t renderTaskIndex = renderSortData[sortIndex].renderTaskIndex;
+		Grindstone::RenderTask& renderTask = renderTasks[renderTaskIndex];
+
+		commandBuffer->BindVertexArrayObject(renderTask.vertexArrayObject);
+
+		commandBuffer->DrawIndices(
+			renderTask.baseIndex,
+			renderTask.indexCount,
+			1,
+			renderTask.baseVertex
+		);
+	}
 }
 
 void Mesh3dRenderer::RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, const char* queueName) {
@@ -133,12 +196,15 @@ void Mesh3dRenderer::CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt:
 		meshRenderComponent.perDrawUniformBuffer->UpdateBuffer(&transform);
 
 		glm::vec3 offset = transformComponent.position - eyePosition;
+		// Multiply because this will be simplified to an int.
+		const float distanceMultiplier = 100.0f;
 		// Distance squared is used to sort. It's squared because we don't need exact distance to sort, and it's an expensive function.
 		float distanceSquared = (offset.x * offset.x) + (offset.y * offset.y) + (offset.z * offset.z);
-		uint32_t sortData = static_cast<uint32_t>(distanceSquared * 100.0f);
+		distanceSquared *= distanceMultiplier;
+		uint32_t sortData = static_cast<uint32_t>(distanceSquared);
 
-		auto& materials = meshRenderComponent.materials;
-		for (Grindstone::Mesh3dAsset::Submesh& submesh : meshAsset->submeshes) {
+		const std::vector<Grindstone::AssetReference<Grindstone::MaterialAsset>>& materials = meshRenderComponent.materials;
+		for (const Grindstone::Mesh3dAsset::Submesh& submesh : meshAsset->submeshes) {
 			if (submesh.materialIndex > materials.size()) {
 				continue;
 			}
@@ -172,14 +238,6 @@ void Mesh3dRenderer::CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt:
 			renderQueues[renderQueueIndex].renderTasks.emplace_back(renderTask);
 		}
 	});
-}
-
-static int CompareRenderSort(const RenderSortData& a, const RenderSortData& b) {
-	return a.sortData > b.sortData;
-}
-
-static int CompareReverseRenderSort(const RenderSortData& a, const RenderSortData& b) {
-	return a.sortData < b.sortData;
 }
 
 void Mesh3dRenderer::SortQueues() {

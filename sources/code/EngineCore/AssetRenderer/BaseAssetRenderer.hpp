@@ -25,7 +25,7 @@ namespace Grindstone {
 	class BaseAssetRenderer {
 	public:
 		virtual void AddQueue(const char* name, DrawSortMode sortType) = 0;
-		virtual void RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet) = 0;
+		virtual void RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet, entt::registry& registry, glm::vec3 lightSourcePosition) = 0;
 		virtual void CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt::registry& registry) = 0;
 		virtual void SortQueues() = 0;
 

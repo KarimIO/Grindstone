@@ -38,10 +38,12 @@ RenderQueueIndex Grindstone::AssetRendererManager::GetIndexOfRenderQueue(const s
 
 void AssetRendererManager::RenderShadowMap(
 	GraphicsAPI::CommandBuffer* commandBuffer,
-	GraphicsAPI::DescriptorSet* lightingDescriptorSet
+	GraphicsAPI::DescriptorSet* lightingDescriptorSet,
+	entt::registry& registry,
+	glm::vec3 lightSourcePosition
 ) {
 	for (auto& assetRenderer : assetRenderers) {
-		assetRenderer.second->RenderShadowMap(commandBuffer, lightingDescriptorSet);
+		assetRenderer.second->RenderShadowMap(commandBuffer, lightingDescriptorSet, registry, lightSourcePosition);
 	}
 }
 

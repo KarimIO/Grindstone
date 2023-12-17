@@ -26,7 +26,7 @@ using namespace Grindstone::GraphicsAPI;
 GraphicsAPI::RenderPass* DeferredRenderer::gbufferRenderPass = nullptr;
 GraphicsAPI::RenderPass* DeferredRenderer::mainRenderPass = nullptr;
 
-const uint32_t MAX_BLOOM_MIPS = 40;
+const size_t MAX_BLOOM_MIPS = 40u;
 
 float lightPositions[] = {
 	-1.0f, -1.0f,
@@ -66,12 +66,19 @@ struct BloomUboStruct {
 	float filterRadius;
 };
 
+static size_t CalculateBloomLevels(uint32_t width, uint32_t height) {
+	float minDimension = static_cast<float>(glm::min(width, height));
+	float logDimension = glm::log2(minDimension);
+	return glm::min(static_cast<size_t>(logDimension) - 1, MAX_BLOOM_MIPS);
+}
+
 DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : targetRenderPass(targetRenderPass) {
 	width = targetRenderPass->GetWidth();
 	height = targetRenderPass->GetHeight();
 
-	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	EngineCore& engineCore = EngineCore::GetInstance();
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	auto wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	uint32_t maxFramesInFlight = wgb->GetMaxFramesInFlight();
 	deferredRendererImageSets.resize(maxFramesInFlight);
 
@@ -83,8 +90,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;
 	shadowMapRenderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
-	float minDimension = static_cast<float>(glm::min(width, height));
-	bloomMipLevelCount = glm::min(static_cast<uint32_t>(glm::log2(minDimension)) - 1, MAX_BLOOM_MIPS);
+	bloomMipLevelCount = CalculateBloomLevels(width, height);
 
 	Uuid brdfAssetUuid("7707483a-9379-4e81-9e15-0e5acf20e9d6");
 	brdfLut = EngineCore::GetInstance().assetManager->GetAsset<TextureAsset>(brdfAssetUuid)->texture;
@@ -298,12 +304,18 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 }
 
 void DeferredRenderer::CleanupPipelines() {
-	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	graphicsCore->DeleteGraphicsPipeline(pointLightPipeline);
 	graphicsCore->DeleteGraphicsPipeline(spotLightPipeline);
 	graphicsCore->DeleteGraphicsPipeline(directionalLightPipeline);
 	graphicsCore->DeleteGraphicsPipeline(shadowMappingPipeline);
 	graphicsCore->DeleteGraphicsPipeline(tonemapPipeline);
+
+	pointLightPipeline = nullptr;
+	spotLightPipeline = nullptr;
+	directionalLightPipeline = nullptr;
+	shadowMappingPipeline = nullptr;
+	tonemapPipeline = nullptr;
 }
 
 bool DeferredRenderer::OnWindowResize(Events::BaseEvent* ev) {
@@ -319,7 +331,7 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 	this->width = width;
 	this->height = height;
 
-	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	graphicsCore->WaitUntilIdle();
 
 	uint32_t halfWidth = width / 2;
@@ -329,15 +341,14 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 	ssaoRenderPass->Resize(halfWidth, halfHeight);
 	ssaoFramebuffer->Resize(halfWidth, halfHeight);
 
-	float minDimension = static_cast<float>(glm::min(width, height));
-	bloomMipLevelCount = glm::min(static_cast<uint32_t>(glm::log2(minDimension)) - 1, MAX_BLOOM_MIPS);
+	bloomMipLevelCount = CalculateBloomLevels(width, height);
 
 	CreateBloomUniformBuffers();
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
-		auto& imageSet = deferredRendererImageSets[i];
+		DeferredRendererImageSet& imageSet = deferredRendererImageSets[i];
 
-		for (auto gbufferRenderTarget : imageSet.gbufferRenderTargets) {
+		for (GraphicsAPI::RenderTarget* gbufferRenderTarget : imageSet.gbufferRenderTargets) {
 			gbufferRenderTarget->Resize(width, height);
 		}
 
@@ -488,7 +499,7 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 	}
 
 	bloomUboStruct.stage = BloomStage::Upsample;
-	for (int i = bloomMipLevelCount - 2; i >= 1; --i) {
+	for (size_t i = bloomMipLevelCount - 2; i >= 1; --i) {
 		std::string bloomDescriptorName = fmt::format("Bloom DS Upsample [{}]({})", imageSetIndex, i);
 		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UpdateBuffer(&bloomUboStruct);
@@ -1226,6 +1237,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.descriptorSetLayoutCount = 1;
 		pipelineCreateInfo.colorAttachmentCount = 1;
 		pipelineCreateInfo.blendMode = BlendMode::None;
+		pipelineCreateInfo.cullMode = CullMode::None;
 		pipelineCreateInfo.renderPass = shadowMapRenderPass;
 		pipelineCreateInfo.isDepthWriteEnabled = true;
 		pipelineCreateInfo.isDepthTestEnabled = true;
@@ -1295,7 +1307,7 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 	mipWidths[0] = mipWidth;
 	mipHeights[0] = mipHeight;
 
-	for (uint32_t i = 1; i < bloomMipLevelCount - 1; ++i) {
+	for (size_t i = 1; i < bloomMipLevelCount - 1; ++i) {
 		mipWidth /= 2;
 		mipHeight /= 2;
 		mipWidths[i] = mipWidth;
@@ -1320,7 +1332,7 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
 
-	for (int i = bloomMipLevelCount - 3; i >= 0; --i) {
+	for (size_t i = bloomMipLevelCount - 3; i != SIZE_MAX; --i) {
 		mipWidth = mipWidths[i];
 		mipHeight = mipHeights[i];
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidth / 4.0f));
@@ -1367,7 +1379,7 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 			currentEnvironmentMapUuid = environmentMapComponent.specularTexture.uuid;
 			Grindstone::TextureAsset* texAsset = environmentMapComponent.specularTexture.Get();
 			if (texAsset != nullptr) {
-				auto tex = texAsset->texture;
+				Texture* tex = texAsset->texture;
 
 				GraphicsAPI::DescriptorSet::Binding binding{};
 				binding.bindingIndex = 0;
@@ -1557,7 +1569,12 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 			commandBuffer->SetScissor(0, 0, resolution, resolution);
 
 			commandBuffer->BindGraphicsDescriptorSet(shadowMappingPipeline, &pointLightComponent.shadowMapDescriptorSet, 1);
-			assetManager->RenderShadowMap(commandBuffer, pointLightComponent.shadowMapDescriptorSet);
+			assetManager->RenderShadowMap(
+				commandBuffer,
+				spotLightComponent.shadowMapDescriptorSet,
+				registry,
+				transformComponent.position
+			);
 
 			commandBuffer->UnbindRenderPass();
 		});
@@ -1612,7 +1629,12 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 			commandBuffer->SetScissor(0, 0, resolution, resolution);
 
 			commandBuffer->BindGraphicsDescriptorSet(shadowMappingPipeline, &spotLightComponent.shadowMapDescriptorSet, 1);
-			assetManager->RenderShadowMap(commandBuffer, spotLightComponent.shadowMapDescriptorSet);
+			assetManager->RenderShadowMap(
+				commandBuffer,
+				spotLightComponent.shadowMapDescriptorSet,
+				registry,
+				transformComponent.position
+			);
 
 			commandBuffer->UnbindRenderPass();
 		});
@@ -1622,11 +1644,12 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 		auto view = registry.view<const TransformComponent, DirectionalLightComponent>();
 		view.each([&](const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
 			const float shadowHalfSize = 40.0f;
-			glm::mat4 projectionMatrix = glm::ortho<float>(-shadowHalfSize, shadowHalfSize, -shadowHalfSize, shadowHalfSize, 0, 80);
+			glm::mat4 projectionMatrix = glm::ortho<float>(-shadowHalfSize, shadowHalfSize, -shadowHalfSize, shadowHalfSize, 0, 160.0f);
 			graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
 
+			glm::vec3 lightPos = transformComponent.GetForward() * -100.0f;
 			glm::mat4 viewMatrix = glm::lookAt(
-				transformComponent.GetForward() * -70.0f,
+				lightPos,
 				glm::vec3(0, 0, 0),
 				transformComponent.GetUp()
 			);
@@ -1656,7 +1679,12 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 			commandBuffer->SetScissor(0, 0, resolution, resolution);
 
 			commandBuffer->BindGraphicsDescriptorSet(shadowMappingPipeline, &directionalLightComponent.shadowMapDescriptorSet, 1);
-			assetManager->RenderShadowMap(commandBuffer, directionalLightComponent.shadowMapDescriptorSet);
+			assetManager->RenderShadowMap(
+				commandBuffer,
+				directionalLightComponent.shadowMapDescriptorSet,
+				registry,
+				lightPos
+			);
 
 			commandBuffer->UnbindRenderPass();
 		});
@@ -1676,7 +1704,7 @@ void DeferredRenderer::PostProcessCommandBuffer(
 
 	auto& imageSet = deferredRendererImageSets[imageIndex];
 
-	// RenderBloom(imageSet, currentCommandBuffer);
+	RenderBloom(imageSet, currentCommandBuffer);
 	
 	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
 	ClearDepthStencil clearDepthStencil;
@@ -1756,7 +1784,7 @@ void DeferredRenderer::RenderCommandBuffer(
 	engineUboStruct.eyePos = eyePos;
 	imageSet.globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
 
-	// RenderShadowMaps(commandBuffer, registry);
+	RenderShadowMaps(commandBuffer, registry);
 	assetManager->SetEngineDescriptorSet(imageSet.engineDescriptorSet);
 
 	{

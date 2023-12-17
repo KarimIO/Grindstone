@@ -53,7 +53,7 @@ namespace Grindstone {
 			Mesh3dRenderer(EngineCore* engineCore);
 
 			virtual void AddQueue(const char* queueName, DrawSortMode sortMode);
-			virtual void RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet) override;
+			virtual void RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet, entt::registry& registry, glm::vec3 lightSourcePosition) override;
 			virtual void RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, const char* queueName) override;
 			virtual void CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt::registry& registry) override;
 			virtual void SortQueues() override;
