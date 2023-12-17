@@ -56,8 +56,14 @@ void AssetRendererManager::RenderQueue(
 	}
 }
 
-void Grindstone::AssetRendererManager::CacheRenderTasksAndFrustumCull(GraphicsAPI::CommandBuffer* commandBuffer, entt::registry& registry) {
+void AssetRendererManager::CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt::registry& registry) {
 	for (auto& assetRenderer : assetRenderers) {
-		assetRenderer.second->CacheRenderTasksAndFrustumCull(commandBuffer, registry);
+		assetRenderer.second->CacheRenderTasksAndFrustumCull(eyePosition, registry);
+	}
+}
+
+void AssetRendererManager::SortQueues() {
+	for (auto& assetRenderer : assetRenderers) {
+		assetRenderer.second->SortQueues();
 	}
 }

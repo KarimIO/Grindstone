@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <entt/fwd.hpp>
+#include <glm/vec3.hpp>
 
 #include "EngineCore/Assets/AssetManager.hpp"
 
@@ -25,7 +26,8 @@ namespace Grindstone {
 	public:
 		virtual void AddQueue(const char* name, DrawSortMode sortType) = 0;
 		virtual void RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet) = 0;
-		virtual void CacheRenderTasksAndFrustumCull(GraphicsAPI::CommandBuffer* commandBuffer, entt::registry& registry) = 0;
+		virtual void CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt::registry& registry) = 0;
+		virtual void SortQueues() = 0;
 
 		virtual std::string GetName() const = 0;
 		virtual void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) = 0;

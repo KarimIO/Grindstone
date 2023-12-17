@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
@@ -77,10 +78,11 @@ void Mesh3dRenderer::RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, cons
 	RenderQueueContainer& renderQueue = renderQueues[renderQueueMap[queueName]];
 
 	GraphicsAPI::GraphicsPipeline* graphicsPipeline = nullptr;
-	auto assetManager = engineCore->assetManager;
+	Assets::AssetManager* assetManager = engineCore->assetManager;
 
-	for (size_t i = 0; i < renderQueue.renderTasks.size(); ++i) {
-		Grindstone::RenderTask& renderTask = renderQueue.renderTasks[i];
+	for (size_t sortIndex = 0; sortIndex < renderQueue.renderSortData.size(); ++sortIndex) {
+		size_t renderTaskIndex = renderQueue.renderSortData[sortIndex].renderTaskIndex;
+		Grindstone::RenderTask& renderTask = renderQueue.renderTasks[renderTaskIndex];
 		if (graphicsPipeline != renderTask.pipeline) {
 			graphicsPipeline = renderTask.pipeline;
 			commandBuffer->BindGraphicsPipeline(renderTask.pipeline);
@@ -103,51 +105,7 @@ void Mesh3dRenderer::RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, cons
 	}
 }
 
-#if 0
-void Mesh3dRenderer::RenderShader(GraphicsAPI::CommandBuffer* commandBuffer, ShaderAsset& shader) {
-	commandBuffer->BindGraphicsPipeline(shader.pipeline);
-
-	for (auto materialUuid : shader.materials) {
-		MaterialAsset& material = *engineCore->assetManager->GetAsset<MaterialAsset>(materialUuid);
-		RenderMaterial(commandBuffer, shader.pipeline, material);
-	}
-}
-
-void Mesh3dRenderer::RenderMaterial(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::GraphicsPipeline* pipeline, MaterialAsset& material) {
-	for (auto& renderable : material.renderables) {
-		ECS::Entity entity = renderable.first;
-		Mesh3dAsset::Submesh& submesh = *(Mesh3dAsset::Submesh*)renderable.second;
-		RenderSubmesh(commandBuffer, pipeline, material.descriptorSet, entity, submesh);
-	}
-}
-
-void Mesh3dRenderer::RenderSubmesh(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::GraphicsPipeline* pipeline, GraphicsAPI::DescriptorSet* materialDescriptorSet, ECS::Entity rendererEntity, Mesh3dAsset::Submesh& submesh3d) {
-	auto graphicsCore = engineCore->GetGraphicsCore();
-	commandBuffer->BindVertexArrayObject(submesh3d.vertexArrayObject);
-
-	auto& registry = rendererEntity.GetScene()->GetEntityRegistry();
-	entt::entity entity = rendererEntity.GetHandle();
-	auto& transformComponent = registry.get<TransformComponent>(entity);
-	auto& meshRendererComponent = registry.get<MeshRendererComponent>(entity);
-	glm::mat4 modelMatrix = transformComponent.GetTransformMatrix();
-	meshRendererComponent.perDrawUniformBuffer->UpdateBuffer(&modelMatrix);
-	std::vector<GraphicsAPI::DescriptorSet*> descriptors = { materialDescriptorSet, engineDescriptorSet, meshRendererComponent.perDrawDescriptorSet };
-	commandBuffer->BindGraphicsDescriptorSet(
-		pipeline,
-		descriptors.data(),
-		static_cast<uint32_t>(descriptors.size())
-	);
-
-	commandBuffer->DrawIndices(
-		submesh3d.baseIndex,
-		submesh3d.indexCount,
-		1,
-		submesh3d.baseVertex
-	);
-}
-#endif
-
-void Mesh3dRenderer::CacheRenderTasksAndFrustumCull(GraphicsAPI::CommandBuffer* commandBuffer, entt::registry& registry) {
+void Mesh3dRenderer::CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt::registry& registry) {
 	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
 	Assets::AssetManager* assetManager = engineCore->assetManager;
 
@@ -162,11 +120,6 @@ void Mesh3dRenderer::CacheRenderTasksAndFrustumCull(GraphicsAPI::CommandBuffer* 
 		const MeshComponent& meshComponent,
 		const MeshRendererComponent& meshRenderComponent
 	) {
-		Math::Matrix4 transform = transformComponent.GetTransformMatrix();
-		meshRenderComponent.perDrawUniformBuffer->UpdateBuffer(&transform);
-
-		// Early Frustum Cull
-
 		// Add to Render Queue
 		Mesh3dAsset* meshAsset = assetManager->GetAsset(meshComponent.mesh);
 
@@ -174,8 +127,23 @@ void Mesh3dRenderer::CacheRenderTasksAndFrustumCull(GraphicsAPI::CommandBuffer* 
 			return;
 		}
 
-		for(auto& submesh : meshAsset->submeshes) {
-			MaterialAsset* materialAsset = assetManager->GetAsset(meshRenderComponent.materials[submesh.materialIndex]);
+		// Early Frustum Cull
+
+		Math::Matrix4 transform = transformComponent.GetTransformMatrix();
+		meshRenderComponent.perDrawUniformBuffer->UpdateBuffer(&transform);
+
+		glm::vec3 offset = transformComponent.position - eyePosition;
+		// Distance squared is used to sort. It's squared because we don't need exact distance to sort, and it's an expensive function.
+		float distanceSquared = (offset.x * offset.x) + (offset.y * offset.y) + (offset.z * offset.z);
+		uint32_t sortData = static_cast<uint32_t>(distanceSquared * 100.0f);
+
+		auto& materials = meshRenderComponent.materials;
+		for (Grindstone::Mesh3dAsset::Submesh& submesh : meshAsset->submeshes) {
+			if (submesh.materialIndex > materials.size()) {
+				continue;
+			}
+
+			MaterialAsset* materialAsset = assetManager->GetAsset(materials[submesh.materialIndex]);
 			if (materialAsset == nullptr) {
 				continue;
 			}
@@ -185,8 +153,7 @@ void Mesh3dRenderer::CacheRenderTasksAndFrustumCull(GraphicsAPI::CommandBuffer* 
 				continue;
 			}
 
-			RenderQueueIndex renderQueueIndex = shaderAsset->renderQueue;
-			RenderTask& renderTask = renderQueues[renderQueueIndex].renderTasks.emplace_back();
+			RenderTask renderTask{};
 			renderTask.materialDescriptorSet = materialAsset->descriptorSet;
 			renderTask.pipeline = shaderAsset->pipeline;
 			renderTask.vertexArrayObject = meshAsset->vertexArrayObject;
@@ -194,8 +161,46 @@ void Mesh3dRenderer::CacheRenderTasksAndFrustumCull(GraphicsAPI::CommandBuffer* 
 			renderTask.baseVertex = submesh.baseVertex;
 			renderTask.baseIndex = submesh.baseIndex;
 			renderTask.perDrawDescriptorSet = meshRenderComponent.perDrawDescriptorSet;
+			renderTask.sortData = sortData;
+
+			RenderQueueIndex renderQueueIndex = shaderAsset->renderQueue;
+
+			if (renderQueueIndex == INVALID_RENDER_QUEUE || renderQueueIndex >= renderQueues.size()) {
+				continue;
+			}
+
+			renderQueues[renderQueueIndex].renderTasks.emplace_back(renderTask);
 		}
 	});
+}
 
-	// Sort here
+static int CompareRenderSort(const RenderSortData& a, const RenderSortData& b) {
+	return a.sortData > b.sortData;
+}
+
+static int CompareReverseRenderSort(const RenderSortData& a, const RenderSortData& b) {
+	return a.sortData < b.sortData;
+}
+
+void Mesh3dRenderer::SortQueues() {
+	for (RenderQueueContainer& renderQueue : renderQueues) {
+		std::vector<RenderSortData>& renderSortData = renderQueue.renderSortData;
+		RenderTaskList& renderTasks = renderQueue.renderTasks;
+
+		renderSortData.resize(renderTasks.size());
+
+		// Build sort data list
+		for (size_t i = 0; i < renderSortData.size(); ++i) {
+			renderSortData[i].renderTaskIndex = i;
+			renderSortData[i].sortData = renderTasks[i].sortData;
+		}
+
+		// Sort the list
+		if (renderQueue.sortMode == DrawSortMode::DistanceFrontToBack) {
+			std::sort(renderSortData.begin(), renderSortData.end(), CompareRenderSort);
+		}
+		else {
+			std::sort(renderSortData.begin(), renderSortData.end(), CompareReverseRenderSort);
+		}
+	}
 }

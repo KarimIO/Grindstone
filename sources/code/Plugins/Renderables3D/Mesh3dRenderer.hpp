@@ -29,9 +29,16 @@ namespace Grindstone {
 	using RenderTaskList = std::vector<RenderTask>;
 	using SortedRender = std::vector<size_t>;
 
+	struct RenderSortData {
+		size_t renderTaskIndex;
+		uint32_t sortData;
+	};
+
+
 	struct RenderQueueContainer {
 		DrawSortMode sortMode;
 		RenderTaskList renderTasks;
+		std::vector<RenderSortData> renderSortData;
 
 		RenderQueueContainer() = default;
 		RenderQueueContainer(DrawSortMode drawSortMode) {
@@ -48,7 +55,8 @@ namespace Grindstone {
 			virtual void AddQueue(const char* queueName, DrawSortMode sortMode);
 			virtual void RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet) override;
 			virtual void RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, const char* queueName) override;
-			virtual void CacheRenderTasksAndFrustumCull(GraphicsAPI::CommandBuffer* commandBuffer, entt::registry& registry) override;
+			virtual void CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt::registry& registry) override;
+			virtual void SortQueues() override;
 		private:
 			virtual std::string GetName() const override;
 			virtual void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) override;

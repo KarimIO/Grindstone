@@ -712,7 +712,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	imageSet.lightingDescriptorSet = graphicsCore->CreateDescriptorSet(lightingDescriptorSetCreateInfo);
 
 	{
-		std::array<DescriptorSetLayout::Binding, 2> ssaoInputLayoutBinding;
+		std::array<DescriptorSetLayout::Binding, 2> ssaoInputLayoutBinding{};
 		ssaoInputLayoutBinding[0].bindingId = 0;
 		ssaoInputLayoutBinding[0].count = 1;
 		ssaoInputLayoutBinding[0].type = BindingType::RenderTexture;
@@ -1331,6 +1331,7 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
+
 	currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + 1], false);
 }
 
@@ -1736,11 +1737,13 @@ void DeferredRenderer::RenderCommandBuffer(
 	glm::vec3 eyePos,
 	GraphicsAPI::Framebuffer* outputFramebuffer
 ) {
-	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	auto assetManager = EngineCore::GetInstance().assetRendererManager;
-	auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
+	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	Grindstone::AssetRendererManager* assetManager = engineCore.assetRendererManager;
+	auto wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 
-	assetManager->CacheRenderTasksAndFrustumCull(commandBuffer, registry);
+	assetManager->CacheRenderTasksAndFrustumCull(eyePos, registry);
+	assetManager->SortQueues();
 
 	graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
 
@@ -1790,8 +1793,9 @@ void DeferredRenderer::RenderCommandBuffer(
 	}
 
 	RenderLightsCommandBuffer(imageIndex, commandBuffer, registry);
-	// assetManager->RenderQueue("Unlit");
+	assetManager->RenderQueue(commandBuffer, "Unlit");
 	assetManager->RenderQueue(commandBuffer, "Skybox");
+	assetManager->RenderQueue(commandBuffer, "Transparent");
 	commandBuffer->UnbindRenderPass();
 
 	PostProcessCommandBuffer(imageIndex, outputFramebuffer, commandBuffer);

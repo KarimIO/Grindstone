@@ -19,11 +19,9 @@ namespace Grindstone {
 		void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet);
 		RenderQueueIndex GetIndexOfRenderQueue(const std::string& renderQueue) const;
 		void RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet);
-		void RenderQueue(
-			GraphicsAPI::CommandBuffer* commandBuffer,
-			const char* name
-		);
-		void CacheRenderTasksAndFrustumCull(GraphicsAPI::CommandBuffer* commandBuffer, entt::registry& registry);
+		void RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, const char* name);
+		void CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt::registry& registry);
+		void SortQueues();
 	private:
 		std::map<std::string, BaseAssetRenderer*> assetRenderers;
 		std::map<std::string, DrawSortMode> queueDrawSortModes;
