@@ -150,8 +150,8 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 		if (ImGui::Button(buttonText.c_str(), buttonSize)) {
 			std::function<void(Uuid, std::string)> callback = [assetManager, assetReference, assetType](Uuid newUuid, std::string path) {
 				assetReference->uuid = newUuid;
-				assetReference->asset = assetManager->GetAsset(assetType, newUuid);
 			};
+
 			imguiEditor->PromptAssetPicker(assetType, callback);
 		}
 
@@ -161,7 +161,6 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 				AssetRegistry::Entry entry;
 				if (Editor::Manager::GetInstance().GetAssetRegistry().TryGetAssetData(uuid, entry)) {
 					assetReference->uuid = uuid;
-					assetReference->asset = assetManager->GetAsset(assetReferenceType->assetType, uuid);
 				}
 			}
 

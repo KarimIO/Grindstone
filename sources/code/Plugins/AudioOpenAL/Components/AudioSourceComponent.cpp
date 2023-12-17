@@ -1,6 +1,8 @@
 #include "EngineCore/Reflection/ComponentReflection.hpp"
+#include "EngineCore/Assets/AssetManager.hpp"
 #include "AudioSourceComponent.hpp"
 #include "../Core.hpp"
+
 using namespace Grindstone;
 
 REFLECT_STRUCT_BEGIN(AudioSourceComponent)
@@ -13,15 +15,17 @@ REFLECT_STRUCT_END()
 
 void Grindstone::SetupAudioSourceComponent(ECS::Entity& entity, void* componentPtr) {
 	Audio::Core& core = Audio::Core::GetInstance();
+	Grindstone::Assets::AssetManager* assetManager = core.engineCore->assetManager;
 
-	auto audioSource = (AudioSourceComponent*)componentPtr;
+	Grindstone::AudioSourceComponent* audioSource = static_cast<AudioSourceComponent*>(componentPtr);
 
-	if (audioSource->audioClip.asset == nullptr) {
+	Grindstone::Audio::AudioClipAsset* audioClip = assetManager->GetAsset<Grindstone::Audio::AudioClipAsset>(audioSource->audioClip.uuid);
+	if (audioClip == nullptr) {
 		return;
 	}
 
 	Audio::Source::CreateInfo audioSourceCreateInfo{};
-	audioSourceCreateInfo.audioClip = static_cast<Audio::AudioClipAsset*>(audioSource->audioClip.asset);
+	audioSourceCreateInfo.audioClip = audioClip;
 	audioSourceCreateInfo.isLooping = audioSource->isLooping;
 	audioSourceCreateInfo.volume = audioSource->volume;
 	audioSourceCreateInfo.pitch = audioSource->pitch;

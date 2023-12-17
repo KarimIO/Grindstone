@@ -1364,7 +1364,7 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 			}
 
 			currentEnvironmentMapUuid = environmentMapComponent.specularTexture.uuid;
-			auto texAsset = static_cast<TextureAsset*>(environmentMapComponent.specularTexture.asset);
+			Grindstone::TextureAsset* texAsset = environmentMapComponent.specularTexture.Get();
 			if (texAsset != nullptr) {
 				auto tex = texAsset->texture;
 
@@ -1740,6 +1740,8 @@ void DeferredRenderer::RenderCommandBuffer(
 	auto assetManager = EngineCore::GetInstance().assetRendererManager;
 	auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 
+	assetManager->CacheRenderTasksAndFrustumCull(commandBuffer, registry);
+
 	graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
 
 	uint32_t imageIndex = wgb->GetCurrentImageIndex();
@@ -1751,7 +1753,7 @@ void DeferredRenderer::RenderCommandBuffer(
 	engineUboStruct.eyePos = eyePos;
 	imageSet.globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
 
-	RenderShadowMaps(commandBuffer, registry);
+	// RenderShadowMaps(commandBuffer, registry);
 	assetManager->SetEngineDescriptorSet(imageSet.engineDescriptorSet);
 
 	{

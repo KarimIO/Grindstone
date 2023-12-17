@@ -32,7 +32,8 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 
 	std::string contentData;
 	if (!assetManager->LoadFileText(uuid, contentData)) {
-		EngineCore::GetInstance().Print(LogSeverity::Error, "Could not find material by file.");
+		std::string error = "Could not find material with id " + uuid.ToString() + ".";
+		EngineCore::GetInstance().Print(LogSeverity::Error, error.c_str());
 		return nullptr;
 	}
 
@@ -60,7 +61,6 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 
 	auto& reflectionData = shaderAsset->reflectionData;
 
-	shaderAsset->materials.emplace_back(uuid);
 	auto& material = materials.emplace(uuid, MaterialAsset(uuid, name, shaderUuid));
 	MaterialAsset* materialAsset = &material.first->second;
 

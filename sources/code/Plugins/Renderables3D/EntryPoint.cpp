@@ -26,37 +26,11 @@ void SetupMeshRendererComponent(ECS::Entity& entity, void* componentPtr) {
 		return;
 	}
 
-	MeshComponent& meshComponent = entity.GetComponent<MeshComponent>();
-	Mesh3dAsset* meshAsset = static_cast<Mesh3dAsset*>(meshComponent.mesh.asset);
-
-	if (meshAsset == nullptr) {
-		return;
-	}
-
-	auto& submeshes = meshAsset->submeshes;
-
-	if (meshRenderer->materials.size() == 0) {
-		return;
-	}
-
 	std::vector<MaterialAsset*> materialAssets(meshRenderer->materials.size());
 	for (size_t i = 0; i < meshRenderer->materials.size(); ++i) {
 		Uuid materialUuid = meshRenderer->materials[i].uuid;
 		MaterialAsset* materialAsset = assetManager->GetAsset<MaterialAsset>(materialUuid);
 		materialAssets[i] = materialAsset;
-	}
-
-	for (size_t i = 0; i < submeshes.size(); ++i) {
-		int materialIndex = submeshes[i].materialIndex;
-
-		if (materialIndex >= meshRenderer->materials.size()) {
-			materialIndex = 0;
-		}
-
-		MaterialAsset* materialAsset = materialAssets[materialIndex];
-		if (materialAsset != nullptr) {
-			materialAsset->renderables.emplace_back(entity, &submeshes[i]);
-		}
 	}
 
 	GraphicsAPI::UniformBuffer::CreateInfo uniformBufferCreateInfo{};

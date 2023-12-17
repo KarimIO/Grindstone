@@ -16,5 +16,5 @@ void Grindstone::SetupEnvironmentMapComponent(ECS::Entity& entity, void* compone
 	auto eventDispatcher = engineCore.GetEventDispatcher();
 
 	auto envMap = static_cast<EnvironmentMapComponent*>(componentPtr);
-	envMap->specularTexture.asset = engineCore.assetManager->GetAsset<TextureAsset>(envMap->specularTexture.uuid);
+	envMap->specularTexture.Load(envMap->specularTexture.uuid);
 }

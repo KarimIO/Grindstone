@@ -66,7 +66,7 @@ void SceneLoaderJson::ProcessEntity(rapidjson::Value& entityJson) {
 		std::string scopeName = "Loading entity with id: " + std::to_string(entityId);
 		GRIND_PROFILE_SCOPE(scopeName.c_str());
 #endif
-		ECS::Entity entity = scene->CreateEntity((entt::entity)entityId);
+		ECS::Entity entity = scene->CreateEntity(static_cast<entt::entity>(entityId));
 
 		for (auto& component : entityJson["components"].GetArray()) {
 			ProcessComponent(entity, component);
@@ -165,33 +165,36 @@ void SceneLoaderJson::ParseMember(
 ) {
 	switch (member->type) {
 	default:
-		EngineCore::GetInstance().Print(LogSeverity::Warning, "Unhandled reflection type in SceneLoaderJson!");
+		EngineCore::GetInstance().Print(LogSeverity::Error, "Unhandled reflection type in SceneLoaderJson!");
 		break;
 	case ReflectionTypeData::AssetReference: {
+		GenericAssetReference& assetRefPtr = *static_cast<GenericAssetReference*>(memberPtr);
 		auto type = (Grindstone::Reflection::TypeDescriptor_AssetReference*)member;
-		AssetType assetType = type->assetType;
-		GenericAssetReference& assetReference = *(GenericAssetReference*)memberPtr;
-		std::string uuidAsString = parameter.GetString();
-		Uuid uuid = Uuid(uuidAsString);
-		void* asset = EngineCore::GetInstance().assetManager->GetAsset(assetType, uuid);
-		assetReference = GenericAssetReference{ uuid, asset };
+		const char* uuidAsString = parameter.GetString();
+		assetRefPtr.uuid = Uuid(uuidAsString);
+		if (assetRefPtr.uuid.IsValid()) {
+			EngineCore::GetInstance().assetManager->GetAsset(type->assetType, assetRefPtr.uuid);
+		}
+		else {
+			EngineCore::GetInstance().Print(LogSeverity::Error, "Invalid UUID in entity!");
+		}
 		break;
 	}
 	case ReflectionTypeData::Struct:
 		// TODO: Implement this
-		EngineCore::GetInstance().Print(LogSeverity::Warning, "Unhandled Struct in SceneLoaderJson!");
+		EngineCore::GetInstance().Print(LogSeverity::Error, "Unhandled Struct in SceneLoaderJson!");
 		break;
 	case ReflectionTypeData::Vector: {
 		ParseArray(memberPtr, member, parameter);
 		break;
 	}
 	case ReflectionTypeData::String: {
-		std::string& str = *(std::string*)memberPtr;
+		std::string& str = *static_cast<std::string*>(memberPtr);
 		str = parameter.GetString();
 		break;
 	}
 	case Reflection::TypeDescriptor::ReflectionTypeData::Quaternion:
-		CopyDataArrayFloat(parameter, (float*)memberPtr, 4);
+		CopyDataArrayFloat(parameter, static_cast<float*>(memberPtr), 4);
 		break;
 	case ReflectionTypeData::Bool: {
 		bool& str = *(bool*)memberPtr;
@@ -204,13 +207,13 @@ void SceneLoaderJson::ParseMember(
 		break;
 	}
 	case ReflectionTypeData::Int2:
-		CopyDataArrayInt(parameter, (int*)memberPtr, 2);
+		CopyDataArrayInt(parameter, static_cast<int*>(memberPtr), 2);
 		break;
 	case ReflectionTypeData::Int3:
-		CopyDataArrayInt(parameter, (int*)memberPtr, 3);
+		CopyDataArrayInt(parameter, static_cast<int*>(memberPtr), 3);
 		break;
 	case ReflectionTypeData::Int4:
-		CopyDataArrayInt(parameter, (int*)memberPtr, 4);
+		CopyDataArrayInt(parameter, static_cast<int*>(memberPtr), 4);
 		break;
 	case ReflectionTypeData::Float: {
 		float& str = *(float*)memberPtr;
@@ -218,27 +221,27 @@ void SceneLoaderJson::ParseMember(
 		break;
 	}
 	case ReflectionTypeData::Float2:
-		CopyDataArrayFloat(parameter, (float*)memberPtr, 2);
+		CopyDataArrayFloat(parameter, static_cast<float*>(memberPtr), 2);
 		break;
 	case ReflectionTypeData::Float3:
-		CopyDataArrayFloat(parameter, (float*)memberPtr, 3);
+		CopyDataArrayFloat(parameter, static_cast<float*>(memberPtr), 3);
 		break;
 	case ReflectionTypeData::Float4:
-		CopyDataArrayFloat(parameter, (float*)memberPtr, 4);
+		CopyDataArrayFloat(parameter, static_cast<float*>(memberPtr), 4);
 		break;
 	case ReflectionTypeData::Double: {
-		double& str = *(double*)memberPtr;
+		double& str = *static_cast<double*>(memberPtr);
 		str = parameter.GetDouble();
 		break;
 	}
 	case ReflectionTypeData::Double2:
-		CopyDataArrayDouble(parameter, (double*)memberPtr, 2);
+		CopyDataArrayDouble(parameter, static_cast<double*>(memberPtr), 2);
 		break;
 	case ReflectionTypeData::Double3:
-		CopyDataArrayDouble(parameter, (double*)memberPtr, 3);
+		CopyDataArrayDouble(parameter, static_cast<double*>(memberPtr), 3);
 		break;
 	case ReflectionTypeData::Double4:
-		CopyDataArrayDouble(parameter, (double*)memberPtr, 4);
+		CopyDataArrayDouble(parameter, static_cast<double*>(memberPtr), 4);
 		break;
 	}
 }

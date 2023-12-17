@@ -6,33 +6,34 @@ using namespace Grindstone;
 void AssetRendererManager::AddAssetRenderer(BaseAssetRenderer* assetRenderer) {
 	assetRenderers[assetRenderer->GetName()] = assetRenderer;
 
-	for (const char* name : assetQueuesNames) {
-		assetRenderer->AddQueue(name);
+	for (std::string& queueName : assetQueuesNames) {
+		assetRenderer->AddQueue(queueName.c_str(), queueDrawSortModes[queueName]);
 	}
 }
 
-void AssetRendererManager::AddQueue(const char* name) {
+void AssetRendererManager::AddQueue(const char* name, DrawSortMode sortMode) {
 	assetQueuesNames.emplace_back(name);
+	queueDrawSortModes[name] = sortMode;
 
-	for (auto assetRenderer : assetRenderers) {
-		assetRenderer.second->AddQueue(name);
+	for (auto& assetRenderer : assetRenderers) {
+		assetRenderer.second->AddQueue(name, sortMode);
 	}
-}
-
-void AssetRendererManager::RegisterShader(std::string& geometryType, std::string& renderQueue, Uuid shaderUuid) {
-	auto assetRenderer = assetRenderers.find(geometryType);
-	if (assetRenderer == assetRenderers.end()) {
-		Grindstone::EngineCore::GetInstance().Print(LogSeverity::Error, "Unable to register shader.");
-		return;
-	}
-
-	assetRenderer->second->AddShaderToRenderQueue(shaderUuid, renderQueue.c_str());
 }
 
 void AssetRendererManager::SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) {
 	for (auto& assetRenderer : assetRenderers) {
 		assetRenderer.second->SetEngineDescriptorSet(descriptorSet);
 	}
+}
+
+RenderQueueIndex Grindstone::AssetRendererManager::GetIndexOfRenderQueue(const std::string& renderQueue) const {
+	for (RenderQueueIndex i = 0; i < assetQueuesNames.size(); ++i) {
+		if (renderQueue == assetQueuesNames[i]) {
+			return i;
+		}
+	}
+
+	return INVALID_RENDER_QUEUE;
 }
 
 void AssetRendererManager::RenderShadowMap(
@@ -46,19 +47,17 @@ void AssetRendererManager::RenderShadowMap(
 
 void AssetRendererManager::RenderQueue(
 	GraphicsAPI::CommandBuffer* commandBuffer,
-	const char* name
+	const char* queueName
 ) {
-	std::string profileScope = std::string("AssetRendererManager::RenderQueue(") + name + ")";
+	std::string profileScope = std::string("AssetRendererManager::RenderQueue(") + queueName + ")";
 	GRIND_PROFILE_SCOPE(profileScope.c_str());
 	for (auto& assetRenderer : assetRenderers) {
-		assetRenderer.second->RenderQueue(commandBuffer, name);
+		assetRenderer.second->RenderQueue(commandBuffer, queueName);
 	}
 }
 
-void AssetRendererManager::RenderQueueImmediate(const char* name) {
-	std::string profileScope = std::string("AssetRendererManager::RenderQueue(") + name + ")";
-	GRIND_PROFILE_SCOPE(profileScope.c_str());
+void Grindstone::AssetRendererManager::CacheRenderTasksAndFrustumCull(GraphicsAPI::CommandBuffer* commandBuffer, entt::registry& registry) {
 	for (auto& assetRenderer : assetRenderers) {
-		assetRenderer.second->RenderQueueImmediate(name);
+		assetRenderer.second->CacheRenderTasksAndFrustumCull(commandBuffer, registry);
 	}
 }

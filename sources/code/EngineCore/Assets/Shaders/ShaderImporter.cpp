@@ -26,7 +26,7 @@ struct ShaderVertexLayouts {
 	GraphicsAPI::VertexBufferLayout uv0;
 };
 
-Grindstone::GraphicsAPI::CullMode TranslateCullMode(std::string& cullMode) {
+static Grindstone::GraphicsAPI::CullMode TranslateCullMode(std::string& cullMode) {
 	if (cullMode == "Front") {
 		return CullMode::Front;
 	}
@@ -57,14 +57,15 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 	// if shaderCache has shader with this uuid
 	//		return shader
 
-	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
-	AssetRendererManager* assetRendererManager = EngineCore::GetInstance().assetRendererManager;
+	EngineCore& engineCore = EngineCore::GetInstance();
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	Assets::AssetManager* assetManager = engineCore.assetManager;
+	AssetRendererManager* assetRendererManager = engineCore.assetRendererManager;
 
 	std::string outContent;
 	if (!assetManager->LoadFileText(shaderAsset.uuid, outContent)) {
 		std::string errorMsg = shaderAsset.uuid.ToString() + " shader reflection file not found.";
-		EngineCore::GetInstance().Print(LogSeverity::Error, errorMsg.c_str());
+		engineCore.Print(LogSeverity::Error, errorMsg.c_str());
 		return false;
 	}
 
@@ -210,9 +211,10 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 	shaderAsset.descriptorSetLayout = pipelineCreateInfo.descriptorSetLayouts[0];
 	shaderAsset.pipeline = pipeline;
 
+	shaderAsset.renderQueue = assetRendererManager->GetIndexOfRenderQueue(reflectionData.renderQueue);
+
 	std::string& renderQueue = shaderAsset.reflectionData.renderQueue;
 	std::string& geometryType = shaderAsset.reflectionData.geometryRenderer;
-	assetRendererManager->RegisterShader(geometryType, renderQueue, shaderAsset.uuid);
 
 	// TODO: Save compiled shader into ShaderCache
 
