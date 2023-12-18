@@ -67,16 +67,15 @@ void SceneHeirarchyPanel::RenderScene(SceneManagement::Scene* scene) {
 	}
 
 	auto& registry = scene->GetEntityRegistry();
+	auto& entityStorage = registry.storage<entt::entity>();
 
-	if (registry.empty()) {
+	if (entityStorage.in_use()) {
 		ImGui::Text("No entities in scene.");
 	}
 	else {
-		registry.each(
-			[&](auto entity) {
-				RenderEntity({ entity, scene });
-			}
-		);
+		for (const entt::entity entity : entityStorage) {
+			RenderEntity({ entity, scene });
+		}
 	}
 }
 
