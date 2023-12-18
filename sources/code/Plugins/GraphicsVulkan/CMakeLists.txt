@@ -13,13 +13,16 @@ set(Vk_COMMON_HEADERS ${GRAPHICS_DIR}/DepthTarget.hpp ${GRAPHICS_DIR}/RenderTarg
 set(Vk_OBJ_SOURCES ${Vk_OBJ_SOURCES} VulkanWindowGraphicsBinding.cpp)
 set(Vk_OBJ_HEADERS ${Vk_OBJ_HEADERS} VulkanWindowGraphicsBinding.hpp)
 
-if (WIN32)
-    set(Vk_WINDOW_SOURCES ${Vk_WINDOW_SOURCES} ${COMMON_DIR}/Window/Win32Window.cpp)
-    set(Vk_WINDOW_HEADERS ${Vk_WINDOW_HEADERS} ${COMMON_DIR}/Window/Win32Window.hpp)
-elseif (UNIX)
-    set(Vk_WINDOW_SOURCES ${Vk_WINDOW_SOURCES} ${COMMON_DIR}/Window/X11Window.cpp)
-    set(Vk_WINDOW_HEADERS ${Vk_WINDOW_HEADERS} ${COMMON_DIR}/Window/X11Window.hpp)
-endif()
+#if (WIN32)
+#    set(Vk_WINDOW_SOURCES ${Vk_WINDOW_SOURCES} ${COMMON_DIR}/Window/Win32Window.cpp)
+#    set(Vk_WINDOW_HEADERS ${Vk_WINDOW_HEADERS} ${COMMON_DIR}/Window/Win32Window.hpp)
+#elseif (UNIX)
+#    set(Vk_WINDOW_SOURCES ${Vk_WINDOW_SOURCES} ${COMMON_DIR}/Window/X11Window.cpp)
+#    set(Vk_WINDOW_HEADERS ${Vk_WINDOW_HEADERS} ${COMMON_DIR}/Window/X11Window.hpp)
+#endif()
+
+set(Vk_WINDOW_SOURCES ${Vk_WINDOW_SOURCES} ${COMMON_DIR}/Window/GlfwWindow.cpp)
+set(Vk_WINDOW_HEADERS ${Vk_WINDOW_HEADERS} ${COMMON_DIR}/Window/GlfwWindow.hpp)
 
 set(Vk_SOURCES ${Vk_CORE_SOURCES} ${Vk_OBJ_SOURCES} ${Vk_WINDOW_SOURCES} ${Vk_DISPLAY_SOURCES})
 set(Vk_HEADERS ${Vk_CORE_HEADERS} ${Vk_OBJ_HEADERS} ${Vk_WINDOW_HEADERS} ${Vk_DISPLAY_HEADERS} ${Vk_COMMON_HEADERS})
@@ -44,7 +47,9 @@ target_include_directories(PluginGraphicsVulkan PUBLIC ${CODE_DIR} ${DEPS_DIR} $
 
 target_compile_definitions(PluginGraphicsVulkan PRIVATE GRAPHICS_DLL)
 
-target_link_libraries(PluginGraphicsVulkan Vulkan::Vulkan)
+find_package(glfw3 CONFIG REQUIRED)
+
+target_link_libraries(PluginGraphicsVulkan Vulkan::Vulkan glfw)
 
 target_compile_features(PluginGraphicsVulkan PRIVATE cxx_std_17)
 

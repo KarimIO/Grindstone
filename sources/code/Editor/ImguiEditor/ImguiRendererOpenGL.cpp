@@ -1,8 +1,9 @@
+#if 0
 #include <iostream>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <imgui_impl_opengl3.h>
-#include <imgui_impl_win32.h>
+#include <imgui_impl_glfw.h>
 #include <GL/gl3w.h>
 #include <Windows.h>
 #include <Winuser.h>
@@ -74,3 +75,4 @@ ImTextureID ImguiRendererOpenGL::CreateTexture(std::filesystem::path path) {
 	GraphicsAPI::GLTexture* glTex = static_cast<GraphicsAPI::GLTexture*>(textureAsset->texture);
 	return (ImTextureID)(uint64_t)glTex->GetTexture();
 }
+#endif

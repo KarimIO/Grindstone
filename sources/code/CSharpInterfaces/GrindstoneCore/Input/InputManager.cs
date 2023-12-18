@@ -24,19 +24,31 @@ namespace Grindstone.Input
 
 		public static bool IsWindowFocused => InputManagerGetIsWindowFocused();
 
-		public static bool IsCursorVisible
+		public static bool IsMouseRawMotion
 		{
-			get => InputManagerGetIsCursorVisible();
-			set => InputManagerSetIsCursorVisible(value);
+			get => InputManagerGetMouseIsRawMotion();
+			set => InputManagerSetMouseIsRawMotion(value);
+		}
+
+		public static CursorMode CursorMode
+		{
+			get => (CursorMode)InputManagerGetCursorMode();
+			set => InputManagerSetCursorMode((byte)value);
 		}
 		#endregion
 
 		#region DllImports
 		[DllImport("EngineCore")]
-		private static extern bool InputManagerGetIsCursorVisible();
+		private static extern byte InputManagerGetCursorMode();
 
 		[DllImport("EngineCore")]
-		private static extern bool InputManagerSetIsCursorVisible(bool isVisible);
+		private static extern void InputManagerSetCursorMode(byte cursorMode);
+
+		[DllImport("EngineCore")]
+		private static extern bool InputManagerGetMouseIsRawMotion();
+
+		[DllImport("EngineCore")]
+		private static extern void InputManagerSetMouseIsRawMotion(bool isRawMotion);
 
 		[DllImport("EngineCore")]
 		private static extern bool InputManagerGetIsWindowFocused();

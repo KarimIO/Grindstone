@@ -26,7 +26,7 @@ struct ShaderVertexLayouts {
 	GraphicsAPI::VertexBufferLayout uv0;
 };
 
-Grindstone::GraphicsAPI::CullMode TranslateCullMode(std::string& cullMode) {
+static Grindstone::GraphicsAPI::CullMode TranslateCullMode(std::string& cullMode) {
 	if (cullMode == "Front") {
 		return CullMode::Front;
 	}
@@ -57,14 +57,15 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 	// if shaderCache has shader with this uuid
 	//		return shader
 
-	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
-	AssetRendererManager* assetRendererManager = EngineCore::GetInstance().assetRendererManager;
+	EngineCore& engineCore = EngineCore::GetInstance();
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	Assets::AssetManager* assetManager = engineCore.assetManager;
+	AssetRendererManager* assetRendererManager = engineCore.assetRendererManager;
 
 	std::string outContent;
 	if (!assetManager->LoadFileText(shaderAsset.uuid, outContent)) {
 		std::string errorMsg = shaderAsset.uuid.ToString() + " shader reflection file not found.";
-		EngineCore::GetInstance().Print(LogSeverity::Error, errorMsg.c_str());
+		engineCore.Print(LogSeverity::Error, errorMsg.c_str());
 		return false;
 	}
 
@@ -90,17 +91,24 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 	auto renderPass = usesGbuffer
 		? DeferredRenderer::gbufferRenderPass
 		: DeferredRenderer::mainRenderPass;
+
+	uint32_t width = 0;
+	uint32_t height = 0;
+	if (renderPass != nullptr) {
+		width = renderPass->GetWidth();
+		height = renderPass->GetHeight();
+	}
 	GraphicsPipeline::CreateInfo pipelineCreateInfo{};
 	pipelineCreateInfo.debugName = debugName.c_str();
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
 	pipelineCreateInfo.cullMode = TranslateCullMode(reflectionData.cullMode);
 	pipelineCreateInfo.renderPass = renderPass;
-	pipelineCreateInfo.width = static_cast<float>(renderPass->GetWidth());
-	pipelineCreateInfo.height = static_cast<float>(renderPass->GetHeight());
+	pipelineCreateInfo.width = static_cast<float>(width);
+	pipelineCreateInfo.height = static_cast<float>(height);
 	pipelineCreateInfo.scissorX = 0;
 	pipelineCreateInfo.scissorY = 0;
-	pipelineCreateInfo.scissorW = renderPass->GetWidth();
-	pipelineCreateInfo.scissorH = renderPass->GetHeight();
+	pipelineCreateInfo.scissorW = width;
+	pipelineCreateInfo.scissorH = height;
 	pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 	pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
 	pipelineCreateInfo.hasDynamicViewport = true;
@@ -203,9 +211,10 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 	shaderAsset.descriptorSetLayout = pipelineCreateInfo.descriptorSetLayouts[0];
 	shaderAsset.pipeline = pipeline;
 
+	shaderAsset.renderQueue = assetRendererManager->GetIndexOfRenderQueue(reflectionData.renderQueue);
+
 	std::string& renderQueue = shaderAsset.reflectionData.renderQueue;
 	std::string& geometryType = shaderAsset.reflectionData.geometryRenderer;
-	assetRendererManager->RegisterShader(geometryType, renderQueue, shaderAsset.uuid);
 
 	// TODO: Save compiled shader into ShaderCache
 

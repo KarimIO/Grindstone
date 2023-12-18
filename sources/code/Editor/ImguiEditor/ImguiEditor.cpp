@@ -34,9 +34,11 @@ using namespace Grindstone::Editor::ImguiEditor;
 ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	// io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
 	SetupFonts();
 	SetupStyles();
@@ -44,7 +46,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 
 	imguiRenderer = ImguiRenderer::Create();
 
-	input = new ImguiInput(io, engineCore);
+	// input = new ImguiInput(io, engineCore);
 
 	sceneHeirarchyPanel = new SceneHeirarchyPanel(engineCore->GetSceneManager(), this);
 	modelConverterModal = new ModelConverterModal();

@@ -9,6 +9,7 @@
 #endif
 
 #include <vulkan/vulkan.h>
+#include <GLFW/glfw3.h>
 
 #include "VulkanWindowGraphicsBinding.hpp"
 #include "VulkanCore.hpp"
@@ -114,14 +115,19 @@ bool VulkanCore::Initialize(Core::CreateInfo& ci) {
 	auto wgb = new VulkanWindowGraphicsBinding();
 	primaryWindow->AddBinding(wgb);
 	wgb->Initialize(primaryWindow);
-	if (ci.debug)
+	if (ci.debug) {
 		SetupDebugMessenger();
+	}
+
 	PickPhysicalDevice();
 	CreateLogicalDevice();
 
 	pfnDebugUtilsSetObjectName = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(vkGetDeviceProcAddr(device, "vkSetDebugUtilsObjectNameEXT"));
 
-	wgb->CreateSwapChain();
+	if (primaryWindow->IsSwapchainControlledByEngine()) {
+		wgb->CreateSwapChain();
+	}
+	wgb->CreateSyncObjects();
 	CreateCommandPool();
 	CreateDescriptorPool();
 
@@ -321,8 +327,7 @@ QueueFamilyIndices VulkanCore::FindQueueFamilies(VkPhysicalDevice device) {
 
 	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
 	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-	auto wgb = ((VulkanWindowGraphicsBinding*)primaryWindow->GetWindowGraphicsBinding());
-
+	
 	int i = 0;
 	for (const auto& queueFamily : queueFamilies) {
 		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
@@ -330,10 +335,7 @@ QueueFamilyIndices VulkanCore::FindQueueFamilies(VkPhysicalDevice device) {
 			indices.hasGraphicsFamily = true;
 		}
 
-		VkBool32 presentSupport = false;
-		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, wgb->GetSurface(), &presentSupport);
-
-		if (presentSupport) {
+		if (glfwGetPhysicalDevicePresentationSupport(instance, device, i)) {
 			indices.presentFamily = i;
 			indices.hasPresentFamily = true;
 		}
@@ -349,7 +351,9 @@ QueueFamilyIndices VulkanCore::FindQueueFamilies(VkPhysicalDevice device) {
 }
 
 std::vector<const char*> VulkanCore::GetRequiredExtensions() {
-	std::vector<const char *> extensions = {
+	std::vector<const char*> extensions;
+	/* TODO: This was removed to switch to glfw. When supporting Win32 or Xlib again, reimplement this.
+	= {
 		VK_KHR_SURFACE_EXTENSION_NAME,
 #ifdef VK_USE_PLATFORM_WIN32_KHR
 		VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
@@ -357,6 +361,20 @@ std::vector<const char*> VulkanCore::GetRequiredExtensions() {
 		VK_KHR_XLIB_SURFACE_EXTENSION_NAME,
 #endif
 	};
+	*/
+
+	uint32_t glfwExtensionCount;
+	const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+	uint32_t extensionCount = enableValidationLayers
+		? glfwExtensionCount + 1
+		: glfwExtensionCount;
+
+	extensions.reserve(extensionCount);
+
+	for (uint32_t i = 0; i < glfwExtensionCount; ++i) {
+		extensions.push_back(glfwExtensions[i]);
+	}
 
 	if (enableValidationLayers) {
 		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);

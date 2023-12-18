@@ -65,6 +65,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 		windowCreationInfo.width = 800;
 		windowCreationInfo.height = 600;
 		windowCreationInfo.engineCore = this;
+		windowCreationInfo.isSwapchainControlledByEngine = !createInfo.isEditor;
 		win = windowManager->Create(windowCreationInfo);
 		eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&EngineCore::OnTryQuit, this, std::placeholders::_1));
 		eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowForceQuit, std::bind(&EngineCore::OnForceQuit, this, std::placeholders::_1));
@@ -82,16 +83,18 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 		GRIND_PROFILE_SCOPE("Initialize Asset Managers");
 		assetManager = new Assets::AssetManager();
 		assetRendererManager = new AssetRendererManager();
-		assetRendererManager->AddQueue("Opaque");
-		assetRendererManager->AddQueue("Transparent");
-		assetRendererManager->AddQueue("Unlit");
-		assetRendererManager->AddQueue("Skybox");
+		assetRendererManager->AddQueue("Opaque", DrawSortMode::DistanceFrontToBack);
+		assetRendererManager->AddQueue("Transparent", DrawSortMode::DistanceBackToFront);
+		assetRendererManager->AddQueue("Unlit", DrawSortMode::DistanceFrontToBack);
+		assetRendererManager->AddQueue("Skybox", DrawSortMode::DistanceFrontToBack);
 	}
 
 	{
 		GRIND_PROFILE_SCOPE("Load Plugin List");
 		pluginManager->LoadPluginList();
 	}
+
+	sceneManager = new SceneManagement::SceneManager();
 
 	Logger::Print("{0} Initialized.", createInfo.applicationTitle);
 	GRIND_PROFILE_END_SESSION();
@@ -103,7 +106,6 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 void EngineCore::InitializeScene(bool shouldLoadSceneFromDefaults, const char* scenePath) {
 	GRIND_PROFILE_SCOPE("Loading Default Scene");
-	sceneManager = new SceneManagement::SceneManager();
 	if (shouldLoadSceneFromDefaults) {
 		sceneManager->LoadDefaultScene();
 	}

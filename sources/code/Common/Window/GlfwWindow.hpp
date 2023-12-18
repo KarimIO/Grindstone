@@ -8,10 +8,12 @@
 #include <windows.h>
 #include <Common/Input/InputInterface.hpp>
 
+struct GLFWwindow;
+
 namespace Grindstone {
 	class EngineCore;
 
-	class Win32Window : public Window {
+	class GlfwWindow : public Window {
 	public:
 		virtual bool Initialize(CreateInfo& createInfo) override;
 		virtual void Show() override;
@@ -24,6 +26,10 @@ namespace Grindstone {
 		virtual void SetWindowSize(unsigned int width, unsigned int height) override;
 		virtual void SetMousePos(unsigned int x, unsigned int y) override;
 		virtual void GetMousePos(unsigned int& x, unsigned int& y) const override;
+		virtual void SetCursorMode(Grindstone::Input::CursorMode cursorMode) override;
+		virtual Grindstone::Input::CursorMode GetCursorMode() const override;
+		virtual void SetMouseIsRawMotion(bool isRawMotion) override;
+		virtual bool GetMouseIsRawMotion() const override;
 		virtual void SetWindowPos(unsigned int x, unsigned int y) override;
 		virtual void GetWindowPos(unsigned int& x, unsigned int& y) const override;
 		virtual bool GetWindowFocus() const override;
@@ -35,6 +41,8 @@ namespace Grindstone {
 		virtual float GetWindowDpiScale() const override;
 		virtual void Close() override;
 
+		virtual void OnSwapchainResized(int width, int height);
+
 		virtual bool CopyStringToClipboard(const std::string& stringToCopy) override;
 		virtual std::filesystem::path BrowseFolder(std::filesystem::path& defaultPath) override;
 		virtual std::filesystem::path OpenFileDialogue(const char* filter) override;
@@ -42,20 +50,19 @@ namespace Grindstone {
 		virtual void ExplorePath(const char* path) override;
 		virtual void OpenFileUsingDefaultProgram(const char* path) override;
 	public:
-		HWND GetHandle() const;
+		virtual GLFWwindow* GetHandle() const;
+		EngineCore* engineCore = nullptr;
 	private:
-		static LRESULT CALLBACK sWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-		LRESULT	CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+		GLFWwindow*	windowHandle;
 
-	private:
-		HWND	windowHandle;
+		/*
 		RECT	windowSize;
 		unsigned int width;
 		unsigned int height;
 		FullscreenMode fullscreenMode;
 		DWORD style;
 		DWORD extendedStyle;
-		EngineCore* engineCore = nullptr;
 		bool shouldClose;
+		*/
 	};
 };

@@ -49,9 +49,9 @@ void SceneWriterJson::ProcessEntities() {
 	documentWriter.StartArray();
 
 	entt::registry& registry = scene->GetEntityRegistry();
-	registry.each([&](auto entityID) {
-		ProcessEntity(registry, ECS::Entity(entityID, scene));
-	});
+	for (auto entityId : registry.storage<entt::entity>()) {
+		ProcessEntity(registry, ECS::Entity(entityId, scene));
+	}
 
 	documentWriter.EndArray();
 }

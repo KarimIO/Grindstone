@@ -1,18 +1,16 @@
 #include "WindowManager.hpp"
-#if defined(_WIN32)
-	#include "Win32Window.hpp"
-#elif defined(__linux__)
-	#include "X11Window.hpp"
-#endif
+#include "GlfwWindow.hpp"
 
 Grindstone::Window* Grindstone::WindowManager::Create(Grindstone::Window::CreateInfo& createInfo) {
+/*
 #if defined(_WIN32)
 	Grindstone::Win32Window *win = new Grindstone::Win32Window();
 #elif defined(__linux__)
 	Grindstone::X11Window *win = new Grindstone::X11Window();
 #else
-	return nullptr;
 #endif
+*/
+	Grindstone::GlfwWindow* win = new Grindstone::GlfwWindow;
 
 	if (win->Initialize(createInfo)) {
 		windows.push_back(win);

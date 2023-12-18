@@ -11,6 +11,8 @@ VulkanRenderTarget::VulkanRenderTarget(VkImage swapchainImage, VkFormat format) 
 	imageView = CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 }
 
+VulkanRenderTarget::VulkanRenderTarget(VkImage image, VkImageView imageView, VkFormat colorFormat) : image(image), imageView(imageView), isOwnedBySwapchain(true) {}
+
 VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& createInfo) : format(createInfo.format), width(createInfo.width), height(createInfo.height), isSampled(createInfo.isSampled), isOwnedBySwapchain(false), isWrittenByCompute(isWrittenByCompute), hasMipChain(hasMipChain){
 	if (createInfo.debugName != nullptr) {
 		debugName = createInfo.debugName;

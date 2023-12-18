@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Common/Input.hpp>
+#include <Common/Input/InputInterface.hpp>
 
 namespace Grindstone {
 	namespace Input {

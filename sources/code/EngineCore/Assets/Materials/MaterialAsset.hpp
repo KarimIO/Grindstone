@@ -19,7 +19,6 @@ namespace Grindstone {
 		GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
 		GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
 		char* buffer = nullptr;
-		std::vector<std::pair<ECS::Entity, void*>> renderables;
 
 		DEFINE_ASSET_TYPE("Material", AssetType::Material)
 	};

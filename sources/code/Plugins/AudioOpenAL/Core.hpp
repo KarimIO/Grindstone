@@ -20,10 +20,10 @@ namespace Grindstone {
 			static Audio::Core& GetInstance();
 			virtual bool GetAvailableDevices(std::vector<std::string>& devicesVec, ALCdevice* device);
 			virtual Audio::Source* CreateSource(Audio::Source::CreateInfo& createInfo);
+			EngineCore* engineCore = nullptr;
 		private:
 			ALCdevice* device = nullptr;
 			ALCcontext* context = nullptr;
-			EngineCore* engineCore = nullptr;
 		};
 	}
 }

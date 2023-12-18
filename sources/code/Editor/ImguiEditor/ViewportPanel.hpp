@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Common/Event/MouseEvent.hpp>
+
 namespace Grindstone {
 	namespace GraphicsAPI {
 		class Core;
@@ -15,14 +17,20 @@ namespace Grindstone {
 				void Render();
 				void RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer);
 			private:
+				bool OnMouseButtonEvent(Grindstone::Events::BaseEvent* ev);
+				bool OnMouseMovedEvent(Grindstone::Events::BaseEvent* ev);
 				void DisplayInGameCamera();
 				void DisplayCameraToPanel(uint64_t textureID);
 				void HandleInput();
 				void HandleSelection();
 				bool isShowingPanel = true;
+				bool isMovingCamera = false;
 				EditorCamera* camera = nullptr;
 				uint32_t width = 1;
 				uint32_t height = 1;
+
+				int startDragX = 0;
+				int startDragY = 0;
 			};
 		}
 	}

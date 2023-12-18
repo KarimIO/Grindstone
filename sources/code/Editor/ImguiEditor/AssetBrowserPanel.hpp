@@ -42,7 +42,7 @@ namespace Grindstone {
 				void FilterSearch(Directory& dir);
 				void FilterSearch();
 				void AfterCreate(std::filesystem::path path);
-				ImTextureID GetIcon(const AssetType assetType);
+				ImTextureID GetIcon(const AssetType assetType) const;
 			private:
 				Directory& rootDirectory;
 				Directory* currentDirectory;

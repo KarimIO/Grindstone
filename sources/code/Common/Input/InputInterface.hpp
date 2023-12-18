@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Event/KeyPressCode.hpp"
-#include "Event/MouseButtonCode.hpp"
+#include <Common/Event/KeyPressCode.hpp>
+#include <Common/Event/MouseButtonCode.hpp>
+#include <Common/Input/CursorMode.hpp>
 
 namespace Grindstone {
 	class Window;
@@ -9,8 +10,10 @@ namespace Grindstone {
 	namespace Input {
 		class Interface {
 		public:
-			virtual bool IsCursorVisible() = 0;
-			virtual void SetIsCursorVisible(bool) = 0;
+			virtual CursorMode GetCursorMode() = 0;
+			virtual void SetCursorMode(CursorMode) = 0;
+			virtual void SetCursorIsRawMotion(bool isRawMode) = 0;
+			virtual bool GetCursorIsRawMotion() = 0;
 			virtual void SetMainWindow(Grindstone::Window* window) = 0;
 			virtual void ResizeEvent(int, int) = 0;
 			virtual void SetMouseButton(Events::MouseButtonCode, bool) = 0;

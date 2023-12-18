@@ -54,7 +54,8 @@ namespace Grindstone {
 						vertexFormat,
 						layoutElement.isNormalized ? GL_TRUE : GL_FALSE,
 						layout.stride,
-						(const void*)layoutElement.offset);
+						reinterpret_cast<const void*>(layoutElement.offset)
+					);
 				}
 			}
 

@@ -10,12 +10,13 @@
 		"fmt",
 		"glslang",
 		"gl3w",
+		"glfw3",
 		"glm",
 		{
 			"name": "imgui",
 			"features": [
 				"docking-experimental",
-				"win32-binding",
+				"glfw-binding",
 				"opengl3-binding",
 				"vulkan-binding"
 			]
