@@ -134,19 +134,19 @@ ImguiRendererVulkan::~ImguiRendererVulkan() {}
 
 Grindstone::GraphicsAPI::CommandBuffer* ImguiRendererVulkan::GetCommandBuffer() {
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
-	auto window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	Grindstone::GraphicsAPI::WindowGraphicsBinding* window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	return commandBuffers[window->GetCurrentImageIndex()];
 }
 
 bool ImguiRendererVulkan::PreRender() {
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
-	auto window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	Grindstone::GraphicsAPI::WindowGraphicsBinding* window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	if (!window->AcquireNextImage()) {
 		WaitForResizeAndRecreateSwapchain();
 		return false;
 	}
 
-	auto currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
+	Grindstone::GraphicsAPI::CommandBuffer* currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
 
 	currentCommandBuffer->BeginCommandBuffer();
 	return true;
@@ -174,13 +174,13 @@ void ImguiRendererVulkan::PrepareImguiRendering() {
 	auto framebuffer = window->GetCurrentFramebuffer();
 	auto currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
 
-	GraphicsAPI::ClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 0.f };
+	GraphicsAPI::ClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 	GraphicsAPI::ClearDepthStencil clearDepthStencil;
 	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = true;
 
-	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, 800, 600, &clearColor, 1, clearDepthStencil);
+	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, renderPass->GetWidth(), renderPass->GetHeight(), &clearColor, 1, clearDepthStencil);
 
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
