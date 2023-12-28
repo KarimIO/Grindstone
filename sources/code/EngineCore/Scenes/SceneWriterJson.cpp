@@ -8,10 +8,17 @@
 #include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
 #include "SceneWriterJson.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
+#include "Common/Math.hpp"
 #include "Scene.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
+
+void WriteParameter(SceneRapidjsonWriter& documentWriter, Reflection::TypeDescriptor* param, void* componentPtr);
+void WriteArray(SceneRapidjsonWriter& documentWriter, void* memberPtr, Reflection::TypeDescriptor* member);
+void WriteArrayFloat(SceneRapidjsonWriter& documentWriter, float* srcArray, rapidjson::SizeType count);
+void WriteArrayDouble(SceneRapidjsonWriter& documentWriter, double* srcArray, rapidjson::SizeType count);
+void WriteArrayInt(SceneRapidjsonWriter& documentWriter, int* srcArray, rapidjson::SizeType count);
 
 SceneWriterJson::SceneWriterJson(Scene* scene, const char* path) : scene(scene), path(path) {
 	Save(path);
@@ -49,8 +56,10 @@ void SceneWriterJson::ProcessEntities() {
 	documentWriter.StartArray();
 
 	entt::registry& registry = scene->GetEntityRegistry();
-	for (auto entityId : registry.storage<entt::entity>()) {
-		ProcessEntity(registry, ECS::Entity(entityId, scene));
+	for (entt::entity entityId : registry.storage<entt::entity>()) {
+		if (registry.valid(entityId)) {
+			ProcessEntity(registry, ECS::Entity(entityId, scene));
+		}
 	}
 
 	documentWriter.EndArray();
@@ -101,82 +110,152 @@ void SceneWriterJson::ProcessComponent(
 
 	for (auto& param : category.members) {
 		documentWriter.Key(param.storedName.c_str());
-		SetParameter(param, componentPtr);
+		char* dataPtr = static_cast<char*>(componentPtr) + param.offset;
+		WriteParameter(documentWriter, param.type, dataPtr);
 	}
 
 	documentWriter.EndObject();
 	documentWriter.EndObject();
 }
 
-void SceneWriterJson::SetParameter(Grindstone::Reflection::TypeDescriptor_Struct::Member param, void* componentPtr) {
-	char* offset = ((char*)componentPtr + param.offset);
-
-	switch (param.type->type) {
+void WriteParameter(SceneRapidjsonWriter& documentWriter, Reflection::TypeDescriptor* member, void* dataPtr) {
+	switch (member->type) {
 		default:
 			documentWriter.Null();
 			break;
+		case Reflection::TypeDescriptor::ReflectionTypeData::AssetReference: {
+			GenericAssetReference& assetRefPtr = *static_cast<GenericAssetReference*>(dataPtr);
+			std::string uuidAsString = assetRefPtr.uuid.ToString();
+			documentWriter.String(uuidAsString.c_str());
+			break;
+		}
 		case Reflection::TypeDescriptor::ReflectionTypeData::Quaternion:
-			CopyDataArrayFloat((float*)offset, 4);
+			WriteArrayFloat(documentWriter, static_cast<float*>(dataPtr), 4);
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Bool:
-			documentWriter.Bool(*(bool*)offset);
+			documentWriter.Bool(*static_cast<bool*>(dataPtr));
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::String: {
-			std::string& str = *(std::string*)offset;
+			std::string& str = *(std::string*)dataPtr;
 			documentWriter.String(str.c_str());
 			break;
 		}
 		case Reflection::TypeDescriptor::ReflectionTypeData::Int:
-			documentWriter.Int(*(int*)offset);
+			documentWriter.Int(*static_cast<int*>(dataPtr));
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Int2:
-			CopyDataArrayInt((int*)offset, 2);
+			WriteArrayInt(documentWriter, static_cast<int*>(dataPtr), 2);
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Int3:
-			CopyDataArrayInt((int*)offset, 3);
+			WriteArrayInt(documentWriter, static_cast<int*>(dataPtr), 3);
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Int4:
-			CopyDataArrayInt((int*)offset, 4);
+			WriteArrayInt(documentWriter, static_cast<int*>(dataPtr), 4);
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Float:
-			documentWriter.Double(*(float*)offset);
+			documentWriter.Double(*static_cast<float*>(dataPtr));
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Float2:
-			CopyDataArrayFloat((float*)offset, 2);
+			WriteArrayFloat(documentWriter, static_cast<float*>(dataPtr), 2);
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Float3:
-			CopyDataArrayFloat((float*)offset, 3);
+			WriteArrayFloat(documentWriter, static_cast<float*>(dataPtr), 3);
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Float4:
-			CopyDataArrayFloat((float*)offset, 4);
+			WriteArrayFloat(documentWriter, static_cast<float*>(dataPtr), 4);
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Double:
-			documentWriter.Double(*(double*)offset);
+			documentWriter.Double(*static_cast<double*>(dataPtr));
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Double2:
-			CopyDataArrayDouble((double*)offset, 2);
+			WriteArrayDouble(documentWriter, static_cast<double*>(dataPtr), 2);
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Double3:
-			CopyDataArrayDouble((double*)offset, 3);
+			WriteArrayDouble(documentWriter, static_cast<double*>(dataPtr), 3);
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Double4:
-			CopyDataArrayDouble((double*)offset, 4);
+			WriteArrayDouble(documentWriter, static_cast<double*>(dataPtr), 4);
 			break;
-		case Reflection::TypeDescriptor::ReflectionTypeData::Vector: {
-			std::vector<std::string>& vector = *(std::vector<std::string>*)offset;
-
-			documentWriter.StartArray();
-			for (auto& element : vector) {
-				documentWriter.String(element.c_str());
-			}
-			documentWriter.EndArray();
-
+		case Reflection::TypeDescriptor::ReflectionTypeData::Vector:
+			WriteArray(documentWriter, dataPtr, member);
 			break;
-		}
 	}
 }
 
-void SceneWriterJson::CopyDataArrayFloat(float* srcArray, rapidjson::SizeType count) {
+template<typename T>
+inline void SetupArray(SceneRapidjsonWriter& documentWriter, void* memberPtr, Reflection::TypeDescriptor* member) {
+	std::vector<T>& vector = *(std::vector<T>*)memberPtr;
+
+	documentWriter.StartArray();
+	for (size_t i = 0; i < vector.size(); ++i) {
+		void* dataPtr = &vector[i];
+		WriteParameter(documentWriter, member, dataPtr);
+	}
+	documentWriter.EndArray();
+}
+
+using ReflectionTypeData = Reflection::TypeDescriptor_Struct::ReflectionTypeData;
+void WriteArray(SceneRapidjsonWriter& documentWriter, void* memberPtr, Reflection::TypeDescriptor* member) {
+	Reflection::TypeDescriptor_StdVector* vectorTypeDescriptor = static_cast<Reflection::TypeDescriptor_StdVector*>(member);
+	Reflection::TypeDescriptor* itemType = vectorTypeDescriptor->itemType;
+	
+	switch (itemType->type) {
+	case ReflectionTypeData::Struct: break;
+	case ReflectionTypeData::AssetReference:
+		SetupArray<GenericAssetReference>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Bool:
+		SetupArray<bool>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Quaternion:
+		SetupArray<Math::Quaternion>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::String:
+		SetupArray<std::string>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Vector:
+		SetupArray<std::vector<char>>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Double:
+		SetupArray<Math::Double>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Double2:
+		SetupArray<Math::Double2>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Double3:
+		SetupArray<Math::Double3>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Double4:
+		SetupArray<Math::Double4>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Int:
+		SetupArray<Math::Int>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Int2:
+		SetupArray<Math::Int2>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Int3:
+		SetupArray<Math::Int3>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Int4:
+		SetupArray<Math::Int4>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Float:
+		SetupArray<Math::Float>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Float2:
+		SetupArray<Math::Float2>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Float3:
+		SetupArray<Math::Float3>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Float4:
+		SetupArray<Math::Float4>(documentWriter, memberPtr, itemType);
+		break;
+	}
+}
+
+void WriteArrayFloat(SceneRapidjsonWriter& documentWriter, float* srcArray, rapidjson::SizeType count) {
 	documentWriter.StartArray();
 	for (rapidjson::SizeType i = 0; i < count; ++i) {
 		documentWriter.Double(srcArray[i]);
@@ -184,7 +263,7 @@ void SceneWriterJson::CopyDataArrayFloat(float* srcArray, rapidjson::SizeType co
 	documentWriter.EndArray();
 }
 
-void SceneWriterJson::CopyDataArrayDouble(double* srcArray, rapidjson::SizeType count) {
+void WriteArrayDouble(SceneRapidjsonWriter& documentWriter, double* srcArray, rapidjson::SizeType count) {
 	documentWriter.StartArray();
 	for (rapidjson::SizeType i = 0; i < count; ++i) {
 		documentWriter.Double(srcArray[i]);
@@ -192,7 +271,7 @@ void SceneWriterJson::CopyDataArrayDouble(double* srcArray, rapidjson::SizeType 
 	documentWriter.EndArray();
 }
 
-void SceneWriterJson::CopyDataArrayInt(int* srcArray, rapidjson::SizeType count) {
+void WriteArrayInt(SceneRapidjsonWriter& documentWriter, int* srcArray, rapidjson::SizeType count) {
 	documentWriter.StartArray();
 	for (rapidjson::SizeType i = 0; i < count; ++i) {
 		documentWriter.Int(srcArray[i]);
