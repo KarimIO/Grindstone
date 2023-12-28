@@ -141,15 +141,15 @@ void VulkanRenderTarget::UpdateSwapChainImage(VkImage swapchainImage) {
 	}
 }
 
-VkImage VulkanRenderTarget::GetImage() {
+VkImage VulkanRenderTarget::GetImage() const {
 	return image;
 }
 
-VkImageView VulkanRenderTarget::GetImageView() {
+VkImageView VulkanRenderTarget::GetImageView() const {
 	return imageView;
 }
 
-VkSampler VulkanRenderTarget::GetSampler() {
+VkSampler VulkanRenderTarget::GetSampler() const {
 	return sampler;
 }
 

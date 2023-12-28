@@ -169,10 +169,10 @@ void ImguiRendererVulkan::WaitForResizeAndRecreateSwapchain() {
 
 void ImguiRendererVulkan::PrepareImguiRendering() {
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
-	auto window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
-	auto renderPass = window->GetRenderPass();
-	auto framebuffer = window->GetCurrentFramebuffer();
-	auto currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
+	GraphicsAPI::WindowGraphicsBinding* window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	GraphicsAPI::RenderPass* renderPass = window->GetRenderPass();
+	GraphicsAPI::Framebuffer* framebuffer = window->GetCurrentFramebuffer();
+	GraphicsAPI::CommandBuffer* currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
 
 	GraphicsAPI::ClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 	GraphicsAPI::ClearDepthStencil clearDepthStencil;
@@ -180,7 +180,15 @@ void ImguiRendererVulkan::PrepareImguiRendering() {
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = true;
 
-	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, renderPass->GetWidth(), renderPass->GetHeight(), &clearColor, 1, clearDepthStencil);
+	currentCommandBuffer->BindRenderPass(
+		renderPass,
+		framebuffer,
+		framebuffer->GetWidth(),
+		framebuffer->GetHeight(),
+		&clearColor,
+		1,
+		clearDepthStencil
+	);
 
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplGlfw_NewFrame();

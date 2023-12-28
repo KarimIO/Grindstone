@@ -80,11 +80,11 @@ VulkanComputePipeline::~VulkanComputePipeline() {
 	}
 }
 
-VkPipeline VulkanComputePipeline::GetComputePipeline() {
+VkPipeline VulkanComputePipeline::GetComputePipeline() const {
 	return computePipeline;
 }
 
-VkPipelineLayout VulkanComputePipeline::GetComputePipelineLayout() {
+VkPipelineLayout VulkanComputePipeline::GetComputePipelineLayout() const {
 	return pipelineLayout;
 }
 

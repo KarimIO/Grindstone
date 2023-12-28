@@ -3,7 +3,6 @@
 #include "Formats.hpp"
 #include <stdint.h>
 
-
 namespace Grindstone {
 	namespace GraphicsAPI {
 		typedef union ClearColor {
@@ -22,17 +21,12 @@ namespace Grindstone {
 		public:
 			struct CreateInfo {
 				const char* debugName = nullptr;
-				uint32_t width = 0;
-				uint32_t height = 0;
 				ColorFormat* colorFormats = nullptr;
 				uint32_t colorFormatCount = 0;
 				DepthFormat depthFormat = DepthFormat::None;
 				bool shouldClearDepthOnLoad = true;
 			};
 
-			virtual void Resize(uint32_t width, uint32_t height) = 0;
-			virtual uint32_t GetWidth() = 0;
-			virtual uint32_t GetHeight() = 0;
 			virtual ~RenderPass() {};
 		};
 	}

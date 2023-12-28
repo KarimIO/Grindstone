@@ -14,9 +14,9 @@ namespace Grindstone {
 			virtual ~VulkanRenderTarget() override;
 		public:
 			void UpdateSwapChainImage(VkImage swapchainImage);
-			VkImage GetImage();
-			VkImageView GetImageView();
-			VkSampler GetSampler();
+			VkImage GetImage() const;
+			VkImageView GetImageView() const;
+			VkSampler GetSampler() const;
 		public:
 			virtual void Resize(uint32_t width, uint32_t height) override;
 			virtual void RenderScreen(unsigned int i, unsigned int width, unsigned int height, unsigned char *data) override;

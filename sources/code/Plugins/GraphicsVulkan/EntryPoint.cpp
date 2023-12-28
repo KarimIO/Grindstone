@@ -7,7 +7,7 @@ using namespace Grindstone;
 
 Plugins::Interface* pluginInterface = nullptr;
 
-void Print(LogSeverity s, const char* m) {
+static void Print(LogSeverity s, const char* m) {
 	pluginInterface->Print(s, m);
 }
 

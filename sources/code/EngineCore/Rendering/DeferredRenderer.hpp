@@ -30,6 +30,7 @@ namespace Grindstone {
 			glm::vec3 eyePos,
 			GraphicsAPI::Framebuffer* outputFramebuffer
 		) override;
+
 		static GraphicsAPI::RenderPass* gbufferRenderPass;
 		static GraphicsAPI::RenderPass* mainRenderPass;
 	private:
@@ -51,6 +52,9 @@ namespace Grindstone {
 			std::vector<GraphicsAPI::DescriptorSet*> bloomDescriptorSets;
 		};
 
+		std::map<Uuid, GraphicsAPI::GraphicsPipeline*> graphicsPipelineMap;
+
+		void CreatePipelines();
 		void CreateBloomUniformBuffers();
 		void CreateBloomRenderTargetsAndDescriptorSets(DeferredRendererImageSet& imageSet, size_t imageSetIndex);
 		void RenderBloom(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer);
@@ -81,7 +85,6 @@ namespace Grindstone {
 		void CreateBloomResources();
 		void CreateSsaoKernelAndNoise();
 		void CleanupPipelines();
-		void CreatePipelines();
 		void CreateDescriptorSetLayouts();
 		void CreateGbufferFramebuffer();
 		void CreateLitHDRFramebuffer();

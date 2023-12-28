@@ -106,11 +106,11 @@ void VulkanDepthTarget::CreateTextureSampler() {
 	}
 }
 
-VkImageView VulkanDepthTarget::GetImageView() {
+VkImageView VulkanDepthTarget::GetImageView() const {
 	return imageView;
 }
 
-VkSampler VulkanDepthTarget::GetSampler() {
+VkSampler VulkanDepthTarget::GetSampler() const {
 	return sampler;
 }
 

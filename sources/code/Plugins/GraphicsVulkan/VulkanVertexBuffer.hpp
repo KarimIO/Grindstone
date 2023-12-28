@@ -10,7 +10,7 @@ namespace Grindstone {
 			VulkanVertexBuffer(VertexBuffer::CreateInfo& createInfo);
 			virtual ~VulkanVertexBuffer() override;
 		public:
-			VkBuffer GetBuffer();
+			VkBuffer GetBuffer() const;
 		private:
 			VkBuffer buffer = nullptr;
 			VkDeviceMemory memory = nullptr;

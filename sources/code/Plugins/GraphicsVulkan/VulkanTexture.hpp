@@ -10,8 +10,8 @@ namespace Grindstone {
 			VulkanTexture(Texture::CreateInfo& createInfo);
 			virtual ~VulkanTexture();
 		public:
-			virtual VkImageView GetImageView();
-			VkSampler GetSampler();
+			virtual VkImageView GetImageView() const;
+			VkSampler GetSampler() const;
 			virtual void RecreateTexture(CreateInfo& createInfo) override;
 		private:
 			void CreateTextureImage(Texture::CreateInfo &createInfo, uint32_t &mipLevels, uint32_t layerCount);

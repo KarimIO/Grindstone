@@ -291,10 +291,10 @@ void VulkanTexture::RecreateTexture(CreateInfo& createInfo) {
 	assert(false);
 }
 
-VkImageView VulkanTexture::GetImageView() {
+VkImageView VulkanTexture::GetImageView() const {
 	return imageView;
 }
 
-VkSampler VulkanTexture::GetSampler() {
+VkSampler VulkanTexture::GetSampler() const {
 	return sampler;
 }

@@ -24,7 +24,7 @@ namespace Grindstone {
 			return vertexBuffers;
 		}
 
-		IndexBuffer* VulkanVertexArrayObject::GetIndexBuffer() {
+		IndexBuffer* VulkanVertexArrayObject::GetIndexBuffer() const  {
 			return indexBuffer;
 		}
 

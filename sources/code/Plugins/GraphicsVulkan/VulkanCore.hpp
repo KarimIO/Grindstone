@@ -21,7 +21,7 @@ namespace Grindstone {
 			bool hasGraphicsFamily = false;
 			bool hasPresentFamily = false;
 
-			bool IsComplete() {
+			bool IsComplete() const {
 				return hasGraphicsFamily && hasPresentFamily;
 			}
 		};
@@ -44,7 +44,7 @@ namespace Grindstone {
 			virtual VkCommandBuffer BeginSingleTimeCommands();
 			virtual uint32_t GetGraphicsFamily();
 			virtual void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
-			VkCommandPool GetGraphicsCommandPool();
+			VkCommandPool GetGraphicsCommandPool() const;
 			std::function<void(LogSeverity, const char*)> logFunction;
 		private:
 

@@ -88,27 +88,21 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 
 	bool usesGbuffer = reflectionData.renderQueue != "Skybox";
 
-	auto renderPass = usesGbuffer
+	GraphicsAPI::RenderPass* renderPass = usesGbuffer
 		? DeferredRenderer::gbufferRenderPass
 		: DeferredRenderer::mainRenderPass;
 
-	uint32_t width = 0;
-	uint32_t height = 0;
-	if (renderPass != nullptr) {
-		width = renderPass->GetWidth();
-		height = renderPass->GetHeight();
-	}
 	GraphicsPipeline::CreateInfo pipelineCreateInfo{};
 	pipelineCreateInfo.debugName = debugName.c_str();
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
 	pipelineCreateInfo.cullMode = TranslateCullMode(reflectionData.cullMode);
 	pipelineCreateInfo.renderPass = renderPass;
-	pipelineCreateInfo.width = static_cast<float>(width);
-	pipelineCreateInfo.height = static_cast<float>(height);
+	pipelineCreateInfo.width = 0.0f;
+	pipelineCreateInfo.height = 0.0f;
 	pipelineCreateInfo.scissorX = 0;
 	pipelineCreateInfo.scissorY = 0;
-	pipelineCreateInfo.scissorW = width;
-	pipelineCreateInfo.scissorH = height;
+	pipelineCreateInfo.scissorW = 0;
+	pipelineCreateInfo.scissorH = 0;
 	pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 	pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
 	pipelineCreateInfo.hasDynamicViewport = true;

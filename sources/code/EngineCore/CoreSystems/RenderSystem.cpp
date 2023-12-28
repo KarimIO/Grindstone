@@ -13,19 +13,6 @@
 #include <EngineCore/EngineCore.hpp>
 #include "RenderSystem.hpp"
 
-glm::vec3 EulerToForward(glm::vec3 eulerAngle) {
-	float pitch = eulerAngle.x;
-	float yaw = eulerAngle.y;
-
-	glm::vec3 forwardVector {
-		cos(yaw)* cos(pitch),
-		sin(pitch),
-		sin(yaw)* cos(pitch)
-	};
-
-	return glm::normalize(forwardVector);
-}
-
 std::vector<Grindstone::GraphicsAPI::CommandBuffer*> commandBuffers;
 
 namespace Grindstone {
@@ -67,13 +54,13 @@ namespace Grindstone {
 				const glm::vec3 forwardVector = transformComponent.GetForward();
 				const glm::vec3 pos = transformComponent.position;
 
-				const auto viewMatrix = glm::lookAt(
+				const glm::mat4 viewMatrix = glm::lookAt(
 					pos,
 					pos + forwardVector,
 					upVector
 				);
 
-				auto projectionMatrix = glm::perspective(
+				const glm::mat4 projectionMatrix = glm::perspective(
 					cameraComponent.fieldOfView,
 					cameraComponent.aspectRatio,
 					cameraComponent.nearPlaneDistance,

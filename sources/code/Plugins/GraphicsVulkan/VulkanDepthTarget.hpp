@@ -12,8 +12,8 @@ namespace Grindstone {
 			VulkanDepthTarget(DepthTarget::CreateInfo& ci);
 			virtual ~VulkanDepthTarget() override;
 		public:
-			VkImageView GetImageView();
-			VkSampler GetSampler();
+			VkImageView GetImageView() const;
+			VkSampler GetSampler() const;
 		public:
 			virtual void Resize(uint32_t width, uint32_t height) override;
 			virtual void BindFace(int k);

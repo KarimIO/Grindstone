@@ -36,11 +36,11 @@ namespace Grindstone {
 			vkFreeMemory(device, memory, nullptr);
 		}
 
-		VkBuffer VulkanIndexBuffer::GetBuffer() {
+		VkBuffer VulkanIndexBuffer::GetBuffer() const {
 			return buffer;
 		}
 
-		bool VulkanIndexBuffer::Is32Bit() {
+		bool VulkanIndexBuffer::Is32Bit() const {
 			return is32Bit;
 		}
 	}

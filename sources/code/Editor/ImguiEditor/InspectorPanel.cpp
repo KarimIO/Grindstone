@@ -8,60 +8,56 @@
 #include "EngineCore/Scenes/Scene.hpp"
 #include "EngineCore/EngineCore.hpp"
 
-namespace Grindstone {
-	namespace Editor {
-		namespace ImguiEditor {
-			InspectorPanel::InspectorPanel(EngineCore* engineCore, ImguiEditor* imguiEditor) : engineCore(engineCore) {
-				componentInspector = new ComponentInspector(imguiEditor);
-				materialInspector = new MaterialInspector(engineCore, imguiEditor);
-			}
+namespace Grindstone::Editor::ImguiEditor {
+	InspectorPanel::InspectorPanel(EngineCore* engineCore, ImguiEditor* imguiEditor) : engineCore(engineCore) {
+		componentInspector = new ComponentInspector(imguiEditor);
+		materialInspector = new MaterialInspector(engineCore, imguiEditor);
+	}
 
-			void InspectorPanel::Render() {
-				if (isShowingPanel) {
-					ImGui::Begin("Inspector", &isShowingPanel);
-					RenderContents();
-					ImGui::End();
-				}
-			}
+	void InspectorPanel::Render() {
+		if (isShowingPanel) {
+			ImGui::Begin("Inspector", &isShowingPanel);
+			RenderContents();
+			ImGui::End();
+		}
+	}
 
-			void InspectorPanel::RenderContents() {
-				bool hasHandledSelected = false;
-				Selection& selection = Editor::Manager::GetInstance().GetSelection();
-				size_t selectedEntityCount = selection.GetSelectedEntityCount();
-				size_t selectedFileCount = selection.GetSelectedFileCount();
+	void InspectorPanel::RenderContents() {
+		bool hasHandledSelected = false;
+		Selection& selection = Editor::Manager::GetInstance().GetSelection();
+		size_t selectedEntityCount = selection.GetSelectedEntityCount();
+		size_t selectedFileCount = selection.GetSelectedFileCount();
 
-				if (selectedEntityCount == 0 && selectedFileCount == 1) {
-					auto entry = selection.GetSingleSelectedFile();
-					if (!entry.is_directory()) {
-						auto& stringPath = entry.path();
-						std::string extension = stringPath.extension().string();
+		if (selectedEntityCount == 0 && selectedFileCount == 1) {
+			auto entry = selection.GetSingleSelectedFile();
+			if (!entry.is_directory()) {
+				auto& stringPath = entry.path();
+				std::string extension = stringPath.extension().string();
 
-						if (extension == ".gmat") {
-							materialInspector->SetMaterialPath(stringPath);
-							materialInspector->Render();
-							return;
-						}
-					}
-				}
-				else if (selectedEntityCount == 1 && selectedFileCount == 0) {
-					componentInspector->Render(selection.GetSingleSelectedEntity());
+				if (extension == ".gmat") {
+					materialInspector->SetMaterialPath(stringPath);
+					materialInspector->Render();
 					return;
 				}
-
-				if (selectedEntityCount > 0 || selectedFileCount > 0) {
-					if (selectedEntityCount > 0) {
-						ImGui::Text("%i entities selected.", selectedEntityCount);
-					}
-
-					if (selectedFileCount > 0) {
-						ImGui::Text("%i files selected.", selectedFileCount);
-					}
-
-					return;
-				}
-
-				ImGui::Text("Nothing selected.");
 			}
 		}
+		else if (selectedEntityCount == 1 && selectedFileCount == 0) {
+			componentInspector->Render(selection.GetSingleSelectedEntity());
+			return;
+		}
+
+		if (selectedEntityCount > 0 || selectedFileCount > 0) {
+			if (selectedEntityCount > 0) {
+				ImGui::Text("%i entities selected.", selectedEntityCount);
+			}
+
+			if (selectedFileCount > 0) {
+				ImGui::Text("%i files selected.", selectedFileCount);
+			}
+
+			return;
+		}
+
+		ImGui::Text("Nothing selected.");
 	}
 }

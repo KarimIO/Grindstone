@@ -8,7 +8,7 @@
 
 using namespace Grindstone::GraphicsAPI;
 
-void AttachUniformBuffer(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
+static void AttachUniformBuffer(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
 	VulkanUniformBuffer* uniformBuffer = static_cast<VulkanUniformBuffer*>(binding.itemPtr);
 
 	// TODO: Handle this lifetime
@@ -28,7 +28,7 @@ void AttachUniformBuffer(std::vector<VkWriteDescriptorSet>& writeVector, Descrip
 	writeVector.push_back(descriptorWrites);
 }
 
-void AttachTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
+static void AttachTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
 	VulkanTexture* texture = static_cast<VulkanTexture*>(binding.itemPtr);
 
 	// TODO: Handle this lifetime
@@ -48,7 +48,7 @@ void AttachTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet
 	writeVector.push_back(descriptorWrites);
 }
 
-void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet, bool isStorage) {
+static void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet, bool isStorage) {
 	VulkanRenderTarget* texture = static_cast<VulkanRenderTarget*>(binding.itemPtr);
 
 	// TODO: Handle this lifetime
@@ -72,7 +72,7 @@ void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, Descrip
 	writeVector.push_back(descriptorWrites);
 }
 
-void AttachDepthTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
+static void AttachDepthTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
 	VulkanDepthTarget* texture = static_cast<VulkanDepthTarget*>(binding.itemPtr);
 
 	// TODO: Handle this lifetime

@@ -23,6 +23,8 @@ namespace Grindstone {
 			struct CreateInfo {
 				const char* debugName;
 				RenderPass* renderPass;
+				uint32_t width;
+				uint32_t height;
 
 				RenderTarget** renderTargetLists;
 				uint32_t numRenderTargetLists;
@@ -31,7 +33,7 @@ namespace Grindstone {
 			};
 
 			virtual uint32_t GetAttachment(uint32_t attachmentIndex) = 0;
-			virtual RenderPass* GetRenderPass() = 0;
+			virtual RenderPass* GetRenderPass() const = 0;
 			virtual void Resize(uint32_t width, uint32_t height) = 0;
 			virtual void Clear(ClearMode mask) = 0;
 			virtual void BindTextures(int i) = 0;
@@ -39,6 +41,8 @@ namespace Grindstone {
 			virtual void BindWrite() = 0;
 			virtual void BindRead() = 0;
 			virtual void Unbind() = 0;
+			virtual uint32_t GetWidth() const = 0;
+			virtual uint32_t GetHeight() const = 0;
 			virtual ~Framebuffer() {};
 		};
 	}

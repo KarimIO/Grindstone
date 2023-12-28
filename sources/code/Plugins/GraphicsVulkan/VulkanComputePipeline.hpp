@@ -12,8 +12,8 @@ namespace Grindstone {
 		public:
 			VulkanComputePipeline(ComputePipeline::CreateInfo& createInfo);
 			~VulkanComputePipeline();
-			VkPipeline GetComputePipeline();
-			VkPipelineLayout GetComputePipelineLayout();
+			VkPipeline GetComputePipeline() const;
+			VkPipelineLayout GetComputePipelineLayout() const;
 		public:
 			virtual void Bind() {};
 			virtual void Recreate(ComputePipeline::CreateInfo& createInfo) override;

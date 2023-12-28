@@ -27,8 +27,6 @@ void Grindstone::SetupDirectionalLightComponent(ECS::Entity& entity, void* compo
 	uint32_t shadowResolution = static_cast<uint32_t>(directionalLightComponent.shadowResolution);
 
 	RenderPass::CreateInfo renderPassCreateInfo{};
-	renderPassCreateInfo.width = shadowResolution;
-	renderPassCreateInfo.height = shadowResolution;
 	renderPassCreateInfo.colorFormats = nullptr;
 	renderPassCreateInfo.colorFormatCount = 0;
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;
@@ -39,6 +37,8 @@ void Grindstone::SetupDirectionalLightComponent(ECS::Entity& entity, void* compo
 
 	Framebuffer::CreateInfo shadowMapCreateInfo{};
 	shadowMapCreateInfo.debugName = "Directional Shadow Framebuffer";
+	shadowMapCreateInfo.width = shadowResolution;
+	shadowMapCreateInfo.height = shadowResolution;
 	shadowMapCreateInfo.renderPass = directionalLightComponent.renderPass;
 	shadowMapCreateInfo.renderTargetLists = nullptr;
 	shadowMapCreateInfo.numRenderTargetLists = 0;

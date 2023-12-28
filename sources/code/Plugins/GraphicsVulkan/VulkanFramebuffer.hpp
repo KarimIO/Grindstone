@@ -15,14 +15,14 @@ namespace Grindstone {
 
 		class VulkanFramebuffer : public Framebuffer {
 		public:
-			VulkanFramebuffer(RenderPass* renderPass, VkFramebuffer framebuffer);
+			VulkanFramebuffer(RenderPass* renderPass, VkFramebuffer framebuffer, uint32_t width, uint32_t height);
 			VulkanFramebuffer(Framebuffer::CreateInfo& createInfo);
 			virtual ~VulkanFramebuffer() override;
 		public:
-			VkFramebuffer GetFramebuffer();
+			VkFramebuffer GetFramebuffer() const;
 		public:
 			virtual uint32_t GetAttachment(uint32_t attachmentIndex) override;
-			virtual RenderPass* GetRenderPass() override;
+			virtual RenderPass* GetRenderPass() const override;
 			virtual void Resize(uint32_t width, uint32_t height) override;
 			virtual void Clear(ClearMode mask) override;
 			virtual void BindTextures(int i) override;
@@ -30,6 +30,8 @@ namespace Grindstone {
 			virtual void BindWrite() override;
 			virtual void BindRead() override;
 			virtual void Unbind() override;
+			virtual uint32_t GetWidth() const override;
+			virtual uint32_t GetHeight() const override;
 		private:
 			void Create();
 			void Cleanup();
@@ -41,6 +43,9 @@ namespace Grindstone {
 			VkFramebuffer framebuffer = nullptr;
 			RenderPass* renderPass = nullptr;
 			bool isCubemap = false;
+
+			uint32_t width = 0;
+			uint32_t height = 0;
 		};
 	}
 }

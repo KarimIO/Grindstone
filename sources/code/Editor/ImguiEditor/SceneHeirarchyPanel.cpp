@@ -68,14 +68,18 @@ void SceneHeirarchyPanel::RenderScene(SceneManagement::Scene* scene) {
 
 	auto& registry = scene->GetEntityRegistry();
 	auto& entityStorage = registry.storage<entt::entity>();
+	size_t entityCount = entityStorage.in_use();
+	bool hasEntities = false;
 
-	if (entityStorage.in_use()) {
-		ImGui::Text("No entities in scene.");
-	}
-	else {
-		for (const entt::entity entity : entityStorage) {
+	for (const entt::entity entity : entityStorage) {
+		if (registry.valid(entity)) {
+			hasEntities = true;
 			RenderEntity({ entity, scene });
 		}
+	}
+
+	if (!hasEntities) {
+		ImGui::Text("No entities in scene.");
 	}
 }
 

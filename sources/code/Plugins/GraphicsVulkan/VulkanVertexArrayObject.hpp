@@ -19,7 +19,7 @@ namespace Grindstone {
 			virtual void Unbind() override;
 		public:
 			std::vector<VertexBuffer*>& GetVertexBuffers();
-			IndexBuffer* GetIndexBuffer();
+			IndexBuffer* GetIndexBuffer() const;
 		private:
 			std::vector<VertexBuffer*> vertexBuffers;
 			IndexBuffer* indexBuffer = nullptr;

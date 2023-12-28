@@ -12,8 +12,8 @@ namespace Grindstone {
 		public:
 			VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& createInfo);
 			~VulkanGraphicsPipeline();
-			VkPipeline GetGraphicsPipeline();
-			VkPipelineLayout GetGraphicsPipelineLayout();
+			VkPipeline GetGraphicsPipeline() const;
+			VkPipelineLayout GetGraphicsPipelineLayout() const;
 		public:
 			virtual void Bind() {};
 			virtual void Recreate(GraphicsPipeline::CreateInfo& createInfo) override;

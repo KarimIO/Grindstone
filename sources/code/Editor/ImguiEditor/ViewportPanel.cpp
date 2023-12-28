@@ -79,7 +79,7 @@ void ViewportPanel::HandleInput() {
 		return;
 	}
 
-	auto& io = ImGui::GetIO();
+	ImGuiIO& io = ImGui::GetIO();
 	Grindstone::EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	Grindstone::Input::Interface* input = engineCore.GetInputManager();
 

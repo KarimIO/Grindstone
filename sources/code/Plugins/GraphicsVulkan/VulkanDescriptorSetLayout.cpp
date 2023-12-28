@@ -5,7 +5,7 @@
 
 using namespace Grindstone::GraphicsAPI;
 
-VkDescriptorType GetDescriptorType(BindingType bindingType) {
+static VkDescriptorType GetDescriptorType(BindingType bindingType) {
 	switch (bindingType) {
 	case BindingType::UniformBuffer:
 		return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -48,7 +48,7 @@ VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(DescriptorSetLayout::Create
 	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, descriptorSetLayout, createInfo.debugName);
 }
 
-VkDescriptorSetLayout Grindstone::GraphicsAPI::VulkanDescriptorSetLayout::GetInternalLayout() {
+VkDescriptorSetLayout VulkanDescriptorSetLayout::GetInternalLayout() const {
 	return descriptorSetLayout;
 }
 

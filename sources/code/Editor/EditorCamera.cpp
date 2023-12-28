@@ -38,8 +38,6 @@ EditorCamera::EditorCamera() {
 	GraphicsAPI::RenderPass::CreateInfo renderPassCreateInfo{};
 	renderPassCreateInfo.debugName = "Editor RenderPass";
 	renderPassCreateInfo.colorFormatCount = 1;
-	renderPassCreateInfo.width = 800;
-	renderPassCreateInfo.height = 600;
 	renderPassCreateInfo.colorFormats = &renderTargetCreateInfo.format;
 	renderPassCreateInfo.depthFormat = GraphicsAPI::DepthFormat::None;
 	renderPass = core->CreateRenderPass(renderPassCreateInfo);
@@ -50,6 +48,8 @@ EditorCamera::EditorCamera() {
 	framebufferCreateInfo.numRenderTargetLists = 1;
 	framebufferCreateInfo.depthTarget = nullptr;
 	framebufferCreateInfo.renderPass = renderPass;
+	framebufferCreateInfo.width = 800;
+	framebufferCreateInfo.height = 600;
 	framebuffer = core->CreateFramebuffer(framebufferCreateInfo);
 
 	GraphicsAPI::DescriptorSetLayout::Binding descriptorSetLayoutBinding{};
@@ -187,13 +187,17 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 		return;
 	}
 
+	this->width = width;
+	this->height = height;
+
+	if (width == 0 || height == 0)
+	{
+		return;
+	}
+
 	GraphicsAPI::Core* core = Editor::Manager::GetEngineCore().GetGraphicsCore();
 	core->WaitUntilIdle();
 
-	this->width = width == 0 ? 1 : width;
-	this->height = height == 0 ? 1 : height;
-
-	renderPass->Resize(width, height);
 	renderTarget->Resize(width, height);
 	framebuffer->Resize(width, height);
 	renderer->Resize(width, height);

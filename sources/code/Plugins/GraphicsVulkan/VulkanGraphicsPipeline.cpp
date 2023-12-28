@@ -127,7 +127,7 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 
 	std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(createInfo.colorAttachmentCount);
 	for (size_t i = 0; i < createInfo.colorAttachmentCount; ++i) {
-		auto& attachment = colorBlendAttachments[i];
+		VkPipelineColorBlendAttachmentState& attachment = colorBlendAttachments[i];
 		colorBlendAttachments[i].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 		switch (createInfo.blendMode) {
 		default:
@@ -174,7 +174,7 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 		layouts.push_back(ubb);
 	}
 
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
+	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(layouts.size());
 	pipelineLayoutInfo.pSetLayouts = layouts.data();
@@ -185,7 +185,7 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 		throw std::runtime_error("failed to create pipeline layout!");
 	}
 
-	VulkanRenderPass * renderPass = static_cast<VulkanRenderPass*>(createInfo.renderPass);
+	VulkanRenderPass* renderPass = static_cast<VulkanRenderPass*>(createInfo.renderPass);
 
 	std::vector<VkDynamicState> dynamicStates;
 	if (createInfo.hasDynamicViewport) {
@@ -212,10 +212,12 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.layout = pipelineLayout;
-	pipelineInfo.renderPass = renderPass->GetRenderPassHandle();
 	pipelineInfo.subpass = 0;
 	pipelineInfo.pDynamicState = &dynamicInfo;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+	pipelineInfo.renderPass = (renderPass != nullptr)
+		? renderPass->GetRenderPassHandle()
+		: nullptr;
 
 	if (vkCreateGraphicsPipelines(VulkanCore::Get().GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create graphics pipeline!");
@@ -241,11 +243,11 @@ VulkanGraphicsPipeline::~VulkanGraphicsPipeline() {
 	}
 }
 
-VkPipeline VulkanGraphicsPipeline::GetGraphicsPipeline() {
+VkPipeline VulkanGraphicsPipeline::GetGraphicsPipeline() const {
 	return graphicsPipeline;
 }
 
-VkPipelineLayout VulkanGraphicsPipeline::GetGraphicsPipelineLayout() {
+VkPipelineLayout VulkanGraphicsPipeline::GetGraphicsPipelineLayout() const {
 	return pipelineLayout;
 }
 

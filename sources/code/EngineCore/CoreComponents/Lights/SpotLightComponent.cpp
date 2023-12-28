@@ -29,8 +29,6 @@ void Grindstone::SetupSpotLightComponent(ECS::Entity& entity, void* componentPtr
 	uint32_t shadowResolution = static_cast<uint32_t>(spotLightComponent.shadowResolution);
 
 	RenderPass::CreateInfo renderPassCreateInfo{};
-	renderPassCreateInfo.width = shadowResolution;
-	renderPassCreateInfo.height = shadowResolution;
 	renderPassCreateInfo.colorFormats = nullptr;
 	renderPassCreateInfo.colorFormatCount = 0;
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;
@@ -41,6 +39,8 @@ void Grindstone::SetupSpotLightComponent(ECS::Entity& entity, void* componentPtr
 
 	Framebuffer::CreateInfo shadowMapCreateInfo{};
 	shadowMapCreateInfo.debugName = "Spotlight Shadow Framebuffer";
+	shadowMapCreateInfo.width = shadowResolution;
+	shadowMapCreateInfo.height = shadowResolution;
 	shadowMapCreateInfo.renderPass = spotLightComponent.renderPass;
 	shadowMapCreateInfo.renderTargetLists = nullptr;
 	shadowMapCreateInfo.numRenderTargetLists = 0;

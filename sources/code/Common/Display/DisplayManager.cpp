@@ -4,7 +4,7 @@ using namespace Grindstone;
 #ifdef _WIN32
 #include <Windows.h>
 
-BOOL CALLBACK EnumDispProc(HMONITOR hMon, HDC dcMon, RECT* pRcMon, LPARAM lParam) {
+static BOOL CALLBACK EnumDispProc(HMONITOR hMon, HDC dcMon, RECT* pRcMon, LPARAM lParam) {
 	Display* pArg = reinterpret_cast<Display*>(lParam);
 
 	// TODO: Fix all this
@@ -18,9 +18,9 @@ BOOL CALLBACK EnumDispProc(HMONITOR hMon, HDC dcMon, RECT* pRcMon, LPARAM lParam
 	return TRUE;
 }
 
-BOOL CALLBACK CountDispProc(HMONITOR hMon, HDC dcMon, RECT* pRcMon, LPARAM lParam) {
-	uint8_t* count = (uint8_t*)lParam;
-	(*count)++;
+static BOOL CALLBACK CountDispProc(HMONITOR hMon, HDC dcMon, RECT* pRcMon, LPARAM lParam) {
+	uint8_t& count = *reinterpret_cast<uint8_t*>(lParam);
+	count++;
 	return TRUE;
 }
 

@@ -73,8 +73,8 @@ static size_t CalculateBloomLevels(uint32_t width, uint32_t height) {
 }
 
 DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : targetRenderPass(targetRenderPass) {
-	width = targetRenderPass->GetWidth();
-	height = targetRenderPass->GetHeight();
+	width = 800;
+	height = 600;
 
 	EngineCore& engineCore = EngineCore::GetInstance();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
@@ -83,8 +83,6 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	deferredRendererImageSets.resize(maxFramesInFlight);
 
 	RenderPass::CreateInfo renderPassCreateInfo{};
-	renderPassCreateInfo.width = 1024;
-	renderPassCreateInfo.height = 1024;
 	renderPassCreateInfo.colorFormats = nullptr;
 	renderPassCreateInfo.colorFormatCount = 0;
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;
@@ -93,7 +91,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	bloomMipLevelCount = CalculateBloomLevels(width, height);
 
 	Uuid brdfAssetUuid("7707483a-9379-4e81-9e15-0e5acf20e9d6");
-	brdfLut = EngineCore::GetInstance().assetManager->GetAsset<TextureAsset>(brdfAssetUuid)->texture;
+	brdfLut = engineCore.assetManager->GetAsset<TextureAsset>(brdfAssetUuid)->texture;
 
 	CreateSsaoKernelAndNoise();
 	CreateVertexAndIndexBuffersAndLayouts();
@@ -103,6 +101,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	CreateDescriptorSetLayouts();
 	CreateBloomResources();
 	CreateBloomUniformBuffers();
+
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		CreateBloomRenderTargetsAndDescriptorSets(deferredRendererImageSets[i], i);
 		CreateDescriptorSets(deferredRendererImageSets[i]);
@@ -181,7 +180,7 @@ void DeferredRenderer::CreateBloomResources() {
 }
 
 void DeferredRenderer::CreateSsaoKernelAndNoise() {
-	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
 	std::default_random_engine generator;
 
@@ -285,8 +284,6 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 		
 		GraphicsAPI::RenderPass::CreateInfo ssaoRenderPassCreateInfo{};
 		ssaoRenderPassCreateInfo.debugName = "SSAO Renderpass";
-		ssaoRenderPassCreateInfo.width = halfWidth;
-		ssaoRenderPassCreateInfo.height = halfHeight;
 		ssaoRenderPassCreateInfo.colorFormats = &ssaoRenderTargetCreateInfo.format;
 		ssaoRenderPassCreateInfo.colorFormatCount = 1;
 		ssaoRenderPassCreateInfo.depthFormat = DepthFormat::None;
@@ -295,6 +292,8 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 
 		GraphicsAPI::Framebuffer::CreateInfo ssaoFramebufferCreateInfo{};
 		ssaoFramebufferCreateInfo.debugName = "SSAO Framebuffer";
+		ssaoFramebufferCreateInfo.width = halfWidth;
+		ssaoFramebufferCreateInfo.height = halfHeight;
 		ssaoFramebufferCreateInfo.renderTargetLists = &ssaoRenderTarget;
 		ssaoFramebufferCreateInfo.numRenderTargetLists = 1;
 		ssaoFramebufferCreateInfo.depthTarget = nullptr;
@@ -338,7 +337,6 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 	uint32_t halfHeight = height / 2;
 
 	ssaoRenderTarget->Resize(halfWidth, halfHeight);
-	ssaoRenderPass->Resize(halfWidth, halfHeight);
 	ssaoFramebuffer->Resize(halfWidth, halfHeight);
 
 	bloomMipLevelCount = CalculateBloomLevels(width, height);
@@ -351,9 +349,6 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 		for (GraphicsAPI::RenderTarget* gbufferRenderTarget : imageSet.gbufferRenderTargets) {
 			gbufferRenderTarget->Resize(width, height);
 		}
-
-		mainRenderPass->Resize(width, height);
-		gbufferRenderPass->Resize(width, height);
 
 		imageSet.gbufferDepthTarget->Resize(width, height);
 		imageSet.gbuffer->Resize(width, height);
@@ -921,16 +916,18 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 	gbufferColorAttachmentNames[2] = "GBuffer Normal Image";
 	gbufferColorAttachmentNames[3] = "GBuffer Specular + Roughness Image";
 
-	RenderPass::CreateInfo gbufferRenderPassCreateInfo{};
-	gbufferRenderPassCreateInfo.debugName = "GBuffer Render Pass";
-	gbufferRenderPassCreateInfo.width = width;
-	gbufferRenderPassCreateInfo.height = height;
-	gbufferRenderPassCreateInfo.colorFormats = gbufferColorFormats.data();
-	gbufferRenderPassCreateInfo.colorFormatCount = static_cast<uint32_t>(gbufferColorFormats.size());
-	gbufferRenderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
-	gbufferRenderPass = graphicsCore->CreateRenderPass(gbufferRenderPassCreateInfo);
+	DepthFormat depthFormat = DepthFormat::D24_STENCIL_8;
 
-	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(gbufferRenderPassCreateInfo.depthFormat, width, height, false, false, false, "GBuffer Depth Image");
+	if (gbufferRenderPass == nullptr) {
+		RenderPass::CreateInfo gbufferRenderPassCreateInfo{};
+		gbufferRenderPassCreateInfo.debugName = "GBuffer Render Pass";
+		gbufferRenderPassCreateInfo.colorFormats = gbufferColorFormats.data();
+		gbufferRenderPassCreateInfo.colorFormatCount = static_cast<uint32_t>(gbufferColorFormats.size());
+		gbufferRenderPassCreateInfo.depthFormat = depthFormat;
+		gbufferRenderPass = graphicsCore->CreateRenderPass(gbufferRenderPassCreateInfo);
+	}
+
+	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(depthFormat, width, height, false, false, false, "GBuffer Depth Image");
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		auto& imageSet = deferredRendererImageSets[i];
@@ -945,6 +942,8 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 
 		Framebuffer::CreateInfo gbufferCreateInfo{};
 		gbufferCreateInfo.debugName = "G-Buffer Framebuffer";
+		gbufferCreateInfo.width = width;
+		gbufferCreateInfo.height = height;
 		gbufferCreateInfo.renderPass = gbufferRenderPass;
 		gbufferCreateInfo.renderTargetLists = imageSet.gbufferRenderTargets.data();
 		gbufferCreateInfo.numRenderTargetLists = static_cast<uint32_t>(imageSet.gbufferRenderTargets.size());
@@ -960,15 +959,15 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::RGBA16, width, height, true, false, "Lit HDR Color Image" };
 	// DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false, false, "Lit HDR Depth Image");
 
-	RenderPass::CreateInfo mainRenderPassCreateInfo{};
-	mainRenderPassCreateInfo.debugName = "Main HDR Render Pass";
-	mainRenderPassCreateInfo.width = width;
-	mainRenderPassCreateInfo.height = height;
-	mainRenderPassCreateInfo.colorFormats = &litHdrImagesCreateInfo.format;
-	mainRenderPassCreateInfo.colorFormatCount = 1;
-	mainRenderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
-	mainRenderPassCreateInfo.shouldClearDepthOnLoad = false;
-	mainRenderPass = graphicsCore->CreateRenderPass(mainRenderPassCreateInfo);
+	if (mainRenderPass == nullptr) {
+		RenderPass::CreateInfo mainRenderPassCreateInfo{};
+		mainRenderPassCreateInfo.debugName = "Main HDR Render Pass";
+		mainRenderPassCreateInfo.colorFormats = &litHdrImagesCreateInfo.format;
+		mainRenderPassCreateInfo.colorFormatCount = 1;
+		mainRenderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
+		mainRenderPassCreateInfo.shouldClearDepthOnLoad = false;
+		mainRenderPass = graphicsCore->CreateRenderPass(mainRenderPassCreateInfo);
+	}
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		auto& imageSet = deferredRendererImageSets[i];
@@ -978,6 +977,8 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 		std::string framebufferName = std::string("Main HDR Framebuffer ") + std::to_string(i);
 		Framebuffer::CreateInfo litHdrFramebufferCreateInfo{};
 		litHdrFramebufferCreateInfo.debugName = framebufferName.c_str();
+		litHdrFramebufferCreateInfo.width = width;
+		litHdrFramebufferCreateInfo.height = height;
 		litHdrFramebufferCreateInfo.renderTargetLists = &imageSet.litHdrRenderTarget;
 		litHdrFramebufferCreateInfo.numRenderTargetLists = 1;
 		litHdrFramebufferCreateInfo.depthTarget = imageSet.gbufferDepthTarget;
@@ -987,7 +988,7 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 }
 
 void DeferredRenderer::CreatePipelines() {
-	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	GraphicsPipeline::CreateInfo pipelineCreateInfo{};
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
@@ -1024,20 +1025,20 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.isStencilEnabled = false;
 		pipelineCreateInfo.blendMode = BlendMode::None;
 		pipelineCreateInfo.renderPass = ssaoRenderPass;
-		pipelineCreateInfo.width = static_cast<float>(ssaoRenderPass->GetWidth());
-		pipelineCreateInfo.height = static_cast<float>(ssaoRenderPass->GetHeight());
-		pipelineCreateInfo.scissorW = ssaoRenderPass->GetWidth();
-		pipelineCreateInfo.scissorH = ssaoRenderPass->GetHeight();
+		pipelineCreateInfo.width = static_cast<float>(ssaoFramebuffer->GetWidth());
+		pipelineCreateInfo.height = static_cast<float>(ssaoFramebuffer->GetHeight());
+		pipelineCreateInfo.scissorW = ssaoFramebuffer->GetWidth();
+		pipelineCreateInfo.scissorH = ssaoFramebuffer->GetHeight();
 		ssaoPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
 
 	shaderStageCreateInfos.clear();
 	fileData.clear();
 
-	pipelineCreateInfo.width = static_cast<float>(mainRenderPass->GetWidth());
-	pipelineCreateInfo.height = static_cast<float>(mainRenderPass->GetHeight());
-	pipelineCreateInfo.scissorW = mainRenderPass->GetWidth();
-	pipelineCreateInfo.scissorH = mainRenderPass->GetHeight();
+	pipelineCreateInfo.width = static_cast<float>(width);
+	pipelineCreateInfo.height = static_cast<float>(height);
+	pipelineCreateInfo.scissorW = width;
+	pipelineCreateInfo.scissorH = height;
 
 	{
 		ShaderStageCreateInfo bloomShaderStageCreateInfo;
@@ -1491,8 +1492,8 @@ void DeferredRenderer::RenderSsao(uint32_t imageIndex, GraphicsAPI::CommandBuffe
 	commandBuffer->BindRenderPass(
 		ssaoRenderPass,
 		ssaoFramebuffer,
-		ssaoRenderPass->GetWidth(),
-		ssaoRenderPass->GetHeight(),
+		ssaoFramebuffer->GetWidth(),
+		ssaoFramebuffer->GetHeight(),
 		&clearColorAttachment,
 		1,
 		clearDepthStencil
@@ -1712,7 +1713,7 @@ void DeferredRenderer::PostProcessCommandBuffer(
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = false;
 	auto renderPass = framebuffer->GetRenderPass();
-	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, renderPass->GetWidth(), renderPass->GetHeight(), &clearColor, 1, clearDepthStencil);
+	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, framebuffer->GetWidth(), framebuffer->GetHeight(), &clearColor, 1, clearDepthStencil);
 	
 	currentCommandBuffer->BindGraphicsDescriptorSet(tonemapPipeline, &imageSet.tonemapDescriptorSet, 1);
 	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
@@ -1768,7 +1769,7 @@ void DeferredRenderer::RenderCommandBuffer(
 	Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	Grindstone::AssetRendererManager* assetManager = engineCore.assetRendererManager;
-	auto wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 
 	assetManager->CacheRenderTasksAndFrustumCull(eyePos, registry);
 	assetManager->SortQueues();
@@ -1787,6 +1788,9 @@ void DeferredRenderer::RenderCommandBuffer(
 	RenderShadowMaps(commandBuffer, registry);
 	assetManager->SetEngineDescriptorSet(imageSet.engineDescriptorSet);
 
+	uint32_t width = imageSet.gbuffer->GetWidth();
+	uint32_t height = imageSet.gbuffer->GetHeight();
+
 	{
 		ClearColorValue clearColors[] = {
 			ClearColorValue{0.3f, 0.6f, 0.9f, 1.f},
@@ -1800,11 +1804,11 @@ void DeferredRenderer::RenderCommandBuffer(
 		clearDepthStencil.stencil = 0;
 		clearDepthStencil.hasDepthStencilAttachment = true;
 
-		commandBuffer->BindRenderPass(gbufferRenderPass, imageSet.gbuffer, gbufferRenderPass->GetWidth(), gbufferRenderPass->GetHeight(), clearColors, 4, clearDepthStencil);
+		commandBuffer->BindRenderPass(gbufferRenderPass, imageSet.gbuffer, width, height, clearColors, 4, clearDepthStencil);
 	}
 
-	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(gbufferRenderPass->GetWidth()), static_cast<float>(gbufferRenderPass->GetHeight()));
-	commandBuffer->SetScissor(0, 0, gbufferRenderPass->GetWidth(), gbufferRenderPass->GetHeight());
+	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
+	commandBuffer->SetScissor(0, 0, width, height);
 
 	assetManager->RenderQueue(commandBuffer, "Opaque");
 	commandBuffer->UnbindRenderPass();
@@ -1817,7 +1821,7 @@ void DeferredRenderer::RenderCommandBuffer(
 		clearDepthStencil.depth = 1.0f;
 		clearDepthStencil.stencil = 0;
 		clearDepthStencil.hasDepthStencilAttachment = true;
-		commandBuffer->BindRenderPass(mainRenderPass, imageSet.litHdrFramebuffer, mainRenderPass->GetWidth(), mainRenderPass->GetHeight(), &clearColor, 1, clearDepthStencil);
+		commandBuffer->BindRenderPass(mainRenderPass, imageSet.litHdrFramebuffer, imageSet.litHdrFramebuffer->GetWidth(), imageSet.litHdrFramebuffer->GetHeight(), &clearColor, 1, clearDepthStencil);
 	}
 
 	RenderLightsCommandBuffer(imageIndex, commandBuffer, registry);

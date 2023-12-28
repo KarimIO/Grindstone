@@ -10,8 +10,8 @@ namespace Grindstone {
 			VulkanIndexBuffer(IndexBuffer::CreateInfo& createInfo);
 			virtual ~VulkanIndexBuffer() override;
 		public:
-			VkBuffer GetBuffer();
-			bool Is32Bit();
+			VkBuffer GetBuffer() const;
+			bool Is32Bit() const;
 		private:
 			VkBuffer buffer = nullptr;
 			VkDeviceMemory memory = nullptr;

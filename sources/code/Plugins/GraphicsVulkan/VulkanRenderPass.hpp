@@ -10,15 +10,12 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		class VulkanRenderPass : public RenderPass {
 		public:
-			VulkanRenderPass(VkRenderPass renderPass, uint32_t width, uint32_t height);
+			VulkanRenderPass(VkRenderPass renderPass);
 			VulkanRenderPass(RenderPass::CreateInfo& createInfo);
 			virtual ~VulkanRenderPass() override;
-			virtual void Resize(uint32_t width, uint32_t height) override;
-			virtual uint32_t GetWidth() override;
-			virtual uint32_t GetHeight() override;
 		public:
-			void Update(VkRenderPass renderPass, uint32_t width, uint32_t height);
-			virtual VkRenderPass GetRenderPassHandle();
+			void Update(VkRenderPass renderPass);
+			virtual VkRenderPass GetRenderPassHandle() const;
 		private:
 			void Create();
 			void Cleanup();
@@ -28,8 +25,6 @@ namespace Grindstone {
 			DepthFormat depthFormat = DepthFormat::None;
 			bool shouldClearDepthOnLoad = true;
 			VkRenderPass renderPass = nullptr;
-			uint32_t width = 0;
-			uint32_t height = 0;
 		};
 	}
 }

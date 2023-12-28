@@ -8,12 +8,10 @@
 
 using namespace Grindstone::GraphicsAPI;
 
-VulkanFramebuffer::VulkanFramebuffer(RenderPass* renderPass, VkFramebuffer framebuffer) {
-	this->renderPass = renderPass;
-	this->framebuffer = framebuffer;
+VulkanFramebuffer::VulkanFramebuffer(RenderPass* renderPass, VkFramebuffer framebuffer, uint32_t width, uint32_t height) : renderPass(renderPass), framebuffer(framebuffer), width(width), height(height) {
 }
 
-VulkanFramebuffer::VulkanFramebuffer(Framebuffer::CreateInfo& createInfo) : isCubemap(createInfo.isCubemap), renderPass(createInfo.renderPass) {
+VulkanFramebuffer::VulkanFramebuffer(Framebuffer::CreateInfo& createInfo) : isCubemap(createInfo.isCubemap), renderPass(createInfo.renderPass), width(createInfo.width), height(createInfo.height) {
 	if (createInfo.debugName != nullptr) {
 		debugName = createInfo.debugName;
 	}
@@ -41,11 +39,11 @@ void VulkanFramebuffer::Cleanup() {
 	}
 }
 
-VkFramebuffer VulkanFramebuffer::GetFramebuffer() {
+VkFramebuffer VulkanFramebuffer::GetFramebuffer() const {
 	return framebuffer;
 }
 
-RenderPass* VulkanFramebuffer::GetRenderPass() {
+RenderPass* VulkanFramebuffer::GetRenderPass() const {
 	return renderPass;
 }
 
@@ -57,6 +55,9 @@ uint32_t VulkanFramebuffer::GetAttachment(uint32_t attachmentIndex) {
 
 void VulkanFramebuffer::Resize(uint32_t width, uint32_t height) {
 	Cleanup();
+
+	this->width = width;
+	this->height = height;
 	Create();
 }
 
@@ -77,8 +78,8 @@ void VulkanFramebuffer::Create() {
 	framebufferInfo.renderPass = rp->GetRenderPassHandle();
 	framebufferInfo.pAttachments = attachments.data();
 	framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-	framebufferInfo.width = rp->GetWidth();
-	framebufferInfo.height = rp->GetHeight();
+	framebufferInfo.width = width;
+	framebufferInfo.height = height;
 	framebufferInfo.layers = 1;
 
 	if (vkCreateFramebuffer(VulkanCore::Get().GetDevice(), &framebufferInfo, nullptr, &framebuffer) != VK_SUCCESS) {
@@ -90,26 +91,39 @@ void VulkanFramebuffer::Create() {
 	}
 }
 
+uint32_t VulkanFramebuffer::GetWidth() const {
+	return width;
+}
+
+uint32_t VulkanFramebuffer::GetHeight() const {
+	return height;
+}
+
 void VulkanFramebuffer::Clear(GraphicsAPI::ClearMode mask) {
 	std::cout << "VulkanFramebuffer::Clear is not used.\n";
 	assert(false);
 }
+
 void VulkanFramebuffer::Bind() {
 	std::cout << "VulkanFramebuffer::Bind is not used.\n";
 	assert(false);
 }
+
 void VulkanFramebuffer::BindWrite() {
 	std::cout << "VulkanFramebuffer::BindWrite is not used.\n";
 	assert(false);
 }
+
 void VulkanFramebuffer::BindRead() {
 	std::cout << "VulkanFramebuffer::BindRead is not used.\n";
 	assert(false);
 }
+
 void VulkanFramebuffer::BindTextures(int i) {
 	std::cout << "VulkanFramebuffer::BindTextures is not used.\n";
 	assert(false);
 }
+
 void VulkanFramebuffer::Unbind() {
 	std::cout << "VulkanFramebuffer::Unbind is not used.\n";
 	assert(false);
