@@ -167,6 +167,11 @@ void SceneLoaderJson::ParseMember(
 	default:
 		EngineCore::GetInstance().Print(LogSeverity::Error, "Unhandled reflection type in SceneLoaderJson!");
 		break;
+	case ReflectionTypeData::Entity: {
+		entt::entity& entity = *(entt::entity*)memberPtr;
+		entity = static_cast<entt::entity>(parameter.GetUint());
+		break;
+	}
 	case ReflectionTypeData::AssetReference: {
 		GenericAssetReference& assetRefPtr = *static_cast<GenericAssetReference*>(memberPtr);
 		auto type = (Grindstone::Reflection::TypeDescriptor_AssetReference*)member;

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "EngineCore/ECS/Entity.hpp"
+#include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
+#include "EngineCore/CoreComponents/Parent/ParentComponent.hpp"
 
 namespace Grindstone {
 	namespace SceneManagement {
@@ -12,14 +14,29 @@ namespace Grindstone {
 		namespace ImguiEditor {
 			class ImguiEditor;
 
+
+			using EntityParentTagView = entt::basic_view<
+				entt::get_t<
+				entt::sigh_mixin<entt::basic_storage<entt::entity, entt::entity, std::allocator<entt::entity>, void>>,
+				entt::sigh_mixin<entt::basic_storage<Grindstone::TagComponent, entt::entity, std::allocator<Grindstone::TagComponent>, void>>,
+				entt::sigh_mixin<entt::basic_storage<Grindstone::ParentComponent, entt::entity, std::allocator<Grindstone::ParentComponent>, void>>
+				>,
+				entt::exclude_t<>,
+				void
+			>;
+
 			class SceneHeirarchyPanel {
 			public:
 				SceneHeirarchyPanel(SceneManagement::SceneManager* sceneManager, ImguiEditor* editor);
 				void Render();
 			private:
-				const char* GetEntityTag(ECS::Entity entity);
 				void RenderScene(SceneManagement::Scene* scene);
-				void RenderEntity(ECS::Entity entity);
+				void RenderEntity(
+					EntityParentTagView& view,
+					ECS::Entity entity,
+					TagComponent& tagComponent,
+					ParentComponent& parentComponent
+				);
 			private:
 				bool isShowingPanel = true;
 				SceneManagement::SceneManager* sceneManager;

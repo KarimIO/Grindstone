@@ -7,12 +7,12 @@ using namespace Grindstone::SceneManagement;
 
 extern "C" {
 	ENGINE_CORE_API Scene* SceneManagerGetActiveScene() {
-		auto sceneManager = EngineCore::GetInstance().GetSceneManager();
+		SceneManager* sceneManager = EngineCore::GetInstance().GetSceneManager();
 		if (sceneManager->scenes.empty()) {
 			return nullptr;
 		}
 
-		auto scene = sceneManager->scenes.begin()->second;
+		Scene* scene = sceneManager->scenes.begin()->second;
 		return scene;
 	}
 }

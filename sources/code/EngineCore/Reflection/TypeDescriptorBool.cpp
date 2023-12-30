@@ -1,15 +1,13 @@
 #include "DefaultResolver.hpp"
 
-namespace Grindstone {
-	namespace Reflection {
-		struct TypeDescriptor_Bool : TypeDescriptor {
-			TypeDescriptor_Bool() : TypeDescriptor{ "bool", sizeof(bool), ReflectionTypeData::Bool } {}
-		};
+namespace Grindstone::Reflection {
+	struct TypeDescriptor_Bool : TypeDescriptor {
+		TypeDescriptor_Bool() : TypeDescriptor{ "bool", sizeof(bool), ReflectionTypeData::Bool } {}
+	};
 
-		template <>
-		TypeDescriptor* GetPrimitiveDescriptor<bool>() {
-			static TypeDescriptor_Bool typeDesc;
-			return &typeDesc;
-		}
+	template <>
+	TypeDescriptor* GetPrimitiveDescriptor<bool>() {
+		static TypeDescriptor_Bool typeDesc;
+		return &typeDesc;
 	}
 }

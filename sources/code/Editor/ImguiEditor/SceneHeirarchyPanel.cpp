@@ -2,7 +2,6 @@
 #include <imgui_stdlib.h>
 #include <entt/entt.hpp>
 #include "EngineCore/Scenes/Manager.hpp"
-#include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
 #include "Editor/Commands/EntityCommands.hpp"
 #include "Editor/EditorManager.hpp"
 #include "ImguiEditor.hpp"
@@ -20,10 +19,10 @@ void SceneHeirarchyPanel::Render() {
 		ImGui::Begin("Scene Heirarchy", &isShowingPanel);
 
 		if (
-			ImGui::IsMouseDown(ImGuiMouseButton_Left) &&
+			ImGui::IsMouseReleased(ImGuiMouseButton_Left) &&
 			ImGui::IsWindowHovered() &&
 			!ImGui::GetIO().KeyCtrl
-		) {
+			) {
 			Editor::Manager::GetInstance().GetSelection().Clear();
 		}
 
@@ -50,14 +49,6 @@ void SceneHeirarchyPanel::Render() {
 	}
 }
 
-const char* SceneHeirarchyPanel::GetEntityTag(ECS::Entity entity) {
-	if (entity.HasComponent<TagComponent>()) {
-		return entity.GetComponent<TagComponent>().tag.c_str();
-	}
-
-	return "[Unnamed Entity]";
-}
-
 void SceneHeirarchyPanel::RenderScene(SceneManagement::Scene* scene) {
 	if (ImGui::BeginPopupContextWindow()) {
 		if (ImGui::MenuItem("Add new entity")) {
@@ -66,85 +57,150 @@ void SceneHeirarchyPanel::RenderScene(SceneManagement::Scene* scene) {
 		ImGui::EndPopup();
 	}
 
-	auto& registry = scene->GetEntityRegistry();
-	auto& entityStorage = registry.storage<entt::entity>();
-	size_t entityCount = entityStorage.in_use();
+	entt::registry& registry = scene->GetEntityRegistry();
 	bool hasEntities = false;
 
-	for (const entt::entity entity : entityStorage) {
-		if (registry.valid(entity)) {
-			hasEntities = true;
-			RenderEntity({ entity, scene });
+	EntityParentTagView view = registry.view<entt::entity, TagComponent, ParentComponent>();
+
+	view.each(
+		[&](
+			entt::entity entity,
+			TagComponent& tagComponent,
+			ParentComponent& parentComponent
+			) {
+				if (parentComponent.parentEntity == entt::null) {
+					RenderEntity(view, { entity, scene }, tagComponent, parentComponent);
+					hasEntities = true;
+				}
 		}
-	}
+	);
 
 	if (!hasEntities) {
 		ImGui::Text("No entities in scene.");
 	}
 }
 
-void SceneHeirarchyPanel::RenderEntity(ECS::Entity entity) {
+struct ChildEntity {
+	entt::entity childEntity;
+	TagComponent* tagComponent;
+	ParentComponent* parentComponent;
+
+	ChildEntity(entt::entity childEntity, TagComponent* tagComponent, ParentComponent* parentComponent)
+		: childEntity(childEntity), tagComponent(tagComponent), parentComponent(parentComponent)
+	{
+
+	}
+};
+
+void SceneHeirarchyPanel::RenderEntity(
+	EntityParentTagView& view,
+	ECS::Entity entity,
+	TagComponent& tagComponent,
+	ParentComponent& parentComponent
+) {
 	const float panelWidth = ImGui::GetContentRegionAvail().x;
 	ImGui::PushItemWidth(panelWidth);
 
-	Selection& selection = Editor::Manager::GetInstance().GetSelection();
+	entt::entity entityHandle = entity.GetHandle();
+
+	std::vector<ChildEntity> children;
+	view.each(
+		[&](
+			entt::entity childEntity,
+			TagComponent& tagComponent,
+			ParentComponent& parentComponent
+		) {
+			if (parentComponent.parentEntity == entityHandle) {
+				children.emplace_back(childEntity, &tagComponent, &parentComponent);
+			}
+		}
+	);
+
+	bool isLeaf = children.empty();
+
+	Grindstone::Editor::Selection& selection = Editor::Manager::GetInstance().GetSelection();
 	bool isSelected = selection.IsEntitySelected(entity);
 	auto& colors = ImGui::GetStyle().Colors;
-	ImGui::PushStyleColor(
-		ImGuiCol_Button,
-		isSelected ? colors[ImGuiCol_Button] : ImVec4(1, 1, 1, 0.05f)
-	);
-	ImGui::PushStyleColor(
-		ImGuiCol_ButtonHovered,
-		isSelected ? colors[ImGuiCol_ButtonHovered] : ImVec4(1, 1, 1, 0.15f)
-	);
-	ImGui::PushStyleColor(
-		ImGuiCol_ButtonActive,
-		isSelected ? colors[ImGuiCol_ButtonActive] : ImVec4(1, 1, 1, 0.2f)
-	);
+	ImGui::PushStyleColor(ImGuiCol_Header, colors[ImGuiCol_Button]);
 
-	const char* entityTag = GetEntityTag(entity);
-	if (entityToRename == entity) {
-		const auto flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
-		if (ImGui::InputText("##AssetRename", &entityRenameNewName, flags)) {
-			entityToRename = ECS::Entity();
-			TagComponent* tagComponent = nullptr;
-			if (entity.TryGetComponent<TagComponent>(tagComponent)) {
-				tagComponent->tag = entityRenameNewName;
+	const char* entityTag = tagComponent.tag.c_str();
+
+	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2{0, 0.5});
+
+	ImGuiTreeNodeFlags treeFlags =
+		ImGuiTreeNodeFlags_SpanAvailWidth |
+		ImGuiTreeNodeFlags_OpenOnArrow |
+		ImGuiTreeNodeFlags_DefaultOpen |
+		ImGuiTreeNodeFlags_OpenOnDoubleClick |
+		(isLeaf
+			? ImGuiTreeNodeFlags_Leaf
+			: 0
+		) |
+		(isSelected
+			? ImGuiTreeNodeFlags_Selected
+			: 0
+		);
+
+	bool isOpened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entityHandle, treeFlags, entityTag);
+
+	if (ImGui::BeginDragDropTarget()) {
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity")) {
+			entt::registry& registry = entity.GetSceneEntityRegistry();
+			entt::entity newTargetEntity = *static_cast<entt::entity*>(payload->Data);
+
+			if (newTargetEntity != entityHandle && registry.valid(newTargetEntity)) {
+				ParentComponent* parentComponent = registry.try_get<ParentComponent>(newTargetEntity);
+				if (parentComponent != nullptr) {
+					parentComponent->parentEntity = entityHandle;
+				}
 			}
-			entityRenameNewName = "";
 		}
+
+		ImGui::EndDragDropTarget();
 	}
-	else {
-		ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2{0, 0.5});
-		ImGui::Button(entityTag, { panelWidth, 0 });
-		if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-			if (ImGui::GetIO().KeyCtrl) {
-				if (selection.IsEntitySelected(entity)) {
-					selection.RemoveEntity(entity);
-				}
-				else {
-					selection.AddEntity(entity);
-				}
+
+	if (ImGui::BeginDragDropSource()) {
+		entt::entity entityId = entity.GetHandle();
+		ImGui::SetDragDropPayload("Entity", &entityId, sizeof(entt::entity));
+		ImGui::Text("%s", entityTag);
+		ImGui::EndDragDropSource();
+	}
+
+	if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+		if (ImGui::GetIO().KeyCtrl) {
+			if (selection.IsEntitySelected(entity)) {
+				selection.RemoveEntity(entity);
 			}
 			else {
-				selection.SetSelectedEntity(entity);
+				selection.AddEntity(entity);
 			}
 		}
-
-		if (ImGui::BeginPopupContextItem()) {
-			if (ImGui::MenuItem("Rename")) {
-				entityToRename = entity;
-				entityRenameNewName = entityTag;
-			}
-			if (ImGui::MenuItem("Delete")) {
-				selection.RemoveEntity(entity);
-				entity.GetScene()->DestroyEntity(entity);
-			}
-			ImGui::EndPopup();
+		else {
+			selection.SetSelectedEntity(entity);
 		}
-		ImGui::PopStyleVar();
+	}
+	
+	if (ImGui::BeginPopupContextItem()) {
+		if (ImGui::MenuItem("Rename")) {
+			entityToRename = entity;
+			entityRenameNewName = entityTag;
+		}
+		if (ImGui::MenuItem("Delete")) {
+			selection.RemoveEntity(entity);
+			entity.GetScene()->DestroyEntity(entity);
+		}
+		ImGui::EndPopup();
 	}
 
-	ImGui::PopStyleColor(3);
+	ImGui::PopStyleVar();
+
+	ImGui::PopStyleColor();
+
+	if (isOpened) {
+		for (ChildEntity& child : children) {
+			RenderEntity(view, { child.childEntity, entity.GetScene() }, *child.tagComponent, *child.parentComponent);
+		}
+
+		ImGui::TreePop();
+	}
 }

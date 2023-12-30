@@ -40,7 +40,7 @@ void SceneWriterJson::Save(const char* path) {
 
 	const char* content = documentStringBuffer.GetString();
 	std::ofstream file(path);
-	file.write((const char*)content, strlen(content));
+	file.write(content, strlen(content));
 	file.flush();
 	file.close();
 }
@@ -127,6 +127,11 @@ void WriteParameter(SceneRapidjsonWriter& documentWriter, Reflection::TypeDescri
 			GenericAssetReference& assetRefPtr = *static_cast<GenericAssetReference*>(dataPtr);
 			std::string uuidAsString = assetRefPtr.uuid.ToString();
 			documentWriter.String(uuidAsString.c_str());
+			break;
+		}
+		case Reflection::TypeDescriptor::ReflectionTypeData::Entity: {
+			entt::entity entity = *static_cast<entt::entity*>(dataPtr);
+			documentWriter.Uint(static_cast<unsigned int>(entity));
 			break;
 		}
 		case Reflection::TypeDescriptor::ReflectionTypeData::Quaternion:

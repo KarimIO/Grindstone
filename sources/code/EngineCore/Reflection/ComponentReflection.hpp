@@ -11,8 +11,7 @@
 #include "TypeDescriptorVector.hpp"
 #include "PrintReflectionData.hpp"
 
-namespace Grindstone {
-	namespace Reflection {
+namespace Grindstone::Reflection {
 #define REFLECT(name) \
 	public: \
 		friend struct Grindstone::Reflection::DefaultResolver; \
@@ -41,7 +40,6 @@ namespace Grindstone {
 #define REFLECT_SUBCAT_END() },
 
 #define REFLECT_STRUCT_END() }; \
-		}
-
 	}
+
 }

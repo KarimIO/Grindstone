@@ -12,6 +12,7 @@
 #include "Plugins/ScriptCSharp/Components/ScriptComponent.hpp"
 #include <Editor/ImguiEditor/ImguiEditor.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
+#include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
 #include "Common/Math.hpp"
 
 using namespace Grindstone::Editor::ImguiEditor;
@@ -82,7 +83,7 @@ void ComponentInspector::RenderCSharpScript(
 
 	ImGui::Text("%s", component->monoClass->scriptClassname.c_str());
 	size_t i = 0;
-	for(auto& field : component->monoClass->fields) {
+	for (auto& field : component->monoClass->fields) {
 		float val = 0.0f;
 		field.second.Get((MonoObject*)component->scriptObject, &val);
 		if (ImGui::InputFloat(field.first.c_str(), &val)) {
@@ -90,7 +91,7 @@ void ComponentInspector::RenderCSharpScript(
 		}
 	}
 }
-			
+
 void ComponentInspector::RenderComponentCategory(
 	Reflection::TypeDescriptor_Struct::Category& category,
 	void* componentPtr,
@@ -150,7 +151,7 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 		if (ImGui::Button(buttonText.c_str(), buttonSize)) {
 			std::function<void(Uuid, std::string)> callback = [assetManager, assetReference, assetType](Uuid newUuid, std::string path) {
 				assetReference->uuid = newUuid;
-			};
+				};
 
 			imguiEditor->PromptAssetPicker(assetType, callback);
 		}
@@ -161,6 +162,39 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 				AssetRegistry::Entry entry;
 				if (Editor::Manager::GetInstance().GetAssetRegistry().TryGetAssetData(uuid, entry)) {
 					assetReference->uuid = uuid;
+				}
+			}
+
+			ImGui::EndDragDropTarget();
+		}
+		ImGui::PopStyleVar();
+		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::Entity: {
+		entt::entity& targetEntity = *(entt::entity*)offset;
+
+		std::string name = "Unassigned";
+
+		entt::registry& registry = entity.GetSceneEntityRegistry();
+
+		if (targetEntity != entt::null) {
+			Grindstone::TagComponent& tagComponent = registry.get<Grindstone::TagComponent>(targetEntity);
+			if (!tagComponent.tag.empty()) {
+				name = tagComponent.tag;
+			}
+		}
+
+		std::string buttonText = (name + "##" + displayNamePtr);
+		ImVec2 buttonSize = { ImGui::GetContentRegionAvail().x, 24 };
+		ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.0f, 0.5f));
+		if (ImGui::Button(buttonText.c_str(), buttonSize)) {
+		}
+
+		if (ImGui::BeginDragDropTarget()) {
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity")) {
+				entt::entity newTargetEntity = *static_cast<entt::entity*>(payload->Data);
+				if (registry.valid(newTargetEntity)) {
+					targetEntity = newTargetEntity;
 				}
 			}
 

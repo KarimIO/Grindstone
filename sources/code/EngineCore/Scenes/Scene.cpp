@@ -5,6 +5,7 @@
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "EngineCore/ECS/SystemRegistrar.hpp"
 #include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
+#include "EngineCore/CoreComponents/Parent/ParentComponent.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "Scene.hpp"
 
@@ -56,6 +57,7 @@ ECS::Entity Scene::CreateEntity(entt::entity entityToUse) {
 	auto entity = CreateEmptyEntity(entityToUse);
 	entity.AddComponent<TagComponent>("New Entity");
 	entity.AddComponent<TransformComponent>();
+	entity.AddComponent<ParentComponent>();
 	return entity;
 }
 
