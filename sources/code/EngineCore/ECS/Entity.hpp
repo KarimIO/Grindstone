@@ -3,6 +3,8 @@
 #include <entt/entt.hpp>
 #include "EntityHandle.hpp"
 
+#include <EngineCore/CoreComponents/Parent/ParentComponent.hpp>
+
 namespace Grindstone {
 	namespace SceneManagement {
 		class Scene;
@@ -21,12 +23,13 @@ namespace Grindstone {
 
 			virtual void* AddComponent(const char* componentType);
 			virtual void* AddComponentWithoutSetup(const char* componentType);
-			virtual bool HasComponent(const char* componentType);
-			virtual void* GetComponent(const char* componentType);
-			virtual bool TryGetComponent(const char* componentType, void*& outComponent);
+			virtual bool HasComponent(const char* componentType) const;
+			virtual void* GetComponent(const char* componentType) const;
+			virtual bool TryGetComponent(const char* componentType, void*& outComponent) const;
 			virtual void RemoveComponent(const char* componentType);
+			virtual bool IsChildOf(const Entity& other) const;
 			virtual void Destroy();
-			virtual entt::registry& GetSceneEntityRegistry();
+			virtual entt::registry& GetSceneEntityRegistry() const;
 
 			template<typename ComponentType, typename... Args>
 			ComponentType& AddComponent(Args&&... args) {
@@ -34,24 +37,23 @@ namespace Grindstone {
 			}
 
 			template<typename ComponentType>
-			bool HasComponent() {
+			bool HasComponent() const {
 				return GetSceneEntityRegistry().all_of<ComponentType>(entityId);
 			}
 
 			template<typename ComponentType>
-			ComponentType& GetComponent() {
+			ComponentType& GetComponent() const {
 				return GetSceneEntityRegistry().get<ComponentType>(entityId);
 			}
 
 			template<typename ComponentType>
-			bool TryGetComponent(ComponentType*& outComponent) {
-				auto& registry = GetSceneEntityRegistry();
-				if (registry.all_of<ComponentType>(entityId)) {
-					outComponent = &registry.get<ComponentType>(entityId);
+			bool TryGetComponent(ComponentType*& outComponent) const {
+				ComponentType* testComponent = GetSceneEntityRegistry().try_get<ComponentType>(entityId);
+				if (testComponent != nullptr) {
+					outComponent = testComponent;
 					return true;
 				}
 
-				outComponent = nullptr;
 				return false;
 			}
 
@@ -68,20 +70,20 @@ namespace Grindstone {
 				return scene;
 			}
 
-			operator bool() {
+			operator bool() const {
 				return entityId == entt::null;
 			}
 
-			bool Entity::operator==(const Entity other) {
-				return (entityId == other.entityId) && (scene = other.scene);
+			bool Entity::operator==(const Entity other) const {
+				return (entityId == other.entityId) && (scene == other.scene);
 			}
 
-			bool Entity::operator!=(const Entity other) {
+			bool Entity::operator!=(const Entity other) const {
 				return !(*this == other);
 			}
 		};
 
-		inline bool operator< (const ECS::Entity& lhs, const ECS::Entity& rhs) {
+		inline bool operator < (const ECS::Entity& lhs, const ECS::Entity& rhs) {
 			bool isSceneLess = lhs.GetScene() < rhs.GetScene();
 			bool isEntityLess = lhs.GetHandle() < rhs.GetHandle();
 			return isSceneLess || isEntityLess;

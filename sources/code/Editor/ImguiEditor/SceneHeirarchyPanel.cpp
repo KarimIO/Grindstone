@@ -16,13 +16,18 @@ SceneHeirarchyPanel::SceneHeirarchyPanel(
 
 void SceneHeirarchyPanel::Render() {
 	if (isShowingPanel) {
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 		ImGui::Begin("Scene Heirarchy", &isShowingPanel);
+
+		// BeginChild is used as a DropTarget for use of unparenting entities.
+		// We begin a new child because windows can't be drop targets
+		ImGui::BeginChild("Scene Heirarchy DropTarget", ImVec2(0,0), false, ImGuiWindowFlags_NoDocking);
 
 		if (
 			ImGui::IsMouseReleased(ImGuiMouseButton_Left) &&
 			ImGui::IsWindowHovered() &&
 			!ImGui::GetIO().KeyCtrl
-			) {
+		) {
 			Editor::Manager::GetInstance().GetSelection().Clear();
 		}
 
@@ -36,7 +41,7 @@ void SceneHeirarchyPanel::Render() {
 		}
 		else {
 			for (auto& scenePair : sceneManager->scenes) {
-				auto* scene = scenePair.second;
+				SceneManagement::Scene* scene = scenePair.second;
 				const char* sceneName = scene->GetName();
 				if (ImGui::TreeNode(sceneName)) {
 					RenderScene(scene);
@@ -45,7 +50,27 @@ void SceneHeirarchyPanel::Render() {
 			}
 		}
 
+		ImGui::EndChild();
+
+		if (ImGui::BeginDragDropTarget()) {
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity")) {
+				ECS::Entity newTargetEntity = *static_cast<ECS::Entity*>(payload->Data);
+				entt::entity newTargetEntityHandle = newTargetEntity.GetHandle();
+				entt::registry& registry = newTargetEntity.GetSceneEntityRegistry();
+
+				if (registry.valid(newTargetEntityHandle)) {
+					ParentComponent* parentComponent = registry.try_get<ParentComponent>(newTargetEntityHandle);
+					if (parentComponent != nullptr) {
+						parentComponent->parentEntity = entt::null;
+					}
+				}
+			}
+
+			ImGui::EndDragDropTarget();
+		}
+
 		ImGui::End();
+		ImGui::PopStyleVar();
 	}
 }
 
@@ -67,11 +92,11 @@ void SceneHeirarchyPanel::RenderScene(SceneManagement::Scene* scene) {
 			entt::entity entity,
 			TagComponent& tagComponent,
 			ParentComponent& parentComponent
-			) {
-				if (parentComponent.parentEntity == entt::null) {
-					RenderEntity(view, { entity, scene }, tagComponent, parentComponent);
-					hasEntities = true;
-				}
+		) {
+			if (parentComponent.parentEntity == entt::null) {
+				RenderEntity(view, { entity, scene }, tagComponent, parentComponent);
+				hasEntities = true;
+			}
 		}
 	);
 
@@ -146,10 +171,15 @@ void SceneHeirarchyPanel::RenderEntity(
 	if (ImGui::BeginDragDropTarget()) {
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity")) {
 			entt::registry& registry = entity.GetSceneEntityRegistry();
-			entt::entity newTargetEntity = *static_cast<entt::entity*>(payload->Data);
+			ECS::Entity newTargetEntity = *static_cast<ECS::Entity*>(payload->Data);
+			entt::entity newTargetEntityHandle = newTargetEntity.GetHandle();
 
-			if (newTargetEntity != entityHandle && registry.valid(newTargetEntity)) {
-				ParentComponent* parentComponent = registry.try_get<ParentComponent>(newTargetEntity);
+			bool isChildOf = newTargetEntity.IsChildOf(entity);
+			if (!isChildOf &&
+				entityHandle != newTargetEntityHandle &&
+				registry.valid(newTargetEntityHandle)
+			) {
+				ParentComponent* parentComponent = registry.try_get<ParentComponent>(newTargetEntityHandle);
 				if (parentComponent != nullptr) {
 					parentComponent->parentEntity = entityHandle;
 				}
@@ -160,8 +190,7 @@ void SceneHeirarchyPanel::RenderEntity(
 	}
 
 	if (ImGui::BeginDragDropSource()) {
-		entt::entity entityId = entity.GetHandle();
-		ImGui::SetDragDropPayload("Entity", &entityId, sizeof(entt::entity));
+		ImGui::SetDragDropPayload("Entity", &entity, sizeof(ECS::Entity));
 		ImGui::Text("%s", entityTag);
 		ImGui::EndDragDropSource();
 	}

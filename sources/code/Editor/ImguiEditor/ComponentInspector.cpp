@@ -22,6 +22,14 @@ ComponentInspector::ComponentInspector(ImguiEditor* editor) : imguiEditor(editor
 void ComponentInspector::Render(ECS::Entity entity) {
 	ImGui::Text("Entity ID: %u", (uint32_t)entity.GetHandle());
 
+	TagComponent* tagComponent = nullptr;
+	if (entity.TryGetComponent<TagComponent>(tagComponent)) {
+		ImGui::InputText(
+			"Tag Name",
+			&tagComponent->tag
+		);
+	}
+
 	auto& editorManager = Editor::Manager::GetInstance();
 	auto& engineCore = editorManager.GetEngineCore();
 	ECS::ComponentRegistrar& componentRegistrar = *engineCore.GetComponentRegistrar();
@@ -57,6 +65,11 @@ void ComponentInspector::RenderComponent(
 	void* componentPtr,
 	ECS::Entity entity
 ) {
+	if (strcmp(componentTypeName, "Parent") == 0 || strcmp(componentTypeName, "Tag") == 0) {
+		// Don't render these
+		return;
+	}
+
 	if (!ImGui::TreeNodeEx(componentTypeName, ImGuiTreeNodeFlags_FramePadding)) {
 		return;
 	}
@@ -192,9 +205,10 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 
 		if (ImGui::BeginDragDropTarget()) {
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity")) {
-				entt::entity newTargetEntity = *static_cast<entt::entity*>(payload->Data);
-				if (registry.valid(newTargetEntity)) {
-					targetEntity = newTargetEntity;
+				ECS::Entity newTargetEntity = *static_cast<ECS::Entity*>(payload->Data);
+				entt::entity newTargetEntityHandle = newTargetEntity.GetHandle();
+				if (newTargetEntity.GetSceneEntityRegistry().valid(newTargetEntityHandle)) {
+					targetEntity = newTargetEntityHandle;
 				}
 			}
 
