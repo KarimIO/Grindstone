@@ -138,7 +138,7 @@ void ViewportPanel::HandleSelection() {
 			return;
 		}
 
-		glm::mat4 transformMatrix = transformComponent->GetTransformMatrix();
+		glm::mat4 transformMatrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
 		glm::mat4& viewMatrix = camera->GetViewMatrix();
 		glm::mat4& projectionMatrix = camera->GetProjectionMatrix();
 
@@ -153,9 +153,20 @@ void ViewportPanel::HandleSelection() {
 		);
 
 		if (ImGuizmo::IsUsing()) {
+			ECS::Entity parentEntity = selectedEntity.GetParent();
+			glm::mat4 localMatrix;
+
+			if (parentEntity) {
+				glm::mat4 parentMatrix = TransformComponent::GetWorldTransformMatrix(parentEntity);
+				localMatrix = glm::inverse(parentMatrix) * transformMatrix;
+			}
+			else {
+				localMatrix = transformMatrix;
+			}
+
 			glm::vec3 translation, rotation, scale;
 			ImGuizmo::DecomposeMatrixToComponents(
-				glm::value_ptr(transformMatrix),
+				glm::value_ptr(localMatrix),
 				glm::value_ptr(translation),
 				glm::value_ptr(rotation),
 				glm::value_ptr(scale)
@@ -187,7 +198,7 @@ void ViewportPanel::DisplayCameraToPanel(uint64_t textureID) {
 }
 
 void ViewportPanel::DisplayInGameCamera() {
-	auto sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
+	SceneManagement::SceneManager* sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
 
 	if (sceneManager == nullptr) {
 		return;

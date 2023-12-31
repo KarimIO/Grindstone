@@ -34,6 +34,20 @@ void Mesh3dRenderer::AddQueue(const char* queueName, DrawSortMode drawSortMode) 
 
 Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
 	this->engineCore = engineCore;
+
+
+	GraphicsAPI::DescriptorSetLayout::Binding descriptorSetUniformBinding{};
+	descriptorSetUniformBinding.bindingId = 0;
+	descriptorSetUniformBinding.type = GraphicsAPI::BindingType::UniformBuffer;
+	descriptorSetUniformBinding.count = 1;
+	descriptorSetUniformBinding.stages = GraphicsAPI::ShaderStageBit::Vertex | GraphicsAPI::ShaderStageBit::Fragment;
+
+	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
+	descriptorSetLayoutCreateInfo.debugName = "Per Draw Descriptor Set Layout";
+	descriptorSetLayoutCreateInfo.bindingCount = 1;
+	descriptorSetLayoutCreateInfo.bindings = &descriptorSetUniformBinding;
+	perDrawDescriptorSetLayout = engineCore->GetGraphicsCore()->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+
 }
 
 void Mesh3dRenderer::SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) {
@@ -42,6 +56,33 @@ void Mesh3dRenderer::SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descript
 
 std::string Mesh3dRenderer::GetName() const {
 	return rendererName;
+}
+
+void Mesh3dRenderer::ValidateMeshRenderer(MeshRendererComponent& meshRenderComponent) {
+	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
+
+	// TODO: Where can I put this? It needs to be done every time a meshrenderer is added.
+	// Maybe just make an array of perDrawUniformBuffers
+	if (meshRenderComponent.perDrawUniformBuffer == nullptr) {
+		GraphicsAPI::UniformBuffer::CreateInfo uniformBufferCreateInfo{};
+		uniformBufferCreateInfo.debugName = "Per Draw Uniform Buffer";
+		uniformBufferCreateInfo.isDynamic = true;
+		uniformBufferCreateInfo.size = sizeof(float) * 16;
+		meshRenderComponent.perDrawUniformBuffer = graphicsCore->CreateUniformBuffer(uniformBufferCreateInfo);
+
+		GraphicsAPI::DescriptorSet::Binding descriptorSetUniformBinding{};
+		descriptorSetUniformBinding.bindingIndex = 0;
+		descriptorSetUniformBinding.bindingType = GraphicsAPI::BindingType::UniformBuffer;
+		descriptorSetUniformBinding.count = 1;
+		descriptorSetUniformBinding.itemPtr = meshRenderComponent.perDrawUniformBuffer;
+
+		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
+		descriptorSetCreateInfo.debugName = "Per Draw Descriptor Set";
+		descriptorSetCreateInfo.bindingCount = 1;
+		descriptorSetCreateInfo.bindings = &descriptorSetUniformBinding;
+		descriptorSetCreateInfo.layout = perDrawDescriptorSetLayout;
+		meshRenderComponent.perDrawDescriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
+	}
 }
 
 void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet, entt::registry& registry, glm::vec3 lightSourcePosition) {
@@ -57,12 +98,13 @@ void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, 
 	std::vector<RenderTask> renderTasks;
 	std::vector<RenderSortData> renderSortData;
 
-	auto view = registry.view<const TransformComponent, const MeshComponent, const MeshRendererComponent>();
+	auto view = registry.view<const entt::entity, const TransformComponent, const MeshComponent, MeshRendererComponent>();
 	view.each(
 		[&](
+			const entt::entity entity,
 			const TransformComponent& transformComponent,
 			const MeshComponent& meshComponent,
-			const MeshRendererComponent& meshRenderComponent
+			MeshRendererComponent& meshRenderComponent
 		) {
 		// Add to Render Queue
 		Mesh3dAsset* meshAsset = assetManager->GetAsset(meshComponent.mesh);
@@ -71,12 +113,14 @@ void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, 
 			return;
 		}
 
+		ValidateMeshRenderer(meshRenderComponent);
+
 		// Early Frustum Cull
 
-		Math::Matrix4 transform = transformComponent.GetTransformMatrix();
+		Math::Matrix4 transform = TransformComponent::GetWorldTransformMatrix(entity, registry);
 		meshRenderComponent.perDrawUniformBuffer->UpdateBuffer(&transform);
 
-		glm::vec3 offset = transformComponent.position - lightSourcePosition;
+		glm::vec3 offset = TransformComponent::GetWorldPosition(entity, registry) - lightSourcePosition;
 		// Multiply because this will be simplified to an int.
 		const float distanceMultiplier = 100.0f;
 		// Distance squared is used to sort. It's squared because we don't need exact distance to sort, and it's an expensive function.
@@ -86,11 +130,16 @@ void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, 
 
 		const std::vector<Grindstone::AssetReference<Grindstone::MaterialAsset>>& materials = meshRenderComponent.materials;
 		for (const Grindstone::Mesh3dAsset::Submesh& submesh : meshAsset->submeshes) {
-			if (submesh.materialIndex > materials.size()) {
+			if (submesh.materialIndex >= materials.size()) {
 				continue;
 			}
 
-			MaterialAsset* materialAsset = assetManager->GetAsset(materials[submesh.materialIndex]);
+			const Grindstone::AssetReference<Grindstone::MaterialAsset> materialAssetReference = materials[submesh.materialIndex];
+			if (!materialAssetReference.uuid.IsValid()) {
+				continue;
+			}
+
+			MaterialAsset* materialAsset = assetManager->GetAsset(materialAssetReference);
 			if (materialAsset == nullptr) {
 				continue;
 			}
@@ -109,7 +158,6 @@ void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, 
 			renderTask.baseIndex = submesh.baseIndex;
 			renderTask.perDrawDescriptorSet = meshRenderComponent.perDrawDescriptorSet;
 			renderTask.sortData = sortData;
-
 			renderTasks.emplace_back(renderTask);
 		}
 	});
@@ -177,11 +225,12 @@ void Mesh3dRenderer::CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt:
 		renderQueue.renderTasks.reserve(8000);
 	}
 
-	auto view = registry.view<const TransformComponent, const MeshComponent, const MeshRendererComponent>();
+	auto view = registry.view<const entt::entity, const TransformComponent, const MeshComponent, MeshRendererComponent>();
 	view.each([&](
+		const entt::entity entity,
 		const TransformComponent& transformComponent,
 		const MeshComponent& meshComponent,
-		const MeshRendererComponent& meshRenderComponent
+		MeshRendererComponent& meshRenderComponent
 	) {
 		// Add to Render Queue
 		Mesh3dAsset* meshAsset = assetManager->GetAsset(meshComponent.mesh);
@@ -190,12 +239,14 @@ void Mesh3dRenderer::CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt:
 			return;
 		}
 
+		ValidateMeshRenderer(meshRenderComponent);
+
 		// Early Frustum Cull
 
-		Math::Matrix4 transform = transformComponent.GetTransformMatrix();
+		Math::Matrix4 transform = TransformComponent::GetWorldTransformMatrix(entity, registry);
 		meshRenderComponent.perDrawUniformBuffer->UpdateBuffer(&transform);
 
-		glm::vec3 offset = transformComponent.position - eyePosition;
+		glm::vec3 offset = TransformComponent::GetWorldPosition(entity, registry) - eyePosition;
 		// Multiply because this will be simplified to an int.
 		const float distanceMultiplier = 100.0f;
 		// Distance squared is used to sort. It's squared because we don't need exact distance to sort, and it's an expensive function.
@@ -205,7 +256,7 @@ void Mesh3dRenderer::CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt:
 
 		const std::vector<Grindstone::AssetReference<Grindstone::MaterialAsset>>& materials = meshRenderComponent.materials;
 		for (const Grindstone::Mesh3dAsset::Submesh& submesh : meshAsset->submeshes) {
-			if (submesh.materialIndex > materials.size()) {
+			if (submesh.materialIndex >= materials.size()) {
 				continue;
 			}
 
