@@ -48,6 +48,10 @@ void AssetManager::ReloadQueuedAssets() {
 }
 
 void* AssetManager::GetAsset(AssetType assetType, const char* path) {
+	if (path == nullptr) {
+		return nullptr;
+	}
+
 	size_t assetTypeSizeT = static_cast<size_t>(assetType);
 	if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
 		return nullptr;
@@ -65,6 +69,10 @@ void* AssetManager::GetAsset(AssetType assetType, const char* path) {
 }
 
 void* AssetManager::GetAsset(AssetType assetType, Uuid uuid) {
+	if (!uuid.IsValid()) {
+		return nullptr;
+	}
+
 	size_t assetTypeSizeT = static_cast<size_t>(assetType);
 	if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
 		return nullptr;

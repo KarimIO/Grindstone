@@ -8,14 +8,14 @@ namespace Grindstone {
 		Uuid();
 		Uuid(std::string str);
 		Uuid(const char* str);
-		std::string ToString();
 		void operator=(const char*);
 		void operator=(const Uuid& other);
+		std::string ToString() const;
 		bool operator==(const Uuid& other) const;
 		bool operator!=(const Uuid& other) const;
 		bool operator<(const Uuid& other) const;
-		bool IsValid();
-		operator std::string();
+		bool IsValid() const;
+		operator std::string() const;
 
 		static Uuid CreateRandom();
 

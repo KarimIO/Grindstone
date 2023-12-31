@@ -14,7 +14,7 @@ Grindstone::Uuid::Uuid(const char* str) {
 	UuidFromString((unsigned char*)str, (UUID*)&uuid);
 }
 
-std::string Grindstone::Uuid::ToString() {
+std::string Grindstone::Uuid::ToString() const {
 	unsigned char* uuidCstr;
 	UuidToString((UUID*)&uuid, &uuidCstr);
 	std::string uuidStr( (char*) uuidCstr );
@@ -49,12 +49,12 @@ Grindstone::Uuid::Uuid() {
 
 Grindstone::Uuid::Uuid(std::string str) : Uuid(str.c_str()) {}
 
-bool Grindstone::Uuid::IsValid() {
-	uint64_t* uuidCasted = reinterpret_cast<uint64_t*>(&uuid[0]);
+bool Grindstone::Uuid::IsValid() const {
+	const uint64_t* uuidCasted = reinterpret_cast<const uint64_t*>(&uuid[0]);
 	return uuidCasted[0] != 0 || uuidCasted[1] != 0;
 }
 
-Grindstone::Uuid::operator std::string() {
+Grindstone::Uuid::operator std::string() const {
 	return ToString();
 }
 

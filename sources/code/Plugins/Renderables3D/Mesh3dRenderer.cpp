@@ -34,6 +34,20 @@ void Mesh3dRenderer::AddQueue(const char* queueName, DrawSortMode drawSortMode) 
 
 Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
 	this->engineCore = engineCore;
+
+
+	GraphicsAPI::DescriptorSetLayout::Binding descriptorSetUniformBinding{};
+	descriptorSetUniformBinding.bindingId = 0;
+	descriptorSetUniformBinding.type = GraphicsAPI::BindingType::UniformBuffer;
+	descriptorSetUniformBinding.count = 1;
+	descriptorSetUniformBinding.stages = GraphicsAPI::ShaderStageBit::Vertex | GraphicsAPI::ShaderStageBit::Fragment;
+
+	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
+	descriptorSetLayoutCreateInfo.debugName = "Per Draw Descriptor Set Layout";
+	descriptorSetLayoutCreateInfo.bindingCount = 1;
+	descriptorSetLayoutCreateInfo.bindings = &descriptorSetUniformBinding;
+	perDrawDescriptorSetLayout = engineCore->GetGraphicsCore()->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+
 }
 
 void Mesh3dRenderer::SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) {
@@ -57,19 +71,42 @@ void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, 
 	std::vector<RenderTask> renderTasks;
 	std::vector<RenderSortData> renderSortData;
 
-	auto view = registry.view<const entt::entity, const TransformComponent, const MeshComponent, const MeshRendererComponent>();
+	auto view = registry.view<const entt::entity, const TransformComponent, const MeshComponent, MeshRendererComponent>();
 	view.each(
 		[&](
 			const entt::entity entity,
 			const TransformComponent& transformComponent,
 			const MeshComponent& meshComponent,
-			const MeshRendererComponent& meshRenderComponent
+			MeshRendererComponent& meshRenderComponent
 		) {
 		// Add to Render Queue
 		Mesh3dAsset* meshAsset = assetManager->GetAsset(meshComponent.mesh);
 
-		if (meshAsset == nullptr || meshRenderComponent.perDrawUniformBuffer == nullptr) {
+		if (meshAsset == nullptr) {
 			return;
+		}
+
+		// TODO: Where can I put this? It needs to be done every time a meshrenderer is added.
+		// Maybe just make an array of perDrawUniformBuffers
+		if (meshRenderComponent.perDrawUniformBuffer == nullptr) {
+			GraphicsAPI::UniformBuffer::CreateInfo uniformBufferCreateInfo{};
+			uniformBufferCreateInfo.debugName = "Per Draw Uniform Buffer";
+			uniformBufferCreateInfo.isDynamic = true;
+			uniformBufferCreateInfo.size = sizeof(float) * 16;
+			meshRenderComponent.perDrawUniformBuffer = graphicsCore->CreateUniformBuffer(uniformBufferCreateInfo);
+
+			GraphicsAPI::DescriptorSet::Binding descriptorSetUniformBinding{};
+			descriptorSetUniformBinding.bindingIndex = 0;
+			descriptorSetUniformBinding.bindingType = GraphicsAPI::BindingType::UniformBuffer;
+			descriptorSetUniformBinding.count = 1;
+			descriptorSetUniformBinding.itemPtr = meshRenderComponent.perDrawUniformBuffer;
+
+			GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
+			descriptorSetCreateInfo.debugName = "Per Draw Descriptor Set";
+			descriptorSetCreateInfo.bindingCount = 1;
+			descriptorSetCreateInfo.bindings = &descriptorSetUniformBinding;
+			descriptorSetCreateInfo.layout = perDrawDescriptorSetLayout;
+			meshRenderComponent.perDrawDescriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 		}
 
 		// Early Frustum Cull
@@ -87,11 +124,16 @@ void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, 
 
 		const std::vector<Grindstone::AssetReference<Grindstone::MaterialAsset>>& materials = meshRenderComponent.materials;
 		for (const Grindstone::Mesh3dAsset::Submesh& submesh : meshAsset->submeshes) {
-			if (submesh.materialIndex > materials.size()) {
+			if (submesh.materialIndex >= materials.size()) {
 				continue;
 			}
 
-			MaterialAsset* materialAsset = assetManager->GetAsset(materials[submesh.materialIndex]);
+			const Grindstone::AssetReference<Grindstone::MaterialAsset> materialAssetReference = materials[submesh.materialIndex];
+			if (!materialAssetReference.uuid.IsValid()) {
+				continue;
+			}
+
+			MaterialAsset* materialAsset = assetManager->GetAsset(materialAssetReference);
 			if (materialAsset == nullptr) {
 				continue;
 			}

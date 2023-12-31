@@ -64,6 +64,7 @@ namespace Grindstone {
 			EngineCore* engineCore = nullptr;
 			std::string rendererName = "Mesh3d";
 			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
+			class GraphicsAPI::DescriptorSetLayout* perDrawDescriptorSetLayout = nullptr;
 
 			std::map<std::string, RenderQueueIndex> renderQueueMap;
 			std::vector<RenderQueueContainer> renderQueues;
