@@ -57,9 +57,10 @@ void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, 
 	std::vector<RenderTask> renderTasks;
 	std::vector<RenderSortData> renderSortData;
 
-	auto view = registry.view<const TransformComponent, const MeshComponent, const MeshRendererComponent>();
+	auto view = registry.view<const entt::entity, const TransformComponent, const MeshComponent, const MeshRendererComponent>();
 	view.each(
 		[&](
+			const entt::entity entity,
 			const TransformComponent& transformComponent,
 			const MeshComponent& meshComponent,
 			const MeshRendererComponent& meshRenderComponent
@@ -67,13 +68,13 @@ void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, 
 		// Add to Render Queue
 		Mesh3dAsset* meshAsset = assetManager->GetAsset(meshComponent.mesh);
 
-		if (meshAsset == nullptr) {
+		if (meshAsset == nullptr || meshRenderComponent.perDrawUniformBuffer == nullptr) {
 			return;
 		}
 
 		// Early Frustum Cull
 
-		Math::Matrix4 transform = transformComponent.GetTransformMatrix();
+		Math::Matrix4 transform = TransformComponent::GetWorldTransformMatrix(entity, registry);
 		meshRenderComponent.perDrawUniformBuffer->UpdateBuffer(&transform);
 
 		glm::vec3 offset = transformComponent.position - lightSourcePosition;
@@ -177,8 +178,9 @@ void Mesh3dRenderer::CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt:
 		renderQueue.renderTasks.reserve(8000);
 	}
 
-	auto view = registry.view<const TransformComponent, const MeshComponent, const MeshRendererComponent>();
+	auto view = registry.view<const entt::entity, const TransformComponent, const MeshComponent, const MeshRendererComponent>();
 	view.each([&](
+		const entt::entity entity,
 		const TransformComponent& transformComponent,
 		const MeshComponent& meshComponent,
 		const MeshRendererComponent& meshRenderComponent
@@ -186,13 +188,13 @@ void Mesh3dRenderer::CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt:
 		// Add to Render Queue
 		Mesh3dAsset* meshAsset = assetManager->GetAsset(meshComponent.mesh);
 
-		if (meshAsset == nullptr) {
+		if (meshAsset == nullptr || meshRenderComponent.perDrawUniformBuffer == nullptr) {
 			return;
 		}
 
 		// Early Frustum Cull
 
-		Math::Matrix4 transform = transformComponent.GetTransformMatrix();
+		Math::Matrix4 transform = TransformComponent::GetWorldTransformMatrix(entity, registry);
 		meshRenderComponent.perDrawUniformBuffer->UpdateBuffer(&transform);
 
 		glm::vec3 offset = transformComponent.position - eyePosition;
@@ -205,7 +207,7 @@ void Mesh3dRenderer::CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt:
 
 		const std::vector<Grindstone::AssetReference<Grindstone::MaterialAsset>>& materials = meshRenderComponent.materials;
 		for (const Grindstone::Mesh3dAsset::Submesh& submesh : meshAsset->submeshes) {
-			if (submesh.materialIndex > materials.size()) {
+			if (submesh.materialIndex >= materials.size()) {
 				continue;
 			}
 

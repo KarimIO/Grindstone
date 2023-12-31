@@ -17,6 +17,7 @@
 #include "EngineCore/CoreComponents/Lights/SpotLightComponent.hpp"
 #include "EngineCore/CoreComponents/Lights/DirectionalLightComponent.hpp"
 #include "EngineCore/AssetRenderer/AssetRendererManager.hpp"
+#include "EngineCore/Scenes/Manager.hpp"
 #include "Common/Event/WindowEvent.hpp"
 #include "EngineCore/Profiling.hpp"
 #include <Common/Window/WindowManager.hpp>
@@ -1355,8 +1356,10 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 ) {
 	GRIND_PROFILE_FUNC();
 
-	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	EngineCore& engineCore = EngineCore::GetInstance();
+	auto graphicsCore = engineCore.GetGraphicsCore();
 	auto& imageSet = deferredRendererImageSets[imageIndex];
+	SceneManagement::Scene* scene = engineCore.GetSceneManager()->scenes.begin()->second;
 	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	currentCommandBuffer->BindIndexBuffer(indexBuffer);
 
@@ -1406,12 +1409,14 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 		std::array<GraphicsAPI::DescriptorSet*, 2> pointLightDescriptors{};
 		pointLightDescriptors[0] = imageSet.lightingDescriptorSet;
 
-		auto view = registry.view<const TransformComponent, PointLightComponent>();
-		view.each([&](const TransformComponent& transformComponent, PointLightComponent& pointLightComponent) {
+		auto view = registry.view<const entt::entity, PointLightComponent>();
+		view.each([&](const entt::entity entityHandle, PointLightComponent& pointLightComponent) {
+			const ECS::Entity entity(entityHandle, scene);
+
 			PointLightComponent::UniformStruct lightmapStruct{
 				pointLightComponent.color,
 				pointLightComponent.attenuationRadius,
-				transformComponent.position,
+				entity.GetWorldPosition(),
 				pointLightComponent.intensity
 			};
 
@@ -1429,16 +1434,17 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 		std::array<GraphicsAPI::DescriptorSet*, 2> spotLightDescriptors{};
 		spotLightDescriptors[0] = imageSet.lightingDescriptorSet;
 
+		auto view = registry.view<const entt::entity, SpotLightComponent>();
+		view.each([&](const entt::entity entityHandle, SpotLightComponent& spotLightComponent) {
+			const ECS::Entity entity(entityHandle, scene);
 
-		auto view = registry.view<const TransformComponent, SpotLightComponent>();
-		view.each([&](const TransformComponent& transformComponent, SpotLightComponent& spotLightComponent) {
 			SpotLightComponent::UniformStruct lightStruct {
 				bias * spotLightComponent.shadowMatrix,
 				spotLightComponent.color,
 				spotLightComponent.attenuationRadius,
-				transformComponent.position,
+				entity.GetWorldPosition(),
 				spotLightComponent.intensity,
-				transformComponent.GetForward(),
+				entity.GetWorldForward(),
 				glm::cos(glm::radians(spotLightComponent.innerAngle)),
 				glm::cos(glm::radians(spotLightComponent.outerAngle)),
 				spotLightComponent.shadowResolution
@@ -1459,13 +1465,15 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 		std::array<GraphicsAPI::DescriptorSet*, 2> directionalLightDescriptors{};
 		directionalLightDescriptors[0] = imageSet.lightingDescriptorSet;
 
-		auto view = registry.view<const TransformComponent, DirectionalLightComponent>();
-		view.each([&](const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
+		auto view = registry.view<const entt::entity, const TransformComponent, DirectionalLightComponent>();
+		view.each([&](const entt::entity entityHandle, const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
+			const ECS::Entity entity(entityHandle, scene);
+
 			DirectionalLightComponent::UniformStruct lightStruct{
 				bias * directionalLightComponent.shadowMatrix,
 				directionalLightComponent.color,
 				directionalLightComponent.sourceRadius,
-				transformComponent.GetForward(),
+				entity.GetWorldForward(),
 				directionalLightComponent.intensity,
 				directionalLightComponent.shadowResolution
 			};
@@ -1513,8 +1521,10 @@ void DeferredRenderer::RenderSsao(uint32_t imageIndex, GraphicsAPI::CommandBuffe
 }
 
 void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::registry& registry) {
-	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	auto assetManager = EngineCore::GetInstance().assetRendererManager;
+	EngineCore& engineCore = EngineCore::GetInstance();
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	AssetRendererManager* assetManager = engineCore.assetRendererManager;
+	SceneManagement::Scene* scene = engineCore.GetSceneManager()->scenes.begin()->second;
 
 	ClearDepthStencil clearDepthStencil{};
 	clearDepthStencil.depth = 1.0f;
@@ -1583,18 +1593,20 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 	*/
 
 	{
-		auto view = registry.view<const TransformComponent, SpotLightComponent>();
-		view.each([&](const TransformComponent& transformComponent, SpotLightComponent& spotLightComponent) {
+		auto view = registry.view<const entt::entity, SpotLightComponent>();
+		view.each([&](const entt::entity entityHandle, SpotLightComponent& spotLightComponent) {
+			const ECS::Entity entity = ECS::Entity(entityHandle, scene);
+
 			float fov = glm::radians(spotLightComponent.outerAngle * 2.0f);
 			float farDist = spotLightComponent.attenuationRadius;
 
-			const glm::vec3 forwardVector = transformComponent.GetForward();
-			const glm::vec3 pos = transformComponent.position;
+			const glm::vec3 forwardVector = entity.GetWorldForward();
+			const glm::vec3 pos = entity.GetWorldPosition();
 
 			const auto viewMatrix = glm::lookAt(
 				pos,
 				pos + forwardVector,
-				transformComponent.GetUp()
+				entity.GetWorldUp()
 			);
 
 			auto projectionMatrix = glm::perspective(
@@ -1634,7 +1646,7 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 				commandBuffer,
 				spotLightComponent.shadowMapDescriptorSet,
 				registry,
-				transformComponent.position
+				pos
 			);
 
 			commandBuffer->UnbindRenderPass();
@@ -1642,17 +1654,21 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 	}
 
 	{
-		auto view = registry.view<const TransformComponent, DirectionalLightComponent>();
-		view.each([&](const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
+		auto view = registry.view<const entt::entity, DirectionalLightComponent>();
+		view.each([&](const entt::entity entityHandle, DirectionalLightComponent& directionalLightComponent) {
+			const ECS::Entity entity = ECS::Entity(entityHandle, scene);
+
 			const float shadowHalfSize = 40.0f;
 			glm::mat4 projectionMatrix = glm::ortho<float>(-shadowHalfSize, shadowHalfSize, -shadowHalfSize, shadowHalfSize, 0, 160.0f);
 			graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
 
-			glm::vec3 lightPos = transformComponent.GetForward() * -100.0f;
+			Math::Float3 forward = entity.GetWorldForward();
+
+			glm::vec3 lightPos = forward * -100.0f;
 			glm::mat4 viewMatrix = glm::lookAt(
 				lightPos,
 				glm::vec3(0, 0, 0),
-				transformComponent.GetUp()
+				entity.GetWorldUp()
 			);
 
 			glm::mat4 projView = projectionMatrix * viewMatrix;

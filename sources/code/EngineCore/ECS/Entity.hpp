@@ -1,9 +1,11 @@
 #pragma once
 
 #include <entt/entt.hpp>
-#include "EntityHandle.hpp"
 
+#include <Common/Math.hpp>
 #include <EngineCore/CoreComponents/Parent/ParentComponent.hpp>
+
+#include "EntityHandle.hpp"
 
 namespace Grindstone {
 	namespace SceneManagement {
@@ -27,7 +29,27 @@ namespace Grindstone {
 			virtual void* GetComponent(const char* componentType) const;
 			virtual bool TryGetComponent(const char* componentType, void*& outComponent) const;
 			virtual void RemoveComponent(const char* componentType);
+
+			// Parent helpers
 			virtual bool IsChildOf(const Entity& other) const;
+			virtual Entity GetParent() const;
+
+			// Transform helpers
+			virtual Math::Matrix4 GetLocalMatrix() const;
+			virtual Math::Matrix4 GetWorldMatrix() const;
+			virtual Math::Float3 GetLocalPosition() const;
+			virtual Math::Float3 GetWorldPosition() const;
+			virtual Math::Quaternion GetLocalRotation() const;
+			virtual Math::Quaternion GetWorldRotation() const;
+			virtual Math::Float3 GetLocalScale() const;
+
+			virtual Math::Float3 GetLocalForward() const;
+			virtual Math::Float3 GetWorldForward() const;
+			virtual Math::Float3 GetLocalRight() const;
+			virtual Math::Float3 GetWorldRight() const;
+			virtual Math::Float3 GetLocalUp() const;
+			virtual Math::Float3 GetWorldUp() const;
+
 			virtual void Destroy();
 			virtual entt::registry& GetSceneEntityRegistry() const;
 

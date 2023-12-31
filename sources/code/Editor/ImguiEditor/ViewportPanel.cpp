@@ -138,7 +138,7 @@ void ViewportPanel::HandleSelection() {
 			return;
 		}
 
-		glm::mat4 transformMatrix = transformComponent->GetTransformMatrix();
+		glm::mat4 transformMatrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
 		glm::mat4& viewMatrix = camera->GetViewMatrix();
 		glm::mat4& projectionMatrix = camera->GetProjectionMatrix();
 
@@ -187,7 +187,7 @@ void ViewportPanel::DisplayCameraToPanel(uint64_t textureID) {
 }
 
 void ViewportPanel::DisplayInGameCamera() {
-	auto sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
+	SceneManagement::SceneManager* sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
 
 	if (sceneManager == nullptr) {
 		return;
