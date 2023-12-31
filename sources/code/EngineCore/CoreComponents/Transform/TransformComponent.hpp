@@ -39,9 +39,26 @@ namespace Grindstone {
 
 		static Math::Float3 GetWorldPosition(entt::entity entity, entt::registry& registry) {
 			Math::Matrix4 worldMatrix = GetWorldTransformMatrix(entity, registry);
-			Math::Float4 extendedPosition = worldMatrix * Math::Float4(1.0f);
 
-			return Math::Float3(extendedPosition.x, extendedPosition.y, extendedPosition.z);
+			return Math::Float3(worldMatrix[3][0], worldMatrix[3][1], worldMatrix[3][2]);
+		}
+
+		void SetLocalMatrix(Math::Matrix4 localMatrix) {
+			rotation = Math::Quaternion(localMatrix);
+
+			for (int i = 0; i < 3; i++) {
+				position[i] = localMatrix[3][i];
+
+				scale[i] = glm::sqrt(
+					localMatrix[i][0] * localMatrix[i][0]
+					+ localMatrix[i][1] * localMatrix[i][1]
+					+ localMatrix[i][2] * localMatrix[i][2]);
+			}
+		}
+
+		void SetWorldMatrixRelativeTo(Math::Matrix4 newWorldMatrix, Math::Matrix4 parentMatrix) {
+			Math::Matrix4 localMatrix = glm::inverse(parentMatrix) * newWorldMatrix;
+			SetLocalMatrix(localMatrix);
 		}
 
 		Math::Matrix4 GetTransformMatrix() const {

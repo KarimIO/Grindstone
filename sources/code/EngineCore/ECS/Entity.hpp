@@ -33,6 +33,7 @@ namespace Grindstone {
 			// Parent helpers
 			virtual bool IsChildOf(const Entity& other) const;
 			virtual Entity GetParent() const;
+			virtual bool SetParent(Entity);
 
 			// Transform helpers
 			virtual Math::Matrix4 GetLocalMatrix() const;
@@ -93,7 +94,7 @@ namespace Grindstone {
 			}
 
 			operator bool() const {
-				return entityId != entt::null;
+				return entityId != entt::null && scene != nullptr && GetSceneEntityRegistry().valid(entityId);
 			}
 
 			bool Entity::operator==(const Entity other) const {

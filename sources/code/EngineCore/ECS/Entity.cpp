@@ -81,6 +81,28 @@ Entity Entity::GetParent() const {
 	return Entity(parentNode, scene);
 }
 
+bool Entity::SetParent(Entity newParent) {
+	bool thisEntityIsChildOfNewParent = newParent.IsChildOf(*this);
+	if (thisEntityIsChildOfNewParent || entityId == newParent.entityId) {
+		return false;
+	}
+
+	TransformComponent& transformComponent = GetComponent<TransformComponent>();
+	ParentComponent& parentComponent = GetComponent<ParentComponent>();
+	Math::Matrix4 currentWorldMatrix = GetWorldMatrix();
+
+	if (!newParent) {
+		transformComponent.SetLocalMatrix(currentWorldMatrix);
+		parentComponent.parentEntity = entt::null;
+		return true;
+	}
+
+	transformComponent.SetWorldMatrixRelativeTo(currentWorldMatrix, newParent.GetWorldMatrix());
+	parentComponent.parentEntity = newParent.entityId;
+	
+	return true;
+}
+
 Math::Matrix4 Entity::GetLocalMatrix() const {
 	entt::registry& registry = GetSceneEntityRegistry();
 	TransformComponent& transformComponent = registry.get<TransformComponent>(entityId);
