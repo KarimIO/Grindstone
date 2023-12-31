@@ -6,6 +6,7 @@
 #include <glm/mat4x4.hpp>
 
 #include "EngineCore/AssetRenderer/BaseAssetRenderer.hpp"
+#include "Components/MeshRendererComponent.hpp"
 #include "Assets/Mesh3dAsset.hpp"
 
 namespace Grindstone {
@@ -60,6 +61,7 @@ namespace Grindstone {
 		private:
 			virtual std::string GetName() const override;
 			virtual void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) override;
+			void ValidateMeshRenderer(MeshRendererComponent& meshRenderer);
 
 			EngineCore* engineCore = nullptr;
 			std::string rendererName = "Mesh3d";
