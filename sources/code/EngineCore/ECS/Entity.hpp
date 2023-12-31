@@ -93,7 +93,7 @@ namespace Grindstone {
 			}
 
 			operator bool() const {
-				return entityId == entt::null;
+				return entityId != entt::null;
 			}
 
 			bool Entity::operator==(const Entity other) const {

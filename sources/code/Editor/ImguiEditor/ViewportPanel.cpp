@@ -153,9 +153,20 @@ void ViewportPanel::HandleSelection() {
 		);
 
 		if (ImGuizmo::IsUsing()) {
+			ECS::Entity parentEntity = selectedEntity.GetParent();
+			glm::mat4 localMatrix;
+
+			if (parentEntity) {
+				glm::mat4 parentMatrix = TransformComponent::GetWorldTransformMatrix(parentEntity);
+				localMatrix = glm::inverse(parentMatrix) * transformMatrix;
+			}
+			else {
+				localMatrix = transformMatrix;
+			}
+
 			glm::vec3 translation, rotation, scale;
 			ImGuizmo::DecomposeMatrixToComponents(
-				glm::value_ptr(transformMatrix),
+				glm::value_ptr(localMatrix),
 				glm::value_ptr(translation),
 				glm::value_ptr(rotation),
 				glm::value_ptr(scale)
