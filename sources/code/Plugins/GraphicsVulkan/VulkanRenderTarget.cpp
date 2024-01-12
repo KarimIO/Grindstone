@@ -21,6 +21,13 @@ VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& createInfo) : f
 	Create();
 }
 
+void VulkanRenderTarget::UpdateNativeImage(VkImage image, VkImageView imageView, VkFormat format) {
+	isOwnedBySwapchain = true;
+	this->image = image;
+	this->imageView = imageView;
+	this->format = TranslateColorFormatFromVulkan(format);
+}
+
 void VulkanRenderTarget::Create() {
 	uint8_t channels;
 	VkFormat renderFormat = TranslateColorFormatToVulkan(format, channels);

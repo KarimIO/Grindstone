@@ -32,6 +32,13 @@ VulkanFramebuffer::~VulkanFramebuffer() {
 	Cleanup();
 }
 
+void VulkanFramebuffer::UpdateNativeFramebuffer(RenderPass* renderPass, VkFramebuffer framebuffer, uint32_t width, uint32_t height) {
+	this->renderPass = renderPass;
+	this->framebuffer = framebuffer;
+	this->width = width;
+	this->height = height;
+}
+
 void VulkanFramebuffer::Cleanup() {
 	if (framebuffer != nullptr) {
 		vkDestroyFramebuffer(VulkanCore::Get().GetDevice(), framebuffer, nullptr);

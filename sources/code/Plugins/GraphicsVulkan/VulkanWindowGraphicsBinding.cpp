@@ -77,24 +77,33 @@ VkSwapchainKHR VulkanWindowGraphicsBinding::GetSwapchain() {
 
 void VulkanWindowGraphicsBinding::SubmitWindowObjects(VulkanWindowBindingDataNative& windowBindingData) {
 	swapChain = windowBindingData.swapChain;
-	renderPass = new VulkanRenderPass(windowBindingData.renderPass);
+	if (renderPass == nullptr) {
+		renderPass = new VulkanRenderPass(windowBindingData.renderPass);
+	}
+	else {
+		static_cast<VulkanRenderPass*>(renderPass)->Update(windowBindingData.renderPass);
+	}
 	swapchainVulkanFormat = windowBindingData.surfaceFormat.format;
 	swapchainFormat = TranslateColorFormatFromVulkan(swapchainVulkanFormat);
-
-	for (uint32_t i = 0; i < imageSets.size(); ++i) {
-		VulkanImageSet& imageSet = imageSets[i];
-
-		delete imageSet.framebuffer;
-		delete imageSet.swapChainTarget;
-	}
 
 	imageSets.resize(windowBindingData.imageSetCount);
 	for (uint32_t i = 0; i < windowBindingData.imageSetCount; ++i) {
 		VulkanImageSetNative& native = windowBindingData.imageSets[i];
 		VulkanImageSet& imageSet = imageSets[i];
 
-		imageSet.framebuffer = new VulkanFramebuffer(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height);
-		imageSet.swapChainTarget = new VulkanRenderTarget(native.image, native.imageView, swapchainVulkanFormat);
+		if (imageSet.framebuffer == nullptr) {
+			imageSet.framebuffer = new VulkanFramebuffer(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height);
+		}
+		else {
+			static_cast<VulkanFramebuffer*>(imageSet.framebuffer)->UpdateNativeFramebuffer(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height);
+		}
+
+		if (imageSet.swapChainTarget == nullptr) {
+			imageSet.swapChainTarget = new VulkanRenderTarget(native.image, native.imageView, swapchainVulkanFormat);
+		}
+		else {
+			static_cast<VulkanRenderTarget*>(imageSet.swapChainTarget)->UpdateNativeImage(native.image, native.imageView, swapchainVulkanFormat);
+		}
 	}
 }
 ColorFormat VulkanWindowGraphicsBinding::GetDeviceColorFormat() const {

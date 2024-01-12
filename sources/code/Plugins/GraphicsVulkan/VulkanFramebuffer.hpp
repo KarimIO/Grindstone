@@ -18,6 +18,7 @@ namespace Grindstone {
 			VulkanFramebuffer(RenderPass* renderPass, VkFramebuffer framebuffer, uint32_t width, uint32_t height);
 			VulkanFramebuffer(Framebuffer::CreateInfo& createInfo);
 			virtual ~VulkanFramebuffer() override;
+			void UpdateNativeFramebuffer(RenderPass* renderPass, VkFramebuffer framebuffer, uint32_t width, uint32_t height);
 		public:
 			VkFramebuffer GetFramebuffer() const;
 		public:

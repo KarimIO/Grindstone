@@ -46,8 +46,8 @@ VulkanCommandBuffer::VulkanCommandBuffer(CommandBuffer::CreateInfo& createInfo) 
 	if (createInfo.secondaryInfo.isSecondary) {
 		beginInfo.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
 		VkCommandBufferInheritanceInfo inheritenceInfo = {};
-		VulkanFramebuffer * framebuffer = static_cast<VulkanFramebuffer *>(createInfo.secondaryInfo.framebuffer);
-		VulkanRenderPass *renderPass = static_cast<VulkanRenderPass *>(createInfo.secondaryInfo.renderPass);
+		VulkanFramebuffer* framebuffer = static_cast<VulkanFramebuffer *>(createInfo.secondaryInfo.framebuffer);
+		VulkanRenderPass* renderPass = static_cast<VulkanRenderPass *>(createInfo.secondaryInfo.renderPass);
 		inheritenceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
 		inheritenceInfo.framebuffer = framebuffer->GetFramebuffer();
 		inheritenceInfo.renderPass = renderPass->GetRenderPassHandle();

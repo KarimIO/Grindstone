@@ -260,7 +260,8 @@ void Mesh3dRenderer::CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt:
 				continue;
 			}
 
-			MaterialAsset* materialAsset = assetManager->GetAsset(materials[submesh.materialIndex]);
+			Grindstone::AssetReference<Grindstone::MaterialAsset> materialReference = materials[submesh.materialIndex];
+			MaterialAsset* materialAsset = assetManager->GetAsset(materialReference);
 			if (materialAsset == nullptr) {
 				continue;
 			}
