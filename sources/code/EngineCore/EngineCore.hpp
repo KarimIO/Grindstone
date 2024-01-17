@@ -102,6 +102,7 @@ namespace Grindstone {
 		Assets::AssetManager* assetManager = nullptr;
 		AssetRendererManager* assetRendererManager = nullptr;
 		std::function<void()> callbackReloadCsharp;
+		bool isEditor = false;
 	private:
 		double currentTime = 0.0;
 		double deltaTime = 0.0;

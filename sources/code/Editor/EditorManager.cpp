@@ -105,7 +105,7 @@ void Manager::SetPlayMode(PlayMode newPlayMode) {
 	playMode = newPlayMode;
 }
 
-PlayMode Manager::GetPlayMode() {
+PlayMode Manager::GetPlayMode() const {
 	return playMode;
 }
 

@@ -26,6 +26,7 @@
 using namespace Grindstone;
 
 bool EngineCore::Initialize(CreateInfo& createInfo) {
+	isEditor = createInfo.isEditor;
 	projectPath = createInfo.projectPath;
 	engineBinaryPath = createInfo.engineBinaryPath;
 	binaryPath = projectPath / "bin/";

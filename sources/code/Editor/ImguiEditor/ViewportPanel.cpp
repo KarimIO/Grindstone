@@ -183,53 +183,29 @@ void ViewportPanel::HandleSelection() {
 }
 
 void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
-	if (isShowingPanel && width >= 4 && height >= 4) {
-		camera->ResizeViewport(width, height);
+	if (!isShowingPanel || width < 4 || height < 4) {
+		return;
+	}
+
+	camera->ResizeViewport(width, height);
+
+	PlayMode playMode = Editor::Manager::GetInstance().GetPlayMode();
+	if (playMode == PlayMode::Editor) {
 		camera->Render(commandBuffer);
 	}
+	else {
+		camera->RenderPlayModeCamera(commandBuffer);
+	}
 }
 
-void ViewportPanel::DisplayCameraToPanel(uint64_t textureID) {
+void ViewportPanel::DisplayCameraToPanel() {
+	uint64_t textureID = camera->GetRenderOutput();
+
 	ImTextureID texturePtr = (ImTextureID)textureID;
 	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-	auto uv0 = ImVec2{ 0, 0 };
-	auto uv1 = ImVec2{ 1, 1 };
+	ImVec2 uv0 = ImVec2{ 0, 0 };
+	ImVec2 uv1 = ImVec2{ 1, 1 };
 	ImGui::Image(texturePtr, viewportPanelSize, uv0, uv1);
-}
-
-void ViewportPanel::DisplayInGameCamera() {
-	SceneManagement::SceneManager* sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
-
-	if (sceneManager == nullptr) {
-		return;
-	}
-
-	if (sceneManager->scenes.size() == 0) {
-		return;
-	}
-
-	entt::registry& registry = sceneManager->scenes.begin()->second->GetEntityRegistry();
-	TransformComponent* transformComponent = nullptr;
-	CameraComponent* cameraComponent = nullptr;
-	auto view = registry.view<TransformComponent, CameraComponent>();
-	view.each(
-		[&](
-			TransformComponent& currentTransform,
-			CameraComponent& currentCamera
-		) {
-			transformComponent = &currentTransform;
-			cameraComponent = &currentCamera;
-		}
-	);
-
-	if (cameraComponent == nullptr || cameraComponent->renderer == nullptr) {
-		return;
-	}
-
-	camera->RenderPlayModeCamera(*transformComponent, *cameraComponent);
-
-	uint64_t textureID = camera->GetRenderOutput();
-	DisplayCameraToPanel(textureID);
 }
 
 void ViewportPanel::Render() {
@@ -242,14 +218,15 @@ void ViewportPanel::Render() {
 		height = std::max((int)viewportPanelSize.y, 1);
 
 		PlayMode playMode = Editor::Manager::GetInstance().GetPlayMode();
-		if (playMode == PlayMode::Editor) {
+		bool isEditorMode = playMode == PlayMode::Editor;
+		if (isEditorMode) {
 			HandleInput();
-			uint64_t textureID = camera->GetRenderOutput();
-			DisplayCameraToPanel(textureID);
-			HandleSelection();
 		}
-		else {
-			DisplayInGameCamera();
+
+		DisplayCameraToPanel();
+
+		if (isEditorMode) {
+			HandleSelection();
 		}
 
 		ImGui::End();

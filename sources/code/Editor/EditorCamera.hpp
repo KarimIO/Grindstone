@@ -24,7 +24,7 @@ namespace Grindstone {
 			EditorCamera();
 			uint64_t GetRenderOutput();
 			void Render(GraphicsAPI::CommandBuffer* commandBuffer);
-			void RenderPlayModeCamera(TransformComponent& transform, CameraComponent& camera);
+			void RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffer);
 			void OffsetRotation(float pitch, float yaw);
 			void OffsetPosition(float x, float y, float z);
 			void ResizeViewport(uint32_t width, uint32_t height);

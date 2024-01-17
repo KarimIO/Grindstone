@@ -19,8 +19,7 @@ namespace Grindstone {
 			private:
 				bool OnMouseButtonEvent(Grindstone::Events::BaseEvent* ev);
 				bool OnMouseMovedEvent(Grindstone::Events::BaseEvent* ev);
-				void DisplayInGameCamera();
-				void DisplayCameraToPanel(uint64_t textureID);
+				void DisplayCameraToPanel();
 				void HandleInput();
 				void HandleSelection();
 				bool isShowingPanel = true;

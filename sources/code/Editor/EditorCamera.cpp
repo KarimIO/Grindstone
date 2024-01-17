@@ -89,10 +89,23 @@ uint64_t EditorCamera::GetRenderOutput() {
 void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 	EngineCore& engineCore = Editor::Manager::GetInstance().GetEngineCore();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-	auto sceneManager = engineCore.GetSceneManager();
-	auto scene = sceneManager->scenes.begin()->second;
-	auto& registry = scene->GetEntityRegistry();
-	
+	SceneManagement::SceneManager* sceneManager = engineCore.GetSceneManager();
+
+	if (sceneManager == nullptr) {
+		return;
+	}
+
+	if (sceneManager->scenes.size() == 0) {
+		return;
+	}
+
+	SceneManagement::Scene* scene = sceneManager->scenes.begin()->second;
+
+	if (scene == nullptr) {
+		return;
+	}
+
+	entt::registry& registry = scene->GetEntityRegistry();
 	renderer->Render(
 		commandBuffer,
 		registry,
@@ -103,39 +116,68 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 	);
 }
 
-void EditorCamera::RenderPlayModeCamera(TransformComponent& transform, CameraComponent& camera) {
+void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 	EngineCore& engineCore = Editor::Manager::GetInstance().GetEngineCore();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-	auto sceneManager = engineCore.GetSceneManager();
-	auto scene = sceneManager->scenes.begin()->second;
-	auto& registry = scene->GetEntityRegistry();
-	/*
-	camera.aspectRatio = static_cast<float>(width) / height;
-	camera.renderer->Resize(width, height);
+	SceneManagement::SceneManager* sceneManager = engineCore.GetSceneManager();
 
-	glm::vec3 pos = transform.position;
-	const auto viewMatrix = glm::lookAt(
-		pos,
-		pos + transform.GetForward(),
-		transform.GetUp()
+	if (sceneManager == nullptr) {
+		return;
+	}
+
+	if (sceneManager->scenes.size() == 0) {
+		return;
+	}
+
+	SceneManagement::Scene* scene = sceneManager->scenes.begin()->second;
+
+	if (scene == nullptr) {
+		return;
+	}
+
+	entt::registry& registry = scene->GetEntityRegistry();
+	TransformComponent* transformComponent = nullptr;
+	CameraComponent* cameraComponent = nullptr;
+	auto view = registry.view<TransformComponent, CameraComponent>();
+	view.each(
+		[&](
+			TransformComponent& currentTransform,
+			CameraComponent& currentCamera
+			) {
+				transformComponent = &currentTransform;
+				cameraComponent = &currentCamera;
+		}
 	);
 
-	const auto projectionMatrix = glm::perspective(
-		camera.fieldOfView,
-		camera.aspectRatio,
-		camera.nearPlaneDistance,
-		camera.farPlaneDistance
+	if (cameraComponent == nullptr || cameraComponent->renderer == nullptr) {
+		return;
+	}
+
+	cameraComponent->aspectRatio = static_cast<float>(width) / height;
+	cameraComponent->renderer->Resize(width, height);
+
+	glm::vec3 pos = transformComponent->position;
+	const glm::mat4 viewMatrix = glm::lookAt(
+		pos,
+		pos + transformComponent->GetForward(),
+		-transformComponent->GetUp()
+	);
+
+	const glm::mat4 projectionMatrix = glm::perspective(
+		cameraComponent->fieldOfView,
+		cameraComponent->aspectRatio,
+		cameraComponent->nearPlaneDistance,
+		cameraComponent->farPlaneDistance
 	);
 
 	renderer->Render(
+		commandBuffer,
 		registry,
 		projectionMatrix,
 		viewMatrix,
 		pos,
 		framebuffer
 	);
-
-	framebuffer->Unbind();*/
 }
 
 const float maxAngle = 1.55f;

@@ -12,6 +12,7 @@ namespace Grindstone {
 	}
 
 	struct CameraComponent {
+		bool isMainCamera = true;
 		bool isOrthographic = false;
 		float nearPlaneDistance = 0.1f;
 		float farPlaneDistance = 200.0f;

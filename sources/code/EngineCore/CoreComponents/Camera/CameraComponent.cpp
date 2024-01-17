@@ -10,6 +10,7 @@
 using namespace Grindstone;
 
 REFLECT_STRUCT_BEGIN(CameraComponent)
+	REFLECT_STRUCT_MEMBER(isMainCamera)
 	REFLECT_STRUCT_MEMBER(isOrthographic)
 	REFLECT_STRUCT_MEMBER(nearPlaneDistance)
 	REFLECT_STRUCT_MEMBER(farPlaneDistance)

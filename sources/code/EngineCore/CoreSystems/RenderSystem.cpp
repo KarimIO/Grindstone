@@ -18,7 +18,12 @@ std::vector<Grindstone::GraphicsAPI::CommandBuffer*> commandBuffers;
 namespace Grindstone {
 	void RenderSystem(entt::registry& registry) {
 		EngineCore& engineCore = EngineCore::GetInstance();
-		auto wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+		if (engineCore.isEditor) {
+			return;
+		}
+
+		GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+
 		if (!wgb->AcquireNextImage()) {
 			return;
 		}
@@ -32,21 +37,26 @@ namespace Grindstone {
 			}
 		}
 
-		auto currentCommandBuffer = commandBuffers[wgb->GetCurrentImageIndex()];
-		currentCommandBuffer->BeginCommandBuffer();
-
-		const auto upVector = glm::vec3(0, 1, 0);
+		const static glm::vec3 upVector = glm::vec3(0, 1, 0);
 		auto view = registry.view<const TransformComponent, const CameraComponent>();
-
-		auto duration = std::chrono::system_clock::now().time_since_epoch();
-		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-		double time = millis / 1000.0;
 
 		view.each(
 			[&](
 				const TransformComponent& transformComponent,
 				const CameraComponent& cameraComponent
 			) {
+				// TODO: Handle case for not main camera
+				// Do we only want to allow rendering to backbuffer and render targets, or also allow useless framebuffers
+				GraphicsAPI::CommandBuffer* currentCommandBuffer = cameraComponent.isMainCamera
+					? commandBuffers[wgb->GetCurrentImageIndex()]
+					: nullptr;
+
+				if (currentCommandBuffer == nullptr) {
+					return;
+				}
+
+				currentCommandBuffer->BeginCommandBuffer();
+
 				if (std::isnan(cameraComponent.aspectRatio) || cameraComponent.renderer == nullptr) {
 					return;
 				}
@@ -75,11 +85,14 @@ namespace Grindstone {
 					pos,
 					wgb->GetCurrentFramebuffer()
 				);
+
+				currentCommandBuffer->EndCommandBuffer();
+				wgb->SubmitCommandBuffer(currentCommandBuffer);
+
+				if (cameraComponent.isMainCamera) {
+					wgb->PresentSwapchain();
+				}
 			}
 		);
-
-		currentCommandBuffer->EndCommandBuffer();
-		wgb->SubmitCommandBuffer(currentCommandBuffer);
-		wgb->PresentSwapchain();
 	}
 }

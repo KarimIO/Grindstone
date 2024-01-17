@@ -56,7 +56,7 @@ namespace Grindstone {
 			~Manager();
 			void Run();
 			void SetPlayMode(PlayMode newPlayMode);
-			PlayMode GetPlayMode();
+			PlayMode GetPlayMode() const;
 			std::filesystem::path GetProjectPath();
 			std::filesystem::path GetAssetsPath();
 			std::filesystem::path GetCompiledAssetsPath();

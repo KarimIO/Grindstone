@@ -328,6 +328,10 @@ bool DeferredRenderer::OnWindowResize(Events::BaseEvent* ev) {
 }
 
 void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
+	if (this->width == width && this->height == height) {
+		return;
+	}
+
 	this->width = width;
 	this->height = height;
 

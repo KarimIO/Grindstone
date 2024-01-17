@@ -264,10 +264,10 @@ void ImguiRendererVulkan::CreateOrResizeWindow(
 	Grindstone::GraphicsAPI::WindowGraphicsBinding* wgb,
 	int width, int height
 ) {
-	auto instance = graphicsCore->GetInstance();
-	auto physicalDevice = graphicsCore->GetPhysicalDevice();
-	auto device = graphicsCore->GetDevice();
-	auto graphicsFamily = graphicsCore->GetGraphicsFamily();
+	VkInstance instance = graphicsCore->GetInstance();
+	VkPhysicalDevice physicalDevice = graphicsCore->GetPhysicalDevice();
+	VkDevice device = graphicsCore->GetDevice();
+	uint32_t graphicsFamily = graphicsCore->GetGraphicsFamily();
 
 	ImGui_ImplVulkanH_CreateOrResizeWindow(instance, physicalDevice, device, &g_MainWindowData, graphicsFamily, nullptr, width, height, wgb->GetMaxFramesInFlight());
 
