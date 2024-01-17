@@ -232,6 +232,7 @@ bool GlfwWindow::Initialize(CreateInfo& createInfo) {
 	glfwSetFramebufferSizeCallback(windowHandle, &OnWindowSizeCallback);
 	glfwSetWindowFocusCallback(windowHandle, &OnWindowFocusCallback);
 	glfwSetWindowIconifyCallback(windowHandle, &OnWindowMinimizeCallback);
+	glfwSetWindowCloseCallback(windowHandle, &OnWindowTryQuit);
 
 	if (isOpenGl) {
 		glfwMakeContextCurrent(windowHandle);
