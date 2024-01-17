@@ -61,6 +61,7 @@ namespace Grindstone {
 			std::filesystem::path GetAssetsPath();
 			std::filesystem::path GetCompiledAssetsPath();
 			std::filesystem::path GetEngineBinariesPath();
+			bool OnKeyPress(Grindstone::Events::BaseEvent* ev);
 			bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
 			bool OnForceQuit(Grindstone::Events::BaseEvent* ev);
 			template<typename... Args>

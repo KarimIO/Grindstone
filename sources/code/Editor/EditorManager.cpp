@@ -3,7 +3,9 @@
 #include "EngineCore/Events/Dispatcher.hpp"
 #include "EditorManager.hpp"
 #include "ImguiEditor/ImguiEditor.hpp"
+#include "Common/Event/KeyEvent.hpp"
 #include "Common/Event/WindowEvent.hpp"
+#include "Common/Input/InputInterface.hpp"
 using namespace Grindstone;
 using namespace Grindstone::Editor;
 
@@ -76,6 +78,7 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 
 void Manager::InitializeQuitCommands() {
 	auto dispatcher = engineCore->GetEventDispatcher();
+	dispatcher->AddEventListener(Grindstone::Events::EventType::KeyPress, std::bind(&Manager::OnKeyPress, this, std::placeholders::_1));
 	dispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&Manager::OnTryQuit, this, std::placeholders::_1));
 	dispatcher->AddEventListener(Grindstone::Events::EventType::WindowForceQuit, std::bind(&Manager::OnForceQuit, this, std::placeholders::_1));
 }
@@ -102,6 +105,10 @@ void Manager::Run() {
 }
 
 void Manager::SetPlayMode(PlayMode newPlayMode) {
+	// Reset input before setting the new playmode
+	engineCore->GetInputManager()->SetCursorIsRawMotion(false);
+	engineCore->GetInputManager()->SetCursorMode(Input::CursorMode::Normal);
+
 	playMode = newPlayMode;
 }
 
@@ -123,6 +130,26 @@ std::filesystem::path Manager::GetCompiledAssetsPath() {
 
 std::filesystem::path Grindstone::Editor::Manager::GetEngineBinariesPath() {
 	return engineBinariesPath;
+}
+
+bool Manager::OnKeyPress(Grindstone::Events::BaseEvent* ev) {
+	auto onKeyPressEvent = static_cast<Events::KeyPressEvent*>(ev);
+	if (onKeyPressEvent == nullptr) {
+		return false;
+	}
+
+	Events::KeyPressCode keyCode = onKeyPressEvent->code;
+
+	switch (keyCode) {
+		case Events::KeyPressCode::Escape:
+			if (GetPlayMode() != Editor::PlayMode::Editor) {
+				SetPlayMode(Editor::PlayMode::Editor);
+				return true;
+			}
+			break;
+	}
+
+	return false;
 }
 
 bool Manager::OnTryQuit(Grindstone::Events::BaseEvent* ev) {
