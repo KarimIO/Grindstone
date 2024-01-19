@@ -278,3 +278,7 @@ glm::mat4& EditorCamera::GetProjectionMatrix() {
 glm::mat4& EditorCamera::GetViewMatrix() {
 	return view;
 }
+
+BaseRenderer* EditorCamera::GetRenderer() const {
+	return renderer;
+}

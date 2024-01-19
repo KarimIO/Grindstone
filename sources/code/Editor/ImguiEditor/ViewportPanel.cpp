@@ -198,6 +198,10 @@ void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 	}
 }
 
+Grindstone::Editor::EditorCamera* ViewportPanel::GetCamera() const {
+	return camera;
+}
+
 void ViewportPanel::DisplayCameraToPanel() {
 	uint64_t textureID = camera->GetRenderOutput();
 

@@ -32,6 +32,7 @@ namespace Grindstone {
 			void UpdateViewMatrix();
 			glm::mat4& GetProjectionMatrix();
 			glm::mat4& GetViewMatrix();
+			BaseRenderer* GetRenderer() const;
 		private:
 			glm::vec3 GetForward() const;
 			glm::vec3 GetRight() const;

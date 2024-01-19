@@ -9,6 +9,9 @@
 #include "EngineCore/Assets/Shaders/ShaderImporter.hpp"
 #include "Plugins/Renderables3D/Assets/Mesh3dImporter.hpp"
 
+#include "EngineCore/AssetRenderer/AssetRendererManager.hpp"
+#include "Plugins/Renderables3D/Mesh3dRenderer.hpp"
+
 namespace Grindstone::Editor::ImguiEditor {
 	StatsPanel::StatsPanel() {
 		lastRenderTime = std::chrono::steady_clock::now();
@@ -58,6 +61,52 @@ namespace Grindstone::Editor::ImguiEditor {
 		}
 	}
 
+	static void RenderRenderQueuesTable(EngineCore& engineCore) {
+		if (!ImGui::TreeNode("Render Queues")) {
+			return;
+		}
+
+		AssetRendererManager* assetRendererManager = engineCore.assetRendererManager;
+		Mesh3dRenderer* meshRenderer = nullptr;
+		for (auto& assetRenderer : assetRendererManager->assetRenderers) {
+			Mesh3dRenderer* testMeshRenderer = static_cast<Mesh3dRenderer*>(assetRenderer.second);
+			if (testMeshRenderer != nullptr) {
+				meshRenderer = testMeshRenderer;
+				break;
+			}
+		}
+
+		if (meshRenderer == nullptr) {
+			ImGui::TreePop();
+			return;
+		}
+
+		if (ImGui::BeginTable("renderStatsSplit", 2)) {
+			ImGui::TableSetupColumn("Render Queue", ImGuiTableColumnFlags_WidthStretch);
+			ImGui::TableSetupColumn("Draw Count", ImGuiTableColumnFlags_WidthFixed);
+
+			ImGui::TableHeadersRow();
+			size_t i = 0;
+			for (auto& queueMapValue : meshRenderer->renderQueueMap) {
+				bool isEven = (++i % 2) == 0;
+				ImGuiCol_ colorKey = isEven ? ImGuiCol_TableRowBg : ImGuiCol_TableRowBgAlt;
+				ImU32 color = ImGui::GetColorU32(colorKey);
+				ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, color);
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::Text("%s", queueMapValue.first.c_str());
+				ImGui::TableNextColumn();
+				RenderQueueIndex queueIndex = queueMapValue.second;
+				RenderQueueContainer& queueContainer = meshRenderer->renderQueues[queueIndex];
+				ImGui::Text("%lu", queueContainer.renderSortData.size());
+			}
+
+			ImGui::EndTable();
+		}
+
+		ImGui::TreePop();
+	}
+
 	void StatsPanel::RenderContents() {
 		totalFrameCount++;
 		frameCountSinceLastRender++;
@@ -77,6 +126,8 @@ namespace Grindstone::Editor::ImguiEditor {
 
 		EngineCore& engineCore = Editor::Manager::GetEngineCore();
 		Assets::AssetManager* assetManager = engineCore.assetManager;
+
+		RenderRenderQueuesTable(engineCore);
 
 		RenderAsset<Mesh3dImporter>(assetManager, "3D Meshes");
 		RenderAsset<MaterialImporter>(assetManager, "Materials");

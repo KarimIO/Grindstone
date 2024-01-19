@@ -27,8 +27,9 @@ namespace Grindstone {
 		void RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, const char* name);
 		void CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt::registry& registry);
 		void SortQueues();
-	private:
+
 		std::map<std::string, BaseAssetRenderer*> assetRenderers;
+	private:
 		std::map<std::string, DrawSortMode> queueDrawSortModes;
 		std::vector<std::string> assetQueuesNames;
 	};

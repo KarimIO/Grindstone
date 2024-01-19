@@ -5,6 +5,7 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		class Core;
+		class CommandBuffer;
 	}
 
 	namespace Editor {
@@ -16,6 +17,7 @@ namespace Grindstone {
 				ViewportPanel();
 				void Render();
 				void RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer);
+				EditorCamera* GetCamera() const;
 			private:
 				bool OnMouseButtonEvent(Grindstone::Events::BaseEvent* ev);
 				bool OnMouseMovedEvent(Grindstone::Events::BaseEvent* ev);

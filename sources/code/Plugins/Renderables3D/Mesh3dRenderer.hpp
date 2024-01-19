@@ -68,6 +68,7 @@ namespace Grindstone {
 			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
 			class GraphicsAPI::DescriptorSetLayout* perDrawDescriptorSetLayout = nullptr;
 
+		public:
 			std::map<std::string, RenderQueueIndex> renderQueueMap;
 			std::vector<RenderQueueContainer> renderQueues;
 	};
