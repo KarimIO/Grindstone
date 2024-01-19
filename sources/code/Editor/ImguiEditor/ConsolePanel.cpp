@@ -44,9 +44,7 @@ void ConsolePanel::Render() {
 			ImGui::Text("No console messages found.");
 		}
 
-		bool isInTable = ImGui::BeginTable("assetBrowserSplit", 2);
-
-		if (isInTable) {
+		if (ImGui::BeginTable("assetBrowserSplit", 2)) {
 			ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, 24.0f);
 			ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 			size_t i = 0;

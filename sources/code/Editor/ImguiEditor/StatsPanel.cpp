@@ -22,6 +22,42 @@ namespace Grindstone::Editor::ImguiEditor {
 		}
 	}
 
+	template<typename AssetImporterClass>
+	void RenderAsset(Grindstone::Assets::AssetManager* assetManager, const char* title) {
+		if (ImGui::TreeNode(title)) {
+			AssetImporterClass* assetImporter = assetManager->GetManager<AssetImporterClass>();
+			if (assetImporter == nullptr) {
+				ImGui::Text("Importer unavailable.");
+			}
+			else if (!assetImporter->HasAssets()) {
+				ImGui::Text("No assets imported.");
+			}
+			else if (ImGui::BeginTable("statsImporterSplit", 2)) {
+				ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
+				ImGui::TableSetupColumn("Uses", ImGuiTableColumnFlags_WidthFixed);
+
+				ImGui::TableHeadersRow();
+
+				size_t i = 0;
+				for (auto& asset : *assetImporter) {
+					bool isEven = (++i % 2) == 0;
+					ImGuiCol_ colorKey = isEven ? ImGuiCol_TableRowBg : ImGuiCol_TableRowBgAlt;
+					ImU32 color = ImGui::GetColorU32(colorKey);
+					ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, color);
+					ImGui::TableNextRow();
+					ImGui::TableNextColumn();
+					ImGui::Text("%s", asset.second.name.c_str());
+					ImGui::TableNextColumn();
+					ImGui::Text("%lu", asset.second.referenceCount);
+				}
+
+				ImGui::EndTable();
+			}
+
+			ImGui::TreePop();
+		}
+	}
+
 	void StatsPanel::RenderContents() {
 		totalFrameCount++;
 		frameCountSinceLastRender++;
@@ -40,65 +76,11 @@ namespace Grindstone::Editor::ImguiEditor {
 		ImGui::Text("Frames Per Second: %f", 1 / lastRenderedDeltaTime);
 
 		EngineCore& engineCore = Editor::Manager::GetEngineCore();
+		Assets::AssetManager* assetManager = engineCore.assetManager;
 
-		if (ImGui::TreeNode("Materials")) {
-			MaterialImporter* materialImporter = engineCore.assetManager->GetManager<MaterialImporter>();
-			if (materialImporter == nullptr) {
-				ImGui::Text("Material Importer unavailable");
-			}
-			else {
-				for (auto& material : *materialImporter) {
-					MaterialAsset& materialAsset = material.second;
-					ImGui::Text("%s (%lu)", materialAsset.name.c_str(), materialAsset.referenceCount);
-				}
-			}
-
-			ImGui::TreePop();
-		}
-
-		if (ImGui::TreeNode("Textures")) {
-			TextureImporter* textureImporter = engineCore.assetManager->GetManager<TextureImporter>();
-			if (textureImporter == nullptr) {
-				ImGui::Text("Texture Importer unavailable");
-			}
-			else {
-				for (auto& texture : *textureImporter) {
-					TextureAsset& textureAsset = texture.second;
-					ImGui::Text("%s (%lu)", textureAsset.name.c_str(), textureAsset.referenceCount);
-				}
-			}
-
-			ImGui::TreePop();
-		}
-
-		if (ImGui::TreeNode("Shaders")) {
-			ShaderImporter* shaderImporter = engineCore.assetManager->GetManager<ShaderImporter>();
-			if (shaderImporter == nullptr) {
-				ImGui::Text("Shader Importer unavailable");
-			}
-			else {
-				for (auto& shader : *shaderImporter) {
-					ShaderAsset& shaderAsset = shader.second;
-					ImGui::Text("%s (%lu)", shaderAsset.name.c_str(), shaderAsset.referenceCount);
-				}
-			}
-
-			ImGui::TreePop();
-		}
-
-		if (ImGui::TreeNode("Meshes")) {
-			Mesh3dImporter* meshImporter = engineCore.assetManager->GetManager<Mesh3dImporter>();
-			if (meshImporter == nullptr) {
-				ImGui::Text("Mesh Importer unavailable");
-			}
-			else {
-				for (auto& mesh : *meshImporter) {
-					Mesh3dAsset& meshAsset = mesh.second;
-					ImGui::Text("%s (%lu)", meshAsset.name.c_str(), meshAsset.referenceCount);
-				}
-			}
-
-			ImGui::TreePop();
-		}
+		RenderAsset<Mesh3dImporter>(assetManager, "3D Meshes");
+		RenderAsset<MaterialImporter>(assetManager, "Materials");
+		RenderAsset<ShaderImporter>(assetManager, "Shaders");
+		RenderAsset<TextureImporter>(assetManager, "Textures");
 	}
 }

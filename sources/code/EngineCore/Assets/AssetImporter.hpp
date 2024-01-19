@@ -39,6 +39,9 @@ namespace Grindstone {
 			return false;
 		}
 
+		size_t AssetCount() const { return assets.size(); }
+		bool HasAssets() const { return assets.size() != 0; }
+
 		auto begin() noexcept { return assets.begin(); }
 		auto cbegin() const noexcept { return assets.begin(); }
 		auto end() noexcept { return assets.end(); }
