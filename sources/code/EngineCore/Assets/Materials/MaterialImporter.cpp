@@ -61,7 +61,7 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 
 	auto& reflectionData = shaderAsset->reflectionData;
 
-	auto& material = materials.emplace(uuid, MaterialAsset(uuid, name, shaderUuid));
+	auto& material = assets.emplace(uuid, MaterialAsset(uuid, name, shaderUuid));
 	MaterialAsset* materialAsset = &material.first->second;
 
 	std::vector<DescriptorSet::Binding> bindings;
@@ -83,8 +83,8 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 }
 
 void MaterialImporter::QueueReloadAsset(Uuid uuid) {
-	auto& materialIterator = materials.find(uuid);
-	if (materialIterator == materials.end()) {
+	auto& materialIterator = assets.find(uuid);
+	if (materialIterator == assets.end()) {
 		return;
 	}
 
@@ -144,16 +144,6 @@ void MaterialImporter::QueueReloadAsset(Uuid uuid) {
 	DescriptorSet* materialDescriptorSet = graphicsCore->CreateDescriptorSet(materialDescriptorSetCreateInfo);
 
 	materialAsset->descriptorSet = materialDescriptorSet;
-}
-
-bool MaterialImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
-	auto materialInMap = materials.find(uuid);
-	if (materialInMap != materials.end()) {
-		output = &materialInMap->second;
-		return true;
-	}
-
-	return false;
 }
 
 void MaterialImporter::SetupUniformBuffer(rapidjson::Document& document, ShaderReflectionData& reflectionData, std::vector<DescriptorSet::Binding>& bindings, std::string name, MaterialAsset* materialAsset) {

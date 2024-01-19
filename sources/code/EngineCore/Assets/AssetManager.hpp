@@ -15,7 +15,16 @@ namespace Grindstone::Assets {
 	class AssetManager {
 	public:
 		AssetManager();
+		~AssetManager();
+
 		void ReloadQueuedAssets();
+		virtual AssetImporter* GetManager(AssetType assetType);
+
+		template<typename AssetImporterClass>
+		AssetImporterClass* GetManager() {
+			return static_cast<AssetImporterClass*>(GetManager(AssetImporterClass::GetStaticAssetType()));
+		}
+
 		virtual void QueueReloadAsset(AssetType assetType, Uuid uuid);
 		virtual void* GetAsset(AssetType assetType, const char* path);
 		virtual void* GetAsset(AssetType assetType, Uuid uuid);

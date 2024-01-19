@@ -17,10 +17,6 @@ AudioClipImporter::AudioClipImporter(EngineCore* engineCore) {
 	this->engineCore = engineCore;
 }
 
-AudioClipImporter::~AudioClipImporter() {
-
-}
-
 void* AudioClipImporter::ProcessLoadedFile(Uuid uuid) {
 	/*
 	char* fileContent;
@@ -82,7 +78,7 @@ void* AudioClipImporter::ProcessLoadedFile(Uuid uuid) {
 
 	alBufferData(buffer, format, memoryBuffer, static_cast<ALsizei>(fileSize), sampleRate);
 
-	auto& asset = audioClips.emplace(
+	auto& asset = assets.emplace(
 		uuid,
 		AudioClipAsset(uuid, uuid.ToString(), buffer, channelCount, sampleRate, bitsPerSample)
 	);
@@ -93,19 +89,9 @@ void* AudioClipImporter::ProcessLoadedFile(Uuid uuid) {
 	return &asset.first->second;
 }
 
-bool AudioClipImporter::TryGetIfLoaded(Uuid uuid, void*& audioClip) {
-	auto audioClipInMap = audioClips.find(uuid);
-	if (audioClipInMap != audioClips.end()) {
-		audioClip = &audioClipInMap->second;
-		return true;
-	}
-
-	return false;
-}
-
 void AudioClipImporter::QueueReloadAsset(Uuid uuid) {
-	auto audioClipInMap = audioClips.find(uuid);
-	if (audioClipInMap == audioClips.end()) {
+	auto audioClipInMap = assets.find(uuid);
+	if (audioClipInMap == assets.end()) {
 		return;
 	}
 
@@ -166,9 +152,3 @@ void AudioClipImporter::QueueReloadAsset(Uuid uuid) {
 	drwav_free(memoryBuffer, nullptr);
 	drwav_uninit(&wav);
 }
-
-/*
-Clip::~Clip() {
-	alDeleteBuffers(1, &buffer);
-}
-*/

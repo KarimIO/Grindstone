@@ -14,7 +14,7 @@ struct SourceSubmesh {
 	uint32_t materialIndex = UINT32_MAX;
 };
 
-GraphicsAPI::VertexBuffer* LoadVertexBufferVec(
+static GraphicsAPI::VertexBuffer* LoadVertexBufferVec(
 	GraphicsAPI::Core* graphicsCore,
 	std::string& fileName,
 	size_t vertexSize,
@@ -94,44 +94,19 @@ void Mesh3dImporter::PrepareLayouts() {
 }
 
 void Mesh3dImporter::DecrementMeshCount(ECS::Entity entity, Uuid uuid) {
-	auto meshInMap = meshes.find(uuid);
-	if (meshInMap == meshes.end()) {
+	auto meshInMap = assets.find(uuid);
+	if (meshInMap == assets.end()) {
 		return;
 	}
 
 	auto mesh = &meshInMap->second;
 	mesh->referenceCount -= 1;
-
-	/*
-	auto materialManager = engineCore.materialImporter;
-	for (auto& submesh : mesh->submeshes) {
-		for (auto& material : submesh.materials) {
-			materialManager->RemoveRenderableFromMaterial(material, entity, &submesh);
-		}
-	}
-
-	if (mesh->referenceCount == 0) {
-		auto graphicsCore = engineCore.GetGraphicsCore();
-		graphicsCore->DeleteVertexArrayObject(mesh->vertexArrayObject);
-		meshes.erase(meshInMap);
-	}
-	*/
-}
-
-bool Mesh3dImporter::TryGetIfLoaded(Uuid uuid, void*& mesh) {
-	auto meshInMap = meshes.find(uuid);
-	if (meshInMap != meshes.end()) {
-		mesh = &meshInMap->second;
-		return true;
-	}
-
-	return false;
 }
 
 void Mesh3dImporter::QueueReloadAsset(Uuid uuid) {
 	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
-	auto meshInMap = meshes.find(uuid);
-	if (meshInMap == meshes.end()) {
+	auto meshInMap = assets.find(uuid);
+	if (meshInMap == assets.end()) {
 		return;
 	}
 
@@ -221,7 +196,7 @@ void Mesh3dImporter::LoadMeshImportIndices(
 }
 
 void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
-	auto& meshIterator = meshes.emplace(uuid, Mesh3dAsset(uuid, uuid.ToString()));
+	auto& meshIterator = assets.emplace(uuid, Mesh3dAsset(uuid, uuid.ToString()));
 	Mesh3dAsset& mesh = meshIterator.first->second;
 
 	ImportModelFile(mesh);

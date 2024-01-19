@@ -26,6 +26,20 @@ AssetManager::AssetManager() {
 	RegisterAssetType(MaterialAsset::GetStaticType(), "MaterialAsset", new MaterialImporter());
 }
 
+AssetManager::~AssetManager() {
+	delete assetLoader;
+
+	for (AssetImporter*& importer : assetTypeImporters) {
+		delete importer;
+		importer = nullptr;
+	}
+}
+
+AssetImporter* AssetManager::GetManager(AssetType assetType) {
+	size_t index = static_cast<size_t>(assetType);
+	return assetTypeImporters[index];
+}
+
 void AssetManager::QueueReloadAsset(AssetType assetType, Uuid uuid) {
 	std::scoped_lock lock(reloadMutex);
 	queuedAssetReloads.emplace_back(assetType, uuid);

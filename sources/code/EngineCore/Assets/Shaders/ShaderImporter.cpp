@@ -41,7 +41,7 @@ static Grindstone::GraphicsAPI::CullMode TranslateCullMode(std::string& cullMode
 }
 
 void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
-	auto asset = shaders.emplace(uuid, ShaderAsset(uuid));
+	auto asset = assets.emplace(uuid, ShaderAsset(uuid));
 	ShaderAsset& shaderAsset = asset.first->second;
 
 	if (!ImportShader(shaderAsset)) {
@@ -85,6 +85,7 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 	}
 
 	std::string debugName = reflectionData.name;
+	shaderAsset.name = debugName;
 
 	bool usesGbuffer = reflectionData.renderQueue != "Skybox";
 
@@ -215,19 +216,9 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 	return true;
 }
 
-bool ShaderImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
-	auto& shaderInMap = shaders.find(uuid);
-	if (shaderInMap != shaders.end()) {
-		output = &shaderInMap->second;
-		return true;
-	}
-
-	return false;
-}
-
 void ShaderImporter::QueueReloadAsset(Uuid uuid) {
-	auto& shaderInMap = shaders.find(uuid);
-	if (shaderInMap == shaders.end()) {
+	auto& shaderInMap = assets.find(uuid);
+	if (shaderInMap == assets.end()) {
 		return;
 	}
 

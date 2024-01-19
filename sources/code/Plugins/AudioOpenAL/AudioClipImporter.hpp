@@ -9,16 +9,13 @@ namespace Grindstone {
 	class EngineCore;
 
 	namespace Audio {
-		class AudioClipImporter : public AssetImporter {
+		class AudioClipImporter : public SpecificAssetImporter<AudioClipAsset, AssetType::AudioClip> {
 		public:
 			AudioClipImporter(EngineCore* engineCore);
-			~AudioClipImporter();
 
 			virtual void* ProcessLoadedFile(Uuid uuid) override;
-			virtual bool TryGetIfLoaded(Uuid uuid, void*& output) override;
 			virtual void QueueReloadAsset(Uuid uuid) override;
 		private:
-			std::map<Uuid, AudioClipAsset> audioClips;
 			EngineCore* engineCore;
 		};
 	}

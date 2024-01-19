@@ -1,7 +1,10 @@
 #pragma once
 
 #include <string>
+#include <map>
+
 #include <Common/ResourcePipeline/Uuid.hpp>
+#include <Common/ResourcePipeline/AssetType.hpp>
 
 namespace Grindstone {
 	class AssetImporter {
@@ -11,5 +14,38 @@ namespace Grindstone {
 		virtual bool TryGetIfLoaded(Uuid uuid, void*& output) = 0;
 		virtual void* ProcessLoadedFile(const char* path) { return nullptr; };
 		virtual bool TryGetIfLoaded(const char* path, void*& output) { return false; };
+		virtual AssetType GetAssetType() { return assetType; }
+
+	protected:
+
+		AssetType assetType;
+
+	};
+
+	template<typename AssetStructType, AssetType internalAssetType>
+	class SpecificAssetImporter : public AssetImporter {
+	public:
+
+		SpecificAssetImporter() { assetType = internalAssetType; }
+		static AssetType GetStaticAssetType() { return internalAssetType; }
+
+		virtual bool TryGetIfLoaded(Uuid uuid, void*& output) {
+			auto assetInMap = assets.find(uuid);
+			if (assetInMap != assets.end()) {
+				output = &assetInMap->second;
+				return true;
+			}
+
+			return false;
+		}
+
+		auto begin() noexcept { return assets.begin(); }
+		auto cbegin() const noexcept { return assets.begin(); }
+		auto end() noexcept { return assets.end(); }
+		auto cend() const noexcept { return assets.cend(); }
+
+	protected:
+		std::map<Uuid, AssetStructType> assets;
+
 	};
 }

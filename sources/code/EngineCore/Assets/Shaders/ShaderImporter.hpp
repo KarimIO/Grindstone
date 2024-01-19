@@ -9,14 +9,12 @@
 
 namespace Grindstone {
 	class BaseAssetRenderer;
-	class ShaderImporter : public AssetImporter {
+	class ShaderImporter : public SpecificAssetImporter<ShaderAsset, AssetType::Shader> {
 		public:
 			virtual void* ProcessLoadedFile(Uuid uuid) override;
-			virtual bool TryGetIfLoaded(Uuid uuid, void*& output) override;
 			virtual void QueueReloadAsset(Uuid uuid) override;
 		private:
 			bool ImportShader(ShaderAsset& shaderAsset);
 
-			std::map<Uuid, ShaderAsset> shaders;
 	};
 }

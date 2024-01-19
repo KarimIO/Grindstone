@@ -18,7 +18,7 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid) {
 		return nullptr;
 	}
 
-	auto asset = textures.emplace(uuid, TextureAsset());
+	auto asset = assets.emplace(uuid, TextureAsset());
 	return ProcessLoadedFile(uuid, fileContents, fileSize, asset.first->second);
 }
 
@@ -115,16 +115,6 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, const char* fileContents, si
 	return &textureAsset;
 }
 
-bool TextureImporter::TryGetIfLoaded(Uuid uuid, void*& output) {
-	auto& textureInMap = textures.find(uuid);
-	if (textureInMap != textures.end()) {
-		output = &textureInMap->second;
-		return true;
-	}
-
-	return false;
-}
-
 bool TextureImporter::TryGetIfLoaded(const char* path, void*& output) {
 	auto& textureInMap = texturesByPath.find(path);
 	if (textureInMap != texturesByPath.end()) {
@@ -136,8 +126,8 @@ bool TextureImporter::TryGetIfLoaded(const char* path, void*& output) {
 }
 
 void TextureImporter::QueueReloadAsset(Uuid uuid) {
-	auto& textureInMap = textures.find(uuid);
-	if (textureInMap == textures.end()) {
+	auto& textureInMap = assets.find(uuid);
+	if (textureInMap == assets.end()) {
 		return;
 	}
 
