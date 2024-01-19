@@ -6,12 +6,12 @@ using namespace Grindstone::Editor::ImguiEditor;
 
 const ImVec2 IMG_CONVERTER_WINDOW_SIZE = { 400.f, 250.f };
 
-std::string GetAssetPath(std::string& path) {
+static std::string GetAssetPath(std::string& path) {
 	size_t p = path.find_last_of('/');
 	return "../assets/" + path.substr(p + 1);
 }
 
-std::string GetDdsPath(std::string& path) {
+static std::string GetDdsPath(std::string& path) {
 	size_t p = path.find_last_of('.');
 	if (p > 1) {
 		return path.substr(0, p + 1) + "dds";
@@ -20,7 +20,7 @@ std::string GetDdsPath(std::string& path) {
 	return path + ".dds";
 }
 
-std::string getImageOutputPath(std::string path) {
+static std::string GetImageOutputPath(std::string path) {
 	return GetDdsPath(GetAssetPath(path));
 }
 
@@ -34,8 +34,6 @@ const char* IMAGE_FORMATS[] = {
 	// "BC6 - HDR Image",
 	// "BC7 - High Quality RGBA"
 };
-
-ImageConverterModal::ImageConverterModal() {}
 
 void ImageConverterModal::Show() {
 	isShown = true;
@@ -120,12 +118,12 @@ void ImageConverterModal::Render() {
 				ImGui::Text(("\t" + pre + "_lf" + ext).c_str());
 
 				if (imagePath != "") {
-					ImGui::Text("Outputting as %s", getImageOutputPath(pre + "_ft" + ext).c_str());
+					ImGui::Text("Outputting as %s", GetImageOutputPath(pre + "_ft" + ext).c_str());
 				}
 			}
 			else {
 				if (imagePath != "") {
-					ImGui::Text("Outputting as %s", getImageOutputPath(imagePath).c_str());
+					ImGui::Text("Outputting as %s", GetImageOutputPath(imagePath).c_str());
 				}
 			}
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 0.4f, 1.0f));
@@ -145,4 +143,8 @@ void ImageConverterModal::Render() {
 					
 		ImGui::EndPopup();
 	}
+}
+
+bool ImageConverterModal::IsOpen() const {
+	return isShown;
 }

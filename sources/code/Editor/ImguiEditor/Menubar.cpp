@@ -7,6 +7,8 @@
 #include "Common/Window/WindowManager.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/EngineCore.hpp"
+#include "Modals/ModelConverterModal.hpp"
+#include "Modals/ImageConverterModal.hpp"
 
 #include "../EditorManager.hpp"
 #include "Menubar.hpp"
@@ -66,10 +68,10 @@ void Menubar::RenderFileMenu() {
 	if (ImGui::MenuItem("Import...", "Ctrl+I", false)) {
 		OnImportFile();
 	}
-	if (ImGui::MenuItem("User Settings...", "Ctrl+Shift+P", false)) {
+	if (ImGui::MenuItem("User Settings...", "Ctrl+Shift+P", editor->userSettingsWindow->IsOpen())) {
 		OnUserSettings();
 	}
-	if (ImGui::MenuItem("Project Settings...", "Ctrl+P", false)) {
+	if (ImGui::MenuItem("Project Settings...", "Ctrl+P", editor->projectSettingsWindow->IsOpen())) {
 		OnProjectSettings();
 	}
 	if (ImGui::MenuItem("Exit", false)) {
@@ -98,10 +100,10 @@ void Menubar::RenderViewMenu() {
 }
 
 void Menubar::RenderConvertMenu() {
-	if (ImGui::MenuItem("Convert Model", "", false)) {
+	if (ImGui::MenuItem("Convert Model", "", editor->modelConverterModal->IsOpen())) {
 		editor->ShowModelModal();
 	}
-	if (ImGui::MenuItem("Convert Image", "", false)) {
+	if (ImGui::MenuItem("Convert Image", "", editor->imageConverterModal->IsOpen())) {
 		editor->ShowImageModal();
 	}
 	ImGui::EndMenu();

@@ -3,26 +3,28 @@
 #include <vector>
 #include <string>
 
-namespace Grindstone {
-	namespace Editor {
-		namespace ImguiEditor {
-			namespace Settings {
-				class BasePage;
+namespace Grindstone::Editor::ImguiEditor::Settings {
+	class BasePage;
 
-				class SettingsWindow {
-				public:
-					void Open();
-					void OpenPage(int preferencesPage);
-					void Render();
-					void RenderSettingsPage();
-					virtual void RenderSideBar() = 0;
-				protected:
-					bool isOpen = false;
-					int preferenceIndex = 0;
-					std::string settingsTitle;
-					std::vector<BasePage*> pages;
-				};
-			}
-		}
-	}
+	struct PageData {
+		std::string title;
+		BasePage* page = nullptr;
+	};
+
+	class SettingsWindow {
+	public:
+		~SettingsWindow();
+
+		void Open();
+		void OpenPage(size_t preferencesPage);
+		void Render();
+		void RenderSettingsPage();
+		void RenderSideBar();
+		bool IsOpen() const;
+	protected:
+		bool isOpen = false;
+		size_t settingIndex = 0;
+		std::string settingsTitle;
+		std::vector<PageData> pages;
+	};
 }

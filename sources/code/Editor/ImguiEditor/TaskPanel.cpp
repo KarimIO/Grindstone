@@ -8,8 +8,8 @@ using namespace Grindstone::Editor::ImguiEditor;
 const ImVec2 WINDOW_SIZE = { 400.0f, 200.0f };
 const float STATUS_COLUMN_WIDTH = 120.0f;
 
-const char* TaskStatusToString(Grindstone::Editor::Task::Status status) {
-	const char* strings[3] = {"Queued", "In Progress", "Done"};
+static const char* TaskStatusToString(Grindstone::Editor::Task::Status status) {
+	static const char* strings[] = {"Queued", "In Progress", "Done"};
 	return strings[static_cast<size_t>(status)];
 }
 

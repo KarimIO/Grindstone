@@ -55,12 +55,13 @@ namespace Grindstone {
 				void SetupColors();
 				bool OnWindowResize(Events::BaseEvent* ev);
 				void PerformResize();
+			public:
+				ImageConverterModal* imageConverterModal = nullptr;
+				ModelConverterModal* modelConverterModal = nullptr;
 			private:
 				bool queueResize = false;
 				EngineCore* engineCore = nullptr;
 				ImguiInput* input = nullptr;
-				ImageConverterModal* imageConverterModal = nullptr;
-				ModelConverterModal* modelConverterModal = nullptr;
 				SceneHeirarchyPanel* sceneHeirarchyPanel = nullptr;
 				AssetBrowserPanel* assetBrowserPanel = nullptr;
 				AssetPicker* assetPicker = nullptr;

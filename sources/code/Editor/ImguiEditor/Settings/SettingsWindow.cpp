@@ -3,18 +3,27 @@
 #include "SettingsWindow.hpp"
 using namespace Grindstone::Editor::ImguiEditor::Settings;
 
+SettingsWindow::~SettingsWindow() {
+	for (PageData& page : pages) {
+		if (page.page != nullptr) {
+			delete page.page;
+			page.page = nullptr;
+		}
+	}
+}
+
 void SettingsWindow::Open() {
 	isOpen = true;
 }
 
-void SettingsWindow::OpenPage(int preferencesPage) {
-	int preferencesPageIndex = (int)preferencesPage;
+void SettingsWindow::OpenPage(size_t preferencesPage) {
+	size_t preferencesPageIndex = (size_t)preferencesPage;
 	if (preferencesPageIndex < 0 || preferencesPageIndex >= pages.size()) {
 		return;
 	}
 
-	preferenceIndex = preferencesPageIndex;
-	pages[preferenceIndex]->Open();
+	settingIndex = preferencesPageIndex;
+	pages[settingIndex].page->Open();
 }
 
 void SettingsWindow::Render() {
@@ -44,23 +53,48 @@ void SettingsWindow::Render() {
 	ImGui::PopStyleVar();
 }
 
+void SettingsWindow::RenderSideBar() {
+	ImGuiID assetTopBar = ImGui::GetID("#SettingsSidebar");
+	ImGui::BeginChildFrame(assetTopBar, ImVec2(), ImGuiWindowFlags_NoBackground);
+	float availWidth = ImGui::GetContentRegionAvail().x;
+	ImVec2 size = ImVec2{ availWidth , 0 };
+
+	for (size_t i = 0; i < pages.size(); ++i) {
+		PageData& page = pages[i];
+
+		if (page.page == nullptr) {
+			continue;
+		}
+
+		if (ImGui::Button(page.title.c_str(), size)) {
+			OpenPage(i);
+		}
+	}
+
+	ImGui::EndChildFrame();
+}
+
 void SettingsWindow::RenderSettingsPage() {
-	auto assetTopBar = ImGui::GetID("#SettingsWindow");
+	ImGuiID assetTopBar = ImGui::GetID("#SettingsWindow");
 	ImGui::BeginChildFrame(assetTopBar, ImVec2{}, ImGuiWindowFlags_NoBackground);
 	float availWidth = ImGui::GetContentRegionAvail().x;
 	ImVec2 size = ImVec2{ availWidth , 0 };
 
-	if (preferenceIndex < 0 || preferenceIndex >= pages.size()) {
+	if (settingIndex < 0 || settingIndex >= pages.size()) {
 		if (pages.size() == 0) {
 			ImGui::Text("No valid settings page.");
 			ImGui::EndChildFrame();
 		}
 		else {
-			preferenceIndex = 0;
+			settingIndex = 0;
 		}
 	}
 
-	pages[preferenceIndex]->Render();
+	pages[settingIndex].page->Render();
 
 	ImGui::EndChildFrame();
+}
+
+bool SettingsWindow::IsOpen() const {
+	return isOpen;
 }
