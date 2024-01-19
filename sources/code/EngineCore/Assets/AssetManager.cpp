@@ -82,6 +82,26 @@ void* AssetManager::GetAsset(AssetType assetType, const char* path) {
 	}
 }
 
+void* AssetManager::IncrementAssetUse(AssetType assetType, Uuid uuid) {
+	size_t assetTypeSizeT = static_cast<size_t>(assetType);
+	if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
+		return nullptr;
+	}
+
+	AssetImporter* assetImporter = assetTypeImporters[assetTypeSizeT];
+	return assetImporter->IncrementAssetUse(uuid);
+}
+
+void AssetManager::DecrementAssetUse(AssetType assetType, Uuid uuid) {
+	size_t assetTypeSizeT = static_cast<size_t>(assetType);
+	if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
+		return;
+	}
+
+	AssetImporter* assetImporter = assetTypeImporters[assetTypeSizeT];
+	assetImporter->DecrementAssetUse(uuid);
+}
+
 void* AssetManager::GetAsset(AssetType assetType, Uuid uuid) {
 	if (!uuid.IsValid()) {
 		return nullptr;

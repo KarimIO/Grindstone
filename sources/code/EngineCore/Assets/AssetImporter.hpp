@@ -14,6 +14,8 @@ namespace Grindstone {
 		virtual bool TryGetIfLoaded(Uuid uuid, void*& output) = 0;
 		virtual void* ProcessLoadedFile(const char* path) { return nullptr; };
 		virtual bool TryGetIfLoaded(const char* path, void*& output) { return false; };
+		virtual void* IncrementAssetUse(Uuid uuid) = 0;
+		virtual void DecrementAssetUse(Uuid uuid) = 0;
 		virtual AssetType GetAssetType() { return assetType; }
 
 	protected:
@@ -29,7 +31,34 @@ namespace Grindstone {
 		SpecificAssetImporter() { assetType = internalAssetType; }
 		static AssetType GetStaticAssetType() { return internalAssetType; }
 
-		virtual bool TryGetIfLoaded(Uuid uuid, void*& output) {
+		virtual void* IncrementAssetUse(Uuid uuid) override {
+			void* output = nullptr;
+			if (TryGetIfLoaded(uuid, output)) {
+				AssetStructType* asset = static_cast<AssetStructType*>(output);
+				asset->referenceCount++;
+				return asset;
+			}
+			else {
+				return ProcessLoadedFile(uuid);
+			}
+
+			return nullptr;
+		}
+
+		virtual void DecrementAssetUse(Uuid uuid) override {
+			void* output = nullptr;
+			if (TryGetIfLoaded(uuid, output) && output != nullptr) {
+				AssetStructType* asset = static_cast<AssetStructType*>(output);
+				if (asset->referenceCount <= 1) {
+					assets.erase(uuid);
+				}
+				else {
+					asset->referenceCount--;
+				}
+			}
+		}
+
+		virtual bool TryGetIfLoaded(Uuid uuid, void*& output) override {
 			auto assetInMap = assets.find(uuid);
 			if (assetInMap != assets.end()) {
 				output = &assetInMap->second;

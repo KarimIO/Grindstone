@@ -14,7 +14,7 @@ namespace Grindstone {
 
 		Uuid uuid;
 		std::string name;
-		size_t referenceCount = 0;
+		size_t referenceCount = 1;
 
 		static AssetType GetStaticType() { return AssetType::Undefined; }
 		virtual AssetType GetAssetType() const { return GetStaticType(); }

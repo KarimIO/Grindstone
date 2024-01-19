@@ -52,7 +52,7 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	}
 
 	Uuid shaderUuid(document["shader"].GetString());
-	ShaderAsset* shaderAsset = assetManager->GetAsset<ShaderAsset>(shaderUuid);
+	ShaderAsset* shaderAsset = assetManager->IncrementAssetUse<ShaderAsset>(shaderUuid);
 
 	if (shaderAsset == nullptr) {
 		EngineCore::GetInstance().Print(LogSeverity::Error, "Failed to load shader.");
@@ -113,7 +113,7 @@ void MaterialImporter::QueueReloadAsset(Uuid uuid) {
 	}
 
 	Uuid shaderUuid(document["shader"].GetString());
-	ShaderAsset* shaderAsset = assetManager->GetAsset<ShaderAsset>(shaderUuid);
+	ShaderAsset* shaderAsset = assetManager->IncrementAssetUse<ShaderAsset>(shaderUuid);
 	// TODO: Handle swapping between shaders
 
 	if (materialAsset->buffer != nullptr) {
@@ -220,7 +220,7 @@ void MaterialImporter::SetupSamplers(rapidjson::Document& document, ShaderReflec
 				const char* textureUuidAsString = samplersJson[textureName].GetString();
 				Uuid textureUuid(textureUuidAsString);
 
-				TextureAsset* textureAsset = assetManager->GetAsset<TextureAsset>(textureUuid);
+				TextureAsset* textureAsset = assetManager->IncrementAssetUse<TextureAsset>(textureUuid);
 				DescriptorSet::Binding textureBinding{};
 				textureBinding.bindingIndex = textureReferencesFromMaterial[i].bindingId;
 				textureBinding.bindingType = BindingType::Texture;

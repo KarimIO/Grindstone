@@ -131,7 +131,7 @@ void ComponentInspector::RenderComponentMember(
 	ECS::Entity entity
 ) {
 	void* offset = ((char*)componentPtr + member.offset);
-	RenderComponentMember(std::string_view(member.displayName), member.type, offset, entity);
+	RenderComponentMember(member.displayName, member.type, offset, entity);
 }
 
 void ComponentInspector::RenderComponentMember(std::string_view displayName, Reflection::TypeDescriptor* itemType, void* offset, ECS::Entity entity) {
@@ -152,9 +152,10 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 
 		AssetType assetType = assetReferenceType->assetType;
 		Uuid uuid = assetReference->uuid;
+		bool hasValue = uuid.IsValid();
 		std::string name = "Unassigned";
 		AssetRegistry::Entry entry;
-		if (Editor::Manager::GetInstance().GetAssetRegistry().TryGetAssetData(uuid, entry)) {
+		if (hasValue && Editor::Manager::GetInstance().GetAssetRegistry().TryGetAssetData(uuid, entry)) {
 			name = entry.name;
 		}
 
@@ -162,19 +163,33 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 		ImVec2 buttonSize = { ImGui::GetContentRegionAvail().x, 24 };
 		ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.0f, 0.5f));
 		if (ImGui::Button(buttonText.c_str(), buttonSize)) {
-			std::function<void(Uuid, std::string)> callback = [assetManager, assetReference, assetType](Uuid newUuid, std::string path) {
+			std::function<void(Uuid, std::string)> callback = [assetManager, assetReference, assetType, hasValue](Uuid newUuid, std::string path) {
+				// Handle old value
+				if (hasValue) {
+					assetManager->DecrementAssetUse(assetType, assetReference->uuid);
+				}
+
+				// Handle new value
 				assetReference->uuid = newUuid;
-				};
+				assetManager->IncrementAssetUse(assetType, newUuid);
+			};
 
 			imguiEditor->PromptAssetPicker(assetType, callback);
 		}
 
 		if (ImGui::BeginDragDropTarget()) {
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(GetAssetTypeToString(assetReferenceType->assetType))) {
-				Uuid uuid = *static_cast<Uuid*>(payload->Data);
+				Uuid newUuid = *static_cast<Uuid*>(payload->Data);
 				AssetRegistry::Entry entry;
-				if (Editor::Manager::GetInstance().GetAssetRegistry().TryGetAssetData(uuid, entry)) {
-					assetReference->uuid = uuid;
+				if (Editor::Manager::GetInstance().GetAssetRegistry().TryGetAssetData(newUuid, entry)) {
+					// Handle old value
+					if (hasValue) {
+						assetManager->DecrementAssetUse(assetType, uuid);
+					}
+
+					// Handle new value
+					assetReference->uuid = newUuid;
+					assetManager->IncrementAssetUse(assetType, newUuid);
 				}
 			}
 

@@ -178,7 +178,7 @@ void SceneLoaderJson::ParseMember(
 		const char* uuidAsString = parameter.GetString();
 		assetRefPtr.uuid = Uuid(uuidAsString);
 		if (assetRefPtr.uuid.IsValid()) {
-			EngineCore::GetInstance().assetManager->GetAsset(type->assetType, assetRefPtr.uuid);
+			EngineCore::GetInstance().assetManager->IncrementAssetUse(type->assetType, assetRefPtr.uuid);
 		}
 		else {
 			EngineCore::GetInstance().Print(LogSeverity::Error, "Invalid UUID in entity!");

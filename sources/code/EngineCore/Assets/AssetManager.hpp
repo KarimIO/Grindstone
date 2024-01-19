@@ -28,6 +28,8 @@ namespace Grindstone::Assets {
 		virtual void QueueReloadAsset(AssetType assetType, Uuid uuid);
 		virtual void* GetAsset(AssetType assetType, const char* path);
 		virtual void* GetAsset(AssetType assetType, Uuid uuid);
+		virtual void* IncrementAssetUse(AssetType assetType, Uuid uuid);
+		virtual void DecrementAssetUse(AssetType assetType, Uuid uuid);
 		virtual bool LoadFile(const char* path, char*& dataPtr, size_t& fileSize);
 		virtual bool LoadFile(Uuid uuid, char*& dataPtr, size_t& fileSize);
 		virtual bool LoadFileText(Uuid uuid, std::string& dataPtr);
@@ -55,6 +57,12 @@ namespace Grindstone::Assets {
 		template<typename T>
 		T* GetAsset(Grindstone::AssetReference<T> assetReference) {
 			void* assetPtr = GetAsset(T::GetStaticType(), assetReference.uuid);
+			return static_cast<T*>(assetPtr);
+		};
+
+		template<typename T>
+		T* IncrementAssetUse(Uuid uuid) {
+			void* assetPtr = IncrementAssetUse(T::GetStaticType(), uuid);
 			return static_cast<T*>(assetPtr);
 		};
 
