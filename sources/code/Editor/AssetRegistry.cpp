@@ -24,7 +24,7 @@ void AssetRegistry::UpdateEntry(std::filesystem::path& path, std::string& name, 
 
 	assets[uuid] = Entry{
 		uuid,
-		name,
+		name, 
 		relativePath,
 		assetType
 	};
@@ -35,8 +35,7 @@ void AssetRegistry::WriteFile() {
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> documentWriter = rapidjson::PrettyWriter<rapidjson::StringBuffer>(documentStringBuffer);
 
 	documentWriter.StartArray();
-	for (auto& entryIterator : assets) {
-		auto& entry = entryIterator.second;
+	for (auto&[_,  entry] : assets) {
 		documentWriter.StartObject();
 		documentWriter.Key("name");
 		documentWriter.String(entry.name.c_str());
@@ -76,7 +75,7 @@ void AssetRegistry::ReadFile() {
 		rapidjson::Value* assetIterator = document.Begin();
 		assetIterator != document.End();
 		++assetIterator
-		) {
+	) {
 		rapidjson::Value& asset = *assetIterator;
 		const char* name = asset["name"].GetString();
 		const char* path = asset["path"].GetString();

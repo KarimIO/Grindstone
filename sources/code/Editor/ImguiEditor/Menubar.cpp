@@ -10,11 +10,12 @@
 #include "Modals/ModelConverterModal.hpp"
 #include "Modals/ImageConverterModal.hpp"
 
-#include "../EditorManager.hpp"
+#include "Editor/AssetPackSerializer.hpp"
+#include "Editor/EditorManager.hpp"
 #include "Menubar.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
-Menubar::Menubar(ImguiEditor* editor) : editor(editor) {}
+Menubar::Menubar(ImguiEditor* editor) : editor(editor), isCompilingAssets(false) {}
 
 void Menubar::Render() {
 	if (!ImGui::BeginMenuBar()) {
@@ -38,10 +39,24 @@ void Menubar::Render() {
 	}
 
 	ImGui::EndMenuBar();
+
+	if (isCompilingAssets) {
+		ImGui::OpenPopup("Compiling Assets...");
+
+		ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+
+		ImGui::SetNextWindowSize(ImVec2(400.0f, 0.0f));
+
+		if (ImGui::BeginPopupModal("Compiling Assets...", false, flags)) {
+			ImGui::ProgressBar(compilerOverallProgress);
+			ImGui::ProgressBar(compilerStageProgress);
+			ImGui::EndPopup();
+		}
+	}
 }
 
 void Menubar::RenderFileMenu() {
-	auto& engineCore = Editor::Manager::GetEngineCore();
+	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	SceneManagement::Scene* scene = engineCore.GetSceneManager()->scenes.begin()->second;
 	bool doesSceneHavePath = scene && scene->GetPath() != nullptr && strlen(scene->GetPath()) > 0;
 
@@ -73,6 +88,17 @@ void Menubar::RenderFileMenu() {
 	}
 	if (ImGui::MenuItem("Project Settings...", "Ctrl+P", editor->projectSettingsWindow->IsOpen())) {
 		OnProjectSettings();
+	}
+	if (ImGui::MenuItem("Compile Assets to Archive")) {
+		isCompilingAssets = true;
+		ImGui::OpenPopup("Compiling Assets...");
+		Editor::Manager& editor = Editor::Manager::GetInstance();
+		compilerThread = std::thread(
+			Assets::AssetPackSerializer::SerializeAllAssets,
+			&compilerOverallProgress,
+			&compilerStageProgress
+		);
+		compilerThread.detach();
 	}
 	if (ImGui::MenuItem("Exit", false)) {
 		OnExit();
@@ -110,7 +136,7 @@ void Menubar::RenderConvertMenu() {
 }
 
 void Menubar::OnNewFile() {
-	auto* sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
+	SceneManagement::SceneManager* sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
 	sceneManager->CreateEmptyScene("Untitled Scene");
 }
 
@@ -119,9 +145,10 @@ void Menubar::OnSaveFile() {
 }
 
 void Menubar::OnSaveAsFile() {
-	auto windowManager = Editor::Manager::GetEngineCore().windowManager;
-	auto window = windowManager->GetWindowByIndex(0);
-	auto filePath = window->SaveFileDialogue("Scene File (.json)\0*.json\0");
+	EngineCore& engineCore = Editor::Manager::GetEngineCore();
+	WindowManager* windowManager = engineCore.windowManager;
+	Window* window = windowManager->GetWindowByIndex(0);
+	std::filesystem::path filePath = window->SaveFileDialogue("Scene File (.json)\0*.json\0");
 
 	if (!filePath.empty()) {
 		SaveFile(filePath.string().c_str());
@@ -129,15 +156,15 @@ void Menubar::OnSaveAsFile() {
 }
 
 void Menubar::OnReloadFile() {
-	auto* sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
+	SceneManagement::SceneManager* sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
 	sceneManager->LoadScene(sceneManager->scenes.begin()->second->GetPath());
 }
 
 void Menubar::OnLoadFile() {
-	auto& engineCore = Editor::Manager::GetEngineCore();
-	auto windowManager = engineCore.windowManager;
-	auto window = windowManager->GetWindowByIndex(0);
-	auto filePath = window->OpenFileDialogue("Scene File (.json)\0*.json\0");
+	EngineCore& engineCore = Editor::Manager::GetEngineCore();
+	WindowManager* windowManager = engineCore.windowManager;
+	Window* window = windowManager->GetWindowByIndex(0);
+	std::filesystem::path filePath = window->OpenFileDialogue("Scene File (.json)\0*.json\0");
 
 	if (!filePath.empty()) {
 		auto* sceneManager = engineCore.GetSceneManager();

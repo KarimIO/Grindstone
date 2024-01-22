@@ -12,6 +12,7 @@ file(GLOB_RECURSE SOURCE_MAIN
 	EditorCamera.cpp EditorCamera.hpp
 	Camera.cpp Camera.hpp
 	AssetRegistry.cpp AssetRegistry.hpp
+	AssetPackSerializer.cpp AssetPackSerializer.hpp
 	TaskSystem.cpp TaskSystem.hpp
 )
 
