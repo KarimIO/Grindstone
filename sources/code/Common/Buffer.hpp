@@ -185,6 +185,7 @@ namespace Grindstone {
 			memcpy(currentPtr, srcPtr, srcSize);
 			Byte* prevPtr = currentPtr;
 			currentPtr += srcSize;
+			size += srcSize;
 			return prevPtr;
 		}
 

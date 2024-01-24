@@ -15,7 +15,7 @@
 #include "Menubar.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
-Menubar::Menubar(ImguiEditor* editor) : editor(editor), isCompilingAssets(false) {}
+Menubar::Menubar(ImguiEditor* editor) : editor(editor) {}
 
 void Menubar::Render() {
 	if (!ImGui::BeginMenuBar()) {
@@ -39,20 +39,6 @@ void Menubar::Render() {
 	}
 
 	ImGui::EndMenuBar();
-
-	if (isCompilingAssets) {
-		ImGui::OpenPopup("Compiling Assets...");
-
-		ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-
-		ImGui::SetNextWindowSize(ImVec2(400.0f, 0.0f));
-
-		if (ImGui::BeginPopupModal("Compiling Assets...", false, flags)) {
-			ImGui::ProgressBar(compilerOverallProgress);
-			ImGui::ProgressBar(compilerStageProgress);
-			ImGui::EndPopup();
-		}
-	}
 }
 
 void Menubar::RenderFileMenu() {
@@ -88,17 +74,6 @@ void Menubar::RenderFileMenu() {
 	}
 	if (ImGui::MenuItem("Project Settings...", "Ctrl+P", editor->projectSettingsWindow->IsOpen())) {
 		OnProjectSettings();
-	}
-	if (ImGui::MenuItem("Compile Assets to Archive")) {
-		isCompilingAssets = true;
-		ImGui::OpenPopup("Compiling Assets...");
-		Editor::Manager& editor = Editor::Manager::GetInstance();
-		compilerThread = std::thread(
-			Assets::AssetPackSerializer::SerializeAllAssets,
-			&compilerOverallProgress,
-			&compilerStageProgress
-		);
-		compilerThread.detach();
 	}
 	if (ImGui::MenuItem("Exit", false)) {
 		OnExit();

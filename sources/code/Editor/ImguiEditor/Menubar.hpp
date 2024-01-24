@@ -31,11 +31,6 @@ namespace Grindstone {
 
 			void SaveFile(const char* path);
 			ImguiEditor* editor = nullptr;
-
-			bool isCompilingAssets;
-			std::atomic<float> compilerOverallProgress;
-			std::atomic<float> compilerStageProgress;
-			std::thread compilerThread;
 		};
 	}
 }

@@ -2,6 +2,8 @@
 
 #include <atomic>
 
+#include "Editor/BuildProcess.hpp"
+
 namespace Grindstone::Assets::AssetPackSerializer {
-	void SerializeAllAssets(std::atomic<float>* outStageProgress, std::atomic<float>* outProgress);
+	void SerializeAllAssets(std::filesystem::path targetPath, Editor::BuildProcessStats* buildProgress, float minProgress, float deltaProgress);
 }

@@ -6,7 +6,10 @@ file(GLOB_RECURSE SOURCE_MAIN
 	${COMMON_DIR}/ResourcePipeline/AssetType.cpp ${COMMON_DIR}/ResourcePipeline/AssetType.hpp
 	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp ${COMMON_DIR}/ResourcePipeline/MetaFile.hpp ${COMMON_DIR}/ResourcePipeline/Uuid.hpp  ${COMMON_DIR}/ResourcePipeline/Uuid.cpp
 	../EngineCore/ECS/Entity.cpp
-	FileManager.cpp FileManager.hpp GitManager.cpp GitManager.hpp FileDirectory.hpp
+	FileDirectory.hpp
+	FileManager.cpp FileManager.hpp
+	GitManager.cpp GitManager.hpp
+	BuildProcess.cpp BuildProcess.hpp
 	EditorManager.cpp EditorManager.hpp
 	Selection.cpp Selection.hpp
 	EditorCamera.cpp EditorCamera.hpp
