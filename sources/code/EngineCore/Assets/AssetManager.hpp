@@ -30,9 +30,9 @@ namespace Grindstone::Assets {
 		virtual void* GetAsset(AssetType assetType, Uuid uuid);
 		virtual void* IncrementAssetUse(AssetType assetType, Uuid uuid);
 		virtual void DecrementAssetUse(AssetType assetType, Uuid uuid);
-		virtual bool LoadFile(const char* path, char*& dataPtr, size_t& fileSize);
-		virtual bool LoadFile(Uuid uuid, char*& dataPtr, size_t& fileSize);
-		virtual bool LoadFileText(Uuid uuid, std::string& dataPtr);
+		virtual bool LoadFile(AssetType assetType, const char* path, char*& dataPtr, size_t& fileSize);
+		virtual bool LoadFile(AssetType assetType, Uuid uuid, char*& dataPtr, size_t& fileSize);
+		virtual bool LoadFileText(AssetType assetType, Uuid uuid, std::string& dataPtr);
 		virtual bool LoadShaderSet(
 			Uuid uuid,
 			uint8_t shaderStagesBitMask,
@@ -70,7 +70,7 @@ namespace Grindstone::Assets {
 		// if there is a new type, we can change all assetTypes in meta files.
 		virtual void RegisterAssetType(AssetType assetType, const char* typeName, AssetImporter* importer);
 	private:
-		AssetLoader* assetLoader = nullptr;
+		Grindstone::Assets::AssetLoader* assetLoader = nullptr;
 		std::vector<std::string> assetTypeNames;
 		std::vector<AssetImporter*> assetTypeImporters;
 		std::vector<std::pair<AssetType, Uuid>> queuedAssetReloads;

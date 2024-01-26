@@ -8,7 +8,7 @@
 #include "BuildProcess.hpp"
 
 namespace Grindstone::Editor {
-	void CopyFileTo(std::filesystem::path srcBase, std::filesystem::path dstBase, std::string_view file) {
+	static void CopyFileTo(std::filesystem::path srcBase, std::filesystem::path dstBase, std::string_view file) {
 		std::filesystem::path src = srcBase / file;
 		std::filesystem::path dst = dstBase / file;
 
@@ -19,17 +19,17 @@ namespace Grindstone::Editor {
 		std::filesystem::copy(src, dst, std::filesystem::copy_options::update_existing);
 	}
 
-	void CopyLibrary(std::filesystem::path srcBase, std::filesystem::path dstBase, std::string_view file) {
+	static void CopyLibrary(std::filesystem::path srcBase, std::filesystem::path dstBase, std::string_view file) {
 		std::string filename = std::string(file) + ".dll";
 		std::filesystem::copy(srcBase / filename, dstBase / filename, std::filesystem::copy_options::update_existing);
 	}
 
-	void CopyExecutable(std::filesystem::path srcBase, std::filesystem::path dstBase, std::string_view file) {
+	static void CopyExecutable(std::filesystem::path srcBase, std::filesystem::path dstBase, std::string_view file) {
 		std::string filename = std::string(file) + ".exe";
 		std::filesystem::copy(srcBase / filename, dstBase / filename, std::filesystem::copy_options::update_existing);
 	}
 
-	void CopyPlugins(std::filesystem::path& enginePath, std::filesystem::path& targetPath) {
+	static void CopyPlugins(std::filesystem::path& enginePath, std::filesystem::path& targetPath) {
 		auto& editorManager = Editor::Manager::GetInstance();
 		std::filesystem::path prefabListFile = editorManager.GetProjectPath() / "buildSettings/pluginsManifest.txt";
 		auto prefabListFilePath = prefabListFile.string();
@@ -54,7 +54,7 @@ namespace Grindstone::Editor {
 		}
 	}
 
-	void CopyBinaries(std::filesystem::path& enginePath, std::filesystem::path& projectPath, std::filesystem::path& targetPath) {
+	static void CopyBinaries(std::filesystem::path& enginePath, std::filesystem::path& projectPath, std::filesystem::path& targetPath) {
 		CopyExecutable(enginePath, targetPath, "Application");
 		CopyLibrary(enginePath, targetPath, "EngineCore");
 		CopyLibrary(enginePath, targetPath, "fmtd");
@@ -74,12 +74,12 @@ namespace Grindstone::Editor {
 		CopyPlugins(enginePath, targetPath);
 	}
 
-	void CopyMetaData(std::filesystem::path& sourceBuildSettingsPath, std::filesystem::path& targetBuildSettingsPath) {
+	static void CopyMetaData(std::filesystem::path& sourceBuildSettingsPath, std::filesystem::path& targetBuildSettingsPath) {
 		CopyFileTo(sourceBuildSettingsPath, targetBuildSettingsPath, "pluginsManifest.txt");
 		CopyFileTo(sourceBuildSettingsPath, targetBuildSettingsPath, "scenesManifest.txt");
 	}
 
-	std::filesystem::path GetBuildPath() {
+	static std::filesystem::path GetBuildPath() {
 		WindowManager* windowManager = Editor::Manager::GetEngineCore().windowManager;
 		Window* window = windowManager->GetWindowByIndex(0);
 

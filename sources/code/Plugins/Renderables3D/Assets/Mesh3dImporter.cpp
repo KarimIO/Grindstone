@@ -207,7 +207,7 @@ void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
 bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 	char* fileContent = nullptr;
 	size_t fileSize;
-	if (!engineCore->assetManager->LoadFile(mesh.uuid, fileContent, fileSize)) {
+	if (!engineCore->assetManager->LoadFile(AssetType::Mesh3d, mesh.uuid, fileContent, fileSize)) {
 		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile Unable to load file with id " + mesh.uuid.ToString() + ".";
 		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
 		return false;

@@ -8,8 +8,8 @@ file(GLOB_RECURSE HEADER_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetManager.hpp 
 source_group("Assets\\Source Files" FILES ${SOURCE_ASSETS_BASE})
 source_group("Assets\\Header Files" FILES ${HEADER_ASSETS_BASE})
 
-file(GLOB_RECURSE SOURCE_ASSET_LOADERS ${ENGINE_CORE_DIR}/Assets/Loaders/FileAssetLoader.cpp)
-file(GLOB_RECURSE HEADER_ASSET_LOADERS ${ENGINE_CORE_DIR}/Assets/Loaders/FileAssetLoader.hpp ${ENGINE_CORE_DIR}/Assets/Loaders/AssetLoader.hpp)
+file(GLOB_RECURSE SOURCE_ASSET_LOADERS ${ENGINE_CORE_DIR}/Assets/Loaders/ArchiveAssetLoader.cpp ${ENGINE_CORE_DIR}/Assets/Loaders/ArchiveDirectoryDeserializer.cpp ${ENGINE_CORE_DIR}/Assets/Loaders/FileAssetLoader.cpp)
+file(GLOB_RECURSE HEADER_ASSET_LOADERS ${ENGINE_CORE_DIR}/Assets/Loaders/ArchiveAssetLoader.hpp ${ENGINE_CORE_DIR}/Assets/Loaders/ArchiveDirectoryDeserializer.hpp ${ENGINE_CORE_DIR}/Assets/Loaders/FileAssetLoader.hpp ${ENGINE_CORE_DIR}/Assets/Loaders/AssetLoader.hpp)
 source_group("Assets\\Loaders\\Source Files" FILES ${SOURCE_ASSET_LOADERS})
 source_group("Assets\\Loaders\\Header Files" FILES ${HEADER_ASSET_LOADERS})
 
