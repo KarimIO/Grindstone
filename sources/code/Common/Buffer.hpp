@@ -64,8 +64,9 @@ namespace Grindstone {
 		}
 
 		void ZeroInitialize() {
-			if (bufferPtr)
+			if (bufferPtr) {
 				memset(bufferPtr, 0, capacity);
+			}
 		}
 
 		virtual BufferView GetBufferView(uint64_t segmentOffset, uint64_t segmentSize) {
@@ -81,6 +82,10 @@ namespace Grindstone {
 			}
 
 			return BufferView(targetPtr, segmentSize);
+		}
+
+		Buffer& operator=(const Buffer&& other) noexcept {
+			return *this;
 		}
 
 		Byte& operator[](int index) {

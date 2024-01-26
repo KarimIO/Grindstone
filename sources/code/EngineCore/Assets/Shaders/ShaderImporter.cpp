@@ -63,7 +63,7 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 	AssetRendererManager* assetRendererManager = engineCore.assetRendererManager;
 
 	std::string outContent;
-	if (!assetManager->LoadFileText(shaderAsset.uuid, outContent)) {
+	if (!assetManager->LoadFileText(AssetType::Shader, shaderAsset.uuid, outContent)) {
 		std::string errorMsg = shaderAsset.uuid.ToString() + " shader reflection file not found.";
 		engineCore.Print(LogSeverity::Error, errorMsg.c_str());
 		return false;

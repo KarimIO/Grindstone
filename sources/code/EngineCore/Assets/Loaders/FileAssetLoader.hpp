@@ -8,9 +8,9 @@ namespace Grindstone {
 	namespace Assets {
 		class FileAssetLoader : public AssetLoader {
 		public:
-			virtual void Load(std::filesystem::path path, char*& outContents, size_t& fileSize) override;
-			virtual void Load(Uuid uuid, char*& outContents, size_t& fileSize) override;
-			virtual bool LoadText(Uuid uuid, std::string& outContents) override;
+			virtual void Load(AssetType assetType, std::filesystem::path path, char*& outContents, size_t& fileSize) override;
+			virtual void Load(AssetType assetType, Uuid uuid, char*& outContents, size_t& fileSize) override;
+			virtual bool LoadText(AssetType assetType, Uuid uuid, std::string& outContents) override;
 			virtual bool LoadShaderStage(
 				Uuid uuid,
 				GraphicsAPI::ShaderStage shaderStage,

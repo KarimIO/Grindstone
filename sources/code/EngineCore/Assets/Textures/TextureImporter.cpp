@@ -12,7 +12,7 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid) {
 	size_t fileSize;
 
 	EngineCore& engineCore = EngineCore::GetInstance();
-	if (!engineCore.assetManager->LoadFile(uuid, fileContents, fileSize)) {
+	if (!engineCore.assetManager->LoadFile(AssetType::Texture, uuid, fileContents, fileSize)) {
 		std::string errorMsg = "Unable to load texture: " + uuid.ToString();
 		engineCore.Print(LogSeverity::Warning, errorMsg.c_str());
 		return nullptr;
@@ -27,7 +27,7 @@ void* TextureImporter::ProcessLoadedFile(const char* path) {
 	size_t fileSize;
 
 	EngineCore& engineCore = EngineCore::GetInstance();
-	if (!engineCore.assetManager->LoadFile(path, fileContents, fileSize)) {
+	if (!engineCore.assetManager->LoadFile(AssetType::Texture, path, fileContents, fileSize)) {
 		std::string errorMsg = std::string("Unable to load texture: ") + path;
 		engineCore.Print(LogSeverity::Warning, errorMsg.c_str());
 		return nullptr;
@@ -143,7 +143,7 @@ void TextureImporter::QueueReloadAsset(Uuid uuid) {
 	char* fileContents;
 	size_t fileSize;
 
-	if (!engineCore.assetManager->LoadFile(uuid, fileContents, fileSize)) {
+	if (!engineCore.assetManager->LoadFile(AssetType::Texture, uuid, fileContents, fileSize)) {
 		std::string errorMsg = "Unable to load texture: " + uuid.ToString();
 		engineCore.Print(LogSeverity::Warning, errorMsg.c_str());
 		return;

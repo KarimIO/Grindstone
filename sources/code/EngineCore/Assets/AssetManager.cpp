@@ -1,6 +1,7 @@
 #include "AssetManager.hpp"
 #include "Loaders/AssetLoader.hpp"
 #include "Loaders/FileAssetLoader.hpp"
+#include "Loaders/ArchiveAssetLoader.hpp"
 
 // Assets
 #include "Materials/MaterialAsset.hpp"
@@ -15,7 +16,10 @@ using namespace Grindstone;
 using namespace Grindstone::Assets;
 
 AssetManager::AssetManager() {
-	assetLoader = new FileAssetLoader();
+	// TODO: Decide via preprocessor after we implement building the engine code during game build
+	assetLoader = EngineCore::GetInstance().isEditor
+		? static_cast<AssetLoader*>(new FileAssetLoader())
+		: static_cast<AssetLoader*>(new ArchiveAssetLoader());
 
 	size_t count = static_cast<size_t>(AssetType::Count);
 	assetTypeNames.resize(count);
@@ -123,11 +127,11 @@ void* AssetManager::GetAsset(AssetType assetType, Uuid uuid) {
 	}
 }
 
-bool AssetManager::LoadFile(const char* path, char*& fileData, size_t& fileSize) {
+bool AssetManager::LoadFile(AssetType assetType, const char* path, char*& fileData, size_t& fileSize) {
 	fileData = nullptr;
 	fileSize = 0;
 
-	assetLoader->Load(std::filesystem::path(path), fileData, fileSize);
+	assetLoader->Load(assetType, std::filesystem::path(path), fileData, fileSize);
 	return fileData != nullptr;
 }
 
@@ -135,11 +139,11 @@ bool AssetManager::LoadFile(const char* path, char*& fileData, size_t& fileSize)
 // Make loading indirect to conceal how files are loading from asset importers
 // This allows multiple files to be imported per asset, and allows different types of loading depending on the
 // asset, such as shaders loading from a file if it's not compiled yet, or loading a compiled shader if it is loaded
-bool AssetManager::LoadFile(Uuid uuid, char*& fileData, size_t& fileSize) {
+bool AssetManager::LoadFile(AssetType assetType, Uuid uuid, char*& fileData, size_t& fileSize) {
 	fileData = nullptr;
 	fileSize = 0;
 
-	assetLoader->Load(uuid, fileData, fileSize);
+	assetLoader->Load(assetType, uuid, fileData, fileSize);
 	return fileData != nullptr;
 }
 
@@ -147,8 +151,8 @@ bool AssetManager::LoadFile(Uuid uuid, char*& fileData, size_t& fileSize) {
 // Make loading indirect to conceal how files are loading from asset importers
 // This allows multiple files to be imported per asset, and allows different types of loading depending on the
 // asset, such as shaders loading from a file if it's not compiled yet, or loading a compiled shader if it is loaded
-bool AssetManager::LoadFileText(Uuid uuid, std::string& fileData) {
-	return assetLoader->LoadText(uuid, fileData);
+bool AssetManager::LoadFileText(AssetType assetType, Uuid uuid, std::string& fileData) {
+	return assetLoader->LoadText(assetType, uuid, fileData);
 }
 
 bool AssetManager::LoadShaderSet(

@@ -31,7 +31,7 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
 
 	std::string contentData;
-	if (!assetManager->LoadFileText(uuid, contentData)) {
+	if (!assetManager->LoadFileText(AssetType::Mesh3d, uuid, contentData)) {
 		std::string error = "Could not find material with id " + uuid.ToString() + ".";
 		EngineCore::GetInstance().Print(LogSeverity::Error, error.c_str());
 		return nullptr;
@@ -93,7 +93,7 @@ void MaterialImporter::QueueReloadAsset(Uuid uuid) {
 	MaterialAsset* materialAsset = &materialIterator->second;
 
 	std::string contentData;
-	if (!assetManager->LoadFileText(uuid, contentData)) {
+	if (!assetManager->LoadFileText(AssetType::Mesh3d, uuid, contentData)) {
 		EngineCore::GetInstance().Print(LogSeverity::Error, "Could not find material by file.");
 		return;
 	}

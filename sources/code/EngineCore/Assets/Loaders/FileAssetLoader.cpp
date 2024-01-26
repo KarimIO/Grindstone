@@ -10,15 +10,15 @@ using namespace Grindstone::Assets;
 // Out:
 //	- outContents should be nullptr
 //	- fileSize should be 0
-void FileAssetLoader::Load(Uuid uuid, char*& outContents, size_t& fileSize) {
+void FileAssetLoader::Load(AssetType assetType, Uuid uuid, char*& outContents, size_t& fileSize) {
 	std::filesystem::path path = EngineCore::GetInstance().GetAssetPath(uuid.ToString());
-	Load(path, outContents, fileSize);
+	Load(assetType, path, outContents, fileSize);
 }
 
 // Out:
 //	- outContents should be nullptr
 //	- fileSize should be 0
-void FileAssetLoader::Load(std::filesystem::path path, char*& outContents, size_t& fileSize) {
+void FileAssetLoader::Load(AssetType assetType, std::filesystem::path path, char*& outContents, size_t& fileSize) {
 	if (!std::filesystem::exists(path)) {
 		return;
 	}
@@ -36,7 +36,7 @@ void FileAssetLoader::Load(std::filesystem::path path, char*& outContents, size_
 	file.read(outContents, fileSize);
 }
 
-bool FileAssetLoader::LoadText(Uuid uuid, std::string& outContents) {
+bool FileAssetLoader::LoadText(AssetType assetType, Uuid uuid, std::string& outContents) {
 	std::filesystem::path path = EngineCore::GetInstance().GetAssetPath(uuid.ToString());
 
 	if (!std::filesystem::exists(path)) {
