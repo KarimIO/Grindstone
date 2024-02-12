@@ -1379,6 +1379,8 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 		currentCommandBuffer->BindGraphicsPipeline(imageBasedLightingPipeline);
 
 		auto view = registry.view<const EnvironmentMapComponent>();
+
+		bool hasEnvMap = false;
 		view.each([&](const EnvironmentMapComponent& environmentMapComponent) {
 			if (currentEnvironmentMapUuid == environmentMapComponent.specularTexture.uuid) {
 				return;
@@ -1388,6 +1390,7 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 			Grindstone::TextureAsset* texAsset = environmentMapComponent.specularTexture.Get();
 			if (texAsset != nullptr) {
 				Texture* tex = texAsset->texture;
+				hasEnvMap = true;
 
 				GraphicsAPI::DescriptorSet::Binding binding{};
 				binding.bindingIndex = 0;
@@ -1398,12 +1401,15 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 				environmentMapDescriptorSet->ChangeBindings(&binding, 1);
 			}
 		});
-		std::array<GraphicsAPI::DescriptorSet*, 3> iblDescriptors{};
-		iblDescriptors[0] = imageSet.lightingDescriptorSet;
-		iblDescriptors[1] = ssaoInputDescriptorSet;
-		iblDescriptors[2] = environmentMapDescriptorSet;
-		currentCommandBuffer->BindGraphicsDescriptorSet(imageBasedLightingPipeline, iblDescriptors.data(), static_cast<uint32_t>(iblDescriptors.size()));
-		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+
+		if (hasEnvMap) {
+			std::array<GraphicsAPI::DescriptorSet*, 3> iblDescriptors{};
+			iblDescriptors[0] = imageSet.lightingDescriptorSet;
+			iblDescriptors[1] = ssaoInputDescriptorSet;
+			iblDescriptors[2] = environmentMapDescriptorSet;
+			currentCommandBuffer->BindGraphicsDescriptorSet(imageBasedLightingPipeline, iblDescriptors.data(), static_cast<uint32_t>(iblDescriptors.size()));
+			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+		}
 	}
 
 	if (pointLightPipeline != nullptr) {
