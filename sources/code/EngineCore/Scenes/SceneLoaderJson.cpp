@@ -8,6 +8,7 @@
 #include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
 #include "EngineCore/Assets/AssetManager.hpp"
 #include "EngineCore/Reflection/TypeDescriptorAsset.hpp"
+#include "EngineCore/Assets/AssetManager.hpp"
 #include "SceneLoaderJson.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Common/Math.hpp"
@@ -21,16 +22,21 @@ SceneLoaderJson::SceneLoaderJson(Scene* scene, const char* path) : scene(scene),
 }
 
 bool SceneLoaderJson::Load(const char* path) {
-	if (!std::filesystem::exists(path)) {
-		std::string printMsg = std::string("Error loading scene: ") + path;
-		EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, printMsg.c_str());
+	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
+	std::string fileContents;
+	if (!assetManager->LoadFileText(AssetType::Scene, std::filesystem::path(path), fileContents)) {
 		return false;
 	}
 
 	size_t strLen = strlen(path) + 1;
-	scene->path = (char*)malloc(strLen);
+	scene->path = static_cast<char*>(malloc(strLen));
+
+	if (scene->path == nullptr) {
+		return false;
+	}
+
 	strcpy_s(scene->path, strLen, path);
-	std::string fileContents = Utils::LoadFileText(path);
+
 	document.Parse(fileContents.c_str());
 
 	std::string printMsg = std::string("Loading scene: ") + path;
@@ -48,7 +54,12 @@ void SceneLoaderJson::ProcessMeta() {
 		: "Untitled Scene";
 
 	size_t strLen = strlen(path) + 1;
-	scene->name = (char*)malloc(strLen);
+	scene->name = static_cast<char*>(malloc(strLen));
+
+	if (scene->name == nullptr) {
+		return;
+	}
+
 	strcpy_s(scene->name, strLen, name);
 }
 

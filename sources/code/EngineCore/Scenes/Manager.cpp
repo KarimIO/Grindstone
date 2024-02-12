@@ -1,5 +1,7 @@
-#include "EngineCore/EngineCore.hpp"
-#include "EngineCore/BuildSettings/SceneBuildSettings.hpp"
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Assets/AssetManager.hpp>
+#include <EngineCore/BuildSettings/SceneBuildSettings.hpp>
+
 #include "SceneLoaderJson.hpp"
 #include "SceneWriterJson.hpp"
 #include "Manager.hpp"
@@ -30,13 +32,13 @@ void SceneManager::LoadDefaultScene() {
 }
 
 void SceneManager::EditorUpdate() {
-	for (auto& scene : scenes) {
+	for (std::pair<const std::string, Scene*>& scene : scenes) {
 		scene.second->EditorUpdate();
 	}
 }
 
 void SceneManager::Update() {
-	for (auto& scene : scenes) {
+	for (std::pair<const std::string, Scene*>& scene : scenes) {
 		scene.second->Update();
 	}
 }
@@ -49,8 +51,7 @@ Scene* SceneManager::LoadScene(const char* path) {
 Scene* SceneManager::LoadSceneAdditively(const char* path) {
 	Scene* newScene = new Scene();
 	scenes[path] = newScene;
-	std::string filepath = Grindstone::EngineCore::GetInstance().GetAssetPath(path).string();
-	SceneLoaderJson sceneLoader(newScene, filepath.c_str());
+	SceneLoaderJson sceneLoader(newScene, path);
 	ProcessSceneAfterLoading(newScene);
 
 	return newScene;
@@ -61,8 +62,8 @@ void SceneManager::AddPostLoadProcess(std::function<void(Scene*)> fn) {
 }
 
 void SceneManager::ProcessSceneAfterLoading(Scene* scene) {
-	for (auto fn : postLoadProcesses) {
-		fn(scene);
+	for (std::function<void(Scene*)> postLoadProcess : postLoadProcesses) {
+		postLoadProcess(scene);
 	}
 }
 
