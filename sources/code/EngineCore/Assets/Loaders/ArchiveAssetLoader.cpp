@@ -26,6 +26,9 @@ void ArchiveAssetLoader::Load(AssetType assetType, Uuid uuid, char*& outContents
 	if (assetTypeIndex >= static_cast<size_t>(AssetType::Count)) {
 		outContents = nullptr;
 		fileSize = 0;
+
+		std::string errorString = "Invalid Asset Type when trying to load file: " + uuid.ToString();
+		EngineCore::GetInstance().Print(LogSeverity::Error, errorString.c_str());
 		return;
 	}
 
@@ -35,6 +38,9 @@ void ArchiveAssetLoader::Load(AssetType assetType, Uuid uuid, char*& outContents
 	if (assetIterator == assetTypeSegment.assets.end()) {
 		outContents = nullptr;
 		fileSize = 0;
+
+		std::string errorString = "Could not load asset: " + uuid.ToString();
+		EngineCore::GetInstance().Print(LogSeverity::Error, errorString.c_str());
 		return;
 	}
 
@@ -50,6 +56,9 @@ void ArchiveAssetLoader::Load(AssetType assetType, std::filesystem::path path, c
 	if (assetTypeIndex >= static_cast<size_t>(AssetType::Count)) {
 		outContents = nullptr;
 		fileSize = 0;
+
+		std::string errorString = "Invalid Asset Type when trying to load file: " + path.string();
+		EngineCore::GetInstance().Print(LogSeverity::Error, errorString.c_str());
 		return;
 	}
 
@@ -64,6 +73,9 @@ void ArchiveAssetLoader::Load(AssetType assetType, std::filesystem::path path, c
 	if (assetInfo == nullptr) {
 		outContents = nullptr;
 		fileSize = 0;
+
+		std::string errorString = "Could not load asset: " + path.string();
+		EngineCore::GetInstance().Print(LogSeverity::Error, errorString.c_str());
 		return;
 	}
 
@@ -76,6 +88,23 @@ bool ArchiveAssetLoader::LoadText(AssetType assetType, Uuid uuid, std::string& o
 	Load(assetType, uuid, charPtr, fileSize);
 
 	if (charPtr == nullptr || fileSize == 0) {
+		std::string errorString = "Could not load file: " + uuid.ToString();
+		EngineCore::GetInstance().Print(LogSeverity::Error, errorString.c_str());
+		return false;
+	}
+
+	outContents = std::string_view(charPtr, fileSize);
+	return true;
+}
+
+bool ArchiveAssetLoader::LoadText(AssetType assetType, std::filesystem::path path, std::string& outContents) {
+	char* charPtr;
+	size_t fileSize;
+	Load(assetType, path, charPtr, fileSize);
+
+	if (charPtr == nullptr || fileSize == 0) {
+		std::string errorString = "Could not load file: " + path.string();
+		EngineCore::GetInstance().Print(LogSeverity::Error, errorString.c_str());
 		return false;
 	}
 

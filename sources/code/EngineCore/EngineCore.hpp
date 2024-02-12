@@ -86,7 +86,7 @@ namespace Grindstone {
 
 		template<typename... Args>
 		void Print(LogSeverity logSeverity, fmt::format_string<Args...> fmt, Args &&...args) {
-			GetInstance().engineCore->Print(logSeverity, textFormat, args);
+			GetInstance()->Print(logSeverity, textFormat, args);
 			va_end(args);
 		}
 		virtual void Print(LogSeverity logSeverity, const char* str);
