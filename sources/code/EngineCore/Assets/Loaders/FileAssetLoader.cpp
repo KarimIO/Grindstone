@@ -20,6 +20,8 @@ void FileAssetLoader::Load(AssetType assetType, Uuid uuid, char*& outContents, s
 //	- fileSize should be 0
 void FileAssetLoader::Load(AssetType assetType, std::filesystem::path path, char*& outContents, size_t& fileSize) {
 	if (!std::filesystem::exists(path)) {
+		std::string errorString = "Could not load file: " + path.string();
+		EngineCore::GetInstance().Print(LogSeverity::Error, errorString.c_str());
 		return;
 	}
 
@@ -38,8 +40,13 @@ void FileAssetLoader::Load(AssetType assetType, std::filesystem::path path, char
 
 bool FileAssetLoader::LoadText(AssetType assetType, Uuid uuid, std::string& outContents) {
 	std::filesystem::path path = EngineCore::GetInstance().GetAssetPath(uuid.ToString());
+	return LoadText(assetType, path, outContents);
+}
 
+bool FileAssetLoader::LoadText(AssetType assetType, std::filesystem::path path, std::string& outContents) {
 	if (!std::filesystem::exists(path)) {
+		std::string errorString = "Could not load file: " + path.string();
+		EngineCore::GetInstance().Print(LogSeverity::Error, errorString.c_str());
 		return false;
 	}
 

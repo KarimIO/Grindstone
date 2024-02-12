@@ -13,6 +13,7 @@ namespace Grindstone::Assets {
 		virtual void Load(AssetType assetType, std::filesystem::path path, char*& outContents, size_t& fileSize) = 0;
 		virtual void Load(AssetType assetType, Uuid uuid, char*& outContents, size_t& fileSize) = 0;
 		virtual bool LoadText(AssetType assetType, Uuid uuid, std::string& outContents) = 0;
+		virtual bool LoadText(AssetType assetType, std::filesystem::path path, std::string& outContents) = 0;
 		virtual bool LoadShaderStage(
 			Uuid uuid,
 			GraphicsAPI::ShaderStage shaderStage,

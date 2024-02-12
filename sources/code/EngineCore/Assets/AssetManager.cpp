@@ -59,6 +59,11 @@ void AssetManager::ReloadQueuedAssets() {
 		}
 
 		AssetImporter* assetImporter = assetTypeImporters[assetTypeSizeT];
+
+		if (assetImporter == nullptr) {
+			return;
+		}
+
 		assetImporter->QueueReloadAsset(assetSet.second);
 	}
 
@@ -153,6 +158,10 @@ bool AssetManager::LoadFile(AssetType assetType, Uuid uuid, char*& fileData, siz
 // asset, such as shaders loading from a file if it's not compiled yet, or loading a compiled shader if it is loaded
 bool AssetManager::LoadFileText(AssetType assetType, Uuid uuid, std::string& fileData) {
 	return assetLoader->LoadText(assetType, uuid, fileData);
+}
+
+bool AssetManager::LoadFileText(AssetType assetType, std::filesystem::path path, std::string& fileData) {
+	return assetLoader->LoadText(assetType, path, fileData);
 }
 
 bool AssetManager::LoadShaderSet(

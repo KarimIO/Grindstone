@@ -33,6 +33,7 @@ namespace Grindstone::Assets {
 		virtual bool LoadFile(AssetType assetType, const char* path, char*& dataPtr, size_t& fileSize);
 		virtual bool LoadFile(AssetType assetType, Uuid uuid, char*& dataPtr, size_t& fileSize);
 		virtual bool LoadFileText(AssetType assetType, Uuid uuid, std::string& dataPtr);
+		virtual bool LoadFileText(AssetType assetType, std::filesystem::path path, std::string& dataPtr);
 		virtual bool LoadShaderSet(
 			Uuid uuid,
 			uint8_t shaderStagesBitMask,

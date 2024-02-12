@@ -205,10 +205,18 @@ namespace Grindstone::Assets::AssetPackSerializer {
 			outputFile.archives.emplace_back(ArchiveDirectoryFile::ArchiveInfo{ archive.crc });
 		}
 
-		std::ofstream output(outputPath);
+		std::ofstream output(outputPath, std::ios::binary);
+
+		if (!output.is_open()) {
+			throw std::runtime_error(std::string("Failed to open ") + outputPath.string());
+		}
 
 		// Write Header
 		{
+			outputFile.header.headerSize			= sizeof(ArchiveDirectoryFile::Header);
+			outputFile.header.version				= ArchiveDirectoryFile::CURRENT_VERSION;
+			outputFile.header.buildCode				= 0;
+			outputFile.header.assetTypeCount		= static_cast<uint32_t>(outputFile.assetInfoIndex.size());
 			outputFile.header.assetTypeIndexSize	= static_cast<uint32_t>(assetTypeIndexSize);
 			outputFile.header.assetInfoIndexSize	= static_cast<uint32_t>(assetIndexSize);
 			outputFile.header.archiveIndexSize		= static_cast<uint32_t>(archiveIndexSize);
