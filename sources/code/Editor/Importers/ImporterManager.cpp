@@ -1,10 +1,37 @@
+#include <Common/ResourcePipeline/Uuid.hpp>
+#include <Common/ResourcePipeline/AssetType.hpp>
+#include <Common/ResourcePipeline/MetaFile.hpp>
+#include <Editor/EditorManager.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Assets/AssetManager.hpp>
+
 #include "ImporterManager.hpp"
 #include "ModelImporter.hpp"
 #include "ShaderImporter.hpp"
 #include "TextureImporter.hpp"
 #include "AudioImporter.hpp"
 #include "MaterialImporter.hpp"
+
 using namespace Grindstone::Importers;
+
+static void ImportScene(std::filesystem::path& path) {
+	Grindstone::MetaFile* metaFile = new Grindstone::MetaFile(path);
+	std::string subassetName = path.filename().string();
+	size_t dotPos = subassetName.find('.');
+	if (dotPos != std::string::npos) {
+		subassetName = subassetName.substr(0, dotPos);
+	}
+
+	Grindstone::Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, Grindstone::AssetType::Scene);
+
+	std::filesystem::path outputPath = Grindstone::Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
+	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
+	metaFile->Save();
+
+	Grindstone::Editor::Manager::GetEngineCore().assetManager->QueueReloadAsset(Grindstone::AssetType::Scene, uuid);
+
+	delete metaFile;
+}
 
 ImporterManager::ImporterManager() {
 	AddImporterFactory("fbx", ImportModel);
@@ -24,6 +51,8 @@ ImporterManager::ImporterManager() {
 	AddImporterFactory("glsl", ImportShadersFromGlsl);
 
 	AddImporterFactory("wav", ImportAudio);
+
+	AddImporterFactory("json", ImportScene);
 }
 
 bool ImporterManager::Import(std::filesystem::path& path) {
