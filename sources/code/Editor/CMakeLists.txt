@@ -112,7 +112,7 @@ add_executable(Editor ${EDITOR_HEADERS} ${EDITOR_SOURCES})
 
 set_property(TARGET Editor PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${BUILD_DIRECTORY})
 
-target_compile_definitions(Editor PUBLIC NOMINMAX)
+target_compile_definitions(Editor PUBLIC NOMINMAX GLM_ENABLE_EXPERIMENTAL)
 target_include_directories(Editor PUBLIC
 	${MONO_PATH}/include/mono-2.0
 	${CODE_DIR}
