@@ -5,25 +5,23 @@
 using namespace Grindstone::Editor::ScriptBuilder;
 
 CSharpProjectBuilder::CSharpProjectBuilder(
-	CSharpProjectMetaData metaData
+	const CSharpProjectMetaData& metaData
 ) : assemblyName(metaData.assemblyName),
 	guid(metaData.assemblyGuid) {
 }
 
-void CSharpProjectBuilder::AddCodeFile(std::filesystem::path& fileName) {
+void CSharpProjectBuilder::AddCodeFile(const std::filesystem::path& fileName) {
 	codeFiles.push_back(fileName);
 }
 
-void CSharpProjectBuilder::AddNonCodeFile(std::filesystem::path& fileName) {
+void CSharpProjectBuilder::AddNonCodeFile(const std::filesystem::path& fileName) {
 	nonCodeFiles.push_back(fileName);
 }
 
-void CSharpProjectBuilder::CreateProject() {
-	std::string content;
-	
-	content = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+void CSharpProjectBuilder::CreateProject() const {
+	std::string content = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
 		"<Project xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\" ToolsVersion=\"Current\">\n";
-	
+
 	WriteProjectInfo(content);
 	WriteCodeFiles(content);
 	WriteTargets(content);
@@ -33,9 +31,9 @@ void CSharpProjectBuilder::CreateProject() {
 	OutputFile(content);
 }
 
-void CSharpProjectBuilder::OutputFile(std::string& outputContent) {
-	std::string filename = assemblyName + ".csproj";
-	auto outputFilePath = Editor::Manager::GetInstance().GetProjectPath() / filename;
+void CSharpProjectBuilder::OutputFile(const std::string& outputContent) const {
+	const std::string filename = assemblyName + ".csproj";
+	const auto outputFilePath = Editor::Manager::GetInstance().GetProjectPath() / filename;
 
 	std::ofstream outputFileStream(outputFilePath);
 
@@ -47,9 +45,9 @@ void CSharpProjectBuilder::OutputFile(std::string& outputContent) {
 	outputFileStream << outputContent;
 	outputFileStream.close();
 }
-	
-void CSharpProjectBuilder::WriteProjectInfo(std::string& output) {
-	std::string dotNetVersion = "v4.7.1";
+
+void CSharpProjectBuilder::WriteProjectInfo(std::string& output) const {
+	const std::string dotNetVersion = "v4.8";
 
 	output += "\t<PropertyGroup>\n"
 		"\t\t<AssemblyName>" + assemblyName + "</AssemblyName>\n"
@@ -61,7 +59,7 @@ void CSharpProjectBuilder::WriteProjectInfo(std::string& output) {
 		"\t</PropertyGroup>\n";
 }
 
-void CSharpProjectBuilder::WriteCodeFiles(std::string& output) {
+void CSharpProjectBuilder::WriteCodeFiles(std::string& output) const {
 	output +=  "\t<ItemGroup>\n";
 
 	for (auto &codeFileName : codeFiles) {
@@ -69,7 +67,7 @@ void CSharpProjectBuilder::WriteCodeFiles(std::string& output) {
 		std::replace(filename.begin(), filename.end(), '/', '\\');
 		output += "\t\t<Compile Include=\"" + filename + "\" />\n";
 	}
-	
+
 	for (auto &nonCodeFile : nonCodeFiles) {
 		std::string filename = nonCodeFile.string();
 		std::replace(filename.begin(), filename.end(), '/', '\\');
@@ -81,12 +79,12 @@ void CSharpProjectBuilder::WriteCodeFiles(std::string& output) {
 	output += "\t</ItemGroup>\n";
 }
 
-void CSharpProjectBuilder::WriteDllReferenceByFilename(std::string& output, std::string path) {
-	std::filesystem::path fullPath = Editor::Manager::GetInstance().GetEngineBinariesPath() / path;
+void CSharpProjectBuilder::WriteDllReferenceByFilename(std::string& output, const std::string& path) {
+	const std::filesystem::path fullPath = Editor::Manager::GetInstance().GetEngineBinariesPath() / path;
 	WriteDllReference(output, fullPath.string());
 }
 
-void CSharpProjectBuilder::WriteDllReference(std::string& output, std::string path) {
+void CSharpProjectBuilder::WriteDllReference(std::string& output, const std::string& path) {
 	output += "\t\t<Reference Include=\"GrindstoneCSharpCore\">\n" \
 		"\t\t\t<HintPath>" + path + "</HintPath>\n" \
 		"\t\t</Reference>\n";

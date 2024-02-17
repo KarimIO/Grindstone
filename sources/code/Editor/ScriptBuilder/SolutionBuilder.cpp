@@ -4,14 +4,13 @@
 #include "SolutionBuilder.hpp"
 using namespace Grindstone::Editor::ScriptBuilder;
 
-void SolutionBuilder::AddProject(CSharpProjectMetaData& projectMetaData) {
+void SolutionBuilder::AddProject(const CSharpProjectMetaData& projectMetaData) {
 	projects.emplace_back(projectMetaData.assemblyName, projectMetaData.assemblyGuid);
 }
 
 void SolutionBuilder::CreateSolution() {
-	std::string content;
-	
-	content = "Microsoft Visual Studio Solution File, Format Version 11.00\n"
+	std::string content =
+		"Microsoft Visual Studio Solution File, Format Version 11.00\n"
 		"# Visual Studio 2010\n";
 
 	WriteMainProjectSection(content);
@@ -25,9 +24,9 @@ void SolutionBuilder::CreateSolution() {
 	OutputFile(content);
 }
 
-void SolutionBuilder::OutputFile(std::string& output) {
-	std::string filename = "Application.sln";
-	auto outputFilePath = Editor::Manager::GetInstance().GetProjectPath() / filename;
+void SolutionBuilder::OutputFile(const std::string& output) {
+	const std::string filename = "Application.sln";
+	const std::filesystem::path outputFilePath = Editor::Manager::GetInstance().GetProjectPath() / filename;
 
 	std::ofstream outputFileStream(outputFilePath);
 
@@ -40,7 +39,7 @@ void SolutionBuilder::OutputFile(std::string& output) {
 	outputFileStream.close();
 }
 
-void SolutionBuilder::WriteMainProjectSection(std::string& output) {
+void SolutionBuilder::WriteMainProjectSection(std::string& output) const {
 	for (auto& project : projects) {
 		output +=
 			"Project(\"{" + project.assemblyGuid + "}\") = \"" + project.assemblyName + "\", \"" + project.assemblyName + ".csproj\", \"{" + project.assemblyGuid + "}\"\n"
