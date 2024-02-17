@@ -45,7 +45,7 @@ find_package(Vulkan REQUIRED)
 
 target_include_directories(PluginGraphicsVulkan PUBLIC ${CODE_DIR} ${DEPS_DIR} ${VULKAN_HEADERS_INCLUDE_DIRS})
 
-target_compile_definitions(PluginGraphicsVulkan PRIVATE GRAPHICS_DLL)
+target_compile_definitions(PluginGraphicsVulkan PRIVATE GRAPHICS_DLL GLM_ENABLE_EXPERIMENTAL)
 
 find_package(glfw3 CONFIG REQUIRED)
 

@@ -22,7 +22,7 @@ add_library(
 	${RENDERABLES_3D_COMPONENTS_HEADER}
 )
 
-target_compile_definitions(PluginRenderables3D PUBLIC RENDERABLES_3D_DLL)
+target_compile_definitions(PluginRenderables3D PUBLIC RENDERABLES_3D_DLL GLM_ENABLE_EXPERIMENTAL)
 
 find_path(GLM_INCLUDE_DIRS "glm/glm.hpp")
 

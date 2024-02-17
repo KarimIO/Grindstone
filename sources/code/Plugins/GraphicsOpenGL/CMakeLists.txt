@@ -12,13 +12,16 @@ set(GL_COMMON_HEADERS ${GRAPHICS_DIR}/DepthTarget.hpp ${GRAPHICS_DIR}/RenderTarg
 set(GL_OBJ_SOURCES ${GL_OBJ_SOURCES} GLWindowGraphicsBinding.cpp)
 set(GL_OBJ_HEADERS ${GL_OBJ_HEADERS} GLWindowGraphicsBinding.hpp)
 
-if (WIN32)
-    set(GL_WINDOW_SOURCES ${GL_WINDOW_SOURCES} ${COMMON_DIR}/Window/Win32Window.cpp)
-    set(GL_WINDOW_HEADERS ${GL_WINDOW_HEADERS} ${COMMON_DIR}/Window/Win32Window.hpp)
-elseif (UNIX)
-    set(GL_WINDOW_SOURCES ${GL_WINDOW_SOURCES} ${COMMON_DIR}/Window/X11Window.cpp)
-    set(GL_WINDOW_HEADERS ${GL_WINDOW_HEADERS} ${COMMON_DIR}/Window/X11Window.hpp)
-endif()
+#if (WIN32)
+#    set(GL_WINDOW_SOURCES ${GL_WINDOW_SOURCES} ${COMMON_DIR}/Window/Win32Window.cpp)
+#    set(GL_WINDOW_HEADERS ${GL_WINDOW_HEADERS} ${COMMON_DIR}/Window/Win32Window.hpp)
+#elseif (UNIX)
+#    set(GL_WINDOW_SOURCES ${GL_WINDOW_SOURCES} ${COMMON_DIR}/Window/X11Window.cpp)
+#    set(GL_WINDOW_HEADERS ${GL_WINDOW_HEADERS} ${COMMON_DIR}/Window/X11Window.hpp)
+#endif()
+
+set(GL_WINDOW_SOURCES ${GL_WINDOW_SOURCES} ${COMMON_DIR}/Window/GlfwWindow.cpp)
+set(GL_WINDOW_HEADERS ${GL_WINDOW_HEADERS} ${COMMON_DIR}/Window/GlfwWindow.hpp)
 
 set(GL_SOURCES ${GL_CORE_SOURCES} ${GL_OBJ_SOURCES} ${GL_WINDOW_SOURCES} ${GL_DISPLAY_SOURCES})
 set(GL_HEADERS ${GL_CORE_HEADERS} ${GL_OBJ_HEADERS} ${GL_WINDOW_HEADERS} ${GL_DISPLAY_HEADERS} ${GL_COMMON_HEADERS})
@@ -38,7 +41,7 @@ add_library(PluginGraphicsOpenGL MODULE ${GL_SOURCES} ${GL_HEADERS})
 
 target_compile_features(PluginGraphicsOpenGL PRIVATE cxx_std_17)
 
-target_compile_definitions(PluginGraphicsOpenGL PUBLIC GRAPHICS_OPENGL GRAPHICS_DLL)
+target_compile_definitions(PluginGraphicsOpenGL PUBLIC GRAPHICS_OPENGL GRAPHICS_DLL GLM_ENABLE_EXPERIMENTAL)
 target_include_directories(PluginGraphicsOpenGL PUBLIC ${CODE_DIR})
 
 target_precompile_headers(PluginGraphicsOpenGL
@@ -47,4 +50,6 @@ target_precompile_headers(PluginGraphicsOpenGL
 
 find_package(OpenGL REQUIRED)
 find_package(gl3w CONFIG REQUIRED)
-target_link_libraries(PluginGraphicsOpenGL unofficial::gl3w::gl3w glm::glm ${OPENGL_gl_LIBRARY} spdlog::spdlog spdlog::spdlog_header_only)
+find_package(glfw3 CONFIG REQUIRED)
+
+target_link_libraries(PluginGraphicsOpenGL glfw unofficial::gl3w::gl3w glm::glm ${OPENGL_gl_LIBRARY} spdlog::spdlog spdlog::spdlog_header_only)

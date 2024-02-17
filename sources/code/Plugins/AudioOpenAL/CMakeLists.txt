@@ -24,7 +24,7 @@ target_compile_features(PluginAudioOpenAL PRIVATE cxx_std_17)
 find_path(ENTT_INCLUDE_DIRS "entt/entt.hpp")
 find_package(OpenAL CONFIG REQUIRED)
 find_path(DRLIBS_INCLUDE_DIRS "dr_flac.h")
-target_compile_definitions(PluginAudioOpenAL PUBLIC AUDIO_OPENAL AUDIO_DLL)
+target_compile_definitions(PluginAudioOpenAL PUBLIC AUDIO_OPENAL AUDIO_DLL GLM_ENABLE_EXPERIMENTAL)
 target_include_directories(PluginAudioOpenAL PUBLIC ${CODE_DIR} ${ENTT_INCLUDE_DIRS} ${DRLIBS_INCLUDE_DIRS})
 
 target_precompile_headers(PluginAudioOpenAL PUBLIC pch.hpp)
