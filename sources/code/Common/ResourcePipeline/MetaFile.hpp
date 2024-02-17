@@ -26,13 +26,13 @@ namespace Grindstone {
 
 		void Load(std::filesystem::path);
 		void Save();
-		bool TryGetDefaultSubasset(Subasset& subasset);
+		bool TryGetDefaultSubasset(Subasset& subasset) const;
 		Uuid GetOrCreateDefaultSubassetUuid(std::string& subassetName, AssetType assetType);
 		Uuid GetOrCreateSubassetUuid(std::string& subassetName, AssetType assetType);
-		size_t GetSubassetCount();
-		bool TryGetDefaultSubassetUuid(Uuid& outUuid);
-		bool TryGetSubassetUuid(std::string& subassetName, Uuid& outUuid);
-		bool IsOutdatedVersion();
+		size_t GetSubassetCount() const;
+		bool TryGetDefaultSubassetUuid(Uuid& outUuid) const;
+		bool TryGetSubassetUuid(std::string& subassetName, Uuid& outUuid) const;
+		bool IsOutdatedVersion() const;
 	public:
 		using Iterator = std::vector<Subasset>::iterator;
 		using ConstIterator = std::vector<Subasset>::const_iterator;

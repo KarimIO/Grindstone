@@ -19,6 +19,7 @@ namespace Grindstone::Assets {
 			uint32_t assetTypeIndexSize;
 			uint32_t assetInfoIndexSize;
 			uint32_t archiveIndexSize;
+			uint32_t stringsSize;
 		};
 
 		struct AssetTypeSectionInfo {

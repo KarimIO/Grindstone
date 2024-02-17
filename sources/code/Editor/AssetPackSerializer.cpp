@@ -99,10 +99,13 @@ namespace Grindstone::Assets::AssetPackSerializer {
 		Byte* dstPtr = static_cast<Byte*>(buffer.AddToBuffer(loadedFile.data(), size));
 		uint64_t offset = dstPtr - buffer.Get();
 
-		std::string& path = entry.path.string();
+		std::string pathAsStr = entry.path.string();
+		size_t stringStart = archiveDirectory.strings.size();
+		archiveDirectory.strings += pathAsStr;
+		const char* stringStartPtr = archiveDirectory.strings.data() + stringStart;
 		std::map<Uuid, ArchiveDirectory::AssetInfo>& assetTypeMap = archiveDirectory.assetTypeIndices[assetType].assets;
 		assetTypeMap[entry.uuid] = {
-			path,
+			std::string_view(stringStartPtr, pathAsStr.size()),
 			crc,
 			archiveIndex,
 			offset,
@@ -182,15 +185,12 @@ namespace Grindstone::Assets::AssetPackSerializer {
 			uint64_t offset = outputFile.assetInfoIndex[i].offset;
 			for (auto& [uuid, asset] : archiveDirectory.assetTypeIndices[i].assets) {
 				uint64_t filenameOffset = stringBaseOffset + outputString.size();
-				outputString += asset.filename;
-
-				uint16_t filenameSize = static_cast<uint16_t>(asset.filename.size());
 
 				outputFile.assets.emplace_back(
 					ArchiveDirectoryFile::AssetInfo{
 						uuid,
-						filenameOffset,
-						filenameSize,
+						asset.filename.data() - string.data(),
+						asset.filename.size(),
 						asset.crc,
 						asset.archiveIndex,
 						asset.offset,
@@ -218,8 +218,9 @@ namespace Grindstone::Assets::AssetPackSerializer {
 			outputFile.header.buildCode				= 0;
 			outputFile.header.assetTypeCount		= static_cast<uint32_t>(outputFile.assetInfoIndex.size());
 			outputFile.header.assetTypeIndexSize	= static_cast<uint32_t>(assetTypeIndexSize);
-			outputFile.header.assetInfoIndexSize	= static_cast<uint32_t>(assetIndexSize);
-			outputFile.header.archiveIndexSize		= static_cast<uint32_t>(archiveIndexSize);
+			outputFile.header.assetInfoIndexSize = static_cast<uint32_t>(assetIndexSize);
+			outputFile.header.archiveIndexSize = static_cast<uint32_t>(archiveIndexSize);
+			outputFile.header.stringsSize = static_cast<uint32_t>(outputString.size() + 1);
 			output.write(reinterpret_cast<const char*>(&outputFile.header), headerSize);
 		}
 
@@ -233,7 +234,7 @@ namespace Grindstone::Assets::AssetPackSerializer {
 		output.write(reinterpret_cast<const char*>(&outputFile.archives), archiveIndexSize);
 		
 		// Write Strings
-		output.write(outputString.c_str(), outputString.size());
+		output.write(outputString.c_str(), outputFile.header.stringsSize);
 		
 		output.close();
 	}

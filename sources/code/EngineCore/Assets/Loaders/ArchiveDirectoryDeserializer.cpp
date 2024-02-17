@@ -54,7 +54,13 @@ void ArchiveDirectoryDeserializer::Load(std::filesystem::path path) {
 		return;
 	}
 
+
 	char* assetTypeSectionCharPtr = offset + sizeof(ArchiveDirectoryFile::Header);
+
+	archiveDirectory.strings.resize(header->stringsSize);
+	char* srcPtr = assetTypeSectionCharPtr + header->archiveIndexSize + header->assetInfoIndexSize + header->assetTypeIndexSize;
+	memcpy(archiveDirectory.strings.data(), srcPtr, header->stringsSize);
+
 	ArchiveDirectoryFile::AssetTypeSectionInfo* assetTypeSectionArr = reinterpret_cast<ArchiveDirectoryFile::AssetTypeSectionInfo*>(assetTypeSectionCharPtr);
 	archiveDirectory.assetTypeIndices.resize(header->assetTypeCount);
 	for (uint32_t assetTypeIndex = 0; assetTypeIndex < header->assetTypeCount; ++assetTypeIndex) {
@@ -70,9 +76,10 @@ void ArchiveDirectoryDeserializer::Load(std::filesystem::path path) {
 			ArchiveDirectory::AssetInfo& dstAsset = assetTypeMap[srcAsset.uuid];
 			dstAsset.archiveIndex = srcAsset.archiveIndex;
 			dstAsset.crc = srcAsset.crc;
-			dstAsset.filename = std::string_view(offset + srcAsset.filenameOffset, srcAsset.filenameSize);
+			dstAsset.filename = std::string_view(archiveDirectory.strings.data() + srcAsset.filenameOffset, srcAsset.filenameSize);
 			dstAsset.offset = srcAsset.offset;
 			dstAsset.size = srcAsset.size;
 		}
 	}
+
 }

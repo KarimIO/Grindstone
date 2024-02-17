@@ -16,7 +16,7 @@
 using namespace Grindstone;
 using namespace Grindstone::Importers;
 
-void ImportTextureAndMakeOutputStr(std::string textureName, std::filesystem::path& inputTexturePath, std::vector<std::string>& arr) {
+static void ImportTextureAndMakeOutputStr(std::string textureName, std::filesystem::path& inputTexturePath, std::vector<std::string>& arr) {
 	if (inputTexturePath == "") {
 		return;
 	}
@@ -27,7 +27,7 @@ void ImportTextureAndMakeOutputStr(std::string textureName, std::filesystem::pat
 	arr.push_back("\t\t\"" + textureName + "\": \"" + textureImporter.GetUuid().ToString());
 }
 
-void CreateStandardOrCutoutMaterial(StandardMaterialCreateInfo& createInfo, std::filesystem::path outputPath, bool isCutout) {
+static void CreateStandardOrCutoutMaterial(StandardMaterialCreateInfo& createInfo, std::filesystem::path outputPath, bool isCutout) {
 	std::filesystem::path p = outputPath;
 
 	std::ofstream output(outputPath);
@@ -109,7 +109,7 @@ void MaterialImporter::Import(std::filesystem::path& path) {
 	Editor::Manager::GetEngineCore().assetManager->QueueReloadAsset(AssetType::Material, uuid);
 }
 
-Uuid MaterialImporter::GetUuidAfterImport() {
+Uuid MaterialImporter::GetUuidAfterImport() const {
 	return uuid;
 }
 
