@@ -22,8 +22,8 @@ namespace Grindstone {
 			private:
 				void BuildProject();
 				void CreateProjectsAndSolution();
-				void CreateProject(CSharpProjectMetaData metaData);
-				void CreateSolution(CSharpProjectMetaData metaData);
+				void CreateProject(const CSharpProjectMetaData& metaData);
+				static void CreateSolution(const CSharpProjectMetaData& metaData);
 
 				std::vector<std::filesystem::path> files;
 			};

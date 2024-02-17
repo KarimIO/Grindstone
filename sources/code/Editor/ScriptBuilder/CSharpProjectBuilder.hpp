@@ -11,17 +11,17 @@ namespace Grindstone {
 		namespace ScriptBuilder {
 			class CSharpProjectBuilder {
 			public:
-				CSharpProjectBuilder(CSharpProjectMetaData project);
-				void AddCodeFile(std::filesystem::path& fileName);
-				void AddNonCodeFile(std::filesystem::path& fileName);
-				void CreateProject();
+				CSharpProjectBuilder(const CSharpProjectMetaData& metaData);
+				void AddCodeFile(const std::filesystem::path& fileName);
+				void AddNonCodeFile(const std::filesystem::path& fileName);
+				void CreateProject() const;
 			private:
-				void OutputFile(std::string& output);
-				void WriteProjectInfo(std::string& output);
-				void WriteCodeFiles(std::string& output);
-				void WriteDllReferenceByFilename(std::string& output, std::string path);
-				void WriteDllReference(std::string& output, std::string path);
-				void WriteTargets(std::string& output);
+				void OutputFile(const std::string& output) const;
+				void WriteProjectInfo(std::string& output) const;
+				void WriteCodeFiles(std::string& output) const;
+				static void WriteDllReferenceByFilename(std::string& output, const std::string& path);
+				static void WriteDllReference(std::string& output, const std::string& path);
+				static void WriteTargets(std::string& output);
 				
 				std::string assemblyName;
 				std::string guid;

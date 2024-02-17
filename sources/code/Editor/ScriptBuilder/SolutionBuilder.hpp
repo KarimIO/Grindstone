@@ -10,15 +10,15 @@ namespace Grindstone {
 		namespace ScriptBuilder {
 			class SolutionBuilder {
 			public:
-				void AddProject(CSharpProjectMetaData& projectMetaData);
+				void AddProject(const CSharpProjectMetaData& projectMetaData);
 				void CreateSolution();
 			private:
-				void OutputFile(std::string& output);
-				void WriteMainProjectSection(std::string& output);
+				static void OutputFile(const std::string& output);
+				void WriteMainProjectSection(std::string& output) const;
 				void WriteSolutionConfigs(std::string& output);
 				void WriteProjectConfigs(std::string& output);
 				void WriteSolutionProperties(std::string& output);
-				
+
 				std::vector<CSharpProjectMetaData> projects;
 			};
 		}
