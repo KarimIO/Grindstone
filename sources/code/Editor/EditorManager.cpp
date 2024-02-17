@@ -77,7 +77,7 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 }
 
 void Manager::InitializeQuitCommands() {
-	auto dispatcher = engineCore->GetEventDispatcher();
+	Events::Dispatcher* dispatcher = engineCore->GetEventDispatcher();
 	dispatcher->AddEventListener(Grindstone::Events::EventType::KeyPress, std::bind(&Manager::OnKeyPress, this, std::placeholders::_1));
 	dispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&Manager::OnTryQuit, this, std::placeholders::_1));
 	dispatcher->AddEventListener(Grindstone::Events::EventType::WindowForceQuit, std::bind(&Manager::OnForceQuit, this, std::placeholders::_1));
@@ -97,6 +97,8 @@ void Manager::Run() {
 		case PlayMode::Play:
 			engineCore->RunLoopIteration();
 			break;
+		case PlayMode::Pause:
+			break;
 		}
 
 		imguiEditor->Update();
@@ -105,7 +107,7 @@ void Manager::Run() {
 }
 
 void Manager::SetPlayMode(PlayMode newPlayMode) {
-	// Reset input before setting the new playmode
+	// Reset input before setting the new playMode
 	engineCore->GetInputManager()->SetCursorIsRawMotion(false);
 	engineCore->GetInputManager()->SetCursorMode(Input::CursorMode::Normal);
 
@@ -133,20 +135,20 @@ std::filesystem::path Grindstone::Editor::Manager::GetEngineBinariesPath() {
 }
 
 bool Manager::OnKeyPress(Grindstone::Events::BaseEvent* ev) {
-	auto onKeyPressEvent = static_cast<Events::KeyPressEvent*>(ev);
+	const Events::KeyPressEvent* onKeyPressEvent = dynamic_cast<Events::KeyPressEvent*>(ev);
+
 	if (onKeyPressEvent == nullptr) {
 		return false;
 	}
 
-	Events::KeyPressCode keyCode = onKeyPressEvent->code;
-
-	switch (keyCode) {
+	switch (onKeyPressEvent->code) {
 		case Events::KeyPressCode::Escape:
 			if (GetPlayMode() != Editor::PlayMode::Editor) {
 				SetPlayMode(Editor::PlayMode::Editor);
 				return true;
 			}
 			break;
+		default: ;
 	}
 
 	return false;
@@ -172,9 +174,9 @@ bool Manager::LoadEngine() {
 		std::cerr << "Failed to load EngineCore Module.\n";
 		return false;
 	}
-	
+
 	CreateEngineFunction* createEngineFn =
-		(CreateEngineFunction*)Utilities::Modules::GetFunction(engineCoreLibraryHandle, "CreateEngine");
+		static_cast<CreateEngineFunction*>(Utilities::Modules::GetFunction(engineCoreLibraryHandle, "CreateEngine"));
 	if (createEngineFn == nullptr) {
 		std::cerr << "Failed to load CreateEngine in EngineCore Module.\n";
 		return false;
@@ -184,10 +186,10 @@ bool Manager::LoadEngine() {
 	createInfo.isEditor = true;
 	createInfo.applicationModuleName = "GrindstoneGameEditor";
 	createInfo.applicationTitle = "Grindstone Game Editor";
-	std::string projectPathAsStr = projectPath.string();
+	const std::string projectPathAsStr = projectPath.string();
 	createInfo.projectPath = projectPathAsStr.c_str();
 
-	std::string currentPath = std::filesystem::current_path().string();
+	const std::string currentPath = std::filesystem::current_path().string();
 	createInfo.engineBinaryPath = currentPath.c_str();
 	engineCore = createEngineFn(createInfo);
 
@@ -197,6 +199,6 @@ bool Manager::LoadEngine() {
 Manager::~Manager() {
 	if (engineCoreLibraryHandle) {
 		Grindstone::Utilities::Modules::Unload(engineCoreLibraryHandle);
-		engineCoreLibraryHandle = 0;
+		engineCoreLibraryHandle = nullptr;
 	}
 }

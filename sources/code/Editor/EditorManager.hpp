@@ -65,8 +65,8 @@ namespace Grindstone {
 			bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
 			bool OnForceQuit(Grindstone::Events::BaseEvent* ev);
 			template<typename... Args>
-			static void Print(LogSeverity logSeverity, fmt::format_string<Args...> fmt, Args &&...args) {
-				std::string outStr = fmt::format(fmt, std::forward<Args>(args)...);
+			static void Print(const LogSeverity logSeverity, fmt::format_string<Args...> fmt, Args &&...args) {
+				const std::string outStr = fmt::format(fmt, std::forward<Args>(args)...);
 				GetInstance().engineCore->Print(logSeverity, outStr.c_str());
 			}
 			ManipulationMode manipulationMode = ManipulationMode::Translate;

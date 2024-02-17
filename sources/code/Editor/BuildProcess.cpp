@@ -88,7 +88,7 @@ namespace Grindstone::Editor {
 			return "";
 		}
 
-		auto defaultBuildPath = Editor::Manager::GetInstance().GetProjectPath();
+		std::filesystem::path defaultBuildPath = Editor::Manager::GetInstance().GetProjectPath();
 		return window->BrowseFolder(defaultBuildPath);
 	}
 
@@ -97,13 +97,13 @@ namespace Grindstone::Editor {
 			return;
 		}
 
-		std::filesystem::path targetPath = GetBuildPath();
+		const std::filesystem::path targetPath = GetBuildPath();
 
 		if (targetPath.empty()) {
 			return;
 		}
 
-		EngineCore& engine = Grindstone::Editor::Manager::GetEngineCore();
+		const EngineCore& engine = Grindstone::Editor::Manager::GetEngineCore();
 		std::filesystem::path engineBinPath = engine.GetEngineBinaryPath();
 		std::filesystem::path projectBinPath = engine.GetBinaryPath();
 		std::filesystem::path sourceBuildSettingsPath = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings";

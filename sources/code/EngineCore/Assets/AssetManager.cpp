@@ -10,7 +10,6 @@
 #include "Shaders/ShaderImporter.hpp"
 #include "Textures/TextureAsset.hpp"
 #include "Textures/TextureImporter.hpp"
-#include "Shaders/ShaderAsset.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::Assets;
@@ -40,7 +39,7 @@ AssetManager::~AssetManager() {
 }
 
 AssetImporter* AssetManager::GetManager(AssetType assetType) {
-	size_t index = static_cast<size_t>(assetType);
+	const size_t index = static_cast<size_t>(assetType);
 	return assetTypeImporters[index];
 }
 
@@ -52,8 +51,8 @@ void AssetManager::QueueReloadAsset(AssetType assetType, Uuid uuid) {
 void AssetManager::ReloadQueuedAssets() {
 	std::scoped_lock lock(reloadMutex);
 
-	for (auto& assetSet : queuedAssetReloads) {
-		size_t assetTypeSizeT = static_cast<size_t>(assetSet.first);
+	for (const auto& [assetType, uuid] : queuedAssetReloads) {
+		const size_t assetTypeSizeT = static_cast<size_t>(assetType);
 		if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
 			return;
 		}
@@ -64,7 +63,7 @@ void AssetManager::ReloadQueuedAssets() {
 			return;
 		}
 
-		assetImporter->QueueReloadAsset(assetSet.second);
+		assetImporter->QueueReloadAsset(uuid);
 	}
 
 	queuedAssetReloads.clear();
@@ -75,7 +74,7 @@ void* AssetManager::GetAsset(AssetType assetType, const char* path) {
 		return nullptr;
 	}
 
-	size_t assetTypeSizeT = static_cast<size_t>(assetType);
+	const size_t assetTypeSizeT = static_cast<size_t>(assetType);
 	if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
 		return nullptr;
 	}
@@ -92,7 +91,7 @@ void* AssetManager::GetAsset(AssetType assetType, const char* path) {
 }
 
 void* AssetManager::IncrementAssetUse(AssetType assetType, Uuid uuid) {
-	size_t assetTypeSizeT = static_cast<size_t>(assetType);
+	const size_t assetTypeSizeT = static_cast<size_t>(assetType);
 	if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
 		return nullptr;
 	}
@@ -102,7 +101,7 @@ void* AssetManager::IncrementAssetUse(AssetType assetType, Uuid uuid) {
 }
 
 void AssetManager::DecrementAssetUse(AssetType assetType, Uuid uuid) {
-	size_t assetTypeSizeT = static_cast<size_t>(assetType);
+	const size_t assetTypeSizeT = static_cast<size_t>(assetType);
 	if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
 		return;
 	}
@@ -116,7 +115,7 @@ void* AssetManager::GetAsset(AssetType assetType, Uuid uuid) {
 		return nullptr;
 	}
 
-	size_t assetTypeSizeT = static_cast<size_t>(assetType);
+	const size_t assetTypeSizeT = static_cast<size_t>(assetType);
 	if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
 		return nullptr;
 	}
@@ -180,9 +179,9 @@ bool AssetManager::LoadShaderSet(
 	for (
 		ShaderStage stage = ShaderStage::Vertex;
 		stage < ShaderStage::Compute;
-		stage = (ShaderStage)((uint8_t)stage + 1)
+		stage = static_cast<ShaderStage>(static_cast<uint8_t>(stage) + 1)
 	) {
-		uint8_t stageBit = (1 << (uint8_t)stage);
+		const uint8_t stageBit = (1 << static_cast<uint8_t>(stage));
 		if ((stageBit & shaderStagesBitMaskAsUint) != stageBit) {
 			continue;
 		}

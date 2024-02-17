@@ -189,8 +189,8 @@ namespace Grindstone::Assets::AssetPackSerializer {
 				outputFile.assets.emplace_back(
 					ArchiveDirectoryFile::AssetInfo{
 						uuid,
-						asset.filename.data() - string.data(),
-						asset.filename.size(),
+						0,
+						static_cast<uint16_t>(asset.filename.size()),
 						asset.crc,
 						asset.archiveIndex,
 						asset.offset,
@@ -226,16 +226,16 @@ namespace Grindstone::Assets::AssetPackSerializer {
 
 		// Write Asset Type Index
 		output.write(reinterpret_cast<const char*>(outputFile.assetInfoIndex.data()), assetTypeIndexSize);
-		
+
 		// Write Asset Maps
 		output.write(reinterpret_cast<const char*>(outputFile.assets.data()), assetIndexSize);
-		
+
 		// Write Archive CRCs
 		output.write(reinterpret_cast<const char*>(&outputFile.archives), archiveIndexSize);
-		
+
 		// Write Strings
 		output.write(outputString.c_str(), outputFile.header.stringsSize);
-		
+
 		output.close();
 	}
 

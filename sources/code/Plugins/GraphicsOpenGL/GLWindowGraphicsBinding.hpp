@@ -14,7 +14,7 @@ namespace Grindstone {
 			~GLWindowGraphicsBinding();
 
 			// Inherited via WindowGraphicsBinding
-			virtual bool Initialize(Window* window) override;
+			virtual bool Initialize(Window* newWindow) override;
 			virtual void ImmediateSetContext() override;
 			virtual void ImmediateSwapBuffers() override;
 			virtual bool AcquireNextImage() override;
@@ -26,7 +26,7 @@ namespace Grindstone {
 			virtual uint32_t GetMaxFramesInFlight() override;
 			virtual void Resize(uint32_t width, uint32_t height) override;
 		public:
-			void ShareLists(GLWindowGraphicsBinding* binding_to_copy_from);
+			void ShareLists(GLWindowGraphicsBinding* bindingToCopyFrom);
 		private:
 			Window* window;
 #ifdef _WIN32

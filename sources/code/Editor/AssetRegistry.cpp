@@ -24,7 +24,7 @@ void AssetRegistry::UpdateEntry(std::filesystem::path& path, std::string& name, 
 
 	assets[uuid] = Entry{
 		uuid,
-		name, 
+		name,
 		relativePath,
 		assetType
 	};
@@ -51,7 +51,7 @@ void AssetRegistry::WriteFile() {
 
 	const char* content = documentStringBuffer.GetString();
 	std::ofstream file(assetRegistryPath);
-	file.write(content, strlen(content));
+	file.write(content, static_cast<std::streamsize>(strlen(content)));
 	file.flush();
 	file.close();
 }
@@ -62,7 +62,7 @@ void AssetRegistry::ReadFile() {
 		return;
 	}
 
-	std::string assetRegistryContent = Grindstone::Utils::LoadFileText(assetRegistryPath.string().c_str());
+	const std::string assetRegistryContent = Grindstone::Utils::LoadFileText(assetRegistryPath.string().c_str());
 
 	rapidjson::Document document;
 	document.Parse(assetRegistryContent.data());
@@ -80,7 +80,7 @@ void AssetRegistry::ReadFile() {
 		const char* name = asset["name"].GetString();
 		const char* path = asset["path"].GetString();
 		Uuid uuid = asset["uuid"].GetString();
-		AssetType assetType = GetAssetTypeFromString(asset["assetType"].GetString());
+		const AssetType assetType = GetAssetTypeFromString(asset["assetType"].GetString());
 
 		assets[uuid] = Entry{
 			uuid,
@@ -96,7 +96,7 @@ bool AssetRegistry::HasAsset(Uuid uuid) {
 }
 
 bool AssetRegistry::TryGetAssetData(Uuid uuid, AssetRegistry::Entry& outEntry) {
-	auto& assetIterator = assets.find(uuid);
+	const auto& assetIterator = assets.find(uuid);
 	if (assetIterator == assets.end()) {
 		return false;
 	}
@@ -105,10 +105,10 @@ bool AssetRegistry::TryGetAssetData(Uuid uuid, AssetRegistry::Entry& outEntry) {
 	return true;
 }
 
-void AssetRegistry::FindAllFilesOfType(AssetType assetType, std::vector<Entry>& outEntries) {
-	for (auto& entry : assets) {
-		if (entry.second.assetType == assetType) {
-			outEntries.push_back(entry.second);
+void AssetRegistry::FindAllFilesOfType(AssetType assetType, std::vector<Entry>& outEntries) const {
+	for (const auto& [_, entry] : assets) {
+		if (entry.assetType == assetType) {
+			outEntries.push_back(entry);
 		}
 	}
 }

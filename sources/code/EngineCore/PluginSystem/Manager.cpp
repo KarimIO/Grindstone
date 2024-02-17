@@ -53,7 +53,7 @@ void Manager::LoadPluginList() {
 }
 
 void Manager::SetupInterfacePointers() {
-	auto& engineCore = EngineCore::GetInstance();
+	const EngineCore& engineCore = EngineCore::GetInstance();
 	pluginInterface.systemRegistrar = engineCore.GetSystemRegistrar();
 	pluginInterface.componentRegistrar = engineCore.GetComponentRegistrar();
 }
@@ -92,8 +92,19 @@ bool Manager::Load(const char *path) {
 	}
 
 #ifdef _WIN32
-	DWORD lastError = GetLastError();
-	Logger::Print(LogSeverity::Error, "Unable to load plugin {0} with {1}", path, lastError);
+	const DWORD lastError = GetLastError();
+	char errorString[256] = {};
+	FormatMessage(
+		FORMAT_MESSAGE_FROM_SYSTEM,
+		nullptr,
+		lastError,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		errorString,
+		255,
+		nullptr
+	);
+
+	Logger::Print(LogSeverity::Error, "Unable to load plugin \"{0}\": {1}", path, errorString);
 #else
 	Logger::Print(LogSeverity::Error, "Unable to load plugin: {0}", path);
 #endif
@@ -112,7 +123,7 @@ void Manager::Remove(const char* name) {
 	if (it != plugins.end()) {
 		auto handle = it->second;
 		if (handle) {
-			auto releaseModuleFnPtr = (void (*)(Interface*))Modules::GetFunction(handle, "ReleaseModule");
+			auto releaseModuleFnPtr = static_cast<void (*)(Interface*)>(Modules::GetFunction(handle, "ReleaseModule"));
 
 			if (releaseModuleFnPtr) {
 				releaseModuleFnPtr(&pluginInterface);

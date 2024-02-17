@@ -7,7 +7,6 @@
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "Common/Window/Window.hpp"
 #include "Common/Logging.hpp"
-#include "EngineCore/Assets/AssetManager.hpp"
 #include <EngineCore/ECS/ComponentFunctions.hpp>
 
 namespace Grindstone {

@@ -1,7 +1,5 @@
 #include "pch.hpp"
 
-#include <entt/entt.hpp>
-
 #include "EngineCore.hpp"
 #include "Logger.hpp"
 #include "Profiling.hpp"
@@ -13,7 +11,6 @@
 #include "PluginSystem/Manager.hpp"
 #include "Events/InputManager.hpp"
 #include "Common/Graphics/Core.hpp"
-#include "Common/Display/DisplayManager.hpp"
 #include "Common/Window/WindowManager.hpp"
 #include "Events/Dispatcher.hpp"
 #include "Common/Event/WindowEvent.hpp"
@@ -55,7 +52,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	pluginManager = new Plugins::Manager(this);
 	pluginManager->Load("PluginGraphicsVulkan");
 
-	Grindstone::Window* win = nullptr;
+	Grindstone::Window* mainWindow = nullptr;
 	{
 		GRIND_PROFILE_SCOPE("Set up InputManager and Window");
 		inputManager = new Input::Manager(eventDispatcher);
@@ -67,17 +64,17 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 		windowCreationInfo.height = 600;
 		windowCreationInfo.engineCore = this;
 		windowCreationInfo.isSwapchainControlledByEngine = !createInfo.isEditor;
-		win = windowManager->Create(windowCreationInfo);
+		mainWindow = windowManager->Create(windowCreationInfo);
 		eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&EngineCore::OnTryQuit, this, std::placeholders::_1));
 		eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowForceQuit, std::bind(&EngineCore::OnForceQuit, this, std::placeholders::_1));
 	}
 
 	{
 		GRIND_PROFILE_SCOPE("Initialize Graphics Core");
-		GraphicsAPI::Core::CreateInfo graphicsCoreInfo{ win, true };
+		GraphicsAPI::Core::CreateInfo graphicsCoreInfo{ mainWindow, true };
 		graphicsCore->Initialize(graphicsCoreInfo);
 
-		inputManager->SetMainWindow(win);
+		inputManager->SetMainWindow(mainWindow);
 	}
 
 	{
@@ -164,39 +161,39 @@ EngineCore::~EngineCore() {
 	delete pluginManager;
 }
 
-void EngineCore::RegisterGraphicsCore(GraphicsAPI::Core* graphicsCore) {
-	this->graphicsCore = graphicsCore;
+void EngineCore::RegisterGraphicsCore(GraphicsAPI::Core* newGraphicsCore) {
+	graphicsCore = newGraphicsCore;
 }
 
-void EngineCore::RegisterInputManager(Input::Interface* inputManager) {
-	this->inputManager = inputManager;
+void EngineCore::RegisterInputManager(Input::Interface* newInputManager) {
+	inputManager = newInputManager;
 }
 
-Input::Interface* EngineCore::GetInputManager() {
+Input::Interface* EngineCore::GetInputManager() const {
 	return inputManager;
 }
 
-SceneManagement::SceneManager* EngineCore::GetSceneManager() {
+SceneManagement::SceneManager* EngineCore::GetSceneManager() const {
 	return sceneManager;
 }
 
-Plugins::Manager* EngineCore::GetPluginManager() {
+Plugins::Manager* EngineCore::GetPluginManager() const {
 	return pluginManager;
 }
 
-ECS::ComponentRegistrar* EngineCore::GetComponentRegistrar() {
+ECS::ComponentRegistrar* EngineCore::GetComponentRegistrar() const {
 	return componentRegistrar;
 }
 
-GraphicsAPI::Core* EngineCore::GetGraphicsCore() {
+GraphicsAPI::Core* EngineCore::GetGraphicsCore() const {
 	return graphicsCore;
 }
 
-ECS::SystemRegistrar* EngineCore::GetSystemRegistrar() {
+ECS::SystemRegistrar* EngineCore::GetSystemRegistrar() const {
 	return systemRegistrar;
 }
 
-Events::Dispatcher* EngineCore::GetEventDispatcher() {
+Events::Dispatcher* EngineCore::GetEventDispatcher() const {
 	return eventDispatcher;
 }
 
@@ -204,23 +201,23 @@ BaseRenderer* EngineCore::CreateRenderer(GraphicsAPI::RenderPass* targetRenderPa
 	return new DeferredRenderer(targetRenderPass);
 }
 
-std::filesystem::path EngineCore::GetProjectPath() {
+std::filesystem::path EngineCore::GetProjectPath() const {
 	return projectPath;
 }
 
-std::filesystem::path EngineCore::GetBinaryPath() {
+std::filesystem::path EngineCore::GetBinaryPath() const {
 	return binaryPath;
 }
 
-std::filesystem::path EngineCore::GetEngineBinaryPath() {
+std::filesystem::path EngineCore::GetEngineBinaryPath() const {
 	return engineBinaryPath;
 }
 
-std::filesystem::path EngineCore::GetAssetsPath() {
+std::filesystem::path EngineCore::GetAssetsPath() const {
 	return assetsPath;
 }
 
-std::filesystem::path EngineCore::GetAssetPath(std::string subPath) {
+std::filesystem::path EngineCore::GetAssetPath(std::string subPath) const {
 	return assetsPath / subPath;
 }
 
@@ -229,7 +226,7 @@ void EngineCore::Print(LogSeverity logSeverity, const char* str) {
 }
 
 bool EngineCore::OnTryQuit(Grindstone::Events::BaseEvent* ev) {
-	auto castedEv = (Grindstone::Events::WindowTryQuitEvent*)ev;
+	const auto castedEv = dynamic_cast<Grindstone::Events::WindowTryQuitEvent*>(ev);
 	shouldClose = true;
 	windowManager->CloseWindow(castedEv->window);
 
@@ -237,7 +234,7 @@ bool EngineCore::OnTryQuit(Grindstone::Events::BaseEvent* ev) {
 }
 
 bool EngineCore::OnForceQuit(Grindstone::Events::BaseEvent* ev) {
-	auto castedEv = (Grindstone::Events::WindowTryQuitEvent*)ev;
+	const auto castedEv = dynamic_cast<Grindstone::Events::WindowTryQuitEvent*>(ev);
 	shouldClose = true;
 	windowManager->CloseWindow(castedEv->window);
 
@@ -252,24 +249,24 @@ void EngineCore::ReloadCsharpBinaries() {
 
 void EngineCore::CalculateDeltaTime() {
 	GRIND_PROFILE_FUNC();
-	auto now = std::chrono::steady_clock::now();
+	const auto now = std::chrono::steady_clock::now();
 
-	auto elapsedTimeSinceLastFrame = now - lastFrameTime;
-	auto elapsedNsSinceLastFrame = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(elapsedTimeSinceLastFrame).count();
-	deltaTime = elapsedNsSinceLastFrame * 0.000000001;
+	const auto elapsedTimeSinceLastFrame = now - lastFrameTime;
+	const auto elapsedNsSinceLastFrame = std::chrono::duration_cast<std::chrono::nanoseconds>(elapsedTimeSinceLastFrame).count();
+	deltaTime = static_cast<double>(elapsedNsSinceLastFrame) * 0.000000001;
 
-	auto elapsedTimeSinceFirstTime = now - lastFrameTime;
-	auto elapsedNsSinceFirstTime = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(now - firstFrameTime).count();
-	currentTime = elapsedNsSinceFirstTime * 0.000000001;
+	const auto elapsedTimeSinceFirstTime = now - lastFrameTime;
+	const auto elapsedNsSinceFirstTime = std::chrono::duration_cast<std::chrono::nanoseconds>(elapsedTimeSinceFirstTime).count();
+	currentTime = static_cast<double>(elapsedNsSinceFirstTime) * 0.000000001;
 
 	lastFrameTime = now;
 }
 
-double EngineCore::GetTimeSinceLaunch() {
+double EngineCore::GetTimeSinceLaunch() const {
 	return currentTime;
 }
 
-double EngineCore::GetDeltaTime() {
+double EngineCore::GetDeltaTime() const {
 	return deltaTime;
 }
 

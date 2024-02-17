@@ -34,7 +34,7 @@ namespace Grindstone {
 
 	template<typename T>
 	struct AssetReference : public GenericAssetReference {
-		static_assert(std::is_base_of<Grindstone::Asset, T>::value, "T not derived from Grindstone::Asset");
+		static_assert(std::is_base_of_v<Grindstone::Asset, T>, "T not derived from Grindstone::Asset");
 
 		T* Load(Uuid uuid) {
 			this->uuid = uuid;

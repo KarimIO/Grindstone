@@ -12,7 +12,7 @@ extern "C" {
 		try {
 			EngineCore& core = EngineCore::GetInstance();
 			core.Initialize(ci);
-			
+
 			return &core;
 		}
 		catch (std::runtime_error& e) {
@@ -21,7 +21,7 @@ extern "C" {
 			OutputDebugString(e.what());
 #endif
 
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			return nullptr;
 		}
 	}
