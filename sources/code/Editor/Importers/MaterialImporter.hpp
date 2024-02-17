@@ -8,7 +8,7 @@ namespace Grindstone {
 		class MaterialImporter : public Importer {
 		public:
 			void Import(std::filesystem::path& path) override;
-			Uuid GetUuidAfterImport();
+			Uuid GetUuidAfterImport() const;
 		private:
 			Uuid uuid;
 		};

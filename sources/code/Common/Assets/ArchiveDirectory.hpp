@@ -31,6 +31,6 @@ namespace Grindstone::Assets {
 
 		std::vector<AssetTypeIndex> assetTypeIndices;
 		std::vector<ArchiveInfo> archives;
-		std::vector<std::string> strings;
+		std::string strings;
 	};
 }
