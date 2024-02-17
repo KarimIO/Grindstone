@@ -5,7 +5,7 @@
     <OutputType>Library</OutputType>
     <ProjectGuid>{D1B9EA12-0C28-3E02-85D8-FC5261DC926E}</ProjectGuid>
     <OutputPath>bin\</OutputPath>
-    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="sources\code\CSharpInterfaces\GrindstoneCore\CoreComponents\PointLightComponent.cs" />
