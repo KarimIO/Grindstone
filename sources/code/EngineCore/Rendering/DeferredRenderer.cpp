@@ -92,7 +92,10 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	bloomMipLevelCount = CalculateBloomLevels(width, height);
 
 	Uuid brdfAssetUuid("7707483a-9379-4e81-9e15-0e5acf20e9d6");
-	brdfLut = engineCore.assetManager->GetAsset<TextureAsset>(brdfAssetUuid)->texture;
+	const TextureAsset* textureAsset = engineCore.assetManager->GetAsset<TextureAsset>(brdfAssetUuid);
+	brdfLut = textureAsset != nullptr
+		? textureAsset->texture
+		: nullptr;
 
 	CreateSsaoKernelAndNoise();
 	CreateVertexAndIndexBuffersAndLayouts();
@@ -282,7 +285,7 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 		uint32_t halfHeight = height / 2;
 		GraphicsAPI::RenderTarget::CreateInfo ssaoRenderTargetCreateInfo{ GraphicsAPI::ColorFormat::R8, halfWidth, halfHeight, true, false, "SSAO Render Target" };
 		ssaoRenderTarget = graphicsCore->CreateRenderTarget(ssaoRenderTargetCreateInfo);
-		
+
 		GraphicsAPI::RenderPass::CreateInfo ssaoRenderPassCreateInfo{};
 		ssaoRenderPassCreateInfo.debugName = "SSAO Renderpass";
 		ssaoRenderPassCreateInfo.colorFormats = &ssaoRenderTargetCreateInfo.format;
@@ -1327,7 +1330,7 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
-	
+
 	{
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidths[bloomMipLevelCount  - 2] / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeights[bloomMipLevelCount - 2] / 4.0f));
@@ -1541,7 +1544,7 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = true;
 
-	/* TODO: Finish with Point Light Shadows eventually 
+	/* TODO: Finish with Point Light Shadows eventually
 	{
 		auto view = registry.view<const TransformComponent, PointLightComponent>();
 		view.each([&](const TransformComponent& transformComponent, PointLightComponent& pointLightComponent) {
@@ -1732,7 +1735,7 @@ void DeferredRenderer::PostProcessCommandBuffer(
 	auto& imageSet = deferredRendererImageSets[imageIndex];
 
 	RenderBloom(imageSet, currentCommandBuffer);
-	
+
 	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
 	ClearDepthStencil clearDepthStencil;
 	clearDepthStencil.depth = 1.0f;
@@ -1740,7 +1743,7 @@ void DeferredRenderer::PostProcessCommandBuffer(
 	clearDepthStencil.hasDepthStencilAttachment = false;
 	auto renderPass = framebuffer->GetRenderPass();
 	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, framebuffer->GetWidth(), framebuffer->GetHeight(), &clearColor, 1, clearDepthStencil);
-	
+
 	currentCommandBuffer->BindGraphicsDescriptorSet(tonemapPipeline, &imageSet.tonemapDescriptorSet, 1);
 	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	currentCommandBuffer->BindIndexBuffer(indexBuffer);
