@@ -1,11 +1,6 @@
-#include "Editor/EditorManager.hpp"
 #include "CSharpBuildManager.hpp"
-#include "CSharpProjectBuilder.hpp"
-#include "SolutionBuilder.hpp"
-#include "EngineCore/Utils/Utilities.hpp"
 
-#include <thread>
-#include <algorithm>
+#include <fstream>
 
 #ifdef _MSC_VER
 #include <Windows.h>
@@ -14,9 +9,14 @@
 #include <ShlObj.h>
 #endif
 
+#include "Editor/EditorManager.hpp"
+#include "EngineCore/Utils/Utilities.hpp"
+#include "CSharpProjectBuilder.hpp"
+#include "SolutionBuilder.hpp"
+
 using namespace Grindstone::Editor::ScriptBuilder;
 
-std::string CallProcessAndReadResult(std::wstring applicationName, std::wstring commandLine) {
+std::string CallProcessAndReadResult(const std::wstring& applicationName, const std::wstring& commandLine) {
 	PROCESS_INFORMATION procInfo{};
 	HANDLE hStdInPipeRead = nullptr;
 	HANDLE hStdInPipeWrite = nullptr;
@@ -40,12 +40,17 @@ std::string CallProcessAndReadResult(std::wstring applicationName, std::wstring 
 	startInfo.hStdOutput = hStdOutPipeWrite;
 	startInfo.dwFlags = STARTF_USESTDHANDLES;
 
-	LPCWSTR appName = applicationName.c_str();
-	LPWSTR cmdline = const_cast<LPWSTR>(commandLine.c_str());
+	const LPCWSTR appName = !applicationName.empty()
+		? applicationName.c_str()
+		: nullptr;
 
-	const PROCESS_INFORMATION processInfo{};
+	const LPWSTR cmdline = !commandLine.empty()
+		? const_cast<LPWSTR>(commandLine.c_str())
+		: nullptr;
 
-	if (CreateProcessW(nullptr, cmdline, nullptr, nullptr, TRUE, 0, nullptr, nullptr, &startInfo, &procInfo)) {
+	constexpr PROCESS_INFORMATION processInfo{};
+
+	if (CreateProcessW(appName, cmdline, nullptr, nullptr, TRUE, 0, nullptr, nullptr, &startInfo, &procInfo)) {
 		WaitForSingleObject(processInfo.hProcess, INFINITE);
 		CloseHandle(processInfo.hProcess);
 		CloseHandle(processInfo.hThread);
@@ -56,7 +61,6 @@ std::string CallProcessAndReadResult(std::wstring applicationName, std::wstring 
 
 		constexpr int bufferSize = 512;
 
-		//Read will return when the buffer is full, or if the pipe on the other end has been broken
 		CHAR buf[bufferSize + 1];
 		DWORD n;
 		while (ReadFile(hStdOutPipeRead, buf, bufferSize, &n, nullptr)) {
@@ -73,7 +77,7 @@ std::string CallProcessAndReadResult(std::wstring applicationName, std::wstring 
 	return "";
 }
 
-void CSharpBuildManager::FinishInitialFileProcessing() {
+void CSharpBuildManager::FinishInitialFileProcessing() const {
 	CreateProjectsAndSolution();
 }
 
@@ -90,10 +94,9 @@ void CSharpBuildManager::OnFileMoved(
 	const std::filesystem::path& updatedPath,
 	const std::filesystem::path& originalPath
 ) {
-	for (int i = 0; i < files.size(); ++i) {
-		auto& file = files[i];
-		if (file == originalPath) {
-			files[i] = updatedPath;
+	for (std::filesystem::path& filepath : files) {
+		if (filepath == originalPath) {
+			filepath = updatedPath;
 			CreateProjectsAndSolution();
 		}
 	}
@@ -102,10 +105,11 @@ void CSharpBuildManager::OnFileMoved(
 }
 
 void CSharpBuildManager::OnFileDeleted(const std::filesystem::path& path) {
-	for (int i = 0; i < files.size(); ++i) {
-		auto& file = files[i];
+	for (size_t i = 0; i < files.size(); ++i) {
+		std::filesystem::path& file = files[i];
 		if (file == path) {
-			files.erase(files.begin() + i);
+			const auto iterator = files.begin() + i;
+			files.erase(iterator);
 			CreateProjectsAndSolution();
 		}
 	}
@@ -116,10 +120,9 @@ void CSharpBuildManager::OnFileModified(const std::filesystem::path& path) {
 }
 
 #ifdef _MSC_VER
-std::thread newThread;
-PROCESS_INFORMATION processInfo;
-HANDLE g_hChildStd_OUT_Rd = nullptr;
-HANDLE g_hChildStd_OUT_Wr = nullptr;
+PROCESS_INFORMATION msBuildProcessInfo;
+HANDLE hStdOutPipeRead = nullptr;
+HANDLE hStdOutPipeWrite = nullptr;
 
 std::string GetMsBuildPath() {
 	const std::filesystem::path settingsFile = Grindstone::Editor::Manager::GetInstance().GetProjectPath() / "userSettings/codeToolsPath.txt";
@@ -132,21 +135,17 @@ std::string GetMsBuildPath() {
 	}
 
 	wchar_t* programFilesPath = nullptr;
-	HRESULT hr = SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, 0, nullptr, &programFilesPath);
-
-	if (hr != S_OK) {
+	if (SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, 0, nullptr, &programFilesPath) != S_OK) {
 		return "";
 	}
 
 	std::wstringstream vsWherePathSStream;
-	vsWherePathSStream << '\"' << programFilesPath << "\\Microsoft Visual Studio\\Installer\\vswhere.exe\"";
-	std::wstring applicationName = vsWherePathSStream.str();
-	vsWherePathSStream << L" -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\MSBuild.exe";
-	std::wstring commandLine = vsWherePathSStream.str();
+	vsWherePathSStream << '\"' << programFilesPath << L"\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\MSBuild.exe";
+	const std::wstring commandLine = vsWherePathSStream.str();
 
 	CoTaskMemFree(static_cast<void*>(programFilesPath));
 
-	std::string searchedPath = CallProcessAndReadResult(applicationName, commandLine);
+	std::string searchedPath = CallProcessAndReadResult(L"", commandLine);
 
 	if (searchedPath.size() < 2) {
 		return "";
@@ -162,33 +161,36 @@ std::string GetMsBuildPath() {
 	}
 
 	if (std::filesystem::exists(searchedPath)) {
+		// Write the path before returning it.
+		std::ofstream outputFile(settingsPath.c_str());
+
+		if (outputFile.is_open()) {
+			outputFile.clear();
+			outputFile << searchedPath << '\n';
+			outputFile.close();
+		}
+
 		return searchedPath;
 	}
 
 	return "";
 }
 
-// Multithreaded: DWORD __stdcall ReadDataFromExtProgram(void* argh) {
+// TODO: Multi-thread this with DWORD __stdcall ReadDataFromExtProgram(void* argh) {
 DWORD ReadDataFromExtProgram() {
-	constexpr int BUFSIZE = 4096;
+	CloseHandle(hStdOutPipeWrite);
+	Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Info, "Building...");
 
-	CHAR chBuf[BUFSIZE];
-	memset(chBuf, 0, BUFSIZE);
-	BOOL bSuccess = FALSE;
-
-	CloseHandle(g_hChildStd_OUT_Wr);
-	Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Info, "Building...", chBuf);
-
-	for (;;)
-	{
+	for (;;) {
 		DWORD bytesAvail = 0;
-		if (!PeekNamedPipe(g_hChildStd_OUT_Rd, nullptr, 0, nullptr, &bytesAvail, nullptr)) {
+		if (!PeekNamedPipe(hStdOutPipeRead, nullptr, 0, nullptr, &bytesAvail, nullptr)) {
 			break;
 		}
 		if (bytesAvail) {
-			CHAR buf[BUFSIZE];
+			constexpr int bufferSize = 4096;
+			CHAR buf[bufferSize + 1];
 			DWORD n;
-			BOOL success = ReadFile(g_hChildStd_OUT_Rd, buf, BUFSIZE, &n, nullptr);
+			const BOOL success = ReadFile(hStdOutPipeRead, buf, bufferSize, &n, nullptr);
 			if (!success || n == 0) {
 				Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Error, "Failed to call ReadFile");
 			}
@@ -196,9 +198,9 @@ DWORD ReadDataFromExtProgram() {
 		}
 	}
 
-	Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Info, "Done building.", chBuf);
-	CloseHandle(processInfo.hProcess);
-	CloseHandle(processInfo.hThread);
+	Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Info, "Done building.");
+	CloseHandle(msBuildProcessInfo.hProcess);
+	CloseHandle(msBuildProcessInfo.hThread);
 
 	Grindstone::Editor::Manager::GetEngineCore().ReloadCsharpBinaries();
 
@@ -206,7 +208,7 @@ DWORD ReadDataFromExtProgram() {
 }
 
 bool CreateChildProcess() {
-	bool isDebug = true;
+	constexpr bool isDebug = true;
 	std::string parameters = "-noLogo -noAutoRsp -verbosity:minimal /p:Configuration=";
 	if (isDebug) {
 		parameters += "Debug";
@@ -215,22 +217,36 @@ bool CreateChildProcess() {
 		parameters += "Release";
 	}
 
-	std::string filename = "Application-CSharp.csproj";
-	auto outputFilePath = Grindstone::Editor::Manager::GetInstance().GetProjectPath() / filename;
-	std::string path = outputFilePath.string();
-	std::string msBuildPath = GetMsBuildPath();
+	const std::string filename = "Application-CSharp.csproj";
+	const std::filesystem::path outputFilePath = Grindstone::Editor::Manager::GetInstance().GetProjectPath() / filename;
+	const std::string path = outputFilePath.string();
+	const std::string msBuildPath = GetMsBuildPath();
 
-	std::string command = std::string("\"") + msBuildPath + "\" " + parameters + " \"" + path + "\"";
+	std::stringstream commandSStream;
+	commandSStream << '\"' << msBuildPath << "\" " << parameters << " \"" << path << '\"';
+	std::string command = commandSStream.str();
 
-	processInfo = {};
+	msBuildProcessInfo = {};
 	STARTUPINFO startInfo{};
 	startInfo.cb = sizeof(STARTUPINFO);
-	startInfo.hStdError = g_hChildStd_OUT_Wr;
-	startInfo.hStdOutput = g_hChildStd_OUT_Wr;
+	startInfo.hStdError = hStdOutPipeWrite;
+	startInfo.hStdOutput = hStdOutPipeWrite;
 	startInfo.dwFlags |= STARTF_USESTDHANDLES;
 
-	if (CreateProcess(nullptr, (TCHAR*)command.c_str(), nullptr, nullptr, TRUE, 0, nullptr, nullptr, &startInfo, &processInfo)) {
-		// Multithreaded: CreateThread(0, 0, ReadDataFromExtProgram, nullptr, 0, nullptr);
+	if (CreateProcessA(
+		nullptr,
+		const_cast<LPSTR>(command.c_str()),
+		nullptr,
+		nullptr,
+		TRUE,
+		0,
+		nullptr,
+		nullptr,
+		&startInfo,
+		&msBuildProcessInfo
+	))
+	{
+		// TODO: Multi-thread this with CreateThread(0, 0, ReadDataFromExtProgram, nullptr, 0, nullptr);
 		ReadDataFromExtProgram();
 		return true;
 	}
@@ -241,16 +257,16 @@ bool CreateChildProcess() {
 
 void CSharpBuildManager::BuildProject() {
 #ifdef _MSC_VER
-	SECURITY_ATTRIBUTES saAttr{};
+	SECURITY_ATTRIBUTES saAttr;
 	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
 	saAttr.bInheritHandle = TRUE;
 	saAttr.lpSecurityDescriptor = nullptr;
 
-	if (!CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0)) {
+	if (!CreatePipe(&hStdOutPipeRead, &hStdOutPipeWrite, &saAttr, 0)) {
 		return;
 	}
 
-	if (!SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0)) {
+	if (!SetHandleInformation(hStdOutPipeRead, HANDLE_FLAG_INHERIT, 0)) {
 		return;
 	}
 
@@ -258,8 +274,8 @@ void CSharpBuildManager::BuildProject() {
 #endif
 }
 
-void CSharpBuildManager::CreateProjectsAndSolution() {
-	std::string msBuildPath = GetMsBuildPath();
+void CSharpBuildManager::CreateProjectsAndSolution() const {
+	const std::string msBuildPath = GetMsBuildPath();
 	if (msBuildPath.empty()) {
 		Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Error, "Could not get visual studio path.");
 		return;
@@ -272,7 +288,7 @@ void CSharpBuildManager::CreateProjectsAndSolution() {
 	BuildProject();
 }
 
-void CSharpBuildManager::CreateProject(const CSharpProjectMetaData& metaData) {
+void CSharpBuildManager::CreateProject(const CSharpProjectMetaData& metaData) const {
 	CSharpProjectBuilder projectBuilder(metaData);
 
 	for (auto& path : files) {
