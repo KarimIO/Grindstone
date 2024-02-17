@@ -19,8 +19,7 @@ namespace Grindstone {
 		virtual AssetType GetAssetType() { return assetType; }
 
 	protected:
-
-		AssetType assetType;
+		AssetType assetType = AssetType::Undefined;
 
 	};
 
@@ -35,7 +34,7 @@ namespace Grindstone {
 			void* output = nullptr;
 			if (TryGetIfLoaded(uuid, output)) {
 				AssetStructType* asset = static_cast<AssetStructType*>(output);
-				asset->referenceCount++;
+				++asset->referenceCount;
 				return asset;
 			}
 			else {
@@ -53,7 +52,7 @@ namespace Grindstone {
 					assets.erase(uuid);
 				}
 				else {
-					asset->referenceCount--;
+					--asset->referenceCount;
 				}
 			}
 		}

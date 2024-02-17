@@ -13,10 +13,8 @@ std::vector<char> Utils::LoadFile(const char* inputPath) {
 	std::ifstream file(inputPath, std::ios::binary);
 	file.unsetf(std::ios::skipws);
 
-	std::streampos fileSize;
-
 	file.seekg(0, std::ios::end);
-	fileSize = file.tellg();
+	const std::streampos fileSize = file.tellg();
 	file.seekg(0, std::ios::beg);
 
 	std::vector<char> fileData;
@@ -71,8 +69,7 @@ std::string Utils::ToLower(const std::string& source) {
 std::string Utils::Trim(const std::string& source) {
 	std::string outString;
 
-	for (size_t i = 0; i < source.size(); ++i) {
-		char c = source[i];
+	for (const char c : source) {
 		if (c != ' ' && c != '\t' && c != '\n') {
 			outString += c;
 		}

@@ -80,7 +80,7 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	window->GetWindowSize(width, height);
 
 	auto wgb = window->GetWindowGraphicsBinding();
-	
+
 	ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
 	SetupVulkanWindow(static_cast<GraphicsAPI::VulkanCore*>(graphicsCore), wgb, width, height);
 
@@ -124,10 +124,8 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	}
 
 	VkCommandBuffer commandBuffer = vulkanCore->BeginSingleTimeCommands();
-	ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
+	ImGui_ImplVulkan_CreateFontsTexture();
 	vulkanCore->EndSingleTimeCommands(commandBuffer);
-
-	ImGui_ImplVulkan_DestroyFontUploadObjects();
 }
 
 ImguiRendererVulkan::~ImguiRendererVulkan() {}

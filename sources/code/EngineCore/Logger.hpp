@@ -1,7 +1,5 @@
-#ifndef _LOGGER_H
-#define _LOGGER_H
+#pragma once
 
-#include <string>
 #include <filesystem>
 #include <spdlog/spdlog.h>
 #include "Common/Logging.hpp"
@@ -49,11 +47,10 @@ namespace Grindstone {
 				break;
 			}
 		}
-		~Logger();
+		
+		virtual ~Logger();
 
 	private:
 		static spdlog::logger *logger;
 	};
 }
-
-#endif

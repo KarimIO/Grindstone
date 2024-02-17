@@ -1,18 +1,15 @@
 #include "Logger.hpp"
 
-#include <iostream>
 #include <filesystem>
-#include <stdarg.h>
+#include <cstdarg>
 #ifdef _MSC_VER
 #include <windows.h>
 #endif
-namespace fs = std::filesystem;
 
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/sinks/base_sink.h"
 #include "spdlog/spdlog.h"
-#include "spdlog/fmt/fmt.h"
 #include "spdlog/common.h"
 
 #include "Common/Event/PrintMessageEvent.hpp"
@@ -22,39 +19,36 @@ using namespace Grindstone;
 
 spdlog::logger *Logger::logger;
 
-LogSeverity SpdLogLevelToGrindstoneLevel(spdlog::level::level_enum level) {
+LogSeverity SpdLogLevelToGrindstoneLevel(const spdlog::level::level_enum level) {
 	switch (level) {
-	default:
-	case spdlog::level::level_enum::trace:
-		return LogSeverity::Trace;
-	case spdlog::level::level_enum::debug:
-		return LogSeverity::Trace;
 	case spdlog::level::level_enum::info:
 		return LogSeverity::Info;
 	case spdlog::level::level_enum::warn:
 		return LogSeverity::Warning;
 	case spdlog::level::level_enum::err:
-		return LogSeverity::Error;
 	case spdlog::level::level_enum::critical:
 		return LogSeverity::Error;
+	default: break;
 	}
+
+	return LogSeverity::Trace;
 }
 
 class EditorSink : public spdlog::sinks::base_sink<std::mutex> {
 protected:
-	void sink_it_(const spdlog::details::log_msg& msg) override {
+	virtual void sink_it_(const spdlog::details::log_msg& msg) override {
 		spdlog::memory_buf_t formatted;
 		base_sink<std::mutex>::formatter_->format(msg, formatted);
 
-		auto level = SpdLogLevelToGrindstoneLevel(msg.level);
-		std::string str = fmt::to_string(formatted);
-		ConsoleMessage consoleMsg = { str, level };
-		auto ev = new Events::PrintMessageEvent(consoleMsg);
-		auto dispatcher = EngineCore::GetInstance().GetEventDispatcher();
-		dispatcher->Dispatch(ev);
+		const LogSeverity level = SpdLogLevelToGrindstoneLevel(msg.level);
+		const std::string str = fmt::to_string(formatted);
+		const ConsoleMessage consoleMsg = { str, level };
+		Events::BaseEvent* printEvent = new Events::PrintMessageEvent(consoleMsg);
+		Events::Dispatcher* dispatcher = EngineCore::GetInstance().GetEventDispatcher();
+		dispatcher->Dispatch(printEvent);
 	}
 
-	void flush_() override {}
+	virtual void flush_() override {}
 };
 
 #ifdef _MSC_VER
@@ -76,7 +70,7 @@ protected:
 
 void Logger::Initialize(std::filesystem::path path) {
 	std::filesystem::create_directories(path.parent_path());
-	
+
 	auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 	consoleSink->set_level(spdlog::level::trace);
 

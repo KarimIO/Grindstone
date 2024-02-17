@@ -26,7 +26,7 @@ namespace Grindstone::Editor {
 		bool HasAsset(Uuid uuid);
 		bool TryGetAssetData(Uuid uuid, AssetRegistry::Entry& outEntry);
 
-		void FindAllFilesOfType(AssetType assetType, std::vector<Entry>& outEntries);
+		void FindAllFilesOfType(AssetType assetType, std::vector<Entry>& outEntries) const;
 	private:
 		std::map<Uuid, Entry> assets;
 		std::filesystem::path assetsPath;

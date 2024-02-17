@@ -2,9 +2,9 @@
 
 #include <fmt/format.h>
 #include <filesystem>
-#include <vector>
 #include <functional>
 #include <chrono>
+
 #include "Common/Logging.hpp"
 
 namespace Grindstone {
@@ -24,7 +24,6 @@ namespace Grindstone {
 	namespace ECS {
 		class ComponentRegistrar;
 		class SystemRegistrar;
-		class Core;
 	};
 
 	namespace SceneManagement {
@@ -62,31 +61,32 @@ namespace Grindstone {
 		virtual void InitializeScene(bool shouldLoadSceneFromDefaults, const char* scenePath = nullptr);
 		virtual void ShowMainWindow();
 
-		~EngineCore();
+		virtual ~EngineCore();
 		virtual void Run();
 		virtual void RunEditorLoopIteration();
 		virtual void RunLoopIteration();
 		virtual void UpdateWindows();
 		void RegisterGraphicsCore(GraphicsAPI::Core*);
 		virtual void RegisterInputManager(Input::Interface*);
-		virtual Input::Interface* GetInputManager();
-		virtual SceneManagement::SceneManager* GetSceneManager();
-		virtual Plugins::Manager* GetPluginManager();
-		virtual ECS::SystemRegistrar* GetSystemRegistrar();
-		virtual Events::Dispatcher* GetEventDispatcher();
-		virtual ECS::ComponentRegistrar* GetComponentRegistrar();
-		virtual GraphicsAPI::Core* GetGraphicsCore();
+		virtual Input::Interface* GetInputManager() const;
+		virtual SceneManagement::SceneManager* GetSceneManager() const;
+		virtual Plugins::Manager* GetPluginManager() const;
+		virtual ECS::SystemRegistrar* GetSystemRegistrar() const;
+		virtual Events::Dispatcher* GetEventDispatcher() const;
+		virtual ECS::ComponentRegistrar* GetComponentRegistrar() const;
+		virtual GraphicsAPI::Core* GetGraphicsCore() const;
 		virtual BaseRenderer* CreateRenderer(GraphicsAPI::RenderPass* targetRenderPass);
-		virtual std::filesystem::path GetProjectPath();
-		virtual std::filesystem::path GetBinaryPath();
-		virtual std::filesystem::path GetEngineBinaryPath();
-		virtual std::filesystem::path GetAssetsPath();
-		virtual std::filesystem::path GetAssetPath(std::string subPath);
+		virtual std::filesystem::path GetProjectPath() const;
+		virtual std::filesystem::path GetBinaryPath() const;
+		virtual std::filesystem::path GetEngineBinaryPath() const;
+		virtual std::filesystem::path GetAssetsPath() const;
+		virtual std::filesystem::path GetAssetPath(std::string subPath) const;
 		virtual void ReloadCsharpBinaries();
 
 		template<typename... Args>
-		void Print(LogSeverity logSeverity, fmt::format_string<Args...> fmt, Args &&...args) {
-			GetInstance()->Print(logSeverity, textFormat, args);
+		void Print(LogSeverity logSeverity, fmt::format_string<Args...> textFormat, Args &&...args) {
+			EngineCore& engineCore = GetInstance();
+			engineCore.Print(logSeverity, textFormat, args);
 			va_end(args);
 		}
 		virtual void Print(LogSeverity logSeverity, const char* str);
@@ -94,8 +94,8 @@ namespace Grindstone {
 		virtual bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
 		virtual bool OnForceQuit(Grindstone::Events::BaseEvent* ev);
 		virtual void CalculateDeltaTime();
-		virtual double GetTimeSinceLaunch();
-		virtual double GetDeltaTime();
+		virtual double GetTimeSinceLaunch() const;
+		virtual double GetDeltaTime() const;
 	public:
 		DisplayManager* displayManager = nullptr;
 		WindowManager* windowManager = nullptr;

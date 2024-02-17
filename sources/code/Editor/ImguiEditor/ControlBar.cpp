@@ -20,7 +20,7 @@ void ControlBar::Render() {
 	if (ImGui::Begin("ControlBar", nullptr, flags)) {
 		Editor::Manager& editorManager = Grindstone::Editor::Manager::GetInstance();
 
-		float centerX = ImGui::GetWindowContentRegionWidth() / 2.0f - 12.0f;
+		float centerX = ImGui::GetWindowContentRegionMax().x / 2.0f - 12.0f;
 
 		selectedColor = ImGui::GetStyleColorVec4(ImGuiCol_Button);
 		selectedHighlightColor = ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered);

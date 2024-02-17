@@ -25,7 +25,7 @@ namespace Grindstone {
 
 			CreateFramebuffer();
 		}
-		
+
 		void GLFramebuffer::CreateFramebuffer() {
 			if (framebuffer) {
 				// glDeleteFramebuffers(1, &framebuffer);
@@ -38,20 +38,20 @@ namespace Grindstone {
 				glObjectLabel(GL_FRAMEBUFFER, framebuffer, -1, debugName.c_str());
 			}
 
-			GLenum *DrawBuffers = new GLenum[numTotalRenderTargets];
+			GLenum* drawBuffers = new GLenum[numTotalRenderTargets];
 			GLenum k = 0;
 			for (uint32_t i = 0; i < numRenderTargetLists; i++) {
 				GLRenderTarget *render_target_list = static_cast<GLRenderTarget *>(renderTargetLists[i]);
 				for (uint32_t j = 0; j < render_target_list->GetNumRenderTargets(); j++) {
-					DrawBuffers[k] = GL_COLOR_ATTACHMENT0 + k;
+					drawBuffers[k] = GL_COLOR_ATTACHMENT0 + k;
 					if (render_target_list->IsCubemap()) {
 						for (int f = 0; f < 6; ++f) {
-							glFramebufferTexture2D(GL_FRAMEBUFFER, DrawBuffers[k], GL_TEXTURE_CUBE_MAP_POSITIVE_X + f, render_target_list->GetHandle(j), 0);
+							glFramebufferTexture2D(GL_FRAMEBUFFER, drawBuffers[k], GL_TEXTURE_CUBE_MAP_POSITIVE_X + f, render_target_list->GetHandle(j), 0);
 						}
 						k++;
 					}
 					else {
-						glFramebufferTexture2D(GL_FRAMEBUFFER, DrawBuffers[k++], GL_TEXTURE_2D, render_target_list->GetHandle(j), 0);
+						glFramebufferTexture2D(GL_FRAMEBUFFER, drawBuffers[k++], GL_TEXTURE_2D, render_target_list->GetHandle(j), 0);
 					}
 				}
 			}
@@ -67,7 +67,7 @@ namespace Grindstone {
 			}
 
 			if (numTotalRenderTargets > 0)
-				glDrawBuffers(numTotalRenderTargets, DrawBuffers);
+				glDrawBuffers(numTotalRenderTargets, drawBuffers);
 			else {
 				glDrawBuffer(GL_NONE);
 				glReadBuffer(GL_NONE);
@@ -78,10 +78,10 @@ namespace Grindstone {
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-			delete[] DrawBuffers;
+			delete[] drawBuffers;
 		}
 
-		RenderPass* GLFramebuffer::GetRenderPass() {
+		RenderPass* GLFramebuffer::GetRenderPass() const {
 			return renderPass;
 		}
 
@@ -94,10 +94,10 @@ namespace Grindstone {
 		uint32_t GLFramebuffer::GetAttachment(uint32_t attachmentIndex) {
 			return renderTargetLists[0]->GetHandle(attachmentIndex);
 		}
-		
-		void GLFramebuffer::Resize(uint32_t width, uint32_t height) {
-			width = std::max(width, 1u);
-			height = std::max(height, 1u);
+
+		void GLFramebuffer::Resize(uint32_t newWidth, uint32_t newHeight) {
+			width = std::max(newWidth, 1u);
+			height = std::max(newHeight, 1u);
 
 			for (uint32_t i = 0; i < numRenderTargetLists; ++i) {
 				RenderTarget* renderTargetList = renderTargetLists[i];
@@ -147,6 +147,14 @@ namespace Grindstone {
 
 		void GLFramebuffer::Unbind() {
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		}
+
+		uint32_t GLFramebuffer::GetWidth() const {
+			return width;
+		}
+
+		uint32_t GLFramebuffer::GetHeight() const {
+			return height;
 		}
 	}
 }

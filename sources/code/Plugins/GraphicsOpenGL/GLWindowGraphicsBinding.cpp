@@ -1,37 +1,43 @@
 #include <GL/gl3w.h>
 #include "GLWindowGraphicsBinding.hpp"
 
+/*
+// TODO: Reimplement Win32
 #ifdef _WIN32
 #include <Common/Window/Win32Window.hpp>
 #include "wglext.hpp"
 #endif
+*/
+
+#include <Common/Window/GlfwWindow.hpp>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		bool GLWindowGraphicsBinding::Initialize(Window *window) {
+		bool GLWindowGraphicsBinding::Initialize(Window *newWindow) {
+			/*
 #ifdef _WIN32
-			window = window;
-			windowHandle = ((Win32Window*)window)->GetHandle();
-			static	PIXELFORMATDESCRIPTOR pfd =
+			window = newWindow;
+			windowHandle = static_cast<Win32Window*>(window)->GetHandle();
+			static PIXELFORMATDESCRIPTOR pfd =
 			{
 				sizeof(PIXELFORMATDESCRIPTOR),
-				1,								
+				1,
 				PFD_DRAW_TO_WINDOW |
 				PFD_SUPPORT_OPENGL |
 				PFD_DOUBLEBUFFER,
-				PFD_TYPE_RGBA,	
-				32,	
+				PFD_TYPE_RGBA,
+				32,
 				0, 0, 0, 0, 0, 0,
-				0,				
-				0,				
-				0,				
-				0, 0, 0, 0,		
-				24,				
-				8,				
-				0,				
-				PFD_MAIN_PLANE,	
-				0,								
-				0, 0, 0							
+				0,
+				0,
+				0,
+				0, 0, 0, 0,
+				24,
+				8,
+				0,
+				PFD_MAIN_PLANE,
+				0,
+				0, 0, 0
 			};
 
 			if (!(windowDeviceContext = GetDC(windowHandle)))
@@ -88,12 +94,14 @@ namespace Grindstone {
 				wglDeleteContext(temp);
 			}
 #endif
+			*/
+
 			return true;
 		}
 
-		void GLWindowGraphicsBinding::ShareLists(GLWindowGraphicsBinding *binding_to_copy_from) {
+		void GLWindowGraphicsBinding::ShareLists(GLWindowGraphicsBinding *bindingToCopyFrom) {
 #ifdef _WIN32
-			wglShareLists(binding_to_copy_from->windowRenderContext, windowRenderContext);
+			wglShareLists(bindingToCopyFrom->windowRenderContext, windowRenderContext);
 #endif
 		}
 
