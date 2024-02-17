@@ -5,28 +5,24 @@
 
 #include "CSharpProjectMetaData.hpp"
 
-namespace Grindstone {
-	namespace Editor {
-		namespace ScriptBuilder {
-			class CSharpBuildManager {
-			public:
-				void FinishInitialFileProcessing();
-				void AddFileInitial(const std::filesystem::path& path);
-				void OnFileAdded(const std::filesystem::path& path);
-				void OnFileMoved(
-					const std::filesystem::path& originalPath,
-					const std::filesystem::path& updatedPath
-				);
-				void OnFileDeleted(const std::filesystem::path& path);
-				void OnFileModified(const std::filesystem::path& path);
-			private:
-				void BuildProject();
-				void CreateProjectsAndSolution();
-				void CreateProject(const CSharpProjectMetaData& metaData);
-				static void CreateSolution(const CSharpProjectMetaData& metaData);
+namespace Grindstone::Editor::ScriptBuilder {
+	class CSharpBuildManager {
+	public:
+		void FinishInitialFileProcessing() const;
+		void AddFileInitial(const std::filesystem::path& path);
+		void OnFileAdded(const std::filesystem::path& path);
+		void OnFileMoved(
+			const std::filesystem::path& updatedPath,
+			const std::filesystem::path& originalPath
+		);
+		void OnFileDeleted(const std::filesystem::path& path);
+		static void OnFileModified(const std::filesystem::path& path);
+	private:
+		static void BuildProject();
+		void CreateProjectsAndSolution() const;
+		void CreateProject(const CSharpProjectMetaData& metaData) const;
+		static void CreateSolution(const CSharpProjectMetaData& metaData);
 
-				std::vector<std::filesystem::path> files;
-			};
-		}
-	}
+		std::vector<std::filesystem::path> files;
+	};
 }

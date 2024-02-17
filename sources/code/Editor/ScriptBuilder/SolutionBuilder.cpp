@@ -8,7 +8,7 @@ void SolutionBuilder::AddProject(const CSharpProjectMetaData& projectMetaData) {
 	projects.emplace_back(projectMetaData.assemblyName, projectMetaData.assemblyGuid);
 }
 
-void SolutionBuilder::CreateSolution() {
+void SolutionBuilder::CreateSolution() const {
 	std::string content =
 		"Microsoft Visual Studio Solution File, Format Version 11.00\n"
 		"# Visual Studio 2010\n";
@@ -55,7 +55,7 @@ void SolutionBuilder::WriteSolutionConfigs(std::string& output) {
 		"\tEndGlobalSection\n";
 }
 
-void SolutionBuilder::WriteProjectConfigs(std::string& output) {
+void SolutionBuilder::WriteProjectConfigs(std::string& output) const {
 	output += "\tGlobalSection(ProjectConfigurationPlatforms) = postSolution\n";
 
 	for (auto& project : projects) {
