@@ -9,7 +9,7 @@ using namespace Grindstone::SceneManagement;
 
 extern "C" {
 	ENGINE_CORE_API Scene* SceneManagerGetActiveScene() {
-		SceneManager* sceneManager = EngineCore::GetInstance().GetSceneManager();
+		const SceneManager* sceneManager = EngineCore::GetInstance().GetSceneManager();
 		if (sceneManager->scenes.empty()) {
 			return nullptr;
 		}
@@ -20,7 +20,7 @@ extern "C" {
 }
 
 void SceneManager::LoadDefaultScene() {
-	BuildSettings::SceneBuildSettings settings; 
+	const BuildSettings::SceneBuildSettings settings;
 	const char* defaultPath = settings.GetDefaultScene();
 
 	if (defaultPath == nullptr || strlen(defaultPath) == 0) {

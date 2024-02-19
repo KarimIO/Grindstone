@@ -8,15 +8,14 @@ SceneBuildSettings::SceneBuildSettings() {
 }
 
 void SceneBuildSettings::Load() {
-	auto& engineCore = EngineCore::GetInstance();
-	std::filesystem::path pluginListFile = engineCore.GetProjectPath() / "buildSettings/scenesManifest.txt";
-	auto prefabListFilePath = pluginListFile.string();
-	auto fileContents = Utils::LoadFileText(prefabListFilePath.c_str());
+	const EngineCore& engineCore = EngineCore::GetInstance();
+	const std::filesystem::path sceneListFilePath = engineCore.GetProjectPath() / "buildSettings/scenesManifest.txt";
+	const std::string fileContents = Utils::LoadFileText(sceneListFilePath.string().c_str());
 
-	size_t start = 0, end;
+	size_t start = 0;
 	std::string sceneName;
 	while (true) {
-		end = fileContents.find('\n', start);
+		const size_t end = fileContents.find('\n', start);
 		if (end == std::string::npos) {
 			sceneName = fileContents.substr(start);
 			if (!sceneName.empty()) {
@@ -31,10 +30,10 @@ void SceneBuildSettings::Load() {
 		start = end + 1;
 	}
 }
-const char* SceneBuildSettings::GetDefaultScene() {
-	if (scenes.size() == 0) {
+const char* SceneBuildSettings::GetDefaultScene() const {
+	if (scenes.empty()) {
 		return nullptr;
 	}
-	
+
 	return scenes[0].c_str();
 }
