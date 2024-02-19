@@ -23,7 +23,7 @@ namespace Grindstone::Assets {
 			std::vector<char>& fileData
 		) override;
 	protected:
-		void LoadAsset(ArchiveDirectory::AssetInfo& assetInfo, char*& outContents, size_t& fileSize);
+		void LoadAsset(const ArchiveDirectory::AssetInfo& assetInfo, char*& outContents, size_t& fileSize);
 		std::string GetShaderPath(Uuid uuid, GraphicsAPI::ShaderStage shaderStage);
 		ArchiveDirectory archiveDirectory;
 
