@@ -69,7 +69,7 @@ source_group("Events\\Source Files" FILES ${SOURCE_EVENTS})
 source_group("Events\\Header Files" FILES ${HEADER_EVENTS})
 
 file(GLOB_RECURSE SOURCE_COMMON_UTILS ${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINE_CORE_DIR}/Utils/Utilities.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${COMMON_DIR}/Graphics/Formats.cpp ${ENGINE_CORE_DIR}/Utils/WindowGlue.cpp)
-file(GLOB_RECURSE HEADER_COMMON_UTILS ${COMMON_DIR}/Utilities/ModuleLoading.hpp ${ENGINE_CORE_DIR}/Utils/Utilities.hpp ${COMMON_DIR}/ResourcePipeline/Uuid.hpp)
+file(GLOB_RECURSE HEADER_COMMON_UTILS ${COMMON_DIR}/Utilities/ModuleLoading.hpp ${ENGINE_CORE_DIR}/Utils/Utilities.hpp ${COMMON_DIR}/ResourcePipeline/Uuid.hpp ${COMMON_DIR}/Buffer.hpp)
 source_group("Utilities\\Source Files" FILES ${SOURCE_COMMON_UTILS})
 source_group("Utilities\\Header Files" FILES ${HEADER_COMMON_UTILS})
 
