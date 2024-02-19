@@ -1,7 +1,5 @@
 #pragma once
 
-#include <entt/entt.hpp>
-
 #include <Common/Math.hpp>
 #include <EngineCore/CoreComponents/Parent/ParentComponent.hpp>
 
@@ -82,7 +80,7 @@ namespace Grindstone {
 
 			template<typename ComponentType>
 			void RemoveComponent(const char* componentType) {
-				return GetSceneEntityRegistry().remove<ComponentType>(entityId);
+				GetSceneEntityRegistry().remove<ComponentType>(entityId);
 			}
 
 			virtual EntityHandle GetHandle() const {
@@ -93,22 +91,22 @@ namespace Grindstone {
 				return scene;
 			}
 
-			operator bool() const {
+			explicit operator bool() const {
 				return entityId != entt::null && scene != nullptr && GetSceneEntityRegistry().valid(entityId);
 			}
 
-			bool Entity::operator==(const Entity other) const {
+			bool operator==(const Entity& other) const {
 				return (entityId == other.entityId) && (scene == other.scene);
 			}
 
-			bool Entity::operator!=(const Entity other) const {
+			bool operator!=(const Entity& other) const {
 				return !(*this == other);
 			}
 		};
 
 		inline bool operator < (const ECS::Entity& lhs, const ECS::Entity& rhs) {
-			bool isSceneLess = lhs.GetScene() < rhs.GetScene();
-			bool isEntityLess = lhs.GetHandle() < rhs.GetHandle();
+			const bool isSceneLess = lhs.GetScene() < rhs.GetScene();
+			const bool isEntityLess = lhs.GetHandle() < rhs.GetHandle();
 			return isSceneLess || isEntityLess;
 		}
 	}

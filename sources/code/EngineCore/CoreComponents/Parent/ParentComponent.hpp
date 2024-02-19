@@ -2,7 +2,7 @@
 
 #include "EngineCore/Reflection/ComponentReflection.hpp"
 
-#include <entt/fwd.hpp>
+#include <entt/entity/entity.hpp>
 
 namespace Grindstone {
 	struct ParentComponent {
