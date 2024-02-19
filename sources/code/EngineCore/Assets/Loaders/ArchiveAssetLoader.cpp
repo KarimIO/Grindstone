@@ -33,9 +33,9 @@ void ArchiveAssetLoader::Load(AssetType assetType, Uuid uuid, char*& outContents
 	}
 
 	ArchiveDirectory::AssetTypeIndex& assetTypeSegment = archiveDirectory.assetTypeIndices[static_cast<size_t>(assetType)];
-	auto& assetIterator = assetTypeSegment.assets.find(uuid);
+	const auto& assetIterator = assetTypeSegment.assets[uuid];
 
-	if (assetIterator == assetTypeSegment.assets.end()) {
+	if (assetIterator.size == 0) {
 		outContents = nullptr;
 		fileSize = 0;
 
@@ -44,7 +44,7 @@ void ArchiveAssetLoader::Load(AssetType assetType, Uuid uuid, char*& outContents
 		return;
 	}
 
-	LoadAsset(assetIterator->second, outContents, fileSize);
+	LoadAsset(assetIterator, outContents, fileSize);
 }
 
 // Out:
@@ -112,15 +112,16 @@ bool ArchiveAssetLoader::LoadText(AssetType assetType, std::filesystem::path pat
 	return true;
 }
 
-void ArchiveAssetLoader::LoadAsset(ArchiveDirectory::AssetInfo& assetInfo, char*& outContents, size_t& fileSize) {
+void ArchiveAssetLoader::LoadAsset(const ArchiveDirectory::AssetInfo& assetInfo, char*& outContents, size_t& fileSize) {
 	if (lastBufferIndex != assetInfo.archiveIndex) {
 		lastBufferIndex = assetInfo.archiveIndex;
 
-		std::string filename = "TestArchive_0.garc";
-		std::filesystem::path path = EngineCore::GetInstance().GetProjectPath() / "archives" / filename;
-		std::string filepathAsStr = path.string();
-		std::vector<char> fileData = Utils::LoadFile(filepathAsStr.c_str());
-		lastBuffer = Buffer(fileData.data(), fileData.size());
+		const std::string filename = "TestArchive_0.garc";
+		const std::filesystem::path path = EngineCore::GetInstance().GetProjectPath() / "archives" / filename;
+		const std::string filepathAsStr = path.string();
+		const std::vector<char> fileData = Utils::LoadFile(filepathAsStr.c_str());
+		lastBuffer = Buffer(fileData.size());
+		memcpy(lastBuffer.Get(), fileData.data(), fileData.size());
 	}
 
 	BufferView bufferView = lastBuffer.GetBufferView(assetInfo.offset, assetInfo.size);
@@ -129,8 +130,8 @@ void ArchiveAssetLoader::LoadAsset(ArchiveDirectory::AssetInfo& assetInfo, char*
 }
 
 bool ArchiveAssetLoader::LoadShaderStage(
-	Uuid uuid,
-	GraphicsAPI::ShaderStage shaderStage,
+	const Uuid uuid,
+	const GraphicsAPI::ShaderStage shaderStage,
 	GraphicsAPI::ShaderStageCreateInfo& stageCreateInfo,
 	std::vector<char>& fileData
 ) {
