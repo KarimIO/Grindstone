@@ -2,10 +2,10 @@
 
 #include "AssetPackSerializer.hpp"
 
+#include <Common/Buffer.hpp>
 #include <Common/Assets/ArchiveContentFile.hpp>
 #include <Common/Assets/ArchiveDirectory.hpp>
 #include <Common/Assets/ArchiveDirectoryFile.hpp>
-#include <Common/Buffer.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
 
 #include "Editor/EditorManager.hpp"
@@ -13,24 +13,30 @@
 namespace Grindstone::Assets::AssetPackSerializer {
 	class AssetPackageSerializer {
 	public:
-		AssetPackageSerializer(std::filesystem::path outputDir, std::string archiveName);
+		AssetPackageSerializer(const std::filesystem::path& outputDir, const std::string& archiveName);
 		void AddEntry(Editor::AssetRegistry::Entry& entry);
-		void WriteBuffer(size_t i);
+		void WriteBuffer(size_t bufferIndex) const;
 		void WriteDirectory();
 		uint16_t FindSuitableBufferIndex(uint64_t size);
 		size_t GetBufferCount() const;
 	protected:
 		ArchiveDirectory archiveDirectory;
 		std::vector<ResizableBuffer> buffers;
-		const uint64_t archiveSize = 1024 * 1024 * 200; // 200mb
+		const uint64_t archiveSize = 1024ul * 1024ul * 200ul; // 200mb
 
 		std::filesystem::path outputDirectory;
+		ResizableBuffer resizableStringBuffer{10485760}; // 10mb
 		std::string archiveName;
 	};
 
-	void SerializeAllAssets(std::filesystem::path targetPath, Editor::BuildProcessStats* buildProgress, float minProgress, float deltaProgress) {
+	void SerializeAllAssets(
+		const std::filesystem::path& targetPath,
+		Editor::BuildProcessStats* buildProgress,
+		const float minProgress,
+		const float deltaProgress
+	) {
 		Editor::Manager& editorManager = Editor::Manager::GetInstance();
-		Editor::AssetRegistry& assetRegistry = editorManager.GetAssetRegistry();
+		const Editor::AssetRegistry& assetRegistry = editorManager.GetAssetRegistry();
 
 		AssetPackageSerializer serializer(targetPath, "TestArchive");
 
@@ -40,15 +46,16 @@ namespace Grindstone::Assets::AssetPackSerializer {
 			std::scoped_lock scopedLock(buildProgress->stringMutex);
 			buildProgress->detailText = "Preparing asset map";
 		}
-		uint16_t assetTypeCount = static_cast<uint16_t>(AssetType::Count);
-		float segmentProgressFraction = deltaProgress / (assetTypeCount * 3.0f);
+
+		constexpr uint16_t assetTypeCount = static_cast<uint16_t>(AssetType::Count);
+		const float segmentProgressFraction = deltaProgress / (3.0f * assetTypeCount);
 		for (uint16_t i = 0; i < assetTypeCount; ++i) {
-			AssetType assetType = static_cast<AssetType>(i);
+			const AssetType assetType = static_cast<AssetType>(i);
 			std::vector<Editor::AssetRegistry::Entry> outEntries;
 			assetRegistry.FindAllFilesOfType(assetType, outEntries);
 
-			size_t assetOfTypeCount = outEntries.size();
-			float assetProgressFraction = segmentProgressFraction * (1.0f / assetOfTypeCount);
+			const size_t assetOfTypeCount = outEntries.size();
+			const float assetProgressFraction = segmentProgressFraction * (1.0f / static_cast<float>(assetOfTypeCount));
 
 			for (size_t assetIndex = 0; assetIndex < assetOfTypeCount; ++assetIndex) {
 				serializer.AddEntry(outEntries[assetIndex]);
@@ -62,9 +69,9 @@ namespace Grindstone::Assets::AssetPackSerializer {
 			buildProgress->detailText = "Writing archive buffers";
 		}
 
-		size_t bufferCount = serializer.GetBufferCount();
+		const size_t bufferCount = serializer.GetBufferCount();
 		for (size_t i = 0; i < bufferCount; ++i) {
-			buildProgress->progress = minProgress + deltaProgress * (static_cast<float>(i) / bufferCount) + (1 / 3.0f);
+			buildProgress->progress = minProgress + deltaProgress * (static_cast<float>(i) /static_cast<float>(bufferCount)) + 1.0f / 3.0f;
 			serializer.WriteBuffer(i);
 		}
 
@@ -79,33 +86,31 @@ namespace Grindstone::Assets::AssetPackSerializer {
 		buildProgress->progress = minProgress + deltaProgress;
 	}
 
-	AssetPackageSerializer::AssetPackageSerializer(std::filesystem::path outputDir, std::string archiveName) :
+	AssetPackageSerializer::AssetPackageSerializer(const std::filesystem::path& outputDir, const std::string& archiveName) :
 		outputDirectory(outputDir), archiveName(archiveName) {}
 
 	void AssetPackageSerializer::AddEntry(Editor::AssetRegistry::Entry& entry) {
-		size_t assetType = static_cast<size_t>(entry.assetType);
-		uint32_t crc = 0;
+		const size_t assetType = static_cast<size_t>(entry.assetType);
+		const uint32_t crc = 0;
 
-		std::filesystem::path actualFilePath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / entry.uuid.ToString();
+		const std::filesystem::path actualFilePath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / entry.uuid.ToString();
 		if (!std::filesystem::exists(actualFilePath)) {
 			return;
 		}
 
 		std::vector<char> loadedFile = Utils::LoadFile(actualFilePath.string().c_str());
-		uint64_t size = loadedFile.size();
-		uint16_t archiveIndex = FindSuitableBufferIndex(size);
+		const uint64_t size = loadedFile.size();
+		const uint16_t archiveIndex = FindSuitableBufferIndex(size);
 		ResizableBuffer& buffer = buffers[archiveIndex];
 
-		Byte* dstPtr = static_cast<Byte*>(buffer.AddToBuffer(loadedFile.data(), size));
-		uint64_t offset = dstPtr - buffer.Get();
+		const Byte* dstPtr = static_cast<Byte*>(buffer.AddToBuffer(loadedFile.data(), size));
+		const uint64_t offset = dstPtr - buffer.Get();
 
-		std::string pathAsStr = entry.path.string();
-		size_t stringStart = archiveDirectory.strings.size();
-		archiveDirectory.strings += pathAsStr;
-		const char* stringStartPtr = archiveDirectory.strings.data() + stringStart;
+		const std::string pathAsStr = entry.path.string();
+		const char* copiedStringPtr = static_cast<const char*>(resizableStringBuffer.AddToBuffer(pathAsStr.c_str(), pathAsStr.size() + 1));
 		std::map<Uuid, ArchiveDirectory::AssetInfo>& assetTypeMap = archiveDirectory.assetTypeIndices[assetType].assets;
 		assetTypeMap[entry.uuid] = {
-			std::string_view(stringStartPtr, pathAsStr.size()),
+			copiedStringPtr,
 			crc,
 			archiveIndex,
 			offset,
@@ -126,15 +131,15 @@ namespace Grindstone::Assets::AssetPackSerializer {
 			: archiveSize;
 
 		// If no available buffer has enough space, add a new one
-		buffers.emplace_back(ResizableBuffer(newArchiveSize));
+		buffers.emplace_back(newArchiveSize);
 
 		return static_cast<uint16_t>(buffers.size() - 1);
 	}
 
-	void AssetPackageSerializer::WriteBuffer(size_t i) {
-		ResizableBuffer& buffer = buffers[i];
-		std::string outputFilename = archiveName + "_" + std::to_string(i) + ".garc";
-		std::filesystem::path outputPath = outputDirectory / outputFilename;
+	void AssetPackageSerializer::WriteBuffer(const size_t bufferIndex) const {
+		const ResizableBuffer& buffer = buffers[bufferIndex];
+		const std::string outputFilename = archiveName + "_" + std::to_string(bufferIndex) + ".garc";
+		const std::filesystem::path outputPath = outputDirectory / outputFilename;
 
 		std::ofstream output(outputPath, std::ios::binary);
 
@@ -142,7 +147,7 @@ namespace Grindstone::Assets::AssetPackSerializer {
 			throw std::runtime_error(std::string("Failed to open ") + outputPath.string());
 		}
 
-		output.write(reinterpret_cast<const char*>(buffer.Get()), buffer.GetUsedSize());
+		output.write(reinterpret_cast<const char*>(buffer.Get()), static_cast<std::streamsize>(buffer.GetUsedSize()));
 	}
 
 	void AssetPackageSerializer::WriteDirectory() {
@@ -171,26 +176,23 @@ namespace Grindstone::Assets::AssetPackSerializer {
 
 		outputFile.assets.reserve(totalAssetCount);
 
-		std::string outputString = "";
+		uint64_t assetIndexSize = sizeof(ArchiveDirectoryFile::AssetInfo) * totalAssetCount;
+		uint64_t archiveIndexSize = sizeof(ArchiveDirectoryFile::ArchiveInfo) * buffers.size();
 
-		uint64_t assetIndexSize = sizeof(outputFile.assets) * totalAssetCount;
-		uint64_t archiveIndexSize = sizeof(outputFile.archives[0]) * buffers.size();
+		uint64_t archivesBaseOffset = assetBaseOffset + assetIndexSize;
+		uint64_t stringBaseOffset = archivesBaseOffset + archiveIndexSize;
 
-		uint64_t archivesBaseOffset = assetBaseOffset + sizeof(outputFile.assets) * totalAssetCount;
-		uint64_t stringBaseOffset = assetBaseOffset + sizeof(outputFile.archives[0]) * buffers.size();
-
-		uint64_t currentAssetIndex = 0;
 		// Prepare actual assets
-		for (uint16_t i = 0; i < assetTypeCount; ++i) {
-			uint64_t offset = outputFile.assetInfoIndex[i].offset;
-			for (auto& [uuid, asset] : archiveDirectory.assetTypeIndices[i].assets) {
-				uint64_t filenameOffset = stringBaseOffset + outputString.size();
+		for (uint16_t assetTypeIndex = 0; assetTypeIndex < assetTypeCount; ++assetTypeIndex) {
+			for (const auto& [uuid, asset] : archiveDirectory.assetTypeIndices[assetTypeIndex].assets) {
+				uint64_t filenameOffset = static_cast<uint64_t>(asset.filename.data() - reinterpret_cast<const char*>(resizableStringBuffer.Get()));
+				uint16_t filenameSize = static_cast<uint16_t>(asset.filename.size());
 
 				outputFile.assets.emplace_back(
 					ArchiveDirectoryFile::AssetInfo{
 						uuid,
-						0,
-						static_cast<uint16_t>(asset.filename.size()),
+						filenameOffset,
+						filenameSize,
 						asset.crc,
 						asset.archiveIndex,
 						asset.offset,
@@ -201,8 +203,8 @@ namespace Grindstone::Assets::AssetPackSerializer {
 		}
 
 		// Prepare Archives
-		for (auto& archive : archiveDirectory.archives) {
-			outputFile.archives.emplace_back(ArchiveDirectoryFile::ArchiveInfo{ archive.crc });
+		for (const auto& [crc] : archiveDirectory.archives) {
+			outputFile.archives.emplace_back(ArchiveDirectoryFile::ArchiveInfo{ crc });
 		}
 
 		std::ofstream output(outputPath, std::ios::binary);
@@ -220,21 +222,21 @@ namespace Grindstone::Assets::AssetPackSerializer {
 			outputFile.header.assetTypeIndexSize	= static_cast<uint32_t>(assetTypeIndexSize);
 			outputFile.header.assetInfoIndexSize = static_cast<uint32_t>(assetIndexSize);
 			outputFile.header.archiveIndexSize = static_cast<uint32_t>(archiveIndexSize);
-			outputFile.header.stringsSize = static_cast<uint32_t>(outputString.size() + 1);
-			output.write(reinterpret_cast<const char*>(&outputFile.header), headerSize);
+			outputFile.header.stringsSize = static_cast<uint32_t>(resizableStringBuffer.GetUsedSize() + 1);
+			output.write(reinterpret_cast<const char*>(&outputFile.header), static_cast<std::streamsize>(headerSize));
 		}
 
 		// Write Asset Type Index
-		output.write(reinterpret_cast<const char*>(outputFile.assetInfoIndex.data()), assetTypeIndexSize);
+		output.write(reinterpret_cast<const char*>(outputFile.assetInfoIndex.data()), static_cast<std::streamsize>(assetTypeIndexSize));
 
 		// Write Asset Maps
-		output.write(reinterpret_cast<const char*>(outputFile.assets.data()), assetIndexSize);
+		output.write(reinterpret_cast<const char*>(outputFile.assets.data()), static_cast<std::streamsize>(assetIndexSize));
 
 		// Write Archive CRCs
-		output.write(reinterpret_cast<const char*>(&outputFile.archives), archiveIndexSize);
+		output.write(reinterpret_cast<const char*>(&outputFile.archives), static_cast<std::streamsize>(archiveIndexSize));
 
 		// Write Strings
-		output.write(outputString.c_str(), outputFile.header.stringsSize);
+		output.write(reinterpret_cast<const char*>(resizableStringBuffer.Get()), outputFile.header.stringsSize);
 
 		output.close();
 	}

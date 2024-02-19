@@ -48,7 +48,7 @@ namespace Grindstone {
 			this->bufferPtr = new Byte[capacity];
 		}
 
-		Buffer(void* bufferPtr, uint64_t capacity) : bufferPtr(static_cast<Byte*>(bufferPtr)), capacity(capacity) {}
+		Buffer(void* bufferPtr, const uint64_t capacity) : bufferPtr(static_cast<Byte*>(bufferPtr)), capacity(capacity) {}
 
 		// Copy-Constructor
 		Buffer(const Buffer& other) {
@@ -57,7 +57,7 @@ namespace Grindstone {
 			memcpy(bufferPtr, other.bufferPtr, capacity);
 		}
 
-		// Copy-Constructor
+		// Move-Constructor
 		Buffer(const Buffer&& other) noexcept {
 			bufferPtr = other.bufferPtr;
 			capacity = other.capacity;
@@ -72,31 +72,44 @@ namespace Grindstone {
 		virtual BufferView GetBufferView(uint64_t segmentOffset, uint64_t segmentSize) {
 			Byte* targetPtr = bufferPtr + segmentOffset;
 			if (targetPtr < bufferPtr) {
-				GS_ASSERT_LOG("Start of view is before start of buffer.")
-				return BufferView();
+				GS_ASSERT_ENGINE("Start of view is before start of buffer.")
+				return {};
 			}
 
 			if (targetPtr + segmentSize > bufferPtr + capacity) {
-				GS_ASSERT_LOG("End of view is after end of buffer.")
-				return BufferView();
+				GS_ASSERT_ENGINE("End of view is after end of buffer.")
+				return {};
 			}
 
-			return BufferView(targetPtr, segmentSize);
+			return {targetPtr, segmentSize};
 		}
 
-		Buffer& operator=(const Buffer&& other) noexcept {
+		Buffer& operator=(const Buffer& other) noexcept {
+			if(this == &other) {
+				return *this;
+			}
+
+			capacity = other.capacity;
+			bufferPtr = new Byte[capacity];
+			memcpy(bufferPtr, other.bufferPtr, capacity);
+			return *this;
+		}
+
+		Buffer& operator=(Buffer&& other) noexcept {
+			bufferPtr = other.bufferPtr;
+			capacity = other.capacity;
 			return *this;
 		}
 
 		Byte& operator[](int index) {
-			return (static_cast<Byte*>(bufferPtr))[index];
+			return bufferPtr[index];
 		}
 
 		Byte operator[](int index) const {
-			return (static_cast<Byte*>(bufferPtr))[index];
+			return bufferPtr[index];
 		}
 
-		operator bool() const {
+		explicit operator bool() const {
 			return bufferPtr != nullptr;
 		}
 
@@ -136,7 +149,7 @@ namespace Grindstone {
 			this->capacity = capacity;
 		}
 
-		~ResizableBuffer() {
+		virtual ~ResizableBuffer() {
 			currentPtr = nullptr;
 			size = 0;
 		}
@@ -163,27 +176,27 @@ namespace Grindstone {
 		virtual BufferView GetBufferView(uint64_t segmentOffset, uint64_t segmentSize) override {
 			Byte* targetPtr = bufferPtr + segmentOffset;
 			if (targetPtr < bufferPtr) {
-				GS_ASSERT_LOG("Start of view is before start of buffer.")
+				GS_ASSERT_ENGINE("Start of view is before start of buffer.")
 				return BufferView();
 			}
 
 			if (targetPtr + segmentSize > bufferPtr + size) {
-				GS_ASSERT_LOG("End of view is after end of used buffer.")
+				GS_ASSERT_ENGINE("End of view is after end of used buffer.")
 				return BufferView();
 			}
 
 			return BufferView(targetPtr, segmentSize);
 		}
 
-		void* AddToBuffer(void* srcPtr, uint64_t srcSize) {
+		void* AddToBuffer(const void* srcPtr, uint64_t srcSize) {
 			if (srcPtr == nullptr) {
-				GS_ASSERT_LOG("Source memory is nullptr.")
+				GS_ASSERT_ENGINE("Source memory is nullptr.")
 				return nullptr;
 			}
 
 			uint64_t spaceLeft = GetSpaceLeft();
 			if (srcSize > spaceLeft) {
-				GS_ASSERT_LOG("Source memory size is too small to fit.")
+				GS_ASSERT_ENGINE("Source memory size is too small to fit.")
 				return nullptr;
 			}
 
