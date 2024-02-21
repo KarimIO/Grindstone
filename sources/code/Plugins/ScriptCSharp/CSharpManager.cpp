@@ -115,8 +115,14 @@ void CSharpManager::LoadAssembly(const char* path, AssemblyData& outAssemblyData
 }
 
 void CSharpManager::LoadAssemblyIntoMap(const char* path) {
-	auto& assemblyData = assemblies[path];
+	AssemblyData assemblyData;
 	LoadAssembly(path, assemblyData);
+
+	if (assemblyData.assembly == nullptr && assemblyData.image == nullptr) {
+		return;
+	}
+
+	assemblies[path] = assemblyData;
 }
 
 struct CompactEntityData {
@@ -211,6 +217,10 @@ ScriptClass* CSharpManager::SetupClass(const char* assemblyName, const char* nam
 void CSharpManager::LoadAssemblyClasses() {
 	for(auto& comp : smartComponents) {
 		delete comp.second;
+	}
+
+	if (assemblies.empty()) {
+		return;
 	}
 
 	smartComponents.clear();
