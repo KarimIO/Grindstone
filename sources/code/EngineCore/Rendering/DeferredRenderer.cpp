@@ -1295,7 +1295,11 @@ void DeferredRenderer::RenderLightsImmediate(entt::registry& registry) {
 }
 
 void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer) {
-	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	if (bloomPipeline == nullptr) {
+		return;
+	}
+
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	currentCommandBuffer->BindComputePipeline(bloomPipeline);
 	uint32_t groupCountX = static_cast<uint32_t>(std::ceil(width / 4.0f));
@@ -1501,6 +1505,10 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 }
 
 void DeferredRenderer::RenderSsao(uint32_t imageIndex, GraphicsAPI::CommandBuffer* commandBuffer) {
+	if (ssaoPipeline == nullptr) {
+		return;
+	}
+
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	auto& imageSet = deferredRendererImageSets[imageIndex];
 
@@ -1744,14 +1752,16 @@ void DeferredRenderer::PostProcessCommandBuffer(
 	auto renderPass = framebuffer->GetRenderPass();
 	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, framebuffer->GetWidth(), framebuffer->GetHeight(), &clearColor, 1, clearDepthStencil);
 
-	currentCommandBuffer->BindGraphicsDescriptorSet(tonemapPipeline, &imageSet.tonemapDescriptorSet, 1);
-	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
-	currentCommandBuffer->BindIndexBuffer(indexBuffer);
+	if (tonemapPipeline != nullptr) {
+		currentCommandBuffer->BindGraphicsDescriptorSet(tonemapPipeline, &imageSet.tonemapDescriptorSet, 1);
+		currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
+		currentCommandBuffer->BindIndexBuffer(indexBuffer);
 
-	{
-		// Tonemapping
-		currentCommandBuffer->BindGraphicsPipeline(tonemapPipeline);
-		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+		{
+			// Tonemapping
+			currentCommandBuffer->BindGraphicsPipeline(tonemapPipeline);
+			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+		}
 	}
 
 	currentCommandBuffer->UnbindRenderPass();
