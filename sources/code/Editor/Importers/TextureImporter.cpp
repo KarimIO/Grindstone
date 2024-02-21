@@ -306,7 +306,11 @@ void TextureImporter::OutputDds(uint8_t* outData, uint64_t contentSize) {
 		subassetName = subassetName.substr(0, dotPos);
 	}
 	uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Texture);
-	std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
+	std::filesystem::path parentPath = Editor::Manager::GetInstance().GetCompiledAssetsPath();
+
+	std::filesystem::create_directories(parentPath);
+
+	std::filesystem::path outputPath = parentPath / uuid.ToString();
 	std::ofstream out(outputPath, std::ios::binary);
 	if (out.fail()) {
 		throw std::runtime_error("Failed to output texture!");
