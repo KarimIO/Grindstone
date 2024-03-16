@@ -21,6 +21,7 @@
 #include "Common/Event/WindowEvent.hpp"
 #include "EngineCore/Profiling.hpp"
 #include <Common/Window/WindowManager.hpp>
+#include <Common/HashedString.hpp>
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
@@ -1011,7 +1012,7 @@ void DeferredRenderer::CreatePipelines() {
 
 	auto assetManager = EngineCore::GetInstance().assetManager;
 	uint8_t shaderBits = static_cast<uint8_t>(ShaderStageBit::Vertex | ShaderStageBit::Fragment);
-
+	 
 	{
 		if (!assetManager->LoadShaderSet(Uuid("3b3bc2c8-ac88-4fba-b9f9-704f86c1278c"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
 			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load ssao shaders.");
