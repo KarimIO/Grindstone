@@ -2,8 +2,8 @@
 
 #include <map>
 
-#include "String.h"
-#include "Hash.h"
+#include "String.hpp"
+#include "Hash.hpp"
 
 namespace Grindstone {
 	class HashedString {

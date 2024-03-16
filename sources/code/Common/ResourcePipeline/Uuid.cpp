@@ -1,26 +1,34 @@
 #include "Uuid.hpp"
+#include <Common/Assert.hpp>
 
 #if defined(_WIN32)
 #include <Rpc.h>
 
 Grindstone::Uuid Grindstone::Uuid::CreateRandom() {
 	Uuid newUuid;
-	UuidCreate((UUID*)&(newUuid.uuid));
+	bool hasSuccessfullyCreatedRandomUuid = UuidCreate((UUID*)&(newUuid.uuid)) == RPC_S_OK;
+	GS_ASSERT_ENGINE_WITH_MESSAGE(hasSuccessfullyCreatedRandomUuid, "Could not create a random uuid.")
 
 	return newUuid;
 }
 
 Grindstone::Uuid::Uuid(const char* str) {
-	UuidFromString((unsigned char*)str, (UUID*)&uuid);
+	if (UuidFromString((unsigned char*)str, (UUID*)&uuid) != RPC_S_OK) {
+		GS_BREAK_WITH_MESSAGE("Could not create a random uuid.")
+		memset(uuid, 0, sizeof(uuid));
+	}
 }
 
 std::string Grindstone::Uuid::ToString() const {
 	unsigned char* uuidCstr;
-	UuidToString((UUID*)&uuid, &uuidCstr);
-	std::string uuidStr( (char*) uuidCstr );
-	RpcStringFreeA(&uuidCstr);
+	if (UuidToString((UUID*)&uuid, &uuidCstr) == RPC_S_OK) {
+		std::string uuidStr((char*)uuidCstr);
+		RpcStringFreeA(&uuidCstr);
 
-	return uuidStr;
+		return uuidStr;
+	}
+
+	return std::string();
 }
 #else
 #include <uuid/uuid.h>

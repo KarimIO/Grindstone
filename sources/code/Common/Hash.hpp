@@ -1,9 +1,9 @@
 #pragma once
 
-#include "IntTypes.h"
+#include "IntTypes.hpp"
 
 namespace Grindstone {
-	using HashValue = uint64;
+	using HashValue = Uint64;
 
 	namespace Hash {
 		constexpr HashValue MurmurOAAT64(const wchar_t* key);
