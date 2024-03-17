@@ -58,12 +58,12 @@ static std::filesystem::path CreateDefaultMaterial(const std::filesystem::path& 
 AssetBrowserPanel::AssetBrowserPanel(ImguiRenderer* imguiRenderer, EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore), rootDirectory(Editor::Manager::GetFileManager().GetRootDirectory()) {
 	pathToRename = "";
 
-	iconIds.folderIcon = imguiRenderer->CreateTexture("assetIcons/Folder.dds");
+	iconIds.folderIcon = imguiRenderer->CreateTexture("assetIcons/Folder.png");
 
 	for (uint16_t i = 0; i < static_cast<uint16_t>(AssetType::Count); ++i) {
 		auto assetType = static_cast<AssetType>(i);
 
-		iconIds.fileIcons[i] = imguiRenderer->CreateTexture(std::string("assetIcons/") + std::string(GetAssetTypeToString(assetType)) + ".dds");
+		iconIds.fileIcons[i] = imguiRenderer->CreateTexture(std::string("assetIcons/") + std::string(GetAssetTypeToString(assetType)) + ".png");
 	}
 
 	currentDirectory = &rootDirectory;
@@ -195,6 +195,7 @@ void AssetBrowserPanel::RenderContextMenuFileTypeSpecificEntries(std::filesystem
 	if (importerFactory != nullptr) {
 		if (ImGui::MenuItem("Import")) {
 			importerFactory(path);
+			Editor::Manager::GetInstance().GetAssetRegistry().WriteFile();
 		}
 	}
 

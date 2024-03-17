@@ -17,6 +17,7 @@ file(GLOB_RECURSE SOURCE_MAIN
 	AssetRegistry.cpp AssetRegistry.hpp
 	AssetPackSerializer.cpp AssetPackSerializer.hpp
 	TaskSystem.cpp TaskSystem.hpp
+	FileAssetLoader.cpp FileAssetLoader.hpp
 )
 
 file(GLOB_RECURSE SOURCE_SCRIPT_BUILDER_EDITOR "${EDITOR_DIR}/ScriptBuilder/*.cpp")

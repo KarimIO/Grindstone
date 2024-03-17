@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "defaultUuid": "3fec6729-d1c5-4664-b505-bd4d55611afd",
+    "subassets": [
+        {
+            "name": "grindstone",
+            "uuid": "3fec6729-d1c5-4664-b505-bd4d55611afd",
+            "type": "Texture"
+        }
+    ]
+}

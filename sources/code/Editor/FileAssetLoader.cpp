@@ -2,7 +2,8 @@
 #include <filesystem>
 #include <EngineCore/Utils/Utilities.hpp>
 #include <EngineCore/EngineCore.hpp>
-#include <EngineCore/Logger.hpp>
+#include "EditorManager.hpp"
+#include "AssetRegistry.hpp"
 #include <Common/Graphics/Core.hpp>
 #include "FileAssetLoader.hpp"
 using namespace Grindstone::Assets;
@@ -11,17 +12,9 @@ using namespace Grindstone::Assets;
 //	- outContents should be nullptr
 //	- fileSize should be 0
 void FileAssetLoader::Load(AssetType assetType, Uuid uuid, char*& outContents, size_t& fileSize) {
-	std::filesystem::path path = EngineCore::GetInstance().GetAssetPath(uuid.ToString());
-	Load(assetType, path, outContents, fileSize);
-}
+	std::filesystem::path path = Editor::Manager::GetEngineCore().GetAssetPath(uuid.ToString());
 
-// Out:
-//	- outContents should be nullptr
-//	- fileSize should be 0
-void FileAssetLoader::Load(AssetType assetType, std::filesystem::path path, char*& outContents, size_t& fileSize) {
 	if (!std::filesystem::exists(path)) {
-		std::string errorString = "Could not load file: " + path.string();
-		EngineCore::GetInstance().Print(LogSeverity::Error, errorString.c_str());
 		return;
 	}
 
@@ -38,15 +31,26 @@ void FileAssetLoader::Load(AssetType assetType, std::filesystem::path path, char
 	file.read(outContents, fileSize);
 }
 
-bool FileAssetLoader::LoadText(AssetType assetType, Uuid uuid, std::string& outContents) {
-	std::filesystem::path path = EngineCore::GetInstance().GetAssetPath(uuid.ToString());
-	return LoadText(assetType, path, outContents);
+// Out:
+//	- outContents should be nullptr
+//	- fileSize should be 0
+void FileAssetLoader::Load(AssetType assetType, std::filesystem::path path, char*& outContents, size_t& fileSize) {
+	Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
+
+	Editor::AssetRegistry::Entry outEntry;
+	if (!assetRegistry.TryGetAssetData(path, outEntry)) {
+		std::string errorString = "Could not load file: " + path.string();
+		Editor::Manager::GetInstance().Print(LogSeverity::Error, errorString.c_str());
+		return;
+	}
+
+	Load(assetType, outEntry.uuid, outContents, fileSize);
 }
 
-bool FileAssetLoader::LoadText(AssetType assetType, std::filesystem::path path, std::string& outContents) {
+bool FileAssetLoader::LoadText(AssetType assetType, Uuid uuid, std::string& outContents) {
+	std::filesystem::path path = Editor::Manager::GetEngineCore().GetAssetPath(uuid.ToString());
+
 	if (!std::filesystem::exists(path)) {
-		std::string errorString = "Could not load file: " + path.string();
-		EngineCore::GetInstance().Print(LogSeverity::Error, errorString.c_str());
 		return false;
 	}
 
@@ -55,6 +59,19 @@ bool FileAssetLoader::LoadText(AssetType assetType, std::filesystem::path path, 
 		(std::istreambuf_iterator<char>()));
 
 	return true;
+}
+
+bool FileAssetLoader::LoadText(AssetType assetType, std::filesystem::path path, std::string& outContents) {
+	Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
+
+	Editor::AssetRegistry::Entry outEntry;
+	if (!assetRegistry.TryGetAssetData(path, outEntry)) {
+		std::string errorString = "Could not load file: " + path.string();
+		Editor::Manager::GetInstance().Print(LogSeverity::Error, errorString.c_str());
+		return false;
+	}
+
+	return LoadText(assetType, outEntry.uuid, outContents);
 }
 
 bool FileAssetLoader::LoadShaderStage(
@@ -68,7 +85,7 @@ bool FileAssetLoader::LoadShaderStage(
 
 	if (!std::filesystem::exists(path)) {
 		std::string errorMsg = path + " shader not found.";
-		EngineCore::GetInstance().Print(LogSeverity::Error, errorMsg.c_str());
+		Editor::Manager::GetInstance().Print(LogSeverity::Error, errorMsg.c_str());
 		return false;
 	}
 
@@ -106,10 +123,11 @@ std::string FileAssetLoader::GetShaderPath(
 		shaderStageExtension = ".comp";
 		break;
 	default:
-		Grindstone::Logger::PrintError("Incorrect shader stage");
+		Editor::Manager::Print(LogSeverity::Error, "Incorrect shader stage");
 		break;
 	}
 
-	std::filesystem::path path = EngineCore::GetInstance().GetAssetPath(uuid.ToString());
-	return path.string() + shaderStageExtension + EngineCore::GetInstance().GetGraphicsCore()->GetDefaultShaderExtension();
+	EngineCore& engineCore = Editor::Manager::GetEngineCore();
+	std::filesystem::path path = engineCore.GetAssetPath(uuid.ToString());
+	return path.string() + shaderStageExtension + engineCore.GetGraphicsCore()->GetDefaultShaderExtension();
 }

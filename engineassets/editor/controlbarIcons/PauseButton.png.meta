@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "defaultUuid": "643ecb17-2e99-48ac-95a7-dcd1d4d3813b",
+    "subassets": [
+        {
+            "name": "PauseButton",
+            "uuid": "643ecb17-2e99-48ac-95a7-dcd1d4d3813b",
+            "type": "Texture"
+        }
+    ]
+}

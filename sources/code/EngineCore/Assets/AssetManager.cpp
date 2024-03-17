@@ -1,6 +1,5 @@
 #include "AssetManager.hpp"
 #include "Loaders/AssetLoader.hpp"
-#include "Loaders/FileAssetLoader.hpp"
 #include "Loaders/ArchiveAssetLoader.hpp"
 
 // Assets
@@ -14,11 +13,11 @@
 using namespace Grindstone;
 using namespace Grindstone::Assets;
 
-AssetManager::AssetManager() {
+AssetManager::AssetManager(AssetLoader* assetLoader) {
 	// TODO: Decide via preprocessor after we implement building the engine code during game build
-	assetLoader = EngineCore::GetInstance().isEditor
-		? static_cast<AssetLoader*>(new FileAssetLoader())
-		: static_cast<AssetLoader*>(new ArchiveAssetLoader());
+	this->assetLoader = assetLoader == nullptr
+		? static_cast<AssetLoader*>(new ArchiveAssetLoader())
+		: assetLoader;
 
 	size_t count = static_cast<size_t>(AssetType::Count);
 	assetTypeNames.resize(count);

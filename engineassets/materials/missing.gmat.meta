@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "defaultUuid": "71a7b86b-b6ca-4123-972a-0cf7d1c5bcf9",
+    "subassets": [
+        {
+            "name": "Missing",
+            "uuid": "71a7b86b-b6ca-4123-972a-0cf7d1c5bcf9",
+            "type": "Material"
+        }
+    ]
+}

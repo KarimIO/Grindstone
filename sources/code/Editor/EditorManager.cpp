@@ -2,6 +2,7 @@
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/Events/Dispatcher.hpp"
 #include "EditorManager.hpp"
+#include "FileAssetLoader.hpp"
 #include "ImguiEditor/ImguiEditor.hpp"
 #include "Common/Event/KeyEvent.hpp"
 #include "Common/Event/WindowEvent.hpp"
@@ -39,7 +40,7 @@ TaskSystem& Manager::GetTaskSystem() {
 }
 
 FileManager& Manager::GetFileManager() {
-	return GetInstance().fileManager;
+	return GetInstance().projectAssetFileManager;
 }
 
 ScriptBuilder::CSharpBuildManager& Manager::GetCSharpBuildManager() {
@@ -60,7 +61,8 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 		return false;
 	}
 	assetRegistry.Initialize(projectPath);
-	fileManager.Initialize(assetsPath);
+	projectAssetFileManager.Initialize(assetsPath);
+	editorAssetFileManager.Initialize(engineBinariesPath / "../engineassets");
 	gitManager.Initialize();
 	csharpBuildManager.FinishInitialFileProcessing();
 
@@ -188,6 +190,7 @@ bool Manager::LoadEngine() {
 	createInfo.applicationTitle = "Grindstone Game Editor";
 	const std::string projectPathAsStr = projectPath.string();
 	createInfo.projectPath = projectPathAsStr.c_str();
+	createInfo.assetLoader = new Assets::FileAssetLoader();
 
 	const std::string currentPath = std::filesystem::current_path().string();
 	createInfo.engineBinaryPath = currentPath.c_str();

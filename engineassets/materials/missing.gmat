@@ -1,8 +1,8 @@
-shader: ../assets/shaders/materials/standard_metalness/standard_metalness.json
-hasAlbedoTexture: false
-hasNormalTexture: false
-hasRoughTexture: false
-hasMetalTexture: false
-albedoConstant: 0.8 0.8 0.8 1
-metalnessConstant: 0
-roughnessConstant: 0.5
+{
+	"name": "Missing",
+	"shader": "60532933-a423-4e08-a23d-b81ee3631782",
+	"parameters": {},
+	"samplers": {
+		"skybox": "5331ba08-cb9c-4e62-a596-be90b2a90ab0"
+	}
+}

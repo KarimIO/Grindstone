@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "defaultUuid": "76f3e4c2-702c-444a-b7bb-42cbcf820fa7",
+    "subassets": [
+        {
+            "name": "ConsoleError",
+            "uuid": "76f3e4c2-702c-444a-b7bb-42cbcf820fa7",
+            "type": "Texture"
+        }
+    ]
+}

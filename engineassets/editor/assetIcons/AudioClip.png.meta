@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "defaultUuid": "dc4cbefe-209d-41a4-8473-27dc456417e9",
+    "subassets": [
+        {
+            "name": "AudioClip",
+            "uuid": "dc4cbefe-209d-41a4-8473-27dc456417e9",
+            "type": "Texture"
+        }
+    ]
+}

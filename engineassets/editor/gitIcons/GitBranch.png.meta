@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "defaultUuid": "963c29b3-aa19-4a92-9732-5dd6af24ed6d",
+    "subassets": [
+        {
+            "name": "GitBranch",
+            "uuid": "963c29b3-aa19-4a92-9732-5dd6af24ed6d",
+            "type": "Texture"
+        }
+    ]
+}

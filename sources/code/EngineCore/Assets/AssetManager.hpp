@@ -14,7 +14,7 @@ namespace Grindstone::Assets {
 
 	class AssetManager {
 	public:
-		AssetManager();
+		AssetManager(AssetLoader* assetLoader);
 		~AssetManager();
 
 		void ReloadQueuedAssets();

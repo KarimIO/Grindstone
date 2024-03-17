@@ -18,10 +18,12 @@ namespace Grindstone::Editor {
 
 		std::string name;
 		std::function<void()> fnPtr;
+		std::thread thread;
 		Status status;
 
 		Task() = default;
-		Task(const Task& other) = default;
+		Task(const Task& other);
+		Task(Task&& other) = default;
 		Task(std::string& name, std::function<void()> fnPtr) : name(name), fnPtr(fnPtr), status(Status::Queued) {}
 	};
 

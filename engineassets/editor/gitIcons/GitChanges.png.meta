@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "defaultUuid": "4854b420-e212-49b6-9b3b-917edaf456cd",
+    "subassets": [
+        {
+            "name": "GitChanges",
+            "uuid": "4854b420-e212-49b6-9b3b-917edaf456cd",
+            "type": "Texture"
+        }
+    ]
+}

@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "defaultUuid": "31c4c5bb-856e-4d01-94b8-d247628a3310",
+    "subassets": [
+        {
+            "name": "Scene",
+            "uuid": "31c4c5bb-856e-4d01-94b8-d247628a3310",
+            "type": "Texture"
+        }
+    ]
+}
