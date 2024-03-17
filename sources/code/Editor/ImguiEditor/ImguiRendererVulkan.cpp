@@ -218,8 +218,9 @@ void ImguiRendererVulkan::Resize() {
 }
 
 ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {
-	std::filesystem::path fullPath = "../engineassets/editor/" / path;
-	auto assetManager = Editor::Manager::GetEngineCore().assetManager;
+	EngineCore& engineCore = Editor::Manager::GetEngineCore();
+	std::filesystem::path fullPath = std::filesystem::relative("../engineassets/editor/" / path, engineCore.GetAssetsPath());
+	auto assetManager = engineCore.assetManager;
 	auto textureAsset = static_cast<TextureAsset*>(assetManager->GetAsset(Grindstone::AssetType::Texture, fullPath.string().c_str()));
 
 	if (textureAsset == nullptr) {
