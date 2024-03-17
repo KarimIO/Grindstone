@@ -2,7 +2,7 @@
 
 #include <filesystem>
 
-#include "AssetLoader.hpp"
+#include <EngineCore/Assets/Loaders/AssetLoader.hpp>
 
 namespace Grindstone {
 	namespace Assets {

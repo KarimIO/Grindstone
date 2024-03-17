@@ -86,7 +86,8 @@ namespace Grindstone {
 			CommandList commandList;
 			PlayMode playMode;
 			Selection selection;
-			FileManager fileManager;
+			FileManager projectAssetFileManager;
+			FileManager editorAssetFileManager;
 			TaskSystem taskSystem;
 			AssetRegistry assetRegistry;
 			GitManager gitManager;

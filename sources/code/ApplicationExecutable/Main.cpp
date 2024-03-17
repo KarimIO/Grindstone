@@ -39,6 +39,7 @@ int main(int argc, char** argv) {
 
 	EngineCore::CreateInfo createInfo;
 	createInfo.isEditor = false;
+	createInfo.assetLoader = nullptr;
 	createInfo.applicationModuleName = "ApplicationDLL";
 	createInfo.applicationTitle = "Grindstone Sandbox";
 	createInfo.projectPath = projectPath.c_str();

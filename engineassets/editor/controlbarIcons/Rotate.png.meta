@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "defaultUuid": "b2a9b0e0-8781-4854-afb7-ae7f035964db",
+    "subassets": [
+        {
+            "name": "Rotate",
+            "uuid": "b2a9b0e0-8781-4854-afb7-ae7f035964db",
+            "type": "Texture"
+        }
+    ]
+}

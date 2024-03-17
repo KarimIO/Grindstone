@@ -72,7 +72,7 @@ void TextureImporter::Import(std::filesystem::path& path) {
 	texChannels = static_cast<uint32_t>(channels);
 	targetTexChannels = texChannels;
 
-	isSixSidedCubemap = (width / 4 == height / 3);
+	isSixSidedCubemap = (width != height && (width / 4 == height / 3));
 	texWidth = isSixSidedCubemap ? sourceWidth / 4 : sourceWidth;
 	texHeight = isSixSidedCubemap ? sourceHeight / 3 : sourceHeight;
 

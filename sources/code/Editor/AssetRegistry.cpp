@@ -35,7 +35,7 @@ void AssetRegistry::WriteFile() {
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> documentWriter = rapidjson::PrettyWriter<rapidjson::StringBuffer>(documentStringBuffer);
 
 	documentWriter.StartArray();
-	for (auto&[_,  entry] : assets) {
+	for (auto& [_, entry] : assets) {
 		documentWriter.StartObject();
 		documentWriter.Key("name");
 		documentWriter.String(entry.name.c_str());
@@ -75,7 +75,7 @@ void AssetRegistry::ReadFile() {
 		rapidjson::Value* assetIterator = document.Begin();
 		assetIterator != document.End();
 		++assetIterator
-	) {
+		) {
 		rapidjson::Value& asset = *assetIterator;
 		const char* name = asset["name"].GetString();
 		const char* path = asset["path"].GetString();
@@ -93,6 +93,17 @@ void AssetRegistry::ReadFile() {
 
 bool AssetRegistry::HasAsset(Uuid uuid) {
 	return assets.find(uuid) != assets.end();
+}
+
+bool AssetRegistry::TryGetAssetData(std::filesystem::path path, AssetRegistry::Entry& outEntry) {
+	for (auto& assetEntries : assets) {
+		if (assetEntries.second.path == path) {
+			outEntry = assetEntries.second;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 bool AssetRegistry::TryGetAssetData(Uuid uuid, AssetRegistry::Entry& outEntry) {

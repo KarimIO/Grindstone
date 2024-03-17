@@ -24,6 +24,7 @@ namespace Grindstone::Editor {
 		void ReadFile();
 
 		bool HasAsset(Uuid uuid);
+		bool TryGetAssetData(std::filesystem::path path, AssetRegistry::Entry& outEntry);
 		bool TryGetAssetData(Uuid uuid, AssetRegistry::Entry& outEntry);
 
 		void FindAllFilesOfType(AssetType assetType, std::vector<Entry>& outEntries) const;

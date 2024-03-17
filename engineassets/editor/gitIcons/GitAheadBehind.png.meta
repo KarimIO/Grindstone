@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "defaultUuid": "4d109c96-ddf7-4f3e-bc12-4836ed660fe1",
+    "subassets": [
+        {
+            "name": "GitAheadBehind",
+            "uuid": "4d109c96-ddf7-4f3e-bc12-4836ed660fe1",
+            "type": "Texture"
+        }
+    ]
+}

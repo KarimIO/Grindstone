@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "defaultUuid": "a26779ed-ca33-4ed5-acdd-6964c1d919eb",
+    "subassets": [
+        {
+            "name": "Shader",
+            "uuid": "a26779ed-ca33-4ed5-acdd-6964c1d919eb",
+            "type": "Texture"
+        }
+    ]
+}

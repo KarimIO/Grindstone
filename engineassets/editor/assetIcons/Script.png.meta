@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "defaultUuid": "12c84c5a-d93d-47f8-bf36-e1c9193a841d",
+    "subassets": [
+        {
+            "name": "Script",
+            "uuid": "12c84c5a-d93d-47f8-bf36-e1c9193a841d",
+            "type": "Texture"
+        }
+    ]
+}

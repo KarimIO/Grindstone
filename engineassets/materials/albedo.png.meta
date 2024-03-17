@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "defaultUuid": "76ef68ff-c9b4-4a81-904b-88f34190f4c2",
+    "subassets": [
+        {
+            "name": "albedo",
+            "uuid": "76ef68ff-c9b4-4a81-904b-88f34190f4c2",
+            "type": "Texture"
+        }
+    ]
+}
