@@ -120,8 +120,17 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(std::filesystem::path path
 	}
 
 	auto& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
-	for (auto& subasset : metaFile) {
-		if (!assetRegistry.HasAsset(subasset.uuid)) {
+	for (MetaFile::Subasset& subasset : metaFile) {
+		std::filesystem::path path = Editor::Manager::GetEngineCore().GetAssetPath(subasset.uuid.ToString());
+		if (!assetRegistry.HasAsset(subasset.uuid) || !std::filesystem::exists(path)) {
+			return true;
+		}
+	}
+
+	MetaFile::Subasset defaultSubasset;
+	if (metaFile.TryGetDefaultSubasset(defaultSubasset)) {
+		std::filesystem::path path = Editor::Manager::GetEngineCore().GetAssetPath(defaultSubasset.uuid.ToString());
+		if (!assetRegistry.HasAsset(defaultSubasset.uuid) || !std::filesystem::exists(path)) {
 			return true;
 		}
 	}
@@ -134,11 +143,13 @@ void FileManager::UpdateCompiledFileIfNecessaryOnInitialize(std::filesystem::pat
 		TaskSystem& taskSystem = Editor::Manager::GetInstance().GetTaskSystem();
 
 		std::string jobName = "Importing " + path.filename().string();
+		Editor::Manager::Print(LogSeverity::Info, "{}", jobName);
 		taskSystem.Execute(jobName, [path] {
 			std::filesystem::path nPath = path;
 			auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
 			importManager.Import(nPath);
-			});
+			Editor::Manager::Print(LogSeverity::Info, "Finished importing {}", path.string().c_str());
+		});
 	}
 }
 

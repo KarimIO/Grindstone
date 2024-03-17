@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "defaultUuid": "a397b3da-6df5-45c9-a4a3-a1b291cf1785",
+    "subassets": [
+        {
+            "name": "roughness",
+            "uuid": "a397b3da-6df5-45c9-a4a3-a1b291cf1785",
+            "type": "Texture"
+        }
+    ]
+}

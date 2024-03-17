@@ -4,6 +4,10 @@
 
 using namespace Grindstone::Editor;
 
+
+Task::Task(const Task& other)
+	: fnPtr(other.fnPtr), name(other.name), status(other.status), thread() {}
+
 TaskSystem::TaskSystem() {
 }
 
@@ -32,10 +36,14 @@ void TaskSystem::Execute(std::string jobName, std::function<void()> jobPtr) {
 		task.status = Task::Status::InProgress;
 	}
 
-	jobPtr();
-
-	{
+	//tasks[uuid].thread = std::thread([jobPtr, uuid, this] {
+		try {
+			jobPtr();
+		}
+		catch (std::runtime_error e) {
+			OutputDebugString(e.what());
+		}
 		std::scoped_lock lock(mutex);
-		tasks.erase(uuid);
-	}
+		tasks[uuid].status = Task::Status::Done;
+	//});
 }

@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "defaultUuid": "abf6ab2e-82a9-4d7c-ac68-0ecd5446bd22",
+    "subassets": [
+        {
+            "name": "dielectric",
+            "uuid": "abf6ab2e-82a9-4d7c-ac68-0ecd5446bd22",
+            "type": "Texture"
+        }
+    ]
+}

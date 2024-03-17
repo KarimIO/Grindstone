@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "defaultUuid": "73fce06b-f947-440b-befe-1a4d1d11242d",
+    "subassets": [
+        {
+            "name": "lut",
+            "uuid": "73fce06b-f947-440b-befe-1a4d1d11242d",
+            "type": "Texture"
+        }
+    ]
+}
