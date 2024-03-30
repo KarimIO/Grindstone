@@ -36,7 +36,10 @@ void TaskSystem::Execute(std::string jobName, std::function<void()> jobPtr) {
 		task.status = Task::Status::InProgress;
 	}
 
-	//tasks[uuid].thread = std::thread([jobPtr, uuid, this] {
+#ifndef GS_SINGLETHREAD_EDITOR
+	tasks[uuid].thread = std::thread([jobPtr, uuid, this]
+#endif
+	{
 		try {
 			jobPtr();
 		}
@@ -45,5 +48,32 @@ void TaskSystem::Execute(std::string jobName, std::function<void()> jobPtr) {
 		}
 		std::scoped_lock lock(mutex);
 		tasks[uuid].status = Task::Status::Done;
-	//});
+	}
+#ifndef GS_SINGLETHREAD_EDITOR
+	);
+#endif
+}
+
+void TaskSystem::CullDoneTasks() {
+	std::scoped_lock lock(mutex);
+
+	for (auto& task = tasks.begin(), next_it = task; task != tasks.end(); task = next_it) {
+		++next_it;
+		if (task->second.status == Task::Status::Done) {
+			task->second.thread.join();
+			tasks.erase(task->first);
+		}
+	}
+}
+
+bool TaskSystem::HasRunningTasks() {
+	std::scoped_lock lock(mutex);
+
+	for (auto& task : tasks) {
+		if (task.second.status != Task::Status::Done) {
+			return true;
+		}
+	}
+
+	return false;
 }

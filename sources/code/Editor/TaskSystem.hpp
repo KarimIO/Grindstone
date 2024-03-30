@@ -33,6 +33,8 @@ namespace Grindstone::Editor {
 		~TaskSystem();
 		std::vector<Task> GetTasks();
 		void Execute(std::string jobName, std::function<void()> jobPtr);
+		void CullDoneTasks();
+		bool HasRunningTasks();
 	private:
 		std::map<Uuid, Task> tasks;
 		std::mutex mutex;
