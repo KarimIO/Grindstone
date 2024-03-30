@@ -63,6 +63,14 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	assetRegistry.Initialize(projectPath);
 	projectAssetFileManager.Initialize(assetsPath);
 	editorAssetFileManager.Initialize(engineBinariesPath / "../engineassets");
+
+	while (taskSystem.HasRunningTasks()) {
+		Sleep(100);
+	}
+	taskSystem.CullDoneTasks();
+
+	Editor::Manager::GetInstance().GetAssetRegistry().WriteFile();
+
 	gitManager.Initialize();
 	csharpBuildManager.FinishInitialFileProcessing();
 

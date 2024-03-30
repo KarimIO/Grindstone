@@ -66,7 +66,6 @@ void FileManager::Initialize(std::filesystem::path projectPath) {
 	rootDirectory.path = std::filesystem::directory_entry(projectPath);
 	rootDirectory.parentDirectory = nullptr;
 	CreateInitialFileStructure(rootDirectory, std::filesystem::directory_iterator(rootDirectory.path));
-	Editor::Manager::GetInstance().GetAssetRegistry().WriteFile();
 }
 
 Directory& Grindstone::Editor::FileManager::GetRootDirectory() {
@@ -122,7 +121,9 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(std::filesystem::path path
 	auto& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
 	for (MetaFile::Subasset& subasset : metaFile) {
 		std::filesystem::path path = Editor::Manager::GetEngineCore().GetAssetPath(subasset.uuid.ToString());
-		if (!assetRegistry.HasAsset(subasset.uuid) || !std::filesystem::exists(path)) {
+		bool registryHasAsset = assetRegistry.HasAsset(subasset.uuid);
+		bool doesFileExist = std::filesystem::exists(path);
+		if (!registryHasAsset || !doesFileExist) {
 			return true;
 		}
 	}
@@ -130,7 +131,9 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(std::filesystem::path path
 	MetaFile::Subasset defaultSubasset;
 	if (metaFile.TryGetDefaultSubasset(defaultSubasset)) {
 		std::filesystem::path path = Editor::Manager::GetEngineCore().GetAssetPath(defaultSubasset.uuid.ToString());
-		if (!assetRegistry.HasAsset(defaultSubasset.uuid) || !std::filesystem::exists(path)) {
+		bool registryHasAsset = assetRegistry.HasAsset(defaultSubasset.uuid);
+		bool doesFileExist = std::filesystem::exists(path);
+		if (!registryHasAsset || !doesFileExist) {
 			return true;
 		}
 	}
@@ -164,7 +167,7 @@ void FileManager::UpdateCompiledFileIfNecessary(std::filesystem::path path) {
 			importManager.Import(nPath);
 			auto& editorManager = Editor::Manager::GetInstance();
 			editorManager.GetAssetRegistry().WriteFile();
-			});
+		});
 	}
 }
 
