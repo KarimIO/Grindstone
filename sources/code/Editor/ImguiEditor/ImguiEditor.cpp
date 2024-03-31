@@ -10,8 +10,6 @@
 #include "EngineCore/Events/Dispatcher.hpp"
 #include "Common/Event/WindowEvent.hpp"
 #include "Editor/EditorManager.hpp"
-#include "Modals/ModelConverterModal.hpp"
-#include "Modals/ImageConverterModal.hpp"
 #include "ViewportPanel.hpp"
 #include "ImguiEditor.hpp"
 #include "ConsolePanel.hpp"
@@ -49,8 +47,6 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	// input = new ImguiInput(io, engineCore);
 
 	sceneHeirarchyPanel = new SceneHeirarchyPanel(engineCore->GetSceneManager(), this);
-	modelConverterModal = new ModelConverterModal();
-	imageConverterModal = new ImageConverterModal();
 	inspectorPanel = new InspectorPanel(engineCore, this);
 	assetBrowserPanel = new AssetBrowserPanel(imguiRenderer, engineCore, this);
 	userSettingsWindow = new Settings::UserSettingsWindow();
@@ -77,8 +73,6 @@ ImguiEditor::~ImguiEditor() {
 	delete input;
 
 	delete sceneHeirarchyPanel;
-	delete modelConverterModal;
-	delete imageConverterModal;
 	delete inspectorPanel;
 	delete assetBrowserPanel;
 	delete userSettingsWindow;
@@ -245,8 +239,6 @@ void ImguiEditor::Update() {
 void ImguiEditor::Render() {
 	RenderDockspace();
 	controlBar->Render();
-	modelConverterModal->Render();
-	imageConverterModal->Render();
 	sceneHeirarchyPanel->Render();
 	viewportPanel->Render();
 	consolePanel->Render();
@@ -259,14 +251,6 @@ void ImguiEditor::Render() {
 	projectSettingsWindow->Render();
 	statusBar->Render();
 	assetPicker->Render();
-}
-
-void ImguiEditor::ShowModelModal() {
-	modelConverterModal->Show();
-}
-
-void ImguiEditor::ShowImageModal() {
-	imageConverterModal->Show();
 }
 
 void ImguiEditor::PromptAssetPicker(AssetType assetType, AssetPicker::AssetPickerCallback callback) {

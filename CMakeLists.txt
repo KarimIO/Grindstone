@@ -74,6 +74,31 @@ if (USE_RENDERABLES_3D)
 	add_subdirectory(${PLUGIN_DIR}/Renderables3D)
 endif()
 
+option(USE_EDITOR_AUDIO_IMPORTER "Include EditorAudioImporter?" ON)
+if (USE_EDITOR_AUDIO_IMPORTER)
+	add_subdirectory(${PLUGIN_DIR}/EditorAudioImporter)
+endif()
+
+option(USE_EDITOR_MATERIAL_IMPORTER "Include EditorMaterialImporter?" ON)
+if (USE_EDITOR_MATERIAL_IMPORTER)
+	add_subdirectory(${PLUGIN_DIR}/EditorMaterialImporter)
+endif()
+
+option(USE_EDITOR_MODEL_IMPORTER "Include EditorModelImporter?" ON)
+if (USE_EDITOR_MODEL_IMPORTER)
+	add_subdirectory(${PLUGIN_DIR}/EditorModelImporter)
+endif()
+
+option(USE_EDITOR_SHADER_IMPORTER "Include EditorShaderImporter?" ON)
+if (USE_EDITOR_SHADER_IMPORTER)
+	add_subdirectory(${PLUGIN_DIR}/EditorShaderImporter)
+endif()
+
+option(USE_EDITOR_TEXTURE_IMPORTER "Include EditorTextureImporter?" ON)
+if (USE_EDITOR_TEXTURE_IMPORTER)
+	add_subdirectory(${PLUGIN_DIR}/EditorTextureImporter)
+endif()
+
 option(USE_CSHARP "Include CSharp?" ON)
 if (USE_CSHARP)
 	add_subdirectory(${PLUGIN_DIR}/ScriptCSharp)

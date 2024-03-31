@@ -16,7 +16,6 @@ namespace Grindstone {
 			void RenderFileMenu();
 			void RenderEditMenu();
 			void RenderViewMenu();
-			void RenderConvertMenu();
 		private:
 			void OnNewFile();
 			void OnSaveFile();

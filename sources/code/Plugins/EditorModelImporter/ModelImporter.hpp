@@ -4,10 +4,12 @@
 #include <string>
 #include <vector>
 #include <map>
+
 #include <assimp/scene.h>
 #include <glm/glm.hpp>
 
-#include "Importer.hpp"
+#include <Common/ResourcePipeline/Uuid.hpp>
+#include <Editor/Importers/Importer.hpp>
 
 namespace Grindstone {
 	namespace Importers {

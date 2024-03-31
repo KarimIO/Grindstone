@@ -39,6 +39,10 @@ TaskSystem& Manager::GetTaskSystem() {
 	return taskSystem;
 }
 
+AssetTemplateRegistry& Manager::GetAssetTemplateRegistry() {
+	return assetTemplateRegistry;
+}
+
 FileManager& Manager::GetFileManager() {
 	return GetInstance().projectAssetFileManager;
 }
@@ -56,6 +60,13 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	assetsPath = this->projectPath / "assets";
 	compiledAssetsPath = this->projectPath / "compiledAssets";
 	engineBinariesPath = std::filesystem::current_path();
+
+	std::string materialContent = "{\n\t\"name\": \"New Material\"\n\t\"shader\": \"\"\n}";
+	assetTemplateRegistry.RegisterTemplate(
+		AssetType::Material,
+		"Material", ".gmat",
+		reinterpret_cast<const void*>(materialContent.c_str()), materialContent.size()
+	);
 
 	if (!LoadEngine()) {
 		return false;

@@ -31,7 +31,12 @@ void MaterialInspector::SetMaterialPath(const std::filesystem::path& materialPat
 	std::string contentData = Grindstone::Utils::LoadFileText(materialPathAsString.c_str());
 
 	rapidjson::Document document;
-	document.Parse(contentData.data());
+	if (document.Parse(contentData.data()).GetParseError()) {
+		Editor::Manager::GetInstance().Print(LogSeverity::Error, "Invalid Material.");
+		materialName = filename;
+		shaderUuid = Uuid();
+		return;
+	}
 
 	if (document.HasMember("name")) {
 		materialName = document["name"].GetString();

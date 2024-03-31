@@ -8,6 +8,7 @@
 #include "Commands/CommandList.hpp"
 #include "Importers/ImporterManager.hpp"
 #include "ScriptBuilder/CSharpBuildManager.hpp"
+#include "AssetTemplateRegistry.hpp"
 #include "FileManager.hpp"
 #include "AssetRegistry.hpp"
 #include "GitManager.hpp"
@@ -48,6 +49,7 @@ namespace Grindstone {
 			GitManager& GetGitManager();
 			Selection& GetSelection();
 			TaskSystem& GetTaskSystem();
+			AssetTemplateRegistry& GetAssetTemplateRegistry();
 			ScriptBuilder::CSharpBuildManager& GetCSharpBuildManager();
 			static FileManager& GetFileManager();
 			static EngineCore& GetEngineCore();
@@ -91,6 +93,7 @@ namespace Grindstone {
 			TaskSystem taskSystem;
 			AssetRegistry assetRegistry;
 			GitManager gitManager;
+			AssetTemplateRegistry assetTemplateRegistry;
 			Grindstone::Utilities::Modules::Handle engineCoreLibraryHandle;
 			Importers::ImporterManager importerManager;
 		};
