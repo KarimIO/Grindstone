@@ -38,7 +38,10 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	}
 
 	rapidjson::Document document;
-	document.Parse(contentData.data());
+	if (document.Parse(contentData.data()).HasParseError()) {
+		EngineCore::GetInstance().Print(LogSeverity::Error, "Unable to parse material.");
+		return nullptr;
+	}
 
 	if (!document.HasMember("name")) {
 		EngineCore::GetInstance().Print(LogSeverity::Error, "No name found in material.");

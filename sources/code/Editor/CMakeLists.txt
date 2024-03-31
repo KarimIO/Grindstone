@@ -18,6 +18,7 @@ file(GLOB_RECURSE SOURCE_MAIN
 	AssetPackSerializer.cpp AssetPackSerializer.hpp
 	TaskSystem.cpp TaskSystem.hpp
 	FileAssetLoader.cpp FileAssetLoader.hpp
+	AssetTemplateRegistry.cpp AssetTemplateRegistry.hpp
 )
 
 file(GLOB_RECURSE SOURCE_SCRIPT_BUILDER_EDITOR "${EDITOR_DIR}/ScriptBuilder/*.cpp")
@@ -85,25 +86,10 @@ set(EDITOR_HEADERS
 	${HEADER_IMGUI_EDITOR}
 )
 
-find_package(Assimp CONFIG REQUIRED)
 find_package(efsw CONFIG REQUIRED)
 find_package(gl3w CONFIG REQUIRED)
-find_package(glslang CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
-find_path(STB_INCLUDE_DIRS "stb_include.h")
-find_path(FMT_INCLUDE_DIRS "fmt/format.h")
 
-find_package(spirv_cross_core CONFIG REQUIRED)
-find_package(spirv_cross_glsl CONFIG REQUIRED)
-find_package(spirv_cross_hlsl CONFIG REQUIRED)
-find_package(spirv_cross_msl CONFIG REQUIRED)
-find_package(spirv_cross_reflect CONFIG REQUIRED)
-find_package(spirv_cross_cpp CONFIG REQUIRED)
-find_package(spirv_cross_c CONFIG REQUIRED)
-find_package(SPIRV-Tools-opt CONFIG REQUIRED)
-find_package(SPIRV-Tools CONFIG REQUIRED)
-add_library(SPIRV-Tools ALIAS SPIRV-Tools-static)
-find_package(unofficial-shaderc CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(imguizmo CONFIG REQUIRED)
 find_package(unofficial-libgit2 CONFIG REQUIRED)
@@ -117,7 +103,6 @@ target_compile_definitions(Editor PUBLIC NOMINMAX GLM_ENABLE_EXPERIMENTAL)
 target_include_directories(Editor PUBLIC
 	${MONO_PATH}/include/mono-2.0
 	${CODE_DIR}
-	${STB_INCLUDE_DIRS}
 	${FMT_INCLUDE_DIRS}
 )
 
@@ -127,14 +112,10 @@ target_link_libraries(
 	Rpcrt4.lib
 	efsw::efsw
 	fmt::fmt
-	spirv-cross-c spirv-cross-core spirv-cross-cpp spirv-cross-glsl spirv-cross-reflect
-	glslang::SPIRV glslang::HLSL glslang::glslang glslang::OGLCompiler
-	unofficial::shaderc::shaderc
 	unofficial::libgit2::libgit2
-	SPIRV-Tools-opt SPIRV-Tools-static
-	spirv-cross-reflect
-	assimp::assimp
-	unofficial::gl3w::gl3w glm::glm opengl32
+	unofficial::gl3w::gl3w
+	glm::glm
+	opengl32
 	imgui::imgui imguizmo::imguizmo
 	${CMAKE_DL_LIBS}
 )
