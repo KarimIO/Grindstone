@@ -17,11 +17,11 @@ void GitManager::Initialize() {
 	UpdateGit();
 }
 
-std::string& GitManager::GetBranchName() {
+const std::string& GitManager::GetBranchName() const {
 	return currentBranchName;
 }
 
-GitRepoStatus GitManager::GetGitRepoStatus() {
+GitRepoStatus GitManager::GetGitRepoStatus() const {
 	return repoStatus;
 }
 
@@ -89,7 +89,7 @@ bool GitManager::OpenRepository() {
 		CloseRepository();
 	}
 
-	auto& editorManager = Editor::Manager::GetInstance();
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
 	std::filesystem::path projectPath = editorManager.GetProjectPath();
 	std::string projectPathString = projectPath.string();
 	const char* path = projectPathString.c_str();
@@ -114,14 +114,14 @@ void GitManager::CloseRepository() {
 	repo = nullptr;
 }
 
-uint32_t GitManager::GetBehindCount() {
+uint32_t GitManager::GetBehindCount() const {
 	return behindCount;
 }
 
-uint32_t GitManager::GetAheadCount() {
+uint32_t GitManager::GetAheadCount() const {
 	return aheadCount;
 }
 
-uint32_t GitManager::GetChangesCount() {
+uint32_t GitManager::GetChangesCount() const {
 	return changesCount;
 }

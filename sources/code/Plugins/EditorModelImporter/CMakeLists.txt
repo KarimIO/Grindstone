@@ -1,5 +1,5 @@
-set(EDITORMODELIMPORTER_SOURCES ModelImporter.cpp EntryPoint.cpp)
-set(EDITORMODELIMPORTER_HEADERS ModelImporter.hpp pch.hpp)
+set(EDITORMODELIMPORTER_SOURCES ModelImporter.cpp ModelMaterialImporter.cpp ${COMMON_DIR}/ResourcePipeline/MetaFile.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${COMMON_DIR}/Editor/Importer.cpp EntryPoint.cpp)
+set(EDITORMODELIMPORTER_HEADERS ModelImporter.hpp ModelMaterialImporter.hpp ${COMMON_DIR}/ResourcePipeline/MetaFile.hpp ${COMMON_DIR}/ResourcePipeline/Uuid.hpp ${COMMON_DIR}/Editor/Importer.hpp pch.hpp)
 
 find_package(Assimp CONFIG REQUIRED)
 find_path(FMT_INCLUDE_DIRS "fmt/format.h")
@@ -17,4 +17,4 @@ target_include_directories(PluginEditorModelImporter PUBLIC ${CODE_DIR} ${FMT_IN
 
 target_precompile_headers(PluginEditorModelImporter PUBLIC pch.hpp)
 
-target_link_libraries(PluginEditorModelImporter assimp::assimp)
+target_link_libraries(PluginEditorModelImporter Rpcrt4.lib assimp::assimp)

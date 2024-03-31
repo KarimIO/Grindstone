@@ -4,12 +4,14 @@
 #include "ShaderImporter.hpp"
 
 using namespace Grindstone;
+using namespace Grindstone::Editor::Importers;
 
 extern "C" {
 	EDITOR_SHADER_IMPORTER_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
-		AddImporterFactory("glsl", ImportShadersFromGlsl);
+		pluginInterface->EditorRegisterAssetImporter("glsl", ImportShadersFromGlsl);
 	}
 
 	EDITOR_SHADER_IMPORTER_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
+		pluginInterface->EditorDeregisterAssetImporter("glsl");
 	}
 }

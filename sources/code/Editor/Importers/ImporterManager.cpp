@@ -9,8 +9,8 @@
 
 using namespace Grindstone::Importers;
 
-static void ImportScene(std::filesystem::path& path) {
-	Grindstone::MetaFile* metaFile = new Grindstone::MetaFile(path);
+static void ImportScene(const std::filesystem::path& path) {
+	Grindstone::Editor::MetaFile* metaFile = new Grindstone::Editor::MetaFile(path);
 	std::string subassetName = path.filename().string();
 	size_t dotPos = subassetName.find('.');
 	if (dotPos != std::string::npos) {

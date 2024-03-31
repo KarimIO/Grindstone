@@ -4,7 +4,7 @@
 #include "Common/ResourcePipeline/AssetType.hpp"
 #include "Uuid.hpp"
 
-namespace Grindstone {
+namespace Grindstone::Editor {
 	class MetaFile {
 	public:
 		struct Subasset {

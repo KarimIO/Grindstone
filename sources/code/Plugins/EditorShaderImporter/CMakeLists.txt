@@ -1,5 +1,5 @@
-set(EDITORSHADERIMPORTER_SOURCES ShaderImporter.cpp EntryPoint.cpp)
-set(EDITORSHADERIMPORTER_HEADERS ShaderImporter.hpp pch.hpp)
+set(EDITORSHADERIMPORTER_SOURCES ShaderImporter.cpp ${COMMON_DIR}/ResourcePipeline/MetaFile.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${COMMON_DIR}/Editor/Importer.cpp EntryPoint.cpp)
+set(EDITORSHADERIMPORTER_HEADERS ShaderImporter.hpp ${COMMON_DIR}/ResourcePipeline/MetaFile.hpp ${COMMON_DIR}/ResourcePipeline/Uuid.hpp ${COMMON_DIR}/Editor/Importer.hpp pch.hpp)
 
 find_package(glslang CONFIG REQUIRED)
 find_package(spirv_cross_core CONFIG REQUIRED)
@@ -23,12 +23,13 @@ add_library(
 
 target_compile_features(PluginEditorShaderImporter PRIVATE cxx_std_17)
 
-target_compile_definitions(PluginEditorShaderImporter PUBLIC EDITOR_MODEL_IMPORTER_DLL GLM_ENABLE_EXPERIMENTAL)
+target_compile_definitions(PluginEditorShaderImporter PUBLIC EDITOR_SHADER_IMPORTER_DLL GLM_ENABLE_EXPERIMENTAL)
 target_include_directories(PluginEditorShaderImporter PUBLIC ${CODE_DIR} ${FMT_INCLUDE_DIRS})
 
 target_precompile_headers(PluginEditorShaderImporter PUBLIC pch.hpp)
 
 target_link_libraries(PluginEditorShaderImporter
+	Rpcrt4.lib
 	spirv-cross-c spirv-cross-core spirv-cross-cpp spirv-cross-glsl spirv-cross-reflect
 	glslang::SPIRV glslang::HLSL glslang::glslang glslang::OGLCompiler
 	unofficial::shaderc::shaderc

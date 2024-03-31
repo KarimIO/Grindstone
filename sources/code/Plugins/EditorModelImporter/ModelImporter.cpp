@@ -1,6 +1,3 @@
-#include "ModelImporter.hpp"
-#include "MaterialImporter.hpp"
-#include "TextureImporter.hpp"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -9,27 +6,30 @@
 #include <fstream>
 #include <chrono>
 
+#include <Common/Formats/Model.hpp>
+#include <Common/Formats/Animation.hpp>
+#include <Common/ResourcePipeline/MetaFile.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
-#include "Common/Formats/Model.hpp"
-#include "Common/Formats/Animation.hpp"
-#include "Editor/EditorManager.hpp"
-#include "EngineCore/Utils/Utilities.hpp"
-#include "Common/ResourcePipeline/MetaFile.hpp"
+#include <EngineCore/Utils/Utilities.hpp>
+#include <Editor/EditorManager.hpp>
 
-using namespace Grindstone::Importers;
+#include "ModelImporter.hpp"
+#include "ModelMaterialImporter.hpp"
 
-void PushVertex3dToVector(std::vector<float>& targetVector, const aiVector3D* aiVertex) {
+using namespace Grindstone::Editor::Importers;
+
+static void PushVertex3dToVector(std::vector<float>& targetVector, const aiVector3D* aiVertex) {
 	targetVector.push_back(aiVertex->x);
 	targetVector.push_back(aiVertex->y);
 	targetVector.push_back(aiVertex->z);
 }
 
-void PushVertex2dToVector(std::vector<float>& targetVector, const aiVector3D* aiVertex) {
+static void PushVertex2dToVector(std::vector<float>& targetVector, const aiVector3D* aiVertex) {
 	targetVector.push_back(aiVertex->x);
 	targetVector.push_back(aiVertex->y);
 }
 
-glm::mat4 AiMatToGlm(aiMatrix4x4& matrix) {
+static glm::mat4 AiMatToGlm(aiMatrix4x4& matrix) {
 	return glm::mat4(
 		matrix.a1, matrix.a2, matrix.a3, matrix.a4,
 		matrix.b1, matrix.b2, matrix.b3, matrix.b4,
@@ -348,7 +348,7 @@ void ModelImporter::ProcessAnimations() {
 	}
 }
 
-void ModelImporter::Import(std::filesystem::path& path) {
+void ModelImporter::Import(const std::filesystem::path& path) {
 	this->path = path;
 	this->baseFolderPath = this->path.parent_path();
 
@@ -494,7 +494,7 @@ void ModelImporter::OutputVertexArray(std::ofstream& output, std::vector<float>&
 	);
 }
 
-void Grindstone::Importers::ImportModel(std::filesystem::path& path) {
+void Grindstone::Editor::Importers::ImportModel(const std::filesystem::path& path) {
 	ModelImporter modelImporter;
 	modelImporter.Import(path);
 }
