@@ -7,8 +7,6 @@
 #include "Common/Window/WindowManager.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/EngineCore.hpp"
-#include "Modals/ModelConverterModal.hpp"
-#include "Modals/ImageConverterModal.hpp"
 
 #include "Editor/AssetPackSerializer.hpp"
 #include "Editor/EditorManager.hpp"
@@ -32,10 +30,6 @@ void Menubar::Render() {
 
 	if (ImGui::BeginMenu("View")) {
 		RenderViewMenu();
-	}
-
-	if (ImGui::BeginMenu("Convert")) {
-		RenderConvertMenu();
 	}
 
 	ImGui::EndMenuBar();
@@ -97,16 +91,6 @@ void Menubar::RenderViewMenu() {
 	if (ImGui::MenuItem("Show Scene Graph", "", false)) {}
 	if (ImGui::MenuItem("Show Inspector Panel", "", false)) {}
 	if (ImGui::MenuItem("Add Viewport Panel", "", false)) {}
-	ImGui::EndMenu();
-}
-
-void Menubar::RenderConvertMenu() {
-	if (ImGui::MenuItem("Convert Model", "", editor->modelConverterModal->IsOpen())) {
-		editor->ShowModelModal();
-	}
-	if (ImGui::MenuItem("Convert Image", "", editor->imageConverterModal->IsOpen())) {
-		editor->ShowImageModal();
-	}
 	ImGui::EndMenu();
 }
 

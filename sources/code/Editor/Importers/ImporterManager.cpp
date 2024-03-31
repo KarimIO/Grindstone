@@ -6,11 +6,6 @@
 #include <EngineCore/Assets/AssetManager.hpp>
 
 #include "ImporterManager.hpp"
-#include "ModelImporter.hpp"
-#include "ShaderImporter.hpp"
-#include "TextureImporter.hpp"
-#include "AudioImporter.hpp"
-#include "MaterialImporter.hpp"
 
 using namespace Grindstone::Importers;
 
@@ -34,24 +29,6 @@ static void ImportScene(std::filesystem::path& path) {
 }
 
 ImporterManager::ImporterManager() {
-	AddImporterFactory("fbx", ImportModel);
-	AddImporterFactory("dae", ImportModel);
-	AddImporterFactory("obj", ImportModel);
-
-	AddImporterFactory("hdr", ImportTexture);
-	AddImporterFactory("jpeg", ImportTexture);
-	AddImporterFactory("jpg", ImportTexture);
-	AddImporterFactory("png", ImportTexture);
-	AddImporterFactory("tga", ImportTexture);
-	AddImporterFactory("bmp", ImportTexture);
-	AddImporterFactory("psd", ImportTexture);
-
-	AddImporterFactory("gmat", ImportMaterial);
-
-	AddImporterFactory("glsl", ImportShadersFromGlsl);
-
-	AddImporterFactory("wav", ImportAudio);
-
 	AddImporterFactory("json", ImportScene);
 }
 

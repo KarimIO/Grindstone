@@ -45,7 +45,11 @@ ShaderReflectionLoader::ShaderReflectionLoader(
 	const char* content,
 	ShaderReflectionData& data
 ) : outData(data) {
-	document.Parse(content);
+	if (document.Parse(content).GetParseError()) {
+		EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Failed to load shader reflection.");
+		return;
+	}
+
 	Process();
 }
 

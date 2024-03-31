@@ -37,7 +37,10 @@ bool SceneLoaderJson::Load(const char* path) {
 
 	strcpy_s(scene->path, strLen, path);
 
-	document.Parse(fileContents.c_str());
+	if (document.Parse(fileContents.c_str()).GetParseError()) {
+		EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Failed to load scene.");
+		return false;
+	}
 
 	std::string printMsg = std::string("Loading scene: ") + path;
 	EngineCore::GetInstance().Print(Grindstone::LogSeverity::Info, printMsg.c_str());

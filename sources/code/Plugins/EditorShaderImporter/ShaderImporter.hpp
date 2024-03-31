@@ -3,10 +3,11 @@
 #include <string>
 #include <vector>
 
-#include "rapidjson/document.h"
-#include "rapidjson/prettywriter.h"
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
 
-#include "Importer.hpp"
+#include <Common/ResourcePipeline/Uuid.hpp>
+#include <Editor/Importers/Importer.hpp>
 
 namespace Grindstone {
 	namespace Importers {

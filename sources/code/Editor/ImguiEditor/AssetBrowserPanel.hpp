@@ -32,6 +32,7 @@ namespace Grindstone {
 				void RenderContextMenuFileTypeSpecificEntries(std::filesystem::directory_entry entry);
 				void RenderAssetContextMenu(std::filesystem::directory_entry entry);
 				void RenderCurrentDirectoryContextMenu();
+				void RenderAssetTemplates(const std::filesystem::path& path);
 				void TryRenameFile();
 				void RenderFolders();
 				void RenderFiles();

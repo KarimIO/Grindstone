@@ -1,7 +1,9 @@
 #pragma once
 
 #include <string>
-#include "Common/ResourcePipeline/Uuid.hpp"
+
+#include <Common/ResourcePipeline/Uuid.hpp>
+#include <Editor/Importers/Importer.hpp>
 
 namespace Grindstone {
 	namespace Importers {

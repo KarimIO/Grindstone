@@ -2,26 +2,20 @@
 #include <fstream>
 #include <string>
 #include <cctype>
+
 #include <imgui.h>
 #include <imgui_stdlib.h>
 #include <entt/entt.hpp>
-#include "ComponentInspector.hpp"
-#include "Editor/ImguiEditor/ImguiEditor.hpp"
-#include "Editor/Importers/ShaderImporter.hpp"
-#include "Editor/Importers/ModelImporter.hpp"
-#include "Editor/Importers/TextureImporter.hpp"
-#include "Editor/EditorManager.hpp"
-#include "AssetBrowserPanel.hpp"
-#include "Common/ResourcePipeline/AssetType.hpp"
-#include "Common/Window/WindowManager.hpp"
-#include "EngineCore/Scenes/Manager.hpp"
-#include "EngineCore/Scenes/Scene.hpp"
-#include "EngineCore/EngineCore.hpp"
-#include "EngineCore/Assets/AssetManager.hpp"
-#include "EngineCore/Assets/Textures/TextureImporter.hpp"
-#include "EngineCore/Assets/Shaders/ShaderImporter.hpp"
-#include "EngineCore/Assets/Materials/MaterialImporter.hpp"
+
+#include <Common/ResourcePipeline/AssetType.hpp>
+#include <Common/Window/WindowManager.hpp>
+#include <Editor/ImguiEditor/ImguiEditor.hpp>
+#include <Editor/EditorManager.hpp>
+#include <EngineCore/EngineCore.hpp>
+
 #include "ImguiRenderer.hpp"
+#include "AssetBrowserPanel.hpp"
+
 using namespace Grindstone::Editor::ImguiEditor;
 
 const double REFRESH_INTERVAL = 1.0;
@@ -44,15 +38,6 @@ static std::filesystem::path GetNewDefaultPath(const std::filesystem::path& base
 			return finalPath;
 		}
 	}
-}
-
-static std::filesystem::path CreateDefaultMaterial(const std::filesystem::path& currentPath) {
-	std::filesystem::path path = GetNewDefaultPath(currentPath, "New Material", ".gmat");
-	std::ofstream output(path);
-	output << "{\n\t\"name\": \"New Material\"\n\t\"shader\": \"\"\n}";
-	output.close();
-
-	return path;
 }
 
 AssetBrowserPanel::AssetBrowserPanel(ImguiRenderer* imguiRenderer, EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore), rootDirectory(Editor::Manager::GetFileManager().GetRootDirectory()) {
@@ -200,24 +185,6 @@ void AssetBrowserPanel::RenderContextMenuFileTypeSpecificEntries(std::filesystem
 	}
 
 	// TODO: Get uuids from meta file so I can reload them
-	/*
-	if (firstDotExtension == "glsl") {
-		if (ImGui::MenuItem("Reload")) {
-			std::string pathWithoutExtension = pathStr.substr(0, firstDot);
-			engineCore.shaderImporter->ReloadShaderIfLoaded(pathWithoutExtension.c_str());
-		}
-	}
-	else if (firstDotExtension == "gmat") {
-		if (ImGui::MenuItem("Reload")) {
-			engineCore.shaderImporter->ReloadMaterialIfLoaded(pathStr.c_str());
-		}
-	}
-	else if (firstDotExtension == "dds") {
-		if (ImGui::MenuItem("Reload")) {
-			engineCore.shaderImporter->ReloadTextureIfLoaded(pathStr.c_str());
-		}
-	}
-	*/
 }
 
 void AssetBrowserPanel::RenderAssetContextMenu(std::filesystem::directory_entry entry) {
@@ -273,10 +240,7 @@ void AssetBrowserPanel::RenderCurrentDirectoryContextMenu() {
 				std::filesystem::create_directory(newFolderName);
 				AfterCreate(newFolderName);
 			}
-			if (ImGui::MenuItem("Material")) {
-				auto materialPath = CreateDefaultMaterial(currentPath);
-				AfterCreate(materialPath);
-			}
+			RenderAssetTemplates(currentPath);
 			ImGui::EndMenu();
 		}
 		if (ImGui::MenuItem("Import File...")) {
@@ -301,6 +265,26 @@ void AssetBrowserPanel::RenderCurrentDirectoryContextMenu() {
 		ImGui::EndPopup();
 	}
 	ImGui::PopStyleVar();
+}
+
+void AssetBrowserPanel::RenderAssetTemplates(const std::filesystem::path& path) {
+	AssetTemplateRegistry& registry = Editor::Manager::GetInstance().GetAssetTemplateRegistry();
+	for (AssetTemplateRegistry::AssetTemplate& assetTemplate : registry) {
+		if (ImGui::MenuItem(assetTemplate.name.c_str())) {
+			std::string newFileName = "New " + assetTemplate.name;
+			std::filesystem::path finalFilePath = GetNewDefaultPath(
+				path,
+				newFileName.c_str(),
+				assetTemplate.extension
+			);
+
+			std::ofstream output(finalFilePath, std::ios::binary);
+			output.write(assetTemplate.content.data(), assetTemplate.content.size());
+			output.close();
+
+			AfterCreate(finalFilePath);
+		}
+	}
 }
 
 void AssetBrowserPanel::AfterCreate(std::filesystem::path path) {

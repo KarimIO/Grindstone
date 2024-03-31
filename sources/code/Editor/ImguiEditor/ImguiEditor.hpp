@@ -20,8 +20,6 @@ namespace Grindstone {
 			}
 
 			class SceneHeirarchyPanel;
-			class ModelConverterModal;
-			class ImageConverterModal;
 			class AssetBrowserPanel;
 			class InspectorPanel;
 			class ViewportPanel;
@@ -43,8 +41,6 @@ namespace Grindstone {
 				~ImguiEditor();
 				void Update();
 				void Render();
-				void ShowModelModal();
-				void ShowImageModal();
 				void PromptAssetPicker(AssetType assetType, AssetPicker::AssetPickerCallback callback);
 				void StartBuild();
 				void ImportFile(const char* folderPathToImportTo = "");
@@ -55,9 +51,6 @@ namespace Grindstone {
 				void SetupColors();
 				bool OnWindowResize(Events::BaseEvent* ev);
 				void PerformResize();
-			public:
-				ImageConverterModal* imageConverterModal = nullptr;
-				ModelConverterModal* modelConverterModal = nullptr;
 			private:
 				bool queueResize = false;
 				EngineCore* engineCore = nullptr;
