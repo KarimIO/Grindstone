@@ -5,7 +5,7 @@
 #include <EngineCore/Utils/Utilities.hpp>
 #include <Editor/EditorManager.hpp>
 #include "MetaFile.hpp"
-using namespace Grindstone;
+using namespace Grindstone::Editor;
 
 const uint32_t currentMetaFileVersion = 1;
 
@@ -123,7 +123,7 @@ bool MetaFile::TryGetDefaultSubassetUuid(Uuid& outUuid) const {
 	return false;
 }
 
-Uuid Grindstone::MetaFile::GetOrCreateDefaultSubassetUuid(std::string& subassetName, AssetType assetType) {
+Grindstone::Uuid MetaFile::GetOrCreateDefaultSubassetUuid(std::string& subassetName, AssetType assetType) {
 	if (!defaultSubasset.uuid.IsValid()) {
 		defaultSubasset.assetType = assetType;
 		defaultSubasset.name = subassetName;
@@ -153,7 +153,7 @@ bool MetaFile::IsOutdatedVersion() const {
 	return version < currentMetaFileVersion;
 }
 
-Uuid MetaFile::GetOrCreateSubassetUuid(std::string& subassetName, AssetType assetType) {
+Grindstone::Uuid MetaFile::GetOrCreateSubassetUuid(std::string& subassetName, AssetType assetType) {
 	for (auto& subasset : subassets) {
 		if (subasset.name == subassetName) {
 			subasset.assetType = assetType;

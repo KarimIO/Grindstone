@@ -2,14 +2,16 @@
 
 #include <filesystem>
 
-namespace Grindstone {
+namespace Grindstone::Editor {
 	class MetaFile;
 
-	namespace Importers {
+	namespace Importers{
 		class Importer {
 		public:
+			virtual void Import(const std::filesystem::path& path) = 0;
 			~Importer();
-			virtual void Import(std::filesystem::path& path) = 0;
+
+		protected:
 			MetaFile* metaFile = nullptr;
 		};
 	}

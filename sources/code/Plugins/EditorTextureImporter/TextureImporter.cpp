@@ -16,11 +16,12 @@
 #include "bc6h_enc.h"
 
 #include <EngineCore/Assets/AssetManager.hpp>
-#include "Common/ResourcePipeline/MetaFile.hpp"
-#include "Common/Formats/Dds.hpp"
-#include "Editor/EditorManager.hpp"
+#include <Common/ResourcePipeline/MetaFile.hpp>
+#include <Common/Formats/Dds.hpp>
+#include <Editor/EditorManager.hpp>
 #include "TextureImporter.hpp"
-using namespace Grindstone::Importers;
+
+using namespace Grindstone::Editor::Importers;
 
 const uint32_t blockWidth = 4;
 
@@ -49,7 +50,7 @@ void TextureImporter::ExtractBlock(
 }
 
 
-void TextureImporter::Import(std::filesystem::path& path) {
+void TextureImporter::Import(const std::filesystem::path& path) {
 	this->path = path;
 	int width = 0, height = 0, channels = 0;
 
@@ -333,7 +334,7 @@ uint32_t TextureImporter::CalculateMipMapLevelCount(uint32_t width, uint32_t hei
 	return static_cast<uint32_t>(std::log2(size) - 1);
 }
 
-void Grindstone::Importers::ImportTexture(std::filesystem::path& inputPath) {
+void Grindstone::Editor::Importers::ImportTexture(const std::filesystem::path& inputPath) {
 	TextureImporter TextureImporter;
 	TextureImporter.Import(inputPath);
 }

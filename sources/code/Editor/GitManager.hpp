@@ -3,8 +3,6 @@
 #include <filesystem>
 #include <string>
 
-struct git_repository;
-
 namespace Grindstone {
 	namespace Editor {
 		enum class GitRepoStatus {
@@ -18,21 +16,24 @@ namespace Grindstone {
 		public:
 			void Initialize();
 			void UpdateGitPeriodically();
-			GitRepoStatus GetGitRepoStatus();
-			std::string& GetBranchName();
 			void Fetch();
 			void Pull();
 			void Push();
 			bool OpenRepository();
 			void CloseRepository();
-			uint32_t GetBehindCount();
-			uint32_t GetAheadCount();
-			uint32_t GetChangesCount();
+
+			GitRepoStatus GetGitRepoStatus() const;
+			const std::string& GetBranchName() const;
+			uint32_t GetBehindCount() const;
+			uint32_t GetAheadCount() const;
+			uint32_t GetChangesCount() const;
 		private:
 			void UpdateGit();
 			void UpdateBranchName();
+
+			struct git_repository* repo = nullptr;
+
 			GitRepoStatus repoStatus = GitRepoStatus::NeedCheck;
-			git_repository* repo = nullptr;
 			std::string currentBranchName;
 			uint32_t behindCount = 0;
 			uint32_t aheadCount = 0;

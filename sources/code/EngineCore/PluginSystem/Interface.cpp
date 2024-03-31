@@ -1,14 +1,31 @@
+#include <Common/Window/Window.hpp>
+#include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
+#include <EngineCore/ECS/SystemRegistrar.hpp>
+#include <EngineCore/Logger.hpp>
+#include <EngineCore/EngineCore.hpp>
+
 #include "Interface.hpp"
 #include "Manager.hpp"
-#include "../EngineCore.hpp"
-#include "../Logger.hpp"
-#include "EngineCore/ECS/SystemRegistrar.hpp"
-#include <Common/Window/Window.hpp>
-#include "EngineCore/AssetRenderer/AssetRendererManager.hpp"
 using namespace Grindstone;
 
 Plugins::Interface::Interface(Manager* manager) 
 	: manager(manager), engineCore(&EngineCore::GetInstance()) {
+}
+
+void Plugins::Interface::EditorRegisterAssetImporter(const char* extension, void(*importer)(const std::filesystem::path&)) {
+
+}
+
+void Plugins::Interface::EditorRegisterAssetTemplate(AssetType assetType, const char* name, const char* extension, const void* const sourcePtr, size_t sourceSize) {
+
+}
+
+void Plugins::Interface::EditorDeregisterAssetImporter(const char* extension) {
+
+}
+
+void Plugins::Interface::EditorDeregisterAssetTemplate(AssetType assetType) {
+
 }
 
 void Plugins::Interface::Print(LogSeverity logSeverity, const char* message) {

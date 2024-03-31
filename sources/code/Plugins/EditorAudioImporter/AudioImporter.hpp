@@ -3,15 +3,13 @@
 #include <filesystem>
 
 #include <Common/ResourcePipeline/Uuid.hpp>
-#include <Editor/Importers/Importer.hpp>
+#include <Common/Editor/Importer.hpp>
 
-namespace Grindstone {
-	namespace Importers {
-		class AudioImporter : public Importer {
-		public:
-			void Import(std::filesystem::path& path) override;
-		};
+namespace Grindstone::Editor::Importers {
+	class AudioImporter : public Importer {
+	public:
+		void Import(const std::filesystem::path& path) override;
+	};
 
-		void ImportAudio(std::filesystem::path& inputPath);
-	}
+	void ImportAudio(const std::filesystem::path& inputPath);
 }
