@@ -1,13 +1,14 @@
+#include <Common/ResourcePipeline/MetaFile.hpp>
+#include <Common/ResourcePipeline/Uuid.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
-#include "Common/ResourcePipeline/MetaFile.hpp"
-#include "Common/ResourcePipeline/Uuid.hpp"
-#include "Editor/EditorManager.hpp"
+#include <Editor/EditorManager.hpp>
+
 #include "AudioImporter.hpp"
 
 using namespace Grindstone;
-using namespace Grindstone::Importers;
+using namespace Grindstone::Editor::Importers;
 
-void AudioImporter::Import(std::filesystem::path& path) {
+void AudioImporter::Import(const std::filesystem::path& path) {
 	metaFile = new MetaFile(path);
 	std::string subassetName = path.filename().string();
 	size_t dotPos = subassetName.find('.');
@@ -23,7 +24,7 @@ void AudioImporter::Import(std::filesystem::path& path) {
 	Editor::Manager::GetEngineCore().assetManager->QueueReloadAsset(AssetType::AudioClip, uuid);
 }
 
-void Importers::ImportAudio(std::filesystem::path& inputPath) {
+void Editor::Importers::ImportAudio(const std::filesystem::path& inputPath) {
 	AudioImporter audioImporter;
 	audioImporter.Import(inputPath);
 }

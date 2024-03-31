@@ -34,8 +34,8 @@ void ImguiRendererVulkan::SetupVulkanWindow(
 	VkSurfaceKHR surface = vwgb->GetSurface();
 	wd->Surface = surface;
 
-	auto physicalDevice = graphicsCore->GetPhysicalDevice();
-	auto graphicsFamily = graphicsCore->GetGraphicsFamily();
+	VkPhysicalDevice physicalDevice = graphicsCore->GetPhysicalDevice();
+	uint32_t graphicsFamily = graphicsCore->GetGraphicsFamily();
 
 	// Check for WSI support
 	VkBool32 res;

@@ -29,6 +29,13 @@ namespace Grindstone {
 		class ENGINE_CORE_API Interface {
 		public:
 			Interface(Manager* manager);
+
+			virtual void EditorRegisterAssetImporter(const char* extension, void(*importer)(const std::filesystem::path&));
+			virtual void EditorRegisterAssetTemplate(AssetType assetType, const char* name, const char* extension, const void* const sourcePtr, size_t sourceSize);
+
+			virtual void EditorDeregisterAssetImporter(const char* extension);
+			virtual void EditorDeregisterAssetTemplate(AssetType assetType);
+
 			virtual void Print(LogSeverity logSeverity, const char* message);
 			virtual EngineCore* GetEngineCore();
 			virtual GraphicsAPI::Core* GetGraphicsCore();
