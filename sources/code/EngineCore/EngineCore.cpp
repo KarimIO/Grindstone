@@ -50,6 +50,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 	// Load core (Logging, ECS and Plugin Manager)
 	pluginManager = new Plugins::Manager(this);
+	pluginManager->GetInterface().SetEditorInterface(createInfo.editorPluginInterface);
 	pluginManager->Load("PluginGraphicsVulkan");
 
 	Grindstone::Window* mainWindow = nullptr;

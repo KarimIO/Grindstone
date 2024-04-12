@@ -1,9 +1,11 @@
 #pragma once
 
-#include <vector>
 #include <filesystem>
+#include <string>
+#include <vector>
 
 #include <Common/ResourcePipeline/MetaFile.hpp>
+
 
 namespace Grindstone::Editor {
 	class MetaFile;
@@ -11,10 +13,7 @@ namespace Grindstone::Editor {
 	struct File {
 		std::filesystem::directory_entry directoryEntry;
 		MetaFile metaFile;
-		File(std::filesystem::directory_entry entry)
-		: directoryEntry(entry) {
-			metaFile.Load(entry.path());
-		}
+		File(std::filesystem::directory_entry entry);
 	};
 
 	struct Directory {
@@ -25,10 +24,6 @@ namespace Grindstone::Editor {
 		std::vector<File*> files;
 
 		Directory() = default;
-		Directory(std::filesystem::directory_entry path, Directory* parentDirectory) :
-			path(path),
-			parentDirectory(parentDirectory) {
-			name = path.path().filename().string();
-		}
+		Directory(std::filesystem::directory_entry path, Directory* parentDirectory);
 	};
 }

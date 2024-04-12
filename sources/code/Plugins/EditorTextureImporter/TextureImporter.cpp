@@ -50,8 +50,10 @@ void TextureImporter::ExtractBlock(
 }
 
 
-void TextureImporter::Import(const std::filesystem::path& path) {
+void TextureImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path) {
 	this->path = path;
+	this->assetRegistry = &assetRegistry;
+	this->assetManager = &assetManager;
 	int width = 0, height = 0, channels = 0;
 
 	bool isHDR = path.extension() == ".hdr";
@@ -77,7 +79,7 @@ void TextureImporter::Import(const std::filesystem::path& path) {
 	texWidth = isSixSidedCubemap ? sourceWidth / 4 : sourceWidth;
 	texHeight = isSixSidedCubemap ? sourceHeight / 3 : sourceHeight;
 
-	metaFile = new MetaFile(path);
+	metaFile = assetRegistry.GetMetaFileByPath(path);
 
 	shouldGenerateMips = true;
 	if (isHDR) {
@@ -307,7 +309,7 @@ void TextureImporter::OutputDds(uint8_t* outData, uint64_t contentSize) {
 		subassetName = subassetName.substr(0, dotPos);
 	}
 	uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Texture);
-	std::filesystem::path parentPath = Editor::Manager::GetInstance().GetCompiledAssetsPath();
+	std::filesystem::path parentPath = assetRegistry->GetCompiledAssetsPath();
 
 	std::filesystem::create_directories(parentPath);
 
@@ -326,7 +328,7 @@ void TextureImporter::OutputDds(uint8_t* outData, uint64_t contentSize) {
 
 	delete[] outData;
 
-	Editor::Manager::GetEngineCore().assetManager->QueueReloadAsset(AssetType::Texture, uuid);
+	assetManager->QueueReloadAsset(AssetType::Texture, uuid);
 }
 
 uint32_t TextureImporter::CalculateMipMapLevelCount(uint32_t width, uint32_t height) {
@@ -334,7 +336,7 @@ uint32_t TextureImporter::CalculateMipMapLevelCount(uint32_t width, uint32_t hei
 	return static_cast<uint32_t>(std::log2(size) - 1);
 }
 
-void Grindstone::Editor::Importers::ImportTexture(const std::filesystem::path& inputPath) {
+void Grindstone::Editor::Importers::ImportTexture(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& inputPath) {
 	TextureImporter TextureImporter;
-	TextureImporter.Import(inputPath);
+	TextureImporter.Import(assetRegistry, assetManager, inputPath);
 }

@@ -1,24 +1,24 @@
 #pragma once
 
+#include <Editor/AssetRegistry.hpp>
+#include <EngineCore/Assets/AssetManager.hpp>
 #include <filesystem>
 #include <map>
 #include <string>
-#include <vector>
-#include <functional>
 
 namespace Grindstone::Importers {
 	class ImporterManager {
 	public:
-		using ImporterFactory = std::function<void(const std::filesystem::path&)>;
+		using ImporterFactory = void(*)(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManger, const std::filesystem::path&);
 
 		ImporterManager();
-		bool Import(std::filesystem::path& path);
-		void AddImporterFactory(std::string extension, ImporterFactory importerToAdd);
-		void RemoveImporterFactoryByExtension(std::string& extension);
-		bool HasImporter(std::string& extension);
-		bool HasImporter(std::filesystem::path& path);
-		ImporterFactory GetImporterFactoryByExtension(std::string& extension);
-		ImporterFactory GetImporterFactoryByPath(std::filesystem::path& path);
+		bool Import(const std::filesystem::path& path);
+		void AddImporterFactory(const std::string& extension, ImporterFactory importerToAdd);
+		void RemoveImporterFactoryByExtension(const std::string& extension);
+		bool HasImporter(const std::string& extension) const;
+		bool HasImporter(const std::filesystem::path& path) const;
+		ImporterFactory GetImporterFactoryByExtension(const std::string& extension) const;
+		ImporterFactory GetImporterFactoryByPath(const std::filesystem::path& path) const;
 	private:
 		std::map<std::string, ImporterFactory> extensionsToImporterFactories;
 	};

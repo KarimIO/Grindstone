@@ -149,11 +149,11 @@ shaderc_shader_kind GetShaderTypeForShaderc(ShaderImporter::ShaderType type) {
 	}
 }
 
-void ShaderImporter::Import(const std::filesystem::path& inputPath) {
+void ShaderImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& inputPath) {
 	this->inputPath = inputPath;
+	this->assetRegistry = &assetRegistry;
 
-	metaFile = new MetaFile();
-	metaFile->Load(inputPath);
+	metaFile = assetRegistry.GetMetaFileByPath(inputPath);
 	sourceFileContents = ReadTextFile(inputPath.string().c_str());
 
 	Process();
@@ -161,14 +161,14 @@ void ShaderImporter::Import(const std::filesystem::path& inputPath) {
 
 	Uuid uuid;
 	if (metaFile->TryGetDefaultSubassetUuid(uuid)) {
-		Editor::Manager::GetEngineCore().assetManager->QueueReloadAsset(AssetType::Shader, uuid);
+		assetManager.QueueReloadAsset(AssetType::Shader, uuid);
 	}
 }
 
 void ShaderImporter::Process() {
 	shaderName = ExtractField("#name");
 	Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(shaderName, AssetType::Shader);
-	baseOutputPath = (Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString()).string();
+	baseOutputPath = (assetRegistry->GetCompiledAssetsPath() / uuid.ToString()).string();
 
 	renderQueue = ExtractField("#renderQueue");
 	geometryRenderer = ExtractField("#geometryRenderer");
@@ -396,7 +396,8 @@ std::vector<uint32_t> ShaderImporter::ConvertToSpirv(ShaderType shaderType, cons
 	);
 
 	if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
-		Editor::Manager::Print(LogSeverity::Error, "{}", result.GetErrorMessage().c_str());
+		// TODO: Fix DLL Printing
+		// Editor::Manager::Print(LogSeverity::Error, "{}", result.GetErrorMessage().c_str());
 		return std::vector<uint32_t>();
 	}
 
@@ -435,7 +436,8 @@ void ShaderImporter::ConvertToOpenglSpirv(ShaderType shaderType, const char* ext
 	);
 
 	if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
-		Editor::Manager::Print(LogSeverity::Error, result.GetErrorMessage().c_str());
+		// TODO: Fix DLL Printing
+		// Editor::Manager::Print(LogSeverity::Error, result.GetErrorMessage().c_str());
 		return;
 	}
 
@@ -480,7 +482,7 @@ void ShaderImporter::OutputUint32ToFile(const char* extension, std::vector<uint3
 	file.close();
 }
 
-void Grindstone::Editor::Importers::ImportShadersFromGlsl(const std::filesystem::path& filePath) {
+void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& filePath) {
 	Importers::ShaderImporter importer;
-	importer.Import(filePath);
+	importer.Import(assetRegistry, assetManager, filePath);
 }

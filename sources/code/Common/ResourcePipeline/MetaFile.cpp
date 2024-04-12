@@ -1,15 +1,28 @@
+#include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
+#include <string>
+#include <vector>
 
+#include <Editor/AssetRegistry.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
-#include <Editor/EditorManager.hpp>
+
 #include "MetaFile.hpp"
+#include "Uuid.hpp"
 using namespace Grindstone::Editor;
 
 const uint32_t currentMetaFileVersion = 1;
 
-void MetaFile::Load(std::filesystem::path baseAssetPath) {
+MetaFile::MetaFile(AssetRegistry& assetRegistry, const std::filesystem::path& path)
+	: assetRegistry(assetRegistry) {
+	Load(assetRegistry, path);
+}
+
+void MetaFile::Load(AssetRegistry& assetRegistry, const std::filesystem::path& baseAssetPath) {
+	this->assetRegistry = assetRegistry;
 	this->baseAssetPath = baseAssetPath;
 	path = baseAssetPath.string() + ".meta";
 	if (!std::filesystem::exists(path)) {
@@ -19,7 +32,9 @@ void MetaFile::Load(std::filesystem::path baseAssetPath) {
 	std::string fileContents = Utils::LoadFileText(path.string().c_str());
 
 	rapidjson::Document document;
-	document.Parse(fileContents.c_str());
+	if (document.Parse(fileContents.c_str()).GetParseError()) {
+		return;
+	}
 
 	version = 0;
 	if (document.HasMember("version")) {
@@ -79,7 +94,7 @@ void MetaFile::Save() {
 		documentWriter.String(GetAssetTypeToString(defaultSubasset.assetType));
 		documentWriter.EndObject();
 
-		Editor::Manager::GetInstance().GetAssetRegistry().UpdateEntry(baseAssetPath, defaultSubasset.name, defaultSubasset.uuid, defaultSubasset.assetType);
+		assetRegistry.UpdateEntry(baseAssetPath, defaultSubasset.name, defaultSubasset.uuid, defaultSubasset.assetType);
 	}
 
 	for (auto& subasset : subassets) {
@@ -92,7 +107,7 @@ void MetaFile::Save() {
 		documentWriter.String(GetAssetTypeToString(subasset.assetType));
 		documentWriter.EndObject();
 
-		Editor::Manager::GetInstance().GetAssetRegistry().UpdateEntry(baseAssetPath, subasset.name, subasset.uuid, subasset.assetType);
+		assetRegistry.UpdateEntry(baseAssetPath, subasset.name, subasset.uuid, subasset.assetType);
 	}
 	documentWriter.EndArray();
 	documentWriter.EndObject();
@@ -184,8 +199,4 @@ MetaFile::Iterator MetaFile::end() noexcept {
 
 MetaFile::ConstIterator MetaFile::end() const noexcept {
 	return subassets.end();
-}
-
-MetaFile::MetaFile(std::filesystem::path path) {
-	Load(path);
 }

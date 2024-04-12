@@ -1,16 +1,30 @@
+#include <cstring>
+#include <filesystem>
 #include <fstream>
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
+#include <string>
+#include <vector>
 
-#include "rapidjson/document.h"
-#include "rapidjson/prettywriter.h"
+
+#include <Common/ResourcePipeline/AssetType.hpp>
+#include <Common/ResourcePipeline/MetaFile.hpp>
+#include <Common/ResourcePipeline/Uuid.hpp>
+#include <EngineCore/Utils/Utilities.hpp>
 
 #include "AssetRegistry.hpp"
-#include "EngineCore/Utils/Utilities.hpp"
 
 using namespace Grindstone::Editor;
 
+AssetRegistry::~AssetRegistry() {
+	Cleanup();
+}
+
 void AssetRegistry::Initialize(const std::filesystem::path& projectPath) {
 	assetsPath = projectPath / "assets";
-	assetRegistryPath = projectPath / "compiledAssets/_assetRegistry.json";
+	compiledAssetsPath = projectPath / "compiledAssets";
+	assetRegistryPath = compiledAssetsPath / "_assetRegistry.json";
 	ReadFile();
 }
 
@@ -18,7 +32,7 @@ void AssetRegistry::Cleanup() {
 	assets.clear();
 }
 
-void AssetRegistry::UpdateEntry(std::filesystem::path& path, std::string& name, Uuid& uuid, AssetType assetType) {
+void AssetRegistry::UpdateEntry(const std::filesystem::path& path, const std::string& name, Uuid& uuid, AssetType assetType) {
 	std::filesystem::path relativePath = std::filesystem::relative(path, assetsPath);
 	relativePath = Utils::FixPathSlashesReturn(relativePath);
 
@@ -91,14 +105,22 @@ void AssetRegistry::ReadFile() {
 	}
 }
 
-bool AssetRegistry::HasAsset(Uuid uuid) {
+Grindstone::Editor::MetaFile* AssetRegistry::GetMetaFileByPath(const std::filesystem::path& path) {
+	return new Grindstone::Editor::MetaFile(*this, path);
+}
+
+const std::filesystem::path& AssetRegistry::GetCompiledAssetsPath() {
+	return compiledAssetsPath;
+}
+
+bool AssetRegistry::HasAsset(Uuid uuid) const {
 	return assets.find(uuid) != assets.end();
 }
 
-bool AssetRegistry::TryGetAssetData(std::filesystem::path path, AssetRegistry::Entry& outEntry) {
-	for (auto& assetEntries : assets) {
-		if (assetEntries.second.path == path) {
-			outEntry = assetEntries.second;
+bool AssetRegistry::TryGetAssetData(const std::filesystem::path& path, AssetRegistry::Entry& outEntry) const {
+	for (const auto& [_, assetEntry] : assets) {
+		if (assetEntry.path == path) {
+			outEntry = assetEntry;
 			return true;
 		}
 	}
@@ -106,7 +128,7 @@ bool AssetRegistry::TryGetAssetData(std::filesystem::path path, AssetRegistry::E
 	return false;
 }
 
-bool AssetRegistry::TryGetAssetData(Uuid uuid, AssetRegistry::Entry& outEntry) {
+bool AssetRegistry::TryGetAssetData(Uuid uuid, AssetRegistry::Entry& outEntry) const {
 	const auto& assetIterator = assets.find(uuid);
 	if (assetIterator == assets.end()) {
 		return false;

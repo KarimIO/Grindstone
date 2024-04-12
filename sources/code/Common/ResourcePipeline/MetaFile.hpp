@@ -1,7 +1,10 @@
 #pragma once
 
 #include <filesystem>
-#include "Common/ResourcePipeline/AssetType.hpp"
+
+#include <Common/ResourcePipeline/AssetType.hpp>
+#include <Editor/AssetRegistry.hpp>
+
 #include "Uuid.hpp"
 
 namespace Grindstone::Editor {
@@ -22,9 +25,9 @@ namespace Grindstone::Editor {
 
 	public:
 		MetaFile() = default;
-		MetaFile(std::filesystem::path);
+		MetaFile(AssetRegistry& assetRegistry, const std::filesystem::path&);
 
-		void Load(std::filesystem::path);
+		void Load(AssetRegistry& assetRegistry, const std::filesystem::path&);
 		void Save();
 		bool TryGetDefaultSubasset(Subasset& subasset) const;
 		Uuid GetOrCreateDefaultSubassetUuid(std::string& subassetName, AssetType assetType);
@@ -44,6 +47,7 @@ namespace Grindstone::Editor {
 		ConstIterator end() const noexcept;
 	private:
 		uint32_t version = 0;
+		AssetRegistry& assetRegistry;
 		Subasset defaultSubasset;
 		std::vector<Subasset> subassets;
 		std::filesystem::path path;
