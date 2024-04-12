@@ -16,7 +16,7 @@ namespace Grindstone::Editor::Importers {
 
 	class ModelImporter : public Importer {
 	public:
-		void Import(const std::filesystem::path& path) override;
+		void Import(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path) override;
 	private:
 		struct Prefab {
 
@@ -51,6 +51,8 @@ namespace Grindstone::Editor::Importers {
 		void OutputVertexArray(std::ofstream& output, std::vector<float>& vertexArray);
 
 		// Members
+		Grindstone::Assets::AssetManager* assetManager = nullptr;
+		Grindstone::Editor::AssetRegistry* assetRegistry = nullptr;
 		std::filesystem::path path;
 		std::filesystem::path baseFolderPath;
 		std::map<std::string, glm::mat4> tempOffsetMatrices; // Save string->offset matrix so we can use it when constructing the bone data
@@ -91,5 +93,5 @@ namespace Grindstone::Editor::Importers {
 		} outputData;
 	};
 
-	void ImportModel(const std::filesystem::path& path);
+	void ImportModel(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path);
 }

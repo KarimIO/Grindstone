@@ -1,16 +1,23 @@
 #pragma once
 
 #include "../pch.hpp"
-#include "EngineCore/EngineCore.hpp"
-#include "EngineCore/Assets/AssetManager.hpp"
-#include "EngineCore/ECS/SystemFactory.hpp"
-#include "EngineCore/ECS/ComponentRegistrar.hpp"
-#include "Common/Window/Window.hpp"
-#include "Common/Logging.hpp"
+
+#include <cstdint>
+#include <functional>
+
+#include <Common/Display/Display.hpp>
+#include <Common/Graphics/Core.hpp>
+#include <Common/Logging.hpp>
+#include <Common/ResourcePipeline/AssetType.hpp>
+#include <Common/Window/Window.hpp>
+#include <EngineCore/AssetRenderer/BaseAssetRenderer.hpp>
+#include <EngineCore/Assets/AssetImporter.hpp>
 #include <EngineCore/ECS/ComponentFunctions.hpp>
+#include <EngineCore/ECS/ComponentRegistrar.hpp>
+#include <EngineCore/ECS/SystemFactory.hpp>
+#include <EngineCore/ECS/SystemRegistrar.hpp>
 
 namespace Grindstone {
-
 	namespace GraphicsAPI {
 		class Core;
 	}
@@ -26,15 +33,20 @@ namespace Grindstone {
 	namespace Plugins {
 		class Manager;
 
+		class BaseEditorInterface {
+		public:
+			BaseEditorInterface() = default;
+			BaseEditorInterface(const BaseEditorInterface&) = default;
+			BaseEditorInterface(BaseEditorInterface&&) = default;
+			virtual ~BaseEditorInterface() {}
+		};
+
 		class ENGINE_CORE_API Interface {
 		public:
 			Interface(Manager* manager);
 
-			virtual void EditorRegisterAssetImporter(const char* extension, void(*importer)(const std::filesystem::path&));
-			virtual void EditorRegisterAssetTemplate(AssetType assetType, const char* name, const char* extension, const void* const sourcePtr, size_t sourceSize);
-
-			virtual void EditorDeregisterAssetImporter(const char* extension);
-			virtual void EditorDeregisterAssetTemplate(AssetType assetType);
+			virtual void SetEditorInterface(BaseEditorInterface* editorInterface);
+			virtual BaseEditorInterface* GetEditorInterface() const;
 
 			virtual void Print(LogSeverity logSeverity, const char* message);
 			virtual EngineCore* GetEngineCore();
@@ -61,6 +73,7 @@ namespace Grindstone {
 			ECS::SystemRegistrar* systemRegistrar = nullptr;
 		private:
 			EngineCore* engineCore = nullptr;
+			BaseEditorInterface* editorInterface = nullptr;
 			Manager* manager = nullptr;
 			GraphicsAPI::Core* graphicsCore = nullptr;
 			Grindstone::Window* (*windowFactoryFn)(Grindstone::Window::CreateInfo&) = nullptr;
@@ -68,7 +81,7 @@ namespace Grindstone {
 			uint8_t (*countDisplaysFn)() = nullptr;
 			void    (*enumerateDisplaysFn)(Grindstone::Display*) = nullptr;
 
-			friend class Manager;
+			friend Manager;
 		};
 	}
 }

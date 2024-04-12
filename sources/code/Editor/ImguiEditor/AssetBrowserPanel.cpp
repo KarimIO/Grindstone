@@ -179,7 +179,7 @@ void AssetBrowserPanel::RenderContextMenuFileTypeSpecificEntries(std::filesystem
 	auto importerFactory = importerManager.GetImporterFactoryByExtension(firstDotExtension);
 	if (importerFactory != nullptr) {
 		if (ImGui::MenuItem("Import")) {
-			importerFactory(path);
+			importerManager.Import(path);
 			Editor::Manager::GetInstance().GetAssetRegistry().WriteFile();
 		}
 	}

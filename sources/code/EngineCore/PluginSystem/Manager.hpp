@@ -1,22 +1,26 @@
 #pragma once
 
-#include <string>
 #include <map>
+#include <string>
 
 #include <Common/Utilities/ModuleLoading.hpp>
+
 #include "Interface.hpp"
 
 namespace Grindstone {
 	class EngineCore;
 
 	namespace Plugins {
+		class Interface;
+
 		class Manager {
-			friend class Interface;
+			friend Interface;
 		public:
-			Manager(EngineCore* engineCore);
+			Manager(Grindstone::EngineCore* engineCore);
 			~Manager();
 
 			void SetupInterfacePointers();
+			Interface& GetInterface();
 			
 			virtual void LoadPluginList();
 			bool Load(const char* name);

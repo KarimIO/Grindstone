@@ -21,7 +21,7 @@ namespace Grindstone::Editor::Importers {
 
 	class TextureImporter : public Importer {
 	public:
-		void Import(const std::filesystem::path& path) override;
+		void Import(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path) override;
 		Uuid GetUuid();
 	private:
 		Uuid uuid;
@@ -40,8 +40,10 @@ namespace Grindstone::Editor::Importers {
 		uint32_t CalculateMipMapLevelCount(uint32_t width, uint32_t height);
 
 		std::filesystem::path path;
+		Grindstone::Assets::AssetManager* assetManager = nullptr;
 		OutputFormat outputFormat = OutputFormat::Undefined;
 		SourceChannelDataType sourceChannelDataType = SourceChannelDataType::Undefined;
+		AssetRegistry* assetRegistry = nullptr;
 		uint8_t* sourcePixels = nullptr;
 		uint32_t sourceWidth = 0;
 		uint32_t sourceHeight = 0;
@@ -54,5 +56,5 @@ namespace Grindstone::Editor::Importers {
 		bool isSixSidedCubemap = false;
 	};
 
-	void ImportTexture(const std::filesystem::path& inputPath);
+	void ImportTexture(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManger, const std::filesystem::path& inputPath);
 }

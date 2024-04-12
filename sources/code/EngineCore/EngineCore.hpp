@@ -19,6 +19,7 @@ namespace Grindstone {
 
 	namespace Plugins {
 		class Manager;
+		class BaseEditorInterface;
 	};
 
 	namespace ECS {
@@ -56,7 +57,8 @@ namespace Grindstone {
 			const char* applicationTitle = nullptr;
 			const char* projectPath = nullptr;
 			const char* engineBinaryPath = nullptr;
-			Assets::AssetLoader* assetLoader;
+			Assets::AssetLoader* assetLoader = nullptr;
+			Grindstone::Plugins::BaseEditorInterface* editorPluginInterface = nullptr;
 		};
 
 		bool Initialize(CreateInfo& ci);

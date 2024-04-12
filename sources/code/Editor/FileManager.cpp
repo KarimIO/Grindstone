@@ -113,7 +113,7 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(std::filesystem::path path
 		return true;
 	}
 
-	MetaFile metaFile(path);
+	MetaFile metaFile(Editor::Manager::GetInstance().GetAssetRegistry(), path);
 	if (metaFile.IsOutdatedVersion()) {
 		return true;
 	}

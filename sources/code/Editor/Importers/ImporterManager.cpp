@@ -1,16 +1,21 @@
-#include <Common/ResourcePipeline/Uuid.hpp>
+#include <filesystem>
+#include <string>
+
 #include <Common/ResourcePipeline/AssetType.hpp>
 #include <Common/ResourcePipeline/MetaFile.hpp>
+#include <Common/ResourcePipeline/Uuid.hpp>
+#include <Editor/AssetRegistry.hpp>
 #include <Editor/EditorManager.hpp>
-#include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 
 #include "ImporterManager.hpp"
 
+using namespace Grindstone::Assets;
+using namespace Grindstone::Editor;
 using namespace Grindstone::Importers;
 
-static void ImportScene(const std::filesystem::path& path) {
-	Grindstone::Editor::MetaFile* metaFile = new Grindstone::Editor::MetaFile(path);
+static void ImportScene(AssetRegistry& assetRegistry, AssetManager& assetManager, const std::filesystem::path& path) {
+	Grindstone::Editor::MetaFile* metaFile = assetRegistry.GetMetaFileByPath(path);
 	std::string subassetName = path.filename().string();
 	size_t dotPos = subassetName.find('.');
 	if (dotPos != std::string::npos) {
@@ -23,7 +28,7 @@ static void ImportScene(const std::filesystem::path& path) {
 	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
 	metaFile->Save();
 
-	Grindstone::Editor::Manager::GetEngineCore().assetManager->QueueReloadAsset(Grindstone::AssetType::Scene, uuid);
+	assetManager.QueueReloadAsset(Grindstone::AssetType::Scene, uuid);
 
 	delete metaFile;
 }
@@ -32,17 +37,19 @@ ImporterManager::ImporterManager() {
 	AddImporterFactory("json", ImportScene);
 }
 
-bool ImporterManager::Import(std::filesystem::path& path) {
+bool ImporterManager::Import(const std::filesystem::path& path) {
 	ImporterFactory importerFactory = GetImporterFactoryByPath(path);
 	if (importerFactory == nullptr) {
 		return false;
 	}
 
-	importerFactory(path);
+	AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
+	AssetManager& assetManager = *Editor::Manager::GetEngineCore().assetManager;
+	importerFactory(assetRegistry, assetManager, path);
 	return true;
 }
 
-void ImporterManager::AddImporterFactory(std::string extension, ImporterFactory importerFactory) {
+void ImporterManager::AddImporterFactory(const std::string& extension, ImporterFactory importerFactory) {
 	if (HasImporter(extension)) {
 		return;
 	}
@@ -50,36 +57,36 @@ void ImporterManager::AddImporterFactory(std::string extension, ImporterFactory 
 	extensionsToImporterFactories[extension] = importerFactory;
 }
 
-void ImporterManager::RemoveImporterFactoryByExtension(std::string& extension) {
-	auto extensionIterator = extensionsToImporterFactories.find(extension);
+void ImporterManager::RemoveImporterFactoryByExtension(const std::string& extension) {
+	const auto extensionIterator = extensionsToImporterFactories.find(extension);
 	if (extensionIterator != extensionsToImporterFactories.end()) {
 		extensionsToImporterFactories.erase(extension);
 	}
 }
 
-ImporterManager::ImporterFactory ImporterManager::GetImporterFactoryByExtension(std::string& extension) {
+ImporterManager::ImporterFactory ImporterManager::GetImporterFactoryByExtension(const std::string& extension) const {
 	auto extensionIterator = extensionsToImporterFactories.find(extension);
 	return (extensionIterator != extensionsToImporterFactories.end())
 		? extensionIterator->second
-		: ImporterFactory();
+		: nullptr;
 }
 
-ImporterManager::ImporterFactory ImporterManager::GetImporterFactoryByPath(std::filesystem::path& path) {
-	std::string extension = path.extension().string().substr(1);
+ImporterManager::ImporterFactory ImporterManager::GetImporterFactoryByPath(const std::filesystem::path& path) const {
+	const std::string extension = path.extension().string().substr(1);
 	return GetImporterFactoryByExtension(extension);
 }
 
-bool ImporterManager::HasImporter(std::string& extension) {
-	auto extensionIterator = extensionsToImporterFactories.find(extension);
+bool ImporterManager::HasImporter(const std::string& extension) const {
+	const auto extensionIterator = extensionsToImporterFactories.find(extension);
 	return extensionIterator != extensionsToImporterFactories.end();
 }
 
-bool ImporterManager::HasImporter(std::filesystem::path& path) {
-	std::string extension = path.extension().string();
+bool ImporterManager::HasImporter(const std::filesystem::path& path) const {
+	const std::string extension = path.extension().string();
 	if (extension.empty()) {
 		return false;
 	}
 
-	std::string extensionWithoutDot = extension.substr(1);
+	const std::string extensionWithoutDot = extension.substr(1);
 	return HasImporter(extensionWithoutDot);
 }

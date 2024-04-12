@@ -1,12 +1,35 @@
+#include <filesystem>
+#include <functional>
 #include <iostream>
-#include "EngineCore/EngineCore.hpp"
-#include "EngineCore/Events/Dispatcher.hpp"
+#include <string>
+#include <Windows.h>
+
+#include <Common/Event/BaseEvent.hpp>
+#include <Common/Event/EventType.hpp>
+#include <Common/Event/KeyEvent.hpp>
+#include <Common/Event/KeyPressCode.hpp>
+#include <Common/Input/CursorMode.hpp>
+#include <Common/Input/InputInterface.hpp>
+#include <Common/ResourcePipeline/AssetType.hpp>
+#include <Common/Utilities/ModuleLoading.hpp>
+#include <Editor/Commands/CommandList.hpp>
+#include <Editor/ImguiEditor/ImguiEditor.hpp>
+#include <Editor/Importers/ImporterManager.hpp>
+#include <Editor/ScriptBuilder/CSharpBuildManager.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Events/Dispatcher.hpp>
+#include <EngineCore/PluginSystem/Interface.hpp>
+
+#include "AssetRegistry.hpp"
+#include "AssetTemplateRegistry.hpp"
 #include "EditorManager.hpp"
+#include "EditorPluginInterface.hpp"
 #include "FileAssetLoader.hpp"
-#include "ImguiEditor/ImguiEditor.hpp"
-#include "Common/Event/KeyEvent.hpp"
-#include "Common/Event/WindowEvent.hpp"
-#include "Common/Input/InputInterface.hpp"
+#include "FileManager.hpp"
+#include "GitManager.hpp"
+#include "Selection.hpp"
+#include "TaskSystem.hpp"
+
 using namespace Grindstone;
 using namespace Grindstone::Editor;
 
@@ -61,7 +84,7 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	compiledAssetsPath = this->projectPath / "compiledAssets";
 	engineBinariesPath = std::filesystem::current_path();
 
-	std::string materialContent = "{\n\t\"name\": \"New Material\"\n\t\"shader\": \"\"\n}";
+	std::string materialContent = "{\n\t\"name\": \"New Material\",\n\t\"shader\": \"\"\n}";
 	assetTemplateRegistry.RegisterTemplate(
 		AssetType::Material,
 		"Material", ".gmat",
@@ -71,6 +94,7 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	if (!LoadEngine()) {
 		return false;
 	}
+
 	assetRegistry.Initialize(projectPath);
 	projectAssetFileManager.Initialize(assetsPath);
 	editorAssetFileManager.Initialize(engineBinariesPath / "../engineassets");
@@ -210,6 +234,7 @@ bool Manager::LoadEngine() {
 	const std::string projectPathAsStr = projectPath.string();
 	createInfo.projectPath = projectPathAsStr.c_str();
 	createInfo.assetLoader = new Assets::FileAssetLoader();
+	createInfo.editorPluginInterface = new Grindstone::Plugins::EditorPluginInterface();
 
 	const std::string currentPath = std::filesystem::current_path().string();
 	createInfo.engineBinaryPath = currentPath.c_str();
