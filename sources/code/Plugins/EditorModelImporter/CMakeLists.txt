@@ -1,5 +1,24 @@
-set(EDITORMODELIMPORTER_SOURCES ModelImporter.cpp ModelMaterialImporter.cpp ${COMMON_DIR}/ResourcePipeline/MetaFile.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${COMMON_DIR}/Editor/Importer.cpp EntryPoint.cpp)
-set(EDITORMODELIMPORTER_HEADERS ModelImporter.hpp ModelMaterialImporter.hpp ${COMMON_DIR}/ResourcePipeline/MetaFile.hpp ${COMMON_DIR}/ResourcePipeline/Uuid.hpp ${COMMON_DIR}/Editor/Importer.hpp pch.hpp)
+set(EDITORMODELIMPORTER_SOURCES
+	ModelImporter.cpp
+	ModelMaterialImporter.cpp
+	${COMMON_DIR}/ResourcePipeline/AssetType.cpp
+	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp
+	${COMMON_DIR}/ResourcePipeline/Uuid.cpp
+	${COMMON_DIR}/Editor/Importer.cpp
+	${ENGINECORE_DIR}/Utils/Utilities.cpp
+	EntryPoint.cpp
+)
+
+set(EDITORMODELIMPORTER_HEADERS
+	ModelImporter.hpp
+	ModelMaterialImporter.hpp
+	${COMMON_DIR}/ResourcePipeline/AssetType.hpp
+	${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
+	${COMMON_DIR}/ResourcePipeline/Uuid.hpp
+	${COMMON_DIR}/Editor/Importer.hpp
+	${ENGINECORE_DIR}/Utils/Utilities.hpp
+	pch.hpp
+)
 
 find_package(Assimp CONFIG REQUIRED)
 find_path(FMT_INCLUDE_DIRS "fmt/format.h")

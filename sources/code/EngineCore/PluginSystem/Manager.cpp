@@ -58,6 +58,10 @@ void Manager::SetupInterfacePointers() {
 	pluginInterface.componentRegistrar = engineCore.GetComponentRegistrar();
 }
 
+Interface& Manager::GetInterface() {
+	return pluginInterface;
+}
+
 bool Manager::Load(const char *path) {
 #ifdef _DEBUG
 	std::string profile_str = std::string("Loading module ") + path;

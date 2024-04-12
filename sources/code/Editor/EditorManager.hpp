@@ -1,5 +1,7 @@
 #pragma once
 
+#include "pch.hpp"
+
 #include <fmt/format.h>
 #include <Common/Logging.hpp>
 #include <Common/Utilities/ModuleLoading.hpp>
@@ -39,10 +41,10 @@ namespace Grindstone {
 			Pause
 		};
 
-		class Manager {
+		class EDITOR_API Manager {
 		public:
 			Manager() = default;
-			static Manager& GetInstance();
+			static Manager& Manager::GetInstance();
 			Importers::ImporterManager& GetImporterManager();
 			AssetRegistry& GetAssetRegistry();
 			CommandList& GetCommandList();

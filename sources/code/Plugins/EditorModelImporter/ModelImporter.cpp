@@ -89,7 +89,7 @@ void ModelImporter::ConvertMaterials() {
 		Uuid uuid = metaFile->GetOrCreateSubassetUuid(newMaterial.materialName, AssetType::Material);
 		std::string uuidString = outputData.materialNames[i] = uuid.ToString();
 
-		std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuidString;
+		std::filesystem::path outputPath = assetRegistry->GetCompiledAssetsPath() / uuidString;
 		CreateStandardMaterial(newMaterial, outputPath);
 	}
 }
@@ -295,7 +295,7 @@ void ModelImporter::ProcessAnimations() {
 		std::string subassetName = "anim-" + animationName;
 		Uuid outUuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Animation);
 
-		std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / outUuid.ToString();
+		std::filesystem::path outputPath = assetRegistry->GetCompiledAssetsPath() / outUuid.ToString();
 		std::ofstream output(outputPath, std::ios::binary);
 
 		if (!output.is_open()) {
@@ -348,9 +348,11 @@ void ModelImporter::ProcessAnimations() {
 	}
 }
 
-void ModelImporter::Import(const std::filesystem::path& path) {
+void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path) {
 	this->path = path;
 	this->baseFolderPath = this->path.parent_path();
+	this->assetManager = &assetManager;
+	this->assetRegistry = &assetRegistry;
 
 	Assimp::Importer importer;
 	scene = importer.ReadFile(
@@ -365,7 +367,7 @@ void ModelImporter::Import(const std::filesystem::path& path) {
 		throw std::runtime_error(importer.GetErrorString());
 	}
 
-	metaFile = new MetaFile(path);
+	assetRegistry.GetMetaFileByPath(path);
 	// Set to false, will check if true later.
 	bool shouldImportAnimations = false;
 	isSkeletalMesh = false;
@@ -411,7 +413,7 @@ void ModelImporter::OutputMeshes() {
 
 	Uuid outUuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Mesh3d);
 
-	std::filesystem::path meshOutputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / outUuid.ToString();
+	std::filesystem::path meshOutputPath = assetRegistry->GetCompiledAssetsPath() / outUuid.ToString();
 
 	auto meshCount = outputData.meshes.size();
 
@@ -477,7 +479,7 @@ void ModelImporter::OutputMeshes() {
 
 	output.close();
 
-	Editor::Manager::GetEngineCore().assetManager->QueueReloadAsset(AssetType::Mesh3d, outUuid);
+	assetManager->QueueReloadAsset(AssetType::Mesh3d, outUuid);
 }
 
 void ModelImporter::OutputVertexArray(std::ofstream& output, std::vector<uint16_t>& vertexArray) {
@@ -494,7 +496,7 @@ void ModelImporter::OutputVertexArray(std::ofstream& output, std::vector<float>&
 	);
 }
 
-void Grindstone::Editor::Importers::ImportModel(const std::filesystem::path& path) {
+void Grindstone::Editor::Importers::ImportModel(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path) {
 	ModelImporter modelImporter;
-	modelImporter.Import(path);
+	modelImporter.Import(assetRegistry, assetManager, path);
 }

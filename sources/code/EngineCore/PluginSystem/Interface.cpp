@@ -4,6 +4,11 @@
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/EngineCore.hpp>
 
+// TODO: Define this type.
+#ifndef GS_RUNTIME
+#include <Editor/AssetRegistry.hpp>
+#endif
+
 #include "Interface.hpp"
 #include "Manager.hpp"
 using namespace Grindstone;
@@ -12,20 +17,12 @@ Plugins::Interface::Interface(Manager* manager)
 	: manager(manager), engineCore(&EngineCore::GetInstance()) {
 }
 
-void Plugins::Interface::EditorRegisterAssetImporter(const char* extension, void(*importer)(const std::filesystem::path&)) {
-
+void Plugins::Interface::SetEditorInterface(BaseEditorInterface* editorInterface) {
+	this->editorInterface = editorInterface;
 }
 
-void Plugins::Interface::EditorRegisterAssetTemplate(AssetType assetType, const char* name, const char* extension, const void* const sourcePtr, size_t sourceSize) {
-
-}
-
-void Plugins::Interface::EditorDeregisterAssetImporter(const char* extension) {
-
-}
-
-void Plugins::Interface::EditorDeregisterAssetTemplate(AssetType assetType) {
-
+Plugins::BaseEditorInterface* Plugins::Interface::GetEditorInterface() const {
+	return editorInterface;
 }
 
 void Plugins::Interface::Print(LogSeverity logSeverity, const char* message) {

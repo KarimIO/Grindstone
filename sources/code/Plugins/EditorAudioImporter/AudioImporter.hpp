@@ -8,8 +8,8 @@
 namespace Grindstone::Editor::Importers {
 	class AudioImporter : public Importer {
 	public:
-		void Import(const std::filesystem::path& path) override;
+		void Import(AssetRegistry& assetRegistry, Assets::AssetManager& assetManger, const std::filesystem::path& path) override;
 	};
 
-	void ImportAudio(const std::filesystem::path& inputPath);
+	void ImportAudio(AssetRegistry& assetRegistry, Assets::AssetManager& assetManger, const std::filesystem::path& inputPath);
 }

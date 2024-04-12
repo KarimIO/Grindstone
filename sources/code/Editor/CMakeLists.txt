@@ -2,11 +2,11 @@ set(EDITOR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 file(GLOB_RECURSE SOURCE_MAIN
 	Main.cpp
-	../Common/Utilities/ModuleLoading.cpp ../EngineCore/Utils/Utilities.cpp
+	../Common/Utilities/ModuleLoading.cpp ${ENGINECORE_DIR}/Utils/Utilities.cpp
 	${COMMON_DIR}/ResourcePipeline/AssetType.cpp ${COMMON_DIR}/ResourcePipeline/AssetType.hpp
 	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp ${COMMON_DIR}/ResourcePipeline/MetaFile.hpp ${COMMON_DIR}/ResourcePipeline/Uuid.hpp  ${COMMON_DIR}/ResourcePipeline/Uuid.cpp
-	../EngineCore/ECS/Entity.cpp
-	FileDirectory.hpp
+	${ENGINECORE_DIR}/ECS/Entity.cpp
+	FileDirectory.cpp FileDirectory.hpp
 	FileManager.cpp FileManager.hpp
 	GitManager.cpp GitManager.hpp
 	BuildProcess.cpp BuildProcess.hpp
@@ -19,6 +19,7 @@ file(GLOB_RECURSE SOURCE_MAIN
 	TaskSystem.cpp TaskSystem.hpp
 	FileAssetLoader.cpp FileAssetLoader.hpp
 	AssetTemplateRegistry.cpp AssetTemplateRegistry.hpp
+	EditorPluginInterface.cpp EditorPluginInterface.hpp
 )
 
 file(GLOB_RECURSE SOURCE_SCRIPT_BUILDER_EDITOR "${EDITOR_DIR}/ScriptBuilder/*.cpp")
@@ -99,12 +100,14 @@ add_executable(Editor ${EDITOR_HEADERS} ${EDITOR_SOURCES})
 
 set_property(TARGET Editor PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${BUILD_DIRECTORY})
 
-target_compile_definitions(Editor PUBLIC NOMINMAX GLM_ENABLE_EXPERIMENTAL)
+target_compile_definitions(Editor PUBLIC NOMINMAX GLM_ENABLE_EXPERIMENTAL EDITOR)
 target_include_directories(Editor PUBLIC
 	${MONO_PATH}/include/mono-2.0
 	${CODE_DIR}
 	${FMT_INCLUDE_DIRS}
 )
+
+target_precompile_headers(Editor PUBLIC pch.hpp)
 
 target_link_libraries(
 	Editor

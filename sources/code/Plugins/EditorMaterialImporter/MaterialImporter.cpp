@@ -15,12 +15,15 @@
 using namespace Grindstone;
 using namespace Grindstone::Editor::Importers;
 
-void MaterialImporter::Import(const std::filesystem::path& path) {
-	metaFile = new MetaFile(path);
+void MaterialImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path) {
+	metaFile = assetRegistry.GetMetaFileByPath(path);
 
 	std::string contentData = Grindstone::Utils::LoadFileText(path.string().c_str());
 	rapidjson::Document document;
-	document.Parse(contentData.data());
+	if (document.Parse(contentData.data()).GetParseError()) {
+		// TODO: Print error
+		return;
+	}
 
 	std::string subassetName = "";
 	if (document.HasMember("name")) {
@@ -36,17 +39,17 @@ void MaterialImporter::Import(const std::filesystem::path& path) {
 
 	uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Material);
 
-	std::filesystem::path outputPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
+	std::filesystem::path outputPath = assetRegistry.GetCompiledAssetsPath() / uuid.ToString();
 	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
 	metaFile->Save();
-	Editor::Manager::GetEngineCore().assetManager->QueueReloadAsset(AssetType::Material, uuid);
+	assetManager.QueueReloadAsset(AssetType::Material, uuid);
 }
 
 Uuid MaterialImporter::GetUuidAfterImport() const {
 	return uuid;
 }
 
-void Editor::Importers::ImportMaterial(const std::filesystem::path& inputPath) {
+void Editor::Importers::ImportMaterial(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& inputPath) {
 	MaterialImporter materialImporter;
-	materialImporter.Import(inputPath);
+	materialImporter.Import(assetRegistry, assetManager, inputPath);
 }

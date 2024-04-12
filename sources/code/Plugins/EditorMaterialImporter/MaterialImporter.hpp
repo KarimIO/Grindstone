@@ -8,11 +8,11 @@
 namespace Grindstone::Editor::Importers {
 	class MaterialImporter : public Importer {
 	public:
-		void Import(const std::filesystem::path& path) override;
+		void Import(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path) override;
 		Uuid GetUuidAfterImport() const;
 	private:
 		Uuid uuid;
 	};
 
-	void ImportMaterial(const std::filesystem::path& inputPath);
+	void ImportMaterial(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& inputPath);
 }

@@ -12,7 +12,7 @@
 namespace Grindstone::Editor::Importers {
 	class ShaderImporter : public Importer {
 	public:
-		void Import(const std::filesystem::path& path) override;
+		void Import(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path) override;
 	public:
 		enum class ShaderType {
 			Vertex,
@@ -83,6 +83,7 @@ namespace Grindstone::Editor::Importers {
 		const char* GetShaderTypeExtension(ShaderType);
 		const char* GetShaderTypeAsString(ShaderType);
 	private:
+		AssetRegistry* assetRegistry;
 		std::filesystem::path inputPath;
 		std::string baseOutputPath;
 		std::string shaderName;
@@ -99,5 +100,5 @@ namespace Grindstone::Editor::Importers {
 		rapidjson::PrettyWriter<rapidjson::StringBuffer> reflectionWriter = rapidjson::PrettyWriter<rapidjson::StringBuffer>(reflectionStringBuffer);
 	};
 
-	void ImportShadersFromGlsl(const std::filesystem::path& path);
+	void ImportShadersFromGlsl(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path);
 }

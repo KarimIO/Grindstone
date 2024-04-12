@@ -1,6 +1,6 @@
 #include "Common/ResourcePipeline/MetaFile.hpp"
 #include "Importer.hpp"
-using namespace Grindstone::Importers;
+using namespace Grindstone::Editor::Importers;
 
 Importer::~Importer() {
 	if (metaFile) {
