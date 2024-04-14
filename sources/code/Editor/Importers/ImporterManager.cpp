@@ -58,7 +58,7 @@ void ImporterManager::AddImporterFactory(const std::string& extension, ImporterF
 }
 
 void ImporterManager::RemoveImporterFactoryByExtension(const std::string& extension) {
-	const auto extensionIterator = extensionsToImporterFactories.find(extension);
+	auto extensionIterator = extensionsToImporterFactories.find(extension);
 	if (extensionIterator != extensionsToImporterFactories.end()) {
 		extensionsToImporterFactories.erase(extension);
 	}

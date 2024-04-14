@@ -71,8 +71,8 @@ namespace Grindstone::Editor::Importers {
 		void WriteReflectionImage(std::vector<Texture>& resources);
 		void WriteReflectionDocument();
 		std::string ExtractField(const char* fieldKey);
-		void ExtractSubmodules();
-		void ProcessSubmodule(ShaderType shaderType, const char* extension, const char* glslSource);
+		bool ExtractSubmodules();
+		bool ProcessSubmodule(ShaderType shaderType, const char* extension, const char* glslSource);
 		std::vector<uint32_t> ConvertToSpirv(ShaderType, const char* extension, const char* shaderModuleGlsl);
 		std::string ConvertToOpenglGlsl(const char* extension, std::vector<uint32_t>&);
 		void ConvertToOpenglSpirv(ShaderType, const char* extension, const char* openglGlsl);

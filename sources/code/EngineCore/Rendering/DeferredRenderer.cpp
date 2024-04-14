@@ -544,7 +544,8 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	litHdrRenderTargetBinding.bindingId = 1;
 	litHdrRenderTargetBinding.count = 1;
 	litHdrRenderTargetBinding.type = BindingType::Texture;
-	litHdrRenderTargetBinding.stages = ShaderStageBit::Fragment;
+	// TODO: Just using vertex for now to get resolution cuz I'm lazy. Remove this eventually and use a uniform buffer.
+	litHdrRenderTargetBinding.stages = ShaderStageBit::Vertex | ShaderStageBit::Fragment;
 
 	DescriptorSetLayout::Binding gbuffer0Binding{};
 	gbuffer0Binding.bindingId = 1;
