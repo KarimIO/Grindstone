@@ -174,7 +174,10 @@ void ShaderImporter::Process() {
 	geometryRenderer = ExtractField("#geometryRenderer");
 	transparencyMode = ExtractField("#transparencyMode");
 	cullMode = ExtractField("#cullMode");
-	ExtractSubmodules();
+	if (!ExtractSubmodules()) {
+		return;
+	}
+
 	WriteReflectionDocument();
 }
 
@@ -293,7 +296,7 @@ std::string ShaderImporter::ExtractField(const char* fieldKey) {
 	return sourceFileContents.substr(valuePos, newLinePos - valuePos);
 }
 		
-void ShaderImporter::ExtractSubmodules() {
+bool ShaderImporter::ExtractSubmodules() {
 	const char* fieldKey = "#shaderModule";
 	const size_t fieldKeyLength = strlen(fieldKey) + 1;
 
@@ -301,8 +304,9 @@ void ShaderImporter::ExtractSubmodules() {
 
 	while (true) {
 		size_t fieldPos = sourceFileContents.find(fieldKey, beginSearchPos);
-		if (fieldPos == -1) {
-			return;
+		if (fieldPos == std::string::npos) {
+			// Last shader module
+			break;
 		}
 
 		size_t newLinePos = sourceFileContents.find('\n', fieldPos);
@@ -310,15 +314,23 @@ void ShaderImporter::ExtractSubmodules() {
 
 		size_t beginPos = newLinePos + 1;
 		size_t endPos = sourceFileContents.find("#endShaderModule", newLinePos);
+		if (fieldPos == std::string::npos) {
+			// Couldn't find endShaderModule!
+			return false;
+		}
 
 		std::string shaderTypeString = sourceFileContents.substr(valuePos, newLinePos - valuePos);
 		auto shaderType = GetShaderTypeFromString(shaderTypeString);
 		std::string glsl = sourceFileContents.substr(beginPos, endPos - beginPos);
 		std::string extension = GetShaderTypeExtension(shaderType);
-		ProcessSubmodule(shaderType, extension.c_str(), glsl.c_str());
+		if (!ProcessSubmodule(shaderType, extension.c_str(), glsl.c_str())) {
+			return false;
+		}
 
 		beginSearchPos = endPos;
 	}
+
+	return true;
 }
 
 ShaderImporter::ShaderType ShaderImporter::GetShaderTypeFromString(std::string& str) {
@@ -368,11 +380,11 @@ const char* ShaderImporter::GetShaderTypeAsString(ShaderType type) {
 	}
 }
 
-void ShaderImporter::ProcessSubmodule(ShaderType shaderType, const char* extension, const char* glslSource) {
+bool ShaderImporter::ProcessSubmodule(ShaderType shaderType, const char* extension, const char* glslSource) {
 	std::vector<uint32_t> vkSpirv = ConvertToSpirv(shaderType, extension, glslSource);
 
 	if (vkSpirv.size() == 0) {
-		return;
+		return false;
 	}
 
 	/* TODO: Re-implement this by using preprocessing to handle the descriptor set issue
@@ -382,6 +394,8 @@ void ShaderImporter::ProcessSubmodule(ShaderType shaderType, const char* extensi
 	}
 	*/
 	ReflectResources(shaderType, vkSpirv);
+
+	return true;
 }
 
 std::vector<uint32_t> ShaderImporter::ConvertToSpirv(ShaderType shaderType, const char* extension, const char* shaderModuleGlsl) {
