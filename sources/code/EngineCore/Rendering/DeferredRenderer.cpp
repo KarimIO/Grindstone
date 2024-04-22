@@ -2,26 +2,31 @@
 #include <random>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include "Common/Graphics/Core.hpp"
-#include "Common/Graphics/VertexArrayObject.hpp"
-#include "Common/Graphics/GraphicsPipeline.hpp"
-#include "DeferredRenderer.hpp"
-#include "EngineCore/Utils/Utilities.hpp"
-#include "EngineCore/EngineCore.hpp"
-#include "EngineCore/Assets/AssetManager.hpp"
-#include "EngineCore/Assets/Shaders/ShaderImporter.hpp"
-#include "EngineCore/Assets/Materials/MaterialImporter.hpp"
-#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
-#include "EngineCore/CoreComponents/EnvironmentMap/EnvironmentMapComponent.hpp"
-#include "EngineCore/CoreComponents/Lights/PointLightComponent.hpp"
-#include "EngineCore/CoreComponents/Lights/SpotLightComponent.hpp"
-#include "EngineCore/CoreComponents/Lights/DirectionalLightComponent.hpp"
-#include "EngineCore/AssetRenderer/AssetRendererManager.hpp"
-#include "EngineCore/Scenes/Manager.hpp"
-#include "Common/Event/WindowEvent.hpp"
-#include "EngineCore/Profiling.hpp"
+
+#include <Common/Graphics/Core.hpp>
+#include <Common/Graphics/VertexArrayObject.hpp>
+#include <Common/Graphics/GraphicsPipeline.hpp>
+#include <Common/Event/WindowEvent.hpp>
+#include <Common/Display/DisplayManager.hpp>
 #include <Common/Window/WindowManager.hpp>
 #include <Common/HashedString.hpp>
+
+#include <EngineCore/Utils/Utilities.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Assets/AssetManager.hpp>
+#include <EngineCore/Assets/Shaders/ShaderImporter.hpp>
+#include <EngineCore/Assets/Materials/MaterialImporter.hpp>
+#include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
+#include <EngineCore/CoreComponents/EnvironmentMap/EnvironmentMapComponent.hpp>
+#include <EngineCore/CoreComponents/Lights/PointLightComponent.hpp>
+#include <EngineCore/CoreComponents/Lights/SpotLightComponent.hpp>
+#include <EngineCore/CoreComponents/Lights/DirectionalLightComponent.hpp>
+#include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
+#include <EngineCore/Scenes/Manager.hpp>
+#include <EngineCore/Profiling.hpp>
+
+#include "DeferredRenderer.hpp"
+
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
@@ -29,6 +34,8 @@ GraphicsAPI::RenderPass* DeferredRenderer::gbufferRenderPass = nullptr;
 GraphicsAPI::RenderPass* DeferredRenderer::mainRenderPass = nullptr;
 
 const size_t MAX_BLOOM_MIPS = 40u;
+const DepthFormat depthFormat = DepthFormat::D24;
+const bool shouldFastResize = true;
 
 float lightPositions[] = {
 	-1.0f, -1.0f,
@@ -46,6 +53,11 @@ struct EngineUboStruct {
 	glm::mat4 proj;
 	glm::mat4 view;
 	glm::vec3 eyePos;
+	float buffer;
+	glm::vec2 framebufferResolution;
+	glm::vec2 renderResolution;
+	glm::vec2 renderScale;
+	float time;
 };
 
 const size_t ssaoKernelSize = 64;
@@ -66,6 +78,8 @@ struct BloomUboStruct {
 	BloomStage stage;
 	float levelOfDetail;
 	float filterRadius;
+	glm::vec4 inReciprocalImgSizes;
+	glm::vec2 outReciprocalImgSize;
 };
 
 static size_t CalculateBloomLevels(uint32_t width, uint32_t height) {
@@ -75,8 +89,13 @@ static size_t CalculateBloomLevels(uint32_t width, uint32_t height) {
 }
 
 DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : targetRenderPass(targetRenderPass) {
-	width = 800;
-	height = 600;
+	if (shouldFastResize) {
+		Display& display = EngineCore::GetInstance().displayManager->GetMainDisplay();
+		framebufferWidth = display.width;
+		framebufferHeight = display.height;
+		renderWidth = display.width;
+		renderHeight = display.height;
+	}
 
 	EngineCore& engineCore = EngineCore::GetInstance();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
@@ -85,12 +104,13 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	deferredRendererImageSets.resize(maxFramesInFlight);
 
 	RenderPass::CreateInfo renderPassCreateInfo{};
+	renderPassCreateInfo.debugName = "Shadow Map Render Pass";
 	renderPassCreateInfo.colorFormats = nullptr;
 	renderPassCreateInfo.colorFormatCount = 0;
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;
 	shadowMapRenderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
-	bloomMipLevelCount = CalculateBloomLevels(width, height);
+	bloomStoredMipLevelCount = bloomMipLevelCount = CalculateBloomLevels(renderWidth, renderHeight);
 
 	Uuid brdfAssetUuid("7707483a-9379-4e81-9e15-0e5acf20e9d6");
 	const TextureAsset* textureAsset = engineCore.assetManager->GetAsset<TextureAsset>(brdfAssetUuid);
@@ -104,10 +124,21 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	CreateLitHDRFramebuffer();
 	CreateUniformBuffers();
 	CreateDescriptorSetLayouts();
+	CreateDepthOfFieldResources();
 	CreateBloomResources();
 	CreateBloomUniformBuffers();
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
+		GraphicsAPI::UniformBuffer::CreateInfo postProcessingUboCreateInfo{};
+		postProcessingUboCreateInfo.debugName = "Post Processing UBO";
+		postProcessingUboCreateInfo.isDynamic = false;
+		postProcessingUboCreateInfo.size = sizeof(PostProcessUbo);
+		GraphicsAPI::UniformBuffer* postProcessingUbo =
+			graphicsCore->CreateUniformBuffer(postProcessingUboCreateInfo);
+		postProcessingUbo->UpdateBuffer(&postProcessUboData);
+		deferredRendererImageSets[i].tonemapPostProcessingUniformBufferObject = postProcessingUbo;
+
+		CreateDepthOfFieldRenderTargetsAndDescriptorSets(deferredRendererImageSets[i], i);
 		CreateBloomRenderTargetsAndDescriptorSets(deferredRendererImageSets[i], i);
 		CreateDescriptorSets(deferredRendererImageSets[i]);
 	}
@@ -149,6 +180,97 @@ DeferredRenderer::~DeferredRenderer() {
 	graphicsCore->DeleteTexture(ssaoNoiseTexture);
 	graphicsCore->DeleteDescriptorSetLayout(ssaoDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSet(ssaoDescriptorSet);
+}
+
+void DeferredRenderer::CreateDepthOfFieldRenderTargetsAndDescriptorSets(DeferredRendererImageSet& imageSet, size_t imageSetIndex) {
+	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+
+	if (imageSet.nearDofRenderTarget != nullptr) {
+		graphicsCore->DeleteRenderTarget(imageSet.nearDofRenderTarget);
+	}
+
+	if (imageSet.farDofRenderTarget != nullptr) {
+		graphicsCore->DeleteRenderTarget(imageSet.farDofRenderTarget);
+	}
+
+	if (imageSet.dofSeparationDescriptorSet != nullptr) {
+		graphicsCore->DeleteDescriptorSet(imageSet.dofSeparationDescriptorSet);
+	}
+
+	if (imageSet.dofBloomDescriptorSet != nullptr) {
+		graphicsCore->DeleteDescriptorSet(imageSet.dofBloomDescriptorSet);
+	}
+
+	if (imageSet.dofCombineDescriptorSet != nullptr) {
+		graphicsCore->DeleteDescriptorSet(imageSet.dofCombineDescriptorSet);
+	}
+
+	GraphicsAPI::RenderTarget::CreateInfo nearRTCreateInfo = { GraphicsAPI::ColorFormat::RGBA16, renderWidth / 2, renderHeight / 2, true, false, "Near DOF Render Target" };
+	imageSet.nearDofRenderTarget = graphicsCore->CreateRenderTarget(nearRTCreateInfo);
+
+	GraphicsAPI::RenderTarget::CreateInfo farRTCreateInfo = { GraphicsAPI::ColorFormat::RGBA16, renderWidth / 2, renderHeight / 2, true, false, "Far DOF Render Target" };
+	imageSet.farDofRenderTarget = graphicsCore->CreateRenderTarget(farRTCreateInfo);
+
+	std::array<GraphicsAPI::DescriptorSet::Binding, 2> sourceDofDescriptorBindings = {
+		imageSet.litHdrRenderTarget,
+		imageSet.gbufferDepthTarget
+	};
+
+	std::array<GraphicsAPI::DescriptorSet::Binding, 2> nearAndFarDescriptorBindings = {
+		imageSet.nearDofRenderTarget,
+		imageSet.farDofRenderTarget
+	};
+
+	/*
+	GraphicsAPI::DescriptorSet::CreateInfo dofSeparationDescriptorSetCreateInfo{};
+	dofSeparationDescriptorSetCreateInfo.layout = dofSeparationDescriptorSetLayout;
+	dofSeparationDescriptorSetCreateInfo.debugName = "Depth of Field Separation Descriptor";
+	dofSeparationDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(sourceDofDescriptorBindings.size());
+	dofSeparationDescriptorSetCreateInfo.bindings = sourceDofDescriptorBindings.data();
+	imageSet.dofSeparationDescriptorSet = graphicsCore->CreateDescriptorSet(dofSeparationDescriptorSetCreateInfo);
+
+	GraphicsAPI::DescriptorSet::CreateInfo dofBlurNearDescriptorSetCreateInfo{};
+	dofBlurNearDescriptorSetCreateInfo.layout = dofBlurNearDescriptorSetLayout;
+	dofBlurNearDescriptorSetCreateInfo.debugName = "Depth of Field Blur Near Descriptor";
+	dofBlurNearDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(sourceDofDescriptorBindings.size());
+	dofBlurNearDescriptorSetCreateInfo.bindings = sourceDofDescriptorBindings.data();
+	imageSet.dofSeparationDescriptorSet = graphicsCore->CreateDescriptorSet(dofBlurDescriptorSetCreateInfo);
+
+	GraphicsAPI::DescriptorSet::CreateInfo dofBlurFarDescriptorSetCreateInfo{};
+	dofBlurFarDescriptorSetCreateInfo.layout = dofBlurFarDescriptorSetLayout;
+	dofBlurFarDescriptorSetCreateInfo.debugName = "Depth of Field Blur Far Descriptor";
+	dofBlurFarDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(sourceDofDescriptorBindings.size());
+	dofBlurFarDescriptorSetCreateInfo.bindings = sourceDofDescriptorBindings.data();
+	imageSet.dofSeparationDescriptorSet = graphicsCore->CreateDescriptorSet(dofBlurDescriptorSetCreateInfo);
+
+	GraphicsAPI::DescriptorSet::CreateInfo dofCombinationDescriptorSetCreateInfo{};
+	dofCombinationDescriptorSetCreateInfo.layout = dofCombiriptorBindings.data();
+	imageSet.dofSeparationDescriptorSet = graphicsCore->CreateDescriptorSet(dofCombinationDescriptorSetCreateInfo);
+	*/
+}
+
+void DeferredRenderer::CreateDepthOfFieldResources() {
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+
+	std::array<ColorFormat, 2> dofSepFormats;
+	dofSepFormats[0] = ColorFormat::RGBA16;
+	dofSepFormats[1] = ColorFormat::RGBA16;
+
+	RenderPass::CreateInfo dofSepRenderPassCreateInfo{};
+	dofSepRenderPassCreateInfo.debugName = "DOF Separation Render Pass";
+	dofSepRenderPassCreateInfo.colorFormats = dofSepFormats.data();
+	dofSepRenderPassCreateInfo.colorFormatCount = static_cast<uint32_t>(dofSepFormats.size());
+	dofSepRenderPassCreateInfo.depthFormat = DepthFormat::None;
+	dofSeparationRenderPass = graphicsCore->CreateRenderPass(dofSepRenderPassCreateInfo);
+
+	ColorFormat dofBlurAndComboFormat = ColorFormat::RGBA16;
+
+	RenderPass::CreateInfo dofBlurAndComboRenderPassCreateInfo{};
+	dofBlurAndComboRenderPassCreateInfo.debugName = "DOF Blur and Combo Render Pass";
+	dofBlurAndComboRenderPassCreateInfo.colorFormats = &dofBlurAndComboFormat;
+	dofBlurAndComboRenderPassCreateInfo.colorFormatCount = 1;
+	dofBlurAndComboRenderPassCreateInfo.depthFormat = DepthFormat::None;
+	dofBlurAndCombinationRenderPass = graphicsCore->CreateRenderPass(dofBlurAndComboRenderPassCreateInfo);
 }
 
 void DeferredRenderer::CreateBloomResources() {
@@ -262,16 +384,10 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 	}
 
 	{
-		std::array<DescriptorSet::Binding, 2> ssaoLayoutBindings{};
-		ssaoLayoutBindings[0].bindingIndex = 0;
-		ssaoLayoutBindings[0].count = 1;
-		ssaoLayoutBindings[0].bindingType = BindingType::UniformBuffer;
-		ssaoLayoutBindings[0].itemPtr = ssaoUniformBuffer;
-
-		ssaoLayoutBindings[1].bindingIndex = 1;
-		ssaoLayoutBindings[1].count = 1;
-		ssaoLayoutBindings[1].bindingType = BindingType::Texture;
-		ssaoLayoutBindings[1].itemPtr = ssaoNoiseTexture;
+		std::array<DescriptorSet::Binding, 2> ssaoLayoutBindings{
+			ssaoUniformBuffer,
+			ssaoNoiseTexture
+		};
 
 		DescriptorSet::CreateInfo engineDescriptorSetCreateInfo{};
 		engineDescriptorSetCreateInfo.debugName = "SSAO Descriptor Set";
@@ -282,9 +398,7 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 	}
 
 	{
-		uint32_t halfWidth = width / 2;
-		uint32_t halfHeight = height / 2;
-		GraphicsAPI::RenderTarget::CreateInfo ssaoRenderTargetCreateInfo{ GraphicsAPI::ColorFormat::R8, halfWidth, halfHeight, true, false, "SSAO Render Target" };
+		GraphicsAPI::RenderTarget::CreateInfo ssaoRenderTargetCreateInfo{ GraphicsAPI::ColorFormat::R8, framebufferWidth / 2, framebufferHeight / 2, true, false, "SSAO Render Target" };
 		ssaoRenderTarget = graphicsCore->CreateRenderTarget(ssaoRenderTargetCreateInfo);
 
 		GraphicsAPI::RenderPass::CreateInfo ssaoRenderPassCreateInfo{};
@@ -297,8 +411,8 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 
 		GraphicsAPI::Framebuffer::CreateInfo ssaoFramebufferCreateInfo{};
 		ssaoFramebufferCreateInfo.debugName = "SSAO Framebuffer";
-		ssaoFramebufferCreateInfo.width = halfWidth;
-		ssaoFramebufferCreateInfo.height = halfHeight;
+		ssaoFramebufferCreateInfo.width = framebufferWidth / 2;
+		ssaoFramebufferCreateInfo.height = framebufferHeight / 2;
 		ssaoFramebufferCreateInfo.renderTargetLists = &ssaoRenderTarget;
 		ssaoFramebufferCreateInfo.numRenderTargetLists = 1;
 		ssaoFramebufferCreateInfo.depthTarget = nullptr;
@@ -332,23 +446,39 @@ bool DeferredRenderer::OnWindowResize(Events::BaseEvent* ev) {
 }
 
 void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
-	if (this->width == width && this->height == height) {
+	if (width == framebufferWidth && height == framebufferHeight) {
 		return;
 	}
 
-	this->width = width;
-	this->height = height;
+	this->renderWidth = width;
+	this->renderHeight = height;
+
+	uint32_t halfWidth = width / 2u;
+	uint32_t halfHeight = height / 2u;
+
+	bloomMipLevelCount = CalculateBloomLevels(width, height);
+
+	if (shouldFastResize && width <= framebufferWidth && height <= framebufferHeight) {
+		UpdateBloomUBO();
+
+		return;
+	}
+
+	if (width > framebufferWidth) {
+		framebufferWidth = width;
+	}
+
+	if (height > framebufferHeight) {
+		framebufferHeight = height;
+	}
 
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	graphicsCore->WaitUntilIdle();
 
-	uint32_t halfWidth = width / 2;
-	uint32_t halfHeight = height / 2;
-
 	ssaoRenderTarget->Resize(halfWidth, halfHeight);
 	ssaoFramebuffer->Resize(halfWidth, halfHeight);
 
-	bloomMipLevelCount = CalculateBloomLevels(width, height);
+	bloomStoredMipLevelCount = bloomMipLevelCount;
 
 	CreateBloomUniformBuffers();
 
@@ -364,16 +494,14 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 		imageSet.litHdrRenderTarget->Resize(width, height);
 		imageSet.litHdrFramebuffer->Resize(width, height);
 
-		CleanupPipelines();
-		CreatePipelines();
-
+		CreateDepthOfFieldRenderTargetsAndDescriptorSets(imageSet, i);
 		CreateBloomRenderTargetsAndDescriptorSets(imageSet, i);
 		UpdateDescriptorSets(imageSet);
 	}
 }
 
 void DeferredRenderer::CreateBloomUniformBuffers() {
-	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	for (size_t i = 0; i < bloomUniformBuffers.size(); ++i) {
 		if (bloomUniformBuffers[i] != nullptr) {
 			graphicsCore->DeleteUniformBuffer(bloomUniformBuffers[i]);
@@ -410,7 +538,7 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 	imageSet.bloomRenderTargets.resize(bloomMipLevelCount * 2);
 	imageSet.bloomDescriptorSets.resize(bloomMipLevelCount * 2 - 2);
 
-	GraphicsAPI::RenderTarget::CreateInfo bloomRenderTargetCreateInfo{ GraphicsAPI::ColorFormat::RGBA32, width, height, true, true, "Bloom Render Target" };
+	GraphicsAPI::RenderTarget::CreateInfo bloomRenderTargetCreateInfo{ GraphicsAPI::ColorFormat::RGBA32, framebufferWidth, framebufferHeight, true, true, "Bloom Render Target" };
 
 	for (uint32_t i = 0; i < bloomMipLevelCount; ++i) {
 		std::string bloomRenderTargetName = std::string("Bloom Render Target Downscale Mip ") + std::to_string(i);
@@ -420,8 +548,8 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 		bloomRenderTargetCreateInfo.height = bloomRenderTargetCreateInfo.height / 2;
 	}
 
-	bloomRenderTargetCreateInfo.width = width;
-	bloomRenderTargetCreateInfo.height = height;
+	bloomRenderTargetCreateInfo.width = framebufferWidth;
+	bloomRenderTargetCreateInfo.height = framebufferHeight;
 
 	for (uint32_t i = 0; i < bloomMipLevelCount; ++i) {
 		std::string bloomRenderTargetName = std::string("Bloom Render Target Upscale Mip ") + std::to_string(i);
@@ -432,22 +560,6 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 	}
 
 	std::array<GraphicsAPI::DescriptorSet::Binding, 4> descriptorBindings;
-	descriptorBindings[0].bindingIndex = 0;
-	descriptorBindings[0].bindingType = BindingType::UniformBuffer;
-	descriptorBindings[0].count = 1;
-
-	descriptorBindings[1].bindingIndex = 1;
-	descriptorBindings[1].bindingType = BindingType::RenderTextureStorageImage;
-	descriptorBindings[1].count = 1;
-
-	descriptorBindings[2].bindingIndex = 2;
-	descriptorBindings[2].bindingType = BindingType::RenderTexture;
-	descriptorBindings[2].count = 1;
-
-	descriptorBindings[3].bindingIndex = 3;
-	descriptorBindings[3].bindingType = BindingType::RenderTexture;
-	descriptorBindings[3].count = 1;
-
 	descriptorBindings[3].itemPtr = imageSet.bloomRenderTargets[0];
 
 	// Threshold values sourced from: https://catlikecoding.com/unity/tutorials/advanced-rendering/bloom/
@@ -515,6 +627,56 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 	}
 }
 
+void DeferredRenderer::UpdateBloomUBO() {
+	std::vector<glm::vec2> mipSizes(bloomMipLevelCount);
+	uint32_t mipWidth = renderWidth;
+	uint32_t mipHeight = renderHeight;
+
+	for (uint32_t i = 0; i < bloomMipLevelCount; ++i) {
+		mipSizes[i] = glm::vec2(mipWidth, mipHeight);
+		mipWidth = mipWidth >> 1;
+		mipHeight = mipHeight >> 1;
+	}
+
+	// Threshold values sourced from: https://catlikecoding.com/unity/tutorials/advanced-rendering/bloom/
+	const float threshold = 1.0f;
+	const float softThreshold = 0.5f;
+	const float knee = threshold * softThreshold;
+	const float thresholdBias = 0.00001f;
+
+	BloomUboStruct bloomUboStruct{};
+	bloomUboStruct.thresholdFilter = { threshold, threshold - knee, 2.0f * knee, 0.25f / (knee + thresholdBias) };
+	bloomUboStruct.levelOfDetail = 0.0f;
+	bloomUboStruct.filterRadius = 0.005f;
+
+	uint32_t bloomUboIndex = 0;
+
+	bloomUboStruct.stage = BloomStage::Filter;
+	if (bloomMipLevelCount > 1) {
+		bloomUboStruct.outReciprocalImgSize = mipSizes[1];
+		bloomUniformBuffers[bloomUboIndex++]->UpdateBuffer(&bloomUboStruct);
+	}
+
+	bloomUboStruct.stage = BloomStage::Downsample;
+	for (size_t i = 1; i < bloomMipLevelCount - 1; ++i) {
+		bloomUboStruct.outReciprocalImgSize = mipSizes[i];
+		bloomUniformBuffers[bloomUboIndex++]->UpdateBuffer(&bloomUboStruct);
+	}
+
+	{
+		bloomUboStruct.outReciprocalImgSize = mipSizes[bloomUboIndex];
+		bloomUboStruct.inReciprocalImg2Size = mipSizes[bloomUboIndex - 1];
+		bloomUniformBuffers[bloomUboIndex++]->UpdateBuffer(&bloomUboStruct);
+	}
+
+	bloomUboStruct.stage = BloomStage::Upsample;
+	for (size_t i = bloomMipLevelCount - 2; i >= 1; --i) {
+		bloomUboStruct.outReciprocalImgSize = mipSizes[i];
+		bloomUboStruct.inReciprocalImg2Size = mipSizes[i + 1];
+		bloomUniformBuffers[bloomUboIndex++]->UpdateBuffer(&bloomUboStruct);
+	}
+}
+
 void DeferredRenderer::CreateUniformBuffers() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
@@ -543,33 +705,33 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	DescriptorSetLayout::Binding litHdrRenderTargetBinding{};
 	litHdrRenderTargetBinding.bindingId = 1;
 	litHdrRenderTargetBinding.count = 1;
-	litHdrRenderTargetBinding.type = BindingType::Texture;
+	litHdrRenderTargetBinding.type = BindingType::RenderTexture;
 	// TODO: Just using vertex for now to get resolution cuz I'm lazy. Remove this eventually and use a uniform buffer.
 	litHdrRenderTargetBinding.stages = ShaderStageBit::Vertex | ShaderStageBit::Fragment;
 
+	DescriptorSetLayout::Binding gbufferDepthBinding{};
+	gbufferDepthBinding.bindingId = 1;
+	gbufferDepthBinding.count = 1;
+	gbufferDepthBinding.type = BindingType::DepthTexture;
+	gbufferDepthBinding.stages = ShaderStageBit::Fragment;
+
 	DescriptorSetLayout::Binding gbuffer0Binding{};
-	gbuffer0Binding.bindingId = 1;
+	gbuffer0Binding.bindingId = 2;
 	gbuffer0Binding.count = 1;
-	gbuffer0Binding.type = BindingType::Texture;
+	gbuffer0Binding.type = BindingType::RenderTexture;
 	gbuffer0Binding.stages = ShaderStageBit::Fragment;
 
 	DescriptorSetLayout::Binding gbuffer1Binding{};
-	gbuffer1Binding.bindingId = 2;
+	gbuffer1Binding.bindingId = 3;
 	gbuffer1Binding.count = 1;
-	gbuffer1Binding.type = BindingType::Texture;
+	gbuffer1Binding.type = BindingType::RenderTexture;
 	gbuffer1Binding.stages = ShaderStageBit::Fragment;
 
 	DescriptorSetLayout::Binding gbuffer2Binding{};
-	gbuffer2Binding.bindingId = 3;
+	gbuffer2Binding.bindingId = 4;
 	gbuffer2Binding.count = 1;
-	gbuffer2Binding.type = BindingType::Texture;
+	gbuffer2Binding.type = BindingType::RenderTexture;
 	gbuffer2Binding.stages = ShaderStageBit::Fragment;
-
-	DescriptorSetLayout::Binding gbuffer3Binding{};
-	gbuffer3Binding.bindingId = 4;
-	gbuffer3Binding.count = 1;
-	gbuffer3Binding.type = BindingType::Texture;
-	gbuffer3Binding.stages = ShaderStageBit::Fragment;
 
 	DescriptorSetLayout::CreateInfo engineDescriptorSetLayoutCreateInfo{};
 	engineDescriptorSetLayoutCreateInfo.debugName = "Engine UBO Set Layout";
@@ -577,16 +739,12 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	engineDescriptorSetLayoutCreateInfo.bindings = &engineUboBinding;
 	engineDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(engineDescriptorSetLayoutCreateInfo);
 
-	DescriptorSetLayout::Binding bloomBindingForTonemap{};
-	bloomBindingForTonemap.bindingId = 2;
-	bloomBindingForTonemap.count = 1;
-	bloomBindingForTonemap.type = BindingType::RenderTexture;
-	bloomBindingForTonemap.stages = ShaderStageBit::Fragment;
-
-	std::array<DescriptorSetLayout::Binding, 3> tonemapDescriptorSetLayoutBindings{};
+	std::array<DescriptorSetLayout::Binding, 5> tonemapDescriptorSetLayoutBindings{};
 	tonemapDescriptorSetLayoutBindings[0] = engineUboBinding;
 	tonemapDescriptorSetLayoutBindings[1] = litHdrRenderTargetBinding;
-	tonemapDescriptorSetLayoutBindings[2] = bloomBindingForTonemap;
+	tonemapDescriptorSetLayoutBindings[2] = { 2, 1, BindingType::RenderTexture, ShaderStageBit::Fragment }; // Bloom Texture
+	tonemapDescriptorSetLayoutBindings[3] = { 3, 1, BindingType::DepthTexture, ShaderStageBit::Fragment };	// Depth Texture
+	tonemapDescriptorSetLayoutBindings[4] = { 4, 1, BindingType::UniformBuffer, ShaderStageBit::Fragment };	// Post Process Uniform Buffer
 
 	DescriptorSetLayout::CreateInfo tonemapDescriptorSetLayoutCreateInfo{};
 	tonemapDescriptorSetLayoutCreateInfo.debugName = "Tonemap Descriptor Set Layout";
@@ -596,10 +754,10 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 
 	std::array<DescriptorSetLayout::Binding, 5> lightingDescriptorSetLayoutBindings{};
 	lightingDescriptorSetLayoutBindings[0] = engineUboBinding;
-	lightingDescriptorSetLayoutBindings[1] = gbuffer0Binding;
-	lightingDescriptorSetLayoutBindings[2] = gbuffer1Binding;
-	lightingDescriptorSetLayoutBindings[3] = gbuffer2Binding;
-	lightingDescriptorSetLayoutBindings[4] = gbuffer3Binding;
+	lightingDescriptorSetLayoutBindings[1] = gbufferDepthBinding;
+	lightingDescriptorSetLayoutBindings[2] = gbuffer0Binding;
+	lightingDescriptorSetLayoutBindings[3] = gbuffer1Binding;
+	lightingDescriptorSetLayoutBindings[4] = gbuffer2Binding;
 
 	DescriptorSetLayout::CreateInfo lightingDescriptorSetLayoutCreateInfo{};
 	lightingDescriptorSetLayoutCreateInfo.debugName = "Pointlight Descriptor Set Layout";
@@ -620,15 +778,8 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	lightingUBODescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(lightingUBODescriptorSetLayoutCreateInfo);
 
 	std::array<DescriptorSetLayout::Binding, 2> shadowMappedLightBindings{};
-	shadowMappedLightBindings[0].bindingId = 0;
-	shadowMappedLightBindings[0].count = 1;
-	shadowMappedLightBindings[0].type = BindingType::UniformBuffer;
-	shadowMappedLightBindings[0].stages = ShaderStageBit::Fragment;
-
-	shadowMappedLightBindings[1].bindingId = 1;
-	shadowMappedLightBindings[1].count = 1;
-	shadowMappedLightBindings[1].type = BindingType::DepthTexture;
-	shadowMappedLightBindings[1].stages = ShaderStageBit::Fragment;
+	shadowMappedLightBindings[0] = { 0, 1, BindingType::UniformBuffer, ShaderStageBit::Fragment };
+	shadowMappedLightBindings[1] = { 1, 1, BindingType::DepthTexture, ShaderStageBit::Fragment };
 
 	DescriptorSetLayout::CreateInfo shadowMappedLightDescriptorSetLayoutCreateInfo{};
 	shadowMappedLightDescriptorSetLayoutCreateInfo.debugName = "Shadowmapped Light Descriptor Set Layout";
@@ -652,41 +803,12 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	DescriptorSet::Binding engineUboBinding{};
-	engineUboBinding.bindingIndex = 0;
-	engineUboBinding.count = 1;
-	engineUboBinding.bindingType = BindingType::UniformBuffer;
-	engineUboBinding.itemPtr = imageSet.globalUniformBufferObject;
-
-	DescriptorSet::Binding litHdrRenderTargetBinding{};
-	litHdrRenderTargetBinding.bindingIndex = 1;
-	litHdrRenderTargetBinding.count = 1;
-	litHdrRenderTargetBinding.bindingType = BindingType::RenderTexture;
-	litHdrRenderTargetBinding.itemPtr = imageSet.litHdrRenderTarget;
-
-	DescriptorSet::Binding gbuffer0Binding{};
-	gbuffer0Binding.bindingIndex = 1;
-	gbuffer0Binding.count = 1;
-	gbuffer0Binding.bindingType = BindingType::RenderTexture;
-	gbuffer0Binding.itemPtr = imageSet.gbufferRenderTargets[0];
-
-	DescriptorSet::Binding gbuffer1Binding{};
-	gbuffer1Binding.bindingIndex = 2;
-	gbuffer1Binding.count = 1;
-	gbuffer1Binding.bindingType = BindingType::RenderTexture;
-	gbuffer1Binding.itemPtr = imageSet.gbufferRenderTargets[1];
-
-	DescriptorSet::Binding gbuffer2Binding{};
-	gbuffer2Binding.bindingIndex = 3;
-	gbuffer2Binding.count = 1;
-	gbuffer2Binding.bindingType = BindingType::RenderTexture;
-	gbuffer2Binding.itemPtr = imageSet.gbufferRenderTargets[2];
-
-	DescriptorSet::Binding gbuffer3Binding{};
-	gbuffer3Binding.bindingIndex = 4;
-	gbuffer3Binding.count = 1;
-	gbuffer3Binding.bindingType = BindingType::RenderTexture;
-	gbuffer3Binding.itemPtr = imageSet.gbufferRenderTargets[3];
+	DescriptorSet::Binding engineUboBinding{ imageSet.globalUniformBufferObject };
+	DescriptorSet::Binding litHdrRenderTargetBinding{ imageSet.litHdrRenderTarget };
+	DescriptorSet::Binding gbufferDepthBinding{ imageSet.gbufferDepthTarget };
+	DescriptorSet::Binding gbuffer0Binding{ imageSet.gbufferRenderTargets[0] };
+	DescriptorSet::Binding gbuffer1Binding{ imageSet.gbufferRenderTargets[1] };
+	DescriptorSet::Binding gbuffer2Binding{ imageSet.gbufferRenderTargets[2] };
 
 	DescriptorSet::CreateInfo engineDescriptorSetCreateInfo{};
 	engineDescriptorSetCreateInfo.debugName = "Engine UBO Descriptor Set";
@@ -695,16 +817,12 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	engineDescriptorSetCreateInfo.bindings = &engineUboBinding;
 	imageSet.engineDescriptorSet = graphicsCore->CreateDescriptorSet(engineDescriptorSetCreateInfo);
 
-	DescriptorSet::Binding bloomBindingForTonemap{};
-	bloomBindingForTonemap.bindingIndex = 2;
-	bloomBindingForTonemap.count = 1;
-	bloomBindingForTonemap.bindingType = BindingType::RenderTexture;
-	bloomBindingForTonemap.itemPtr = imageSet.bloomRenderTargets[bloomMipLevelCount + 1];
-
-	std::array<DescriptorSet::Binding, 3> tonemapDescriptorSetBindings{};
+	std::array<DescriptorSet::Binding, 5> tonemapDescriptorSetBindings{};
 	tonemapDescriptorSetBindings[0] = engineUboBinding;
 	tonemapDescriptorSetBindings[1] = litHdrRenderTargetBinding;
-	tonemapDescriptorSetBindings[2] = bloomBindingForTonemap;
+	tonemapDescriptorSetBindings[2] = { imageSet.bloomRenderTargets[bloomMipLevelCount + 1] };
+	tonemapDescriptorSetBindings[3] = gbufferDepthBinding;
+	tonemapDescriptorSetBindings[4] = { imageSet.tonemapPostProcessingUniformBufferObject };
 
 	DescriptorSet::CreateInfo tonemapDescriptorSetCreateInfo{};
 	tonemapDescriptorSetCreateInfo.debugName = "Tonemap Descriptor Set";
@@ -715,10 +833,10 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 
 	std::array<DescriptorSet::Binding, 5> lightingDescriptorSetBindings{};
 	lightingDescriptorSetBindings[0] = engineUboBinding;
-	lightingDescriptorSetBindings[1] = gbuffer0Binding;
-	lightingDescriptorSetBindings[2] = gbuffer1Binding;
-	lightingDescriptorSetBindings[3] = gbuffer2Binding;
-	lightingDescriptorSetBindings[4] = gbuffer3Binding;
+	lightingDescriptorSetBindings[1] = gbufferDepthBinding;
+	lightingDescriptorSetBindings[2] = gbuffer0Binding;
+	lightingDescriptorSetBindings[3] = gbuffer1Binding;
+	lightingDescriptorSetBindings[4] = gbuffer2Binding;
 
 	DescriptorSet::CreateInfo lightingDescriptorSetCreateInfo{};
 	lightingDescriptorSetCreateInfo.debugName = "Point Light Descriptor Set";
@@ -747,16 +865,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	}
 
 	{
-		std::array<DescriptorSet::Binding, 2> ssaoInputBinding;
-		ssaoInputBinding[0].bindingIndex = 0;
-		ssaoInputBinding[0].count = 1;
-		ssaoInputBinding[0].bindingType = BindingType::RenderTexture;
-		ssaoInputBinding[0].itemPtr = ssaoRenderTarget;
-
-		ssaoInputBinding[1].bindingIndex = 1;
-		ssaoInputBinding[1].count = 1;
-		ssaoInputBinding[1].bindingType = BindingType::Texture;
-		ssaoInputBinding[1].itemPtr = brdfLut;
+		std::array<DescriptorSet::Binding, 2> ssaoInputBinding = { ssaoRenderTarget, brdfLut };
 
 		DescriptorSet::CreateInfo ssaoInputCreateInfo{};
 		ssaoInputCreateInfo.debugName = "SSAO Descriptor Set";
@@ -781,17 +890,13 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	}
 
 	{
-		DescriptorSet::Binding environmentMapBinding{};
-		environmentMapBinding.bindingIndex = 0;
-		environmentMapBinding.count = 1;
-		environmentMapBinding.bindingType = BindingType::RenderTexture;
-		environmentMapBinding.itemPtr = ssaoRenderTarget;
+		DescriptorSet::Binding environmentMapBinding{ nullptr };
 
 		DescriptorSet::CreateInfo environmentMapDescriptorCreateInfo{};
 		environmentMapDescriptorCreateInfo.debugName = "Environment Map Input Descriptor Set";
 		environmentMapDescriptorCreateInfo.layout = environmentMapDescriptorSetLayout;
-		environmentMapDescriptorCreateInfo.bindingCount = 1;
-		environmentMapDescriptorCreateInfo.bindings = &environmentMapBinding;
+		environmentMapDescriptorCreateInfo.bindingCount = 0;
+		environmentMapDescriptorCreateInfo.bindings = nullptr;
 		environmentMapDescriptorSet = graphicsCore->CreateDescriptorSet(environmentMapDescriptorCreateInfo);
 	}
 }
@@ -799,55 +904,21 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	DescriptorSet::Binding engineUboBinding{};
-	engineUboBinding.bindingIndex = 0;
-	engineUboBinding.count = 1;
-	engineUboBinding.bindingType = BindingType::UniformBuffer;
-	engineUboBinding.itemPtr = imageSet.globalUniformBufferObject;
-
-	DescriptorSet::Binding litHdrRenderTargetBinding{};
-	litHdrRenderTargetBinding.bindingIndex = 1;
-	litHdrRenderTargetBinding.count = 1;
-	litHdrRenderTargetBinding.bindingType = BindingType::RenderTexture;
-	litHdrRenderTargetBinding.itemPtr = imageSet.litHdrRenderTarget;
-
-	DescriptorSet::Binding gbuffer0Binding{};
-	gbuffer0Binding.bindingIndex = 1;
-	gbuffer0Binding.count = 1;
-	gbuffer0Binding.bindingType = BindingType::RenderTexture;
-	gbuffer0Binding.itemPtr = imageSet.gbufferRenderTargets[0];
-
-	DescriptorSet::Binding gbuffer1Binding{};
-	gbuffer1Binding.bindingIndex = 2;
-	gbuffer1Binding.count = 1;
-	gbuffer1Binding.bindingType = BindingType::RenderTexture;
-	gbuffer1Binding.itemPtr = imageSet.gbufferRenderTargets[1];
-
-	DescriptorSet::Binding gbuffer2Binding{};
-	gbuffer2Binding.bindingIndex = 3;
-	gbuffer2Binding.count = 1;
-	gbuffer2Binding.bindingType = BindingType::RenderTexture;
-	gbuffer2Binding.itemPtr = imageSet.gbufferRenderTargets[2];
-
-	DescriptorSet::Binding gbuffer3Binding{};
-	gbuffer3Binding.bindingIndex = 4;
-	gbuffer3Binding.count = 1;
-	gbuffer3Binding.bindingType = BindingType::RenderTexture;
-	gbuffer3Binding.itemPtr = imageSet.gbufferRenderTargets[3];
-
+	DescriptorSet::Binding engineUboBinding{ imageSet.globalUniformBufferObject };
+	DescriptorSet::Binding litHdrRenderTargetBinding{ imageSet.litHdrRenderTarget };
+	DescriptorSet::Binding gbufferDepthBinding{ imageSet.gbufferDepthTarget };
+	DescriptorSet::Binding gbuffer0Binding{ imageSet.gbufferRenderTargets[0] };
+	DescriptorSet::Binding gbuffer1Binding{ imageSet.gbufferRenderTargets[1] };
+	DescriptorSet::Binding gbuffer2Binding{ imageSet.gbufferRenderTargets[2] };
 	imageSet.engineDescriptorSet->ChangeBindings(&engineUboBinding, 1);
 
 	{
-		DescriptorSet::Binding bloomDescriptorSetBinding{};
-		bloomDescriptorSetBinding.bindingIndex = 2;
-		bloomDescriptorSetBinding.count = 1;
-		bloomDescriptorSetBinding.bindingType = BindingType::RenderTexture;
-		bloomDescriptorSetBinding.itemPtr = imageSet.bloomRenderTargets[bloomMipLevelCount + 1];
-
-		std::array<DescriptorSet::Binding, 3> tonemapDescriptorSetBindings{};
+		std::array<DescriptorSet::Binding, 5> tonemapDescriptorSetBindings{};
 		tonemapDescriptorSetBindings[0] = engineUboBinding;
 		tonemapDescriptorSetBindings[1] = litHdrRenderTargetBinding;
-		tonemapDescriptorSetBindings[2] = bloomDescriptorSetBinding;
+		tonemapDescriptorSetBindings[2] = { imageSet.bloomRenderTargets[bloomMipLevelCount + 1] };
+		tonemapDescriptorSetBindings[3] = gbufferDepthBinding;
+		tonemapDescriptorSetBindings[4] = { imageSet.tonemapPostProcessingUniformBufferObject };
 
 		imageSet.tonemapDescriptorSet->ChangeBindings(tonemapDescriptorSetBindings.data(), static_cast<uint32_t>(tonemapDescriptorSetBindings.size()));
 	}
@@ -855,21 +926,16 @@ void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	{
 		std::array<DescriptorSet::Binding, 5> lightingDescriptorSetBindings{};
 		lightingDescriptorSetBindings[0] = engineUboBinding;
-		lightingDescriptorSetBindings[1] = gbuffer0Binding;
-		lightingDescriptorSetBindings[2] = gbuffer1Binding;
-		lightingDescriptorSetBindings[3] = gbuffer2Binding;
-		lightingDescriptorSetBindings[4] = gbuffer3Binding;
+		lightingDescriptorSetBindings[1] = gbufferDepthBinding;
+		lightingDescriptorSetBindings[2] = gbuffer0Binding;
+		lightingDescriptorSetBindings[3] = gbuffer1Binding;
+		lightingDescriptorSetBindings[4] = gbuffer2Binding;
 
 		imageSet.lightingDescriptorSet->ChangeBindings(lightingDescriptorSetBindings.data(), static_cast<uint32_t>(lightingDescriptorSetBindings.size()));
 	}
 
 	{
-		DescriptorSet::Binding ssaoInputBinding{};
-		ssaoInputBinding.bindingIndex = 0;
-		ssaoInputBinding.count = 1;
-		ssaoInputBinding.bindingType = BindingType::RenderTexture;
-		ssaoInputBinding.itemPtr = ssaoRenderTarget;
-
+		DescriptorSet::Binding ssaoInputBinding{ ssaoRenderTarget };
 		ssaoInputDescriptorSet->ChangeBindings(&ssaoInputBinding, 1);
 	}
 }
@@ -913,20 +979,16 @@ void DeferredRenderer::CreateVertexAndIndexBuffersAndLayouts() {
 void DeferredRenderer::CreateGbufferFramebuffer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	const int gbufferColorCount = 4;
+	const int gbufferColorCount = 3;
 	std::array<ColorFormat, gbufferColorCount> gbufferColorFormats{};
-	gbufferColorFormats[0] = ColorFormat::RGBA16; // X Y Z
-	gbufferColorFormats[1] = ColorFormat::RGBA8; // R  G  B matID
-	gbufferColorFormats[2] = ColorFormat::RGBA16; // nX nY nZ
-	gbufferColorFormats[3] = ColorFormat::RGBA8; // sR sG sB Roughness
+	gbufferColorFormats[0] = ColorFormat::RGBA8; // R  G  B matID
+	gbufferColorFormats[1] = ColorFormat::RGBA16; // nX nY nZ
+	gbufferColorFormats[2] = ColorFormat::RGBA8; // sR sG sB Roughness
 
 	std::array<const char*, gbufferColorCount> gbufferColorAttachmentNames{};
-	gbufferColorAttachmentNames[0] = "GBuffer Position Image";
-	gbufferColorAttachmentNames[1] = "GBuffer Albedo Image";
-	gbufferColorAttachmentNames[2] = "GBuffer Normal Image";
-	gbufferColorAttachmentNames[3] = "GBuffer Specular + Roughness Image";
-
-	DepthFormat depthFormat = DepthFormat::D24_STENCIL_8;
+	gbufferColorAttachmentNames[0] = "GBuffer Albedo Image";
+	gbufferColorAttachmentNames[1] = "GBuffer Normal Image";
+	gbufferColorAttachmentNames[2] = "GBuffer Specular + Roughness Image";
 
 	if (gbufferRenderPass == nullptr) {
 		RenderPass::CreateInfo gbufferRenderPassCreateInfo{};
@@ -937,14 +999,14 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 		gbufferRenderPass = graphicsCore->CreateRenderPass(gbufferRenderPassCreateInfo);
 	}
 
-	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(depthFormat, width, height, false, false, false, "GBuffer Depth Image");
+	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(depthFormat, framebufferWidth, framebufferHeight, false, false, true, "GBuffer Depth Image");
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		auto& imageSet = deferredRendererImageSets[i];
 
 		imageSet.gbufferRenderTargets.reserve(gbufferColorFormats.size());
 		for (size_t i = 0; i < gbufferColorFormats.size(); ++i) {
-			RenderTarget::CreateInfo gbufferRtCreateInfo{ gbufferColorFormats[i], width, height, true, false, gbufferColorAttachmentNames[i] };
+			RenderTarget::CreateInfo gbufferRtCreateInfo{ gbufferColorFormats[i], framebufferWidth, framebufferHeight, true, false, gbufferColorAttachmentNames[i] };
 			imageSet.gbufferRenderTargets.emplace_back(graphicsCore->CreateRenderTarget(gbufferRtCreateInfo));
 		}
 
@@ -952,8 +1014,8 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 
 		Framebuffer::CreateInfo gbufferCreateInfo{};
 		gbufferCreateInfo.debugName = "G-Buffer Framebuffer";
-		gbufferCreateInfo.width = width;
-		gbufferCreateInfo.height = height;
+		gbufferCreateInfo.width = framebufferWidth;
+		gbufferCreateInfo.height = framebufferHeight;
 		gbufferCreateInfo.renderPass = gbufferRenderPass;
 		gbufferCreateInfo.renderTargetLists = imageSet.gbufferRenderTargets.data();
 		gbufferCreateInfo.numRenderTargetLists = static_cast<uint32_t>(imageSet.gbufferRenderTargets.size());
@@ -966,7 +1028,7 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 void DeferredRenderer::CreateLitHDRFramebuffer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::RGBA16, width, height, true, false, "Lit HDR Color Image" };
+	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::RGBA16, framebufferWidth, framebufferHeight, true, false, "Lit HDR Color Image" };
 	// DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false, false, "Lit HDR Depth Image");
 
 	if (mainRenderPass == nullptr) {
@@ -974,9 +1036,29 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 		mainRenderPassCreateInfo.debugName = "Main HDR Render Pass";
 		mainRenderPassCreateInfo.colorFormats = &litHdrImagesCreateInfo.format;
 		mainRenderPassCreateInfo.colorFormatCount = 1;
-		mainRenderPassCreateInfo.depthFormat = DepthFormat::D24_STENCIL_8;
+		mainRenderPassCreateInfo.depthFormat = depthFormat;
 		mainRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 		mainRenderPass = graphicsCore->CreateRenderPass(mainRenderPassCreateInfo);
+	}
+
+	if (lightingRenderPass == nullptr) {
+		RenderPass::CreateInfo lightingRenderPassCreateInfo{};
+		lightingRenderPassCreateInfo.debugName = "Deferred Light Render Pass";
+		lightingRenderPassCreateInfo.colorFormats = &litHdrImagesCreateInfo.format;
+		lightingRenderPassCreateInfo.colorFormatCount = 1;
+		lightingRenderPassCreateInfo.depthFormat = DepthFormat::None;
+		lightingRenderPassCreateInfo.shouldClearDepthOnLoad = false;
+		lightingRenderPass = graphicsCore->CreateRenderPass(lightingRenderPassCreateInfo);
+	}
+
+	if (forwardLitRenderPass == nullptr) {
+		RenderPass::CreateInfo forwardLitRenderPassCreateInfo{};
+		forwardLitRenderPassCreateInfo.debugName = "Forward Lit Renderables Render Pass";
+		forwardLitRenderPassCreateInfo.colorFormats = &litHdrImagesCreateInfo.format;
+		forwardLitRenderPassCreateInfo.colorFormatCount = 1;
+		forwardLitRenderPassCreateInfo.depthFormat = depthFormat;
+		forwardLitRenderPassCreateInfo.shouldClearDepthOnLoad = false;
+		forwardLitRenderPass = graphicsCore->CreateRenderPass(forwardLitRenderPassCreateInfo);
 	}
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
@@ -987,13 +1069,17 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 		std::string framebufferName = std::string("Main HDR Framebuffer ") + std::to_string(i);
 		Framebuffer::CreateInfo litHdrFramebufferCreateInfo{};
 		litHdrFramebufferCreateInfo.debugName = framebufferName.c_str();
-		litHdrFramebufferCreateInfo.width = width;
-		litHdrFramebufferCreateInfo.height = height;
+		litHdrFramebufferCreateInfo.width = framebufferWidth;
+		litHdrFramebufferCreateInfo.height = framebufferHeight;
 		litHdrFramebufferCreateInfo.renderTargetLists = &imageSet.litHdrRenderTarget;
 		litHdrFramebufferCreateInfo.numRenderTargetLists = 1;
 		litHdrFramebufferCreateInfo.depthTarget = imageSet.gbufferDepthTarget;
 		litHdrFramebufferCreateInfo.renderPass = mainRenderPass;
 		imageSet.litHdrFramebuffer = graphicsCore->CreateFramebuffer(litHdrFramebufferCreateInfo);
+
+		// litHdrFramebufferCreateInfo.depthTarget = nullptr;
+		// litHdrFramebufferCreateInfo.renderPass = lightingRenderPass;
+		// imageSet.lightingFramebuffer = graphicsCore->CreateFramebuffer(litHdrFramebufferCreateInfo);
 	}
 }
 
@@ -1005,6 +1091,8 @@ void DeferredRenderer::CreatePipelines() {
 	pipelineCreateInfo.cullMode = CullMode::Back;
 	pipelineCreateInfo.scissorX = 0;
 	pipelineCreateInfo.scissorY = 0;
+	pipelineCreateInfo.hasDynamicScissor = true;
+	pipelineCreateInfo.hasDynamicViewport = true;
 	pipelineCreateInfo.vertexBindings = &vertexLightPositionLayout;
 	pipelineCreateInfo.vertexBindingsCount = 1;
 
@@ -1045,10 +1133,10 @@ void DeferredRenderer::CreatePipelines() {
 	shaderStageCreateInfos.clear();
 	fileData.clear();
 
-	pipelineCreateInfo.width = static_cast<float>(width);
-	pipelineCreateInfo.height = static_cast<float>(height);
-	pipelineCreateInfo.scissorW = width;
-	pipelineCreateInfo.scissorH = height;
+	pipelineCreateInfo.width = static_cast<float>(renderWidth);
+	pipelineCreateInfo.height = static_cast<float>(renderHeight);
+	pipelineCreateInfo.scissorW = renderWidth;
+	pipelineCreateInfo.scissorH = renderHeight;
 
 	{
 		ShaderStageCreateInfo bloomShaderStageCreateInfo;
@@ -1207,8 +1295,97 @@ void DeferredRenderer::CreatePipelines() {
 		tonemapPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
 
+#if 0
 	shaderStageCreateInfos.clear();
 	fileData.clear();
+
+	{
+		if (!assetManager->LoadShaderSet(
+			Uuid("9cd38044-b781-4398-a0f9-3aa270701453"),
+			shaderBits,
+			2,
+			shaderStageCreateInfos,
+			fileData
+		)) {
+			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load depth of field separation shader.");
+			return;
+		}
+
+		pipelineCreateInfo.debugName = "Depth of Field (Separation Stage)";
+		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
+		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
+		pipelineCreateInfo.descriptorSetLayouts = &tonemapDescriptorSetLayout;
+		pipelineCreateInfo.descriptorSetLayoutCount = 1;
+		pipelineCreateInfo.colorAttachmentCount = 1;
+		pipelineCreateInfo.blendMode = BlendMode::None;
+		pipelineCreateInfo.renderPass = targetRenderPass;
+		pipelineCreateInfo.isDepthWriteEnabled = true;
+		pipelineCreateInfo.isDepthTestEnabled = true;
+		pipelineCreateInfo.isStencilEnabled = true;
+		dofSeparationPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
+	}
+
+	shaderStageCreateInfos.clear();
+	fileData.clear();
+
+	{
+		if (!assetManager->LoadShaderSet(
+			Uuid("65b37559-4286-4351-bf3a-d61e6a688d52"),
+			shaderBits,
+			2,
+			shaderStageCreateInfos,
+			fileData
+		)) {
+			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load depth of field blur shader.");
+			return;
+		}
+
+		pipelineCreateInfo.debugName = "Depth of Field (Blur Stage)";
+		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
+		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
+		pipelineCreateInfo.descriptorSetLayouts = &tonemapDescriptorSetLayout;
+		pipelineCreateInfo.descriptorSetLayoutCount = 1;
+		pipelineCreateInfo.colorAttachmentCount = 1;
+		pipelineCreateInfo.blendMode = BlendMode::None;
+		pipelineCreateInfo.renderPass = targetRenderPass;
+		pipelineCreateInfo.isDepthWriteEnabled = true;
+		pipelineCreateInfo.isDepthTestEnabled = true;
+		pipelineCreateInfo.isStencilEnabled = true;
+		dofBlurPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
+	}
+
+	shaderStageCreateInfos.clear();
+	fileData.clear();
+
+	{
+		if (!assetManager->LoadShaderSet(
+			Uuid("ca629d4c-b4ed-4da4-9c37-451034ff67cb"),
+			shaderBits,
+			2,
+			shaderStageCreateInfos,
+			fileData
+		)) {
+			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load depth of field combination shader.");
+			return;
+		}
+
+		pipelineCreateInfo.debugName = "Depth of Field (Combination Stage)";
+		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
+		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
+		pipelineCreateInfo.descriptorSetLayouts = &tonemapDescriptorSetLayout;
+		pipelineCreateInfo.descriptorSetLayoutCount = 1;
+		pipelineCreateInfo.colorAttachmentCount = 1;
+		pipelineCreateInfo.blendMode = BlendMode::None;
+		pipelineCreateInfo.renderPass = targetRenderPass;
+		pipelineCreateInfo.isDepthWriteEnabled = true;
+		pipelineCreateInfo.isDepthTestEnabled = true;
+		pipelineCreateInfo.isStencilEnabled = true;
+		dofCombinationPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
+	}
+
+	shaderStageCreateInfos.clear();
+	fileData.clear();
+#endif
 
 	{
 		if (!assetManager->LoadShaderSet(
@@ -1253,8 +1430,6 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.isDepthWriteEnabled = true;
 		pipelineCreateInfo.isDepthTestEnabled = true;
 		pipelineCreateInfo.isStencilEnabled = false;
-		pipelineCreateInfo.hasDynamicScissor = true;
-		pipelineCreateInfo.hasDynamicViewport = true;
 		pipelineCreateInfo.isDepthBiasEnabled = true;
 		shadowMappingPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
@@ -1296,6 +1471,33 @@ void DeferredRenderer::RenderLightsImmediate(entt::registry& registry) {
 #endif
 }
 
+void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer) {
+	return;
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+
+	{
+		currentCommandBuffer->BindGraphicsPipeline(dofSeparationPipeline);
+		currentCommandBuffer->BindGraphicsDescriptorSet(dofSeparationPipeline, &imageSet.dofBloomDescriptorSet, 1);
+		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+	}
+
+	{
+		currentCommandBuffer->BindGraphicsPipeline(dofBlurPipeline);
+
+		currentCommandBuffer->BindGraphicsDescriptorSet(dofBlurPipeline, &imageSet.dofBloomDescriptorSet, 1);
+		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+
+		currentCommandBuffer->BindGraphicsDescriptorSet(dofBlurPipeline, &imageSet.dofBloomDescriptorSet, 1);
+		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+	}
+
+	{
+		currentCommandBuffer->BindGraphicsPipeline(dofCombinationPipeline);
+		currentCommandBuffer->BindGraphicsDescriptorSet(dofCombinationPipeline, &imageSet.dofBloomDescriptorSet, 1);
+		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+	}
+}
+
 void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer) {
 	if (bloomPipeline == nullptr) {
 		return;
@@ -1304,8 +1506,8 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	currentCommandBuffer->BindComputePipeline(bloomPipeline);
-	uint32_t groupCountX = static_cast<uint32_t>(std::ceil(width / 4.0f));
-	uint32_t groupCountY = static_cast<uint32_t>(std::ceil(height / 4.0f));
+	uint32_t groupCountX = static_cast<uint32_t>(std::ceil(renderWidth / 4.0f));
+	uint32_t groupCountY = static_cast<uint32_t>(std::ceil(renderHeight / 4.0f));
 	uint32_t descriptorSetIndex = 0;
 
 	{
@@ -1314,8 +1516,8 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
 
-	uint32_t mipWidth = static_cast<uint32_t>(width);
-	uint32_t mipHeight = static_cast<uint32_t>(height);
+	uint32_t mipWidth = static_cast<uint32_t>(renderWidth);
+	uint32_t mipHeight = static_cast<uint32_t>(renderHeight);
 
 	std::vector<uint32_t> mipWidths(bloomMipLevelCount);
 	std::vector<uint32_t> mipHeights(bloomMipLevelCount);
@@ -1392,6 +1594,7 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 		bool hasEnvMap = false;
 		view.each([&](const EnvironmentMapComponent& environmentMapComponent) {
 			if (currentEnvironmentMapUuid == environmentMapComponent.specularTexture.uuid) {
+				hasEnvMap = true;
 				return;
 			}
 
@@ -1401,12 +1604,7 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 				Texture* tex = texAsset->texture;
 				hasEnvMap = true;
 
-				GraphicsAPI::DescriptorSet::Binding binding{};
-				binding.bindingIndex = 0;
-				binding.bindingType = GraphicsAPI::BindingType::Texture;
-				binding.count = 1;
-				binding.itemPtr = tex;
-
+				GraphicsAPI::DescriptorSet::Binding binding{ tex };
 				environmentMapDescriptorSet->ChangeBindings(&binding, 1);
 			}
 		});
@@ -1529,6 +1727,12 @@ void DeferredRenderer::RenderSsao(uint32_t imageIndex, GraphicsAPI::CommandBuffe
 		1,
 		clearDepthStencil
 	);
+
+	uint32_t halfWidth = renderWidth / 2u;
+	uint32_t halfHeight = renderHeight / 2u;
+
+	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(halfWidth), static_cast<float>(halfHeight), 0.0f, 1.0f);
+	commandBuffer->SetScissor(0, 0, halfWidth, halfHeight);
 
 	commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	commandBuffer->BindIndexBuffer(indexBuffer);
@@ -1744,6 +1948,7 @@ void DeferredRenderer::PostProcessCommandBuffer(
 
 	auto& imageSet = deferredRendererImageSets[imageIndex];
 
+	RenderDepthOfField(imageSet, currentCommandBuffer);
 	RenderBloom(imageSet, currentCommandBuffer);
 
 	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
@@ -1755,6 +1960,8 @@ void DeferredRenderer::PostProcessCommandBuffer(
 	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, framebuffer->GetWidth(), framebuffer->GetHeight(), &clearColor, 1, clearDepthStencil);
 
 	if (tonemapPipeline != nullptr) {
+		imageSet.tonemapPostProcessingUniformBufferObject->UpdateBuffer(&postProcessUboData);
+
 		currentCommandBuffer->BindGraphicsDescriptorSet(tonemapPipeline, &imageSet.tonemapDescriptorSet, 1);
 		currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 		currentCommandBuffer->BindIndexBuffer(indexBuffer);
@@ -1824,17 +2031,17 @@ void DeferredRenderer::RenderCommandBuffer(
 	engineUboStruct.proj = projectionMatrix;
 	engineUboStruct.view = viewMatrix;
 	engineUboStruct.eyePos = eyePos;
+	engineUboStruct.framebufferResolution = glm::vec2(framebufferWidth, framebufferHeight);
+	engineUboStruct.renderResolution = glm::vec2(renderWidth, renderHeight);
+	engineUboStruct.renderScale = glm::vec2(static_cast<float>(renderWidth) / framebufferWidth, static_cast<float>(renderHeight) / framebufferHeight);
+	engineUboStruct.time = static_cast<float>(engineCore.GetTimeSinceLaunch());
 	imageSet.globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
 
 	RenderShadowMaps(commandBuffer, registry);
 	assetManager->SetEngineDescriptorSet(imageSet.engineDescriptorSet);
 
-	uint32_t width = imageSet.gbuffer->GetWidth();
-	uint32_t height = imageSet.gbuffer->GetHeight();
-
 	{
-		ClearColorValue clearColors[] = {
-			ClearColorValue{0.3f, 0.6f, 0.9f, 1.f},
+		std::array<ClearColorValue, 3> clearColors = {
 			ClearColorValue{0.0f, 0.0f, 0.0f, 1.f},
 			ClearColorValue{0.0f, 0.0f, 0.0f, 1.f},
 			ClearColorValue{0.0f, 0.0f, 0.0f, 1.f}
@@ -1845,31 +2052,44 @@ void DeferredRenderer::RenderCommandBuffer(
 		clearDepthStencil.stencil = 0;
 		clearDepthStencil.hasDepthStencilAttachment = true;
 
-		commandBuffer->BindRenderPass(gbufferRenderPass, imageSet.gbuffer, width, height, clearColors, 4, clearDepthStencil);
+		commandBuffer->BindRenderPass(
+			gbufferRenderPass,
+			imageSet.gbuffer,
+			renderWidth, renderHeight,
+			clearColors.data(),
+			static_cast<uint32_t>(clearColors.size()),
+			clearDepthStencil
+		);
 	}
 
-	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
-	commandBuffer->SetScissor(0, 0, width, height);
+	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(renderWidth), static_cast<float>(renderHeight));
+	commandBuffer->SetScissor(0, 0, renderWidth, renderHeight);
 
 	assetManager->RenderQueue(commandBuffer, "Opaque");
 	commandBuffer->UnbindRenderPass();
 
 	RenderSsao(imageIndex, commandBuffer);
 
-	{
-		ClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 0.f };
-		ClearDepthStencil clearDepthStencil;
-		clearDepthStencil.depth = 1.0f;
-		clearDepthStencil.stencil = 0;
-		clearDepthStencil.hasDepthStencilAttachment = true;
-		commandBuffer->BindRenderPass(mainRenderPass, imageSet.litHdrFramebuffer, imageSet.litHdrFramebuffer->GetWidth(), imageSet.litHdrFramebuffer->GetHeight(), &clearColor, 1, clearDepthStencil);
-	}
+	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(renderWidth), static_cast<float>(renderHeight));
+	commandBuffer->SetScissor(0, 0, renderWidth, renderHeight);
 
-	RenderLightsCommandBuffer(imageIndex, commandBuffer, registry);
-	assetManager->RenderQueue(commandBuffer, "Unlit");
-	assetManager->RenderQueue(commandBuffer, "Skybox");
-	assetManager->RenderQueue(commandBuffer, "Transparent");
-	commandBuffer->UnbindRenderPass();
+	{
+		ClearColorValue clearColor{ 0.0f, 0.0f, 0.0f, 1.f };
+		ClearDepthStencil clearDepthStencil;
+		// commandBuffer->BindRenderPass(lightingRenderPass, imageSet.lightingFramebuffer, width, height, nullptr, 0, clearDepthStencil);
+
+		commandBuffer->BindRenderPass(mainRenderPass, imageSet.litHdrFramebuffer, renderWidth, renderHeight, &clearColor, 1, clearDepthStencil);
+
+		RenderLightsCommandBuffer(imageIndex, commandBuffer, registry);
+
+		// commandBuffer->UnbindRenderPass();
+	
+		assetManager->RenderQueue(commandBuffer, "Unlit");
+		assetManager->RenderQueue(commandBuffer, "Skybox");
+		assetManager->RenderQueue(commandBuffer, "Transparent");
+
+		commandBuffer->UnbindRenderPass();
+	}
 
 	PostProcessCommandBuffer(imageIndex, outputFramebuffer, commandBuffer);
 }

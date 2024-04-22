@@ -8,7 +8,7 @@
 
 using namespace Grindstone::GraphicsAPI;
 
-static void AttachUniformBuffer(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
+static void AttachUniformBuffer(std::vector<VkWriteDescriptorSet>& writeVector, uint32_t bindingIndex, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
 	VulkanUniformBuffer* uniformBuffer = static_cast<VulkanUniformBuffer*>(binding.itemPtr);
 
 	// TODO: Handle this lifetime
@@ -20,7 +20,7 @@ static void AttachUniformBuffer(std::vector<VkWriteDescriptorSet>& writeVector, 
 	VkWriteDescriptorSet descriptorWrites = {};
 	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites.dstSet = descriptorSet;
-	descriptorWrites.dstBinding = binding.bindingIndex;
+	descriptorWrites.dstBinding = bindingIndex;
 	descriptorWrites.dstArrayElement = 0;
 	descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorWrites.descriptorCount = binding.count;
@@ -28,7 +28,7 @@ static void AttachUniformBuffer(std::vector<VkWriteDescriptorSet>& writeVector, 
 	writeVector.push_back(descriptorWrites);
 }
 
-static void AttachTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
+static void AttachTexture(std::vector<VkWriteDescriptorSet>& writeVector, uint32_t bindingIndex, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
 	VulkanTexture* texture = static_cast<VulkanTexture*>(binding.itemPtr);
 
 	// TODO: Handle this lifetime
@@ -40,7 +40,7 @@ static void AttachTexture(std::vector<VkWriteDescriptorSet>& writeVector, Descri
 	VkWriteDescriptorSet descriptorWrites = {};
 	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites.dstSet = descriptorSet;
-	descriptorWrites.dstBinding = binding.bindingIndex;
+	descriptorWrites.dstBinding = bindingIndex;
 	descriptorWrites.dstArrayElement = 0;
 	descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptorWrites.descriptorCount = binding.count;
@@ -48,7 +48,7 @@ static void AttachTexture(std::vector<VkWriteDescriptorSet>& writeVector, Descri
 	writeVector.push_back(descriptorWrites);
 }
 
-static void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet, bool isStorage) {
+static void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, uint32_t bindingIndex, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet, bool isStorage) {
 	VulkanRenderTarget* texture = static_cast<VulkanRenderTarget*>(binding.itemPtr);
 
 	// TODO: Handle this lifetime
@@ -62,7 +62,7 @@ static void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, 
 	VkWriteDescriptorSet descriptorWrites = {};
 	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites.dstSet = descriptorSet;
-	descriptorWrites.dstBinding = binding.bindingIndex;
+	descriptorWrites.dstBinding = bindingIndex;
 	descriptorWrites.dstArrayElement = 0;
 	descriptorWrites.descriptorType = isStorage
 		? VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
@@ -72,7 +72,7 @@ static void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, 
 	writeVector.push_back(descriptorWrites);
 }
 
-static void AttachDepthTexture(std::vector<VkWriteDescriptorSet>& writeVector, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
+static void AttachDepthTexture(std::vector<VkWriteDescriptorSet>& writeVector, uint32_t bindingIndex, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
 	VulkanDepthTarget* texture = static_cast<VulkanDepthTarget*>(binding.itemPtr);
 
 	// TODO: Handle this lifetime
@@ -84,7 +84,7 @@ static void AttachDepthTexture(std::vector<VkWriteDescriptorSet>& writeVector, D
 	VkWriteDescriptorSet descriptorWrites = {};
 	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites.dstSet = descriptorSet;
-	descriptorWrites.dstBinding = binding.bindingIndex;
+	descriptorWrites.dstBinding = bindingIndex;
 	descriptorWrites.dstArrayElement = 0;
 	descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptorWrites.descriptorCount = binding.count;
@@ -93,7 +93,7 @@ static void AttachDepthTexture(std::vector<VkWriteDescriptorSet>& writeVector, D
 }
 
 VulkanDescriptorSet::VulkanDescriptorSet(DescriptorSet::CreateInfo& createInfo) {
-	VulkanDescriptorSetLayout* layout = static_cast<VulkanDescriptorSetLayout*>(createInfo.layout);
+	layout = static_cast<VulkanDescriptorSetLayout*>(createInfo.layout);
 	VkDescriptorSetLayout internalLayout = layout->GetInternalLayout();
 
 	VkDescriptorSetAllocateInfo allocInfo = {};
@@ -111,29 +111,32 @@ VulkanDescriptorSet::VulkanDescriptorSet(DescriptorSet::CreateInfo& createInfo) 
 	ChangeBindings(createInfo.bindings, createInfo.bindingCount);
 }
 
-void VulkanDescriptorSet::ChangeBindings(Binding* bindings, uint32_t bindingCount) {
+void VulkanDescriptorSet::ChangeBindings(Binding* sourceBindings, uint32_t bindingCount, uint32_t bindOffset) {
 	std::vector<VkWriteDescriptorSet> descriptorWrites;
 
-	for (uint32_t i = 0; i < bindingCount; ++i) {
-		Binding& binding = bindings[i];
+	uint32_t lastBind = bindOffset + bindingCount;
 
-		if (binding.itemPtr == nullptr) {
+	for (uint32_t i = bindOffset; i < bindOffset + bindingCount; ++i) {
+		const VulkanDescriptorSetLayout::Binding& layoutBinding = layout->GetBinding(i);
+		Binding& sourceBinding = sourceBindings[i];
+
+		if (sourceBinding.itemPtr == nullptr) {
 			continue;
 		}
 
-		switch (binding.bindingType) {
+		switch (layoutBinding.type) {
 		case BindingType::UniformBuffer:
-			AttachUniformBuffer(descriptorWrites, binding, descriptorSet);
+			AttachUniformBuffer(descriptorWrites, layoutBinding.bindingId, sourceBinding, descriptorSet);
 			break;
 		case BindingType::Texture:
-			AttachTexture(descriptorWrites, binding, descriptorSet);
+			AttachTexture(descriptorWrites, layoutBinding.bindingId, sourceBinding, descriptorSet);
 			break;
 		case BindingType::RenderTexture:
 		case BindingType::RenderTextureStorageImage:
-			AttachRenderTexture(descriptorWrites, binding, descriptorSet, binding.bindingType == BindingType::RenderTextureStorageImage);
+			AttachRenderTexture(descriptorWrites, layoutBinding.bindingId, sourceBinding, descriptorSet, layoutBinding.type == BindingType::RenderTextureStorageImage);
 			break;
 		case BindingType::DepthTexture:
-			AttachDepthTexture(descriptorWrites, binding, descriptorSet);
+			AttachDepthTexture(descriptorWrites, layoutBinding.bindingId, sourceBinding, descriptorSet);
 			break;
 		}
 	}

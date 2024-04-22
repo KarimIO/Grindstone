@@ -81,11 +81,7 @@ void Grindstone::SetupPointLightComponent(ECS::Entity& entity, void* componentPt
 	}
 
 	{
-		std::array<DescriptorSet::Binding, 1> lightBindings{};
-		lightBindings[0].bindingIndex = 0;
-		lightBindings[0].count = 1;
-		lightBindings[0].bindingType = BindingType::UniformBuffer;
-		lightBindings[0].itemPtr = pointLightComponent.uniformBufferObject;
+		std::array<DescriptorSet::Binding, 1> lightBindings{ pointLightComponent.uniformBufferObject };
 
 		/* TODO: Re-add this when you come back to point light shadows
 		lightBindings[1].bindingIndex = 1;

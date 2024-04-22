@@ -8,8 +8,11 @@ namespace Grindstone::GraphicsAPI {
 	public:
 		VulkanDescriptorSetLayout(DescriptorSetLayout::CreateInfo& createInfo);
 		~VulkanDescriptorSetLayout();
+		const DescriptorSetLayout::Binding& GetBinding(size_t bindingIndex) const;
 		VkDescriptorSetLayout GetInternalLayout() const;
 	private:
 		VkDescriptorSetLayout descriptorSetLayout;
+		DescriptorSetLayout::Binding* bindings = nullptr;
+		size_t bindingCount = 0;
 	};
 }

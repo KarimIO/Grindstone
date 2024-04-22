@@ -36,12 +36,16 @@ void VulkanDepthTarget::Create() {
 	}
 
 	if (isSampled) {
+		VkImageLayout newLayout = hasStencil
+			? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+			: VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL;
+
 		TransitionImageLayout(
 			image,
 			depthFormat,
 			VK_IMAGE_ASPECT_DEPTH_BIT,
 			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+			newLayout,
 			1,
 			1
 		);

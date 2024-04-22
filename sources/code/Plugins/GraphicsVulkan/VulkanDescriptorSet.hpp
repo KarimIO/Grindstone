@@ -10,10 +10,11 @@ namespace Grindstone {
 			VulkanDescriptorSet(DescriptorSet::CreateInfo& createInfo);
 			~VulkanDescriptorSet();
 
-			virtual void ChangeBindings(Binding* bindings, uint32_t bindingCount) override;
+			virtual void ChangeBindings(DescriptorSet::Binding* bindings, uint32_t bindingCount, uint32_t bindingOffset = 0) override;
 			virtual VkDescriptorSet GetDescriptorSet();
 		private:
 			VkDescriptorSet descriptorSet = nullptr;
+			class VulkanDescriptorSetLayout* layout = nullptr;
 		};
 	}
 }

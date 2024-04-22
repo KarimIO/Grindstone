@@ -239,11 +239,7 @@ ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {
 	descriptorSetLayoutCreateInfo.bindings = &layoutBinding;
 	auto layout = Editor::Manager::GetEngineCore().GetGraphicsCore()->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
-	GraphicsAPI::DescriptorSet::Binding binding{};
-	binding.bindingIndex = 0;
-	binding.bindingType = BindingType::Texture;
-	binding.count = 1;
-	binding.itemPtr = textureAsset->texture;
+	GraphicsAPI::DescriptorSet::Binding binding{ textureAsset->texture };
 
 	auto pathAsStr = path.filename().string();
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};

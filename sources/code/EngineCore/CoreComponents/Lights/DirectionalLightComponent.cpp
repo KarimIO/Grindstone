@@ -72,16 +72,10 @@ void Grindstone::SetupDirectionalLightComponent(ECS::Entity& entity, void* compo
 		descriptorSetLayoutCreateInfo.bindings = lightLayoutBindings.data();
 		directionalLightComponent.descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
-		std::array<DescriptorSet::Binding, 2> lightBindings{};
-		lightBindings[0].bindingIndex = 0;
-		lightBindings[0].count = 1;
-		lightBindings[0].bindingType = BindingType::UniformBuffer;
-		lightBindings[0].itemPtr = directionalLightComponent.uniformBufferObject;
-
-		lightBindings[1].bindingIndex = 1;
-		lightBindings[1].count = 1;
-		lightBindings[1].bindingType = BindingType::DepthTexture;
-		lightBindings[1].itemPtr = directionalLightComponent.depthTarget;
+		std::array<DescriptorSet::Binding, 2> lightBindings{
+			directionalLightComponent.uniformBufferObject,
+			directionalLightComponent.depthTarget
+		};
 
 		DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 		descriptorSetCreateInfo.debugName = "Directional Light Descriptor Set";
@@ -110,11 +104,7 @@ void Grindstone::SetupDirectionalLightComponent(ECS::Entity& entity, void* compo
 		descriptorSetLayoutCreateInfo.bindings = &lightUboBindingLayout;
 		directionalLightComponent.shadowMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
-		DescriptorSet::Binding lightUboBinding{};
-		lightUboBinding.bindingIndex = 0;
-		lightUboBinding.count = 1;
-		lightUboBinding.bindingType = BindingType::UniformBuffer;
-		lightUboBinding.itemPtr = directionalLightComponent.shadowMapUniformBufferObject;
+		DescriptorSet::Binding lightUboBinding{ directionalLightComponent.shadowMapUniformBufferObject };
 
 		DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 		descriptorSetCreateInfo.debugName = "Directional Light Shadow Descriptor Set";

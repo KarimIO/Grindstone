@@ -70,11 +70,7 @@ void Mesh3dRenderer::ValidateMeshRenderer(MeshRendererComponent& meshRenderCompo
 		uniformBufferCreateInfo.size = sizeof(float) * 16;
 		meshRenderComponent.perDrawUniformBuffer = graphicsCore->CreateUniformBuffer(uniformBufferCreateInfo);
 
-		GraphicsAPI::DescriptorSet::Binding descriptorSetUniformBinding{};
-		descriptorSetUniformBinding.bindingIndex = 0;
-		descriptorSetUniformBinding.bindingType = GraphicsAPI::BindingType::UniformBuffer;
-		descriptorSetUniformBinding.count = 1;
-		descriptorSetUniformBinding.itemPtr = meshRenderComponent.perDrawUniformBuffer;
+		GraphicsAPI::DescriptorSet::Binding descriptorSetUniformBinding{ meshRenderComponent.perDrawUniformBuffer };
 
 		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 		descriptorSetCreateInfo.debugName = "Per Draw Descriptor Set";
