@@ -173,11 +173,8 @@ void MaterialImporter::SetupUniformBuffer(rapidjson::Document& document, ShaderR
 		ubCi.size = static_cast<uint32_t>(materialUniformBuffer->bufferSize);
 		uniformBufferObject = graphicsCore->CreateUniformBuffer(ubCi);
 
-		DescriptorSet::Binding uniformBufferBinding{};
-		uniformBufferBinding.bindingIndex = materialUniformBuffer->bindingId;
-		uniformBufferBinding.bindingType = BindingType::UniformBuffer;
-		uniformBufferBinding.itemPtr = uniformBufferObject;
-		uniformBufferBinding.count = 1;
+		// TODO: Use materialUniformBuffer->bindingId
+		DescriptorSet::Binding uniformBufferBinding{ uniformBufferObject };
 		bindings.push_back(uniformBufferBinding);
 
 		if (ubCi.size == 0) {
@@ -224,21 +221,15 @@ void MaterialImporter::SetupSamplers(rapidjson::Document& document, ShaderReflec
 				Uuid textureUuid(textureUuidAsString);
 
 				TextureAsset* textureAsset = assetManager->IncrementAssetUse<TextureAsset>(textureUuid);
-				DescriptorSet::Binding textureBinding{};
-				textureBinding.bindingIndex = textureReferencesFromMaterial[i].bindingId;
-				textureBinding.bindingType = BindingType::Texture;
-				textureBinding.itemPtr = textureAsset != nullptr
+				// TODO: Use this to ensure it goes in the right place: textureReferencesFromMaterial[i].bindingId;
+				Texture* itemPtr = textureAsset != nullptr
 					? textureAsset->texture
 					: missingTexture;
-				textureBinding.count = 1;
+				DescriptorSet::Binding textureBinding{ itemPtr };
 				bindings.push_back(textureBinding);
 			}
 			else {
-				DescriptorSet::Binding textureBinding{};
-				textureBinding.bindingIndex = textureReferencesFromMaterial[i].bindingId;
-				textureBinding.bindingType = BindingType::Texture;
-				textureBinding.itemPtr = missingTexture;
-				textureBinding.count = 1;
+				DescriptorSet::Binding textureBinding{ missingTexture };
 				bindings.push_back(textureBinding);
 			}
 		}

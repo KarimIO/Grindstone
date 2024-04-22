@@ -132,13 +132,13 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 		createInfo.format == ColorFormat::SRGB_ALPHA_DXT1 ||
 		createInfo.format == ColorFormat::RGB_DXT1 ||
 		createInfo.format == ColorFormat::RGBA_DXT1 ||
-		createInfo.format == ColorFormat::BC4 ||
-		createInfo.format == ColorFormat::BC6H;
+		createInfo.format == ColorFormat::BC4;
 	bool isLargeCompressedFormat =
 		createInfo.format == ColorFormat::SRGB_ALPHA_DXT3 ||
 		createInfo.format == ColorFormat::SRGB_ALPHA_DXT5 ||
 		createInfo.format == ColorFormat::RGBA_DXT3 ||
-		createInfo.format == ColorFormat::RGBA_DXT5;
+		createInfo.format == ColorFormat::RGBA_DXT5 ||
+		createInfo.format == ColorFormat::BC6H;
 	bool isCompressedFormat = isSmallCompressedFormat || isLargeCompressedFormat;
 
 	uint32_t blockSize = (isSmallCompressedFormat) ? 8 : 16;
@@ -166,10 +166,10 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 		uint32_t height = createInfo.height;
 		for (uint32_t i = 0; i < mipLevels; ++i) {
 			uint32_t mipSize = isCompressedFormat
-				? ((width + 3) / 4) * ((width + 3) / 4) * blockSize
+				? ((width + 3) / 4) * ((height + 3) / 4) * blockSize
 				: width * height * channels * (createInfo.format == ColorFormat::RG32 ? 4 : 1);
-			width /= 2;
-			height /= 2;
+			width = width >> 1;
+			height = height >> 1;
 			totalImageSize += mipSize;
 		}
 	}
@@ -236,8 +236,8 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 					? ((mipWidth + 3) / 4) * ((mipHeight + 3) / 4) * blockSize
 					: mipWidth * mipHeight * channels * (createInfo.format == ColorFormat::RG32 ? 4 : 1);
 				offset += mipSize;
-				mipWidth /= 2;
-				mipHeight /= 2;
+				mipWidth = mipWidth >> 1;
+				mipHeight = mipHeight >> 1;
 			}
 
 			vkCmdCopyBufferToImage(

@@ -24,8 +24,12 @@ VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(DescriptorSetLayout::Create
 	std::vector<VkDescriptorSetLayoutBinding> bindingLayouts;
 	bindingLayouts.reserve(createInfo.bindingCount);
 
+	bindings = new Binding[createInfo.bindingCount];
+	bindingCount = createInfo.bindingCount;
+
 	for (uint32_t i = 0; i < createInfo.bindingCount; ++i) {
 		DescriptorSetLayout::Binding& sourceBinding = createInfo.bindings[i];
+		bindings[i] = sourceBinding;
 
 		VkDescriptorSetLayoutBinding binding = {};
 		binding.binding = sourceBinding.bindingId;
@@ -54,4 +58,12 @@ VkDescriptorSetLayout VulkanDescriptorSetLayout::GetInternalLayout() const {
 
 VulkanDescriptorSetLayout::~VulkanDescriptorSetLayout() {
 	vkDestroyDescriptorSetLayout(VulkanCore::Get().GetDevice(), descriptorSetLayout, nullptr);
+}
+
+const DescriptorSetLayout::Binding& VulkanDescriptorSetLayout::GetBinding(size_t bindingIndex) const {
+	if (bindings == nullptr || bindingIndex >= bindingCount) {
+		throw std::runtime_error("Invalid bindingIndex in GetBinding!");
+	}
+
+	return bindings[bindingIndex];
 }

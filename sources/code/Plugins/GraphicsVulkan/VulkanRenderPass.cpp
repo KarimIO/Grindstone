@@ -57,7 +57,9 @@ namespace Grindstone::GraphicsAPI {
 			depthAttachment.format = TranslateDepthFormatToVulkan(depthFormat, hasStencil);
 			hasStencil = true;
 			depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-			depthAttachment.loadOp = shouldClearDepthOnLoad ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+			depthAttachment.loadOp = shouldClearDepthOnLoad
+				? VK_ATTACHMENT_LOAD_OP_CLEAR
+				: VK_ATTACHMENT_LOAD_OP_LOAD;
 			depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 			depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -69,7 +71,7 @@ namespace Grindstone::GraphicsAPI {
 				: depthAttachment.finalLayout;
 			depthAttachment.flags = 0;
 
-			depthAttachmentRef.attachment = static_cast<uint32_t>(colorFormats.size());
+			depthAttachmentRef.attachment = static_cast<uint32_t>(colorFormats.size()); // Attaches after every color attachment
 			depthAttachmentRef.layout = hasStencil
 				? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 				: VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;

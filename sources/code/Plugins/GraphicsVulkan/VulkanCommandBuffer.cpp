@@ -78,7 +78,7 @@ void VulkanCommandBuffer::BindRenderPass(
 ) {
 	VulkanRenderPass *vulkanRenderPass = static_cast<VulkanRenderPass*>(renderPass);
 	VulkanFramebuffer *vulkanFramebuffer = static_cast<VulkanFramebuffer*>(framebuffer);
-	VkRenderPassBeginInfo renderPassInfo = {};
+	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = vulkanRenderPass->GetRenderPassHandle();
 	renderPassInfo.framebuffer = vulkanFramebuffer->GetFramebuffer();
@@ -172,8 +172,8 @@ void VulkanCommandBuffer::SetViewport(float offsetX, float offsetY, float width,
 	VkViewport viewport{};
 	viewport.x = offsetX;
 	viewport.y = offsetY;
-	viewport.width = (float)width;
-	viewport.height = (float)height;
+	viewport.width = width;
+	viewport.height = height;
 	viewport.minDepth = depthMin;
 	viewport.maxDepth = depthMax;
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);

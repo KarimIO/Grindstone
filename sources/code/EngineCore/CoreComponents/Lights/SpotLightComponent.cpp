@@ -74,16 +74,10 @@ void Grindstone::SetupSpotLightComponent(ECS::Entity& entity, void* componentPtr
 		descriptorSetLayoutCreateInfo.bindings = lightLayoutBindings.data();
 		spotLightComponent.descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
-		std::array<DescriptorSet::Binding, 2> lightBindings{};
-		lightBindings[0].bindingIndex = 0;
-		lightBindings[0].count = 1;
-		lightBindings[0].bindingType = BindingType::UniformBuffer;
-		lightBindings[0].itemPtr = spotLightComponent.uniformBufferObject;
-
-		lightBindings[1].bindingIndex = 1;
-		lightBindings[1].count = 1;
-		lightBindings[1].bindingType = BindingType::DepthTexture;
-		lightBindings[1].itemPtr = spotLightComponent.depthTarget;
+		std::array<DescriptorSet::Binding, 2> lightBindings{
+			spotLightComponent.uniformBufferObject,
+			spotLightComponent.depthTarget
+		};
 
 		DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 		descriptorSetCreateInfo.debugName = "Spotlight Descriptor Set";
@@ -112,11 +106,7 @@ void Grindstone::SetupSpotLightComponent(ECS::Entity& entity, void* componentPtr
 		descriptorSetLayoutCreateInfo.bindings = &lightUboBindingLayout;
 		spotLightComponent.shadowMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
-		DescriptorSet::Binding lightUboBinding{};
-		lightUboBinding.bindingIndex = 0;
-		lightUboBinding.count = 1;
-		lightUboBinding.bindingType = BindingType::UniformBuffer;
-		lightUboBinding.itemPtr = spotLightComponent.shadowMapUniformBufferObject;
+		DescriptorSet::Binding lightUboBinding{ spotLightComponent.shadowMapUniformBufferObject };
 
 		DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 		descriptorSetCreateInfo.debugName = "Spotlight Shadow Descriptor Set";

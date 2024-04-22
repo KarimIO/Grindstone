@@ -195,7 +195,7 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 
 	pipelineCreateInfo.vertexBindings = &vertexLayouts.positions;
 	pipelineCreateInfo.vertexBindingsCount = 4; // Would be 5, but uv1 is not yet used
-	pipelineCreateInfo.colorAttachmentCount = usesGbuffer ? 4 : 1; // TODO: Collor Attachments depending on stage and renderer type
+	pipelineCreateInfo.colorAttachmentCount = usesGbuffer ? 3 : 1; // TODO: Color Attachments depending on stage and renderer type
 	pipelineCreateInfo.blendMode = BlendMode::None; // TODO: Support Blending
 	pipelineCreateInfo.isDepthTestEnabled = true;
 	pipelineCreateInfo.isDepthWriteEnabled = true;

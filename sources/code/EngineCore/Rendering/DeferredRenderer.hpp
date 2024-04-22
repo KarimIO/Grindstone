@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <glm/glm.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
 #include "BaseRenderer.hpp"
 
@@ -39,14 +40,24 @@ namespace Grindstone {
 			std::vector<GraphicsAPI::RenderTarget*> gbufferRenderTargets;
 			GraphicsAPI::DepthTarget* gbufferDepthTarget = nullptr;
 			GraphicsAPI::Framebuffer* litHdrFramebuffer = nullptr;
+			GraphicsAPI::Framebuffer* lightingFramebuffer = nullptr;
 			GraphicsAPI::RenderTarget* litHdrRenderTarget = nullptr;
 			GraphicsAPI::DepthTarget* litHdrDepthTarget = nullptr;
 
 			GraphicsAPI::UniformBuffer* globalUniformBufferObject = nullptr;
+			GraphicsAPI::UniformBuffer* tonemapPostProcessingUniformBufferObject = nullptr;
 
 			GraphicsAPI::DescriptorSet* tonemapDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* lightingDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
+
+			GraphicsAPI::DescriptorSet* dofSeparationDescriptorSet = nullptr;
+			GraphicsAPI::DescriptorSet* dofBloomDescriptorSet = nullptr;
+			GraphicsAPI::DescriptorSet* dofCombineDescriptorSet = nullptr;
+
+
+			GraphicsAPI::RenderTarget* nearDofRenderTarget = nullptr;
+			GraphicsAPI::RenderTarget* farDofRenderTarget = nullptr;
 
 			std::vector<GraphicsAPI::RenderTarget*> bloomRenderTargets;
 			std::vector<GraphicsAPI::DescriptorSet*> bloomDescriptorSets;
@@ -56,8 +67,11 @@ namespace Grindstone {
 
 		void CreatePipelines();
 		void CreateBloomUniformBuffers();
+		void CreateDepthOfFieldRenderTargetsAndDescriptorSets(DeferredRendererImageSet& imageSet, size_t imageSetIndex);
 		void CreateBloomRenderTargetsAndDescriptorSets(DeferredRendererImageSet& imageSet, size_t imageSetIndex);
+		void RenderDepthOfField(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer);
 		void RenderBloom(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer);
+		void UpdateBloomUBO();
 
 		void RenderCommandBuffer(
 			GraphicsAPI::CommandBuffer* commandBuffer,
@@ -82,6 +96,7 @@ namespace Grindstone {
 		void PostProcessCommandBuffer(uint32_t imageIndex, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer);
 		void PostProcessImmediate(GraphicsAPI::Framebuffer* outputFramebuffer);
 
+		void CreateDepthOfFieldResources();
 		void CreateBloomResources();
 		void CreateSsaoKernelAndNoise();
 		void CleanupPipelines();
@@ -93,14 +108,38 @@ namespace Grindstone {
 		void CreateUniformBuffers();
 		void CreateVertexAndIndexBuffersAndLayouts();
 
-		uint32_t width = 800;
-		uint32_t height = 600;
+		struct PostProcessUbo {
+			glm::vec4 vignetteColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+			float vignetteRadius = 0.75f;
+			float vignetteSoftness = 0.8f;
+			float grainAmount = 0.005f;
+			float grainPixelSize = 1.0f;
+			glm::vec2 chromaticDistortionRedOffset = glm::vec2(0.0045f, 0.0045f);
+			glm::vec2 chromaticDistortionGreenOffset = glm::vec2(0.003f, 0.003f);
+			glm::vec2 chromaticDistortionBlueOffset = glm::vec2(-0.003f, -0.003f);
+			float paniniDistortionStrength = 1.00f;
+			bool isAnimated = true;
+		};
+
+		PostProcessUbo postProcessUboData;
+
+		uint32_t framebufferWidth = 0u;
+		uint32_t framebufferHeight = 0u;
+		uint32_t renderWidth = 0u;
+		uint32_t renderHeight = 0u;
+
+		size_t bloomStoredMipLevelCount = 0;
 		size_t bloomMipLevelCount = 0;
 		Grindstone::GraphicsAPI::Texture* brdfLut = nullptr;
 
 		std::vector<DeferredRendererImageSet> deferredRendererImageSets;
 		std::vector<GraphicsAPI::UniformBuffer*> bloomUniformBuffers;
 
+		GraphicsAPI::RenderPass* dofSeparationRenderPass = nullptr;
+		GraphicsAPI::RenderPass* dofBlurAndCombinationRenderPass = nullptr;
+
+		GraphicsAPI::RenderPass* lightingRenderPass = nullptr;
+		GraphicsAPI::RenderPass* forwardLitRenderPass = nullptr;
 		GraphicsAPI::RenderPass* ssaoRenderPass = nullptr;
 		GraphicsAPI::Framebuffer* ssaoFramebuffer = nullptr;
 		GraphicsAPI::RenderTarget* ssaoRenderTarget = nullptr;
@@ -140,6 +179,9 @@ namespace Grindstone {
 		GraphicsAPI::GraphicsPipeline* pointLightPipeline = nullptr;
 		GraphicsAPI::GraphicsPipeline* directionalLightPipeline = nullptr;
 		GraphicsAPI::GraphicsPipeline* tonemapPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* dofSeparationPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* dofBlurPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* dofCombinationPipeline = nullptr;
 		GraphicsAPI::GraphicsPipeline* shadowMappingPipeline = nullptr;
 
 		GraphicsAPI::ComputePipeline* bloomPipeline = nullptr;

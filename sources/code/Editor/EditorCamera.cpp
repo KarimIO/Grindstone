@@ -64,11 +64,7 @@ EditorCamera::EditorCamera() {
 	descriptorSetLayoutCreateInfo.bindings = &descriptorSetLayoutBinding;
 	descriptorSetLayout = core->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
-	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding{};
-	descriptorSetBinding.bindingIndex = 0;
-	descriptorSetBinding.bindingType = GraphicsAPI::BindingType::RenderTexture;
-	descriptorSetBinding.count = 1;
-	descriptorSetBinding.itemPtr = renderTarget;
+	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding{ renderTarget };
 
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 	descriptorSetCreateInfo.debugName = "Editor Viewport Descriptor Set";
@@ -244,11 +240,7 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 	framebuffer->Resize(width, height);
 	renderer->Resize(width, height);
 
-	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding{};
-	descriptorSetBinding.bindingIndex = 0;
-	descriptorSetBinding.bindingType = GraphicsAPI::BindingType::RenderTexture;
-	descriptorSetBinding.count = 1;
-	descriptorSetBinding.itemPtr = renderTarget;
+	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding{ renderTarget };
 
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 	descriptorSetCreateInfo.debugName = "Editor Viewport Descriptor Set";

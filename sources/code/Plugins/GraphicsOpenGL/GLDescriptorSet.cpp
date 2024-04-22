@@ -11,7 +11,7 @@ namespace Grindstone {
 		GLDescriptorSet::~GLDescriptorSet() {
 		}
 
-		void GLDescriptorSet::ChangeBindings(Binding* bindings, uint32_t bindingCount) {
+		void GLDescriptorSet::ChangeBindings(Binding* bindings, uint32_t bindingCount, uint32_t bindingOffset) {
 		}
 	}
 }
