@@ -199,6 +199,12 @@ constexpr DWORD MakeFourCCStr(const char* str) {
 	return MakeFourCC(str[0], str[1], str[2], str[3]);
 }
 
+constexpr DWORD FOURCC_R16 = 111;
+constexpr DWORD FOURCC_RG16 = 112;
+constexpr DWORD FOURCC_RGBA16 = 113;
+constexpr DWORD FOURCC_R32 = 114;
+constexpr DWORD FOURCC_RG32 = 115;
+constexpr DWORD FOURCC_RGBA32 = 116;
 constexpr DWORD FOURCC_DXT1 = MakeFourCC('D', 'X', 'T', '1');
 constexpr DWORD FOURCC_DXT3 = MakeFourCC('D', 'X', 'T', '3');
 constexpr DWORD FOURCC_DXT5 = MakeFourCC('D', 'X', 'T', '5');

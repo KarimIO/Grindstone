@@ -141,12 +141,29 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 		createInfo.format == ColorFormat::BC6H;
 	bool isCompressedFormat = isSmallCompressedFormat || isLargeCompressedFormat;
 
-	uint32_t blockSize = (isSmallCompressedFormat) ? 8 : 16;
+	uint64_t blockSize = (isSmallCompressedFormat) ? 8 : 16;
 
-	uint32_t baseMipSize = isCompressedFormat
+	if (!isCompressedFormat) {
+		switch (createInfo.format) {
+			case ColorFormat::R16:
+			case ColorFormat::RG16:
+			case ColorFormat::RGB16:
+			case ColorFormat::RGBA16:
+				channels *= 2;
+				break;
+			case ColorFormat::R32:
+			case ColorFormat::RG32:
+			case ColorFormat::RGB32:
+			case ColorFormat::RGBA32:
+				channels *= 4;
+				break;
+		}
+	}
+
+	uint64_t baseMipSize = isCompressedFormat
 		? ((createInfo.width + 3) / 4) * ((createInfo.height + 3) / 4) * blockSize
 		: createInfo.width * createInfo.height * channels;
-	uint32_t totalImageSize = 0;
+	uint64_t totalImageSize = 0;
 
 	bool shouldGenerateMipmaps = createInfo.options.shouldGenerateMipmaps;
 	if (shouldGenerateMipmaps) {
@@ -159,15 +176,17 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 		}
 	}
 	else {
-		uint32_t maxMipMaps = static_cast<uint32_t>(std::floor(std::log2(std::max(createInfo.width, createInfo.height)))) - 1;
+		uint64_t maxMipMaps = isCompressedFormat
+			? static_cast<uint64_t>(std::floor(std::log2(std::max(createInfo.width, createInfo.height)))) - 1
+			: static_cast<uint64_t>(std::floor(std::log2(std::max(createInfo.width, createInfo.height)))) + 1;
 		mipLevels = (createInfo.mipmaps > maxMipMaps) ? maxMipMaps : createInfo.mipmaps;
 
-		uint32_t width = createInfo.width;
-		uint32_t height = createInfo.height;
+		uint64_t width = createInfo.width;
+		uint64_t height = createInfo.height;
 		for (uint32_t i = 0; i < mipLevels; ++i) {
-			uint32_t mipSize = isCompressedFormat
+			uint64_t mipSize = isCompressedFormat
 				? ((width + 3) / 4) * ((height + 3) / 4) * blockSize
-				: width * height * channels * (createInfo.format == ColorFormat::RG32 ? 4 : 1);
+				: width * height * channels;
 			width = width >> 1;
 			height = height >> 1;
 			totalImageSize += mipSize;
@@ -209,14 +228,14 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 	TransitionImageLayout(image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels, layerCount);
 
 	if (shouldGenerateMipmaps) {
-		CopyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(createInfo.width), static_cast<uint32_t>(createInfo.height));
+		CopyBufferToImage(stagingBuffer, image, static_cast<uint64_t>(createInfo.width), static_cast<uint64_t>(createInfo.height));
 	}
 	else {
 		VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
-		uint32_t offset = 0;
-		for (uint32_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
-			uint32_t mipWidth = createInfo.width;
-			uint32_t mipHeight = createInfo.height;
+		uint64_t offset = 0;
+		for (uint64_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
+			uint64_t mipWidth = createInfo.width;
+			uint64_t mipHeight = createInfo.height;
 
 			std::vector<VkBufferImageCopy> regions;
 			regions.resize(mipLevels);
@@ -228,13 +247,13 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 				region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 				region.imageSubresource.mipLevel = mipIndex;
 				region.imageSubresource.layerCount = 1;
-				region.imageExtent.width = mipWidth;
-				region.imageExtent.height = mipHeight;
+				region.imageExtent.width = static_cast<uint32_t>(mipWidth);
+				region.imageExtent.height = static_cast<uint32_t>(mipHeight);
 				region.imageExtent.depth = 1;
 
-				uint32_t mipSize = isCompressedFormat
+				uint64_t mipSize = isCompressedFormat
 					? ((mipWidth + 3) / 4) * ((mipHeight + 3) / 4) * blockSize
-					: mipWidth * mipHeight * channels * (createInfo.format == ColorFormat::RG32 ? 4 : 1);
+					: mipWidth * mipHeight * channels;
 				offset += mipSize;
 				mipWidth = mipWidth >> 1;
 				mipHeight = mipHeight >> 1;
@@ -245,7 +264,7 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 				stagingBuffer,
 				image,
 				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-				static_cast<uint32_t>(regions.size()),
+				static_cast<uint64_t>(regions.size()),
 				regions.data()
 			);
 		}

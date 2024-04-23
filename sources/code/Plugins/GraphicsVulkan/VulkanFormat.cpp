@@ -120,6 +120,9 @@ namespace Grindstone::GraphicsAPI {
 			channels = 4;
 			return VK_FORMAT_R16G16B16A16_SFLOAT;
 
+		case ColorFormat::R32:
+			channels = 1;
+			return VK_FORMAT_R32_SFLOAT;
 		case ColorFormat::RG32:
 			channels = 2;
 			return VK_FORMAT_R32G32_SFLOAT;

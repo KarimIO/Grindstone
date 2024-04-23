@@ -53,26 +53,66 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, const char* fileContents, si
 
 	bool useDxgi = false;
 	Grindstone::GraphicsAPI::ColorFormat format = GraphicsAPI::ColorFormat::Invalid;
-	switch (header.ddspf.dwFourCC) {
-	case FOURCC_DXT1:
-		format = hasAlpha
-			? Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT1
-			: Grindstone::GraphicsAPI::ColorFormat::RGB_DXT1;
-		break;
-	case FOURCC_DXT3:
-		format = Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT3;
-		break;
-	case FOURCC_DXT5:
-		format = Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT5;
-		break;
-	case FOURCC_BC4:
-		format = Grindstone::GraphicsAPI::ColorFormat::BC4;
-		break;
-	case FOURCC_DXGI:
-		useDxgi = true;
-		break;
-	default:
-		throw std::runtime_error("Invalid FourCC in texture");
+
+	bool isFourCC = (header.ddspf.dwFlags & DDPF_FOURCC) > 0;
+	bool isRGB = (header.ddspf.dwFlags & DDPF_RGB) > 0;
+
+	if (isFourCC) {
+		switch (header.ddspf.dwFourCC) {
+		case FOURCC_DXT1:
+			format = hasAlpha
+				? Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT1
+				: Grindstone::GraphicsAPI::ColorFormat::RGB_DXT1;
+			break;
+		case FOURCC_DXT3:
+			format = Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT3;
+			break;
+		case FOURCC_DXT5:
+			format = Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT5;
+			break;
+		case FOURCC_BC4:
+			format = Grindstone::GraphicsAPI::ColorFormat::BC4;
+			break;
+
+		case FOURCC_R16:
+			format = Grindstone::GraphicsAPI::ColorFormat::R16;
+			break;
+		case FOURCC_RG16:
+			format = Grindstone::GraphicsAPI::ColorFormat::RG16;
+			break;
+		case FOURCC_RGBA16:
+			format = Grindstone::GraphicsAPI::ColorFormat::RGBA16;
+			break;
+		case FOURCC_R32:
+			format = Grindstone::GraphicsAPI::ColorFormat::R32;
+			break;
+		case FOURCC_RG32:
+			format = Grindstone::GraphicsAPI::ColorFormat::RG32;
+			break;
+		case FOURCC_RGBA32:
+			format = Grindstone::GraphicsAPI::ColorFormat::RGBA32;
+			break;
+		case FOURCC_DXGI:
+			useDxgi = true;
+			break;
+		default:
+			throw std::runtime_error("Invalid FourCC in texture");
+		}
+	}
+	else if (isRGB) {
+		switch (header.ddspf.dwRGBBitCount) {
+		case 24:
+			format = Grindstone::GraphicsAPI::ColorFormat::RGB8;
+			break;
+		case 32:
+			format = Grindstone::GraphicsAPI::ColorFormat::RGBA8;
+			break;
+		default:
+			throw std::runtime_error("Invalid rgb pixel format in texture");
+		}
+	}
+	else {
+		throw std::runtime_error("Invalid pixel format in texture");
 	}
 
 	const char* imgPtr = fileContents + 4 + sizeof(DDSHeader);
