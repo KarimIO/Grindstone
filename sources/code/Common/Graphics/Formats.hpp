@@ -23,6 +23,7 @@ namespace Grindstone {
 			R10G10B10A2,
 
 			R16,
+			R32,
 			RG16,
 			RG32,
 			RGB16,
