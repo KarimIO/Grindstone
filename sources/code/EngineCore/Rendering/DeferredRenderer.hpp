@@ -67,6 +67,7 @@ namespace Grindstone {
 
 		void CreatePipelines();
 		void CreateBloomUniformBuffers();
+		void UpdateBloomDescriptorSet(DeferredRendererImageSet& imageSet);
 		void CreateDepthOfFieldRenderTargetsAndDescriptorSets(DeferredRendererImageSet& imageSet, size_t imageSetIndex);
 		void CreateBloomRenderTargetsAndDescriptorSets(DeferredRendererImageSet& imageSet, size_t imageSetIndex);
 		void RenderDepthOfField(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer);
@@ -112,7 +113,7 @@ namespace Grindstone {
 			glm::vec4 vignetteColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 			float vignetteRadius = 0.75f;
 			float vignetteSoftness = 0.8f;
-			float grainAmount = 0.005f;
+			float grainAmount = 0.007f;
 			float grainPixelSize = 1.0f;
 			glm::vec2 chromaticDistortionRedOffset = glm::vec2(0.0045f, 0.0045f);
 			glm::vec2 chromaticDistortionGreenOffset = glm::vec2(0.003f, 0.003f);
@@ -134,6 +135,7 @@ namespace Grindstone {
 
 		std::vector<DeferredRendererImageSet> deferredRendererImageSets;
 		std::vector<GraphicsAPI::UniformBuffer*> bloomUniformBuffers;
+		size_t bloomFirstUpsampleIndex = 0;
 
 		GraphicsAPI::RenderPass* dofSeparationRenderPass = nullptr;
 		GraphicsAPI::RenderPass* dofBlurAndCombinationRenderPass = nullptr;
