@@ -114,10 +114,8 @@ VulkanDescriptorSet::VulkanDescriptorSet(DescriptorSet::CreateInfo& createInfo) 
 void VulkanDescriptorSet::ChangeBindings(Binding* sourceBindings, uint32_t bindingCount, uint32_t bindOffset) {
 	std::vector<VkWriteDescriptorSet> descriptorWrites;
 
-	uint32_t lastBind = bindOffset + bindingCount;
-
-	for (uint32_t i = bindOffset; i < bindOffset + bindingCount; ++i) {
-		const VulkanDescriptorSetLayout::Binding& layoutBinding = layout->GetBinding(i);
+	for (uint32_t i = 0; i < bindingCount; ++i) {
+		const VulkanDescriptorSetLayout::Binding& layoutBinding = layout->GetBinding(bindOffset + i);
 		Binding& sourceBinding = sourceBindings[i];
 
 		if (sourceBinding.itemPtr == nullptr) {
