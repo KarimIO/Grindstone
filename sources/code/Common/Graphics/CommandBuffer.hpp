@@ -29,6 +29,8 @@ namespace Grindstone {
 				ClearDepthStencil depthStencilClearValue
 			) = 0;
 			virtual void UnbindRenderPass() = 0;
+			virtual void BeginDebugLabelSection(const char* name, float color[4] = nullptr) = 0;
+			virtual void EndDebugLabelSection() = 0;
 			virtual void BindGraphicsDescriptorSet(
 				GraphicsPipeline* graphicsPipeline,
 				DescriptorSet** descriptorSets,

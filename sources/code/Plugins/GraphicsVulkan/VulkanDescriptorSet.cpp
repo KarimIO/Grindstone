@@ -106,7 +106,12 @@ VulkanDescriptorSet::VulkanDescriptorSet(DescriptorSet::CreateInfo& createInfo) 
 		throw std::runtime_error("failed to allocate descriptor sets!");
 	}
 
-	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_DESCRIPTOR_SET, descriptorSet, createInfo.debugName);
+	if (createInfo.debugName != nullptr) {
+		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_DESCRIPTOR_SET, descriptorSet, createInfo.debugName);
+	}
+	else {
+		throw std::runtime_error("Unnamed Descriptor Set!");
+	}
 
 	ChangeBindings(createInfo.bindings, createInfo.bindingCount);
 }

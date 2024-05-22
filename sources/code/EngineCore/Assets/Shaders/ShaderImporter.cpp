@@ -142,8 +142,11 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 
 	std::array<GraphicsAPI::DescriptorSetLayout*, descriptorSetCount> descriptorSetLayouts{};
 	for (size_t i = 0; i < descriptorSetCount; ++i) {
-		auto& bindings = descriptorSetBindings[i];
+		std::string descriptorSetLayoutName = debugName + " Descriptor Set Layout " + std::to_string(i);
+
+		std::vector<GraphicsAPI::DescriptorSetLayout::Binding>& bindings = descriptorSetBindings[i];
 		GraphicsAPI::DescriptorSetLayout::CreateInfo layoutCi{};
+		layoutCi.debugName = descriptorSetLayoutName.c_str();
 		layoutCi.bindingCount = static_cast<uint32_t>(bindings.size());
 		layoutCi.bindings = bindings.data();
 		descriptorSetLayouts[i] = graphicsCore->CreateDescriptorSetLayout(layoutCi);

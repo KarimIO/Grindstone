@@ -11,7 +11,7 @@
 using namespace Grindstone::GraphicsAPI;
 
 VulkanComputePipeline::VulkanComputePipeline(ComputePipeline::CreateInfo& createInfo) {
-	auto device = VulkanCore::Get().GetDevice();
+	VkDevice device = VulkanCore::Get().GetDevice();
 
 	VkShaderModule computeShaderModule;
 	{
@@ -64,6 +64,9 @@ VulkanComputePipeline::VulkanComputePipeline(ComputePipeline::CreateInfo& create
 
 	if (createInfo.debugName != nullptr) {
 		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_PIPELINE, computePipeline, createInfo.debugName);
+	}
+	else {
+		throw std::runtime_error("Unnamed Compute Pipeline!");
 	}
 
 	vkDestroyShaderModule(device, computeShaderModule, nullptr);

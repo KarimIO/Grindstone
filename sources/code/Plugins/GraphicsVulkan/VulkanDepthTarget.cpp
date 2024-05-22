@@ -15,6 +15,10 @@ VulkanDepthTarget::VulkanDepthTarget(DepthTarget::CreateInfo& createInfo) : form
 }
 
 void VulkanDepthTarget::Create() {
+	if (debugName.empty()) {
+		throw std::runtime_error("Unnamed Depth Target!");
+	}
+
 	bool hasStencil = false;
 	VkFormat depthFormat = TranslateDepthFormatToVulkan(format, hasStencil);
 
@@ -29,7 +33,7 @@ void VulkanDepthTarget::Create() {
 	CreateImage(width, height, 1, depthFormat, VK_IMAGE_TILING_OPTIMAL, imageUsageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
 	imageView = CreateImageView(image, depthFormat, aspectFlags, 1);
 
-	if (!debugName.empty()) {
+	{
 		std::string imageViewDebugName = debugName + " View";
 		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, debugName.c_str());
 		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
@@ -52,7 +56,7 @@ void VulkanDepthTarget::Create() {
 
 		CreateTextureSampler();
 
-		if (!debugName.empty()) {
+		{
 			std::string imageSamplerDebugName = debugName + " Sampler";
 			VulkanCore::Get().NameObject(VK_OBJECT_TYPE_SAMPLER, sampler, debugName.c_str());
 		}

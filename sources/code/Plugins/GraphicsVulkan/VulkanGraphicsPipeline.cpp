@@ -10,7 +10,7 @@
 
 using namespace Grindstone::GraphicsAPI;
 
-VkShaderStageFlagBits TranslateShaderStageToVulkanBit(ShaderStage stage) {
+static VkShaderStageFlagBits TranslateShaderStageToVulkanBit(ShaderStage stage) {
 	switch (stage) {
 	default:
 	case ShaderStage::Vertex:
@@ -225,6 +225,9 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 
 	if (createInfo.debugName != nullptr) {
 		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_PIPELINE, graphicsPipeline, createInfo.debugName);
+	}
+	else {
+		throw std::runtime_error("Unnamed Graphics Pipeline!");
 	}
 
 	for (uint32_t i = 0; i < createInfo.shaderStageCreateInfoCount; ++i) {

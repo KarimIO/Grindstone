@@ -49,7 +49,12 @@ VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(DescriptorSetLayout::Create
 		throw std::runtime_error("failed to create descriptor set layout!");
 	}
 
-	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, descriptorSetLayout, createInfo.debugName);
+	if (createInfo.debugName != nullptr) {
+		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, descriptorSetLayout, createInfo.debugName);
+	}
+	else {
+		throw std::runtime_error("Unnamed Descriptor Set Layout!");
+	}
 }
 
 VkDescriptorSetLayout VulkanDescriptorSetLayout::GetInternalLayout() const {

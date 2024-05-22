@@ -14,7 +14,15 @@
 #include "VulkanDescriptorSetLayout.hpp"
 #include <cstring>
 
+PFN_vkCmdBeginDebugUtilsLabelEXT cmdBeginDebugUtilsLabelEXT;
+PFN_vkCmdEndDebugUtilsLabelEXT cmdEndDebugUtilsLabelEXT;
+
 using namespace Grindstone::GraphicsAPI;
+
+void VulkanCommandBuffer::SetupDebugLabelUtils(VkInstance instance) {
+	cmdBeginDebugUtilsLabelEXT = (PFN_vkCmdBeginDebugUtilsLabelEXT)vkGetInstanceProcAddr(instance, "vkCmdBeginDebugUtilsLabelEXT");
+	cmdEndDebugUtilsLabelEXT = (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(instance, "vkCmdEndDebugUtilsLabelEXT");
+}
 
 VkCommandBuffer VulkanCommandBuffer::GetCommandBuffer()	{
 	return commandBuffer;
@@ -35,7 +43,12 @@ VulkanCommandBuffer::VulkanCommandBuffer(CommandBuffer::CreateInfo& createInfo) 
 		throw std::runtime_error("failed to allocate command buffers!");
 	}
 
-	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_COMMAND_BUFFER, commandBuffer, createInfo.debugName);
+	if (createInfo.debugName != nullptr) {
+		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_COMMAND_BUFFER, commandBuffer, createInfo.debugName);
+	}
+	else {
+		throw std::runtime_error("Unnamed Command Buffer!");
+	}
 
 	secondaryInfo = createInfo.secondaryInfo;
 
@@ -104,11 +117,44 @@ void VulkanCommandBuffer::BindRenderPass(
 	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearColor.size());
 	renderPassInfo.pClearValues = clearColor.data();
 
+	VkDebugUtilsLabelEXT labelInfo{};
+	labelInfo.pLabelName = renderPass->GetDebugName();
+	labelInfo.pNext = nullptr;
+
+	if (labelInfo.color != nullptr) {
+		const float* debugColor = renderPass->GetDebugColor();
+		labelInfo.color[0] = debugColor[0];
+		labelInfo.color[1] = debugColor[1];
+		labelInfo.color[2] = debugColor[2];
+		labelInfo.color[3] = debugColor[3];
+	}
+
+	cmdBeginDebugUtilsLabelEXT(commandBuffer, &labelInfo);
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 void VulkanCommandBuffer::UnbindRenderPass() {
 	vkCmdEndRenderPass(commandBuffer);
+	cmdEndDebugUtilsLabelEXT(commandBuffer);
+}
+
+void VulkanCommandBuffer::BeginDebugLabelSection(const char* name, float color[4]) {
+	VkDebugUtilsLabelEXT labelInfo{};
+	labelInfo.pLabelName = name;
+	labelInfo.pNext = nullptr;
+
+	if (color != nullptr) {
+		labelInfo.color[0] = color[0];
+		labelInfo.color[1] = color[1];
+		labelInfo.color[2] = color[2];
+		labelInfo.color[3] = color[3];
+	}
+
+	cmdBeginDebugUtilsLabelEXT(commandBuffer, &labelInfo);
+}
+
+void VulkanCommandBuffer::EndDebugLabelSection() {
+	cmdEndDebugUtilsLabelEXT(commandBuffer);
 }
 
 void VulkanCommandBuffer::BindGraphicsDescriptorSet(GraphicsPipeline* graphicsPipeline, DescriptorSet** descriptorSets, uint32_t descriptorSetCount) {

@@ -8,6 +8,10 @@
 using namespace Grindstone::GraphicsAPI;
 
 VulkanTexture::VulkanTexture(Texture::CreateInfo& createInfo) {
+	if (createInfo.debugName == nullptr) {
+		throw std::runtime_error("Unnamed Texture!");
+	}
+
 	uint32_t mipLevels;
 	CreateTextureImage(createInfo, mipLevels, createInfo.isCubemap ? 6 : 1);
 	imageView = createInfo.isCubemap

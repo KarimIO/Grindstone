@@ -1,6 +1,9 @@
-#include "AssetRendererManager.hpp"
+#include <Common/Graphics/CommandBuffer.hpp>
 #include "EngineCore/Profiling.hpp"
 #include "EngineCore/EngineCore.hpp"
+
+#include "AssetRendererManager.hpp"
+
 using namespace Grindstone;
 
 void AssetRendererManager::AddAssetRenderer(BaseAssetRenderer* assetRenderer) {
@@ -53,9 +56,11 @@ void AssetRendererManager::RenderQueue(
 ) {
 	std::string profileScope = std::string("AssetRendererManager::RenderQueue(") + queueName + ")";
 	GRIND_PROFILE_SCOPE(profileScope.c_str());
+	commandBuffer->BeginDebugLabelSection(profileScope.c_str());
 	for (auto& assetRenderer : assetRenderers) {
 		assetRenderer.second->RenderQueue(commandBuffer, queueName);
 	}
+	commandBuffer->EndDebugLabelSection();
 }
 
 void AssetRendererManager::CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt::registry& registry) {
