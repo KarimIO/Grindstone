@@ -15,10 +15,21 @@ namespace Grindstone {
 
 		class VulkanFramebuffer : public Framebuffer {
 		public:
-			VulkanFramebuffer(RenderPass* renderPass, VkFramebuffer framebuffer, uint32_t width, uint32_t height);
+			VulkanFramebuffer(
+				RenderPass* renderPass,
+				VkFramebuffer framebuffer,
+				uint32_t width,
+				uint32_t height,
+				const char* debugName
+			);
 			VulkanFramebuffer(Framebuffer::CreateInfo& createInfo);
 			virtual ~VulkanFramebuffer() override;
-			void UpdateNativeFramebuffer(RenderPass* renderPass, VkFramebuffer framebuffer, uint32_t width, uint32_t height);
+			void UpdateNativeFramebuffer(
+				RenderPass* renderPass,
+				VkFramebuffer framebuffer,
+				uint32_t width,
+				uint32_t height
+			);
 		public:
 			VkFramebuffer GetFramebuffer() const;
 		public:

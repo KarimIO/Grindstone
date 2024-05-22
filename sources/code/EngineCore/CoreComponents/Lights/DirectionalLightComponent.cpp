@@ -27,6 +27,7 @@ void Grindstone::SetupDirectionalLightComponent(ECS::Entity& entity, void* compo
 	uint32_t shadowResolution = static_cast<uint32_t>(directionalLightComponent.shadowResolution);
 
 	RenderPass::CreateInfo renderPassCreateInfo{};
+	renderPassCreateInfo.debugName = "Directional Shadow Render Pass";
 	renderPassCreateInfo.colorFormats = nullptr;
 	renderPassCreateInfo.colorFormatCount = 0;
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;

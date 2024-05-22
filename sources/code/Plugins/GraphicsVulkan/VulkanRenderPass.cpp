@@ -4,13 +4,26 @@
 #include <vulkan/vulkan.h>
 
 namespace Grindstone::GraphicsAPI {
-	VulkanRenderPass::VulkanRenderPass(VkRenderPass renderPass)
+	VulkanRenderPass::VulkanRenderPass(VkRenderPass renderPass, const char* debugName)
 		: renderPass(renderPass) {
+
+		if (debugName != nullptr) {
+			this->debugName = debugName;
+
+			VulkanCore::Get().NameObject(VK_OBJECT_TYPE_RENDER_PASS, renderPass, debugName);
+		}
+		else {
+			throw std::runtime_error("Unnamed RenderPass!");
+		}
 	}
 
 	VulkanRenderPass::VulkanRenderPass(RenderPass::CreateInfo& createInfo) : shouldClearDepthOnLoad(createInfo.shouldClearDepthOnLoad) {
 		if (createInfo.debugName != nullptr) {
 			debugName = createInfo.debugName;
+		}
+
+		if (createInfo.debugColor != nullptr) {
+			memcpy(debugColor, createInfo.debugColor, sizeof(debugColor));
 		}
 
 		for (uint32_t i = 0; i < createInfo.colorFormatCount; ++i) {
@@ -108,6 +121,17 @@ namespace Grindstone::GraphicsAPI {
 		if (!debugName.empty()) {
 			VulkanCore::Get().NameObject(VK_OBJECT_TYPE_RENDER_PASS, renderPass, debugName.c_str());
 		}
+		else {
+			throw std::runtime_error("Unnamed RenderPass!");
+		}
+	}
+
+	const char* VulkanRenderPass::GetDebugName() const {
+		return debugName.c_str();
+	}
+
+	const float* VulkanRenderPass::GetDebugColor() const {
+		return &debugColor[0];
 	}
 
 	VulkanRenderPass::~VulkanRenderPass() {

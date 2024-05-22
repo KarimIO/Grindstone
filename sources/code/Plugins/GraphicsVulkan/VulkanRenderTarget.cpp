@@ -7,8 +7,20 @@
 
 using namespace Grindstone::GraphicsAPI;
 
-VulkanRenderTarget::VulkanRenderTarget(VkImage swapchainImage, VkFormat format) : image(swapchainImage), isOwnedBySwapchain(true) {
+VulkanRenderTarget::VulkanRenderTarget(
+	VkImage swapchainImage,
+	VkFormat format,
+	uint32_t swapchainIndex
+) : image(swapchainImage),
+	isOwnedBySwapchain(true)
+{
+	debugName = "Swapchain " + std::to_string(swapchainIndex);
+
 	imageView = CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+
+	std::string imageViewDebugName = debugName + " View";
+	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, debugName.c_str());
+	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
 }
 
 VulkanRenderTarget::VulkanRenderTarget(VkImage image, VkImageView imageView, VkFormat colorFormat) : image(image), imageView(imageView), isOwnedBySwapchain(true) {}
@@ -29,6 +41,10 @@ void VulkanRenderTarget::UpdateNativeImage(VkImage image, VkImageView imageView,
 }
 
 void VulkanRenderTarget::Create() {
+	if (debugName.empty()) {
+		throw std::runtime_error("Unnamed Render Target!");
+	}
+
 	uint8_t channels;
 	VkFormat renderFormat = TranslateColorFormatToVulkan(format, channels);
 
@@ -55,9 +71,10 @@ void VulkanRenderTarget::Create() {
 		image,
 		imageMemory
 	);
+
 	imageView = CreateImageView(image, renderFormat, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
 
-	if (!debugName.empty()) {
+	{
 		std::string imageViewDebugName = debugName + " View";
 		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, debugName.c_str());
 		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
@@ -76,10 +93,8 @@ void VulkanRenderTarget::Create() {
 
 		CreateTextureSampler();
 
-		if (!debugName.empty()) {
-			std::string imageSamplerDebugName = debugName + " Sampler";
-			VulkanCore::Get().NameObject(VK_OBJECT_TYPE_SAMPLER, sampler, imageSamplerDebugName.c_str());
-		}
+		std::string imageSamplerDebugName = debugName + " Sampler";
+		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_SAMPLER, sampler, imageSamplerDebugName.c_str());
 	}
 }
 

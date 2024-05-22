@@ -37,16 +37,20 @@ namespace Grindstone {
 	private:
 		struct DeferredRendererImageSet {
 			GraphicsAPI::Framebuffer* gbuffer = nullptr;
-			std::vector<GraphicsAPI::RenderTarget*> gbufferRenderTargets;
 			GraphicsAPI::DepthTarget* gbufferDepthTarget = nullptr;
 			GraphicsAPI::Framebuffer* litHdrFramebuffer = nullptr;
 			GraphicsAPI::Framebuffer* lightingFramebuffer = nullptr;
 			GraphicsAPI::RenderTarget* litHdrRenderTarget = nullptr;
 			GraphicsAPI::DepthTarget* litHdrDepthTarget = nullptr;
+			GraphicsAPI::RenderTarget* ssrRenderTarget = nullptr;
+			GraphicsAPI::RenderTarget* gbufferAlbedoRenderTarget = nullptr;
+			GraphicsAPI::RenderTarget* gbufferNormalRenderTarget = nullptr;
+			GraphicsAPI::RenderTarget* gbufferSpecularRoughnessRenderTarget = nullptr;
 
 			GraphicsAPI::UniformBuffer* globalUniformBufferObject = nullptr;
 			GraphicsAPI::UniformBuffer* tonemapPostProcessingUniformBufferObject = nullptr;
 
+			GraphicsAPI::DescriptorSet* ssrDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* tonemapDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* lightingDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
@@ -54,7 +58,6 @@ namespace Grindstone {
 			GraphicsAPI::DescriptorSet* dofSeparationDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* dofBloomDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* dofCombineDescriptorSet = nullptr;
-
 
 			GraphicsAPI::RenderTarget* nearDofRenderTarget = nullptr;
 			GraphicsAPI::RenderTarget* farDofRenderTarget = nullptr;
@@ -69,8 +72,10 @@ namespace Grindstone {
 		void CreateBloomUniformBuffers();
 		void UpdateBloomDescriptorSet(DeferredRendererImageSet& imageSet);
 		void CreateDepthOfFieldRenderTargetsAndDescriptorSets(DeferredRendererImageSet& imageSet, size_t imageSetIndex);
+		void CreateSsrRenderTargetsAndDescriptorSets(DeferredRendererImageSet& imageSet, size_t imageSetIndex);
 		void CreateBloomRenderTargetsAndDescriptorSets(DeferredRendererImageSet& imageSet, size_t imageSetIndex);
 		void RenderDepthOfField(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer);
+		void RenderSsr(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer);
 		void RenderBloom(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer);
 		void UpdateBloomUBO();
 
@@ -99,6 +104,7 @@ namespace Grindstone {
 
 		void CreateDepthOfFieldResources();
 		void CreateBloomResources();
+		void CreateSSRResources();
 		void CreateSsaoKernelAndNoise();
 		void CleanupPipelines();
 		void CreateDescriptorSetLayouts();
@@ -158,6 +164,7 @@ namespace Grindstone {
 		GraphicsAPI::VertexBufferLayout vertexLightPositionLayout{};
 
 		GraphicsAPI::DescriptorSetLayout* bloomDescriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSetLayout* ssrDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* tonemapDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingUBODescriptorSetLayout = nullptr;
@@ -186,6 +193,7 @@ namespace Grindstone {
 		GraphicsAPI::GraphicsPipeline* dofCombinationPipeline = nullptr;
 		GraphicsAPI::GraphicsPipeline* shadowMappingPipeline = nullptr;
 
+		GraphicsAPI::ComputePipeline* ssrPipeline = nullptr;
 		GraphicsAPI::ComputePipeline* bloomPipeline = nullptr;
 
 		// Used to check when environment map changes, so we can update it

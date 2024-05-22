@@ -78,7 +78,7 @@ VkSwapchainKHR VulkanWindowGraphicsBinding::GetSwapchain() {
 void VulkanWindowGraphicsBinding::SubmitWindowObjects(VulkanWindowBindingDataNative& windowBindingData) {
 	swapChain = windowBindingData.swapChain;
 	if (renderPass == nullptr) {
-		renderPass = new VulkanRenderPass(windowBindingData.renderPass);
+		renderPass = new VulkanRenderPass(windowBindingData.renderPass, "Swapchain Render Pass");
 	}
 	else {
 		static_cast<VulkanRenderPass*>(renderPass)->Update(windowBindingData.renderPass);
@@ -92,7 +92,7 @@ void VulkanWindowGraphicsBinding::SubmitWindowObjects(VulkanWindowBindingDataNat
 		VulkanImageSet& imageSet = imageSets[i];
 
 		if (imageSet.framebuffer == nullptr) {
-			imageSet.framebuffer = new VulkanFramebuffer(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height);
+			imageSet.framebuffer = new VulkanFramebuffer(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height, "Swapchain Framebuffer");
 		}
 		else {
 			static_cast<VulkanFramebuffer*>(imageSet.framebuffer)->UpdateNativeFramebuffer(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height);
@@ -219,7 +219,11 @@ void VulkanWindowGraphicsBinding::CreateImageSets() {
 
 	imageSets.resize(imageCount);
 	for (uint32_t i = 0; i < imageCount; ++i) {
-		VulkanRenderTarget* rt = new VulkanRenderTarget(swapChainImages[i], swapchainVulkanFormat);
+		VulkanRenderTarget* rt = new VulkanRenderTarget(
+			swapChainImages[i],
+			swapchainVulkanFormat,
+			i
+		);
 
 		VkImageView attachments[] = { rt->GetImageView() };
 		framebufferInfo.pAttachments = attachments;
@@ -231,7 +235,14 @@ void VulkanWindowGraphicsBinding::CreateImageSets() {
 
 		VulkanImageSet& imageSet = imageSets[i];
 		imageSet.swapChainTarget = rt;
-		imageSet.framebuffer = new VulkanFramebuffer(renderPass, vkFramebuffer, swapExtent.width, swapExtent.height);
+		imageSet.framebuffer = new VulkanFramebuffer(
+			renderPass,
+			vkFramebuffer,
+			swapExtent.width,
+			swapExtent.height,
+			"Swapchain Framebuffer"
+		);
+
 		imageSet.fence = nullptr;
 	}
 }
@@ -454,7 +465,7 @@ void VulkanWindowGraphicsBinding::CreateRenderPass() {
 	}
 
 	if (renderPass == nullptr) {
-		renderPass = new VulkanRenderPass(vkRenderPass);
+		renderPass = new VulkanRenderPass(vkRenderPass, "Swapchain Render Pass");
 	}
 	else {
 		static_cast<VulkanRenderPass*>(renderPass)->Update(vkRenderPass);

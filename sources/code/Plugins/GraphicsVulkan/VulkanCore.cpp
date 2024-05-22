@@ -123,6 +123,7 @@ bool VulkanCore::Initialize(Core::CreateInfo& ci) {
 	CreateLogicalDevice();
 
 	pfnDebugUtilsSetObjectName = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(vkGetDeviceProcAddr(device, "vkSetDebugUtilsObjectNameEXT"));
+	VulkanCommandBuffer::SetupDebugLabelUtils(instance);
 
 	if (primaryWindow->IsSwapchainControlledByEngine()) {
 		wgb->CreateSwapChain();

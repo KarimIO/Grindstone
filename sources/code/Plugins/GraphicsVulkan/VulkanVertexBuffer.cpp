@@ -4,6 +4,10 @@
 
 namespace Grindstone::GraphicsAPI {
 	VulkanVertexBuffer::VulkanVertexBuffer(VertexBuffer::CreateInfo& createInfo) {
+		if (createInfo.debugName == nullptr) {
+			throw std::runtime_error("Unnamed Vertex Buffer!");
+		}
+
 		VkDevice device = VulkanCore::Get().GetDevice();
 
 		VkDeviceSize bufferSize = createInfo.size;

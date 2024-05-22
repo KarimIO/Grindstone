@@ -8,7 +8,23 @@
 
 using namespace Grindstone::GraphicsAPI;
 
-VulkanFramebuffer::VulkanFramebuffer(RenderPass* renderPass, VkFramebuffer framebuffer, uint32_t width, uint32_t height) : renderPass(renderPass), framebuffer(framebuffer), width(width), height(height) {
+VulkanFramebuffer::VulkanFramebuffer(
+	RenderPass* renderPass,
+	VkFramebuffer framebuffer,
+	uint32_t width,
+	uint32_t height,
+	const char* debugName
+) : renderPass(renderPass),
+	framebuffer(framebuffer),
+	width(width),
+	height(height) {
+	if (debugName != nullptr) {
+		this->debugName = debugName;
+		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_FRAMEBUFFER, framebuffer, debugName);
+	}
+	else {
+		throw std::runtime_error("Unnamed Framebuffer!");
+	}
 }
 
 VulkanFramebuffer::VulkanFramebuffer(Framebuffer::CreateInfo& createInfo) : isCubemap(createInfo.isCubemap), renderPass(createInfo.renderPass), width(createInfo.width), height(createInfo.height) {
@@ -32,11 +48,18 @@ VulkanFramebuffer::~VulkanFramebuffer() {
 	Cleanup();
 }
 
-void VulkanFramebuffer::UpdateNativeFramebuffer(RenderPass* renderPass, VkFramebuffer framebuffer, uint32_t width, uint32_t height) {
+void VulkanFramebuffer::UpdateNativeFramebuffer(
+	RenderPass* renderPass,
+	VkFramebuffer framebuffer,
+	uint32_t width,
+	uint32_t height
+) {
 	this->renderPass = renderPass;
 	this->framebuffer = framebuffer;
 	this->width = width;
 	this->height = height;
+
+	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_FRAMEBUFFER, framebuffer, debugName.c_str());
 }
 
 void VulkanFramebuffer::Cleanup() {
@@ -95,6 +118,9 @@ void VulkanFramebuffer::Create() {
 
 	if (!debugName.empty()) {
 		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_FRAMEBUFFER, framebuffer, debugName.c_str());
+	}
+	else {
+		throw std::runtime_error("Unnamed Framebuffer!");
 	}
 }
 

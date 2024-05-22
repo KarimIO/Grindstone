@@ -25,8 +25,11 @@ namespace Grindstone {
 				uint32_t colorFormatCount = 0;
 				DepthFormat depthFormat = DepthFormat::None;
 				bool shouldClearDepthOnLoad = true;
+				float debugColor[4];
 			};
 
+			virtual const char* GetDebugName() const = 0;
+			virtual const float* GetDebugColor() const = 0;
 			virtual ~RenderPass() {};
 		};
 	}

@@ -7,6 +7,8 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		class VulkanCommandBuffer : public CommandBuffer {
 		public:
+			static void SetupDebugLabelUtils(VkInstance instance);
+
 			VulkanCommandBuffer(CommandBuffer::CreateInfo& createInfo);
 			virtual ~VulkanCommandBuffer() override;
 		public:
@@ -23,6 +25,8 @@ namespace Grindstone {
 				ClearDepthStencil depthStencilClearValue
 			) override;
 			virtual void UnbindRenderPass() override;
+			virtual void BeginDebugLabelSection(const char* name, float color[4] = nullptr) override;
+			virtual void EndDebugLabelSection() override;
 			virtual void BindGraphicsDescriptorSet(
 				GraphicsPipeline* graphicsPipeline,
 				DescriptorSet** descriptorSets,

@@ -80,7 +80,18 @@ namespace Grindstone::GraphicsAPI {
 		vkBindImageMemory(device, image, imageMemory, 0);
 	}
 
-	void CreateBuffer(const char* debugName, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
+	void CreateBuffer(
+		const char* debugName,
+		VkDeviceSize size,
+		VkBufferUsageFlags usage,
+		VkMemoryPropertyFlags properties,
+		VkBuffer& buffer,
+		VkDeviceMemory& bufferMemory
+	) {
+		if (debugName == nullptr) {
+			throw std::runtime_error("Unnamed Buffer!");
+		}
+
 		VkDevice device = VulkanCore::Get().GetDevice();
 		VkBufferCreateInfo bufferInfo = {};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;

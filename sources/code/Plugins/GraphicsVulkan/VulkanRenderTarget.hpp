@@ -8,7 +8,7 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		class VulkanRenderTarget : public RenderTarget {
 		public:
-			VulkanRenderTarget(VkImage swapchainImage, VkFormat format); // Build from swapchain
+			VulkanRenderTarget(VkImage swapchainImage, VkFormat format, uint32_t swapchainIndex); // Build from swapchain
 			VulkanRenderTarget(VkImage image, VkImageView imageView, VkFormat colorFormat); // Built from ImGui
 			VulkanRenderTarget(RenderTarget::CreateInfo& createInfo);
 			virtual ~VulkanRenderTarget() override;
