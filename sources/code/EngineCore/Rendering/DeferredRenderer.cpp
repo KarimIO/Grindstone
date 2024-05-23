@@ -260,7 +260,7 @@ void DeferredRenderer::CreateDepthOfFieldRenderTargetsAndDescriptorSets(Deferred
 void DeferredRenderer::CreateDepthOfFieldResources() {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	std::array<ColorFormat, 2> dofSepFormats;
+	std::array<ColorFormat, 2> dofSepFormats{};
 	dofSepFormats[0] = ColorFormat::RGBA16;
 	dofSepFormats[1] = ColorFormat::RGBA16;
 
@@ -315,6 +315,16 @@ void DeferredRenderer::CreateBloomResources() {
 void DeferredRenderer::CreateSSRResources() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
+	UniformBuffer::CreateInfo ssrUboCi{};
+	ssrUboCi.isDynamic = false;
+	ssrUboCi.size = sizeof(SsrUboStruct);
+
+	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
+		std::string debugName = "SSR Uniform Buffer " + std::to_string(i);
+		ssrUboCi.debugName = debugName.c_str();
+		deferredRendererImageSets[i].ssrUbo = graphicsCore->CreateUniformBuffer(ssrUboCi);
+	}
+
 	DescriptorSetLayout::Binding sourceBinding{};
 	sourceBinding.count = 1;
 	sourceBinding.type = BindingType::RenderTexture;
@@ -323,11 +333,12 @@ void DeferredRenderer::CreateSSRResources() {
 	std::array<DescriptorSetLayout::Binding, 6> ssrLayoutBindings{};
 	for (size_t i = 0; i < ssrLayoutBindings.size(); ++i) {
 		ssrLayoutBindings[i] = sourceBinding;
-		ssrLayoutBindings[i].bindingId = i;
+		ssrLayoutBindings[i].bindingId = static_cast<uint32_t>(i);
 	}
 
 	ssrLayoutBindings[0].type = BindingType::UniformBuffer;
 	ssrLayoutBindings[1].type = BindingType::RenderTextureStorageImage;
+	ssrLayoutBindings[3].type = BindingType::DepthTexture;
 
 	DescriptorSetLayout::CreateInfo ssrDescriptorSetLayoutCreateInfo{};
 	ssrDescriptorSetLayoutCreateInfo.debugName = "SSR Descriptor Set Layout";
@@ -570,9 +581,13 @@ void DeferredRenderer::CreateSsrRenderTargetsAndDescriptorSets(DeferredRendererI
 	GraphicsAPI::RenderTarget::CreateInfo ssrRenderTargetCreateInfo{ GraphicsAPI::ColorFormat::RGBA16, framebufferWidth, framebufferHeight, true, true, "SSR Render Target" };
 	imageSet.ssrRenderTarget = graphicsCore->CreateRenderTarget(ssrRenderTargetCreateInfo);
 
-	// bloomUniformBuffers[bloomDescriptorSetIndex]->UpdateBuffer(&bloomUboStruct);
+	SsrUboStruct ssrUboStruct{};
+	ssrUboStruct.reciprocalImgSize.x = 1.0f / renderWidth;
+	ssrUboStruct.reciprocalImgSize.y = 1.0f / renderHeight;
+
+	imageSet.ssrUbo->UpdateBuffer(&ssrUboStruct);
 	std::array<GraphicsAPI::DescriptorSet::Binding, 6> descriptorBindings;
-	descriptorBindings[0].itemPtr = bloomUniformBuffers[0];
+	descriptorBindings[0].itemPtr = imageSet.ssrUbo;
 	descriptorBindings[1].itemPtr = imageSet.ssrRenderTarget;
 	descriptorBindings[2].itemPtr = imageSet.litHdrRenderTarget;
 	descriptorBindings[3].itemPtr = imageSet.gbufferDepthTarget;
@@ -1065,7 +1080,7 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 	const int gbufferColorCount = 3;
 	std::array<ColorFormat, gbufferColorCount> gbufferColorFormats{};
 	gbufferColorFormats[0] = ColorFormat::RGBA8; // Albedo
-	gbufferColorFormats[1] = ColorFormat::RGBA8; // Normal
+	gbufferColorFormats[1] = ColorFormat::RGBA16; // Normal
 	gbufferColorFormats[2] = ColorFormat::RGBA8; // Specular RGB + Roughness Alpha
 
 	if (gbufferRenderPass == nullptr) {
@@ -1074,6 +1089,7 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 		gbufferRenderPassCreateInfo.colorFormats = gbufferColorFormats.data();
 		gbufferRenderPassCreateInfo.colorFormatCount = static_cast<uint32_t>(gbufferColorFormats.size());
 		gbufferRenderPassCreateInfo.depthFormat = depthFormat;
+		gbufferRenderPassCreateInfo.shouldClearDepthOnLoad = true;
 		gbufferRenderPass = graphicsCore->CreateRenderPass(gbufferRenderPassCreateInfo);
 	}
 
@@ -1254,6 +1270,9 @@ void DeferredRenderer::CreatePipelines() {
 		computePipelineCreateInfo.descriptorSetLayoutCount = 1;
 		bloomPipeline = graphicsCore->CreateComputePipeline(computePipelineCreateInfo);
 	}
+
+	shaderStageCreateInfos.clear();
+	fileData.clear();
 
 	{
 		ShaderStageCreateInfo ssrShaderStageCreateInfo;
@@ -1624,16 +1643,13 @@ void DeferredRenderer::RenderSsr(DeferredRendererImageSet& imageSet, GraphicsAPI
 
 	currentCommandBuffer->BeginDebugLabelSection("Screen Space Reflections Pass", nullptr);
 	currentCommandBuffer->BindComputePipeline(ssrPipeline);
-	uint32_t groupCountX = static_cast<uint32_t>(std::ceil(renderWidth / 4.0f));
-	uint32_t groupCountY = static_cast<uint32_t>(std::ceil(renderHeight / 4.0f));
 
 	{
 		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.ssrRenderTarget, true);
 		currentCommandBuffer->BindComputeDescriptorSet(ssrPipeline, &imageSet.ssrDescriptorSet, 1);
-		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
+		currentCommandBuffer->DispatchCompute(renderWidth, renderHeight, 1);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.ssrRenderTarget, false);
 	}
-
-	currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.ssrRenderTarget, false);
 	currentCommandBuffer->EndDebugLabelSection();
 }
 
@@ -1655,7 +1671,7 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 
 	currentCommandBuffer->BeginDebugLabelSection("Bloom First Downsample", debugColor);
 	{
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[0], true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[1], true);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
@@ -1713,8 +1729,9 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 	}
 	currentCommandBuffer->EndDebugLabelSection();
 
-	currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount + 1], false);
 	currentCommandBuffer->EndDebugLabelSection();
+
+	currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + 1], false);
 }
 
 void DeferredRenderer::RenderLightsCommandBuffer(
@@ -1856,8 +1873,8 @@ void DeferredRenderer::RenderLightsCommandBuffer(
 			directionalLightDescriptors[1] = directionalLightComponent.descriptorSet;
 			currentCommandBuffer->BindGraphicsDescriptorSet(directionalLightPipeline, directionalLightDescriptors.data(), static_cast<uint32_t>(directionalLightDescriptors.size()));
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+			currentCommandBuffer->EndDebugLabelSection();
 		});
-		currentCommandBuffer->EndDebugLabelSection();
 	}
 }
 
@@ -2233,20 +2250,19 @@ void DeferredRenderer::RenderCommandBuffer(
 	{
 		ClearColorValue clearColor{ 0.0f, 0.0f, 0.0f, 1.f };
 		ClearDepthStencil clearDepthStencil;
-		// commandBuffer->BindRenderPass(lightingRenderPass, imageSet.lightingFramebuffer, width, height, nullptr, 0, clearDepthStencil);
 
 		commandBuffer->BindRenderPass(mainRenderPass, imageSet.litHdrFramebuffer, renderWidth, renderHeight, &clearColor, 1, clearDepthStencil);
 
 		RenderLightsCommandBuffer(imageIndex, commandBuffer, registry);
 
-		// commandBuffer->UnbindRenderPass();
-	
 		assetManager->RenderQueue(commandBuffer, "Unlit");
 		assetManager->RenderQueue(commandBuffer, "Skybox");
 		assetManager->RenderQueue(commandBuffer, "Transparent");
 
 		commandBuffer->UnbindRenderPass();
 	}
+
+	RenderSsr(imageSet, commandBuffer);
 
 	PostProcessCommandBuffer(imageIndex, outputFramebuffer, commandBuffer);
 }
