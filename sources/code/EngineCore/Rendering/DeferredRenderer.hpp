@@ -49,7 +49,6 @@ namespace Grindstone {
 
 			GraphicsAPI::UniformBuffer* globalUniformBufferObject = nullptr;
 			GraphicsAPI::UniformBuffer* tonemapPostProcessingUniformBufferObject = nullptr;
-			GraphicsAPI::UniformBuffer* ssrUbo = nullptr;
 
 			GraphicsAPI::DescriptorSet* ssrDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* tonemapDescriptorSet = nullptr;
