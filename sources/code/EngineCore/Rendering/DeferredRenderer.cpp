@@ -82,10 +82,6 @@ struct BloomUboStruct {
 	float filterRadius;
 };
 
-struct SsrUboStruct {
-	glm::vec2 reciprocalImgSize;
-};
-
 static size_t CalculateBloomLevels(uint32_t width, uint32_t height) {
 	float minDimension = static_cast<float>(glm::min(width, height));
 	float logDimension = glm::log2(minDimension);
@@ -314,16 +310,6 @@ void DeferredRenderer::CreateBloomResources() {
 
 void DeferredRenderer::CreateSSRResources() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-
-	UniformBuffer::CreateInfo ssrUboCi{};
-	ssrUboCi.isDynamic = false;
-	ssrUboCi.size = sizeof(SsrUboStruct);
-
-	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
-		std::string debugName = "SSR Uniform Buffer " + std::to_string(i);
-		ssrUboCi.debugName = debugName.c_str();
-		deferredRendererImageSets[i].ssrUbo = graphicsCore->CreateUniformBuffer(ssrUboCi);
-	}
 
 	DescriptorSetLayout::Binding sourceBinding{};
 	sourceBinding.count = 1;
@@ -581,13 +567,8 @@ void DeferredRenderer::CreateSsrRenderTargetsAndDescriptorSets(DeferredRendererI
 	GraphicsAPI::RenderTarget::CreateInfo ssrRenderTargetCreateInfo{ GraphicsAPI::ColorFormat::RGBA16, framebufferWidth, framebufferHeight, true, true, "SSR Render Target" };
 	imageSet.ssrRenderTarget = graphicsCore->CreateRenderTarget(ssrRenderTargetCreateInfo);
 
-	SsrUboStruct ssrUboStruct{};
-	ssrUboStruct.reciprocalImgSize.x = 1.0f / renderWidth;
-	ssrUboStruct.reciprocalImgSize.y = 1.0f / renderHeight;
-
-	imageSet.ssrUbo->UpdateBuffer(&ssrUboStruct);
 	std::array<GraphicsAPI::DescriptorSet::Binding, 6> descriptorBindings;
-	descriptorBindings[0].itemPtr = imageSet.ssrUbo;
+	descriptorBindings[0].itemPtr = imageSet.globalUniformBufferObject;
 	descriptorBindings[1].itemPtr = imageSet.ssrRenderTarget;
 	descriptorBindings[2].itemPtr = imageSet.litHdrRenderTarget;
 	descriptorBindings[3].itemPtr = imageSet.gbufferDepthTarget;
