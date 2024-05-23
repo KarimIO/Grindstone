@@ -118,6 +118,7 @@ void VulkanCommandBuffer::BindRenderPass(
 	renderPassInfo.pClearValues = clearColor.data();
 
 	VkDebugUtilsLabelEXT labelInfo{};
+	labelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
 	labelInfo.pLabelName = renderPass->GetDebugName();
 	labelInfo.pNext = nullptr;
 
@@ -140,6 +141,7 @@ void VulkanCommandBuffer::UnbindRenderPass() {
 
 void VulkanCommandBuffer::BeginDebugLabelSection(const char* name, float color[4]) {
 	VkDebugUtilsLabelEXT labelInfo{};
+	labelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
 	labelInfo.pLabelName = name;
 	labelInfo.pNext = nullptr;
 
