@@ -67,7 +67,7 @@ void ModelImporter::ConvertMaterials() {
 
 		newMaterial.albedoPath = GetTexturePath(pMaterial, aiTextureType_DIFFUSE);
 		newMaterial.normalPath = GetTexturePath(pMaterial, aiTextureType_NORMALS);
-		newMaterial.specularPath = GetTexturePath(pMaterial, aiTextureType_AMBIENT);
+		newMaterial.specularPath = GetTexturePath(pMaterial, aiTextureType_METALNESS);
 		newMaterial.roughnessPath = GetTexturePath(pMaterial, aiTextureType_SHININESS);
 
 		aiColor4D diffuse_color;
@@ -90,7 +90,7 @@ void ModelImporter::ConvertMaterials() {
 		std::string uuidString = outputData.materialNames[i] = uuid.ToString();
 
 		std::filesystem::path outputPath = assetRegistry->GetCompiledAssetsPath() / uuidString;
-		CreateStandardMaterial(newMaterial, outputPath);
+		CreateStandardMaterial(*assetRegistry, newMaterial, outputPath);
 	}
 }
 
@@ -367,7 +367,9 @@ void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Gri
 		throw std::runtime_error(importer.GetErrorString());
 	}
 
-	assetRegistry.GetMetaFileByPath(path);
+
+	metaFile = assetRegistry.GetMetaFileByPath(path);
+
 	// Set to false, will check if true later.
 	bool shouldImportAnimations = false;
 	isSkeletalMesh = false;

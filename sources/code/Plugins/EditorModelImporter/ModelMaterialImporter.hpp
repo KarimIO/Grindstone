@@ -14,6 +14,6 @@ namespace Grindstone::Editor::Importers {
 		float roughness = 0.5f;
 	};
 
-	void CreateStandardMaterial(StandardMaterialCreateInfo& ci, std::filesystem::path path);
-	void CreateCutoutMaterial(StandardMaterialCreateInfo& ci, std::filesystem::path path);
+	void CreateStandardMaterial(Grindstone::Editor::AssetRegistry& assetRegistry, StandardMaterialCreateInfo& ci, std::filesystem::path path);
+	void CreateCutoutMaterial(Grindstone::Editor::AssetRegistry& assetRegistry, StandardMaterialCreateInfo& ci, std::filesystem::path path);
 }

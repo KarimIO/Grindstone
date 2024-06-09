@@ -12,6 +12,8 @@
 #include <Common/ResourcePipeline/MetaFile.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
+#include <Editor/Importers/ImporterManager.hpp>
+#include <Editor/EditorManager.hpp>
 
 #include "AssetRegistry.hpp"
 
@@ -105,11 +107,27 @@ void AssetRegistry::ReadFile() {
 	}
 }
 
+Grindstone::Uuid AssetRegistry::Import(const std::filesystem::path& path) {
+	Grindstone::Editor::Manager& editor = Grindstone::Editor::Manager::GetInstance();
+	Grindstone::Importers::ImporterManager& importerManager = editor.GetImporterManager();
+
+	if (importerManager.Import(path)) {
+		std::filesystem::path basePath = editor.GetAssetsPath();
+		std::filesystem::path relPath = std::filesystem::relative(path, basePath);
+		AssetRegistry::Entry outEntry;
+		if (TryGetAssetData(relPath, outEntry)) {
+			return outEntry.uuid;
+		}
+	}
+
+	return Uuid();
+}
+
 Grindstone::Editor::MetaFile* AssetRegistry::GetMetaFileByPath(const std::filesystem::path& path) {
 	return new Grindstone::Editor::MetaFile(*this, path);
 }
 
-const std::filesystem::path& AssetRegistry::GetCompiledAssetsPath() {
+const std::filesystem::path& AssetRegistry::GetCompiledAssetsPath() const {
 	return compiledAssetsPath;
 }
 

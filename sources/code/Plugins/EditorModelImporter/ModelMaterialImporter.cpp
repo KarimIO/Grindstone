@@ -1,25 +1,23 @@
 #include <fstream>
 
 #include <Common/ResourcePipeline/Uuid.hpp>
+#include <Editor/AssetRegistry.hpp>
 
 #include "ModelMaterialImporter.hpp"
 
 using namespace Grindstone::Editor::Importers;
 
-static void ImportTextureAndMakeOutputStr(std::string textureName, std::filesystem::path& inputTexturePath, std::vector<std::string>& arr) {
+static void ImportTextureAndMakeOutputStr(Grindstone::Editor::AssetRegistry& assetRegistry, std::string textureName, std::filesystem::path& inputTexturePath, std::vector<std::string>& arr) {
 	if (inputTexturePath == "") {
 		return;
 	}
 
-	// TextureImporter textureImporter;
-	// textureImporter.Import(inputTexturePath);
-
-	Grindstone::Uuid textureUuid;
+	Grindstone::Uuid textureUuid = assetRegistry.Import(inputTexturePath);
 
 	arr.push_back("\t\t\"" + textureName + "\": \"" + textureUuid.ToString());
 }
 
-static void CreateStandardOrCutoutMaterial(StandardMaterialCreateInfo& createInfo, std::filesystem::path outputPath, bool isCutout) {
+static void CreateStandardOrCutoutMaterial(Grindstone::Editor::AssetRegistry& assetRegistry, StandardMaterialCreateInfo& createInfo, std::filesystem::path outputPath, bool isCutout) {
 	std::filesystem::path p = outputPath;
 
 	std::ofstream output(outputPath);
@@ -44,10 +42,10 @@ static void CreateStandardOrCutoutMaterial(StandardMaterialCreateInfo& createInf
 	output << "\t\"samplers\": {\n";
 	{
 		std::vector<std::string> textures;
-		ImportTextureAndMakeOutputStr("albedoTexture", createInfo.albedoPath, textures);
-		ImportTextureAndMakeOutputStr("normalTexture", createInfo.normalPath, textures);
-		ImportTextureAndMakeOutputStr("metalnessTexture", createInfo.specularPath, textures);
-		ImportTextureAndMakeOutputStr("roughnessTexture", createInfo.roughnessPath, textures);
+		ImportTextureAndMakeOutputStr(assetRegistry, "albedoTexture", createInfo.albedoPath, textures);
+		ImportTextureAndMakeOutputStr(assetRegistry, "normalTexture", createInfo.normalPath, textures);
+		ImportTextureAndMakeOutputStr(assetRegistry, "metalnessTexture", createInfo.specularPath, textures);
+		ImportTextureAndMakeOutputStr(assetRegistry, "roughnessTexture", createInfo.roughnessPath, textures);
 
 		for (size_t i = 0; i < textures.size(); ++i) {
 			output << textures[i];
@@ -66,10 +64,10 @@ static void CreateStandardOrCutoutMaterial(StandardMaterialCreateInfo& createInf
 	output.close();
 }
 
-void Grindstone::Editor::Importers::CreateStandardMaterial(StandardMaterialCreateInfo& ci, std::filesystem::path path) {
-	CreateStandardOrCutoutMaterial(ci, path, false);
+void Grindstone::Editor::Importers::CreateStandardMaterial(Grindstone::Editor::AssetRegistry& assetRegistry, StandardMaterialCreateInfo& ci, std::filesystem::path path) {
+	CreateStandardOrCutoutMaterial(assetRegistry, ci, path, false);
 }
 
-void Grindstone::Editor::Importers::CreateCutoutMaterial(StandardMaterialCreateInfo& ci, std::filesystem::path path) {
-	CreateStandardOrCutoutMaterial(ci, path, true);
+void Grindstone::Editor::Importers::CreateCutoutMaterial(Grindstone::Editor::AssetRegistry& assetRegistry, StandardMaterialCreateInfo& ci, std::filesystem::path path) {
+	CreateStandardOrCutoutMaterial(assetRegistry, ci, path, true);
 }
