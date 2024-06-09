@@ -55,12 +55,20 @@ namespace Grindstone {
 			GraphicsAPI::DescriptorSet* lightingDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
 
-			GraphicsAPI::DescriptorSet* dofSeparationDescriptorSet = nullptr;
-			GraphicsAPI::DescriptorSet* dofBloomDescriptorSet = nullptr;
+			GraphicsAPI::DescriptorSet* dofSourceDescriptorSet = nullptr;
+			GraphicsAPI::DescriptorSet* dofNearBlurDescriptorSet = nullptr;
+			GraphicsAPI::DescriptorSet* dofFarBlurDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* dofCombineDescriptorSet = nullptr;
 
 			GraphicsAPI::RenderTarget* nearDofRenderTarget = nullptr;
 			GraphicsAPI::RenderTarget* farDofRenderTarget = nullptr;
+			GraphicsAPI::RenderTarget* nearBlurredDofRenderTarget = nullptr;
+			GraphicsAPI::RenderTarget* farBlurredDofRenderTarget = nullptr;
+
+			GraphicsAPI::Framebuffer* dofSeparationFramebuffer = nullptr;
+			GraphicsAPI::Framebuffer* dofNearBlurFramebuffer = nullptr;
+			GraphicsAPI::Framebuffer* dofFarBlurFramebuffer = nullptr;
+			GraphicsAPI::Framebuffer* dofCombinationFramebuffer = nullptr;
 
 			std::vector<GraphicsAPI::RenderTarget*> bloomRenderTargets;
 			std::vector<GraphicsAPI::DescriptorSet*> bloomDescriptorSets;
@@ -79,29 +87,11 @@ namespace Grindstone {
 		void RenderBloom(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer);
 		void UpdateBloomUBO();
 
-		void RenderCommandBuffer(
-			GraphicsAPI::CommandBuffer* commandBuffer,
-			entt::registry& registry,
-			glm::mat4 projectionMatrix,
-			glm::mat4 viewMatrix,
-			glm::vec3 eyePos,
-			GraphicsAPI::Framebuffer* outputFramebuffer
-		);
-		void RenderImmediate(
-			entt::registry& registry,
-			glm::mat4 projectionMatrix,
-			glm::mat4 viewMatrix,
-			glm::vec3 eyePos,
-			GraphicsAPI::Framebuffer* outputFramebuffer
-		);
-
 		void RenderSsao(uint32_t imageIndex, GraphicsAPI::CommandBuffer* commandBuffer);
 		void RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffer, entt::registry& registry);
-		void RenderLightsCommandBuffer(uint32_t imageIndex, GraphicsAPI::CommandBuffer* currentCommandBuffer, entt::registry& registry);
-		void RenderLightsImmediate(entt::registry& registry);
-		void PostProcessCommandBuffer(uint32_t imageIndex, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer);
-		void PostProcessImmediate(GraphicsAPI::Framebuffer* outputFramebuffer);
-
+		void RenderLights(uint32_t imageIndex, GraphicsAPI::CommandBuffer* currentCommandBuffer, entt::registry& registry);
+		void PostProcess(uint32_t imageIndex, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer);
+		
 		void CreateDepthOfFieldResources();
 		void CreateBloomResources();
 		void CreateSSRResources();
@@ -119,12 +109,12 @@ namespace Grindstone {
 			glm::vec4 vignetteColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 			float vignetteRadius = 0.75f;
 			float vignetteSoftness = 0.8f;
-			float grainAmount = 0.007f;
+			float grainAmount = 0.0007f;
 			float grainPixelSize = 1.0f;
-			glm::vec2 chromaticDistortionRedOffset = glm::vec2(0.0045f, 0.0045f);
-			glm::vec2 chromaticDistortionGreenOffset = glm::vec2(0.003f, 0.003f);
-			glm::vec2 chromaticDistortionBlueOffset = glm::vec2(-0.003f, -0.003f);
-			float paniniDistortionStrength = 1.00f;
+			glm::vec2 chromaticDistortionRedOffset = glm::vec2(0.00045f, 0.00045f);
+			glm::vec2 chromaticDistortionGreenOffset = glm::vec2(0.0003f, 0.0003f);
+			glm::vec2 chromaticDistortionBlueOffset = glm::vec2(-0.0003f, -0.0003f);
+			float paniniDistortionStrength = 0.20f;
 			bool isAnimated = true;
 		};
 
@@ -192,6 +182,10 @@ namespace Grindstone {
 		GraphicsAPI::GraphicsPipeline* dofBlurPipeline = nullptr;
 		GraphicsAPI::GraphicsPipeline* dofCombinationPipeline = nullptr;
 		GraphicsAPI::GraphicsPipeline* shadowMappingPipeline = nullptr;
+
+		GraphicsAPI::DescriptorSetLayout* dofSourceDescriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSetLayout* dofBlurDescriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSetLayout* dofCombinationDescriptorSetLayout = nullptr;
 
 		GraphicsAPI::ComputePipeline* ssrPipeline = nullptr;
 		GraphicsAPI::ComputePipeline* bloomPipeline = nullptr;
