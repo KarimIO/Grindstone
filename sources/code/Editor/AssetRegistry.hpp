@@ -27,8 +27,9 @@ namespace Grindstone::Editor {
 		virtual void UpdateEntry(const std::filesystem::path& path, const std::string& name, Uuid& uuid, AssetType assetType);
 		virtual void WriteFile();
 		virtual void ReadFile();
-		virtual Grindstone::Editor::MetaFile* GetMetaFileByPath(const std::filesystem::path& path);
-		virtual const std::filesystem::path& GetCompiledAssetsPath();
+		virtual Uuid Import(const std::filesystem::path& path);
+		[[nodiscard]] virtual Grindstone::Editor::MetaFile* GetMetaFileByPath(const std::filesystem::path& path);
+		[[nodiscard]] virtual const std::filesystem::path& GetCompiledAssetsPath() const;
 
 		virtual bool HasAsset(Uuid uuid) const;
 		virtual bool TryGetAssetData(const std::filesystem::path& path, AssetRegistry::Entry& outEntry) const;
