@@ -167,7 +167,6 @@ DeferredRenderer::~DeferredRenderer() {
 		graphicsCore->DeleteDepthTarget(imageSet.gbufferDepthTarget);
 		graphicsCore->DeleteFramebuffer(imageSet.litHdrFramebuffer);
 		graphicsCore->DeleteRenderTarget(imageSet.litHdrRenderTarget);
-		// graphicsCore->DeleteDepthTarget(imageSet.litHdrDepthTarget);
 
 		graphicsCore->DeleteDescriptorSet(imageSet.engineDescriptorSet);
 		graphicsCore->DeleteDescriptorSet(imageSet.tonemapDescriptorSet);
@@ -197,60 +196,172 @@ void DeferredRenderer::CreateDepthOfFieldRenderTargetsAndDescriptorSets(Deferred
 		graphicsCore->DeleteRenderTarget(imageSet.farDofRenderTarget);
 	}
 
-	if (imageSet.dofSeparationDescriptorSet != nullptr) {
-		graphicsCore->DeleteDescriptorSet(imageSet.dofSeparationDescriptorSet);
+	if (imageSet.nearBlurredDofRenderTarget != nullptr) {
+		graphicsCore->DeleteRenderTarget(imageSet.nearBlurredDofRenderTarget);
 	}
 
-	if (imageSet.dofBloomDescriptorSet != nullptr) {
-		graphicsCore->DeleteDescriptorSet(imageSet.dofBloomDescriptorSet);
+	if (imageSet.farBlurredDofRenderTarget != nullptr) {
+		graphicsCore->DeleteRenderTarget(imageSet.farBlurredDofRenderTarget);
+	}
+
+	if (imageSet.dofSeparationFramebuffer != nullptr) {
+		graphicsCore->DeleteFramebuffer(imageSet.dofSeparationFramebuffer);
+	}
+
+	if (imageSet.dofNearBlurFramebuffer != nullptr) {
+		graphicsCore->DeleteFramebuffer(imageSet.dofNearBlurFramebuffer);
+	}
+
+	if (imageSet.dofFarBlurFramebuffer != nullptr) {
+		graphicsCore->DeleteFramebuffer(imageSet.dofFarBlurFramebuffer);
+	}
+
+	if (imageSet.dofCombinationFramebuffer != nullptr) {
+		graphicsCore->DeleteFramebuffer(imageSet.dofCombinationFramebuffer);
+	}
+
+	if (imageSet.dofSourceDescriptorSet != nullptr) {
+		graphicsCore->DeleteDescriptorSet(imageSet.dofSourceDescriptorSet);
+	}
+
+	if (imageSet.dofNearBlurDescriptorSet != nullptr) {
+		graphicsCore->DeleteDescriptorSet(imageSet.dofNearBlurDescriptorSet);
+	}
+
+	if (imageSet.dofFarBlurDescriptorSet != nullptr) {
+		graphicsCore->DeleteDescriptorSet(imageSet.dofFarBlurDescriptorSet);
 	}
 
 	if (imageSet.dofCombineDescriptorSet != nullptr) {
 		graphicsCore->DeleteDescriptorSet(imageSet.dofCombineDescriptorSet);
 	}
 
-	GraphicsAPI::RenderTarget::CreateInfo nearRTCreateInfo = { GraphicsAPI::ColorFormat::RGBA16, renderWidth / 2, renderHeight / 2, true, false, "Near DOF Render Target" };
-	imageSet.nearDofRenderTarget = graphicsCore->CreateRenderTarget(nearRTCreateInfo);
+	{
+		GraphicsAPI::RenderTarget::CreateInfo nearRTCreateInfo = { GraphicsAPI::ColorFormat::RGBA16, framebufferWidth / 2, framebufferHeight / 2, true, false, "Near DOF Render Target" };
+		imageSet.nearDofRenderTarget = graphicsCore->CreateRenderTarget(nearRTCreateInfo);
+	}
 
-	GraphicsAPI::RenderTarget::CreateInfo farRTCreateInfo = { GraphicsAPI::ColorFormat::RGBA16, renderWidth / 2, renderHeight / 2, true, false, "Far DOF Render Target" };
-	imageSet.farDofRenderTarget = graphicsCore->CreateRenderTarget(farRTCreateInfo);
+	{
+		GraphicsAPI::RenderTarget::CreateInfo farRTCreateInfo = { GraphicsAPI::ColorFormat::RGBA16, framebufferWidth / 2, framebufferHeight / 2, true, false, "Far DOF Render Target" };
+		imageSet.farDofRenderTarget = graphicsCore->CreateRenderTarget(farRTCreateInfo);
+	}
 
-	std::array<GraphicsAPI::DescriptorSet::Binding, 2> sourceDofDescriptorBindings = {
-		imageSet.litHdrRenderTarget,
-		imageSet.gbufferDepthTarget
-	};
+	{
+		GraphicsAPI::RenderTarget::CreateInfo nearBlurredRTCreateInfo = { GraphicsAPI::ColorFormat::RGBA16, framebufferWidth / 4, framebufferHeight / 4, true, false, "Near Blurred DOF Render Target" };
+		imageSet.nearBlurredDofRenderTarget = graphicsCore->CreateRenderTarget(nearBlurredRTCreateInfo);
+	}
 
-	std::array<GraphicsAPI::DescriptorSet::Binding, 2> nearAndFarDescriptorBindings = {
-		imageSet.nearDofRenderTarget,
-		imageSet.farDofRenderTarget
-	};
+	{
+		GraphicsAPI::RenderTarget::CreateInfo farBlurredRTCreateInfo = { GraphicsAPI::ColorFormat::RGBA16, framebufferWidth / 4, framebufferHeight / 4, true, false, "Far Blurred DOF Render Target" };
+		imageSet.farBlurredDofRenderTarget = graphicsCore->CreateRenderTarget(farBlurredRTCreateInfo);
+	}
 
-	/*
-	GraphicsAPI::DescriptorSet::CreateInfo dofSeparationDescriptorSetCreateInfo{};
-	dofSeparationDescriptorSetCreateInfo.layout = dofSeparationDescriptorSetLayout;
-	dofSeparationDescriptorSetCreateInfo.debugName = "Depth of Field Separation Descriptor";
-	dofSeparationDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(sourceDofDescriptorBindings.size());
-	dofSeparationDescriptorSetCreateInfo.bindings = sourceDofDescriptorBindings.data();
-	imageSet.dofSeparationDescriptorSet = graphicsCore->CreateDescriptorSet(dofSeparationDescriptorSetCreateInfo);
+	{
+		std::array<RenderTarget*, 2> renderTargets = {
+			imageSet.nearDofRenderTarget,
+			imageSet.farDofRenderTarget
+		};
 
-	GraphicsAPI::DescriptorSet::CreateInfo dofBlurNearDescriptorSetCreateInfo{};
-	dofBlurNearDescriptorSetCreateInfo.layout = dofBlurNearDescriptorSetLayout;
-	dofBlurNearDescriptorSetCreateInfo.debugName = "Depth of Field Blur Near Descriptor";
-	dofBlurNearDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(sourceDofDescriptorBindings.size());
-	dofBlurNearDescriptorSetCreateInfo.bindings = sourceDofDescriptorBindings.data();
-	imageSet.dofSeparationDescriptorSet = graphicsCore->CreateDescriptorSet(dofBlurDescriptorSetCreateInfo);
+		GraphicsAPI::Framebuffer::CreateInfo dofSeparationFramebufferCreateInfo{};
+		dofSeparationFramebufferCreateInfo.debugName = "Depth of Field Separation Framebuffer";
+		dofSeparationFramebufferCreateInfo.depthTarget = nullptr;
+		dofSeparationFramebufferCreateInfo.width = framebufferWidth / 2;
+		dofSeparationFramebufferCreateInfo.height = framebufferHeight / 2;
+		dofSeparationFramebufferCreateInfo.isCubemap = false;
+		dofSeparationFramebufferCreateInfo.renderPass = dofSeparationRenderPass;
+		dofSeparationFramebufferCreateInfo.renderTargetLists = renderTargets.data();
+		dofSeparationFramebufferCreateInfo.numRenderTargetLists = static_cast<uint32_t>(renderTargets.size());
+		imageSet.dofSeparationFramebuffer = graphicsCore->CreateFramebuffer(dofSeparationFramebufferCreateInfo);
+	}
 
-	GraphicsAPI::DescriptorSet::CreateInfo dofBlurFarDescriptorSetCreateInfo{};
-	dofBlurFarDescriptorSetCreateInfo.layout = dofBlurFarDescriptorSetLayout;
-	dofBlurFarDescriptorSetCreateInfo.debugName = "Depth of Field Blur Far Descriptor";
-	dofBlurFarDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(sourceDofDescriptorBindings.size());
-	dofBlurFarDescriptorSetCreateInfo.bindings = sourceDofDescriptorBindings.data();
-	imageSet.dofSeparationDescriptorSet = graphicsCore->CreateDescriptorSet(dofBlurDescriptorSetCreateInfo);
+	{
+		GraphicsAPI::Framebuffer::CreateInfo dofSeparationFramebufferCreateInfo{};
+		dofSeparationFramebufferCreateInfo.debugName = "Depth of Field Near Framebuffer";
+		dofSeparationFramebufferCreateInfo.depthTarget = nullptr;
+		dofSeparationFramebufferCreateInfo.width = framebufferWidth / 4;
+		dofSeparationFramebufferCreateInfo.height = framebufferHeight / 4;
+		dofSeparationFramebufferCreateInfo.isCubemap = false;
+		dofSeparationFramebufferCreateInfo.renderPass = dofBlurAndCombinationRenderPass;
+		dofSeparationFramebufferCreateInfo.renderTargetLists = &imageSet.nearBlurredDofRenderTarget;
+		dofSeparationFramebufferCreateInfo.numRenderTargetLists = 1;
+		imageSet.dofNearBlurFramebuffer = graphicsCore->CreateFramebuffer(dofSeparationFramebufferCreateInfo);
+	}
 
-	GraphicsAPI::DescriptorSet::CreateInfo dofCombinationDescriptorSetCreateInfo{};
-	dofCombinationDescriptorSetCreateInfo.layout = dofCombiriptorBindings.data();
-	imageSet.dofSeparationDescriptorSet = graphicsCore->CreateDescriptorSet(dofCombinationDescriptorSetCreateInfo);
-	*/
+	{
+		GraphicsAPI::Framebuffer::CreateInfo dofSeparationFramebufferCreateInfo{};
+		dofSeparationFramebufferCreateInfo.debugName = "Depth of Field Far Framebuffer";
+		dofSeparationFramebufferCreateInfo.depthTarget = nullptr;
+		dofSeparationFramebufferCreateInfo.width = framebufferWidth / 4;
+		dofSeparationFramebufferCreateInfo.height = framebufferHeight / 4;
+		dofSeparationFramebufferCreateInfo.isCubemap = false;
+		dofSeparationFramebufferCreateInfo.renderPass = dofBlurAndCombinationRenderPass;
+		dofSeparationFramebufferCreateInfo.renderTargetLists = &imageSet.farBlurredDofRenderTarget;
+		dofSeparationFramebufferCreateInfo.numRenderTargetLists = 1;
+		imageSet.dofFarBlurFramebuffer = graphicsCore->CreateFramebuffer(dofSeparationFramebufferCreateInfo);
+	}
+
+	{
+		GraphicsAPI::Framebuffer::CreateInfo dofSeparationFramebufferCreateInfo{};
+		dofSeparationFramebufferCreateInfo.debugName = "Depth of Field Combination Framebuffer";
+		dofSeparationFramebufferCreateInfo.depthTarget = nullptr;
+		dofSeparationFramebufferCreateInfo.width = framebufferWidth;
+		dofSeparationFramebufferCreateInfo.height = framebufferHeight;
+		dofSeparationFramebufferCreateInfo.isCubemap = false;
+		dofSeparationFramebufferCreateInfo.renderPass = dofBlurAndCombinationRenderPass;
+		dofSeparationFramebufferCreateInfo.renderTargetLists = &imageSet.litHdrRenderTarget;
+		dofSeparationFramebufferCreateInfo.numRenderTargetLists = 1;
+		imageSet.dofCombinationFramebuffer = graphicsCore->CreateFramebuffer(dofSeparationFramebufferCreateInfo);
+	}
+
+	{
+		std::array<GraphicsAPI::DescriptorSet::Binding, 2> sourceDofDescriptorBindings = {
+			imageSet.gbufferDepthTarget,
+			imageSet.litHdrRenderTarget
+		};
+
+		GraphicsAPI::DescriptorSet::CreateInfo dofSourceDescriptorSetCreateInfo{};
+		dofSourceDescriptorSetCreateInfo.layout = dofSourceDescriptorSetLayout;
+		dofSourceDescriptorSetCreateInfo.debugName = "Depth of Field Source Descriptor";
+		dofSourceDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(sourceDofDescriptorBindings.size());
+		dofSourceDescriptorSetCreateInfo.bindings = sourceDofDescriptorBindings.data();
+		imageSet.dofSourceDescriptorSet = graphicsCore->CreateDescriptorSet(dofSourceDescriptorSetCreateInfo);
+	}
+
+	{
+		GraphicsAPI::DescriptorSet::Binding nearDofDescriptorBinding = { imageSet.nearDofRenderTarget };
+
+		GraphicsAPI::DescriptorSet::CreateInfo dofBlurNearDescriptorSetCreateInfo{};
+		dofBlurNearDescriptorSetCreateInfo.layout = dofBlurDescriptorSetLayout;
+		dofBlurNearDescriptorSetCreateInfo.debugName = "Depth of Field Blur Near Descriptor";
+		dofBlurNearDescriptorSetCreateInfo.bindingCount = 1u;
+		dofBlurNearDescriptorSetCreateInfo.bindings = &nearDofDescriptorBinding;
+		imageSet.dofNearBlurDescriptorSet = graphicsCore->CreateDescriptorSet(dofBlurNearDescriptorSetCreateInfo);
+	}
+
+	{
+		GraphicsAPI::DescriptorSet::Binding farDofDescriptorBinding = { imageSet.farDofRenderTarget };
+
+		GraphicsAPI::DescriptorSet::CreateInfo dofBlurFarDescriptorSetCreateInfo{};
+		dofBlurFarDescriptorSetCreateInfo.layout = dofBlurDescriptorSetLayout;
+		dofBlurFarDescriptorSetCreateInfo.debugName = "Depth of Field Blur Far Descriptor";
+		dofBlurFarDescriptorSetCreateInfo.bindingCount = 1u;
+		dofBlurFarDescriptorSetCreateInfo.bindings = &farDofDescriptorBinding;
+		imageSet.dofFarBlurDescriptorSet = graphicsCore->CreateDescriptorSet(dofBlurFarDescriptorSetCreateInfo);
+	}
+
+	{
+		std::array<GraphicsAPI::DescriptorSet::Binding, 2> nearAndFarDescriptorBindings = {
+			imageSet.nearBlurredDofRenderTarget,
+			imageSet.farBlurredDofRenderTarget
+		};
+
+		GraphicsAPI::DescriptorSet::CreateInfo dofCombinationDescriptorSetCreateInfo{};
+		dofCombinationDescriptorSetCreateInfo.layout = dofCombinationDescriptorSetLayout;
+		dofCombinationDescriptorSetCreateInfo.debugName = "Depth of Field Combination Descriptor";
+		dofCombinationDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(nearAndFarDescriptorBindings.size());
+		dofCombinationDescriptorSetCreateInfo.bindings = nearAndFarDescriptorBindings.data();
+		imageSet.dofCombineDescriptorSet = graphicsCore->CreateDescriptorSet(dofCombinationDescriptorSetCreateInfo);
+	}
 }
 
 void DeferredRenderer::CreateDepthOfFieldResources() {
@@ -261,7 +372,7 @@ void DeferredRenderer::CreateDepthOfFieldResources() {
 	dofSepFormats[1] = ColorFormat::RGBA16;
 
 	RenderPass::CreateInfo dofSepRenderPassCreateInfo{};
-	dofSepRenderPassCreateInfo.debugName = "DOF Separation Render Pass";
+	dofSepRenderPassCreateInfo.debugName = "Depth of Field Separation Render Pass";
 	dofSepRenderPassCreateInfo.colorFormats = dofSepFormats.data();
 	dofSepRenderPassCreateInfo.colorFormatCount = static_cast<uint32_t>(dofSepFormats.size());
 	dofSepRenderPassCreateInfo.depthFormat = DepthFormat::None;
@@ -270,11 +381,49 @@ void DeferredRenderer::CreateDepthOfFieldResources() {
 	ColorFormat dofBlurAndComboFormat = ColorFormat::RGBA16;
 
 	RenderPass::CreateInfo dofBlurAndComboRenderPassCreateInfo{};
-	dofBlurAndComboRenderPassCreateInfo.debugName = "DOF Blur and Combo Render Pass";
+	dofBlurAndComboRenderPassCreateInfo.debugName = "Depth of Field Blur and Combo Render Pass";
 	dofBlurAndComboRenderPassCreateInfo.colorFormats = &dofBlurAndComboFormat;
 	dofBlurAndComboRenderPassCreateInfo.colorFormatCount = 1;
 	dofBlurAndComboRenderPassCreateInfo.depthFormat = DepthFormat::None;
 	dofBlurAndCombinationRenderPass = graphicsCore->CreateRenderPass(dofBlurAndComboRenderPassCreateInfo);
+
+
+	{
+		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 2> sourceDofDescriptorBindings = {
+			GraphicsAPI::DescriptorSetLayout::Binding{ 0, 1, BindingType::DepthTexture, GraphicsAPI::ShaderStageBit::Fragment }, // Depth
+			GraphicsAPI::DescriptorSetLayout::Binding{ 1, 1, BindingType::RenderTexture, GraphicsAPI::ShaderStageBit::Fragment } // Lit Scene
+		};
+
+		GraphicsAPI::DescriptorSetLayout::CreateInfo dofSourceDescriptorSetLayoutCreateInfo{};
+		dofSourceDescriptorSetLayoutCreateInfo.debugName = "Depth of Field Source Descriptor Layout";
+		dofSourceDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(sourceDofDescriptorBindings.size());
+		dofSourceDescriptorSetLayoutCreateInfo.bindings = sourceDofDescriptorBindings.data();
+		dofSourceDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(dofSourceDescriptorSetLayoutCreateInfo);
+	}
+
+	{
+		GraphicsAPI::DescriptorSetLayout::Binding farDofDescriptorBinding
+			{ 0, 1, BindingType::RenderTexture, GraphicsAPI::ShaderStageBit::Fragment };
+
+		GraphicsAPI::DescriptorSetLayout::CreateInfo dofBlurFarDescriptorSetLayoutCreateInfo{};
+		dofBlurFarDescriptorSetLayoutCreateInfo.debugName = "Depth of Field Blur Far Descriptor Layout";
+		dofBlurFarDescriptorSetLayoutCreateInfo.bindingCount = 1u;
+		dofBlurFarDescriptorSetLayoutCreateInfo.bindings = &farDofDescriptorBinding;
+		dofBlurDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(dofBlurFarDescriptorSetLayoutCreateInfo);
+	}
+
+	{
+		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 2> nearAndFarDescriptorBindings = {
+			GraphicsAPI::DescriptorSetLayout::Binding{ 0, 1, BindingType::RenderTexture, GraphicsAPI::ShaderStageBit::Fragment }, // Near RT
+			GraphicsAPI::DescriptorSetLayout::Binding{ 1, 1, BindingType::RenderTexture, GraphicsAPI::ShaderStageBit::Fragment } // Far RT
+		};
+
+		GraphicsAPI::DescriptorSetLayout::CreateInfo dofCombinationDescriptorSetLayoutCreateInfo{};
+		dofCombinationDescriptorSetLayoutCreateInfo.debugName = "Depth of Field Combination Descriptor Layout";
+		dofCombinationDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(nearAndFarDescriptorBindings.size());
+		dofCombinationDescriptorSetLayoutCreateInfo.bindings = nearAndFarDescriptorBindings.data();
+		dofCombinationDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(dofCombinationDescriptorSetLayoutCreateInfo);
+	}
 }
 
 void DeferredRenderer::CreateBloomResources() {
@@ -1230,8 +1379,8 @@ void DeferredRenderer::CreatePipelines() {
 
 	pipelineCreateInfo.width = static_cast<float>(renderWidth);
 	pipelineCreateInfo.height = static_cast<float>(renderHeight);
-	pipelineCreateInfo.scissorW = renderWidth;
-	pipelineCreateInfo.scissorH = renderHeight;
+	pipelineCreateInfo.scissorW = framebufferWidth;
+	pipelineCreateInfo.scissorH = framebufferHeight;
 
 	{
 		ShaderStageCreateInfo bloomShaderStageCreateInfo;
@@ -1412,13 +1561,12 @@ void DeferredRenderer::CreatePipelines() {
 		tonemapPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
 
-#if 0
 	shaderStageCreateInfos.clear();
 	fileData.clear();
 
 	{
 		if (!assetManager->LoadShaderSet(
-			Uuid("9cd38044-b781-4398-a0f9-3aa270701453"),
+			Uuid("fafd3e26-3b40-4c5d-88b5-4a906810bf19"),
 			shaderBits,
 			2,
 			shaderStageCreateInfos,
@@ -1428,17 +1576,22 @@ void DeferredRenderer::CreatePipelines() {
 			return;
 		}
 
+		std::array<DescriptorSetLayout*, 2> layouts = {
+			engineDescriptorSetLayout,
+			dofSourceDescriptorSetLayout
+		};
+
 		pipelineCreateInfo.debugName = "Depth of Field (Separation Stage)";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineCreateInfo.descriptorSetLayouts = &tonemapDescriptorSetLayout;
-		pipelineCreateInfo.descriptorSetLayoutCount = 1;
-		pipelineCreateInfo.colorAttachmentCount = 1;
+		pipelineCreateInfo.descriptorSetLayouts = layouts.data();
+		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(layouts.size());
+		pipelineCreateInfo.colorAttachmentCount = 2;
 		pipelineCreateInfo.blendMode = BlendMode::None;
-		pipelineCreateInfo.renderPass = targetRenderPass;
-		pipelineCreateInfo.isDepthWriteEnabled = true;
-		pipelineCreateInfo.isDepthTestEnabled = true;
-		pipelineCreateInfo.isStencilEnabled = true;
+		pipelineCreateInfo.renderPass = dofSeparationRenderPass;
+		pipelineCreateInfo.isDepthWriteEnabled = false;
+		pipelineCreateInfo.isDepthTestEnabled = false;
+		pipelineCreateInfo.isStencilEnabled = false;
 		dofSeparationPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
 
@@ -1457,17 +1610,22 @@ void DeferredRenderer::CreatePipelines() {
 			return;
 		}
 
+		std::array<DescriptorSetLayout*, 2> layouts = {
+			engineDescriptorSetLayout,
+			dofBlurDescriptorSetLayout
+		};
+
 		pipelineCreateInfo.debugName = "Depth of Field (Blur Stage)";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineCreateInfo.descriptorSetLayouts = &tonemapDescriptorSetLayout;
-		pipelineCreateInfo.descriptorSetLayoutCount = 1;
+		pipelineCreateInfo.descriptorSetLayouts = layouts.data();
+		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(layouts.size());
 		pipelineCreateInfo.colorAttachmentCount = 1;
 		pipelineCreateInfo.blendMode = BlendMode::None;
-		pipelineCreateInfo.renderPass = targetRenderPass;
-		pipelineCreateInfo.isDepthWriteEnabled = true;
-		pipelineCreateInfo.isDepthTestEnabled = true;
-		pipelineCreateInfo.isStencilEnabled = true;
+		pipelineCreateInfo.renderPass = dofBlurAndCombinationRenderPass;
+		pipelineCreateInfo.isDepthWriteEnabled = false;
+		pipelineCreateInfo.isDepthTestEnabled = false;
+		pipelineCreateInfo.isStencilEnabled = false;
 		dofBlurPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
 
@@ -1476,7 +1634,7 @@ void DeferredRenderer::CreatePipelines() {
 
 	{
 		if (!assetManager->LoadShaderSet(
-			Uuid("ca629d4c-b4ed-4da4-9c37-451034ff67cb"),
+			Uuid("6c7f3e48-4439-47c5-a3a2-43441cd2657e"),
 			shaderBits,
 			2,
 			shaderStageCreateInfos,
@@ -1486,23 +1644,28 @@ void DeferredRenderer::CreatePipelines() {
 			return;
 		}
 
+		std::array<DescriptorSetLayout*, 3> layouts = {
+			engineDescriptorSetLayout,
+			dofSourceDescriptorSetLayout,
+			dofCombinationDescriptorSetLayout
+		};
+
 		pipelineCreateInfo.debugName = "Depth of Field (Combination Stage)";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineCreateInfo.descriptorSetLayouts = &tonemapDescriptorSetLayout;
-		pipelineCreateInfo.descriptorSetLayoutCount = 1;
+		pipelineCreateInfo.descriptorSetLayouts = layouts.data();
+		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(layouts.size());
 		pipelineCreateInfo.colorAttachmentCount = 1;
 		pipelineCreateInfo.blendMode = BlendMode::None;
-		pipelineCreateInfo.renderPass = targetRenderPass;
-		pipelineCreateInfo.isDepthWriteEnabled = true;
-		pipelineCreateInfo.isDepthTestEnabled = true;
-		pipelineCreateInfo.isStencilEnabled = true;
+		pipelineCreateInfo.renderPass = dofBlurAndCombinationRenderPass;
+		pipelineCreateInfo.isDepthWriteEnabled = false;
+		pipelineCreateInfo.isDepthTestEnabled = false;
+		pipelineCreateInfo.isStencilEnabled = false;
 		dofCombinationPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
 
 	shaderStageCreateInfos.clear();
 	fileData.clear();
-#endif
 
 	{
 		if (!assetManager->LoadShaderSet(
@@ -1553,65 +1716,107 @@ void DeferredRenderer::CreatePipelines() {
 	pipelineCreateInfo.isDepthBiasEnabled = false;
 }
 
-void DeferredRenderer::RenderLightsImmediate(entt::registry& registry) {
-#if 0
-	GRIND_PROFILE_FUNC();
-	if (pointLightPipeline == nullptr) {
-		return;
-	}
-
-	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-
-	graphicsCore->BindGraphicsPipeline(pointLightPipeline);
-	graphicsCore->EnableDepthWrite(false);
-	litHdrFramebuffer->BindWrite();
-
-	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.f };
-	graphicsCore->Clear(ClearMode::ColorAndDepth, clearColor, 1);
-	graphicsCore->SetImmediateBlending(BlendMode::Additive);
-	gbuffer->BindTextures(2);
-	lightUniformBufferObject->Bind();
-	planePostProcessVao->Bind();
-
-	auto view = registry.view<const TransformComponent, const PointLightComponent>();
-	view.each([&](const TransformComponent& transformComponent, const PointLightComponent& pointLightComponent) {
-		LightmapStruct lightmapStruct{
-			pointLightComponent.color,
-			pointLightComponent.attenuationRadius,
-			transformComponent.position,
-			pointLightComponent.intensity,
-		};
-
-		lightUniformBufferObject->UpdateBuffer(&lightmapStruct);
-		graphicsCore->DrawImmediateIndexed(GeometryType::Triangles, false, 0, 0, 6);
-	});
-#endif
-}
-
 void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer) {
-	return;
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
+	ClearColorValue singleClearColor{ 0.0f, 0.0f, 0.0f, 0.f };
+
+	ClearDepthStencil depthStencilClear;
+	depthStencilClear.hasDepthStencilAttachment = false;
+
 	{
+		std::array<ClearColorValue, 2> clearColors = {
+			ClearColorValue{0.0f, 0.0f, 0.0f, 0.f},
+			ClearColorValue{0.0f, 0.0f, 0.0f, 0.f}
+		};
+
+		currentCommandBuffer->BindRenderPass(
+			dofSeparationRenderPass,
+			imageSet.dofSeparationFramebuffer,
+			renderWidth / 2,
+			renderHeight / 2,
+			clearColors.data(),
+			static_cast<uint32_t>(clearColors.size()),
+			depthStencilClear
+		);
+
+		std::array<DescriptorSet*, 2> descriptorSets = { imageSet.engineDescriptorSet, imageSet.dofSourceDescriptorSet };
 		currentCommandBuffer->BindGraphicsPipeline(dofSeparationPipeline);
-		currentCommandBuffer->BindGraphicsDescriptorSet(dofSeparationPipeline, &imageSet.dofBloomDescriptorSet, 1);
+		currentCommandBuffer->BindGraphicsDescriptorSet(
+			dofSeparationPipeline,
+			descriptorSets.data(),
+			static_cast<uint32_t>(descriptorSets.size())
+		);
 		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+		currentCommandBuffer->UnbindRenderPass();
 	}
 
 	{
+		currentCommandBuffer->BindRenderPass(
+			dofBlurAndCombinationRenderPass,
+			imageSet.dofNearBlurFramebuffer,
+			renderWidth / 4,
+			renderHeight / 4,
+			&singleClearColor,
+			1u,
+			depthStencilClear
+		);
+
+
+		std::array<DescriptorSet*, 2> descriptorSets = { imageSet.engineDescriptorSet, imageSet.dofNearBlurDescriptorSet };
+
 		currentCommandBuffer->BindGraphicsPipeline(dofBlurPipeline);
-
-		currentCommandBuffer->BindGraphicsDescriptorSet(dofBlurPipeline, &imageSet.dofBloomDescriptorSet, 1);
+		currentCommandBuffer->BindGraphicsDescriptorSet(
+			dofBlurPipeline,
+			descriptorSets.data(),
+			static_cast<uint32_t>(descriptorSets.size())
+		);
 		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
-
-		currentCommandBuffer->BindGraphicsDescriptorSet(dofBlurPipeline, &imageSet.dofBloomDescriptorSet, 1);
-		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+		currentCommandBuffer->UnbindRenderPass();
 	}
 
 	{
-		currentCommandBuffer->BindGraphicsPipeline(dofCombinationPipeline);
-		currentCommandBuffer->BindGraphicsDescriptorSet(dofCombinationPipeline, &imageSet.dofBloomDescriptorSet, 1);
+		currentCommandBuffer->BindRenderPass(
+			dofBlurAndCombinationRenderPass,
+			imageSet.dofFarBlurFramebuffer,
+			renderWidth / 4,
+			renderHeight / 4,
+			&singleClearColor,
+			1u,
+			depthStencilClear
+		);
+
+		std::array<DescriptorSet*, 2> descriptorSets = { imageSet.engineDescriptorSet, imageSet.dofFarBlurDescriptorSet };
+
+		currentCommandBuffer->BindGraphicsDescriptorSet(
+			dofBlurPipeline,
+			descriptorSets.data(),
+			static_cast<uint32_t>(descriptorSets.size())
+		);
 		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+		currentCommandBuffer->UnbindRenderPass();
+	}
+
+	{
+		currentCommandBuffer->BindRenderPass(
+			dofBlurAndCombinationRenderPass,
+			imageSet.dofCombinationFramebuffer,
+			renderWidth,
+			renderHeight,
+			nullptr,
+			0u,
+			depthStencilClear
+		);
+
+		std::array<DescriptorSet*, 3> descriptorSets = { imageSet.engineDescriptorSet, imageSet.dofSourceDescriptorSet, imageSet.dofCombineDescriptorSet };
+		currentCommandBuffer->BindGraphicsPipeline(dofCombinationPipeline);
+		currentCommandBuffer->BindGraphicsDescriptorSet(
+			dofCombinationPipeline,
+			descriptorSets.data(),
+			static_cast<uint32_t>(descriptorSets.size())
+		);
+		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+		currentCommandBuffer->UnbindRenderPass();
 	}
 }
 
@@ -1715,7 +1920,7 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 	currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + 1], false);
 }
 
-void DeferredRenderer::RenderLightsCommandBuffer(
+void DeferredRenderer::RenderLights(
 	uint32_t imageIndex,
 	GraphicsAPI::CommandBuffer* currentCommandBuffer,
 	entt::registry& registry
@@ -2090,11 +2295,7 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 	}
 }
 
-void DeferredRenderer::PostProcessImmediate(GraphicsAPI::Framebuffer* outputFramebuffer) {
-
-}
-
-void DeferredRenderer::PostProcessCommandBuffer(
+void DeferredRenderer::PostProcess(
 	uint32_t imageIndex,
 	GraphicsAPI::Framebuffer* framebuffer,
 	GraphicsAPI::CommandBuffer* currentCommandBuffer
@@ -2118,8 +2319,6 @@ void DeferredRenderer::PostProcessCommandBuffer(
 		imageSet.tonemapPostProcessingUniformBufferObject->UpdateBuffer(&postProcessUboData);
 
 		currentCommandBuffer->BindGraphicsDescriptorSet(tonemapPipeline, &imageSet.tonemapDescriptorSet, 1);
-		currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
-		currentCommandBuffer->BindIndexBuffer(indexBuffer);
 
 		{
 			// Tonemapping
@@ -2132,36 +2331,6 @@ void DeferredRenderer::PostProcessCommandBuffer(
 }
 
 void DeferredRenderer::Render(
-	GraphicsAPI::CommandBuffer* commandBuffer,
-	entt::registry& registry,
-	glm::mat4 projectionMatrix,
-	glm::mat4 viewMatrix,
-	glm::vec3 eyePos,
-	GraphicsAPI::Framebuffer* outputFramebuffer
-) {
-	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	if (graphicsCore->ShouldUseImmediateMode()) {
-		RenderImmediate(
-			registry,
-			projectionMatrix,
-			viewMatrix,
-			eyePos,
-			outputFramebuffer
-		);
-	}
-	else {
-		RenderCommandBuffer(
-			commandBuffer,
-			registry,
-			projectionMatrix,
-			viewMatrix,
-			eyePos,
-			outputFramebuffer
-		);
-	}
-}
-
-void DeferredRenderer::RenderCommandBuffer(
 	GraphicsAPI::CommandBuffer* commandBuffer,
 	entt::registry& registry,
 	glm::mat4 projectionMatrix,
@@ -2234,7 +2403,9 @@ void DeferredRenderer::RenderCommandBuffer(
 
 		commandBuffer->BindRenderPass(mainRenderPass, imageSet.litHdrFramebuffer, renderWidth, renderHeight, &clearColor, 1, clearDepthStencil);
 
-		RenderLightsCommandBuffer(imageIndex, commandBuffer, registry);
+		commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
+		commandBuffer->BindIndexBuffer(indexBuffer);
+		RenderLights(imageIndex, commandBuffer, registry);
 
 		assetManager->RenderQueue(commandBuffer, "Unlit");
 		assetManager->RenderQueue(commandBuffer, "Skybox");
@@ -2243,45 +2414,10 @@ void DeferredRenderer::RenderCommandBuffer(
 		commandBuffer->UnbindRenderPass();
 	}
 
-	RenderSsr(imageSet, commandBuffer);
+	commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
+	commandBuffer->BindIndexBuffer(indexBuffer);
 
-	PostProcessCommandBuffer(imageIndex, outputFramebuffer, commandBuffer);
-}
+	// RenderSsr(imageSet, commandBuffer);
 
-void DeferredRenderer::RenderImmediate(
-	entt::registry& registry,
-	glm::mat4 projectionMatrix,
-	glm::mat4 viewMatrix,
-	glm::vec3 eyePos,
-	GraphicsAPI::Framebuffer* outputFramebuffer
-) {
-#if 0
-	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	auto assetManager = EngineCore::GetInstance().assetRendererManager;
-	graphicsCore->ResizeViewport(width, height);
-
-	gbuffer->BindWrite();
-	gbuffer->BindRead();
-
-	float clearColor[4] = { 0.3f, 0.6f, 0.9f, 1.f };
-	graphicsCore->Clear(ClearMode::ColorAndDepth, clearColor, 1);
-
-	globalUniformBufferObject->Bind();
-	assetManager->SetEngineDescriptorSet(engineDescriptorSet);
-
-	graphicsCore->EnableDepthWrite(true);
-	graphicsCore->SetImmediateBlending(BlendMode::None);
-	EngineCore::GetInstance().assetRendererManager->RenderQueueImmediate("Opaque");
-
-	RenderLightsImmediate(registry);
-
-	EngineCore::GetInstance().assetRendererManager->RenderQueueImmediate("Unlit");
-
-	graphicsCore->EnableDepthWrite(false);
-	graphicsCore->CopyDepthBufferFromReadToWrite(width, height, width, height);
-	graphicsCore->SetImmediateBlending(BlendMode::AdditiveAlpha);
-	EngineCore::GetInstance().assetRendererManager->RenderQueueImmediate("Transparent");
-
-	PostProcessImmediate(outputFramebuffer);
-#endif
+	PostProcess(imageIndex, outputFramebuffer, commandBuffer);
 }
