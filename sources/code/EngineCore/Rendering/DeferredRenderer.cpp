@@ -870,32 +870,36 @@ void DeferredRenderer::UpdateBloomUBO() {
 	if (bloomMipLevelCount > 1) {
 		bloomUboStruct.outReciprocalImgSize = mipSizes[0];
 		bloomUniformBuffers[bloomUboIndex++]->UpdateBuffer(&bloomUboStruct);
-	}
 
-	bloomUboStruct.stage = BloomStage::Downsample;
-	for (size_t i = 1; i < bloomMipLevelCount - 1; ++i) {
-		bloomUboStruct.outReciprocalImgSize = mipSizes[i + 1];
-		bloomUniformBuffers[bloomUboIndex++]->UpdateBuffer(&bloomUboStruct);
-	}
+		bloomUboStruct.stage = BloomStage::Downsample;
+		for (size_t i = 1; i < bloomMipLevelCount - 1; ++i) {
+			bloomUboStruct.outReciprocalImgSize = mipSizes[i + 1];
+			bloomUniformBuffers[bloomUboIndex++]->UpdateBuffer(&bloomUboStruct);
+		}
 
-	bloomUboStruct.stage = BloomStage::Upsample;
-	{
-		bloomUboStruct.outReciprocalImgSize = mipSizes[bloomMipLevelCount - 1];
-		bloomUboStruct.inReciprocalImgSize = mipSizes[bloomMipLevelCount - 2];
-		bloomUniformBuffers[bloomFirstUpsampleIndex]->UpdateBuffer(&bloomUboStruct);
-	}
+		bloomUboStruct.stage = BloomStage::Upsample;
+		{
+			bloomUboStruct.outReciprocalImgSize = mipSizes[bloomMipLevelCount - 1];
+			bloomUboStruct.inReciprocalImgSize = mipSizes[bloomMipLevelCount - 2];
+			bloomUniformBuffers[bloomFirstUpsampleIndex]->UpdateBuffer(&bloomUboStruct);
+		}
 
-	bloomUboIndex = static_cast<uint32_t>((bloomStoredMipLevelCount * 2) - bloomMipLevelCount);
-	for (size_t i = bloomMipLevelCount - 2; i >= 1; --i) {
-		bloomUboStruct.outReciprocalImgSize = mipSizes[i];
-		bloomUboStruct.inReciprocalImgSize = mipSizes[i - 1];
-		bloomUniformBuffers[bloomUboIndex++]->UpdateBuffer(&bloomUboStruct);
-	}
+		bloomUboIndex = static_cast<uint32_t>((bloomStoredMipLevelCount * 2) - bloomMipLevelCount);
+		for (size_t i = bloomMipLevelCount - 2; i >= 1; --i) {
+			bloomUboStruct.outReciprocalImgSize = mipSizes[i];
+			bloomUboStruct.inReciprocalImgSize = mipSizes[i - 1];
+			bloomUniformBuffers[bloomUboIndex++]->UpdateBuffer(&bloomUboStruct);
+		}
 
+	}
 }
 
 void DeferredRenderer::UpdateBloomDescriptorSet(DeferredRendererImageSet& imageSet) {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+
+	if (bloomMipLevelCount == 0) {
+		return;
+	}
 
 	std::array<DescriptorSet::Binding, 3> bindings;
 	bindings[0].itemPtr = imageSet.bloomRenderTargets[(bloomStoredMipLevelCount * 2) - bloomMipLevelCount + 2];
@@ -1724,6 +1728,8 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 	ClearDepthStencil depthStencilClear;
 	depthStencilClear.hasDepthStencilAttachment = false;
 
+	currentCommandBuffer->BeginDebugLabelSection("Depth of Field Pass", nullptr);
+
 	{
 		std::array<ClearColorValue, 2> clearColors = {
 			ClearColorValue{0.0f, 0.0f, 0.0f, 0.f},
@@ -1818,6 +1824,8 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 		currentCommandBuffer->UnbindRenderPass();
 	}
+
+	currentCommandBuffer->EndDebugLabelSection();
 }
 
 void DeferredRenderer::RenderSsr(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer) {
@@ -1840,7 +1848,7 @@ void DeferredRenderer::RenderSsr(DeferredRendererImageSet& imageSet, GraphicsAPI
 }
 
 void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer) {
-	if (bloomPipeline == nullptr) {
+	if (bloomPipeline == nullptr || bloomMipLevelCount == 0) {
 		return;
 	}
 
@@ -2304,7 +2312,7 @@ void DeferredRenderer::PostProcess(
 
 	auto& imageSet = deferredRendererImageSets[imageIndex];
 
-	RenderDepthOfField(imageSet, currentCommandBuffer);
+	// RenderDepthOfField(imageSet, currentCommandBuffer);
 	RenderBloom(imageSet, currentCommandBuffer);
 
 	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };

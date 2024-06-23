@@ -114,7 +114,7 @@ namespace Grindstone {
 			glm::vec2 chromaticDistortionRedOffset = glm::vec2(0.00045f, 0.00045f);
 			glm::vec2 chromaticDistortionGreenOffset = glm::vec2(0.0003f, 0.0003f);
 			glm::vec2 chromaticDistortionBlueOffset = glm::vec2(-0.0003f, -0.0003f);
-			float paniniDistortionStrength = 0.20f;
+			float paniniDistortionStrength = 0.0f;
 			bool isAnimated = true;
 		};
 
