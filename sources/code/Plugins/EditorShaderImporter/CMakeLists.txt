@@ -48,7 +48,7 @@ target_precompile_headers(PluginEditorShaderImporter PUBLIC pch.hpp)
 target_link_libraries(PluginEditorShaderImporter
 	Rpcrt4.lib
 	spirv-cross-c spirv-cross-core spirv-cross-cpp spirv-cross-glsl spirv-cross-reflect
-	glslang::SPIRV glslang::HLSL glslang::glslang glslang::OGLCompiler
+	glslang::glslang glslang::glslang-default-resource-limits glslang::SPIRV glslang::SPVRemapper
 	unofficial::shaderc::shaderc
 	SPIRV-Tools-opt SPIRV-Tools-static
 	spirv-cross-reflect

@@ -93,7 +93,7 @@ find_package(gl3w CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 
 find_package(fmt CONFIG REQUIRED)
-find_package(imguizmo CONFIG REQUIRED)
+find_package(unofficial-imguizmo CONFIG REQUIRED)
 find_package(unofficial-libgit2 CONFIG REQUIRED)
 set(MONO_PATH CACHE PATH "Mono Path")
 
@@ -120,6 +120,6 @@ target_link_libraries(
 	unofficial::gl3w::gl3w
 	glm::glm
 	opengl32
-	imgui::imgui imguizmo::imguizmo
+	imgui::imgui unofficial::imguizmo::imguizmo
 	${CMAKE_DL_LIBS}
 )
