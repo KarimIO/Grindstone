@@ -102,9 +102,11 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	}
 
 	ImGui_ImplGlfw_InitForVulkan(static_cast<Grindstone::GlfwWindow*>(window)->GetHandle(), true);
+	auto vulkanRenderPass = static_cast<Grindstone::GraphicsAPI::VulkanRenderPass*>(wgb->GetRenderPass());
 
 	ImGui_ImplVulkan_InitInfo imguiInitInfo{};
 	imguiInitInfo.Instance = vulkanCore->GetInstance();
+	imguiInitInfo.RenderPass = vulkanRenderPass->GetRenderPassHandle();
 	imguiInitInfo.PhysicalDevice = vulkanCore->GetPhysicalDevice();
 	imguiInitInfo.Device = vulkanCore->GetDevice();
 	imguiInitInfo.Queue = vulkanCore->graphicsQueue;
@@ -113,8 +115,7 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	imguiInitInfo.ImageCount = 3;
 	imguiInitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-	auto vulkanRenderPass = static_cast<Grindstone::GraphicsAPI::VulkanRenderPass*>(wgb->GetRenderPass());
-	ImGui_ImplVulkan_Init(&imguiInitInfo, vulkanRenderPass->GetRenderPassHandle());
+	ImGui_ImplVulkan_Init(&imguiInitInfo);
 
 	Grindstone::GraphicsAPI::CommandBuffer::CreateInfo commandBufferCreateInfo{};
 
