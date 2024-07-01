@@ -14,7 +14,7 @@ using namespace Grindstone::Assets;
 using namespace Grindstone::Editor;
 using namespace Grindstone::Importers;
 
-static void ImportScene(AssetRegistry& assetRegistry, AssetManager& assetManager, const std::filesystem::path& path) {
+static void ImportCopyFile(Grindstone::AssetType assetType, AssetRegistry& assetRegistry, AssetManager& assetManager, const std::filesystem::path& path) {
 	Grindstone::Editor::MetaFile* metaFile = assetRegistry.GetMetaFileByPath(path);
 	std::string subassetName = path.filename().string();
 	size_t dotPos = subassetName.find('.');
@@ -22,34 +22,23 @@ static void ImportScene(AssetRegistry& assetRegistry, AssetManager& assetManager
 		subassetName = subassetName.substr(0, dotPos);
 	}
 
-	Grindstone::Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, Grindstone::AssetType::Scene);
+	Grindstone::Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, assetType);
 
 	std::filesystem::path outputPath = Grindstone::Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
 	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
 	metaFile->Save();
 
-	assetManager.QueueReloadAsset(Grindstone::AssetType::Scene, uuid);
+	assetManager.QueueReloadAsset(assetType, uuid);
 
 	delete metaFile;
 }
 
+static void ImportScene(AssetRegistry& assetRegistry, AssetManager& assetManager, const std::filesystem::path& path) {
+	ImportCopyFile(Grindstone::AssetType::Scene, assetRegistry, assetManager, path);
+}
+
 static void ImportDdsTexture(AssetRegistry& assetRegistry, AssetManager& assetManager, const std::filesystem::path& path) {
-	Grindstone::Editor::MetaFile* metaFile = assetRegistry.GetMetaFileByPath(path);
-	std::string subassetName = path.filename().string();
-	size_t dotPos = subassetName.find('.');
-	if (dotPos != std::string::npos) {
-		subassetName = subassetName.substr(0, dotPos);
-	}
-
-	Grindstone::Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, Grindstone::AssetType::Texture);
-
-	std::filesystem::path outputPath = Grindstone::Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
-	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
-	metaFile->Save();
-
-	assetManager.QueueReloadAsset(Grindstone::AssetType::Texture, uuid);
-
-	delete metaFile;
+	ImportCopyFile(Grindstone::AssetType::Texture, assetRegistry, assetManager, path);
 }
 
 ImporterManager::ImporterManager() {
