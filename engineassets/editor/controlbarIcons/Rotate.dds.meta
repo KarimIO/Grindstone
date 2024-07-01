@@ -5,7 +5,7 @@
         {
             "name": "Rotate",
             "uuid": "e4caeb3e-f3d5-408d-b567-b0ff67c3e157",
-            "type": "Scene"
+            "type": "Texture"
         }
     ]
 }

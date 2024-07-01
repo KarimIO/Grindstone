@@ -5,7 +5,7 @@
         {
             "name": "ConsoleTrace",
             "uuid": "f0a4f222-2047-4a19-bc9c-40ac7663c415",
-            "type": "Scene"
+            "type": "Texture"
         }
     ]
 }
