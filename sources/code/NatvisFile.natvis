@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+	<Type Name="Grindstone::Uuid">
+		<DisplayString>{{{uuid[0],nvoxb}{uuid[1],nvoxb}{uuid[2],nvoxb}{uuid[3],nvoxb}-{uuid[4],nvoxb}{uuid[5],nvoxb}-{uuid[6],nvoxb}{uuid[7],nvoxb}-{uuid[8],nvoxb}{uuid[9],nvoxb}-{uuid[10],nvoxb}{uuid[11],nvoxb}{uuid[12],nvoxb}{uuid[13],nvoxb}{uuid[14],nvoxb}{uuid[15],nvoxb}}}</DisplayString>
+	</Type>
+</AutoVisualizer>
