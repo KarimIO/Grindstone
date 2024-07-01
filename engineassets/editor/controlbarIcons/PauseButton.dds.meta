@@ -5,7 +5,7 @@
         {
             "name": "PauseButton",
             "uuid": "09f16d03-6d90-47b8-a884-c33e347fe17b",
-            "type": "Scene"
+            "type": "Texture"
         }
     ]
 }

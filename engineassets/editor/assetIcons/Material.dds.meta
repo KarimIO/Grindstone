@@ -3,9 +3,9 @@
     "defaultUuid": "6b6994c4-5315-41ba-86ae-00a162fd27eb",
     "subassets": [
         {
-            "name": "material",
+            "name": "Material",
             "uuid": "6b6994c4-5315-41ba-86ae-00a162fd27eb",
-            "type": "Scene"
+            "type": "Texture"
         }
     ]
 }

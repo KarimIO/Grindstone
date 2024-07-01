@@ -5,7 +5,7 @@
         {
             "name": "GitBranch",
             "uuid": "963c29b3-aa19-4a92-9732-5dd6af24ed6d",
-            "type": "Scene"
+            "type": "Texture"
         }
     ]
 }
