@@ -28,6 +28,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	engineBinaryPath = createInfo.engineBinaryPath;
 	binaryPath = projectPath / "bin/";
 	assetsPath = projectPath / "compiledAssets/";
+	engineAssetsPath = engineBinaryPath.parent_path() / "engineassets";
 	eventDispatcher = new Events::Dispatcher();
 
 	firstFrameTime = std::chrono::steady_clock::now();
@@ -216,6 +217,10 @@ std::filesystem::path EngineCore::GetEngineBinaryPath() const {
 
 std::filesystem::path EngineCore::GetAssetsPath() const {
 	return assetsPath;
+}
+
+std::filesystem::path EngineCore::GetEngineAssetsPath() const {
+	return engineAssetsPath;
 }
 
 std::filesystem::path EngineCore::GetAssetPath(std::string subPath) const {

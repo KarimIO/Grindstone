@@ -97,7 +97,7 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 
 	assetRegistry.Initialize(projectPath);
 	projectAssetFileManager.Initialize(assetsPath);
-	editorAssetFileManager.Initialize(engineBinariesPath / "../engineassets");
+	editorAssetFileManager.Initialize(engineBinariesPath.parent_path() / "engineassets");
 
 	while (taskSystem.HasRunningTasks()) {
 		Sleep(100);

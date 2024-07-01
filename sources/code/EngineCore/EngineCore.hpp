@@ -84,6 +84,7 @@ namespace Grindstone {
 		virtual std::filesystem::path GetBinaryPath() const;
 		virtual std::filesystem::path GetEngineBinaryPath() const;
 		virtual std::filesystem::path GetAssetsPath() const;
+		virtual std::filesystem::path GetEngineAssetsPath() const;
 		virtual std::filesystem::path GetAssetPath(std::string subPath) const;
 		virtual void ReloadCsharpBinaries();
 
@@ -123,6 +124,7 @@ namespace Grindstone {
 		std::filesystem::path projectPath;
 		std::filesystem::path binaryPath;
 		std::filesystem::path engineBinaryPath;
+		std::filesystem::path engineAssetsPath;
 		std::filesystem::path assetsPath;
 	};
 }
