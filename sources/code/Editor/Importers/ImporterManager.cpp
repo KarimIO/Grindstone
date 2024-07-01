@@ -41,7 +41,7 @@ static void ImportDdsTexture(AssetRegistry& assetRegistry, AssetManager& assetMa
 		subassetName = subassetName.substr(0, dotPos);
 	}
 
-	Grindstone::Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, Grindstone::AssetType::Scene);
+	Grindstone::Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, Grindstone::AssetType::Texture);
 
 	std::filesystem::path outputPath = Grindstone::Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
 	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
