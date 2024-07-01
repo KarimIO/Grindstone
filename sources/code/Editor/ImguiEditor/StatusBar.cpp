@@ -11,9 +11,9 @@ using namespace Grindstone::Editor;
 using namespace Grindstone::Editor::ImguiEditor;
 
 StatusBar::StatusBar(ImguiRenderer* imguiRenderer) {
-	gitBranchIcon = imguiRenderer->CreateTexture("gitIcons/GitBranch.png");
-	gitAheadBehindIcon = imguiRenderer->CreateTexture("gitIcons/GitAheadBehind.png");
-	gitChangesIcon = imguiRenderer->CreateTexture("gitIcons/GitChanges.png");
+	gitBranchIcon = imguiRenderer->CreateTexture("gitIcons/GitBranch.dds");
+	gitAheadBehindIcon = imguiRenderer->CreateTexture("gitIcons/GitAheadBehind.dds");
+	gitChangesIcon = imguiRenderer->CreateTexture("gitIcons/GitChanges.dds");
 }
 
 void StatusBar::Render() {

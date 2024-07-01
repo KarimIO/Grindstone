@@ -5,7 +5,7 @@
         {
             "name": "ConsoleWarning",
             "uuid": "cbb07a96-59e4-4abc-8db3-95011520e96b",
-            "type": "Texture"
+            "type": "Scene"
         }
     ]
 }

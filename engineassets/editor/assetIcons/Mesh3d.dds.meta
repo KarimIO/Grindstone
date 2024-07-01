@@ -5,7 +5,7 @@
         {
             "name": "Mesh3d",
             "uuid": "869e1066-f23e-4540-a54b-5c9f9f141264",
-            "type": "Texture"
+            "type": "Scene"
         }
     ]
 }

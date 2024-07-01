@@ -5,7 +5,7 @@
         {
             "name": "Shader",
             "uuid": "a26779ed-ca33-4ed5-acdd-6964c1d919eb",
-            "type": "Texture"
+            "type": "Scene"
         }
     ]
 }

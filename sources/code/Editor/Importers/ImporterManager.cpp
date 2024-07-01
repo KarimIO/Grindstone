@@ -33,8 +33,28 @@ static void ImportScene(AssetRegistry& assetRegistry, AssetManager& assetManager
 	delete metaFile;
 }
 
+static void ImportDdsTexture(AssetRegistry& assetRegistry, AssetManager& assetManager, const std::filesystem::path& path) {
+	Grindstone::Editor::MetaFile* metaFile = assetRegistry.GetMetaFileByPath(path);
+	std::string subassetName = path.filename().string();
+	size_t dotPos = subassetName.find('.');
+	if (dotPos != std::string::npos) {
+		subassetName = subassetName.substr(0, dotPos);
+	}
+
+	Grindstone::Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, Grindstone::AssetType::Scene);
+
+	std::filesystem::path outputPath = Grindstone::Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
+	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
+	metaFile->Save();
+
+	assetManager.QueueReloadAsset(Grindstone::AssetType::Texture, uuid);
+
+	delete metaFile;
+}
+
 ImporterManager::ImporterManager() {
 	AddImporterFactory("json", ImportScene);
+	AddImporterFactory("dds", ImportDdsTexture);
 }
 
 bool ImporterManager::Import(const std::filesystem::path& path) {

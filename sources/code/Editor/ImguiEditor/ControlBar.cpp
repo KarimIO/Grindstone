@@ -8,11 +8,11 @@ using namespace Grindstone::Editor;
 using namespace Grindstone::Editor::ImguiEditor;
 
 ControlBar::ControlBar(ImguiRenderer* imguiRenderer) {
-	pauseIcon = imguiRenderer->CreateTexture("controlbarIcons/PauseButton.png");
-	playIcon = imguiRenderer->CreateTexture("controlbarIcons/PlayButton.png");
-	translateIcon = imguiRenderer->CreateTexture("controlbarIcons/Translate.png");
-	rotateIcon = imguiRenderer->CreateTexture("controlbarIcons/Rotate.png");
-	scaleIcon = imguiRenderer->CreateTexture("controlbarIcons/Scale.png");
+	pauseIcon = imguiRenderer->CreateTexture("controlbarIcons/PauseButton.dds");
+	playIcon = imguiRenderer->CreateTexture("controlbarIcons/PlayButton.dds");
+	translateIcon = imguiRenderer->CreateTexture("controlbarIcons/Translate.dds");
+	rotateIcon = imguiRenderer->CreateTexture("controlbarIcons/Rotate.dds");
+	scaleIcon = imguiRenderer->CreateTexture("controlbarIcons/Scale.dds");
 }
 
 void ControlBar::Render() {

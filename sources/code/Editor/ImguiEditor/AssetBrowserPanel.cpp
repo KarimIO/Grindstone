@@ -43,12 +43,12 @@ static std::filesystem::path GetNewDefaultPath(const std::filesystem::path& base
 AssetBrowserPanel::AssetBrowserPanel(ImguiRenderer* imguiRenderer, EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore), rootDirectory(Editor::Manager::GetFileManager().GetRootDirectory()) {
 	pathToRename = "";
 
-	iconIds.folderIcon = imguiRenderer->CreateTexture("assetIcons/Folder.png");
+	iconIds.folderIcon = imguiRenderer->CreateTexture("assetIcons/Folder.dds");
 
 	for (uint16_t i = 0; i < static_cast<uint16_t>(AssetType::Count); ++i) {
 		auto assetType = static_cast<AssetType>(i);
 
-		iconIds.fileIcons[i] = imguiRenderer->CreateTexture(std::string("assetIcons/") + std::string(GetAssetTypeToString(assetType)) + ".png");
+		iconIds.fileIcons[i] = imguiRenderer->CreateTexture(std::string("assetIcons/") + std::string(GetAssetTypeToString(assetType)) + ".dds");
 	}
 
 	currentDirectory = &rootDirectory;

@@ -13,10 +13,10 @@ using namespace Grindstone;
 using namespace Grindstone::Editor::ImguiEditor;
 
 ConsolePanel::ConsolePanel(ImguiRenderer* imguiRenderer) {
-	consoleErrorIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleError.png");
-	consoleWarningIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleWarning.png");
-	consoleTraceIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleTrace.png");
-	consoleInfoIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleInfo.png");
+	consoleErrorIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleError.dds");
+	consoleWarningIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleWarning.dds");
+	consoleTraceIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleTrace.dds");
+	consoleInfoIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleInfo.dds");
 
 	auto dispatcher = Editor::Manager::GetEngineCore().GetEventDispatcher();
 	dispatcher->AddEventListener(Events::EventType::PrintMessage, std::bind(&ConsolePanel::AddConsoleMessage, this, std::placeholders::_1));
