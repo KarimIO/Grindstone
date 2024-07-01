@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "defaultUuid": "443e5653-cf47-41d7-8f22-c5b35bbc09f9",
+    "subassets": [
+        {
+            "name": "PlayButton",
+            "uuid": "443e5653-cf47-41d7-8f22-c5b35bbc09f9",
+            "type": "Scene"
+        }
+    ]
+}

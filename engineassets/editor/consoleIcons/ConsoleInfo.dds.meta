@@ -5,7 +5,7 @@
         {
             "name": "ConsoleInfo",
             "uuid": "09ff7a46-fd6c-4112-bf81-87a69d7da40b",
-            "type": "Texture"
+            "type": "Scene"
         }
     ]
 }

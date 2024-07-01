@@ -5,7 +5,7 @@
         {
             "name": "Animation",
             "uuid": "472d54a3-2303-456a-9bf4-8040373b0403",
-            "type": "Texture"
+            "type": "Scene"
         }
     ]
 }
