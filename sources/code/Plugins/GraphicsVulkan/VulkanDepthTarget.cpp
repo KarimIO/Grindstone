@@ -58,7 +58,7 @@ void VulkanDepthTarget::Create() {
 
 		{
 			std::string imageSamplerDebugName = debugName + " Sampler";
-			VulkanCore::Get().NameObject(VK_OBJECT_TYPE_SAMPLER, sampler, debugName.c_str());
+			VulkanCore::Get().NameObject(VK_OBJECT_TYPE_SAMPLER, sampler, imageSamplerDebugName.c_str());
 		}
 	}
 }
