@@ -1,6 +1,7 @@
 #pragma once
 
 using DWORD = unsigned long;
+using UINT = unsigned int;
 
 struct DDS_PIXELFORMAT {
 	DWORD dwSize = 32;
@@ -32,6 +33,8 @@ constexpr DWORD DDSD_REQUIRED =
 	DDSD_PIXELFORMAT |
 	DDSD_LINEARSIZE;
 
+const unsigned int DDS_RESOURCE_MISC_TEXTURECUBE = 0x4;
+
 struct DDSHeader {
 	DWORD           dwSize = 124;
 	DWORD           dwFlags;
@@ -49,7 +52,7 @@ struct DDSHeader {
 	DWORD           dwReserved2;
 };
 
-enum class DxgiFormat : uint32_t {
+enum class DxgiFormat {
 	DXGI_FORMAT_UNKNOWN = 0,
 	DXGI_FORMAT_R32G32B32A32_TYPELESS = 1,
 	DXGI_FORMAT_R32G32B32A32_FLOAT = 2,
@@ -174,7 +177,7 @@ enum class DxgiFormat : uint32_t {
 	DXGI_FORMAT_FORCE_UINT = 0xffffffff
 };
 
-enum class D3d10ResourceDimension : uint32_t {
+enum class D3d10ResourceDimension {
 	D3D10_RESOURCE_DIMENSION_UNKNOWN = 0,
 	D3D10_RESOURCE_DIMENSION_BUFFER = 1,
 	D3D10_RESOURCE_DIMENSION_TEXTURE1D = 2,
@@ -185,9 +188,9 @@ enum class D3d10ResourceDimension : uint32_t {
 struct DDSHeaderExtended {
 	DxgiFormat dxgiFormat = DxgiFormat::DXGI_FORMAT_UNKNOWN;
 	D3d10ResourceDimension resourceDimension = D3d10ResourceDimension::D3D10_RESOURCE_DIMENSION_TEXTURE2D;
-	uint32_t miscFlag;
-	uint32_t arraySize;
-	uint32_t miscFlags2;
+	UINT miscFlag;
+	UINT arraySize;
+	UINT miscFlags2;
 };
 
 constexpr DWORD MakeFourCC(char c0, char c1, char c2, char c3) {

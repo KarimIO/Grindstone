@@ -1,5 +1,8 @@
 set(EDITORTEXTUREIMPORTER_SOURCES
+	Bc6Encoder.cpp
+	S3tcEncoder.cpp
 	TextureImporter.cpp
+	DdsFileWriter.cpp
 	${COMMON_DIR}/ResourcePipeline/AssetType.cpp
 	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp
 	${COMMON_DIR}/ResourcePipeline/Uuid.cpp
@@ -9,7 +12,10 @@ set(EDITORTEXTUREIMPORTER_SOURCES
 )
 
 set(EDITORTEXTUREIMPORTER_HEADERS
+	Bc6Encoder.hpp
+	S3tcEncoder.hpp
 	TextureImporter.hpp
+	DdsFileWriter.hpp
 	${COMMON_DIR}/ResourcePipeline/AssetType.hpp
 	${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
 	${COMMON_DIR}/ResourcePipeline/Uuid.hpp
