@@ -1,43 +1,50 @@
 #include <filesystem>
-#include "Common/Formats/Dds.hpp"
-#include "Common/Graphics/Core.hpp"
-#include "EngineCore/EngineCore.hpp"
-#include "EngineCore/Utils/Utilities.hpp"
-#include "EngineCore/Assets/AssetManager.hpp"
+#include <string>
+#include <string_view>
+
+#include <Common/Formats/Dds.hpp>
+#include <Common/Graphics/Core.hpp>
+#include <Common/ResourcePipeline/Uuid.hpp>
+#include <EngineCore/Assets/AssetManager.hpp>
+#include <EngineCore/EngineCore.hpp>
+
 #include "TextureImporter.hpp"
+
 using namespace Grindstone;
 
 void* TextureImporter::ProcessLoadedFile(Uuid uuid) {
 	char* fileContents;
 	size_t fileSize;
+	std::string assetName;
 
 	EngineCore& engineCore = EngineCore::GetInstance();
-	if (!engineCore.assetManager->LoadFile(AssetType::Texture, uuid, fileContents, fileSize)) {
+	if (!engineCore.assetManager->LoadFile(AssetType::Texture, uuid, assetName, fileContents, fileSize)) {
 		std::string errorMsg = "Unable to load texture: " + uuid.ToString();
 		engineCore.Print(LogSeverity::Warning, errorMsg.c_str());
 		return nullptr;
 	}
 
 	auto asset = assets.emplace(uuid, TextureAsset());
-	return ProcessLoadedFile(uuid, fileContents, fileSize, asset.first->second);
+	return ProcessLoadedFile(uuid, assetName, fileContents, fileSize, asset.first->second);
 }
 
 void* TextureImporter::ProcessLoadedFile(const char* path) {
 	char* fileContents;
 	size_t fileSize;
+	std::string assetName;
 
 	EngineCore& engineCore = EngineCore::GetInstance();
-	if (!engineCore.assetManager->LoadFile(AssetType::Texture, path, fileContents, fileSize)) {
+	if (!engineCore.assetManager->LoadFile(AssetType::Texture, path, assetName, fileContents, fileSize)) {
 		std::string errorMsg = std::string("Unable to load texture: ") + path;
 		engineCore.Print(LogSeverity::Warning, errorMsg.c_str());
 		return nullptr;
 	}
 
 	auto asset = texturesByPath.emplace(path, TextureAsset());
-	return ProcessLoadedFile(Uuid(), fileContents, fileSize, asset.first->second);
+	return ProcessLoadedFile(Uuid(), assetName, fileContents, fileSize, asset.first->second);
 }
 
-void* TextureImporter::ProcessLoadedFile(Uuid uuid, const char* fileContents, size_t fileSize, TextureAsset& textureAsset) {
+void* TextureImporter::ProcessLoadedFile(Uuid uuid, std::string& assetName, const char* fileContents, size_t fileSize, TextureAsset& textureAsset) {
 	EngineCore& engineCore = EngineCore::GetInstance();
 
 	if (strncmp(fileContents, "DDS ", 4) != 0) {
@@ -129,10 +136,8 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, const char* fileContents, si
 		imgPtr += sizeof(DDSHeaderExtended);
 	}
 
-	std::string debugName = uuid.ToString();
-
 	Grindstone::GraphicsAPI::Texture::CreateInfo createInfo;
-	createInfo.debugName = debugName.c_str();
+	createInfo.debugName = assetName.c_str();
 	createInfo.data = imgPtr;
 	createInfo.size = header.dwSize;
 	createInfo.mipmaps = static_cast<uint16_t>(header.dwMipMapCount);
@@ -151,7 +156,7 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, const char* fileContents, si
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	Grindstone::GraphicsAPI::Texture* texture = graphicsCore->CreateTexture(createInfo);
 
-	textureAsset = TextureAsset(uuid, debugName, texture);
+	textureAsset = TextureAsset(uuid, assetName, texture);
 	return &textureAsset;
 }
 
@@ -182,12 +187,13 @@ void TextureImporter::QueueReloadAsset(Uuid uuid) {
 
 	char* fileContents;
 	size_t fileSize;
+	std::string assetName;
 
-	if (!engineCore.assetManager->LoadFile(AssetType::Texture, uuid, fileContents, fileSize)) {
+	if (!engineCore.assetManager->LoadFile(AssetType::Texture, uuid, assetName, fileContents, fileSize)) {
 		std::string errorMsg = "Unable to load texture: " + uuid.ToString();
 		engineCore.Print(LogSeverity::Warning, errorMsg.c_str());
 		return;
 	}
 
-	ProcessLoadedFile(uuid, fileContents, fileSize, textureInMap->second);
+	ProcessLoadedFile(uuid, assetName, fileContents, fileSize, textureInMap->second);
 }

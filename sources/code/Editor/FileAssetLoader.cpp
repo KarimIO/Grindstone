@@ -1,18 +1,24 @@
-#include <fstream>
 #include <filesystem>
-#include <EngineCore/Utils/Utilities.hpp>
-#include <EngineCore/EngineCore.hpp>
-#include "EditorManager.hpp"
-#include "AssetRegistry.hpp"
+#include <fstream>
+#include <iosfwd>
+#include <iterator>
+#include <string>
+
 #include <Common/Graphics/Core.hpp>
+#include <Common/ResourcePipeline/AssetType.hpp>
+#include <Common/ResourcePipeline/Uuid.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Utils/Utilities.hpp>
+
+#include "AssetRegistry.hpp"
+#include "EditorManager.hpp"
 #include "FileAssetLoader.hpp"
+
 using namespace Grindstone::Assets;
 
-// Out:
-//	- outContents should be nullptr
-//	- fileSize should be 0
-void FileAssetLoader::Load(AssetType assetType, Uuid uuid, char*& outContents, size_t& fileSize) {
-	std::filesystem::path path = Editor::Manager::GetEngineCore().GetAssetPath(uuid.ToString());
+static void Load(Grindstone::Editor::AssetRegistry::Entry& outEntry, std::string& assetName, char*& outContents, size_t& fileSize) {
+	assetName = outEntry.name;
+	std::filesystem::path path = Grindstone::Editor::Manager::GetEngineCore().GetAssetPath(outEntry.uuid.ToString());
 
 	if (!std::filesystem::exists(path)) {
 		return;
@@ -34,21 +40,38 @@ void FileAssetLoader::Load(AssetType assetType, Uuid uuid, char*& outContents, s
 // Out:
 //	- outContents should be nullptr
 //	- fileSize should be 0
-void FileAssetLoader::Load(AssetType assetType, std::filesystem::path path, char*& outContents, size_t& fileSize) {
+void FileAssetLoader::Load(AssetType assetType, Uuid uuid, std::string& assetName, char*& outContents, size_t& fileSize) {
 	Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
 
 	Editor::AssetRegistry::Entry outEntry;
-	if (!assetRegistry.TryGetAssetData(path, outEntry)) {
-		std::string errorString = "Could not load file: " + path.string();
+	if (!assetRegistry.TryGetAssetData(uuid, outEntry)) {
+		std::string errorString = "Could not get asset: " + uuid.ToString();
 		Editor::Manager::GetInstance().Print(LogSeverity::Error, errorString.c_str());
 		return;
 	}
 
-	Load(assetType, outEntry.uuid, outContents, fileSize);
+	::Load(outEntry, assetName, outContents, fileSize);
 }
 
-bool FileAssetLoader::LoadText(AssetType assetType, Uuid uuid, std::string& outContents) {
-	std::filesystem::path path = Editor::Manager::GetEngineCore().GetAssetPath(uuid.ToString());
+// Out:
+//	- outContents should be nullptr
+//	- fileSize should be 0
+void FileAssetLoader::Load(AssetType assetType, std::filesystem::path path, std::string& assetName, char*& outContents, size_t& fileSize) {
+	Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
+
+	Editor::AssetRegistry::Entry outEntry;
+	if (!assetRegistry.TryGetAssetData(path, outEntry)) {
+		std::string errorString = "Could not get asset: " + path.string();
+		Editor::Manager::GetInstance().Print(LogSeverity::Error, errorString.c_str());
+		return;
+	}
+
+	::Load(outEntry, assetName, outContents, fileSize);
+}
+
+static bool LoadText(Grindstone::Editor::AssetRegistry::Entry& outEntry, std::string& assetName, std::string& outContents) {
+	assetName = outEntry.name;
+	std::filesystem::path path = Grindstone::Editor::Manager::GetEngineCore().GetAssetPath(outEntry.uuid.ToString());
 
 	if (!std::filesystem::exists(path)) {
 		return false;
@@ -61,17 +84,30 @@ bool FileAssetLoader::LoadText(AssetType assetType, Uuid uuid, std::string& outC
 	return true;
 }
 
-bool FileAssetLoader::LoadText(AssetType assetType, std::filesystem::path path, std::string& outContents) {
+bool FileAssetLoader::LoadText(AssetType assetType, Uuid uuid, std::string& assetName, std::string& outContents) {
 	Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
 
 	Editor::AssetRegistry::Entry outEntry;
-	if (!assetRegistry.TryGetAssetData(path, outEntry)) {
-		std::string errorString = "Could not load file: " + path.string();
+	if (!assetRegistry.TryGetAssetData(uuid, outEntry)) {
+		std::string errorString = "Could not get asset: " + uuid.ToString();
 		Editor::Manager::GetInstance().Print(LogSeverity::Error, errorString.c_str());
 		return false;
 	}
 
-	return LoadText(assetType, outEntry.uuid, outContents);
+	return ::LoadText(outEntry, assetName, outContents);
+}
+
+bool FileAssetLoader::LoadText(AssetType assetType, std::filesystem::path path, std::string& assetName, std::string& outContents) {
+	Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
+
+	Editor::AssetRegistry::Entry outEntry;
+	if (!assetRegistry.TryGetAssetData(path, outEntry)) {
+		std::string errorString = "Could not get asset: " + path.string();
+		Editor::Manager::GetInstance().Print(LogSeverity::Error, errorString.c_str());
+		return false;
+	}
+
+	return ::LoadText(outEntry, assetName, outContents);
 }
 
 bool FileAssetLoader::LoadShaderStage(

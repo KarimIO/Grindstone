@@ -30,8 +30,8 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
 
-	std::string contentData;
-	if (!assetManager->LoadFileText(AssetType::Material, uuid, contentData)) {
+	std::string assetName, contentData;
+	if (!assetManager->LoadFileText(AssetType::Material, uuid, assetName, contentData)) {
 		std::string error = "Could not find material with id " + uuid.ToString() + ".";
 		EngineCore::GetInstance().Print(LogSeverity::Error, error.c_str());
 		return nullptr;
@@ -42,12 +42,6 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 		EngineCore::GetInstance().Print(LogSeverity::Error, "Unable to parse material.");
 		return nullptr;
 	}
-
-	if (!document.HasMember("name")) {
-		EngineCore::GetInstance().Print(LogSeverity::Error, "No name found in material.");
-		return nullptr;
-	}
-	const char* name = document["name"].GetString();
 
 	if (!document.HasMember("shader")) {
 		EngineCore::GetInstance().Print(LogSeverity::Error, "No shader found in material.");
@@ -64,7 +58,7 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 
 	auto& reflectionData = shaderAsset->reflectionData;
 
-	auto& material = assets.emplace(uuid, MaterialAsset(uuid, name, shaderUuid));
+	auto& material = assets.emplace(uuid, MaterialAsset(uuid, assetName, shaderUuid));
 	MaterialAsset* materialAsset = &material.first->second;
 
 	std::vector<DescriptorSet::Binding> bindings;
@@ -95,11 +89,13 @@ void MaterialImporter::QueueReloadAsset(Uuid uuid) {
 	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
 	MaterialAsset* materialAsset = &materialIterator->second;
 
-	std::string contentData;
-	if (!assetManager->LoadFileText(AssetType::Mesh3d, uuid, contentData)) {
+	std::string assetName, contentData;
+	if (!assetManager->LoadFileText(AssetType::Mesh3d, uuid, assetName, contentData)) {
 		EngineCore::GetInstance().Print(LogSeverity::Error, "Could not find material by file.");
 		return;
 	}
+
+	materialAsset->name = assetName;
 
 	rapidjson::Document document;
 	document.Parse(contentData.data());

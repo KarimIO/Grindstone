@@ -24,7 +24,9 @@ SceneLoaderJson::SceneLoaderJson(Scene* scene, const char* path) : scene(scene),
 bool SceneLoaderJson::Load(const char* path) {
 	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
 	std::string fileContents;
-	if (!assetManager->LoadFileText(AssetType::Scene, std::filesystem::path(path), fileContents)) {
+	std::string assetName;
+
+	if (!assetManager->LoadFileText(AssetType::Scene, std::filesystem::path(path), assetName, fileContents)) {
 		return false;
 	}
 
@@ -57,7 +59,7 @@ void SceneLoaderJson::ProcessMeta() {
 		: "Untitled Scene";
 
 	size_t strLen = strlen(path) + 1;
-	scene->name = static_cast<char*>(malloc(strLen));
+	scene->name = new char[strLen];
 
 	if (scene->name == nullptr) {
 		return;

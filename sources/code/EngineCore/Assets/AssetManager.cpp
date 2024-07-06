@@ -130,11 +130,11 @@ void* AssetManager::GetAsset(AssetType assetType, Uuid uuid) {
 	}
 }
 
-bool AssetManager::LoadFile(AssetType assetType, const char* path, char*& fileData, size_t& fileSize) {
+bool AssetManager::LoadFile(AssetType assetType, const char* path, std::string& assetName, char*& fileData, size_t& fileSize) {
 	fileData = nullptr;
 	fileSize = 0;
 
-	assetLoader->Load(assetType, std::filesystem::path(path), fileData, fileSize);
+	assetLoader->Load(assetType, std::filesystem::path(path), assetName, fileData, fileSize);
 	return fileData != nullptr;
 }
 
@@ -142,11 +142,11 @@ bool AssetManager::LoadFile(AssetType assetType, const char* path, char*& fileDa
 // Make loading indirect to conceal how files are loading from asset importers
 // This allows multiple files to be imported per asset, and allows different types of loading depending on the
 // asset, such as shaders loading from a file if it's not compiled yet, or loading a compiled shader if it is loaded
-bool AssetManager::LoadFile(AssetType assetType, Uuid uuid, char*& fileData, size_t& fileSize) {
+bool AssetManager::LoadFile(AssetType assetType, Uuid uuid, std::string& assetName, char*& fileData, size_t& fileSize) {
 	fileData = nullptr;
 	fileSize = 0;
 
-	assetLoader->Load(assetType, uuid, fileData, fileSize);
+	assetLoader->Load(assetType, uuid, assetName, fileData, fileSize);
 	return fileData != nullptr;
 }
 
@@ -154,12 +154,12 @@ bool AssetManager::LoadFile(AssetType assetType, Uuid uuid, char*& fileData, siz
 // Make loading indirect to conceal how files are loading from asset importers
 // This allows multiple files to be imported per asset, and allows different types of loading depending on the
 // asset, such as shaders loading from a file if it's not compiled yet, or loading a compiled shader if it is loaded
-bool AssetManager::LoadFileText(AssetType assetType, Uuid uuid, std::string& fileData) {
-	return assetLoader->LoadText(assetType, uuid, fileData);
+bool AssetManager::LoadFileText(AssetType assetType, Uuid uuid, std::string& assetName, std::string& fileData) {
+	return assetLoader->LoadText(assetType, uuid, assetName, fileData);
 }
 
-bool AssetManager::LoadFileText(AssetType assetType, std::filesystem::path path, std::string& fileData) {
-	return assetLoader->LoadText(assetType, path, fileData);
+bool AssetManager::LoadFileText(AssetType assetType, std::filesystem::path path, std::string& assetName, std::string& fileData) {
+	return assetLoader->LoadText(assetType, path, assetName, fileData);
 }
 
 bool AssetManager::LoadShaderSet(

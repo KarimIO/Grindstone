@@ -62,8 +62,8 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 	Assets::AssetManager* assetManager = engineCore.assetManager;
 	AssetRendererManager* assetRendererManager = engineCore.assetRendererManager;
 
-	std::string outContent;
-	if (!assetManager->LoadFileText(AssetType::Shader, shaderAsset.uuid, outContent)) {
+	std::string assetName, outContent;
+	if (!assetManager->LoadFileText(AssetType::Shader, shaderAsset.uuid, assetName, outContent)) {
 		std::string errorMsg = shaderAsset.uuid.ToString() + " shader reflection file not found.";
 		engineCore.Print(LogSeverity::Error, errorMsg.c_str());
 		return false;
@@ -84,8 +84,7 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 		return false;
 	}
 
-	std::string debugName = reflectionData.name;
-	shaderAsset.name = debugName;
+	shaderAsset.name = assetName;
 
 	bool usesGbuffer = reflectionData.renderQueue != "Skybox";
 
@@ -94,7 +93,7 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 		: DeferredRenderer::mainRenderPass;
 
 	GraphicsPipeline::CreateInfo pipelineCreateInfo{};
-	pipelineCreateInfo.debugName = debugName.c_str();
+	pipelineCreateInfo.debugName = assetName.c_str();
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
 	pipelineCreateInfo.cullMode = TranslateCullMode(reflectionData.cullMode);
 	pipelineCreateInfo.renderPass = renderPass;
@@ -142,7 +141,7 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 
 	std::array<GraphicsAPI::DescriptorSetLayout*, descriptorSetCount> descriptorSetLayouts{};
 	for (size_t i = 0; i < descriptorSetCount; ++i) {
-		std::string descriptorSetLayoutName = debugName + " Descriptor Set Layout " + std::to_string(i);
+		std::string descriptorSetLayoutName = assetName + " Descriptor Set Layout " + std::to_string(i);
 
 		std::vector<GraphicsAPI::DescriptorSetLayout::Binding>& bindings = descriptorSetBindings[i];
 		GraphicsAPI::DescriptorSetLayout::CreateInfo layoutCi{};

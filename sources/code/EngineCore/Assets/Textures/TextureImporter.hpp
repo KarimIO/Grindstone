@@ -13,7 +13,7 @@ namespace Grindstone {
 	public:
 		virtual void* ProcessLoadedFile(Uuid uuid) override;
 		virtual void* ProcessLoadedFile(const char* path) override;
-		virtual void* ProcessLoadedFile(Uuid uuid, const char* fileContents, size_t fileSize, TextureAsset& textureAsset);
+		virtual void* ProcessLoadedFile(Uuid uuid, std::string& assetName, const char* fileContents, size_t fileSize, TextureAsset& textureAsset);
 		virtual void QueueReloadAsset(Uuid uuid) override;
 
 		virtual bool TryGetIfLoaded(const char* path, void*& output) override;
