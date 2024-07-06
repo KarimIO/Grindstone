@@ -3,9 +3,7 @@
 #include <string>
 #include <string_view>
 
-#define GS_TEXT(x) L ## x
-
 namespace Grindstone {
-	using String = std::wstring;
-	using StringRef = std::wstring_view;
+	using String = std::string;
+	using StringRef = std::string_view;
 }
