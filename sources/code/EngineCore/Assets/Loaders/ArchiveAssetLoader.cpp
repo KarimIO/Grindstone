@@ -20,7 +20,7 @@ void ArchiveAssetLoader::InitializeDirectory() {
 // Out:
 //	- outContents should be nullptr
 //	- fileSize should be 0
-void ArchiveAssetLoader::Load(AssetType assetType, Uuid uuid, char*& outContents, size_t& fileSize) {
+void ArchiveAssetLoader::Load(AssetType assetType, Uuid uuid, std::string& assetName, char*& outContents, size_t& fileSize) {
 	size_t assetTypeIndex = static_cast<size_t>(assetType);
 
 	if (assetTypeIndex >= static_cast<size_t>(AssetType::Count)) {
@@ -44,13 +44,13 @@ void ArchiveAssetLoader::Load(AssetType assetType, Uuid uuid, char*& outContents
 		return;
 	}
 
-	LoadAsset(assetIterator, outContents, fileSize);
+	LoadAsset(assetIterator, assetName, outContents, fileSize);
 }
 
 // Out:
 //	- outContents should be nullptr
 //	- fileSize should be 0
-void ArchiveAssetLoader::Load(AssetType assetType, std::filesystem::path path, char*& outContents, size_t& fileSize) {
+void ArchiveAssetLoader::Load(AssetType assetType, std::filesystem::path path, std::string& assetName, char*& outContents, size_t& fileSize) {
 	size_t assetTypeIndex = static_cast<size_t>(assetType);
 
 	if (assetTypeIndex >= static_cast<size_t>(AssetType::Count)) {
@@ -79,13 +79,13 @@ void ArchiveAssetLoader::Load(AssetType assetType, std::filesystem::path path, c
 		return;
 	}
 
-	LoadAsset(*assetInfo, outContents, fileSize);
+	LoadAsset(*assetInfo, assetName, outContents, fileSize);
 }
 
-bool ArchiveAssetLoader::LoadText(AssetType assetType, Uuid uuid, std::string& outContents) {
+bool ArchiveAssetLoader::LoadText(AssetType assetType, Uuid uuid, std::string& assetName, std::string& outContents) {
 	char* charPtr;
 	size_t fileSize;
-	Load(assetType, uuid, charPtr, fileSize);
+	Load(assetType, uuid, assetName, charPtr, fileSize);
 
 	if (charPtr == nullptr || fileSize == 0) {
 		std::string errorString = "Could not load file: " + uuid.ToString();
@@ -97,10 +97,10 @@ bool ArchiveAssetLoader::LoadText(AssetType assetType, Uuid uuid, std::string& o
 	return true;
 }
 
-bool ArchiveAssetLoader::LoadText(AssetType assetType, std::filesystem::path path, std::string& outContents) {
+bool ArchiveAssetLoader::LoadText(AssetType assetType, std::filesystem::path path, std::string& assetName, std::string& outContents) {
 	char* charPtr;
 	size_t fileSize;
-	Load(assetType, path, charPtr, fileSize);
+	Load(assetType, path, assetName, charPtr, fileSize);
 
 	if (charPtr == nullptr || fileSize == 0) {
 		std::string errorString = "Could not load file: " + path.string();
@@ -112,7 +112,7 @@ bool ArchiveAssetLoader::LoadText(AssetType assetType, std::filesystem::path pat
 	return true;
 }
 
-void ArchiveAssetLoader::LoadAsset(const ArchiveDirectory::AssetInfo& assetInfo, char*& outContents, size_t& fileSize) {
+void ArchiveAssetLoader::LoadAsset(const ArchiveDirectory::AssetInfo& assetInfo, std::string& assetName, char*& outContents, size_t& fileSize) {
 	if (lastBufferIndex != assetInfo.archiveIndex) {
 		lastBufferIndex = assetInfo.archiveIndex;
 
@@ -127,6 +127,7 @@ void ArchiveAssetLoader::LoadAsset(const ArchiveDirectory::AssetInfo& assetInfo,
 	BufferView bufferView = lastBuffer.GetBufferView(assetInfo.offset, assetInfo.size);
 	outContents = static_cast<char*>(bufferView.Get());
 	fileSize = bufferView.GetSize();
+	assetName = assetInfo.filename;
 }
 
 bool ArchiveAssetLoader::LoadShaderStage(

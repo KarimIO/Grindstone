@@ -30,10 +30,10 @@ namespace Grindstone::Assets {
 		virtual void* GetAsset(AssetType assetType, Uuid uuid);
 		virtual void* IncrementAssetUse(AssetType assetType, Uuid uuid);
 		virtual void DecrementAssetUse(AssetType assetType, Uuid uuid);
-		virtual bool LoadFile(AssetType assetType, const char* path, char*& dataPtr, size_t& fileSize);
-		virtual bool LoadFile(AssetType assetType, Uuid uuid, char*& dataPtr, size_t& fileSize);
-		virtual bool LoadFileText(AssetType assetType, Uuid uuid, std::string& dataPtr);
-		virtual bool LoadFileText(AssetType assetType, std::filesystem::path path, std::string& dataPtr);
+		virtual bool LoadFile(AssetType assetType, const char* path, std::string& assetName, char*& dataPtr, size_t& fileSize);
+		virtual bool LoadFile(AssetType assetType, Uuid uuid, std::string& assetName, char*& dataPtr, size_t& fileSize);
+		virtual bool LoadFileText(AssetType assetType, Uuid uuid, std::string& assetName, std::string& dataPtr);
+		virtual bool LoadFileText(AssetType assetType, std::filesystem::path path, std::string& assetName, std::string& dataPtr);
 		virtual bool LoadShaderSet(
 			Uuid uuid,
 			uint8_t shaderStagesBitMask,
