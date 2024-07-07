@@ -8,19 +8,15 @@
 #include <dlfcn.h>
 #endif
 
-namespace Grindstone {
-	namespace Utilities {
-		namespace Modules {
+namespace Grindstone::Utilities::Modules {
 #if defined(_WIN32)
-			typedef HMODULE Handle;
+	using Handle = HMODULE;
 #elif defined(__linux__)
-			typedef void* Handle;
+	using Handle = void*;
 #endif
 
-			Grindstone::Utilities::Modules::Handle Load(std::string name);
-			void Unload(Grindstone::Utilities::Modules::Handle handle);
+	Grindstone::Utilities::Modules::Handle Load(std::string name);
+	void Unload(Grindstone::Utilities::Modules::Handle handle);
 
-			void* GetFunction(Grindstone::Utilities::Modules::Handle handle, const char *name);
-		}
-	}
+	void* GetFunction(Grindstone::Utilities::Modules::Handle handle, const char *name);
 }

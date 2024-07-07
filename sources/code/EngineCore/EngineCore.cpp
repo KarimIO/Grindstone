@@ -29,7 +29,13 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	binaryPath = projectPath / "bin/";
 	assetsPath = projectPath / "compiledAssets/";
 	engineAssetsPath = engineBinaryPath.parent_path() / "engineassets";
-	eventDispatcher = new Events::Dispatcher();
+
+	const size_t megabytesInGig = 1024u;
+	if (!memoryAllocator.Initialize(megabytesInGig * 2u)) {
+		return false;
+	}
+
+	eventDispatcher = memoryAllocator.Allocate<Events::Dispatcher>();
 
 	firstFrameTime = std::chrono::steady_clock::now();
 
@@ -39,25 +45,25 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 	{
 		GRIND_PROFILE_SCOPE("Setup Core Systems");
-		systemRegistrar = new ECS::SystemRegistrar();
+		systemRegistrar = memoryAllocator.Allocate<ECS::SystemRegistrar>();
 		SetupCoreSystems(systemRegistrar);
 	}
 
 	{
 		GRIND_PROFILE_SCOPE("Setup Core Components");
-		componentRegistrar = new ECS::ComponentRegistrar();
+		componentRegistrar = memoryAllocator.Allocate<ECS::ComponentRegistrar>();
 		SetupCoreComponents(componentRegistrar);
 	}
 
 	// Load core (Logging, ECS and Plugin Manager)
-	pluginManager = new Plugins::Manager(this);
+	pluginManager = memoryAllocator.Allocate<Plugins::Manager>(this);
 	pluginManager->GetInterface().SetEditorInterface(createInfo.editorPluginInterface);
 	pluginManager->Load("PluginGraphicsVulkan");
 
 	Grindstone::Window* mainWindow = nullptr;
 	{
 		GRIND_PROFILE_SCOPE("Set up InputManager and Window");
-		inputManager = new Input::Manager(eventDispatcher);
+		inputManager = memoryAllocator.Allocate<Input::Manager>(eventDispatcher);
 
 		Window::CreateInfo windowCreationInfo;
 		windowCreationInfo.fullscreen = Window::FullscreenMode::Windowed;
@@ -81,8 +87,8 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 	{
 		GRIND_PROFILE_SCOPE("Initialize Asset Managers");
-		assetManager = new Assets::AssetManager(createInfo.assetLoader);
-		assetRendererManager = new AssetRendererManager();
+		assetManager = memoryAllocator.Allocate<Assets::AssetManager>(createInfo.assetLoader);
+		assetRendererManager = memoryAllocator.Allocate<AssetRendererManager>();
 		assetRendererManager->AddQueue("Opaque", DrawSortMode::DistanceFrontToBack);
 		assetRendererManager->AddQueue("Transparent", DrawSortMode::DistanceBackToFront);
 		assetRendererManager->AddQueue("Unlit", DrawSortMode::DistanceFrontToBack);
@@ -94,7 +100,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 		pluginManager->LoadPluginList();
 	}
 
-	sceneManager = new SceneManagement::SceneManager();
+	sceneManager = memoryAllocator.Allocate<SceneManagement::SceneManager>();
 
 	Logger::Print("{0} Initialized.", createInfo.applicationTitle);
 	GRIND_PROFILE_END_SESSION();
@@ -155,12 +161,19 @@ void EngineCore::UpdateWindows() {
 
 EngineCore::~EngineCore() {
 	Logger::Print("Closing...");
-	delete sceneManager;
-	delete componentRegistrar;
-	delete systemRegistrar;
-	delete eventDispatcher;
-	delete inputManager;
-	delete pluginManager;
+	sizeof(Grindstone::AssetRendererManager);
+	memoryAllocator.Free(sceneManager);
+	memoryAllocator.Free(assetRendererManager);
+	memoryAllocator.Free(assetManager);
+	memoryAllocator.Free(inputManager);
+	memoryAllocator.Free(pluginManager);
+	memoryAllocator.Free(componentRegistrar);
+	memoryAllocator.Free(systemRegistrar);
+	memoryAllocator.Free(eventDispatcher);
+
+	if (!memoryAllocator.IsCleared()) {
+		Logger::Print(LogSeverity::Error, "Uncleared memory: {0} bytes left!", memoryAllocator.GetUsed());
+	}
 }
 
 void EngineCore::RegisterGraphicsCore(GraphicsAPI::Core* newGraphicsCore) {
@@ -200,7 +213,7 @@ Events::Dispatcher* EngineCore::GetEventDispatcher() const {
 }
 
 BaseRenderer* EngineCore::CreateRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
-	return new DeferredRenderer(targetRenderPass);
+	return memoryAllocator.Allocate<DeferredRenderer>(targetRenderPass);
 }
 
 std::filesystem::path EngineCore::GetProjectPath() const {
@@ -274,6 +287,10 @@ double EngineCore::GetTimeSinceLaunch() const {
 
 double EngineCore::GetDeltaTime() const {
 	return deltaTime;
+}
+
+Memory::AllocatorCore& Grindstone::EngineCore::GetAllocator() {
+	return memoryAllocator;
 }
 
 extern "C" {

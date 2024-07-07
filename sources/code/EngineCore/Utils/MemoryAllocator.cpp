@@ -6,6 +6,10 @@
 
 using namespace Grindstone::Memory;
 
+bool AllocatorCore::Initialize(size_t sizeInMegs) {
+	return allocator.Initialize(sizeInMegs * 1024u * 1024u);
+}
+
 Grindstone::StringRef AllocatorCore::AllocateString(size_t size) {
 	char* memory = static_cast<char*>(Allocate(size));
 
@@ -27,4 +31,16 @@ void* AllocatorCore::Allocate(size_t size) {
 
 bool AllocatorCore::Free(void* memPtr) {
 	return allocator.Free(memPtr);
+}
+
+size_t Grindstone::Memory::AllocatorCore::GetUsed() const {
+	return allocator.GetUsedSize();
+}
+
+size_t Grindstone::Memory::AllocatorCore::GetTotal() const {
+	return allocator.GetTotalMemorySize();
+}
+
+bool Grindstone::Memory::AllocatorCore::IsCleared() const {
+	return allocator.GetUsedSize() == 0u;
 }
