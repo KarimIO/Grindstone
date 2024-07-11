@@ -23,13 +23,13 @@ Handle Modules::Load(std::string name) {
 }
 
 void Modules::Unload(Handle handle) {
+	if (handle) {
 #if defined(_WIN32)
-	if (handle)
 		FreeLibrary(handle);
 #elif defined(__linux__)
-	if (handle)
 		dlclose(handle);
 #endif
+	}
 }
 
 void* Modules::GetFunction(Handle module, const char *name) {

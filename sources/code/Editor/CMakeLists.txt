@@ -3,6 +3,8 @@ set(EDITOR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 file(GLOB_RECURSE SOURCE_MAIN
 	Main.cpp ${CODE_DIR}/NatvisFile.natvis
 	${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINECORE_DIR}/Utils/Utilities.cpp
+	${COMMON_DIR}/Memory/Allocators/DynamicAllocator.cpp ${COMMON_DIR}/Memory/Allocators/DynamicAllocator.hpp
+	${ENGINECORE_DIR}/Utils/MemoryAllocator.cpp ${ENGINECORE_DIR}/Utils/MemoryAllocator.hpp
 	${COMMON_DIR}/ResourcePipeline/AssetType.cpp ${COMMON_DIR}/ResourcePipeline/AssetType.hpp
 	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp ${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
 	${COMMON_DIR}/ResourcePipeline/Uuid.cpp  ${COMMON_DIR}/ResourcePipeline/Uuid.hpp
@@ -53,10 +55,10 @@ file(GLOB_RECURSE HEADER_IMGUI_PREFS_PROJECT_EDITOR "${EDITOR_DIR}/ImguiEditor/P
 source_group("Imgui Editor\\Settings\\Project\\Source Files" FILES ${SOURCE_IMGUI_PREFS_PROJECT_EDITOR})
 source_group("Imgui Editor\\Settings\\Project\\Header Files" FILES ${HEADER_IMGUI_PREFS_PROJECT_EDITOR})
 
-file(GLOB_RECURSE SOURCE_IMGUI_COMPONENtS_EDITOR "${EDITOR_DIR}/ImguiEditor/Components/*.cpp")
-file(GLOB_RECURSE HEADER_IMGUI_COMPONENtS_EDITOR "${EDITOR_DIR}/ImguiEditor/Components/*.hpp")
-source_group("Imgui Editor\\Components\\Source Files" FILES ${SOURCE_IMGUI_COMPONENtS_EDITOR})
-source_group("Imgui Editor\\Components\\Header Files" FILES ${HEADER_IMGUI_COMPONENtS_EDITOR})
+file(GLOB_RECURSE SOURCE_IMGUI_COMPONENTS_EDITOR "${EDITOR_DIR}/ImguiEditor/Components/*.cpp")
+file(GLOB_RECURSE HEADER_IMGUI_COMPONENTS_EDITOR "${EDITOR_DIR}/ImguiEditor/Components/*.hpp")
+source_group("Imgui Editor\\Components\\Source Files" FILES ${SOURCE_IMGUI_COMPONENTS_EDITOR})
+source_group("Imgui Editor\\Components\\Header Files" FILES ${HEADER_IMGUI_COMPONENTS_EDITOR})
 
 file(GLOB_RECURSE SOURCE_IMGUI_EDITOR "${EDITOR_DIR}/ImguiEditor/*.cpp")
 file(GLOB_RECURSE HEADER_IMGUI_EDITOR "${EDITOR_DIR}/ImguiEditor/*.hpp")

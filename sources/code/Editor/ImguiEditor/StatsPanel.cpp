@@ -108,6 +108,8 @@ namespace Grindstone::Editor::ImguiEditor {
 	}
 
 	void StatsPanel::RenderContents() {
+		float maxWidth = ImGui::GetContentRegionAvail().x;
+
 		totalFrameCount++;
 		frameCountSinceLastRender++;
 
@@ -124,7 +126,22 @@ namespace Grindstone::Editor::ImguiEditor {
 		ImGui::Text("Frame Time (Seconds): %f", lastRenderedDeltaTime);
 		ImGui::Text("Frames Per Second: %f", 1 / lastRenderedDeltaTime);
 
+		ImGui::Separator();
+
 		EngineCore& engineCore = Editor::Manager::GetEngineCore();
+
+		{
+			const Memory::AllocatorCore& allocator = engineCore.GetAllocator();
+			const size_t oneMB = 1024u * 1024u;
+			const size_t memUsed = allocator.GetUsed() / oneMB;
+			const size_t memTotal = allocator.GetTotal() / oneMB;
+			const float memUsedPct = memUsed * 100.0f / memTotal;
+			ImGui::Text("Memory Used: %zuMB / %zuMB", memUsed, memTotal);
+			ImGui::ProgressBar(memUsedPct, ImVec2(maxWidth, 0));
+		}
+
+		ImGui::Separator();
+
 		Assets::AssetManager* assetManager = engineCore.assetManager;
 
 		RenderRenderQueuesTable(engineCore);

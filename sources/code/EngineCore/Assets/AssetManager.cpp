@@ -14,25 +14,28 @@ using namespace Grindstone;
 using namespace Grindstone::Assets;
 
 AssetManager::AssetManager(AssetLoader* assetLoader) {
+	Memory::AllocatorCore& allocator = EngineCore::GetInstance().GetAllocator();
+
 	// TODO: Decide via preprocessor after we implement building the engine code during game build
 	this->assetLoader = assetLoader == nullptr
-		? static_cast<AssetLoader*>(new ArchiveAssetLoader())
+		? static_cast<AssetLoader*>(allocator.Allocate<ArchiveAssetLoader>())
 		: assetLoader;
 
 	size_t count = static_cast<size_t>(AssetType::Count);
 	assetTypeNames.resize(count);
 	assetTypeImporters.resize(count);
 	RegisterAssetType(AssetType::Undefined, "Undefined", nullptr);
-	RegisterAssetType(ShaderAsset::GetStaticType(), "ShaderAsset", new ShaderImporter());
-	RegisterAssetType(TextureAsset::GetStaticType(), "TextureAsset", new TextureImporter());
-	RegisterAssetType(MaterialAsset::GetStaticType(), "MaterialAsset", new MaterialImporter());
+	RegisterAssetType(ShaderAsset::GetStaticType(), "ShaderAsset", allocator.Allocate<ShaderImporter>());
+	RegisterAssetType(TextureAsset::GetStaticType(), "TextureAsset", allocator.Allocate<TextureImporter>());
+	RegisterAssetType(MaterialAsset::GetStaticType(), "MaterialAsset", allocator.Allocate<MaterialImporter>());
 }
 
 AssetManager::~AssetManager() {
-	delete assetLoader;
+	Memory::AllocatorCore& allocator = EngineCore::GetInstance().GetAllocator();
+	allocator.Free(assetLoader);
 
 	for (AssetImporter*& importer : assetTypeImporters) {
-		delete importer;
+		allocator.Free(importer);
 		importer = nullptr;
 	}
 }
