@@ -1,6 +1,7 @@
 <div align="center">
 
-<img src="readmeImages/grindstoneLogo.png" alt="Logo" width="120"/>
+![Logo](./readmeImages/grindstoneLogo.png#gh-dark-mode-only)
+![Logo](./readmeImages/grindstoneLogoLightMode.png#gh-light-mode-only)
 
 # The Grindstone Engine
 
