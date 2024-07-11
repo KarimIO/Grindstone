@@ -29,7 +29,7 @@ void* AllocatorCore::Allocate(size_t size) {
 	return allocator.Allocate(size);
 }
 
-bool AllocatorCore::Free(void* memPtr) {
+bool AllocatorCore::FreeWithoutDestructor(void* memPtr) {
 	return allocator.Free(memPtr);
 }
 
@@ -41,6 +41,6 @@ size_t Grindstone::Memory::AllocatorCore::GetTotal() const {
 	return allocator.GetTotalMemorySize();
 }
 
-bool Grindstone::Memory::AllocatorCore::IsCleared() const {
-	return allocator.GetUsedSize() == 0u;
+bool Grindstone::Memory::AllocatorCore::IsEmpty() const {
+	return allocator.IsEmpty();
 }

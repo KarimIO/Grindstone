@@ -21,6 +21,7 @@ namespace Grindstone {
 		class EditorCamera {
 		public:
 			EditorCamera();
+			~EditorCamera();
 			uint64_t GetRenderOutput();
 			void Render(GraphicsAPI::CommandBuffer* commandBuffer);
 			void RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffer);

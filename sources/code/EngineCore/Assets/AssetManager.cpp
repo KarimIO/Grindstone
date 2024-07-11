@@ -17,7 +17,8 @@ AssetManager::AssetManager(AssetLoader* assetLoader) {
 	Memory::AllocatorCore& allocator = EngineCore::GetInstance().GetAllocator();
 
 	// TODO: Decide via preprocessor after we implement building the engine code during game build
-	this->assetLoader = assetLoader == nullptr
+	ownsAssetLoader = assetLoader == nullptr;
+	this->assetLoader = ownsAssetLoader
 		? static_cast<AssetLoader*>(allocator.Allocate<ArchiveAssetLoader>())
 		: assetLoader;
 
@@ -25,18 +26,22 @@ AssetManager::AssetManager(AssetLoader* assetLoader) {
 	assetTypeNames.resize(count);
 	assetTypeImporters.resize(count);
 	RegisterAssetType(AssetType::Undefined, "Undefined", nullptr);
-	RegisterAssetType(ShaderAsset::GetStaticType(), "ShaderAsset", allocator.Allocate<ShaderImporter>());
-	RegisterAssetType(TextureAsset::GetStaticType(), "TextureAsset", allocator.Allocate<TextureImporter>());
-	RegisterAssetType(MaterialAsset::GetStaticType(), "MaterialAsset", allocator.Allocate<MaterialImporter>());
+	RegisterAssetType(ShaderAsset::GetStaticType(), "ShaderAsset", new ShaderImporter());
+	RegisterAssetType(TextureAsset::GetStaticType(), "TextureAsset", new TextureImporter());
+	RegisterAssetType(MaterialAsset::GetStaticType(), "MaterialAsset", new MaterialImporter());
 }
 
 AssetManager::~AssetManager() {
 	Memory::AllocatorCore& allocator = EngineCore::GetInstance().GetAllocator();
-	allocator.Free(assetLoader);
+	if (ownsAssetLoader) {
+		allocator.Free(assetLoader);
+	}
 
 	for (AssetImporter*& importer : assetTypeImporters) {
-		allocator.Free(importer);
-		importer = nullptr;
+		if (importer != nullptr) {
+			delete importer;
+			importer = nullptr;
+		}
 	}
 }
 

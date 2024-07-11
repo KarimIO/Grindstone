@@ -36,6 +36,11 @@ ViewportPanel::ViewportPanel() {
 	dispatcher->AddEventListener(Grindstone::Events::EventType::MouseMoved, std::bind(&ViewportPanel::OnMouseMovedEvent, this, std::placeholders::_1));
 }
 
+ViewportPanel::~ViewportPanel() {
+	delete camera;
+	camera = nullptr;
+}
+
 bool ViewportPanel::OnMouseButtonEvent(Grindstone::Events::BaseEvent* baseEvent) {
 	Grindstone::Events::MousePressEvent* ev = static_cast<Grindstone::Events::MousePressEvent*>(baseEvent);
 

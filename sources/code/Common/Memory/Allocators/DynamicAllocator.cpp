@@ -169,6 +169,12 @@ bool DynamicAllocator::Free(void* memPtr, bool shouldClear) {
 
 	header->isAllocated = false;
 
+	char* deleteStart = reinterpret_cast<char*>(header) + sizeof(Header);
+	char* deleteEnd = header->nextHeader == nullptr
+		? reinterpret_cast<char*>(rootHeader) + totalMemorySize
+		: reinterpret_cast<char*>(header->nextHeader);
+	size_t removedActualSize = deleteEnd - deleteStart;
+
 	Header* prevHeader = header;
 	if (header->previousHeader != nullptr && !header->previousHeader->isAllocated) {
 		prevHeader = header->previousHeader;
@@ -177,25 +183,26 @@ bool DynamicAllocator::Free(void* memPtr, bool shouldClear) {
 	Header* nextHeader = header->nextHeader;
 	if (nextHeader != nullptr && !nextHeader->isAllocated) {
 		nextHeader = nextHeader->nextHeader;
+		removedActualSize += sizeof(Header);
 	}
 
 	prevHeader->nextHeader = nextHeader;
 	if (nextHeader != nullptr) {
 		nextHeader->previousHeader = prevHeader;
+		removedActualSize += sizeof(Header);
 	}
 
-	char* clearStart = reinterpret_cast<char*>(header);
-	char* clearEnd = header->nextHeader == nullptr
-		? reinterpret_cast<char*>(rootHeader) + totalMemorySize
-		: reinterpret_cast<char*>(header->nextHeader);
-
-	size_t size = clearEnd - clearStart;
-
-	// TODO: This isn't right
-	usedSize -= size;
-
 	if (shouldClear) {
-		memset(clearStart, 0, size);
+		char* clearStart = reinterpret_cast<char*>(header) + sizeof(Header);
+		char* clearEnd = header->nextHeader == nullptr
+			? reinterpret_cast<char*>(rootHeader) + totalMemorySize
+			: reinterpret_cast<char*>(header->nextHeader);
+
+		size_t sizeToClear = clearEnd - clearStart;
+
+		usedSize -= removedActualSize;
+
+		memset(clearStart, 0, sizeToClear);
 	}
 
 	return true;
@@ -214,6 +221,11 @@ void DynamicAllocator::PrintBlocks() {
 		std::cout << "[" << allocStr << "]:" << BreakBytes(bytes) << "\n";
 		currentHeader = currentHeader->nextHeader;
 	}
+}
+
+bool DynamicAllocator::IsEmpty() const {
+	// A minimum of one header is always required!
+	return usedSize == sizeof(Header);
 }
 
 void* ValidatePtr(void* block) {

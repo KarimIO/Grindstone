@@ -171,7 +171,7 @@ EngineCore::~EngineCore() {
 	memoryAllocator.Free(systemRegistrar);
 	memoryAllocator.Free(eventDispatcher);
 
-	if (!memoryAllocator.IsCleared()) {
+	if (!memoryAllocator.IsEmpty()) {
 		Logger::Print(LogSeverity::Error, "Uncleared memory: {0} bytes left!", memoryAllocator.GetUsed());
 	}
 }
@@ -213,7 +213,7 @@ Events::Dispatcher* EngineCore::GetEventDispatcher() const {
 }
 
 BaseRenderer* EngineCore::CreateRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
-	return memoryAllocator.Allocate<DeferredRenderer>(targetRenderPass);
+	return new DeferredRenderer(targetRenderPass);
 }
 
 std::filesystem::path EngineCore::GetProjectPath() const {

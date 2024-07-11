@@ -28,6 +28,8 @@ namespace Grindstone::Memory::Allocators {
 
 		void PrintBlocks();
 
+		bool IsEmpty() const;
+
 		size_t GetTotalMemorySize() const;
 		size_t GetUsedSize() const;
 		void* GetMemory() const;

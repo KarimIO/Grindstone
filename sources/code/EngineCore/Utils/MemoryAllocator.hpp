@@ -11,12 +11,12 @@ namespace Grindstone::Memory {
 		StringRef AllocateString(Grindstone::StringRef srcString);
 
 		void* Allocate(size_t size);
-		bool Free(void* memPtr);
+		bool FreeWithoutDestructor(void* memPtr);
 
 		virtual size_t GetUsed() const;
 		virtual size_t GetTotal() const;
 
-		virtual bool IsCleared() const;
+		virtual bool IsEmpty() const;
 
 		template<typename T, typename... Args>
 		T* Allocate(Args&&... params) {
@@ -32,6 +32,17 @@ namespace Grindstone::Memory {
 		template<typename T>
 		T* AllocateWithoutConstructor() {
 			return static_cast<T*>(allocator.Allocate(sizeof(T)));
+		}
+
+		template<typename T>
+		bool Free(T* memPtr, bool shouldClear = false) {
+			bool retVal = allocator.Free(memPtr, shouldClear);
+			if (retVal) {
+				reinterpret_cast<T*>(memPtr)->~T();
+				return true;
+			}
+
+			return false;
 		}
 
 	private:
