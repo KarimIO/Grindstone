@@ -31,7 +31,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	engineAssetsPath = engineBinaryPath.parent_path() / "engineassets";
 
 	const size_t megabytesInGig = 1024u;
-	if (!memoryAllocator.Initialize(megabytesInGig * 2u)) {
+	if (!memoryAllocator.Initialize(megabytesInGig * 1u)) {
 		return false;
 	}
 
