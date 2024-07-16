@@ -10,45 +10,15 @@ using namespace Grindstone::Memory::Allocators;
 
 constexpr size_t headerSize = sizeof(DynamicAllocator::Header);
 
-std::string BreakBytes(size_t bytes) {
-	if (bytes == 0) {
-		return "0b";
-	}
-
-	size_t gb = bytes >> 30;
-	size_t totalMb = bytes >> 20;
-	size_t totalKb = bytes >> 10;
-
-	size_t mb = (bytes >> 20) - (gb << 10);
-	size_t kb = (bytes >> 10) - (totalMb << 10);
-	size_t b = bytes - (totalKb << 10);
-
-	std::stringstream str;
-
-	if (gb > 0) {
-		str << gb << "gb ";
-	}
-
-	if (mb > 0) {
-		str << mb << "mb ";
-	}
-
-	if (kb > 0) {
-		str << kb << "kb ";
-	}
-
-	if (b > 0) {
-		str << b << "b ";
-	}
-
-	return str.str();
-}
-
 void DynamicAllocator::Initialize(void* ownedMemory, size_t size) {
 	rootHeader = reinterpret_cast<Header*>(ownedMemory);
 	if (rootHeader == nullptr) {
 		return;
 	}
+
+	deleterFn = [this](void* ptr) -> void {
+		this->Free(ptr);
+	};
 
 	memset(rootHeader, 0, size);
 	usedSize = sizeof(Header);
@@ -65,6 +35,10 @@ bool DynamicAllocator::Initialize(size_t size) {
 	if (rootHeader == nullptr) {
 		return false;
 	}
+
+	deleterFn = [this](void* ptr) -> void {
+		this->Free(ptr);
+	};
 
 	memset(rootHeader, 0, size);
 	usedSize = sizeof(Header);
@@ -120,7 +94,7 @@ DynamicAllocator::Header* DynamicAllocator::FindAvailableHeader(size_t size) con
 	return nullptr;
 }
 
-void* DynamicAllocator::Allocate(size_t size) {
+void* DynamicAllocator::AllocateRaw(size_t size) {
 	DynamicAllocator::Header* header = FindAvailableHeader(size);
 
 	if (header == nullptr) {
@@ -192,6 +166,8 @@ bool DynamicAllocator::Free(void* memPtr, bool shouldClear) {
 		removedActualSize += sizeof(Header);
 	}
 
+	usedSize -= removedActualSize;
+
 	if (shouldClear) {
 		char* clearStart = reinterpret_cast<char*>(header) + sizeof(Header);
 		char* clearEnd = header->nextHeader == nullptr
@@ -200,52 +176,13 @@ bool DynamicAllocator::Free(void* memPtr, bool shouldClear) {
 
 		size_t sizeToClear = clearEnd - clearStart;
 
-		usedSize -= removedActualSize;
-
 		memset(clearStart, 0, sizeToClear);
 	}
 
 	return true;
 }
 
-void DynamicAllocator::PrintBlocks() {
-	Header* currentHeader = rootHeader;
-	while (currentHeader != nullptr) {
-		const char* allocStr = currentHeader->isAllocated ? "ALLOCATED" : "DEALLOCATED";
-
-		char* target = currentHeader->nextHeader == nullptr
-			? reinterpret_cast<char*>(rootHeader) + totalMemorySize
-			: reinterpret_cast<char*>(currentHeader->nextHeader);
-
-		size_t bytes = target - reinterpret_cast<char*>(currentHeader) - sizeof(Header);
-		std::cout << "[" << allocStr << "]:" << BreakBytes(bytes) << "\n";
-		currentHeader = currentHeader->nextHeader;
-	}
-}
-
 bool DynamicAllocator::IsEmpty() const {
 	// A minimum of one header is always required!
 	return usedSize == sizeof(Header);
-}
-
-void* ValidatePtr(void* block) {
-	using Grindstone::Memory::Allocators::DynamicAllocator;
-	if (block == nullptr) {
-		return nullptr;
-	}
-
-	DynamicAllocator::Header* header = DynamicAllocator::GetHeaderOfBlock(block);
-	return header->isAllocated
-		? block
-		: nullptr;
-}
-
-bool IsValid(void* block) {
-	using Grindstone::Memory::Allocators::DynamicAllocator;
-	if (block == nullptr) {
-		return false;
-	}
-
-	DynamicAllocator::Header* header = DynamicAllocator::GetHeaderOfBlock(block);
-	return header->isAllocated;
 }

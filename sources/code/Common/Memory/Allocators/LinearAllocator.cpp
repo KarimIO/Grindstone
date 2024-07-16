@@ -1,5 +1,6 @@
 #include <memory>
 
+#include "../../Assert.hpp"
 #include "LinearAllocator.hpp"
 
 using namespace Grindstone::Allocators;
@@ -23,14 +24,16 @@ bool LinearAllocator::Initialize(size_t size) {
 }
 
 void* LinearAllocator::Allocate(size_t size) {
+#ifdef _DEBUG
 	if (memory == nullptr) {
-		// TODO: Assert
+		GS_BREAK_WITH_MESSAGE("No memory buffer allocated.");
 		return nullptr;
 	}
+#endif
 
 	size_t usedSizeAfterAllocation = usedSize + size;
 	if (usedSizeAfterAllocation > totalMemorySize) {
-		// TODO: Assert
+		GS_BREAK_WITH_MESSAGE("Cannot allocate memory.");
 		return nullptr;
 	}
 

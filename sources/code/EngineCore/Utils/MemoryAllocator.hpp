@@ -10,7 +10,6 @@ namespace Grindstone::Memory {
 		StringRef AllocateString(size_t size);
 		StringRef AllocateString(Grindstone::StringRef srcString);
 
-		void* Allocate(size_t size);
 		bool FreeWithoutDestructor(void* memPtr);
 
 		virtual size_t GetUsed() const;
@@ -19,19 +18,24 @@ namespace Grindstone::Memory {
 		virtual bool IsEmpty() const;
 
 		template<typename T, typename... Args>
+		UniquePtr<T> AllocateUnique(Args&&... params) {
+			return static_cast<T*>(allocator.AllocateUnique<T>(params));
+		}
+
+		template<typename T, typename... Args>
+		SharedPtr<T> AllocateShared(Args&&... params) {
+			return static_cast<T*>(allocator.AllocateShared<T>(params));
+		}
+
+		template<typename T, typename... Args>
 		T* Allocate(Args&&... params) {
-			T* ptr = static_cast<T*>(allocator.Allocate(sizeof(T)));
+			T* ptr = static_cast<T*>(allocator.AllocateRaw(sizeof(T)));
 			if (ptr != nullptr) {
 				// Call the constructor on the newly allocated memory
 				new (ptr) T(std::forward<Args>(params)...);
 			}
 
 			return ptr;
-		}
-
-		template<typename T>
-		T* AllocateWithoutConstructor() {
-			return static_cast<T*>(allocator.Allocate(sizeof(T)));
 		}
 
 		template<typename T>

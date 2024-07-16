@@ -161,7 +161,7 @@ void EngineCore::UpdateWindows() {
 
 EngineCore::~EngineCore() {
 	Logger::Print("Closing...");
-	sizeof(Grindstone::AssetRendererManager);
+
 	memoryAllocator.Free(sceneManager);
 	memoryAllocator.Free(assetRendererManager);
 	memoryAllocator.Free(assetManager);
@@ -174,6 +174,8 @@ EngineCore::~EngineCore() {
 	if (!memoryAllocator.IsEmpty()) {
 		Logger::Print(LogSeverity::Error, "Uncleared memory: {0} bytes left!", memoryAllocator.GetUsed());
 	}
+
+	Logger::Print("Closed.");
 }
 
 void EngineCore::RegisterGraphicsCore(GraphicsAPI::Core* newGraphicsCore) {

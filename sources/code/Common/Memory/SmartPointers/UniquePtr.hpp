@@ -1,15 +1,14 @@
 #pragma once
 
+#include <functional>
+
 template<typename T>
 class UniquePtr {
 public:
 
 	UniquePtr() = default;
 
-	UniquePtr(T* ptr) : ptr(ptr) {}
-
-	template<typename... Args>
-	UniquePtr(Args&&... params) : ptr(new T(std::forward<Args>(params)...)) {}
+	UniquePtr(T* ptr, std::function<void(void*)> deleteFn) : ptr(ptr), deleteFn(deleteFn) {}
 
 	UniquePtr(const UniquePtr& obj) = delete;
 	UniquePtr& operator=(const UniquePtr& obj) = delete;
@@ -24,12 +23,19 @@ public:
 
 	~UniquePtr() {
 		if (ptr != nullptr) {
-			delete ptr;
+			ptr->~T();
+
+			if (deleteFn) {
+				deleteFn(ptr);
+			}
+
+			ptr = nullptr;
 		}
 	}
 
 private:
 	T* ptr = nullptr;
+	std::function<void(void*)> deleteFn;
 };
 
 template<typename T, typename... Args>

@@ -1,8 +1,11 @@
 #pragma once
 
 #include <string>
+#include <functional>
 #include <stdint.h>
 #include <utility>
+
+#include "../SmartPointers.hpp"
 
 namespace Grindstone::Memory::Allocators {
 	/**
@@ -23,7 +26,7 @@ namespace Grindstone::Memory::Allocators {
 		void Initialize(void* ownedMemory, size_t size);
 		bool Initialize(size_t size);
 
-		void* Allocate(size_t size);
+		void* AllocateRaw(size_t size);
 		bool Free(void* memPtr, bool shouldClear = false);
 
 		void PrintBlocks();
@@ -38,19 +41,36 @@ namespace Grindstone::Memory::Allocators {
 		static Header* GetHeaderOfBlock(void* block);
 
 		template<typename T, typename... Args>
-		T* Allocate(Args&&... params) {
-			T* ptr = static_cast<T*>(Allocate(sizeof(T)));
+		SharedPtr<T> AllocateShared(Args&&... params) {
+			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T)));
+			if (ptr != nullptr) {
+				// Call the constructor on the newly allocated memory
+				new (ptr) T(std::forward<Args>(params)...);
+			}
+
+			return SharedPtr<T>(ptr, deleterFn);
+		}
+
+		template<typename T, typename... Args>
+		UniquePtr<T> AllocateUnique(Args&&... params) {
+			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T)));
+			if (ptr != nullptr) {
+				// Call the constructor on the newly allocated memory
+				new (ptr) T(std::forward<Args>(params)...);
+			}
+
+			return UniquePtr<T>(ptr, deleterFn);
+		}
+
+		template<typename T, typename... Args>
+		T* AllocateRaw(Args&&... params) {
+			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T)));
 			if (ptr != nullptr) {
 				// Call the constructor on the newly allocated memory
 				new (ptr) T(std::forward<Args>(params)...);
 			}
 
 			return ptr;
-		}
-
-		template<typename T>
-		T* AllocateWithoutConstructor() {
-			return static_cast<T*>(Allocate(sizeof(T)));
 		}
 
 		template<typename T>
@@ -68,6 +88,7 @@ namespace Grindstone::Memory::Allocators {
 		Header* FindAvailableHeader(size_t size) const;
 
 		Header* rootHeader = nullptr;
+		std::function<void(void*)> deleterFn;
 		size_t totalMemorySize = 0;
 		size_t usedSize = 0;
 		bool hasAllocatedOwnMemory = false;

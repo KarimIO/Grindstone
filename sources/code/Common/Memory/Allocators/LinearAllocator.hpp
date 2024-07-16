@@ -4,7 +4,7 @@
 
 namespace Grindstone::Allocators {
 	/**
-	 * \brief A linear allocator where memory can only be deallocated when freed.
+	 * \brief A linear allocator where memory can only be deallocated when the entire allocator is cleared.
 	 *
 	 * Memory in a linear allocator is allocated sequentially, similar to a StackAllocator,
 	 * one after the other. This removes the possibility of fragmentation, but with LinearAllocators
