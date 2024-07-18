@@ -15,6 +15,7 @@ namespace Grindstone {
 			class ViewportPanel {
 			public:
 				ViewportPanel();
+				~ViewportPanel();
 				void Render();
 				void RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer);
 				EditorCamera* GetCamera() const;

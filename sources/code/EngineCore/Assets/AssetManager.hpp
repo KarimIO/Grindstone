@@ -71,6 +71,7 @@ namespace Grindstone::Assets {
 		// if there is a new type, we can change all assetTypes in meta files.
 		virtual void RegisterAssetType(AssetType assetType, const char* typeName, AssetImporter* importer);
 	private:
+		bool ownsAssetLoader = false;
 		Grindstone::Assets::AssetLoader* assetLoader = nullptr;
 		std::vector<std::string> assetTypeNames;
 		std::vector<AssetImporter*> assetTypeImporters;

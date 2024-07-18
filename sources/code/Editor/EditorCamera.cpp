@@ -78,6 +78,11 @@ EditorCamera::EditorCamera() {
 	UpdateViewMatrix();
 }
 
+EditorCamera::~EditorCamera() {
+	delete renderer;
+	renderer = nullptr;
+}
+
 uint64_t EditorCamera::GetRenderOutput() {
 	return (uint64_t)(static_cast<GraphicsAPI::VulkanDescriptorSet*>(descriptorSet)->GetDescriptorSet());
 }

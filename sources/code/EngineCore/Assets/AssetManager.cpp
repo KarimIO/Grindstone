@@ -14,9 +14,12 @@ using namespace Grindstone;
 using namespace Grindstone::Assets;
 
 AssetManager::AssetManager(AssetLoader* assetLoader) {
+	Memory::AllocatorCore& allocator = EngineCore::GetInstance().GetAllocator();
+
 	// TODO: Decide via preprocessor after we implement building the engine code during game build
-	this->assetLoader = assetLoader == nullptr
-		? static_cast<AssetLoader*>(new ArchiveAssetLoader())
+	ownsAssetLoader = assetLoader == nullptr;
+	this->assetLoader = ownsAssetLoader
+		? static_cast<AssetLoader*>(allocator.Allocate<ArchiveAssetLoader>())
 		: assetLoader;
 
 	size_t count = static_cast<size_t>(AssetType::Count);
@@ -29,11 +32,16 @@ AssetManager::AssetManager(AssetLoader* assetLoader) {
 }
 
 AssetManager::~AssetManager() {
-	delete assetLoader;
+	Memory::AllocatorCore& allocator = EngineCore::GetInstance().GetAllocator();
+	if (ownsAssetLoader) {
+		allocator.Free(assetLoader);
+	}
 
 	for (AssetImporter*& importer : assetTypeImporters) {
-		delete importer;
-		importer = nullptr;
+		if (importer != nullptr) {
+			delete importer;
+			importer = nullptr;
+		}
 	}
 }
 
