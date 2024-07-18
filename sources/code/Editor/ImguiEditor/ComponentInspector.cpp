@@ -15,7 +15,31 @@
 #include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
 #include "Common/Math.hpp"
 
+#include <mono/jit/jit.h>
+
 using namespace Grindstone::Editor::ImguiEditor;
+
+#define RenderMonoFieldType(Type, FunctionName) { \
+		Type val; \
+		mono_field_get_value(monoObject, classField, &val); \
+		if (FunctionName(fieldName, &val)) { \
+			mono_field_set_value(monoObject, classField, &val); \
+		} \
+		break; \
+	}
+
+static void RenderMonoField(MonoObject* monoObject, MonoClassField* classField) {
+	const char* fieldName = mono_field_get_name(classField);
+	MonoType* monoType = mono_field_get_type(classField);
+	int monoTypeActual = mono_type_get_type(monoType);
+
+	switch (monoTypeActual) {
+	case MONO_TYPE_BOOLEAN: RenderMonoFieldType(bool, ImGui::Checkbox);
+	case MONO_TYPE_I4: RenderMonoFieldType(int, ImGui::InputInt);
+	case MONO_TYPE_R4: RenderMonoFieldType(float, ImGui::InputFloat);
+	case MONO_TYPE_R8: RenderMonoFieldType(double, ImGui::InputDouble);
+	}
+}
 
 ComponentInspector::ComponentInspector(ImguiEditor* editor) : imguiEditor(editor) {}
 
@@ -70,18 +94,16 @@ void ComponentInspector::RenderComponent(
 		return;
 	}
 
-	if (!ImGui::TreeNodeEx(componentTypeName, ImGuiTreeNodeFlags_FramePadding)) {
-		return;
-	}
-
 	if (strcmp(componentTypeName, "CSharpScript") == 0) {
 		RenderCSharpScript(componentPtr, entity);
 	}
 	else {
-		RenderComponentCategory(componentReflectionData.category, componentPtr, entity);
+		if (ImGui::TreeNodeEx(componentTypeName, ImGuiTreeNodeFlags_FramePadding)) {
+			RenderComponentCategory(componentReflectionData.category, componentPtr, entity);
+			ImGui::TreePop();
+		}
 	}
 
-	ImGui::TreePop();
 }
 
 void ComponentInspector::RenderCSharpScript(
@@ -90,18 +112,24 @@ void ComponentInspector::RenderCSharpScript(
 ) {
 	auto component = static_cast<Grindstone::Scripting::CSharp::ScriptComponent*>(componentPtr);
 
-	if (component == nullptr || component->monoClass == nullptr) {
+	if (component == nullptr) {
 		return;
 	}
 
-	ImGui::Text("%s", component->monoClass->scriptClassname.c_str());
-	size_t i = 0;
-	for (auto& field : component->monoClass->fields) {
-		float val = 0.0f;
-		field.second.Get((MonoObject*)component->scriptObject, &val);
-		if (ImGui::InputFloat(field.first.c_str(), &val)) {
-			field.second.Set((MonoObject*)component->scriptObject, &val);
+	if (component->monoClass == nullptr) {
+		if (ImGui::TreeNodeEx("Unassigned CSharp Component", ImGuiTreeNodeFlags_FramePadding)) {
+			ImGui::TreePop();
 		}
+
+		return;
+	}
+
+	const std::string componentName = "(C#) " + component->monoClass->scriptClassname;
+	if (ImGui::TreeNodeEx(componentName.c_str(), ImGuiTreeNodeFlags_FramePadding)) {
+		for (auto& field : component->monoClass->fields) {
+			RenderMonoField(component->scriptObject, field.second.classFieldPtr);
+		}
+		ImGui::TreePop();
 	}
 }
 

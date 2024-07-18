@@ -99,7 +99,9 @@ find_package(unofficial-imguizmo CONFIG REQUIRED)
 find_package(unofficial-libgit2 CONFIG REQUIRED)
 set(MONO_PATH CACHE PATH "Mono Path")
 
+
 add_executable(Editor ${EDITOR_HEADERS} ${EDITOR_SOURCES})
+target_link_directories(Editor PUBLIC ${MONO_PATH}/lib)
 
 set_property(TARGET Editor PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${BUILD_DIRECTORY})
 
@@ -116,6 +118,7 @@ target_link_libraries(
 	Editor
 	PUBLIC
 	Rpcrt4.lib
+	mono-2.0-sgen.lib
 	efsw::efsw
 	fmt::fmt
 	unofficial::libgit2::libgit2

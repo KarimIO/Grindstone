@@ -2425,7 +2425,7 @@ void DeferredRenderer::Render(
 	commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	commandBuffer->BindIndexBuffer(indexBuffer);
 
-	// RenderSsr(imageSet, commandBuffer);
+	RenderSsr(imageSet, commandBuffer);
 
 	PostProcess(imageIndex, outputFramebuffer, commandBuffer);
 }
