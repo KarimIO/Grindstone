@@ -51,6 +51,12 @@ bool DynamicAllocator::Initialize(size_t size) {
 	return true;
 }
 
+DynamicAllocator::~DynamicAllocator() {
+	if (rootHeader && hasAllocatedOwnMemory) {
+		delete rootHeader;
+	}
+}
+
 size_t DynamicAllocator::GetUsedSize() const {
 	return usedSize;
 }

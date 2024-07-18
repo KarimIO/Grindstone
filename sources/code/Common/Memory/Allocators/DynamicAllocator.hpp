@@ -23,6 +23,8 @@ namespace Grindstone::Memory::Allocators {
 			Header* previousHeader;
 		};
 
+		~DynamicAllocator();
+
 		void Initialize(void* ownedMemory, size_t size);
 		bool Initialize(size_t size);
 
