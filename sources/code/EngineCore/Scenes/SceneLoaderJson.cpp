@@ -30,14 +30,7 @@ bool SceneLoaderJson::Load(const char* path) {
 		return false;
 	}
 
-	size_t strLen = strlen(path) + 1;
-	scene->path = static_cast<char*>(malloc(strLen));
-
-	if (scene->path == nullptr) {
-		return false;
-	}
-
-	strcpy_s(scene->path, strLen, path);
+	scene->path = path;
 
 	if (document.Parse(fileContents.c_str()).GetParseError()) {
 		EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Failed to load scene.");
@@ -58,14 +51,7 @@ void SceneLoaderJson::ProcessMeta() {
 		? document["name"].GetString()
 		: "Untitled Scene";
 
-	size_t strLen = strlen(path) + 1;
-	scene->name = new char[strLen];
-
-	if (scene->name == nullptr) {
-		return;
-	}
-
-	strcpy_s(scene->name, strLen, name);
+	scene->name = name;
 }
 
 void SceneLoaderJson::ProcessEntities() {

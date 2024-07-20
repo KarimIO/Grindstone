@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <filesystem>
 #include <map>
 
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
@@ -19,8 +20,8 @@ namespace Grindstone {
 		class Scene {
 			friend SceneLoaderJson;
 		private:
-			char* name;
-			char* path;
+			std::string name;
+			std::filesystem::path path;
 			entt::registry registry;
 		public:
 			~Scene();

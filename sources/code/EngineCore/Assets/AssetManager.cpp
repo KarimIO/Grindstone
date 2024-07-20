@@ -1,4 +1,6 @@
-#include "AssetManager.hpp"
+
+#include <EngineCore/Profiling.hpp>
+
 #include "Loaders/AssetLoader.hpp"
 #include "Loaders/ArchiveAssetLoader.hpp"
 
@@ -9,6 +11,8 @@
 #include "Shaders/ShaderImporter.hpp"
 #include "Textures/TextureAsset.hpp"
 #include "Textures/TextureImporter.hpp"
+
+#include "AssetManager.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::Assets;
@@ -56,6 +60,7 @@ void AssetManager::QueueReloadAsset(AssetType assetType, Uuid uuid) {
 }
 
 void AssetManager::ReloadQueuedAssets() {
+	GRIND_PROFILE_SCOPE("AssetManager::ReloadQueuedAssets()");
 	std::scoped_lock lock(reloadMutex);
 
 	for (const auto& [assetType, uuid] : queuedAssetReloads) {

@@ -8,6 +8,7 @@
 #include "EngineCore/CoreComponents/Parent/ParentComponent.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "Scene.hpp"
+#include <EngineCore/Profiling.hpp>
 
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
@@ -62,11 +63,11 @@ ECS::Entity Scene::CreateEntity(entt::entity entityToUse) {
 }
 
 const char* Scene::GetName() {
-	return name;
+	return name.c_str();
 }
 
 const char* Scene::GetPath() {
-	return path;
+	return path.string().c_str();
 }
 
 // Made so that entities can access componentregistrat without requiring enginecore.
@@ -79,9 +80,12 @@ entt::registry& Scene::GetEntityRegistry() {
 }
 
 void Scene::Update() {
+	std::string sceneId = "Scene::Update() : " + name;
+	GRIND_PROFILE_SCOPE(sceneId.c_str());
 	EngineCore::GetInstance().GetSystemRegistrar()->Update(registry);
 }
 
 void Scene::EditorUpdate() {
+	std::string sceneId = "Scene::EditorUpdate() : " + name;
 	EngineCore::GetInstance().GetSystemRegistrar()->EditorUpdate(registry);
 }

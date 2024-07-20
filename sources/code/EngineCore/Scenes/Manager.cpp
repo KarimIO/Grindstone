@@ -1,6 +1,7 @@
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/BuildSettings/SceneBuildSettings.hpp>
+#include <EngineCore/Profiling.hpp>
 
 #include "SceneLoaderJson.hpp"
 #include "SceneWriterJson.hpp"
@@ -32,12 +33,14 @@ void SceneManager::LoadDefaultScene() {
 }
 
 void SceneManager::EditorUpdate() {
+	GRIND_PROFILE_SCOPE("SceneManager::EditorUpdate()");
 	for (std::pair<const std::string, Scene*>& scene : scenes) {
 		scene.second->EditorUpdate();
 	}
 }
 
 void SceneManager::Update() {
+	GRIND_PROFILE_SCOPE("SceneManager::Update()");
 	for (std::pair<const std::string, Scene*>& scene : scenes) {
 		scene.second->Update();
 	}

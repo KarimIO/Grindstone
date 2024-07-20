@@ -39,6 +39,8 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 	firstFrameTime = std::chrono::steady_clock::now();
 
+	profiler = &Profiler::Manager::Get();
+
 	Logger::Initialize(projectPath / "log/output.log");
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Loading", projectPath / "log/grind-profile-load.json");
 	Logger::Print("Initializing {0}...", createInfo.applicationTitle);
@@ -242,6 +244,10 @@ std::filesystem::path EngineCore::GetAssetPath(std::string subPath) const {
 	return assetsPath / subPath;
 }
 
+Profiler::Manager* EngineCore::GetProfiler() const {
+	return profiler;
+}
+
 void EngineCore::Print(LogSeverity logSeverity, const char* str) {
 	Logger::Print(logSeverity, str);
 }
@@ -249,7 +255,6 @@ void EngineCore::Print(LogSeverity logSeverity, const char* str) {
 bool EngineCore::OnTryQuit(Grindstone::Events::BaseEvent* ev) {
 	const auto castedEv = dynamic_cast<Grindstone::Events::WindowTryQuitEvent*>(ev);
 	shouldClose = true;
-	windowManager->CloseWindow(castedEv->window);
 
 	return false;
 }
@@ -257,7 +262,6 @@ bool EngineCore::OnTryQuit(Grindstone::Events::BaseEvent* ev) {
 bool EngineCore::OnForceQuit(Grindstone::Events::BaseEvent* ev) {
 	const auto castedEv = dynamic_cast<Grindstone::Events::WindowTryQuitEvent*>(ev);
 	shouldClose = true;
-	windowManager->CloseWindow(castedEv->window);
 
 	return false;
 }

@@ -11,12 +11,16 @@
 #include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
 #include <EngineCore/Rendering/BaseRenderer.hpp>
 #include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Profiling.hpp>
+
 #include "RenderSystem.hpp"
 
 std::vector<Grindstone::GraphicsAPI::CommandBuffer*> commandBuffers;
 
 namespace Grindstone {
 	void RenderSystem(entt::registry& registry) {
+		GRIND_PROFILE_SCOPE("RenderSystem()");
+
 		EngineCore& engineCore = EngineCore::GetInstance();
 		if (engineCore.isEditor) {
 			return;

@@ -1,31 +1,12 @@
-#include "Profiling.hpp"
-#include <thread>
 #include <algorithm>
+#include <fstream>
+#include <thread>
+
+#include "Profiling.hpp"
 
 using namespace Grindstone::Profiler;
 
-Manager::Manager() : currentSession(nullptr), profileCount(0) {}
-
-void Manager::BeginSession(const std::string& name, const std::filesystem::path filepath) {
-	std::filesystem::create_directories(filepath.parent_path());
-	outputStream.open(filepath);
-	WriteHeader();
-	currentSession = new InstrumentationSession{ name };
-	profileCount = 0;
-}
-
-void Manager::EndSession() {
-	WriteFooter();
-	outputStream.close();
-	delete currentSession;
-	currentSession = nullptr;
-	profileCount = 0;
-}
-
-void Manager::WriteProfile(const Result& result) {
-	if (profileCount++ > 0)
-		outputStream << ",";
-
+static void WriteProfile(std::ofstream& outputStream, const Result& result) {
 	std::string name = result.name;
 	std::replace(name.begin(), name.end(), '"', '\'');
 
@@ -34,18 +15,63 @@ void Manager::WriteProfile(const Result& result) {
 	outputStream << "{\"cat\":\"function\",\"dur\":" << duration
 		<< ",\"name\":\"" << name << "\",\"ph\":\"X\",\"pid\":0,\"tid\":" << result.threadId
 		<< ",\"ts\":" << result.start << "}";
-
-	outputStream.flush();
 }
 
-void Manager::WriteHeader() {
+Manager::Manager() : currentSession(&sessionA), otherSession(&sessionB), depth(0) {
+	sessionA.results.reserve(1000);
+	sessionB.results.reserve(1000);
+}
+
+void Manager::BeginSession(const std::string& name, const std::filesystem::path filepath) {
+	if (currentSession == &sessionB) {
+		currentSession = &sessionA;
+		otherSession = &sessionB;
+	}
+	else {
+		currentSession = &sessionB;
+		otherSession = &sessionA;
+	}
+
+	currentSession->name = name;
+	currentSession->path = filepath;
+	currentSession->results.clear();
+
+	frameStart = std::chrono::system_clock::now();
+	isInSession = true;
+}
+
+void Manager::EndSession() {
+	if (currentSession == nullptr) {
+		return;
+	}
+
+	std::ofstream outputStream;
+	std::filesystem::create_directories(currentSession->path.parent_path());
+	outputStream.open(currentSession->path);
+
+	size_t resultCount = currentSession->results.size();
+
 	outputStream << "{\"otherData\":{},\"traceEvents\":[";
-	outputStream.flush();
+
+	if (resultCount > 0) {
+		WriteProfile(outputStream, currentSession->results[0]);
+	}
+
+	for (size_t i = 1; i < resultCount; ++i) {
+		outputStream << ",";
+		WriteProfile(outputStream, currentSession->results[i]);
+	}
+
+	outputStream << "]}";
+	outputStream.close();
+
+	isInSession = false;
 }
 
-void Manager::WriteFooter() {
-	outputStream << "]}";
-	outputStream.flush();
+void Manager::AddProfile(const Result& result) {
+	if (isInSession) {
+		currentSession->results.push_back(result);
+	}
 }
 
 Manager& Manager::Get() {
@@ -53,23 +79,32 @@ Manager& Manager::Get() {
 	return instance;
 }
 
+const InstrumentationSession& Grindstone::Profiler::Manager::GetAvailableSession() const {
+	return *otherSession;
+}
+
 Timer::Timer(const char *name) : name(name), stopped(false) {
-	startTime = std::chrono::high_resolution_clock::now();
+	startTime = std::chrono::system_clock::now();
+	Manager& manager = Manager::Get();
+	++manager.depth;
 }
 
 Timer::~Timer() {
-	if (!stopped)
+	if (!stopped) {
 		Stop();
+	}
 }
 
 void Timer::Stop() {
-	auto end_time = std::chrono::high_resolution_clock::now();
-
-	long long start = std::chrono::time_point_cast<std::chrono::microseconds>(startTime).time_since_epoch().count();
-	long long end = std::chrono::time_point_cast<std::chrono::microseconds>(end_time).time_since_epoch().count();
-
 	uint32_t threadID = (uint32_t)std::hash<std::thread::id>{}(std::this_thread::get_id());
-	Manager::Get().WriteProfile({ name, start, end, threadID });
+	Manager& manager = Manager::Get();
+	std::chrono::system_clock::time_point frameStart = manager.frameStart;
+
+	std::chrono::duration<float> start = startTime - frameStart;
+	std::chrono::duration<float> end = std::chrono::system_clock::now() - frameStart;
+
+	manager.AddProfile({ name, start.count(), end.count(), manager.depth, threadID});
+	--manager.depth;
 
 	stopped = true;
 }

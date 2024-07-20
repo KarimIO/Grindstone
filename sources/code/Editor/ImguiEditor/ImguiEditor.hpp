@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 
 #include <Common/Event/BaseEvent.hpp>
+#include <Common/Memory/SmartPointers/UniquePtr.hpp>
 #include <Editor/ImguiEditor/AssetPicker.hpp>
 
 namespace Grindstone {
@@ -32,6 +33,7 @@ namespace Grindstone {
 			class ControlBar;
 			class StatusBar;
 			class AssetPicker;
+			class TracingPanel;
 
 			class ImguiEditor {
 			public:
@@ -70,6 +72,7 @@ namespace Grindstone {
 				StatusBar* statusBar = nullptr;
 				Menubar* menubar = nullptr;
 				ImguiRenderer* imguiRenderer = nullptr;
+				TracingPanel* tracingPanel = nullptr;
 			};
 		}
 	}

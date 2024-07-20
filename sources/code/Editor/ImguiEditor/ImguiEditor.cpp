@@ -26,6 +26,7 @@
 #include "Menubar.hpp"
 #include "AssetPicker.hpp"
 #include "ImguiInput.hpp"
+#include "TracingPanel.hpp"
 #include "ImguiRenderer.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
@@ -44,22 +45,23 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 
 	imguiRenderer = ImguiRenderer::Create();
 
-	// input = new ImguiInput(io, engineCore);
+	Grindstone::Memory::AllocatorCore& allocator = engineCore->GetAllocator();
 
-	sceneHeirarchyPanel = new SceneHeirarchyPanel(engineCore->GetSceneManager(), this);
-	inspectorPanel = new InspectorPanel(engineCore, this);
-	assetBrowserPanel = new AssetBrowserPanel(imguiRenderer, engineCore, this);
-	userSettingsWindow = new Settings::UserSettingsWindow();
-	projectSettingsWindow = new Settings::ProjectSettingsWindow();
-	viewportPanel = new ViewportPanel();
-	consolePanel = new ConsolePanel(imguiRenderer);
-	statsPanel = new StatsPanel();
-	buildPopup = new BuildPopup();
-	systemPanel = new SystemPanel(engineCore->GetSystemRegistrar());
-	controlBar = new ControlBar(imguiRenderer);
-	menubar = new Menubar(this);
-	assetPicker = new AssetPicker();
-	statusBar = new StatusBar(imguiRenderer);
+	sceneHeirarchyPanel = allocator.Allocate<SceneHeirarchyPanel>(engineCore->GetSceneManager(), this);
+	inspectorPanel = allocator.Allocate<InspectorPanel>(engineCore, this);
+	assetBrowserPanel = allocator.Allocate<AssetBrowserPanel>(imguiRenderer, engineCore, this);
+	userSettingsWindow = allocator.Allocate<Settings::UserSettingsWindow>();
+	projectSettingsWindow = allocator.Allocate<Settings::ProjectSettingsWindow>();
+	viewportPanel = allocator.Allocate<ViewportPanel>();
+	consolePanel = allocator.Allocate<ConsolePanel>(imguiRenderer);
+	statsPanel = allocator.Allocate<StatsPanel>();
+	buildPopup = allocator.Allocate<BuildPopup>();
+	systemPanel = allocator.Allocate<SystemPanel>(engineCore->GetSystemRegistrar());
+	controlBar = allocator.Allocate<ControlBar>(imguiRenderer);
+	menubar = allocator.Allocate<Menubar>(this);
+	assetPicker = allocator.Allocate<AssetPicker>();
+	statusBar = allocator.Allocate<StatusBar>(imguiRenderer);
+	tracingPanel = allocator.Allocate<TracingPanel>();
 
 	auto eventDispatcher = engineCore->GetEventDispatcher();
 	eventDispatcher->AddEventListener(
@@ -69,23 +71,29 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 }
 
 ImguiEditor::~ImguiEditor() {
-	delete imguiRenderer;
-	delete input;
+	Grindstone::Memory::AllocatorCore& allocator = engineCore->GetAllocator();
 
-	delete sceneHeirarchyPanel;
-	delete inspectorPanel;
-	delete assetBrowserPanel;
-	delete userSettingsWindow;
-	delete projectSettingsWindow;
-	delete viewportPanel;
-	delete consolePanel;
-	delete statsPanel;
-	delete buildPopup;
-	delete systemPanel;
-	delete controlBar;
-	delete menubar;
-	delete assetPicker;
-	delete statusBar;
+	allocator.Free(imguiRenderer);
+
+	if (input) {
+		allocator.Free(input);
+	}
+
+	allocator.Free(sceneHeirarchyPanel);
+	allocator.Free(inspectorPanel);
+	allocator.Free(assetBrowserPanel);
+	allocator.Free(userSettingsWindow);
+	allocator.Free(projectSettingsWindow);
+	allocator.Free(viewportPanel);
+	allocator.Free(consolePanel);
+	allocator.Free(statsPanel);
+	allocator.Free(buildPopup);
+	allocator.Free(systemPanel);
+	allocator.Free(controlBar);
+	allocator.Free(menubar);
+	allocator.Free(assetPicker);
+	allocator.Free(statusBar);
+	allocator.Free(tracingPanel);
 }
 
 void ImguiEditor::PerformResize() {
@@ -238,14 +246,15 @@ void ImguiEditor::Update() {
 
 void ImguiEditor::Render() {
 	RenderDockspace();
+	tracingPanel->Render();
 	controlBar->Render();
 	sceneHeirarchyPanel->Render();
 	viewportPanel->Render();
 	consolePanel->Render();
 	assetBrowserPanel->Render();
+	inspectorPanel->Render();
 	systemPanel->Render();
 	statsPanel->Render();
-	inspectorPanel->Render();
 	buildPopup->Render();
 	userSettingsWindow->Render();
 	projectSettingsWindow->Render();

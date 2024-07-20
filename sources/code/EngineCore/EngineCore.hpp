@@ -42,6 +42,10 @@ namespace Grindstone {
 		class AssetLoader;
 	}
 
+	namespace Profiler {
+		class Manager;
+	}
+
 	class Window;
 	class DisplayManager;
 	class WindowManager;
@@ -80,6 +84,7 @@ namespace Grindstone {
 		virtual Events::Dispatcher* GetEventDispatcher() const;
 		virtual ECS::ComponentRegistrar* GetComponentRegistrar() const;
 		virtual GraphicsAPI::Core* GetGraphicsCore() const;
+		virtual Profiler::Manager* GetProfiler() const;
 		virtual BaseRenderer* CreateRenderer(GraphicsAPI::RenderPass* targetRenderPass);
 		virtual std::filesystem::path GetProjectPath() const;
 		virtual std::filesystem::path GetBinaryPath() const;
@@ -108,6 +113,7 @@ namespace Grindstone {
 		WindowManager* windowManager = nullptr;
 		Assets::AssetManager* assetManager = nullptr;
 		AssetRendererManager* assetRendererManager = nullptr;
+		Profiler::Manager* profiler = nullptr;
 		std::function<void()> callbackReloadCsharp;
 		bool isEditor = false;
 	private:
