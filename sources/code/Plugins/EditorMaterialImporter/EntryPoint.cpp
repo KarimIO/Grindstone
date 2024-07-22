@@ -9,6 +9,8 @@ using namespace Grindstone::Editor::Importers;
 
 extern "C" {
 	EDITOR_MATERIAL_IMPORTER_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
+		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
+
 		Plugins::EditorPluginInterface* editorPluginInterface =
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 

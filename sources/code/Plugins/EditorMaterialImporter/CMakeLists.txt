@@ -24,6 +24,7 @@ add_library(
 	PluginEditorMaterialImporter MODULE
 	${EDITORMATERIALIMPORTER_SOURCES}
 	${EDITORMATERIALIMPORTER_HEADERS}
+	${CORE_UTILS}
 )
 
 target_compile_features(PluginEditorMaterialImporter PRIVATE cxx_std_17)

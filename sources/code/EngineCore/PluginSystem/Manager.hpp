@@ -20,7 +20,7 @@ namespace Grindstone {
 			~Manager();
 
 			void SetupInterfacePointers();
-			Interface& GetInterface();
+			virtual Interface& GetInterface();
 			
 			virtual void LoadPluginList();
 			bool Load(const char* name);

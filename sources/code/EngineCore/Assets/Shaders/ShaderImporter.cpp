@@ -44,6 +44,7 @@ void* ShaderImporter::ProcessLoadedFile(Uuid uuid) {
 	auto asset = assets.emplace(uuid, ShaderAsset(uuid));
 	ShaderAsset& shaderAsset = asset.first->second;
 
+	shaderAsset.assetLoadStatus = AssetLoadStatus::Loading;
 	if (!ImportShader(shaderAsset)) {
 		return nullptr;
 	}
@@ -65,7 +66,7 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 	std::string assetName, outContent;
 	if (!assetManager->LoadFileText(AssetType::Shader, shaderAsset.uuid, assetName, outContent)) {
 		std::string errorMsg = shaderAsset.uuid.ToString() + " shader reflection file not found.";
-		engineCore.Print(LogSeverity::Error, errorMsg.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, errorMsg.c_str());
 		return false;
 	}
 
@@ -203,18 +204,15 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 	pipelineCreateInfo.isDepthWriteEnabled = true;
 	pipelineCreateInfo.isStencilEnabled = false;
 
-	GraphicsPipeline* pipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	shaderAsset.reflectionData = reflectionData;
 	shaderAsset.descriptorSetLayout = pipelineCreateInfo.descriptorSetLayouts[0];
-	shaderAsset.pipeline = pipeline;
+	shaderAsset.pipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 
 	shaderAsset.renderQueue = assetRendererManager->GetIndexOfRenderQueue(reflectionData.renderQueue);
 
-	std::string& renderQueue = shaderAsset.reflectionData.renderQueue;
-	std::string& geometryType = shaderAsset.reflectionData.geometryRenderer;
-
 	// TODO: Save compiled shader into ShaderCache
 
+	shaderAsset.assetLoadStatus = AssetLoadStatus::Ready;
 	return true;
 }
 
@@ -224,12 +222,15 @@ void ShaderImporter::QueueReloadAsset(Uuid uuid) {
 		return;
 	}
 
-	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	GraphicsPipeline*& pipeline = shaderInMap->second.pipeline;
-	if (pipeline != nullptr) {
-		graphicsCore->DeleteGraphicsPipeline(pipeline);
-		pipeline = nullptr;
-	}
+	ShaderAsset& shaderAsset = shaderInMap->second;
+	GraphicsPipeline* previousPipeline = shaderAsset.pipeline;
 
-	ImportShader(shaderInMap->second);
+	shaderAsset.assetLoadStatus = AssetLoadStatus::Reloading;
+	ImportShader(shaderAsset);
+
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	if (previousPipeline != nullptr) {
+		graphicsCore->DeleteGraphicsPipeline(previousPipeline);
+		previousPipeline = nullptr;
+	}
 }

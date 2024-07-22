@@ -7,7 +7,8 @@
 
 #include <glfw/glfw3.h>
 
-#include "Common/Window/GlfwWindow.hpp"
+#include <Common/Window/GlfwWindow.hpp>
+#include <EngineCore/Logger.hpp>
 
 #include "VulkanWindowGraphicsBinding.hpp"
 #include "VulkanCore.hpp"
@@ -334,7 +335,7 @@ void VulkanWindowGraphicsBinding::SubmitCommandBuffer(CommandBuffer* buffer) {
 	vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
 	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
-		vkCore.logFunction(LogSeverity::Error, "Failed to submit draw command buffer!");
+		GPRINT_ERROR(LogSource::GraphicsAPI, "Failed to submit draw command buffer!");
 	}
 }
 

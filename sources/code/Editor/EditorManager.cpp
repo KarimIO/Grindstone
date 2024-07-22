@@ -19,6 +19,8 @@
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
 #include <EngineCore/PluginSystem/Interface.hpp>
+#include <EngineCore/PluginSystem/Manager.hpp>
+#include <EngineCore/Logger.hpp>
 
 #include "AssetRegistry.hpp"
 #include "AssetTemplateRegistry.hpp"
@@ -239,6 +241,8 @@ bool Manager::LoadEngine() {
 	const std::string currentPath = std::filesystem::current_path().string();
 	createInfo.engineBinaryPath = currentPath.c_str();
 	engineCore = createEngineFn(createInfo);
+
+	Grindstone::Logger::SetLoggerState(engineCore->GetPluginManager()->GetInterface().GetLoggerState());
 
 	return engineCore != nullptr;
 }

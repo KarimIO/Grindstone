@@ -17,6 +17,7 @@ add_library(
 	${CSHARP_COMPONENTS_HEADER}
 	${SOURCE_REFLECTION}
 	${HEADER_REFLECTION}
+	${CORE_UTILS}
 )
 
 target_compile_features(PluginScriptCSharp PRIVATE cxx_std_17)

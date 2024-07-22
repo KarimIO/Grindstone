@@ -13,6 +13,7 @@
 #include <mono/metadata/attrdefs.h>
 #include <mono/metadata/mono-debug.h>
 #include <mono/metadata/threads.h>
+#include <EngineCore/Logger.hpp>
 
 using namespace Grindstone;
 using namespace Grindstone::Scripting::CSharp;
@@ -84,7 +85,7 @@ void CSharpManager::LoadAssembly(const char* path, AssemblyData& outAssemblyData
 
 	if (image == nullptr || status != MONO_IMAGE_OK) {
 		const char* errorMessage = mono_image_strerror(status);
-		engineCore->Print(LogSeverity::Error, errorMessage);
+		GPRINT_ERROR(LogSource::Scripting, errorMessage);
 		return;
 	}
 
@@ -104,7 +105,7 @@ void CSharpManager::LoadAssembly(const char* path, AssemblyData& outAssemblyData
 
 	if (assembly == nullptr || status != MONO_IMAGE_OK) {
 		const char* errorMessage = mono_image_strerror(status);
-		engineCore->Print(LogSeverity::Error, errorMessage);
+		GPRINT_ERROR(LogSource::Scripting, errorMessage);
 		return;
 	}
 
@@ -364,7 +365,7 @@ void CSharpManager::QueueReload() {
 }
 
 void CSharpManager::PerformReload() {
-	engineCore->Print(LogSeverity::Info, "Reloading CSharp Binaries...");
+	GPRINT_TRACE(LogSource::Scripting, "Reloading CSharp Binaries...");
 	mono_domain_set(mono_get_root_domain(), false);
 	mono_domain_unload(scriptDomain);
 
@@ -379,5 +380,5 @@ void CSharpManager::PerformReload() {
 	LoadAssemblyClasses();
 	RegisterComponents();
 	isReloadQueued = false;
-	engineCore->Print(LogSeverity::Info, "Reloaded CSharp Binaries.");
+	GPRINT_TRACE(LogSource::Scripting, "Reloaded CSharp Binaries.");
 }

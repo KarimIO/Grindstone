@@ -15,6 +15,8 @@ using namespace Grindstone;
 
 extern "C" {
 	RENDERABLES_3D_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
+		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
+
 		EngineCore* engineCore = pluginInterface->GetEngineCore();
 
 		pluginInterface->RegisterComponent<MeshComponent>();

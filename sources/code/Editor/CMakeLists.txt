@@ -23,6 +23,7 @@ file(GLOB_RECURSE SOURCE_MAIN
 	FileAssetLoader.cpp FileAssetLoader.hpp
 	AssetTemplateRegistry.cpp AssetTemplateRegistry.hpp
 	EditorPluginInterface.cpp EditorPluginInterface.hpp
+	${CORE_UTILS}
 )
 
 file(GLOB_RECURSE SOURCE_SCRIPT_BUILDER_EDITOR "${EDITOR_DIR}/ScriptBuilder/*.cpp")
@@ -94,7 +95,6 @@ find_package(efsw CONFIG REQUIRED)
 find_package(gl3w CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 
-find_package(fmt CONFIG REQUIRED)
 find_package(unofficial-imguizmo CONFIG REQUIRED)
 find_package(unofficial-libgit2 CONFIG REQUIRED)
 set(MONO_PATH CACHE PATH "Mono Path")

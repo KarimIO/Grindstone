@@ -12,6 +12,7 @@ using namespace Grindstone::Physics;
 
 extern "C" {
 	BULLET_PHYSICS_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
+		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
 		pluginInterface->RegisterComponent<BoxColliderComponent>(SetupColliderComponent);
 		pluginInterface->RegisterComponent<SphereColliderComponent>(SetupColliderComponent);
 		pluginInterface->RegisterComponent<PlaneColliderComponent>(SetupColliderComponent);

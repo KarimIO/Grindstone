@@ -8,8 +8,13 @@
 #define VK_USE_PLATFORM_XLIB_KHR
 #endif
 
+#include <set>
+#include <algorithm>
+#include <array>
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
+
+#include <EngineCore/Logger.hpp>
 
 #include "VulkanWindowGraphicsBinding.hpp"
 #include "VulkanCore.hpp"
@@ -29,9 +34,6 @@
 #include "VulkanDescriptorSetLayout.hpp"
 #include "VulkanFormat.hpp"
 #include "VulkanUtils.hpp"
-#include <set>
-#include <algorithm>
-#include <array>
 
 using namespace Grindstone::GraphicsAPI;
 
@@ -79,7 +81,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityF
 		break;
 	}
 
-	vk->logFunction(logSeverity, pCallbackData->pMessage);
+	GPRINT_TYPED(logSeverity, Grindstone::LogSource::GraphicsAPI, pCallbackData->messageIdNumber, pCallbackData->pMessage);
 
 	return VK_FALSE;
 }
@@ -102,8 +104,6 @@ static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMesse
 }
 
 VulkanCore *VulkanCore::graphicsWrapper = nullptr;
-
-VulkanCore::VulkanCore(std::function<void(LogSeverity, const char*)> logFunction) : logFunction(logFunction) {}
 
 bool VulkanCore::Initialize(Core::CreateInfo& ci) {
 	apiType = API::Vulkan;
@@ -216,8 +216,7 @@ void VulkanCore::PickPhysicalDevice() {
 	VkPhysicalDeviceProperties gpuProps{};
 	vkGetPhysicalDeviceProperties(physicalDevice, &gpuProps);
 
-	std::string output = std::string("Using Device: ") + gpuProps.deviceName;
-	logFunction(LogSeverity::Info, output.c_str());
+	GPRINT_INFO_V(LogSource::GraphicsAPI, "Using Device: {}", gpuProps.deviceName);
 
 	VkPhysicalDeviceProperties properties;
 	vkGetPhysicalDeviceProperties(physicalDevice, &properties);

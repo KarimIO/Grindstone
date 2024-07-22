@@ -9,6 +9,7 @@
 #include <EngineCore/EngineCore.hpp>
 
 #include "TextureImporter.hpp"
+#include <EngineCore/Logger.hpp>
 
 using namespace Grindstone;
 
@@ -20,7 +21,7 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid) {
 	EngineCore& engineCore = EngineCore::GetInstance();
 	if (!engineCore.assetManager->LoadFile(AssetType::Texture, uuid, assetName, fileContents, fileSize)) {
 		std::string errorMsg = "Unable to load texture: " + uuid.ToString();
-		engineCore.Print(LogSeverity::Warning, errorMsg.c_str());
+		GPRINT_WARN(LogSource::EngineCore, errorMsg.c_str());
 		return nullptr;
 	}
 
@@ -36,7 +37,7 @@ void* TextureImporter::ProcessLoadedFile(const char* path) {
 	EngineCore& engineCore = EngineCore::GetInstance();
 	if (!engineCore.assetManager->LoadFile(AssetType::Texture, path, assetName, fileContents, fileSize)) {
 		std::string errorMsg = std::string("Unable to load texture: ") + path;
-		engineCore.Print(LogSeverity::Warning, errorMsg.c_str());
+		GPRINT_WARN(LogSource::EngineCore, errorMsg.c_str());
 		return nullptr;
 	}
 
@@ -49,7 +50,7 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, std::string& assetName, cons
 
 	if (strncmp(fileContents, "DDS ", 4) != 0) {
 		std::string errorMsg = "Invalid texture file: " + uuid.ToString();
-		engineCore.Print(LogSeverity::Warning, errorMsg.c_str());
+		GPRINT_WARN(LogSource::EngineCore, errorMsg.c_str());
 		return nullptr;
 	}
 
@@ -191,7 +192,7 @@ void TextureImporter::QueueReloadAsset(Uuid uuid) {
 
 	if (!engineCore.assetManager->LoadFile(AssetType::Texture, uuid, assetName, fileContents, fileSize)) {
 		std::string errorMsg = "Unable to load texture: " + uuid.ToString();
-		engineCore.Print(LogSeverity::Warning, errorMsg.c_str());
+		GPRINT_WARN(LogSource::EngineCore, errorMsg.c_str());
 		return;
 	}
 

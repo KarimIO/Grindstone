@@ -13,6 +13,7 @@
 #include "AssetRegistry.hpp"
 #include "EditorManager.hpp"
 #include "FileAssetLoader.hpp"
+#include <EngineCore/Logger.hpp>
 
 using namespace Grindstone::Assets;
 
@@ -46,7 +47,7 @@ void FileAssetLoader::Load(AssetType assetType, Uuid uuid, std::string& assetNam
 	Editor::AssetRegistry::Entry outEntry;
 	if (!assetRegistry.TryGetAssetData(uuid, outEntry)) {
 		std::string errorString = "Could not get asset: " + uuid.ToString();
-		Editor::Manager::GetInstance().Print(LogSeverity::Error, errorString.c_str());
+		GPRINT_ERROR(LogSource::Editor, errorString.c_str());
 		return;
 	}
 
@@ -62,7 +63,7 @@ void FileAssetLoader::Load(AssetType assetType, std::filesystem::path path, std:
 	Editor::AssetRegistry::Entry outEntry;
 	if (!assetRegistry.TryGetAssetData(path, outEntry)) {
 		std::string errorString = "Could not get asset: " + path.string();
-		Editor::Manager::GetInstance().Print(LogSeverity::Error, errorString.c_str());
+		GPRINT_ERROR(LogSource::Editor, errorString.c_str());
 		return;
 	}
 
@@ -90,7 +91,7 @@ bool FileAssetLoader::LoadText(AssetType assetType, Uuid uuid, std::string& asse
 	Editor::AssetRegistry::Entry outEntry;
 	if (!assetRegistry.TryGetAssetData(uuid, outEntry)) {
 		std::string errorString = "Could not get asset: " + uuid.ToString();
-		Editor::Manager::GetInstance().Print(LogSeverity::Error, errorString.c_str());
+		GPRINT_ERROR(LogSource::Editor, errorString.c_str());
 		return false;
 	}
 
@@ -103,7 +104,7 @@ bool FileAssetLoader::LoadText(AssetType assetType, std::filesystem::path path, 
 	Editor::AssetRegistry::Entry outEntry;
 	if (!assetRegistry.TryGetAssetData(path, outEntry)) {
 		std::string errorString = "Could not get asset: " + path.string();
-		Editor::Manager::GetInstance().Print(LogSeverity::Error, errorString.c_str());
+		GPRINT_ERROR(LogSource::Editor, errorString.c_str());
 		return false;
 	}
 
@@ -121,7 +122,7 @@ bool FileAssetLoader::LoadShaderStage(
 
 	if (!std::filesystem::exists(path)) {
 		std::string errorMsg = path + " shader not found.";
-		Editor::Manager::GetInstance().Print(LogSeverity::Error, errorMsg.c_str());
+		GPRINT_ERROR(LogSource::Editor, errorMsg.c_str());
 		return false;
 	}
 
@@ -159,7 +160,7 @@ std::string FileAssetLoader::GetShaderPath(
 		shaderStageExtension = ".comp";
 		break;
 	default:
-		Editor::Manager::Print(LogSeverity::Error, "Incorrect shader stage");
+		GPRINT_ERROR(LogSource::Editor, "Incorrect shader stage");
 		break;
 	}
 

@@ -21,7 +21,7 @@ Manager::~Manager() {
 				releaseModuleFnPtr(&pluginInterface);
 			}
 			else {
-				Logger::Print(LogSeverity::Error, "Unable to call ReleaseModule in plugin: {0}", it->first.c_str());
+				GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", it->first.c_str());
 			}
 		}
 	}
@@ -90,7 +90,7 @@ bool Manager::Load(const char *path) {
 			return true;
 		}
 		else {
-			Logger::Print(LogSeverity::Error, "Unable to call InitializeModule in plugin: {0}", path);
+			GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call InitializeModule in plugin: {0}", path);
 			return false;
 		}
 	}
@@ -108,9 +108,9 @@ bool Manager::Load(const char *path) {
 		nullptr
 	);
 
-	Logger::Print(LogSeverity::Error, "Unable to load plugin \"{0}\": {1}", path, errorString);
+	GPRINT_ERROR_V(LogSource::EngineCore, "Unable to load plugin \"{0}\": {1}", path, errorString);
 #else
-	Logger::Print(LogSeverity::Error, "Unable to load plugin: {0}", path);
+	GPRINT_ERROR_V(LogSource::EngineCore, "Unable to load plugin: {0}", path);
 #endif
 
 	return false;
@@ -133,7 +133,7 @@ void Manager::Remove(const char* name) {
 				releaseModuleFnPtr(&pluginInterface);
 			}
 			else {
-				Logger::Print(LogSeverity::Error, "Unable to call ReleaseModule in plugin: {0}", it->first.c_str());
+				GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", it->first.c_str());
 			}
 		}
 

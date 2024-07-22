@@ -11,6 +11,7 @@
 
 #include "Editor/EditorManager.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
+#include <EngineCore/Logger.hpp>
 #include "CSharpProjectBuilder.hpp"
 #include "SolutionBuilder.hpp"
 
@@ -177,9 +178,9 @@ std::string GetMsBuildPath() {
 }
 
 // TODO: Multi-thread this with DWORD __stdcall ReadDataFromExtProgram(void* argh) {
-DWORD ReadDataFromExtProgram() {
+static DWORD ReadDataFromExtProgram() {
 	CloseHandle(hStdOutPipeWrite);
-	Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Info, "Building...");
+	GPRINT_INFO(Grindstone::LogSource::Editor, "Building...");
 
 	for (;;) {
 		DWORD bytesAvail = 0;
@@ -192,13 +193,15 @@ DWORD ReadDataFromExtProgram() {
 			DWORD n;
 			const BOOL success = ReadFile(hStdOutPipeRead, buf, bufferSize, &n, nullptr);
 			if (!success || n == 0) {
-				Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Error, "Failed to call ReadFile");
+				GPRINT_ERROR(Grindstone::LogSource::Editor, "Failed to call ReadFile");
 			}
-			Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Info, std::string(buf, buf + n));
+
+			std::string errorMsg(buf, buf + n);
+			GPRINT_INFO(Grindstone::LogSource::Editor, errorMsg.c_str());
 		}
 	}
 
-	Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Info, "Done building.");
+	GPRINT_INFO(Grindstone::LogSource::Editor, "Done building.");
 	CloseHandle(msBuildProcessInfo.hProcess);
 	CloseHandle(msBuildProcessInfo.hThread);
 
@@ -277,7 +280,7 @@ void CSharpBuildManager::BuildProject() {
 void CSharpBuildManager::CreateProjectsAndSolution() const {
 	const std::string msBuildPath = GetMsBuildPath();
 	if (msBuildPath.empty()) {
-		Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Error, "Could not get visual studio path.");
+		GPRINT_ERROR(LogSource::Editor, "Could not get visual studio path.");
 		return;
 	}
 

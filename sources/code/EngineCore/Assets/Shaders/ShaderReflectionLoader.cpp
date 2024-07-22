@@ -4,6 +4,7 @@
 #include "ShaderImporter.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
 #include "ShaderReflectionLoader.hpp"
+#include <EngineCore/Logger.hpp>
 using namespace Grindstone;
 
 GraphicsAPI::ShaderStage GetStageFromString(std::string str) {
@@ -46,7 +47,7 @@ ShaderReflectionLoader::ShaderReflectionLoader(
 	ShaderReflectionData& data
 ) : outData(data) {
 	if (document.Parse(content).GetParseError()) {
-		EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Failed to load shader reflection.");
+		GPRINT_ERROR(LogSource::EngineCore, "Failed to load shader reflection.");
 		return;
 	}
 

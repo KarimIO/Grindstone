@@ -17,6 +17,7 @@ add_library(
 	${AUDIO_OPENAL_COMPONENTS_HEADER}
 	${SOURCE_REFLECTION}
 	${HEADER_REFLECTION}
+	${CORE_UTILS}
 )
 
 target_compile_features(PluginAudioOpenAL PRIVATE cxx_std_17)

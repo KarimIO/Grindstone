@@ -7,14 +7,12 @@ using namespace Grindstone;
 
 Plugins::Interface* pluginInterface = nullptr;
 
-static void Print(LogSeverity s, const char* m) {
-	pluginInterface->Print(s, m);
-}
-
 extern "C" {
 	GRAPHICS_VULKAN_API void InitializeModule(Plugins::Interface* pInterface) {
+		Grindstone::Logger::SetLoggerState(pInterface->GetLoggerState());
+
 		pluginInterface = pInterface;
-		pInterface->RegisterGraphicsCore(new GraphicsAPI::VulkanCore(Print));
+		pInterface->RegisterGraphicsCore(new GraphicsAPI::VulkanCore());
 		pInterface->RegisterWindowManager(new WindowManager());
 		pInterface->RegisterDisplayManager(new DisplayManager());
 	}

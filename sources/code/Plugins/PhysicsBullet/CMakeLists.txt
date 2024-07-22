@@ -17,6 +17,7 @@ add_library(
 	${BULLETPHYS_COMPONENTS_HEADER}
 	${SOURCE_REFLECTION}
 	${HEADER_REFLECTION}
+	${CORE_UTILS}
 )
 
 target_compile_features(PluginBulletPhysics PRIVATE cxx_std_17)

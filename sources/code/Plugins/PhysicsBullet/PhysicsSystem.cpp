@@ -8,7 +8,7 @@
 using namespace Grindstone;
 using namespace Grindstone::Physics;
 
-void SimulatePhysicsForObject(
+static void SimulatePhysicsForObject(
 	RigidBodyComponent& rigidBodyComponent,
 	TransformComponent& transformComponent
 ) {
@@ -23,8 +23,8 @@ void SimulatePhysicsForObject(
 	}
 
 	motionState->getWorldTransform(rigidBodyTransform);
-	auto position = rigidBodyTransform.getOrigin();
-	auto rotation = rigidBodyTransform.getRotation();
+	btVector3& position = rigidBodyTransform.getOrigin();
+	btQuaternion& rotation = rigidBodyTransform.getRotation();
 
 	transformComponent.position = { position.x(), position.y(), position.z() };
 	transformComponent.rotation = { rotation.x(), rotation.y(), rotation.z(), rotation.w() };

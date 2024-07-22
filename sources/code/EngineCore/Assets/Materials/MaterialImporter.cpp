@@ -8,6 +8,7 @@
 #include "EngineCore/Assets/AssetManager.hpp"
 #include "Common/Graphics/Core.hpp"
 #include "Common/Graphics/Texture.hpp"
+#include <EngineCore/Logger.hpp>
 using namespace Grindstone;
 
 MaterialImporter::MaterialImporter() {
@@ -33,18 +34,18 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	std::string assetName, contentData;
 	if (!assetManager->LoadFileText(AssetType::Material, uuid, assetName, contentData)) {
 		std::string error = "Could not find material with id " + uuid.ToString() + ".";
-		EngineCore::GetInstance().Print(LogSeverity::Error, error.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, error.c_str());
 		return nullptr;
 	}
 
 	rapidjson::Document document;
 	if (document.Parse(contentData.data()).HasParseError()) {
-		EngineCore::GetInstance().Print(LogSeverity::Error, "Unable to parse material.");
+		GPRINT_ERROR(LogSource::EngineCore, "Unable to parse material.");
 		return nullptr;
 	}
 
 	if (!document.HasMember("shader")) {
-		EngineCore::GetInstance().Print(LogSeverity::Error, "No shader found in material.");
+		GPRINT_ERROR(LogSource::EngineCore, "No shader found in material.");
 		return nullptr;
 	}
 
@@ -52,7 +53,7 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	ShaderAsset* shaderAsset = assetManager->IncrementAssetUse<ShaderAsset>(shaderUuid);
 
 	if (shaderAsset == nullptr) {
-		EngineCore::GetInstance().Print(LogSeverity::Error, "Failed to load shader.");
+		GPRINT_ERROR(LogSource::EngineCore, "Failed to load shader.");
 		return nullptr;
 	}
 
@@ -91,7 +92,7 @@ void MaterialImporter::QueueReloadAsset(Uuid uuid) {
 
 	std::string assetName, contentData;
 	if (!assetManager->LoadFileText(AssetType::Mesh3d, uuid, assetName, contentData)) {
-		EngineCore::GetInstance().Print(LogSeverity::Error, "Could not find material by file.");
+		GPRINT_ERROR(LogSource::EngineCore, "Could not find material by file.");
 		return;
 	}
 
@@ -101,13 +102,13 @@ void MaterialImporter::QueueReloadAsset(Uuid uuid) {
 	document.Parse(contentData.data());
 
 	if (!document.HasMember("name")) {
-		EngineCore::GetInstance().Print(LogSeverity::Error, "No name found in material.");
+		GPRINT_ERROR(LogSource::EngineCore, "No name found in material.");
 		return;
 	}
 	const char* name = document["name"].GetString();
 
 	if (!document.HasMember("shader")) {
-		EngineCore::GetInstance().Print(LogSeverity::Error, "No shader found in material.");
+		GPRINT_ERROR(LogSource::EngineCore, "No shader found in material.");
 		return;
 	}
 

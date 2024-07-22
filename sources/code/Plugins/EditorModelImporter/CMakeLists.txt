@@ -27,6 +27,7 @@ add_library(
 	PluginEditorModelImporter MODULE
 	${EDITORMODELIMPORTER_SOURCES}
 	${EDITORMODELIMPORTER_HEADERS}
+	${CORE_UTILS}
 )
 
 target_compile_features(PluginEditorModelImporter PRIVATE cxx_std_17)

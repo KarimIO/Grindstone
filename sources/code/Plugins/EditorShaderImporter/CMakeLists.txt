@@ -36,6 +36,7 @@ add_library(
 	PluginEditorShaderImporter MODULE
 	${EDITORSHADERIMPORTER_SOURCES}
 	${EDITORSHADERIMPORTER_HEADERS}
+	${CORE_UTILS}
 )
 
 target_compile_features(PluginEditorShaderImporter PRIVATE cxx_std_17)

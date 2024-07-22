@@ -1,122 +1,153 @@
-#include "Logger.hpp"
-
+#include <fmt/format.h>
 #include <filesystem>
 #include <cstdarg>
+#include <chrono>
 #ifdef _MSC_VER
 #include <windows.h>
 #endif
 
-#include "spdlog/sinks/stdout_color_sinks.h"
-#include "spdlog/sinks/basic_file_sink.h"
-#include "spdlog/sinks/base_sink.h"
-#include "spdlog/spdlog.h"
-#include "spdlog/common.h"
+#include <Common/Assert.hpp>
+#include <Common/Event/PrintMessageEvent.hpp>
+#include <EngineCore/Events/Dispatcher.hpp>
+#include <EngineCore/EngineCore.hpp>
 
-#include "Common/Event/PrintMessageEvent.hpp"
-#include "EngineCore/Events/Dispatcher.hpp"
-#include "EngineCore.hpp"
+#include "Logger.hpp"
 using namespace Grindstone;
 
-spdlog::logger *Logger::logger;
-
-LogSeverity SpdLogLevelToGrindstoneLevel(const spdlog::level::level_enum level) {
-	switch (level) {
-	case spdlog::level::level_enum::info:
-		return LogSeverity::Info;
-	case spdlog::level::level_enum::warn:
-		return LogSeverity::Warning;
-	case spdlog::level::level_enum::err:
-	case spdlog::level::level_enum::critical:
-		return LogSeverity::Error;
-	default: break;
-	}
-
-	return LogSeverity::Trace;
-}
-
-class EditorSink : public spdlog::sinks::base_sink<std::mutex> {
-protected:
-	virtual void sink_it_(const spdlog::details::log_msg& msg) override {
-		spdlog::memory_buf_t formatted;
-		base_sink<std::mutex>::formatter_->format(msg, formatted);
-
-		const LogSeverity level = SpdLogLevelToGrindstoneLevel(msg.level);
-		const std::string str = fmt::to_string(formatted);
-		const ConsoleMessage consoleMsg = { str, level };
-		Events::BaseEvent* printEvent = new Events::PrintMessageEvent(consoleMsg);
-		Events::Dispatcher* dispatcher = EngineCore::GetInstance().GetEventDispatcher();
-		dispatcher->Dispatch(printEvent);
-	}
-
-	virtual void flush_() override {}
-};
 
 #ifdef _MSC_VER
-class VisualStudioOutputSink : public spdlog::sinks::base_sink<std::mutex> {
-protected:
-	void sink_it_(const spdlog::details::log_msg& msg) override {
-		spdlog::memory_buf_t formatted;
-		base_sink<std::mutex>::formatter_->format(msg, formatted);
+const WORD debugColorOff = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
 
-		std::string str = fmt::to_string(formatted);
-#ifdef OutputDebugString
-		OutputDebugString(str.c_str());
-#endif
-	}
-
-	void flush_() override {}
+WORD debugColors[] = {
+	FOREGROUND_GREEN,											// Trace: green
+	FOREGROUND_GREEN | FOREGROUND_BLUE,							// Info: cyan
+	FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY,	// Warning: intense yellow
+	FOREGROUND_RED | FOREGROUND_INTENSITY,						// Error: intense red
+	BACKGROUND_RED | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY	// Fatal
+};
+#else
+const char* ansiColorLogPrefix[] = {
+	"\033[1;32m", // Trace: green
+	"\033[1;36m", // Info: cyan
+	"\033[1;33m", // Warning: yellow
+	"\033[1;31m", // Error: red
+	"\033[1;35m"  // Fatal: magenta
 };
 #endif
 
-void Logger::Initialize(std::filesystem::path path) {
+static Grindstone::Logger::LoggerState* loggerState = nullptr;
+
+Grindstone::Logger::LoggerState* Grindstone::Logger::GetLoggerState() {
+	return loggerState;
+}
+
+void Grindstone::Logger::SetLoggerState(Grindstone::Logger::LoggerState* newLoggerState) {
+	loggerState = newLoggerState;
+}
+
+void Grindstone::Logger::Initialize(std::filesystem::path path, Events::Dispatcher* newDispatcher) {
 	std::filesystem::create_directories(path.parent_path());
-
-	auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-	consoleSink->set_level(spdlog::level::trace);
-
-	std::string pathAsString = path.string();
-	auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(pathAsString, true);
-	fileSink->set_level(spdlog::level::trace);
-
-	auto editorSink = std::make_shared<EditorSink>();
-	editorSink->set_level(spdlog::level::trace);
-	editorSink->set_pattern("[%I:%M:%S:%e %p] [%l] %v");
-
-#ifdef _MSC_VER
-	auto visualStudioOutputSink = std::make_shared<VisualStudioOutputSink>();
-	visualStudioOutputSink->set_level(spdlog::level::trace);
-	visualStudioOutputSink->set_pattern("[%I:%M:%S:%e %p] [%l] %v");
-#endif
-
-	logger = new spdlog::logger("Debug Logger", {
-		consoleSink,
-		fileSink,
-		editorSink,
-#ifdef _MSC_VER
-		visualStudioOutputSink
-#endif
-	});
-	logger->set_level(spdlog::level::trace);
-	logger->flush_on(spdlog::level::trace);
+	loggerState = new LoggerState();
+	loggerState->outputStream.open(path);
+	loggerState->dispatcher = newDispatcher;
 }
 
-void Logger::Print(LogSeverity logSeverity, const char* str) {
-	switch (logSeverity) {
-	case LogSeverity::Info:
-		logger->info(str);
-		break;
-	case LogSeverity::Trace:
-		logger->trace(str);
-		break;
-	case LogSeverity::Warning:
-		logger->warn(str);
-		break;
-	case LogSeverity::Error:
-		logger->error(str);
-		break;
+void Grindstone::Logger::Print(
+	LogSeverity logSeverity,
+	LogSource logSource,
+	LogInternalType internalType,
+	const char* filename,
+	uint32_t line,
+	const char* str
+) {
+	if (logSeverity > LogSeverity::Fatal) {
+		logSeverity = LogSeverity::Error;
+	}
+
+	std::chrono::system_clock::time_point timepoint = std::chrono::system_clock::now();
+	time_t coarse = std::chrono::system_clock::to_time_t(timepoint);
+	std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> fine =
+		std::chrono::time_point_cast<std::chrono::milliseconds>(timepoint);
+	const unsigned long long milliseconds = fine.time_since_epoch().count() % 1000u;
+
+	tm tm;
+	localtime_s(&tm, &coarse);
+
+	char timeBuffer[sizeof("23:59:59.999")]{};
+	size_t timeOffset = std::strftime(timeBuffer, sizeof timeBuffer - 3, "%T.", &tm);
+	std::snprintf(
+		timeBuffer + timeOffset,
+		4, "%03llu",
+		milliseconds
+	);
+
+	const char* category = logSourceStrings[static_cast<size_t>(logSource)];
+	const char* logSeverityPrefix = logSeverityPrefixes[static_cast<size_t>(logSeverity)];
+
+	char* outputPrefixBuffer = new char[sizeof("[] [] []: ") + strlen(logSeverityPrefix) + strlen(category) + strlen(timeBuffer)];
+	std::string outputPrefix = std::string("[") + logSeverityPrefix + "] [" + category + "] [" + timeBuffer + "]: ";
+	std::string completeMessage = outputPrefix + str + '\n';
+
+#ifdef _MSC_VER
+	DWORD outputHandle = logSeverity == LogSeverity::Error
+		? STD_ERROR_HANDLE
+		: STD_OUTPUT_HANDLE;
+
+	HANDLE hConsole = ::GetStdHandle(outputHandle);
+	::SetConsoleTextAttribute(hConsole, debugColors[static_cast<size_t>(logSeverity)]);
+	::WriteConsole(hConsole, outputPrefix.c_str(), static_cast<DWORD>(outputPrefix.size()), nullptr, nullptr);
+
+	::SetConsoleTextAttribute(hConsole, debugColorOff);
+	::WriteConsole(hConsole, str, static_cast<DWORD>(strlen(str)), nullptr, nullptr);
+	::WriteConsole(hConsole, "\n", 1, nullptr, nullptr);
+#else
+	std::ostream& consoleStream = (logSeverity == LogSeverity::Error)
+		? std::cerr
+		: std::cout;
+
+	const char* resetColorLog = "\033[0m";
+	consoleStream
+		<< ansiColorLogPrefix[static_cast<size_t>(logSeverity)]
+		<< outputPrefix.c_str()
+		<< resetColorLog
+		<< str
+		<< '\n';
+#endif
+
+	if (loggerState != nullptr) {
+		if (loggerState->outputStream.is_open()) {
+			loggerState->outputStream << completeMessage;
+			loggerState->outputStream.flush();
+		}
+
+		if (loggerState->dispatcher) {
+			const ConsoleMessage consoleMsg = {
+				str,
+				filename,
+				line,
+				static_cast<uint32_t>(fine.time_since_epoch().count()),
+				logSource,
+				internalType,
+				logSeverity
+			};
+
+			Events::BaseEvent* printEvent = new Events::PrintMessageEvent(consoleMsg);
+
+			loggerState->dispatcher->Dispatch(printEvent);
+		}
+	}
+	
+#ifdef _MSC_VER
+	::OutputDebugString(completeMessage.c_str());
+#endif
+
+	if (logSeverity == LogSeverity::Fatal) {
+		GS_DEBUG_BREAK;
 	}
 }
 
-Logger::~Logger() {
-	logger->flush();
+void Grindstone::Logger::CloseLogger() {
+	if (loggerState && loggerState->outputStream.is_open()) {
+		loggerState->outputStream.close();
+	}
 }

@@ -7,14 +7,12 @@
 #include "BaseEvent.hpp"
 #include "KeyPressCode.hpp"
 
-namespace Grindstone {
-	namespace Events {
+namespace Grindstone::Events {
 		struct PrintMessageEvent : public BaseEvent {
-			PrintMessageEvent(ConsoleMessage msg)
-				: message(msg) {}
-			ConsoleMessage message;
+		PrintMessageEvent(ConsoleMessage msg)
+			: message(msg) {}
+		ConsoleMessage message;
 
-			SETUP_EVENT(PrintMessage)
-		}; // struct PrintMessageEvent
-	} // namespace Events
-} // namespace Grindstone
+		SETUP_EVENT(PrintMessage)
+	}; // struct PrintMessageEvent
+} // namespace Grindstone::Events

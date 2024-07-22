@@ -16,6 +16,7 @@
 #include <EngineCore/ECS/ComponentRegistrar.hpp>
 #include <EngineCore/ECS/SystemFactory.hpp>
 #include <EngineCore/ECS/SystemRegistrar.hpp>
+#include <EngineCore/Logger.hpp>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -48,7 +49,6 @@ namespace Grindstone {
 			virtual void SetEditorInterface(BaseEditorInterface* editorInterface);
 			virtual BaseEditorInterface* GetEditorInterface() const;
 
-			virtual void Print(LogSeverity logSeverity, const char* message);
 			virtual EngineCore* GetEngineCore();
 			virtual GraphicsAPI::Core* GetGraphicsCore();
 			virtual bool LoadPlugin(const char* name);
@@ -64,6 +64,7 @@ namespace Grindstone {
 			virtual void RegisterAssetRenderer(BaseAssetRenderer* assetRenderer);
 			virtual void RegisterAssetType(AssetType assetType, const char* typeName, AssetImporter* assetImporter);
 			virtual void SetReloadCsharpCallback(std::function<void()> callback);
+			virtual Grindstone::Logger::LoggerState* Plugins::Interface::GetLoggerState() const;
 
 			template<typename T>
 			void RegisterComponent(ECS::SetupComponentFn setupComponentFn = nullptr) {

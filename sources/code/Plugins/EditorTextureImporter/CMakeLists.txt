@@ -25,6 +25,7 @@ add_library(
 	PluginEditorTextureImporter MODULE
 	${EDITORTEXTUREIMPORTER_SOURCES}
 	${EDITORTEXTUREIMPORTER_HEADERS}
+	${CORE_UTILS}
 )
 
 target_compile_features(PluginEditorTextureImporter PRIVATE cxx_std_17)

@@ -37,9 +37,6 @@ static void ValuesGetter(
 	}
 }
 
-TracingPanel::TracingPanel() {
-}
-
 void TracingPanel::Render() {
 	if (isShowingPanel) {
 		ImGui::Begin("Tracing", &isShowingPanel);
@@ -50,7 +47,7 @@ void TracingPanel::Render() {
 }
 
 void TracingPanel::TryCaptureSession() {
-	const long long secondsToRecapture = 10;
+	const long long secondsToRecapture = 3;
 
 	std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
 	long long elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastCaptureTime).count();

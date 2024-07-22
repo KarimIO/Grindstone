@@ -4,21 +4,16 @@
 
 #include <EngineCore/Profiling.hpp>
 
-namespace Grindstone {
-	class EngineCore;
+namespace Grindstone::Editor::ImguiEditor {
+	class TracingPanel {
+	public:
+		void Render();
+	private:
+		void RenderContents();
+		void TryCaptureSession();
 
-	namespace Editor::ImguiEditor {
-		class TracingPanel {
-		public:
-			TracingPanel();
-			void Render();
-		private:
-			void RenderContents();
-			void TryCaptureSession();
-
-			bool isShowingPanel = true;
-			Profiler::InstrumentationSession session;
-			std::chrono::steady_clock::time_point lastCaptureTime;
-		};
-	}
+		bool isShowingPanel = true;
+		Profiler::InstrumentationSession session;
+		std::chrono::steady_clock::time_point lastCaptureTime;
+	};
 }

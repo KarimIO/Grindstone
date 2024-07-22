@@ -25,16 +25,16 @@ Plugins::BaseEditorInterface* Plugins::Interface::GetEditorInterface() const {
 	return editorInterface;
 }
 
-void Plugins::Interface::Print(LogSeverity logSeverity, const char* message) {
-	Logger::Print(logSeverity, message);
-}
-
 EngineCore* Plugins::Interface::GetEngineCore() {
 	return manager->engineCore;
 }
 
 GraphicsAPI::Core* Plugins::Interface::GetGraphicsCore() {
 	return graphicsCore;
+}
+
+Grindstone::Logger::LoggerState* Plugins::Interface::GetLoggerState() const {
+	return Grindstone::Logger::GetLoggerState();
 }
 
 bool Plugins::Interface::LoadPlugin(const char* name) {

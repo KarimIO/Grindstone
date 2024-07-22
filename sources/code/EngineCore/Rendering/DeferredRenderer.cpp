@@ -26,6 +26,7 @@
 #include <EngineCore/Profiling.hpp>
 
 #include "DeferredRenderer.hpp"
+#include <EngineCore/Logger.hpp>
 
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
@@ -1352,7 +1353,7 @@ void DeferredRenderer::CreatePipelines() {
 	 
 	{
 		if (!assetManager->LoadShaderSet(Uuid("3b3bc2c8-ac88-4fba-b9f9-704f86c1278c"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
-			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load ssao shaders.");
+			GPRINT_ERROR(LogSource::Rendering, "Could not load ssao shaders.");
 			return;
 		}
 
@@ -1391,7 +1392,7 @@ void DeferredRenderer::CreatePipelines() {
 		std::vector<char> bloomFileData;
 
 		if (!assetManager->LoadShaderStage(Uuid("8a2475b4-8731-456c-beb7-2d51db7914f9"), ShaderStage::Compute, bloomShaderStageCreateInfo, bloomFileData)) {
-			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load bloom compute shader.");
+			GPRINT_ERROR(LogSource::Rendering, "Could not load bloom compute shader.");
 			return;
 		}
 
@@ -1413,7 +1414,7 @@ void DeferredRenderer::CreatePipelines() {
 		std::vector<char> ssrFileData;
 
 		if (!assetManager->LoadShaderStage(Uuid("cff2c843-6b35-4030-9a4b-464feb1e3365"), ShaderStage::Compute, ssrShaderStageCreateInfo, ssrFileData)) {
-			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load SSR compute shader.");
+			GPRINT_ERROR(LogSource::Rendering, "Could not load SSR compute shader.");
 			return;
 		}
 
@@ -1432,7 +1433,7 @@ void DeferredRenderer::CreatePipelines() {
 
 	{
 		if (!assetManager->LoadShaderSet(Uuid("5227a9a2-4a62-4f1b-9906-2b6acbf1b8d3"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
-			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load image based lighting shaders.");
+			GPRINT_ERROR(LogSource::Rendering, "Could not load image based lighting shaders.");
 			return;
 		}
 
@@ -1460,7 +1461,7 @@ void DeferredRenderer::CreatePipelines() {
 
 	{
 		if (!assetManager->LoadShaderSet(Uuid("5537b925-96bc-4e1f-8e2a-d66d6dd9bed1"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
-			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load point light shaders.");
+			GPRINT_ERROR(LogSource::Rendering, "Could not load point light shaders.");
 			return;
 		}
 
@@ -1487,7 +1488,7 @@ void DeferredRenderer::CreatePipelines() {
 
 	{
 		if (!assetManager->LoadShaderSet(Uuid("31cc60ab-59cb-43b5-94bb-3951844c8f76"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
-			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load spot light shaders.");
+			GPRINT_ERROR(LogSource::Rendering, "Could not load spot light shaders.");
 			return;
 		}
 
@@ -1514,7 +1515,7 @@ void DeferredRenderer::CreatePipelines() {
 
 	{
 		if (!assetManager->LoadShaderSet(Uuid("94dcc829-3b58-45fb-809a-6800a23eab45"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
-			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load directional light shaders.");
+			GPRINT_ERROR(LogSource::Rendering, "Could not load directional light shaders.");
 			return;
 		}
 
@@ -1547,7 +1548,7 @@ void DeferredRenderer::CreatePipelines() {
 			shaderStageCreateInfos,
 			fileData
 		)) {
-			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load tonemapping shaders.");
+			GPRINT_ERROR(LogSource::Rendering, "Could not load tonemapping shaders.");
 			return;
 		}
 
@@ -1576,7 +1577,7 @@ void DeferredRenderer::CreatePipelines() {
 			shaderStageCreateInfos,
 			fileData
 		)) {
-			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load depth of field separation shader.");
+			GPRINT_ERROR(LogSource::Rendering, "Could not load depth of field separation shader.");
 			return;
 		}
 
@@ -1610,7 +1611,7 @@ void DeferredRenderer::CreatePipelines() {
 			shaderStageCreateInfos,
 			fileData
 		)) {
-			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load depth of field blur shader.");
+			GPRINT_ERROR(LogSource::Rendering, "Could not load depth of field blur shader.");
 			return;
 		}
 
@@ -1644,7 +1645,7 @@ void DeferredRenderer::CreatePipelines() {
 			shaderStageCreateInfos,
 			fileData
 		)) {
-			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load depth of field combination shader.");
+			GPRINT_ERROR(LogSource::Rendering, "Could not load depth of field combination shader.");
 			return;
 		}
 
@@ -1679,7 +1680,7 @@ void DeferredRenderer::CreatePipelines() {
 			shaderStageCreateInfos,
 			fileData
 		)) {
-			EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Could not load shadow mapping shaders.");
+			GPRINT_ERROR(LogSource::Rendering, "Could not load shadow mapping shaders.");
 			return;
 		}
 
@@ -2425,7 +2426,7 @@ void DeferredRenderer::Render(
 	commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	commandBuffer->BindIndexBuffer(indexBuffer);
 
-	RenderSsr(imageSet, commandBuffer);
+	// RenderSsr(imageSet, commandBuffer);
 
 	PostProcess(imageIndex, outputFramebuffer, commandBuffer);
 }

@@ -22,11 +22,11 @@ ImguiRendererOpenGL::ImguiRendererOpenGL() {
 	ImGui_ImplWin32_Init(win);
 
 	if (gl3wInit()) {
-		Editor::Manager::Print(LogSeverity::Error, "Failed to initialize OpenGL");
+		GPRINT_ERROR(LogSource::Editor, "Failed to initialize OpenGL");
 		return;
 	}
 	if (!gl3wIsSupported(3, 2)) {
-		Editor::Manager::Print(LogSeverity::Error, "OpenGL 3.2 not supported\n");
+		GPRINT_ERROR(LogSource::Editor, "OpenGL 3.2 not supported\n");
 		return;
 	}
 

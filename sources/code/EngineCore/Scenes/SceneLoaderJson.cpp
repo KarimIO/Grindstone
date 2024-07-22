@@ -13,6 +13,7 @@
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Common/Math.hpp"
 #include "Scene.hpp"
+#include <EngineCore/Logger.hpp>
 
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
@@ -33,12 +34,12 @@ bool SceneLoaderJson::Load(const char* path) {
 	scene->path = path;
 
 	if (document.Parse(fileContents.c_str()).GetParseError()) {
-		EngineCore::GetInstance().Print(Grindstone::LogSeverity::Error, "Failed to load scene.");
+		GPRINT_ERROR(LogSource::EngineCore, "Failed to load scene.");
 		return false;
 	}
 
 	std::string printMsg = std::string("Loading scene: ") + path;
-	EngineCore::GetInstance().Print(Grindstone::LogSeverity::Info, printMsg.c_str());
+	GPRINT_INFO(LogSource::EngineCore, printMsg.c_str());
 
 	ProcessMeta();
 	ProcessEntities();
@@ -111,7 +112,7 @@ void SceneLoaderJson::ProcessComponent(ECS::Entity entity, rapidjson::Value& com
 	componentRegistrar->SetupComponent(componentType, entity, componentPtr);
 }
 
-void CopyDataArrayFloat(rapidjson::Value& srcParameter, float* dstArray, rapidjson::SizeType count) {
+static void CopyDataArrayFloat(rapidjson::Value& srcParameter, float* dstArray, rapidjson::SizeType count) {
 	auto srcArray = srcParameter.GetArray();
 
 	for (rapidjson::SizeType i = 0; i < count; ++i) {
@@ -119,7 +120,7 @@ void CopyDataArrayFloat(rapidjson::Value& srcParameter, float* dstArray, rapidjs
 	}
 }
 
-void CopyDataArrayDouble(rapidjson::Value& srcParameter, double* dstArray, rapidjson::SizeType count) {
+static void CopyDataArrayDouble(rapidjson::Value& srcParameter, double* dstArray, rapidjson::SizeType count) {
 	auto srcArray = srcParameter.GetArray();
 
 	for (rapidjson::SizeType i = 0; i < count; ++i) {
@@ -127,7 +128,7 @@ void CopyDataArrayDouble(rapidjson::Value& srcParameter, double* dstArray, rapid
 	}
 }
 
-void CopyDataArrayInt(rapidjson::Value& srcParameter, int* dstArray, rapidjson::SizeType count) {
+static void CopyDataArrayInt(rapidjson::Value& srcParameter, int* dstArray, rapidjson::SizeType count) {
 	auto srcArray = srcParameter.GetArray();
 
 	for (rapidjson::SizeType i = 0; i < count; ++i) {
@@ -167,7 +168,7 @@ void SceneLoaderJson::ParseMember(
 ) {
 	switch (member->type) {
 	default:
-		EngineCore::GetInstance().Print(LogSeverity::Error, "Unhandled reflection type in SceneLoaderJson!");
+		GPRINT_ERROR(LogSource::EngineCore, "Unhandled reflection type in SceneLoaderJson!");
 		break;
 	case ReflectionTypeData::Entity: {
 		entt::entity& entity = *(entt::entity*)memberPtr;
@@ -183,13 +184,13 @@ void SceneLoaderJson::ParseMember(
 			EngineCore::GetInstance().assetManager->IncrementAssetUse(type->assetType, assetRefPtr.uuid);
 		}
 		else {
-			EngineCore::GetInstance().Print(LogSeverity::Error, "Invalid UUID in entity!");
+			GPRINT_ERROR(LogSource::EngineCore, "Invalid UUID in entity!");
 		}
 		break;
 	}
 	case ReflectionTypeData::Struct:
 		// TODO: Implement this
-		EngineCore::GetInstance().Print(LogSeverity::Error, "Unhandled Struct in SceneLoaderJson!");
+		GPRINT_ERROR(LogSource::EngineCore, "Unhandled Struct in SceneLoaderJson!");
 		break;
 	case ReflectionTypeData::Vector: {
 		ParseArray(memberPtr, member, parameter);

@@ -28,7 +28,6 @@ namespace Grindstone {
 
 		class VulkanCore : public Core {
 		public:
-			VulkanCore(std::function<void(LogSeverity, const char*)> logFunction);
 			virtual bool Initialize(Core::CreateInfo& ci) override;
 			~VulkanCore();
 
@@ -45,7 +44,6 @@ namespace Grindstone {
 			virtual uint32_t GetGraphicsFamily();
 			virtual void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
 			VkCommandPool GetGraphicsCommandPool() const;
-			std::function<void(LogSeverity, const char*)> logFunction;
 		private:
 
 			VkInstance instance = nullptr;

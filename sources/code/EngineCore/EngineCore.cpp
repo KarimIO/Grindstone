@@ -41,9 +41,9 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 	profiler = &Profiler::Manager::Get();
 
-	Logger::Initialize(projectPath / "log/output.log");
+	Logger::Initialize(projectPath / "log/output.log", eventDispatcher);
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Loading", projectPath / "log/grind-profile-load.json");
-	Logger::Print("Initializing {0}...", createInfo.applicationTitle);
+	GPRINT_INFO_V(LogSource::EngineCore, "Initializing {0}...", createInfo.applicationTitle);
 
 	{
 		GRIND_PROFILE_SCOPE("Setup Core Systems");
@@ -104,7 +104,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 	sceneManager = memoryAllocator.Allocate<SceneManagement::SceneManager>();
 
-	Logger::Print("{0} Initialized.", createInfo.applicationTitle);
+	GPRINT_INFO_V(LogSource::EngineCore, "{0} Initialized.", createInfo.applicationTitle);
 	GRIND_PROFILE_END_SESSION();
 
 	lastFrameTime = std::chrono::steady_clock::now();
@@ -162,7 +162,7 @@ void EngineCore::UpdateWindows() {
 }
 
 EngineCore::~EngineCore() {
-	Logger::Print("Closing...");
+	GPRINT_INFO(LogSource::EngineCore, "Closing...");
 
 	memoryAllocator.Free(sceneManager);
 	memoryAllocator.Free(assetRendererManager);
@@ -174,10 +174,11 @@ EngineCore::~EngineCore() {
 	memoryAllocator.Free(eventDispatcher);
 
 	if (!memoryAllocator.IsEmpty()) {
-		Logger::Print(LogSeverity::Error, "Uncleared memory: {0} bytes left!", memoryAllocator.GetUsed());
+		GPRINT_ERROR_V(LogSource::EngineCore, "Uncleared memory: {0} bytes left!", memoryAllocator.GetUsed());
 	}
 
-	Logger::Print("Closed.");
+	GPRINT_INFO(LogSource::EngineCore, "Closed.");
+	Logger::CloseLogger();
 }
 
 void EngineCore::RegisterGraphicsCore(GraphicsAPI::Core* newGraphicsCore) {
@@ -246,10 +247,6 @@ std::filesystem::path EngineCore::GetAssetPath(std::string subPath) const {
 
 Profiler::Manager* EngineCore::GetProfiler() const {
 	return profiler;
-}
-
-void EngineCore::Print(LogSeverity logSeverity, const char* str) {
-	Logger::Print(logSeverity, str);
 }
 
 bool EngineCore::OnTryQuit(Grindstone::Events::BaseEvent* ev) {

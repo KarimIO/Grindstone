@@ -28,7 +28,7 @@ void ArchiveAssetLoader::Load(AssetType assetType, Uuid uuid, std::string& asset
 		fileSize = 0;
 
 		std::string errorString = "Invalid Asset Type when trying to load file: " + uuid.ToString();
-		EngineCore::GetInstance().Print(LogSeverity::Error, errorString.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, errorString.c_str());
 		return;
 	}
 
@@ -40,7 +40,7 @@ void ArchiveAssetLoader::Load(AssetType assetType, Uuid uuid, std::string& asset
 		fileSize = 0;
 
 		std::string errorString = "Could not load asset: " + uuid.ToString();
-		EngineCore::GetInstance().Print(LogSeverity::Error, errorString.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, errorString.c_str());
 		return;
 	}
 
@@ -58,7 +58,7 @@ void ArchiveAssetLoader::Load(AssetType assetType, std::filesystem::path path, s
 		fileSize = 0;
 
 		std::string errorString = "Invalid Asset Type when trying to load file: " + path.string();
-		EngineCore::GetInstance().Print(LogSeverity::Error, errorString.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, errorString.c_str());
 		return;
 	}
 
@@ -75,7 +75,7 @@ void ArchiveAssetLoader::Load(AssetType assetType, std::filesystem::path path, s
 		fileSize = 0;
 
 		std::string errorString = "Could not load asset: " + path.string();
-		EngineCore::GetInstance().Print(LogSeverity::Error, errorString.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, errorString.c_str());
 		return;
 	}
 
@@ -89,7 +89,7 @@ bool ArchiveAssetLoader::LoadText(AssetType assetType, Uuid uuid, std::string& a
 
 	if (charPtr == nullptr || fileSize == 0) {
 		std::string errorString = "Could not load file: " + uuid.ToString();
-		EngineCore::GetInstance().Print(LogSeverity::Error, errorString.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, errorString.c_str());
 		return false;
 	}
 
@@ -104,7 +104,7 @@ bool ArchiveAssetLoader::LoadText(AssetType assetType, std::filesystem::path pat
 
 	if (charPtr == nullptr || fileSize == 0) {
 		std::string errorString = "Could not load file: " + path.string();
-		EngineCore::GetInstance().Print(LogSeverity::Error, errorString.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, errorString.c_str());
 		return false;
 	}
 
@@ -141,7 +141,7 @@ bool ArchiveAssetLoader::LoadShaderStage(
 
 	if (!std::filesystem::exists(path)) {
 		std::string errorMsg = path + " shader not found.";
-		EngineCore::GetInstance().Print(LogSeverity::Error, errorMsg.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, errorMsg.c_str());
 		return false;
 	}
 
@@ -179,7 +179,7 @@ std::string ArchiveAssetLoader::GetShaderPath(
 		shaderStageExtension = ".comp";
 		break;
 	default:
-		Grindstone::Logger::PrintError("Incorrect shader stage");
+		GPRINT_ERROR(LogSource::EngineCore, "Incorrect shader stage");
 		break;
 	}
 

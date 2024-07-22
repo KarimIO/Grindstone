@@ -1,8 +1,8 @@
-//#include "../Engine/Core/InputInterface.hpp"
 #include "GlfwWindow.hpp"
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
+#include <EngineCore/Logger.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <Common/Input/InputInterface.hpp>
 #include <GL/wglext.h>
@@ -39,7 +39,7 @@ static Input::Interface* GetInput(GLFWwindow* window) {
 
 static Grindstone::EngineCore* g_engineCore = nullptr;
 static void OnErrorCallback(int error, const char* description) {
-	g_engineCore->Print(Grindstone::LogSeverity::Error, description);
+	GPRINT_ERROR(LogSource::GraphicsAPI, description);
 }
 
 static void OnKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {

@@ -15,16 +15,18 @@ enable_language(CSharp)
 
 set(CMAKE_CXX_STANDARD 17)
 
+find_package(fmt CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(RapidJSON CONFIG REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
-find_package(spdlog CONFIG REQUIRED)
 set(DEPS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/sources/deps")
 set(CODE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/sources/code")
 set(COMMON_DIR "${CODE_DIR}/Common")
 set(ENGINECORE_DIR "${CODE_DIR}/EngineCore")
 set(EDITORCONFIG "${CODE_DIR}/.editorconfig")
 set(BUILD_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
+
+set(CORE_UTILS ${ENGINECORE_DIR}/Logger.cpp ${ENGINECORE_DIR}/Logger.hpp)
 
 set(ENGINE_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/sources/code/EngineCore)
 file(GLOB_RECURSE SOURCE_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.cpp")

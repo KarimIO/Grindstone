@@ -8,6 +8,13 @@
 #include <EngineCore/EngineCore.hpp>
 
 namespace Grindstone {
+	enum class AssetLoadStatus {
+		Unloaded = 0,
+		Loading,
+		Ready,
+		Reloading
+	};
+
 	struct Asset {
 		Asset() = default;
 		Asset(Uuid uuid, std::string_view name) : uuid(uuid), name(name) {}
@@ -15,6 +22,7 @@ namespace Grindstone {
 		Uuid uuid;
 		std::string name;
 		size_t referenceCount = 1;
+		AssetLoadStatus assetLoadStatus = AssetLoadStatus::Unloaded;
 
 		static AssetType GetStaticType() { return AssetType::Undefined; }
 		virtual AssetType GetAssetType() const { return GetStaticType(); }

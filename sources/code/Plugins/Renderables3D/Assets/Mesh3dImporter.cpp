@@ -2,6 +2,7 @@
 
 #include <Common/Logging.hpp>
 #include <Common/Graphics/Core.hpp>
+#include <EngineCore/Logger.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Assets/Materials/MaterialImporter.hpp>
 #include <EngineCore/EngineCore.hpp>
@@ -212,7 +213,7 @@ bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 	std::string assetName;
 	if (!engineCore->assetManager->LoadFile(AssetType::Mesh3d, mesh.uuid, assetName, fileContent, fileSize)) {
 		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile Unable to load file with id " + mesh.uuid.ToString() + ".";
-		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, errorMsg.c_str());
 		return false;
 	}
 
@@ -221,14 +222,14 @@ bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 	auto graphicsCore = engineCore->GetGraphicsCore();
 	if (fileSize < 3 && strncmp("GMF", fileContent, 3) != 0) {
 		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile GMF magic code wasn't matched.";
-		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, errorMsg.c_str());
 		return false;
 	}
 
 	Formats::Model::V1::Header header;
 	if (fileSize < (3 + sizeof(header))) {
 		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile file not big enough to fit header.";
-		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, errorMsg.c_str());
 		return false;
 	}
 	char* headerPtr = fileContent + 3;
@@ -239,7 +240,7 @@ bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 	uint64_t totalFileExpectedSize = GetTotalFileSize(header);
 	if (totalFileExpectedSize > fileSize || header.totalFileSize > fileSize) {
 		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile file not big enough to fit all contents.";
-		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, errorMsg.c_str());
 		return false;
 	}
 

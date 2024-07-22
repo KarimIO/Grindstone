@@ -94,14 +94,6 @@ namespace Grindstone {
 		virtual std::filesystem::path GetAssetPath(std::string subPath) const;
 		virtual void ReloadCsharpBinaries();
 
-		template<typename... Args>
-		void Print(LogSeverity logSeverity, fmt::format_string<Args...> textFormat, Args &&...args) {
-			EngineCore& engineCore = GetInstance();
-			engineCore.Print(logSeverity, textFormat, args);
-			va_end(args);
-		}
-		virtual void Print(LogSeverity logSeverity, const char* str);
-
 		virtual bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
 		virtual bool OnForceQuit(Grindstone::Events::BaseEvent* ev);
 		virtual void CalculateDeltaTime();

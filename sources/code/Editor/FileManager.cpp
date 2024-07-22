@@ -9,6 +9,7 @@
 #include <Editor/ScriptBuilder/CSharpBuildManager.hpp>
 #include "FileManager.hpp"
 #include "EditorManager.hpp"
+#include <EngineCore/Logger.hpp>
 
 using namespace Grindstone;
 using namespace Grindstone::Editor;
@@ -45,7 +46,7 @@ void FileWatcherCallback(
 		fileManager->HandleMovePath(entry, oldFilename);
 		break;
 	default:
-		Editor::Manager::Print(LogSeverity::Info, "Invalid filesystem event!");
+		GPRINT_ERROR(LogSource::Editor, "Invalid filesystem event!");
 	}
 }
 
@@ -57,7 +58,7 @@ void FileManager::Initialize(std::filesystem::path projectPath) {
 	efsw_watchid watchID = efsw_addwatch(watcher, projectPath.string().c_str(), FileWatcherCallback, 1, this);
 
 	if (watchID < 0) {
-		Grindstone::Editor::Manager::Print(LogSeverity::Error, "Failed to watch path: {}", efsw_getlasterror());
+		GPRINT_ERROR_V(LogSource::Editor, "Failed to watch path: {}", efsw_getlasterror());
 	}
 	else {
 		efsw_watch(watcher);
@@ -146,12 +147,12 @@ void FileManager::UpdateCompiledFileIfNecessaryOnInitialize(std::filesystem::pat
 		TaskSystem& taskSystem = Editor::Manager::GetInstance().GetTaskSystem();
 
 		std::string jobName = "Importing " + path.filename().string();
-		Editor::Manager::Print(LogSeverity::Info, "{}", jobName);
+		GPRINT_TRACE_V(LogSource::Editor, "{}", jobName);
 		taskSystem.Execute(jobName, [path] {
 			std::filesystem::path nPath = path;
 			auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
 			importManager.Import(nPath);
-			Editor::Manager::Print(LogSeverity::Info, "Finished importing {}", path.string().c_str());
+			GPRINT_TRACE_V(LogSource::Editor, "Finished importing {}", path.string().c_str());
 		});
 	}
 }
@@ -222,7 +223,7 @@ Directory* FileManager::GetFolderForPath(std::filesystem::path path) {
 
 		currentDirectory = GetOrMakeSubdirectory(currentDirectory, node);
 
-		Editor::Manager::Print(LogSeverity::Info, node.c_str());
+		GPRINT_TRACE(LogSource::Editor, node.c_str());
 		lastIndex = newIndex + 1;
 	}
 

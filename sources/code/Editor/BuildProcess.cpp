@@ -6,6 +6,7 @@
 #include "Editor/EditorManager.hpp"
 #include "AssetPackSerializer.hpp"
 #include "BuildProcess.hpp"
+#include <EngineCore/Logger.hpp>
 
 namespace Grindstone::Editor {
 	static void CopyFileTo(std::filesystem::path srcBase, std::filesystem::path dstBase, std::string_view file) {
@@ -84,7 +85,7 @@ namespace Grindstone::Editor {
 		Window* window = windowManager->GetWindowByIndex(0);
 
 		if (window == nullptr) {
-			Grindstone::Editor::Manager::Print(Grindstone::LogSeverity::Error, "StartBuild - Could not get window.");
+			GPRINT_ERROR(LogSource::Editor, "StartBuild - Could not get window.");
 			return "";
 		}
 

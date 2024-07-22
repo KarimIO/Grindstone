@@ -9,6 +9,7 @@
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Editor/EditorManager.hpp"
 #include "Editor/ImguiEditor/ImguiEditor.hpp"
+#include <EngineCore/Logger.hpp>
 using namespace rapidjson;
 
 using namespace Grindstone::Editor::ImguiEditor;
@@ -32,7 +33,7 @@ void MaterialInspector::SetMaterialPath(const std::filesystem::path& materialPat
 
 	rapidjson::Document document;
 	if (document.Parse(contentData.data()).GetParseError()) {
-		Editor::Manager::GetInstance().Print(LogSeverity::Error, "Invalid Material.");
+		GPRINT_ERROR(LogSource::Editor, "Invalid Material.");
 		materialName = filename;
 		shaderUuid = Uuid();
 		return;
@@ -42,11 +43,11 @@ void MaterialInspector::SetMaterialPath(const std::filesystem::path& materialPat
 		materialName = document["name"].GetString();
 	}
 	else {
-		Editor::Manager::GetInstance().Print(LogSeverity::Error, "No name found in material.");
+		GPRINT_ERROR(LogSource::Editor, "No name found in material.");
 	}
 
 	if (!document.HasMember("shader")) {
-		Editor::Manager::GetInstance().Print(LogSeverity::Error, "No shader found in material.");
+		GPRINT_ERROR(LogSource::Editor, "No shader found in material.");
 		return;
 	}
 

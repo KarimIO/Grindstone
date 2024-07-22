@@ -10,6 +10,7 @@
 #include "EngineCore/Utils/Utilities.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include "AudioClipImporter.hpp"
+#include <EngineCore/Logger.hpp>
 
 using namespace Grindstone::Audio;
 
@@ -18,29 +19,17 @@ AudioClipImporter::AudioClipImporter(EngineCore* engineCore) {
 }
 
 void* AudioClipImporter::ProcessLoadedFile(Uuid uuid) {
-	/*
-	char* fileContent;
-	size_t fileSize;
-	if (!engineCore->assetManager->LoadFile(uuid, fileContent, fileSize)) {
-		std::string errorMsg = "AudioClipImporter::ProcessLoadedFile Unable to load file with id " + uuid.ToString() + ".";
-		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
-		return nullptr;
-	}
-	*/
-
 	std::filesystem::path path = engineCore->GetAssetPath(uuid.ToString());
 	std::string pathString = path.string();
 	const char* pathCstr = pathString.c_str();
 	if (!std::filesystem::exists(path)) {
-		std::string errorMsg = std::string("AudioClipImporter::LoadFromPath - Could not find file:") + pathString;
-		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+		GPRINT_ERROR_V(LogSource::Audio, "AudioClipImporter::LoadFromPath - Could not find file:", pathString.c_str());
 		return nullptr;
 	}
 
 	drwav wav;
 	if (!drwav_init_file(&wav, pathCstr, nullptr)) {
-		std::string errorMsg = std::string("AudioClipImporter::LoadFromPath - Failed to load file:") + pathString;
-		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+		GPRINT_ERROR_V(LogSource::Audio, "AudioClipImporter::LoadFromPath - Failed to load file:", pathString.c_str());
 		return nullptr;
 	}
 
@@ -69,11 +58,7 @@ void* AudioClipImporter::ProcessLoadedFile(Uuid uuid) {
 		format = AL_FORMAT_STEREO16;
 	}
 	else {
-		throw std::runtime_error(
-			std::string("ERROR: unrecognised wave format: ") +
-			std::to_string(channelCount) + " channels, " +
-			std::to_string(bitsPerSample) + " bits per sample."
-		);
+		GPRINT_ERROR_V(LogSource::Audio, "ERROR: unrecognised wave format: {} channels, {} bits per sample.", channelCount, bitsPerSample);
 	}
 
 	alBufferData(buffer, format, memoryBuffer, static_cast<ALsizei>(fileSize), sampleRate);
@@ -99,15 +84,13 @@ void AudioClipImporter::QueueReloadAsset(Uuid uuid) {
 	std::string pathString = path.string();
 	const char* pathCstr = pathString.c_str();
 	if (!std::filesystem::exists(path)) {
-		std::string errorMsg = std::string("AudioClipImporter::LoadFromPath - Could not find file:") + pathString;
-		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+		GPRINT_ERROR_V(LogSource::Audio, "AudioClipImporter::LoadFromPath - Could not find file: {}", pathString.c_str());
 		return;
 	}
 
 	drwav wav;
 	if (!drwav_init_file(&wav, pathCstr, nullptr)) {
-		std::string errorMsg = std::string("AudioClipImporter::LoadFromPath - Failed to load file:") + pathString;
-		engineCore->Print(LogSeverity::Error, errorMsg.c_str());
+		GPRINT_ERROR_V(LogSource::Audio, "AudioClipImporter::LoadFromPath - Failed to load file: {}", pathString.c_str());
 		return;
 	}
 
@@ -136,11 +119,7 @@ void AudioClipImporter::QueueReloadAsset(Uuid uuid) {
 		format = AL_FORMAT_STEREO16;
 	}
 	else {
-		throw std::runtime_error(
-			std::string("ERROR: unrecognised wave format: ") +
-			std::to_string(channelCount) + " channels, " +
-			std::to_string(bitsPerSample) + " bits per sample."
-		);
+		GPRINT_ERROR_V(LogSource::Audio, "ERROR: unrecognised wave format: {} channels, {} bits per sample.", channelCount, bitsPerSample);
 	}
 
 	alDeleteBuffers(1, &audioClipInMap->second.buffer);

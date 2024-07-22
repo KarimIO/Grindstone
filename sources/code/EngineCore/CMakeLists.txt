@@ -152,8 +152,6 @@ target_link_libraries(EngineCore
 	rapidjson
 	fmt::fmt
 	OpenAL::OpenAL
-	spdlog::spdlog
-	spdlog::spdlog_header_only
 )
 
 target_precompile_headers(EngineCore PUBLIC pch.hpp)

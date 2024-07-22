@@ -24,6 +24,7 @@ add_library(
 	PluginEditorAudioImporter MODULE
 	${EDITORAUDIOIMPORTER_SOURCES}
 	${EDITORAUDIOIMPORTER_HEADERS}
+	${CORE_UTILS}
 )
 
 target_compile_features(PluginEditorAudioImporter PRIVATE cxx_std_17)

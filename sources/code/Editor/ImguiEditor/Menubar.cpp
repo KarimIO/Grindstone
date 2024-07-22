@@ -7,6 +7,7 @@
 #include "Common/Window/WindowManager.hpp"
 #include "EngineCore/Scenes/Manager.hpp"
 #include "EngineCore/EngineCore.hpp"
+#include <EngineCore/Logger.hpp>
 
 #include "Editor/AssetPackSerializer.hpp"
 #include "Editor/EditorManager.hpp"
@@ -154,7 +155,7 @@ void Menubar::OnExit() {
 void Menubar::SaveFile(const char* path = "") {
 	auto* sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
 	if (sceneManager->scenes.empty()) {
-		Editor::Manager::Print(Grindstone::LogSeverity::Error, "No active scenes.");
+		GPRINT_ERROR(LogSource::Editor, "No active scenes.");
 	}
 	else {
 		SceneManagement::Scene* scene = sceneManager->scenes.begin()->second;

@@ -28,7 +28,6 @@
     "opengl-registry",
     "rapidjson",
     "shaderc",
-    "spdlog",
     "spirv-cross",
     "stb",
     "vulkan",

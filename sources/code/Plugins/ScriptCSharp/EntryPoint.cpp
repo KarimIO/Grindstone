@@ -1,6 +1,7 @@
 #include "pch.hpp"
 #include <chrono>
 #include <string>
+#include <EngineCore/Logger.hpp>
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/ECS/SystemRegistrar.hpp"
@@ -16,7 +17,7 @@ Plugins::Interface* globalPluginInterface = nullptr;
 
 extern "C" {
 	CSHARP_EXPORT void LoggerLog(int logSeverity, const char* message) {
-		globalPluginInterface->Print((LogSeverity)logSeverity, message);
+		GPRINT(static_cast<LogSeverity>(logSeverity), LogSource::Scripting, message);
 	}
 
 	CSHARP_EXPORT void EntityCreateComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType) {
@@ -39,6 +40,8 @@ extern "C" {
 	}
 
 	CSHARP_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
+		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
+
 		auto& manager = CSharpManager::GetInstance();
 		manager.Initialize(pluginInterface->GetEngineCore());
 		globalPluginInterface = pluginInterface;

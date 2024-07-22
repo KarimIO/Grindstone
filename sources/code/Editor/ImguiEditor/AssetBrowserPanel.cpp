@@ -15,6 +15,7 @@
 
 #include "ImguiRenderer.hpp"
 #include "AssetBrowserPanel.hpp"
+#include <EngineCore/Logger.hpp>
 
 using namespace Grindstone::Editor::ImguiEditor;
 
@@ -301,11 +302,11 @@ void AssetBrowserPanel::TryRenameFile() {
 			pathRenameNewName = "";
 		}
 		catch (std::filesystem::filesystem_error error) {
-			Editor::Manager::Print(LogSeverity::Error, "Rename failed: %s!", error.what());
+			GPRINT_ERROR_V(LogSource::Editor, "Rename failed: %s!", error.what());
 		}
 	}
 	else {
-		Editor::Manager::Print(LogSeverity::Error, "Could not rename file, this name is already used.");
+		GPRINT_ERROR_V(LogSource::Editor, "Could not rename file, this name is already used.");
 	}
 }
 

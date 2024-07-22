@@ -52,7 +52,7 @@ void ConsolePanel::Render() {
 				ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::GetColorU32(++i % 2 ? ImGuiCol_TableRowBgAlt : ImGuiCol_TableRowBg));
 				ImGui::TableNextRow(ImGuiTableRowFlags_None, 24.0f);
 				ImGui::TableNextColumn();
-				auto icon = GetLogSeverityIcon(msg.logSeverity);
+				auto icon = GetLogSeverityIcon(msg.severity);
 				ImGui::Image(icon, ImVec2(20.0f, 20.0f));
 				ImGui::TableNextColumn();
 				ImGui::TextWrapped(msg.message.c_str());
