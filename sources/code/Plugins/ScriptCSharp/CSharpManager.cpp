@@ -39,10 +39,10 @@ CSharpManager& CSharpManager::GetInstance() {
 void CSharpManager::Initialize(EngineCore* engineCore) {
 	this->engineCore = engineCore;
 
-	mono_set_dirs(
-		"C:\\Program Files\\Mono\\lib",
-		"C:\\Program Files\\Mono\\etc"
-	);
+	std::string libPath = (engineCore->GetEngineBinaryPath().parent_path() / "deps/Mono/lib").string();
+	std::string etcPath = (engineCore->GetEngineBinaryPath().parent_path() / "deps/Mono/etc").string();
+
+	mono_set_dirs(libPath.c_str(), etcPath.c_str());
 
 	rootDomain = mono_jit_init("GrindstoneJitRootDomain");
 

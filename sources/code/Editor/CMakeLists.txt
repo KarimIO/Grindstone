@@ -97,17 +97,15 @@ find_package(imgui CONFIG REQUIRED)
 
 find_package(unofficial-imguizmo CONFIG REQUIRED)
 find_package(unofficial-libgit2 CONFIG REQUIRED)
-set(MONO_PATH CACHE PATH "Mono Path")
-
 
 add_executable(Editor ${EDITOR_HEADERS} ${EDITOR_SOURCES})
-target_link_directories(Editor PUBLIC ${MONO_PATH}/lib)
+target_link_directories(Editor PUBLIC ${DEPS_DIR}/Mono/lib)
 
 set_property(TARGET Editor PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${BUILD_DIRECTORY})
 
 target_compile_definitions(Editor PUBLIC NOMINMAX GLM_ENABLE_EXPERIMENTAL EDITOR)
 target_include_directories(Editor PUBLIC
-	${MONO_PATH}/include/mono-2.0
+	${DEPS_DIR}/Mono/include/mono-2.0
 	${CODE_DIR}
 	${FMT_INCLUDE_DIRS}
 )
