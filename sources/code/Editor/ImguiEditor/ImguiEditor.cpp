@@ -39,6 +39,11 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
+	imguiIniFile = (engineCore->GetProjectPath() / "imgui.ini").string();
+	imguiLogFile = (engineCore->GetProjectPath() / "log/imgui.log").string();
+	io.IniFilename = imguiIniFile.c_str();
+	io.LogFilename = imguiLogFile.c_str();
+
 	SetupFonts();
 	SetupStyles();
 	SetupColors();

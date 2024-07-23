@@ -73,6 +73,9 @@ namespace Grindstone {
 				Menubar* menubar = nullptr;
 				ImguiRenderer* imguiRenderer = nullptr;
 				TracingPanel* tracingPanel = nullptr;
+
+				std::string imguiIniFile;
+				std::string imguiLogFile;
 			};
 		}
 	}
