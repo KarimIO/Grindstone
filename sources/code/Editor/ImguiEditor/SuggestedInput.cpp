@@ -50,7 +50,8 @@ namespace Grindstone::Editor::ImguiEditor {
 			ImGuiWindowFlags_NoTitleBar |
 			ImGuiWindowFlags_NoResize |
 			ImGuiWindowFlags_NoMove |
-			ImGuiWindowFlags_NoSavedSettings;
+			ImGuiWindowFlags_NoSavedSettings |
+			ImGuiWindowFlags_NoFocusOnAppearing;
 
 		ImGui::SetNextWindowPos(position);
 		ImGui::SetNextWindowSize({ suggestionsWidth, 256.f });

@@ -2,20 +2,21 @@
 #include <imgui_stdlib.h>
 #include <entt/entt.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include "ComponentInspector.hpp"
-#include "Editor/EditorManager.hpp"
-#include "EngineCore/EngineCore.hpp"
-#include "EngineCore/Scenes/Manager.hpp"
-#include "EngineCore/ECS/ComponentRegistrar.hpp"
-#include "EngineCore/Reflection/TypeDescriptor.hpp"
-#include "EngineCore/Assets/Asset.hpp"
-#include "Plugins/ScriptCSharp/Components/ScriptComponent.hpp"
-#include <Editor/ImguiEditor/ImguiEditor.hpp>
+#include <mono/jit/jit.h>
+
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Scenes/Manager.hpp>
+#include <EngineCore/ECS/ComponentRegistrar.hpp>
+#include <EngineCore/Reflection/TypeDescriptor.hpp>
+#include <EngineCore/Assets/Asset.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
-#include "Common/Math.hpp"
+#include <Editor/EditorManager.hpp>
+#include <Editor/ImguiEditor/ImguiEditor.hpp>
+#include <Plugins/ScriptCSharp/Components/ScriptComponent.hpp>
+#include <Common/Math.hpp>
 
-#include <mono/jit/jit.h>
+#include "ComponentInspector.hpp"
 
 using namespace Grindstone::Editor::ImguiEditor;
 
@@ -54,12 +55,12 @@ void ComponentInspector::Render(ECS::Entity entity) {
 		);
 	}
 
-	auto& editorManager = Editor::Manager::GetInstance();
-	auto& engineCore = editorManager.GetEngineCore();
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
+	EngineCore& engineCore = editorManager.GetEngineCore();
 	ECS::ComponentRegistrar& componentRegistrar = *engineCore.GetComponentRegistrar();
 	std::vector<std::string> unusedComponentsItems;
 	std::vector<ECS::ComponentFunctions> unusedComponentsFunctions;
-	for (auto componentEntry : componentRegistrar) {
+	for (auto& componentEntry : componentRegistrar) {
 		const char* componentTypeName = componentEntry.first.c_str();
 		auto componentReflectionData = componentEntry.second.GetComponentReflectionDataFn();
 		auto tryGetComponentFn = componentEntry.second.TryGetComponentFn;
