@@ -337,6 +337,7 @@ void ImguiEditor::RenderDockspace() {
 		ImGui::DockBuilderDockWindow("ControlBar", dockIdControlbarArea);
 		ImGui::DockBuilderDockWindow("Viewport", dockIdViewportArea);
 		ImGui::DockBuilderDockWindow("Console", dockIdConsoleArea);
+		ImGui::DockBuilderDockWindow("Tracing", dockIdConsoleArea);
 		ImGui::DockBuilderDockWindow("Asset Browser", dockIdConsoleArea);
 		ImGui::DockBuilderDockWindow("Scene Heirarchy", dockIdSceneHeirarchyArea);
 		ImGui::DockBuilderDockWindow("Inspector", dockIdInspectorArea);
