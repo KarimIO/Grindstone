@@ -125,7 +125,7 @@ void Grindstone::Logger::Print(
 				str,
 				filename,
 				line,
-				static_cast<uint32_t>(fine.time_since_epoch().count()),
+				timepoint,
 				logSource,
 				internalType,
 				logSeverity

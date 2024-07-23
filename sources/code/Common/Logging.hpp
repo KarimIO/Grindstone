@@ -52,8 +52,8 @@ namespace Grindstone {
 	struct ConsoleMessage {
 		std::string message;
 		std::string filename;
-		long long timePoint;
 		uint32_t line;
+		std::chrono::system_clock::time_point timepoint;
 		LogSource source;
 		LogInternalType internalType;
 		LogSeverity severity;
