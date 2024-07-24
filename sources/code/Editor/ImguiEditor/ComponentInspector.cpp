@@ -42,6 +42,90 @@ static void RenderMonoField(MonoObject* monoObject, MonoClassField* classField) 
 	}
 }
 
+static bool DrawFloatInput(const char* name, float& toEdit, size_t index, float containerWidth) {
+	constexpr const char* fields[] = { "X", "Y", "Z" };
+	constexpr ImVec4 regularColors[] = {
+		ImVec4{ 0.6f, 0.1f, 0.1f, 1.0f },
+		ImVec4{ 0.05f, 0.5f, 0.05f, 1.0f },
+		ImVec4{ 0.1f, 0.1f, 0.55f, 1.0f }
+	};
+	constexpr ImVec4 hoverColors[] = {
+		ImVec4{ 0.6f, 0.1f, 0.1f, 1.0f },
+		ImVec4{ 0.05f, 0.5f, 0.05f, 1.0f },
+		ImVec4{ 0.1f, 0.1f, 0.55f, 1.0f }
+	};
+	constexpr ImVec4 pressColors[] = {
+		ImVec4{ 0.6f, 0.1f, 0.1f, 1.0f },
+		ImVec4{ 0.05f, 0.5f, 0.05f, 1.0f },
+		ImVec4{ 0.1f, 0.1f, 0.55f, 1.0f }
+	};
+
+	const float spacingX = 8.0f;
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ spacingX, 0.0f });
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0.0f, 2.0f });
+
+	ImGui::PushStyleColor(ImGuiCol_Button, regularColors[index]);
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, pressColors[index]);
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoverColors[index]);
+	constexpr float framePadding = 2.0f;
+	constexpr float outlineSpacing = 1.0f;
+	float fontSize = ImGui::GetFontSize();
+	float lineHeight = fontSize + framePadding * 2.0f;
+	ImVec2 buttonSize = { lineHeight + 2.0f, lineHeight };
+	const float inputItemWidth = containerWidth - buttonSize.x - outlineSpacing * 2.0f;
+
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(framePadding, 0.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 1.0f);
+	ImGui::Button((fields[index] + std::string("##") + name).c_str(), buttonSize);
+	ImGui::PopStyleColor(3);
+	ImGui::PopStyleVar(2);
+	ImGui::SameLine(0.0f, 0.1f);
+	ImGui::SetCursorPosY(ImGui::GetCursorPosY() - framePadding / 2.0f);
+	ImGui::PushItemWidth(inputItemWidth);
+	bool hasChanged = ImGui::InputFloat((std::string("##") + name + fields[index]).c_str(), &toEdit);
+	ImGui::PopItemWidth();
+	ImGui::PopStyleVar(2);
+
+	return hasChanged;
+}
+
+static void DrawFloatInputNewLine() {
+	ImGui::SameLine(0.0f, 0.2f);
+}
+
+static bool DrawFloat2(const char* name, float* vec2) {
+	float containerWidth = ImGui::GetContentRegionAvail().x / 2.0f;
+	bool hasChanged = DrawFloatInput(name, vec2[0], 0, containerWidth);
+	DrawFloatInputNewLine();
+	hasChanged |= DrawFloatInput(name, vec2[1], 1, containerWidth);
+
+	return hasChanged;
+}
+
+static bool DrawFloat3(const char* name, float* vec3) {
+	float containerWidth = ImGui::GetContentRegionAvail().x / 3.0f;
+	bool hasChanged = DrawFloatInput(name, vec3[0], 0, containerWidth);
+	DrawFloatInputNewLine();
+	hasChanged |= DrawFloatInput(name, vec3[1], 1, containerWidth);
+	DrawFloatInputNewLine();
+	hasChanged |= DrawFloatInput(name, vec3[2], 2, containerWidth);
+
+	return hasChanged;
+}
+
+static bool DrawFloat4(const char* name, float* vec4) {
+	float containerWidth = ImGui::GetContentRegionAvail().x / 4.0f;
+	bool hasChanged = DrawFloatInput(name, vec4[0], 0, containerWidth);
+	DrawFloatInputNewLine();
+	hasChanged |= DrawFloatInput(name, vec4[1], 1, containerWidth);
+	DrawFloatInputNewLine();
+	hasChanged |= DrawFloatInput(name, vec4[2], 2, containerWidth);
+	DrawFloatInputNewLine();
+	hasChanged |= DrawFloatInput(name, vec4[3], 3, containerWidth);
+
+	return hasChanged;
+}
+
 ComponentInspector::ComponentInspector(ImguiEditor* editor) : imguiEditor(editor) {}
 
 void ComponentInspector::Render(ECS::Entity entity) {
@@ -149,8 +233,16 @@ void ComponentInspector::RenderComponentCategory(
 		ImGui::TreePop();
 	}
 
-	for (auto& member : category.members) {
-		RenderComponentMember(member, componentPtr, entity);
+	if (ImGui::BeginTable("assetBrowserSplit", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX)) {
+		for (auto& member : category.members) {
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::Text(member.displayName.c_str());
+			ImGui::TableNextColumn();
+			RenderComponentMember(member, componentPtr, entity);
+		}
+
+		ImGui::EndTable();
 	}
 }
 
@@ -160,7 +252,7 @@ void ComponentInspector::RenderComponentMember(
 	ECS::Entity entity
 ) {
 	void* offset = ((char*)componentPtr + member.offset);
-	RenderComponentMember(member.displayName, member.type, offset, entity);
+	RenderComponentMember("##" + member.displayName, member.type, offset, entity);
 }
 
 void ComponentInspector::RenderComponentMember(std::string_view displayName, Reflection::TypeDescriptor* itemType, void* offset, ECS::Entity entity) {
@@ -262,16 +354,20 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 		break;
 	}
 	case Reflection::TypeDescriptor::ReflectionTypeData::String:
+		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 		ImGui::InputText(
 			displayNamePtr,
 			(std::string *)offset
 		);
+		ImGui::PopItemWidth();
 		break;
 	case Reflection::TypeDescriptor::ReflectionTypeData::Int:
+		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 		ImGui::InputInt(
 			displayNamePtr,
 			(int*)offset
 		);
+		ImGui::PopItemWidth();
 		break;
 	case Reflection::TypeDescriptor::ReflectionTypeData::Int2:
 		ImGui::InputInt2(
@@ -292,33 +388,29 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 		);
 		break;
 	case Reflection::TypeDescriptor::ReflectionTypeData::Float:
+		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 		ImGui::InputFloat(
 			displayNamePtr,
 			(float*)offset
 		);
+		ImGui::PopItemWidth();
 		break;
-	case Reflection::TypeDescriptor::ReflectionTypeData::Float2:
-		ImGui::InputFloat2(
-			displayNamePtr,
-			(float *)offset
-		);
+	case Reflection::TypeDescriptor::ReflectionTypeData::Float2: {
+		DrawFloat2(displayNamePtr, static_cast<float*>(offset));
 		break;
-	case Reflection::TypeDescriptor::ReflectionTypeData::Float3:
-		ImGui::InputFloat3(
-			displayNamePtr,
-			(float *)offset
-		);
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::Float3: {
+		DrawFloat3(displayNamePtr, static_cast<float*>(offset));
 		break;
-	case Reflection::TypeDescriptor::ReflectionTypeData::Float4:
-		ImGui::InputFloat4(
-			displayNamePtr,
-			(float*)offset
-		);
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::Float4: {
+		DrawFloat4(displayNamePtr, static_cast<float*>(offset));
 		break;
+	}
 	case Reflection::TypeDescriptor::ReflectionTypeData::Quaternion: {
 		glm::quat* quaternion = (glm::quat*)offset;
 		glm::vec3 euler = glm::degrees(glm::eulerAngles(*quaternion));
-		if (ImGui::InputFloat3(
+		if (DrawFloat3(
 			displayNamePtr,
 			&euler[0]
 		)) {
