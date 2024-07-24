@@ -13,8 +13,13 @@ Grindstone::Uuid Grindstone::Uuid::CreateRandom() {
 }
 
 Grindstone::Uuid::Uuid(const char* str) {
+	if (str == nullptr || strlen(str) == 0) {
+		memset(uuid, 0, sizeof(uuid));
+		return;
+	}
+
 	if (UuidFromString((unsigned char*)str, (::UUID*)&uuid) != RPC_S_OK) {
-		GS_BREAK_WITH_MESSAGE("Could not create a random uuid.")
+		GS_BREAK_WITH_MESSAGE("Could not make guid from an empty string.")
 		memset(uuid, 0, sizeof(uuid));
 	}
 }
