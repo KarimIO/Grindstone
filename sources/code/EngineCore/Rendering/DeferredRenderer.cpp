@@ -898,7 +898,7 @@ void DeferredRenderer::UpdateBloomUBO() {
 void DeferredRenderer::UpdateBloomDescriptorSet(DeferredRendererImageSet& imageSet) {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	if (bloomMipLevelCount == 0) {
+	if (bloomMipLevelCount <= 2) {
 		return;
 	}
 
@@ -1849,7 +1849,7 @@ void DeferredRenderer::RenderSsr(DeferredRendererImageSet& imageSet, GraphicsAPI
 }
 
 void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer) {
-	if (bloomPipeline == nullptr || bloomMipLevelCount == 0) {
+	if (bloomPipeline == nullptr || bloomMipLevelCount <= 2) {
 		return;
 	}
 
