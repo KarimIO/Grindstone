@@ -84,6 +84,9 @@ void MaterialInspector::Render() {
 			if (ImGui::Selectable(availableShaders[i].name.c_str(), isCurrentShader)) {
 				shaderName = availableShaders[i].name;
 				shaderUuid = availableShaders[i].uuid;
+
+				TryLoadShaderReflection(shaderUuid);
+
 				hasBeenChanged = true;
 			}
 		}
