@@ -182,15 +182,18 @@ void MaterialImporter::SetupUniformBuffer(rapidjson::Document& document, ShaderR
 
 			auto& parametersJson = document["parameters"];
 			for (auto& member : materialUniformBuffer->members) {
-				rapidjson::Value& params = parametersJson[member.name.c_str()];
-				std::vector<float> paramArray;
-				paramArray.resize(params.Size());
-				for (rapidjson::SizeType i = 0; i < params.Size(); ++i) {
-					paramArray[i] = params[i].GetFloat();
-				}
+				auto& paramIterator = parametersJson.FindMember(member.name.c_str());
+				if (paramIterator != parametersJson.MemberEnd()) {
+					rapidjson::Value& param = paramIterator->value;
+					std::vector<float> paramArray;
+					paramArray.resize(param.Size());
+					for (rapidjson::SizeType i = 0; i < param.Size(); ++i) {
+						paramArray[i] = param[i].GetFloat();
+					}
 
-				// char* memberPos = bufferSpace + member.offset;
-				memcpy(bufferSpace, paramArray.data(), member.memberSize);
+					// char* memberPos = bufferSpace + member.offset;
+					memcpy(bufferSpace, paramArray.data(), member.memberSize);
+				}
 			}
 
 			uniformBufferObject->UpdateBuffer(bufferSpace);
