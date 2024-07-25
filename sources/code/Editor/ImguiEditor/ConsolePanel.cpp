@@ -20,7 +20,7 @@ constexpr uint8_t warnBit = (1 << static_cast<uint8_t>(LogSeverity::Warning));
 constexpr uint8_t infoBit = (1 << static_cast<uint8_t>(LogSeverity::Info));
 constexpr uint8_t traceBit = (1 << static_cast<uint8_t>(LogSeverity::Trace));
 
-ConsolePanel::ConsolePanel(ImguiRenderer* imguiRenderer) : severityFlags(0xff) {
+ConsolePanel::ConsolePanel(ImguiRenderer* imguiRenderer) : severityFlags(0xff), sourceFlags(UINT64_MAX) {
 	consoleErrorIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleError.dds");
 	consoleWarningIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleWarning.dds");
 	consoleTraceIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleTrace.dds");
@@ -35,9 +35,11 @@ void ConsolePanel::FilterSearch() {
 
 	for (auto& message : messageQueue) {
 		uint8_t severityBit = (1u << static_cast<uint8_t>(message.base.severity));
+		uint64_t sourceBit = (1ull << static_cast<uint64_t>(message.base.source));
 		bool showSeverity = (severityFlags & severityBit) > 0;
+		bool showSource = (sourceFlags & sourceBit) > 0;
 		if (
-			showSeverity &&
+			showSeverity && showSource &&
 			message.lowercaseMessage.find(filterTextLowercase) != std::string::npos
 		) {
 			filteredMessage.push_back(&message);
@@ -80,6 +82,61 @@ void ConsolePanel::RenderTopbar() {
 	RenderButton("ConsoleInfoToggle", consoleInfoIcon, infoBit);
 	ImGui::SameLine();
 	RenderButton("ConsoleTraceToggle", consoleTraceIcon, traceBit);
+	ImGui::SameLine();
+
+	bool areAllSelected = sourceFlags == UINT64_MAX;
+	uint64_t none = UINT64_MAX << (static_cast<uint64_t>(Grindstone::LogSource::Count));
+	bool areNoneSelected = sourceFlags == none;
+
+	std::string label;
+	if (areAllSelected) {
+		label = "Log Source Filter: All";
+	}
+	else if (areNoneSelected) {
+		label = "Log Source Filter: None";
+	}
+	else {
+		uint32_t selected = 0;
+		uint32_t numSelected = 0;
+		for (uint64_t i = 0; i < static_cast<uint64_t>(Grindstone::LogSource::Count); ++i) {
+			if (sourceFlags & (1ull << i)) {
+				numSelected += 1u;
+				selected = i;
+
+				if (numSelected == 2) {
+					break;
+				}
+			}
+		}
+
+		label = "Log Source Filter: ";
+		label += numSelected > 1
+			? "Mixed"
+			: logSourceStrings[selected];
+	}
+
+	ImGui::PushItemWidth(200.0f);
+	if (ImGui::BeginCombo("##ConsoleSourceFilter", label.c_str())) {
+		if (ImGui::Selectable("[ All ]", &areAllSelected)) {
+			sourceFlags = UINT64_MAX;
+			FilterSearch();
+		}
+		if (ImGui::Selectable("[ None ]", &areNoneSelected)) {
+			sourceFlags = none;
+			FilterSearch();
+		}
+		for (uint64_t i = 0; i < static_cast<uint64_t>(Grindstone::LogSource::Count); ++i) {
+			bool bitEnabled = sourceFlags & (static_cast<uint64_t>(1u) << i);
+			ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 64.0f);
+			if (ImGui::Selectable(Grindstone::logSourceStrings[i], bitEnabled)) {
+				sourceFlags ^= (static_cast<uint64_t>(1u) << i);
+				FilterSearch();
+			}
+			ImGui::PopStyleVar();
+		}
+		ImGui::EndCombo();
+	}
+	ImGui::PopItemWidth();
 
 	float totalAvailWidth = ImGui::GetContentRegionAvail().x;
 	const float searchWidth = 160.0f;
@@ -145,7 +202,7 @@ void ConsolePanel::RenderMessage(size_t index, EditorConsoleMessage& msg) {
 			milliseconds
 		);
 
-		ImGui::SetTooltip("%s:%u %s", msg.base.filename.c_str(), msg.base.line, timeBuffer);
+		ImGui::SetTooltip("%s:%u [%s]", msg.base.filename.c_str(), msg.base.line, timeBuffer);
 	}
 }
 

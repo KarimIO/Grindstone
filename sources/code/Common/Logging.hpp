@@ -14,16 +14,17 @@ namespace Grindstone {
 		Rendering,
 		Audio,
 		Physics,
-		Scripting
+		Scripting,
+		Count
 	};
 
 	constexpr const char* logSourceStrings[] = {
 		"Unknown",
-		"EngineCore",
+		"Engine Core",
 		"Editor",
-		"EditorImporter",
-		"GraphicsAPI",
-		"RenderingBackend",
+		"Editor Importer",
+		"Graphics API",
+		"Rendering Backend",
 		"Rendering",
 		"Audio",
 		"Physics",

@@ -46,6 +46,7 @@ namespace Grindstone {
 				std::string filterText;
 				std::string filterTextLowercase;
 				uint8_t severityFlags;
+				uint64_t sourceFlags;
 
 				ImVec4 selectedColor;
 				ImVec4 selectedHighlightColor;
