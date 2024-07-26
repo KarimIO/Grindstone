@@ -1348,7 +1348,7 @@ void DeferredRenderer::CreatePipelines() {
 	std::vector<ShaderStageCreateInfo> shaderStageCreateInfos;
 	std::vector<std::vector<char>> fileData;
 
-	auto assetManager = EngineCore::GetInstance().assetManager;
+	Grindstone::Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
 	uint8_t shaderBits = static_cast<uint8_t>(ShaderStageBit::Vertex | ShaderStageBit::Fragment);
 	 
 	{

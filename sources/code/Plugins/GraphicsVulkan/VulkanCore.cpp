@@ -35,6 +35,9 @@
 #include "VulkanFormat.hpp"
 #include "VulkanUtils.hpp"
 
+#define VMA_IMPLEMENTATION
+#include "vk_mem_alloc.h"
+
 using namespace Grindstone::GraphicsAPI;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
@@ -61,6 +64,8 @@ const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
 #endif
+
+constexpr auto vkApiVersion = VK_API_VERSION_1_3;
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 	Grindstone::GraphicsAPI::VulkanCore* vk = static_cast<Grindstone::GraphicsAPI::VulkanCore*>(pUserData);
@@ -121,6 +126,7 @@ bool VulkanCore::Initialize(Core::CreateInfo& ci) {
 
 	PickPhysicalDevice();
 	CreateLogicalDevice();
+	CreateAllocator();
 
 	pfnDebugUtilsSetObjectName = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(vkGetDeviceProcAddr(device, "vkSetDebugUtilsObjectNameEXT"));
 	VulkanCommandBuffer::SetupDebugLabelUtils(instance);
@@ -135,6 +141,16 @@ bool VulkanCore::Initialize(Core::CreateInfo& ci) {
 	return true;
 }
 
+void VulkanCore::CreateAllocator() {
+	VmaAllocatorCreateInfo AllocatorInfo = {};
+	AllocatorInfo.vulkanApiVersion = vkApiVersion;
+	AllocatorInfo.physicalDevice = physicalDevice;
+	AllocatorInfo.device = device;
+	AllocatorInfo.instance = instance;
+
+	vmaCreateAllocator(&AllocatorInfo, &allocator);
+}
+
 void VulkanCore::CreateInstance() {
 	if (enableValidationLayers && !CheckValidationLayerSupport()) {
 		throw std::runtime_error("validation layers requested, but not available!");
@@ -146,7 +162,7 @@ void VulkanCore::CreateInstance() {
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.pEngineName = "Grindstone Engine";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.apiVersion = VK_API_VERSION_1_3;
+	appInfo.apiVersion = vkApiVersion;
 
 	VkInstanceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -289,7 +305,7 @@ void VulkanCore::CreateCommandPool() {
 	poolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	poolCreateInfo.queueFamilyIndex = graphicsFamily;
 
-	if (vkCreateCommandPool(device, &poolCreateInfo, nullptr, &commandPoolGraphics) != VK_SUCCESS) {
+	if (vkCreateCommandPool(device, &poolCreateInfo, allocator->GetAllocationCallbacks(), &commandPoolGraphics) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create graphics command pool!");
 	}
 }
@@ -329,7 +345,7 @@ QueueFamilyIndices VulkanCore::FindQueueFamilies(VkPhysicalDevice device) {
 	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 	
 	int i = 0;
-	for (const auto& queueFamily : queueFamilies) {
+	for (const VkQueueFamilyProperties& queueFamily : queueFamilies) {
 		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
 			indices.graphicsFamily = i;
 			indices.hasGraphicsFamily = true;
@@ -454,21 +470,21 @@ bool VulkanCore::CheckDeviceExtensionSupport(VkPhysicalDevice device) {
 
 VulkanCore::~VulkanCore() {
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
-		vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-		vkDestroyFence(device, inFlightFences[i], nullptr);
+		vkDestroySemaphore(device, renderFinishedSemaphores[i], allocator->GetAllocationCallbacks());
+		vkDestroySemaphore(device, imageAvailableSemaphores[i], allocator->GetAllocationCallbacks());
+		vkDestroyFence(device, inFlightFences[i], allocator->GetAllocationCallbacks());
 	}
 
-	vkDestroyCommandPool(device, commandPoolGraphics, nullptr);
-	vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+	vkDestroyCommandPool(device, commandPoolGraphics, allocator->GetAllocationCallbacks());
+	vkDestroyDescriptorPool(device, descriptorPool, allocator->GetAllocationCallbacks());
 
-	vkDestroyDevice(device, nullptr);
+	vkDestroyDevice(device, allocator->GetAllocationCallbacks());
 
 	if (enableValidationLayers) {
-		DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+		DestroyDebugUtilsMessengerEXT(instance, debugMessenger, allocator->GetAllocationCallbacks());
 	}
 
-	vkDestroyInstance(instance, nullptr);
+	vkDestroyInstance(instance, allocator->GetAllocationCallbacks());
 
 }
 
@@ -491,7 +507,7 @@ void VulkanCore::CreateDescriptorPool() {
 	poolInfo.pPoolSizes = poolSizes.data();
 	poolInfo.maxSets = 3000;
 
-	if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
+	if (vkCreateDescriptorPool(device, &poolInfo, allocator->GetAllocationCallbacks(), &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor pool!");
 	}
 }

@@ -42,6 +42,7 @@ add_library(PluginGraphicsVulkan MODULE ${Vk_SOURCES} ${Vk_HEADERS} ${CORE_UTILS
 
 find_path(VULKAN_HEADERS_INCLUDE_DIRS "vk_video/vulkan_video_codec_h264std.h")
 find_package(Vulkan REQUIRED)
+find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 
 target_include_directories(PluginGraphicsVulkan PUBLIC ${CODE_DIR} ${DEPS_DIR} ${VULKAN_HEADERS_INCLUDE_DIRS})
 
@@ -49,7 +50,7 @@ target_compile_definitions(PluginGraphicsVulkan PRIVATE GRAPHICS_DLL GLM_ENABLE_
 
 find_package(glfw3 CONFIG REQUIRED)
 
-target_link_libraries(PluginGraphicsVulkan Vulkan::Vulkan glfw fmt::fmt)
+target_link_libraries(PluginGraphicsVulkan Vulkan::Vulkan glfw fmt::fmt GPUOpen::VulkanMemoryAllocator)
 
 target_compile_features(PluginGraphicsVulkan PRIVATE cxx_std_17)
 

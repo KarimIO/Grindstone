@@ -180,9 +180,9 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 		}
 	}
 	else {
-		uint64_t maxMipMaps = isCompressedFormat
-			? static_cast<uint64_t>(std::floor(std::log2(std::max(createInfo.width, createInfo.height)))) - 1
-			: static_cast<uint64_t>(std::floor(std::log2(std::max(createInfo.width, createInfo.height)))) + 1;
+		uint32_t maxMipMaps = isCompressedFormat
+			? static_cast<uint32_t>(std::floor(std::log2(std::max(createInfo.width, createInfo.height)))) - 1
+			: static_cast<uint32_t>(std::floor(std::log2(std::max(createInfo.width, createInfo.height)))) + 1;
 		mipLevels = (createInfo.mipmaps > maxMipMaps) ? maxMipMaps : createInfo.mipmaps;
 
 		uint64_t width = createInfo.width;
@@ -237,7 +237,7 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 	else {
 		VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 		uint64_t offset = 0;
-		for (uint64_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
+		for (uint32_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
 			uint64_t mipWidth = createInfo.width;
 			uint64_t mipHeight = createInfo.height;
 
@@ -268,7 +268,7 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 				stagingBuffer,
 				image,
 				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-				static_cast<uint64_t>(regions.size()),
+				static_cast<uint32_t>(regions.size()),
 				regions.data()
 			);
 		}

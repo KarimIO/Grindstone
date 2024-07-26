@@ -1,6 +1,9 @@
 #pragma once
 
 #include <functional>
+
+#include <vma/vk_mem_alloc.h>
+
 #include <Common/Logging.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <Common/Graphics/DLLDefs.hpp>
@@ -71,6 +74,7 @@ namespace Grindstone {
 			void CreateCommandPool();
 			void CreateDescriptorPool();
 		private:
+			void CreateAllocator();
 			uint16_t ScoreDevice(VkPhysicalDevice device);
 			bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
 			bool CheckValidationLayerSupport();
@@ -140,6 +144,7 @@ namespace Grindstone {
 			std::string vendorName;
 			std::string adapterName;
 			std::string apiVersion;
+			VmaAllocator allocator;
 
 			Window* primaryWindow = nullptr;
 
