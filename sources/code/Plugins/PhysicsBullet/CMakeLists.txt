@@ -30,4 +30,4 @@ target_precompile_headers(PluginBulletPhysics PUBLIC pch.hpp)
 
 
 find_package(Bullet CONFIG REQUIRED)
-target_link_libraries(PluginBulletPhysics BulletSoftBody BulletDynamics BulletCollision Bullet3Common LinearMath)
+target_link_libraries(PluginBulletPhysics ${CORE_LIBS} BulletSoftBody BulletDynamics BulletCollision Bullet3Common LinearMath)

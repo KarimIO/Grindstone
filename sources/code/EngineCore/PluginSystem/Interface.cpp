@@ -1,7 +1,9 @@
+#include "Interface.hpp"
 #include <Common/Window/Window.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
 #include <EngineCore/ECS/SystemRegistrar.hpp>
 #include <EngineCore/Logger.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/EngineCore.hpp>
 
 // TODO: Define this type.
@@ -35,6 +37,10 @@ GraphicsAPI::Core* Plugins::Interface::GetGraphicsCore() {
 
 Grindstone::Logger::LoggerState* Plugins::Interface::GetLoggerState() const {
 	return Grindstone::Logger::GetLoggerState();
+}
+
+Grindstone::Memory::AllocatorCore::AllocatorState* Plugins::Interface::GetAllocatorState() const {
+	return Grindstone::Memory::AllocatorCore::GetAllocatorState();
 }
 
 bool Plugins::Interface::LoadPlugin(const char* name) {
@@ -98,9 +104,17 @@ void Plugins::Interface::RegisterSystem(const char* name, ECS::SystemFactory fac
 }
 
 void Plugins::Interface::RegisterAssetRenderer(BaseAssetRenderer* assetRenderer) {
-	EngineCore::GetInstance().assetRendererManager->AddAssetRenderer(assetRenderer);
+	engineCore->assetRendererManager->AddAssetRenderer(assetRenderer);
+}
+
+void Plugins::Interface::UnregisterAssetRenderer(BaseAssetRenderer* assetRenderer) {
+	engineCore->assetRendererManager->RemoveAssetRenderer(assetRenderer);
 }
 
 void Plugins::Interface::RegisterAssetType(AssetType assetType, const char* typeName, AssetImporter* assetImporter) {
 	engineCore->assetManager->RegisterAssetType(assetType, typeName, assetImporter);
+}
+
+void Plugins::Interface::UnregisterAssetType(AssetType assetType) {
+	engineCore->assetManager->UnregisterAssetType(assetType);
 }

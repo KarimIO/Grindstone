@@ -3,8 +3,6 @@ set(EDITOR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 file(GLOB_RECURSE SOURCE_MAIN
 	Main.cpp ${CODE_DIR}/NatvisFile.natvis
 	${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINECORE_DIR}/Utils/Utilities.cpp
-	${COMMON_DIR}/Memory/Allocators/DynamicAllocator.cpp ${COMMON_DIR}/Memory/Allocators/DynamicAllocator.hpp
-	${ENGINECORE_DIR}/Utils/MemoryAllocator.cpp ${ENGINECORE_DIR}/Utils/MemoryAllocator.hpp
 	${COMMON_DIR}/ResourcePipeline/AssetType.cpp ${COMMON_DIR}/ResourcePipeline/AssetType.hpp
 	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp ${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
 	${COMMON_DIR}/ResourcePipeline/Uuid.cpp  ${COMMON_DIR}/ResourcePipeline/Uuid.hpp
@@ -115,10 +113,10 @@ target_precompile_headers(Editor PUBLIC pch.hpp)
 target_link_libraries(
 	Editor
 	PUBLIC
+	${CORE_LIBS}
 	Rpcrt4.lib
 	mono-2.0-sgen.lib
 	efsw::efsw
-	fmt::fmt
 	unofficial::libgit2::libgit2
 	unofficial::gl3w::gl3w
 	glm::glm

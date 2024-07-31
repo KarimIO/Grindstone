@@ -1,5 +1,7 @@
 #pragma once
 
+#include <EngineCore/Utils/MemoryAllocator.hpp>
+
 #include "Assert.hpp"
 #include "IntTypes.hpp"
 
@@ -45,7 +47,7 @@ namespace Grindstone {
 	public:
 		Buffer() : bufferPtr(nullptr), capacity(0) {}
 		Buffer(uint64_t capacity) : capacity(capacity) {
-			this->bufferPtr = new Byte[capacity];
+			this->bufferPtr = static_cast<Byte*>(Grindstone::Memory::AllocatorCore::AllocateRaw(capacity, "Buffer"));
 		}
 
 		Buffer(void* bufferPtr, const uint64_t capacity) : bufferPtr(static_cast<Byte*>(bufferPtr)), capacity(capacity) {}
@@ -53,7 +55,7 @@ namespace Grindstone {
 		// Copy-Constructor
 		Buffer(const Buffer& other) {
 			capacity = other.capacity;
-			bufferPtr = new Byte[capacity];
+			bufferPtr = static_cast<Byte*>(Grindstone::Memory::AllocatorCore::AllocateRaw(capacity, "Buffer"));
 			memcpy(bufferPtr, other.bufferPtr, capacity);
 		}
 
@@ -90,7 +92,7 @@ namespace Grindstone {
 			}
 
 			capacity = other.capacity;
-			bufferPtr = new Byte[capacity];
+			bufferPtr = static_cast<Byte*>(Grindstone::Memory::AllocatorCore::AllocateRaw(capacity, "Buffer"));
 			memcpy(bufferPtr, other.bufferPtr, capacity);
 			return *this;
 		}
@@ -115,7 +117,7 @@ namespace Grindstone {
 
 		void Clear() {
 			if (bufferPtr != nullptr) {
-				delete bufferPtr;
+				Grindstone::Memory::AllocatorCore::Free(bufferPtr);
 				bufferPtr = nullptr;
 			}
 
@@ -144,7 +146,7 @@ namespace Grindstone {
 		ResizableBuffer() : Buffer(), currentPtr(nullptr), size(0) {}
 
 		ResizableBuffer(uint64_t capacity) : Buffer() {
-			bufferPtr = new Byte[capacity];
+			bufferPtr = static_cast<Byte*>(Grindstone::Memory::AllocatorCore::AllocateRaw(capacity, "ResizableBuffer"));
 			currentPtr = bufferPtr;
 			this->capacity = capacity;
 		}
@@ -159,7 +161,7 @@ namespace Grindstone {
 			capacity = other.capacity;
 			size = other.size;
 
-			bufferPtr = new Byte[capacity];
+			bufferPtr = static_cast<Byte*>(Grindstone::Memory::AllocatorCore::AllocateRaw(capacity, "ResizableBuffer"));
 			currentPtr = other.currentPtr;
 
 			memcpy(bufferPtr, other.bufferPtr, size);

@@ -34,4 +34,4 @@ target_include_directories(PluginEditorMaterialImporter PUBLIC ${CODE_DIR} ${FMT
 
 target_precompile_headers(PluginEditorMaterialImporter PUBLIC pch.hpp)
 
-target_link_libraries(PluginEditorMaterialImporter Rpcrt4.lib)
+target_link_libraries(PluginEditorMaterialImporter ${CORE_LIBS} Rpcrt4.lib)

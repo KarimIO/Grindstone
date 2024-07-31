@@ -69,7 +69,7 @@ void TracingPanel::RenderContents() {
 		"##CPU Profiling",
 		&ValuesGetter,
 		&session,
-		session.results.size(),
+		static_cast<int>(session.results.size()),
 		0,
 		"Main Thread",
 		FLT_MAX,

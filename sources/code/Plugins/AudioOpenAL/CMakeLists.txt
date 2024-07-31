@@ -31,7 +31,7 @@ target_include_directories(PluginAudioOpenAL PUBLIC ${CODE_DIR} ${ENTT_INCLUDE_D
 target_precompile_headers(PluginAudioOpenAL PUBLIC pch.hpp)
 
 target_link_libraries(PluginAudioOpenAL
-	fmt::fmt
+	${CORE_LIBS}
 	OpenAL::OpenAL
 	Rpcrt4.lib
 )

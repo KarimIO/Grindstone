@@ -26,7 +26,8 @@ set(ENGINECORE_DIR "${CODE_DIR}/EngineCore")
 set(EDITORCONFIG "${CODE_DIR}/.editorconfig")
 set(BUILD_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
-set(CORE_UTILS ${ENGINECORE_DIR}/Logger.cpp ${ENGINECORE_DIR}/Logger.hpp)
+set(CORE_UTILS ${ENGINECORE_DIR}/Logger.cpp ${ENGINECORE_DIR}/Logger.hpp ${ENGINECORE_DIR}/Utils/MemoryAllocator.cpp ${ENGINECORE_DIR}/Utils/MemoryAllocator.hpp ${COMMON_DIR}/Memory/Allocators/DynamicAllocator.cpp ${COMMON_DIR}/Memory/Allocators/DynamicAllocator.hpp)
+set(CORE_LIBS fmt::fmt)
 
 set(ENGINE_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/sources/code/EngineCore)
 file(GLOB_RECURSE SOURCE_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.cpp")

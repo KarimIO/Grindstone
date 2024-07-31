@@ -50,7 +50,7 @@ target_compile_definitions(PluginGraphicsVulkan PRIVATE GRAPHICS_DLL GLM_ENABLE_
 
 find_package(glfw3 CONFIG REQUIRED)
 
-target_link_libraries(PluginGraphicsVulkan Vulkan::Vulkan glfw fmt::fmt GPUOpen::VulkanMemoryAllocator)
+target_link_libraries(PluginGraphicsVulkan ${CORE_LIBS} Vulkan::Vulkan glfw fmt::fmt GPUOpen::VulkanMemoryAllocator)
 
 target_compile_features(PluginGraphicsVulkan PRIVATE cxx_std_17)
 

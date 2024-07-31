@@ -1,26 +1,27 @@
 #include "pch.hpp"
 
-#include "EngineCore.hpp"
+#include <EngineCore/Utils/MemoryAllocator.hpp>
+#include <EngineCore/ECS/SystemRegistrar.hpp>
+#include <EngineCore/ECS/ComponentRegistrar.hpp>
+#include <EngineCore/CoreComponents/setupCoreComponents.hpp>
+#include <EngineCore/CoreSystems/setupCoreSystems.hpp>
+#include <EngineCore/Scenes/Manager.hpp>
+#include <EngineCore/PluginSystem/Manager.hpp>
+#include <EngineCore/Events/InputManager.hpp>
+#include <EngineCore/Events/Dispatcher.hpp>
+#include <EngineCore/Rendering/DeferredRenderer.hpp>
+#include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
+#include <EngineCore/Assets/AssetManager.hpp>
+#include <Common/Event/WindowEvent.hpp>
+#include <Common/Graphics/Core.hpp>
+#include <Common/Window/WindowManager.hpp>
+
 #include "Logger.hpp"
 #include "Profiling.hpp"
-#include "ECS/SystemRegistrar.hpp"
-#include "ECS/ComponentRegistrar.hpp"
-#include "CoreComponents/setupCoreComponents.hpp"
-#include "CoreSystems/setupCoreSystems.hpp"
-#include "Scenes/Manager.hpp"
-#include "PluginSystem/Manager.hpp"
-#include "Events/InputManager.hpp"
-#include "Common/Graphics/Core.hpp"
-#include "Common/Window/WindowManager.hpp"
-#include "Events/Dispatcher.hpp"
-#include "Common/Event/WindowEvent.hpp"
-
-#include "Rendering/DeferredRenderer.hpp"
-
-#include "EngineCore/AssetRenderer/AssetRendererManager.hpp"
-#include "Assets/AssetManager.hpp"
+#include "EngineCore.hpp"
 
 using namespace Grindstone;
+using namespace Grindstone::Memory;
 
 bool EngineCore::Initialize(CreateInfo& createInfo) {
 	isEditor = createInfo.isEditor;
@@ -31,11 +32,11 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	engineAssetsPath = engineBinaryPath.parent_path() / "engineassets";
 
 	const size_t megabytesInGig = 1024u;
-	if (!memoryAllocator.Initialize(megabytesInGig * 1u)) {
+	if (!AllocatorCore::Initialize(megabytesInGig * 1u)) {
 		return false;
 	}
 
-	eventDispatcher = memoryAllocator.Allocate<Events::Dispatcher>();
+	eventDispatcher = AllocatorCore::Allocate<Events::Dispatcher>();
 
 	firstFrameTime = std::chrono::steady_clock::now();
 
@@ -47,25 +48,25 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 	{
 		GRIND_PROFILE_SCOPE("Setup Core Systems");
-		systemRegistrar = memoryAllocator.Allocate<ECS::SystemRegistrar>();
+		systemRegistrar = AllocatorCore::Allocate<ECS::SystemRegistrar>();
 		SetupCoreSystems(systemRegistrar);
 	}
 
 	{
 		GRIND_PROFILE_SCOPE("Setup Core Components");
-		componentRegistrar = memoryAllocator.Allocate<ECS::ComponentRegistrar>();
+		componentRegistrar = AllocatorCore::Allocate<ECS::ComponentRegistrar>();
 		SetupCoreComponents(componentRegistrar);
 	}
 
 	// Load core (Logging, ECS and Plugin Manager)
-	pluginManager = memoryAllocator.Allocate<Plugins::Manager>(this);
+	pluginManager = AllocatorCore::Allocate<Plugins::Manager>(this);
 	pluginManager->GetInterface().SetEditorInterface(createInfo.editorPluginInterface);
 	pluginManager->Load("PluginGraphicsVulkan");
 
 	Grindstone::Window* mainWindow = nullptr;
 	{
 		GRIND_PROFILE_SCOPE("Set up InputManager and Window");
-		inputManager = memoryAllocator.Allocate<Input::Manager>(eventDispatcher);
+		inputManager = AllocatorCore::Allocate<Input::Manager>(eventDispatcher);
 
 		Window::CreateInfo windowCreationInfo;
 		windowCreationInfo.fullscreen = Window::FullscreenMode::Windowed;
@@ -89,8 +90,8 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 	{
 		GRIND_PROFILE_SCOPE("Initialize Asset Managers");
-		assetManager = memoryAllocator.Allocate<Assets::AssetManager>(createInfo.assetLoader);
-		assetRendererManager = memoryAllocator.Allocate<AssetRendererManager>();
+		assetManager = AllocatorCore::Allocate<Assets::AssetManager>(createInfo.assetLoader);
+		assetRendererManager = AllocatorCore::Allocate<AssetRendererManager>();
 		assetRendererManager->AddQueue("Opaque", DrawSortMode::DistanceFrontToBack);
 		assetRendererManager->AddQueue("Transparent", DrawSortMode::DistanceBackToFront);
 		assetRendererManager->AddQueue("Unlit", DrawSortMode::DistanceFrontToBack);
@@ -102,7 +103,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 		pluginManager->LoadPluginList();
 	}
 
-	sceneManager = memoryAllocator.Allocate<SceneManagement::SceneManager>();
+	sceneManager = AllocatorCore::Allocate<SceneManagement::SceneManager>();
 
 	GPRINT_INFO_V(LogSource::EngineCore, "{0} Initialized.", createInfo.applicationTitle);
 	GRIND_PROFILE_END_SESSION();
@@ -164,21 +165,27 @@ void EngineCore::UpdateWindows() {
 EngineCore::~EngineCore() {
 	GPRINT_INFO(LogSource::EngineCore, "Closing...");
 
-	memoryAllocator.Free(sceneManager);
-	memoryAllocator.Free(assetRendererManager);
-	memoryAllocator.Free(assetManager);
-	memoryAllocator.Free(inputManager);
-	memoryAllocator.Free(pluginManager);
-	memoryAllocator.Free(componentRegistrar);
-	memoryAllocator.Free(systemRegistrar);
-	memoryAllocator.Free(eventDispatcher);
+	if (pluginManager) {
+		pluginManager->UnloadPluginList();
+	}
 
-	if (!memoryAllocator.IsEmpty()) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Uncleared memory: {0} bytes left!", memoryAllocator.GetUsed());
+	AllocatorCore::Free(sceneManager);
+	AllocatorCore::Free(assetRendererManager);
+	AllocatorCore::Free(assetManager);
+	AllocatorCore::Free(inputManager);
+	AllocatorCore::Free(pluginManager);
+	AllocatorCore::Free(componentRegistrar);
+	AllocatorCore::Free(systemRegistrar);
+	Logger::GetLoggerState()->dispatcher = nullptr;
+	AllocatorCore::Free(eventDispatcher);
+
+	if (!AllocatorCore::IsEmpty()) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Uncleared memory: {0} bytes left!", AllocatorCore::GetUsed());
 	}
 
 	GPRINT_INFO(LogSource::EngineCore, "Closed.");
 	Logger::CloseLogger();
+	AllocatorCore::CloseAllocator();
 }
 
 void EngineCore::RegisterGraphicsCore(GraphicsAPI::Core* newGraphicsCore) {
@@ -218,7 +225,7 @@ Events::Dispatcher* EngineCore::GetEventDispatcher() const {
 }
 
 BaseRenderer* EngineCore::CreateRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
-	return new DeferredRenderer(targetRenderPass);
+	return AllocatorCore::Allocate<DeferredRenderer>(targetRenderPass);
 }
 
 std::filesystem::path EngineCore::GetProjectPath() const {
@@ -290,10 +297,6 @@ double EngineCore::GetTimeSinceLaunch() const {
 
 double EngineCore::GetDeltaTime() const {
 	return deltaTime;
-}
-
-Memory::AllocatorCore& Grindstone::EngineCore::GetAllocator() {
-	return memoryAllocator;
 }
 
 extern "C" {

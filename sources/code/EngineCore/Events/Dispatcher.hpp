@@ -9,7 +9,7 @@ namespace Grindstone {
 	namespace Events {
 		struct BaseEvent;
 
-		using EventListener = bool(BaseEvent*);
+		using EventListener = std::function<bool(BaseEvent*)>;
 
 		class Dispatcher {
 		public:
@@ -30,7 +30,7 @@ namespace Grindstone {
 			void HandleEvent(BaseEvent* eventToHandle);
 		private:
 			using EventListenerList = std::vector<std::function<bool(BaseEvent*)>>;
-			std::map<Events::EventType, EventListenerList*> eventListeners;
+			std::map<Events::EventType, EventListenerList> eventListeners;
 			std::vector<BaseEvent*> eventsToHandle;
 		}; // class Dispatcher
 	} // namespace Events

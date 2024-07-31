@@ -29,6 +29,7 @@ find_path(GLM_INCLUDE_DIRS "glm/glm.hpp")
 
 target_link_libraries(
 	PluginRenderables3D
+	${CORE_LIBS}
 	Rpcrt4.lib
 )
 

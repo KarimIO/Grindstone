@@ -34,4 +34,4 @@ target_include_directories(PluginEditorAudioImporter PUBLIC ${CODE_DIR} ${FMT_IN
 
 target_precompile_headers(PluginEditorAudioImporter PUBLIC pch.hpp)
 
-target_link_libraries(PluginEditorAudioImporter Rpcrt4.lib)
+target_link_libraries(PluginEditorAudioImporter ${CORE_LIBS} Rpcrt4.lib)

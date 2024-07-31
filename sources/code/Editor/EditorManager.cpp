@@ -20,6 +20,7 @@
 #include <EngineCore/Events/Dispatcher.hpp>
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <EngineCore/PluginSystem/Manager.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/Logger.hpp>
 
 #include "AssetRegistry.hpp"
@@ -34,6 +35,7 @@
 
 using namespace Grindstone;
 using namespace Grindstone::Editor;
+using namespace Grindstone::Memory;
 
 Manager& Manager::GetInstance() {
 	static Editor::Manager manager;
@@ -86,16 +88,16 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	compiledAssetsPath = this->projectPath / "compiledAssets";
 	engineBinariesPath = std::filesystem::current_path();
 
+	if (!LoadEngine()) {
+		return false;
+	}
+
 	std::string materialContent = "{\n\t\"name\": \"New Material\",\n\t\"shader\": \"\"\n}";
 	assetTemplateRegistry.RegisterTemplate(
 		AssetType::Material,
 		"Material", ".gmat",
 		reinterpret_cast<const void*>(materialContent.c_str()), materialContent.size()
 	);
-
-	if (!LoadEngine()) {
-		return false;
-	}
 
 	assetRegistry.Initialize(projectPath);
 	projectAssetFileManager.Initialize(assetsPath);
@@ -131,7 +133,7 @@ void Manager::InitializeQuitCommands() {
 }
 
 bool Manager::SetupImguiEditor() {
-	imguiEditor = new ImguiEditor::ImguiEditor(engineCore);
+	imguiEditor = AllocatorCore::Allocate<ImguiEditor::ImguiEditor>(engineCore);
 	return true;
 }
 
@@ -243,11 +245,17 @@ bool Manager::LoadEngine() {
 	engineCore = createEngineFn(createInfo);
 
 	Grindstone::Logger::SetLoggerState(engineCore->GetPluginManager()->GetInterface().GetLoggerState());
+	Grindstone::Memory::AllocatorCore::SetAllocatorState(engineCore->GetPluginManager()->GetInterface().GetAllocatorState());
 
 	return engineCore != nullptr;
 }
 
 Manager::~Manager() {
+	if (imguiEditor) {
+		AllocatorCore::Free(imguiEditor);
+		imguiEditor = nullptr;
+	}
+
 	if (engineCoreLibraryHandle) {
 		Grindstone::Utilities::Modules::Unload(engineCoreLibraryHandle);
 		engineCoreLibraryHandle = nullptr;

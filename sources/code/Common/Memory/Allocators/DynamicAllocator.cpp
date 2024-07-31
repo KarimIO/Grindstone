@@ -2,6 +2,8 @@
 #include <iostream>
 #include <sstream>
 
+#include <EngineCore/Logger.hpp>
+
 #include "DynamicAllocator.hpp"
 
 using namespace Grindstone::Memory::Allocators;
@@ -52,6 +54,19 @@ bool DynamicAllocator::Initialize(size_t size) {
 }
 
 DynamicAllocator::~DynamicAllocator() {
+	Header* currentHeader = rootHeader;
+	while (currentHeader != nullptr) {
+		if (currentHeader->isAllocated) {
+			char* target = currentHeader->nextHeader == nullptr
+				? reinterpret_cast<char*>(rootHeader) + totalMemorySize
+				: reinterpret_cast<char*>(currentHeader->nextHeader);
+
+			size_t bytes = target - reinterpret_cast<char*>(currentHeader) - sizeof(Header);
+			GPRINT_ERROR_V(LogSource::EngineCore, "Uncleared memory: {}", currentHeader->debugName);
+		}
+		currentHeader = currentHeader->nextHeader;
+	}
+
 	if (rootHeader && hasAllocatedOwnMemory) {
 		delete rootHeader;
 	}
@@ -100,7 +115,7 @@ DynamicAllocator::Header* DynamicAllocator::FindAvailableHeader(size_t size) con
 	return nullptr;
 }
 
-void* DynamicAllocator::AllocateRaw(size_t size) {
+void* DynamicAllocator::AllocateRaw(size_t size, const char* debugName) {
 	DynamicAllocator::Header* header = FindAvailableHeader(size);
 
 	if (header == nullptr) {
@@ -125,6 +140,9 @@ void* DynamicAllocator::AllocateRaw(size_t size) {
 	}
 
 	header->isAllocated = true;
+#ifdef _DEBUG
+	header->debugName = debugName;
+#endif
 
 	return blockPointer;
 }
@@ -146,6 +164,12 @@ bool DynamicAllocator::Free(void* memPtr, bool shouldClear) {
 	if (header == nullptr) {
 		return false;
 	}
+
+#ifdef _DEBUG
+	if (!header->isAllocated) {
+		GPRINT_ERROR(LogSource::EngineCore, "Already freed, but trying to free again!");
+	}
+#endif
 
 	header->isAllocated = false;
 
@@ -190,5 +214,5 @@ bool DynamicAllocator::Free(void* memPtr, bool shouldClear) {
 
 bool DynamicAllocator::IsEmpty() const {
 	// A minimum of one header is always required!
-	return usedSize == sizeof(Header);
+	return usedSize <= sizeof(Header);
 }

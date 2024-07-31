@@ -68,12 +68,12 @@ file(GLOB_RECURSE HEADER_EVENTS "${ENGINE_CORE_DIR}/Events/*.hpp")
 source_group("Events\\Source Files" FILES ${SOURCE_EVENTS})
 source_group("Events\\Header Files" FILES ${HEADER_EVENTS})
 
-file(GLOB_RECURSE SOURCE_MEMORY ${ENGINE_CORE_DIR}/Utils/MemoryAllocator.cpp ${COMMON_DIR}/Memory/Allocators/DynamicAllocator.cpp ${COMMON_DIR}/Memory/Allocators/LinearAllocator.cpp ${COMMON_DIR}/Memory/Allocators/StackAllocator.cpp)
-file(GLOB_RECURSE HEADER_MEMORY ${ENGINE_CORE_DIR}/Utils/MemoryAllocator.hpp ${COMMON_DIR}/Memory/Allocators/DynamicAllocator.hpp ${COMMON_DIR}/Memory/Allocators/LinearAllocator.hpp ${COMMON_DIR}/Memory/Allocators/StackAllocator.hpp ${ENGINE_CORE_DIR}/Memory/Allocators.hpp ${ENGINE_CORE_DIR}/Memory/Memory.hpp)
+file(GLOB_RECURSE SOURCE_MEMORY ${COMMON_DIR}/Memory/Allocators/LinearAllocator.cpp ${COMMON_DIR}/Memory/Allocators/StackAllocator.cpp)
+file(GLOB_RECURSE HEADER_MEMORY ${COMMON_DIR}/Memory/Allocators/LinearAllocator.hpp ${COMMON_DIR}/Memory/Allocators/StackAllocator.hpp ${ENGINE_CORE_DIR}/Memory/Allocators.hpp ${ENGINE_CORE_DIR}/Memory/Memory.hpp)
 source_group("Memory\\Source Files" FILES ${SOURCE_MEMORY})
 source_group("Memory\\Header Files" FILES ${HEADER_MEMORY})
 
-file(GLOB_RECURSE SOURCE_COMMON_UTILS ${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINE_CORE_DIR}/Utils/Utilities.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${COMMON_DIR}/Graphics/Formats.cpp ${ENGINE_CORE_DIR}/Utils/WindowGlue.cpp)
+file(GLOB_RECURSE SOURCE_COMMON_UTILS ${CORE_UTILS} ${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINE_CORE_DIR}/Utils/Utilities.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${COMMON_DIR}/Graphics/Formats.cpp ${ENGINE_CORE_DIR}/Utils/WindowGlue.cpp)
 file(GLOB_RECURSE HEADER_COMMON_UTILS ${COMMON_DIR}/Utilities/ModuleLoading.hpp ${ENGINE_CORE_DIR}/Utils/Utilities.hpp ${COMMON_DIR}/ResourcePipeline/Uuid.hpp ${COMMON_DIR}/Buffer.hpp)
 source_group("Utilities\\Source Files" FILES ${SOURCE_COMMON_UTILS})
 source_group("Utilities\\Header Files" FILES ${HEADER_COMMON_UTILS})
@@ -148,9 +148,9 @@ find_package(fmt CONFIG REQUIRED)
 target_include_directories(EngineCore PUBLIC ../)
 
 target_link_libraries(EngineCore
+	${CORE_LIBS}
 	Rpcrt4.lib
 	rapidjson
-	fmt::fmt
 	OpenAL::OpenAL
 )
 

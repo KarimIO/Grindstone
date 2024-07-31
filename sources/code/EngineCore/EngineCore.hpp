@@ -6,7 +6,6 @@
 #include <chrono>
 
 #include <Common/Logging.hpp>
-#include <EngineCore/Utils/MemoryAllocator.hpp>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -99,7 +98,6 @@ namespace Grindstone {
 		virtual void CalculateDeltaTime();
 		virtual double GetTimeSinceLaunch() const;
 		virtual double GetDeltaTime() const;
-		virtual Memory::AllocatorCore& GetAllocator();
 	public:
 		DisplayManager* displayManager = nullptr;
 		WindowManager* windowManager = nullptr;
@@ -113,7 +111,6 @@ namespace Grindstone {
 		double deltaTime = 0.0;
 		std::chrono::steady_clock::time_point firstFrameTime;
 		std::chrono::steady_clock::time_point lastFrameTime;
-		Memory::AllocatorCore memoryAllocator;
 		SceneManagement::SceneManager* sceneManager = nullptr;
 		ECS::ComponentRegistrar* componentRegistrar = nullptr;
 		ECS::SystemRegistrar* systemRegistrar = nullptr;

@@ -15,6 +15,7 @@ namespace Grindstone {
 	class AssetRendererManager {
 	public:
 		void AddAssetRenderer(BaseAssetRenderer* assetRenderer);
+		void RemoveAssetRenderer(BaseAssetRenderer* assetRenderer);
 		void AddQueue(const char* name, DrawSortMode sortType);
 		void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet);
 		RenderQueueIndex GetIndexOfRenderQueue(const std::string& renderQueue) const;

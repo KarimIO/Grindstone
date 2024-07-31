@@ -18,4 +18,4 @@ target_include_directories(ApplicationExecutable
 )
 find_package(fmt CONFIG REQUIRED)
 
-target_link_libraries(ApplicationExecutable ${CMAKE_DL_LIBS} fmt::fmt)
+target_link_libraries(ApplicationExecutable ${CMAKE_DL_LIBS} ${CORE_LIBS})

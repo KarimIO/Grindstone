@@ -14,6 +14,13 @@ void AssetRendererManager::AddAssetRenderer(BaseAssetRenderer* assetRenderer) {
 	}
 }
 
+void AssetRendererManager::RemoveAssetRenderer(BaseAssetRenderer* assetRenderer) {
+	auto& rendererInMap = assetRenderers.find(assetRenderer->GetName());
+	if (rendererInMap == assetRenderers.end()) {
+		assetRenderers.erase(rendererInMap);
+	}
+}
+
 void AssetRendererManager::AddQueue(const char* name, DrawSortMode sortMode) {
 	assetQueuesNames.emplace_back(name);
 	queueDrawSortModes[name] = sortMode;

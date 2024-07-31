@@ -84,7 +84,6 @@ void Grindstone::Logger::Print(
 	const char* category = logSourceStrings[static_cast<size_t>(logSource)];
 	const char* logSeverityPrefix = logSeverityPrefixes[static_cast<size_t>(logSeverity)];
 
-	char* outputPrefixBuffer = new char[sizeof("[] [] []: ") + strlen(logSeverityPrefix) + strlen(category) + strlen(timeBuffer)];
 	std::string outputPrefix = std::string("[") + logSeverityPrefix + "] [" + category + "] [" + timeBuffer + "]: ";
 	std::string completeMessage = outputPrefix + str + '\n';
 

@@ -19,6 +19,10 @@
 #include <EngineCore/Logger.hpp>
 
 namespace Grindstone {
+	namespace Memory::AllocatorCore {
+		struct AllocatorState;
+	}
+
 	namespace GraphicsAPI {
 		class Core;
 	}
@@ -62,9 +66,12 @@ namespace Grindstone {
 			virtual void EnumerateDisplays(Display* displays);
 			virtual void RegisterSystem(const char* name, ECS::SystemFactory factory);
 			virtual void RegisterAssetRenderer(BaseAssetRenderer* assetRenderer);
+			virtual void UnregisterAssetRenderer(BaseAssetRenderer* assetRenderer);
 			virtual void RegisterAssetType(AssetType assetType, const char* typeName, AssetImporter* assetImporter);
+			virtual void UnregisterAssetType(AssetType assetType);
 			virtual void SetReloadCsharpCallback(std::function<void()> callback);
-			virtual Grindstone::Logger::LoggerState* Plugins::Interface::GetLoggerState() const;
+			virtual Grindstone::Logger::LoggerState* GetLoggerState() const;
+			virtual Grindstone::Memory::AllocatorCore::AllocatorState* GetAllocatorState() const;
 
 			template<typename T>
 			void RegisterComponent(ECS::SetupComponentFn setupComponentFn = nullptr) {

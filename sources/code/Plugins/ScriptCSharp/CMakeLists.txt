@@ -25,7 +25,7 @@ target_compile_features(PluginScriptCSharp PRIVATE cxx_std_17)
 find_path(ENTT_INCLUDE_DIRS "entt/entt.hpp")
 
 target_compile_definitions(PluginScriptCSharp PUBLIC CSHARP_DLL GLM_ENABLE_EXPERIMENTAL)
-target_link_libraries(PluginScriptCSharp PUBLIC mono-2.0-sgen.lib)
+target_link_libraries(PluginScriptCSharp PUBLIC ${CORE_LIBS} mono-2.0-sgen.lib)
 
 target_include_directories(PluginScriptCSharp PUBLIC
 	${CODE_DIR}

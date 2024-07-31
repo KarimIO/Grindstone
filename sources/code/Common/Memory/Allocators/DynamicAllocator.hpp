@@ -21,6 +21,9 @@ namespace Grindstone::Memory::Allocators {
 			bool isAllocated;
 			Header* nextHeader;
 			Header* previousHeader;
+#ifdef _DEBUG
+			const char* debugName;
+#endif
 		};
 
 		~DynamicAllocator();
@@ -28,10 +31,8 @@ namespace Grindstone::Memory::Allocators {
 		void Initialize(void* ownedMemory, size_t size);
 		bool Initialize(size_t size);
 
-		void* AllocateRaw(size_t size);
+		void* AllocateRaw(size_t size, const char* debugName);
 		bool Free(void* memPtr, bool shouldClear = false);
-
-		void PrintBlocks();
 
 		bool IsEmpty() const;
 
@@ -44,7 +45,7 @@ namespace Grindstone::Memory::Allocators {
 
 		template<typename T, typename... Args>
 		SharedPtr<T> AllocateShared(Args&&... params) {
-			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T)));
+			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T), typeid(T).name()));
 			if (ptr != nullptr) {
 				// Call the constructor on the newly allocated memory
 				new (ptr) T(std::forward<Args>(params)...);
@@ -55,7 +56,7 @@ namespace Grindstone::Memory::Allocators {
 
 		template<typename T, typename... Args>
 		UniquePtr<T> AllocateUnique(Args&&... params) {
-			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T)));
+			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T), typeid(T).name()));
 			if (ptr != nullptr) {
 				// Call the constructor on the newly allocated memory
 				new (ptr) T(std::forward<Args>(params)...);
@@ -66,7 +67,7 @@ namespace Grindstone::Memory::Allocators {
 
 		template<typename T, typename... Args>
 		T* AllocateRaw(Args&&... params) {
-			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T)));
+			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T), typeid(T).name()));
 			if (ptr != nullptr) {
 				// Call the constructor on the newly allocated memory
 				new (ptr) T(std::forward<Args>(params)...);

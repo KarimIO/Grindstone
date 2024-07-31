@@ -23,6 +23,7 @@ namespace Grindstone {
 			virtual Interface& GetInterface();
 			
 			virtual void LoadPluginList();
+			virtual void UnloadPluginList();
 			bool Load(const char* name);
 			void LoadCritical(const char* name);
 
@@ -31,6 +32,7 @@ namespace Grindstone {
 			Interface pluginInterface;
 			EngineCore *engineCore;
 			std::map<std::string, Utilities::Modules::Handle> plugins;
+			std::vector<Utilities::Modules::Handle> pluginsFromList;
 		};
 	}
 }

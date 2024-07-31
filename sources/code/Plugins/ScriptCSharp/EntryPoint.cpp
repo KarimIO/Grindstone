@@ -3,6 +3,7 @@
 #include <string>
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/PluginSystem/Interface.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
 #include "EngineCore/EngineCore.hpp"
 #include "EngineCore/ECS/SystemRegistrar.hpp"
 #include "EngineCore/Scenes/Scene.hpp"
@@ -11,6 +12,8 @@
 #include "CSharpManager.hpp"
 #include "Components/ScriptComponent.hpp"
 #include "CSharpSystem.hpp"
+
+using namespace Grindstone::Memory;
 using namespace Grindstone::Scripting::CSharp;
 
 Plugins::Interface* globalPluginInterface = nullptr;

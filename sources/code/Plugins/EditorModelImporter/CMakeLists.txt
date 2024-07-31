@@ -37,4 +37,4 @@ target_include_directories(PluginEditorModelImporter PUBLIC ${CODE_DIR} ${FMT_IN
 
 target_precompile_headers(PluginEditorModelImporter PUBLIC pch.hpp)
 
-target_link_libraries(PluginEditorModelImporter Rpcrt4.lib assimp::assimp)
+target_link_libraries(PluginEditorModelImporter ${CORE_LIBS} Rpcrt4.lib assimp::assimp)

@@ -70,7 +70,9 @@ namespace Grindstone::Assets {
 		// TODO: Register these into a file, so we can refer to types by number, and
 		// if there is a new type, we can change all assetTypes in meta files.
 		virtual void RegisterAssetType(AssetType assetType, const char* typeName, AssetImporter* importer);
+		virtual void UnregisterAssetType(AssetType assetType);
 	private:
+
 		bool ownsAssetLoader = false;
 		Grindstone::Assets::AssetLoader* assetLoader = nullptr;
 		std::vector<std::string> assetTypeNames;

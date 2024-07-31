@@ -52,6 +52,34 @@ void Manager::LoadPluginList() {
 	}
 }
 
+void Manager::UnloadPluginList() {
+	for (int32_t i = static_cast<int32_t>(pluginsFromList.size()) - 1; i >= 0; --i) {
+		Grindstone::Utilities::Modules::Handle handle = pluginsFromList[i];
+		if (handle) {
+			auto releaseModuleFnPtr = (void (*)(Interface*))Modules::GetFunction(handle, "ReleaseModule");
+
+			// Get the name and erase the element from the map.
+			std::string name;
+			for (auto& mapElement : plugins) {
+				if (mapElement.second == handle) {
+					name = mapElement.first;
+					plugins.erase(name);
+					break;
+				}
+			}
+
+			if (releaseModuleFnPtr) {
+				releaseModuleFnPtr(&pluginInterface);
+			}
+			else {
+				GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", name.c_str());
+			}
+		}
+	}
+
+	pluginsFromList.clear();
+}
+
 void Manager::SetupInterfacePointers() {
 	const EngineCore& engineCore = EngineCore::GetInstance();
 	pluginInterface.systemRegistrar = engineCore.GetSystemRegistrar();
@@ -81,6 +109,7 @@ bool Manager::Load(const char *path) {
 
 	if (handle) {
 		plugins[path] = handle;
+		pluginsFromList.emplace_back(handle);
 
 		auto initializeModuleFnPtr = (void (*)(Interface*))Modules::GetFunction(handle, "InitializeModule");
 
@@ -125,7 +154,7 @@ void Manager::LoadCritical(const char* path) {
 void Manager::Remove(const char* name) {
 	auto it = plugins.find(name);
 	if (it != plugins.end()) {
-		auto handle = it->second;
+		Grindstone::Utilities::Modules::Handle handle = it->second;
 		if (handle) {
 			auto releaseModuleFnPtr = static_cast<void (*)(Interface*)>(Modules::GetFunction(handle, "ReleaseModule"));
 
@@ -134,6 +163,13 @@ void Manager::Remove(const char* name) {
 			}
 			else {
 				GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", it->first.c_str());
+			}
+		}
+
+		for (size_t i = 0; i < pluginsFromList.size(); ++i) {
+			if (pluginsFromList[i] == handle) {
+				pluginsFromList.erase(pluginsFromList.begin() + i);
+				break;
 			}
 		}
 

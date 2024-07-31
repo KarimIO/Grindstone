@@ -2,6 +2,7 @@
 
 #include <Common/Graphics/Framebuffer.hpp>
 #include <Common/Graphics/Core.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/Rendering/BaseRenderer.hpp>
 #include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
@@ -12,6 +13,7 @@
 #include "EditorCamera.hpp"
 #include "EditorManager.hpp"
 
+using namespace Grindstone::Memory;
 using namespace Grindstone::Editor;
 using namespace Grindstone;
 
@@ -79,7 +81,7 @@ EditorCamera::EditorCamera() {
 }
 
 EditorCamera::~EditorCamera() {
-	delete renderer;
+	AllocatorCore::Free(renderer);
 	renderer = nullptr;
 }
 

@@ -35,4 +35,4 @@ target_include_directories(PluginEditorTextureImporter PUBLIC ${CODE_DIR} ${STB_
 
 target_precompile_headers(PluginEditorTextureImporter PUBLIC pch.hpp)
 
-target_link_libraries(PluginEditorTextureImporter Rpcrt4.lib)
+target_link_libraries(PluginEditorTextureImporter ${CORE_LIBS} Rpcrt4.lib)
