@@ -103,6 +103,18 @@ void Plugins::Interface::RegisterSystem(const char* name, ECS::SystemFactory fac
 	systemRegistrar->RegisterSystem(name, factory);
 }
 
+void Plugins::Interface::RegisterEditorSystem(const char* name, ECS::SystemFactory factory) {
+	systemRegistrar->RegisterSystem(name, factory);
+}
+
+void Plugins::Interface::UnregisterSystem(const char* name) {
+	systemRegistrar->UnregisterSystem(name);
+}
+
+void Plugins::Interface::UnregisterEditorSystem(const char* name) {
+	systemRegistrar->UnregisterSystem(name);
+}
+
 void Plugins::Interface::RegisterAssetRenderer(BaseAssetRenderer* assetRenderer) {
 	engineCore->assetRendererManager->AddAssetRenderer(assetRenderer);
 }

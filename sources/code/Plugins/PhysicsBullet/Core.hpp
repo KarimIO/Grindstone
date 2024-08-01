@@ -11,7 +11,10 @@ namespace Grindstone {
 		class Core {
 		public:
 			Core();
+			~Core();
+
 			static Core& GetInstance();
+			static Core* instance;
 
 			btDbvtBroadphase* broadphase = nullptr;
 			btDefaultCollisionConfiguration* collisionConfiguration = nullptr;

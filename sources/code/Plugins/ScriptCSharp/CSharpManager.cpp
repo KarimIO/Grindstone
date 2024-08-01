@@ -1,21 +1,24 @@
 #include <string>
-#include "CSharpManager.hpp"
-
-#include "EngineCore/EngineCore.hpp"
-#include "EngineCore/ECS/Entity.hpp"
-#include "EngineCore/ECS/ComponentRegistrar.hpp"
-#include "Components/ScriptComponent.hpp"
-
-#include <EngineCore/Utils/Utilities.hpp>
 
 #include <mono/jit/jit.h>
 #include <mono/metadata/assembly.h>
 #include <mono/metadata/attrdefs.h>
 #include <mono/metadata/mono-debug.h>
 #include <mono/metadata/threads.h>
+
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/ECS/Entity.hpp>
+#include <EngineCore/ECS/ComponentRegistrar.hpp>
 #include <EngineCore/Logger.hpp>
+#include <EngineCore/Utils/Utilities.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
+
+#include "Components/ScriptComponent.hpp"
+
+#include "CSharpManager.hpp"
 
 using namespace Grindstone;
+using namespace Grindstone::Memory;
 using namespace Grindstone::Scripting::CSharp;
 
 #define FUNCTION_CALL_IMPL(CallFnInComponent, scriptMethod) \
@@ -61,10 +64,13 @@ void CSharpManager::Initialize(EngineCore* engineCore) {
 }
 
 void CSharpManager::Cleanup() {
-	// TODO: Fix Cleanup
+	for (auto& smartComponent : smartComponents) {
+		AllocatorCore::Free(smartComponent.second);
+	}
+	smartComponents.clear();
 	return;
-	mono_domain_set(mono_get_root_domain(), false);
 
+	// TODO: Fix this cleanup.
 	mono_domain_unload(scriptDomain);
 	scriptDomain = nullptr;
 
@@ -257,7 +263,7 @@ void CSharpManager::LoadAssemblyClasses() {
 			continue;
 		}
 
-		ScriptClass* scriptClass = new ScriptClass(classNamespace, className, monoClass);
+		ScriptClass* scriptClass = AllocatorCore::Allocate<ScriptClass>(classNamespace, className, monoClass);
 		smartComponents[scriptName] = scriptClass;
 		auto& methods = scriptClass->methods;
 		methods.constructor = mono_class_get_method_from_name(monoClass, ".ctor", 0);

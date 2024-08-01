@@ -24,6 +24,7 @@ namespace Grindstone {
 		private:
 			ALCdevice* device = nullptr;
 			ALCcontext* context = nullptr;
+			static Core* instance;
 		};
 	}
 }

@@ -48,6 +48,7 @@ extern "C" {
 
 		CSharpManager& manager = CSharpManager::GetInstance();
 		manager.Initialize(pluginInterface->GetEngineCore());
+
 		globalPluginInterface = pluginInterface;
 		pluginInterface->RegisterComponent<ScriptComponent>(SetupCSharpScriptComponent);
 		pluginInterface->RegisterSystem("Scripting::CSharp::Update", UpdateSystem);
@@ -56,6 +57,11 @@ extern "C" {
 	}
 
 	CSHARP_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
+		pluginInterface->SetReloadCsharpCallback(nullptr);
+		pluginInterface->systemRegistrar->UnregisterEditorSystem("Scripting::CSharp::UpdateEditor");
+		pluginInterface->UnregisterSystem("Scripting::CSharp::Update");
+		pluginInterface->UnregisterComponent<ScriptComponent>();
+
 		CSharpManager& manager = CSharpManager::GetInstance();
 		manager.Cleanup();
 	}

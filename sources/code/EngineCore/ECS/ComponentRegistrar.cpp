@@ -1,8 +1,24 @@
+#include <EngineCore/Logger.hpp>
+
 #include "ComponentRegistrar.hpp"
 using namespace Grindstone::ECS;
 
 void ComponentRegistrar::RegisterComponent(const char *name, ComponentFunctions componentFunctions) {
+	auto comp = componentFunctionsList.find(name);
+	if (comp != componentFunctionsList.end()) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Registering a component that was already registered: {}", name);
+	}
+
 	componentFunctionsList.emplace(name, componentFunctions);
+}
+
+void ComponentRegistrar::UnregisterComponent(const char* name) {
+	auto comp = componentFunctionsList.find(name);
+	if (comp == componentFunctionsList.end()) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Unregistering a component that isn't registered: {}", name);
+	}
+
+	componentFunctionsList.erase(comp);
 }
 
 void* ComponentRegistrar::CreateComponentWithSetup(const char* name, ECS::Entity entity) {

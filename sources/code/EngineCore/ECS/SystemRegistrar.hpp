@@ -14,6 +14,8 @@ namespace Grindstone {
 			SystemRegistrar();
 			virtual void RegisterSystem(const char* name, SystemFactory factory);
 			virtual void RegisterEditorSystem(const char* name, SystemFactory factory);
+			virtual void UnregisterSystem(const char* name);
+			virtual void UnregisterEditorSystem(const char* name);
 			void Update(entt::registry& registry);
 			void EditorUpdate(entt::registry& registry);
 			~SystemRegistrar();

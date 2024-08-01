@@ -46,5 +46,8 @@ extern "C" {
 			AllocatorCore::Free(mesh3dImporter);
 			mesh3dImporter = nullptr;
 		}
+
+		pluginInterface->UnregisterComponent<MeshRendererComponent>();
+		pluginInterface->UnregisterComponent<MeshComponent>();
 	}
 }

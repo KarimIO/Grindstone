@@ -1,51 +1,59 @@
 #include <iostream>
+
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Logger.hpp>
+
 #include "Core.hpp"
-#include "EngineCore/EngineCore.hpp"
+
 using namespace Grindstone;
 using namespace Grindstone::Audio;
 
-bool CheckOpenALErrors(const std::string& filename, const std::uint_fast32_t line) {
-	/*ALenum error = alGetError();
+Grindstone::Audio::Core* Grindstone::Audio::Core::instance = nullptr;
+
+static bool CheckOpenALErrors(const std::string& filename, const std::uint_fast32_t line) {
+	ALenum error = alGetError();
 	if (error != AL_NO_ERROR) {
-		Logger::PrintError("***ERROR*** ({0}: {1})", filename, line);
+		GPRINT_ERROR_V(LogSource::Audio, "***ERROR*** ({0}: {1})", filename, line);
 		switch (error) {
 		case AL_INVALID_NAME:
-			Logger::PrintError("AL_INVALID_NAME: a bad name (ID) was passed to an OpenAL function");
+			GPRINT_ERROR(LogSource::Audio, "AL_INVALID_NAME: a bad name (ID) was passed to an OpenAL function");
 			break;
 		case AL_INVALID_ENUM:
-			Logger::PrintError("AL_INVALID_ENUM: an invalid enum value was passed to an OpenAL function");
+			GPRINT_ERROR(LogSource::Audio, "AL_INVALID_ENUM: an invalid enum value was passed to an OpenAL function");
 			break;
 		case AL_INVALID_VALUE:
-			Logger::PrintError("AL_INVALID_VALUE: an invalid value was passed to an OpenAL function");
+			GPRINT_ERROR(LogSource::Audio, "AL_INVALID_VALUE: an invalid value was passed to an OpenAL function");
 			break;
 		case AL_INVALID_OPERATION:
-			Logger::PrintError("AL_INVALID_OPERATION: the requested operation is not valid");
+			GPRINT_ERROR(LogSource::Audio, "AL_INVALID_OPERATION: the requested operation is not valid");
 			break;
 		case AL_OUT_OF_MEMORY:
-			Logger::PrintError("AL_OUT_OF_MEMORY: the requested operation resulted in OpenAL running out of memory");
+			GPRINT_ERROR(LogSource::Audio, "AL_OUT_OF_MEMORY: the requested operation resulted in OpenAL running out of memory");
 			break;
 		default:
-			Logger::PrintError("UNKNOWN AL ERROR: {0}", error);
+			GPRINT_ERROR_V(LogSource::Audio, "UNKNOWN AL ERROR: {0}", error);
 		}
 		return false;
-	}*/
+	}
 	return true;
 }
 
 Core::Core() {
 	device = alcOpenDevice(nullptr);
 	if (!device) {
-		throw std::runtime_error("Could not create OpenAL Device.");
+		GPRINT_FATAL(LogSource::Audio, "Could not create OpenAL Device.");
 	}
 
 	context = alcCreateContext(device, nullptr);
 	if (!context) {
-		throw std::runtime_error("Could not create OpenAL Context.");
+		GPRINT_FATAL(LogSource::Audio, "Could not create OpenAL Context.");
 	}
 
 	if (!alcMakeContextCurrent(context)) {
-		throw std::runtime_error("Could not create OpenAL Context Current.");
+		GPRINT_FATAL(LogSource::Audio, "Could not create OpenAL Context Current.");
 	}
+
+	instance = this;
 }
 
 Core::~Core() {
@@ -56,7 +64,7 @@ Core::~Core() {
 
 	if (device) {
 		if (alcCloseDevice(device)) {
-			// Logger::PrintError("Could not close OpenAL Device.");
+			GPRINT_ERROR(LogSource::Audio, "Could not close OpenAL Device.");
 		}
 	}
 }
@@ -66,8 +74,7 @@ void Core::SetEngineCorePtr(EngineCore* engineCore) {
 }
 
 Core& Core::GetInstance() {
-	static Core instance;
-	return instance;
+	return *instance;
 }
 
 bool Core::GetAvailableDevices(std::vector<std::string>& devicesVec, ALCdevice* device) {
@@ -87,6 +94,7 @@ bool Core::GetAvailableDevices(std::vector<std::string>& devicesVec, ALCdevice* 
 	return true;
 }
 
+// TODO: Fix Allocation
 Source* Core::CreateSource(Audio::Source::CreateInfo& createInfo) {
 	return new Audio::Source(createInfo);
 }

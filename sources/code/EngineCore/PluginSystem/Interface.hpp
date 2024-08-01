@@ -65,6 +65,9 @@ namespace Grindstone {
 			virtual uint8_t CountDisplays();
 			virtual void EnumerateDisplays(Display* displays);
 			virtual void RegisterSystem(const char* name, ECS::SystemFactory factory);
+			virtual void RegisterEditorSystem(const char* name, ECS::SystemFactory factory);
+			virtual void UnregisterSystem(const char* name);
+			virtual void UnregisterEditorSystem(const char* name);
 			virtual void RegisterAssetRenderer(BaseAssetRenderer* assetRenderer);
 			virtual void UnregisterAssetRenderer(BaseAssetRenderer* assetRenderer);
 			virtual void RegisterAssetType(AssetType assetType, const char* typeName, AssetImporter* assetImporter);
@@ -77,6 +80,12 @@ namespace Grindstone {
 			void RegisterComponent(ECS::SetupComponentFn setupComponentFn = nullptr) {
 				componentRegistrar->RegisterComponent<T>(setupComponentFn);
 			}
+
+			template<typename T>
+			void UnregisterComponent() {
+				componentRegistrar->UnregisterComponent<T>();
+			}
+
 			ECS::ComponentRegistrar* componentRegistrar = nullptr;
 			ECS::SystemRegistrar* systemRegistrar = nullptr;
 		private:
