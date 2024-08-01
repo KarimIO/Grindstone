@@ -1,17 +1,27 @@
 #include <imgui.h>
 #include <entt/entt.hpp>
+
+#include <Editor/EditorManager.hpp>
+#include <EngineCore/Scenes/Manager.hpp>
+#include <EngineCore/Scenes/Scene.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
+
 #include "ComponentInspector.hpp"
 #include "MaterialInspector.hpp"
 #include "InspectorPanel.hpp"
-#include "Editor/EditorManager.hpp"
-#include "EngineCore/Scenes/Manager.hpp"
-#include "EngineCore/Scenes/Scene.hpp"
-#include "EngineCore/EngineCore.hpp"
+
+using namespace Grindstone::Memory;
 
 namespace Grindstone::Editor::ImguiEditor {
 	InspectorPanel::InspectorPanel(EngineCore* engineCore, ImguiEditor* imguiEditor) : engineCore(engineCore) {
-		componentInspector = new ComponentInspector(imguiEditor);
-		materialInspector = new MaterialInspector(engineCore, imguiEditor);
+		componentInspector = AllocatorCore::Allocate<ComponentInspector>(imguiEditor);
+		materialInspector = AllocatorCore::Allocate<MaterialInspector>(engineCore, imguiEditor);
+	}
+
+	InspectorPanel::~InspectorPanel() {
+		AllocatorCore::Free(materialInspector);
+		AllocatorCore::Free(componentInspector);
 	}
 
 	void InspectorPanel::Render() {

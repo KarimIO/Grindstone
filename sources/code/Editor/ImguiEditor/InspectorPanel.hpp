@@ -15,6 +15,7 @@ namespace Grindstone {
 			class InspectorPanel {
 			public:
 				InspectorPanel(EngineCore* engineCore, ImguiEditor* imguiEditor);
+				~InspectorPanel();
 				void Render();
 			private:
 				void RenderContents();
