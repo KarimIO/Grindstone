@@ -1,9 +1,12 @@
+#include <iostream>
+#include <cassert>
+
+#include <EngineCore/Logger.hpp>
+
 #include "VulkanRenderTarget.hpp"
 #include "VulkanUtils.hpp"
 #include "VulkanFormat.hpp"
 #include "VulkanCore.hpp"
-#include <iostream>
-#include <cassert>
 
 using namespace Grindstone::GraphicsAPI;
 
@@ -42,7 +45,7 @@ void VulkanRenderTarget::UpdateNativeImage(VkImage image, VkImageView imageView,
 
 void VulkanRenderTarget::Create() {
 	if (debugName.empty()) {
-		throw std::runtime_error("Unnamed Render Target!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Render Target!");
 	}
 
 	uint8_t channels;
@@ -148,7 +151,7 @@ void VulkanRenderTarget::CreateTextureSampler() {
 	samplerInfo.mipLodBias = 0;
 
 	if (vkCreateSampler(VulkanCore::Get().GetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create texture sampler!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create texture sampler!");
 	}
 }
 
@@ -184,6 +187,5 @@ void VulkanRenderTarget::Resize(uint32_t width, uint32_t height) {
 }
 
 void VulkanRenderTarget::RenderScreen(unsigned int i, unsigned int resx, unsigned int resy, unsigned char * data) {
-	std::cout << "VulkanRenderTarget::RenderScreen is not used.\n";
-	assert(false);
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanRenderTarget::RenderScreen is not used.");
 }

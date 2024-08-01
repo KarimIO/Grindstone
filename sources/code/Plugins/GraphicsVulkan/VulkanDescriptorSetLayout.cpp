@@ -1,7 +1,10 @@
 #include <vector>
+
+#include <EngineCore/Logger.hpp>
+
 #include "VulkanCore.hpp"
-#include "VulkanDescriptorSetLayout.hpp"
 #include "VulkanUtils.hpp"
+#include "VulkanDescriptorSetLayout.hpp"
 
 using namespace Grindstone::GraphicsAPI;
 
@@ -46,14 +49,14 @@ VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(DescriptorSetLayout::Create
 	layoutInfo.pBindings = bindingLayouts.data();
 
 	if (vkCreateDescriptorSetLayout(VulkanCore::Get().GetDevice(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create descriptor set layout!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create descriptor set layout!");
 	}
 
 	if (createInfo.debugName != nullptr) {
 		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, descriptorSetLayout, createInfo.debugName);
 	}
 	else {
-		throw std::runtime_error("Unnamed Descriptor Set Layout!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Descriptor Set Layout!");
 	}
 }
 
@@ -67,7 +70,7 @@ VulkanDescriptorSetLayout::~VulkanDescriptorSetLayout() {
 
 const DescriptorSetLayout::Binding& VulkanDescriptorSetLayout::GetBinding(size_t bindingIndex) const {
 	if (bindings == nullptr || bindingIndex >= bindingCount) {
-		throw std::runtime_error("Invalid bindingIndex in GetBinding!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Invalid bindingIndex in GetBinding!");
 	}
 
 	return bindings[bindingIndex];

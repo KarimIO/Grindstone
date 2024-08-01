@@ -1,10 +1,12 @@
+#include <assert.h>
+
+#include <EngineCore/Logger.hpp>
+
 #include "VulkanRenderPass.hpp"
-#include "VulkanFramebuffer.hpp"
 #include "VulkanRenderTarget.hpp"
 #include "VulkanDepthTarget.hpp"
 #include "VulkanCore.hpp"
-
-#include <assert.h>
+#include "VulkanFramebuffer.hpp"
 
 using namespace Grindstone::GraphicsAPI;
 
@@ -23,7 +25,7 @@ VulkanFramebuffer::VulkanFramebuffer(
 		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_FRAMEBUFFER, framebuffer, debugName);
 	}
 	else {
-		throw std::runtime_error("Unnamed Framebuffer!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Framebuffer!");
 	}
 }
 
@@ -78,7 +80,7 @@ RenderPass* VulkanFramebuffer::GetRenderPass() const {
 }
 
 uint32_t VulkanFramebuffer::GetAttachment(uint32_t attachmentIndex) {
-	std::cout << "VulkanFramebuffer::GetAttachment is not used.\n";
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanFramebuffer::GetAttachment is not used.");
 	assert(false);
 	return 0;
 }
@@ -113,14 +115,14 @@ void VulkanFramebuffer::Create() {
 	framebufferInfo.layers = 1;
 
 	if (vkCreateFramebuffer(VulkanCore::Get().GetDevice(), &framebufferInfo, nullptr, &framebuffer) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create framebuffer!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create framebuffer!");
 	}
 
 	if (!debugName.empty()) {
 		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_FRAMEBUFFER, framebuffer, debugName.c_str());
 	}
 	else {
-		throw std::runtime_error("Unnamed Framebuffer!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Framebuffer!");
 	}
 }
 
@@ -133,31 +135,31 @@ uint32_t VulkanFramebuffer::GetHeight() const {
 }
 
 void VulkanFramebuffer::Clear(GraphicsAPI::ClearMode mask) {
-	std::cout << "VulkanFramebuffer::Clear is not used.\n";
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanFramebuffer::Clear is not used.");
 	assert(false);
 }
 
 void VulkanFramebuffer::Bind() {
-	std::cout << "VulkanFramebuffer::Bind is not used.\n";
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanFramebuffer::Bind is not used.");
 	assert(false);
 }
 
 void VulkanFramebuffer::BindWrite() {
-	std::cout << "VulkanFramebuffer::BindWrite is not used.\n";
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanFramebuffer::BindWrite is not used.");
 	assert(false);
 }
 
 void VulkanFramebuffer::BindRead() {
-	std::cout << "VulkanFramebuffer::BindRead is not used.\n";
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanFramebuffer::BindRead is not used.");
 	assert(false);
 }
 
 void VulkanFramebuffer::BindTextures(int i) {
-	std::cout << "VulkanFramebuffer::BindTextures is not used.\n";
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanFramebuffer::BindTextures is not used.");
 	assert(false);
 }
 
 void VulkanFramebuffer::Unbind() {
-	std::cout << "VulkanFramebuffer::Unbind is not used.\n";
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanFramebuffer::Unbind is not used.");
 	assert(false);
 }

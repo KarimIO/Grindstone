@@ -1,6 +1,8 @@
 #include <iostream>
 #include <assert.h>
 
+#include <EngineCore/Logger.hpp>
+
 #include "VulkanVertexArrayObject.hpp"
 #include "VulkanVertexBuffer.hpp"
 #include "VulkanIndexBuffer.hpp"
@@ -29,13 +31,11 @@ namespace Grindstone {
 		}
 
 		void VulkanVertexArrayObject::Bind() {
-			std::cout << "VulkanVertexArrayObject::Bind is not used.\n";
-			assert(false);
+			GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanVertexArrayObject::Bind is not used.");
 		}
 
 		void VulkanVertexArrayObject::Unbind() {
-			std::cout << "VulkanVertexArrayObject::Bind is not used.\n";
-			assert(false);
+			GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanVertexArrayObject::Bind is not used.");
 		}
 	}
 }

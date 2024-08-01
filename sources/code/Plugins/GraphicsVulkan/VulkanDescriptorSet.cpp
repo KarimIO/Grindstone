@@ -1,10 +1,13 @@
+#include <EngineCore/Logger.hpp>
+
 #include "VulkanDescriptorSetLayout.hpp"
-#include "VulkanDescriptorSet.hpp"
 #include "VulkanUniformBuffer.hpp"
 #include "VulkanRenderTarget.hpp"
 #include "VulkanDepthTarget.hpp"
 #include "VulkanTexture.hpp"
 #include "VulkanCore.hpp"
+
+#include "VulkanDescriptorSet.hpp"
 
 using namespace Grindstone::GraphicsAPI;
 
@@ -103,14 +106,14 @@ VulkanDescriptorSet::VulkanDescriptorSet(DescriptorSet::CreateInfo& createInfo) 
 	allocInfo.pSetLayouts = &internalLayout;
 
 	if (vkAllocateDescriptorSets(VulkanCore::Get().GetDevice(), &allocInfo, &descriptorSet) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate descriptor sets!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to allocate descriptor sets!");
 	}
 
 	if (createInfo.debugName != nullptr) {
 		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_DESCRIPTOR_SET, descriptorSet, createInfo.debugName);
 	}
 	else {
-		throw std::runtime_error("Unnamed Descriptor Set!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Descriptor Set!");
 	}
 
 	ChangeBindings(createInfo.bindings, createInfo.bindingCount);

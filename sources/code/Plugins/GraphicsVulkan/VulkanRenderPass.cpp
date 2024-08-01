@@ -1,7 +1,10 @@
-#include "VulkanRenderPass.hpp"
+#include <vulkan/vulkan.h>
+
+#include <EngineCore/Logger.hpp>
+
 #include "VulkanCore.hpp"
 #include "VulkanFormat.hpp"
-#include <vulkan/vulkan.h>
+#include "VulkanRenderPass.hpp"
 
 namespace Grindstone::GraphicsAPI {
 	VulkanRenderPass::VulkanRenderPass(VkRenderPass renderPass, const char* debugName)
@@ -13,7 +16,7 @@ namespace Grindstone::GraphicsAPI {
 			VulkanCore::Get().NameObject(VK_OBJECT_TYPE_RENDER_PASS, renderPass, debugName);
 		}
 		else {
-			throw std::runtime_error("Unnamed RenderPass!");
+			GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed RenderPass!");
 		}
 	}
 
@@ -115,14 +118,14 @@ namespace Grindstone::GraphicsAPI {
 		renderPassInfo.pDependencies = &dependency;
 
 		if (vkCreateRenderPass(VulkanCore::Get().GetDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create render pass!");
+			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create render pass!");
 		}
 
 		if (!debugName.empty()) {
 			VulkanCore::Get().NameObject(VK_OBJECT_TYPE_RENDER_PASS, renderPass, debugName.c_str());
 		}
 		else {
-			throw std::runtime_error("Unnamed RenderPass!");
+			GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed RenderPass!");
 		}
 	}
 

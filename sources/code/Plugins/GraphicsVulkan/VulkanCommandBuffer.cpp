@@ -1,4 +1,7 @@
-#include "VulkanCommandBuffer.hpp"
+#include <cstring>
+
+#include <EngineCore/Logger.hpp>
+
 #include "VulkanRenderPass.hpp"
 #include "VulkanRenderTarget.hpp"
 #include "VulkanGraphicsPipeline.hpp"
@@ -12,7 +15,7 @@
 #include "VulkanTexture.hpp"
 #include "VulkanDescriptorSet.hpp"
 #include "VulkanDescriptorSetLayout.hpp"
-#include <cstring>
+#include "VulkanCommandBuffer.hpp"
 
 PFN_vkCmdBeginDebugUtilsLabelEXT cmdBeginDebugUtilsLabelEXT;
 PFN_vkCmdEndDebugUtilsLabelEXT cmdEndDebugUtilsLabelEXT;
@@ -40,14 +43,14 @@ VulkanCommandBuffer::VulkanCommandBuffer(CommandBuffer::CreateInfo& createInfo) 
 	allocInfo.commandBufferCount = 1;
 
 	if (vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate command buffers!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to allocate command buffers!");
 	}
 
 	if (createInfo.debugName != nullptr) {
 		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_COMMAND_BUFFER, commandBuffer, createInfo.debugName);
 	}
 	else {
-		throw std::runtime_error("Unnamed Command Buffer!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Command Buffer!");
 	}
 
 	secondaryInfo = createInfo.secondaryInfo;

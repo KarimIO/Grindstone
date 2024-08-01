@@ -153,7 +153,7 @@ void VulkanCore::CreateAllocator() {
 
 void VulkanCore::CreateInstance() {
 	if (enableValidationLayers && !CheckValidationLayerSupport()) {
-		throw std::runtime_error("validation layers requested, but not available!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "validation layers requested, but not available!");
 	}
 
 	VkApplicationInfo appInfo = {};
@@ -189,7 +189,7 @@ void VulkanCore::CreateInstance() {
 	}
 
 	if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create instance!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create instance!");
 	}
 }
 
@@ -200,7 +200,7 @@ void VulkanCore::SetupDebugMessenger() {
 	PopulateDebugMessengerCreateInfo(createInfo);
 
 	if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
-		throw std::runtime_error("failed to set up debug messenger!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to set up debug messenger!");
 	}
 }
 
@@ -209,7 +209,7 @@ void VulkanCore::PickPhysicalDevice() {
 	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
 	if (deviceCount == 0) {
-		throw std::runtime_error("failed to find GPUs with Vulkan support!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to find GPUs with Vulkan support!");
 	}
 
 	std::vector<VkPhysicalDevice> devices(deviceCount);
@@ -226,7 +226,7 @@ void VulkanCore::PickPhysicalDevice() {
 	}
 
 	if (physicalDevice == VK_NULL_HANDLE) {
-		throw std::runtime_error("Vulkan: Failed to find a suitable GPU!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan: Failed to find a suitable GPU!");
 	}
 
 	VkPhysicalDeviceProperties gpuProps{};
@@ -292,7 +292,7 @@ void VulkanCore::CreateLogicalDevice() {
 	}
 
 	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create logical device!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create logical device!");
 	}
 
 	vkGetDeviceQueue(device, graphicsFamily, 0, &graphicsQueue);
@@ -306,7 +306,7 @@ void VulkanCore::CreateCommandPool() {
 	poolCreateInfo.queueFamilyIndex = graphicsFamily;
 
 	if (vkCreateCommandPool(device, &poolCreateInfo, allocator->GetAllocationCallbacks(), &commandPoolGraphics) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create graphics command pool!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create graphics command pool!");
 	}
 }
 
@@ -508,7 +508,7 @@ void VulkanCore::CreateDescriptorPool() {
 	poolInfo.maxSets = 3000;
 
 	if (vkCreateDescriptorPool(device, &poolInfo, allocator->GetAllocationCallbacks(), &descriptorPool) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create descriptor pool!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create descriptor pool!");
 	}
 }
 
@@ -533,7 +533,9 @@ uint32_t VulkanCore::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags p
 		}
 	}
 
-	throw std::runtime_error("failed to find suitable memory type!");
+	GPRINT_FATAL(LogSource::GraphicsAPI, "failed to find suitable memory type!");
+
+	return UINT32_MAX;
 }
 
 VkInstance VulkanCore::GetInstance() {
@@ -743,35 +745,35 @@ inline const bool VulkanCore::SupportsMultiDrawIndirect() {
 // Unused
 //==================================
 void VulkanCore::Clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) {
-	std::cout << "VulkanCore::Clear is not used.\n";
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::Clear is not used.");
 	assert(false);
 }
 void VulkanCore::BindGraphicsPipeline(GraphicsPipeline*) {
-	std::cout << "VulkanCore::BindGraphicsPipeline is not used.\n";
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::BindGraphicsPipeline is not used.");
 	assert(false);
 }
 void VulkanCore::BindVertexArrayObject(VertexArrayObject *) {
-	std::cout << "VulkanCore::BindVertexArrayObject is not used.\n";
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::BindVertexArrayObject is not used.");
 	assert(false);
 }
 void VulkanCore::DrawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
-	std::cout << "VulkanCore::DrawImmediateIndexed is not used.\n";
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::DrawImmediateIndexed is not used.");
 	assert(false);
 }
 void VulkanCore::DrawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) {
-	std::cout << "VulkanCore::DrawImmediateVertices is not used.\n";
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::DrawImmediateVertices is not used.");
 	assert(false);
 }
 void VulkanCore::SetImmediateBlending(BlendMode) {
-	std::cout << "VulkanCore::SetImmediateBlending is not used.\n";
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::SetImmediateBlending is not used.");
 	assert(false);
 }
 void VulkanCore::EnableDepthWrite(bool state) {
-	std::cout << "VulkanCore::EnableDepthWrite is not used.\n";
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::EnableDepthWrite is not used.");
 	assert(false);
 }
 void VulkanCore::SetColorMask(ColorMask mask) {
-	std::cout << "VulkanCore::SetColorMask is not used.\n";
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::SetColorMask is not used.");
 	assert(false);
 }
 

@@ -1,15 +1,18 @@
 #include <assert.h>
-#include "VulkanTexture.hpp"
+#include <vulkan/vulkan.h>
+
+#include <EngineCore/Logger.hpp>
+
 #include "VulkanUtils.hpp"
 #include "VulkanFormat.hpp"
 #include "VulkanCore.hpp"
-#include <vulkan/vulkan.h>
+#include "VulkanTexture.hpp"
 
 using namespace Grindstone::GraphicsAPI;
 
 VulkanTexture::VulkanTexture(Texture::CreateInfo& createInfo) {
 	if (createInfo.debugName == nullptr) {
-		throw std::runtime_error("Unnamed Texture!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Texture!");
 	}
 
 	uint32_t mipLevels;
@@ -35,7 +38,7 @@ void VulkanTexture::GenerateMipmaps(VkImage image, VkFormat imageFormat, int32_t
 	vkGetPhysicalDeviceFormatProperties(physicalDevice, imageFormat, &formatProperties);
 
 	if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) {
-		throw std::runtime_error("texture image format does not support linear blitting!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "texture image format does not support linear blitting!");
 	}
 
 	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
@@ -305,13 +308,12 @@ void VulkanTexture::CreateTextureSampler(Texture::CreateInfo &createInfo, uint32
 	samplerInfo.mipLodBias = 0;
 
 	if (vkCreateSampler(VulkanCore::Get().GetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create texture sampler!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create texture sampler!");
 	}
 }
 
 void VulkanTexture::RecreateTexture(CreateInfo& createInfo) {
-	std::cout << "VulkanTexture::RecreateTexture is not used\n";
-	assert(false);
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanTexture::RecreateTexture is not used");
 }
 
 VkImageView VulkanTexture::GetImageView() const {

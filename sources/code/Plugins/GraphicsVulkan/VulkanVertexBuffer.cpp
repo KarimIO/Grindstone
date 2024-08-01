@@ -1,11 +1,13 @@
-#include "VulkanVertexBuffer.hpp"
+#include <EngineCore/Logger.hpp>
+
 #include "VulkanCore.hpp"
 #include "VulkanUtils.hpp"
+#include "VulkanVertexBuffer.hpp"
 
 namespace Grindstone::GraphicsAPI {
 	VulkanVertexBuffer::VulkanVertexBuffer(VertexBuffer::CreateInfo& createInfo) {
 		if (createInfo.debugName == nullptr) {
-			throw std::runtime_error("Unnamed Vertex Buffer!");
+			GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Vertex Buffer!");
 		}
 
 		VkDevice device = VulkanCore::Get().GetDevice();

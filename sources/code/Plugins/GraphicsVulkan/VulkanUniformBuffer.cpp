@@ -1,7 +1,10 @@
 #include <assert.h>
-#include "VulkanUniformBuffer.hpp"
+
+#include <EngineCore/Logger.hpp>
+
 #include "VulkanCore.hpp"
 #include "VulkanUtils.hpp"
+#include "VulkanUniformBuffer.hpp"
 
 using namespace Grindstone::GraphicsAPI;
 
@@ -46,6 +49,6 @@ VkBuffer VulkanUniformBuffer::GetBuffer() {
 }
 
 void VulkanUniformBuffer::Bind() {
-	std::cout << "VulkanUniformBuffer::Bind is not used.\n";
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanUniformBuffer::Bind is not used.");
 	assert(false);
 }

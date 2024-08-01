@@ -1,12 +1,14 @@
-#include "VulkanGraphicsPipeline.hpp"
+#include <vulkan/vulkan.h>
+
+#include <EngineCore/Logger.hpp>
+
 #include "VulkanRenderPass.hpp"
 #include "VulkanCore.hpp"
 #include "VulkanFormat.hpp"
 #include "VulkanUniformBuffer.hpp"
 #include "VulkanTexture.hpp"
 #include "VulkanDescriptorSetLayout.hpp"
-
-#include <vulkan/vulkan.h>
+#include "VulkanGraphicsPipeline.hpp"
 
 using namespace Grindstone::GraphicsAPI;
 
@@ -182,7 +184,7 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 	pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
 	if (vkCreatePipelineLayout(VulkanCore::Get().GetDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create pipeline layout!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create pipeline layout!");
 	}
 
 	VulkanRenderPass* renderPass = static_cast<VulkanRenderPass*>(createInfo.renderPass);
@@ -220,14 +222,14 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 		: nullptr;
 
 	if (vkCreateGraphicsPipelines(VulkanCore::Get().GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create graphics pipeline!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create graphics pipeline!");
 	}
 
 	if (createInfo.debugName != nullptr) {
 		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_PIPELINE, graphicsPipeline, createInfo.debugName);
 	}
 	else {
-		throw std::runtime_error("Unnamed Graphics Pipeline!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Graphics Pipeline!");
 	}
 
 	for (uint32_t i = 0; i < createInfo.shaderStageCreateInfoCount; ++i) {
@@ -265,7 +267,7 @@ void VulkanGraphicsPipeline::CreateShaderModule(ShaderStageCreateInfo & createIn
 
 	VkShaderModule shaderModule;
 	if (vkCreateShaderModule(VulkanCore::Get().GetDevice(), &shaderModuleCreateInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create shader module!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create shader module!");
 	}
 
 	out = {};

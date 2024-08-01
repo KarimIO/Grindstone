@@ -1,5 +1,7 @@
-#include "VulkanUtils.hpp"
+#include <EngineCore/Logger.hpp>
+
 #include "VulkanCore.hpp"
+#include "VulkanUtils.hpp"
 
 namespace Grindstone::GraphicsAPI {
 	VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels) {
@@ -16,7 +18,7 @@ namespace Grindstone::GraphicsAPI {
 
 		VkImageView imageView;
 		if (vkCreateImageView(VulkanCore::Get().GetDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create texture image view!");
+			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create texture image view!");
 		}
 
 		return imageView;
@@ -36,7 +38,7 @@ namespace Grindstone::GraphicsAPI {
 
 		VkImageView imageView;
 		if (vkCreateImageView(VulkanCore::Get().GetDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create texture image view!");
+			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create texture image view!");
 		}
 
 		return imageView;
@@ -62,7 +64,7 @@ namespace Grindstone::GraphicsAPI {
 		imageInfo.flags = flags;
 
 		if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create image!");
+			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create image!");
 		}
 
 		VkMemoryRequirements memRequirements;
@@ -74,7 +76,7 @@ namespace Grindstone::GraphicsAPI {
 		allocInfo.memoryTypeIndex = VulkanCore::Get().FindMemoryType(memRequirements.memoryTypeBits, properties);
 
 		if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
-			throw std::runtime_error("failed to allocate image memory!");
+			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to allocate image memory!");
 		}
 
 		vkBindImageMemory(device, image, imageMemory, 0);
@@ -89,7 +91,7 @@ namespace Grindstone::GraphicsAPI {
 		VkDeviceMemory& bufferMemory
 	) {
 		if (debugName == nullptr) {
-			throw std::runtime_error("Unnamed Buffer!");
+			GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Buffer!");
 		}
 
 		VkDevice device = VulkanCore::Get().GetDevice();
@@ -100,7 +102,7 @@ namespace Grindstone::GraphicsAPI {
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 		if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create buffer!");
+			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create buffer!");
 		}
 
 		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_BUFFER, buffer, debugName);
@@ -114,7 +116,7 @@ namespace Grindstone::GraphicsAPI {
 		allocInfo.memoryTypeIndex = VulkanCore::Get().FindMemoryType(memRequirements.memoryTypeBits, properties);
 
 		if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
-			throw std::runtime_error("failed to allocate buffer memory!");
+			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to allocate buffer memory!");
 		}
 
 		std::string memoryName = std::string(debugName) + " Memory";

@@ -1,12 +1,14 @@
-#include "VulkanComputePipeline.hpp"
+#include <vulkan/vulkan.h>
+
+#include <EngineCore/Logger.hpp>
+
 #include "VulkanRenderPass.hpp"
 #include "VulkanCore.hpp"
 #include "VulkanFormat.hpp"
 #include "VulkanUniformBuffer.hpp"
 #include "VulkanTexture.hpp"
 #include "VulkanDescriptorSetLayout.hpp"
-
-#include <vulkan/vulkan.h>
+#include "VulkanComputePipeline.hpp"
 
 using namespace Grindstone::GraphicsAPI;
 
@@ -21,7 +23,7 @@ VulkanComputePipeline::VulkanComputePipeline(ComputePipeline::CreateInfo& create
 		computeShaderCreateInfo.pCode = reinterpret_cast<const uint32_t*>(createInfo.shaderContent);
 
 		if (vkCreateShaderModule(device, &computeShaderCreateInfo, nullptr, &computeShaderModule) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create shader module!");
+			GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to create shader module!");
 		}
 	}
 
@@ -41,7 +43,7 @@ VulkanComputePipeline::VulkanComputePipeline(ComputePipeline::CreateInfo& create
 		pipelineLayoutInfo.pSetLayouts = layouts.data();
 
 		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create compute pipeline layout!");
+			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create compute pipeline layout!");
 		}
 	}
 
@@ -58,7 +60,7 @@ VulkanComputePipeline::VulkanComputePipeline(ComputePipeline::CreateInfo& create
 		pipelineInfo.stage = computeShaderStageInfo;
 
 		if (vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &computePipeline) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create compute pipeline!");
+			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create compute pipeline!");
 		}
 	}
 
@@ -66,7 +68,7 @@ VulkanComputePipeline::VulkanComputePipeline(ComputePipeline::CreateInfo& create
 		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_PIPELINE, computePipeline, createInfo.debugName);
 	}
 	else {
-		throw std::runtime_error("Unnamed Compute Pipeline!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Compute Pipeline!");
 	}
 
 	vkDestroyShaderModule(device, computeShaderModule, nullptr);

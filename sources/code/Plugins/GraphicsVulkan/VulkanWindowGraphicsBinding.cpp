@@ -194,7 +194,7 @@ void VulkanWindowGraphicsBinding::CreateSyncObjects() {
 			vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
 			vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
 
-			throw std::runtime_error("Vulkan: Failed to create synchronization objects for a frame!");
+			GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan: Failed to create synchronization objects for a frame!");
 		}
 	}
 }
@@ -231,7 +231,7 @@ void VulkanWindowGraphicsBinding::CreateImageSets() {
 
 		VkFramebuffer vkFramebuffer = nullptr;
 		if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &vkFramebuffer) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create framebuffer!");
+			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create framebuffer!");
 		}
 
 		VulkanImageSet& imageSet = imageSets[i];
@@ -260,7 +260,7 @@ bool VulkanWindowGraphicsBinding::AcquireNextImage() {
 		return false;
 	}
 	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-		throw std::runtime_error("failed to acquire swap chain image!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to acquire swap chain image!");
 	}
 
 	VulkanImageSet& imageSet = imageSets[currentFrame];
@@ -415,7 +415,7 @@ void VulkanWindowGraphicsBinding::CreateSwapChain() {
 	createInfo.clipped = VK_TRUE;
 
 	if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create swap chain!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create swap chain!");
 	}
 
 	CreateRenderPass();
@@ -462,7 +462,7 @@ void VulkanWindowGraphicsBinding::CreateRenderPass() {
 	VkDevice device = VulkanCore::Get().GetDevice();
 	VkRenderPass vkRenderPass = nullptr;
 	if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &vkRenderPass) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create render pass!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create render pass!");
 	}
 
 	if (renderPass == nullptr) {

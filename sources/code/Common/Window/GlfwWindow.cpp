@@ -1,19 +1,20 @@
-#include "GlfwWindow.hpp"
-#include <GLFW/glfw3.h>
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <GLFW/glfw3native.h>
-#include <EngineCore/Logger.hpp>
-#include <EngineCore/EngineCore.hpp>
-#include <Common/Input/InputInterface.hpp>
-#include <GL/wglext.h>
-#include <Windowsx.h>
-#include <ShlObj_core.h>
-
 #include <iostream>
 #include <assert.h>
 #include <vector>
-
 #include <tchar.h>
+#include <Windowsx.h>
+#include <ShlObj_core.h>
+
+#include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
+#include <GL/wglext.h>
+
+#include <EngineCore/Logger.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <Common/Input/InputInterface.hpp>
+
+#include "GlfwWindow.hpp"
 
 using namespace Grindstone;
 
@@ -312,7 +313,8 @@ Grindstone::Input::CursorMode GlfwWindow::GetCursorMode() const {
 	case GLFW_CURSOR_DISABLED:
 		return Grindstone::Input::CursorMode::Disabled;
 	default:
-		throw std::runtime_error("Invalid CursorMode!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Invalid CursorMode!");
+		return Grindstone::Input::CursorMode::Normal;
 	}
 }
 

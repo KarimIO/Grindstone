@@ -1,8 +1,11 @@
-#include "VulkanDepthTarget.hpp"
+#include <assert.h>
+
+#include <EngineCore/Logger.hpp>
+
 #include "VulkanCore.hpp"
 #include "VulkanFormat.hpp"
 #include "VulkanUtils.hpp"
-#include <assert.h>
+#include "VulkanDepthTarget.hpp"
 
 using namespace Grindstone::GraphicsAPI;
 
@@ -16,7 +19,7 @@ VulkanDepthTarget::VulkanDepthTarget(DepthTarget::CreateInfo& createInfo) : form
 
 void VulkanDepthTarget::Create() {
 	if (debugName.empty()) {
-		throw std::runtime_error("Unnamed Depth Target!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Depth Target!");
 	}
 
 	bool hasStencil = false;
@@ -110,7 +113,7 @@ void VulkanDepthTarget::CreateTextureSampler() {
 	samplerInfo.mipLodBias = 0;
 
 	if (vkCreateSampler(VulkanCore::Get().GetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create texture sampler!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create texture sampler!");
 	}
 }
 
@@ -130,6 +133,5 @@ void VulkanDepthTarget::Resize(uint32_t width, uint32_t height) {
 }
 
 void VulkanDepthTarget::BindFace(int k) {
-	std::cout << "VulkanDepthTarget::BindFace is not used.\n";
-	assert(false);
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanDepthTarget::BindFace is not used.");
 }
