@@ -208,15 +208,16 @@ void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
 }
 
 bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
-	char* fileContent = nullptr;
-	size_t fileSize;
 	std::string assetName;
-	if (!engineCore->assetManager->LoadFile(AssetType::Mesh3d, mesh.uuid, assetName, fileContent, fileSize)) {
-		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile Unable to load file with id " + mesh.uuid.ToString() + ".";
-		GPRINT_ERROR(LogSource::EngineCore, errorMsg.c_str());
+
+	Grindstone::Assets::AssetLoadResult result = engineCore->assetManager->LoadFile(AssetType::Texture, mesh.uuid, assetName);
+	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Mesh3dImporter::ProcessLoadedFile Unable to load file with id: {}", mesh.uuid.ToString());
 		return false;
 	}
 
+	char* fileContent = reinterpret_cast<char*>(result.buffer.Get());
+	uint64_t fileSize = result.buffer.GetCapacity();
 	mesh.name = assetName;
 
 	auto graphicsCore = engineCore->GetGraphicsCore();

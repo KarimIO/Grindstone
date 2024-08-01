@@ -2,10 +2,13 @@
 #include <filesystem>
 #include <fstream>
 
+#include <Common/Buffer.hpp>
+
 #include "Utilities.hpp"
 
 using namespace Grindstone;
-std::vector<char> Utils::LoadFile(const char* inputPath) {
+
+Grindstone::Buffer Utils::LoadFile(const char* inputPath) {
 	if (!std::filesystem::exists(inputPath)) {
 		return {};
 	}
@@ -17,17 +20,12 @@ std::vector<char> Utils::LoadFile(const char* inputPath) {
 	const std::streampos fileSize = file.tellg();
 	file.seekg(0, std::ios::beg);
 
-	std::vector<char> fileData;
-	fileData.reserve(fileSize);
-
-	fileData.insert(fileData.begin(),
-		std::istream_iterator<char>(file),
-		std::istream_iterator<char>()
-	);
+	Grindstone::Buffer buffer(fileSize);
+	file.read(reinterpret_cast<char*>(buffer.Get()), fileSize);
 
 	file.close();
 
-	return fileData;
+	return buffer;
 }
 
 std::string Utils::LoadFileText(const char* inputPath) {

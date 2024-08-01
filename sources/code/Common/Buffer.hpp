@@ -53,16 +53,24 @@ namespace Grindstone {
 		Buffer(void* bufferPtr, const uint64_t capacity) : bufferPtr(static_cast<Byte*>(bufferPtr)), capacity(capacity) {}
 
 		// Copy-Constructor
-		Buffer(const Buffer& other) {
-			capacity = other.capacity;
+		Buffer(const Buffer& other) : capacity(other.capacity) {
 			bufferPtr = static_cast<Byte*>(Grindstone::Memory::AllocatorCore::AllocateRaw(capacity, "Buffer"));
 			memcpy(bufferPtr, other.bufferPtr, capacity);
 		}
 
 		// Move-Constructor
-		Buffer(const Buffer&& other) noexcept {
+		Buffer(Buffer&& other) noexcept : capacity(other.capacity), bufferPtr(bufferPtr) {
 			bufferPtr = other.bufferPtr;
 			capacity = other.capacity;
+
+			other.bufferPtr = nullptr;
+			other.capacity = 0;
+		}
+
+		~Buffer() {
+			Grindstone::Memory::AllocatorCore::Free(bufferPtr);
+			bufferPtr = nullptr;
+			capacity = 0;
 		}
 
 		void ZeroInitialize() {
@@ -86,7 +94,7 @@ namespace Grindstone {
 			return {targetPtr, segmentSize};
 		}
 
-		Buffer& operator=(const Buffer& other) noexcept {
+		Buffer& operator=(const Buffer& other) {
 			if(this == &other) {
 				return *this;
 			}
@@ -98,8 +106,20 @@ namespace Grindstone {
 		}
 
 		Buffer& operator=(Buffer&& other) noexcept {
+			if (this == &other) {
+				return *this;
+			}
+
+			if (bufferPtr) {
+				Grindstone::Memory::AllocatorCore::Free(bufferPtr);
+			}
+
 			bufferPtr = other.bufferPtr;
 			capacity = other.capacity;
+
+			other.bufferPtr = nullptr;
+			other.capacity = 0;
+
 			return *this;
 		}
 
@@ -168,11 +188,16 @@ namespace Grindstone {
 		}
 
 		// Copy-Constructor
-		ResizableBuffer(const ResizableBuffer&& other) noexcept {
+		ResizableBuffer(ResizableBuffer&& other) noexcept {
 			bufferPtr = other.bufferPtr;
 			currentPtr = other.currentPtr;
 			capacity = other.capacity;
 			size = other.size;
+
+			other.bufferPtr = nullptr;
+			other.currentPtr = nullptr;
+			other.capacity = 0;
+			other.size = 0;
 		}
 
 		virtual BufferView GetBufferView(uint64_t segmentOffset, uint64_t segmentSize) override {

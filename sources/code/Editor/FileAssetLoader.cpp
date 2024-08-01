@@ -9,65 +9,60 @@
 #include <Common/ResourcePipeline/Uuid.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
+#include <EngineCore/Logger.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
 
 #include "AssetRegistry.hpp"
 #include "EditorManager.hpp"
 #include "FileAssetLoader.hpp"
-#include <EngineCore/Logger.hpp>
 
 using namespace Grindstone::Assets;
 
-static void Load(Grindstone::Editor::AssetRegistry::Entry& outEntry, std::string& assetName, char*& outContents, size_t& fileSize) {
+static AssetLoadResult Load(Grindstone::Editor::AssetRegistry::Entry& outEntry, std::string& assetName) {
 	assetName = outEntry.name;
 	std::filesystem::path path = Grindstone::Editor::Manager::GetEngineCore().GetAssetPath(outEntry.uuid.ToString());
 
 	if (!std::filesystem::exists(path)) {
-		return;
+		return { AssetLoadStatus::FileNotFound, {} };
 	}
 
 	std::ifstream file(path, std::ios::binary);
 	file.unsetf(std::ios::skipws);
 
 	file.seekg(0, std::ios::end);
-	fileSize = file.tellg();
+	size_t fileSize = file.tellg();
 	file.seekg(0, std::ios::beg);
 
-	// TODO: Use allocator
 	// TODO: Catch if cannot allocate memory
-	outContents = new char[fileSize];
-	file.read(outContents, fileSize);
+	Grindstone::Buffer buffer(fileSize);
+	file.read(reinterpret_cast<char*>(buffer.Get()), fileSize);
+
+	return std::move(AssetLoadResult{ AssetLoadStatus::Success, std::move(buffer) });
 }
 
-// Out:
-//	- outContents should be nullptr
-//	- fileSize should be 0
-void FileAssetLoader::Load(AssetType assetType, Uuid uuid, std::string& assetName, char*& outContents, size_t& fileSize) {
+AssetLoadResult FileAssetLoader::Load(AssetType assetType, Uuid uuid, std::string& assetName) {
 	Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
 
 	Editor::AssetRegistry::Entry outEntry;
 	if (!assetRegistry.TryGetAssetData(uuid, outEntry)) {
-		std::string errorString = "Could not get asset: " + uuid.ToString();
-		GPRINT_ERROR(LogSource::Editor, errorString.c_str());
-		return;
+		GPRINT_ERROR_V(LogSource::Editor, "Could not get asset: {}", uuid.ToString());
+		return std::move(AssetLoadResult{ AssetLoadStatus::AssetNotInRegistry, {} });
 	}
 
-	::Load(outEntry, assetName, outContents, fileSize);
+	return ::Load(outEntry, assetName);
 }
 
-// Out:
-//	- outContents should be nullptr
-//	- fileSize should be 0
-void FileAssetLoader::Load(AssetType assetType, std::filesystem::path path, std::string& assetName, char*& outContents, size_t& fileSize) {
+AssetLoadResult FileAssetLoader::Load(AssetType assetType, std::filesystem::path path, std::string& assetName) {
 	Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
 
 	Editor::AssetRegistry::Entry outEntry;
 	if (!assetRegistry.TryGetAssetData(path, outEntry)) {
 		std::string errorString = "Could not get asset: " + path.string();
 		GPRINT_ERROR(LogSource::Editor, errorString.c_str());
-		return;
+		return std::move(AssetLoadResult{ AssetLoadStatus::AssetNotInRegistry, {} });
 	}
 
-	::Load(outEntry, assetName, outContents, fileSize);
+	return std::move(::Load(outEntry, assetName));
 }
 
 static bool LoadText(Grindstone::Editor::AssetRegistry::Entry& outEntry, std::string& assetName, std::string& outContents) {
@@ -126,7 +121,9 @@ bool FileAssetLoader::LoadShaderStage(
 		return false;
 	}
 
-	fileData = Utils::LoadFile(path.c_str());
+	Buffer buffer = Utils::LoadFile(path.c_str());
+	fileData.resize(buffer.GetCapacity());
+	memcpy(fileData.data(), buffer.Get(), buffer.GetCapacity());
 	stageCreateInfo.content = fileData.data();
 	stageCreateInfo.size = static_cast<uint32_t>(fileData.size());
 	stageCreateInfo.type = shaderStage;

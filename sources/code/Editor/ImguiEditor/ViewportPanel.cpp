@@ -10,10 +10,13 @@
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 #include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
+#include <Editor/EditorCamera.hpp>
+#include <Editor/EditorManager.hpp>
 
-#include "../EditorCamera.hpp"
-#include "../EditorManager.hpp"
 #include "ViewportPanel.hpp"
+
+using namespace Grindstone::Memory;
 using namespace Grindstone::Editor::ImguiEditor;
 
 static ImGuizmo::OPERATION ConvertManipulationModeToImGuizmoOperation(Editor::ManipulationMode mode) {
@@ -28,7 +31,7 @@ static ImGuizmo::OPERATION ConvertManipulationModeToImGuizmoOperation(Editor::Ma
 }
 
 ViewportPanel::ViewportPanel() {
-	camera = new EditorCamera();
+	camera = AllocatorCore::Allocate<EditorCamera>();
 
 	Grindstone::EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	auto dispatcher = engineCore.GetEventDispatcher();
@@ -37,7 +40,7 @@ ViewportPanel::ViewportPanel() {
 }
 
 ViewportPanel::~ViewportPanel() {
-	delete camera;
+	AllocatorCore::Free(camera);
 	camera = nullptr;
 }
 

@@ -17,49 +17,31 @@ void ArchiveAssetLoader::InitializeDirectory() {
 	ArchiveDirectoryDeserializer deserializer(archiveDirectory);
 }
 
-// Out:
-//	- outContents should be nullptr
-//	- fileSize should be 0
-void ArchiveAssetLoader::Load(AssetType assetType, Uuid uuid, std::string& assetName, char*& outContents, size_t& fileSize) {
+AssetLoadResult ArchiveAssetLoader::Load(AssetType assetType, Uuid uuid, std::string& assetName) {
 	size_t assetTypeIndex = static_cast<size_t>(assetType);
 
 	if (assetTypeIndex >= static_cast<size_t>(AssetType::Count)) {
-		outContents = nullptr;
-		fileSize = 0;
-
-		std::string errorString = "Invalid Asset Type when trying to load file: " + uuid.ToString();
-		GPRINT_ERROR(LogSource::EngineCore, errorString.c_str());
-		return;
+		GPRINT_ERROR_V(LogSource::EngineCore, "Invalid Asset Type when trying to load file: {}", uuid.ToString());
+		return { AssetLoadStatus::InvalidAssetType, {} };
 	}
 
 	ArchiveDirectory::AssetTypeIndex& assetTypeSegment = archiveDirectory.assetTypeIndices[static_cast<size_t>(assetType)];
 	const auto& assetIterator = assetTypeSegment.assets[uuid];
 
 	if (assetIterator.size == 0) {
-		outContents = nullptr;
-		fileSize = 0;
-
-		std::string errorString = "Could not load asset: " + uuid.ToString();
-		GPRINT_ERROR(LogSource::EngineCore, errorString.c_str());
-		return;
+		GPRINT_ERROR_V(LogSource::EngineCore, "Could not load asset: {}", uuid.ToString());
+		return { AssetLoadStatus::InvalidAssetType, {} };
 	}
 
-	LoadAsset(assetIterator, assetName, outContents, fileSize);
+	return LoadAsset(assetIterator, assetName);
 }
 
-// Out:
-//	- outContents should be nullptr
-//	- fileSize should be 0
-void ArchiveAssetLoader::Load(AssetType assetType, std::filesystem::path path, std::string& assetName, char*& outContents, size_t& fileSize) {
+AssetLoadResult ArchiveAssetLoader::Load(AssetType assetType, std::filesystem::path path, std::string& assetName) {
 	size_t assetTypeIndex = static_cast<size_t>(assetType);
 
 	if (assetTypeIndex >= static_cast<size_t>(AssetType::Count)) {
-		outContents = nullptr;
-		fileSize = 0;
-
-		std::string errorString = "Invalid Asset Type when trying to load file: " + path.string();
-		GPRINT_ERROR(LogSource::EngineCore, errorString.c_str());
-		return;
+		GPRINT_ERROR_V(LogSource::EngineCore, "Invalid Asset Type when trying to load file: ", path.string());
+		return { AssetLoadStatus::InvalidAssetType, {} };
 	}
 
 	ArchiveDirectory::AssetInfo* assetInfo = nullptr;
@@ -71,63 +53,49 @@ void ArchiveAssetLoader::Load(AssetType assetType, std::filesystem::path path, s
 	}
 
 	if (assetInfo == nullptr) {
-		outContents = nullptr;
-		fileSize = 0;
-
-		std::string errorString = "Could not load asset: " + path.string();
-		GPRINT_ERROR(LogSource::EngineCore, errorString.c_str());
-		return;
+		GPRINT_ERROR_V(LogSource::EngineCore, "Could not load asset: {}", path.string());
+		return { AssetLoadStatus::InvalidAssetType, {} };
 	}
 
-	LoadAsset(*assetInfo, assetName, outContents, fileSize);
+	return LoadAsset(*assetInfo, assetName);
 }
 
 bool ArchiveAssetLoader::LoadText(AssetType assetType, Uuid uuid, std::string& assetName, std::string& outContents) {
-	char* charPtr;
-	size_t fileSize;
-	Load(assetType, uuid, assetName, charPtr, fileSize);
+	AssetLoadResult result = Load(assetType, uuid, assetName);
 
-	if (charPtr == nullptr || fileSize == 0) {
-		std::string errorString = "Could not load file: " + uuid.ToString();
-		GPRINT_ERROR(LogSource::EngineCore, errorString.c_str());
+	if (result.status != AssetLoadStatus::Success) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Could not load asset: {}", uuid.ToString());
 		return false;
 	}
 
-	outContents = std::string_view(charPtr, fileSize);
+	outContents = reinterpret_cast<const char*>(result.buffer.Get());
 	return true;
 }
 
 bool ArchiveAssetLoader::LoadText(AssetType assetType, std::filesystem::path path, std::string& assetName, std::string& outContents) {
-	char* charPtr;
-	size_t fileSize;
-	Load(assetType, path, assetName, charPtr, fileSize);
+	AssetLoadResult result = Load(assetType, path, assetName);
 
-	if (charPtr == nullptr || fileSize == 0) {
-		std::string errorString = "Could not load file: " + path.string();
-		GPRINT_ERROR(LogSource::EngineCore, errorString.c_str());
+	if (result.status != AssetLoadStatus::Success) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Could not load asset: {}", path.string());
 		return false;
 	}
 
-	outContents = std::string_view(charPtr, fileSize);
+	outContents = reinterpret_cast<const char*>(result.buffer.Get());
 	return true;
 }
 
-void ArchiveAssetLoader::LoadAsset(const ArchiveDirectory::AssetInfo& assetInfo, std::string& assetName, char*& outContents, size_t& fileSize) {
+AssetLoadResult ArchiveAssetLoader::LoadAsset(const ArchiveDirectory::AssetInfo& assetInfo, std::string& assetName) {
 	if (lastBufferIndex != assetInfo.archiveIndex) {
 		lastBufferIndex = assetInfo.archiveIndex;
 
 		const std::string filename = "TestArchive_0.garc";
 		const std::filesystem::path path = EngineCore::GetInstance().GetProjectPath() / "archives" / filename;
 		const std::string filepathAsStr = path.string();
-		const std::vector<char> fileData = Utils::LoadFile(filepathAsStr.c_str());
-		lastBuffer = Buffer(fileData.size());
-		memcpy(lastBuffer.Get(), fileData.data(), fileData.size());
+		lastBuffer = Utils::LoadFile(filepathAsStr.c_str());
 	}
 
-	BufferView bufferView = lastBuffer.GetBufferView(assetInfo.offset, assetInfo.size);
-	outContents = static_cast<char*>(bufferView.Get());
-	fileSize = bufferView.GetSize();
 	assetName = assetInfo.filename;
+	return { AssetLoadStatus::Success, Buffer(lastBuffer.Get() + assetInfo.offset, assetInfo.size) };
 }
 
 bool ArchiveAssetLoader::LoadShaderStage(
@@ -145,7 +113,9 @@ bool ArchiveAssetLoader::LoadShaderStage(
 		return false;
 	}
 
-	fileData = Utils::LoadFile(path.c_str());
+	Buffer buffer = Utils::LoadFile(path.c_str());
+	fileData.resize(buffer.GetCapacity());
+	memcpy(fileData.data(), buffer.Get(), buffer.GetCapacity());
 	stageCreateInfo.content = fileData.data();
 	stageCreateInfo.size = static_cast<uint32_t>(fileData.size());
 	stageCreateInfo.type = shaderStage;

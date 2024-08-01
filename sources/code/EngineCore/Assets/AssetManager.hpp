@@ -4,14 +4,14 @@
 #include <string>
 #include <mutex>
 
-#include "Common/Graphics/GraphicsPipeline.hpp"
+#include <Common/Graphics/GraphicsPipeline.hpp>
+#include <Common/Buffer.hpp>
+#include <EngineCore/Assets/Loaders/AssetLoader.hpp>
 
 #include "Asset.hpp"
 #include "AssetImporter.hpp"
 
 namespace Grindstone::Assets {
-	class AssetLoader;
-
 	class AssetManager {
 	public:
 		AssetManager(AssetLoader* assetLoader);
@@ -30,8 +30,8 @@ namespace Grindstone::Assets {
 		virtual void* GetAsset(AssetType assetType, Uuid uuid);
 		virtual void* IncrementAssetUse(AssetType assetType, Uuid uuid);
 		virtual void DecrementAssetUse(AssetType assetType, Uuid uuid);
-		virtual bool LoadFile(AssetType assetType, const char* path, std::string& assetName, char*& dataPtr, size_t& fileSize);
-		virtual bool LoadFile(AssetType assetType, Uuid uuid, std::string& assetName, char*& dataPtr, size_t& fileSize);
+		virtual AssetLoadResult LoadFile(AssetType assetType, const char* path, std::string& assetName);
+		virtual AssetLoadResult LoadFile(AssetType assetType, Uuid uuid, std::string& assetName);
 		virtual bool LoadFileText(AssetType assetType, Uuid uuid, std::string& assetName, std::string& dataPtr);
 		virtual bool LoadFileText(AssetType assetType, std::filesystem::path path, std::string& assetName, std::string& dataPtr);
 		virtual bool LoadShaderSet(

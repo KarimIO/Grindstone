@@ -129,8 +129,10 @@ void* DynamicAllocator::AllocateRaw(size_t size, const char* debugName) {
 	if (nextHeaderAsChar + sizeof(Header) <= tail) {
 		Header* nextHeader = reinterpret_cast<Header*>(nextHeaderAsChar);
 		header->nextHeader = nextHeader;
+		nextHeader->isAllocated = false;
 		nextHeader->nextHeader = nullptr;
 		nextHeader->previousHeader = header;
+		nextHeader->debugName = nullptr;
 
 		usedSize += size + headerSize;
 	}
@@ -169,6 +171,8 @@ bool DynamicAllocator::Free(void* memPtr, bool shouldClear) {
 	if (!header->isAllocated) {
 		GPRINT_ERROR(LogSource::EngineCore, "Already freed, but trying to free again!");
 	}
+
+	header->debugName = nullptr;
 #endif
 
 	header->isAllocated = false;

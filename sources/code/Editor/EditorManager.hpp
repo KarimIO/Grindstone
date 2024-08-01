@@ -41,7 +41,7 @@ namespace Grindstone {
 			Pause
 		};
 
-		class EDITOR_API Manager {
+		class Manager {
 		public:
 			Manager() = default;
 			static Manager& Manager::GetInstance();

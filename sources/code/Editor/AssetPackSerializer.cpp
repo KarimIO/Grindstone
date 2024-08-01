@@ -98,12 +98,12 @@ namespace Grindstone::Assets::AssetPackSerializer {
 			return;
 		}
 
-		std::vector<char> loadedFile = Utils::LoadFile(actualFilePath.string().c_str());
-		const uint64_t size = loadedFile.size();
+		Grindstone::Buffer loadedFile = Utils::LoadFile(actualFilePath.string().c_str());
+		const uint64_t size = loadedFile.GetCapacity();
 		const uint16_t archiveIndex = FindSuitableBufferIndex(size);
 		ResizableBuffer& buffer = buffers[archiveIndex];
 
-		const Byte* dstPtr = static_cast<Byte*>(buffer.AddToBuffer(loadedFile.data(), size));
+		const Byte* dstPtr = static_cast<Byte*>(buffer.AddToBuffer(loadedFile.Get(), size));
 		const uint64_t offset = dstPtr - buffer.Get();
 
 		const std::string pathAsStr = entry.path.string();

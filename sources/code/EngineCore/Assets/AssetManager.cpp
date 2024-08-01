@@ -157,24 +157,16 @@ void* AssetManager::GetAsset(AssetType assetType, Uuid uuid) {
 	}
 }
 
-bool AssetManager::LoadFile(AssetType assetType, const char* path, std::string& assetName, char*& fileData, size_t& fileSize) {
-	fileData = nullptr;
-	fileSize = 0;
-
-	assetLoader->Load(assetType, std::filesystem::path(path), assetName, fileData, fileSize);
-	return fileData != nullptr;
+AssetLoadResult AssetManager::LoadFile(AssetType assetType, const char* path, std::string& assetName) {
+	return assetLoader->Load(assetType, std::filesystem::path(path), assetName);
 }
 
 // Loads an actual file, not an asset. The file still needs to be imported and handled.
 // Make loading indirect to conceal how files are loading from asset importers
 // This allows multiple files to be imported per asset, and allows different types of loading depending on the
 // asset, such as shaders loading from a file if it's not compiled yet, or loading a compiled shader if it is loaded
-bool AssetManager::LoadFile(AssetType assetType, Uuid uuid, std::string& assetName, char*& fileData, size_t& fileSize) {
-	fileData = nullptr;
-	fileSize = 0;
-
-	assetLoader->Load(assetType, uuid, assetName, fileData, fileSize);
-	return fileData != nullptr;
+AssetLoadResult AssetManager::LoadFile(AssetType assetType, Uuid uuid, std::string& assetName) {
+	return assetLoader->Load(assetType, uuid, assetName);
 }
 
 // Loads an actual file, not an asset. The file still needs to be imported and handled.

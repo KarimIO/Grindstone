@@ -78,10 +78,10 @@ void CSharpManager::CreateDomain() {
 }
 
 void CSharpManager::LoadAssembly(const char* path, AssemblyData& outAssemblyData) {
-	std::vector<char> assemblyData = Grindstone::Utils::LoadFile(path);
+	Grindstone::Buffer assemblyData = Grindstone::Utils::LoadFile(path);
 
 	MonoImageOpenStatus status;
-	MonoImage* image = mono_image_open_from_data_full(assemblyData.data(), static_cast<uint32_t>(assemblyData.size()), 1, &status, false);
+	MonoImage* image = mono_image_open_from_data_full(reinterpret_cast<char*>(assemblyData.Get()), static_cast<uint32_t>(assemblyData.GetCapacity()), 1, &status, false);
 
 	if (image == nullptr || status != MONO_IMAGE_OK) {
 		const char* errorMessage = mono_image_strerror(status);
