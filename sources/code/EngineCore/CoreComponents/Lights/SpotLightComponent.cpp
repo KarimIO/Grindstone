@@ -19,12 +19,12 @@ REFLECT_STRUCT_BEGIN(SpotLightComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::SetupSpotLightComponent(ECS::Entity& entity, void* componentPtr) {
+void Grindstone::SetupSpotLightComponent(entt::registry& registry, entt::entity entity) {
 	auto& engineCore = EngineCore::GetInstance();
 	auto graphicsCore = engineCore.GetGraphicsCore();
 	auto eventDispatcher = engineCore.GetEventDispatcher();
 
-	SpotLightComponent& spotLightComponent = *static_cast<SpotLightComponent*>(componentPtr);
+	SpotLightComponent& spotLightComponent = registry.get<SpotLightComponent>(entity);
 
 	uint32_t shadowResolution = static_cast<uint32_t>(spotLightComponent.shadowResolution);
 
@@ -116,4 +116,20 @@ void Grindstone::SetupSpotLightComponent(ECS::Entity& entity, void* componentPtr
 		descriptorSetCreateInfo.bindings = &lightUboBinding;
 		spotLightComponent.shadowMapDescriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
+}
+
+void Grindstone::DestroySpotLightComponent(entt::registry& registry, entt::entity entity) {
+	EngineCore& engineCore = EngineCore::GetInstance();
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+
+	SpotLightComponent& spotLightComponent = registry.get<SpotLightComponent>(entity);
+	graphicsCore->DeleteDescriptorSet(spotLightComponent.shadowMapDescriptorSet);
+	graphicsCore->DeleteDescriptorSetLayout(spotLightComponent.shadowMapDescriptorSetLayout);
+	graphicsCore->DeleteDescriptorSet(spotLightComponent.descriptorSet);
+	graphicsCore->DeleteDescriptorSetLayout(spotLightComponent.descriptorSetLayout);
+	graphicsCore->DeleteUniformBuffer(spotLightComponent.shadowMapUniformBufferObject);
+	graphicsCore->DeleteUniformBuffer(spotLightComponent.uniformBufferObject);
+	graphicsCore->DeleteFramebuffer(spotLightComponent.framebuffer);
+	graphicsCore->DeleteRenderPass(spotLightComponent.renderPass);
+	graphicsCore->DeleteDepthTarget(spotLightComponent.depthTarget);
 }

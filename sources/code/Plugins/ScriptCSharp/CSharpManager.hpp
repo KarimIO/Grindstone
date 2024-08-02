@@ -32,8 +32,8 @@ namespace Grindstone {
 				virtual void CreateDomain();
 				virtual void LoadAssembly(const char* path, AssemblyData& outAssemblyData);
 				virtual void LoadAssemblyIntoMap(const char* path);
-				virtual void SetupComponent(ECS::Entity& entity, ScriptComponent& component);
-				virtual void DestroyComponent(ECS::Entity& entity, ScriptComponent& component);
+				virtual void SetupComponent(entt::registry& registry, entt::entity entity, ScriptComponent& component);
+				virtual void DestroyComponent(entt::registry& registry, entt::entity entity, ScriptComponent& component);
 				virtual void CallStartInAllComponents(entt::registry& registry);
 				virtual void CallUpdateInAllComponents(entt::registry& registry);
 				virtual void CallEditorUpdateInAllComponents(entt::registry& registry);
@@ -48,7 +48,7 @@ namespace Grindstone {
 				void EditorUpdate(entt::registry& registry);
 			private:
 				void LoadAssemblyClasses();
-				void SetupEntityDataInComponent(ECS::Entity& entity, ScriptComponent& component);
+				void SetupEntityDataInComponent(entt::entity entity, ScriptComponent& component);
 				void CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset);
 				void CallConstructorInComponent(ScriptComponent& scriptComponent);
 				void CallAttachComponentInComponent(ScriptComponent& scriptComponent);

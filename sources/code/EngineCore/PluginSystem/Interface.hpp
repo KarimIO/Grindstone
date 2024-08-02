@@ -76,9 +76,9 @@ namespace Grindstone {
 			virtual Grindstone::Logger::LoggerState* GetLoggerState() const;
 			virtual Grindstone::Memory::AllocatorCore::AllocatorState* GetAllocatorState() const;
 
-			template<typename T>
-			void RegisterComponent(ECS::SetupComponentFn setupComponentFn = nullptr) {
-				componentRegistrar->RegisterComponent<T>(setupComponentFn);
+			template<typename ClassType>
+			void RegisterComponent(Grindstone::ECS::SetupComponentFn setupComponentFn = nullptr, Grindstone::ECS::DestroyComponentFn destroyComponentFn = nullptr) {
+				componentRegistrar->RegisterComponent<ClassType>(setupComponentFn, destroyComponentFn);
 			}
 
 			template<typename T>

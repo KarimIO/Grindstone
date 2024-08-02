@@ -11,18 +11,17 @@ REFLECT_STRUCT_BEGIN(ScriptComponent)
 REFLECT_STRUCT_END()
 
 void Grindstone::Scripting::CSharp::SetupCSharpScriptComponent(
-	ECS::Entity& entity,
-	void* componentPtr
+	entt::registry& registry,
+	entt::entity entity
 ) {
 	CSharpManager& csManager = CSharpManager::GetInstance();
-	auto& component = *(ScriptComponent*)componentPtr;
-	csManager.SetupComponent(entity, component);
+	ScriptComponent& component = registry.get<ScriptComponent>(entity);
+	csManager.SetupComponent(registry, entity, component);
 }
 
-void Grindstone::Scripting::CSharp::DestroyCSharpScriptComponent(ECS::Entity& entity) {
-	ScriptComponent& component = entity.GetComponent<ScriptComponent>();
-
+void Grindstone::Scripting::CSharp::DestroyCSharpScriptComponent(entt::registry& registry, entt::entity entity) {
 	CSharpManager& csManager = CSharpManager::GetInstance();
-	csManager.DestroyComponent(entity, component);
+	ScriptComponent& component = registry.get<ScriptComponent>(entity);
+	csManager.DestroyComponent(registry, entity, component);
 }
 

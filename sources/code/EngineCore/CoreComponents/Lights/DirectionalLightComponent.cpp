@@ -17,12 +17,12 @@ REFLECT_STRUCT_BEGIN(DirectionalLightComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::SetupDirectionalLightComponent(ECS::Entity& entity, void* componentPtr) {
+void Grindstone::SetupDirectionalLightComponent(entt::registry& registry, entt::entity entity) {
 	auto& engineCore = EngineCore::GetInstance();
 	auto graphicsCore = engineCore.GetGraphicsCore();
 	auto eventDispatcher = engineCore.GetEventDispatcher();
 
-	DirectionalLightComponent& directionalLightComponent = *static_cast<DirectionalLightComponent*>(componentPtr);
+	DirectionalLightComponent& directionalLightComponent = registry.get<DirectionalLightComponent>(entity);
 
 	uint32_t shadowResolution = static_cast<uint32_t>(directionalLightComponent.shadowResolution);
 
@@ -114,4 +114,21 @@ void Grindstone::SetupDirectionalLightComponent(ECS::Entity& entity, void* compo
 		descriptorSetCreateInfo.bindings = &lightUboBinding;
 		directionalLightComponent.shadowMapDescriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
+}
+
+void Grindstone::DestroyDirectionalLightComponent(entt::registry& registry, entt::entity entity) {
+	auto& engineCore = EngineCore::GetInstance();
+	auto graphicsCore = engineCore.GetGraphicsCore();
+	auto eventDispatcher = engineCore.GetEventDispatcher();
+
+	DirectionalLightComponent& directionalLightComponent = registry.get<DirectionalLightComponent>(entity);
+	graphicsCore->DeleteDescriptorSet(directionalLightComponent.shadowMapDescriptorSet);
+	graphicsCore->DeleteDescriptorSetLayout(directionalLightComponent.shadowMapDescriptorSetLayout);
+	graphicsCore->DeleteDescriptorSet(directionalLightComponent.descriptorSet);
+	graphicsCore->DeleteDescriptorSetLayout(directionalLightComponent.descriptorSetLayout);
+	graphicsCore->DeleteUniformBuffer(directionalLightComponent.shadowMapUniformBufferObject);
+	graphicsCore->DeleteUniformBuffer(directionalLightComponent.uniformBufferObject);
+	graphicsCore->DeleteFramebuffer(directionalLightComponent.framebuffer);
+	graphicsCore->DeleteRenderPass(directionalLightComponent.renderPass);
+	graphicsCore->DeleteDepthTarget(directionalLightComponent.depthTarget);
 }

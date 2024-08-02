@@ -3,6 +3,24 @@
 #include "ComponentRegistrar.hpp"
 using namespace Grindstone::ECS;
 
+entt::registry& ComponentRegistrar::GetEntityRegistry() {
+	return EngineCore::GetInstance().GetEntityRegistry();
+}
+
+void ComponentRegistrar::DestroyEntity(ECS::Entity entity) {
+	entt::registry& registry = GetEntityRegistry();
+	entt::entity entityHandle = entity.GetHandle();
+
+	for (auto& compFnPair : componentFunctionsList) {
+		ComponentFunctions& compFns = compFnPair.second;
+		if (compFns.HasComponentFn(entity) && compFns.DestroyComponentFn) {
+			compFns.DestroyComponentFn(registry, entityHandle);
+		}
+	}
+
+	registry.destroy(entityHandle);
+}
+
 void ComponentRegistrar::RegisterComponent(const char *name, ComponentFunctions componentFunctions) {
 	auto comp = componentFunctionsList.find(name);
 	if (comp != componentFunctionsList.end()) {
@@ -31,7 +49,7 @@ void* ComponentRegistrar::CreateComponentWithSetup(const char* name, ECS::Entity
 	auto comp = fns.CreateComponentFn(entity);
 
 	if (fns.SetupComponentFn) {
-		fns.SetupComponentFn(entity, comp);
+		fns.SetupComponentFn(GetEntityRegistry(), entity.GetHandle());
 	}
 
 	return comp;
@@ -54,7 +72,7 @@ void ComponentRegistrar::RemoveComponent(const char *name, ECS::Entity entity) {
 
 	auto& fns = selectedFactory->second;
 	if (fns.DestroyComponentFn) {
-		fns.DestroyComponentFn(entity);
+		fns.DestroyComponentFn(GetEntityRegistry(), entity.GetHandle());
 	}
 
 	fns.RemoveComponentFn(entity);
@@ -96,7 +114,7 @@ void ComponentRegistrar::SetupComponent(const char* componentType, ECS::Entity e
 
 	auto& fns = selectedFactory->second;
 	if (fns.SetupComponentFn) {
-		fns.SetupComponentFn(entity, componentPtr);
+		fns.SetupComponentFn(GetEntityRegistry(), entity.GetHandle());
 	}
 }
 

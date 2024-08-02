@@ -32,26 +32,31 @@ extern "C" {
 }
 
 Scene::~Scene() {
-	EngineCore& engineCore = EngineCore::GetInstance();
-	registry.clear();
+	auto view = GetEntityRegistry().view<entt::entity>();
+
+	view.each(
+		[&](entt::entity entity) {
+			DestroyEntity(entity);
+		}
+	);
 }
 
 ECS::Entity Scene::CreateEmptyEntity(entt::entity entityToUse) {
 	if (entityToUse == entt::null) {
-		entt::entity entityId = registry.create();
+		entt::entity entityId = GetEntityRegistry().create();
 		return { entityId, this };
 	}
 
-	entt::entity entityId = registry.create(entityToUse);
+	entt::entity entityId = GetEntityRegistry().create(entityToUse);
 	return { entityId, this };
 }
 
 void Scene::DestroyEntity(ECS::EntityHandle entityId) {
-	registry.destroy(entityId);
+	DestroyEntity(ECS::Entity(entityId, this));
 }
 
 void Scene::DestroyEntity(ECS::Entity entity) {
-	DestroyEntity(entity.GetHandle());
+	GetComponentRegistrar()->DestroyEntity(entity);
 }
 
 ECS::Entity Scene::CreateEntity(entt::entity entityToUse) {
@@ -76,16 +81,5 @@ ECS::ComponentRegistrar* Scene::GetComponentRegistrar() const {
 }
 
 entt::registry& Scene::GetEntityRegistry() {
-	return registry;
-}
-
-void Scene::Update() {
-	std::string sceneId = "Scene::Update() : " + name;
-	GRIND_PROFILE_SCOPE(sceneId.c_str());
-	EngineCore::GetInstance().GetSystemRegistrar()->Update(registry);
-}
-
-void Scene::EditorUpdate() {
-	std::string sceneId = "Scene::EditorUpdate() : " + name;
-	EngineCore::GetInstance().GetSystemRegistrar()->EditorUpdate(registry);
+	return EngineCore::GetInstance().GetEntityRegistry();
 }

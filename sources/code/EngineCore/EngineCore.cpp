@@ -146,14 +146,14 @@ void EngineCore::RunEditorLoopIteration() {
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Running", projectPath / "log/grind-profile-run.json");
 	assetManager->ReloadQueuedAssets();
 	CalculateDeltaTime();
-	sceneManager->EditorUpdate();
+	systemRegistrar->EditorUpdate(entityRegistry);
 	GRIND_PROFILE_END_SESSION();
 }
 
 void EngineCore::RunLoopIteration() {
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Running", projectPath / "log/grind-profile-run.json");
 	CalculateDeltaTime();
-	sceneManager->Update();
+	systemRegistrar->Update(entityRegistry);
 	GRIND_PROFILE_END_SESSION();
 }
 
@@ -164,6 +164,8 @@ void EngineCore::UpdateWindows() {
 
 EngineCore::~EngineCore() {
 	GPRINT_INFO(LogSource::EngineCore, "Closing...");
+
+	graphicsCore->WaitUntilIdle();
 
 	if (windowManager) {
 		for (unsigned int i = 0; i < windowManager->GetNumWindows(); ++i) {
@@ -276,6 +278,10 @@ bool EngineCore::OnForceQuit(Grindstone::Events::BaseEvent* ev) {
 	shouldClose = true;
 
 	return false;
+}
+
+entt::registry& EngineCore::GetEntityRegistry() {
+	return entityRegistry;
 }
 
 void EngineCore::ReloadCsharpBinaries() {

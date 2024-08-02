@@ -45,5 +45,6 @@ namespace Grindstone {
 		REFLECT("DirectionalLight")
 	};
 
-	void SetupDirectionalLightComponent(ECS::Entity& entity, void* componentPtr);
+	void SetupDirectionalLightComponent(entt::registry&, entt::entity);
+	void DestroyDirectionalLightComponent(entt::registry&, entt::entity);
 }

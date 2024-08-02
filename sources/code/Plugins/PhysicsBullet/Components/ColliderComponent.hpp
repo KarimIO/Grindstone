@@ -7,7 +7,8 @@
 
 namespace Grindstone {
 	namespace Physics {
-		void SetupColliderComponent(ECS::Entity& entity, void* componentPtr);
+		void SetupColliderComponent(entt::registry& registry, entt::entity entity);
+		void DestroyColliderComponent(entt::registry& registry, entt::entity entity);
 
 		struct ColliderComponent {
 			virtual void Initialize() = 0;
@@ -17,24 +18,20 @@ namespace Grindstone {
 
 
 		struct SphereColliderComponent : public ColliderComponent {
-			SphereColliderComponent() = default;
-			SphereColliderComponent(float radius);
 			virtual void Initialize() override;
 			void SetRadius(float radius);
-			float GetRadius();
+			float GetRadius() const;
 		private:
-			float radius;
+			float radius = 0.0f;
 
 			REFLECT("SphereCollider")
 		};
 
 		struct PlaneColliderComponent : public ColliderComponent {
-			PlaneColliderComponent() = default;
-			PlaneColliderComponent(Math::Float3 planeNormal, float positionAlongNormal);
 			virtual void Initialize() override;
 			void SetCollider(Math::Float3 planeNormal, float positionAlongNormal);
-			Math::Float3 GetPlaneNormal();
-			float GetPositionAlongNormal();
+			Math::Float3 GetPlaneNormal() const;
+			float GetPositionAlongNormal() const;
 		private:
 			Math::Float3 planeNormal;
 			float positionAlongNormal;
@@ -43,11 +40,9 @@ namespace Grindstone {
 		};
 
 		struct BoxColliderComponent : public ColliderComponent {
-			BoxColliderComponent() = default;
-			BoxColliderComponent(Math::Float3 size);
 			virtual void Initialize() override;
 			void SetSize(Math::Float3);
-			Math::Float3 GetSize();
+			Math::Float3 GetSize() const;
 		private:
 			Math::Float3 size;
 
@@ -55,12 +50,10 @@ namespace Grindstone {
 		};
 
 		struct CapsuleColliderComponent : public ColliderComponent {
-			CapsuleColliderComponent() = default;
-			CapsuleColliderComponent(float radius, float height);
 			virtual void Initialize() override;
 			void SetCollider(float radius, float height);
-			float GetRadius();
-			float GetHeight();
+			float GetRadius() const;
+			float GetHeight() const;
 		private:
 			float radius;
 			float height;

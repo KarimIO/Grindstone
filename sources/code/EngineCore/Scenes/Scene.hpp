@@ -22,7 +22,6 @@ namespace Grindstone {
 		private:
 			std::string name;
 			std::filesystem::path path;
-			entt::registry registry;
 		public:
 			~Scene();
 			virtual Grindstone::ECS::Entity CreateEmptyEntity(entt::entity entityToUse = entt::null);
@@ -33,8 +32,6 @@ namespace Grindstone {
 			virtual const char* GetPath();
 			virtual ECS::ComponentRegistrar* GetComponentRegistrar() const;
 			virtual entt::registry& GetEntityRegistry();
-			void Update();
-			void EditorUpdate();
 		};
 	}
 }

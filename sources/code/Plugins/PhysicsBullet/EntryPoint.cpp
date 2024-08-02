@@ -26,12 +26,12 @@ extern "C" {
 
 		physicsCore = AllocatorCore::Allocate<Physics::Core>();
 
-		pluginInterface->RegisterComponent<BoxColliderComponent>(SetupColliderComponent);
-		pluginInterface->RegisterComponent<SphereColliderComponent>(SetupColliderComponent);
-		pluginInterface->RegisterComponent<PlaneColliderComponent>(SetupColliderComponent);
-		pluginInterface->RegisterComponent<CapsuleColliderComponent>(SetupColliderComponent);
+		pluginInterface->RegisterComponent<BoxColliderComponent>(SetupColliderComponent, DestroyColliderComponent);
+		pluginInterface->RegisterComponent<SphereColliderComponent>(SetupColliderComponent, DestroyColliderComponent);
+		pluginInterface->RegisterComponent<PlaneColliderComponent>(SetupColliderComponent, DestroyColliderComponent);
+		pluginInterface->RegisterComponent<CapsuleColliderComponent>(SetupColliderComponent, DestroyColliderComponent);
 
-		pluginInterface->RegisterComponent<RigidBodyComponent>(SetupRigidBodyComponent);
+		pluginInterface->RegisterComponent<RigidBodyComponent>(SetupRigidBodyComponent, DestroyRigidBodyComponent);
 
 		pluginInterface->RegisterSystem("PhysicsSystem", PhysicsBulletSystem);
 	}

@@ -17,5 +17,6 @@ namespace Grindstone {
 		REFLECT("AudioSource")
 	};
 
-	void SetupAudioSourceComponent(ECS::Entity& entity, void* componentPtr);
+	void SetupAudioSourceComponent(entt::registry& registry, entt::entity);
+	void DestroyAudioSourceComponent(entt::registry& registry, entt::entity);
 }

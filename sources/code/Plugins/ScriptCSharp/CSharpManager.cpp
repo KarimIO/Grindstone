@@ -129,12 +129,7 @@ void CSharpManager::LoadAssemblyIntoMap(const char* path) {
 	assemblies[path] = assemblyData;
 }
 
-struct CompactEntityData {
-	entt::entity entityHandle;
-	Grindstone::SceneManagement::Scene* scene;
-};
-
-void CSharpManager::SetupComponent(ECS::Entity& entity, ScriptComponent& component) {
+void CSharpManager::SetupComponent(entt::registry& registry, entt::entity entity, ScriptComponent& component) {
 	std::string searchString =
 		component.scriptNamespace.empty()
 		? component.scriptClass
@@ -160,8 +155,8 @@ void CSharpManager::SetupComponent(ECS::Entity& entity, ScriptComponent& compone
 	CallAttachComponentInComponent(component);
 }
 
-void CSharpManager::DestroyComponent(ECS::Entity& entity, ScriptComponent& component) {
-	mono_free(component.scriptObject);
+void CSharpManager::DestroyComponent(entt::registry& registry, entt::entity entity, ScriptComponent& component) {
+	
 }
 
 void CSharpManager::EditorUpdate(entt::registry& registry) {
@@ -173,15 +168,14 @@ void CSharpManager::EditorUpdate(entt::registry& registry) {
 	CallEditorUpdateInAllComponents(registry);
 }
 
-void CSharpManager::SetupEntityDataInComponent(ECS::Entity& entity, ScriptComponent& component) {
+void CSharpManager::SetupEntityDataInComponent(entt::entity entity, ScriptComponent& component) {
 	MonoClassField* field = mono_class_get_field_from_name(component.monoClass->monoClass, "entity");
 
 	if (field == nullptr) {
 		return;
 	}
 
-	CompactEntityData outEnt = { entity.GetHandle(), entity.GetScene() };
-	mono_field_set_value((MonoObject*)component.scriptObject, field, &outEnt);
+	mono_field_set_value((MonoObject*)component.scriptObject, field, &entity);
 }
 
 ScriptClass* CSharpManager::SetupClass(const char* assemblyName, const char* namespaceName, const char* className) {

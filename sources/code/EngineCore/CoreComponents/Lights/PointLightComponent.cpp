@@ -17,12 +17,12 @@ REFLECT_STRUCT_BEGIN(PointLightComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::SetupPointLightComponent(ECS::Entity& entity, void* componentPtr) {
+void Grindstone::SetupPointLightComponent(entt::registry& registry, entt::entity entity) {
 	auto& engineCore = EngineCore::GetInstance();
 	auto graphicsCore = engineCore.GetGraphicsCore();
 	auto eventDispatcher = engineCore.GetEventDispatcher();
 
-	PointLightComponent& pointLightComponent = *static_cast<PointLightComponent*>(componentPtr);
+	PointLightComponent& pointLightComponent = registry.get<PointLightComponent>(entity);
 
 	/* TODO: Re-add this when you come back to point light shadows
 	uint32_t shadowResolution = static_cast<uint32_t>(pointLightComponent.shadowResolution);
@@ -132,4 +132,14 @@ void Grindstone::SetupPointLightComponent(ECS::Entity& entity, void* componentPt
 		pointLightComponent.shadowMapDescriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 	*/
+}
+
+void Grindstone::DestroyPointLightComponent(entt::registry& registry, entt::entity entity) {
+	EngineCore& engineCore = EngineCore::GetInstance();
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+
+	PointLightComponent& pointLightComponent = registry.get<PointLightComponent>(entity);
+	graphicsCore->DeleteDescriptorSet(pointLightComponent.descriptorSet);
+	graphicsCore->DeleteDescriptorSetLayout(pointLightComponent.descriptorSetLayout);
+	graphicsCore->DeleteUniformBuffer(pointLightComponent.uniformBufferObject);
 }

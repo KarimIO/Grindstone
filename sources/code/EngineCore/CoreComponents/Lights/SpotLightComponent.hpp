@@ -50,5 +50,6 @@ namespace Grindstone {
 		REFLECT("SpotLight")
 	};
 
-	void SetupSpotLightComponent(ECS::Entity& entity, void* componentPtr);
+	void SetupSpotLightComponent(entt::registry&, entt::entity);
+	void DestroySpotLightComponent(entt::registry&, entt::entity);
 }

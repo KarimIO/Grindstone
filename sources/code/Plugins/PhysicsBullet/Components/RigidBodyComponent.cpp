@@ -1,29 +1,32 @@
 #include <bullet/btBulletDynamicsCommon.h>
-#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
-#include "Plugins/PhysicsBullet/Core.hpp"
+
+#include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
+#include <Plugins/PhysicsBullet/Core.hpp>
+
 #include "RigidBodyComponent.hpp"
+
 using namespace Grindstone::Physics;
+using namespace Grindstone::Memory;
 using namespace Grindstone::Math;
 
-ColliderComponent* GetCollider(Grindstone::ECS::Entity& entity) {
-	auto& registry = entity.GetSceneEntityRegistry();
-	auto entityHandle = entity.GetHandle();
-	auto sphere = registry.try_get<SphereColliderComponent>(entityHandle);
+static ColliderComponent* GetCollider(entt::registry& registry, entt::entity entityHandle) {
+	SphereColliderComponent* sphere = registry.try_get<SphereColliderComponent>(entityHandle);
 	if (sphere) {
 		return sphere;
 	}
 
-	auto box = registry.try_get<BoxColliderComponent>(entityHandle);
+	BoxColliderComponent* box = registry.try_get<BoxColliderComponent>(entityHandle);
 	if (box) {
 		return box;
 	}
 
-	auto plane = registry.try_get<PlaneColliderComponent>(entityHandle);
+	PlaneColliderComponent* plane = registry.try_get<PlaneColliderComponent>(entityHandle);
 	if (plane) {
 		return plane;
 	}
 
-	auto capsule = registry.try_get<CapsuleColliderComponent>(entityHandle);
+	CapsuleColliderComponent* capsule = registry.try_get<CapsuleColliderComponent>(entityHandle);
 	if (capsule) {
 		return capsule;
 	}
@@ -31,19 +34,26 @@ ColliderComponent* GetCollider(Grindstone::ECS::Entity& entity) {
 	return nullptr;
 }
 
-void Grindstone::Physics::SetupRigidBodyComponent(ECS::Entity& entity, void* componentPtr) {
-	auto& registry = entity.GetSceneEntityRegistry();
-	auto entityHandle = entity.GetHandle();
-
-	ColliderComponent* colliderComponent = GetCollider(entity);
+void Grindstone::Physics::SetupRigidBodyComponent(entt::registry& registry, entt::entity entity) {
+	ColliderComponent* colliderComponent = GetCollider(registry, entity);
 	if (colliderComponent == nullptr) {
 		return;
 	}
 
-	RigidBodyComponent* rigidBodyComponent = (RigidBodyComponent*)componentPtr;
-	TransformComponent* transformComponent = &registry.get<TransformComponent>(entityHandle);
+	RigidBodyComponent& rigidBodyComponent = registry.get<RigidBodyComponent>(entity);
+	TransformComponent& transformComponent = registry.get<TransformComponent>(entity);
 
-	SetupRigidBodyComponentWithCollider(rigidBodyComponent, transformComponent, colliderComponent);
+	SetupRigidBodyComponentWithCollider(&rigidBodyComponent, &transformComponent, colliderComponent);
+}
+
+void Grindstone::Physics::DestroyRigidBodyComponent(entt::registry& registry, entt::entity entity) {
+	RigidBodyComponent& rigidBodyComponent = registry.get<RigidBodyComponent>(entity);
+	btRigidBody* rigidbody = rigidBodyComponent.rigidBody;
+
+	if (rigidbody != nullptr) {
+		AllocatorCore::Free(rigidbody->getMotionState());
+		AllocatorCore::Free(rigidbody);
+	}
 }
 
 void Grindstone::Physics::SetupRigidBodyComponentWithCollider(
@@ -60,21 +70,21 @@ void Grindstone::Physics::SetupRigidBodyComponentWithCollider(
 	);
 	btTransform transformMatrix(quaternion, position);
 
-	rigidBodyComponent->rigidBody = new btRigidBody(
+	rigidBodyComponent->rigidBody = AllocatorCore::Allocate<btRigidBody>(
 		rigidBodyComponent->GetMass(),
-		new btDefaultMotionState(transformMatrix),
+		AllocatorCore::Allocate<btDefaultMotionState>(transformMatrix),
 		colliderComponent->collisionShape
 	);
 	rigidBodyComponent->rigidBody->setUserPointer(&rigidBodyComponent);
 
-	auto& core = Physics::Core::GetInstance();
+	Physics::Core& core = Physics::Core::GetInstance();
 	core.dynamicsWorld->addRigidBody(rigidBodyComponent->rigidBody);
 }
 
 RigidBodyComponent::RigidBodyComponent(float mass, ColliderComponent* colliderComponent) : mass(mass) {
-	btDefaultMotionState* motionState = new btDefaultMotionState();
+	btDefaultMotionState* motionState = AllocatorCore::Allocate<btDefaultMotionState>();
 
-	rigidBody = new btRigidBody(mass, motionState, colliderComponent->collisionShape);
+	rigidBody = AllocatorCore::Allocate<btRigidBody>(mass, motionState, colliderComponent->collisionShape);
 }
 
 void RigidBodyComponent::SetCollisionShape(ColliderComponent* colliderComponent) {
@@ -113,23 +123,23 @@ void RigidBodyComponent::ApplyCentralImpulse(Float3 force) {
 	rigidBody->applyCentralForce(btVector3(force.x, force.y, force.z));
 }
 
-float RigidBodyComponent::GetMass() {
+float RigidBodyComponent::GetMass() const {
 	return mass;
 }
 
-float RigidBodyComponent::GetFriction() {
+float RigidBodyComponent::GetFriction() const {
 	return friction;
 }
 
-float RigidBodyComponent::GetRestitution() {
+float RigidBodyComponent::GetRestitution() const {
 	return restitution;
 }
 
-float RigidBodyComponent::GetDampingLinear() {
+float RigidBodyComponent::GetDampingLinear() const {
 	return dampingLinear;
 }
 
-float RigidBodyComponent::GetDampingRotational() {
+float RigidBodyComponent::GetDampingRotational() const {
 	return dampingRotational;
 }
 

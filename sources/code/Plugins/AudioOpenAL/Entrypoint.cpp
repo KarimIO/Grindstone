@@ -1,10 +1,10 @@
 #include "pch.hpp"
-#include "EngineCore/PluginSystem/Interface.hpp"
-#include "EngineCore/ECS/ComponentRegistrar.hpp"
-#include <EngineCore/Utils/MemoryAllocator.hpp>
-#include "EngineCore/EngineCore.hpp"
-
 #include <entt/entt.hpp>
+#include <EngineCore/PluginSystem/Interface.hpp>
+#include <EngineCore/ECS/ComponentRegistrar.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
+#include <EngineCore/EngineCore.hpp>
+
 #include "Components/AudioListenerComponent.hpp"
 #include "Components/AudioSourceComponent.hpp"
 #include "AudioClipImporter.hpp"
@@ -28,7 +28,7 @@ extern "C" {
 
 		audioClipImporter = AllocatorCore::Allocate<Audio::AudioClipImporter>(engineCore);
 		pluginInterface->RegisterComponent<AudioListenerComponent>();
-		pluginInterface->RegisterComponent<AudioSourceComponent>(SetupAudioSourceComponent);
+		pluginInterface->RegisterComponent<AudioSourceComponent>(SetupAudioSourceComponent, DestroyAudioSourceComponent);
 		pluginInterface->RegisterAssetType(AssetType::AudioClip, "AudioClip", audioClipImporter);
 	}
 

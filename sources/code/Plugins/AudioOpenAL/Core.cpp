@@ -93,8 +93,3 @@ bool Core::GetAvailableDevices(std::vector<std::string>& devicesVec, ALCdevice* 
 
 	return true;
 }
-
-// TODO: Fix Allocation
-Source* Core::CreateSource(Audio::Source::CreateInfo& createInfo) {
-	return new Audio::Source(createInfo);
-}

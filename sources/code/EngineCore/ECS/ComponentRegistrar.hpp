@@ -28,11 +28,18 @@ namespace Grindstone::ECS {
 			});
 		}
 
-		template<typename T>
+		template<typename ClassType>
 		void UnregisterComponent() {
-			UnregisterComponent(T::GetComponentName());
+			GetEntityRegistry().clear<ClassType>();
+
+			auto comp = componentFunctionsList.find(ClassType::GetComponentName());
+			if (comp != componentFunctionsList.end()) {
+				componentFunctionsList.erase(comp);
+			}
 		}
 
+		virtual entt::registry& GetEntityRegistry();
+		virtual void DestroyEntity(ECS::Entity entity);
 		virtual void RegisterComponent(const char* name, ComponentFunctions componentFunctions);
 		virtual void UnregisterComponent(const char* name);
 		virtual void* CreateComponentWithSetup(const char* name, ECS::Entity entity);

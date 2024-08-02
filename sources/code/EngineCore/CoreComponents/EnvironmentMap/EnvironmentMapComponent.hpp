@@ -11,5 +11,6 @@ namespace Grindstone {
 		REFLECT("EnvironmentMap")
 	};
 
-	void SetupEnvironmentMapComponent(Grindstone::ECS::Entity& entity, void* componentPtr);
+	void SetupEnvironmentMapComponent(entt::registry&, entt::entity);
+	void DestroyEnvironmentMapComponent(entt::registry&, entt::entity);
 }

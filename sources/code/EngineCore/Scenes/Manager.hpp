@@ -11,8 +11,6 @@ namespace Grindstone::SceneManagement {
 		~SceneManager();
 
 		void LoadDefaultScene();
-		void EditorUpdate();
-		void Update();
 
 		virtual void AddPostLoadProcess(std::function<void(Scene*)>);
 		virtual void SaveScene(const char* path, Scene* scene);

@@ -25,5 +25,6 @@ namespace Grindstone {
 		REFLECT("Camera")
 	};
 
-	void SetupCameraComponent(ECS::Entity& entity, void* componentPtr);
+	void SetupCameraComponent(entt::registry&, entt::entity);
+	void DestroyCameraComponent(entt::registry&, entt::entity);
 }

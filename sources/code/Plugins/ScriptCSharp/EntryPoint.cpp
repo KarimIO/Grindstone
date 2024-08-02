@@ -50,7 +50,7 @@ extern "C" {
 		manager.Initialize(pluginInterface->GetEngineCore());
 
 		globalPluginInterface = pluginInterface;
-		pluginInterface->RegisterComponent<ScriptComponent>(SetupCSharpScriptComponent);
+		pluginInterface->RegisterComponent<ScriptComponent>(SetupCSharpScriptComponent, DestroyCSharpScriptComponent);
 		pluginInterface->RegisterSystem("Scripting::CSharp::Update", UpdateSystem);
 		pluginInterface->systemRegistrar->RegisterEditorSystem("Scripting::CSharp::UpdateEditor", UpdateEditorSystem);
 		pluginInterface->SetReloadCsharpCallback(QueueReloadCsharp);

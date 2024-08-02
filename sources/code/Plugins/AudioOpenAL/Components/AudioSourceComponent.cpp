@@ -1,9 +1,12 @@
-#include "EngineCore/Reflection/ComponentReflection.hpp"
-#include "EngineCore/Assets/AssetManager.hpp"
-#include "AudioSourceComponent.hpp"
+#include <EngineCore/Reflection/ComponentReflection.hpp>
+#include <EngineCore/Assets/AssetManager.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
+
 #include "../Core.hpp"
+#include "AudioSourceComponent.hpp"
 
 using namespace Grindstone;
+using namespace Grindstone::Memory;
 
 REFLECT_STRUCT_BEGIN(AudioSourceComponent)
 	REFLECT_STRUCT_MEMBER(audioClip)
@@ -13,23 +16,28 @@ REFLECT_STRUCT_BEGIN(AudioSourceComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::SetupAudioSourceComponent(ECS::Entity& entity, void* componentPtr) {
+void Grindstone::SetupAudioSourceComponent(entt::registry& registry, entt::entity entity) {
 	Audio::Core& core = Audio::Core::GetInstance();
 	Grindstone::Assets::AssetManager* assetManager = core.engineCore->assetManager;
 
-	Grindstone::AudioSourceComponent* audioSource = static_cast<AudioSourceComponent*>(componentPtr);
+	Grindstone::AudioSourceComponent& audioSource = registry.get<AudioSourceComponent>(entity);
 
-	Grindstone::Audio::AudioClipAsset* audioClip = assetManager->GetAsset<Grindstone::Audio::AudioClipAsset>(audioSource->audioClip.uuid);
+	Grindstone::Audio::AudioClipAsset* audioClip = assetManager->GetAsset<Grindstone::Audio::AudioClipAsset>(audioSource.audioClip.uuid);
 	if (audioClip == nullptr) {
 		return;
 	}
 
 	Audio::Source::CreateInfo audioSourceCreateInfo{};
 	audioSourceCreateInfo.audioClip = audioClip;
-	audioSourceCreateInfo.isLooping = audioSource->isLooping;
-	audioSourceCreateInfo.volume = audioSource->volume;
-	audioSourceCreateInfo.pitch = audioSource->pitch;
-	audioSource->source = core.CreateSource(audioSourceCreateInfo);
+	audioSourceCreateInfo.isLooping = audioSource.isLooping;
+	audioSourceCreateInfo.volume = audioSource.volume;
+	audioSourceCreateInfo.pitch = audioSource.pitch;
+	audioSource.source = AllocatorCore::Allocate<Audio::Source>(audioSourceCreateInfo);
 
-	audioSource->source->Play();
+	audioSource.source->Play();
+}
+
+void Grindstone::DestroyAudioSourceComponent(entt::registry& registry, entt::entity entity) {
+	Grindstone::AudioSourceComponent& audioSource = registry.get<AudioSourceComponent>(entity);
+	AllocatorCore::Free<Audio::Source>(audioSource.source);
 }

@@ -45,5 +45,6 @@ namespace Grindstone {
 		REFLECT("PointLight")
 	};
 
-	void SetupPointLightComponent(ECS::Entity& entity, void* componentPtr);
+	void SetupPointLightComponent(entt::registry&, entt::entity);
+	void DestroyPointLightComponent(entt::registry&, entt::entity);
 }

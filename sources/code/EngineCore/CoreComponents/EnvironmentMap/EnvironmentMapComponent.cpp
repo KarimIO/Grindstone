@@ -10,11 +10,12 @@ REFLECT_STRUCT_BEGIN(EnvironmentMapComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::SetupEnvironmentMapComponent(ECS::Entity& entity, void* componentPtr) {
-	auto& engineCore = Grindstone::EngineCore::GetInstance();
-	auto graphicsCore = engineCore.GetGraphicsCore();
-	auto eventDispatcher = engineCore.GetEventDispatcher();
+void Grindstone::SetupEnvironmentMapComponent(entt::registry& registry, entt::entity entity) {
+	EnvironmentMapComponent& envMap = registry.get<EnvironmentMapComponent>(entity);
+	envMap.specularTexture.Load(envMap.specularTexture.uuid);
+}
 
-	auto envMap = static_cast<EnvironmentMapComponent*>(componentPtr);
-	envMap->specularTexture.Load(envMap->specularTexture.uuid);
+void Grindstone::DestroyEnvironmentMapComponent(entt::registry& registry, entt::entity entity) {
+	EnvironmentMapComponent& envMap = registry.get<EnvironmentMapComponent>(entity);
+	// TODO: Unload environment map
 }

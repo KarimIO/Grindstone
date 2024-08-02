@@ -39,20 +39,6 @@ void SceneManager::LoadDefaultScene() {
 	LoadScene(defaultPath);
 }
 
-void SceneManager::EditorUpdate() {
-	GRIND_PROFILE_SCOPE("SceneManager::EditorUpdate()");
-	for (std::pair<const std::string, Scene*>& scene : scenes) {
-		scene.second->EditorUpdate();
-	}
-}
-
-void SceneManager::Update() {
-	GRIND_PROFILE_SCOPE("SceneManager::Update()");
-	for (std::pair<const std::string, Scene*>& scene : scenes) {
-		scene.second->Update();
-	}
-}
-
 Scene* SceneManager::LoadScene(const char* path) {
 	CloseActiveScenes();
 	return LoadSceneAdditively(path);

@@ -5,6 +5,8 @@
 #include <functional>
 #include <chrono>
 
+#include <entt/entity/registry.hpp>
+
 #include <Common/Logging.hpp>
 
 namespace Grindstone {
@@ -91,6 +93,7 @@ namespace Grindstone {
 		virtual std::filesystem::path GetAssetsPath() const;
 		virtual std::filesystem::path GetEngineAssetsPath() const;
 		virtual std::filesystem::path GetAssetPath(std::string subPath) const;
+		virtual entt::registry& GetEntityRegistry();
 		virtual void ReloadCsharpBinaries();
 
 		virtual bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
@@ -124,5 +127,6 @@ namespace Grindstone {
 		std::filesystem::path engineBinaryPath;
 		std::filesystem::path engineAssetsPath;
 		std::filesystem::path assetsPath;
+		entt::registry entityRegistry;
 	};
 }
