@@ -33,6 +33,7 @@ namespace Grindstone {
 				virtual void LoadAssembly(const char* path, AssemblyData& outAssemblyData);
 				virtual void LoadAssemblyIntoMap(const char* path);
 				virtual void SetupComponent(ECS::Entity& entity, ScriptComponent& component);
+				virtual void DestroyComponent(ECS::Entity& entity, ScriptComponent& component);
 				virtual void CallStartInAllComponents(entt::registry& registry);
 				virtual void CallUpdateInAllComponents(entt::registry& registry);
 				virtual void CallEditorUpdateInAllComponents(entt::registry& registry);

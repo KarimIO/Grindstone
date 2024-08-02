@@ -68,11 +68,8 @@ void CSharpManager::Cleanup() {
 		AllocatorCore::Free(smartComponent.second);
 	}
 	smartComponents.clear();
-	return;
 
-	// TODO: Fix this cleanup.
-	mono_domain_unload(scriptDomain);
-	scriptDomain = nullptr;
+	return;
 
 	mono_jit_cleanup(rootDomain);
 	rootDomain = nullptr;
@@ -161,6 +158,10 @@ void CSharpManager::SetupComponent(ECS::Entity& entity, ScriptComponent& compone
 
 	CallConstructorInComponent(component);
 	CallAttachComponentInComponent(component);
+}
+
+void CSharpManager::DestroyComponent(ECS::Entity& entity, ScriptComponent& component) {
+	mono_free(component.scriptObject);
 }
 
 void CSharpManager::EditorUpdate(entt::registry& registry) {

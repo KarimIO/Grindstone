@@ -18,3 +18,11 @@ void Grindstone::Scripting::CSharp::SetupCSharpScriptComponent(
 	auto& component = *(ScriptComponent*)componentPtr;
 	csManager.SetupComponent(entity, component);
 }
+
+void Grindstone::Scripting::CSharp::DestroyCSharpScriptComponent(ECS::Entity& entity) {
+	ScriptComponent& component = entity.GetComponent<ScriptComponent>();
+
+	CSharpManager& csManager = CSharpManager::GetInstance();
+	csManager.DestroyComponent(entity, component);
+}
+

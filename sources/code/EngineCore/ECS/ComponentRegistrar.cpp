@@ -52,7 +52,12 @@ void ComponentRegistrar::RemoveComponent(const char *name, ECS::Entity entity) {
 		return;
 	}
 
-	return selectedFactory->second.RemoveComponentFn(entity);
+	auto& fns = selectedFactory->second;
+	if (fns.DestroyComponentFn) {
+		fns.DestroyComponentFn(entity);
+	}
+
+	fns.RemoveComponentFn(entity);
 }
 
 bool ComponentRegistrar::HasComponent(const char* name, ECS::Entity entity) {
