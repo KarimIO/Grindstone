@@ -165,6 +165,12 @@ void EngineCore::UpdateWindows() {
 EngineCore::~EngineCore() {
 	GPRINT_INFO(LogSource::EngineCore, "Closing...");
 
+	if (windowManager) {
+		for (unsigned int i = 0; i < windowManager->GetNumWindows(); ++i) {
+			windowManager->GetWindowByIndex(i)->Hide();
+		}
+	}
+
 	if (pluginManager) {
 		pluginManager->UnloadPluginList();
 	}
