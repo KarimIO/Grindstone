@@ -2,11 +2,14 @@
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/BuildSettings/SceneBuildSettings.hpp>
 #include <EngineCore/Profiling.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
 
 #include "SceneLoaderJson.hpp"
 #include "SceneWriterJson.hpp"
 #include "Manager.hpp"
+
 using namespace Grindstone::SceneManagement;
+using namespace Grindstone::Memory;
 
 extern "C" {
 	ENGINE_CORE_API Scene* SceneManagerGetActiveScene() {
@@ -18,6 +21,10 @@ extern "C" {
 		Scene* scene = sceneManager->scenes.begin()->second;
 		return scene;
 	}
+}
+
+Grindstone::SceneManagement::SceneManager::~SceneManager() {
+	CloseActiveScenes();
 }
 
 void SceneManager::LoadDefaultScene() {
@@ -52,7 +59,7 @@ Scene* SceneManager::LoadScene(const char* path) {
 }
 
 Scene* SceneManager::LoadSceneAdditively(const char* path) {
-	Scene* newScene = new Scene();
+	Scene* newScene = AllocatorCore::Allocate<Scene>();
 	scenes[path] = newScene;
 	SceneLoaderJson sceneLoader(newScene, path);
 	ProcessSceneAfterLoading(newScene);
@@ -80,7 +87,7 @@ Scene* SceneManager::CreateEmptyScene(const char* name) {
 }
 
 Scene* SceneManager::CreateEmptySceneAdditively(const char *name) {
-	Scene* newScene = new Scene();
+	Scene* newScene = AllocatorCore::Allocate<Scene>();
 	scenes[name] = newScene;
 
 	return newScene;
@@ -88,7 +95,7 @@ Scene* SceneManager::CreateEmptySceneAdditively(const char *name) {
 
 void SceneManager::CloseActiveScenes() {
 	for (auto& scene : scenes) {
-		delete scene.second;
+		AllocatorCore::Free(scene.second);
 	}
 
 	scenes.clear();
