@@ -1,5 +1,4 @@
 #include <Common/Math.hpp>
-#include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 
 #include "RigidBodyComponent.hpp"
@@ -13,31 +12,6 @@ REFLECT_STRUCT_BEGIN(SphereColliderComponent)
 	REFLECT_STRUCT_MEMBER(radius)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
-
-void Grindstone::Physics::SetupColliderComponent(entt::registry& registry, entt::entity entity) {
-	ColliderComponent& colliderComponent = registry.get<ColliderComponent>(entity);
-
-	if (colliderComponent.collisionShape == nullptr) {
-		colliderComponent.Initialize();
-		colliderComponent.collisionShape->setUserPointer(&colliderComponent);
-	}
-
-	RigidBodyComponent* rigidBodyComponent = registry.try_get<RigidBodyComponent>(entity);
-	TransformComponent* transformComponent = registry.try_get<TransformComponent>(entity);
-	if (rigidBodyComponent != nullptr && transformComponent != nullptr) {
-		SetupRigidBodyComponentWithCollider(
-			rigidBodyComponent,
-			transformComponent,
-			&colliderComponent
-		);
-	}
-}
-
-void Grindstone::Physics::DestroyColliderComponent(entt::registry& registry, entt::entity entity) {
-	ColliderComponent& colliderComponent = registry.get<ColliderComponent>(entity);
-
-	AllocatorCore::Free(colliderComponent.collisionShape);
-}
 
 void SphereColliderComponent::Initialize() {
 	if (collisionShape) {
