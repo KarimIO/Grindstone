@@ -34,7 +34,7 @@ extern "C" {
 	}
 
 	ENGINE_CORE_API void* EntityGetTransformComponent(Grindstone::SceneManagement::Scene* scene, uint32_t entity) {
-		entt::registry& reg = scene->GetEntityRegistry();
+		entt::registry& reg = EngineCore::GetInstance().GetEntityRegistry();
 		const entt::entity entityId = static_cast<entt::entity>(entity);
 		return &reg.get<TransformComponent>(entityId);
 	}
