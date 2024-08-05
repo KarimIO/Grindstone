@@ -162,12 +162,16 @@ void Manager::SetPlayMode(PlayMode newPlayMode) {
 	engineCore->GetInputManager()->SetCursorIsRawMotion(false);
 	engineCore->GetInputManager()->SetCursorMode(Input::CursorMode::Normal);
 
+	entt::registry& engineRegistry = engineCore->GetEntityRegistry();
+	Grindstone::ECS::ComponentRegistrar* componentRegistry = engineCore->GetComponentRegistrar();
 	if (newPlayMode == PlayMode::Editor && playMode == PlayMode::Play) {
-		engineCore->GetEntityRegistry().swap(backupRegistry);
+		engineRegistry.swap(backupRegistry);
+		componentRegistry->CallDestroyOnRegistry(backupRegistry);
 	}
 	else if (newPlayMode == PlayMode::Play && playMode == PlayMode::Editor) {
 		backupRegistry.clear();
-		engineCore->GetComponentRegistrar()->CopyRegistry(backupRegistry, engineCore->GetEntityRegistry());
+		componentRegistry->CopyRegistry(backupRegistry, engineRegistry);
+		componentRegistry->CallCreateOnRegistry(engineRegistry);
 	}
 
 	selection.Clear();

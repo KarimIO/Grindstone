@@ -41,6 +41,8 @@ namespace Grindstone::ECS {
 
 		virtual entt::registry& GetEntityRegistry();
 		virtual void CopyRegistry(entt::registry& to, entt::registry& from);
+		virtual void CallCreateOnRegistry(entt::registry& registry);
+		virtual void CallDestroyOnRegistry(entt::registry& registry);
 		virtual void DestroyEntity(ECS::Entity entity);
 		virtual void RegisterComponent(const char* name, ComponentFunctions componentFunctions);
 		virtual void UnregisterComponent(const char* name);

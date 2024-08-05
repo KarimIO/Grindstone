@@ -29,12 +29,40 @@ void ComponentRegistrar::DestroyEntity(ECS::Entity entity) {
 
 	for (auto& compFnPair : componentFunctionsList) {
 		ComponentFunctions& compFns = compFnPair.second;
-		if (compFns.HasComponentFn(entity) && compFns.DestroyComponentFn) {
+		if (compFns.HasComponentFn(registry, entityHandle) && compFns.DestroyComponentFn) {
 			compFns.DestroyComponentFn(registry, entityHandle);
 		}
 	}
 
 	registry.destroy(entityHandle);
+}
+
+void ComponentRegistrar::CallCreateOnRegistry(entt::registry& registry) {
+	auto& entityView = registry.view<entt::entity>();
+
+	for (auto& compFnPair : componentFunctionsList) {
+		ComponentFunctions& compFns = compFnPair.second;
+
+		for (entt::entity entity : entityView) {
+			if (compFns.SetupComponentFn != nullptr && compFns.HasComponentFn(registry, entity)) {
+				compFns.SetupComponentFn(registry, entity);
+			}
+		}
+	}
+}
+
+void ComponentRegistrar::CallDestroyOnRegistry(entt::registry& registry) {
+	auto& entityView = registry.view<entt::entity>();
+
+	for (auto& compFnPair : componentFunctionsList) {
+		ComponentFunctions& compFns = compFnPair.second;
+
+		for (entt::entity entity : entityView) {
+			if (compFns.DestroyComponentFn != nullptr && compFns.HasComponentFn(registry, entity)) {
+				compFns.DestroyComponentFn(registry, entity);
+			}
+		}
+	}
 }
 
 void ComponentRegistrar::RegisterComponent(const char *name, ComponentFunctions componentFunctions) {
@@ -61,8 +89,10 @@ void* ComponentRegistrar::CreateComponentWithSetup(const char* name, ECS::Entity
 		return nullptr;
 	}
 
+	entt::registry& registry = GetEntityRegistry();
+
 	auto& fns = selectedFactory->second;
-	auto comp = fns.CreateComponentFn(entity);
+	auto comp = fns.CreateComponentFn(registry, entity.GetHandle());
 
 	if (fns.SetupComponentFn) {
 		fns.SetupComponentFn(GetEntityRegistry(), entity.GetHandle());
@@ -77,7 +107,8 @@ void* ComponentRegistrar::CreateComponent(const char* name, ECS::Entity entity) 
 		return nullptr;
 	}
 
-	return selectedFactory->second.CreateComponentFn(entity);
+	entt::registry& registry = GetEntityRegistry();
+	return selectedFactory->second.CreateComponentFn(registry, entity.GetHandle());
 }
 
 void ComponentRegistrar::RemoveComponent(const char *name, ECS::Entity entity) {
@@ -91,7 +122,8 @@ void ComponentRegistrar::RemoveComponent(const char *name, ECS::Entity entity) {
 		fns.DestroyComponentFn(GetEntityRegistry(), entity.GetHandle());
 	}
 
-	fns.RemoveComponentFn(entity);
+	entt::registry& registry = GetEntityRegistry();
+	fns.RemoveComponentFn(registry, entity.GetHandle());
 }
 
 bool ComponentRegistrar::HasComponent(const char* name, ECS::Entity entity) {
@@ -100,7 +132,8 @@ bool ComponentRegistrar::HasComponent(const char* name, ECS::Entity entity) {
 		return false;
 	}
 
-	return selectedFactory->second.HasComponentFn(entity);
+	entt::registry& registry = GetEntityRegistry();
+	return selectedFactory->second.HasComponentFn(registry, entity.GetHandle());
 }
 
 bool ComponentRegistrar::TryGetComponent(const char* name, ECS::Entity entity, void*& outComponent) {
@@ -109,7 +142,8 @@ bool ComponentRegistrar::TryGetComponent(const char* name, ECS::Entity entity, v
 		return false;
 	}
 
-	return selectedFactory->second.TryGetComponentFn(entity, outComponent);
+	entt::registry& registry = GetEntityRegistry();
+	return selectedFactory->second.TryGetComponentFn(registry, entity.GetHandle(), outComponent);
 }
 
 bool ComponentRegistrar::TryGetComponentReflectionData(const char *name, Grindstone::Reflection::TypeDescriptor_Struct& outReflectionData) {

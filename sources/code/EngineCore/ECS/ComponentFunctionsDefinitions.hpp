@@ -4,16 +4,14 @@
 
 namespace Grindstone::ECS {
 	template<typename ComponentType>
-	void* CreateComponent(ECS::Entity& entity) {
-		return &entity.GetSceneEntityRegistry().emplace<ComponentType>(entity.GetHandle());
+	void* CreateComponent(entt::registry& registry, entt::entity entity) {
+		return &registry.emplace<ComponentType>(entity);
 	}
 
 	template<typename ComponentType>
-	void RemoveComponent(ECS::Entity& entity) {
-		auto& registry = entity.GetSceneEntityRegistry();
-		auto entityHandle = entity.GetHandle();
-		if (registry.any_of<ComponentType>(entityHandle)) {
-			registry.remove<ComponentType>(entityHandle);
+	void RemoveComponent(entt::registry& registry, entt::entity entity) {
+		if (registry.any_of<ComponentType>(entity)) {
+			registry.remove<ComponentType>(entity);
 		}
 	}
 
@@ -23,23 +21,16 @@ namespace Grindstone::ECS {
 	}
 
 	template<typename ComponentType>
-	bool TryGetComponent(ECS::Entity& entity, void*& outComponent) {
-		auto& registry = entity.GetSceneEntityRegistry();
-		auto entityHandle = entity.GetHandle();
-		if (registry.any_of<ComponentType>(entityHandle)) {
-			outComponent = &registry.get<ComponentType>(entityHandle);
-			return true;
-		}
+	bool TryGetComponent(entt::registry& registry, entt::entity entity, void*& outComponent) {
+		ComponentType* foundComp = registry.try_get<ComponentType>(entity);
+		outComponent = foundComp;
 
-		outComponent = nullptr;
-		return false;
+		return foundComp != nullptr;
 	}
 
 	template<typename ComponentType>
-	bool HasComponent(ECS::Entity& entity) {
-		auto& registry = entity.GetSceneEntityRegistry();
-		auto entityHandle = entity.GetHandle();
-		return registry.all_of<ComponentType>(entityHandle);
+	bool HasComponent(entt::registry& registry, entt::entity entity) {
+		return registry.all_of<ComponentType>(entity);
 	}
 
 	template<typename ComponentType>

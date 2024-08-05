@@ -10,10 +10,10 @@ namespace Grindstone {
 		using SetupComponentFn = void(*)(entt::registry&, entt::entity);
 		using DestroyComponentFn = void(*)(entt::registry&, entt::entity);
 		using GetComponentReflectionDataFn = Grindstone::Reflection::TypeDescriptor_Struct(*)();
-		using TryGetComponentFn = bool(*)(ECS::Entity& entity, void*& outEntity);
-		using HasComponentFn = bool(*)(ECS::Entity& entity);
-		using CreateComponentFn = void*(*)(ECS::Entity& entity);
-		using RemoveComponentFn = void(*)(ECS::Entity& entity);
+		using TryGetComponentFn = bool(*)(entt::registry&, entt::entity, void*& outEntity);
+		using HasComponentFn = bool(*)(entt::registry&, entt::entity);
+		using CreateComponentFn = void*(*)(entt::registry&, entt::entity);
+		using RemoveComponentFn = void(*)(entt::registry&, entt::entity);
 		using CopyRegistryComponentsFn = void(*)(entt::registry& dst, entt::registry& src);
 		
 		class ComponentFunctions {

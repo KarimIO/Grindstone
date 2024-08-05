@@ -338,26 +338,29 @@ void CSharpManager::RegisterComponent(std::string& componentName, ECS::Component
 }
 
 // TODO: Shouldn't this be !=?
-void CSharpManager::CallCreateComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType) {
+void CSharpManager::CallCreateComponent(SceneManagement::Scene* scene, entt::entity entity, MonoType* monoType) {
 	auto iterator = createComponentFuncs.find(monoType);
 	if (iterator == createComponentFuncs.end()) {
-		iterator->second(ECS::Entity(entityHandle, scene));
+		entt::registry& registry = engineCore->GetEntityRegistry();
+		iterator->second(registry, entity);
 	}
 }
 
 // TODO: Shouldn't this be !=?
-void CSharpManager::CallHasComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType) {
+void CSharpManager::CallHasComponent(SceneManagement::Scene* scene, entt::entity entity, MonoType* monoType) {
 	auto iterator = hasComponentFuncs.find(monoType);
 	if (iterator == hasComponentFuncs.end()) {
-		iterator->second(ECS::Entity(entityHandle, scene));
+		entt::registry& registry = engineCore->GetEntityRegistry();
+		iterator->second(registry, entity);
 	}
 }
 
 // TODO: Shouldn't this be !=?
-void CSharpManager::CallRemoveComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType) {
+void CSharpManager::CallRemoveComponent(SceneManagement::Scene* scene, entt::entity entity, MonoType* monoType) {
 	auto iterator = removeComponentFuncs.find(monoType);
 	if (iterator == removeComponentFuncs.end()) {
-		iterator->second(ECS::Entity(entityHandle, scene));
+		entt::registry& registry = engineCore->GetEntityRegistry();
+		iterator->second(registry, entity);
 	}
 }
 

@@ -24,10 +24,8 @@ template<typename ComponentType>
 void SetupColliderComponent(entt::registry& registry, entt::entity entity) {
 	ComponentType& colliderComponent = registry.get<ComponentType>(entity);
 
-	if (colliderComponent.collisionShape == nullptr) {
-		colliderComponent.Initialize();
-		colliderComponent.collisionShape->setUserPointer(&colliderComponent);
-	}
+	colliderComponent.Initialize();
+	colliderComponent.collisionShape->setUserPointer(&colliderComponent);
 
 	RigidBodyComponent* rigidBodyComponent = registry.try_get<RigidBodyComponent>(entity);
 	TransformComponent* transformComponent = registry.try_get<TransformComponent>(entity);

@@ -62,7 +62,12 @@ void Grindstone::Physics::SetupRigidBodyComponentWithCollider(
 	ColliderComponent* colliderComponent
 ) {
 	btScalar mass = rigidBodyComponent->GetMass();
-	btQuaternion quaternion;
+	btQuaternion quaternion(
+		transformComponent->rotation.x,
+		transformComponent->rotation.y,
+		transformComponent->rotation.z,
+		transformComponent->rotation.w
+	);
 	btVector3 position(
 		transformComponent->position.x,
 		transformComponent->position.y,
