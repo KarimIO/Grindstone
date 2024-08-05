@@ -14,7 +14,7 @@ namespace Grindstone {
 		using HasComponentFn = bool(*)(ECS::Entity& entity);
 		using CreateComponentFn = void*(*)(ECS::Entity& entity);
 		using RemoveComponentFn = void(*)(ECS::Entity& entity);
-
+		using CopyRegistryComponentsFn = void(*)(entt::registry& dst, entt::registry& src);
 		
 		class ComponentFunctions {
 		public:
@@ -25,6 +25,7 @@ namespace Grindstone {
 			HasComponentFn HasComponentFn = nullptr;
 			TryGetComponentFn TryGetComponentFn = nullptr;
 			GetComponentReflectionDataFn GetComponentReflectionDataFn = nullptr;
+			CopyRegistryComponentsFn CopyRegistryComponentsFn = nullptr;
 		};
 	}
 }

@@ -155,10 +155,22 @@ void Manager::Run() {
 	}
 }
 
+entt::registry backupRegistry;
+
 void Manager::SetPlayMode(PlayMode newPlayMode) {
 	// Reset input before setting the new playMode
 	engineCore->GetInputManager()->SetCursorIsRawMotion(false);
 	engineCore->GetInputManager()->SetCursorMode(Input::CursorMode::Normal);
+
+	if (newPlayMode == PlayMode::Editor && playMode == PlayMode::Play) {
+		engineCore->GetEntityRegistry().swap(backupRegistry);
+	}
+	else if (newPlayMode == PlayMode::Play && playMode == PlayMode::Editor) {
+		backupRegistry.clear();
+		engineCore->GetComponentRegistrar()->CopyRegistry(backupRegistry, engineCore->GetEntityRegistry());
+	}
+
+	selection.Clear();
 
 	playMode = newPlayMode;
 }

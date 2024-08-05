@@ -1,14 +1,16 @@
 #include <stdexcept>
 #include <iostream>
 
-#include "EngineCore/EngineCore.hpp"
-#include "EngineCore/ECS/ComponentRegistrar.hpp"
-#include "EngineCore/ECS/SystemRegistrar.hpp"
-#include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
-#include "EngineCore/CoreComponents/Parent/ParentComponent.hpp"
-#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
-#include "Scene.hpp"
 #include <EngineCore/Profiling.hpp>
+#include <EngineCore/Logger.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/ECS/SystemRegistrar.hpp>
+#include <EngineCore/ECS/ComponentRegistrar.hpp>
+#include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
+#include <EngineCore/CoreComponents/Parent/ParentComponent.hpp>
+#include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
+
+#include "Scene.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
@@ -42,12 +44,19 @@ Scene::~Scene() {
 }
 
 ECS::Entity Scene::CreateEmptyEntity(entt::entity entityToUse) {
+	entt::registry& registry = GetEntityRegistry();
 	if (entityToUse == entt::null) {
-		entt::entity entityId = GetEntityRegistry().create();
+		entt::entity entityId = registry.create();
 		return { entityId, this };
 	}
 
-	entt::entity entityId = GetEntityRegistry().create(entityToUse);
+	if (registry.valid(entityToUse)) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Registry already has entity with ID {}", static_cast<uint32_t>(entityToUse));
+		entt::entity entityId = registry.create();
+		return { entityId, this };
+	}
+
+	entt::entity entityId = registry.create(entityToUse);
 	return { entityId, this };
 }
 

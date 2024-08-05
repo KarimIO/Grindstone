@@ -7,6 +7,22 @@ entt::registry& ComponentRegistrar::GetEntityRegistry() {
 	return EngineCore::GetInstance().GetEntityRegistry();
 }
 
+void ComponentRegistrar::CopyRegistry(entt::registry& dst, entt::registry& src) {
+	auto& srcEntityView = src.view<entt::entity>();
+	srcEntityView.each(
+		[&dst](entt::entity srcEntity) {
+			entt::entity dstEntity = dst.create(srcEntity);
+			if (dstEntity == entt::null) {
+				GPRINT_ERROR_V(LogSource::EngineCore, "Failure to great error {}", static_cast<uint32_t>(dstEntity));
+			}
+		}
+	);
+
+	for (auto& fns : componentFunctionsList) {
+		fns.second.CopyRegistryComponentsFn(dst, src);
+	}
+}
+
 void ComponentRegistrar::DestroyEntity(ECS::Entity entity) {
 	entt::registry& registry = GetEntityRegistry();
 	entt::entity entityHandle = entity.GetHandle();

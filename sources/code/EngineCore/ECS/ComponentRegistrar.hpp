@@ -15,30 +15,32 @@ using namespace Grindstone;
 namespace Grindstone::ECS {
 	class ComponentRegistrar {
 	public:
-		template<typename T>
+		template<typename ComponentType>
 		void RegisterComponent(SetupComponentFn setupComponentFn = nullptr, DestroyComponentFn destroyComponentFn = nullptr) {
-			RegisterComponent(T::GetComponentName(), {
+			RegisterComponent(ComponentType::GetComponentName(), {
 				setupComponentFn,
 				destroyComponentFn,
-				&ECS::CreateComponent<T>,
-				&ECS::RemoveComponent<T>,
-				&ECS::HasComponent<T>,
-				&ECS::TryGetComponent<T>,
-				&ECS::GetComponentReflectionData<T>
+				&ECS::CreateComponent<ComponentType>,
+				&ECS::RemoveComponent<ComponentType>,
+				&ECS::HasComponent<ComponentType>,
+				&ECS::TryGetComponent<ComponentType>,
+				&ECS::GetComponentReflectionData<ComponentType>,
+				&ECS::CopyRegistryComponents<ComponentType>
 			});
 		}
 
-		template<typename ClassType>
+		template<typename ComponentType>
 		void UnregisterComponent() {
-			GetEntityRegistry().clear<ClassType>();
+			GetEntityRegistry().clear<ComponentType>();
 
-			auto comp = componentFunctionsList.find(ClassType::GetComponentName());
+			auto comp = componentFunctionsList.find(ComponentType::GetComponentName());
 			if (comp != componentFunctionsList.end()) {
 				componentFunctionsList.erase(comp);
 			}
 		}
 
 		virtual entt::registry& GetEntityRegistry();
+		virtual void CopyRegistry(entt::registry& to, entt::registry& from);
 		virtual void DestroyEntity(ECS::Entity entity);
 		virtual void RegisterComponent(const char* name, ComponentFunctions componentFunctions);
 		virtual void UnregisterComponent(const char* name);
