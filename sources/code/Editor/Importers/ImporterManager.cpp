@@ -42,7 +42,7 @@ static void ImportDdsTexture(AssetRegistry& assetRegistry, AssetManager& assetMa
 }
 
 ImporterManager::ImporterManager() {
-	AddImporterFactory("json", ImportScene);
+	AddImporterFactory("gscene", ImportScene);
 	AddImporterFactory("dds", ImportDdsTexture);
 }
 

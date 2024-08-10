@@ -108,7 +108,7 @@ void Menubar::OnSaveAsFile() {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	WindowManager* windowManager = engineCore.windowManager;
 	Window* window = windowManager->GetWindowByIndex(0);
-	std::filesystem::path filePath = window->SaveFileDialogue("Scene File (.json)\0*.json\0");
+	std::filesystem::path filePath = window->SaveFileDialogue("Scene File (.gscene)\0*.gscene\0");
 
 	if (!filePath.empty()) {
 		SaveFile(filePath.string().c_str());
@@ -124,7 +124,7 @@ void Menubar::OnLoadFile() {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	WindowManager* windowManager = engineCore.windowManager;
 	Window* window = windowManager->GetWindowByIndex(0);
-	std::filesystem::path filePath = window->OpenFileDialogue("Scene File (.json)\0*.json\0");
+	std::filesystem::path filePath = window->OpenFileDialogue("Scene File (.gscene)\0*.gscene\0");
 
 	if (!filePath.empty()) {
 		auto* sceneManager = engineCore.GetSceneManager();
