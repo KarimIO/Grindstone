@@ -11,11 +11,12 @@
 #include <Common/Window/WindowManager.hpp>
 #include <Editor/ImguiEditor/ImguiEditor.hpp>
 #include <Editor/EditorManager.hpp>
+#include <EngineCore/Logger.hpp>
 #include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Scenes/Manager.hpp>
 
 #include "ImguiRenderer.hpp"
 #include "AssetBrowserPanel.hpp"
-#include <EngineCore/Logger.hpp>
 
 using namespace Grindstone::Editor::ImguiEditor;
 
@@ -79,6 +80,12 @@ void AssetBrowserPanel::ProcessDirectoryEntryClicks(std::filesystem::directory_e
 		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
 			if (entry.is_directory() && directory) {
 				SetCurrentAssetDirectory(*directory);
+			}
+			else if (path.extension().string() == ".gscene") {
+				Editor::Manager& engineManager = Editor::Manager::GetInstance();
+				SceneManagement::SceneManager* sceneManager = engineManager.GetEngineCore().GetSceneManager();
+				std::string relativePath = std::filesystem::relative(path, engineManager.GetAssetsPath()).string();
+				sceneManager->LoadScene(relativePath.c_str());
 			}
 			else {
 				auto window = engineCore->windowManager->GetWindowByIndex(0);
