@@ -56,11 +56,11 @@ void Build::WriteFile() {
 	}
 
 	std::string contents = "";
-	for (auto i = 0; i < sceneList.size() - 1; ++i) {
-		contents += sceneList[i] + "\n";
-	}
-
 	if (sceneList.size() > 0) {
+		for (auto i = 0; i < sceneList.size() - 1; ++i) {
+			contents += sceneList[i] + "\n";
+		}
+
 		contents += sceneList[sceneList.size() - 1];
 	}
 
