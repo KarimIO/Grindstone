@@ -38,7 +38,7 @@ void Manager::LoadPluginList() {
 	while (true) {
 		end = fileContents.find("\n", start);
 		if (end == std::string::npos) {
-			pluginName = fileContents.substr(start);
+			pluginName = Utils::Trim(fileContents.substr(start));
 			if (!pluginName.empty()) {
 				Load(pluginName.c_str());
 			}
@@ -46,8 +46,10 @@ void Manager::LoadPluginList() {
 			break;
 		}
 
-		pluginName = fileContents.substr(start, end - start);
-		Load(pluginName.c_str());
+		pluginName = Utils::Trim(fileContents.substr(start, end - start));
+		if (!pluginName.empty()) {
+			Load(pluginName.c_str());
+		}
 		start = end + 1;
 	}
 }

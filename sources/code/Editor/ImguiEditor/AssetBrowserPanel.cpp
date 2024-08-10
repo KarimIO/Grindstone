@@ -152,7 +152,7 @@ void AssetBrowserPanel::RenderPathPart(Directory* directory) {
 	ImGui::SameLine();
 	ImGui::Text("/");
 	ImGui::SameLine();
-}
+} 
 
 void AssetBrowserPanel::RenderPath() {
 	if (!searchText.empty()) {

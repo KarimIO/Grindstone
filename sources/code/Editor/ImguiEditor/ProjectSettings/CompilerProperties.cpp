@@ -41,7 +41,7 @@ void Settings::CompilerProperties::Render() {
 	ImGui::Text("Compiler Properties");
 	ImGui::Separator();
 	ImGui::Text("Preprocessor Defines:");
-	Components::ListEditor(preprocessorDefinitions, "PreprocessorDefines");
+	Widgets::StringListEditor(preprocessorDefinitions, "PreprocessorDefines");
 
 	if (ImGui::Button("Save")) {
 		WriteFile();

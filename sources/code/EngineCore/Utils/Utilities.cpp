@@ -64,14 +64,18 @@ std::string Utils::ToLower(const std::string& source) {
 	return outString;
 }
 
-std::string Utils::Trim(const std::string& source) {
-	std::string outString;
+const char* whitespace = " \t\f\v\r\n";
 
-	for (const char c : source) {
-		if (c != ' ' && c != '\t' && c != '\n') {
-			outString += c;
-		}
-	}
+std::string& Utils::TrimLeft(std::string& string) {
+	string.erase(0, string.find_first_not_of(whitespace));
+	return string;
+}
 
-	return outString;
+std::string& Utils::TrimRight(std::string& string) {
+	string.erase(string.find_last_not_of(whitespace) + 1);
+	return string;
+}
+
+std::string& Utils::Trim(std::string& string) {
+	return Utils::TrimRight(Utils::TrimLeft(string));
 }

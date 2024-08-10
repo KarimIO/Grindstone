@@ -38,7 +38,7 @@ void Build::Render() {
 	ImGui::Separator();
 
 	ImGui::Text("Included Scenes:");
-	Components::ListEditor(sceneList, "PrefScene");
+	Widgets::StringListEditor(sceneList, "PrefScene");
 
 	if (ImGui::Button("Save")) {
 		WriteFile();

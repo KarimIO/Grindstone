@@ -63,7 +63,7 @@ void AssetPicker::Render() {
 
 		if (ImGui::InputText("Search", &searchString)) {
 			std::string lowerSearch = Utils::ToLower(searchString);
-			lowerSearch = Utils::Trim(lowerSearch);
+			lowerSearch = Utils::TrimLeft(lowerSearch);
 
 			filteredResults.clear();
 			if (lowerSearch.size() == 0) {
