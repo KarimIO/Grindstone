@@ -3,12 +3,14 @@
 #include <iostream>
 #include <fstream>
 
-#include "EngineCore/EngineCore.hpp"
-#include "EngineCore/ECS/ComponentRegistrar.hpp"
-#include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/ECS/ComponentRegistrar.hpp>
+#include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
+#include <EngineCore/Utils/Utilities.hpp>
+#include <EngineCore/Logger.hpp>
+#include <Common/Math.hpp>
+
 #include "SceneWriterJson.hpp"
-#include "EngineCore/Utils/Utilities.hpp"
-#include "Common/Math.hpp"
 #include "Scene.hpp"
 
 using namespace Grindstone;
@@ -34,7 +36,7 @@ void SceneWriterJson::Save(const char* path) {
 	std::filesystem::path parentPath = dstPath.parent_path();
 	if (parentPath != "") {
 		if (std::filesystem::create_directories(parentPath)) {
-			throw std::runtime_error("Failed to create directories to scene output path");
+			GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Failed to create directories to scene output path");
 		}
 	}
 

@@ -29,25 +29,25 @@ Grindstone::SceneManagement::SceneManager::~SceneManager() {
 
 void SceneManager::LoadDefaultScene() {
 	const BuildSettings::SceneBuildSettings settings;
-	const char* defaultPath = settings.GetDefaultScene();
+	Grindstone::Uuid defaultSceneUuid = settings.GetDefaultScene();
 
-	if (defaultPath == nullptr || strlen(defaultPath) == 0) {
+	if (!defaultSceneUuid.IsValid()) {
 		CreateEmptyScene("Untitled Scene");
 		return;
 	}
 
-	LoadScene(defaultPath);
+	LoadScene(defaultSceneUuid);
 }
 
-Scene* SceneManager::LoadScene(const char* path) {
+Scene* SceneManager::LoadScene(Grindstone::Uuid uuid) {
 	CloseActiveScenes();
-	return LoadSceneAdditively(path);
+	return LoadSceneAdditively(uuid);
 }
 
-Scene* SceneManager::LoadSceneAdditively(const char* path) {
+Scene* SceneManager::LoadSceneAdditively(Grindstone::Uuid uuid) {
 	Scene* newScene = AllocatorCore::Allocate<Scene>();
-	scenes[path] = newScene;
-	SceneLoaderJson sceneLoader(newScene, path);
+	scenes[uuid] = newScene;
+	SceneLoaderJson sceneLoader(newScene, uuid);
 	ProcessSceneAfterLoading(newScene);
 
 	return newScene;

@@ -14,8 +14,8 @@ namespace Grindstone::SceneManagement {
 
 		virtual void AddPostLoadProcess(std::function<void(Scene*)>);
 		virtual void SaveScene(const char* path, Scene* scene);
-		virtual Scene* LoadSceneAdditively(const char* path);
-		virtual Scene* LoadScene(const char* path);
+		virtual Scene* LoadSceneAdditively(Grindstone::Uuid);
+		virtual Scene* LoadScene(Grindstone::Uuid);
 		virtual Scene* CreateEmptyScene(const char* name);
 		virtual Scene* CreateEmptySceneAdditively(const char* name);
 		virtual void CloseActiveScenes();

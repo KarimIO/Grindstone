@@ -3,7 +3,9 @@
 #include <string>
 #include <map>
 #include <entt/entt.hpp>
-#include "rapidjson/document.h"
+#include <rapidjson/document.h>
+
+#include <Common/ResourcePipeline/Uuid.hpp>
 
 #include "../ECS/Entity.hpp"
 #include "../Reflection/TypeDescriptorStruct.hpp"
@@ -14,9 +16,9 @@ namespace Grindstone {
 
 		class SceneLoaderJson {
 		public:
-			SceneLoaderJson(Scene*, const char* path);
+			SceneLoaderJson(Scene*, Grindstone::Uuid uuid);
 		private:
-			bool Load(const char* path);
+			bool Load(Grindstone::Uuid uuid);
 			void ProcessMeta();
 			void ProcessEntities();
 
@@ -34,7 +36,7 @@ namespace Grindstone {
 		private:
 			Scene* scene;
 			rapidjson::Document document;
-			const char* path;
+			Grindstone::Uuid uuid;
 		};
 	}
 }

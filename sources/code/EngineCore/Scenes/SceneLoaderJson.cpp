@@ -18,28 +18,27 @@
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
 
-SceneLoaderJson::SceneLoaderJson(Scene* scene, const char* path) : scene(scene), path(path) {
-	Load(path);
+SceneLoaderJson::SceneLoaderJson(Scene* scene, Grindstone::Uuid uuid) : scene(scene), uuid(uuid) {
+	Load(uuid);
 }
 
-bool SceneLoaderJson::Load(const char* path) {
+bool SceneLoaderJson::Load(Grindstone::Uuid uuid) {
 	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
 	std::string fileContents;
 	std::string assetName;
 
-	if (!assetManager->LoadFileText(AssetType::Scene, std::filesystem::path(path), assetName, fileContents)) {
+	if (!assetManager->LoadFileText(AssetType::Scene, uuid, assetName, fileContents)) {
 		return false;
 	}
 
-	scene->path = path;
+	scene->path = assetName;
 
 	if (document.Parse(fileContents.c_str()).GetParseError()) {
 		GPRINT_ERROR(LogSource::EngineCore, "Failed to load scene.");
 		return false;
 	}
 
-	std::string printMsg = std::string("Loading scene: ") + path;
-	GPRINT_INFO(LogSource::EngineCore, printMsg.c_str());
+	GPRINT_INFO_V(LogSource::EngineCore, "Loading scene: {}", assetName);
 
 	ProcessMeta();
 	ProcessEntities();

@@ -19,21 +19,22 @@ void SceneBuildSettings::Load() {
 		if (end == std::string::npos) {
 			sceneName = fileContents.substr(start);
 			if (!sceneName.empty()) {
-				scenes.push_back(sceneName);
+				sceneUuids.push_back(sceneName);
 			}
 
 			break;
 		}
 
 		sceneName = fileContents.substr(start, end - start);
-		scenes.push_back(sceneName);
+		sceneUuids.push_back(sceneName);
 		start = end + 1;
 	}
 }
-const char* SceneBuildSettings::GetDefaultScene() const {
-	if (scenes.empty()) {
+
+Grindstone::Uuid SceneBuildSettings::GetDefaultScene() const {
+	if (sceneUuids.empty()) {
 		return nullptr;
 	}
 
-	return scenes[0].c_str();
+	return sceneUuids[0];
 }
