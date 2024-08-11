@@ -46,6 +46,10 @@ Importers::ImporterManager& Manager::GetImporterManager() {
 	return importerManager;
 }
 
+ImguiEditor::ImguiEditor& Manager::GetImguiEditor() {
+	return *imguiEditor;
+}
+
 AssetRegistry& Grindstone::Editor::Manager::GetAssetRegistry() {
 	return assetRegistry;
 }
@@ -260,8 +264,9 @@ bool Manager::LoadEngine() {
 	createInfo.engineBinaryPath = currentPath.c_str();
 	engineCore = createEngineFn(createInfo);
 
-	Grindstone::Logger::SetLoggerState(engineCore->GetPluginManager()->GetInterface().GetLoggerState());
-	Grindstone::Memory::AllocatorCore::SetAllocatorState(engineCore->GetPluginManager()->GetInterface().GetAllocatorState());
+	Plugins::Interface& pluginInterface = engineCore->GetPluginManager()->GetInterface();
+	Grindstone::Logger::SetLoggerState(pluginInterface.GetLoggerState());
+	Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface.GetAllocatorState());
 
 	return engineCore != nullptr;
 }

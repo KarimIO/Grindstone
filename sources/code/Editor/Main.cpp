@@ -15,7 +15,7 @@ extern "C" {
 static std::filesystem::path FindFolder() {
 	std::filesystem::path outPath;
 
-	HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED |
+	HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED |
 		COINIT_DISABLE_OLE1DDE);
 	if (SUCCEEDED(hr)) {
 		IFileOpenDialog* pFileOpen = nullptr;

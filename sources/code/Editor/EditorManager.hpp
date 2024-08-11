@@ -46,6 +46,7 @@ namespace Grindstone {
 			Manager() = default;
 			static Manager& Manager::GetInstance();
 			Importers::ImporterManager& GetImporterManager();
+			ImguiEditor::ImguiEditor& GetImguiEditor();
 			AssetRegistry& GetAssetRegistry();
 			CommandList& GetCommandList();
 			GitManager& GetGitManager();
