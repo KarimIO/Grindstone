@@ -54,6 +54,7 @@ bool DynamicAllocator::Initialize(size_t size) {
 }
 
 DynamicAllocator::~DynamicAllocator() {
+#ifdef _DEBUG
 	Header* currentHeader = rootHeader;
 	while (currentHeader != nullptr) {
 		if (currentHeader->isAllocated) {
@@ -66,6 +67,7 @@ DynamicAllocator::~DynamicAllocator() {
 		}
 		currentHeader = currentHeader->nextHeader;
 	}
+#endif
 
 	if (rootHeader && hasAllocatedOwnMemory) {
 		delete rootHeader;
@@ -132,7 +134,9 @@ void* DynamicAllocator::AllocateRaw(size_t size, const char* debugName) {
 		nextHeader->isAllocated = false;
 		nextHeader->nextHeader = nullptr;
 		nextHeader->previousHeader = header;
+#ifdef _DEBUG
 		nextHeader->debugName = nullptr;
+#endif
 
 		usedSize += size + headerSize;
 	}

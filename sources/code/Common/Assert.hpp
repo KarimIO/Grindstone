@@ -46,4 +46,11 @@
 			GS_ASSERT_LOG(condition); \
 			GS_DEBUG_BREAK; \
 		}
+#else
+	#define GS_ASSERT_LOG(text, ...)
+	#define GS_BREAK_WITH_MESSAGE(msg, ...)
+	#define GS_ASSERT_ENGINE_WITH_MESSAGE(condition, msg, ...)
+	#define GS_ASSERT_WITH_MESSAGE(condition, msg, ...)
+	#define GS_ASSERT_ENGINE(condition)
+	#define GS_ASSERT(condition)
 #endif

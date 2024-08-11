@@ -392,9 +392,7 @@ std::vector<const char*> VulkanCore::GetRequiredExtensions() {
 		extensions.push_back(glfwExtensions[i]);
 	}
 
-	if (enableValidationLayers) {
-		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-	}
+	extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
 	return extensions;
 }
