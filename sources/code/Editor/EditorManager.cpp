@@ -267,6 +267,8 @@ bool Manager::LoadEngine() {
 }
 
 Manager::~Manager() {
+	engineCore->GetGraphicsCore()->WaitUntilIdle();
+
 	if (imguiEditor) {
 		AllocatorCore::Free(imguiEditor);
 		imguiEditor = nullptr;
