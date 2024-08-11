@@ -18,8 +18,10 @@ x86/
 bld/
 [Bb]in/
 [Oo]bj/
+[Ou]ut/
 [Ll]og/
 [Ll]ogs/
+[Ss]ources/[Cc]ode/*.recipe
 
 # Prerequisites
 *.d
