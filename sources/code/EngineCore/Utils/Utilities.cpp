@@ -3,6 +3,7 @@
 #include <fstream>
 
 #include <Common/Buffer.hpp>
+#include <EngineCore/Logger.hpp>
 
 #include "Utilities.hpp"
 
@@ -29,11 +30,17 @@ Grindstone::Buffer Utils::LoadFile(const char* inputPath) {
 }
 
 std::string Utils::LoadFileText(const char* inputPath) {
-	std::ifstream ifs(inputPath);
-	std::string content((std::istreambuf_iterator<char>(ifs)),
-		(std::istreambuf_iterator<char>()));
+	std::ifstream ifs(inputPath, std::ios::in | std::ios::binary | std::ios::ate);
 
-	return content;
+	std::ifstream::pos_type fileSize = ifs.tellg();
+	ifs.seekg(0, std::ios::beg);
+
+	std::vector<char> bytes(fileSize);
+	ifs.read(bytes.data(), fileSize);
+
+	std::string outStr(bytes.data(), fileSize);
+
+	return outStr;
 }
 
 std::string Utils::FixStringSlashesReturn(std::string& path) {
