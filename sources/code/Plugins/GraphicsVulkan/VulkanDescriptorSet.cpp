@@ -20,7 +20,7 @@ static void AttachUniformBuffer(std::vector<VkWriteDescriptorSet>& writeVector, 
 	bufferInfo->offset = 0;
 	bufferInfo->range = uniformBuffer->GetSize();
 
-	VkWriteDescriptorSet descriptorWrites = {};
+	VkWriteDescriptorSet descriptorWrites{};
 	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites.dstSet = descriptorSet;
 	descriptorWrites.dstBinding = bindingIndex;
@@ -40,7 +40,7 @@ static void AttachTexture(std::vector<VkWriteDescriptorSet>& writeVector, uint32
 	imageInfo->imageView = texture->GetImageView();
 	imageInfo->sampler = texture->GetSampler();
 
-	VkWriteDescriptorSet descriptorWrites = {};
+	VkWriteDescriptorSet descriptorWrites{};
 	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites.dstSet = descriptorSet;
 	descriptorWrites.dstBinding = bindingIndex;
@@ -62,7 +62,7 @@ static void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, 
 	imageInfo->imageView = texture->GetImageView();
 	imageInfo->sampler = texture->GetSampler();
 
-	VkWriteDescriptorSet descriptorWrites = {};
+	VkWriteDescriptorSet descriptorWrites{};
 	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites.dstSet = descriptorSet;
 	descriptorWrites.dstBinding = bindingIndex;
@@ -84,7 +84,7 @@ static void AttachDepthTexture(std::vector<VkWriteDescriptorSet>& writeVector, u
 	imageInfo->imageView = texture->GetImageView();
 	imageInfo->sampler = texture->GetSampler();
 
-	VkWriteDescriptorSet descriptorWrites = {};
+	VkWriteDescriptorSet descriptorWrites{};
 	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites.dstSet = descriptorSet;
 	descriptorWrites.dstBinding = bindingIndex;
@@ -123,7 +123,7 @@ void VulkanDescriptorSet::ChangeBindings(Binding* sourceBindings, uint32_t bindi
 	std::vector<VkWriteDescriptorSet> descriptorWrites;
 
 	for (uint32_t i = 0; i < bindingCount; ++i) {
-		const VulkanDescriptorSetLayout::Binding& layoutBinding = layout->GetBinding(bindOffset + i);
+		const VulkanDescriptorSetLayout::Binding& layoutBinding = layout->GetBinding(static_cast<size_t>(bindOffset) + i);
 		Binding& sourceBinding = sourceBindings[i];
 
 		if (sourceBinding.itemPtr == nullptr) {

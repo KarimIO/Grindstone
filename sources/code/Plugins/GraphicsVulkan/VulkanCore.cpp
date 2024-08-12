@@ -15,6 +15,7 @@
 #include <GLFW/glfw3.h>
 
 #include <EngineCore/Logger.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
 
 #include "VulkanWindowGraphicsBinding.hpp"
 #include "VulkanCore.hpp"
@@ -39,6 +40,7 @@
 #include "vk_mem_alloc.h"
 
 using namespace Grindstone::GraphicsAPI;
+using namespace Grindstone::Memory;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -117,7 +119,7 @@ bool VulkanCore::Initialize(Core::CreateInfo& ci) {
 	primaryWindow = ci.window;
 
 	CreateInstance();
-	auto wgb = new VulkanWindowGraphicsBinding();
+	auto wgb = AllocatorCore::Allocate<VulkanWindowGraphicsBinding>();
 	primaryWindow->AddBinding(wgb);
 	wgb->Initialize(primaryWindow);
 	if (ci.debug) {
@@ -515,7 +517,7 @@ VulkanCore &VulkanCore::Get() {
 }
 
 void VulkanCore::RegisterWindow(Window* window) {
-	auto wgb = new VulkanWindowGraphicsBinding();
+	auto wgb = AllocatorCore::Allocate<VulkanWindowGraphicsBinding>();
 	window->AddBinding(wgb);
 	wgb->Initialize(window);
 	//wgb->shareLists((VulkanWindowGraphicsBinding*)primary_window_->getWindowGraphicsBinding());
@@ -608,113 +610,125 @@ const char* VulkanCore::GetDefaultShaderExtension() {
 // Creators
 //==================================
 Framebuffer *VulkanCore::CreateFramebuffer(Framebuffer::CreateInfo& ci) {
-	return static_cast<Framebuffer*>(new VulkanFramebuffer(ci));
+	return static_cast<Framebuffer*>(AllocatorCore::Allocate<VulkanFramebuffer>(ci));
 }
 
 RenderPass * VulkanCore::CreateRenderPass(RenderPass::CreateInfo& ci) {
-	return static_cast<RenderPass*>(new VulkanRenderPass(ci));
+	return static_cast<RenderPass*>(AllocatorCore::Allocate<VulkanRenderPass>(ci));
 }
 
 ComputePipeline* VulkanCore::CreateComputePipeline(ComputePipeline::CreateInfo& ci) {
-	return static_cast<ComputePipeline*>(new VulkanComputePipeline(ci));
+	return static_cast<ComputePipeline*>(AllocatorCore::Allocate<VulkanComputePipeline>(ci));
 }
 
 GraphicsPipeline* VulkanCore::CreateGraphicsPipeline(GraphicsPipeline::CreateInfo& ci) {
-	return static_cast<GraphicsPipeline*>(new VulkanGraphicsPipeline(ci));
+	return static_cast<GraphicsPipeline*>(AllocatorCore::Allocate<VulkanGraphicsPipeline>(ci));
 }
 
 CommandBuffer * VulkanCore::CreateCommandBuffer(CommandBuffer::CreateInfo& ci) {
-	return static_cast<CommandBuffer*>(new VulkanCommandBuffer(ci));
+	return static_cast<CommandBuffer*>(AllocatorCore::Allocate<VulkanCommandBuffer>(ci));
 }
 
 VertexArrayObject* VulkanCore::CreateVertexArrayObject(VertexArrayObject::CreateInfo& ci) {
-	return static_cast<VertexArrayObject*>(new VulkanVertexArrayObject(ci));
+	return static_cast<VertexArrayObject*>(AllocatorCore::Allocate<VulkanVertexArrayObject>(ci));
 }
 
 VertexBuffer * VulkanCore::CreateVertexBuffer(VertexBuffer::CreateInfo& ci) {
-	return static_cast<VertexBuffer*>(new VulkanVertexBuffer(ci));
+	return static_cast<VertexBuffer*>(AllocatorCore::Allocate<VulkanVertexBuffer>(ci));
 }
 
 IndexBuffer * VulkanCore::CreateIndexBuffer(IndexBuffer::CreateInfo& ci) {
-	return static_cast<IndexBuffer*>(new VulkanIndexBuffer(ci));
+	return static_cast<IndexBuffer*>(AllocatorCore::Allocate<VulkanIndexBuffer>(ci));
 }
 
 UniformBuffer * VulkanCore::CreateUniformBuffer(UniformBuffer::CreateInfo& ci) {
-	return static_cast<UniformBuffer*>(new VulkanUniformBuffer(ci));
+	return static_cast<UniformBuffer*>(AllocatorCore::Allocate<VulkanUniformBuffer>(ci));
 }
 
 Texture* VulkanCore::CreateCubemap(Texture::CubemapCreateInfo& createInfo) {
-	return nullptr; // static_cast<Texture*>(new VulkanTexture(ci));
+	return nullptr; // static_cast<Texture*>(AllocatorCore::Allocate<VulkanTexture>(ci));
 }
 
 Texture* VulkanCore::CreateTexture(Texture::CreateInfo& ci) {
-	return static_cast<Texture*>(new VulkanTexture(ci));
+	return static_cast<Texture*>(AllocatorCore::Allocate<VulkanTexture>(ci));
 }
 
 DescriptorSet* VulkanCore::CreateDescriptorSet(DescriptorSet::CreateInfo& ci) {
-	return static_cast<DescriptorSet*>(new VulkanDescriptorSet(ci));
+	return static_cast<DescriptorSet*>(AllocatorCore::Allocate<VulkanDescriptorSet>(ci));
 }
 
 DescriptorSetLayout* VulkanCore::CreateDescriptorSetLayout(DescriptorSetLayout::CreateInfo& ci) {
-	return static_cast<DescriptorSetLayout*>(new VulkanDescriptorSetLayout(ci));
+	return static_cast<DescriptorSetLayout*>(AllocatorCore::Allocate<VulkanDescriptorSetLayout>(ci));
 }
 
 RenderTarget* VulkanCore::CreateRenderTarget(RenderTarget::CreateInfo& ci) {
-	return static_cast<RenderTarget*>(new VulkanRenderTarget(ci));
+	return static_cast<RenderTarget*>(AllocatorCore::Allocate<VulkanRenderTarget>(ci));
 }
 
 RenderTarget* VulkanCore::CreateRenderTarget(RenderTarget::CreateInfo* ci, uint32_t rc, bool cube) {
-	return static_cast<RenderTarget*>(new VulkanRenderTarget(*ci));
+	return static_cast<RenderTarget*>(AllocatorCore::Allocate<VulkanRenderTarget>(*ci));
 }
 
-DepthTarget * VulkanCore::CreateDepthTarget(DepthTarget::CreateInfo& ci) {
-	return static_cast<DepthTarget*>(new VulkanDepthTarget(ci));
+DepthTarget* VulkanCore::CreateDepthTarget(DepthTarget::CreateInfo& ci) {
+	return static_cast<DepthTarget*>(AllocatorCore::Allocate<VulkanDepthTarget>(ci));
 }
 
 //==================================
 // Deleters
 //==================================
 void VulkanCore::DeleteRenderTarget(RenderTarget * ptr) {
-	delete static_cast<VulkanRenderTarget*>(ptr);
+	AllocatorCore::Free(static_cast<VulkanRenderTarget*>(ptr));
 }
+
 void VulkanCore::DeleteDepthTarget(DepthTarget * ptr) {
-	delete static_cast<VulkanDepthTarget*>(ptr);
+	AllocatorCore::Free(static_cast<VulkanDepthTarget*>(ptr));
 }
+
 void VulkanCore::DeleteFramebuffer(Framebuffer *ptr) {
-	delete static_cast<VulkanFramebuffer*>(ptr);
+	AllocatorCore::Free(static_cast<VulkanFramebuffer*>(ptr));
 }
+
 void VulkanCore::DeleteVertexArrayObject(VertexArrayObject* ptr) {
-	delete static_cast<VulkanVertexArrayObject*>(ptr);
+	AllocatorCore::Free(static_cast<VulkanVertexArrayObject*>(ptr));
 }
+
 void VulkanCore::DeleteVertexBuffer(VertexBuffer *ptr) {
-	delete static_cast<VulkanVertexBuffer*>(ptr);
+	AllocatorCore::Free(static_cast<VulkanVertexBuffer*>(ptr));
 }
+
 void VulkanCore::DeleteIndexBuffer(IndexBuffer *ptr) {
-	delete static_cast<VulkanIndexBuffer*>(ptr);
+	AllocatorCore::Free(static_cast<VulkanIndexBuffer*>(ptr));
 }
+
 void VulkanCore::DeleteUniformBuffer(UniformBuffer *ptr) {
-	delete static_cast<VulkanUniformBuffer*>(ptr);
+	AllocatorCore::Free(static_cast<VulkanUniformBuffer*>(ptr));
 }
+
 void VulkanCore::DeleteComputePipeline(ComputePipeline* ptr) {
-	delete static_cast<VulkanComputePipeline*>(ptr);
+	AllocatorCore::Free(static_cast<VulkanComputePipeline*>(ptr));
 }
+
 void VulkanCore::DeleteGraphicsPipeline(GraphicsPipeline *ptr) {
-	delete static_cast<VulkanGraphicsPipeline*>(ptr);
+	AllocatorCore::Free(static_cast<VulkanGraphicsPipeline*>(ptr));
 }
+
 void VulkanCore::DeleteRenderPass(RenderPass *ptr) {
-	delete static_cast<VulkanRenderPass*>(ptr);
+	AllocatorCore::Free(static_cast<VulkanRenderPass*>(ptr));
 }
+
 void VulkanCore::DeleteTexture(Texture * ptr) {
-	delete static_cast<VulkanTexture*>(ptr);
+	AllocatorCore::Free(static_cast<VulkanTexture*>(ptr));
 }
+
 void VulkanCore::DeleteDescriptorSet(DescriptorSet* ptr) {
-	delete static_cast<VulkanDescriptorSet*>(ptr);
+	AllocatorCore::Free(static_cast<VulkanDescriptorSet*>(ptr));
 }
 void VulkanCore::DeleteDescriptorSetLayout(DescriptorSetLayout * ptr) {
-	delete static_cast<VulkanDescriptorSetLayout*>(ptr);
+	AllocatorCore::Free(static_cast<VulkanDescriptorSetLayout*>(ptr));
 }
+
 void VulkanCore::DeleteCommandBuffer(CommandBuffer *ptr) {
-	delete static_cast<VulkanCommandBuffer*>(ptr);
+	AllocatorCore::Free(static_cast<VulkanCommandBuffer*>(ptr));
 }
 
 //==================================
