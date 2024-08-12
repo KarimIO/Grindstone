@@ -183,9 +183,22 @@ void ComponentInspector::RenderComponent(
 		RenderCSharpScript(componentPtr, entity);
 	}
 	else {
-		if (ImGui::TreeNodeEx(componentTypeName, ImGuiTreeNodeFlags_FramePadding)) {
+		bool shouldRemove = false;
+		bool isOpened = ImGui::TreeNodeEx(componentTypeName, ImGuiTreeNodeFlags_FramePadding);
+		if (ImGui::BeginPopupContextItem(componentTypeName)) {
+			if (ImGui::MenuItem("Remove Component")) {
+				shouldRemove = true;
+			}
+			ImGui::EndPopup();
+		}
+
+		if (isOpened) {
 			RenderComponentCategory(componentReflectionData.category, componentPtr, entity);
 			ImGui::TreePop();
+		}
+
+		if (shouldRemove) {
+			entity.RemoveComponent(componentTypeName);
 		}
 	}
 
@@ -202,19 +215,47 @@ void ComponentInspector::RenderCSharpScript(
 	}
 
 	if (component->monoClass == nullptr) {
-		if (ImGui::TreeNodeEx("Unassigned CSharp Component", ImGuiTreeNodeFlags_FramePadding)) {
+		bool shouldRemove = false;
+		bool isOpened = ImGui::TreeNodeEx("Unassigned CSharp Component", ImGuiTreeNodeFlags_FramePadding);
+		if (ImGui::BeginPopupContextItem("Unassigned CSharp Component")) {
+			if (ImGui::MenuItem("Remove Component")) {
+				shouldRemove = true;
+			}
+			ImGui::EndPopup();
+		}
+
+		if (isOpened) {
 			ImGui::TreePop();
+		}
+
+		if (shouldRemove) {
+			entity.RemoveComponent("CSharpScript");
 		}
 
 		return;
 	}
 
-	const std::string componentName = "(C#) " + component->monoClass->scriptClassname;
-	if (ImGui::TreeNodeEx(componentName.c_str(), ImGuiTreeNodeFlags_FramePadding)) {
-		for (auto& field : component->monoClass->fields) {
-			RenderMonoField(component->scriptObject, field.second.classFieldPtr);
+	{
+		bool shouldRemove = false;
+		const std::string componentName = "(C#) " + component->monoClass->scriptClassname;
+		bool isOpened = ImGui::TreeNodeEx(componentName.c_str(), ImGuiTreeNodeFlags_FramePadding);
+		if (ImGui::BeginPopupContextItem(componentName.c_str())) {
+			if (ImGui::MenuItem("Remove Component")) {
+				shouldRemove = true;
+			}
+			ImGui::EndPopup();
 		}
-		ImGui::TreePop();
+
+		if (isOpened) {
+			for (auto& field : component->monoClass->fields) {
+				RenderMonoField(component->scriptObject, field.second.classFieldPtr);
+			}
+			ImGui::TreePop();
+		}
+
+		if (shouldRemove) {
+			entity.RemoveComponent("CSharpScript");
+		}
 	}
 }
 
