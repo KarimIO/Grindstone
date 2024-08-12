@@ -49,9 +49,12 @@ namespace Grindstone::Memory::AllocatorCore {
 
 	template<typename T>
 	bool Free(T* memPtr, bool shouldClear = false) {
-		bool retVal = GetAllocatorState()->dynamicAllocator.Free(memPtr, shouldClear);
-		if (retVal) {
+		Allocators::DynamicAllocator& dynamicAllocator = GetAllocatorState()->dynamicAllocator;
+		Allocators::DynamicAllocator::Header* header = dynamicAllocator.GetHeaderOfBlock(memPtr);
+		if (header != nullptr) {
 			reinterpret_cast<T*>(memPtr)->~T();
+			dynamicAllocator.FreeFromHeader(header, shouldClear);
+
 			return true;
 		}
 

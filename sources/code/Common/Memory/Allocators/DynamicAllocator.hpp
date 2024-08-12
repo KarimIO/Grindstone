@@ -33,6 +33,7 @@ namespace Grindstone::Memory::Allocators {
 
 		void* AllocateRaw(size_t size, const char* debugName);
 		bool Free(void* memPtr, bool shouldClear = false);
+		bool FreeFromHeader(Header* header, bool shouldClear = false);
 
 		bool IsEmpty() const;
 
@@ -78,9 +79,11 @@ namespace Grindstone::Memory::Allocators {
 
 		template<typename T>
 		bool Free(void* memPtr, bool shouldClear = false) {
-			bool retVal = Free(memPtr, shouldClear);
-			if (retVal) {
+			Header* header = GetHeaderOfBlock(memPtr);
+			if (header != nullptr) {
 				reinterpret_cast<T*>(memPtr)->~T();
+				FreeFromHeader(header, shouldClear);
+
 				return true;
 			}
 
