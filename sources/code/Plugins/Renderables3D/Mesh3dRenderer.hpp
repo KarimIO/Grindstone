@@ -58,10 +58,10 @@ namespace Grindstone {
 			virtual void RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, const char* queueName) override;
 			virtual void CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt::registry& registry) override;
 			virtual void SortQueues() override;
+			GraphicsAPI::DescriptorSetLayout* GetPerDrawDescriptorSetLayout() const;
 		private:
 			virtual std::string GetName() const override;
 			virtual void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) override;
-			void ValidateMeshRenderer(MeshRendererComponent& meshRenderer);
 
 			EngineCore* engineCore = nullptr;
 			std::string rendererName = "Mesh3d";

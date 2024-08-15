@@ -58,29 +58,6 @@ std::string Mesh3dRenderer::GetName() const {
 	return rendererName;
 }
 
-void Mesh3dRenderer::ValidateMeshRenderer(MeshRendererComponent& meshRenderComponent) {
-	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
-
-	// TODO: Where can I put this? It needs to be done every time a meshrenderer is added.
-	// Maybe just make an array of perDrawUniformBuffers
-	if (meshRenderComponent.perDrawUniformBuffer == nullptr) {
-		GraphicsAPI::UniformBuffer::CreateInfo uniformBufferCreateInfo{};
-		uniformBufferCreateInfo.debugName = "Per Draw Uniform Buffer";
-		uniformBufferCreateInfo.isDynamic = true;
-		uniformBufferCreateInfo.size = sizeof(float) * 16;
-		meshRenderComponent.perDrawUniformBuffer = graphicsCore->CreateUniformBuffer(uniformBufferCreateInfo);
-
-		GraphicsAPI::DescriptorSet::Binding descriptorSetUniformBinding{ meshRenderComponent.perDrawUniformBuffer };
-
-		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
-		descriptorSetCreateInfo.debugName = "Per Draw Descriptor Set";
-		descriptorSetCreateInfo.bindingCount = 1;
-		descriptorSetCreateInfo.bindings = &descriptorSetUniformBinding;
-		descriptorSetCreateInfo.layout = perDrawDescriptorSetLayout;
-		meshRenderComponent.perDrawDescriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
-	}
-}
-
 void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet, entt::registry& registry, glm::vec3 lightSourcePosition) {
 	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
 	Assets::AssetManager* assetManager = engineCore->assetManager;
@@ -108,8 +85,6 @@ void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, 
 		if (meshAsset == nullptr) {
 			return;
 		}
-
-		ValidateMeshRenderer(meshRenderComponent);
 
 		// Early Frustum Cull
 
@@ -235,8 +210,6 @@ void Mesh3dRenderer::CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt:
 			return;
 		}
 
-		ValidateMeshRenderer(meshRenderComponent);
-
 		// Early Frustum Cull
 
 		Math::Matrix4 transform = TransformComponent::GetWorldTransformMatrix(entity, registry);
@@ -309,4 +282,8 @@ void Mesh3dRenderer::SortQueues() {
 			std::sort(renderSortData.begin(), renderSortData.end(), CompareReverseRenderSort);
 		}
 	}
+}
+
+GraphicsAPI::DescriptorSetLayout* Mesh3dRenderer::GetPerDrawDescriptorSetLayout() const {
+	return perDrawDescriptorSetLayout;
 }
