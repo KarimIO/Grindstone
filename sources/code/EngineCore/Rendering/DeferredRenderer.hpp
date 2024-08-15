@@ -43,12 +43,16 @@ namespace Grindstone {
 			Default,
 			Position,
 			PositionMod,
+			ViewPosition,
+			ViewPositionMod,
 			Depth,
 			DepthMod,
 			Normal,
+			ViewNormal,
 			Albedo,
 			Specular,
 			Roughness,
+			AmbientOcclusion,
 			Count
 		};
 
@@ -65,6 +69,9 @@ namespace Grindstone {
 			GraphicsAPI::RenderTarget* gbufferNormalRenderTarget = nullptr;
 			GraphicsAPI::RenderTarget* gbufferSpecularRoughnessRenderTarget = nullptr;
 
+			GraphicsAPI::Framebuffer* ambientOcclusionFramebuffer = nullptr;
+			GraphicsAPI::RenderTarget* ambientOcclusionRenderTarget = nullptr;
+
 			GraphicsAPI::UniformBuffer* globalUniformBufferObject = nullptr;
 			GraphicsAPI::UniformBuffer* debugUniformBufferObject = nullptr;
 			GraphicsAPI::UniformBuffer* tonemapPostProcessingUniformBufferObject = nullptr;
@@ -79,6 +86,8 @@ namespace Grindstone {
 			GraphicsAPI::DescriptorSet* dofNearBlurDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* dofFarBlurDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* dofCombineDescriptorSet = nullptr;
+
+			GraphicsAPI::DescriptorSet* ambientOcclusionDescriptorSet = nullptr;
 
 			GraphicsAPI::RenderTarget* nearDofRenderTarget = nullptr;
 			GraphicsAPI::RenderTarget* farDofRenderTarget = nullptr;
@@ -107,7 +116,7 @@ namespace Grindstone {
 		void RenderBloom(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer);
 		void UpdateBloomUBO();
 
-		void RenderSsao(uint32_t imageIndex, GraphicsAPI::CommandBuffer* commandBuffer);
+		void RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* commandBuffer);
 		void RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffer, entt::registry& registry);
 		void RenderLights(uint32_t imageIndex, GraphicsAPI::CommandBuffer* currentCommandBuffer, entt::registry& registry);
 		void PostProcess(uint32_t imageIndex, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer);
@@ -166,14 +175,11 @@ namespace Grindstone {
 		GraphicsAPI::RenderPass* lightingRenderPass = nullptr;
 		GraphicsAPI::RenderPass* forwardLitRenderPass = nullptr;
 		GraphicsAPI::RenderPass* ssaoRenderPass = nullptr;
-		GraphicsAPI::Framebuffer* ssaoFramebuffer = nullptr;
-		GraphicsAPI::RenderTarget* ssaoRenderTarget = nullptr;
 		GraphicsAPI::UniformBuffer* ssaoUniformBuffer = nullptr;
 		GraphicsAPI::Texture* ssaoNoiseTexture = nullptr;
+		GraphicsAPI::DescriptorSetLayout* ambientOcclusionDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* ssaoInputDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSet* ssaoInputDescriptorSet = nullptr;
-		GraphicsAPI::DescriptorSetLayout* ssaoDescriptorSetLayout = nullptr;
-		GraphicsAPI::DescriptorSet* ssaoDescriptorSet = nullptr;
 
 		GraphicsAPI::DescriptorSetLayout* environmentMapDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSet* environmentMapDescriptorSet = nullptr;

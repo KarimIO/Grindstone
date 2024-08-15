@@ -33,14 +33,18 @@ using namespace Grindstone::GraphicsAPI;
 
 std::array<Grindstone::BaseRenderer::RenderMode, static_cast<uint16_t>(DeferredRenderer::DeferredRenderMode::Count)> DeferredRenderer::renderModes = {
 	Grindstone::BaseRenderer::RenderMode{ "Default" },
-	Grindstone::BaseRenderer::RenderMode{ "Position" },
-	Grindstone::BaseRenderer::RenderMode{ "Position (Modulus)" },
+	Grindstone::BaseRenderer::RenderMode{ "World Position" },
+	Grindstone::BaseRenderer::RenderMode{ "World Position (Modulus)" },
+	Grindstone::BaseRenderer::RenderMode{ "View Position" },
+	Grindstone::BaseRenderer::RenderMode{ "View Position (Modulus)" },
 	Grindstone::BaseRenderer::RenderMode{ "Depth" },
 	Grindstone::BaseRenderer::RenderMode{ "Depth (Modulus)" },
 	Grindstone::BaseRenderer::RenderMode{ "Normals" },
+	Grindstone::BaseRenderer::RenderMode{ "View Normals" },
 	Grindstone::BaseRenderer::RenderMode{ "Albedo" },
 	Grindstone::BaseRenderer::RenderMode{ "Specular" },
-	Grindstone::BaseRenderer::RenderMode{ "Roughness" }
+	Grindstone::BaseRenderer::RenderMode{ "Roughness" },
+	Grindstone::BaseRenderer::RenderMode{ "Ambient Occlusion" }
 };
 
 GraphicsAPI::RenderPass* DeferredRenderer::gbufferRenderPass = nullptr;
@@ -49,6 +53,7 @@ GraphicsAPI::RenderPass* DeferredRenderer::mainRenderPass = nullptr;
 const size_t MAX_BLOOM_MIPS = 40u;
 const DepthFormat depthFormat = DepthFormat::D24;
 const bool shouldFastResize = true;
+GraphicsAPI::ColorFormat ambientOcclusionFormat = GraphicsAPI::ColorFormat::R8;;
 
 float lightPositions[] = {
 	-1.0f, -1.0f,
@@ -186,6 +191,10 @@ DeferredRenderer::~DeferredRenderer() {
 		graphicsCore->DeleteDescriptorSet(imageSet.engineDescriptorSet);
 		graphicsCore->DeleteDescriptorSet(imageSet.tonemapDescriptorSet);
 		graphicsCore->DeleteDescriptorSet(imageSet.lightingDescriptorSet);
+
+		graphicsCore->DeleteRenderTarget(imageSet.ambientOcclusionRenderTarget);
+		graphicsCore->DeleteFramebuffer(imageSet.ambientOcclusionFramebuffer);
+		graphicsCore->DeleteDescriptorSet(imageSet.ambientOcclusionDescriptorSet);
 	}
 
 	graphicsCore->DeleteDescriptorSetLayout(engineDescriptorSetLayout);
@@ -196,8 +205,9 @@ DeferredRenderer::~DeferredRenderer() {
 
 	graphicsCore->DeleteUniformBuffer(ssaoUniformBuffer);
 	graphicsCore->DeleteTexture(ssaoNoiseTexture);
-	graphicsCore->DeleteDescriptorSetLayout(ssaoDescriptorSetLayout);
-	graphicsCore->DeleteDescriptorSet(ssaoDescriptorSet);
+	graphicsCore->DeleteDescriptorSet(ssaoInputDescriptorSet);
+	graphicsCore->DeleteDescriptorSetLayout(ssaoInputDescriptorSetLayout);
+	graphicsCore->DeleteDescriptorSetLayout(ambientOcclusionDescriptorSetLayout);
 }
 
 void DeferredRenderer::CreateDepthOfFieldRenderTargetsAndDescriptorSets(DeferredRendererImageSet& imageSet, size_t imageSetIndex) {
@@ -568,10 +578,10 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 		ssaoLayoutBindings[1].stages = GraphicsAPI::ShaderStageBit::Fragment;
 
 		DescriptorSetLayout::CreateInfo ssaoDescriptorSetLayoutCreateInfo{};
-		ssaoDescriptorSetLayoutCreateInfo.debugName = "SSAO Descriptor Set Layout";
+		ssaoDescriptorSetLayoutCreateInfo.debugName = "SSAO Input Descriptor Set Layout";
 		ssaoDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(ssaoLayoutBindings.size());
 		ssaoDescriptorSetLayoutCreateInfo.bindings = ssaoLayoutBindings.data();
-		ssaoDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ssaoDescriptorSetLayoutCreateInfo);
+		ssaoInputDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ssaoDescriptorSetLayoutCreateInfo);
 	}
 
 	{
@@ -581,35 +591,21 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 		};
 
 		DescriptorSet::CreateInfo engineDescriptorSetCreateInfo{};
-		engineDescriptorSetCreateInfo.debugName = "SSAO Descriptor Set";
-		engineDescriptorSetCreateInfo.layout = ssaoDescriptorSetLayout;
+		engineDescriptorSetCreateInfo.debugName = "SSAO Input Descriptor Set";
+		engineDescriptorSetCreateInfo.layout = ssaoInputDescriptorSetLayout;
 		engineDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(ssaoLayoutBindings.size());
 		engineDescriptorSetCreateInfo.bindings = ssaoLayoutBindings.data();
-		ssaoDescriptorSet = graphicsCore->CreateDescriptorSet(engineDescriptorSetCreateInfo);
+		ssaoInputDescriptorSet = graphicsCore->CreateDescriptorSet(engineDescriptorSetCreateInfo);
 	}
 
-	{
-		GraphicsAPI::RenderTarget::CreateInfo ssaoRenderTargetCreateInfo{ GraphicsAPI::ColorFormat::R8, framebufferWidth / 2, framebufferHeight / 2, true, false, "SSAO Render Target" };
-		ssaoRenderTarget = graphicsCore->CreateRenderTarget(ssaoRenderTargetCreateInfo);
+	GraphicsAPI::RenderPass::CreateInfo ssaoRenderPassCreateInfo{};
+	ssaoRenderPassCreateInfo.debugName = "SSAO Renderpass";
+	ssaoRenderPassCreateInfo.colorFormats = &ambientOcclusionFormat;
+	ssaoRenderPassCreateInfo.colorFormatCount = 1;
+	ssaoRenderPassCreateInfo.depthFormat = DepthFormat::None;
+	ssaoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
+	ssaoRenderPass = graphicsCore->CreateRenderPass(ssaoRenderPassCreateInfo);
 
-		GraphicsAPI::RenderPass::CreateInfo ssaoRenderPassCreateInfo{};
-		ssaoRenderPassCreateInfo.debugName = "SSAO Renderpass";
-		ssaoRenderPassCreateInfo.colorFormats = &ssaoRenderTargetCreateInfo.format;
-		ssaoRenderPassCreateInfo.colorFormatCount = 1;
-		ssaoRenderPassCreateInfo.depthFormat = DepthFormat::None;
-		ssaoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
-		ssaoRenderPass = graphicsCore->CreateRenderPass(ssaoRenderPassCreateInfo);
-
-		GraphicsAPI::Framebuffer::CreateInfo ssaoFramebufferCreateInfo{};
-		ssaoFramebufferCreateInfo.debugName = "SSAO Framebuffer";
-		ssaoFramebufferCreateInfo.width = framebufferWidth / 2;
-		ssaoFramebufferCreateInfo.height = framebufferHeight / 2;
-		ssaoFramebufferCreateInfo.renderTargetLists = &ssaoRenderTarget;
-		ssaoFramebufferCreateInfo.numRenderTargetLists = 1;
-		ssaoFramebufferCreateInfo.depthTarget = nullptr;
-		ssaoFramebufferCreateInfo.renderPass = ssaoRenderPass;
-		ssaoFramebuffer = graphicsCore->CreateFramebuffer(ssaoFramebufferCreateInfo);
-	}
 }
 
 void DeferredRenderer::CleanupPipelines() {
@@ -669,9 +665,6 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	graphicsCore->WaitUntilIdle();
 
-	ssaoRenderTarget->Resize(halfWidth, halfHeight);
-	ssaoFramebuffer->Resize(halfWidth, halfHeight);
-
 	bloomStoredMipLevelCount = bloomMipLevelCount;
 	bloomFirstUpsampleIndex = bloomStoredMipLevelCount - 1;
 
@@ -689,6 +682,9 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 		imageSet.gbuffer->Resize(width, height);
 		imageSet.litHdrRenderTarget->Resize(width, height);
 		imageSet.litHdrFramebuffer->Resize(width, height);
+
+		imageSet.ambientOcclusionRenderTarget->Resize(halfWidth, halfHeight);
+		imageSet.ambientOcclusionFramebuffer->Resize(halfWidth, halfHeight);
 
 		CreateDepthOfFieldRenderTargetsAndDescriptorSets(imageSet, i);
 		CreateSsrRenderTargetsAndDescriptorSets(imageSet, i);
@@ -1011,7 +1007,7 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	debugDescriptorSetLayoutBindings[2] = gbuffer0Binding;
 	debugDescriptorSetLayoutBindings[3] = gbuffer1Binding;
 	debugDescriptorSetLayoutBindings[4] = gbuffer2Binding;
-	debugDescriptorSetLayoutBindings[5] = { 5, 1, BindingType::RenderTexture, ShaderStageBit::Fragment }; // Bloom Texture
+	debugDescriptorSetLayoutBindings[5] = { 5, 1, BindingType::RenderTexture, ShaderStageBit::Fragment }; // Ambient Occlusion Texture
 	debugDescriptorSetLayoutBindings[6] = { 6, 1, BindingType::UniformBuffer, ShaderStageBit::Fragment }; // Post Process Uniform Buffer
 
 	DescriptorSetLayout::CreateInfo debugDescriptorSetLayoutCreateInfo{};
@@ -1066,6 +1062,39 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	shadowMapDescriptorSetLayoutCreateInfo.bindingCount = 1;
 	shadowMapDescriptorSetLayoutCreateInfo.bindings = &shadowMapMatrixBinding;
 	shadowMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(shadowMapDescriptorSetLayoutCreateInfo);
+
+	{
+		std::array<DescriptorSetLayout::Binding, 2> ambientOcclusionInputLayoutBinding{};
+		ambientOcclusionInputLayoutBinding[0].bindingId = 0;
+		ambientOcclusionInputLayoutBinding[0].count = 1;
+		ambientOcclusionInputLayoutBinding[0].type = BindingType::RenderTexture;
+		ambientOcclusionInputLayoutBinding[0].stages = GraphicsAPI::ShaderStageBit::Fragment;
+
+		ambientOcclusionInputLayoutBinding[1].bindingId = 1;
+		ambientOcclusionInputLayoutBinding[1].count = 1;
+		ambientOcclusionInputLayoutBinding[1].type = BindingType::Texture;
+		ambientOcclusionInputLayoutBinding[1].stages = GraphicsAPI::ShaderStageBit::Fragment;
+
+		DescriptorSetLayout::CreateInfo ambientOcclusionInputLayoutCreateInfo{};
+		ambientOcclusionInputLayoutCreateInfo.debugName = "Ambient Occlusion Descriptor Set Layout";
+		ambientOcclusionInputLayoutCreateInfo.bindingCount = static_cast<uint32_t>(ambientOcclusionInputLayoutBinding.size());
+		ambientOcclusionInputLayoutCreateInfo.bindings = ambientOcclusionInputLayoutBinding.data();
+		ambientOcclusionDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ambientOcclusionInputLayoutCreateInfo);
+	}
+
+	{
+		DescriptorSetLayout::Binding environmentMapLayoutBinding{};
+		environmentMapLayoutBinding.bindingId = 0;
+		environmentMapLayoutBinding.count = 1;
+		environmentMapLayoutBinding.type = BindingType::Texture;
+		environmentMapLayoutBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
+
+		DescriptorSetLayout::CreateInfo environmentMapLayoutCreateInfo{};
+		environmentMapLayoutCreateInfo.debugName = "Environment Map Input Descriptor Set Layout";
+		environmentMapLayoutCreateInfo.bindingCount = 1;
+		environmentMapLayoutCreateInfo.bindings = &environmentMapLayoutBinding;
+		environmentMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(environmentMapLayoutCreateInfo);
+	}
 }
 
 void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) {
@@ -1105,7 +1134,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	debugDescriptorSetBindings[2] = gbufferAlbedoBinding;
 	debugDescriptorSetBindings[3] = gbufferNormalBinding;
 	debugDescriptorSetBindings[4] = gbufferSpecRoughnessBinding;
-	debugDescriptorSetBindings[5] = { imageSet.bloomRenderTargets[bloomMipLevelCount + 1] }; // Bloom Texture
+	debugDescriptorSetBindings[5] = { imageSet.ambientOcclusionRenderTarget };
 	debugDescriptorSetBindings[6] = { imageSet.debugUniformBufferObject };
 
 	DescriptorSet::CreateInfo debugDescriptorSetCreateInfo{};
@@ -1130,47 +1159,14 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	imageSet.lightingDescriptorSet = graphicsCore->CreateDescriptorSet(lightingDescriptorSetCreateInfo);
 
 	{
-		std::array<DescriptorSetLayout::Binding, 2> ssaoInputLayoutBinding{};
-		ssaoInputLayoutBinding[0].bindingId = 0;
-		ssaoInputLayoutBinding[0].count = 1;
-		ssaoInputLayoutBinding[0].type = BindingType::RenderTexture;
-		ssaoInputLayoutBinding[0].stages = GraphicsAPI::ShaderStageBit::Fragment;
+		std::array<DescriptorSet::Binding, 2> aoInputBinding = { imageSet.ambientOcclusionRenderTarget, brdfLut };
 
-		ssaoInputLayoutBinding[1].bindingId = 1;
-		ssaoInputLayoutBinding[1].count = 1;
-		ssaoInputLayoutBinding[1].type = BindingType::Texture;
-		ssaoInputLayoutBinding[1].stages = GraphicsAPI::ShaderStageBit::Fragment;
-
-		DescriptorSetLayout::CreateInfo ssaoInputLayoutCreateInfo{};
-		ssaoInputLayoutCreateInfo.debugName = "SSAO Descriptor Set Layout";
-		ssaoInputLayoutCreateInfo.bindingCount = static_cast<uint32_t>(ssaoInputLayoutBinding.size());
-		ssaoInputLayoutCreateInfo.bindings = ssaoInputLayoutBinding.data();
-		ssaoInputDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ssaoInputLayoutCreateInfo);
-	}
-
-	{
-		std::array<DescriptorSet::Binding, 2> ssaoInputBinding = { ssaoRenderTarget, brdfLut };
-
-		DescriptorSet::CreateInfo ssaoInputCreateInfo{};
-		ssaoInputCreateInfo.debugName = "SSAO Descriptor Set";
-		ssaoInputCreateInfo.layout = ssaoInputDescriptorSetLayout;
-		ssaoInputCreateInfo.bindingCount = static_cast<uint32_t>(ssaoInputBinding.size());
-		ssaoInputCreateInfo.bindings = ssaoInputBinding.data();
-		ssaoInputDescriptorSet = graphicsCore->CreateDescriptorSet(ssaoInputCreateInfo);
-	}
-
-	{
-		DescriptorSetLayout::Binding environmentMapLayoutBinding{};
-		environmentMapLayoutBinding.bindingId = 0;
-		environmentMapLayoutBinding.count = 1;
-		environmentMapLayoutBinding.type = BindingType::Texture;
-		environmentMapLayoutBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
-
-		DescriptorSetLayout::CreateInfo environmentMapLayoutCreateInfo{};
-		environmentMapLayoutCreateInfo.debugName = "Environment Map Input Descriptor Set Layout";
-		environmentMapLayoutCreateInfo.bindingCount = 1;
-		environmentMapLayoutCreateInfo.bindings = &environmentMapLayoutBinding;
-		environmentMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(environmentMapLayoutCreateInfo);
+		DescriptorSet::CreateInfo aoInputCreateInfo{};
+		aoInputCreateInfo.debugName = "Ambient Occlusion Descriptor Set";
+		aoInputCreateInfo.layout = ambientOcclusionDescriptorSetLayout;
+		aoInputCreateInfo.bindingCount = static_cast<uint32_t>(aoInputBinding.size());
+		aoInputCreateInfo.bindings = aoInputBinding.data();
+		imageSet.ambientOcclusionDescriptorSet = graphicsCore->CreateDescriptorSet(aoInputCreateInfo);
 	}
 
 	{
@@ -1219,7 +1215,7 @@ void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	}
 
 	{
-		DescriptorSet::Binding ssaoInputBinding{ ssaoRenderTarget };
+		DescriptorSet::Binding ssaoInputBinding{ imageSet.ambientOcclusionRenderTarget };
 		ssaoInputDescriptorSet->ChangeBindings(&ssaoInputBinding, 1);
 	}
 }
@@ -1313,6 +1309,21 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 		gbufferCreateInfo.depthTarget = imageSet.gbufferDepthTarget;
 
 		imageSet.gbuffer = graphicsCore->CreateFramebuffer(gbufferCreateInfo);
+
+		{
+			GraphicsAPI::RenderTarget::CreateInfo ssaoRenderTargetCreateInfo{ ambientOcclusionFormat, framebufferWidth / 2, framebufferHeight / 2, true, false, "SSAO Render Target" };
+			imageSet.ambientOcclusionRenderTarget = graphicsCore->CreateRenderTarget(ssaoRenderTargetCreateInfo);
+
+			GraphicsAPI::Framebuffer::CreateInfo ssaoFramebufferCreateInfo{};
+			ssaoFramebufferCreateInfo.debugName = "SSAO Framebuffer";
+			ssaoFramebufferCreateInfo.width = framebufferWidth / 2;
+			ssaoFramebufferCreateInfo.height = framebufferHeight / 2;
+			ssaoFramebufferCreateInfo.renderTargetLists = &imageSet.ambientOcclusionRenderTarget;
+			ssaoFramebufferCreateInfo.numRenderTargetLists = 1;
+			ssaoFramebufferCreateInfo.depthTarget = nullptr;
+			ssaoFramebufferCreateInfo.renderPass = ssaoRenderPass;
+			imageSet.ambientOcclusionFramebuffer = graphicsCore->CreateFramebuffer(ssaoFramebufferCreateInfo);
+		}
 	}
 }
 
@@ -1410,7 +1421,7 @@ void DeferredRenderer::CreatePipelines() {
 
 		std::array<GraphicsAPI::DescriptorSetLayout*, 2> ssaoLayouts{};
 		ssaoLayouts[0] = lightingDescriptorSetLayout;
-		ssaoLayouts[1] = ssaoDescriptorSetLayout;
+		ssaoLayouts[1] = ssaoInputDescriptorSetLayout;
 
 		pipelineCreateInfo.debugName = "SSAO Pipeline";
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
@@ -1423,10 +1434,6 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.isStencilEnabled = false;
 		pipelineCreateInfo.blendMode = BlendMode::None;
 		pipelineCreateInfo.renderPass = ssaoRenderPass;
-		pipelineCreateInfo.width = static_cast<float>(ssaoFramebuffer->GetWidth());
-		pipelineCreateInfo.height = static_cast<float>(ssaoFramebuffer->GetHeight());
-		pipelineCreateInfo.scissorW = ssaoFramebuffer->GetWidth();
-		pipelineCreateInfo.scissorH = ssaoFramebuffer->GetHeight();
 		ssaoPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
 
@@ -1490,7 +1497,7 @@ void DeferredRenderer::CreatePipelines() {
 
 		std::array<GraphicsAPI::DescriptorSetLayout*, 3> iblLayouts{};
 		iblLayouts[0] = lightingDescriptorSetLayout;
-		iblLayouts[1] = ssaoInputDescriptorSetLayout;
+		iblLayouts[1] = ambientOcclusionDescriptorSetLayout;
 		iblLayouts[2] = environmentMapDescriptorSetLayout;
 
 		pipelineCreateInfo.debugName = "Image Based Lighting Pipeline";
@@ -2057,7 +2064,7 @@ void DeferredRenderer::RenderLights(
 		if (hasEnvMap) {
 			std::array<GraphicsAPI::DescriptorSet*, 3> iblDescriptors{};
 			iblDescriptors[0] = imageSet.lightingDescriptorSet;
-			iblDescriptors[1] = ssaoInputDescriptorSet;
+			iblDescriptors[1] = imageSet.ambientOcclusionDescriptorSet;
 			iblDescriptors[2] = environmentMapDescriptorSet;
 			currentCommandBuffer->BindGraphicsDescriptorSet(imageBasedLightingPipeline, iblDescriptors.data(), static_cast<uint32_t>(iblDescriptors.size()));
 			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
@@ -2153,13 +2160,12 @@ void DeferredRenderer::RenderLights(
 	}
 }
 
-void DeferredRenderer::RenderSsao(uint32_t imageIndex, GraphicsAPI::CommandBuffer* commandBuffer) {
+void DeferredRenderer::RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* commandBuffer) {
 	if (ssaoPipeline == nullptr) {
 		return;
 	}
 
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	auto& imageSet = deferredRendererImageSets[imageIndex];
 
 	ClearColorValue clearColorAttachment = { 16.0f, 16.0f, 16.0f, 16.0f };
 	ClearDepthStencil clearDepthStencil{};
@@ -2169,9 +2175,9 @@ void DeferredRenderer::RenderSsao(uint32_t imageIndex, GraphicsAPI::CommandBuffe
 
 	commandBuffer->BindRenderPass(
 		ssaoRenderPass,
-		ssaoFramebuffer,
-		ssaoFramebuffer->GetWidth(),
-		ssaoFramebuffer->GetHeight(),
+		imageSet.ambientOcclusionFramebuffer,
+		imageSet.ambientOcclusionFramebuffer->GetWidth(),
+		imageSet.ambientOcclusionFramebuffer->GetHeight(),
 		&clearColorAttachment,
 		1,
 		clearDepthStencil
@@ -2188,7 +2194,7 @@ void DeferredRenderer::RenderSsao(uint32_t imageIndex, GraphicsAPI::CommandBuffe
 
 	std::array<GraphicsAPI::DescriptorSet*, 2> ssaoDescriptors{};
 	ssaoDescriptors[0] = imageSet.lightingDescriptorSet;
-	ssaoDescriptors[1] = ssaoDescriptorSet;
+	ssaoDescriptors[1] = ssaoInputDescriptorSet;
 
 	commandBuffer->BindGraphicsPipeline(ssaoPipeline);
 	commandBuffer->BindGraphicsDescriptorSet(ssaoPipeline, ssaoDescriptors.data(), static_cast<uint32_t>(ssaoDescriptors.size()));
@@ -2509,8 +2515,8 @@ void DeferredRenderer::Render(
 	assetManager->RenderQueue(commandBuffer, "Opaque");
 	commandBuffer->UnbindRenderPass();
 
-	if (renderMode == DeferredRenderMode::Default) {
-		RenderSsao(imageIndex, commandBuffer);
+	if (renderMode == DeferredRenderMode::Default || renderMode == DeferredRenderMode::AmbientOcclusion) {
+		RenderSsao(imageSet, commandBuffer);
 	}
 
 	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(renderWidth), static_cast<float>(renderHeight));
