@@ -6,13 +6,14 @@
 
 #include <Common/ResourcePipeline/MetaFile.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
+#include <EngineCore/Logger.hpp>
 #include <Editor/EditorManager.hpp>
 
 #include "ShaderImporter.hpp"
 
 using namespace Grindstone::Editor::Importers;
 
-std::string GetDataTypeName(spirv_cross::SPIRType::BaseType type) {
+static std::string GetDataTypeName(spirv_cross::SPIRType::BaseType type) {
 	switch (type) {
 		case spirv_cross::SPIRType::BaseType::Void: return "Void";
 		case spirv_cross::SPIRType::BaseType::Boolean: return "Boolean";
@@ -38,7 +39,7 @@ std::string GetDataTypeName(spirv_cross::SPIRType::BaseType type) {
 	}
 }
 
-std::string ReadTextFile(const char* filename) {
+static std::string ReadTextFile(const char* filename) {
 	std::ifstream ifs(filename);
 
 	if (!ifs.is_open()) {
@@ -51,7 +52,7 @@ std::string ReadTextFile(const char* filename) {
 	return content;
 }
 
-ShaderImporter::Texture* FindTextureAlreadyReflected(
+static ShaderImporter::Texture* FindTextureAlreadyReflected(
 	std::vector<ShaderImporter::Texture>& textures,
 	const std::string& resourceName
 ) {
@@ -64,7 +65,7 @@ ShaderImporter::Texture* FindTextureAlreadyReflected(
 	return nullptr;
 }
 
-void ReflectImages(
+static void ReflectImages(
 	ShaderImporter::ShaderType shaderType,
 	std::vector<ShaderImporter::Texture>& textures,
 	spirv_cross::Compiler& compiler,
@@ -86,7 +87,7 @@ void ReflectImages(
 	}
 }
 
-ShaderImporter::UniformBuffer* FindUniformAlreadyReflected(
+static ShaderImporter::UniformBuffer* FindUniformAlreadyReflected(
 	std::vector<ShaderImporter::UniformBuffer>& uniformBuffers,
 	const std::string& resourceName
 ) {
@@ -99,7 +100,7 @@ ShaderImporter::UniformBuffer* FindUniformAlreadyReflected(
 	return nullptr;
 }
 
-void ReflectStruct(
+static void ReflectStruct(
 	ShaderImporter::ShaderType shaderType,
 	std::vector<ShaderImporter::UniformBuffer>& uniformBuffers,
 	spirv_cross::Compiler& compiler,
@@ -137,7 +138,7 @@ void ReflectStruct(
 	}
 }
 
-shaderc_shader_kind GetShaderTypeForShaderc(ShaderImporter::ShaderType type) {
+static shaderc_shader_kind GetShaderTypeForShaderc(ShaderImporter::ShaderType type) {
 	switch(type) {
 	case ShaderImporter::ShaderType::Vertex: return shaderc_glsl_vertex_shader;
 	case ShaderImporter::ShaderType::Fragment: return shaderc_glsl_fragment_shader;
@@ -410,9 +411,15 @@ std::vector<uint32_t> ShaderImporter::ConvertToSpirv(ShaderType shaderType, cons
 	);
 
 	if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
-		// TODO: Fix DLL Printing
-		// Editor::Manager::Print(LogSeverity::Error, "{}", result.GetErrorMessage().c_str());
-		return std::vector<uint32_t>();
+		std::string error = result.GetErrorMessage();
+		size_t firstPos = 0;
+		size_t secondPos = error.find('\n', firstPos);
+		while (secondPos != std::string::npos) {
+			GPRINT_ERROR_V(LogSource::EditorImporter, "Shader Error: {}", std::string_view(error.data() + firstPos, secondPos - firstPos));
+
+			firstPos = secondPos + 1;
+			secondPos = error.find('\n', firstPos);
+		}
 	}
 
 	auto vkSpirv = std::vector<uint32_t>(result.cbegin(), result.cend());
@@ -450,8 +457,15 @@ void ShaderImporter::ConvertToOpenglSpirv(ShaderType shaderType, const char* ext
 	);
 
 	if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
-		// TODO: Fix DLL Printing
-		// Editor::Manager::Print(LogSeverity::Error, result.GetErrorMessage().c_str());
+		std::string error = result.GetErrorMessage();
+		size_t firstPos = 0;
+		size_t secondPos = error.find('\n', firstPos);
+		while (secondPos != std::string::npos) {
+			GPRINT_ERROR_V(LogSource::EditorImporter, "Shader Error: {}", std::string_view(error.data() + firstPos, secondPos - firstPos));
+
+			firstPos = secondPos + 1;
+			secondPos = error.find('\n', firstPos);
+		}
 		return;
 	}
 
