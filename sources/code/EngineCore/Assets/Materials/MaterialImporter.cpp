@@ -1,15 +1,20 @@
-#include "MaterialImporter.hpp"
-#include "rapidjson/document.h"
-#include "EngineCore/Assets/Shaders/ShaderImporter.hpp"
-#include "EngineCore/Assets/Textures/TextureImporter.hpp"
-#include "EngineCore/AssetRenderer/BaseAssetRenderer.hpp"
-#include "EngineCore/Utils/Utilities.hpp"
-#include "EngineCore/EngineCore.hpp"
-#include "EngineCore/Assets/AssetManager.hpp"
-#include "Common/Graphics/Core.hpp"
-#include "Common/Graphics/Texture.hpp"
+#include <rapidjson/document.h>
+
+#include <EngineCore/Assets/Shaders/ShaderImporter.hpp>
+#include <EngineCore/Assets/Textures/TextureImporter.hpp>
+#include <EngineCore/AssetRenderer/BaseAssetRenderer.hpp>
+#include <EngineCore/Utils/Utilities.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Assets/AssetManager.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/Logger.hpp>
+#include <Common/Graphics/Core.hpp>
+#include <Common/Graphics/Texture.hpp>
+
+#include "MaterialImporter.hpp"
+
 using namespace Grindstone;
+using namespace Grindstone::Memory;
 
 MaterialImporter::MaterialImporter() {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
@@ -178,7 +183,7 @@ void MaterialImporter::SetupUniformBuffer(rapidjson::Document& document, ShaderR
 			bufferSpace = nullptr;
 		}
 		else {
-			bufferSpace = new char[ubCi.size];
+			bufferSpace = static_cast<char*>(AllocatorCore::AllocateRaw(ubCi.size, 4, "Material Buffer"));
 
 			auto& parametersJson = document["parameters"];
 			for (auto& member : materialUniformBuffer->members) {
@@ -234,4 +239,18 @@ void MaterialImporter::SetupSamplers(rapidjson::Document& document, ShaderReflec
 			}
 		}
 	}
+}
+
+MaterialImporter::~MaterialImporter() {
+	EngineCore& engineCore = EngineCore::GetInstance();
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+
+	for (auto& asset : assets) {
+		AllocatorCore::Free(asset.second.buffer);
+		graphicsCore->DeleteDescriptorSet(asset.second.descriptorSet);
+		graphicsCore->DeleteUniformBuffer(asset.second.uniformBufferObject);
+	}
+	assets.clear();
+
+	graphicsCore->DeleteTexture(missingTexture);
 }

@@ -11,6 +11,8 @@ namespace Grindstone {
 	class BaseAssetRenderer;
 	class ShaderImporter : public SpecificAssetImporter<ShaderAsset, AssetType::Shader> {
 		public:
+			virtual ~ShaderImporter() override;
+
 			virtual void* ProcessLoadedFile(Uuid uuid) override;
 			virtual void QueueReloadAsset(Uuid uuid) override;
 		private:

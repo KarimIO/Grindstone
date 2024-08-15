@@ -131,3 +131,11 @@ void AudioClipImporter::QueueReloadAsset(Uuid uuid) {
 	drwav_free(memoryBuffer, nullptr);
 	drwav_uninit(&wav);
 }
+
+AudioClipImporter::~AudioClipImporter() {
+	for (auto& asset : assets) {
+		alDeleteBuffers(1, &asset.second.buffer);
+	}
+
+	assets.clear();
+}

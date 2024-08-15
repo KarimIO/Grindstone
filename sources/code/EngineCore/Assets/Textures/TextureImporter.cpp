@@ -192,3 +192,18 @@ void TextureImporter::QueueReloadAsset(Uuid uuid) {
 
 	ProcessLoadedFile(uuid, assetName, std::move(result.buffer), textureInMap->second);
 }
+
+TextureImporter::~TextureImporter() {
+	EngineCore& engineCore = EngineCore::GetInstance();
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+
+	for (auto& asset : assets) {
+		graphicsCore->DeleteTexture(asset.second.texture);
+	}
+	assets.clear();
+
+	for (auto& asset : texturesByPath) {
+		graphicsCore->DeleteTexture(asset.second.texture);
+	}
+	texturesByPath.clear();
+}

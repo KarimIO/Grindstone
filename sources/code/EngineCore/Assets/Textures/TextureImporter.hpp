@@ -13,6 +13,8 @@
 namespace Grindstone {
 	class TextureImporter : public SpecificAssetImporter<TextureAsset, AssetType::Texture> {
 	public:
+		virtual ~TextureImporter() override;
+
 		virtual void* ProcessLoadedFile(Uuid uuid) override;
 		virtual void* ProcessLoadedFile(const char* path) override;
 		virtual void* ProcessLoadedFile(Uuid uuid, std::string& assetName, Grindstone::Buffer buffer, TextureAsset& textureAsset);

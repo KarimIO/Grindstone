@@ -294,4 +294,13 @@ uint64_t Mesh3dImporter::GetTotalFileSize(Formats::Model::V1::Header& header) {
 	return totalFileExpectedSize;
 }
 
+Mesh3dImporter::~Mesh3dImporter() {
+	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
+
+	for (auto& asset : assets) {
+		graphicsCore->DeleteVertexArrayObject(asset.second.vertexArrayObject);
+	}
+	assets.clear();
+}
+
 Grindstone::Mesh3dImporter::VertexLayouts Mesh3dImporter::vertexLayouts;

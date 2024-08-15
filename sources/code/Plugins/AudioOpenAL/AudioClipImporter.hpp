@@ -11,6 +11,8 @@ namespace Grindstone {
 	namespace Audio {
 		class AudioClipImporter : public SpecificAssetImporter<AudioClipAsset, AssetType::AudioClip> {
 		public:
+			virtual ~AudioClipImporter() override;
+
 			AudioClipImporter(EngineCore* engineCore);
 
 			virtual void* ProcessLoadedFile(Uuid uuid) override;

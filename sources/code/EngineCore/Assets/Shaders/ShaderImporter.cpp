@@ -234,3 +234,13 @@ void ShaderImporter::QueueReloadAsset(Uuid uuid) {
 		previousPipeline = nullptr;
 	}
 }
+
+ShaderImporter::~ShaderImporter() {
+	EngineCore& engineCore = EngineCore::GetInstance();
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+
+	for (auto& asset : assets) {
+		graphicsCore->DeleteGraphicsPipeline(asset.second.pipeline);
+	}
+	assets.clear();
+}

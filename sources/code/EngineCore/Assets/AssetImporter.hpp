@@ -9,6 +9,8 @@
 namespace Grindstone {
 	class AssetImporter {
 	public:
+		virtual ~AssetImporter() {};
+
 		virtual void QueueReloadAsset(Uuid uuid) = 0;
 		virtual void* ProcessLoadedFile(Uuid uuid) = 0;
 		virtual bool TryGetIfLoaded(Uuid uuid, void*& output) = 0;

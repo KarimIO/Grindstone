@@ -19,6 +19,8 @@ namespace Grindstone {
 	class Mesh3dImporter : public SpecificAssetImporter<Mesh3dAsset, AssetType::Mesh3d> {
 		public:
 			Mesh3dImporter(EngineCore* engineCore);
+			virtual ~Mesh3dImporter() override;
+
 			virtual void* ProcessLoadedFile(Uuid uuid) override;
 			virtual void QueueReloadAsset(Uuid uuid) override;
 			void PrepareLayouts();
