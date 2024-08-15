@@ -175,7 +175,40 @@ DeferredRenderer::~DeferredRenderer() {
 	CleanupPipelines();
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
-		auto& imageSet = deferredRendererImageSets[i];
+		DeferredRendererImageSet& imageSet = deferredRendererImageSets[i];
+
+		graphicsCore->DeleteFramebuffer(imageSet.lightingFramebuffer);
+		graphicsCore->DeleteDepthTarget(imageSet.litHdrDepthTarget);
+		graphicsCore->DeleteRenderTarget(imageSet.ssrRenderTarget);
+
+		graphicsCore->DeleteUniformBuffer(imageSet.debugUniformBufferObject);
+		graphicsCore->DeleteUniformBuffer(imageSet.tonemapPostProcessingUniformBufferObject);
+
+		graphicsCore->DeleteDescriptorSet(imageSet.ssrDescriptorSet);
+		graphicsCore->DeleteDescriptorSet(imageSet.debugDescriptorSet);
+
+		graphicsCore->DeleteDescriptorSet(imageSet.dofSourceDescriptorSet);
+		graphicsCore->DeleteDescriptorSet(imageSet.dofNearBlurDescriptorSet);
+		graphicsCore->DeleteDescriptorSet(imageSet.dofFarBlurDescriptorSet);
+		graphicsCore->DeleteDescriptorSet(imageSet.dofCombineDescriptorSet);
+
+		graphicsCore->DeleteRenderTarget(imageSet.nearDofRenderTarget);
+		graphicsCore->DeleteRenderTarget(imageSet.farDofRenderTarget);
+		graphicsCore->DeleteRenderTarget(imageSet.nearBlurredDofRenderTarget);
+		graphicsCore->DeleteRenderTarget(imageSet.farBlurredDofRenderTarget);
+
+		graphicsCore->DeleteFramebuffer(imageSet.dofSeparationFramebuffer);
+		graphicsCore->DeleteFramebuffer(imageSet.dofNearBlurFramebuffer);
+		graphicsCore->DeleteFramebuffer(imageSet.dofFarBlurFramebuffer);
+		graphicsCore->DeleteFramebuffer(imageSet.dofCombinationFramebuffer);
+
+		for (GraphicsAPI::RenderTarget* bloomRt : imageSet.bloomRenderTargets) {
+			graphicsCore->DeleteRenderTarget(bloomRt);
+		}
+
+		for (GraphicsAPI::DescriptorSet* bloomDs : imageSet.bloomDescriptorSets) {
+			graphicsCore->DeleteDescriptorSet(bloomDs);
+		}
 
 		graphicsCore->DeleteUniformBuffer(imageSet.globalUniformBufferObject);
 
@@ -197,6 +230,10 @@ DeferredRenderer::~DeferredRenderer() {
 		graphicsCore->DeleteDescriptorSet(imageSet.ambientOcclusionDescriptorSet);
 	}
 
+	for (GraphicsAPI::UniformBuffer* bloomUb : bloomUniformBuffers) {
+		graphicsCore->DeleteUniformBuffer(bloomUb);
+	}
+
 	graphicsCore->DeleteDescriptorSetLayout(engineDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSetLayout(tonemapDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSetLayout(lightingDescriptorSetLayout);
@@ -208,6 +245,34 @@ DeferredRenderer::~DeferredRenderer() {
 	graphicsCore->DeleteDescriptorSet(ssaoInputDescriptorSet);
 	graphicsCore->DeleteDescriptorSetLayout(ssaoInputDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSetLayout(ambientOcclusionDescriptorSetLayout);
+
+	graphicsCore->DeleteRenderPass(dofSeparationRenderPass);
+	graphicsCore->DeleteRenderPass(dofBlurAndCombinationRenderPass);
+	graphicsCore->DeleteRenderPass(shadowMapRenderPass);
+	graphicsCore->DeleteRenderPass(targetRenderPass);
+	graphicsCore->DeleteRenderPass(lightingRenderPass);
+	graphicsCore->DeleteRenderPass(forwardLitRenderPass);
+	graphicsCore->DeleteRenderPass(ssaoRenderPass);
+
+	graphicsCore->DeleteDescriptorSetLayout(environmentMapDescriptorSetLayout);
+	graphicsCore->DeleteDescriptorSetLayout(bloomDescriptorSetLayout);
+	graphicsCore->DeleteDescriptorSetLayout(ssrDescriptorSetLayout);
+	graphicsCore->DeleteDescriptorSetLayout(debugDescriptorSetLayout);
+	graphicsCore->DeleteDescriptorSetLayout(lightingUBODescriptorSetLayout);
+	graphicsCore->DeleteDescriptorSetLayout(shadowMappedLightDescriptorSetLayout);
+	graphicsCore->DeleteDescriptorSetLayout(lightingWithShadowUBODescriptorSetLayout);
+	graphicsCore->DeleteDescriptorSetLayout(shadowMapDescriptorSetLayout);
+
+	graphicsCore->DeleteDescriptorSet(environmentMapDescriptorSet);
+	graphicsCore->DeleteDescriptorSet(shadowMapDescriptorSet);
+
+	graphicsCore->DeleteVertexBuffer(vertexBuffer);
+	graphicsCore->DeleteIndexBuffer(indexBuffer);
+	graphicsCore->DeleteVertexArrayObject(planePostProcessVao);
+
+	graphicsCore->DeleteDescriptorSetLayout(dofSourceDescriptorSetLayout);
+	graphicsCore->DeleteDescriptorSetLayout(dofBlurDescriptorSetLayout);
+	graphicsCore->DeleteDescriptorSetLayout(dofCombinationDescriptorSetLayout);
 }
 
 void DeferredRenderer::CreateDepthOfFieldRenderTargetsAndDescriptorSets(DeferredRendererImageSet& imageSet, size_t imageSetIndex) {
@@ -616,11 +681,29 @@ void DeferredRenderer::CleanupPipelines() {
 	graphicsCore->DeleteGraphicsPipeline(shadowMappingPipeline);
 	graphicsCore->DeleteGraphicsPipeline(tonemapPipeline);
 
+	graphicsCore->DeleteGraphicsPipeline(ssaoPipeline);
+	graphicsCore->DeleteGraphicsPipeline(imageBasedLightingPipeline);
+	graphicsCore->DeleteGraphicsPipeline(dofSeparationPipeline);
+	graphicsCore->DeleteGraphicsPipeline(dofBlurPipeline);
+	graphicsCore->DeleteGraphicsPipeline(dofCombinationPipeline);
+	graphicsCore->DeleteGraphicsPipeline(debugPipeline);
+
+	graphicsCore->DeleteComputePipeline(ssrPipeline);
+	graphicsCore->DeleteComputePipeline(bloomPipeline);
+
 	pointLightPipeline = nullptr;
 	spotLightPipeline = nullptr;
 	directionalLightPipeline = nullptr;
 	shadowMappingPipeline = nullptr;
 	tonemapPipeline = nullptr;
+	ssaoPipeline = nullptr;
+	imageBasedLightingPipeline = nullptr;
+	dofSeparationPipeline = nullptr;
+	dofCombinationPipeline = nullptr;
+	debugPipeline = nullptr;
+
+	ssrPipeline = nullptr;
+	bloomPipeline = nullptr;
 }
 
 bool DeferredRenderer::OnWindowResize(Events::BaseEvent* ev) {
