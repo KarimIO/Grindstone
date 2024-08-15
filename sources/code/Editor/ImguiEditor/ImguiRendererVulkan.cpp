@@ -131,7 +131,17 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	vulkanCore->EndSingleTimeCommands(commandBuffer);
 }
 
-ImguiRendererVulkan::~ImguiRendererVulkan() {}
+ImguiRendererVulkan::~ImguiRendererVulkan() {
+	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
+	GraphicsAPI::VulkanCore* graphicsCore = static_cast<VulkanCore*>(engineCore.GetGraphicsCore());
+
+	VkDevice device = graphicsCore->GetDevice();
+	vkDestroyDescriptorPool(device, imguiPool, nullptr);
+
+	for (GraphicsAPI::CommandBuffer* cb : commandBuffers) {
+		graphicsCore->DeleteCommandBuffer(cb);
+	}
+}
 
 Grindstone::GraphicsAPI::CommandBuffer* ImguiRendererVulkan::GetCommandBuffer() {
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
