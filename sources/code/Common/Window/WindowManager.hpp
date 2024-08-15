@@ -6,6 +6,8 @@
 namespace Grindstone {
 	class WindowManager {
 	public:
+		~WindowManager();
+
 		virtual Grindstone::Window* Create(Grindstone::Window::CreateInfo&);
 		virtual Grindstone::Window* GetWindowByIndex(unsigned int i);
 		virtual unsigned int GetNumWindows();

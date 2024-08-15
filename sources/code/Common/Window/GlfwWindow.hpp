@@ -15,6 +15,7 @@ namespace Grindstone {
 
 	class GlfwWindow : public Window {
 	public:
+		virtual ~GlfwWindow() override;
 		virtual bool Initialize(CreateInfo& createInfo) override;
 		virtual void Show() override;
 		virtual void Hide() override;

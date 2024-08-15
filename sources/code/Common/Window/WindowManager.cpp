@@ -1,5 +1,17 @@
+#include <EngineCore/Utils/MemoryAllocator.hpp>
+
 #include "WindowManager.hpp"
 #include "GlfwWindow.hpp"
+
+using namespace Grindstone::Memory;
+
+Grindstone::WindowManager::~WindowManager() {
+	for (Window* window : windows) {
+		AllocatorCore::Free(window);
+	}
+
+	windows.clear();
+}
 
 Grindstone::Window* Grindstone::WindowManager::Create(Grindstone::Window::CreateInfo& createInfo) {
 /*
@@ -10,7 +22,7 @@ Grindstone::Window* Grindstone::WindowManager::Create(Grindstone::Window::Create
 #else
 #endif
 */
-	Grindstone::GlfwWindow* win = new Grindstone::GlfwWindow;
+	Grindstone::GlfwWindow* win = AllocatorCore::Allocate<Grindstone::GlfwWindow>();
 
 	if (win->Initialize(createInfo)) {
 		windows.push_back(win);

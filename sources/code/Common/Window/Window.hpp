@@ -27,6 +27,7 @@ namespace Grindstone {
 			bool isSwapchainControlledByEngine = false;
 		};
 	public:
+		virtual ~Window() {}
 		static Grindstone::Window* Create(CreateInfo& createInfo);
 		virtual void Show() = 0;
 		virtual void Hide() = 0;

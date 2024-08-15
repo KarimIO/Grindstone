@@ -12,11 +12,13 @@
 
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <Common/Input/InputInterface.hpp>
 
 #include "GlfwWindow.hpp"
 
 using namespace Grindstone;
+using namespace Grindstone::Memory;
 
 static Events::KeyPressCode TranslateKeyboardButton(int key);
 static Events::MouseButtonCode TranslateMouseButton(int action);
@@ -202,6 +204,11 @@ void GlfwWindow::ExplorePath(const char* path) {
 
 void GlfwWindow::OpenFileUsingDefaultProgram(const char* path) {
 	ShellExecute(0, 0, path, 0, 0, SW_SHOW);
+}
+
+
+GlfwWindow::~GlfwWindow() {
+	AllocatorCore::Free(windowsGraphicsBinding);
 }
 
 bool GlfwWindow::Initialize(CreateInfo& createInfo) {
