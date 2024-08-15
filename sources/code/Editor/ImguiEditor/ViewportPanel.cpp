@@ -13,6 +13,7 @@
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <Editor/EditorCamera.hpp>
 #include <Editor/EditorManager.hpp>
+#include <EngineCore/Rendering/BaseRenderer.hpp>
 
 #include "ViewportPanel.hpp"
 
@@ -220,6 +221,26 @@ void ViewportPanel::DisplayCameraToPanel() {
 	ImGui::Image(texturePtr, viewportPanelSize, uv0, uv1);
 }
 
+void ViewportPanel::DisplayOptions() {
+	BaseRenderer* renderer = camera->GetRenderer();
+	uint16_t count = renderer->GetRenderModeCount();
+	const BaseRenderer::RenderMode* modes = renderer->GetRenderModes();
+
+	ImVec2 position = ImVec2(0.0f, 24.0f);
+	ImGui::SetCursorPos(position);
+	const BaseRenderer::RenderMode& currentMode = modes[renderMode];
+	if (ImGui::BeginCombo("##DisplayMode", currentMode.name, ImGuiComboFlags_WidthFitPreview)) {
+		for (uint16_t i = 0; i < count; ++i) {
+			bool isSelected = renderMode;
+			if (ImGui::Selectable(modes[i].name, isSelected)) {
+				renderer->SetRenderMode(i);
+				renderMode = i;
+			}
+		}
+		ImGui::EndCombo();
+	}
+}
+
 void ViewportPanel::Render() {
 	if (isShowingPanel) {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
@@ -236,6 +257,7 @@ void ViewportPanel::Render() {
 		}
 
 		DisplayCameraToPanel();
+		DisplayOptions();
 
 		if (isEditorMode) {
 			HandleSelection();

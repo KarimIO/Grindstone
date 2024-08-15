@@ -32,8 +32,26 @@ namespace Grindstone {
 			GraphicsAPI::Framebuffer* outputFramebuffer
 		) override;
 
+		virtual uint16_t GetRenderModeCount() const override;
+		virtual const RenderMode* GetRenderModes() const override;
+		virtual void SetRenderMode(uint16_t mode) override;
+
 		static GraphicsAPI::RenderPass* gbufferRenderPass;
 		static GraphicsAPI::RenderPass* mainRenderPass;
+
+		enum class DeferredRenderMode : uint16_t {
+			Default,
+			Position,
+			PositionMod,
+			Depth,
+			DepthMod,
+			Normal,
+			Albedo,
+			Specular,
+			Roughness,
+			Count
+		};
+
 	private:
 		struct DeferredRendererImageSet {
 			GraphicsAPI::Framebuffer* gbuffer = nullptr;
@@ -48,11 +66,13 @@ namespace Grindstone {
 			GraphicsAPI::RenderTarget* gbufferSpecularRoughnessRenderTarget = nullptr;
 
 			GraphicsAPI::UniformBuffer* globalUniformBufferObject = nullptr;
+			GraphicsAPI::UniformBuffer* debugUniformBufferObject = nullptr;
 			GraphicsAPI::UniformBuffer* tonemapPostProcessingUniformBufferObject = nullptr;
 
 			GraphicsAPI::DescriptorSet* ssrDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* tonemapDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* lightingDescriptorSet = nullptr;
+			GraphicsAPI::DescriptorSet* debugDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
 
 			GraphicsAPI::DescriptorSet* dofSourceDescriptorSet = nullptr;
@@ -91,7 +111,8 @@ namespace Grindstone {
 		void RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffer, entt::registry& registry);
 		void RenderLights(uint32_t imageIndex, GraphicsAPI::CommandBuffer* currentCommandBuffer, entt::registry& registry);
 		void PostProcess(uint32_t imageIndex, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer);
-		
+		void Debug(uint32_t imageIndex, GraphicsAPI::Framebuffer* outputFramebuffer, GraphicsAPI::CommandBuffer* commandBuffer);
+
 		void CreateDepthOfFieldResources();
 		void CreateBloomResources();
 		void CreateSSRResources();
@@ -119,6 +140,12 @@ namespace Grindstone {
 		};
 
 		PostProcessUbo postProcessUboData;
+
+		struct DebugUboData {
+			uint16_t renderMode;
+		};
+
+		DebugUboData debugUboData;
 
 		uint32_t framebufferWidth = 0u;
 		uint32_t framebufferHeight = 0u;
@@ -156,6 +183,7 @@ namespace Grindstone {
 		GraphicsAPI::DescriptorSetLayout* bloomDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* ssrDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* tonemapDescriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSetLayout* debugDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingUBODescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* shadowMappedLightDescriptorSetLayout = nullptr;
@@ -182,6 +210,7 @@ namespace Grindstone {
 		GraphicsAPI::GraphicsPipeline* dofBlurPipeline = nullptr;
 		GraphicsAPI::GraphicsPipeline* dofCombinationPipeline = nullptr;
 		GraphicsAPI::GraphicsPipeline* shadowMappingPipeline = nullptr;
+		GraphicsAPI::GraphicsPipeline* debugPipeline = nullptr;
 
 		GraphicsAPI::DescriptorSetLayout* dofSourceDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* dofBlurDescriptorSetLayout = nullptr;
@@ -190,7 +219,11 @@ namespace Grindstone {
 		GraphicsAPI::ComputePipeline* ssrPipeline = nullptr;
 		GraphicsAPI::ComputePipeline* bloomPipeline = nullptr;
 
+		static std::array<Grindstone::BaseRenderer::RenderMode, static_cast<uint16_t>(DeferredRenderMode::Count)> renderModes;
+
 		// Used to check when environment map changes, so we can update it
 		Uuid currentEnvironmentMapUuid;
+
+		DeferredRenderMode renderMode;
 	};
 }

@@ -31,6 +31,18 @@
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
+std::array<Grindstone::BaseRenderer::RenderMode, static_cast<uint16_t>(DeferredRenderer::DeferredRenderMode::Count)> DeferredRenderer::renderModes = {
+	Grindstone::BaseRenderer::RenderMode{ "Default" },
+	Grindstone::BaseRenderer::RenderMode{ "Position" },
+	Grindstone::BaseRenderer::RenderMode{ "Position (Modulus)" },
+	Grindstone::BaseRenderer::RenderMode{ "Depth" },
+	Grindstone::BaseRenderer::RenderMode{ "Depth (Modulus)" },
+	Grindstone::BaseRenderer::RenderMode{ "Normals" },
+	Grindstone::BaseRenderer::RenderMode{ "Albedo" },
+	Grindstone::BaseRenderer::RenderMode{ "Specular" },
+	Grindstone::BaseRenderer::RenderMode{ "Roughness" }
+};
+
 GraphicsAPI::RenderPass* DeferredRenderer::gbufferRenderPass = nullptr;
 GraphicsAPI::RenderPass* DeferredRenderer::mainRenderPass = nullptr;
 
@@ -97,6 +109,8 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 		renderWidth = display.width;
 		renderHeight = display.height;
 	}
+
+	renderMode = DeferredRenderMode::Default;
 
 	EngineCore& engineCore = EngineCore::GetInstance();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
@@ -914,13 +928,19 @@ void DeferredRenderer::CreateUniformBuffers() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
-		auto& imageSet = deferredRendererImageSets[i];
+		DeferredRendererImageSet& imageSet = deferredRendererImageSets[i];
 
 		UniformBuffer::CreateInfo globalUniformBufferObjectCi{};
 		globalUniformBufferObjectCi.debugName = "EngineUbo";
 		globalUniformBufferObjectCi.isDynamic = true;
 		globalUniformBufferObjectCi.size = sizeof(EngineUboStruct);
 		imageSet.globalUniformBufferObject = graphicsCore->CreateUniformBuffer(globalUniformBufferObjectCi);
+
+		UniformBuffer::CreateInfo debugUniformBufferObjectCi{};
+		debugUniformBufferObjectCi.debugName = "DebugUbo";
+		debugUniformBufferObjectCi.isDynamic = true;
+		debugUniformBufferObjectCi.size = sizeof(DebugUboData);
+		imageSet.debugUniformBufferObject = graphicsCore->CreateUniformBuffer(debugUniformBufferObjectCi);
 	}
 
 	CreateDescriptorSetLayouts();
@@ -984,6 +1004,21 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	tonemapDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(tonemapDescriptorSetLayoutBindings.size());
 	tonemapDescriptorSetLayoutCreateInfo.bindings = tonemapDescriptorSetLayoutBindings.data();
 	tonemapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(tonemapDescriptorSetLayoutCreateInfo);
+
+	std::array<DescriptorSetLayout::Binding, 7> debugDescriptorSetLayoutBindings{};
+	debugDescriptorSetLayoutBindings[0] = engineUboBinding;
+	debugDescriptorSetLayoutBindings[1] = gbufferDepthBinding;
+	debugDescriptorSetLayoutBindings[2] = gbuffer0Binding;
+	debugDescriptorSetLayoutBindings[3] = gbuffer1Binding;
+	debugDescriptorSetLayoutBindings[4] = gbuffer2Binding;
+	debugDescriptorSetLayoutBindings[5] = { 5, 1, BindingType::RenderTexture, ShaderStageBit::Fragment }; // Bloom Texture
+	debugDescriptorSetLayoutBindings[6] = { 6, 1, BindingType::UniformBuffer, ShaderStageBit::Fragment }; // Post Process Uniform Buffer
+
+	DescriptorSetLayout::CreateInfo debugDescriptorSetLayoutCreateInfo{};
+	debugDescriptorSetLayoutCreateInfo.debugName = "Debug Descriptor Set Layout";
+	debugDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(debugDescriptorSetLayoutBindings.size());
+	debugDescriptorSetLayoutCreateInfo.bindings = debugDescriptorSetLayoutBindings.data();
+	debugDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(debugDescriptorSetLayoutCreateInfo);
 
 	std::array<DescriptorSetLayout::Binding, 5> lightingDescriptorSetLayoutBindings{};
 	lightingDescriptorSetLayoutBindings[0] = engineUboBinding;
@@ -1063,6 +1098,22 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	tonemapDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(tonemapDescriptorSetBindings.size());
 	tonemapDescriptorSetCreateInfo.bindings = tonemapDescriptorSetBindings.data();
 	imageSet.tonemapDescriptorSet = graphicsCore->CreateDescriptorSet(tonemapDescriptorSetCreateInfo);
+
+	std::array<DescriptorSet::Binding, 7> debugDescriptorSetBindings{};
+	debugDescriptorSetBindings[0] = engineUboBinding;
+	debugDescriptorSetBindings[1] = gbufferDepthBinding;
+	debugDescriptorSetBindings[2] = gbufferAlbedoBinding;
+	debugDescriptorSetBindings[3] = gbufferNormalBinding;
+	debugDescriptorSetBindings[4] = gbufferSpecRoughnessBinding;
+	debugDescriptorSetBindings[5] = { imageSet.bloomRenderTargets[bloomMipLevelCount + 1] }; // Bloom Texture
+	debugDescriptorSetBindings[6] = { imageSet.debugUniformBufferObject };
+
+	DescriptorSet::CreateInfo debugDescriptorSetCreateInfo{};
+	debugDescriptorSetCreateInfo.debugName = "Debug Descriptor Set";
+	debugDescriptorSetCreateInfo.layout = debugDescriptorSetLayout;
+	debugDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(debugDescriptorSetBindings.size());
+	debugDescriptorSetCreateInfo.bindings = debugDescriptorSetBindings.data();
+	imageSet.debugDescriptorSet = graphicsCore->CreateDescriptorSet(debugDescriptorSetCreateInfo);
 
 	std::array<DescriptorSet::Binding, 5> lightingDescriptorSetBindings{};
 	lightingDescriptorSetBindings[0] = engineUboBinding;
@@ -1535,6 +1586,35 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.blendMode = BlendMode::Additive;
 		pipelineCreateInfo.renderPass = mainRenderPass;
 		directionalLightPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
+	}
+
+	shaderStageCreateInfos.clear();
+	fileData.clear();
+
+	{
+		if (!assetManager->LoadShaderSet(
+			Uuid("1f7b7b1e-2056-40d1-bb04-cbdc559325e8"),
+			shaderBits,
+			2,
+			shaderStageCreateInfos,
+			fileData
+		)) {
+			GPRINT_ERROR(LogSource::Rendering, "Could not load debug shaders.");
+			return;
+		}
+
+		pipelineCreateInfo.debugName = "Debug Pipeline";
+		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
+		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
+		pipelineCreateInfo.descriptorSetLayouts = &debugDescriptorSetLayout;
+		pipelineCreateInfo.descriptorSetLayoutCount = 1;
+		pipelineCreateInfo.colorAttachmentCount = 1;
+		pipelineCreateInfo.blendMode = BlendMode::None;
+		pipelineCreateInfo.renderPass = targetRenderPass;
+		pipelineCreateInfo.isDepthWriteEnabled = true;
+		pipelineCreateInfo.isDepthTestEnabled = true;
+		pipelineCreateInfo.isStencilEnabled = true;
+		debugPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
 
 	shaderStageCreateInfos.clear();
@@ -2311,7 +2391,7 @@ void DeferredRenderer::PostProcess(
 ) {
 	GRIND_PROFILE_FUNC();
 
-	auto& imageSet = deferredRendererImageSets[imageIndex];
+	DeferredRendererImageSet& imageSet = deferredRendererImageSets[imageIndex];
 
 	// RenderDepthOfField(imageSet, currentCommandBuffer);
 	RenderBloom(imageSet, currentCommandBuffer);
@@ -2328,12 +2408,37 @@ void DeferredRenderer::PostProcess(
 		imageSet.tonemapPostProcessingUniformBufferObject->UpdateBuffer(&postProcessUboData);
 
 		currentCommandBuffer->BindGraphicsDescriptorSet(tonemapPipeline, &imageSet.tonemapDescriptorSet, 1);
+		currentCommandBuffer->BindGraphicsPipeline(tonemapPipeline);
+		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+	}
 
-		{
-			// Tonemapping
-			currentCommandBuffer->BindGraphicsPipeline(tonemapPipeline);
-			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
-		}
+	currentCommandBuffer->UnbindRenderPass();
+}
+
+void DeferredRenderer::Debug(
+	uint32_t imageIndex,
+	GraphicsAPI::Framebuffer* framebuffer,
+	GraphicsAPI::CommandBuffer* currentCommandBuffer
+) {
+	GRIND_PROFILE_FUNC();
+
+	DeferredRendererImageSet& imageSet = deferredRendererImageSets[imageIndex];
+
+	ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
+	ClearDepthStencil clearDepthStencil;
+	clearDepthStencil.depth = 1.0f;
+	clearDepthStencil.stencil = 0;
+	clearDepthStencil.hasDepthStencilAttachment = false;
+
+	RenderPass* renderPass = framebuffer->GetRenderPass();
+	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, framebuffer->GetWidth(), framebuffer->GetHeight(), &clearColor, 1, clearDepthStencil);
+
+	if (debugPipeline != nullptr) {
+		imageSet.debugUniformBufferObject->UpdateBuffer(&debugUboData);
+
+		currentCommandBuffer->BindGraphicsDescriptorSet(debugPipeline, &imageSet.debugDescriptorSet, 1);
+		currentCommandBuffer->BindGraphicsPipeline(debugPipeline);
+		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
 	}
 
 	currentCommandBuffer->UnbindRenderPass();
@@ -2370,7 +2475,10 @@ void DeferredRenderer::Render(
 	engineUboStruct.time = static_cast<float>(engineCore.GetTimeSinceLaunch());
 	imageSet.globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
 
-	RenderShadowMaps(commandBuffer, registry);
+	if (renderMode == DeferredRenderMode::Default) {
+		RenderShadowMaps(commandBuffer, registry);
+	}
+
 	assetManager->SetEngineDescriptorSet(imageSet.engineDescriptorSet);
 
 	{
@@ -2401,7 +2509,9 @@ void DeferredRenderer::Render(
 	assetManager->RenderQueue(commandBuffer, "Opaque");
 	commandBuffer->UnbindRenderPass();
 
-	RenderSsao(imageIndex, commandBuffer);
+	if (renderMode == DeferredRenderMode::Default) {
+		RenderSsao(imageIndex, commandBuffer);
+	}
 
 	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(renderWidth), static_cast<float>(renderHeight));
 	commandBuffer->SetScissor(0, 0, renderWidth, renderHeight);
@@ -2412,13 +2522,18 @@ void DeferredRenderer::Render(
 
 		commandBuffer->BindRenderPass(mainRenderPass, imageSet.litHdrFramebuffer, renderWidth, renderHeight, &clearColor, 1, clearDepthStencil);
 
-		commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
-		commandBuffer->BindIndexBuffer(indexBuffer);
-		RenderLights(imageIndex, commandBuffer, registry);
+		if (renderMode == DeferredRenderMode::Default) {
+			commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
+			commandBuffer->BindIndexBuffer(indexBuffer);
+			RenderLights(imageIndex, commandBuffer, registry);
+		}
 
 		assetManager->RenderQueue(commandBuffer, "Unlit");
-		assetManager->RenderQueue(commandBuffer, "Skybox");
-		assetManager->RenderQueue(commandBuffer, "Transparent");
+
+		if (renderMode == DeferredRenderMode::Default) {
+			assetManager->RenderQueue(commandBuffer, "Skybox");
+			assetManager->RenderQueue(commandBuffer, "Transparent");
+		}
 
 		commandBuffer->UnbindRenderPass();
 	}
@@ -2428,5 +2543,23 @@ void DeferredRenderer::Render(
 
 	// RenderSsr(imageSet, commandBuffer);
 
-	PostProcess(imageIndex, outputFramebuffer, commandBuffer);
+	if (renderMode == DeferredRenderMode::Default) {
+		PostProcess(imageIndex, outputFramebuffer, commandBuffer);
+	}
+	else {
+		debugUboData.renderMode = static_cast<uint16_t>(renderMode);
+		Debug(imageIndex, outputFramebuffer, commandBuffer);
+	}
+}
+
+uint16_t DeferredRenderer::GetRenderModeCount() const {
+	return static_cast<uint16_t>(renderModes.size());
+}
+
+const Grindstone::BaseRenderer::RenderMode* DeferredRenderer::GetRenderModes() const {
+	return renderModes.data();
+}
+
+void DeferredRenderer::SetRenderMode(uint16_t mode) {
+	renderMode = static_cast<DeferredRenderMode>(mode);
 }
