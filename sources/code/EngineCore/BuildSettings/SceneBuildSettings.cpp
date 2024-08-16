@@ -17,7 +17,7 @@ void SceneBuildSettings::Load() {
 	while (true) {
 		const size_t end = fileContents.find('\n', start);
 		if (end == std::string::npos) {
-			sceneName = fileContents.substr(start);
+			sceneName = Utils::Trim(fileContents.substr(start));
 			if (!sceneName.empty()) {
 				sceneUuids.push_back(sceneName);
 			}
@@ -25,7 +25,7 @@ void SceneBuildSettings::Load() {
 			break;
 		}
 
-		sceneName = fileContents.substr(start, end - start);
+		sceneName = Utils::Trim(fileContents.substr(start, end - start));
 		sceneUuids.push_back(sceneName);
 		start = end + 1;
 	}

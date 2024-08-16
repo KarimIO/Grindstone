@@ -61,7 +61,7 @@ void Build::Open() {
 	while (true) {
 		end = fileContents.find("\n", start);
 		if (end == std::string::npos) {
-			sceneUuidAsString = fileContents.substr(start);
+			sceneUuidAsString = Utils::Trim(fileContents.substr(start));
 			if (!sceneUuidAsString.empty()) {
 				Uuid uuid = Uuid(sceneUuidAsString);
 				AssetRegistry::Entry entry;
@@ -73,7 +73,7 @@ void Build::Open() {
 			break;
 		}
 
-		sceneUuidAsString = fileContents.substr(start, end - start);
+		sceneUuidAsString = Utils::Trim(fileContents.substr(start, end - start));
 		{
 			Uuid uuid = Uuid(sceneUuidAsString);
 			AssetRegistry::Entry entry;
