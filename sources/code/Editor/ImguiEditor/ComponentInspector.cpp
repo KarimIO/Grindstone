@@ -466,8 +466,6 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 		);
 		break;
 	case Reflection::TypeDescriptor::ReflectionTypeData::Vector:
-		ImGui::Text(displayNamePtr);
-		ImGui::SameLine();
 		const void* vector = static_cast<const void*>(offset);
 		auto vectorType = static_cast<Reflection::TypeDescriptor_StdVector*>(itemType);
 		size_t vectorSize = vectorType->getSize(offset);
