@@ -20,7 +20,7 @@ const ImVec2 ASSET_PICKER_WINDOW_SIZE = { 300.f, 400.f };
 
 void AssetPicker::OpenPrompt(AssetType assetType, AssetPickerCallback callback) {
 	this->callback = callback;
-	isShowing = true;
+	ImGui::OpenPopup("Asset Picker");
 
 	assets.clear();
 	filteredResults.clear();
@@ -40,11 +40,6 @@ void AssetPicker::OpenPrompt(AssetType assetType, AssetPickerCallback callback) 
 }
 
 void AssetPicker::Render() {
-	if (isShowing) {
-		ImGui::OpenPopup("Asset Picker");
-		isShowing = false;
-	}
-
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
 	ImGui::SetNextWindowSize(ASSET_PICKER_WINDOW_SIZE);
 
@@ -55,12 +50,7 @@ void AssetPicker::Render() {
 	);
 	ImGui::SetNextWindowPos(windowPos);
 
-	if (ImGui::BeginPopupModal("Asset Picker", false, flags)) {
-		if (assets.size() == 0) {
-			ImGui::Text("No related files found.");
-			return;
-		}
-
+	if (ImGui::BeginPopupModal("Asset Picker", &isShowing, flags)) {
 		if (ImGui::InputText("Search", &searchString)) {
 			std::string lowerSearch = Utils::ToLower(searchString);
 			lowerSearch = Utils::TrimLeft(lowerSearch);
@@ -81,6 +71,12 @@ void AssetPicker::Render() {
 					}
 				}
 			}
+		}
+
+		if (filteredResults.size() == 0) {
+			ImGui::Text("No related files found.");
+			ImGui::EndPopup();
+			return;
 		}
 
 		bool isInTable = ImGui::BeginTable("assetBrowserSplit", 1);
