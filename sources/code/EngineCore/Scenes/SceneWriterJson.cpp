@@ -22,11 +22,11 @@ void WriteArrayFloat(SceneRapidjsonWriter& documentWriter, float* srcArray, rapi
 void WriteArrayDouble(SceneRapidjsonWriter& documentWriter, double* srcArray, rapidjson::SizeType count);
 void WriteArrayInt(SceneRapidjsonWriter& documentWriter, int* srcArray, rapidjson::SizeType count);
 
-SceneWriterJson::SceneWriterJson(Scene* scene, const char* path) : scene(scene), path(path) {
+SceneWriterJson::SceneWriterJson(Scene* scene, const std::filesystem::path& path) : scene(scene), path(path) {
 	Save(path);
 }
 
-void SceneWriterJson::Save(const char* path) {
+void SceneWriterJson::Save(const std::filesystem::path& path) {
 	documentWriter.StartObject();
 	ProcessMeta();
 	ProcessEntities();
@@ -48,9 +48,9 @@ void SceneWriterJson::Save(const char* path) {
 }
 
 void SceneWriterJson::ProcessMeta() {
-	const char* name = scene->GetName();
+	const std::string& name = scene->GetName();
 	documentWriter.Key("name");
-	documentWriter.String(name);
+	documentWriter.String(name.c_str());
 }
 
 void SceneWriterJson::ProcessEntities() {

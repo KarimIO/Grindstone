@@ -42,7 +42,7 @@ void SceneHeirarchyPanel::Render() {
 		else {
 			for (auto& scenePair : sceneManager->scenes) {
 				SceneManagement::Scene* scene = scenePair.second;
-				const char* sceneName = scene->GetName();
+				const char* sceneName = scene->GetName().c_str();
 				if (ImGui::TreeNode(sceneName)) {
 					RenderScene(scene);
 					ImGui::TreePop();

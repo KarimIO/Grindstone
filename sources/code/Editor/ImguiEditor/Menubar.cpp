@@ -39,7 +39,7 @@ void Menubar::Render() {
 void Menubar::RenderFileMenu() {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	SceneManagement::Scene* scene = engineCore.GetSceneManager()->scenes.begin()->second;
-	bool doesSceneHavePath = scene && scene->GetPath() != nullptr && strlen(scene->GetPath()) > 0;
+	bool doesSceneHavePath = scene && scene->HasPath();
 
 	if (ImGui::MenuItem("New", "Ctrl+N", false)) {
 		OnNewFile();
@@ -111,13 +111,13 @@ void Menubar::OnSaveAsFile() {
 	std::filesystem::path filePath = window->SaveFileDialogue("Scene File (.gscene)\0*.gscene\0");
 
 	if (!filePath.empty()) {
-		SaveFile(filePath.string().c_str());
+		SaveFile(filePath);
 	}
 }
 
 void Menubar::OnReloadFile() {
 	SceneManagement::SceneManager* sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
-	sceneManager->LoadScene(sceneManager->scenes.begin()->second->GetPath());
+	sceneManager->LoadScene(sceneManager->scenes.begin()->first);
 }
 
 void Menubar::OnLoadFile() {
@@ -152,14 +152,14 @@ void Menubar::OnExit() {
 	Editor::Manager::GetInstance().OnTryQuit(nullptr);
 }
 
-void Menubar::SaveFile(const char* path = "") {
+void Menubar::SaveFile(const std::filesystem::path& path) {
 	auto* sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
 	if (sceneManager->scenes.empty()) {
 		GPRINT_ERROR(LogSource::Editor, "No active scenes.");
 	}
 	else {
 		SceneManagement::Scene* scene = sceneManager->scenes.begin()->second;
-		if (strlen(path) == 0) {
+		if (path.empty()) {
 			sceneManager->SaveScene(scene->GetPath(), scene);
 		}
 		else {

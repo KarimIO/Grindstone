@@ -17,11 +17,11 @@ using namespace Grindstone::SceneManagement;
 
 extern "C" {
 	ENGINE_CORE_API const char* SceneGetName(Scene* scene) {
-		return scene->GetName();
+		return scene->GetName().c_str();
 	}
 
 	ENGINE_CORE_API const char* SceneGetPath(Scene* scene) {
-		return scene->GetPath();
+		return scene->GetPath().string().c_str();
 	}
 
 	ENGINE_CORE_API entt::entity SceneCreateEntity(Scene* scene) {
@@ -76,12 +76,16 @@ ECS::Entity Scene::CreateEntity(entt::entity entityToUse) {
 	return entity;
 }
 
-const char* Scene::GetName() {
-	return name.c_str();
+const std::string& Scene::GetName() const {
+	return name;
 }
 
-const char* Scene::GetPath() {
-	return path.string().c_str();
+const std::filesystem::path& Scene::GetPath() const {
+	return path;
+}
+
+bool Scene::HasPath() const {
+	return !path.empty();
 }
 
 // Made so that entities can access componentregistrat without requiring enginecore.

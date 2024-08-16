@@ -63,7 +63,7 @@ void SceneManager::ProcessSceneAfterLoading(Scene* scene) {
 	}
 }
 
-void SceneManager::SaveScene(const char* path, Scene* scene) {
+void SceneManager::SaveScene(const std::filesystem::path& path, Scene* scene) {
 	SceneWriterJson sceneWriter(scene, path);
 }
 

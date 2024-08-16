@@ -28,7 +28,7 @@ namespace Grindstone {
 			void OnProjectSettings();
 			void OnExit();
 
-			void SaveFile(const char* path);
+			void SaveFile(const std::filesystem::path& path);
 			ImguiEditor* editor = nullptr;
 		};
 	}

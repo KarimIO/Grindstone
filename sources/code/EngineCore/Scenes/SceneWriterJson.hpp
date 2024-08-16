@@ -16,9 +16,9 @@ namespace Grindstone::SceneManagement {
 
 	class SceneWriterJson {
 	public:
-		SceneWriterJson(Scene*, const char* path);
+		SceneWriterJson(Scene*, const std::filesystem::path& path);
 	private:
-		void Save(const char* path);
+		void Save(const std::filesystem::path& path);
 		void ProcessMeta();
 		void ProcessEntities();
 		void ProcessEntity(entt::registry& registry, ECS::Entity entity);
@@ -41,6 +41,6 @@ namespace Grindstone::SceneManagement {
 		Scene* scene;
 		rapidjson::StringBuffer documentStringBuffer;
 		SceneRapidjsonWriter documentWriter = SceneRapidjsonWriter(documentStringBuffer);
-		const char* path;
+		std::filesystem::path path;
 	};
 }
