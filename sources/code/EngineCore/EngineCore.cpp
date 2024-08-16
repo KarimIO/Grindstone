@@ -190,7 +190,7 @@ EngineCore::~EngineCore() {
 	AllocatorCore::Free(eventDispatcher);
 
 	if (!AllocatorCore::IsEmpty()) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Uncleared memory: {0} bytes left!", AllocatorCore::GetUsed());
+		GPRINT_ERROR_V(LogSource::EngineCore, "Uncleared memory: {0} bytes left!", static_cast<intmax_t>(AllocatorCore::GetUsed()));
 	}
 
 	GPRINT_INFO(LogSource::EngineCore, "Closed.");

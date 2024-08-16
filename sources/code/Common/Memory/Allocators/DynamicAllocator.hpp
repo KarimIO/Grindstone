@@ -3,6 +3,7 @@
 #include <string>
 #include <functional>
 #include <stdint.h>
+#include <map>
 #include <utility>
 
 #include "../SmartPointers.hpp"
@@ -17,36 +18,39 @@ namespace Grindstone::Memory::Allocators {
 	 */
 	class DynamicAllocator {
 	public:
-		struct Header {
-			bool isAllocated;
-			Header* nextHeader;
-			Header* previousHeader;
-#ifdef _DEBUG
-			const char* debugName;
-#endif
+		struct FreeHeader {
+			size_t blockSize;
+			FreeHeader* nextFreeBlock = nullptr;
+		};
+
+		struct AllocationHeader {
+			size_t blockSize;
+			char padding;
+		};
+
+		enum class SearchPolicy {
+			FirstSearch = 0,
+			BestSearch
 		};
 
 		~DynamicAllocator();
 
-		void Initialize(void* ownedMemory, size_t size);
 		bool Initialize(size_t size);
+		void Initialize(void* ownedMemory, size_t size);
 
-		void* AllocateRaw(size_t size, const char* debugName);
-		bool Free(void* memPtr, bool shouldClear = false);
-		bool FreeFromHeader(Header* header, bool shouldClear = false);
+		void* AllocateRaw(size_t size, size_t alignment, const char* debugName);
+		bool Free(void* memPtr);
 
 		bool IsEmpty() const;
 
 		size_t GetTotalMemorySize() const;
+		size_t GetPeakSize() const;
 		size_t GetUsedSize() const;
 		void* GetMemory() const;
 
-		// Assumes that this is a header within the memory block, in order to be more optimal
-		static Header* GetHeaderOfBlock(void* block);
-
 		template<typename T, typename... Args>
 		SharedPtr<T> AllocateShared(Args&&... params) {
-			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T), typeid(T).name()));
+			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T), alignof(T), typeid(T).name()));
 			if (ptr != nullptr) {
 				// Call the constructor on the newly allocated memory
 				new (ptr) T(std::forward<Args>(params)...);
@@ -57,7 +61,7 @@ namespace Grindstone::Memory::Allocators {
 
 		template<typename T, typename... Args>
 		UniquePtr<T> AllocateUnique(Args&&... params) {
-			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T), typeid(T).name()));
+			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T), alignof(T), typeid(T).name()));
 			if (ptr != nullptr) {
 				// Call the constructor on the newly allocated memory
 				new (ptr) T(std::forward<Args>(params)...);
@@ -68,7 +72,7 @@ namespace Grindstone::Memory::Allocators {
 
 		template<typename T, typename... Args>
 		T* AllocateRaw(Args&&... params) {
-			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T), typeid(T).name()));
+			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T), alignof(T), typeid(T).name()));
 			if (ptr != nullptr) {
 				// Call the constructor on the newly allocated memory
 				new (ptr) T(std::forward<Args>(params)...);
@@ -78,30 +82,38 @@ namespace Grindstone::Memory::Allocators {
 		}
 
 		template<typename T>
-		bool Free(void* memPtr, bool shouldClear = false) {
-			Header* header = GetHeaderOfBlock(memPtr);
-			if (header != nullptr) {
-				reinterpret_cast<T*>(memPtr)->~T();
-				FreeFromHeader(header, shouldClear);
-
-				return true;
+		bool Free(void* memPtr) {
+			if (memPtr != nullptr) {
+				return false;
 			}
 
-			return false;
+			reinterpret_cast<T*>(memPtr)->~T();
+			Free(memPtr);
+
+			return true;
 		}
 
 	private:
-		Header* FindAvailableHeader(size_t size) const;
+		void FindAvailable(size_t size, size_t alignment, size_t& padding, FreeHeader*& previousFreeHeader, FreeHeader*& freeHeader) const;
+		void FindAvailableFirst(size_t size, size_t alignment, size_t& padding, FreeHeader*& previousFreeHeader, FreeHeader*& freeHeader) const;
+		void FindAvailableBest(size_t size, size_t alignment, size_t& padding, FreeHeader*& previousFreeHeader, FreeHeader*& freeHeader) const;
+		void Coalesce(FreeHeader* previousNode, FreeHeader* freeNode);
+		void InitializeImpl(void* ownedMemory, size_t size);
 
-		Header* rootHeader = nullptr;
+		void* startMemory = nullptr;
+		void* endMemory = nullptr;
+		FreeHeader* firstFreeHeader = nullptr;
+
 		std::function<void(void*)> deleterFn;
 		size_t totalMemorySize = 0;
 		size_t usedSize = 0;
+		size_t peakSize = 0;
+		SearchPolicy searchPolicy = SearchPolicy::BestSearch;
+		bool shouldClear = false;
 		bool hasAllocatedOwnMemory = false;
+
+#ifdef _DEBUG
+		std::map<void*, const char*> nameMap;
+#endif
 	};
 }
-
-std::string BreakBytes(size_t bytes);
-
-void* ValidatePtr(void* block);
-bool IsValid(void* block);

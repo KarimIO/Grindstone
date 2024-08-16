@@ -10,68 +10,127 @@ using namespace Grindstone::Memory::Allocators;
 
 // https://www.gingerbill.org/article/2021/11/30/memory-allocation-strategies-005/
 
-constexpr size_t headerSize = sizeof(DynamicAllocator::Header);
+constexpr size_t allocationHeaderSize = sizeof(DynamicAllocator::AllocationHeader);
+constexpr size_t freeHeaderSize = sizeof(DynamicAllocator::FreeHeader);
 
-void DynamicAllocator::Initialize(void* ownedMemory, size_t size) {
-	rootHeader = reinterpret_cast<Header*>(ownedMemory);
-	if (rootHeader == nullptr) {
+static void RemoveFreeList(DynamicAllocator::FreeHeader*& head, DynamicAllocator::FreeHeader* previousNode, DynamicAllocator::FreeHeader* deleteNode) {
+	if (previousNode != nullptr) {
+		previousNode->nextFreeBlock = deleteNode->nextFreeBlock;
 		return;
 	}
 
+	// Is the first node
+	if (deleteNode->nextFreeBlock == nullptr) {
+		// List only has one element
+		head = nullptr;
+	}
+	else {
+		// List has more elements
+		head = deleteNode->nextFreeBlock;
+	}
+}
+
+static void InsertFreeList(DynamicAllocator::FreeHeader*& head, DynamicAllocator::FreeHeader*& previousNode, DynamicAllocator::FreeHeader*& newNode) {
+	if (previousNode == nullptr) {
+		newNode->nextFreeBlock = head;
+		head = newNode;
+	}
+	else {
+		if (previousNode->nextFreeBlock == nullptr) {
+			// Last node
+			previousNode->nextFreeBlock = newNode;
+			newNode->nextFreeBlock = nullptr;
+		}
+		else {
+			//
+			// Middle node
+			newNode->nextFreeBlock = previousNode->nextFreeBlock;
+			previousNode->nextFreeBlock = newNode;
+		}
+	}
+}
+
+static size_t CalculatePadding(size_t baseAddress, size_t alignment) {
+	size_t multiplier = (baseAddress / alignment) + 1;
+	size_t alignedAddress = multiplier * alignment;
+	size_t padding = alignedAddress - baseAddress;
+	return padding;
+}
+
+static size_t CalculatePaddingWithHeader(size_t baseAddress, size_t alignment, size_t headerSize) {
+	size_t padding = CalculatePadding(baseAddress, alignment);
+	size_t neededSpace = headerSize;
+
+	if (padding < neededSpace) {
+		// Find next aligned address
+		neededSpace -= padding;
+
+		if (neededSpace % alignment > 0) {
+			padding += alignment * (1 + (neededSpace / alignment));
+		}
+		else {
+			padding += alignment * (neededSpace / alignment);
+		}
+	}
+
+	return padding;
+}
+
+void DynamicAllocator::InitializeImpl(void* ownedMemory, size_t size) {;
+	if (ownedMemory == nullptr) {
+		return;
+	}
+
+	startMemory = ownedMemory;
+	endMemory = static_cast<void*>(static_cast<char*>(ownedMemory) + size);
+
 	deleterFn = [this](void* ptr) -> void {
 		this->Free(ptr);
 	};
 
-	memset(rootHeader, 0, size);
-	usedSize = sizeof(Header);
+	memset(startMemory, 0, size);
+	firstFreeHeader = reinterpret_cast<FreeHeader*>(startMemory);
+	usedSize = 0;
+	peakSize = 0;
 	totalMemorySize = size;
 	hasAllocatedOwnMemory = false;
 
-	rootHeader->nextHeader = nullptr;
-	rootHeader->previousHeader = nullptr;
-	rootHeader->isAllocated = false;
+	firstFreeHeader->blockSize = size;
+	firstFreeHeader->nextFreeBlock = nullptr;
+}
+
+void DynamicAllocator::Initialize(void* ownedMemory, size_t size) {
+	hasAllocatedOwnMemory = false;
+	InitializeImpl(ownedMemory, size);
 }
 
 bool DynamicAllocator::Initialize(size_t size) {
-	rootHeader = reinterpret_cast<Header*>(malloc(size));
-	if (rootHeader == nullptr) {
+	void* newMemory = malloc(size);
+
+	if (newMemory == nullptr) {
 		return false;
 	}
 
-	deleterFn = [this](void* ptr) -> void {
-		this->Free(ptr);
-	};
-
-	memset(rootHeader, 0, size);
-	usedSize = sizeof(Header);
-	totalMemorySize = size;
 	hasAllocatedOwnMemory = true;
-
-	rootHeader->nextHeader = nullptr;
-	rootHeader->previousHeader = nullptr;
-	rootHeader->isAllocated = false;
+	InitializeImpl(newMemory, size);
 	return true;
 }
 
 DynamicAllocator::~DynamicAllocator() {
 #ifdef _DEBUG
-	Header* currentHeader = rootHeader;
-	while (currentHeader != nullptr) {
-		if (currentHeader->isAllocated) {
-			char* target = currentHeader->nextHeader == nullptr
-				? reinterpret_cast<char*>(rootHeader) + totalMemorySize
-				: reinterpret_cast<char*>(currentHeader->nextHeader);
-
-			size_t bytes = target - reinterpret_cast<char*>(currentHeader) - sizeof(Header);
-			GPRINT_ERROR_V(LogSource::EngineCore, "Uncleared memory: {}", currentHeader->debugName);
-		}
-		currentHeader = currentHeader->nextHeader;
+	for (auto& allocation : nameMap) {
+		AllocationHeader* header = reinterpret_cast<AllocationHeader*>(static_cast<char*>(allocation.first) - sizeof(AllocationHeader));
+		GPRINT_TRACE_V(LogSource::EngineCore, "Unfreed Memory - {} Size({}): {}", allocation.first, header->blockSize, allocation.second);
 	}
 #endif
 
-	if (rootHeader && hasAllocatedOwnMemory) {
-		delete rootHeader;
+	if (startMemory && hasAllocatedOwnMemory) {
+		delete startMemory;
 	}
+}
+
+size_t DynamicAllocator::GetPeakSize() const {
+	return peakSize;
 }
 
 size_t DynamicAllocator::GetUsedSize() const {
@@ -79,155 +138,154 @@ size_t DynamicAllocator::GetUsedSize() const {
 }
 
 void* DynamicAllocator::GetMemory() const {
-	return rootHeader;
+	return startMemory;
 }
 
 size_t DynamicAllocator::GetTotalMemorySize() const {
 	return totalMemorySize;
 }
 
-DynamicAllocator::Header* DynamicAllocator::FindAvailableHeader(size_t size) const {
-	size_t minimumSpaceRequired = size + sizeof(Header);
-	Header* currentMemoryHeader = rootHeader;
-	Header* previousMemoryHeader = nullptr;
-
-	while (true) {
-		Header* nextMemoryHeader = currentMemoryHeader->nextHeader;
-		char* endOfBlock = reinterpret_cast<char*>(nextMemoryHeader);
-		size_t spaceLeft = endOfBlock - reinterpret_cast<char*>(currentMemoryHeader);
-
-		if (!currentMemoryHeader->isAllocated && spaceLeft >= minimumSpaceRequired) {
-			return currentMemoryHeader;
-		}
-
-		if (currentMemoryHeader->nextHeader == nullptr) {
-			break;
-		}
-
-		currentMemoryHeader = currentMemoryHeader->nextHeader;
+void DynamicAllocator::FindAvailable(size_t size, size_t alignment, size_t& padding, FreeHeader*& previousFreeHeader, FreeHeader*& freeHeader) const {
+	if (searchPolicy == SearchPolicy::FirstSearch) {
+		FindAvailableFirst(size, alignment, padding, previousFreeHeader, freeHeader);
 	}
-
-	char* end = reinterpret_cast<char*>(rootHeader) + totalMemorySize;
-	size_t spaceLeft = end - reinterpret_cast<char*>(currentMemoryHeader);
-
-	if (!currentMemoryHeader->isAllocated && spaceLeft >= minimumSpaceRequired) {
-		return currentMemoryHeader;
-	}
-
-	return nullptr;
-}
-
-void* DynamicAllocator::AllocateRaw(size_t size, const char* debugName) {
-	DynamicAllocator::Header* header = FindAvailableHeader(size);
-
-	if (header == nullptr) {
-		return nullptr;
-	}
-
-	char* blockPointer = reinterpret_cast<char*>(header) + sizeof(Header);
-
-	char* nextHeaderAsChar = blockPointer + size;
-	char* tail = reinterpret_cast<char*>(rootHeader) + totalMemorySize;
-	if (nextHeaderAsChar + sizeof(Header) <= tail) {
-		Header* nextHeader = reinterpret_cast<Header*>(nextHeaderAsChar);
-		header->nextHeader = nextHeader;
-		nextHeader->isAllocated = false;
-		nextHeader->nextHeader = nullptr;
-		nextHeader->previousHeader = header;
-#ifdef _DEBUG
-		nextHeader->debugName = nullptr;
-#endif
-
-		usedSize += size + headerSize;
+	else if (searchPolicy == SearchPolicy::BestSearch) {
+		FindAvailableFirst(size, alignment, padding, previousFreeHeader, freeHeader);
 	}
 	else {
-		header->nextHeader = nullptr;
-		usedSize += size;
+		GPRINT_FATAL(LogSource::EngineCore, "Invalid search policy");
 	}
-
-	header->isAllocated = true;
-#ifdef _DEBUG
-	header->debugName = debugName;
-#endif
-
-	return blockPointer;
 }
 
-DynamicAllocator::Header* DynamicAllocator::GetHeaderOfBlock(void* block) {
-	if (block == nullptr) {
+void DynamicAllocator::FindAvailableFirst(size_t size, size_t alignment, size_t& padding, FreeHeader*& previousFreeHeader, FreeHeader*& freeHeader) const {
+	FreeHeader* it = firstFreeHeader;
+	FreeHeader* itPrev = nullptr;
+
+	while (it != nullptr) {
+		padding = CalculatePaddingWithHeader((size_t)it, alignment, sizeof(AllocationHeader));
+		size_t requiredSpace = size + padding;
+		if (it->blockSize >= requiredSpace) {
+			break;
+		}
+		itPrev = it;
+		it = it->nextFreeBlock;
+	}
+
+	previousFreeHeader = itPrev;
+	freeHeader = it;
+}
+
+void DynamicAllocator::FindAvailableBest(size_t size, size_t alignment, size_t& padding, FreeHeader*& previousFreeHeader, FreeHeader*& freeHeader) const {
+	constexpr size_t smallestDiff = std::numeric_limits<size_t>::max();
+	FreeHeader* bestBlock = nullptr;
+	FreeHeader* it = firstFreeHeader;
+	FreeHeader* itPrev = nullptr;
+
+	while (it != nullptr) {
+		padding = CalculatePaddingWithHeader((size_t)it, alignment, sizeof(AllocationHeader));
+		size_t requiredSpace = size + padding;
+		if (it->blockSize >= requiredSpace && (it->blockSize - requiredSpace < smallestDiff)) {
+			bestBlock = it;
+		}
+		itPrev = it;
+		it = it->nextFreeBlock;
+	}
+
+	previousFreeHeader = itPrev;
+	freeHeader = it;
+}
+
+void DynamicAllocator::Coalesce(FreeHeader* previousNode, FreeHeader* freeNode) {
+	if (freeNode->nextFreeBlock != nullptr &&
+		(size_t)freeNode + freeNode->blockSize == (size_t)freeNode->nextFreeBlock) {
+		freeNode->blockSize += freeNode->nextFreeBlock->blockSize;
+		RemoveFreeList(firstFreeHeader, freeNode, freeNode->nextFreeBlock);
+	}
+
+	if (previousNode != nullptr &&
+		(size_t)previousNode + previousNode->blockSize == (size_t)freeNode) {
+		previousNode->blockSize += freeNode->blockSize;
+		RemoveFreeList(firstFreeHeader, previousNode, freeNode);
+	}
+}
+
+void* DynamicAllocator::AllocateRaw(size_t size, size_t alignment, const char* debugName) {
+	DynamicAllocator::FreeHeader* previousFreeHeader = nullptr;
+	DynamicAllocator::FreeHeader* freeHeader = nullptr;
+	size_t padding;
+
+	FindAvailable(size, alignment, padding, previousFreeHeader, freeHeader);
+
+	if (freeHeader == nullptr) {
 		return nullptr;
 	}
 
-	char* blockPtrAsChar = static_cast<char*>(block);
-	Header* headerPtr = reinterpret_cast<Header*>(blockPtrAsChar - sizeof(Header));
+	const size_t alignmentPadding = padding - allocationHeaderSize;
+	const size_t requiredSize = size + padding;
 
-	return headerPtr;
-}
+	const size_t rest = freeHeader->blockSize - requiredSize;
 
-bool DynamicAllocator::Free(void* memPtr, bool shouldClear) {
-	if (memPtr == nullptr) {
-		return false;
+	if (rest > 0) {
+		// Split node
+		FreeHeader* newFreeNode = (FreeHeader*)((size_t)freeHeader + requiredSize);
+		newFreeNode->blockSize = rest;
+		InsertFreeList(firstFreeHeader, freeHeader, newFreeNode);
 	}
 
-	Header* header = GetHeaderOfBlock(memPtr);
-	if (header != nullptr) {
-		return FreeFromHeader(header, shouldClear);
-	}
+	RemoveFreeList(firstFreeHeader, previousFreeHeader, freeHeader);
 
-	return false;
-}
+	size_t headerAddress = reinterpret_cast<size_t>(freeHeader) + alignmentPadding;
+	size_t dataAddress = headerAddress + allocationHeaderSize;
 
-bool DynamicAllocator::FreeFromHeader(Header* header, bool shouldClear) {
+	AllocationHeader* newHeader = reinterpret_cast<AllocationHeader*>(headerAddress);
+	newHeader->blockSize = requiredSize;
+	newHeader->padding = static_cast<char>(alignmentPadding);
+
+	usedSize += requiredSize;
+	peakSize = std::max(peakSize, usedSize);
+
+	void* voidAddr = reinterpret_cast<void*>(dataAddress);
+
 #ifdef _DEBUG
-	if (!header->isAllocated) {
-		GPRINT_ERROR(LogSource::EngineCore, "Already freed, but trying to free again!");
-	}
-
-	header->debugName = nullptr;
+	nameMap[voidAddr] = debugName;
 #endif
 
-	header->isAllocated = false;
+	return voidAddr;
+}
 
-	char* deleteStart = reinterpret_cast<char*>(header) + sizeof(Header);
-	char* deleteEnd = header->nextHeader == nullptr
-		? reinterpret_cast<char*>(rootHeader) + totalMemorySize
-		: reinterpret_cast<char*>(header->nextHeader);
-	size_t removedActualSize = deleteEnd - deleteStart;
+bool DynamicAllocator::Free(void* ptr) {
+	size_t currentAddress = reinterpret_cast<size_t>(ptr);
+	size_t headerAddress = currentAddress - sizeof(AllocationHeader);
+	AllocationHeader* allocationHeader = (AllocationHeader*)headerAddress ;
 
-	Header* prevHeader = header;
-	if (header->previousHeader != nullptr && !header->previousHeader->isAllocated) {
-		prevHeader = header->previousHeader;
+	FreeHeader* freeNode = reinterpret_cast<FreeHeader*>(headerAddress);
+	freeNode->blockSize = allocationHeader->blockSize + allocationHeader->padding;
+	freeNode->nextFreeBlock = nullptr;
+
+	FreeHeader* it = firstFreeHeader;
+	FreeHeader* itPrev = nullptr;
+	while (it != nullptr) {
+		if (ptr < it) {
+			InsertFreeList(firstFreeHeader, itPrev, freeNode);
+			break;
+		}
+		itPrev = it;
+		it = it->nextFreeBlock;
 	}
 
-	Header* nextHeader = header->nextHeader;
-	if (nextHeader != nullptr && !nextHeader->isAllocated) {
-		nextHeader = nextHeader->nextHeader;
-		removedActualSize += sizeof(Header);
-	}
+	usedSize -= freeNode->blockSize;
 
-	prevHeader->nextHeader = nextHeader;
-	if (nextHeader != nullptr) {
-		nextHeader->previousHeader = prevHeader;
-		removedActualSize += sizeof(Header);
-	}
+	Coalesce(itPrev, freeNode);
 
-	usedSize -= removedActualSize;
+#ifdef _DEBUG
+	nameMap.erase(ptr);
+#endif
 
-	if (shouldClear) {
-		char* clearStart = reinterpret_cast<char*>(header) + sizeof(Header);
-		char* clearEnd = header->nextHeader == nullptr
-			? reinterpret_cast<char*>(rootHeader) + totalMemorySize
-			: reinterpret_cast<char*>(header->nextHeader);
-
-		size_t sizeToClear = clearEnd - clearStart;
-
-		memset(clearStart, 0, sizeToClear);
-	}
 
 	return true;
 }
 
 bool DynamicAllocator::IsEmpty() const {
 	// A minimum of one header is always required!
-	return usedSize <= sizeof(Header);
+	return usedSize == 0;
 }

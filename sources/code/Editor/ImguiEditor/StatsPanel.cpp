@@ -135,9 +135,11 @@ void StatsPanel::RenderContents() {
 
 	{
 		const size_t oneKB = 1024u;
+		const size_t memPeak = AllocatorCore::GetPeak() / oneKB;
 		const size_t memUsed = AllocatorCore::GetUsed() / oneKB;
 		const size_t memTotal = AllocatorCore::GetTotal() / oneKB;
 		const float memUsedPct = static_cast<float>(memUsed) / static_cast<float>(memTotal);
+		ImGui::Text("Peak: %zuKB", memPeak);
 		ImGui::Text("Memory Used: %zuKB / %zuKB", memUsed, memTotal);
 		ImGui::ProgressBar(memUsedPct, ImVec2(maxWidth, 0));
 	}

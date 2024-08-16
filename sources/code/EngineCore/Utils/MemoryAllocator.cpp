@@ -16,8 +16,8 @@ void Grindstone::Memory::AllocatorCore::SetAllocatorState(Grindstone::Memory::Al
 	allocatorState = newAllocatorState;
 }
 
-void* Grindstone::Memory::AllocatorCore::AllocateRaw(size_t size, const char* debugName) {
-	return GetAllocatorState()->dynamicAllocator.AllocateRaw(size, debugName);
+void* Grindstone::Memory::AllocatorCore::AllocateRaw(size_t size, size_t alignment, const char* debugName) {
+	return GetAllocatorState()->dynamicAllocator.AllocateRaw(size, alignment, debugName);
 }
 
 bool AllocatorCore::Initialize(size_t sizeInMegs) {
@@ -30,7 +30,7 @@ void Grindstone::Memory::AllocatorCore::CloseAllocator() {
 }
 
 Grindstone::StringRef AllocatorCore::AllocateString(size_t size) {
-	char* memory = static_cast<char*>(allocatorState->dynamicAllocator.AllocateRaw(size, "String"));
+	char* memory = static_cast<char*>(allocatorState->dynamicAllocator.AllocateRaw(size, alignof(std::string), "String"));
 
 	return Grindstone::StringRef(memory, size);
 }
@@ -38,7 +38,7 @@ Grindstone::StringRef AllocatorCore::AllocateString(size_t size) {
 Grindstone::StringRef AllocatorCore::AllocateString(Grindstone::StringRef srcString) {
 	size_t srcStringLength = srcString.size() + 1;
 
-	char* memory = static_cast<char*>(allocatorState->dynamicAllocator.AllocateRaw(srcStringLength, "String"));
+	char* memory = static_cast<char*>(allocatorState->dynamicAllocator.AllocateRaw(srcStringLength, alignof(std::string), "String"));
 	memcpy(memory, srcString.data(), srcStringLength);
 
 	return Grindstone::StringRef(memory, srcStringLength - 1);
@@ -46,6 +46,10 @@ Grindstone::StringRef AllocatorCore::AllocateString(Grindstone::StringRef srcStr
 
 bool AllocatorCore::FreeWithoutDestructor(void* memPtr) {
 	return allocatorState->dynamicAllocator.Free(memPtr);
+}
+
+size_t Grindstone::Memory::AllocatorCore::GetPeak() {
+	return allocatorState->dynamicAllocator.GetPeakSize();
 }
 
 size_t Grindstone::Memory::AllocatorCore::GetUsed() {

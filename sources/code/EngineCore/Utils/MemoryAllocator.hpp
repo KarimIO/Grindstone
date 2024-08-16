@@ -19,12 +19,13 @@ namespace Grindstone::Memory::AllocatorCore {
 
 	bool FreeWithoutDestructor(void* memPtr);
 
+	size_t GetPeak();
 	size_t GetUsed();
 	size_t GetTotal();
 
 	bool IsEmpty();
 
-	void* AllocateRaw(size_t size, const char* debugName);
+	void* AllocateRaw(size_t size, size_t alignment, const char* debugName);
 
 	template<typename T, typename... Args>
 	UniquePtr<T> AllocateUnique(Args&&... params) {
@@ -38,7 +39,7 @@ namespace Grindstone::Memory::AllocatorCore {
 
 	template<typename T, typename... Args>
 	T* Allocate(Args&&... params) {
-		T* ptr = static_cast<T*>(GetAllocatorState()->dynamicAllocator.AllocateRaw(sizeof(T), typeid(T).name()));
+		T* ptr = static_cast<T*>(GetAllocatorState()->dynamicAllocator.AllocateRaw(sizeof(T), alignof(T), typeid(T).name()));
 		if (ptr != nullptr) {
 			// Call the constructor on the newly allocated memory
 			new (ptr) T(std::forward<Args>(params)...);
@@ -48,16 +49,14 @@ namespace Grindstone::Memory::AllocatorCore {
 	}
 
 	template<typename T>
-	bool Free(T* memPtr, bool shouldClear = false) {
-		Allocators::DynamicAllocator& dynamicAllocator = GetAllocatorState()->dynamicAllocator;
-		Allocators::DynamicAllocator::Header* header = dynamicAllocator.GetHeaderOfBlock(memPtr);
-		if (header != nullptr) {
-			reinterpret_cast<T*>(memPtr)->~T();
-			dynamicAllocator.FreeFromHeader(header, shouldClear);
-
-			return true;
+	bool Free(T* memPtr) {
+		if (memPtr == nullptr) {
+			return false;
 		}
 
-		return false;
+		reinterpret_cast<T*>(memPtr)->~T();
+		GetAllocatorState()->dynamicAllocator.Free(memPtr);
+
+		return true;
 	}
 };

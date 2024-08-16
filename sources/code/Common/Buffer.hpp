@@ -47,14 +47,14 @@ namespace Grindstone {
 	public:
 		Buffer() : bufferPtr(nullptr), capacity(0) {}
 		Buffer(uint64_t capacity) : capacity(capacity) {
-			this->bufferPtr = static_cast<Byte*>(Grindstone::Memory::AllocatorCore::AllocateRaw(capacity, "Buffer"));
+			this->bufferPtr = static_cast<Byte*>(Grindstone::Memory::AllocatorCore::AllocateRaw(capacity, alignof(Buffer), "Buffer"));
 		}
 
 		Buffer(void* bufferPtr, const uint64_t capacity) : bufferPtr(static_cast<Byte*>(bufferPtr)), capacity(capacity) {}
 
 		// Copy-Constructor
 		Buffer(const Buffer& other) : capacity(other.capacity) {
-			bufferPtr = static_cast<Byte*>(Grindstone::Memory::AllocatorCore::AllocateRaw(capacity, "Buffer"));
+			bufferPtr = static_cast<Byte*>(Grindstone::Memory::AllocatorCore::AllocateRaw(capacity, alignof(Buffer), "Buffer"));
 			memcpy(bufferPtr, other.bufferPtr, capacity);
 		}
 
@@ -100,7 +100,7 @@ namespace Grindstone {
 			}
 
 			capacity = other.capacity;
-			bufferPtr = static_cast<Byte*>(Grindstone::Memory::AllocatorCore::AllocateRaw(capacity, "Buffer"));
+			bufferPtr = static_cast<Byte*>(Grindstone::Memory::AllocatorCore::AllocateRaw(capacity, alignof(Buffer), "Buffer"));
 			memcpy(bufferPtr, other.bufferPtr, capacity);
 			return *this;
 		}
@@ -166,7 +166,7 @@ namespace Grindstone {
 		ResizableBuffer() : Buffer(), currentPtr(nullptr), size(0) {}
 
 		ResizableBuffer(uint64_t capacity) : Buffer() {
-			bufferPtr = static_cast<Byte*>(Grindstone::Memory::AllocatorCore::AllocateRaw(capacity, "ResizableBuffer"));
+			bufferPtr = static_cast<Byte*>(Grindstone::Memory::AllocatorCore::AllocateRaw(capacity, alignof(ResizableBuffer), "ResizableBuffer"));
 			currentPtr = bufferPtr;
 			this->capacity = capacity;
 		}
@@ -181,7 +181,7 @@ namespace Grindstone {
 			capacity = other.capacity;
 			size = other.size;
 
-			bufferPtr = static_cast<Byte*>(Grindstone::Memory::AllocatorCore::AllocateRaw(capacity, "ResizableBuffer"));
+			bufferPtr = static_cast<Byte*>(Grindstone::Memory::AllocatorCore::AllocateRaw(capacity, alignof(ResizableBuffer), "ResizableBuffer"));
 			currentPtr = other.currentPtr;
 
 			memcpy(bufferPtr, other.bufferPtr, size);
