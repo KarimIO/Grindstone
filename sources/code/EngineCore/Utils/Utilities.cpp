@@ -30,6 +30,10 @@ Grindstone::Buffer Utils::LoadFile(const char* inputPath) {
 }
 
 std::string Utils::LoadFileText(const char* inputPath) {
+	if (!std::filesystem::exists(inputPath)) {
+		return "";
+	}
+
 	std::ifstream ifs(inputPath, std::ios::in | std::ios::binary | std::ios::ate);
 
 	std::ifstream::pos_type fileSize = ifs.tellg();
