@@ -282,12 +282,12 @@ void VulkanCommandBuffer::BindIndexBuffer(IndexBuffer* indexBuffer) {
 	vkCmdBindIndexBuffer(commandBuffer, vulkanIndexBuffer->GetBuffer(), 0, vulkanIndexBuffer->Is32Bit() ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16);
 }
 
-void VulkanCommandBuffer::DrawVertices(uint32_t vertexCount, uint32_t instanceCount) {
-	vkCmdDraw(commandBuffer, vertexCount, instanceCount, 0, 0);
+void VulkanCommandBuffer::DrawVertices(uint32_t vertexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) {
+	vkCmdDraw(commandBuffer, vertexCount, instanceCount, vertexOffset, firstInstance);
 }
 
-void VulkanCommandBuffer::DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t instanceCount, int32_t vertexOffset) {
-	vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, 0);
+void VulkanCommandBuffer::DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) {
+	vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 }
 
 void VulkanCommandBuffer::DispatchCompute(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) {

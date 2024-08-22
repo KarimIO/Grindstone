@@ -150,6 +150,7 @@ void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, 
 		commandBuffer->DrawIndices(
 			renderTask.baseIndex,
 			renderTask.indexCount,
+			0,
 			1,
 			renderTask.baseVertex
 		);
@@ -181,6 +182,7 @@ void Mesh3dRenderer::RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, cons
 		commandBuffer->DrawIndices(
 			renderTask.baseIndex,
 			renderTask.indexCount,
+			0,
 			1,
 			renderTask.baseVertex
 		);

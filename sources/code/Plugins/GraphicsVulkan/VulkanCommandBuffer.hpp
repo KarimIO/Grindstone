@@ -46,8 +46,8 @@ namespace Grindstone {
 			virtual void BindVertexArrayObject(VertexArrayObject* vertexArrayObject) override;
 			virtual void BindVertexBuffers(VertexBuffer** vb, uint32_t count) override;
 			virtual void BindIndexBuffer(IndexBuffer* indexBuffer) override;
-			virtual void DrawVertices(uint32_t vertexCount, uint32_t instanceCount) override;
-			virtual void DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t instanceCount, int32_t vertexOffset) override;
+			virtual void DrawVertices(uint32_t vertexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) override;
+			virtual void DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) override;
 			virtual void DispatchCompute(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) override;
 
 			virtual void WaitForComputeMemoryBarrier(RenderTarget* renderTarget, bool shouldMakeWritable) override;

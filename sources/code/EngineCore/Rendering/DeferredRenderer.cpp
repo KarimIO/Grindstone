@@ -1924,7 +1924,7 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 			descriptorSets.data(),
 			static_cast<uint32_t>(descriptorSets.size())
 		);
-		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+		currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 		currentCommandBuffer->UnbindRenderPass();
 	}
 
@@ -1948,7 +1948,7 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 			descriptorSets.data(),
 			static_cast<uint32_t>(descriptorSets.size())
 		);
-		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+		currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 		currentCommandBuffer->UnbindRenderPass();
 	}
 
@@ -1970,7 +1970,7 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 			descriptorSets.data(),
 			static_cast<uint32_t>(descriptorSets.size())
 		);
-		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+		currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 		currentCommandBuffer->UnbindRenderPass();
 	}
 
@@ -1992,7 +1992,7 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 			descriptorSets.data(),
 			static_cast<uint32_t>(descriptorSets.size())
 		);
-		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+		currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 		currentCommandBuffer->UnbindRenderPass();
 	}
 
@@ -2150,7 +2150,7 @@ void DeferredRenderer::RenderLights(
 			iblDescriptors[1] = imageSet.ambientOcclusionDescriptorSet;
 			iblDescriptors[2] = environmentMapDescriptorSet;
 			currentCommandBuffer->BindGraphicsDescriptorSet(imageBasedLightingPipeline, iblDescriptors.data(), static_cast<uint32_t>(iblDescriptors.size()));
-			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+			currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 		}
 		currentCommandBuffer->EndDebugLabelSection();
 	}
@@ -2176,7 +2176,7 @@ void DeferredRenderer::RenderLights(
 			pointLightDescriptors[1] = pointLightComponent.descriptorSet;
 			pointLightComponent.uniformBufferObject->UpdateBuffer(&lightmapStruct);
 			currentCommandBuffer->BindGraphicsDescriptorSet(pointLightPipeline, pointLightDescriptors.data(), static_cast<uint32_t>(pointLightDescriptors.size()));
-			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+			currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 		});
 		currentCommandBuffer->EndDebugLabelSection();
 	}
@@ -2208,7 +2208,7 @@ void DeferredRenderer::RenderLights(
 
 			spotLightDescriptors[1] = spotLightComponent.descriptorSet;
 			currentCommandBuffer->BindGraphicsDescriptorSet(spotLightPipeline, spotLightDescriptors.data(), static_cast<uint32_t>(spotLightDescriptors.size()));
-			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+			currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 		});
 		currentCommandBuffer->EndDebugLabelSection();
 	}
@@ -2237,7 +2237,7 @@ void DeferredRenderer::RenderLights(
 
 			directionalLightDescriptors[1] = directionalLightComponent.descriptorSet;
 			currentCommandBuffer->BindGraphicsDescriptorSet(directionalLightPipeline, directionalLightDescriptors.data(), static_cast<uint32_t>(directionalLightDescriptors.size()));
-			currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+			currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 			currentCommandBuffer->EndDebugLabelSection();
 		});
 	}
@@ -2281,7 +2281,7 @@ void DeferredRenderer::RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAP
 
 	commandBuffer->BindGraphicsPipeline(ssaoPipeline);
 	commandBuffer->BindGraphicsDescriptorSet(ssaoPipeline, ssaoDescriptors.data(), static_cast<uint32_t>(ssaoDescriptors.size()));
-	commandBuffer->DrawIndices(0, 6, 1, 0);
+	commandBuffer->DrawIndices(0, 6, 0, 1, 0);
 	commandBuffer->UnbindRenderPass();
 }
 
@@ -2498,7 +2498,7 @@ void DeferredRenderer::PostProcess(
 
 		currentCommandBuffer->BindGraphicsDescriptorSet(tonemapPipeline, &imageSet.tonemapDescriptorSet, 1);
 		currentCommandBuffer->BindGraphicsPipeline(tonemapPipeline);
-		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+		currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 	}
 
 	currentCommandBuffer->UnbindRenderPass();
@@ -2527,7 +2527,7 @@ void DeferredRenderer::Debug(
 
 		currentCommandBuffer->BindGraphicsDescriptorSet(debugPipeline, &imageSet.debugDescriptorSet, 1);
 		currentCommandBuffer->BindGraphicsPipeline(debugPipeline);
-		currentCommandBuffer->DrawIndices(0, 6, 1, 0);
+		currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 	}
 
 	currentCommandBuffer->UnbindRenderPass();
