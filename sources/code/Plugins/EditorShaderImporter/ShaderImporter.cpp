@@ -420,6 +420,7 @@ std::vector<uint32_t> ShaderImporter::ConvertToSpirv(ShaderType shaderType, cons
 			firstPos = secondPos + 1;
 			secondPos = error.find('\n', firstPos);
 		}
+		return std::vector<uint32_t>();
 	}
 
 	auto vkSpirv = std::vector<uint32_t>(result.cbegin(), result.cend());
