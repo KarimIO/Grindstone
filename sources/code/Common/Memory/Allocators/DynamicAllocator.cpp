@@ -8,8 +8,6 @@
 
 using namespace Grindstone::Memory::Allocators;
 
-// https://www.gingerbill.org/article/2021/11/30/memory-allocation-strategies-005/
-
 constexpr size_t allocationHeaderSize = sizeof(DynamicAllocator::AllocationHeader);
 constexpr size_t freeHeaderSize = sizeof(DynamicAllocator::FreeHeader);
 

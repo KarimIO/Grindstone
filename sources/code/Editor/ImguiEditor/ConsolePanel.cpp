@@ -101,7 +101,7 @@ void ConsolePanel::RenderTopbar() {
 		for (uint64_t i = 0; i < static_cast<uint64_t>(Grindstone::LogSource::Count); ++i) {
 			if (sourceFlags & (1ull << i)) {
 				numSelected += 1u;
-				selected = i;
+				selected = static_cast<uint32_t>(i);
 
 				if (numSelected == 2) {
 					break;
