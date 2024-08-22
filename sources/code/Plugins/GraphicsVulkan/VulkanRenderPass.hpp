@@ -25,7 +25,7 @@ namespace Grindstone {
 
 			std::string debugName;
 			float debugColor[4] = {};
-			std::vector<ColorFormat> colorFormats;
+			std::vector<RenderPass::AttachmentInfo> colorAttachments;
 			DepthFormat depthFormat = DepthFormat::None;
 			bool shouldClearDepthOnLoad = true;
 			VkRenderPass renderPass = nullptr;

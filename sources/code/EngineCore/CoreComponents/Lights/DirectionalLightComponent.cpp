@@ -28,8 +28,8 @@ void Grindstone::SetupDirectionalLightComponent(entt::registry& registry, entt::
 
 	RenderPass::CreateInfo renderPassCreateInfo{};
 	renderPassCreateInfo.debugName = "Directional Shadow Render Pass";
-	renderPassCreateInfo.colorFormats = nullptr;
-	renderPassCreateInfo.colorFormatCount = 0;
+	renderPassCreateInfo.colorAttachments = nullptr;
+	renderPassCreateInfo.colorAttachmentCount = 0;
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;
 	directionalLightComponent.renderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 

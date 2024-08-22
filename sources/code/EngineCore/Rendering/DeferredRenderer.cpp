@@ -125,8 +125,8 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 
 	RenderPass::CreateInfo renderPassCreateInfo{};
 	renderPassCreateInfo.debugName = "Shadow Map Render Pass";
-	renderPassCreateInfo.colorFormats = nullptr;
-	renderPassCreateInfo.colorFormatCount = 0;
+	renderPassCreateInfo.colorAttachments = nullptr;
+	renderPassCreateInfo.colorAttachmentCount = 0;
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;
 	shadowMapRenderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
@@ -457,23 +457,23 @@ void DeferredRenderer::CreateDepthOfFieldRenderTargetsAndDescriptorSets(Deferred
 void DeferredRenderer::CreateDepthOfFieldResources() {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	std::array<ColorFormat, 2> dofSepFormats{};
-	dofSepFormats[0] = ColorFormat::RGBA16;
-	dofSepFormats[1] = ColorFormat::RGBA16;
+	std::array<RenderPass::AttachmentInfo, 2> dofSepFormats{};
+	dofSepFormats[0] = { ColorFormat::RGBA16, true };
+	dofSepFormats[1] = { ColorFormat::RGBA16, true };
 
 	RenderPass::CreateInfo dofSepRenderPassCreateInfo{};
 	dofSepRenderPassCreateInfo.debugName = "Depth of Field Separation Render Pass";
-	dofSepRenderPassCreateInfo.colorFormats = dofSepFormats.data();
-	dofSepRenderPassCreateInfo.colorFormatCount = static_cast<uint32_t>(dofSepFormats.size());
+	dofSepRenderPassCreateInfo.colorAttachments = dofSepFormats.data();
+	dofSepRenderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(dofSepFormats.size());
 	dofSepRenderPassCreateInfo.depthFormat = DepthFormat::None;
 	dofSeparationRenderPass = graphicsCore->CreateRenderPass(dofSepRenderPassCreateInfo);
 
-	ColorFormat dofBlurAndComboFormat = ColorFormat::RGBA16;
+	RenderPass::AttachmentInfo dofBlurAndComboFormat = { ColorFormat::RGBA16, true };
 
 	RenderPass::CreateInfo dofBlurAndComboRenderPassCreateInfo{};
 	dofBlurAndComboRenderPassCreateInfo.debugName = "Depth of Field Blur and Combo Render Pass";
-	dofBlurAndComboRenderPassCreateInfo.colorFormats = &dofBlurAndComboFormat;
-	dofBlurAndComboRenderPassCreateInfo.colorFormatCount = 1;
+	dofBlurAndComboRenderPassCreateInfo.colorAttachments = &dofBlurAndComboFormat;
+	dofBlurAndComboRenderPassCreateInfo.colorAttachmentCount = 1;
 	dofBlurAndComboRenderPassCreateInfo.depthFormat = DepthFormat::None;
 	dofBlurAndCombinationRenderPass = graphicsCore->CreateRenderPass(dofBlurAndComboRenderPassCreateInfo);
 
@@ -663,14 +663,16 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 		ssaoInputDescriptorSet = graphicsCore->CreateDescriptorSet(engineDescriptorSetCreateInfo);
 	}
 
-	GraphicsAPI::RenderPass::CreateInfo ssaoRenderPassCreateInfo{};
-	ssaoRenderPassCreateInfo.debugName = "SSAO Renderpass";
-	ssaoRenderPassCreateInfo.colorFormats = &ambientOcclusionFormat;
-	ssaoRenderPassCreateInfo.colorFormatCount = 1;
-	ssaoRenderPassCreateInfo.depthFormat = DepthFormat::None;
-	ssaoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
-	ssaoRenderPass = graphicsCore->CreateRenderPass(ssaoRenderPassCreateInfo);
-
+	{
+		GraphicsAPI::RenderPass::AttachmentInfo attachment{ ambientOcclusionFormat, true };
+		GraphicsAPI::RenderPass::CreateInfo ssaoRenderPassCreateInfo{};
+		ssaoRenderPassCreateInfo.debugName = "SSAO Renderpass";
+		ssaoRenderPassCreateInfo.colorAttachments = &attachment;
+		ssaoRenderPassCreateInfo.colorAttachmentCount = 1;
+		ssaoRenderPassCreateInfo.depthFormat = DepthFormat::None;
+		ssaoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
+		ssaoRenderPass = graphicsCore->CreateRenderPass(ssaoRenderPassCreateInfo);
+	}
 }
 
 void DeferredRenderer::CleanupPipelines() {
@@ -1343,16 +1345,16 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	const int gbufferColorCount = 3;
-	std::array<ColorFormat, gbufferColorCount> gbufferColorFormats{};
-	gbufferColorFormats[0] = ColorFormat::RGBA8; // Albedo
-	gbufferColorFormats[1] = ColorFormat::RGBA16; // Normal
-	gbufferColorFormats[2] = ColorFormat::RGBA8; // Specular RGB + Roughness Alpha
+	std::array<RenderPass::AttachmentInfo, gbufferColorCount> gbufferColorAttachments{};
+	gbufferColorAttachments[0] = { ColorFormat::RGBA8, true }; // Albedo
+	gbufferColorAttachments[1] = { ColorFormat::RGBA16, true }; // Normal
+	gbufferColorAttachments[2] = { ColorFormat::RGBA8, true }; // Specular RGB + Roughness Alpha
 
 	if (gbufferRenderPass == nullptr) {
 		RenderPass::CreateInfo gbufferRenderPassCreateInfo{};
 		gbufferRenderPassCreateInfo.debugName = "GBuffer Render Pass";
-		gbufferRenderPassCreateInfo.colorFormats = gbufferColorFormats.data();
-		gbufferRenderPassCreateInfo.colorFormatCount = static_cast<uint32_t>(gbufferColorFormats.size());
+		gbufferRenderPassCreateInfo.colorAttachments = gbufferColorAttachments.data();
+		gbufferRenderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(gbufferColorAttachments.size());
 		gbufferRenderPassCreateInfo.depthFormat = depthFormat;
 		gbufferRenderPassCreateInfo.shouldClearDepthOnLoad = true;
 		gbufferRenderPass = graphicsCore->CreateRenderPass(gbufferRenderPassCreateInfo);
@@ -1365,16 +1367,16 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 		auto& imageSet = deferredRendererImageSets[i];
 
 		{
-			RenderTarget::CreateInfo gbufferRtCreateInfo{ gbufferColorFormats[0], framebufferWidth, framebufferHeight, true, false, "GBuffer Albedo Image" };
+			RenderTarget::CreateInfo gbufferRtCreateInfo{ gbufferColorAttachments[0].colorFormat, framebufferWidth, framebufferHeight, true, false, "GBuffer Albedo Image" };
 
 			gbufferRenderTargets[0] = imageSet.gbufferAlbedoRenderTarget = graphicsCore->CreateRenderTarget(gbufferRtCreateInfo);
 
-			gbufferRtCreateInfo.format = gbufferColorFormats[1];
+			gbufferRtCreateInfo.format = gbufferColorAttachments[1].colorFormat;
 			gbufferRtCreateInfo.debugName = "GBuffer Normal Image";
 
 			gbufferRenderTargets[1] = imageSet.gbufferNormalRenderTarget = graphicsCore->CreateRenderTarget(gbufferRtCreateInfo);
 
-			gbufferRtCreateInfo.format = gbufferColorFormats[2];
+			gbufferRtCreateInfo.format = gbufferColorAttachments[2].colorFormat;
 			gbufferRtCreateInfo.debugName = "GBuffer Specular + Roughness Image";
 
 			gbufferRenderTargets[2] = imageSet.gbufferSpecularRoughnessRenderTarget = graphicsCore->CreateRenderTarget(gbufferRtCreateInfo);
@@ -1416,13 +1418,15 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::RGBA16, framebufferWidth, framebufferHeight, true, false, "Lit HDR Color Image" };
 	// DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false, false, "Lit HDR Depth Image");
 
+	RenderPass::AttachmentInfo attachment{ litHdrImagesCreateInfo.format , true };
+
 	if (mainRenderPass == nullptr) {
 		static float debugColor[4] = {0.3f, 0.6f, 0.9f, 1.0f};
 
 		RenderPass::CreateInfo mainRenderPassCreateInfo{};
 		mainRenderPassCreateInfo.debugName = "Main HDR Render Pass";
-		mainRenderPassCreateInfo.colorFormats = &litHdrImagesCreateInfo.format;
-		mainRenderPassCreateInfo.colorFormatCount = 1;
+		mainRenderPassCreateInfo.colorAttachments = &attachment;
+		mainRenderPassCreateInfo.colorAttachmentCount = 1;
 		mainRenderPassCreateInfo.depthFormat = depthFormat;
 		mainRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 		memcpy(mainRenderPassCreateInfo.debugColor, debugColor, sizeof(float) * 4);
@@ -1434,8 +1438,8 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 
 		RenderPass::CreateInfo lightingRenderPassCreateInfo{};
 		lightingRenderPassCreateInfo.debugName = "Deferred Light Render Pass";
-		lightingRenderPassCreateInfo.colorFormats = &litHdrImagesCreateInfo.format;
-		lightingRenderPassCreateInfo.colorFormatCount = 1;
+		lightingRenderPassCreateInfo.colorAttachments = &attachment;
+		lightingRenderPassCreateInfo.colorAttachmentCount = 1;
 		lightingRenderPassCreateInfo.depthFormat = DepthFormat::None;
 		lightingRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 		memcpy(lightingRenderPassCreateInfo.debugColor, debugColor, sizeof(float) * 4);
@@ -1447,8 +1451,8 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 
 		RenderPass::CreateInfo forwardLitRenderPassCreateInfo{};
 		forwardLitRenderPassCreateInfo.debugName = "Forward Lit Renderables Render Pass";
-		forwardLitRenderPassCreateInfo.colorFormats = &litHdrImagesCreateInfo.format;
-		forwardLitRenderPassCreateInfo.colorFormatCount = 1;
+		forwardLitRenderPassCreateInfo.colorAttachments = &attachment;
+		forwardLitRenderPassCreateInfo.colorAttachmentCount = 1;
 		forwardLitRenderPassCreateInfo.depthFormat = depthFormat;
 		forwardLitRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 		memcpy(forwardLitRenderPassCreateInfo.debugColor, debugColor, sizeof(float) * 4);

@@ -29,8 +29,8 @@ namespace Grindstone::GraphicsAPI {
 			memcpy(debugColor, createInfo.debugColor, sizeof(debugColor));
 		}
 
-		for (uint32_t i = 0; i < createInfo.colorFormatCount; ++i) {
-			colorFormats.push_back(createInfo.colorFormats[i]);
+		for (uint32_t i = 0; i < createInfo.colorAttachmentCount; ++i) {
+			colorAttachments.push_back(createInfo.colorAttachments[i]);
 		}
 
 		depthFormat = createInfo.depthFormat;
@@ -43,22 +43,22 @@ namespace Grindstone::GraphicsAPI {
 	}
 
 	void VulkanRenderPass::Create() {
-		uint32_t total = static_cast<uint32_t>(colorFormats.size());
+		uint32_t total = static_cast<uint32_t>(colorAttachments.size());
 		total += (depthFormat != DepthFormat::None) ? 1 : 0;
 
 		std::vector<VkAttachmentDescription> attachmentDescs(total);
-		std::vector<VkAttachmentReference> attachmentRefs(colorFormats.size());
+		std::vector<VkAttachmentReference> attachmentRefs(colorAttachments.size());
 			
-		for (uint32_t i = 0; i < colorFormats.size(); ++i) {
+		for (uint32_t i = 0; i < colorAttachments.size(); ++i) {
 			VkAttachmentDescription &colorAttachment = attachmentDescs[i];
 			uint8_t channels;
-			colorAttachment.format = TranslateColorFormatToVulkan(colorFormats[i], channels);
+			colorAttachment.format = TranslateColorFormatToVulkan(colorAttachments[i].colorFormat, channels);
 			colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-			colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			colorAttachment.loadOp = colorAttachments[i].shouldClear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
 			colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 			colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			colorAttachment.initialLayout = colorAttachments[i].shouldClear ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			colorAttachment.flags = 0;
 
@@ -68,7 +68,7 @@ namespace Grindstone::GraphicsAPI {
 		VkAttachmentReference *depthAttachmentRefPtr = nullptr;
 		VkAttachmentReference depthAttachmentRef = {};
 		if (depthFormat != DepthFormat::None) {
-			VkAttachmentDescription &depthAttachment = attachmentDescs[colorFormats.size()];
+			VkAttachmentDescription &depthAttachment = attachmentDescs[colorAttachments.size()];
 			bool hasStencil = true;
 			depthAttachment.format = TranslateDepthFormatToVulkan(depthFormat, hasStencil);
 			hasStencil = true;
@@ -87,7 +87,7 @@ namespace Grindstone::GraphicsAPI {
 				: depthAttachment.finalLayout;
 			depthAttachment.flags = 0;
 
-			depthAttachmentRef.attachment = static_cast<uint32_t>(colorFormats.size()); // Attaches after every color attachment
+			depthAttachmentRef.attachment = static_cast<uint32_t>(colorAttachments.size()); // Attaches after every color attachment
 			depthAttachmentRef.layout = hasStencil
 				? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 				: VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;

@@ -36,11 +36,12 @@ EditorCamera::EditorCamera() {
 	depthTargetCreateInfo.format = GraphicsAPI::DepthFormat::D24_STENCIL_8;
 	auto* depthTarget = core->CreateDepthTarget(depthTargetCreateInfo);
 	*/
+	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> attachments = { { renderTargetCreateInfo.format, true } };
 
 	GraphicsAPI::RenderPass::CreateInfo renderPassCreateInfo{};
 	renderPassCreateInfo.debugName = "Editor RenderPass";
-	renderPassCreateInfo.colorFormatCount = 1;
-	renderPassCreateInfo.colorFormats = &renderTargetCreateInfo.format;
+	renderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(attachments.size());
+	renderPassCreateInfo.colorAttachments = attachments.data();
 	renderPassCreateInfo.depthFormat = GraphicsAPI::DepthFormat::None;
 	renderPass = core->CreateRenderPass(renderPassCreateInfo);
 	

@@ -19,10 +19,15 @@ namespace Grindstone {
 
 		class RenderPass {
 		public:
+			struct AttachmentInfo {
+				ColorFormat colorFormat = ColorFormat::Invalid;
+				bool shouldClear = false;
+			};
+
 			struct CreateInfo {
 				const char* debugName = nullptr;
-				ColorFormat* colorFormats = nullptr;
-				uint32_t colorFormatCount = 0;
+				AttachmentInfo* colorAttachments = nullptr;
+				uint32_t colorAttachmentCount = 0;
 				DepthFormat depthFormat = DepthFormat::None;
 				bool shouldClearDepthOnLoad = true;
 				float debugColor[4];
