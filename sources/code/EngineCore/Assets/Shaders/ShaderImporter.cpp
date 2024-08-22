@@ -96,6 +96,7 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 	GraphicsPipeline::CreateInfo pipelineCreateInfo{};
 	pipelineCreateInfo.debugName = assetName.c_str();
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
+	pipelineCreateInfo.polygonFillMode = GraphicsAPI::PolygonFillMode::Fill;
 	pipelineCreateInfo.cullMode = TranslateCullMode(reflectionData.cullMode);
 	pipelineCreateInfo.renderPass = renderPass;
 	pipelineCreateInfo.width = 0.0f;

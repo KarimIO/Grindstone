@@ -111,6 +111,12 @@ namespace Grindstone {
 			Patches
 		};
 
+		enum class PolygonFillMode : uint8_t {
+			Point,
+			Line,
+			Fill
+		};
+
 		enum class ColorMask : uint8_t {
 			Red = 0x1,
 			Green = 0x2,

@@ -1482,6 +1482,7 @@ void DeferredRenderer::CreatePipelines() {
 
 	GraphicsPipeline::CreateInfo pipelineCreateInfo{};
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
+	pipelineCreateInfo.polygonFillMode = GraphicsAPI::PolygonFillMode::Fill;
 	pipelineCreateInfo.cullMode = CullMode::Back;
 	pipelineCreateInfo.scissorX = 0;
 	pipelineCreateInfo.scissorY = 0;

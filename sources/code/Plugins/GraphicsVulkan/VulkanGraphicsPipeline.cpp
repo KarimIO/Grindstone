@@ -74,7 +74,20 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	static VkPrimitiveTopology primTypes[] = {
+		VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
+		VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
+		VK_PRIMITIVE_TOPOLOGY_LINE_STRIP,
+		VK_PRIMITIVE_TOPOLOGY_LINE_STRIP,
+		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
+		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN,
+		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+		VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY,
+		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY,
+		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY,
+		VK_PRIMITIVE_TOPOLOGY_PATCH_LIST
+	};
+	inputAssembly.topology = primTypes[static_cast<size_t>(createInfo.primitiveType)];
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 
 	VkViewport viewport = {};
@@ -100,7 +113,15 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	rasterizer.depthClampEnable = VK_FALSE;
 	rasterizer.rasterizerDiscardEnable = VK_FALSE;
-	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+
+	static VkPolygonMode polygonModes[] = {
+		VK_POLYGON_MODE_POINT,
+		VK_POLYGON_MODE_LINE,
+		VK_POLYGON_MODE_FILL
+	};
+
+	rasterizer.polygonMode = polygonModes[static_cast<size_t>(createInfo.polygonFillMode)];
+
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = TranslateCullModeToVulkan(createInfo.cullMode);
 	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;

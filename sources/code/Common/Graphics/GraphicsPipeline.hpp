@@ -23,6 +23,7 @@ namespace Grindstone {
 			struct CreateInfo {
 				const char* debugName;
 				GeometryType primitiveType;
+				PolygonFillMode polygonFillMode;
 				CullMode cullMode;
 				RenderPass* renderPass;
 				float width, height;
