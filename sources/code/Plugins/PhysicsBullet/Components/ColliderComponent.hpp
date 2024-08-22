@@ -15,8 +15,8 @@ namespace Grindstone::Physics {
 
 	struct SphereColliderComponent : public ColliderComponent {
 		virtual void Initialize() override;
-		void SetRadius(float radius);
-		float GetRadius() const;
+		virtual void SetRadius(float radius);
+		virtual float GetRadius() const;
 	private:
 		float radius = 0.0f;
 
@@ -25,9 +25,9 @@ namespace Grindstone::Physics {
 
 	struct PlaneColliderComponent : public ColliderComponent {
 		virtual void Initialize() override;
-		void SetCollider(Math::Float3 planeNormal, float positionAlongNormal);
-		Math::Float3 GetPlaneNormal() const;
-		float GetPositionAlongNormal() const;
+		virtual void SetCollider(Math::Float3 planeNormal, float positionAlongNormal);
+		virtual Math::Float3 GetPlaneNormal() const;
+		virtual float GetPositionAlongNormal() const;
 	private:
 		Math::Float3 planeNormal;
 		float positionAlongNormal;
@@ -37,8 +37,8 @@ namespace Grindstone::Physics {
 
 	struct BoxColliderComponent : public ColliderComponent {
 		virtual void Initialize() override;
-		void SetSize(Math::Float3);
-		Math::Float3 GetSize() const;
+		virtual void SetSize(Math::Float3);
+		virtual Math::Float3 GetSize() const;
 	private:
 		Math::Float3 size;
 
@@ -47,9 +47,9 @@ namespace Grindstone::Physics {
 
 	struct CapsuleColliderComponent : public ColliderComponent {
 		virtual void Initialize() override;
-		void SetCollider(float radius, float height);
-		float GetRadius() const;
-		float GetHeight() const;
+		virtual void SetCollider(float radius, float height);
+		virtual float GetRadius() const;
+		virtual float GetHeight() const;
 	private:
 		float radius;
 		float height;
