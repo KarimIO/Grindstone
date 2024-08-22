@@ -272,7 +272,18 @@ void VulkanCore::CreateLogicalDevice() {
 	}
 
 	VkPhysicalDeviceFeatures deviceFeatures = {};
+	deviceFeatures.fillModeNonSolid = VK_TRUE;
+	deviceFeatures.multiDrawIndirect = VK_TRUE;
 	deviceFeatures.samplerAnisotropy = VK_TRUE;
+
+	VkPhysicalDeviceVulkan11Features deviceFeatures11 = {};
+	deviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+	deviceFeatures11.shaderDrawParameters = VK_TRUE;
+
+	VkPhysicalDeviceFeatures2 deviceFeatures2 = {};
+	deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	deviceFeatures2.features = deviceFeatures;
+	deviceFeatures2.pNext = &deviceFeatures11;
 
 	VkDeviceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -280,7 +291,7 @@ void VulkanCore::CreateLogicalDevice() {
 	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
-	createInfo.pEnabledFeatures = &deviceFeatures;
+	createInfo.pNext = &deviceFeatures2;
 
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
