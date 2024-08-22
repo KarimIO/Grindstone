@@ -3,6 +3,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include "GizmoRenderer.hpp"
+
 namespace Grindstone {
 	class BaseRenderer;
 	struct TransformComponent;
@@ -38,8 +40,10 @@ namespace Grindstone {
 			glm::vec3 GetRight() const;
 			glm::vec3 GetUp() const;
 
+			GizmoRenderer gizmoRenderer;
 			GraphicsAPI::RenderTarget* renderTarget = nullptr;
 			GraphicsAPI::RenderPass* renderPass = nullptr;
+			GraphicsAPI::RenderPass* gizmoRenderPass = nullptr;
 			GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
 			GraphicsAPI::Framebuffer* framebuffer = nullptr;
 			GraphicsAPI::DescriptorSet* descriptorSet = nullptr;

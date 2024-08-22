@@ -1,5 +1,3 @@
-#include <glm/gtx/transform.hpp>
-
 #include <Common/Graphics/Framebuffer.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
@@ -8,7 +6,9 @@
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 #include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Logger.hpp>
 #include <Plugins/GraphicsVulkan/VulkanDescriptorSet.hpp>
+#include <Plugins/PhysicsBullet/Components/ColliderComponent.hpp>
 
 #include "EditorCamera.hpp"
 #include "EditorManager.hpp"
@@ -18,7 +18,8 @@ using namespace Grindstone::Editor;
 using namespace Grindstone;
 
 EditorCamera::EditorCamera() {
-	GraphicsAPI::Core* core = Editor::Manager::GetEngineCore().GetGraphicsCore();
+	EngineCore& engineCore = Editor::Manager::GetEngineCore();
+	GraphicsAPI::Core* core = engineCore.GetGraphicsCore();
 
 	GraphicsAPI::RenderTarget::CreateInfo renderTargetCreateInfo{};
 	renderTargetCreateInfo.debugName = "Editor Viewport Color Image";
@@ -28,14 +29,6 @@ EditorCamera::EditorCamera() {
 	renderTargetCreateInfo.isSampled = true;
 	renderTarget = core->CreateRenderTarget(&renderTargetCreateInfo, 1, false);
 
-	/*
-	GraphicsAPI::DepthTarget::CreateInfo depthTargetCreateInfo{};
-	depthTargetCreateInfo.debugName = "Editor Viewport Depth Image";
-	depthTargetCreateInfo.width = 800;
-	depthTargetCreateInfo.height = 600;
-	depthTargetCreateInfo.format = GraphicsAPI::DepthFormat::D24_STENCIL_8;
-	auto* depthTarget = core->CreateDepthTarget(depthTargetCreateInfo);
-	*/
 	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> attachments = { { renderTargetCreateInfo.format, true } };
 
 	GraphicsAPI::RenderPass::CreateInfo renderPassCreateInfo{};
@@ -44,7 +37,16 @@ EditorCamera::EditorCamera() {
 	renderPassCreateInfo.colorAttachments = attachments.data();
 	renderPassCreateInfo.depthFormat = GraphicsAPI::DepthFormat::None;
 	renderPass = core->CreateRenderPass(renderPassCreateInfo);
-	
+
+	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> gizmoAttachments = { { renderTargetCreateInfo.format, false } };
+
+	GraphicsAPI::RenderPass::CreateInfo gizmoRenderPassCreateInfo{};
+	gizmoRenderPassCreateInfo.debugName = "Editor Gizmo RenderPass";
+	gizmoRenderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(gizmoAttachments.size());
+	gizmoRenderPassCreateInfo.colorAttachments = gizmoAttachments.data();
+	gizmoRenderPassCreateInfo.depthFormat = GraphicsAPI::DepthFormat::None;
+	gizmoRenderPass = core->CreateRenderPass(gizmoRenderPassCreateInfo);
+
 	GraphicsAPI::Framebuffer::CreateInfo framebufferCreateInfo{};
 	framebufferCreateInfo.debugName = "Editor Framebuffer";
 	framebufferCreateInfo.renderTargetLists = &renderTarget;
@@ -76,7 +78,8 @@ EditorCamera::EditorCamera() {
 	descriptorSetCreateInfo.layout = descriptorSetLayout;
 	descriptorSet = core->CreateDescriptorSet(descriptorSetCreateInfo);
 
-	EngineCore& engineCore = Editor::Manager::GetEngineCore();
+	gizmoRenderer.Initialize(renderPass);
+
 	renderer = engineCore.CreateRenderer(renderPass);
 	UpdateViewMatrix();
 }
@@ -91,7 +94,8 @@ uint64_t EditorCamera::GetRenderOutput() {
 }
 
 void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
-	EngineCore& engineCore = Editor::Manager::GetInstance().GetEngineCore();
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
+	EngineCore& engineCore = editorManager.GetEngineCore();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	SceneManagement::SceneManager* sceneManager = engineCore.GetSceneManager();
 
@@ -118,6 +122,46 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		position,
 		framebuffer
 	);
+
+	if (editorManager.GetSelection().GetSelectedEntityCount() > 0) {
+		static const glm::vec4 colliderColor = glm::vec4(1.0f, 0.8f, 0.0f, 1.0f);
+
+		Physics::BoxColliderComponent* box = nullptr;
+		Physics::CapsuleColliderComponent* capsule = nullptr;
+		Physics::PlaneColliderComponent* plane = nullptr;
+		Physics::SphereColliderComponent* sphere = nullptr;
+
+		for (const ECS::Entity& selectedEntity : editorManager.GetSelection().selectedEntities) {
+			if (selectedEntity.TryGetComponent<Physics::BoxColliderComponent>(box)) {
+				TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+				Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+				gizmoRenderer.SubmitCubeGizmo(matrix, box->GetSize(), colliderColor);
+			}
+			else if (selectedEntity.TryGetComponent<Physics::CapsuleColliderComponent>(capsule)) {
+				TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+				Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+				gizmoRenderer.SubmitCapsuleGizmo(matrix, capsule->GetHeight(), capsule->GetRadius(), colliderColor);
+			}
+			else if (selectedEntity.TryGetComponent<Physics::PlaneColliderComponent>(plane)) {
+				TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+				Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+				gizmoRenderer.SubmitPlaneGizmo(matrix, plane->GetPlaneNormal(), plane->GetPositionAlongNormal(), colliderColor);
+			}
+			else if (selectedEntity.TryGetComponent<Physics::SphereColliderComponent>(sphere)) {
+				TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+				Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+				gizmoRenderer.SubmitSphereGizmo(matrix, sphere->GetRadius(), colliderColor);
+			}
+		}
+
+		Grindstone::GraphicsAPI::ClearDepthStencil clearDepthStencil;
+		clearDepthStencil.hasDepthStencilAttachment = false;
+		commandBuffer->BindRenderPass(gizmoRenderPass, framebuffer, width, height, nullptr, 0, clearDepthStencil);
+		glm::mat4 gizmoProjection = projection;
+		graphicsCore->AdjustPerspective(&gizmoProjection[0][0]);
+		gizmoRenderer.Render(gizmoProjection * view, commandBuffer);
+		commandBuffer->UnbindRenderPass();
+	}
 }
 
 void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffer) {

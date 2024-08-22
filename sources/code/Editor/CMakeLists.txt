@@ -2,6 +2,7 @@ set(EDITOR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 file(GLOB_RECURSE SOURCE_MAIN
 	Main.cpp ${CODE_DIR}/NatvisFile.natvis
+	${COMMON_DIR}/Graphics/Formats.cpp 
 	${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINECORE_DIR}/Utils/Utilities.cpp
 	${COMMON_DIR}/ResourcePipeline/AssetType.cpp ${COMMON_DIR}/ResourcePipeline/AssetType.hpp
 	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp ${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
@@ -10,6 +11,7 @@ file(GLOB_RECURSE SOURCE_MAIN
 	FileDirectory.cpp FileDirectory.hpp
 	FileManager.cpp FileManager.hpp
 	GitManager.cpp GitManager.hpp
+	GizmoRenderer.cpp GizmoRenderer.hpp
 	BuildProcess.cpp BuildProcess.hpp
 	EditorManager.cpp EditorManager.hpp
 	Selection.cpp Selection.hpp
