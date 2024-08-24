@@ -13,6 +13,7 @@ namespace Grindstone::GraphicsAPI {
 	class VertexBuffer;
 	class IndexBuffer;
 	class VertexArrayObject;
+	class RenderPass;
 }
 
 namespace Grindstone::Editor {
@@ -23,7 +24,7 @@ namespace Grindstone::Editor {
 		void SubmitCapsuleGizmo(const glm::mat4& transform, float height, float radius, glm::vec4 color = glm::vec4(1.0f));
 		void SubmitPlaneGizmo(const glm::mat4& transform, glm::vec3 normal, float positionAlongNormal, glm::vec4 color = glm::vec4(1.0f));
 		void SubmitSphereGizmo(const glm::mat4& transform, float radius, glm::vec4 color = glm::vec4(1.0f));
-		void Render(glm::mat4 projView, Grindstone::GraphicsAPI::CommandBuffer* commandBuffer);
+		void Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, glm::mat4 projView);
 	protected:
 		Grindstone::GraphicsAPI::UniformBuffer* gizmoUniformBuffer = nullptr;
 		Grindstone::GraphicsAPI::DescriptorSet* gizmoDescriptorSet = nullptr;

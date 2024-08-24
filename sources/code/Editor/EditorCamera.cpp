@@ -78,6 +78,7 @@ EditorCamera::EditorCamera() {
 	descriptorSetCreateInfo.layout = descriptorSetLayout;
 	descriptorSet = core->CreateDescriptorSet(descriptorSetCreateInfo);
 
+	// gridRenderer.Initialize(renderPass);
 	gizmoRenderer.Initialize(renderPass);
 
 	renderer = engineCore.CreateRenderer(renderPass);
@@ -123,6 +124,19 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		framebuffer
 	);
 
+	glm::mat4 gizmoProjection = projection;
+	graphicsCore->AdjustPerspective(&gizmoProjection[0][0]);
+	glm::mat4 projView = gizmoProjection * view;
+	glm::vec2 renderScale = glm::vec2(
+		static_cast<float>(width) / framebuffer->GetWidth(),
+		static_cast<float>(height) / framebuffer->GetHeight()
+	);
+
+	Grindstone::GraphicsAPI::ClearDepthStencil clearDepthStencil;
+	clearDepthStencil.hasDepthStencilAttachment = false;
+	commandBuffer->BindRenderPass(gizmoRenderPass, framebuffer, width, height, nullptr, 0, clearDepthStencil);
+	// gridRenderer.Render(commandBuffer, renderScale, gizmoProjection, view, nearPlaneDistance, farPlaneDistance, glm::quat(), 0.0f);
+
 	if (editorManager.GetSelection().GetSelectedEntityCount() > 0) {
 		static const glm::vec4 colliderColor = glm::vec4(1.0f, 0.8f, 0.0f, 1.0f);
 
@@ -154,14 +168,9 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 			}
 		}
 
-		Grindstone::GraphicsAPI::ClearDepthStencil clearDepthStencil;
-		clearDepthStencil.hasDepthStencilAttachment = false;
-		commandBuffer->BindRenderPass(gizmoRenderPass, framebuffer, width, height, nullptr, 0, clearDepthStencil);
-		glm::mat4 gizmoProjection = projection;
-		graphicsCore->AdjustPerspective(&gizmoProjection[0][0]);
-		gizmoRenderer.Render(gizmoProjection * view, commandBuffer);
-		commandBuffer->UnbindRenderPass();
+		gizmoRenderer.Render(commandBuffer, projView);
 	}
+	commandBuffer->UnbindRenderPass();
 }
 
 void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
@@ -191,7 +200,7 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 		[&](
 			TransformComponent& currentTransform,
 			CameraComponent& currentCamera
-			) {
+		) {
 				transformComponent = &currentTransform;
 				cameraComponent = &currentCamera;
 		}

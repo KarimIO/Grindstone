@@ -387,7 +387,7 @@ void GizmoRenderer::SubmitSphereGizmo(const glm::mat4& transform, float radius, 
 	++drawCount;
 }
 
-void GizmoRenderer::Render(glm::mat4 projView, GraphicsAPI::CommandBuffer* commandBuffer) {
+void GizmoRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, glm::mat4 projView) {
 	for (auto& data : dataBuffer) {
 		data.transform = projView * data.transform;
 	}

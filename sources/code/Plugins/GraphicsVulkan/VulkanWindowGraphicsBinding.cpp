@@ -1,9 +1,9 @@
 #ifdef _WIN32
 #define VK_USE_PLATFORM_WIN32_KHR
-#include <vulkan/vulkan.h>
 #else
 #define VK_USE_PLATFORM_XLIB_KHR
 #endif
+#include <vulkan/vulkan.h>
 
 #include <glfw/glfw3.h>
 

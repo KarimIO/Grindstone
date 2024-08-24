@@ -12,6 +12,7 @@ file(GLOB_RECURSE SOURCE_MAIN
 	FileManager.cpp FileManager.hpp
 	GitManager.cpp GitManager.hpp
 	GizmoRenderer.cpp GizmoRenderer.hpp
+	GridRenderer.cpp GridRenderer.hpp
 	BuildProcess.cpp BuildProcess.hpp
 	EditorManager.cpp EditorManager.hpp
 	Selection.cpp Selection.hpp

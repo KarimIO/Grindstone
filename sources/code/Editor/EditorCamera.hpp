@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include "GridRenderer.hpp"
 #include "GizmoRenderer.hpp"
 
 namespace Grindstone {
@@ -41,6 +42,7 @@ namespace Grindstone {
 			glm::vec3 GetUp() const;
 
 			GizmoRenderer gizmoRenderer;
+			GridRenderer gridRenderer;
 			GraphicsAPI::RenderTarget* renderTarget = nullptr;
 			GraphicsAPI::RenderPass* renderPass = nullptr;
 			GraphicsAPI::RenderPass* gizmoRenderPass = nullptr;
