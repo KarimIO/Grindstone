@@ -8,6 +8,7 @@
 #include <glfw/glfw3.h>
 
 #include <Common/Window/GlfwWindow.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/Logger.hpp>
 
 #include "VulkanWindowGraphicsBinding.hpp"
@@ -18,6 +19,7 @@
 #include "VulkanCommandBuffer.hpp"
 
 using namespace Grindstone::GraphicsAPI;
+using namespace Grindstone::Memory;
 
 bool VulkanWindowGraphicsBinding::Initialize(Window *window) {
 	this->window = window;
@@ -68,22 +70,16 @@ VulkanWindowGraphicsBinding::~VulkanWindowGraphicsBinding() {
 	vkDestroySurfaceKHR(vkCore.GetInstance(), surface, nullptr);
 }
 
-VkSurfaceKHR VulkanWindowGraphicsBinding::GetSurface() {
+VkSurfaceKHR VulkanWindowGraphicsBinding::GetSurface() const {
 	return surface;
 }
 
-VkSwapchainKHR VulkanWindowGraphicsBinding::GetSwapchain() {
+VkSwapchainKHR VulkanWindowGraphicsBinding::GetSwapchain() const {
 	return swapChain;
 }
 
 void VulkanWindowGraphicsBinding::SubmitWindowObjects(VulkanWindowBindingDataNative& windowBindingData) {
 	swapChain = windowBindingData.swapChain;
-	if (renderPass == nullptr) {
-		renderPass = new VulkanRenderPass(windowBindingData.renderPass, "Swapchain Render Pass");
-	}
-	else {
-		static_cast<VulkanRenderPass*>(renderPass)->Update(windowBindingData.renderPass);
-	}
 	swapchainVulkanFormat = windowBindingData.surfaceFormat.format;
 	swapchainFormat = TranslateColorFormatFromVulkan(swapchainVulkanFormat);
 
@@ -92,15 +88,8 @@ void VulkanWindowGraphicsBinding::SubmitWindowObjects(VulkanWindowBindingDataNat
 		VulkanImageSetNative& native = windowBindingData.imageSets[i];
 		VulkanImageSet& imageSet = imageSets[i];
 
-		if (imageSet.framebuffer == nullptr) {
-			imageSet.framebuffer = new VulkanFramebuffer(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height, "Swapchain Framebuffer");
-		}
-		else {
-			static_cast<VulkanFramebuffer*>(imageSet.framebuffer)->UpdateNativeFramebuffer(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height);
-		}
-
 		if (imageSet.swapChainTarget == nullptr) {
-			imageSet.swapChainTarget = new VulkanRenderTarget(native.image, native.imageView, swapchainVulkanFormat);
+			imageSet.swapChainTarget = AllocatorCore::Allocate<VulkanRenderTarget>(native.image, native.imageView, swapchainVulkanFormat);
 		}
 		else {
 			static_cast<VulkanRenderTarget*>(imageSet.swapChainTarget)->UpdateNativeImage(native.image, native.imageView, swapchainVulkanFormat);
@@ -208,41 +197,18 @@ void VulkanWindowGraphicsBinding::CreateImageSets() {
 	swapChainImages.resize(imageCount);
 	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
 
-	VkRenderPass vkRenderPass = static_cast<VulkanRenderPass*>(renderPass)->GetRenderPassHandle();
-
-	VkFramebufferCreateInfo framebufferInfo{};
-	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	framebufferInfo.renderPass = vkRenderPass;
-	framebufferInfo.attachmentCount = 1;
-	framebufferInfo.width = swapExtent.width;
-	framebufferInfo.height = swapExtent.height;
-	framebufferInfo.layers = 1;
-
 	imageSets.resize(imageCount);
 	for (uint32_t i = 0; i < imageCount; ++i) {
-		VulkanRenderTarget* rt = new VulkanRenderTarget(
+		VulkanRenderTarget* rt = AllocatorCore::Allocate<VulkanRenderTarget>(
 			swapChainImages[i],
 			swapchainVulkanFormat,
 			i
 		);
 
 		VkImageView attachments[] = { rt->GetImageView() };
-		framebufferInfo.pAttachments = attachments;
-
-		VkFramebuffer vkFramebuffer = nullptr;
-		if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &vkFramebuffer) != VK_SUCCESS) {
-			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create framebuffer!");
-		}
 
 		VulkanImageSet& imageSet = imageSets[i];
 		imageSet.swapChainTarget = rt;
-		imageSet.framebuffer = new VulkanFramebuffer(
-			renderPass,
-			vkFramebuffer,
-			swapExtent.width,
-			swapExtent.height,
-			"Swapchain Framebuffer"
-		);
 
 		imageSet.fence = nullptr;
 	}
@@ -276,6 +242,10 @@ void VulkanWindowGraphicsBinding::Resize(uint32_t width, uint32_t height) {
 	isSwapchainDirty = true;
 }
 
+Grindstone::GraphicsAPI::ColorFormat VulkanWindowGraphicsBinding::GetSwapchainFormat() const {
+	return swapchainFormat;
+}
+
 void VulkanWindowGraphicsBinding::RecreateSwapchain() {
 	if (!window->IsSwapchainControlledByEngine()) {
 		return;
@@ -298,12 +268,10 @@ void VulkanWindowGraphicsBinding::RecreateSwapchain() {
 		VkDevice device = vkCore.GetDevice();
 		vkDestroySwapchainKHR(device, swapChain, nullptr);
 		swapChain = nullptr;
-
 	}
 
 	for (size_t i = 0; i < imageSets.size(); i++) {
-		delete imageSets[i].framebuffer;
-		delete imageSets[i].swapChainTarget;
+		AllocatorCore::Free(imageSets[i].swapChainTarget);
 	}
 	imageSets.clear();
 
@@ -418,75 +386,19 @@ void VulkanWindowGraphicsBinding::CreateSwapChain() {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create swap chain!");
 	}
 
-	CreateRenderPass();
 	CreateImageSets();
 }
 
-void VulkanWindowGraphicsBinding::CreateRenderPass() {
-	VkAttachmentDescription colorAttachment{};
-	colorAttachment.format = swapchainVulkanFormat;
-	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-	VkAttachmentReference colorAttachmentRef{};
-	colorAttachmentRef.attachment = 0;
-	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VkSubpassDescription subpass{};
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorAttachmentRef;
-
-	VkSubpassDependency dependency{};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-	VkRenderPassCreateInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = 1;
-	renderPassInfo.pAttachments = &colorAttachment;
-	renderPassInfo.subpassCount = 1;
-	renderPassInfo.pSubpasses = &subpass;
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &dependency;
-
-	VkDevice device = VulkanCore::Get().GetDevice();
-	VkRenderPass vkRenderPass = nullptr;
-	if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &vkRenderPass) != VK_SUCCESS) {
-		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create render pass!");
-	}
-
-	if (renderPass == nullptr) {
-		renderPass = new VulkanRenderPass(vkRenderPass, "Swapchain Render Pass");
-	}
-	else {
-		static_cast<VulkanRenderPass*>(renderPass)->Update(vkRenderPass);
-	}
-}
-
-RenderPass* VulkanWindowGraphicsBinding::GetRenderPass() {
-	return renderPass;
-}
-
-Framebuffer* VulkanWindowGraphicsBinding::GetCurrentFramebuffer() {
-	return imageSets[currentFrame].framebuffer;
-}
-
-uint32_t VulkanWindowGraphicsBinding::GetCurrentImageIndex() {
+uint32_t VulkanWindowGraphicsBinding::GetCurrentImageIndex() const {
 	return currentFrame;
 }
 
-uint32_t VulkanWindowGraphicsBinding::GetMaxFramesInFlight() {
+uint32_t VulkanWindowGraphicsBinding::GetMaxFramesInFlight() const  {
 	return maxFramesInFlight;
+}
+
+Grindstone::GraphicsAPI::RenderTarget* VulkanWindowGraphicsBinding::GetSwapchainRenderTarget(uint32_t i) {
+	return imageSets[i].swapChainTarget;
 }
 
 void VulkanWindowGraphicsBinding::ImmediateSetContext() {}

@@ -9,6 +9,10 @@ namespace Grindstone {
 		class WindowGraphicsBinding;
 	}
 
+	namespace Events {
+		struct BaseEvent;
+	}
+
 	namespace Editor {
 		namespace ImguiEditor {
 			class ImguiRendererVulkan : public ImguiRenderer {
@@ -24,6 +28,7 @@ namespace Grindstone {
 				virtual ImTextureID CreateTexture(std::filesystem::path path) override;
 			private:
 				void WaitForResizeAndRecreateSwapchain();
+				bool OnWindowResize(Events::BaseEvent* ev);
 				void SetupVulkanWindow(
 					Grindstone::GraphicsAPI::VulkanCore* graphicsCore,
 					Grindstone::GraphicsAPI::WindowGraphicsBinding* wgb,
@@ -37,8 +42,14 @@ namespace Grindstone {
 					int width, int height
 				);
 
+				struct FrameData {
+					GraphicsAPI::Framebuffer* framebuffer = nullptr;
+					GraphicsAPI::CommandBuffer* commandBuffer = nullptr;
+				};
+
 				VkDescriptorPool imguiPool = nullptr;
-				std::vector<GraphicsAPI::CommandBuffer*> commandBuffers;
+				GraphicsAPI::RenderPass* renderPass = nullptr;
+				std::vector<FrameData> frameData;
 
 				bool shouldRebuildSwapchain = false;
 			};

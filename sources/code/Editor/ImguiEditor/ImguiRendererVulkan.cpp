@@ -7,7 +7,9 @@
 
 #include <Common/Window/WindowManager.hpp>
 #include <Common/Window/GlfwWindow.hpp>
+#include <Common/Event/WindowEvent.hpp>
 #include <Editor/EditorManager.hpp>
+#include <EngineCore/Events/Dispatcher.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Assets/Textures/TextureAsset.hpp>
 #include <Plugins/GraphicsVulkan/VulkanCore.hpp>
@@ -95,18 +97,30 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	poolInfo.poolSizeCount = static_cast<uint32_t>(std::size(poolSizes));
 	poolInfo.pPoolSizes = poolSizes;
 
-	auto vulkanCore = static_cast<Grindstone::GraphicsAPI::VulkanCore*>(graphicsCore);
+	GraphicsAPI::VulkanCore* vulkanCore = static_cast<GraphicsAPI::VulkanCore*>(graphicsCore);
 
 	if (vkCreateDescriptorPool(vulkanCore->GetDevice(), &poolInfo, nullptr, &imguiPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate imgui descriptor pool!");
 	}
 
 	ImGui_ImplGlfw_InitForVulkan(static_cast<Grindstone::GlfwWindow*>(window)->GetHandle(), true);
-	auto vulkanRenderPass = static_cast<Grindstone::GraphicsAPI::VulkanRenderPass*>(wgb->GetRenderPass());
+	GraphicsAPI::ColorFormat swapchainFormat = wgb->GetSwapchainFormat();
+
+	GraphicsAPI::RenderPass::AttachmentInfo mainRenderPassAttachment{};
+	mainRenderPassAttachment.colorFormat = swapchainFormat;
+	mainRenderPassAttachment.shouldClear = true;
+
+	GraphicsAPI::RenderPass::CreateInfo renderPassCreateInfo{};
+	renderPassCreateInfo.debugName = "Imgui Renderpass";
+	renderPassCreateInfo.colorAttachments = &mainRenderPassAttachment;
+	renderPassCreateInfo.colorAttachmentCount = 1;
+	renderPassCreateInfo.depthFormat = GraphicsAPI::DepthFormat::None;
+	renderPassCreateInfo.shouldClearDepthOnLoad = false;
+	renderPass = vulkanCore->CreateRenderPass(renderPassCreateInfo);
 
 	ImGui_ImplVulkan_InitInfo imguiInitInfo{};
 	imguiInitInfo.Instance = vulkanCore->GetInstance();
-	imguiInitInfo.RenderPass = vulkanRenderPass->GetRenderPassHandle();
+	imguiInitInfo.RenderPass = static_cast<GraphicsAPI::VulkanRenderPass*>(renderPass)->GetRenderPassHandle();
 	imguiInitInfo.PhysicalDevice = vulkanCore->GetPhysicalDevice();
 	imguiInitInfo.Device = vulkanCore->GetDevice();
 	imguiInitInfo.Queue = vulkanCore->graphicsQueue;
@@ -117,18 +131,98 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 
 	ImGui_ImplVulkan_Init(&imguiInitInfo);
 
+	uint32_t imageCount = wgb->GetMaxFramesInFlight();
+	frameData.resize(imageCount);
+
 	Grindstone::GraphicsAPI::CommandBuffer::CreateInfo commandBufferCreateInfo{};
 
-	commandBuffers.resize(wgb->GetMaxFramesInFlight());
-	for (size_t i = 0; i < commandBuffers.size(); ++i) {
-		std::string debugName = "Imgui Command Buffer " + std::to_string(i);
-		commandBufferCreateInfo.debugName = debugName.c_str();
-		commandBuffers[i] = graphicsCore->CreateCommandBuffer(commandBufferCreateInfo);
+	GraphicsAPI::Framebuffer::CreateInfo framebufferCreateInfo{};
+	framebufferCreateInfo.depthTarget = nullptr;
+	framebufferCreateInfo.width = width;
+	framebufferCreateInfo.height = height;
+	framebufferCreateInfo.isCubemap = false;
+	framebufferCreateInfo.numRenderTargetLists = 1;
+	framebufferCreateInfo.renderPass = renderPass;
+	for (uint32_t i = 0; i < imageCount; ++i) {
+		std::string commandBufferDebugName = "Imgui Command Buffer " + std::to_string(i);
+		commandBufferCreateInfo.debugName = commandBufferDebugName.c_str();
+		frameData[i].commandBuffer = graphicsCore->CreateCommandBuffer(commandBufferCreateInfo);
+
+		GraphicsAPI::RenderTarget* rt = wgb->GetSwapchainRenderTarget(i);
+		std::string framebufferDebugName = "Imgui Framebuffer " + std::to_string(i);
+		framebufferCreateInfo.debugName = framebufferDebugName.c_str();
+		framebufferCreateInfo.renderTargetLists = &rt;
+		frameData[i].framebuffer = graphicsCore->CreateFramebuffer(framebufferCreateInfo);
 	}
 
-	VkCommandBuffer commandBuffer = vulkanCore->BeginSingleTimeCommands();
-	ImGui_ImplVulkan_CreateFontsTexture();
-	vulkanCore->EndSingleTimeCommands(commandBuffer);
+	{
+		VkCommandBuffer commandBuffer = vulkanCore->BeginSingleTimeCommands();
+		ImGui_ImplVulkan_CreateFontsTexture();
+		vulkanCore->EndSingleTimeCommands(commandBuffer);
+	}
+
+	Grindstone::Events::Dispatcher* eventDispatcher = engineCore.GetEventDispatcher();
+	eventDispatcher->AddEventListener(
+		Events::EventType::WindowResize,
+		std::bind(&ImguiRendererVulkan::OnWindowResize, this, std::placeholders::_1)
+	);
+}
+
+bool ImguiRendererVulkan::OnWindowResize(Events::BaseEvent* ev) {
+	if (ev->GetEventType() != Events::EventType::WindowResize) {
+		return false;
+	}
+
+	Events::WindowResizeEvent* winResizeEvent = (Events::WindowResizeEvent*)ev;
+
+	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
+	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	Grindstone::Window* window = engineCore.windowManager->GetWindowByIndex(0);
+	unsigned int width, height;
+	window->GetWindowSize(width, height);
+
+	auto wgb = window->GetWindowGraphicsBinding();
+	uint32_t currentImageCount = static_cast<uint32_t>(frameData.size());
+	uint32_t imageCount = wgb->GetMaxFramesInFlight();
+
+	GraphicsAPI::Framebuffer::CreateInfo framebufferCreateInfo{};
+	framebufferCreateInfo.depthTarget = nullptr;
+	framebufferCreateInfo.width = width;
+	framebufferCreateInfo.height = height;
+	framebufferCreateInfo.isCubemap = false;
+	framebufferCreateInfo.numRenderTargetLists = 1;
+	framebufferCreateInfo.renderPass = renderPass;
+
+	if (currentImageCount > imageCount) {
+		frameData.resize(imageCount);
+
+		for (uint32_t i = currentImageCount; i < imageCount; ++i) {
+			std::string commandBufferDebugName = "Imgui Command Buffer " + std::to_string(i);
+			Grindstone::GraphicsAPI::CommandBuffer::CreateInfo commandBufferCreateInfo{};
+			commandBufferCreateInfo.debugName = commandBufferDebugName.c_str();
+			frameData[i].commandBuffer = graphicsCore->CreateCommandBuffer(commandBufferCreateInfo);
+
+			GraphicsAPI::RenderTarget* rt = wgb->GetSwapchainRenderTarget(i);
+			std::string framebufferDebugName = "Imgui Framebuffer " + std::to_string(i);
+			framebufferCreateInfo.debugName = framebufferDebugName.c_str();
+			framebufferCreateInfo.renderTargetLists = &rt;
+			frameData[i].framebuffer = graphicsCore->CreateFramebuffer(framebufferCreateInfo);
+		}
+	}
+	else if (currentImageCount < imageCount) {
+		for (uint32_t i = currentImageCount; i < imageCount; ++i) {
+			graphicsCore->DeleteFramebuffer(frameData[i].framebuffer);
+			graphicsCore->DeleteCommandBuffer(frameData[i].commandBuffer);
+		}
+
+		frameData.resize(imageCount);
+	}
+
+	for (uint32_t i = 0; i < imageCount; ++i) {
+		frameData[i].framebuffer->Resize(width, height);
+	}
+
+	return true;
 }
 
 ImguiRendererVulkan::~ImguiRendererVulkan() {
@@ -138,15 +232,16 @@ ImguiRendererVulkan::~ImguiRendererVulkan() {
 	VkDevice device = graphicsCore->GetDevice();
 	vkDestroyDescriptorPool(device, imguiPool, nullptr);
 
-	for (GraphicsAPI::CommandBuffer* cb : commandBuffers) {
-		graphicsCore->DeleteCommandBuffer(cb);
+	for (FrameData& frameData : frameData) {
+		graphicsCore->DeleteFramebuffer(frameData.framebuffer);
+		graphicsCore->DeleteCommandBuffer(frameData.commandBuffer);
 	}
 }
 
 Grindstone::GraphicsAPI::CommandBuffer* ImguiRendererVulkan::GetCommandBuffer() {
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
 	Grindstone::GraphicsAPI::WindowGraphicsBinding* window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
-	return commandBuffers[window->GetCurrentImageIndex()];
+	return frameData[window->GetCurrentImageIndex()].commandBuffer;
 }
 
 bool ImguiRendererVulkan::PreRender() {
@@ -157,7 +252,7 @@ bool ImguiRendererVulkan::PreRender() {
 		return false;
 	}
 
-	Grindstone::GraphicsAPI::CommandBuffer* currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
+	Grindstone::GraphicsAPI::CommandBuffer* currentCommandBuffer = frameData[window->GetCurrentImageIndex()].commandBuffer;
 
 	currentCommandBuffer->BeginCommandBuffer();
 	return true;
@@ -181,9 +276,10 @@ void ImguiRendererVulkan::WaitForResizeAndRecreateSwapchain() {
 void ImguiRendererVulkan::PrepareImguiRendering() {
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
 	GraphicsAPI::WindowGraphicsBinding* window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
-	GraphicsAPI::RenderPass* renderPass = window->GetRenderPass();
-	GraphicsAPI::Framebuffer* framebuffer = window->GetCurrentFramebuffer();
-	GraphicsAPI::CommandBuffer* currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
+
+	uint32_t imageIndex = window->GetCurrentImageIndex();
+	GraphicsAPI::Framebuffer* currentFramebuffer = frameData[imageIndex].framebuffer;
+	GraphicsAPI::CommandBuffer* currentCommandBuffer = frameData[imageIndex].commandBuffer;
 
 	GraphicsAPI::ClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 	GraphicsAPI::ClearDepthStencil clearDepthStencil;
@@ -193,9 +289,9 @@ void ImguiRendererVulkan::PrepareImguiRendering() {
 
 	currentCommandBuffer->BindRenderPass(
 		renderPass,
-		framebuffer,
-		framebuffer->GetWidth(),
-		framebuffer->GetHeight(),
+		currentFramebuffer,
+		currentFramebuffer->GetWidth(),
+		currentFramebuffer->GetHeight(),
 		&clearColor,
 		1,
 		clearDepthStencil
@@ -209,10 +305,10 @@ void ImguiRendererVulkan::PrepareImguiRendering() {
 void ImguiRendererVulkan::PostRender() {
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
 	auto window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
-	auto currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
+	GraphicsAPI::CommandBuffer* currentCommandBuffer = frameData[window->GetCurrentImageIndex()].commandBuffer;
 	ImGui::Render();
 
-	auto vkCB = static_cast<GraphicsAPI::VulkanCommandBuffer*>(currentCommandBuffer);
+	GraphicsAPI::VulkanCommandBuffer* vkCB = static_cast<GraphicsAPI::VulkanCommandBuffer*>(currentCommandBuffer);
 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vkCB->GetCommandBuffer());
 
 	ImGui::UpdatePlatformWindows();
@@ -293,7 +389,6 @@ void ImguiRendererVulkan::CreateOrResizeWindow(
 
 	VulkanWindowBindingDataNative windowBindingData{};
 	windowBindingData.swapChain = g_MainWindowData.Swapchain;
-	windowBindingData.renderPass = g_MainWindowData.RenderPass;
 	windowBindingData.width = static_cast<uint32_t>(g_MainWindowData.Width);
 	windowBindingData.height = static_cast<uint32_t>(g_MainWindowData.Height);
 	windowBindingData.surfaceFormat = g_MainWindowData.SurfaceFormat;

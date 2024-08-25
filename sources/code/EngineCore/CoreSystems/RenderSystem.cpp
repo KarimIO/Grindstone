@@ -15,8 +15,6 @@
 
 #include "RenderSystem.hpp"
 
-std::vector<Grindstone::GraphicsAPI::CommandBuffer*> commandBuffers;
-
 namespace Grindstone {
 	void RenderSystem(entt::registry& registry) {
 		GRIND_PROFILE_SCOPE("RenderSystem()");
@@ -32,15 +30,6 @@ namespace Grindstone {
 			return;
 		}
 
-		if (commandBuffers.size() == 0) {
-			commandBuffers.resize(wgb->GetMaxFramesInFlight());
-			GraphicsAPI::CommandBuffer::CreateInfo commandBufferCreateInfo{};
-
-			for (size_t i = 0; i < commandBuffers.size(); ++i) {
-				commandBuffers[i] = engineCore.GetGraphicsCore()->CreateCommandBuffer(commandBufferCreateInfo);
-			}
-		}
-
 		const static glm::vec3 upVector = glm::vec3(0, 1, 0);
 		auto view = registry.view<const TransformComponent, const CameraComponent>();
 
@@ -51,19 +40,15 @@ namespace Grindstone {
 			) {
 				// TODO: Handle case for not main camera
 				// Do we only want to allow rendering to backbuffer and render targets, or also allow useless framebuffers
-				GraphicsAPI::CommandBuffer* currentCommandBuffer = cameraComponent.isMainCamera
-					? commandBuffers[wgb->GetCurrentImageIndex()]
-					: nullptr;
-
-				if (currentCommandBuffer == nullptr) {
+				if (!cameraComponent.isMainCamera || std::isnan(cameraComponent.aspectRatio) || cameraComponent.renderer == nullptr) {
 					return;
 				}
+
+				uint32_t imageIndex = wgb->GetCurrentImageIndex();
+				GraphicsAPI::CommandBuffer* currentCommandBuffer = cameraComponent.commandBuffers[imageIndex];
+				GraphicsAPI::Framebuffer* currentFramebuffer = cameraComponent.framebuffers[imageIndex];
 
 				currentCommandBuffer->BeginCommandBuffer();
-
-				if (std::isnan(cameraComponent.aspectRatio) || cameraComponent.renderer == nullptr) {
-					return;
-				}
 
 				const glm::vec3 forwardVector = transformComponent.GetForward();
 				const glm::vec3 pos = transformComponent.position;
@@ -87,7 +72,7 @@ namespace Grindstone {
 					projectionMatrix,
 					viewMatrix,
 					pos,
-					wgb->GetCurrentFramebuffer()
+					currentFramebuffer
 				);
 
 				currentCommandBuffer->EndCommandBuffer();
