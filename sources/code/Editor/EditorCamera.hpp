@@ -17,6 +17,7 @@ namespace Grindstone {
 		class DescriptorSet;
 		class DescriptorSetLayout;
 		class RenderTarget;
+		class DepthTarget;
 		class RenderPass;
 	}
 
@@ -44,6 +45,7 @@ namespace Grindstone {
 			GizmoRenderer gizmoRenderer;
 			GridRenderer gridRenderer;
 			GraphicsAPI::RenderTarget* renderTarget = nullptr;
+			GraphicsAPI::DepthTarget* depthTarget = nullptr;
 			GraphicsAPI::RenderPass* renderPass = nullptr;
 			GraphicsAPI::RenderPass* gizmoRenderPass = nullptr;
 			GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;

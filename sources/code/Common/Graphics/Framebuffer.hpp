@@ -11,6 +11,8 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		class RenderPass;
+		class VulkanRenderTarget;
+		class VulkanDepthTarget;
 
 		class Framebuffer {
 		public:
@@ -43,6 +45,9 @@ namespace Grindstone {
 			virtual void Unbind() = 0;
 			virtual uint32_t GetWidth() const = 0;
 			virtual uint32_t GetHeight() const = 0;
+			virtual uint32_t GetRenderTargetCount() const = 0;
+			virtual RenderTarget* GetRenderTarget(uint32_t index) const = 0;
+			virtual DepthTarget* GetDepthTarget() const = 0;
 			virtual ~Framebuffer() {};
 		};
 	}

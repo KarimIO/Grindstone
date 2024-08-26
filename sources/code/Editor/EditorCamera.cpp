@@ -1,3 +1,4 @@
+#include <Common/Display/DisplayManager.hpp>
 #include <Common/Graphics/Framebuffer.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
@@ -21,13 +22,27 @@ EditorCamera::EditorCamera() {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	GraphicsAPI::Core* core = engineCore.GetGraphicsCore();
 
+	Display& display = engineCore.displayManager->GetMainDisplay();
+	uint32_t framebufferWidth = display.width;
+	uint32_t framebufferHeight = display.height;
+
 	GraphicsAPI::RenderTarget::CreateInfo renderTargetCreateInfo{};
 	renderTargetCreateInfo.debugName = "Editor Viewport Color Image";
-	renderTargetCreateInfo.width = 800;
-	renderTargetCreateInfo.height = 600;
+	renderTargetCreateInfo.width = framebufferWidth;
+	renderTargetCreateInfo.height = framebufferHeight;
 	renderTargetCreateInfo.format = GraphicsAPI::ColorFormat::RGBA8;
 	renderTargetCreateInfo.isSampled = true;
 	renderTarget = core->CreateRenderTarget(&renderTargetCreateInfo, 1, false);
+
+	GraphicsAPI::DepthTarget::CreateInfo depthTargetCreateInfo{};
+	depthTargetCreateInfo.debugName = "Editor Viewport Depth Image";
+	depthTargetCreateInfo.width = framebufferWidth;
+	depthTargetCreateInfo.height = framebufferHeight;
+	depthTargetCreateInfo.format = GraphicsAPI::DepthFormat::D24;
+	depthTargetCreateInfo.isSampled = true;
+	depthTargetCreateInfo.isCubemap = false;
+	depthTargetCreateInfo.isShadowMap = false;
+	depthTarget = core->CreateDepthTarget(depthTargetCreateInfo);
 
 	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> attachments = { { renderTargetCreateInfo.format, true } };
 
@@ -35,7 +50,7 @@ EditorCamera::EditorCamera() {
 	renderPassCreateInfo.debugName = "Editor RenderPass";
 	renderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(attachments.size());
 	renderPassCreateInfo.colorAttachments = attachments.data();
-	renderPassCreateInfo.depthFormat = GraphicsAPI::DepthFormat::None;
+	renderPassCreateInfo.depthFormat = GraphicsAPI::DepthFormat::D24;
 	renderPass = core->CreateRenderPass(renderPassCreateInfo);
 
 	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> gizmoAttachments = { { renderTargetCreateInfo.format, false } };
@@ -44,17 +59,18 @@ EditorCamera::EditorCamera() {
 	gizmoRenderPassCreateInfo.debugName = "Editor Gizmo RenderPass";
 	gizmoRenderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(gizmoAttachments.size());
 	gizmoRenderPassCreateInfo.colorAttachments = gizmoAttachments.data();
-	gizmoRenderPassCreateInfo.depthFormat = GraphicsAPI::DepthFormat::None;
+	gizmoRenderPassCreateInfo.depthFormat = GraphicsAPI::DepthFormat::D24;
+	gizmoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 	gizmoRenderPass = core->CreateRenderPass(gizmoRenderPassCreateInfo);
 
 	GraphicsAPI::Framebuffer::CreateInfo framebufferCreateInfo{};
 	framebufferCreateInfo.debugName = "Editor Framebuffer";
 	framebufferCreateInfo.renderTargetLists = &renderTarget;
 	framebufferCreateInfo.numRenderTargetLists = 1;
-	framebufferCreateInfo.depthTarget = nullptr;
+	framebufferCreateInfo.depthTarget = depthTarget;
 	framebufferCreateInfo.renderPass = renderPass;
-	framebufferCreateInfo.width = 800;
-	framebufferCreateInfo.height = 600;
+	framebufferCreateInfo.width = framebufferWidth;
+	framebufferCreateInfo.height = framebufferHeight;
 	framebuffer = core->CreateFramebuffer(framebufferCreateInfo);
 
 	GraphicsAPI::DescriptorSetLayout::Binding descriptorSetLayoutBinding{};
@@ -78,7 +94,7 @@ EditorCamera::EditorCamera() {
 	descriptorSetCreateInfo.layout = descriptorSetLayout;
 	descriptorSet = core->CreateDescriptorSet(descriptorSetCreateInfo);
 
-	// gridRenderer.Initialize(renderPass);
+	gridRenderer.Initialize(renderPass);
 	gizmoRenderer.Initialize(renderPass);
 
 	renderer = engineCore.CreateRenderer(renderPass);
@@ -132,10 +148,11 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		static_cast<float>(height) / framebuffer->GetHeight()
 	);
 
+	Grindstone::GraphicsAPI::ClearColor clearColor{};
 	Grindstone::GraphicsAPI::ClearDepthStencil clearDepthStencil;
-	clearDepthStencil.hasDepthStencilAttachment = false;
-	commandBuffer->BindRenderPass(gizmoRenderPass, framebuffer, width, height, nullptr, 0, clearDepthStencil);
-	// gridRenderer.Render(commandBuffer, renderScale, gizmoProjection, view, nearPlaneDistance, farPlaneDistance, glm::quat(), 0.0f);
+	clearDepthStencil.hasDepthStencilAttachment = true;
+	commandBuffer->BindRenderPass(gizmoRenderPass, framebuffer, width, height, &clearColor, 1, clearDepthStencil);
+	gridRenderer.Render(commandBuffer, renderScale, gizmoProjection, view, nearPlaneDistance, farPlaneDistance, glm::quat(), 0.0f);
 
 	if (editorManager.GetSelection().GetSelectedEntityCount() > 0) {
 		static const glm::vec4 colliderColor = glm::vec4(1.0f, 0.8f, 0.0f, 1.0f);

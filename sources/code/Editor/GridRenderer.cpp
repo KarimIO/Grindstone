@@ -25,11 +25,10 @@ using namespace Grindstone::Editor;
 struct GridUniformBuffer {
 	glm::mat4 projMatrix;
 	glm::mat4 viewMatrix;
-	glm::vec4 colorXAxis = glm::vec4(0.6f, 0.0f, 0.0f, 1.0f);
-	glm::vec4 colorYAxis = glm::vec4(0.0f, 0.6f, 0.0f, 1.0f);
-	glm::vec4 colorZAxis = glm::vec4(0.0f, 0.0f, 0.6f, 1.0f);
-	glm::vec4 colorMinor = glm::vec4(1.0f, 1.0f, 1.0f, 0.5f);
-	glm::vec4 colorMajor = glm::vec4(1.0f, 1.0f, 1.0f, 0.8f);
+	glm::vec4 colorXAxis = glm::vec4(1.0f, 0.2f, 0.2f, 1.0f);
+	glm::vec4 colorZAxis = glm::vec4(0.2f, 0.2f, 1.0f, 1.0f);
+	glm::vec4 colorMinor = glm::vec4(0.2f, 0.2f, 0.2f, 0.5f);
+	glm::vec4 colorMajor = glm::vec4(0.2f, 0.2f, 0.2f, 0.9f);
 	glm::vec2 renderScale;
 	float fadeDistanceMultiplier = 0.0f;
 	float nearDistance;
@@ -90,7 +89,7 @@ void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	pipelineCreateInfo.descriptorSetLayoutCount = 1u;
 	pipelineCreateInfo.colorAttachmentCount = 1;
 	pipelineCreateInfo.isDepthWriteEnabled = false;
-	pipelineCreateInfo.isDepthTestEnabled = false;
+	pipelineCreateInfo.isDepthTestEnabled = true;
 	pipelineCreateInfo.isStencilEnabled = false;
 	pipelineCreateInfo.blendMode = GraphicsAPI::BlendMode::AdditiveAlpha;
 	pipelineCreateInfo.renderPass = renderPass;

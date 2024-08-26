@@ -178,7 +178,6 @@ DeferredRenderer::~DeferredRenderer() {
 		DeferredRendererImageSet& imageSet = deferredRendererImageSets[i];
 
 		graphicsCore->DeleteFramebuffer(imageSet.lightingFramebuffer);
-		graphicsCore->DeleteDepthTarget(imageSet.litHdrDepthTarget);
 		graphicsCore->DeleteRenderTarget(imageSet.ssrRenderTarget);
 
 		graphicsCore->DeleteUniformBuffer(imageSet.debugUniformBufferObject);
@@ -1474,10 +1473,6 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 		litHdrFramebufferCreateInfo.depthTarget = imageSet.gbufferDepthTarget;
 		litHdrFramebufferCreateInfo.renderPass = mainRenderPass;
 		imageSet.litHdrFramebuffer = graphicsCore->CreateFramebuffer(litHdrFramebufferCreateInfo);
-
-		// litHdrFramebufferCreateInfo.depthTarget = nullptr;
-		// litHdrFramebufferCreateInfo.renderPass = lightingRenderPass;
-		// imageSet.lightingFramebuffer = graphicsCore->CreateFramebuffer(litHdrFramebufferCreateInfo);
 	}
 }
 
@@ -1735,9 +1730,9 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.colorAttachmentCount = 1;
 		pipelineCreateInfo.blendMode = BlendMode::None;
 		pipelineCreateInfo.renderPass = targetRenderPass;
-		pipelineCreateInfo.isDepthWriteEnabled = true;
-		pipelineCreateInfo.isDepthTestEnabled = true;
-		pipelineCreateInfo.isStencilEnabled = true;
+		pipelineCreateInfo.isDepthWriteEnabled = false;
+		pipelineCreateInfo.isDepthTestEnabled = false;
+		pipelineCreateInfo.isStencilEnabled = false;
 		tonemapPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
 
@@ -2494,8 +2489,9 @@ void DeferredRenderer::PostProcess(
 	ClearDepthStencil clearDepthStencil;
 	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
-	clearDepthStencil.hasDepthStencilAttachment = false;
+	clearDepthStencil.hasDepthStencilAttachment = true;
 	auto renderPass = framebuffer->GetRenderPass();
+
 	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, framebuffer->GetWidth(), framebuffer->GetHeight(), &clearColor, 1, clearDepthStencil);
 
 	if (tonemapPipeline != nullptr) {
@@ -2507,6 +2503,8 @@ void DeferredRenderer::PostProcess(
 	}
 
 	currentCommandBuffer->UnbindRenderPass();
+
+	currentCommandBuffer->BlitDepthImage(imageSet.gbufferDepthTarget, framebuffer->GetDepthTarget());
 }
 
 void DeferredRenderer::Debug(
