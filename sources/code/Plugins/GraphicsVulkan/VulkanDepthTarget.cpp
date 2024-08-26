@@ -117,6 +117,18 @@ void VulkanDepthTarget::CreateTextureSampler() {
 	}
 }
 
+uint32_t VulkanDepthTarget::GetWidth() const {
+	return width;
+}
+
+uint32_t VulkanDepthTarget::GetHeight() const {
+	return height;
+}
+
+VkImage VulkanDepthTarget::GetImage() const {
+	return image;
+}
+
 VkImageView VulkanDepthTarget::GetImageView() const {
 	return imageView;
 }

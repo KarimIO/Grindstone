@@ -4,6 +4,7 @@
 
 #include "VulkanRenderPass.hpp"
 #include "VulkanRenderTarget.hpp"
+#include "VulkanDepthTarget.hpp"
 #include "VulkanGraphicsPipeline.hpp"
 #include "VulkanComputePipeline.hpp"
 #include "VulkanFramebuffer.hpp"
@@ -208,6 +209,32 @@ void VulkanCommandBuffer::BindCommandBuffers(CommandBuffer** commandBuffers, uin
 		static_cast<uint32_t>(vkCommandBuffers.size()),
 		vkCommandBuffers.data()
 	);
+}
+
+void VulkanCommandBuffer::BlitDepthImage(DepthTarget* src, DepthTarget* dst) {
+	VulkanDepthTarget* vkSrc = static_cast<VulkanDepthTarget*>(src);
+	VulkanDepthTarget* vkDst = static_cast<VulkanDepthTarget*>(dst);
+
+	VkImageLayout srcLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+	VkImageLayout dstLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+
+	VkImageBlit blit{};
+	blit.srcOffsets[0] = { 0, 0, 0 };
+	blit.srcOffsets[1] = { static_cast<int>(vkSrc->GetWidth()), static_cast<int>(vkSrc->GetHeight()), 1};
+	blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	blit.srcSubresource.mipLevel = 0;
+	blit.srcSubresource.baseArrayLayer = 0;
+	blit.srcSubresource.layerCount = 1;
+	blit.dstOffsets[0] = { 0, 0, 0 };
+	blit.dstOffsets[1] = { static_cast<int>(vkDst->GetWidth()), static_cast<int>(vkDst->GetHeight()), 1 };
+	blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	blit.dstSubresource.mipLevel = 0;
+	blit.dstSubresource.baseArrayLayer = 0;
+	blit.dstSubresource.layerCount = 1;
+
+	VkFilter filter = VkFilter::VK_FILTER_NEAREST;
+
+	vkCmdBlitImage(commandBuffer, vkSrc->GetImage(), srcLayout, vkDst->GetImage(), dstLayout, 1, &blit, filter);
 }
 
 void VulkanCommandBuffer::SetDepthBias(float biasConstantFactor, float biasSlopeFactor) {

@@ -134,6 +134,18 @@ uint32_t VulkanFramebuffer::GetHeight() const {
 	return height;
 }
 
+uint32_t VulkanFramebuffer::GetRenderTargetCount() const {
+	return static_cast<uint32_t>(colorAttachments.size());
+}
+
+RenderTarget* VulkanFramebuffer::GetRenderTarget(uint32_t index) const {
+	return colorAttachments[index];
+}
+
+DepthTarget* VulkanFramebuffer::GetDepthTarget() const {
+	return depthAttachment;
+}
+
 void VulkanFramebuffer::Clear(GraphicsAPI::ClearMode mask) {
 	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanFramebuffer::Clear is not used.");
 	assert(false);

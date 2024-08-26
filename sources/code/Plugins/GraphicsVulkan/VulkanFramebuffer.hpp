@@ -44,6 +44,9 @@ namespace Grindstone {
 			virtual void Unbind() override;
 			virtual uint32_t GetWidth() const override;
 			virtual uint32_t GetHeight() const override;
+			virtual uint32_t GetRenderTargetCount() const override;
+			virtual RenderTarget* GetRenderTarget(uint32_t index) const override;
+			virtual DepthTarget* GetDepthTarget() const override;
 		private:
 			void Create();
 			void Cleanup();
