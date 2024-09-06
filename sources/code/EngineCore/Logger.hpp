@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <fmt/format.h>
+#include <mutex>
 
 #include "Common/Logging.hpp"
 
@@ -12,6 +13,7 @@ namespace Grindstone::Events {
 namespace Grindstone::Logger {
 	struct LoggerState {
 		std::ofstream outputStream;
+		std::mutex mutex;
 		Events::Dispatcher* dispatcher = nullptr;
 	};
 

@@ -60,6 +60,8 @@ void Grindstone::Logger::Print(
 	uint32_t line,
 	const char* str
 ) {
+	std::scoped_lock lock(loggerState->mutex);
+	
 	if (logSeverity > LogSeverity::Fatal) {
 		logSeverity = LogSeverity::Error;
 	}
