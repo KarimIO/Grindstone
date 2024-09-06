@@ -81,6 +81,11 @@ void CSharpManager::CreateDomain() {
 }
 
 void CSharpManager::LoadAssembly(const char* path, AssemblyData& outAssemblyData) {
+	if (!std::filesystem::exists(path)) {
+		GPRINT_ERROR_V(LogSource::Scripting, "Attempting to load invalid assembly: {}", path);
+		return;
+	}
+
 	Grindstone::Buffer assemblyData = Grindstone::Utils::LoadFile(path);
 
 	MonoImageOpenStatus status;
