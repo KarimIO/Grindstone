@@ -173,7 +173,9 @@ EngineCore::~EngineCore() {
 		}
 	}
 
-	sceneManager->CloseActiveScenes();
+	if (sceneManager) {
+		sceneManager->CloseActiveScenes();
+	}
 
 	if (pluginManager) {
 		pluginManager->UnloadPluginList();
