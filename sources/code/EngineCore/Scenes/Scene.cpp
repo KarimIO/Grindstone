@@ -68,6 +68,10 @@ void Scene::DestroyEntity(ECS::Entity entity) {
 	GetComponentRegistrar()->DestroyEntity(entity);
 }
 
+void Scene::SetName(std::string_view name) {
+	this->name = name;
+}
+
 ECS::Entity Scene::CreateEntity(entt::entity entityToUse) {
 	auto entity = CreateEmptyEntity(entityToUse);
 	entity.AddComponent<TagComponent>("New Entity");

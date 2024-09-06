@@ -74,7 +74,8 @@ Scene* SceneManager::CreateEmptyScene(const char* name) {
 
 Scene* SceneManager::CreateEmptySceneAdditively(const char *name) {
 	Scene* newScene = AllocatorCore::Allocate<Scene>();
-	scenes[name] = newScene;
+	newScene->SetName(name);
+	scenes[Uuid::CreateRandom()] = newScene;
 
 	return newScene;
 }
