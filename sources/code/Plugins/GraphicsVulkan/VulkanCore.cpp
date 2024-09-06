@@ -154,8 +154,9 @@ void VulkanCore::CreateAllocator() {
 }
 
 void VulkanCore::CreateInstance() {
-	if (enableValidationLayers && !CheckValidationLayerSupport()) {
-		GPRINT_FATAL(LogSource::GraphicsAPI, "validation layers requested, but not available!");
+	bool areValidationLayersFound = CheckValidationLayerSupport();
+	if (enableValidationLayers && !areValidationLayersFound) {
+		GPRINT_ERROR(LogSource::GraphicsAPI, "Vulkan validation support is requested, but not available. Please install https://vulkan.lunarg.com/");
 	}
 
 	VkApplicationInfo appInfo = {};
@@ -177,7 +178,7 @@ void VulkanCore::CreateInstance() {
 	createInfo.ppEnabledExtensionNames = extensions.data();
 
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
-	if (enableValidationLayers) {
+	if (enableValidationLayers && areValidationLayersFound) {
 		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 		createInfo.ppEnabledLayerNames = validationLayers.data();
 
@@ -186,6 +187,7 @@ void VulkanCore::CreateInstance() {
 	}
 	else {
 		createInfo.enabledLayerCount = 0;
+		createInfo.ppEnabledLayerNames = nullptr;
 
 		createInfo.pNext = nullptr;
 	}
@@ -345,7 +347,7 @@ bool VulkanCore::CheckValidationLayerSupport() {
 		}
 	}
 
-	return true;
+	return false;
 }
 
 QueueFamilyIndices VulkanCore::FindQueueFamilies(VkPhysicalDevice device) {
