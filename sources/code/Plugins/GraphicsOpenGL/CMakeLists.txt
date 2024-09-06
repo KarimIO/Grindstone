@@ -37,7 +37,7 @@ source_group("Header Files\\Window" FILES ${GL_WINDOW_HEADERS})
 source_group("Source Files\\Display" FILES ${GL_DISPLAY_SOURCES})
 source_group("Header Files\\Display" FILES ${GL_DISPLAY_HEADERS})
 
-add_library(PluginGraphicsOpenGL MODULE ${GL_SOURCES} ${GL_HEADERS})
+add_library(PluginGraphicsOpenGL MODULE ${GL_SOURCES} ${GL_HEADERS} ${CORE_UTILS})
 
 target_compile_features(PluginGraphicsOpenGL PRIVATE cxx_std_17)
 

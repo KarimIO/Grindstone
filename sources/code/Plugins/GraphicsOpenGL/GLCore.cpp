@@ -1,6 +1,10 @@
+#include <iostream>
+#include <cstdio>
 #include <GL/gl3w.h>
-#include "GLCore.hpp"
 
+#include <EngineCore/Utils/MemoryAllocator.hpp>
+
+#include "GLCore.hpp"
 #include "GLDescriptorSet.hpp"
 #include "GLDescriptorSetLayout.hpp"
 #include "GLVertexArrayObject.hpp"
@@ -10,8 +14,6 @@
 #include "GLComputePipeline.hpp"
 #include "GLRenderTarget.hpp"
 #include "GLWindowGraphicsBinding.hpp"
-#include <iostream>
-#include <cstdio>
 
 #ifdef _WIN32
 	//#include <windows.h>
@@ -21,6 +23,7 @@
 #endif
 
 using namespace Grindstone::GraphicsAPI;
+using namespace Grindstone::Memory;
 
 void APIENTRY glDebugOutput(GLenum source,
 	GLenum type,
@@ -73,7 +76,7 @@ bool GLCore::Initialize(Core::CreateInfo& ci) {
 	debug = ci.debug;
 	primaryWindow = ci.window;
 
-	auto wgb = new GLWindowGraphicsBinding();
+	auto wgb = AllocatorCore::Allocate<GLWindowGraphicsBinding>();
 	ci.window->AddBinding(wgb);
 	wgb->Initialize(ci.window);
 
@@ -140,7 +143,7 @@ void GLCore::AdjustPerspective(float *perspective) {
 }
 
 void GLCore::RegisterWindow(Window* window) {
-	auto wgb = new GLWindowGraphicsBinding();
+	auto wgb = AllocatorCore::Allocate<GLWindowGraphicsBinding>();
 	window->AddBinding(wgb);
 	wgb->Initialize(window);
 	wgb->ShareLists((GLWindowGraphicsBinding *)primaryWindow->GetWindowGraphicsBinding());
@@ -173,15 +176,15 @@ const char* GLCore::GetAPIVersion() {
 // Creators
 //==================================
 DescriptorSet* GLCore::CreateDescriptorSet(DescriptorSet::CreateInfo& createInfo) {
-	return static_cast<DescriptorSet*>(new GLDescriptorSet(createInfo));
+	return static_cast<DescriptorSet*>(AllocatorCore::Allocate<GLDescriptorSet>(createInfo));
 }
 
 DescriptorSetLayout* GLCore::CreateDescriptorSetLayout(DescriptorSetLayout::CreateInfo& createInfo) {
-	return static_cast<DescriptorSetLayout*>(new GLDescriptorSetLayout(createInfo));
+	return static_cast<DescriptorSetLayout*>(AllocatorCore::Allocate<GLDescriptorSetLayout>(createInfo));
 }
 
 Framebuffer* GLCore::CreateFramebuffer(Framebuffer::CreateInfo& ci) {
-	return static_cast<Framebuffer*>(new GLFramebuffer(ci));
+	return static_cast<Framebuffer*>(AllocatorCore::Allocate<GLFramebuffer>(ci));
 }
 
 RenderPass* GLCore::CreateRenderPass(RenderPass::CreateInfo& ci) {
@@ -189,15 +192,15 @@ RenderPass* GLCore::CreateRenderPass(RenderPass::CreateInfo& ci) {
 }
 
 ComputePipeline* GLCore::CreateComputePipeline(ComputePipeline::CreateInfo& ci) {
-	return static_cast<ComputePipeline*>(new GLComputePipeline(ci));
+	return static_cast<ComputePipeline*>(AllocatorCore::Allocate<GLComputePipeline>(ci));
 }
 
 GraphicsPipeline* GLCore::CreateGraphicsPipeline(GraphicsPipeline::CreateInfo& ci) {
-	return static_cast<GraphicsPipeline*>(new GLGraphicsPipeline(ci));
+	return static_cast<GraphicsPipeline*>(AllocatorCore::Allocate<GLGraphicsPipeline>(ci));
 }
 
 VertexArrayObject* GLCore::CreateVertexArrayObject(VertexArrayObject::CreateInfo& ci) {
-	return static_cast<VertexArrayObject*>(new GLVertexArrayObject(ci));
+	return static_cast<VertexArrayObject*>(AllocatorCore::Allocate<GLVertexArrayObject>(ci));
 }
 
 CommandBuffer* GLCore::CreateCommandBuffer(CommandBuffer::CreateInfo& ci) {
@@ -205,35 +208,35 @@ CommandBuffer* GLCore::CreateCommandBuffer(CommandBuffer::CreateInfo& ci) {
 }
 
 VertexBuffer* GLCore::CreateVertexBuffer(VertexBuffer::CreateInfo& ci) {
-	return static_cast<VertexBuffer*>(new GLVertexBuffer(ci));
+	return static_cast<VertexBuffer*>(AllocatorCore::Allocate<GLVertexBuffer>(ci));
 }
 
 IndexBuffer* GLCore::CreateIndexBuffer(IndexBuffer::CreateInfo& ci) {
-	return static_cast<IndexBuffer*>(new GLIndexBuffer(ci));
+	return static_cast<IndexBuffer*>(AllocatorCore::Allocate<GLIndexBuffer>(ci));
 }
 
 UniformBuffer* GLCore::CreateUniformBuffer(UniformBuffer::CreateInfo& ci) {
-	return static_cast<UniformBuffer*>(new GLUniformBuffer(ci));
+	return static_cast<UniformBuffer*>(AllocatorCore::Allocate<GLUniformBuffer>(ci));
 }
 
 Texture* GLCore::CreateCubemap(Texture::CubemapCreateInfo& ci) {
-	return static_cast<Texture*>(new GLTexture(ci));
+	return static_cast<Texture*>(AllocatorCore::Allocate<GLTexture>(ci));
 }
 
 Texture* GLCore::CreateTexture(Texture::CreateInfo& ci) {
-	return static_cast<Texture*>(new GLTexture(ci));
+	return static_cast<Texture*>(AllocatorCore::Allocate<GLTexture>(ci));
 }
 
 RenderTarget* GLCore::CreateRenderTarget(RenderTarget::CreateInfo* rt, uint32_t rc, bool cube) {
-	return static_cast<RenderTarget*>(new GLRenderTarget(rt, rc, cube));
+	return static_cast<RenderTarget*>(AllocatorCore::Allocate<GLRenderTarget>(rt, rc, cube));
 }
 
 RenderTarget* GLCore::CreateRenderTarget(RenderTarget::CreateInfo& rt) {
-	return static_cast<RenderTarget*>(new GLRenderTarget(rt));
+	return static_cast<RenderTarget*>(AllocatorCore::Allocate<GLRenderTarget>(rt));
 }
 
 DepthTarget* GLCore::CreateDepthTarget(DepthTarget::CreateInfo& rt) {
-	return static_cast<DepthTarget*>(new GLDepthTarget(rt));
+	return static_cast<DepthTarget*>(AllocatorCore::Allocate<GLDepthTarget>(rt));
 }
 
 //==================================
@@ -262,58 +265,58 @@ const bool GLCore::SupportsMultiDrawIndirect() {
 // Deleters
 //==================================
 void GLCore::DeleteRenderTarget(RenderTarget *ptr) {
-	delete (GLRenderTarget *)ptr;
+	AllocatorCore::Free(static_cast<GLRenderTarget *>(ptr));
 }
 
 void GLCore::DeleteDepthTarget(DepthTarget *ptr) {
-	delete (GLDepthTarget *)ptr;
+	AllocatorCore::Free(static_cast<GLDepthTarget *>(ptr));
 }
 
 void GLCore::DeleteFramebuffer(Framebuffer *ptr) {
-	delete (GLFramebuffer *)ptr;
+	AllocatorCore::Free(static_cast<GLFramebuffer *>(ptr));
 }
 
 void GLCore::DeleteVertexBuffer(VertexBuffer *ptr) {
-	delete (GLVertexBuffer *)ptr;
+	AllocatorCore::Free(static_cast<GLVertexBuffer *>(ptr));
 }
 
 void GLCore::DeleteIndexBuffer(IndexBuffer *ptr) {
-	delete (GLIndexBuffer *)ptr;
+	AllocatorCore::Free(static_cast<GLIndexBuffer *>(ptr));
 }
 
 void GLCore::DeleteUniformBuffer(UniformBuffer * ptr) {
-	delete (GLUniformBuffer *)ptr;
+	AllocatorCore::Free(static_cast<GLUniformBuffer *>(ptr));
 }
 
 void GLCore::DeleteComputePipeline(ComputePipeline* ptr) {
-	delete (GLComputePipeline*)ptr;
+	AllocatorCore::Free(static_cast<GLComputePipeline*>(ptr));
 }
 
 void GLCore::DeleteGraphicsPipeline(GraphicsPipeline* ptr) {
-	delete (GLGraphicsPipeline *)ptr;
+	AllocatorCore::Free(static_cast<GLGraphicsPipeline *>(ptr));
 }
 
 void GLCore::DeleteRenderPass(RenderPass *ptr) {
-	//delete (GLRenderPass *)ptr;
+	//AllocatorCore::Free(static_cast<GLRenderPass *>(ptr));
 }
 
 void GLCore::DeleteTexture(Texture *ptr) {
-	delete (GLTexture *)ptr;
+	AllocatorCore::Free(static_cast<GLTexture *>(ptr));
 }
 
 void GLCore::DeleteDescriptorSet(DescriptorSet *ptr) {
-	delete (GLDescriptorSet *)ptr;
+	AllocatorCore::Free(static_cast<GLDescriptorSet *>(ptr));
 }
 
 void GLCore::DeleteDescriptorSetLayout(DescriptorSetLayout *ptr) {
-	delete (GLDescriptorSetLayout *)ptr;
+	AllocatorCore::Free(static_cast<GLDescriptorSetLayout *>(ptr));
 }
 
 void GLCore::DeleteCommandBuffer(CommandBuffer * ptr) {
 }
 
 void GLCore::DeleteVertexArrayObject(VertexArrayObject * ptr) {
-	delete (GLVertexArrayObject *)ptr;
+	AllocatorCore::Free(static_cast<GLVertexArrayObject *>(ptr));
 }
 
 void GLCore::CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) {
@@ -415,12 +418,12 @@ void GLCore::SetImmediateBlending(BlendMode mode) {
 /*
 extern "C" {
 	GRAPHICS_EXPORT Grindstone::GraphicsAPI::GraphicsWrapper* createGraphics() {
-		return new Grindstone::GraphicsAPI::GLCore();
+		return AllocatorCore::Allocate<Grindstone::GraphicsAPI::GLCore();
 	}
 
 	GRAPHICS_EXPORT void deleteGraphics(void* ptr) {
 		Grindstone::GraphicsAPI::GLCore* glptr = (Grindstone::GraphicsAPI::GLCore*)ptr;
-		delete glptr;
+		AllocatorCore::Free(glptr;
 	}
 }
 */
