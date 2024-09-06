@@ -63,7 +63,6 @@ namespace Grindstone::Editor {
 		CopyLibrary(enginePath, targetPath, "glfw3");
 		CopyLibrary(enginePath, targetPath, "mono-2.0-sgen");
 		CopyLibrary(enginePath, targetPath, "OpenAL32");
-		CopyLibrary(enginePath, targetPath, "spdlogd");
 
 		// TODO: Build from assets folders
 		CopyLibrary(projectPath, targetPath, "Application-CSharp");
