@@ -10,8 +10,12 @@ endif()
 
 include("${CMAKE_TOOLCHAIN_FILE}")
 
-project(Grindstone VERSION 1.0.0 LANGUAGES CXX CSharp)
-enable_language(CSharp)
+if (WIN32)
+	project(Grindstone VERSION 1.0.0 LANGUAGES CXX CSharp)
+	enable_language(CSharp)
+else()
+	project(Grindstone VERSION 1.0.0 LANGUAGES CXX)
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 
