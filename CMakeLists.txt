@@ -54,7 +54,7 @@ add_subdirectory(sources/code/ApplicationExecutable)
 
 set(PLUGIN_DIR sources/code/Plugins)
 
-option(USE_OPENGL "Include OpenGL?" ON)
+option(USE_OPENGL "Include OpenGL?" OFF)
 if (USE_OPENGL)
 add_subdirectory(${PLUGIN_DIR}/GraphicsOpenGL)
 endif()
