@@ -74,20 +74,7 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	static VkPrimitiveTopology primTypes[] = {
-		VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
-		VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
-		VK_PRIMITIVE_TOPOLOGY_LINE_STRIP,
-		VK_PRIMITIVE_TOPOLOGY_LINE_STRIP,
-		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
-		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN,
-		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-		VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY,
-		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY,
-		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY,
-		VK_PRIMITIVE_TOPOLOGY_PATCH_LIST
-	};
-	inputAssembly.topology = primTypes[static_cast<size_t>(createInfo.primitiveType)];
+	inputAssembly.topology = TranslateGeometryTypeToVulkan(createInfo.primitiveType);
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 
 	VkViewport viewport = {};
@@ -111,29 +98,16 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 
 	VkPipelineRasterizationStateCreateInfo rasterizer = {};
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	rasterizer.depthClampEnable = VK_FALSE;
+	rasterizer.depthClampEnable = createInfo.isDepthClampEnabled;
 	rasterizer.rasterizerDiscardEnable = VK_FALSE;
-
-	static VkPolygonMode polygonModes[] = {
-		VK_POLYGON_MODE_POINT,
-		VK_POLYGON_MODE_LINE,
-		VK_POLYGON_MODE_FILL
-	};
-
-	rasterizer.polygonMode = polygonModes[static_cast<size_t>(createInfo.polygonFillMode)];
-
+	rasterizer.polygonMode = TranslatePolygonModeToVulkan(createInfo.polygonFillMode);
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = TranslateCullModeToVulkan(createInfo.cullMode);
 	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	if (createInfo.isDepthBiasEnabled) {
-		rasterizer.depthBiasEnable = VK_TRUE;
-		rasterizer.depthBiasConstantFactor = 1.25f;
-		rasterizer.depthBiasSlopeFactor = 1.75f;
-		rasterizer.depthBiasClamp = 0.0f;
-	}
-	else {
-		rasterizer.depthBiasEnable = VK_FALSE;
-	}
+	rasterizer.depthBiasEnable = createInfo.isDepthBiasEnabled;
+	rasterizer.depthBiasConstantFactor = createInfo.depthBiasConstantFactor;
+	rasterizer.depthBiasSlopeFactor = createInfo.depthBiasSlopeFactor;
+	rasterizer.depthBiasClamp = createInfo.depthBiasClamp;
 
 	VkPipelineMultisampleStateCreateInfo multisampling = {};
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -144,7 +118,7 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 	depthStencil.depthTestEnable = createInfo.isDepthTestEnabled;
 	depthStencil.depthWriteEnable = createInfo.isDepthWriteEnabled;
-	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+	depthStencil.depthCompareOp = TranslateCompareOpToVulkan(createInfo.depthCompareOp);
 	depthStencil.depthBoundsTestEnable = VK_FALSE;
 	depthStencil.stencilTestEnable = createInfo.isStencilEnabled;
 
@@ -152,29 +126,25 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 	for (size_t i = 0; i < createInfo.colorAttachmentCount; ++i) {
 		VkPipelineColorBlendAttachmentState& attachment = colorBlendAttachments[i];
 		colorBlendAttachments[i].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		switch (createInfo.blendMode) {
-		default:
+
+		if (createInfo.blendData.colorOperation == BlendOperation::None && createInfo.blendData.alphaOperation == BlendOperation::None) {
 			attachment.blendEnable = VK_FALSE;
-			break;
-		case BlendMode::Additive:
-			attachment.blendEnable = VK_TRUE;
-			attachment.colorBlendOp = VK_BLEND_OP_ADD;
-			attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-			attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
-			attachment.alphaBlendOp = VK_BLEND_OP_ADD;
-			attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-			attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-			break;
-		case BlendMode::AdditiveAlpha:
-			attachment.blendEnable = VK_TRUE;
-			attachment.colorBlendOp = VK_BLEND_OP_ADD;
-			attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-			attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-			attachment.alphaBlendOp = VK_BLEND_OP_ADD;
-			attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-			attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-			break;
 		}
+		else if (createInfo.blendData.colorOperation == BlendOperation::None || createInfo.blendData.alphaOperation == BlendOperation::None) {
+			GPRINT_ERROR(LogSource::GraphicsAPI, "Invalid blendOperation - using none blend with non-none blend");
+			attachment.blendEnable = VK_FALSE;
+		}
+		else {
+			attachment.blendEnable = VK_TRUE;
+		}
+
+		attachment.colorBlendOp = TranslateBlendOpToVulkan(createInfo.blendData.colorOperation);
+		attachment.srcColorBlendFactor = TranslateBlendFactorToVulkan(createInfo.blendData.colorFactorSrc);
+		attachment.dstColorBlendFactor = TranslateBlendFactorToVulkan(createInfo.blendData.colorFactorDst);
+
+		attachment.alphaBlendOp = TranslateBlendOpToVulkan(createInfo.blendData.alphaOperation);
+		attachment.srcAlphaBlendFactor = TranslateBlendFactorToVulkan(createInfo.blendData.alphaFactorSrc);
+		attachment.dstAlphaBlendFactor = TranslateBlendFactorToVulkan(createInfo.blendData.alphaFactorDst);
 	}
 
 	VkPipelineColorBlendStateCreateInfo colorBlending = {};
@@ -206,6 +176,7 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 
 	if (vkCreatePipelineLayout(VulkanCore::Get().GetDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create pipeline layout!");
+		return;
 	}
 
 	VulkanRenderPass* renderPass = static_cast<VulkanRenderPass*>(createInfo.renderPass);
@@ -244,6 +215,7 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 
 	if (vkCreateGraphicsPipelines(VulkanCore::Get().GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create graphics pipeline!");
+		return;
 	}
 
 	if (createInfo.debugName != nullptr) {
@@ -251,6 +223,7 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 	}
 	else {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Graphics Pipeline!");
+		return;
 	}
 
 	for (uint32_t i = 0; i < createInfo.shaderStageCreateInfoCount; ++i) {

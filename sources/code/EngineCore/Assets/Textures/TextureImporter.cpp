@@ -143,11 +143,18 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, std::string& assetName, Buff
 	createInfo.height = header.dwHeight;
 	createInfo.isCubemap = (header.dwCaps2 & DDS_CUBEMAP_ALLFACES);
 	createInfo.options.shouldGenerateMipmaps = false;
+	createInfo.options.anistropy = 16.0f;
+	createInfo.options.mipMax = -1000.0f;
+	createInfo.options.mipMax = 1000.0f;
+	createInfo.options.mipFilter = TextureFilter::Linear;
+	createInfo.options.minFilter = TextureFilter::Linear;
+	createInfo.options.magFilter = TextureFilter::Linear;
+
 	if (createInfo.isCubemap) {
 		createInfo.options.wrapModeU =
-			createInfo.options.wrapModeV =
-			createInfo.options.wrapModeW =
-			TextureWrapMode::ClampToEdge;
+		createInfo.options.wrapModeV =
+		createInfo.options.wrapModeW =
+		TextureWrapMode::ClampToEdge;
 	}
 
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();

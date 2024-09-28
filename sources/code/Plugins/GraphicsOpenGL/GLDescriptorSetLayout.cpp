@@ -2,12 +2,10 @@
 #include "GLDescriptorSetLayout.hpp"
 #include <iostream>
 
-namespace Grindstone {
-	namespace GraphicsAPI {
-		GLDescriptorSetLayout::GLDescriptorSetLayout(CreateInfo& createInfo) {
-		}
+using namespace Grindstone::GraphicsAPI;
 
-		GLDescriptorSetLayout::~GLDescriptorSetLayout() {
-		}
-	}
+GLDescriptorSetLayout::GLDescriptorSetLayout(CreateInfo& createInfo) {
+}
+
+GLDescriptorSetLayout::~GLDescriptorSetLayout() {
 }

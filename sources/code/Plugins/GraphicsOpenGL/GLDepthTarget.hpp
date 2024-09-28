@@ -4,32 +4,29 @@
 #include <stdint.h>
 #include <Common/Graphics/DepthTarget.hpp>
 
+namespace Grindstone::GraphicsAPI {
+	class GLDepthTarget : public DepthTarget {
+	public:
+		GLDepthTarget(CreateInfo& cis);
+		uint32_t GetHandle() const;
 
-namespace Grindstone {
-	namespace GraphicsAPI {
-		class GLDepthTarget : public DepthTarget {
-		public:
-			GLDepthTarget(CreateInfo& cis);
-			uint32_t GetHandle();
+		bool IsCubemap() const;
 
-			bool IsCubemap();
+		virtual void Resize(uint32_t width, uint32_t height);
+		virtual void BindFace(int k);
+		virtual void Bind(int i);
+		virtual ~GLDepthTarget();
+	private:
+		void CreateDepthTarget();
+	private:
+		DepthFormat depthFormat;
+		uint32_t width;
+		uint32_t height;
 
-			virtual void Resize(uint32_t width, uint32_t height);
-			virtual void BindFace(int k);
-			virtual void Bind(int i);
-			virtual ~GLDepthTarget();
-		private:
-			void CreateDepthTarget();
-		private:
-			DepthFormat depthFormat;
-			uint32_t width;
-			uint32_t height;
-
-			uint32_t handle;
-			bool isShadowMap;
-			bool isCubemap;
-		};
-	}
+		uint32_t handle;
+		bool isShadowMap;
+		bool isCubemap;
+	};
 }
 
 #endif

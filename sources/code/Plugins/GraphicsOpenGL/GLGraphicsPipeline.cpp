@@ -1,13 +1,15 @@
-#include <GL/gl3w.h>
-#include "GLUniformBuffer.hpp"
-#include "GLTexture.hpp"
 #include <vector>
 #include <iostream>
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
+#include <cstring>
+#include <GL/gl3w.h>
+
+#include "GLUniformBuffer.hpp"
+#include "GLTexture.hpp"
 #include "GLGraphicsPipeline.hpp"
 #include "GLCore.hpp"
-#include <cstring>
+#include "GLFormats.hpp"
 
 using namespace Grindstone::GraphicsAPI;
 
@@ -23,15 +25,38 @@ void GLGraphicsPipeline::Recreate(CreateInfo& createInfo) {
 }
 
 void GLGraphicsPipeline::CreatePipeline(CreateInfo& createInfo) {
-	primitiveType = GetGeomType(createInfo.primitiveType);
+	width = static_cast<GLsizei>(createInfo.width);
+	height = static_cast<GLsizei>(createInfo.height);
+	scissorWidth = static_cast<GLsizei>(createInfo.scissorW);
+	scissorHeight = static_cast<GLsizei>(createInfo.scissorH);
+	scissorX = static_cast<GLint>(createInfo.scissorX);
+	scissorY = static_cast<GLint>(createInfo.scissorY);
 
-	width = createInfo.width;
-	height = createInfo.height;
-	scissorWidth = createInfo.scissorW;
-	scissorHeight = createInfo.scissorH;
-	scissorX = createInfo.scissorX;
-	scissorY = createInfo.scissorY;
-	cullMode = createInfo.cullMode;
+	colorMaskRed = static_cast<GLboolean>(createInfo.colorMask & ColorMask::Red);
+	colorMaskBlue = static_cast<GLboolean>(createInfo.colorMask & ColorMask::Blue);
+	colorMaskGreen = static_cast<GLboolean>(createInfo.colorMask & ColorMask::Green);
+	colorMaskAlpha = static_cast<GLboolean>(createInfo.colorMask & ColorMask::Alpha);
+
+	depthCompareOp = TranslateCompareOpToOpenGL(createInfo.depthCompareOp);
+	isDepthTestEnabled = createInfo.isDepthTestEnabled;
+	isDepthWriteEnabled = createInfo.isDepthWriteEnabled;
+	isStencilEnabled = createInfo.isStencilEnabled;
+	isDepthBiasEnabled = createInfo.isDepthBiasEnabled;
+	isDepthClampEnabled = createInfo.isDepthClampEnabled;
+
+	depthBiasConstantFactor = createInfo.depthBiasConstantFactor;
+	depthBiasSlopeFactor = createInfo.depthBiasSlopeFactor;
+	depthBiasClamp = createInfo.depthBiasClamp;
+
+	primitiveType = TranslateGeometryTypeToOpenGL(createInfo.primitiveType);
+	polygonFillMode = TranslatePolygonModeToOpenGL(createInfo.polygonFillMode);
+	cullMode = TranslateCullModeToOpenGL(createInfo.cullMode);
+	blendColorOp = TranslateBlendOpToOpenGL(createInfo.blendData.colorOperation);
+	blendColorSrc = TranslateBlendFactorToOpenGL(createInfo.blendData.colorFactorSrc);
+	blendColorDst = TranslateBlendFactorToOpenGL(createInfo.blendData.colorFactorDst);
+	blendAlphaOp = TranslateBlendOpToOpenGL(createInfo.blendData.alphaOperation);
+	blendAlphaSrc = TranslateBlendFactorToOpenGL(createInfo.blendData.alphaFactorSrc);
+	blendAlphaDst = TranslateBlendFactorToOpenGL(createInfo.blendData.alphaFactorDst);
 
 	program = glCreateProgram();
 	glObjectLabel(GL_PROGRAM, program, -1, createInfo.debugName);
@@ -122,24 +147,62 @@ GLuint GLGraphicsPipeline::CreateShaderModule(ShaderStageCreateInfo createInfo) 
 void GLGraphicsPipeline::Bind() {
 	glUseProgram(program);
 
-	// glViewport(0, 0, (GLsizei)width, (GLsizei)height);
-	// glScissor(scissor_x_, scissor_y_, scissor_w_, scissor_h_);
-	switch (cullMode) {
-	case CullMode::None:
+	glViewport(0, 0, scissorX, scissorY);
+	glScissor(scissorX, scissorY, scissorWidth, scissorHeight);
+
+	if (cullMode == GL_NONE) {
 		glDisable(GL_CULL_FACE);
-		break;
-	case CullMode::Front:
+	}
+	else {
 		glEnable(GL_CULL_FACE);
-		glCullFace(GL_FRONT);
-		break;
-	case CullMode::Back:
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
-		break;
-	case CullMode::Both:
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_FRONT_AND_BACK);
-		break;
+		glCullFace(cullMode);
+	}
+
+	if (blendColorOp == GL_NONE || blendAlphaOp == GL_NONE) {
+		glDisable(GL_BLEND);
+	}
+	else {
+		glEnable(GL_BLEND);
+		glBlendEquationSeparate(blendColorOp, blendAlphaOp);
+		glBlendFuncSeparate(blendColorSrc, blendColorDst, blendAlphaSrc, blendAlphaDst);
+	}
+
+	if (isDepthTestEnabled) {
+		glEnable(GL_DEPTH_TEST);
+	}
+	else {
+		glDisable(GL_DEPTH_TEST);
+	}
+
+	if (isStencilEnabled) {
+		glEnable(GL_STENCIL_TEST);
+	}
+	else {
+		glDisable(GL_STENCIL_TEST);
+	}
+
+	glDepthMask(isDepthWriteEnabled);
+	glDepthFunc(depthCompareOp);
+	glPolygonMode(GL_FRONT_AND_BACK, polygonFillMode);
+
+	glColorMask(colorMaskRed, colorMaskGreen, colorMaskBlue, colorMaskAlpha);
+	if (isDepthClampEnabled) {
+		glEnable(GL_DEPTH_CLAMP);
+	}
+	else {
+		glDisable(GL_DEPTH_CLAMP);
+	}
+
+	if (isDepthBiasEnabled) {
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glEnable(GL_POLYGON_OFFSET_LINE);
+		glEnable(GL_POLYGON_OFFSET_POINT);
+		glPolygonOffset(depthBiasSlopeFactor, depthBiasConstantFactor);
+	}
+	else {
+		glDisable(GL_POLYGON_OFFSET_FILL);
+		glDisable(GL_POLYGON_OFFSET_LINE);
+		glDisable(GL_POLYGON_OFFSET_POINT);
 	}
 }
 

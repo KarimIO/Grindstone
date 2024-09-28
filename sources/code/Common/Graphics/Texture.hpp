@@ -11,29 +11,18 @@ namespace Grindstone {
 			uint32_t width, height;
 		};
 
-		enum class TextureWrapMode : uint8_t {
-			Repeat = 0,
-			ClampToEdge,
-			ClampToBorder,
-			MirroredRepeat,
-			MirroredClampToEdge
-		};
-
-		enum class TextureFilter : uint8_t {
-			Nearest = 0,
-			Linear,
-			NearestMipMapNearest,
-			NearestMipMapLinear,
-			LinearMipMapNearest,
-			LinearMipMapLinear
-		};
-
 		struct TextureOptions {
 			TextureWrapMode wrapModeU = TextureWrapMode::Repeat;
 			TextureWrapMode wrapModeV = TextureWrapMode::Repeat;
 			TextureWrapMode wrapModeW = TextureWrapMode::Repeat;
-			TextureFilter minFilter = TextureFilter::LinearMipMapLinear;
+			TextureFilter mipFilter = TextureFilter::Nearest;
+			TextureFilter minFilter = TextureFilter::Linear;
 			TextureFilter magFilter = TextureFilter::Linear;
+			// anisotropy == 0 implies it's off.
+			float anistropy = 0.0f;
+			float mipMin = -1000.f;
+			float mipMax = 1000.0f;
+			float mipBias = 0.0f;
 			bool shouldGenerateMipmaps = true;
 		};
 

@@ -8,15 +8,24 @@ namespace Grindstone::GraphicsAPI {
 		case TextureFilter::Nearest:
 			return VK_FILTER_NEAREST;
 		case TextureFilter::Linear:
-		case TextureFilter::NearestMipMapNearest:
-		case TextureFilter::NearestMipMapLinear:
-		case TextureFilter::LinearMipMapNearest:
-		case TextureFilter::LinearMipMapLinear:
 			return VK_FILTER_LINEAR;
 		}
 
 		assert(false && "TranslateFilterToVulkan: Invalid TextureFilter!");
 		return VK_FILTER_LINEAR;
+	}
+
+	VkSamplerMipmapMode TranslateMipFilterToVulkan(TextureFilter f) {
+		switch (f) {
+		case TextureFilter::Nearest:
+			return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+		case TextureFilter::Linear:
+			return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		}
+
+		assert(false && "TranslateMipFilterToVulkan: Invalid TextureFilter!");
+		return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+
 	}
 
 	VkSamplerAddressMode TranslateWrapToVulkan(TextureWrapMode m) {
@@ -202,18 +211,149 @@ namespace Grindstone::GraphicsAPI {
 	}
 
 	VkCullModeFlags TranslateCullModeToVulkan(CullMode cullMode) {
-		switch (cullMode) {
-		case CullMode::None:
-			return VK_CULL_MODE_NONE;
-		case CullMode::Front:
-			return VK_CULL_MODE_FRONT_BIT;
-		case CullMode::Back:
-			return VK_CULL_MODE_BACK_BIT;
-		case CullMode::Both:
-			return VK_CULL_MODE_FRONT_AND_BACK;
-		}
+		constexpr VkCullModeFlags cullModes[] = {
+			VK_CULL_MODE_NONE,
+			VK_CULL_MODE_FRONT_BIT,
+			VK_CULL_MODE_BACK_BIT,
+			VK_CULL_MODE_FRONT_AND_BACK,
+		};
 
-		assert(false && "TranslateCullModeToVulkan: Invalid CullMode format!");
-		return VK_CULL_MODE_NONE;
+		return cullModes[static_cast<size_t>(cullMode)];
+	}
+
+	VkColorComponentFlags TranslateColorMaskToVulkan(ColorMask colorMask) {
+		return
+			(((colorMask & ColorMask::Red) == ColorMask::Red) ? VK_COLOR_COMPONENT_R_BIT : 0) |
+			(((colorMask & ColorMask::Green) == ColorMask::Green) ? VK_COLOR_COMPONENT_G_BIT : 0) |
+			(((colorMask & ColorMask::Blue) == ColorMask::Blue) ? VK_COLOR_COMPONENT_B_BIT : 0) |
+			(((colorMask & ColorMask::Alpha) == ColorMask::Alpha) ? VK_COLOR_COMPONENT_A_BIT : 0);
+	}
+
+	VkPolygonMode TranslatePolygonModeToVulkan(PolygonFillMode mode) {
+		constexpr VkPolygonMode polygonModes[] = {
+			VK_POLYGON_MODE_POINT,
+			VK_POLYGON_MODE_LINE,
+			VK_POLYGON_MODE_FILL
+		};
+
+		return polygonModes[static_cast<size_t>(mode)];
+	}
+
+	VkPrimitiveTopology TranslateGeometryTypeToVulkan(GeometryType geometryType) {
+		static VkPrimitiveTopology primTypes[] = {
+			VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
+			VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
+			VK_PRIMITIVE_TOPOLOGY_LINE_STRIP,
+			VK_PRIMITIVE_TOPOLOGY_LINE_STRIP,
+			VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
+			VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN,
+			VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+			VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY,
+			VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY,
+			VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY,
+			VK_PRIMITIVE_TOPOLOGY_PATCH_LIST
+		};
+
+		return primTypes[static_cast<size_t>(geometryType)];
+	}
+
+	VkBlendOp TranslateBlendOpToVulkan(BlendOperation op) {
+		constexpr VkBlendOp blendOps[] = {
+			VK_BLEND_OP_MAX_ENUM,
+			VK_BLEND_OP_ADD,
+			VK_BLEND_OP_SUBTRACT,
+			VK_BLEND_OP_REVERSE_SUBTRACT,
+			VK_BLEND_OP_MIN,
+			VK_BLEND_OP_MAX,
+			VK_BLEND_OP_ZERO_EXT,
+			VK_BLEND_OP_SRC_EXT,
+			VK_BLEND_OP_DST_EXT,
+			VK_BLEND_OP_SRC_OVER_EXT,
+			VK_BLEND_OP_DST_OVER_EXT,
+			VK_BLEND_OP_SRC_IN_EXT,
+			VK_BLEND_OP_DST_IN_EXT,
+			VK_BLEND_OP_SRC_OUT_EXT,
+			VK_BLEND_OP_DST_OUT_EXT,
+			VK_BLEND_OP_SRC_ATOP_EXT,
+			VK_BLEND_OP_DST_ATOP_EXT,
+			VK_BLEND_OP_XOR_EXT,
+			VK_BLEND_OP_MULTIPLY_EXT,
+			VK_BLEND_OP_SCREEN_EXT,
+			VK_BLEND_OP_OVERLAY_EXT,
+			VK_BLEND_OP_DARKEN_EXT,
+			VK_BLEND_OP_LIGHTEN_EXT,
+			VK_BLEND_OP_COLORDODGE_EXT,
+			VK_BLEND_OP_COLORBURN_EXT,
+			VK_BLEND_OP_HARDLIGHT_EXT,
+			VK_BLEND_OP_SOFTLIGHT_EXT,
+			VK_BLEND_OP_DIFFERENCE_EXT,
+			VK_BLEND_OP_EXCLUSION_EXT,
+			VK_BLEND_OP_INVERT_EXT,
+			VK_BLEND_OP_INVERT_RGB_EXT,
+			VK_BLEND_OP_LINEARDODGE_EXT,
+			VK_BLEND_OP_LINEARBURN_EXT,
+			VK_BLEND_OP_VIVIDLIGHT_EXT,
+			VK_BLEND_OP_LINEARLIGHT_EXT,
+			VK_BLEND_OP_PINLIGHT_EXT,
+			VK_BLEND_OP_HARDMIX_EXT,
+			VK_BLEND_OP_HSL_HUE_EXT,
+			VK_BLEND_OP_HSL_SATURATION_EXT,
+			VK_BLEND_OP_HSL_COLOR_EXT,
+			VK_BLEND_OP_HSL_LUMINOSITY_EXT,
+			VK_BLEND_OP_PLUS_EXT,
+			VK_BLEND_OP_PLUS_CLAMPED_EXT,
+			VK_BLEND_OP_PLUS_CLAMPED_ALPHA_EXT,
+			VK_BLEND_OP_PLUS_DARKER_EXT,
+			VK_BLEND_OP_MINUS_EXT,
+			VK_BLEND_OP_MINUS_CLAMPED_EXT,
+			VK_BLEND_OP_CONTRAST_EXT,
+			VK_BLEND_OP_INVERT_OVG_EXT,
+			VK_BLEND_OP_RED_EXT,
+			VK_BLEND_OP_GREEN_EXT,
+			VK_BLEND_OP_BLUE_EXT
+		};
+
+		return blendOps[static_cast<size_t>(op)];
+	}
+
+	VkBlendFactor TranslateBlendFactorToVulkan(BlendFactor factor) {
+		constexpr VkBlendFactor blendFactors[] = {
+			VK_BLEND_FACTOR_ZERO,
+			VK_BLEND_FACTOR_ONE,
+			VK_BLEND_FACTOR_SRC_COLOR,
+			VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR,
+			VK_BLEND_FACTOR_DST_COLOR,
+			VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR,
+			VK_BLEND_FACTOR_SRC_ALPHA,
+			VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+			VK_BLEND_FACTOR_DST_ALPHA,
+			VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA,
+			VK_BLEND_FACTOR_CONSTANT_COLOR,
+			VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR,
+			VK_BLEND_FACTOR_CONSTANT_ALPHA,
+			VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA,
+			VK_BLEND_FACTOR_SRC_ALPHA_SATURATE,
+			VK_BLEND_FACTOR_SRC1_COLOR,
+			VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR,
+			VK_BLEND_FACTOR_SRC1_ALPHA,
+			VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA
+		};
+
+		return blendFactors[static_cast<size_t>(factor)];
+	}
+
+	VkCompareOp TranslateCompareOpToVulkan(CompareOperation op) {
+		constexpr VkCompareOp compareOps[] = {
+			VK_COMPARE_OP_NEVER,
+			VK_COMPARE_OP_LESS,
+			VK_COMPARE_OP_EQUAL,
+			VK_COMPARE_OP_LESS_OR_EQUAL,
+			VK_COMPARE_OP_GREATER,
+			VK_COMPARE_OP_NOT_EQUAL,
+			VK_COMPARE_OP_GREATER_OR_EQUAL,
+			VK_COMPARE_OP_ALWAYS
+		};
+
+		return compareOps[static_cast<size_t>(op)];
 	}
 }

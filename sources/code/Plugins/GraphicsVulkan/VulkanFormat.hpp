@@ -8,6 +8,7 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		VkFilter TranslateFilterToVulkan(TextureFilter);
+		VkSamplerMipmapMode TranslateMipFilterToVulkan(TextureFilter);
 		VkSamplerAddressMode TranslateWrapToVulkan(TextureWrapMode);
 		VkFormat TranslateVertexFormatsToVulkan(VertexFormat format);
 		ColorFormat TranslateColorFormatFromVulkan(VkFormat format);
@@ -15,5 +16,12 @@ namespace Grindstone {
 		VkFormat TranslateColorFormatToVulkan(ColorFormat, uint8_t &channels);
 		VkFormat TranslateDepthFormatToVulkan(DepthFormat, bool& hasStencil);
 		VkCullModeFlags TranslateCullModeToVulkan(CullMode cullMode);
+		VkColorComponentFlags TranslateColorMaskToVulkan(ColorMask colorMask);
+		VkPolygonMode TranslatePolygonModeToVulkan(PolygonFillMode mode);
+		VkPrimitiveTopology TranslateGeometryTypeToVulkan(GeometryType geometryType);
+
+		VkBlendOp TranslateBlendOpToVulkan(BlendOperation op);
+		VkBlendFactor TranslateBlendFactorToVulkan(BlendFactor factor);
+		VkCompareOp TranslateCompareOpToVulkan(CompareOperation op);
 	}
 }

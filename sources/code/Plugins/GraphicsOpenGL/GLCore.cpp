@@ -1,7 +1,8 @@
-#include <iostream>
 #include <cstdio>
 #include <GL/gl3w.h>
 
+#include <Common/Logging.hpp>
+#include <EngineCore/Logger.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 
 #include "GLCore.hpp"
@@ -14,10 +15,9 @@
 #include "GLComputePipeline.hpp"
 #include "GLRenderTarget.hpp"
 #include "GLWindowGraphicsBinding.hpp"
+#include "GLFormats.hpp"
 
 #ifdef _WIN32
-	//#include <windows.h>
-	//#include <Windowsx.h>
 	#include <GL/wglext.h>
 	#include <Common/Window/Win32Window.hpp>
 #endif
@@ -25,50 +25,53 @@
 using namespace Grindstone::GraphicsAPI;
 using namespace Grindstone::Memory;
 
-void APIENTRY glDebugOutput(GLenum source,
+static void APIENTRY glDebugOutput(
+	GLenum source,
 	GLenum type,
 	GLuint id,
 	GLenum severity,
 	GLsizei length,
 	const GLchar *message,
-	void *userParam) {
+	void *userParam
+) {
 	// ignore non-significant error/warning codes
 	if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
 
-	if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) return;
-
-	std::cout << "--------------- \nDebug message (" << id << "): " << message << "\n";
-
+	const char* sourceStr = nullptr;
 	switch (source) {
-	case GL_DEBUG_SOURCE_API:             std::cout << "Source: API"; break;
-	case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   std::cout << "Source: Window System"; break;
-	case GL_DEBUG_SOURCE_SHADER_COMPILER: std::cout << "Source: Shader Compiler"; break;
-	case GL_DEBUG_SOURCE_THIRD_PARTY:     std::cout << "Source: Third Party"; break;
-	case GL_DEBUG_SOURCE_APPLICATION:     std::cout << "Source: Application"; break;
-	case GL_DEBUG_SOURCE_OTHER:           std::cout << "Source: Other"; break;
+	case GL_DEBUG_SOURCE_API:             sourceStr = "[SOURCE: API]"; break;
+	case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   sourceStr = "[SOURCE: Window System]"; break;
+	case GL_DEBUG_SOURCE_SHADER_COMPILER: sourceStr = "[SOURCE: Shader Compiler]"; break;
+	case GL_DEBUG_SOURCE_THIRD_PARTY:     sourceStr = "[SOURCE: Third Party]"; break;
+	case GL_DEBUG_SOURCE_APPLICATION:     sourceStr = "[SOURCE: Application]"; break;
+	default:
+	case GL_DEBUG_SOURCE_OTHER:           sourceStr = "[SOURCE: Other]"; break;
 	}
-	std::cout << "\n";
 
+	const char* typeStr = nullptr;
 	switch (type) {
-	case GL_DEBUG_TYPE_ERROR:               std::cout << "Type: Error"; break;
-	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: std::cout << "Type: Deprecated Behaviour"; break;
-	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  std::cout << "Type: Undefined Behaviour"; break;
-	case GL_DEBUG_TYPE_PORTABILITY:         std::cout << "Type: Portability"; break;
-	case GL_DEBUG_TYPE_PERFORMANCE:         std::cout << "Type: Performance"; break;
-	case GL_DEBUG_TYPE_MARKER:              std::cout << "Type: Marker"; break;
-	case GL_DEBUG_TYPE_PUSH_GROUP:          std::cout << "Type: Push Group"; break;
-	case GL_DEBUG_TYPE_POP_GROUP:           std::cout << "Type: Pop Group"; break;
-	case GL_DEBUG_TYPE_OTHER:               std::cout << "Type: Other"; break;
+	case GL_DEBUG_TYPE_ERROR:               typeStr = "[TYPE: Error]"; break;
+	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: typeStr = "[TYPE: Deprecated Behaviour]"; break;
+	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  typeStr = "[TYPE: Undefined Behaviour]"; break;
+	case GL_DEBUG_TYPE_PORTABILITY:         typeStr = "[TYPE: Portability]"; break;
+	case GL_DEBUG_TYPE_PERFORMANCE:         typeStr = "[TYPE: Performance]"; break;
+	case GL_DEBUG_TYPE_MARKER:              typeStr = "[TYPE: Marker]"; break;
+	case GL_DEBUG_TYPE_PUSH_GROUP:          typeStr = "[TYPE: Push Group]"; break;
+	case GL_DEBUG_TYPE_POP_GROUP:           typeStr = "[TYPE: Pop Group]"; break;
+	default:
+	case GL_DEBUG_TYPE_OTHER:               typeStr = "[TYPE: Other]"; break;
 	}
-	std::cout << "\n";
 
+	Grindstone::LogSeverity logSeverity = Grindstone::LogSeverity::Info;
 	switch (severity) {
-	case GL_DEBUG_SEVERITY_HIGH:         std::cout << "Severity: high"; break;
-	case GL_DEBUG_SEVERITY_MEDIUM:       std::cout << "Severity: medium"; break;
-	case GL_DEBUG_SEVERITY_LOW:          std::cout << "Severity: low"; break;
-	case GL_DEBUG_SEVERITY_NOTIFICATION: std::cout << "Severity: notification"; break;
+	case GL_DEBUG_SEVERITY_HIGH:         logSeverity = Grindstone::LogSeverity::Error; break;
+	case GL_DEBUG_SEVERITY_MEDIUM:       logSeverity = Grindstone::LogSeverity::Warning; break;
+	case GL_DEBUG_SEVERITY_LOW:          logSeverity = Grindstone::LogSeverity::Info; break;
+	case GL_DEBUG_SEVERITY_NOTIFICATION: logSeverity = Grindstone::LogSeverity::Trace; break;
 	}
-	std::cout << "\n\n";
+
+	std::string formattedMessage = std::string(sourceStr) + typeStr + message;
+	GPRINT_TYPED(logSeverity, Grindstone::LogSource::GraphicsAPI, id, formattedMessage.c_str());
 }
 
 bool GLCore::Initialize(Core::CreateInfo& ci) {
@@ -328,7 +331,7 @@ void GLCore::WaitUntilIdle() {
 }
 
 void GLCore::SetColorMask(ColorMask mask) {
-	glColorMask((GLboolean)(mask & ColorMask::Red), (GLboolean)(mask & ColorMask::Blue), (GLboolean)(mask & ColorMask::Green), (GLboolean)(mask & ColorMask::Alpha));
+	glColorMask((GLboolean)(mask & ColorMask::Red), (GLboolean)(mask & ColorMask::Green), (GLboolean)(mask & ColorMask::Blue), (GLboolean)(mask & ColorMask::Alpha));
 }
 
 void GLCore::BindGraphicsPipeline(GraphicsPipeline* pipeline) {
@@ -340,44 +343,15 @@ void GLCore::BindVertexArrayObject(VertexArrayObject *vao) {
 	vao->Bind();
 }
 
-GLenum Grindstone::GraphicsAPI::GetGeomType(GeometryType geomType) {
-	switch (geomType) {
-	case GeometryType::Points:
-		return GL_POINTS;
-	case GeometryType::Lines:
-		return GL_LINES;
-	case GeometryType::LineStrips:
-		return GL_LINE_STRIP;
-	case GeometryType::LineLoops:
-		return GL_LINE_LOOP;
-	case GeometryType::TriangleStrips:
-		return GL_TRIANGLE_STRIP;
-	case GeometryType::TriangleFans:
-		return GL_TRIANGLE_FAN;
-	case GeometryType::Triangles:
-		return GL_TRIANGLES;
-	case GeometryType::LinesAdjacency:
-		return GL_LINES_ADJACENCY;
-	case GeometryType::TrianglesAdjacency:
-		return GL_TRIANGLES_ADJACENCY;
-	case GeometryType::TriangleStripsAdjacency:
-		return GL_TRIANGLE_STRIP_ADJACENCY;
-	case GeometryType::Patches:
-		return GL_PATCHES;
-	}
-
-	throw std::runtime_error("Invalid Geometry Type");
-}
-
 void GLCore::DrawImmediateIndexed(GeometryType geometryType, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
 	uint32_t size = largeBuffer ? sizeof(uint32_t) : sizeof(uint16_t);
 	uint64_t finalPtrUint = indexOffsetPtr * size;
 	void *ptr = reinterpret_cast<void *>(finalPtrUint);
-	glDrawElementsBaseVertex(GetGeomType(geometryType), indexCount, largeBuffer ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, ptr, baseVertex);
+	glDrawElementsBaseVertex(TranslateGeometryTypeToOpenGL(geometryType), indexCount, largeBuffer ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, ptr, baseVertex);
 }
 
-void GLCore::DrawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) {
-	glDrawArrays(GetGeomType(geom_type), base, count);
+void GLCore::DrawImmediateVertices(GeometryType geometryType, uint32_t base, uint32_t count) {
+	glDrawArrays(TranslateGeometryTypeToOpenGL(geometryType), base, count);
 }
 
 void GLCore::EnableDepthWrite(bool isDepthEnabled) {
@@ -396,34 +370,16 @@ void GLCore::BindDefaultFramebuffer() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void GLCore::SetImmediateBlending(BlendMode mode) {
-	switch (mode) {
-	case BlendMode::None:
-	default:
+void GLCore::SetImmediateBlending(
+	BlendOperation colorOp, BlendFactor colorSrc, BlendFactor colorDst,
+	BlendOperation alphaOp, BlendFactor alphaSrc, BlendFactor alphaDst
+) {
+	if (colorOp == BlendOperation::None && alphaOp == BlendOperation::None) {
 		glDisable(GL_BLEND);
-		break;
-	case BlendMode::Additive:
-		glEnable(GL_BLEND);
-		glBlendEquation(GL_FUNC_ADD);
-		glBlendFunc(GL_ONE, GL_ONE);
-		break;
-	case BlendMode::AdditiveAlpha:
-		glEnable(GL_BLEND);
-		glBlendEquation(GL_FUNC_ADD);
-		glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-		break;
-	}
-}
-
-/*
-extern "C" {
-	GRAPHICS_EXPORT Grindstone::GraphicsAPI::GraphicsWrapper* createGraphics() {
-		return AllocatorCore::Allocate<Grindstone::GraphicsAPI::GLCore();
+		return;
 	}
 
-	GRAPHICS_EXPORT void deleteGraphics(void* ptr) {
-		Grindstone::GraphicsAPI::GLCore* glptr = (Grindstone::GraphicsAPI::GLCore*)ptr;
-		AllocatorCore::Free(glptr;
-	}
+	glEnable(GL_BLEND);
+	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 }
-*/

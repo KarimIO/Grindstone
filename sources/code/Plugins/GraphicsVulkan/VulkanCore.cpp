@@ -233,25 +233,23 @@ void VulkanCore::PickPhysicalDevice() {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan: Failed to find a suitable GPU!");
 	}
 
-	VkPhysicalDeviceProperties gpuProps{};
-	vkGetPhysicalDeviceProperties(physicalDevice, &gpuProps);
+	VkPhysicalDeviceProperties gpuProperties{};
+	vkGetPhysicalDeviceProperties(physicalDevice, &gpuProperties);
 
-	GPRINT_INFO_V(LogSource::GraphicsAPI, "Using Device: {}", gpuProps.deviceName);
+	GPRINT_INFO_V(LogSource::GraphicsAPI, "Using Device: {}", gpuProperties.deviceName);
 
-	VkPhysicalDeviceProperties properties;
-	vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-	const char *vendorName = GetVendorNameFromID(properties.vendorID);
+	const char *vendorName = GetVendorNameFromID(gpuProperties.vendorID);
 	if (vendorName == nullptr) {
-		this->vendorName = std::string("Unknown Vendor(") + std::to_string(properties.vendorID) + ")";
+		this->vendorName = std::string("Unknown Vendor(") + std::to_string(gpuProperties.vendorID) + ")";
 	}
 	else {
 		this->vendorName = vendorName;
 	}
-	adapterName = properties.deviceName;
+	adapterName = gpuProperties.deviceName;
 
-	unsigned int versionMajor = (properties.apiVersion >> 22) & 0x3FF;
-	unsigned int versionMinor = (properties.apiVersion >> 12) & 0x3FF;
-	unsigned int versionPatch = (properties.apiVersion) & 0xfff;
+	unsigned int versionMajor = (gpuProperties.apiVersion >> 22) & 0x3FF;
+	unsigned int versionMinor = (gpuProperties.apiVersion >> 12) & 0x3FF;
+	unsigned int versionPatch = (gpuProperties.apiVersion) & 0xfff;
 	apiVersion = std::to_string(versionMajor)+"."+ std::to_string(versionMinor) + "." + std::to_string(versionPatch);
 
 	QueueFamilyIndices indices = FindQueueFamilies(physicalDevice);
@@ -789,7 +787,10 @@ void VulkanCore::DrawImmediateVertices(GeometryType geom_type, uint32_t base, ui
 	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::DrawImmediateVertices is not used.");
 	assert(false);
 }
-void VulkanCore::SetImmediateBlending(BlendMode) {
+void VulkanCore::SetImmediateBlending(
+	BlendOperation colorOp, BlendFactor colorSrc, BlendFactor colorDst,
+	BlendOperation alphaOp, BlendFactor alphaSrc, BlendFactor alphaDst
+) {
 	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::SetImmediateBlending is not used.");
 	assert(false);
 }

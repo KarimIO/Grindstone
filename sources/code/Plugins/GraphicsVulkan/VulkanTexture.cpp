@@ -296,16 +296,18 @@ void VulkanTexture::CreateTextureSampler(Texture::CreateInfo &createInfo, uint32
 	samplerInfo.addressModeU = TranslateWrapToVulkan(createInfo.options.wrapModeU);
 	samplerInfo.addressModeV = TranslateWrapToVulkan(createInfo.options.wrapModeV);
 	samplerInfo.addressModeW = TranslateWrapToVulkan(createInfo.options.wrapModeW);
-	samplerInfo.anisotropyEnable = VK_TRUE;
-	samplerInfo.maxAnisotropy = 16;
+	samplerInfo.anisotropyEnable = (createInfo.options.anistropy != 0) ? VK_TRUE : VK_FALSE;
+
+	// TODO: anisotropy must be between 1 and device limit
+	samplerInfo.maxAnisotropy = createInfo.options.anistropy;
 	samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
 	samplerInfo.compareEnable = VK_FALSE;
 	samplerInfo.compareOp = VK_COMPARE_OP_NEVER;
-	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	samplerInfo.minLod = 0;
-	samplerInfo.maxLod = static_cast<float>(mipLevels);
-	samplerInfo.mipLodBias = 0;
+	samplerInfo.mipmapMode = TranslateMipFilterToVulkan(createInfo.options.mipFilter);
+	samplerInfo.minLod = createInfo.options.mipMin;
+	samplerInfo.maxLod = createInfo.options.mipMax;
+	samplerInfo.mipLodBias = createInfo.options.mipBias;
 
 	if (vkCreateSampler(VulkanCore::Get().GetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create texture sampler!");

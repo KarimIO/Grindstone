@@ -100,7 +100,10 @@ namespace Grindstone {
 			virtual void BindVertexArrayObject(VertexArrayObject*) = 0;
 			virtual	void DrawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) = 0;
 			virtual void DrawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) = 0;
-			virtual void SetImmediateBlending(BlendMode) = 0;
+			virtual void SetImmediateBlending(
+				BlendOperation colorOp, BlendFactor colorSrc, BlendFactor colorDst,
+				BlendOperation alphaOp, BlendFactor alphaSrc, BlendFactor alphaDst
+			) = 0;
 			virtual void EnableDepthWrite(bool isDepthEnabled) = 0;
 			virtual void SetColorMask(ColorMask mask) = 0;
 			virtual void ResizeViewport(uint32_t w, uint32_t h) = 0;

@@ -1,9 +1,12 @@
-#include <GL/gl3w.h>
 #include <iostream>
+#include <cmath>
+#include <GL/gl3w.h>
+#include <glm/glm.hpp>
+
+#include <EngineCore/Logger.hpp>
+
 #include "GLFramebuffer.hpp"
 #include "GLTexture.hpp"
-#include <cmath>
-#include <glm/glm.hpp>
 
 using namespace Grindstone::GraphicsAPI;
 
@@ -27,7 +30,7 @@ GLFramebuffer::GLFramebuffer(CreateInfo& createInfo) {
 
 void GLFramebuffer::CreateFramebuffer() {
 	if (framebuffer) {
-		// glDeleteFramebuffers(1, &framebuffer);
+		glDeleteFramebuffers(1, &framebuffer);
 		framebuffer = 0;
 	}
 
@@ -41,7 +44,7 @@ void GLFramebuffer::CreateFramebuffer() {
 
 	GLenum k = 0;
 	for (uint32_t i = 0; i < static_cast<uint32_t>(colorAttachments.size()); i++) {
-		GLRenderTarget *renderTargetList = colorAttachments[i];
+		GLRenderTarget* renderTargetList = colorAttachments[i];
 		for (uint32_t j = 0; j < renderTargetList->GetNumRenderTargets(); j++) {
 			drawBuffers[k] = static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + k);
 			if (renderTargetList->IsCubemap()) {
@@ -57,7 +60,7 @@ void GLFramebuffer::CreateFramebuffer() {
 	}
 
 	if (depthTarget) {
-		GLDepthTarget *dt = static_cast<GLDepthTarget *>(depthTarget);
+		GLDepthTarget* dt = static_cast<GLDepthTarget*>(depthTarget);
 		if (!dt->IsCubemap())
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, dt->GetHandle(), 0);
 		else
@@ -74,8 +77,9 @@ void GLFramebuffer::CreateFramebuffer() {
 		glReadBuffer(GL_NONE);
 	}
 
-	//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		//throw std::runtime_error("Framebuffer Incomplete\n");
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Framebuffer incomplete: {}.", debugName);
+	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

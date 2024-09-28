@@ -91,7 +91,7 @@ void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	pipelineCreateInfo.isDepthWriteEnabled = false;
 	pipelineCreateInfo.isDepthTestEnabled = true;
 	pipelineCreateInfo.isStencilEnabled = false;
-	pipelineCreateInfo.blendMode = GraphicsAPI::BlendMode::AdditiveAlpha;
+	pipelineCreateInfo.blendData = GraphicsAPI::BlendData::AdditiveAlpha();
 	pipelineCreateInfo.renderPass = renderPass;
 	gridPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 }

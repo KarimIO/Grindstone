@@ -1515,7 +1515,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.isDepthWriteEnabled = false;
 		pipelineCreateInfo.isDepthTestEnabled = false;
 		pipelineCreateInfo.isStencilEnabled = false;
-		pipelineCreateInfo.blendMode = BlendMode::None;
+		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::NoBlending();
 		pipelineCreateInfo.renderPass = ssaoRenderPass;
 		ssaoPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
@@ -1592,7 +1592,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.isDepthWriteEnabled = false;
 		pipelineCreateInfo.isDepthTestEnabled = false;
 		pipelineCreateInfo.isStencilEnabled = false;
-		pipelineCreateInfo.blendMode = BlendMode::Additive;
+		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::Additive();
 		pipelineCreateInfo.renderPass = mainRenderPass;
 		imageBasedLightingPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
@@ -1619,7 +1619,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.isDepthWriteEnabled = false;
 		pipelineCreateInfo.isDepthTestEnabled = false;
 		pipelineCreateInfo.isStencilEnabled = false;
-		pipelineCreateInfo.blendMode = BlendMode::Additive;
+		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::Additive();
 		pipelineCreateInfo.renderPass = mainRenderPass;
 		pointLightPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
@@ -1646,7 +1646,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.isDepthWriteEnabled = false;
 		pipelineCreateInfo.isDepthTestEnabled = false;
 		pipelineCreateInfo.isStencilEnabled = false;
-		pipelineCreateInfo.blendMode = BlendMode::Additive;
+		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::Additive();
 		pipelineCreateInfo.renderPass = mainRenderPass;
 		spotLightPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
@@ -1673,7 +1673,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.isDepthWriteEnabled = false;
 		pipelineCreateInfo.isDepthTestEnabled = false;
 		pipelineCreateInfo.isStencilEnabled = false;
-		pipelineCreateInfo.blendMode = BlendMode::Additive;
+		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::Additive();
 		pipelineCreateInfo.renderPass = mainRenderPass;
 		directionalLightPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 	}
@@ -1699,7 +1699,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.descriptorSetLayouts = &debugDescriptorSetLayout;
 		pipelineCreateInfo.descriptorSetLayoutCount = 1;
 		pipelineCreateInfo.colorAttachmentCount = 1;
-		pipelineCreateInfo.blendMode = BlendMode::None;
+		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::NoBlending();
 		pipelineCreateInfo.renderPass = targetRenderPass;
 		pipelineCreateInfo.isDepthWriteEnabled = true;
 		pipelineCreateInfo.isDepthTestEnabled = true;
@@ -1728,7 +1728,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.descriptorSetLayouts = &tonemapDescriptorSetLayout;
 		pipelineCreateInfo.descriptorSetLayoutCount = 1;
 		pipelineCreateInfo.colorAttachmentCount = 1;
-		pipelineCreateInfo.blendMode = BlendMode::None;
+		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::NoBlending();
 		pipelineCreateInfo.renderPass = targetRenderPass;
 		pipelineCreateInfo.isDepthWriteEnabled = false;
 		pipelineCreateInfo.isDepthTestEnabled = false;
@@ -1762,7 +1762,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.descriptorSetLayouts = layouts.data();
 		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(layouts.size());
 		pipelineCreateInfo.colorAttachmentCount = 2;
-		pipelineCreateInfo.blendMode = BlendMode::None;
+		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::NoBlending();
 		pipelineCreateInfo.renderPass = dofSeparationRenderPass;
 		pipelineCreateInfo.isDepthWriteEnabled = false;
 		pipelineCreateInfo.isDepthTestEnabled = false;
@@ -1796,7 +1796,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.descriptorSetLayouts = layouts.data();
 		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(layouts.size());
 		pipelineCreateInfo.colorAttachmentCount = 1;
-		pipelineCreateInfo.blendMode = BlendMode::None;
+		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::NoBlending();
 		pipelineCreateInfo.renderPass = dofBlurAndCombinationRenderPass;
 		pipelineCreateInfo.isDepthWriteEnabled = false;
 		pipelineCreateInfo.isDepthTestEnabled = false;
@@ -1831,7 +1831,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.descriptorSetLayouts = layouts.data();
 		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(layouts.size());
 		pipelineCreateInfo.colorAttachmentCount = 1;
-		pipelineCreateInfo.blendMode = BlendMode::None;
+		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::NoBlending();
 		pipelineCreateInfo.renderPass = dofBlurAndCombinationRenderPass;
 		pipelineCreateInfo.isDepthWriteEnabled = false;
 		pipelineCreateInfo.isDepthTestEnabled = false;
@@ -1879,7 +1879,7 @@ void DeferredRenderer::CreatePipelines() {
 		pipelineCreateInfo.descriptorSetLayouts = &shadowMapDescriptorSetLayout;
 		pipelineCreateInfo.descriptorSetLayoutCount = 1;
 		pipelineCreateInfo.colorAttachmentCount = 1;
-		pipelineCreateInfo.blendMode = BlendMode::None;
+		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::NoBlending();
 		pipelineCreateInfo.cullMode = CullMode::None;
 		pipelineCreateInfo.renderPass = shadowMapRenderPass;
 		pipelineCreateInfo.isDepthWriteEnabled = true;

@@ -357,7 +357,7 @@ void GizmoRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	pipelineCreateInfo.isDepthWriteEnabled = false;
 	pipelineCreateInfo.isDepthTestEnabled = false;
 	pipelineCreateInfo.isStencilEnabled = false;
-	pipelineCreateInfo.blendMode = GraphicsAPI::BlendMode::None;
+	pipelineCreateInfo.blendData = GraphicsAPI::BlendData::NoBlending();
 	pipelineCreateInfo.renderPass = renderPass;
 	gizmoPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 }
