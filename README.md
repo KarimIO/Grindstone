@@ -1,7 +1,7 @@
 <div align="center">
 
-![Logo](./readmeImages/grindstoneLogo.png#gh-dark-mode-only)
-![Logo](./readmeImages/grindstoneLogoLightMode.png#gh-light-mode-only)
+![Logo](./docs/images/grindstoneLogo.png#gh-dark-mode-only)
+![Logo](./docs/images/grindstoneLogoLightMode.png#gh-light-mode-only)
 
 # The Grindstone Engine
 
@@ -9,7 +9,7 @@ The Grindstone Engine is an extensible engine that contains all tools to create 
 
 </div>
 
-![Runtime](readmeImages/grindstone.jpg)
+![Runtime](docs/images/grindstone.jpg)
 
 ## Building
  - Install [vcpkg](https://vcpkg.io/en/getting-started.html) and [CMake](https://cmake.org/install/).
@@ -22,7 +22,12 @@ The Grindstone Engine is an extensible engine that contains all tools to create 
 Run `ApplicationExecutable.exe` with `-projectpath "Path\To\Project"` to run a project.
 [Grindstone Sandbox](https://github.com/KarimIO/Grindstone-Sandbox).
 
-![Editor](readmeImages/editor.jpg)
+![Editor](docs/images/editor.jpg)
+
+## Documentation
+ * To generate documentation, install [Doxygen](https://www.doxygen.nl/manual/install.html).
+ * In a terminal, run `doxygen` when in the root directory of this project
+ * It will generate documentation, which you can find, relative to the root directory, in: `../GrindstoneDoxygen/html/index.html`
 
 ## License
 Please view the [LICENSE.md](LICENSE.md) file for information on the MIT License, which this project uses.
