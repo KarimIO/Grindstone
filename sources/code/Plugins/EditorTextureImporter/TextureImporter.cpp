@@ -22,6 +22,7 @@
 #include "TextureImporter.hpp"
 
 using namespace Grindstone::Editor::Importers;
+using namespace Grindstone::Formats::DDS;
 
 const uint32_t blockWidth = 4;
 

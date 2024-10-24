@@ -12,6 +12,7 @@
 #include <EngineCore/Logger.hpp>
 
 using namespace Grindstone;
+using namespace Grindstone::Formats::DDS;
 
 void* TextureImporter::ProcessLoadedFile(Uuid uuid) {
 	std::string assetName;
