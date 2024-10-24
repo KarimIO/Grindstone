@@ -1,3 +1,5 @@
+# Grindstone Game Engine
+
 <div align="center">
 ![The Grindstone Logo](grindstoneLogo.png){html: width=100rem, latex: width=15cm}
 </div>
@@ -10,5 +12,8 @@ Grindstone is made to be whatever you want it to be. It's free, and open-source.
 
 ![Create incredible games using simple, flexible tools.](editor.jpg)
 
+## Building
+You can start developing using Grindstone by following the guide to [building the project](@ref docs/pages/BuildingTheProject.md).
+
 ## License
-Please view the [LICENSE](@ref license.md) file for information on the MIT License, which this project uses.
+Please view the [LICENSE](@ref LICENSE.md) file for information on the MIT License, which this project uses.
