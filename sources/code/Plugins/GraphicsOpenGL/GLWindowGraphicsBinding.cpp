@@ -5,7 +5,7 @@
 // TODO: Reimplement Win32
 #ifdef _WIN32
 #include <Common/Window/Win32Window.hpp>
-#include "wglext.hpp"
+#include <GL/wglext.h>
 #endif
 */
 
