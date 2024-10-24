@@ -25,4 +25,7 @@ Run `ApplicationExecutable.exe` with `-projectpath "Path\To\Project"` to run a p
 ![Editor](readmeImages/editor.jpg)
 
 ## License
-This is closed source, at least for now. Only using repository for internal usage! Do not leak or distribute the code.
+Please view the [LICENSE.md](LICENSE.md) file for information on the MIT License, which this project uses.
+
+## Contributing
+Please view [CONTRIBUTING.md](CONTRIBUTING.md) file for information on how to report issues and contribute code.
