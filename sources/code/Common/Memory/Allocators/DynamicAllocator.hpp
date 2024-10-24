@@ -49,7 +49,7 @@ namespace Grindstone::Memory::Allocators {
 		void* GetMemory() const;
 
 		template<typename T, typename... Args>
-		SharedPtr<T> AllocateShared(Args&&... params) {
+		Grindstone::Memory::SmartPointers::SharedPtr<T> AllocateShared(Args&&... params) {
 			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T), alignof(T), typeid(T).name()));
 			if (ptr != nullptr) {
 				// Call the constructor on the newly allocated memory
@@ -60,7 +60,7 @@ namespace Grindstone::Memory::Allocators {
 		}
 
 		template<typename T, typename... Args>
-		UniquePtr<T> AllocateUnique(Args&&... params) {
+		Grindstone::Memory::SmartPointers::UniquePtr<T> AllocateUnique(Args&&... params) {
 			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T), alignof(T), typeid(T).name()));
 			if (ptr != nullptr) {
 				// Call the constructor on the newly allocated memory

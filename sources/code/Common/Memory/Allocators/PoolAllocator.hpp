@@ -7,7 +7,8 @@
 
 #include "../SmartPointers.hpp"
 
-namespace Grindstone::Allocators {
+
+namespace Grindstone::Memory::Allocators {
 	class BasePoolAllocator {
 	public:
 

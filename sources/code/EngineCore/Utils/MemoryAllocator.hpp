@@ -28,12 +28,12 @@ namespace Grindstone::Memory::AllocatorCore {
 	void* AllocateRaw(size_t size, size_t alignment, const char* debugName);
 
 	template<typename T, typename... Args>
-	UniquePtr<T> AllocateUnique(Args&&... params) {
+	Grindstone::Memory::SmartPointers::UniquePtr<T> AllocateUnique(Args&&... params) {
 		return static_cast<T*>(GetAllocatorState()->dynamicAllocator.AllocateUnique<T>(params));
 	}
 
 	template<typename T, typename... Args>
-	SharedPtr<T> AllocateShared(Args&&... params) {
+	Grindstone::Memory::SmartPointers::SharedPtr<T> AllocateShared(Args&&... params) {
 		return static_cast<T*>(GetAllocatorState()->dynamicAllocator.AllocateShared<T>(params));
 	}
 

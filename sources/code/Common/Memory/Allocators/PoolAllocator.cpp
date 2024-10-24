@@ -1,7 +1,7 @@
 #include "../../Assert.hpp"
 #include "PoolAllocator.hpp"
 
-using namespace Grindstone::Allocators;
+using namespace Grindstone::Memory::Allocators;
 
 // ============================================
 // Base Allocator Methods
@@ -41,13 +41,13 @@ void* BasePoolAllocator::AllocateImpl() {
 	void* returnedChunk = headFreePtr;
 	headFreePtr = headFreePtr->next;
 	++usedChunkCount;
-	
+
 	return returnedChunk;
 }
 
 void BasePoolAllocator::DeallocateImpl(void* ptr) {
 	--usedChunkCount;
-	
+
 	reinterpret_cast<FreeLink*>(ptr)->next = headFreePtr;
 	headFreePtr = reinterpret_cast<FreeLink*>(ptr);
 

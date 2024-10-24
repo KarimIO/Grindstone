@@ -2,7 +2,8 @@
 
 #include <stdint.h>
 
-namespace Grindstone::Allocators {
+
+namespace Grindstone::Memory::Allocators {
 	/**
 	 * \brief A linear allocator where memory can only be deallocated when the entire allocator is cleared.
 	 *

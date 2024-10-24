@@ -3,7 +3,7 @@
 #include "../../Assert.hpp"
 #include "LinearAllocator.hpp"
 
-using namespace Grindstone::Allocators;
+using namespace Grindstone::Memory::Allocators;
 
 LinearAllocator::~LinearAllocator() {
 	Destroy();
