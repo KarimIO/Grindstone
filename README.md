@@ -25,9 +25,14 @@ Run `ApplicationExecutable.exe` with `-projectpath "Path\To\Project"` to run a p
 ![Editor](docs/images/editor.jpg)
 
 ## Documentation
- * To generate documentation, install [Doxygen](https://www.doxygen.nl/manual/install.html).
- * In a terminal, run `doxygen` when in the root directory of this project
- * It will generate documentation, which you can find, relative to the root directory, in: `../GrindstoneDoxygen/html/index.html`
+
+You can find the documentation for Grindstone here: https://karimio.github.io/Grindstone/
+
+You can also generate it yourself by following these steps, which is especially useful if you want documentation for a branch other than main:
+
+ * Install [Doxygen](https://www.doxygen.nl/manual/install.html).
+ * In a terminal, run `doxygen` when in the `/docs` subdirectory of this project.
+ * It will generate documentation, which you can find, relative to the root directory, in: `../GrindstoneDoxygen/html/index.html`.
 
 ## License
 Please view the [LICENSE.md](LICENSE.md) file for information on the MIT License, which this project uses.
