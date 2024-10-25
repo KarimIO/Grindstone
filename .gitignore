@@ -62,7 +62,7 @@ build/*
 *.out
 *.app
 
-/docs/generated/*
+/docs/generated/
 build/*
 !build/readme.md
 assets/*
