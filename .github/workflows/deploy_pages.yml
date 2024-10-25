@@ -6,7 +6,7 @@ name: Deploy Documentation
 # Controls when the action will run.
 on:
   push:
-    branches: [ main, docs-test ]
+    branches: [ main ]
 
 jobs:
   build-documentation:
