@@ -107,7 +107,7 @@ EditorCamera::~EditorCamera() {
 }
 
 uint64_t EditorCamera::GetRenderOutput() {
-	return (uint64_t)(static_cast<GraphicsAPI::VulkanDescriptorSet*>(descriptorSet)->GetDescriptorSet());
+	return (uint64_t)(static_cast<GraphicsAPI::Vulkan::DescriptorSet*>(descriptorSet)->GetDescriptorSet());
 }
 
 void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {

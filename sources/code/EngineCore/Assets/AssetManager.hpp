@@ -38,13 +38,13 @@ namespace Grindstone::Assets {
 			Uuid uuid,
 			uint8_t shaderStagesBitMask,
 			size_t numShaderStages,
-			std::vector<GraphicsAPI::ShaderStageCreateInfo>& shaderStageCreateInfos,
+			std::vector<GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData>& shaderStageCreateInfos,
 			std::vector<std::vector<char>>& fileData
 		);
 		virtual bool LoadShaderStage(
 			Uuid uuid,
 			GraphicsAPI::ShaderStage shaderStage,
-			GraphicsAPI::ShaderStageCreateInfo& stageCreateInfo,
+			GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& stageCreateInfo,
 			std::vector<char>& fileData
 		);
 		virtual std::string& GetTypeName(AssetType assetType);

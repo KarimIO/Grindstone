@@ -20,7 +20,7 @@ extern "C" {
 		Grindstone::Memory::AllocatorCore::SetAllocatorState(pInterface->GetAllocatorState());
 
 		pluginInterface = pInterface;
-		pInterface->RegisterGraphicsCore(AllocatorCore::Allocate<GraphicsAPI::GLCore>());
+		pInterface->RegisterGraphicsCore(AllocatorCore::Allocate<GraphicsAPI::OpenGL::Core>());
 
 		windowManager = AllocatorCore::Allocate<WindowManager>();
 		displayManager = AllocatorCore::Allocate<DisplayManager>();

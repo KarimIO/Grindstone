@@ -10,10 +10,10 @@
 #include "VulkanDescriptorSetLayout.hpp"
 #include "VulkanComputePipeline.hpp"
 
-using namespace Grindstone::GraphicsAPI;
+namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
-VulkanComputePipeline::VulkanComputePipeline(ComputePipeline::CreateInfo& createInfo) {
-	VkDevice device = VulkanCore::Get().GetDevice();
+Vulkan::ComputePipeline::ComputePipeline(const CreateInfo& createInfo) {
+	VkDevice device = Vulkan::Core::Get().GetDevice();
 
 	VkShaderModule computeShaderModule;
 	{
@@ -32,7 +32,7 @@ VulkanComputePipeline::VulkanComputePipeline(ComputePipeline::CreateInfo& create
 		layouts.reserve(createInfo.descriptorSetLayoutCount);
 
 		for (uint32_t i = 0; i < createInfo.descriptorSetLayoutCount; ++i) {
-			VulkanDescriptorSetLayout* uboBinding = static_cast<VulkanDescriptorSetLayout*>(createInfo.descriptorSetLayouts[i]);
+			Vulkan::DescriptorSetLayout* uboBinding = static_cast<Vulkan::DescriptorSetLayout*>(createInfo.descriptorSetLayouts[i]);
 			VkDescriptorSetLayout ubb = uboBinding->GetInternalLayout();
 			layouts.push_back(ubb);
 		}
@@ -65,7 +65,7 @@ VulkanComputePipeline::VulkanComputePipeline(ComputePipeline::CreateInfo& create
 	}
 
 	if (createInfo.debugName != nullptr) {
-		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_PIPELINE, computePipeline, createInfo.debugName);
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_PIPELINE, computePipeline, createInfo.debugName);
 	}
 	else {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Compute Pipeline!");
@@ -74,8 +74,8 @@ VulkanComputePipeline::VulkanComputePipeline(ComputePipeline::CreateInfo& create
 	vkDestroyShaderModule(device, computeShaderModule, nullptr);
 }
 
-VulkanComputePipeline::~VulkanComputePipeline() {
-	VkDevice device = VulkanCore::Get().GetDevice();
+Vulkan::ComputePipeline::~ComputePipeline() {
+	VkDevice device = Vulkan::Core::Get().GetDevice();
 	if (computePipeline != nullptr) {
 		vkDestroyPipeline(device, computePipeline, nullptr);
 	}
@@ -85,13 +85,13 @@ VulkanComputePipeline::~VulkanComputePipeline() {
 	}
 }
 
-VkPipeline VulkanComputePipeline::GetComputePipeline() const {
+VkPipeline Vulkan::ComputePipeline::GetComputePipeline() const {
 	return computePipeline;
 }
 
-VkPipelineLayout VulkanComputePipeline::GetComputePipelineLayout() const {
+VkPipelineLayout Vulkan::ComputePipeline::GetComputePipelineLayout() const {
 	return pipelineLayout;
 }
 
-void VulkanComputePipeline::Recreate(CreateInfo& createInfo) {
+void Vulkan::ComputePipeline::Recreate(const CreateInfo& createInfo) {
 }

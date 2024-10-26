@@ -19,7 +19,7 @@ namespace Grindstone::Assets {
 		virtual bool LoadShaderStage(
 			Uuid uuid,
 			GraphicsAPI::ShaderStage shaderStage,
-			GraphicsAPI::ShaderStageCreateInfo& shaderStageCreateInfo,
+			GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& shaderStageCreateInfo,
 			std::vector<char>& fileData
 		) override;
 	protected:

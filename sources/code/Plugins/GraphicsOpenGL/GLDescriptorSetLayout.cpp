@@ -1,11 +1,13 @@
-#include <GL/gl3w.h>
-#include "GLDescriptorSetLayout.hpp"
 #include <iostream>
+
+#include <GL/gl3w.h>
+
+#include "GLDescriptorSetLayout.hpp"
 
 using namespace Grindstone::GraphicsAPI;
 
-GLDescriptorSetLayout::GLDescriptorSetLayout(CreateInfo& createInfo) {
+OpenGL::DescriptorSetLayout::DescriptorSetLayout(const DescriptorSetLayout::CreateInfo& createInfo) {
 }
 
-GLDescriptorSetLayout::~GLDescriptorSetLayout() {
+OpenGL::DescriptorSetLayout::~DescriptorSetLayout() {
 }

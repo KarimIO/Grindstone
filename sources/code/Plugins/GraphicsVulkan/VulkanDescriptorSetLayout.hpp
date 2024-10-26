@@ -3,11 +3,11 @@
 #include <Common/Graphics/DescriptorSetLayout.hpp>
 #include <vulkan/vulkan.h>
 
-namespace Grindstone::GraphicsAPI {
-	class VulkanDescriptorSetLayout : public DescriptorSetLayout {
+namespace Grindstone::GraphicsAPI::Vulkan {
+	class DescriptorSetLayout : public Grindstone::GraphicsAPI::DescriptorSetLayout {
 	public:
-		VulkanDescriptorSetLayout(DescriptorSetLayout::CreateInfo& createInfo);
-		~VulkanDescriptorSetLayout();
+		DescriptorSetLayout(const CreateInfo& createInfo);
+		~DescriptorSetLayout();
 		const DescriptorSetLayout::Binding& GetBinding(size_t bindingIndex) const;
 		VkDescriptorSetLayout GetInternalLayout() const;
 	private:

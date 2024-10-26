@@ -7,35 +7,34 @@
 #include "VulkanVertexBuffer.hpp"
 #include "VulkanIndexBuffer.hpp"
 
-namespace Grindstone {
-	namespace GraphicsAPI {
-		VulkanVertexArrayObject::VulkanVertexArrayObject(VertexArrayObject::CreateInfo& createInfo) {
-			vertexBuffers.resize(createInfo.vertexBufferCount);
+namespace Base = Grindstone::GraphicsAPI;
+namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
-			for (uint32_t i = 0; i < createInfo.vertexBufferCount; ++i) {
-				vertexBuffers[i] = createInfo.vertexBuffers[i];
-			}
+Vulkan::VertexArrayObject::VertexArrayObject(const CreateInfo& createInfo) {
+	vertexBuffers.resize(createInfo.vertexBufferCount);
 
-			indexBuffer = static_cast<VulkanIndexBuffer*>(createInfo.indexBuffer);
-		}
-
-		VulkanVertexArrayObject::~VulkanVertexArrayObject() {
-		}
-
-		std::vector<VertexBuffer*>& VulkanVertexArrayObject::GetVertexBuffers() {
-			return vertexBuffers;
-		}
-
-		IndexBuffer* VulkanVertexArrayObject::GetIndexBuffer() const  {
-			return indexBuffer;
-		}
-
-		void VulkanVertexArrayObject::Bind() {
-			GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanVertexArrayObject::Bind is not used.");
-		}
-
-		void VulkanVertexArrayObject::Unbind() {
-			GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanVertexArrayObject::Bind is not used.");
-		}
+	for (uint32_t i = 0; i < createInfo.vertexBufferCount; ++i) {
+		vertexBuffers[i] = static_cast<Vulkan::VertexBuffer*>(createInfo.vertexBuffers[i]);
 	}
+
+	indexBuffer = static_cast<Vulkan::IndexBuffer*>(createInfo.indexBuffer);
+}
+
+Vulkan::VertexArrayObject::~VertexArrayObject() {
+}
+
+std::vector<Base::VertexBuffer*>& Vulkan::VertexArrayObject::GetVertexBuffers() {
+	return vertexBuffers;
+}
+
+Base::IndexBuffer* Vulkan::VertexArrayObject::GetIndexBuffer() const  {
+	return indexBuffer;
+}
+
+void Vulkan::VertexArrayObject::Bind() {
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanVertexArrayObject::Bind is not used.");
+}
+
+void Vulkan::VertexArrayObject::Unbind() {
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanVertexArrayObject::Bind is not used.");
 }

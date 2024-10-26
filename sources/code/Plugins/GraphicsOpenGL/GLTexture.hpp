@@ -5,19 +5,22 @@
 
 #include <Common/Graphics/Texture.hpp>
 
-namespace Grindstone::GraphicsAPI {
-	class GLTexture : public Texture {
-		GLuint textureHandle;
-		bool isCubemap;
+namespace Grindstone::GraphicsAPI::OpenGL {
+	class Texture : public Grindstone::GraphicsAPI::Texture {
 	public:
-		GLTexture(CreateInfo& ci);
-		GLTexture(CubemapCreateInfo& ci);
-		virtual void RecreateTexture(CreateInfo& createInfo) override;
-		void CreateTexture(CreateInfo& createInfo);
+		Texture(const CreateInfo& ci);
+		Texture(const CubemapCreateInfo& ci);
+		virtual void RecreateTexture(const CreateInfo& createInfo) override;
+		void CreateTexture(const CreateInfo& createInfo);
 		void Bind(int i);
 
-		virtual unsigned int GetTexture();
+		virtual unsigned int GetTexture() const;
 
-		~GLTexture();
+		~Texture();
+
+	protected:
+		GLuint textureHandle;
+		bool isCubemap;
+
 	};
 }

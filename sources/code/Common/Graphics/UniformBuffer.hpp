@@ -13,7 +13,7 @@ namespace Grindstone::GraphicsAPI {
 		};
 
 		virtual void UpdateBuffer(void * content) = 0;
-		virtual uint32_t GetSize() = 0;
+		virtual uint32_t GetSize() const = 0;
 		virtual void Bind() = 0;
 	};
 };

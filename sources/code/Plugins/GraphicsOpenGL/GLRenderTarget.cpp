@@ -8,7 +8,7 @@
 
 using namespace Grindstone::GraphicsAPI;
 
-GLRenderTarget::GLRenderTarget(CreateInfo& createInfoList) {
+OpenGL::RenderTarget::RenderTarget(const RenderTarget::CreateInfo& createInfoList) {
 	renderTargetCount = 1;
 	width = std::max(createInfoList.width, 1u);
 	height = std::max(createInfoList.height, 1u);
@@ -26,7 +26,7 @@ GLRenderTarget::GLRenderTarget(CreateInfo& createInfoList) {
 	CreateRenderTargets();
 }
 
-GLRenderTarget::GLRenderTarget(CreateInfo* createInfoList, uint32_t createInfoCount, bool isCubemap) {
+OpenGL::RenderTarget::RenderTarget(const RenderTarget::CreateInfo* createInfoList, uint32_t createInfoCount, bool isCubemap) {
 	renderTargetCount = createInfoCount;
 	width = std::max(createInfoList[0].width, 1u);
 	height = std::max(createInfoList[0].height, 1u);
@@ -44,7 +44,7 @@ GLRenderTarget::GLRenderTarget(CreateInfo* createInfoList, uint32_t createInfoCo
 	CreateRenderTargets();
 }
 
-void GLRenderTarget::CreateRenderTargets() {
+void OpenGL::RenderTarget::CreateRenderTargets() {
 	if (renderTargetHandles[0] > 0) {
 		glDeleteTextures(renderTargetCount, renderTargetHandles.data());
 
@@ -81,49 +81,49 @@ void GLRenderTarget::CreateRenderTargets() {
 	}
 }
 
-uint32_t GLRenderTarget::GetHandle() const {
+uint32_t OpenGL::RenderTarget::GetHandle() const {
 	return renderTargetHandles[0];
 }
 
-uint32_t GLRenderTarget::GetHandle(uint32_t i) const {
+uint32_t OpenGL::RenderTarget::GetHandle(uint32_t i) const {
 	return renderTargetHandles[i];
 }
 
-uint32_t GLRenderTarget::GetNumRenderTargets() const {
+uint32_t OpenGL::RenderTarget::GetNumRenderTargets() const {
 	return renderTargetCount;
 }
 
-bool GLRenderTarget::IsCubemap() const {
+bool OpenGL::RenderTarget::IsCubemap() const {
 	return isCubemap;
 }
 
-void GLRenderTarget::Resize(uint32_t width, uint32_t height) {
+void OpenGL::RenderTarget::Resize(uint32_t width, uint32_t height) {
 	this->width = width;
 	this->height = height;
 
 	CreateRenderTargets();
 }
 
-void GLRenderTarget::Bind() {
+void OpenGL::RenderTarget::Bind() {
 	for (uint32_t i = 0; i < renderTargetCount; i++) {
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(isCubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D, renderTargetHandles[i]);
 	}
 }
 
-void GLRenderTarget::Bind(uint32_t j) {
+void OpenGL::RenderTarget::Bind(uint32_t j) {
 	for (uint32_t i = 0; i < renderTargetCount; i++) {
 		glActiveTexture(GL_TEXTURE0 + j + i);
 		glBindTexture(isCubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D, renderTargetHandles[i]);
 	}
 }
 
-void GLRenderTarget::RenderScreen(unsigned int i, unsigned int resx, unsigned int resy, unsigned char *data) {
+void OpenGL::RenderTarget::RenderScreen(unsigned int i, unsigned int resx, unsigned int resy, unsigned char *data) {
 	glReadBuffer(GL_COLOR_ATTACHMENT0);
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glReadPixels(0, 0, resx, resy, GL_RGBA, GL_UNSIGNED_BYTE, data);
 }
 
-GLRenderTarget::~GLRenderTarget() {
+OpenGL::RenderTarget::~RenderTarget() {
 	glDeleteTextures(renderTargetCount, renderTargetHandles.data());
 }

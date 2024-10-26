@@ -4,25 +4,23 @@
 
 #include <Common/Graphics/VertexArrayObject.hpp>
 
-namespace Grindstone {
-	namespace GraphicsAPI {
-		class VulkanVertexBuffer;
-		class VulkanIndexBuffer;
+namespace Grindstone::GraphicsAPI::Vulkan {
+	class VertexBuffer;
+	class IndexBuffer;
 
-		class VulkanVertexArrayObject : public VertexArrayObject {
-		public:
-			VulkanVertexArrayObject(VertexArrayObject::CreateInfo& createInfo);
+	class VertexArrayObject : public Grindstone::GraphicsAPI::VertexArrayObject {
+	public:
+		VertexArrayObject(const CreateInfo& createInfo);
 
-			// Inherited from VertexArrayObject
-			virtual ~VulkanVertexArrayObject() override;
-			virtual void Bind() override;
-			virtual void Unbind() override;
-		public:
-			std::vector<VertexBuffer*>& GetVertexBuffers();
-			IndexBuffer* GetIndexBuffer() const;
-		private:
-			std::vector<VertexBuffer*> vertexBuffers;
-			IndexBuffer* indexBuffer = nullptr;
-		};
+		// Inherited from VertexArrayObject
+		virtual ~VertexArrayObject() override;
+		virtual void Bind() override;
+		virtual void Unbind() override;
+	public:
+		std::vector<GraphicsAPI::VertexBuffer*>& GetVertexBuffers();
+		GraphicsAPI::IndexBuffer* GetIndexBuffer() const;
+	private:
+		std::vector<GraphicsAPI::VertexBuffer*> vertexBuffers;
+		GraphicsAPI::IndexBuffer* indexBuffer = nullptr;
 	};
-};
+}

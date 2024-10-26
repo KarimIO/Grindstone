@@ -1,16 +1,13 @@
-#ifndef _GL_FRAMEBUFFER_H
-#define _GL_FRAMEBUFFER_H
+#pragma once
 
 #include <Common/Graphics/Framebuffer.hpp>
 #include <Common/Graphics/DLLDefs.hpp>
-#include "GLRenderTarget.hpp"
-#include "GLDepthTarget.hpp"
 
-namespace Grindstone::GraphicsAPI {
-	class GLFramebuffer : public Framebuffer {
+namespace Grindstone::GraphicsAPI::OpenGL {
+	class Framebuffer : public Grindstone::GraphicsAPI::Framebuffer {
 	public:
-		GLFramebuffer(CreateInfo&);
-		~GLFramebuffer();
+		Framebuffer(const CreateInfo& createInfo);
+		~Framebuffer();
 
 		virtual void Blit(uint32_t i, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
 
@@ -27,21 +24,18 @@ namespace Grindstone::GraphicsAPI {
 		virtual uint32_t GetWidth() const override;
 		virtual uint32_t GetHeight() const override;
 		virtual uint32_t GetRenderTargetCount() const override;
-		virtual RenderTarget* GetRenderTarget(uint32_t index) const override;
-		virtual DepthTarget* GetDepthTarget() const override;
+		virtual Grindstone::GraphicsAPI::RenderTarget* GetRenderTarget(uint32_t index) const override;
+		virtual Grindstone::GraphicsAPI::DepthTarget* GetDepthTarget() const override;
 	private:
 		void CreateFramebuffer();
 	private:
 		std::string debugName;
 		GLuint framebuffer = 0;
 		GLsizei numTotalRenderTargets = 0;
-		RenderPass* renderPass = nullptr;
-		std::vector<GLRenderTarget*> colorAttachments;
-		GLDepthTarget *depthTarget = nullptr;
+		Grindstone::GraphicsAPI::RenderPass* renderPass = nullptr;
+		std::vector<Grindstone::GraphicsAPI::RenderTarget*> colorAttachments;
+		Grindstone::GraphicsAPI::DepthTarget *depthTarget = nullptr;
 		uint32_t width;
 		uint32_t height;
 	};
 }
-
-
-#endif

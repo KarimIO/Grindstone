@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-namespace Grindstone::GraphicsAPI {
+namespace Grindstone::GraphicsAPI::Vulkan {
 	VkFilter TranslateFilterToVulkan(TextureFilter f) {
 		switch (f) {
 		case TextureFilter::Nearest:

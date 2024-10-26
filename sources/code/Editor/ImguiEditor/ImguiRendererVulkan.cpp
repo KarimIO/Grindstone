@@ -24,13 +24,13 @@ using namespace Grindstone::Editor::ImguiEditor;
 static ImGui_ImplVulkanH_Window g_MainWindowData;
 
 void ImguiRendererVulkan::SetupVulkanWindow(
-	Grindstone::GraphicsAPI::VulkanCore* graphicsCore,
+	Grindstone::GraphicsAPI::Vulkan::Core* graphicsCore,
 	Grindstone::GraphicsAPI::WindowGraphicsBinding* wgb,
 	int width,
 	int height
 ) {
 	ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
-	Grindstone::GraphicsAPI::VulkanWindowGraphicsBinding* vwgb = static_cast<Grindstone::GraphicsAPI::VulkanWindowGraphicsBinding*>(wgb);
+	Grindstone::GraphicsAPI::Vulkan::WindowGraphicsBinding* vwgb = static_cast<Grindstone::GraphicsAPI::Vulkan::WindowGraphicsBinding*>(wgb);
 	VkSurfaceKHR surface = vwgb->GetSurface();
 	wd->Surface = surface;
 
@@ -82,7 +82,7 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	auto wgb = window->GetWindowGraphicsBinding();
 
 	ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
-	SetupVulkanWindow(static_cast<GraphicsAPI::VulkanCore*>(graphicsCore), wgb, width, height);
+	SetupVulkanWindow(static_cast<GraphicsAPI::Vulkan::Core*>(graphicsCore), wgb, width, height);
 
 	VkDescriptorPoolSize poolSizes[] = {
 		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1 }
@@ -95,14 +95,14 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	poolInfo.poolSizeCount = static_cast<uint32_t>(std::size(poolSizes));
 	poolInfo.pPoolSizes = poolSizes;
 
-	auto vulkanCore = static_cast<Grindstone::GraphicsAPI::VulkanCore*>(graphicsCore);
+	auto vulkanCore = static_cast<Grindstone::GraphicsAPI::Vulkan::Core*>(graphicsCore);
 
 	if (vkCreateDescriptorPool(vulkanCore->GetDevice(), &poolInfo, nullptr, &imguiPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate imgui descriptor pool!");
 	}
 
 	ImGui_ImplGlfw_InitForVulkan(static_cast<Grindstone::GlfwWindow*>(window)->GetHandle(), true);
-	auto vulkanRenderPass = static_cast<Grindstone::GraphicsAPI::VulkanRenderPass*>(wgb->GetRenderPass());
+	auto vulkanRenderPass = static_cast<Grindstone::GraphicsAPI::Vulkan::RenderPass*>(wgb->GetRenderPass());
 
 	ImGui_ImplVulkan_InitInfo imguiInitInfo{};
 	imguiInitInfo.Instance = vulkanCore->GetInstance();
@@ -133,7 +133,7 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 
 ImguiRendererVulkan::~ImguiRendererVulkan() {
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
-	GraphicsAPI::VulkanCore* graphicsCore = static_cast<VulkanCore*>(engineCore.GetGraphicsCore());
+	GraphicsAPI::Vulkan::Core* graphicsCore = static_cast<Vulkan::Core*>(engineCore.GetGraphicsCore());
 
 	VkDevice device = graphicsCore->GetDevice();
 	vkDestroyDescriptorPool(device, imguiPool, nullptr);
@@ -165,7 +165,7 @@ bool ImguiRendererVulkan::PreRender() {
 
 void ImguiRendererVulkan::WaitForResizeAndRecreateSwapchain() {
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
-	auto vulkanCore = static_cast<Grindstone::GraphicsAPI::VulkanCore*>(engineCore.GetGraphicsCore());
+	auto vulkanCore = static_cast<Grindstone::GraphicsAPI::Vulkan::Core*>(engineCore.GetGraphicsCore());
 	auto window = static_cast<GlfwWindow*>(engineCore.windowManager->GetWindowByIndex(0));
 	GLFWwindow* winHandle = window->GetHandle();
 	int width = 0, height = 0;
@@ -212,7 +212,7 @@ void ImguiRendererVulkan::PostRender() {
 	auto currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
 	ImGui::Render();
 
-	auto vkCB = static_cast<GraphicsAPI::VulkanCommandBuffer*>(currentCommandBuffer);
+	auto vkCB = static_cast<GraphicsAPI::Vulkan::CommandBuffer*>(currentCommandBuffer);
 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vkCB->GetCommandBuffer());
 
 	ImGui::UpdatePlatformWindows();
@@ -262,13 +262,13 @@ ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {
 	descriptorSetCreateInfo.layout = layout;
 	auto dset = Editor::Manager::GetEngineCore().GetGraphicsCore()->CreateDescriptorSet(descriptorSetCreateInfo);
 
-	auto descriptor = static_cast<VulkanDescriptorSet*>(dset)->GetDescriptorSet();
+	auto descriptor = static_cast<Vulkan::DescriptorSet*>(dset)->GetDescriptorSet();
 
 	return (ImTextureID)(uint64_t)descriptor;
 }
 
 void ImguiRendererVulkan::CreateOrResizeWindow(
-	Grindstone::GraphicsAPI::VulkanCore* graphicsCore,
+	Grindstone::GraphicsAPI::Vulkan::Core* graphicsCore,
 	Grindstone::GraphicsAPI::WindowGraphicsBinding* wgb,
 	int width, int height
 ) {
@@ -280,7 +280,7 @@ void ImguiRendererVulkan::CreateOrResizeWindow(
 	ImGui_ImplVulkanH_CreateOrResizeWindow(instance, physicalDevice, device, &g_MainWindowData, graphicsFamily, nullptr, width, height, wgb->GetMaxFramesInFlight());
 
 	// Send new imgui window data to window
-	std::vector<VulkanImageSetNative> imguiImageSets;
+	std::vector<Vulkan::ImageSetNative> imguiImageSets;
 	imguiImageSets.resize(g_MainWindowData.ImageCount);
 	for (uint32_t i = 0; i < g_MainWindowData.ImageCount; ++i) {
 		auto& imageSet = imguiImageSets[i];
@@ -291,7 +291,7 @@ void ImguiRendererVulkan::CreateOrResizeWindow(
 		imageSet.framebuffer = imguiFrame.Framebuffer;
 	}
 
-	VulkanWindowBindingDataNative windowBindingData{};
+	Vulkan::WindowBindingDataNative windowBindingData{};
 	windowBindingData.swapChain = g_MainWindowData.Swapchain;
 	windowBindingData.renderPass = g_MainWindowData.RenderPass;
 	windowBindingData.width = static_cast<uint32_t>(g_MainWindowData.Width);
@@ -300,5 +300,5 @@ void ImguiRendererVulkan::CreateOrResizeWindow(
 	windowBindingData.imageSetCount = g_MainWindowData.ImageCount;
 	windowBindingData.imageSets = imguiImageSets.data();
 
-	static_cast<VulkanWindowGraphicsBinding*>(wgb)->SubmitWindowObjects(windowBindingData);
+	static_cast<Vulkan::WindowGraphicsBinding*>(wgb)->SubmitWindowObjects(windowBindingData);
 }

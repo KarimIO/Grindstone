@@ -1,13 +1,13 @@
-#ifndef _GL_DEPTH_TARGET_H
-#define _GL_DEPTH_TARGET_H
+#pragma once
 
 #include <stdint.h>
+
 #include <Common/Graphics/DepthTarget.hpp>
 
-namespace Grindstone::GraphicsAPI {
-	class GLDepthTarget : public DepthTarget {
+namespace Grindstone::GraphicsAPI::OpenGL {
+	class DepthTarget : public Grindstone::GraphicsAPI::DepthTarget {
 	public:
-		GLDepthTarget(CreateInfo& cis);
+		DepthTarget(const CreateInfo& cis);
 		uint32_t GetHandle() const;
 
 		bool IsCubemap() const;
@@ -15,7 +15,7 @@ namespace Grindstone::GraphicsAPI {
 		virtual void Resize(uint32_t width, uint32_t height);
 		virtual void BindFace(int k);
 		virtual void Bind(int i);
-		virtual ~GLDepthTarget();
+		virtual ~DepthTarget();
 	private:
 		void CreateDepthTarget();
 	private:
@@ -28,5 +28,3 @@ namespace Grindstone::GraphicsAPI {
 		bool isCubemap;
 	};
 }
-
-#endif

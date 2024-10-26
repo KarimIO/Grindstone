@@ -5,12 +5,12 @@
 
 using namespace Grindstone::GraphicsAPI;
 
-GLVertexArrayObject::GLVertexArrayObject() {
+OpenGL::VertexArrayObject::VertexArrayObject() {
 	glGenVertexArrays(1, &vertexArrayObject);
 	glBindVertexArray(vertexArrayObject);
 }
 
-GLVertexArrayObject::GLVertexArrayObject(CreateInfo& createInfo) {
+OpenGL::VertexArrayObject::VertexArrayObject(const VertexArrayObject::CreateInfo& createInfo) {
 	glGenVertexArrays(1, &vertexArrayObject);
 	glBindVertexArray(vertexArrayObject);
 	if (createInfo.debugName != nullptr) {
@@ -18,7 +18,7 @@ GLVertexArrayObject::GLVertexArrayObject(CreateInfo& createInfo) {
 	}
 
 	for (size_t i = 0; i < createInfo.vertexBufferCount; ++i) {
-		GLVertexBuffer* vbo = static_cast<GLVertexBuffer*>(createInfo.vertexBuffers[i]);
+		OpenGL::VertexBuffer* vbo = static_cast<OpenGL::VertexBuffer*>(createInfo.vertexBuffers[i]);
 		vbo->Bind();
 
 		const auto& layout = vbo->GetLayout();
@@ -38,20 +38,20 @@ GLVertexArrayObject::GLVertexArrayObject(CreateInfo& createInfo) {
 	}
 
 	if (createInfo.indexBuffer != nullptr) {
-		static_cast<GLIndexBuffer*>(createInfo.indexBuffer)->Bind();
+		static_cast<OpenGL::IndexBuffer*>(createInfo.indexBuffer)->Bind();
 	}
 
 	glBindVertexArray(0);
 }
 
-GLVertexArrayObject::~GLVertexArrayObject() {
+OpenGL::VertexArrayObject::~VertexArrayObject() {
 	glDeleteVertexArrays(1, &vertexArrayObject);
 }
 
-void GLVertexArrayObject::Bind() {
+void OpenGL::VertexArrayObject::Bind() {
 	glBindVertexArray(vertexArrayObject);
 }
 
-void GLVertexArrayObject::Unbind() {
+void OpenGL::VertexArrayObject::Unbind() {
 	glBindVertexArray(0);
 }

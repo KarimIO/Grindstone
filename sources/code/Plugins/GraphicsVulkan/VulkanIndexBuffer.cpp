@@ -2,47 +2,45 @@
 #include "VulkanCore.hpp"
 #include "VulkanUtils.hpp"
 
-namespace Grindstone {
-	namespace GraphicsAPI {
-		VulkanIndexBuffer::VulkanIndexBuffer(IndexBuffer::CreateInfo& createInfo) {
-			is32Bit = createInfo.is32Bit;
+namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
-			VkDevice device = VulkanCore::Get().GetDevice();
+Vulkan::IndexBuffer::IndexBuffer(const CreateInfo& createInfo) {
+	is32Bit = createInfo.is32Bit;
 
-			VkDeviceSize bufferSize = createInfo.size;
+	VkDevice device = Vulkan::Core::Get().GetDevice();
 
-			std::string debugName = std::string(createInfo.debugName) + " Staging";
+	VkDeviceSize bufferSize = createInfo.size;
 
-			VkBuffer stagingBuffer;
-			VkDeviceMemory stagingBufferMemory;
-			CreateBuffer(createInfo.debugName, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+	std::string debugName = std::string(createInfo.debugName) + " Staging";
 
-			void* data;
-			vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-			memcpy(data, createInfo.content, (size_t)bufferSize);
-			vkUnmapMemory(device, stagingBufferMemory);
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	CreateBuffer(createInfo.debugName, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
-			CreateBuffer(createInfo.debugName, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, buffer, memory);
+	void* data;
+	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+	memcpy(data, createInfo.content, (size_t)bufferSize);
+	vkUnmapMemory(device, stagingBufferMemory);
 
-			CopyBuffer(stagingBuffer, buffer, bufferSize);
+	CreateBuffer(createInfo.debugName, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, buffer, memory);
 
-			vkDestroyBuffer(device, stagingBuffer, nullptr);
-			vkFreeMemory(device, stagingBufferMemory, nullptr);
-		}
+	CopyBuffer(stagingBuffer, buffer, bufferSize);
 
-		VulkanIndexBuffer::~VulkanIndexBuffer() {
-			VkDevice device = VulkanCore::Get().GetDevice();
-			vkDestroyBuffer(device, buffer, nullptr);
-			vkFreeMemory(device, memory, nullptr);
-		}
+	vkDestroyBuffer(device, stagingBuffer, nullptr);
+	vkFreeMemory(device, stagingBufferMemory, nullptr);
+}
 
-		VkBuffer VulkanIndexBuffer::GetBuffer() const {
-			return buffer;
-		}
+Vulkan::IndexBuffer::~IndexBuffer() {
+	VkDevice device = Vulkan::Core::Get().GetDevice();
+	vkDestroyBuffer(device, buffer, nullptr);
+	vkFreeMemory(device, memory, nullptr);
+}
 
-		bool VulkanIndexBuffer::Is32Bit() const {
-			return is32Bit;
-		}
-	}
+VkBuffer Vulkan::IndexBuffer::GetBuffer() const {
+	return buffer;
+}
+
+bool Vulkan::IndexBuffer::Is32Bit() const {
+	return is32Bit;
 }
 

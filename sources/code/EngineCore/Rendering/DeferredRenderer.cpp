@@ -1490,7 +1490,7 @@ void DeferredRenderer::CreatePipelines() {
 	pipelineCreateInfo.vertexBindings = &vertexLightPositionLayout;
 	pipelineCreateInfo.vertexBindingsCount = 1;
 
-	std::vector<ShaderStageCreateInfo> shaderStageCreateInfos;
+	std::vector<GraphicsPipeline::CreateInfo::ShaderStageData> shaderStageCreateInfos;
 	std::vector<std::vector<char>> fileData;
 
 	Grindstone::Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
@@ -1529,7 +1529,7 @@ void DeferredRenderer::CreatePipelines() {
 	pipelineCreateInfo.scissorH = framebufferHeight;
 
 	{
-		ShaderStageCreateInfo bloomShaderStageCreateInfo;
+		GraphicsPipeline::CreateInfo::ShaderStageData bloomShaderStageCreateInfo;
 		std::vector<char> bloomFileData;
 
 		if (!assetManager->LoadShaderStage(Uuid("8a2475b4-8731-456c-beb7-2d51db7914f9"), ShaderStage::Compute, bloomShaderStageCreateInfo, bloomFileData)) {
@@ -1551,7 +1551,7 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		ShaderStageCreateInfo ssrShaderStageCreateInfo;
+		GraphicsPipeline::CreateInfo::ShaderStageData ssrShaderStageCreateInfo;
 		std::vector<char> ssrFileData;
 
 		if (!assetManager->LoadShaderStage(Uuid("cff2c843-6b35-4030-9a4b-464feb1e3365"), ShaderStage::Compute, ssrShaderStageCreateInfo, ssrFileData)) {

@@ -28,7 +28,7 @@ GraphicsAPI::ShaderStage GetStageFromString(std::string str) {
 	}
 
 	assert(false && "Incorrect");
-	return GraphicsAPI::ShaderStage::All;
+	return GraphicsAPI::ShaderStage::Count;
 }
 
 uint8_t GetShaderBitMaskFromArray(rapidjson::GenericArray<false, rapidjson::Value> array) {

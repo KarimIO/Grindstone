@@ -25,6 +25,7 @@
 #include "VulkanGraphicsPipeline.hpp"
 #include "VulkanComputePipeline.hpp"
 #include "VulkanIndexBuffer.hpp"
+#include "VulkanUniformBuffer.hpp"
 #include "VulkanRenderPass.hpp"
 #include "VulkanRenderTarget.hpp"
 #include "VulkanTexture.hpp"
@@ -39,7 +40,8 @@
 #define VMA_IMPLEMENTATION
 #include "vk_mem_alloc.h"
 
-using namespace Grindstone::GraphicsAPI;
+namespace Base = Grindstone::GraphicsAPI;
+namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 using namespace Grindstone::Memory;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
@@ -70,7 +72,7 @@ const bool enableValidationLayers = true;
 constexpr auto vkApiVersion = VK_API_VERSION_1_3;
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-	Grindstone::GraphicsAPI::VulkanCore* vk = static_cast<Grindstone::GraphicsAPI::VulkanCore*>(pUserData);
+	Grindstone::GraphicsAPI::Vulkan::Core* vk = static_cast<Grindstone::GraphicsAPI::Vulkan::Core*>(pUserData);
 
 	Grindstone::LogSeverity logSeverity = Grindstone::LogSeverity::Info;
 	switch (messageSeverity) {
@@ -110,16 +112,16 @@ static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMesse
 	}
 }
 
-VulkanCore *VulkanCore::graphicsWrapper = nullptr;
+Vulkan::Core *Vulkan::Core::graphicsWrapper = nullptr;
 
-bool VulkanCore::Initialize(Core::CreateInfo& ci) {
+bool Vulkan::Core::Initialize(const Base::Core::CreateInfo& ci) {
 	apiType = API::Vulkan;
 	graphicsWrapper = this;
 	debug = ci.debug;
 	primaryWindow = ci.window;
 
 	CreateInstance();
-	auto wgb = AllocatorCore::Allocate<VulkanWindowGraphicsBinding>();
+	auto wgb = AllocatorCore::Allocate<Vulkan::WindowGraphicsBinding>();
 	primaryWindow->AddBinding(wgb);
 	wgb->Initialize(primaryWindow);
 	if (ci.debug) {
@@ -131,7 +133,7 @@ bool VulkanCore::Initialize(Core::CreateInfo& ci) {
 	CreateAllocator();
 
 	pfnDebugUtilsSetObjectName = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(vkGetDeviceProcAddr(device, "vkSetDebugUtilsObjectNameEXT"));
-	VulkanCommandBuffer::SetupDebugLabelUtils(instance);
+	Vulkan::CommandBuffer::SetupDebugLabelUtils(instance);
 
 	if (primaryWindow->IsSwapchainControlledByEngine()) {
 		wgb->CreateSwapChain();
@@ -143,7 +145,7 @@ bool VulkanCore::Initialize(Core::CreateInfo& ci) {
 	return true;
 }
 
-void VulkanCore::CreateAllocator() {
+void Vulkan::Core::CreateAllocator() {
 	VmaAllocatorCreateInfo AllocatorInfo = {};
 	AllocatorInfo.vulkanApiVersion = vkApiVersion;
 	AllocatorInfo.physicalDevice = physicalDevice;
@@ -153,7 +155,7 @@ void VulkanCore::CreateAllocator() {
 	vmaCreateAllocator(&AllocatorInfo, &allocator);
 }
 
-void VulkanCore::CreateInstance() {
+void Vulkan::Core::CreateInstance() {
 	bool areValidationLayersFound = CheckValidationLayerSupport();
 	if (enableValidationLayers && !areValidationLayersFound) {
 		GPRINT_ERROR(LogSource::GraphicsAPI, "Vulkan validation support is requested, but not available. Please install https://vulkan.lunarg.com/");
@@ -197,7 +199,7 @@ void VulkanCore::CreateInstance() {
 	}
 }
 
-void VulkanCore::SetupDebugMessenger() {
+void Vulkan::Core::SetupDebugMessenger() {
 	if (!enableValidationLayers) return;
 
 	VkDebugUtilsMessengerCreateInfoEXT createInfo;
@@ -208,12 +210,12 @@ void VulkanCore::SetupDebugMessenger() {
 	}
 }
 
-void VulkanCore::PickPhysicalDevice() {
+void Vulkan::Core::PickPhysicalDevice() {
 	uint32_t deviceCount = 0;
 	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
 	if (deviceCount == 0) {
-		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to find GPUs with Vulkan support!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to find GPUs with Vulkan:: support!");
 	}
 
 	std::vector<VkPhysicalDevice> devices(deviceCount);
@@ -257,7 +259,7 @@ void VulkanCore::PickPhysicalDevice() {
 	presentFamily = indices.presentFamily;
 }
 
-void VulkanCore::CreateLogicalDevice() {
+void Vulkan::Core::CreateLogicalDevice() {
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 	std::set<uint32_t> uniqueQueueFamilies = { graphicsFamily, presentFamily };
 
@@ -312,7 +314,7 @@ void VulkanCore::CreateLogicalDevice() {
 	vkGetDeviceQueue(device, presentFamily, 0, &presentQueue);
 }
 
-void VulkanCore::CreateCommandPool() {
+void Vulkan::Core::CreateCommandPool() {
 	VkCommandPoolCreateInfo poolCreateInfo = {};
 	poolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
@@ -323,7 +325,7 @@ void VulkanCore::CreateCommandPool() {
 	}
 }
 
-bool VulkanCore::CheckValidationLayerSupport() {
+bool Vulkan::Core::CheckValidationLayerSupport() {
 	uint32_t layerCount;
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
@@ -348,7 +350,7 @@ bool VulkanCore::CheckValidationLayerSupport() {
 	return false;
 }
 
-QueueFamilyIndices VulkanCore::FindQueueFamilies(VkPhysicalDevice device) {
+Vulkan::QueueFamilyIndices Vulkan::Core::FindQueueFamilies(VkPhysicalDevice device) {
 	QueueFamilyIndices indices;
 
 	uint32_t queueFamilyCount = 0;
@@ -379,7 +381,7 @@ QueueFamilyIndices VulkanCore::FindQueueFamilies(VkPhysicalDevice device) {
 	return indices;
 }
 
-std::vector<const char*> VulkanCore::GetRequiredExtensions() {
+std::vector<const char*> Vulkan::Core::GetRequiredExtensions() {
 	std::vector<const char*> extensions;
 	/* TODO: This was removed to switch to glfw. When supporting Win32 or Xlib again, reimplement this.
 	= {
@@ -410,7 +412,7 @@ std::vector<const char*> VulkanCore::GetRequiredExtensions() {
 	return extensions;
 }
 
-void VulkanCore::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
+void Vulkan::Core::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
 	createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
 	createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
@@ -419,14 +421,14 @@ void VulkanCore::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInf
 	createInfo.pUserData = this;
 }
 
-uint16_t VulkanCore::ScoreDevice(VkPhysicalDevice device) {
+uint16_t Vulkan::Core::ScoreDevice(VkPhysicalDevice device) {
 	QueueFamilyIndices indices = FindQueueFamilies(device);
 
 	bool extensionsSupported = CheckDeviceExtensionSupport(device);
 
 	bool swapChainAdequate = false;
 	if (extensionsSupported) {
-		auto wgb = static_cast<VulkanWindowGraphicsBinding*>(primaryWindow->GetWindowGraphicsBinding());
+		auto wgb = static_cast<Vulkan::WindowGraphicsBinding*>(primaryWindow->GetWindowGraphicsBinding());
 		SwapChainSupportDetails swapChainSupport = wgb->QuerySwapChainSupport(device);
 		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 	}
@@ -463,7 +465,7 @@ uint16_t VulkanCore::ScoreDevice(VkPhysicalDevice device) {
 	return static_cast<uint16_t>(heapScore + gpuTypeScore);
 }
 
-bool VulkanCore::CheckDeviceExtensionSupport(VkPhysicalDevice device) {
+bool Vulkan::Core::CheckDeviceExtensionSupport(VkPhysicalDevice device) {
 	uint32_t extensionCount;
 	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
 
@@ -479,7 +481,7 @@ bool VulkanCore::CheckDeviceExtensionSupport(VkPhysicalDevice device) {
 	return requiredExtensions.empty();
 }
 
-VulkanCore::~VulkanCore() {
+Vulkan::Core::~Core() {
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		vkDestroySemaphore(device, renderFinishedSemaphores[i], allocator->GetAllocationCallbacks());
 		vkDestroySemaphore(device, imageAvailableSemaphores[i], allocator->GetAllocationCallbacks());
@@ -499,11 +501,11 @@ VulkanCore::~VulkanCore() {
 
 }
 
-void VulkanCore::WaitUntilIdle() {
+void Vulkan::Core::WaitUntilIdle() {
 	vkDeviceWaitIdle(device);
 }
 
-void VulkanCore::CreateDescriptorPool() {
+void Vulkan::Core::CreateDescriptorPool() {
 	std::array<VkDescriptorPoolSize, 3> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	poolSizes[0].descriptorCount = 1000; // static_cast<uint32_t>(swapChainImages.size());
@@ -523,18 +525,18 @@ void VulkanCore::CreateDescriptorPool() {
 	}
 }
 
-VulkanCore &VulkanCore::Get() {
+Vulkan::Core &Vulkan::Core::Get() {
 	return *graphicsWrapper;
 }
 
-void VulkanCore::RegisterWindow(Window* window) {
-	auto wgb = AllocatorCore::Allocate<VulkanWindowGraphicsBinding>();
+void Vulkan::Core::RegisterWindow(Window* window) {
+	auto wgb = AllocatorCore::Allocate<Vulkan::WindowGraphicsBinding>();
 	window->AddBinding(wgb);
 	wgb->Initialize(window);
 	//wgb->shareLists((VulkanWindowGraphicsBinding*)primary_window_->getWindowGraphicsBinding());
 }
 
-uint32_t VulkanCore::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+uint32_t Vulkan::Core::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 	VkPhysicalDeviceMemoryProperties memProperties;
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
 
@@ -549,39 +551,39 @@ uint32_t VulkanCore::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags p
 	return UINT32_MAX;
 }
 
-VkInstance VulkanCore::GetInstance() {
+VkInstance Vulkan::Core::GetInstance() {
 	return instance;
 }
 
-VkDevice VulkanCore::GetDevice() {
+VkDevice Vulkan::Core::GetDevice() {
 	return device;
 }
 
-VkPhysicalDevice VulkanCore::GetPhysicalDevice() {
+VkPhysicalDevice Vulkan::Core::GetPhysicalDevice() {
 	return physicalDevice;
 }
 
-VkCommandBuffer VulkanCore::BeginSingleTimeCommands() {
-	return GraphicsAPI::BeginSingleTimeCommands();
+VkCommandBuffer Vulkan::Core::BeginSingleTimeCommands() {
+	return Vulkan::BeginSingleTimeCommands();
 }
 
-uint32_t VulkanCore::GetGraphicsFamily() {
+uint32_t Vulkan::Core::GetGraphicsFamily() {
 	return graphicsFamily;
 }
 
-void VulkanCore::EndSingleTimeCommands(VkCommandBuffer commandBuffer) {
-	GraphicsAPI::EndSingleTimeCommands(commandBuffer);
+void Vulkan::Core::EndSingleTimeCommands(VkCommandBuffer commandBuffer) {
+	Vulkan::EndSingleTimeCommands(commandBuffer);
 }
 
-VkCommandPool VulkanCore::GetGraphicsCommandPool() const {
+VkCommandPool Vulkan::Core::GetGraphicsCommandPool() const {
 	return commandPoolGraphics;
 }
 
-void VulkanCore::AdjustPerspective(float *perspective) {
+void Vulkan::Core::AdjustPerspective(float *perspective) {
 	perspective[1*4 + 1] *= -1;
 }
 
-void VulkanCore::NameObject(
+void Vulkan::Core::NameObject(
 	VkObjectType objectType,
 	void* object,
 	const char* objectName
@@ -597,223 +599,223 @@ void VulkanCore::NameObject(
 //==================================
 // Get Text Metainfo
 //==================================
-const char* VulkanCore::GetVendorName() {
+const char* Vulkan::Core::GetVendorName() const {
 	return vendorName.c_str();
 }
 
-const char* VulkanCore::GetAdapterName() {
+const char* Vulkan::Core::GetAdapterName() const {
 	return adapterName.c_str();
 }
 
-const char* VulkanCore::GetAPIName() {
+const char* Vulkan::Core::GetAPIName() const {
 	return "Vulkan";
 }
 
-const char* VulkanCore::GetAPIVersion() {
+const char* Vulkan::Core::GetAPIVersion() const {
 	return apiVersion.c_str();
 }
 
-const char* VulkanCore::GetDefaultShaderExtension() {
+const char* Vulkan::Core::GetDefaultShaderExtension() const {
 	return ".vk.spv";
 }
 
 //==================================
 // Creators
 //==================================
-Framebuffer *VulkanCore::CreateFramebuffer(Framebuffer::CreateInfo& ci) {
-	return static_cast<Framebuffer*>(AllocatorCore::Allocate<VulkanFramebuffer>(ci));
+Base::Framebuffer* Vulkan::Core::CreateFramebuffer(const Base::Framebuffer::CreateInfo& ci) {
+	return static_cast<Base::Framebuffer*>(AllocatorCore::Allocate<Vulkan::Framebuffer>(ci));
 }
 
-RenderPass * VulkanCore::CreateRenderPass(RenderPass::CreateInfo& ci) {
-	return static_cast<RenderPass*>(AllocatorCore::Allocate<VulkanRenderPass>(ci));
+Base::RenderPass* Vulkan::Core::CreateRenderPass(const Base::RenderPass::CreateInfo& ci) {
+	return static_cast<Base::RenderPass*>(AllocatorCore::Allocate<Vulkan::RenderPass>(ci));
 }
 
-ComputePipeline* VulkanCore::CreateComputePipeline(ComputePipeline::CreateInfo& ci) {
-	return static_cast<ComputePipeline*>(AllocatorCore::Allocate<VulkanComputePipeline>(ci));
+Base::ComputePipeline* Vulkan::Core::CreateComputePipeline(const Base::ComputePipeline::CreateInfo& ci) {
+	return static_cast<Base::ComputePipeline*>(AllocatorCore::Allocate<Vulkan::ComputePipeline>(ci));
 }
 
-GraphicsPipeline* VulkanCore::CreateGraphicsPipeline(GraphicsPipeline::CreateInfo& ci) {
-	return static_cast<GraphicsPipeline*>(AllocatorCore::Allocate<VulkanGraphicsPipeline>(ci));
+Base::GraphicsPipeline* Vulkan::Core::CreateGraphicsPipeline(const Base::GraphicsPipeline::CreateInfo& ci) {
+	return static_cast<Base::GraphicsPipeline*>(AllocatorCore::Allocate<Vulkan::GraphicsPipeline>(ci));
 }
 
-CommandBuffer * VulkanCore::CreateCommandBuffer(CommandBuffer::CreateInfo& ci) {
-	return static_cast<CommandBuffer*>(AllocatorCore::Allocate<VulkanCommandBuffer>(ci));
+Base::CommandBuffer* Vulkan::Core::CreateCommandBuffer(const Base::CommandBuffer::CreateInfo& ci) {
+	return static_cast<Base::CommandBuffer*>(AllocatorCore::Allocate<Vulkan::CommandBuffer>(ci));
 }
 
-VertexArrayObject* VulkanCore::CreateVertexArrayObject(VertexArrayObject::CreateInfo& ci) {
-	return static_cast<VertexArrayObject*>(AllocatorCore::Allocate<VulkanVertexArrayObject>(ci));
+Base::VertexArrayObject* Vulkan::Core::CreateVertexArrayObject(const Base::VertexArrayObject::CreateInfo& ci) {
+	return static_cast<Base::VertexArrayObject*>(AllocatorCore::Allocate<Vulkan::VertexArrayObject>(ci));
 }
 
-VertexBuffer * VulkanCore::CreateVertexBuffer(VertexBuffer::CreateInfo& ci) {
-	return static_cast<VertexBuffer*>(AllocatorCore::Allocate<VulkanVertexBuffer>(ci));
+Base::VertexBuffer* Vulkan::Core::CreateVertexBuffer(const Base::VertexBuffer::CreateInfo& ci) {
+	return static_cast<Base::VertexBuffer*>(AllocatorCore::Allocate<Vulkan::VertexBuffer>(ci));
 }
 
-IndexBuffer * VulkanCore::CreateIndexBuffer(IndexBuffer::CreateInfo& ci) {
-	return static_cast<IndexBuffer*>(AllocatorCore::Allocate<VulkanIndexBuffer>(ci));
+Base::IndexBuffer* Vulkan::Core::CreateIndexBuffer(const Base::IndexBuffer::CreateInfo& ci) {
+	return static_cast<Base::IndexBuffer*>(AllocatorCore::Allocate<Vulkan::IndexBuffer>(ci));
 }
 
-UniformBuffer * VulkanCore::CreateUniformBuffer(UniformBuffer::CreateInfo& ci) {
-	return static_cast<UniformBuffer*>(AllocatorCore::Allocate<VulkanUniformBuffer>(ci));
+Base::UniformBuffer* Vulkan::Core::CreateUniformBuffer(const Base::UniformBuffer::CreateInfo& ci) {
+	return static_cast<Base::UniformBuffer*>(AllocatorCore::Allocate<Vulkan::UniformBuffer>(ci));
 }
 
-Texture* VulkanCore::CreateCubemap(Texture::CubemapCreateInfo& createInfo) {
-	return nullptr; // static_cast<Texture*>(AllocatorCore::Allocate<VulkanTexture>(ci));
+Base::Texture* Vulkan::Core::CreateCubemap(const Base::Texture::CubemapCreateInfo& createInfo) {
+	return nullptr; // static_cast<Base::Texture*>(AllocatorCore::Allocate<Vulkan::Texture>(ci));
 }
 
-Texture* VulkanCore::CreateTexture(Texture::CreateInfo& ci) {
-	return static_cast<Texture*>(AllocatorCore::Allocate<VulkanTexture>(ci));
+Base::Texture* Vulkan::Core::CreateTexture(const Base::Texture::CreateInfo& ci) {
+	return static_cast<Base::Texture*>(AllocatorCore::Allocate<Vulkan::Texture>(ci));
 }
 
-DescriptorSet* VulkanCore::CreateDescriptorSet(DescriptorSet::CreateInfo& ci) {
-	return static_cast<DescriptorSet*>(AllocatorCore::Allocate<VulkanDescriptorSet>(ci));
+Base::DescriptorSet* Vulkan::Core::CreateDescriptorSet(const Base::DescriptorSet::CreateInfo& ci) {
+	return static_cast<Base::DescriptorSet*>(AllocatorCore::Allocate<Vulkan::DescriptorSet>(ci));
 }
 
-DescriptorSetLayout* VulkanCore::CreateDescriptorSetLayout(DescriptorSetLayout::CreateInfo& ci) {
-	return static_cast<DescriptorSetLayout*>(AllocatorCore::Allocate<VulkanDescriptorSetLayout>(ci));
+Base::DescriptorSetLayout* Vulkan::Core::CreateDescriptorSetLayout(const Base::DescriptorSetLayout::CreateInfo& ci) {
+	return static_cast<Base::DescriptorSetLayout*>(AllocatorCore::Allocate<Vulkan::DescriptorSetLayout>(ci));
 }
 
-RenderTarget* VulkanCore::CreateRenderTarget(RenderTarget::CreateInfo& ci) {
-	return static_cast<RenderTarget*>(AllocatorCore::Allocate<VulkanRenderTarget>(ci));
+Base::RenderTarget* Vulkan::Core::CreateRenderTarget(const Base::RenderTarget::CreateInfo& ci) {
+	return static_cast<Base::RenderTarget*>(AllocatorCore::Allocate<Vulkan::RenderTarget>(ci));
 }
 
-RenderTarget* VulkanCore::CreateRenderTarget(RenderTarget::CreateInfo* ci, uint32_t rc, bool cube) {
-	return static_cast<RenderTarget*>(AllocatorCore::Allocate<VulkanRenderTarget>(*ci));
+Base::RenderTarget* Vulkan::Core::CreateRenderTarget(const Base::RenderTarget::CreateInfo* ci, uint32_t rc, bool cube) {
+	return static_cast<Base::RenderTarget*>(AllocatorCore::Allocate<Vulkan::RenderTarget>(*ci));
 }
 
-DepthTarget* VulkanCore::CreateDepthTarget(DepthTarget::CreateInfo& ci) {
-	return static_cast<DepthTarget*>(AllocatorCore::Allocate<VulkanDepthTarget>(ci));
+Base::DepthTarget* Vulkan::Core::CreateDepthTarget(const Base::DepthTarget::CreateInfo& ci) {
+	return static_cast<Base::DepthTarget*>(AllocatorCore::Allocate<Vulkan::DepthTarget>(ci));
 }
 
-//==================================
 // Deleters
 //==================================
-void VulkanCore::DeleteRenderTarget(RenderTarget * ptr) {
-	AllocatorCore::Free(static_cast<VulkanRenderTarget*>(ptr));
+void Vulkan::Core::DeleteRenderTarget(Base::RenderTarget * ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::RenderTarget*>(ptr));
 }
 
-void VulkanCore::DeleteDepthTarget(DepthTarget * ptr) {
-	AllocatorCore::Free(static_cast<VulkanDepthTarget*>(ptr));
+void Vulkan::Core::DeleteDepthTarget(Base::DepthTarget * ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::DepthTarget*>(ptr));
 }
 
-void VulkanCore::DeleteFramebuffer(Framebuffer *ptr) {
-	AllocatorCore::Free(static_cast<VulkanFramebuffer*>(ptr));
+void Vulkan::Core::DeleteFramebuffer(Base::Framebuffer *ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::Framebuffer*>(ptr));
 }
 
-void VulkanCore::DeleteVertexArrayObject(VertexArrayObject* ptr) {
-	AllocatorCore::Free(static_cast<VulkanVertexArrayObject*>(ptr));
+void Vulkan::Core::DeleteVertexArrayObject(Base::VertexArrayObject* ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::VertexArrayObject*>(ptr));
 }
 
-void VulkanCore::DeleteVertexBuffer(VertexBuffer *ptr) {
-	AllocatorCore::Free(static_cast<VulkanVertexBuffer*>(ptr));
+void Vulkan::Core::DeleteVertexBuffer(Base::VertexBuffer *ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::VertexBuffer*>(ptr));
 }
 
-void VulkanCore::DeleteIndexBuffer(IndexBuffer *ptr) {
-	AllocatorCore::Free(static_cast<VulkanIndexBuffer*>(ptr));
+void Vulkan::Core::DeleteIndexBuffer(Base::IndexBuffer *ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::IndexBuffer*>(ptr));
 }
 
-void VulkanCore::DeleteUniformBuffer(UniformBuffer *ptr) {
-	AllocatorCore::Free(static_cast<VulkanUniformBuffer*>(ptr));
+void Vulkan::Core::DeleteUniformBuffer(Base::UniformBuffer *ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::UniformBuffer*>(ptr));
 }
 
-void VulkanCore::DeleteComputePipeline(ComputePipeline* ptr) {
-	AllocatorCore::Free(static_cast<VulkanComputePipeline*>(ptr));
+void Vulkan::Core::DeleteComputePipeline(Base::ComputePipeline* ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::ComputePipeline*>(ptr));
 }
 
-void VulkanCore::DeleteGraphicsPipeline(GraphicsPipeline *ptr) {
-	AllocatorCore::Free(static_cast<VulkanGraphicsPipeline*>(ptr));
+void Vulkan::Core::DeleteGraphicsPipeline(Base::GraphicsPipeline *ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::GraphicsPipeline*>(ptr));
 }
 
-void VulkanCore::DeleteRenderPass(RenderPass *ptr) {
-	AllocatorCore::Free(static_cast<VulkanRenderPass*>(ptr));
+void Vulkan::Core::DeleteRenderPass(Base::RenderPass *ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::RenderPass*>(ptr));
 }
 
-void VulkanCore::DeleteTexture(Texture * ptr) {
-	AllocatorCore::Free(static_cast<VulkanTexture*>(ptr));
+void Vulkan::Core::DeleteTexture(Base::Texture* ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::Texture*>(ptr));
 }
 
-void VulkanCore::DeleteDescriptorSet(DescriptorSet* ptr) {
-	AllocatorCore::Free(static_cast<VulkanDescriptorSet*>(ptr));
-}
-void VulkanCore::DeleteDescriptorSetLayout(DescriptorSetLayout * ptr) {
-	AllocatorCore::Free(static_cast<VulkanDescriptorSetLayout*>(ptr));
+void Vulkan::Core::DeleteDescriptorSet(Base::DescriptorSet* ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::DescriptorSet*>(ptr));
 }
 
-void VulkanCore::DeleteCommandBuffer(CommandBuffer *ptr) {
-	AllocatorCore::Free(static_cast<VulkanCommandBuffer*>(ptr));
+void Vulkan::Core::DeleteDescriptorSetLayout(Base::DescriptorSetLayout * ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::DescriptorSetLayout*>(ptr));
+}
+
+void Vulkan::Core::DeleteCommandBuffer(Base::CommandBuffer *ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::CommandBuffer*>(ptr));
 }
 
 //==================================
 // Booleans
 //==================================
-inline const bool VulkanCore::ShouldUseImmediateMode() {
+inline bool Vulkan::Core::ShouldUseImmediateMode() const {
 	return false;
 }
-inline const bool VulkanCore::SupportsCommandBuffers() {
+inline bool Vulkan::Core::SupportsCommandBuffers() const {
 	return false;
 }
-inline const bool VulkanCore::SupportsTesselation() {
+inline bool Vulkan::Core::SupportsTesselation() const {
 	return false;
 }
-inline const bool VulkanCore::SupportsGeometryShader() {
+inline bool Vulkan::Core::SupportsGeometryShader() const {
 	return false;
 }
-inline const bool VulkanCore::SupportsComputeShader() {
+inline bool Vulkan::Core::SupportsComputeShader() const {
 	return false;
 }
-inline const bool VulkanCore::SupportsMultiDrawIndirect() {
+inline bool Vulkan::Core::SupportsMultiDrawIndirect() const {
 	return false;
 }
 
 //==================================
 // Unused
 //==================================
-void VulkanCore::Clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) {
-	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::Clear is not used.");
+void Vulkan::Core::Clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) {
+	GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan::Core::Clear is not used.");
 	assert(false);
 }
-void VulkanCore::BindGraphicsPipeline(GraphicsPipeline*) {
-	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::BindGraphicsPipeline is not used.");
+void Vulkan::Core::BindGraphicsPipeline(Base::GraphicsPipeline*) {
+	GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan::Core::BindGraphicsPipeline is not used.");
 	assert(false);
 }
-void VulkanCore::BindVertexArrayObject(VertexArrayObject *) {
-	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::BindVertexArrayObject is not used.");
+void Vulkan::Core::BindVertexArrayObject(Base::VertexArrayObject *) {
+	GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan::Core::BindVertexArrayObject is not used.");
 	assert(false);
 }
-void VulkanCore::DrawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
-	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::DrawImmediateIndexed is not used.");
+void Vulkan::Core::DrawImmediateIndexed(GeometryType geometryType, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
+	GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan::Core::DrawImmediateIndexed is not used.");
 	assert(false);
 }
-void VulkanCore::DrawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) {
-	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::DrawImmediateVertices is not used.");
+void Vulkan::Core::DrawImmediateVertices(GeometryType geometryType, uint32_t base, uint32_t count) {
+	GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan::Core::DrawImmediateVertices is not used.");
 	assert(false);
 }
-void VulkanCore::SetImmediateBlending(
+void Vulkan::Core::SetImmediateBlending(
 	BlendOperation colorOp, BlendFactor colorSrc, BlendFactor colorDst,
 	BlendOperation alphaOp, BlendFactor alphaSrc, BlendFactor alphaDst
 ) {
-	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::SetImmediateBlending is not used.");
+	GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan::Core::SetImmediateBlending is not used.");
 	assert(false);
 }
-void VulkanCore::EnableDepthWrite(bool state) {
-	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::EnableDepthWrite is not used.");
+void Vulkan::Core::EnableDepthWrite(bool state) {
+	GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan::Core::EnableDepthWrite is not used.");
 	assert(false);
 }
-void VulkanCore::SetColorMask(ColorMask mask) {
-	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanCore::SetColorMask is not used.");
+void Vulkan::Core::SetColorMask(ColorMask mask) {
+	GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan::Core::SetColorMask is not used.");
 	assert(false);
 }
 
-void VulkanCore::CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) {
+void Vulkan::Core::CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) {
 }
 
-void VulkanCore::BindDefaultFramebuffer() {
+void Vulkan::Core::BindDefaultFramebuffer() {
 }
 
-void VulkanCore::BindDefaultFramebufferWrite() {
+void Vulkan::Core::BindDefaultFramebufferWrite() {
 }
 
-void VulkanCore::BindDefaultFramebufferRead() {
+void Vulkan::Core::BindDefaultFramebufferRead() {
 }
 
-void VulkanCore::ResizeViewport(uint32_t w, uint32_t h) {
+void Vulkan::Core::ResizeViewport(uint32_t w, uint32_t h) {
 }

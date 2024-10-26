@@ -73,7 +73,7 @@ file(GLOB_RECURSE HEADER_MEMORY ${COMMON_DIR}/Memory/Allocators/LinearAllocator.
 source_group("Memory\\Source Files" FILES ${SOURCE_MEMORY})
 source_group("Memory\\Header Files" FILES ${HEADER_MEMORY})
 
-file(GLOB_RECURSE SOURCE_COMMON_UTILS ${CORE_UTILS} ${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINE_CORE_DIR}/Utils/Utilities.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${COMMON_DIR}/Graphics/Formats.cpp ${ENGINE_CORE_DIR}/Utils/WindowGlue.cpp)
+file(GLOB_RECURSE SOURCE_COMMON_UTILS ${CORE_UTILS} ${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINE_CORE_DIR}/Utils/Utilities.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${ENGINE_CORE_DIR}/Utils/WindowGlue.cpp)
 file(GLOB_RECURSE HEADER_COMMON_UTILS ${COMMON_DIR}/Utilities/ModuleLoading.hpp ${ENGINE_CORE_DIR}/Utils/Utilities.hpp ${COMMON_DIR}/ResourcePipeline/Uuid.hpp ${COMMON_DIR}/Buffer.hpp)
 source_group("Utilities\\Source Files" FILES ${SOURCE_COMMON_UTILS})
 source_group("Utilities\\Header Files" FILES ${HEADER_COMMON_UTILS})

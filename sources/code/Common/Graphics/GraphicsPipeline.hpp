@@ -11,16 +11,16 @@ namespace Grindstone::GraphicsAPI {
 	class DescriptorSetLayout;
 	struct VertexBufferLayout;
 
-	struct ShaderStageCreateInfo {
-		const char *fileName;
-		const char *content;
-		uint32_t size;
-		ShaderStage type;
-	};
-
 	class GraphicsPipeline {
 	public:
 		struct CreateInfo {
+			struct ShaderStageData {
+				const char* fileName;
+				const char* content;
+				uint32_t size;
+				ShaderStage type;
+			};
+
 			const char* debugName;
 			GeometryType primitiveType;
 			PolygonFillMode polygonFillMode;
@@ -29,7 +29,7 @@ namespace Grindstone::GraphicsAPI {
 			float width, height;
 			int32_t scissorX = 0, scissorY = 0;
 			uint32_t scissorW, scissorH;
-			ShaderStageCreateInfo* shaderStageCreateInfos;
+			ShaderStageData* shaderStageCreateInfos;
 			uint32_t shaderStageCreateInfoCount;
 			DescriptorSetLayout** descriptorSetLayouts;
 			uint32_t descriptorSetLayoutCount;
@@ -54,6 +54,6 @@ namespace Grindstone::GraphicsAPI {
 			float depthBiasClamp = 0.0f;
 		};
 
-		virtual void Recreate(CreateInfo& createInfo) = 0;
+		virtual void Recreate(const CreateInfo& createInfo) = 0;
 	};
 }

@@ -109,7 +109,7 @@ bool FileAssetLoader::LoadText(AssetType assetType, std::filesystem::path path, 
 bool FileAssetLoader::LoadShaderStage(
 	Uuid uuid,
 	GraphicsAPI::ShaderStage shaderStage,
-	GraphicsAPI::ShaderStageCreateInfo& stageCreateInfo,
+	GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& stageCreateInfo,
 	std::vector<char>& fileData
 ) {
 	auto& path = GetShaderPath(uuid, shaderStage);

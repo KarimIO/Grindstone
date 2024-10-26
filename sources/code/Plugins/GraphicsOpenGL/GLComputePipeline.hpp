@@ -2,18 +2,16 @@
 
 #include <Common/Graphics/ComputePipeline.hpp>
 
-namespace Grindstone {
-	namespace GraphicsAPI {
-		class GLComputePipeline : public ComputePipeline {
-		public:
-			GLComputePipeline(ComputePipeline::CreateInfo& createInfo);
-			virtual void Recreate(ComputePipeline::CreateInfo& createInfo) override;
-			void Bind();
-			~GLComputePipeline();
-		private:
-			void CreatePipeline(ComputePipeline::CreateInfo& createInfo);
+namespace Grindstone::GraphicsAPI::OpenGL {
+	class ComputePipeline : public Grindstone::GraphicsAPI::ComputePipeline {
+	public:
+		ComputePipeline(const CreateInfo& createInfo);
+		virtual void Recreate(const CreateInfo& createInfo) override;
+		void Bind();
+		~ComputePipeline();
+	private:
+		void CreatePipeline(const CreateInfo& createInfo);
 
-			GLuint program;
-		};
-	}
+		GLuint program;
+	};
 }

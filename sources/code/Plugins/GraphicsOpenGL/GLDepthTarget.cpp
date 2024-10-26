@@ -5,7 +5,7 @@
 
 using namespace Grindstone::GraphicsAPI;
 
-GLDepthTarget::GLDepthTarget(CreateInfo& createInfo) {
+OpenGL::DepthTarget::DepthTarget(const DepthTarget::CreateInfo& createInfo) {
 	width = createInfo.width;
 	height = createInfo.height;
 	depthFormat = createInfo.format;
@@ -15,7 +15,7 @@ GLDepthTarget::GLDepthTarget(CreateInfo& createInfo) {
 	CreateDepthTarget();
 }
 
-void GLDepthTarget::CreateDepthTarget() {
+void OpenGL::DepthTarget::CreateDepthTarget() {
 	if (handle) {
 		glDeleteTextures(1, &handle);
 	}
@@ -70,31 +70,31 @@ void GLDepthTarget::CreateDepthTarget() {
 	}
 }
 
-uint32_t GLDepthTarget::GetHandle() const {
+uint32_t OpenGL::DepthTarget::GetHandle() const {
 	return handle;
 }
 
-bool GLDepthTarget::IsCubemap() const {
+bool OpenGL::DepthTarget::IsCubemap() const {
 	return isCubemap;
 }
 
-void GLDepthTarget::Bind(int i) {
+void OpenGL::DepthTarget::Bind(int i) {
 	glActiveTexture(GL_TEXTURE0 + i);
 	glBindTexture(isCubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D, handle);
 }
 
-void GLDepthTarget::Resize(uint32_t width, uint32_t height) {
+void OpenGL::DepthTarget::Resize(uint32_t width, uint32_t height) {
 	this->width = width;
 	this->height = height;
 
 	CreateDepthTarget();
 }
 
-void GLDepthTarget::BindFace(int k) {
+void OpenGL::DepthTarget::BindFace(int k) {
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X + k, handle, 0);
 	glDrawBuffer(GL_NONE);
 }
 
-GLDepthTarget::~GLDepthTarget() {
+OpenGL::DepthTarget::~DepthTarget() {
 	glDeleteTextures(1, &handle);
 }

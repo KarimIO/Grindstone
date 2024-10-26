@@ -6,9 +6,9 @@
 #include "VulkanUtils.hpp"
 #include "VulkanUniformBuffer.hpp"
 
-using namespace Grindstone::GraphicsAPI;
+namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
-VulkanUniformBuffer::VulkanUniformBuffer(UniformBuffer::CreateInfo& createInfo) {
+Vulkan::UniformBuffer::UniformBuffer(const CreateInfo& createInfo) {
 	size = createInfo.size;
 	CreateBuffer(
 		createInfo.debugName,
@@ -20,8 +20,8 @@ VulkanUniformBuffer::VulkanUniformBuffer(UniformBuffer::CreateInfo& createInfo) 
 	);
 }
 
-VulkanUniformBuffer::~VulkanUniformBuffer() {
-	VkDevice device = VulkanCore::Get().GetDevice();
+Vulkan::UniformBuffer::~UniformBuffer() {
+	VkDevice device = Vulkan::Core::Get().GetDevice();
 
 	if (buffer != nullptr) {
 		vkDestroyBuffer(device, buffer, nullptr);
@@ -32,23 +32,23 @@ VulkanUniformBuffer::~VulkanUniformBuffer() {
 	}
 }
 		
-void VulkanUniformBuffer::UpdateBuffer(void * content) {
-	VkDevice device = VulkanCore::Get().GetDevice();
+void Vulkan::UniformBuffer::UpdateBuffer(void * content) {
+	VkDevice device = Vulkan::Core::Get().GetDevice();
 	void* data;
 	vkMapMemory(device, memory, 0, size, 0, &data);
 	memcpy(data, content, size);
 	vkUnmapMemory(device, memory);
 }
 
-uint32_t VulkanUniformBuffer::GetSize() {
+uint32_t Vulkan::UniformBuffer::GetSize() const {
 	return size;
 }
 
-VkBuffer VulkanUniformBuffer::GetBuffer() {
+VkBuffer Vulkan::UniformBuffer::GetBuffer() const {
 	return buffer;
 }
 
-void VulkanUniformBuffer::Bind() {
+void Vulkan::UniformBuffer::Bind() {
 	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanUniformBuffer::Bind is not used.");
 	assert(false);
 }
