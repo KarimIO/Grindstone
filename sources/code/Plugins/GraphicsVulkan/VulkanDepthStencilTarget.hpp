@@ -2,14 +2,14 @@
 
 #include <string>
 #include <stdint.h>
-#include <Common/Graphics/DepthTarget.hpp>
+#include <Common/Graphics/DepthStencilTarget.hpp>
 #include <vulkan/vulkan.h>
 
 namespace Grindstone::GraphicsAPI::Vulkan {
-	class DepthTarget : public Grindstone::GraphicsAPI::DepthTarget {
+	class DepthStencilTarget : public Grindstone::GraphicsAPI::DepthStencilTarget {
 	public:
-		DepthTarget(const CreateInfo& ci);
-		virtual ~DepthTarget() override;
+		DepthStencilTarget(const CreateInfo& ci);
+		virtual ~DepthStencilTarget() override;
 	public:
 		uint32_t GetWidth() const;
 		uint32_t GetHeight() const;

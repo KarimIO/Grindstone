@@ -3,17 +3,17 @@
 #include "RenderPass.hpp"
 #include "Formats.hpp"
 #include "RenderTarget.hpp"
-#include "DepthTarget.hpp"
+#include "DepthStencilTarget.hpp"
 #include <vector>
 #include <stdint.h>
 
 namespace Grindstone::GraphicsAPI {
 	class RenderPass;
 	class RenderTarget;
-	class DepthTarget;
+	class DepthStencilTarget;
 
 	/*! A framebuffer is a series of one or more RenderTarget and optionally a
-		DepthTarget. Framebuffers bind these attachments together to be drawn to
+		DepthStencilTarget. Framebuffers bind these attachments together to be drawn to
 		by a GraphicsPipeline.
 	*/
 	class Framebuffer {
@@ -32,7 +32,7 @@ namespace Grindstone::GraphicsAPI {
 
 			RenderTarget** renderTargetLists;
 			uint32_t numRenderTargetLists;
-			DepthTarget* depthTarget;
+			DepthStencilTarget* depthTarget;
 			bool isCubemap = false;
 		};
 
@@ -49,7 +49,7 @@ namespace Grindstone::GraphicsAPI {
 		virtual uint32_t GetHeight() const = 0;
 		virtual uint32_t GetRenderTargetCount() const = 0;
 		virtual RenderTarget* GetRenderTarget(uint32_t index) const = 0;
-		virtual DepthTarget* GetDepthTarget() const = 0;
+		virtual DepthStencilTarget* GetDepthStencilTarget() const = 0;
 		virtual ~Framebuffer() {};
 	};
 }

@@ -34,7 +34,7 @@ EditorCamera::EditorCamera() {
 	renderTargetCreateInfo.isSampled = true;
 	renderTarget = core->CreateRenderTarget(&renderTargetCreateInfo, 1, false);
 
-	GraphicsAPI::DepthTarget::CreateInfo depthTargetCreateInfo{};
+	GraphicsAPI::DepthStencilTarget::CreateInfo depthTargetCreateInfo{};
 	depthTargetCreateInfo.debugName = "Editor Viewport Depth Image";
 	depthTargetCreateInfo.width = framebufferWidth;
 	depthTargetCreateInfo.height = framebufferHeight;
@@ -42,7 +42,7 @@ EditorCamera::EditorCamera() {
 	depthTargetCreateInfo.isSampled = true;
 	depthTargetCreateInfo.isCubemap = false;
 	depthTargetCreateInfo.isShadowMap = false;
-	depthTarget = core->CreateDepthTarget(depthTargetCreateInfo);
+	depthTarget = core->CreateDepthStencilTarget(depthTargetCreateInfo);
 
 	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> attachments = { { renderTargetCreateInfo.format, true } };
 

@@ -2,12 +2,12 @@
 
 #include <stdint.h>
 
-#include <Common/Graphics/DepthTarget.hpp>
+#include <Common/Graphics/DepthStencilTarget.hpp>
 
 namespace Grindstone::GraphicsAPI::OpenGL {
-	class DepthTarget : public Grindstone::GraphicsAPI::DepthTarget {
+	class DepthStencilTarget : public Grindstone::GraphicsAPI::DepthStencilTarget {
 	public:
-		DepthTarget(const CreateInfo& cis);
+		DepthStencilTarget(const CreateInfo& cis);
 		uint32_t GetHandle() const;
 
 		bool IsCubemap() const;
@@ -15,9 +15,9 @@ namespace Grindstone::GraphicsAPI::OpenGL {
 		virtual void Resize(uint32_t width, uint32_t height);
 		virtual void BindFace(int k);
 		virtual void Bind(int i);
-		virtual ~DepthTarget();
+		virtual ~DepthStencilTarget();
 	private:
-		void CreateDepthTarget();
+		void CreateDepthStencilTarget();
 	private:
 		DepthFormat depthFormat;
 		uint32_t width;

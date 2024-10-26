@@ -20,7 +20,7 @@
 #include "VulkanWindowGraphicsBinding.hpp"
 #include "VulkanCore.hpp"
 #include "VulkanCommandBuffer.hpp"
-#include "VulkanDepthTarget.hpp"
+#include "VulkanDepthStencilTarget.hpp"
 #include "VulkanFramebuffer.hpp"
 #include "VulkanGraphicsPipeline.hpp"
 #include "VulkanComputePipeline.hpp"
@@ -358,7 +358,7 @@ Vulkan::QueueFamilyIndices Vulkan::Core::FindQueueFamilies(VkPhysicalDevice devi
 
 	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
 	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-	
+
 	int i = 0;
 	for (const VkQueueFamilyProperties& queueFamily : queueFamilies) {
 		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
@@ -682,8 +682,8 @@ Base::RenderTarget* Vulkan::Core::CreateRenderTarget(const Base::RenderTarget::C
 	return static_cast<Base::RenderTarget*>(AllocatorCore::Allocate<Vulkan::RenderTarget>(*ci));
 }
 
-Base::DepthTarget* Vulkan::Core::CreateDepthTarget(const Base::DepthTarget::CreateInfo& ci) {
-	return static_cast<Base::DepthTarget*>(AllocatorCore::Allocate<Vulkan::DepthTarget>(ci));
+Base::DepthStencilTarget* Vulkan::Core::CreateDepthStencilTarget(const Base::DepthStencilTarget::CreateInfo& ci) {
+	return static_cast<Base::DepthStencilTarget*>(AllocatorCore::Allocate<Vulkan::DepthStencilTarget>(ci));
 }
 
 // Deleters
@@ -692,8 +692,8 @@ void Vulkan::Core::DeleteRenderTarget(Base::RenderTarget * ptr) {
 	AllocatorCore::Free(static_cast<Vulkan::RenderTarget*>(ptr));
 }
 
-void Vulkan::Core::DeleteDepthTarget(Base::DepthTarget * ptr) {
-	AllocatorCore::Free(static_cast<Vulkan::DepthTarget*>(ptr));
+void Vulkan::Core::DeleteDepthStencilTarget(Base::DepthStencilTarget * ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::DepthStencilTarget*>(ptr));
 }
 
 void Vulkan::Core::DeleteFramebuffer(Base::Framebuffer *ptr) {

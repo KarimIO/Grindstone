@@ -11,7 +11,7 @@ namespace Grindstone::GraphicsAPI {
 	class ComputePipeline;
 	class VertexArrayObject;
 	class VertexBuffer;
-	class DepthTarget;
+	class DepthStencilTarget;
 	class IndexBuffer;
 
 	/*! CommandBuffers are an object that hold a list of commands to be executed
@@ -57,7 +57,7 @@ namespace Grindstone::GraphicsAPI {
 		virtual void DrawVertices(uint32_t vertexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) = 0;
 		virtual void DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) = 0;
 		virtual void DispatchCompute(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) = 0;
-		virtual void BlitDepthImage(DepthTarget* src, DepthTarget* dst) = 0;
+		virtual void BlitDepthImage(DepthStencilTarget* src, DepthStencilTarget* dst) = 0;
 
 		virtual void WaitForComputeMemoryBarrier(RenderTarget* renderTarget, bool shouldMakeWritable) = 0;
 

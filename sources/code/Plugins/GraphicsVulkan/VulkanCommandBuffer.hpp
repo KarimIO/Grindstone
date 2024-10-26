@@ -48,7 +48,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void DrawVertices(uint32_t vertexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) override;
 		virtual void DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) override;
 		virtual void DispatchCompute(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) override;
-		virtual void BlitDepthImage(Grindstone::GraphicsAPI::DepthTarget* src, Grindstone::GraphicsAPI::DepthTarget* dst) override;
+		virtual void BlitDepthImage(Grindstone::GraphicsAPI::DepthStencilTarget* src, Grindstone::GraphicsAPI::DepthStencilTarget* dst) override;
 		virtual void WaitForComputeMemoryBarrier(Grindstone::GraphicsAPI::RenderTarget* renderTarget, bool shouldMakeWritable) override;
 
 		virtual void EndCommandBuffer() override;

@@ -12,7 +12,7 @@ namespace Grindstone::GraphicsAPI {
 		screen. Stencil buffers are arbitrary data placed alongside the depth target,
 		often used for controlling where rendering occurs.
 	*/
-	class DepthTarget {
+	class DepthStencilTarget {
 	public:
 		struct CreateInfo {
 			const char* debugName = nullptr;
@@ -34,6 +34,6 @@ namespace Grindstone::GraphicsAPI {
 
 		virtual void Resize(uint32_t width, uint32_t height) = 0;
 		virtual void BindFace(int k) = 0;
-		virtual ~DepthTarget() {};
+		virtual ~DepthStencilTarget() {};
 	};
 }

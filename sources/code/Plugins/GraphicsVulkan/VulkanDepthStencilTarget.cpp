@@ -5,11 +5,11 @@
 #include "VulkanCore.hpp"
 #include "VulkanFormat.hpp"
 #include "VulkanUtils.hpp"
-#include "VulkanDepthTarget.hpp"
+#include "VulkanDepthStencilTarget.hpp"
 
 using namespace Grindstone::GraphicsAPI;
 
-Vulkan::DepthTarget::DepthTarget(const CreateInfo& createInfo) : format(createInfo.format), width(createInfo.width), height(createInfo.height), isShadowMap(createInfo.isShadowMap), isCubemap(createInfo.isCubemap), isSampled(createInfo.isSampled) {
+Vulkan::DepthStencilTarget::DepthStencilTarget(const CreateInfo& createInfo) : format(createInfo.format), width(createInfo.width), height(createInfo.height), isShadowMap(createInfo.isShadowMap), isCubemap(createInfo.isCubemap), isSampled(createInfo.isSampled) {
 	if (createInfo.debugName != nullptr) {
 		debugName = createInfo.debugName;
 	}
@@ -17,7 +17,7 @@ Vulkan::DepthTarget::DepthTarget(const CreateInfo& createInfo) : format(createIn
 	Create();
 }
 
-void Vulkan::DepthTarget::Create() {
+void Vulkan::DepthStencilTarget::Create() {
 	if (debugName.empty()) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Depth Target!");
 	}
@@ -65,12 +65,12 @@ void Vulkan::DepthTarget::Create() {
 		}
 	}
 }
-		
-Vulkan::DepthTarget::~DepthTarget() {
+
+Vulkan::DepthStencilTarget::~DepthStencilTarget() {
 	Cleanup();
 }
 
-void Vulkan::DepthTarget::Cleanup() {
+void Vulkan::DepthStencilTarget::Cleanup() {
 	VkDevice device = Vulkan::Core::Get().GetDevice();
 	if (sampler != nullptr) {
 		vkDestroySampler(device, sampler, nullptr);
@@ -93,7 +93,7 @@ void Vulkan::DepthTarget::Cleanup() {
 	}
 }
 
-void Vulkan::DepthTarget::CreateTextureSampler() {
+void Vulkan::DepthStencilTarget::CreateTextureSampler() {
 	VkSamplerCreateInfo samplerInfo = {};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerInfo.magFilter = VkFilter::VK_FILTER_LINEAR;
@@ -117,33 +117,33 @@ void Vulkan::DepthTarget::CreateTextureSampler() {
 	}
 }
 
-uint32_t Vulkan::DepthTarget::GetWidth() const {
+uint32_t Vulkan::DepthStencilTarget::GetWidth() const {
 	return width;
 }
 
-uint32_t Vulkan::DepthTarget::GetHeight() const {
+uint32_t Vulkan::DepthStencilTarget::GetHeight() const {
 	return height;
 }
 
-VkImage Vulkan::DepthTarget::GetImage() const {
+VkImage Vulkan::DepthStencilTarget::GetImage() const {
 	return image;
 }
 
-VkImageView Vulkan::DepthTarget::GetImageView() const {
+VkImageView Vulkan::DepthStencilTarget::GetImageView() const {
 	return imageView;
 }
 
-VkSampler Vulkan::DepthTarget::GetSampler() const {
+VkSampler Vulkan::DepthStencilTarget::GetSampler() const {
 	return sampler;
 }
 
-void Vulkan::DepthTarget::Resize(uint32_t width, uint32_t height) {
+void Vulkan::DepthStencilTarget::Resize(uint32_t width, uint32_t height) {
 	this->width = width;
 	this->height = height;
 	Cleanup();
 	Create();
 }
 
-void Vulkan::DepthTarget::BindFace(int k) {
-	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanDepthTarget::BindFace is not used.");
+void Vulkan::DepthStencilTarget::BindFace(int k) {
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanDepthStencilTarget::BindFace is not used.");
 }

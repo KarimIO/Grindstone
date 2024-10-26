@@ -216,7 +216,7 @@ DeferredRenderer::~DeferredRenderer() {
 		graphicsCore->DeleteRenderTarget(imageSet.gbufferNormalRenderTarget);
 		graphicsCore->DeleteRenderTarget(imageSet.gbufferSpecularRoughnessRenderTarget);
 
-		graphicsCore->DeleteDepthTarget(imageSet.gbufferDepthTarget);
+		graphicsCore->DeleteDepthStencilTarget(imageSet.gbufferDepthStencilTarget);
 		graphicsCore->DeleteFramebuffer(imageSet.litHdrFramebuffer);
 		graphicsCore->DeleteRenderTarget(imageSet.litHdrRenderTarget);
 
@@ -404,7 +404,7 @@ void DeferredRenderer::CreateDepthOfFieldRenderTargetsAndDescriptorSets(Deferred
 
 	{
 		std::array<GraphicsAPI::DescriptorSet::Binding, 2> sourceDofDescriptorBindings = {
-			imageSet.gbufferDepthTarget,
+			imageSet.gbufferDepthStencilTarget,
 			imageSet.litHdrRenderTarget
 		};
 
@@ -762,7 +762,7 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 		imageSet.gbufferNormalRenderTarget->Resize(width, height);
 		imageSet.gbufferSpecularRoughnessRenderTarget->Resize(width, height);
 
-		imageSet.gbufferDepthTarget->Resize(width, height);
+		imageSet.gbufferDepthStencilTarget->Resize(width, height);
 		imageSet.gbuffer->Resize(width, height);
 		imageSet.litHdrRenderTarget->Resize(width, height);
 		imageSet.litHdrFramebuffer->Resize(width, height);
@@ -807,7 +807,7 @@ void DeferredRenderer::CreateSsrRenderTargetsAndDescriptorSets(DeferredRendererI
 	if (imageSet.ssrDescriptorSet != nullptr) {
 		graphicsCore->DeleteDescriptorSet(imageSet.ssrDescriptorSet);
 	}
-	
+
 	GraphicsAPI::RenderTarget::CreateInfo ssrRenderTargetCreateInfo{ GraphicsAPI::ColorFormat::RGBA16, framebufferWidth, framebufferHeight, true, true, "SSR Render Target" };
 	imageSet.ssrRenderTarget = graphicsCore->CreateRenderTarget(ssrRenderTargetCreateInfo);
 
@@ -815,7 +815,7 @@ void DeferredRenderer::CreateSsrRenderTargetsAndDescriptorSets(DeferredRendererI
 	descriptorBindings[0].itemPtr = imageSet.globalUniformBufferObject;
 	descriptorBindings[1].itemPtr = imageSet.ssrRenderTarget;
 	descriptorBindings[2].itemPtr = imageSet.litHdrRenderTarget;
-	descriptorBindings[3].itemPtr = imageSet.gbufferDepthTarget;
+	descriptorBindings[3].itemPtr = imageSet.gbufferDepthStencilTarget;
 	descriptorBindings[4].itemPtr = imageSet.gbufferNormalRenderTarget;
 	descriptorBindings[5].itemPtr = imageSet.gbufferSpecularRoughnessRenderTarget;
 
@@ -1186,7 +1186,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 
 	DescriptorSet::Binding engineUboBinding{ imageSet.globalUniformBufferObject };
 	DescriptorSet::Binding litHdrRenderTargetBinding{ imageSet.litHdrRenderTarget };
-	DescriptorSet::Binding gbufferDepthBinding{ imageSet.gbufferDepthTarget };
+	DescriptorSet::Binding gbufferDepthBinding{ imageSet.gbufferDepthStencilTarget };
 	DescriptorSet::Binding gbufferAlbedoBinding{ imageSet.gbufferAlbedoRenderTarget };
 	DescriptorSet::Binding gbufferNormalBinding{ imageSet.gbufferNormalRenderTarget };
 	DescriptorSet::Binding gbufferSpecRoughnessBinding{ imageSet.gbufferSpecularRoughnessRenderTarget };
@@ -1270,7 +1270,7 @@ void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) 
 
 	DescriptorSet::Binding engineUboBinding{ imageSet.globalUniformBufferObject };
 	DescriptorSet::Binding litHdrRenderTargetBinding{ imageSet.litHdrRenderTarget };
-	DescriptorSet::Binding gbufferDepthBinding{ imageSet.gbufferDepthTarget };
+	DescriptorSet::Binding gbufferDepthBinding{ imageSet.gbufferDepthStencilTarget };
 	DescriptorSet::Binding gbufferAlbedoBinding{ imageSet.gbufferAlbedoRenderTarget };
 	DescriptorSet::Binding gbufferNormalBinding{ imageSet.gbufferNormalRenderTarget };
 	DescriptorSet::Binding gbufferSpecRoughnessBinding{ imageSet.gbufferSpecularRoughnessRenderTarget };
@@ -1360,7 +1360,7 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 	}
 
 	std::array<RenderTarget*, gbufferColorCount> gbufferRenderTargets{};
-	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(depthFormat, framebufferWidth, framebufferHeight, false, false, true, "GBuffer Depth Image");
+	DepthStencilTarget::CreateInfo gbufferDepthImageCreateInfo(depthFormat, framebufferWidth, framebufferHeight, false, false, true, "GBuffer Depth Image");
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		auto& imageSet = deferredRendererImageSets[i];
@@ -1381,7 +1381,7 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 			gbufferRenderTargets[2] = imageSet.gbufferSpecularRoughnessRenderTarget = graphicsCore->CreateRenderTarget(gbufferRtCreateInfo);
 		}
 
-		imageSet.gbufferDepthTarget = graphicsCore->CreateDepthTarget(gbufferDepthImageCreateInfo);
+		imageSet.gbufferDepthStencilTarget = graphicsCore->CreateDepthStencilTarget(gbufferDepthImageCreateInfo);
 
 		Framebuffer::CreateInfo gbufferCreateInfo{};
 		gbufferCreateInfo.debugName = "G-Buffer Framebuffer";
@@ -1390,7 +1390,7 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 		gbufferCreateInfo.renderPass = gbufferRenderPass;
 		gbufferCreateInfo.renderTargetLists = gbufferRenderTargets.data();
 		gbufferCreateInfo.numRenderTargetLists = static_cast<uint32_t>(gbufferRenderTargets.size());
-		gbufferCreateInfo.depthTarget = imageSet.gbufferDepthTarget;
+		gbufferCreateInfo.depthTarget = imageSet.gbufferDepthStencilTarget;
 
 		imageSet.gbuffer = graphicsCore->CreateFramebuffer(gbufferCreateInfo);
 
@@ -1415,7 +1415,7 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::RGBA16, framebufferWidth, framebufferHeight, true, false, "Lit HDR Color Image" };
-	// DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false, false, "Lit HDR Depth Image");
+	// DepthStencilTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false, false, "Lit HDR Depth Image");
 
 	RenderPass::AttachmentInfo attachment{ litHdrImagesCreateInfo.format , true };
 
@@ -1470,7 +1470,7 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 		litHdrFramebufferCreateInfo.height = framebufferHeight;
 		litHdrFramebufferCreateInfo.renderTargetLists = &imageSet.litHdrRenderTarget;
 		litHdrFramebufferCreateInfo.numRenderTargetLists = 1;
-		litHdrFramebufferCreateInfo.depthTarget = imageSet.gbufferDepthTarget;
+		litHdrFramebufferCreateInfo.depthTarget = imageSet.gbufferDepthStencilTarget;
 		litHdrFramebufferCreateInfo.renderPass = mainRenderPass;
 		imageSet.litHdrFramebuffer = graphicsCore->CreateFramebuffer(litHdrFramebufferCreateInfo);
 	}
@@ -1495,7 +1495,7 @@ void DeferredRenderer::CreatePipelines() {
 
 	Grindstone::Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
 	uint8_t shaderBits = static_cast<uint8_t>(ShaderStageBit::Vertex | ShaderStageBit::Fragment);
-	 
+
 	{
 		if (!assetManager->LoadShaderSet(Uuid("3b3bc2c8-ac88-4fba-b9f9-704f86c1278c"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
 			GPRINT_ERROR(LogSource::Rendering, "Could not load ssao shaders.");
@@ -2504,7 +2504,7 @@ void DeferredRenderer::PostProcess(
 
 	currentCommandBuffer->UnbindRenderPass();
 
-	currentCommandBuffer->BlitDepthImage(imageSet.gbufferDepthTarget, framebuffer->GetDepthTarget());
+	currentCommandBuffer->BlitDepthImage(imageSet.gbufferDepthStencilTarget, framebuffer->GetDepthStencilTarget());
 }
 
 void DeferredRenderer::Debug(

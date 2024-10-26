@@ -4,7 +4,7 @@
 
 #include "VulkanRenderPass.hpp"
 #include "VulkanRenderTarget.hpp"
-#include "VulkanDepthTarget.hpp"
+#include "VulkanDepthStencilTarget.hpp"
 #include "VulkanGraphicsPipeline.hpp"
 #include "VulkanComputePipeline.hpp"
 #include "VulkanFramebuffer.hpp"
@@ -227,9 +227,9 @@ void Vulkan::CommandBuffer::BindCommandBuffers(
 	);
 }
 
-void Vulkan::CommandBuffer::BlitDepthImage(GraphicsAPI::DepthTarget* src, GraphicsAPI::DepthTarget* dst) {
-	Vulkan::DepthTarget* vkSrc = static_cast<Vulkan::DepthTarget*>(src);
-	Vulkan::DepthTarget* vkDst = static_cast<Vulkan::DepthTarget*>(dst);
+void Vulkan::CommandBuffer::BlitDepthImage(GraphicsAPI::DepthStencilTarget* src, GraphicsAPI::DepthStencilTarget* dst) {
+	Vulkan::DepthStencilTarget* vkSrc = static_cast<Vulkan::DepthStencilTarget*>(src);
+	Vulkan::DepthStencilTarget* vkDst = static_cast<Vulkan::DepthStencilTarget*>(dst);
 
 	VkImageLayout srcLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 	VkImageLayout dstLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;

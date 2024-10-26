@@ -90,7 +90,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void AdjustPerspective(float *perspective) override;
 
 		virtual void DeleteRenderTarget(GraphicsAPI::RenderTarget * ptr) override;
-		virtual void DeleteDepthTarget(GraphicsAPI::DepthTarget * ptr) override;
+		virtual void DeleteDepthStencilTarget(GraphicsAPI::DepthStencilTarget * ptr) override;
 		virtual void DeleteFramebuffer(GraphicsAPI::Framebuffer *ptr) override;
 		virtual void DeleteVertexBuffer(GraphicsAPI::VertexBuffer *ptr) override;
 		virtual void DeleteIndexBuffer(GraphicsAPI::IndexBuffer *ptr) override;
@@ -119,8 +119,8 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual GraphicsAPI::DescriptorSetLayout* CreateDescriptorSetLayout(const GraphicsAPI::DescriptorSetLayout::CreateInfo& ci) override;
 		virtual GraphicsAPI::RenderTarget* CreateRenderTarget(const GraphicsAPI::RenderTarget::CreateInfo& rt) override;
 		virtual GraphicsAPI::RenderTarget *CreateRenderTarget(const GraphicsAPI::RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) override;
-		virtual GraphicsAPI::DepthTarget *CreateDepthTarget(const GraphicsAPI::DepthTarget::CreateInfo& rt) override;
-			
+		virtual GraphicsAPI::DepthStencilTarget *CreateDepthStencilTarget(const GraphicsAPI::DepthStencilTarget::CreateInfo& rt) override;
+
 		virtual inline bool ShouldUseImmediateMode() const override;
 		virtual inline bool SupportsCommandBuffers() const override;
 		virtual inline bool SupportsTesselation() const override;

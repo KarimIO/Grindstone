@@ -3,7 +3,7 @@
 #include "VulkanDescriptorSetLayout.hpp"
 #include "VulkanUniformBuffer.hpp"
 #include "VulkanRenderTarget.hpp"
-#include "VulkanDepthTarget.hpp"
+#include "VulkanDepthStencilTarget.hpp"
 #include "VulkanTexture.hpp"
 #include "VulkanCore.hpp"
 
@@ -77,7 +77,7 @@ static void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, 
 }
 
 static void AttachDepthTexture(std::vector<VkWriteDescriptorSet>& writeVector, uint32_t bindingIndex, Base::DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
-	Vulkan::DepthTarget* texture = static_cast<Vulkan::DepthTarget*>(binding.itemPtr);
+	Vulkan::DepthStencilTarget* texture = static_cast<Vulkan::DepthStencilTarget*>(binding.itemPtr);
 
 	// TODO: Handle this lifetime
 	VkDescriptorImageInfo* imageInfo = new VkDescriptorImageInfo();

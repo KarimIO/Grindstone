@@ -11,7 +11,7 @@
 namespace Grindstone::GraphicsAPI::Vulkan {
 	class RenderPass;
 	class RenderTarget;
-	class DepthTarget;
+	class DepthStencilTarget;
 
 	class Framebuffer : public Grindstone::GraphicsAPI::Framebuffer {
 	public:
@@ -46,14 +46,14 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual uint32_t GetHeight() const override;
 		virtual uint32_t GetRenderTargetCount() const override;
 		virtual Grindstone::GraphicsAPI::RenderTarget* GetRenderTarget(uint32_t index) const override;
-		virtual Grindstone::GraphicsAPI::DepthTarget* GetDepthTarget() const override;
+		virtual Grindstone::GraphicsAPI::DepthStencilTarget* GetDepthStencilTarget() const override;
 	private:
 		void Create();
 		void Cleanup();
 
 		std::string debugName;
 		std::vector<RenderTarget*> colorAttachments;
-		DepthTarget* depthAttachment = nullptr;
+		DepthStencilTarget* depthAttachment = nullptr;
 
 		VkFramebuffer framebuffer = nullptr;
 		GraphicsAPI::RenderPass* renderPass = nullptr;

@@ -7,7 +7,7 @@
 
 #include "GLRenderTarget.hpp"
 #include "GLFramebuffer.hpp"
-#include "GLDepthTarget.hpp"
+#include "GLDepthStencilTarget.hpp"
 #include "GLTexture.hpp"
 
 using namespace Grindstone::GraphicsAPI;
@@ -19,7 +19,7 @@ OpenGL::Framebuffer::Framebuffer(const Framebuffer::CreateInfo& createInfo) {
 
 	renderPass = createInfo.renderPass;
 	colorAttachments.resize(createInfo.numRenderTargetLists);
-	depthTarget = static_cast<DepthTarget*>(createInfo.depthTarget);
+	depthTarget = static_cast<DepthStencilTarget*>(createInfo.depthTarget);
 
 	numTotalRenderTargets = 0;
 	for (uint32_t i = 0; i < createInfo.numRenderTargetLists; i++) {
@@ -62,7 +62,7 @@ void OpenGL::Framebuffer::CreateFramebuffer() {
 	}
 
 	if (depthTarget) {
-		OpenGL::DepthTarget* dt = static_cast<OpenGL::DepthTarget*>(depthTarget);
+		OpenGL::DepthStencilTarget* dt = static_cast<OpenGL::DepthStencilTarget*>(depthTarget);
 		if (!dt->IsCubemap())
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, dt->GetHandle(), 0);
 		else
@@ -149,7 +149,7 @@ void OpenGL::Framebuffer::BindTextures(int k) {
 	}
 
 	if (depthTarget) {
-		OpenGL::DepthTarget* dt = static_cast<OpenGL::DepthTarget*>(depthTarget);
+		OpenGL::DepthStencilTarget* dt = static_cast<OpenGL::DepthStencilTarget*>(depthTarget);
 		dt->Bind(j);
 	}
 }
@@ -174,6 +174,6 @@ Grindstone::GraphicsAPI::RenderTarget* OpenGL::Framebuffer::GetRenderTarget(uint
 	return colorAttachments[index];
 }
 
-Grindstone::GraphicsAPI::DepthTarget* OpenGL::Framebuffer::GetDepthTarget() const {
+Grindstone::GraphicsAPI::DepthStencilTarget* OpenGL::Framebuffer::GetDepthStencilTarget() const {
 	return depthTarget;
 }

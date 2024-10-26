@@ -11,7 +11,7 @@
 #include "ComputePipeline.hpp"
 #include "CommandBuffer.hpp"
 #include "VertexArrayObject.hpp"
-#include "DepthTarget.hpp"
+#include "DepthStencilTarget.hpp"
 #include "Texture.hpp"
 #include "DescriptorSet.hpp"
 #include "DescriptorSetLayout.hpp"
@@ -48,11 +48,11 @@ namespace Grindstone::GraphicsAPI {
 		virtual const char* GetDefaultShaderExtension() const = 0;
 
 		virtual void Clear(ClearMode mask, float clearColor[4] = nullptr, float clearDepth = 0, uint32_t clearStencil = 0) = 0;
-			
+
 		virtual void AdjustPerspective(float *perspective) = 0;
 
 		virtual void DeleteRenderTarget(RenderTarget* ptr) = 0;
-		virtual void DeleteDepthTarget(DepthTarget* ptr) = 0;
+		virtual void DeleteDepthStencilTarget(DepthStencilTarget* ptr) = 0;
 		virtual void DeleteFramebuffer(Framebuffer* ptr) = 0;
 		virtual void DeleteVertexBuffer(VertexBuffer* ptr) = 0;
 		virtual void DeleteIndexBuffer(IndexBuffer* ptr) = 0;
@@ -81,7 +81,7 @@ namespace Grindstone::GraphicsAPI {
 		virtual DescriptorSetLayout* CreateDescriptorSetLayout(const DescriptorSetLayout::CreateInfo& ci) = 0;
 		virtual RenderTarget* CreateRenderTarget(const RenderTarget::CreateInfo& rt) = 0;
 		virtual RenderTarget* CreateRenderTarget(const RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) = 0;
-		virtual DepthTarget* CreateDepthTarget(const DepthTarget::CreateInfo& rt) = 0;
+		virtual DepthStencilTarget* CreateDepthStencilTarget(const DepthStencilTarget::CreateInfo& rt) = 0;
 
 		virtual void CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) = 0;
 

@@ -10,7 +10,7 @@ namespace Grindstone {
 		class UniformBuffer;
 		class Framebuffer;
 		class RenderTarget;
-		class DepthTarget;
+		class DepthStencilTarget;
 		class VertexArrayObject;
 		class GraphicsPipeline;
 		class ComputePipeline;
@@ -59,7 +59,7 @@ namespace Grindstone {
 	private:
 		struct DeferredRendererImageSet {
 			GraphicsAPI::Framebuffer* gbuffer = nullptr;
-			GraphicsAPI::DepthTarget* gbufferDepthTarget = nullptr;
+			GraphicsAPI::DepthStencilTarget* gbufferDepthStencilTarget = nullptr;
 			GraphicsAPI::Framebuffer* litHdrFramebuffer = nullptr;
 			GraphicsAPI::Framebuffer* lightingFramebuffer = nullptr;
 			GraphicsAPI::RenderTarget* litHdrRenderTarget = nullptr;

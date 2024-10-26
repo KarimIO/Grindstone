@@ -22,7 +22,7 @@ namespace Grindstone::GraphicsAPI::OpenGL {
 		virtual const char* GetDefaultShaderExtension() const override;
 
 		virtual void DeleteRenderTarget(Grindstone::GraphicsAPI::RenderTarget * ptr) override;
-		virtual void DeleteDepthTarget(Grindstone::GraphicsAPI::DepthTarget * ptr) override;
+		virtual void DeleteDepthStencilTarget(Grindstone::GraphicsAPI::DepthStencilTarget * ptr) override;
 		virtual void DeleteFramebuffer(Grindstone::GraphicsAPI::Framebuffer *ptr) override;
 		virtual void DeleteVertexBuffer(Grindstone::GraphicsAPI::VertexBuffer *ptr) override;
 		virtual void DeleteIndexBuffer(Grindstone::GraphicsAPI::IndexBuffer *ptr) override;
@@ -51,7 +51,7 @@ namespace Grindstone::GraphicsAPI::OpenGL {
 		virtual Grindstone::GraphicsAPI::DescriptorSetLayout* CreateDescriptorSetLayout(const DescriptorSetLayout::CreateInfo& createInfo) override;
 		virtual Grindstone::GraphicsAPI::RenderTarget* CreateRenderTarget(const RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) override;
 		virtual Grindstone::GraphicsAPI::RenderTarget* CreateRenderTarget(const RenderTarget::CreateInfo& rt) override;
-		virtual Grindstone::GraphicsAPI::DepthTarget* CreateDepthTarget(const DepthTarget::CreateInfo& rt) override;
+		virtual Grindstone::GraphicsAPI::DepthStencilTarget* CreateDepthStencilTarget(const DepthStencilTarget::CreateInfo& rt) override;
 
 		virtual void CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) override;
 

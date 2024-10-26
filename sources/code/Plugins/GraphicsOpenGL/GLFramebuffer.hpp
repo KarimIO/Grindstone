@@ -25,7 +25,7 @@ namespace Grindstone::GraphicsAPI::OpenGL {
 		virtual uint32_t GetHeight() const override;
 		virtual uint32_t GetRenderTargetCount() const override;
 		virtual Grindstone::GraphicsAPI::RenderTarget* GetRenderTarget(uint32_t index) const override;
-		virtual Grindstone::GraphicsAPI::DepthTarget* GetDepthTarget() const override;
+		virtual Grindstone::GraphicsAPI::DepthStencilTarget* GetDepthStencilTarget() const override;
 	private:
 		void CreateFramebuffer();
 	private:
@@ -34,7 +34,7 @@ namespace Grindstone::GraphicsAPI::OpenGL {
 		GLsizei numTotalRenderTargets = 0;
 		Grindstone::GraphicsAPI::RenderPass* renderPass = nullptr;
 		std::vector<Grindstone::GraphicsAPI::RenderTarget*> colorAttachments;
-		Grindstone::GraphicsAPI::DepthTarget *depthTarget = nullptr;
+		Grindstone::GraphicsAPI::DepthStencilTarget *depthTarget = nullptr;
 		uint32_t width;
 		uint32_t height;
 	};

@@ -1,15 +1,15 @@
 #pragma once
 
 #include <stdint.h>
-#include "../GraphicsCommon/DepthTarget.hpp"
+#include "../GraphicsCommon/DepthStencilTarget.hpp"
 #include <d3d12.h>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		class DirectX12DepthTarget : public DepthTarget {
+		class DirectX12DepthStencilTarget : public DepthStencilTarget {
 		public:
-			DirectX12DepthTarget(DepthTargetCreateInfo ci);
-			virtual ~DirectX12DepthTarget() override;
+			DirectX12DepthStencilTarget(DepthStencilTargetCreateInfo ci);
+			virtual ~DirectX12DepthStencilTarget() override;
 		public:
 			// VkImageView getImageView();
 		public:

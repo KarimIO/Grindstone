@@ -4,7 +4,7 @@
 
 #include "VulkanRenderPass.hpp"
 #include "VulkanRenderTarget.hpp"
-#include "VulkanDepthTarget.hpp"
+#include "VulkanDepthStencilTarget.hpp"
 #include "VulkanCore.hpp"
 #include "VulkanFramebuffer.hpp"
 
@@ -45,7 +45,7 @@ Vulkan::Framebuffer::Framebuffer(const CreateInfo& createInfo) :
 	}
 
 	if (createInfo.depthTarget != nullptr) {
-		depthAttachment = static_cast<Vulkan::DepthTarget*>(createInfo.depthTarget);
+		depthAttachment = static_cast<Vulkan::DepthStencilTarget*>(createInfo.depthTarget);
 	}
 
 	Create();
@@ -147,7 +147,7 @@ Grindstone::GraphicsAPI::RenderTarget* Vulkan::Framebuffer::GetRenderTarget(uint
 	return colorAttachments[index];
 }
 
-Grindstone::GraphicsAPI::DepthTarget* Vulkan::Framebuffer::GetDepthTarget() const {
+Grindstone::GraphicsAPI::DepthStencilTarget* Vulkan::Framebuffer::GetDepthStencilTarget() const {
 	return depthAttachment;
 }
 

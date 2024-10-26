@@ -16,7 +16,7 @@
 #include "GLGraphicsPipeline.hpp"
 #include "GLComputePipeline.hpp"
 #include "GLRenderTarget.hpp"
-#include "GLDepthTarget.hpp"
+#include "GLDepthStencilTarget.hpp"
 #include "GLTexture.hpp"
 #include "GLWindowGraphicsBinding.hpp"
 #include "GLFormats.hpp"
@@ -243,8 +243,8 @@ Base::RenderTarget* OpenGL::Core::CreateRenderTarget(const Base::RenderTarget::C
 	return static_cast<RenderTarget*>(AllocatorCore::Allocate<OpenGL::RenderTarget>(rt));
 }
 
-Base::DepthTarget* OpenGL::Core::CreateDepthTarget(const Base::DepthTarget::CreateInfo& rt) {
-	return static_cast<DepthTarget*>(AllocatorCore::Allocate<OpenGL::DepthTarget>(rt));
+Base::DepthStencilTarget* OpenGL::Core::CreateDepthStencilTarget(const Base::DepthStencilTarget::CreateInfo& rt) {
+	return static_cast<DepthStencilTarget*>(AllocatorCore::Allocate<OpenGL::DepthStencilTarget>(rt));
 }
 
 //==================================
@@ -281,8 +281,8 @@ void OpenGL::Core::DeleteRenderTarget(Base::RenderTarget *ptr) {
 	AllocatorCore::Free(static_cast<OpenGL::RenderTarget*>(ptr));
 }
 
-void OpenGL::Core::DeleteDepthTarget(Base::DepthTarget *ptr) {
-	AllocatorCore::Free(static_cast<OpenGL::DepthTarget*>(ptr));
+void OpenGL::Core::DeleteDepthStencilTarget(Base::DepthStencilTarget *ptr) {
+	AllocatorCore::Free(static_cast<OpenGL::DepthStencilTarget*>(ptr));
 }
 
 void OpenGL::Core::DeleteFramebuffer(Base::Framebuffer *ptr) {
