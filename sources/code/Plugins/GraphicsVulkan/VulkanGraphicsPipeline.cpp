@@ -10,27 +10,28 @@
 #include "VulkanDescriptorSetLayout.hpp"
 #include "VulkanGraphicsPipeline.hpp"
 
-using namespace Grindstone::GraphicsAPI;
+namespace GraphicsAPI = Grindstone::GraphicsAPI;
+namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
-static VkShaderStageFlagBits TranslateShaderStageToVulkanBit(ShaderStage stage) {
+static VkShaderStageFlagBits TranslateShaderStageToVulkanBit(GraphicsAPI::ShaderStage stage) {
 	switch (stage) {
 	default:
-	case ShaderStage::Vertex:
+	case GraphicsAPI::ShaderStage::Vertex:
 		return VK_SHADER_STAGE_VERTEX_BIT;
-	case ShaderStage::Fragment:
+	case GraphicsAPI::ShaderStage::Fragment:
 		return VK_SHADER_STAGE_FRAGMENT_BIT;
-	case ShaderStage::Geometry:
+	case GraphicsAPI::ShaderStage::Geometry:
 		return VK_SHADER_STAGE_GEOMETRY_BIT;
-	case ShaderStage::TesselationControl:
+	case GraphicsAPI::ShaderStage::TesselationControl:
 		return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-	case ShaderStage::TesselationEvaluation:
+	case GraphicsAPI::ShaderStage::TesselationEvaluation:
 		return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-	case ShaderStage::Compute:
+	case GraphicsAPI::ShaderStage::Compute:
 		return VK_SHADER_STAGE_COMPUTE_BIT;
 	}
 }
 
-VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& createInfo) {
+Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStages(createInfo.shaderStageCreateInfoCount);
 
 	for (uint32_t i = 0; i < createInfo.shaderStageCreateInfoCount; ++i) {
@@ -162,7 +163,7 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 	layouts.reserve(createInfo.descriptorSetLayoutCount);
 
 	for (uint32_t i = 0; i < createInfo.descriptorSetLayoutCount; ++i) {
-		VulkanDescriptorSetLayout* uboBinding = static_cast<VulkanDescriptorSetLayout*>(createInfo.descriptorSetLayouts[i]);
+		Vulkan::DescriptorSetLayout* uboBinding = static_cast<Vulkan::DescriptorSetLayout*>(createInfo.descriptorSetLayouts[i]);
 		VkDescriptorSetLayout ubb = uboBinding->GetInternalLayout();
 		layouts.push_back(ubb);
 	}
@@ -174,12 +175,12 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 	pipelineLayoutInfo.pushConstantRangeCount = 0;
 	pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
-	if (vkCreatePipelineLayout(VulkanCore::Get().GetDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+	if (vkCreatePipelineLayout(Vulkan::Core::Get().GetDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create pipeline layout!");
 		return;
 	}
 
-	VulkanRenderPass* renderPass = static_cast<VulkanRenderPass*>(createInfo.renderPass);
+	Vulkan::RenderPass* renderPass = static_cast<Vulkan::RenderPass*>(createInfo.renderPass);
 
 	std::vector<VkDynamicState> dynamicStates;
 	if (createInfo.hasDynamicViewport) {
@@ -213,13 +214,13 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 		? renderPass->GetRenderPassHandle()
 		: nullptr;
 
-	if (vkCreateGraphicsPipelines(VulkanCore::Get().GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
+	if (vkCreateGraphicsPipelines(Vulkan::Core::Get().GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create graphics pipeline!");
 		return;
 	}
 
 	if (createInfo.debugName != nullptr) {
-		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_PIPELINE, graphicsPipeline, createInfo.debugName);
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_PIPELINE, graphicsPipeline, createInfo.debugName);
 	}
 	else {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Graphics Pipeline!");
@@ -227,12 +228,12 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& cre
 	}
 
 	for (uint32_t i = 0; i < createInfo.shaderStageCreateInfoCount; ++i) {
-		vkDestroyShaderModule(VulkanCore::Get().GetDevice(), shaderStages[i].module, nullptr);
+		vkDestroyShaderModule(Vulkan::Core::Get().GetDevice(), shaderStages[i].module, nullptr);
 	}
 }
 
-VulkanGraphicsPipeline::~VulkanGraphicsPipeline() {
-	VkDevice device = VulkanCore::Get().GetDevice();
+Vulkan::GraphicsPipeline::~GraphicsPipeline() {
+	VkDevice device = Vulkan::Core::Get().GetDevice();
 	if (graphicsPipeline != nullptr) {
 		vkDestroyPipeline(device, graphicsPipeline, nullptr);
 	}
@@ -242,25 +243,25 @@ VulkanGraphicsPipeline::~VulkanGraphicsPipeline() {
 	}
 }
 
-VkPipeline VulkanGraphicsPipeline::GetGraphicsPipeline() const {
+VkPipeline Vulkan::GraphicsPipeline::GetGraphicsPipeline() const {
 	return graphicsPipeline;
 }
 
-VkPipelineLayout VulkanGraphicsPipeline::GetGraphicsPipelineLayout() const {
+VkPipelineLayout Vulkan::GraphicsPipeline::GetGraphicsPipelineLayout() const {
 	return pipelineLayout;
 }
 
-void VulkanGraphicsPipeline::Recreate(CreateInfo& createInfo) {
+void Vulkan::GraphicsPipeline::Recreate(const CreateInfo& createInfo) {
 }
 
-void VulkanGraphicsPipeline::CreateShaderModule(ShaderStageCreateInfo & createInfo, VkPipelineShaderStageCreateInfo &out) {
+void Vulkan::GraphicsPipeline::CreateShaderModule(GraphicsPipeline::CreateInfo::ShaderStageData& createInfo, VkPipelineShaderStageCreateInfo &out) {
 	VkShaderModuleCreateInfo shaderModuleCreateInfo = {};
 	shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	shaderModuleCreateInfo.codeSize = createInfo.size;
 	shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(createInfo.content);
 
 	VkShaderModule shaderModule;
-	if (vkCreateShaderModule(VulkanCore::Get().GetDevice(), &shaderModuleCreateInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+	if (vkCreateShaderModule(Vulkan::Core::Get().GetDevice(), &shaderModuleCreateInfo, nullptr, &shaderModule) != VK_SUCCESS) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create shader module!");
 	}
 

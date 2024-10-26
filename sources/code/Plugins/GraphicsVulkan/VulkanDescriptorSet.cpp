@@ -3,16 +3,17 @@
 #include "VulkanDescriptorSetLayout.hpp"
 #include "VulkanUniformBuffer.hpp"
 #include "VulkanRenderTarget.hpp"
-#include "VulkanDepthTarget.hpp"
+#include "VulkanDepthStencilTarget.hpp"
 #include "VulkanTexture.hpp"
 #include "VulkanCore.hpp"
 
 #include "VulkanDescriptorSet.hpp"
 
-using namespace Grindstone::GraphicsAPI;
+namespace Base = Grindstone::GraphicsAPI;
+namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
-static void AttachUniformBuffer(std::vector<VkWriteDescriptorSet>& writeVector, uint32_t bindingIndex, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
-	VulkanUniformBuffer* uniformBuffer = static_cast<VulkanUniformBuffer*>(binding.itemPtr);
+static void AttachUniformBuffer(std::vector<VkWriteDescriptorSet>& writeVector, uint32_t bindingIndex, Base::DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
+	Vulkan::UniformBuffer* uniformBuffer = static_cast<Vulkan::UniformBuffer*>(binding.itemPtr);
 
 	// TODO: Handle this lifetime
 	VkDescriptorBufferInfo* bufferInfo = new VkDescriptorBufferInfo();
@@ -31,8 +32,8 @@ static void AttachUniformBuffer(std::vector<VkWriteDescriptorSet>& writeVector, 
 	writeVector.push_back(descriptorWrites);
 }
 
-static void AttachTexture(std::vector<VkWriteDescriptorSet>& writeVector, uint32_t bindingIndex, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
-	VulkanTexture* texture = static_cast<VulkanTexture*>(binding.itemPtr);
+static void AttachTexture(std::vector<VkWriteDescriptorSet>& writeVector, uint32_t bindingIndex, Base::DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
+	Vulkan::Texture* texture = static_cast<Vulkan::Texture*>(binding.itemPtr);
 
 	// TODO: Handle this lifetime
 	VkDescriptorImageInfo* imageInfo = new VkDescriptorImageInfo();
@@ -51,8 +52,8 @@ static void AttachTexture(std::vector<VkWriteDescriptorSet>& writeVector, uint32
 	writeVector.push_back(descriptorWrites);
 }
 
-static void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, uint32_t bindingIndex, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet, bool isStorage) {
-	VulkanRenderTarget* texture = static_cast<VulkanRenderTarget*>(binding.itemPtr);
+static void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, uint32_t bindingIndex, Base::DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet, bool isStorage) {
+	Vulkan::RenderTarget* texture = static_cast<Vulkan::RenderTarget*>(binding.itemPtr);
 
 	// TODO: Handle this lifetime
 	VkDescriptorImageInfo* imageInfo = new VkDescriptorImageInfo();
@@ -75,8 +76,8 @@ static void AttachRenderTexture(std::vector<VkWriteDescriptorSet>& writeVector, 
 	writeVector.push_back(descriptorWrites);
 }
 
-static void AttachDepthTexture(std::vector<VkWriteDescriptorSet>& writeVector, uint32_t bindingIndex, DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
-	VulkanDepthTarget* texture = static_cast<VulkanDepthTarget*>(binding.itemPtr);
+static void AttachDepthTexture(std::vector<VkWriteDescriptorSet>& writeVector, uint32_t bindingIndex, Base::DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
+	Vulkan::DepthStencilTarget* texture = static_cast<Vulkan::DepthStencilTarget*>(binding.itemPtr);
 
 	// TODO: Handle this lifetime
 	VkDescriptorImageInfo* imageInfo = new VkDescriptorImageInfo();
@@ -95,22 +96,22 @@ static void AttachDepthTexture(std::vector<VkWriteDescriptorSet>& writeVector, u
 	writeVector.push_back(descriptorWrites);
 }
 
-VulkanDescriptorSet::VulkanDescriptorSet(DescriptorSet::CreateInfo& createInfo) {
-	layout = static_cast<VulkanDescriptorSetLayout*>(createInfo.layout);
+Vulkan::DescriptorSet::DescriptorSet(const CreateInfo& createInfo) {
+	layout = static_cast<Vulkan::DescriptorSetLayout*>(createInfo.layout);
 	VkDescriptorSetLayout internalLayout = layout->GetInternalLayout();
 
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = VulkanCore::Get().descriptorPool;
+	allocInfo.descriptorPool = Vulkan::Core::Get().descriptorPool;
 	allocInfo.descriptorSetCount = 1;
 	allocInfo.pSetLayouts = &internalLayout;
 
-	if (vkAllocateDescriptorSets(VulkanCore::Get().GetDevice(), &allocInfo, &descriptorSet) != VK_SUCCESS) {
+	if (vkAllocateDescriptorSets(Vulkan::Core::Get().GetDevice(), &allocInfo, &descriptorSet) != VK_SUCCESS) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to allocate descriptor sets!");
 	}
 
 	if (createInfo.debugName != nullptr) {
-		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_DESCRIPTOR_SET, descriptorSet, createInfo.debugName);
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_DESCRIPTOR_SET, descriptorSet, createInfo.debugName);
 	}
 	else {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Descriptor Set!");
@@ -119,11 +120,11 @@ VulkanDescriptorSet::VulkanDescriptorSet(DescriptorSet::CreateInfo& createInfo) 
 	ChangeBindings(createInfo.bindings, createInfo.bindingCount);
 }
 
-void VulkanDescriptorSet::ChangeBindings(Binding* sourceBindings, uint32_t bindingCount, uint32_t bindOffset) {
+void Vulkan::DescriptorSet::ChangeBindings(Binding* sourceBindings, uint32_t bindingCount, uint32_t bindOffset) {
 	std::vector<VkWriteDescriptorSet> descriptorWrites;
 
 	for (uint32_t i = 0; i < bindingCount; ++i) {
-		const VulkanDescriptorSetLayout::Binding& layoutBinding = layout->GetBinding(static_cast<size_t>(bindOffset) + i);
+		const Vulkan::DescriptorSetLayout::Binding& layoutBinding = layout->GetBinding(static_cast<size_t>(bindOffset) + i);
 		Binding& sourceBinding = sourceBindings[i];
 
 		if (sourceBinding.itemPtr == nullptr) {
@@ -148,7 +149,7 @@ void VulkanDescriptorSet::ChangeBindings(Binding* sourceBindings, uint32_t bindi
 	}
 
 	vkUpdateDescriptorSets(
-		VulkanCore::Get().GetDevice(),
+		Vulkan::Core::Get().GetDevice(),
 		static_cast<uint32_t>(descriptorWrites.size()),
 		descriptorWrites.data(),
 		0,
@@ -156,9 +157,9 @@ void VulkanDescriptorSet::ChangeBindings(Binding* sourceBindings, uint32_t bindi
 	);
 }
 
-VulkanDescriptorSet::~VulkanDescriptorSet() {
+Vulkan::DescriptorSet::~DescriptorSet() {
 }
 
-VkDescriptorSet VulkanDescriptorSet::GetDescriptorSet() {
+VkDescriptorSet Vulkan::DescriptorSet::GetDescriptorSet() const {
 	return descriptorSet;
 }

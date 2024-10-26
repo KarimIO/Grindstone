@@ -45,7 +45,7 @@ void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	ubCi.size = static_cast<uint32_t>(sizeof(GridUniformBuffer));
 	gridUniformBuffer = graphicsCore->CreateUniformBuffer(ubCi);
 
-	std::vector<GraphicsAPI::ShaderStageCreateInfo> shaderStageCreateInfos;
+	std::vector<GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData> shaderStageCreateInfos;
 	std::vector<std::vector<char>> fileData;
 
 	Grindstone::Assets::AssetManager* assetManager = engineCore.assetManager;

@@ -6,22 +6,23 @@
 #include <iostream>
 #include <vulkan/vulkan.h>
 
-namespace Grindstone {
-	namespace GraphicsAPI {
-		class VulkanGraphicsPipeline : public GraphicsPipeline {
-		public:
-			VulkanGraphicsPipeline(GraphicsPipeline::CreateInfo& createInfo);
-			~VulkanGraphicsPipeline();
-			VkPipeline GetGraphicsPipeline() const;
-			VkPipelineLayout GetGraphicsPipelineLayout() const;
-		public:
-			virtual void Bind() {};
-			virtual void Recreate(GraphicsPipeline::CreateInfo& createInfo) override;
-		private:
-			void CreateShaderModule(ShaderStageCreateInfo &createInfo, VkPipelineShaderStageCreateInfo &out);
-		private:
-			VkPipelineLayout pipelineLayout = nullptr;
-			VkPipeline graphicsPipeline = nullptr;
-		};
-	}
+namespace Grindstone::GraphicsAPI::Vulkan {
+	class GraphicsPipeline : public Grindstone::GraphicsAPI::GraphicsPipeline {
+	public:
+		GraphicsPipeline(const CreateInfo& createInfo);
+		~GraphicsPipeline();
+		VkPipeline GetGraphicsPipeline() const;
+		VkPipelineLayout GetGraphicsPipelineLayout() const;
+	public:
+		virtual void Bind() {};
+		virtual void Recreate(const CreateInfo& createInfo) override;
+	private:
+		void CreateShaderModule(
+			GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData &createInfo,
+			VkPipelineShaderStageCreateInfo &out
+		);
+	private:
+		VkPipelineLayout pipelineLayout = nullptr;
+		VkPipeline graphicsPipeline = nullptr;
+	};
 }

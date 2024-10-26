@@ -2,7 +2,6 @@ set(EDITOR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 file(GLOB_RECURSE SOURCE_MAIN
 	Main.cpp ${CODE_DIR}/NatvisFile.natvis
-	${COMMON_DIR}/Graphics/Formats.cpp 
 	${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINECORE_DIR}/Utils/Utilities.cpp
 	${COMMON_DIR}/ResourcePipeline/AssetType.cpp ${COMMON_DIR}/ResourcePipeline/AssetType.hpp
 	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp ${COMMON_DIR}/ResourcePipeline/MetaFile.hpp

@@ -72,7 +72,7 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 
 	ShaderReflectionData reflectionData;
 	ShaderReflectionLoader loader(outContent.data(), reflectionData);
-	std::vector<ShaderStageCreateInfo> shaderStageCreateInfos;
+	std::vector<GraphicsPipeline::CreateInfo::ShaderStageData> shaderStageCreateInfos;
 	std::vector<std::vector<char>> fileData;
 
 	if (!assetManager->LoadShaderSet(

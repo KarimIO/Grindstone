@@ -7,8 +7,8 @@
 namespace Grindstone {
 	class DisplayManager {
 	public:
-		virtual Grindstone::Display GetMainDisplay();
-		virtual uint8_t GetDisplayCount();
-		virtual void EnumerateDisplays(Grindstone::Display*);
+		virtual Grindstone::Display GetMainDisplay() const;
+		virtual uint8_t GetDisplayCount() const;
+		virtual void EnumerateDisplays(Grindstone::Display*) const;
 	};
 }

@@ -35,8 +35,8 @@ void Grindstone::SetupPointLightComponent(entt::registry& registry, entt::entity
 	renderPassCreateInfo.depthFormat = DepthFormat::D32;
 	pointLightComponent.renderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
-	DepthTarget::CreateInfo shadowMapDepthImageCreateInfo(renderPassCreateInfo.depthFormat, shadowResolution, shadowResolution, true, true, true, "Point Shadow Map Depth Image");
-	pointLightComponent.depthTarget = graphicsCore->CreateDepthTarget(shadowMapDepthImageCreateInfo);
+	DepthStencilTarget::CreateInfo shadowMapDepthImageCreateInfo(renderPassCreateInfo.depthFormat, shadowResolution, shadowResolution, true, true, true, "Point Shadow Map Depth Image");
+	pointLightComponent.depthTarget = graphicsCore->CreateDepthStencilTarget(shadowMapDepthImageCreateInfo);
 
 	Framebuffer::CreateInfo shadowMapCreateInfo{};
 	shadowMapCreateInfo.debugName = "Pointlight Shadow Framebuffer";

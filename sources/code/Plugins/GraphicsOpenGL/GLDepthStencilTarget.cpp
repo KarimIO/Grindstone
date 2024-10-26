@@ -1,21 +1,21 @@
 #include <GL/gl3w.h>
 
-#include "GLDepthTarget.hpp"
+#include "GLDepthStencilTarget.hpp"
 #include "GLFormats.hpp"
 
 using namespace Grindstone::GraphicsAPI;
 
-GLDepthTarget::GLDepthTarget(CreateInfo& createInfo) {
+OpenGL::DepthStencilTarget::DepthStencilTarget(const DepthStencilTarget::CreateInfo& createInfo) {
 	width = createInfo.width;
 	height = createInfo.height;
 	depthFormat = createInfo.format;
 	isCubemap = createInfo.isCubemap;
 	isShadowMap = createInfo.isShadowMap;
 
-	CreateDepthTarget();
+	CreateDepthStencilTarget();
 }
 
-void GLDepthTarget::CreateDepthTarget() {
+void OpenGL::DepthStencilTarget::CreateDepthStencilTarget() {
 	if (handle) {
 		glDeleteTextures(1, &handle);
 	}
@@ -70,31 +70,31 @@ void GLDepthTarget::CreateDepthTarget() {
 	}
 }
 
-uint32_t GLDepthTarget::GetHandle() const {
+uint32_t OpenGL::DepthStencilTarget::GetHandle() const {
 	return handle;
 }
 
-bool GLDepthTarget::IsCubemap() const {
+bool OpenGL::DepthStencilTarget::IsCubemap() const {
 	return isCubemap;
 }
 
-void GLDepthTarget::Bind(int i) {
+void OpenGL::DepthStencilTarget::Bind(int i) {
 	glActiveTexture(GL_TEXTURE0 + i);
 	glBindTexture(isCubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D, handle);
 }
 
-void GLDepthTarget::Resize(uint32_t width, uint32_t height) {
+void OpenGL::DepthStencilTarget::Resize(uint32_t width, uint32_t height) {
 	this->width = width;
 	this->height = height;
 
-	CreateDepthTarget();
+	CreateDepthStencilTarget();
 }
 
-void GLDepthTarget::BindFace(int k) {
+void OpenGL::DepthStencilTarget::BindFace(int k) {
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X + k, handle, 0);
 	glDrawBuffer(GL_NONE);
 }
 
-GLDepthTarget::~GLDepthTarget() {
+OpenGL::DepthStencilTarget::~DepthStencilTarget() {
 	glDeleteTextures(1, &handle);
 }

@@ -1,16 +1,15 @@
-#ifndef _GL_RENDER_TARGET_H
-#define _GL_RENDER_TARGET_H
+#pragma once
 
 #include <stdint.h>
 #include <vector>
 
 #include <Common/Graphics/RenderTarget.hpp>
 
-namespace Grindstone::GraphicsAPI {
-	class GLRenderTarget : public RenderTarget {
+namespace Grindstone::GraphicsAPI::OpenGL {
+	class RenderTarget : public Grindstone::GraphicsAPI::RenderTarget {
 	public:
-		GLRenderTarget(CreateInfo& createInfoList);
-		GLRenderTarget(CreateInfo *createInfoList, uint32_t createInfoCount, bool isCcubemap);
+		RenderTarget(const CreateInfo& createInfoList);
+		RenderTarget(const CreateInfo *createInfoList, uint32_t createInfoCount, bool isCcubemap);
 		virtual uint32_t GetHandle() const;
 		virtual uint32_t GetHandle(uint32_t i) const;
 		uint32_t GetNumRenderTargets() const;
@@ -20,7 +19,7 @@ namespace Grindstone::GraphicsAPI {
 		virtual void Bind();
 		virtual void Bind(uint32_t i);
 		virtual void RenderScreen(unsigned int i, unsigned int resx, unsigned int resy, unsigned char *data);
-		virtual ~GLRenderTarget();
+		virtual ~RenderTarget();
 	private:
 		void CreateRenderTargets();
 	private:
@@ -32,5 +31,3 @@ namespace Grindstone::GraphicsAPI {
 		uint32_t width, height;
 	};
 }
-
-#endif

@@ -8,9 +8,9 @@
 #include "VulkanCore.hpp"
 #include "VulkanTexture.hpp"
 
-using namespace Grindstone::GraphicsAPI;
+namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
-VulkanTexture::VulkanTexture(Texture::CreateInfo& createInfo) {
+Vulkan::Texture::Texture(const CreateInfo& createInfo) {
 	if (createInfo.debugName == nullptr) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Texture!");
 	}
@@ -25,13 +25,13 @@ VulkanTexture::VulkanTexture(Texture::CreateInfo& createInfo) {
 	std::string debugName = createInfo.debugName;
 	std::string imageViewDebugName = debugName + " View";
 	std::string imageSamplerDebugName = debugName + " Sampler";
-	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, createInfo.debugName);
-	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
-	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_SAMPLER, sampler, imageSamplerDebugName.c_str());
+	Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, createInfo.debugName);
+	Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
+	Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_SAMPLER, sampler, imageSamplerDebugName.c_str());
 }
 
-void VulkanTexture::GenerateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels) {
-	VkPhysicalDevice physicalDevice = VulkanCore::Get().GetPhysicalDevice();
+void Vulkan::Texture::GenerateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels) {
+	VkPhysicalDevice physicalDevice = Vulkan::Core::Get().GetPhysicalDevice();
 
 	// Check if image format supports linear blitting
 	VkFormatProperties formatProperties;
@@ -119,8 +119,8 @@ void VulkanTexture::GenerateMipmaps(VkImage image, VkFormat imageFormat, int32_t
 	EndSingleTimeCommands(commandBuffer);
 }
 
-VulkanTexture::~VulkanTexture() {
-	VkDevice device = VulkanCore::Get().GetDevice();
+Vulkan::Texture::~Texture() {
+	VkDevice device = Vulkan::Core::Get().GetDevice();
 	vkDestroySampler(device, sampler, nullptr);
 	vkDestroyImageView(device, imageView, nullptr);
 
@@ -128,8 +128,8 @@ VulkanTexture::~VulkanTexture() {
 	vkFreeMemory(device, imageMemory, nullptr);
 }
 
-void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t& mipLevels, uint32_t layerCount) {
-	VkDevice device = VulkanCore::Get().GetDevice();
+void Vulkan::Texture::CreateTextureImage(const CreateInfo& createInfo, uint32_t& mipLevels, uint32_t layerCount) {
+	VkDevice device = Vulkan::Core::Get().GetDevice();
 
 	uint8_t channels = 4;
 	format = TranslateColorFormatToVulkan(createInfo.format, channels);
@@ -288,7 +288,7 @@ void VulkanTexture::CreateTextureImage(Texture::CreateInfo& createInfo, uint32_t
 	}
 }
 
-void VulkanTexture::CreateTextureSampler(Texture::CreateInfo &createInfo, uint32_t mipLevels) {
+void Vulkan::Texture::CreateTextureSampler(const CreateInfo &createInfo, uint32_t mipLevels) {
 	VkSamplerCreateInfo samplerInfo = {};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerInfo.magFilter = TranslateFilterToVulkan(createInfo.options.magFilter);
@@ -309,19 +309,19 @@ void VulkanTexture::CreateTextureSampler(Texture::CreateInfo &createInfo, uint32
 	samplerInfo.maxLod = createInfo.options.mipMax;
 	samplerInfo.mipLodBias = createInfo.options.mipBias;
 
-	if (vkCreateSampler(VulkanCore::Get().GetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
+	if (vkCreateSampler(Vulkan::Core::Get().GetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create texture sampler!");
 	}
 }
 
-void VulkanTexture::RecreateTexture(CreateInfo& createInfo) {
+void Vulkan::Texture::RecreateTexture(const CreateInfo& createInfo) {
 	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanTexture::RecreateTexture is not used");
 }
 
-VkImageView VulkanTexture::GetImageView() const {
+VkImageView Vulkan::Texture::GetImageView() const {
 	return imageView;
 }
 
-VkSampler VulkanTexture::GetSampler() const {
+VkSampler Vulkan::Texture::GetSampler() const {
 	return sampler;
 }

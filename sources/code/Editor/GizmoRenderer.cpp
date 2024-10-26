@@ -311,7 +311,7 @@ void GizmoRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	// TODO: Capsule is currently just copying cylinder. We need to actually handle the capsule
 	shapeMetaData[static_cast<size_t>(ShapeType::Capsule)] = shapeMetaData[static_cast<size_t>(ShapeType::Cyclinder)];
 
-	std::vector<GraphicsAPI::ShaderStageCreateInfo> shaderStageCreateInfos;
+	std::vector<GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData> shaderStageCreateInfos;
 	std::vector<std::vector<char>> fileData;
 
 	Grindstone::Assets::AssetManager* assetManager = engineCore.assetManager;

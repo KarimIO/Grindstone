@@ -3,22 +3,20 @@
 #include <Common/Graphics/UniformBuffer.hpp>
 #include <vulkan/vulkan.h>
 
-namespace Grindstone {
-	namespace GraphicsAPI {
-		class VulkanUniformBuffer : public UniformBuffer {
-		public:
-			VulkanUniformBuffer(UniformBuffer::CreateInfo& createInfo);
-			virtual ~VulkanUniformBuffer();
+namespace Grindstone::GraphicsAPI::Vulkan {
+	class UniformBuffer : public Grindstone::GraphicsAPI::UniformBuffer {
+	public:
+		UniformBuffer(const CreateInfo& createInfo);
+		virtual ~UniformBuffer();
 
-			virtual void UpdateBuffer(void* content) override;
-			virtual uint32_t GetSize() override;
-			virtual void Bind() override;
+		virtual void UpdateBuffer(void* content) override;
+		virtual uint32_t GetSize() const override;
+		virtual void Bind() override;
 
-			virtual VkBuffer GetBuffer();
-		private:
-			VkDeviceMemory memory = nullptr;
-			VkBuffer buffer = nullptr;
-			uint32_t size = 0;
-		};
+		virtual VkBuffer GetBuffer() const;
+	private:
+		VkDeviceMemory memory = nullptr;
+		VkBuffer buffer = nullptr;
+		uint32_t size = 0;
 	};
-};
+}

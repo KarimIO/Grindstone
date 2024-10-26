@@ -3,6 +3,19 @@
 #include <stdint.h>
 
 namespace Grindstone::GraphicsAPI {
+	enum class TextureWrapMode : uint8_t {
+		Repeat = 0,
+		ClampToEdge,
+		ClampToBorder,
+		MirroredRepeat,
+		MirroredClampToEdge
+	};
+
+	enum class TextureFilter : uint8_t {
+		Nearest = 0,
+		Linear
+	};
+
 	enum class ClearMode : uint8_t {
 		Color = 1,
 		Depth = 2,
@@ -55,29 +68,50 @@ namespace Grindstone::GraphicsAPI {
 		//FORMAT_STENCIL_8
 	};
 
+	#define SHADER_STAGE_TYPES \
+		GSExpandEntry(Vertex, 1 << 0),\
+		GSExpandEntry(TesselationEvaluation, 1 << 1),\
+		GSExpandEntry(TesselationControl, 1 << 2),\
+		GSExpandEntry(Geometry, 1 << 3),\
+		GSExpandEntry(Fragment, 1 << 4),\
+		GSExpandEntry(Task, 1 << 5),\
+		GSExpandEntry(Mesh, 1 << 6),\
+		GSExpandEntry(Compute, 1 << 7)
+
 	enum class ShaderStage : uint8_t {
-		Vertex = 0,
-		TesselationEvaluation,
-		TesselationControl,
-		Geometry,
-		Fragment,
-		NumGraphics,
-		Compute = NumGraphics,
-		All
+		#define GSExpandEntry(key, bit) key
+		SHADER_STAGE_TYPES,
+		#undef GSExpandEntry
+		GraphicsCount = Compute,
+		Count
 	};
+
+	constexpr uint8_t numShaderGraphicStage = static_cast<uint8_t>(ShaderStage::GraphicsCount);
+	constexpr uint8_t numShaderTotalStage = static_cast<uint8_t>(ShaderStage::Count);
 
 	enum class ShaderStageBit : uint8_t {
-		Vertex = 0x1,
-		TesselationEvaluation = 0x2,
-		TesselationControl = 0x4,
-		Geometry = 0x8,
-		Fragment = 0x10,
-		AllGraphics = 0x1F,
-		Compute = 0x20,
-		All = 0x3F
+		None = 0,
+#define GSExpandEntry(key, bit) key = bit
+		SHADER_STAGE_TYPES,
+#undef GSExpandEntry
+		AllGraphics = Vertex | TesselationEvaluation | TesselationControl | Geometry | Fragment | Task | Mesh,
+		All = AllGraphics | Compute
 	};
 
-	ShaderStageBit operator |(ShaderStageBit a, ShaderStageBit b);
+	constexpr const char* shaderStageNames[] = {
+		#define GSExpandEntry(key, bit) #key
+		SHADER_STAGE_TYPES
+		#undef GSExpandEntry
+	};
+
+	inline const char* GetShaderStageName(Grindstone::GraphicsAPI::ShaderStage stage) {
+		uint8_t index = static_cast<uint8_t>(stage);
+		if (index >= static_cast<uint8_t>(ShaderStage::Count)) {
+			return "Invalid";
+		}
+
+		return shaderStageNames[index];
+	}
 
 	enum class BindingType {
 		UniformBuffer,
@@ -87,85 +121,125 @@ namespace Grindstone::GraphicsAPI {
 		RenderTextureStorageImage
 	};
 
-	const uint8_t numShaderGraphicStage = 5;
-	const uint8_t numShaderTotalStage = 6;
+#define BLEND_OPERATIONS_LIST \
+	GSExpandEntry(None),\
+	GSExpandEntry(Add),\
+	GSExpandEntry(Subtract),\
+	GSExpandEntry(ReverseSubtract),\
+	GSExpandEntry(Minimum),\
+	GSExpandEntry(Maximum),\
+	GSExpandEntry(Zero),\
+	GSExpandEntry(Source),\
+	GSExpandEntry(Destination),\
+	GSExpandEntry(SourceOver),\
+	GSExpandEntry(DestinationOver),\
+	GSExpandEntry(SourceIn),\
+	GSExpandEntry(DestinationIn),\
+	GSExpandEntry(SourceOut),\
+	GSExpandEntry(DestinationOut),\
+	GSExpandEntry(SourceAtop),\
+	GSExpandEntry(DestinationAtop),\
+	GSExpandEntry(XOR),\
+	GSExpandEntry(Multiply),\
+	GSExpandEntry(Screen),\
+	GSExpandEntry(Overlay),\
+	GSExpandEntry(Darken),\
+	GSExpandEntry(Lighten),\
+	GSExpandEntry(ColorDodge),\
+	GSExpandEntry(ColorBurn),\
+	GSExpandEntry(HardLight),\
+	GSExpandEntry(SoftLight),\
+	GSExpandEntry(Difference),\
+	GSExpandEntry(Exclusion),\
+	GSExpandEntry(Invert),\
+	GSExpandEntry(InvertRGB),\
+	GSExpandEntry(LinearDodge),\
+	GSExpandEntry(LinearBurn),\
+	GSExpandEntry(VividLight),\
+	GSExpandEntry(LinearLight),\
+	GSExpandEntry(PinLight),\
+	GSExpandEntry(HardMix),\
+	GSExpandEntry(HSLHue),\
+	GSExpandEntry(HSLSaturation),\
+	GSExpandEntry(HSLColor),\
+	GSExpandEntry(HSLLuminosity),\
+	GSExpandEntry(Plus),\
+	GSExpandEntry(PlusClamped),\
+	GSExpandEntry(PlusClampedAlpha),\
+	GSExpandEntry(PlusDark),\
+	GSExpandEntry(Minus),\
+	GSExpandEntry(MinusClamped),\
+	GSExpandEntry(Contrast),\
+	GSExpandEntry(InvertOVG),\
+	GSExpandEntry(Red),\
+	GSExpandEntry(Green),\
+	GSExpandEntry(Blue)
 
 	enum class BlendOperation : uint8_t {
-		None = 0,
-		Add,
-		Subtract,
-		ReverseSubtract,
-		Minimum,
-		Maximum,
-		Zero,
-		Source,
-		Destination,
-		SourceOver,
-		DestinationOver,
-		SourceIn,
-		DestinationIn,
-		SourceOut,
-		DestinationOut,
-		SourceAtop,
-		DestinationAtop,
-		XOR,
-		Multiply,
-		Screen,
-		Overlay,
-		Darken,
-		Lighten,
-		ColorDodge,
-		ColorBurn,
-		HardLight,
-		SoftLight,
-		Difference,
-		Exclusion,
-		Invert,
-		InvertRGB,
-		LinearDodge,
-		LinearBurn,
-		VividLight,
-		LinearLight,
-		PinLight,
-		HardMix,
-		HSLHue,
-		HSLSaturation,
-		HSLColor,
-		HSLLuminosity,
-		Plus,
-		PlusClamped,
-		PlusClampedAlpha,
-		PlusDark,
-		Minus,
-		MinusClamped,
-		Contrast,
-		InvertOVG,
-		Red,
-		Green,
-		Blue,
+#define GSExpandEntry(key) key
+		BLEND_OPERATIONS_LIST,
+#undef GSExpandEntry
+		Count
 	};
 
-	enum class BlendFactor : uint8_t {
-		Zero = 0,
-		One,
-		SrcColor,
-		OneMinusSrcColor,
-		DstColor,
-		OneMinusDstColor,
-		SrcAlpha,
-		OneMinusSrcAlpha,
-		DstAlpha,
-		OneMinusDstAlpha,
-		ConstantColor,
-		OneMinusConstantColor,
-		ConstantAlpha,
-		OneMinusConstantAlpha,
-		SrcAlphaSaturate,
-		Src1Color,
-		OneMinusSrc1Color,
-		Src1Alpha,
-		OneMinusSrc1Alpha
+	constexpr const char* blendOperationNames[] = {
+		#define GSExpandEntry(key) #key
+		BLEND_OPERATIONS_LIST
+		#undef GSExpandEntry
 	};
+
+	inline const char* GetBlendOperationName(Grindstone::GraphicsAPI::BlendOperation op) {
+		uint8_t index = static_cast<uint8_t>(op);
+		if (index >= static_cast<uint8_t>(BlendOperation::Count)) {
+			return "Invalid";
+		}
+
+		return blendOperationNames[index];
+	}
+
+
+#define BLEND_FACTORS_LIST \
+	GSExpandEntry(Zero),\
+	GSExpandEntry(One),\
+	GSExpandEntry(SrcColor),\
+	GSExpandEntry(OneMinusSrcColor),\
+	GSExpandEntry(DstColor),\
+	GSExpandEntry(OneMinusDstColor),\
+	GSExpandEntry(SrcAlpha),\
+	GSExpandEntry(OneMinusSrcAlpha),\
+	GSExpandEntry(DstAlpha),\
+	GSExpandEntry(OneMinusDstAlpha),\
+	GSExpandEntry(ConstantColor),\
+	GSExpandEntry(OneMinusConstantColor),\
+	GSExpandEntry(ConstantAlpha),\
+	GSExpandEntry(OneMinusConstantAlpha),\
+	GSExpandEntry(SrcAlphaSaturate),\
+	GSExpandEntry(Src1Color),\
+	GSExpandEntry(OneMinusSrc1Color),\
+	GSExpandEntry(Src1Alpha),\
+	GSExpandEntry(OneMinusSrc1Alpha)
+
+	enum class BlendFactor : uint8_t {
+		#define GSExpandEntry(key) key
+		BLEND_FACTORS_LIST,
+		#undef GSExpandEntry
+		Count
+	};
+
+	constexpr const char* blendFactorNames[] = {
+		#define GSExpandEntry(key) #key
+		BLEND_FACTORS_LIST
+		#undef GSExpandEntry
+	};
+
+	inline const char* GetBlendFactorName(Grindstone::GraphicsAPI::BlendFactor factor) {
+		uint8_t index = static_cast<uint8_t>(factor);
+		if (index >= static_cast<uint8_t>(BlendFactor::Count)) {
+			return "Invalid";
+		}
+
+		return blendFactorNames[index];
+	}
 
 	struct BlendData {
 		BlendOperation colorOperation = BlendOperation::None;
@@ -213,25 +287,61 @@ namespace Grindstone::GraphicsAPI {
 		};
 	};
 
+#define GEOMETRY_TYPES_LIST \
+		GSExpandEntry(Points),\
+		GSExpandEntry(Lines),\
+		GSExpandEntry(LineStrips),\
+		GSExpandEntry(LineLoops),\
+		GSExpandEntry(TriangleStrips),\
+		GSExpandEntry(TriangleFans),\
+		GSExpandEntry(Triangles),\
+		GSExpandEntry(LinesAdjacency),\
+		GSExpandEntry(TrianglesAdjacency),\
+		GSExpandEntry(TriangleStripsAdjacency),\
+		GSExpandEntry(Patches)
+
 	enum class GeometryType : uint8_t {
-		Points,
-		Lines,
-		LineStrips,
-		LineLoops,
-		TriangleStrips,
-		TriangleFans,
-		Triangles,
-		LinesAdjacency,
-		TrianglesAdjacency,
-		TriangleStripsAdjacency,
-		Patches
+		#define GSExpandEntry(key) key
+		GEOMETRY_TYPES_LIST,
+		#undef GSExpandEntry
+		Count
 	};
+
+	constexpr const char* geometryTypeNames[] = {
+		#define GSExpandEntry(key) #key
+		GEOMETRY_TYPES_LIST
+		#undef GSExpandEntry
+	};
+
+	inline const char* GetGeometryTypeName(Grindstone::GraphicsAPI::GeometryType stage) {
+		uint8_t index = static_cast<uint8_t>(stage);
+		if (index >= static_cast<uint8_t>(GeometryType::Count)) {
+			return "Invalid";
+		}
+
+		return geometryTypeNames[index];
+	}
 
 	enum class PolygonFillMode : uint8_t {
 		Point,
 		Line,
 		Fill
 	};
+
+	constexpr const char* polygonFillModeNames[] = {
+		"Point",
+		"Line",
+		"Fill"
+	};
+
+	inline const char* GetPolygonFillModeName(Grindstone::GraphicsAPI::PolygonFillMode mode) {
+		uint8_t index = static_cast<uint8_t>(mode);
+		if (index > static_cast<uint8_t>(PolygonFillMode::Fill)) {
+			return "Invalid";
+		}
+
+		return polygonFillModeNames[index];
+	}
 
 	enum class CompareOperation : uint8_t {
 		Never,
@@ -244,20 +354,23 @@ namespace Grindstone::GraphicsAPI {
 		Always
 	};
 
-	enum class TextureWrapMode : uint8_t {
-		Repeat = 0,
-		ClampToEdge,
-		ClampToBorder,
-		MirroredRepeat,
-		MirroredClampToEdge
+	constexpr const char* compareOperationNames[] = {
+		#define GSExpandEntry(key, bit) #key
+		SHADER_STAGE_TYPES
+		#undef GSExpandEntry
 	};
 
-	enum class TextureFilter : uint8_t {
-		Nearest = 0,
-		Linear
-	};
+	inline const char* GetCompareOperationName(Grindstone::GraphicsAPI::CompareOperation op) {
+		uint8_t index = static_cast<uint8_t>(op);
+		if (index > static_cast<uint8_t>(CompareOperation::Always)) {
+			return "Invalid";
+		}
+
+		return compareOperationNames[index];
+	}
 
 	enum class ColorMask : uint8_t {
+		None = 0,
 		Red = 0x1,
 		Green = 0x2,
 		Blue = 0x4,
@@ -278,9 +391,33 @@ namespace Grindstone::GraphicsAPI {
 		RGBA = Red | Green | Blue | Alpha
 	};
 
-	ColorMask operator~(const ColorMask& f);
-	ColorMask operator|(const ColorMask& a, const ColorMask& b);
-	ColorMask operator&(const ColorMask& a, const ColorMask& b);
+	constexpr const char* colorMaskNames[] = {
+		"None",
+		"R",
+		"G",
+		"RG",
+		"B",
+		"RB",
+		"GB",
+		"RGB",
+		"A",
+		"RA",
+		"GA",
+		"RGA",
+		"BA",
+		"RBA",
+		"GBA",
+		"RGBA"
+	};
+
+	inline const char* GetColorMaskName(Grindstone::GraphicsAPI::ColorMask colorMask) {
+		uint8_t index = static_cast<uint8_t>(colorMask);
+		if (index > static_cast<uint8_t>(ColorMask::RGBA)) {
+			return "Invalid";
+		}
+
+		return colorMaskNames[index];
+	}
 
 	enum class CullMode : uint8_t {
 		None = 0,
@@ -288,4 +425,90 @@ namespace Grindstone::GraphicsAPI {
 		Back,
 		Both
 	};
+
+	constexpr const char* cullModeNames[] = {
+		"None",
+		"Front",
+		"Back",
+		"Both"
+	};
+
+	inline const char* GetCullModeName(Grindstone::GraphicsAPI::CullMode cullMode) {
+		uint8_t index = static_cast<uint8_t>(cullMode);
+		if (index > static_cast<uint8_t>(CullMode::Both)) {
+			return "Invalid";
+		}
+
+		return cullModeNames[index];
+	}
+}
+
+inline Grindstone::GraphicsAPI::ShaderStageBit operator~(const Grindstone::GraphicsAPI::ShaderStageBit stages) {
+	using ShaderStageBitType = uint8_t;
+	return static_cast<Grindstone::GraphicsAPI::ShaderStageBit>(~static_cast<ShaderStageBitType>(stages));
+}
+
+inline Grindstone::GraphicsAPI::ShaderStageBit operator|(const Grindstone::GraphicsAPI::ShaderStageBit a, const Grindstone::GraphicsAPI::ShaderStageBit b) {
+	using ShaderStageBitType = uint8_t;
+	return static_cast<Grindstone::GraphicsAPI::ShaderStageBit>(static_cast<ShaderStageBitType>(a) | static_cast<ShaderStageBitType>(b));
+}
+
+inline Grindstone::GraphicsAPI::ShaderStageBit operator&(const Grindstone::GraphicsAPI::ShaderStageBit a, const Grindstone::GraphicsAPI::ShaderStageBit b) {
+	using ShaderStageBitType = uint8_t;
+	return static_cast<Grindstone::GraphicsAPI::ShaderStageBit>(static_cast<ShaderStageBitType>(a) & static_cast<ShaderStageBitType>(b));
+}
+
+inline Grindstone::GraphicsAPI::ShaderStageBit operator^(const Grindstone::GraphicsAPI::ShaderStageBit a, const Grindstone::GraphicsAPI::ShaderStageBit b) {
+	using ShaderStageBitType = uint8_t;
+	return static_cast<Grindstone::GraphicsAPI::ShaderStageBit>(static_cast<ShaderStageBitType>(a) ^ static_cast<ShaderStageBitType>(b));
+}
+
+inline Grindstone::GraphicsAPI::ShaderStageBit& operator|=(Grindstone::GraphicsAPI::ShaderStageBit& a, const Grindstone::GraphicsAPI::ShaderStageBit b) {
+	a = a | b;
+	return a;
+}
+
+inline Grindstone::GraphicsAPI::ShaderStageBit& operator&=(Grindstone::GraphicsAPI::ShaderStageBit& a, const Grindstone::GraphicsAPI::ShaderStageBit b) {
+	a = a & b;
+	return a;
+}
+
+inline Grindstone::GraphicsAPI::ShaderStageBit& operator^=(Grindstone::GraphicsAPI::ShaderStageBit& a, const Grindstone::GraphicsAPI::ShaderStageBit b) {
+	a = a ^ b;
+	return a;
+}
+
+inline Grindstone::GraphicsAPI::ColorMask operator~(const Grindstone::GraphicsAPI::ColorMask stages) {
+	using ColorMaskType = uint8_t;
+	return static_cast<Grindstone::GraphicsAPI::ColorMask>(~static_cast<ColorMaskType>(stages));
+}
+
+inline Grindstone::GraphicsAPI::ColorMask operator|(const Grindstone::GraphicsAPI::ColorMask a, const Grindstone::GraphicsAPI::ColorMask b) {
+	using ColorMaskType = uint8_t;
+	return static_cast<Grindstone::GraphicsAPI::ColorMask>(static_cast<ColorMaskType>(a) | static_cast<ColorMaskType>(b));
+}
+
+inline Grindstone::GraphicsAPI::ColorMask operator&(const Grindstone::GraphicsAPI::ColorMask a, const Grindstone::GraphicsAPI::ColorMask b) {
+	using ColorMaskType = uint8_t;
+	return static_cast<Grindstone::GraphicsAPI::ColorMask>(static_cast<ColorMaskType>(a) & static_cast<ColorMaskType>(b));
+}
+
+inline Grindstone::GraphicsAPI::ColorMask operator^(const Grindstone::GraphicsAPI::ColorMask a, const Grindstone::GraphicsAPI::ColorMask b) {
+	using ColorMaskType = uint8_t;
+	return static_cast<Grindstone::GraphicsAPI::ColorMask>(static_cast<ColorMaskType>(a) ^ static_cast<ColorMaskType>(b));
+}
+
+inline Grindstone::GraphicsAPI::ColorMask& operator|=(Grindstone::GraphicsAPI::ColorMask& a, const Grindstone::GraphicsAPI::ColorMask b) {
+	a = a | b;
+	return a;
+}
+
+inline Grindstone::GraphicsAPI::ColorMask& operator&=(Grindstone::GraphicsAPI::ColorMask& a, const Grindstone::GraphicsAPI::ColorMask b) {
+	a = a & b;
+	return a;
+}
+
+inline Grindstone::GraphicsAPI::ColorMask& operator^=(Grindstone::GraphicsAPI::ColorMask& a, const Grindstone::GraphicsAPI::ColorMask b) {
+	a = a ^ b;
+	return a;
 }

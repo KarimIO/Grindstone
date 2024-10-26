@@ -6,14 +6,18 @@
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 
 #include "GLCore.hpp"
+#include "GLFramebuffer.hpp"
 #include "GLDescriptorSet.hpp"
 #include "GLDescriptorSetLayout.hpp"
 #include "GLVertexArrayObject.hpp"
 #include "GLVertexBuffer.hpp"
 #include "GLIndexBuffer.hpp"
+#include "GLUniformBuffer.hpp"
 #include "GLGraphicsPipeline.hpp"
 #include "GLComputePipeline.hpp"
 #include "GLRenderTarget.hpp"
+#include "GLDepthStencilTarget.hpp"
+#include "GLTexture.hpp"
 #include "GLWindowGraphicsBinding.hpp"
 #include "GLFormats.hpp"
 
@@ -22,7 +26,8 @@
 	#include <Common/Window/Win32Window.hpp>
 #endif
 
-using namespace Grindstone::GraphicsAPI;
+namespace Base = Grindstone::GraphicsAPI;
+namespace OpenGL = Grindstone::GraphicsAPI::OpenGL;
 using namespace Grindstone::Memory;
 
 static void APIENTRY glDebugOutput(
@@ -74,12 +79,12 @@ static void APIENTRY glDebugOutput(
 	GPRINT_TYPED(logSeverity, Grindstone::LogSource::GraphicsAPI, id, formattedMessage.c_str());
 }
 
-bool GLCore::Initialize(Core::CreateInfo& ci) {
-	apiType = API::OpenGL;
+bool OpenGL::Core::Initialize(const Core::CreateInfo& ci) {
+	apiType = Base::API::OpenGL;
 	debug = ci.debug;
 	primaryWindow = ci.window;
 
-	auto wgb = AllocatorCore::Allocate<GLWindowGraphicsBinding>();
+	auto wgb = AllocatorCore::Allocate<OpenGL::WindowGraphicsBinding>();
 	ci.window->AddBinding(wgb);
 	wgb->Initialize(ci.window);
 
@@ -121,18 +126,18 @@ bool GLCore::Initialize(Core::CreateInfo& ci) {
 	return true;
 }
 
-void GLCore::ResizeViewport(uint32_t w, uint32_t h) {
+void OpenGL::Core::ResizeViewport(uint32_t w, uint32_t h) {
 	glViewport(0, 0, w, h);
 }
 
-void GLCore::Clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) {
+void OpenGL::Core::Clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) {
 	if (clear_color == nullptr) {
 		glClearColor(0, 0, 0, 1);
 	}
 	else {
 		glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
 	}
-			
+
 	glClearDepthf(clear_depth);
 	glClearStencil(clear_stencil);
 
@@ -142,235 +147,240 @@ void GLCore::Clear(ClearMode mask, float clear_color[4], float clear_depth, uint
 	glClear(m);
 }
 
-void GLCore::AdjustPerspective(float *perspective) {
+void OpenGL::Core::AdjustPerspective(float *perspective) {
 }
 
-void GLCore::RegisterWindow(Window* window) {
-	auto wgb = AllocatorCore::Allocate<GLWindowGraphicsBinding>();
+void OpenGL::Core::RegisterWindow(Window* window) {
+	auto wgb = AllocatorCore::Allocate<OpenGL::WindowGraphicsBinding>();
 	window->AddBinding(wgb);
 	wgb->Initialize(window);
-	wgb->ShareLists((GLWindowGraphicsBinding *)primaryWindow->GetWindowGraphicsBinding());
+	wgb->ShareLists(static_cast<OpenGL::WindowGraphicsBinding*>(primaryWindow->GetWindowGraphicsBinding()));
 }
 
 //==================================
 // Get Text Metainfo
 //==================================
-const char* GLCore::GetVendorName() {
+const char* OpenGL::Core::GetVendorName() const {
 	return vendorName.c_str();
 }
 
-const char* GLCore::GetAdapterName() {
+const char* OpenGL::Core::GetAdapterName() const {
 	return adapterName.c_str();
 }
 
-const char* GLCore::GetAPIName() {
+const char* OpenGL::Core::GetAPIName() const {
 	return "OpenGL";
 }
 
-const char* GLCore::GetDefaultShaderExtension() {
+const char* OpenGL::Core::GetDefaultShaderExtension() const {
 	return ".ogl.spv";
 }
 
-const char* GLCore::GetAPIVersion() {
+const char* OpenGL::Core::GetAPIVersion() const {
 	return apiVersion.c_str();
 }
 
 //==================================
 // Creators
 //==================================
-DescriptorSet* GLCore::CreateDescriptorSet(DescriptorSet::CreateInfo& createInfo) {
-	return static_cast<DescriptorSet*>(AllocatorCore::Allocate<GLDescriptorSet>(createInfo));
+Base::DescriptorSet* OpenGL::Core::CreateDescriptorSet(const Base::DescriptorSet::CreateInfo& createInfo) {
+	return static_cast<DescriptorSet*>(AllocatorCore::Allocate<OpenGL::DescriptorSet>(createInfo));
 }
 
-DescriptorSetLayout* GLCore::CreateDescriptorSetLayout(DescriptorSetLayout::CreateInfo& createInfo) {
-	return static_cast<DescriptorSetLayout*>(AllocatorCore::Allocate<GLDescriptorSetLayout>(createInfo));
+Base::DescriptorSetLayout* OpenGL::Core::CreateDescriptorSetLayout(const Base::DescriptorSetLayout::CreateInfo& createInfo) {
+	return static_cast<DescriptorSetLayout*>(AllocatorCore::Allocate<OpenGL::DescriptorSetLayout>(createInfo));
 }
 
-Framebuffer* GLCore::CreateFramebuffer(Framebuffer::CreateInfo& ci) {
-	return static_cast<Framebuffer*>(AllocatorCore::Allocate<GLFramebuffer>(ci));
+Base::Framebuffer* OpenGL::Core::CreateFramebuffer(const Base::Framebuffer::CreateInfo& ci) {
+	return static_cast<Framebuffer*>(AllocatorCore::Allocate<OpenGL::Framebuffer>(ci));
 }
 
-RenderPass* GLCore::CreateRenderPass(RenderPass::CreateInfo& ci) {
+Base::RenderPass* OpenGL::Core::CreateRenderPass(const Base::RenderPass::CreateInfo& ci) {
 	return 0;
 }
 
-ComputePipeline* GLCore::CreateComputePipeline(ComputePipeline::CreateInfo& ci) {
-	return static_cast<ComputePipeline*>(AllocatorCore::Allocate<GLComputePipeline>(ci));
+Base::ComputePipeline* OpenGL::Core::CreateComputePipeline(const Base::ComputePipeline::CreateInfo& ci) {
+	return static_cast<ComputePipeline*>(AllocatorCore::Allocate<OpenGL::ComputePipeline>(ci));
 }
 
-GraphicsPipeline* GLCore::CreateGraphicsPipeline(GraphicsPipeline::CreateInfo& ci) {
-	return static_cast<GraphicsPipeline*>(AllocatorCore::Allocate<GLGraphicsPipeline>(ci));
+Base::GraphicsPipeline* OpenGL::Core::CreateGraphicsPipeline(const Base::GraphicsPipeline::CreateInfo& ci) {
+	return static_cast<GraphicsPipeline*>(AllocatorCore::Allocate<OpenGL::GraphicsPipeline>(ci));
 }
 
-VertexArrayObject* GLCore::CreateVertexArrayObject(VertexArrayObject::CreateInfo& ci) {
-	return static_cast<VertexArrayObject*>(AllocatorCore::Allocate<GLVertexArrayObject>(ci));
+Base::VertexArrayObject* OpenGL::Core::CreateVertexArrayObject(const Base::VertexArrayObject::CreateInfo& ci) {
+	return static_cast<VertexArrayObject*>(AllocatorCore::Allocate<OpenGL::VertexArrayObject>(ci));
 }
 
-CommandBuffer* GLCore::CreateCommandBuffer(CommandBuffer::CreateInfo& ci) {
+Base::CommandBuffer* OpenGL::Core::CreateCommandBuffer(const Base::CommandBuffer::CreateInfo& ci) {
 	return 0;
 }
 
-VertexBuffer* GLCore::CreateVertexBuffer(VertexBuffer::CreateInfo& ci) {
-	return static_cast<VertexBuffer*>(AllocatorCore::Allocate<GLVertexBuffer>(ci));
+Base::VertexBuffer* OpenGL::Core::CreateVertexBuffer(const Base::VertexBuffer::CreateInfo& ci) {
+	return static_cast<VertexBuffer*>(AllocatorCore::Allocate<OpenGL::VertexBuffer>(ci));
 }
 
-IndexBuffer* GLCore::CreateIndexBuffer(IndexBuffer::CreateInfo& ci) {
-	return static_cast<IndexBuffer*>(AllocatorCore::Allocate<GLIndexBuffer>(ci));
+Base::IndexBuffer* OpenGL::Core::CreateIndexBuffer(const Base::IndexBuffer::CreateInfo& ci) {
+	return static_cast<IndexBuffer*>(AllocatorCore::Allocate<OpenGL::IndexBuffer>(ci));
 }
 
-UniformBuffer* GLCore::CreateUniformBuffer(UniformBuffer::CreateInfo& ci) {
-	return static_cast<UniformBuffer*>(AllocatorCore::Allocate<GLUniformBuffer>(ci));
+Base::UniformBuffer* OpenGL::Core::CreateUniformBuffer(const Base::UniformBuffer::CreateInfo& ci) {
+	return static_cast<UniformBuffer*>(AllocatorCore::Allocate<OpenGL::UniformBuffer>(ci));
 }
 
-Texture* GLCore::CreateCubemap(Texture::CubemapCreateInfo& ci) {
-	return static_cast<Texture*>(AllocatorCore::Allocate<GLTexture>(ci));
+Base::Texture* OpenGL::Core::CreateCubemap(const Base::Texture::CubemapCreateInfo& ci) {
+	return static_cast<Texture*>(AllocatorCore::Allocate<OpenGL::Texture>(ci));
 }
 
-Texture* GLCore::CreateTexture(Texture::CreateInfo& ci) {
-	return static_cast<Texture*>(AllocatorCore::Allocate<GLTexture>(ci));
+Base::Texture* OpenGL::Core::CreateTexture(const Base::Texture::CreateInfo& ci) {
+	return static_cast<Texture*>(AllocatorCore::Allocate<OpenGL::Texture>(ci));
 }
 
-RenderTarget* GLCore::CreateRenderTarget(RenderTarget::CreateInfo* rt, uint32_t rc, bool cube) {
-	return static_cast<RenderTarget*>(AllocatorCore::Allocate<GLRenderTarget>(rt, rc, cube));
+Base::RenderTarget* OpenGL::Core::CreateRenderTarget(const Base::RenderTarget::CreateInfo* rt, uint32_t rc, bool cube) {
+	return static_cast<RenderTarget*>(AllocatorCore::Allocate<OpenGL::RenderTarget>(rt, rc, cube));
 }
 
-RenderTarget* GLCore::CreateRenderTarget(RenderTarget::CreateInfo& rt) {
-	return static_cast<RenderTarget*>(AllocatorCore::Allocate<GLRenderTarget>(rt));
+Base::RenderTarget* OpenGL::Core::CreateRenderTarget(const Base::RenderTarget::CreateInfo& rt) {
+	return static_cast<RenderTarget*>(AllocatorCore::Allocate<OpenGL::RenderTarget>(rt));
 }
 
-DepthTarget* GLCore::CreateDepthTarget(DepthTarget::CreateInfo& rt) {
-	return static_cast<DepthTarget*>(AllocatorCore::Allocate<GLDepthTarget>(rt));
+Base::DepthStencilTarget* OpenGL::Core::CreateDepthStencilTarget(const Base::DepthStencilTarget::CreateInfo& rt) {
+	return static_cast<DepthStencilTarget*>(AllocatorCore::Allocate<OpenGL::DepthStencilTarget>(rt));
 }
 
 //==================================
 // Booleans
 //==================================
-const bool GLCore::ShouldUseImmediateMode() {
+bool OpenGL::Core::ShouldUseImmediateMode() const {
 	return true;
 }
-const bool GLCore::SupportsCommandBuffers() {
+
+bool OpenGL::Core::SupportsCommandBuffers() const {
 	return false;
 }
-const bool GLCore::SupportsTesselation() {
+
+bool OpenGL::Core::SupportsTesselation() const {
 	return gl3wIsSupported(4, 0) ? true : false;
 }
-const bool GLCore::SupportsGeometryShader() {
+
+bool OpenGL::Core::SupportsGeometryShader() const {
 	return gl3wIsSupported(3, 2) ? true : false;
 }
-const bool GLCore::SupportsComputeShader() {
+
+bool OpenGL::Core::SupportsComputeShader() const {
 	return gl3wIsSupported(4, 3) ? true : false;
 }
-const bool GLCore::SupportsMultiDrawIndirect() {
+
+bool OpenGL::Core::SupportsMultiDrawIndirect() const {
 	return gl3wIsSupported(4, 3) ? true : false;
 }
 
 //==================================
 // Deleters
 //==================================
-void GLCore::DeleteRenderTarget(RenderTarget *ptr) {
-	AllocatorCore::Free(static_cast<GLRenderTarget *>(ptr));
+void OpenGL::Core::DeleteRenderTarget(Base::RenderTarget *ptr) {
+	AllocatorCore::Free(static_cast<OpenGL::RenderTarget*>(ptr));
 }
 
-void GLCore::DeleteDepthTarget(DepthTarget *ptr) {
-	AllocatorCore::Free(static_cast<GLDepthTarget *>(ptr));
+void OpenGL::Core::DeleteDepthStencilTarget(Base::DepthStencilTarget *ptr) {
+	AllocatorCore::Free(static_cast<OpenGL::DepthStencilTarget*>(ptr));
 }
 
-void GLCore::DeleteFramebuffer(Framebuffer *ptr) {
-	AllocatorCore::Free(static_cast<GLFramebuffer *>(ptr));
+void OpenGL::Core::DeleteFramebuffer(Base::Framebuffer *ptr) {
+	AllocatorCore::Free(static_cast<OpenGL::Framebuffer*>(ptr));
 }
 
-void GLCore::DeleteVertexBuffer(VertexBuffer *ptr) {
-	AllocatorCore::Free(static_cast<GLVertexBuffer *>(ptr));
+void OpenGL::Core::DeleteVertexBuffer(Base::VertexBuffer *ptr) {
+	AllocatorCore::Free(static_cast<OpenGL::VertexBuffer*>(ptr));
 }
 
-void GLCore::DeleteIndexBuffer(IndexBuffer *ptr) {
-	AllocatorCore::Free(static_cast<GLIndexBuffer *>(ptr));
+void OpenGL::Core::DeleteIndexBuffer(Base::IndexBuffer *ptr) {
+	AllocatorCore::Free(static_cast<OpenGL::IndexBuffer*>(ptr));
 }
 
-void GLCore::DeleteUniformBuffer(UniformBuffer * ptr) {
-	AllocatorCore::Free(static_cast<GLUniformBuffer *>(ptr));
+void OpenGL::Core::DeleteUniformBuffer(Base::UniformBuffer * ptr) {
+	AllocatorCore::Free(static_cast<OpenGL::UniformBuffer*>(ptr));
 }
 
-void GLCore::DeleteComputePipeline(ComputePipeline* ptr) {
-	AllocatorCore::Free(static_cast<GLComputePipeline*>(ptr));
+void OpenGL::Core::DeleteComputePipeline(Base::ComputePipeline* ptr) {
+	AllocatorCore::Free(static_cast<OpenGL::ComputePipeline*>(ptr));
 }
 
-void GLCore::DeleteGraphicsPipeline(GraphicsPipeline* ptr) {
-	AllocatorCore::Free(static_cast<GLGraphicsPipeline *>(ptr));
+void OpenGL::Core::DeleteGraphicsPipeline(Base::GraphicsPipeline* ptr) {
+	AllocatorCore::Free(static_cast<OpenGL::GraphicsPipeline*>(ptr));
 }
 
-void GLCore::DeleteRenderPass(RenderPass *ptr) {
-	//AllocatorCore::Free(static_cast<GLRenderPass *>(ptr));
+void OpenGL::Core::DeleteRenderPass(Base::RenderPass *ptr) {
+	//AllocatorCore::Free(static_cast<OpenGL::RenderPass*>(ptr));
 }
 
-void GLCore::DeleteTexture(Texture *ptr) {
-	AllocatorCore::Free(static_cast<GLTexture *>(ptr));
+void OpenGL::Core::DeleteTexture(Base::Texture* ptr) {
+	AllocatorCore::Free(static_cast<OpenGL::Texture*>(ptr));
 }
 
-void GLCore::DeleteDescriptorSet(DescriptorSet *ptr) {
-	AllocatorCore::Free(static_cast<GLDescriptorSet *>(ptr));
+void OpenGL::Core::DeleteDescriptorSet(Base::DescriptorSet* ptr) {
+	AllocatorCore::Free(static_cast<OpenGL::DescriptorSet*>(ptr));
 }
 
-void GLCore::DeleteDescriptorSetLayout(DescriptorSetLayout *ptr) {
-	AllocatorCore::Free(static_cast<GLDescriptorSetLayout *>(ptr));
+void OpenGL::Core::DeleteDescriptorSetLayout(Base::DescriptorSetLayout* ptr) {
+	AllocatorCore::Free(static_cast<OpenGL::DescriptorSetLayout*>(ptr));
 }
 
-void GLCore::DeleteCommandBuffer(CommandBuffer * ptr) {
+void OpenGL::Core::DeleteCommandBuffer(Base::CommandBuffer* ptr) {
 }
 
-void GLCore::DeleteVertexArrayObject(VertexArrayObject * ptr) {
-	AllocatorCore::Free(static_cast<GLVertexArrayObject *>(ptr));
+void OpenGL::Core::DeleteVertexArrayObject(Base::VertexArrayObject* ptr) {
+	AllocatorCore::Free(static_cast<OpenGL::VertexArrayObject*>(ptr));
 }
 
-void GLCore::CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) {
+void OpenGL::Core::CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) {
 	glBlitFramebuffer(0, 0, srcWidth, srcHeight, 0, 0, dstWidth, dstHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 }
 
-void GLCore::WaitUntilIdle() {
+void OpenGL::Core::WaitUntilIdle() {
 
 }
 
-void GLCore::SetColorMask(ColorMask mask) {
+void OpenGL::Core::SetColorMask(ColorMask mask) {
 	glColorMask((GLboolean)(mask & ColorMask::Red), (GLboolean)(mask & ColorMask::Green), (GLboolean)(mask & ColorMask::Blue), (GLboolean)(mask & ColorMask::Alpha));
 }
 
-void GLCore::BindGraphicsPipeline(GraphicsPipeline* pipeline) {
-	GLGraphicsPipeline* p = (GLGraphicsPipeline*)pipeline;
+void OpenGL::Core::BindGraphicsPipeline(Base::GraphicsPipeline* pipeline) {
+	OpenGL::GraphicsPipeline* p = static_cast<OpenGL::GraphicsPipeline*>(pipeline);
 	p->Bind();
 }
 
-void GLCore::BindVertexArrayObject(VertexArrayObject *vao) {
+void OpenGL::Core::BindVertexArrayObject(Base::VertexArrayObject *vao) {
 	vao->Bind();
 }
 
-void GLCore::DrawImmediateIndexed(GeometryType geometryType, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
-	uint32_t size = largeBuffer ? sizeof(uint32_t) : sizeof(uint16_t);
-	uint64_t finalPtrUint = indexOffsetPtr * size;
-	void *ptr = reinterpret_cast<void *>(finalPtrUint);
+void OpenGL::Core::DrawImmediateIndexed(GeometryType geometryType, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
+	uint64_t size = largeBuffer ? sizeof(uint32_t) : sizeof(uint16_t);
+	uint64_t finalPtrUint = static_cast<uint64_t>(indexOffsetPtr) * size;
+	void *ptr = reinterpret_cast<void*>(finalPtrUint);
 	glDrawElementsBaseVertex(TranslateGeometryTypeToOpenGL(geometryType), indexCount, largeBuffer ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, ptr, baseVertex);
 }
 
-void GLCore::DrawImmediateVertices(GeometryType geometryType, uint32_t base, uint32_t count) {
+void OpenGL::Core::DrawImmediateVertices(GeometryType geometryType, uint32_t base, uint32_t count) {
 	glDrawArrays(TranslateGeometryTypeToOpenGL(geometryType), base, count);
 }
 
-void GLCore::EnableDepthWrite(bool isDepthEnabled) {
+void OpenGL::Core::EnableDepthWrite(bool isDepthEnabled) {
 	glDepthMask(isDepthEnabled ? GL_TRUE : GL_FALSE);
 }
 
-void GLCore::BindDefaultFramebufferRead() {
+void OpenGL::Core::BindDefaultFramebufferRead() {
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 }
 
-void GLCore::BindDefaultFramebufferWrite() {
+void OpenGL::Core::BindDefaultFramebufferWrite() {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
-void GLCore::BindDefaultFramebuffer() {
+void OpenGL::Core::BindDefaultFramebuffer() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void GLCore::SetImmediateBlending(
+void OpenGL::Core::SetImmediateBlending(
 	BlendOperation colorOp, BlendFactor colorSrc, BlendFactor colorDst,
 	BlendOperation alphaOp, BlendFactor alphaSrc, BlendFactor alphaDst
 ) {

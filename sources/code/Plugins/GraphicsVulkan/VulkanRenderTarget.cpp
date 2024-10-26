@@ -8,9 +8,9 @@
 #include "VulkanFormat.hpp"
 #include "VulkanCore.hpp"
 
-using namespace Grindstone::GraphicsAPI;
+namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
-VulkanRenderTarget::VulkanRenderTarget(
+Vulkan::RenderTarget::RenderTarget(
 	VkImage swapchainImage,
 	VkFormat format,
 	uint32_t swapchainIndex
@@ -22,13 +22,13 @@ VulkanRenderTarget::VulkanRenderTarget(
 	imageView = CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
 	std::string imageViewDebugName = debugName + " View";
-	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, debugName.c_str());
-	VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
+	Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, debugName.c_str());
+	Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
 }
 
-VulkanRenderTarget::VulkanRenderTarget(VkImage image, VkImageView imageView, VkFormat colorFormat) : image(image), imageView(imageView), isOwnedBySwapchain(true) {}
+Vulkan::RenderTarget::RenderTarget(VkImage image, VkImageView imageView, VkFormat colorFormat) : image(image), imageView(imageView), isOwnedBySwapchain(true) {}
 
-VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& createInfo) : format(createInfo.format), width(createInfo.width), height(createInfo.height), isSampled(createInfo.isSampled), isOwnedBySwapchain(false), isWrittenByCompute(createInfo.isWrittenByCompute), hasMipChain(createInfo.hasMipChain){
+Vulkan::RenderTarget::RenderTarget(const CreateInfo& createInfo) : format(createInfo.format), width(createInfo.width), height(createInfo.height), isSampled(createInfo.isSampled), isOwnedBySwapchain(false), isWrittenByCompute(createInfo.isWrittenByCompute), hasMipChain(createInfo.hasMipChain){
 	if (createInfo.debugName != nullptr) {
 		debugName = createInfo.debugName;
 	}
@@ -36,14 +36,14 @@ VulkanRenderTarget::VulkanRenderTarget(RenderTarget::CreateInfo& createInfo) : f
 	Create();
 }
 
-void VulkanRenderTarget::UpdateNativeImage(VkImage image, VkImageView imageView, VkFormat format) {
+void Vulkan::RenderTarget::UpdateNativeImage(VkImage image, VkImageView imageView, VkFormat format) {
 	isOwnedBySwapchain = true;
 	this->image = image;
 	this->imageView = imageView;
 	this->format = TranslateColorFormatFromVulkan(format);
 }
 
-void VulkanRenderTarget::Create() {
+void Vulkan::RenderTarget::Create() {
 	if (debugName.empty()) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Render Target!");
 	}
@@ -79,8 +79,8 @@ void VulkanRenderTarget::Create() {
 
 	{
 		std::string imageViewDebugName = debugName + " View";
-		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, debugName.c_str());
-		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, debugName.c_str());
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
 	}
 
 	if (isSampled) {
@@ -97,16 +97,16 @@ void VulkanRenderTarget::Create() {
 		CreateTextureSampler();
 
 		std::string imageSamplerDebugName = debugName + " Sampler";
-		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_SAMPLER, sampler, imageSamplerDebugName.c_str());
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_SAMPLER, sampler, imageSamplerDebugName.c_str());
 	}
 }
 
-VulkanRenderTarget::~VulkanRenderTarget() {
+Vulkan::RenderTarget::~RenderTarget() {
 	Cleanup();
 }
 
-void VulkanRenderTarget::Cleanup() {
-	VkDevice device = VulkanCore::Get().GetDevice();
+void Vulkan::RenderTarget::Cleanup() {
+	VkDevice device = Vulkan::Core::Get().GetDevice();
 
 	if (sampler != nullptr) {
 		vkDestroySampler(device, sampler, nullptr);
@@ -131,7 +131,7 @@ void VulkanRenderTarget::Cleanup() {
 	}
 }
 
-void VulkanRenderTarget::CreateTextureSampler() {
+void Vulkan::RenderTarget::CreateTextureSampler() {
 	VkSamplerCreateInfo samplerInfo = {};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerInfo.magFilter = VkFilter::VK_FILTER_LINEAR;
@@ -150,15 +150,15 @@ void VulkanRenderTarget::CreateTextureSampler() {
 	samplerInfo.maxLod = 1;
 	samplerInfo.mipLodBias = 0;
 
-	if (vkCreateSampler(VulkanCore::Get().GetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
+	if (vkCreateSampler(Vulkan::Core::Get().GetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create texture sampler!");
 	}
 }
 
-void VulkanRenderTarget::UpdateSwapChainImage(VkImage swapchainImage) {
+void Vulkan::RenderTarget::UpdateSwapChainImage(VkImage swapchainImage) {
 	image = swapchainImage;
 
-	VkDevice device = VulkanCore::Get().GetDevice();
+	VkDevice device = Vulkan::Core::Get().GetDevice();
 
 	if (imageView != nullptr) {
 		vkDestroyImageView(device, imageView, nullptr);
@@ -166,19 +166,19 @@ void VulkanRenderTarget::UpdateSwapChainImage(VkImage swapchainImage) {
 	}
 }
 
-VkImage VulkanRenderTarget::GetImage() const {
+VkImage Vulkan::RenderTarget::GetImage() const {
 	return image;
 }
 
-VkImageView VulkanRenderTarget::GetImageView() const {
+VkImageView Vulkan::RenderTarget::GetImageView() const {
 	return imageView;
 }
 
-VkSampler VulkanRenderTarget::GetSampler() const {
+VkSampler Vulkan::RenderTarget::GetSampler() const {
 	return sampler;
 }
 
-void VulkanRenderTarget::Resize(uint32_t width, uint32_t height) {
+void Vulkan::RenderTarget::Resize(uint32_t width, uint32_t height) {
 	this->width = width;
 	this->height = height;
 
@@ -186,6 +186,6 @@ void VulkanRenderTarget::Resize(uint32_t width, uint32_t height) {
 	Create();
 }
 
-void VulkanRenderTarget::RenderScreen(unsigned int i, unsigned int resx, unsigned int resy, unsigned char * data) {
+void Vulkan::RenderTarget::RenderScreen(unsigned int i, unsigned int resx, unsigned int resy, unsigned char * data) {
 	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanRenderTarget::RenderScreen is not used.");
 }

@@ -35,6 +35,9 @@ namespace Grindstone {
 		uint32_t sortData;
 	};
 
+	struct Mesh3dUbo {
+		glm::mat4 modelMatrix;
+	};
 
 	struct RenderQueueContainer {
 		DrawSortMode sortMode;

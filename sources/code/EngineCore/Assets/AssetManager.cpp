@@ -185,7 +185,7 @@ bool AssetManager::LoadShaderSet(
 	Uuid uuid,
 	uint8_t shaderStagesBitMask,
 	size_t numShaderStages,
-	std::vector<ShaderStageCreateInfo>& shaderStageCreateInfos,
+	std::vector<Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData>& shaderStageCreateInfos,
 	std::vector<std::vector<char>>& fileData
 ) {
 	shaderStageCreateInfos.resize(numShaderStages);
@@ -196,7 +196,7 @@ bool AssetManager::LoadShaderSet(
 	size_t shaderIterator = 0;
 	for (
 		ShaderStage stage = ShaderStage::Vertex;
-		stage < ShaderStage::Compute;
+		stage < ShaderStage::GraphicsCount;
 		stage = static_cast<ShaderStage>(static_cast<uint8_t>(stage) + 1)
 	) {
 		const uint8_t stageBit = (1 << static_cast<uint8_t>(stage));
@@ -214,7 +214,7 @@ bool AssetManager::LoadShaderSet(
 	return true;
 }
 
-bool AssetManager::LoadShaderStage(Uuid uuid, GraphicsAPI::ShaderStage shaderStage, GraphicsAPI::ShaderStageCreateInfo& stageCreateInfo, std::vector<char>& fileData) {
+bool AssetManager::LoadShaderStage(Uuid uuid, GraphicsAPI::ShaderStage shaderStage, GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& stageCreateInfo, std::vector<char>& fileData) {
 	return assetLoader->LoadShaderStage(uuid, shaderStage, stageCreateInfo, fileData);
 }
 

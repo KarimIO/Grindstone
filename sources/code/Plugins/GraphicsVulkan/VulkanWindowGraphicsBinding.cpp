@@ -17,13 +17,14 @@
 #include "VulkanFramebuffer.hpp"
 #include "VulkanCommandBuffer.hpp"
 
-using namespace Grindstone::GraphicsAPI;
+namespace Base = Grindstone::GraphicsAPI;
+namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
-bool VulkanWindowGraphicsBinding::Initialize(Window *window) {
+bool Vulkan::WindowGraphicsBinding::Initialize(Window *window) {
 	this->window = window;
 	maxFramesInFlight = 3;
 
-	VkResult err = glfwCreateWindowSurface(VulkanCore::Get().GetInstance(), static_cast<GlfwWindow*>(window)->GetHandle(), NULL, &surface);
+	VkResult err = glfwCreateWindowSurface(Vulkan::Core::Get().GetInstance(), static_cast<GlfwWindow*>(window)->GetHandle(), NULL, &surface);
 	if (err) {
 		return false;
 	}
@@ -37,7 +38,7 @@ bool VulkanWindowGraphicsBinding::Initialize(Window *window) {
 	surfaceCreateInfo.pNext = VK_NULL_HANDLE;
 	surfaceCreateInfo.flags = 0;
 
-	if (vkCreateWin32SurfaceKHR(VulkanCore::Get().GetInstance(), &surfaceCreateInfo, nullptr, &surface) != VK_SUCCESS) {
+	if (vkCreateWin32SurfaceKHR(Vulkan::Core::Get().GetInstance(), &surfaceCreateInfo, nullptr, &surface) != VK_SUCCESS) {
 		return false;
 	}
 
@@ -60,58 +61,59 @@ bool VulkanWindowGraphicsBinding::Initialize(Window *window) {
 	return true;
 }
 
-VulkanWindowGraphicsBinding::~VulkanWindowGraphicsBinding() {
-	VulkanCore& vkCore = VulkanCore::Get();
+Vulkan::WindowGraphicsBinding::~WindowGraphicsBinding() {
+	Vulkan::Core& vkCore = Vulkan::Core::Get();
 			
 	// Delete rt imageview
 	vkDestroySwapchainKHR(vkCore.GetDevice(), swapChain, nullptr);
 	vkDestroySurfaceKHR(vkCore.GetInstance(), surface, nullptr);
 }
 
-VkSurfaceKHR VulkanWindowGraphicsBinding::GetSurface() {
+VkSurfaceKHR Vulkan::WindowGraphicsBinding::GetSurface() {
 	return surface;
 }
 
-VkSwapchainKHR VulkanWindowGraphicsBinding::GetSwapchain() {
+VkSwapchainKHR Vulkan::WindowGraphicsBinding::GetSwapchain() {
 	return swapChain;
 }
 
-void VulkanWindowGraphicsBinding::SubmitWindowObjects(VulkanWindowBindingDataNative& windowBindingData) {
+void Vulkan::WindowGraphicsBinding::SubmitWindowObjects(WindowBindingDataNative& windowBindingData) {
 	swapChain = windowBindingData.swapChain;
 	if (renderPass == nullptr) {
-		renderPass = new VulkanRenderPass(windowBindingData.renderPass, "Swapchain Render Pass");
+		renderPass = new Vulkan::RenderPass(windowBindingData.renderPass, "Swapchain Render Pass");
 	}
 	else {
-		static_cast<VulkanRenderPass*>(renderPass)->Update(windowBindingData.renderPass);
+		static_cast<RenderPass*>(renderPass)->Update(windowBindingData.renderPass);
 	}
 	swapchainVulkanFormat = windowBindingData.surfaceFormat.format;
 	swapchainFormat = TranslateColorFormatFromVulkan(swapchainVulkanFormat);
 
 	imageSets.resize(windowBindingData.imageSetCount);
 	for (uint32_t i = 0; i < windowBindingData.imageSetCount; ++i) {
-		VulkanImageSetNative& native = windowBindingData.imageSets[i];
-		VulkanImageSet& imageSet = imageSets[i];
+		ImageSetNative& native = windowBindingData.imageSets[i];
+		ImageSet& imageSet = imageSets[i];
 
 		if (imageSet.framebuffer == nullptr) {
-			imageSet.framebuffer = new VulkanFramebuffer(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height, "Swapchain Framebuffer");
+			imageSet.framebuffer = new Vulkan::Framebuffer(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height, "Swapchain Framebuffer");
 		}
 		else {
-			static_cast<VulkanFramebuffer*>(imageSet.framebuffer)->UpdateNativeFramebuffer(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height);
+			static_cast<Framebuffer*>(imageSet.framebuffer)->UpdateNativeFramebuffer(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height);
 		}
 
 		if (imageSet.swapChainTarget == nullptr) {
-			imageSet.swapChainTarget = new VulkanRenderTarget(native.image, native.imageView, swapchainVulkanFormat);
+			imageSet.swapChainTarget = new Vulkan::RenderTarget(native.image, native.imageView, swapchainVulkanFormat);
 		}
 		else {
-			static_cast<VulkanRenderTarget*>(imageSet.swapChainTarget)->UpdateNativeImage(native.image, native.imageView, swapchainVulkanFormat);
+			static_cast<RenderTarget*>(imageSet.swapChainTarget)->UpdateNativeImage(native.image, native.imageView, swapchainVulkanFormat);
 		}
 	}
 }
-ColorFormat VulkanWindowGraphicsBinding::GetDeviceColorFormat() const {
+
+Base::ColorFormat Vulkan::WindowGraphicsBinding::GetDeviceColorFormat() const {
 	return swapchainFormat;
 }
 
-SwapChainSupportDetails VulkanWindowGraphicsBinding::QuerySwapChainSupport(VkPhysicalDevice device) {
+Vulkan::SwapChainSupportDetails Vulkan::WindowGraphicsBinding::QuerySwapChainSupport(VkPhysicalDevice device) {
 	SwapChainSupportDetails details;
 
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
@@ -135,7 +137,7 @@ SwapChainSupportDetails VulkanWindowGraphicsBinding::QuerySwapChainSupport(VkPhy
 	return details;
 }
 
-VkSurfaceFormatKHR VulkanWindowGraphicsBinding::ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
+VkSurfaceFormatKHR Vulkan::WindowGraphicsBinding::ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
 	for (const VkSurfaceFormatKHR& availableFormat : availableFormats) {
 		if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
 			return availableFormat;
@@ -145,7 +147,7 @@ VkSurfaceFormatKHR VulkanWindowGraphicsBinding::ChooseSwapSurfaceFormat(const st
 	return availableFormats[0];
 }
 
-VkPresentModeKHR VulkanWindowGraphicsBinding::ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
+VkPresentModeKHR Vulkan::WindowGraphicsBinding::ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
 	for (const VkPresentModeKHR& availablePresentMode : availablePresentModes) {
 		if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
 			return availablePresentMode;
@@ -155,7 +157,7 @@ VkPresentModeKHR VulkanWindowGraphicsBinding::ChooseSwapPresentMode(const std::v
 	return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkExtent2D VulkanWindowGraphicsBinding::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities) {
+VkExtent2D Vulkan::WindowGraphicsBinding::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities) {
 	if (capabilities.currentExtent.width != UINT32_MAX) {
 		return capabilities.currentExtent;
 	}
@@ -175,8 +177,8 @@ VkExtent2D VulkanWindowGraphicsBinding::ChooseSwapExtent(const VkSurfaceCapabili
 	}
 }
 
-void VulkanWindowGraphicsBinding::CreateSyncObjects() {
-	VkDevice device = VulkanCore::Get().GetDevice();
+void Vulkan::WindowGraphicsBinding::CreateSyncObjects() {
+	VkDevice device = Vulkan::Core::Get().GetDevice();
 
 	VkSemaphoreCreateInfo semaphoreInfo = {};
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -199,8 +201,8 @@ void VulkanWindowGraphicsBinding::CreateSyncObjects() {
 	}
 }
 
-void VulkanWindowGraphicsBinding::CreateImageSets() {
-	VkDevice device = VulkanCore::Get().GetDevice();
+void Vulkan::WindowGraphicsBinding::CreateImageSets() {
+	VkDevice device = Vulkan::Core::Get().GetDevice();
 
 	uint32_t imageCount;
 	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
@@ -208,7 +210,7 @@ void VulkanWindowGraphicsBinding::CreateImageSets() {
 	swapChainImages.resize(imageCount);
 	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
 
-	VkRenderPass vkRenderPass = static_cast<VulkanRenderPass*>(renderPass)->GetRenderPassHandle();
+	VkRenderPass vkRenderPass = static_cast<RenderPass*>(renderPass)->GetRenderPassHandle();
 
 	VkFramebufferCreateInfo framebufferInfo{};
 	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -220,7 +222,7 @@ void VulkanWindowGraphicsBinding::CreateImageSets() {
 
 	imageSets.resize(imageCount);
 	for (uint32_t i = 0; i < imageCount; ++i) {
-		VulkanRenderTarget* rt = new VulkanRenderTarget(
+		Vulkan::RenderTarget* rt = new Vulkan::RenderTarget(
 			swapChainImages[i],
 			swapchainVulkanFormat,
 			i
@@ -234,9 +236,9 @@ void VulkanWindowGraphicsBinding::CreateImageSets() {
 			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create framebuffer!");
 		}
 
-		VulkanImageSet& imageSet = imageSets[i];
+		Vulkan::ImageSet& imageSet = imageSets[i];
 		imageSet.swapChainTarget = rt;
-		imageSet.framebuffer = new VulkanFramebuffer(
+		imageSet.framebuffer = new Vulkan::Framebuffer(
 			renderPass,
 			vkFramebuffer,
 			swapExtent.width,
@@ -248,8 +250,8 @@ void VulkanWindowGraphicsBinding::CreateImageSets() {
 	}
 }
 
-bool VulkanWindowGraphicsBinding::AcquireNextImage() {
-	VulkanCore& vkCore = VulkanCore::Get();
+bool Vulkan::WindowGraphicsBinding::AcquireNextImage() {
+	Vulkan::Core& vkCore = Vulkan::Core::Get();
 	VkDevice device = vkCore.GetDevice();
 
 	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
@@ -263,7 +265,7 @@ bool VulkanWindowGraphicsBinding::AcquireNextImage() {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to acquire swap chain image!");
 	}
 
-	VulkanImageSet& imageSet = imageSets[currentFrame];
+	Vulkan::ImageSet& imageSet = imageSets[currentFrame];
 	if (imageSet.fence != VK_NULL_HANDLE) {
 		vkWaitForFences(device, 1, &imageSet.fence, VK_TRUE, UINT64_MAX);
 	}
@@ -272,11 +274,11 @@ bool VulkanWindowGraphicsBinding::AcquireNextImage() {
 	return true;
 }
 
-void VulkanWindowGraphicsBinding::Resize(uint32_t width, uint32_t height) {
+void Vulkan::WindowGraphicsBinding::Resize(uint32_t width, uint32_t height) {
 	isSwapchainDirty = true;
 }
 
-void VulkanWindowGraphicsBinding::RecreateSwapchain() {
+void Vulkan::WindowGraphicsBinding::RecreateSwapchain() {
 	if (!window->IsSwapchainControlledByEngine()) {
 		return;
 	}
@@ -291,7 +293,7 @@ void VulkanWindowGraphicsBinding::RecreateSwapchain() {
 		glfwWaitEvents();
 	}
 
-	VulkanCore& vkCore = VulkanCore::Get();
+	Vulkan::Core& vkCore = Vulkan::Core::Get();
 	vkCore.WaitUntilIdle();
 
 	if (swapChain != nullptr) {
@@ -312,15 +314,15 @@ void VulkanWindowGraphicsBinding::RecreateSwapchain() {
 	grindstoneGlfwWindow->OnSwapchainResized(width, height);
 }
 
-void VulkanWindowGraphicsBinding::SubmitCommandBuffer(CommandBuffer* buffer) {
-	VulkanCore& vkCore = VulkanCore::Get();
+void Vulkan::WindowGraphicsBinding::SubmitCommandBuffer(GraphicsAPI::CommandBuffer* buffer) {
+	Vulkan::Core& vkCore = Vulkan::Core::Get();
 	VkDevice device = vkCore.GetDevice();
 	VkQueue graphicsQueue = vkCore.graphicsQueue;
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-	VkCommandBuffer vkCommandBuffer = static_cast<VulkanCommandBuffer*>(buffer)->GetCommandBuffer();
+	VkCommandBuffer vkCommandBuffer = static_cast<Vulkan::CommandBuffer*>(buffer)->GetCommandBuffer();
 
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	submitInfo.waitSemaphoreCount = 1;
@@ -339,8 +341,8 @@ void VulkanWindowGraphicsBinding::SubmitCommandBuffer(CommandBuffer* buffer) {
 	}
 }
 
-bool VulkanWindowGraphicsBinding::PresentSwapchain() {
-	VulkanCore& vkCore = VulkanCore::Get();
+bool Vulkan::WindowGraphicsBinding::PresentSwapchain() {
+	Vulkan::Core& vkCore = Vulkan::Core::Get();
 	VkQueue presentQueue = vkCore.presentQueue;
 
 	VkPresentInfoKHR presentInfo = {};
@@ -368,9 +370,9 @@ bool VulkanWindowGraphicsBinding::PresentSwapchain() {
 	return true;
 }
 
-void VulkanWindowGraphicsBinding::CreateSwapChain() {
-	VkPhysicalDevice physicalDevice = VulkanCore::Get().GetPhysicalDevice();
-	VkDevice device = VulkanCore::Get().GetDevice();
+void Vulkan::WindowGraphicsBinding::CreateSwapChain() {
+	VkPhysicalDevice physicalDevice = Vulkan::Core::Get().GetPhysicalDevice();
+	VkDevice device = Vulkan::Core::Get().GetDevice();
 
 	SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(physicalDevice);
 
@@ -397,7 +399,7 @@ void VulkanWindowGraphicsBinding::CreateSwapChain() {
 	createInfo.imageArrayLayers = 1;
 	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-	QueueFamilyIndices indices = VulkanCore::Get().FindQueueFamilies(physicalDevice);
+	QueueFamilyIndices indices = Vulkan::Core::Get().FindQueueFamilies(physicalDevice);
 	uint32_t queueFamilyIndices[] = { indices.graphicsFamily, indices.presentFamily };
 
 	if (indices.graphicsFamily != indices.presentFamily) {
@@ -422,7 +424,7 @@ void VulkanWindowGraphicsBinding::CreateSwapChain() {
 	CreateImageSets();
 }
 
-void VulkanWindowGraphicsBinding::CreateRenderPass() {
+void Vulkan::WindowGraphicsBinding::CreateRenderPass() {
 	VkAttachmentDescription colorAttachment{};
 	colorAttachment.format = swapchainVulkanFormat;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -459,35 +461,35 @@ void VulkanWindowGraphicsBinding::CreateRenderPass() {
 	renderPassInfo.dependencyCount = 1;
 	renderPassInfo.pDependencies = &dependency;
 
-	VkDevice device = VulkanCore::Get().GetDevice();
+	VkDevice device = Vulkan::Core::Get().GetDevice();
 	VkRenderPass vkRenderPass = nullptr;
 	if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &vkRenderPass) != VK_SUCCESS) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create render pass!");
 	}
 
 	if (renderPass == nullptr) {
-		renderPass = new VulkanRenderPass(vkRenderPass, "Swapchain Render Pass");
+		renderPass = new Vulkan::RenderPass(vkRenderPass, "Swapchain Render Pass");
 	}
 	else {
-		static_cast<VulkanRenderPass*>(renderPass)->Update(vkRenderPass);
+		static_cast<Vulkan::RenderPass*>(renderPass)->Update(vkRenderPass);
 	}
 }
 
-RenderPass* VulkanWindowGraphicsBinding::GetRenderPass() {
+Base::RenderPass* Vulkan::WindowGraphicsBinding::GetRenderPass() {
 	return renderPass;
 }
 
-Framebuffer* VulkanWindowGraphicsBinding::GetCurrentFramebuffer() {
+Base::Framebuffer* Vulkan::WindowGraphicsBinding::GetCurrentFramebuffer() {
 	return imageSets[currentFrame].framebuffer;
 }
 
-uint32_t VulkanWindowGraphicsBinding::GetCurrentImageIndex() {
+uint32_t Vulkan::WindowGraphicsBinding::GetCurrentImageIndex() {
 	return currentFrame;
 }
 
-uint32_t VulkanWindowGraphicsBinding::GetMaxFramesInFlight() {
+uint32_t Vulkan::WindowGraphicsBinding::GetMaxFramesInFlight() {
 	return maxFramesInFlight;
 }
 
-void VulkanWindowGraphicsBinding::ImmediateSetContext() {}
-void VulkanWindowGraphicsBinding::ImmediateSwapBuffers() {}
+void Vulkan::WindowGraphicsBinding::ImmediateSetContext() {}
+void Vulkan::WindowGraphicsBinding::ImmediateSwapBuffers() {}

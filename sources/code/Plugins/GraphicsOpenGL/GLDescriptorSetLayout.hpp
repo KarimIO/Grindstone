@@ -2,12 +2,10 @@
 
 #include <Common/Graphics/DescriptorSetLayout.hpp>
 
-namespace Grindstone {
-	namespace GraphicsAPI {
-		class GLDescriptorSetLayout : public DescriptorSetLayout {
-		public:
-			GLDescriptorSetLayout(CreateInfo& createInfo);
-			virtual ~GLDescriptorSetLayout();
-		};
-	}
+namespace Grindstone::GraphicsAPI::OpenGL {
+	class DescriptorSetLayout : public Grindstone::GraphicsAPI::DescriptorSetLayout {
+	public:
+		DescriptorSetLayout(const CreateInfo& createInfo);
+		virtual ~DescriptorSetLayout();
+	};
 }

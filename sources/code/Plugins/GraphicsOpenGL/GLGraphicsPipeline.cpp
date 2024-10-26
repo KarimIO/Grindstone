@@ -13,18 +13,18 @@
 
 using namespace Grindstone::GraphicsAPI;
 
-GLGraphicsPipeline::GLGraphicsPipeline(CreateInfo& createInfo) {
+OpenGL::GraphicsPipeline::GraphicsPipeline(const GraphicsPipeline::CreateInfo& createInfo) {
 	CreatePipeline(createInfo);
 }
 
-void GLGraphicsPipeline::Recreate(CreateInfo& createInfo) {
+void OpenGL::GraphicsPipeline::Recreate(const GraphicsPipeline::CreateInfo& createInfo) {
 	glUseProgram(0);
 	glDeleteProgram(program);
 
 	CreatePipeline(createInfo);
 }
 
-void GLGraphicsPipeline::CreatePipeline(CreateInfo& createInfo) {
+void OpenGL::GraphicsPipeline::CreatePipeline(const GraphicsPipeline::CreateInfo& createInfo) {
 	width = static_cast<GLsizei>(createInfo.width);
 	height = static_cast<GLsizei>(createInfo.height);
 	scissorWidth = static_cast<GLsizei>(createInfo.scissorW);
@@ -87,7 +87,7 @@ void GLGraphicsPipeline::CreatePipeline(CreateInfo& createInfo) {
 	delete[] shaders;
 }
 
-GLuint GLGraphicsPipeline::CreateShaderModule(ShaderStageCreateInfo createInfo) {
+GLuint OpenGL::GraphicsPipeline::CreateShaderModule(const GraphicsPipeline::CreateInfo::ShaderStageData& createInfo) {
 	int shaderType;
 	switch (createInfo.type) {
 	default:
@@ -144,7 +144,7 @@ GLuint GLGraphicsPipeline::CreateShaderModule(ShaderStageCreateInfo createInfo) 
 	return shader;
 }
 
-void GLGraphicsPipeline::Bind() {
+void OpenGL::GraphicsPipeline::Bind() {
 	glUseProgram(program);
 
 	glViewport(0, 0, scissorX, scissorY);
@@ -206,11 +206,11 @@ void GLGraphicsPipeline::Bind() {
 	}
 }
 
-GLuint GLGraphicsPipeline::GetPrimitiveType() {
+GLuint OpenGL::GraphicsPipeline::GetPrimitiveType() {
 	return primitiveType;
 }
 
-GLGraphicsPipeline::~GLGraphicsPipeline() {
+OpenGL::GraphicsPipeline::~GraphicsPipeline() {
 	glUseProgram(0);
 	glDeleteProgram(program);
 }

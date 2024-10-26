@@ -14,10 +14,6 @@
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
-struct Mesh3dUbo {
-	glm::mat4 modelMatrix;
-};
-
 static int CompareRenderSort(const RenderSortData& a, const RenderSortData& b) {
 	return a.sortData > b.sortData;
 }

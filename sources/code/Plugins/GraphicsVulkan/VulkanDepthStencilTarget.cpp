@@ -5,11 +5,11 @@
 #include "VulkanCore.hpp"
 #include "VulkanFormat.hpp"
 #include "VulkanUtils.hpp"
-#include "VulkanDepthTarget.hpp"
+#include "VulkanDepthStencilTarget.hpp"
 
 using namespace Grindstone::GraphicsAPI;
 
-VulkanDepthTarget::VulkanDepthTarget(DepthTarget::CreateInfo& createInfo) : format(createInfo.format), width(createInfo.width), height(createInfo.height), isShadowMap(createInfo.isShadowMap), isCubemap(createInfo.isCubemap), isSampled(createInfo.isSampled) {
+Vulkan::DepthStencilTarget::DepthStencilTarget(const CreateInfo& createInfo) : format(createInfo.format), width(createInfo.width), height(createInfo.height), isShadowMap(createInfo.isShadowMap), isCubemap(createInfo.isCubemap), isSampled(createInfo.isSampled) {
 	if (createInfo.debugName != nullptr) {
 		debugName = createInfo.debugName;
 	}
@@ -17,7 +17,7 @@ VulkanDepthTarget::VulkanDepthTarget(DepthTarget::CreateInfo& createInfo) : form
 	Create();
 }
 
-void VulkanDepthTarget::Create() {
+void Vulkan::DepthStencilTarget::Create() {
 	if (debugName.empty()) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Depth Target!");
 	}
@@ -38,8 +38,8 @@ void VulkanDepthTarget::Create() {
 
 	{
 		std::string imageViewDebugName = debugName + " View";
-		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, debugName.c_str());
-		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, debugName.c_str());
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
 	}
 
 	if (isSampled) {
@@ -61,17 +61,17 @@ void VulkanDepthTarget::Create() {
 
 		{
 			std::string imageSamplerDebugName = debugName + " Sampler";
-			VulkanCore::Get().NameObject(VK_OBJECT_TYPE_SAMPLER, sampler, imageSamplerDebugName.c_str());
+			Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_SAMPLER, sampler, imageSamplerDebugName.c_str());
 		}
 	}
 }
-		
-VulkanDepthTarget::~VulkanDepthTarget() {
+
+Vulkan::DepthStencilTarget::~DepthStencilTarget() {
 	Cleanup();
 }
 
-void VulkanDepthTarget::Cleanup() {
-	VkDevice device = VulkanCore::Get().GetDevice();
+void Vulkan::DepthStencilTarget::Cleanup() {
+	VkDevice device = Vulkan::Core::Get().GetDevice();
 	if (sampler != nullptr) {
 		vkDestroySampler(device, sampler, nullptr);
 		sampler = nullptr;
@@ -93,7 +93,7 @@ void VulkanDepthTarget::Cleanup() {
 	}
 }
 
-void VulkanDepthTarget::CreateTextureSampler() {
+void Vulkan::DepthStencilTarget::CreateTextureSampler() {
 	VkSamplerCreateInfo samplerInfo = {};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerInfo.magFilter = VkFilter::VK_FILTER_LINEAR;
@@ -112,38 +112,38 @@ void VulkanDepthTarget::CreateTextureSampler() {
 	samplerInfo.maxLod = 1;
 	samplerInfo.mipLodBias = 0;
 
-	if (vkCreateSampler(VulkanCore::Get().GetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
+	if (vkCreateSampler(Vulkan::Core::Get().GetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create texture sampler!");
 	}
 }
 
-uint32_t VulkanDepthTarget::GetWidth() const {
+uint32_t Vulkan::DepthStencilTarget::GetWidth() const {
 	return width;
 }
 
-uint32_t VulkanDepthTarget::GetHeight() const {
+uint32_t Vulkan::DepthStencilTarget::GetHeight() const {
 	return height;
 }
 
-VkImage VulkanDepthTarget::GetImage() const {
+VkImage Vulkan::DepthStencilTarget::GetImage() const {
 	return image;
 }
 
-VkImageView VulkanDepthTarget::GetImageView() const {
+VkImageView Vulkan::DepthStencilTarget::GetImageView() const {
 	return imageView;
 }
 
-VkSampler VulkanDepthTarget::GetSampler() const {
+VkSampler Vulkan::DepthStencilTarget::GetSampler() const {
 	return sampler;
 }
 
-void VulkanDepthTarget::Resize(uint32_t width, uint32_t height) {
+void Vulkan::DepthStencilTarget::Resize(uint32_t width, uint32_t height) {
 	this->width = width;
 	this->height = height;
 	Cleanup();
 	Create();
 }
 
-void VulkanDepthTarget::BindFace(int k) {
-	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanDepthTarget::BindFace is not used.");
+void Vulkan::DepthStencilTarget::BindFace(int k) {
+	GPRINT_FATAL(LogSource::GraphicsAPI, "VulkanDepthStencilTarget::BindFace is not used.");
 }

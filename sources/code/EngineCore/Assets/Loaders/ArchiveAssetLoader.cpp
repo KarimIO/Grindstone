@@ -101,7 +101,7 @@ AssetLoadResult ArchiveAssetLoader::LoadAsset(const ArchiveDirectory::AssetInfo&
 bool ArchiveAssetLoader::LoadShaderStage(
 	const Uuid uuid,
 	const GraphicsAPI::ShaderStage shaderStage,
-	GraphicsAPI::ShaderStageCreateInfo& stageCreateInfo,
+	GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& stageCreateInfo,
 	std::vector<char>& fileData
 ) {
 	std::string path = GetShaderPath(uuid, shaderStage);
