@@ -3,6 +3,11 @@
 #include "Formats.hpp"
 
 namespace Grindstone:: GraphicsAPI {
+	/*! A descriptor is a reference to a data to be passed to a Pipeline. A
+		DescriptorSetLayout is a template that a DescriptorSet can reference to ensure
+		they match. They are used upon creation of a Pipeline to ensure the
+		correct DescriptorSet formats are passed to them.
+	*/
 	class DescriptorSetLayout {
 	public:
 		struct Binding {

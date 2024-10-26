@@ -5,6 +5,13 @@
 #include "Formats.hpp"
 
 namespace Grindstone::GraphicsAPI {
+	/*! Depth Targets are a kind of image used as an attachment in one or more
+		GraphicsPipeline. They are meant to contain both depth and stencil data.
+		Depth data refers to how far pixels are from the screen, and are used to
+		order which triangles appear on top when drawing many triangles to the
+		screen. Stencil buffers are arbitrary data placed alongside the depth target,
+		often used for controlling where rendering occurs.
+	*/
 	class DepthTarget {
 	public:
 		struct CreateInfo {

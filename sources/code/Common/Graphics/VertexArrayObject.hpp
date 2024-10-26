@@ -4,6 +4,9 @@
 #include "IndexBuffer.hpp"
 
 namespace Grindstone::GraphicsAPI {
+	/*! A Vertex Array Object is a data structure including one or more VertexBuffers
+		and an IndexBuffer, to be bound to the GPU simultaneously.
+	*/
 	class VertexArrayObject {
 	public:
 		struct CreateInfo {

@@ -4,6 +4,11 @@
 #include "Formats.hpp"
 
 namespace Grindstone::GraphicsAPI {
+	/*! RenderTargets are a kind of image used as an attachment in one or more
+		GraphicsPipeline. They can contain different formats of data including
+		red, green, blue, and alpha channels. These also include additional data
+		about how they will be used.
+	*/
 	class RenderTarget {
 	public:
 		struct CreateInfo {

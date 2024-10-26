@@ -11,6 +11,10 @@ namespace Grindstone::GraphicsAPI {
 	class DescriptorSetLayout;
 	struct VertexBufferLayout;
 
+	/*! Pipelines are a program that runs on the GPU. Graphics Pipelines are a variety
+		of Pipeline that deal strictly with computer graphics. They have several stages,
+		some of which are programmable, to draw primitive shapes to pixels on the screen.
+	*/
 	class GraphicsPipeline {
 	public:
 		struct CreateInfo {

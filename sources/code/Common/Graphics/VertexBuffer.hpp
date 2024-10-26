@@ -66,6 +66,7 @@ namespace Grindstone::GraphicsAPI {
 		return 0;
 	};
 
+	// This refers to semantic information about how some vertex data will be used.
 	enum class AttributeUsage {
 		Position,
 		Color,
@@ -80,6 +81,8 @@ namespace Grindstone::GraphicsAPI {
 		Other
 	};
 
+	/*! A structure to define a particular kind of data in a Vertex Buffer.
+	*/
 	struct VertexAttributeDescription {
 		uint32_t location = 0;
 		VertexFormat format = VertexFormat::Float;
@@ -97,6 +100,7 @@ namespace Grindstone::GraphicsAPI {
 			location(location), format(_format), name(_name), usage(_usage), size(vertexFormatTypeSize(_format)), componentsCount(vertexFormatTypeComponents(_format)), isNormalized(_normalized), offset(0) {}
 	};
 
+	// A VertexBufferLayout dictates how the Vertex Buffer data is formatted.
 	struct VertexBufferLayout {
 		VertexBufferLayout() = default;
 		VertexBufferLayout(const std::initializer_list<VertexAttributeDescription>& elements, bool _element_rate = false)
@@ -119,6 +123,10 @@ namespace Grindstone::GraphicsAPI {
 		uint32_t bindingCount;
 	};
 
+	/*! A vertex is a point in 3d space. They are often used in triangles, which will
+		be rendered to the screen. A VertexBuffer is a list of data to be used by Vertices.
+		This often contains position, normal, color, and texture coordinate data.
+	*/
 	class VertexBuffer {
 	public:
 		struct CreateInfo {

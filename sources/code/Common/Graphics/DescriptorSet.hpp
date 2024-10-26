@@ -4,6 +4,10 @@
 #include "Formats.hpp"
 
 namespace Grindstone::GraphicsAPI {
+	/*! A descriptor is a reference to a data to be passed to a Pipeline. A
+		DescriptorSet is a list of descriptors that can be passed to the GPU together
+		to more efficiently bind data.
+	*/
 	class DescriptorSet {
 	public:
 		struct Binding {

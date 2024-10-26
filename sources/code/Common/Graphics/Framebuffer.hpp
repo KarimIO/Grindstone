@@ -12,6 +12,10 @@ namespace Grindstone::GraphicsAPI {
 	class RenderTarget;
 	class DepthTarget;
 
+	/*! A framebuffer is a series of one or more RenderTarget and optionally a
+		DepthTarget. Framebuffers bind these attachments together to be drawn to
+		by a GraphicsPipeline.
+	*/
 	class Framebuffer {
 	public:
 		struct DefaultFramebufferCreateInfo {

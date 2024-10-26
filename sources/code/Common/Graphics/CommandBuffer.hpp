@@ -14,9 +14,9 @@ namespace Grindstone::GraphicsAPI {
 	class DepthTarget;
 	class IndexBuffer;
 
-	//! Command Buffer
-	/*!
-		CommandBuffers are a list
+	/*! CommandBuffers are an object that hold a list of commands to be executed
+		by your graphics card. After recording any commands you wish to use for
+		a frame, you can send them to a queue to be processed.
 	*/
 	class CommandBuffer {
 	public:

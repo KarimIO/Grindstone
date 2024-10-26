@@ -10,6 +10,13 @@ namespace Grindstone::GraphicsAPI {
 		uint32_t width, height;
 	};
 
+	/*! TextureOptions control how textures are sampled.
+		Wrap Modes dictate how an image will be sampled when trying to get data
+		outside the coordinates of the image.
+		Mip Filters, Min Filters, and Mag filters dictate how pixels will be sampled
+		when trying to get data a fraction of the way between pixels or partway between
+		mips.
+	*/
 	struct TextureOptions {
 		TextureWrapMode wrapModeU = TextureWrapMode::Repeat;
 		TextureWrapMode wrapModeV = TextureWrapMode::Repeat;
@@ -17,7 +24,8 @@ namespace Grindstone::GraphicsAPI {
 		TextureFilter mipFilter = TextureFilter::Nearest;
 		TextureFilter minFilter = TextureFilter::Linear;
 		TextureFilter magFilter = TextureFilter::Linear;
-		// anisotropy == 0 implies it's off.
+		// Anistropy dictates how pixels are blended together as the angle to its normal
+		// increase. When anisotropy == 0, it will be disabled.
 		float anistropy = 0.0f;
 		float mipMin = -1000.f;
 		float mipMax = 1000.0f;
@@ -25,6 +33,10 @@ namespace Grindstone::GraphicsAPI {
 		bool shouldGenerateMipmaps = true;
 	};
 
+	/*! Textures represent image data. They can include a multitude of formats
+		representing red, green, blue, and alpha channels. They represent 1d,
+		2d, or 3d buffers, cubemaps, etc. These also include sampler information.
+	*/
 	class Texture {
 	public:
 		struct CreateInfo {
