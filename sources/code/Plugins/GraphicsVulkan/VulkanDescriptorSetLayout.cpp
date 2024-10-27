@@ -7,6 +7,7 @@
 #include "VulkanDescriptorSetLayout.hpp"
 
 using namespace Grindstone::GraphicsAPI;
+namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
 static VkDescriptorType GetDescriptorType(BindingType bindingType) {
 	switch (bindingType) {
@@ -23,7 +24,7 @@ static VkDescriptorType GetDescriptorType(BindingType bindingType) {
 	return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 }
 
-VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(DescriptorSetLayout::CreateInfo& createInfo) {
+Vulkan::DescriptorSetLayout::DescriptorSetLayout(const CreateInfo& createInfo) {
 	std::vector<VkDescriptorSetLayoutBinding> bindingLayouts;
 	bindingLayouts.reserve(createInfo.bindingCount);
 
@@ -48,27 +49,27 @@ VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(DescriptorSetLayout::Create
 	layoutInfo.bindingCount = static_cast<uint32_t>(bindingLayouts.size());
 	layoutInfo.pBindings = bindingLayouts.data();
 
-	if (vkCreateDescriptorSetLayout(VulkanCore::Get().GetDevice(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
+	if (vkCreateDescriptorSetLayout(Vulkan::Core::Get().GetDevice(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create descriptor set layout!");
 	}
 
 	if (createInfo.debugName != nullptr) {
-		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, descriptorSetLayout, createInfo.debugName);
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, descriptorSetLayout, createInfo.debugName);
 	}
 	else {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Descriptor Set Layout!");
 	}
 }
 
-VkDescriptorSetLayout VulkanDescriptorSetLayout::GetInternalLayout() const {
+VkDescriptorSetLayout Vulkan::DescriptorSetLayout::GetInternalLayout() const {
 	return descriptorSetLayout;
 }
 
-VulkanDescriptorSetLayout::~VulkanDescriptorSetLayout() {
-	vkDestroyDescriptorSetLayout(VulkanCore::Get().GetDevice(), descriptorSetLayout, nullptr);
+Vulkan::DescriptorSetLayout::~DescriptorSetLayout() {
+	vkDestroyDescriptorSetLayout(Vulkan::Core::Get().GetDevice(), descriptorSetLayout, nullptr);
 }
 
-const DescriptorSetLayout::Binding& VulkanDescriptorSetLayout::GetBinding(size_t bindingIndex) const {
+const DescriptorSetLayout::Binding& Vulkan::DescriptorSetLayout::GetBinding(size_t bindingIndex) const {
 	if (bindings == nullptr || bindingIndex >= bindingCount) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "Invalid bindingIndex in GetBinding!");
 	}

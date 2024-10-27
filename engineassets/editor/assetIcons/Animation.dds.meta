@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "472d54a3-2303-456a-9bf4-8040373b0403",
+    "metaFileVersion": 1,
+    "defaultUuid": "adb1756e-4fb8-4ddc-8b12-3522cc5b971a",
     "subassets": [
         {
-            "name": "Animation",
-            "uuid": "472d54a3-2303-456a-9bf4-8040373b0403",
+            "displayName": "Animation",
+            "address": "@EDITOR_ICONS/assetIcons/Animation",
+            "subassetIdentifier": "Animation",
+            "uuid": "adb1756e-4fb8-4ddc-8b12-3522cc5b971a",
             "type": "Texture"
         }
     ]

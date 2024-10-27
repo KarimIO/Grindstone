@@ -1,0 +1,13 @@
+{
+    "metaFileVersion": 1,
+    "defaultUuid": "a673c729-9481-488c-a7b2-0de191b6c620",
+    "subassets": [
+        {
+            "displayName": "roughness",
+            "address": "",
+            "subassetIdentifier": "roughness",
+            "uuid": "a673c729-9481-488c-a7b2-0de191b6c620",
+            "type": "Texture"
+        }
+    ]
+}

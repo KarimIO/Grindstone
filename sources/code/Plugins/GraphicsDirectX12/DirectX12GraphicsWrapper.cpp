@@ -18,7 +18,7 @@
 
 #include "DirectX12GraphicsWrapper.hpp"
 #include "DirectX12CommandBuffer.hpp"
-#include "DirectX12DepthTarget.hpp"
+#include "DirectX12DepthStencilTarget.hpp"
 #include "DirectX12Descriptors.hpp"
 #include "DirectX12Framebuffer.hpp"
 #include "DirectX12GraphicsPipeline.hpp"
@@ -90,7 +90,7 @@ namespace Grindstone {
 				DXGI_ADAPTER_DESC1 dxgiAdapterDesc1;
 				dxgiAdapter1->GetDesc1(&dxgiAdapterDesc1);
 
-				// Check to see if the adapter can create a D3D12 device without actually 
+				// Check to see if the adapter can create a D3D12 device without actually
 				// creating it. The adapter with the largest dedicated video memory
 				// is favored.
 				if ((dxgiAdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
@@ -256,7 +256,7 @@ namespace Grindstone {
 		}
 
 		DirectX12GraphicsWrapper::~DirectX12GraphicsWrapper() {
-			
+
 		}
 
 		void DirectX12GraphicsWrapper::createCommandPool() {
@@ -321,7 +321,7 @@ namespace Grindstone {
 			// execute the array of command lists
 			command_queue_->ExecuteCommandLists(command_buffer_count, command_lists);
 
-			// this command goes in at the end of our command queue. we will know when our command queue 
+			// this command goes in at the end of our command queue. we will know when our command queue
 			// has finished because the fence value will be set to "fenceValue" from the GPU since the command
 			// queue is being executed on the GPU
 			HRESULT hr = command_queue_->Signal(fence_[frame_index_], fence_value_[frame_index_]);
@@ -417,8 +417,8 @@ namespace Grindstone {
 			return nullptr; //return static_cast<RenderTarget*>(new DirectX12RenderTarget(*ci));
 		}
 
-		DepthTarget* DirectX12GraphicsWrapper::createDepthTarget(DepthTargetCreateInfo ci) {
-			return nullptr; //return static_cast<DepthTarget*>(new DirectX12DepthTarget(ci));
+		DepthStencilTarget* DirectX12GraphicsWrapper::createDepthStencilTarget(DepthStencilTargetCreateInfo ci) {
+			return nullptr; //return static_cast<DepthStencilTarget*>(new DirectX12DepthStencilTarget(ci));
 		}
 
 		//==================================
@@ -427,8 +427,8 @@ namespace Grindstone {
 		void DirectX12GraphicsWrapper::deleteRenderTarget(RenderTarget* ptr) {
 			delete (DirectX12RenderTarget*)ptr;
 		}
-		void DirectX12GraphicsWrapper::deleteDepthTarget(DepthTarget* ptr) {
-			delete (DirectX12DepthTarget*)ptr;
+		void DirectX12GraphicsWrapper::deleteDepthStencilTarget(DepthStencilTarget* ptr) {
+			delete (DirectX12DepthStencilTarget*)ptr;
 		}
 		void DirectX12GraphicsWrapper::deleteFramebuffer(Framebuffer* ptr) {
 			delete (DirectX12Framebuffer*)ptr;
@@ -530,7 +530,7 @@ namespace Grindstone {
 			std::cout << "DirectX12GraphicsWrapper::setColorMask is not used.\n";
 			assert(false);
 		}
-		void DirectX12GraphicsWrapper::copyToDepthBuffer(DepthTarget* p) {
+		void DirectX12GraphicsWrapper::copyToDepthBuffer(DepthStencilTarget* p) {
 			std::cout << "DirectX12GraphicsWrapper::copyToDepthBuffer is not used.\n";
 			assert(false);
 		}

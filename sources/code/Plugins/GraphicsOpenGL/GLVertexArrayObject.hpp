@@ -1,25 +1,23 @@
-#ifndef _GL_VERTEX_ARRAY_OBJECT_H
-#define _GL_VERTEX_ARRAY_OBJECT_H
+#pragma once
 
 #include <Common/Graphics/VertexArrayObject.hpp>
+
 #include "GLVertexBuffer.hpp"
 #include "GLIndexBuffer.hpp"
 
-namespace Grindstone {
-	namespace GraphicsAPI {
-		class GLVertexArrayObject : public VertexArrayObject {
-		public:
-			GLuint vertexArrayObject;
-			uint32_t vertexBufferCount = 0;
-		public:
-			GLVertexArrayObject();
-			GLVertexArrayObject(CreateInfo& createInfo);
-			virtual ~GLVertexArrayObject() override;
+namespace Grindstone::GraphicsAPI::OpenGL {
+	class VertexArrayObject : public Grindstone::GraphicsAPI::VertexArrayObject {
+	public:
+		VertexArrayObject();
+		VertexArrayObject(const CreateInfo& createInfo);
+		virtual ~VertexArrayObject() override;
 
-			virtual void Bind() override;
-			virtual void Unbind() override;
-		};
-	}
+		virtual void Bind() override;
+		virtual void Unbind() override;
+
+	protected:
+		GLuint vertexArrayObject;
+		uint32_t vertexBufferCount = 0;
+
+	};
 }
-
-#endif

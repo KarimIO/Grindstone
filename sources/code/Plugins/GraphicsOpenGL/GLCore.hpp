@@ -1,78 +1,71 @@
 #pragma once
+
 #define NOMINMAX
 #include <GL/gl3w.h>
 #include <vector>
 
-#include "GLRenderPass.hpp"
-#include "GLGraphicsPipeline.hpp"
-#include "GLFramebuffer.hpp"
-#include "GLVertexBuffer.hpp"
-#include "GLIndexBuffer.hpp"
-#include "GLUniformBuffer.hpp"
-#include "GLTexture.hpp"
-#include "GLDepthTarget.hpp"
 #include <Common/Graphics/Core.hpp>
 #include <Common/Graphics/DLLDefs.hpp>
 
-namespace Grindstone::GraphicsAPI {
-	class GLCore : public Core {
+namespace Grindstone::GraphicsAPI::OpenGL {
+	class Core : public Grindstone::GraphicsAPI::Core {
 	public:
-		virtual bool Initialize(CreateInfo& createInfo) override;
+		virtual bool Initialize(const CreateInfo& createInfo) override;
 		virtual void Clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) override;
 		virtual void AdjustPerspective(float *perspective) override;
 		virtual void RegisterWindow(Window* window) override;
 
-		virtual const char* GetVendorName() override;
-		virtual const char* GetAdapterName() override;
-		virtual const char* GetAPIName() override;
-		virtual const char* GetAPIVersion() override;
-		virtual const char* GetDefaultShaderExtension() override;
+		virtual const char* GetVendorName() const override;
+		virtual const char* GetAdapterName() const override;
+		virtual const char* GetAPIName() const override;
+		virtual const char* GetAPIVersion() const override;
+		virtual const char* GetDefaultShaderExtension() const override;
 
-		virtual void DeleteRenderTarget(RenderTarget * ptr) override;
-		virtual void DeleteDepthTarget(DepthTarget * ptr) override;
-		virtual void DeleteFramebuffer(Framebuffer *ptr) override;
-		virtual void DeleteVertexBuffer(VertexBuffer *ptr) override;
-		virtual void DeleteIndexBuffer(IndexBuffer *ptr) override;
-		virtual void DeleteUniformBuffer(UniformBuffer * ptr) override;
-		virtual void DeleteGraphicsPipeline(GraphicsPipeline* ptr) override;
-		virtual void DeleteComputePipeline(ComputePipeline* ptr) override;
-		virtual void DeleteRenderPass(RenderPass *ptr) override;
-		virtual void DeleteTexture(Texture *ptr) override;
-		virtual void DeleteDescriptorSet(DescriptorSet *ptr) override;
-		virtual void DeleteDescriptorSetLayout(DescriptorSetLayout *ptr) override;
-		virtual void DeleteCommandBuffer(CommandBuffer * ptr) override;
-		virtual void DeleteVertexArrayObject(VertexArrayObject *ptr) override;
+		virtual void DeleteRenderTarget(Grindstone::GraphicsAPI::RenderTarget * ptr) override;
+		virtual void DeleteDepthStencilTarget(Grindstone::GraphicsAPI::DepthStencilTarget * ptr) override;
+		virtual void DeleteFramebuffer(Grindstone::GraphicsAPI::Framebuffer *ptr) override;
+		virtual void DeleteVertexBuffer(Grindstone::GraphicsAPI::VertexBuffer *ptr) override;
+		virtual void DeleteIndexBuffer(Grindstone::GraphicsAPI::IndexBuffer *ptr) override;
+		virtual void DeleteUniformBuffer(Grindstone::GraphicsAPI::UniformBuffer * ptr) override;
+		virtual void DeleteGraphicsPipeline(Grindstone::GraphicsAPI::GraphicsPipeline* ptr) override;
+		virtual void DeleteComputePipeline(Grindstone::GraphicsAPI::ComputePipeline* ptr) override;
+		virtual void DeleteRenderPass(Grindstone::GraphicsAPI::RenderPass *ptr) override;
+		virtual void DeleteTexture(Grindstone::GraphicsAPI::Texture *ptr) override;
+		virtual void DeleteDescriptorSet(Grindstone::GraphicsAPI::DescriptorSet *ptr) override;
+		virtual void DeleteDescriptorSetLayout(Grindstone::GraphicsAPI::DescriptorSetLayout *ptr) override;
+		virtual void DeleteCommandBuffer(Grindstone::GraphicsAPI::CommandBuffer * ptr) override;
+		virtual void DeleteVertexArrayObject(Grindstone::GraphicsAPI::VertexArrayObject *ptr) override;
 
-		virtual Framebuffer *CreateFramebuffer(Framebuffer::CreateInfo& ci) override;
-		virtual RenderPass *CreateRenderPass(RenderPass::CreateInfo& ci) override;
-		virtual GraphicsPipeline* CreateGraphicsPipeline(GraphicsPipeline::CreateInfo& ci) override;
-		virtual ComputePipeline* CreateComputePipeline(ComputePipeline::CreateInfo& ci) override;
-		virtual CommandBuffer *CreateCommandBuffer(CommandBuffer::CreateInfo& gp) override;
-		virtual VertexArrayObject *CreateVertexArrayObject(VertexArrayObject::CreateInfo& gp) override;
-		virtual VertexBuffer *CreateVertexBuffer(VertexBuffer::CreateInfo& ci) override;
-		virtual IndexBuffer *CreateIndexBuffer(IndexBuffer::CreateInfo& ci) override;
-		virtual UniformBuffer *CreateUniformBuffer(UniformBuffer::CreateInfo& ci) override;
-		virtual Texture *CreateCubemap(Texture::CubemapCreateInfo& createInfo) override;
-		virtual Texture *CreateTexture(Texture::CreateInfo& createInfo) override;
-		virtual DescriptorSet *CreateDescriptorSet(DescriptorSet::CreateInfo& createInfo) override;
-		virtual DescriptorSetLayout *CreateDescriptorSetLayout(DescriptorSetLayout::CreateInfo& createInfo) override;
-		virtual RenderTarget* CreateRenderTarget(RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) override;
-		virtual RenderTarget* CreateRenderTarget(RenderTarget::CreateInfo& rt) override;
-		virtual DepthTarget *CreateDepthTarget(DepthTarget::CreateInfo& rt) override;
+		virtual Grindstone::GraphicsAPI::Framebuffer* CreateFramebuffer(const Framebuffer::CreateInfo& ci) override;
+		virtual Grindstone::GraphicsAPI::RenderPass* CreateRenderPass(const RenderPass::CreateInfo& ci) override;
+		virtual Grindstone::GraphicsAPI::GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipeline::CreateInfo& ci) override;
+		virtual Grindstone::GraphicsAPI::ComputePipeline* CreateComputePipeline(const ComputePipeline::CreateInfo& ci) override;
+		virtual Grindstone::GraphicsAPI::CommandBuffer* CreateCommandBuffer(const CommandBuffer::CreateInfo& ci) override;
+		virtual Grindstone::GraphicsAPI::VertexArrayObject* CreateVertexArrayObject(const VertexArrayObject::CreateInfo& gp) override;
+		virtual Grindstone::GraphicsAPI::VertexBuffer* CreateVertexBuffer(const VertexBuffer::CreateInfo& ci) override;
+		virtual Grindstone::GraphicsAPI::IndexBuffer* CreateIndexBuffer(const IndexBuffer::CreateInfo& ci) override;
+		virtual Grindstone::GraphicsAPI::UniformBuffer* CreateUniformBuffer(const UniformBuffer::CreateInfo& ci) override;
+		virtual Grindstone::GraphicsAPI::Texture* CreateCubemap(const Texture::CubemapCreateInfo& createInfo) override;
+		virtual Grindstone::GraphicsAPI::Texture* CreateTexture(const Texture::CreateInfo& createInfo) override;
+		virtual Grindstone::GraphicsAPI::DescriptorSet* CreateDescriptorSet(const DescriptorSet::CreateInfo& createInfo) override;
+		virtual Grindstone::GraphicsAPI::DescriptorSetLayout* CreateDescriptorSetLayout(const DescriptorSetLayout::CreateInfo& createInfo) override;
+		virtual Grindstone::GraphicsAPI::RenderTarget* CreateRenderTarget(const RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) override;
+		virtual Grindstone::GraphicsAPI::RenderTarget* CreateRenderTarget(const RenderTarget::CreateInfo& rt) override;
+		virtual Grindstone::GraphicsAPI::DepthStencilTarget* CreateDepthStencilTarget(const DepthStencilTarget::CreateInfo& rt) override;
 
 		virtual void CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) override;
 
-		virtual const bool ShouldUseImmediateMode() override;
-		virtual const bool SupportsCommandBuffers() override;
-		virtual const bool SupportsTesselation() override;
-		virtual const bool SupportsGeometryShader() override;
-		virtual const bool SupportsComputeShader() override;
-		virtual const bool SupportsMultiDrawIndirect() override;
+		virtual bool ShouldUseImmediateMode() const override;
+		virtual bool SupportsCommandBuffers() const override;
+		virtual bool SupportsTesselation() const override;
+		virtual bool SupportsGeometryShader() const override;
+		virtual bool SupportsComputeShader() const override;
+		virtual bool SupportsMultiDrawIndirect() const override;
 
 		virtual void WaitUntilIdle() override;
 
-		virtual void BindGraphicsPipeline(GraphicsPipeline* pipeline) override;
-		virtual void BindVertexArrayObject(VertexArrayObject *) override;
+		virtual void BindGraphicsPipeline(Grindstone::GraphicsAPI::GraphicsPipeline* pipeline) override;
+		virtual void BindVertexArrayObject(Grindstone::GraphicsAPI::VertexArrayObject *) override;
 		virtual void DrawImmediateIndexed(GeometryType geom_type, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) override;
 		virtual void DrawImmediateVertices(GeometryType geom_type, uint32_t base, uint32_t count) override;
 		virtual void SetImmediateBlending(

@@ -11,7 +11,7 @@
 
 using namespace Grindstone::GraphicsAPI;
 
-static void SetupTextureProperties(GLenum textureType, TextureOptions& createInfo) {
+static void SetupTextureProperties(GLenum textureType, const TextureOptions& createInfo) {
 	if (createInfo.shouldGenerateMipmaps) {
 		glGenerateMipmap(textureType);
 	}
@@ -40,16 +40,16 @@ static void SetupTextureProperties(GLenum textureType, TextureOptions& createInf
 	glTexParameterf(textureType, GL_TEXTURE_LOD_BIAS, createInfo.mipBias);
 }
 
-GLTexture::GLTexture(CreateInfo& createInfo) {
+OpenGL::Texture::Texture(const Texture::CreateInfo& createInfo) {
 	CreateTexture(createInfo);
 }
 
-void GLTexture::RecreateTexture(CreateInfo& createInfo) {
+void OpenGL::Texture::RecreateTexture(const Texture::CreateInfo& createInfo) {
 	glDeleteTextures(1, &textureHandle);
 	CreateTexture(createInfo);
 }
 
-void GLTexture::CreateTexture(CreateInfo& createInfo) {
+void OpenGL::Texture::CreateTexture(const Texture::CreateInfo& createInfo) {
 	if (createInfo.isCubemap) {
 		isCubemap = true;
 		glGenTextures(1, &textureHandle);
@@ -141,11 +141,11 @@ void GLTexture::CreateTexture(CreateInfo& createInfo) {
 	}
 }
 
-unsigned int GLTexture::GetTexture() {
+unsigned int OpenGL::Texture::GetTexture() const {
 	return textureHandle;
 }
 
-GLTexture::GLTexture(CubemapCreateInfo& createInfo) {
+OpenGL::Texture::Texture(const Texture::CubemapCreateInfo& createInfo) {
 	isCubemap = true;
 	glGenTextures(1, &textureHandle);
 
@@ -175,7 +175,7 @@ GLTexture::GLTexture(CubemapCreateInfo& createInfo) {
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
-void GLTexture::Bind(int i) {
+void OpenGL::Texture::Bind(int i) {
 	if (glIsTexture(textureHandle)) {
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(isCubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D, textureHandle);
@@ -185,6 +185,6 @@ void GLTexture::Bind(int i) {
 	}
 }
 
-GLTexture::~GLTexture() {
+OpenGL::Texture::~Texture() {
 	glDeleteTextures(1, &textureHandle);
 }

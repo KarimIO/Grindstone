@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "6b6994c4-5315-41ba-86ae-00a162fd27eb",
+    "metaFileVersion": 1,
+    "defaultUuid": "d72e0550-1c9d-4362-9a76-2261191a21b9",
     "subassets": [
         {
-            "name": "Material",
-            "uuid": "6b6994c4-5315-41ba-86ae-00a162fd27eb",
+            "displayName": "Material",
+            "address": "@EDITOR_ICONS/assetIcons/Material",
+            "subassetIdentifier": "material",
+            "uuid": "d72e0550-1c9d-4362-9a76-2261191a21b9",
             "type": "Texture"
         }
     ]

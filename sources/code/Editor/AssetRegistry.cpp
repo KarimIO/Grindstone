@@ -34,14 +34,24 @@ void AssetRegistry::Cleanup() {
 	assets.clear();
 }
 
-void AssetRegistry::UpdateEntry(const std::filesystem::path& path, const std::string& name, Uuid& uuid, AssetType assetType) {
-	std::filesystem::path relativePath = std::filesystem::relative(path, assetsPath);
-	relativePath = Utils::FixPathSlashesReturn(relativePath);
+void AssetRegistry::UpdateEntry(
+	const std::filesystem::path& path,
+	const std::string_view subassetIdentifier,
+	const std::string_view displayName,
+	const std::string_view address,
+	Uuid& uuid,
+	AssetType assetType
+) {
+	std::filesystem::path mountedPath;
+	TryGetPathWithMountPoint(path, mountedPath);
+	Utils::FixPathSlashes(mountedPath);
 
 	assets[uuid] = Entry{
 		uuid,
-		name,
-		relativePath,
+		std::string(displayName),
+		std::string(subassetIdentifier),
+		std::string(address),
+		mountedPath,
 		assetType
 	};
 }
@@ -53,8 +63,12 @@ void AssetRegistry::WriteFile() {
 	documentWriter.StartArray();
 	for (auto& [_, entry] : assets) {
 		documentWriter.StartObject();
-		documentWriter.Key("name");
-		documentWriter.String(entry.name.c_str());
+		documentWriter.Key("displayName");
+		documentWriter.String(entry.displayName.c_str());
+		documentWriter.Key("subassetIdentifier");
+		documentWriter.String(entry.subassetIdentifier.c_str());
+		documentWriter.Key("address");
+		documentWriter.String(entry.address.c_str());
 		documentWriter.Key("path");
 		documentWriter.String(entry.path.string().c_str());
 		documentWriter.Key("uuid");
@@ -91,16 +105,20 @@ void AssetRegistry::ReadFile() {
 		rapidjson::Value* assetIterator = document.Begin();
 		assetIterator != document.End();
 		++assetIterator
-		) {
+	) {
 		rapidjson::Value& asset = *assetIterator;
-		const char* name = asset["name"].GetString();
+		const char* subassetIdentifier = asset["subassetIdentifier"].GetString();
+		const char* displayName = asset["displayName"].GetString();
+		const char* address = asset["address"].GetString();
 		const char* path = asset["path"].GetString();
 		Uuid uuid = asset["uuid"].GetString();
 		const AssetType assetType = GetAssetTypeFromString(asset["assetType"].GetString());
 
 		assets[uuid] = Entry{
 			uuid,
-			name,
+			std::string(displayName),
+			std::string(subassetIdentifier),
+			std::string(address),
 			path,
 			assetType
 		};
@@ -112,10 +130,11 @@ Grindstone::Uuid AssetRegistry::Import(const std::filesystem::path& path) {
 	Grindstone::Importers::ImporterManager& importerManager = editor.GetImporterManager();
 
 	if (importerManager.Import(path)) {
-		std::filesystem::path basePath = editor.GetAssetsPath();
-		std::filesystem::path relPath = std::filesystem::relative(path, basePath);
+		std::filesystem::path mountedPath;
+		TryGetPathWithMountPoint(path, mountedPath);
+		Utils::FixPathSlashes(mountedPath);
 		AssetRegistry::Entry outEntry;
-		if (TryGetAssetData(relPath, outEntry)) {
+		if (TryGetAssetData(mountedPath, outEntry)) {
 			return outEntry.uuid;
 		}
 	}
@@ -135,9 +154,26 @@ bool AssetRegistry::HasAsset(Uuid uuid) const {
 	return assets.find(uuid) != assets.end();
 }
 
+bool AssetRegistry::TryGetPathWithMountPoint(const std::filesystem::path& path, std::filesystem::path& outMountedPath) const {
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
+	Editor::FileManager& fileManager = editorManager.GetFileManager();
+	return fileManager.TryGetPathWithMountPoint(path, outMountedPath);
+}
+
 bool AssetRegistry::TryGetAssetData(const std::filesystem::path& path, AssetRegistry::Entry& outEntry) const {
 	for (const auto& [_, assetEntry] : assets) {
 		if (assetEntry.path == path) {
+			outEntry = assetEntry;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool AssetRegistry::TryGetAssetData(const std::string& address, AssetRegistry::Entry& outEntry) const {
+	for (const auto& [_, assetEntry] : assets) {
+		if (assetEntry.address == address) {
 			outEntry = assetEntry;
 			return true;
 		}

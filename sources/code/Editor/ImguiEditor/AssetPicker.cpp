@@ -29,7 +29,7 @@ void AssetPicker::OpenPrompt(AssetType assetType, AssetPickerCallback callback) 
 	std::sort(
 		assets.begin(), assets.end(),
 		[](AssetRegistry::Entry& a, AssetRegistry::Entry& b) {
-			return a.name < b.name;
+			return a.displayName < b.displayName;
 		}
 	);
 
@@ -65,7 +65,7 @@ void AssetPicker::Render() {
 			else {
 				for (size_t i = 0; i < assets.size(); ++i) {
 					const auto& asset = assets[i];
-					std::string assetName = Utils::ToLower(asset.name);
+					std::string assetName = Utils::ToLower(asset.displayName);
 					if (assetName.find(lowerSearch) != std::string::npos) {
 						filteredResults.push_back(asset);
 					}
@@ -92,8 +92,8 @@ void AssetPicker::Render() {
 				ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::GetColorU32(++i % 2 ? ImGuiCol_TableRowBgAlt : ImGuiCol_TableRowBg));
 				ImGui::TableNextRow(ImGuiTableRowFlags_None, 24.0f);
 				ImGui::TableNextColumn();
-				if (ImGui::Button((asset.name + "##" + std::to_string(i)).c_str(), btnSize)) {
-					callback(asset.uuid, asset.name);
+				if (ImGui::Button((asset.displayName + "##" + std::to_string(i)).c_str(), btnSize)) {
+					callback(asset.uuid, asset.displayName);
 					ImGui::CloseCurrentPopup();
 					isShowing = false;
 				}

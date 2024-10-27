@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "7487e5ba-921f-416f-ace5-42c33d555985",
+    "metaFileVersion": 1,
+    "defaultUuid": "ec73c033-f0a5-4b83-b001-e97126693758",
     "subassets": [
         {
-            "name": "Undefined",
-            "uuid": "7487e5ba-921f-416f-ace5-42c33d555985",
+            "displayName": "Undefined",
+            "address": "@EDITOR_ICONS/assetIcons/Undefined",
+            "subassetIdentifier": "Undefined",
+            "uuid": "ec73c033-f0a5-4b83-b001-e97126693758",
             "type": "Texture"
         }
     ]

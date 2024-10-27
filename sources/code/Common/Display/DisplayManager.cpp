@@ -24,20 +24,20 @@ static BOOL CALLBACK CountDispProc(HMONITOR hMon, HDC dcMon, RECT* pRcMon, LPARA
 	return TRUE;
 }
 
-Display DisplayManager::GetMainDisplay() {
+Display DisplayManager::GetMainDisplay() const {
 	Display* displays = new Display[GetDisplayCount()];
 	EnumerateDisplays(displays);
 
 	return displays[0];
 }
 
-uint8_t DisplayManager::GetDisplayCount() {
+uint8_t DisplayManager::GetDisplayCount() const {
 	uint8_t count = 0;
 	EnumDisplayMonitors(0, 0, CountDispProc, reinterpret_cast<LPARAM>(&count));
 	return count;
 }
 
-void DisplayManager::EnumerateDisplays(Display *displays) {
+void DisplayManager::EnumerateDisplays(Display *displays) const {
 	EnumDisplayMonitors(0, 0, EnumDispProc, reinterpret_cast<LPARAM>(displays));
 }
 #elif defined(__linux__)

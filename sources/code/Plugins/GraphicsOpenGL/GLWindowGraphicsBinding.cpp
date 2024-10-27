@@ -13,7 +13,7 @@
 
 using namespace Grindstone::GraphicsAPI;
 
-bool GLWindowGraphicsBinding::Initialize(Window *newWindow) {
+bool OpenGL::WindowGraphicsBinding::Initialize(Window *newWindow) {
 	/*
 #ifdef _WIN32
 	window = newWindow;
@@ -99,49 +99,49 @@ bool GLWindowGraphicsBinding::Initialize(Window *newWindow) {
 	return true;
 }
 
-void GLWindowGraphicsBinding::ShareLists(GLWindowGraphicsBinding *bindingToCopyFrom) {
+void OpenGL::WindowGraphicsBinding::ShareLists(OpenGL::WindowGraphicsBinding *bindingToCopyFrom) {
 #ifdef _WIN32
 	wglShareLists(bindingToCopyFrom->windowRenderContext, windowRenderContext);
 #endif
 }
 
-bool GLWindowGraphicsBinding::AcquireNextImage() { return true; }
+bool OpenGL::WindowGraphicsBinding::AcquireNextImage() { return true; }
 
-void GLWindowGraphicsBinding::SubmitCommandBuffer(CommandBuffer* buffers) {}
+void OpenGL::WindowGraphicsBinding::SubmitCommandBuffer(CommandBuffer* buffers) {}
 
-bool GLWindowGraphicsBinding::PresentSwapchain() { return true; }
+bool OpenGL::WindowGraphicsBinding::PresentSwapchain() { return true; }
 
-RenderPass* GLWindowGraphicsBinding::GetRenderPass() {
+Grindstone::GraphicsAPI::RenderPass* OpenGL::WindowGraphicsBinding::GetRenderPass() {
 	return nullptr;
 }
 
-Framebuffer* GLWindowGraphicsBinding::GetCurrentFramebuffer() {
+Grindstone::GraphicsAPI::Framebuffer* OpenGL::WindowGraphicsBinding::GetCurrentFramebuffer() {
 	return nullptr;
 }
 
-uint32_t GLWindowGraphicsBinding::GetCurrentImageIndex() {
+uint32_t OpenGL::WindowGraphicsBinding::GetCurrentImageIndex() {
 	return 0;
 }
 
-uint32_t GLWindowGraphicsBinding::GetMaxFramesInFlight() {
+uint32_t OpenGL::WindowGraphicsBinding::GetMaxFramesInFlight() {
 	return 0;
 }
 
-void GLWindowGraphicsBinding::Resize(uint32_t width, uint32_t height) {}
+void OpenGL::WindowGraphicsBinding::Resize(uint32_t width, uint32_t height) {}
 
-void GLWindowGraphicsBinding::ImmediateSetContext() {
+void OpenGL::WindowGraphicsBinding::ImmediateSetContext() {
 #ifdef _WIN32
 	wglMakeCurrent(windowDeviceContext, windowRenderContext);
 #endif
 }
 
-void GLWindowGraphicsBinding::ImmediateSwapBuffers() {
+void OpenGL::WindowGraphicsBinding::ImmediateSwapBuffers() {
 #ifdef _WIN32
 	SwapBuffers(windowDeviceContext);
 #endif
 }
 
-GLWindowGraphicsBinding::~GLWindowGraphicsBinding() {
+OpenGL::WindowGraphicsBinding::~WindowGraphicsBinding() {
 #ifdef _WIN32
 	wglDeleteContext(windowRenderContext);
 	ReleaseDC(windowHandle, windowDeviceContext);

@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "cbb07a96-59e4-4abc-8db3-95011520e96b",
+    "metaFileVersion": 1,
+    "defaultUuid": "ad6820d4-8839-4703-99fd-ab4024accd9f",
     "subassets": [
         {
-            "name": "ConsoleWarning",
-            "uuid": "cbb07a96-59e4-4abc-8db3-95011520e96b",
+            "displayName": "ConsoleWarning",
+            "address": "@EDITOR_ICONS/consoleIcons/ConsoleWarning.dds",
+            "subassetIdentifier": "ConsoleWarning",
+            "uuid": "ad6820d4-8839-4703-99fd-ab4024accd9f",
             "type": "Texture"
         }
     ]

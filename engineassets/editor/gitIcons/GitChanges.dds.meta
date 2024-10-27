@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "4854b420-e212-49b6-9b3b-917edaf456cd",
+    "metaFileVersion": 1,
+    "defaultUuid": "ac6e7684-aea1-422a-aa57-a06df9f72cde",
     "subassets": [
         {
-            "name": "GitChanges",
-            "uuid": "4854b420-e212-49b6-9b3b-917edaf456cd",
+            "displayName": "GitChanges",
+            "address": "@EDITOR_ICONS/gitIcons/GitChanges.dds",
+            "subassetIdentifier": "GitChanges",
+            "uuid": "ac6e7684-aea1-422a-aa57-a06df9f72cde",
             "type": "Texture"
         }
     ]

@@ -6,29 +6,27 @@
 #include <Common/Graphics/RenderPass.hpp>
 #include <vulkan/vulkan.h>
 
-namespace Grindstone {
-	namespace GraphicsAPI {
-		class VulkanRenderPass : public RenderPass {
-		public:
-			VulkanRenderPass(VkRenderPass renderPass, const char* renderPassName);
-			VulkanRenderPass(RenderPass::CreateInfo& createInfo);
-			virtual ~VulkanRenderPass() override;
-		public:
-			void Update(VkRenderPass renderPass);
-			virtual VkRenderPass GetRenderPassHandle() const;
-			virtual const char* GetDebugName() const override;
-			virtual const float* GetDebugColor() const override;
+namespace Grindstone::GraphicsAPI::Vulkan {
+	class RenderPass : public Grindstone::GraphicsAPI::RenderPass {
+	public:
+		RenderPass(VkRenderPass renderPass, const char* renderPassName);
+		RenderPass(const CreateInfo& createInfo);
+		virtual ~RenderPass() override;
+	public:
+		void Update(VkRenderPass renderPass);
+		virtual VkRenderPass GetRenderPassHandle() const;
+		virtual const char* GetDebugName() const override;
+		virtual const float* GetDebugColor() const override;
 
-		private:
-			void Create();
-			void Cleanup();
+	private:
+		void Create();
+		void Cleanup();
 
-			std::string debugName;
-			float debugColor[4] = {};
-			std::vector<RenderPass::AttachmentInfo> colorAttachments;
-			DepthFormat depthFormat = DepthFormat::None;
-			bool shouldClearDepthOnLoad = true;
-			VkRenderPass renderPass = nullptr;
-		};
-	}
+		std::string debugName;
+		float debugColor[4] = {};
+		std::vector<RenderPass::AttachmentInfo> colorAttachments;
+		DepthFormat depthFormat = DepthFormat::None;
+		bool shouldClearDepthOnLoad = true;
+		VkRenderPass renderPass = nullptr;
+	};
 }

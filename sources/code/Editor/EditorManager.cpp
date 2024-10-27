@@ -75,7 +75,7 @@ AssetTemplateRegistry& Manager::GetAssetTemplateRegistry() {
 }
 
 FileManager& Manager::GetFileManager() {
-	return GetInstance().projectAssetFileManager;
+	return GetInstance().fileManager;
 }
 
 ScriptBuilder::CSharpBuildManager& Manager::GetCSharpBuildManager() {
@@ -104,8 +104,8 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	);
 
 	assetRegistry.Initialize(projectPath);
-	projectAssetFileManager.Initialize(assetsPath);
-	editorAssetFileManager.Initialize(engineBinariesPath.parent_path() / "engineassets");
+	fileManager.WatchDirectory("ASSETS", assetsPath);
+	fileManager.WatchDirectory("ENGINE", engineBinariesPath.parent_path() / "engineassets");
 
 	while (taskSystem.HasRunningTasks()) {
 		Sleep(100);

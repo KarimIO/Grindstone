@@ -3,26 +3,28 @@
 #include "GLTexture.hpp"
 #include <vector>
 #include <iostream>
+#include <cstring>
+
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
+
 #include "GLComputePipeline.hpp"
 #include "GLCore.hpp"
-#include <cstring>
 
 using namespace Grindstone::GraphicsAPI;
 
-GLComputePipeline::GLComputePipeline(ComputePipeline::CreateInfo& createInfo) {
+OpenGL::ComputePipeline::ComputePipeline(const ComputePipeline::CreateInfo& createInfo) {
 	CreatePipeline(createInfo);
 }
 
-void GLComputePipeline::Recreate(CreateInfo& createInfo) {
+void OpenGL::ComputePipeline::Recreate(const ComputePipeline::CreateInfo& createInfo) {
 	glUseProgram(0);
 	glDeleteProgram(program);
 
 	CreatePipeline(createInfo);
 }
 
-void GLComputePipeline::CreatePipeline(CreateInfo& createInfo) {
+void OpenGL::ComputePipeline::CreatePipeline(const ComputePipeline::CreateInfo& createInfo) {
 	program = glCreateProgram();
 	glObjectLabel(GL_PROGRAM, program, -1, createInfo.debugName);
 
@@ -52,11 +54,11 @@ void GLComputePipeline::CreatePipeline(CreateInfo& createInfo) {
 	glDeleteShader(shader);
 }
 
-void GLComputePipeline::Bind() {
+void OpenGL::ComputePipeline::Bind() {
 	glUseProgram(program);
 }
 
-GLComputePipeline::~GLComputePipeline() {
+OpenGL::ComputePipeline::~ComputePipeline() {
 	glUseProgram(0);
 	glDeleteProgram(program);
 }

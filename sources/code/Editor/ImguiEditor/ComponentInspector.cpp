@@ -318,7 +318,7 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 		std::string name = "Unassigned";
 		AssetRegistry::Entry entry;
 		if (hasValue && Editor::Manager::GetInstance().GetAssetRegistry().TryGetAssetData(uuid, entry)) {
-			name = entry.name;
+			name = entry.displayName;
 		}
 
 		std::string buttonText = (name + "##" + displayNamePtr);

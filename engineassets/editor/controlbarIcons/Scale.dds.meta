@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "5abab45a-ab2f-4886-b03b-387e7310d765",
+    "metaFileVersion": 1,
+    "defaultUuid": "0059040f-3817-4e80-82e4-5331238b2f17",
     "subassets": [
         {
-            "name": "Scale",
-            "uuid": "5abab45a-ab2f-4886-b03b-387e7310d765",
+            "displayName": "Scale",
+            "address": "@EDITOR_ICONS/controlbarIcons/Scale.dds",
+            "subassetIdentifier": "Scale",
+            "uuid": "0059040f-3817-4e80-82e4-5331238b2f17",
             "type": "Texture"
         }
     ]

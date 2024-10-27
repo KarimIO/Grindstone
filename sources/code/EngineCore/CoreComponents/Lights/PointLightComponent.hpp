@@ -8,7 +8,7 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		class RenderPass;
 		class Framebuffer;
-		class DepthTarget;
+		class DepthStencilTarget;
 		class UniformBuffer;
 		class DescriptorSet;
 		class DescriptorSetLayout;
@@ -35,7 +35,7 @@ namespace Grindstone {
 		float shadowResolution;
 		GraphicsAPI::RenderPass* renderPass = nullptr;
 		GraphicsAPI::Framebuffer* framebuffer = nullptr;
-		GraphicsAPI::DepthTarget* depthTarget = nullptr;
+		GraphicsAPI::DepthStencilTarget* depthTarget = nullptr;
 
 		GraphicsAPI::UniformBuffer* shadowMapUniformBufferObject = nullptr;
 		GraphicsAPI::DescriptorSet* shadowMapDescriptorSet = nullptr;

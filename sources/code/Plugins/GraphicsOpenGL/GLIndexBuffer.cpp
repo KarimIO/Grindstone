@@ -5,7 +5,7 @@
 
 using namespace Grindstone::GraphicsAPI;
 
-GLIndexBuffer::GLIndexBuffer(CreateInfo& createInfo) {
+OpenGL::IndexBuffer::IndexBuffer(const IndexBuffer::CreateInfo& createInfo) {
 	glGenBuffers(1, &buffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
 	if (createInfo.debugName != nullptr) {
@@ -15,10 +15,10 @@ GLIndexBuffer::GLIndexBuffer(CreateInfo& createInfo) {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-GLIndexBuffer::~GLIndexBuffer() {
+OpenGL::IndexBuffer::~IndexBuffer() {
 	glDeleteBuffers(1, &buffer);
 }
 
-void GLIndexBuffer::Bind() {
+void OpenGL::IndexBuffer::Bind() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
 }

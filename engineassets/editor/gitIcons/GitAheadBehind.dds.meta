@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "4d109c96-ddf7-4f3e-bc12-4836ed660fe1",
+    "metaFileVersion": 1,
+    "defaultUuid": "b3f6a84e-f612-414f-8467-e2aba041dcc6",
     "subassets": [
         {
-            "name": "GitAheadBehind",
-            "uuid": "4d109c96-ddf7-4f3e-bc12-4836ed660fe1",
+            "displayName": "GitAheadBehind",
+            "address": "@EDITOR_ICONS/gitIcons/GitAheadBehind.dds",
+            "subassetIdentifier": "GitAheadBehind",
+            "uuid": "b3f6a84e-f612-414f-8467-e2aba041dcc6",
             "type": "Texture"
         }
     ]

@@ -2,7 +2,7 @@
 #include "DirectX12RenderPass.hpp"
 #include "DirectX12Framebuffer.hpp"
 #include "DirectX12RenderTarget.hpp"
-#include "DirectX12DepthTarget.hpp"
+#include "DirectX12DepthStencilTarget.hpp"
 #include "DirectX12GraphicsWrapper.hpp"
 
 #include <assert.h>
@@ -19,7 +19,7 @@ namespace Grindstone {
 			}
 
 			if (ci.depth_target != nullptr) {
-				attachments[total_views - 1] = ((DirectX12DepthTarget *)ci.depth_target)->getImageView();
+				attachments[total_views - 1] = ((DirectX12DepthStencilTarget *)ci.depth_target)->getImageView();
 			}
 
 			DirectX12RenderPass *rp = (DirectX12RenderPass *)ci.render_pass;

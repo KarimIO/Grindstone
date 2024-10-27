@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "12c84c5a-d93d-47f8-bf36-e1c9193a841d",
+    "metaFileVersion": 1,
+    "defaultUuid": "7d382d0d-f85d-40eb-9afc-9e86e922fe8f",
     "subassets": [
         {
-            "name": "Script",
-            "uuid": "12c84c5a-d93d-47f8-bf36-e1c9193a841d",
+            "displayName": "Script",
+            "address": "@EDITOR_ICONS/assetIcons/Script",
+            "subassetIdentifier": "Script",
+            "uuid": "7d382d0d-f85d-40eb-9afc-9e86e922fe8f",
             "type": "Texture"
         }
     ]

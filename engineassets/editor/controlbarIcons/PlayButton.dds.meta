@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "443e5653-cf47-41d7-8f22-c5b35bbc09f9",
+    "metaFileVersion": 1,
+    "defaultUuid": "a2b2153b-770c-4cfb-b55a-e1a31b2f2bba",
     "subassets": [
         {
-            "name": "PlayButton",
-            "uuid": "443e5653-cf47-41d7-8f22-c5b35bbc09f9",
+            "displayName": "PlayButton",
+            "address": "@EDITOR_ICONS/controlbarIcons/PlayButton.dds",
+            "subassetIdentifier": "PlayButton",
+            "uuid": "a2b2153b-770c-4cfb-b55a-e1a31b2f2bba",
             "type": "Texture"
         }
     ]

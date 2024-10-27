@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include "EditorManager.hpp"
 using namespace Grindstone;
 
@@ -74,6 +75,17 @@ static std::filesystem::path CreateNewProject() {
 	std::filesystem::create_directories(basePath / "buildSettings");
 	std::filesystem::create_directories(basePath / "compiledAssets");
 	std::filesystem::create_directories(basePath / "userSettings");
+	std::string defaultPlugins = "PluginEditorAudioImporter\n\
+PluginEditorMaterialImporter\n\
+PluginEditorModelImporter\n\
+PluginEditorShaderImporter\n\
+PluginEditorTextureImporter\n\
+PluginBulletPhysics\n\
+PluginRenderables3D\n";
+
+	std::ofstream outputPlugins(basePath / "buildSettings" / "pluginsManifest.txt");
+	outputPlugins.write(defaultPlugins.c_str(), defaultPlugins.size());
+	outputPlugins.close();
 
 	return basePath;
 }

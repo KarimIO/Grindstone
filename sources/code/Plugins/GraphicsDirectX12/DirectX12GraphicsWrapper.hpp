@@ -22,7 +22,7 @@ namespace Grindstone {
 		private:
 
 		public:
-			ID3D12Fence* fence_[num_buffers];    // an object that is locked while our command list is being executed by the gpu. We need as many 
+			ID3D12Fence* fence_[num_buffers];    // an object that is locked while our command list is being executed by the gpu. We need as many
 			HANDLE fence_event_; // a handle to an event when our fence is unlocked by the gpu
 			UINT64 fence_value_[num_buffers]; // this value is incremented each frame. each fence will have its own value
 			int frame_index_;
@@ -50,7 +50,7 @@ namespace Grindstone {
 			void createDescriptorPool();
 			void createSyncObjects();
 		private:
-			
+
 		public:
 			virtual const char* getVendorName() override;
 			virtual const char* getAdapterName() override;
@@ -62,7 +62,7 @@ namespace Grindstone {
 			void registerWindow(Window* window);
 
 			virtual void deleteRenderTarget(RenderTarget* ptr) override;
-			virtual void deleteDepthTarget(DepthTarget* ptr) override;
+			virtual void deleteDepthStencilTarget(DepthStencilTarget* ptr) override;
 			virtual void deleteFramebuffer(Framebuffer* ptr) override;
 			virtual void deleteVertexBuffer(VertexBuffer* ptr) override;
 			virtual void deleteIndexBuffer(IndexBuffer* ptr) override;
@@ -90,7 +90,7 @@ namespace Grindstone {
 			virtual TextureBinding* createTextureBinding(TextureBindingCreateInfo ci) override;
 			virtual TextureBindingLayout* createTextureBindingLayout(TextureBindingLayoutCreateInfo createInfo) override;
 			virtual RenderTarget* createRenderTarget(RenderTargetCreateInfo* rt, uint32_t rc, bool cube = false) override;
-			virtual DepthTarget* createDepthTarget(DepthTargetCreateInfo rt) override;
+			virtual DepthStencilTarget* createDepthStencilTarget(DepthStencilTargetCreateInfo rt) override;
 
 			virtual inline const bool shouldUseImmediateMode() override;
 			virtual inline const bool supportsCommandBuffers() override;
@@ -110,7 +110,7 @@ namespace Grindstone {
 			virtual void setImmediateBlending(BlendMode) override;
 			virtual void enableDepth(bool state) override;
 			virtual void setColorMask(ColorMask mask) override;
-			virtual void copyToDepthBuffer(DepthTarget* p) override;
+			virtual void copyToDepthBuffer(DepthStencilTarget* p) override;
 			virtual void bindDefaultFramebuffer(bool depth) override;
 		private:
 			std::string vendor_name_;

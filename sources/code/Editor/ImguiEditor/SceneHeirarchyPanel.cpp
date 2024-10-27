@@ -104,9 +104,7 @@ struct ChildEntity {
 
 	ChildEntity(entt::entity childEntity, TagComponent* tagComponent, ParentComponent* parentComponent)
 		: childEntity(childEntity), tagComponent(tagComponent), parentComponent(parentComponent)
-	{
-
-	}
+	{}
 };
 
 void SceneHeirarchyPanel::RenderEntity(

@@ -3,7 +3,7 @@
 #include "VulkanCore.hpp"
 #include "VulkanUtils.hpp"
 
-namespace Grindstone::GraphicsAPI {
+namespace Grindstone::GraphicsAPI::Vulkan {
 	VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels) {
 		VkImageViewCreateInfo viewInfo = {};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -17,7 +17,7 @@ namespace Grindstone::GraphicsAPI {
 		viewInfo.subresourceRange.layerCount = 1;
 
 		VkImageView imageView;
-		if (vkCreateImageView(VulkanCore::Get().GetDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
+		if (vkCreateImageView(Vulkan::Core::Get().GetDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
 			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create texture image view!");
 		}
 
@@ -37,7 +37,7 @@ namespace Grindstone::GraphicsAPI {
 		viewInfo.subresourceRange.layerCount = 6;
 
 		VkImageView imageView;
-		if (vkCreateImageView(VulkanCore::Get().GetDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
+		if (vkCreateImageView(Vulkan::Core::Get().GetDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
 			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create texture image view!");
 		}
 
@@ -45,7 +45,7 @@ namespace Grindstone::GraphicsAPI {
 	}
 
 	void CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, uint32_t layerCount, VkImageCreateFlags flags) {
-		VkDevice device = VulkanCore::Get().GetDevice();
+		VkDevice device = Vulkan::Core::Get().GetDevice();
 			
 		VkImageCreateInfo imageInfo = {};
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -73,7 +73,7 @@ namespace Grindstone::GraphicsAPI {
 		VkMemoryAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = VulkanCore::Get().FindMemoryType(memRequirements.memoryTypeBits, properties);
+		allocInfo.memoryTypeIndex = Vulkan::Core::Get().FindMemoryType(memRequirements.memoryTypeBits, properties);
 
 		if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
 			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to allocate image memory!");
@@ -94,7 +94,7 @@ namespace Grindstone::GraphicsAPI {
 			GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Buffer!");
 		}
 
-		VkDevice device = VulkanCore::Get().GetDevice();
+		VkDevice device = Vulkan::Core::Get().GetDevice();
 		VkBufferCreateInfo bufferInfo = {};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		bufferInfo.size = size;
@@ -105,7 +105,7 @@ namespace Grindstone::GraphicsAPI {
 			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create buffer!");
 		}
 
-		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_BUFFER, buffer, debugName);
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_BUFFER, buffer, debugName);
 
 		VkMemoryRequirements memRequirements;
 		vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
@@ -113,24 +113,24 @@ namespace Grindstone::GraphicsAPI {
 		VkMemoryAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = VulkanCore::Get().FindMemoryType(memRequirements.memoryTypeBits, properties);
+		allocInfo.memoryTypeIndex = Vulkan::Core::Get().FindMemoryType(memRequirements.memoryTypeBits, properties);
 
 		if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
 			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to allocate buffer memory!");
 		}
 
 		std::string memoryName = std::string(debugName) + " Memory";
-		VulkanCore::Get().NameObject(VK_OBJECT_TYPE_DEVICE_MEMORY, bufferMemory, memoryName.c_str());
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_DEVICE_MEMORY, bufferMemory, memoryName.c_str());
 
 		vkBindBufferMemory(device, buffer, bufferMemory, 0);
 	}
 
 	VkCommandBuffer BeginSingleTimeCommands() {
-		VkDevice device = VulkanCore::Get().GetDevice();
+		VkDevice device = Vulkan::Core::Get().GetDevice();
 		VkCommandBufferAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandPool = VulkanCore::Get().GetGraphicsCommandPool();
+		allocInfo.commandPool = Vulkan::Core::Get().GetGraphicsCommandPool();
 		allocInfo.commandBufferCount = 1;
 
 		VkCommandBuffer commandBuffer;
@@ -146,8 +146,8 @@ namespace Grindstone::GraphicsAPI {
 	}
 
 	void EndSingleTimeCommands(VkCommandBuffer commandBuffer) {
-		VkDevice device = VulkanCore::Get().GetDevice();
-		auto graphicsQueue = VulkanCore::Get().graphicsQueue;
+		VkDevice device = Vulkan::Core::Get().GetDevice();
+		auto graphicsQueue = Vulkan::Core::Get().graphicsQueue;
 		vkEndCommandBuffer(commandBuffer);
 
 		VkSubmitInfo submitInfo = {};
@@ -158,7 +158,7 @@ namespace Grindstone::GraphicsAPI {
 		vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 		vkQueueWaitIdle(graphicsQueue);
 
-		vkFreeCommandBuffers(device, VulkanCore::Get().GetGraphicsCommandPool(), 1, &commandBuffer);
+		vkFreeCommandBuffers(device, Vulkan::Core::Get().GetGraphicsCommandPool(), 1, &commandBuffer);
 	}
 
 	VkShaderStageFlags TranslateShaderStageBits(ShaderStageBit shaderStageBits) {

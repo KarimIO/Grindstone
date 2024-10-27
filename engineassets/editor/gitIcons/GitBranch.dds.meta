@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "963c29b3-aa19-4a92-9732-5dd6af24ed6d",
+    "metaFileVersion": 1,
+    "defaultUuid": "9361de7f-b095-438e-b925-3f5b5c023728",
     "subassets": [
         {
-            "name": "GitBranch",
-            "uuid": "963c29b3-aa19-4a92-9732-5dd6af24ed6d",
+            "displayName": "GitBranch",
+            "address": "@EDITOR_ICONS/gitIcons/GitBranch.dds",
+            "subassetIdentifier": "GitBranch",
+            "uuid": "9361de7f-b095-438e-b925-3f5b5c023728",
             "type": "Texture"
         }
     ]

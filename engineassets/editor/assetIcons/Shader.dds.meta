@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "a26779ed-ca33-4ed5-acdd-6964c1d919eb",
+    "metaFileVersion": 1,
+    "defaultUuid": "52202066-7e7d-4b01-839f-a3d9969d65ff",
     "subassets": [
         {
-            "name": "Shader",
-            "uuid": "a26779ed-ca33-4ed5-acdd-6964c1d919eb",
+            "displayName": "Shader",
+            "address": "@EDITOR_ICONS/assetIcons/Shader",
+            "subassetIdentifier": "Shader",
+            "uuid": "52202066-7e7d-4b01-839f-a3d9969d65ff",
             "type": "Texture"
         }
     ]

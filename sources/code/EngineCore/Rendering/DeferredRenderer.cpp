@@ -133,8 +133,8 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	bloomStoredMipLevelCount = bloomMipLevelCount = CalculateBloomLevels(renderWidth, renderHeight);
 	bloomFirstUpsampleIndex = bloomStoredMipLevelCount - 1;
 
-	Uuid brdfAssetUuid("7707483a-9379-4e81-9e15-0e5acf20e9d6");
-	const TextureAsset* textureAsset = engineCore.assetManager->GetAsset<TextureAsset>(brdfAssetUuid);
+	std::string_view iblBrdfLut = "@CORESHADERS/textures/ibl_brdf_lut";
+	const TextureAsset* textureAsset = engineCore.assetManager->GetAsset<TextureAsset>(iblBrdfLut);
 	brdfLut = textureAsset != nullptr
 		? textureAsset->texture
 		: nullptr;
@@ -216,7 +216,7 @@ DeferredRenderer::~DeferredRenderer() {
 		graphicsCore->DeleteRenderTarget(imageSet.gbufferNormalRenderTarget);
 		graphicsCore->DeleteRenderTarget(imageSet.gbufferSpecularRoughnessRenderTarget);
 
-		graphicsCore->DeleteDepthTarget(imageSet.gbufferDepthTarget);
+		graphicsCore->DeleteDepthStencilTarget(imageSet.gbufferDepthStencilTarget);
 		graphicsCore->DeleteFramebuffer(imageSet.litHdrFramebuffer);
 		graphicsCore->DeleteRenderTarget(imageSet.litHdrRenderTarget);
 
@@ -404,7 +404,7 @@ void DeferredRenderer::CreateDepthOfFieldRenderTargetsAndDescriptorSets(Deferred
 
 	{
 		std::array<GraphicsAPI::DescriptorSet::Binding, 2> sourceDofDescriptorBindings = {
-			imageSet.gbufferDepthTarget,
+			imageSet.gbufferDepthStencilTarget,
 			imageSet.litHdrRenderTarget
 		};
 
@@ -762,7 +762,7 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 		imageSet.gbufferNormalRenderTarget->Resize(width, height);
 		imageSet.gbufferSpecularRoughnessRenderTarget->Resize(width, height);
 
-		imageSet.gbufferDepthTarget->Resize(width, height);
+		imageSet.gbufferDepthStencilTarget->Resize(width, height);
 		imageSet.gbuffer->Resize(width, height);
 		imageSet.litHdrRenderTarget->Resize(width, height);
 		imageSet.litHdrFramebuffer->Resize(width, height);
@@ -807,7 +807,7 @@ void DeferredRenderer::CreateSsrRenderTargetsAndDescriptorSets(DeferredRendererI
 	if (imageSet.ssrDescriptorSet != nullptr) {
 		graphicsCore->DeleteDescriptorSet(imageSet.ssrDescriptorSet);
 	}
-	
+
 	GraphicsAPI::RenderTarget::CreateInfo ssrRenderTargetCreateInfo{ GraphicsAPI::ColorFormat::RGBA16, framebufferWidth, framebufferHeight, true, true, "SSR Render Target" };
 	imageSet.ssrRenderTarget = graphicsCore->CreateRenderTarget(ssrRenderTargetCreateInfo);
 
@@ -815,7 +815,7 @@ void DeferredRenderer::CreateSsrRenderTargetsAndDescriptorSets(DeferredRendererI
 	descriptorBindings[0].itemPtr = imageSet.globalUniformBufferObject;
 	descriptorBindings[1].itemPtr = imageSet.ssrRenderTarget;
 	descriptorBindings[2].itemPtr = imageSet.litHdrRenderTarget;
-	descriptorBindings[3].itemPtr = imageSet.gbufferDepthTarget;
+	descriptorBindings[3].itemPtr = imageSet.gbufferDepthStencilTarget;
 	descriptorBindings[4].itemPtr = imageSet.gbufferNormalRenderTarget;
 	descriptorBindings[5].itemPtr = imageSet.gbufferSpecularRoughnessRenderTarget;
 
@@ -1186,7 +1186,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 
 	DescriptorSet::Binding engineUboBinding{ imageSet.globalUniformBufferObject };
 	DescriptorSet::Binding litHdrRenderTargetBinding{ imageSet.litHdrRenderTarget };
-	DescriptorSet::Binding gbufferDepthBinding{ imageSet.gbufferDepthTarget };
+	DescriptorSet::Binding gbufferDepthBinding{ imageSet.gbufferDepthStencilTarget };
 	DescriptorSet::Binding gbufferAlbedoBinding{ imageSet.gbufferAlbedoRenderTarget };
 	DescriptorSet::Binding gbufferNormalBinding{ imageSet.gbufferNormalRenderTarget };
 	DescriptorSet::Binding gbufferSpecRoughnessBinding{ imageSet.gbufferSpecularRoughnessRenderTarget };
@@ -1270,7 +1270,7 @@ void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) 
 
 	DescriptorSet::Binding engineUboBinding{ imageSet.globalUniformBufferObject };
 	DescriptorSet::Binding litHdrRenderTargetBinding{ imageSet.litHdrRenderTarget };
-	DescriptorSet::Binding gbufferDepthBinding{ imageSet.gbufferDepthTarget };
+	DescriptorSet::Binding gbufferDepthBinding{ imageSet.gbufferDepthStencilTarget };
 	DescriptorSet::Binding gbufferAlbedoBinding{ imageSet.gbufferAlbedoRenderTarget };
 	DescriptorSet::Binding gbufferNormalBinding{ imageSet.gbufferNormalRenderTarget };
 	DescriptorSet::Binding gbufferSpecRoughnessBinding{ imageSet.gbufferSpecularRoughnessRenderTarget };
@@ -1360,7 +1360,7 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 	}
 
 	std::array<RenderTarget*, gbufferColorCount> gbufferRenderTargets{};
-	DepthTarget::CreateInfo gbufferDepthImageCreateInfo(depthFormat, framebufferWidth, framebufferHeight, false, false, true, "GBuffer Depth Image");
+	DepthStencilTarget::CreateInfo gbufferDepthImageCreateInfo(depthFormat, framebufferWidth, framebufferHeight, false, false, true, "GBuffer Depth Image");
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		auto& imageSet = deferredRendererImageSets[i];
@@ -1381,7 +1381,7 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 			gbufferRenderTargets[2] = imageSet.gbufferSpecularRoughnessRenderTarget = graphicsCore->CreateRenderTarget(gbufferRtCreateInfo);
 		}
 
-		imageSet.gbufferDepthTarget = graphicsCore->CreateDepthTarget(gbufferDepthImageCreateInfo);
+		imageSet.gbufferDepthStencilTarget = graphicsCore->CreateDepthStencilTarget(gbufferDepthImageCreateInfo);
 
 		Framebuffer::CreateInfo gbufferCreateInfo{};
 		gbufferCreateInfo.debugName = "G-Buffer Framebuffer";
@@ -1390,7 +1390,7 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 		gbufferCreateInfo.renderPass = gbufferRenderPass;
 		gbufferCreateInfo.renderTargetLists = gbufferRenderTargets.data();
 		gbufferCreateInfo.numRenderTargetLists = static_cast<uint32_t>(gbufferRenderTargets.size());
-		gbufferCreateInfo.depthTarget = imageSet.gbufferDepthTarget;
+		gbufferCreateInfo.depthTarget = imageSet.gbufferDepthStencilTarget;
 
 		imageSet.gbuffer = graphicsCore->CreateFramebuffer(gbufferCreateInfo);
 
@@ -1415,7 +1415,7 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::RGBA16, framebufferWidth, framebufferHeight, true, false, "Lit HDR Color Image" };
-	// DepthTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false, false, "Lit HDR Depth Image");
+	// DepthStencilTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false, false, "Lit HDR Depth Image");
 
 	RenderPass::AttachmentInfo attachment{ litHdrImagesCreateInfo.format , true };
 
@@ -1470,7 +1470,7 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 		litHdrFramebufferCreateInfo.height = framebufferHeight;
 		litHdrFramebufferCreateInfo.renderTargetLists = &imageSet.litHdrRenderTarget;
 		litHdrFramebufferCreateInfo.numRenderTargetLists = 1;
-		litHdrFramebufferCreateInfo.depthTarget = imageSet.gbufferDepthTarget;
+		litHdrFramebufferCreateInfo.depthTarget = imageSet.gbufferDepthStencilTarget;
 		litHdrFramebufferCreateInfo.renderPass = mainRenderPass;
 		imageSet.litHdrFramebuffer = graphicsCore->CreateFramebuffer(litHdrFramebufferCreateInfo);
 	}
@@ -1490,14 +1490,14 @@ void DeferredRenderer::CreatePipelines() {
 	pipelineCreateInfo.vertexBindings = &vertexLightPositionLayout;
 	pipelineCreateInfo.vertexBindingsCount = 1;
 
-	std::vector<ShaderStageCreateInfo> shaderStageCreateInfos;
+	std::vector<GraphicsPipeline::CreateInfo::ShaderStageData> shaderStageCreateInfos;
 	std::vector<std::vector<char>> fileData;
 
 	Grindstone::Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
 	uint8_t shaderBits = static_cast<uint8_t>(ShaderStageBit::Vertex | ShaderStageBit::Fragment);
-	 
+
 	{
-		if (!assetManager->LoadShaderSet(Uuid("3b3bc2c8-ac88-4fba-b9f9-704f86c1278c"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
+		if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/postProcessing/screenSpaceAmbientOcclusion", shaderBits, 2, shaderStageCreateInfos, fileData)) {
 			GPRINT_ERROR(LogSource::Rendering, "Could not load ssao shaders.");
 			return;
 		}
@@ -1529,10 +1529,10 @@ void DeferredRenderer::CreatePipelines() {
 	pipelineCreateInfo.scissorH = framebufferHeight;
 
 	{
-		ShaderStageCreateInfo bloomShaderStageCreateInfo;
+		GraphicsPipeline::CreateInfo::ShaderStageData bloomShaderStageCreateInfo;
 		std::vector<char> bloomFileData;
 
-		if (!assetManager->LoadShaderStage(Uuid("8a2475b4-8731-456c-beb7-2d51db7914f9"), ShaderStage::Compute, bloomShaderStageCreateInfo, bloomFileData)) {
+		if (!assetManager->LoadShaderStageByAddress("@CORESHADERS/postProcessing/bloom", ShaderStage::Compute, bloomShaderStageCreateInfo, bloomFileData)) {
 			GPRINT_ERROR(LogSource::Rendering, "Could not load bloom compute shader.");
 			return;
 		}
@@ -1551,10 +1551,10 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		ShaderStageCreateInfo ssrShaderStageCreateInfo;
+		GraphicsPipeline::CreateInfo::ShaderStageData ssrShaderStageCreateInfo;
 		std::vector<char> ssrFileData;
 
-		if (!assetManager->LoadShaderStage(Uuid("cff2c843-6b35-4030-9a4b-464feb1e3365"), ShaderStage::Compute, ssrShaderStageCreateInfo, ssrFileData)) {
+		if (!assetManager->LoadShaderStageByAddress("@CORESHADERS/postProcessing/screenSpaceReflections", ShaderStage::Compute, ssrShaderStageCreateInfo, ssrFileData)) {
 			GPRINT_ERROR(LogSource::Rendering, "Could not load SSR compute shader.");
 			return;
 		}
@@ -1573,7 +1573,7 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(Uuid("5227a9a2-4a62-4f1b-9906-2b6acbf1b8d3"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
+		if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/lighting/ibl", shaderBits, 2, shaderStageCreateInfos, fileData)) {
 			GPRINT_ERROR(LogSource::Rendering, "Could not load image based lighting shaders.");
 			return;
 		}
@@ -1601,7 +1601,7 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(Uuid("5537b925-96bc-4e1f-8e2a-d66d6dd9bed1"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
+		if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/lighting/point", shaderBits, 2, shaderStageCreateInfos, fileData)) {
 			GPRINT_ERROR(LogSource::Rendering, "Could not load point light shaders.");
 			return;
 		}
@@ -1628,7 +1628,7 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(Uuid("31cc60ab-59cb-43b5-94bb-3951844c8f76"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
+		if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/lighting/spot", shaderBits, 2, shaderStageCreateInfos, fileData)) {
 			GPRINT_ERROR(LogSource::Rendering, "Could not load spot light shaders.");
 			return;
 		}
@@ -1655,7 +1655,7 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(Uuid("94dcc829-3b58-45fb-809a-6800a23eab45"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
+		if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/lighting/directional", shaderBits, 2, shaderStageCreateInfos, fileData)) {
 			GPRINT_ERROR(LogSource::Rendering, "Could not load directional light shaders.");
 			return;
 		}
@@ -1682,8 +1682,8 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(
-			Uuid("1f7b7b1e-2056-40d1-bb04-cbdc559325e8"),
+		if (!assetManager->LoadShaderSetByAddress(
+			"@CORESHADERS/editor/debug",
 			shaderBits,
 			2,
 			shaderStageCreateInfos,
@@ -1711,8 +1711,8 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(
-			Uuid("30e9223e-1753-4a7a-acac-8488c75bb1ef"),
+		if (!assetManager->LoadShaderSetByAddress(
+			"@CORESHADERS/postProcessing/tonemapping",
 			shaderBits,
 			2,
 			shaderStageCreateInfos,
@@ -1740,8 +1740,8 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(
-			Uuid("fafd3e26-3b40-4c5d-88b5-4a906810bf19"),
+		if (!assetManager->LoadShaderSetByAddress(
+			"@CORESHADERS/postProcessing/dofSeparation",
 			shaderBits,
 			2,
 			shaderStageCreateInfos,
@@ -1774,8 +1774,8 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(
-			Uuid("65b37559-4286-4351-bf3a-d61e6a688d52"),
+		if (!assetManager->LoadShaderSetByAddress(
+			"@CORESHADERS/postProcessing/dofBlur",
 			shaderBits,
 			2,
 			shaderStageCreateInfos,
@@ -1808,8 +1808,8 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(
-			Uuid("6c7f3e48-4439-47c5-a3a2-43441cd2657e"),
+		if (!assetManager->LoadShaderSetByAddress(
+			"@CORESHADERS/postProcessing/dofCombination",
 			shaderBits,
 			2,
 			shaderStageCreateInfos,
@@ -1843,8 +1843,8 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(
-			Uuid("fc5b427f-7847-419d-a34d-2a55778eccbd"),
+		if (!assetManager->LoadShaderSetByAddress(
+			"@CORESHADERS/lighting/shadow",
 			shaderBits,
 			2,
 			shaderStageCreateInfos,
@@ -2504,7 +2504,7 @@ void DeferredRenderer::PostProcess(
 
 	currentCommandBuffer->UnbindRenderPass();
 
-	currentCommandBuffer->BlitDepthImage(imageSet.gbufferDepthTarget, framebuffer->GetDepthTarget());
+	currentCommandBuffer->BlitDepthImage(imageSet.gbufferDepthStencilTarget, framebuffer->GetDepthStencilTarget());
 }
 
 void DeferredRenderer::Debug(

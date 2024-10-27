@@ -1,21 +1,20 @@
-#ifndef _GL_INDEX_BUFFER_H
-#define _GL_INDEX_BUFFER_H
+#pragma once
 
 #include <stdint.h>
+
 #include <Common/Graphics/DLLDefs.hpp>
 #include <Common/Graphics/IndexBuffer.hpp>
 
-namespace Grindstone {
-	namespace GraphicsAPI {
-		class GLIndexBuffer : public IndexBuffer {
-			GLuint buffer;
-		public:
-			GLIndexBuffer(CreateInfo& createInfo);
-			~GLIndexBuffer();
+namespace Grindstone::GraphicsAPI::OpenGL {
+	class IndexBuffer : public Grindstone::GraphicsAPI::IndexBuffer {
+	public:
+		IndexBuffer(const CreateInfo& createInfo);
+		~IndexBuffer();
 
-			void Bind();
-		};
-	}
+		void Bind();
+
+	protected:
+		GLuint buffer;
+
+	};
 }
-
-#endif
