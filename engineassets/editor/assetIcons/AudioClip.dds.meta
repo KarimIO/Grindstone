@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "dc4cbefe-209d-41a4-8473-27dc456417e9",
+    "metaFileVersion": 1,
+    "defaultUuid": "75aefb1d-4ee4-4243-acac-f7e619de8c65",
     "subassets": [
         {
-            "name": "AudioClip",
-            "uuid": "dc4cbefe-209d-41a4-8473-27dc456417e9",
+            "displayName": "AudioClip",
+            "address": "@EDITOR_ICONS/assetIcons/AudioClip",
+            "subassetIdentifier": "AudioClip",
+            "uuid": "75aefb1d-4ee4-4243-acac-f7e619de8c65",
             "type": "Texture"
         }
     ]

@@ -1,0 +1,13 @@
+{
+    "metaFileVersion": 1,
+    "defaultUuid": "1967c9cd-346c-4f51-b43c-f9aa58563c72",
+    "subassets": [
+        {
+            "displayName": "normal",
+            "address": "",
+            "subassetIdentifier": "normal",
+            "uuid": "1967c9cd-346c-4f51-b43c-f9aa58563c72",
+            "type": "Texture"
+        }
+    ]
+}

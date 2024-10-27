@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "e4caeb3e-f3d5-408d-b567-b0ff67c3e157",
+    "metaFileVersion": 1,
+    "defaultUuid": "82e65cda-7bf6-4bd5-9bf4-3eb248fc58fc",
     "subassets": [
         {
-            "name": "Rotate",
-            "uuid": "e4caeb3e-f3d5-408d-b567-b0ff67c3e157",
+            "displayName": "Rotate",
+            "address": "@EDITOR_ICONS/controlbarIcons/Rotate.dds",
+            "subassetIdentifier": "Rotate",
+            "uuid": "82e65cda-7bf6-4bd5-9bf4-3eb248fc58fc",
             "type": "Texture"
         }
     ]

@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "897edd2d-1569-424e-97b4-933e7a1113b2",
+    "metaFileVersion": 1,
+    "defaultUuid": "d0bb4b55-00dd-4604-bd45-6f4971ec4bee",
     "subassets": [
         {
-            "name": "Rig",
-            "uuid": "897edd2d-1569-424e-97b4-933e7a1113b2",
+            "displayName": "Rig",
+            "address": "@EDITOR_ICONS/assetIcons/Rig",
+            "subassetIdentifier": "Rig",
+            "uuid": "d0bb4b55-00dd-4604-bd45-6f4971ec4bee",
             "type": "Texture"
         }
     ]

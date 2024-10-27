@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "09f16d03-6d90-47b8-a884-c33e347fe17b",
+    "metaFileVersion": 1,
+    "defaultUuid": "47762f66-e229-4dbf-89f8-81018a85fc91",
     "subassets": [
         {
-            "name": "PauseButton",
-            "uuid": "09f16d03-6d90-47b8-a884-c33e347fe17b",
+            "displayName": "PauseButton",
+            "address": "@EDITOR_ICONS/controlbarIcons/PauseButton.dds",
+            "subassetIdentifier": "PauseButton",
+            "uuid": "47762f66-e229-4dbf-89f8-81018a85fc91",
             "type": "Texture"
         }
     ]

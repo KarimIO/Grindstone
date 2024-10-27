@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "09ff7a46-fd6c-4112-bf81-87a69d7da40b",
+    "metaFileVersion": 1,
+    "defaultUuid": "f5865604-2b75-49bf-a915-0214db645958",
     "subassets": [
         {
-            "name": "ConsoleInfo",
-            "uuid": "09ff7a46-fd6c-4112-bf81-87a69d7da40b",
+            "displayName": "ConsoleInfo",
+            "address": "@EDITOR_ICONS/consoleIcons/ConsoleInfo.dds",
+            "subassetIdentifier": "ConsoleInfo",
+            "uuid": "f5865604-2b75-49bf-a915-0214db645958",
             "type": "Texture"
         }
     ]

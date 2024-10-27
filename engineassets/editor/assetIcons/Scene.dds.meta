@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "31c4c5bb-856e-4d01-94b8-d247628a3310",
+    "metaFileVersion": 1,
+    "defaultUuid": "4edf6562-5041-45f7-9dcf-bdae4826bd73",
     "subassets": [
         {
-            "name": "Scene",
-            "uuid": "31c4c5bb-856e-4d01-94b8-d247628a3310",
+            "displayName": "Scene",
+            "address": "@EDITOR_ICONS/assetIcons/Scene",
+            "subassetIdentifier": "Scene",
+            "uuid": "4edf6562-5041-45f7-9dcf-bdae4826bd73",
             "type": "Texture"
         }
     ]
