@@ -1,0 +1,13 @@
+{
+    "metaFileVersion": 1,
+    "defaultUuid": "c99b2490-4f68-4e4d-82f8-976b469f3c99",
+    "subassets": [
+        {
+            "displayName": "Gizmo Shader",
+            "address": "@CORESHADERS/editor/gizmo",
+            "subassetIdentifier": "Gizmo Shader",
+            "uuid": "c99b2490-4f68-4e4d-82f8-976b469f3c99",
+            "type": "Shader"
+        }
+    ]
+}

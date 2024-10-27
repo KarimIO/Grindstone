@@ -17,18 +17,41 @@ namespace Grindstone::Assets {
 		AssetNotInRegistry,
 	};
 
-	struct AssetLoadResult {
+	struct AssetLoadBinaryResult {
 		AssetLoadStatus status;
+		std::string displayName;
 		Buffer buffer;
+	};
+
+	struct AssetLoadTextResult {
+		AssetLoadStatus status;
+		std::string displayName;
+		std::string content;
 	};
 
 	class AssetLoader {
 	public:
-		virtual AssetLoadResult Load(AssetType assetType, std::filesystem::path path, std::string& assetName) = 0;
-		virtual AssetLoadResult Load(AssetType assetType, Uuid uuid, std::string& assetName) = 0;
-		virtual bool LoadText(AssetType assetType, Uuid uuid, std::string& assetName, std::string& outContents) = 0;
-		virtual bool LoadText(AssetType assetType, std::filesystem::path path, std::string& assetName, std::string& outContents) = 0;
-		virtual bool LoadShaderStage(
+		virtual AssetLoadBinaryResult LoadBinaryByPath(AssetType assetType, const std::filesystem::path& path) = 0;
+		virtual AssetLoadBinaryResult LoadBinaryByAddress(AssetType assetType, std::string_view address) = 0;
+		virtual AssetLoadBinaryResult LoadBinaryByUuid(AssetType assetType, Uuid uuid) = 0;
+
+		virtual AssetLoadTextResult LoadTextByPath(AssetType assetType, const std::filesystem::path& path) = 0;
+		virtual AssetLoadTextResult LoadTextByAddress(AssetType assetType, std::string_view address) = 0;
+		virtual AssetLoadTextResult LoadTextByUuid(AssetType assetType, Uuid uuid) = 0;
+
+		virtual bool LoadShaderStageByPath(
+			const std::filesystem::path& path,
+			GraphicsAPI::ShaderStage shaderStage,
+			GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& shaderStageCreateInfo,
+			std::vector<char>& fileData
+		) = 0;
+		virtual bool LoadShaderStageByAddress(
+			std::string_view address,
+			GraphicsAPI::ShaderStage shaderStage,
+			GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& shaderStageCreateInfo,
+			std::vector<char>& fileData
+		) = 0;
+		virtual bool LoadShaderStageByUuid(
 			Uuid uuid,
 			GraphicsAPI::ShaderStage shaderStage,
 			GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& shaderStageCreateInfo,

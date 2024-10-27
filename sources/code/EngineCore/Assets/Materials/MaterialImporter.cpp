@@ -36,21 +36,20 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
 
-	std::string assetName, contentData;
-	if (!assetManager->LoadFileText(AssetType::Material, uuid, assetName, contentData)) {
-		std::string error = "Could not find material with id " + uuid.ToString() + ".";
-		GPRINT_ERROR(LogSource::EngineCore, error.c_str());
+	Assets::AssetLoadTextResult result = assetManager->LoadTextByUuid(AssetType::Material, uuid);
+	if (result.status != Assets::AssetLoadStatus::Success) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find material with id {}.", uuid.ToString());
 		return nullptr;
 	}
 
 	rapidjson::Document document;
-	if (document.Parse(contentData.data()).HasParseError()) {
-		GPRINT_ERROR(LogSource::EngineCore, "Unable to parse material.");
+	if (document.Parse(result.content.c_str()).HasParseError()) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Unable to parse material {}.", result.displayName);
 		return nullptr;
 	}
 
 	if (!document.HasMember("shader")) {
-		GPRINT_ERROR(LogSource::EngineCore, "No shader found in material.");
+		GPRINT_ERROR_V(LogSource::EngineCore, "No shader found in material {}.", result.displayName);
 		return nullptr;
 	}
 
@@ -58,13 +57,13 @@ void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
 	ShaderAsset* shaderAsset = assetManager->IncrementAssetUse<ShaderAsset>(shaderUuid);
 
 	if (shaderAsset == nullptr) {
-		GPRINT_ERROR(LogSource::EngineCore, "Failed to load shader.");
+		GPRINT_ERROR_V(LogSource::EngineCore, "Failed to load shader {}.", result.displayName);
 		return nullptr;
 	}
 
 	auto& reflectionData = shaderAsset->reflectionData;
 
-	auto& material = assets.emplace(uuid, MaterialAsset(uuid, assetName, shaderUuid));
+	auto& material = assets.emplace(uuid, MaterialAsset(uuid, result.displayName, shaderUuid));
 	MaterialAsset* materialAsset = &material.first->second;
 
 	std::vector<DescriptorSet::Binding> bindings;
@@ -95,25 +94,25 @@ void MaterialImporter::QueueReloadAsset(Uuid uuid) {
 	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
 	MaterialAsset* materialAsset = &materialIterator->second;
 
-	std::string assetName, contentData;
-	if (!assetManager->LoadFileText(AssetType::Mesh3d, uuid, assetName, contentData)) {
-		GPRINT_ERROR(LogSource::EngineCore, "Could not find material by file.");
+	Assets::AssetLoadTextResult result = assetManager->LoadTextByUuid(AssetType::Material, uuid);
+	if (result.status != Assets::AssetLoadStatus::Success) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find material with id {}.", uuid.ToString());
 		return;
 	}
 
-	materialAsset->name = assetName;
+	materialAsset->name = result.displayName;
 
 	rapidjson::Document document;
-	document.Parse(contentData.data());
+	document.Parse(result.content.c_str());
 
 	if (!document.HasMember("name")) {
-		GPRINT_ERROR(LogSource::EngineCore, "No name found in material.");
+		GPRINT_ERROR_V(LogSource::EngineCore, "No name found in material {}.", result.displayName);
 		return;
 	}
 	const char* name = document["name"].GetString();
 
 	if (!document.HasMember("shader")) {
-		GPRINT_ERROR(LogSource::EngineCore, "No shader found in material.");
+		GPRINT_ERROR_V(LogSource::EngineCore, "No shader found in material {}.", result.displayName);
 		return;
 	}
 

@@ -7,7 +7,7 @@
 #include <EngineCore/Logger.hpp>
 using namespace Grindstone;
 
-GraphicsAPI::ShaderStage GetStageFromString(std::string str) {
+static GraphicsAPI::ShaderStage GetStageFromString(std::string str) {
 	if (str == "vertex") {
 		return GraphicsAPI::ShaderStage::Vertex;
 	}
@@ -31,7 +31,7 @@ GraphicsAPI::ShaderStage GetStageFromString(std::string str) {
 	return GraphicsAPI::ShaderStage::Count;
 }
 
-uint8_t GetShaderBitMaskFromArray(rapidjson::GenericArray<false, rapidjson::Value> array) {
+static uint8_t GetShaderBitMaskFromArray(rapidjson::GenericArray<false, rapidjson::Value> array) {
 	uint8_t bitfield = 0;
 	for (rapidjson::SizeType i = 0; i < array.Size(); ++i) {
 		auto shaderStageString = array[i].GetString();

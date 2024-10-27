@@ -208,9 +208,7 @@ void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
 }
 
 bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
-	std::string assetName;
-
-	Grindstone::Assets::AssetLoadResult result = engineCore->assetManager->LoadFile(AssetType::Texture, mesh.uuid, assetName);
+	Grindstone::Assets::AssetLoadBinaryResult result = engineCore->assetManager->LoadBinaryByUuid(AssetType::Texture, mesh.uuid);
 	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "Mesh3dImporter::ProcessLoadedFile Unable to load file with id: {}", mesh.uuid.ToString());
 		return false;
@@ -218,7 +216,7 @@ bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 
 	char* fileContent = reinterpret_cast<char*>(result.buffer.Get());
 	uint64_t fileSize = result.buffer.GetCapacity();
-	mesh.name = assetName;
+	mesh.name = result.displayName;
 
 	auto graphicsCore = engineCore->GetGraphicsCore();
 	if (fileSize < 3 && strncmp("GMF", fileContent, 3) != 0) {
@@ -252,7 +250,7 @@ bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 	LoadMeshImportVertices(mesh, header, srcPtr, vertexBuffers);
 	LoadMeshImportIndices(mesh, header, srcPtr, indexBuffer);
 
-	std::string debugName = assetName + " Vertex Array Object";
+	std::string debugName = result.displayName + " Vertex Array Object";
 	GraphicsAPI::VertexArrayObject::CreateInfo vaoCi{};
 	vaoCi.debugName = debugName.c_str();
 	vaoCi.indexBuffer = indexBuffer;

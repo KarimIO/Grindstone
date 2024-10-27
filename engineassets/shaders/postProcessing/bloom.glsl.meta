@@ -1,0 +1,13 @@
+{
+    "metaFileVersion": 1,
+    "defaultUuid": "c1071b96-e3d8-476d-a5ff-cc69f1f78d95",
+    "subassets": [
+        {
+            "displayName": "Bloom",
+            "address": "@CORESHADERS/postProcessing/bloom",
+            "subassetIdentifier": "Bloom",
+            "uuid": "c1071b96-e3d8-476d-a5ff-cc69f1f78d95",
+            "type": "Shader"
+        }
+    ]
+}

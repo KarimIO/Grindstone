@@ -1,0 +1,13 @@
+{
+    "metaFileVersion": 1,
+    "defaultUuid": "394ac325-c543-451b-9b04-1e2d5d4db553",
+    "subassets": [
+        {
+            "displayName": "Screen Space Reflections",
+            "address": "@CORESHADERS/postProcessing/screenSpaceReflections",
+            "subassetIdentifier": "Screen Space Reflections",
+            "uuid": "394ac325-c543-451b-9b04-1e2d5d4db553",
+            "type": "Shader"
+        }
+    ]
+}

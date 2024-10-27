@@ -63,19 +63,19 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 	Assets::AssetManager* assetManager = engineCore.assetManager;
 	AssetRendererManager* assetRendererManager = engineCore.assetRendererManager;
 
-	std::string assetName, outContent;
-	if (!assetManager->LoadFileText(AssetType::Shader, shaderAsset.uuid, assetName, outContent)) {
-		std::string errorMsg = shaderAsset.uuid.ToString() + " shader reflection file not found.";
-		GPRINT_ERROR(LogSource::EngineCore, errorMsg.c_str());
+	Assets::AssetLoadTextResult result = assetManager->LoadTextByUuid(AssetType::Shader, shaderAsset.uuid);
+	if (result.status != Assets::AssetLoadStatus::Success) {
+		std::string error = "Could not find shader with id " + shaderAsset.uuid.ToString() + ".";
+		GPRINT_ERROR(LogSource::EngineCore, error.c_str());
 		return false;
 	}
 
 	ShaderReflectionData reflectionData;
-	ShaderReflectionLoader loader(outContent.data(), reflectionData);
+	ShaderReflectionLoader loader(result.content.c_str(), reflectionData);
 	std::vector<GraphicsPipeline::CreateInfo::ShaderStageData> shaderStageCreateInfos;
 	std::vector<std::vector<char>> fileData;
 
-	if (!assetManager->LoadShaderSet(
+	if (!assetManager->LoadShaderSetByUuid(
 		shaderAsset.uuid,
 		reflectionData.shaderStagesBitMask,
 		reflectionData.numShaderStages,
@@ -85,7 +85,7 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 		return false;
 	}
 
-	shaderAsset.name = assetName;
+	shaderAsset.name = result.displayName;
 
 	bool usesGbuffer = reflectionData.renderQueue != "Skybox";
 
@@ -94,7 +94,7 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 		: DeferredRenderer::mainRenderPass;
 
 	GraphicsPipeline::CreateInfo pipelineCreateInfo{};
-	pipelineCreateInfo.debugName = assetName.c_str();
+	pipelineCreateInfo.debugName = result.displayName.c_str();
 	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
 	pipelineCreateInfo.polygonFillMode = GraphicsAPI::PolygonFillMode::Fill;
 	pipelineCreateInfo.cullMode = TranslateCullMode(reflectionData.cullMode);
@@ -143,7 +143,7 @@ bool ShaderImporter::ImportShader(ShaderAsset& shaderAsset) {
 
 	std::array<GraphicsAPI::DescriptorSetLayout*, descriptorSetCount> descriptorSetLayouts{};
 	for (size_t i = 0; i < descriptorSetCount; ++i) {
-		std::string descriptorSetLayoutName = assetName + " Descriptor Set Layout " + std::to_string(i);
+		std::string descriptorSetLayoutName = result.displayName + " Descriptor Set Layout " + std::to_string(i);
 
 		std::vector<GraphicsAPI::DescriptorSetLayout::Binding>& bindings = descriptorSetBindings[i];
 		GraphicsAPI::DescriptorSetLayout::CreateInfo layoutCi{};

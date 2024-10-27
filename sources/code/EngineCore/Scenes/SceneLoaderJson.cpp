@@ -23,22 +23,23 @@ SceneLoaderJson::SceneLoaderJson(Scene* scene, Grindstone::Uuid uuid) : scene(sc
 }
 
 bool SceneLoaderJson::Load(Grindstone::Uuid uuid) {
-	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
-	std::string fileContents;
-	std::string assetName;
+	EngineCore& engineCore = EngineCore::GetInstance();
+	Assets::AssetManager* assetManager = engineCore.assetManager;
 
-	if (!assetManager->LoadFileText(AssetType::Scene, uuid, assetName, fileContents)) {
+	Assets::AssetLoadTextResult result = engineCore.assetManager->LoadTextByUuid(AssetType::Scene, uuid);
+	if (result.status != Assets::AssetLoadStatus::Success) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find scene with id {}.", uuid.ToString());
 		return false;
 	}
 
-	scene->path = assetName;
+	scene->path = result.displayName;
 
-	if (document.Parse(fileContents.c_str()).GetParseError()) {
+	if (document.Parse(result.content.c_str()).GetParseError()) {
 		GPRINT_ERROR(LogSource::EngineCore, "Failed to load scene.");
 		return false;
 	}
 
-	GPRINT_INFO_V(LogSource::EngineCore, "Loading scene: {}", assetName);
+	GPRINT_INFO_V(LogSource::EngineCore, "Loading scene: {}", result.displayName);
 
 	ProcessMeta();
 	ProcessEntities();

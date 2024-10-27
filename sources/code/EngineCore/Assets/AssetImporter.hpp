@@ -14,8 +14,8 @@ namespace Grindstone {
 		virtual void QueueReloadAsset(Uuid uuid) = 0;
 		virtual void* ProcessLoadedFile(Uuid uuid) = 0;
 		virtual bool TryGetIfLoaded(Uuid uuid, void*& output) = 0;
-		virtual void* ProcessLoadedFile(const char* path) { return nullptr; };
-		virtual bool TryGetIfLoaded(const char* path, void*& output) { return false; };
+		virtual void* ProcessLoadedFile(std::string_view address) { return nullptr; };
+		virtual bool TryGetIfLoaded(std::string_view address, void*& output) { return false; };
 		virtual void* IncrementAssetUse(Uuid uuid) = 0;
 		virtual void DecrementAssetUse(Uuid uuid) = 0;
 		virtual AssetType GetAssetType() { return assetType; }

@@ -15,31 +15,27 @@ using namespace Grindstone;
 using namespace Grindstone::Formats::DDS;
 
 void* TextureImporter::ProcessLoadedFile(Uuid uuid) {
-	std::string assetName;
-
 	EngineCore& engineCore = EngineCore::GetInstance();
-	Grindstone::Assets::AssetLoadResult result = engineCore.assetManager->LoadFile(AssetType::Texture, uuid, assetName);
-	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
-		GPRINT_WARN_V(LogSource::EngineCore, "Unable to load texture: {}", uuid.ToString());
+	Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByUuid(AssetType::Texture, uuid);
+	if (result.status != Assets::AssetLoadStatus::Success) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find texture with id {}.", uuid.ToString());
 		return nullptr;
 	}
 
 	auto asset = assets.emplace(uuid, TextureAsset());
-	return ProcessLoadedFile(uuid, assetName, std::move(result.buffer), asset.first->second);
+	return ProcessLoadedFile(uuid, result.displayName, std::move(result.buffer), asset.first->second);
 }
 
-void* TextureImporter::ProcessLoadedFile(const char* path) {
-	std::string assetName;
-
+void* TextureImporter::ProcessLoadedFile(std::string_view address) {
 	EngineCore& engineCore = EngineCore::GetInstance();
-	Grindstone::Assets::AssetLoadResult result = engineCore.assetManager->LoadFile(AssetType::Texture, path, assetName);
-	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
-		GPRINT_WARN_V(LogSource::EngineCore, "Unable to load texture: {}", path);
+	Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByAddress(AssetType::Texture, address);
+	if (result.status != Assets::AssetLoadStatus::Success) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find texture with address {}.", address);
 		return nullptr;
 	}
 
-	auto asset = texturesByPath.emplace(path, TextureAsset());
-	return ProcessLoadedFile(Uuid(), assetName, std::move(result.buffer), asset.first->second);
+	auto asset = texturesByAddress.emplace(address, TextureAsset());
+	return ProcessLoadedFile(Uuid(), result.displayName, std::move(result.buffer), asset.first->second);
 }
 
 void* TextureImporter::ProcessLoadedFile(Uuid uuid, std::string& assetName, Buffer buffer, TextureAsset& textureAsset) {
@@ -165,9 +161,9 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, std::string& assetName, Buff
 	return &textureAsset;
 }
 
-bool TextureImporter::TryGetIfLoaded(const char* path, void*& output) {
-	auto& textureInMap = texturesByPath.find(path);
-	if (textureInMap != texturesByPath.end()) {
+bool TextureImporter::TryGetIfLoaded(std::string_view address, void*& output) {
+	auto& textureInMap = texturesByAddress.find(std::string(address));
+	if (textureInMap != texturesByAddress.end()) {
 		output = &textureInMap->second;
 		return true;
 	}
@@ -190,15 +186,13 @@ void TextureImporter::QueueReloadAsset(Uuid uuid) {
 		texture = nullptr;
 	}
 
-	std::string assetName;
-
-	Grindstone::Assets::AssetLoadResult result = engineCore.assetManager->LoadFile(AssetType::Texture, uuid, assetName);
+	Grindstone::Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByUuid(AssetType::Texture, uuid);
 	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
 		GPRINT_WARN_V(LogSource::EngineCore, "Unable to load texture: {}", uuid.ToString());
 		return;
 	}
 
-	ProcessLoadedFile(uuid, assetName, std::move(result.buffer), textureInMap->second);
+	ProcessLoadedFile(uuid, result.displayName, std::move(result.buffer), textureInMap->second);
 }
 
 TextureImporter::~TextureImporter() {
@@ -210,8 +204,8 @@ TextureImporter::~TextureImporter() {
 	}
 	assets.clear();
 
-	for (auto& asset : texturesByPath) {
+	for (auto& asset : texturesByAddress) {
 		graphicsCore->DeleteTexture(asset.second.texture);
 	}
-	texturesByPath.clear();
+	texturesByAddress.clear();
 }

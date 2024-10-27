@@ -26,23 +26,51 @@ namespace Grindstone::Assets {
 		}
 
 		virtual void QueueReloadAsset(AssetType assetType, Uuid uuid);
-		virtual void* GetAsset(AssetType assetType, const char* path);
+		virtual void* GetAsset(AssetType assetType, std::string_view address);
 		virtual void* GetAsset(AssetType assetType, Uuid uuid);
 		virtual void* IncrementAssetUse(AssetType assetType, Uuid uuid);
 		virtual void DecrementAssetUse(AssetType assetType, Uuid uuid);
-		virtual AssetLoadResult LoadFile(AssetType assetType, const char* path, std::string& assetName);
-		virtual AssetLoadResult LoadFile(AssetType assetType, Uuid uuid, std::string& assetName);
-		virtual bool LoadFileText(AssetType assetType, Uuid uuid, std::string& assetName, std::string& dataPtr);
-		virtual bool LoadFileText(AssetType assetType, std::filesystem::path path, std::string& assetName, std::string& dataPtr);
-		virtual bool LoadShaderSet(
+		virtual AssetLoadBinaryResult LoadBinaryByPath(AssetType assetType, const std::filesystem::path& path);
+		virtual AssetLoadBinaryResult LoadBinaryByAddress(AssetType assetType, std::string_view address);
+		virtual AssetLoadBinaryResult LoadBinaryByUuid(AssetType assetType, Uuid uuid);
+		virtual AssetLoadTextResult LoadTextByPath(AssetType assetType, const std::filesystem::path& path);
+		virtual AssetLoadTextResult LoadTextByAddress(AssetType assetType, std::string_view address);
+		virtual AssetLoadTextResult LoadTextByUuid(AssetType assetType, Uuid uuid);
+		virtual bool LoadShaderSetByUuid(
 			Uuid uuid,
 			uint8_t shaderStagesBitMask,
 			size_t numShaderStages,
 			std::vector<GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData>& shaderStageCreateInfos,
 			std::vector<std::vector<char>>& fileData
 		);
-		virtual bool LoadShaderStage(
+		virtual bool LoadShaderStageByUuid(
 			Uuid uuid,
+			GraphicsAPI::ShaderStage shaderStage,
+			GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& stageCreateInfo,
+			std::vector<char>& fileData
+		);
+		virtual bool LoadShaderSetByAddress(
+			std::string_view address,
+			uint8_t shaderStagesBitMask,
+			size_t numShaderStages,
+			std::vector<GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData>& shaderStageCreateInfos,
+			std::vector<std::vector<char>>& fileData
+		);
+		virtual bool LoadShaderStageByAddress(
+			std::string_view address,
+			GraphicsAPI::ShaderStage shaderStage,
+			GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& stageCreateInfo,
+			std::vector<char>& fileData
+		);
+		virtual bool LoadShaderSetByPath(
+			const std::filesystem::path& path,
+			uint8_t shaderStagesBitMask,
+			size_t numShaderStages,
+			std::vector<GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData>& shaderStageCreateInfos,
+			std::vector<std::vector<char>>& fileData
+		);
+		virtual bool LoadShaderStageByPath(
+			const std::filesystem::path& path,
 			GraphicsAPI::ShaderStage shaderStage,
 			GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& stageCreateInfo,
 			std::vector<char>& fileData
@@ -52,6 +80,12 @@ namespace Grindstone::Assets {
 		template<typename T>
 		T* GetAsset(Uuid uuid) {
 			void* assetPtr = GetAsset(T::GetStaticType(), uuid);
+			return static_cast<T*>(assetPtr);
+		};
+
+		template<typename T>
+		T* GetAsset(std::string_view address) {
+			void* assetPtr = GetAsset(T::GetStaticType(), address);
 			return static_cast<T*>(assetPtr);
 		};
 

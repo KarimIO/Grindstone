@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "39e18e3d-a6ee-45d6-88d8-2d5b70b7797c",
+    "metaFileVersion": 1,
+    "defaultUuid": "6f3a2989-12db-480c-b567-e14c1f216565",
     "subassets": [
         {
-            "name": "Translate",
-            "uuid": "39e18e3d-a6ee-45d6-88d8-2d5b70b7797c",
+            "displayName": "Translate",
+            "address": "@EDITOR_ICONS/controlbarIcons/Translate.dds",
+            "subassetIdentifier": "Translate",
+            "uuid": "6f3a2989-12db-480c-b567-e14c1f216565",
             "type": "Texture"
         }
     ]

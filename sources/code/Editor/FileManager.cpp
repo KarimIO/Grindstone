@@ -1,20 +1,19 @@
 #include <filesystem>
-
-#include <efsw/efsw.h>
+#include <string_view>
 
 #include <Common/Logging.hpp>
 #include <Common/ResourcePipeline/MetaFile.hpp>
-
 #include <Editor/Importers/ImporterManager.hpp>
 #include <Editor/ScriptBuilder/CSharpBuildManager.hpp>
+#include <EngineCore/Logger.hpp>
+
 #include "FileManager.hpp"
 #include "EditorManager.hpp"
-#include <EngineCore/Logger.hpp>
 
 using namespace Grindstone;
 using namespace Grindstone::Editor;
 
-void FileWatcherCallback(
+static void FileWatcherCallback(
 	efsw_watcher watcher,
 	efsw_watchid watchid,
 	const char* dir,
@@ -50,7 +49,7 @@ void FileWatcherCallback(
 	}
 }
 
-void FileManager::Initialize(std::filesystem::path projectPath) {
+void FileManager::WatchDirectory(std::string_view mountPoint, const std::filesystem::path& projectPath) {
 	std::filesystem::create_directories(projectPath);
 
 	efsw_watcher watcher = {};
@@ -58,19 +57,36 @@ void FileManager::Initialize(std::filesystem::path projectPath) {
 	efsw_watchid watchID = efsw_addwatch(watcher, projectPath.string().c_str(), FileWatcherCallback, 1, this);
 
 	if (watchID < 0) {
-		GPRINT_ERROR_V(LogSource::Editor, "Failed to watch path: {}", efsw_getlasterror());
+		GPRINT_FATAL_V(LogSource::Editor, "Failed to watch path: {}", efsw_getlasterror());
 	}
 	else {
 		efsw_watch(watcher);
 	}
 
+	MountPoint& mountPointEntry = mountedDirectories.emplace_back();
+	mountPointEntry.watchID = watchID;
+	mountPointEntry.mountPoint = std::string("$") + std::string(mountPoint);
+	Directory& rootDirectory = mountPointEntry.rootDirectory;
 	rootDirectory.path = std::filesystem::directory_entry(projectPath);
 	rootDirectory.parentDirectory = nullptr;
 	CreateInitialFileStructure(rootDirectory, std::filesystem::directory_iterator(rootDirectory.path));
 }
 
-Directory& Grindstone::Editor::FileManager::GetRootDirectory() {
-	return rootDirectory;
+Directory& FileManager::GetPrimaryDirectory() {
+	return mountedDirectories.begin()->rootDirectory;
+}
+
+bool FileManager::TryGetPathWithMountPoint(const std::filesystem::path& path, std::filesystem::path& outMountedPath) const {
+	for (const MountPoint& mountPoint : mountedDirectories) {
+		const std::filesystem::path& root = mountPoint.rootDirectory.path;
+		std::string relative = std::filesystem::relative(path, root).string();
+		if (relative.size() != 0 && (relative.size() == 1 || relative[0] != '.' && relative[1] != '.')) {
+			outMountedPath = std::filesystem::path(mountPoint.mountPoint) / relative;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void FileManager::CreateInitialFileStructure(Directory& directory, std::filesystem::directory_iterator directoryIterator) {
@@ -115,7 +131,7 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(std::filesystem::path path
 	}
 
 	MetaFile metaFile(Editor::Manager::GetInstance().GetAssetRegistry(), path);
-	if (metaFile.IsOutdatedVersion()) {
+	if (metaFile.IsOutdatedVersion() || !metaFile.IsValid()) {
 		return true;
 	}
 
@@ -210,7 +226,21 @@ Directory* FileManager::GetFolderForPath(std::filesystem::path path) {
 	std::string pathAsString = std::filesystem::relative(path, Editor::Manager::GetInstance().GetAssetsPath()).string();
 	std::replace(pathAsString.begin(), pathAsString.end(), '\\', '/');
 
-	Directory* currentDirectory = &rootDirectory;
+	Directory* currentDirectory = nullptr;
+
+	for (MountPoint& mountPoint : mountedDirectories) {
+		const std::filesystem::path& root = mountPoint.rootDirectory.path;
+		std::string relative = std::filesystem::relative(path, root).string();
+		if (relative.size() == 1 || relative[0] != '.' && relative[1] != '.') {
+			currentDirectory = &mountPoint.rootDirectory;
+			break;
+		}
+	}
+
+	if (currentDirectory == nullptr) {
+		return nullptr;
+	}
+
 	std::size_t lastIndex = 0;
 
 	while (true) {
@@ -249,7 +279,6 @@ void FileManager::HandleAddFolder(std::filesystem::directory_entry folderPath) {
 }
 
 void FileManager::HandleAddFile(std::filesystem::directory_entry filePath) {
-
 	Directory* entry = GetFolderForPath(filePath);
 	entry->files.emplace_back(new File(filePath));
 	UpdateCompiledFileIfNecessary(filePath);

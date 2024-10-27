@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "2be61ebc-c4c0-4409-8861-eff41eaedf21",
+    "metaFileVersion": 1,
+    "defaultUuid": "96914f4f-0019-448e-b89a-d8124cb96e51",
     "subassets": [
         {
-            "name": "Folder",
-            "uuid": "2be61ebc-c4c0-4409-8861-eff41eaedf21",
+            "displayName": "Folder",
+            "address": "@EDITOR_ICONS/assetIcons/Folder",
+            "subassetIdentifier": "Folder",
+            "uuid": "96914f4f-0019-448e-b89a-d8124cb96e51",
             "type": "Texture"
         }
     ]

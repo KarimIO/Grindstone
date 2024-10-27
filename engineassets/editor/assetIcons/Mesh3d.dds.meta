@@ -1,10 +1,12 @@
 {
-    "version": 1,
-    "defaultUuid": "869e1066-f23e-4540-a54b-5c9f9f141264",
+    "metaFileVersion": 1,
+    "defaultUuid": "208d7965-8283-4289-a9a9-edf249add552",
     "subassets": [
         {
-            "name": "Mesh3d",
-            "uuid": "869e1066-f23e-4540-a54b-5c9f9f141264",
+            "displayName": "Mesh3d",
+            "address": "@EDITOR_ICONS/assetIcons/Mesh3d",
+            "subassetIdentifier": "Mesh3d",
+            "uuid": "208d7965-8283-4289-a9a9-edf249add552",
             "type": "Texture"
         }
     ]

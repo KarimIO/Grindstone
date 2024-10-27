@@ -95,8 +95,8 @@ void AssetManager::ReloadQueuedAssets() {
 	queuedAssetReloads.clear();
 }
 
-void* AssetManager::GetAsset(AssetType assetType, const char* path) {
-	if (path == nullptr) {
+void* AssetManager::GetAsset(AssetType assetType, std::string_view address) {
+	if (address.empty()) {
 		return nullptr;
 	}
 
@@ -108,11 +108,11 @@ void* AssetManager::GetAsset(AssetType assetType, const char* path) {
 	AssetImporter* assetImporter = assetTypeImporters[assetTypeSizeT];
 
 	void* loadedAsset = nullptr;
-	if (assetImporter->TryGetIfLoaded(path, loadedAsset)) {
+	if (assetImporter->TryGetIfLoaded(address, loadedAsset)) {
 		return loadedAsset;
 	}
 	else {
-		return assetTypeImporters[assetTypeSizeT]->ProcessLoadedFile(path);
+		return assetTypeImporters[assetTypeSizeT]->ProcessLoadedFile(address);
 	}
 }
 
@@ -157,31 +157,31 @@ void* AssetManager::GetAsset(AssetType assetType, Uuid uuid) {
 	}
 }
 
-AssetLoadResult AssetManager::LoadFile(AssetType assetType, const char* path, std::string& assetName) {
-	return assetLoader->Load(assetType, std::filesystem::path(path), assetName);
+AssetLoadBinaryResult AssetManager::LoadBinaryByPath(AssetType assetType, const std::filesystem::path& path) {
+	return assetLoader->LoadBinaryByPath(assetType, path);
 }
 
-// Loads an actual file, not an asset. The file still needs to be imported and handled.
-// Make loading indirect to conceal how files are loading from asset importers
-// This allows multiple files to be imported per asset, and allows different types of loading depending on the
-// asset, such as shaders loading from a file if it's not compiled yet, or loading a compiled shader if it is loaded
-AssetLoadResult AssetManager::LoadFile(AssetType assetType, Uuid uuid, std::string& assetName) {
-	return assetLoader->Load(assetType, uuid, assetName);
+AssetLoadBinaryResult AssetManager::LoadBinaryByAddress(AssetType assetType, std::string_view address) {
+	return assetLoader->LoadBinaryByAddress(assetType, address);
 }
 
-// Loads an actual file, not an asset. The file still needs to be imported and handled.
-// Make loading indirect to conceal how files are loading from asset importers
-// This allows multiple files to be imported per asset, and allows different types of loading depending on the
-// asset, such as shaders loading from a file if it's not compiled yet, or loading a compiled shader if it is loaded
-bool AssetManager::LoadFileText(AssetType assetType, Uuid uuid, std::string& assetName, std::string& fileData) {
-	return assetLoader->LoadText(assetType, uuid, assetName, fileData);
+AssetLoadBinaryResult AssetManager::LoadBinaryByUuid(AssetType assetType, Uuid uuid) {
+	return assetLoader->LoadBinaryByUuid(assetType, uuid);
 }
 
-bool AssetManager::LoadFileText(AssetType assetType, std::filesystem::path path, std::string& assetName, std::string& fileData) {
-	return assetLoader->LoadText(assetType, path, assetName, fileData);
+AssetLoadTextResult AssetManager::LoadTextByPath(AssetType assetType, const std::filesystem::path& path) {
+	return assetLoader->LoadTextByPath(assetType, path);
 }
 
-bool AssetManager::LoadShaderSet(
+AssetLoadTextResult AssetManager::LoadTextByAddress(AssetType assetType, std::string_view address) {
+	return assetLoader->LoadTextByAddress(assetType, address);
+}
+
+AssetLoadTextResult AssetManager::LoadTextByUuid(AssetType assetType, Uuid uuid) {
+	return assetLoader->LoadTextByUuid(assetType, uuid);
+}
+
+bool AssetManager::LoadShaderSetByUuid(
 	Uuid uuid,
 	uint8_t shaderStagesBitMask,
 	size_t numShaderStages,
@@ -204,7 +204,7 @@ bool AssetManager::LoadShaderSet(
 			continue;
 		}
 
-		if (!assetLoader->LoadShaderStage(uuid, stage, shaderStageCreateInfos[shaderIterator], fileData[shaderIterator])) {
+		if (!assetLoader->LoadShaderStageByUuid(uuid, stage, shaderStageCreateInfos[shaderIterator], fileData[shaderIterator])) {
 			return false;
 		}
 
@@ -214,8 +214,92 @@ bool AssetManager::LoadShaderSet(
 	return true;
 }
 
-bool AssetManager::LoadShaderStage(Uuid uuid, GraphicsAPI::ShaderStage shaderStage, GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& stageCreateInfo, std::vector<char>& fileData) {
-	return assetLoader->LoadShaderStage(uuid, shaderStage, stageCreateInfo, fileData);
+bool AssetManager::LoadShaderStageByUuid(Uuid uuid, GraphicsAPI::ShaderStage shaderStage, GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& stageCreateInfo, std::vector<char>& fileData) {
+	return assetLoader->LoadShaderStageByUuid(uuid, shaderStage, stageCreateInfo, fileData);
+}
+
+bool AssetManager::LoadShaderSetByAddress(
+	std::string_view address,
+	uint8_t shaderStagesBitMask,
+	size_t numShaderStages,
+	std::vector<GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData>& shaderStageCreateInfos,
+	std::vector<std::vector<char>>& fileData
+) {
+	shaderStageCreateInfos.resize(numShaderStages);
+	fileData.resize(numShaderStages);
+
+	uint8_t shaderStagesBitMaskAsUint = static_cast<uint8_t>(shaderStagesBitMask);
+
+	size_t shaderIterator = 0;
+	for (
+		ShaderStage stage = ShaderStage::Vertex;
+		stage < ShaderStage::GraphicsCount;
+		stage = static_cast<ShaderStage>(static_cast<uint8_t>(stage) + 1)
+	) {
+		const uint8_t stageBit = (1 << static_cast<uint8_t>(stage));
+		if ((stageBit & shaderStagesBitMaskAsUint) != stageBit) {
+			continue;
+		}
+
+		if (!assetLoader->LoadShaderStageByAddress(address, stage, shaderStageCreateInfos[shaderIterator], fileData[shaderIterator])) {
+			return false;
+		}
+
+		++shaderIterator;
+	}
+
+	return true;
+}
+
+bool AssetManager::LoadShaderStageByAddress(
+	std::string_view address,
+	GraphicsAPI::ShaderStage shaderStage,
+	GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& stageCreateInfo,
+	std::vector<char>& fileData
+) {
+	return assetLoader->LoadShaderStageByAddress(address, shaderStage, stageCreateInfo, fileData);
+}
+
+bool AssetManager::LoadShaderSetByPath(
+	const std::filesystem::path& path,
+	uint8_t shaderStagesBitMask,
+	size_t numShaderStages,
+	std::vector<GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData>& shaderStageCreateInfos,
+	std::vector<std::vector<char>>& fileData
+) {
+	shaderStageCreateInfos.resize(numShaderStages);
+	fileData.resize(numShaderStages);
+
+	uint8_t shaderStagesBitMaskAsUint = static_cast<uint8_t>(shaderStagesBitMask);
+
+	size_t shaderIterator = 0;
+	for (
+		ShaderStage stage = ShaderStage::Vertex;
+		stage < ShaderStage::GraphicsCount;
+		stage = static_cast<ShaderStage>(static_cast<uint8_t>(stage) + 1)
+	) {
+		const uint8_t stageBit = (1 << static_cast<uint8_t>(stage));
+		if ((stageBit & shaderStagesBitMaskAsUint) != stageBit) {
+			continue;
+		}
+
+		if (!assetLoader->LoadShaderStageByPath(path, stage, shaderStageCreateInfos[shaderIterator], fileData[shaderIterator])) {
+			return false;
+		}
+
+		++shaderIterator;
+	}
+
+	return true;
+}
+
+bool AssetManager::LoadShaderStageByPath(
+	const std::filesystem::path& path,
+	GraphicsAPI::ShaderStage shaderStage,
+	GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& stageCreateInfo,
+	std::vector<char>& fileData
+) {
+	return assetLoader->LoadShaderStageByPath(path, shaderStage, stageCreateInfo, fileData);
 }
 
 std::string& AssetManager::GetTypeName(AssetType assetType) {
