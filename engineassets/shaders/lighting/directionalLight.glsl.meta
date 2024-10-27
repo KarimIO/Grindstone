@@ -1,0 +1,13 @@
+{
+    "metaFileVersion": 1,
+    "defaultUuid": "7c5beb6d-a9c2-478f-8b09-e036a1a6dfb3",
+    "subassets": [
+        {
+            "displayName": "Directional Light",
+            "address": "@CORESHADERS/lighting/directional",
+            "subassetIdentifier": "Directional Light",
+            "uuid": "7c5beb6d-a9c2-478f-8b09-e036a1a6dfb3",
+            "type": "Shader"
+        }
+    ]
+}

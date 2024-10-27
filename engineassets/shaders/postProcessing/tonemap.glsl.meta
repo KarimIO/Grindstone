@@ -1,0 +1,13 @@
+{
+    "metaFileVersion": 1,
+    "defaultUuid": "ec151d2e-170e-4746-9e89-5c553c67d5d2",
+    "subassets": [
+        {
+            "displayName": "Tonemap Post-Processing",
+            "address": "@CORESHADERS/postProcessing/tonemapping",
+            "subassetIdentifier": "Tonemap Post-Processing",
+            "uuid": "ec151d2e-170e-4746-9e89-5c553c67d5d2",
+            "type": "Shader"
+        }
+    ]
+}

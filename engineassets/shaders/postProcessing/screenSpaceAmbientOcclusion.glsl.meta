@@ -1,0 +1,13 @@
+{
+    "metaFileVersion": 1,
+    "defaultUuid": "d63e58a3-093e-4d6c-bac1-30bd9306d935",
+    "subassets": [
+        {
+            "displayName": "Screen-Space Ambient Occlusion",
+            "address": "@CORESHADERS/postProcessing/screenSpaceAmbientOcclusion",
+            "subassetIdentifier": "Screen-Space Ambient Occlusion",
+            "uuid": "d63e58a3-093e-4d6c-bac1-30bd9306d935",
+            "type": "Shader"
+        }
+    ]
+}

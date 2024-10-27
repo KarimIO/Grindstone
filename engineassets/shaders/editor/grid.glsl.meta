@@ -1,0 +1,13 @@
+{
+    "metaFileVersion": 1,
+    "defaultUuid": "b048b31a-60c2-4d32-bd57-d11c0d98f168",
+    "subassets": [
+        {
+            "displayName": "Grid Shader",
+            "address": "@CORESHADERS/editor/grid",
+            "subassetIdentifier": "Grid Shader",
+            "uuid": "b048b31a-60c2-4d32-bd57-d11c0d98f168",
+            "type": "Shader"
+        }
+    ]
+}
