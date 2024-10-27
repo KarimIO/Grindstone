@@ -42,15 +42,21 @@ static std::filesystem::path GetNewDefaultPath(const std::filesystem::path& base
 	}
 }
 
-AssetBrowserPanel::AssetBrowserPanel(ImguiRenderer* imguiRenderer, EngineCore* engineCore, ImguiEditor* editor) : editor(editor), engineCore(engineCore), rootDirectory(Editor::Manager::GetFileManager().GetRootDirectory()) {
+AssetBrowserPanel::AssetBrowserPanel(
+	ImguiRenderer* imguiRenderer,
+	EngineCore* engineCore,
+	ImguiEditor* editor
+) : editor(editor),
+	engineCore(engineCore),
+	rootDirectory(Editor::Manager::GetFileManager().GetPrimaryDirectory()) {
 	pathToRename = "";
 
-	iconIds.folderIcon = imguiRenderer->CreateTexture("assetIcons/Folder.dds");
+	iconIds.folderIcon = imguiRenderer->CreateTexture("assetIcons/Folder");
 
 	for (uint16_t i = 0; i < static_cast<uint16_t>(AssetType::Count); ++i) {
 		auto assetType = static_cast<AssetType>(i);
 
-		iconIds.fileIcons[i] = imguiRenderer->CreateTexture(std::string("assetIcons/") + std::string(GetAssetTypeToString(assetType)) + ".dds");
+		iconIds.fileIcons[i] = imguiRenderer->CreateTexture(std::string("assetIcons/") + std::string(GetAssetTypeToString(assetType)));
 	}
 
 	currentDirectory = &rootDirectory;
@@ -479,11 +485,11 @@ void AssetBrowserPanel::RenderFile(File* file) {
 					Uuid myUuid = subasset.uuid;
 					std::string myUuidAsString = myUuid.ToString();
 					ImGui::SetDragDropPayload("_UUID", myUuidAsString.data(), myUuidAsString.size() + 1);
-					ImGui::Text(subasset.name.c_str());
+					ImGui::Text(subasset.displayName.c_str());
 					ImGui::EndDragDropSource();
 				}
 
-				ImGui::TextWrapped(subasset.name.c_str());
+				ImGui::TextWrapped(subasset.displayName.c_str());
 			}
 		}
 	}

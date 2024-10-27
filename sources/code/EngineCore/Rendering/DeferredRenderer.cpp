@@ -133,8 +133,8 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	bloomStoredMipLevelCount = bloomMipLevelCount = CalculateBloomLevels(renderWidth, renderHeight);
 	bloomFirstUpsampleIndex = bloomStoredMipLevelCount - 1;
 
-	Uuid brdfAssetUuid("7707483a-9379-4e81-9e15-0e5acf20e9d6");
-	const TextureAsset* textureAsset = engineCore.assetManager->GetAsset<TextureAsset>(brdfAssetUuid);
+	std::string_view iblBrdfLut = "@CORESHADERS/textures/ibl_brdf_lut";
+	const TextureAsset* textureAsset = engineCore.assetManager->GetAsset<TextureAsset>(iblBrdfLut);
 	brdfLut = textureAsset != nullptr
 		? textureAsset->texture
 		: nullptr;
@@ -1497,7 +1497,7 @@ void DeferredRenderer::CreatePipelines() {
 	uint8_t shaderBits = static_cast<uint8_t>(ShaderStageBit::Vertex | ShaderStageBit::Fragment);
 
 	{
-		if (!assetManager->LoadShaderSet(Uuid("3b3bc2c8-ac88-4fba-b9f9-704f86c1278c"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
+		if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/postProcessing/screenSpaceAmbientOcclusion", shaderBits, 2, shaderStageCreateInfos, fileData)) {
 			GPRINT_ERROR(LogSource::Rendering, "Could not load ssao shaders.");
 			return;
 		}
@@ -1532,7 +1532,7 @@ void DeferredRenderer::CreatePipelines() {
 		GraphicsPipeline::CreateInfo::ShaderStageData bloomShaderStageCreateInfo;
 		std::vector<char> bloomFileData;
 
-		if (!assetManager->LoadShaderStage(Uuid("8a2475b4-8731-456c-beb7-2d51db7914f9"), ShaderStage::Compute, bloomShaderStageCreateInfo, bloomFileData)) {
+		if (!assetManager->LoadShaderStageByAddress("@CORESHADERS/postProcessing/bloom", ShaderStage::Compute, bloomShaderStageCreateInfo, bloomFileData)) {
 			GPRINT_ERROR(LogSource::Rendering, "Could not load bloom compute shader.");
 			return;
 		}
@@ -1554,7 +1554,7 @@ void DeferredRenderer::CreatePipelines() {
 		GraphicsPipeline::CreateInfo::ShaderStageData ssrShaderStageCreateInfo;
 		std::vector<char> ssrFileData;
 
-		if (!assetManager->LoadShaderStage(Uuid("cff2c843-6b35-4030-9a4b-464feb1e3365"), ShaderStage::Compute, ssrShaderStageCreateInfo, ssrFileData)) {
+		if (!assetManager->LoadShaderStageByAddress("@CORESHADERS/postProcessing/screenSpaceReflections", ShaderStage::Compute, ssrShaderStageCreateInfo, ssrFileData)) {
 			GPRINT_ERROR(LogSource::Rendering, "Could not load SSR compute shader.");
 			return;
 		}
@@ -1573,7 +1573,7 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(Uuid("5227a9a2-4a62-4f1b-9906-2b6acbf1b8d3"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
+		if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/lighting/ibl", shaderBits, 2, shaderStageCreateInfos, fileData)) {
 			GPRINT_ERROR(LogSource::Rendering, "Could not load image based lighting shaders.");
 			return;
 		}
@@ -1601,7 +1601,7 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(Uuid("5537b925-96bc-4e1f-8e2a-d66d6dd9bed1"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
+		if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/lighting/point", shaderBits, 2, shaderStageCreateInfos, fileData)) {
 			GPRINT_ERROR(LogSource::Rendering, "Could not load point light shaders.");
 			return;
 		}
@@ -1628,7 +1628,7 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(Uuid("31cc60ab-59cb-43b5-94bb-3951844c8f76"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
+		if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/lighting/spot", shaderBits, 2, shaderStageCreateInfos, fileData)) {
 			GPRINT_ERROR(LogSource::Rendering, "Could not load spot light shaders.");
 			return;
 		}
@@ -1655,7 +1655,7 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(Uuid("94dcc829-3b58-45fb-809a-6800a23eab45"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
+		if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/lighting/directional", shaderBits, 2, shaderStageCreateInfos, fileData)) {
 			GPRINT_ERROR(LogSource::Rendering, "Could not load directional light shaders.");
 			return;
 		}
@@ -1682,8 +1682,8 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(
-			Uuid("1f7b7b1e-2056-40d1-bb04-cbdc559325e8"),
+		if (!assetManager->LoadShaderSetByAddress(
+			"@CORESHADERS/editor/debug",
 			shaderBits,
 			2,
 			shaderStageCreateInfos,
@@ -1711,8 +1711,8 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(
-			Uuid("30e9223e-1753-4a7a-acac-8488c75bb1ef"),
+		if (!assetManager->LoadShaderSetByAddress(
+			"@CORESHADERS/postProcessing/tonemapping",
 			shaderBits,
 			2,
 			shaderStageCreateInfos,
@@ -1740,8 +1740,8 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(
-			Uuid("fafd3e26-3b40-4c5d-88b5-4a906810bf19"),
+		if (!assetManager->LoadShaderSetByAddress(
+			"@CORESHADERS/postProcessing/dofSeparation",
 			shaderBits,
 			2,
 			shaderStageCreateInfos,
@@ -1774,8 +1774,8 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(
-			Uuid("65b37559-4286-4351-bf3a-d61e6a688d52"),
+		if (!assetManager->LoadShaderSetByAddress(
+			"@CORESHADERS/postProcessing/dofBlur",
 			shaderBits,
 			2,
 			shaderStageCreateInfos,
@@ -1808,8 +1808,8 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(
-			Uuid("6c7f3e48-4439-47c5-a3a2-43441cd2657e"),
+		if (!assetManager->LoadShaderSetByAddress(
+			"@CORESHADERS/postProcessing/dofCombination",
 			shaderBits,
 			2,
 			shaderStageCreateInfos,
@@ -1843,8 +1843,8 @@ void DeferredRenderer::CreatePipelines() {
 	fileData.clear();
 
 	{
-		if (!assetManager->LoadShaderSet(
-			Uuid("fc5b427f-7847-419d-a34d-2a55778eccbd"),
+		if (!assetManager->LoadShaderSetByAddress(
+			"@CORESHADERS/lighting/shadow",
 			shaderBits,
 			2,
 			shaderStageCreateInfos,

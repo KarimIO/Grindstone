@@ -317,7 +317,7 @@ void GizmoRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	Grindstone::Assets::AssetManager* assetManager = engineCore.assetManager;
 	uint8_t shaderBits = static_cast<uint8_t>(GraphicsAPI::ShaderStageBit::Vertex | GraphicsAPI::ShaderStageBit::Fragment);
 
-	if (!assetManager->LoadShaderSet(Uuid("bdcf4f2a-3d64-4f54-bbc2-a5594e032429"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
+	if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/editor/gizmo", shaderBits, 2, shaderStageCreateInfos, fileData)) {
 		GPRINT_ERROR(LogSource::Rendering, "Could not load gizmo shaders.");
 		return;
 	}
@@ -388,6 +388,10 @@ void GizmoRenderer::SubmitSphereGizmo(const glm::mat4& transform, float radius, 
 }
 
 void GizmoRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, glm::mat4 projView) {
+	if (gizmoPipeline == nullptr) {
+		return;
+	}
+
 	for (auto& data : dataBuffer) {
 		data.transform = projView * data.transform;
 	}

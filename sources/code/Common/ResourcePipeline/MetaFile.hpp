@@ -11,16 +11,24 @@ namespace Grindstone::Editor {
 	class MetaFile {
 	public:
 		struct Subasset {
-			std::string name;
+			std::string displayName;
+			std::string subassetIdentifier;
+			std::string address;
 			AssetType assetType = AssetType::Undefined;
 			Uuid uuid;
 
 			Subasset() = default;
 			Subasset(
-				std::string name,
+				std::string_view subassetIdentifier,
+				std::string_view displayName,
+				std::string_view address,
 				Uuid uuid,
 				AssetType type
-			) : name(name), uuid(uuid), assetType(type) {}
+			) : subassetIdentifier(subassetIdentifier),
+				displayName(displayName),
+				address(address),
+				uuid(uuid),
+				assetType(type) {}
 		};
 
 	public:
@@ -35,6 +43,7 @@ namespace Grindstone::Editor {
 		size_t GetSubassetCount() const;
 		bool TryGetDefaultSubassetUuid(Uuid& outUuid) const;
 		bool TryGetSubassetUuid(std::string& subassetName, Uuid& outUuid) const;
+		bool IsValid() const;
 		bool IsOutdatedVersion() const;
 	public:
 		using Iterator = std::vector<Subasset>::iterator;
@@ -46,11 +55,15 @@ namespace Grindstone::Editor {
 		Iterator end() noexcept;
 		ConstIterator end() const noexcept;
 	private:
+		std::string MakeDefaultAddress(std::string_view subassetName) const;
+
+		bool isValid = true;
 		uint32_t version = 0;
 		AssetRegistry& assetRegistry;
 		Subasset defaultSubasset;
 		std::vector<Subasset> subassets;
-		std::filesystem::path path;
+		std::filesystem::path metaFilePath;
 		std::filesystem::path baseAssetPath;
+		std::filesystem::path mountedAssetPath;
 	};
 }

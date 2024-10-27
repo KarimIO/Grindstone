@@ -66,7 +66,7 @@ void Build::Open() {
 				Uuid uuid = Uuid(sceneUuidAsString);
 				AssetRegistry::Entry entry;
 				if (assetRegistry.TryGetAssetData(uuid, entry)) {
-					sceneList.emplace_back(uuid, entry.name);
+					sceneList.emplace_back(uuid, entry.displayName);
 				}
 			}
 
@@ -78,7 +78,7 @@ void Build::Open() {
 			Uuid uuid = Uuid(sceneUuidAsString);
 			AssetRegistry::Entry entry;
 			if (assetRegistry.TryGetAssetData(uuid, entry)) {
-				sceneList.emplace_back(uuid, entry.name);
+				sceneList.emplace_back(uuid, entry.displayName);
 			}
 		}
 		start = end + 1;

@@ -51,7 +51,7 @@ void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	Grindstone::Assets::AssetManager* assetManager = engineCore.assetManager;
 	uint8_t shaderBits = static_cast<uint8_t>(GraphicsAPI::ShaderStageBit::Vertex | GraphicsAPI::ShaderStageBit::Fragment);
 
-	if (!assetManager->LoadShaderSet(Uuid("49d8949b-11f9-419f-a963-60dccf89cffc"), shaderBits, 2, shaderStageCreateInfos, fileData)) {
+	if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/editor/grid", shaderBits, 2, shaderStageCreateInfos, fileData)) {
 		GPRINT_ERROR(LogSource::Rendering, "Could not load grid shaders.");
 		return;
 	}
@@ -97,6 +97,10 @@ void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 }
 
 void GridRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, glm::vec2 renderScale, glm::mat4 proj, glm::mat4 view, float nearDist, float farDist, glm::quat rotation, float offset) {
+	if (gridPipeline == nullptr) {
+		return;
+	}
+
 	GridUniformBuffer gridData{};
 	gridData.projMatrix = proj;
 	gridData.viewMatrix = view;

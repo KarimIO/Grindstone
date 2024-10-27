@@ -67,7 +67,7 @@ void MaterialInspector::ReloadAvailableShaders() {
 	std::sort(
 		availableShaders.begin(), availableShaders.end(),
 		[](AssetRegistry::Entry& a, AssetRegistry::Entry& b) {
-			return a.name < b.name;
+			return a.displayName < b.displayName;
 		}
 	);
 }
@@ -81,8 +81,8 @@ void MaterialInspector::Render() {
 	if (ImGui::BeginCombo("Shader", shaderName.c_str())) {
 		for (size_t i = 0; i < availableShaders.size(); ++i) {
 			bool isCurrentShader = availableShaders[i].uuid == shaderUuid;
-			if (ImGui::Selectable(availableShaders[i].name.c_str(), isCurrentShader)) {
-				shaderName = availableShaders[i].name;
+			if (ImGui::Selectable(availableShaders[i].displayName.c_str(), isCurrentShader)) {
+				shaderName = availableShaders[i].displayName;
 				shaderUuid = availableShaders[i].uuid;
 
 				TryLoadShaderReflection(shaderUuid);
@@ -197,7 +197,7 @@ void MaterialInspector::LoadMaterialSamplers(rapidjson::Value& samplers) {
 			AssetRegistry::Entry entry;
 			if (Editor::Manager::GetInstance().GetAssetRegistry().TryGetAssetData(uuid, entry)) {
 				shaderSampler.value = uuid;
-				shaderSampler.valueName = entry.name;
+				shaderSampler.valueName = entry.displayName;
 				hasBeenChanged = false;
 			}
 		}

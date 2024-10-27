@@ -34,15 +34,9 @@ std::string Utils::LoadFileText(const char* inputPath) {
 		return "";
 	}
 
-	std::ifstream ifs(inputPath, std::ios::in | std::ios::binary | std::ios::ate);
-
-	std::ifstream::pos_type fileSize = ifs.tellg();
-	ifs.seekg(0, std::ios::beg);
-
-	std::vector<char> bytes(fileSize);
-	ifs.read(bytes.data(), fileSize);
-
-	std::string outStr(bytes.data(), fileSize);
+	std::ifstream ifs(inputPath, std::ios::in);
+	std::string outStr;
+	std::getline(ifs, outStr, '\0');
 
 	return outStr;
 }
