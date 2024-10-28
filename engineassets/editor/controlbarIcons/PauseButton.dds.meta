@@ -4,7 +4,7 @@
     "subassets": [
         {
             "displayName": "PauseButton",
-            "address": "@EDITOR_ICONS/controlbarIcons/PauseButton.dds",
+            "address": "@EDITOR_ICONS/controlbarIcons/PauseButton",
             "subassetIdentifier": "PauseButton",
             "uuid": "47762f66-e229-4dbf-89f8-81018a85fc91",
             "type": "Texture"

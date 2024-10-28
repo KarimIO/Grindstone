@@ -4,7 +4,7 @@
     "subassets": [
         {
             "displayName": "ConsoleWarning",
-            "address": "@EDITOR_ICONS/consoleIcons/ConsoleWarning.dds",
+            "address": "@EDITOR_ICONS/consoleIcons/ConsoleWarning",
             "subassetIdentifier": "ConsoleWarning",
             "uuid": "ad6820d4-8839-4703-99fd-ab4024accd9f",
             "type": "Texture"

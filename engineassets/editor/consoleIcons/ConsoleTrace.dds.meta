@@ -4,7 +4,7 @@
     "subassets": [
         {
             "displayName": "ConsoleTrace",
-            "address": "@EDITOR_ICONS/consoleIcons/ConsoleTrace.dds",
+            "address": "@EDITOR_ICONS/consoleIcons/ConsoleTrace",
             "subassetIdentifier": "ConsoleTrace",
             "uuid": "e22e2f32-c2ce-49ee-8d14-f0670bb2f8e9",
             "type": "Texture"

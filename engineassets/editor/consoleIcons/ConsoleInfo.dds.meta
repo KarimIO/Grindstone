@@ -4,7 +4,7 @@
     "subassets": [
         {
             "displayName": "ConsoleInfo",
-            "address": "@EDITOR_ICONS/consoleIcons/ConsoleInfo.dds",
+            "address": "@EDITOR_ICONS/consoleIcons/ConsoleInfo",
             "subassetIdentifier": "ConsoleInfo",
             "uuid": "f5865604-2b75-49bf-a915-0214db645958",
             "type": "Texture"

@@ -4,7 +4,7 @@
     "subassets": [
         {
             "displayName": "GitAheadBehind",
-            "address": "@EDITOR_ICONS/gitIcons/GitAheadBehind.dds",
+            "address": "@EDITOR_ICONS/gitIcons/GitAheadBehind",
             "subassetIdentifier": "GitAheadBehind",
             "uuid": "b3f6a84e-f612-414f-8467-e2aba041dcc6",
             "type": "Texture"
