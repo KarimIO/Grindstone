@@ -4,7 +4,7 @@
     "subassets": [
         {
             "displayName": "PlayButton",
-            "address": "@EDITOR_ICONS/controlbarIcons/PlayButton.dds",
+            "address": "@EDITOR_ICONS/controlbarIcons/PlayButton",
             "subassetIdentifier": "PlayButton",
             "uuid": "a2b2153b-770c-4cfb-b55a-e1a31b2f2bba",
             "type": "Texture"

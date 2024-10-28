@@ -21,10 +21,10 @@ constexpr uint8_t infoBit = (1 << static_cast<uint8_t>(LogSeverity::Info));
 constexpr uint8_t traceBit = (1 << static_cast<uint8_t>(LogSeverity::Trace));
 
 ConsolePanel::ConsolePanel(ImguiRenderer* imguiRenderer) : severityFlags(0xff), sourceFlags(UINT64_MAX) {
-	consoleErrorIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleError.dds");
-	consoleWarningIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleWarning.dds");
-	consoleTraceIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleTrace.dds");
-	consoleInfoIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleInfo.dds");
+	consoleErrorIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleError");
+	consoleWarningIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleWarning");
+	consoleTraceIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleTrace");
+	consoleInfoIcon = imguiRenderer->CreateTexture("consoleIcons/ConsoleInfo");
 
 	auto dispatcher = Editor::Manager::GetEngineCore().GetEventDispatcher();
 	dispatcher->AddEventListener(Events::EventType::PrintMessage, std::bind(&ConsolePanel::AddConsoleMessage, this, std::placeholders::_1));

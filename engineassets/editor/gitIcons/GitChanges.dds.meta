@@ -4,7 +4,7 @@
     "subassets": [
         {
             "displayName": "GitChanges",
-            "address": "@EDITOR_ICONS/gitIcons/GitChanges.dds",
+            "address": "@EDITOR_ICONS/gitIcons/GitChanges",
             "subassetIdentifier": "GitChanges",
             "uuid": "ac6e7684-aea1-422a-aa57-a06df9f72cde",
             "type": "Texture"

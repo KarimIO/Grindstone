@@ -4,7 +4,7 @@
     "subassets": [
         {
             "displayName": "Rotate",
-            "address": "@EDITOR_ICONS/controlbarIcons/Rotate.dds",
+            "address": "@EDITOR_ICONS/controlbarIcons/Rotate",
             "subassetIdentifier": "Rotate",
             "uuid": "82e65cda-7bf6-4bd5-9bf4-3eb248fc58fc",
             "type": "Texture"

@@ -4,7 +4,7 @@
     "subassets": [
         {
             "displayName": "GitBranch",
-            "address": "@EDITOR_ICONS/gitIcons/GitBranch.dds",
+            "address": "@EDITOR_ICONS/gitIcons/GitBranch",
             "subassetIdentifier": "GitBranch",
             "uuid": "9361de7f-b095-438e-b925-3f5b5c023728",
             "type": "Texture"
