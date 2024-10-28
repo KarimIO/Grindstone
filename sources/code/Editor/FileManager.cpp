@@ -66,19 +66,26 @@ void FileManager::WatchDirectory(std::string_view mountPoint, const std::filesys
 	MountPoint& mountPointEntry = mountedDirectories.emplace_back();
 	mountPointEntry.watchID = watchID;
 	mountPointEntry.mountPoint = std::string("$") + std::string(mountPoint);
-	Directory& rootDirectory = mountPointEntry.rootDirectory;
-	rootDirectory.path = std::filesystem::directory_entry(projectPath);
-	rootDirectory.parentDirectory = nullptr;
-	CreateInitialFileStructure(rootDirectory, std::filesystem::directory_iterator(rootDirectory.path));
+
+	auto directoryIterator = std::filesystem::directory_entry(projectPath);
+	mountPointEntry.rootDirectory = new Directory(directoryIterator, nullptr);
+	CreateInitialFileStructure(
+		*mountPointEntry.rootDirectory,
+		std::filesystem::directory_iterator(directoryIterator)
+	);
 }
 
 Directory& FileManager::GetPrimaryDirectory() {
-	return mountedDirectories.begin()->rootDirectory;
+	return *mountedDirectories.begin()->rootDirectory;
+}
+
+std::vector<FileManager::MountPoint>& FileManager::GetMountedDirectories() {
+	return mountedDirectories;
 }
 
 bool FileManager::TryGetPathWithMountPoint(const std::filesystem::path& path, std::filesystem::path& outMountedPath) const {
 	for (const MountPoint& mountPoint : mountedDirectories) {
-		const std::filesystem::path& root = mountPoint.rootDirectory.path;
+		const std::filesystem::path& root = mountPoint.rootDirectory->path;
 		std::string relative = std::filesystem::relative(path, root).string();
 		if (relative.size() != 0 && (relative.size() == 1 || relative[0] != '.' && relative[1] != '.')) {
 			outMountedPath = std::filesystem::path(mountPoint.mountPoint) / relative;
@@ -229,10 +236,10 @@ Directory* FileManager::GetFolderForPath(std::filesystem::path path) {
 	Directory* currentDirectory = nullptr;
 
 	for (MountPoint& mountPoint : mountedDirectories) {
-		const std::filesystem::path& root = mountPoint.rootDirectory.path;
+		const std::filesystem::path& root = mountPoint.rootDirectory->path;
 		std::string relative = std::filesystem::relative(path, root).string();
 		if (relative.size() == 1 || relative[0] != '.' && relative[1] != '.') {
-			currentDirectory = &mountPoint.rootDirectory;
+			currentDirectory = mountPoint.rootDirectory;
 			break;
 		}
 	}

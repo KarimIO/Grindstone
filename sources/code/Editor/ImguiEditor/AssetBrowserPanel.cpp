@@ -48,7 +48,7 @@ AssetBrowserPanel::AssetBrowserPanel(
 	ImguiEditor* editor
 ) : editor(editor),
 	engineCore(engineCore),
-	rootDirectory(Editor::Manager::GetFileManager().GetPrimaryDirectory()) {
+	rootDirectory(&Editor::Manager::GetFileManager().GetPrimaryDirectory()) {
 	pathToRename = "";
 
 	iconIds.folderIcon = imguiRenderer->CreateTexture("assetIcons/Folder");
@@ -59,7 +59,7 @@ AssetBrowserPanel::AssetBrowserPanel(
 		iconIds.fileIcons[i] = imguiRenderer->CreateTexture(std::string("assetIcons/") + std::string(GetAssetTypeToString(assetType)));
 	}
 
-	currentDirectory = &rootDirectory;
+	currentDirectory = rootDirectory;
 }
 
 ImTextureID AssetBrowserPanel::GetIcon(const AssetType assetType) const {
@@ -134,7 +134,7 @@ void AssetBrowserPanel::RenderTopBar() {
 	ImGui::PushItemWidth(searchWidth);
 	if (ImGui::InputTextWithHint("##Search", "Search", &searchText)) {
 		if (searchText.empty()) {
-			currentDirectory = &rootDirectory;
+			currentDirectory = rootDirectory;
 		}
 		else {
 			searchTextLower.resize(searchText.size());
@@ -540,11 +540,22 @@ void AssetBrowserPanel::RenderSidebar(float height) {
 	ImGui::BeginChildFrame(sidebarId, ImVec2(0, height), ImGuiWindowFlags_NoBackground);
 	ImGui::PopStyleVar();
 
-	if (rootDirectory.subdirectories.empty()) {
+	Editor::FileManager& fileManager = Editor::Manager::GetFileManager();
+	auto& mountPoints = fileManager.GetMountedDirectories();
+
+	if (mountPoints.empty()) {
 		ImGui::Text("This folder is empty.");
 	}
-	else {
-		RenderSidebarSubdirectory(rootDirectory);
+
+	for (FileManager::MountPoint& mountPoint : mountPoints) {
+		Directory* directory = mountPoint.rootDirectory;
+
+		if (directory->subdirectories.empty()) {
+			ImGui::Text("This folder is empty.");
+		}
+		else {
+			RenderSidebarSubdirectory(*directory);
+		}
 	}
 
 	ImGui::EndChildFrame();
@@ -637,5 +648,5 @@ void AssetBrowserPanel::FilterSearch() {
 	expandedAssetUuidsWithSubassets.clear();
 
 	searchedFiles.clear();
-	FilterSearch(rootDirectory);
+	FilterSearch(*rootDirectory);
 }
