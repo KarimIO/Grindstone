@@ -45,7 +45,7 @@ namespace Grindstone {
 				void AfterCreate(std::filesystem::path path);
 				ImTextureID GetIcon(const AssetType assetType) const;
 			private:
-				Directory& rootDirectory;
+				Directory* rootDirectory;
 				Directory* currentDirectory;
 
 				struct IconsIds {

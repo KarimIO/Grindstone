@@ -7,9 +7,16 @@
 namespace Grindstone::Editor {
 	class FileManager {
 	public:
+		struct MountPoint {
+			efsw_watchid watchID;
+			std::string mountPoint;
+			Directory* rootDirectory;
+		};
+
 		void WatchDirectory(std::string_view mountPoint, const std::filesystem::path& projectPath);
 		Directory& GetPrimaryDirectory();
 
+		std::vector<MountPoint>& GetMountedDirectories();
 		virtual bool TryGetPathWithMountPoint(const std::filesystem::path& path, std::filesystem::path& outMountedPath) const;
 
 		void HandleAddPath(std::filesystem::directory_entry directoryEntry);
@@ -44,12 +51,6 @@ namespace Grindstone::Editor {
 		void UpdateCompiledFileIfNecessary(std::filesystem::path path);
 		void RemoveFileFromManager(std::filesystem::directory_entry);
 		std::filesystem::directory_entry GetFileFromMetaPath(std::filesystem::directory_entry);
-
-		struct MountPoint {
-			efsw_watchid watchID;
-			std::string mountPoint;
-			Directory rootDirectory;
-		};
 
 		std::vector<MountPoint> mountedDirectories;
 	};
