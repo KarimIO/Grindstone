@@ -125,7 +125,7 @@ PROCESS_INFORMATION msBuildProcessInfo;
 HANDLE hStdOutPipeRead = nullptr;
 HANDLE hStdOutPipeWrite = nullptr;
 
-std::string GetMsBuildPath() {
+static std::string GetMsBuildPath() {
 	const std::filesystem::path settingsFile = Grindstone::Editor::Manager::GetInstance().GetProjectPath() / "userSettings/codeToolsPath.txt";
 	std::filesystem::create_directories(settingsFile.parent_path());
 	const auto settingsPath = settingsFile.string();

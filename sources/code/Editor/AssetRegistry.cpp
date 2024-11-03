@@ -160,6 +160,22 @@ bool AssetRegistry::TryGetPathWithMountPoint(const std::filesystem::path& path, 
 	return fileManager.TryGetPathWithMountPoint(path, outMountedPath);
 }
 
+bool AssetRegistry::TryGetAssetDataFromAbsolutePath(const std::filesystem::path& path, AssetRegistry::Entry& outEntry) const {
+	std::filesystem::path mountedPath;
+	if (!TryGetPathWithMountPoint(path, mountedPath)) {
+		return false;
+	}
+
+	for (const auto& [_, assetEntry] : assets) {
+		if (assetEntry.path == mountedPath) {
+			outEntry = assetEntry;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 bool AssetRegistry::TryGetAssetData(const std::filesystem::path& path, AssetRegistry::Entry& outEntry) const {
 	for (const auto& [_, assetEntry] : assets) {
 		if (assetEntry.path == path) {

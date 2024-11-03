@@ -59,12 +59,13 @@ namespace Grindstone::Editor {
 		void InitializeQuitCommands();
 		~Manager();
 		void Run();
+		// Begin to set PlayMode at end of frame.
 		void SetPlayMode(PlayMode newPlayMode);
 		PlayMode GetPlayMode() const;
-		std::filesystem::path GetProjectPath();
-		std::filesystem::path GetAssetsPath();
-		std::filesystem::path GetCompiledAssetsPath();
-		std::filesystem::path GetEngineBinariesPath();
+		const std::filesystem::path& GetProjectPath() const;
+		const std::filesystem::path& GetAssetsPath() const;
+		const std::filesystem::path& GetCompiledAssetsPath() const;
+		const std::filesystem::path& GetEngineBinariesPath() const;
 		bool OnKeyPress(Grindstone::Events::BaseEvent* ev);
 		bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
 		bool OnForceQuit(Grindstone::Events::BaseEvent* ev);
@@ -73,6 +74,9 @@ namespace Grindstone::Editor {
 	private:
 		bool LoadEngine();
 		bool SetupImguiEditor();
+
+		// Actually change the PlayMode, to be used only by SetPlayMode.
+		void TransferPlayMode(PlayMode newPlayMode);
 	private:
 		std::filesystem::path projectPath;
 		std::filesystem::path assetsPath;
@@ -83,7 +87,10 @@ namespace Grindstone::Editor {
 		ImguiEditor::ImguiEditor* imguiEditor = nullptr;
 		ScriptBuilder::CSharpBuildManager csharpBuildManager;
 		CommandList commandList;
+		// Current PlayMode - should we update objects? And how?
 		PlayMode playMode;
+		// Play Mode that will be set at end of frame
+		PlayMode newPlayMode;
 		Selection selection;
 		FileManager fileManager;
 		TaskSystem taskSystem;
