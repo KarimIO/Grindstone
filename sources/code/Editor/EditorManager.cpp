@@ -104,6 +104,7 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	);
 
 	assetRegistry.Initialize(projectPath);
+
 	fileManager.WatchDirectory("ASSETS", assetsPath);
 	fileManager.WatchDirectory("ENGINE", engineBinariesPath.parent_path() / "engineassets");
 
@@ -156,12 +157,20 @@ void Manager::Run() {
 
 		imguiEditor->Update();
 		engineCore->UpdateWindows();
+
+		if (newPlayMode != playMode) {
+			TransferPlayMode(newPlayMode);
+		}
 	}
 }
 
 entt::registry backupRegistry;
 
 void Manager::SetPlayMode(PlayMode newPlayMode) {
+	this->newPlayMode = newPlayMode;
+}
+
+void Manager::TransferPlayMode(PlayMode newPlayMode) {
 	// Reset input before setting the new playMode
 	engineCore->GetInputManager()->SetCursorIsRawMotion(false);
 	engineCore->GetInputManager()->SetCursorMode(Input::CursorMode::Normal);
@@ -187,19 +196,19 @@ PlayMode Manager::GetPlayMode() const {
 	return playMode;
 }
 
-std::filesystem::path Manager::GetProjectPath() {
+const std::filesystem::path& Manager::GetProjectPath() const {
 	return projectPath;
 }
 
-std::filesystem::path Manager::GetAssetsPath() {
+const std::filesystem::path& Manager::GetAssetsPath() const {
 	return assetsPath;
 }
 
-std::filesystem::path Manager::GetCompiledAssetsPath() {
+const std::filesystem::path& Manager::GetCompiledAssetsPath() const {
 	return compiledAssetsPath;
 }
 
-std::filesystem::path Grindstone::Editor::Manager::GetEngineBinariesPath() {
+const std::filesystem::path& Grindstone::Editor::Manager::GetEngineBinariesPath() const {
 	return engineBinariesPath;
 }
 

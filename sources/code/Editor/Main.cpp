@@ -96,7 +96,6 @@ static std::filesystem::path OpenExistingProject() {
 #endif
 
 int main(int argc, char* argv[]) {
-	try {
 		std::filesystem::path projectPath;
 		for (int i = 1; i < argc; ++i) {
 			if (strcmp(argv[i], "-projectpath") == 0 && argc > i + 1) {
@@ -138,11 +137,6 @@ int main(int argc, char* argv[]) {
 		if (editorManager.Initialize(projectPath)) {
 			editorManager.Run();
 		}
-	}
-	catch (std::runtime_error& e) {
-		std::cerr << e.what() << std::endl;
-		OutputDebugString(e.what());
-	}
 
 	return 0;
 }

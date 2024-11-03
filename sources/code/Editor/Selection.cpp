@@ -19,7 +19,7 @@ void Selection::AddEntity(ECS::Entity entity) {
 	selectedEntities.insert(entity);
 }
 
-bool Selection::IsEntitySelected(ECS::Entity entity) {
+bool Selection::IsEntitySelected(ECS::Entity entity) const {
 	return selectedEntities.find(entity) != selectedEntities.end();
 }
 
@@ -30,11 +30,11 @@ void Selection::RemoveEntity(ECS::Entity entity) {
 	}
 }
 
-size_t Selection::GetSelectedEntityCount() {
+size_t Selection::GetSelectedEntityCount() const {
 	return selectedEntities.size();
 }
 
-Grindstone::ECS::Entity Selection::GetSingleSelectedEntity() {
+Grindstone::ECS::Entity Selection::GetSingleSelectedEntity() const {
 	return *selectedEntities.begin();
 }
 
@@ -42,27 +42,27 @@ void Selection::ClearFiles() {
 	selectedFiles.clear();
 }
 
-void Selection::SetSelectedFile(const std::filesystem::directory_entry& path) {
+void Selection::SetSelectedFile(const std::filesystem::path& path) {
 	Clear();
 	AddFile(path);
 }
 
-void Selection::AddFile(const std::filesystem::directory_entry& path) {
+void Selection::AddFile(const std::filesystem::path& path) {
 	selectedFiles.insert(path);
 }
 
-bool Selection::IsFileSelected(const std::filesystem::directory_entry& path) {
+bool Selection::IsFileSelected(const std::filesystem::path& path) const {
 	return selectedFiles.find(path) != selectedFiles.end();
 }
 
-void Selection::RemoveFile(const std::filesystem::directory_entry& path) {
+void Selection::RemoveFile(const std::filesystem::path& path) {
 	selectedFiles.erase(selectedFiles.find(path));
 }
 
-size_t Selection::GetSelectedFileCount() {
+size_t Selection::GetSelectedFileCount() const {
 	return selectedFiles.size();
 }
 
-std::filesystem::directory_entry Selection::GetSingleSelectedFile() {
+const std::filesystem::path& Selection::GetSingleSelectedFile() const {
 	return *selectedFiles.begin();
 }

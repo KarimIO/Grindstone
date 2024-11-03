@@ -244,6 +244,22 @@ size_t MetaFile::GetSubassetCount() const {
 	return subassets.size();
 }
 
+bool Grindstone::Editor::MetaFile::TryGetSubasset(Uuid uuid, Subasset*& outSubasset) {
+	if (defaultSubasset.uuid == uuid) {
+		outSubasset = &defaultSubasset;
+		return true;
+	}
+
+	for(Subasset& subasset : subassets) {
+		if (subasset.uuid == uuid) {
+			outSubasset = &subasset;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 MetaFile::Iterator MetaFile::begin() noexcept {
 	return subassets.begin();
 }

@@ -43,7 +43,8 @@ namespace Grindstone::Editor {
 
 		virtual bool HasAsset(Uuid uuid) const;
 		virtual bool TryGetPathWithMountPoint(const std::filesystem::path& path, std::filesystem::path& outMountedPath) const;
-		virtual bool TryGetAssetData(const std::filesystem::path& path, AssetRegistry::Entry& outEntry) const;
+		virtual bool TryGetAssetDataFromAbsolutePath(const std::filesystem::path& path, AssetRegistry::Entry& outEntry) const;
+		virtual bool TryGetAssetData(const std::filesystem::path & path, AssetRegistry::Entry & outEntry) const;
 		virtual bool TryGetAssetData(const std::string& address, AssetRegistry::Entry& outEntry) const;
 		virtual bool TryGetAssetData(Uuid uuid, AssetRegistry::Entry& outEntry) const;
 

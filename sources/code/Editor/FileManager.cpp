@@ -22,39 +22,67 @@ static void FileWatcherCallback(
 	const char* oldFilename,
 	void* param
 ) {
-	if (param == nullptr) {
+	std::filesystem::path path = std::filesystem::path(dir) / filename;
+	std::filesystem::directory_entry entry = std::filesystem::directory_entry(path);
+	if (param == nullptr || entry.is_directory()) {
 		return;
 	}
 
 	FileManager* fileManager = static_cast<FileManager*>(param);
+	const Grindstone::Editor::FileManager::MountPoint* mountPoint = nullptr;
+	for (const Grindstone::Editor::FileManager::MountPoint& currentMountPoint : fileManager->GetMountedDirectories()) {
+		mountPoint = &currentMountPoint;
+	}
 
-	std::filesystem::path path = std::filesystem::path(dir) / filename;
-	std::filesystem::directory_entry entry = std::filesystem::directory_entry(path);
+	if (mountPoint == nullptr) {
+		return;
+	}
+
+	bool isMetaFile = path.extension() == ".meta";
 
 	switch (action) {
 	case EFSW_ADD:
-		fileManager->HandleAddPath(entry);
+		if (isMetaFile) {
+			fileManager->HandleAddFile(*mountPoint, entry);
+		}
+		else {
+			fileManager->HandleAddMetaFile(*mountPoint, entry);
+		}
 		break;
 	case EFSW_DELETE:
-		fileManager->HandleDeletePath(entry);
+		if (isMetaFile) {
+			fileManager->HandleDeleteFile(*mountPoint, entry);
+		}
+		else {
+			fileManager->HandleDeleteMetaFile(*mountPoint, entry);
+		}
 		break;
 	case EFSW_MODIFIED:
-		fileManager->HandleModifyPath(entry);
+		if (isMetaFile) {
+			fileManager->HandleModifyFile(*mountPoint, entry);
+		}
+		else {
+			fileManager->HandleModifyMetaFile(*mountPoint, entry);
+		}
 		break;
 	case EFSW_MOVED:
-		fileManager->HandleMovePath(entry, oldFilename);
+		if (isMetaFile) {
+			fileManager->HandleMoveFile(*mountPoint, entry, oldFilename);
+		}
+		else {
+			fileManager->HandleMoveMetaFile(*mountPoint, entry, oldFilename);
+		}
 		break;
 	default:
-		GPRINT_ERROR(LogSource::Editor, "Invalid filesystem event!");
+		GPRINT_ERROR_V(LogSource::Editor, "Invalid filesystem event trying to process {}", path.string().c_str());
 	}
 }
 
-void FileManager::WatchDirectory(std::string_view mountPoint, const std::filesystem::path& projectPath) {
-	std::filesystem::create_directories(projectPath);
+void FileManager::WatchDirectory(std::string_view mountPoint, const std::filesystem::path& path) {
+	std::filesystem::create_directories(path);
 
-	efsw_watcher watcher = {};
-	watcher = efsw_create(1);
-	efsw_watchid watchID = efsw_addwatch(watcher, projectPath.string().c_str(), FileWatcherCallback, 1, this);
+	efsw_watcher watcher = efsw_create(1);
+	efsw_watchid watchID = efsw_addwatch(watcher, path.string().c_str(), FileWatcherCallback, 1, this);
 
 	if (watchID < 0) {
 		GPRINT_FATAL_V(LogSource::Editor, "Failed to watch path: {}", efsw_getlasterror());
@@ -66,26 +94,39 @@ void FileManager::WatchDirectory(std::string_view mountPoint, const std::filesys
 	MountPoint& mountPointEntry = mountedDirectories.emplace_back();
 	mountPointEntry.watchID = watchID;
 	mountPointEntry.mountPoint = std::string("$") + std::string(mountPoint);
+	mountPointEntry.path = path;
 
-	auto directoryIterator = std::filesystem::directory_entry(projectPath);
-	mountPointEntry.rootDirectory = new Directory(directoryIterator, nullptr);
-	CreateInitialFileStructure(
-		*mountPointEntry.rootDirectory,
+	auto directoryIterator = std::filesystem::directory_entry(path);
+	PreprocessFilesOnMount(
+		mountPointEntry,
 		std::filesystem::directory_iterator(directoryIterator)
 	);
 }
 
-Directory& FileManager::GetPrimaryDirectory() {
-	return *mountedDirectories.begin()->rootDirectory;
+const std::vector<FileManager::MountPoint>& FileManager::GetMountedDirectories() const {
+	return mountedDirectories;
 }
 
-std::vector<FileManager::MountPoint>& FileManager::GetMountedDirectories() {
-	return mountedDirectories;
+const FileManager::MountPoint& FileManager::GetPrimaryMountPoint() const {
+	return mountedDirectories[0];
+}
+
+void FileManager::DispatchTask(const std::filesystem::path& path) const {
+	TaskSystem& taskSystem = Editor::Manager::GetInstance().GetTaskSystem();
+
+	std::string jobName = "Importing " + path.filename().string();
+	taskSystem.Execute(jobName, [path] {
+		GPRINT_TRACE_V(LogSource::Editor, "Importing {}", path.string().c_str());
+		std::filesystem::path nPath = path;
+		auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
+		importManager.Import(nPath);
+		GPRINT_TRACE_V(LogSource::Editor, "Finished importing {}", path.string().c_str());
+	});
 }
 
 bool FileManager::TryGetPathWithMountPoint(const std::filesystem::path& path, std::filesystem::path& outMountedPath) const {
 	for (const MountPoint& mountPoint : mountedDirectories) {
-		const std::filesystem::path& root = mountPoint.rootDirectory->path;
+		const std::filesystem::path& root = mountPoint.path;
 		std::string relative = std::filesystem::relative(path, root).string();
 		if (relative.size() != 0 && (relative.size() == 1 || relative[0] != '.' && relative[1] != '.')) {
 			outMountedPath = std::filesystem::path(mountPoint.mountPoint) / relative;
@@ -96,13 +137,16 @@ bool FileManager::TryGetPathWithMountPoint(const std::filesystem::path& path, st
 	return false;
 }
 
-void FileManager::CreateInitialFileStructure(Directory& directory, std::filesystem::directory_iterator directoryIterator) {
-	for (const auto& directoryEntry : directoryIterator) {
+void FileManager::PreprocessFilesOnMount(
+	const MountPoint& mountPoint,
+	std::filesystem::directory_iterator directoryIterator
+) const {
+	for (const std::filesystem::directory_entry& directoryEntry : directoryIterator) {
 		if (directoryEntry.is_directory()) {
-			Directory* newDirectory = new Directory(directoryEntry, &directory);
-			directory.subdirectories.push_back(newDirectory);
-			auto directoryIterator = std::filesystem::directory_iterator(directoryEntry);
-			CreateInitialFileStructure(*newDirectory, directoryIterator);
+			PreprocessFilesOnMount(
+				mountPoint,
+				std::filesystem::directory_iterator(directoryEntry)
+			);
 		}
 		else {
 			const std::filesystem::path& filePath = directoryEntry.path();
@@ -113,14 +157,34 @@ void FileManager::CreateInitialFileStructure(Directory& directory, std::filesyst
 					csharpBuildManager.AddFileInitial(filePath);
 				}
 
-				directory.files.emplace_back(new File(directoryEntry));
-				UpdateCompiledFileIfNecessaryOnInitialize(filePath);
+				UpdateCompiledFileIfNecessary(mountPoint, filePath);
 			}
 		}
 	}
 }
 
-bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(std::filesystem::path path) {
+static bool IsSubassetValid(
+	const std::filesystem::path& mountedPath,
+	Editor::AssetRegistry& assetRegistry,
+	MetaFile::Subasset& subasset
+) {
+	AssetRegistry::Entry outEntry;
+	if (
+		!assetRegistry.TryGetAssetData(subasset.uuid, outEntry) ||
+		outEntry.assetType != subasset.assetType ||
+		// TODO: Fix this so path uses mount point
+		outEntry.path != mountedPath
+	) {
+		return false;
+	}
+
+	outEntry.address = subasset.address;
+	outEntry.displayName = subasset.displayName;
+	outEntry.subassetIdentifier = subasset.subassetIdentifier;
+	return true;
+}
+
+bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(const MountPoint& mountPoint, const std::filesystem::path& path) const {
 	auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
 	if (!importManager.HasImporter(path)) {
 		return false;
@@ -142,22 +206,17 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(std::filesystem::path path
 		return true;
 	}
 
+	std::filesystem::path mountedPath = std::filesystem::path(mountPoint.mountPoint) / std::filesystem::relative(path, mountPoint.path);
 	auto& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
 	for (MetaFile::Subasset& subasset : metaFile) {
-		std::filesystem::path path = Editor::Manager::GetEngineCore().GetAssetPath(subasset.uuid.ToString());
-		bool registryHasAsset = assetRegistry.HasAsset(subasset.uuid);
-		bool doesFileExist = std::filesystem::exists(path);
-		if (!registryHasAsset || !doesFileExist) {
+		if (!IsSubassetValid(mountedPath, assetRegistry, subasset)) {
 			return true;
 		}
 	}
 
 	MetaFile::Subasset defaultSubasset;
 	if (metaFile.TryGetDefaultSubasset(defaultSubasset)) {
-		std::filesystem::path path = Editor::Manager::GetEngineCore().GetAssetPath(defaultSubasset.uuid.ToString());
-		bool registryHasAsset = assetRegistry.HasAsset(defaultSubasset.uuid);
-		bool doesFileExist = std::filesystem::exists(path);
-		if (!registryHasAsset || !doesFileExist) {
+		if (!IsSubassetValid(mountedPath, assetRegistry, defaultSubasset)) {
 			return true;
 		}
 	}
@@ -165,130 +224,14 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(std::filesystem::path path
 	return false;
 }
 
-void FileManager::UpdateCompiledFileIfNecessaryOnInitialize(std::filesystem::path path) {
-	if (CheckIfCompiledFileNeedsToBeUpdated(path)) {
-		TaskSystem& taskSystem = Editor::Manager::GetInstance().GetTaskSystem();
-
-		std::string jobName = "Importing " + path.filename().string();
-		GPRINT_TRACE_V(LogSource::Editor, "{}", jobName);
-		taskSystem.Execute(jobName, [path] {
-			std::filesystem::path nPath = path;
-			auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
-			importManager.Import(nPath);
-			GPRINT_TRACE_V(LogSource::Editor, "Finished importing {}", path.string().c_str());
-		});
+void FileManager::UpdateCompiledFileIfNecessary(const MountPoint& mountPoint, const std::filesystem::path& path) const {
+	if (CheckIfCompiledFileNeedsToBeUpdated(mountPoint, path)) {
+		DispatchTask(path);
 	}
 }
 
-void FileManager::UpdateCompiledFileIfNecessary(std::filesystem::path path) {
-	if (CheckIfCompiledFileNeedsToBeUpdated(path)) {
-		TaskSystem& taskSystem = Editor::Manager::GetInstance().GetTaskSystem();
-
-		std::string jobName = "Importing " + path.filename().string();
-		taskSystem.Execute(jobName, [path] {
-			std::filesystem::path nPath = path;
-			auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
-			importManager.Import(nPath);
-			auto& editorManager = Editor::Manager::GetInstance();
-			editorManager.GetAssetRegistry().WriteFile();
-		});
-	}
-}
-
-FileManager::FolderIterator FileManager::GetSubdirectoryInDirectory(Directory* directory, std::string filename) {
-	return std::find_if(
-		directory->subdirectories.begin(),
-		directory->subdirectories.end(),
-		[&](Directory* entry) {
-			return entry->name == filename;
-		}
-	);
-}
-
-FileManager::FileIterator FileManager::GetFileInDirectory(Directory* directory, std::string filename) {
-	return std::find_if(
-		directory->files.begin(),
-		directory->files.end(),
-		[&](File* entry) {
-			return entry->directoryEntry.path().filename().string() == filename;
-		}
-	);
-}
-
-Directory* FileManager::GetOrMakeSubdirectory(Directory* currentDirectory, std::string subdirectoryName) {
-	for (auto subdir : currentDirectory->subdirectories) {
-		if (subdir->name == subdirectoryName) {
-			return subdir;
-		}
-	}
-
-	std::filesystem::directory_entry newEntry = std::filesystem::directory_entry(currentDirectory->path / subdirectoryName);
-	Directory* newSubdirectory = new Directory(newEntry, currentDirectory);
-	currentDirectory->subdirectories.push_back(newSubdirectory);
-
-	return newSubdirectory;
-}
-
-Directory* FileManager::GetFolderForPath(std::filesystem::path path) {
-	std::string pathAsString = std::filesystem::relative(path, Editor::Manager::GetInstance().GetAssetsPath()).string();
-	std::replace(pathAsString.begin(), pathAsString.end(), '\\', '/');
-
-	Directory* currentDirectory = nullptr;
-
-	for (MountPoint& mountPoint : mountedDirectories) {
-		const std::filesystem::path& root = mountPoint.rootDirectory->path;
-		std::string relative = std::filesystem::relative(path, root).string();
-		if (relative.size() == 1 || relative[0] != '.' && relative[1] != '.') {
-			currentDirectory = mountPoint.rootDirectory;
-			break;
-		}
-	}
-
-	if (currentDirectory == nullptr) {
-		return nullptr;
-	}
-
-	std::size_t lastIndex = 0;
-
-	while (true) {
-		std::size_t newIndex = pathAsString.find("/", lastIndex);
-		if (newIndex == -1) {
-			break;
-		}
-
-		std::string node = pathAsString.substr(lastIndex, newIndex - lastIndex);
-
-		currentDirectory = GetOrMakeSubdirectory(currentDirectory, node);
-
-		GPRINT_TRACE(LogSource::Editor, node.c_str());
-		lastIndex = newIndex + 1;
-	}
-
-	return currentDirectory;
-}
-
-void FileManager::HandleAddPath(std::filesystem::directory_entry directoryEntry) {
-	if (directoryEntry.is_directory()) {
-		HandleAddFolder(directoryEntry);
-	}
-	else if (directoryEntry.path().extension() == ".meta") {
-		HandleAddMetaFile(directoryEntry);
-	}
-	else {
-		HandleAddFile(directoryEntry);
-	}
-}
-
-void FileManager::HandleAddFolder(std::filesystem::directory_entry folderPath) {
-	Directory* parentDirectory = GetFolderForPath(folderPath);
-	Directory* newDirectory = new Directory(folderPath, parentDirectory);
-	parentDirectory->subdirectories.push_back(newDirectory);
-}
-
-void FileManager::HandleAddFile(std::filesystem::directory_entry filePath) {
-	Directory* entry = GetFolderForPath(filePath);
-	entry->files.emplace_back(new File(filePath));
-	UpdateCompiledFileIfNecessary(filePath);
+void FileManager::HandleAddFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& filePath) {
+	UpdateCompiledFileIfNecessary(mountPoint, filePath);
 
 	if (filePath.path().extension() == ".cs") {
 		auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
@@ -296,115 +239,54 @@ void FileManager::HandleAddFile(std::filesystem::directory_entry filePath) {
 	}
 }
 
-void FileManager::HandleAddMetaFile(std::filesystem::directory_entry fileDirectoryEntry) {
-	auto mainEntry = GetFileFromMetaPath(fileDirectoryEntry);
+void FileManager::HandleAddMetaFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& directoryEntry) {
+	auto mainEntry = GetFileFromMetaPath(directoryEntry);
 	if (std::filesystem::exists(mainEntry)) {
-		UpdateCompiledFileIfNecessary(mainEntry);
+		UpdateCompiledFileIfNecessary(mountPoint, mainEntry);
 	}
 }
 
-void FileManager::HandleModifyPath(std::filesystem::directory_entry directoryEntry) {
-	if (directoryEntry.is_directory()) {
-		HandleModifyFolder(directoryEntry);
-	}
-	else if (directoryEntry.path().extension() == ".meta") {
-		HandleModifyMetaFile(directoryEntry);
-	}
-	else {
-		HandleModifyFile(directoryEntry);
-	}
+void FileManager::HandleModifyMetaFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& directoryEntry) {
 }
 
-void FileManager::HandleModifyFolder(std::filesystem::directory_entry folderPath) {
-
-}
-
-void FileManager::HandleModifyMetaFile(std::filesystem::directory_entry fileDirectoryEntry) {
-}
-
-void FileManager::HandleModifyFile(std::filesystem::directory_entry filePath) {
-	if (filePath.path().extension() == ".cs") {
+void FileManager::HandleModifyFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& directoryEntry) {
+	if (directoryEntry.path().extension() == ".cs") {
 		auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
-		csharpBuildManager.OnFileModified(filePath);
+		csharpBuildManager.OnFileModified(directoryEntry);
 	}
 
-	UpdateCompiledFileIfNecessary(filePath);
+	UpdateCompiledFileIfNecessary(mountPoint, directoryEntry);
 }
 
-void FileManager::HandleMovePath(std::filesystem::directory_entry directoryEntry, std::string oldFilename) {
-	if (directoryEntry.is_directory()) {
-		HandleMoveFolder(directoryEntry, oldFilename);
-	}
-	else if (directoryEntry.path().extension() == ".meta") {
-		HandleMoveMetaFile(directoryEntry, oldFilename);
-	}
-	else {
-		HandleMoveFile(directoryEntry, oldFilename);
-	}
-}
-
-void FileManager::HandleMoveFolder(std::filesystem::directory_entry folderPath, std::string oldFilename) {
-
-}
-
-void FileManager::HandleMoveMetaFile(std::filesystem::directory_entry fileDirectoryEntry, std::string oldFilename) {
+void FileManager::HandleMoveMetaFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& directoryEntry, std::string oldFilename) {
 	auto oldMetaPath = (std::filesystem::directory_entry)oldFilename;
 	auto oldFilePath = GetFileFromMetaPath(oldMetaPath);
 	if (std::filesystem::exists(oldFilePath)) {
-		UpdateCompiledFileIfNecessary(oldFilePath);
+		UpdateCompiledFileIfNecessary(mountPoint, oldFilePath);
 	}
 }
 
-void FileManager::HandleMoveFile(std::filesystem::directory_entry filePath, std::string oldFilename) {
-	RemoveFileFromManager(filePath);
-
-	Directory* entry = GetFolderForPath(filePath);
-	entry->files.emplace_back(new File(filePath));
-
-	if (filePath.path().extension() == ".cs") {
+void FileManager::HandleMoveFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& directoryEntry, std::string oldFilename) {
+	if (directoryEntry.path().extension() == ".cs") {
 		auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
-		csharpBuildManager.OnFileMoved(filePath, oldFilename);
+		csharpBuildManager.OnFileMoved(directoryEntry, oldFilename);
 	}
 
-	std::string metaFilePath = filePath.path().string() + ".meta";
+	std::string metaFilePath = directoryEntry.path().string() + ".meta";
 	std::string oldMetaFilePath = oldFilename + ".meta";
 	if (std::filesystem::exists(oldMetaFilePath)) {
 		std::filesystem::rename(oldMetaFilePath, metaFilePath);
 	}
 
-	UpdateCompiledFileIfNecessary(filePath);
+	UpdateCompiledFileIfNecessary(mountPoint, directoryEntry);
 }
 
-void FileManager::HandleDeletePath(std::filesystem::directory_entry directoryEntry) {
-	if (directoryEntry.is_directory()) {
-		HandleDeleteFolder(directoryEntry);
-	}
-	else if (directoryEntry.path().extension() == ".meta") {
-		HandleDeleteMetaFile(directoryEntry);
-	}
-	else {
-		HandleDeleteFile(directoryEntry);
-	}
+void FileManager::HandleDeleteMetaFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& directoryEntry) {
+	UpdateCompiledFileIfNecessary(mountPoint, GetFileFromMetaPath(directoryEntry));
 }
 
-void FileManager::HandleDeleteFolder(std::filesystem::directory_entry folderPath) {
-	Directory* directory = GetFolderForPath(folderPath);
-	std::filesystem::path path = folderPath.path();
-	std::string fileName = path.filename().string();
-	FolderIterator folderIterator = GetSubdirectoryInDirectory(directory, fileName);
-	if (folderIterator != directory->subdirectories.end()) {
-		directory->subdirectories.erase(folderIterator);
-	}
-}
-
-void FileManager::HandleDeleteMetaFile(std::filesystem::directory_entry fileDirectoryEntry) {
-	UpdateCompiledFileIfNecessary(GetFileFromMetaPath(fileDirectoryEntry));
-}
-
-void FileManager::HandleDeleteFile(std::filesystem::directory_entry fileDirectoryEntry) {
-	RemoveFileFromManager(fileDirectoryEntry);
-
-	std::filesystem::path path = fileDirectoryEntry.path();
+void FileManager::HandleDeleteFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& directoryEntry) {
+	std::filesystem::path path = directoryEntry.path();
 	if (path.extension() == ".cs") {
 		auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
 		csharpBuildManager.OnFileDeleted(path);
@@ -416,17 +298,7 @@ void FileManager::HandleDeleteFile(std::filesystem::directory_entry fileDirector
 	}
 }
 
-void FileManager::RemoveFileFromManager(std::filesystem::directory_entry fileDirectoryEntry) {
-	Directory* directory = GetFolderForPath(fileDirectoryEntry);
-	std::filesystem::path path = fileDirectoryEntry.path();
-	std::string fileName = path.filename().string();
-	FileIterator fileIterator = GetFileInDirectory(directory, fileName);
-	if (fileIterator != directory->files.end()) {
-		directory->files.erase(fileIterator);
-	}
-}
-
-std::filesystem::directory_entry FileManager::GetFileFromMetaPath(std::filesystem::directory_entry path) {
+std::filesystem::directory_entry FileManager::GetFileFromMetaPath(const std::filesystem::directory_entry& path) {
 	std::string pathStr = path.path().string();
 	return (std::filesystem::directory_entry)pathStr.substr(0, pathStr.find_last_of('.'));
 }

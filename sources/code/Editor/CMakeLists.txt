@@ -7,7 +7,6 @@ file(GLOB_RECURSE SOURCE_MAIN
 	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp ${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
 	${COMMON_DIR}/ResourcePipeline/Uuid.cpp  ${COMMON_DIR}/ResourcePipeline/Uuid.hpp
 	${ENGINECORE_DIR}/ECS/Entity.cpp
-	FileDirectory.cpp FileDirectory.hpp
 	FileManager.cpp FileManager.hpp
 	GitManager.cpp GitManager.hpp
 	GizmoRenderer.cpp GizmoRenderer.hpp

@@ -53,7 +53,7 @@ GraphicsAPI::RenderPass* DeferredRenderer::mainRenderPass = nullptr;
 const size_t MAX_BLOOM_MIPS = 40u;
 const DepthFormat depthFormat = DepthFormat::D24;
 const bool shouldFastResize = true;
-GraphicsAPI::ColorFormat ambientOcclusionFormat = GraphicsAPI::ColorFormat::R8;;
+GraphicsAPI::ColorFormat ambientOcclusionFormat = GraphicsAPI::ColorFormat::R8;
 
 float lightPositions[] = {
 	-1.0f, -1.0f,
