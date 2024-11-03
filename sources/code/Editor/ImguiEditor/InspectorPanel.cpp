@@ -96,17 +96,13 @@ void InspectorPanel::RenderContents() {
 			if (extension == ".gmat") {
 				materialInspector->SetMaterialPath(path);
 				materialInspector->Render();
-				return;
 			}
+			return;
 		}
 
 		unsigned int unmanagedFiles = 0;
 		for (const auto& path : selection.selectedFiles) {
 			RenderGenericFile(path);
-		}
-
-		if (unmanagedFiles > 0) {
-			ImGui::Text("%u files selected outside of mount points.", unmanagedFiles);
 		}
 		return;
 	}
