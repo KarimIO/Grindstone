@@ -9,7 +9,7 @@
 namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
 Vulkan::RenderPass::RenderPass(VkRenderPass renderPass, const char* debugName)
-	: renderPass(renderPass) {
+	: renderPass(renderPass), ownsRenderPass(false) {
 
 	if (debugName != nullptr) {
 		this->debugName = debugName;
@@ -21,7 +21,8 @@ Vulkan::RenderPass::RenderPass(VkRenderPass renderPass, const char* debugName)
 	}
 }
 
-Vulkan::RenderPass::RenderPass(const CreateInfo& createInfo) : shouldClearDepthOnLoad(createInfo.shouldClearDepthOnLoad) {
+Vulkan::RenderPass::RenderPass(const CreateInfo& createInfo)
+	: shouldClearDepthOnLoad(createInfo.shouldClearDepthOnLoad), ownsRenderPass(true) {
 	if (createInfo.debugName != nullptr) {
 		debugName = createInfo.debugName;
 	}
@@ -143,7 +144,7 @@ Vulkan::RenderPass::~RenderPass() {
 }
 
 void Vulkan::RenderPass::Cleanup() {
-	if (renderPass != nullptr) {
+	if (ownsRenderPass && renderPass != nullptr) {
 		vkDestroyRenderPass(Vulkan::Core::Get().GetDevice(), renderPass, nullptr);
 		renderPass = nullptr;
 	}

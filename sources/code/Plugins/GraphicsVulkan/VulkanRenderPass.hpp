@@ -27,6 +27,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		std::vector<RenderPass::AttachmentInfo> colorAttachments;
 		DepthFormat depthFormat = DepthFormat::None;
 		bool shouldClearDepthOnLoad = true;
+		bool ownsRenderPass = true;
 		VkRenderPass renderPass = nullptr;
 	};
 }
