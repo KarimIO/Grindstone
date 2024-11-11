@@ -248,7 +248,6 @@ DeferredRenderer::~DeferredRenderer() {
 	graphicsCore->DeleteRenderPass(dofSeparationRenderPass);
 	graphicsCore->DeleteRenderPass(dofBlurAndCombinationRenderPass);
 	graphicsCore->DeleteRenderPass(shadowMapRenderPass);
-	graphicsCore->DeleteRenderPass(targetRenderPass);
 	graphicsCore->DeleteRenderPass(lightingRenderPass);
 	graphicsCore->DeleteRenderPass(forwardLitRenderPass);
 	graphicsCore->DeleteRenderPass(ssaoRenderPass);
