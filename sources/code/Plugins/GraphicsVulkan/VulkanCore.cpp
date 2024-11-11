@@ -347,7 +347,7 @@ bool Vulkan::Core::CheckValidationLayerSupport() {
 		}
 	}
 
-	return false;
+	return true;
 }
 
 Vulkan::QueueFamilyIndices Vulkan::Core::FindQueueFamilies(VkPhysicalDevice device) {
