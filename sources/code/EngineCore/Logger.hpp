@@ -59,7 +59,7 @@ namespace Grindstone::Logger {
 #define GPRINT_TRACE(source, str) Grindstone::Logger::Print(Grindstone::LogSeverity::Trace, source, Grindstone::LOG_UNSPECIFIED_INTERNAL_TYPE, __FILE__, __LINE__, str)
 #define GPRINT_WARN(source, str) Grindstone::Logger::Print(Grindstone::LogSeverity::Warning, source, Grindstone::LOG_UNSPECIFIED_INTERNAL_TYPE, __FILE__, __LINE__, str)
 #define GPRINT_ERROR(source, str) Grindstone::Logger::Print(Grindstone::LogSeverity::Error, source, Grindstone::LOG_UNSPECIFIED_INTERNAL_TYPE, __FILE__, __LINE__, str)
-#define GPRINT_FATAL(source, str) Grindstone::Logger::Print(Grindstone::LogSeverity::Fatal, source, LOG_UNSPECIFIED_INTERNAL_TYPE, __FILE__, __LINE__, str)
+#define GPRINT_FATAL(source, str) Grindstone::Logger::Print(Grindstone::LogSeverity::Fatal, source, Grindstone::LOG_UNSPECIFIED_INTERNAL_TYPE, __FILE__, __LINE__, str)
 
 #define GPRINT_TYPED_V(severity, source, internalType, fmt, ...) Grindstone::Logger::Print(severity, source, internalType, __FILE__, __LINE__, fmt, __VA_ARGS__)
 #define GPRINT_TYPED_INFO_V(source, internalType, fmt, ...) Grindstone::Logger::Print(Grindstone::LogSeverity::Info, source, internalType, __FILE__, __LINE__, fmt, __VA_ARGS__)
@@ -73,4 +73,4 @@ namespace Grindstone::Logger {
 #define GPRINT_TRACE_V(source, fmt, ...) Grindstone::Logger::Print(Grindstone::LogSeverity::Trace, source, Grindstone::LOG_UNSPECIFIED_INTERNAL_TYPE, __FILE__, __LINE__, fmt, __VA_ARGS__)
 #define GPRINT_WARN_V(source, fmt, ...) Grindstone::Logger::Print(Grindstone::LogSeverity::Warning, source, Grindstone::LOG_UNSPECIFIED_INTERNAL_TYPE, __FILE__, __LINE__, fmt, __VA_ARGS__)
 #define GPRINT_ERROR_V(source, fmt, ...) Grindstone::Logger::Print(Grindstone::LogSeverity::Error, source, Grindstone::LOG_UNSPECIFIED_INTERNAL_TYPE, __FILE__, __LINE__, fmt, __VA_ARGS__)
-#define GPRINT_FATAL_V(source, fmt, ...) Grindstone::Logger::Print(Grindstone::LogSeverity::Fatal, source, LOG_UNSPECIFIED_INTERNAL_TYPE, __FILE__, __LINE__, fmt, __VA_ARGS__)
+#define GPRINT_FATAL_V(source, fmt, ...) Grindstone::Logger::Print(Grindstone::LogSeverity::Fatal, source, Grindstone::LOG_UNSPECIFIED_INTERNAL_TYPE, __FILE__, __LINE__, fmt, __VA_ARGS__)
