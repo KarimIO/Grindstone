@@ -25,7 +25,7 @@ namespace Grindstone::Memory::Allocators {
 
 		struct AllocationHeader {
 			size_t blockSize;
-			char padding;
+			uint8_t padding;
 		};
 
 		enum class SearchPolicy {
@@ -56,7 +56,7 @@ namespace Grindstone::Memory::Allocators {
 				new (ptr) T(std::forward<Args>(params)...);
 			}
 
-			return SharedPtr<T>(ptr, deleterFn);
+			return Grindstone::Memory::SmartPointers::SharedPtr<T>(ptr, deleterFn);
 		}
 
 		template<typename T, typename... Args>
@@ -67,7 +67,7 @@ namespace Grindstone::Memory::Allocators {
 				new (ptr) T(std::forward<Args>(params)...);
 			}
 
-			return UniquePtr<T>(ptr, deleterFn);
+			return Grindstone::Memory::SmartPointers::UniquePtr<T>(ptr, deleterFn);
 		}
 
 		template<typename T, typename... Args>
@@ -94,10 +94,6 @@ namespace Grindstone::Memory::Allocators {
 		}
 
 	private:
-		void FindAvailable(size_t size, size_t alignment, size_t& padding, FreeHeader*& previousFreeHeader, FreeHeader*& freeHeader) const;
-		void FindAvailableFirst(size_t size, size_t alignment, size_t& padding, FreeHeader*& previousFreeHeader, FreeHeader*& freeHeader) const;
-		void FindAvailableBest(size_t size, size_t alignment, size_t& padding, FreeHeader*& previousFreeHeader, FreeHeader*& freeHeader) const;
-		void Coalesce(FreeHeader* previousNode, FreeHeader* freeNode);
 		void InitializeImpl(void* ownedMemory, size_t size);
 
 		void* startMemory = nullptr;
