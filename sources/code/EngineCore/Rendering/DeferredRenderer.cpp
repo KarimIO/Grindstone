@@ -237,8 +237,6 @@ DeferredRenderer::~DeferredRenderer() {
 	graphicsCore->DeleteDescriptorSetLayout(tonemapDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSetLayout(lightingDescriptorSetLayout);
 
-	graphicsCore->DeleteVertexArrayObject(planePostProcessVao);
-
 	graphicsCore->DeleteUniformBuffer(ssaoUniformBuffer);
 	graphicsCore->DeleteTexture(ssaoNoiseTexture);
 	graphicsCore->DeleteDescriptorSet(ssaoInputDescriptorSet);
