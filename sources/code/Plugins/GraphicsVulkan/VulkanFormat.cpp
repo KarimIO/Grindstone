@@ -259,7 +259,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 
 	VkBlendOp TranslateBlendOpToVulkan(BlendOperation op) {
 		constexpr VkBlendOp blendOps[] = {
-			VK_BLEND_OP_MAX_ENUM,
+			VK_BLEND_OP_ADD,
 			VK_BLEND_OP_ADD,
 			VK_BLEND_OP_SUBTRACT,
 			VK_BLEND_OP_REVERSE_SUBTRACT,
