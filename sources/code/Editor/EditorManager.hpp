@@ -2,6 +2,7 @@
 
 #include "pch.hpp"
 
+#include <entt/entt.hpp>
 #include <fmt/format.h>
 #include <Common/Logging.hpp>
 #include <Common/Utilities/ModuleLoading.hpp>
@@ -99,5 +100,6 @@ namespace Grindstone::Editor {
 		AssetTemplateRegistry assetTemplateRegistry;
 		Grindstone::Utilities::Modules::Handle engineCoreLibraryHandle;
 		Importers::ImporterManager importerManager;
+		entt::registry backupRegistry;
 	};
 }

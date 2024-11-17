@@ -164,8 +164,6 @@ void Manager::Run() {
 	}
 }
 
-entt::registry backupRegistry;
-
 void Manager::SetPlayMode(PlayMode newPlayMode) {
 	this->newPlayMode = newPlayMode;
 }
@@ -180,9 +178,9 @@ void Manager::TransferPlayMode(PlayMode newPlayMode) {
 	if (newPlayMode == PlayMode::Editor && playMode == PlayMode::Play) {
 		engineRegistry.swap(backupRegistry);
 		componentRegistry->CallDestroyOnRegistry(backupRegistry);
+		backupRegistry.clear();
 	}
 	else if (newPlayMode == PlayMode::Play && playMode == PlayMode::Editor) {
-		backupRegistry.clear();
 		componentRegistry->CopyRegistry(backupRegistry, engineRegistry);
 		componentRegistry->CallCreateOnRegistry(engineRegistry);
 	}
@@ -287,6 +285,8 @@ Manager::~Manager() {
 		AllocatorCore::Free(imguiEditor);
 		imguiEditor = nullptr;
 	}
+
+	backupRegistry.clear();
 
 	if (engineCoreLibraryHandle) {
 		Grindstone::Utilities::Modules::Unload(engineCoreLibraryHandle);
