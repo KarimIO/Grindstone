@@ -126,7 +126,7 @@ static bool FreeBlockFromFreelist(DynamicAllocator::FreeHeader*& head, void* ite
 
 	while (node) {
 		// The first case is if we find the block directly before the one we want to remove - the normal case.
-		if ((node + node->blockSize) == itemToRemove) {
+		if (OffsetPointer(node, node->blockSize) == itemToRemove) {
 			node->blockSize += size;
 
 			// Coalesce this node and the following one in the case that they can be merged.
@@ -142,6 +142,8 @@ static bool FreeBlockFromFreelist(DynamicAllocator::FreeHeader*& head, void* ite
 		// The second case is if we find the node we want to remove - this means that we are clearing an item twice.
 		else if (node == itemToRemove) {
 			// Trying to clear an already cleared node.
+
+			GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Failed to free allocation - already freed.");
 			return false;
 		}
 		// We want to free an allocated block that is after another allocated block
@@ -182,7 +184,7 @@ static bool FreeBlockFromFreelist(DynamicAllocator::FreeHeader*& head, void* ite
 		else if (node->nextFreeBlock == nullptr && OffsetPointer(node, node->blockSize) < itemToRemove) {
 			DynamicAllocator::FreeHeader* newNode = reinterpret_cast<DynamicAllocator::FreeHeader*>(itemToRemove);
 			newNode->blockSize = size;
-			newNode->nextFreeBlock = 0;
+			newNode->nextFreeBlock = nullptr;
 			node->nextFreeBlock = newNode;
 
 			return true;
@@ -192,6 +194,7 @@ static bool FreeBlockFromFreelist(DynamicAllocator::FreeHeader*& head, void* ite
 		node = node->nextFreeBlock;
 	}
 
+	GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Failed to free allocation - should not reach here.");
 	return false;
 }
 
