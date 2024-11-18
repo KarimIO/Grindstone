@@ -38,12 +38,12 @@ namespace Grindstone::Editor {
 		void Load(AssetRegistry& assetRegistry, const std::filesystem::path&);
 		void Save();
 		bool TryGetDefaultSubasset(Subasset& subasset) const;
-		Uuid GetOrCreateDefaultSubassetUuid(std::string& subassetName, AssetType assetType);
-		Uuid GetOrCreateSubassetUuid(std::string& subassetName, AssetType assetType);
+		Uuid GetOrCreateDefaultSubassetUuid(const std::string& subassetName, AssetType assetType);
+		Uuid GetOrCreateSubassetUuid(const std::string& subassetName, AssetType assetType);
 		size_t GetSubassetCount() const;
 		bool TryGetSubasset(Uuid uuid, Subasset*& outSubasset);
 		bool TryGetDefaultSubassetUuid(Uuid& outUuid) const;
-		bool TryGetSubassetUuid(std::string& subassetName, Uuid& outUuid) const;
+		bool TryGetSubassetUuid(const std::string& subassetName, Uuid& outUuid) const;
 		bool IsValid() const;
 		bool IsOutdatedVersion() const;
 	public:

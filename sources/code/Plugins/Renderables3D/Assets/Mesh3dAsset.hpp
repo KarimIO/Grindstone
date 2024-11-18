@@ -2,9 +2,12 @@
 
 #include <vector>
 #include <filesystem>
-#include "EngineCore/ECS/Entity.hpp"
-#include "EngineCore/Assets/Asset.hpp"
-#include "Common/ResourcePipeline/Uuid.hpp"
+
+#include <Common/ResourcePipeline/Uuid.hpp>
+#include <Common/Formats/Model.hpp>
+
+#include <EngineCore/ECS/Entity.hpp>
+#include <EngineCore/Assets/Asset.hpp>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -29,6 +32,7 @@ namespace Grindstone {
 			GraphicsAPI::VertexArrayObject* vertexArrayObject = nullptr;
 		};
 
+		Grindstone::Formats::Model::V1::BoundingData boundingData;
 		GraphicsAPI::VertexArrayObject* vertexArrayObject = nullptr;
 		std::vector<Submesh> submeshes;
 

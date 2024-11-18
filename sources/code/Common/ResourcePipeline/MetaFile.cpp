@@ -191,7 +191,7 @@ bool MetaFile::TryGetDefaultSubassetUuid(Uuid& outUuid) const {
 	return false;
 }
 
-Grindstone::Uuid MetaFile::GetOrCreateDefaultSubassetUuid(std::string& subassetName, AssetType assetType) {
+Grindstone::Uuid MetaFile::GetOrCreateDefaultSubassetUuid(const std::string& subassetName, AssetType assetType) {
 	if (!defaultSubasset.uuid.IsValid()) {
 		defaultSubasset.uuid = Uuid::CreateRandom();
 	}
@@ -209,7 +209,7 @@ Grindstone::Uuid MetaFile::GetOrCreateDefaultSubassetUuid(std::string& subassetN
 	return defaultSubasset.uuid;
 }
 
-bool MetaFile::TryGetSubassetUuid(std::string& subassetName, Uuid& outUuid) const {
+bool MetaFile::TryGetSubassetUuid(const std::string& subassetName, Uuid& outUuid) const {
 	for (auto& subasset : subassets) {
 		if (subasset.subassetIdentifier == subassetName) {
 			outUuid = subasset.uuid;
@@ -228,7 +228,7 @@ bool MetaFile::IsOutdatedVersion() const {
 	return version < currentMetaFileVersion;
 }
 
-Grindstone::Uuid MetaFile::GetOrCreateSubassetUuid(std::string& subassetName, AssetType assetType) {
+Grindstone::Uuid MetaFile::GetOrCreateSubassetUuid(const std::string& subassetName, AssetType assetType) {
 	for (auto& subasset : subassets) {
 		if (subasset.subassetIdentifier == subassetName) {
 			return subasset.uuid;

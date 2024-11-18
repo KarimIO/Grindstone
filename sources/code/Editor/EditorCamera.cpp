@@ -10,6 +10,7 @@
 #include <EngineCore/Logger.hpp>
 #include <Plugins/GraphicsVulkan/VulkanDescriptorSet.hpp>
 #include <Plugins/PhysicsBullet/Components/ColliderComponent.hpp>
+#include <Plugins/Renderables3D/Components/MeshComponent.hpp>
 
 #include "EditorCamera.hpp"
 #include "EditorManager.hpp"
@@ -155,6 +156,7 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 	gridRenderer.Render(commandBuffer, renderScale, gizmoProjection, view, nearPlaneDistance, farPlaneDistance, glm::quat(), 0.0f);
 
 	if (editorManager.GetSelection().GetSelectedEntityCount() > 0) {
+		static const glm::vec4 boundingColor = glm::vec4(0.2f, 0.9f, 0.3f, 1.0f);
 		static const glm::vec4 colliderColor = glm::vec4(1.0f, 0.8f, 0.0f, 1.0f);
 
 		Physics::BoxColliderComponent* box = nullptr;
@@ -163,6 +165,19 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		Physics::SphereColliderComponent* sphere = nullptr;
 
 		for (const ECS::Entity& selectedEntity : editorManager.GetSelection().selectedEntities) {
+			Grindstone::MeshComponent* mesh = nullptr;
+			if (selectedEntity.TryGetComponent<Grindstone::MeshComponent>(mesh)) {
+				Grindstone::Mesh3dAsset* meshAsset = engineCore.assetManager->GetAsset(mesh->mesh);
+				auto& boundingData = meshAsset->boundingData;
+				TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+				Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+				glm::vec3 center = boundingData.sphereCenter;
+				glm::vec3 boxSize = boundingData.maxAABB - boundingData.minAABB;
+				matrix = matrix * glm::translate(center);
+				gizmoRenderer.SubmitCubeGizmo(matrix, boxSize, boundingColor);
+				gizmoRenderer.SubmitSphereGizmo(matrix, boundingData.sphereRadius, boundingColor);
+			}
+
 			if (selectedEntity.TryGetComponent<Physics::BoxColliderComponent>(box)) {
 				TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
 				Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);

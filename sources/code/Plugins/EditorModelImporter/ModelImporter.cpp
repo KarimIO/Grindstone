@@ -1,12 +1,14 @@
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <chrono>
+
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include <iostream>
-#include <fstream>
-#include <chrono>
+#include <glm/glm.hpp>
 
-#include <Common/Formats/Model.hpp>
 #include <Common/Formats/Animation.hpp>
 #include <Common/ResourcePipeline/MetaFile.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
@@ -17,6 +19,20 @@
 #include "ModelMaterialImporter.hpp"
 
 using namespace Grindstone::Editor::Importers;
+
+static void OutputVertexArray(std::ofstream& output, const std::vector<uint16_t>& vertexArray) {
+	output.write(
+		reinterpret_cast<const char*> (vertexArray.data()),
+		vertexArray.size() * sizeof(uint16_t)
+	);
+}
+
+static void OutputVertexArray(std::ofstream& output, const std::vector<float>& vertexArray) {
+	output.write(
+		reinterpret_cast<const char*> (vertexArray.data()),
+		vertexArray.size() * sizeof(float)
+	);
+}
 
 static void PushVertex3dToVector(std::vector<float>& targetVector, const aiVector3D* aiVertex) {
 	targetVector.push_back(aiVertex->x);
@@ -38,66 +54,10 @@ static glm::mat4 AiMatToGlm(aiMatrix4x4& matrix) {
 	);
 }
 
-void ModelImporter::ConvertMaterials() {
-	if (!scene->HasMaterials()) {
-		return;
-	}
-
-	outputData.materialNames.resize(scene->mNumMaterials);
-	uint32_t materialCount = scene->mNumMaterials;
-	aiMaterial **materials = scene->mMaterials;
-
-	std::string folderName = "";
-	/*if (!CreateFolder(outPath.c_str())) {
-		outPath = "../assets/materials/";
-	}*/
-
-	aiMaterial *pMaterial;
-	aiString Path;
-	for (uint32_t i = 0; i < materialCount; i++) {
-		StandardMaterialCreateInfo newMaterial;
-		pMaterial = materials[i];
-
-		aiString name;
-		pMaterial->Get(AI_MATKEY_NAME, name);
-
-		if (name.length == 0) {
-			name = "Material_" + std::to_string(i);
-		}
-
-		newMaterial.albedoPath = GetTexturePath(pMaterial, aiTextureType_DIFFUSE);
-		newMaterial.normalPath = GetTexturePath(pMaterial, aiTextureType_NORMALS);
-		newMaterial.specularPath = GetTexturePath(pMaterial, aiTextureType_METALNESS);
-		newMaterial.roughnessPath = GetTexturePath(pMaterial, aiTextureType_SHININESS);
-
-		aiColor4D diffuse_color;
-		if (AI_SUCCESS == aiGetMaterialColor(pMaterial, AI_MATKEY_COLOR_DIFFUSE, &diffuse_color)) {
-			memcpy(&newMaterial.albedoColor, &diffuse_color, sizeof(float) * 4);
-		}
-
-		aiColor4D metalness;
-		if (AI_SUCCESS == aiGetMaterialColor(pMaterial, AI_MATKEY_COLOR_SPECULAR, &metalness)) {
-			newMaterial.metalness = metalness.r;
-		}
-
-		aiColor4D roughness;
-		if (AI_SUCCESS == aiGetMaterialColor(pMaterial, AI_MATKEY_COLOR_AMBIENT, &roughness)) {
-			newMaterial.roughness = roughness.r;
-		}
-
-		newMaterial.materialName = name.C_Str();
-		Uuid uuid = metaFile->GetOrCreateSubassetUuid(newMaterial.materialName, AssetType::Material);
-		std::string uuidString = outputData.materialNames[i] = uuid.ToString();
-
-		std::filesystem::path outputPath = assetRegistry->GetCompiledAssetsPath() / uuidString;
-		CreateStandardMaterial(*assetRegistry, newMaterial, outputPath);
-	}
-}
-
-std::filesystem::path ModelImporter::GetTexturePath(aiMaterial* pMaterial, aiTextureType type) {
-	if (pMaterial->GetTextureCount(type) > 0) {
+static std::filesystem::path GetTexturePath(const std::filesystem::path& baseFolderPath, aiMaterial* material, aiTextureType type) {
+	if (material->GetTextureCount(type) > 0) {
 		aiString aiPath;
-		if (pMaterial->GetTexture(type, 0, &aiPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+		if (material->GetTexture(type, 0, &aiPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 			std::string fullPath = aiPath.data;
 			return baseFolderPath / fullPath;
 		}
@@ -106,150 +66,186 @@ std::filesystem::path ModelImporter::GetTexturePath(aiMaterial* pMaterial, aiTex
 	return "";
 }
 
-void ModelImporter::InitSubmeshes(bool hasBones) {
-	auto& vertexCount = outputData.vertexCount;
-	auto& indexCount = outputData.indexCount;
+void ModelImporter::ProcessMaterial(size_t materialIndex, aiMaterial* inputMaterial) {
+	aiString Path;
+	StandardMaterialCreateInfo newMaterial;
 
-	outputData.meshes.resize(scene->mNumMeshes);
-	for (unsigned int meshIterator = 0; meshIterator < scene->mNumMeshes; ++meshIterator) {
-		Submesh& mesh = outputData.meshes[meshIterator];
-		aiMesh* aiMesh = scene->mMeshes[meshIterator];
+	aiString name;
+	inputMaterial->Get(AI_MATKEY_NAME, name);
 
-		mesh.indexCount = aiMesh->mNumFaces * 3;
-		mesh.baseVertex = vertexCount;
-		mesh.baseIndex = indexCount;
-		mesh.materialIndex = aiMesh->mMaterialIndex;
-
-		vertexCount += aiMesh->mNumVertices;
-		indexCount += mesh.indexCount;
+	if (name.length == 0) {
+		name = "Material_" + std::to_string(materialIndex);
 	}
 
+	newMaterial.albedoPath = GetTexturePath(baseFolderPath, inputMaterial, aiTextureType_DIFFUSE);
+	newMaterial.normalPath = GetTexturePath(baseFolderPath, inputMaterial, aiTextureType_NORMALS);
+	newMaterial.specularPath = GetTexturePath(baseFolderPath, inputMaterial, aiTextureType_METALNESS);
+	newMaterial.roughnessPath = GetTexturePath(baseFolderPath, inputMaterial, aiTextureType_SHININESS);
+
+	aiColor4D diffuse_color;
+	if (AI_SUCCESS == aiGetMaterialColor(inputMaterial, AI_MATKEY_COLOR_DIFFUSE, &diffuse_color)) {
+		memcpy(&newMaterial.albedoColor, &diffuse_color, sizeof(float) * 4);
+	}
+
+	aiColor4D metalness;
+	if (AI_SUCCESS == aiGetMaterialColor(inputMaterial, AI_MATKEY_COLOR_SPECULAR, &metalness)) {
+		newMaterial.metalness = metalness.r;
+	}
+
+	aiColor4D roughness;
+	if (AI_SUCCESS == aiGetMaterialColor(inputMaterial, AI_MATKEY_COLOR_AMBIENT, &roughness)) {
+		newMaterial.roughness = roughness.r;
+	}
+
+	newMaterial.materialName = name.C_Str();
+	Uuid uuid = metaFile->GetOrCreateSubassetUuid(newMaterial.materialName, AssetType::Material);
+	outputMaterialUuids[materialIndex] = uuid.ToString();
+
+	std::filesystem::path outputPath = assetRegistry->GetCompiledAssetsPath() / outputMaterialUuids[materialIndex];
+	CreateStandardMaterial(*assetRegistry, newMaterial, outputPath);
+}
+
+void ModelImporter::InitSubmeshes(aiMesh* inputMesh, OutputMesh& outputMesh, bool hasBones) {
+	uint32_t& vertexCount = outputMesh.vertexCount;
+	uint32_t indexCount = inputMesh->mNumFaces * 3;
+
+	outputMesh.indices.reserve(indexCount);
+	outputMesh.submeshes.resize(1);
+	Submesh& outputSubmesh = outputMesh.submeshes[0];
+
+	outputSubmesh.baseVertex = 0;
+	outputSubmesh.baseIndex = 0;
+	outputSubmesh.indexCount = indexCount;
+	outputSubmesh.materialIndex = inputMesh->mMaterialIndex;
+	outputMesh.vertexCount = inputMesh->mNumVertices;
+
 	size_t vertexCountSizeT = vertexCount;
-	outputData.vertexArray.position.reserve(vertexCountSizeT * 3);
-	outputData.vertexArray.normal.reserve(vertexCountSizeT * 3);
-	outputData.vertexArray.tangent.reserve(vertexCountSizeT * 3);
-	outputData.vertexArray.texCoordArray.resize(1);
-	outputData.vertexArray.texCoordArray[0].reserve(vertexCountSizeT * 2);
+	outputMesh.vertexArray.position.reserve(vertexCountSizeT * 3);
+	outputMesh.vertexArray.normal.reserve(vertexCountSizeT * 3);
+	outputMesh.vertexArray.tangent.reserve(vertexCountSizeT * 3);
+	outputMesh.vertexArray.texCoordArray.resize(1);
+	outputMesh.vertexArray.texCoordArray[0].reserve(vertexCountSizeT * 2);
 	size_t boneWeightCount = hasBones
 		? vertexCountSizeT * NUM_BONES_PER_VERTEX
 		: 0;
-	outputData.vertexArray.boneIds.resize(boneWeightCount);
-	outputData.vertexArray.boneWeights.resize(boneWeightCount);
-	outputData.indices.reserve(indexCount);
+	outputMesh.vertexArray.boneIds.resize(boneWeightCount);
+	outputMesh.vertexArray.boneWeights.resize(boneWeightCount);
 }
 
-void ModelImporter::ProcessVertices() {
-	for (unsigned int meshIterator = 0; meshIterator < scene->mNumMeshes; meshIterator++) {
-		const aiVector3D zero3D(0.0f, 0.0f, 0.0f);
+void ModelImporter::ProcessVertices(aiMesh* inputMesh, OutputMesh& outputMesh) {
+	const aiVector3D zeroVector(0.0f, 0.0f, 0.0f);
 
-		auto mesh = scene->mMeshes[meshIterator];
+	for (unsigned int vertexIterator = 0; vertexIterator < inputMesh->mNumVertices; vertexIterator++) {
+		const aiVector3D* aiPos = &(inputMesh->mVertices[vertexIterator]);
+		const aiVector3D* aiNormal = &(inputMesh->mNormals[vertexIterator]);
+		const aiVector3D* aiTangent = &(inputMesh->mTangents[vertexIterator]);
+		const aiVector3D* aiTexCoord = inputMesh->HasTextureCoords(0)
+			? &(inputMesh->mTextureCoords[0][vertexIterator])
+			: &zeroVector;
 
-		for (unsigned int vertexIterator = 0; vertexIterator < mesh->mNumVertices; vertexIterator++) {
-			const aiVector3D* aiPos = &(mesh->mVertices[vertexIterator]);
-			const aiVector3D* aiNormal = &(mesh->mNormals[vertexIterator]);
-			const aiVector3D* aiTangent = &(mesh->mTangents[vertexIterator]);
-			const aiVector3D* aiTexCoord = mesh->HasTextureCoords(0)
-				? &(mesh->mTextureCoords[0][vertexIterator])
-				: &zero3D;
+		OutputMesh::VertexArray& vertexArray = outputMesh.vertexArray;
+		PushVertex3dToVector(vertexArray.position, aiPos);
+		PushVertex3dToVector(vertexArray.normal, aiNormal);
+		PushVertex3dToVector(vertexArray.tangent, aiTangent);
+		PushVertex2dToVector(vertexArray.texCoordArray[0], aiTexCoord);
+	}
 
-			auto& vertexArray = outputData.vertexArray;
-			PushVertex3dToVector(vertexArray.position, aiPos);
-			PushVertex3dToVector(vertexArray.normal, aiNormal);
-			PushVertex3dToVector(vertexArray.tangent, aiTangent);
-			PushVertex2dToVector(vertexArray.texCoordArray[0], aiTexCoord);
+	aiVector3D& minAABB = inputMesh->mAABB.mMin;
+	aiVector3D& maxAABB = inputMesh->mAABB.mMax;
+	outputMesh.boundingData.minAABB = glm::vec3(minAABB.x, minAABB.y, minAABB.z);
+	outputMesh.boundingData.maxAABB = glm::vec3(maxAABB.x, maxAABB.y, maxAABB.z);
+	outputMesh.boundingData.sphereCenter = (outputMesh.boundingData.maxAABB + outputMesh.boundingData.minAABB) / 2.0f;
+	outputMesh.boundingData.sphereRadius = glm::distance(outputMesh.boundingData.maxAABB, outputMesh.boundingData.sphereCenter);
 
-			// const float pos[3]{ pPos->x, pPos->y, pPos->z };
-			// bounding_shape_->TestBounding(pos);
-		}
-
-		for (unsigned int faceIterator = 0; faceIterator < mesh->mNumFaces; faceIterator++) {
-			const aiFace& face = mesh->mFaces[faceIterator];
-			outputData.indices.push_back(face.mIndices[0]);
-			outputData.indices.push_back(face.mIndices[1]);
-			outputData.indices.push_back(face.mIndices[2]);
-		}
+	for (unsigned int faceIterator = 0; faceIterator < inputMesh->mNumFaces; faceIterator++) {
+		const aiFace& face = inputMesh->mFaces[faceIterator];
+		outputMesh.indices.push_back(face.mIndices[0]);
+		outputMesh.indices.push_back(face.mIndices[1]);
+		outputMesh.indices.push_back(face.mIndices[2]);
 	}
 }
 
 // Make a list of used bones so we can remove unnecessary bones, and get offset Matrix
-void ModelImporter::PreprocessBones() {
-	for (unsigned int meshIterator = 0; meshIterator < scene->mNumMeshes; meshIterator++) {
-		auto mesh = scene->mMeshes[meshIterator];
+void ModelImporter::ProcessSkeleton(aiSkeleton* skeleton) {
+	for (unsigned int boneIterator = 0; boneIterator < skeleton->mNumBones; boneIterator++) {
+		aiSkeletonBone* bone = skeleton->mBones[boneIterator];
+		std::string boneName(bone->mNode->mName.data);
 
-		for (unsigned int boneIterator = 0; boneIterator < mesh->mNumBones; boneIterator++) {
-			auto bone = mesh->mBones[boneIterator];
-			std::string boneName(bone->mName.data);
-
-			tempOffsetMatrices[boneName] = AiMatToGlm(bone->mOffsetMatrix);
-		}
+		tempOffsetMatrices[boneName] = AiMatToGlm(bone->mOffsetMatrix);
 	}
 }
 
-void ModelImporter::ProcessNodeTree(aiNode* node, uint16_t parentIndex) {
-	std::string name(node->mName.data);
+void ModelImporter::ProcessNodeTree(aiNode* inputNode, size_t parentIndex) {
+	size_t nodeIndex = outputNodes.size();
 
-	uint16_t currentBone = outputData.boneCount++;
-	auto boneOffsetMatrixIterator = tempOffsetMatrices.find(name);
-	bool isBone = boneOffsetMatrixIterator != tempOffsetMatrices.end();
-	if (isBone) {
-		glm::mat4 inverseMatrix = glm::inverse(AiMatToGlm(node->mTransformation));
-		glm::mat4& offsetMatrix = boneOffsetMatrixIterator->second;
-		outputData.boneNames.push_back(name);
-		outputData.bones.emplace_back(parentIndex, offsetMatrix, inverseMatrix);
-		boneMapping[name.c_str()] = currentBone;
+	OutputNode& node = outputNodes.emplace_back();
+	if (inputNode->mName.length == 0) {
+		node.name = std::string("Unnamed entity ") + std::to_string(nodeIndex);
+	}
+	else {
+		node.name = std::string(inputNode->mName.C_Str());
 	}
 
-	for (unsigned int childIterator = 0; childIterator < node->mNumChildren; ++childIterator) {
-		ProcessNodeTree(node->mChildren[childIterator], currentBone);
+	inputNode->mTransformation.Decompose(node.scale, node.rotation, node.position);
+	node.parentNode = parentIndex;
+	if (inputNode->mNumMeshes > 0) {
+		node.meshIndex = inputNode->mMeshes[0];
+	}
+
+	for (unsigned int meshIndex = 1; meshIndex < inputNode->mNumMeshes; meshIndex++) {
+		OutputNode& meshNode = outputNodes.emplace_back();
+		meshNode.name = outputNodes[nodeIndex].name + " - Mesh " + std::to_string(meshIndex);
+		meshNode.parentNode = nodeIndex;
+		meshNode.meshIndex = inputNode->mMeshes[meshIndex];
+	}
+
+	for (unsigned int childIterator = 0; childIterator < inputNode->mNumChildren; ++childIterator) {
+		ProcessNodeTree(inputNode->mChildren[childIterator], nodeIndex);
 	}
 }
 
-void ModelImporter::ProcessVertexBoneWeights() {
-	for (unsigned int meshIterator = 0; meshIterator < scene->mNumMeshes; meshIterator++) {
-		auto mesh = scene->mMeshes[meshIterator];
+void ModelImporter::ProcessVertexBoneWeights(aiMesh* inputMesh, OutputMesh& outputMesh) {
+	for (unsigned int boneIterator = 0; boneIterator < inputMesh->mNumBones; boneIterator++) {
+		aiBone* bone = inputMesh->mBones[boneIterator];
+		std::string boneName(bone->mName.data);
+		unsigned int boneId = boneMapping[boneName];
 
-		for (unsigned int boneIterator = 0; boneIterator < mesh->mNumBones; boneIterator++) {
-			auto bone = mesh->mBones[boneIterator];
-			std::string boneName(bone->mName.data);
-			unsigned int boneId = boneMapping[boneName];
+		for (unsigned int weightIterator = 0; weightIterator < bone->mNumWeights; weightIterator++) {
+			auto& weight = bone->mWeights[weightIterator];
 
-			for (unsigned int weightIterator = 0; weightIterator < bone->mNumWeights; weightIterator++) {
-				auto& weight = bone->mWeights[weightIterator];
-
-				auto vertexId = weight.mVertexId;
-				float vertexWeight = weight.mWeight;
-				AddBoneData(vertexId, boneId, vertexWeight);
-			}
+			auto vertexId = weight.mVertexId;
+			float vertexWeight = weight.mWeight;
+			AddBoneData(outputMesh, vertexId, boneId, vertexWeight);
 		}
 	}
 
 	if (hasExtraWeights) {
-		NormalizeBoneWeights();
+		NormalizeBoneWeights(outputMesh);
 	}
 }
 
-void ModelImporter::NormalizeBoneWeights() {
-	for (size_t i = 0; i < outputData.vertexArray.boneWeights.size(); i += NUM_BONES_PER_VERTEX) {
-		float w0 = outputData.vertexArray.boneWeights[i];
-		float w1 = outputData.vertexArray.boneWeights[i + 1];
-		float w2 = outputData.vertexArray.boneWeights[i + 2];
-		float w3 = outputData.vertexArray.boneWeights[i + 3];
+void ModelImporter::NormalizeBoneWeights(OutputMesh& outputMesh) {
+	for (size_t i = 0; i < outputMesh.vertexArray.boneWeights.size(); i += NUM_BONES_PER_VERTEX) {
+		float w0 = outputMesh.vertexArray.boneWeights[i];
+		float w1 = outputMesh.vertexArray.boneWeights[i + 1];
+		float w2 = outputMesh.vertexArray.boneWeights[i + 2];
+		float w3 = outputMesh.vertexArray.boneWeights[i + 3];
 		float total = w0 + w1 + w2 + w3;
 
-		outputData.vertexArray.boneWeights[i] = w0 / total;
-		outputData.vertexArray.boneWeights[i + 1] = w1 / total;
-		outputData.vertexArray.boneWeights[i + 2] = w2 / total;
-		outputData.vertexArray.boneWeights[i + 3] = w3 / total;
+		outputMesh.vertexArray.boneWeights[i] = w0 / total;
+		outputMesh.vertexArray.boneWeights[i + 1] = w1 / total;
+		outputMesh.vertexArray.boneWeights[i + 2] = w2 / total;
+		outputMesh.vertexArray.boneWeights[i + 3] = w3 / total;
 	}
 }
 
-void ModelImporter::AddBoneData(unsigned int vertexId, unsigned int boneId, float vertexWeight) {
+void ModelImporter::AddBoneData(OutputMesh& outputMesh, unsigned int vertexId, unsigned int boneId, float vertexWeight) {
 	unsigned int baseIndex = vertexId * NUM_BONES_PER_VERTEX;
 	unsigned int lastIndex = baseIndex + NUM_BONES_PER_VERTEX;
 	for (unsigned int i = baseIndex; i < lastIndex; i++) {
-		if (outputData.vertexArray.boneWeights[i] == 0.0f) {
-			outputData.vertexArray.boneIds[i] = boneId;
-			outputData.vertexArray.boneWeights[i] = vertexWeight;
+		if (outputMesh.vertexArray.boneWeights[i] == 0.0f) {
+			outputMesh.vertexArray.boneIds[i] = boneId;
+			outputMesh.vertexArray.boneWeights[i] = vertexWeight;
 			return;
 		}
 	}
@@ -257,9 +253,9 @@ void ModelImporter::AddBoneData(unsigned int vertexId, unsigned int boneId, floa
 	// Too many boneweights - replace the smallest one
 	hasExtraWeights = true;
 	unsigned int lowestIndex = baseIndex;
-	float lowestWeight = outputData.vertexArray.boneWeights[lowestIndex];
+	float lowestWeight = outputMesh.vertexArray.boneWeights[lowestIndex];
 	for (unsigned int i = baseIndex; i < lastIndex; i++) {
-		float currentWeight = outputData.vertexArray.boneWeights[i];
+		float currentWeight = outputMesh.vertexArray.boneWeights[i];
 		if (currentWeight < lowestWeight) {
 			lowestIndex = i;
 			lowestWeight = currentWeight;
@@ -267,82 +263,97 @@ void ModelImporter::AddBoneData(unsigned int vertexId, unsigned int boneId, floa
 	}
 
 	if (lowestWeight < vertexWeight) {
-		outputData.vertexArray.boneIds[lowestIndex] = boneId;
-		outputData.vertexArray.boneWeights[lowestIndex] = vertexWeight;
+		outputMesh.vertexArray.boneIds[lowestIndex] = boneId;
+		outputMesh.vertexArray.boneWeights[lowestIndex] = vertexWeight;
 	}
 }
 
-void ModelImporter::ProcessAnimations() {
-	for (unsigned int i = 0; i < scene->mNumAnimations; ++i) {
-		auto animation = scene->mAnimations[i];
-		std::string animationName(animation->mName.data);
-
-		double ticksPerSecond = animation->mTicksPerSecond != 0
-			? animation->mTicksPerSecond
-			: 25.0f;
-		double duration = animation->mDuration;
-
-		Formats::Animation::V1::Header animationHeader;
-		animationHeader.animationDuration = duration;
-		animationHeader.channelCount = static_cast<uint16_t>(animation->mNumChannels);
-		animationHeader.ticksPerSecond = ticksPerSecond;
-
-		std::vector<Formats::Animation::V1::Channel> channels;
-		channels.resize(animation->mNumChannels);
-		std::vector<Formats::Animation::V1::ChannelData> channelData;
-		channels.resize(animation->mNumChannels);
-
-		std::string subassetName = "anim-" + animationName;
-		Uuid outUuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Animation);
-
-		std::filesystem::path outputPath = assetRegistry->GetCompiledAssetsPath() / outUuid.ToString();
-		std::ofstream output(outputPath, std::ios::binary);
-
-		if (!output.is_open()) {
-			throw std::runtime_error(std::string("Failed to open ") + outputPath.string());
+void ModelImporter::ProcessLight(aiLight* light) {
+	aiString lightName = light->mName;
+	for (OutputNode& node : outputNodes) {
+		if (node.name == lightName.C_Str()) {
+			node.lightData = light;
 		}
+	}
+}
 
-		//  - Output File MetaData
-		output.write("GAF", 3);
+void ModelImporter::ProcessCamera(aiCamera* camera) {
+	aiString cameraName = camera->mName;
+	for (OutputNode& node : outputNodes) {
+		if (node.name == cameraName.C_Str()) {
+			node.cameraData = camera;
+		}
+	}
+}
 
-		for (unsigned int channelIndex = 0; channelIndex < animation->mNumChannels; ++channelIndex) {
-			Formats::Animation::V1::Channel& dstChannel = channels[channelIndex];
-			Formats::Animation::V1::ChannelData& dstChannelData = channelData[channelIndex];
-			auto srcChannel = animation->mChannels[channelIndex];
-			std::string channelName(srcChannel->mNodeName.data);
-			auto boneIterator = boneMapping.find(channelName);
-			bool isBone = boneIterator == boneMapping.end();
+void ModelImporter::ProcessAnimation(aiAnimation* animation) {
+	std::string animationName(animation->mName.data);
 
-			if (isBone) {
-				dstChannel.boneIndex = boneIterator->second;
+	double ticksPerSecond = animation->mTicksPerSecond != 0
+		? animation->mTicksPerSecond
+		: 25.0f;
+	double duration = animation->mDuration;
 
-				dstChannel.positionCount = srcChannel->mNumPositionKeys;
-				dstChannel.rotationCount = srcChannel->mNumRotationKeys;
-				dstChannel.scaleCount = srcChannel->mNumScalingKeys;
+	Formats::Animation::V1::Header animationHeader;
+	animationHeader.animationDuration = duration;
+	animationHeader.channelCount = static_cast<uint16_t>(animation->mNumChannels);
+	animationHeader.ticksPerSecond = ticksPerSecond;
 
-				dstChannelData.positions.reserve(srcChannel->mNumPositionKeys);
-				for (unsigned int i = 0; i < srcChannel->mNumPositionKeys; ++i) {
-					double time = srcChannel->mPositionKeys[i].mTime;
-					aiVector3D& srcValue = srcChannel->mPositionKeys[i].mValue;
-					Math::Float3 value = Math::Float3(srcValue.x, srcValue.y, srcValue.z);
-					dstChannelData.positions.emplace_back(time, value);
-				}
+	std::vector<Formats::Animation::V1::Channel> channels;
+	channels.resize(animation->mNumChannels);
+	std::vector<Formats::Animation::V1::ChannelData> channelData;
+	channels.resize(animation->mNumChannels);
 
-				dstChannelData.rotations.reserve(srcChannel->mNumRotationKeys);
-				for (unsigned int i = 0; i < srcChannel->mNumRotationKeys; ++i) {
-					double time = srcChannel->mRotationKeys[i].mTime;
-					aiQuaternion& srcValue = srcChannel->mRotationKeys[i].mValue;
-					Math::Quaternion value = Math::Quaternion(srcValue.x, srcValue.y, srcValue.z, srcValue.w);
-					dstChannelData.rotations.emplace_back(time, value);
-				}
+	std::string subassetName = "anim-" + animationName;
+	Uuid outUuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Animation);
 
-				dstChannelData.scales.reserve(srcChannel->mNumScalingKeys);
-				for (unsigned int i = 0; i < srcChannel->mNumScalingKeys; ++i) {
-					double time = srcChannel->mScalingKeys[i].mTime;
-					aiVector3D& srcValue = srcChannel->mScalingKeys[i].mValue;
-					Math::Float3 value = Math::Float3(srcValue.x, srcValue.y, srcValue.z);
-					dstChannelData.scales.emplace_back(time, value);
-				}
+	std::filesystem::path outputPath = assetRegistry->GetCompiledAssetsPath() / outUuid.ToString();
+	std::ofstream output(outputPath, std::ios::binary);
+
+	if (!output.is_open()) {
+		throw std::runtime_error(std::string("Failed to open ") + outputPath.string());
+	}
+
+	//  - Output File MetaData
+	output.write("GAF", 3);
+
+	for (unsigned int channelIndex = 0; channelIndex < animation->mNumChannels; ++channelIndex) {
+		Formats::Animation::V1::Channel& dstChannel = channels[channelIndex];
+		Formats::Animation::V1::ChannelData& dstChannelData = channelData[channelIndex];
+		auto srcChannel = animation->mChannels[channelIndex];
+		std::string channelName(srcChannel->mNodeName.data);
+		auto boneIterator = boneMapping.find(channelName);
+		bool isBone = boneIterator == boneMapping.end();
+
+		if (isBone) {
+			dstChannel.boneIndex = boneIterator->second;
+
+			dstChannel.positionCount = srcChannel->mNumPositionKeys;
+			dstChannel.rotationCount = srcChannel->mNumRotationKeys;
+			dstChannel.scaleCount = srcChannel->mNumScalingKeys;
+
+			dstChannelData.positions.reserve(srcChannel->mNumPositionKeys);
+			for (unsigned int i = 0; i < srcChannel->mNumPositionKeys; ++i) {
+				double time = srcChannel->mPositionKeys[i].mTime;
+				aiVector3D& srcValue = srcChannel->mPositionKeys[i].mValue;
+				Math::Float3 value = Math::Float3(srcValue.x, srcValue.y, srcValue.z);
+				dstChannelData.positions.emplace_back(time, value);
+			}
+
+			dstChannelData.rotations.reserve(srcChannel->mNumRotationKeys);
+			for (unsigned int i = 0; i < srcChannel->mNumRotationKeys; ++i) {
+				double time = srcChannel->mRotationKeys[i].mTime;
+				aiQuaternion& srcValue = srcChannel->mRotationKeys[i].mValue;
+				Math::Quaternion value = Math::Quaternion(srcValue.x, srcValue.y, srcValue.z, srcValue.w);
+				dstChannelData.rotations.emplace_back(time, value);
+			}
+
+			dstChannelData.scales.reserve(srcChannel->mNumScalingKeys);
+			for (unsigned int i = 0; i < srcChannel->mNumScalingKeys; ++i) {
+				double time = srcChannel->mScalingKeys[i].mTime;
+				aiVector3D& srcValue = srcChannel->mScalingKeys[i].mValue;
+				Math::Float3 value = Math::Float3(srcValue.x, srcValue.y, srcValue.z);
+				dstChannelData.scales.emplace_back(time, value);
 			}
 		}
 	}
@@ -360,89 +371,266 @@ void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Gri
 		aiProcess_CalcTangentSpace |
 		aiProcess_GenSmoothNormals |
 		aiProcess_Triangulate |
-		aiProcess_FlipUVs
+		aiProcess_FlipUVs |
+		aiProcess_GenBoundingBoxes
 	);
 
 	if (!scene) {
 		throw std::runtime_error(importer.GetErrorString());
 	}
 
-
 	metaFile = assetRegistry.GetMetaFileByPath(path);
 
 	// Set to false, will check if true later.
-	bool shouldImportAnimations = false;
-	isSkeletalMesh = false;
+	bool shouldImportAnimations = true;
+	isSkeletalMesh = scene->hasSkeletons();
 
-	InitSubmeshes(isSkeletalMesh);
-	ConvertMaterials();
-	ProcessVertices();
+	outputMaterialUuids.resize(scene->mNumMaterials);
+	for (unsigned int materialIndex = 0; materialIndex < scene->mNumMaterials; ++materialIndex) {
+		aiMaterial* material = scene->mMaterials[materialIndex];
+		ProcessMaterial(materialIndex, material);
+	}
 
-	if (isSkeletalMesh) {
-		PreprocessBones();
-		ProcessNodeTree(scene->mRootNode, -1);
-		ProcessVertexBoneWeights();
+	for (unsigned int skeletonIndex = 0; skeletonIndex < scene->mNumSkeletons; ++skeletonIndex) {
+		aiSkeleton* skeleton = scene->mSkeletons[skeletonIndex];
+		ProcessSkeleton(skeleton);
 	}
-	/*
-	TODO: Process lights, etc here
-	else {
-		ProcessNodeTree(scene->mRootNode, -1);
+
+	ProcessNodeTree(scene->mRootNode, SIZE_MAX);
+	outputMeshUuids.resize(scene->mNumMeshes);
+	outputMeshes.resize(scene->mNumMeshes);
+	for (unsigned int meshIndex = 0; meshIndex < scene->mNumMeshes; ++meshIndex) {
+		aiMesh* inputMesh = scene->mMeshes[meshIndex];
+		OutputMesh& outputMesh = outputMeshes[meshIndex];
+		outputMesh.name = inputMesh->mName.length == 0
+			? std::string("Mesh ") + std::to_string(meshIndex)
+			: inputMesh->mName.C_Str();
+
+		for (unsigned int tempMeshIndex = 0; tempMeshIndex < meshIndex; ++tempMeshIndex) {
+			if (outputMesh.name == outputMeshes[tempMeshIndex].name) {
+				outputMesh.name = outputMesh.name + std::to_string(meshIndex);
+			}
+		}
+
+		InitSubmeshes(inputMesh, outputMesh, isSkeletalMesh);
+		ProcessVertices(inputMesh, outputMesh);
+		ProcessVertexBoneWeights(inputMesh, outputMesh);
 	}
-	*/
+
+	for (unsigned int lightIndex = 0; lightIndex < scene->mNumLights; ++lightIndex) {
+		aiLight* light = scene->mLights[lightIndex];
+		ProcessLight(light);
+	}
+
+	for (unsigned int cameraIndex = 0; cameraIndex < scene->mNumCameras; ++cameraIndex) {
+		aiCamera* camera = scene->mCameras[cameraIndex];
+		ProcessCamera(camera);
+	}
 
 	if (shouldImportAnimations) {
-		ProcessAnimations();
+		for (unsigned int i = 0; i < scene->mNumAnimations; ++i) {
+			aiAnimation* animation = scene->mAnimations[i];
+			ProcessAnimation(animation);
+		}
 	}
 
 	importer.FreeScene();
 
-	OutputPrefabs();
-	OutputMeshes();
+	for (size_t meshIndex = 0; meshIndex < outputMeshes.size(); meshIndex++) {
+		const OutputMesh& mesh = outputMeshes[meshIndex];
+		WriteMesh(meshIndex, mesh);
+	}
+	WritePrefab();
 
 	metaFile->Save();
 }
 
-void ModelImporter::OutputPrefabs() {
-
+inline static void WriteComponentHeader(std::ofstream& output, const char* name) {
+	output << "\t\t\t\t{\n\t\t\t\t\t\"component\": \"" << name << "\",\n\t\t\t\t\t\"params\": {\n";
 }
 
-void ModelImporter::OutputMeshes() {
+inline static std::ofstream& WriteComponentKey(std::ofstream& output, const char* key) {
+	output << "\t\t\t\t\t\t\"" << key << "\": ";
+	return output;
+}
+
+inline static void WriteComponentFooter(std::ofstream& output, bool isBeforeLast) {
+	output << (isBeforeLast
+		? "\t\t\t\t\t}\n\t\t\t\t},\n"
+		: "\t\t\t\t\t}\n\t\t\t\t}\n");
+}
+
+static std::ostream& operator<<(std::ostream& output, const aiVector3D& vector) {
+	output << "[" << vector.x << ", " << vector.y << ", " << vector.z << "]";
+	return output;
+}
+
+static std::ostream& operator<<(std::ostream& output, const aiQuaternion& quaternion) {
+	output << "[" << quaternion.x << ", " << quaternion.y << ", " << quaternion.z << ", " << quaternion.w << "]";
+	return output;
+}
+
+static std::ostream& operator<<(std::ostream& output, const aiColor3D& vector) {
+	output << "[" << vector.r << ", " << vector.g << ", " << vector.b << "]";
+	return output;
+}
+
+void ModelImporter::WritePrefab() {
 	std::string subassetName = path.filename().string();
 	size_t dotPos = subassetName.find('.');
 	if (dotPos != std::string::npos) {
 		subassetName = subassetName.substr(0, dotPos);
 	}
 
-	Uuid outUuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Mesh3d);
+	Uuid outUuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Scene);
+
+	std::filesystem::path meshOutputPath = assetRegistry->GetCompiledAssetsPath() / outUuid.ToString();
+	std::ofstream output(meshOutputPath, std::ios::binary);
+
+	output << "{\n\t\"name\": \"" << subassetName << "\",\n\t\"entities\": [\n";
+	for (size_t nodeIndex = 0; nodeIndex < outputNodes.size(); ++nodeIndex) {
+		OutputNode& node = outputNodes[nodeIndex];
+
+		bool hasParent = node.parentNode != SIZE_MAX;
+		bool hasMesh = node.meshIndex != SIZE_MAX;
+		bool hasLight = node.lightData != nullptr;
+		bool hasCamera = node.cameraData != nullptr;
+
+		output << "\t\t{\n\t\t\t\"entityId\": " << nodeIndex << ",\n\t\t\t\"components\": [\n";
+		// Output Tag
+		WriteComponentHeader(output, "Tag");
+		WriteComponentKey(output, "tag") << "\"" << node.name << "\"\n";
+		WriteComponentFooter(output, true);
+
+		// Output Transform
+		WriteComponentHeader(output, "Transform");
+		WriteComponentKey(output, "position") << node.position << ",\n";
+		WriteComponentKey(output, "rotation") << node.rotation << ",\n";
+		WriteComponentKey(output, "scale") << node.scale << "\n";
+		WriteComponentFooter(output, hasParent || hasMesh || hasCamera || hasLight);
+
+	// Output Parent
+		if (hasParent) {
+			WriteComponentHeader(output, "Parent");
+			WriteComponentKey(output, "parentEntity") << node.parentNode << "\n";
+			WriteComponentFooter(output, hasMesh || hasCamera || hasLight);
+		}
+
+	// Output Mesh and MeshRenderer
+		if (hasMesh) {
+			OutputMesh& mesh = outputMeshes[node.meshIndex];
+			if (mesh.submeshes.size() == 0) {
+				// TODO: ERROR
+			}
+			else if (mesh.submeshes.size() > 1) {
+				// TODO: Other ERROR
+			}
+			else {
+				std::string& meshUuid = outputMeshUuids[node.meshIndex];
+				std::string& materialUuid = outputMaterialUuids[mesh.submeshes[0].materialIndex];
+				WriteComponentHeader(output, "MeshRenderer");
+				WriteComponentKey(output, "materials") << "[ \"" << materialUuid << "\" ]\n";
+				WriteComponentFooter(output, true);
+				WriteComponentHeader(output, "Mesh");
+				WriteComponentKey(output, "mesh") << "\"" << meshUuid << "\"\n";
+				WriteComponentFooter(output, hasCamera || hasLight);
+			}
+		}
+
+		// Output Camera
+		if (hasCamera) {
+			WriteComponentHeader(output, "Camera");
+			WriteComponentKey(output, "isMainCamera") << "false,\n";
+			WriteComponentKey(output, "nearPlaneDistance") << node.cameraData->mClipPlaneNear << ",\n";
+			WriteComponentKey(output, "farPlaneDistance") << node.cameraData->mClipPlaneFar << ",\n";
+			WriteComponentKey(output, "fieldOfView") << node.cameraData->mHorizontalFOV << ",\n";
+			WriteComponentKey(output, "aspectRatio") << node.cameraData->mAspect << ",\n";
+			// TODO: Handle Orthographic/Perspective, Orthographic Width, and LookAt
+			WriteComponentFooter(output, hasLight);
+		}
+
+		// Output Light
+		if (hasLight) {
+			// TODO: Use node.lightData->mDirection;
+			switch (node.lightData->mType) {
+			case aiLightSource_DIRECTIONAL:
+				WriteComponentHeader(output, "DirectionalLight");
+				WriteComponentKey(output, "color") << node.lightData->mColorDiffuse << ",\n";
+				WriteComponentKey(output, "sourceRadius") << "40.0\n";
+				WriteComponentKey(output, "intensity") << "1.0,\n";
+				WriteComponentKey(output, "shadowResolution") << "2048.0\n";
+				WriteComponentFooter(output, false);
+				break;
+			case aiLightSource_POINT:
+				WriteComponentHeader(output, "PointLight");
+				WriteComponentKey(output, "color") << node.lightData->mColorDiffuse << ",\n";
+				WriteComponentKey(output, "attenuationRadius") << node.lightData->mAttenuationQuadratic << ",\n";
+				WriteComponentKey(output, "intensity") << "1.0\n";
+				WriteComponentFooter(output, false);
+				break;
+			case aiLightSource_SPOT:
+				WriteComponentHeader(output, "SpotLight");
+				WriteComponentKey(output, "color") << node.lightData->mColorDiffuse << ",\n";
+				WriteComponentKey(output, "attenuationRadius") << node.lightData->mAttenuationQuadratic << ",\n";
+				WriteComponentKey(output, "intensity") << "1.0,\n";
+				WriteComponentKey(output, "innerAngle") << node.lightData->mAngleInnerCone << ",\n";
+				WriteComponentKey(output, "outerAngle") << node.lightData->mAngleOuterCone << ",\n";
+				WriteComponentKey(output, "shadowResolution") << "0.0\n";
+				WriteComponentFooter(output, false);
+				break;
+			}
+		}
+
+		output << "\t\t\t]\n";
+
+		if (nodeIndex == outputNodes.size() - 1) {
+			output << "\t\t}\n";
+		}
+		else {
+			output << "\t\t},\n";
+		}
+	}
+
+	output << "\t]\n}\n";
+
+}
+
+void ModelImporter::WriteMesh(size_t index, const OutputMesh& mesh) {
+	const std::string& subassetName = mesh.name;
+
+	Uuid outUuid = metaFile->GetOrCreateSubassetUuid(subassetName, AssetType::Mesh3d);
+	outputMeshUuids[index] = outUuid.ToString();
 
 	std::filesystem::path meshOutputPath = assetRegistry->GetCompiledAssetsPath() / outUuid.ToString();
 
-	auto meshCount = outputData.meshes.size();
+	auto meshCount = mesh.submeshes.size();
 
-	Grindstone::Formats::Model::V1::Header outFormat;
-	outFormat.totalFileSize = static_cast<uint32_t>(
+	Grindstone::Formats::Model::V1::Header outHeader;
+	outHeader.totalFileSize = static_cast<uint32_t>(
 		3 +
-		sizeof(outFormat) + 
+		sizeof(outHeader) +
+		sizeof(Grindstone::Formats::Model::V1::BoundingData) +
 		meshCount * sizeof(Submesh) +
-		outputData.vertexArray.position.size() * sizeof(float) +
-		outputData.vertexArray.normal.size() * sizeof(float) +
-		outputData.vertexArray.tangent.size() * sizeof(float) +
-		outputData.vertexArray.texCoordArray[0].size() * sizeof(float) +
-		outputData.indices.size() * sizeof(uint16_t)
+		mesh.vertexArray.position.size() * sizeof(float) +
+		mesh.vertexArray.normal.size() * sizeof(float) +
+		mesh.vertexArray.tangent.size() * sizeof(float) +
+		mesh.vertexArray.texCoordArray[0].size() * sizeof(float) +
+		mesh.indices.size() * sizeof(uint16_t)
 	);
-	outFormat.hasVertexPositions = true;
-	outFormat.hasVertexNormals = true;
-	outFormat.hasVertexTangents = true;
-	outFormat.vertexUvSetCount = 1;
-	outFormat.numWeightPerBone = isSkeletalMesh ? 4 : 0;
-	outFormat.vertexCount = static_cast<uint64_t>(outputData.vertexCount);
-	outFormat.indexCount = static_cast<uint64_t>(outputData.indexCount);
-	outFormat.meshCount = static_cast<uint32_t>(meshCount);
+
+	outHeader.hasVertexPositions = true;
+	outHeader.hasVertexNormals = true;
+	outHeader.hasVertexTangents = true;
+	outHeader.vertexUvSetCount = 1;
+	outHeader.numWeightPerBone = isSkeletalMesh ? 4 : 0;
+	outHeader.vertexCount = static_cast<uint64_t>(mesh.vertexCount);
+	outHeader.indexCount = static_cast<uint64_t>(mesh.indices.size());
+	outHeader.meshCount = static_cast<uint32_t>(meshCount);
 
 	if (isSkeletalMesh) {
-		outFormat.totalFileSize += static_cast<uint32_t>(
-			outputData.vertexArray.boneIds.size() * sizeof(uint16_t) +
-			outputData.vertexArray.boneWeights.size() * sizeof(float)
+		outHeader.totalFileSize += static_cast<uint32_t>(
+			mesh.vertexArray.boneIds.size() * sizeof(uint16_t) +
+			mesh.vertexArray.boneWeights.size() * sizeof(float)
 		);
 	}
 
@@ -454,28 +642,29 @@ void ModelImporter::OutputMeshes() {
 
 	//  - Output File MetaData
 	output.write("GMF", 3);
+	output.write(reinterpret_cast<const char*>(&outHeader), sizeof(Grindstone::Formats::Model::V1::Header));
+	output.write(reinterpret_cast<const char*>(&mesh.boundingData), sizeof(Grindstone::Formats::Model::V1::BoundingData));
+	for (uint32_t i = 0; i < mesh.submeshes.size(); ++i) {
+		Submesh normalizedSubmesh = mesh.submeshes[i];
+		normalizedSubmesh.materialIndex = i;
+		output.write(reinterpret_cast<const char*>(&normalizedSubmesh), sizeof(Submesh));
+	}
 
-	//	- Output Header
-	output.write(reinterpret_cast<const char*> (&outFormat), sizeof(Grindstone::Formats::Model::V1::Header));
-
-	//	- Output Meshes
-	output.write(reinterpret_cast<const char*> (outputData.meshes.data()), meshCount * sizeof(Submesh));
-
-	OutputVertexArray(output, outputData.vertexArray.position);
-	OutputVertexArray(output, outputData.vertexArray.normal);
-	OutputVertexArray(output, outputData.vertexArray.tangent);
-	OutputVertexArray(output, outputData.vertexArray.texCoordArray[0]);
+	OutputVertexArray(output, mesh.vertexArray.position);
+	OutputVertexArray(output, mesh.vertexArray.normal);
+	OutputVertexArray(output, mesh.vertexArray.tangent);
+	OutputVertexArray(output, mesh.vertexArray.texCoordArray[0]);
 
 	if (isSkeletalMesh) {
-		OutputVertexArray(output, outputData.vertexArray.boneIds);
-		OutputVertexArray(output, outputData.vertexArray.boneWeights);
+		OutputVertexArray(output, mesh.vertexArray.boneIds);
+		OutputVertexArray(output, mesh.vertexArray.boneWeights);
 	}
 
 	// - Output Indices
-	output.write(reinterpret_cast<const char*> (outputData.indices.data()), outputData.indices.size() * sizeof(uint16_t));
+	output.write(reinterpret_cast<const char*>(mesh.indices.data()), mesh.indices.size() * sizeof(uint16_t));
 	
 	// - Output Bone Names
-	for (auto& name : outputData.boneNames) {
+	for (auto& name : mesh.boneNames) {
 		output.write(name.data(), name.size() + 1); // size + 1 to include null terminated character
 	}
 
@@ -484,18 +673,7 @@ void ModelImporter::OutputMeshes() {
 	assetManager->QueueReloadAsset(AssetType::Mesh3d, outUuid);
 }
 
-void ModelImporter::OutputVertexArray(std::ofstream& output, std::vector<uint16_t>& vertexArray) {
-	output.write(
-		reinterpret_cast<const char*> (vertexArray.data()),
-		vertexArray.size() * sizeof(uint16_t)
-	);
-}
-
-void ModelImporter::OutputVertexArray(std::ofstream& output, std::vector<float>& vertexArray) {
-	output.write(
-		reinterpret_cast<const char*> (vertexArray.data()),
-		vertexArray.size() * sizeof(float)
-	);
+void ModelImporter::WriteSkeleton(size_t index) const {
 }
 
 void Grindstone::Editor::Importers::ImportModel(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path) {

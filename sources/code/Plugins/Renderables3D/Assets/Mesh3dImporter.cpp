@@ -246,6 +246,9 @@ bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 	std::vector<GraphicsAPI::VertexBuffer*> vertexBuffers;
 	GraphicsAPI::IndexBuffer* indexBuffer = nullptr;
 
+	mesh.boundingData = *(Formats::Model::V1::BoundingData*)srcPtr;
+	srcPtr = srcPtr + sizeof(Formats::Model::V1::BoundingData);
+
 	LoadMeshImportSubmeshes(mesh, header, srcPtr);
 	LoadMeshImportVertices(mesh, header, srcPtr, vertexBuffers);
 	LoadMeshImportIndices(mesh, header, srcPtr, indexBuffer);
