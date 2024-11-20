@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-
 #include <Common/ResourcePipeline/AssetType.hpp>
 #include <Common/ResourcePipeline/MetaFile.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>

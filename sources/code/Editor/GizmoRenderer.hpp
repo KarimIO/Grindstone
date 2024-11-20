@@ -38,6 +38,7 @@ namespace Grindstone::Editor {
 		enum class ShapeType {
 			Undefined,
 			Cube,
+			Circle,
 			Sphere,
 			Cone,
 			Plane,
@@ -51,7 +52,7 @@ namespace Grindstone::Editor {
 			uint32_t vertexOffset;
 		};
 
-		std::array<ShapeMetaData, 7> shapeMetaData;
+		std::array<ShapeMetaData, 8> shapeMetaData;
 
 		struct GizmoUniformBuffer {
 			glm::mat4 transform;

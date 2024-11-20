@@ -156,7 +156,8 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 	gridRenderer.Render(commandBuffer, renderScale, gizmoProjection, view, nearPlaneDistance, farPlaneDistance, glm::quat(), 0.0f);
 
 	if (editorManager.GetSelection().GetSelectedEntityCount() > 0) {
-		static const glm::vec4 boundingColor = glm::vec4(0.2f, 0.9f, 0.3f, 1.0f);
+		static const glm::vec4 boundingBoxColor = glm::vec4(0.2f, 0.9f, 0.3f, 1.0f);
+		static const glm::vec4 boundingSphereColor = glm::vec4(0.2f, 0.9f, 0.3f, 0.4f);
 		static const glm::vec4 colliderColor = glm::vec4(1.0f, 0.8f, 0.0f, 1.0f);
 
 		Physics::BoxColliderComponent* box = nullptr;
@@ -174,8 +175,8 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 				glm::vec3 center = boundingData.sphereCenter;
 				glm::vec3 boxSize = boundingData.maxAABB - boundingData.minAABB;
 				matrix = matrix * glm::translate(center);
-				gizmoRenderer.SubmitCubeGizmo(matrix, boxSize, boundingColor);
-				gizmoRenderer.SubmitSphereGizmo(matrix, boundingData.sphereRadius, boundingColor);
+				gizmoRenderer.SubmitSphereGizmo(matrix, boundingData.sphereRadius, boundingSphereColor);
+				gizmoRenderer.SubmitCubeGizmo(matrix, boxSize, boundingBoxColor);
 			}
 
 			if (selectedEntity.TryGetComponent<Physics::BoxColliderComponent>(box)) {
