@@ -91,7 +91,10 @@ void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, 
 		// Multiply because this will be simplified to an int.
 		const float distanceMultiplier = 100.0f;
 		// Distance squared is used to sort. It's squared because we don't need exact distance to sort, and it's an expensive function.
-		float distanceSquared = (offset.x * offset.x) + (offset.y * offset.y) + (offset.z * offset.z);
+		float distanceSquared =
+			(offset.x * offset.x) +
+			(offset.y * offset.y) +
+			(offset.z * offset.z);
 		distanceSquared *= distanceMultiplier;
 		uint32_t sortData = static_cast<uint32_t>(distanceSquared);
 

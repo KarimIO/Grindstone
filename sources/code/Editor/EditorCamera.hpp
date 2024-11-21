@@ -37,6 +37,10 @@ namespace Grindstone {
 			glm::mat4& GetProjectionMatrix();
 			glm::mat4& GetViewMatrix();
 			BaseRenderer* GetRenderer() const;
+
+			bool isBoundingSphereGizmoEnabled = false;
+			bool isBoundingBoxGizmoEnabled = false;
+			bool isColliderGizmoEnabled = true;
 		private:
 			glm::vec3 GetForward() const;
 			glm::vec3 GetRight() const;

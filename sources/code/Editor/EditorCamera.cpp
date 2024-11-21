@@ -164,10 +164,13 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		Physics::CapsuleColliderComponent* capsule = nullptr;
 		Physics::PlaneColliderComponent* plane = nullptr;
 		Physics::SphereColliderComponent* sphere = nullptr;
+		Grindstone::MeshComponent* mesh = nullptr;
 
 		for (const ECS::Entity& selectedEntity : editorManager.GetSelection().selectedEntities) {
-			Grindstone::MeshComponent* mesh = nullptr;
-			if (selectedEntity.TryGetComponent<Grindstone::MeshComponent>(mesh)) {
+			if (
+				(isBoundingSphereGizmoEnabled || isBoundingBoxGizmoEnabled) &&
+				selectedEntity.TryGetComponent<Grindstone::MeshComponent>(mesh)
+			) {
 				Grindstone::Mesh3dAsset* meshAsset = engineCore.assetManager->GetAsset(mesh->mesh);
 				auto& boundingData = meshAsset->boundingData;
 				TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
@@ -175,29 +178,36 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 				glm::vec3 center = boundingData.sphereCenter;
 				glm::vec3 boxSize = boundingData.maxAABB - boundingData.minAABB;
 				matrix = matrix * glm::translate(center);
-				gizmoRenderer.SubmitSphereGizmo(matrix, boundingData.sphereRadius, boundingSphereColor);
-				gizmoRenderer.SubmitCubeGizmo(matrix, boxSize, boundingBoxColor);
+				if (isBoundingSphereGizmoEnabled) {
+					gizmoRenderer.SubmitSphereGizmo(matrix, boundingData.sphereRadius, boundingSphereColor);
+				}
+
+				if (isBoundingBoxGizmoEnabled) {
+					gizmoRenderer.SubmitCubeGizmo(matrix, boxSize, boundingBoxColor);
+				}
 			}
 
-			if (selectedEntity.TryGetComponent<Physics::BoxColliderComponent>(box)) {
-				TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
-				Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
-				gizmoRenderer.SubmitCubeGizmo(matrix, box->GetSize(), colliderColor);
-			}
-			else if (selectedEntity.TryGetComponent<Physics::CapsuleColliderComponent>(capsule)) {
-				TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
-				Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
-				gizmoRenderer.SubmitCapsuleGizmo(matrix, capsule->GetHeight(), capsule->GetRadius(), colliderColor);
-			}
-			else if (selectedEntity.TryGetComponent<Physics::PlaneColliderComponent>(plane)) {
-				TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
-				Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
-				gizmoRenderer.SubmitPlaneGizmo(matrix, plane->GetPlaneNormal(), plane->GetPositionAlongNormal(), colliderColor);
-			}
-			else if (selectedEntity.TryGetComponent<Physics::SphereColliderComponent>(sphere)) {
-				TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
-				Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
-				gizmoRenderer.SubmitSphereGizmo(matrix, sphere->GetRadius(), colliderColor);
+			if (isColliderGizmoEnabled) {
+				if (selectedEntity.TryGetComponent<Physics::BoxColliderComponent>(box)) {
+					TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+					Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+					gizmoRenderer.SubmitCubeGizmo(matrix, box->GetSize(), colliderColor);
+				}
+				else if (selectedEntity.TryGetComponent<Physics::CapsuleColliderComponent>(capsule)) {
+					TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+					Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+					gizmoRenderer.SubmitCapsuleGizmo(matrix, capsule->GetHeight(), capsule->GetRadius(), colliderColor);
+				}
+				else if (selectedEntity.TryGetComponent<Physics::PlaneColliderComponent>(plane)) {
+					TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+					Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+					gizmoRenderer.SubmitPlaneGizmo(matrix, plane->GetPlaneNormal(), plane->GetPositionAlongNormal(), colliderColor);
+				}
+				else if (selectedEntity.TryGetComponent<Physics::SphereColliderComponent>(sphere)) {
+					TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+					Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+					gizmoRenderer.SubmitSphereGizmo(matrix, sphere->GetRadius(), colliderColor);
+				}
 			}
 		}
 
@@ -234,8 +244,8 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 			TransformComponent& currentTransform,
 			CameraComponent& currentCamera
 		) {
-				transformComponent = &currentTransform;
-				cameraComponent = &currentCamera;
+			transformComponent = &currentTransform;
+			cameraComponent = &currentCamera;
 		}
 	);
 
