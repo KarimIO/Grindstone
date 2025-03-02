@@ -11,6 +11,7 @@
 #include <Common/ResourcePipeline/MetaFile.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
+#include <EngineCore/Logger.hpp>
 #include <Editor/Importers/ImporterManager.hpp>
 #include <Editor/EditorManager.hpp>
 
@@ -110,7 +111,11 @@ void AssetRegistry::ReadFile() {
 		const char* displayName = asset["displayName"].GetString();
 		const char* address = asset["address"].GetString();
 		const char* path = asset["path"].GetString();
-		Uuid uuid = asset["uuid"].GetString();
+		Uuid uuid;
+		if (!Grindstone::Uuid::MakeFromString(asset["uuid"].GetString(), uuid)) {
+			GPRINT_FATAL_V(Grindstone::LogSource::EngineCore, "Unable to make uuid for asset from {}", asset["uuid"].GetString());
+			continue;
+		}
 		const AssetType assetType = GetAssetTypeFromString(asset["assetType"].GetString());
 
 		assets[uuid] = Entry{

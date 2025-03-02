@@ -115,14 +115,20 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 void EngineCore::InitializeScene(bool shouldLoadSceneFromDefaults, const char* scenePath) {
 	GRIND_PROFILE_SCOPE("Loading Default Scene");
+
+	Grindstone::Uuid uuid;
 	if (shouldLoadSceneFromDefaults) {
 		sceneManager->LoadDefaultScene();
 	}
 	else if (strcmp(scenePath, "") == 0) {
 		sceneManager->CreateEmptyScene("Untitled");
 	}
+	else if (!Grindstone::Uuid::MakeFromString(scenePath, uuid)) {
+		sceneManager->CreateEmptyScene("Untitled");
+	}
 	else {
 		sceneManager->LoadScene(scenePath);
+		sceneManager->LoadScene(uuid);
 	}
 }
 
