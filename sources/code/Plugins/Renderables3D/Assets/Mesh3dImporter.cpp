@@ -198,7 +198,7 @@ void Mesh3dImporter::LoadMeshImportIndices(
 	indexBuffer = graphicsCore->CreateIndexBuffer(indexBufferCreateInfo);
 }
 
-void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
+void* Mesh3dImporter::LoadAsset(Uuid uuid) {
 	auto& meshIterator = assets.emplace(uuid, Mesh3dAsset(uuid, uuid.ToString()));
 	Mesh3dAsset& mesh = meshIterator.first->second;
 
@@ -210,7 +210,7 @@ void* Mesh3dImporter::ProcessLoadedFile(Uuid uuid) {
 bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 	Grindstone::Assets::AssetLoadBinaryResult result = engineCore->assetManager->LoadBinaryByUuid(AssetType::Texture, mesh.uuid);
 	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Mesh3dImporter::ProcessLoadedFile Unable to load file with id: {}", mesh.uuid.ToString());
+		GPRINT_ERROR_V(LogSource::EngineCore, "Mesh3dImporter::LoadAsset Unable to load file with id: {}", mesh.uuid.ToString());
 		return false;
 	}
 
@@ -220,14 +220,14 @@ bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 
 	auto graphicsCore = engineCore->GetGraphicsCore();
 	if (fileSize < 3 && strncmp("GMF", fileContent, 3) != 0) {
-		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile GMF magic code wasn't matched.";
+		std::string errorMsg = "Mesh3dImporter::LoadAsset GMF magic code wasn't matched.";
 		GPRINT_ERROR(LogSource::EngineCore, errorMsg.c_str());
 		return false;
 	}
 
 	Formats::Model::V1::Header header;
 	if (fileSize < (3 + sizeof(header))) {
-		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile file not big enough to fit header.";
+		std::string errorMsg = "Mesh3dImporter::LoadAsset file not big enough to fit header.";
 		GPRINT_ERROR(LogSource::EngineCore, errorMsg.c_str());
 		return false;
 	}
@@ -238,7 +238,7 @@ bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 
 	uint64_t totalFileExpectedSize = GetTotalFileSize(header);
 	if (totalFileExpectedSize > fileSize || header.totalFileSize > fileSize) {
-		std::string errorMsg = "Mesh3dImporter::ProcessLoadedFile file not big enough to fit all contents.";
+		std::string errorMsg = "Mesh3dImporter::LoadAsset file not big enough to fit all contents.";
 		GPRINT_ERROR(LogSource::EngineCore, errorMsg.c_str());
 		return false;
 	}

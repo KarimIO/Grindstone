@@ -12,12 +12,11 @@ namespace Grindstone {
 		virtual ~AssetImporter() {};
 
 		virtual void QueueReloadAsset(Uuid uuid) = 0;
-		virtual void* ProcessLoadedFile(Uuid uuid) = 0;
+		virtual void* LoadAsset(Uuid uuid) = 0;
 		virtual bool TryGetIfLoaded(Uuid uuid, void*& output) = 0;
-		virtual void* ProcessLoadedFile(std::string_view address) { return nullptr; };
-		virtual bool TryGetIfLoaded(std::string_view address, void*& output) { return false; };
 		virtual void* IncrementAssetUse(Uuid uuid) = 0;
 		virtual void DecrementAssetUse(Uuid uuid) = 0;
+		virtual void IncrementOrLoad(Uuid uuid) = 0;
 		virtual AssetType GetAssetType() { return assetType; }
 
 	protected:
@@ -31,6 +30,7 @@ namespace Grindstone {
 
 		SpecificAssetImporter() { assetType = internalAssetType; }
 		static AssetType GetStaticAssetType() { return internalAssetType; }
+		static const char* GetStaticAssetTypeName() { return GetAssetTypeToString(internalAssetType); }
 
 		virtual void* IncrementAssetUse(Uuid uuid) override {
 			void* output = nullptr;
@@ -40,7 +40,7 @@ namespace Grindstone {
 				return asset;
 			}
 			else {
-				return ProcessLoadedFile(uuid);
+				return LoadAsset(uuid);
 			}
 
 			return nullptr;
@@ -60,13 +60,22 @@ namespace Grindstone {
 		}
 
 		virtual bool TryGetIfLoaded(Uuid uuid, void*& output) override {
-			auto assetInMap = assets.find(uuid);
+			auto& assetInMap = assets.find(uuid);
 			if (assetInMap != assets.end()) {
 				output = &assetInMap->second;
 				return true;
 			}
 
 			return false;
+		}
+
+		virtual void IncrementOrLoad(Uuid uuid) override {
+			auto& assetInMap = assets.find(uuid);
+			if (assetInMap != assets.end()) {
+				++assetInMap->second.referenceCount;
+			}
+
+			LoadAsset(uuid);
 		}
 
 		size_t AssetCount() const { return assets.size(); }

@@ -36,24 +36,6 @@ namespace Grindstone {
 		}
 	};
 
-	struct GenericAssetReference {
-		Uuid uuid;
-	};
-
-	template<typename T>
-	struct AssetReference : public GenericAssetReference {
-		static_assert(std::is_base_of_v<Grindstone::Asset, T>, "T not derived from Grindstone::Asset");
-
-		T* Load(Uuid uuid) {
-			this->uuid = uuid;
-			return EngineCore::GetInstance().assetManager->GetAsset<T>(uuid);
-		}
-
-		T* Get() const {
-			return EngineCore::GetInstance().assetManager->GetAsset<T>(uuid);
-		}
-	};
-
 	#define DEFINE_ASSET_TYPE(name, assetType) \
 		static std::string GetStaticTypeName() { return name; }\
 		virtual std::string GetAssetTypeName() { return name; }\

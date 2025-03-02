@@ -171,7 +171,7 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 				(isBoundingSphereGizmoEnabled || isBoundingBoxGizmoEnabled) &&
 				selectedEntity.TryGetComponent<Grindstone::MeshComponent>(mesh)
 			) {
-				Grindstone::Mesh3dAsset* meshAsset = engineCore.assetManager->GetAsset(mesh->mesh);
+				Grindstone::Mesh3dAsset* meshAsset = engineCore.assetManager->GetAssetByUuid<Grindstone::Mesh3dAsset>(mesh->mesh.uuid);
 				auto& boundingData = meshAsset->boundingData;
 				TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
 				Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);

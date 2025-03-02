@@ -12,7 +12,7 @@ REFLECT_STRUCT_END()
 
 void Grindstone::SetupEnvironmentMapComponent(entt::registry& registry, entt::entity entity) {
 	EnvironmentMapComponent& envMap = registry.get<EnvironmentMapComponent>(entity);
-	envMap.specularTexture.Load(envMap.specularTexture.uuid);
+	envMap.specularTexture = Grindstone::AssetReference<Grindstone::TextureAsset>::CreateAndIncrement(envMap.specularTexture.uuid);
 }
 
 void Grindstone::DestroyEnvironmentMapComponent(entt::registry& registry, entt::entity entity) {

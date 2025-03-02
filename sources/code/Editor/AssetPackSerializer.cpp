@@ -108,7 +108,7 @@ namespace Grindstone::Assets::AssetPackSerializer {
 
 		const std::string pathAsStr = entry.path.string();
 		const char* copiedStringPtr = static_cast<const char*>(resizableStringBuffer.AddToBuffer(pathAsStr.c_str(), pathAsStr.size() + 1));
-		std::map<Uuid, ArchiveDirectory::AssetInfo>& assetTypeMap = archiveDirectory.assetTypeIndices[assetType].assets;
+		std::map<Uuid, ArchiveDirectory::AssetInfo>& assetTypeMap = archiveDirectory.assetTypeIndices[assetType].assetsByUuid;
 		assetTypeMap[entry.uuid] = {
 			copiedStringPtr,
 			crc,
@@ -166,12 +166,12 @@ namespace Grindstone::Assets::AssetPackSerializer {
 		uint64_t currentAssetOffset = assetBaseOffset;
 		uint64_t totalAssetCount = 0;
 		for (uint16_t i = 0; i < assetTypeCount; ++i) {
-			size_t count = archiveDirectory.assetTypeIndices[i].assets.size();
+			size_t count = archiveDirectory.assetTypeIndices[i].assetsByUuid.size();
 			outputFile.assetInfoIndex[i].offset = currentAssetOffset;
 			outputFile.assetInfoIndex[i].count = static_cast<uint16_t>(count);
 
 			currentAssetOffset += count * sizeof(outputFile.assets[0]);
-			totalAssetCount += archiveDirectory.assetTypeIndices[i].assets.size();
+			totalAssetCount += archiveDirectory.assetTypeIndices[i].assetsByUuid.size();
 		}
 
 		outputFile.assets.reserve(totalAssetCount);
@@ -184,15 +184,15 @@ namespace Grindstone::Assets::AssetPackSerializer {
 
 		// Prepare actual assets
 		for (uint16_t assetTypeIndex = 0; assetTypeIndex < assetTypeCount; ++assetTypeIndex) {
-			for (const auto& [uuid, asset] : archiveDirectory.assetTypeIndices[assetTypeIndex].assets) {
-				uint64_t filenameOffset = static_cast<uint64_t>(asset.filename.data() - reinterpret_cast<const char*>(resizableStringBuffer.Get()));
-				uint16_t filenameSize = static_cast<uint16_t>(asset.filename.size());
+			for (const auto& [uuid, asset] : archiveDirectory.assetTypeIndices[assetTypeIndex].assetsByUuid) {
+				uint64_t addressOffset = static_cast<uint64_t>(asset.address.data() - reinterpret_cast<const char*>(resizableStringBuffer.Get()));
+				uint16_t addressSize = static_cast<uint16_t>(asset.address.size());
 
 				outputFile.assets.emplace_back(
 					ArchiveDirectoryFile::AssetInfo{
 						uuid,
-						filenameOffset,
-						filenameSize,
+						addressOffset,
+						addressSize,
 						asset.crc,
 						asset.archiveIndex,
 						asset.offset,

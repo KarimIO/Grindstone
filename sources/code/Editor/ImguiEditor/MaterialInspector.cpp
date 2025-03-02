@@ -51,7 +51,9 @@ void MaterialInspector::SetMaterialPath(const std::filesystem::path& materialPat
 		return;
 	}
 
-	shaderUuid = Uuid(document["shader"].GetString());
+	if (!Grindstone::Uuid::MakeFromString(document["shader"].GetString(), shaderUuid)) {
+		return;
+	}
 
 	TryLoadShaderReflection(shaderUuid);
 
@@ -194,7 +196,12 @@ void MaterialInspector::LoadMaterialSamplers(rapidjson::Value& samplers) {
 		if (samplers.HasMember(samplerName)) {
 			const char* samplerValue = samplers[samplerName].GetString();
 			Uuid uuid = samplerValue;
+			Grindstone::Uuid uuid;
 			AssetRegistry::Entry entry;
+			if (!Grindstone::Uuid::MakeFromString(samplerValue, uuid)) {
+				continue;
+			}
+
 			if (Editor::Manager::GetInstance().GetAssetRegistry().TryGetAssetData(uuid, entry)) {
 				shaderSampler.value = uuid;
 				shaderSampler.valueName = entry.displayName;

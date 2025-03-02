@@ -18,7 +18,7 @@ AudioClipImporter::AudioClipImporter(EngineCore* engineCore) {
 	this->engineCore = engineCore;
 }
 
-void* AudioClipImporter::ProcessLoadedFile(Uuid uuid) {
+void* AudioClipImporter::LoadAsset(Uuid uuid) {
 	std::filesystem::path path = engineCore->GetAssetPath(uuid.ToString());
 	std::string pathString = path.string();
 	const char* pathCstr = pathString.c_str();

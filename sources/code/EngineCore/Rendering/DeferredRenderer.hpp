@@ -3,6 +3,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
+#include <EngineCore/Assets/AssetReference.hpp>
 #include "BaseRenderer.hpp"
 
 namespace Grindstone {
@@ -162,7 +163,7 @@ namespace Grindstone {
 
 		size_t bloomStoredMipLevelCount = 0;
 		size_t bloomMipLevelCount = 0;
-		Grindstone::GraphicsAPI::Texture* brdfLut = nullptr;
+		Grindstone::AssetReference<Grindstone::TextureAsset> brdfLut;
 
 		std::vector<DeferredRendererImageSet> deferredRendererImageSets;
 		std::vector<GraphicsAPI::UniformBuffer*> bloomUniformBuffers;

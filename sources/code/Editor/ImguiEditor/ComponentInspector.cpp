@@ -328,12 +328,12 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 			std::function<void(Uuid, std::string)> callback = [assetManager, assetReference, assetType, hasValue](Uuid newUuid, std::string path) {
 				// Handle old value
 				if (hasValue) {
-					assetManager->DecrementAssetUse(assetType, assetReference->uuid);
+					assetManager->DecrementAssetCount(assetType, assetReference->uuid);
 				}
 
 				// Handle new value
 				assetReference->uuid = newUuid;
-				assetManager->IncrementAssetUse(assetType, newUuid);
+				assetManager->IncrementAssetCount(assetType, newUuid);
 			};
 
 			imguiEditor->PromptAssetPicker(assetType, callback);
@@ -346,12 +346,12 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 				if (Editor::Manager::GetInstance().GetAssetRegistry().TryGetAssetData(newUuid, entry)) {
 					// Handle old value
 					if (hasValue) {
-						assetManager->DecrementAssetUse(assetType, uuid);
+						assetManager->DecrementAssetCount(assetType, uuid);
 					}
 
 					// Handle new value
 					assetReference->uuid = newUuid;
-					assetManager->IncrementAssetUse(assetType, newUuid);
+					assetManager->IncrementAssetCount(assetType, newUuid);
 				}
 			}
 

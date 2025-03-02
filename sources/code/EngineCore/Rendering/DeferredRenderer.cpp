@@ -134,10 +134,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	bloomFirstUpsampleIndex = bloomStoredMipLevelCount - 1;
 
 	std::string_view iblBrdfLut = "@CORESHADERS/textures/ibl_brdf_lut";
-	const TextureAsset* textureAsset = engineCore.assetManager->GetAsset<TextureAsset>(iblBrdfLut);
-	brdfLut = textureAsset != nullptr
-		? textureAsset->texture
-		: nullptr;
+	brdfLut = engineCore.assetManager->GetAssetReferenceByAddress<TextureAsset>(iblBrdfLut);
 
 	CreateSsaoKernelAndNoise();
 	CreateVertexAndIndexBuffersAndLayouts();
@@ -1240,7 +1237,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	imageSet.lightingDescriptorSet = graphicsCore->CreateDescriptorSet(lightingDescriptorSetCreateInfo);
 
 	{
-		std::array<DescriptorSet::Binding, 2> aoInputBinding = { imageSet.ambientOcclusionRenderTarget, brdfLut };
+		std::array<DescriptorSet::Binding, 2> aoInputBinding = { imageSet.ambientOcclusionRenderTarget, brdfLut.Get() };
 
 		DescriptorSet::CreateInfo aoInputCreateInfo{};
 		aoInputCreateInfo.debugName = "Ambient Occlusion Descriptor Set";

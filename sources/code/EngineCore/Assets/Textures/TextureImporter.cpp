@@ -14,37 +14,21 @@
 using namespace Grindstone;
 using namespace Grindstone::Formats::DDS;
 
-void* TextureImporter::ProcessLoadedFile(Uuid uuid) {
+static void LoadTextureAsset(TextureAsset& textureAsset) {
 	EngineCore& engineCore = EngineCore::GetInstance();
-	Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByUuid(AssetType::Texture, uuid);
-	if (result.status != Assets::AssetLoadStatus::Success) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find texture with id {}.", uuid.ToString());
-		return nullptr;
+
+	Grindstone::Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByUuid(AssetType::Texture, textureAsset.uuid);
+	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
+		GPRINT_WARN_V(LogSource::EngineCore, "Unable to load texture: {}", textureAsset.uuid.ToString());
+		textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Ready;
+		return;
 	}
 
-	auto asset = assets.emplace(uuid, TextureAsset());
-	return ProcessLoadedFile(uuid, result.displayName, std::move(result.buffer), asset.first->second);
-}
-
-void* TextureImporter::ProcessLoadedFile(std::string_view address) {
-	EngineCore& engineCore = EngineCore::GetInstance();
-	Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByAddress(AssetType::Texture, address);
-	if (result.status != Assets::AssetLoadStatus::Success) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find texture with address {}.", address);
-		return nullptr;
-	}
-
-	auto asset = texturesByAddress.emplace(address, TextureAsset());
-	return ProcessLoadedFile(Uuid(), result.displayName, std::move(result.buffer), asset.first->second);
-}
-
-void* TextureImporter::ProcessLoadedFile(Uuid uuid, std::string& assetName, Buffer buffer, TextureAsset& textureAsset) {
-	EngineCore& engineCore = EngineCore::GetInstance();
-
-	const char* fileContents = reinterpret_cast<const char*>(buffer.Get());
+	const char* fileContents = reinterpret_cast<const char*>(result.buffer.Get());
 	if (strncmp(fileContents, "DDS ", 4) != 0) {
-		GPRINT_WARN_V(LogSource::EngineCore, "Invalid texture file: {}", uuid.ToString());
-		return nullptr;
+		GPRINT_WARN_V(LogSource::EngineCore, "Invalid texture file: {}", textureAsset.uuid.ToString());
+		textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Ready;
+		return;
 	}
 
 	DDSHeader header;
@@ -131,7 +115,7 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, std::string& assetName, Buff
 	}
 
 	Grindstone::GraphicsAPI::Texture::CreateInfo createInfo;
-	createInfo.debugName = assetName.c_str();
+	createInfo.debugName = textureAsset.name.c_str();
 	createInfo.data = imgPtr;
 	createInfo.size = header.dwSize;
 	createInfo.mipmaps = static_cast<uint16_t>(header.dwMipMapCount);
@@ -148,27 +132,29 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, std::string& assetName, Buff
 	createInfo.options.magFilter = TextureFilter::Linear;
 
 	if (createInfo.isCubemap) {
-		createInfo.options.wrapModeU =
-		createInfo.options.wrapModeV =
-		createInfo.options.wrapModeW =
-		TextureWrapMode::ClampToEdge;
+		createInfo.options.wrapModeU = TextureWrapMode::ClampToEdge;
+		createInfo.options.wrapModeV = TextureWrapMode::ClampToEdge;
+		createInfo.options.wrapModeW = TextureWrapMode::ClampToEdge;
 	}
 
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	Grindstone::GraphicsAPI::Texture* texture = graphicsCore->CreateTexture(createInfo);
-
-	textureAsset = TextureAsset(uuid, assetName, texture);
-	return &textureAsset;
 }
 
-bool TextureImporter::TryGetIfLoaded(std::string_view address, void*& output) {
-	auto& textureInMap = texturesByAddress.find(std::string(address));
-	if (textureInMap != texturesByAddress.end()) {
-		output = &textureInMap->second;
-		return true;
+void* TextureImporter::LoadAsset(Uuid uuid) {
+	EngineCore& engineCore = EngineCore::GetInstance();
+	Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByUuid(AssetType::Texture, uuid);
+	if (result.status != Assets::AssetLoadStatus::Success) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find texture with id {}.", uuid.ToString());
+		return nullptr;
 	}
 
-	return false;
+	auto& asset = assets.emplace(uuid, TextureAsset(uuid));
+	TextureAsset& textureAsset = asset.first->second;
+	textureAsset.assetLoadStatus = AssetLoadStatus::Loading;
+
+	LoadTextureAsset(textureAsset);
+	return &textureAsset;
 }
 
 void TextureImporter::QueueReloadAsset(Uuid uuid) {
@@ -180,19 +166,14 @@ void TextureImporter::QueueReloadAsset(Uuid uuid) {
 	EngineCore& engineCore = EngineCore::GetInstance();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
+	textureInMap->second.assetLoadStatus = AssetLoadStatus::Reloading;
 	Texture*& texture = textureInMap->second.texture;
 	if (textureInMap->second.texture != nullptr) {
 		graphicsCore->DeleteTexture(texture);
 		texture = nullptr;
 	}
 
-	Grindstone::Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByUuid(AssetType::Texture, uuid);
-	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
-		GPRINT_WARN_V(LogSource::EngineCore, "Unable to load texture: {}", uuid.ToString());
-		return;
-	}
-
-	ProcessLoadedFile(uuid, result.displayName, std::move(result.buffer), textureInMap->second);
+	LoadTextureAsset(textureInMap->second);
 }
 
 TextureImporter::~TextureImporter() {
