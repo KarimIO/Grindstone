@@ -1,47 +1,42 @@
 #include <stdlib.h>
 
-#include "HashedString.h"
+#include "HashedString.hpp"
 
-namespace Grindstone {
-	// TODO: Consider removing map value.
-	std::map<HashValue, String> HashedString::nameHashMap;
+// TODO: Consider removing map value.
+std::map<Grindstone::HashValue, Grindstone::String> Grindstone::HashedString::nameHashMap;
 
-	HashedString::HashedString() : hashedString(0) {}
+Grindstone::HashedString::HashedString() : hash(0) {}
 
-	HashedString::HashedString(const wchar_t* inStringRef) {
-		Create(inStringRef);
+Grindstone::HashedString::HashedString(const char* inStringRef) {
+	Create(inStringRef);
+}
+
+Grindstone::HashedString::HashedString(const String& inString) : HashedString(inString.data()) {}
+Grindstone::HashedString::HashedString(StringRef inStringRef) : HashedString(inStringRef.data()) {}
+
+Grindstone::HashedString::operator bool() const noexcept {
+	return hash != 0;
+}
+
+bool Grindstone::HashedString::operator==(Grindstone::HashedString& other) const noexcept {
+	return hash == other.hash;
+}
+
+void Grindstone::HashedString::Create(const char* inStringRef) {
+	hash = Hash::MurmurOAAT64(inStringRef);
+	nameHashMap[hash] = inStringRef;
+}
+
+const Grindstone::String& Grindstone::HashedString::ToString() const {
+	if (hash == 0) {
+		return "";
 	}
 
-	HashedString::HashedString(const char* inStringRef) {
-		const size_t size = strlen(inStringRef) + 1;
-		wchar_t* wText = new wchar_t[size];
+	std::map<HashValue, String>::iterator value = nameHashMap.find(hash);
 
-		size_t outSize;
-		mbstowcs_s(&outSize, wText, size, inStringRef, size - 1);
-
-		Create(wText);
+	if (value == nameHashMap.end()) {
+		return "";
 	}
 
-	HashedString::HashedString(const String& inString) : HashedString(inString.data()) {}
-	HashedString::HashedString(StringRef inStringRef) : HashedString(inStringRef.data()) {}
-
-	void HashedString::Create(const wchar_t* inStringRef) {
-		hashedString = Hash::MurmurOAAT64(inStringRef);
-		nameHashMap[hashedString] = inStringRef;
-		ptr = nameHashMap.find(hashedString);
-	}
-
-	String HashedString::ToString() const {
-		if (hashedString == 0) {
-			return GS_TEXT("");
-		}
-
-		std::map<HashValue, String>::iterator value = nameHashMap.find(hashedString);
-
-		if (value == nameHashMap.end()) {
-			return GS_TEXT("");
-		}
-
-		return value->second;
-	}
+	return value->second;
 }

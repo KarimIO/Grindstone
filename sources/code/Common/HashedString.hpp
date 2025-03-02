@@ -10,23 +10,20 @@ namespace Grindstone {
 	public:
 
 		HashedString();
-		HashedString(const wchar_t* inStringRef);
 		HashedString(const char* inStringRef);
 		HashedString(const String& inString);
 		HashedString(StringRef inStringRef);
 
-		void Create(const wchar_t* inStringRef);
+		void Create(const char* inStringRef);
 
-		String ToString() const;
+		operator bool() const noexcept;
+		bool operator==(Grindstone::HashedString& other) const noexcept;
+
+		const String& ToString() const;
 
 	protected:
-
-		uint64_t hashedString;
+		uint64_t hash;
 		static std::map<HashValue, String> nameHashMap;
-
-	private:
-
-		std::map<HashValue, String>::iterator ptr;
 
 	};
 }
