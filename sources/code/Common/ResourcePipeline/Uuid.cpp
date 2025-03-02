@@ -12,16 +12,19 @@ Grindstone::Uuid Grindstone::Uuid::CreateRandom() {
 	return newUuid;
 }
 
-Grindstone::Uuid::Uuid(const char* str) {
+bool Grindstone::Uuid::MakeFromString(const char* str, Grindstone::Uuid& outUuid) {
 	if (str == nullptr || strlen(str) == 0) {
-		memset(uuid, 0, sizeof(uuid));
-		return;
+		memset(outUuid.uuid, 0, sizeof(outUuid.uuid));
+		return false;
 	}
 
-	if (UuidFromString((unsigned char*)str, (::UUID*)&uuid) != RPC_S_OK) {
+	if (UuidFromString((unsigned char*)str, (::UUID*)&outUuid.uuid) != RPC_S_OK) {
 		GS_BREAK_WITH_MESSAGE("Could not make guid from an empty string.")
-		memset(uuid, 0, sizeof(uuid));
+			memset(outUuid.uuid, 0, sizeof(outUuid.uuid));
+		return false;
 	}
+
+	return true;
 }
 
 std::string Grindstone::Uuid::ToString() const {
@@ -44,11 +47,16 @@ Grindstone::Uuid Grindstone::Uuid::CreateRandom() {
 	return newUuid;
 }
 
-Grindstone::Uuid::Uuid(const char* str) {
-	uuid_parse(str, (uuint_t)uuid);
+bool Grindstone::Uuid::MakeFromString(const char* str, Grindstone::Uuid& outUuid) {
+	if (str == nullptr || strlen(str) == 0) {
+		memset(outUuid.uuid, 0, sizeof(outUuid.uuid));
+		return false;
+	}
+
+	return uuid_parse(str, (uuint_t)outUuid.uuid) == 0;
 }
 
-std::string Grindstone::Uuid::ToString() {
+std::string Grindstone::Uuid::ToString() const {
 	char uuidStr[37];
 	uuid_unparse((uuid_t)uuid, uuidStr);
 
@@ -60,7 +68,9 @@ Grindstone::Uuid::Uuid() {
 	memset(uuid, 0, sizeof(uuid));
 }
 
-Grindstone::Uuid::Uuid(std::string str) : Uuid(str.c_str()) {}
+bool Grindstone::Uuid::MakeFromString(const std::string& str, Grindstone::Uuid& outUuid) {
+	return MakeFromString(str.c_str(), outUuid);
+}
 
 bool Grindstone::Uuid::IsValid() const {
 	const uint64_t* uuidCasted = reinterpret_cast<const uint64_t*>(&uuid[0]);
@@ -81,10 +91,6 @@ bool Grindstone::Uuid::operator!=(const Uuid& other) const {
 
 bool Grindstone::Uuid::operator<(const Uuid& other) const {
 	return std::memcmp(other.uuid, uuid, sizeof(uuid)) < 0;
-}
-
-void Grindstone::Uuid::operator=(const char *str) {
-	*this = Uuid(str);
 }
 
 void Grindstone::Uuid::operator=(const Uuid& other) {

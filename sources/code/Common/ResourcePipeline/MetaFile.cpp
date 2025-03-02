@@ -48,9 +48,12 @@ void MetaFile::Load(AssetRegistry& assetRegistry, const std::filesystem::path& b
 		version = document["metaFileVersion"].GetUint();
 	}
 
-	Uuid defaultUuid = Uuid::CreateRandom();
-	if (document.HasMember("defaultUuid")) {
-		defaultUuid = document["defaultUuid"].GetString();
+	Uuid defaultUuid;
+	if (
+		!document.HasMember("defaultUuid") ||
+		!Grindstone::Uuid::MakeFromString(document["defaultUuid"].GetString(), defaultUuid)
+	) {
+		defaultUuid = Uuid::CreateRandom();
 	}
 
 	rapidjson::Value subassetsArray = document["subassets"].GetArray();
@@ -77,7 +80,11 @@ void MetaFile::Load(AssetRegistry& assetRegistry, const std::filesystem::path& b
 			? subasset["address"].GetString()
 			: "";
 
-		Uuid uuid(subasset["uuid"].GetString());
+		Uuid uuid;
+		if (!Uuid::MakeFromString(subasset["uuid"].GetString(), uuid)) {
+			continue;
+		}
+
 		AssetType assetType = AssetType::Undefined;
 		if (subasset.HasMember("type")) {
 			const char* assetTypeStr = subasset["type"].GetString();
