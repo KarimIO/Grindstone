@@ -18,26 +18,26 @@ namespace Grindstone {
 			return GetWorldTransformMatrix(entity.GetHandle(), entity.GetSceneEntityRegistry());
 		}
 
-		static Math::Matrix4 GetWorldTransformMatrix(entt::entity entity, entt::registry& registry) {
+		static Math::Matrix4 GetWorldTransformMatrix(entt::entity entity, const entt::registry& registry) {
 			Math::Matrix4 matrix = Math::Matrix4(1.0f);
 			entt::entity currentEntity = entity;
 			while (currentEntity != entt::null) {
-				TransformComponent& transformComp = registry.get<TransformComponent>(currentEntity);
+				const TransformComponent& transformComp = registry.get<TransformComponent>(currentEntity);
 
 				matrix = transformComp.GetTransformMatrix() * matrix;
 
-				ParentComponent& parentComp = registry.get<ParentComponent>(currentEntity);
+				const ParentComponent& parentComp = registry.get<ParentComponent>(currentEntity);
 				currentEntity = parentComp.parentEntity;
 			}
 
 			return matrix;
 		}
 
-		static Math::Float3 GetWorldPosition(ECS::Entity entity) {
+		static Math::Float3 GetWorldPosition(const ECS::Entity entity) {
 			return GetWorldPosition(entity.GetHandle(), entity.GetSceneEntityRegistry());
 		}
 
-		static Math::Float3 GetWorldPosition(entt::entity entity, entt::registry& registry) {
+		static Math::Float3 GetWorldPosition(const entt::entity entity, const entt::registry& registry) {
 			Math::Matrix4 worldMatrix = GetWorldTransformMatrix(entity, registry);
 
 			return Math::Float3(worldMatrix[3][0], worldMatrix[3][1], worldMatrix[3][2]);
