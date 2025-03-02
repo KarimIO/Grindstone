@@ -1,3 +1,4 @@
+#include "EngineCore.hpp"
 #include "pch.hpp"
 
 #include <EngineCore/Utils/MemoryAllocator.hpp>
@@ -22,6 +23,8 @@
 
 using namespace Grindstone;
 using namespace Grindstone::Memory;
+
+static Grindstone::EngineCore* engineCoreInstance = nullptr;
 
 bool EngineCore::Initialize(CreateInfo& createInfo) {
 	isEditor = createInfo.isEditor;
@@ -123,18 +126,12 @@ void EngineCore::InitializeScene(bool shouldLoadSceneFromDefaults, const char* s
 		sceneManager->CreateEmptyScene("Untitled");
 	}
 	else {
-		sceneManager->LoadScene(scenePath);
 		sceneManager->LoadScene(uuid);
 	}
 }
 
 void EngineCore::ShowMainWindow() {
 	windowManager->GetWindowByIndex(0)->Show();
-}
-
-EngineCore& EngineCore::GetInstance() {
-	static EngineCore instance;
-	return instance;
 }
 
 void EngineCore::Run() {

@@ -57,6 +57,8 @@ namespace Grindstone {
 	class EngineCore {
 	public:
 		static EngineCore& GetInstance();
+		static void SetInstance(EngineCore& engineCore);
+
 		struct CreateInfo {
 			bool isEditor = false;
 			const char* applicationModuleName = nullptr;
