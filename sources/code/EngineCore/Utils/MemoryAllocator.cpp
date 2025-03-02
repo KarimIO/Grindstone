@@ -21,7 +21,11 @@ void* Grindstone::Memory::AllocatorCore::AllocateRaw(size_t size, size_t alignme
 }
 
 bool AllocatorCore::Initialize(size_t sizeInMegs) {
-	allocatorState = new AllocatorState();
+	allocatorState = reinterpret_cast<Grindstone::Memory::AllocatorCore::AllocatorState*>(malloc(sizeof(AllocatorState)));
+	if (allocatorState == nullptr) {
+		return false;
+	}
+
 	return allocatorState->dynamicAllocator.Initialize(sizeInMegs * 1024u * 1024u);
 }
 
