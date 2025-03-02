@@ -1,6 +1,6 @@
 #include <rapidjson/document.h>
 
-#include <EngineCore/Assets/Shaders/ShaderImporter.hpp>
+#include <EngineCore/Assets/PipelineSet/GraphicsPipelineImporter.hpp>
 #include <EngineCore/Assets/Textures/TextureImporter.hpp>
 #include <EngineCore/AssetRenderer/BaseAssetRenderer.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
@@ -16,219 +16,249 @@
 using namespace Grindstone;
 using namespace Grindstone::Memory;
 
-MaterialImporter::MaterialImporter() {
-	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+template<typename Type, typename JsonType>
+static inline void ReadMaterialDataArray(
+	Grindstone::Buffer& buffer,
+	const rapidjson::Value& materialDocumentData,
+	const PipelineAssetMetaData::Parameter& shaderMemberData,
+	JsonType(rapidjson::Value::* memberFunction)() const
+) {
+	// TODO: Maybe investigate using stride for alignment
+	// TODO: Verify array element count
+	std::vector<Type> materialArray;
+	materialArray.resize(materialDocumentData.Size());
 
-	uint32_t blackColorData = 0;
-	GraphicsAPI::Texture::CreateInfo blackTextureCreateInfo{};
-	blackTextureCreateInfo.debugName = "Black Missing Texture";
-	blackTextureCreateInfo.data = reinterpret_cast<const char*>(&blackColorData);
-	blackTextureCreateInfo.size = sizeof(blackColorData);
-	blackTextureCreateInfo.width = 1;
-	blackTextureCreateInfo.height = 1;
-	blackTextureCreateInfo.format = ColorFormat::RGBA8;
-	blackTextureCreateInfo.mipmaps = 1;
-	blackTextureCreateInfo.options.shouldGenerateMipmaps = false;
-	missingTexture = graphicsCore->CreateTexture(blackTextureCreateInfo);
+	for (rapidjson::SizeType i = 0; i < materialDocumentData.Size(); ++i) {
+		if (materialDocumentData[i].GetType != rapidjson::kNumberType) {
+			GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Expected a number for an element of the array '{}' in material '{}'!", shaderMemberData.name, name);
+		}
+		else {
+			materialArray[i] = static_cast<Type>((materialDocumentData[i].*memberFunction)());
+		}
+	}
+
+	memcpy(buffer.Get() + shaderMemberData.offset, materialArray.data(), sizeof(Type) * materialArray.size());
 }
 
-void* MaterialImporter::ProcessLoadedFile(Uuid uuid) {
-	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
+static void ReadMaterialDataMember(
+	const std::string& name,
+	Grindstone::Buffer& buffer,
+	const rapidjson::Value& materialDocumentData,
+	const PipelineAssetMetaData::Parameter& shaderMemberData
+) {
+	// TODO: Verify that the material data type matches the source shader data type
 
-	Assets::AssetLoadTextResult result = assetManager->LoadTextByUuid(AssetType::Material, uuid);
-	if (result.status != Assets::AssetLoadStatus::Success) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find material with id {}.", uuid.ToString());
-		return nullptr;
+	switch (materialDocumentData.GetType()) {
+		case rapidjson::kNullType:
+			GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Unsupported type 'null' for member '{}' in material '{}'!", shaderMemberData.name, name);
+			break;
+		case rapidjson::kFalseType: {
+			bool value = false;
+			memcpy(buffer.Get() + shaderMemberData.offset, &value, shaderMemberData.size);
+			break;
+		}
+		case rapidjson::kTrueType: {
+			bool value = true;
+			memcpy(buffer.Get() + shaderMemberData.offset, &value, shaderMemberData.size);
+			break;
+		}
+		case rapidjson::kObjectType:
+			// TODO: We need to handle this in the future.
+			GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Unhandled type 'object' for member '{}' in material '{}'! We will support this in the future.", shaderMemberData.name, name);
+			break;
+		case rapidjson::kArrayType: {
+			switch (shaderMemberData.type) {
+			default:
+				GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Unhandled shader member type for array '{}' in material '{}'!", shaderMemberData.name, name);
+				break;
+			case PipelineAssetMetaData::ParameterType::Float:
+				ReadMaterialDataArray<float>(buffer, materialDocumentData, shaderMemberData, &rapidjson::Value::GetFloat);
+				break;
+			case PipelineAssetMetaData::ParameterType::Double:
+				ReadMaterialDataArray<double>(buffer, materialDocumentData, shaderMemberData, &rapidjson::Value::GetDouble);
+				break;
+			case PipelineAssetMetaData::ParameterType::SByte:
+				ReadMaterialDataArray<int8_t>(buffer, materialDocumentData, shaderMemberData, &rapidjson::Value::GetInt);
+				break;
+			case PipelineAssetMetaData::ParameterType::UByte:
+				ReadMaterialDataArray<uint8_t>(buffer, materialDocumentData, shaderMemberData, &rapidjson::Value::GetUint);
+				break;
+			case PipelineAssetMetaData::ParameterType::Short:
+				ReadMaterialDataArray<int16_t>(buffer, materialDocumentData, shaderMemberData, &rapidjson::Value::GetInt);
+				break;
+			case PipelineAssetMetaData::ParameterType::UShort:
+				ReadMaterialDataArray<uint16_t>(buffer, materialDocumentData, shaderMemberData, &rapidjson::Value::GetUint);
+				break;
+			case PipelineAssetMetaData::ParameterType::Int:
+				ReadMaterialDataArray<int32_t>(buffer, materialDocumentData, shaderMemberData, &rapidjson::Value::GetInt);
+				break;
+			case PipelineAssetMetaData::ParameterType::UInt:
+				ReadMaterialDataArray<uint32_t>(buffer, materialDocumentData, shaderMemberData, &rapidjson::Value::GetUint);
+				break;
+			case PipelineAssetMetaData::ParameterType::Int64:
+				ReadMaterialDataArray<int64_t>(buffer, materialDocumentData, shaderMemberData, &rapidjson::Value::GetInt64);
+				break;
+			case PipelineAssetMetaData::ParameterType::UInt64:
+				ReadMaterialDataArray<uint64_t>(buffer, materialDocumentData, shaderMemberData, &rapidjson::Value::GetUint64);
+				break;
+			}
+			break;
+		}
+		case rapidjson::kStringType: {
+			// Shader languages don't support strings.
+			GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Unsupported type 'string' for member '{}' in material '{}'! Shaders do not support strings.", shaderMemberData.name, name);
+			break;
+		}
+		case rapidjson::kNumberType: {
+			void* offset = buffer.Get() + shaderMemberData.offset;
+			switch (shaderMemberData.type) {
+				default:
+					GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Unhandled shader member type for member '{}' in material '{}'!", shaderMemberData.name, name);
+					break;
+				case PipelineAssetMetaData::ParameterType::Float: {
+					float value = materialDocumentData.GetFloat();
+					memcpy(offset, &value, sizeof(value));
+					break;
+				}
+				case PipelineAssetMetaData::ParameterType::Double: {
+					double value = materialDocumentData.GetDouble();
+					memcpy(offset, &value, sizeof(value));
+					break;
+				}
+				case PipelineAssetMetaData::ParameterType::SByte: {
+					int8_t value = static_cast<int8_t>(materialDocumentData.GetInt());
+					memcpy(offset, &value, sizeof(value));
+					break;
+				}
+				case PipelineAssetMetaData::ParameterType::UByte: {
+					uint8_t value = static_cast<uint8_t>(materialDocumentData.GetUint());
+					memcpy(offset, &value, sizeof(value));
+					break;
+				}
+				case PipelineAssetMetaData::ParameterType::Short: {
+					int16_t value = static_cast<int16_t>(materialDocumentData.GetInt());
+					memcpy(offset, &value, sizeof(value));
+					break;
+				}
+				case PipelineAssetMetaData::ParameterType::UShort: {
+					uint16_t value = static_cast<uint16_t>(materialDocumentData.GetUint());
+					memcpy(offset, &value, sizeof(value));
+					break;
+				}
+				case PipelineAssetMetaData::ParameterType::Int: {
+					int32_t value = materialDocumentData.GetInt();
+					memcpy(offset, &value, sizeof(value));
+					break;
+				}
+				case PipelineAssetMetaData::ParameterType::UInt: {
+					uint32_t value = materialDocumentData.GetUint();
+					memcpy(offset, &value, sizeof(value));
+					break;
+				}
+				case PipelineAssetMetaData::ParameterType::Int64: {
+					int64_t value = materialDocumentData.GetInt64();
+					memcpy(offset, &value, sizeof(value));
+					break;
+				}
+				case PipelineAssetMetaData::ParameterType::UInt64: {
+					uint64_t value = materialDocumentData.GetUint64();
+					memcpy(offset, &value, sizeof(value));
+					break;
+				}
+			}
+			break;
+		}
 	}
-
-	rapidjson::Document document;
-	if (document.Parse(result.content.c_str()).HasParseError()) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Unable to parse material {}.", result.displayName);
-		return nullptr;
-	}
-
-	if (!document.HasMember("shader")) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "No shader found in material {}.", result.displayName);
-		return nullptr;
-	}
-
-	Uuid shaderUuid(document["shader"].GetString());
-	ShaderAsset* shaderAsset = assetManager->IncrementAssetUse<ShaderAsset>(shaderUuid);
-
-	if (shaderAsset == nullptr) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Failed to load shader {}.", result.displayName);
-		return nullptr;
-	}
-
-	auto& reflectionData = shaderAsset->reflectionData;
-
-	auto& material = assets.emplace(uuid, MaterialAsset(uuid, result.displayName, shaderUuid));
-	MaterialAsset* materialAsset = &material.first->second;
-
-	std::vector<DescriptorSet::Binding> bindings;
-	SetupUniformBuffer(document, reflectionData, bindings, materialAsset->name, materialAsset);
-	SetupSamplers(document, reflectionData, bindings);
-
-	std::string descriptorSetName = (materialAsset->name + " Material Descriptor Set");
-
-	GraphicsAPI::DescriptorSet::CreateInfo materialDescriptorSetCreateInfo{};
-	materialDescriptorSetCreateInfo.debugName = descriptorSetName.c_str();
-	materialDescriptorSetCreateInfo.bindings = bindings.data();
-	materialDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	materialDescriptorSetCreateInfo.layout = shaderAsset->descriptorSetLayout;
-	DescriptorSet* materialDescriptorSet = graphicsCore->CreateDescriptorSet(materialDescriptorSetCreateInfo);
-
-	materialAsset->descriptorSet = materialDescriptorSet;
-
-	return materialAsset;
 }
 
-void MaterialImporter::QueueReloadAsset(Uuid uuid) {
-	auto& materialIterator = assets.find(uuid);
-	if (materialIterator == assets.end()) {
-		return;
-	}
-
-	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
-	MaterialAsset* materialAsset = &materialIterator->second;
-
-	Assets::AssetLoadTextResult result = assetManager->LoadTextByUuid(AssetType::Material, uuid);
-	if (result.status != Assets::AssetLoadStatus::Success) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find material with id {}.", uuid.ToString());
-		return;
-	}
-
-	materialAsset->name = result.displayName;
-
-	rapidjson::Document document;
-	document.Parse(result.content.c_str());
-
-	if (!document.HasMember("name")) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "No name found in material {}.", result.displayName);
-		return;
-	}
-	const char* name = document["name"].GetString();
-
-	if (!document.HasMember("shader")) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "No shader found in material {}.", result.displayName);
-		return;
-	}
-
-	Uuid shaderUuid(document["shader"].GetString());
-	ShaderAsset* shaderAsset = assetManager->IncrementAssetUse<ShaderAsset>(shaderUuid);
-	// TODO: Handle swapping between shaders
-
-	if (materialAsset->buffer != nullptr) {
-		delete materialAsset->buffer;
-	}
-
-	if (materialAsset->buffer != nullptr) {
-		graphicsCore->DeleteDescriptorSet(materialAsset->descriptorSet);
-	}
-
-	if (materialAsset->buffer != nullptr) {
-		graphicsCore->DeleteUniformBuffer(materialAsset->uniformBufferObject);
-	}
-
-	auto& reflectionData = shaderAsset->reflectionData;
-
-	std::vector<DescriptorSet::Binding> bindings;
-	SetupUniformBuffer(document, reflectionData, bindings, materialAsset->name, materialAsset);
-	SetupSamplers(document, reflectionData, bindings);
-
-	std::string descriptorSetName = (materialAsset->name + " Material Descriptor Set");
-
-	GraphicsAPI::DescriptorSet::CreateInfo materialDescriptorSetCreateInfo{};
-	materialDescriptorSetCreateInfo.debugName = descriptorSetName.c_str();
-	materialDescriptorSetCreateInfo.bindings = bindings.data();
-	materialDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	materialDescriptorSetCreateInfo.layout = shaderAsset->descriptorSetLayout;
-	DescriptorSet* materialDescriptorSet = graphicsCore->CreateDescriptorSet(materialDescriptorSetCreateInfo);
-
-	materialAsset->descriptorSet = materialDescriptorSet;
-}
-
-void MaterialImporter::SetupUniformBuffer(rapidjson::Document& document, ShaderReflectionData& reflectionData, std::vector<DescriptorSet::Binding>& bindings, std::string name, MaterialAsset* materialAsset) {
+static void SetupUniformBuffer(
+	const rapidjson::Document& document,
+	Grindstone::GraphicsPipelineAsset& pipelineSetAsset,
+	std::vector<DescriptorSet::Binding>& bindings,
+	const std::string& name,
+	Grindstone::MaterialAsset& materialAsset
+) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
-	char* bufferSpace = nullptr;
 
-	ShaderReflectionData::StructData* materialUniformBuffer = nullptr;
-	auto& uniformBuffers = reflectionData.uniformBuffers;
-	for (auto& uniformBuffer : uniformBuffers) {
-		if (uniformBuffer.name != "MaterialUbo") {
-			continue;
-		}
+	const Grindstone::PipelineAssetMetaData::Buffer* materialBuffer =
+		pipelineSetAsset.GetBufferMetaData();
 
-		materialUniformBuffer = &uniformBuffer;
-	}
-
-	if (materialUniformBuffer != nullptr) {
+	if (materialBuffer != nullptr) {
 		std::string uniformBufferName = (name + " MaterialUbo");
 		GraphicsAPI::UniformBuffer::CreateInfo ubCi{};
 		ubCi.debugName = uniformBufferName.c_str();
 		ubCi.isDynamic = true;
-		ubCi.size = static_cast<uint32_t>(materialUniformBuffer->bufferSize);
+		ubCi.size = static_cast<uint32_t>(materialBuffer->bufferSize);
 		uniformBufferObject = graphicsCore->CreateUniformBuffer(ubCi);
 
-		// TODO: Use materialUniformBuffer->bindingId
 		DescriptorSet::Binding uniformBufferBinding{ uniformBufferObject };
 		bindings.push_back(uniformBufferBinding);
 
-		if (ubCi.size == 0) {
-			bufferSpace = nullptr;
-		}
-		else {
-			bufferSpace = static_cast<char*>(AllocatorCore::AllocateRaw(ubCi.size, 4, "Material Buffer"));
+		if (ubCi.size > 0) {
+			materialAsset.materialDataBuffer = Grindstone::Buffer(ubCi.size);
 
-			auto& parametersJson = document["parameters"];
-			for (auto& member : materialUniformBuffer->members) {
-				auto& paramIterator = parametersJson.FindMember(member.name.c_str());
-				if (paramIterator != parametersJson.MemberEnd()) {
-					rapidjson::Value& param = paramIterator->value;
-					std::vector<float> paramArray;
-					paramArray.resize(param.Size());
-					for (rapidjson::SizeType i = 0; i < param.Size(); ++i) {
-						paramArray[i] = param[i].GetFloat();
-					}
-
-					// char* memberPos = bufferSpace + member.offset;
-					memcpy(bufferSpace, paramArray.data(), member.memberSize);
+			const rapidjson::Value& materialDocumentParametersJson = document["parameters"];
+			for (const PipelineAssetMetaData::Parameter& shaderMemberData : materialBuffer->parameters) {
+				const auto& materialDocumentParamIterator = materialDocumentParametersJson.FindMember(shaderMemberData.name.c_str());
+				if (materialDocumentParamIterator != materialDocumentParametersJson.MemberEnd()) {
+					const rapidjson::Value& materialDocumentData = materialDocumentParamIterator->value;
+					ReadMaterialDataMember(
+						name, materialAsset.materialDataBuffer, materialDocumentData, shaderMemberData
+					);
 				}
+				// TODO: Handle default data from shaders on else here.
 			}
 
-			uniformBufferObject->UpdateBuffer(bufferSpace);
+			uniformBufferObject->UpdateBuffer(materialAsset.materialDataBuffer.Get());
 		}
 	}
 
-	materialAsset->uniformBufferObject = uniformBufferObject;
-	materialAsset->buffer = bufferSpace;
+	materialAsset.materialDataUniformBuffer = uniformBufferObject;
 }
 
-void MaterialImporter::SetupSamplers(rapidjson::Document& document, ShaderReflectionData& reflectionData, std::vector<DescriptorSet::Binding>& bindings) {
+static void SetupSamplers(
+	const rapidjson::Document& document,
+	Grindstone::GraphicsPipelineAsset& pipelineSetAsset,
+	Grindstone::GraphicsAPI::Texture* missingTexture,
+	std::vector<DescriptorSet::Binding>& bindings,
+	Grindstone::MaterialAsset& materialAsset
+) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
+	size_t textureCount = pipelineSetAsset.GetTextureMetaDataSize();
+	materialAsset.textures.resize(textureCount);
 
-	auto& textureReferencesFromMaterial = reflectionData.textures;
-	bool hasSamplers = document.HasMember("samplers");
-	if (textureReferencesFromMaterial.size() > 0 && hasSamplers) {
-		auto& samplersJson = document["samplers"];
+	if (textureCount > 0 && document.HasMember("samplers")) {
+		const auto& samplersJson = document["samplers"];
+
 		std::vector<GraphicsAPI::Texture*> textures;
-		textures.resize(textureReferencesFromMaterial.size());
-		for (size_t i = 0; i < textureReferencesFromMaterial.size(); ++i) {
-			const char* textureName = textureReferencesFromMaterial[i].name.c_str();
-			if (samplersJson.HasMember(textureName)) {
-				const char* textureUuidAsString = samplersJson[textureName].GetString();
-				Uuid textureUuid(textureUuidAsString);
+		textures.resize(textureCount);
+		for (size_t i = 0; i < textureCount; ++i) {
+			const Grindstone::PipelineAssetMetaData::TextureSlot& textureMetaData =
+				pipelineSetAsset.GetTextureMetaDataByIndex(i);
+			const char* textureName = textureMetaData.slotName.c_str();
 
-				TextureAsset* textureAsset = assetManager->IncrementAssetUse<TextureAsset>(textureUuid);
+			if (samplersJson.HasMember(textureName)) {
+				Texture* itemPtr = missingTexture;
+				if (samplersJson[textureName].IsString()) {
+					GPRINT_ERROR_V(LogSource::EngineCore, "Textures expects a UUID in the form of a string in member {} of material {}.", textureName, materialAsset.name.c_str());
+					continue;
+				}
+
+				const char* textureUuidAsString = samplersJson[textureName].GetString();
+				Grindstone::Uuid textureUuid;
+				if (!Grindstone::Uuid::MakeFromString(textureUuidAsString, textureUuid)) {
+					GPRINT_ERROR_V(LogSource::EngineCore, "Texture failed to make a uuid out of string in member {} of material {}.", textureName, materialAsset.name.c_str());
+					continue;
+				}
+
+				materialAsset.textures[i] = assetManager->GetAssetReferenceByUuid<TextureAsset>(textureUuid);
 				// TODO: Use this to ensure it goes in the right place: textureReferencesFromMaterial[i].bindingId;
-				Texture* itemPtr = textureAsset != nullptr
-					? textureAsset->texture
-					: missingTexture;
+				if (materialAsset.textures[i].IsValid()) {
+					itemPtr = materialAsset.textures[i].Get()->texture;
+				}
 				DescriptorSet::Binding textureBinding{ itemPtr };
 				bindings.push_back(textureBinding);
 			}
@@ -240,15 +270,133 @@ void MaterialImporter::SetupSamplers(rapidjson::Document& document, ShaderReflec
 	}
 }
 
+MaterialImporter::MaterialImporter() {
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+
+	std::array<unsigned char, 16> colorData = {
+		0x00, 0x00, 0x00, 0xff,
+		0xff, 0x00, 0xff, 0xff,
+		0xff, 0x00, 0xff, 0xff,
+		0x00, 0x00, 0x00, 0xff,
+	};
+	GraphicsAPI::Texture::CreateInfo blackTextureCreateInfo{};
+	blackTextureCreateInfo.debugName = "Black Missing Texture";
+	blackTextureCreateInfo.data = reinterpret_cast<const char*>(&colorData);
+	blackTextureCreateInfo.size = static_cast<uint32_t>(colorData.size());
+	blackTextureCreateInfo.width = 2;
+	blackTextureCreateInfo.height = 2;
+	blackTextureCreateInfo.format = ColorFormat::RGBA8;
+	blackTextureCreateInfo.mipmaps = 1;
+	blackTextureCreateInfo.options.shouldGenerateMipmaps = false;
+	missingTexture = graphicsCore->CreateTexture(blackTextureCreateInfo);
+}
+
+static void LoadMaterial(
+	Grindstone::MaterialAsset& material,
+	const std::string& displayName,
+	Grindstone::GraphicsAPI::Texture* missingTexture,
+	const std::string_view materialContent
+) {
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
+
+	rapidjson::Document document;
+	if (document.Parse(materialContent.data()).HasParseError()) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Unable to parse material {}.", displayName);
+		return;
+	}
+
+	Grindstone::Uuid shaderUuid;
+	if (!document.HasMember("shader") || !Grindstone::Uuid::MakeFromString(document["shader"].GetString(), shaderUuid)) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "No shader found in material {}.", displayName);
+		return;
+	}
+
+	if (shaderUuid != material.pipelineSetAsset.uuid) {
+		material.pipelineSetAsset = assetManager->GetAssetReferenceByUuid<GraphicsPipelineAsset>(shaderUuid);
+	}
+
+	if (!material.pipelineSetAsset.IsValid()) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Failed to load shader {}.", displayName);
+		return;
+	}
+
+	Grindstone::GraphicsPipelineAsset& pipelineSetAsset = *material.pipelineSetAsset.Get();
+
+	std::vector<DescriptorSet::Binding> bindings;
+	SetupUniformBuffer(document, pipelineSetAsset, bindings, displayName, material);
+	SetupSamplers(document, pipelineSetAsset, missingTexture, bindings, material);
+
+	std::string descriptorSetName = (displayName + " Material Descriptor Set");
+
+	GraphicsAPI::DescriptorSet::CreateInfo materialDescriptorSetCreateInfo{};
+	materialDescriptorSetCreateInfo.debugName = descriptorSetName.c_str();
+	materialDescriptorSetCreateInfo.bindings = bindings.data();
+	materialDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+	materialDescriptorSetCreateInfo.layout = pipelineSetAsset.GetMaterialLayout();
+	DescriptorSet* materialDescriptorSet = graphicsCore->CreateDescriptorSet(materialDescriptorSetCreateInfo);
+
+	material.materialDescriptorSet = materialDescriptorSet;
+	material.assetLoadStatus = AssetLoadStatus::Ready;
+}
+
+void* MaterialImporter::LoadAsset(Uuid uuid) {
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
+
+	Assets::AssetLoadTextResult result = assetManager->LoadTextByUuid(AssetType::Material, uuid);
+	if (result.status != Assets::AssetLoadStatus::Success) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find material with id {}.", uuid.ToString());
+		return nullptr;
+	}
+
+	auto& material = assets.emplace(uuid, MaterialAsset(uuid, result.displayName, uuid));
+	Grindstone::MaterialAsset& materialAsset = material.first->second;
+
+	materialAsset.assetLoadStatus = AssetLoadStatus::Loading;
+	LoadMaterial(materialAsset, result.displayName, missingTexture, result.content);
+	return &materialAsset;
+}
+
+void MaterialImporter::QueueReloadAsset(Uuid uuid) {
+	auto& materialIterator = assets.find(uuid);
+	if (materialIterator == assets.end()) {
+		return;
+	}
+
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
+	MaterialAsset& materialAsset = materialIterator->second;
+
+	Assets::AssetLoadTextResult result = assetManager->LoadTextByUuid(AssetType::Material, uuid);
+	if (result.status != Assets::AssetLoadStatus::Success) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find material with id {}.", uuid.ToString());
+		return;
+	}
+
+	if (materialAsset.materialDescriptorSet != nullptr) {
+		graphicsCore->DeleteDescriptorSet(materialAsset.materialDescriptorSet);
+	}
+
+	if (materialAsset.materialDataUniformBuffer != nullptr) {
+		graphicsCore->DeleteUniformBuffer(materialAsset.materialDataUniformBuffer);
+	}
+
+	materialAsset.name = result.displayName;
+	materialAsset.assetLoadStatus = AssetLoadStatus::Reloading;
+
+	LoadMaterial(materialAsset, result.displayName, missingTexture, result.content);
+}
+
 MaterialImporter::~MaterialImporter() {
 	EngineCore& engineCore = EngineCore::GetInstance();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
 	for (auto& asset : assets) {
-		AllocatorCore::Free(asset.second.buffer);
-		graphicsCore->DeleteDescriptorSet(asset.second.descriptorSet);
-		graphicsCore->DeleteUniformBuffer(asset.second.uniformBufferObject);
+		graphicsCore->DeleteDescriptorSet(asset.second.materialDescriptorSet);
+		graphicsCore->DeleteUniformBuffer(asset.second.materialDataUniformBuffer);
 	}
+
 	assets.clear();
 
 	graphicsCore->DeleteTexture(missingTexture);

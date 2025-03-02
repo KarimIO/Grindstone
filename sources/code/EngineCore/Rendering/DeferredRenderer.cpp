@@ -14,7 +14,6 @@
 #include <EngineCore/Utils/Utilities.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
-#include <EngineCore/Assets/Shaders/ShaderImporter.hpp>
 #include <EngineCore/Assets/Materials/MaterialImporter.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 #include <EngineCore/CoreComponents/EnvironmentMap/EnvironmentMapComponent.hpp>
@@ -168,8 +167,6 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 
 DeferredRenderer::~DeferredRenderer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-
-	CleanupPipelines();
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		DeferredRendererImageSet& imageSet = deferredRendererImageSets[i];
@@ -666,39 +663,6 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 		ssaoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 		ssaoRenderPass = graphicsCore->CreateRenderPass(ssaoRenderPassCreateInfo);
 	}
-}
-
-void DeferredRenderer::CleanupPipelines() {
-	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	graphicsCore->DeleteGraphicsPipeline(pointLightPipeline);
-	graphicsCore->DeleteGraphicsPipeline(spotLightPipeline);
-	graphicsCore->DeleteGraphicsPipeline(directionalLightPipeline);
-	graphicsCore->DeleteGraphicsPipeline(shadowMappingPipeline);
-	graphicsCore->DeleteGraphicsPipeline(tonemapPipeline);
-
-	graphicsCore->DeleteGraphicsPipeline(ssaoPipeline);
-	graphicsCore->DeleteGraphicsPipeline(imageBasedLightingPipeline);
-	graphicsCore->DeleteGraphicsPipeline(dofSeparationPipeline);
-	graphicsCore->DeleteGraphicsPipeline(dofBlurPipeline);
-	graphicsCore->DeleteGraphicsPipeline(dofCombinationPipeline);
-	graphicsCore->DeleteGraphicsPipeline(debugPipeline);
-
-	graphicsCore->DeleteComputePipeline(ssrPipeline);
-	graphicsCore->DeleteComputePipeline(bloomPipeline);
-
-	pointLightPipeline = nullptr;
-	spotLightPipeline = nullptr;
-	directionalLightPipeline = nullptr;
-	shadowMappingPipeline = nullptr;
-	tonemapPipeline = nullptr;
-	ssaoPipeline = nullptr;
-	imageBasedLightingPipeline = nullptr;
-	dofSeparationPipeline = nullptr;
-	dofCombinationPipeline = nullptr;
-	debugPipeline = nullptr;
-
-	ssrPipeline = nullptr;
-	bloomPipeline = nullptr;
 }
 
 bool DeferredRenderer::OnWindowResize(Events::BaseEvent* ev) {
@@ -1471,418 +1435,21 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 }
 
 void DeferredRenderer::CreatePipelines() {
-	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-
-	GraphicsPipeline::CreateInfo pipelineCreateInfo{};
-	pipelineCreateInfo.primitiveType = GeometryType::Triangles;
-	pipelineCreateInfo.polygonFillMode = GraphicsAPI::PolygonFillMode::Fill;
-	pipelineCreateInfo.cullMode = CullMode::Back;
-	pipelineCreateInfo.scissorX = 0;
-	pipelineCreateInfo.scissorY = 0;
-	pipelineCreateInfo.hasDynamicScissor = true;
-	pipelineCreateInfo.hasDynamicViewport = true;
-	pipelineCreateInfo.vertexBindings = &vertexLightPositionLayout;
-	pipelineCreateInfo.vertexBindingsCount = 1;
-
-	std::vector<GraphicsPipeline::CreateInfo::ShaderStageData> shaderStageCreateInfos;
-	std::vector<std::vector<char>> fileData;
-
 	Grindstone::Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
-	uint8_t shaderBits = static_cast<uint8_t>(ShaderStageBit::Vertex | ShaderStageBit::Fragment);
 
-	{
-		if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/postProcessing/screenSpaceAmbientOcclusion", shaderBits, 2, shaderStageCreateInfos, fileData)) {
-			GPRINT_ERROR(LogSource::Rendering, "Could not load ssao shaders.");
-			return;
-		}
+	bloomPipelineSet = assetManager->GetAssetReferenceByAddress<ComputePipelineAsset>("@CORESHADERS/postProcessing/bloom");
+	ssrPipelineSet = assetManager->GetAssetReferenceByAddress<ComputePipelineAsset>("@CORESHADERS/postProcessing/screenSpaceReflections");
 
-		std::array<GraphicsAPI::DescriptorSetLayout*, 2> ssaoLayouts{};
-		ssaoLayouts[0] = lightingDescriptorSetLayout;
-		ssaoLayouts[1] = ssaoInputDescriptorSetLayout;
-
-		pipelineCreateInfo.debugName = "SSAO Pipeline";
-		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
-		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineCreateInfo.descriptorSetLayouts = ssaoLayouts.data();
-		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(ssaoLayouts.size());
-		pipelineCreateInfo.colorAttachmentCount = 1;
-		pipelineCreateInfo.isDepthWriteEnabled = false;
-		pipelineCreateInfo.isDepthTestEnabled = false;
-		pipelineCreateInfo.isStencilEnabled = false;
-		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::NoBlending();
-		pipelineCreateInfo.renderPass = ssaoRenderPass;
-		ssaoPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
-	}
-
-	shaderStageCreateInfos.clear();
-	fileData.clear();
-
-	pipelineCreateInfo.width = static_cast<float>(renderWidth);
-	pipelineCreateInfo.height = static_cast<float>(renderHeight);
-	pipelineCreateInfo.scissorW = framebufferWidth;
-	pipelineCreateInfo.scissorH = framebufferHeight;
-
-	{
-		GraphicsPipeline::CreateInfo::ShaderStageData bloomShaderStageCreateInfo;
-		std::vector<char> bloomFileData;
-
-		if (!assetManager->LoadShaderStageByAddress("@CORESHADERS/postProcessing/bloom", ShaderStage::Compute, bloomShaderStageCreateInfo, bloomFileData)) {
-			GPRINT_ERROR(LogSource::Rendering, "Could not load bloom compute shader.");
-			return;
-		}
-
-		ComputePipeline::CreateInfo computePipelineCreateInfo{};
-		computePipelineCreateInfo.debugName = "Bloom Compute Pipeline";
-		computePipelineCreateInfo.shaderFileName = bloomShaderStageCreateInfo.fileName;
-		computePipelineCreateInfo.shaderContent = bloomFileData.data();
-		computePipelineCreateInfo.shaderSize = static_cast<uint32_t>(bloomFileData.size());
-		computePipelineCreateInfo.descriptorSetLayouts = &bloomDescriptorSetLayout;
-		computePipelineCreateInfo.descriptorSetLayoutCount = 1;
-		bloomPipeline = graphicsCore->CreateComputePipeline(computePipelineCreateInfo);
-	}
-
-	shaderStageCreateInfos.clear();
-	fileData.clear();
-
-	{
-		GraphicsPipeline::CreateInfo::ShaderStageData ssrShaderStageCreateInfo;
-		std::vector<char> ssrFileData;
-
-		if (!assetManager->LoadShaderStageByAddress("@CORESHADERS/postProcessing/screenSpaceReflections", ShaderStage::Compute, ssrShaderStageCreateInfo, ssrFileData)) {
-			GPRINT_ERROR(LogSource::Rendering, "Could not load SSR compute shader.");
-			return;
-		}
-
-		ComputePipeline::CreateInfo computePipelineCreateInfo{};
-		computePipelineCreateInfo.debugName = "Screen Space Reflections Compute Pipeline";
-		computePipelineCreateInfo.shaderFileName = ssrShaderStageCreateInfo.fileName;
-		computePipelineCreateInfo.shaderContent = ssrFileData.data();
-		computePipelineCreateInfo.shaderSize = static_cast<uint32_t>(ssrFileData.size());
-		computePipelineCreateInfo.descriptorSetLayouts = &ssrDescriptorSetLayout;
-		computePipelineCreateInfo.descriptorSetLayoutCount = 1;
-		ssrPipeline = graphicsCore->CreateComputePipeline(computePipelineCreateInfo);
-	}
-
-	shaderStageCreateInfos.clear();
-	fileData.clear();
-
-	{
-		if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/lighting/ibl", shaderBits, 2, shaderStageCreateInfos, fileData)) {
-			GPRINT_ERROR(LogSource::Rendering, "Could not load image based lighting shaders.");
-			return;
-		}
-
-		std::array<GraphicsAPI::DescriptorSetLayout*, 3> iblLayouts{};
-		iblLayouts[0] = lightingDescriptorSetLayout;
-		iblLayouts[1] = ambientOcclusionDescriptorSetLayout;
-		iblLayouts[2] = environmentMapDescriptorSetLayout;
-
-		pipelineCreateInfo.debugName = "Image Based Lighting Pipeline";
-		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
-		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineCreateInfo.descriptorSetLayouts = iblLayouts.data();
-		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(iblLayouts.size());
-		pipelineCreateInfo.colorAttachmentCount = 1;
-		pipelineCreateInfo.isDepthWriteEnabled = false;
-		pipelineCreateInfo.isDepthTestEnabled = false;
-		pipelineCreateInfo.isStencilEnabled = false;
-		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::Additive();
-		pipelineCreateInfo.renderPass = mainRenderPass;
-		imageBasedLightingPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
-	}
-
-	shaderStageCreateInfos.clear();
-	fileData.clear();
-
-	{
-		if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/lighting/point", shaderBits, 2, shaderStageCreateInfos, fileData)) {
-			GPRINT_ERROR(LogSource::Rendering, "Could not load point light shaders.");
-			return;
-		}
-
-		std::array<GraphicsAPI::DescriptorSetLayout*, 2> pointLightLayouts{};
-		pointLightLayouts[0] = lightingDescriptorSetLayout;
-		pointLightLayouts[1] = lightingUBODescriptorSetLayout;
-
-		pipelineCreateInfo.debugName = "Point Light Pipeline";
-		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
-		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineCreateInfo.descriptorSetLayouts = pointLightLayouts.data();
-		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(pointLightLayouts.size());
-		pipelineCreateInfo.colorAttachmentCount = 1;
-		pipelineCreateInfo.isDepthWriteEnabled = false;
-		pipelineCreateInfo.isDepthTestEnabled = false;
-		pipelineCreateInfo.isStencilEnabled = false;
-		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::Additive();
-		pipelineCreateInfo.renderPass = mainRenderPass;
-		pointLightPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
-	}
-
-	shaderStageCreateInfos.clear();
-	fileData.clear();
-
-	{
-		if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/lighting/spot", shaderBits, 2, shaderStageCreateInfos, fileData)) {
-			GPRINT_ERROR(LogSource::Rendering, "Could not load spot light shaders.");
-			return;
-		}
-
-		std::array<GraphicsAPI::DescriptorSetLayout*, 2> spotLightLayouts{};
-		spotLightLayouts[0] = lightingDescriptorSetLayout;
-		spotLightLayouts[1] = shadowMappedLightDescriptorSetLayout;
-
-		pipelineCreateInfo.debugName = "Spot Light Pipeline";
-		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
-		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineCreateInfo.descriptorSetLayouts = spotLightLayouts.data();
-		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(spotLightLayouts.size());
-		pipelineCreateInfo.colorAttachmentCount = 1;
-		pipelineCreateInfo.isDepthWriteEnabled = false;
-		pipelineCreateInfo.isDepthTestEnabled = false;
-		pipelineCreateInfo.isStencilEnabled = false;
-		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::Additive();
-		pipelineCreateInfo.renderPass = mainRenderPass;
-		spotLightPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
-	}
-
-	shaderStageCreateInfos.clear();
-	fileData.clear();
-
-	{
-		if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/lighting/directional", shaderBits, 2, shaderStageCreateInfos, fileData)) {
-			GPRINT_ERROR(LogSource::Rendering, "Could not load directional light shaders.");
-			return;
-		}
-
-		std::array<GraphicsAPI::DescriptorSetLayout*, 2> directionalLightLayouts{};
-		directionalLightLayouts[0] = lightingDescriptorSetLayout;
-		directionalLightLayouts[1] = shadowMappedLightDescriptorSetLayout;
-
-		pipelineCreateInfo.debugName = "Directional Light Pipeline";
-		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
-		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineCreateInfo.descriptorSetLayouts = directionalLightLayouts.data();
-		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(directionalLightLayouts.size());
-		pipelineCreateInfo.colorAttachmentCount = 1;
-		pipelineCreateInfo.isDepthWriteEnabled = false;
-		pipelineCreateInfo.isDepthTestEnabled = false;
-		pipelineCreateInfo.isStencilEnabled = false;
-		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::Additive();
-		pipelineCreateInfo.renderPass = mainRenderPass;
-		directionalLightPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
-	}
-
-	shaderStageCreateInfos.clear();
-	fileData.clear();
-
-	{
-		if (!assetManager->LoadShaderSetByAddress(
-			"@CORESHADERS/editor/debug",
-			shaderBits,
-			2,
-			shaderStageCreateInfos,
-			fileData
-		)) {
-			GPRINT_ERROR(LogSource::Rendering, "Could not load debug shaders.");
-			return;
-		}
-
-		pipelineCreateInfo.debugName = "Debug Pipeline";
-		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
-		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineCreateInfo.descriptorSetLayouts = &debugDescriptorSetLayout;
-		pipelineCreateInfo.descriptorSetLayoutCount = 1;
-		pipelineCreateInfo.colorAttachmentCount = 1;
-		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::NoBlending();
-		pipelineCreateInfo.renderPass = targetRenderPass;
-		pipelineCreateInfo.isDepthWriteEnabled = true;
-		pipelineCreateInfo.isDepthTestEnabled = true;
-		pipelineCreateInfo.isStencilEnabled = true;
-		debugPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
-	}
-
-	shaderStageCreateInfos.clear();
-	fileData.clear();
-
-	{
-		if (!assetManager->LoadShaderSetByAddress(
-			"@CORESHADERS/postProcessing/tonemapping",
-			shaderBits,
-			2,
-			shaderStageCreateInfos,
-			fileData
-		)) {
-			GPRINT_ERROR(LogSource::Rendering, "Could not load tonemapping shaders.");
-			return;
-		}
-
-		pipelineCreateInfo.debugName = "Tonemapping Pipeline";
-		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
-		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineCreateInfo.descriptorSetLayouts = &tonemapDescriptorSetLayout;
-		pipelineCreateInfo.descriptorSetLayoutCount = 1;
-		pipelineCreateInfo.colorAttachmentCount = 1;
-		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::NoBlending();
-		pipelineCreateInfo.renderPass = targetRenderPass;
-		pipelineCreateInfo.isDepthWriteEnabled = false;
-		pipelineCreateInfo.isDepthTestEnabled = false;
-		pipelineCreateInfo.isStencilEnabled = false;
-		tonemapPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
-	}
-
-	shaderStageCreateInfos.clear();
-	fileData.clear();
-
-	{
-		if (!assetManager->LoadShaderSetByAddress(
-			"@CORESHADERS/postProcessing/dofSeparation",
-			shaderBits,
-			2,
-			shaderStageCreateInfos,
-			fileData
-		)) {
-			GPRINT_ERROR(LogSource::Rendering, "Could not load depth of field separation shader.");
-			return;
-		}
-
-		std::array<DescriptorSetLayout*, 2> layouts = {
-			engineDescriptorSetLayout,
-			dofSourceDescriptorSetLayout
-		};
-
-		pipelineCreateInfo.debugName = "Depth of Field (Separation Stage)";
-		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
-		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineCreateInfo.descriptorSetLayouts = layouts.data();
-		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(layouts.size());
-		pipelineCreateInfo.colorAttachmentCount = 2;
-		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::NoBlending();
-		pipelineCreateInfo.renderPass = dofSeparationRenderPass;
-		pipelineCreateInfo.isDepthWriteEnabled = false;
-		pipelineCreateInfo.isDepthTestEnabled = false;
-		pipelineCreateInfo.isStencilEnabled = false;
-		dofSeparationPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
-	}
-
-	shaderStageCreateInfos.clear();
-	fileData.clear();
-
-	{
-		if (!assetManager->LoadShaderSetByAddress(
-			"@CORESHADERS/postProcessing/dofBlur",
-			shaderBits,
-			2,
-			shaderStageCreateInfos,
-			fileData
-		)) {
-			GPRINT_ERROR(LogSource::Rendering, "Could not load depth of field blur shader.");
-			return;
-		}
-
-		std::array<DescriptorSetLayout*, 2> layouts = {
-			engineDescriptorSetLayout,
-			dofBlurDescriptorSetLayout
-		};
-
-		pipelineCreateInfo.debugName = "Depth of Field (Blur Stage)";
-		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
-		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineCreateInfo.descriptorSetLayouts = layouts.data();
-		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(layouts.size());
-		pipelineCreateInfo.colorAttachmentCount = 1;
-		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::NoBlending();
-		pipelineCreateInfo.renderPass = dofBlurAndCombinationRenderPass;
-		pipelineCreateInfo.isDepthWriteEnabled = false;
-		pipelineCreateInfo.isDepthTestEnabled = false;
-		pipelineCreateInfo.isStencilEnabled = false;
-		dofBlurPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
-	}
-
-	shaderStageCreateInfos.clear();
-	fileData.clear();
-
-	{
-		if (!assetManager->LoadShaderSetByAddress(
-			"@CORESHADERS/postProcessing/dofCombination",
-			shaderBits,
-			2,
-			shaderStageCreateInfos,
-			fileData
-		)) {
-			GPRINT_ERROR(LogSource::Rendering, "Could not load depth of field combination shader.");
-			return;
-		}
-
-		std::array<DescriptorSetLayout*, 3> layouts = {
-			engineDescriptorSetLayout,
-			dofSourceDescriptorSetLayout,
-			dofCombinationDescriptorSetLayout
-		};
-
-		pipelineCreateInfo.debugName = "Depth of Field (Combination Stage)";
-		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
-		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineCreateInfo.descriptorSetLayouts = layouts.data();
-		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(layouts.size());
-		pipelineCreateInfo.colorAttachmentCount = 1;
-		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::NoBlending();
-		pipelineCreateInfo.renderPass = dofBlurAndCombinationRenderPass;
-		pipelineCreateInfo.isDepthWriteEnabled = false;
-		pipelineCreateInfo.isDepthTestEnabled = false;
-		pipelineCreateInfo.isStencilEnabled = false;
-		dofCombinationPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
-	}
-
-	shaderStageCreateInfos.clear();
-	fileData.clear();
-
-	{
-		if (!assetManager->LoadShaderSetByAddress(
-			"@CORESHADERS/lighting/shadow",
-			shaderBits,
-			2,
-			shaderStageCreateInfos,
-			fileData
-		)) {
-			GPRINT_ERROR(LogSource::Rendering, "Could not load shadow mapping shaders.");
-			return;
-		}
-
-		Grindstone::GraphicsAPI::VertexBufferLayout shadowMapPositionLayout = {
-		{
-			0,
-			Grindstone::GraphicsAPI::VertexFormat::Float3,
-			"vertexPosition",
-			false,
-			Grindstone::GraphicsAPI::AttributeUsage::Position
-		}
-		};
-
-		auto wgb = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
-
-		pipelineCreateInfo.width = 600;
-		pipelineCreateInfo.height = 600;
-		pipelineCreateInfo.scissorW = 600;
-		pipelineCreateInfo.scissorH = 600;
-
-		pipelineCreateInfo.vertexBindings = &shadowMapPositionLayout;
-		pipelineCreateInfo.vertexBindingsCount = 1;
-		pipelineCreateInfo.debugName = "Shadow Mapping Pipeline";
-		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
-		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineCreateInfo.descriptorSetLayouts = &shadowMapDescriptorSetLayout;
-		pipelineCreateInfo.descriptorSetLayoutCount = 1;
-		pipelineCreateInfo.colorAttachmentCount = 1;
-		pipelineCreateInfo.blendData = GraphicsAPI::BlendData::NoBlending();
-		pipelineCreateInfo.cullMode = CullMode::None;
-		pipelineCreateInfo.renderPass = shadowMapRenderPass;
-		pipelineCreateInfo.isDepthWriteEnabled = true;
-		pipelineCreateInfo.isDepthTestEnabled = true;
-		pipelineCreateInfo.isStencilEnabled = false;
-		pipelineCreateInfo.isDepthBiasEnabled = true;
-		shadowMappingPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
-	}
-	pipelineCreateInfo.isDepthBiasEnabled = false;
+	ssaoPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/postProcessing/screenSpaceAmbientOcclusion");
+	imageBasedLightingPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/ibl");
+	pointLightPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/point");
+	spotLightPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/spot");
+	directionalLightPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/directional");
+	debugPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/editor/debug");
+	tonemapPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/postProcessing/tonemapping");
+	dofSeparationPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/postProcessing/dofSeparation");
+	dofBlurPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/postProcessing/dofBlur");
+	dofCombinationPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/postProcessing/dofCombination");
 }
 
 void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer) {
@@ -1911,6 +1478,7 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 			depthStencilClear
 		);
 
+		Grindstone::GraphicsAPI::GraphicsPipeline* dofSeparationPipeline = dofSeparationPipelineSet.Get()->GetFirstPass()->pipeline;
 		std::array<DescriptorSet*, 2> descriptorSets = { imageSet.engineDescriptorSet, imageSet.dofSourceDescriptorSet };
 		currentCommandBuffer->BindGraphicsPipeline(dofSeparationPipeline);
 		currentCommandBuffer->BindGraphicsDescriptorSet(
@@ -1922,6 +1490,7 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 		currentCommandBuffer->UnbindRenderPass();
 	}
 
+	Grindstone::GraphicsAPI::GraphicsPipeline* dofBlurPipeline = dofBlurPipelineSet.Get()->GetFirstPass()->pipeline;
 	{
 		currentCommandBuffer->BindRenderPass(
 			dofBlurAndCombinationRenderPass,
@@ -1980,6 +1549,7 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 		);
 
 		std::array<DescriptorSet*, 3> descriptorSets = { imageSet.engineDescriptorSet, imageSet.dofSourceDescriptorSet, imageSet.dofCombineDescriptorSet };
+		Grindstone::GraphicsAPI::GraphicsPipeline* dofCombinationPipeline = dofCombinationPipelineSet.Get()->GetFirstPass()->pipeline;
 		currentCommandBuffer->BindGraphicsPipeline(dofCombinationPipeline);
 		currentCommandBuffer->BindGraphicsDescriptorSet(
 			dofCombinationPipeline,
@@ -1994,6 +1564,8 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 }
 
 void DeferredRenderer::RenderSsr(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer) {
+	// TODO: Get Compute Pipeline
+	Grindstone::GraphicsAPI::ComputePipeline* ssrPipeline = (Grindstone::GraphicsAPI::ComputePipeline*)ssrPipelineSet.Get()->pipeline;
 	if (ssrPipeline == nullptr) {
 		return;
 	}
@@ -2013,6 +1585,8 @@ void DeferredRenderer::RenderSsr(DeferredRendererImageSet& imageSet, GraphicsAPI
 }
 
 void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer) {
+	// TODO: Get Compute Shader
+	Grindstone::GraphicsAPI::ComputePipeline* bloomPipeline = (Grindstone::GraphicsAPI::ComputePipeline*)bloomPipelineSet.Get()->pipeline;
 	if (bloomPipeline == nullptr || bloomMipLevelCount <= 2) {
 		return;
 	}
@@ -2114,6 +1688,7 @@ void DeferredRenderer::RenderLights(
 		0.5f, 0.5f, 0.0f, 1.0f
 	);
 
+	Grindstone::GraphicsAPI::GraphicsPipeline* imageBasedLightingPipeline = imageBasedLightingPipelineSet.Get()->GetFirstPass()->pipeline;
 	if (imageBasedLightingPipeline != nullptr) {
 		currentCommandBuffer->BeginDebugLabelSection("Image Based Lighting", nullptr);
 		currentCommandBuffer->BindGraphicsPipeline(imageBasedLightingPipeline);
@@ -2128,7 +1703,7 @@ void DeferredRenderer::RenderLights(
 			}
 
 			currentEnvironmentMapUuid = environmentMapComponent.specularTexture.uuid;
-			Grindstone::TextureAsset* texAsset = environmentMapComponent.specularTexture.Get();
+			const Grindstone::TextureAsset* texAsset = environmentMapComponent.specularTexture.Get();
 			if (texAsset != nullptr) {
 				Texture* tex = texAsset->texture;
 				hasEnvMap = true;
@@ -2149,6 +1724,7 @@ void DeferredRenderer::RenderLights(
 		currentCommandBuffer->EndDebugLabelSection();
 	}
 
+	Grindstone::GraphicsAPI::GraphicsPipeline* pointLightPipeline = pointLightPipelineSet.Get()->GetFirstPass()->pipeline;
 	if (pointLightPipeline != nullptr) {
 		currentCommandBuffer->BeginDebugLabelSection("Point Lighting", nullptr);
 		currentCommandBuffer->BindGraphicsPipeline(pointLightPipeline);
@@ -2175,6 +1751,7 @@ void DeferredRenderer::RenderLights(
 		currentCommandBuffer->EndDebugLabelSection();
 	}
 
+	Grindstone::GraphicsAPI::GraphicsPipeline* spotLightPipeline = spotLightPipelineSet.Get()->GetFirstPass()->pipeline;
 	if (spotLightPipeline != nullptr) {
 		currentCommandBuffer->BeginDebugLabelSection("Spot Lighting", nullptr);
 		currentCommandBuffer->BindGraphicsPipeline(spotLightPipeline);
@@ -2207,6 +1784,7 @@ void DeferredRenderer::RenderLights(
 		currentCommandBuffer->EndDebugLabelSection();
 	}
 
+	Grindstone::GraphicsAPI::GraphicsPipeline* directionalLightPipeline = directionalLightPipelineSet.Get()->GetFirstPass()->pipeline;
 	if (directionalLightPipeline != nullptr) {
 		currentCommandBuffer->BeginDebugLabelSection("Directional Lighting", nullptr);
 		currentCommandBuffer->BindGraphicsPipeline(directionalLightPipeline);
@@ -2238,6 +1816,7 @@ void DeferredRenderer::RenderLights(
 }
 
 void DeferredRenderer::RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* commandBuffer) {
+	Grindstone::GraphicsAPI::GraphicsPipeline* ssaoPipeline = ssaoPipelineSet.Get()->GetFirstPass()->pipeline;
 	if (ssaoPipeline == nullptr) {
 		return;
 	}
@@ -2394,18 +1973,14 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 				clearDepthStencil
 			);
 
-			commandBuffer->BindGraphicsPipeline(shadowMappingPipeline);
-
 			float resF = static_cast<float>(resolution);
 			commandBuffer->SetViewport(0.0f, 0.0f, resF, resF);
 			commandBuffer->SetScissor(0, 0, resolution, resolution);
-
-			commandBuffer->BindGraphicsDescriptorSet(shadowMappingPipeline, &spotLightComponent.shadowMapDescriptorSet, 1);
-			assetManager->RenderShadowMap(
+			assetManager->RenderQueue(
 				commandBuffer,
-				spotLightComponent.shadowMapDescriptorSet,
 				registry,
-				pos
+				"ShadowMap",
+				HashedString()
 			);
 
 			commandBuffer->UnbindRenderPass();
@@ -2448,18 +2023,14 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 				clearDepthStencil
 			);
 
-			commandBuffer->BindGraphicsPipeline(shadowMappingPipeline);
-
 			float resF = static_cast<float>(resolution);
 			commandBuffer->SetViewport(0.0f, 0.0f, resF, resF);
 			commandBuffer->SetScissor(0, 0, resolution, resolution);
-
-			commandBuffer->BindGraphicsDescriptorSet(shadowMappingPipeline, &directionalLightComponent.shadowMapDescriptorSet, 1);
-			assetManager->RenderShadowMap(
+			assetManager->RenderQueue(
 				commandBuffer,
-				directionalLightComponent.shadowMapDescriptorSet,
 				registry,
-				lightPos
+				"ShadowMap",
+				HashedString()
 			);
 
 			commandBuffer->UnbindRenderPass();
@@ -2488,6 +2059,7 @@ void DeferredRenderer::PostProcess(
 
 	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, framebuffer->GetWidth(), framebuffer->GetHeight(), &clearColor, 1, clearDepthStencil);
 
+	Grindstone::GraphicsAPI::GraphicsPipeline* tonemapPipeline = tonemapPipelineSet.Get()->GetFirstPass()->pipeline;
 	if (tonemapPipeline != nullptr) {
 		imageSet.tonemapPostProcessingUniformBufferObject->UpdateBuffer(&postProcessUboData);
 
@@ -2519,6 +2091,7 @@ void DeferredRenderer::Debug(
 	RenderPass* renderPass = framebuffer->GetRenderPass();
 	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, framebuffer->GetWidth(), framebuffer->GetHeight(), &clearColor, 1, clearDepthStencil);
 
+	Grindstone::GraphicsAPI::GraphicsPipeline* debugPipeline = debugPipelineSet.Get()->GetFirstPass()->pipeline;
 	if (debugPipeline != nullptr) {
 		imageSet.debugUniformBufferObject->UpdateBuffer(&debugUboData);
 
@@ -2542,9 +2115,6 @@ void DeferredRenderer::Render(
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	Grindstone::AssetRendererManager* assetManager = engineCore.assetRendererManager;
 	GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
-
-	assetManager->CacheRenderTasksAndFrustumCull(eyePos, registry);
-	assetManager->SortQueues();
 
 	graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
 
@@ -2592,7 +2162,7 @@ void DeferredRenderer::Render(
 	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(renderWidth), static_cast<float>(renderHeight));
 	commandBuffer->SetScissor(0, 0, renderWidth, renderHeight);
 
-	assetManager->RenderQueue(commandBuffer, "Opaque");
+	assetManager->RenderQueue(commandBuffer, registry, "Main", "Opaque");
 	commandBuffer->UnbindRenderPass();
 
 	if (renderMode == DeferredRenderMode::Default || renderMode == DeferredRenderMode::AmbientOcclusion) {
@@ -2614,11 +2184,11 @@ void DeferredRenderer::Render(
 			RenderLights(imageIndex, commandBuffer, registry);
 		}
 
-		assetManager->RenderQueue(commandBuffer, "Unlit");
+		assetManager->RenderQueue(commandBuffer, registry, "Main", "Unlit");
 
 		if (renderMode == DeferredRenderMode::Default) {
-			assetManager->RenderQueue(commandBuffer, "Skybox");
-			assetManager->RenderQueue(commandBuffer, "Transparent");
+			assetManager->RenderQueue(commandBuffer, registry, "Main", "Skybox");
+			assetManager->RenderQueue(commandBuffer, registry, "Main", "Transparent");
 		}
 
 		commandBuffer->UnbindRenderPass();

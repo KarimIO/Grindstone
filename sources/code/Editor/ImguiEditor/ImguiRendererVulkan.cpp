@@ -129,11 +129,26 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	VkCommandBuffer commandBuffer = vulkanCore->BeginSingleTimeCommands();
 	ImGui_ImplVulkan_CreateFontsTexture();
 	vulkanCore->EndSingleTimeCommands(commandBuffer);
+
+	GraphicsAPI::DescriptorSetLayout::Binding layoutBinding{};
+	layoutBinding.bindingId = 0;
+	layoutBinding.type = BindingType::Texture;
+	layoutBinding.count = 1;
+	layoutBinding.stages = ShaderStageBit::Fragment;
+
+	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
+	descriptorSetLayoutCreateInfo.debugName = "Imgui Texture Layout";
+	descriptorSetLayoutCreateInfo.bindingCount = 1;
+	descriptorSetLayoutCreateInfo.bindings = &layoutBinding;
+	textureDescriptorLayout = Editor::Manager::GetEngineCore().GetGraphicsCore()->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+
 }
 
 ImguiRendererVulkan::~ImguiRendererVulkan() {
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
 	GraphicsAPI::Vulkan::Core* graphicsCore = static_cast<Vulkan::Core*>(engineCore.GetGraphicsCore());
+
+	graphicsCore->DeleteDescriptorSetLayout(textureDescriptorLayout);
 
 	VkDevice device = graphicsCore->GetDevice();
 	vkDestroyDescriptorPool(device, imguiPool, nullptr);
@@ -234,23 +249,12 @@ ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	auto assetManager = engineCore.assetManager;
 	std::string assetAddress = "@EDITOR_ICONS/" + path.string();
-	auto textureAsset = static_cast<TextureAsset*>(assetManager->GetAsset(Grindstone::AssetType::Texture, std::string_view(assetAddress)));
+	Grindstone::Uuid uuid = assetManager->GetUuidByAddress(Grindstone::AssetType::Texture, assetAddress);
+	Grindstone::TextureAsset* textureAsset = static_cast<TextureAsset*>(assetManager->GetAndIncrementAssetCount(Grindstone::AssetType::Texture, uuid));
 
 	if (textureAsset == nullptr) {
 		return 0;
 	}
-
-	GraphicsAPI::DescriptorSetLayout::Binding layoutBinding{};
-	layoutBinding.bindingId = 0;
-	layoutBinding.type = BindingType::Texture;
-	layoutBinding.count = 1;
-	layoutBinding.stages = ShaderStageBit::Fragment;
-
-	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
-	descriptorSetLayoutCreateInfo.debugName = "Layout";
-	descriptorSetLayoutCreateInfo.bindingCount = 1;
-	descriptorSetLayoutCreateInfo.bindings = &layoutBinding;
-	auto layout = Editor::Manager::GetEngineCore().GetGraphicsCore()->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
 	GraphicsAPI::DescriptorSet::Binding binding{ textureAsset->texture };
 
@@ -259,7 +263,7 @@ ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {
 	descriptorSetCreateInfo.debugName = pathAsStr.c_str();
 	descriptorSetCreateInfo.bindings = &binding;
 	descriptorSetCreateInfo.bindingCount = 1;
-	descriptorSetCreateInfo.layout = layout;
+	descriptorSetCreateInfo.layout = textureDescriptorLayout;
 	auto dset = Editor::Manager::GetEngineCore().GetGraphicsCore()->CreateDescriptorSet(descriptorSetCreateInfo);
 
 	auto descriptor = static_cast<Vulkan::DescriptorSet*>(dset)->GetDescriptorSet();

@@ -79,34 +79,6 @@ static void RenderRenderQueuesTable(Grindstone::EngineCore& engineCore) {
 		}
 	}
 
-	if (meshRenderer == nullptr) {
-		ImGui::TreePop();
-		return;
-	}
-
-	if (ImGui::BeginTable("renderStatsSplit", 2)) {
-		ImGui::TableSetupColumn("Render Queue", ImGuiTableColumnFlags_WidthStretch);
-		ImGui::TableSetupColumn("Draw Count", ImGuiTableColumnFlags_WidthFixed);
-
-		ImGui::TableHeadersRow();
-		size_t i = 0;
-		for (auto& queueMapValue : meshRenderer->renderQueueMap) {
-			bool isEven = (++i % 2) == 0;
-			ImGuiCol_ colorKey = isEven ? ImGuiCol_TableRowBg : ImGuiCol_TableRowBgAlt;
-			ImU32 color = ImGui::GetColorU32(colorKey);
-			ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, color);
-			ImGui::TableNextRow();
-			ImGui::TableNextColumn();
-			ImGui::Text("%s", queueMapValue.first.c_str());
-			ImGui::TableNextColumn();
-			RenderQueueIndex queueIndex = queueMapValue.second;
-			Grindstone::RenderQueueContainer& queueContainer = meshRenderer->renderQueues[queueIndex];
-			ImGui::Text("%lu", queueContainer.renderSortData.size());
-		}
-
-		ImGui::EndTable();
-	}
-
 	ImGui::TreePop();
 }
 

@@ -2,6 +2,7 @@
 
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
+#include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <Common/Graphics/VertexArrayObject.hpp>
@@ -490,10 +491,7 @@ void GizmoRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	Grindstone::Assets::AssetManager* assetManager = engineCore.assetManager;
 	uint8_t shaderBits = static_cast<uint8_t>(GraphicsAPI::ShaderStageBit::Vertex | GraphicsAPI::ShaderStageBit::Fragment);
 
-	if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/editor/gizmo", shaderBits, 2, shaderStageCreateInfos, fileData)) {
-		GPRINT_ERROR(LogSource::Rendering, "Could not load gizmo shaders.");
-		return;
-	}
+	gizmoPipelineSet = assetManager->GetAssetReferenceByAddress<Grindstone::GraphicsPipelineAsset>("@CORESHADERS/editor/gizmo");
 
 	GraphicsAPI::DescriptorSetLayout::Binding gizmoDescriptorLayoutBinding
 		{ 0, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Vertex };
@@ -512,27 +510,6 @@ void GizmoRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	gizmoDescriptorSetCreateInfo.bindings = &gizmoDescriptorBinding;
 	gizmoDescriptorSetCreateInfo.layout = gizmoDescriptorSetLayout;
 	gizmoDescriptorSet = graphicsCore->CreateDescriptorSet(gizmoDescriptorSetCreateInfo);
-
-	GraphicsAPI::GraphicsPipeline::CreateInfo pipelineCreateInfo{};
-	pipelineCreateInfo.primitiveType = GraphicsAPI::GeometryType::Lines;
-	pipelineCreateInfo.polygonFillMode = GraphicsAPI::PolygonFillMode::Line;
-	pipelineCreateInfo.cullMode = GraphicsAPI::CullMode::None;
-	pipelineCreateInfo.hasDynamicScissor = true;
-	pipelineCreateInfo.hasDynamicViewport = true;
-	pipelineCreateInfo.vertexBindings = &gizmoVertexLayout;
-	pipelineCreateInfo.vertexBindingsCount = 1;
-	pipelineCreateInfo.debugName = "Gizmo Pipeline";
-	pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
-	pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-	pipelineCreateInfo.descriptorSetLayouts = &gizmoDescriptorSetLayout;
-	pipelineCreateInfo.descriptorSetLayoutCount = 1u;
-	pipelineCreateInfo.colorAttachmentCount = 1;
-	pipelineCreateInfo.isDepthWriteEnabled = false;
-	pipelineCreateInfo.isDepthTestEnabled = false;
-	pipelineCreateInfo.isStencilEnabled = false;
-	pipelineCreateInfo.blendData = GraphicsAPI::BlendData::NoBlending();
-	pipelineCreateInfo.renderPass = renderPass;
-	gizmoPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 }
 
 void GizmoRenderer::SubmitCubeGizmo(const glm::mat4& transform, glm::vec3 size, glm::vec4 color) {
@@ -561,6 +538,9 @@ void GizmoRenderer::SubmitSphereGizmo(const glm::mat4& transform, float radius, 
 }
 
 void GizmoRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, glm::mat4 projView) {
+	const Grindstone::GraphicsPipelineAsset::Pass* pass = gizmoPipelineSet.Get()->GetFirstPass();
+	Grindstone::GraphicsAPI::GraphicsPipeline* gizmoPipeline = pass->pipeline;
+
 	if (gizmoPipeline == nullptr) {
 		return;
 	}

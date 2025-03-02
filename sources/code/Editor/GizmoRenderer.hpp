@@ -4,6 +4,9 @@
 #include <glm/gtc/quaternion.hpp>
 #include <vector>
 
+#include <EngineCore/Assets/AssetReference.hpp>
+#include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
+
 namespace Grindstone::GraphicsAPI {
 	class CommandBuffer;
 	class UniformBuffer;
@@ -29,7 +32,7 @@ namespace Grindstone::Editor {
 		Grindstone::GraphicsAPI::UniformBuffer* gizmoUniformBuffer = nullptr;
 		Grindstone::GraphicsAPI::DescriptorSet* gizmoDescriptorSet = nullptr;
 		Grindstone::GraphicsAPI::DescriptorSetLayout* gizmoDescriptorSetLayout = nullptr;
-		Grindstone::GraphicsAPI::GraphicsPipeline* gizmoPipeline = nullptr;
+		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> gizmoPipelineSet;
 
 		Grindstone::GraphicsAPI::VertexBuffer* gizmoShapesVertexBuffer = nullptr;
 		Grindstone::GraphicsAPI::IndexBuffer* gizmoShapesIndexBuffer = nullptr;

@@ -92,10 +92,6 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 		GRIND_PROFILE_SCOPE("Initialize Asset Managers");
 		assetManager = AllocatorCore::Allocate<Assets::AssetManager>(createInfo.assetLoader);
 		assetRendererManager = AllocatorCore::Allocate<AssetRendererManager>();
-		assetRendererManager->AddQueue("Opaque", DrawSortMode::DistanceFrontToBack);
-		assetRendererManager->AddQueue("Transparent", DrawSortMode::DistanceBackToFront);
-		assetRendererManager->AddQueue("Unlit", DrawSortMode::DistanceFrontToBack);
-		assetRendererManager->AddQueue("Skybox", DrawSortMode::DistanceFrontToBack);
 	}
 
 	{

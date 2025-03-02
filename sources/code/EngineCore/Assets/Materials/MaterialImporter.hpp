@@ -8,7 +8,6 @@
 
 #include <Common/Graphics/DescriptorSet.hpp>
 #include <EngineCore/Assets/AssetImporter.hpp>
-#include <EngineCore/Assets/Shaders/ShaderReflectionData.hpp>
 #include "MaterialAsset.hpp"
 
 namespace Grindstone {
@@ -23,12 +22,9 @@ namespace Grindstone {
 		MaterialImporter();
 		virtual ~MaterialImporter() override;
 		virtual void QueueReloadAsset(Uuid uuid) override;
-		virtual void* ProcessLoadedFile(Uuid uuid) override;
+		virtual void* LoadAsset(Uuid uuid) override;
 
 	private:
-		void SetupUniformBuffer(rapidjson::Document& document, ShaderReflectionData& reflectionData, std::vector<GraphicsAPI::DescriptorSet::Binding>& bindings, std::string name, MaterialAsset* materialAsset);
-		void SetupSamplers(rapidjson::Document& document, ShaderReflectionData& reflectionData, std::vector<GraphicsAPI::DescriptorSet::Binding>& bindings);
-
 		GraphicsAPI::Texture* missingTexture = nullptr;
 	};
 }

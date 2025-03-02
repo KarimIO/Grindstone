@@ -2,8 +2,12 @@
 
 #include <vector>
 #include <glm/glm.hpp>
+
 #include <Common/ResourcePipeline/Uuid.hpp>
+#include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
+#include <EngineCore/Assets/PipelineSet/ComputePipelineAsset.hpp>
 #include <EngineCore/Assets/AssetReference.hpp>
+
 #include "BaseRenderer.hpp"
 
 namespace Grindstone {
@@ -103,8 +107,6 @@ namespace Grindstone {
 			std::vector<GraphicsAPI::DescriptorSet*> bloomDescriptorSets;
 		};
 
-		std::map<Uuid, GraphicsAPI::GraphicsPipeline*> graphicsPipelineMap;
-
 		void CreatePipelines();
 		void CreateBloomUniformBuffers();
 		void UpdateBloomDescriptorSet(DeferredRendererImageSet& imageSet);
@@ -126,7 +128,6 @@ namespace Grindstone {
 		void CreateBloomResources();
 		void CreateSSRResources();
 		void CreateSsaoKernelAndNoise();
-		void CleanupPipelines();
 		void CreateDescriptorSetLayouts();
 		void CreateGbufferFramebuffer();
 		void CreateLitHDRFramebuffer();
@@ -206,24 +207,23 @@ namespace Grindstone {
 		GraphicsAPI::IndexBuffer* indexBuffer;
 		GraphicsAPI::VertexArrayObject* planePostProcessVao = nullptr;
 
-		GraphicsAPI::GraphicsPipeline* ssaoPipeline = nullptr;
-		GraphicsAPI::GraphicsPipeline* imageBasedLightingPipeline = nullptr;
-		GraphicsAPI::GraphicsPipeline* spotLightPipeline = nullptr;
-		GraphicsAPI::GraphicsPipeline* pointLightPipeline = nullptr;
-		GraphicsAPI::GraphicsPipeline* directionalLightPipeline = nullptr;
-		GraphicsAPI::GraphicsPipeline* tonemapPipeline = nullptr;
-		GraphicsAPI::GraphicsPipeline* dofSeparationPipeline = nullptr;
-		GraphicsAPI::GraphicsPipeline* dofBlurPipeline = nullptr;
-		GraphicsAPI::GraphicsPipeline* dofCombinationPipeline = nullptr;
-		GraphicsAPI::GraphicsPipeline* shadowMappingPipeline = nullptr;
-		GraphicsAPI::GraphicsPipeline* debugPipeline = nullptr;
+		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> ssaoPipelineSet;
+		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> imageBasedLightingPipelineSet;
+		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> spotLightPipelineSet;
+		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> pointLightPipelineSet;
+		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> directionalLightPipelineSet;
+		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> tonemapPipelineSet;
+		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> dofSeparationPipelineSet;
+		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> dofBlurPipelineSet;
+		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> dofCombinationPipelineSet;
+		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> debugPipelineSet;
+
+		Grindstone::AssetReference<Grindstone::ComputePipelineAsset> ssrPipelineSet;
+		Grindstone::AssetReference<Grindstone::ComputePipelineAsset> bloomPipelineSet;
 
 		GraphicsAPI::DescriptorSetLayout* dofSourceDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* dofBlurDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* dofCombinationDescriptorSetLayout = nullptr;
-
-		GraphicsAPI::ComputePipeline* ssrPipeline = nullptr;
-		GraphicsAPI::ComputePipeline* bloomPipeline = nullptr;
 
 		static std::array<Grindstone::BaseRenderer::RenderMode, static_cast<uint16_t>(DeferredRenderMode::Count)> renderModes;
 

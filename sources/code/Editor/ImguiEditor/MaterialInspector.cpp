@@ -21,7 +21,7 @@ void MaterialInspector::SetMaterialPath(const std::filesystem::path& materialPat
 		return;
 	}
 
-	ReloadAvailableShaders();
+	ReloadAvailablePipelineSets();
 
 	samplers.clear();
 	parameters.clear();
@@ -62,12 +62,12 @@ void MaterialInspector::SetMaterialPath(const std::filesystem::path& materialPat
 	}
 }
 
-void MaterialInspector::ReloadAvailableShaders() {
+void MaterialInspector::ReloadAvailablePipelineSets() {
 	AssetRegistry& registry = Editor::Manager::GetInstance().GetAssetRegistry();
-	registry.FindAllFilesOfType(AssetType::Shader, availableShaders);
+	registry.FindAllFilesOfType(AssetType::GraphicsPipelineSet, availablePipelineSets);
 
 	std::sort(
-		availableShaders.begin(), availableShaders.end(),
+		availablePipelineSets.begin(), availablePipelineSets.end(),
 		[](AssetRegistry::Entry& a, AssetRegistry::Entry& b) {
 			return a.displayName < b.displayName;
 		}
@@ -80,12 +80,12 @@ void MaterialInspector::Render() {
 		hasBeenChanged = true;
 	}
 
-	if (ImGui::BeginCombo("Shader", shaderName.c_str())) {
-		for (size_t i = 0; i < availableShaders.size(); ++i) {
-			bool isCurrentShader = availableShaders[i].uuid == shaderUuid;
-			if (ImGui::Selectable(availableShaders[i].displayName.c_str(), isCurrentShader)) {
-				shaderName = availableShaders[i].displayName;
-				shaderUuid = availableShaders[i].uuid;
+	if (ImGui::BeginCombo("Graphics Pipeline Set", pipelineSetName.c_str())) {
+		for (size_t i = 0; i < availablePipelineSets.size(); ++i) {
+			bool isCurrentShader = availablePipelineSets[i].uuid == shaderUuid;
+			if (ImGui::Selectable(availablePipelineSets[i].displayName.c_str(), isCurrentShader)) {
+				pipelineSetName = availablePipelineSets[i].displayName;
+				shaderUuid = availablePipelineSets[i].uuid;
 
 				TryLoadShaderReflection(shaderUuid);
 
@@ -128,7 +128,7 @@ bool MaterialInspector::TryLoadShaderReflection(Uuid& shaderUuid) {
 	rapidjson::Document document;
 	document.Parse(contentData.c_str());
 	if (document.HasMember("name")) {
-		shaderName = document.HasMember("name")
+		pipelineSetName = document.HasMember("name")
 			? document["name"].GetString()
 			: "Untitled Shader";
 	}
@@ -167,7 +167,6 @@ void MaterialInspector::LoadShaderUniformBuffers(rapidjson::Value& uniformBuffer
 		rapidjson::Value* itr = uniformBuffers.Begin();
 		itr != uniformBuffers.End();
 		++itr
-	) {
 		auto& uniformBuffer = *itr;
 		auto name = uniformBuffer["name"].GetString();
 		size_t bindingId = uniformBuffer["binding"].GetUint();
@@ -180,7 +179,6 @@ void MaterialInspector::LoadShaderUniformBuffers(rapidjson::Value& uniformBuffer
 			rapidjson::Value* memberItr = memberSource.Begin();
 			memberItr != memberSource.End();
 			++memberItr
-		) {
 			auto& memberData = *memberItr;
 			auto name = memberData["name"].GetString();
 			size_t offset = memberData["offset"].GetUint();
@@ -195,7 +193,6 @@ void MaterialInspector::LoadMaterialSamplers(rapidjson::Value& samplers) {
 		const char* samplerName = shaderSampler.name.c_str();
 		if (samplers.HasMember(samplerName)) {
 			const char* samplerValue = samplers[samplerName].GetString();
-			Uuid uuid = samplerValue;
 			Grindstone::Uuid uuid;
 			AssetRegistry::Entry entry;
 			if (!Grindstone::Uuid::MakeFromString(samplerValue, uuid)) {

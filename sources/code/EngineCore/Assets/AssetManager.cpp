@@ -6,11 +6,9 @@
 #include "Loaders/ArchiveAssetLoader.hpp"
 
 // Assets
-#include "Materials/MaterialAsset.hpp"
 #include "Materials/MaterialImporter.hpp"
-#include "Shaders/ShaderAsset.hpp"
-#include "Shaders/ShaderImporter.hpp"
-#include "Textures/TextureAsset.hpp"
+#include "PipelineSet/GraphicsPipelineImporter.hpp"
+#include "PipelineSet/ComputePipelineImporter.hpp"
 #include "Textures/TextureImporter.hpp"
 
 #include "AssetManager.hpp"
@@ -45,10 +43,12 @@ AssetManager::~AssetManager() {
 		AllocatorCore::Free(assetLoader);
 	}
 
-	AllocatorCore::Free(static_cast<ShaderImporter*>(assetTypeImporters[static_cast<size_t>(ShaderAsset::GetStaticType())]));
+	AllocatorCore::Free(static_cast<GraphicsPipelineImporter*>(assetTypeImporters[static_cast<size_t>(GraphicsPipelineAsset::GetStaticType())]));
+	AllocatorCore::Free(static_cast<ComputePipelineImporter*>(assetTypeImporters[static_cast<size_t>(ComputePipelineAsset::GetStaticType())]));
 	AllocatorCore::Free(static_cast<TextureImporter*>(assetTypeImporters[static_cast<size_t>(TextureAsset::GetStaticType())]));
 	AllocatorCore::Free(static_cast<MaterialImporter*>(assetTypeImporters[static_cast<size_t>(MaterialAsset::GetStaticType())]));
-	UnregisterAssetType(ShaderAsset::GetStaticType());
+	UnregisterAssetType(GraphicsPipelineAsset::GetStaticType());
+	UnregisterAssetType(ComputePipelineAsset::GetStaticType());
 	UnregisterAssetType(TextureAsset::GetStaticType());
 	UnregisterAssetType(MaterialAsset::GetStaticType());
 

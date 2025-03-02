@@ -6,7 +6,7 @@
 #include "EngineCore/EngineCore.hpp"
 #include "Common/Graphics/Core.hpp"
 #include "EngineCore/Assets/Materials/MaterialImporter.hpp"
-#include "EngineCore/Assets/Shaders/ShaderAsset.hpp"
+#include "EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp"
 #include "EngineCore/Scenes/Scene.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
 #include "Components/MeshComponent.hpp"
@@ -14,18 +14,42 @@
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
-static int CompareRenderSort(const RenderSortData& a, const RenderSortData& b) {
+struct RenderTask {
+	GraphicsAPI::DescriptorSet* materialDescriptorSet;
+	GraphicsAPI::DescriptorSet* perDrawDescriptorSet;
+	class GraphicsAPI::GraphicsPipeline* pipeline;
+	class GraphicsAPI::VertexArrayObject* vertexArrayObject;
+	uint32_t indexCount;
+	uint32_t baseVertex;
+	uint32_t baseIndex;
+	glm::mat4 transformMatrix;
+	uint32_t sortData;
+};
+
+struct RenderTaskGroup {
+	uint32_t offset;
+	uint32_t count;
+};
+
+using RenderTaskList = std::vector<RenderTask>;
+using SortedRender = std::vector<size_t>;
+
+struct RenderSortData {
+	size_t renderTaskIndex;
+	uint32_t sortData;
+};
+
+struct Mesh3dUbo {
+	glm::mat4 modelMatrix;
+};
+
+
+static int CompareRenderSort(const RenderTask& a, const RenderTask& b) {
 	return a.sortData > b.sortData;
 }
 
-static int CompareReverseRenderSort(const RenderSortData& a, const RenderSortData& b) {
+static int CompareReverseRenderSort(const RenderTask& a, const RenderTask& b) {
 	return a.sortData < b.sortData;
-}
-
-void Mesh3dRenderer::AddQueue(const char* queueName, DrawSortMode drawSortMode) {
-	RenderQueueIndex index = static_cast<RenderQueueIndex>(renderQueues.size());
-	RenderQueueContainer& queue = renderQueues.emplace_back(drawSortMode);
-	renderQueueMap[queueName] = index;
 }
 
 Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
@@ -54,117 +78,85 @@ std::string Mesh3dRenderer::GetName() const {
 	return rendererName;
 }
 
-void Mesh3dRenderer::RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet, entt::registry& registry, glm::vec3 lightSourcePosition) {
+void Mesh3dRenderer::RenderQueue(
+	GraphicsAPI::CommandBuffer* commandBuffer,
+	const entt::registry& registry,
+	Grindstone::HashedString passType,
+	Grindstone::HashedString drawOrderBucket
+) {
 	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
 	Assets::AssetManager* assetManager = engineCore->assetManager;
 
-	auto skybox = renderQueueMap.find("Skybox");
-	RenderQueueIndex renderQueueSkyIndex = INVALID_RENDER_QUEUE;
-	if (skybox == renderQueueMap.end()) {
-		renderQueueSkyIndex = skybox->second;
-	}
-
 	std::vector<RenderTask> renderTasks;
-	std::vector<RenderSortData> renderSortData;
+	renderTasks.reserve(1000);
 
-	auto view = registry.view<const entt::entity, const TransformComponent, const MeshComponent, MeshRendererComponent>();
+	auto view = registry.view<const entt::entity, const TransformComponent, const MeshComponent, const MeshRendererComponent>();
 	view.each(
 		[&](
 			const entt::entity entity,
 			const TransformComponent& transformComponent,
 			const MeshComponent& meshComponent,
-			MeshRendererComponent& meshRenderComponent
+			const MeshRendererComponent& meshRenderComponent
 		) {
-		// Add to Render Queue
-		Mesh3dAsset* meshAsset = assetManager->GetAsset(meshComponent.mesh);
+			// Add to Render Queue
+			Mesh3dAsset* meshAsset = assetManager->GetAssetByUuid<Mesh3dAsset>(meshComponent.mesh.uuid);
 
-		if (meshAsset == nullptr) {
-			return;
+			if (meshAsset == nullptr) {
+				return;
+			}
+
+			// Early Frustum Cull
+
+			Math::Matrix4 transform = TransformComponent::GetWorldTransformMatrix(entity, registry);
+			meshRenderComponent.perDrawUniformBuffer->UpdateBuffer(&transform);
+
+			const std::vector<Grindstone::AssetReference<Grindstone::MaterialAsset>>& materials = meshRenderComponent.materials;
+			for (const Grindstone::Mesh3dAsset::Submesh& submesh : meshAsset->submeshes) {
+				if (submesh.materialIndex >= materials.size()) {
+					continue;
+				}
+
+				Grindstone::AssetReference<Grindstone::MaterialAsset> materialReference = materials[submesh.materialIndex];
+				MaterialAsset* materialAsset = assetManager->GetAssetByUuid<Grindstone::MaterialAsset>(materialReference.uuid);
+				if (materialAsset == nullptr) {
+					continue;
+				}
+
+				GraphicsPipelineAsset* graphicsPipelineAsset = assetManager->GetAssetByUuid<GraphicsPipelineAsset>(materialAsset->pipelineSetAsset.uuid);
+				if (graphicsPipelineAsset == nullptr) {
+					continue;
+				}
+
+				const Grindstone::GraphicsPipelineAsset::Pass* pass = graphicsPipelineAsset->GetPass(passType, drawOrderBucket);
+				if (pass == nullptr) {
+					continue;
+				}
+
+				uint32_t sortData = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(pass->pipeline));
+
+				RenderTask renderTask{};
+				renderTask.materialDescriptorSet = materialAsset->materialDescriptorSet;
+				renderTask.pipeline = pass->pipeline;
+				renderTask.vertexArrayObject = meshAsset->vertexArrayObject;
+				renderTask.indexCount = submesh.indexCount;
+				renderTask.baseVertex = submesh.baseVertex;
+				renderTask.baseIndex = submesh.baseIndex;
+				renderTask.perDrawDescriptorSet = meshRenderComponent.perDrawDescriptorSet;
+				renderTask.sortData = sortData;
+
+				renderTasks.emplace_back(renderTask);
+			}
 		}
+	);
 
-		// Early Frustum Cull
-
-		Math::Matrix4 transform = TransformComponent::GetWorldTransformMatrix(entity, registry);
-		meshRenderComponent.perDrawUniformBuffer->UpdateBuffer(&transform);
-
-		glm::vec3 offset = TransformComponent::GetWorldPosition(entity, registry) - lightSourcePosition;
-		// Multiply because this will be simplified to an int.
-		const float distanceMultiplier = 100.0f;
-		// Distance squared is used to sort. It's squared because we don't need exact distance to sort, and it's an expensive function.
-		float distanceSquared =
-			(offset.x * offset.x) +
-			(offset.y * offset.y) +
-			(offset.z * offset.z);
-		distanceSquared *= distanceMultiplier;
-		uint32_t sortData = static_cast<uint32_t>(distanceSquared);
-
-		const std::vector<Grindstone::AssetReference<Grindstone::MaterialAsset>>& materials = meshRenderComponent.materials;
-		for (const Grindstone::Mesh3dAsset::Submesh& submesh : meshAsset->submeshes) {
-			if (submesh.materialIndex >= materials.size()) {
-				continue;
-			}
-
-			const Grindstone::AssetReference<Grindstone::MaterialAsset> materialAssetReference = materials[submesh.materialIndex];
-			if (!materialAssetReference.uuid.IsValid()) {
-				continue;
-			}
-
-			MaterialAsset* materialAsset = assetManager->GetAsset(materialAssetReference);
-			if (materialAsset == nullptr) {
-				continue;
-			}
-
-			ShaderAsset* shaderAsset = assetManager->GetAsset<ShaderAsset>(materialAsset->shaderUuid);
-			if (shaderAsset == nullptr) {
-				continue;
-			}
-
-			RenderTask renderTask{};
-			renderTask.materialDescriptorSet = materialAsset->descriptorSet;
-			renderTask.pipeline = shaderAsset->pipeline;
-			renderTask.vertexArrayObject = meshAsset->vertexArrayObject;
-			renderTask.indexCount = submesh.indexCount;
-			renderTask.baseVertex = submesh.baseVertex;
-			renderTask.baseIndex = submesh.baseIndex;
-			renderTask.perDrawDescriptorSet = meshRenderComponent.perDrawDescriptorSet;
-			renderTask.sortData = sortData;
-			renderTasks.emplace_back(renderTask);
-		}
-	});
-
-	renderSortData.resize(renderTasks.size());
-	for (size_t i = 0; i < renderSortData.size(); ++i) {
-		renderSortData[i].renderTaskIndex = i;
-		renderSortData[i].sortData = renderTasks[i].sortData;
-	}
-
-	std::sort(renderSortData.begin(), renderSortData.end(), CompareRenderSort);
-
-	for (size_t sortIndex = 0; sortIndex < renderSortData.size(); ++sortIndex) {
-		size_t renderTaskIndex = renderSortData[sortIndex].renderTaskIndex;
-		Grindstone::RenderTask& renderTask = renderTasks[renderTaskIndex];
-
-		commandBuffer->BindVertexArrayObject(renderTask.vertexArrayObject);
-
-		commandBuffer->DrawIndices(
-			renderTask.baseIndex,
-			renderTask.indexCount,
-			0,
-			1,
-			renderTask.baseVertex
-		);
-	}
-}
-
-void Mesh3dRenderer::RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, const char* queueName) {
-	RenderQueueContainer& renderQueue = renderQueues[renderQueueMap[queueName]];
+	std::sort(renderTasks.begin(), renderTasks.end(), CompareRenderSort);
+	
+	std::vector<RenderTaskGroup> renderTaskGroups;
+	renderTasks.reserve(1000);
 
 	GraphicsAPI::GraphicsPipeline* graphicsPipeline = nullptr;
-	Assets::AssetManager* assetManager = engineCore->assetManager;
 
-	for (size_t sortIndex = 0; sortIndex < renderQueue.renderSortData.size(); ++sortIndex) {
-		size_t renderTaskIndex = renderQueue.renderSortData[sortIndex].renderTaskIndex;
-		Grindstone::RenderTask& renderTask = renderQueue.renderTasks[renderTaskIndex];
+	for (RenderTask& renderTask : renderTasks) {
 		if (graphicsPipeline != renderTask.pipeline) {
 			graphicsPipeline = renderTask.pipeline;
 			commandBuffer->BindGraphicsPipeline(renderTask.pipeline);
@@ -185,103 +177,6 @@ void Mesh3dRenderer::RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, cons
 			1,
 			renderTask.baseVertex
 		);
-	}
-}
-
-void Mesh3dRenderer::CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt::registry& registry) {
-	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
-	Assets::AssetManager* assetManager = engineCore->assetManager;
-
-	for(auto& renderQueue : renderQueues) {
-		renderQueue.renderTasks.clear();
-		renderQueue.renderTasks.reserve(8000);
-	}
-
-	auto view = registry.view<const entt::entity, const TransformComponent, const MeshComponent, MeshRendererComponent>();
-	view.each([&](
-		const entt::entity entity,
-		const TransformComponent& transformComponent,
-		const MeshComponent& meshComponent,
-		MeshRendererComponent& meshRenderComponent
-	) {
-		// Add to Render Queue
-		Mesh3dAsset* meshAsset = assetManager->GetAsset(meshComponent.mesh);
-
-		if (meshAsset == nullptr) {
-			return;
-		}
-
-		// Early Frustum Cull
-
-		Math::Matrix4 transform = TransformComponent::GetWorldTransformMatrix(entity, registry);
-		meshRenderComponent.perDrawUniformBuffer->UpdateBuffer(&transform);
-
-		glm::vec3 offset = TransformComponent::GetWorldPosition(entity, registry) - eyePosition;
-		// Multiply because this will be simplified to an int.
-		const float distanceMultiplier = 100.0f;
-		// Distance squared is used to sort. It's squared because we don't need exact distance to sort, and it's an expensive function.
-		float distanceSquared = (offset.x * offset.x) + (offset.y * offset.y) + (offset.z * offset.z);
-		distanceSquared *= distanceMultiplier;
-		uint32_t sortData = static_cast<uint32_t>(distanceSquared);
-
-		const std::vector<Grindstone::AssetReference<Grindstone::MaterialAsset>>& materials = meshRenderComponent.materials;
-		for (const Grindstone::Mesh3dAsset::Submesh& submesh : meshAsset->submeshes) {
-			if (submesh.materialIndex >= materials.size()) {
-				continue;
-			}
-
-			Grindstone::AssetReference<Grindstone::MaterialAsset> materialReference = materials[submesh.materialIndex];
-			MaterialAsset* materialAsset = assetManager->GetAsset(materialReference);
-			if (materialAsset == nullptr) {
-				continue;
-			}
-
-			ShaderAsset* shaderAsset = assetManager->GetAsset<ShaderAsset>(materialAsset->shaderUuid);
-			if (shaderAsset == nullptr) {
-				continue;
-			}
-
-			RenderTask renderTask{};
-			renderTask.materialDescriptorSet = materialAsset->descriptorSet;
-			renderTask.pipeline = shaderAsset->pipeline;
-			renderTask.vertexArrayObject = meshAsset->vertexArrayObject;
-			renderTask.indexCount = submesh.indexCount;
-			renderTask.baseVertex = submesh.baseVertex;
-			renderTask.baseIndex = submesh.baseIndex;
-			renderTask.perDrawDescriptorSet = meshRenderComponent.perDrawDescriptorSet;
-			renderTask.sortData = sortData;
-
-			RenderQueueIndex renderQueueIndex = shaderAsset->renderQueue;
-
-			if (renderQueueIndex == INVALID_RENDER_QUEUE || renderQueueIndex >= renderQueues.size()) {
-				continue;
-			}
-
-			renderQueues[renderQueueIndex].renderTasks.emplace_back(renderTask);
-		}
-	});
-}
-
-void Mesh3dRenderer::SortQueues() {
-	for (RenderQueueContainer& renderQueue : renderQueues) {
-		std::vector<RenderSortData>& renderSortData = renderQueue.renderSortData;
-		RenderTaskList& renderTasks = renderQueue.renderTasks;
-
-		renderSortData.resize(renderTasks.size());
-
-		// Build sort data list
-		for (size_t i = 0; i < renderSortData.size(); ++i) {
-			renderSortData[i].renderTaskIndex = i;
-			renderSortData[i].sortData = renderTasks[i].sortData;
-		}
-
-		// Sort the list
-		if (renderQueue.sortMode == DrawSortMode::DistanceFrontToBack) {
-			std::sort(renderSortData.begin(), renderSortData.end(), CompareRenderSort);
-		}
-		else {
-			std::sort(renderSortData.begin(), renderSortData.end(), CompareReverseRenderSort);
-		}
 	}
 }
 

@@ -2,6 +2,7 @@
 
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
+#include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <Common/Graphics/VertexArrayObject.hpp>
@@ -51,10 +52,7 @@ void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	Grindstone::Assets::AssetManager* assetManager = engineCore.assetManager;
 	uint8_t shaderBits = static_cast<uint8_t>(GraphicsAPI::ShaderStageBit::Vertex | GraphicsAPI::ShaderStageBit::Fragment);
 
-	if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/editor/grid", shaderBits, 2, shaderStageCreateInfos, fileData)) {
-		GPRINT_ERROR(LogSource::Rendering, "Could not load grid shaders.");
-		return;
-	}
+	pipelineSet = assetManager->GetAssetReferenceByAddress<Grindstone::GraphicsPipelineAsset>("@CORESHADERS/editor/grid");
 
 	GraphicsAPI::DescriptorSetLayout::Binding gridDescriptorLayoutBinding
 		{ 0, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Vertex | GraphicsAPI::ShaderStageBit::Fragment };
@@ -73,33 +71,15 @@ void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	gridDescriptorSetCreateInfo.bindings = &gridDescriptorBinding;
 	gridDescriptorSetCreateInfo.layout = gridDescriptorSetLayout;
 	gridDescriptorSet = graphicsCore->CreateDescriptorSet(gridDescriptorSetCreateInfo);
-
-	GraphicsAPI::GraphicsPipeline::CreateInfo pipelineCreateInfo{};
-	pipelineCreateInfo.primitiveType = GraphicsAPI::GeometryType::Triangles;
-	pipelineCreateInfo.polygonFillMode = GraphicsAPI::PolygonFillMode::Fill;
-	pipelineCreateInfo.cullMode = GraphicsAPI::CullMode::None;
-	pipelineCreateInfo.hasDynamicScissor = true;
-	pipelineCreateInfo.hasDynamicViewport = true;
-	pipelineCreateInfo.vertexBindings = nullptr;
-	pipelineCreateInfo.vertexBindingsCount = 0;
-	pipelineCreateInfo.debugName = "Grid Pipeline";
-	pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
-	pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-	pipelineCreateInfo.descriptorSetLayouts = &gridDescriptorSetLayout;
-	pipelineCreateInfo.descriptorSetLayoutCount = 1u;
-	pipelineCreateInfo.colorAttachmentCount = 1;
-	pipelineCreateInfo.isDepthWriteEnabled = false;
-	pipelineCreateInfo.isDepthTestEnabled = true;
-	pipelineCreateInfo.isStencilEnabled = false;
-	pipelineCreateInfo.blendData = GraphicsAPI::BlendData::AdditiveAlpha();
-	pipelineCreateInfo.renderPass = renderPass;
-	gridPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 }
 
 void GridRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, glm::vec2 renderScale, glm::mat4 proj, glm::mat4 view, float nearDist, float farDist, glm::quat rotation, float offset) {
-	if (gridPipeline == nullptr) {
+	if (pipelineSet) {
 		return;
 	}
+
+	Grindstone::GraphicsPipelineAsset* shaderAsset = pipelineSet.Get();
+	const Grindstone::GraphicsPipelineAsset::Pass* pipelinePass = shaderAsset->GetFirstPass();
 
 	GridUniformBuffer gridData{};
 	gridData.projMatrix = proj;
@@ -109,8 +89,8 @@ void GridRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer,
 	gridData.farDistance = farDist;
 
 	gridUniformBuffer->UpdateBuffer(&gridData);
-	commandBuffer->BindGraphicsPipeline(gridPipeline);
-	commandBuffer->BindGraphicsDescriptorSet(gridPipeline, &gridDescriptorSet, 1);
+	commandBuffer->BindGraphicsPipeline(pipelinePass->pipeline);
+	commandBuffer->BindGraphicsDescriptorSet(pipelinePass->pipeline, &gridDescriptorSet, 1);
 
 	commandBuffer->DrawVertices(6, 0, 1, 0);
 }
