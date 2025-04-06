@@ -121,7 +121,9 @@ void Mesh3dImporter::QueueReloadAsset(Uuid uuid) {
 
 	meshAsset.submeshes.clear();
 
-	ImportModelFile(meshAsset);
+	if (!ImportModelFile(meshAsset)) {
+		return;
+	}
 }
 
 void Mesh3dImporter::LoadMeshImportSubmeshes(Mesh3dAsset& mesh, Formats::Model::V1::Header& header, char*& sourcePtr) {
@@ -199,12 +201,14 @@ void Mesh3dImporter::LoadMeshImportIndices(
 }
 
 void* Mesh3dImporter::LoadAsset(Uuid uuid) {
-	auto& meshIterator = assets.emplace(uuid, Mesh3dAsset(uuid, uuid.ToString()));
-	Mesh3dAsset& mesh = meshIterator.first->second;
+	Mesh3dAsset mesh = Mesh3dAsset(uuid, uuid.ToString());
 
-	ImportModelFile(mesh);
+	if (!ImportModelFile(mesh)) {
+		return nullptr;
+	}
 
-	return &mesh;
+	auto& meshIterator = assets.emplace(uuid, mesh);
+	return &meshIterator.first->second;
 }
 
 bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
@@ -261,8 +265,7 @@ bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 	vaoCi.vertexBufferCount = static_cast<uint32_t>(vertexBuffers.size());
 	mesh.vertexArrayObject = graphicsCore->CreateVertexArrayObject(vaoCi);
 
-	for (size_t i = 0; i < mesh.submeshes.size(); ++i)
-	{
+	for (size_t i = 0; i < mesh.submeshes.size(); ++i) {
 		mesh.submeshes[i].vertexArrayObject = mesh.vertexArrayObject;
 	}
 

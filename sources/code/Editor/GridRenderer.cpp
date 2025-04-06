@@ -74,12 +74,15 @@ void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 }
 
 void GridRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, glm::vec2 renderScale, glm::mat4 proj, glm::mat4 view, float nearDist, float farDist, glm::quat rotation, float offset) {
-	if (pipelineSet) {
+	Grindstone::GraphicsPipelineAsset* pipelineAsset = pipelineSet.Get();
+	if (pipelineAsset == nullptr) {
 		return;
 	}
 
-	Grindstone::GraphicsPipelineAsset* shaderAsset = pipelineSet.Get();
-	const Grindstone::GraphicsPipelineAsset::Pass* pipelinePass = shaderAsset->GetFirstPass();
+	Grindstone::GraphicsAPI::GraphicsPipeline* pipeline = pipelineAsset->GetFirstPassPipeline();
+	if (pipeline == nullptr) {
+		return;
+	}
 
 	GridUniformBuffer gridData{};
 	gridData.projMatrix = proj;
@@ -89,8 +92,8 @@ void GridRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer,
 	gridData.farDistance = farDist;
 
 	gridUniformBuffer->UpdateBuffer(&gridData);
-	commandBuffer->BindGraphicsPipeline(pipelinePass->pipeline);
-	commandBuffer->BindGraphicsDescriptorSet(pipelinePass->pipeline, &gridDescriptorSet, 1);
+	commandBuffer->BindGraphicsPipeline(pipeline);
+	commandBuffer->BindGraphicsDescriptorSet(pipeline, &gridDescriptorSet, 1);
 
 	commandBuffer->DrawVertices(6, 0, 1, 0);
 }

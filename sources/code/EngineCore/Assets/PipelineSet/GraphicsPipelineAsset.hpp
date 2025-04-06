@@ -65,6 +65,30 @@ namespace Grindstone {
 			return &passes[0];
 		}
 
+		const Grindstone::GraphicsAPI::GraphicsPipeline* GetFirstPassPipeline() const {
+			if (passes.size() == 0) {
+				return nullptr;
+			}
+
+			return passes[0].pipeline;
+		}
+
+		Grindstone::GraphicsPipelineAsset::Pass* GetFirstPass() {
+			if (passes.size() == 0) {
+				return nullptr;
+			}
+
+			return &passes[0];
+		}
+
+		Grindstone::GraphicsAPI::GraphicsPipeline* GetFirstPassPipeline() {
+			if (passes.size() == 0) {
+				return nullptr;
+			}
+
+			return passes[0].pipeline;
+		}
+
 		const Grindstone::GraphicsPipelineAsset::Pass* GetPass(Grindstone::HashedString renderPass) const {
 			for (const Grindstone::GraphicsPipelineAsset::Pass& pass : passes) {
 				if (pass.renderPass == renderPass) {

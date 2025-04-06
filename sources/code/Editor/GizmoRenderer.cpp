@@ -538,9 +538,12 @@ void GizmoRenderer::SubmitSphereGizmo(const glm::mat4& transform, float radius, 
 }
 
 void GizmoRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, glm::mat4 projView) {
-	const Grindstone::GraphicsPipelineAsset::Pass* pass = gizmoPipelineSet.Get()->GetFirstPass();
-	Grindstone::GraphicsAPI::GraphicsPipeline* gizmoPipeline = pass->pipeline;
+	Grindstone::GraphicsPipelineAsset* pipelineAsset = gizmoPipelineSet.Get();
+	if (pipelineAsset == nullptr) {
+		return;
+	}
 
+	Grindstone::GraphicsAPI::GraphicsPipeline* gizmoPipeline = pipelineAsset->GetFirstPassPipeline();
 	if (gizmoPipeline == nullptr) {
 		return;
 	}

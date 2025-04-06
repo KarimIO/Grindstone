@@ -8,6 +8,7 @@
 #include <Common/Window/WindowManager.hpp>
 #include <Common/Window/GlfwWindow.hpp>
 #include <Editor/EditorManager.hpp>
+#include <EngineCore/Logger.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Assets/Textures/TextureAsset.hpp>
 #include <Plugins/GraphicsVulkan/VulkanCore.hpp>
@@ -250,8 +251,12 @@ ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {
 	auto assetManager = engineCore.assetManager;
 	std::string assetAddress = "@EDITOR_ICONS/" + path.string();
 	Grindstone::Uuid uuid = assetManager->GetUuidByAddress(Grindstone::AssetType::Texture, assetAddress);
-	Grindstone::TextureAsset* textureAsset = static_cast<TextureAsset*>(assetManager->GetAndIncrementAssetCount(Grindstone::AssetType::Texture, uuid));
+	if (!uuid.IsValid()) {
+		GPRINT_ERROR_V(LogSource::Editor, "Could not find texture uuid for {}.", assetAddress);
+		return 0;
+	}
 
+	Grindstone::TextureAsset* textureAsset = static_cast<TextureAsset*>(assetManager->GetAndIncrementAssetCount(Grindstone::AssetType::Texture, uuid));
 	if (textureAsset == nullptr) {
 		return 0;
 	}

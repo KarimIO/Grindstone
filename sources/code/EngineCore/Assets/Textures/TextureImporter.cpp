@@ -14,21 +14,21 @@
 using namespace Grindstone;
 using namespace Grindstone::Formats::DDS;
 
-static void LoadTextureAsset(TextureAsset& textureAsset) {
+static bool LoadTextureAsset(TextureAsset& textureAsset) {
 	EngineCore& engineCore = EngineCore::GetInstance();
 
 	Grindstone::Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByUuid(AssetType::Texture, textureAsset.uuid);
 	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
 		GPRINT_WARN_V(LogSource::EngineCore, "Unable to load texture: {}", textureAsset.uuid.ToString());
 		textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Ready;
-		return;
+		return false;
 	}
 
 	const char* fileContents = reinterpret_cast<const char*>(result.buffer.Get());
 	if (strncmp(fileContents, "DDS ", 4) != 0) {
 		GPRINT_WARN_V(LogSource::EngineCore, "Invalid texture file: {}", textureAsset.uuid.ToString());
 		textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Ready;
-		return;
+		return false;
 	}
 
 	DDSHeader header;
@@ -81,7 +81,8 @@ static void LoadTextureAsset(TextureAsset& textureAsset) {
 			useDxgi = true;
 			break;
 		default:
-			throw std::runtime_error("Invalid FourCC in texture");
+			GPRINT_ERROR_V(LogSource::EngineCore, "Invalid FourCC in texture with id {}.", textureAsset.uuid.ToString());
+			return false;
 		}
 	}
 	else if (isRGB) {
@@ -93,11 +94,13 @@ static void LoadTextureAsset(TextureAsset& textureAsset) {
 			format = Grindstone::GraphicsAPI::ColorFormat::RGBA8;
 			break;
 		default:
-			throw std::runtime_error("Invalid rgb pixel format in texture");
+			GPRINT_ERROR_V(LogSource::EngineCore, "Invalid rgb pixel format in texture with id {}.", textureAsset.uuid.ToString());
+			return false;
 		}
 	}
 	else {
-		throw std::runtime_error("Invalid pixel format in texture");
+		GPRINT_ERROR_V(LogSource::EngineCore, "Invalid pixel format in texture with id {}.", textureAsset.uuid.ToString());
+		return false;
 	}
 
 	const char* imgPtr = fileContents + 4 + sizeof(DDSHeader);
@@ -108,7 +111,8 @@ static void LoadTextureAsset(TextureAsset& textureAsset) {
 			format = Grindstone::GraphicsAPI::ColorFormat::BC6H;
 		}
 		else {
-			throw std::runtime_error("Invalid extended DXGI format!");
+			GPRINT_ERROR_V(LogSource::EngineCore, "Invalid extended DXGI format in texture with id {}.", textureAsset.uuid.ToString());
+			return false;
 		}
 
 		imgPtr += sizeof(DDSHeaderExtended);
@@ -139,6 +143,9 @@ static void LoadTextureAsset(TextureAsset& textureAsset) {
 
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	Grindstone::GraphicsAPI::Texture* texture = graphicsCore->CreateTexture(createInfo);
+	textureAsset.texture = texture;
+
+	return true;
 }
 
 void* TextureImporter::LoadAsset(Uuid uuid) {
@@ -149,12 +156,14 @@ void* TextureImporter::LoadAsset(Uuid uuid) {
 		return nullptr;
 	}
 
-	auto& asset = assets.emplace(uuid, TextureAsset(uuid));
-	TextureAsset& textureAsset = asset.first->second;
+	TextureAsset textureAsset(uuid);
 	textureAsset.assetLoadStatus = AssetLoadStatus::Loading;
+	if (!LoadTextureAsset(textureAsset)) {
+		return nullptr;
+	}
 
-	LoadTextureAsset(textureAsset);
-	return &textureAsset;
+	auto& asset = assets.emplace(uuid, textureAsset);
+	return &asset.first->second;
 }
 
 void TextureImporter::QueueReloadAsset(Uuid uuid) {

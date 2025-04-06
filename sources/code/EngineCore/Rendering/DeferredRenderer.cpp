@@ -1201,7 +1201,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	imageSet.lightingDescriptorSet = graphicsCore->CreateDescriptorSet(lightingDescriptorSetCreateInfo);
 
 	{
-		std::array<DescriptorSet::Binding, 2> aoInputBinding = { imageSet.ambientOcclusionRenderTarget, brdfLut.Get() };
+		std::array<DescriptorSet::Binding, 2> aoInputBinding = { imageSet.ambientOcclusionRenderTarget, brdfLut.Get()->texture };
 
 		DescriptorSet::CreateInfo aoInputCreateInfo{};
 		aoInputCreateInfo.debugName = "Ambient Occlusion Descriptor Set";
@@ -1478,7 +1478,7 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 			depthStencilClear
 		);
 
-		Grindstone::GraphicsAPI::GraphicsPipeline* dofSeparationPipeline = dofSeparationPipelineSet.Get()->GetFirstPass()->pipeline;
+		Grindstone::GraphicsAPI::GraphicsPipeline* dofSeparationPipeline = dofSeparationPipelineSet.Get()->GetFirstPassPipeline();
 		std::array<DescriptorSet*, 2> descriptorSets = { imageSet.engineDescriptorSet, imageSet.dofSourceDescriptorSet };
 		currentCommandBuffer->BindGraphicsPipeline(dofSeparationPipeline);
 		currentCommandBuffer->BindGraphicsDescriptorSet(
@@ -1490,7 +1490,7 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 		currentCommandBuffer->UnbindRenderPass();
 	}
 
-	Grindstone::GraphicsAPI::GraphicsPipeline* dofBlurPipeline = dofBlurPipelineSet.Get()->GetFirstPass()->pipeline;
+	Grindstone::GraphicsAPI::GraphicsPipeline* dofBlurPipeline = dofBlurPipelineSet.Get()->GetFirstPassPipeline();
 	{
 		currentCommandBuffer->BindRenderPass(
 			dofBlurAndCombinationRenderPass,
@@ -1549,7 +1549,7 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 		);
 
 		std::array<DescriptorSet*, 3> descriptorSets = { imageSet.engineDescriptorSet, imageSet.dofSourceDescriptorSet, imageSet.dofCombineDescriptorSet };
-		Grindstone::GraphicsAPI::GraphicsPipeline* dofCombinationPipeline = dofCombinationPipelineSet.Get()->GetFirstPass()->pipeline;
+		Grindstone::GraphicsAPI::GraphicsPipeline* dofCombinationPipeline = dofCombinationPipelineSet.Get()->GetFirstPassPipeline();
 		currentCommandBuffer->BindGraphicsPipeline(dofCombinationPipeline);
 		currentCommandBuffer->BindGraphicsDescriptorSet(
 			dofCombinationPipeline,
@@ -1585,8 +1585,12 @@ void DeferredRenderer::RenderSsr(DeferredRendererImageSet& imageSet, GraphicsAPI
 }
 
 void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer) {
-	// TODO: Get Compute Shader
-	Grindstone::GraphicsAPI::ComputePipeline* bloomPipeline = (Grindstone::GraphicsAPI::ComputePipeline*)bloomPipelineSet.Get()->pipeline;
+	Grindstone::ComputePipelineAsset* bloomPipelineAsset = bloomPipelineSet.Get();
+	if (bloomPipelineAsset == nullptr) {
+		return;
+	}
+
+	Grindstone::GraphicsAPI::ComputePipeline* bloomPipeline = bloomPipelineAsset->pipeline;
 	if (bloomPipeline == nullptr || bloomMipLevelCount <= 2) {
 		return;
 	}
@@ -1675,153 +1679,170 @@ void DeferredRenderer::RenderLights(
 	GRIND_PROFILE_FUNC();
 
 	EngineCore& engineCore = EngineCore::GetInstance();
-	auto graphicsCore = engineCore.GetGraphicsCore();
-	auto& imageSet = deferredRendererImageSets[imageIndex];
+	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	Grindstone::DeferredRenderer::DeferredRendererImageSet& imageSet = deferredRendererImageSets[imageIndex];
 	SceneManagement::Scene* scene = engineCore.GetSceneManager()->scenes.begin()->second;
 	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	currentCommandBuffer->BindIndexBuffer(indexBuffer);
 
-	const glm::mat4 bias = glm::mat4(
+	const glm::mat4 bias = glm::mat4( 
 		0.5f, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.5f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.5f, 0.5f, 0.0f, 1.0f
 	);
 
-	Grindstone::GraphicsAPI::GraphicsPipeline* imageBasedLightingPipeline = imageBasedLightingPipelineSet.Get()->GetFirstPass()->pipeline;
-	if (imageBasedLightingPipeline != nullptr) {
-		currentCommandBuffer->BeginDebugLabelSection("Image Based Lighting", nullptr);
-		currentCommandBuffer->BindGraphicsPipeline(imageBasedLightingPipeline);
+	Grindstone::GraphicsPipelineAsset* imageBasedLightingAsset = imageBasedLightingPipelineSet.Get();
+	if (imageBasedLightingAsset != nullptr) {
+		Grindstone::GraphicsAPI::GraphicsPipeline* imageBasedLightingPipeline = imageBasedLightingAsset->GetFirstPassPipeline();
+		if (imageBasedLightingPipeline != nullptr) {
+			currentCommandBuffer->BeginDebugLabelSection("Image Based Lighting", nullptr);
+			currentCommandBuffer->BindGraphicsPipeline(imageBasedLightingPipeline);
 
-		auto view = registry.view<const EnvironmentMapComponent>();
+			auto view = registry.view<const EnvironmentMapComponent>();
 
-		bool hasEnvMap = false;
-		view.each([&](const EnvironmentMapComponent& environmentMapComponent) {
-			if (currentEnvironmentMapUuid == environmentMapComponent.specularTexture.uuid) {
-				hasEnvMap = true;
-				return;
+			bool hasEnvMap = false;
+			view.each([&](const EnvironmentMapComponent& environmentMapComponent) {
+				if (currentEnvironmentMapUuid == environmentMapComponent.specularTexture.uuid) {
+					hasEnvMap = true;
+					return;
+				}
+
+				currentEnvironmentMapUuid = environmentMapComponent.specularTexture.uuid;
+				const Grindstone::TextureAsset* texAsset = environmentMapComponent.specularTexture.Get();
+				if (texAsset != nullptr) {
+					Texture* tex = texAsset->texture;
+					hasEnvMap = true;
+
+					GraphicsAPI::DescriptorSet::Binding binding{ tex };
+					environmentMapDescriptorSet->ChangeBindings(&binding, 1);
+				}
+			});
+
+			if (hasEnvMap) {
+				std::array<GraphicsAPI::DescriptorSet*, 3> iblDescriptors{};
+				iblDescriptors[0] = imageSet.lightingDescriptorSet;
+				iblDescriptors[1] = imageSet.ambientOcclusionDescriptorSet;
+				iblDescriptors[2] = environmentMapDescriptorSet;
+				currentCommandBuffer->BindGraphicsDescriptorSet(imageBasedLightingPipeline, iblDescriptors.data(), static_cast<uint32_t>(iblDescriptors.size()));
+				currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 			}
-
-			currentEnvironmentMapUuid = environmentMapComponent.specularTexture.uuid;
-			const Grindstone::TextureAsset* texAsset = environmentMapComponent.specularTexture.Get();
-			if (texAsset != nullptr) {
-				Texture* tex = texAsset->texture;
-				hasEnvMap = true;
-
-				GraphicsAPI::DescriptorSet::Binding binding{ tex };
-				environmentMapDescriptorSet->ChangeBindings(&binding, 1);
-			}
-		});
-
-		if (hasEnvMap) {
-			std::array<GraphicsAPI::DescriptorSet*, 3> iblDescriptors{};
-			iblDescriptors[0] = imageSet.lightingDescriptorSet;
-			iblDescriptors[1] = imageSet.ambientOcclusionDescriptorSet;
-			iblDescriptors[2] = environmentMapDescriptorSet;
-			currentCommandBuffer->BindGraphicsDescriptorSet(imageBasedLightingPipeline, iblDescriptors.data(), static_cast<uint32_t>(iblDescriptors.size()));
-			currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
-		}
-		currentCommandBuffer->EndDebugLabelSection();
-	}
-
-	Grindstone::GraphicsAPI::GraphicsPipeline* pointLightPipeline = pointLightPipelineSet.Get()->GetFirstPass()->pipeline;
-	if (pointLightPipeline != nullptr) {
-		currentCommandBuffer->BeginDebugLabelSection("Point Lighting", nullptr);
-		currentCommandBuffer->BindGraphicsPipeline(pointLightPipeline);
-
-		std::array<GraphicsAPI::DescriptorSet*, 2> pointLightDescriptors{};
-		pointLightDescriptors[0] = imageSet.lightingDescriptorSet;
-
-		auto view = registry.view<const entt::entity, PointLightComponent>();
-		view.each([&](const entt::entity entityHandle, PointLightComponent& pointLightComponent) {
-			const ECS::Entity entity(entityHandle, scene);
-
-			PointLightComponent::UniformStruct lightmapStruct{
-				pointLightComponent.color,
-				pointLightComponent.attenuationRadius,
-				entity.GetWorldPosition(),
-				pointLightComponent.intensity
-			};
-
-			pointLightDescriptors[1] = pointLightComponent.descriptorSet;
-			pointLightComponent.uniformBufferObject->UpdateBuffer(&lightmapStruct);
-			currentCommandBuffer->BindGraphicsDescriptorSet(pointLightPipeline, pointLightDescriptors.data(), static_cast<uint32_t>(pointLightDescriptors.size()));
-			currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
-		});
-		currentCommandBuffer->EndDebugLabelSection();
-	}
-
-	Grindstone::GraphicsAPI::GraphicsPipeline* spotLightPipeline = spotLightPipelineSet.Get()->GetFirstPass()->pipeline;
-	if (spotLightPipeline != nullptr) {
-		currentCommandBuffer->BeginDebugLabelSection("Spot Lighting", nullptr);
-		currentCommandBuffer->BindGraphicsPipeline(spotLightPipeline);
-
-		std::array<GraphicsAPI::DescriptorSet*, 2> spotLightDescriptors{};
-		spotLightDescriptors[0] = imageSet.lightingDescriptorSet;
-
-		auto view = registry.view<const entt::entity, SpotLightComponent>();
-		view.each([&](const entt::entity entityHandle, SpotLightComponent& spotLightComponent) {
-			const ECS::Entity entity(entityHandle, scene);
-
-			SpotLightComponent::UniformStruct lightStruct {
-				bias * spotLightComponent.shadowMatrix,
-				spotLightComponent.color,
-				spotLightComponent.attenuationRadius,
-				entity.GetWorldPosition(),
-				spotLightComponent.intensity,
-				entity.GetWorldForward(),
-				glm::cos(glm::radians(spotLightComponent.innerAngle)),
-				glm::cos(glm::radians(spotLightComponent.outerAngle)),
-				spotLightComponent.shadowResolution
-			};
-
-			spotLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
-
-			spotLightDescriptors[1] = spotLightComponent.descriptorSet;
-			currentCommandBuffer->BindGraphicsDescriptorSet(spotLightPipeline, spotLightDescriptors.data(), static_cast<uint32_t>(spotLightDescriptors.size()));
-			currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
-		});
-		currentCommandBuffer->EndDebugLabelSection();
-	}
-
-	Grindstone::GraphicsAPI::GraphicsPipeline* directionalLightPipeline = directionalLightPipelineSet.Get()->GetFirstPass()->pipeline;
-	if (directionalLightPipeline != nullptr) {
-		currentCommandBuffer->BeginDebugLabelSection("Directional Lighting", nullptr);
-		currentCommandBuffer->BindGraphicsPipeline(directionalLightPipeline);
-
-		std::array<GraphicsAPI::DescriptorSet*, 2> directionalLightDescriptors{};
-		directionalLightDescriptors[0] = imageSet.lightingDescriptorSet;
-
-		auto view = registry.view<const entt::entity, const TransformComponent, DirectionalLightComponent>();
-		view.each([&](const entt::entity entityHandle, const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
-			const ECS::Entity entity(entityHandle, scene);
-
-			DirectionalLightComponent::UniformStruct lightStruct{
-				bias * directionalLightComponent.shadowMatrix,
-				directionalLightComponent.color,
-				directionalLightComponent.sourceRadius,
-				entity.GetWorldForward(),
-				directionalLightComponent.intensity,
-				directionalLightComponent.shadowResolution
-			};
-
-			directionalLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
-
-			directionalLightDescriptors[1] = directionalLightComponent.descriptorSet;
-			currentCommandBuffer->BindGraphicsDescriptorSet(directionalLightPipeline, directionalLightDescriptors.data(), static_cast<uint32_t>(directionalLightDescriptors.size()));
-			currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 			currentCommandBuffer->EndDebugLabelSection();
-		});
+		}
+	}
+
+	Grindstone::GraphicsPipelineAsset* pointLightAsset = pointLightPipelineSet.Get();
+	if (pointLightAsset != nullptr) {
+		Grindstone::GraphicsAPI::GraphicsPipeline* pointLightPipeline = pointLightAsset->GetFirstPassPipeline();
+		if (pointLightPipeline != nullptr) {
+			currentCommandBuffer->BeginDebugLabelSection("Point Lighting", nullptr);
+			currentCommandBuffer->BindGraphicsPipeline(pointLightPipeline);
+
+			std::array<GraphicsAPI::DescriptorSet*, 2> pointLightDescriptors{};
+			pointLightDescriptors[0] = imageSet.lightingDescriptorSet;
+
+			auto view = registry.view<const entt::entity, PointLightComponent>();
+			view.each([&](const entt::entity entityHandle, PointLightComponent& pointLightComponent) {
+				const ECS::Entity entity(entityHandle, scene);
+
+				PointLightComponent::UniformStruct lightmapStruct{
+					pointLightComponent.color,
+					pointLightComponent.attenuationRadius,
+					entity.GetWorldPosition(),
+					pointLightComponent.intensity
+				};
+
+				pointLightDescriptors[1] = pointLightComponent.descriptorSet;
+				pointLightComponent.uniformBufferObject->UpdateBuffer(&lightmapStruct);
+				currentCommandBuffer->BindGraphicsDescriptorSet(pointLightPipeline, pointLightDescriptors.data(), static_cast<uint32_t>(pointLightDescriptors.size()));
+				currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
+			});
+			currentCommandBuffer->EndDebugLabelSection();
+		}
+	}
+
+	Grindstone::GraphicsPipelineAsset* spotLightAsset = spotLightPipelineSet.Get();
+	if (spotLightAsset != nullptr) {
+		Grindstone::GraphicsAPI::GraphicsPipeline* spotLightPipeline = spotLightAsset->GetFirstPassPipeline();
+		if (spotLightPipeline != nullptr) {
+			currentCommandBuffer->BeginDebugLabelSection("Spot Lighting", nullptr);
+			currentCommandBuffer->BindGraphicsPipeline(spotLightPipeline);
+
+			std::array<GraphicsAPI::DescriptorSet*, 2> spotLightDescriptors{};
+			spotLightDescriptors[0] = imageSet.lightingDescriptorSet;
+
+			auto view = registry.view<const entt::entity, SpotLightComponent>();
+			view.each([&](const entt::entity entityHandle, SpotLightComponent& spotLightComponent) {
+				const ECS::Entity entity(entityHandle, scene);
+
+				SpotLightComponent::UniformStruct lightStruct{
+					bias * spotLightComponent.shadowMatrix,
+					spotLightComponent.color,
+					spotLightComponent.attenuationRadius,
+					entity.GetWorldPosition(),
+					spotLightComponent.intensity,
+					entity.GetWorldForward(),
+					glm::cos(glm::radians(spotLightComponent.innerAngle)),
+					glm::cos(glm::radians(spotLightComponent.outerAngle)),
+					spotLightComponent.shadowResolution
+				};
+
+				spotLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
+
+				spotLightDescriptors[1] = spotLightComponent.descriptorSet;
+				currentCommandBuffer->BindGraphicsDescriptorSet(spotLightPipeline, spotLightDescriptors.data(), static_cast<uint32_t>(spotLightDescriptors.size()));
+				currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
+			});
+			currentCommandBuffer->EndDebugLabelSection();
+		}
+	}
+
+	Grindstone::GraphicsPipelineAsset* directionalLightAsset = directionalLightPipelineSet.Get();
+	if (directionalLightAsset != nullptr) {
+		Grindstone::GraphicsAPI::GraphicsPipeline* directionalLightPipeline = directionalLightAsset->GetFirstPassPipeline();
+		if (directionalLightPipeline != nullptr) {
+			currentCommandBuffer->BeginDebugLabelSection("Directional Lighting", nullptr);
+			currentCommandBuffer->BindGraphicsPipeline(directionalLightPipeline);
+
+			std::array<GraphicsAPI::DescriptorSet*, 2> directionalLightDescriptors{};
+			directionalLightDescriptors[0] = imageSet.lightingDescriptorSet;
+
+			auto view = registry.view<const entt::entity, const TransformComponent, DirectionalLightComponent>();
+			view.each([&](const entt::entity entityHandle, const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
+				const ECS::Entity entity(entityHandle, scene);
+
+				DirectionalLightComponent::UniformStruct lightStruct{
+					bias * directionalLightComponent.shadowMatrix,
+					directionalLightComponent.color,
+					directionalLightComponent.sourceRadius,
+					entity.GetWorldForward(),
+					directionalLightComponent.intensity,
+					directionalLightComponent.shadowResolution
+				};
+
+				directionalLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
+
+				directionalLightDescriptors[1] = directionalLightComponent.descriptorSet;
+				currentCommandBuffer->BindGraphicsDescriptorSet(directionalLightPipeline, directionalLightDescriptors.data(), static_cast<uint32_t>(directionalLightDescriptors.size()));
+				currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
+				currentCommandBuffer->EndDebugLabelSection();
+			});
+		}
 	}
 }
 
 void DeferredRenderer::RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* commandBuffer) {
-	Grindstone::GraphicsAPI::GraphicsPipeline* ssaoPipeline = ssaoPipelineSet.Get()->GetFirstPass()->pipeline;
+	Grindstone::GraphicsPipelineAsset* pipelineSetAsset = ssaoPipelineSet.Get();
+	if (pipelineSetAsset == nullptr) {
+		return;
+	}
+
+	Grindstone::GraphicsAPI::GraphicsPipeline* ssaoPipeline = pipelineSetAsset->GetFirstPassPipeline();
 	if (ssaoPipeline == nullptr) {
 		return;
 	}
 
-	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	Grindstone::GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	ClearColorValue clearColorAttachment = { 16.0f, 16.0f, 16.0f, 16.0f };
 	ClearDepthStencil clearDepthStencil{};
@@ -2059,13 +2080,16 @@ void DeferredRenderer::PostProcess(
 
 	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, framebuffer->GetWidth(), framebuffer->GetHeight(), &clearColor, 1, clearDepthStencil);
 
-	Grindstone::GraphicsAPI::GraphicsPipeline* tonemapPipeline = tonemapPipelineSet.Get()->GetFirstPass()->pipeline;
-	if (tonemapPipeline != nullptr) {
-		imageSet.tonemapPostProcessingUniformBufferObject->UpdateBuffer(&postProcessUboData);
+	Grindstone::GraphicsPipelineAsset* tonemapPipelineAsset = tonemapPipelineSet.Get();
+	if (tonemapPipelineAsset != nullptr) {
+		Grindstone::GraphicsAPI::GraphicsPipeline* tonemapPipeline = tonemapPipelineAsset->GetFirstPassPipeline();
+		if (tonemapPipeline != nullptr) {
+			imageSet.tonemapPostProcessingUniformBufferObject->UpdateBuffer(&postProcessUboData);
 
-		currentCommandBuffer->BindGraphicsDescriptorSet(tonemapPipeline, &imageSet.tonemapDescriptorSet, 1);
-		currentCommandBuffer->BindGraphicsPipeline(tonemapPipeline);
-		currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
+			currentCommandBuffer->BindGraphicsDescriptorSet(tonemapPipeline, &imageSet.tonemapDescriptorSet, 1);
+			currentCommandBuffer->BindGraphicsPipeline(tonemapPipeline);
+			currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
+		}
 	}
 
 	currentCommandBuffer->UnbindRenderPass();
@@ -2091,7 +2115,7 @@ void DeferredRenderer::Debug(
 	RenderPass* renderPass = framebuffer->GetRenderPass();
 	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, framebuffer->GetWidth(), framebuffer->GetHeight(), &clearColor, 1, clearDepthStencil);
 
-	Grindstone::GraphicsAPI::GraphicsPipeline* debugPipeline = debugPipelineSet.Get()->GetFirstPass()->pipeline;
+	Grindstone::GraphicsAPI::GraphicsPipeline* debugPipeline = debugPipelineSet.Get()->GetFirstPassPipeline();
 	if (debugPipeline != nullptr) {
 		imageSet.debugUniformBufferObject->UpdateBuffer(&debugUboData);
 

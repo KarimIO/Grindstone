@@ -10,7 +10,6 @@
 #include "Editor/EditorManager.hpp"
 #include "Editor/ImguiEditor/ImguiEditor.hpp"
 #include <EngineCore/Logger.hpp>
-using namespace rapidjson;
 
 using namespace Grindstone::Editor::ImguiEditor;
 
@@ -167,20 +166,22 @@ void MaterialInspector::LoadShaderUniformBuffers(rapidjson::Value& uniformBuffer
 		rapidjson::Value* itr = uniformBuffers.Begin();
 		itr != uniformBuffers.End();
 		++itr
-		auto& uniformBuffer = *itr;
-		auto name = uniformBuffer["name"].GetString();
+	) {
+		rapidjson::Value& uniformBuffer = *itr;
+		const char* name = uniformBuffer["name"].GetString();
 		size_t bindingId = uniformBuffer["binding"].GetUint();
 		size_t bufferSize = uniformBuffer["bufferSize"].GetUint();
 		materialUniformBuffers.emplace_back(name, bindingId, bufferSize);
-		auto& memberSource = uniformBuffer["members"];
+		rapidjson::Value& memberSource = uniformBuffer["members"];
 		auto& memberList = materialUniformBuffers.back().members;
 		memberList.reserve(memberSource.Size());
 		for (
 			rapidjson::Value* memberItr = memberSource.Begin();
 			memberItr != memberSource.End();
 			++memberItr
-			auto& memberData = *memberItr;
-			auto name = memberData["name"].GetString();
+		) {
+			rapidjson::Value& memberData = *memberItr;
+			const char* name = memberData["name"].GetString();
 			size_t offset = memberData["offset"].GetUint();
 			size_t memberSize = memberData["memberSize"].GetUint();
 			memberList.emplace_back(name, offset, memberSize);

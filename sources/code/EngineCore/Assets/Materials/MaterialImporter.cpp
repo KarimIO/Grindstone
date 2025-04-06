@@ -29,8 +29,8 @@ static inline void ReadMaterialDataArray(
 	materialArray.resize(materialDocumentData.Size());
 
 	for (rapidjson::SizeType i = 0; i < materialDocumentData.Size(); ++i) {
-		if (materialDocumentData[i].GetType != rapidjson::kNumberType) {
-			GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Expected a number for an element of the array '{}' in material '{}'!", shaderMemberData.name, name);
+		if (materialDocumentData[i].GetType() != rapidjson::kNumberType) {
+			GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Expected a number for an element of the array '{}' in material '{}'!", shaderMemberData.name, "Unset material name");
 		}
 		else {
 			materialArray[i] = static_cast<Type>((materialDocumentData[i].*memberFunction)());
@@ -291,7 +291,7 @@ MaterialImporter::MaterialImporter() {
 	missingTexture = graphicsCore->CreateTexture(blackTextureCreateInfo);
 }
 
-static void LoadMaterial(
+static bool LoadMaterial(
 	Grindstone::MaterialAsset& material,
 	const std::string& displayName,
 	Grindstone::GraphicsAPI::Texture* missingTexture,
@@ -303,13 +303,13 @@ static void LoadMaterial(
 	rapidjson::Document document;
 	if (document.Parse(materialContent.data()).HasParseError()) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "Unable to parse material {}.", displayName);
-		return;
+		return false;
 	}
 
 	Grindstone::Uuid shaderUuid;
 	if (!document.HasMember("shader") || !Grindstone::Uuid::MakeFromString(document["shader"].GetString(), shaderUuid)) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "No shader found in material {}.", displayName);
-		return;
+		return false;
 	}
 
 	if (shaderUuid != material.pipelineSetAsset.uuid) {
@@ -317,15 +317,19 @@ static void LoadMaterial(
 	}
 
 	if (!material.pipelineSetAsset.IsValid()) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Failed to load shader {}.", displayName);
-		return;
+		GPRINT_ERROR_V(LogSource::EngineCore, "Failed to load shader for {}.", displayName);
+		return false;
 	}
 
-	Grindstone::GraphicsPipelineAsset& pipelineSetAsset = *material.pipelineSetAsset.Get();
+	Grindstone::GraphicsPipelineAsset* pipelineSetAsset = material.pipelineSetAsset.Get();
+	if (pipelineSetAsset == nullptr) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Failed to load shader {} for material {}.", material.pipelineSetAsset.uuid.ToString(), displayName);
+		return false;
+	}
 
 	std::vector<DescriptorSet::Binding> bindings;
-	SetupUniformBuffer(document, pipelineSetAsset, bindings, displayName, material);
-	SetupSamplers(document, pipelineSetAsset, missingTexture, bindings, material);
+	SetupUniformBuffer(document, *pipelineSetAsset, bindings, displayName, material);
+	SetupSamplers(document, *pipelineSetAsset, missingTexture, bindings, material);
 
 	std::string descriptorSetName = (displayName + " Material Descriptor Set");
 
@@ -333,11 +337,12 @@ static void LoadMaterial(
 	materialDescriptorSetCreateInfo.debugName = descriptorSetName.c_str();
 	materialDescriptorSetCreateInfo.bindings = bindings.data();
 	materialDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	materialDescriptorSetCreateInfo.layout = pipelineSetAsset.GetMaterialLayout();
+	// materialDescriptorSetCreateInfo.layout = pipelineSetAsset.GetMaterialLayout();
 	DescriptorSet* materialDescriptorSet = graphicsCore->CreateDescriptorSet(materialDescriptorSetCreateInfo);
 
 	material.materialDescriptorSet = materialDescriptorSet;
 	material.assetLoadStatus = AssetLoadStatus::Ready;
+	return true;
 }
 
 void* MaterialImporter::LoadAsset(Uuid uuid) {
@@ -350,12 +355,15 @@ void* MaterialImporter::LoadAsset(Uuid uuid) {
 		return nullptr;
 	}
 
-	auto& material = assets.emplace(uuid, MaterialAsset(uuid, result.displayName, uuid));
-	Grindstone::MaterialAsset& materialAsset = material.first->second;
+	Grindstone::MaterialAsset materialAsset(uuid);
 
 	materialAsset.assetLoadStatus = AssetLoadStatus::Loading;
-	LoadMaterial(materialAsset, result.displayName, missingTexture, result.content);
-	return &materialAsset;
+	if (!LoadMaterial(materialAsset, result.displayName, missingTexture, result.content)) {
+		return nullptr;
+	}
+
+	auto& material = assets.emplace(uuid, materialAsset);
+	return &material.first->second;
 }
 
 void MaterialImporter::QueueReloadAsset(Uuid uuid) {

@@ -17,7 +17,7 @@ namespace Grindstone {
 	}
 
 	struct MaterialAsset : public Asset {
-		MaterialAsset(Grindstone::Uuid uuid, std::string_view name, Uuid shaderUuid) : Asset(uuid, name) {}
+		MaterialAsset(Grindstone::Uuid uuid) : Asset(uuid, uuid.ToString()) {}
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> pipelineSetAsset;
 		Grindstone::GraphicsAPI::DescriptorSet* materialDescriptorSet = nullptr;
 		Grindstone::GraphicsAPI::UniformBuffer* materialDataUniformBuffer = nullptr;
