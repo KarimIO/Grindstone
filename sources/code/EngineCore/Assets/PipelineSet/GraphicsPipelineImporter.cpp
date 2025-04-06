@@ -14,6 +14,8 @@ using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
 static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineAsset) {
+	return false;
+
 	// TODO: Check shader cache before loading and compiling again
 	// The shader cache includes shaders precompiled for consoles, or compiled once per driver update on computers
 	// if shaderCache has shader with this uuid
@@ -79,15 +81,15 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 }
 
 void* GraphicsPipelineImporter::LoadAsset(Uuid uuid) {
-	auto asset = assets.emplace(uuid, GraphicsPipelineAsset(uuid));
-	GraphicsPipelineAsset& graphicsPipelineAsset = asset.first->second;
+	GraphicsPipelineAsset graphicsPipelineAsset(uuid);
 
 	graphicsPipelineAsset.assetLoadStatus = AssetLoadStatus::Loading;
 	if (!ImportGraphicsPipelineAsset(graphicsPipelineAsset)) {
 		return nullptr;
 	}
 
-	return &graphicsPipelineAsset;
+	auto& asset = assets.emplace(uuid, graphicsPipelineAsset);
+	return &asset.first->second;
 }
 
 void GraphicsPipelineImporter::QueueReloadAsset(Uuid uuid) {

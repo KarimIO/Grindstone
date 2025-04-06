@@ -6,7 +6,8 @@
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Assets/Materials/MaterialImporter.hpp>
 #include <EngineCore/Assets/Textures/TextureImporter.hpp>
-#include <EngineCore/Assets/Shaders/ShaderImporter.hpp>
+#include <EngineCore/Assets/PipelineSet/GraphicsPipelineImporter.hpp>
+#include <EngineCore/Assets/PipelineSet/ComputePipelineImporter.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
 #include <Plugins/Renderables3D/Assets/Mesh3dImporter.hpp>
 #include <Plugins/Renderables3D/Mesh3dRenderer.hpp>
@@ -124,6 +125,7 @@ void StatsPanel::RenderContents() {
 
 	RenderAsset<Mesh3dImporter>(assetManager, "3D Meshes");
 	RenderAsset<MaterialImporter>(assetManager, "Materials");
-	RenderAsset<ShaderImporter>(assetManager, "Shaders");
+	RenderAsset<ComputePipelineImporter>(assetManager, "Compute Pipeline Sets");
+	RenderAsset<GraphicsPipelineImporter>(assetManager, "Graphics Pipeline Sets");
 	RenderAsset<TextureImporter>(assetManager, "Textures");
 }

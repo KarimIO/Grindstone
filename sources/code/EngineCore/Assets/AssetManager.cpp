@@ -28,7 +28,8 @@ AssetManager::AssetManager(AssetLoader* assetLoader) {
 	assetTypeNames.resize(count);
 	assetTypeImporters.resize(count);
 	RegisterAssetType(AssetType::Undefined, "Undefined", nullptr);
-	RegisterAssetType<ShaderImporter>();
+	RegisterAssetType<GraphicsPipelineImporter>();
+	RegisterAssetType<ComputePipelineImporter>();
 	RegisterAssetType<TextureImporter>();
 	RegisterAssetType<MaterialImporter>();
 }

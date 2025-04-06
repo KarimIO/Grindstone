@@ -33,6 +33,7 @@ namespace Grindstone {
 			return uuid.IsValid();
 		}
 
+		// TODO: It's not clear that IsValid just refers to a valid uuid, rather than an existing asset. We need separate functions for this.
 		bool IsValid() const noexcept {
 			return uuid.IsValid();
 		}
