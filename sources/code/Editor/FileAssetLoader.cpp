@@ -83,8 +83,8 @@ Grindstone::Uuid Grindstone::Assets::FileAssetLoader::GetUuidByAddress(AssetType
 	std::string addressString = std::string(address);
 	if (!assetRegistry.TryGetAssetData(addressString, outEntry)) {
 		GPRINT_ERROR_V(LogSource::Editor, "Could not get uuid of asset: {}", address);
-		return outEntry.uuid;
+		return Grindstone::Uuid();
 	}
 
-	return Grindstone::Uuid();
+	return outEntry.uuid;
 }
