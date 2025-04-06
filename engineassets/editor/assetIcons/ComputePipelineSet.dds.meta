@@ -3,9 +3,9 @@
     "defaultUuid": "52202066-7e7d-4b01-839f-a3d9969d65ff",
     "subassets": [
         {
-            "displayName": "Shader",
-            "address": "@EDITOR_ICONS/assetIcons/Shader",
-            "subassetIdentifier": "Shader",
+            "displayName": "ComputePipelineSet",
+            "address": "@EDITOR_ICONS/assetIcons/ComputePipelineSet",
+            "subassetIdentifier": "ComputePipelineSet",
             "uuid": "52202066-7e7d-4b01-839f-a3d9969d65ff",
             "type": "Texture"
         }
