@@ -26,6 +26,7 @@ bool AllocatorCore::Initialize(size_t sizeInMegs) {
 		return false;
 	}
 
+	new (allocatorState) AllocatorState();
 	return allocatorState->dynamicAllocator.Initialize(sizeInMegs * 1024u * 1024u);
 }
 
