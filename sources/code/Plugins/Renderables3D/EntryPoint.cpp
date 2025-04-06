@@ -8,7 +8,7 @@
 #include "Assets/RigAsset.hpp"
 #include "Assets/RigImporter.hpp"
 #include "Mesh3dRenderer.hpp"
-#include "EngineCore/Assets/Shaders/ShaderAsset.hpp"
+#include "EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp"
 #include "EngineCore/Assets/AssetManager.hpp"
 #include "Components/MeshComponent.hpp"
 #include "Components/MeshRendererComponent.hpp"
@@ -17,10 +17,9 @@ using namespace Grindstone::Memory;
 
 Mesh3dImporter* mesh3dImporter = nullptr;
 Mesh3dRenderer* mesh3dRenderer = nullptr;
-EngineCore* engineCore = nullptr;
 
 static void SetupMeshRendererComponent(entt::registry& registry, entt::entity entity) {
-	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	MeshRendererComponent& meshRendererComponent = registry.get<MeshRendererComponent>(entity);
 
@@ -41,7 +40,7 @@ static void SetupMeshRendererComponent(entt::registry& registry, entt::entity en
 }
 
 static void DestroyMeshRendererComponent(entt::registry& registry, entt::entity entity) {
-	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	MeshRendererComponent& meshRendererComponent = registry.get<MeshRendererComponent>(entity);
 	graphicsCore->DeleteDescriptorSet(meshRendererComponent.perDrawDescriptorSet);
@@ -54,7 +53,8 @@ extern "C" {
 		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
 		Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
 
-		engineCore = pluginInterface->GetEngineCore();
+		Grindstone::EngineCore* engineCore = pluginInterface->GetEngineCore();
+		EngineCore::SetInstance(*engineCore);
 
 		mesh3dImporter = AllocatorCore::Allocate<Mesh3dImporter>(engineCore);
 		mesh3dRenderer = AllocatorCore::Allocate<Mesh3dRenderer>(engineCore);

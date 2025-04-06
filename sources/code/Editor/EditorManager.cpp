@@ -275,6 +275,8 @@ bool Manager::LoadEngine() {
 	Grindstone::Logger::SetLoggerState(pluginInterface.GetLoggerState());
 	Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface.GetAllocatorState());
 
+	Grindstone::EngineCore::SetInstance(*engineCore);
+
 	return engineCore != nullptr;
 }
 
