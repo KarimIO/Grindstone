@@ -105,9 +105,9 @@ if (USE_EDITOR_MODEL_IMPORTER)
 	add_subdirectory(${PLUGIN_DIR}/EditorModelImporter)
 endif()
 
-option(USE_EDITOR_SHADER_IMPORTER "Include EditorShaderImporter?" ON)
-if (USE_EDITOR_SHADER_IMPORTER)
-	add_subdirectory(${PLUGIN_DIR}/EditorShaderImporter)
+option(USE_EDITOR_PIPELINESET_IMPORTER "Include EditorPipelineSetImporter?" ON)
+if (USE_EDITOR_PIPELINESET_IMPORTER)
+	add_subdirectory(${PLUGIN_DIR}/EditorPipelineSetImporter)
 endif()
 
 option(USE_EDITOR_TEXTURE_IMPORTER "Include EditorTextureImporter?" ON)

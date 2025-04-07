@@ -4,6 +4,7 @@
 	"dependencies": [
 		"assimp",
 		"bullet3",
+		"directx-dxc",
 		"drlibs",
 		"entt",
 		"efsw",

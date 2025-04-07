@@ -3,14 +3,14 @@
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <Editor/EditorPluginInterface.hpp>
 
-#include "ShaderImporter.hpp"
+#include "PipelineSetImporter.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::Memory;
 using namespace Grindstone::Editor::Importers;
 
 extern "C" {
-	EDITOR_SHADER_IMPORTER_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
+	EDITOR_PIPELINESET_IMPORTER_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
 		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
 		Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
 
@@ -22,7 +22,7 @@ extern "C" {
 		}
 	}
 
-	EDITOR_SHADER_IMPORTER_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
+	EDITOR_PIPELINESET_IMPORTER_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
 		Plugins::EditorPluginInterface* editorPluginInterface =
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 
