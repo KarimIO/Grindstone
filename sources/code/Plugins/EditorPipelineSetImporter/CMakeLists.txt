@@ -43,6 +43,7 @@ add_library(
 )
 
 target_compile_features(PluginEditorPipelineSetImporter PRIVATE cxx_std_17)
+set_target_properties(PluginEditorPipelineSetImporter PROPERTIES FOLDER "Plugins/Editor/Importers")
 
 target_compile_definitions(PluginEditorPipelineSetImporter PUBLIC EDITOR_PIPELINESET_IMPORTER_DLL GLM_ENABLE_EXPERIMENTAL)
 target_include_directories(PluginEditorPipelineSetImporter PUBLIC ${CODE_DIR} ${FMT_INCLUDE_DIRS})

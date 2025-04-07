@@ -28,6 +28,7 @@ add_library(
 )
 
 target_compile_features(PluginEditorAudioImporter PRIVATE cxx_std_17)
+set_target_properties(PluginEditorAudioImporter PROPERTIES FOLDER "Plugins/Editor/Importers")
 
 target_compile_definitions(PluginEditorAudioImporter PUBLIC EDITOR_AUDIO_IMPORTER_DLL GLM_ENABLE_EXPERIMENTAL)
 target_include_directories(PluginEditorAudioImporter PUBLIC ${CODE_DIR} ${FMT_INCLUDE_DIRS})

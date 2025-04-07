@@ -9,6 +9,7 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 endif()
 
 include("${CMAKE_TOOLCHAIN_FILE}")
+set_property(GLOBAL PROPERTY USE_FOLDERS TRUE)
 
 if (WIN32)
 	project(Grindstone VERSION 1.0.0 LANGUAGES CXX CSharp)

@@ -29,6 +29,7 @@ add_library(
 )
 
 target_compile_features(PluginEditorTextureImporter PRIVATE cxx_std_17)
+set_target_properties(PluginEditorTextureImporter PROPERTIES FOLDER "Plugins/Editor/Importers")
 
 target_compile_definitions(PluginEditorTextureImporter PUBLIC EDITOR_TEXTURE_IMPORTER_DLL __STDC_LIB_EXT1__ GLM_ENABLE_EXPERIMENTAL)
 target_include_directories(PluginEditorTextureImporter PUBLIC ${CODE_DIR} ${STB_INCLUDE_DIRS} ${FMT_INCLUDE_DIRS})

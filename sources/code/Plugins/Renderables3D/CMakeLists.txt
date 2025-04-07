@@ -24,6 +24,7 @@ add_library(
 )
 
 target_compile_definitions(PluginRenderables3D PUBLIC RENDERABLES_3D_DLL GLM_ENABLE_EXPERIMENTAL)
+set_target_properties(PluginRenderables3D PROPERTIES FOLDER Plugins/Renderables)
 
 find_path(GLM_INCLUDE_DIRS "glm/glm.hpp")
 

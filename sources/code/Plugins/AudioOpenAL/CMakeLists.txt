@@ -21,6 +21,7 @@ add_library(
 )
 
 target_compile_features(PluginAudioOpenAL PRIVATE cxx_std_17)
+set_target_properties(PluginAudioOpenAL PROPERTIES FOLDER "Plugins/Audio")
 
 find_path(ENTT_INCLUDE_DIRS "entt/entt.hpp")
 find_package(OpenAL CONFIG REQUIRED)

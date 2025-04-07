@@ -39,6 +39,7 @@ source_group("Source Files\\Display" FILES ${Vk_DISPLAY_SOURCES})
 source_group("Header Files\\Display" FILES ${Vk_DISPLAY_HEADERS})
 
 add_library(PluginGraphicsVulkan MODULE ${Vk_SOURCES} ${Vk_HEADERS} ${CORE_UTILS})
+set_target_properties(PluginGraphicsVulkan PROPERTIES FOLDER "Plugins/Render Hardware Interface")
 
 find_path(VULKAN_HEADERS_INCLUDE_DIRS "vk_video/vulkan_video_codec_h264std.h")
 find_package(Vulkan REQUIRED)
