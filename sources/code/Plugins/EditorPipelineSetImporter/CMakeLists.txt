@@ -1,3 +1,35 @@
+set(PipelineSetConverter "PipelineSet/Converter")
+
+set(EDITORPIPELINESETIMPORTER_CONVERTER_SOURCES
+	${PipelineSetConverter}/Output.cpp
+	${PipelineSetConverter}/Parser.cpp
+	${PipelineSetConverter}/PipelineSetConverter.cpp
+	${PipelineSetConverter}/Scanner.cpp
+	${PipelineSetConverter}/ShaderCompiler.cpp
+	${PipelineSetConverter}/StateResolver.cpp
+	${PipelineSetConverter}/Token.cpp
+)
+
+source_group("Converter\\Source Files" FILES ${EDITORPIPELINESETIMPORTER_CONVERTER_SOURCES})
+
+set(EDITORPIPELINESETIMPORTER_CONVERTER_HEADERS
+	${PipelineSetConverter}/CompilationArtifacts.hpp
+	${PipelineSetConverter}/CompilationOptions.hpp
+	${PipelineSetConverter}/Keyword.hpp
+	${PipelineSetConverter}/Output.hpp
+	${PipelineSetConverter}/Parser.hpp
+	${PipelineSetConverter}/ParseTree.hpp
+	${PipelineSetConverter}/PipelineSetConditioner.hpp
+	${PipelineSetConverter}/ResolvedStateTree.hpp
+	${PipelineSetConverter}/Scanner.hpp
+	${PipelineSetConverter}/ShaderCompiler.hpp
+	${PipelineSetConverter}/StateResolver.hpp
+	${PipelineSetConverter}/Token.hpp
+	PipelineSet/Log.hpp
+	PipelineSet/WriteCallback.hpp
+)
+source_group("Converter\\Header Files" FILES ${EDITORPIPELINESETIMPORTER_CONVERTER_HEADERS})
+
 set(EDITORPIPELINESETIMPORTER_SOURCES
 	PipelineSetImporter.cpp
 	${COMMON_DIR}/ResourcePipeline/AssetType.cpp
@@ -39,6 +71,8 @@ add_library(
 	PluginEditorPipelineSetImporter MODULE
 	${EDITORPIPELINESETIMPORTER_SOURCES}
 	${EDITORPIPELINESETIMPORTER_HEADERS}
+	${EDITORPIPELINESETIMPORTER_CONVERTER_SOURCES}
+	${EDITORPIPELINESETIMPORTER_CONVERTER_HEADERS}
 	${CORE_UTILS}
 )
 
@@ -46,7 +80,7 @@ target_compile_features(PluginEditorPipelineSetImporter PRIVATE cxx_std_17)
 set_target_properties(PluginEditorPipelineSetImporter PROPERTIES FOLDER "Plugins/Editor/Importers")
 
 target_compile_definitions(PluginEditorPipelineSetImporter PUBLIC EDITOR_PIPELINESET_IMPORTER_DLL GLM_ENABLE_EXPERIMENTAL)
-target_include_directories(PluginEditorPipelineSetImporter PUBLIC ${CODE_DIR} ${FMT_INCLUDE_DIRS})
+target_include_directories(PluginEditorPipelineSetImporter PUBLIC ${CODE_DIR} ${FMT_INCLUDE_DIRS} .)
 
 target_precompile_headers(PluginEditorPipelineSetImporter PUBLIC pch.hpp)
 

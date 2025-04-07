@@ -1,0 +1,164 @@
+#pragma once
+
+#include <string_view>
+#include <cstring>
+#include <map>
+
+#define KEYWORD_LIST \
+E(shaderHlsl)\
+E(shaderGlsl)\
+E(computeSet)\
+E(pipelineSet)\
+E(parameters)\
+E(name)\
+E(configuration)\
+E(pass)\
+E(shaderBlock)\
+E(requiresBlocks)\
+E(clones)\
+E(inherits)\
+E(stage)\
+E(properties)\
+E(shaderEntrypoint)\
+E(rendererTags)\
+E(passTags)\
+E(attachments)\
+E(colorMask)\
+E(cull)\
+E(depthBias)\
+E(depthWrite)\
+E(depthTest)\
+E(depthClamp)\
+E(depthCompareOp)\
+E(blendPreset)\
+E(blendColor)\
+E(blendAlpha)\
+E(points)\
+E(lines)\
+E(lineStrips)\
+E(lineLoops)\
+E(triangleStrips)\
+E(triangleFans)\
+E(triangles)\
+E(linesAdjacency)\
+E(trianglesAdjacency)\
+E(triangleStripsAdjacency)\
+E(patches)\
+E(point)\
+E(line)\
+E(fill)\
+E(never)\
+E(less)\
+E(equal)\
+E(lessOrEqual)\
+E(greater)\
+E(notEqual)\
+E(greaterOrEqual)\
+E(always)\
+E(none)\
+E(front)\
+E(back)\
+E(both)\
+E(zero)\
+E(one)\
+E(srcColor)\
+E(oneMinusSrcColor)\
+E(dstColor)\
+E(oneMinusDstColor)\
+E(srcAlpha)\
+E(oneMinusSrcAlpha)\
+E(dstAlpha)\
+E(oneMinusDstAlpha)\
+E(constantColor)\
+E(oneMinusConstantColor)\
+E(constantAlpha)\
+E(oneMinusConstantAlpha)\
+E(srcAlphaSaturate)\
+E(src1Color)\
+E(oneMinusSrc1Color)\
+E(src1Alpha)\
+E(oneMinusSrc1Alpha)\
+E(off)\
+E(add)\
+E(subtract)\
+E(reverseSubtract)\
+E(minimum)\
+E(maximum)\
+E(source)\
+E(destination)\
+E(sourceOver)\
+E(destinationOver)\
+E(sourceIn)\
+E(destinationIn)\
+E(sourceOut)\
+E(destinationOut)\
+E(sourceAtop)\
+E(destinationAtop)\
+E(xOR)\
+E(multiply)\
+E(screen)\
+E(overlay)\
+E(darken)\
+E(lighten)\
+E(colorDodge)\
+E(colorBurn)\
+E(hardLight)\
+E(softLight)\
+E(difference)\
+E(exclusion)\
+E(invert)\
+E(invertRGB)\
+E(linearDodge)\
+E(linearBurn)\
+E(vividLight)\
+E(linearLight)\
+E(pinLight)\
+E(hardMix)\
+E(hSLHue)\
+E(hSLSaturation)\
+E(hSLColor)\
+E(hSLLuminosity)\
+E(plus)\
+E(plusClamped)\
+E(plusClampedAlpha)\
+E(plusDark)\
+E(minus)\
+E(minusClamped)\
+E(contrast)\
+E(invertOVG)\
+E(red)\
+E(green)\
+E(blue)\
+E(vertex)\
+E(tesselationEvaluation)\
+E(tesselationControl)\
+E(geometry)\
+E(fragment)\
+E(task)\
+E(mesh)\
+E(compute)\
+E(opaque)\
+E(translucent)\
+E(additive)\
+E(multiplicative)\
+E(premultiply)
+
+enum class Keyword : uint8_t {
+#define E(val) val,
+	KEYWORD_LIST
+#undef E
+	abstractKeyword,
+	boolTrue,
+	boolFalse
+};
+
+constexpr const char* keywordStrings[] = {
+#define E(val) #val,
+	KEYWORD_LIST
+#undef E
+	"abstract",
+	"true",
+	"false"
+};
+
+extern std::map<std::string_view, Keyword> stringToKeywordMap;
