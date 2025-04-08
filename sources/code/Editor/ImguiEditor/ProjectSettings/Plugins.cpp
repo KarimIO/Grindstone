@@ -18,7 +18,7 @@ const char* availablePlugins[] = {
 	"PluginEditorAudioImporter",
 	"PluginEditorMaterialImporter",
 	"PluginEditorModelImporter",
-	"PluginEditorShaderImporter",
+	"PluginEditorPipelineSetImporter",
 	"PluginEditorTextureImporter",
 	"PluginBulletPhysics",
 	"PluginScriptCSharp",
