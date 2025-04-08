@@ -1,0 +1,119 @@
+pipelineSet "Image Based Lighting" inherits "DeferredLighting" {
+	configuration "main" {
+		pass "main" {
+			shaderEntrypoint: fragment mainFragment
+
+			requiresBlocks [
+				GsInvertMatrix,
+				CommonConstants,
+				GsRendererUniform,
+				LightGbufferUniforms,
+				GsComputeWorldSpacePosition
+			]
+
+			shaderHlsl {
+				Texture2D<float4> ssao : register(t0,  space1);
+				Texture2D<float4> brdfLUT : register(t1,  space1);
+				TextureCube<float4> specularMap : register(t2,  space2);
+
+				float3 Light_F(in float3 f0, in float f90, in float VH) {
+					return f0 + (f90-f0) * pow(1-VH, 5.0f);
+				}
+
+				float3 FresnelSchlickRoughness(float cosTheta, float3 F0, float roughness) {
+					float minusOneRoughness = 1.0 - roughness;
+					return F0 + (max(float3(minusOneRoughness, minusOneRoughness, minusOneRoughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+				}   
+
+				static const float2 invAtan = float2(0.1591, 0.3183);
+				float2 SampleSphericalMap(float3 v) {
+					float2 uv = float2(atan2(v.x, v.z), asin(v.y));
+					uv *= invAtan;
+					uv += 0.5;
+					uv.y = -uv.y;
+					return uv;
+				}
+
+				static const float3 sphericalHarmonics[] =  {
+					// First Band
+					float3(2.58676, 2.730808, 3.152812),
+					// Second Band
+					float3(-0.431493, -0.665128, -0.969124),
+					float3(-0.353886, 0.048348, 0.672755),
+					float3(-0.604269, -0.88623, -1.298684),
+					// Third Band
+					float3(0.320121, 0.422942, 0.541783),
+					float3(-0.137435, -0.168666, -0.229637),
+					float3(-0.052101, -0.149999, -0.232127),
+					float3(-0.117312, -0.167151, -0.265015),
+					float3(-0.090028, -0.021071, 0.08956)
+				};
+
+				float3 GetIrradiance(float3 normal) {
+					float x = normal.z;
+					float y = normal.y;
+					float z = normal.x;
+
+					float c[] = {
+						0.282095,
+						0.488603,
+						1.092548,
+						0.315392,
+						0.546274
+					};
+					
+					float3 result = (
+						sphericalHarmonics[0] * c[0] +
+
+						sphericalHarmonics[1] * c[1] * x +
+						sphericalHarmonics[2] * c[1] * y +
+						sphericalHarmonics[3] * c[1] * z +
+
+						sphericalHarmonics[4] * c[2] * z * x +
+						sphericalHarmonics[5] * c[2] * y * z +
+						sphericalHarmonics[6] * c[2] * y * x +
+						sphericalHarmonics[7] * c[3] * (3.0 * z * z - 1.0) +
+						sphericalHarmonics[8] * c[4] * (x*x - y*y)
+					);
+
+					return max(result / PI, float3(0.0, 0.0, 0.0));
+				}
+
+				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
+					float4 gbuffer3Value = gbuffer3.Sample(mySampler, input.scaledFragmentTexCoord);
+
+					float depthFromTexture = gbuffer0.Sample(mySampler, input.scaledFragmentTexCoord).r;
+
+					float3 position = ComputeWorldSpacePosition(rendererUbo.projectionMatrix, rendererUbo.viewMatrix, input.fragmentTexCoord, depthFromTexture);
+					float3 albedo = gbuffer1.Sample(mySampler, input.scaledFragmentTexCoord).rgb;
+					float3 normal = gbuffer2.Sample(mySampler, input.scaledFragmentTexCoord).rgb;
+					float3 specularInput = gbuffer3Value.rgb;
+					float roughness = gbuffer3Value.a * gbuffer3Value.a;
+					float ao = ssao.Sample(mySampler, input.scaledFragmentTexCoord).r;
+					
+					float3 eyeDir = normalize(rendererUbo.eyePos.xyz - position);
+					float3 reflectRay = 2 * dot(eyeDir, normal) * normal - eyeDir;
+					
+					float NV = max(dot(normal, eyeDir), 0.0);
+					
+					const float MAX_REFLECTION_LOD = 4.0;
+					float3 f0 = 0.32 * specularInput * specularInput;
+					float f90 = clamp(50 * dot(f0, float3(0.33, 0.33, 0.33)), 0, 1);
+					float3 F = Light_F(f0, f90, NV);
+					float3 prefilteredColor = specularMap.SampleLevel(mySampler, reflectRay, roughness * MAX_REFLECTION_LOD).rgb;   
+					float2 envBRDF  = brdfLUT.Sample(mySampler, float2(NV, roughness)).rg;
+					float3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
+
+					float3 irradiance = GetIrradiance(normal);
+
+					float3 kS = F;
+					float3 kD = 1.0 - kS;
+					float3 diffuse    = irradiance * albedo;
+					float3 ambient    = (kD * diffuse + specular) * ao;
+
+					return float4(ambient, 1);
+				}
+			}
+		}
+	}
+}

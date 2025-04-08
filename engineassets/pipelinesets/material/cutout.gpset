@@ -1,0 +1,73 @@
+pipelineSet "lit.cutout" {
+	parameters {
+		Color materialInstanceUbo.color : Color.white,
+		Texture2D albedoTexture : Texture2D.missingCheckerboard,
+		Texture2D normalTexture : Texture2D.missingNormal,
+		Texture2D metalnessTexture : Texture2D.black,
+		Texture2D roughnessTexture : Texture2D.black
+	}
+	
+	configuration "main" {
+		rendererTags: "deferred"
+
+		pass "main" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment mainFragment
+
+			properties {
+				cull: back
+				depthBias: false
+				depthWrite: true
+				depthTest: true
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+			}
+
+			requiresBlocks [
+				GsMeshRendererVertexInput,
+				GsTransformNormalToWorldSpace,
+				GsDefaultSampler
+			]
+
+			shaderHlsl {
+				struct MaterialInstanceUBO {
+					float3 color;
+				};
+
+				cbuffer materialInstanceUbo : register(b0, space0) { MaterialInstanceUBO materialInstanceUbo; }
+
+				Texture2D<float4> albedoTexture : register(t1, space0);
+				Texture2D<float4> normalTexture : register(t2, space0);
+				Texture2D<float4> metalnessTexture : register(t3, space0);
+				Texture2D<float4> roughnessTexture : register(t4, space0);
+
+				struct FragmentOutput {
+					[[vk::location(0)]] float4 gbufferAlbedoMatID : SV_TARGET0;
+					[[vk::location(1)]] float4 gbufferNormal : SV_TARGET1;
+					[[vk::location(2)]] float4 gbufferSpecularRoughness : SV_TARGET2;
+				};
+
+				FragmentOutput mainFragment(VertexToFragment input) {
+					float4 albedo = float4(materialInstanceUbo.color.rgb, 1) * albedoTexture.Sample(mySampler, input.texCoord0);
+
+					if (albedo.a < 0.5f) {
+						discard;
+					}
+
+					float3 textureSpaceNormal = normalTexture.Sample(mySampler, input.texCoord0).rgb;
+					float metalness = metalnessTexture.Sample(mySampler, input.texCoord0).r;
+					float roughness = roughnessTexture.Sample(mySampler, input.texCoord0).r;
+
+					float3 specular = lerp(float3(0.04, 0.04, 0.04), albedo.rgb, metalness);
+					float3 worldSpaceNormal = TransformNormalToWorldSpace(input.normal, textureSpaceNormal, input.tangent);
+
+					FragmentOutput output = (FragmentOutput)0;
+					output.gbufferAlbedoMatID = albedo;
+					output.gbufferNormal = float4(worldSpaceNormal, 1);
+					output.gbufferSpecularRoughness = float4(specular, roughness);
+					return output;
+				}
+			}
+		}
+	}
+}

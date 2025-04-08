@@ -1,0 +1,126 @@
+shaderBlock GsInvertMatrix {
+	shaderHlsl {
+		float4x4 InvertMatrix(float4x4 m) {
+			float n11 = m[0][0], n12 = m[1][0], n13 = m[2][0], n14 = m[3][0];
+			float n21 = m[0][1], n22 = m[1][1], n23 = m[2][1], n24 = m[3][1];
+			float n31 = m[0][2], n32 = m[1][2], n33 = m[2][2], n34 = m[3][2];
+			float n41 = m[0][3], n42 = m[1][3], n43 = m[2][3], n44 = m[3][3];
+
+			float t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44;
+			float t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44;
+			float t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44;
+			float t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
+
+			float det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
+			float idet = 1.0f / det;
+
+			float4x4 ret;
+
+			ret[0][0] = t11 * idet;
+			ret[0][1] = (n24 * n33 * n41 - n23 * n34 * n41 - n24 * n31 * n43 + n21 * n34 * n43 + n23 * n31 * n44 - n21 * n33 * n44) * idet;
+			ret[0][2] = (n22 * n34 * n41 - n24 * n32 * n41 + n24 * n31 * n42 - n21 * n34 * n42 - n22 * n31 * n44 + n21 * n32 * n44) * idet;
+			ret[0][3] = (n23 * n32 * n41 - n22 * n33 * n41 - n23 * n31 * n42 + n21 * n33 * n42 + n22 * n31 * n43 - n21 * n32 * n43) * idet;
+
+			ret[1][0] = t12 * idet;
+			ret[1][1] = (n13 * n34 * n41 - n14 * n33 * n41 + n14 * n31 * n43 - n11 * n34 * n43 - n13 * n31 * n44 + n11 * n33 * n44) * idet;
+			ret[1][2] = (n14 * n32 * n41 - n12 * n34 * n41 - n14 * n31 * n42 + n11 * n34 * n42 + n12 * n31 * n44 - n11 * n32 * n44) * idet;
+			ret[1][3] = (n12 * n33 * n41 - n13 * n32 * n41 + n13 * n31 * n42 - n11 * n33 * n42 - n12 * n31 * n43 + n11 * n32 * n43) * idet;
+
+			ret[2][0] = t13 * idet;
+			ret[2][1] = (n14 * n23 * n41 - n13 * n24 * n41 - n14 * n21 * n43 + n11 * n24 * n43 + n13 * n21 * n44 - n11 * n23 * n44) * idet;
+			ret[2][2] = (n12 * n24 * n41 - n14 * n22 * n41 + n14 * n21 * n42 - n11 * n24 * n42 - n12 * n21 * n44 + n11 * n22 * n44) * idet;
+			ret[2][3] = (n13 * n22 * n41 - n12 * n23 * n41 - n13 * n21 * n42 + n11 * n23 * n42 + n12 * n21 * n43 - n11 * n22 * n43) * idet;
+
+			ret[3][0] = t14 * idet;
+			ret[3][1] = (n13 * n24 * n31 - n14 * n23 * n31 + n14 * n21 * n33 - n11 * n24 * n33 - n13 * n21 * n34 + n11 * n23 * n34) * idet;
+			ret[3][2] = (n14 * n22 * n31 - n12 * n24 * n31 - n14 * n21 * n32 + n11 * n24 * n32 + n12 * n21 * n34 - n11 * n22 * n34) * idet;
+			ret[3][3] = (n12 * n23 * n31 - n13 * n22 * n31 + n13 * n21 * n32 - n11 * n23 * n32 - n12 * n21 * n33 + n11 * n22 * n33) * idet;
+
+			return ret;
+		}
+	}
+}
+
+shaderBlock GsPadFloat33ToFloat44 {
+	shaderHlsl {
+		float4x4 PadFloat33ToFloat44(float3x3 inMatrix) {
+    		return float4x4(float4(inMatrix[0].x, inMatrix[0].y, inMatrix[0].z, 0.0f), float4(inMatrix[1].x, inMatrix[1].y, inMatrix[1].z, 0.0f), float4(inMatrix[2].x, inMatrix[2].y, inMatrix[2].z, 0.0f), float4(0.0f, 0.0f, 0.0f, 1.0f));
+		}
+	}
+}
+
+shaderBlock GsComputeDepth {
+	shaderHlsl {
+		float ComputeDepth(float4x4 projMatrix, float4x4 viewMatrix, float3 pos) {
+			float4 clipSpacePos = mul(mul(float4(pos.xyz, 1.0), viewMatrix), projMatrix);
+			return (clipSpacePos.z / clipSpacePos.w);
+		}
+	}
+}
+
+shaderBlock GsViewSpaceToScreenSpace {
+	shaderHlsl {
+		float4 ViewSpaceToScreenSpace(float4x4 projMatrix, float4 worldPosition, float2 pixelSize) {
+			float4 projectedCoords = projMatrix * worldPosition;
+			projectedCoords.xyz /= projectedCoords.w;
+			projectedCoords.xy = (projectedCoords.xy * 0.5f + 0.5f) * pixelSize;
+			return projectedCoords;
+		}
+	}
+}
+
+shaderBlock GsComputeLinearDepth {
+	shaderHlsl {
+		float ComputeLinearDepth(float4 projMatrix, float4 viewMatrix, float3 pos) {
+			float4 clipSpacePos = projMatrix * viewMatrix * float4(pos.xyz, 1.0);
+			return (clipSpacePos.z / clipSpacePos.w);
+		}
+	}
+}
+
+shaderBlock GsComputeClipSpacePosition {
+	shaderHlsl {
+		float4 ComputeClipSpacePosition(float2 positionNDC, float deviceDepth) {
+			float4 positionCS = float4(positionNDC * 2.0 - 1.0, deviceDepth, 1.0);
+
+			return positionCS;
+		}
+	}
+}
+
+shaderBlock GsComputeViewSpacePosition {
+	requiresBlocks [
+		GsComputeClipSpacePosition
+	]
+
+	shaderHlsl {
+		float3 ComputeViewSpacePosition(float4x4 inverseProjectionMatrix, float4x4 viewMatrix, float2 positionNDC, float deviceDepth) {
+			float4 positionCS  = ComputeClipSpacePosition(positionNDC, deviceDepth);
+			float4 hpositionWS = mul(positionCS, inverseProjectionMatrix);
+			return hpositionWS.xyz / hpositionWS.w;
+		}
+	}
+}
+
+shaderBlock GsComputeWorldSpacePosition {
+	requiresBlocks [
+		GsComputeClipSpacePosition,
+		GsInvertMatrix
+	]
+
+	shaderHlsl {
+		float3 ComputeWorldSpacePosition(float4x4 projectionMatrix, float4x4 viewMatrix, float2 positionNDC, float deviceDepth) {
+			float4 positionCS  = ComputeClipSpacePosition(positionNDC, deviceDepth);
+			float4 hpositionWS = mul(positionCS, InvertMatrix(projectionMatrix * viewMatrix));
+			return hpositionWS.xyz / hpositionWS.w;
+		}
+	}
+}
+
+shaderBlock GsViewNormal {
+	shaderHlsl {
+		float3 ViewNormal(float4x4 viewMatrix, float3 inNormals) {
+			return mul((float3x3)viewMatrix, normalize(inNormals));
+		}
+	}
+}

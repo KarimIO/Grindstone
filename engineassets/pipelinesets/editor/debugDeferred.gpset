@@ -1,0 +1,171 @@
+pipelineSet "DebugDeferred" {
+	configuration "main" {
+		pass "main" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment mainFragment
+
+			properties {
+				cull: back
+				depthBias: false
+				depthWrite: false
+				depthTest: false
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+			}
+			
+			requiresBlocks [
+				GsDefaultSampler,
+				GsInvertMatrix,
+				GsRendererUniform
+			]
+
+			shaderHlsl {
+				struct VertexInput {
+					[[vk::location(0)]] float2 position : POSITION0;
+				};
+					
+				struct VertexToFragment {
+					float4 position : SV_Position;
+					[[vk::location(0)]] float2 fragmentTexCoord : TEXCOORD0;
+					[[vk::location(1)]] float2 scaledFragmentTexCoord : TEXCOORD1;
+				};
+
+				VertexToFragment mainVertex(VertexInput inData) {
+					VertexToFragment outData = (VertexToFragment)0;
+					outData.position = float4(inData.position, 0.0, 1.0);
+					outData.fragmentTexCoord = ((inData.position * 0.5f) + float2(0.5f, 0.5f));
+					outData.scaledFragmentTexCoord = outData.fragmentTexCoord * rendererUbo.renderScale;
+					return outData;
+				}
+
+				Texture2D<float4> gbufferDepth : register(t1,  space0);
+				Texture2D<float4> gbufferAlbedo : register(t2,  space0);
+				Texture2D<float4> gbufferNormal : register(t3,  space0);
+				Texture2D<float4> gbufferSpecularRoughness : register(t4,  space0);
+				Texture2D<float4> ambientOcclusion : register(t5,  space0);
+
+				struct DebugUbo {
+					uint mode;
+				};
+
+				cbuffer debugUbo : register(b6, space0) { DebugUbo debugUbo; }
+
+				float3 linearToSRGB(float3 inColor) {
+					float3 outColor;
+					outColor.r = inColor.r <= 0.0031308 ? 12.92 * inColor.r : 1.055 * pow(inColor.r, 1.0/2.4) - 0.055;
+					outColor.g = inColor.g <= 0.0031308 ? 12.92 * inColor.g : 1.055 * pow(inColor.g, 1.0/2.4) - 0.055;
+					outColor.b = inColor.b <= 0.0031308 ? 12.92 * inColor.b : 1.055 * pow(inColor.b, 1.0/2.4) - 0.055;
+					return outColor;
+				}
+
+				float3 hdrTransform(float3 color) {
+					float a = 2.51f;
+					float b = 0.03f;
+					float c = 2.43f;
+					float d = 0.59f;
+					float e = 0.14f;
+
+					return clamp((color*(a*color+b))/(color*(c*color+d)+e), 0, 1);
+				}
+
+				float4 ComputeClipSpacePosition(float2 positionNDC, float deviceDepth) {
+					float4 positionCS = float4(positionNDC * 2.0 - 1.0, deviceDepth, 1.0);
+
+					return positionCS;
+				}
+
+				float3 ComputeViewSpacePosition(float2 positionNDC, float deviceDepth) {
+					float4 positionCS  = ComputeClipSpacePosition(positionNDC, deviceDepth);
+					float4 hpositionWS = mul(InvertMatrix(rendererUbo.projectionMatrix), positionCS);
+					return hpositionWS.xyz / hpositionWS.w;
+				}
+
+				float3 ComputeWorldSpacePosition(float2 positionNDC, float deviceDepth) {
+					float4 positionCS  = ComputeClipSpacePosition(positionNDC, deviceDepth);
+					float4 hpositionWS = mul(InvertMatrix(rendererUbo.projectionMatrix * rendererUbo.viewMatrix), positionCS);
+					return hpositionWS.xyz / hpositionWS.w;
+				}
+
+				float3 ViewNormal(float3 inNorm) {
+					return mul(normalize(inNorm), (float3x3)rendererUbo.viewMatrix);
+				}
+
+				#define RenderMode_Default 0
+				#define RenderMode_Position 1
+				#define RenderMode_PositionMod 2
+				#define RenderMode_ViewPosition 3
+				#define RenderMode_ViewPositionMod 4
+				#define RenderMode_Depth 5
+				#define RenderMode_DepthMod 6
+				#define RenderMode_Normal 7
+				#define RenderMode_ViewNormal 8
+				#define RenderMode_Albedo 9
+				#define RenderMode_Specular 10
+				#define RenderMode_Roughness 11
+				#define RenderMode_AmbientOcclusion 12
+
+				float4 mainFragment(VertexToFragment inData) : SV_TARGET0 {
+					switch (debugUbo.mode) {
+						case RenderMode_Position: {
+							float depth = gbufferDepth.Sample(mySampler, inData.scaledFragmentTexCoord).r;
+							float3 pos = ComputeWorldSpacePosition(inData.fragmentTexCoord, depth);
+							return float4(pos, 1);
+						}
+						case RenderMode_PositionMod: {
+							float depth = gbufferDepth.Sample(mySampler, inData.scaledFragmentTexCoord).r;
+							float3 pos = fmod(abs(ComputeWorldSpacePosition(inData.fragmentTexCoord, depth)), 1.0f);
+							return float4(pos, 1);
+						}
+						case RenderMode_ViewPosition: {
+							float depth = gbufferDepth.Sample(mySampler, inData.scaledFragmentTexCoord).r;
+							float3 pos = ComputeViewSpacePosition(inData.fragmentTexCoord, depth);
+							return float4(pos, 1);
+						}
+						case RenderMode_ViewPositionMod: {
+							float depth = gbufferDepth.Sample(mySampler, inData.scaledFragmentTexCoord).r;
+							float3 pos = fmod(abs(ComputeViewSpacePosition(inData.fragmentTexCoord, depth)), 1.0f);
+							return float4(pos, 1);
+						}
+						case RenderMode_Depth: {
+							float depth = gbufferDepth.Sample(mySampler, inData.scaledFragmentTexCoord).r;
+							return float4(depth, depth, depth, 1);
+						}
+						case RenderMode_DepthMod: {
+							float depth = gbufferDepth.Sample(mySampler, inData.scaledFragmentTexCoord).r;
+							depth = ComputeViewSpacePosition(inData.scaledFragmentTexCoord, depth).z;
+							float modDepth = fmod(depth, 1.0f);
+							return float4(modDepth, modDepth, modDepth, 1);
+						}
+						case RenderMode_Normal: {
+							float3 normal = gbufferNormal.Sample(mySampler, inData.scaledFragmentTexCoord).rgb;
+							return float4(normal, 1);
+						}
+						case RenderMode_ViewNormal: {
+							float3 normal = ViewNormal(gbufferNormal.Sample(mySampler, inData.scaledFragmentTexCoord).rgb);
+							return float4(normal, 1);
+						}
+						case RenderMode_Albedo: {
+							float3 albedo = gbufferAlbedo.Sample(mySampler, inData.scaledFragmentTexCoord).rgb;
+							return float4(albedo, 1);
+						}
+						case RenderMode_Specular: {
+							float3 specular = gbufferSpecularRoughness.Sample(mySampler, inData.scaledFragmentTexCoord).rgb;
+							return float4(specular, 1);
+						}
+						case RenderMode_Roughness: {
+							float roughness = gbufferSpecularRoughness.Sample(mySampler, inData.scaledFragmentTexCoord).a;
+							return float4(roughness, roughness, roughness, 1);
+						}
+						case RenderMode_AmbientOcclusion: {
+							float ao = ambientOcclusion.Sample(mySampler, inData.scaledFragmentTexCoord).r;
+							return float4(ao, ao, ao, 1);
+						}
+						default: {
+							return float4(0, 0, 0, 1);
+						}
+					}
+				}
+			}
+		}
+	}
+}
