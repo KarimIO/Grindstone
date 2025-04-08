@@ -197,7 +197,7 @@ static bool TranspileShader(LogCallback logCallback, CompilationOptions& options
 		// Use fputs to prevent any chance of new allocations
 		// Terminate the process
 
-		logCallback(LogLevel::Error, LogSource::Output, fmt::format("Critical Error in {}", entrypoint), sourcePath, UNDEFINED_LINE, UNDEFINED_COLUMN);
+		logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Output, fmt::format("Critical Error in {}", entrypoint), sourcePath, UNDEFINED_LINE, UNDEFINED_COLUMN);
 
 		return false;
 	}
@@ -212,7 +212,7 @@ static bool TranspileShader(LogCallback logCallback, CompilationOptions& options
 		pErrors->GetStringLength() != 0
 	) {
 		std::string outputStr = pErrors->GetStringPointer();
-		logCallback(LogLevel::Error, LogSource::Output, outputStr, sourcePath, UNDEFINED_LINE, UNDEFINED_COLUMN);
+		logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Output, outputStr, sourcePath, UNDEFINED_LINE, UNDEFINED_COLUMN);
 		return false;
 	}
 
@@ -221,7 +221,7 @@ static bool TranspileShader(LogCallback logCallback, CompilationOptions& options
 	//
 	HRESULT hrStatus;
 	if (FAILED(pResults->GetStatus(&hrStatus)) || FAILED(hrStatus)) {
-		logCallback(LogLevel::Error, LogSource::Output, "Could not compile shader.", sourcePath, UNDEFINED_LINE, UNDEFINED_COLUMN);
+		logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Output, "Could not compile shader.", sourcePath, UNDEFINED_LINE, UNDEFINED_COLUMN);
 		return false;
 	}
 

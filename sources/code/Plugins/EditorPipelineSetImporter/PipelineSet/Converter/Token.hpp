@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 
-#include <PipelineSet/Formats.hpp>
+#include <Common/Graphics/Formats.hpp>
 
 #define TOKEN_LIST \
 E(Invalid)\

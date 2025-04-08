@@ -5,7 +5,7 @@
 #include <array>
 #include <vector>
 
-#include <PipelineSet/Formats.hpp>
+#include <Common/Graphics/Formats.hpp>
 #include "ParseTree.hpp"
 
 struct ResolvedStateTree {

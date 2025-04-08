@@ -34,17 +34,17 @@ static std::string PrintToken(TokenData& tokenData) {
 }
 
 static void UnexpectedError(ParseContext& context, TokenData& token) {
-	context.Log(LogLevel::Error, LogSource::Parser, fmt::format("Unexpected token: {}", PrintToken(token)), token.path, token.line, token.column);
+	context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, fmt::format("Unexpected token: {}", PrintToken(token)), token.path, token.line, token.column);
 }
 
 static void UnexpectedError(ParseContext& context) {
 	if (context.tokenIterator >= context.scannerTokens.size()) {
 		if (!context.scannerTokens.empty()) {
 			TokenData token = context.scannerTokens[context.scannerTokens.size() - 1];
-			context.Log(LogLevel::Error, LogSource::Parser, fmt::format("Unexpected end of line after token: ", PrintToken(token)), token.path, token.line, token.column);
+			context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, fmt::format("Unexpected end of line after token: ", PrintToken(token)), token.path, token.line, token.column);
 		}
 		else {
-			context.Log(LogLevel::Error, LogSource::Parser, "Unexpected end of line: ", context.filepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
+			context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, "Unexpected end of line: ", context.filepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
 		}
 	}
 
@@ -57,7 +57,7 @@ static bool ExpectToken(ParseContext& context, Token token, const char* errorMsg
 		if (errorMsg != nullptr) {
 			std::string errorMsgExtended;
 			errorMsgExtended = std::string(errorMsg) + " - Found end of file.";
-			context.Log(LogLevel::Error, LogSource::Parser, errorMsg, context.filepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
+			context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, errorMsg, context.filepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
 		}
 		return false;
 	}
@@ -67,7 +67,7 @@ static bool ExpectToken(ParseContext& context, Token token, const char* errorMsg
 		if (errorMsg != nullptr) {
 			std::string errorMsgExtended;
 			errorMsgExtended = std::string(errorMsg) + " - Expected token '" + tokenStrings[static_cast<size_t>(token)] + ", found token " + PrintToken(tokenData) + ".";
-			context.Log(LogLevel::Error, LogSource::Parser, errorMsg, tokenData.path, tokenData.line, tokenData.column);
+			context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, errorMsg, tokenData.path, tokenData.line, tokenData.column);
 		}
 		return false;
 	}
@@ -90,7 +90,7 @@ static bool ExpectToken(ParseContext& context, Token token, TokenData::Data& out
 		if (errorMsg != nullptr) {
 			std::string errorTotalMsg = errorMsg;
 			errorTotalMsg += " - found token " + PrintToken(tokenData) + ".";
-			context.Log(LogLevel::Error, LogSource::Parser, errorTotalMsg.c_str(), tokenData.path, tokenData.line, tokenData.column);
+			context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, errorTotalMsg.c_str(), tokenData.path, tokenData.line, tokenData.column);
 		}
 		return false;
 	}
@@ -181,7 +181,7 @@ static void ParseShader(ParseContext& context, ParseTree::ShaderBlock& selectedS
 		selectedShaderBlock.code += code;
 	}
 	else {
-		context.Log(LogLevel::Error, LogSource::Parser, "Shaderblock changed code type!", token.path, token.line, token.column);
+		context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, "Shaderblock changed code type!", token.path, token.line, token.column);
 	}
 }
 
@@ -327,7 +327,7 @@ static bool ParseAttachmentProperty(ParseContext& context, ParseTree::RenderStat
 						isValid = false;
 						TokenData& tokenData = context.scannerTokens[context.tokenIterator - 1];
 						std::string invalidValue = "Expected only a combination of 'r', 'g', 'b', 'a' in 'colorMask' - found " + std::string(mask);
-						context.Log(LogLevel::Error, LogSource::Parser, invalidValue, tokenData.path, tokenData.line, tokenData.column);
+						context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, invalidValue, tokenData.path, tokenData.line, tokenData.column);
 						break;
 					}
 				}
@@ -461,7 +461,7 @@ static void ParseAttachments(ParseContext& context, ParseTree::RenderState& rend
 				attachments.emplace_back();
 				if (attachmentIndex == MAXIMUM_ATTACHMENT_COUNT) {
 					TokenData commaToken = context.scannerTokens[context.tokenIterator];
-					context.Log(LogLevel::Error, LogSource::Parser, "Too many attachments!", commaToken.path, commaToken.line, commaToken.column);
+					context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, "Too many attachments!", commaToken.path, commaToken.line, commaToken.column);
 					break;
 				}
 
@@ -502,8 +502,8 @@ static void ParseAttachments(ParseContext& context, ParseTree::RenderState& rend
 	}
 	else {
 		context.Log(
-			LogLevel::Error,
-			LogSource::Parser,
+			Grindstone::LogSeverity::Error,
+			PipelineConverterLogSource::Parser,
 			"Expected an opening curly brace '{' or square brace '[' after \"attachments:\".",
 			attachmentsTokenData.path,
 			attachmentsTokenData.line,
@@ -554,7 +554,7 @@ static void ParseRequiresBlocks(ParseContext& context, std::vector<std::string>&
 		case Token::Identifier:
 			++context.tokenIterator;
 			if (lastWasString) {
-				context.Log(LogLevel::Error, LogSource::Parser, "Expected a comma before another identifier!", token.path, token.line, token.column);
+				context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, "Expected a comma before another identifier!", token.path, token.line, token.column);
 			}
 			lastWasString = true;
 			names.push_back(std::string(token.data.string));
@@ -562,7 +562,7 @@ static void ParseRequiresBlocks(ParseContext& context, std::vector<std::string>&
 		case Token::Comma:
 			++context.tokenIterator;
 			if (!lastWasString) {
-				context.Log(LogLevel::Error, LogSource::Parser, "Expected an identifier before a comma!", token.path, token.line, token.column);
+				context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, "Expected an identifier before a comma!", token.path, token.line, token.column);
 			}
 			lastWasString = false;
 			break;
@@ -780,7 +780,7 @@ static bool ReadParameter(ParseContext& context, ParseTree::PipelineSet& pipelin
 
 	}
 	else {
-		context.Log(LogLevel::Error, LogSource::Parser, fmt::format("Unexpected parameter type '{}'", token.data.string), token.path, token.line, token.column);
+		context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, fmt::format("Unexpected parameter type '{}'", token.data.string), token.path, token.line, token.column);
 		return false;
 	}
 
@@ -815,7 +815,7 @@ static bool ParseParameters(ParseContext& context, ParseTree::PipelineSet& pipel
 			break;
 		case Token::Identifier:
 			if (requiresComma == true) {
-				context.Log(LogLevel::Error, LogSource::Parser, "Expected a comma before this identifier", token.path, token.line, token.column);
+				context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, "Expected a comma before this identifier", token.path, token.line, token.column);
 			}
 			
 			ReadParameter(context, pipelineSet, token);

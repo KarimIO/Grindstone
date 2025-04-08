@@ -5,7 +5,6 @@
 #include <set>
 #include <map>
 
-#include <functional>
 #include <PipelineSet/Converter/CompilationOptions.hpp>
 #include <PipelineSet/WriteCallback.hpp>
 #include <PipelineSet/Log.hpp>

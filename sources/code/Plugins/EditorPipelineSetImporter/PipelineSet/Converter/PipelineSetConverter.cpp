@@ -15,7 +15,14 @@
 #include "ShaderCompiler.hpp"
 #include "Output.hpp"
 
-static void SimpleLog(LogLevel level, LogSource source, std::string_view msg, const std::filesystem::path& filename, uint32_t line, uint32_t column) {
+static void SimpleLog(
+	Grindstone::LogSeverity severity,
+	PipelineConverterLogSource source,
+	std::string_view msg,
+	const std::filesystem::path& filename,
+	uint32_t line,
+	uint32_t column
+) {
 	#ifdef _MSC_VER
 		constexpr const WORD debugColorOff = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
 
@@ -71,10 +78,10 @@ static void SimpleLog(LogLevel level, LogSource source, std::string_view msg, co
 		milliseconds
 	);
 
-	const char* logPrefix = logPrefixes[static_cast<uint8_t>(level)];
+	const char* logPrefix = logPrefixes[static_cast<uint8_t>(severity)];
 	const char* logSource = logSources[static_cast<uint8_t>(source)];
 
-	uint8_t index = static_cast<uint8_t>(level);
+	uint8_t index = static_cast<uint8_t>(severity);
 
 	std::string outputPrefix = fmt::format("{}{}[{}] {}", logPrefix, logSource, timeBuffer, filename.string());
 	if (line != UNDEFINED_LINE) {
@@ -90,14 +97,14 @@ static void SimpleLog(LogLevel level, LogSource source, std::string_view msg, co
 	}
 
 	#ifdef _MSC_VER
-		DWORD outputHandle = level == LogLevel::Error
+		DWORD outputHandle = severity == Grindstone::LogSeverity::Error
 			? STD_ERROR_HANDLE
 			: STD_OUTPUT_HANDLE;
 
 		std::string mainMessage = fmt::format("{}\n", msg);
 
 		HANDLE hConsole = ::GetStdHandle(outputHandle);
-		::SetConsoleTextAttribute(hConsole, debugColors[static_cast<size_t>(level)]);
+		::SetConsoleTextAttribute(hConsole, debugColors[static_cast<size_t>(severity)]);
 		::WriteConsoleA(hConsole, outputPrefix.c_str(), static_cast<DWORD>(outputPrefix.size()), nullptr, nullptr);
 		::SetConsoleTextAttribute(hConsole, debugColorOff);
 
@@ -149,13 +156,13 @@ static bool PreprocessFile(LogCallback logCallback, ParseTree& parseTree, const 
 	std::string pathAsStr = path.string();
 	if (!std::filesystem::exists(path)) {
 		std::string msg = fmt::format("Can't find file: {}", pathAsStr);
-		logCallback(LogLevel::Error, LogSource::General, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
+		logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::General, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
 		return false;
 	}
 
 	{
 		std::string msg = fmt::format("Processing {}", pathAsStr);
-		logCallback(LogLevel::Trace, LogSource::General, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
+		logCallback(Grindstone::LogSeverity::Trace, PipelineConverterLogSource::General, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
 	}
 
 	std::ifstream ifs(path);
@@ -168,13 +175,13 @@ static bool PreprocessFile(LogCallback logCallback, ParseTree& parseTree, const 
 
 	if (!ScanPipelineSet(logCallback, path, content, scanTokens)) {
 		std::string msg = fmt::format("Found errors in ScanPipelineState: {}", pathAsStr);
-		logCallback(LogLevel::Error, LogSource::General, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
+		logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::General, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
 		return false;
 	}
 
 	if (!ParsePipelineSet(logCallback, path, scanTokens, parseTree)) {
 		std::string msg = fmt::format("Found errors in ParsePipelineState: {}", pathAsStr);
-		logCallback(LogLevel::Error, LogSource::General, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
+		logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::General, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
 		return false;
 	}
 
@@ -237,7 +244,7 @@ void PipelineSetConditioner::Convert(CompilationOptions options) {
 
 void PipelineSetConditioner::Rerun(const std::filesystem::path& path) {
 	std::string msg = fmt::format("Rerunning {}", path.string());
-	logCallback(LogLevel::Trace, LogSource::General, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
+	logCallback(Grindstone::LogSeverity::Trace, PipelineConverterLogSource::General, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
 }
 
 LogCallback PipelineSetConditioner::GetLogCallback() const {

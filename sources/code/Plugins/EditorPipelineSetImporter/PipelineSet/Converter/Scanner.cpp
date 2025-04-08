@@ -170,7 +170,7 @@ static std::string_view ReadCommentMultiLine(ScanContext& scanContext) {
 		}
 	}
 
-	scanContext.Log(LogLevel::Error, LogSource::Scanner, "Unended comment!", scanContext.path, scanContext.currentLine, scanContext.currentCharacterInLine);
+	scanContext.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Scanner, "Unended comment!", scanContext.path, scanContext.currentLine, scanContext.currentCharacterInLine);
 	const char* end = &*(scanContext.currentPtr - 1);
 	return std::string_view(start, end - start);
 }
@@ -209,7 +209,7 @@ static bool ReadNumber(ScanContext& scanContext, float& number) {
 		return true;
 	}
 
-	scanContext.Log(LogLevel::Error, LogSource::Scanner, "Invalid Number!", scanContext.path, scanContext.currentLine, scanContext.currentCharacterInLine);
+	scanContext.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Scanner, "Invalid Number!", scanContext.path, scanContext.currentLine, scanContext.currentCharacterInLine);
 	return false;
 }
 
@@ -537,7 +537,7 @@ static TokenData ParseKeywordToken(ScanContext& scanContext, Keyword keyword, co
 		return TokenData::Boolean(false, path, line, column);
 	default:
 		std::string errorMsg = std::string("Unhandled token ") + keywordStrings[static_cast<uint8_t>(keyword)];
-		scanContext.Log(LogLevel::Error, LogSource::Scanner, errorMsg.c_str(), path, line, column);
+		scanContext.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Scanner, errorMsg.c_str(), path, line, column);
 		return TokenData(Token::Invalid, path, line, column);
 	}
 }

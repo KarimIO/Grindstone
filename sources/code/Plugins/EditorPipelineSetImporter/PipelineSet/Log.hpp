@@ -3,16 +3,11 @@
 #include <filesystem>
 #include <functional>
 #include <string_view>
+#include <stdint.h>
 
-enum class LogLevel : uint8_t {
-	Trace,
-	Info,
-	Warning,
-	Error,
-	Fatal
-};
+#include <Common/Logging.hpp>
 
-enum class LogSource : uint8_t {
+enum class PipelineConverterLogSource : uint8_t {
 	General,
 	Scanner,
 	Parser,
@@ -23,4 +18,5 @@ enum class LogSource : uint8_t {
 constexpr uint32_t UNDEFINED_LINE = UINT32_MAX;
 constexpr uint32_t UNDEFINED_COLUMN = UINT32_MAX;
 
-using LogCallback = std::function<void(LogLevel level, LogSource source, std::string_view msg, const std::filesystem::path& filename, uint32_t line, uint32_t column)>;
+// Grindstone::LogSeverity level, PipelineConverterLogSource source, std::string_view msg, const std::filesystem::path& filename, uint32_t line, uint32_t column
+using LogCallback = std::function<void(Grindstone::LogSeverity, PipelineConverterLogSource, std::string_view, const std::filesystem::path&, uint32_t, uint32_t)>;

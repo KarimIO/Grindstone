@@ -1,5 +1,8 @@
 #include <fmt/format.h>
 #include <vector>
+
+#include <Common/Graphics/Formats.hpp>
+
 #include "Output.hpp"
 
 #define NOMINMAX
@@ -77,13 +80,8 @@ static void WriteBytes(Writer& writer, const void* bytes, const size_t count) {
 	writer.ptr += count;
 }
 
-enum class PipelineType {
-	PipelineSet = 0,
-	Compute,
-};
-
 struct PipelineHeader {
-	PipelineType isComputeHeader = PipelineType::PipelineSet;
+	PipelineType isComputeHeader = PipelineType::Graphics;
 	uint32_t pipelineSize = 0;
 	uint32_t configurationCount = 0;
 	uint32_t nextPipelineOffset = 0;
@@ -170,7 +168,7 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 
 					const StageCompilationArtifacts& artifacts = passArtifact.stages[usedStageIndex++];
 					if (artifacts.stage != static_cast<Grindstone::GraphicsAPI::ShaderStage>(stageIndex)) {
-						logCallback(LogLevel::Error, LogSource::Output, "Something fishy - stage mismatch!", pipelineSet.sourceFilepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
+						logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Output, "Something fishy - stage mismatch!", pipelineSet.sourceFilepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
 					}
 					hasUsedStages = true;
 					hasUsedPasses = true;
@@ -180,13 +178,13 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 		}
 	}
 
-	writeCallback(pipelineSet.sourceFilepath, outputBuffer.size(), outputBuffer.data());
+	// writeCallback(pipelineSet.sourceFilepath, outputBuffer.size(), outputBuffer.data());
 
 	return true;
 }
 
 bool OutputComputeSet(LogCallback logCallback, const CompilationArtifactsCompute& compilationArtifacts, const ResolvedStateTree::ComputeSet& computeSet, WriteCallback writeCallback) {
-	logCallback(LogLevel::Info, LogSource::Output, "Compiled and Outputted", computeSet.sourceFilepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
+	logCallback(Grindstone::LogSeverity::Info, PipelineConverterLogSource::Output, "Compiled and Outputted", computeSet.sourceFilepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
 
 	return true;
 }

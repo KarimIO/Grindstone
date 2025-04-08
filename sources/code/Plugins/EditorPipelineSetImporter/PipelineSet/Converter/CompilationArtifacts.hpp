@@ -4,7 +4,7 @@
 #include <string_view>
 #include <vector>
 
-#include <PipelineSet/Formats.hpp>
+#include <Common/Graphics/Formats.hpp>
 
 struct StageCompilationArtifacts {
 	Grindstone::GraphicsAPI::ShaderStage stage;
