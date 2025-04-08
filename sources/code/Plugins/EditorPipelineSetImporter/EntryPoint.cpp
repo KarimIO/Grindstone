@@ -18,7 +18,7 @@ extern "C" {
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 
 		if (editorPluginInterface != nullptr) {
-			editorPluginInterface->RegisterAssetImporter("glsl", ImportShadersFromGlsl);
+			editorPluginInterface->RegisterAssetImporter("gpset", ImportShadersFromGlsl);
 		}
 	}
 
@@ -27,7 +27,7 @@ extern "C" {
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 
 		if (editorPluginInterface != nullptr) {
-			editorPluginInterface->DeregisterAssetImporter("glsl");
+			editorPluginInterface->DeregisterAssetImporter("gpset");
 		}
 	}
 }
