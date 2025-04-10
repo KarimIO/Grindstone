@@ -164,6 +164,13 @@ bool AssetRegistry::TryGetPathWithMountPoint(const std::filesystem::path& path, 
 	return fileManager.TryGetPathWithMountPoint(path, outMountedPath);
 }
 
+bool Grindstone::Editor::AssetRegistry::TryGetAbsolutePathFromMountedPath(const std::filesystem::path& mountedPath, std::filesystem::path& outAbsolutePath) const {
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
+	Editor::FileManager& fileManager = editorManager.GetFileManager();
+	return fileManager.TryGetAbsolutePathFromMountedPath(mountedPath, outAbsolutePath);
+}
+
+
 bool AssetRegistry::TryGetAssetDataFromAbsolutePath(const std::filesystem::path& path, AssetRegistry::Entry& outEntry) const {
 	std::filesystem::path mountedPath;
 	if (!TryGetPathWithMountPoint(path, mountedPath)) {

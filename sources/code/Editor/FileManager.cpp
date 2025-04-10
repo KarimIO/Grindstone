@@ -137,6 +137,35 @@ bool FileManager::TryGetPathWithMountPoint(const std::filesystem::path& path, st
 	return false;
 }
 
+bool FileManager::TryGetAbsolutePathFromMountedPath(const std::filesystem::path& mountedPath, std::filesystem::path& outAbsolutePath) const {
+	std::string mountingPointStr = mountedPath.string();
+	if (mountingPointStr.empty() || mountingPointStr[0] != '$') {
+		outAbsolutePath = mountedPath;
+		return true;
+	}
+
+	size_t charPos = 0;
+	for (char c : mountingPointStr) {
+		if (c == '\\' || c == '/') {
+			break;
+		}
+		else {
+			charPos++;
+		}
+	}
+
+	mountingPointStr = mountingPointStr.substr(0, charPos);
+
+	for (const MountPoint& mountPoint : mountedDirectories) {
+		if (mountingPointStr == mountPoint.mountPoint) {
+			outAbsolutePath = mountPoint.path / std::filesystem::relative(mountedPath, mountingPointStr);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void FileManager::PreprocessFilesOnMount(
 	const MountPoint& mountPoint,
 	std::filesystem::directory_iterator directoryIterator
@@ -207,7 +236,7 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(const MountPoint& mountPoi
 	}
 
 	std::filesystem::path mountedPath = std::filesystem::path(mountPoint.mountPoint) / std::filesystem::relative(path, mountPoint.path);
-	auto& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
+	Grindstone::Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
 	for (MetaFile::Subasset& subasset : metaFile) {
 		if (!IsSubassetValid(mountedPath, assetRegistry, subasset)) {
 			return true;
