@@ -159,8 +159,36 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 			if (passArtifactsIterator == configArtifact.passes.end()) {
 				continue;
 			}
-			
+
+			uint8_t flags = 0;
+			flags |= pass.renderState.isDepthBiasEnabled.value() ? 0b1 : 0;
+			flags |= pass.renderState.isDepthClampEnabled.value() ? 0b10 : 0;
+			flags |= pass.renderState.isDepthTestEnabled.value() ? 0b100 : 0;
+			flags |= pass.renderState.isDepthWriteEnabled.value() ? 0b1000 : 0;
+			flags |= pass.renderState.isStencilEnabled.value() ? 0b10000 : 0;
+			flags |= pass.renderState.shouldCopyFirstAttachment ? 0b100000 : 0;
+
 			const CompilationArtifactsGraphics::Pass& passArtifact = passArtifactsIterator->second;
+			WriteBytes(writer, &pass.renderState.depthBiasClamp.value(), sizeof(float));
+			WriteBytes(writer, &pass.renderState.depthBiasConstantFactor.value(), sizeof(float));
+			WriteBytes(writer, &pass.renderState.depthBiasSlopeFactor.value(), sizeof(float));
+			WriteBytes(writer, &pass.renderState.cullMode.value(), sizeof(Grindstone::GraphicsAPI::CullMode));
+			WriteBytes(writer, &pass.renderState.depthCompareOp.value(), sizeof(Grindstone::GraphicsAPI::CompareOperation));
+			WriteBytes(writer, &pass.renderState.polygonFillMode.value(), sizeof(Grindstone::GraphicsAPI::PolygonFillMode));
+			WriteBytes(writer, &pass.renderState.primitiveType.value(), sizeof(Grindstone::GraphicsAPI::GeometryType));
+			WriteBytes(writer, &flags, sizeof(uint8_t));
+
+			uint8_t attachmentCount = static_cast<uint8_t>(pass.renderState.attachmentData.size());
+			WriteBytes(writer, &attachmentCount, sizeof(uint8_t));
+			for (const ParseTree::RenderState::AttachmentData& attachmentData : pass.renderState.attachmentData) {
+				WriteBytes(writer, &attachmentData.colorMask, sizeof(attachmentData.colorMask));
+				WriteBytes(writer, &attachmentData.blendAlphaFactorDst, sizeof(attachmentData.blendAlphaFactorDst));
+				WriteBytes(writer, &attachmentData.blendAlphaFactorSrc, sizeof(attachmentData.blendAlphaFactorSrc));
+				WriteBytes(writer, &attachmentData.blendAlphaOperation, sizeof(attachmentData.blendAlphaOperation));
+				WriteBytes(writer, &attachmentData.blendColorFactorDst, sizeof(attachmentData.blendColorFactorDst));
+				WriteBytes(writer, &attachmentData.blendColorFactorSrc, sizeof(attachmentData.blendColorFactorSrc));
+				WriteBytes(writer, &attachmentData.blendColorOperation, sizeof(attachmentData.blendColorOperation));
+			}
 
 			bool hasUsedStages = false;
 			size_t usedStageIndex = 0;
@@ -175,6 +203,8 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 					if (artifacts.stage != static_cast<Grindstone::GraphicsAPI::ShaderStage>(stageIndex)) {
 						logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Output, "Something fishy - stage mismatch!", pipelineSet.sourceFilepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
 					}
+
+					WriteBytes(writer, artifacts.compiledCode.data(), artifacts.compiledCode.size());
 					hasUsedStages = true;
 					hasUsedPasses = true;
 					hasUsedConfigs = true;
