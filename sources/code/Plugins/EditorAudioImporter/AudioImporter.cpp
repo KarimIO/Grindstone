@@ -21,7 +21,7 @@ void AudioImporter::Import(AssetRegistry& assetRegistry, Assets::AssetManager& a
 
 	std::filesystem::path outputPath = assetRegistry.GetCompiledAssetsPath() / uuid.ToString();
 	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
-	metaFile->Save();
+	metaFile->Save(audioImporterVersion);
 
 	assetManager.QueueReloadAsset(AssetType::AudioClip, uuid);
 }

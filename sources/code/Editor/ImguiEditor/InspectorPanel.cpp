@@ -38,7 +38,7 @@ static void RenderGenericFile(const std::filesystem::path& path) {
 					if (metaFile.TryGetSubasset(entry.uuid, subasset)) {
 						subasset->address = newAddress;
 					}
-					metaFile.Save();
+					metaFile.SaveWithoutImporterVersionChange();
 					assetRegistry.WriteFile();
 
 					selectedEntryToEdit = Uuid();

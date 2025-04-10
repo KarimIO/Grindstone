@@ -42,7 +42,7 @@ Manager& Manager::GetInstance() {
 	return manager;
 }
 
-Importers::ImporterManager& Manager::GetImporterManager() {
+Grindstone::Importers::ImporterManager& Manager::GetImporterManager() {
 	return importerManager;
 }
 

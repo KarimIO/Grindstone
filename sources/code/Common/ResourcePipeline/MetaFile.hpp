@@ -2,6 +2,7 @@
 
 #include <filesystem>
 
+#include <Common/Editor/Importer.hpp>
 #include <Common/ResourcePipeline/AssetType.hpp>
 #include <Editor/AssetRegistry.hpp>
 
@@ -36,7 +37,8 @@ namespace Grindstone::Editor {
 		MetaFile(AssetRegistry& assetRegistry, const std::filesystem::path&);
 
 		void Load(AssetRegistry& assetRegistry, const std::filesystem::path&);
-		void Save();
+		void Save(uint32_t currentImporterVersion);
+		void SaveWithoutImporterVersionChange();
 		bool TryGetDefaultSubasset(Subasset& subasset) const;
 		Uuid GetOrCreateDefaultSubassetUuid(const std::string& subassetName, AssetType assetType);
 		Uuid GetOrCreateSubassetUuid(const std::string& subassetName, AssetType assetType);
@@ -45,7 +47,8 @@ namespace Grindstone::Editor {
 		bool TryGetDefaultSubassetUuid(Uuid& outUuid) const;
 		bool TryGetSubassetUuid(const std::string& subassetName, Uuid& outUuid) const;
 		bool IsValid() const;
-		bool IsOutdatedVersion() const;
+		bool IsOutdatedImporterVersion(Grindstone::Editor::ImporterVersion currentImporterVersion) const;
+		bool IsOutdatedMetaVersion() const;
 	public:
 		using Iterator = std::vector<Subasset>::iterator;
 		using ConstIterator = std::vector<Subasset>::const_iterator;
@@ -59,7 +62,8 @@ namespace Grindstone::Editor {
 		std::string MakeDefaultAddress(std::string_view subassetName) const;
 
 		bool isValid = true;
-		uint32_t version = 0;
+		uint32_t importerVersion = 0;
+		uint32_t metaVersion = 0;
 		AssetRegistry& assetRegistry;
 		Subasset defaultSubasset;
 		std::vector<Subasset> subassets;

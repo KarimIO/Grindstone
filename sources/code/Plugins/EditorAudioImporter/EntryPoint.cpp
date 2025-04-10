@@ -15,7 +15,7 @@ extern "C" {
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 
 		if (editorPluginInterface != nullptr) {
-			editorPluginInterface->RegisterAssetImporter("wav", ImportAudio);
+			editorPluginInterface->RegisterAssetImporter("wav", ImportAudio, audioImporterVersion);
 		}
 	}
 

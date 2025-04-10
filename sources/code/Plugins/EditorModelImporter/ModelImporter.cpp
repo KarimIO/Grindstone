@@ -442,7 +442,7 @@ void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Gri
 	}
 	WritePrefab();
 
-	metaFile->Save();
+	metaFile->Save(modelImporterVersion);
 }
 
 inline static void WriteComponentHeader(std::ofstream& output, const char* name) {
@@ -497,6 +497,7 @@ void ModelImporter::WritePrefab() {
 		bool hasCamera = node.cameraData != nullptr;
 
 		output << "\t\t{\n\t\t\t\"entityId\": " << nodeIndex << ",\n\t\t\t\"components\": [\n";
+
 		// Output Tag
 		WriteComponentHeader(output, "Tag");
 		WriteComponentKey(output, "tag") << "\"" << node.name << "\"\n";
@@ -509,14 +510,14 @@ void ModelImporter::WritePrefab() {
 		WriteComponentKey(output, "scale") << node.scale << "\n";
 		WriteComponentFooter(output, hasParent || hasMesh || hasCamera || hasLight);
 
-	// Output Parent
+		// Output Parent
 		if (hasParent) {
 			WriteComponentHeader(output, "Parent");
 			WriteComponentKey(output, "parentEntity") << node.parentNode << "\n";
 			WriteComponentFooter(output, hasMesh || hasCamera || hasLight);
 		}
 
-	// Output Mesh and MeshRenderer
+		// Output Mesh and MeshRenderer
 		if (hasMesh) {
 			OutputMesh& mesh = outputMeshes[node.meshIndex];
 			if (mesh.submeshes.size() == 0) {

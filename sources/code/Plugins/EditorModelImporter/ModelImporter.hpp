@@ -109,5 +109,7 @@ namespace Grindstone::Editor::Importers {
 		void WriteSkeleton(size_t index) const;
 	};
 
+	const Grindstone::Editor::ImporterVersion modelImporterVersion = 1;
+
 	void ImportModel(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path);
 }

@@ -43,9 +43,14 @@ void MetaFile::Load(AssetRegistry& assetRegistry, const std::filesystem::path& b
 		return;
 	}
 
-	version = 0;
+	metaVersion = 0;
 	if (document.HasMember("metaFileVersion")) {
-		version = document["metaFileVersion"].GetUint();
+		metaVersion = document["metaFileVersion"].GetUint();
+	}
+
+	importerVersion = 0;
+	if (document.HasMember("assetImporterVersion")) {
+		importerVersion = document["assetImporterVersion"].GetUint();
 	}
 
 	Uuid defaultUuid;
@@ -110,15 +115,23 @@ void MetaFile::Load(AssetRegistry& assetRegistry, const std::filesystem::path& b
 	}
 }
 
-void MetaFile::Save() {
+void MetaFile::Save(uint32_t currentImporterVersion) {
+	importerVersion = currentImporterVersion;
+
 	rapidjson::StringBuffer documentStringBuffer;
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> documentWriter = rapidjson::PrettyWriter<rapidjson::StringBuffer>(documentStringBuffer);
 
 	documentWriter.StartObject();
+
+	documentWriter.Key("assetImporterVersion");
+	documentWriter.Uint(currentImporterVersion);
+
 	documentWriter.Key("metaFileVersion");
 	documentWriter.Uint(currentMetaFileVersion);
+
 	documentWriter.Key("defaultUuid");
 	documentWriter.String(defaultSubasset.uuid.ToString().c_str());
+
 	documentWriter.Key("subassets");
 	documentWriter.StartArray();
 
@@ -180,6 +193,10 @@ void MetaFile::Save() {
 	file.close();
 }
 
+void MetaFile::SaveWithoutImporterVersionChange() {
+	Save(importerVersion);
+}
+
 bool MetaFile::TryGetDefaultSubasset(MetaFile::Subasset& subasset) const {
 	if (defaultSubasset.uuid.IsValid()) {
 		subasset = defaultSubasset;
@@ -231,8 +248,12 @@ bool MetaFile::IsValid() const {
 	return isValid;
 }
 
-bool MetaFile::IsOutdatedVersion() const {
-	return version < currentMetaFileVersion;
+bool MetaFile::IsOutdatedImporterVersion(Grindstone::Editor::ImporterVersion currentImporterVersion) const {
+	return (currentImporterVersion == 0) || (importerVersion != currentImporterVersion);
+}
+
+bool MetaFile::IsOutdatedMetaVersion() const {
+	return metaVersion < currentMetaFileVersion;
 }
 
 Grindstone::Uuid MetaFile::GetOrCreateSubassetUuid(const std::string& subassetName, AssetType assetType) {

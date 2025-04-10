@@ -230,8 +230,9 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(const MountPoint& mountPoi
 		return true;
 	}
 
+	Grindstone::Editor::ImporterVersion importerVersion = importManager.GetImporterVersion(path);
 	MetaFile metaFile(Editor::Manager::GetInstance().GetAssetRegistry(), path);
-	if (metaFile.IsOutdatedVersion() || !metaFile.IsValid()) {
+	if (metaFile.IsOutdatedMetaVersion() || metaFile.IsOutdatedImporterVersion(importerVersion) || !metaFile.IsValid()) {
 		return true;
 	}
 

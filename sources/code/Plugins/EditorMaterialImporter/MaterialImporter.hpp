@@ -14,5 +14,7 @@ namespace Grindstone::Editor::Importers {
 		Uuid uuid;
 	};
 
+	const Grindstone::Editor::ImporterVersion materialImporterVersion = 1;
+
 	void ImportMaterial(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& inputPath);
 }

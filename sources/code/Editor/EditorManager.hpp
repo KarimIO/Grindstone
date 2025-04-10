@@ -44,8 +44,8 @@ namespace Grindstone::Editor {
 	class Manager {
 	public:
 		Manager() = default;
-		static Manager& Manager::GetInstance();
-		Importers::ImporterManager& GetImporterManager();
+		static Manager& GetInstance();
+		Grindstone::Importers::ImporterManager& GetImporterManager();
 		ImguiEditor::ImguiEditor& GetImguiEditor();
 		AssetRegistry& GetAssetRegistry();
 		CommandList& GetCommandList();
@@ -99,7 +99,7 @@ namespace Grindstone::Editor {
 		GitManager gitManager;
 		AssetTemplateRegistry assetTemplateRegistry;
 		Grindstone::Utilities::Modules::Handle engineCoreLibraryHandle;
-		Importers::ImporterManager importerManager;
+		Grindstone::Importers::ImporterManager importerManager;
 		entt::registry backupRegistry;
 	};
 }

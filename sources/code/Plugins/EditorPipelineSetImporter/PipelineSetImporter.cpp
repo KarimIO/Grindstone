@@ -56,14 +56,12 @@ void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::As
 			Grindstone::Uuid uuid = metaFile->GetOrCreateSubassetUuid(pipelineName, Grindstone::AssetType::GraphicsPipelineSet);
 			std::filesystem::path outputPath = assetRegistry.GetCompiledAssetsPath() / uuid.ToString();
 
-			std::ofstream outStream(path, std::ios::binary);
 			std::ofstream outStream(outputPath, std::ios::binary);
 			if (outStream.fail()) {
 				GPRINT_ERROR_V(Grindstone::LogSource::EditorImporter, "{} - Unable to write shader {} to file {}.", path.string(), pout.name, outputPath.string());
 				return;
 			}
 
-			outStream.write(reinterpret_cast<char*>(pout.content), pout.size);
 			outStream.write(pout.content.data(), pout.content.size());
 			outStream.close();
 
@@ -71,14 +69,13 @@ void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::As
 			assetManager.QueueReloadAsset(AssetType::Material, uuid);
 		}
 
-		metaFile->Save();
+		metaFile->Save(pipelineSetImporterVersion);
 	};
 
 	ResolvePathCallback resolveCallback = [&assetRegistry](const std::filesystem::path& path) {
 		return ResolvePath(assetRegistry, path);
 	};
 
-	PipelineSetConditioner conditioner(writeCallback, ::Log);
 	PipelineSetConditioner conditioner(writeCallback, ::Log, resolveCallback);
 	conditioner.Add(filePath);
 	conditioner.Convert(options);
