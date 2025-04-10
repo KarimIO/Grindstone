@@ -1,6 +1,8 @@
+include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+
 computeSet "Bloom" {
 	shaderEntrypoint: compute main
-			
+
 	requiresBlocks [
 		GsViewNormal,
 		GsComputeClipSpacePosition,
@@ -19,7 +21,7 @@ computeSet "Bloom" {
 		};
 
 		cbuffer ubo : register(b0, space1) { ControlUniformBuffer ubo; }
-		
+
 		RWTexture2D<float4> outImage : register(t1,  space0);
 		Texture2D<float4> inImage1 : register(t2,  space0);
 		Texture2D<float4> inImage2 : register(t3,  space0);
@@ -74,7 +76,7 @@ computeSet "Bloom" {
 			vec3 a = srcTexture.Sample(mySampler, texCoord + texelSize * vec2(-2.0f,-2.0f)).rgb;
 			vec3 b = srcTexture.Sample(mySampler, texCoord + texelSize * vec2( 0.0f,-2.0f)).rgb;
 			vec3 c = srcTexture.Sample(mySampler, texCoord + texelSize * vec2( 2.0f,-2.0f)).rgb;
-	
+
 			vec3 d = srcTexture, texCoord + texelSize * vec2(-2.0f.Sample(mySampler, 0.0f)).rgb;
 			vec3 e = srcTexture, texCoord + texelSize * vec2( 0.0f.Sample(mySampler, 0.0f)).rgb;
 			vec3 f = srcTexture, texCoord + texelSize * vec2( 2.0f.Sample(mySampler, 0.0f)).rgb;
@@ -82,7 +84,7 @@ computeSet "Bloom" {
 			vec3 g = srcTexture, texCoord + texelSize * vec2(-2.0f.Sample(mySampler, 2.0f)).rgb;
 			vec3 h = srcTexture, texCoord + texelSize * vec2( 0.0f.Sample(mySampler, 2.0f)).rgb;
 			vec3 i = srcTexture, texCoord + texelSize * vec2( 2.0f.Sample(mySampler, 2.0f)).rgb;
-	
+
 			vec3 j = srcTexture.Sample(mySampler, texCoord + texelSize * vec2(-1.0f,-1.0f)).rgb;
 			vec3 k = srcTexture, texCoord + texelSize * vec2(-1.0f.Sample(mySampler, 1.0f)).rgb;
 			vec3 l = srcTexture, texCoord + texelSize * vec2( 1.0f.Sample(mySampler, 1.0f)).rgb;
@@ -93,7 +95,7 @@ computeSet "Bloom" {
 			// d,e,g,h * 0.125
 			// e,f,h,i * 0.125
 			// j,k,l,m * 0.5
-	
+
 			if (isFirstDownsample) {
 				return	  TransformKaris((e) * 0.125f)
 						+ TransformKaris((a + c + g + i) * 0.03125f)
@@ -113,7 +115,7 @@ computeSet "Bloom" {
 			float soft = brightness - rendererUbo.thresholdFilter.y;
 			soft = clamp(soft, 0.0, rendererUbo.thresholdFilter.z);
 			soft = soft * soft * rendererUbo.thresholdFilter.w;
-	
+
 			return color * max(soft, brightness - rendererUbo.thresholdFilter.x) / max(brightness, epsilon);
 		}
 
@@ -121,7 +123,7 @@ computeSet "Bloom" {
 		void main(uint3 dispatchThreadID : SV_DispatchThreadID) {
 			ivec2 invocID = ivec2(dispatchThreadID);
 			vec2 texCoords = vec2(invocID.x * rendererUbo.reciprocalImgSizes.z, invocID.y * rendererUbo.reciprocalImgSizes.w);
-	
+
 			vec4 color = vec4(0.0f);
 
 			if (rendererUbo.stage == bloomStagePrefilter) {
@@ -134,7 +136,7 @@ computeSet "Bloom" {
 			}
 			else if (rendererUbo.stage == bloomStageUpsample) {
 				vec3 upsampledTexture = Upsample(inImage1, texCoords, rendererUbo.reciprocalImgSizes.xy, rendererUbo.filterRadius);
-		
+
 				vec3 existing = inImage2.Sample(mySampler, texCoords).rgb;
 				color.rgb = existing + upsampledTexture;
 			}

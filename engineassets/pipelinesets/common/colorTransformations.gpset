@@ -1,5 +1,5 @@
 shaderBlock GsColorTransform {
-	shaderHlsl {	
+	shaderHlsl {
 		float3 LinearToSRGB(float3 inColor) {
 			return float3(
 				inColor.r <= 0.0031308

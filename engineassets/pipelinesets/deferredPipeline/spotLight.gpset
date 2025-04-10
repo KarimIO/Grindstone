@@ -1,3 +1,5 @@
+include "$ENGINE/pipelinesets/deferredPipeline/lightingTemplate.gpset"
+
 pipelineSet "Spot Light" inherits "DeferredLighting" {
 	configuration "main" {
 		pass "main" {
@@ -45,22 +47,22 @@ pipelineSet "Spot Light" inherits "DeferredLighting" {
 
 					float3 eyeDir		= normalize(eyePos - position);
 					float3 eyeReflect = reflect(-eyeDir, normal);
-					
+
 					lightDir		= -normalize(lightDir);
 
 					float alpha = roughness * roughness;
 					float alphaSqr = alpha * alpha;
 
 					float NL = clamp(dot(normal, lightDir), 0, 1);
-					
+
 					float distSqr = lightDistance * lightDistance;
 					float lightRadiusSqr = lightRadius * lightRadius;
 					float attenuationFactor = distSqr / lightRadiusSqr;
-					float attenuation = clamp(1 - attenuationFactor * attenuationFactor, 0, 1); 
+					float attenuation = clamp(1 - attenuationFactor * attenuationFactor, 0, 1);
 					attenuation = attenuation * attenuation / (distSqr + 0.001);
 
 					float3 H = normalize(eyeDir + lightDir);
-					
+
 					float NV = abs(dot(normal, eyeDir)) + 0.00001;
 					float NH = clamp(dot(normal, H), 0, 1);
 					float LH = clamp(dot(lightDir, H), 0, 1);
@@ -86,7 +88,7 @@ pipelineSet "Spot Light" inherits "DeferredLighting" {
 					float roughness = gbuffer3Value.a;
 
 					float3 lightPow = light.color * light.intensity;
-					
+
 					float3 lightDir = normalize(position - light.position);
 					float3 lightDirection = light.direction;
 
@@ -112,12 +114,12 @@ pipelineSet "Spot Light" inherits "DeferredLighting" {
 					);
 
 					float nl = dot(lightDirection, normal);
-					
+
 					position.y += 1.0f;
 					float4 lightSpacePos = mul(light.shadowMatrix, float4(position, 1));
 					float3 projCoords = lightSpacePos.xyz / lightSpacePos.w;
 					float pixelDepth = projCoords.z;
-					
+
 					float bias = 0.005;
 					float closestDepth = shadowMap.Sample(mySampler, projCoords.xy).x;
 

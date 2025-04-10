@@ -1,0 +1,14 @@
+{
+    "assetImporterVersion": 0,
+    "metaFileVersion": 1,
+    "defaultUuid": "00000000-0000-0000-0000-000000000000",
+    "subassets": [
+        {
+            "displayName": "lit.default",
+            "address": "",
+            "subassetIdentifier": "lit.default",
+            "uuid": "b652f96d-0b81-4df6-af4f-5847dcdd7932",
+            "type": "GraphicsPipelineSet"
+        }
+    ]
+}

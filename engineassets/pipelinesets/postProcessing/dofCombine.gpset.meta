@@ -1,0 +1,14 @@
+{
+    "assetImporterVersion": 0,
+    "metaFileVersion": 1,
+    "defaultUuid": "00000000-0000-0000-0000-000000000000",
+    "subassets": [
+        {
+            "displayName": "Depth of Field (Combine)",
+            "address": "",
+            "subassetIdentifier": "Depth of Field (Combine)",
+            "uuid": "456032ef-c280-4eba-bede-fd0c8b9ba708",
+            "type": "GraphicsPipelineSet"
+        }
+    ]
+}

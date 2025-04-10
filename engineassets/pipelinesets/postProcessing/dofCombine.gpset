@@ -1,3 +1,6 @@
+include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+include "$ENGINE/pipelinesets/common/postProcessingTemplate.gpset"
+
 pipelineSet "Depth of Field (Combine)" inherits "PostProcessing" {
 	configuration "main" {
 		pass "main" {
@@ -34,7 +37,7 @@ pipelineSet "Depth of Field (Combine)" inherits "PostProcessing" {
 					float sensorHeight = 0.0024000001139938831329345703125;
 					float coc = ((-apertureSize) * (focalLength * (focalDistance - linearDepth))) / (linearDepth * (focalDistance - focalLength));
 					coc /= sensorHeight;
-					
+
 					float4 unblurredColor = litSceneTexture.Sample(mySampler, input.scaledFragmentTexCoord);
 					return float4(unblurredColor.rgb, 1);
 

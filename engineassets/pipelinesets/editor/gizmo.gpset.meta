@@ -1,0 +1,14 @@
+{
+    "assetImporterVersion": 0,
+    "metaFileVersion": 1,
+    "defaultUuid": "00000000-0000-0000-0000-000000000000",
+    "subassets": [
+        {
+            "displayName": "Gizmo",
+            "address": "",
+            "subassetIdentifier": "Gizmo",
+            "uuid": "3ba55727-a12b-4bd7-a3ec-22224e0c6cbe",
+            "type": "GraphicsPipelineSet"
+        }
+    ]
+}

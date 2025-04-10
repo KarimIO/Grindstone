@@ -1,3 +1,5 @@
+include "$ENGINE/pipelinesets/common/postProcessingTemplate.gpset"
+
 pipelineSet "Tonemapping" inherits "PostProcessing" {
 	configuration "main" {
 		pass "main" {
@@ -99,21 +101,21 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 
 						texCoord *= b;
 					}
-	
+
 					float h = texCoord.x;
 					float v = texCoord.y;
-	
+
 					float h2 = h*h;
-	
+
 					float k = h2/Pow2(distortionStrength+1.0);
 					float k2 = k*k;
-	
+
 					float discriminant = max(0.0, k2 * distortionStrength2 - (k + 1.0) * (k * distortionStrength2 - 1.0));
-	
+
 					float cosPhi = (-k * distortionStrength + sqrt(discriminant))/(k+1.0);
 					float S = (distortionStrength+1.0)/(distortionStrength+cosPhi);
 					float tanTheta = v/S;
-	
+
 					float sinPhi = sqrt(max(0.0, 1.0 - cosPhi*cosPhi));
 
 					if(texCoord.x < 0.0) {
@@ -121,7 +123,7 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 					}
 
 					float s = 1.0 + tanTheta*tanTheta; // TODO: Re-Add this inversesqrt(1.0 + tanTheta*tanTheta);
-	
+
 					return float3(sinPhi, tanTheta, cosPhi) * s;
 				}
 
@@ -136,7 +138,7 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 					if (texCoordToSample.x <= 0.0f || texCoordToSample.y <= 0.0f || texCoordToSample.x > 1.0f || texCoordToSample.y > 1.0f) {
 						return float4(0.0f, 0.0f, 1.0f, 1.0f);
 					}
-	
+
 					float2 screenOffset = texCoordToSample;
 					screenOffset = (screenOffset * 2.0f) - float2(1.0f, 1.0f);
 					screenOffset = (aspectRatio > 1.0f)

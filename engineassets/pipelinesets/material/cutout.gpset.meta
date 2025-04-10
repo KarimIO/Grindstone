@@ -1,0 +1,14 @@
+{
+    "assetImporterVersion": 0,
+    "metaFileVersion": 1,
+    "defaultUuid": "00000000-0000-0000-0000-000000000000",
+    "subassets": [
+        {
+            "displayName": "lit.cutout",
+            "address": "",
+            "subassetIdentifier": "lit.cutout",
+            "uuid": "7377f906-24a0-4052-ae48-e4c0a2cd3d4f",
+            "type": "GraphicsPipelineSet"
+        }
+    ]
+}

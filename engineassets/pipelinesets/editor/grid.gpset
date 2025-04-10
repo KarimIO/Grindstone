@@ -1,3 +1,5 @@
+include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+
 pipelineSet "Grid" {
 	configuration "main" {
 		pass "main" {
@@ -12,7 +14,7 @@ pipelineSet "Grid" {
 				depthClamp: false
 				depthCompareOp: lessOrEqual
 			}
-			
+
 			requiresBlocks [
 				GsInvertMatrix,
 				GsComputeDepth,
@@ -28,7 +30,7 @@ pipelineSet "Grid" {
 					float3( 1,  1, 0),
 					float3( 1, -1, 0)
 				};
-				
+
 				struct GridUbo {
 					float4x4 projectionMatrix;
 					float4x4 viewMatrix;
@@ -73,12 +75,12 @@ pipelineSet "Grid" {
 					float lineColor = min(grid.x, grid.y);
 					float2 minimum = min(derivative, 1);
 					float colorFade = 1.0 - min(lineColor, 1.0);
-					
+
 					float4 color = gridColor;
-					
+
 					if(fragPos3D.x > -0.1 * minimum.x && fragPos3D.x < 0.1 * minimum.x)
 						color = gridUbo.colorXAxis;
-						
+
 					if(fragPos3D.z > -0.1 * minimum.y && fragPos3D.z < 0.1 * minimum.y)
 						color = gridUbo.colorZAxis;
 

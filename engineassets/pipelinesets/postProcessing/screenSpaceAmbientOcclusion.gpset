@@ -1,3 +1,6 @@
+include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+include "$ENGINE/pipelinesets/common/postProcessingTemplate.gpset"
+
 pipelineSet "Screen-Space Ambient Occlusion" inherits "PostProcessing" {
 	configuration "main" {
 		pass "main" {
@@ -12,7 +15,7 @@ pipelineSet "Screen-Space Ambient Occlusion" inherits "PostProcessing" {
 				depthClamp: false
 				depthCompareOp: lessOrEqual
 			}
-			
+
 			requiresBlocks [
 				GsInvertMatrix,
 				GsViewNormal,
@@ -42,7 +45,7 @@ pipelineSet "Screen-Space Ambient Occlusion" inherits "PostProcessing" {
 					float3 position = ComputeViewSpacePosition(InvertMatrix(rendererUbo.projectionMatrix), rendererUbo.viewMatrix, input.fragmentTexCoord, depthFromTexture).rgb;
 					float3 normal = ViewNormal(rendererUbo.viewMatrix, gbuffer2.Sample(mySampler, input.scaledFragmentTexCoord).rgb);
 					float2 noise = ssaoNoise.Sample(mySampler, input.fragmentTexCoord * noiseScale).rg;
-					float3 randomVec  = float3(noise, 0); 
+					float3 randomVec  = float3(noise, 0);
 
 					float3 tangent   = normalize(randomVec - normal * dot(randomVec, normal));
 					float3 bitangent = cross(tangent, normal);
@@ -61,7 +64,7 @@ pipelineSet "Screen-Space Ambient Occlusion" inherits "PostProcessing" {
 						offset      = mul(rendererUbo.projectionMatrix, offset);// from view to clip-space
 						offset.xyz /= offset.w;									// perspective divide
 						offset.xyz  = offset.xyz * 0.5 + float3(0.5, 0.5, 0.5);	// transform to range 0.0 - 1.0
-		
+
 						float sampleDepth = depthTexture.Sample(mySampler, offset.xy * rendererUbo.renderScale).x;
 						float sampleDepthLinear = ComputeViewSpacePosition(InvertMatrix(rendererUbo.projectionMatrix), rendererUbo.viewMatrix, offset.xy, sampleDepth).z;
 						float rangeCheck = smoothstep(0.0, 1.0, radius / abs(position.z - sampleDepthLinear));

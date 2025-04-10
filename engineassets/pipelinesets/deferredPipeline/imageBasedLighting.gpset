@@ -1,3 +1,5 @@
+include "$ENGINE/pipelinesets/deferredPipeline/lightingTemplate.gpset"
+
 pipelineSet "Image Based Lighting" inherits "DeferredLighting" {
 	configuration "main" {
 		pass "main" {
@@ -23,7 +25,7 @@ pipelineSet "Image Based Lighting" inherits "DeferredLighting" {
 				float3 FresnelSchlickRoughness(float cosTheta, float3 F0, float roughness) {
 					float minusOneRoughness = 1.0 - roughness;
 					return F0 + (max(float3(minusOneRoughness, minusOneRoughness, minusOneRoughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
-				}   
+				}
 
 				static const float2 invAtan = float2(0.1591, 0.3183);
 				float2 SampleSphericalMap(float3 v) {
@@ -61,7 +63,7 @@ pipelineSet "Image Based Lighting" inherits "DeferredLighting" {
 						0.315392,
 						0.546274
 					};
-					
+
 					float3 result = (
 						sphericalHarmonics[0] * c[0] +
 
@@ -90,17 +92,17 @@ pipelineSet "Image Based Lighting" inherits "DeferredLighting" {
 					float3 specularInput = gbuffer3Value.rgb;
 					float roughness = gbuffer3Value.a * gbuffer3Value.a;
 					float ao = ssao.Sample(mySampler, input.scaledFragmentTexCoord).r;
-					
+
 					float3 eyeDir = normalize(rendererUbo.eyePos.xyz - position);
 					float3 reflectRay = 2 * dot(eyeDir, normal) * normal - eyeDir;
-					
+
 					float NV = max(dot(normal, eyeDir), 0.0);
-					
+
 					const float MAX_REFLECTION_LOD = 4.0;
 					float3 f0 = 0.32 * specularInput * specularInput;
 					float f90 = clamp(50 * dot(f0, float3(0.33, 0.33, 0.33)), 0, 1);
 					float3 F = Light_F(f0, f90, NV);
-					float3 prefilteredColor = specularMap.SampleLevel(mySampler, reflectRay, roughness * MAX_REFLECTION_LOD).rgb;   
+					float3 prefilteredColor = specularMap.SampleLevel(mySampler, reflectRay, roughness * MAX_REFLECTION_LOD).rgb;
 					float2 envBRDF  = brdfLUT.Sample(mySampler, float2(NV, roughness)).rg;
 					float3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 

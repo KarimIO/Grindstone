@@ -1,0 +1,14 @@
+{
+    "assetImporterVersion": 0,
+    "metaFileVersion": 1,
+    "defaultUuid": "00000000-0000-0000-0000-000000000000",
+    "subassets": [
+        {
+            "displayName": "Spot Light",
+            "address": "",
+            "subassetIdentifier": "Spot Light",
+            "uuid": "3ad19b74-6cab-4109-b00f-e289572f85d8",
+            "type": "GraphicsPipelineSet"
+        }
+    ]
+}

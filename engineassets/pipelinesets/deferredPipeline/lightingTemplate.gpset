@@ -1,3 +1,7 @@
+include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+include "$ENGINE/pipelinesets/common/rendererUniform.gpset"
+include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
+
 pipelineSet abstract "DeferredLighting" {
 	configuration "main" {
 		pass "main" {
@@ -9,17 +13,11 @@ pipelineSet abstract "DeferredLighting" {
 				depthClamp: false
 				depthCompareOp: lessOrEqual
 			}
-			
+
 			requiresBlocks [
 				GsLightingVertexInputs,
 				GsDefaultSampler
 			]
-
-			shaderBlock GsDefaultSampler {
-				shaderHlsl {
-					SamplerState mySampler;
-				}
-			}
 
 			shaderBlock GsLightingVertexInputs {
 				shaderEntrypoint: vertex mainVertex
@@ -27,12 +25,12 @@ pipelineSet abstract "DeferredLighting" {
 				requiresBlocks [
 					GsRendererUniform
 				]
-				
+
 				shaderHlsl {
 					struct VertexInput {
 						[[vk::location(0)]] float2 position : POSITION0;
 					};
-					
+
 					struct VertexToFragment {
 						float4 position : SV_Position;
 						[[vk::location(0)]] float2 fragmentTexCoord : TEXCOORD0;
@@ -88,12 +86,12 @@ pipelineSet abstract "DeferredLighting" {
 					}
 				}
 			}
-			
+
 			shaderBlock DiffuseDisney {
 				requiresBlocks [
 					LightFresnelSchlick
 				]
-				
+
 				shaderHlsl {
 					float DiffuseDisney(float NdotV, float NdotL, float LdotH, float linearRoughness) {
 						float energyBias = lerp(0.0, 0.5, linearRoughness);
@@ -107,7 +105,7 @@ pipelineSet abstract "DeferredLighting" {
 					}
 				}
 			}
-			
+
 			shaderBlock BSDF {
 				requiresBlocks [
 					LightFresnelSchlick,
@@ -119,7 +117,7 @@ pipelineSet abstract "DeferredLighting" {
 					float3 BSDF(float NV, float NL, float LH, float NH, float alpha, float3 SpecularColor) {
 						float3 f0 = 0.32 * SpecularColor * SpecularColor;
 						float f90 = clamp(50 * dot(f0, float3(0.33, 0.33, 0.33)), 0, 1);
-						
+
 						float3 F = LightFresnelSchlick(f0, f90, LH);
 						float D = LightDistributionGGX(alpha, NH);
 						float Vis = LightVisibilitySmith(NL, NV, alpha);
@@ -131,23 +129,23 @@ pipelineSet abstract "DeferredLighting" {
 
 			shaderBlock poissonDisk {
 				shaderHlsl {
-					static const float2 poissonDisk[16] = { 
-						float2( -0.94201624, -0.39906216 ), 
-						float2( 0.94558609, -0.76890725 ), 
-						float2( -0.094184101, -0.92938870 ), 
-						float2( 0.34495938, 0.29387760 ), 
-						float2( -0.91588581, 0.45771432 ), 
-						float2( -0.81544232, -0.87912464 ), 
-						float2( -0.38277543, 0.27676845 ), 
-						float2( 0.97484398, 0.75648379 ), 
-						float2( 0.44323325, -0.97511554 ), 
-						float2( 0.53742981, -0.47373420 ), 
-						float2( -0.26496911, -0.41893023 ), 
-						float2( 0.79197514, 0.19090188 ), 
-						float2( -0.24188840, 0.99706507 ), 
-						float2( -0.81409955, 0.91437590 ), 
-						float2( 0.19984126, 0.78641367 ), 
-						float2( 0.14383161, -0.14100790 ) 
+					static const float2 poissonDisk[16] = {
+						float2( -0.94201624, -0.39906216 ),
+						float2( 0.94558609, -0.76890725 ),
+						float2( -0.094184101, -0.92938870 ),
+						float2( 0.34495938, 0.29387760 ),
+						float2( -0.91588581, 0.45771432 ),
+						float2( -0.81544232, -0.87912464 ),
+						float2( -0.38277543, 0.27676845 ),
+						float2( 0.97484398, 0.75648379 ),
+						float2( 0.44323325, -0.97511554 ),
+						float2( 0.53742981, -0.47373420 ),
+						float2( -0.26496911, -0.41893023 ),
+						float2( 0.79197514, 0.19090188 ),
+						float2( -0.24188840, 0.99706507 ),
+						float2( -0.81409955, 0.91437590 ),
+						float2( 0.19984126, 0.78641367 ),
+						float2( 0.14383161, -0.14100790 )
 					};
 
 					float ShadowRandom(float4 seed4) {

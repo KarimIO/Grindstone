@@ -1,3 +1,7 @@
+include "$ENGINE/pipelinesets/common/meshRenderer.gpset"
+include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
+
 pipelineSet "Translucent" {
 	parameters {
 		Color materialInstanceUbo.color : Color.white,
@@ -26,13 +30,13 @@ pipelineSet "Translucent" {
 					blendPreset: translucent
 				}
 			}
-			
+
 			requiresBlocks [
 				GsMeshRendererVertexInput,
 				GsTransformNormalToWorldSpace,
 				GsDefaultSampler
 			]
-			
+
 			shaderHlsl {
 				struct MaterialInstanceUBO {
 					float4 color;

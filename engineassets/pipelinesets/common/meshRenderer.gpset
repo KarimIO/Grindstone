@@ -1,3 +1,5 @@
+include "$ENGINE/pipelinesets/common/rendererUniform.gpset"
+
 shaderBlock GsMeshRendererInstanceUbo {
 	shaderHlsl {
 		struct RenderInstanceUBO {

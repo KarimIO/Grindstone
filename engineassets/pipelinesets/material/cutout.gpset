@@ -1,3 +1,7 @@
+include "$ENGINE/pipelinesets/common/meshRenderer.gpset"
+include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
+
 pipelineSet "lit.cutout" {
 	parameters {
 		Color materialInstanceUbo.color : Color.white,
@@ -6,7 +10,7 @@ pipelineSet "lit.cutout" {
 		Texture2D metalnessTexture : Texture2D.black,
 		Texture2D roughnessTexture : Texture2D.black
 	}
-	
+
 	configuration "main" {
 		rendererTags: "deferred"
 

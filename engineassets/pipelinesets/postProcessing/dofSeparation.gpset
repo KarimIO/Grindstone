@@ -1,3 +1,6 @@
+include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+include "$ENGINE/pipelinesets/common/postProcessingTemplate.gpset"
+
 pipelineSet "Depth of Field (Separation)" inherits "PostProcessing" {
 	configuration "main" {
 		pass "main" {

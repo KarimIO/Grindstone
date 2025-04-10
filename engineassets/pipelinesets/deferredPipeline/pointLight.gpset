@@ -1,3 +1,5 @@
+include "$ENGINE/pipelinesets/deferredPipeline/lightingTemplate.gpset"
+
 pipelineSet "Point Light" inherits "DeferredLighting" {
 	configuration "main" {
 		pass "main" {
@@ -38,22 +40,22 @@ pipelineSet "Point Light" inherits "DeferredLighting" {
 
 					float3 eyeDir		= normalize(eyePos - position);
 					float3 eyeReflect = reflect(-eyeDir, normal);
-					
+
 					lightDir		= -normalize(lightDir);
 
 					float alpha = roughness * roughness;
 					float alphaSqr = alpha * alpha;
 
 					float NL = clamp(dot(normal, lightDir), 0, 1);
-					
+
 					float distSqr = lightDistance * lightDistance;
 					float lightRadiusSqr = lightRadius * lightRadius;
 					float attenuationFactor = distSqr / lightRadiusSqr;
-					float attenuation = clamp(1 - attenuationFactor * attenuationFactor, 0, 1); 
+					float attenuation = clamp(1 - attenuationFactor * attenuationFactor, 0, 1);
 					attenuation = attenuation * attenuation / (distSqr + 0.0001);
 
 					float3 H = normalize(eyeDir + lightDir);
-					
+
 					float NV = abs(dot(normal, eyeDir)) + 0.00001;
 					float NH = clamp(dot(normal, H), 0, 1);
 					float LH = clamp(dot(lightDir, H), 0, 1);
@@ -70,7 +72,7 @@ pipelineSet "Point Light" inherits "DeferredLighting" {
 
 				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
 					float4 gbuffer3Value = gbuffer3.Sample(mySampler, input.scaledFragmentTexCoord);
-					
+
 					float depth = gbuffer0.Sample(mySampler, input.scaledFragmentTexCoord).r;
 					float3 position = ComputeWorldSpacePosition(rendererUbo.projectionMatrix, rendererUbo.viewMatrix, input.fragmentTexCoord, depth);
 					float3 diffuse = gbuffer1.Sample(mySampler, input.scaledFragmentTexCoord).rgb;

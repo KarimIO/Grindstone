@@ -1,6 +1,8 @@
+include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+
 computeSet "Screen-Space Reflections" {
 	shaderEntrypoint: compute main
-			
+
 	requiresBlocks [
 		GsViewNormal,
 		GsComputeClipSpacePosition,
@@ -38,13 +40,13 @@ computeSet "Screen-Space Reflections" {
 
 			float4 startPosPixelSpace = ViewSpaceToScreenSpace(rendererUbo.projectionMatrix, startPosViewSpace, pixelSize);
 			float2 currPosPixelSpace = startPosPixelSpace.xy;
-	
+
 			float2 uv = currPosPixelSpace / pixelSize;
 			float4 endPosPixelSpace = ViewSpaceToScreenSpace(rendererUbo.projectionMatrix, endPosViewSpace, pixelSize);
-	
+
 			float searchStart = 0;
 			float searchEnd = 0;
-	
+
 			float2 delta = endPosPixelSpace.xy - startPosPixelSpace.xy;
 			float useX = abs(delta.x) >= abs(delta.y) ? 1.0 : 0.0;
 			float deltaMax = lerp(abs(delta.y), abs(delta.x), useX) * clamp(resolution, 0.0, 1.0);
@@ -85,7 +87,7 @@ computeSet "Screen-Space Reflections" {
 		/*
 			searchEnd = searchStart + ((searchEnd - searchStart) / 2.0);
 			const int steps = maxSteps * hitInitialPass;
-	
+
 			for (i = 0; i < steps; ++i) {
 				currPosPixelSpace = lerp(startPosPixelSpace.xy, endPosPixelSpace.xy, searchEnd);
 				uv.xy = currPosPixelSpace.xy / pixelSize;
@@ -123,7 +125,7 @@ computeSet "Screen-Space Reflections" {
 		void main(uint3 dispatchThreadID : SV_DispatchThreadID) {
 			int2 invocID = int2(dispatchThreadID);
 			float2 texCoords = float2(invocID.x / rendererUbo.framebufferResolution.x, invocID.y / rendererUbo.framebufferResolution.y);
-	
+
 			float4 positionViewSpace = GetPosition(texCoords / rendererUbo.renderScale);
 			float3 normal = GetNormal(texCoords);
 			float3 reflectedRay = normalize(reflect(normalize(positionViewSpace.xyz), normal));

@@ -1,3 +1,5 @@
+include "$ENGINE/pipelinesets/common/rendererUniform.gpset"
+
 pipelineSet "Gizmo" {
 	configuration "main" {
 		pass "main" {
@@ -12,7 +14,7 @@ pipelineSet "Gizmo" {
 				depthClamp: false
 				depthCompareOp: lessOrEqual
 			}
-			
+
 			requiresBlocks [
 				GsRendererUniform
 			]
@@ -30,7 +32,7 @@ pipelineSet "Gizmo" {
 				};
 
 				cbuffer ubo : register(b0, space0) { Ubo ubo; }
-				
+
 				struct VertexInput {
 					[[vk::location(0)]] float3 position : POSITION0;
 				};

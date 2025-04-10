@@ -1,8 +1,12 @@
+include "$ENGINE/pipelinesets/common/meshRenderer.gpset"
+include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
+
 pipelineSet "Skybox (Cubemap)" {
 	parameters {
 		TextureCube skybox : TextureCube.skyCube
 	}
-	
+
 	configuration "main" {
 		rendererTags: "deferred"
 
@@ -22,13 +26,13 @@ pipelineSet "Skybox (Cubemap)" {
 					blendPreset: opaque
 				}
 			}
-			
+
 			requiresBlocks [
 				GsRendererUniform,
 				GsDefaultSampler,
 				GsPadFloat33ToFloat44
 			]
-			
+
 			shaderHlsl {
 				TextureCube<float4> skybox : register(t1, space0);
 
@@ -45,13 +49,13 @@ pipelineSet "Skybox (Cubemap)" {
 					VertexToFragment output;
 
 					output.texCoord = normalize(input.position);
-					
+
 					float4x4 viewMatrixWithoutPos = PadFloat33ToFloat44((float3x3)rendererUbo.viewMatrix);
 					output.position = mul(mul(float4(output.texCoord, 1.0), viewMatrixWithoutPos), rendererUbo.projectionMatrix);
 					output.position = output.position.xyww;
 					return output;
 				}
-				
+
 				float4 mainFragment(VertexToFragment input) : SV_TARGET {
     				return skybox.SampleLevel(mySampler, input.texCoord, 0);
 				}

@@ -1,0 +1,14 @@
+{
+    "assetImporterVersion": 0,
+    "metaFileVersion": 1,
+    "defaultUuid": "00000000-0000-0000-0000-000000000000",
+    "subassets": [
+        {
+            "displayName": "Grid",
+            "address": "",
+            "subassetIdentifier": "Grid",
+            "uuid": "f5ed6334-55e0-41fa-af4e-6ab1605cbc1a",
+            "type": "GraphicsPipelineSet"
+        }
+    ]
+}

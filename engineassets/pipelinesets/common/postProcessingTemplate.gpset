@@ -1,3 +1,6 @@
+include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
+include "$ENGINE/pipelinesets/common/rendererUniform.gpset"
+
 pipelineSet abstract "PostProcessing" {
 	configuration "main" {
 		pass "main" {
@@ -19,12 +22,12 @@ pipelineSet abstract "PostProcessing" {
 				requiresBlocks [
 					GsRendererUniform
 				]
-			
+
 				shaderHlsl {
 					struct VertexInput {
 						[[vk::location(0)]] float2 position : POSITION0;
 					};
-					
+
 					struct VertexToFragment {
 						float4 position : SV_Position;
 						[[vk::location(0)]] float2 fragmentTexCoord : TEXCOORD0;

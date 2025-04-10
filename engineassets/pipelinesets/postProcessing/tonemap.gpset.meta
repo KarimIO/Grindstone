@@ -1,0 +1,14 @@
+{
+    "assetImporterVersion": 0,
+    "metaFileVersion": 1,
+    "defaultUuid": "00000000-0000-0000-0000-000000000000",
+    "subassets": [
+        {
+            "displayName": "Tonemapping",
+            "address": "",
+            "subassetIdentifier": "Tonemapping",
+            "uuid": "8eb48004-5901-4be6-b962-4cea35cfc572",
+            "type": "GraphicsPipelineSet"
+        }
+    ]
+}

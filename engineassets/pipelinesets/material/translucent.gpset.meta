@@ -1,0 +1,14 @@
+{
+    "assetImporterVersion": 0,
+    "metaFileVersion": 1,
+    "defaultUuid": "00000000-0000-0000-0000-000000000000",
+    "subassets": [
+        {
+            "displayName": "Translucent",
+            "address": "",
+            "subassetIdentifier": "Translucent",
+            "uuid": "71c8a859-dd91-4dc5-9e77-5315282a7a55",
+            "type": "GraphicsPipelineSet"
+        }
+    ]
+}
