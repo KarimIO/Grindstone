@@ -294,6 +294,8 @@ static TokenData ParseKeywordToken(ScanContext& scanContext, Keyword keyword, co
 		return TokenData(Token::BlendAlphaKey, path, line, column);
 	case Keyword::blendPreset:
 		return TokenData(Token::BlendPresetKey, path, line, column);
+	case Keyword::includeKeyword:
+		return TokenData(Token::Include, path, line, column);
 
 	// Primitive Types
 	case Keyword::points:

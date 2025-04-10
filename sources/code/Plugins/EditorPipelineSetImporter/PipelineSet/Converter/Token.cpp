@@ -81,6 +81,7 @@ std::map<std::string_view, Keyword> stringToKeywordMap{
 #define E(val) { #val, Keyword::val },
 	KEYWORD_LIST
 #undef E
+	{ "include", Keyword::includeKeyword },
 	{ "abstract", Keyword::abstractKeyword },
 	{ "true", Keyword::boolTrue },
 	{ "false", Keyword::boolFalse },

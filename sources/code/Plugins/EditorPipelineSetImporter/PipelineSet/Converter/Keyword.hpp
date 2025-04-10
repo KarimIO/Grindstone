@@ -147,6 +147,7 @@ enum class Keyword : uint8_t {
 #define E(val) val,
 	KEYWORD_LIST
 #undef E
+	includeKeyword,
 	abstractKeyword,
 	boolTrue,
 	boolFalse
@@ -156,6 +157,7 @@ constexpr const char* keywordStrings[] = {
 #define E(val) #val,
 	KEYWORD_LIST
 #undef E
+	"include",
 	"abstract",
 	"true",
 	"false"

@@ -29,6 +29,15 @@ static void Log(Grindstone::LogSeverity severity, PipelineConverterLogSource sou
 	GPRINT_V(severity, Grindstone::LogSource::EditorImporter, "{}:{}:{} - {}", filename.string(), line, column, msg);
 }
 
+static std::filesystem::path ResolvePath(Grindstone::Editor::AssetRegistry& assetRegistry, const std::filesystem::path& path) {
+	std::filesystem::path outMountedPath;
+	if (assetRegistry.TryGetAbsolutePathFromMountedPath(path, outMountedPath)) {
+		return outMountedPath;
+	}
+
+	return path;
+}
+
 void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& filePath) {
 	CompilationOptions options;
 	options.isDebug = true;
@@ -48,12 +57,14 @@ void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::As
 			std::filesystem::path outputPath = assetRegistry.GetCompiledAssetsPath() / uuid.ToString();
 
 			std::ofstream outStream(path, std::ios::binary);
+			std::ofstream outStream(outputPath, std::ios::binary);
 			if (outStream.fail()) {
 				GPRINT_ERROR_V(Grindstone::LogSource::EditorImporter, "{} - Unable to write shader {} to file {}.", path.string(), pout.name, outputPath.string());
 				return;
 			}
 
 			outStream.write(reinterpret_cast<char*>(pout.content), pout.size);
+			outStream.write(pout.content.data(), pout.content.size());
 			outStream.close();
 
 			// TODO: Maybe queuing all assets at once will improve efficiency?
@@ -63,7 +74,12 @@ void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::As
 		metaFile->Save();
 	};
 
+	ResolvePathCallback resolveCallback = [&assetRegistry](const std::filesystem::path& path) {
+		return ResolvePath(assetRegistry, path);
+	};
+
 	PipelineSetConditioner conditioner(writeCallback, ::Log);
+	PipelineSetConditioner conditioner(writeCallback, ::Log, resolveCallback);
 	conditioner.Add(filePath);
 	conditioner.Convert(options);
 }

@@ -14,7 +14,21 @@ inline static const char* GetBoolAsString(bool val) {
 	return val ? "true" : "false";
 }
 
-static int filter(unsigned int code, struct _EXCEPTION_POINTERS* pExceptionInfo) {
+static void PrintShaderMessage(LogCallback logCallback, const std::filesystem::path& path, const std::string& msg) {
+	Grindstone::LogSeverity severity = Grindstone::LogSeverity::Info;
+
+	if (msg.find("error") != std::string::npos) {
+		severity = Grindstone::LogSeverity::Error;
+	}
+
+	if (msg.find("warning") != std::string::npos) {
+		severity = Grindstone::LogSeverity::Warning;
+	}
+
+	logCallback(severity, PipelineConverterLogSource::Output, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
+}
+
+static int Filter(unsigned int code, struct _EXCEPTION_POINTERS* pExceptionInfo) {
 	static char scratch[32];
 	// report all errors with fputs to prevent any allocation
 	if (code == EXCEPTION_ACCESS_VIOLATION) {
@@ -53,7 +67,7 @@ static HRESULT Compile(IDxcCompiler3* pCompiler, DxcBuffer* pSource, LPCWSTR psz
 			IID_PPV_ARGS(compiledShaderBuffer) // Compiler output status, buffer, and errors.
 		);
 	}
-	__except (filter(GetExceptionCode(), GetExceptionInformation())) {
+	__except (Filter(GetExceptionCode(), GetExceptionInformation())) {
 		// UNRECOVERABLE ERROR!
 		// At this point, state could be extremely corrupt. Terminate the process
 		return E_FAIL;
@@ -212,8 +226,7 @@ static bool TranspileShader(LogCallback logCallback, CompilationOptions& options
 		pErrors->GetStringLength() != 0
 	) {
 		std::string outputStr = pErrors->GetStringPointer();
-		logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Output, outputStr, sourcePath, UNDEFINED_LINE, UNDEFINED_COLUMN);
-		return false;
+		PrintShaderMessage(logCallback, sourcePath, outputStr);
 	}
 
 	//

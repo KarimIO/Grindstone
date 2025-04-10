@@ -152,7 +152,7 @@ static bool TestStringAgainstWildcardPattern(
 	return false;
 }
 
-static bool PreprocessFile(LogCallback logCallback, ParseTree& parseTree, const std::filesystem::path& path) {
+static bool PreprocessFile(LogCallback logCallback, ParseTree& parseTree, const std::filesystem::path& path, std::set<std::filesystem::path>& unprocessedFiles) {
 	std::string pathAsStr = path.string();
 	if (!std::filesystem::exists(path)) {
 		std::string msg = fmt::format("Can't find file: {}", pathAsStr);
@@ -179,7 +179,7 @@ static bool PreprocessFile(LogCallback logCallback, ParseTree& parseTree, const 
 		return false;
 	}
 
-	if (!ParsePipelineSet(logCallback, path, scanTokens, parseTree)) {
+	if (!ParsePipelineSet(logCallback, path, scanTokens, parseTree, unprocessedFiles)) {
 		std::string msg = fmt::format("Found errors in ParsePipelineState: {}", pathAsStr);
 		logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::General, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
 		return false;
@@ -188,8 +188,12 @@ static bool PreprocessFile(LogCallback logCallback, ParseTree& parseTree, const 
 	return true;
 }
 
-PipelineSetConditioner::PipelineSetConditioner(WriteCallback writeFn, LogCallback logFn)
-	: writeFileCallback(writeFn), logCallback(logFn == nullptr ? SimpleLog : logFn) {}
+static std::filesystem::path SimpleResolve(const std::filesystem::path& path) {
+	return path;
+}
+
+PipelineSetConditioner::PipelineSetConditioner(WriteCallback writeFn, LogCallback logFn, ResolvePathCallback resolvePathFn)
+	: writeFileCallback(writeFn), logCallback(logFn == nullptr ? SimpleLog : logFn), resolvePathCallback(resolvePathFn == nullptr ? SimpleResolve : resolvePathFn) {}
 
 void PipelineSetConditioner::Add(const std::filesystem::path& path) {
 	unprocessedFiles.insert(path);
@@ -216,30 +220,54 @@ void PipelineSetConditioner::Scan(const std::filesystem::path& path) {
 }
 
 void PipelineSetConditioner::Convert(CompilationOptions options) {
-	ParseTree parseTree;
-	ResolvedStateTree resolvedStateTree;
-	
-	for (const std::filesystem::path& path : unprocessedFiles) {
-		PreprocessFile(logCallback, parseTree, path);
+	for (const std::filesystem::path& mainFilePath : unprocessedFiles) {
+		ParseTree parseTree;
+		ResolvedStateTree resolvedStateTree;
+		std::set<std::filesystem::path> dependenciesToProcess;
+		std::set<std::filesystem::path> resolvedFiles;
+		dependenciesToProcess.insert(mainFilePath);
+
+		while (!dependenciesToProcess.empty()) {
+			const std::filesystem::path& path = *dependenciesToProcess.begin();
+			const std::filesystem::path resolvedPath = resolvePathCallback(path);
+
+			bool hasProcessedThisFile = resolvedFiles.find(resolvedPath) != resolvedFiles.end();
+			if (!hasProcessedThisFile) {
+				PreprocessFile(logCallback, parseTree, resolvedPath, dependenciesToProcess);
+				resolvedFiles.insert(resolvedPath);
+			}
+
+			dependenciesToProcess.erase(path);
+		}
+
+		ResolveStateTree(logCallback, parseTree, resolvedStateTree);
+
+		std::vector<PipelineOutput> outputFiles;
+
+		for (ResolvedStateTree::PipelineSet& pipelineSet : resolvedStateTree.pipelineSets) {
+			CompilationArtifactsGraphics compilationArtifacts;
+			if (CompileShadersGraphics(logCallback, pipelineSet, options, compilationArtifacts)) {
+				PipelineOutput outputFile;
+				if (OutputPipelineSet(logCallback, compilationArtifacts, pipelineSet, outputFile)) {
+					outputFiles.emplace_back(outputFile);
+				}
+			}
+		}
+
+		for (ResolvedStateTree::ComputeSet& computeSet : resolvedStateTree.computeSets) {
+			CompilationArtifactsCompute compilationArtifacts;
+			if (CompileShadersCompute(logCallback, computeSet, options, compilationArtifacts)) {
+				PipelineOutput outputFile;
+				if (OutputComputeSet(logCallback, compilationArtifacts, computeSet, outputFile)) {
+					outputFiles.emplace_back(outputFile);
+				}
+			}
+		}
+
+		writeFileCallback(mainFilePath, outputFiles);
 	}
 
 	unprocessedFiles.clear();
-
-	ResolveStateTree(logCallback, parseTree, resolvedStateTree);
-
-	for (ResolvedStateTree::PipelineSet& pipelineSet : resolvedStateTree.pipelineSets) {
-		CompilationArtifactsGraphics compilationArtifacts;
-		if (CompileShadersGraphics(logCallback, pipelineSet, options, compilationArtifacts)) {
-			OutputPipelineSet(logCallback, compilationArtifacts, pipelineSet, writeFileCallback);
-		}
-	}
-
-	for (ResolvedStateTree::ComputeSet& computeSet : resolvedStateTree.computeSets) {
-		CompilationArtifactsCompute compilationArtifacts;
-		if (CompileShadersCompute(logCallback, computeSet, options, compilationArtifacts)) {
-			OutputComputeSet(logCallback, compilationArtifacts, computeSet, writeFileCallback);
-		}
-	}
 }
 
 void PipelineSetConditioner::Rerun(const std::filesystem::path& path) {

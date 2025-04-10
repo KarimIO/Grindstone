@@ -72,12 +72,16 @@ static const size_t GetTotalSize(const CompilationArtifactsGraphics& compilation
 
 struct Writer {
 	std::vector<char>& outputBuffer;
-	char* ptr = outputBuffer.data();
+	size_t offset = 0;
 };
 
 static void WriteBytes(Writer& writer, const void* bytes, const size_t count) {
-	memcpy(writer.ptr, bytes, count);
-	writer.ptr += count;
+	if (writer.offset + count >= writer.outputBuffer.size()) {
+		writer.outputBuffer.resize(writer.offset + count);
+	}
+
+	memcpy(writer.outputBuffer.data() + writer.offset, bytes, count);
+	writer.offset += count;
 }
 
 struct PipelineHeader {
@@ -113,18 +117,19 @@ struct PipelineSetHeader {
 	uint32_t pipelineCount = 0;
 };
 
-bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphics& compilationArtifacts, const ResolvedStateTree::PipelineSet& pipelineSet, WriteCallback writeCallback) {
+bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphics& compilationArtifacts, const ResolvedStateTree::PipelineSet& pipelineSet, PipelineOutput& outputFile) {
 	const size_t totalSize = GetTotalSize(compilationArtifacts);
 
 	if (totalSize == 0) {
 		return false;
 	}
 
-	std::vector<char> outputBuffer;
+	outputFile.name = pipelineSet.name;
+	outputFile.pipelineType = PipelineType::Graphics;
+	std::vector<char>& outputBuffer = outputFile.content;
 	outputBuffer.resize(totalSize);
 
 	Writer writer{ outputBuffer };
-	writer.ptr = outputBuffer.data();
 	WriteBytes(writer, "GSHAD", 4);
 
 	PipelineSetHeader pipelineSetHeader;
@@ -156,7 +161,7 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 			}
 			
 			const CompilationArtifactsGraphics::Pass& passArtifact = passArtifactsIterator->second;
-			
+
 			bool hasUsedStages = false;
 			size_t usedStageIndex = 0;
 			for (uint8_t stageIndex = 0; stageIndex < Grindstone::GraphicsAPI::numShaderTotalStage; ++stageIndex) {
@@ -178,13 +183,16 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 		}
 	}
 
-	// writeCallback(pipelineSet.sourceFilepath, outputBuffer.size(), outputBuffer.data());
 
 	return true;
 }
 
-bool OutputComputeSet(LogCallback logCallback, const CompilationArtifactsCompute& compilationArtifacts, const ResolvedStateTree::ComputeSet& computeSet, WriteCallback writeCallback) {
+bool OutputComputeSet(LogCallback logCallback, const CompilationArtifactsCompute& compilationArtifacts, const ResolvedStateTree::ComputeSet& computeSet, PipelineOutput& outputFile) {
 	logCallback(Grindstone::LogSeverity::Info, PipelineConverterLogSource::Output, "Compiled and Outputted", computeSet.sourceFilepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
+	outputFile.name = computeSet.name;
+	outputFile.pipelineType = PipelineType::Compute;
+	outputFile.content.resize(computeSet.shaderCode.size() + 1);
+	memcpy(outputFile.content.data(), computeSet.shaderCode.data(), computeSet.shaderCode.size() + 1);
 
 	return true;
 }

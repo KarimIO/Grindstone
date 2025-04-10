@@ -11,7 +11,7 @@
 
 class PipelineSetConditioner {
 public:
-	PipelineSetConditioner(WriteCallback writeFn = nullptr, LogCallback logFn = nullptr);
+	PipelineSetConditioner(WriteCallback writeFn = nullptr, LogCallback logFn = nullptr, ResolvePathCallback resolvePathFn = nullptr);
 	void Add(const std::filesystem::path& path);
 	void Scan(const std::filesystem::path& path);
 	void Convert(CompilationOptions options);
@@ -35,6 +35,7 @@ private:
 
 	std::map<std::string, PipelineTemplate> pipelineTemplates;
 
+	ResolvePathCallback resolvePathCallback = nullptr;
 	WriteCallback writeFileCallback = nullptr;
 	LogCallback logCallback = nullptr;
 };

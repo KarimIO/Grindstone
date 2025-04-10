@@ -10,6 +10,7 @@
 #define TOKEN_LIST \
 E(Invalid)\
 E(EndOfFile)\
+E(Include)\
 E(Parameters)\
 E(Abstract)\
 E(ComputeSet)\
@@ -113,13 +114,13 @@ public:
 		Data(Grindstone::GraphicsAPI::ShaderStage shaderStage) : shaderStage(shaderStage) {}
 		Data(BlendPreset blendPreset) : blendPreset(blendPreset) {}
 	};
-	
+
 	Token token;
 	Data data;
 	const std::filesystem::path& path;
 	uint32_t line;
 	uint32_t column;
-	
+
 	TokenData(Token token, const std::filesystem::path& path, uint32_t line, uint32_t column) noexcept;
 	TokenData(Token token, Data data, const std::filesystem::path& path, uint32_t line, uint32_t column) noexcept;
 	TokenData(const TokenData& other) noexcept;

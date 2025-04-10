@@ -216,7 +216,7 @@ static void ResolvePipelineSetIteration(ResolveContext& context, const std::stri
 
 static void CollapseShaderBlock(ResolveContext& context, std::string& code, std::set<std::string_view>& processedBlocks, const ParseTree::ShaderBlock& shaderBlock) {
 	for (const std::string& requiredShaderBlock : shaderBlock.requiredShaderBlocks) {
-		if (processedBlocks.find(requiredShaderBlock) == processedBlocks.end()) {
+		if (processedBlocks.find(requiredShaderBlock) != processedBlocks.end()) {
 			continue;
 		}
 
@@ -242,7 +242,7 @@ static void CollapsePasses(ResolveContext& context, ResolvedStateTree::PipelineS
 				std::string code;
 				std::set<std::string_view> processedBlocks;
 				for (const std::string_view requiredShaderBlock : pass.requiredShaderBlocks) {
-					if (processedBlocks.find(requiredShaderBlock) == processedBlocks.end()) {
+					if (processedBlocks.find(requiredShaderBlock) != processedBlocks.end()) {
 						continue;
 					}
 

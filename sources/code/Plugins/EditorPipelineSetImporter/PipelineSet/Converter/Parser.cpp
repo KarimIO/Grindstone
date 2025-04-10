@@ -901,13 +901,22 @@ static void ParseComputeSet(ParseContext& context) {
 	}
 }
 
-bool ParsePipelineSet(LogCallback logFn, const std::filesystem::path& path, TokenList& scannerTokens, ParseTree& parseTree) {
+bool ParsePipelineSet(LogCallback logFn, const std::filesystem::path& path, TokenList& scannerTokens, ParseTree& parseTree, std::set<std::filesystem::path>& unprocessedFiles) {
 	ParseContext context(scannerTokens, path, logFn, parseTree);
 
 	while (context.tokenIterator < context.scannerTokens.size()) {
 		TokenData& token = context.scannerTokens[context.tokenIterator];
 
 		switch (token.token) {
+		case Token::Include: {
+			++context.tokenIterator;
+
+			std::string_view includePath;
+			if (ExpectTokenWithString(context, Token::String, includePath, "Expected a string after the keyword 'include'.")) {
+				unprocessedFiles.insert(includePath);
+			}
+			break;
+		}
 		case Token::PipelineSet:
 			ParsePipelineSet(context);
 			break;
