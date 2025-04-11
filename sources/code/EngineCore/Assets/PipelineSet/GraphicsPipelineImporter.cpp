@@ -14,8 +14,6 @@ using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
 static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineAsset) {
-	return false;
-
 	// TODO: Check shader cache before loading and compiling again
 	// The shader cache includes shaders precompiled for consoles, or compiled once per driver update on computers
 	// if shaderCache has shader with this uuid
@@ -29,6 +27,7 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 	Assets::AssetLoadBinaryResult result = assetManager->LoadBinaryByUuid(AssetType::GraphicsPipelineSet, graphicsPipelineAsset.uuid);
 	if (result.status != Assets::AssetLoadStatus::Success) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find shader with id {}.", graphicsPipelineAsset.uuid.ToString());
+		graphicsPipelineAsset.assetLoadStatus = AssetLoadStatus::Missing;
 		return false;
 	}
 
@@ -39,7 +38,6 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 
 	graphicsPipelineAsset.passes.resize(1);
 	for (GraphicsPipelineAsset::Pass& pass : graphicsPipelineAsset.passes) {
-
 		GraphicsPipeline::CreateInfo pipelineCreateInfo{};
 		pipelineCreateInfo.debugName = result.displayName.c_str();
 		pipelineCreateInfo.width = 0.0f;
@@ -71,25 +69,25 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		pass.pipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 
 		// TODO: Fix
-		pass.descriptorSetLayouts[0] = pipelineCreateInfo.descriptorSetLayouts[0];
+		// pass.descriptorSetLayouts[0] = pipelineCreateInfo.descriptorSetLayouts[0];
 	}
 
 	// TODO: Save compiled shader into ShaderCache
 
-	graphicsPipelineAsset.assetLoadStatus = AssetLoadStatus::Ready;
-	return true;
+	graphicsPipelineAsset.assetLoadStatus = AssetLoadStatus::Failed;
+	return false;
 }
 
 void* GraphicsPipelineImporter::LoadAsset(Uuid uuid) {
-	GraphicsPipelineAsset graphicsPipelineAsset(uuid);
+	auto& pipelineIterator = assets.emplace(uuid, GraphicsPipelineAsset(uuid));
+	GraphicsPipelineAsset& graphicsPipelineAsset = pipelineIterator.first->second;
 
 	graphicsPipelineAsset.assetLoadStatus = AssetLoadStatus::Loading;
 	if (!ImportGraphicsPipelineAsset(graphicsPipelineAsset)) {
 		return nullptr;
 	}
 
-	auto& asset = assets.emplace(uuid, graphicsPipelineAsset);
-	return &asset.first->second;
+	return &graphicsPipelineAsset;
 }
 
 void GraphicsPipelineImporter::QueueReloadAsset(Uuid uuid) {

@@ -36,8 +36,13 @@ namespace Grindstone {
 			void* output = nullptr;
 			if (TryGetIfLoaded(uuid, output)) {
 				AssetStructType* asset = static_cast<AssetStructType*>(output);
-				++asset->referenceCount;
-				return asset;
+
+				if (asset->assetLoadStatus == AssetLoadStatus::Ready) {
+					++asset->referenceCount;
+					return asset;
+				}
+
+				return nullptr;
 			}
 			else {
 				return LoadAsset(uuid);
@@ -48,6 +53,7 @@ namespace Grindstone {
 
 		virtual void DecrementAssetUse(Uuid uuid) override {
 			void* output = nullptr;
+
 			if (TryGetIfLoaded(uuid, output) && output != nullptr) {
 				AssetStructType* asset = static_cast<AssetStructType*>(output);
 				if (asset->referenceCount <= 1) {

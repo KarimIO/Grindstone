@@ -116,13 +116,13 @@ void Mesh3dRenderer::RenderQueue(
 					continue;
 				}
 
-				Grindstone::AssetReference<Grindstone::MaterialAsset> materialReference = materials[submesh.materialIndex];
-				MaterialAsset* materialAsset = assetManager->GetAssetByUuid<Grindstone::MaterialAsset>(materialReference.uuid);
+				const Grindstone::AssetReference<Grindstone::MaterialAsset>& materialReference = materials[submesh.materialIndex];
+				const MaterialAsset* materialAsset = materialReference.Get();
 				if (materialAsset == nullptr) {
 					continue;
 				}
 
-				GraphicsPipelineAsset* graphicsPipelineAsset = assetManager->GetAssetByUuid<GraphicsPipelineAsset>(materialAsset->pipelineSetAsset.uuid);
+				const GraphicsPipelineAsset* graphicsPipelineAsset = materialAsset->pipelineSetAsset.Get();
 				if (graphicsPipelineAsset == nullptr) {
 					continue;
 				}

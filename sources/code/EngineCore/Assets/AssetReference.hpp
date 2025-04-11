@@ -60,7 +60,7 @@ namespace Grindstone {
 			Grindstone::AssetFunctions::Increment(T::GetStaticType(), uuid);
 		}
 
-		AssetReference(AssetReference&& other) : GenericAssetReference(other.uuid) {}
+		AssetReference(AssetReference&& other) noexcept : GenericAssetReference(other.uuid) {}
 
 		AssetReference& operator=(const AssetReference& other) noexcept {
 			if (uuid != other.uuid) {
@@ -82,26 +82,50 @@ namespace Grindstone {
 				}
 
 				uuid = other.uuid;
+				other.uuid = Grindstone::Uuid();
 			}
 
 			return *this;
 		}
 
 		~AssetReference() {
-			Grindstone::AssetFunctions::Decrement(T::GetStaticType(), uuid);
+			if (uuid.IsValid()) {
+				Grindstone::AssetFunctions::Decrement(T::GetStaticType(), uuid);
+				uuid = Uuid();
+			}
 		}
 
 		void Release() {
-			Grindstone::AssetFunctions::Decrement(T::GetStaticType(), uuid);
-			uuid = Uuid();
+			if (uuid.IsValid()) {
+				Grindstone::AssetFunctions::Decrement(T::GetStaticType(), uuid);
+				uuid = Uuid();
+			}
 		}
 
+		// Return a pointer to the actual asset whether or not there was an error.
+		[[nodiscard]] T* GetUnchecked() {
+			return reinterpret_cast<T*>(Grindstone::AssetFunctions::Get(T::GetStaticType(), uuid));
+		}
+
+		// Return a pointer to the actual asset whether or not there was an error.
+		[[nodiscard]] const T* GetUnchecked() const {
+			return reinterpret_cast<T*>(Grindstone::AssetFunctions::Get(T::GetStaticType(), uuid));
+		}
+
+		// Return a pointer to the actual asset, but only if the asset is ready to be used.
 		[[nodiscard]] T* Get() {
-			return reinterpret_cast<T*>(Grindstone::AssetFunctions::Get(T::GetStaticType(), uuid));
+			T* asset = reinterpret_cast<T*>(Grindstone::AssetFunctions::Get(T::GetStaticType(), uuid));
+			return asset->assetLoadStatus == Grindstone::AssetLoadStatus::Ready
+				? asset
+				: nullptr;
 		}
 
+		// Return a pointer to the actual asset, but only if the asset is ready to be used.
 		[[nodiscard]] const T* Get() const {
-			return reinterpret_cast<T*>(Grindstone::AssetFunctions::Get(T::GetStaticType(), uuid));
+			T* asset = reinterpret_cast<T*>(Grindstone::AssetFunctions::Get(T::GetStaticType(), uuid));
+			return asset->assetLoadStatus == Grindstone::AssetLoadStatus::Ready
+				? asset
+				: nullptr;
 		}
 
 		// Don't implement operators * or ->, as they imply getting data is a cheap operator.

@@ -303,12 +303,14 @@ static bool LoadMaterial(
 	rapidjson::Document document;
 	if (document.Parse(materialContent.data()).HasParseError()) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "Unable to parse material {}.", displayName);
+		material.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
 
 	Grindstone::Uuid shaderUuid;
 	if (!document.HasMember("shader") || !Grindstone::Uuid::MakeFromString(document["shader"].GetString(), shaderUuid)) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "No shader found in material {}.", displayName);
+		material.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
 
@@ -318,12 +320,14 @@ static bool LoadMaterial(
 
 	if (!material.pipelineSetAsset.IsValid()) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "Failed to load shader for {}.", displayName);
+		material.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
 
 	Grindstone::GraphicsPipelineAsset* pipelineSetAsset = material.pipelineSetAsset.Get();
-	if (pipelineSetAsset == nullptr) {
+	if (pipelineSetAsset == nullptr || pipelineSetAsset->assetLoadStatus != AssetLoadStatus::Ready) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "Failed to load shader {} for material {}.", material.pipelineSetAsset.uuid.ToString(), displayName);
+		material.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
 
@@ -349,21 +353,22 @@ void* MaterialImporter::LoadAsset(Uuid uuid) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
 
+	auto& materialIterator = assets.emplace(uuid, Grindstone::MaterialAsset(uuid));
+	Grindstone::MaterialAsset& materialAsset = materialIterator.first->second;
+
 	Assets::AssetLoadTextResult result = assetManager->LoadTextByUuid(AssetType::Material, uuid);
 	if (result.status != Assets::AssetLoadStatus::Success) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find material with id {}.", uuid.ToString());
+		materialAsset.assetLoadStatus = AssetLoadStatus::Missing;
 		return nullptr;
 	}
-
-	Grindstone::MaterialAsset materialAsset(uuid);
 
 	materialAsset.assetLoadStatus = AssetLoadStatus::Loading;
 	if (!LoadMaterial(materialAsset, result.displayName, missingTexture, result.content)) {
 		return nullptr;
 	}
 
-	auto& material = assets.emplace(uuid, materialAsset);
-	return &material.first->second;
+	return &materialAsset;
 }
 
 void MaterialImporter::QueueReloadAsset(Uuid uuid) {

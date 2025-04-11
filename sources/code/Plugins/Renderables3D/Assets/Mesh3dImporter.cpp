@@ -103,7 +103,7 @@ void Mesh3dImporter::DecrementMeshCount(ECS::Entity entity, Uuid uuid) {
 		return;
 	}
 
-	auto mesh = &meshInMap->second;
+	Grindstone::Mesh3dAsset* mesh = &meshInMap->second;
 	mesh->referenceCount -= 1;
 }
 
@@ -114,16 +114,15 @@ void Mesh3dImporter::QueueReloadAsset(Uuid uuid) {
 		return;
 	}
 
-	auto& meshAsset = meshInMap->second;
+	Grindstone::Mesh3dAsset& meshAsset = meshInMap->second;
+	meshAsset.assetLoadStatus = AssetLoadStatus::Reloading;
 	if (meshAsset.vertexArrayObject != nullptr) {
 		graphicsCore->DeleteVertexArrayObject(meshAsset.vertexArrayObject);
 	}
 
 	meshAsset.submeshes.clear();
 
-	if (!ImportModelFile(meshAsset)) {
-		return;
-	}
+	ImportModelFile(meshAsset);
 }
 
 void Mesh3dImporter::LoadMeshImportSubmeshes(Mesh3dAsset& mesh, Formats::Model::V1::Header& header, char*& sourcePtr) {
@@ -201,20 +200,22 @@ void Mesh3dImporter::LoadMeshImportIndices(
 }
 
 void* Mesh3dImporter::LoadAsset(Uuid uuid) {
-	Mesh3dAsset mesh = Mesh3dAsset(uuid, uuid.ToString());
+	auto& meshIterator = assets.emplace(uuid, Mesh3dAsset(uuid, uuid.ToString()));
+	Mesh3dAsset& meshAsset = meshIterator.first->second;
 
-	if (!ImportModelFile(mesh)) {
+	meshAsset.assetLoadStatus = AssetLoadStatus::Loading;
+	if (!ImportModelFile(meshAsset)) {
 		return nullptr;
 	}
 
-	auto& meshIterator = assets.emplace(uuid, mesh);
-	return &meshIterator.first->second;
+	return &meshAsset;
 }
 
 bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 	Grindstone::Assets::AssetLoadBinaryResult result = engineCore->assetManager->LoadBinaryByUuid(AssetType::Texture, mesh.uuid);
 	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "Mesh3dImporter::LoadAsset Unable to load file with id: {}", mesh.uuid.ToString());
+		mesh.assetLoadStatus = AssetLoadStatus::Missing;
 		return false;
 	}
 
@@ -224,17 +225,18 @@ bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 
 	auto graphicsCore = engineCore->GetGraphicsCore();
 	if (fileSize < 3 && strncmp("GMF", fileContent, 3) != 0) {
-		std::string errorMsg = "Mesh3dImporter::LoadAsset GMF magic code wasn't matched.";
-		GPRINT_ERROR(LogSource::EngineCore, errorMsg.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, "Mesh3dImporter::LoadAsset GMF magic code wasn't matched.");
+		mesh.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
 
 	Formats::Model::V1::Header header;
 	if (fileSize < (3 + sizeof(header))) {
-		std::string errorMsg = "Mesh3dImporter::LoadAsset file not big enough to fit header.";
-		GPRINT_ERROR(LogSource::EngineCore, errorMsg.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, "Mesh3dImporter::LoadAsset file not big enough to fit header.");
+		mesh.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
+
 	char* headerPtr = fileContent + 3;
 	header = *(Formats::Model::V1::Header*)headerPtr;
 
@@ -242,8 +244,8 @@ bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 
 	uint64_t totalFileExpectedSize = GetTotalFileSize(header);
 	if (totalFileExpectedSize > fileSize || header.totalFileSize > fileSize) {
-		std::string errorMsg = "Mesh3dImporter::LoadAsset file not big enough to fit all contents.";
-		GPRINT_ERROR(LogSource::EngineCore, errorMsg.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, "Mesh3dImporter::LoadAsset file not big enough to fit all contents.");
+		mesh.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
 
@@ -269,6 +271,7 @@ bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 		mesh.submeshes[i].vertexArrayObject = mesh.vertexArrayObject;
 	}
 
+	mesh.assetLoadStatus = AssetLoadStatus::Ready;
 	return true;
 }
 

@@ -20,14 +20,14 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 	Grindstone::Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByUuid(AssetType::Texture, textureAsset.uuid);
 	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
 		GPRINT_WARN_V(LogSource::EngineCore, "Unable to load texture: {}", textureAsset.uuid.ToString());
-		textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Ready;
+		textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Missing;
 		return false;
 	}
 
 	const char* fileContents = reinterpret_cast<const char*>(result.buffer.Get());
 	if (strncmp(fileContents, "DDS ", 4) != 0) {
 		GPRINT_WARN_V(LogSource::EngineCore, "Invalid texture file: {}", textureAsset.uuid.ToString());
-		textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Ready;
+		textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Failed;
 		return false;
 	}
 
@@ -82,6 +82,7 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 			break;
 		default:
 			GPRINT_ERROR_V(LogSource::EngineCore, "Invalid FourCC in texture with id {}.", textureAsset.uuid.ToString());
+			textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Failed;
 			return false;
 		}
 	}
@@ -95,11 +96,13 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 			break;
 		default:
 			GPRINT_ERROR_V(LogSource::EngineCore, "Invalid rgb pixel format in texture with id {}.", textureAsset.uuid.ToString());
+			textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Failed;
 			return false;
 		}
 	}
 	else {
 		GPRINT_ERROR_V(LogSource::EngineCore, "Invalid pixel format in texture with id {}.", textureAsset.uuid.ToString());
+		textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Failed;
 		return false;
 	}
 
@@ -112,6 +115,7 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 		}
 		else {
 			GPRINT_ERROR_V(LogSource::EngineCore, "Invalid extended DXGI format in texture with id {}.", textureAsset.uuid.ToString());
+			textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Failed;
 			return false;
 		}
 
@@ -144,26 +148,21 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	Grindstone::GraphicsAPI::Texture* texture = graphicsCore->CreateTexture(createInfo);
 	textureAsset.texture = texture;
+	textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Ready;
 
 	return true;
 }
 
 void* TextureImporter::LoadAsset(Uuid uuid) {
-	EngineCore& engineCore = EngineCore::GetInstance();
-	Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByUuid(AssetType::Texture, uuid);
-	if (result.status != Assets::AssetLoadStatus::Success) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find texture with id {}.", uuid.ToString());
-		return nullptr;
-	}
+	auto& textureIterator = assets.emplace(uuid, TextureAsset(uuid));
+	TextureAsset& textureAsset = textureIterator.first->second;
 
-	TextureAsset textureAsset(uuid);
 	textureAsset.assetLoadStatus = AssetLoadStatus::Loading;
 	if (!LoadTextureAsset(textureAsset)) {
 		return nullptr;
 	}
 
-	auto& asset = assets.emplace(uuid, textureAsset);
-	return &asset.first->second;
+	return &textureAsset;
 }
 
 void TextureImporter::QueueReloadAsset(Uuid uuid) {

@@ -55,14 +55,15 @@ static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
 }
 
 void* ComputePipelineImporter::LoadAsset(Uuid uuid) {
-	ComputePipelineAsset computePipelineAsset(uuid);
+	auto& pipelineIterator = assets.emplace(uuid, ComputePipelineAsset(uuid));
+	ComputePipelineAsset& computePipelineAsset = pipelineIterator.first->second;
+
 	computePipelineAsset.assetLoadStatus = AssetLoadStatus::Loading;
 	if (!ImportComputeAsset(computePipelineAsset)) {
 		return nullptr;
 	}
 
-	auto& asset = assets.emplace(uuid, computePipelineAsset);
-	return &asset.first->second;
+	return &computePipelineAsset;
 }
 
 void ComputePipelineImporter::QueueReloadAsset(Uuid uuid) {
