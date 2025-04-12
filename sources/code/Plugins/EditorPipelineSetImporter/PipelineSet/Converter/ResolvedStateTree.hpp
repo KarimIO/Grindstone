@@ -33,10 +33,10 @@ struct ResolvedStateTree {
 	struct ComputeSet {
 		std::filesystem::path sourceFilepath;
 		std::string name;
-		std::map<std::string, Configuration> configurations;
 		std::string shaderCode;
 		std::string shaderEntrypoint;
 		ShaderCodeType shaderType = ShaderCodeType::Unset;
+		std::set<std::string_view> requiredShaderBlocks; // Only used in resolve step
 	};
 
 	std::vector<PipelineSet> pipelineSets;

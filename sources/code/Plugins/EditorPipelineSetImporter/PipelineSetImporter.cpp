@@ -53,7 +53,7 @@ void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::As
 				: Grindstone::AssetType::ComputePipelineSet;
 
 			std::string pipelineName = std::string(pout.name);
-			Grindstone::Uuid uuid = metaFile->GetOrCreateSubassetUuid(pipelineName, Grindstone::AssetType::GraphicsPipelineSet);
+			Grindstone::Uuid uuid = metaFile->GetOrCreateSubassetUuid(pipelineName, assetType);
 			std::filesystem::path outputPath = assetRegistry.GetCompiledAssetsPath() / uuid.ToString();
 
 			std::ofstream outStream(outputPath, std::ios::binary);
@@ -66,7 +66,7 @@ void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::As
 			outStream.close();
 
 			// TODO: Maybe queuing all assets at once will improve efficiency?
-			assetManager.QueueReloadAsset(AssetType::Material, uuid);
+			assetManager.QueueReloadAsset(assetType, uuid);
 		}
 
 		metaFile->Save(pipelineSetImporterVersion);

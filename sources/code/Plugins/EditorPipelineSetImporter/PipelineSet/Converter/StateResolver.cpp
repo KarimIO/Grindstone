@@ -176,6 +176,46 @@ static bool HasBrokenDependency(const ResolveContext& context, const std::string
 	return true;
 }
 
+static bool HasBrokenDependency(const ResolveContext& context, const std::string& computeSetName, const ParseTree::ComputeSet& computeSet) {
+	std::set<std::string> processedSets;
+	const ParseTree::ComputeSet* currentComputeSet = &computeSet;
+	bool shouldAppendParentCode = true;
+
+	// This limit is arbitary, to ensure we don't loop forever.
+	for (size_t i = 0; i < maxInheritance; ++i) {
+		processedSets.insert(computeSetName);
+
+		if (currentComputeSet->shaderBlock.parentData.parent.empty()) {
+			return false;
+		}
+		else {
+			const std::string& parentName = currentComputeSet->shaderBlock.parentData.parent;
+
+			if (processedSets.find(parentName) != processedSets.end()) {
+				std::string msg = fmt::format("Cyclical dependency found for {} while trying to resolve pipelineSet {}.", parentName, computeSetName);
+				context.logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Resolver, msg, computeSet.sourceFilepath, UNDEFINED_COLUMN, UNDEFINED_LINE);
+				return true;
+			}
+
+			auto computeIterator = context.parseTree.computeSets.find(parentName);
+			if (computeIterator == context.parseTree.computeSets.end()) {
+				std::string msg = fmt::format("Invalid parent found for {} while trying to resolve pipelineSet {}.", parentName, computeSetName);
+				context.logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Resolver, msg, currentComputeSet->sourceFilepath, UNDEFINED_COLUMN, UNDEFINED_LINE);
+				return true;
+			}
+
+			currentComputeSet = &computeIterator->second;
+		}
+	}
+
+	{
+		std::string msg = fmt::format("Too many dependencies for pipelineSet {}. The dependency chain is over {} deep.", computeSetName, maxInheritance);
+		context.logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Resolver, msg, computeSet.sourceFilepath, UNDEFINED_COLUMN, UNDEFINED_LINE);
+	}
+
+	return true;
+}
+
 static void ResolvePass(ResolveContext& context, const ParseTree::Pass& srcPass, ResolvedStateTree::Pass& dstPass) {
 	for (const std::string& requiredBlock : srcPass.shaderBlock.requiredShaderBlocks) {
 		dstPass.requiredShaderBlocks.insert(requiredBlock);
@@ -194,7 +234,11 @@ static void ResolvePass(ResolveContext& context, const ParseTree::Pass& srcPass,
 	ApplyRenderState(srcPass.renderState, dstPass.renderState);
 }
 
-static void ResolveConfiguration(ResolveContext& context, const ParseTree::Configuration& srcConfiguration, ResolvedStateTree::Configuration& dstConfiguration) {
+static void ResolveConfiguration(
+	ResolveContext& context,
+	const ParseTree::Configuration& srcConfiguration,
+	ResolvedStateTree::Configuration& dstConfiguration
+) {
 	for (auto& passIterator : srcConfiguration.passes) {
 		const std::string& passName = passIterator.first;
 		const ParseTree::Pass& srcPass = passIterator.second;
@@ -204,13 +248,35 @@ static void ResolveConfiguration(ResolveContext& context, const ParseTree::Confi
 	}
 }
 
-static void ResolvePipelineSetIteration(ResolveContext& context, const std::string& pipelineSetName, const ParseTree::PipelineSet& pipelineSet, ResolvedStateTree::PipelineSet& resolvedPipelineSet) {
+static void ResolvePipelineSetIteration(
+	ResolveContext& context,
+	const std::string& pipelineSetName,
+	const ParseTree::PipelineSet& pipelineSet,
+	ResolvedStateTree::PipelineSet& resolvedPipelineSet
+) {
 	for (auto& configIterator : pipelineSet.configurations) {
 		const std::string& configurationName = configIterator.first;
 		const ParseTree::Configuration& srcConfiguration = configIterator.second;
 		ResolvedStateTree::Configuration& dstConfiguration = resolvedPipelineSet.configurations[configurationName];
 
 		ResolveConfiguration(context, srcConfiguration, dstConfiguration);
+	}
+}
+
+
+static void ResolveComputeSetIteration(
+	ResolveContext& context,
+	const std::string& computeSetName,
+	const ParseTree::ComputeSet& computeSet,
+	ResolvedStateTree::ComputeSet& resolvedComputeSet
+) {
+	resolvedComputeSet.name = computeSetName;
+	resolvedComputeSet.shaderCode = computeSet.shaderBlock.code;
+	resolvedComputeSet.shaderEntrypoint = computeSet.shaderBlock.stageEntryPoints[static_cast<size_t>(Grindstone::GraphicsAPI::ShaderStage::Compute)];
+	resolvedComputeSet.shaderType = computeSet.shaderBlock.type;
+
+	for (const std::string& shaderBlock : computeSet.shaderBlock.requiredShaderBlocks) {
+		resolvedComputeSet.requiredShaderBlocks.insert(shaderBlock);
 	}
 }
 
@@ -267,7 +333,39 @@ static void CollapsePasses(ResolveContext& context, ResolvedStateTree::PipelineS
 	}
 }
 
-static void ResolvePipelineSet(ResolveContext& context, const std::string& pipelineSetName, const ParseTree::PipelineSet& pipelineSet, ResolvedStateTree::PipelineSet& resolvedPipelineSet) {
+static void CollapseComputeSet(
+	ResolveContext& context,
+	ResolvedStateTree::ComputeSet& resolvedComputeSet
+) {
+	std::string code;
+
+	std::set<std::string_view> processedBlocks;
+	for (const std::string_view requiredShaderBlock : resolvedComputeSet.requiredShaderBlocks) {
+		if (processedBlocks.find(requiredShaderBlock) != processedBlocks.end()) {
+			continue;
+		}
+
+		auto shaderBlockIterator = context.parseTree.genericShaderBlocks.find(std::string(requiredShaderBlock));
+		if (shaderBlockIterator == context.parseTree.genericShaderBlocks.end()) {
+			std::string errorMsg = fmt::format("Found a missing shader block '{}'.", requiredShaderBlock);
+			context.logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Resolver, errorMsg, resolvedComputeSet.sourceFilepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
+		}
+		else {
+			const ParseTree::ShaderBlock& shaderBlock = shaderBlockIterator->second;
+			processedBlocks.insert(requiredShaderBlock);
+			CollapseShaderBlock(context, code, processedBlocks, shaderBlock);
+		}
+	}
+
+	resolvedComputeSet.shaderCode = code + resolvedComputeSet.shaderCode;
+}
+
+static void ResolvePipelineSet(
+	ResolveContext& context,
+	const std::string& pipelineSetName,
+	const ParseTree::PipelineSet& pipelineSet,
+	ResolvedStateTree::PipelineSet& resolvedPipelineSet
+) {
 	if (HasBrokenDependency(context, pipelineSetName, pipelineSet)) {
 		return;
 	}
@@ -295,20 +393,58 @@ static void ResolvePipelineSet(ResolveContext& context, const std::string& pipel
 	CollapsePasses(context, resolvedPipelineSet);
 }
 
+static void ResolveComputeSet(
+	ResolveContext& context,
+	const std::string& computeSetName,
+	const ParseTree::ComputeSet& computeSet,
+	ResolvedStateTree::ComputeSet& resolvedComputeSet
+) {
+	if (HasBrokenDependency(context, computeSetName, computeSet)) {
+		return;
+	}
+
+	resolvedComputeSet.name = computeSetName;
+
+	context.shouldCopyCode = true;
+	const ParseTree::ComputeSet* currentComputeSet = &computeSet;
+	while (true) {
+		ResolveComputeSetIteration(context, computeSetName, *currentComputeSet, resolvedComputeSet);
+
+		if (currentComputeSet->shaderBlock.parentData.parent.empty()) {
+			break;
+		}
+		else {
+			if (currentComputeSet->shaderBlock.parentData.parentType == ParseTree::ParentType::Inherit) {
+				context.shouldCopyCode = false;
+			}
+
+			const std::string& parent = currentComputeSet->shaderBlock.parentData.parent;
+			currentComputeSet = &context.parseTree.computeSets.find(parent)->second;
+		}
+	}
+
+	CollapseComputeSet(context, resolvedComputeSet);
+}
+
 bool ResolveStateTree(LogCallback logCallback, const ParseTree& parseTree, ResolvedStateTree& resolvedStateTree) {
 	ResolveContext context(logCallback, parseTree, resolvedStateTree);
 	
-	for (auto& pipelineSetIterator : parseTree.pipelineSets) {
-		const ParseTree::PipelineSet& pipelineSet = pipelineSetIterator.second;
+	for (const auto& [pipelineSetName, pipelineSet] : parseTree.pipelineSets) {
 		if (pipelineSet.isAbstract) {
 			continue;
 		}
 
-		const std::string& pipelineSetName = pipelineSetIterator.first;
 		ResolvedStateTree::PipelineSet& resolvedPipelineSet = resolvedStateTree.pipelineSets.emplace_back();
 		resolvedPipelineSet.sourceFilepath = pipelineSet.sourceFilepath;
 
 		ResolvePipelineSet(context, pipelineSetName, pipelineSet, resolvedPipelineSet);
+	}
+
+	for (const auto& [computeSetName, computeSet] : parseTree.computeSets) {
+		ResolvedStateTree::ComputeSet& resolvedComputeSet = resolvedStateTree.computeSets.emplace_back();
+		resolvedComputeSet.sourceFilepath = computeSet.sourceFilepath;
+
+		ResolveComputeSet(context, computeSetName, computeSet, resolvedComputeSet);
 	}
 
 	return true;
