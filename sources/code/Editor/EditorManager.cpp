@@ -113,7 +113,10 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	}
 	taskSystem.CullDoneTasks();
 
-	Editor::Manager::GetInstance().GetAssetRegistry().WriteFile();
+	// TODO: This might not be necessary or desirable - make it an option.
+	fileManager.CleanupStaleFiles();
+
+	assetRegistry.WriteFile();
 
 	gitManager.Initialize();
 	csharpBuildManager.FinishInitialFileProcessing();

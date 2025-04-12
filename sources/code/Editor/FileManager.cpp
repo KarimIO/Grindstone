@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <string_view>
+#include <unordered_set>
 
 #include <Common/Logging.hpp>
 #include <Common/ResourcePipeline/MetaFile.hpp>
@@ -101,6 +102,87 @@ void FileManager::WatchDirectory(std::string_view mountPoint, const std::filesys
 		mountPointEntry,
 		std::filesystem::directory_iterator(directoryIterator)
 	);
+}
+
+static void GetCompiledFilePaths(
+	std::filesystem::directory_iterator directoryIterator,
+	std::unordered_set<std::filesystem::path>& compiledFiles
+) {
+	for (const std::filesystem::directory_entry& directoryEntry : directoryIterator) {
+		if (directoryEntry.is_directory()) {
+			GPRINT_ERROR_V(LogSource::Editor, "Found a folder in compiled assets folder - these shouldn't be here: {}", directoryEntry.path().string());
+		}
+		else {
+			compiledFiles.insert(directoryEntry.path().filename());
+		}
+	}
+}
+
+static void CleanupStaleFilesForFolder(
+	Grindstone::Editor::AssetRegistry& assetRegistry,
+	std::filesystem::directory_iterator directoryIterator,
+	std::unordered_set<Grindstone::Uuid>& assetRegistryUuids,
+	std::unordered_set<std::filesystem::path>& compiledFiles
+) {
+	for (const std::filesystem::directory_entry& directoryEntry : directoryIterator) {
+		if (directoryEntry.is_directory()) {
+			CleanupStaleFilesForFolder(
+				assetRegistry,
+				static_cast<std::filesystem::directory_iterator>(directoryEntry),
+				assetRegistryUuids,
+				compiledFiles
+			);
+		}
+		else if (directoryEntry.path().extension() != ".meta") {
+			Grindstone::Editor::MetaFile* metaFile = assetRegistry.GetMetaFileByPath(directoryEntry.path());
+			if (metaFile != nullptr) {
+				Grindstone::Editor::MetaFile::Subasset defaultSubasset;
+				if (metaFile->TryGetDefaultSubasset(defaultSubasset)) {
+					assetRegistryUuids.erase(defaultSubasset.uuid);
+					compiledFiles.erase(defaultSubasset.uuid.ToString());
+				}
+
+				for (Grindstone::Editor::MetaFile::Subasset& subasset : *metaFile) {
+					assetRegistryUuids.erase(subasset.uuid);
+					compiledFiles.erase(subasset.uuid.ToString());
+				}
+			}
+		}
+	}
+}
+
+void FileManager::CleanupStaleFiles() {
+	// Create an array of current uuids, which we will filter out to see what we need to remove.
+	Grindstone::Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
+	std::unordered_set<Grindstone::Uuid> assetRegistryUuids = assetRegistry.GetUsedUuids();
+
+	// Create an array of all file paths in the compiled directory to filter out what we want to remove.
+	std::unordered_set<std::filesystem::path> compiledFilesToErase;
+	const std::filesystem::path& compiledAssetsPath = Editor::Manager::GetInstance().GetCompiledAssetsPath();
+	GetCompiledFilePaths(std::filesystem::directory_iterator(compiledAssetsPath), compiledFilesToErase);
+
+	for (MountPoint& mountPointEntry : mountedDirectories) {
+		std::filesystem::directory_entry directoryIterator(mountPointEntry.path);
+		CleanupStaleFilesForFolder(
+			assetRegistry,
+			std::filesystem::directory_iterator(directoryIterator),
+			assetRegistryUuids,
+			compiledFilesToErase
+		);
+	}
+
+	// Make sure not to delete the assetRegistry!
+	compiledFilesToErase.erase("_assetRegistry.json");
+
+	// Remove asset registry entries
+	for (Grindstone::Uuid uuid : assetRegistryUuids) {
+		assetRegistry.RemoveEntry(uuid);
+	}
+
+	// Remove converted files
+	for (const std::filesystem::path& path : compiledFilesToErase) {
+		std::filesystem::remove(compiledAssetsPath / path);
+	}
 }
 
 const std::vector<FileManager::MountPoint>& FileManager::GetMountedDirectories() const {

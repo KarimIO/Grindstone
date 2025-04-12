@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 #include <Common/ResourcePipeline/AssetType.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
@@ -41,6 +42,7 @@ namespace Grindstone::Editor {
 		[[nodiscard]] virtual Grindstone::Editor::MetaFile* GetMetaFileByPath(const std::filesystem::path& path);
 		[[nodiscard]] virtual const std::filesystem::path& GetCompiledAssetsPath() const;
 
+		virtual bool RemoveEntry(Uuid uuid);
 		virtual bool HasAsset(Uuid uuid) const;
 		virtual bool TryGetPathWithMountPoint(const std::filesystem::path& path, std::filesystem::path& outMountedPath) const;
 		virtual bool TryGetAbsolutePathFromMountedPath(const std::filesystem::path& mountedPath, std::filesystem::path& outAbsolutePath) const;
@@ -50,6 +52,8 @@ namespace Grindstone::Editor {
 		virtual bool TryGetAssetData(Uuid uuid, AssetRegistry::Entry& outEntry) const;
 
 		virtual void FindAllFilesOfType(AssetType assetType, std::vector<Entry>& outEntries) const;
+
+		virtual std::unordered_set<Grindstone::Uuid> GetUsedUuids() const;
 	private:
 		std::map<Uuid, Entry> assets;
 		std::filesystem::path assetsPath;

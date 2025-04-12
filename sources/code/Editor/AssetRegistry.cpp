@@ -154,6 +154,10 @@ const std::filesystem::path& AssetRegistry::GetCompiledAssetsPath() const {
 	return compiledAssetsPath;
 }
 
+bool AssetRegistry::RemoveEntry(Uuid uuid) {
+	return assets.erase(uuid) != 0;
+}
+
 bool AssetRegistry::HasAsset(Uuid uuid) const {
 	return assets.find(uuid) != assets.end();
 }
@@ -225,4 +229,14 @@ void AssetRegistry::FindAllFilesOfType(AssetType assetType, std::vector<Entry>& 
 			outEntries.push_back(entry);
 		}
 	}
+}
+
+std::unordered_set<Grindstone::Uuid> Grindstone::Editor::AssetRegistry::GetUsedUuids() const {
+	std::unordered_set<Grindstone::Uuid> unusedUuids;
+
+	for (const auto& [uuid, _] : assets) {
+		unusedUuids.insert(uuid);
+	}
+
+	return unusedUuids;
 }
