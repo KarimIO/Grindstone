@@ -6,7 +6,7 @@
 
 Grindstone::Uuid Grindstone::Uuid::CreateRandom() {
 	Uuid newUuid;
-	bool hasSuccessfullyCreatedRandomUuid = UuidCreate((::UUID*)&(newUuid.uuid)) == RPC_S_OK;
+	bool hasSuccessfullyCreatedRandomUuid = UuidCreate(reinterpret_cast<::UUID*>(&newUuid.asUint64[0])) == RPC_S_OK;
 	GS_ASSERT_ENGINE_WITH_MESSAGE(hasSuccessfullyCreatedRandomUuid, "Could not create a random uuid.")
 
 	return newUuid;
@@ -14,13 +14,13 @@ Grindstone::Uuid Grindstone::Uuid::CreateRandom() {
 
 bool Grindstone::Uuid::MakeFromString(const char* str, Grindstone::Uuid& outUuid) {
 	if (str == nullptr || strlen(str) == 0) {
-		memset(outUuid.uuid, 0, sizeof(outUuid.uuid));
+		memset(&outUuid.asUint64[0], 0, sizeof(uint64_t) * 2);
 		return false;
 	}
 
-	if (UuidFromString((unsigned char*)str, (::UUID*)&outUuid.uuid) != RPC_S_OK) {
+	if (UuidFromString((unsigned char*)str, (::UUID*)&outUuid.asUint64[0]) != RPC_S_OK) {
 		GS_BREAK_WITH_MESSAGE("Could not make guid from an empty string.")
-			memset(outUuid.uuid, 0, sizeof(outUuid.uuid));
+		memset(&outUuid.asUint64[0], 0, sizeof(uint64_t) * 2);
 		return false;
 	}
 
@@ -29,7 +29,8 @@ bool Grindstone::Uuid::MakeFromString(const char* str, Grindstone::Uuid& outUuid
 
 std::string Grindstone::Uuid::ToString() const {
 	unsigned char* uuidCstr;
-	if (UuidToString((::UUID*)&uuid, &uuidCstr) == RPC_S_OK) {
+	::UUID uuid = *reinterpret_cast<const ::UUID*>(&asUint64[0]);
+	if (UuidToString(&uuid, &uuidCstr) == RPC_S_OK) {
 		std::string uuidStr((char*)uuidCstr);
 		RpcStringFreeA(&uuidCstr);
 
@@ -43,29 +44,29 @@ std::string Grindstone::Uuid::ToString() const {
 
 Grindstone::Uuid Grindstone::Uuid::CreateRandom() {
 	Uuid newUuid();
-	uuid_generate_random((uuid_t)newUuid.uuid);
+	uuid_generate_random((uuid_t)newUuid.asUint64);
 	return newUuid;
 }
 
 bool Grindstone::Uuid::MakeFromString(const char* str, Grindstone::Uuid& outUuid) {
 	if (str == nullptr || strlen(str) == 0) {
-		memset(outUuid.uuid, 0, sizeof(outUuid.uuid));
+		memset(&outUuid.asUint64[0], 0, sizeof(uint64_t) * 2);
 		return false;
 	}
 
-	return uuid_parse(str, (uuint_t)outUuid.uuid) == 0;
+	return uuid_parse(str, (uuint_t)outUuid.asUint64) == 0;
 }
 
 std::string Grindstone::Uuid::ToString() const {
 	char uuidStr[37];
-	uuid_unparse((uuid_t)uuid, uuidStr);
+	uuid_unparse((uuid_t)&outUuid.asUint64[0], uuidStr);
 
 	return uuidStr;
 }
 #endif
 
 Grindstone::Uuid::Uuid() {
-	memset(uuid, 0, sizeof(uuid));
+	memset(&asUint64[0], 0, sizeof(uint64_t) * 2);
 }
 
 bool Grindstone::Uuid::MakeFromString(const std::string& str, Grindstone::Uuid& outUuid) {
@@ -73,7 +74,7 @@ bool Grindstone::Uuid::MakeFromString(const std::string& str, Grindstone::Uuid& 
 }
 
 bool Grindstone::Uuid::IsValid() const {
-	const uint64_t* uuidCasted = reinterpret_cast<const uint64_t*>(&uuid[0]);
+	const uint64_t* uuidCasted = reinterpret_cast<const uint64_t*>(&asUint64[0]);
 	return uuidCasted[0] != 0 || uuidCasted[1] != 0;
 }
 
@@ -82,17 +83,17 @@ Grindstone::Uuid::operator std::string() const {
 }
 
 bool Grindstone::Uuid::operator==(const Uuid& other) const {
-	return std::memcmp(other.uuid, uuid, sizeof(uuid)) == 0;
+	return std::memcmp(&other.asUint64[0], &asUint64[0], sizeof(uint64_t) * 2) == 0;
 }
 
 bool Grindstone::Uuid::operator!=(const Uuid& other) const {
-	return std::memcmp(other.uuid, uuid, sizeof(uuid)) != 0;
+	return std::memcmp(&other.asUint64[0], &asUint64[0], sizeof(uint64_t) * 2) != 0;
 }
 
 bool Grindstone::Uuid::operator<(const Uuid& other) const {
-	return std::memcmp(other.uuid, uuid, sizeof(uuid)) < 0;
+	return std::memcmp(&other.asUint64[0], &asUint64[0], sizeof(uint64_t) * 2) < 0;
 }
 
 void Grindstone::Uuid::operator=(const Uuid& other) {
-	std::memcpy(uuid, other.uuid, sizeof(uuid));
+	std::memcpy(&asUint64[0], &other.asUint64[0], sizeof(uint64_t) * 2);
 }
