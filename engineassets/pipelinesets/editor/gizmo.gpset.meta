@@ -5,7 +5,7 @@
     "subassets": [
         {
             "displayName": "Gizmo",
-            "address": "",
+            "address": "@CORESHADERS/editor/gizmo",
             "subassetIdentifier": "Gizmo",
             "uuid": "3ba55727-a12b-4bd7-a3ec-22224e0c6cbe",
             "type": "GraphicsPipelineSet"

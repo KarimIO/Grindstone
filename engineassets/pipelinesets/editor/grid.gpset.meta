@@ -5,7 +5,7 @@
     "subassets": [
         {
             "displayName": "Grid",
-            "address": "",
+            "address": "@CORESHADERS/editor/grid",
             "subassetIdentifier": "Grid",
             "uuid": "f5ed6334-55e0-41fa-af4e-6ab1605cbc1a",
             "type": "GraphicsPipelineSet"

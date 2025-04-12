@@ -221,8 +221,8 @@ bool OutputComputeSet(LogCallback logCallback, const CompilationArtifactsCompute
 	logCallback(Grindstone::LogSeverity::Info, PipelineConverterLogSource::Output, "Compiled and Outputted", computeSet.sourceFilepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
 	outputFile.name = computeSet.name;
 	outputFile.pipelineType = PipelineType::Compute;
-	outputFile.content.resize(computeSet.shaderCode.size() + 1);
-	memcpy(outputFile.content.data(), computeSet.shaderCode.data(), computeSet.shaderCode.size() + 1);
+	outputFile.content.resize(compilationArtifacts.computeStage.compiledCode.size() + 1);
+	memcpy(outputFile.content.data(), compilationArtifacts.computeStage.compiledCode.data(), compilationArtifacts.computeStage.compiledCode.size() + 1);
 
 	return true;
 }

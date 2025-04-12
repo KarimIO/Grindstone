@@ -1,4 +1,6 @@
 include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+include "$ENGINE/pipelinesets/common/rendererUniform.gpset"
+include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
 
 computeSet "Screen-Space Reflections" {
 	shaderEntrypoint: compute main
@@ -6,11 +8,14 @@ computeSet "Screen-Space Reflections" {
 	requiresBlocks [
 		GsViewNormal,
 		GsComputeClipSpacePosition,
-		GsComputeViewSpacePosition
+		GsComputeViewSpacePosition,
+		GsViewSpaceToScreenSpace,
+		GsRendererUniform,
+		GsDefaultSampler
 	]
 
 	shaderHlsl {
-		RWTexture2D<float4> outImage : register(t1,  space0);
+		RWTexture2D<float4> outImage : register(u1,  space0);
 		Texture2D<float4> colorImage : register(t2,  space0);
 		Texture2D<float4> gbufferDepth : register(t3,  space0);
 		Texture2D<float4> gbufferNormal : register(t4,  space0);
@@ -18,12 +23,12 @@ computeSet "Screen-Space Reflections" {
 
 		float4 GetPosition(float2 texCoords) {
 			float depthFromTexture = gbufferDepth.Sample(mySampler, texCoords * rendererUbo.renderScale).x;
-			float4 position = ComputeViewSpacePosition(texCoords, depthFromTexture);
-			return position;
+			float3 position = ComputeViewSpacePosition(rendererUbo.inverseProjectionMatrix, rendererUbo.viewMatrix, texCoords, depthFromTexture);
+			return float4(position, 1);
 		}
 
 		float3 GetNormal(float2 texCoords) {
-			return normalize(ViewNormal(gbufferNormal.Sample(mySampler, texCoords).rgb));
+			return normalize(ViewNormal(rendererUbo.viewMatrix, gbufferNormal.Sample(mySampler, texCoords).rgb));
 		}
 
 		const float maxDistance = 15;
@@ -121,10 +126,9 @@ computeSet "Screen-Space Reflections" {
 			return float4(uv, 0, visibility);
 		}
 
-		[numthreads(1, 1]
+		[numthreads(1, 1, 1)]
 		void main(uint3 dispatchThreadID : SV_DispatchThreadID) {
-			int2 invocID = int2(dispatchThreadID);
-			float2 texCoords = float2(invocID.x / rendererUbo.framebufferResolution.x, invocID.y / rendererUbo.framebufferResolution.y);
+			float2 texCoords = float2(dispatchThreadID.x / rendererUbo.framebufferResolution.x, dispatchThreadID.y / rendererUbo.framebufferResolution.y);
 
 			float4 positionViewSpace = GetPosition(texCoords / rendererUbo.renderScale);
 			float3 normal = GetNormal(texCoords);
@@ -135,9 +139,9 @@ computeSet "Screen-Space Reflections" {
 			float roughness = specRough.a * specRough.a;
 
 			float4 reflCoords = ReflectRay(positionViewSpace, reflectedRay);
-			float4 color = float4(colorImage, reflCoords.xy * rendererUbo.renderScale).xyz * reflCoords.a.Sample(mySampler, reflCoords.a);
+			float4 color = float4(colorImage.Sample(mySampler, reflCoords.xy * rendererUbo.renderScale).xyz * reflCoords.a, reflCoords.a);
 
-			imageStore(outImage, invocID, color);
+			outImage[dispatchThreadID.xy] = color;
 		}
 	}
 }

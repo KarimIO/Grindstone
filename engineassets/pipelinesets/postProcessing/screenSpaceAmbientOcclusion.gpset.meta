@@ -5,7 +5,7 @@
     "subassets": [
         {
             "displayName": "Screen-Space Ambient Occlusion",
-            "address": "",
+            "address": "@CORESHADERS/postProcessing/screenSpaceAmbientOcclusion",
             "subassetIdentifier": "Screen-Space Ambient Occlusion",
             "uuid": "85febf6d-8352-4f30-9cbd-3819bc748a79",
             "type": "GraphicsPipelineSet"

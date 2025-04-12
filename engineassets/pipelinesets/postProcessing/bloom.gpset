@@ -1,28 +1,31 @@
 include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
-
+include "$ENGINE/pipelinesets/common/rendererUniform.gpset"
+include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
 computeSet "Bloom" {
 	shaderEntrypoint: compute main
 
 	requiresBlocks [
 		GsViewNormal,
 		GsComputeClipSpacePosition,
-		GsComputeViewSpacePosition
+		GsComputeViewSpacePosition,
+		GsRendererUniform,
+		GsDefaultSampler
 	]
 
 	shaderHlsl {
 		const float epsilon = 1.0e-4;
 
 		struct ControlUniformBuffer {
-			vec4 reciprocalImgSizes; // Consists of  vec2 in; vec2 out;
-			vec4 thresholdFilter;
+			float4 reciprocalImgSizes; // Consists of  float2 in; float2 out;
+			float4 thresholdFilter;
 			int stage;
 			float levelOfDetail;
 			float filterRadius;
 		};
 
-		cbuffer ubo : register(b0, space1) { ControlUniformBuffer ubo; }
+		cbuffer postUbo : register(b0, space1) { ControlUniformBuffer postUbo; }
 
-		RWTexture2D<float4> outImage : register(t1,  space0);
+		RWTexture2D<float4> outImage : register(u1,  space0);
 		Texture2D<float4> inImage1 : register(t2,  space0);
 		Texture2D<float4> inImage2 : register(t3,  space0);
 
@@ -31,64 +34,64 @@ computeSet "Bloom" {
 		const int bloomStageUpsample	= 2;
 		const int bloomStageApply		= 3;
 
-		vec3 Upsample(sampler2D srcTexture, vec2 texCoord, vec2 texelSize, float radius) {
-			vec2 offset = texelSize * radius;
+		float3 Upsample(Texture2D<float4> srcTexture, float2 texCoord, float2 texelSize, float radius) {
+			float2 offset = texelSize * radius;
 
-			vec3 result = srcTexture.Sample(mySampler, texCoord).rgb * 4.0f;
+			float3 result = srcTexture.Sample(mySampler, texCoord).rgb * 4.0f;
 
-			result += srcTexture, texCoord + vec2(-offset.x.Sample(mySampler, 0)).rgb * 2.0;
-			result += srcTexture, texCoord + vec2( offset.x.Sample(mySampler, 0)).rgb * 2.0;
-			result += srcTexture, texCoord + vec2(0.Sample(mySampler, -offset.y)).rgb * 2.0;
-			result += srcTexture, texCoord + vec2(0.Sample(mySampler,  offset.y)).rgb * 2.0;
+			result += srcTexture.Sample(mySampler, texCoord + float2(-offset.x, 0)).rgb * 2.0;
+			result += srcTexture.Sample(mySampler, texCoord + float2( offset.x, 0)).rgb * 2.0;
+			result += srcTexture.Sample(mySampler, texCoord + float2(0, -offset.y)).rgb * 2.0;
+			result += srcTexture.Sample(mySampler, texCoord + float2(0,  offset.y)).rgb * 2.0;
 
-			result += srcTexture.Sample(mySampler, texCoord + vec2(-offset.x,-offset.y)).rgb;
-			result += srcTexture, texCoord + vec2(-offset.x.Sample(mySampler, offset.y)).rgb;
-			result += srcTexture.Sample(mySampler, texCoord + vec2( offset.x,-offset.y)).rgb;
-			result += srcTexture, texCoord + vec2( offset.x.Sample(mySampler, offset.y)).rgb;
+			result += srcTexture.Sample(mySampler, texCoord + float2(-offset.x,-offset.y)).rgb;
+			result += srcTexture.Sample(mySampler, texCoord + float2(-offset.x, offset.y)).rgb;
+			result += srcTexture.Sample(mySampler, texCoord + float2( offset.x,-offset.y)).rgb;
+			result += srcTexture.Sample(mySampler, texCoord + float2( offset.x, offset.y)).rgb;
 
 			return result * (1.0f / 16.0f);
 		}
 
-		vec3 PowVec3(vec3 v, float p) {
-			return vec3(pow(v.x, p), pow(v.y, p), pow(v.z, p));
+		float3 Powfloat3(float3 v, float p) {
+			return float3(pow(v.x, p), pow(v.y, p), pow(v.z, p));
 		}
 
 		const float invGamma = 1.0 / 2.2;
-		vec3 ToSRGB(vec3 v) { return PowVec3(v, invGamma); }
+		float3 ToSRGB(float3 v) { return Powfloat3(v, invGamma); }
 
-		float RGBToLuminance(vec3 col) {
-			return dot(col, vec3(0.2126f, 0.7152f, 0.0722f));
+		float RGBToLuminance(float3 col) {
+			return dot(col, float3(0.2126f, 0.7152f, 0.0722f));
 		}
 
-		float KarisAverage(vec3 col) {
+		float KarisAverage(float3 col) {
 			// Formula is 1 / (1 + luma)
 			float luma = RGBToLuminance(ToSRGB(col)) * 0.25f;
 			return 1.0f / (1.0f + luma);
 		}
 
-		vec3 TransformKaris(vec3 col) {
+		float3 TransformKaris(float3 col) {
 			return col * KarisAverage(col);
 		}
 
-		vec3 Downsample(sampler2D srcTexture, vec2 texCoord, vec2 texelSize, bool isFirstDownsample) {
+		float3 Downsample(Texture2D<float4> srcTexture, float2 texCoord, float2 texelSize, bool isFirstDownsample) {
 			texCoord += texelSize / 2.0f;
 
-			vec3 a = srcTexture.Sample(mySampler, texCoord + texelSize * vec2(-2.0f,-2.0f)).rgb;
-			vec3 b = srcTexture.Sample(mySampler, texCoord + texelSize * vec2( 0.0f,-2.0f)).rgb;
-			vec3 c = srcTexture.Sample(mySampler, texCoord + texelSize * vec2( 2.0f,-2.0f)).rgb;
+			float3 a = srcTexture.Sample(mySampler, texCoord + texelSize * float2(-2.0f,-2.0f)).rgb;
+			float3 b = srcTexture.Sample(mySampler, texCoord + texelSize * float2( 0.0f,-2.0f)).rgb;
+			float3 c = srcTexture.Sample(mySampler, texCoord + texelSize * float2( 2.0f,-2.0f)).rgb;
 
-			vec3 d = srcTexture, texCoord + texelSize * vec2(-2.0f.Sample(mySampler, 0.0f)).rgb;
-			vec3 e = srcTexture, texCoord + texelSize * vec2( 0.0f.Sample(mySampler, 0.0f)).rgb;
-			vec3 f = srcTexture, texCoord + texelSize * vec2( 2.0f.Sample(mySampler, 0.0f)).rgb;
+			float3 d = srcTexture.Sample(mySampler, texCoord + texelSize * float2(-2.0f, 0.0f)).rgb;
+			float3 e = srcTexture.Sample(mySampler, texCoord + texelSize * float2( 0.0f, 0.0f)).rgb;
+			float3 f = srcTexture.Sample(mySampler, texCoord + texelSize * float2( 2.0f, 0.0f)).rgb;
 
-			vec3 g = srcTexture, texCoord + texelSize * vec2(-2.0f.Sample(mySampler, 2.0f)).rgb;
-			vec3 h = srcTexture, texCoord + texelSize * vec2( 0.0f.Sample(mySampler, 2.0f)).rgb;
-			vec3 i = srcTexture, texCoord + texelSize * vec2( 2.0f.Sample(mySampler, 2.0f)).rgb;
+			float3 g = srcTexture.Sample(mySampler, texCoord + texelSize * float2(-2.0f, 2.0f)).rgb;
+			float3 h = srcTexture.Sample(mySampler, texCoord + texelSize * float2( 0.0f, 2.0f)).rgb;
+			float3 i = srcTexture.Sample(mySampler, texCoord + texelSize * float2( 2.0f, 2.0f)).rgb;
 
-			vec3 j = srcTexture.Sample(mySampler, texCoord + texelSize * vec2(-1.0f,-1.0f)).rgb;
-			vec3 k = srcTexture, texCoord + texelSize * vec2(-1.0f.Sample(mySampler, 1.0f)).rgb;
-			vec3 l = srcTexture, texCoord + texelSize * vec2( 1.0f.Sample(mySampler, 1.0f)).rgb;
-			vec3 m = srcTexture.Sample(mySampler, texCoord + texelSize * vec2( 1.0f,-1.0f)).rgb;
+			float3 j = srcTexture.Sample(mySampler, texCoord + texelSize * float2(-1.0f,-1.0f)).rgb;
+			float3 k = srcTexture.Sample(mySampler, texCoord + texelSize * float2(-1.0f, 1.0f)).rgb;
+			float3 l = srcTexture.Sample(mySampler, texCoord + texelSize * float2( 1.0f, 1.0f)).rgb;
+			float3 m = srcTexture.Sample(mySampler, texCoord + texelSize * float2( 1.0f,-1.0f)).rgb;
 
 			// a,b,d,e * 0.125
 			// b,c,e,f * 0.125
@@ -110,41 +113,40 @@ computeSet "Bloom" {
 			}
 		}
 
-		vec4 Prefilter(vec4 color) {
+		float4 Prefilter(float4 color) {
 			float brightness = max(color.r, max(color.g, color.b));
-			float soft = brightness - rendererUbo.thresholdFilter.y;
-			soft = clamp(soft, 0.0, rendererUbo.thresholdFilter.z);
-			soft = soft * soft * rendererUbo.thresholdFilter.w;
+			float soft = brightness - postUbo.thresholdFilter.y;
+			soft = clamp(soft, 0.0, postUbo.thresholdFilter.z);
+			soft = soft * soft * postUbo.thresholdFilter.w;
 
-			return color * max(soft, brightness - rendererUbo.thresholdFilter.x) / max(brightness, epsilon);
+			return color * max(soft, brightness - postUbo.thresholdFilter.x) / max(brightness, epsilon);
 		}
 
-		[numthreads(4, 4)]
+		[numthreads(4, 4, 1)]
 		void main(uint3 dispatchThreadID : SV_DispatchThreadID) {
-			ivec2 invocID = ivec2(dispatchThreadID);
-			vec2 texCoords = vec2(invocID.x * rendererUbo.reciprocalImgSizes.z, invocID.y * rendererUbo.reciprocalImgSizes.w);
+			float2 texCoords = float2(dispatchThreadID.x * postUbo.reciprocalImgSizes.z, dispatchThreadID.y * postUbo.reciprocalImgSizes.w);
 
-			vec4 color = vec4(0.0f);
+			float4 color = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
-			if (rendererUbo.stage == bloomStagePrefilter) {
-				color.rgb = Downsample(inImage1, texCoords, rendererUbo.reciprocalImgSizes.zw, true);
+			if (postUbo.stage == bloomStagePrefilter) {
+				color.rgb = Downsample(inImage1, texCoords, postUbo.reciprocalImgSizes.zw, true);
 				color = max(Prefilter(color), 0.0f);
 				color.a = 1.0f;
 			}
-			else if (rendererUbo.stage == bloomStageDownsample) {
-				color.rgb = Downsample(inImage1, texCoords, rendererUbo.reciprocalImgSizes.zw, false);
+			else if (postUbo.stage == bloomStageDownsample) {
+				color.rgb = Downsample(inImage1, texCoords, postUbo.reciprocalImgSizes.zw, false);
 			}
-			else if (rendererUbo.stage == bloomStageUpsample) {
-				vec3 upsampledTexture = Upsample(inImage1, texCoords, rendererUbo.reciprocalImgSizes.xy, rendererUbo.filterRadius);
+			else if (postUbo.stage == bloomStageUpsample) {
+				float3 upsampledTexture = Upsample(inImage1, texCoords, postUbo.reciprocalImgSizes.xy, postUbo.filterRadius);
 
-				vec3 existing = inImage2.Sample(mySampler, texCoords).rgb;
+				float3 existing = inImage2.Sample(mySampler, texCoords).rgb;
 				color.rgb = existing + upsampledTexture;
 			}
-			else if (rendererUbo.stage == bloomStageApply) {
-				color.rgb = Upsample(inImage1, texCoords, rendererUbo.reciprocalImgSizes.xy, rendererUbo.filterRadius);
+			else if (postUbo.stage == bloomStageApply) {
+				color.rgb = Upsample(inImage1, texCoords, postUbo.reciprocalImgSizes.xy, postUbo.filterRadius);
 			}
 
-			imageStore(outImage, invocID, color);
+			outImage[dispatchThreadID.xy] = color;
 		}
 	}
 }

@@ -2,5 +2,13 @@
     "assetImporterVersion": 0,
     "metaFileVersion": 1,
     "defaultUuid": "00000000-0000-0000-0000-000000000000",
-    "subassets": []
+    "subassets": [
+        {
+            "displayName": "Bloom",
+            "address": "@CORESHADERS/postProcessing/bloom",
+            "subassetIdentifier": "Bloom",
+            "uuid": "2b71b354-a101-4f42-930b-2e69d8bf5c7e",
+            "type": "ComputePipelineSet"
+        }
+    ]
 }

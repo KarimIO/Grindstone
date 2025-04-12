@@ -61,7 +61,7 @@ shaderBlock GsComputeDepth {
 shaderBlock GsViewSpaceToScreenSpace {
 	shaderHlsl {
 		float4 ViewSpaceToScreenSpace(float4x4 projMatrix, float4 worldPosition, float2 pixelSize) {
-			float4 projectedCoords = projMatrix * worldPosition;
+			float4 projectedCoords = mul(projMatrix, worldPosition);
 			projectedCoords.xyz /= projectedCoords.w;
 			projectedCoords.xy = (projectedCoords.xy * 0.5f + 0.5f) * pixelSize;
 			return projectedCoords;
@@ -72,7 +72,7 @@ shaderBlock GsViewSpaceToScreenSpace {
 shaderBlock GsComputeLinearDepth {
 	shaderHlsl {
 		float ComputeLinearDepth(float4 projMatrix, float4 viewMatrix, float3 pos) {
-			float4 clipSpacePos = projMatrix * viewMatrix * float4(pos.xyz, 1.0);
+			float4 clipSpacePos = mul(mul(float4(pos.xyz, 1.0), viewMatrix), projMatrix);
 			return (clipSpacePos.z / clipSpacePos.w);
 		}
 	}

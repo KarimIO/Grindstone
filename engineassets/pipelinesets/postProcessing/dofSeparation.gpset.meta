@@ -5,7 +5,7 @@
     "subassets": [
         {
             "displayName": "Depth of Field (Separation)",
-            "address": "",
+            "address": "@CORESHADERS/postProcessing/dofSeparation",
             "subassetIdentifier": "Depth of Field (Separation)",
             "uuid": "06c58d0b-e200-4d59-ba5c-4d22b0413276",
             "type": "GraphicsPipelineSet"

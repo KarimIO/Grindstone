@@ -5,7 +5,7 @@
     "subassets": [
         {
             "displayName": "Spot Light",
-            "address": "",
+            "address": "@CORESHADERS/lighting/spot",
             "subassetIdentifier": "Spot Light",
             "uuid": "3ad19b74-6cab-4109-b00f-e289572f85d8",
             "type": "GraphicsPipelineSet"
