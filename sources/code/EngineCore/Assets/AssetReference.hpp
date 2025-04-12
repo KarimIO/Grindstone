@@ -115,7 +115,7 @@ namespace Grindstone {
 		// Return a pointer to the actual asset, but only if the asset is ready to be used.
 		[[nodiscard]] T* Get() {
 			T* asset = reinterpret_cast<T*>(Grindstone::AssetFunctions::Get(T::GetStaticType(), uuid));
-			return asset->assetLoadStatus == Grindstone::AssetLoadStatus::Ready
+			return asset && asset->assetLoadStatus == Grindstone::AssetLoadStatus::Ready
 				? asset
 				: nullptr;
 		}
@@ -123,7 +123,7 @@ namespace Grindstone {
 		// Return a pointer to the actual asset, but only if the asset is ready to be used.
 		[[nodiscard]] const T* Get() const {
 			T* asset = reinterpret_cast<T*>(Grindstone::AssetFunctions::Get(T::GetStaticType(), uuid));
-			return asset->assetLoadStatus == Grindstone::AssetLoadStatus::Ready
+			return asset && asset->assetLoadStatus == Grindstone::AssetLoadStatus::Ready
 				? asset
 				: nullptr;
 		}
