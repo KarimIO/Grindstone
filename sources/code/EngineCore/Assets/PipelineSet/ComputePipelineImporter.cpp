@@ -1,5 +1,6 @@
 #include <filesystem>
 
+#include <Common/Formats/PipelineSet.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
@@ -12,6 +13,7 @@
 
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
+using namespace Grindstone::Formats::Pipelines;
 
 static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
 	return false;
@@ -31,8 +33,30 @@ static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
 		return false;
 	}
 
+	Grindstone::Buffer& fileData = result.buffer;
+	GS_ASSERT(fileData.GetCapacity() >= (4 + sizeof(V1::PipelineSetFileHeader)));
+
+	if (memcmp(fileData.Get(), V1::FileMagicCode, 4) != 0) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Graphics Pipeline file does not start with GPSF - {}.", result.displayName);
+		computePipelineAsset.assetLoadStatus = AssetLoadStatus::Failed;
+		return false;
+	}
+
+	computePipelineAsset.name = result.displayName;
+
+	unsigned char* readPtr = fileData.Get() + 4;
+	V1::PipelineSetFileHeader* srcFileHeader = reinterpret_cast<V1::PipelineSetFileHeader*>(readPtr);
+	readPtr += sizeof(V1::PipelineSetFileHeader);
+
+	GS_ASSERT(srcFileHeader->headerSize == sizeof(V1::PipelineSetFileHeader));
+	GS_ASSERT(srcFileHeader->graphicsPipelineSize == sizeof(V1::GraphicsPipelineHeader));
+	GS_ASSERT(srcFileHeader->computePipelineSize == sizeof(V1::ComputePipelineHeader));
+	GS_ASSERT(srcFileHeader->configurationSize == sizeof(V1::PipelineConfigurationHeader));
+	GS_ASSERT(srcFileHeader->passSize == sizeof(V1::PassPipelineHeader));
+	GS_ASSERT(srcFileHeader->attachmentSize == sizeof(V1::PassPipelineAttachmentHeader));
+	GS_ASSERT(srcFileHeader->stageSize == sizeof(V1::PassPipelineShaderStageHeader));
+
 	std::vector<GraphicsPipeline::CreateInfo::ShaderStageData> shaderStageCreateInfos;
-	std::vector<std::vector<char>> fileData;
 
 	computePipelineAsset.name = result.displayName;
 

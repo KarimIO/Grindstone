@@ -48,7 +48,7 @@ void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::As
 
 		for (const PipelineOutput& pout : pipelines) {
 			Grindstone::AssetType assetType =
-				pout.pipelineType == PipelineType::Graphics
+				pout.pipelineType == Grindstone::Formats::Pipelines::V1::PipelineType::Graphics
 				? Grindstone::AssetType::GraphicsPipelineSet
 				: Grindstone::AssetType::ComputePipelineSet;
 

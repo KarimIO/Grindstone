@@ -2,6 +2,7 @@
 #include <vector>
 
 #include <Common/Graphics/Formats.hpp>
+#include <Common/Formats/PipelineSet.hpp>
 
 #include "Output.hpp"
 
@@ -84,39 +85,6 @@ static void WriteBytes(Writer& writer, const void* bytes, const size_t count) {
 	writer.offset += count;
 }
 
-struct PipelineHeader {
-	PipelineType isComputeHeader = PipelineType::Graphics;
-	uint32_t pipelineSize = 0;
-	uint32_t configurationCount = 0;
-	uint32_t nextPipelineOffset = 0;
-};
-
-struct PipelineConfigurationHeader {
-	uint32_t firstPassOffset = 0;
-	uint32_t nextConfigurationOffset = 0;
-};
-
-struct PipelinePassHeader {
-	uint16_t firstStageIndex = 0;
-	uint8_t stageCount = 0;
-};
-
-struct PipelineStageHeader {
-	uint16_t nextStageIndex = 0;
-	Grindstone::GraphicsAPI::ShaderStage stageType;
-};
-
-struct PipelineSetHeader {
-	uint8_t versionMajor = 1;
-	uint8_t versionMinor = 0;
-	uint8_t versionPatch = 0;
-	uint8_t headerSize = sizeof(PipelineSetHeader);
-	uint8_t pipelineSize = sizeof(PipelineSetHeader);
-	uint8_t configurationSize = sizeof(PipelineSetHeader);
-	uint8_t passSize = sizeof(PipelineSetHeader);
-	uint32_t pipelineCount = 0;
-};
-
 bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphics& compilationArtifacts, const ResolvedStateTree::PipelineSet& pipelineSet, PipelineOutput& outputFile) {
 	const size_t totalSize = GetTotalSize(compilationArtifacts);
 
@@ -125,18 +93,41 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 	}
 
 	outputFile.name = pipelineSet.name;
-	outputFile.pipelineType = PipelineType::Graphics;
+	outputFile.pipelineType = Grindstone::Formats::Pipelines::V1::PipelineType::Graphics;
 	std::vector<char>& outputBuffer = outputFile.content;
 	outputBuffer.resize(totalSize);
 
 	Writer writer{ outputBuffer };
-	WriteBytes(writer, "GGP", 4);
+	WriteBytes(writer, Grindstone::Formats::Pipelines::V1::FileMagicCode, 4);
 
-	PipelineSetHeader pipelineSetHeader;
-	pipelineSetHeader.pipelineCount = 1;
-	
-	std::vector<PipelineConfigurationHeader> configurations;
-	
+	// ========================================
+	// Write File headers
+	// ========================================
+	Grindstone::Formats::Pipelines::V1::PipelineSetFileHeader pipelineSetFileHeader{};
+	pipelineSetFileHeader.graphicsPipelineCount = 1;
+	pipelineSetFileHeader.computePipelineCount = 0;
+	WriteBytes(writer, &pipelineSetFileHeader, sizeof(pipelineSetFileHeader));
+
+	// ========================================
+	// Write Pipeline headers
+	// ========================================
+	Grindstone::Formats::Pipelines::V1::GraphicsPipelineHeader pipelineSetHeader{};
+	pipelineSetHeader.configurationCount = static_cast<uint32_t>(pipelineSet.configurations.size());
+	WriteBytes(writer, &pipelineSetHeader, sizeof(pipelineSetHeader));
+
+	// ========================================
+	// Write Configuration headers
+	// ========================================
+	uint32_t passCount = 0;
+	std::vector<Grindstone::Formats::Pipelines::V1::PipelineConfigurationHeader> configHeaders;
+	configHeaders.reserve(pipelineSetHeader.configurationCount);
+	for (auto& [configName, srcConfig] : pipelineSet.configurations) {
+		Grindstone::Formats::Pipelines::V1::PipelineConfigurationHeader& configHeader = configHeaders.emplace_back();
+		configHeader.passCount = static_cast<uint32_t>(pipelineSet.configurations.size());
+		passCount += configHeader.passCount;
+	}
+	WriteBytes(writer, configHeaders.data(), sizeof(Grindstone::Formats::Pipelines::V1::PipelineConfigurationHeader) * pipelineSetHeader.configurationCount);
+
 	bool hasUsedConfigs = false;
 	for (const auto& configIterator : pipelineSet.configurations) {
 
@@ -160,28 +151,10 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 				continue;
 			}
 
-			uint8_t flags = 0;
-			flags |= pass.renderState.isDepthBiasEnabled.value() ? 0b1 : 0;
-			flags |= pass.renderState.isDepthClampEnabled.value() ? 0b10 : 0;
-			flags |= pass.renderState.isDepthTestEnabled.value() ? 0b100 : 0;
-			flags |= pass.renderState.isDepthWriteEnabled.value() ? 0b1000 : 0;
-			flags |= pass.renderState.isStencilEnabled.value() ? 0b10000 : 0;
-			flags |= pass.renderState.shouldCopyFirstAttachment ? 0b100000 : 0;
-
 			const CompilationArtifactsGraphics::Pass& passArtifact = passArtifactsIterator->second;
-			WriteBytes(writer, &pass.renderState.depthBiasClamp.value(), sizeof(float));
-			WriteBytes(writer, &pass.renderState.depthBiasConstantFactor.value(), sizeof(float));
-			WriteBytes(writer, &pass.renderState.depthBiasSlopeFactor.value(), sizeof(float));
-			WriteBytes(writer, &pass.renderState.cullMode.value(), sizeof(Grindstone::GraphicsAPI::CullMode));
-			WriteBytes(writer, &pass.renderState.depthCompareOp.value(), sizeof(Grindstone::GraphicsAPI::CompareOperation));
-			WriteBytes(writer, &pass.renderState.polygonFillMode.value(), sizeof(Grindstone::GraphicsAPI::PolygonFillMode));
-			WriteBytes(writer, &pass.renderState.primitiveType.value(), sizeof(Grindstone::GraphicsAPI::GeometryType));
-			WriteBytes(writer, &flags, sizeof(uint8_t));
-
-			uint8_t attachmentCount = static_cast<uint8_t>(pass.renderState.attachmentData.size());
 
 			uint8_t shaderStageCount = 0;
-			std::array<uint32_t, Grindstone::GraphicsAPI::numShaderTotalStage> shaderCodeSizes;
+			std::array<uint32_t, Grindstone::GraphicsAPI::numShaderTotalStage> shaderCodeSizes{};
 			size_t usedStageIndex = 0;
 			for (uint8_t stageIndex = 0; stageIndex < Grindstone::GraphicsAPI::numShaderTotalStage; ++stageIndex) {
 				const std::string& stageEntrypoint = pass.stageEntryPoints[stageIndex];
@@ -191,7 +164,7 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 					}
 
 					const StageCompilationArtifacts& artifacts = passArtifact.stages[usedStageIndex++];
-					shaderCodeSizes[stageIndex] = artifacts.compiledCode.size();
+					shaderCodeSizes[stageIndex] = static_cast<uint32_t>(artifacts.compiledCode.size());
 
 					if (shaderCodeSizes[stageIndex] != 0) {
 						shaderStageCount++;
@@ -199,25 +172,47 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 				}
 			}
 
-			static_assert(sizeof(Grindstone::GraphicsAPI::ShaderStage) == sizeof(uint8_t));
-			WriteBytes(writer, &shaderStageCount, sizeof(shaderStageCount));
+			uint8_t flags = 0;
+			flags |= pass.renderState.isDepthBiasEnabled.value() ? 0b1 : 0;
+			flags |= pass.renderState.isDepthClampEnabled.value() ? 0b10 : 0;
+			flags |= pass.renderState.isDepthTestEnabled.value() ? 0b100 : 0;
+			flags |= pass.renderState.isDepthWriteEnabled.value() ? 0b1000 : 0;
+			flags |= pass.renderState.isStencilEnabled.value() ? 0b10000 : 0;
+			flags |= pass.renderState.shouldCopyFirstAttachment ? 0b100000 : 0;
+
+			Grindstone::Formats::Pipelines::V1::PassPipelineHeader passPipelineHeader{};
+			passPipelineHeader.depthBiasClamp = pass.renderState.depthBiasClamp.value();
+			passPipelineHeader.depthBiasConstantFactor = pass.renderState.depthBiasConstantFactor.value();
+			passPipelineHeader.depthBiasSlopeFactor = pass.renderState.depthBiasSlopeFactor.value();
+			passPipelineHeader.cullMode = pass.renderState.cullMode.value();
+			passPipelineHeader.depthCompareOp = pass.renderState.depthCompareOp.value();
+			passPipelineHeader.polygonFillMode = pass.renderState.polygonFillMode.value();
+			passPipelineHeader.primitiveType = pass.renderState.primitiveType.value();
+			passPipelineHeader.flags = flags;
+			passPipelineHeader.attachmentCount = static_cast<uint8_t>(pass.renderState.attachmentData.size());
+			passPipelineHeader.shaderStageCount = shaderStageCount;
+			WriteBytes(writer, &passPipelineHeader, sizeof(Grindstone::Formats::Pipelines::V1::PassPipelineHeader));
+
 			for (uint8_t stageIndex = 0; stageIndex < Grindstone::GraphicsAPI::numShaderTotalStage; ++stageIndex) {
 				if (shaderCodeSizes[stageIndex] != 0) {
-					WriteBytes(writer, &stageIndex, sizeof(uint8_t));
-					WriteBytes(writer, &shaderCodeSizes[stageIndex], sizeof(uint32_t));
+					Grindstone::Formats::Pipelines::V1::PassPipelineShaderStageHeader stageHeader{};
+					stageHeader.shaderCodeSize = shaderCodeSizes[stageIndex];
+					stageHeader.stageType = static_cast<Grindstone::GraphicsAPI::ShaderStage>(stageIndex);
+
+					WriteBytes(writer, &stageHeader, sizeof(Grindstone::Formats::Pipelines::V1::PassPipelineShaderStageHeader));
 				}
 			}
 
-
-			WriteBytes(writer, &attachmentCount, sizeof(uint8_t));
 			for (const ParseTree::RenderState::AttachmentData& attachmentData : pass.renderState.attachmentData) {
-				WriteBytes(writer, &attachmentData.colorMask, sizeof(attachmentData.colorMask));
-				WriteBytes(writer, &attachmentData.blendAlphaFactorDst, sizeof(attachmentData.blendAlphaFactorDst));
-				WriteBytes(writer, &attachmentData.blendAlphaFactorSrc, sizeof(attachmentData.blendAlphaFactorSrc));
-				WriteBytes(writer, &attachmentData.blendAlphaOperation, sizeof(attachmentData.blendAlphaOperation));
-				WriteBytes(writer, &attachmentData.blendColorFactorDst, sizeof(attachmentData.blendColorFactorDst));
-				WriteBytes(writer, &attachmentData.blendColorFactorSrc, sizeof(attachmentData.blendColorFactorSrc));
-				WriteBytes(writer, &attachmentData.blendColorOperation, sizeof(attachmentData.blendColorOperation));
+				Grindstone::Formats::Pipelines::V1::PassPipelineAttachmentHeader attachmentHeader{};
+				attachmentHeader.colorMask = attachmentData.colorMask.value();
+				attachmentHeader.blendAlphaFactorDst = attachmentData.blendAlphaFactorDst.value();
+				attachmentHeader.blendAlphaFactorSrc = attachmentData.blendAlphaFactorSrc.value();
+				attachmentHeader.blendAlphaOperation = attachmentData.blendAlphaOperation.value();
+				attachmentHeader.blendColorFactorDst = attachmentData.blendColorFactorDst.value();
+				attachmentHeader.blendColorFactorSrc = attachmentData.blendColorFactorSrc.value();
+				attachmentHeader.blendColorOperation = attachmentData.blendColorOperation.value();
+				WriteBytes(writer, &attachmentHeader, sizeof(Grindstone::Formats::Pipelines::V1::PassPipelineAttachmentHeader));
 			}
 
 			bool hasUsedStages = false;
@@ -251,11 +246,24 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 bool OutputComputeSet(LogCallback logCallback, const CompilationArtifactsCompute& compilationArtifacts, const ResolvedStateTree::ComputeSet& computeSet, PipelineOutput& outputFile) {
 	logCallback(Grindstone::LogSeverity::Info, PipelineConverterLogSource::Output, "Compiled and Outputted", computeSet.sourceFilepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
 	outputFile.name = computeSet.name;
-	outputFile.pipelineType = PipelineType::Compute;
+	outputFile.pipelineType = Grindstone::Formats::Pipelines::V1::PipelineType::Compute;
 	outputFile.content.resize(compilationArtifacts.computeStage.compiledCode.size() + 4);
+
+
 	Writer writer{ outputFile.content };
-	WriteBytes(writer, "GCP", 4);
-	memcpy(outputFile.content.data(), compilationArtifacts.computeStage.compiledCode.data(), compilationArtifacts.computeStage.compiledCode.size());
+	WriteBytes(writer, Grindstone::Formats::Pipelines::V1::FileMagicCode, 4);
+
+
+	Grindstone::Formats::Pipelines::V1::PipelineSetFileHeader pipelineSetHeader{};
+	pipelineSetHeader.graphicsPipelineCount = 1;
+	pipelineSetHeader.computePipelineCount = 0;
+
+	Grindstone::Formats::Pipelines::V1::ComputePipelineHeader computeHeader{};
+	computeHeader.codeSize = static_cast<uint32_t>(compilationArtifacts.computeStage.compiledCode.size());
+
+	WriteBytes(writer, &pipelineSetHeader, sizeof(pipelineSetHeader));
+	WriteBytes(writer, &computeHeader, sizeof(computeHeader));
+	WriteBytes(writer, compilationArtifacts.computeStage.compiledCode.data(), compilationArtifacts.computeStage.compiledCode.size());
 
 	return true;
 }

@@ -5,13 +5,10 @@
 #include <functional>
 #include <vector>
 
-enum class PipelineType {
-	Graphics,
-	Compute
-};
+#include <Common/Formats/PipelineSet.hpp>
 
 struct PipelineOutput {
-	PipelineType pipelineType;
+	Grindstone::Formats::Pipelines::V1::PipelineType pipelineType;
 	std::string_view name;
 	std::vector<char> content;
 };

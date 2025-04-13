@@ -1,5 +1,6 @@
 #include <filesystem>
 
+#include <Common/Formats/PipelineSet.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
@@ -12,37 +13,12 @@
 
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
+using namespace Grindstone::Formats::Pipelines;
 
-struct GraphicsPipelineFileHeader {
-	float depthBiasClamp;
-	float depthBiasConstantFactor;
-	float depthBiasSlopeFactor;
-	Grindstone::GraphicsAPI::CullMode cullMode;
-	Grindstone::GraphicsAPI::CompareOperation depthCompareOp;
-	Grindstone::GraphicsAPI::PolygonFillMode polygonFillMode;
-	Grindstone::GraphicsAPI::GeometryType primitiveType;
-	uint8_t flags;
-	uint8_t attachmentCount;
-	uint8_t shaderStageCount;
-};
-
-
-struct GraphicsPipelineShaderStageHeaders {
-	uint8_t stageType;
-	uint32_t shaderCodeSize;
-};
-
-struct GraphicsPipelineAttachmentFileHeader {
-	Grindstone::GraphicsAPI::ColorMask colorMask;
-	Grindstone::GraphicsAPI::BlendFactor blendAlphaFactorDst;
-	Grindstone::GraphicsAPI::BlendFactor blendAlphaFactorSrc;
-	Grindstone::GraphicsAPI::BlendOperation blendAlphaOperation;
-	Grindstone::GraphicsAPI::BlendFactor blendColorFactorDst;
-	Grindstone::GraphicsAPI::BlendFactor blendColorFactorSrc;
-	Grindstone::GraphicsAPI::BlendOperation blendColorOperation;
-};
-
-static void UnpackGraphicsPipelineHeader(const GraphicsPipelineFileHeader& srcHeader, GraphicsPipeline::CreateInfo& dstHeader) {
+static void UnpackGraphicsPipelineHeader(
+	const V1::PassPipelineHeader& srcHeader,
+	GraphicsPipeline::CreateInfo& dstHeader
+) {
 	dstHeader.primitiveType = srcHeader.primitiveType;
 	dstHeader.polygonFillMode = srcHeader.polygonFillMode;
 	dstHeader.depthCompareOp = srcHeader.depthCompareOp;
@@ -62,7 +38,7 @@ static void UnpackGraphicsPipelineHeader(const GraphicsPipelineFileHeader& srcHe
 }
 
 static void UnpackGraphicsPipelineAttachmentHeader(
-	const GraphicsPipelineAttachmentFileHeader& srcHeader,
+	const V1::PassPipelineAttachmentHeader& srcHeader,
 	Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo::AttachmentData& dstHeader
 ) {
 	dstHeader.colorMask = srcHeader.colorMask;
@@ -75,7 +51,7 @@ static void UnpackGraphicsPipelineAttachmentHeader(
 }
 
 // Graphics Pipeline Format:
-// GGP + null-terminated character magic text
+// GPSF character magic text
 // GraphicsPipelineFileHeader
 // GraphicsPipelineShaderStageHeaders[]
 // GraphicsPipelineAttachmentFileHeader[]
@@ -100,9 +76,10 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 	}
 
 	Grindstone::Buffer& fileData = result.buffer;
+	GS_ASSERT(fileData.GetCapacity() >= (4 + sizeof(V1::PipelineSetFileHeader)));
 
-	if (memcmp(fileData.Get(), "GGP\0", 4) != 0) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Graphics Pipeline file does not start with GGP - {}.", result.displayName);
+	if (memcmp(fileData.Get(), V1::FileMagicCode, 4) != 0) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Graphics Pipeline file does not start with GPSF - {}.", result.displayName);
 		graphicsPipelineAsset.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
@@ -110,20 +87,43 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 	graphicsPipelineAsset.name = result.displayName;
 
 	unsigned char* readPtr = fileData.Get() + 4;
-	GraphicsPipelineFileHeader* srcFileHeader = reinterpret_cast<GraphicsPipelineFileHeader*>(readPtr);
-	readPtr += sizeof(GraphicsPipelineFileHeader);
+	V1::PipelineSetFileHeader* srcFileHeader = reinterpret_cast<V1::PipelineSetFileHeader*>(readPtr);
+	readPtr += sizeof(V1::PipelineSetFileHeader);
 
-	GraphicsPipelineShaderStageHeaders* srcStageHeaders = reinterpret_cast<GraphicsPipelineShaderStageHeaders*>(readPtr);
-	readPtr += sizeof(GraphicsPipelineShaderStageHeaders) * srcFileHeader->shaderStageCount;
+	GS_ASSERT(srcFileHeader->headerSize == sizeof(V1::PipelineSetFileHeader));
+	GS_ASSERT(srcFileHeader->graphicsPipelineSize == sizeof(V1::GraphicsPipelineHeader));
+	GS_ASSERT(srcFileHeader->computePipelineSize == sizeof(V1::ComputePipelineHeader));
+	GS_ASSERT(srcFileHeader->configurationSize == sizeof(V1::PipelineConfigurationHeader));
+	GS_ASSERT(srcFileHeader->passSize == sizeof(V1::PassPipelineHeader));
+	GS_ASSERT(srcFileHeader->attachmentSize == sizeof(V1::PassPipelineAttachmentHeader));
+	GS_ASSERT(srcFileHeader->stageSize == sizeof(V1::PassPipelineShaderStageHeader));
 
-	GraphicsPipelineAttachmentFileHeader* srcAttachmentHeaders = reinterpret_cast<GraphicsPipelineAttachmentFileHeader*>(readPtr);
-	readPtr += sizeof(GraphicsPipelineAttachmentFileHeader) * srcFileHeader->attachmentCount;
+	V1::GraphicsPipelineHeader* srcPipelineHeader = reinterpret_cast<V1::GraphicsPipelineHeader*>(readPtr);
+	readPtr += sizeof(V1::GraphicsPipelineHeader) * srcFileHeader->graphicsPipelineCount;
 
-	std::vector<GraphicsPipeline::CreateInfo::ShaderStageData> shaderStageCreateInfos;
-	shaderStageCreateInfos.resize(srcFileHeader->shaderStageCount);
+	// TODO: Do something with Compute Pipelines
+	readPtr += sizeof(V1::ComputePipelineHeader) * srcFileHeader->computePipelineCount;
 
-	graphicsPipelineAsset.passes.resize(1);
-	for (GraphicsPipelineAsset::Pass& pass : graphicsPipelineAsset.passes) {
+	V1::PipelineConfigurationHeader* srcConfigHeader = reinterpret_cast<V1::PipelineConfigurationHeader*>(readPtr);
+	readPtr += sizeof(V1::PipelineConfigurationHeader) * srcPipelineHeader->configurationCount;
+
+	// TODO: Loop over Configurations
+	graphicsPipelineAsset.passes.resize(srcConfigHeader->passCount);
+	for (uint32_t passIndex = 0; passIndex < srcConfigHeader->passCount; ++passIndex) {
+		V1::PassPipelineHeader* srcPassHeader = reinterpret_cast<V1::PassPipelineHeader*>(readPtr);
+		readPtr += sizeof(V1::PassPipelineHeader);
+
+		V1::PassPipelineShaderStageHeader* srcStageHeaders = reinterpret_cast<V1::PassPipelineShaderStageHeader*>(readPtr);
+		readPtr += sizeof(V1::PassPipelineShaderStageHeader) * srcPassHeader->shaderStageCount;
+
+		V1::PassPipelineAttachmentHeader* srcAttachmentHeaders = reinterpret_cast<V1::PassPipelineAttachmentHeader*>(readPtr);
+		readPtr += sizeof(V1::PassPipelineAttachmentHeader) * srcPassHeader->attachmentCount;
+
+		GraphicsPipelineAsset::Pass& pass = graphicsPipelineAsset.passes[passIndex];
+
+		std::vector<GraphicsPipeline::CreateInfo::ShaderStageData> shaderStageCreateInfos;
+		shaderStageCreateInfos.resize(srcPassHeader->shaderStageCount);
+		
 		GraphicsPipeline::CreateInfo pipelineCreateInfo{};
 		pipelineCreateInfo.debugName = result.displayName.c_str();
 		pipelineCreateInfo.width = 0.0f;
@@ -146,20 +146,18 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		pipelineCreateInfo.vertexBindingsCount = 0;
 		pipelineCreateInfo.colorAttachmentCount = 0;
 
-		std::vector<GraphicsPipelineAttachmentFileHeader> srcAttachmentHeaders;
-		srcAttachmentHeaders.resize(srcAttachmentHeaders.size());
-		for (size_t i = 0; i < srcAttachmentHeaders.size(); ++i) {
-			UnpackGraphicsPipelineAttachmentHeader(srcAttachmentHeaders[i], pipelineCreateInfo.colorAttachmentData[i]);
-		}
+		UnpackGraphicsPipelineHeader(*srcPassHeader, pipelineCreateInfo);
 
-		UnpackGraphicsPipelineHeader(*srcFileHeader, pipelineCreateInfo);
-
-		for (size_t i = 0; i < srcFileHeader->shaderStageCount; ++i) {
+		for (uint8_t i = 0; i < srcPassHeader->shaderStageCount; ++i) {
 			shaderStageCreateInfos[i].content = reinterpret_cast<const char*>(readPtr);
 			shaderStageCreateInfos[i].size = srcStageHeaders[i].shaderCodeSize;
 			shaderStageCreateInfos[i].type = static_cast<Grindstone::GraphicsAPI::ShaderStage>(srcStageHeaders[i].stageType);
 
 			readPtr += srcStageHeaders[i].shaderCodeSize;
+		}
+
+		for (uint8_t i = 0; i < srcPassHeader->attachmentCount; ++i) {
+			UnpackGraphicsPipelineAttachmentHeader(srcAttachmentHeaders[i], pipelineCreateInfo.colorAttachmentData[i]);
 		}
 
 		pass.pipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
