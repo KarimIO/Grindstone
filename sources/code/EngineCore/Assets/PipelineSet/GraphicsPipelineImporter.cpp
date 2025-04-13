@@ -62,7 +62,6 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		pipelineCreateInfo.vertexBindings = nullptr;
 		pipelineCreateInfo.vertexBindingsCount = 0;
 		pipelineCreateInfo.colorAttachmentCount = 0;
-		pipelineCreateInfo.blendData = BlendData::NoBlending();
 		pipelineCreateInfo.isDepthTestEnabled = true;
 		pipelineCreateInfo.isDepthWriteEnabled = true;
 		pipelineCreateInfo.isStencilEnabled = false;

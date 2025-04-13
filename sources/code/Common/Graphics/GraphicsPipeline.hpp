@@ -25,6 +25,11 @@ namespace Grindstone::GraphicsAPI {
 				ShaderStage type;
 			};
 
+			struct AttachmentData {
+				BlendData blendData = BlendData::NoBlending();
+				ColorMask colorMask = ColorMask::RGBA;
+			};
+
 			const char* debugName;
 			GeometryType primitiveType;
 			PolygonFillMode polygonFillMode;
@@ -40,10 +45,8 @@ namespace Grindstone::GraphicsAPI {
 			VertexBufferLayout* vertexBindings;
 			uint32_t vertexBindingsCount;
 
-			BlendData blendData = BlendData::NoBlending();
-			ColorMask colorMask = ColorMask::RGBA;
-
-			uint32_t colorAttachmentCount;
+			AttachmentData* colorAttachmentData = nullptr;
+			uint8_t colorAttachmentCount;
 			CompareOperation depthCompareOp = CompareOperation::LessOrEqual;
 			bool isDepthTestEnabled = true;
 			bool isDepthWriteEnabled = true;

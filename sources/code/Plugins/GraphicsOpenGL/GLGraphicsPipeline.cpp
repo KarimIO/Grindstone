@@ -32,11 +32,6 @@ void OpenGL::GraphicsPipeline::CreatePipeline(const GraphicsPipeline::CreateInfo
 	scissorX = static_cast<GLint>(createInfo.scissorX);
 	scissorY = static_cast<GLint>(createInfo.scissorY);
 
-	colorMaskRed = static_cast<GLboolean>(createInfo.colorMask & ColorMask::Red);
-	colorMaskBlue = static_cast<GLboolean>(createInfo.colorMask & ColorMask::Blue);
-	colorMaskGreen = static_cast<GLboolean>(createInfo.colorMask & ColorMask::Green);
-	colorMaskAlpha = static_cast<GLboolean>(createInfo.colorMask & ColorMask::Alpha);
-
 	depthCompareOp = TranslateCompareOpToOpenGL(createInfo.depthCompareOp);
 	isDepthTestEnabled = createInfo.isDepthTestEnabled;
 	isDepthWriteEnabled = createInfo.isDepthWriteEnabled;
@@ -51,12 +46,20 @@ void OpenGL::GraphicsPipeline::CreatePipeline(const GraphicsPipeline::CreateInfo
 	primitiveType = TranslateGeometryTypeToOpenGL(createInfo.primitiveType);
 	polygonFillMode = TranslatePolygonModeToOpenGL(createInfo.polygonFillMode);
 	cullMode = TranslateCullModeToOpenGL(createInfo.cullMode);
-	blendColorOp = TranslateBlendOpToOpenGL(createInfo.blendData.colorOperation);
-	blendColorSrc = TranslateBlendFactorToOpenGL(createInfo.blendData.colorFactorSrc);
-	blendColorDst = TranslateBlendFactorToOpenGL(createInfo.blendData.colorFactorDst);
-	blendAlphaOp = TranslateBlendOpToOpenGL(createInfo.blendData.alphaOperation);
-	blendAlphaSrc = TranslateBlendFactorToOpenGL(createInfo.blendData.alphaFactorSrc);
-	blendAlphaDst = TranslateBlendFactorToOpenGL(createInfo.blendData.alphaFactorDst);
+
+	// TODO: Support colorMask for different attachments.
+	// colorMaskRed = static_cast<GLboolean>(createInfo.colorMask & ColorMask::Red);
+	// colorMaskBlue = static_cast<GLboolean>(createInfo.colorMask & ColorMask::Blue);
+	// colorMaskGreen = static_cast<GLboolean>(createInfo.colorMask & ColorMask::Green);
+	// colorMaskAlpha = static_cast<GLboolean>(createInfo.colorMask & ColorMask::Alpha);
+	// 
+	// TODO: Support blends for different attachments.
+	// blendColorOp = TranslateBlendOpToOpenGL(createInfo.blendData.colorOperation);
+	// blendColorSrc = TranslateBlendFactorToOpenGL(createInfo.blendData.colorFactorSrc);
+	// blendColorDst = TranslateBlendFactorToOpenGL(createInfo.blendData.colorFactorDst);
+	// blendAlphaOp = TranslateBlendOpToOpenGL(createInfo.blendData.alphaOperation);
+	// blendAlphaSrc = TranslateBlendFactorToOpenGL(createInfo.blendData.alphaFactorSrc);
+	// blendAlphaDst = TranslateBlendFactorToOpenGL(createInfo.blendData.alphaFactorDst);
 
 	program = glCreateProgram();
 	glObjectLabel(GL_PROGRAM, program, -1, createInfo.debugName);

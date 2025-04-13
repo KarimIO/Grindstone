@@ -124,14 +124,16 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 	depthStencil.stencilTestEnable = createInfo.isStencilEnabled;
 
 	std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(createInfo.colorAttachmentCount);
-	for (size_t i = 0; i < createInfo.colorAttachmentCount; ++i) {
+	for (uint8_t i = 0; i < createInfo.colorAttachmentCount; ++i) {
+		Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo::AttachmentData& attachmentCreateInfo = createInfo.colorAttachmentData[i];
 		VkPipelineColorBlendAttachmentState& attachment = colorBlendAttachments[i];
-		colorBlendAttachments[i].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		
+		colorBlendAttachments[i].colorWriteMask = TranslateColorMaskToVulkan(attachmentCreateInfo.colorMask);
 
-		if (createInfo.blendData.colorOperation == BlendOperation::None && createInfo.blendData.alphaOperation == BlendOperation::None) {
+		if (attachmentCreateInfo.blendData.colorOperation == BlendOperation::None && attachmentCreateInfo.blendData.alphaOperation == BlendOperation::None) {
 			attachment.blendEnable = VK_FALSE;
 		}
-		else if (createInfo.blendData.colorOperation == BlendOperation::None || createInfo.blendData.alphaOperation == BlendOperation::None) {
+		else if (attachmentCreateInfo.blendData.colorOperation == BlendOperation::None || attachmentCreateInfo.blendData.alphaOperation == BlendOperation::None) {
 			GPRINT_ERROR(LogSource::GraphicsAPI, "Invalid blendOperation - using none blend with non-none blend");
 			attachment.blendEnable = VK_FALSE;
 		}
@@ -139,13 +141,13 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 			attachment.blendEnable = VK_TRUE;
 		}
 
-		attachment.colorBlendOp = TranslateBlendOpToVulkan(createInfo.blendData.colorOperation);
-		attachment.srcColorBlendFactor = TranslateBlendFactorToVulkan(createInfo.blendData.colorFactorSrc);
-		attachment.dstColorBlendFactor = TranslateBlendFactorToVulkan(createInfo.blendData.colorFactorDst);
+		attachment.colorBlendOp = TranslateBlendOpToVulkan(attachmentCreateInfo.blendData.colorOperation);
+		attachment.srcColorBlendFactor = TranslateBlendFactorToVulkan(attachmentCreateInfo.blendData.colorFactorSrc);
+		attachment.dstColorBlendFactor = TranslateBlendFactorToVulkan(attachmentCreateInfo.blendData.colorFactorDst);
 
-		attachment.alphaBlendOp = TranslateBlendOpToVulkan(createInfo.blendData.alphaOperation);
-		attachment.srcAlphaBlendFactor = TranslateBlendFactorToVulkan(createInfo.blendData.alphaFactorSrc);
-		attachment.dstAlphaBlendFactor = TranslateBlendFactorToVulkan(createInfo.blendData.alphaFactorDst);
+		attachment.alphaBlendOp = TranslateBlendOpToVulkan(attachmentCreateInfo.blendData.alphaOperation);
+		attachment.srcAlphaBlendFactor = TranslateBlendFactorToVulkan(attachmentCreateInfo.blendData.alphaFactorSrc);
+		attachment.dstAlphaBlendFactor = TranslateBlendFactorToVulkan(attachmentCreateInfo.blendData.alphaFactorDst);
 	}
 
 	VkPipelineColorBlendStateCreateInfo colorBlending = {};
