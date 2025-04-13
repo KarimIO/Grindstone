@@ -130,7 +130,7 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 	outputBuffer.resize(totalSize);
 
 	Writer writer{ outputBuffer };
-	WriteBytes(writer, "GSHAD", 4);
+	WriteBytes(writer, "GGP", 4);
 
 	PipelineSetHeader pipelineSetHeader;
 	pipelineSetHeader.pipelineCount = 1;
@@ -179,6 +179,36 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 			WriteBytes(writer, &flags, sizeof(uint8_t));
 
 			uint8_t attachmentCount = static_cast<uint8_t>(pass.renderState.attachmentData.size());
+
+			uint8_t shaderStageCount = 0;
+			std::array<uint32_t, Grindstone::GraphicsAPI::numShaderTotalStage> shaderCodeSizes;
+			size_t usedStageIndex = 0;
+			for (uint8_t stageIndex = 0; stageIndex < Grindstone::GraphicsAPI::numShaderTotalStage; ++stageIndex) {
+				const std::string& stageEntrypoint = pass.stageEntryPoints[stageIndex];
+				if (!stageEntrypoint.empty()) {
+					if (usedStageIndex >= passArtifact.stages.size()) {
+						continue;
+					}
+
+					const StageCompilationArtifacts& artifacts = passArtifact.stages[usedStageIndex++];
+					shaderCodeSizes[stageIndex] = artifacts.compiledCode.size();
+
+					if (shaderCodeSizes[stageIndex] != 0) {
+						shaderStageCount++;
+					}
+				}
+			}
+
+			static_assert(sizeof(Grindstone::GraphicsAPI::ShaderStage) == sizeof(uint8_t));
+			WriteBytes(writer, &shaderStageCount, sizeof(shaderStageCount));
+			for (uint8_t stageIndex = 0; stageIndex < Grindstone::GraphicsAPI::numShaderTotalStage; ++stageIndex) {
+				if (shaderCodeSizes[stageIndex] != 0) {
+					WriteBytes(writer, &stageIndex, sizeof(uint8_t));
+					WriteBytes(writer, &shaderCodeSizes[stageIndex], sizeof(uint32_t));
+				}
+			}
+
+
 			WriteBytes(writer, &attachmentCount, sizeof(uint8_t));
 			for (const ParseTree::RenderState::AttachmentData& attachmentData : pass.renderState.attachmentData) {
 				WriteBytes(writer, &attachmentData.colorMask, sizeof(attachmentData.colorMask));
@@ -191,7 +221,7 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 			}
 
 			bool hasUsedStages = false;
-			size_t usedStageIndex = 0;
+			usedStageIndex = 0;
 			for (uint8_t stageIndex = 0; stageIndex < Grindstone::GraphicsAPI::numShaderTotalStage; ++stageIndex) {
 				const std::string& stageEntrypoint = pass.stageEntryPoints[stageIndex];
 				if (!stageEntrypoint.empty()) {
@@ -204,7 +234,8 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 						logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Output, "Something fishy - stage mismatch!", pipelineSet.sourceFilepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
 					}
 
-					WriteBytes(writer, artifacts.compiledCode.data(), artifacts.compiledCode.size());
+					uint32_t shaderCodeSize = static_cast<uint32_t>(artifacts.compiledCode.size());
+					WriteBytes(writer, artifacts.compiledCode.data(), shaderCodeSize);
 					hasUsedStages = true;
 					hasUsedPasses = true;
 					hasUsedConfigs = true;
@@ -221,8 +252,10 @@ bool OutputComputeSet(LogCallback logCallback, const CompilationArtifactsCompute
 	logCallback(Grindstone::LogSeverity::Info, PipelineConverterLogSource::Output, "Compiled and Outputted", computeSet.sourceFilepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
 	outputFile.name = computeSet.name;
 	outputFile.pipelineType = PipelineType::Compute;
-	outputFile.content.resize(compilationArtifacts.computeStage.compiledCode.size() + 1);
-	memcpy(outputFile.content.data(), compilationArtifacts.computeStage.compiledCode.data(), compilationArtifacts.computeStage.compiledCode.size() + 1);
+	outputFile.content.resize(compilationArtifacts.computeStage.compiledCode.size() + 4);
+	Writer writer{ outputFile.content };
+	WriteBytes(writer, "GCP", 4);
+	memcpy(outputFile.content.data(), compilationArtifacts.computeStage.compiledCode.data(), compilationArtifacts.computeStage.compiledCode.size());
 
 	return true;
 }

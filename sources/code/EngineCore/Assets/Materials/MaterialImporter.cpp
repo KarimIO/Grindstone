@@ -325,7 +325,7 @@ static bool LoadMaterial(
 	}
 
 	Grindstone::GraphicsPipelineAsset* pipelineSetAsset = material.pipelineSetAsset.Get();
-	if (pipelineSetAsset == nullptr || pipelineSetAsset->assetLoadStatus != AssetLoadStatus::Ready) {
+	if (pipelineSetAsset == nullptr) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "Failed to load shader {} for material {}.", material.pipelineSetAsset.uuid.ToString(), displayName);
 		material.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
