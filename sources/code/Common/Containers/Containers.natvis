@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+	<Type Name="Grindstone::Containers::DynamicArray&lt;*&gt;">
+		<DisplayString>{{ size={size}, capacity={capacity} }}</DisplayString>
+		<Expand>
+			<Item Name="[size]" ExcludeView="simple">size</Item>
+			<Item Name="[capacity]" ExcludeView="simple">capacity</Item>
+			<ArrayItems>
+				<Size>size</Size>
+				<ValuePointer>contents</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+
+	<Type Name="Grindstone::Containers::Span&lt;*&gt;">
+		<DisplayString>{{ size={size} }}</DisplayString>
+		<Expand>
+			<Item Name="[size]" ExcludeView="simple">size</Item>
+			<ArrayItems>
+				<Size>size</Size>
+				<ValuePointer>contents</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+
+</AutoVisualizer>
