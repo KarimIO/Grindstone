@@ -2,7 +2,6 @@
 
 #include <Common/Graphics/Texture.hpp>
 #include <Common/Graphics/Formats.hpp>
-#include <Common/Graphics/VertexBuffer.hpp>
 #include <vulkan/vulkan.h>
 
 namespace Grindstone::GraphicsAPI::Vulkan {

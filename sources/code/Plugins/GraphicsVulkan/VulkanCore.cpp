@@ -24,14 +24,11 @@
 #include "VulkanFramebuffer.hpp"
 #include "VulkanGraphicsPipeline.hpp"
 #include "VulkanComputePipeline.hpp"
-#include "VulkanIndexBuffer.hpp"
-#include "VulkanUniformBuffer.hpp"
 #include "VulkanRenderPass.hpp"
 #include "VulkanRenderTarget.hpp"
 #include "VulkanTexture.hpp"
-#include "VulkanUniformBuffer.hpp"
 #include "VulkanVertexArrayObject.hpp"
-#include "VulkanVertexBuffer.hpp"
+#include "VulkanBuffer.hpp"
 #include "VulkanDescriptorSet.hpp"
 #include "VulkanDescriptorSetLayout.hpp"
 #include "VulkanFormat.hpp"
@@ -646,16 +643,8 @@ Base::VertexArrayObject* Vulkan::Core::CreateVertexArrayObject(const Base::Verte
 	return static_cast<Base::VertexArrayObject*>(AllocatorCore::Allocate<Vulkan::VertexArrayObject>(ci));
 }
 
-Base::VertexBuffer* Vulkan::Core::CreateVertexBuffer(const Base::VertexBuffer::CreateInfo& ci) {
-	return static_cast<Base::VertexBuffer*>(AllocatorCore::Allocate<Vulkan::VertexBuffer>(ci));
-}
-
-Base::IndexBuffer* Vulkan::Core::CreateIndexBuffer(const Base::IndexBuffer::CreateInfo& ci) {
-	return static_cast<Base::IndexBuffer*>(AllocatorCore::Allocate<Vulkan::IndexBuffer>(ci));
-}
-
-Base::UniformBuffer* Vulkan::Core::CreateUniformBuffer(const Base::UniformBuffer::CreateInfo& ci) {
-	return static_cast<Base::UniformBuffer*>(AllocatorCore::Allocate<Vulkan::UniformBuffer>(ci));
+Base::Buffer* Vulkan::Core::CreateBuffer(const Base::Buffer::CreateInfo& ci) {
+	return static_cast<Base::Buffer*>(AllocatorCore::Allocate<Vulkan::Buffer>(ci));
 }
 
 Base::Texture* Vulkan::Core::CreateCubemap(const Base::Texture::CubemapCreateInfo& createInfo) {
@@ -704,16 +693,8 @@ void Vulkan::Core::DeleteVertexArrayObject(Base::VertexArrayObject* ptr) {
 	AllocatorCore::Free(static_cast<Vulkan::VertexArrayObject*>(ptr));
 }
 
-void Vulkan::Core::DeleteVertexBuffer(Base::VertexBuffer *ptr) {
-	AllocatorCore::Free(static_cast<Vulkan::VertexBuffer*>(ptr));
-}
-
-void Vulkan::Core::DeleteIndexBuffer(Base::IndexBuffer *ptr) {
-	AllocatorCore::Free(static_cast<Vulkan::IndexBuffer*>(ptr));
-}
-
-void Vulkan::Core::DeleteUniformBuffer(Base::UniformBuffer *ptr) {
-	AllocatorCore::Free(static_cast<Vulkan::UniformBuffer*>(ptr));
+void Vulkan::Core::DeleteBuffer(Base::Buffer *ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::Buffer*>(ptr));
 }
 
 void Vulkan::Core::DeleteComputePipeline(Base::ComputePipeline* ptr) {

@@ -2,11 +2,9 @@
 
 #include <Common/Window/Window.hpp>
 
-#include "IndexBuffer.hpp"
+#include "Buffer.hpp"
 #include "RenderPass.hpp"
 #include "Framebuffer.hpp"
-#include "VertexBuffer.hpp"
-#include "UniformBuffer.hpp"
 #include "GraphicsPipeline.hpp"
 #include "ComputePipeline.hpp"
 #include "CommandBuffer.hpp"
@@ -54,9 +52,7 @@ namespace Grindstone::GraphicsAPI {
 		virtual void DeleteRenderTarget(RenderTarget* ptr) = 0;
 		virtual void DeleteDepthStencilTarget(DepthStencilTarget* ptr) = 0;
 		virtual void DeleteFramebuffer(Framebuffer* ptr) = 0;
-		virtual void DeleteVertexBuffer(VertexBuffer* ptr) = 0;
-		virtual void DeleteIndexBuffer(IndexBuffer* ptr) = 0;
-		virtual void DeleteUniformBuffer(UniformBuffer* ptr) = 0;
+		virtual void DeleteBuffer(Buffer* ptr) = 0;
 		virtual void DeleteGraphicsPipeline(GraphicsPipeline* ptr) = 0;
 		virtual void DeleteComputePipeline(ComputePipeline* ptr) = 0;
 		virtual void DeleteRenderPass(RenderPass* ptr) = 0;
@@ -72,9 +68,7 @@ namespace Grindstone::GraphicsAPI {
 		virtual ComputePipeline* CreateComputePipeline(const ComputePipeline::CreateInfo& ci) = 0;
 		virtual CommandBuffer* CreateCommandBuffer(const CommandBuffer::CreateInfo& ci) = 0;
 		virtual VertexArrayObject* CreateVertexArrayObject(const VertexArrayObject::CreateInfo& ci) = 0;
-		virtual VertexBuffer* CreateVertexBuffer(const VertexBuffer::CreateInfo& ci) = 0;
-		virtual IndexBuffer* CreateIndexBuffer(const IndexBuffer::CreateInfo& ci) = 0;
-		virtual UniformBuffer* CreateUniformBuffer(const UniformBuffer::CreateInfo& ci) = 0;
+		virtual Buffer* CreateBuffer(const Buffer::CreateInfo& ci) = 0;
 		virtual Texture* CreateCubemap(const Texture::CubemapCreateInfo& createInfo) = 0;
 		virtual Texture* CreateTexture(const Texture::CreateInfo& createInfo) = 0;
 		virtual DescriptorSet* CreateDescriptorSet(const DescriptorSet::CreateInfo& ci) = 0;

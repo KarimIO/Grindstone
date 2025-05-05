@@ -1,9 +1,7 @@
 #pragma once
 
+#include <Common/Graphics/Formats.hpp>
 #include <Common/Graphics/VertexArrayObject.hpp>
-
-#include "GLVertexBuffer.hpp"
-#include "GLIndexBuffer.hpp"
 
 namespace Grindstone::GraphicsAPI::OpenGL {
 	class VertexArrayObject : public Grindstone::GraphicsAPI::VertexArrayObject {
@@ -18,6 +16,6 @@ namespace Grindstone::GraphicsAPI::OpenGL {
 	protected:
 		GLuint vertexArrayObject;
 		uint32_t vertexBufferCount = 0;
-
+		VertexInputLayout layout;
 	};
 }

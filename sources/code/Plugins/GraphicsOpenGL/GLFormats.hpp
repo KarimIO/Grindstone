@@ -1,10 +1,10 @@
 #pragma once
 
 #include <Common/Graphics/Formats.hpp>
-#include <Common/Graphics/VertexBuffer.hpp>
+#include <Common/Graphics/Buffer.hpp>
 
 namespace Grindstone::GraphicsAPI {
-	GLenum TranslateVertexFormatToOpenGL(VertexFormat format);
+	GLenum TranslateVertexFormatToOpenGL(ColorFormat format);
 	GLenum TranslateMinFilterToOpenGL(bool hasMips, TextureFilter minFilter, TextureFilter mipFilter);
 	GLenum TranslateMagFilterToOpenGL(TextureFilter);
 	GLenum TranslateWrapToOpenGL(TextureWrapMode);

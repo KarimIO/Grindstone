@@ -41,7 +41,7 @@ namespace Grindstone::Assets {
 		template<typename AssetImporterClass>
 		void RegisterAssetType() {
 			static_assert(std::is_base_of_v<Grindstone::AssetImporter, AssetImporterClass>, "AssetImporterClass not derived from Grindstone::AssetImporter");
-			RegisterAssetType(AssetImporterClass::GetStaticAssetType(), AssetImporterClass::GetStaticAssetTypeName(), AllocatorCore::Allocate<AssetImporterClass>());
+			RegisterAssetType(AssetImporterClass::GetStaticAssetType(), AssetImporterClass::GetStaticAssetTypeName(), Grindstone::Memory::AllocatorCore::Allocate<AssetImporterClass>());
 		}
 
 		template<typename T>

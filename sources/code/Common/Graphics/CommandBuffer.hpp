@@ -4,15 +4,14 @@
 #include "Framebuffer.hpp"
 
 namespace Grindstone::GraphicsAPI {
+	class Buffer;
 	class RenderPass;
 	class Framebuffer;
 	class DescriptorSet;
 	class GraphicsPipeline;
 	class ComputePipeline;
 	class VertexArrayObject;
-	class VertexBuffer;
 	class DepthStencilTarget;
-	class IndexBuffer;
 
 	/*! CommandBuffers are an object that hold a list of commands to be executed
 		by your graphics card. After recording any commands you wish to use for
@@ -52,8 +51,8 @@ namespace Grindstone::GraphicsAPI {
 		virtual void BindGraphicsPipeline(GraphicsPipeline* pipeline) = 0;
 		virtual void BindComputePipeline(ComputePipeline* pipeline) = 0;
 		virtual void BindVertexArrayObject(VertexArrayObject* vertexArrayObject) = 0;
-		virtual void BindVertexBuffers(VertexBuffer** vb, uint32_t count) = 0;
-		virtual void BindIndexBuffer(IndexBuffer* indexBuffer) = 0;
+		virtual void BindVertexBuffers(Buffer** vb, uint32_t count) = 0;
+		virtual void BindIndexBuffer(Buffer* indexBuffer) = 0;
 		virtual void DrawVertices(uint32_t vertexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) = 0;
 		virtual void DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) = 0;
 		virtual void DispatchCompute(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) = 0;

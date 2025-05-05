@@ -1,7 +1,6 @@
 #pragma once
 
-#include "VertexBuffer.hpp"
-#include "IndexBuffer.hpp"
+#include "Buffer.hpp"
 
 namespace Grindstone::GraphicsAPI {
 	/*! A Vertex Array Object is a data structure including one or more VertexBuffers
@@ -11,9 +10,10 @@ namespace Grindstone::GraphicsAPI {
 	public:
 		struct CreateInfo {
 			const char* debugName = nullptr;
-			VertexBuffer** vertexBuffers = nullptr;
+			Buffer** vertexBuffers = nullptr;
 			uint32_t vertexBufferCount = 0;
-			IndexBuffer* indexBuffer = nullptr;
+			Buffer* indexBuffer = nullptr;
+			VertexInputLayout layout;
 		};
 
 		virtual ~VertexArrayObject() {};

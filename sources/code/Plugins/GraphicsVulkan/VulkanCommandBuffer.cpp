@@ -9,10 +9,8 @@
 #include "VulkanComputePipeline.hpp"
 #include "VulkanFramebuffer.hpp"
 #include "VulkanVertexArrayObject.hpp"
-#include "VulkanVertexBuffer.hpp"
-#include "VulkanIndexBuffer.hpp"
 #include "VulkanCore.hpp"
-#include "VulkanUniformBuffer.hpp"
+#include "VulkanBuffer.hpp"
 #include "VulkanTexture.hpp"
 #include "VulkanDescriptorSet.hpp"
 #include "VulkanDescriptorSetLayout.hpp"
@@ -299,14 +297,14 @@ void Vulkan::CommandBuffer::BindVertexArrayObject(Base::VertexArrayObject* verte
 	BindIndexBuffer(vkVao->GetIndexBuffer());
 }
 
-void Vulkan::CommandBuffer::BindVertexBuffers(Base::VertexBuffer** vertexBuffers, uint32_t vertexBufferCount) {
+void Vulkan::CommandBuffer::BindVertexBuffers(Base::Buffer** vertexBuffers, uint32_t vertexBufferCount) {
 	std::vector<VkBuffer> buffers;
 	std::vector<VkDeviceSize> offsets;
 	buffers.resize(vertexBufferCount);
 	offsets.resize(vertexBufferCount);
 
 	for (uint32_t i = 0; i < vertexBufferCount; ++i) {
-		Vulkan::VertexBuffer *vb = static_cast<Vulkan::VertexBuffer *>(vertexBuffers[i]);
+		Vulkan::Buffer *vb = static_cast<Vulkan::Buffer*>(vertexBuffers[i]);
 		buffers[i] = vb->GetBuffer();
 		offsets[i] = 0;
 	}
@@ -320,9 +318,12 @@ void Vulkan::CommandBuffer::BindVertexBuffers(Base::VertexBuffer** vertexBuffers
 	);
 }
 
-void Vulkan::CommandBuffer::BindIndexBuffer(Base::IndexBuffer* indexBuffer) {
-	Vulkan::IndexBuffer *vulkanIndexBuffer = static_cast<Vulkan::IndexBuffer *>(indexBuffer);
-	vkCmdBindIndexBuffer(commandBuffer, vulkanIndexBuffer->GetBuffer(), 0, vulkanIndexBuffer->Is32Bit() ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16);
+void Vulkan::CommandBuffer::BindIndexBuffer(Base::Buffer* indexBuffer) {
+	Vulkan::Buffer* vulkanIndexBuffer = static_cast<Vulkan::Buffer*>(indexBuffer);
+
+	// TODO: Where can I get this from?
+	VkIndexType indexType = true ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16;
+	vkCmdBindIndexBuffer(commandBuffer, vulkanIndexBuffer->GetBuffer(), 0, indexType);
 }
 
 void Vulkan::CommandBuffer::DrawVertices(uint32_t vertexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) {

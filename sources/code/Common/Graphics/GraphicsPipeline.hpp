@@ -3,7 +3,10 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <xkeycheck.h>
 
+#include <Common/Hash.hpp>
+#include <Common/Graphics/Formats.hpp>
 #include "Formats.hpp"
 
 namespace Grindstone::GraphicsAPI {
@@ -17,20 +20,21 @@ namespace Grindstone::GraphicsAPI {
 	*/
 	class GraphicsPipeline {
 	public:
-		struct CreateInfo {
-			struct ShaderStageData {
-				const char* fileName;
-				const char* content;
-				uint32_t size;
-				ShaderStage type;
-			};
+		struct ShaderStageData {
+			const char* fileName;
+			const char* content;
+			uint32_t size;
+			ShaderStage type;
+		};
 
-			struct AttachmentData {
-				BlendData blendData = BlendData::NoBlending();
-				ColorMask colorMask = ColorMask::RGBA;
-			};
+		struct AttachmentData {
+			BlendData blendData = BlendData::NoBlending();
+			ColorMask colorMask = ColorMask::RGBA;
+		};
 
+		struct PipelineData {
 			const char* debugName;
+
 			GeometryType primitiveType;
 			PolygonFillMode polygonFillMode;
 			CullMode cullMode;
@@ -42,8 +46,6 @@ namespace Grindstone::GraphicsAPI {
 			uint32_t shaderStageCreateInfoCount;
 			DescriptorSetLayout** descriptorSetLayouts;
 			uint32_t descriptorSetLayoutCount;
-			VertexBufferLayout* vertexBindings;
-			uint32_t vertexBindingsCount;
 
 			AttachmentData* colorAttachmentData = nullptr;
 			uint8_t colorAttachmentCount;
@@ -61,6 +63,76 @@ namespace Grindstone::GraphicsAPI {
 			float depthBiasClamp = 0.0f;
 		};
 
-		virtual void Recreate(const CreateInfo& createInfo) = 0;
+		struct CreateInfo {
+			VertexInputLayout vertexInputLayout;
+			PipelineData pipelineData;
+		};
 	};
+}
+
+namespace std {
+	template<>
+	struct std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::ShaderStageData> {
+		std::size_t operator()(const Grindstone::GraphicsAPI::GraphicsPipeline::ShaderStageData& stage) const noexcept {
+			size_t result = stage.size;
+			result ^= std::hash<uint8_t>{}(static_cast<uint8_t>(stage.type));
+
+			for (uint32_t i = 0; i < stage.size; ++i) {
+				result ^= std::hash<uint8_t>{}(stage.content[i]);
+			}
+
+			return result;
+		}
+	};
+
+	template<>
+	struct std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::AttachmentData> {
+		std::size_t operator()(const Grindstone::GraphicsAPI::GraphicsPipeline::AttachmentData& attachment) const noexcept {
+			size_t result =
+				static_cast<size_t>(attachment.colorMask) |
+				static_cast<size_t>(attachment.blendData.alphaFactorDst) << 8 |
+				static_cast<size_t>(attachment.blendData.alphaFactorSrc) << 16 |
+				static_cast<size_t>(attachment.blendData.alphaOperation) << 24 |
+				static_cast<size_t>(attachment.blendData.colorFactorDst) << 32 |
+				static_cast<size_t>(attachment.blendData.colorFactorSrc) << 40 |
+				static_cast<size_t>(attachment.blendData.colorOperation) << 48;
+			return result;
+		}
+	};
+
+	/*
+	template<>
+	struct std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo> {
+		std::size_t operator()(const Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo& gpci) const noexcept {
+			size_t result = gpci.;
+			for (uint8_t i = 0; i < gpci.colorAttachmentCount; ++i) {
+				result ^= std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo::AttachmentData>{}(gpci.colorAttachmentData[i]);
+			}
+
+			result ^= gpci.;
+			for (uint8_t i = 0; i < gpci.colorAttachmentCount; ++i) {
+				result ^= std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo::AttachmentData>{}(gpci.colorAttachmentData[i]);
+			}
+
+			return result;
+		}
+	};
+
+	template<>
+	struct std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo> {
+		std::size_t operator()(const Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo& gpci) const noexcept {
+			size_t result = gpci.;
+			for (uint8_t i = 0; i < gpci.colorAttachmentCount; ++i) {
+				result ^= std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo::AttachmentData>{}(gpci.colorAttachmentData[i]);
+			}
+
+			result ^= gpci.;
+			for (uint8_t i = 0; i < gpci.colorAttachmentCount; ++i) {
+				result ^= std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo::AttachmentData>{}(gpci.colorAttachmentData[i]);
+			}
+
+			return result;
+		}
+	};
+	*/
 }
