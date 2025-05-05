@@ -9,6 +9,8 @@
 #include <wrl/client.h>
 #include <dxcapi.h>
 #include <d3d12shader.h>
+#include <spirv_reflect.h>
+#include <Common/Assert.hpp>
 
 inline static const char* GetBoolAsString(bool val) {
 	return val ? "true" : "false";
@@ -128,14 +130,71 @@ static bool GatherArtifactsDirectX(IDxcUtils* pUtils, IDxcResult* pResults, Stag
 static bool GatherArtifactsSpirV(IDxcUtils* pUtils, IDxcResult* pResults, StageCompilationArtifacts& outArtifacts) {
 	Microsoft::WRL::ComPtr<IDxcBlob> pShader = nullptr;
 	Microsoft::WRL::ComPtr<IDxcBlobUtf16> pShaderName = nullptr;
-	if (SUCCEEDED(pResults->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pShader), &pShaderName)) &&
-		pShader != nullptr) {
-		outArtifacts.compiledCode.resize(pShader->GetBufferSize());
-		memcpy(outArtifacts.compiledCode.data(), pShader->GetBufferPointer(), pShader->GetBufferSize());
-		return true;
+	if (FAILED(pResults->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pShader), &pShaderName)) || pShader == nullptr) {
+		GS_ASSERT_LOG("Failed to compile shader.");
+		return false;
 	}
+
+	outArtifacts.compiledCode.resize(pShader->GetBufferSize());
+	memcpy(outArtifacts.compiledCode.data(), pShader->GetBufferPointer(), pShader->GetBufferSize());
+
+	SpvReflectShaderModule module;
+	SpvReflectResult result = spvReflectCreateShaderModule(outArtifacts.compiledCode.size(), outArtifacts.compiledCode.data(), &module);
+	GS_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
+
+	uint32_t descriptorInputCount = 0;
+	result = spvReflectEnumerateDescriptorSets(&module, &descriptorInputCount, nullptr);
+	GS_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
+	std::vector<SpvReflectDescriptorSet*> descriptorSets;
+	descriptorSets.resize(descriptorInputCount);
+	result = spvReflectEnumerateDescriptorSets(&module, &descriptorInputCount, descriptorSets.data());
+	GS_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
+
+	for (uint32_t descriptorSetIndex = 0; descriptorSetIndex < descriptorInputCount; ++descriptorSetIndex) {
+		SpvReflectDescriptorSet* srcDescriptorSet = descriptorSets[descriptorSetIndex];
+		auto& dstDescriptorSet = outArtifacts.reflectedDescriptorSets.emplace_back();
+		dstDescriptorSet.setIndex = srcDescriptorSet->set;
+		dstDescriptorSet.firstBindingIndex = static_cast<uint32_t>(outArtifacts.reflectedDescriptorBindings.size());
+		dstDescriptorSet.bindingCount = srcDescriptorSet->binding_count;
+
+		for (uint32_t descriptorBindingIndex = 0; descriptorBindingIndex < srcDescriptorSet->binding_count; ++descriptorBindingIndex) {
+			SpvReflectDescriptorBinding* srcDescriptorBinding = srcDescriptorSet->bindings[descriptorBindingIndex];
+			auto& dstDescriptorBinding = outArtifacts.reflectedDescriptorBindings.emplace_back();
+			dstDescriptorBinding.bindingIndex = srcDescriptorBinding->binding;
+			dstDescriptorBinding.count = srcDescriptorBinding->count;
+			dstDescriptorBinding.stages = ToShaderStageBit(outArtifacts.stage);
+
+			switch (srcDescriptorBinding->descriptor_type) {
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
+				GS_ASSERT_LOG("Unsupported reflect descriptor binding type!");
+				break;
+			default:
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::RenderTextureStorageImage;
+				break;
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
+				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::Sampler;
+				break;
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::Texture;
+				break;
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::UniformBuffer;
+				break;
+			}
+		}
+	}
+
+	spvReflectDestroyShaderModule(&module);
 	
-	return false;
+	return true;
 }
 
 Microsoft::WRL::ComPtr<IDxcUtils> pUtils;

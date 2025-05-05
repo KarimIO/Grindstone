@@ -1,5 +1,6 @@
 #include <filesystem>
 
+#include <Common/Containers/Span.hpp>
 #include <Common/Formats/PipelineSet.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <EngineCore/EngineCore.hpp>
@@ -12,6 +13,7 @@
 #include "GraphicsPipelineImporter.hpp"
 
 using namespace Grindstone;
+using namespace Grindstone::Containers;
 using namespace Grindstone::GraphicsAPI;
 using namespace Grindstone::Formats::Pipelines;
 
@@ -37,17 +39,70 @@ static void UnpackGraphicsPipelineHeader(
 	// dstHeader.shouldCopyFirstAttachment ? 0b100000;
 }
 
-static void UnpackGraphicsPipelineAttachmentHeader(
-	const V1::PassPipelineAttachmentHeader& srcHeader,
-	Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo::AttachmentData& dstHeader
+static void UnpackGraphicsPipelineAttachmentHeaders(
+	const Span<V1::PassPipelineAttachmentHeader>& srcHeaders,
+	Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo::AttachmentData* dstHeaders
 ) {
-	dstHeader.colorMask = srcHeader.colorMask;
-	dstHeader.blendData.alphaFactorDst = srcHeader.blendAlphaFactorDst;
-	dstHeader.blendData.alphaFactorSrc = srcHeader.blendAlphaFactorSrc;
-	dstHeader.blendData.alphaOperation = srcHeader.blendAlphaOperation;
-	dstHeader.blendData.colorFactorDst = srcHeader.blendColorFactorDst;
-	dstHeader.blendData.colorFactorSrc = srcHeader.blendColorFactorSrc;
-	dstHeader.blendData.colorOperation = srcHeader.blendColorOperation;
+	for (uint8_t i = 0; i < srcHeaders.GetSize(); ++i) {
+		const V1::PassPipelineAttachmentHeader& srcHeader = srcHeaders[i];
+		Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo::AttachmentData& dstHeader = dstHeaders[i];
+
+		dstHeader.colorMask = srcHeader.colorMask;
+		dstHeader.blendData.alphaFactorDst = srcHeader.blendAlphaFactorDst;
+		dstHeader.blendData.alphaFactorSrc = srcHeader.blendAlphaFactorSrc;
+		dstHeader.blendData.alphaOperation = srcHeader.blendAlphaOperation;
+		dstHeader.blendData.colorFactorDst = srcHeader.blendColorFactorDst;
+		dstHeader.blendData.colorFactorSrc = srcHeader.blendColorFactorSrc;
+		dstHeader.blendData.colorOperation = srcHeader.blendColorOperation;
+	}
+}
+
+static void UnpackGraphicsPipelineDescriptorSetHeaders(
+	Grindstone::GraphicsAPI::Core* graphicsCore,
+	std::string_view pipelineName,
+	const Span<V1::ShaderReflectDescriptorSet>& srcDescriptorSets,
+	const Span<V1::ShaderReflectDescriptorBinding>& srcDescriptorBindings,
+	std::vector<Grindstone::GraphicsAPI::DescriptorSetLayout*>& dstDescriptorSets
+) {
+	Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo layoutCreateInfo;
+
+	for (uint8_t i = 0; i < srcDescriptorSets.GetSize(); ++i) {
+		const V1::ShaderReflectDescriptorSet& srcDescriptorSet = srcDescriptorSets[i];
+
+		std::vector<Grindstone::GraphicsAPI::DescriptorSetLayout::Binding> dstDescriptorBindings;
+		dstDescriptorBindings.reserve(srcDescriptorSet.bindingCount);
+
+		for (size_t bindingIndex = srcDescriptorSet.firstBindingIndex;
+			bindingIndex < srcDescriptorSet.firstBindingIndex + srcDescriptorSet.bindingCount;
+			++bindingIndex
+		) {
+			const V1::ShaderReflectDescriptorBinding& srcBinding = srcDescriptorBindings[bindingIndex];
+			Grindstone::GraphicsAPI::DescriptorSetLayout::Binding& dstBinding = dstDescriptorBindings.emplace_back();
+			dstBinding.bindingId = srcBinding.bindingIndex;
+			dstBinding.stages = srcBinding.stages;
+			dstBinding.count = srcBinding.count;
+			dstBinding.type = srcBinding.type;
+		}
+
+		std::string setName = fmt::format("{} Descriptor Set {}", pipelineName, i);
+		layoutCreateInfo.debugName = setName.c_str();
+		layoutCreateInfo.bindings = dstDescriptorBindings.data();
+		layoutCreateInfo.bindingCount = static_cast<uint32_t>(dstDescriptorBindings.size());
+
+		dstDescriptorSets[i] = graphicsCore->CreateDescriptorSetLayout(layoutCreateInfo);
+	}
+}
+
+static void UnpackGraphicsPipelineVertexBuffersHeaders(
+	const Span<V1::PassVertexBuffer>& srcVertexBuffers,
+	Grindstone::GraphicsAPI::VertexBufferLayout* dstVertexBuffers
+) {
+	for (uint8_t i = 0; i < srcVertexBuffers.GetSize(); ++i) {
+		const V1::PassVertexBuffer& srcVertexBuffer = srcVertexBuffers[i];
+		Grindstone::GraphicsAPI::VertexBufferLayout& dstVertexBuffer = dstVertexBuffers[i];
+
+		// TODO: This
+	}
 }
 
 // Graphics Pipeline Format:
@@ -113,17 +168,26 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		V1::PassPipelineHeader* srcPassHeader = reinterpret_cast<V1::PassPipelineHeader*>(readPtr);
 		readPtr += sizeof(V1::PassPipelineHeader);
 
-		V1::PassPipelineShaderStageHeader* srcStageHeaders = reinterpret_cast<V1::PassPipelineShaderStageHeader*>(readPtr);
+		Span<V1::PassPipelineShaderStageHeader> srcStageHeaders{ reinterpret_cast<V1::PassPipelineShaderStageHeader*>(readPtr), srcPassHeader->shaderStageCount };
 		readPtr += sizeof(V1::PassPipelineShaderStageHeader) * srcPassHeader->shaderStageCount;
 
-		V1::PassPipelineAttachmentHeader* srcAttachmentHeaders = reinterpret_cast<V1::PassPipelineAttachmentHeader*>(readPtr);
+		Span<V1::PassPipelineAttachmentHeader> srcAttachmentHeaders{ reinterpret_cast<V1::PassPipelineAttachmentHeader*>(readPtr), srcPassHeader->attachmentCount };
 		readPtr += sizeof(V1::PassPipelineAttachmentHeader) * srcPassHeader->attachmentCount;
+
+		Span<V1::ShaderReflectDescriptorSet> srcDescriptorSets{ reinterpret_cast<V1::ShaderReflectDescriptorSet*>(readPtr), srcPassHeader->descriptorSetCount };
+		readPtr += sizeof(V1::ShaderReflectDescriptorSet) * srcPassHeader->descriptorSetCount;
+
+		Span<V1::ShaderReflectDescriptorBinding> srcDescriptorBindings{ reinterpret_cast<V1::ShaderReflectDescriptorBinding*>(readPtr), srcPassHeader->descriptorBindingCount };
+		readPtr += sizeof(V1::ShaderReflectDescriptorBinding) * srcPassHeader->descriptorBindingCount;
+
+		Span<V1::PassVertexBuffer> srcVertexBuffers{ reinterpret_cast<V1::PassVertexBuffer*>(readPtr), srcPassHeader->vertexBufferCount };
+		readPtr += sizeof(V1::PassVertexBuffer) * srcPassHeader->vertexBufferCount;
 
 		GraphicsPipelineAsset::Pass& pass = graphicsPipelineAsset.passes[passIndex];
 
 		std::vector<GraphicsPipeline::CreateInfo::ShaderStageData> shaderStageCreateInfos;
 		shaderStageCreateInfos.resize(srcPassHeader->shaderStageCount);
-		
+
 		GraphicsPipeline::CreateInfo pipelineCreateInfo{};
 		pipelineCreateInfo.debugName = result.displayName.c_str();
 		pipelineCreateInfo.width = 0.0f;
@@ -134,17 +198,13 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		pipelineCreateInfo.scissorH = 0;
 		pipelineCreateInfo.hasDynamicViewport = true;
 		pipelineCreateInfo.hasDynamicScissor = true;
-
-		GraphicsAPI::RenderPass* renderPass = nullptr; // TODO: FindRenderPass(renderStage);
-		pipelineCreateInfo.renderPass = renderPass;
+		pipelineCreateInfo.renderPass = nullptr; // TODO: FindRenderPass(renderStage);
 
 		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
 		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineCreateInfo.descriptorSetLayouts = nullptr;
-		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(0);
-		pipelineCreateInfo.vertexBindings = nullptr;
-		pipelineCreateInfo.vertexBindingsCount = 0;
-		pipelineCreateInfo.colorAttachmentCount = 0;
+		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(srcPassHeader->descriptorSetCount);
+		pipelineCreateInfo.vertexBindingsCount = static_cast<uint32_t>(srcPassHeader->vertexBufferCount);
+		pipelineCreateInfo.colorAttachmentCount = srcPassHeader->attachmentCount;
 
 		UnpackGraphicsPipelineHeader(*srcPassHeader, pipelineCreateInfo);
 
@@ -156,10 +216,18 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 			readPtr += srcStageHeaders[i].shaderCodeSize;
 		}
 
-		for (uint8_t i = 0; i < srcPassHeader->attachmentCount; ++i) {
-			UnpackGraphicsPipelineAttachmentHeader(srcAttachmentHeaders[i], pipelineCreateInfo.colorAttachmentData[i]);
-		}
-
+		std::vector<Grindstone::GraphicsAPI::DescriptorSetLayout*> descriptorSetLayouts;
+		descriptorSetLayouts.resize(srcPassHeader->descriptorSetCount);
+		UnpackGraphicsPipelineAttachmentHeaders(srcAttachmentHeaders, pipelineCreateInfo.colorAttachmentData);
+		UnpackGraphicsPipelineDescriptorSetHeaders(
+			graphicsCore,
+			graphicsPipelineAsset.name,
+			srcDescriptorSets,
+			srcDescriptorBindings,
+			descriptorSetLayouts
+		);
+		UnpackGraphicsPipelineVertexBuffersHeaders(srcVertexBuffers, pipelineCreateInfo.vertexBindings);
+		pipelineCreateInfo.descriptorSetLayouts = descriptorSetLayouts.data();
 		pass.pipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 
 		// TODO: Fix

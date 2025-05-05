@@ -71,6 +71,62 @@ static const size_t GetTotalSize(const CompilationArtifactsGraphics& compilation
 	return totalSize;
 }
 
+struct DescriptorSetOutput {
+	uint32_t setIndex;
+	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding> bindings;
+};
+
+static void ConsolidateDescriptorSets(
+	Grindstone::GraphicsAPI::ShaderStageBit stageBit,
+	std::vector<DescriptorSetOutput>& passDescriptorSets,
+	const std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet>& stageDescriptorSets,
+	const std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding>& stageDescriptorBindings
+) {
+	for (size_t i = 0; i < stageDescriptorSets.size(); ++i) {
+		const Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet& srcSet = stageDescriptorSets[i];
+
+		size_t dstIndex = 0;
+		for (; dstIndex < passDescriptorSets.size(); ++dstIndex) {
+			if (passDescriptorSets[dstIndex].setIndex == srcSet.setIndex) {
+				break;
+			}
+		}
+
+		if (dstIndex == passDescriptorSets.size()) {
+			passDescriptorSets.emplace_back();
+		}
+
+		DescriptorSetOutput& dstSet = passDescriptorSets[dstIndex];
+		dstSet.setIndex = srcSet.setIndex;
+
+		for (size_t srcBindingIndex = srcSet.firstBindingIndex;
+			srcBindingIndex < srcSet.firstBindingIndex + srcSet.bindingCount;
+			++srcBindingIndex
+		) {
+			const Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding& srcBinding = stageDescriptorBindings[srcBindingIndex];
+
+			bool hasFoundBinding = false;
+			for (Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding& dstBinding : dstSet.bindings) {
+				if (srcBinding.bindingIndex == dstBinding.bindingIndex) {
+					dstBinding.stages |= srcBinding.stages;
+					hasFoundBinding = true;
+					break;
+				}
+			}
+
+			if (!hasFoundBinding) {
+				Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding& newBinding =
+					dstSet.bindings.emplace_back();
+
+				newBinding.bindingIndex = srcBinding.bindingIndex;
+				newBinding.count = srcBinding.count;
+				newBinding.stages = srcBinding.stages;
+				newBinding.type = srcBinding.type;
+			}
+		}
+	}
+}
+
 struct Writer {
 	std::vector<char>& outputBuffer;
 	size_t offset = 0;
@@ -153,6 +209,8 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 
 			const CompilationArtifactsGraphics::Pass& passArtifact = passArtifactsIterator->second;
 
+			std::vector<DescriptorSetOutput> passDescriptorSets;
+
 			uint8_t shaderStageCount = 0;
 			std::array<uint32_t, Grindstone::GraphicsAPI::numShaderTotalStage> shaderCodeSizes{};
 			size_t usedStageIndex = 0;
@@ -167,9 +225,36 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 					shaderCodeSizes[stageIndex] = static_cast<uint32_t>(artifacts.compiledCode.size());
 
 					if (shaderCodeSizes[stageIndex] != 0) {
+						Grindstone::GraphicsAPI::ShaderStageBit stageBit =
+							static_cast<Grindstone::GraphicsAPI::ShaderStageBit>(1 << stageIndex);
+
+						ConsolidateDescriptorSets(
+							stageBit,
+							passDescriptorSets,
+							artifacts.reflectedDescriptorSets,
+							artifacts.reflectedDescriptorBindings
+						);
+
 						shaderStageCount++;
 					}
 				}
+			}
+
+			std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet> passOutDescriptorSets;
+			std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding> passOutDescriptorBindings;
+			passOutDescriptorSets.resize(passDescriptorSets.size());
+			for (DescriptorSetOutput& srcSet : passDescriptorSets) {
+				size_t firstIndex = passOutDescriptorBindings.size();
+				size_t bindingCount = srcSet.bindings.size();
+
+				for (Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding& srcBinding : srcSet.bindings) {
+					passOutDescriptorBindings.emplace_back(srcBinding);
+				}
+
+				Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet& dstSet = passOutDescriptorSets.emplace_back();
+				dstSet.setIndex = srcSet.setIndex;
+				dstSet.firstBindingIndex = static_cast<uint32_t>(firstIndex);
+				dstSet.bindingCount = static_cast<uint32_t>(bindingCount);
 			}
 
 			uint8_t flags = 0;
@@ -191,6 +276,8 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 			passPipelineHeader.flags = flags;
 			passPipelineHeader.attachmentCount = static_cast<uint8_t>(pass.renderState.attachmentData.size());
 			passPipelineHeader.shaderStageCount = shaderStageCount;
+			passPipelineHeader.descriptorSetCount = static_cast<uint8_t>(passOutDescriptorSets.size());
+			passPipelineHeader.descriptorBindingCount = static_cast<uint8_t>(passOutDescriptorBindings.size());
 			WriteBytes(writer, &passPipelineHeader, sizeof(Grindstone::Formats::Pipelines::V1::PassPipelineHeader));
 
 			for (uint8_t stageIndex = 0; stageIndex < Grindstone::GraphicsAPI::numShaderTotalStage; ++stageIndex) {
@@ -214,6 +301,9 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 				attachmentHeader.blendColorOperation = attachmentData.blendColorOperation.value();
 				WriteBytes(writer, &attachmentHeader, sizeof(Grindstone::Formats::Pipelines::V1::PassPipelineAttachmentHeader));
 			}
+
+			WriteBytes(writer, passOutDescriptorSets.data(), passPipelineHeader.descriptorSetCount * sizeof(Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet));
+			WriteBytes(writer, passOutDescriptorBindings.data(), passPipelineHeader.descriptorBindingCount * sizeof(Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding));
 
 			bool hasUsedStages = false;
 			usedStageIndex = 0;
@@ -249,14 +339,12 @@ bool OutputComputeSet(LogCallback logCallback, const CompilationArtifactsCompute
 	outputFile.pipelineType = Grindstone::Formats::Pipelines::V1::PipelineType::Compute;
 	outputFile.content.resize(compilationArtifacts.computeStage.compiledCode.size() + 4);
 
-
 	Writer writer{ outputFile.content };
 	WriteBytes(writer, Grindstone::Formats::Pipelines::V1::FileMagicCode, 4);
 
-
 	Grindstone::Formats::Pipelines::V1::PipelineSetFileHeader pipelineSetHeader{};
-	pipelineSetHeader.graphicsPipelineCount = 1;
-	pipelineSetHeader.computePipelineCount = 0;
+	pipelineSetHeader.graphicsPipelineCount = 0;
+	pipelineSetHeader.computePipelineCount = 1;
 
 	Grindstone::Formats::Pipelines::V1::ComputePipelineHeader computeHeader{};
 	computeHeader.codeSize = static_cast<uint32_t>(compilationArtifacts.computeStage.compiledCode.size());
