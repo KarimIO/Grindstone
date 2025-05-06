@@ -1388,7 +1388,7 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	RenderTarget::CreateInfo litHdrImagesCreateInfo = {
-		Grindstone::GraphicsAPI::Format::R16G16B16_SFLOAT,
+		Grindstone::GraphicsAPI::Format::R16G16B16A16_SFLOAT,
 		framebufferWidth,
 		framebufferHeight,
 		true,
