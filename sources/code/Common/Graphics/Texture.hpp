@@ -45,7 +45,7 @@ namespace Grindstone::GraphicsAPI {
 			uint32_t width, height, size;
 			uint16_t mipmaps;
 			bool isCubemap;
-			ColorFormat format;
+			Format format;
 			TextureOptions options;
 		};
 
@@ -53,7 +53,7 @@ namespace Grindstone::GraphicsAPI {
 			unsigned char* data[6];
 			uint32_t width, height;
 			uint16_t mipmaps;
-			ColorFormat format;
+			Format format;
 			TextureOptions options;
 		};
 

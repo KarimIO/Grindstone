@@ -114,8 +114,9 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual GraphicsAPI::DescriptorSet* CreateDescriptorSet(const GraphicsAPI::DescriptorSet::CreateInfo& ci) override;
 		virtual GraphicsAPI::DescriptorSetLayout* CreateDescriptorSetLayout(const GraphicsAPI::DescriptorSetLayout::CreateInfo& ci) override;
 		virtual GraphicsAPI::RenderTarget* CreateRenderTarget(const GraphicsAPI::RenderTarget::CreateInfo& rt) override;
-		virtual GraphicsAPI::RenderTarget* CreateRenderTarget(const GraphicsAPI::RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) override;
 		virtual GraphicsAPI::DepthStencilTarget* CreateDepthStencilTarget(const GraphicsAPI::DepthStencilTarget::CreateInfo& rt) override;
+
+		virtual GraphicsAPI::GraphicsPipeline* GetOrCreateGraphicsPipelineFromCache(const GraphicsPipeline::PipelineData& pipelineData, const VertexInputLayout* vertexInputLayout) override;
 
 		virtual inline bool ShouldUseImmediateMode() const override;
 		virtual inline bool SupportsCommandBuffers() const override;
@@ -153,5 +154,8 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void BindDefaultFramebufferWrite() override;
 		virtual void BindDefaultFramebufferRead() override;
 		virtual void ResizeViewport(uint32_t w, uint32_t h) override;
+
+		using PipelineHash = size_t;
+		std::unordered_map<PipelineHash, Grindstone::GraphicsAPI::GraphicsPipeline*> graphicsPipelineCache;
 	};
 }

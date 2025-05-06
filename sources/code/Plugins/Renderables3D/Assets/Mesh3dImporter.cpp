@@ -18,27 +18,26 @@ struct SourceSubmesh {
 	uint32_t materialIndex = UINT32_MAX;
 };
 
-static GraphicsAPI::VertexBuffer* LoadVertexBufferVec(
+static GraphicsAPI::Buffer* LoadVertexBufferVec(
 	GraphicsAPI::Core* graphicsCore,
 	std::string& fileName,
 	size_t vertexSize,
 	uint64_t vertexCount,
 	void* sourcePtr,
-	GraphicsAPI::VertexBufferLayout& vertexLayout
+	const char* bufferName
 ) {
 	uint64_t size = sizeof(float) * vertexSize * vertexCount;
 	std::vector<float> vertices;
 	vertices.resize(vertexCount * vertexSize);
 	std::memcpy(vertices.data(), sourcePtr, size);
 
-	std::string debugName = fileName + " " + vertexLayout.attributes[0].name;
-	GraphicsAPI::VertexBuffer::CreateInfo vertexBufferCreateInfo;
+	std::string debugName = fileName + " " + bufferName;
+	GraphicsAPI::Buffer::CreateInfo vertexBufferCreateInfo{};
 	vertexBufferCreateInfo.debugName = debugName.c_str();
 	vertexBufferCreateInfo.content = vertices.data();
-	vertexBufferCreateInfo.size = static_cast<uint32_t>(size);
-	vertexBufferCreateInfo.layout = &vertexLayout;
-	vertexBufferCreateInfo.count = static_cast<uint32_t>(vertexCount);
-	return graphicsCore->CreateVertexBuffer(vertexBufferCreateInfo);
+	vertexBufferCreateInfo.bufferUsage = Grindstone::GraphicsAPI::BufferUsage::Vertex;
+	vertexBufferCreateInfo.bufferSize = static_cast<uint32_t>(size);
+	return graphicsCore->CreateBuffer(vertexBufferCreateInfo);
 }
 
 Mesh3dImporter::Mesh3dImporter(EngineCore* engineCore) : engineCore(engineCore) {
@@ -46,55 +45,65 @@ Mesh3dImporter::Mesh3dImporter(EngineCore* engineCore) : engineCore(engineCore) 
 }
 
 void Mesh3dImporter::PrepareLayouts() {
-	vertexLayouts.positions = {
+	VertexInputLayoutBuilder builder;
+	builder.AddBinding(
+		{0, 0, VertexInputRate::Vertex},
 		{
-			(uint32_t)Mesh3dLayoutIndex::Position,
-			Grindstone::GraphicsAPI::VertexFormat::Float3,
-			"vertexPosition",
-			false,
-			Grindstone::GraphicsAPI::AttributeUsage::Position
+			{
+				"vertexPosition",
+				(uint32_t)Mesh3dLayoutIndex::Position,
+				Grindstone::GraphicsAPI::Format::R32G32B32_SFLOAT,
+				0,
+				Grindstone::GraphicsAPI::AttributeUsage::Position
+			}
 		}
-	};
+	).AddBinding(
+		{ 2, 0, VertexInputRate::Vertex },
+		{
+			{
+				"vertexNormal",
+				(uint32_t)Mesh3dLayoutIndex::Normal,
+				Grindstone::GraphicsAPI::Format::R32G32B32_SFLOAT,
+				0,
+				Grindstone::GraphicsAPI::AttributeUsage::Normal
+			}
+		}
+	).AddBinding(
+		{ 3, 0, VertexInputRate::Vertex },
+		{
+			{
+				"vertexTangent",
+				(uint32_t)Mesh3dLayoutIndex::Tangent,
+				Grindstone::GraphicsAPI::Format::R32G32B32_SFLOAT,
+				0,
+				Grindstone::GraphicsAPI::AttributeUsage::Tangent
+			}
+		}
+	).AddBinding(
+		{ 4, 0, VertexInputRate::Vertex },
+		{
+			{
+				"vertexTexCoord0",
+				(uint32_t)Mesh3dLayoutIndex::Uv0,
+				Grindstone::GraphicsAPI::Format::R32G32B32_SFLOAT,
+				0,
+				Grindstone::GraphicsAPI::AttributeUsage::TexCoord0
+			}
+		}
+	).AddBinding(
+		{ 4, 0, VertexInputRate::Vertex },
+		{
+			{
+				"vertexTexCoord1",
+				(uint32_t)Mesh3dLayoutIndex::Uv1,
+				Grindstone::GraphicsAPI::Format::R32G32B32_SFLOAT,
+				0,
+				Grindstone::GraphicsAPI::AttributeUsage::TexCoord1
+			}
+		}
+	);
 
-	vertexLayouts.normals = {
-		{
-			(uint32_t)Mesh3dLayoutIndex::Normal,
-			Grindstone::GraphicsAPI::VertexFormat::Float3,
-			"vertexNormal",
-			false,
-			Grindstone::GraphicsAPI::AttributeUsage::Normal
-		}
-	};
-
-	vertexLayouts.tangents = {
-		{
-			(uint32_t)Mesh3dLayoutIndex::Tangent,
-			Grindstone::GraphicsAPI::VertexFormat::Float3,
-			"vertexTangent",
-			false,
-			Grindstone::GraphicsAPI::AttributeUsage::Tangent
-		}
-	};
-
-	vertexLayouts.uv0 = {
-		{
-			(uint32_t)Mesh3dLayoutIndex::Uv0,
-			Grindstone::GraphicsAPI::VertexFormat::Float2,
-			"vertexTexCoord0",
-			false,
-			Grindstone::GraphicsAPI::AttributeUsage::TexCoord0
-		}
-	};
-
-	vertexLayouts.uv1 = {
-		{
-			(uint32_t)Mesh3dLayoutIndex::Uv1,
-			Grindstone::GraphicsAPI::VertexFormat::Float2,
-			"vertexTexCoord1",
-			false,
-			Grindstone::GraphicsAPI::AttributeUsage::TexCoord1
-		}
-	};
+	vertexLayout = builder.Build();
 }
 
 void Mesh3dImporter::DecrementMeshCount(ECS::Entity entity, Uuid uuid) {
@@ -146,31 +155,31 @@ void Mesh3dImporter::LoadMeshImportVertices(
 	Mesh3dAsset& mesh,
 	Formats::Model::V1::Header& header,
 	char*& sourcePtr,
-	std::vector<GraphicsAPI::VertexBuffer*>& vertexBuffers
+	std::vector<GraphicsAPI::Buffer*>& vertexBuffers
 ) {
 	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
 	std::string& assetName = mesh.name;
 	auto vertexCount = header.vertexCount;
 	if (header.hasVertexPositions) {
-		auto positions = LoadVertexBufferVec(graphicsCore, assetName, 3, vertexCount, sourcePtr, vertexLayouts.positions);
+		auto positions = LoadVertexBufferVec(graphicsCore, assetName, 3, vertexCount, sourcePtr, "Positions");
 		vertexBuffers.push_back(positions);
 		sourcePtr += sizeof(float) * 3 * vertexCount;
 	}
 
 	if (header.hasVertexNormals) {
-		auto normals = LoadVertexBufferVec(graphicsCore, assetName, 3, vertexCount, sourcePtr, vertexLayouts.normals);
+		auto normals = LoadVertexBufferVec(graphicsCore, assetName, 3, vertexCount, sourcePtr, "Normals");
 		vertexBuffers.push_back(normals);
 		sourcePtr += sizeof(float) * 3 * vertexCount;
 	}
 
 	if (header.hasVertexTangents) {
-		auto tangents = LoadVertexBufferVec(graphicsCore, assetName, 3, vertexCount, sourcePtr, vertexLayouts.tangents);
+		auto tangents = LoadVertexBufferVec(graphicsCore, assetName, 3, vertexCount, sourcePtr, "Tangents");
 		vertexBuffers.push_back(tangents);
 		sourcePtr += sizeof(float) * 3 * vertexCount;
 	}
 
 	if (header.vertexUvSetCount >= 1) {
-		auto uv0 = LoadVertexBufferVec(graphicsCore, assetName, 2, vertexCount, sourcePtr, vertexLayouts.uv0);
+		auto uv0 = LoadVertexBufferVec(graphicsCore, assetName, 2, vertexCount, sourcePtr, "TexCoord0");
 		vertexBuffers.push_back(uv0);
 		sourcePtr += sizeof(float) * 2 * vertexCount;
 	}
@@ -180,7 +189,7 @@ void Mesh3dImporter::LoadMeshImportIndices(
 	Mesh3dAsset& mesh,
 	Formats::Model::V1::Header& header,
 	char*& sourcePtr,
-	GraphicsAPI::IndexBuffer*& indexBuffer
+	GraphicsAPI::Buffer*& indexBuffer
 ) {
 	auto graphicsCore = engineCore->GetGraphicsCore();
 	std::vector<uint16_t> indices;
@@ -190,13 +199,13 @@ void Mesh3dImporter::LoadMeshImportIndices(
 	sourcePtr += indexSize;
 
 	std::string debugName = mesh.name + " Index Buffer";
-	GraphicsAPI::IndexBuffer::CreateInfo indexBufferCreateInfo{};
+	GraphicsAPI::Buffer::CreateInfo indexBufferCreateInfo{};
 	indexBufferCreateInfo.debugName = debugName.c_str();
 	indexBufferCreateInfo.content = indices.data();
-	indexBufferCreateInfo.count = static_cast<uint32_t>(indices.size());
-	indexBufferCreateInfo.size = static_cast<uint32_t>(indices.size() * sizeof(indices[0]));
-	indexBufferCreateInfo.is32Bit = false;
-	indexBuffer = graphicsCore->CreateIndexBuffer(indexBufferCreateInfo);
+	indexBufferCreateInfo.bufferUsage = BufferUsage::Index;
+	indexBufferCreateInfo.memoryUsage = MemUsage::GPUOnly;
+	indexBufferCreateInfo.bufferSize = static_cast<uint32_t>(indices.size() * sizeof(indices[0]));
+	indexBuffer = graphicsCore->CreateBuffer(indexBufferCreateInfo);
 }
 
 void* Mesh3dImporter::LoadAsset(Uuid uuid) {
@@ -249,8 +258,8 @@ bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 		return false;
 	}
 
-	std::vector<GraphicsAPI::VertexBuffer*> vertexBuffers;
-	GraphicsAPI::IndexBuffer* indexBuffer = nullptr;
+	std::vector<GraphicsAPI::Buffer*> vertexBuffers;
+	GraphicsAPI::Buffer* indexBuffer = nullptr;
 
 	mesh.boundingData = *(Formats::Model::V1::BoundingData*)srcPtr;
 	srcPtr = srcPtr + sizeof(Formats::Model::V1::BoundingData);
@@ -310,4 +319,4 @@ Mesh3dImporter::~Mesh3dImporter() {
 	assets.clear();
 }
 
-Grindstone::Mesh3dImporter::VertexLayouts Mesh3dImporter::vertexLayouts;
+Grindstone::GraphicsAPI::VertexInputLayout Mesh3dImporter::vertexLayout;

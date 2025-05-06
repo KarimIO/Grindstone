@@ -5,13 +5,13 @@
 #include <map>
 
 #include <Common/Formats/Model.hpp>
-#include <Common/Graphics/VertexBuffer.hpp>
+#include <Common/Graphics/Formats.hpp>
 #include <EngineCore/Assets/AssetImporter.hpp>
 #include "Mesh3dAsset.hpp"
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		class IndexBuffer;
+		class Buffer;
 	}
 
 	class EngineCore;
@@ -37,26 +37,18 @@ namespace Grindstone {
 				Mesh3dAsset& mesh,
 				Formats::Model::V1::Header& header,
 				char*& sourcePtr,
-				std::vector<GraphicsAPI::VertexBuffer*>& vertexBuffers
+				std::vector<GraphicsAPI::Buffer*>& vertexBuffers
 			);
 			void LoadMeshImportIndices(
 				Mesh3dAsset& mesh,
 				Formats::Model::V1::Header& header,
 				char*& sourcePtr,
-				GraphicsAPI::IndexBuffer*& indexBuffer
+				GraphicsAPI::Buffer*& indexBuffer
 			);
 		public:
 			EngineCore* engineCore;
 		private:
-			struct VertexLayouts {
-				GraphicsAPI::VertexBufferLayout positions;
-				GraphicsAPI::VertexBufferLayout normals;
-				GraphicsAPI::VertexBufferLayout tangents;
-				GraphicsAPI::VertexBufferLayout uv0;
-				GraphicsAPI::VertexBufferLayout uv1;
-			};
-
-			static VertexLayouts vertexLayouts;
+			static Grindstone::GraphicsAPI::VertexInputLayout vertexLayout;
 
 			enum class Mesh3dLayoutIndex {
 				Position = 0,

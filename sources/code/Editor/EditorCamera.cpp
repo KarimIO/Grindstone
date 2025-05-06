@@ -31,15 +31,15 @@ EditorCamera::EditorCamera() {
 	renderTargetCreateInfo.debugName = "Editor Viewport Color Image";
 	renderTargetCreateInfo.width = framebufferWidth;
 	renderTargetCreateInfo.height = framebufferHeight;
-	renderTargetCreateInfo.format = GraphicsAPI::ColorFormat::RGBA8;
+	renderTargetCreateInfo.format = GraphicsAPI::Format::R8G8B8A8_UNORM;
 	renderTargetCreateInfo.isSampled = true;
-	renderTarget = core->CreateRenderTarget(&renderTargetCreateInfo, 1, false);
+	renderTarget = core->CreateRenderTarget(renderTargetCreateInfo);
 
 	GraphicsAPI::DepthStencilTarget::CreateInfo depthTargetCreateInfo{};
 	depthTargetCreateInfo.debugName = "Editor Viewport Depth Image";
 	depthTargetCreateInfo.width = framebufferWidth;
 	depthTargetCreateInfo.height = framebufferHeight;
-	depthTargetCreateInfo.format = GraphicsAPI::DepthFormat::D24;
+	depthTargetCreateInfo.format = GraphicsAPI::Format::D24_UNORM_S8_UINT;
 	depthTargetCreateInfo.isSampled = true;
 	depthTargetCreateInfo.isCubemap = false;
 	depthTargetCreateInfo.isShadowMap = false;
@@ -51,7 +51,7 @@ EditorCamera::EditorCamera() {
 	renderPassCreateInfo.debugName = "Editor RenderPass";
 	renderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(attachments.size());
 	renderPassCreateInfo.colorAttachments = attachments.data();
-	renderPassCreateInfo.depthFormat = GraphicsAPI::DepthFormat::D24;
+	renderPassCreateInfo.depthFormat = GraphicsAPI::Format::D24_UNORM_S8_UINT;
 	renderPass = core->CreateRenderPass(renderPassCreateInfo);
 
 	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> gizmoAttachments = { { renderTargetCreateInfo.format, false } };
@@ -60,7 +60,7 @@ EditorCamera::EditorCamera() {
 	gizmoRenderPassCreateInfo.debugName = "Editor Gizmo RenderPass";
 	gizmoRenderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(gizmoAttachments.size());
 	gizmoRenderPassCreateInfo.colorAttachments = gizmoAttachments.data();
-	gizmoRenderPassCreateInfo.depthFormat = GraphicsAPI::DepthFormat::D24;
+	gizmoRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D24_UNORM_S8_UINT;
 	gizmoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 	gizmoRenderPass = core->CreateRenderPass(gizmoRenderPassCreateInfo);
 

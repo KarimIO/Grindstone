@@ -13,13 +13,13 @@ namespace Grindstone::GraphicsAPI {
 	public:
 		struct CreateInfo {
 			const char* debugName = nullptr;
-			ColorFormat format = ColorFormat::Invalid;
+			Format format = Format::Invalid;
 			bool isSampled = false;
 			bool isWrittenByCompute = false;
 			bool hasMipChain = false;
 			uint32_t width = 0, height = 0;
 			CreateInfo() {};
-			CreateInfo(ColorFormat colorFormat, uint32_t width, uint32_t height, bool isSampled, bool isWrittenByCompute, const char* name, bool hasMipChain = false) :
+			CreateInfo(Format colorFormat, uint32_t width, uint32_t height, bool isSampled, bool isWrittenByCompute, const char* name, bool hasMipChain = false) :
 				format(colorFormat),
 				width(width),
 				height(height),

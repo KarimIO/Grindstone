@@ -667,12 +667,33 @@ Base::RenderTarget* Vulkan::Core::CreateRenderTarget(const Base::RenderTarget::C
 	return static_cast<Base::RenderTarget*>(AllocatorCore::Allocate<Vulkan::RenderTarget>(ci));
 }
 
-Base::RenderTarget* Vulkan::Core::CreateRenderTarget(const Base::RenderTarget::CreateInfo* ci, uint32_t rc, bool cube) {
-	return static_cast<Base::RenderTarget*>(AllocatorCore::Allocate<Vulkan::RenderTarget>(*ci));
-}
-
 Base::DepthStencilTarget* Vulkan::Core::CreateDepthStencilTarget(const Base::DepthStencilTarget::CreateInfo& ci) {
 	return static_cast<Base::DepthStencilTarget*>(AllocatorCore::Allocate<Vulkan::DepthStencilTarget>(ci));
+}
+
+Base::GraphicsPipeline* Vulkan::Core::GetOrCreateGraphicsPipelineFromCache(
+	const GraphicsPipeline::PipelineData& pipelineData,
+	const VertexInputLayout* vertexInputLayout
+) {
+	size_t hash = std::hash<GraphicsPipeline::PipelineData>{}(pipelineData);
+	if (vertexInputLayout != nullptr) {
+		hash ^= std::hash<VertexInputLayout>{}(*vertexInputLayout);
+	}
+	auto& iterator = graphicsPipelineCache.find(hash);
+	if (iterator != graphicsPipelineCache.end()) {
+		return iterator->second;
+	}
+
+	Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo createInfo{};
+	createInfo.pipelineData = pipelineData;
+	if (vertexInputLayout != nullptr) {
+		createInfo.vertexInputLayout = *vertexInputLayout;
+	}
+
+	Grindstone::GraphicsAPI::GraphicsPipeline* newPipeline = CreateGraphicsPipeline(createInfo);
+
+	graphicsPipelineCache[hash] = newPipeline;
+	return newPipeline;
 }
 
 // Deleters

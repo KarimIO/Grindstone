@@ -50,9 +50,9 @@ GraphicsAPI::RenderPass* DeferredRenderer::gbufferRenderPass = nullptr;
 GraphicsAPI::RenderPass* DeferredRenderer::mainRenderPass = nullptr;
 
 const size_t MAX_BLOOM_MIPS = 40u;
-const DepthFormat depthFormat = DepthFormat::D24;
+const Format depthFormat = Format::D24_UNORM_S8_UINT;
 const bool shouldFastResize = true;
-GraphicsAPI::ColorFormat ambientOcclusionFormat = GraphicsAPI::ColorFormat::R8;
+GraphicsAPI::Format ambientOcclusionFormat = GraphicsAPI::Format::R8_UNORM;
 
 float lightPositions[] = {
 	-1.0f, -1.0f,
@@ -126,7 +126,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	renderPassCreateInfo.debugName = "Shadow Map Render Pass";
 	renderPassCreateInfo.colorAttachments = nullptr;
 	renderPassCreateInfo.colorAttachmentCount = 0;
-	renderPassCreateInfo.depthFormat = DepthFormat::D32;
+	renderPassCreateInfo.depthFormat = Format::D32_SFLOAT;
 	shadowMapRenderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
 	bloomStoredMipLevelCount = bloomMipLevelCount = CalculateBloomLevels(renderWidth, renderHeight);
@@ -147,14 +147,15 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	CreateBloomUniformBuffers();
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
-		GraphicsAPI::UniformBuffer::CreateInfo postProcessingUboCreateInfo{};
+		GraphicsAPI::Buffer::CreateInfo postProcessingUboCreateInfo{};
 		postProcessingUboCreateInfo.debugName = "Post Processing UBO";
-		postProcessingUboCreateInfo.isDynamic = false;
-		postProcessingUboCreateInfo.size = sizeof(PostProcessUbo);
-		GraphicsAPI::UniformBuffer* postProcessingUbo =
-			graphicsCore->CreateUniformBuffer(postProcessingUboCreateInfo);
-		postProcessingUbo->UpdateBuffer(&postProcessUboData);
-		deferredRendererImageSets[i].tonemapPostProcessingUniformBufferObject = postProcessingUbo;
+		postProcessingUboCreateInfo.content = &postProcessUboData;
+		postProcessingUboCreateInfo.bufferUsage = BufferUsage::Uniform;
+		postProcessingUboCreateInfo.memoryUsage = MemUsage::CPUToGPU;
+		postProcessingUboCreateInfo.bufferSize = sizeof(PostProcessUbo);
+
+		deferredRendererImageSets[i].tonemapPostProcessingUniformBufferObject =
+			graphicsCore->CreateBuffer(postProcessingUboCreateInfo);
 
 		CreateDepthOfFieldRenderTargetsAndDescriptorSets(deferredRendererImageSets[i], i);
 		CreateSsrRenderTargetsAndDescriptorSets(deferredRendererImageSets[i], i);
@@ -174,8 +175,8 @@ DeferredRenderer::~DeferredRenderer() {
 		graphicsCore->DeleteFramebuffer(imageSet.lightingFramebuffer);
 		graphicsCore->DeleteRenderTarget(imageSet.ssrRenderTarget);
 
-		graphicsCore->DeleteUniformBuffer(imageSet.debugUniformBufferObject);
-		graphicsCore->DeleteUniformBuffer(imageSet.tonemapPostProcessingUniformBufferObject);
+		graphicsCore->DeleteBuffer(imageSet.debugUniformBufferObject);
+		graphicsCore->DeleteBuffer(imageSet.tonemapPostProcessingUniformBufferObject);
 
 		graphicsCore->DeleteDescriptorSet(imageSet.ssrDescriptorSet);
 		graphicsCore->DeleteDescriptorSet(imageSet.debugDescriptorSet);
@@ -203,7 +204,7 @@ DeferredRenderer::~DeferredRenderer() {
 			graphicsCore->DeleteDescriptorSet(bloomDs);
 		}
 
-		graphicsCore->DeleteUniformBuffer(imageSet.globalUniformBufferObject);
+		graphicsCore->DeleteBuffer(imageSet.globalUniformBufferObject);
 
 		graphicsCore->DeleteFramebuffer(imageSet.gbuffer);
 		graphicsCore->DeleteRenderTarget(imageSet.gbufferAlbedoRenderTarget);
@@ -223,15 +224,15 @@ DeferredRenderer::~DeferredRenderer() {
 		graphicsCore->DeleteDescriptorSet(imageSet.ambientOcclusionDescriptorSet);
 	}
 
-	for (GraphicsAPI::UniformBuffer* bloomUb : bloomUniformBuffers) {
-		graphicsCore->DeleteUniformBuffer(bloomUb);
+	for (GraphicsAPI::Buffer* bloomUb : bloomUniformBuffers) {
+		graphicsCore->DeleteBuffer(bloomUb);
 	}
 
 	graphicsCore->DeleteDescriptorSetLayout(engineDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSetLayout(tonemapDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSetLayout(lightingDescriptorSetLayout);
 
-	graphicsCore->DeleteUniformBuffer(ssaoUniformBuffer);
+	graphicsCore->DeleteBuffer(ssaoUniformBuffer);
 	graphicsCore->DeleteTexture(ssaoNoiseTexture);
 	graphicsCore->DeleteDescriptorSet(ssaoInputDescriptorSet);
 	graphicsCore->DeleteDescriptorSetLayout(ssaoInputDescriptorSetLayout);
@@ -256,8 +257,8 @@ DeferredRenderer::~DeferredRenderer() {
 	graphicsCore->DeleteDescriptorSet(environmentMapDescriptorSet);
 	graphicsCore->DeleteDescriptorSet(shadowMapDescriptorSet);
 
-	graphicsCore->DeleteVertexBuffer(vertexBuffer);
-	graphicsCore->DeleteIndexBuffer(indexBuffer);
+	graphicsCore->DeleteBuffer(vertexBuffer);
+	graphicsCore->DeleteBuffer(indexBuffer);
 	graphicsCore->DeleteVertexArrayObject(planePostProcessVao);
 
 	graphicsCore->DeleteDescriptorSetLayout(dofSourceDescriptorSetLayout);
@@ -317,22 +318,22 @@ void DeferredRenderer::CreateDepthOfFieldRenderTargetsAndDescriptorSets(Deferred
 	}
 
 	{
-		GraphicsAPI::RenderTarget::CreateInfo nearRTCreateInfo = { GraphicsAPI::ColorFormat::RGBA16, framebufferWidth / 2, framebufferHeight / 2, true, false, "Near DOF Render Target" };
+		GraphicsAPI::RenderTarget::CreateInfo nearRTCreateInfo = { Format::R16G16B16A16_SFLOAT, framebufferWidth / 2, framebufferHeight / 2, true, false, "Near DOF Render Target" };
 		imageSet.nearDofRenderTarget = graphicsCore->CreateRenderTarget(nearRTCreateInfo);
 	}
 
 	{
-		GraphicsAPI::RenderTarget::CreateInfo farRTCreateInfo = { GraphicsAPI::ColorFormat::RGBA16, framebufferWidth / 2, framebufferHeight / 2, true, false, "Far DOF Render Target" };
+		GraphicsAPI::RenderTarget::CreateInfo farRTCreateInfo = { Format::R16G16B16A16_SFLOAT, framebufferWidth / 2, framebufferHeight / 2, true, false, "Far DOF Render Target" };
 		imageSet.farDofRenderTarget = graphicsCore->CreateRenderTarget(farRTCreateInfo);
 	}
 
 	{
-		GraphicsAPI::RenderTarget::CreateInfo nearBlurredRTCreateInfo = { GraphicsAPI::ColorFormat::RGBA16, framebufferWidth / 4, framebufferHeight / 4, true, false, "Near Blurred DOF Render Target" };
+		GraphicsAPI::RenderTarget::CreateInfo nearBlurredRTCreateInfo = { Format::R16G16B16A16_SFLOAT, framebufferWidth / 4, framebufferHeight / 4, true, false, "Near Blurred DOF Render Target" };
 		imageSet.nearBlurredDofRenderTarget = graphicsCore->CreateRenderTarget(nearBlurredRTCreateInfo);
 	}
 
 	{
-		GraphicsAPI::RenderTarget::CreateInfo farBlurredRTCreateInfo = { GraphicsAPI::ColorFormat::RGBA16, framebufferWidth / 4, framebufferHeight / 4, true, false, "Far Blurred DOF Render Target" };
+		GraphicsAPI::RenderTarget::CreateInfo farBlurredRTCreateInfo = { Format::R16G16B16A16_SFLOAT, framebufferWidth / 4, framebufferHeight / 4, true, false, "Far Blurred DOF Render Target" };
 		imageSet.farBlurredDofRenderTarget = graphicsCore->CreateRenderTarget(farBlurredRTCreateInfo);
 	}
 
@@ -448,23 +449,23 @@ void DeferredRenderer::CreateDepthOfFieldResources() {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	std::array<RenderPass::AttachmentInfo, 2> dofSepFormats{};
-	dofSepFormats[0] = { ColorFormat::RGBA16, true };
-	dofSepFormats[1] = { ColorFormat::RGBA16, true };
+	dofSepFormats[0] = { Format::R16G16B16A16_SFLOAT, true };
+	dofSepFormats[1] = { Format::R16G16B16A16_SFLOAT, true };
 
 	RenderPass::CreateInfo dofSepRenderPassCreateInfo{};
 	dofSepRenderPassCreateInfo.debugName = "Depth of Field Separation Render Pass";
 	dofSepRenderPassCreateInfo.colorAttachments = dofSepFormats.data();
 	dofSepRenderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(dofSepFormats.size());
-	dofSepRenderPassCreateInfo.depthFormat = DepthFormat::None;
+	dofSepRenderPassCreateInfo.depthFormat = Format::Invalid;
 	dofSeparationRenderPass = graphicsCore->CreateRenderPass(dofSepRenderPassCreateInfo);
 
-	RenderPass::AttachmentInfo dofBlurAndComboFormat = { ColorFormat::RGBA16, true };
+	RenderPass::AttachmentInfo dofBlurAndComboFormat = { Format::R16G16B16A16_SFLOAT, true };
 
 	RenderPass::CreateInfo dofBlurAndComboRenderPassCreateInfo{};
 	dofBlurAndComboRenderPassCreateInfo.debugName = "Depth of Field Blur and Combo Render Pass";
 	dofBlurAndComboRenderPassCreateInfo.colorAttachments = &dofBlurAndComboFormat;
 	dofBlurAndComboRenderPassCreateInfo.colorAttachmentCount = 1;
-	dofBlurAndComboRenderPassCreateInfo.depthFormat = DepthFormat::None;
+	dofBlurAndComboRenderPassCreateInfo.depthFormat = Format::Invalid;
 	dofBlurAndCombinationRenderPass = graphicsCore->CreateRenderPass(dofBlurAndComboRenderPassCreateInfo);
 
 
@@ -585,12 +586,13 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 			ssaoUboStruct.kernels[i] = sample;
 		}
 
-		GraphicsAPI::UniformBuffer::CreateInfo ssaoUniformBufferObjectCi{};
+		GraphicsAPI::Buffer::CreateInfo ssaoUniformBufferObjectCi{};
 		ssaoUniformBufferObjectCi.debugName = "SSAO Uniform Buffer";
-		ssaoUniformBufferObjectCi.isDynamic = false;
-		ssaoUniformBufferObjectCi.size = sizeof(SsaoUboStruct);
-		ssaoUniformBuffer = graphicsCore->CreateUniformBuffer(ssaoUniformBufferObjectCi);
-		ssaoUniformBuffer->UpdateBuffer(&ssaoUboStruct);
+		ssaoUniformBufferObjectCi.bufferUsage = BufferUsage::Uniform;
+		ssaoUniformBufferObjectCi.memoryUsage = MemUsage::CPUToGPU;
+		ssaoUniformBufferObjectCi.bufferSize = sizeof(SsaoUboStruct);
+		ssaoUniformBuffer = graphicsCore->CreateBuffer(ssaoUniformBufferObjectCi);
+		ssaoUniformBuffer->UploadData(&ssaoUboStruct);
 	}
 
 	{
@@ -607,7 +609,7 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 		ssaoNoiseCreateInfo.debugName = "SSAO Noise Texture";
 		ssaoNoiseCreateInfo.data = reinterpret_cast<const char*>(ssaoNoise.data());
 		ssaoNoiseCreateInfo.size = static_cast<uint32_t>(sizeof(ssaoNoise));
-		ssaoNoiseCreateInfo.format = GraphicsAPI::ColorFormat::RG8;
+		ssaoNoiseCreateInfo.format = GraphicsAPI::Format::R8G8_UNORM;
 		ssaoNoiseCreateInfo.width = ssaoNoiseCreateInfo.height = ssaoNoiseDimSize;
 		ssaoNoiseCreateInfo.isCubemap = false;
 		ssaoNoiseCreateInfo.mipmaps = 1;
@@ -659,7 +661,7 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 		ssaoRenderPassCreateInfo.debugName = "SSAO Renderpass";
 		ssaoRenderPassCreateInfo.colorAttachments = &attachment;
 		ssaoRenderPassCreateInfo.colorAttachmentCount = 1;
-		ssaoRenderPassCreateInfo.depthFormat = DepthFormat::None;
+		ssaoRenderPassCreateInfo.depthFormat = Format::Invalid;
 		ssaoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 		ssaoRenderPass = graphicsCore->CreateRenderPass(ssaoRenderPassCreateInfo);
 	}
@@ -739,19 +741,20 @@ void DeferredRenderer::CreateBloomUniformBuffers() {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	for (size_t i = 0; i < bloomUniformBuffers.size(); ++i) {
 		if (bloomUniformBuffers[i] != nullptr) {
-			graphicsCore->DeleteUniformBuffer(bloomUniformBuffers[i]);
+			graphicsCore->DeleteBuffer(bloomUniformBuffers[i]);
 		}
 	}
 
 	bloomUniformBuffers.resize(bloomStoredMipLevelCount * 2);
 
-	GraphicsAPI::UniformBuffer::CreateInfo uniformBufferCreateInfo{};
+	GraphicsAPI::Buffer::CreateInfo uniformBufferCreateInfo{};
 	uniformBufferCreateInfo.debugName = "Bloom Uniform Buffer";
-	uniformBufferCreateInfo.isDynamic = true;
-	uniformBufferCreateInfo.size = sizeof(BloomUboStruct);
+	uniformBufferCreateInfo.bufferUsage = BufferUsage::Uniform;
+	uniformBufferCreateInfo.memoryUsage = MemUsage::CPUToGPU;
+	uniformBufferCreateInfo.bufferSize = sizeof(BloomUboStruct);
 
 	for (size_t i = 0; i < bloomUniformBuffers.size(); ++i) {
-		bloomUniformBuffers[i] = graphicsCore->CreateUniformBuffer(uniformBufferCreateInfo);
+		bloomUniformBuffers[i] = graphicsCore->CreateBuffer(uniformBufferCreateInfo);
 	}
 }
 
@@ -766,7 +769,7 @@ void DeferredRenderer::CreateSsrRenderTargetsAndDescriptorSets(DeferredRendererI
 		graphicsCore->DeleteDescriptorSet(imageSet.ssrDescriptorSet);
 	}
 
-	GraphicsAPI::RenderTarget::CreateInfo ssrRenderTargetCreateInfo{ GraphicsAPI::ColorFormat::RGBA16, framebufferWidth, framebufferHeight, true, true, "SSR Render Target" };
+	GraphicsAPI::RenderTarget::CreateInfo ssrRenderTargetCreateInfo{ Format::R16G16B16A16_SFLOAT, framebufferWidth, framebufferHeight, true, true, "SSR Render Target" };
 	imageSet.ssrRenderTarget = graphicsCore->CreateRenderTarget(ssrRenderTargetCreateInfo);
 
 	std::array<GraphicsAPI::DescriptorSet::Binding, 6> descriptorBindings;
@@ -804,7 +807,13 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 	imageSet.bloomRenderTargets.resize(bloomStoredMipLevelCount * 2);
 	imageSet.bloomDescriptorSets.resize(bloomStoredMipLevelCount * 2 - 2);
 
-	GraphicsAPI::RenderTarget::CreateInfo bloomRenderTargetCreateInfo{ GraphicsAPI::ColorFormat::RGBA32, framebufferWidth, framebufferHeight, true, true, "Bloom Render Target" };
+	GraphicsAPI::RenderTarget::CreateInfo bloomRenderTargetCreateInfo{
+		GraphicsAPI::Format::R32G32B32A32_SFLOAT,
+		framebufferWidth,
+		framebufferHeight,
+		true, true,
+		"Bloom Render Target"
+	};
 
 	for (uint32_t i = 0; i < bloomStoredMipLevelCount; ++i) {
 		std::string bloomRenderTargetName = std::string("Bloom Render Target Downscale Mip ") + std::to_string(i);
@@ -851,7 +860,7 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 	if (bloomStoredMipLevelCount > 1) {
 		std::string bloomDescriptorName = fmt::format("Bloom DS Filter [{}]", imageSetIndex);
 		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
-		bloomUniformBuffers[bloomDescriptorSetIndex]->UpdateBuffer(&bloomUboStruct);
+		bloomUniformBuffers[bloomDescriptorSetIndex]->UploadData(&bloomUboStruct);
 		descriptorBindings[0].itemPtr = bloomUniformBuffers[bloomDescriptorSetIndex];
 		descriptorBindings[1].itemPtr = imageSet.bloomRenderTargets[1];
 		descriptorBindings[2].itemPtr = imageSet.litHdrRenderTarget;
@@ -862,7 +871,7 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 	for (size_t i = 1; i < bloomStoredMipLevelCount - 1; ++i) {
 		std::string bloomDescriptorName = fmt::format("Bloom DS Downsample [{}]({})", imageSetIndex, i);
 		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
-		bloomUniformBuffers[bloomDescriptorSetIndex]->UpdateBuffer(&bloomUboStruct);
+		bloomUniformBuffers[bloomDescriptorSetIndex]->UploadData(&bloomUboStruct);
 		descriptorBindings[0].itemPtr = bloomUniformBuffers[bloomDescriptorSetIndex];
 		descriptorBindings[1].itemPtr = imageSet.bloomRenderTargets[i + 1];
 		descriptorBindings[2].itemPtr = imageSet.bloomRenderTargets[i];
@@ -872,7 +881,7 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 	{
 		std::string bloomDescriptorName = fmt::format("Bloom DS First Upsample [{}])", imageSetIndex);
 		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
-		bloomUniformBuffers[bloomDescriptorSetIndex]->UpdateBuffer(&bloomUboStruct);
+		bloomUniformBuffers[bloomDescriptorSetIndex]->UploadData(&bloomUboStruct);
 		descriptorBindings[0].itemPtr = bloomUniformBuffers[bloomDescriptorSetIndex];
 		descriptorBindings[1].itemPtr = imageSet.bloomRenderTargets[bloomStoredMipLevelCount * 2 - 1];
 		descriptorBindings[2].itemPtr = imageSet.bloomRenderTargets[bloomStoredMipLevelCount - 2];
@@ -884,7 +893,7 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 	for (size_t i = bloomStoredMipLevelCount - 2; i >= 1; --i) {
 		std::string bloomDescriptorName = fmt::format("Bloom DS Upsample [{}]({})", imageSetIndex, i);
 		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
-		bloomUniformBuffers[bloomDescriptorSetIndex]->UpdateBuffer(&bloomUboStruct);
+		bloomUniformBuffers[bloomDescriptorSetIndex]->UploadData(&bloomUboStruct);
 		descriptorBindings[0].itemPtr = bloomUniformBuffers[bloomDescriptorSetIndex];
 		descriptorBindings[1].itemPtr = imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i];
 		descriptorBindings[3].itemPtr = imageSet.bloomRenderTargets[i];
@@ -922,26 +931,26 @@ void DeferredRenderer::UpdateBloomUBO() {
 	bloomUboStruct.stage = BloomStage::Filter;
 	if (bloomMipLevelCount > 1) {
 		bloomUboStruct.outReciprocalImgSize = mipSizes[0];
-		bloomUniformBuffers[bloomUboIndex++]->UpdateBuffer(&bloomUboStruct);
+		bloomUniformBuffers[bloomUboIndex++]->UploadData(&bloomUboStruct);
 
 		bloomUboStruct.stage = BloomStage::Downsample;
 		for (size_t i = 1; i < bloomMipLevelCount - 1; ++i) {
 			bloomUboStruct.outReciprocalImgSize = mipSizes[i + 1];
-			bloomUniformBuffers[bloomUboIndex++]->UpdateBuffer(&bloomUboStruct);
+			bloomUniformBuffers[bloomUboIndex++]->UploadData(&bloomUboStruct);
 		}
 
 		bloomUboStruct.stage = BloomStage::Upsample;
 		{
 			bloomUboStruct.outReciprocalImgSize = mipSizes[bloomMipLevelCount - 1];
 			bloomUboStruct.inReciprocalImgSize = mipSizes[bloomMipLevelCount - 2];
-			bloomUniformBuffers[bloomFirstUpsampleIndex]->UpdateBuffer(&bloomUboStruct);
+			bloomUniformBuffers[bloomFirstUpsampleIndex]->UploadData(&bloomUboStruct);
 		}
 
 		bloomUboIndex = static_cast<uint32_t>((bloomStoredMipLevelCount * 2) - bloomMipLevelCount);
 		for (size_t i = bloomMipLevelCount - 2; i >= 1; --i) {
 			bloomUboStruct.outReciprocalImgSize = mipSizes[i];
 			bloomUboStruct.inReciprocalImgSize = mipSizes[i - 1];
-			bloomUniformBuffers[bloomUboIndex++]->UpdateBuffer(&bloomUboStruct);
+			bloomUniformBuffers[bloomUboIndex++]->UploadData(&bloomUboStruct);
 		}
 
 	}
@@ -968,17 +977,19 @@ void DeferredRenderer::CreateUniformBuffers() {
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		DeferredRendererImageSet& imageSet = deferredRendererImageSets[i];
 
-		UniformBuffer::CreateInfo globalUniformBufferObjectCi{};
+		GraphicsAPI::Buffer::CreateInfo globalUniformBufferObjectCi{};
 		globalUniformBufferObjectCi.debugName = "EngineUbo";
-		globalUniformBufferObjectCi.isDynamic = true;
-		globalUniformBufferObjectCi.size = sizeof(EngineUboStruct);
-		imageSet.globalUniformBufferObject = graphicsCore->CreateUniformBuffer(globalUniformBufferObjectCi);
+		globalUniformBufferObjectCi.bufferUsage = BufferUsage::Uniform;
+		globalUniformBufferObjectCi.memoryUsage = MemUsage::CPUToGPU;
+		globalUniformBufferObjectCi.bufferSize = sizeof(EngineUboStruct);
+		imageSet.globalUniformBufferObject = graphicsCore->CreateBuffer(globalUniformBufferObjectCi);
 
-		UniformBuffer::CreateInfo debugUniformBufferObjectCi{};
+		GraphicsAPI::Buffer::CreateInfo debugUniformBufferObjectCi{};
 		debugUniformBufferObjectCi.debugName = "DebugUbo";
-		debugUniformBufferObjectCi.isDynamic = true;
-		debugUniformBufferObjectCi.size = sizeof(DebugUboData);
-		imageSet.debugUniformBufferObject = graphicsCore->CreateUniformBuffer(debugUniformBufferObjectCi);
+		debugUniformBufferObjectCi.bufferUsage = BufferUsage::Uniform;
+		debugUniformBufferObjectCi.memoryUsage = MemUsage::CPUToGPU;
+		debugUniformBufferObjectCi.bufferSize = sizeof(DebugUboData);
+		imageSet.debugUniformBufferObject = graphicsCore->CreateBuffer(debugUniformBufferObjectCi);
 	}
 
 	CreateDescriptorSetLayouts();
@@ -1265,30 +1276,34 @@ void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) 
 void DeferredRenderer::CreateVertexAndIndexBuffersAndLayouts() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	vertexLightPositionLayout = {
+	vertexLightPositionLayout = VertexInputLayoutBuilder().AddBinding(
+		{ 0, 0, VertexInputRate::Vertex },
 		{
-			0,
-			Grindstone::GraphicsAPI::VertexFormat::Float2,
-			"vertexPosition",
-			false,
-			Grindstone::GraphicsAPI::AttributeUsage::Position
+			{
+				"vertexPosition",
+				0,
+				Grindstone::GraphicsAPI::Format::R8G8_UNORM,
+				false,
+				Grindstone::GraphicsAPI::AttributeUsage::Position
+			}
 		}
-	};
+	).Build();
 
-	VertexBuffer::CreateInfo vboCi{};
+	GraphicsAPI::Buffer::CreateInfo vboCi{};
 	vboCi.debugName = "Light Vertex Position Buffer";
+	vboCi.bufferUsage = BufferUsage::Vertex;
+	vboCi.memoryUsage = MemUsage::GPUOnly;
 	vboCi.content = lightPositions;
-	vboCi.count = sizeof(lightPositions) / (sizeof(float) * 2);
-	vboCi.size = sizeof(lightPositions);
-	vboCi.layout = &vertexLightPositionLayout;
-	vertexBuffer = graphicsCore->CreateVertexBuffer(vboCi);
+	vboCi.bufferSize = sizeof(float) * 8;
+	vertexBuffer = graphicsCore->CreateBuffer(vboCi);
 
-	IndexBuffer::CreateInfo iboCi{};
+	GraphicsAPI::Buffer::CreateInfo iboCi{};
 	iboCi.debugName = "Light Index Buffer";
+	vboCi.bufferUsage = BufferUsage::Vertex;
+	vboCi.memoryUsage = MemUsage::GPUOnly;
 	iboCi.content = lightIndices;
-	iboCi.count = sizeof(lightIndices) / sizeof(lightIndices[0]);
-	iboCi.size = sizeof(lightIndices);
-	indexBuffer = graphicsCore->CreateIndexBuffer(iboCi);
+	iboCi.bufferSize = sizeof(lightIndices);
+	indexBuffer = graphicsCore->CreateBuffer(iboCi);
 
 	VertexArrayObject::CreateInfo vaoCi{};
 	vaoCi.debugName = "Light Vertex Array Object";
@@ -1303,9 +1318,9 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 
 	const int gbufferColorCount = 3;
 	std::array<RenderPass::AttachmentInfo, gbufferColorCount> gbufferColorAttachments{};
-	gbufferColorAttachments[0] = { ColorFormat::RGBA8, true }; // Albedo
-	gbufferColorAttachments[1] = { ColorFormat::RGBA16, true }; // Normal
-	gbufferColorAttachments[2] = { ColorFormat::RGBA8, true }; // Specular RGB + Roughness Alpha
+	gbufferColorAttachments[0] = { Format::R8G8B8A8_UNORM, true }; // Albedo
+	gbufferColorAttachments[1] = { Format::R16G16B16A16_UNORM, true }; // Normal
+	gbufferColorAttachments[2] = { Format::R8G8B8A8_UNORM, true }; // Specular RGB + Roughness Alpha
 
 	if (gbufferRenderPass == nullptr) {
 		RenderPass::CreateInfo gbufferRenderPassCreateInfo{};
@@ -1372,7 +1387,14 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 void DeferredRenderer::CreateLitHDRFramebuffer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	RenderTarget::CreateInfo litHdrImagesCreateInfo = { Grindstone::GraphicsAPI::ColorFormat::RGBA16, framebufferWidth, framebufferHeight, true, false, "Lit HDR Color Image" };
+	RenderTarget::CreateInfo litHdrImagesCreateInfo = {
+		Grindstone::GraphicsAPI::Format::R16G16B16_SFLOAT,
+		framebufferWidth,
+		framebufferHeight,
+		true,
+		false,
+		"Lit HDR Color Image"
+	};
 	// DepthStencilTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false, false, "Lit HDR Depth Image");
 
 	RenderPass::AttachmentInfo attachment{ litHdrImagesCreateInfo.format , true };
@@ -1397,7 +1419,7 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 		lightingRenderPassCreateInfo.debugName = "Deferred Light Render Pass";
 		lightingRenderPassCreateInfo.colorAttachments = &attachment;
 		lightingRenderPassCreateInfo.colorAttachmentCount = 1;
-		lightingRenderPassCreateInfo.depthFormat = DepthFormat::None;
+		lightingRenderPassCreateInfo.depthFormat = Format::Invalid;
 		lightingRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 		memcpy(lightingRenderPassCreateInfo.debugColor, debugColor, sizeof(float) * 4);
 		lightingRenderPass = graphicsCore->CreateRenderPass(lightingRenderPassCreateInfo);
@@ -1478,7 +1500,7 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 			depthStencilClear
 		);
 
-		Grindstone::GraphicsAPI::GraphicsPipeline* dofSeparationPipeline = dofSeparationPipelineSet.Get()->GetFirstPassPipeline();
+		Grindstone::GraphicsAPI::GraphicsPipeline* dofSeparationPipeline = dofSeparationPipelineSet.Get()->GetFirstPassPipeline(&vertexLightPositionLayout);
 		std::array<DescriptorSet*, 2> descriptorSets = { imageSet.engineDescriptorSet, imageSet.dofSourceDescriptorSet };
 		currentCommandBuffer->BindGraphicsPipeline(dofSeparationPipeline);
 		currentCommandBuffer->BindGraphicsDescriptorSet(
@@ -1490,7 +1512,8 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 		currentCommandBuffer->UnbindRenderPass();
 	}
 
-	Grindstone::GraphicsAPI::GraphicsPipeline* dofBlurPipeline = dofBlurPipelineSet.Get()->GetFirstPassPipeline();
+	Grindstone::GraphicsAPI::GraphicsPipeline* dofBlurPipeline = dofBlurPipelineSet.Get()->GetFirstPassPipeline(&vertexLightPositionLayout);
+
 	{
 		currentCommandBuffer->BindRenderPass(
 			dofBlurAndCombinationRenderPass,
@@ -1549,7 +1572,7 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 		);
 
 		std::array<DescriptorSet*, 3> descriptorSets = { imageSet.engineDescriptorSet, imageSet.dofSourceDescriptorSet, imageSet.dofCombineDescriptorSet };
-		Grindstone::GraphicsAPI::GraphicsPipeline* dofCombinationPipeline = dofCombinationPipelineSet.Get()->GetFirstPassPipeline();
+		Grindstone::GraphicsAPI::GraphicsPipeline* dofCombinationPipeline = dofCombinationPipelineSet.Get()->GetFirstPassPipeline(&vertexLightPositionLayout);
 		currentCommandBuffer->BindGraphicsPipeline(dofCombinationPipeline);
 		currentCommandBuffer->BindGraphicsDescriptorSet(
 			dofCombinationPipeline,
@@ -1694,7 +1717,7 @@ void DeferredRenderer::RenderLights(
 
 	Grindstone::GraphicsPipelineAsset* imageBasedLightingAsset = imageBasedLightingPipelineSet.Get();
 	if (imageBasedLightingAsset != nullptr) {
-		Grindstone::GraphicsAPI::GraphicsPipeline* imageBasedLightingPipeline = imageBasedLightingAsset->GetFirstPassPipeline();
+		Grindstone::GraphicsAPI::GraphicsPipeline* imageBasedLightingPipeline = imageBasedLightingAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
 		if (imageBasedLightingPipeline != nullptr) {
 			currentCommandBuffer->BeginDebugLabelSection("Image Based Lighting", nullptr);
 			currentCommandBuffer->BindGraphicsPipeline(imageBasedLightingPipeline);
@@ -1733,7 +1756,7 @@ void DeferredRenderer::RenderLights(
 
 	Grindstone::GraphicsPipelineAsset* pointLightAsset = pointLightPipelineSet.Get();
 	if (pointLightAsset != nullptr) {
-		Grindstone::GraphicsAPI::GraphicsPipeline* pointLightPipeline = pointLightAsset->GetFirstPassPipeline();
+		Grindstone::GraphicsAPI::GraphicsPipeline* pointLightPipeline = pointLightAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
 		if (pointLightPipeline != nullptr) {
 			currentCommandBuffer->BeginDebugLabelSection("Point Lighting", nullptr);
 			currentCommandBuffer->BindGraphicsPipeline(pointLightPipeline);
@@ -1753,7 +1776,7 @@ void DeferredRenderer::RenderLights(
 				};
 
 				pointLightDescriptors[1] = pointLightComponent.descriptorSet;
-				pointLightComponent.uniformBufferObject->UpdateBuffer(&lightmapStruct);
+				pointLightComponent.uniformBufferObject->UploadData(&lightmapStruct);
 				currentCommandBuffer->BindGraphicsDescriptorSet(pointLightPipeline, pointLightDescriptors.data(), static_cast<uint32_t>(pointLightDescriptors.size()));
 				currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 			});
@@ -1763,7 +1786,7 @@ void DeferredRenderer::RenderLights(
 
 	Grindstone::GraphicsPipelineAsset* spotLightAsset = spotLightPipelineSet.Get();
 	if (spotLightAsset != nullptr) {
-		Grindstone::GraphicsAPI::GraphicsPipeline* spotLightPipeline = spotLightAsset->GetFirstPassPipeline();
+		Grindstone::GraphicsAPI::GraphicsPipeline* spotLightPipeline = spotLightAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
 		if (spotLightPipeline != nullptr) {
 			currentCommandBuffer->BeginDebugLabelSection("Spot Lighting", nullptr);
 			currentCommandBuffer->BindGraphicsPipeline(spotLightPipeline);
@@ -1787,7 +1810,7 @@ void DeferredRenderer::RenderLights(
 					spotLightComponent.shadowResolution
 				};
 
-				spotLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
+				spotLightComponent.uniformBufferObject->UploadData(&lightStruct);
 
 				spotLightDescriptors[1] = spotLightComponent.descriptorSet;
 				currentCommandBuffer->BindGraphicsDescriptorSet(spotLightPipeline, spotLightDescriptors.data(), static_cast<uint32_t>(spotLightDescriptors.size()));
@@ -1799,7 +1822,7 @@ void DeferredRenderer::RenderLights(
 
 	Grindstone::GraphicsPipelineAsset* directionalLightAsset = directionalLightPipelineSet.Get();
 	if (directionalLightAsset != nullptr) {
-		Grindstone::GraphicsAPI::GraphicsPipeline* directionalLightPipeline = directionalLightAsset->GetFirstPassPipeline();
+		Grindstone::GraphicsAPI::GraphicsPipeline* directionalLightPipeline = directionalLightAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
 		if (directionalLightPipeline != nullptr) {
 			currentCommandBuffer->BeginDebugLabelSection("Directional Lighting", nullptr);
 			currentCommandBuffer->BindGraphicsPipeline(directionalLightPipeline);
@@ -1820,7 +1843,7 @@ void DeferredRenderer::RenderLights(
 					directionalLightComponent.shadowResolution
 				};
 
-				directionalLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
+				directionalLightComponent.uniformBufferObject->UploadData(&lightStruct);
 
 				directionalLightDescriptors[1] = directionalLightComponent.descriptorSet;
 				currentCommandBuffer->BindGraphicsDescriptorSet(directionalLightPipeline, directionalLightDescriptors.data(), static_cast<uint32_t>(directionalLightDescriptors.size()));
@@ -1837,7 +1860,7 @@ void DeferredRenderer::RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAP
 		return;
 	}
 
-	Grindstone::GraphicsAPI::GraphicsPipeline* ssaoPipeline = pipelineSetAsset->GetFirstPassPipeline();
+	Grindstone::GraphicsAPI::GraphicsPipeline* ssaoPipeline = pipelineSetAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
 	if (ssaoPipeline == nullptr) {
 		return;
 	}
@@ -1920,7 +1943,7 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 
 			uint32_t resolution = static_cast<uint32_t>(pointLightComponent.shadowResolution);
 
-			pointLightComponent.shadowMapUniformBufferObject->UpdateBuffer(&shadowPass);
+			pointLightComponent.shadowMapUniformBufferObject->UploadData(&shadowPass);
 
 			commandBuffer->BindRenderPass(
 				pointLightComponent.renderPass,
@@ -1982,7 +2005,7 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 
 			uint32_t resolution = static_cast<uint32_t>(spotLightComponent.shadowResolution);
 
-			spotLightComponent.shadowMapUniformBufferObject->UpdateBuffer(&shadowPass);
+			spotLightComponent.shadowMapUniformBufferObject->UploadData(&shadowPass);
 
 			commandBuffer->BindRenderPass(
 				spotLightComponent.renderPass,
@@ -2032,7 +2055,7 @@ void DeferredRenderer::RenderShadowMaps(CommandBuffer* commandBuffer, entt::regi
 
 			uint32_t resolution = static_cast<uint32_t>(directionalLightComponent.shadowResolution);
 
-			directionalLightComponent.shadowMapUniformBufferObject->UpdateBuffer(&shadowPass);
+			directionalLightComponent.shadowMapUniformBufferObject->UploadData(&shadowPass);
 
 			commandBuffer->BindRenderPass(
 				directionalLightComponent.renderPass,
@@ -2082,9 +2105,9 @@ void DeferredRenderer::PostProcess(
 
 	Grindstone::GraphicsPipelineAsset* tonemapPipelineAsset = tonemapPipelineSet.Get();
 	if (tonemapPipelineAsset != nullptr) {
-		Grindstone::GraphicsAPI::GraphicsPipeline* tonemapPipeline = tonemapPipelineAsset->GetFirstPassPipeline();
+		Grindstone::GraphicsAPI::GraphicsPipeline* tonemapPipeline = tonemapPipelineAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
 		if (tonemapPipeline != nullptr) {
-			imageSet.tonemapPostProcessingUniformBufferObject->UpdateBuffer(&postProcessUboData);
+			imageSet.tonemapPostProcessingUniformBufferObject->UploadData(&postProcessUboData);
 
 			currentCommandBuffer->BindGraphicsDescriptorSet(tonemapPipeline, &imageSet.tonemapDescriptorSet, 1);
 			currentCommandBuffer->BindGraphicsPipeline(tonemapPipeline);
@@ -2115,9 +2138,9 @@ void DeferredRenderer::Debug(
 	RenderPass* renderPass = framebuffer->GetRenderPass();
 	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, framebuffer->GetWidth(), framebuffer->GetHeight(), &clearColor, 1, clearDepthStencil);
 
-	Grindstone::GraphicsAPI::GraphicsPipeline* debugPipeline = debugPipelineSet.Get()->GetFirstPassPipeline();
+	Grindstone::GraphicsAPI::GraphicsPipeline* debugPipeline = debugPipelineSet.Get()->GetFirstPassPipeline(&vertexLightPositionLayout);
 	if (debugPipeline != nullptr) {
-		imageSet.debugUniformBufferObject->UpdateBuffer(&debugUboData);
+		imageSet.debugUniformBufferObject->UploadData(&debugUboData);
 
 		currentCommandBuffer->BindGraphicsDescriptorSet(debugPipeline, &imageSet.debugDescriptorSet, 1);
 		currentCommandBuffer->BindGraphicsPipeline(debugPipeline);
@@ -2153,7 +2176,7 @@ void DeferredRenderer::Render(
 	engineUboStruct.renderResolution = glm::vec2(renderWidth, renderHeight);
 	engineUboStruct.renderScale = glm::vec2(static_cast<float>(renderWidth) / framebufferWidth, static_cast<float>(renderHeight) / framebufferHeight);
 	engineUboStruct.time = static_cast<float>(engineCore.GetTimeSinceLaunch());
-	imageSet.globalUniformBufferObject->UpdateBuffer(&engineUboStruct);
+	imageSet.globalUniformBufferObject->UploadData(&engineUboStruct);
 
 	if (renderMode == DeferredRenderMode::Default) {
 		RenderShadowMaps(commandBuffer, registry);

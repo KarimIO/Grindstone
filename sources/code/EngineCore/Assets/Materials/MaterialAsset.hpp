@@ -13,14 +13,14 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		class DescriptorSet;
-		class UniformBuffer;
+		class Buffer;
 	}
 
 	struct MaterialAsset : public Asset {
 		MaterialAsset(Grindstone::Uuid uuid) : Asset(uuid, uuid.ToString()) {}
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> pipelineSetAsset;
 		Grindstone::GraphicsAPI::DescriptorSet* materialDescriptorSet = nullptr;
-		Grindstone::GraphicsAPI::UniformBuffer* materialDataUniformBuffer = nullptr;
+		Grindstone::GraphicsAPI::Buffer* materialDataUniformBuffer = nullptr;
 		std::vector<Grindstone::AssetReference<Grindstone::TextureAsset>> textures;
 		Grindstone::Buffer materialDataBuffer;
 

@@ -74,8 +74,9 @@ namespace Grindstone::GraphicsAPI {
 		virtual DescriptorSet* CreateDescriptorSet(const DescriptorSet::CreateInfo& ci) = 0;
 		virtual DescriptorSetLayout* CreateDescriptorSetLayout(const DescriptorSetLayout::CreateInfo& ci) = 0;
 		virtual RenderTarget* CreateRenderTarget(const RenderTarget::CreateInfo& rt) = 0;
-		virtual RenderTarget* CreateRenderTarget(const RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) = 0;
 		virtual DepthStencilTarget* CreateDepthStencilTarget(const DepthStencilTarget::CreateInfo& rt) = 0;
+
+		virtual GraphicsPipeline* GetOrCreateGraphicsPipelineFromCache(const GraphicsPipeline::PipelineData& pipelineData, const VertexInputLayout* vertexInputLayout) = 0;
 
 		virtual void CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) = 0;
 

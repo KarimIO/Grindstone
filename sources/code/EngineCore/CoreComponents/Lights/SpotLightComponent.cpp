@@ -1,7 +1,7 @@
 #include <EngineCore/Reflection/ComponentReflection.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <Common/Graphics/Core.hpp>
-#include <Common/Graphics/UniformBuffer.hpp>
+#include <Common/Graphics/Buffer.hpp>
 #include <Common/Graphics/DescriptorSet.hpp>
 #include <Common/Graphics/DescriptorSetLayout.hpp>
 #include "SpotLightComponent.hpp"
@@ -32,7 +32,7 @@ void Grindstone::SetupSpotLightComponent(entt::registry& registry, entt::entity 
 	renderPassCreateInfo.debugName = "Spotlight Shadow Render Pass";
 	renderPassCreateInfo.colorAttachments = nullptr;
 	renderPassCreateInfo.colorAttachmentCount = 0;
-	renderPassCreateInfo.depthFormat = DepthFormat::D32;
+	renderPassCreateInfo.depthFormat = Format::D32_SFLOAT;
 	spotLightComponent.renderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
 	DepthStencilTarget::CreateInfo shadowMapDepthImageCreateInfo(renderPassCreateInfo.depthFormat, shadowResolution, shadowResolution, false, false, true, "Spot Shadow Map Depth Image");
@@ -49,14 +49,14 @@ void Grindstone::SetupSpotLightComponent(entt::registry& registry, entt::entity 
 	spotLightComponent.framebuffer = graphicsCore->CreateFramebuffer(shadowMapCreateInfo);
 
 	{
-		UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
-		lightUniformBufferObjectCi.debugName = "LightUbo";
-		lightUniformBufferObjectCi.isDynamic = true;
-		lightUniformBufferObjectCi.size = sizeof(SpotLightComponent::UniformStruct);
-		spotLightComponent.uniformBufferObject = graphicsCore->CreateUniformBuffer(lightUniformBufferObjectCi);
-
 		SpotLightComponent::UniformStruct lightStruct{};
-		spotLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
+		Buffer::CreateInfo lightUniformBufferObjectCi{};
+		lightUniformBufferObjectCi.content = &lightStruct;
+		lightUniformBufferObjectCi.debugName = "LightUbo";
+		lightUniformBufferObjectCi.bufferUsage = BufferUsage::Uniform;
+		lightUniformBufferObjectCi.memoryUsage = MemUsage::CPUToGPU;
+		lightUniformBufferObjectCi.bufferSize = sizeof(SpotLightComponent::UniformStruct);
+		spotLightComponent.uniformBufferObject = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
 
 		std::array<DescriptorSetLayout::Binding, 2> lightLayoutBindings{};
 		lightLayoutBindings[0].bindingId = 0;
@@ -89,11 +89,12 @@ void Grindstone::SetupSpotLightComponent(entt::registry& registry, entt::entity 
 	}
 
 	{
-		UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
+		Buffer::CreateInfo lightUniformBufferObjectCi{};
 		lightUniformBufferObjectCi.debugName = "Spot Shadow Map";
-		lightUniformBufferObjectCi.isDynamic = true;
-		lightUniformBufferObjectCi.size = sizeof(glm::mat4);
-		spotLightComponent.shadowMapUniformBufferObject = graphicsCore->CreateUniformBuffer(lightUniformBufferObjectCi);
+		lightUniformBufferObjectCi.bufferUsage = BufferUsage::Uniform;
+		lightUniformBufferObjectCi.memoryUsage = MemUsage::CPUToGPU;
+		lightUniformBufferObjectCi.bufferSize = sizeof(glm::mat4);
+		spotLightComponent.shadowMapUniformBufferObject = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
 
 		DescriptorSetLayout::Binding lightUboBindingLayout{};
 		lightUboBindingLayout.bindingId = 0;
@@ -127,8 +128,8 @@ void Grindstone::DestroySpotLightComponent(entt::registry& registry, entt::entit
 	graphicsCore->DeleteDescriptorSetLayout(spotLightComponent.shadowMapDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSet(spotLightComponent.descriptorSet);
 	graphicsCore->DeleteDescriptorSetLayout(spotLightComponent.descriptorSetLayout);
-	graphicsCore->DeleteUniformBuffer(spotLightComponent.shadowMapUniformBufferObject);
-	graphicsCore->DeleteUniformBuffer(spotLightComponent.uniformBufferObject);
+	graphicsCore->DeleteBuffer(spotLightComponent.shadowMapUniformBufferObject);
+	graphicsCore->DeleteBuffer(spotLightComponent.uniformBufferObject);
 	graphicsCore->DeleteFramebuffer(spotLightComponent.framebuffer);
 	graphicsCore->DeleteRenderPass(spotLightComponent.renderPass);
 	graphicsCore->DeleteDepthStencilTarget(spotLightComponent.depthTarget);

@@ -10,9 +10,7 @@
 #include "GLDescriptorSet.hpp"
 #include "GLDescriptorSetLayout.hpp"
 #include "GLVertexArrayObject.hpp"
-#include "GLVertexBuffer.hpp"
-#include "GLIndexBuffer.hpp"
-#include "GLUniformBuffer.hpp"
+#include "GLBuffer.hpp"
 #include "GLGraphicsPipeline.hpp"
 #include "GLComputePipeline.hpp"
 #include "GLRenderTarget.hpp"
@@ -215,28 +213,16 @@ Base::CommandBuffer* OpenGL::Core::CreateCommandBuffer(const Base::CommandBuffer
 	return 0;
 }
 
-Base::VertexBuffer* OpenGL::Core::CreateVertexBuffer(const Base::VertexBuffer::CreateInfo& ci) {
-	return static_cast<VertexBuffer*>(AllocatorCore::Allocate<OpenGL::VertexBuffer>(ci));
-}
-
-Base::IndexBuffer* OpenGL::Core::CreateIndexBuffer(const Base::IndexBuffer::CreateInfo& ci) {
-	return static_cast<IndexBuffer*>(AllocatorCore::Allocate<OpenGL::IndexBuffer>(ci));
-}
-
-Base::UniformBuffer* OpenGL::Core::CreateUniformBuffer(const Base::UniformBuffer::CreateInfo& ci) {
-	return static_cast<UniformBuffer*>(AllocatorCore::Allocate<OpenGL::UniformBuffer>(ci));
-}
-
-Base::Texture* OpenGL::Core::CreateCubemap(const Base::Texture::CubemapCreateInfo& ci) {
-	return static_cast<Texture*>(AllocatorCore::Allocate<OpenGL::Texture>(ci));
+Base::Buffer* OpenGL::Core::CreateBuffer(const Base::Buffer::CreateInfo& ci) {
+	return static_cast<Buffer*>(AllocatorCore::Allocate<OpenGL::Buffer>(ci));
 }
 
 Base::Texture* OpenGL::Core::CreateTexture(const Base::Texture::CreateInfo& ci) {
 	return static_cast<Texture*>(AllocatorCore::Allocate<OpenGL::Texture>(ci));
 }
 
-Base::RenderTarget* OpenGL::Core::CreateRenderTarget(const Base::RenderTarget::CreateInfo* rt, uint32_t rc, bool cube) {
-	return static_cast<RenderTarget*>(AllocatorCore::Allocate<OpenGL::RenderTarget>(rt, rc, cube));
+Base::Texture* OpenGL::Core::CreateCubemap(const Base::Texture::CubemapCreateInfo& ci) {
+	return static_cast<Texture*>(AllocatorCore::Allocate<OpenGL::Texture>(ci));
 }
 
 Base::RenderTarget* OpenGL::Core::CreateRenderTarget(const Base::RenderTarget::CreateInfo& rt) {
@@ -245,6 +231,21 @@ Base::RenderTarget* OpenGL::Core::CreateRenderTarget(const Base::RenderTarget::C
 
 Base::DepthStencilTarget* OpenGL::Core::CreateDepthStencilTarget(const Base::DepthStencilTarget::CreateInfo& rt) {
 	return static_cast<DepthStencilTarget*>(AllocatorCore::Allocate<OpenGL::DepthStencilTarget>(rt));
+}
+
+Base::GraphicsPipeline* OpenGL::Core::GetOrCreateGraphicsPipelineFromCache(const GraphicsPipeline::PipelineData& pipelineData, const VertexInputLayout* vertexInputLayout) {
+	size_t hash = std::hash<GraphicsPipeline::PipelineData>{}(pipelineData);
+	auto& iterator = graphicsPipelineCache.find(hash);
+	if (iterator != graphicsPipelineCache.end()) {
+		return iterator->second;
+	}
+
+	Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo createInfo{};
+	createInfo.pipelineData = pipelineData;
+	Grindstone::GraphicsAPI::GraphicsPipeline* newPipeline = CreateGraphicsPipeline(createInfo);
+
+	graphicsPipelineCache[hash] = newPipeline;
+	return newPipeline;
 }
 
 //==================================
@@ -289,16 +290,8 @@ void OpenGL::Core::DeleteFramebuffer(Base::Framebuffer *ptr) {
 	AllocatorCore::Free(static_cast<OpenGL::Framebuffer*>(ptr));
 }
 
-void OpenGL::Core::DeleteVertexBuffer(Base::VertexBuffer *ptr) {
-	AllocatorCore::Free(static_cast<OpenGL::VertexBuffer*>(ptr));
-}
-
-void OpenGL::Core::DeleteIndexBuffer(Base::IndexBuffer *ptr) {
-	AllocatorCore::Free(static_cast<OpenGL::IndexBuffer*>(ptr));
-}
-
-void OpenGL::Core::DeleteUniformBuffer(Base::UniformBuffer * ptr) {
-	AllocatorCore::Free(static_cast<OpenGL::UniformBuffer*>(ptr));
+void OpenGL::Core::DeleteBuffer(Base::Buffer *ptr) {
+	AllocatorCore::Free(static_cast<OpenGL::Buffer*>(ptr));
 }
 
 void OpenGL::Core::DeleteComputePipeline(Base::ComputePipeline* ptr) {

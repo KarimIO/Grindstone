@@ -180,24 +180,14 @@ static void SetupUniformBuffer(
 ) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
+	GraphicsAPI::Buffer* uniformBufferObject = nullptr;
 
 	const Grindstone::PipelineAssetMetaData::Buffer* materialBuffer =
 		pipelineSetAsset.GetBufferMetaData();
 
 	if (materialBuffer != nullptr) {
-		std::string uniformBufferName = (name + " MaterialUbo");
-		GraphicsAPI::UniformBuffer::CreateInfo ubCi{};
-		ubCi.debugName = uniformBufferName.c_str();
-		ubCi.isDynamic = true;
-		ubCi.size = static_cast<uint32_t>(materialBuffer->bufferSize);
-		uniformBufferObject = graphicsCore->CreateUniformBuffer(ubCi);
-
-		DescriptorSet::Binding uniformBufferBinding{ uniformBufferObject };
-		bindings.push_back(uniformBufferBinding);
-
-		if (ubCi.size > 0) {
-			materialAsset.materialDataBuffer = Grindstone::Buffer(ubCi.size);
+		if (materialBuffer->bufferSize > 0) {
+			materialAsset.materialDataBuffer = Grindstone::Buffer(materialBuffer->bufferSize);
 
 			const rapidjson::Value& materialDocumentParametersJson = document["parameters"];
 			for (const PipelineAssetMetaData::Parameter& shaderMemberData : materialBuffer->parameters) {
@@ -210,9 +200,19 @@ static void SetupUniformBuffer(
 				}
 				// TODO: Handle default data from shaders on else here.
 			}
-
-			uniformBufferObject->UpdateBuffer(materialAsset.materialDataBuffer.Get());
 		}
+
+		std::string uniformBufferName = (name + " MaterialUbo");
+		GraphicsAPI::Buffer::CreateInfo ubCi{};
+		ubCi.debugName = uniformBufferName.c_str();
+		ubCi.content = materialAsset.materialDataBuffer.Get();
+		ubCi.bufferUsage = BufferUsage::Uniform;
+		ubCi.memoryUsage = MemUsage::CPUToGPU;
+		ubCi.bufferSize = static_cast<uint32_t>(materialBuffer->bufferSize);
+		uniformBufferObject = graphicsCore->CreateBuffer(ubCi);
+
+		DescriptorSet::Binding uniformBufferBinding{ uniformBufferObject };
+		bindings.push_back(uniformBufferBinding);
 	}
 
 	materialAsset.materialDataUniformBuffer = uniformBufferObject;
@@ -285,7 +285,7 @@ MaterialImporter::MaterialImporter() {
 	blackTextureCreateInfo.size = static_cast<uint32_t>(colorData.size());
 	blackTextureCreateInfo.width = 2;
 	blackTextureCreateInfo.height = 2;
-	blackTextureCreateInfo.format = ColorFormat::RGBA8;
+	blackTextureCreateInfo.format = Format::R8G8B8A8_UNORM;
 	blackTextureCreateInfo.mipmaps = 1;
 	blackTextureCreateInfo.options.shouldGenerateMipmaps = false;
 	missingTexture = graphicsCore->CreateTexture(blackTextureCreateInfo);
@@ -392,7 +392,7 @@ void MaterialImporter::QueueReloadAsset(Uuid uuid) {
 	}
 
 	if (materialAsset.materialDataUniformBuffer != nullptr) {
-		graphicsCore->DeleteUniformBuffer(materialAsset.materialDataUniformBuffer);
+		graphicsCore->DeleteBuffer(materialAsset.materialDataUniformBuffer);
 	}
 
 	materialAsset.name = result.displayName;
@@ -407,7 +407,7 @@ MaterialImporter::~MaterialImporter() {
 
 	for (auto& asset : assets) {
 		graphicsCore->DeleteDescriptorSet(asset.second.materialDescriptorSet);
-		graphicsCore->DeleteUniformBuffer(asset.second.materialDataUniformBuffer);
+		graphicsCore->DeleteBuffer(asset.second.materialDataUniformBuffer);
 	}
 
 	assets.clear();

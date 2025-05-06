@@ -56,7 +56,7 @@ static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
 	GS_ASSERT(srcFileHeader->attachmentSize == sizeof(V1::PassPipelineAttachmentHeader));
 	GS_ASSERT(srcFileHeader->stageSize == sizeof(V1::PassPipelineShaderStageHeader));
 
-	std::vector<GraphicsPipeline::CreateInfo::ShaderStageData> shaderStageCreateInfos;
+	std::vector<GraphicsPipeline::ShaderStageData> shaderStageCreateInfos;
 
 	computePipelineAsset.name = result.displayName;
 

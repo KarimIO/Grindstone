@@ -28,14 +28,37 @@ Vulkan::Buffer::Buffer(const CreateInfo& createInfo) : GraphicsAPI::Buffer(creat
 	case MemUsage::GPUToCPU:	properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT; break;
 	}
 
-	CreateBuffer(
-		createInfo.debugName,
-		bufferSize,
-		usage,
-		properties,
-		bufferObject,
-		deviceMemory
-	);
+	VkDevice device = Vulkan::Core::Get().GetDevice();
+	CreateBuffer(createInfo.debugName, bufferSize, usage, properties, bufferObject, deviceMemory);
+
+	// Copy data if content is not nullptr.
+	if (createInfo.content != nullptr) {
+		if ((properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) > 0) {
+			// If I'm CPUOnly or CPUToGPU, then copy data directly to buffer.
+			void* data;
+			vkMapMemory(device, deviceMemory, 0, bufferSize, 0, &data);
+			memcpy(data, createInfo.content, bufferSize);
+			vkUnmapMemory(device, deviceMemory);
+		}
+		else {
+			// Otherwise, use a staging buffer.
+			std::string stagingDebugName = std::string(createInfo.debugName) + " Staging";
+
+			VkBuffer stagingBuffer;
+			VkDeviceMemory stagingBufferMemory;
+			CreateBuffer(stagingDebugName.c_str(), bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+			void* data;
+			vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+			memcpy(data, createInfo.content, bufferSize);
+			vkUnmapMemory(device, stagingBufferMemory);
+
+			CopyBuffer(stagingBuffer, bufferObject, bufferSize);
+
+			vkDestroyBuffer(device, stagingBuffer, nullptr);
+			vkFreeMemory(device, stagingBufferMemory, nullptr);
+		}
+	}
 }
 
 Vulkan::Buffer::~Buffer() {

@@ -4,8 +4,11 @@
 #include <vector>
 
 #include <Common/HashedString.hpp>
+#include <Common/Graphics/Core.hpp>
+#include <Common/Graphics/GraphicsPipeline.hpp>
 #include <EngineCore/Assets/Asset.hpp>
 #include <EngineCore/Assets/Textures/TextureAsset.hpp>
+#include <EngineCore/EngineCore.hpp>
 
 #include "PipelineAsset.hpp"
 
@@ -23,7 +26,7 @@ namespace Grindstone {
 			uint8_t renderQueue = UINT8_MAX;
 			Grindstone::HashedString renderPass;
 			Grindstone::HashedString orderBucket;
-			GraphicsAPI::GraphicsPipeline* pipeline = nullptr;
+			GraphicsAPI::GraphicsPipeline::PipelineData pipelineData;
 			std::array<GraphicsAPI::DescriptorSetLayout*, 4> descriptorSetLayouts;
 
 			std::vector<size_t> bufferMetaDataIndices;
@@ -65,12 +68,21 @@ namespace Grindstone {
 			return &passes[0];
 		}
 
-		const Grindstone::GraphicsAPI::GraphicsPipeline* GetFirstPassPipeline() const {
+		const Grindstone::GraphicsAPI::GraphicsPipeline::PipelineData* GetFirstPassPipelineData() const {
 			if (passes.size() == 0) {
 				return nullptr;
 			}
 
-			return passes[0].pipeline;
+			return &passes[0].pipelineData;
+		}
+
+		const Grindstone::GraphicsAPI::GraphicsPipeline* GetFirstPassPipeline(const Grindstone::GraphicsAPI::VertexInputLayout* vertexInputLayout) const {
+			if (passes.size() == 0) {
+				return nullptr;
+			}
+
+			Grindstone::GraphicsAPI::Core* graphicsCore = Grindstone::EngineCore::GetInstance().GetGraphicsCore();
+			return graphicsCore->GetOrCreateGraphicsPipelineFromCache(passes[0].pipelineData, vertexInputLayout);
 		}
 
 		Grindstone::GraphicsPipelineAsset::Pass* GetFirstPass() {
@@ -81,12 +93,21 @@ namespace Grindstone {
 			return &passes[0];
 		}
 
-		Grindstone::GraphicsAPI::GraphicsPipeline* GetFirstPassPipeline() {
+		Grindstone::GraphicsAPI::GraphicsPipeline::PipelineData* GetFirstPassPipelineData() {
 			if (passes.size() == 0) {
 				return nullptr;
 			}
 
-			return passes[0].pipeline;
+			return &passes[0].pipelineData;
+		}
+
+		Grindstone::GraphicsAPI::GraphicsPipeline* GetFirstPassPipeline(const Grindstone::GraphicsAPI::VertexInputLayout* vertexInputLayout) {
+			if (passes.size() == 0) {
+				return nullptr;
+			}
+
+			Grindstone::GraphicsAPI::Core* graphicsCore = Grindstone::EngineCore::GetInstance().GetGraphicsCore();
+			return graphicsCore->GetOrCreateGraphicsPipelineFromCache(passes[0].pipelineData, vertexInputLayout);
 		}
 
 		const Grindstone::GraphicsPipelineAsset::Pass* GetPass(Grindstone::HashedString renderPass) const {

@@ -86,7 +86,7 @@ void Vulkan::WindowGraphicsBinding::SubmitWindowObjects(WindowBindingDataNative&
 		static_cast<RenderPass*>(renderPass)->Update(windowBindingData.renderPass);
 	}
 	swapchainVulkanFormat = windowBindingData.surfaceFormat.format;
-	swapchainFormat = TranslateColorFormatFromVulkan(swapchainVulkanFormat);
+	swapchainFormat = TranslateFormatFromVulkan(swapchainVulkanFormat);
 
 	imageSets.resize(windowBindingData.imageSetCount);
 	for (uint32_t i = 0; i < windowBindingData.imageSetCount; ++i) {
@@ -109,7 +109,7 @@ void Vulkan::WindowGraphicsBinding::SubmitWindowObjects(WindowBindingDataNative&
 	}
 }
 
-Base::ColorFormat Vulkan::WindowGraphicsBinding::GetDeviceColorFormat() const {
+Base::Format Vulkan::WindowGraphicsBinding::GetDeviceColorFormat() const {
 	return swapchainFormat;
 }
 
@@ -390,7 +390,7 @@ void Vulkan::WindowGraphicsBinding::CreateSwapChain() {
 	createInfo.surface = surface;
 
 	swapchainVulkanFormat = surfaceFormat.format;
-	swapchainFormat = TranslateColorFormatFromVulkan(swapchainVulkanFormat);
+	swapchainFormat = TranslateFormatFromVulkan(swapchainVulkanFormat);
 
 	createInfo.minImageCount = imageCount;
 	createInfo.imageFormat = swapchainVulkanFormat;

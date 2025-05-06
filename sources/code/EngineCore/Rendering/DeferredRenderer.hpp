@@ -12,7 +12,7 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		class UniformBuffer;
+		class Buffer;
 		class Framebuffer;
 		class RenderTarget;
 		class DepthStencilTarget;
@@ -76,9 +76,9 @@ namespace Grindstone {
 			GraphicsAPI::Framebuffer* ambientOcclusionFramebuffer = nullptr;
 			GraphicsAPI::RenderTarget* ambientOcclusionRenderTarget = nullptr;
 
-			GraphicsAPI::UniformBuffer* globalUniformBufferObject = nullptr;
-			GraphicsAPI::UniformBuffer* debugUniformBufferObject = nullptr;
-			GraphicsAPI::UniformBuffer* tonemapPostProcessingUniformBufferObject = nullptr;
+			GraphicsAPI::Buffer* globalUniformBufferObject = nullptr;
+			GraphicsAPI::Buffer* debugUniformBufferObject = nullptr;
+			GraphicsAPI::Buffer* tonemapPostProcessingUniformBufferObject = nullptr;
 
 			GraphicsAPI::DescriptorSet* ssrDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* tonemapDescriptorSet = nullptr;
@@ -167,7 +167,7 @@ namespace Grindstone {
 		Grindstone::AssetReference<Grindstone::TextureAsset> brdfLut;
 
 		std::vector<DeferredRendererImageSet> deferredRendererImageSets;
-		std::vector<GraphicsAPI::UniformBuffer*> bloomUniformBuffers;
+		std::vector<GraphicsAPI::Buffer*> bloomUniformBuffers;
 		size_t bloomFirstUpsampleIndex = 0;
 
 		GraphicsAPI::RenderPass* dofSeparationRenderPass = nullptr;
@@ -176,7 +176,7 @@ namespace Grindstone {
 		GraphicsAPI::RenderPass* lightingRenderPass = nullptr;
 		GraphicsAPI::RenderPass* forwardLitRenderPass = nullptr;
 		GraphicsAPI::RenderPass* ssaoRenderPass = nullptr;
-		GraphicsAPI::UniformBuffer* ssaoUniformBuffer = nullptr;
+		GraphicsAPI::Buffer* ssaoUniformBuffer = nullptr;
 		GraphicsAPI::Texture* ssaoNoiseTexture = nullptr;
 		GraphicsAPI::DescriptorSetLayout* ambientOcclusionDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* ssaoInputDescriptorSetLayout = nullptr;
@@ -185,7 +185,7 @@ namespace Grindstone {
 		GraphicsAPI::DescriptorSetLayout* environmentMapDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSet* environmentMapDescriptorSet = nullptr;
 
-		GraphicsAPI::VertexBufferLayout vertexLightPositionLayout{};
+		GraphicsAPI::VertexInputLayout vertexLightPositionLayout{};
 
 		GraphicsAPI::DescriptorSetLayout* bloomDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* ssrDescriptorSetLayout = nullptr;
@@ -203,8 +203,8 @@ namespace Grindstone {
 		GraphicsAPI::RenderPass* shadowMapRenderPass = nullptr;
 		GraphicsAPI::RenderPass* targetRenderPass = nullptr;
 
-		GraphicsAPI::VertexBuffer* vertexBuffer;
-		GraphicsAPI::IndexBuffer* indexBuffer;
+		GraphicsAPI::Buffer* vertexBuffer;
+		GraphicsAPI::Buffer* indexBuffer;
 		GraphicsAPI::VertexArrayObject* planePostProcessVao = nullptr;
 
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> ssaoPipelineSet;

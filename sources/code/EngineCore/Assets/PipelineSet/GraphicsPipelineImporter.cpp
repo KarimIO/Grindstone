@@ -19,41 +19,41 @@ using namespace Grindstone::Formats::Pipelines;
 
 static void UnpackGraphicsPipelineHeader(
 	const V1::PassPipelineHeader& srcHeader,
-	GraphicsPipeline::CreateInfo& dstHeader
+	GraphicsPipeline::PipelineData& dstPipelineData
 ) {
-	dstHeader.primitiveType = srcHeader.primitiveType;
-	dstHeader.polygonFillMode = srcHeader.polygonFillMode;
-	dstHeader.depthCompareOp = srcHeader.depthCompareOp;
-	dstHeader.cullMode = srcHeader.cullMode;
-	dstHeader.depthBiasClamp = srcHeader.depthBiasClamp;
-	dstHeader.depthBiasConstantFactor = srcHeader.depthBiasConstantFactor;
-	dstHeader.depthBiasSlopeFactor = srcHeader.depthBiasSlopeFactor;
+	dstPipelineData.primitiveType = srcHeader.primitiveType;
+	dstPipelineData.polygonFillMode = srcHeader.polygonFillMode;
+	dstPipelineData.depthCompareOp = srcHeader.depthCompareOp;
+	dstPipelineData.cullMode = srcHeader.cullMode;
+	dstPipelineData.depthBiasClamp = srcHeader.depthBiasClamp;
+	dstPipelineData.depthBiasConstantFactor = srcHeader.depthBiasConstantFactor;
+	dstPipelineData.depthBiasSlopeFactor = srcHeader.depthBiasSlopeFactor;
 
-	dstHeader.isDepthBiasEnabled = srcHeader.flags & 0b1;
-	dstHeader.isDepthClampEnabled = srcHeader.flags & 0b10;
-	dstHeader.isDepthTestEnabled = srcHeader.flags & 0b100;
-	dstHeader.isDepthWriteEnabled = srcHeader.flags & 0b1000;
-	dstHeader.isStencilEnabled = srcHeader.flags & 0b10000;
+	dstPipelineData.isDepthBiasEnabled = srcHeader.flags & 0b1;
+	dstPipelineData.isDepthClampEnabled = srcHeader.flags & 0b10;
+	dstPipelineData.isDepthTestEnabled = srcHeader.flags & 0b100;
+	dstPipelineData.isDepthWriteEnabled = srcHeader.flags & 0b1000;
+	dstPipelineData.isStencilEnabled = srcHeader.flags & 0b10000;
 
 	// TODO: We should check this and probably apply the first attachment data to others if necessary.
 	// dstHeader.shouldCopyFirstAttachment ? 0b100000;
 }
 
 static void UnpackGraphicsPipelineAttachmentHeaders(
-	const Span<V1::PassPipelineAttachmentHeader>& srcHeaders,
-	Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo::AttachmentData* dstHeaders
+	const Span<V1::PassPipelineAttachmentHeader>& srcAttachments,
+	Grindstone::GraphicsAPI::GraphicsPipeline::AttachmentData* dstAttachments
 ) {
-	for (uint8_t i = 0; i < srcHeaders.GetSize(); ++i) {
-		const V1::PassPipelineAttachmentHeader& srcHeader = srcHeaders[i];
-		Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo::AttachmentData& dstHeader = dstHeaders[i];
+	for (uint8_t i = 0; i < srcAttachments.GetSize(); ++i) {
+		const V1::PassPipelineAttachmentHeader& srcHeader = srcAttachments[i];
+		Grindstone::GraphicsAPI::GraphicsPipeline::AttachmentData& dstAttachment = dstAttachments[i];
 
-		dstHeader.colorMask = srcHeader.colorMask;
-		dstHeader.blendData.alphaFactorDst = srcHeader.blendAlphaFactorDst;
-		dstHeader.blendData.alphaFactorSrc = srcHeader.blendAlphaFactorSrc;
-		dstHeader.blendData.alphaOperation = srcHeader.blendAlphaOperation;
-		dstHeader.blendData.colorFactorDst = srcHeader.blendColorFactorDst;
-		dstHeader.blendData.colorFactorSrc = srcHeader.blendColorFactorSrc;
-		dstHeader.blendData.colorOperation = srcHeader.blendColorOperation;
+		dstAttachment.colorMask = srcHeader.colorMask;
+		dstAttachment.blendData.alphaFactorDst = srcHeader.blendAlphaFactorDst;
+		dstAttachment.blendData.alphaFactorSrc = srcHeader.blendAlphaFactorSrc;
+		dstAttachment.blendData.alphaOperation = srcHeader.blendAlphaOperation;
+		dstAttachment.blendData.colorFactorDst = srcHeader.blendColorFactorDst;
+		dstAttachment.blendData.colorFactorSrc = srcHeader.blendColorFactorSrc;
+		dstAttachment.blendData.colorOperation = srcHeader.blendColorOperation;
 	}
 }
 
@@ -90,18 +90,6 @@ static void UnpackGraphicsPipelineDescriptorSetHeaders(
 		layoutCreateInfo.bindingCount = static_cast<uint32_t>(dstDescriptorBindings.size());
 
 		dstDescriptorSets[i] = graphicsCore->CreateDescriptorSetLayout(layoutCreateInfo);
-	}
-}
-
-static void UnpackGraphicsPipelineVertexBuffersHeaders(
-	const Span<V1::PassVertexBuffer>& srcVertexBuffers,
-	Grindstone::GraphicsAPI::VertexBufferLayout* dstVertexBuffers
-) {
-	for (uint8_t i = 0; i < srcVertexBuffers.GetSize(); ++i) {
-		const V1::PassVertexBuffer& srcVertexBuffer = srcVertexBuffers[i];
-		Grindstone::GraphicsAPI::VertexBufferLayout& dstVertexBuffer = dstVertexBuffers[i];
-
-		// TODO: This
 	}
 }
 
@@ -180,33 +168,29 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		Span<V1::ShaderReflectDescriptorBinding> srcDescriptorBindings{ reinterpret_cast<V1::ShaderReflectDescriptorBinding*>(readPtr), srcPassHeader->descriptorBindingCount };
 		readPtr += sizeof(V1::ShaderReflectDescriptorBinding) * srcPassHeader->descriptorBindingCount;
 
-		Span<V1::PassVertexBuffer> srcVertexBuffers{ reinterpret_cast<V1::PassVertexBuffer*>(readPtr), srcPassHeader->vertexBufferCount };
-		readPtr += sizeof(V1::PassVertexBuffer) * srcPassHeader->vertexBufferCount;
-
 		GraphicsPipelineAsset::Pass& pass = graphicsPipelineAsset.passes[passIndex];
 
-		std::vector<GraphicsPipeline::CreateInfo::ShaderStageData> shaderStageCreateInfos;
+		std::vector<GraphicsPipeline::ShaderStageData> shaderStageCreateInfos;
 		shaderStageCreateInfos.resize(srcPassHeader->shaderStageCount);
 
-		GraphicsPipeline::CreateInfo pipelineCreateInfo{};
-		pipelineCreateInfo.debugName = result.displayName.c_str();
-		pipelineCreateInfo.width = 0.0f;
-		pipelineCreateInfo.height = 0.0f;
-		pipelineCreateInfo.scissorX = 0;
-		pipelineCreateInfo.scissorY = 0;
-		pipelineCreateInfo.scissorW = 0;
-		pipelineCreateInfo.scissorH = 0;
-		pipelineCreateInfo.hasDynamicViewport = true;
-		pipelineCreateInfo.hasDynamicScissor = true;
-		pipelineCreateInfo.renderPass = nullptr; // TODO: FindRenderPass(renderStage);
+		GraphicsPipeline::PipelineData& pipelineData = pass.pipelineData;
+		pipelineData.debugName = result.displayName.c_str();
+		pipelineData.width = 0.0f;
+		pipelineData.height = 0.0f;
+		pipelineData.scissorX = 0;
+		pipelineData.scissorY = 0;
+		pipelineData.scissorW = 0;
+		pipelineData.scissorH = 0;
+		pipelineData.hasDynamicViewport = true;
+		pipelineData.hasDynamicScissor = true;
+		pipelineData.renderPass = nullptr; // TODO: FindRenderPass(renderStage);
 
-		pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
-		pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(srcPassHeader->descriptorSetCount);
-		pipelineCreateInfo.vertexBindingsCount = static_cast<uint32_t>(srcPassHeader->vertexBufferCount);
-		pipelineCreateInfo.colorAttachmentCount = srcPassHeader->attachmentCount;
+		pipelineData.shaderStageCreateInfos = shaderStageCreateInfos.data();
+		pipelineData.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
+		pipelineData.descriptorSetLayoutCount = static_cast<uint32_t>(srcPassHeader->descriptorSetCount);
+		pipelineData.colorAttachmentCount = srcPassHeader->attachmentCount;
 
-		UnpackGraphicsPipelineHeader(*srcPassHeader, pipelineCreateInfo);
+		UnpackGraphicsPipelineHeader(*srcPassHeader, pipelineData);
 
 		for (uint8_t i = 0; i < srcPassHeader->shaderStageCount; ++i) {
 			shaderStageCreateInfos[i].content = reinterpret_cast<const char*>(readPtr);
@@ -218,7 +202,7 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 
 		std::vector<Grindstone::GraphicsAPI::DescriptorSetLayout*> descriptorSetLayouts;
 		descriptorSetLayouts.resize(srcPassHeader->descriptorSetCount);
-		UnpackGraphicsPipelineAttachmentHeaders(srcAttachmentHeaders, pipelineCreateInfo.colorAttachmentData);
+		UnpackGraphicsPipelineAttachmentHeaders(srcAttachmentHeaders, pipelineData.colorAttachmentData);
 		UnpackGraphicsPipelineDescriptorSetHeaders(
 			graphicsCore,
 			graphicsPipelineAsset.name,
@@ -226,9 +210,7 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 			srcDescriptorBindings,
 			descriptorSetLayouts
 		);
-		UnpackGraphicsPipelineVertexBuffersHeaders(srcVertexBuffers, pipelineCreateInfo.vertexBindings);
-		pipelineCreateInfo.descriptorSetLayouts = descriptorSetLayouts.data();
-		pass.pipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
+		pipelineData.descriptorSetLayouts = descriptorSetLayouts.data();
 
 		// TODO: Fix
 		// pass.descriptorSetLayouts[0] = pipelineCreateInfo.descriptorSetLayouts[0];
@@ -262,22 +244,10 @@ void GraphicsPipelineImporter::QueueReloadAsset(Uuid uuid) {
 
 	graphicsPipelineAsset.assetLoadStatus = AssetLoadStatus::Reloading;
 	Grindstone::GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
-	for (Grindstone::GraphicsPipelineAsset::Pass& pass : graphicsPipelineAsset.passes) {
-		graphicsCore->DeleteGraphicsPipeline(pass.pipeline);
-	}
-
 	graphicsPipelineAsset.passes.clear();
 	ImportGraphicsPipelineAsset(graphicsPipelineAsset);
 }
 
 GraphicsPipelineImporter::~GraphicsPipelineImporter() {
-	EngineCore& engineCore = EngineCore::GetInstance();
-	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-
-	for (auto& asset : assets) {
-		for (Grindstone::GraphicsPipelineAsset::Pass& pass : asset.second.passes) {
-			graphicsCore->DeleteGraphicsPipeline(pass.pipeline);
-		}
-	}
 	assets.clear();
 }

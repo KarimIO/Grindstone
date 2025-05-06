@@ -6,13 +6,11 @@
 #include <xkeycheck.h>
 
 #include <Common/Hash.hpp>
-#include <Common/Graphics/Formats.hpp>
 #include "Formats.hpp"
 
 namespace Grindstone::GraphicsAPI {
 	class RenderPass;
 	class DescriptorSetLayout;
-	struct VertexBufferLayout;
 
 	/*! Pipelines are a program that runs on the GPU. Graphics Pipelines are a variety
 		of Pipeline that deal strictly with computer graphics. They have several stages,
@@ -100,39 +98,39 @@ namespace std {
 		}
 	};
 
-	/*
 	template<>
-	struct std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo> {
-		std::size_t operator()(const Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo& gpci) const noexcept {
-			size_t result = gpci.;
-			for (uint8_t i = 0; i < gpci.colorAttachmentCount; ++i) {
-				result ^= std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo::AttachmentData>{}(gpci.colorAttachmentData[i]);
+	struct std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::PipelineData> {
+		std::size_t operator()(const Grindstone::GraphicsAPI::GraphicsPipeline::PipelineData& pipelineData) const noexcept {
+			size_t result =
+				static_cast<size_t>(pipelineData.cullMode) |
+				static_cast<size_t>(pipelineData.depthCompareOp) << 8 |
+				static_cast<size_t>(pipelineData.primitiveType) << 16 |
+				static_cast<size_t>(pipelineData.polygonFillMode) << 24 |
+				static_cast<size_t>(pipelineData.isDepthTestEnabled ? 1 : 0) << 32 |
+				static_cast<size_t>(pipelineData.isDepthWriteEnabled ? 1 : 0) << 33 |
+				static_cast<size_t>(pipelineData.isStencilEnabled ? 1 : 0) << 34 |
+				static_cast<size_t>(pipelineData.hasDynamicViewport ? 1 : 0) << 35 |
+				static_cast<size_t>(pipelineData.hasDynamicScissor ? 1 : 0) << 36 |
+				static_cast<size_t>(pipelineData.isDepthBiasEnabled ? 1 : 0) << 37 |
+				static_cast<size_t>(pipelineData.isDepthClampEnabled ? 1 : 0) << 38;
+
+			result ^= static_cast<size_t>(pipelineData.width) | (static_cast<size_t>(pipelineData.height) << 32);
+			result ^= static_cast<size_t>(pipelineData.scissorX) | (static_cast<size_t>(pipelineData.scissorY) << 32);
+			result ^= static_cast<size_t>(pipelineData.scissorW) | (static_cast<size_t>(pipelineData.scissorH) << 32);
+			result ^= static_cast<size_t>(pipelineData.depthBiasConstantFactor) | (static_cast<size_t>(pipelineData.depthBiasSlopeFactor) << 32);
+			result ^= static_cast<size_t>(pipelineData.depthBiasClamp);
+
+			result ^= pipelineData.colorAttachmentCount;
+			for (uint8_t i = 0; i < pipelineData.colorAttachmentCount; ++i) {
+				result ^= std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::AttachmentData>{}(pipelineData.colorAttachmentData[i]);
 			}
 
-			result ^= gpci.;
-			for (uint8_t i = 0; i < gpci.colorAttachmentCount; ++i) {
-				result ^= std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo::AttachmentData>{}(gpci.colorAttachmentData[i]);
+			result ^= pipelineData.shaderStageCreateInfoCount;
+			for (uint8_t i = 0; i < pipelineData.shaderStageCreateInfoCount; ++i) {
+				result ^= std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::ShaderStageData>{}(pipelineData.shaderStageCreateInfos[i]);
 			}
 
 			return result;
 		}
 	};
-
-	template<>
-	struct std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo> {
-		std::size_t operator()(const Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo& gpci) const noexcept {
-			size_t result = gpci.;
-			for (uint8_t i = 0; i < gpci.colorAttachmentCount; ++i) {
-				result ^= std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo::AttachmentData>{}(gpci.colorAttachmentData[i]);
-			}
-
-			result ^= gpci.;
-			for (uint8_t i = 0; i < gpci.colorAttachmentCount; ++i) {
-				result ^= std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo::AttachmentData>{}(gpci.colorAttachmentData[i]);
-			}
-
-			return result;
-		}
-	};
-	*/
 }

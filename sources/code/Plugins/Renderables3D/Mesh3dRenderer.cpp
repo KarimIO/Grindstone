@@ -108,7 +108,7 @@ void Mesh3dRenderer::RenderQueue(
 			// Early Frustum Cull
 
 			Math::Matrix4 transform = TransformComponent::GetWorldTransformMatrix(entity, registry);
-			meshRenderComponent.perDrawUniformBuffer->UpdateBuffer(&transform);
+			meshRenderComponent.perDrawUniformBuffer->UploadData(&transform);
 
 			const std::vector<Grindstone::AssetReference<Grindstone::MaterialAsset>>& materials = meshRenderComponent.materials;
 			for (const Grindstone::Mesh3dAsset::Submesh& submesh : meshAsset->submeshes) {
@@ -132,11 +132,13 @@ void Mesh3dRenderer::RenderQueue(
 					continue;
 				}
 
-				uint32_t sortData = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(pass->pipeline));
+				GraphicsPipeline* pipeline = nullptr; // TODO: GetOrCreate(pass->pipelineData, meshAsset->layout);
+
+				uint32_t sortData = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(pipeline));
 
 				RenderTask renderTask{};
 				renderTask.materialDescriptorSet = materialAsset->materialDescriptorSet;
-				renderTask.pipeline = pass->pipeline;
+				renderTask.pipeline = pipeline;
 				renderTask.vertexArrayObject = meshAsset->vertexArrayObject;
 				renderTask.indexCount = submesh.indexCount;
 				renderTask.baseVertex = submesh.baseVertex;

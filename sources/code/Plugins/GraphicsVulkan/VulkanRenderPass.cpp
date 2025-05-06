@@ -46,15 +46,14 @@ void Vulkan::RenderPass::Update(VkRenderPass renderPass) {
 
 void Vulkan::RenderPass::Create() {
 	uint32_t total = static_cast<uint32_t>(colorAttachments.size());
-	total += (depthFormat != DepthFormat::None) ? 1 : 0;
+	total += (depthFormat != Format::Invalid) ? 1 : 0;
 
 	std::vector<VkAttachmentDescription> attachmentDescs(total);
 	std::vector<VkAttachmentReference> attachmentRefs(colorAttachments.size());
 			
 	for (uint32_t i = 0; i < colorAttachments.size(); ++i) {
 		VkAttachmentDescription &colorAttachment = attachmentDescs[i];
-		uint8_t channels;
-		colorAttachment.format = TranslateColorFormatToVulkan(colorAttachments[i].colorFormat, channels);
+		colorAttachment.format = TranslateFormatToVulkan(colorAttachments[i].colorFormat);
 		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 		colorAttachment.loadOp = colorAttachments[i].shouldClear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
 		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -69,11 +68,14 @@ void Vulkan::RenderPass::Create() {
 	}
 	VkAttachmentReference *depthAttachmentRefPtr = nullptr;
 	VkAttachmentReference depthAttachmentRef = {};
-	if (depthFormat != DepthFormat::None) {
+	if (depthFormat != Format::Invalid) {
+		FormatDepthStencilType depthStencilType = GetFormatDepthStencilType(depthFormat);
+		bool hasStencil =
+			(depthStencilType == FormatDepthStencilType::StencilOnly ||
+			 depthStencilType == FormatDepthStencilType::DepthStencil);
+
 		VkAttachmentDescription &depthAttachment = attachmentDescs[colorAttachments.size()];
-		bool hasStencil = true;
-		depthAttachment.format = TranslateDepthFormatToVulkan(depthFormat, hasStencil);
-		hasStencil = true;
+		depthAttachment.format = TranslateFormatToVulkan(depthFormat);
 		depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 		depthAttachment.loadOp = shouldClearDepthOnLoad
 			? VK_ATTACHMENT_LOAD_OP_CLEAR

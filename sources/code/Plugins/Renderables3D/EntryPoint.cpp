@@ -23,11 +23,12 @@ static void SetupMeshRendererComponent(entt::registry& registry, entt::entity en
 
 	MeshRendererComponent& meshRendererComponent = registry.get<MeshRendererComponent>(entity);
 
-	GraphicsAPI::UniformBuffer::CreateInfo uniformBufferCreateInfo{};
+	GraphicsAPI::Buffer::CreateInfo uniformBufferCreateInfo{};
 	uniformBufferCreateInfo.debugName = "Per Draw Uniform Buffer";
-	uniformBufferCreateInfo.isDynamic = true;
-	uniformBufferCreateInfo.size = sizeof(float) * 16;
-	meshRendererComponent.perDrawUniformBuffer = graphicsCore->CreateUniformBuffer(uniformBufferCreateInfo);
+	uniformBufferCreateInfo.bufferUsage = BufferUsage::Uniform;
+	uniformBufferCreateInfo.memoryUsage = MemUsage::CPUToGPU;
+	uniformBufferCreateInfo.bufferSize = sizeof(float) * 16;
+	meshRendererComponent.perDrawUniformBuffer = graphicsCore->CreateBuffer(uniformBufferCreateInfo);
 
 	GraphicsAPI::DescriptorSet::Binding descriptorSetUniformBinding{ meshRendererComponent.perDrawUniformBuffer };
 
@@ -44,7 +45,7 @@ static void DestroyMeshRendererComponent(entt::registry& registry, entt::entity 
 
 	MeshRendererComponent& meshRendererComponent = registry.get<MeshRendererComponent>(entity);
 	graphicsCore->DeleteDescriptorSet(meshRendererComponent.perDrawDescriptorSet);
-	graphicsCore->DeleteUniformBuffer(meshRendererComponent.perDrawUniformBuffer);
+	graphicsCore->DeleteBuffer(meshRendererComponent.perDrawUniformBuffer);
 }
 
 

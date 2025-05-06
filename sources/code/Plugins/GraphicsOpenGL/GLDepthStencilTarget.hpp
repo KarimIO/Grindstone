@@ -19,7 +19,7 @@ namespace Grindstone::GraphicsAPI::OpenGL {
 	private:
 		void CreateDepthStencilTarget();
 	private:
-		DepthFormat depthFormat;
+		Format depthFormat;
 		uint32_t width;
 		uint32_t height;
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <utility>
 #include <stdint.h>
 
 namespace Grindstone::GraphicsAPI {
@@ -26,7 +27,7 @@ namespace Grindstone::GraphicsAPI {
 	};
 
 	enum class Format {
-		UNDEFINED,
+		Invalid,
 		R4G4_UNORM_PACK8,
 		R4G4B4A4_UNORM_PACK16,
 		B4G4R4A4_UNORM_PACK16,
@@ -281,6 +282,17 @@ namespace Grindstone::GraphicsAPI {
 		A1B5G5R5_UNORM_PACK16,
 		A8_UNORM,
 	};
+
+	enum class FormatDepthStencilType {
+		NotDepthStencil,
+		DepthOnly,
+		StencilOnly,
+		DepthStencil
+	};
+
+	FormatDepthStencilType GetFormatDepthStencilType(Format format);
+	bool IsFormatCompressed(Format format);
+	uint8_t GetCompressedFormatBlockSize(Format format);
 
 	#define SHADER_STAGE_TYPES \
 		GSExpandEntry(Vertex, 1 << 0),\
@@ -706,18 +718,41 @@ namespace Grindstone::GraphicsAPI {
 
 		VertexInputLayoutBuilder() = default;
 
+		struct InlineAttribute {
+			const char* name;
+			uint32_t locationIndex;
+			Format format;
+			uint32_t byteOffset;
+			AttributeUsage attributeUsage;
+		};
+
 		VertexInputLayoutBuilder& AddBinding(
-			std::initializer_list<VertexBindingDescription, std::tuple<int>> bindings
+			VertexBindingDescription binding,
+			std::initializer_list<InlineAttribute> newAttributes
 		) {
 			bindings.emplace_back(binding);
+			for (const InlineAttribute& attrib : newAttributes) {
+				attributes.emplace_back(VertexAttributeDescription{
+					attrib.name,
+					binding.bindingIndex,
+					attrib.locationIndex,
+					attrib.format,
+					attrib.byteOffset,
+					attrib.attributeUsage
+				});
+			}
+
+			return *this;
 		}
 
 		VertexInputLayoutBuilder& AddBinding(VertexBindingDescription binding) {
 			bindings.emplace_back(binding);
+			return *this;
 		}
 
 		VertexInputLayoutBuilder& AddAttribute(VertexAttributeDescription attribute) {
-			bindings.emplace_back(attribute);
+			attributes.emplace_back(attribute);
+			return *this;
 		}
 
 		VertexInputLayout Build() {
@@ -802,4 +837,56 @@ inline Grindstone::GraphicsAPI::ColorMask& operator&=(Grindstone::GraphicsAPI::C
 inline Grindstone::GraphicsAPI::ColorMask& operator^=(Grindstone::GraphicsAPI::ColorMask& a, const Grindstone::GraphicsAPI::ColorMask b) {
 	a = a ^ b;
 	return a;
+}
+
+namespace std {
+	template<>
+	struct std::hash<Grindstone::GraphicsAPI::VertexBindingDescription> {
+		std::size_t operator()(const Grindstone::GraphicsAPI::VertexBindingDescription& binding) const noexcept {
+			size_t result = std::hash<size_t>{}(
+				static_cast<size_t>(binding.bindingIndex) << 8 |
+				static_cast<size_t>(binding.stride) << 32
+				);
+			result ^= std::hash<size_t>{}(static_cast<size_t>(binding.inputRate));
+			return result;
+		}
+	};
+
+	template<>
+	struct std::hash<Grindstone::GraphicsAPI::VertexAttributeDescription> {
+		std::size_t operator()(const Grindstone::GraphicsAPI::VertexAttributeDescription& attribute) const noexcept {
+			size_t result = std::hash<size_t>{}(
+				static_cast<size_t>(attribute.attributeUsage) |
+				static_cast<size_t>(attribute.bindingIndex) << 32
+				);
+
+			result ^= std::hash<size_t>{}(
+				static_cast<size_t>(attribute.byteOffset) |
+				static_cast<size_t>(attribute.format) << 32
+				);
+
+			result ^= std::hash<size_t>{}(
+				static_cast<size_t>(attribute.locationIndex) << 32
+				);
+
+			return result;
+		}
+	};
+
+	template<>
+	struct std::hash<Grindstone::GraphicsAPI::VertexInputLayout> {
+		std::size_t operator()(const Grindstone::GraphicsAPI::VertexInputLayout& vertexInputLayout) const noexcept {
+			size_t result = std::hash<size_t>{}(vertexInputLayout.attributes.size()) ^ std::hash<size_t>{}(vertexInputLayout.bindings.size());
+
+			for (const Grindstone::GraphicsAPI::VertexBindingDescription& binding : vertexInputLayout.bindings) {
+				result ^= std::hash<Grindstone::GraphicsAPI::VertexBindingDescription>{}(binding);
+			}
+
+			for (const Grindstone::GraphicsAPI::VertexAttributeDescription& attribute : vertexInputLayout.attributes) {
+				result ^= std::hash<Grindstone::GraphicsAPI::VertexAttributeDescription>{}(attribute);
+			}
+
+			return result;
+		}
+	};
 }

@@ -31,7 +31,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		VkDeviceMemory imageMemory = nullptr;
 
 		std::string debugName;
-		DepthFormat format = DepthFormat::None;
+		Format format = Format::Invalid;
 		uint32_t width = 0;
 		uint32_t height = 0;
 		bool isShadowMap = false;

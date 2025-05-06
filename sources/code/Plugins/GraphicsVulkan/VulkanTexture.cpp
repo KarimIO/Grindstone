@@ -132,40 +132,29 @@ void Vulkan::Texture::CreateTextureImage(const CreateInfo& createInfo, uint32_t&
 	VkDevice device = Vulkan::Core::Get().GetDevice();
 
 	uint8_t channels = 4;
-	format = TranslateColorFormatToVulkan(createInfo.format, channels);
+	format = TranslateFormatToVulkan(createInfo.format);
 
-	bool isSmallCompressedFormat =
-		createInfo.format == ColorFormat::SRGB_DXT1 ||
-		createInfo.format == ColorFormat::SRGB_ALPHA_DXT1 ||
-		createInfo.format == ColorFormat::RGB_DXT1 ||
-		createInfo.format == ColorFormat::RGBA_DXT1 ||
-		createInfo.format == ColorFormat::BC4;
-	bool isLargeCompressedFormat =
-		createInfo.format == ColorFormat::SRGB_ALPHA_DXT3 ||
-		createInfo.format == ColorFormat::SRGB_ALPHA_DXT5 ||
-		createInfo.format == ColorFormat::RGBA_DXT3 ||
-		createInfo.format == ColorFormat::RGBA_DXT5 ||
-		createInfo.format == ColorFormat::BC6H;
-	bool isCompressedFormat = isSmallCompressedFormat || isLargeCompressedFormat;
+	bool isCompressedFormat = IsFormatCompressed(createInfo.format);
+	uint64_t blockSize = GetCompressedFormatBlockSize(createInfo.format);
 
-	uint64_t blockSize = (isSmallCompressedFormat) ? 8 : 16;
-
+	/* TODO: Figure this out more extensively.
 	if (!isCompressedFormat) {
 		switch (createInfo.format) {
-			case ColorFormat::R16:
-			case ColorFormat::RG16:
-			case ColorFormat::RGB16:
-			case ColorFormat::RGBA16:
+			case Format::R16:
+			case Format::RG16:
+			case Format::RGB16:
+			case Format::RGBA16:
 				channels *= 2;
 				break;
-			case ColorFormat::R32:
-			case ColorFormat::RG32:
-			case ColorFormat::RGB32:
-			case ColorFormat::RGBA32:
+			case Format::R32:
+			case Format::RG32:
+			case Format::RGB32:
+			case Format::RGBA32:
 				channels *= 4;
 				break;
 		}
 	}
+	*/
 
 	uint64_t baseMipSize = isCompressedFormat
 		? ((createInfo.width + 3) / 4) * ((createInfo.height + 3) / 4) * blockSize

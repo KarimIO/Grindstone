@@ -1,7 +1,7 @@
 #include <EngineCore/Reflection/ComponentReflection.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <Common/Graphics/Core.hpp>
-#include <Common/Graphics/UniformBuffer.hpp>
+#include <Common/Graphics/Buffer.hpp>
 #include <Common/Graphics/DescriptorSet.hpp>
 #include <Common/Graphics/DescriptorSetLayout.hpp>
 #include "DirectionalLightComponent.hpp"
@@ -30,7 +30,7 @@ void Grindstone::SetupDirectionalLightComponent(entt::registry& registry, entt::
 	renderPassCreateInfo.debugName = "Directional Shadow Render Pass";
 	renderPassCreateInfo.colorAttachments = nullptr;
 	renderPassCreateInfo.colorAttachmentCount = 0;
-	renderPassCreateInfo.depthFormat = DepthFormat::D32;
+	renderPassCreateInfo.depthFormat = Format::D32_SFLOAT;
 	directionalLightComponent.renderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
 	DepthStencilTarget::CreateInfo shadowMapDepthImageCreateInfo(renderPassCreateInfo.depthFormat, shadowResolution, shadowResolution, false, false, true, "Directional Shadow Map Depth Image");
@@ -47,14 +47,14 @@ void Grindstone::SetupDirectionalLightComponent(entt::registry& registry, entt::
 	directionalLightComponent.framebuffer = graphicsCore->CreateFramebuffer(shadowMapCreateInfo);
 
 	{
-		UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
-		lightUniformBufferObjectCi.debugName = "LightUbo";
-		lightUniformBufferObjectCi.isDynamic = true;
-		lightUniformBufferObjectCi.size = sizeof(DirectionalLightComponent::UniformStruct);
-		directionalLightComponent.uniformBufferObject = graphicsCore->CreateUniformBuffer(lightUniformBufferObjectCi);
-
 		DirectionalLightComponent::UniformStruct lightStruct{};
-		directionalLightComponent.uniformBufferObject->UpdateBuffer(&lightStruct);
+		Buffer::CreateInfo lightUniformBufferObjectCi{};
+		lightUniformBufferObjectCi.debugName = "LightUbo";
+		lightUniformBufferObjectCi.content = &lightStruct;
+		lightUniformBufferObjectCi.bufferUsage = BufferUsage::Uniform;
+		lightUniformBufferObjectCi.memoryUsage = MemUsage::CPUToGPU;
+		lightUniformBufferObjectCi.bufferSize = sizeof(DirectionalLightComponent::UniformStruct);
+		directionalLightComponent.uniformBufferObject = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
 
 		std::array<DescriptorSetLayout::Binding, 2> lightLayoutBindings{};
 		lightLayoutBindings[0].bindingId = 0;
@@ -87,11 +87,12 @@ void Grindstone::SetupDirectionalLightComponent(entt::registry& registry, entt::
 	}
 
 	{
-		UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
+		Buffer::CreateInfo lightUniformBufferObjectCi{};
 		lightUniformBufferObjectCi.debugName = "Directional Light Shadow Map";
-		lightUniformBufferObjectCi.isDynamic = true;
-		lightUniformBufferObjectCi.size = sizeof(glm::mat4);
-		directionalLightComponent.shadowMapUniformBufferObject = graphicsCore->CreateUniformBuffer(lightUniformBufferObjectCi);
+		lightUniformBufferObjectCi.bufferUsage = BufferUsage::Uniform;
+		lightUniformBufferObjectCi.memoryUsage = MemUsage::CPUToGPU;
+		lightUniformBufferObjectCi.bufferSize = sizeof(glm::mat4);
+		directionalLightComponent.shadowMapUniformBufferObject = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
 
 		DescriptorSetLayout::Binding lightUboBindingLayout{};
 		lightUboBindingLayout.bindingId = 0;
@@ -126,8 +127,8 @@ void Grindstone::DestroyDirectionalLightComponent(entt::registry& registry, entt
 	graphicsCore->DeleteDescriptorSetLayout(directionalLightComponent.shadowMapDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSet(directionalLightComponent.descriptorSet);
 	graphicsCore->DeleteDescriptorSetLayout(directionalLightComponent.descriptorSetLayout);
-	graphicsCore->DeleteUniformBuffer(directionalLightComponent.shadowMapUniformBufferObject);
-	graphicsCore->DeleteUniformBuffer(directionalLightComponent.uniformBufferObject);
+	graphicsCore->DeleteBuffer(directionalLightComponent.shadowMapUniformBufferObject);
+	graphicsCore->DeleteBuffer(directionalLightComponent.uniformBufferObject);
 	graphicsCore->DeleteFramebuffer(directionalLightComponent.framebuffer);
 	graphicsCore->DeleteRenderPass(directionalLightComponent.renderPass);
 	graphicsCore->DeleteDepthStencilTarget(directionalLightComponent.depthTarget);

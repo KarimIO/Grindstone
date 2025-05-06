@@ -8,11 +8,8 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 	VkFilter TranslateFilterToVulkan(TextureFilter);
 	VkSamplerMipmapMode TranslateMipFilterToVulkan(TextureFilter);
 	VkSamplerAddressMode TranslateWrapToVulkan(TextureWrapMode);
-	VkFormat TranslateVertexFormatsToVulkan(VertexFormat format);
-	ColorFormat TranslateColorFormatFromVulkan(VkFormat format);
-	DepthFormat TranslateDepthFormatFromVulkan(VkFormat format);
-	VkFormat TranslateColorFormatToVulkan(ColorFormat, uint8_t &channels);
-	VkFormat TranslateDepthFormatToVulkan(DepthFormat, bool& hasStencil);
+	VkFormat TranslateFormatToVulkan(Format format);
+	Format TranslateFormatFromVulkan(VkFormat format);
 	VkCullModeFlags TranslateCullModeToVulkan(CullMode cullMode);
 	VkColorComponentFlags TranslateColorMaskToVulkan(ColorMask colorMask);
 	VkPolygonMode TranslatePolygonModeToVulkan(PolygonFillMode mode);

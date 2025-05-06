@@ -58,7 +58,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void ImmediateSwapBuffers() override;
 		virtual void Resize(uint32_t width, uint32_t height) override;
 	private:
-		ColorFormat GetDeviceColorFormat() const;
+		Format GetDeviceColorFormat() const;
 		VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 		VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 		VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
@@ -71,7 +71,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		RenderPass* renderPass = nullptr;
 		std::vector<ImageSet> imageSets;
 			
-		ColorFormat swapchainFormat = ColorFormat::Invalid;
+		Format swapchainFormat = Format::Invalid;
 		VkFormat swapchainVulkanFormat;
 
 		VkSurfaceKHR surface = nullptr;

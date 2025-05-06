@@ -20,16 +20,14 @@ void OpenGL::DepthStencilTarget::CreateDepthStencilTarget() {
 		glDeleteTextures(1, &handle);
 	}
 
+	OpenGLFormats oglFormat = TranslateFormatToOpenGL(depthFormat);
+
 	glGenTextures(1, &handle);
 	if (isCubemap) {
 		glBindTexture(GL_TEXTURE_CUBE_MAP, handle);
 
-		GLint internalFormat;
-		GLenum format;
-		TranslateDepthFormatToOpenGL(depthFormat, format, internalFormat);
-
 		for (GLenum i = 0; i < 6; i++) {
-			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, width, height, 0, format, GL_FLOAT, 0);
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, oglFormat.internalFormat, width, height, 0, oglFormat.format, oglFormat.type, 0);
 		}
 
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -49,11 +47,7 @@ void OpenGL::DepthStencilTarget::CreateDepthStencilTarget() {
 	else {
 		glBindTexture(GL_TEXTURE_2D, handle);
 
-		GLint internalFormat;
-		GLenum format;
-		TranslateDepthFormatToOpenGL(depthFormat, format, internalFormat);
-
-		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_FLOAT, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, oglFormat.internalFormat, width, height, 0, oglFormat.format, oglFormat.type, 0);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);

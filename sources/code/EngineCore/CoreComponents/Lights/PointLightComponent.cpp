@@ -1,7 +1,7 @@
 #include <EngineCore/Reflection/ComponentReflection.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <Common/Graphics/Core.hpp>
-#include <Common/Graphics/UniformBuffer.hpp>
+#include <Common/Graphics/Buffer.hpp>
 #include <Common/Graphics/DescriptorSet.hpp>
 #include <Common/Graphics/DescriptorSetLayout.hpp>
 #include "PointLightComponent.hpp"
@@ -49,14 +49,14 @@ void Grindstone::SetupPointLightComponent(entt::registry& registry, entt::entity
 	*/
 
 	{
-		UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
-		lightUniformBufferObjectCi.debugName = "LightUbo";
-		lightUniformBufferObjectCi.isDynamic = true;
-		lightUniformBufferObjectCi.size = sizeof(PointLightComponent::UniformStruct);
-		pointLightComponent.uniformBufferObject = graphicsCore->CreateUniformBuffer(lightUniformBufferObjectCi);
-
 		PointLightComponent::UniformStruct lightInfoStruct{};
-		pointLightComponent.uniformBufferObject->UpdateBuffer(&lightInfoStruct);
+		Buffer::CreateInfo lightUniformBufferObjectCi{};
+		lightUniformBufferObjectCi.debugName = "LightUbo";
+		lightUniformBufferObjectCi.content = &lightInfoStruct;
+		lightUniformBufferObjectCi.bufferUsage = BufferUsage::Uniform;
+		lightUniformBufferObjectCi.memoryUsage = MemUsage::CPUToGPU;
+		lightUniformBufferObjectCi.bufferSize = sizeof(PointLightComponent::UniformStruct);
+		pointLightComponent.uniformBufferObject = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
 	}
 
 	{
@@ -141,5 +141,5 @@ void Grindstone::DestroyPointLightComponent(entt::registry& registry, entt::enti
 	PointLightComponent& pointLightComponent = registry.get<PointLightComponent>(entity);
 	graphicsCore->DeleteDescriptorSet(pointLightComponent.descriptorSet);
 	graphicsCore->DeleteDescriptorSetLayout(pointLightComponent.descriptorSetLayout);
-	graphicsCore->DeleteUniformBuffer(pointLightComponent.uniformBufferObject);
+	graphicsCore->DeleteBuffer(pointLightComponent.uniformBufferObject);
 }

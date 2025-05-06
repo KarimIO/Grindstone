@@ -2,7 +2,6 @@
 
 #include <stdint.h>
 #include <Common/Graphics/Formats.hpp>
-#include <Common/Graphics/VertexBuffer.hpp>
 
 namespace Grindstone::Formats::Pipelines::V1 {
 	constexpr auto FileMagicCode = "GPSF";
@@ -78,7 +77,7 @@ namespace Grindstone::Formats::Pipelines::V1 {
 
 	struct PassVertexAttribute {
 		uint32_t location = 0;
-		Grindstone::GraphicsAPI::VertexFormat format = Grindstone::GraphicsAPI::VertexFormat::Float;
+		Grindstone::GraphicsAPI::Format format = Grindstone::GraphicsAPI::Format::R32G32B32A32_SFLOAT;
 		uint32_t offset = 0;
 		uint32_t size = 0;
 		uint32_t componentsCount = 0;

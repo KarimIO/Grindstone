@@ -7,14 +7,10 @@
 #include <Common/Graphics/Core.hpp>
 #include <Common/Graphics/VertexArrayObject.hpp>
 #include <Common/Graphics/CommandBuffer.hpp>
-#include <Common/Graphics/UniformBuffer.hpp>
+#include <Common/Graphics/Buffer.hpp>
 #include <Common/Graphics/DescriptorSet.hpp>
 #include <Common/Graphics/DescriptorSetLayout.hpp>
 #include <Common/Graphics/GraphicsPipeline.hpp>
-#include <Common/Graphics/DescriptorSetLayout.hpp>
-#include <Common/Graphics/VertexBuffer.hpp>
-#include <Common/Graphics/IndexBuffer.hpp>
-#include <Common/Graphics/IndexBuffer.hpp>
 #include <Common/Graphics/Formats.hpp>
 #include <Editor/EditorManager.hpp>
 
@@ -40,13 +36,14 @@ void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
-	GraphicsAPI::UniformBuffer::CreateInfo ubCi{};
+	GraphicsAPI::Buffer::CreateInfo ubCi{};
 	ubCi.debugName = "Gizmo Uniform Buffer";
-	ubCi.isDynamic = true;
-	ubCi.size = static_cast<uint32_t>(sizeof(GridUniformBuffer));
-	gridUniformBuffer = graphicsCore->CreateUniformBuffer(ubCi);
+	ubCi.bufferUsage = BufferUsage::Uniform;
+	ubCi.memoryUsage = MemUsage::CPUToGPU;
+	ubCi.bufferSize = static_cast<uint32_t>(sizeof(GridUniformBuffer));
+	gridUniformBuffer = graphicsCore->CreateBuffer(ubCi);
 
-	std::vector<GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData> shaderStageCreateInfos;
+	std::vector<GraphicsAPI::GraphicsPipeline::ShaderStageData> shaderStageCreateInfos;
 	std::vector<std::vector<char>> fileData;
 
 	Grindstone::Assets::AssetManager* assetManager = engineCore.assetManager;
@@ -79,7 +76,7 @@ void GridRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer,
 		return;
 	}
 
-	Grindstone::GraphicsAPI::GraphicsPipeline* pipeline = pipelineAsset->GetFirstPassPipeline();
+	Grindstone::GraphicsAPI::GraphicsPipeline* pipeline = pipelineAsset->GetFirstPassPipeline(nullptr);
 	if (pipeline == nullptr) {
 		return;
 	}
@@ -91,7 +88,7 @@ void GridRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer,
 	gridData.nearDistance = nearDist;
 	gridData.farDistance = farDist;
 
-	gridUniformBuffer->UpdateBuffer(&gridData);
+	gridUniformBuffer->UploadData(&gridData);
 	commandBuffer->BindGraphicsPipeline(pipeline);
 	commandBuffer->BindGraphicsDescriptorSet(pipeline, &gridDescriptorSet, 1);
 

@@ -21,10 +21,9 @@ OpenGL::Framebuffer::Framebuffer(const Framebuffer::CreateInfo& createInfo) {
 	colorAttachments.resize(createInfo.numRenderTargetLists);
 	depthTarget = static_cast<DepthStencilTarget*>(createInfo.depthTarget);
 
-	numTotalRenderTargets = 0;
+	numTotalRenderTargets = createInfo.numRenderTargetLists;
 	for (uint32_t i = 0; i < createInfo.numRenderTargetLists; i++) {
 		colorAttachments[i] = createInfo.renderTargetLists[i];
-		numTotalRenderTargets += static_cast<OpenGL::RenderTarget *>(colorAttachments[i])->GetNumRenderTargets();
 	}
 
 	CreateFramebuffer();
@@ -44,20 +43,16 @@ void OpenGL::Framebuffer::CreateFramebuffer() {
 
 	std::vector<GLenum> drawBuffers(numTotalRenderTargets);
 
-	GLenum k = 0;
 	for (uint32_t i = 0; i < static_cast<uint32_t>(colorAttachments.size()); i++) {
 		OpenGL::RenderTarget* renderTargetList = static_cast<OpenGL::RenderTarget*>(colorAttachments[i]);
-		for (uint32_t j = 0; j < renderTargetList->GetNumRenderTargets(); j++) {
-			drawBuffers[k] = static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + k);
-			if (renderTargetList->IsCubemap()) {
-				for (int f = 0; f < 6; ++f) {
-					glFramebufferTexture2D(GL_FRAMEBUFFER, drawBuffers[k], GL_TEXTURE_CUBE_MAP_POSITIVE_X + f, renderTargetList->GetHandle(j), 0);
-				}
-				k++;
+		drawBuffers[i] = static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i);
+		if (renderTargetList->IsCubemap()) {
+			for (int f = 0; f < 6; ++f) {
+				glFramebufferTexture2D(GL_FRAMEBUFFER, drawBuffers[i], GL_TEXTURE_CUBE_MAP_POSITIVE_X + f, renderTargetList->GetHandle(), 0);
 			}
-			else {
-				glFramebufferTexture2D(GL_FRAMEBUFFER, drawBuffers[k++], GL_TEXTURE_2D, renderTargetList->GetHandle(j), 0);
-			}
+		}
+		else {
+			glFramebufferTexture2D(GL_FRAMEBUFFER, drawBuffers[i], GL_TEXTURE_2D, renderTargetList->GetHandle(), 0);
 		}
 	}
 
@@ -97,8 +92,8 @@ OpenGL::Framebuffer::~Framebuffer() {
 }
 
 uint32_t OpenGL::Framebuffer::GetAttachment(uint32_t attachmentIndex) {
-	OpenGL::RenderTarget* rt = static_cast<OpenGL::RenderTarget*>(colorAttachments[0]);
-	return rt->GetHandle(attachmentIndex);
+	OpenGL::RenderTarget* rt = static_cast<OpenGL::RenderTarget*>(colorAttachments[attachmentIndex]);
+	return rt->GetHandle();
 }
 
 void OpenGL::Framebuffer::Resize(uint32_t newWidth, uint32_t newHeight) {
@@ -141,16 +136,14 @@ void OpenGL::Framebuffer::BindRead() {
 }
 
 void OpenGL::Framebuffer::BindTextures(int k) {
-	int j = k;
 	for (size_t i = 0; i < colorAttachments.size(); i++) {
 		OpenGL::RenderTarget* rt = static_cast<OpenGL::RenderTarget*>(colorAttachments[i]);
-		rt->Bind(j);
-		j += rt->GetNumRenderTargets();
+		rt->Bind(i);
 	}
 
 	if (depthTarget) {
 		OpenGL::DepthStencilTarget* dt = static_cast<OpenGL::DepthStencilTarget*>(depthTarget);
-		dt->Bind(j);
+		dt->Bind(colorAttachments.size());
 	}
 }
 

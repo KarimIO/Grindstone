@@ -87,11 +87,11 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 		VkVertexInputAttributeDescription& attributeDst = vkAttributes[i];
 		attributeDst.binding = attributeSrc.bindingIndex;
 		attributeDst.location = attributeSrc.locationIndex;
-		attributeDst.format = TranslateVertexFormatsToVulkan(attributeSrc.format);
+		attributeDst.format = TranslateFormatToVulkan(attributeSrc.format);
 		attributeDst.offset = attributeSrc.byteOffset;
 	}
 
-	vertexInputInfo.vertexBindingDescriptionCount = vkBindings.size();
+	vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(vkBindings.size());
 	vertexInputInfo.pVertexBindingDescriptions = vkBindings.data();
 	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vkAttributes.size());
 	vertexInputInfo.pVertexAttributeDescriptions = vkAttributes.data();

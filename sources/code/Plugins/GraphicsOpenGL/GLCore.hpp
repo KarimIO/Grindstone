@@ -3,6 +3,7 @@
 #define NOMINMAX
 #include <GL/gl3w.h>
 #include <vector>
+#include <unordered_map>
 
 #include <Common/Graphics/Core.hpp>
 #include <Common/Graphics/DLLDefs.hpp>
@@ -45,9 +46,10 @@ namespace Grindstone::GraphicsAPI::OpenGL {
 		virtual Grindstone::GraphicsAPI::Texture* CreateTexture(const Texture::CreateInfo& createInfo) override;
 		virtual Grindstone::GraphicsAPI::DescriptorSet* CreateDescriptorSet(const DescriptorSet::CreateInfo& createInfo) override;
 		virtual Grindstone::GraphicsAPI::DescriptorSetLayout* CreateDescriptorSetLayout(const DescriptorSetLayout::CreateInfo& createInfo) override;
-		virtual Grindstone::GraphicsAPI::RenderTarget* CreateRenderTarget(const RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) override;
 		virtual Grindstone::GraphicsAPI::RenderTarget* CreateRenderTarget(const RenderTarget::CreateInfo& rt) override;
 		virtual Grindstone::GraphicsAPI::DepthStencilTarget* CreateDepthStencilTarget(const DepthStencilTarget::CreateInfo& rt) override;
+
+		virtual Grindstone::GraphicsAPI::GraphicsPipeline* GetOrCreateGraphicsPipelineFromCache(const GraphicsPipeline::PipelineData& pipelineData, const VertexInputLayout* vertexInputLayout) override;
 
 		virtual void CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) override;
 
@@ -80,5 +82,8 @@ namespace Grindstone::GraphicsAPI::OpenGL {
 		std::string apiVersion;
 
 		Window* primaryWindow;
+
+		using PipelineHash = size_t;
+		std::unordered_map<PipelineHash, Grindstone::GraphicsAPI::GraphicsPipeline*> graphicsPipelineCache;
 	};
 }

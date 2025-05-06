@@ -4,12 +4,17 @@
 #include <Common/Graphics/Buffer.hpp>
 
 namespace Grindstone::GraphicsAPI {
-	GLenum TranslateVertexFormatToOpenGL(ColorFormat format);
+
+	struct OpenGLFormats {
+		GLenum internalFormat;
+		GLenum format;
+		GLenum type;
+	};
+
+	OpenGLFormats TranslateFormatToOpenGL(Format format);
 	GLenum TranslateMinFilterToOpenGL(bool hasMips, TextureFilter minFilter, TextureFilter mipFilter);
 	GLenum TranslateMagFilterToOpenGL(TextureFilter);
 	GLenum TranslateWrapToOpenGL(TextureWrapMode);
-	void TranslateColorFormatToOpenGL(ColorFormat inFormat, bool& isCompressed, GLenum& format, GLint& internalFormat);
-	void TranslateDepthFormatToOpenGL(DepthFormat inFormat, GLenum& format, GLint& internalFormat);
 	GLenum TranslateCullModeToOpenGL(CullMode cullMode);
 	GLenum TranslatePolygonModeToOpenGL(PolygonFillMode mode);
 	GLenum TranslateGeometryTypeToOpenGL(GeometryType geometryType);

@@ -9,7 +9,7 @@
 
 namespace Grindstone::GraphicsAPI {
 	class CommandBuffer;
-	class UniformBuffer;
+	class Buffer;
 	class DescriptorSet;
 	class DescriptorSetLayout;
 	class GraphicsPipeline;
@@ -23,7 +23,7 @@ namespace Grindstone::Editor {
 		void Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, glm::vec2 renderScale, glm::mat4 proj, glm::mat4 view, float nearDist, float farDist, glm::quat rotation, float offset);
 	protected:
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> pipelineSet;
-		Grindstone::GraphicsAPI::UniformBuffer* gridUniformBuffer = nullptr;
+		Grindstone::GraphicsAPI::Buffer* gridUniformBuffer = nullptr;
 		Grindstone::GraphicsAPI::DescriptorSet* gridDescriptorSet = nullptr;
 		Grindstone::GraphicsAPI::DescriptorSetLayout* gridDescriptorSetLayout = nullptr;
 	};

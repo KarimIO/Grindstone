@@ -7,14 +7,10 @@
 #include <Common/Graphics/Core.hpp>
 #include <Common/Graphics/VertexArrayObject.hpp>
 #include <Common/Graphics/CommandBuffer.hpp>
-#include <Common/Graphics/UniformBuffer.hpp>
+#include <Common/Graphics/Buffer.hpp>
 #include <Common/Graphics/DescriptorSet.hpp>
 #include <Common/Graphics/DescriptorSetLayout.hpp>
 #include <Common/Graphics/GraphicsPipeline.hpp>
-#include <Common/Graphics/DescriptorSetLayout.hpp>
-#include <Common/Graphics/VertexBuffer.hpp>
-#include <Common/Graphics/IndexBuffer.hpp>
-#include <Common/Graphics/IndexBuffer.hpp>
 #include <Common/Graphics/Formats.hpp>
 #include <Editor/EditorManager.hpp>
 
@@ -42,15 +38,20 @@ void GizmoRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
-	GraphicsAPI::VertexBufferLayout gizmoVertexLayout = {
-		{
-			0,
-			Grindstone::GraphicsAPI::VertexFormat::Float3,
-			"vertexPosition",
-			false,
-			Grindstone::GraphicsAPI::AttributeUsage::Position
-		}
-	};
+	GraphicsAPI::VertexInputLayoutBuilder layoutBuilder;
+	gizmoVertexLayout = layoutBuilder
+		.AddBinding(
+			{ 0, 0, VertexInputRate::Vertex },
+			{
+				{
+					"vertexPosition",
+					0,
+					Grindstone::GraphicsAPI::Format::R32G32B32_SFLOAT,
+					false,
+					Grindstone::GraphicsAPI::AttributeUsage::Position
+				}
+			}
+		).Build();
 
 	std::array<float, 3 * (8 + 80 + 16 + 17 + 4 + 32)> shapeVertices{
 		// Cube
@@ -443,27 +444,24 @@ void GizmoRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	dataBuffer.resize(maxObjects);
 	drawShapes.resize(maxObjects);
 
-	GraphicsAPI::UniformBuffer::CreateInfo ubCi{};
+	GraphicsAPI::Buffer::CreateInfo ubCi{};
 	ubCi.debugName = "Gizmo Uniform Buffer";
-	ubCi.isDynamic = true;
-	ubCi.size = static_cast<uint32_t>(sizeof(GizmoUniformBuffer) * maxObjects);
-	gizmoUniformBuffer = graphicsCore->CreateUniformBuffer(ubCi);
+	ubCi.bufferUsage = BufferUsage::Uniform;
+	ubCi.memoryUsage = MemUsage::CPUToGPU;
+	ubCi.bufferSize = static_cast<uint32_t>(sizeof(GizmoUniformBuffer) * maxObjects);
+	gizmoUniformBuffer = graphicsCore->CreateBuffer(ubCi);
 
-	GraphicsAPI::VertexBuffer::CreateInfo gizmoShapesVertexBufferCi{};
+	GraphicsAPI::Buffer::CreateInfo gizmoShapesVertexBufferCi{};
 	gizmoShapesVertexBufferCi.debugName = "Gizmo Shape Vertex Buffer";
-	gizmoShapesVertexBufferCi.count = static_cast<uint32_t>(shapeVertices.size() / 3);
 	gizmoShapesVertexBufferCi.content = shapeVertices.data();
-	gizmoShapesVertexBufferCi.layout = &gizmoVertexLayout;
-	gizmoShapesVertexBufferCi.size = sizeof(shapeVertices);
-	gizmoShapesVertexBuffer = graphicsCore->CreateVertexBuffer(gizmoShapesVertexBufferCi);
+	gizmoShapesVertexBufferCi.bufferSize = sizeof(shapeVertices);
+	gizmoShapesVertexBuffer = graphicsCore->CreateBuffer(gizmoShapesVertexBufferCi);
 
-	GraphicsAPI::IndexBuffer::CreateInfo gizmoShapesIndexBufferCi{};
+	GraphicsAPI::Buffer::CreateInfo gizmoShapesIndexBufferCi{};
 	gizmoShapesIndexBufferCi.debugName = "Gizmo Shape Index Buffer";
-	gizmoShapesIndexBufferCi.count = static_cast<uint32_t>(shapeIndices.size());
 	gizmoShapesIndexBufferCi.content = shapeIndices.data();
-	gizmoShapesIndexBufferCi.size = sizeof(shapeIndices);
-	gizmoShapesIndexBufferCi.is32Bit = false;
-	gizmoShapesIndexBuffer = graphicsCore->CreateIndexBuffer(gizmoShapesIndexBufferCi);
+	gizmoShapesIndexBufferCi.bufferSize = sizeof(shapeIndices);
+	gizmoShapesIndexBuffer = graphicsCore->CreateBuffer(gizmoShapesIndexBufferCi);
 
 	GraphicsAPI::VertexArrayObject::CreateInfo vaoCi{};
 	vaoCi.debugName = "Gizmo Shape Vertex Array Object";
@@ -485,7 +483,7 @@ void GizmoRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	// TODO: Capsule is currently just copying cylinder. We need to actually handle the capsule
 	shapeMetaData[static_cast<size_t>(ShapeType::Capsule)] = shapeMetaData[static_cast<size_t>(ShapeType::Cyclinder)];
 
-	std::vector<GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData> shaderStageCreateInfos;
+	std::vector<GraphicsAPI::GraphicsPipeline::ShaderStageData> shaderStageCreateInfos;
 	std::vector<std::vector<char>> fileData;
 
 	Grindstone::Assets::AssetManager* assetManager = engineCore.assetManager;
@@ -543,7 +541,7 @@ void GizmoRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer
 		return;
 	}
 
-	Grindstone::GraphicsAPI::GraphicsPipeline* gizmoPipeline = pipelineAsset->GetFirstPassPipeline();
+	Grindstone::GraphicsAPI::GraphicsPipeline* gizmoPipeline = pipelineAsset->GetFirstPassPipeline(&gizmoVertexLayout);
 	if (gizmoPipeline == nullptr) {
 		return;
 	}
@@ -552,7 +550,7 @@ void GizmoRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer
 		data.transform = projView * data.transform;
 	}
 
-	gizmoUniformBuffer->UpdateBuffer(dataBuffer.data());
+	gizmoUniformBuffer->UploadData(dataBuffer.data());
 	commandBuffer->BindGraphicsPipeline(gizmoPipeline);
 	commandBuffer->BindGraphicsDescriptorSet(gizmoPipeline, &gizmoDescriptorSet, 1);
 	commandBuffer->BindVertexArrayObject(gizmoShapesVao);

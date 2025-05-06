@@ -1,10 +1,10 @@
 #include <EngineCore/Logger.hpp>
 
 #include "VulkanDescriptorSetLayout.hpp"
-#include "VulkanUniformBuffer.hpp"
 #include "VulkanRenderTarget.hpp"
 #include "VulkanDepthStencilTarget.hpp"
 #include "VulkanTexture.hpp"
+#include "VulkanBuffer.hpp"
 #include "VulkanCore.hpp"
 
 #include "VulkanDescriptorSet.hpp"
@@ -13,7 +13,7 @@ namespace Base = Grindstone::GraphicsAPI;
 namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
 static void AttachUniformBuffer(std::vector<VkWriteDescriptorSet>& writeVector, uint32_t bindingIndex, Base::DescriptorSet::Binding& binding, VkDescriptorSet descriptorSet) {
-	Vulkan::UniformBuffer* uniformBuffer = static_cast<Vulkan::UniformBuffer*>(binding.itemPtr);
+	Vulkan::Buffer* uniformBuffer = static_cast<Vulkan::Buffer*>(binding.itemPtr);
 
 	// TODO: Handle this lifetime
 	VkDescriptorBufferInfo* bufferInfo = new VkDescriptorBufferInfo();

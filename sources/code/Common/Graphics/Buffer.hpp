@@ -28,6 +28,7 @@ namespace Grindstone::GraphicsAPI {
 	public:
 		struct CreateInfo {
 			const char* debugName;
+			const void* content;
 			size_t bufferSize;
 			BufferUsage bufferUsage;
 			MemUsage memoryUsage;
@@ -39,7 +40,7 @@ namespace Grindstone::GraphicsAPI {
 			memoryUsage(createInfo.memoryUsage),
 			bufferSize(createInfo.bufferSize) {};
 
-		virtual ~Buffer() = 0;
+		virtual ~Buffer() {}
 		virtual void* Map() = 0;
 		virtual void Unmap() = 0;
 		virtual void UploadData(const void* data, size_t size, size_t offset = 0) = 0;

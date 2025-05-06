@@ -40,7 +40,7 @@ void Vulkan::RenderTarget::UpdateNativeImage(VkImage image, VkImageView imageVie
 	isOwnedBySwapchain = true;
 	this->image = image;
 	this->imageView = imageView;
-	this->format = TranslateColorFormatFromVulkan(format);
+	this->format = TranslateFormatFromVulkan(format);
 }
 
 void Vulkan::RenderTarget::Create() {
@@ -48,8 +48,7 @@ void Vulkan::RenderTarget::Create() {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Render Target!");
 	}
 
-	uint8_t channels;
-	VkFormat renderFormat = TranslateColorFormatToVulkan(format, channels);
+	VkFormat renderFormat = TranslateFormatToVulkan(format);
 
 	uint32_t mipLevels = 1;
 

@@ -27,7 +27,7 @@ OpenGL::Buffer::Buffer(const Grindstone::GraphicsAPI::Buffer::CreateInfo& create
 	glGenBuffers(1, &bufferObject);
 	glBindBuffer(bufferType, bufferObject);
 	glObjectLabel(GL_BUFFER, bufferObject, -1, createInfo.debugName);
-	glBufferData(bufferType, createInfo.bufferSize, nullptr, usageHint);
+	glBufferData(bufferType, createInfo.bufferSize, createInfo.content, usageHint);
 	glBindBuffer(bufferType, 0);
 }
 

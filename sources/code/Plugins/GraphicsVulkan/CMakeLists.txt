@@ -8,7 +8,7 @@ set(Vk_WINDOW_SOURCES ${COMMON_DIR}/Window/WindowManager.cpp)
 set(Vk_WINDOW_HEADERS ${COMMON_DIR}/Window/WindowManager.hpp ${COMMON_DIR}/Window/Window.hpp)
 set(Vk_DISPLAY_SOURCES ${COMMON_DIR}/Display/DisplayManager.cpp)
 set(Vk_DISPLAY_HEADERS ${COMMON_DIR}/Display/DisplayManager.hpp ${COMMON_DIR}/Display/Display.hpp)
-set(Vk_COMMON_HEADERS ${GRAPHICS_DIR}/DepthStencilTarget.hpp ${GRAPHICS_DIR}/RenderTarget.hpp ${GRAPHICS_DIR}/CommandBuffer.hpp ${GRAPHICS_DIR}/Formats.hpp ${GRAPHICS_DIR}/VertexArrayObject.hpp ${GRAPHICS_DIR}/Framebuffer.hpp ${GRAPHICS_DIR}/GraphicsPipeline.hpp ${GRAPHICS_DIR}/ComputePipeline.hpp ${GRAPHICS_DIR}/Core.hpp ${GRAPHICS_DIR}/RenderPass.hpp ${GRAPHICS_DIR}/Texture.hpp ${GRAPHICS_DIR}/Buffer.hpp ${GRAPHICS_DIR}/WindowGraphicsBinding.hpp)
+set(Vk_COMMON_HEADERS ${GRAPHICS_DIR}/DepthStencilTarget.hpp ${GRAPHICS_DIR}/RenderTarget.hpp ${GRAPHICS_DIR}/CommandBuffer.hpp ${GRAPHICS_DIR}/Formats.cpp ${GRAPHICS_DIR}/Formats.hpp ${GRAPHICS_DIR}/VertexArrayObject.hpp ${GRAPHICS_DIR}/Framebuffer.hpp ${GRAPHICS_DIR}/GraphicsPipeline.hpp ${GRAPHICS_DIR}/ComputePipeline.hpp ${GRAPHICS_DIR}/Core.hpp ${GRAPHICS_DIR}/RenderPass.hpp ${GRAPHICS_DIR}/Texture.hpp ${GRAPHICS_DIR}/Buffer.hpp ${GRAPHICS_DIR}/WindowGraphicsBinding.hpp)
 
 set(Vk_OBJ_SOURCES ${Vk_OBJ_SOURCES} VulkanWindowGraphicsBinding.cpp)
 set(Vk_OBJ_HEADERS ${Vk_OBJ_HEADERS} VulkanWindowGraphicsBinding.hpp)

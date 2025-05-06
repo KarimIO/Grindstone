@@ -37,7 +37,7 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 	bool hasAlpha = header.ddspf.dwFlags & DDPF_ALPHAPIXELS;
 
 	bool useDxgi = false;
-	Grindstone::GraphicsAPI::ColorFormat format = GraphicsAPI::ColorFormat::Invalid;
+	Grindstone::GraphicsAPI::Format format = GraphicsAPI::Format::Invalid;
 
 	bool isFourCC = (header.ddspf.dwFlags & DDPF_FOURCC) > 0;
 	bool isRGB = (header.ddspf.dwFlags & DDPF_RGB) > 0;
@@ -46,36 +46,36 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 		switch (header.ddspf.dwFourCC) {
 		case FOURCC_DXT1:
 			format = hasAlpha
-				? Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT1
-				: Grindstone::GraphicsAPI::ColorFormat::RGB_DXT1;
+				? Grindstone::GraphicsAPI::Format::BC1_RGBA_SRGB_BLOCK
+				: Grindstone::GraphicsAPI::Format::BC1_RGB_SRGB_BLOCK;
 			break;
 		case FOURCC_DXT3:
-			format = Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT3;
+			format = Grindstone::GraphicsAPI::Format::BC2_SRGB_BLOCK;
 			break;
 		case FOURCC_DXT5:
-			format = Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT5;
+			format = Grindstone::GraphicsAPI::Format::BC3_SRGB_BLOCK;
 			break;
 		case FOURCC_BC4:
-			format = Grindstone::GraphicsAPI::ColorFormat::BC4;
+			format = Grindstone::GraphicsAPI::Format::BC1_RGBA_UNORM_BLOCK;
 			break;
 
 		case FOURCC_R16:
-			format = Grindstone::GraphicsAPI::ColorFormat::R16;
+			format = Grindstone::GraphicsAPI::Format::R16_UNORM;
 			break;
 		case FOURCC_RG16:
-			format = Grindstone::GraphicsAPI::ColorFormat::RG16;
+			format = Grindstone::GraphicsAPI::Format::R16G16_UNORM;
 			break;
 		case FOURCC_RGBA16:
-			format = Grindstone::GraphicsAPI::ColorFormat::RGBA16;
+			format = Grindstone::GraphicsAPI::Format::R16G16B16A16_UNORM;
 			break;
 		case FOURCC_R32:
-			format = Grindstone::GraphicsAPI::ColorFormat::R32;
+			format = Grindstone::GraphicsAPI::Format::R32_SFLOAT;
 			break;
 		case FOURCC_RG32:
-			format = Grindstone::GraphicsAPI::ColorFormat::RG32;
+			format = Grindstone::GraphicsAPI::Format::R32G32_SFLOAT;
 			break;
 		case FOURCC_RGBA32:
-			format = Grindstone::GraphicsAPI::ColorFormat::RGBA32;
+			format = Grindstone::GraphicsAPI::Format::R32G32B32A32_SFLOAT;
 			break;
 		case FOURCC_DXGI:
 			useDxgi = true;
@@ -89,10 +89,10 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 	else if (isRGB) {
 		switch (header.ddspf.dwRGBBitCount) {
 		case 24:
-			format = Grindstone::GraphicsAPI::ColorFormat::RGB8;
+			format = Grindstone::GraphicsAPI::Format::R8G8B8_UINT;
 			break;
 		case 32:
-			format = Grindstone::GraphicsAPI::ColorFormat::RGBA8;
+			format = Grindstone::GraphicsAPI::Format::R8G8B8A8_UINT;
 			break;
 		default:
 			GPRINT_ERROR_V(LogSource::EngineCore, "Invalid rgb pixel format in texture with id {}.", textureAsset.uuid.ToString());
@@ -110,8 +110,11 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 	if (useDxgi) {
 		DDSHeaderExtended extendedHeader;
 		std::memcpy(&extendedHeader, imgPtr, sizeof(DDSHeaderExtended));
-		if (extendedHeader.dxgiFormat == DxgiFormat::DXGI_FORMAT_BC6H_TYPELESS || extendedHeader.dxgiFormat == DxgiFormat::DXGI_FORMAT_BC6H_UF16 || extendedHeader.dxgiFormat == DxgiFormat::DXGI_FORMAT_BC6H_SF16) {
-			format = Grindstone::GraphicsAPI::ColorFormat::BC6H;
+		if (extendedHeader.dxgiFormat == DxgiFormat::DXGI_FORMAT_BC6H_TYPELESS || extendedHeader.dxgiFormat == DxgiFormat::DXGI_FORMAT_BC6H_UF16) {
+			format = Grindstone::GraphicsAPI::Format::BC6H_UFLOAT_BLOCK;
+		}
+		else if (extendedHeader.dxgiFormat == DxgiFormat::DXGI_FORMAT_BC6H_SF16) {
+			format = Grindstone::GraphicsAPI::Format::BC6H_SFLOAT_BLOCK;
 		}
 		else {
 			GPRINT_ERROR_V(LogSource::EngineCore, "Invalid extended DXGI format in texture with id {}.", textureAsset.uuid.ToString());

@@ -6,56 +6,6 @@
 
 using namespace Grindstone::GraphicsAPI;
 
-static uint32_t VertexFormatTypeSize(VertexFormat type) {
-	switch (type) {
-	case VertexFormat::Float:    return 4;
-	case VertexFormat::Float2:   return 4 * 2;
-	case VertexFormat::Float3:   return 4 * 3;
-	case VertexFormat::Float4:   return 4 * 4;
-	case VertexFormat::Mat3:     return 4 * 3 * 3;
-	case VertexFormat::Mat4:     return 4 * 4 * 4;
-	case VertexFormat::Int:      return 4;
-	case VertexFormat::Int2:     return 4 * 2;
-	case VertexFormat::Int3:     return 4 * 3;
-	case VertexFormat::Int4:     return 4 * 4;
-	case VertexFormat::UInt:     return 4;
-	case VertexFormat::UInt2:    return 4 * 2;
-	case VertexFormat::UInt3:    return 4 * 3;
-	case VertexFormat::UInt4:    return 4 * 4;
-	case VertexFormat::Bool:     return 1;
-	}
-
-	return 0;
-};
-
-static uint32_t VertexFormatTypeComponents(VertexFormat type) {
-	switch (type) {
-	case VertexFormat::Float:    return 1;
-	case VertexFormat::Float2:   return 2;
-	case VertexFormat::Float3:   return 3;
-	case VertexFormat::Float4:   return 4;
-	case VertexFormat::Mat3:     return 4 * 3;
-	case VertexFormat::Mat4:     return 4 * 4;
-	case VertexFormat::Int:      return 1;
-	case VertexFormat::Int2:     return 2;
-	case VertexFormat::Int3:     return 3;
-	case VertexFormat::Int4:     return 4;
-	case VertexFormat::UInt:     return 1;
-	case VertexFormat::UInt2:    return 2;
-	case VertexFormat::UInt3:    return 3;
-	case VertexFormat::UInt4:    return 4;
-	case VertexFormat::Bool:     return 1;
-	}
-
-	return 0;
-};
-
-static GLenum VertexFormatTypeComponents(VertexFormat type) {
-	// TODO: Implement this
-
-	return GL_FALSE;
-};
-
 OpenGL::VertexArrayObject::VertexArrayObject() {
 	glGenVertexArrays(1, &vertexArrayObject);
 	glBindVertexArray(vertexArrayObject);
@@ -89,18 +39,18 @@ OpenGL::VertexArrayObject::VertexArrayObject(const VertexArrayObject::CreateInfo
 	for (uint32_t j = 0; j < layout.attributes.size(); ++j) {
 		const VertexAttributeDescription& attribute = layout.attributes[j];
 
-		const GLenum vertexFormat = TranslateVertexFormatToOpenGL(attribute.format);
-		const GLenum isNormalized = VertexFormatTypeComponents(attribute.format);
-		const GLenum componentCount = VertexFormatTypeComponents(attribute.format);
+		OpenGLFormats oglFormat = TranslateFormatToOpenGL(attribute.format);
+		const GLenum isNormalized = true; // TODO: FormatTypeComponents(attribute.format);
+		const GLenum componentCount = 4; // TODO: FormatTypeComponents(attribute.format);
 		const GLuint offset = attribute.byteOffset;
 
 		glEnableVertexArrayAttrib(vertexArrayObject, attribute.locationIndex);
 		glVertexArrayAttribBinding(vertexArrayObject, attribute.locationIndex, attribute.bindingIndex);
-		glVertexArrayAttribFormat
+		glVertexArrayAttribFormat(
 			vertexArrayObject,
 			attribute.locationIndex,
 			componentCount,
-			vertexFormat,
+			oglFormat.format,
 			isNormalized,
 			offset
 		);

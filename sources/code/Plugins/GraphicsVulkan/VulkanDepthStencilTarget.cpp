@@ -22,8 +22,9 @@ void Vulkan::DepthStencilTarget::Create() {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Depth Target!");
 	}
 
-	bool hasStencil = false;
-	VkFormat depthFormat = TranslateDepthFormatToVulkan(format, hasStencil);
+	FormatDepthStencilType depthStencilType = GetFormatDepthStencilType(format);
+	bool hasStencil = (depthStencilType == FormatDepthStencilType::StencilOnly || depthStencilType == FormatDepthStencilType::DepthStencil);
+	VkFormat depthFormat = TranslateFormatToVulkan(format);
 
 	VkImageAspectFlags aspectFlags = hasStencil
 		? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT

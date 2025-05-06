@@ -5,7 +5,7 @@
 #include <cstring>
 #include <GL/gl3w.h>
 
-#include "GLUniformBuffer.hpp"
+#include "GLBuffer.hpp"
 #include "GLTexture.hpp"
 #include "GLGraphicsPipeline.hpp"
 #include "GLCore.hpp"
@@ -17,57 +17,53 @@ OpenGL::GraphicsPipeline::GraphicsPipeline(const GraphicsPipeline::CreateInfo& c
 	CreatePipeline(createInfo);
 }
 
-void OpenGL::GraphicsPipeline::Recreate(const GraphicsPipeline::CreateInfo& createInfo) {
-	glUseProgram(0);
-	glDeleteProgram(program);
-
-	CreatePipeline(createInfo);
-}
-
 void OpenGL::GraphicsPipeline::CreatePipeline(const GraphicsPipeline::CreateInfo& createInfo) {
-	width = static_cast<GLsizei>(createInfo.width);
-	height = static_cast<GLsizei>(createInfo.height);
-	scissorWidth = static_cast<GLsizei>(createInfo.scissorW);
-	scissorHeight = static_cast<GLsizei>(createInfo.scissorH);
-	scissorX = static_cast<GLint>(createInfo.scissorX);
-	scissorY = static_cast<GLint>(createInfo.scissorY);
+	const VertexInputLayout& vertexInputLayout = createInfo.vertexInputLayout;
+	const PipelineData& pipelineData = createInfo.pipelineData;
 
-	depthCompareOp = TranslateCompareOpToOpenGL(createInfo.depthCompareOp);
-	isDepthTestEnabled = createInfo.isDepthTestEnabled;
-	isDepthWriteEnabled = createInfo.isDepthWriteEnabled;
-	isStencilEnabled = createInfo.isStencilEnabled;
-	isDepthBiasEnabled = createInfo.isDepthBiasEnabled;
-	isDepthClampEnabled = createInfo.isDepthClampEnabled;
+	width = static_cast<GLsizei>(pipelineData.width);
+	height = static_cast<GLsizei>(pipelineData.height);
+	scissorWidth = static_cast<GLsizei>(pipelineData.scissorW);
+	scissorHeight = static_cast<GLsizei>(pipelineData.scissorH);
+	scissorX = static_cast<GLint>(pipelineData.scissorX);
+	scissorY = static_cast<GLint>(pipelineData.scissorY);
 
-	depthBiasConstantFactor = createInfo.depthBiasConstantFactor;
-	depthBiasSlopeFactor = createInfo.depthBiasSlopeFactor;
-	depthBiasClamp = createInfo.depthBiasClamp;
+	depthCompareOp = TranslateCompareOpToOpenGL(pipelineData.depthCompareOp);
+	isDepthTestEnabled = pipelineData.isDepthTestEnabled;
+	isDepthWriteEnabled = pipelineData.isDepthWriteEnabled;
+	isStencilEnabled = pipelineData.isStencilEnabled;
+	isDepthBiasEnabled = pipelineData.isDepthBiasEnabled;
+	isDepthClampEnabled = pipelineData.isDepthClampEnabled;
 
-	primitiveType = TranslateGeometryTypeToOpenGL(createInfo.primitiveType);
-	polygonFillMode = TranslatePolygonModeToOpenGL(createInfo.polygonFillMode);
-	cullMode = TranslateCullModeToOpenGL(createInfo.cullMode);
+	depthBiasConstantFactor = pipelineData.depthBiasConstantFactor;
+	depthBiasSlopeFactor = pipelineData.depthBiasSlopeFactor;
+	depthBiasClamp = pipelineData.depthBiasClamp;
+
+	primitiveType = TranslateGeometryTypeToOpenGL(pipelineData.primitiveType);
+	polygonFillMode = TranslatePolygonModeToOpenGL(pipelineData.polygonFillMode);
+	cullMode = TranslateCullModeToOpenGL(pipelineData.cullMode);
 
 	// TODO: Support colorMask for different attachments.
-	// colorMaskRed = static_cast<GLboolean>(createInfo.colorMask & ColorMask::Red);
-	// colorMaskBlue = static_cast<GLboolean>(createInfo.colorMask & ColorMask::Blue);
-	// colorMaskGreen = static_cast<GLboolean>(createInfo.colorMask & ColorMask::Green);
-	// colorMaskAlpha = static_cast<GLboolean>(createInfo.colorMask & ColorMask::Alpha);
+	// colorMaskRed = static_cast<GLboolean>(pipelineData.colorMask & ColorMask::Red);
+	// colorMaskBlue = static_cast<GLboolean>(pipelineData.colorMask & ColorMask::Blue);
+	// colorMaskGreen = static_cast<GLboolean>(pipelineData.colorMask & ColorMask::Green);
+	// colorMaskAlpha = static_cast<GLboolean>(pipelineData.colorMask & ColorMask::Alpha);
 	// 
 	// TODO: Support blends for different attachments.
-	// blendColorOp = TranslateBlendOpToOpenGL(createInfo.blendData.colorOperation);
-	// blendColorSrc = TranslateBlendFactorToOpenGL(createInfo.blendData.colorFactorSrc);
-	// blendColorDst = TranslateBlendFactorToOpenGL(createInfo.blendData.colorFactorDst);
-	// blendAlphaOp = TranslateBlendOpToOpenGL(createInfo.blendData.alphaOperation);
-	// blendAlphaSrc = TranslateBlendFactorToOpenGL(createInfo.blendData.alphaFactorSrc);
-	// blendAlphaDst = TranslateBlendFactorToOpenGL(createInfo.blendData.alphaFactorDst);
+	// blendColorOp = TranslateBlendOpToOpenGL(pipelineData.blendData.colorOperation);
+	// blendColorSrc = TranslateBlendFactorToOpenGL(pipelineData.blendData.colorFactorSrc);
+	// blendColorDst = TranslateBlendFactorToOpenGL(pipelineData.blendData.colorFactorDst);
+	// blendAlphaOp = TranslateBlendOpToOpenGL(pipelineData.blendData.alphaOperation);
+	// blendAlphaSrc = TranslateBlendFactorToOpenGL(pipelineData.blendData.alphaFactorSrc);
+	// blendAlphaDst = TranslateBlendFactorToOpenGL(pipelineData.blendData.alphaFactorDst);
 
 	program = glCreateProgram();
-	glObjectLabel(GL_PROGRAM, program, -1, createInfo.debugName);
+	glObjectLabel(GL_PROGRAM, program, -1, pipelineData.debugName);
 
-	uint32_t shaderNum = createInfo.shaderStageCreateInfoCount;
+	uint32_t shaderNum = pipelineData.shaderStageCreateInfoCount;
 	GLuint* shaders = new GLuint[shaderNum];
 	for (uint32_t i = 0; i < shaderNum; i++) {
-		shaders[i] = CreateShaderModule(createInfo.shaderStageCreateInfos[i]);
+		shaders[i] = CreateShaderModule(pipelineData.shaderStageCreateInfos[i]);
 	}
 
 	GLint result = 0;
@@ -90,9 +86,9 @@ void OpenGL::GraphicsPipeline::CreatePipeline(const GraphicsPipeline::CreateInfo
 	delete[] shaders;
 }
 
-GLuint OpenGL::GraphicsPipeline::CreateShaderModule(const GraphicsPipeline::CreateInfo::ShaderStageData& createInfo) {
+GLuint OpenGL::GraphicsPipeline::CreateShaderModule(const GraphicsPipeline::ShaderStageData& pipelineData) {
 	int shaderType;
-	switch (createInfo.type) {
+	switch (pipelineData.type) {
 	default:
 	case ShaderStage::Vertex:
 		shaderType = GL_VERTEX_SHADER;
@@ -112,15 +108,15 @@ GLuint OpenGL::GraphicsPipeline::CreateShaderModule(const GraphicsPipeline::Crea
 	}
 
 	GLuint shader = glCreateShader(shaderType);
-	if (createInfo.fileName != nullptr) {
-		glObjectLabel(GL_SHADER, shader, -1, createInfo.fileName);
+	if (pipelineData.fileName != nullptr) {
+		glObjectLabel(GL_SHADER, shader, -1, pipelineData.fileName);
 	}
 
 	bool shouldUseTextShaders = false;
 
 	if (shouldUseTextShaders) {
-		const GLint size = createInfo.size;
-		glShaderSource(shader, 1, &createInfo.content, &size);
+		const GLint size = pipelineData.size;
+		glShaderSource(shader, 1, &pipelineData.content, &size);
 		glCompileShader(shader);
 
 		GLint result = GL_FALSE;
@@ -130,7 +126,7 @@ GLuint OpenGL::GraphicsPipeline::CreateShaderModule(const GraphicsPipeline::Crea
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
 		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLength);
 		if (!result) {
-			printf("Error Report in Shader %s\n", createInfo.fileName);
+			printf("Error Report in Shader %s\n", pipelineData.fileName);
 			std::vector<char> VertexShaderErrorMessage(infoLength + 1);
 			glGetShaderInfoLog(shader, infoLength, NULL, VertexShaderErrorMessage.data());
 			printf("%s\n", VertexShaderErrorMessage.data());
@@ -138,7 +134,7 @@ GLuint OpenGL::GraphicsPipeline::CreateShaderModule(const GraphicsPipeline::Crea
 		}
 	}
 	else {
-		glShaderBinary(1, &shader, GL_SHADER_BINARY_FORMAT_SPIR_V_ARB, createInfo.content, createInfo.size);
+		glShaderBinary(1, &shader, GL_SHADER_BINARY_FORMAT_SPIR_V_ARB, pipelineData.content, pipelineData.size);
 		glSpecializeShader(shader, "main", 0, 0, 0);
 	}
 

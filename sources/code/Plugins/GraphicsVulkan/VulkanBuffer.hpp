@@ -7,7 +7,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 	class Buffer : public Grindstone::GraphicsAPI::Buffer {
 	public:
 		Buffer(const Grindstone::GraphicsAPI::Buffer::CreateInfo& createInfo);
-		virtual ~Buffer();
+		virtual ~Buffer() override;
 
 		virtual void* Map() override;
 		virtual void Unmap() override;

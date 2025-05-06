@@ -58,18 +58,10 @@ void OpenGL::Texture::CreateTexture(const Texture::CreateInfo& createInfo) {
 			glObjectLabel(GL_TEXTURE, textureHandle, -1, createInfo.debugName);
 		}
 
-		GLint internalFormat;
-		GLenum format;
-		bool isCompressed;
-		TranslateColorFormatToOpenGL(createInfo.format, isCompressed, format, internalFormat);
+		OpenGLFormats oglFormat = TranslateFormatToOpenGL(createInfo.format);
 
 		const char *buffer = createInfo.data;
-		unsigned int blockSize = (
-				createInfo.format == ColorFormat::SRGB_DXT1 ||
-				createInfo.format == ColorFormat::SRGB_ALPHA_DXT1 ||
-				createInfo.format == ColorFormat::RGB_DXT1 ||
-				createInfo.format == ColorFormat::RGBA_DXT1
-			) ? 8 : 16;
+		uint8_t blockSize = GetCompressedFormatBlockSize(createInfo.format);
 
 		gl3wGetProcAddress("GL_COMPRESSED_RGBA_S3TC_DXT1_EXT");
 
@@ -78,11 +70,11 @@ void OpenGL::Texture::CreateTexture(const Texture::CreateInfo& createInfo) {
 			uint32_t height = createInfo.height;
 
 			for (GLint j = 0; j <= createInfo.mipmaps; j++) {
-				unsigned int size = ((width + 3) / 4)*((height + 3) / 4)*blockSize;
+				unsigned int size = ((width + 3) / 4) * ((height + 3) / 4) * blockSize;
 				glCompressedTexImage2D(
 					GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
 					j,
-					format,
+					oglFormat.format,
 					width,
 					height,
 					0,
@@ -107,17 +99,14 @@ void OpenGL::Texture::CreateTexture(const Texture::CreateInfo& createInfo) {
 			glObjectLabel(GL_TEXTURE, textureHandle, -1, createInfo.debugName);
 		}
 
-		GLint internalFormat;
-		GLenum format;
-		bool isCompressed;
-		TranslateColorFormatToOpenGL(createInfo.format, isCompressed, format, internalFormat);
+		OpenGLFormats oglFormat = TranslateFormatToOpenGL(createInfo.format);
+		bool isCompressed = IsFormatCompressed(createInfo.format);
 
 		if (!isCompressed) {
-			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, createInfo.width, createInfo.height, 0, format, GL_UNSIGNED_BYTE, createInfo.data);
+			glTexImage2D(GL_TEXTURE_2D, 0, oglFormat.internalFormat, createInfo.width, createInfo.height, 0, oglFormat.format, oglFormat.type, createInfo.data);
 		}
 		else {
-			unsigned int blockSize = (createInfo.format == ColorFormat::SRGB_DXT1 || createInfo.format == ColorFormat::SRGB_ALPHA_DXT1
-				|| createInfo.format == ColorFormat::RGB_DXT1 || createInfo.format == ColorFormat::RGBA_DXT1) ? 8 : 16;
+			uint8_t blockSize = GetCompressedFormatBlockSize(createInfo.format);
 
 			uint32_t width = createInfo.width;
 			uint32_t height = createInfo.height;
@@ -126,8 +115,7 @@ void OpenGL::Texture::CreateTexture(const Texture::CreateInfo& createInfo) {
 
 			for (uint32_t i = 0; i <= createInfo.mipmaps; i++) {
 				unsigned int size = ((width + 3) / 4)*((height + 3) / 4)*blockSize;
-				glCompressedTexImage2D(GL_TEXTURE_2D, i, format, width, height,
-					0, size, buffer);
+				glCompressedTexImage2D(GL_TEXTURE_2D, i, oglFormat.format, width, height, 0, size, buffer);
 
 				buffer += size;
 				width /= 2;
@@ -151,21 +139,18 @@ OpenGL::Texture::Texture(const Texture::CubemapCreateInfo& createInfo) {
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP, textureHandle);
 
-	GLint internalFormat;
-	GLenum format;
-	bool isCompressed;
-	TranslateColorFormatToOpenGL(createInfo.format, isCompressed, format, internalFormat);
+	OpenGLFormats oglFormat = TranslateFormatToOpenGL(createInfo.format);
 
 	for (GLenum i = 0; i < 6; i++) {
 		glTexImage2D(
 			GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
 			0,
-			internalFormat,
+			oglFormat.internalFormat,
 			createInfo.width,
 			createInfo.height,
 			0,
-			format,
-			GL_UNSIGNED_BYTE,
+			oglFormat.format,
+			oglFormat.type,
 			createInfo.data[i]
 		);
 	}

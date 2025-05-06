@@ -8,7 +8,7 @@ set(GL_WINDOW_SOURCES ${COMMON_DIR}/Window/WindowManager.cpp)
 set(GL_WINDOW_HEADERS ${COMMON_DIR}/Window/WindowManager.hpp ${COMMON_DIR}/Window/Window.hpp)
 set(GL_DISPLAY_SOURCES ${COMMON_DIR}/Display/DisplayManager.cpp)
 set(GL_DISPLAY_HEADERS ${COMMON_DIR}/Display/DisplayManager.hpp ${COMMON_DIR}/Display/Display.hpp)
-set(GL_COMMON_HEADERS ${GRAPHICS_DIR}/DescriptorSet.hpp ${GRAPHICS_DIR}/DescriptorSetLayout.hpp ${GRAPHICS_DIR}/DepthStencilTarget.hpp ${GRAPHICS_DIR}/RenderTarget.hpp ${GRAPHICS_DIR}/CommandBuffer.hpp ${GRAPHICS_DIR}/Formats.hpp ${GRAPHICS_DIR}/VertexArrayObject.hpp ${GRAPHICS_DIR}/Framebuffer.hpp ${GRAPHICS_DIR}/GraphicsPipeline.hpp ${GRAPHICS_DIR}/ComputePipeline.hpp ${GRAPHICS_DIR}/Core.hpp ${GRAPHICS_DIR}/RenderPass.hpp ${GRAPHICS_DIR}/Texture.hpp ${GRAPHICS_DIR}/Buffer.hpp ${GRAPHICS_DIR}/WindowGraphicsBinding.hpp)
+set(GL_COMMON_HEADERS ${GRAPHICS_DIR}/DescriptorSet.hpp ${GRAPHICS_DIR}/DescriptorSetLayout.hpp ${GRAPHICS_DIR}/DepthStencilTarget.hpp ${GRAPHICS_DIR}/RenderTarget.hpp ${GRAPHICS_DIR}/CommandBuffer.hpp ${GRAPHICS_DIR}/Formats.cpp ${GRAPHICS_DIR}/Formats.hpp ${GRAPHICS_DIR}/VertexArrayObject.hpp ${GRAPHICS_DIR}/Framebuffer.hpp ${GRAPHICS_DIR}/GraphicsPipeline.hpp ${GRAPHICS_DIR}/ComputePipeline.hpp ${GRAPHICS_DIR}/Core.hpp ${GRAPHICS_DIR}/RenderPass.hpp ${GRAPHICS_DIR}/Texture.hpp ${GRAPHICS_DIR}/Buffer.hpp ${GRAPHICS_DIR}/WindowGraphicsBinding.hpp)
 
 set(GL_OBJ_SOURCES ${GL_OBJ_SOURCES} GLWindowGraphicsBinding.cpp)
 set(GL_OBJ_HEADERS ${GL_OBJ_HEADERS} GLWindowGraphicsBinding.hpp)
