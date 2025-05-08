@@ -120,6 +120,16 @@ static bool ExpectTokenWithString(ParseContext& context, Token token, std::strin
 	return false;
 }
 
+static bool ExpectParameter(ParseContext& context, ParameterType& parameterType) {
+	TokenData::Data outData;
+	if (ExpectToken(context, Token::Parameter, outData, "Expected a Parameter")) {
+		parameterType = outData.parameterType;
+		return true;
+	}
+
+	return false;
+}
+
 static void ExpectCompareOp(ParseContext& context, std::optional<Grindstone::GraphicsAPI::CompareOperation>& compareOp) {
 	TokenData::Data outData;
 	if (ExpectToken(context, Token::CompareOperationValue, outData, "Expected a comparison operator")) {
@@ -767,23 +777,10 @@ static bool ParseConfiguration(ParseContext& context, ParseTree::PipelineSet* pi
 }
 
 static bool ReadParameter(ParseContext& context, ParseTree::PipelineSet& pipelineSet, TokenData& token) {
-	++context.tokenIterator;
-	std::string_view dataType = token.data.string;
-	
-	if (dataType == "Color") {
-
-	}
-	else if (dataType == "Texture2D") {
-
-	}
-	else if (dataType == "TextureCube") {
-
-	}
-	else {
-		context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, fmt::format("Unexpected parameter type '{}'", token.data.string), token.path, token.line, token.column);
+	ParameterType parameterType;
+	if (!ExpectParameter(context, parameterType)) {
 		return false;
 	}
-
 
 	std::string_view identifier;
 	ExpectTokenWithString(context, Token::Identifier, identifier);
@@ -792,6 +789,8 @@ static bool ReadParameter(ParseContext& context, ParseTree::PipelineSet& pipelin
 
 	std::string_view defaultValue;
 	ExpectTokenWithString(context, Token::Identifier, defaultValue);
+
+	pipelineSet.parameters.emplace_back(ParseTree::MaterialParameter{ parameterType, identifier, defaultValue });
 
 	return true;
 }
@@ -813,7 +812,7 @@ static bool ParseParameters(ParseContext& context, ParseTree::PipelineSet& pipel
 			++context.tokenIterator;
 			requiresComma = false;
 			break;
-		case Token::Identifier:
+		case Token::Parameter:
 			if (requiresComma == true) {
 				context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, "Expected a comma before this identifier", token.path, token.line, token.column);
 			}

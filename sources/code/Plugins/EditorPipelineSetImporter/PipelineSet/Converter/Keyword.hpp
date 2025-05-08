@@ -141,7 +141,38 @@ E(opaque)\
 E(translucent)\
 E(additive)\
 E(multiplicative)\
-E(premultiply)
+E(premultiply)\
+E(Color)\
+E(Bool)\
+E(Int)\
+E(Int2)\
+E(Int3)\
+E(Int4)\
+E(Uint)\
+E(Uint2)\
+E(Uint3)\
+E(Uint4)\
+E(Float)\
+E(Float2)\
+E(Float3)\
+E(Float4)\
+E(Double)\
+E(Double2)\
+E(Double3)\
+E(Double4)\
+E(Matrix2x2)\
+E(Matrix2x3)\
+E(Matrix2x4)\
+E(Matrix3x2)\
+E(Matrix4x2)\
+E(Matrix3x3)\
+E(Matrix3x4)\
+E(Matrix4x3)\
+E(Matrix4x4)\
+E(Texture)\
+E(Sampler)\
+E(Image)\
+E(Atomic)
 
 enum class Keyword : uint8_t {
 #define E(val) val,

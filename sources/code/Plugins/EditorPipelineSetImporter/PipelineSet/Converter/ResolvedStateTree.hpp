@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <Common/Graphics/Formats.hpp>
+
 #include "ParseTree.hpp"
 
 struct ResolvedStateTree {
@@ -27,6 +28,7 @@ struct ResolvedStateTree {
 	struct PipelineSet {
 		std::filesystem::path sourceFilepath;
 		std::string name;
+		std::vector<ParseTree::MaterialParameter> parameters;
 		std::map<std::string, Configuration> configurations;
 	};
 

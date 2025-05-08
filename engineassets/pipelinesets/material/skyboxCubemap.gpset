@@ -4,7 +4,7 @@ include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
 
 pipelineSet "Skybox (Cubemap)" {
 	parameters {
-		TextureCube skybox : TextureCube.skyCube
+		Texture skybox : TextureCube.skyCube
 	}
 
 	configuration "main" {

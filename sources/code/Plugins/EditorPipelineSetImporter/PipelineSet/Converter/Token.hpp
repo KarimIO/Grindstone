@@ -7,6 +7,8 @@
 
 #include <Common/Graphics/Formats.hpp>
 
+#include "ParameterType.hpp"
+
 #define TOKEN_LIST \
 E(Invalid)\
 E(EndOfFile)\
@@ -64,7 +66,8 @@ E(CompareOperationValue)\
 E(BlendOperationValue)\
 E(BlendFactorValue)\
 E(BlendPresetKey)\
-E(BlendPresetValue)
+E(BlendPresetValue)\
+E(Parameter)
 
 enum class Token : uint8_t {
 #define E(val) val,
@@ -100,6 +103,7 @@ public:
 		Grindstone::GraphicsAPI::BlendFactor blendFactor;
 		Grindstone::GraphicsAPI::ShaderStage shaderStage;
 		BlendPreset blendPreset;
+		ParameterType parameterType;
 
 		Data() : boolean(false) {}
 		Data(bool boolean) : boolean(boolean) {}
@@ -113,6 +117,7 @@ public:
 		Data(Grindstone::GraphicsAPI::PolygonFillMode polygonFillMode) : polygonFillMode(polygonFillMode) {}
 		Data(Grindstone::GraphicsAPI::ShaderStage shaderStage) : shaderStage(shaderStage) {}
 		Data(BlendPreset blendPreset) : blendPreset(blendPreset) {}
+		Data(ParameterType parameterType) : parameterType(parameterType) {}
 	};
 
 	Token token;
@@ -142,6 +147,7 @@ public:
 	static TokenData BlendFactorValue(Grindstone::GraphicsAPI::BlendFactor mode, const std::filesystem::path& path, uint32_t line, uint32_t column);
 	static TokenData ShaderStageValue(Grindstone::GraphicsAPI::ShaderStage mode, const std::filesystem::path& path, uint32_t line, uint32_t column);
 	static TokenData BlendPresetValue(BlendPreset mode, const std::filesystem::path& path, uint32_t line, uint32_t column);
+	static TokenData Parameter(ParameterType parameterType, const std::filesystem::path& path, uint32_t line, uint32_t column);
 };
 
 using TokenList = std::vector<TokenData>;

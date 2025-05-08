@@ -19,6 +19,7 @@ set(EDITORPIPELINESETIMPORTER_CONVERTER_HEADERS
 	${PipelineSetConverter}/Output.hpp
 	${PipelineSetConverter}/Parser.hpp
 	${PipelineSetConverter}/ParseTree.hpp
+	${PipelineSetConverter}/ParameterType.hpp
 	${PipelineSetConverter}/PipelineSetConditioner.hpp
 	${PipelineSetConverter}/ResolvedStateTree.hpp
 	${PipelineSetConverter}/Scanner.hpp

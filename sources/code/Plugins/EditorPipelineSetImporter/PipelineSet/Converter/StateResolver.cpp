@@ -371,6 +371,7 @@ static void ResolvePipelineSet(
 	}
 
 	resolvedPipelineSet.name = pipelineSetName;
+	resolvedPipelineSet.parameters = pipelineSet.parameters;
 
 	context.shouldCopyCode = true;
 	const ParseTree::PipelineSet* currentPipelineSet = &pipelineSet;

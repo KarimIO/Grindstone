@@ -63,6 +63,10 @@ TokenData TokenData::BlendPresetValue(BlendPreset preset, const std::filesystem:
 	return TokenData(Token::BlendPresetValue, preset, path, line, column);
 }
 
+TokenData TokenData::Parameter(ParameterType parameterType, const std::filesystem::path& path, uint32_t line, uint32_t column) {
+	return TokenData(Token::Parameter, parameterType, path, line, column);
+}
+
 TokenData TokenData::BlendFactorValue(Grindstone::GraphicsAPI::BlendFactor mode, const std::filesystem::path& path, uint32_t line, uint32_t column) {
 	return TokenData(Token::BlendFactorValue, mode, path, line, column);
 }

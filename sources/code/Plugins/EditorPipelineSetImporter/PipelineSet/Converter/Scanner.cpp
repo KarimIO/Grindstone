@@ -532,7 +532,70 @@ static TokenData ParseKeywordToken(ScanContext& scanContext, Keyword keyword, co
 		return TokenData::ShaderStageValue(Grindstone::GraphicsAPI::ShaderStage::Mesh, path, line, column);
 	case Keyword::compute:
 		return TokenData::ShaderStageValue(Grindstone::GraphicsAPI::ShaderStage::Compute, path, line, column);
-	
+
+	case Keyword::Color:
+		return TokenData::Parameter(ParameterType::Color, path, line, column);
+	case Keyword::Bool:
+		return TokenData::Parameter(ParameterType::Bool, path, line, column);
+	case Keyword::Int:
+		return TokenData::Parameter(ParameterType::Int, path, line, column);
+	case Keyword::Int2:
+		return TokenData::Parameter(ParameterType::Int2, path, line, column);
+	case Keyword::Int3:
+		return TokenData::Parameter(ParameterType::Int3, path, line, column);
+	case Keyword::Int4:
+		return TokenData::Parameter(ParameterType::Int4, path, line, column);
+	case Keyword::Uint:
+		return TokenData::Parameter(ParameterType::Uint, path, line, column);
+	case Keyword::Uint2:
+		return TokenData::Parameter(ParameterType::Uint2, path, line, column);
+	case Keyword::Uint3:
+		return TokenData::Parameter(ParameterType::Uint3, path, line, column);
+	case Keyword::Uint4:
+		return TokenData::Parameter(ParameterType::Uint4, path, line, column);
+	case Keyword::Float:
+		return TokenData::Parameter(ParameterType::Float, path, line, column);
+	case Keyword::Float2:
+		return TokenData::Parameter(ParameterType::Float2, path, line, column);
+	case Keyword::Float3:
+		return TokenData::Parameter(ParameterType::Float3, path, line, column);
+	case Keyword::Float4:
+		return TokenData::Parameter(ParameterType::Float4, path, line, column);
+	case Keyword::Double:
+		return TokenData::Parameter(ParameterType::Double, path, line, column);
+	case Keyword::Double2:
+		return TokenData::Parameter(ParameterType::Double2, path, line, column);
+	case Keyword::Double3:
+		return TokenData::Parameter(ParameterType::Double3, path, line, column);
+	case Keyword::Double4:
+		return TokenData::Parameter(ParameterType::Double4, path, line, column);
+	case Keyword::Matrix2x2:
+		return TokenData::Parameter(ParameterType::Matrix2x2, path, line, column);
+	case Keyword::Matrix2x3:
+		return TokenData::Parameter(ParameterType::Matrix2x3, path, line, column);
+	case Keyword::Matrix2x4:
+		return TokenData::Parameter(ParameterType::Matrix2x4, path, line, column);
+	case Keyword::Matrix3x2:
+		return TokenData::Parameter(ParameterType::Matrix3x2, path, line, column);
+	case Keyword::Matrix4x2:
+		return TokenData::Parameter(ParameterType::Matrix4x2, path, line, column);
+	case Keyword::Matrix3x3:
+		return TokenData::Parameter(ParameterType::Matrix3x3, path, line, column);
+	case Keyword::Matrix3x4:
+		return TokenData::Parameter(ParameterType::Matrix3x4, path, line, column);
+	case Keyword::Matrix4x3:
+		return TokenData::Parameter(ParameterType::Matrix4x3, path, line, column);
+	case Keyword::Matrix4x4:
+		return TokenData::Parameter(ParameterType::Matrix4x4, path, line, column);
+	case Keyword::Texture:
+		return TokenData::Parameter(ParameterType::Texture, path, line, column);
+	case Keyword::Sampler:
+		return TokenData::Parameter(ParameterType::Sampler, path, line, column);
+	case Keyword::Image:
+		return TokenData::Parameter(ParameterType::Image, path, line, column);
+	case Keyword::Atomic:
+		return TokenData::Parameter(ParameterType::Atomic, path, line, column);
+
 	case Keyword::boolTrue:
 		return TokenData::Boolean(true, path, line, column);
 	case Keyword::boolFalse:

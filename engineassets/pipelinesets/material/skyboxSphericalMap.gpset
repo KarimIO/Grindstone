@@ -4,7 +4,7 @@ include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
 
 pipelineSet "Skybox (Spherical Map)" {
 	parameters {
-		Texture2D skybox : Texture2D.missingCheckerboard
+		Texture skybox : Texture2D.missingCheckerboard
 	}
 
 	configuration "main" {

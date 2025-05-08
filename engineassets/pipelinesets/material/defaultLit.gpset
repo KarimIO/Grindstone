@@ -5,10 +5,10 @@ include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
 pipelineSet "lit.default" {
 	parameters {
 		Color materialInstanceUbo.color : Color.white,
-		Texture2D albedoTexture : Texture2D.missingCheckerboard,
-		Texture2D normalTexture : Texture2D.missingNormal,
-		Texture2D metalnessTexture : Texture2D.black,
-		Texture2D roughnessTexture : Texture2D.black
+		Texture albedoTexture : Texture2D.missingCheckerboard,
+		Texture normalTexture : Texture2D.missingNormal,
+		Texture metalnessTexture : Texture2D.black,
+		Texture roughnessTexture : Texture2D.black
 	}
 
 	configuration "main" {

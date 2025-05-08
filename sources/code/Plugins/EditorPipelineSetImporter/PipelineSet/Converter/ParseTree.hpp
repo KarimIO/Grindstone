@@ -7,6 +7,7 @@
 #include <optional>
 
 #include <Common/Graphics/Formats.hpp>
+#include "ParameterType.hpp"
 
 enum class ShaderCodeType {
 	Unset,
@@ -83,11 +84,18 @@ struct ParseTree {
 		std::map<std::string, Pass> passes;
 	};
 
+	struct MaterialParameter {
+		ParameterType parameterType;
+		std::string_view name;
+		std::string_view defaultValue;
+	};
+
 	struct PipelineSet {
 		std::filesystem::path sourceFilepath;
 		bool isAbstract;
 		ParentData parentData;
 		std::vector<std::string_view> tags;
+		std::vector<MaterialParameter> parameters;
 		std::map<std::string, Configuration> configurations;
 	};
 
