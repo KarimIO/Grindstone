@@ -27,7 +27,8 @@ namespace Grindstone {
 			Grindstone::HashedString renderPass;
 			Grindstone::HashedString orderBucket;
 			GraphicsAPI::GraphicsPipeline::PipelineData pipelineData;
-			std::array<GraphicsAPI::DescriptorSetLayout*, 4> descriptorSetLayouts;
+			std::array<GraphicsAPI::DescriptorSetLayout*, 16> descriptorSetLayouts;
+			std::array<GraphicsAPI::GraphicsPipeline::AttachmentData, 8> colorAttachmentData;
 
 			std::vector<size_t> bufferMetaDataIndices;
 			std::vector<size_t> textureMetaDataIndices;
@@ -58,6 +59,14 @@ namespace Grindstone {
 
 		size_t GetTextureMetaDataSize() const {
 			return metaData.materialTextureMetaDataIndices.size();
+		}
+
+		Grindstone::GraphicsAPI::DescriptorSetLayout* GetMaterialDescriptorLayout() {
+			if (passes.size() == 0) {
+				return nullptr;
+			}
+
+			return passes[0].descriptorSetLayouts[0];
 		}
 
 		const Grindstone::GraphicsPipelineAsset::Pass* GetFirstPass() const {

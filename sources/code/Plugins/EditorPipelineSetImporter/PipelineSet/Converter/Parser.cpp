@@ -790,7 +790,13 @@ static bool ReadParameter(ParseContext& context, ParseTree::PipelineSet& pipelin
 	std::string_view defaultValue;
 	ExpectTokenWithString(context, Token::Identifier, defaultValue);
 
-	pipelineSet.parameters.emplace_back(ParseTree::MaterialParameter{ parameterType, identifier, defaultValue });
+	pipelineSet.parameters.emplace_back(
+		ParseTree::MaterialParameter{
+			parameterType,
+			std::string(identifier),
+			std::string(defaultValue)
+		}
+	);
 
 	return true;
 }

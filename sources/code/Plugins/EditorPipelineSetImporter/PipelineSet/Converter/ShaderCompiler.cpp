@@ -154,7 +154,7 @@ static bool GatherArtifactsSpirV(IDxcUtils* pUtils, IDxcResult* pResults, StageC
 		SpvReflectDescriptorSet* srcDescriptorSet = descriptorSets[descriptorSetIndex];
 		auto& dstDescriptorSet = outArtifacts.reflectedDescriptorSets.emplace_back();
 		dstDescriptorSet.setIndex = srcDescriptorSet->set;
-		dstDescriptorSet.firstBindingIndex = static_cast<uint32_t>(outArtifacts.reflectedDescriptorBindings.size());
+		dstDescriptorSet.bindingStartIndex = static_cast<uint32_t>(outArtifacts.reflectedDescriptorBindings.size());
 		dstDescriptorSet.bindingCount = srcDescriptorSet->binding_count;
 
 		for (uint32_t descriptorBindingIndex = 0; descriptorBindingIndex < srcDescriptorSet->binding_count; ++descriptorBindingIndex) {

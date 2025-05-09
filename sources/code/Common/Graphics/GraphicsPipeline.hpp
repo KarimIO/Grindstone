@@ -75,10 +75,6 @@ namespace std {
 			size_t result = stage.size;
 			result ^= std::hash<uint8_t>{}(static_cast<uint8_t>(stage.type));
 
-			for (uint32_t i = 0; i < stage.size; ++i) {
-				result ^= std::hash<uint8_t>{}(stage.content[i]);
-			}
-
 			return result;
 		}
 	};

@@ -62,7 +62,7 @@ static void UnpackGraphicsPipelineDescriptorSetHeaders(
 	std::string_view pipelineName,
 	const Span<V1::ShaderReflectDescriptorSet>& srcDescriptorSets,
 	const Span<V1::ShaderReflectDescriptorBinding>& srcDescriptorBindings,
-	std::vector<Grindstone::GraphicsAPI::DescriptorSetLayout*>& dstDescriptorSets
+	std::array<Grindstone::GraphicsAPI::DescriptorSetLayout*, 16>& dstDescriptorSets
 ) {
 	Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo layoutCreateInfo;
 
@@ -72,8 +72,8 @@ static void UnpackGraphicsPipelineDescriptorSetHeaders(
 		std::vector<Grindstone::GraphicsAPI::DescriptorSetLayout::Binding> dstDescriptorBindings;
 		dstDescriptorBindings.reserve(srcDescriptorSet.bindingCount);
 
-		for (size_t bindingIndex = srcDescriptorSet.firstBindingIndex;
-			bindingIndex < srcDescriptorSet.firstBindingIndex + srcDescriptorSet.bindingCount;
+		for (size_t bindingIndex = srcDescriptorSet.bindingStartIndex;
+			bindingIndex < srcDescriptorSet.bindingStartIndex + srcDescriptorSet.bindingCount;
 			++bindingIndex
 		) {
 			const V1::ShaderReflectDescriptorBinding& srcBinding = srcDescriptorBindings[bindingIndex];
@@ -129,10 +129,9 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 
 	graphicsPipelineAsset.name = result.displayName;
 
-	unsigned char* readPtr = fileData.Get() + 4;
-	V1::PipelineSetFileHeader* srcFileHeader = reinterpret_cast<V1::PipelineSetFileHeader*>(readPtr);
-	readPtr += sizeof(V1::PipelineSetFileHeader);
-
+	uint8_t* filePtr = fileData.Get();
+	V1::PipelineSetFileHeader* srcFileHeader = reinterpret_cast<V1::PipelineSetFileHeader*>(filePtr + 4);
+	
 	GS_ASSERT(srcFileHeader->headerSize == sizeof(V1::PipelineSetFileHeader));
 	GS_ASSERT(srcFileHeader->graphicsPipelineSize == sizeof(V1::GraphicsPipelineHeader));
 	GS_ASSERT(srcFileHeader->computePipelineSize == sizeof(V1::ComputePipelineHeader));
@@ -141,37 +140,53 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 	GS_ASSERT(srcFileHeader->attachmentSize == sizeof(V1::PassPipelineAttachmentHeader));
 	GS_ASSERT(srcFileHeader->stageSize == sizeof(V1::PassPipelineShaderStageHeader));
 
-	V1::GraphicsPipelineHeader* srcPipelineHeader = reinterpret_cast<V1::GraphicsPipelineHeader*>(readPtr);
-	readPtr += sizeof(V1::GraphicsPipelineHeader) * srcFileHeader->graphicsPipelineCount;
+	Span<V1::GraphicsPipelineHeader> graphicsPipelines{
+		reinterpret_cast<V1::GraphicsPipelineHeader*>(filePtr + srcFileHeader->graphicsPipelinesOffset),
+		srcFileHeader->graphicsPipelineCount
+	};
+	Span<V1::PipelineConfigurationHeader> pipelineConfigurations{
+		reinterpret_cast<V1::PipelineConfigurationHeader*>(filePtr + srcFileHeader->graphicsConfigurationsOffset),
+		srcFileHeader->graphicsConfigurationsCount
+	};
+	Span<V1::PassPipelineHeader> pipelinePasses{
+			reinterpret_cast<V1::PassPipelineHeader*>(filePtr + srcFileHeader->graphicsPassesOffset),
+			srcFileHeader->graphicsPassesCount
+	};
+	Span<V1::PassPipelineShaderStageHeader> shaderStages{
+			reinterpret_cast<V1::PassPipelineShaderStageHeader*>(filePtr + srcFileHeader->shaderStagesOffset),
+			srcFileHeader->shaderStagesCount
+	};
+	Span<V1::PassPipelineAttachmentHeader> attachments{
+			reinterpret_cast<V1::PassPipelineAttachmentHeader*>(filePtr + srcFileHeader->attachmentHeadersOffset),
+			srcFileHeader->attachmentHeadersCount
+	};
+	Span<V1::ShaderReflectDescriptorSet> descriptorSets{
+			reinterpret_cast<V1::ShaderReflectDescriptorSet*>(filePtr + srcFileHeader->descriptorSetsOffset),
+			srcFileHeader->descriptorSetsCount
+	};
+	Span<V1::ShaderReflectDescriptorBinding> descriptorBindings{
+			reinterpret_cast<V1::ShaderReflectDescriptorBinding*>(filePtr + srcFileHeader->descriptorBindingsOffset),
+			srcFileHeader->descriptorBindingsCount
+	};
+	Span<uint8_t> blobs{
+			filePtr + srcFileHeader->blobSectionOffset,
+			srcFileHeader->blobSectionSize
+	};
 
-	// TODO: Do something with Compute Pipelines
-	readPtr += sizeof(V1::ComputePipelineHeader) * srcFileHeader->computePipelineCount;
+	GS_ASSERT(graphicsPipelines.GetSize() != 0);
+	const V1::GraphicsPipelineHeader& srcPipelineHeader = graphicsPipelines[0];
 
-	V1::PipelineConfigurationHeader* srcConfigHeader = reinterpret_cast<V1::PipelineConfigurationHeader*>(readPtr);
-	readPtr += sizeof(V1::PipelineConfigurationHeader) * srcPipelineHeader->configurationCount;
-
+	GS_ASSERT(srcPipelineHeader.configurationCount != 0);
+	const V1::PipelineConfigurationHeader& srcConfigHeader = pipelineConfigurations[0];
+	
 	// TODO: Loop over Configurations
-	graphicsPipelineAsset.passes.resize(srcConfigHeader->passCount);
-	for (uint32_t passIndex = 0; passIndex < srcConfigHeader->passCount; ++passIndex) {
-		V1::PassPipelineHeader* srcPassHeader = reinterpret_cast<V1::PassPipelineHeader*>(readPtr);
-		readPtr += sizeof(V1::PassPipelineHeader);
-
-		Span<V1::PassPipelineShaderStageHeader> srcStageHeaders{ reinterpret_cast<V1::PassPipelineShaderStageHeader*>(readPtr), srcPassHeader->shaderStageCount };
-		readPtr += sizeof(V1::PassPipelineShaderStageHeader) * srcPassHeader->shaderStageCount;
-
-		Span<V1::PassPipelineAttachmentHeader> srcAttachmentHeaders{ reinterpret_cast<V1::PassPipelineAttachmentHeader*>(readPtr), srcPassHeader->attachmentCount };
-		readPtr += sizeof(V1::PassPipelineAttachmentHeader) * srcPassHeader->attachmentCount;
-
-		Span<V1::ShaderReflectDescriptorSet> srcDescriptorSets{ reinterpret_cast<V1::ShaderReflectDescriptorSet*>(readPtr), srcPassHeader->descriptorSetCount };
-		readPtr += sizeof(V1::ShaderReflectDescriptorSet) * srcPassHeader->descriptorSetCount;
-
-		Span<V1::ShaderReflectDescriptorBinding> srcDescriptorBindings{ reinterpret_cast<V1::ShaderReflectDescriptorBinding*>(readPtr), srcPassHeader->descriptorBindingCount };
-		readPtr += sizeof(V1::ShaderReflectDescriptorBinding) * srcPassHeader->descriptorBindingCount;
-
+	graphicsPipelineAsset.passes.resize(srcConfigHeader.passCount);
+	for (uint32_t passIndex = srcConfigHeader.passStartIndex; passIndex < srcConfigHeader.passCount; ++passIndex) {
 		GraphicsPipelineAsset::Pass& pass = graphicsPipelineAsset.passes[passIndex];
+		const V1::PassPipelineHeader& srcPass = pipelinePasses[passIndex];
 
 		std::vector<GraphicsPipeline::ShaderStageData> shaderStageCreateInfos;
-		shaderStageCreateInfos.resize(srcPassHeader->shaderStageCount);
+		shaderStageCreateInfos.resize(srcPass.shaderStageCount);
 
 		GraphicsPipeline::PipelineData& pipelineData = pass.pipelineData;
 		pipelineData.debugName = result.displayName.c_str();
@@ -187,29 +202,38 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 
 		pipelineData.shaderStageCreateInfos = shaderStageCreateInfos.data();
 		pipelineData.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-		pipelineData.descriptorSetLayoutCount = static_cast<uint32_t>(srcPassHeader->descriptorSetCount);
-		pipelineData.colorAttachmentCount = srcPassHeader->attachmentCount;
+		pipelineData.descriptorSetLayoutCount = static_cast<uint32_t>(srcPass.descriptorSetCount);
+		pipelineData.colorAttachmentCount = srcPass.attachmentCount;
 
-		UnpackGraphicsPipelineHeader(*srcPassHeader, pipelineData);
+		UnpackGraphicsPipelineHeader(srcPass, pipelineData);
 
-		for (uint8_t i = 0; i < srcPassHeader->shaderStageCount; ++i) {
-			shaderStageCreateInfos[i].content = reinterpret_cast<const char*>(readPtr);
-			shaderStageCreateInfos[i].size = srcStageHeaders[i].shaderCodeSize;
-			shaderStageCreateInfos[i].type = static_cast<Grindstone::GraphicsAPI::ShaderStage>(srcStageHeaders[i].stageType);
+		for (uint8_t i = 0; i < srcPass.shaderStageCount; ++i) {
+			V1::PassPipelineShaderStageHeader& srcStage = shaderStages[srcPass.shaderStageStartIndex + i];
 
-			readPtr += srcStageHeaders[i].shaderCodeSize;
+			shaderStageCreateInfos[i].content = reinterpret_cast<const char*>(&blobs[srcStage.shaderCodeOffsetFromBlobStart]);
+			shaderStageCreateInfos[i].size = srcStage.shaderCodeSize;
+			shaderStageCreateInfos[i].type = srcStage.stageType;
 		}
 
-		std::vector<Grindstone::GraphicsAPI::DescriptorSetLayout*> descriptorSetLayouts;
-		descriptorSetLayouts.resize(srcPassHeader->descriptorSetCount);
-		UnpackGraphicsPipelineAttachmentHeaders(srcAttachmentHeaders, pipelineData.colorAttachmentData);
+
+		auto& colorAttachmentData = pass.colorAttachmentData;
+		GS_ASSERT(srcPass.attachmentCount <= pass.colorAttachmentData.size());
+		UnpackGraphicsPipelineAttachmentHeaders(
+			attachments.GetSubspan(srcPass.attachmentStartIndex, srcPass.attachmentCount),
+			colorAttachmentData.data()
+		);
+
+		auto& descriptorSetLayouts = pass.descriptorSetLayouts;
+		GS_ASSERT(srcPass.descriptorSetCount <= pass.descriptorSetLayouts.size());
 		UnpackGraphicsPipelineDescriptorSetHeaders(
 			graphicsCore,
 			graphicsPipelineAsset.name,
-			srcDescriptorSets,
-			srcDescriptorBindings,
+			descriptorSets.GetSubspan(srcPass.descriptorSetStartIndex, srcPass.descriptorSetCount),
+			descriptorBindings,
 			descriptorSetLayouts
 		);
+
+		pipelineData.colorAttachmentData = colorAttachmentData.data();
 		pipelineData.descriptorSetLayouts = descriptorSetLayouts.data();
 
 		// TODO: Fix

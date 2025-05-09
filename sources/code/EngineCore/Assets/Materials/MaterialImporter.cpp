@@ -341,7 +341,7 @@ static bool LoadMaterial(
 	materialDescriptorSetCreateInfo.debugName = descriptorSetName.c_str();
 	materialDescriptorSetCreateInfo.bindings = bindings.data();
 	materialDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	// materialDescriptorSetCreateInfo.layout = pipelineSetAsset.GetMaterialLayout();
+	materialDescriptorSetCreateInfo.layout = pipelineSetAsset->GetMaterialDescriptorLayout();
 	DescriptorSet* materialDescriptorSet = graphicsCore->CreateDescriptorSet(materialDescriptorSetCreateInfo);
 
 	material.materialDescriptorSet = materialDescriptorSet;

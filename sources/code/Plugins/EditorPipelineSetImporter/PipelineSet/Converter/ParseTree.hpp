@@ -86,8 +86,8 @@ struct ParseTree {
 
 	struct MaterialParameter {
 		ParameterType parameterType;
-		std::string_view name;
-		std::string_view defaultValue;
+		std::string name;
+		std::string defaultValue;
 	};
 
 	struct PipelineSet {

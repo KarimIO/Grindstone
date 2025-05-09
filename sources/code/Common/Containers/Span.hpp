@@ -75,6 +75,11 @@ namespace Grindstone::Containers {
 			return size;
 		}
 
+		Span<T> GetSubspan(size_t firstIndex, size_t count) {
+			GS_ASSERT_ENGINE_WITH_MESSAGE(count == 0 || firstIndex + count <= size, "Array index is invalid.");
+			return Span<T>{ &contents[firstIndex], count };
+		}
+
 		T& operator[](size_t index) {
 			GS_ASSERT_ENGINE_WITH_MESSAGE(index < size, "Array index is invalid.");
 			return contents[index];

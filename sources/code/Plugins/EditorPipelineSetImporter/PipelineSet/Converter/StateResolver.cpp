@@ -53,7 +53,6 @@ static void ApplyRenderState(const ParseTree::RenderState& src, ParseTree::Rende
 	ApplyProperty(depthBiasSlopeFactor);
 	ApplyProperty(depthBiasClamp);
 
-	/*
 	if (dst.attachmentData.size() == 0) {
 		dst.attachmentData.resize(src.attachmentData.size());
 	}
@@ -63,8 +62,8 @@ static void ApplyRenderState(const ParseTree::RenderState& src, ParseTree::Rende
 		: dst.attachmentData.size();
 
 	for (size_t i = 0; i < minAttachmentCount; ++i) {
-		ParseTree::RenderState::AttachmentData& srcAttach = src.attachmentData[i];
-		ResolvedStateTree::RenderState::AttachmentData& dstAttach = dst.attachmentData[i];
+		const ParseTree::RenderState::AttachmentData& srcAttach = src.attachmentData[i];
+		ParseTree::RenderState::AttachmentData& dstAttach = dst.attachmentData[i];
 
 		ApplyPropertyWithDefault(srcAttach.colorMask, dstAttach.colorMask, defaultColorMask);
 
@@ -78,7 +77,7 @@ static void ApplyRenderState(const ParseTree::RenderState& src, ParseTree::Rende
 	}
 
 	for (size_t i = minAttachmentCount; i < dst.attachmentData.size(); ++i) {
-		ParseTree::RenderState::RenderState::AttachmentData& dstAttach = src.attachmentData[i];
+		ParseTree::RenderState::RenderState::AttachmentData& dstAttach = dst.attachmentData[i];
 
 		ApplyPropertyDefault(dstAttach.colorMask, defaultColorMask);
 
@@ -90,7 +89,6 @@ static void ApplyRenderState(const ParseTree::RenderState& src, ParseTree::Rende
 		ApplyPropertyDefault(dstAttach.blendAlphaFactorSrc, defaultBlendFactor);
 		ApplyPropertyDefault(dstAttach.blendAlphaFactorDst, defaultBlendFactor);
 	}
-	*/
 }
 
 static void ApplyRenderStateDefaults(ParseTree::RenderState& target) {
@@ -371,7 +369,16 @@ static void ResolvePipelineSet(
 	}
 
 	resolvedPipelineSet.name = pipelineSetName;
-	resolvedPipelineSet.parameters = pipelineSet.parameters;
+	resolvedPipelineSet.parameters.reserve(pipelineSet.parameters.size());
+	for (const ParseTree::MaterialParameter& srcParameter : pipelineSet.parameters) {
+		resolvedPipelineSet.parameters.emplace_back(
+			ParseTree::MaterialParameter {
+				srcParameter.parameterType,
+				srcParameter.name,
+				srcParameter.defaultValue
+			}
+		);
+	}
 
 	context.shouldCopyCode = true;
 	const ParseTree::PipelineSet* currentPipelineSet = &pipelineSet;

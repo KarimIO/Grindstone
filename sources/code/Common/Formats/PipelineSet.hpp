@@ -20,13 +20,18 @@ namespace Grindstone::Formats::Pipelines::V1 {
 		Grindstone::GraphicsAPI::PolygonFillMode polygonFillMode;
 		Grindstone::GraphicsAPI::GeometryType primitiveType;
 		uint8_t flags;
+		uint16_t attachmentStartIndex;
 		uint8_t attachmentCount;
+		uint16_t shaderStageStartIndex;
 		uint8_t shaderStageCount;
+		uint16_t descriptorSetStartIndex;
 		uint8_t descriptorSetCount;
+		uint16_t descriptorBindingStartIndex;
 		uint8_t descriptorBindingCount;
 	};
 
 	struct PassPipelineShaderStageHeader {
+		uint32_t shaderCodeOffsetFromBlobStart;
 		uint32_t shaderCodeSize;
 		Grindstone::GraphicsAPI::ShaderStage stageType;
 	};
@@ -42,6 +47,7 @@ namespace Grindstone::Formats::Pipelines::V1 {
 	};
 
 	struct GraphicsPipelineHeader {
+		uint32_t configurationStartIndex = 0;
 		uint32_t configurationCount = 0;
 	};
 
@@ -52,39 +58,21 @@ namespace Grindstone::Formats::Pipelines::V1 {
 	struct PipelineConfigurationHeader {
 		// TODO: When really supporting multiple configurations:
 		// uint32_t tagCount = 0;
-		uint32_t passCount = 0;
+		uint16_t passStartIndex = 0;
+		uint16_t passCount = 0;
 	};
 
 	struct PassDescriptorBinding {
 		uint32_t bindingIndex;
-		uint32_t bindingCount;
+		uint32_t bindingArrayCount;
 		Grindstone::GraphicsAPI::BindingType type;
 		Grindstone::GraphicsAPI::ShaderStageBit stages;
 	};
 
 	struct PassDescriptorSet {
 		uint32_t set = 0;
-		uint32_t bindingsOffsetFromFile = 0;
+		uint32_t bindingsStartIndex = 0;
 		uint32_t bindingCount = 0;
-	};
-
-	struct PassVertexBuffer {
-		bool elementRate = false;
-		uint32_t stride = 0;
-		uint32_t attributeOffset = 0; // Offset from start of file.
-		uint8_t attributeCount = 0;
-	};
-
-	struct PassVertexAttribute {
-		uint32_t location = 0;
-		Grindstone::GraphicsAPI::Format format = Grindstone::GraphicsAPI::Format::R32G32B32A32_SFLOAT;
-		uint32_t offset = 0;
-		uint32_t size = 0;
-		uint32_t componentsCount = 0;
-		bool isNormalized = false;
-
-		Grindstone::GraphicsAPI::AttributeUsage usage = Grindstone::GraphicsAPI::AttributeUsage::Other;
-		const char* name = "";
 	};
 
 	struct PipelineSetFileHeader {
@@ -98,8 +86,28 @@ namespace Grindstone::Formats::Pipelines::V1 {
 		uint8_t passSize = sizeof(PassPipelineHeader);
 		uint8_t attachmentSize = sizeof(PassPipelineAttachmentHeader);
 		uint8_t stageSize = sizeof(PassPipelineShaderStageHeader);
+		uint32_t graphicsPipelinesOffset = 0;
 		uint32_t graphicsPipelineCount = 0;
+		uint32_t computePipelinesOffset = 0;
 		uint32_t computePipelineCount = 0;
+		uint32_t materialParametersOffset = 0;
+		uint32_t materialParameterCount = 0;
+		uint32_t materialResourcesOffset = 0;
+		uint32_t materialResourceCount = 0;
+		uint32_t graphicsConfigurationsOffset = 0;
+		uint32_t graphicsConfigurationsCount = 0;
+		uint32_t graphicsPassesOffset = 0;
+		uint32_t graphicsPassesCount = 0;
+		uint32_t shaderStagesOffset = 0;
+		uint32_t shaderStagesCount = 0;
+		uint32_t attachmentHeadersOffset = 0;
+		uint32_t attachmentHeadersCount = 0;
+		uint32_t descriptorSetsOffset = 0;
+		uint32_t descriptorSetsCount = 0;
+		uint32_t descriptorBindingsOffset = 0;
+		uint32_t descriptorBindingsCount = 0;
+		uint32_t blobSectionOffset = 0;
+		uint32_t blobSectionSize = 0;
 	};
 
 	struct ShaderReflectInputVariables {
@@ -110,11 +118,53 @@ namespace Grindstone::Formats::Pipelines::V1 {
 		uint32_t count;
 		Grindstone::GraphicsAPI::BindingType type;
 		Grindstone::GraphicsAPI::ShaderStageBit stages;
+		uint32_t descriptorNameOffsetFromBlobStart;
 	};
 
 	struct ShaderReflectDescriptorSet {
 		uint32_t setIndex;
-		uint32_t firstBindingIndex;
+		uint32_t bindingStartIndex;
 		uint32_t bindingCount;
+	};
+
+	enum class ParameterType : uint8_t {
+		Color,
+		Bool,
+		Int,
+		Int2,
+		Int3,
+		Int4,
+		Uint,
+		Uint2,
+		Uint3,
+		Uint4,
+		Float,
+		Float2,
+		Float3,
+		Float4,
+		Double,
+		Double2,
+		Double3,
+		Double4,
+		Matrix2x2,
+		Matrix2x3,
+		Matrix2x4,
+		Matrix3x2,
+		Matrix4x2,
+		Matrix3x3,
+		Matrix3x4,
+		Matrix4x3,
+		Matrix4x4,
+	};
+
+	struct MaterialParameter {
+		uint32_t nameOffsetFromBlobStart;
+		uint32_t byteOffsetFromBufferStart;
+		ParameterType parameterType;
+	};
+
+	struct MaterialResource {
+		uint32_t nameOffsetFromBlobStart;
+		uint32_t bindingIndex;
 	};
 }
