@@ -185,9 +185,6 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		GraphicsPipelineAsset::Pass& pass = graphicsPipelineAsset.passes[passIndex];
 		const V1::PassPipelineHeader& srcPass = pipelinePasses[passIndex];
 
-		std::vector<GraphicsPipeline::ShaderStageData> shaderStageCreateInfos;
-		shaderStageCreateInfos.resize(srcPass.shaderStageCount);
-
 		GraphicsPipeline::PipelineData& pipelineData = pass.pipelineData;
 		pipelineData.debugName = result.displayName.c_str();
 		pipelineData.width = 0.0f;
@@ -200,8 +197,8 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		pipelineData.hasDynamicScissor = true;
 		pipelineData.renderPass = nullptr; // TODO: FindRenderPass(renderStage);
 
-		pipelineData.shaderStageCreateInfos = shaderStageCreateInfos.data();
-		pipelineData.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
+		pipelineData.shaderStageCreateInfos = nullptr;
+		pipelineData.shaderStageCreateInfoCount = srcPass.shaderStageCount;
 		pipelineData.descriptorSetLayoutCount = static_cast<uint32_t>(srcPass.descriptorSetCount);
 		pipelineData.colorAttachmentCount = srcPass.attachmentCount;
 
@@ -209,10 +206,11 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 
 		for (uint8_t i = 0; i < srcPass.shaderStageCount; ++i) {
 			V1::PassPipelineShaderStageHeader& srcStage = shaderStages[srcPass.shaderStageStartIndex + i];
-
-			shaderStageCreateInfos[i].content = reinterpret_cast<const char*>(&blobs[srcStage.shaderCodeOffsetFromBlobStart]);
-			shaderStageCreateInfos[i].size = srcStage.shaderCodeSize;
-			shaderStageCreateInfos[i].type = srcStage.stageType;
+			pass.stageBuffers[i] = Grindstone::Buffer(
+				reinterpret_cast<void*>(&blobs[srcStage.shaderCodeOffsetFromBlobStart]),
+				static_cast<const uint64_t>(srcStage.shaderCodeSize)
+			);
+			pass.stageTypes[i] = srcStage.stageType;
 		}
 
 
@@ -233,11 +231,9 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 			descriptorSetLayouts
 		);
 
+		pass.passPipelineName = result.displayName;
 		pipelineData.colorAttachmentData = colorAttachmentData.data();
 		pipelineData.descriptorSetLayouts = descriptorSetLayouts.data();
-
-		// TODO: Fix
-		// pass.descriptorSetLayouts[0] = pipelineCreateInfo.descriptorSetLayouts[0];
 	}
 
 	// TODO: Save compiled shader into ShaderCache

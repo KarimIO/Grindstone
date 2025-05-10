@@ -68,8 +68,10 @@ namespace Grindstone {
 		}
 
 		~Buffer() {
-			Grindstone::Memory::AllocatorCore::Free(bufferPtr);
-			bufferPtr = nullptr;
+			if (bufferPtr != nullptr) {
+				Grindstone::Memory::AllocatorCore::Free(bufferPtr);
+				bufferPtr = nullptr;
+			}
 			capacity = 0;
 		}
 
