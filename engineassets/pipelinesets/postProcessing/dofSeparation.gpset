@@ -14,6 +14,10 @@ pipelineSet "Depth of Field (Separation)" inherits "PostProcessing" {
 				depthTest: false
 				depthClamp: false
 				depthCompareOp: lessOrEqual
+				attachments: {
+					colorMask: rgba
+					blendPreset: opaque
+				}
 			}
 
 			shaderHlsl {

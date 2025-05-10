@@ -13,6 +13,10 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 				depthTest: false
 				depthClamp: false
 				depthCompareOp: lessOrEqual
+				attachments: {
+					colorMask: rgba
+					blendPreset: opaque
+				}
 			}
 
 			shaderHlsl {

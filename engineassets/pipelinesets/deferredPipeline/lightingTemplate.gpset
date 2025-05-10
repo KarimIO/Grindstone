@@ -12,6 +12,10 @@ pipelineSet abstract "DeferredLighting" {
 				depthTest: false
 				depthClamp: false
 				depthCompareOp: lessOrEqual
+				attachments: {
+					colorMask: rgba
+					blendPreset: opaque
+				}
 			}
 
 			requiresBlocks [

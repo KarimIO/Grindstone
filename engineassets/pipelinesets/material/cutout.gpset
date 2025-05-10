@@ -25,6 +25,16 @@ pipelineSet "lit.cutout" {
 				depthTest: true
 				depthClamp: false
 				depthCompareOp: lessOrEqual
+				attachments: [
+					{
+						colorMask: rgba
+						blendPreset: opaque
+					},
+					{
+						colorMask: rgba
+						blendPreset: opaque
+					}
+				]
 			}
 
 			requiresBlocks [
