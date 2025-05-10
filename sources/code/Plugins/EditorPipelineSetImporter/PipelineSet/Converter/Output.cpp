@@ -269,9 +269,8 @@ static void ExtractPipelineSet(
 					Grindstone::Formats::Pipelines::V1::PassPipelineShaderStageHeader& stageHeader = shaderStages.emplace_back();
 					stageHeader.shaderCodeSize = shaderCodeSizes[stageIndex];
 					stageHeader.stageType = static_cast<Grindstone::GraphicsAPI::ShaderStage>(stageIndex);
-					uint32_t shaderCodeSize = static_cast<uint32_t>(artifacts.compiledCode.size());
-					WriteBytes(blobWriter, artifacts.compiledCode.data(), artifacts.compiledCode.size());
-
+					stageHeader.shaderCodeOffsetFromBlobStart = static_cast<uint32_t>(blobWriter.offset);
+					WriteBytes(blobWriter, artifacts.compiledCode.data(), stageHeader.shaderCodeSize);
 				}
 			}
 
