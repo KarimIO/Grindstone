@@ -7,7 +7,6 @@
 #include "SpotLightComponent.hpp"
 
 using namespace Grindstone;
-using namespace Grindstone::GraphicsAPI;
 
 REFLECT_STRUCT_BEGIN(SpotLightComponent)
 	REFLECT_STRUCT_MEMBER(color)
@@ -32,19 +31,25 @@ void Grindstone::SetupSpotLightComponent(entt::registry& registry, entt::entity 
 	renderPassCreateInfo.debugName = "Spotlight Shadow Render Pass";
 	renderPassCreateInfo.colorAttachments = nullptr;
 	renderPassCreateInfo.colorAttachmentCount = 0;
-	renderPassCreateInfo.depthFormat = Format::D32_SFLOAT;
+	renderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
 	spotLightComponent.renderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
-	DepthStencilTarget::CreateInfo shadowMapDepthImageCreateInfo(renderPassCreateInfo.depthFormat, shadowResolution, shadowResolution, false, false, true, "Spot Shadow Map Depth Image");
-	spotLightComponent.depthTarget = graphicsCore->CreateDepthStencilTarget(shadowMapDepthImageCreateInfo);
+	GraphicsAPI::Image::CreateInfo shadowMapDepthImageCreateInfo{};
+	shadowMapDepthImageCreateInfo.debugName = "Spot Shadow Map Depth Image";
+	shadowMapDepthImageCreateInfo.format = renderPassCreateInfo.depthFormat;
+	shadowMapDepthImageCreateInfo.width = shadowMapDepthImageCreateInfo.height = shadowResolution;
+	shadowMapDepthImageCreateInfo.imageUsage =
+		GraphicsAPI::ImageUsageFlags::DepthStencil |
+		GraphicsAPI::ImageUsageFlags::Sampled;
+	spotLightComponent.depthTarget = graphicsCore->CreateImage(shadowMapDepthImageCreateInfo);
 
 	GraphicsAPI::Framebuffer::CreateInfo shadowMapCreateInfo{};
 	shadowMapCreateInfo.debugName = "Spotlight Shadow Framebuffer";
 	shadowMapCreateInfo.width = shadowResolution;
 	shadowMapCreateInfo.height = shadowResolution;
 	shadowMapCreateInfo.renderPass = spotLightComponent.renderPass;
-	shadowMapCreateInfo.renderTargetLists = nullptr;
-	shadowMapCreateInfo.numRenderTargetLists = 0;
+	shadowMapCreateInfo.renderTargets = nullptr;
+	shadowMapCreateInfo.renderTargetCount = 0;
 	shadowMapCreateInfo.depthTarget = spotLightComponent.depthTarget;
 	spotLightComponent.framebuffer = graphicsCore->CreateFramebuffer(shadowMapCreateInfo);
 
@@ -66,8 +71,8 @@ void Grindstone::SetupSpotLightComponent(entt::registry& registry, entt::entity 
 
 		lightLayoutBindings[1].bindingId = 1;
 		lightLayoutBindings[1].count = 1;
-		lightLayoutBindings[1].type = BindingType::DepthTexture;
-		lightLayoutBindings[1].stages = ShaderStageBit::Fragment;
+		lightLayoutBindings[1].type = GraphicsAPI::BindingType::SampledImage;
+		lightLayoutBindings[1].stages = GraphicsAPI::ShaderStageBit::Fragment;
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
 		descriptorSetLayoutCreateInfo.debugName = "Spotlight Descriptor Set Layout";
@@ -132,5 +137,5 @@ void Grindstone::DestroySpotLightComponent(entt::registry& registry, entt::entit
 	graphicsCore->DeleteBuffer(spotLightComponent.uniformBufferObject);
 	graphicsCore->DeleteFramebuffer(spotLightComponent.framebuffer);
 	graphicsCore->DeleteRenderPass(spotLightComponent.renderPass);
-	graphicsCore->DeleteDepthStencilTarget(spotLightComponent.depthTarget);
+	graphicsCore->DeleteImage(spotLightComponent.depthTarget);
 }

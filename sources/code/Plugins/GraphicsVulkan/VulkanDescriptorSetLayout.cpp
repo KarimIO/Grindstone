@@ -11,24 +11,36 @@ namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
 static VkDescriptorType GetDescriptorType(BindingType bindingType) {
 	switch (bindingType) {
+	case BindingType::Sampler:
+		return VK_DESCRIPTOR_TYPE_SAMPLER;
+	case BindingType::CombinedImageSampler:
+		return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	case BindingType::SampledImage:
+		return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+	case BindingType::StorageImage:
+		return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	case BindingType::UniformTexelBuffer:
+		return VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
+	case BindingType::StorageTexelBuffer:
+		return VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
 	case BindingType::UniformBuffer:
 		return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	case BindingType::Texture:
-	case BindingType::RenderTexture:
-	case BindingType::DepthTexture:
-		return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	case BindingType::RenderTextureStorageImage:
-		return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	case BindingType::StorageBuffer:
+		return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	case BindingType::UniformBufferDynamic:
+		return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+	case BindingType::StorageBufferDynamic:
+		return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
 	}
 
-	return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	return VK_DESCRIPTOR_TYPE_MAX_ENUM;
 }
 
 Vulkan::DescriptorSetLayout::DescriptorSetLayout(const CreateInfo& createInfo) {
 	std::vector<VkDescriptorSetLayoutBinding> bindingLayouts;
 	bindingLayouts.reserve(createInfo.bindingCount);
 
-	bindings = new Binding[createInfo.bindingCount];
+	bindings.resize(createInfo.bindingCount);
 	bindingCount = createInfo.bindingCount;
 
 	for (uint32_t i = 0; i < createInfo.bindingCount; ++i) {
@@ -70,7 +82,7 @@ Vulkan::DescriptorSetLayout::~DescriptorSetLayout() {
 }
 
 const DescriptorSetLayout::Binding& Vulkan::DescriptorSetLayout::GetBinding(size_t bindingIndex) const {
-	if (bindings == nullptr || bindingIndex >= bindingCount) {
+	if (bindings.empty() || bindingIndex >= bindingCount) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "Invalid bindingIndex in GetBinding!");
 	}
 

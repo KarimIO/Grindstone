@@ -11,7 +11,7 @@ namespace Grindstone {
 		class DescriptorSetLayout;
 		class RenderPass;
 		class Framebuffer;
-		class DepthStencilTarget;
+		class Image;
 	}
 
 	struct DirectionalLightComponent {
@@ -32,7 +32,7 @@ namespace Grindstone {
 
 		GraphicsAPI::RenderPass* renderPass = nullptr;
 		GraphicsAPI::Framebuffer* framebuffer = nullptr;
-		GraphicsAPI::DepthStencilTarget* depthTarget = nullptr;
+		GraphicsAPI::Image* depthTarget = nullptr;
 
 		GraphicsAPI::Buffer* uniformBufferObject = nullptr;
 		GraphicsAPI::DescriptorSet* descriptorSet = nullptr;

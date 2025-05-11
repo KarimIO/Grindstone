@@ -101,6 +101,8 @@ static void UnpackGraphicsPipelineDescriptorSetHeaders(
 // Shader Code[]
 
 static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineAsset) {
+	return false;
+
 	// TODO: Check shader cache before loading and compiling again
 	// The shader cache includes shaders precompiled for consoles, or compiled once per driver update on computers
 	// if shaderCache has shader with this uuid

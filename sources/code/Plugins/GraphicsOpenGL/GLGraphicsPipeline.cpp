@@ -6,7 +6,6 @@
 #include <GL/gl3w.h>
 
 #include "GLBuffer.hpp"
-#include "GLTexture.hpp"
 #include "GLGraphicsPipeline.hpp"
 #include "GLCore.hpp"
 #include "GLFormats.hpp"

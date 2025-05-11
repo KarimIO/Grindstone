@@ -133,7 +133,7 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 
 	GraphicsAPI::DescriptorSetLayout::Binding layoutBinding{};
 	layoutBinding.bindingId = 0;
-	layoutBinding.type = BindingType::Texture;
+	layoutBinding.type = BindingType::CombinedImageSampler;
 	layoutBinding.count = 1;
 	layoutBinding.stages = ShaderStageBit::Fragment;
 
@@ -261,7 +261,8 @@ ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {
 		return 0;
 	}
 
-	GraphicsAPI::DescriptorSet::Binding binding{ textureAsset->texture };
+	std::pair<void*, void*> samplerPair = { textureAsset->image, textureAsset->defaultSampler };
+	GraphicsAPI::DescriptorSet::Binding binding{ &samplerPair };
 
 	auto pathAsStr = path.filename().string();
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};

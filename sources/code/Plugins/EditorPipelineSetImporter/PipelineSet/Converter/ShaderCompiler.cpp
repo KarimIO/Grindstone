@@ -166,28 +166,43 @@ static bool GatherArtifactsSpirV(IDxcUtils* pUtils, IDxcResult* pResults, StageC
 
 			switch (srcDescriptorBinding->descriptor_type) {
 			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
-			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
-			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:
-			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
-			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
-			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
-			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
-				GS_ASSERT_LOG("Unsupported reflect descriptor binding type!");
+				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::CombinedImageSampler;
 				break;
-			default:
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
+				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::UniformTexelBuffer;
+				break;
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
+				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::StorageTexelBuffer;
+				break;
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::StorageBuffer;
+				break;
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
+				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::StorageBufferDynamic;
+				break;
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
+				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::StorageImage;
+				break;
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
+				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::UniformBufferDynamic;
+				break;
 			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:
-				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::RenderTextureStorageImage;
+				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::StorageImage;
 				break;
 			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
 				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::Sampler;
 				break;
 			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
-				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::Texture;
+				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::SampledImage;
 				break;
 			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
 				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::UniformBuffer;
 				break;
+			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
+				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::AccelerationStructure;
+				break;
+			default:
+				GS_ASSERT_LOG("Unsupported reflect descriptor binding type!");
 			}
 		}
 	}

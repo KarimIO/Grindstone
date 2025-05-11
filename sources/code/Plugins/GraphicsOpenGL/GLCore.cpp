@@ -13,9 +13,8 @@
 #include "GLBuffer.hpp"
 #include "GLGraphicsPipeline.hpp"
 #include "GLComputePipeline.hpp"
-#include "GLRenderTarget.hpp"
-#include "GLDepthStencilTarget.hpp"
-#include "GLTexture.hpp"
+#include "GLSampler.hpp"
+#include "GLImage.hpp"
 #include "GLWindowGraphicsBinding.hpp"
 #include "GLFormats.hpp"
 
@@ -217,20 +216,12 @@ Base::Buffer* OpenGL::Core::CreateBuffer(const Base::Buffer::CreateInfo& ci) {
 	return static_cast<Buffer*>(AllocatorCore::Allocate<OpenGL::Buffer>(ci));
 }
 
-Base::Texture* OpenGL::Core::CreateTexture(const Base::Texture::CreateInfo& ci) {
-	return static_cast<Texture*>(AllocatorCore::Allocate<OpenGL::Texture>(ci));
+Base::Image* OpenGL::Core::CreateImage(const Base::Image::CreateInfo& ci) {
+	return static_cast<Image*>(AllocatorCore::Allocate<OpenGL::Image>(ci));
 }
 
-Base::Texture* OpenGL::Core::CreateCubemap(const Base::Texture::CubemapCreateInfo& ci) {
-	return static_cast<Texture*>(AllocatorCore::Allocate<OpenGL::Texture>(ci));
-}
-
-Base::RenderTarget* OpenGL::Core::CreateRenderTarget(const Base::RenderTarget::CreateInfo& rt) {
-	return static_cast<RenderTarget*>(AllocatorCore::Allocate<OpenGL::RenderTarget>(rt));
-}
-
-Base::DepthStencilTarget* OpenGL::Core::CreateDepthStencilTarget(const Base::DepthStencilTarget::CreateInfo& rt) {
-	return static_cast<DepthStencilTarget*>(AllocatorCore::Allocate<OpenGL::DepthStencilTarget>(rt));
+Base::Sampler* OpenGL::Core::CreateSampler(const Base::Sampler::CreateInfo& rt) {
+	return static_cast<Sampler*>(AllocatorCore::Allocate<OpenGL::Sampler>(rt));
 }
 
 Base::GraphicsPipeline* OpenGL::Core::GetOrCreateGraphicsPipelineFromCache(const GraphicsPipeline::PipelineData& pipelineData, const VertexInputLayout* vertexInputLayout) {
@@ -278,14 +269,6 @@ bool OpenGL::Core::SupportsMultiDrawIndirect() const {
 //==================================
 // Deleters
 //==================================
-void OpenGL::Core::DeleteRenderTarget(Base::RenderTarget *ptr) {
-	AllocatorCore::Free(static_cast<OpenGL::RenderTarget*>(ptr));
-}
-
-void OpenGL::Core::DeleteDepthStencilTarget(Base::DepthStencilTarget *ptr) {
-	AllocatorCore::Free(static_cast<OpenGL::DepthStencilTarget*>(ptr));
-}
-
 void OpenGL::Core::DeleteFramebuffer(Base::Framebuffer *ptr) {
 	AllocatorCore::Free(static_cast<OpenGL::Framebuffer*>(ptr));
 }
@@ -306,8 +289,12 @@ void OpenGL::Core::DeleteRenderPass(Base::RenderPass *ptr) {
 	//AllocatorCore::Free(static_cast<OpenGL::RenderPass*>(ptr));
 }
 
-void OpenGL::Core::DeleteTexture(Base::Texture* ptr) {
-	AllocatorCore::Free(static_cast<OpenGL::Texture*>(ptr));
+void OpenGL::Core::DeleteSampler(Base::Sampler* ptr) {
+	AllocatorCore::Free(static_cast<OpenGL::Sampler*>(ptr));
+}
+
+void OpenGL::Core::DeleteImage(Base::Image* ptr) {
+	AllocatorCore::Free(static_cast<OpenGL::Image*>(ptr));
 }
 
 void OpenGL::Core::DeleteDescriptorSet(Base::DescriptorSet* ptr) {

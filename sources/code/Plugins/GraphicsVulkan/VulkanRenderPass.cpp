@@ -70,10 +70,6 @@ void Vulkan::RenderPass::Create() {
 	VkAttachmentReference depthAttachmentRef = {};
 	if (depthFormat != Format::Invalid) {
 		FormatDepthStencilType depthStencilType = GetFormatDepthStencilType(depthFormat);
-		bool hasStencil =
-			(depthStencilType == FormatDepthStencilType::StencilOnly ||
-			 depthStencilType == FormatDepthStencilType::DepthStencil);
-
 		VkAttachmentDescription &depthAttachment = attachmentDescs[colorAttachments.size()];
 		depthAttachment.format = TranslateFormatToVulkan(depthFormat);
 		depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -83,18 +79,14 @@ void Vulkan::RenderPass::Create() {
 		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		depthAttachment.finalLayout = hasStencil
-			? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
-			: VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL;
+		depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 		depthAttachment.initialLayout = shouldClearDepthOnLoad
 			? VK_IMAGE_LAYOUT_UNDEFINED
 			: depthAttachment.finalLayout;
 		depthAttachment.flags = 0;
 
 		depthAttachmentRef.attachment = static_cast<uint32_t>(colorAttachments.size()); // Attaches after every color attachment
-		depthAttachmentRef.layout = hasStencil
-			? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-			: VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+		depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		depthAttachmentRefPtr = &depthAttachmentRef;
 	}
 

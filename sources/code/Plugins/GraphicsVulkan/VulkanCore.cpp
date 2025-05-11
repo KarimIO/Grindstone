@@ -20,13 +20,12 @@
 #include "VulkanWindowGraphicsBinding.hpp"
 #include "VulkanCore.hpp"
 #include "VulkanCommandBuffer.hpp"
-#include "VulkanDepthStencilTarget.hpp"
+#include "VulkanSampler.hpp"
+#include "VulkanImage.hpp"
 #include "VulkanFramebuffer.hpp"
 #include "VulkanGraphicsPipeline.hpp"
 #include "VulkanComputePipeline.hpp"
 #include "VulkanRenderPass.hpp"
-#include "VulkanRenderTarget.hpp"
-#include "VulkanTexture.hpp"
 #include "VulkanVertexArrayObject.hpp"
 #include "VulkanBuffer.hpp"
 #include "VulkanDescriptorSet.hpp"
@@ -503,19 +502,25 @@ void Vulkan::Core::WaitUntilIdle() {
 }
 
 void Vulkan::Core::CreateDescriptorPool() {
-	std::array<VkDescriptorPoolSize, 3> poolSizes = {};
+	std::array<VkDescriptorPoolSize, 5> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = 1000; // static_cast<uint32_t>(swapChainImages.size());
-	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[1].descriptorCount = 1000; //static_cast<uint32_t>(swapChainImages.size());
-	poolSizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-	poolSizes[2].descriptorCount = 1000; //static_cast<uint32_t>(swapChainImages.size());
+	poolSizes[0].descriptorCount = 1000;
+	poolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	poolSizes[1].descriptorCount = 1000;
+	poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	poolSizes[2].descriptorCount = 1000;
+	poolSizes[3].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	poolSizes[3].descriptorCount = 1000;
+	poolSizes[4].type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+	poolSizes[4].descriptorCount = 1000;
+	poolSizes[4].type = VK_DESCRIPTOR_TYPE_SAMPLER;
+	poolSizes[4].descriptorCount = 1000;
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = 3000;
+	poolInfo.maxSets = static_cast<uint32_t>(poolSizes.size() * 1000);
 
 	if (vkCreateDescriptorPool(device, &poolInfo, allocator->GetAllocationCallbacks(), &descriptorPool) != VK_SUCCESS) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create descriptor pool!");
@@ -647,12 +652,12 @@ Base::Buffer* Vulkan::Core::CreateBuffer(const Base::Buffer::CreateInfo& ci) {
 	return static_cast<Base::Buffer*>(AllocatorCore::Allocate<Vulkan::Buffer>(ci));
 }
 
-Base::Texture* Vulkan::Core::CreateCubemap(const Base::Texture::CubemapCreateInfo& createInfo) {
-	return nullptr; // static_cast<Base::Texture*>(AllocatorCore::Allocate<Vulkan::Texture>(ci));
+Base::Sampler* Vulkan::Core::CreateSampler(const Base::Sampler::CreateInfo& createInfo) {
+	return static_cast<Base::Sampler*>(AllocatorCore::Allocate<Vulkan::Sampler>(createInfo));
 }
 
-Base::Texture* Vulkan::Core::CreateTexture(const Base::Texture::CreateInfo& ci) {
-	return static_cast<Base::Texture*>(AllocatorCore::Allocate<Vulkan::Texture>(ci));
+Base::Image* Vulkan::Core::CreateImage(const Base::Image::CreateInfo& createInfo) {
+	return static_cast<Base::Image*>(AllocatorCore::Allocate<Vulkan::Image>(createInfo));
 }
 
 Base::DescriptorSet* Vulkan::Core::CreateDescriptorSet(const Base::DescriptorSet::CreateInfo& ci) {
@@ -661,14 +666,6 @@ Base::DescriptorSet* Vulkan::Core::CreateDescriptorSet(const Base::DescriptorSet
 
 Base::DescriptorSetLayout* Vulkan::Core::CreateDescriptorSetLayout(const Base::DescriptorSetLayout::CreateInfo& ci) {
 	return static_cast<Base::DescriptorSetLayout*>(AllocatorCore::Allocate<Vulkan::DescriptorSetLayout>(ci));
-}
-
-Base::RenderTarget* Vulkan::Core::CreateRenderTarget(const Base::RenderTarget::CreateInfo& ci) {
-	return static_cast<Base::RenderTarget*>(AllocatorCore::Allocate<Vulkan::RenderTarget>(ci));
-}
-
-Base::DepthStencilTarget* Vulkan::Core::CreateDepthStencilTarget(const Base::DepthStencilTarget::CreateInfo& ci) {
-	return static_cast<Base::DepthStencilTarget*>(AllocatorCore::Allocate<Vulkan::DepthStencilTarget>(ci));
 }
 
 Base::GraphicsPipeline* Vulkan::Core::GetOrCreateGraphicsPipelineFromCache(
@@ -698,14 +695,6 @@ Base::GraphicsPipeline* Vulkan::Core::GetOrCreateGraphicsPipelineFromCache(
 
 // Deleters
 //==================================
-void Vulkan::Core::DeleteRenderTarget(Base::RenderTarget * ptr) {
-	AllocatorCore::Free(static_cast<Vulkan::RenderTarget*>(ptr));
-}
-
-void Vulkan::Core::DeleteDepthStencilTarget(Base::DepthStencilTarget * ptr) {
-	AllocatorCore::Free(static_cast<Vulkan::DepthStencilTarget*>(ptr));
-}
-
 void Vulkan::Core::DeleteFramebuffer(Base::Framebuffer *ptr) {
 	AllocatorCore::Free(static_cast<Vulkan::Framebuffer*>(ptr));
 }
@@ -730,8 +719,12 @@ void Vulkan::Core::DeleteRenderPass(Base::RenderPass *ptr) {
 	AllocatorCore::Free(static_cast<Vulkan::RenderPass*>(ptr));
 }
 
-void Vulkan::Core::DeleteTexture(Base::Texture* ptr) {
-	AllocatorCore::Free(static_cast<Vulkan::Texture*>(ptr));
+void Vulkan::Core::DeleteSampler(Base::Sampler* ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::Sampler*>(ptr));
+}
+
+void Vulkan::Core::DeleteImage(Base::Image* ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::Image*>(ptr));
 }
 
 void Vulkan::Core::DeleteDescriptorSet(Base::DescriptorSet* ptr) {

@@ -340,12 +340,17 @@ namespace Grindstone::GraphicsAPI {
 	}
 
 	enum class BindingType {
-		UniformBuffer,
 		Sampler,
-		Texture,
-		RenderTexture,
-		DepthTexture,
-		RenderTextureStorageImage,
+		CombinedImageSampler,
+		SampledImage,
+		StorageImage,
+		UniformTexelBuffer,
+		StorageTexelBuffer,
+		UniformBuffer,
+		StorageBuffer,
+		UniformBufferDynamic,
+		StorageBufferDynamic,
+		AccelerationStructure
 	};
 
 #define BLEND_OPERATIONS_LIST \

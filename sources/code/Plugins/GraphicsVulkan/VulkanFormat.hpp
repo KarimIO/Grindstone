@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Common/Graphics/Texture.hpp>
+#include <Common/Graphics/Image.hpp>
 #include <Common/Graphics/Formats.hpp>
 #include <vulkan/vulkan.h>
 

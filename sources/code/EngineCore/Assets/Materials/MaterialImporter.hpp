@@ -12,7 +12,7 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		class Texture;
+		class Image;
 	}
 
 	class BaseAssetRenderer;
@@ -25,6 +25,6 @@ namespace Grindstone {
 		virtual void* LoadAsset(Uuid uuid) override;
 
 	private:
-		GraphicsAPI::Texture* missingTexture = nullptr;
+		GraphicsAPI::Image* missingTexture = nullptr;
 	};
 }

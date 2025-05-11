@@ -22,14 +22,13 @@ namespace Grindstone::GraphicsAPI::OpenGL {
 		virtual const char* GetAPIVersion() const override;
 		virtual const char* GetDefaultShaderExtension() const override;
 
-		virtual void DeleteRenderTarget(Grindstone::GraphicsAPI::RenderTarget * ptr) override;
-		virtual void DeleteDepthStencilTarget(Grindstone::GraphicsAPI::DepthStencilTarget * ptr) override;
 		virtual void DeleteFramebuffer(Grindstone::GraphicsAPI::Framebuffer *ptr) override;
 		virtual void DeleteBuffer(Grindstone::GraphicsAPI::Buffer *ptr) override;
 		virtual void DeleteGraphicsPipeline(Grindstone::GraphicsAPI::GraphicsPipeline* ptr) override;
 		virtual void DeleteComputePipeline(Grindstone::GraphicsAPI::ComputePipeline* ptr) override;
 		virtual void DeleteRenderPass(Grindstone::GraphicsAPI::RenderPass *ptr) override;
-		virtual void DeleteTexture(Grindstone::GraphicsAPI::Texture *ptr) override;
+		virtual void DeleteSampler(Grindstone::GraphicsAPI::Sampler* ptr) override;
+		virtual void DeleteImage(Grindstone::GraphicsAPI::Image* ptr) override;
 		virtual void DeleteDescriptorSet(Grindstone::GraphicsAPI::DescriptorSet *ptr) override;
 		virtual void DeleteDescriptorSetLayout(Grindstone::GraphicsAPI::DescriptorSetLayout *ptr) override;
 		virtual void DeleteCommandBuffer(Grindstone::GraphicsAPI::CommandBuffer * ptr) override;
@@ -42,12 +41,10 @@ namespace Grindstone::GraphicsAPI::OpenGL {
 		virtual Grindstone::GraphicsAPI::CommandBuffer* CreateCommandBuffer(const CommandBuffer::CreateInfo& ci) override;
 		virtual Grindstone::GraphicsAPI::VertexArrayObject* CreateVertexArrayObject(const VertexArrayObject::CreateInfo& gp) override;
 		virtual Grindstone::GraphicsAPI::Buffer* CreateBuffer(const Buffer::CreateInfo& ci) override;
-		virtual Grindstone::GraphicsAPI::Texture* CreateCubemap(const Texture::CubemapCreateInfo& createInfo) override;
-		virtual Grindstone::GraphicsAPI::Texture* CreateTexture(const Texture::CreateInfo& createInfo) override;
+		virtual Grindstone::GraphicsAPI::Sampler* CreateSampler(const Sampler::CreateInfo& createInfo) override;
+		virtual Grindstone::GraphicsAPI::Image* CreateImage(const Image::CreateInfo& createInfo) override;
 		virtual Grindstone::GraphicsAPI::DescriptorSet* CreateDescriptorSet(const DescriptorSet::CreateInfo& createInfo) override;
 		virtual Grindstone::GraphicsAPI::DescriptorSetLayout* CreateDescriptorSetLayout(const DescriptorSetLayout::CreateInfo& createInfo) override;
-		virtual Grindstone::GraphicsAPI::RenderTarget* CreateRenderTarget(const RenderTarget::CreateInfo& rt) override;
-		virtual Grindstone::GraphicsAPI::DepthStencilTarget* CreateDepthStencilTarget(const DepthStencilTarget::CreateInfo& rt) override;
 
 		virtual Grindstone::GraphicsAPI::GraphicsPipeline* GetOrCreateGraphicsPipelineFromCache(const GraphicsPipeline::PipelineData& pipelineData, const VertexInputLayout* vertexInputLayout) override;
 

@@ -29,19 +29,25 @@ void Grindstone::SetupDirectionalLightComponent(entt::registry& registry, entt::
 	renderPassCreateInfo.debugName = "Directional Shadow Render Pass";
 	renderPassCreateInfo.colorAttachments = nullptr;
 	renderPassCreateInfo.colorAttachmentCount = 0;
-	renderPassCreateInfo.depthFormat = Format::D32_SFLOAT;
+	renderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
 	directionalLightComponent.renderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
 
-	DepthStencilTarget::CreateInfo shadowMapDepthImageCreateInfo(renderPassCreateInfo.depthFormat, shadowResolution, shadowResolution, false, false, true, "Directional Shadow Map Depth Image");
-	directionalLightComponent.depthTarget = graphicsCore->CreateDepthStencilTarget(shadowMapDepthImageCreateInfo);
+	GraphicsAPI::Image::CreateInfo shadowMapDepthImageCreateInfo;
+	shadowMapDepthImageCreateInfo.debugName = "Directional Shadow Map Depth Image";
+	shadowMapDepthImageCreateInfo.format = renderPassCreateInfo.depthFormat;
+	shadowMapDepthImageCreateInfo.width = shadowMapDepthImageCreateInfo.height = shadowResolution;
+	shadowMapDepthImageCreateInfo.imageUsage =
+		GraphicsAPI::ImageUsageFlags::DepthStencil |
+		GraphicsAPI::ImageUsageFlags::Sampled;
+	directionalLightComponent.depthTarget = graphicsCore->CreateImage(shadowMapDepthImageCreateInfo);
 
 	GraphicsAPI::Framebuffer::CreateInfo shadowMapCreateInfo{};
 	shadowMapCreateInfo.debugName = "Directional Shadow Framebuffer";
 	shadowMapCreateInfo.width = shadowResolution;
 	shadowMapCreateInfo.height = shadowResolution;
 	shadowMapCreateInfo.renderPass = directionalLightComponent.renderPass;
-	shadowMapCreateInfo.renderTargetLists = nullptr;
-	shadowMapCreateInfo.numRenderTargetLists = 0;
+	shadowMapCreateInfo.renderTargets = nullptr;
+	shadowMapCreateInfo.renderTargetCount = 0;
 	shadowMapCreateInfo.depthTarget = directionalLightComponent.depthTarget;
 	directionalLightComponent.framebuffer = graphicsCore->CreateFramebuffer(shadowMapCreateInfo);
 
@@ -63,10 +69,10 @@ void Grindstone::SetupDirectionalLightComponent(entt::registry& registry, entt::
 
 		lightLayoutBindings[1].bindingId = 1;
 		lightLayoutBindings[1].count = 1;
-		lightLayoutBindings[1].type = BindingType::DepthTexture;
-		lightLayoutBindings[1].stages = ShaderStageBit::Fragment;
+		lightLayoutBindings[1].type = GraphicsAPI::BindingType::SampledImage;
+		lightLayoutBindings[1].stages = GraphicsAPI::ShaderStageBit::Fragment;
 
-		DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
+		GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
 		descriptorSetLayoutCreateInfo.debugName = "Directional Light Descriptor Set Layout";
 		descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightLayoutBindings.size());
 		descriptorSetLayoutCreateInfo.bindings = lightLayoutBindings.data();
@@ -130,5 +136,5 @@ void Grindstone::DestroyDirectionalLightComponent(entt::registry& registry, entt
 	graphicsCore->DeleteBuffer(directionalLightComponent.uniformBufferObject);
 	graphicsCore->DeleteFramebuffer(directionalLightComponent.framebuffer);
 	graphicsCore->DeleteRenderPass(directionalLightComponent.renderPass);
-	graphicsCore->DeleteDepthStencilTarget(directionalLightComponent.depthTarget);
+	graphicsCore->DeleteImage(directionalLightComponent.depthTarget);
 }

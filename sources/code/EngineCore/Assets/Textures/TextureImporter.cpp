@@ -24,6 +24,8 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 		return false;
 	}
 
+	textureAsset.name = result.displayName;
+
 	const char* fileContents = reinterpret_cast<const char*>(result.buffer.Get());
 	if (strncmp(fileContents, "DDS ", 4) != 0) {
 		GPRINT_WARN_V(LogSource::EngineCore, "Invalid texture file: {}", textureAsset.uuid.ToString());
@@ -125,32 +127,40 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 		imgPtr += sizeof(DDSHeaderExtended);
 	}
 
-	Grindstone::GraphicsAPI::Texture::CreateInfo createInfo;
-	createInfo.debugName = textureAsset.name.c_str();
-	createInfo.data = imgPtr;
-	createInfo.size = header.dwSize;
-	createInfo.mipmaps = static_cast<uint16_t>(header.dwMipMapCount);
-	createInfo.format = format;
-	createInfo.width = header.dwWidth;
-	createInfo.height = header.dwHeight;
-	createInfo.isCubemap = (header.dwCaps2 & DDS_CUBEMAP_ALLFACES);
-	createInfo.options.shouldGenerateMipmaps = false;
-	createInfo.options.anistropy = 16.0f;
-	createInfo.options.mipMax = -1000.0f;
-	createInfo.options.mipMax = 1000.0f;
-	createInfo.options.mipFilter = TextureFilter::Linear;
-	createInfo.options.minFilter = TextureFilter::Linear;
-	createInfo.options.magFilter = TextureFilter::Linear;
+	bool hasCubemap = header.dwCaps2 & DDS_CUBEMAP_ALLFACES;
 
-	if (createInfo.isCubemap) {
-		createInfo.options.wrapModeU = TextureWrapMode::ClampToEdge;
-		createInfo.options.wrapModeV = TextureWrapMode::ClampToEdge;
-		createInfo.options.wrapModeW = TextureWrapMode::ClampToEdge;
-	}
+	Grindstone::GraphicsAPI::Image::CreateInfo imgCreateInfo;
+	imgCreateInfo.debugName = textureAsset.name.c_str();
+	imgCreateInfo.initialData = imgPtr;
+	imgCreateInfo.initialDataSize = result.buffer.GetCapacity() - static_cast<uint64_t>(imgPtr - fileContents);
+	imgCreateInfo.mipLevels = static_cast<uint32_t>(header.dwMipMapCount);
+	imgCreateInfo.format = format;
+	imgCreateInfo.width = header.dwWidth;
+	imgCreateInfo.height = header.dwHeight;
+	imgCreateInfo.arrayLayers = hasCubemap ? 6 : 1;
+	imgCreateInfo.imageUsage =
+		GraphicsAPI::ImageUsageFlags::Sampled |
+		GraphicsAPI::ImageUsageFlags::TransferSrc |
+		GraphicsAPI::ImageUsageFlags::TransferDst;
+	imgCreateInfo.imageUsage.Set(GraphicsAPI::ImageUsageFlags::Cubemap, hasCubemap);
+	imgCreateInfo.imageUsage.Set(GraphicsAPI::ImageUsageFlags::GenerateMipmaps, false);
+
+	std::string samplerName = textureAsset.name + " Sampler";
+	Grindstone::GraphicsAPI::Sampler::CreateInfo samplerCreateInfo;
+	samplerCreateInfo.debugName = samplerName.c_str();
+	samplerCreateInfo.options.anistropy = 16.0f;
+	samplerCreateInfo.options.mipMin = -1000.0f;
+	samplerCreateInfo.options.mipMax = 1000.0f;
+	samplerCreateInfo.options.mipFilter = GraphicsAPI::TextureFilter::Linear;
+	samplerCreateInfo.options.minFilter = GraphicsAPI::TextureFilter::Linear;
+	samplerCreateInfo.options.magFilter = GraphicsAPI::TextureFilter::Linear;
+	samplerCreateInfo.options.wrapModeU = GraphicsAPI::TextureWrapMode::ClampToEdge;
+	samplerCreateInfo.options.wrapModeV = GraphicsAPI::TextureWrapMode::ClampToEdge;
+	samplerCreateInfo.options.wrapModeW = GraphicsAPI::TextureWrapMode::ClampToEdge;
 
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-	Grindstone::GraphicsAPI::Texture* texture = graphicsCore->CreateTexture(createInfo);
-	textureAsset.texture = texture;
+	textureAsset.image = graphicsCore->CreateImage(imgCreateInfo);
+	textureAsset.defaultSampler = graphicsCore->CreateSampler(samplerCreateInfo);
 	textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Ready;
 
 	return true;
@@ -178,10 +188,16 @@ void TextureImporter::QueueReloadAsset(Uuid uuid) {
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
 	textureInMap->second.assetLoadStatus = AssetLoadStatus::Reloading;
-	Texture*& texture = textureInMap->second.texture;
-	if (textureInMap->second.texture != nullptr) {
-		graphicsCore->DeleteTexture(texture);
-		texture = nullptr;
+	GraphicsAPI::Image*& image = textureInMap->second.image;
+	if (image != nullptr) {
+		graphicsCore->DeleteImage(image);
+		image = nullptr;
+	}
+
+	GraphicsAPI::Sampler*& defaultSampler = textureInMap->second.defaultSampler;
+	if (defaultSampler != nullptr) {
+		graphicsCore->DeleteSampler(defaultSampler);
+		defaultSampler = nullptr;
 	}
 
 	LoadTextureAsset(textureInMap->second);
@@ -192,12 +208,14 @@ TextureImporter::~TextureImporter() {
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
 	for (auto& asset : assets) {
-		graphicsCore->DeleteTexture(asset.second.texture);
+		graphicsCore->DeleteImage(asset.second.image);
+		graphicsCore->DeleteSampler(asset.second.defaultSampler);
 	}
 	assets.clear();
 
 	for (auto& asset : texturesByAddress) {
-		graphicsCore->DeleteTexture(asset.second.texture);
+		graphicsCore->DeleteImage(asset.second.image);
+		graphicsCore->DeleteSampler(asset.second.defaultSampler);
 	}
 	texturesByAddress.clear();
 }

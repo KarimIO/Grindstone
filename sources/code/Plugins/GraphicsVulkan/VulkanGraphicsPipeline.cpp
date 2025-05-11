@@ -6,7 +6,6 @@
 #include "VulkanCore.hpp"
 #include "VulkanFormat.hpp"
 #include "VulkanBuffer.hpp"
-#include "VulkanTexture.hpp"
 #include "VulkanDescriptorSetLayout.hpp"
 #include "VulkanGraphicsPipeline.hpp"
 

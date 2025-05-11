@@ -5,7 +5,7 @@
 #include <Common/Graphics/WindowGraphicsBinding.hpp>
 
 #include "VulkanCore.hpp"
-#include "VulkanRenderTarget.hpp"
+#include "VulkanImage.hpp"
 #include <vector>
 
 namespace Grindstone::GraphicsAPI::Vulkan {
@@ -14,7 +14,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 
 	struct ImageSet {
 		Framebuffer* framebuffer;
-		RenderTarget* swapChainTarget;
+		Image* swapChainTarget;
 		VkFence fence;
 	};
 

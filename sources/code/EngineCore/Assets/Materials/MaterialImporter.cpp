@@ -9,7 +9,7 @@
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/Logger.hpp>
 #include <Common/Graphics/Core.hpp>
-#include <Common/Graphics/Texture.hpp>
+#include <Common/Graphics/Image.hpp>
 
 #include "MaterialImporter.hpp"
 
@@ -214,7 +214,7 @@ static void SetupUniformBuffer(
 		ubCi.bufferSize = static_cast<uint32_t>(materialBuffer->bufferSize);
 		uniformBufferObject = graphicsCore->CreateBuffer(ubCi);
 
-		DescriptorSet::Binding uniformBufferBinding{ uniformBufferObject };
+		GraphicsAPI::DescriptorSet::Binding uniformBufferBinding{ uniformBufferObject };
 		bindings.push_back(uniformBufferBinding);
 	}
 
@@ -224,7 +224,7 @@ static void SetupUniformBuffer(
 static void SetupSamplers(
 	const rapidjson::Document& document,
 	Grindstone::GraphicsPipelineAsset& pipelineSetAsset,
-	Grindstone::GraphicsAPI::Texture* missingTexture,
+	Grindstone::GraphicsAPI::Image* missingTexture,
 	std::vector<GraphicsAPI::DescriptorSet::Binding>& bindings,
 	Grindstone::MaterialAsset& materialAsset
 ) {
@@ -236,7 +236,7 @@ static void SetupSamplers(
 	if (textureCount > 0 && document.HasMember("samplers")) {
 		const auto& samplersJson = document["samplers"];
 
-		std::vector<GraphicsAPI::Texture*> textures;
+		std::vector<GraphicsAPI::Image*> textures;
 		textures.resize(textureCount);
 		for (size_t i = 0; i < textureCount; ++i) {
 			const Grindstone::PipelineAssetMetaData::TextureSlot& textureMetaData =
@@ -244,7 +244,7 @@ static void SetupSamplers(
 			const char* textureName = textureMetaData.slotName.c_str();
 
 			if (samplersJson.HasMember(textureName)) {
-				Texture* itemPtr = missingTexture;
+				GraphicsAPI::Image* itemPtr = missingTexture;
 				if (samplersJson[textureName].IsString()) {
 					GPRINT_ERROR_V(LogSource::EngineCore, "Textures expects a UUID in the form of a string in member {} of material {}.", textureName, materialAsset.name.c_str());
 					continue;
@@ -260,7 +260,7 @@ static void SetupSamplers(
 				materialAsset.textures[i] = assetManager->GetAssetReferenceByUuid<TextureAsset>(textureUuid);
 				// TODO: Use this to ensure it goes in the right place: textureReferencesFromMaterial[i].bindingId;
 				if (materialAsset.textures[i].IsValid()) {
-					itemPtr = materialAsset.textures[i].Get()->texture;
+					itemPtr = materialAsset.textures[i].Get()->image;
 				}
 				GraphicsAPI::DescriptorSet::Binding textureBinding{ itemPtr };
 				bindings.push_back(textureBinding);
@@ -282,22 +282,26 @@ MaterialImporter::MaterialImporter() {
 		0xff, 0x00, 0xff, 0xff,
 		0x00, 0x00, 0x00, 0xff,
 	};
-	GraphicsAPI::Texture::CreateInfo blackTextureCreateInfo{};
+
+	GraphicsAPI::Image::CreateInfo blackTextureCreateInfo{};
 	blackTextureCreateInfo.debugName = "Black Missing Texture";
-	blackTextureCreateInfo.data = reinterpret_cast<const char*>(&colorData);
-	blackTextureCreateInfo.size = static_cast<uint32_t>(colorData.size());
+	blackTextureCreateInfo.initialData = reinterpret_cast<const char*>(&colorData);
+	blackTextureCreateInfo.initialDataSize = static_cast<uint32_t>(colorData.size()) * sizeof(uint32_t);
 	blackTextureCreateInfo.width = 2;
 	blackTextureCreateInfo.height = 2;
-	blackTextureCreateInfo.format = Format::R8G8B8A8_UNORM;
-	blackTextureCreateInfo.mipmaps = 1;
-	blackTextureCreateInfo.options.shouldGenerateMipmaps = false;
-	missingTexture = graphicsCore->CreateTexture(blackTextureCreateInfo);
+	blackTextureCreateInfo.format = GraphicsAPI::Format::R8G8B8A8_UNORM;
+	blackTextureCreateInfo.mipLevels = 1;
+	blackTextureCreateInfo.imageUsage =
+		GraphicsAPI::ImageUsageFlags::TransferSrc |
+		GraphicsAPI::ImageUsageFlags::TransferDst |
+		GraphicsAPI::ImageUsageFlags::Sampled;
+	missingTexture = graphicsCore->CreateImage(blackTextureCreateInfo);
 }
 
 static bool LoadMaterial(
 	Grindstone::MaterialAsset& material,
 	const std::string& displayName,
-	Grindstone::GraphicsAPI::Texture* missingTexture,
+	Grindstone::GraphicsAPI::Image* missingTexture,
 	const std::string_view materialContent
 ) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
@@ -415,5 +419,5 @@ MaterialImporter::~MaterialImporter() {
 
 	assets.clear();
 
-	graphicsCore->DeleteTexture(missingTexture);
+	graphicsCore->DeleteImage(missingTexture);
 }

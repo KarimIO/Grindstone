@@ -101,10 +101,10 @@ void Vulkan::WindowGraphicsBinding::SubmitWindowObjects(WindowBindingDataNative&
 		}
 
 		if (imageSet.swapChainTarget == nullptr) {
-			imageSet.swapChainTarget = new Vulkan::RenderTarget(native.image, native.imageView, swapchainVulkanFormat);
+			imageSet.swapChainTarget = new Vulkan::Image(native.image, swapchainVulkanFormat, i);
 		}
 		else {
-			static_cast<RenderTarget*>(imageSet.swapChainTarget)->UpdateNativeImage(native.image, native.imageView, swapchainVulkanFormat);
+			static_cast<Vulkan::Image*>(imageSet.swapChainTarget)->UpdateNativeImage(native.image, native.imageView, swapchainVulkanFormat);
 		}
 	}
 }
@@ -222,7 +222,7 @@ void Vulkan::WindowGraphicsBinding::CreateImageSets() {
 
 	imageSets.resize(imageCount);
 	for (uint32_t i = 0; i < imageCount; ++i) {
-		Vulkan::RenderTarget* rt = new Vulkan::RenderTarget(
+		Vulkan::Image* rt = new Vulkan::Image(
 			swapChainImages[i],
 			swapchainVulkanFormat,
 			i

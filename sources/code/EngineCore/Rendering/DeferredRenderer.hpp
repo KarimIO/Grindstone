@@ -14,8 +14,7 @@ namespace Grindstone {
 	namespace GraphicsAPI {
 		class Buffer;
 		class Framebuffer;
-		class RenderTarget;
-		class DepthStencilTarget;
+		class Image;
 		class VertexArrayObject;
 		class GraphicsPipeline;
 		class ComputePipeline;
@@ -64,17 +63,17 @@ namespace Grindstone {
 	private:
 		struct DeferredRendererImageSet {
 			GraphicsAPI::Framebuffer* gbuffer = nullptr;
-			GraphicsAPI::DepthStencilTarget* gbufferDepthStencilTarget = nullptr;
+			GraphicsAPI::Image* gbufferDepthStencilTarget = nullptr;
 			GraphicsAPI::Framebuffer* litHdrFramebuffer = nullptr;
 			GraphicsAPI::Framebuffer* lightingFramebuffer = nullptr;
-			GraphicsAPI::RenderTarget* litHdrRenderTarget = nullptr;
-			GraphicsAPI::RenderTarget* ssrRenderTarget = nullptr;
-			GraphicsAPI::RenderTarget* gbufferAlbedoRenderTarget = nullptr;
-			GraphicsAPI::RenderTarget* gbufferNormalRenderTarget = nullptr;
-			GraphicsAPI::RenderTarget* gbufferSpecularRoughnessRenderTarget = nullptr;
+			GraphicsAPI::Image* litHdrRenderTarget = nullptr;
+			GraphicsAPI::Image* ssrRenderTarget = nullptr;
+			GraphicsAPI::Image* gbufferAlbedoRenderTarget = nullptr;
+			GraphicsAPI::Image* gbufferNormalRenderTarget = nullptr;
+			GraphicsAPI::Image* gbufferSpecularRoughnessRenderTarget = nullptr;
 
 			GraphicsAPI::Framebuffer* ambientOcclusionFramebuffer = nullptr;
-			GraphicsAPI::RenderTarget* ambientOcclusionRenderTarget = nullptr;
+			GraphicsAPI::Image* ambientOcclusionRenderTarget = nullptr;
 
 			GraphicsAPI::Buffer* globalUniformBufferObject = nullptr;
 			GraphicsAPI::Buffer* debugUniformBufferObject = nullptr;
@@ -93,17 +92,17 @@ namespace Grindstone {
 
 			GraphicsAPI::DescriptorSet* ambientOcclusionDescriptorSet = nullptr;
 
-			GraphicsAPI::RenderTarget* nearDofRenderTarget = nullptr;
-			GraphicsAPI::RenderTarget* farDofRenderTarget = nullptr;
-			GraphicsAPI::RenderTarget* nearBlurredDofRenderTarget = nullptr;
-			GraphicsAPI::RenderTarget* farBlurredDofRenderTarget = nullptr;
+			GraphicsAPI::Image* nearDofRenderTarget = nullptr;
+			GraphicsAPI::Image* farDofRenderTarget = nullptr;
+			GraphicsAPI::Image* nearBlurredDofRenderTarget = nullptr;
+			GraphicsAPI::Image* farBlurredDofRenderTarget = nullptr;
 
 			GraphicsAPI::Framebuffer* dofSeparationFramebuffer = nullptr;
 			GraphicsAPI::Framebuffer* dofNearBlurFramebuffer = nullptr;
 			GraphicsAPI::Framebuffer* dofFarBlurFramebuffer = nullptr;
 			GraphicsAPI::Framebuffer* dofCombinationFramebuffer = nullptr;
 
-			std::vector<GraphicsAPI::RenderTarget*> bloomRenderTargets;
+			std::vector<GraphicsAPI::Image*> bloomRenderTargets;
 			std::vector<GraphicsAPI::DescriptorSet*> bloomDescriptorSets;
 		};
 
@@ -177,7 +176,8 @@ namespace Grindstone {
 		GraphicsAPI::RenderPass* forwardLitRenderPass = nullptr;
 		GraphicsAPI::RenderPass* ssaoRenderPass = nullptr;
 		GraphicsAPI::Buffer* ssaoUniformBuffer = nullptr;
-		GraphicsAPI::Texture* ssaoNoiseTexture = nullptr;
+		GraphicsAPI::Image* ssaoNoiseTexture = nullptr;
+		GraphicsAPI::Sampler* ssaoNoiseSampler = nullptr;
 		GraphicsAPI::DescriptorSetLayout* ambientOcclusionDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* ssaoInputDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSet* ssaoInputDescriptorSet = nullptr;

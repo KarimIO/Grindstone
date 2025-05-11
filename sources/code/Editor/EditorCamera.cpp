@@ -27,23 +27,25 @@ EditorCamera::EditorCamera() {
 	uint32_t framebufferWidth = display.width;
 	uint32_t framebufferHeight = display.height;
 
-	GraphicsAPI::RenderTarget::CreateInfo renderTargetCreateInfo{};
+	GraphicsAPI::Image::CreateInfo renderTargetCreateInfo{};
 	renderTargetCreateInfo.debugName = "Editor Viewport Color Image";
 	renderTargetCreateInfo.width = framebufferWidth;
 	renderTargetCreateInfo.height = framebufferHeight;
 	renderTargetCreateInfo.format = GraphicsAPI::Format::R8G8B8A8_UNORM;
-	renderTargetCreateInfo.isSampled = true;
-	renderTarget = core->CreateRenderTarget(renderTargetCreateInfo);
+	renderTargetCreateInfo.imageUsage =
+		GraphicsAPI::ImageUsageFlags::Sampled |
+		GraphicsAPI::ImageUsageFlags::RenderTarget;
+	renderTarget = core->CreateImage(renderTargetCreateInfo);
 
-	GraphicsAPI::DepthStencilTarget::CreateInfo depthTargetCreateInfo{};
+	GraphicsAPI::Image::CreateInfo depthTargetCreateInfo{};
 	depthTargetCreateInfo.debugName = "Editor Viewport Depth Image";
 	depthTargetCreateInfo.width = framebufferWidth;
 	depthTargetCreateInfo.height = framebufferHeight;
 	depthTargetCreateInfo.format = GraphicsAPI::Format::D24_UNORM_S8_UINT;
-	depthTargetCreateInfo.isSampled = true;
-	depthTargetCreateInfo.isCubemap = false;
-	depthTargetCreateInfo.isShadowMap = false;
-	depthTarget = core->CreateDepthStencilTarget(depthTargetCreateInfo);
+	depthTargetCreateInfo.imageUsage =
+		GraphicsAPI::ImageUsageFlags::Sampled |
+		GraphicsAPI::ImageUsageFlags::DepthStencil;
+	depthTarget = core->CreateImage(depthTargetCreateInfo);
 
 	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> attachments = { { renderTargetCreateInfo.format, true } };
 
@@ -66,8 +68,8 @@ EditorCamera::EditorCamera() {
 
 	GraphicsAPI::Framebuffer::CreateInfo framebufferCreateInfo{};
 	framebufferCreateInfo.debugName = "Editor Framebuffer";
-	framebufferCreateInfo.renderTargetLists = &renderTarget;
-	framebufferCreateInfo.numRenderTargetLists = 1;
+	framebufferCreateInfo.renderTargets = &renderTarget;
+	framebufferCreateInfo.renderTargetCount = 1;
 	framebufferCreateInfo.depthTarget = depthTarget;
 	framebufferCreateInfo.renderPass = renderPass;
 	framebufferCreateInfo.width = framebufferWidth;
@@ -76,7 +78,7 @@ EditorCamera::EditorCamera() {
 
 	GraphicsAPI::DescriptorSetLayout::Binding descriptorSetLayoutBinding{};
 	descriptorSetLayoutBinding.bindingId = 0;
-	descriptorSetLayoutBinding.type = GraphicsAPI::BindingType::RenderTexture;
+	descriptorSetLayoutBinding.type = GraphicsAPI::BindingType::SampledImage;
 	descriptorSetLayoutBinding.count = 1;
 	descriptorSetLayoutBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
 
