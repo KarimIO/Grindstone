@@ -13,6 +13,8 @@ namespace Grindstone {
 
 	namespace GraphicsAPI {
 		class Framebuffer;
+		class Image;
+		class Sampler;
 		class CommandBuffer;
 		class DescriptorSet;
 		class DescriptorSetLayout;
@@ -48,6 +50,7 @@ namespace Grindstone {
 			GridRenderer gridRenderer;
 			GraphicsAPI::Image* renderTarget = nullptr;
 			GraphicsAPI::Image* depthTarget = nullptr;
+			GraphicsAPI::Sampler* sampler = nullptr;
 			GraphicsAPI::RenderPass* renderPass = nullptr;
 			GraphicsAPI::RenderPass* gizmoRenderPass = nullptr;
 			GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;

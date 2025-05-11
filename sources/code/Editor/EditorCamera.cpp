@@ -76,9 +76,22 @@ EditorCamera::EditorCamera() {
 	framebufferCreateInfo.height = framebufferHeight;
 	framebuffer = core->CreateFramebuffer(framebufferCreateInfo);
 
+	Grindstone::GraphicsAPI::Sampler::CreateInfo samplerCreateInfo;
+	samplerCreateInfo.debugName = "Editor Sampler";
+	samplerCreateInfo.options.anistropy = 16.0f;
+	samplerCreateInfo.options.mipMin = -1000.0f;
+	samplerCreateInfo.options.mipMax = 1000.0f;
+	samplerCreateInfo.options.mipFilter = GraphicsAPI::TextureFilter::Linear;
+	samplerCreateInfo.options.minFilter = GraphicsAPI::TextureFilter::Linear;
+	samplerCreateInfo.options.magFilter = GraphicsAPI::TextureFilter::Linear;
+	samplerCreateInfo.options.wrapModeU = GraphicsAPI::TextureWrapMode::ClampToEdge;
+	samplerCreateInfo.options.wrapModeV = GraphicsAPI::TextureWrapMode::ClampToEdge;
+	samplerCreateInfo.options.wrapModeW = GraphicsAPI::TextureWrapMode::ClampToEdge;
+	sampler = core->CreateSampler(samplerCreateInfo);
+
 	GraphicsAPI::DescriptorSetLayout::Binding descriptorSetLayoutBinding{};
 	descriptorSetLayoutBinding.bindingId = 0;
-	descriptorSetLayoutBinding.type = GraphicsAPI::BindingType::SampledImage;
+	descriptorSetLayoutBinding.type = GraphicsAPI::BindingType::CombinedImageSampler;
 	descriptorSetLayoutBinding.count = 1;
 	descriptorSetLayoutBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
 
@@ -88,7 +101,8 @@ EditorCamera::EditorCamera() {
 	descriptorSetLayoutCreateInfo.bindings = &descriptorSetLayoutBinding;
 	descriptorSetLayout = core->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
-	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding{ renderTarget };
+	std::pair<void*, void*> combinedSamplerPair = { renderTarget, sampler };
+	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding{ &combinedSamplerPair };
 
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 	descriptorSetCreateInfo.debugName = "Editor Viewport Descriptor Set";
@@ -346,7 +360,8 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 	framebuffer->Resize(width, height);
 	renderer->Resize(width, height);
 
-	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding{ renderTarget };
+	std::pair<void*, void*> combinedSamplerPair = { renderTarget, sampler };
+	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding{ &combinedSamplerPair };
 
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 	descriptorSetCreateInfo.debugName = "Editor Viewport Descriptor Set";
