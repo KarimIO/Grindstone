@@ -337,7 +337,7 @@ void Vulkan::WindowGraphicsBinding::SubmitCommandBuffer(GraphicsAPI::CommandBuff
 	vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
 	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
-		GPRINT_ERROR(LogSource::GraphicsAPI, "Failed to submit draw command buffer!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to submit draw command buffer!");
 	}
 }
 
