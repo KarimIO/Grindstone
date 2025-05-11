@@ -1,19 +1,48 @@
 #pragma once
 
 #include <stdint.h>
+
+#include <Common/Containers/Bitset.hpp>
+
 #include "Formats.hpp"
 
 namespace Grindstone::GraphicsAPI {
 	enum class BufferUsage : uint8_t {
-		Vertex,
-		Index,
-		Uniform,
-		Storage,
-		Indirect,
-		TransferSrc,
-		TransferDst
+		Vertex = 1,
+		Index = 1 << 1,
+		Uniform = 1 << 2,
+		Storage = 1 << 3,
+		Indirect = 1 << 4,
+		TransferSrc = 1 << 5,
+		TransferDst = 1 << 6
 	};
+}
 
+template <>
+struct EnumFlagsTraits<Grindstone::GraphicsAPI::BufferUsage> {
+	static constexpr const char* names[] = {
+		"Vertex",
+		"Index",
+		"Uniform",
+		"Storage",
+		"Indirect",
+		"TransferSrc",
+		"TransferDst"
+	};
+	static constexpr size_t size = 7;
+};
+
+inline Grindstone::GraphicsAPI::BufferUsage operator|(Grindstone::GraphicsAPI::BufferUsage a, const Grindstone::GraphicsAPI::BufferUsage b) {
+	using Underlying = uint8_t;
+	return static_cast<Grindstone::GraphicsAPI::BufferUsage>(static_cast<Underlying>(a) | static_cast<Underlying>(b));
+}
+
+inline Grindstone::GraphicsAPI::BufferUsage operator&(Grindstone::GraphicsAPI::BufferUsage a, const Grindstone::GraphicsAPI::BufferUsage b) {
+	using Underlying = uint8_t;
+	return static_cast<Grindstone::GraphicsAPI::BufferUsage>(static_cast<Underlying>(a) & static_cast<Underlying>(b));
+}
+
+namespace Grindstone::GraphicsAPI {
 	enum class MemUsage : uint8_t {
 		GPUOnly,
 		CPUOnly,
@@ -30,7 +59,7 @@ namespace Grindstone::GraphicsAPI {
 			const char* debugName;
 			const void* content;
 			size_t bufferSize;
-			BufferUsage bufferUsage;
+			Grindstone::Containers::BitsetFlags<BufferUsage> bufferUsage;
 			MemUsage memoryUsage;
 		};
 
@@ -50,7 +79,7 @@ namespace Grindstone::GraphicsAPI {
 		}
 
 		BufferUsage GetBufferUsage() const {
-			return bufferUsage;
+			return bufferUsage.GetValueEnum();
 		}
 
 		MemUsage GetMemoryUsage() const {
@@ -63,7 +92,7 @@ namespace Grindstone::GraphicsAPI {
 
 	protected:
 		const char* debugName;
-		BufferUsage bufferUsage;
+		Grindstone::Containers::BitsetFlags<BufferUsage> bufferUsage;
 		MemUsage memoryUsage;
 		size_t bufferSize;
 		void* mappedMemoryPtr = nullptr;

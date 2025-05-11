@@ -38,9 +38,12 @@ void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 
 	GraphicsAPI::Buffer::CreateInfo ubCi{};
 	ubCi.debugName = "Gizmo Uniform Buffer";
-	ubCi.bufferUsage = BufferUsage::Uniform;
-	ubCi.memoryUsage = MemUsage::CPUToGPU;
-	ubCi.bufferSize = static_cast<uint32_t>(sizeof(GridUniformBuffer));
+	ubCi.bufferUsage =
+		GraphicsAPI::BufferUsage::TransferDst |
+		GraphicsAPI::BufferUsage::TransferSrc |
+		GraphicsAPI::BufferUsage::Uniform;
+	ubCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
+	ubCi.bufferSize = static_cast<size_t>(sizeof(GridUniformBuffer));
 	gridUniformBuffer = graphicsCore->CreateBuffer(ubCi);
 
 	std::vector<GraphicsAPI::GraphicsPipeline::ShaderStageData> shaderStageCreateInfos;

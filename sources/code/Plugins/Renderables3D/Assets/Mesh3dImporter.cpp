@@ -35,7 +35,10 @@ static GraphicsAPI::Buffer* LoadVertexBufferVec(
 	GraphicsAPI::Buffer::CreateInfo vertexBufferCreateInfo{};
 	vertexBufferCreateInfo.debugName = debugName.c_str();
 	vertexBufferCreateInfo.content = vertices.data();
-	vertexBufferCreateInfo.bufferUsage = Grindstone::GraphicsAPI::BufferUsage::Vertex;
+	vertexBufferCreateInfo.bufferUsage =
+		GraphicsAPI::BufferUsage::TransferDst |
+		GraphicsAPI::BufferUsage::TransferSrc |
+		Grindstone::GraphicsAPI::BufferUsage::Vertex;
 	vertexBufferCreateInfo.bufferSize = static_cast<uint32_t>(size);
 	return graphicsCore->CreateBuffer(vertexBufferCreateInfo);
 }
@@ -45,9 +48,9 @@ Mesh3dImporter::Mesh3dImporter(EngineCore* engineCore) : engineCore(engineCore) 
 }
 
 void Mesh3dImporter::PrepareLayouts() {
-	VertexInputLayoutBuilder builder;
+	GraphicsAPI::VertexInputLayoutBuilder builder;
 	builder.AddBinding(
-		{0, 0, VertexInputRate::Vertex},
+		{0, 0, GraphicsAPI::VertexInputRate::Vertex},
 		{
 			{
 				"vertexPosition",
@@ -58,7 +61,7 @@ void Mesh3dImporter::PrepareLayouts() {
 			}
 		}
 	).AddBinding(
-		{ 2, 0, VertexInputRate::Vertex },
+		{ 2, 0, GraphicsAPI::VertexInputRate::Vertex },
 		{
 			{
 				"vertexNormal",
@@ -69,7 +72,7 @@ void Mesh3dImporter::PrepareLayouts() {
 			}
 		}
 	).AddBinding(
-		{ 3, 0, VertexInputRate::Vertex },
+		{ 3, 0, GraphicsAPI::VertexInputRate::Vertex },
 		{
 			{
 				"vertexTangent",
@@ -80,7 +83,7 @@ void Mesh3dImporter::PrepareLayouts() {
 			}
 		}
 	).AddBinding(
-		{ 4, 0, VertexInputRate::Vertex },
+		{ 4, 0, GraphicsAPI::VertexInputRate::Vertex },
 		{
 			{
 				"vertexTexCoord0",
@@ -91,7 +94,7 @@ void Mesh3dImporter::PrepareLayouts() {
 			}
 		}
 	).AddBinding(
-		{ 4, 0, VertexInputRate::Vertex },
+		{ 4, 0, GraphicsAPI::VertexInputRate::Vertex },
 		{
 			{
 				"vertexTexCoord1",
@@ -202,8 +205,11 @@ void Mesh3dImporter::LoadMeshImportIndices(
 	GraphicsAPI::Buffer::CreateInfo indexBufferCreateInfo{};
 	indexBufferCreateInfo.debugName = debugName.c_str();
 	indexBufferCreateInfo.content = indices.data();
-	indexBufferCreateInfo.bufferUsage = BufferUsage::Index;
-	indexBufferCreateInfo.memoryUsage = MemUsage::GPUOnly;
+	indexBufferCreateInfo.bufferUsage =
+		GraphicsAPI::BufferUsage::TransferDst |
+		GraphicsAPI::BufferUsage::TransferSrc |
+		GraphicsAPI::BufferUsage::Index;
+	indexBufferCreateInfo.memoryUsage = GraphicsAPI::MemUsage::GPUOnly;
 	indexBufferCreateInfo.bufferSize = static_cast<uint32_t>(indices.size() * sizeof(indices[0]));
 	indexBuffer = graphicsCore->CreateBuffer(indexBufferCreateInfo);
 }

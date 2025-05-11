@@ -25,8 +25,11 @@ static void SetupMeshRendererComponent(entt::registry& registry, entt::entity en
 
 	GraphicsAPI::Buffer::CreateInfo uniformBufferCreateInfo{};
 	uniformBufferCreateInfo.debugName = "Per Draw Uniform Buffer";
-	uniformBufferCreateInfo.bufferUsage = BufferUsage::Uniform;
-	uniformBufferCreateInfo.memoryUsage = MemUsage::CPUToGPU;
+	uniformBufferCreateInfo.bufferUsage =
+		GraphicsAPI::BufferUsage::TransferDst |
+		GraphicsAPI::BufferUsage::TransferSrc |
+		GraphicsAPI::BufferUsage::Uniform;
+	uniformBufferCreateInfo.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
 	uniformBufferCreateInfo.bufferSize = sizeof(float) * 16;
 	meshRendererComponent.perDrawUniformBuffer = graphicsCore->CreateBuffer(uniformBufferCreateInfo);
 

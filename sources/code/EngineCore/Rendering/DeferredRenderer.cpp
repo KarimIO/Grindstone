@@ -150,8 +150,11 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 		GraphicsAPI::Buffer::CreateInfo postProcessingUboCreateInfo{};
 		postProcessingUboCreateInfo.debugName = "Post Processing UBO";
 		postProcessingUboCreateInfo.content = &postProcessUboData;
-		postProcessingUboCreateInfo.bufferUsage = BufferUsage::Uniform;
-		postProcessingUboCreateInfo.memoryUsage = MemUsage::CPUToGPU;
+		postProcessingUboCreateInfo.bufferUsage =
+			GraphicsAPI::BufferUsage::TransferDst |
+			GraphicsAPI::BufferUsage::TransferSrc |
+			GraphicsAPI::BufferUsage::Uniform;
+		postProcessingUboCreateInfo.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
 		postProcessingUboCreateInfo.bufferSize = sizeof(PostProcessUbo);
 
 		deferredRendererImageSets[i].tonemapPostProcessingUniformBufferObject =
@@ -749,8 +752,11 @@ void DeferredRenderer::CreateBloomUniformBuffers() {
 
 	GraphicsAPI::Buffer::CreateInfo uniformBufferCreateInfo{};
 	uniformBufferCreateInfo.debugName = "Bloom Uniform Buffer";
-	uniformBufferCreateInfo.bufferUsage = BufferUsage::Uniform;
-	uniformBufferCreateInfo.memoryUsage = MemUsage::CPUToGPU;
+	uniformBufferCreateInfo.bufferUsage =
+		GraphicsAPI::BufferUsage::TransferDst |
+		GraphicsAPI::BufferUsage::TransferSrc |
+		GraphicsAPI::BufferUsage::Uniform;
+	uniformBufferCreateInfo.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
 	uniformBufferCreateInfo.bufferSize = sizeof(BloomUboStruct);
 
 	for (size_t i = 0; i < bloomUniformBuffers.size(); ++i) {
@@ -979,15 +985,18 @@ void DeferredRenderer::CreateUniformBuffers() {
 
 		GraphicsAPI::Buffer::CreateInfo globalUniformBufferObjectCi{};
 		globalUniformBufferObjectCi.debugName = "EngineUbo";
-		globalUniformBufferObjectCi.bufferUsage = BufferUsage::Uniform;
-		globalUniformBufferObjectCi.memoryUsage = MemUsage::CPUToGPU;
+		globalUniformBufferObjectCi.bufferUsage =
+			GraphicsAPI::BufferUsage::TransferDst |
+			GraphicsAPI::BufferUsage::TransferSrc |
+			GraphicsAPI::BufferUsage::Uniform;
+		globalUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
 		globalUniformBufferObjectCi.bufferSize = sizeof(EngineUboStruct);
 		imageSet.globalUniformBufferObject = graphicsCore->CreateBuffer(globalUniformBufferObjectCi);
 
 		GraphicsAPI::Buffer::CreateInfo debugUniformBufferObjectCi{};
 		debugUniformBufferObjectCi.debugName = "DebugUbo";
-		debugUniformBufferObjectCi.bufferUsage = BufferUsage::Uniform;
-		debugUniformBufferObjectCi.memoryUsage = MemUsage::CPUToGPU;
+		debugUniformBufferObjectCi.bufferUsage = GraphicsAPI::BufferUsage::Uniform;
+		debugUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
 		debugUniformBufferObjectCi.bufferSize = sizeof(DebugUboData);
 		imageSet.debugUniformBufferObject = graphicsCore->CreateBuffer(debugUniformBufferObjectCi);
 	}
@@ -1291,16 +1300,22 @@ void DeferredRenderer::CreateVertexAndIndexBuffersAndLayouts() {
 
 	GraphicsAPI::Buffer::CreateInfo vboCi{};
 	vboCi.debugName = "Light Vertex Position Buffer";
-	vboCi.bufferUsage = BufferUsage::Vertex;
-	vboCi.memoryUsage = MemUsage::GPUOnly;
+	vboCi.bufferUsage =
+		GraphicsAPI::BufferUsage::TransferDst |
+		GraphicsAPI::BufferUsage::TransferSrc |
+		GraphicsAPI::BufferUsage::Vertex;
+	vboCi.memoryUsage = GraphicsAPI::MemUsage::GPUOnly;
 	vboCi.content = lightPositions;
 	vboCi.bufferSize = sizeof(float) * 8;
 	vertexBuffer = graphicsCore->CreateBuffer(vboCi);
 
 	GraphicsAPI::Buffer::CreateInfo iboCi{};
 	iboCi.debugName = "Light Index Buffer";
-	vboCi.bufferUsage = BufferUsage::Vertex;
-	vboCi.memoryUsage = MemUsage::GPUOnly;
+	iboCi.bufferUsage =
+		GraphicsAPI::BufferUsage::TransferDst |
+		GraphicsAPI::BufferUsage::TransferSrc |
+		GraphicsAPI::BufferUsage::Vertex;
+	iboCi.memoryUsage = GraphicsAPI::MemUsage::GPUOnly;
 	iboCi.content = lightIndices;
 	iboCi.bufferSize = sizeof(lightIndices);
 	indexBuffer = graphicsCore->CreateBuffer(iboCi);

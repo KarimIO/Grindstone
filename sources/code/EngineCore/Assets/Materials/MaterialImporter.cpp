@@ -174,7 +174,7 @@ static void ReadMaterialDataMember(
 static void SetupUniformBuffer(
 	const rapidjson::Document& document,
 	Grindstone::GraphicsPipelineAsset& pipelineSetAsset,
-	std::vector<DescriptorSet::Binding>& bindings,
+	std::vector<GraphicsAPI::DescriptorSet::Binding>& bindings,
 	const std::string& name,
 	Grindstone::MaterialAsset& materialAsset
 ) {
@@ -206,8 +206,11 @@ static void SetupUniformBuffer(
 		GraphicsAPI::Buffer::CreateInfo ubCi{};
 		ubCi.debugName = uniformBufferName.c_str();
 		ubCi.content = materialAsset.materialDataBuffer.Get();
-		ubCi.bufferUsage = BufferUsage::Uniform;
-		ubCi.memoryUsage = MemUsage::CPUToGPU;
+		ubCi.bufferUsage =
+			GraphicsAPI::BufferUsage::TransferDst |
+			GraphicsAPI::BufferUsage::TransferSrc |
+			GraphicsAPI::BufferUsage::Uniform;
+		ubCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
 		ubCi.bufferSize = static_cast<uint32_t>(materialBuffer->bufferSize);
 		uniformBufferObject = graphicsCore->CreateBuffer(ubCi);
 
@@ -222,7 +225,7 @@ static void SetupSamplers(
 	const rapidjson::Document& document,
 	Grindstone::GraphicsPipelineAsset& pipelineSetAsset,
 	Grindstone::GraphicsAPI::Texture* missingTexture,
-	std::vector<DescriptorSet::Binding>& bindings,
+	std::vector<GraphicsAPI::DescriptorSet::Binding>& bindings,
 	Grindstone::MaterialAsset& materialAsset
 ) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
@@ -259,11 +262,11 @@ static void SetupSamplers(
 				if (materialAsset.textures[i].IsValid()) {
 					itemPtr = materialAsset.textures[i].Get()->texture;
 				}
-				DescriptorSet::Binding textureBinding{ itemPtr };
+				GraphicsAPI::DescriptorSet::Binding textureBinding{ itemPtr };
 				bindings.push_back(textureBinding);
 			}
 			else {
-				DescriptorSet::Binding textureBinding{ missingTexture };
+				GraphicsAPI::DescriptorSet::Binding textureBinding{ missingTexture };
 				bindings.push_back(textureBinding);
 			}
 		}
@@ -331,7 +334,7 @@ static bool LoadMaterial(
 		return false;
 	}
 
-	std::vector<DescriptorSet::Binding> bindings;
+	std::vector<GraphicsAPI::DescriptorSet::Binding> bindings;
 	SetupUniformBuffer(document, *pipelineSetAsset, bindings, displayName, material);
 	SetupSamplers(document, *pipelineSetAsset, missingTexture, bindings, material);
 
@@ -342,7 +345,7 @@ static bool LoadMaterial(
 	materialDescriptorSetCreateInfo.bindings = bindings.data();
 	materialDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
 	materialDescriptorSetCreateInfo.layout = pipelineSetAsset->GetMaterialDescriptorLayout();
-	DescriptorSet* materialDescriptorSet = graphicsCore->CreateDescriptorSet(materialDescriptorSetCreateInfo);
+	GraphicsAPI::DescriptorSet* materialDescriptorSet = graphicsCore->CreateDescriptorSet(materialDescriptorSetCreateInfo);
 
 	material.materialDescriptorSet = materialDescriptorSet;
 	material.assetLoadStatus = AssetLoadStatus::Ready;

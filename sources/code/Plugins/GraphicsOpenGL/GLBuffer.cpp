@@ -7,13 +7,23 @@
 using namespace Grindstone::GraphicsAPI;
 
 OpenGL::Buffer::Buffer(const Grindstone::GraphicsAPI::Buffer::CreateInfo& createInfo) : GraphicsAPI::Buffer(createInfo) {
-	switch (createInfo.bufferUsage) {
-	case BufferUsage::Vertex:	bufferType = GL_ARRAY_BUFFER; break;
-	case BufferUsage::Index:	bufferType = GL_ELEMENT_ARRAY_BUFFER; break;
-	case BufferUsage::Uniform:	bufferType = GL_UNIFORM_BUFFER; break;
-	case BufferUsage::Storage:	bufferType = GL_SHADER_STORAGE_BUFFER; break;
-	case BufferUsage::Indirect: bufferType = GL_DRAW_INDIRECT_BUFFER; break;
-	default: bufferType = GL_ARRAY_BUFFER; break;
+	if (createInfo.bufferUsage.Test(BufferUsage::Vertex)) {
+		bufferType = GL_ARRAY_BUFFER;
+	}
+	else if (createInfo.bufferUsage.Test(BufferUsage::Index)) {
+		bufferType = GL_ELEMENT_ARRAY_BUFFER;
+	}
+	else if (createInfo.bufferUsage.Test(BufferUsage::Uniform)) {
+		bufferType = GL_UNIFORM_BUFFER;
+	}
+	else if (createInfo.bufferUsage.Test(BufferUsage::Storage)) {
+		bufferType = GL_SHADER_STORAGE_BUFFER;
+	}
+	else if (createInfo.bufferUsage.Test(BufferUsage::Indirect)) {
+		bufferType = GL_DRAW_INDIRECT_BUFFER;
+	}
+	else {
+		bufferType = GL_ARRAY_BUFFER;
 	}
 
 	GLenum usageHint = 0;

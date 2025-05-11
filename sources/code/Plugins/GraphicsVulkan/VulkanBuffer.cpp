@@ -10,14 +10,27 @@ namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
 Vulkan::Buffer::Buffer(const CreateInfo& createInfo) : GraphicsAPI::Buffer(createInfo) {
 	VkBufferUsageFlags usage = 0;
-	switch (bufferUsage) {
-	case BufferUsage::Vertex:		usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;		break;
-	case BufferUsage::Index:		usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;		break;
-	case BufferUsage::Uniform:		usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;		break;
-	case BufferUsage::Storage:		usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;		break;
-	case BufferUsage::Indirect:		usage = VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;	break;
-	case BufferUsage::TransferSrc:	usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;		break;
-	case BufferUsage::TransferDst:	usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;		break;
+
+	if (createInfo.bufferUsage.Test(BufferUsage::Vertex)) {
+		usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	}
+	if (createInfo.bufferUsage.Test(BufferUsage::Index)) {
+		usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+	}
+	if (createInfo.bufferUsage.Test(BufferUsage::Uniform)) {
+		usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+	}
+	if (createInfo.bufferUsage.Test(BufferUsage::Storage)) {
+		usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+	}
+	if (createInfo.bufferUsage.Test(BufferUsage::Indirect)) {
+		usage |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
+	}
+	if (createInfo.bufferUsage.Test(BufferUsage::TransferSrc)) {
+		usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+	}
+	if (createInfo.bufferUsage.Test(BufferUsage::TransferDst)) {
+		usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 	}
 
 	VkMemoryPropertyFlags properties = 0;

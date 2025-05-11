@@ -41,7 +41,7 @@ void GizmoRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	GraphicsAPI::VertexInputLayoutBuilder layoutBuilder;
 	gizmoVertexLayout = layoutBuilder
 		.AddBinding(
-			{ 0, 0, VertexInputRate::Vertex },
+			{ 0, 0, GraphicsAPI::VertexInputRate::Vertex },
 			{
 				{
 					"vertexPosition",
@@ -446,21 +446,32 @@ void GizmoRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 
 	GraphicsAPI::Buffer::CreateInfo ubCi{};
 	ubCi.debugName = "Gizmo Uniform Buffer";
-	ubCi.bufferUsage = BufferUsage::Uniform;
-	ubCi.memoryUsage = MemUsage::CPUToGPU;
-	ubCi.bufferSize = static_cast<uint32_t>(sizeof(GizmoUniformBuffer) * maxObjects);
+	ubCi.bufferUsage =
+		GraphicsAPI::BufferUsage::TransferDst |
+		GraphicsAPI::BufferUsage::TransferSrc |
+		GraphicsAPI::BufferUsage::Uniform;
+	ubCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
+	ubCi.bufferSize = static_cast<size_t>(sizeof(GizmoUniformBuffer) * maxObjects);
 	gizmoUniformBuffer = graphicsCore->CreateBuffer(ubCi);
 
 	GraphicsAPI::Buffer::CreateInfo gizmoShapesVertexBufferCi{};
 	gizmoShapesVertexBufferCi.debugName = "Gizmo Shape Vertex Buffer";
 	gizmoShapesVertexBufferCi.content = shapeVertices.data();
 	gizmoShapesVertexBufferCi.bufferSize = sizeof(shapeVertices);
+	gizmoShapesVertexBufferCi.bufferUsage =
+		GraphicsAPI::BufferUsage::Vertex |
+		GraphicsAPI::BufferUsage::TransferSrc |
+		GraphicsAPI::BufferUsage::TransferDst;
 	gizmoShapesVertexBuffer = graphicsCore->CreateBuffer(gizmoShapesVertexBufferCi);
 
 	GraphicsAPI::Buffer::CreateInfo gizmoShapesIndexBufferCi{};
 	gizmoShapesIndexBufferCi.debugName = "Gizmo Shape Index Buffer";
 	gizmoShapesIndexBufferCi.content = shapeIndices.data();
 	gizmoShapesIndexBufferCi.bufferSize = sizeof(shapeIndices);
+	gizmoShapesIndexBufferCi.bufferUsage =
+		GraphicsAPI::BufferUsage::Index |
+		GraphicsAPI::BufferUsage::TransferSrc |
+		GraphicsAPI::BufferUsage::TransferDst;
 	gizmoShapesIndexBuffer = graphicsCore->CreateBuffer(gizmoShapesIndexBufferCi);
 
 	GraphicsAPI::VertexArrayObject::CreateInfo vaoCi{};
