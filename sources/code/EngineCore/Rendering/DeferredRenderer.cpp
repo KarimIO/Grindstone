@@ -1331,7 +1331,7 @@ void DeferredRenderer::CreateVertexAndIndexBuffersAndLayouts() {
 	iboCi.bufferUsage =
 		GraphicsAPI::BufferUsage::TransferDst |
 		GraphicsAPI::BufferUsage::TransferSrc |
-		GraphicsAPI::BufferUsage::Vertex;
+		GraphicsAPI::BufferUsage::Index;
 	iboCi.memoryUsage = GraphicsAPI::MemUsage::GPUOnly;
 	iboCi.content = lightIndices;
 	iboCi.bufferSize = sizeof(lightIndices);
