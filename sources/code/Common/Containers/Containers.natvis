@@ -24,4 +24,54 @@
 		</Expand>
 	</Type>
 
+	<Type Name="Grindstone::Containers::Bitset&lt;*,*&gt;">
+		<DisplayString Condition="wordCount == 0">Empty</DisplayString>
+		<DisplayString Condition="wordCount == 1">{{ value={contents[0],b} bits={enumBitCount} words={wordCount} }}</DisplayString>
+		<DisplayString Condition="wordCount > 1">{{ bits={enumBitCount} words={wordCount} }}</DisplayString>
+		<Expand>
+			<IndexListItems>
+				<Size>$T1</Size>
+				<ValueNode>(contents[$i / bitsPerWord] &gt;&gt; ($i % bitsPerWord)) &amp; 1,d</ValueNode>
+			</IndexListItems>
+		</Expand>
+	</Type>
+
+	<Type Name="Grindstone::Containers::BitsetEnum&lt;*&gt;">
+		<DisplayString Condition="wordCount == 0">Empty</DisplayString>
+		<DisplayString Condition="wordCount == 1">{{ value={contents[0],b} bits={enumBitCount} words={wordCount} }}</DisplayString>
+		<DisplayString Condition="wordCount > 1">{{ bits={enumBitCount} words={wordCount} }}</DisplayString>
+		<Expand>
+			<IndexListItems>
+				<Size>enumBitCount</Size>
+				<ValueNode>(contents[$i / bitsPerWord] &gt;&gt; ($i % bitsPerWord)) &amp; 1,d</ValueNode>
+			</IndexListItems>
+			<Synthetic Name="Names">
+				<Expand>
+					<IndexListItems>
+						<Size>enumBitCount</Size>
+						<ValueNode>EnumTraits&lt;$T1&gt;::names[$i]</ValueNode>
+					</IndexListItems>
+				</Expand>
+			</Synthetic>
+		</Expand>
+	</Type>
+
+	<Type Name="Grindstone::Containers::BitsetFlags&lt;*&gt;">
+		<DisplayString>{{ value={value,b} bits={enumBitCount} }}</DisplayString>
+		<Expand>
+			<IndexListItems>
+				<Size>enumBitCount</Size>
+				<ValueNode>(value &gt;&gt; ($i)) &amp; 1,d</ValueNode>
+			</IndexListItems>
+			<Synthetic Name="Names">
+				<Expand>
+					<IndexListItems>
+						<Size>enumBitCount</Size>
+						<ValueNode>EnumFlagsTraits&lt;$T1&gt;::names[$i]</ValueNode>
+					</IndexListItems>
+				</Expand>
+			</Synthetic>
+		</Expand>
+	</Type>
+
 </AutoVisualizer>
