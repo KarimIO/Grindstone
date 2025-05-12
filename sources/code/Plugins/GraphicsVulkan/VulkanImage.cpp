@@ -411,6 +411,8 @@ void Vulkan::Image::UploadData(const char* data, uint64_t dataSize) {
 		static_cast<uint32_t>(regions.size()),
 		regions.data()
 	);
+
+	EndSingleTimeCommands(commandBuffer);
 	
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
