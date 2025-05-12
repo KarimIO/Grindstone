@@ -286,7 +286,7 @@ MaterialImporter::MaterialImporter() {
 	GraphicsAPI::Image::CreateInfo blackTextureCreateInfo{};
 	blackTextureCreateInfo.debugName = "Black Missing Texture";
 	blackTextureCreateInfo.initialData = reinterpret_cast<const char*>(&colorData);
-	blackTextureCreateInfo.initialDataSize = static_cast<uint32_t>(colorData.size()) * sizeof(uint32_t);
+	blackTextureCreateInfo.initialDataSize = static_cast<uint32_t>(colorData.size());
 	blackTextureCreateInfo.width = 2;
 	blackTextureCreateInfo.height = 2;
 	blackTextureCreateInfo.format = GraphicsAPI::Format::R8G8B8A8_UNORM;

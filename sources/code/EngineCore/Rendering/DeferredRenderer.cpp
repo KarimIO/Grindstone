@@ -567,6 +567,7 @@ void DeferredRenderer::CreateSSRResources() {
 void DeferredRenderer::CreateSsaoKernelAndNoise() {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
+	std::uniform_int_distribution<short> randomShorts(0, std::numeric_limits<short>::max());
 	std::default_random_engine generator;
 
 	{
@@ -601,12 +602,9 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 
 	{
 		constexpr size_t ssaoNoiseDimSize = 4;
-		std::array<glm::vec2, ssaoNoiseDimSize* ssaoNoiseDimSize> ssaoNoise{};
+		std::array<short, ssaoNoiseDimSize * ssaoNoiseDimSize> ssaoNoise{};
 		for (size_t i = 0; i < ssaoNoise.size(); i++) {
-			ssaoNoise[i] = glm::vec2(
-				randomFloats(generator) * 2.0 - 1.0,
-				randomFloats(generator) * 2.0 - 1.0
-			);
+			ssaoNoise[i] = randomShorts(generator);
 		}
 
 		GraphicsAPI::Image::CreateInfo ssaoNoiseImgCreateInfo{};
@@ -624,6 +622,7 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 
 	{
 		GraphicsAPI::Sampler::CreateInfo ssaoNoiseSamplerCreateInfo{};
+		ssaoNoiseSamplerCreateInfo.debugName = "SSAO Noise Sampler";
 		ssaoNoiseSamplerCreateInfo.options.magFilter = GraphicsAPI::TextureFilter::Nearest;
 		ssaoNoiseSamplerCreateInfo.options.minFilter = GraphicsAPI::TextureFilter::Nearest;
 		ssaoNoiseSamplerCreateInfo.options.wrapModeU = GraphicsAPI::TextureWrapMode::Repeat;
