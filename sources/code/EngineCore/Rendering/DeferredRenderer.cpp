@@ -1371,6 +1371,7 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 	gbufferDepthImageCreateInfo.width = framebufferWidth;
 	gbufferDepthImageCreateInfo.height = framebufferHeight;
 	gbufferDepthImageCreateInfo.imageUsage =
+		GraphicsAPI::ImageUsageFlags::TransferSrc |
 		GraphicsAPI::ImageUsageFlags::DepthStencil |
 		GraphicsAPI::ImageUsageFlags::Sampled;
 
@@ -2173,7 +2174,8 @@ void DeferredRenderer::PostProcess(
 
 	currentCommandBuffer->UnbindRenderPass();
 
-	currentCommandBuffer->BlitImage(imageSet.gbufferDepthStencilTarget, framebuffer->GetDepthStencilTarget());
+	// TODO: Re-add this for gizmos
+	// currentCommandBuffer->BlitImage(imageSet.gbufferDepthStencilTarget, framebuffer->GetDepthStencilTarget());
 }
 
 void DeferredRenderer::Debug(

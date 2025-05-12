@@ -50,7 +50,9 @@ static void AttachImage(
 	Vulkan::Image* image = static_cast<Vulkan::Image*>(binding.itemPtr);
 
 	VkDescriptorImageInfo& imageInfo = descriptorImageInfos.emplace_back();
-	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo.imageLayout = isStorageImage
+		? VK_IMAGE_LAYOUT_GENERAL
+		: VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	imageInfo.imageView = image->GetImageView();
 	imageInfo.sampler = nullptr;
 

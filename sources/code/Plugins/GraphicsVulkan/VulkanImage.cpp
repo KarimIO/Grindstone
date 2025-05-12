@@ -48,6 +48,18 @@ Vulkan::Image::Image(const CreateInfo& createInfo) :
 			EndSingleTimeCommands(commandBuffer);
 		}
 	}
+
+	if (imageUsage.Test(ImageUsageFlags::Sampled)) {
+		TransitionImageLayout(
+			image,
+			vkFormat,
+			aspect,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			mipLevels,
+			arrayLayers
+		);
+	}
 }
 
 void Vulkan::Image::Create() {
@@ -296,6 +308,18 @@ void Vulkan::Image::CreateImage() {
 		imageMemory,
 		createFlags
 	);
+
+	if (imageUsage.Test(ImageUsageFlags::Storage)) {
+		TransitionImageLayout(
+			image,
+			vkFormat,
+			aspect,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_GENERAL,
+			mipLevels,
+			arrayLayers
+		);
+	}
 }
 
 void Vulkan::Image::UploadData(const char* data, uint64_t dataSize) {

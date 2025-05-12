@@ -43,6 +43,7 @@ EditorCamera::EditorCamera() {
 	depthTargetCreateInfo.height = framebufferHeight;
 	depthTargetCreateInfo.format = GraphicsAPI::Format::D24_UNORM_S8_UINT;
 	depthTargetCreateInfo.imageUsage =
+		GraphicsAPI::ImageUsageFlags::TransferDst |
 		GraphicsAPI::ImageUsageFlags::Sampled |
 		GraphicsAPI::ImageUsageFlags::DepthStencil;
 	depthTarget = core->CreateImage(depthTargetCreateInfo);

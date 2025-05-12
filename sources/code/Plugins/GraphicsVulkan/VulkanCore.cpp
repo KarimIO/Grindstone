@@ -502,7 +502,7 @@ void Vulkan::Core::WaitUntilIdle() {
 }
 
 void Vulkan::Core::CreateDescriptorPool() {
-	std::array<VkDescriptorPoolSize, 5> poolSizes = {};
+	std::array<VkDescriptorPoolSize, 6> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	poolSizes[0].descriptorCount = 1000;
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -513,8 +513,8 @@ void Vulkan::Core::CreateDescriptorPool() {
 	poolSizes[3].descriptorCount = 1000;
 	poolSizes[4].type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 	poolSizes[4].descriptorCount = 1000;
-	poolSizes[4].type = VK_DESCRIPTOR_TYPE_SAMPLER;
-	poolSizes[4].descriptorCount = 1000;
+	poolSizes[5].type = VK_DESCRIPTOR_TYPE_SAMPLER;
+	poolSizes[5].descriptorCount = 1000;
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
