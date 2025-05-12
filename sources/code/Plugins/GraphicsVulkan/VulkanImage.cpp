@@ -39,7 +39,8 @@ Vulkan::Image::Image(const CreateInfo& createInfo) :
 {
 	Create();
 
-	if (createInfo.initialData != nullptr && createInfo.initialDataSize > 0) {
+	bool hasInitialData = createInfo.initialData != nullptr && createInfo.initialDataSize > 0;
+	if (hasInitialData) {
 		UploadData(createInfo.initialData, createInfo.initialDataSize);
 
 		if (imageUsage.Test(ImageUsageFlags::GenerateMipmaps) && (aspect & VK_IMAGE_ASPECT_COLOR_BIT)) {
@@ -54,7 +55,9 @@ Vulkan::Image::Image(const CreateInfo& createInfo) :
 			image,
 			vkFormat,
 			aspect,
-			VK_IMAGE_LAYOUT_UNDEFINED,
+			hasInitialData
+				? VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+				: VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			mipLevels,
 			arrayLayers
@@ -120,8 +123,10 @@ void Vulkan::Image::Create() {
 
 	if (!imageName.empty()) {
 		std::string imageViewDebugName = imageName + " View";
+		std::string imageMemoryDebugName = imageName + " Memory";
 		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, imageName.c_str());
 		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_DEVICE_MEMORY, imageMemory, imageMemoryDebugName.c_str());
 	}
 	else {
 		GPRINT_WARN(LogSource::GraphicsAPI, "Unnamed image!");
@@ -323,7 +328,6 @@ void Vulkan::Image::CreateImage() {
 }
 
 void Vulkan::Image::UploadData(const char* data, uint64_t dataSize) {
-	dataSize = maxImageSize;
 	VkDevice device = Vulkan::Core::Get().GetDevice();
 
 	VkBuffer stagingBuffer;
@@ -354,19 +358,20 @@ void Vulkan::Image::UploadData(const char* data, uint64_t dataSize) {
 
 	bool isCompressedFormat = IsFormatCompressed(format);
 	uint64_t blockSize = GetCompressedFormatBlockSize(format);
-	uint64_t channels = 4;
-	uint64_t pixelSize = sizeof(float) * channels;
+	uint64_t pixelSize = GetFormatBytesPerPixel(format);
 
 	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 	uint64_t offset = 0;
+
+	std::vector<VkBufferImageCopy> regions;
+	regions.reserve(static_cast<size_t>(mipLevels) * static_cast<size_t>(arrayLayers));
+
 	for (uint32_t layerIndex = 0; layerIndex < arrayLayers; ++layerIndex) {
 		uint64_t mipWidth = width;
 		uint64_t mipHeight = height;
 
-		std::vector<VkBufferImageCopy> regions;
-		regions.resize(mipLevels);
 		for (uint32_t mipIndex = 0; mipIndex < mipLevels; ++mipIndex) {
-			VkBufferImageCopy& region = regions[mipIndex];
+			VkBufferImageCopy& region = regions.emplace_back();
 			region.bufferOffset = offset;
 			region.bufferRowLength = 0;
 			region.imageSubresource.baseArrayLayer = layerIndex;
@@ -380,20 +385,32 @@ void Vulkan::Image::UploadData(const char* data, uint64_t dataSize) {
 			uint64_t mipSize = isCompressedFormat
 				? ((mipWidth + 3) / 4) * ((mipHeight + 3) / 4) * blockSize
 				: mipWidth * mipHeight * pixelSize;
-			offset += mipSize;
-			mipWidth = mipWidth >> 1;
-			mipHeight = mipHeight >> 1;
-		}
 
-		vkCmdCopyBufferToImage(
-			commandBuffer,
-			stagingBuffer,
-			image,
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			static_cast<uint32_t>(regions.size()),
-			regions.data()
-		);
+
+			offset += mipSize;
+
+			mipWidth = mipWidth >> 1;
+			if (mipWidth < 1) {
+				mipWidth = 1;
+			}
+
+			mipHeight = mipHeight >> 1;
+			if (mipHeight < 1) {
+				mipHeight = 1;
+			}
+		}
 	}
+
+	GS_ASSERT_ENGINE(offset <= dataSize);
+
+	vkCmdCopyBufferToImage(
+		commandBuffer,
+		stagingBuffer,
+		image,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		static_cast<uint32_t>(regions.size()),
+		regions.data()
+	);
 	
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);

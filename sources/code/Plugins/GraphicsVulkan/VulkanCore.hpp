@@ -80,7 +80,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		std::vector<const char*> GetRequiredExtensions();
 		void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 	public:
-		void NameObject(VkObjectType objectType, void* object, const char* objectName);
+		virtual void NameObject(VkObjectType objectType, void* object, const char* objectName);
 
 		virtual const char* GetVendorName() const override;
 		virtual const char* GetAdapterName() const override;

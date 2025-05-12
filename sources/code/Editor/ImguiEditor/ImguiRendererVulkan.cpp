@@ -86,13 +86,14 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	SetupVulkanWindow(static_cast<GraphicsAPI::Vulkan::Core*>(graphicsCore), wgb, width, height);
 
 	VkDescriptorPoolSize poolSizes[] = {
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
 		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1 }
 	};
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-	poolInfo.maxSets = 1;
+	poolInfo.maxSets = 2;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(std::size(poolSizes));
 	poolInfo.pPoolSizes = poolSizes;
 
@@ -101,6 +102,8 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	if (vkCreateDescriptorPool(vulkanCore->GetDevice(), &poolInfo, nullptr, &imguiPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate imgui descriptor pool!");
 	}
+
+	vulkanCore->NameObject(VK_OBJECT_TYPE_DESCRIPTOR_POOL, imguiPool, "IMGUI Descriptor Pool");
 
 	ImGui_ImplGlfw_InitForVulkan(static_cast<Grindstone::GlfwWindow*>(window)->GetHandle(), true);
 	auto vulkanRenderPass = static_cast<Grindstone::GraphicsAPI::Vulkan::RenderPass*>(wgb->GetRenderPass());
@@ -264,7 +267,7 @@ ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {
 	std::pair<void*, void*> samplerPair = { textureAsset->image, textureAsset->defaultSampler };
 	GraphicsAPI::DescriptorSet::Binding binding{ &samplerPair };
 
-	auto pathAsStr = path.filename().string();
+	auto pathAsStr = path.filename().string() + " Descriptor Set";
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 	descriptorSetCreateInfo.debugName = pathAsStr.c_str();
 	descriptorSetCreateInfo.bindings = &binding;

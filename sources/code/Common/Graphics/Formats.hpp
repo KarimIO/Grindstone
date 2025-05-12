@@ -293,6 +293,7 @@ namespace Grindstone::GraphicsAPI {
 	FormatDepthStencilType GetFormatDepthStencilType(Format format);
 	bool IsFormatCompressed(Format format);
 	uint8_t GetCompressedFormatBlockSize(Format format);
+	uint8_t GetFormatBytesPerPixel(Grindstone::GraphicsAPI::Format format);
 
 	#define SHADER_STAGE_TYPES \
 		GSExpandEntry(Vertex, 1 << 0),\

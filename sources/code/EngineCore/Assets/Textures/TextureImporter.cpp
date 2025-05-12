@@ -48,14 +48,14 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 		switch (header.ddspf.dwFourCC) {
 		case FOURCC_DXT1:
 			format = hasAlpha
-				? Grindstone::GraphicsAPI::Format::BC1_RGBA_SRGB_BLOCK
-				: Grindstone::GraphicsAPI::Format::BC1_RGB_SRGB_BLOCK;
+				? Grindstone::GraphicsAPI::Format::BC1_RGBA_UNORM_BLOCK
+				: Grindstone::GraphicsAPI::Format::BC1_RGB_UNORM_BLOCK;
 			break;
 		case FOURCC_DXT3:
-			format = Grindstone::GraphicsAPI::Format::BC2_SRGB_BLOCK;
+			format = Grindstone::GraphicsAPI::Format::BC2_UNORM_BLOCK;
 			break;
 		case FOURCC_DXT5:
-			format = Grindstone::GraphicsAPI::Format::BC3_SRGB_BLOCK;
+			format = Grindstone::GraphicsAPI::Format::BC3_UNORM_BLOCK;
 			break;
 		case FOURCC_BC4:
 			format = Grindstone::GraphicsAPI::Format::BC1_RGBA_UNORM_BLOCK;
