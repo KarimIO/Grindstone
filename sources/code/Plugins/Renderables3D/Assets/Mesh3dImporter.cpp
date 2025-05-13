@@ -240,14 +240,14 @@ bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 
 	auto graphicsCore = engineCore->GetGraphicsCore();
 	if (fileSize < 3 && strncmp("GMF", fileContent, 3) != 0) {
-		GPRINT_ERROR(LogSource::EngineCore, "Mesh3dImporter::LoadAsset GMF magic code wasn't matched.");
+		GPRINT_ERROR_V(LogSource::EngineCore, "Mesh3dImporter::LoadAsset \"{}\" with id \"{}\" doesn't start with GMF magic code.", mesh.name.c_str(), mesh.uuid.ToString());
 		mesh.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
 
 	Formats::Model::V1::Header header;
 	if (fileSize < (3 + sizeof(header))) {
-		GPRINT_ERROR(LogSource::EngineCore, "Mesh3dImporter::LoadAsset file not big enough to fit header.");
+		GPRINT_ERROR_V(LogSource::EngineCore, "Mesh3dImporter::LoadAsset \"{}\" with id \"{}\" not big enough to fit header.", mesh.name.c_str(), mesh.uuid.ToString());
 		mesh.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
@@ -259,7 +259,7 @@ bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 
 	uint64_t totalFileExpectedSize = GetTotalFileSize(header);
 	if (totalFileExpectedSize > fileSize || header.totalFileSize > fileSize) {
-		GPRINT_ERROR(LogSource::EngineCore, "Mesh3dImporter::LoadAsset file not big enough to fit all contents.");
+		GPRINT_ERROR_V(LogSource::EngineCore, "Mesh3dImporter::LoadAsset \"{}\" with id \"{}\" not big enough to fit all contents.", mesh.name.c_str(), mesh.uuid.ToString());
 		mesh.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
