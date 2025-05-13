@@ -258,6 +258,7 @@ static bool TranspileShader(LogCallback logCallback, CompilationOptions& options
 	else {
 		compilationArguments.push_back(L"-spirv");
 		compilationArguments.push_back(L"-fspv-reflect");
+		compilationArguments.push_back(L"-fspv-entrypoint-name=main");
 		if (options.isDebug) {
 			compilationArguments.push_back(L"-fspv-debug=vulkan-with-source");
 		}

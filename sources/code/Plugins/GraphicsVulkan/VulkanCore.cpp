@@ -56,7 +56,9 @@ const std::vector<const char*> validationLayers = {
 };
 
 const std::vector<const char*> deviceExtensions = {
-	VK_KHR_SWAPCHAIN_EXTENSION_NAME
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+	VK_GOOGLE_HLSL_FUNCTIONALITY_1_EXTENSION_NAME,
+	VK_GOOGLE_USER_TYPE_EXTENSION_NAME,
 };
 
 #ifdef NDEBUG
@@ -274,9 +276,18 @@ void Vulkan::Core::CreateLogicalDevice() {
 	deviceFeatures.multiDrawIndirect = VK_TRUE;
 	deviceFeatures.samplerAnisotropy = VK_TRUE;
 
+	VkPhysicalDeviceVulkan13Features deviceFeatures13 = {};
+	deviceFeatures13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+	deviceFeatures13.dynamicRendering = VK_TRUE;
+
+	VkPhysicalDeviceVulkan12Features deviceFeatures12 = {};
+	deviceFeatures12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+	deviceFeatures12.pNext = &deviceFeatures13;
+
 	VkPhysicalDeviceVulkan11Features deviceFeatures11 = {};
 	deviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
 	deviceFeatures11.shaderDrawParameters = VK_TRUE;
+	deviceFeatures11.pNext = &deviceFeatures12;
 
 	VkPhysicalDeviceFeatures2 deviceFeatures2 = {};
 	deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
