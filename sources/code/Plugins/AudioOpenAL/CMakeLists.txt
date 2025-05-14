@@ -34,5 +34,4 @@ target_precompile_headers(PluginAudioOpenAL PUBLIC pch.hpp)
 target_link_libraries(PluginAudioOpenAL
 	${CORE_LIBS}
 	OpenAL::OpenAL
-	Rpcrt4.lib
 )

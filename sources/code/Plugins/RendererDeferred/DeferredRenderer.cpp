@@ -32,9 +32,7 @@
 using namespace Grindstone;
 
 const size_t MAX_BLOOM_MIPS = 40u;
-const Grindstone::GraphicsAPI::Format depthFormat = Grindstone::GraphicsAPI::Format::D32_SFLOAT;
 const bool shouldFastResize = true;
-GraphicsAPI::Format ambientOcclusionFormat = GraphicsAPI::Format::R8_UNORM;
 
 float lightPositions[] = {
 	-1.0f, -1.0f,
@@ -1654,8 +1652,6 @@ void DeferredRenderer::RenderLights(
 	GraphicsAPI::CommandBuffer* currentCommandBuffer,
 	entt::registry& registry
 ) {
-	GRIND_PROFILE_FUNC();
-
 	EngineCore& engineCore = EngineCore::GetInstance();
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	Grindstone::DeferredRenderer::DeferredRendererImageSet& imageSet = deferredRendererImageSets[imageIndex];
@@ -2043,8 +2039,6 @@ void DeferredRenderer::PostProcess(
 	GraphicsAPI::Framebuffer* framebuffer,
 	GraphicsAPI::CommandBuffer* currentCommandBuffer
 ) {
-	GRIND_PROFILE_FUNC();
-
 	DeferredRendererImageSet& imageSet = deferredRendererImageSets[imageIndex];
 
 	// RenderDepthOfField(imageSet, currentCommandBuffer);
@@ -2082,8 +2076,6 @@ void DeferredRenderer::Debug(
 	GraphicsAPI::Framebuffer* framebuffer,
 	GraphicsAPI::CommandBuffer* currentCommandBuffer
 ) {
-	GRIND_PROFILE_FUNC();
-
 	DeferredRendererImageSet& imageSet = deferredRendererImageSets[imageIndex];
 
 	GraphicsAPI::ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };

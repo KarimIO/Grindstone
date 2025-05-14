@@ -4,7 +4,7 @@ set(EDITORMATERIALIMPORTER_SOURCES
 	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp
 	${COMMON_DIR}/ResourcePipeline/Uuid.cpp
 	${COMMON_DIR}/Editor/Importer.cpp
-	${ENGINECORE_DIR}/Utils/Utilities.cpp
+	${ENGINE_CORE_DIR}/Utils/Utilities.cpp
 	EntryPoint.cpp
 )
 
@@ -14,7 +14,7 @@ set(EDITORMATERIALIMPORTER_HEADERS
 	${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
 	${COMMON_DIR}/ResourcePipeline/Uuid.hpp
 	${COMMON_DIR}/Editor/Importer.hpp
-	${ENGINECORE_DIR}/Utils/Utilities.hpp
+	${ENGINE_CORE_DIR}/Utils/Utilities.hpp
 	pch.hpp
 )
 
@@ -35,4 +35,4 @@ target_include_directories(PluginEditorMaterialImporter PUBLIC ${CODE_DIR} ${FMT
 
 target_precompile_headers(PluginEditorMaterialImporter PUBLIC pch.hpp)
 
-target_link_libraries(PluginEditorMaterialImporter ${CORE_LIBS} Rpcrt4.lib)
+target_link_libraries(PluginEditorMaterialImporter ${CORE_LIBS})

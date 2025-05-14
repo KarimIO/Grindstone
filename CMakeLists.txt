@@ -34,11 +34,14 @@ set(BUILD_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 set(CORE_UTILS
 	${ENGINECORE_DIR}/EngineCoreInstance.cpp
 	${ENGINECORE_DIR}/Assets/AssetReference.cpp ${ENGINECORE_DIR}/Assets/AssetReference.hpp
+	${ENGINECORE_DIR}/ECS/Entity.cpp ${ENGINECORE_DIR}/ECS/Entity.hpp
 	${ENGINECORE_DIR}/Logger.cpp ${ENGINECORE_DIR}/Logger.hpp
 	${ENGINECORE_DIR}/Utils/MemoryAllocator.cpp ${ENGINECORE_DIR}/Utils/MemoryAllocator.hpp
 	${COMMON_DIR}/Memory/Allocators/DynamicAllocator.cpp ${COMMON_DIR}/Memory/Allocators/DynamicAllocator.hpp
+	${COMMON_DIR}/HashedString.cpp ${COMMON_DIR}/HashedString.hpp
+	${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.hpp
 )
-set(CORE_LIBS fmt::fmt)
+set(CORE_LIBS fmt::fmt Rpcrt4.lib)
 
 set(ENGINE_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/sources/code/EngineCore)
 file(GLOB_RECURSE SOURCE_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.cpp")
@@ -89,6 +92,11 @@ endif()
 option(USE_RENDERABLES_3D "Include Renderables 3D?" ON)
 if (USE_RENDERABLES_3D)
 	add_subdirectory(${PLUGIN_DIR}/Renderables3D)
+endif()
+
+option(USE_RENDERABLES_DEFERRED "Include Deferred Renderer?" ON)
+if (USE_RENDERABLES_DEFERRED)
+	add_subdirectory(${PLUGIN_DIR}/RendererDeferred)
 endif()
 
 option(USE_EDITOR_AUDIO_IMPORTER "Include EditorAudioImporter?" ON)

@@ -14,10 +14,10 @@ namespace Grindstone {
 
 	class AssetRendererManager {
 	public:
-		void AddAssetRenderer(BaseAssetRenderer* assetRenderer);
-		void RemoveAssetRenderer(BaseAssetRenderer* assetRenderer);
-		void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet);
-		void RenderQueue(
+		virtual void AddAssetRenderer(BaseAssetRenderer* assetRenderer);
+		virtual void RemoveAssetRenderer(BaseAssetRenderer* assetRenderer);
+		virtual void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet);
+		virtual void RenderQueue(
 			GraphicsAPI::CommandBuffer* commandBuffer,
 			const entt::registry& registry,
 			Grindstone::HashedString passType,

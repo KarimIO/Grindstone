@@ -4,7 +4,6 @@
 #include <Common/Graphics/Core.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
-#include <EngineCore/Rendering/DeferredRenderer.hpp>
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>

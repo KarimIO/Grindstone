@@ -7,9 +7,6 @@
 
 using namespace Grindstone;
 
-const Grindstone::GraphicsAPI::Format depthFormat = Grindstone::GraphicsAPI::Format::D32_SFLOAT;
-const Grindstone::GraphicsAPI::Format litHdrFormat = Grindstone::GraphicsAPI::Format::R16G16B16A16_SFLOAT;
-
 std::array<Grindstone::BaseRenderer::RenderMode, static_cast<uint16_t>(DeferredRenderer::DeferredRenderMode::Count)> DeferredRendererFactory::renderModes = {
 	Grindstone::BaseRenderer::RenderMode{ "Default" },
 	Grindstone::BaseRenderer::RenderMode{ "World Position" },
@@ -55,7 +52,7 @@ static Grindstone::GraphicsAPI::RenderPass* CreateDofBlurAndCombinationRenderPas
 }
 
 static Grindstone::GraphicsAPI::RenderPass* CreateSsaoRenderPass(Grindstone::GraphicsAPI::Core* graphicsCore, Grindstone::RenderPassRegistry* rpRegistry) {
-	GraphicsAPI::RenderPass::AttachmentInfo attachment{ GraphicsAPI::Format::R8_UNORM, true };
+	GraphicsAPI::RenderPass::AttachmentInfo attachment{ ambientOcclusionFormat, true };
 	GraphicsAPI::RenderPass::CreateInfo ssaoRenderPassCreateInfo{};
 	ssaoRenderPassCreateInfo.debugName = "SSAO Renderpass";
 	ssaoRenderPassCreateInfo.colorAttachments = &attachment;

@@ -1,4 +1,4 @@
-set(RENDERABLES_3D_SOURCES Mesh3dRenderer.cpp EntryPoint.cpp ${ENGINE_CORE_DIR}/ECS/Entity.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${COMMON_DIR}/HashedString.cpp ${ENGINE_CORE_DIR}/Reflection/PrintReflectionData.cpp)
+set(RENDERABLES_3D_SOURCES Mesh3dRenderer.cpp EntryPoint.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${COMMON_DIR}/HashedString.cpp ${ENGINE_CORE_DIR}/Reflection/PrintReflectionData.cpp)
 set(RENDERABLES_3D_HEADERS Mesh3dRenderer.hpp)
 
 file(GLOB_RECURSE RENDERABLES_3D_ASSETS_SOURCES "Assets/*.cpp")
@@ -28,11 +28,7 @@ set_target_properties(PluginRenderables3D PROPERTIES FOLDER Plugins/Renderables)
 
 find_path(GLM_INCLUDE_DIRS "glm/glm.hpp")
 
-target_link_libraries(
-	PluginRenderables3D
-	${CORE_LIBS}
-	Rpcrt4.lib
-)
+target_link_libraries(PluginRenderables3D ${CORE_LIBS})
 
 target_include_directories(
 	PluginRenderables3D PUBLIC

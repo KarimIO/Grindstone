@@ -8,7 +8,6 @@
 namespace Grindstone {
 	class HashedString {
 	public:
-
 		HashedString();
 		HashedString(const char* inStringRef);
 		HashedString(const String& inString);
@@ -24,8 +23,6 @@ namespace Grindstone {
 
 	protected:
 		uint64_t hash;
-		static std::map<HashValue, String> nameHashMap;
-
 	};
 }
 

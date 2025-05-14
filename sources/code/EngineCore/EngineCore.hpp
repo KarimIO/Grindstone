@@ -81,6 +81,7 @@ namespace Grindstone {
 		virtual void UpdateWindows();
 		void RegisterGraphicsCore(GraphicsAPI::Core*);
 		virtual void RegisterInputManager(Input::Interface*);
+		virtual void SetRendererFactory(BaseRendererFactory* factory);
 		virtual Input::Interface* GetInputManager() const;
 		virtual SceneManagement::SceneManager* GetSceneManager() const;
 		virtual Plugins::Manager* GetPluginManager() const;

@@ -2,9 +2,6 @@
 
 #include "HashedString.hpp"
 
-// TODO: Consider removing map value.
-std::map<Grindstone::HashValue, Grindstone::String> Grindstone::HashedString::nameHashMap;
-
 Grindstone::HashedString::HashedString() : hash(0) {}
 
 Grindstone::HashedString::HashedString(const char* inStringRef) {
@@ -24,7 +21,6 @@ bool Grindstone::HashedString::operator==(const Grindstone::HashedString& other)
 
 void Grindstone::HashedString::Create(const char* inStringRef) {
 	hash = Hash::MurmurOAAT64(inStringRef);
-	nameHashMap[hash] = inStringRef;
 }
 
 uint64_t Grindstone::HashedString::GetHash() const {
@@ -32,15 +28,5 @@ uint64_t Grindstone::HashedString::GetHash() const {
 }
 
 const Grindstone::String& Grindstone::HashedString::ToString() const {
-	if (hash == 0) {
-		return "";
-	}
-
-	std::map<HashValue, String>::iterator value = nameHashMap.find(hash);
-
-	if (value == nameHashMap.end()) {
-		return "";
-	}
-
-	return value->second;
+	return "";
 }

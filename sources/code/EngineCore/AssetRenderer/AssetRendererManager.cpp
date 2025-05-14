@@ -29,9 +29,7 @@ void AssetRendererManager::RenderQueue(
 	Grindstone::HashedString passType,
 	Grindstone::HashedString drawOrderBucket
 ) {
-	std::string profileScope = std::string("AssetRendererManager::RenderQueue(") + passType.ToString()  + ")";
-	GRIND_PROFILE_SCOPE(profileScope.c_str());
-	commandBuffer->BeginDebugLabelSection(profileScope.c_str());
+	commandBuffer->BeginDebugLabelSection("RenderQueue");
 	for (auto& assetRenderer : assetRenderers) {
 		assetRenderer.second->RenderQueue(commandBuffer, registry, passType, drawOrderBucket);
 	}

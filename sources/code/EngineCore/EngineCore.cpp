@@ -1,4 +1,5 @@
 #include "EngineCore.hpp"
+#include "EngineCore.hpp"
 #include "pch.hpp"
 
 #include <EngineCore/Utils/MemoryAllocator.hpp>
@@ -10,7 +11,7 @@
 #include <EngineCore/PluginSystem/Manager.hpp>
 #include <EngineCore/Events/InputManager.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
-#include <EngineCore/Rendering/DeferredRendererFactory.hpp>
+#include <EngineCore/Rendering/BaseRenderer.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
 #include <EngineCore/Rendering/RenderPassRegistry.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
@@ -99,14 +100,13 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	}
 
 	{
-		GRIND_PROFILE_SCOPE("Load Plugin List");
-		pluginManager->LoadPluginList();
+		GRIND_PROFILE_SCOPE("Create Renderer");
+		renderpassRegistry = AllocatorCore::Allocate<Grindstone::RenderPassRegistry>();
 	}
 
 	{
-		GRIND_PROFILE_SCOPE("Create Renderer");
-		renderpassRegistry = AllocatorCore::Allocate<Grindstone::RenderPassRegistry>();
-		rendererFactory = AllocatorCore::Allocate<Grindstone::DeferredRendererFactory>();
+		GRIND_PROFILE_SCOPE("Load Plugin List");
+		pluginManager->LoadPluginList();
 	}
 
 	sceneManager = AllocatorCore::Allocate<SceneManagement::SceneManager>();
@@ -212,6 +212,10 @@ void EngineCore::RegisterGraphicsCore(GraphicsAPI::Core* newGraphicsCore) {
 
 void EngineCore::RegisterInputManager(Input::Interface* newInputManager) {
 	inputManager = newInputManager;
+}
+
+void Grindstone::EngineCore::SetRendererFactory(BaseRendererFactory* factory) {
+	rendererFactory = factory;
 }
 
 Input::Interface* EngineCore::GetInputManager() const {

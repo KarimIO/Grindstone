@@ -54,4 +54,4 @@ find_package(OpenGL REQUIRED)
 find_package(gl3w CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 
-target_link_libraries(PluginGraphicsOpenGL glfw unofficial::gl3w::gl3w glm::glm fmt::fmt ${OPENGL_gl_LIBRARY})
+target_link_libraries(PluginGraphicsOpenGL glfw unofficial::gl3w::gl3w glm::glm fmt::fmt ${CORE_LIBS} ${OPENGL_gl_LIBRARY})

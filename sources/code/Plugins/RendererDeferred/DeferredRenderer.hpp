@@ -7,8 +7,7 @@
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 #include <EngineCore/Assets/PipelineSet/ComputePipelineAsset.hpp>
 #include <EngineCore/Assets/AssetReference.hpp>
-
-#include "BaseRenderer.hpp"
+#include <EngineCore/Rendering/BaseRenderer.hpp>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
