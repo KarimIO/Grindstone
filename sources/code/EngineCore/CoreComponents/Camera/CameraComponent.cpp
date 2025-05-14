@@ -39,7 +39,7 @@ void Grindstone::SetupCameraComponent(entt::registry& registry, entt::entity ent
 
 	GraphicsAPI::RenderPass* renderPass = wgb->GetRenderPass();
 	if (renderPass != nullptr) {
-		cameraComponent.renderer = engineCore.CreateRenderer(wgb->GetRenderPass());
+		cameraComponent.renderer = engineCore.GetRendererFactory()->CreateRenderer(wgb->GetRenderPass());
 
 		eventDispatcher->AddEventListener(
 			Events::EventType::WindowResize,

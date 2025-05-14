@@ -40,9 +40,6 @@ namespace Grindstone {
 		virtual const RenderMode* GetRenderModes() const override;
 		virtual void SetRenderMode(uint16_t mode) override;
 
-		static GraphicsAPI::RenderPass* gbufferRenderPass;
-		static GraphicsAPI::RenderPass* mainRenderPass;
-
 		enum class DeferredRenderMode : uint16_t {
 			Default,
 			Position,
@@ -169,12 +166,6 @@ namespace Grindstone {
 		std::vector<GraphicsAPI::Buffer*> bloomUniformBuffers;
 		size_t bloomFirstUpsampleIndex = 0;
 
-		GraphicsAPI::RenderPass* dofSeparationRenderPass = nullptr;
-		GraphicsAPI::RenderPass* dofBlurAndCombinationRenderPass = nullptr;
-
-		GraphicsAPI::RenderPass* lightingRenderPass = nullptr;
-		GraphicsAPI::RenderPass* forwardLitRenderPass = nullptr;
-		GraphicsAPI::RenderPass* ssaoRenderPass = nullptr;
 		GraphicsAPI::Buffer* ssaoUniformBuffer = nullptr;
 		GraphicsAPI::Image* ssaoNoiseTexture = nullptr;
 		GraphicsAPI::Sampler* ssaoNoiseSampler = nullptr;
@@ -200,7 +191,6 @@ namespace Grindstone {
 
 		GraphicsAPI::DescriptorSet* shadowMapDescriptorSet = nullptr;
 
-		GraphicsAPI::RenderPass* shadowMapRenderPass = nullptr;
 		GraphicsAPI::RenderPass* targetRenderPass = nullptr;
 
 		GraphicsAPI::Buffer* vertexBuffer;
@@ -224,8 +214,6 @@ namespace Grindstone {
 		GraphicsAPI::DescriptorSetLayout* dofSourceDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* dofBlurDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* dofCombinationDescriptorSetLayout = nullptr;
-
-		static std::array<Grindstone::BaseRenderer::RenderMode, static_cast<uint16_t>(DeferredRenderMode::Count)> renderModes;
 
 		// Used to check when environment map changes, so we can update it
 		Uuid currentEnvironmentMapUuid;

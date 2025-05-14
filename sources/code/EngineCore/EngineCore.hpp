@@ -52,7 +52,7 @@ namespace Grindstone {
 	class WindowManager;
 
 	class AssetRendererManager;
-	class BaseRenderer;
+	class BaseRendererFactory;
 	class RenderPassRegistry;
 
 	class EngineCore {
@@ -89,7 +89,7 @@ namespace Grindstone {
 		virtual ECS::ComponentRegistrar* GetComponentRegistrar() const;
 		virtual GraphicsAPI::Core* GetGraphicsCore() const;
 		virtual Profiler::Manager* GetProfiler() const;
-		virtual BaseRenderer* CreateRenderer(GraphicsAPI::RenderPass* targetRenderPass);
+		virtual BaseRendererFactory* GetRendererFactory();
 		virtual RenderPassRegistry* GetRenderPassRegistry();
 		virtual std::filesystem::path GetProjectPath() const;
 		virtual std::filesystem::path GetBinaryPath() const;
@@ -121,6 +121,7 @@ namespace Grindstone {
 		SceneManagement::SceneManager* sceneManager = nullptr;
 		ECS::ComponentRegistrar* componentRegistrar = nullptr;
 		ECS::SystemRegistrar* systemRegistrar = nullptr;
+		BaseRendererFactory* rendererFactory = nullptr;
 		RenderPassRegistry* renderpassRegistry = nullptr;
 		Events::Dispatcher* eventDispatcher = nullptr;
 		Plugins::Manager* pluginManager = nullptr;

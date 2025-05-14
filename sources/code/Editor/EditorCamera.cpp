@@ -115,7 +115,7 @@ EditorCamera::EditorCamera() {
 	gridRenderer.Initialize(renderPass);
 	gizmoRenderer.Initialize(renderPass);
 
-	renderer = engineCore.CreateRenderer(renderPass);
+	renderer = engineCore.GetRendererFactory()->CreateRenderer(renderPass);
 	UpdateViewMatrix();
 }
 
