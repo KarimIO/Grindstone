@@ -12,6 +12,7 @@
 #include <EngineCore/Events/Dispatcher.hpp>
 #include <EngineCore/Rendering/DeferredRenderer.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
+#include <EngineCore/Rendering/RenderPassRegistry.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <Common/Event/WindowEvent.hpp>
 #include <Common/Graphics/Core.hpp>
@@ -100,6 +101,11 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	{
 		GRIND_PROFILE_SCOPE("Load Plugin List");
 		pluginManager->LoadPluginList();
+	}
+
+	{
+		GRIND_PROFILE_SCOPE("Create Renderer");
+		renderpassRegistry = AllocatorCore::Allocate<Grindstone::RenderPassRegistry>();
 	}
 
 	sceneManager = AllocatorCore::Allocate<SceneManagement::SceneManager>();
@@ -237,6 +243,9 @@ Events::Dispatcher* EngineCore::GetEventDispatcher() const {
 
 BaseRenderer* EngineCore::CreateRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 	return AllocatorCore::Allocate<DeferredRenderer>(targetRenderPass);
+
+RenderPassRegistry* Grindstone::EngineCore::GetRenderPassRegistry() {
+	return renderpassRegistry;
 }
 
 std::filesystem::path EngineCore::GetProjectPath() const {
