@@ -21,6 +21,7 @@ E(Clones)\
 E(Inherits)\
 E(ShaderBlock)\
 E(RequiresBlocks)\
+E(RenderQueue)\
 E(CommentMultiLine)\
 E(Comment)\
 E(Identifier)\

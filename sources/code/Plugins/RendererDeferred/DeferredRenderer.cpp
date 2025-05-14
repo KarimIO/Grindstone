@@ -26,6 +26,7 @@
 #include <EngineCore/Profiling.hpp>
 #include <EngineCore/Logger.hpp>
 
+#include "DeferredRendererFactory.hpp"
 #include "DeferredRendererCommon.hpp"
 #include "DeferredRenderer.hpp"
 
@@ -2203,8 +2204,6 @@ void DeferredRenderer::Render(
 		Debug(imageIndex, outputFramebuffer, commandBuffer);
 	}
 }
-
-#include "DeferredRendererFactory.hpp"
 
 uint16_t DeferredRenderer::GetRenderModeCount() const {
 	Grindstone::DeferredRendererFactory* factory = static_cast<Grindstone::DeferredRendererFactory*>(EngineCore::GetInstance().GetRendererFactory());

@@ -229,6 +229,10 @@ static void ResolvePass(ResolveContext& context, const ParseTree::Pass& srcPass,
 		}
 	}
 
+	if (dstPass.renderQueue.empty()) {
+		dstPass.renderQueue = srcPass.renderQueue;
+	}
+
 	ApplyRenderState(srcPass.renderState, dstPass.renderState);
 }
 

@@ -71,6 +71,7 @@ struct ParseTree {
 	struct Pass {
 		std::filesystem::path sourceFilepath;
 		bool isAbstract;
+		std::string renderQueue;
 		ParentData parentData;
 		RenderState renderState;
 		ShaderBlock shaderBlock;

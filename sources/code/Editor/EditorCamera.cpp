@@ -5,6 +5,7 @@
 #include <EngineCore/Rendering/BaseRenderer.hpp>
 #include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
+#include <EngineCore/Rendering/RenderPassRegistry.hpp>
 #include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Logger.hpp>
@@ -21,6 +22,7 @@ using namespace Grindstone;
 
 EditorCamera::EditorCamera() {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
+	Grindstone::RenderPassRegistry* renderPassRegistry = engineCore.GetRenderPassRegistry();
 	GraphicsAPI::Core* core = engineCore.GetGraphicsCore();
 
 	Display& display = engineCore.displayManager->GetMainDisplay();
@@ -56,6 +58,7 @@ EditorCamera::EditorCamera() {
 	renderPassCreateInfo.colorAttachments = attachments.data();
 	renderPassCreateInfo.depthFormat = GraphicsAPI::Format::D24_UNORM_S8_UINT;
 	renderPass = core->CreateRenderPass(renderPassCreateInfo);
+	renderPassRegistry->RegisterRenderpass("Editor", renderPass);
 
 	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> gizmoAttachments = { { renderTargetCreateInfo.format, false } };
 
@@ -66,6 +69,7 @@ EditorCamera::EditorCamera() {
 	gizmoRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D24_UNORM_S8_UINT;
 	gizmoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 	gizmoRenderPass = core->CreateRenderPass(gizmoRenderPassCreateInfo);
+	renderPassRegistry->RegisterRenderpass("Gizmo", gizmoRenderPass);
 
 	GraphicsAPI::Framebuffer::CreateInfo framebufferCreateInfo{};
 	framebufferCreateInfo.debugName = "Editor Framebuffer";

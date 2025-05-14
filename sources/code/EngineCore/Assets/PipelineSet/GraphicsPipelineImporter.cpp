@@ -5,10 +5,10 @@
 #include <Common/Graphics/Core.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
-#include <EngineCore/Rendering/DeferredRenderer.hpp>
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
+#include <EngineCore/Rendering/RenderPassRegistry.hpp>
 
 #include "GraphicsPipelineImporter.hpp"
 
@@ -103,15 +103,11 @@ static void UnpackGraphicsPipelineDescriptorSetHeaders(
 static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineAsset) {
 	return false;
 
-	// TODO: Check shader cache before loading and compiling again
-	// The shader cache includes shaders precompiled for consoles, or compiled once per driver update on computers
-	// if shaderCache has shader with this uuid
-	//		return shader
-
 	EngineCore& engineCore = EngineCore::GetInstance();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	Assets::AssetManager* assetManager = engineCore.assetManager;
 	AssetRendererManager* assetRendererManager = engineCore.assetRendererManager;
+	RenderPassRegistry* renderPassRegistry = Grindstone::EngineCore::GetInstance().GetRenderPassRegistry();
 
 	Assets::AssetLoadBinaryResult result = assetManager->LoadBinaryByUuid(AssetType::GraphicsPipelineSet, graphicsPipelineAsset.uuid);
 	if (result.status != Assets::AssetLoadStatus::Success) {
@@ -187,6 +183,7 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		GraphicsPipelineAsset::Pass& pass = graphicsPipelineAsset.passes[passIndex];
 		const V1::PassPipelineHeader& srcPass = pipelinePasses[passIndex];
 		const char* passName = reinterpret_cast<const char*>(&blobs[srcPass.pipelineNameOffsetFromBlobStart]);
+		const char* renderQueueName = reinterpret_cast<const char*>(&blobs[srcPass.renderQueueNameOffsetFromBlobStart]);
 		pass.passPipelineName = result.displayName + " " + passName;
 
 		GraphicsPipeline::PipelineData& pipelineData = pass.pipelineData;
@@ -199,7 +196,7 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		pipelineData.scissorH = 0;
 		pipelineData.hasDynamicViewport = true;
 		pipelineData.hasDynamicScissor = true;
-		pipelineData.renderPass = nullptr; // TODO: FindRenderPass(renderStage);
+		pipelineData.renderPass = renderPassRegistry->GetRenderpass(renderQueueName);
 
 		pipelineData.shaderStageCreateInfos = nullptr;
 		pipelineData.shaderStageCreateInfoCount = srcPass.shaderStageCount;
@@ -239,8 +236,6 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		pipelineData.colorAttachmentData = colorAttachmentData.data();
 		pipelineData.descriptorSetLayouts = descriptorSetLayouts.data();
 	}
-
-	// TODO: Save compiled shader into ShaderCache
 
 	graphicsPipelineAsset.assetLoadStatus = AssetLoadStatus::Ready;
 	return true;

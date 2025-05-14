@@ -13,6 +13,7 @@ struct ResolvedStateTree {
 	struct Pass {
 		std::string name;
 		ParseTree::RenderState renderState;
+		std::string renderQueue;
 		std::string code;
 		ShaderCodeType type = ShaderCodeType::Unset;
 		std::set<std::string_view> requiredShaderBlocks; // Only used in resolve step

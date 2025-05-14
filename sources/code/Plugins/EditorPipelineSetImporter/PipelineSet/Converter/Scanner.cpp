@@ -266,6 +266,8 @@ static TokenData ParseKeywordToken(ScanContext& scanContext, Keyword keyword, co
 		return TokenData(Token::ShaderBlock, path, line, column);
 	case Keyword::requiresBlocks:
 		return TokenData(Token::RequiresBlocks, path, line, column);
+	case Keyword::renderQueue:
+		return TokenData(Token::RenderQueue, path, line, column);
 	case Keyword::shaderEntrypoint:
 		return TokenData(Token::ShaderEntrypoint, path, line, column);
 	case Keyword::rendererTags:

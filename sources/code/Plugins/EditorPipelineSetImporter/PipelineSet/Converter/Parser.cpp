@@ -724,6 +724,14 @@ static bool ParsePass(ParseContext& context, ParseTree::Configuration* parentCon
 		case Token::ShaderHlsl:
 			ParseShader(context, pass->shaderBlock, ShaderCodeType::Hlsl);
 			break;
+		case Token::RenderQueue: {
+			++context.tokenIterator;
+			ExpectColon(context, "Expected a colon after renderQueue.");
+			std::string_view renderQueue;
+			ExpectTokenWithString(context, Token::String, renderQueue);
+			pass->renderQueue = renderQueue;
+			break;
+		}
 		default:
 			UnexpectedError(context, token);
 			++context.tokenIterator;

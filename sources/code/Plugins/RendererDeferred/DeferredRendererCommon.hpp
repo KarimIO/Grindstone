@@ -3,16 +3,16 @@
 #include <Common/HashedString.hpp>
 #include <Common/Graphics/Formats.hpp>
 
-static Grindstone::HashedString gbufferRenderPassKey = "GbufferRenderPass";
-static Grindstone::HashedString mainRenderPassKey = "MainRenderPass";
+static Grindstone::HashedString gbufferRenderPassKey = "Gbuffer";
+static Grindstone::HashedString mainRenderPassKey = "Main";
 
-static Grindstone::HashedString dofSeparationRenderPassKey = "DofSeparationRenderPass";
-static Grindstone::HashedString dofBlurAndCombinationRenderPassKey = "DofBlurAndCombinationRenderPass";
+static Grindstone::HashedString dofSeparationRenderPassKey = "DofSeparation";
+static Grindstone::HashedString dofBlurAndCombinationRenderPassKey = "DofBlurAndCombination";
 
-static Grindstone::HashedString lightingRenderPassKey = "LightingRenderPass";
-static Grindstone::HashedString forwardLitRenderPassKey = "ForwardLitRenderPass";
-static Grindstone::HashedString ssaoRenderPassKey = "SsaoRenderPass";
-static Grindstone::HashedString shadowMapRenderPassKey = "ShadowMapRenderPass";
+static Grindstone::HashedString lightingRenderPassKey = "Lighting";
+static Grindstone::HashedString forwardLitRenderPassKey = "ForwardLit";
+static Grindstone::HashedString ssaoRenderPassKey = "Ssao";
+static Grindstone::HashedString shadowMapRenderPassKey = "ShadowMap";
 
 static const Grindstone::GraphicsAPI::Format depthFormat = Grindstone::GraphicsAPI::Format::D32_SFLOAT;
 static const Grindstone::GraphicsAPI::Format litHdrFormat = Grindstone::GraphicsAPI::Format::R16G16B16A16_SFLOAT;

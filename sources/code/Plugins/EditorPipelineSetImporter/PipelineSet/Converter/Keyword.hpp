@@ -18,6 +18,7 @@ E(requiresBlocks)\
 E(clones)\
 E(inherits)\
 E(stage)\
+E(renderQueue)\
 E(properties)\
 E(shaderEntrypoint)\
 E(rendererTags)\
