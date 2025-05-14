@@ -12,6 +12,7 @@ namespace Grindstone::Formats::Pipelines::V1 {
 	};
 
 	struct PassPipelineHeader {
+		uint32_t pipelineNameOffsetFromBlobStart;
 		float depthBiasClamp;
 		float depthBiasConstantFactor;
 		float depthBiasSlopeFactor;

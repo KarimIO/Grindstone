@@ -242,6 +242,7 @@ static void ResolveConfiguration(
 		const ParseTree::Pass& srcPass = passIterator.second;
 		ResolvedStateTree::Pass& dstPass = dstConfiguration.passes[passName];
 
+		dstPass.name = passName;
 		ResolvePass(context, srcPass, dstPass);
 	}
 }

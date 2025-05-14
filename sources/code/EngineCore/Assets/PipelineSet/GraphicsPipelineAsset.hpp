@@ -112,22 +112,6 @@ namespace Grindstone {
 			return graphicsCore->GetOrCreateGraphicsPipelineFromCache(passes[0].pipelineData, vertexInputLayout);
 		}
 
-		Grindstone::GraphicsPipelineAsset::Pass* GetFirstPass() {
-			if (passes.size() == 0) {
-				return nullptr;
-			}
-
-			return &passes[0];
-		}
-
-		Grindstone::GraphicsAPI::GraphicsPipeline::PipelineData* GetFirstPassPipelineData() {
-			if (passes.size() == 0) {
-				return nullptr;
-			}
-
-			return &passes[0].pipelineData;
-		}
-
 		const Grindstone::GraphicsPipelineAsset::Pass* GetPass(Grindstone::HashedString renderPass) const {
 			for (const Grindstone::GraphicsPipelineAsset::Pass& pass : passes) {
 				if (pass.renderPass == renderPass) {

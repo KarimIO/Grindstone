@@ -186,6 +186,8 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 	for (uint32_t passIndex = srcConfigHeader.passStartIndex; passIndex < srcConfigHeader.passCount; ++passIndex) {
 		GraphicsPipelineAsset::Pass& pass = graphicsPipelineAsset.passes[passIndex];
 		const V1::PassPipelineHeader& srcPass = pipelinePasses[passIndex];
+		const char* passName = reinterpret_cast<const char*>(&blobs[srcPass.pipelineNameOffsetFromBlobStart]);
+		pass.passPipelineName = result.displayName + " " + passName;
 
 		GraphicsPipeline::PipelineData& pipelineData = pass.pipelineData;
 		pipelineData.debugName = result.displayName.c_str();

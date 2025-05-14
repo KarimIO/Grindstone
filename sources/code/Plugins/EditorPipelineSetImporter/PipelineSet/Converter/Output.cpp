@@ -185,6 +185,10 @@ static void ExtractPipelineSet(
 			const CompilationArtifactsGraphics::Pass& passArtifact = passArtifactsIterator->second;
 			Grindstone::Formats::Pipelines::V1::PassPipelineHeader& passPipelineHeader = passHeaders.emplace_back();
 
+			// TODO: Maybe this shouldn't be the name. We might be better off having a parameter called renderpass or bindpoint or something like that.
+			passPipelineHeader.pipelineNameOffsetFromBlobStart = static_cast<uint32_t>(blobWriter.offset);
+			WriteBytes(blobWriter, pass.name.data(), pass.name.size() + 1); // +1 for null-terminated
+
 			std::vector<DescriptorSetOutput> passDescriptorSets;
 
 			uint8_t shaderStageCount = 0;
