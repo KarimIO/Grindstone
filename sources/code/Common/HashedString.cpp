@@ -18,13 +18,17 @@ Grindstone::HashedString::operator bool() const noexcept {
 	return hash != 0;
 }
 
-bool Grindstone::HashedString::operator==(Grindstone::HashedString& other) const noexcept {
+bool Grindstone::HashedString::operator==(const Grindstone::HashedString& other) const noexcept {
 	return hash == other.hash;
 }
 
 void Grindstone::HashedString::Create(const char* inStringRef) {
 	hash = Hash::MurmurOAAT64(inStringRef);
 	nameHashMap[hash] = inStringRef;
+}
+
+uint64_t Grindstone::HashedString::GetHash() const {
+	return hash;
 }
 
 const Grindstone::String& Grindstone::HashedString::ToString() const {
