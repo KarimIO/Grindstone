@@ -168,6 +168,7 @@ namespace Grindstone {
 		GraphicsAPI::Buffer* ssaoUniformBuffer = nullptr;
 		GraphicsAPI::Image* ssaoNoiseTexture = nullptr;
 		GraphicsAPI::Sampler* ssaoNoiseSampler = nullptr;
+		GraphicsAPI::Sampler* screenSampler = nullptr;
 		GraphicsAPI::DescriptorSetLayout* ambientOcclusionDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* ssaoInputDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSet* ssaoInputDescriptorSet = nullptr;

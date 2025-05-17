@@ -11,7 +11,7 @@ namespace Grindstone::GraphicsAPI {
 	class DescriptorSet {
 	public:
 		struct Binding {
-			void* itemPtr;
+			void* itemPtr = nullptr;
 			uint32_t count = 1;
 
 			Binding() = default;

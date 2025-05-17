@@ -120,6 +120,16 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	CreateBloomResources();
 	CreateBloomUniformBuffers();
 
+	Grindstone::GraphicsAPI::Sampler::CreateInfo screenSamplerCreateInfo{};
+	screenSamplerCreateInfo.debugName = "Screen Sampler";
+	screenSamplerCreateInfo.options.anistropy = 0;
+	screenSamplerCreateInfo.options.magFilter = GraphicsAPI::TextureFilter::Nearest;
+	screenSamplerCreateInfo.options.minFilter = GraphicsAPI::TextureFilter::Nearest;
+	screenSamplerCreateInfo.options.wrapModeU = GraphicsAPI::TextureWrapMode::ClampToEdge;
+	screenSamplerCreateInfo.options.wrapModeV = GraphicsAPI::TextureWrapMode::ClampToEdge;
+	screenSamplerCreateInfo.options.wrapModeW = GraphicsAPI::TextureWrapMode::ClampToEdge;
+	screenSampler = graphicsCore->CreateSampler(screenSamplerCreateInfo);
+
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		GraphicsAPI::Buffer::CreateInfo postProcessingUboCreateInfo{};
 		postProcessingUboCreateInfo.debugName = "Post Processing UBO";
@@ -589,12 +599,12 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 
 		ssaoLayoutBindings[1].bindingId = 1;
 		ssaoLayoutBindings[1].count = 1;
-		ssaoLayoutBindings[1].type = GraphicsAPI::BindingType::UniformBuffer;
+		ssaoLayoutBindings[1].type = GraphicsAPI::BindingType::SampledImage;
 		ssaoLayoutBindings[1].stages = GraphicsAPI::ShaderStageBit::Fragment;
 
 		ssaoLayoutBindings[2].bindingId = 2;
 		ssaoLayoutBindings[2].count = 1;
-		ssaoLayoutBindings[2].type = GraphicsAPI::BindingType::SampledImage;
+		ssaoLayoutBindings[2].type = GraphicsAPI::BindingType::UniformBuffer;
 		ssaoLayoutBindings[2].stages = GraphicsAPI::ShaderStageBit::Fragment;
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo ssaoDescriptorSetLayoutCreateInfo{};
@@ -607,8 +617,8 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 	{
 		std::array<GraphicsAPI::DescriptorSet::Binding, 3> ssaoLayoutBindings{
 			ssaoNoiseSampler,
-			ssaoUniformBuffer,
-			ssaoNoiseTexture
+			ssaoNoiseTexture,
+			ssaoUniformBuffer
 		};
 
 		GraphicsAPI::DescriptorSet::CreateInfo engineDescriptorSetCreateInfo{};
@@ -973,36 +983,42 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	engineUboBinding.type = GraphicsAPI::BindingType::UniformBuffer;
 	engineUboBinding.stages = GraphicsAPI::ShaderStageBit::Vertex | GraphicsAPI::ShaderStageBit::Fragment;
 
+	GraphicsAPI::DescriptorSetLayout::Binding gbufferSampler{};
+	gbufferSampler.bindingId = 1;
+	gbufferSampler.count = 1;
+	gbufferSampler.type = GraphicsAPI::BindingType::Sampler;
+	gbufferSampler.stages = GraphicsAPI::ShaderStageBit::Vertex | GraphicsAPI::ShaderStageBit::Fragment;
+
 	GraphicsAPI::DescriptorSetLayout::Binding litHdrRenderTargetBinding{};
-	litHdrRenderTargetBinding.bindingId = 1;
+	litHdrRenderTargetBinding.bindingId = 2;
 	litHdrRenderTargetBinding.count = 1;
 	litHdrRenderTargetBinding.type = GraphicsAPI::BindingType::SampledImage;
 	// TODO: Just using vertex for now to get resolution cuz I'm lazy. Remove this eventually and use a uniform buffer.
 	litHdrRenderTargetBinding.stages = GraphicsAPI::ShaderStageBit::Vertex | GraphicsAPI::ShaderStageBit::Fragment;
 
 	GraphicsAPI::DescriptorSetLayout::Binding gbufferDepthBinding{};
-	gbufferDepthBinding.bindingId = 1;
+	gbufferDepthBinding.bindingId = 2;
 	gbufferDepthBinding.count = 1;
 	gbufferDepthBinding.type = GraphicsAPI::BindingType::SampledImage;
 	gbufferDepthBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
 
-	GraphicsAPI::DescriptorSetLayout::Binding gbuffer0Binding{};
-	gbuffer0Binding.bindingId = 2;
-	gbuffer0Binding.count = 1;
-	gbuffer0Binding.type = GraphicsAPI::BindingType::SampledImage;
-	gbuffer0Binding.stages = GraphicsAPI::ShaderStageBit::Fragment;
+	GraphicsAPI::DescriptorSetLayout::Binding gbufferAlbedoBinding{};
+	gbufferAlbedoBinding.bindingId = 3;
+	gbufferAlbedoBinding.count = 1;
+	gbufferAlbedoBinding.type = GraphicsAPI::BindingType::SampledImage;
+	gbufferAlbedoBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
 
-	GraphicsAPI::DescriptorSetLayout::Binding gbuffer1Binding{};
-	gbuffer1Binding.bindingId = 3;
-	gbuffer1Binding.count = 1;
-	gbuffer1Binding.type = GraphicsAPI::BindingType::SampledImage;
-	gbuffer1Binding.stages = GraphicsAPI::ShaderStageBit::Fragment;
+	GraphicsAPI::DescriptorSetLayout::Binding gbufferNormalsBinding{};
+	gbufferNormalsBinding.bindingId = 4;
+	gbufferNormalsBinding.count = 1;
+	gbufferNormalsBinding.type = GraphicsAPI::BindingType::SampledImage;
+	gbufferNormalsBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
 
-	GraphicsAPI::DescriptorSetLayout::Binding gbuffer2Binding{};
-	gbuffer2Binding.bindingId = 4;
-	gbuffer2Binding.count = 1;
-	gbuffer2Binding.type = GraphicsAPI::BindingType::SampledImage;
-	gbuffer2Binding.stages = GraphicsAPI::ShaderStageBit::Fragment;
+	GraphicsAPI::DescriptorSetLayout::Binding gbufferSpecularRoughnessBinding{};
+	gbufferSpecularRoughnessBinding.bindingId = 5;
+	gbufferSpecularRoughnessBinding.count = 1;
+	gbufferSpecularRoughnessBinding.type = GraphicsAPI::BindingType::SampledImage;
+	gbufferSpecularRoughnessBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo engineDescriptorSetLayoutCreateInfo{};
 	engineDescriptorSetLayoutCreateInfo.debugName = "Engine UBO Set Layout";
@@ -1010,12 +1026,13 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	engineDescriptorSetLayoutCreateInfo.bindings = &engineUboBinding;
 	engineDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(engineDescriptorSetLayoutCreateInfo);
 
-	std::array<GraphicsAPI::DescriptorSetLayout::Binding, 5> tonemapDescriptorSetLayoutBindings{};
+	std::array<GraphicsAPI::DescriptorSetLayout::Binding, 6> tonemapDescriptorSetLayoutBindings{};
 	tonemapDescriptorSetLayoutBindings[0] = engineUboBinding;
-	tonemapDescriptorSetLayoutBindings[1] = litHdrRenderTargetBinding;
-	tonemapDescriptorSetLayoutBindings[2] = { 2, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment }; // Bloom Texture
-	tonemapDescriptorSetLayoutBindings[3] = { 3, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment };	// Depth Texture
-	tonemapDescriptorSetLayoutBindings[4] = { 4, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Fragment };	// Post Process Uniform Buffer
+	tonemapDescriptorSetLayoutBindings[1] = gbufferSampler;
+	tonemapDescriptorSetLayoutBindings[2] = litHdrRenderTargetBinding;
+	tonemapDescriptorSetLayoutBindings[3] = { 3, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment };	// Bloom Texture
+	tonemapDescriptorSetLayoutBindings[4] = { 4, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment };	// Depth Texture
+	tonemapDescriptorSetLayoutBindings[5] = { 5, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Fragment };	// Post Process Uniform Buffer
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo tonemapDescriptorSetLayoutCreateInfo{};
 	tonemapDescriptorSetLayoutCreateInfo.debugName = "Tonemap Descriptor Set Layout";
@@ -1023,14 +1040,15 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	tonemapDescriptorSetLayoutCreateInfo.bindings = tonemapDescriptorSetLayoutBindings.data();
 	tonemapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(tonemapDescriptorSetLayoutCreateInfo);
 
-	std::array<GraphicsAPI::DescriptorSetLayout::Binding, 7> debugDescriptorSetLayoutBindings{};
+	std::array<GraphicsAPI::DescriptorSetLayout::Binding, 8> debugDescriptorSetLayoutBindings{};
 	debugDescriptorSetLayoutBindings[0] = engineUboBinding;
-	debugDescriptorSetLayoutBindings[1] = gbufferDepthBinding;
-	debugDescriptorSetLayoutBindings[2] = gbuffer0Binding;
-	debugDescriptorSetLayoutBindings[3] = gbuffer1Binding;
-	debugDescriptorSetLayoutBindings[4] = gbuffer2Binding;
-	debugDescriptorSetLayoutBindings[5] = { 5, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment }; // Ambient Occlusion Texture
-	debugDescriptorSetLayoutBindings[6] = { 6, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Fragment }; // Post Process Uniform Buffer
+	debugDescriptorSetLayoutBindings[1] = gbufferSampler;
+	debugDescriptorSetLayoutBindings[2] = gbufferDepthBinding;
+	debugDescriptorSetLayoutBindings[3] = gbufferAlbedoBinding;
+	debugDescriptorSetLayoutBindings[4] = gbufferNormalsBinding;
+	debugDescriptorSetLayoutBindings[5] = gbufferSpecularRoughnessBinding;
+	debugDescriptorSetLayoutBindings[6] = { 6, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment }; // Ambient Occlusion Texture
+	debugDescriptorSetLayoutBindings[7] = { 7, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Fragment }; // Post Process Uniform Buffer
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo debugDescriptorSetLayoutCreateInfo{};
 	debugDescriptorSetLayoutCreateInfo.debugName = "Debug Descriptor Set Layout";
@@ -1038,12 +1056,13 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	debugDescriptorSetLayoutCreateInfo.bindings = debugDescriptorSetLayoutBindings.data();
 	debugDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(debugDescriptorSetLayoutCreateInfo);
 
-	std::array<GraphicsAPI::DescriptorSetLayout::Binding, 5> lightingDescriptorSetLayoutBindings{};
+	std::array<GraphicsAPI::DescriptorSetLayout::Binding, 6> lightingDescriptorSetLayoutBindings{};
 	lightingDescriptorSetLayoutBindings[0] = engineUboBinding;
-	lightingDescriptorSetLayoutBindings[1] = gbufferDepthBinding;
-	lightingDescriptorSetLayoutBindings[2] = gbuffer0Binding;
-	lightingDescriptorSetLayoutBindings[3] = gbuffer1Binding;
-	lightingDescriptorSetLayoutBindings[4] = gbuffer2Binding;
+	lightingDescriptorSetLayoutBindings[1] = gbufferSampler;
+	lightingDescriptorSetLayoutBindings[2] = gbufferDepthBinding;
+	lightingDescriptorSetLayoutBindings[3] = gbufferAlbedoBinding;
+	lightingDescriptorSetLayoutBindings[4] = gbufferNormalsBinding;
+	lightingDescriptorSetLayoutBindings[5] = gbufferSpecularRoughnessBinding;
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo lightingDescriptorSetLayoutCreateInfo{};
 	lightingDescriptorSetLayoutCreateInfo.debugName = "Pointlight Descriptor Set Layout";
@@ -1208,6 +1227,7 @@ void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) 
 
 	GraphicsAPI::DescriptorSet::Binding engineUboBinding{ imageSet.globalUniformBufferObject };
 	GraphicsAPI::DescriptorSet::Binding litHdrRenderTargetBinding{ imageSet.litHdrRenderTarget };
+	GraphicsAPI::DescriptorSet::Binding screenSamplerBinding{ screenSampler };
 	GraphicsAPI::DescriptorSet::Binding gbufferDepthBinding{ imageSet.gbufferDepthStencilTarget };
 	GraphicsAPI::DescriptorSet::Binding gbufferAlbedoBinding{ imageSet.gbufferAlbedoRenderTarget };
 	GraphicsAPI::DescriptorSet::Binding gbufferNormalBinding{ imageSet.gbufferNormalRenderTarget };
@@ -1226,12 +1246,13 @@ void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	}
 
 	{
-		std::array<GraphicsAPI::DescriptorSet::Binding, 5> lightingDescriptorSetBindings{};
+		std::array<GraphicsAPI::DescriptorSet::Binding, 6> lightingDescriptorSetBindings{};
 		lightingDescriptorSetBindings[0] = engineUboBinding;
-		lightingDescriptorSetBindings[1] = gbufferDepthBinding;
-		lightingDescriptorSetBindings[2] = gbufferAlbedoBinding;
-		lightingDescriptorSetBindings[3] = gbufferNormalBinding;
-		lightingDescriptorSetBindings[4] = gbufferSpecRoughnessBinding;
+		lightingDescriptorSetBindings[1] = screenSamplerBinding;
+		lightingDescriptorSetBindings[2] = gbufferDepthBinding;
+		lightingDescriptorSetBindings[3] = gbufferAlbedoBinding;
+		lightingDescriptorSetBindings[4] = gbufferNormalBinding;
+		lightingDescriptorSetBindings[5] = gbufferSpecRoughnessBinding;
 
 		imageSet.lightingDescriptorSet->ChangeBindings(lightingDescriptorSetBindings.data(), static_cast<uint32_t>(lightingDescriptorSetBindings.size()));
 	}
