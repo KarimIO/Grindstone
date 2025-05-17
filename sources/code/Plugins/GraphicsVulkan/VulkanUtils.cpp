@@ -196,6 +196,14 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 			outputStages |= VK_SHADER_STAGE_GEOMETRY_BIT;
 		}
 
+		if (bit & static_cast<uint8_t>(ShaderStageBit::Task)) {
+			outputStages |= VK_SHADER_STAGE_TASK_BIT_EXT;
+		}
+
+		if (bit & static_cast<uint8_t>(ShaderStageBit::Mesh)) {
+			outputStages |= VK_SHADER_STAGE_MESH_BIT_EXT;
+		}
+
 		if (bit & static_cast<uint8_t>(ShaderStageBit::TesselationControl)) {
 			outputStages |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
 		}

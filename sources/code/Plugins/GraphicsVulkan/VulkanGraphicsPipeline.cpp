@@ -187,9 +187,9 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 	layouts.reserve(pipelineData.descriptorSetLayoutCount);
 
 	for (uint32_t i = 0; i < pipelineData.descriptorSetLayoutCount; ++i) {
-		Vulkan::DescriptorSetLayout* uboBinding = static_cast<Vulkan::DescriptorSetLayout*>(pipelineData.descriptorSetLayouts[i]);
-		VkDescriptorSetLayout ubb = uboBinding->GetInternalLayout();
-		layouts.push_back(ubb);
+		Vulkan::DescriptorSetLayout* descriptorSetLayout = static_cast<Vulkan::DescriptorSetLayout*>(pipelineData.descriptorSetLayouts[i]);
+		VkDescriptorSetLayout vkDescriptorSetLayout = descriptorSetLayout->GetInternalLayout();
+		layouts.push_back(vkDescriptorSetLayout);
 	}
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
