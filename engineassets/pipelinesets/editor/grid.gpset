@@ -5,6 +5,7 @@ pipelineSet "Grid" {
 		pass "main" {
 			shaderEntrypoint: vertex mainVertex
 			shaderEntrypoint: fragment mainFragment
+			renderQueue: "Editor"
 
 			properties {
 				cull: back

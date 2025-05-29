@@ -5,6 +5,7 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 		pass "main" {
 			shaderEntrypoint: vertex mainVertex
 			shaderEntrypoint: fragment mainFragment
+			renderQueue: "Main"
 
 			properties {
 				cull: back
@@ -20,6 +21,7 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 			}
 
 			shaderHlsl {
+				[[vk::binding(0, 0)]] SamplerState gbufferSampler : register(s0, space0);
 				Texture2D<float4> litSceneTexture : register(t1,  space0);
 				Texture2D<float4> bloomTexture : register(t2,  space0);
 				Texture2D<float4> depthTexture : register(t3,  space0);
@@ -67,9 +69,9 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 
 				float3 applyChromaticAbberation(float2 texCoord, float2 direction) {
 					float3 color = float3(0.0f, 0.0f, 0.0f);
-					color.r  = litSceneTexture.Sample(mySampler, texCoord + (direction * postProcessingUbo.chromaticDistortionRedOffset)).r;
-					color.g  = litSceneTexture.Sample(mySampler, texCoord + (direction * postProcessingUbo.chromaticDistortionGreenOffset)).g;
-					color.b = litSceneTexture.Sample(mySampler, texCoord + (direction * postProcessingUbo.chromaticDistortionBlueOffset)).b;
+					color.r  = litSceneTexture.Sample(gbufferSampler, texCoord + (direction * postProcessingUbo.chromaticDistortionRedOffset)).r;
+					color.g  = litSceneTexture.Sample(gbufferSampler, texCoord + (direction * postProcessingUbo.chromaticDistortionGreenOffset)).g;
+					color.b = litSceneTexture.Sample(gbufferSampler, texCoord + (direction * postProcessingUbo.chromaticDistortionBlueOffset)).b;
 
 					return color;
 				}
@@ -152,10 +154,10 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 					float3 sceneColor = float3(0.0f, 0.0f, 0.0f);
 
 					// Get color directly if not using chromatic abberation.
-					// float3 sceneColor = litSceneTexture.Sample(mySampler, distortedUV).rgb;
+					// float3 sceneColor = litSceneTexture.Sample(gbufferSampler, distortedUV).rgb;
 					sceneColor = applyChromaticAbberation(texCoordToSample * rendererUbo.renderScale, screenOffset * screenOffset);
 
-					sceneColor = sceneColor + bloomTexture.Sample(mySampler, texCoordToSample * rendererUbo.renderScale * 2).rgb;
+					sceneColor = sceneColor + bloomTexture.Sample(gbufferSampler, texCoordToSample * rendererUbo.renderScale * 2).rgb;
 					sceneColor = applyVignette(sceneColor, screenOffset);
 					sceneColor = applyGrain(sceneColor, resolution, input.fragmentTexCoord);
 					sceneColor = hdrTransform(sceneColor);

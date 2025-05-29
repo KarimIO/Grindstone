@@ -101,8 +101,6 @@ static void UnpackGraphicsPipelineDescriptorSetHeaders(
 // Shader Code[]
 
 static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineAsset) {
-	return false;
-
 	EngineCore& engineCore = EngineCore::GetInstance();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	Assets::AssetManager* assetManager = engineCore.assetManager;

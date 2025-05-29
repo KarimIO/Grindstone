@@ -14,8 +14,7 @@ pipelineSet abstract "PostProcessing" {
 			}
 
 			requiresBlocks [
-				GsPostProcessingVertexShader,
-				GsDefaultSampler
+				GsPostProcessingVertexShader
 			]
 
 			shaderBlock GsPostProcessingVertexShader {

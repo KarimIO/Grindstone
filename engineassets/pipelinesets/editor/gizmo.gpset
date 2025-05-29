@@ -5,6 +5,7 @@ pipelineSet "Gizmo" {
 		pass "main" {
 			shaderEntrypoint: vertex mainVertex
 			shaderEntrypoint: fragment mainFragment
+			renderQueue: "Gizmo"
 
 			properties {
 				cull: back
@@ -31,11 +32,7 @@ pipelineSet "Gizmo" {
 
 				#define maxObjects 500
 
-				struct Ubo {
-					Element elements[maxObjects];
-				};
-
-				cbuffer ubo : register(b0, space0) { Ubo ubo; }
+				RWStructuredBuffer<Element> elementsBuffer : register(u0, space0);
 
 				struct VertexInput {
 					[[vk::location(0)]] float3 position : POSITION0;
@@ -48,8 +45,8 @@ pipelineSet "Gizmo" {
 
 				VertexToFragment mainVertex(VertexInput input, uint instanceID : SV_InstanceID) {
 					VertexToFragment output = (VertexToFragment)0;
-					output.position = mul(ubo.elements[instanceID].matrix, float4(input.position, 1.0));
-					output.color = ubo.elements[instanceID].color;
+					output.position = mul(elementsBuffer[instanceID].matrix, float4(input.position, 1.0));
+					output.color = elementsBuffer[instanceID].color;
 					return output;
 				}
 

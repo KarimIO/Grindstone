@@ -72,6 +72,10 @@ constexpr auto vkApiVersion = VK_API_VERSION_1_3;
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 	Grindstone::GraphicsAPI::Vulkan::Core* vk = static_cast<Grindstone::GraphicsAPI::Vulkan::Core*>(pUserData);
 
+	if (pCallbackData->messageIdNumber == 1402107823) {
+		return VK_FALSE;
+	}
+
 	Grindstone::LogSeverity logSeverity = Grindstone::LogSeverity::Info;
 	switch (messageSeverity) {
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:

@@ -78,12 +78,12 @@ pipelineSet "Spot Light" inherits "DeferredLighting" {
 				}
 
 				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
-					float4 gbuffer3Value = gbuffer3.Sample(mySampler, input.scaledFragmentTexCoord);
+					float4 gbuffer3Value = gbuffer3.Sample(defaultSampler, input.scaledFragmentTexCoord);
 
-					float depth = gbuffer0.Sample(mySampler, input.scaledFragmentTexCoord).r;
+					float depth = gbuffer0.Sample(defaultSampler, input.scaledFragmentTexCoord).r;
 					float3 position = ComputeWorldSpacePosition(rendererUbo.projectionMatrix, rendererUbo.viewMatrix, input.fragmentTexCoord, depth);
-					float3 diffuse = gbuffer1.Sample(mySampler, input.scaledFragmentTexCoord).rgb;
-					float3 normal = gbuffer2.Sample(mySampler, input.scaledFragmentTexCoord).rgb;
+					float3 diffuse = gbuffer1.Sample(defaultSampler, input.scaledFragmentTexCoord).rgb;
+					float3 normal = gbuffer2.Sample(defaultSampler, input.scaledFragmentTexCoord).rgb;
 					float3 specular = gbuffer3Value.rgb;
 					float roughness = gbuffer3Value.a;
 
@@ -121,7 +121,7 @@ pipelineSet "Spot Light" inherits "DeferredLighting" {
 					float pixelDepth = projCoords.z;
 
 					float bias = 0.005;
-					float closestDepth = shadowMap.Sample(mySampler, projCoords.xy).x;
+					float closestDepth = shadowMap.Sample(defaultSampler, projCoords.xy).x;
 
 					bool isInMap = projCoords.x >= 0 && projCoords.x <= 1 && projCoords.y >= 0 && projCoords.y <= 1 && projCoords.z >= 0 && projCoords.z <= 1;
 					bool isInLight = closestDepth + bias >= pixelDepth;

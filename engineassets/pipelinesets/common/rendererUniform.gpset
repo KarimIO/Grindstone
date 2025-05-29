@@ -12,6 +12,6 @@ shaderBlock GsRendererUniform {
 			float time;
 		};
 
-		cbuffer rendererUbo : register(b0, space1) { RendererUBO rendererUbo; }
+		ConstantBuffer<RendererUBO> rendererUbo : register(b0, space0);
 	}
 }

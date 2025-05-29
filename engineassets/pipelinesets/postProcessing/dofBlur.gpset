@@ -6,6 +6,7 @@ pipelineSet "Depth of Field (Blur)" inherits "PostProcessing" {
 		pass "main" {
 			shaderEntrypoint: vertex mainVertex
 			shaderEntrypoint: fragment mainFragment
+			renderQueue: "DofBlurAndCombination"
 
 			properties {
 				cull: back
@@ -21,6 +22,7 @@ pipelineSet "Depth of Field (Blur)" inherits "PostProcessing" {
 			}
 
 			shaderHlsl {
+				[[vk::binding(0, 0)]] SamplerState gbufferSampler : register(s0, space0);
 				Texture2D<float4> unblurredTexture : register(t0,  space1);
 
 				float2 unitSquareToUnitDiskPolar(float2 inCoord) {
@@ -51,7 +53,7 @@ pipelineSet "Depth of Field (Blur)" inherits "PostProcessing" {
 				}
 
 				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
-					float4 unblurred = unblurredTexture.Sample(mySampler, input.scaledFragmentTexCoord);
+					float4 unblurred = unblurredTexture.Sample(gbufferSampler, input.scaledFragmentTexCoord);
 
 					float coc01 = unblurred.w;
 					if (coc01 == 0.0) {
@@ -68,7 +70,7 @@ pipelineSet "Depth of Field (Blur)" inherits "PostProcessing" {
 							float param_1 = 6.0;
 							float param_2 = 0.0;
 							float2 sampleCoord = squareToPolygonMapping(param, param_1, param_2);
-							blurredColor += unblurredTexture.Sample(mySampler, input.scaledFragmentTexCoord + (sampleCoord * cocPixels)).xyz;
+							blurredColor += unblurredTexture.Sample(gbufferSampler, input.scaledFragmentTexCoord + (sampleCoord * cocPixels)).xyz;
 						}
 					}
 

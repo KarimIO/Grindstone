@@ -17,6 +17,7 @@ pipelineSet "Translucent" {
 		pass "main" {
 			shaderEntrypoint: vertex mainVertex
 			shaderEntrypoint: fragment mainFragment
+			renderQueue: "ForwardLit"
 
 			properties {
 				cull: back
@@ -50,11 +51,11 @@ pipelineSet "Translucent" {
 				Texture2D<float4> roughnessTexture : register(t4, space0);
 
 				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
-					float4 albedo = materialInstanceUbo.color * albedoTexture.Sample(mySampler, input.texCoord0);
+					float4 albedo = materialInstanceUbo.color * albedoTexture.Sample(defaultSampler, input.texCoord0);
 
-					float3 textureSpaceNormal = normalTexture.Sample(mySampler, input.texCoord0).rgb;
-					float metalness = metalnessTexture.Sample(mySampler, input.texCoord0).r;
-					float roughness = roughnessTexture.Sample(mySampler, input.texCoord0).r;
+					float3 textureSpaceNormal = normalTexture.Sample(defaultSampler, input.texCoord0).rgb;
+					float metalness = metalnessTexture.Sample(defaultSampler, input.texCoord0).r;
+					float roughness = roughnessTexture.Sample(defaultSampler, input.texCoord0).r;
 
 					float3 specular = lerp(float3(0.04, 0.04, 0.04), albedo.rgb, metalness);
 					float3 worldSpaceNormal = TransformNormalToWorldSpace(input.normal, textureSpaceNormal, input.tangent);

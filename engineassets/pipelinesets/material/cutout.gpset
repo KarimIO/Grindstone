@@ -17,6 +17,7 @@ pipelineSet "lit.cutout" {
 		pass "main" {
 			shaderEntrypoint: vertex mainVertex
 			shaderEntrypoint: fragment mainFragment
+			renderQueue: "Gbuffer"
 
 			properties {
 				cull: back
@@ -62,15 +63,15 @@ pipelineSet "lit.cutout" {
 				};
 
 				FragmentOutput mainFragment(VertexToFragment input) {
-					float4 albedo = float4(materialInstanceUbo.color.rgb, 1) * albedoTexture.Sample(mySampler, input.texCoord0);
+					float4 albedo = float4(materialInstanceUbo.color.rgb, 1) * albedoTexture.Sample(defaultSampler, input.texCoord0);
 
 					if (albedo.a < 0.5f) {
 						discard;
 					}
 
-					float3 textureSpaceNormal = normalTexture.Sample(mySampler, input.texCoord0).rgb;
-					float metalness = metalnessTexture.Sample(mySampler, input.texCoord0).r;
-					float roughness = roughnessTexture.Sample(mySampler, input.texCoord0).r;
+					float3 textureSpaceNormal = normalTexture.Sample(defaultSampler, input.texCoord0).rgb;
+					float metalness = metalnessTexture.Sample(defaultSampler, input.texCoord0).r;
+					float roughness = roughnessTexture.Sample(defaultSampler, input.texCoord0).r;
 
 					float3 specular = lerp(float3(0.04, 0.04, 0.04), albedo.rgb, metalness);
 					float3 worldSpaceNormal = TransformNormalToWorldSpace(input.normal, textureSpaceNormal, input.tangent);

@@ -5,6 +5,8 @@ include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
 pipelineSet abstract "DeferredLighting" {
 	configuration "main" {
 		pass "main" {
+			renderQueue: "Lighting"
+			
 			properties {
 				cull: back
 				depthBias: false

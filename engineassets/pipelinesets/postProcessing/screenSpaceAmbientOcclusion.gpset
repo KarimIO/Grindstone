@@ -6,6 +6,7 @@ pipelineSet "Screen-Space Ambient Occlusion" inherits "PostProcessing" {
 		pass "main" {
 			shaderEntrypoint: vertex mainVertex
 			shaderEntrypoint: fragment mainFragment
+			renderQueue: "Ssao"
 
 			properties {
 				cull: back
@@ -30,25 +31,27 @@ pipelineSet "Screen-Space Ambient Occlusion" inherits "PostProcessing" {
 			shaderHlsl {
 				static const int kernelSize = 64;
 
+				SamplerState gbufferSampler : register(s0, space0);
+				Texture2D<float4> depthTexture : register(t1,  space0);
+				Texture2D<float4> gbufferNormals : register(t5,  space0);
+
 				struct SSAOBufferObject {
 					float4 kernels[kernelSize];
 					float radius;
 					float bias;
 				};
 
-				cbuffer ssaoUbo : register(b0, space0) { SSAOBufferObject ssaoUbo; }
-
-				Texture2D<float4> depthTexture : register(t1,  space0);
-				Texture2D<float4> gbuffer2 : register(t3,  space0);
+				SamplerState ssaoNoiseSampler : register(s0, space1);
 				Texture2D<float4> ssaoNoise : register(t1,  space1);
+				ConstantBuffer<SSAOBufferObject> ssaoUbo : register(b2, space1);
 
 				float mainFragment(VertexToFragment input) : SV_TARGET0 {
 					int2 noiseScale = int2(rendererUbo.renderResolution.x, rendererUbo.renderResolution.y) / 4;
 
-					float depthFromTexture = depthTexture.Sample(mySampler, input.scaledFragmentTexCoord).x;
+					float depthFromTexture = depthTexture.Sample(gbufferSampler, input.scaledFragmentTexCoord).x;
 					float3 position = ComputeViewSpacePosition(InvertMatrix(rendererUbo.projectionMatrix), rendererUbo.viewMatrix, input.fragmentTexCoord, depthFromTexture).rgb;
-					float3 normal = ViewNormal(rendererUbo.viewMatrix, gbuffer2.Sample(mySampler, input.scaledFragmentTexCoord).rgb);
-					float2 noise = ssaoNoise.Sample(mySampler, input.fragmentTexCoord * noiseScale).rg;
+					float3 normal = ViewNormal(rendererUbo.viewMatrix, gbufferNormals.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb);
+					float2 noise = ssaoNoise.Sample(ssaoNoiseSampler, input.fragmentTexCoord * noiseScale).rg;
 					float3 randomVec  = float3(noise, 0);
 
 					float3 tangent   = normalize(randomVec - normal * dot(randomVec, normal));
@@ -69,7 +72,7 @@ pipelineSet "Screen-Space Ambient Occlusion" inherits "PostProcessing" {
 						offset.xyz /= offset.w;									// perspective divide
 						offset.xyz  = offset.xyz * 0.5 + float3(0.5, 0.5, 0.5);	// transform to range 0.0 - 1.0
 
-						float sampleDepth = depthTexture.Sample(mySampler, offset.xy * rendererUbo.renderScale).x;
+						float sampleDepth = depthTexture.Sample(gbufferSampler, offset.xy * rendererUbo.renderScale).x;
 						float sampleDepthLinear = ComputeViewSpacePosition(InvertMatrix(rendererUbo.projectionMatrix), rendererUbo.viewMatrix, offset.xy, sampleDepth).z;
 						float rangeCheck = smoothstep(0.0, 1.0, radius / abs(position.z - sampleDepthLinear));
 						occlusion += (sampleDepthLinear >= sampleKernel.z + bias ? 1.0 : 0.0) * rangeCheck;
