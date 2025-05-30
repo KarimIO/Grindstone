@@ -163,11 +163,10 @@ pipelineSet abstract "DeferredLighting" {
 
 			shaderBlock LightGbufferUniforms {
 				shaderHlsl {
-					Texture2D<float4> gbuffer0 : register(t1,  space0);
-					Texture2D<float4> gbuffer1 : register(t2,  space0);
-					Texture2D<float4> gbuffer2 : register(t3,  space0);
-					Texture2D<float4> gbuffer3 : register(t4,  space0);
-					Texture2D<float4> gbuffer4 : register(t5,  space0);
+					Texture2D<float4> gbufferDepth : register(t2,  space0);
+					Texture2D<float4> gbufferAlbedo : register(t3,  space0);
+					Texture2D<float4> gbufferNormals : register(t4,  space0);
+					Texture2D<float4> gbufferSpecularRoughness : register(t5,  space0);
 				}
 			}
 		}

@@ -15,7 +15,7 @@ static void AttachUniformBuffer(
 	std::vector<VkDescriptorBufferInfo>& descriptorBuffersInfos,
 	std::vector<VkWriteDescriptorSet>& writeVector,
 	uint32_t bindingIndex,
-	Base::DescriptorSet::Binding& binding,
+	const Base::DescriptorSet::Binding& binding,
 	VkDescriptorSet descriptorSet,
 	bool isStorageBuffer
 ) {
@@ -43,7 +43,7 @@ static void AttachImage(
 	std::vector<VkDescriptorImageInfo>& descriptorImageInfos,
 	std::vector<VkWriteDescriptorSet>& writeVector,
 	uint32_t bindingIndex,
-	Base::DescriptorSet::Binding& binding,
+	const Base::DescriptorSet::Binding& binding,
 	VkDescriptorSet descriptorSet,
 	bool isStorageImage
 ) {
@@ -73,7 +73,7 @@ static void AttachSampler(
 	std::vector<VkDescriptorImageInfo>& descriptorImageInfos,
 	std::vector<VkWriteDescriptorSet>& writeVector,
 	uint32_t bindingIndex,
-	Base::DescriptorSet::Binding& binding,
+	const Base::DescriptorSet::Binding& binding,
 	VkDescriptorSet descriptorSet
 ) {
 	Vulkan::Sampler* sampler = static_cast<Vulkan::Sampler*>(binding.itemPtr);
@@ -98,7 +98,7 @@ static void AttachCombinedImageSampler(
 	std::vector<VkDescriptorImageInfo>& descriptorImageInfos,
 	std::vector<VkWriteDescriptorSet>& writeVector,
 	uint32_t bindingIndex,
-	Base::DescriptorSet::Binding& binding,
+	const Base::DescriptorSet::Binding& binding,
 	VkDescriptorSet descriptorSet
 ) {
 	std::pair<void*, void*>* samplerPair = static_cast<std::pair<void*, void*>*>(binding.itemPtr);
@@ -145,7 +145,7 @@ Vulkan::DescriptorSet::DescriptorSet(const CreateInfo& createInfo) {
 	ChangeBindings(createInfo.bindings, createInfo.bindingCount);
 }
 
-void Vulkan::DescriptorSet::ChangeBindings(Binding* sourceBindings, uint32_t bindingCount, uint32_t bindOffset) {
+void Vulkan::DescriptorSet::ChangeBindings(const Binding* sourceBindings, uint32_t bindingCount, uint32_t bindOffset) {
 	std::vector<VkWriteDescriptorSet> descriptorWrites;
 
 	// Allocate vectors bigger than the size we need so we can have stable pointers to them.
@@ -156,11 +156,13 @@ void Vulkan::DescriptorSet::ChangeBindings(Binding* sourceBindings, uint32_t bin
 
 	for (uint32_t i = 0; i < bindingCount; ++i) {
 		const Vulkan::DescriptorSetLayout::Binding& layoutBinding = layout->GetBinding(static_cast<size_t>(bindOffset) + i);
-		Binding& sourceBinding = sourceBindings[i];
+		const Binding& sourceBinding = sourceBindings[i];
 
 		if (sourceBinding.itemPtr == nullptr) {
 			continue;
 		}
+
+		GS_ASSERT(sourceBinding.bindingType == layoutBinding.type);
 
 		switch (layoutBinding.type) {
 		case BindingType::Sampler:

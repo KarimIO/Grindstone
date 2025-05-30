@@ -511,7 +511,7 @@ void GizmoRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	gizmoDescriptorSetLayoutCreateInfo.bindings = &gizmoDescriptorLayoutBinding;
 	gizmoDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(gizmoDescriptorSetLayoutCreateInfo);
 
-	GraphicsAPI::DescriptorSet::Binding gizmoDescriptorBinding{ gizmoUniformBuffer };
+	GraphicsAPI::DescriptorSet::Binding gizmoDescriptorBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( gizmoUniformBuffer );
 
 	GraphicsAPI::DescriptorSet::CreateInfo gizmoDescriptorSetCreateInfo{};
 	gizmoDescriptorSetCreateInfo.debugName = "Gizmo Descriptor";

@@ -3,6 +3,7 @@ include "$ENGINE/pipelinesets/deferredPipeline/lightingTemplate.gpset"
 pipelineSet "Image Based Lighting" inherits "DeferredLighting" {
 	configuration "main" {
 		pass "main" {
+			shaderEntrypoint: vertex mainVertex
 			shaderEntrypoint: fragment mainFragment
 
 			requiresBlocks [
@@ -82,15 +83,15 @@ pipelineSet "Image Based Lighting" inherits "DeferredLighting" {
 				}
 
 				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
-					float4 gbuffer3Value = gbuffer3.Sample(defaultSampler, input.scaledFragmentTexCoord);
+					float4 gbufferSpecularRoughnessValue = gbufferSpecularRoughness.Sample(defaultSampler, input.scaledFragmentTexCoord);
 
-					float depthFromTexture = gbuffer0.Sample(defaultSampler, input.scaledFragmentTexCoord).r;
+					float depthFromTexture = gbufferDepth.Sample(defaultSampler, input.scaledFragmentTexCoord).r;
 
 					float3 position = ComputeWorldSpacePosition(rendererUbo.projectionMatrix, rendererUbo.viewMatrix, input.fragmentTexCoord, depthFromTexture);
-					float3 albedo = gbuffer1.Sample(defaultSampler, input.scaledFragmentTexCoord).rgb;
-					float3 normal = gbuffer2.Sample(defaultSampler, input.scaledFragmentTexCoord).rgb;
-					float3 specularInput = gbuffer3Value.rgb;
-					float roughness = gbuffer3Value.a * gbuffer3Value.a;
+					float3 albedo = gbufferAlbedo.Sample(defaultSampler, input.scaledFragmentTexCoord).rgb;
+					float3 normal = gbufferNormals.Sample(defaultSampler, input.scaledFragmentTexCoord).rgb;
+					float3 specularInput = gbufferSpecularRoughnessValue.rgb;
+					float roughness = gbufferSpecularRoughnessValue.a * gbufferSpecularRoughnessValue.a;
 					float ao = ssao.Sample(defaultSampler, input.scaledFragmentTexCoord).r;
 
 					float3 eyeDir = normalize(rendererUbo.eyePos.xyz - position);
@@ -98,7 +99,7 @@ pipelineSet "Image Based Lighting" inherits "DeferredLighting" {
 
 					float NV = max(dot(normal, eyeDir), 0.0);
 
-					const float MAX_REFLECTION_LOD = 4.0;
+					static const float MAX_REFLECTION_LOD = 4.0;
 					float3 f0 = 0.32 * specularInput * specularInput;
 					float f90 = clamp(50 * dot(f0, float3(0.33, 0.33, 0.33)), 0, 1);
 					float3 F = Light_F(f0, f90, NV);

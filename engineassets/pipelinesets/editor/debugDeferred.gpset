@@ -57,7 +57,7 @@ pipelineSet "DebugDeferred" {
 					uint mode;
 				};
 
-				cbuffer debugUbo : register(b6, space0) { DebugUbo debugUbo; }
+				ConstantBuffer<DebugUbo> debugUbo : register(b6, space0);
 
 				float3 linearToSRGB(float3 inColor) {
 					float3 outColor;

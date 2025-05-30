@@ -63,7 +63,7 @@ void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	gridDescriptorSetLayoutCreateInfo.bindings = &gridDescriptorLayoutBinding;
 	gridDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(gridDescriptorSetLayoutCreateInfo);
 
-	GraphicsAPI::DescriptorSet::Binding gridDescriptorBinding{ gridUniformBuffer };
+	GraphicsAPI::DescriptorSet::Binding gridDescriptorBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( gridUniformBuffer );
 
 	GraphicsAPI::DescriptorSet::CreateInfo gridDescriptorSetCreateInfo{};
 	gridDescriptorSetCreateInfo.debugName = "Grid Descriptor";

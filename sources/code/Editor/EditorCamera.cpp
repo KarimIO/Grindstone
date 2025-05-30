@@ -106,8 +106,8 @@ EditorCamera::EditorCamera() {
 	descriptorSetLayoutCreateInfo.bindings = &descriptorSetLayoutBinding;
 	descriptorSetLayout = core->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
-	std::pair<void*, void*> combinedSamplerPair = { renderTarget, sampler };
-	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding{ &combinedSamplerPair };
+	std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> combinedSamplerPair = { renderTarget, sampler };
+	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding = GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler( &combinedSamplerPair );
 
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 	descriptorSetCreateInfo.debugName = "Editor Viewport Descriptor Set";
@@ -365,8 +365,8 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 	framebuffer->Resize(width, height);
 	renderer->Resize(width, height);
 
-	std::pair<void*, void*> combinedSamplerPair = { renderTarget, sampler };
-	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding{ &combinedSamplerPair };
+	std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> combinedSamplerPair = { renderTarget, sampler };
+	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding = GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler( &combinedSamplerPair );
 
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 	descriptorSetCreateInfo.debugName = "Editor Viewport Descriptor Set";

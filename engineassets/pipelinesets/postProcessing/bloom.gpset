@@ -13,7 +13,7 @@ computeSet "Bloom" {
 	]
 
 	shaderHlsl {
-		const float epsilon = 1.0e-4;
+		static const float epsilon = 1.0e-4;
 
 		struct ControlUniformBuffer {
 			float4 reciprocalImgSizes; // Consists of  float2 in; float2 out;
@@ -23,16 +23,16 @@ computeSet "Bloom" {
 			float filterRadius;
 		};
 
-		cbuffer postUbo : register(b0, space1) { ControlUniformBuffer postUbo; }
+		ConstantBuffer<ControlUniformBuffer> postUbo : register(b0, space1);
 
 		RWTexture2D<float4> outImage : register(u1,  space0);
 		Texture2D<float4> inImage1 : register(t2,  space0);
 		Texture2D<float4> inImage2 : register(t3,  space0);
 
-		const int bloomStagePrefilter	= 0;
-		const int bloomStageDownsample	= 1;
-		const int bloomStageUpsample	= 2;
-		const int bloomStageApply		= 3;
+		static const int bloomStagePrefilter	= 0;
+		static const int bloomStageDownsample	= 1;
+		static const int bloomStageUpsample	= 2;
+		static const int bloomStageApply		= 3;
 
 		float3 Upsample(Texture2D<float4> srcTexture, float2 texCoord, float2 texelSize, float radius) {
 			float2 offset = texelSize * radius;
@@ -56,7 +56,7 @@ computeSet "Bloom" {
 			return float3(pow(v.x, p), pow(v.y, p), pow(v.z, p));
 		}
 
-		const float invGamma = 1.0 / 2.2;
+		static const float invGamma = 1.0 / 2.2;
 		float3 ToSRGB(float3 v) { return Powfloat3(v, invGamma); }
 
 		float RGBToLuminance(float3 col) {

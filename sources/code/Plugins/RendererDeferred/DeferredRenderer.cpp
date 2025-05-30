@@ -377,8 +377,8 @@ void DeferredRenderer::CreateDepthOfFieldRenderTargetsAndDescriptorSets(Deferred
 
 	{
 		std::array<GraphicsAPI::DescriptorSet::Binding, 2> sourceDofDescriptorBindings = {
-			imageSet.gbufferDepthStencilTarget,
-			imageSet.litHdrRenderTarget
+			GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferDepthStencilTarget ),
+			GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.litHdrRenderTarget )
 		};
 
 		GraphicsAPI::DescriptorSet::CreateInfo dofSourceDescriptorSetCreateInfo{};
@@ -390,7 +390,7 @@ void DeferredRenderer::CreateDepthOfFieldRenderTargetsAndDescriptorSets(Deferred
 	}
 
 	{
-		GraphicsAPI::DescriptorSet::Binding nearDofDescriptorBinding = { imageSet.nearDofRenderTarget };
+		GraphicsAPI::DescriptorSet::Binding nearDofDescriptorBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.nearDofRenderTarget );
 
 		GraphicsAPI::DescriptorSet::CreateInfo dofBlurNearDescriptorSetCreateInfo{};
 		dofBlurNearDescriptorSetCreateInfo.layout = dofBlurDescriptorSetLayout;
@@ -401,7 +401,7 @@ void DeferredRenderer::CreateDepthOfFieldRenderTargetsAndDescriptorSets(Deferred
 	}
 
 	{
-		GraphicsAPI::DescriptorSet::Binding farDofDescriptorBinding = { imageSet.farDofRenderTarget };
+		GraphicsAPI::DescriptorSet::Binding farDofDescriptorBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.farDofRenderTarget );
 
 		GraphicsAPI::DescriptorSet::CreateInfo dofBlurFarDescriptorSetCreateInfo{};
 		dofBlurFarDescriptorSetCreateInfo.layout = dofBlurDescriptorSetLayout;
@@ -413,8 +413,8 @@ void DeferredRenderer::CreateDepthOfFieldRenderTargetsAndDescriptorSets(Deferred
 
 	{
 		std::array<GraphicsAPI::DescriptorSet::Binding, 2> nearAndFarDescriptorBindings = {
-			imageSet.nearBlurredDofRenderTarget,
-			imageSet.farBlurredDofRenderTarget
+			GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.nearBlurredDofRenderTarget ),
+			GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.farBlurredDofRenderTarget )
 		};
 
 		GraphicsAPI::DescriptorSet::CreateInfo dofCombinationDescriptorSetCreateInfo{};
@@ -616,9 +616,9 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 
 	{
 		std::array<GraphicsAPI::DescriptorSet::Binding, 3> ssaoLayoutBindings{
-			ssaoNoiseSampler,
-			ssaoNoiseTexture,
-			ssaoUniformBuffer
+			GraphicsAPI::DescriptorSet::Binding::Sampler( ssaoNoiseSampler ),
+			GraphicsAPI::DescriptorSet::Binding::SampledImage( ssaoNoiseTexture ),
+			GraphicsAPI::DescriptorSet::Binding::UniformBuffer( ssaoUniformBuffer )
 		};
 
 		GraphicsAPI::DescriptorSet::CreateInfo engineDescriptorSetCreateInfo{};
@@ -747,12 +747,12 @@ void DeferredRenderer::CreateSsrRenderTargetsAndDescriptorSets(DeferredRendererI
 	imageSet.ssrRenderTarget = graphicsCore->CreateImage(ssrRenderTargetCreateInfo);
 
 	std::array<GraphicsAPI::DescriptorSet::Binding, 6> descriptorBindings;
-	descriptorBindings[0].itemPtr = imageSet.globalUniformBufferObject;
-	descriptorBindings[1].itemPtr = imageSet.ssrRenderTarget;
-	descriptorBindings[2].itemPtr = imageSet.litHdrRenderTarget;
-	descriptorBindings[3].itemPtr = imageSet.gbufferDepthStencilTarget;
-	descriptorBindings[4].itemPtr = imageSet.gbufferNormalRenderTarget;
-	descriptorBindings[5].itemPtr = imageSet.gbufferSpecularRoughnessRenderTarget;
+	descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( imageSet.globalUniformBufferObject );
+	descriptorBindings[1] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.ssrRenderTarget );
+	descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.litHdrRenderTarget );
+	descriptorBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferDepthStencilTarget );
+	descriptorBindings[4] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferNormalRenderTarget );
+	descriptorBindings[5] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferSpecularRoughnessRenderTarget );
 
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 	descriptorSetCreateInfo.debugName = "SSR Descriptor Set";
@@ -811,7 +811,7 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 	}
 
 	std::array<GraphicsAPI::DescriptorSet::Binding, 4> descriptorBindings;
-	descriptorBindings[3].itemPtr = imageSet.bloomRenderTargets[0];
+	descriptorBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[0] );
 
 	// Threshold values sourced from: https://catlikecoding.com/unity/tutorials/advanced-rendering/bloom/
 	float threshold = 1.0f;
@@ -837,9 +837,9 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 		std::string bloomDescriptorName = fmt::format("Bloom DS Filter [{}]", imageSetIndex);
 		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UploadData(&bloomUboStruct);
-		descriptorBindings[0].itemPtr = bloomUniformBuffers[bloomDescriptorSetIndex];
-		descriptorBindings[1].itemPtr = imageSet.bloomRenderTargets[1];
-		descriptorBindings[2].itemPtr = imageSet.litHdrRenderTarget;
+		descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( bloomUniformBuffers[bloomDescriptorSetIndex] );
+		descriptorBindings[1] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.bloomRenderTargets[1] );
+		descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.litHdrRenderTarget );
 		imageSet.bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 
@@ -848,9 +848,9 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 		std::string bloomDescriptorName = fmt::format("Bloom DS Downsample [{}]({})", imageSetIndex, i);
 		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UploadData(&bloomUboStruct);
-		descriptorBindings[0].itemPtr = bloomUniformBuffers[bloomDescriptorSetIndex];
-		descriptorBindings[1].itemPtr = imageSet.bloomRenderTargets[i + 1];
-		descriptorBindings[2].itemPtr = imageSet.bloomRenderTargets[i];
+		descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( bloomUniformBuffers[bloomDescriptorSetIndex] );
+		descriptorBindings[1] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.bloomRenderTargets[i + 1] );
+		descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[i] );
 		imageSet.bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 
@@ -858,10 +858,10 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 		std::string bloomDescriptorName = fmt::format("Bloom DS First Upsample [{}])", imageSetIndex);
 		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UploadData(&bloomUboStruct);
-		descriptorBindings[0].itemPtr = bloomUniformBuffers[bloomDescriptorSetIndex];
-		descriptorBindings[1].itemPtr = imageSet.bloomRenderTargets[bloomStoredMipLevelCount * 2 - 1];
-		descriptorBindings[2].itemPtr = imageSet.bloomRenderTargets[bloomStoredMipLevelCount - 2];
-		descriptorBindings[3].itemPtr = imageSet.bloomRenderTargets[bloomStoredMipLevelCount - 1];
+		descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( bloomUniformBuffers[bloomDescriptorSetIndex] );
+		descriptorBindings[1] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.bloomRenderTargets[bloomStoredMipLevelCount * 2 - 1] );
+		descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomStoredMipLevelCount - 2] );
+		descriptorBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomStoredMipLevelCount - 1] );
 		imageSet.bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 
@@ -870,10 +870,10 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 		std::string bloomDescriptorName = fmt::format("Bloom DS Upsample [{}]({})", imageSetIndex, i);
 		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UploadData(&bloomUboStruct);
-		descriptorBindings[0].itemPtr = bloomUniformBuffers[bloomDescriptorSetIndex];
-		descriptorBindings[1].itemPtr = imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i];
-		descriptorBindings[3].itemPtr = imageSet.bloomRenderTargets[i];
-		descriptorBindings[2].itemPtr = imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i + 1];
+		descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( bloomUniformBuffers[bloomDescriptorSetIndex] );
+		descriptorBindings[1] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i] );
+		descriptorBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[i] );
+		descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i + 1] );
 		imageSet.bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 }
@@ -940,9 +940,9 @@ void DeferredRenderer::UpdateBloomDescriptorSet(DeferredRendererImageSet& imageS
 	}
 
 	std::array<GraphicsAPI::DescriptorSet::Binding, 3> bindings;
-	bindings[0].itemPtr = imageSet.bloomRenderTargets[(bloomStoredMipLevelCount * 2) - bloomMipLevelCount + 2];
-	bindings[1].itemPtr = imageSet.bloomRenderTargets[bloomMipLevelCount - 2];
-	bindings[2].itemPtr = imageSet.bloomRenderTargets[bloomMipLevelCount - 1];
+	bindings[0] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.bloomRenderTargets[(bloomStoredMipLevelCount * 2) - bloomMipLevelCount + 2] );
+	bindings[1] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomMipLevelCount - 2] );
+	bindings[2] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomMipLevelCount - 1] );
 
 	imageSet.bloomDescriptorSets[bloomFirstUpsampleIndex]->ChangeBindings(bindings.data(), static_cast<uint32_t>(bindings.size()), 1);
 }
@@ -987,7 +987,7 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	gbufferSampler.bindingId = 1;
 	gbufferSampler.count = 1;
 	gbufferSampler.type = GraphicsAPI::BindingType::Sampler;
-	gbufferSampler.stages = GraphicsAPI::ShaderStageBit::Vertex | GraphicsAPI::ShaderStageBit::Fragment;
+	gbufferSampler.stages = GraphicsAPI::ShaderStageBit::Fragment;
 
 	GraphicsAPI::DescriptorSetLayout::Binding litHdrRenderTargetBinding{};
 	litHdrRenderTargetBinding.bindingId = 2;
@@ -1141,12 +1141,13 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	GraphicsAPI::DescriptorSet::Binding engineUboBinding{ imageSet.globalUniformBufferObject };
-	GraphicsAPI::DescriptorSet::Binding litHdrRenderTargetBinding{ imageSet.litHdrRenderTarget };
-	GraphicsAPI::DescriptorSet::Binding gbufferDepthBinding{ imageSet.gbufferDepthStencilTarget };
-	GraphicsAPI::DescriptorSet::Binding gbufferAlbedoBinding{ imageSet.gbufferAlbedoRenderTarget };
-	GraphicsAPI::DescriptorSet::Binding gbufferNormalBinding{ imageSet.gbufferNormalRenderTarget };
-	GraphicsAPI::DescriptorSet::Binding gbufferSpecRoughnessBinding{ imageSet.gbufferSpecularRoughnessRenderTarget };
+	const GraphicsAPI::DescriptorSet::Binding screenSamplerBinding = GraphicsAPI::DescriptorSet::Binding::Sampler(screenSampler);
+	const GraphicsAPI::DescriptorSet::Binding engineUboBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( imageSet.globalUniformBufferObject );
+	const GraphicsAPI::DescriptorSet::Binding litHdrRenderTargetBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.litHdrRenderTarget );
+	const GraphicsAPI::DescriptorSet::Binding gbufferDepthBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferDepthStencilTarget );
+	const GraphicsAPI::DescriptorSet::Binding gbufferAlbedoBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferAlbedoRenderTarget );
+	const GraphicsAPI::DescriptorSet::Binding gbufferNormalBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferNormalRenderTarget );
+	const GraphicsAPI::DescriptorSet::Binding gbufferSpecRoughnessBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferSpecularRoughnessRenderTarget );
 
 	GraphicsAPI::DescriptorSet::CreateInfo engineDescriptorSetCreateInfo{};
 	engineDescriptorSetCreateInfo.debugName = "Engine UBO Descriptor Set";
@@ -1155,12 +1156,13 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	engineDescriptorSetCreateInfo.bindings = &engineUboBinding;
 	imageSet.engineDescriptorSet = graphicsCore->CreateDescriptorSet(engineDescriptorSetCreateInfo);
 
-	std::array<GraphicsAPI::DescriptorSet::Binding, 5> tonemapDescriptorSetBindings{};
+	std::array<GraphicsAPI::DescriptorSet::Binding, 6> tonemapDescriptorSetBindings{};
 	tonemapDescriptorSetBindings[0] = engineUboBinding;
-	tonemapDescriptorSetBindings[1] = litHdrRenderTargetBinding;
-	tonemapDescriptorSetBindings[2] = { imageSet.bloomRenderTargets[bloomMipLevelCount + 1] };
-	tonemapDescriptorSetBindings[3] = gbufferDepthBinding;
-	tonemapDescriptorSetBindings[4] = { imageSet.tonemapPostProcessingUniformBufferObject };
+	tonemapDescriptorSetBindings[1] = screenSamplerBinding;
+	tonemapDescriptorSetBindings[2] = litHdrRenderTargetBinding;
+	tonemapDescriptorSetBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomMipLevelCount + 1] );
+	tonemapDescriptorSetBindings[4] = gbufferDepthBinding;
+	tonemapDescriptorSetBindings[5] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( imageSet.tonemapPostProcessingUniformBufferObject );
 
 	GraphicsAPI::DescriptorSet::CreateInfo tonemapDescriptorSetCreateInfo{};
 	tonemapDescriptorSetCreateInfo.debugName = "Tonemap Descriptor Set";
@@ -1169,14 +1171,15 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	tonemapDescriptorSetCreateInfo.bindings = tonemapDescriptorSetBindings.data();
 	imageSet.tonemapDescriptorSet = graphicsCore->CreateDescriptorSet(tonemapDescriptorSetCreateInfo);
 
-	std::array<GraphicsAPI::DescriptorSet::Binding, 7> debugDescriptorSetBindings{};
+	std::array<GraphicsAPI::DescriptorSet::Binding, 8> debugDescriptorSetBindings{};
 	debugDescriptorSetBindings[0] = engineUboBinding;
-	debugDescriptorSetBindings[1] = gbufferDepthBinding;
-	debugDescriptorSetBindings[2] = gbufferAlbedoBinding;
-	debugDescriptorSetBindings[3] = gbufferNormalBinding;
-	debugDescriptorSetBindings[4] = gbufferSpecRoughnessBinding;
-	debugDescriptorSetBindings[5] = { imageSet.ambientOcclusionRenderTarget };
-	debugDescriptorSetBindings[6] = { imageSet.debugUniformBufferObject };
+	debugDescriptorSetBindings[1] = screenSamplerBinding;
+	debugDescriptorSetBindings[2] = gbufferDepthBinding;
+	debugDescriptorSetBindings[3] = gbufferAlbedoBinding;
+	debugDescriptorSetBindings[4] = gbufferNormalBinding;
+	debugDescriptorSetBindings[5] = gbufferSpecRoughnessBinding;
+	debugDescriptorSetBindings[6] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.ambientOcclusionRenderTarget );
+	debugDescriptorSetBindings[7] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( imageSet.debugUniformBufferObject );
 
 	GraphicsAPI::DescriptorSet::CreateInfo debugDescriptorSetCreateInfo{};
 	debugDescriptorSetCreateInfo.debugName = "Debug Descriptor Set";
@@ -1185,12 +1188,13 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	debugDescriptorSetCreateInfo.bindings = debugDescriptorSetBindings.data();
 	imageSet.debugDescriptorSet = graphicsCore->CreateDescriptorSet(debugDescriptorSetCreateInfo);
 
-	std::array<GraphicsAPI::DescriptorSet::Binding, 5> lightingDescriptorSetBindings{};
+	std::array<GraphicsAPI::DescriptorSet::Binding, 6> lightingDescriptorSetBindings{};
 	lightingDescriptorSetBindings[0] = engineUboBinding;
-	lightingDescriptorSetBindings[1] = gbufferDepthBinding;
-	lightingDescriptorSetBindings[2] = gbufferAlbedoBinding;
-	lightingDescriptorSetBindings[3] = gbufferNormalBinding;
-	lightingDescriptorSetBindings[4] = gbufferSpecRoughnessBinding;
+	lightingDescriptorSetBindings[1] = screenSamplerBinding;
+	lightingDescriptorSetBindings[2] = gbufferDepthBinding;
+	lightingDescriptorSetBindings[3] = gbufferAlbedoBinding;
+	lightingDescriptorSetBindings[4] = gbufferNormalBinding;
+	lightingDescriptorSetBindings[5] = gbufferSpecRoughnessBinding;
 
 	GraphicsAPI::DescriptorSet::CreateInfo lightingDescriptorSetCreateInfo{};
 	lightingDescriptorSetCreateInfo.debugName = "Point Light Descriptor Set";
@@ -1200,7 +1204,10 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	imageSet.lightingDescriptorSet = graphicsCore->CreateDescriptorSet(lightingDescriptorSetCreateInfo);
 
 	{
-		std::array<GraphicsAPI::DescriptorSet::Binding, 2> aoInputBinding = { imageSet.ambientOcclusionRenderTarget, brdfLut.Get()->image };
+		std::array<GraphicsAPI::DescriptorSet::Binding, 2> aoInputBinding = {
+			GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.ambientOcclusionRenderTarget ),
+			GraphicsAPI::DescriptorSet::Binding::SampledImage( brdfLut.Get()->image )
+		};
 
 		GraphicsAPI::DescriptorSet::CreateInfo aoInputCreateInfo{};
 		aoInputCreateInfo.debugName = "Ambient Occlusion Descriptor Set";
@@ -1211,7 +1218,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	}
 
 	{
-		GraphicsAPI::DescriptorSet::Binding environmentMapBinding{ nullptr };
+		GraphicsAPI::DescriptorSet::Binding environmentMapBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( nullptr );
 
 		GraphicsAPI::DescriptorSet::CreateInfo environmentMapDescriptorCreateInfo{};
 		environmentMapDescriptorCreateInfo.debugName = "Environment Map Input Descriptor Set";
@@ -1225,22 +1232,22 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	GraphicsAPI::DescriptorSet::Binding engineUboBinding{ imageSet.globalUniformBufferObject };
-	GraphicsAPI::DescriptorSet::Binding litHdrRenderTargetBinding{ imageSet.litHdrRenderTarget };
-	GraphicsAPI::DescriptorSet::Binding screenSamplerBinding{ screenSampler };
-	GraphicsAPI::DescriptorSet::Binding gbufferDepthBinding{ imageSet.gbufferDepthStencilTarget };
-	GraphicsAPI::DescriptorSet::Binding gbufferAlbedoBinding{ imageSet.gbufferAlbedoRenderTarget };
-	GraphicsAPI::DescriptorSet::Binding gbufferNormalBinding{ imageSet.gbufferNormalRenderTarget };
-	GraphicsAPI::DescriptorSet::Binding gbufferSpecRoughnessBinding{ imageSet.gbufferSpecularRoughnessRenderTarget };
+	GraphicsAPI::DescriptorSet::Binding engineUboBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( imageSet.globalUniformBufferObject );
+	GraphicsAPI::DescriptorSet::Binding screenSamplerBinding = GraphicsAPI::DescriptorSet::Binding::Sampler( screenSampler );
+	GraphicsAPI::DescriptorSet::Binding litHdrRenderTargetBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.litHdrRenderTarget );
+	GraphicsAPI::DescriptorSet::Binding gbufferDepthBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferDepthStencilTarget );
+	GraphicsAPI::DescriptorSet::Binding gbufferAlbedoBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferAlbedoRenderTarget );
+	GraphicsAPI::DescriptorSet::Binding gbufferNormalBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferNormalRenderTarget );
+	GraphicsAPI::DescriptorSet::Binding gbufferSpecRoughnessBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferSpecularRoughnessRenderTarget );
 	imageSet.engineDescriptorSet->ChangeBindings(&engineUboBinding, 1);
 
 	{
 		std::array<GraphicsAPI::DescriptorSet::Binding, 5> tonemapDescriptorSetBindings{};
 		tonemapDescriptorSetBindings[0] = engineUboBinding;
 		tonemapDescriptorSetBindings[1] = litHdrRenderTargetBinding;
-		tonemapDescriptorSetBindings[2] = { imageSet.bloomRenderTargets[bloomMipLevelCount + 1] };
+		tonemapDescriptorSetBindings[2] = GraphicsAPI::DescriptorSet::Binding::SampledImage(imageSet.bloomRenderTargets[bloomMipLevelCount + 1]);
 		tonemapDescriptorSetBindings[3] = gbufferDepthBinding;
-		tonemapDescriptorSetBindings[4] = { imageSet.tonemapPostProcessingUniformBufferObject };
+		tonemapDescriptorSetBindings[4] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(imageSet.tonemapPostProcessingUniformBufferObject);
 
 		imageSet.tonemapDescriptorSet->ChangeBindings(tonemapDescriptorSetBindings.data(), static_cast<uint32_t>(tonemapDescriptorSetBindings.size()));
 	}
@@ -1258,7 +1265,7 @@ void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	}
 
 	{
-		GraphicsAPI::DescriptorSet::Binding ssaoInputBinding{ imageSet.ambientOcclusionRenderTarget };
+		GraphicsAPI::DescriptorSet::Binding ssaoInputBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage(imageSet.ambientOcclusionRenderTarget);
 		ssaoInputDescriptorSet->ChangeBindings(&ssaoInputBinding, 1);
 	}
 }
@@ -1710,7 +1717,7 @@ void DeferredRenderer::RenderLights(
 					GraphicsAPI::Image* tex = texAsset->image;
 					hasEnvMap = true;
 
-					GraphicsAPI::DescriptorSet::Binding binding{ tex };
+					GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::SampledImage(tex);
 					environmentMapDescriptorSet->ChangeBindings(&binding, 1);
 				}
 			});

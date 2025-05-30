@@ -81,8 +81,8 @@ void Grindstone::SetupSpotLightComponent(entt::registry& registry, entt::entity 
 		spotLightComponent.descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
 		std::array<GraphicsAPI::DescriptorSet::Binding, 2> lightBindings{
-			spotLightComponent.uniformBufferObject,
-			spotLightComponent.depthTarget
+			GraphicsAPI::DescriptorSet::Binding::UniformBuffer( spotLightComponent.uniformBufferObject ),
+			GraphicsAPI::DescriptorSet::Binding::SampledImage( spotLightComponent.depthTarget )
 		};
 
 		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
@@ -113,7 +113,7 @@ void Grindstone::SetupSpotLightComponent(entt::registry& registry, entt::entity 
 		descriptorSetLayoutCreateInfo.bindings = &lightUboBindingLayout;
 		spotLightComponent.shadowMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
-		GraphicsAPI::DescriptorSet::Binding lightUboBinding{ spotLightComponent.shadowMapUniformBufferObject };
+		GraphicsAPI::DescriptorSet::Binding lightUboBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( spotLightComponent.shadowMapUniformBufferObject );
 
 		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 		descriptorSetCreateInfo.debugName = "Spotlight Shadow Descriptor Set";

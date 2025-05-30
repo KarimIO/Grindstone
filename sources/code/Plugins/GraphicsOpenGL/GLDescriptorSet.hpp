@@ -9,6 +9,6 @@ namespace Grindstone::GraphicsAPI::OpenGL {
 		virtual ~DescriptorSet();
 
 		// Inherited via DescriptorSet
-		virtual void ChangeBindings(Binding* bindings, uint32_t bindingCount, uint32_t bindingOffset = 0) override;
+		virtual void ChangeBindings(const Binding* bindings, uint32_t bindingCount, uint32_t bindingOffset = 0) override;
 	};
 }

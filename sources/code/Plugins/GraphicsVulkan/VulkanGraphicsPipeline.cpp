@@ -186,8 +186,11 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 	std::vector<VkDescriptorSetLayout> layouts;
 	layouts.reserve(pipelineData.descriptorSetLayoutCount);
 
+
+	Vulkan::DescriptorSetLayout** descriptorSetLayouts = reinterpret_cast<Vulkan::DescriptorSetLayout**>(pipelineData.descriptorSetLayouts);
+
 	for (uint32_t i = 0; i < pipelineData.descriptorSetLayoutCount; ++i) {
-		Vulkan::DescriptorSetLayout* descriptorSetLayout = static_cast<Vulkan::DescriptorSetLayout*>(pipelineData.descriptorSetLayouts[i]);
+		Vulkan::DescriptorSetLayout* descriptorSetLayout = descriptorSetLayouts[i];
 		VkDescriptorSetLayout vkDescriptorSetLayout = descriptorSetLayout->GetInternalLayout();
 		layouts.push_back(vkDescriptorSetLayout);
 	}

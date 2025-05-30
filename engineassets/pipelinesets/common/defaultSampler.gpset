@@ -1,5 +1,5 @@
 shaderBlock GsDefaultSampler {
 	shaderHlsl {
-		SamplerState defaultSampler : register(s0, space0);
+		SamplerState defaultSampler : register(s1, space0);
 	}
 }

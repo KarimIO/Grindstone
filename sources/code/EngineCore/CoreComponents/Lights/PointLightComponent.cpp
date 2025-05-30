@@ -81,7 +81,8 @@ void Grindstone::SetupPointLightComponent(entt::registry& registry, entt::entity
 	}
 
 	{
-		std::array<DescriptorSet::Binding, 1> lightBindings{ pointLightComponent.uniformBufferObject };
+		std::array<DescriptorSet::Binding, 1> lightBindings;
+		lightBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(pointLightComponent.uniformBufferObject);
 
 		/* TODO: Re-add this when you come back to point light shadows
 		lightBindings[1].bindingIndex = 1;

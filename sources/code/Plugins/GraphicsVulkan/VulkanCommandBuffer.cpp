@@ -329,7 +329,7 @@ void Vulkan::CommandBuffer::BindIndexBuffer(Base::Buffer* indexBuffer) {
 	Vulkan::Buffer* vulkanIndexBuffer = static_cast<Vulkan::Buffer*>(indexBuffer);
 
 	// TODO: Where can I get this from?
-	VkIndexType indexType = true ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16;
+	VkIndexType indexType = false ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16;
 	vkCmdBindIndexBuffer(commandBuffer, vulkanIndexBuffer->GetBuffer(), 0, indexType);
 }
 

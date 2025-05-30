@@ -43,7 +43,7 @@ pipelineSet "Translucent" {
 					float4 color;
 				};
 
-				cbuffer materialInstanceUbo : register(b0, space0) { MaterialInstanceUBO materialInstanceUbo; }
+				ConstantBuffer<MaterialInstanceUBO> materialInstanceUbo : register(b0, space0);
 
 				Texture2D<float4> albedoTexture : register(t1, space0);
 				Texture2D<float4> normalTexture : register(t2, space0);

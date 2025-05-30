@@ -264,8 +264,8 @@ ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {
 		return 0;
 	}
 
-	std::pair<void*, void*> samplerPair = { textureAsset->image, textureAsset->defaultSampler };
-	GraphicsAPI::DescriptorSet::Binding binding{ &samplerPair };
+	std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> samplerPair = { textureAsset->image, textureAsset->defaultSampler };
+	GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler( &samplerPair );
 
 	auto pathAsStr = path.filename().string() + " Descriptor Set";
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};

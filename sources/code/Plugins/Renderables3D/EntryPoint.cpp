@@ -33,7 +33,7 @@ static void SetupMeshRendererComponent(entt::registry& registry, entt::entity en
 	uniformBufferCreateInfo.bufferSize = sizeof(float) * 16;
 	meshRendererComponent.perDrawUniformBuffer = graphicsCore->CreateBuffer(uniformBufferCreateInfo);
 
-	GraphicsAPI::DescriptorSet::Binding descriptorSetUniformBinding{ meshRendererComponent.perDrawUniformBuffer };
+	GraphicsAPI::DescriptorSet::Binding descriptorSetUniformBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( meshRendererComponent.perDrawUniformBuffer );
 
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 	descriptorSetCreateInfo.debugName = "Per Draw Descriptor Set";

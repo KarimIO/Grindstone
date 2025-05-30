@@ -79,8 +79,8 @@ void Grindstone::SetupDirectionalLightComponent(entt::registry& registry, entt::
 		directionalLightComponent.descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
 		std::array<GraphicsAPI::DescriptorSet::Binding, 2> lightBindings{
-			directionalLightComponent.uniformBufferObject,
-			directionalLightComponent.depthTarget
+			GraphicsAPI::DescriptorSet::Binding::UniformBuffer( directionalLightComponent.uniformBufferObject ),
+			GraphicsAPI::DescriptorSet::Binding::SampledImage( directionalLightComponent.depthTarget )
 		};
 
 		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
@@ -111,7 +111,7 @@ void Grindstone::SetupDirectionalLightComponent(entt::registry& registry, entt::
 		descriptorSetLayoutCreateInfo.bindings = &lightUboBindingLayout;
 		directionalLightComponent.shadowMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
-		GraphicsAPI::DescriptorSet::Binding lightUboBinding{ directionalLightComponent.shadowMapUniformBufferObject };
+		GraphicsAPI::DescriptorSet::Binding lightUboBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( directionalLightComponent.shadowMapUniformBufferObject );
 
 		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 		descriptorSetCreateInfo.debugName = "Directional Light Shadow Descriptor Set";

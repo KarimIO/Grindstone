@@ -39,7 +39,7 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 					bool isAnimated;
 				};
 
-				cbuffer postProcessingUbo : register(b4, space0) { PostProcessUbo postProcessingUbo; }
+				ConstantBuffer<PostProcessUbo> postProcessingUbo : register(b4, space0);
 
 				float3 linearToSRGB(float3 inColor) {
 					float3 outColor;

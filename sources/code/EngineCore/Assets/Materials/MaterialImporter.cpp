@@ -214,7 +214,7 @@ static void SetupUniformBuffer(
 		ubCi.bufferSize = static_cast<uint32_t>(materialBuffer->bufferSize);
 		uniformBufferObject = graphicsCore->CreateBuffer(ubCi);
 
-		GraphicsAPI::DescriptorSet::Binding uniformBufferBinding{ uniformBufferObject };
+		GraphicsAPI::DescriptorSet::Binding uniformBufferBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( uniformBufferObject );
 		bindings.push_back(uniformBufferBinding);
 	}
 
@@ -262,11 +262,11 @@ static void SetupSamplers(
 				if (materialAsset.textures[i].IsValid()) {
 					itemPtr = materialAsset.textures[i].Get()->image;
 				}
-				GraphicsAPI::DescriptorSet::Binding textureBinding{ itemPtr };
+				GraphicsAPI::DescriptorSet::Binding textureBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( itemPtr );
 				bindings.push_back(textureBinding);
 			}
 			else {
-				GraphicsAPI::DescriptorSet::Binding textureBinding{ missingTexture };
+				GraphicsAPI::DescriptorSet::Binding textureBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( missingTexture );
 				bindings.push_back(textureBinding);
 			}
 		}
