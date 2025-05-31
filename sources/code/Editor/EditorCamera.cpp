@@ -43,7 +43,7 @@ EditorCamera::EditorCamera() {
 	depthTargetCreateInfo.debugName = "Editor Viewport Depth Image";
 	depthTargetCreateInfo.width = framebufferWidth;
 	depthTargetCreateInfo.height = framebufferHeight;
-	depthTargetCreateInfo.format = GraphicsAPI::Format::D24_UNORM_S8_UINT;
+	depthTargetCreateInfo.format = GraphicsAPI::Format::D32_SFLOAT;
 	depthTargetCreateInfo.imageUsage =
 		GraphicsAPI::ImageUsageFlags::TransferDst |
 		GraphicsAPI::ImageUsageFlags::Sampled |
@@ -56,7 +56,7 @@ EditorCamera::EditorCamera() {
 	renderPassCreateInfo.debugName = "Editor RenderPass";
 	renderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(attachments.size());
 	renderPassCreateInfo.colorAttachments = attachments.data();
-	renderPassCreateInfo.depthFormat = GraphicsAPI::Format::D24_UNORM_S8_UINT;
+	renderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
 	renderPass = core->CreateRenderPass(renderPassCreateInfo);
 	renderPassRegistry->RegisterRenderpass("Editor", renderPass);
 
@@ -66,7 +66,7 @@ EditorCamera::EditorCamera() {
 	gizmoRenderPassCreateInfo.debugName = "Editor Gizmo RenderPass";
 	gizmoRenderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(gizmoAttachments.size());
 	gizmoRenderPassCreateInfo.colorAttachments = gizmoAttachments.data();
-	gizmoRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D24_UNORM_S8_UINT;
+	gizmoRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
 	gizmoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 	gizmoRenderPass = core->CreateRenderPass(gizmoRenderPassCreateInfo);
 	renderPassRegistry->RegisterRenderpass("Gizmo", gizmoRenderPass);
