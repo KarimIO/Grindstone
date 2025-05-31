@@ -129,51 +129,59 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 	V1::PipelineSetFileHeader* srcFileHeader = reinterpret_cast<V1::PipelineSetFileHeader*>(filePtr + 4);
 	
 	GS_ASSERT(srcFileHeader->headerSize == sizeof(V1::PipelineSetFileHeader));
-	GS_ASSERT(srcFileHeader->graphicsPipelineSize == sizeof(V1::GraphicsPipelineHeader));
-	GS_ASSERT(srcFileHeader->computePipelineSize == sizeof(V1::ComputePipelineHeader));
-	GS_ASSERT(srcFileHeader->configurationSize == sizeof(V1::PipelineConfigurationHeader));
+	GS_ASSERT(srcFileHeader->graphicsPipelineSize == sizeof(V1::GraphicsPipelineSetHeader));
+	GS_ASSERT(srcFileHeader->computePipelineSize == sizeof(V1::ComputePipelineSetHeader));
+	GS_ASSERT(srcFileHeader->graphicsConfigurationSize == sizeof(V1::GraphicsPipelineConfigurationHeader));
+	GS_ASSERT(srcFileHeader->computeConfigurationSize == sizeof(V1::ComputePipelineConfigurationHeader));
 	GS_ASSERT(srcFileHeader->passSize == sizeof(V1::PassPipelineHeader));
 	GS_ASSERT(srcFileHeader->attachmentSize == sizeof(V1::PassPipelineAttachmentHeader));
 	GS_ASSERT(srcFileHeader->stageSize == sizeof(V1::PassPipelineShaderStageHeader));
 
-	Span<V1::GraphicsPipelineHeader> graphicsPipelines{
-		reinterpret_cast<V1::GraphicsPipelineHeader*>(filePtr + srcFileHeader->graphicsPipelinesOffset),
+	Span<V1::GraphicsPipelineSetHeader> graphicsPipelines{
+		reinterpret_cast<V1::GraphicsPipelineSetHeader*>(filePtr + srcFileHeader->graphicsPipelinesOffset),
 		srcFileHeader->graphicsPipelineCount
 	};
-	Span<V1::PipelineConfigurationHeader> pipelineConfigurations{
-		reinterpret_cast<V1::PipelineConfigurationHeader*>(filePtr + srcFileHeader->graphicsConfigurationsOffset),
-		srcFileHeader->graphicsConfigurationsCount
+
+	Span<V1::GraphicsPipelineConfigurationHeader> pipelineConfigurations{
+		reinterpret_cast<V1::GraphicsPipelineConfigurationHeader*>(filePtr + srcFileHeader->graphicsConfigurationsOffset),
+		srcFileHeader->graphicsConfigurationCount
 	};
+
 	Span<V1::PassPipelineHeader> pipelinePasses{
-			reinterpret_cast<V1::PassPipelineHeader*>(filePtr + srcFileHeader->graphicsPassesOffset),
-			srcFileHeader->graphicsPassesCount
+		reinterpret_cast<V1::PassPipelineHeader*>(filePtr + srcFileHeader->graphicsPassesOffset),
+		srcFileHeader->graphicsPassCount
 	};
+
 	Span<V1::PassPipelineShaderStageHeader> shaderStages{
-			reinterpret_cast<V1::PassPipelineShaderStageHeader*>(filePtr + srcFileHeader->shaderStagesOffset),
-			srcFileHeader->shaderStagesCount
+		reinterpret_cast<V1::PassPipelineShaderStageHeader*>(filePtr + srcFileHeader->shaderStagesOffset),
+		srcFileHeader->shaderStageCount
 	};
+
 	Span<V1::PassPipelineAttachmentHeader> attachments{
-			reinterpret_cast<V1::PassPipelineAttachmentHeader*>(filePtr + srcFileHeader->attachmentHeadersOffset),
-			srcFileHeader->attachmentHeadersCount
+		reinterpret_cast<V1::PassPipelineAttachmentHeader*>(filePtr + srcFileHeader->attachmentHeadersOffset),
+		srcFileHeader->attachmentHeaderCount
 	};
+
 	Span<V1::ShaderReflectDescriptorSet> descriptorSets{
-			reinterpret_cast<V1::ShaderReflectDescriptorSet*>(filePtr + srcFileHeader->descriptorSetsOffset),
-			srcFileHeader->descriptorSetsCount
+		reinterpret_cast<V1::ShaderReflectDescriptorSet*>(filePtr + srcFileHeader->descriptorSetsOffset),
+		srcFileHeader->descriptorSetCount
 	};
+
 	Span<V1::ShaderReflectDescriptorBinding> descriptorBindings{
-			reinterpret_cast<V1::ShaderReflectDescriptorBinding*>(filePtr + srcFileHeader->descriptorBindingsOffset),
-			srcFileHeader->descriptorBindingsCount
+		reinterpret_cast<V1::ShaderReflectDescriptorBinding*>(filePtr + srcFileHeader->descriptorBindingsOffset),
+		srcFileHeader->descriptorBindingCount
 	};
+
 	Span<uint8_t> blobs{
-			filePtr + srcFileHeader->blobSectionOffset,
-			srcFileHeader->blobSectionSize
+		filePtr + srcFileHeader->blobSectionOffset,
+		srcFileHeader->blobSectionSize
 	};
 
 	GS_ASSERT(graphicsPipelines.GetSize() != 0);
-	const V1::GraphicsPipelineHeader& srcPipelineHeader = graphicsPipelines[0];
+	const V1::GraphicsPipelineSetHeader& srcPipelineHeader = graphicsPipelines[0];
 
 	GS_ASSERT(srcPipelineHeader.configurationCount != 0);
-	const V1::PipelineConfigurationHeader& srcConfigHeader = pipelineConfigurations[0];
+	const V1::GraphicsPipelineConfigurationHeader& srcConfigHeader = pipelineConfigurations[0];
 	
 	// TODO: Loop over Configurations
 	graphicsPipelineAsset.passes.resize(srcConfigHeader.passCount);

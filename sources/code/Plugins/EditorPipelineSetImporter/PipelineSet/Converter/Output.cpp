@@ -13,51 +13,6 @@
 #include <dxcapi.h>
 #include <d3d12shader.h>
 
-inline static const char* GetBoolAsString(bool val) {
-	return val ? "true" : "false";
-}
-
-static void PrintRenderState(std::string& output, const ParseTree::RenderState& renderState) {
-	#define INDENTATION "\t\t\t\t"
-	output += "\t\t\trenderState {\n";
-	output += fmt::format(INDENTATION "primitiveType: {}\n", GetGeometryTypeName(renderState.primitiveType.value()));
-	output += fmt::format(INDENTATION "polygonFillMode: {}\n", GetPolygonFillModeName(renderState.polygonFillMode.value()));
-	output += fmt::format(INDENTATION "cullMode: {}\n", GetCullModeName(renderState.cullMode.value()));
-
-	output += fmt::format(INDENTATION "depthCompareOp: {}\n", GetCompareOperationName(renderState.depthCompareOp.value()));
-	output += fmt::format(INDENTATION "isStencilEnabled: {}\n", GetBoolAsString(renderState.isStencilEnabled.value()));
-	output += fmt::format(INDENTATION "isDepthTestEnabled: {}\n", GetBoolAsString(renderState.isDepthTestEnabled.value()));
-	output += fmt::format(INDENTATION "isDepthWriteEnabled: {}\n", GetBoolAsString(renderState.isDepthWriteEnabled.value()));
-	output += fmt::format(INDENTATION "isDepthBiasEnabled: {}\n", GetBoolAsString(renderState.isDepthBiasEnabled.value()));
-	output += fmt::format(INDENTATION "isDepthClampEnabled: {}\n", GetBoolAsString(renderState.isDepthClampEnabled.value()));
-
-	output += fmt::format(INDENTATION "depthBiasConstantFactor: {}\n", renderState.depthBiasConstantFactor.value());
-	output += fmt::format(INDENTATION "depthBiasSlopeFactor: {}\n", renderState.depthBiasSlopeFactor.value());
-	output += fmt::format(INDENTATION "depthBiasClamp: {}\n", renderState.depthBiasClamp.value());
-
-	output += INDENTATION "attachments: [\n";
-	for (const ParseTree::RenderState::AttachmentData& attachment : renderState.attachmentData) {
-		output += INDENTATION "\t{";
-		output += fmt::format(INDENTATION "\t\tcolorMask: {}\n", GetColorMaskName(attachment.colorMask.value()));
-
-		output += fmt::format(INDENTATION "\t\tblendColor: {}, {}, {}\n",
-			GetBlendOperationName(attachment.blendColorOperation.value()),
-			GetBlendFactorName(attachment.blendColorFactorSrc.value()),
-			GetBlendFactorName(attachment.blendColorFactorDst.value()));
-
-		output += fmt::format(INDENTATION "\t\tblendAlpha: {}, {}, {}\n",
-			GetBlendOperationName(attachment.blendAlphaOperation.value()),
-			GetBlendFactorName(attachment.blendAlphaFactorSrc.value()),
-			GetBlendFactorName(attachment.blendAlphaFactorDst.value()));
-
-		output += INDENTATION "\t}";
-	}
-
-	output += INDENTATION "]\n";
-	output += "\t\t\t}\n";
-	#undef INDENTATION
-}
-
 struct DescriptorSetOutput {
 	uint32_t setIndex;
 	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding> bindings;
@@ -86,8 +41,9 @@ static void ConsolidateDescriptorSets(
 		DescriptorSetOutput& dstSet = passDescriptorSets[dstIndex];
 		dstSet.setIndex = srcSet.setIndex;
 
+		size_t bindingEnd = static_cast<size_t>(srcSet.bindingStartIndex) + srcSet.bindingCount;
 		for (size_t srcBindingIndex = srcSet.bindingStartIndex;
-			srcBindingIndex < srcSet.bindingStartIndex + srcSet.bindingCount;
+			srcBindingIndex < bindingEnd;
 			++srcBindingIndex
 		) {
 			const Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding& srcBinding = stageDescriptorBindings[srcBindingIndex];
@@ -119,13 +75,18 @@ struct Writer {
 	size_t offset = 0;
 };
 
-static void WriteBytes(Writer& writer, const void* bytes, const size_t count) {
-	if (writer.offset + count >= writer.outputBuffer.size()) {
-		writer.outputBuffer.resize(writer.offset + count);
+static void WriteBytes(Writer& writer, const void* bytes, const size_t size) {
+	if (writer.offset + size >= writer.outputBuffer.size()) {
+		writer.outputBuffer.resize(writer.offset + size);
 	}
 
-	memcpy(writer.outputBuffer.data() + writer.offset, bytes, count);
-	writer.offset += count;
+	memcpy(writer.outputBuffer.data() + writer.offset, bytes, size);
+	writer.offset += size;
+}
+
+template<typename T>
+static void WriteBytes(Writer& writer, const std::vector<T>& list) {
+	WriteBytes(writer, list.data(), list.size() * sizeof(T));
 }
 
 static inline uint32_t IncrementSize(uint32_t& offset, uint32_t size) {
@@ -140,12 +101,18 @@ static inline uint32_t IncrementSize(uint32_t& offset, uint32_t size, size_t cou
 	return preOffset;
 }
 
-static void ExtractPipelineSet(
+template<typename T>
+static inline void AssignCountAndOffsetAndIncrementSize(uint32_t& totalSize, uint32_t& offset, uint32_t& count, const std::vector<T>& list) {
+	offset = IncrementSize(totalSize, sizeof(T), list.size());
+	count = static_cast<uint32_t>(list.size());
+}
+
+static void ExtractGraphicsPipelineSet(
 	LogCallback logCallback,
 	const CompilationArtifactsGraphics& compilationArtifacts,
 	const ResolvedStateTree::PipelineSet& pipelineSet,
-	std::vector<Grindstone::Formats::Pipelines::V1::GraphicsPipelineHeader>& pipelineSetHeaders,
-	std::vector<Grindstone::Formats::Pipelines::V1::PipelineConfigurationHeader>& configHeaders,
+	std::vector<Grindstone::Formats::Pipelines::V1::GraphicsPipelineSetHeader>& pipelineSetHeaders,
+	std::vector<Grindstone::Formats::Pipelines::V1::GraphicsPipelineConfigurationHeader>& configHeaders,
 	std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineHeader>& passHeaders,
 	std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineShaderStageHeader>& shaderStages,
 	std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineAttachmentHeader>& attachmentHeaders,
@@ -156,7 +123,7 @@ static void ExtractPipelineSet(
 	// ========================================
 	// Write Pipeline headers
 	// ========================================
-	Grindstone::Formats::Pipelines::V1::GraphicsPipelineHeader& pipelineSetHeader = pipelineSetHeaders.emplace_back();
+	Grindstone::Formats::Pipelines::V1::GraphicsPipelineSetHeader& pipelineSetHeader = pipelineSetHeaders.emplace_back();
 	pipelineSetHeader.configurationStartIndex = static_cast<uint32_t>(configHeaders.size());
 	pipelineSetHeader.configurationCount = static_cast<uint32_t>(pipelineSet.configurations.size());
 
@@ -295,67 +262,40 @@ static void ExtractPipelineSet(
 
 }
 
-bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphics& compilationArtifacts, const ResolvedStateTree::PipelineSet& pipelineSet, PipelineOutput& outputFile) {
-	outputFile.name = pipelineSet.name;
-	outputFile.pipelineType = Grindstone::Formats::Pipelines::V1::PipelineType::Graphics;
-	std::vector<char>& outputBuffer = outputFile.content;
-
-	std::vector<Grindstone::Formats::Pipelines::V1::MaterialParameter> materialParameters;
-	std::vector<Grindstone::Formats::Pipelines::V1::MaterialResource> materialResources;
-	std::vector<Grindstone::Formats::Pipelines::V1::GraphicsPipelineHeader> pipelineSetHeaders;
-	std::vector<Grindstone::Formats::Pipelines::V1::PipelineConfigurationHeader> configHeaders;
-	std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineHeader> passHeaders;
-	std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineShaderStageHeader> shaderStages;
-	std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineAttachmentHeader> attachmentHeaders;
-	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet> descriptorSets;
-	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding> descriptorBindings;
-	std::vector<char> blobs;
-	Writer blobWriter{ blobs };
-
-	ExtractPipelineSet(
-		logCallback,
-		compilationArtifacts,
-		pipelineSet,
-		pipelineSetHeaders,
-		configHeaders,
-		passHeaders,
-		shaderStages,
-		attachmentHeaders,
-		descriptorSets,
-		descriptorBindings,
-		blobWriter
-	);
-
-
+static void OutputPipelineSetFile(
+	std::vector<char>& outputBuffer,
+	const std::vector<Grindstone::Formats::Pipelines::V1::MaterialParameter>& materialParameters,
+	const std::vector<Grindstone::Formats::Pipelines::V1::MaterialResource>& materialResources,
+	const std::vector<Grindstone::Formats::Pipelines::V1::GraphicsPipelineSetHeader>& graphicsPipelineSetHeaders,
+	const std::vector<Grindstone::Formats::Pipelines::V1::ComputePipelineSetHeader>& computePipelineSetHeaders,
+	const std::vector<Grindstone::Formats::Pipelines::V1::GraphicsPipelineConfigurationHeader>& graphicsConfigHeaders,
+	const std::vector<Grindstone::Formats::Pipelines::V1::ComputePipelineConfigurationHeader>& computeConfigHeaders,
+	const std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineHeader>& passHeaders,
+	const std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineShaderStageHeader>& shaderStages,
+	const std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineAttachmentHeader>& attachmentHeaders,
+	const std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet>& descriptorSets,
+	const std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding>& descriptorBindings,
+	const std::vector<char>& blobs
+) {
 	// ========================================
-	// Copy buffers to final buffer
+	// Prepare Header
 	// ========================================
 	Grindstone::Formats::Pipelines::V1::PipelineSetFileHeader pipelineSetFileHeader{};
 	uint32_t totalSize = 4 + sizeof(Grindstone::Formats::Pipelines::V1::PipelineSetFileHeader);
 	{
-		using namespace Grindstone::Formats::Pipelines::V1;
-		pipelineSetFileHeader.graphicsPipelinesOffset = IncrementSize(totalSize, sizeof(GraphicsPipelineHeader), pipelineSetHeaders.size());
-		pipelineSetFileHeader.graphicsPipelineCount = static_cast<uint32_t>(pipelineSetHeaders.size());
-		pipelineSetFileHeader.computePipelinesOffset = IncrementSize(totalSize, sizeof(ComputePipelineHeader), 0);
-		pipelineSetFileHeader.computePipelineCount = 0;
-		pipelineSetFileHeader.materialParametersOffset = IncrementSize(totalSize, sizeof(MaterialParameter), materialParameters.size());
-		pipelineSetFileHeader.materialParameterCount = static_cast<uint32_t>(materialParameters.size());
-		pipelineSetFileHeader.materialResourcesOffset = IncrementSize(totalSize, sizeof(MaterialResource), materialResources.size());
-		pipelineSetFileHeader.materialResourceCount = static_cast<uint32_t>(materialResources.size());
-		pipelineSetFileHeader.graphicsConfigurationsOffset = IncrementSize(totalSize, sizeof(PipelineConfigurationHeader), configHeaders.size());
-		pipelineSetFileHeader.graphicsConfigurationsCount = static_cast<uint32_t>(configHeaders.size());
-		pipelineSetFileHeader.graphicsPassesOffset = IncrementSize(totalSize, sizeof(PassPipelineHeader), passHeaders.size());
-		pipelineSetFileHeader.graphicsPassesCount = static_cast<uint32_t>(passHeaders.size());
-		pipelineSetFileHeader.shaderStagesOffset = IncrementSize(totalSize, sizeof(PassPipelineShaderStageHeader), shaderStages.size());
-		pipelineSetFileHeader.shaderStagesCount = static_cast<uint32_t>(shaderStages.size());
-		pipelineSetFileHeader.attachmentHeadersOffset = IncrementSize(totalSize, sizeof(PassPipelineAttachmentHeader), attachmentHeaders.size());
-		pipelineSetFileHeader.attachmentHeadersCount = static_cast<uint32_t>(attachmentHeaders.size());
-		pipelineSetFileHeader.descriptorSetsOffset = IncrementSize(totalSize, sizeof(ShaderReflectDescriptorSet), descriptorSets.size());
-		pipelineSetFileHeader.descriptorSetsCount = static_cast<uint32_t>(descriptorSets.size());
-		pipelineSetFileHeader.descriptorBindingsOffset = IncrementSize(totalSize, sizeof(ShaderReflectDescriptorBinding), descriptorBindings.size());
-		pipelineSetFileHeader.descriptorBindingsCount = static_cast<uint32_t>(descriptorBindings.size());
-		pipelineSetFileHeader.blobSectionOffset = IncrementSize(totalSize, static_cast<uint32_t>(blobs.size()));
-		pipelineSetFileHeader.blobSectionSize = static_cast<uint32_t>(blobs.size());
+		pipelineSetFileHeader.headerSize = sizeof(Grindstone::Formats::Pipelines::V1::PipelineSetFileHeader);
+		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.graphicsPipelinesOffset, pipelineSetFileHeader.graphicsPipelineCount, graphicsPipelineSetHeaders);
+		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.computePipelinesOffset, pipelineSetFileHeader.computePipelineCount, computePipelineSetHeaders);
+		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.materialParametersOffset, pipelineSetFileHeader.materialParameterCount, materialParameters);
+		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.materialResourcesOffset, pipelineSetFileHeader.materialResourceCount, materialResources);
+		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.graphicsConfigurationsOffset, pipelineSetFileHeader.graphicsConfigurationCount, graphicsConfigHeaders);
+		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.computeConfigurationsOffset, pipelineSetFileHeader.computeConfigurationCount, computeConfigHeaders);
+		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.graphicsPassesOffset, pipelineSetFileHeader.graphicsPassCount, passHeaders);
+		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.shaderStagesOffset, pipelineSetFileHeader.shaderStageCount, shaderStages);
+		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.attachmentHeadersOffset, pipelineSetFileHeader.attachmentHeaderCount, attachmentHeaders);
+		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.descriptorSetsOffset, pipelineSetFileHeader.descriptorSetCount, descriptorSets);
+		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.descriptorBindingsOffset, pipelineSetFileHeader.descriptorBindingCount, descriptorBindings);
+		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.blobSectionOffset, pipelineSetFileHeader.blobSectionSize, blobs);
 	}
 
 	outputBuffer.resize(totalSize);
@@ -365,17 +305,69 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 	// ========================================
 	Writer writer{ outputBuffer };
 	WriteBytes(writer, Grindstone::Formats::Pipelines::V1::FileMagicCode, 4);
-	WriteBytes(writer, &pipelineSetFileHeader, sizeof(pipelineSetFileHeader));
-	WriteBytes(writer, pipelineSetHeaders.data(), pipelineSetHeaders.size() * sizeof(Grindstone::Formats::Pipelines::V1::GraphicsPipelineHeader));
-	WriteBytes(writer, configHeaders.data(), configHeaders.size() * sizeof(Grindstone::Formats::Pipelines::V1::PipelineConfigurationHeader));
-	WriteBytes(writer, materialParameters.data(), materialParameters.size() * sizeof(Grindstone::Formats::Pipelines::V1::MaterialParameter));
-	WriteBytes(writer, materialResources.data(), materialResources.size() * sizeof(Grindstone::Formats::Pipelines::V1::MaterialResource));
-	WriteBytes(writer, passHeaders.data(), passHeaders.size() * sizeof(Grindstone::Formats::Pipelines::V1::PassPipelineHeader));
-	WriteBytes(writer, shaderStages.data(), shaderStages.size() * sizeof(Grindstone::Formats::Pipelines::V1::PassPipelineShaderStageHeader));
-	WriteBytes(writer, attachmentHeaders.data(), attachmentHeaders.size() * sizeof(Grindstone::Formats::Pipelines::V1::PassPipelineAttachmentHeader));
-	WriteBytes(writer, descriptorSets.data(), descriptorSets.size() * sizeof(Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet));
-	WriteBytes(writer, descriptorBindings.data(), descriptorBindings.size() * sizeof(Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding));
-	WriteBytes(writer, blobs.data(), blobs.size());
+	WriteBytes(writer, &pipelineSetFileHeader, sizeof(Grindstone::Formats::Pipelines::V1::PipelineSetFileHeader));
+	WriteBytes(writer, graphicsPipelineSetHeaders);
+	WriteBytes(writer, computePipelineSetHeaders);
+	WriteBytes(writer, materialParameters);
+	WriteBytes(writer, materialResources);
+	WriteBytes(writer, graphicsConfigHeaders);
+	WriteBytes(writer, computeConfigHeaders);
+	WriteBytes(writer, passHeaders);
+	WriteBytes(writer, shaderStages);
+	WriteBytes(writer, attachmentHeaders);
+	WriteBytes(writer, descriptorSets);
+	WriteBytes(writer, descriptorBindings);
+	WriteBytes(writer, blobs);
+}
+
+bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphics& compilationArtifacts, const ResolvedStateTree::PipelineSet& pipelineSet, PipelineOutput& outputFile) {
+	outputFile.name = pipelineSet.name;
+	outputFile.pipelineType = Grindstone::Formats::Pipelines::V1::PipelineType::Graphics;
+	std::vector<char>& outputBuffer = outputFile.content;
+
+	std::vector<Grindstone::Formats::Pipelines::V1::MaterialParameter> materialParameters;
+	std::vector<Grindstone::Formats::Pipelines::V1::MaterialResource> materialResources;
+	std::vector<Grindstone::Formats::Pipelines::V1::GraphicsPipelineSetHeader> graphicsSetHeaders;
+	std::vector<Grindstone::Formats::Pipelines::V1::ComputePipelineSetHeader> computeSetHeaders;
+	std::vector<Grindstone::Formats::Pipelines::V1::GraphicsPipelineConfigurationHeader> graphicsConfigHeaders;
+	std::vector<Grindstone::Formats::Pipelines::V1::ComputePipelineConfigurationHeader> computeConfigHeaders;
+	std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineHeader> passHeaders;
+	std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineShaderStageHeader> shaderStages;
+	std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineAttachmentHeader> attachmentHeaders;
+	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet> descriptorSets;
+	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding> descriptorBindings;
+	std::vector<char> blobs;
+	Writer blobWriter{ blobs };
+
+	ExtractGraphicsPipelineSet(
+		logCallback,
+		compilationArtifacts,
+		pipelineSet,
+		graphicsSetHeaders,
+		graphicsConfigHeaders,
+		passHeaders,
+		shaderStages,
+		attachmentHeaders,
+		descriptorSets,
+		descriptorBindings,
+		blobWriter
+	);
+
+	OutputPipelineSetFile(
+		outputBuffer,
+		materialParameters,
+		materialResources,
+		graphicsSetHeaders,
+		computeSetHeaders,
+		graphicsConfigHeaders,
+		computeConfigHeaders,
+		passHeaders,
+		shaderStages,
+		attachmentHeaders,
+		descriptorSets,
+		descriptorBindings,
+		blobs
+	);
 
 	return true;
 }
@@ -386,19 +378,87 @@ bool OutputComputeSet(LogCallback logCallback, const CompilationArtifactsCompute
 	outputFile.pipelineType = Grindstone::Formats::Pipelines::V1::PipelineType::Compute;
 	outputFile.content.resize(compilationArtifacts.computeStage.compiledCode.size() + 4);
 
-	Writer writer{ outputFile.content };
-	WriteBytes(writer, Grindstone::Formats::Pipelines::V1::FileMagicCode, 4);
+	std::vector<Grindstone::Formats::Pipelines::V1::MaterialParameter> materialParameters;
+	std::vector<Grindstone::Formats::Pipelines::V1::MaterialResource> materialResources;
+	std::vector<Grindstone::Formats::Pipelines::V1::GraphicsPipelineSetHeader> graphicsSetHeaders;
+	std::vector<Grindstone::Formats::Pipelines::V1::ComputePipelineSetHeader> computeSetHeaders;
+	std::vector<Grindstone::Formats::Pipelines::V1::GraphicsPipelineConfigurationHeader> graphicsConfigHeaders;
+	std::vector<Grindstone::Formats::Pipelines::V1::ComputePipelineConfigurationHeader> computeConfigHeaders;
+	std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineHeader> passHeaders;
+	std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineShaderStageHeader> shaderStages;
+	std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineAttachmentHeader> attachmentHeaders;
+	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet> descriptorSets;
+	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding> descriptorBindings;
+	std::vector<char> blobs;
+	Writer blobWriter{ blobs };
 
-	Grindstone::Formats::Pipelines::V1::PipelineSetFileHeader pipelineSetHeader{};
-	pipelineSetHeader.graphicsPipelineCount = 0;
-	pipelineSetHeader.computePipelineCount = 1;
+	if (computeSet.shaderEntrypoint.empty()) {
+		return false;
+	}
 
-	Grindstone::Formats::Pipelines::V1::ComputePipelineHeader computeHeader{};
-	computeHeader.codeSize = static_cast<uint32_t>(compilationArtifacts.computeStage.compiledCode.size());
+	std::vector<DescriptorSetOutput> passDescriptorSets;
+	const StageCompilationArtifacts& artifacts = compilationArtifacts.computeStage;
+		
+	Grindstone::GraphicsAPI::ShaderStageBit stageBit =
+		static_cast<Grindstone::GraphicsAPI::ShaderStageBit>(1 << static_cast<uint8_t>(artifacts.stage));
 
-	WriteBytes(writer, &pipelineSetHeader, sizeof(pipelineSetHeader));
-	WriteBytes(writer, &computeHeader, sizeof(computeHeader));
-	WriteBytes(writer, compilationArtifacts.computeStage.compiledCode.data(), compilationArtifacts.computeStage.compiledCode.size());
+	ConsolidateDescriptorSets(
+		stageBit,
+		passDescriptorSets,
+		artifacts.reflectedDescriptorSets,
+		artifacts.reflectedDescriptorBindings
+	);
+
+	uint16_t descriptorSetOffset = static_cast<uint16_t>(descriptorSets.size());
+	uint16_t descriptorBindingOffset = static_cast<uint16_t>(descriptorBindings.size());
+
+	for (DescriptorSetOutput& srcSet : passDescriptorSets) {
+		size_t firstIndex = descriptorBindings.size();
+		size_t bindingCount = srcSet.bindings.size();
+
+		for (Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding& srcBinding : srcSet.bindings) {
+			descriptorBindings.emplace_back(srcBinding);
+		}
+
+		Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet& dstSet = descriptorSets.emplace_back();
+		dstSet.setIndex = srcSet.setIndex;
+		dstSet.bindingStartIndex = static_cast<uint32_t>(firstIndex);
+		dstSet.bindingCount = static_cast<uint32_t>(bindingCount);
+	}
+
+	Grindstone::Formats::Pipelines::V1::ComputePipelineConfigurationHeader& computeConfigurationHeader = computeConfigHeaders.emplace_back();
+	computeConfigurationHeader = {};
+	computeConfigurationHeader.shaderStageIndex = static_cast<uint16_t>(shaderStages.size());
+	computeConfigurationHeader.descriptorSetStartIndex = static_cast<uint16_t>(descriptorSetOffset);
+	computeConfigurationHeader.descriptorSetCount = static_cast<uint8_t>(descriptorSets.size() - descriptorSetOffset);
+	computeConfigurationHeader.descriptorBindingStartIndex = static_cast<uint16_t>(descriptorBindingOffset);
+	computeConfigurationHeader.descriptorBindingCount = static_cast<uint8_t>(descriptorBindings.size() - descriptorBindingOffset);
+
+	Grindstone::Formats::Pipelines::V1::ComputePipelineSetHeader computeHeader{};
+	computeHeader.configurationStartIndex = static_cast<uint32_t>(computeSetHeaders.size());
+	computeHeader.configurationCount = 1;
+
+	Grindstone::Formats::Pipelines::V1::PassPipelineShaderStageHeader& stageHeader = shaderStages.emplace_back();
+	stageHeader.shaderCodeSize = static_cast<uint32_t>(artifacts.compiledCode.size());
+	stageHeader.stageType = static_cast<Grindstone::GraphicsAPI::ShaderStage>(artifacts.stage);
+	stageHeader.shaderCodeOffsetFromBlobStart = static_cast<uint32_t>(blobWriter.offset);
+	WriteBytes(blobWriter, artifacts.compiledCode.data(), stageHeader.shaderCodeSize);
+
+	OutputPipelineSetFile(
+		outputFile.content,
+		materialParameters,
+		materialResources,
+		graphicsSetHeaders,
+		computeSetHeaders,
+		graphicsConfigHeaders,
+		computeConfigHeaders,
+		passHeaders,
+		shaderStages,
+		attachmentHeaders,
+		descriptorSets,
+		descriptorBindings,
+		blobs
+	);
 
 	return true;
 }

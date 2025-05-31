@@ -48,16 +48,12 @@ namespace Grindstone::Formats::Pipelines::V1 {
 		Grindstone::GraphicsAPI::BlendOperation blendColorOperation;
 	};
 
-	struct GraphicsPipelineHeader {
+	struct GraphicsPipelineSetHeader {
 		uint32_t configurationStartIndex = 0;
 		uint32_t configurationCount = 0;
 	};
 
-	struct ComputePipelineHeader {
-		uint32_t codeSize = 0;
-	};
-
-	struct PipelineConfigurationHeader {
+	struct GraphicsPipelineConfigurationHeader {
 		// TODO: When really supporting multiple configurations:
 		// uint32_t tagCount = 0;
 		uint16_t passStartIndex = 0;
@@ -77,14 +73,28 @@ namespace Grindstone::Formats::Pipelines::V1 {
 		uint32_t bindingCount = 0;
 	};
 
+	struct ComputePipelineConfigurationHeader {
+		uint16_t shaderStageIndex;
+		uint16_t descriptorSetStartIndex;
+		uint8_t descriptorSetCount;
+		uint16_t descriptorBindingStartIndex;
+		uint8_t descriptorBindingCount;
+	};
+
+	struct ComputePipelineSetHeader {
+		uint32_t configurationStartIndex = 0;
+		uint32_t configurationCount = 0;
+	};
+
 	struct PipelineSetFileHeader {
 		uint8_t versionMajor = 1;
 		uint8_t versionMinor = 0;
 		uint8_t versionPatch = 0;
 		uint8_t headerSize = sizeof(PipelineSetFileHeader);
-		uint8_t graphicsPipelineSize = sizeof(GraphicsPipelineHeader);
-		uint8_t computePipelineSize = sizeof(ComputePipelineHeader);
-		uint8_t configurationSize = sizeof(PipelineConfigurationHeader);
+		uint8_t graphicsPipelineSize = sizeof(GraphicsPipelineSetHeader);
+		uint8_t computePipelineSize = sizeof(ComputePipelineSetHeader);
+		uint8_t computeConfigurationSize = sizeof(ComputePipelineConfigurationHeader);
+		uint8_t graphicsConfigurationSize = sizeof(GraphicsPipelineConfigurationHeader);
 		uint8_t passSize = sizeof(PassPipelineHeader);
 		uint8_t attachmentSize = sizeof(PassPipelineAttachmentHeader);
 		uint8_t stageSize = sizeof(PassPipelineShaderStageHeader);
@@ -97,17 +107,19 @@ namespace Grindstone::Formats::Pipelines::V1 {
 		uint32_t materialResourcesOffset = 0;
 		uint32_t materialResourceCount = 0;
 		uint32_t graphicsConfigurationsOffset = 0;
-		uint32_t graphicsConfigurationsCount = 0;
+		uint32_t graphicsConfigurationCount = 0;
+		uint32_t computeConfigurationsOffset = 0;
+		uint32_t computeConfigurationCount = 0;
 		uint32_t graphicsPassesOffset = 0;
-		uint32_t graphicsPassesCount = 0;
+		uint32_t graphicsPassCount = 0;
 		uint32_t shaderStagesOffset = 0;
-		uint32_t shaderStagesCount = 0;
+		uint32_t shaderStageCount = 0;
 		uint32_t attachmentHeadersOffset = 0;
-		uint32_t attachmentHeadersCount = 0;
+		uint32_t attachmentHeaderCount = 0;
 		uint32_t descriptorSetsOffset = 0;
-		uint32_t descriptorSetsCount = 0;
+		uint32_t descriptorSetCount = 0;
 		uint32_t descriptorBindingsOffset = 0;
-		uint32_t descriptorBindingsCount = 0;
+		uint32_t descriptorBindingCount = 0;
 		uint32_t blobSectionOffset = 0;
 		uint32_t blobSectionSize = 0;
 	};

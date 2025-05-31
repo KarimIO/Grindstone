@@ -12,10 +12,6 @@
 #include <spirv_reflect.h>
 #include <Common/Assert.hpp>
 
-inline static const char* GetBoolAsString(bool val) {
-	return val ? "true" : "false";
-}
-
 static void PrintShaderMessage(LogCallback logCallback, const std::filesystem::path& path, const std::string& msg) {
 	Grindstone::LogSeverity severity = Grindstone::LogSeverity::Info;
 

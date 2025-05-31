@@ -48,9 +48,10 @@ static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
 	readPtr += sizeof(V1::PipelineSetFileHeader);
 
 	GS_ASSERT(srcFileHeader->headerSize == sizeof(V1::PipelineSetFileHeader));
-	GS_ASSERT(srcFileHeader->graphicsPipelineSize == sizeof(V1::GraphicsPipelineHeader));
-	GS_ASSERT(srcFileHeader->computePipelineSize == sizeof(V1::ComputePipelineHeader));
-	GS_ASSERT(srcFileHeader->configurationSize == sizeof(V1::PipelineConfigurationHeader));
+	GS_ASSERT(srcFileHeader->graphicsPipelineSize == sizeof(V1::GraphicsPipelineSetHeader));
+	GS_ASSERT(srcFileHeader->computePipelineSize == sizeof(V1::ComputePipelineSetHeader));
+	GS_ASSERT(srcFileHeader->graphicsConfigurationSize == sizeof(V1::GraphicsPipelineConfigurationHeader));
+	GS_ASSERT(srcFileHeader->computeConfigurationSize == sizeof(V1::ComputePipelineConfigurationHeader));
 	GS_ASSERT(srcFileHeader->passSize == sizeof(V1::PassPipelineHeader));
 	GS_ASSERT(srcFileHeader->attachmentSize == sizeof(V1::PassPipelineAttachmentHeader));
 	GS_ASSERT(srcFileHeader->stageSize == sizeof(V1::PassPipelineShaderStageHeader));
