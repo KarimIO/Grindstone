@@ -1,7 +1,9 @@
 #pragma once
 
 #include <type_traits>
-#include "../Assert.hpp"
+
+#include <Common/Assert.hpp>
+#include <Common/IntTypes.hpp>
 
 #include "Iterators.hpp"
 
@@ -24,7 +26,6 @@ namespace Grindstone::Containers {
 
 		Span(Span&& other) noexcept : size(other.size), contents(other.contents) {
 			other.size = 0;
-			other.capacity = 0;
 			other.contents = nullptr;
 		}
 
@@ -138,10 +139,11 @@ namespace Grindstone::Containers {
 			return ConstReverseIterator(contents - 1);
 		}
 	protected:
-		size_t capacity = 0;
 		size_t size = 0;
 		T* contents = nullptr;
 	};
+
+	using BufferSpan = Span<Grindstone::Byte>;
 
 	template<typename T>
 	class ReverseRange {

@@ -3,46 +3,9 @@
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 
 #include "Assert.hpp"
-#include "IntTypes.hpp"
+#include "Containers/Span.hpp"
 
 namespace Grindstone {
-	class BufferView {
-	public:
-		BufferView() : bufferPtr(nullptr), size(0) {}
-		BufferView(void* bufferPtr, uint64_t size) : bufferPtr(bufferPtr), size(size) {}
-
-		~BufferView() {
-			bufferPtr = nullptr;
-			size = 0;
-		}
-
-		void* Get() {
-			return bufferPtr;
-		}
-
-		const void* Get() const {
-			return bufferPtr;
-		}
-
-		template<typename T>
-		T* Get() {
-			return static_cast<T*>(bufferPtr);
-		}
-
-		template<typename T>
-		const T* Get() const {
-			return static_cast<const T*>(bufferPtr);
-		}
-
-		uint64_t GetSize() const {
-			return size;
-		}
-
-	protected:
-		void* bufferPtr = nullptr;
-		uint64_t size = 0;
-	};
-
 	class Buffer {
 	public:
 		Buffer() : bufferPtr(nullptr), capacity(0) {}
@@ -81,19 +44,36 @@ namespace Grindstone {
 			}
 		}
 
-		virtual BufferView GetBufferView(uint64_t segmentOffset, uint64_t segmentSize) {
+		virtual Grindstone::Containers::BufferSpan GetSpan(uint64_t segmentOffset, uint64_t segmentSize) {
 			Byte* targetPtr = bufferPtr + segmentOffset;
 			if (targetPtr < bufferPtr) {
 				GS_ASSERT_ENGINE("Start of view is before start of buffer.")
-				return {};
+					return {};
 			}
 
 			if (targetPtr + segmentSize > bufferPtr + capacity) {
 				GS_ASSERT_ENGINE("End of view is after end of buffer.")
-				return {};
+					return {};
 			}
 
-			return {targetPtr, segmentSize};
+			return { targetPtr, segmentSize };
+		}
+
+		template<typename T>
+		Grindstone::Containers::Span<T> GetSpan(uint64_t offset, uint64_t count) {
+			Byte* bytePtr = bufferPtr + offset;
+			T* targetPtr = reinterpret_cast<T*>(bytePtr);
+			if (bytePtr < bufferPtr) {
+				GS_ASSERT_ENGINE("Start of view is before start of buffer.")
+					return {};
+			}
+
+			if (reinterpret_cast<Byte*>(bytePtr + (count * sizeof(T))) > bufferPtr + capacity) {
+				GS_ASSERT_ENGINE("End of view is after end of buffer.")
+					return {};
+			}
+
+			return { targetPtr, count };
 		}
 
 		Buffer& operator=(const Buffer& other) {
@@ -202,20 +182,37 @@ namespace Grindstone {
 			other.size = 0;
 		}
 
-		virtual BufferView GetBufferView(uint64_t segmentOffset, uint64_t segmentSize) override {
+		virtual Grindstone::Containers::BufferSpan GetSpan(uint64_t segmentOffset, uint64_t segmentSize) override {
 			Byte* targetPtr = bufferPtr + segmentOffset;
 			if (targetPtr < bufferPtr) {
 				GS_ASSERT_ENGINE("Start of view is before start of buffer.")
-				return BufferView();
+				return Grindstone::Containers::BufferSpan();
 			}
 
 			if (targetPtr + segmentSize > bufferPtr + size) {
 				GS_ASSERT_ENGINE("End of view is after end of used buffer.")
-				return BufferView();
+				return Grindstone::Containers::BufferSpan();
 			}
 
-			return BufferView(targetPtr, segmentSize);
+			return Grindstone::Containers::BufferSpan(targetPtr, segmentSize);
 		}
+
+		template<typename T>
+		Grindstone::Containers::Span<T> GetSpan(uint64_t offset, uint64_t count) {
+			T* targetPtr = reinterpret_cast<T*>(bufferPtr + offset);
+			if (targetPtr < bufferPtr) {
+				GS_ASSERT_ENGINE("Start of view is before start of buffer.")
+					return {};
+			}
+
+			if (targetPtr + count > bufferPtr + capacity) {
+				GS_ASSERT_ENGINE("End of view is after end of buffer.")
+					return {};
+			}
+
+			return { targetPtr, count };
+		}
+
 
 		void* AddToBuffer(const void* srcPtr, uint64_t srcSize) {
 			if (srcPtr == nullptr) {

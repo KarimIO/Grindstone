@@ -137,45 +137,14 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 	GS_ASSERT(srcFileHeader->attachmentSize == sizeof(V1::PassPipelineAttachmentHeader));
 	GS_ASSERT(srcFileHeader->stageSize == sizeof(V1::PassPipelineShaderStageHeader));
 
-	Span<V1::GraphicsPipelineSetHeader> graphicsPipelines{
-		reinterpret_cast<V1::GraphicsPipelineSetHeader*>(filePtr + srcFileHeader->graphicsPipelinesOffset),
-		srcFileHeader->graphicsPipelineCount
-	};
-
-	Span<V1::GraphicsPipelineConfigurationHeader> pipelineConfigurations{
-		reinterpret_cast<V1::GraphicsPipelineConfigurationHeader*>(filePtr + srcFileHeader->graphicsConfigurationsOffset),
-		srcFileHeader->graphicsConfigurationCount
-	};
-
-	Span<V1::PassPipelineHeader> pipelinePasses{
-		reinterpret_cast<V1::PassPipelineHeader*>(filePtr + srcFileHeader->graphicsPassesOffset),
-		srcFileHeader->graphicsPassCount
-	};
-
-	Span<V1::PassPipelineShaderStageHeader> shaderStages{
-		reinterpret_cast<V1::PassPipelineShaderStageHeader*>(filePtr + srcFileHeader->shaderStagesOffset),
-		srcFileHeader->shaderStageCount
-	};
-
-	Span<V1::PassPipelineAttachmentHeader> attachments{
-		reinterpret_cast<V1::PassPipelineAttachmentHeader*>(filePtr + srcFileHeader->attachmentHeadersOffset),
-		srcFileHeader->attachmentHeaderCount
-	};
-
-	Span<V1::ShaderReflectDescriptorSet> descriptorSets{
-		reinterpret_cast<V1::ShaderReflectDescriptorSet*>(filePtr + srcFileHeader->descriptorSetsOffset),
-		srcFileHeader->descriptorSetCount
-	};
-
-	Span<V1::ShaderReflectDescriptorBinding> descriptorBindings{
-		reinterpret_cast<V1::ShaderReflectDescriptorBinding*>(filePtr + srcFileHeader->descriptorBindingsOffset),
-		srcFileHeader->descriptorBindingCount
-	};
-
-	Span<uint8_t> blobs{
-		filePtr + srcFileHeader->blobSectionOffset,
-		srcFileHeader->blobSectionSize
-	};
+	Span<V1::GraphicsPipelineSetHeader> graphicsPipelines = fileData.GetSpan<V1::GraphicsPipelineSetHeader>(srcFileHeader->graphicsPipelinesOffset, srcFileHeader->graphicsPipelineCount);
+	Span<V1::GraphicsPipelineConfigurationHeader> pipelineConfigurations = fileData.GetSpan<V1::GraphicsPipelineConfigurationHeader>(srcFileHeader->graphicsConfigurationsOffset, srcFileHeader->graphicsConfigurationCount);
+	Span<V1::PassPipelineHeader> pipelinePasses = fileData.GetSpan<V1::PassPipelineHeader>(srcFileHeader->graphicsPassesOffset, srcFileHeader->graphicsPassCount);
+	Span<V1::PassPipelineShaderStageHeader> shaderStages = fileData.GetSpan<V1::PassPipelineShaderStageHeader>(srcFileHeader->shaderStagesOffset, srcFileHeader->shaderStageCount);
+	Span<V1::PassPipelineAttachmentHeader> attachments = fileData.GetSpan<V1::PassPipelineAttachmentHeader>(srcFileHeader->attachmentHeadersOffset, srcFileHeader->attachmentHeaderCount);
+	Span<V1::ShaderReflectDescriptorSet> descriptorSets = fileData.GetSpan<V1::ShaderReflectDescriptorSet>(srcFileHeader->descriptorSetsOffset, srcFileHeader->descriptorSetCount);
+	Span<V1::ShaderReflectDescriptorBinding> descriptorBindings = fileData.GetSpan<V1::ShaderReflectDescriptorBinding>(srcFileHeader->descriptorBindingsOffset, srcFileHeader->descriptorBindingCount);
+	BufferSpan blobs = fileData.GetSpan(srcFileHeader->blobSectionOffset, srcFileHeader->blobSectionSize);
 
 	GS_ASSERT(graphicsPipelines.GetSize() != 0);
 	const V1::GraphicsPipelineSetHeader& srcPipelineHeader = graphicsPipelines[0];
