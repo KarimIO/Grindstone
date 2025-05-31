@@ -216,6 +216,27 @@ bool MetaFile::TryGetDefaultSubassetUuid(Uuid& outUuid) const {
 }
 
 Grindstone::Uuid MetaFile::GetOrCreateDefaultSubassetUuid(const std::string& subassetName, AssetType assetType) {
+	if (defaultSubasset.subassetIdentifier == subassetName && assetType == defaultSubasset.assetType) {
+		if (!defaultSubasset.uuid.IsValid()) {
+			defaultSubasset.uuid = Uuid::CreateRandom();
+		}
+
+		if (defaultSubasset.displayName.empty()) {
+			defaultSubasset.displayName = subassetName;
+		}
+
+		return defaultSubasset.uuid;
+	}
+
+	Subasset* outSubasset = nullptr;
+	if (TryGetSubasset(subassetName, outSubasset)) {
+		defaultSubasset = *outSubasset;
+
+		subassets.erase((subassets.begin() + (outSubasset - subassets.data())));
+
+		return defaultSubasset.uuid;
+	}
+
 	if (!defaultSubasset.uuid.IsValid()) {
 		defaultSubasset.uuid = Uuid::CreateRandom();
 	}
@@ -234,6 +255,11 @@ Grindstone::Uuid MetaFile::GetOrCreateDefaultSubassetUuid(const std::string& sub
 }
 
 bool MetaFile::TryGetSubassetUuid(const std::string& subassetName, Uuid& outUuid) const {
+	if (defaultSubasset.subassetIdentifier == subassetName) {
+		outUuid = defaultSubasset.uuid;
+		return true;
+	}
+
 	for (auto& subasset : subassets) {
 		if (subasset.subassetIdentifier == subassetName) {
 			outUuid = subasset.uuid;
@@ -270,6 +296,22 @@ Grindstone::Uuid MetaFile::GetOrCreateSubassetUuid(const std::string& subassetNa
 
 size_t MetaFile::GetSubassetCount() const {
 	return subassets.size();
+}
+
+bool Grindstone::Editor::MetaFile::TryGetSubasset(const std::string& subassetName, Subasset*& outSubasset) {
+	if (defaultSubasset.subassetIdentifier == subassetName) {
+		outSubasset = &defaultSubasset;
+		return true;
+	}
+
+	for (Subasset& subasset : subassets) {
+		if (subasset.subassetIdentifier == subassetName) {
+			outSubasset = &subasset;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 bool Grindstone::Editor::MetaFile::TryGetSubasset(Uuid uuid, Subasset*& outSubasset) {

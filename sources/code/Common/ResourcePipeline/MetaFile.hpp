@@ -43,6 +43,7 @@ namespace Grindstone::Editor {
 		Uuid GetOrCreateDefaultSubassetUuid(const std::string& subassetName, AssetType assetType);
 		Uuid GetOrCreateSubassetUuid(const std::string& subassetName, AssetType assetType);
 		size_t GetSubassetCount() const;
+		bool TryGetSubasset(const std::string& subassetName, Subasset*& outSubasset);
 		bool TryGetSubasset(Uuid uuid, Subasset*& outSubasset);
 		bool TryGetDefaultSubassetUuid(Uuid& outUuid) const;
 		bool TryGetSubassetUuid(const std::string& subassetName, Uuid& outUuid) const;
