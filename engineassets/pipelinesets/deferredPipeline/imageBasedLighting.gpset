@@ -17,7 +17,7 @@ pipelineSet "Image Based Lighting" inherits "DeferredLighting" {
 			shaderHlsl {
 				Texture2D<float4> ssao : register(t0,  space1);
 				Texture2D<float4> brdfLUT : register(t1,  space1);
-				TextureCube<float4> specularMap : register(t2,  space2);
+				TextureCube<float4> specularMap : register(t0,  space2);
 
 				float3 Light_F(in float3 f0, in float f90, in float VH) {
 					return f0 + (f90-f0) * pow(1-VH, 5.0f);

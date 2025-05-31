@@ -207,6 +207,15 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 		return;
 	}
 
+	if (pipelineData.debugName != nullptr) {
+		std::string layoutDebugName = std::string(pipelineData.debugName) + " Layout";
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_PIPELINE_LAYOUT, pipelineLayout, layoutDebugName.c_str());
+	}
+	else {
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Graphics Pipeline!");
+		return;
+	}
+
 	Vulkan::RenderPass* renderPass = static_cast<Vulkan::RenderPass*>(pipelineData.renderPass);
 
 	std::vector<VkDynamicState> dynamicStates;
@@ -248,10 +257,6 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 
 	if (pipelineData.debugName != nullptr) {
 		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_PIPELINE, graphicsPipeline, pipelineData.debugName);
-	}
-	else {
-		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Graphics Pipeline!");
-		return;
 	}
 
 	for (uint32_t i = 0; i < pipelineData.shaderStageCreateInfoCount; ++i) {

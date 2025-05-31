@@ -77,6 +77,7 @@ namespace Grindstone {
 
 			GraphicsAPI::DescriptorSet* ssrDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* tonemapDescriptorSet = nullptr;
+			GraphicsAPI::DescriptorSet* ssaoDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* lightingDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* debugDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
@@ -183,6 +184,7 @@ namespace Grindstone {
 		GraphicsAPI::DescriptorSetLayout* tonemapDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* debugDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingDescriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSetLayout* ssaoDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingUBODescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* shadowMappedLightDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* lightingWithShadowUBODescriptorSetLayout = nullptr;

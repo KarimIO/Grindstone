@@ -21,10 +21,9 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 			}
 
 			shaderHlsl {
-				[[vk::binding(0, 0)]] SamplerState gbufferSampler : register(s0, space0);
-				Texture2D<float4> litSceneTexture : register(t1,  space0);
-				Texture2D<float4> bloomTexture : register(t2,  space0);
-				Texture2D<float4> depthTexture : register(t3,  space0);
+				SamplerState gbufferSampler : register(s1, space0);
+				Texture2D<float4> litSceneTexture : register(t2,  space0);
+				Texture2D<float4> bloomTexture : register(t3,  space0);
 
 				struct PostProcessUbo {
 					float4 vignetteColor;

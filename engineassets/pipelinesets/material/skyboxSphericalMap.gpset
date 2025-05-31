@@ -13,7 +13,7 @@ pipelineSet "Skybox (Spherical Map)" {
 		pass "main" {
 			shaderEntrypoint: vertex mainVertex
 			shaderEntrypoint: fragment mainFragment
-			renderQueue: "Main"
+			renderQueue: "ForwardLit"
 
 			properties {
 				cull: back

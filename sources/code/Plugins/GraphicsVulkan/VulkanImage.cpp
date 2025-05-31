@@ -69,6 +69,8 @@ void Vulkan::Image::Create() {
 	FormatDepthStencilType type = GetFormatDepthStencilType(format);
 
 	if (imageUsage.Test(ImageUsageFlags::DepthStencil)) {
+		// TODO: For renderpasses, a DepthStencil ImageView requires both bits, but for sampled images, the ImageView requires only one.
+		// How can we go about fixing this issue?
 		switch (type) {
 		case FormatDepthStencilType::DepthStencil:
 			aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;

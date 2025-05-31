@@ -56,6 +56,11 @@ static void AttachImage(
 	imageInfo.imageView = image->GetImageView();
 	imageInfo.sampler = nullptr;
 
+	VkImageAspectFlags aspect = image->GetAspect();
+	if ((aspect & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT))) {
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+	}
+
 	VkWriteDescriptorSet descriptorWrites{};
 	descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites.dstSet = descriptorSet;

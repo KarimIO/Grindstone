@@ -993,8 +993,7 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	litHdrRenderTargetBinding.bindingId = 2;
 	litHdrRenderTargetBinding.count = 1;
 	litHdrRenderTargetBinding.type = GraphicsAPI::BindingType::SampledImage;
-	// TODO: Just using vertex for now to get resolution cuz I'm lazy. Remove this eventually and use a uniform buffer.
-	litHdrRenderTargetBinding.stages = GraphicsAPI::ShaderStageBit::Vertex | GraphicsAPI::ShaderStageBit::Fragment;
+	litHdrRenderTargetBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
 
 	GraphicsAPI::DescriptorSetLayout::Binding gbufferDepthBinding{};
 	gbufferDepthBinding.bindingId = 2;
@@ -1020,89 +1019,122 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	gbufferSpecularRoughnessBinding.type = GraphicsAPI::BindingType::SampledImage;
 	gbufferSpecularRoughnessBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
 
-	GraphicsAPI::DescriptorSetLayout::CreateInfo engineDescriptorSetLayoutCreateInfo{};
-	engineDescriptorSetLayoutCreateInfo.debugName = "Engine UBO Set Layout";
-	engineDescriptorSetLayoutCreateInfo.bindingCount = 1;
-	engineDescriptorSetLayoutCreateInfo.bindings = &engineUboBinding;
-	engineDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(engineDescriptorSetLayoutCreateInfo);
+	{
+		GraphicsAPI::DescriptorSetLayout::CreateInfo engineDescriptorSetLayoutCreateInfo{};
+		engineDescriptorSetLayoutCreateInfo.debugName = "Engine UBO Set Layout";
+		engineDescriptorSetLayoutCreateInfo.bindingCount = 1;
+		engineDescriptorSetLayoutCreateInfo.bindings = &engineUboBinding;
+		engineDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(engineDescriptorSetLayoutCreateInfo);
+	}
 
-	std::array<GraphicsAPI::DescriptorSetLayout::Binding, 6> tonemapDescriptorSetLayoutBindings{};
-	tonemapDescriptorSetLayoutBindings[0] = engineUboBinding;
-	tonemapDescriptorSetLayoutBindings[1] = gbufferSampler;
-	tonemapDescriptorSetLayoutBindings[2] = litHdrRenderTargetBinding;
-	tonemapDescriptorSetLayoutBindings[3] = { 3, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment };	// Bloom Texture
-	tonemapDescriptorSetLayoutBindings[4] = { 4, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment };	// Depth Texture
-	tonemapDescriptorSetLayoutBindings[5] = { 5, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Fragment };	// Post Process Uniform Buffer
+	{
+		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 5> tonemapDescriptorSetLayoutBindings{};
+		tonemapDescriptorSetLayoutBindings[0] = engineUboBinding;
+		tonemapDescriptorSetLayoutBindings[1] = gbufferSampler;
+		tonemapDescriptorSetLayoutBindings[2] = litHdrRenderTargetBinding;
+		tonemapDescriptorSetLayoutBindings[3] = { 3, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment };	// Bloom Texture
+		tonemapDescriptorSetLayoutBindings[4] = { 4, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Fragment };	// Post Process Uniform Buffer
 
-	GraphicsAPI::DescriptorSetLayout::CreateInfo tonemapDescriptorSetLayoutCreateInfo{};
-	tonemapDescriptorSetLayoutCreateInfo.debugName = "Tonemap Descriptor Set Layout";
-	tonemapDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(tonemapDescriptorSetLayoutBindings.size());
-	tonemapDescriptorSetLayoutCreateInfo.bindings = tonemapDescriptorSetLayoutBindings.data();
-	tonemapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(tonemapDescriptorSetLayoutCreateInfo);
+		GraphicsAPI::DescriptorSetLayout::CreateInfo tonemapDescriptorSetLayoutCreateInfo{};
+		tonemapDescriptorSetLayoutCreateInfo.debugName = "Tonemap Descriptor Set Layout";
+		tonemapDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(tonemapDescriptorSetLayoutBindings.size());
+		tonemapDescriptorSetLayoutCreateInfo.bindings = tonemapDescriptorSetLayoutBindings.data();
+		tonemapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(tonemapDescriptorSetLayoutCreateInfo);
+	}
 
-	std::array<GraphicsAPI::DescriptorSetLayout::Binding, 8> debugDescriptorSetLayoutBindings{};
-	debugDescriptorSetLayoutBindings[0] = engineUboBinding;
-	debugDescriptorSetLayoutBindings[1] = gbufferSampler;
-	debugDescriptorSetLayoutBindings[2] = gbufferDepthBinding;
-	debugDescriptorSetLayoutBindings[3] = gbufferAlbedoBinding;
-	debugDescriptorSetLayoutBindings[4] = gbufferNormalsBinding;
-	debugDescriptorSetLayoutBindings[5] = gbufferSpecularRoughnessBinding;
-	debugDescriptorSetLayoutBindings[6] = { 6, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment }; // Ambient Occlusion Texture
-	debugDescriptorSetLayoutBindings[7] = { 7, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Fragment }; // Post Process Uniform Buffer
+	{
+		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 8> debugDescriptorSetLayoutBindings{};
+		debugDescriptorSetLayoutBindings[0] = engineUboBinding;
+		debugDescriptorSetLayoutBindings[1] = gbufferSampler;
+		debugDescriptorSetLayoutBindings[2] = gbufferDepthBinding;
+		debugDescriptorSetLayoutBindings[3] = gbufferAlbedoBinding;
+		debugDescriptorSetLayoutBindings[4] = gbufferNormalsBinding;
+		debugDescriptorSetLayoutBindings[5] = gbufferSpecularRoughnessBinding;
+		debugDescriptorSetLayoutBindings[6] = { 6, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment }; // Ambient Occlusion Texture
+		debugDescriptorSetLayoutBindings[7] = { 7, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Fragment }; // Post Process Uniform Buffer
 
-	GraphicsAPI::DescriptorSetLayout::CreateInfo debugDescriptorSetLayoutCreateInfo{};
-	debugDescriptorSetLayoutCreateInfo.debugName = "Debug Descriptor Set Layout";
-	debugDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(debugDescriptorSetLayoutBindings.size());
-	debugDescriptorSetLayoutCreateInfo.bindings = debugDescriptorSetLayoutBindings.data();
-	debugDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(debugDescriptorSetLayoutCreateInfo);
+		GraphicsAPI::DescriptorSetLayout::CreateInfo debugDescriptorSetLayoutCreateInfo{};
+		debugDescriptorSetLayoutCreateInfo.debugName = "Debug Descriptor Set Layout";
+		debugDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(debugDescriptorSetLayoutBindings.size());
+		debugDescriptorSetLayoutCreateInfo.bindings = debugDescriptorSetLayoutBindings.data();
+		debugDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(debugDescriptorSetLayoutCreateInfo);
+	}
 
-	std::array<GraphicsAPI::DescriptorSetLayout::Binding, 6> lightingDescriptorSetLayoutBindings{};
-	lightingDescriptorSetLayoutBindings[0] = engineUboBinding;
-	lightingDescriptorSetLayoutBindings[1] = gbufferSampler;
-	lightingDescriptorSetLayoutBindings[2] = gbufferDepthBinding;
-	lightingDescriptorSetLayoutBindings[3] = gbufferAlbedoBinding;
-	lightingDescriptorSetLayoutBindings[4] = gbufferNormalsBinding;
-	lightingDescriptorSetLayoutBindings[5] = gbufferSpecularRoughnessBinding;
+	{
+		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 6> lightingDescriptorSetLayoutBindings{};
+		lightingDescriptorSetLayoutBindings[0] = engineUboBinding;
+		lightingDescriptorSetLayoutBindings[1] = gbufferSampler;
+		lightingDescriptorSetLayoutBindings[2] = gbufferDepthBinding;
+		lightingDescriptorSetLayoutBindings[3] = gbufferAlbedoBinding;
+		lightingDescriptorSetLayoutBindings[4] = gbufferNormalsBinding;
+		lightingDescriptorSetLayoutBindings[5] = gbufferSpecularRoughnessBinding;
 
-	GraphicsAPI::DescriptorSetLayout::CreateInfo lightingDescriptorSetLayoutCreateInfo{};
-	lightingDescriptorSetLayoutCreateInfo.debugName = "Pointlight Descriptor Set Layout";
-	lightingDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightingDescriptorSetLayoutBindings.size());
-	lightingDescriptorSetLayoutCreateInfo.bindings = lightingDescriptorSetLayoutBindings.data();
-	lightingDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(lightingDescriptorSetLayoutCreateInfo);
+		GraphicsAPI::DescriptorSetLayout::CreateInfo lightingDescriptorSetLayoutCreateInfo{};
+		lightingDescriptorSetLayoutCreateInfo.debugName = "Pointlight Descriptor Set Layout";
+		lightingDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightingDescriptorSetLayoutBindings.size());
+		lightingDescriptorSetLayoutCreateInfo.bindings = lightingDescriptorSetLayoutBindings.data();
+		lightingDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(lightingDescriptorSetLayoutCreateInfo);
+	}
 
-	GraphicsAPI::DescriptorSetLayout::Binding lightUboBinding{};
-	lightUboBinding.bindingId = 0;
-	lightUboBinding.count = 1;
-	lightUboBinding.type = GraphicsAPI::BindingType::UniformBuffer;
-	lightUboBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
+	{
+		GraphicsAPI::DescriptorSetLayout::Binding ssaoGbufferNormalsBinding{};
+		ssaoGbufferNormalsBinding.bindingId = 3;
+		ssaoGbufferNormalsBinding.count = 1;
+		ssaoGbufferNormalsBinding.type = GraphicsAPI::BindingType::SampledImage;
+		ssaoGbufferNormalsBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
 
-	GraphicsAPI::DescriptorSetLayout::CreateInfo lightingUBODescriptorSetLayoutCreateInfo{};
-	lightingUBODescriptorSetLayoutCreateInfo.debugName = "Pointlight UBO Descriptor Set Layout";
-	lightingUBODescriptorSetLayoutCreateInfo.bindingCount = 1;
-	lightingUBODescriptorSetLayoutCreateInfo.bindings = &lightUboBinding;
-	lightingUBODescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(lightingUBODescriptorSetLayoutCreateInfo);
+		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 4> ssaoDescriptorSetLayoutBindings{};
+		ssaoDescriptorSetLayoutBindings[0] = engineUboBinding;
+		ssaoDescriptorSetLayoutBindings[1] = gbufferSampler;
+		ssaoDescriptorSetLayoutBindings[2] = gbufferDepthBinding;
+		ssaoDescriptorSetLayoutBindings[3] = ssaoGbufferNormalsBinding;
 
-	std::array<GraphicsAPI::DescriptorSetLayout::Binding, 2> shadowMappedLightBindings{};
-	shadowMappedLightBindings[0] = { 0, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Fragment };
-	shadowMappedLightBindings[1] = { 1, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment };
+		GraphicsAPI::DescriptorSetLayout::CreateInfo ssaoDescriptorSetLayoutCreateInfo{};
+		ssaoDescriptorSetLayoutCreateInfo.debugName = "SSAO Descriptor Set Layout";
+		ssaoDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(ssaoDescriptorSetLayoutBindings.size());
+		ssaoDescriptorSetLayoutCreateInfo.bindings = ssaoDescriptorSetLayoutBindings.data();
+		ssaoDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ssaoDescriptorSetLayoutCreateInfo);
+	}
 
-	GraphicsAPI::DescriptorSetLayout::CreateInfo shadowMappedLightDescriptorSetLayoutCreateInfo{};
-	shadowMappedLightDescriptorSetLayoutCreateInfo.debugName = "Shadowmapped Light Descriptor Set Layout";
-	shadowMappedLightDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(shadowMappedLightBindings.size());
-	shadowMappedLightDescriptorSetLayoutCreateInfo.bindings = shadowMappedLightBindings.data();
-	shadowMappedLightDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(shadowMappedLightDescriptorSetLayoutCreateInfo);
+	{
+		GraphicsAPI::DescriptorSetLayout::Binding lightUboBinding{};
+		lightUboBinding.bindingId = 0;
+		lightUboBinding.count = 1;
+		lightUboBinding.type = GraphicsAPI::BindingType::UniformBuffer;
+		lightUboBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
 
-	GraphicsAPI::DescriptorSetLayout::Binding shadowMapMatrixBinding{};
-	shadowMapMatrixBinding.bindingId = 0;
-	shadowMapMatrixBinding.count = 1;
-	shadowMapMatrixBinding.type = GraphicsAPI::BindingType::UniformBuffer;
-	shadowMapMatrixBinding.stages = GraphicsAPI::ShaderStageBit::Vertex;
+		GraphicsAPI::DescriptorSetLayout::CreateInfo lightingUBODescriptorSetLayoutCreateInfo{};
+		lightingUBODescriptorSetLayoutCreateInfo.debugName = "Pointlight UBO Descriptor Set Layout";
+		lightingUBODescriptorSetLayoutCreateInfo.bindingCount = 1;
+		lightingUBODescriptorSetLayoutCreateInfo.bindings = &lightUboBinding;
+		lightingUBODescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(lightingUBODescriptorSetLayoutCreateInfo);
+	}
 
-	GraphicsAPI::DescriptorSetLayout::CreateInfo shadowMapDescriptorSetLayoutCreateInfo{};
-	shadowMapDescriptorSetLayoutCreateInfo.debugName = "Shadow Map Descriptor Set Layout";
-	shadowMapDescriptorSetLayoutCreateInfo.bindingCount = 1;
-	shadowMapDescriptorSetLayoutCreateInfo.bindings = &shadowMapMatrixBinding;
-	shadowMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(shadowMapDescriptorSetLayoutCreateInfo);
+	{
+		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 2> shadowMappedLightBindings{};
+		shadowMappedLightBindings[0] = { 0, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Fragment };
+		shadowMappedLightBindings[1] = { 1, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment };
+
+		GraphicsAPI::DescriptorSetLayout::CreateInfo shadowMappedLightDescriptorSetLayoutCreateInfo{};
+		shadowMappedLightDescriptorSetLayoutCreateInfo.debugName = "Shadowmapped Light Descriptor Set Layout";
+		shadowMappedLightDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(shadowMappedLightBindings.size());
+		shadowMappedLightDescriptorSetLayoutCreateInfo.bindings = shadowMappedLightBindings.data();
+		shadowMappedLightDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(shadowMappedLightDescriptorSetLayoutCreateInfo);
+	}
+
+	{
+		GraphicsAPI::DescriptorSetLayout::Binding shadowMapMatrixBinding{};
+		shadowMapMatrixBinding.bindingId = 0;
+		shadowMapMatrixBinding.count = 1;
+		shadowMapMatrixBinding.type = GraphicsAPI::BindingType::UniformBuffer;
+		shadowMapMatrixBinding.stages = GraphicsAPI::ShaderStageBit::Vertex;
+
+		GraphicsAPI::DescriptorSetLayout::CreateInfo shadowMapDescriptorSetLayoutCreateInfo{};
+		shadowMapDescriptorSetLayoutCreateInfo.debugName = "Shadow Map Descriptor Set Layout";
+		shadowMapDescriptorSetLayoutCreateInfo.bindingCount = 1;
+		shadowMapDescriptorSetLayoutCreateInfo.bindings = &shadowMapMatrixBinding;
+		shadowMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(shadowMapDescriptorSetLayoutCreateInfo);
+	}
 
 	{
 		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 2> ambientOcclusionInputLayoutBinding{};
@@ -1156,13 +1188,12 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	engineDescriptorSetCreateInfo.bindings = &engineUboBinding;
 	imageSet.engineDescriptorSet = graphicsCore->CreateDescriptorSet(engineDescriptorSetCreateInfo);
 
-	std::array<GraphicsAPI::DescriptorSet::Binding, 6> tonemapDescriptorSetBindings{};
+	std::array<GraphicsAPI::DescriptorSet::Binding, 5> tonemapDescriptorSetBindings{};
 	tonemapDescriptorSetBindings[0] = engineUboBinding;
 	tonemapDescriptorSetBindings[1] = screenSamplerBinding;
 	tonemapDescriptorSetBindings[2] = litHdrRenderTargetBinding;
 	tonemapDescriptorSetBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomMipLevelCount + 1] );
-	tonemapDescriptorSetBindings[4] = gbufferDepthBinding;
-	tonemapDescriptorSetBindings[5] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( imageSet.tonemapPostProcessingUniformBufferObject );
+	tonemapDescriptorSetBindings[4] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( imageSet.tonemapPostProcessingUniformBufferObject );
 
 	GraphicsAPI::DescriptorSet::CreateInfo tonemapDescriptorSetCreateInfo{};
 	tonemapDescriptorSetCreateInfo.debugName = "Tonemap Descriptor Set";
@@ -1188,6 +1219,19 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	debugDescriptorSetCreateInfo.bindings = debugDescriptorSetBindings.data();
 	imageSet.debugDescriptorSet = graphicsCore->CreateDescriptorSet(debugDescriptorSetCreateInfo);
 
+	std::array<GraphicsAPI::DescriptorSet::Binding, 4> ssaoDescriptorSetBindings{};
+	ssaoDescriptorSetBindings[0] = engineUboBinding;
+	ssaoDescriptorSetBindings[1] = screenSamplerBinding;
+	ssaoDescriptorSetBindings[2] = gbufferDepthBinding;
+	ssaoDescriptorSetBindings[3] = gbufferNormalBinding;
+
+	GraphicsAPI::DescriptorSet::CreateInfo ssaoDescriptorSetCreateInfo{};
+	ssaoDescriptorSetCreateInfo.debugName = "SSAO Descriptor Set";
+	ssaoDescriptorSetCreateInfo.layout = ssaoDescriptorSetLayout;
+	ssaoDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(ssaoDescriptorSetBindings.size());
+	ssaoDescriptorSetCreateInfo.bindings = ssaoDescriptorSetBindings.data();
+	imageSet.ssaoDescriptorSet = graphicsCore->CreateDescriptorSet(ssaoDescriptorSetCreateInfo);
+
 	std::array<GraphicsAPI::DescriptorSet::Binding, 6> lightingDescriptorSetBindings{};
 	lightingDescriptorSetBindings[0] = engineUboBinding;
 	lightingDescriptorSetBindings[1] = screenSamplerBinding;
@@ -1197,7 +1241,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	lightingDescriptorSetBindings[5] = gbufferSpecRoughnessBinding;
 
 	GraphicsAPI::DescriptorSet::CreateInfo lightingDescriptorSetCreateInfo{};
-	lightingDescriptorSetCreateInfo.debugName = "Point Light Descriptor Set";
+	lightingDescriptorSetCreateInfo.debugName = "Light Descriptor Set";
 	lightingDescriptorSetCreateInfo.layout = lightingDescriptorSetLayout;
 	lightingDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(lightingDescriptorSetBindings.size());
 	lightingDescriptorSetCreateInfo.bindings = lightingDescriptorSetBindings.data();
@@ -1223,8 +1267,8 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 		GraphicsAPI::DescriptorSet::CreateInfo environmentMapDescriptorCreateInfo{};
 		environmentMapDescriptorCreateInfo.debugName = "Environment Map Input Descriptor Set";
 		environmentMapDescriptorCreateInfo.layout = environmentMapDescriptorSetLayout;
-		environmentMapDescriptorCreateInfo.bindingCount = 0;
-		environmentMapDescriptorCreateInfo.bindings = nullptr;
+		environmentMapDescriptorCreateInfo.bindingCount = 1;
+		environmentMapDescriptorCreateInfo.bindings = &environmentMapBinding;
 		environmentMapDescriptorSet = graphicsCore->CreateDescriptorSet(environmentMapDescriptorCreateInfo);
 	}
 }
@@ -1432,7 +1476,7 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 		litHdrFramebufferCreateInfo.renderTargets = &imageSet.litHdrRenderTarget;
 		litHdrFramebufferCreateInfo.renderTargetCount = 1;
 		litHdrFramebufferCreateInfo.depthTarget = imageSet.gbufferDepthStencilTarget;
-		litHdrFramebufferCreateInfo.renderPass = engineCore.GetRenderPassRegistry()->GetRenderpass(mainRenderPassKey);
+		litHdrFramebufferCreateInfo.renderPass = engineCore.GetRenderPassRegistry()->GetRenderpass(lightingRenderPassKey);
 		imageSet.litHdrFramebuffer = graphicsCore->CreateFramebuffer(litHdrFramebufferCreateInfo);
 	}
 }
@@ -1874,7 +1918,7 @@ void DeferredRenderer::RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAP
 	commandBuffer->BindIndexBuffer(indexBuffer);
 
 	std::array<GraphicsAPI::DescriptorSet*, 2> ssaoDescriptors{};
-	ssaoDescriptors[0] = imageSet.lightingDescriptorSet;
+	ssaoDescriptors[0] = imageSet.ssaoDescriptorSet;
 	ssaoDescriptors[1] = ssaoInputDescriptorSet;
 
 	commandBuffer->BindGraphicsPipeline(ssaoPipeline);
@@ -2201,7 +2245,7 @@ void DeferredRenderer::Render(
 		GraphicsAPI::ClearColorValue clearColor{ 0.0f, 0.0f, 0.0f, 1.f };
 		GraphicsAPI::ClearDepthStencil clearDepthStencil;
 
-		commandBuffer->BindRenderPass(engineCore.GetRenderPassRegistry()->GetRenderpass(mainRenderPassKey), imageSet.litHdrFramebuffer, renderWidth, renderHeight, &clearColor, 1, clearDepthStencil);
+		commandBuffer->BindRenderPass(engineCore.GetRenderPassRegistry()->GetRenderpass(lightingRenderPassKey), imageSet.litHdrFramebuffer, renderWidth, renderHeight, &clearColor, 1, clearDepthStencil);
 
 		if (renderMode == DeferredRenderMode::Default) {
 			commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
