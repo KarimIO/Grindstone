@@ -470,7 +470,7 @@ void DeferredRenderer::CreateDepthOfFieldResources() {
 void DeferredRenderer::CreateBloomResources() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	std::array<GraphicsAPI::DescriptorSetLayout::Binding, 4> bloomLayoutBindings{};
+	std::array<GraphicsAPI::DescriptorSetLayout::Binding, 5> bloomLayoutBindings{};
 	bloomLayoutBindings[0].bindingId = 0;
 	bloomLayoutBindings[0].count = 1;
 	bloomLayoutBindings[0].type = GraphicsAPI::BindingType::UniformBuffer;
@@ -478,18 +478,23 @@ void DeferredRenderer::CreateBloomResources() {
 
 	bloomLayoutBindings[1].bindingId = 1;
 	bloomLayoutBindings[1].count = 1;
-	bloomLayoutBindings[1].type = GraphicsAPI::BindingType::StorageImage;
+	bloomLayoutBindings[1].type = GraphicsAPI::BindingType::Sampler;
 	bloomLayoutBindings[1].stages = GraphicsAPI::ShaderStageBit::Compute;
 
 	bloomLayoutBindings[2].bindingId = 2;
 	bloomLayoutBindings[2].count = 1;
-	bloomLayoutBindings[2].type = GraphicsAPI::BindingType::SampledImage;
+	bloomLayoutBindings[2].type = GraphicsAPI::BindingType::StorageImage;
 	bloomLayoutBindings[2].stages = GraphicsAPI::ShaderStageBit::Compute;
 
 	bloomLayoutBindings[3].bindingId = 3;
 	bloomLayoutBindings[3].count = 1;
 	bloomLayoutBindings[3].type = GraphicsAPI::BindingType::SampledImage;
 	bloomLayoutBindings[3].stages = GraphicsAPI::ShaderStageBit::Compute;
+
+	bloomLayoutBindings[4].bindingId = 4;
+	bloomLayoutBindings[4].count = 1;
+	bloomLayoutBindings[4].type = GraphicsAPI::BindingType::SampledImage;
+	bloomLayoutBindings[4].stages = GraphicsAPI::ShaderStageBit::Compute;
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo bloomDescriptorSetLayoutCreateInfo{};
 	bloomDescriptorSetLayoutCreateInfo.debugName = "Bloom Descriptor Set Layout";
@@ -810,7 +815,8 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 		bloomRenderTargetCreateInfo.height = bloomRenderTargetCreateInfo.height / 2;
 	}
 
-	std::array<GraphicsAPI::DescriptorSet::Binding, 4> descriptorBindings;
+	std::array<GraphicsAPI::DescriptorSet::Binding, 5> descriptorBindings;
+	descriptorBindings[1] = GraphicsAPI::DescriptorSet::Binding::Sampler(screenSampler);
 	descriptorBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[0] );
 
 	// Threshold values sourced from: https://catlikecoding.com/unity/tutorials/advanced-rendering/bloom/
@@ -838,8 +844,8 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UploadData(&bloomUboStruct);
 		descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( bloomUniformBuffers[bloomDescriptorSetIndex] );
-		descriptorBindings[1] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.bloomRenderTargets[1] );
-		descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.litHdrRenderTarget );
+		descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.bloomRenderTargets[1] );
+		descriptorBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.litHdrRenderTarget );
 		imageSet.bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 
@@ -849,8 +855,8 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UploadData(&bloomUboStruct);
 		descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( bloomUniformBuffers[bloomDescriptorSetIndex] );
-		descriptorBindings[1] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.bloomRenderTargets[i + 1] );
-		descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[i] );
+		descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.bloomRenderTargets[i + 1] );
+		descriptorBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[i] );
 		imageSet.bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 
@@ -859,9 +865,9 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UploadData(&bloomUboStruct);
 		descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( bloomUniformBuffers[bloomDescriptorSetIndex] );
-		descriptorBindings[1] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.bloomRenderTargets[bloomStoredMipLevelCount * 2 - 1] );
-		descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomStoredMipLevelCount - 2] );
-		descriptorBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomStoredMipLevelCount - 1] );
+		descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.bloomRenderTargets[bloomStoredMipLevelCount * 2 - 1] );
+		descriptorBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomStoredMipLevelCount - 2] );
+		descriptorBindings[4] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomStoredMipLevelCount - 1] );
 		imageSet.bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 
@@ -871,9 +877,9 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UploadData(&bloomUboStruct);
 		descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( bloomUniformBuffers[bloomDescriptorSetIndex] );
-		descriptorBindings[1] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i] );
-		descriptorBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[i] );
-		descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i + 1] );
+		descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::StorageImage(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i]);
+		descriptorBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i + 1] );
+		descriptorBindings[4] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[i] );
 		imageSet.bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 }
@@ -944,7 +950,7 @@ void DeferredRenderer::UpdateBloomDescriptorSet(DeferredRendererImageSet& imageS
 	bindings[1] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomMipLevelCount - 2] );
 	bindings[2] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomMipLevelCount - 1] );
 
-	imageSet.bloomDescriptorSets[bloomFirstUpsampleIndex]->ChangeBindings(bindings.data(), static_cast<uint32_t>(bindings.size()), 1);
+	imageSet.bloomDescriptorSets[bloomFirstUpsampleIndex]->ChangeBindings(bindings.data(), static_cast<uint32_t>(bindings.size()), 2);
 }
 
 void DeferredRenderer::CreateUniformBuffers() {
@@ -1613,8 +1619,12 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 }
 
 void DeferredRenderer::RenderSsr(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* currentCommandBuffer) {
-	// TODO: Get Compute Pipeline
-	Grindstone::GraphicsAPI::ComputePipeline* ssrPipeline = (Grindstone::GraphicsAPI::ComputePipeline*)ssrPipelineSet.Get()->pipeline;
+	Grindstone::ComputePipelineAsset* ssrPipelineAsset = ssrPipelineSet.Get();
+	if (ssrPipelineAsset == nullptr) {
+		return;
+	}
+
+	Grindstone::GraphicsAPI::ComputePipeline* ssrPipeline = ssrPipelineAsset->GetPipeline();
 	if (ssrPipeline == nullptr) {
 		return;
 	}
@@ -1639,7 +1649,7 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		return;
 	}
 
-	Grindstone::GraphicsAPI::ComputePipeline* bloomPipeline = bloomPipelineAsset->pipeline;
+	Grindstone::GraphicsAPI::ComputePipeline* bloomPipeline = bloomPipelineAsset->GetPipeline();
 	if (bloomPipeline == nullptr || bloomMipLevelCount <= 2) {
 		return;
 	}

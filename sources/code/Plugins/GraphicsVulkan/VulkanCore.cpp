@@ -275,11 +275,6 @@ void Vulkan::Core::CreateLogicalDevice() {
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 
-	VkPhysicalDeviceFeatures deviceFeatures = {};
-	deviceFeatures.fillModeNonSolid = VK_TRUE;
-	deviceFeatures.multiDrawIndirect = VK_TRUE;
-	deviceFeatures.samplerAnisotropy = VK_TRUE;
-
 	VkPhysicalDeviceVulkan13Features deviceFeatures13 = {};
 	deviceFeatures13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
 	deviceFeatures13.dynamicRendering = VK_TRUE;
@@ -295,7 +290,9 @@ void Vulkan::Core::CreateLogicalDevice() {
 
 	VkPhysicalDeviceFeatures2 deviceFeatures2 = {};
 	deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-	deviceFeatures2.features = deviceFeatures;
+	deviceFeatures2.features.fillModeNonSolid = VK_TRUE;
+	deviceFeatures2.features.multiDrawIndirect = VK_TRUE;
+	deviceFeatures2.features.samplerAnisotropy = VK_TRUE;
 	deviceFeatures2.pNext = &deviceFeatures11;
 
 	VkDeviceCreateInfo createInfo = {};

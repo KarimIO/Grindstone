@@ -1,6 +1,5 @@
 include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
 include "$ENGINE/pipelinesets/common/rendererUniform.gpset"
-include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
 computeSet "Bloom" {
 	shaderEntrypoint: compute main
 
@@ -9,7 +8,6 @@ computeSet "Bloom" {
 		GsComputeClipSpacePosition,
 		GsComputeViewSpacePosition,
 		GsRendererUniform,
-		GsDefaultSampler
 	]
 
 	shaderHlsl {
@@ -23,11 +21,11 @@ computeSet "Bloom" {
 			float filterRadius;
 		};
 
-		ConstantBuffer<ControlUniformBuffer> postUbo : register(b0, space1);
-
-		RWTexture2D<float4> outImage : register(u1,  space0);
-		Texture2D<float4> inImage1 : register(t2,  space0);
-		Texture2D<float4> inImage2 : register(t3,  space0);
+		ConstantBuffer<ControlUniformBuffer> postUbo : register(b0, space0);
+		SamplerState defaultSampler : register(s1, space0);
+		RWTexture2D<float4> outImage : register(u2,  space0);
+		Texture2D<float4> inImage1 : register(t3,  space0);
+		Texture2D<float4> inImage2 : register(t4,  space0);
 
 		static const int bloomStagePrefilter	= 0;
 		static const int bloomStageDownsample	= 1;

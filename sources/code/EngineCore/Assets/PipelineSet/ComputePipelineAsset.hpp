@@ -18,18 +18,13 @@ namespace Grindstone {
 	struct ComputePipelineAsset : public Asset {
 		ComputePipelineAsset(Uuid uuid) : Asset(uuid, uuid.ToString()) {}
 		
-		struct MetaData {
-			std::vector<Grindstone::PipelineAssetMetaData::Buffer> buffers;
-			std::vector<Grindstone::PipelineAssetMetaData::TextureSlot> textures;
-		};
+		std::array<GraphicsAPI::DescriptorSetLayout*, 16> descriptorSetLayouts = {};
+		Grindstone::GraphicsAPI::ComputePipeline* pipeline = nullptr;
 
-		MetaData metaData;
-		GraphicsAPI::ComputePipeline* pipeline = nullptr;
-		std::array<GraphicsAPI::DescriptorSetLayout*, 4> descriptorSetLayouts;
-
-		const Grindstone::ComputePipelineAsset::MetaData* GetMetaData() const {
-			return &metaData;
+		Grindstone::GraphicsAPI::ComputePipeline* GetPipeline() {
+			return pipeline;
 		}
+
 
 		DEFINE_ASSET_TYPE("Compute PipelineSet", AssetType::ComputePipelineSet)
 	};

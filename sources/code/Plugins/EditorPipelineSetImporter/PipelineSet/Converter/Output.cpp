@@ -426,6 +426,11 @@ bool OutputComputeSet(LogCallback logCallback, const CompilationArtifactsCompute
 		dstSet.bindingCount = static_cast<uint32_t>(bindingCount);
 	}
 
+	Grindstone::Formats::Pipelines::V1::ComputePipelineSetHeader& computeHeader = computeSetHeaders.emplace_back();
+	computeHeader = {};
+	computeHeader.configurationStartIndex = static_cast<uint32_t>(computeConfigHeaders.size());
+	computeHeader.configurationCount = 1;
+
 	Grindstone::Formats::Pipelines::V1::ComputePipelineConfigurationHeader& computeConfigurationHeader = computeConfigHeaders.emplace_back();
 	computeConfigurationHeader = {};
 	computeConfigurationHeader.shaderStageIndex = static_cast<uint16_t>(shaderStages.size());
@@ -434,11 +439,8 @@ bool OutputComputeSet(LogCallback logCallback, const CompilationArtifactsCompute
 	computeConfigurationHeader.descriptorBindingStartIndex = static_cast<uint16_t>(descriptorBindingOffset);
 	computeConfigurationHeader.descriptorBindingCount = static_cast<uint8_t>(descriptorBindings.size() - descriptorBindingOffset);
 
-	Grindstone::Formats::Pipelines::V1::ComputePipelineSetHeader computeHeader{};
-	computeHeader.configurationStartIndex = static_cast<uint32_t>(computeSetHeaders.size());
-	computeHeader.configurationCount = 1;
-
 	Grindstone::Formats::Pipelines::V1::PassPipelineShaderStageHeader& stageHeader = shaderStages.emplace_back();
+	stageHeader = {};
 	stageHeader.shaderCodeSize = static_cast<uint32_t>(artifacts.compiledCode.size());
 	stageHeader.stageType = static_cast<Grindstone::GraphicsAPI::ShaderStage>(artifacts.stage);
 	stageHeader.shaderCodeOffsetFromBlobStart = static_cast<uint32_t>(blobWriter.offset);

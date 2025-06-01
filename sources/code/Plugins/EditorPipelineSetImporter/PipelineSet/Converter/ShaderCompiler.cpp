@@ -19,11 +19,13 @@ static void PrintShaderMessage(LogCallback logCallback, const std::filesystem::p
 		severity = Grindstone::LogSeverity::Error;
 	}
 
+	// TODO: Unsupress warnings.
 	if (msg.find("warning") != std::string::npos) {
 		severity = Grindstone::LogSeverity::Warning;
 	}
-
-	logCallback(severity, PipelineConverterLogSource::Output, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
+	else {
+		logCallback(severity, PipelineConverterLogSource::Output, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
+	}
 }
 
 static int Filter(unsigned int code, struct _EXCEPTION_POINTERS* pExceptionInfo) {

@@ -11,11 +11,47 @@
 #include "ComputePipelineImporter.hpp"
 
 using namespace Grindstone;
+using namespace Grindstone::Containers;
 using namespace Grindstone::GraphicsAPI;
 using namespace Grindstone::Formats::Pipelines;
 
+static void UnpackGraphicsPipelineDescriptorSetHeaders(
+	Grindstone::GraphicsAPI::Core* graphicsCore,
+	std::string_view pipelineName,
+	const Span<V1::ShaderReflectDescriptorSet>& srcDescriptorSets,
+	const Span<V1::ShaderReflectDescriptorBinding>& srcDescriptorBindings,
+	std::array<Grindstone::GraphicsAPI::DescriptorSetLayout*, 16>& dstDescriptorSets
+) {
+	Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo layoutCreateInfo;
+
+	for (uint8_t i = 0; i < srcDescriptorSets.GetSize(); ++i) {
+		const V1::ShaderReflectDescriptorSet& srcDescriptorSet = srcDescriptorSets[i];
+
+		std::vector<Grindstone::GraphicsAPI::DescriptorSetLayout::Binding> dstDescriptorBindings;
+		dstDescriptorBindings.reserve(srcDescriptorSet.bindingCount);
+
+		for (size_t bindingIndex = srcDescriptorSet.bindingStartIndex;
+			bindingIndex < srcDescriptorSet.bindingStartIndex + srcDescriptorSet.bindingCount;
+			++bindingIndex
+		) {
+			const V1::ShaderReflectDescriptorBinding& srcBinding = srcDescriptorBindings[bindingIndex];
+			Grindstone::GraphicsAPI::DescriptorSetLayout::Binding& dstBinding = dstDescriptorBindings.emplace_back();
+			dstBinding.bindingId = srcBinding.bindingIndex;
+			dstBinding.stages = srcBinding.stages;
+			dstBinding.count = srcBinding.count;
+			dstBinding.type = srcBinding.type;
+		}
+
+		std::string setName = fmt::format("{} Descriptor Set {}", pipelineName, i);
+		layoutCreateInfo.debugName = setName.c_str();
+		layoutCreateInfo.bindings = dstDescriptorBindings.data();
+		layoutCreateInfo.bindingCount = static_cast<uint32_t>(dstDescriptorBindings.size());
+
+		dstDescriptorSets[i] = graphicsCore->CreateDescriptorSetLayout(layoutCreateInfo);
+	}
+}
+
 static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
-	return false;
 	// TODO: Check shader cache before loading and compiling again
 	// The shader cache includes shaders precompiled for consoles, or compiled once per driver update on computers
 	// if shaderCache has shader with this uuid
@@ -56,21 +92,36 @@ static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
 	GS_ASSERT(srcFileHeader->attachmentSize == sizeof(V1::PassPipelineAttachmentHeader));
 	GS_ASSERT(srcFileHeader->stageSize == sizeof(V1::PassPipelineShaderStageHeader));
 
-	std::vector<GraphicsPipeline::ShaderStageData> shaderStageCreateInfos;
+	Span<V1::ComputePipelineSetHeader> computePipelines = fileData.GetSpan<V1::ComputePipelineSetHeader>(srcFileHeader->computePipelinesOffset, srcFileHeader->computePipelineCount);
+	Span<V1::ComputePipelineConfigurationHeader> pipelineConfigurations = fileData.GetSpan<V1::ComputePipelineConfigurationHeader>(srcFileHeader->computeConfigurationsOffset, srcFileHeader->computeConfigurationCount);
+	Span<V1::PassPipelineShaderStageHeader> shaderStages = fileData.GetSpan<V1::PassPipelineShaderStageHeader>(srcFileHeader->shaderStagesOffset, srcFileHeader->shaderStageCount);
+	Span<V1::ShaderReflectDescriptorSet> descriptorSets = fileData.GetSpan<V1::ShaderReflectDescriptorSet>(srcFileHeader->descriptorSetsOffset, srcFileHeader->descriptorSetCount);
+	Span<V1::ShaderReflectDescriptorBinding> descriptorBindings = fileData.GetSpan<V1::ShaderReflectDescriptorBinding>(srcFileHeader->descriptorBindingsOffset, srcFileHeader->descriptorBindingCount);
+	BufferSpan blobs = fileData.GetSpan(srcFileHeader->blobSectionOffset, srcFileHeader->blobSectionSize);
 
-	computePipelineAsset.name = result.displayName;
+	GS_ASSERT(computePipelines.GetSize() != 0);
+	const V1::ComputePipelineSetHeader& srcPipelineHeader = computePipelines[0];
 
-	ComputePipeline::CreateInfo pipelineCreateInfo{};
-	pipelineCreateInfo.debugName = result.displayName.c_str();
-	pipelineCreateInfo.descriptorSetLayouts = nullptr;
-	pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(0);
-	pipelineCreateInfo.shaderContent;
-	pipelineCreateInfo.shaderFileName;
-	pipelineCreateInfo.shaderSize;
+	GS_ASSERT(srcPipelineHeader.configurationCount != 0);
+	const V1::ComputePipelineConfigurationHeader& srcConfigHeader = pipelineConfigurations[srcPipelineHeader.configurationStartIndex];
+	const V1::PassPipelineShaderStageHeader& srcStage = shaderStages[srcConfigHeader.shaderStageIndex];
+
+	UnpackGraphicsPipelineDescriptorSetHeaders(
+		graphicsCore,
+		computePipelineAsset.name,
+		descriptorSets.GetSubspan(srcConfigHeader.descriptorSetStartIndex, srcConfigHeader.descriptorSetCount),
+		descriptorBindings,
+		computePipelineAsset.descriptorSetLayouts
+	);
+
+	Grindstone::GraphicsAPI::ComputePipeline::CreateInfo pipelineCreateInfo{};
+	pipelineCreateInfo.debugName = computePipelineAsset.name.c_str();
+	pipelineCreateInfo.descriptorSetLayoutCount = static_cast<uint32_t>(srcConfigHeader.descriptorSetCount);
+	pipelineCreateInfo.descriptorSetLayouts = computePipelineAsset.descriptorSetLayouts.data();
+	pipelineCreateInfo.shaderContent = reinterpret_cast<const char*>(&blobs.GetBegin() + srcStage.shaderCodeOffsetFromBlobStart);
+	pipelineCreateInfo.shaderFileName = computePipelineAsset.name.c_str();
+	pipelineCreateInfo.shaderSize = srcStage.shaderCodeSize;
 	computePipelineAsset.pipeline = graphicsCore->CreateComputePipeline(pipelineCreateInfo);
-
-	// TODO: Fix
-	computePipelineAsset.descriptorSetLayouts[0] = pipelineCreateInfo.descriptorSetLayouts[0];
 
 	// TODO: Save compiled shader into ShaderCache
 
