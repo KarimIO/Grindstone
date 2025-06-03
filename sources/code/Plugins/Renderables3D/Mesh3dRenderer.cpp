@@ -17,8 +17,8 @@ using namespace Grindstone::GraphicsAPI;
 struct RenderTask {
 	GraphicsAPI::DescriptorSet* materialDescriptorSet;
 	GraphicsAPI::DescriptorSet* perDrawDescriptorSet;
-	class GraphicsAPI::GraphicsPipeline* pipeline;
-	class GraphicsAPI::VertexArrayObject* vertexArrayObject;
+	const class GraphicsAPI::GraphicsPipeline* pipeline;
+	const class GraphicsAPI::VertexArrayObject* vertexArrayObject;
 	uint32_t indexCount;
 	uint32_t baseVertex;
 	uint32_t baseIndex;
@@ -81,8 +81,7 @@ std::string Mesh3dRenderer::GetName() const {
 void Mesh3dRenderer::RenderQueue(
 	GraphicsAPI::CommandBuffer* commandBuffer,
 	const entt::registry& registry,
-	Grindstone::HashedString passType,
-	Grindstone::HashedString drawOrderBucket
+	Grindstone::HashedString renderQueueHash
 ) {
 	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
 	Assets::AssetManager* assetManager = engineCore->assetManager;
@@ -127,12 +126,10 @@ void Mesh3dRenderer::RenderQueue(
 					continue;
 				}
 
-				const Grindstone::GraphicsPipelineAsset::Pass* pass = graphicsPipelineAsset->GetPass(passType, drawOrderBucket);
-				if (pass == nullptr) {
+				const GraphicsAPI::GraphicsPipeline* pipeline = graphicsPipelineAsset->GetPassPipeline(renderQueueHash, &meshAsset->vertexArrayObject->GetLayout());
+				if (pipeline == nullptr) {
 					continue;
 				}
-
-				GraphicsPipeline* pipeline = nullptr; // TODO: GetOrCreate(pass->pipelineData, meshAsset->layout);
 
 				uint32_t sortData = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(pipeline));
 
@@ -156,7 +153,7 @@ void Mesh3dRenderer::RenderQueue(
 	std::vector<RenderTaskGroup> renderTaskGroups;
 	renderTasks.reserve(1000);
 
-	GraphicsAPI::GraphicsPipeline* graphicsPipeline = nullptr;
+	const GraphicsAPI::GraphicsPipeline* graphicsPipeline = nullptr;
 
 	for (RenderTask& renderTask : renderTasks) {
 		if (graphicsPipeline != renderTask.pipeline) {

@@ -2059,8 +2059,7 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 			assetManager->RenderQueue(
 				commandBuffer,
 				registry,
-				"ShadowMap",
-				HashedString()
+				"ShadowMap"
 			);
 
 			commandBuffer->UnbindRenderPass();
@@ -2109,8 +2108,7 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 			assetManager->RenderQueue(
 				commandBuffer,
 				registry,
-				"ShadowMap",
-				HashedString()
+				"ShadowMap"
 			);
 
 			commandBuffer->UnbindRenderPass();
@@ -2125,6 +2123,7 @@ void DeferredRenderer::PostProcess(
 ) {
 	DeferredRendererImageSet& imageSet = deferredRendererImageSets[imageIndex];
 
+	// RenderSsr(imageSet, commandBuffer);
 	// RenderDepthOfField(imageSet, currentCommandBuffer);
 	RenderBloom(imageSet, currentCommandBuffer);
 
@@ -2242,7 +2241,7 @@ void DeferredRenderer::Render(
 	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(renderWidth), static_cast<float>(renderHeight));
 	commandBuffer->SetScissor(0, 0, renderWidth, renderHeight);
 
-	assetManager->RenderQueue(commandBuffer, registry, "Main", "Opaque");
+	assetManager->RenderQueue(commandBuffer, registry, geometryOpaqueRenderPassKey);
 	commandBuffer->UnbindRenderPass();
 
 	if (renderMode == DeferredRenderMode::Default || renderMode == DeferredRenderMode::AmbientOcclusion) {
@@ -2264,11 +2263,11 @@ void DeferredRenderer::Render(
 			RenderLights(imageIndex, commandBuffer, registry);
 		}
 
-		assetManager->RenderQueue(commandBuffer, registry, "Main", "Unlit");
+		assetManager->RenderQueue(commandBuffer, registry, geometryUnlitRenderPassKey);
 
 		if (renderMode == DeferredRenderMode::Default) {
-			assetManager->RenderQueue(commandBuffer, registry, "Main", "Skybox");
-			assetManager->RenderQueue(commandBuffer, registry, "Main", "Transparent");
+			assetManager->RenderQueue(commandBuffer, registry, geometrySkyRenderPassKey);
+			assetManager->RenderQueue(commandBuffer, registry, geometryTransparentRenderPassKey);
 		}
 
 		commandBuffer->UnbindRenderPass();
@@ -2276,8 +2275,6 @@ void DeferredRenderer::Render(
 
 	commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	commandBuffer->BindIndexBuffer(indexBuffer);
-
-	// RenderSsr(imageSet, commandBuffer);
 
 	if (renderMode == DeferredRenderMode::Default) {
 		PostProcess(imageIndex, outputFramebuffer, commandBuffer);

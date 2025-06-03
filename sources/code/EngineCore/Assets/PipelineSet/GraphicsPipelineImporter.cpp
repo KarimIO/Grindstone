@@ -160,6 +160,7 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		const char* passName = reinterpret_cast<const char*>(&blobs[srcPass.pipelineNameOffsetFromBlobStart]);
 		const char* renderQueueName = reinterpret_cast<const char*>(&blobs[srcPass.renderQueueNameOffsetFromBlobStart]);
 		pass.passPipelineName = result.displayName + " " + passName;
+		pass.renderQueue = renderQueueName;
 
 		GraphicsPipeline::PipelineData& pipelineData = pass.pipelineData;
 		pipelineData.debugName = result.displayName.c_str();

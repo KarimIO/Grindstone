@@ -31,7 +31,7 @@ static VkShaderStageFlagBits TranslateShaderStageToVulkanBit(GraphicsAPI::Shader
 }
 
 static void CreateShaderModule(
-	GraphicsAPI::GraphicsPipeline::ShaderStageData& createInfo,
+	const GraphicsAPI::GraphicsPipeline::ShaderStageData& createInfo,
 	VkPipelineShaderStageCreateInfo& out
 ) {
 	VkShaderModuleCreateInfo shaderModuleCreateInfo = {};
@@ -147,7 +147,7 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 
 	std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(pipelineData.colorAttachmentCount);
 	for (uint8_t i = 0; i < pipelineData.colorAttachmentCount; ++i) {
-		Grindstone::GraphicsAPI::GraphicsPipeline::AttachmentData& attachmentCreateInfo = pipelineData.colorAttachmentData[i];
+		const Grindstone::GraphicsAPI::GraphicsPipeline::AttachmentData& attachmentCreateInfo = pipelineData.colorAttachmentData[i];
 		VkPipelineColorBlendAttachmentState& attachment = colorBlendAttachments[i];
 		
 		colorBlendAttachments[i].colorWriteMask = TranslateColorMaskToVulkan(attachmentCreateInfo.colorMask);
@@ -187,10 +187,10 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 	layouts.reserve(pipelineData.descriptorSetLayoutCount);
 
 
-	Vulkan::DescriptorSetLayout** descriptorSetLayouts = reinterpret_cast<Vulkan::DescriptorSetLayout**>(pipelineData.descriptorSetLayouts);
+	const Vulkan::DescriptorSetLayout* const * descriptorSetLayouts = reinterpret_cast<const Vulkan::DescriptorSetLayout* const *>(pipelineData.descriptorSetLayouts);
 
 	for (uint32_t i = 0; i < pipelineData.descriptorSetLayoutCount; ++i) {
-		Vulkan::DescriptorSetLayout* descriptorSetLayout = descriptorSetLayouts[i];
+		const Vulkan::DescriptorSetLayout* descriptorSetLayout = descriptorSetLayouts[i];
 		VkDescriptorSetLayout vkDescriptorSetLayout = descriptorSetLayout->GetInternalLayout();
 		layouts.push_back(vkDescriptorSetLayout);
 	}

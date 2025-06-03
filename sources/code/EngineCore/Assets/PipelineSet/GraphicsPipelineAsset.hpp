@@ -25,9 +25,7 @@ namespace Grindstone {
 		// TODO: Support Configurations
 		struct Pass {
 			std::string passPipelineName;
-			uint8_t renderQueue = UINT8_MAX;
-			Grindstone::HashedString renderPass;
-			Grindstone::HashedString orderBucket;
+			Grindstone::HashedString renderQueue;
 			GraphicsAPI::GraphicsPipeline::PipelineData pipelineData;
 			std::array<GraphicsAPI::DescriptorSetLayout*, 16> descriptorSetLayouts;
 			std::array<Grindstone::Buffer, GraphicsAPI::numShaderGraphicStage> stageBuffers;
@@ -112,19 +110,41 @@ namespace Grindstone {
 			return graphicsCore->GetOrCreateGraphicsPipelineFromCache(passes[0].pipelineData, vertexInputLayout);
 		}
 
-		const Grindstone::GraphicsPipelineAsset::Pass* GetPass(Grindstone::HashedString renderPass) const {
+		const Grindstone::GraphicsAPI::GraphicsPipeline* GetPassPipeline(Grindstone::HashedString renderQueue, const Grindstone::GraphicsAPI::VertexInputLayout* vertexInputLayout) const {
+			const Grindstone::GraphicsPipelineAsset::Pass* selectedPass = nullptr;
 			for (const Grindstone::GraphicsPipelineAsset::Pass& pass : passes) {
-				if (pass.renderPass == renderPass) {
-					return &pass;
+				if (pass.renderQueue == renderQueue) {
+					selectedPass = &pass;
+					break;
 				}
 			}
 
-			return nullptr;
+			if (selectedPass == nullptr) {
+				return nullptr;
+			}
+
+			std::vector<Grindstone::GraphicsAPI::GraphicsPipeline::ShaderStageData> stages;
+			stages.resize(selectedPass->pipelineData.shaderStageCreateInfoCount);
+
+			for (size_t stageIndex = 0; stageIndex < selectedPass->pipelineData.shaderStageCreateInfoCount; ++stageIndex) {
+				stages[stageIndex].content = reinterpret_cast<const char*>(selectedPass->stageBuffers[stageIndex].Get());
+				stages[stageIndex].size = static_cast<uint32_t>(selectedPass->stageBuffers[stageIndex].GetCapacity());
+				stages[stageIndex].type = selectedPass->stageTypes[stageIndex];
+			}
+
+			GraphicsAPI::GraphicsPipeline::PipelineData pipelineData = selectedPass->pipelineData;
+			pipelineData.debugName = selectedPass->passPipelineName.c_str();
+			pipelineData.colorAttachmentData = selectedPass->colorAttachmentData.data();
+			pipelineData.descriptorSetLayouts = selectedPass->descriptorSetLayouts.data();
+			pipelineData.shaderStageCreateInfos = stages.data();
+
+			Grindstone::GraphicsAPI::Core* graphicsCore = Grindstone::EngineCore::GetInstance().GetGraphicsCore();
+			return graphicsCore->GetOrCreateGraphicsPipelineFromCache(pipelineData, vertexInputLayout);
 		}
 
-		const Grindstone::GraphicsPipelineAsset::Pass* GetPass(Grindstone::HashedString renderPass, Grindstone::HashedString orderBucket) const {
+		const Grindstone::GraphicsPipelineAsset::Pass* GetPass(Grindstone::HashedString renderQueue) const {
 			for (const Grindstone::GraphicsPipelineAsset::Pass& pass : passes) {
-				if (pass.renderPass == renderPass && pass.orderBucket == orderBucket) {
+				if (pass.renderQueue == renderQueue) {
 					return &pass;
 				}
 			}

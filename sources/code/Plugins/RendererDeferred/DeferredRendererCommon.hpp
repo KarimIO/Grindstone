@@ -4,6 +4,10 @@
 #include <Common/Graphics/Formats.hpp>
 
 static Grindstone::HashedString gbufferRenderPassKey = "Gbuffer";
+static Grindstone::HashedString geometryOpaqueRenderPassKey = "GeometryOpaque";
+static Grindstone::HashedString geometryUnlitRenderPassKey = "GeometryUnlit";
+static Grindstone::HashedString geometrySkyRenderPassKey = "GeometrySky";
+static Grindstone::HashedString geometryTransparentRenderPassKey = "GeometryTransparent";
 static Grindstone::HashedString mainRenderPassKey = "Main";
 
 static Grindstone::HashedString dofSeparationRenderPassKey = "DofSeparation";

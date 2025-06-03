@@ -161,27 +161,27 @@ void Vulkan::CommandBuffer::EndDebugLabelSection() {
 }
 
 void Vulkan::CommandBuffer::BindGraphicsDescriptorSet(
-	Base::GraphicsPipeline* graphicsPipeline,
-	Base::DescriptorSet** descriptorSets,
+	const Base::GraphicsPipeline* graphicsPipeline,
+	const Base::DescriptorSet* const * descriptorSets,
 	uint32_t descriptorSetCount
 ) {
-	Vulkan::GraphicsPipeline *vkPipeline = static_cast<Vulkan::GraphicsPipeline *>(graphicsPipeline);
+	const Vulkan::GraphicsPipeline *vkPipeline = static_cast<const Vulkan::GraphicsPipeline *>(graphicsPipeline);
 	BindDescriptorSet(vkPipeline->GetGraphicsPipelineLayout(), VK_PIPELINE_BIND_POINT_GRAPHICS, descriptorSets, descriptorSetCount);
 }
 
 void Vulkan::CommandBuffer::BindComputeDescriptorSet(
-	Base::ComputePipeline* graphicsPipeline,
-	Base::DescriptorSet** descriptorSets,
+	const Base::ComputePipeline* graphicsPipeline,
+	const Base::DescriptorSet* const * descriptorSets,
 	uint32_t descriptorSetCount
 ) {
-	Vulkan::ComputePipeline* vkPipeline = static_cast<Vulkan::ComputePipeline*>(graphicsPipeline);
+	const Vulkan::ComputePipeline* vkPipeline = static_cast<const Vulkan::ComputePipeline*>(graphicsPipeline);
 	BindDescriptorSet(vkPipeline->GetComputePipelineLayout(), VK_PIPELINE_BIND_POINT_COMPUTE, descriptorSets, descriptorSetCount);
 }
 
 void Vulkan::CommandBuffer::BindDescriptorSet(
 	VkPipelineLayout pipelineLayout,
 	VkPipelineBindPoint bindPoint,
-	Base::DescriptorSet** descriptorSets,
+	const Base::DescriptorSet* const * descriptorSets,
 	uint32_t descriptorSetCount
 ) {
 	std::vector<VkDescriptorSet> vkDescriptorSets;
@@ -189,7 +189,7 @@ void Vulkan::CommandBuffer::BindDescriptorSet(
 	for (uint32_t i = 0; i < descriptorSetCount; i++) {
 		auto descriptorPtr = descriptorSets[i];
 		VkDescriptorSet desc = descriptorPtr != nullptr
-			? static_cast<Vulkan::DescriptorSet*>(descriptorPtr)->GetDescriptorSet()
+			? static_cast<const Vulkan::DescriptorSet*>(descriptorPtr)->GetDescriptorSet()
 			: nullptr;
 		vkDescriptorSets.push_back(desc);
 	}
@@ -286,32 +286,32 @@ void Vulkan::CommandBuffer::SetScissor(int32_t offsetX, int32_t offsetY, uint32_
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
 
-void Vulkan::CommandBuffer::BindGraphicsPipeline(Base::GraphicsPipeline* pipeline) {
-	Vulkan::GraphicsPipeline* vulkanPipeline = static_cast<Vulkan::GraphicsPipeline*>(pipeline);
+void Vulkan::CommandBuffer::BindGraphicsPipeline(const Base::GraphicsPipeline* pipeline) {
+	const Vulkan::GraphicsPipeline* vulkanPipeline = static_cast<const Vulkan::GraphicsPipeline*>(pipeline);
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanPipeline->GetGraphicsPipeline());
 }
 
-void Vulkan::CommandBuffer::BindComputePipeline(Base::ComputePipeline* pipeline) {
-	Vulkan::ComputePipeline * vulkanPipeline = static_cast<Vulkan::ComputePipeline*>(pipeline);
+void Vulkan::CommandBuffer::BindComputePipeline(const Base::ComputePipeline* pipeline) {
+	const Vulkan::ComputePipeline * vulkanPipeline = static_cast<const Vulkan::ComputePipeline*>(pipeline);
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, vulkanPipeline->GetComputePipeline());
 }
 
-void Vulkan::CommandBuffer::BindVertexArrayObject(Base::VertexArrayObject* vertexArrayObject) {
-	Vulkan::VertexArrayObject* vkVao = static_cast<Vulkan::VertexArrayObject*>(vertexArrayObject);
-	auto& vkVertexBuffers = vkVao->GetVertexBuffers();
+void Vulkan::CommandBuffer::BindVertexArrayObject(const Base::VertexArrayObject* vertexArrayObject) {
+	const Vulkan::VertexArrayObject* vkVao = static_cast<const Vulkan::VertexArrayObject*>(vertexArrayObject);
+	const auto& vkVertexBuffers = vkVao->GetVertexBuffers();
 
 	BindVertexBuffers(vkVertexBuffers.data(), static_cast<uint32_t>(vkVertexBuffers.size()));
 	BindIndexBuffer(vkVao->GetIndexBuffer());
 }
 
-void Vulkan::CommandBuffer::BindVertexBuffers(Base::Buffer** vertexBuffers, uint32_t vertexBufferCount) {
+void Vulkan::CommandBuffer::BindVertexBuffers(const Base::Buffer* const * vertexBuffers, uint32_t vertexBufferCount) {
 	std::vector<VkBuffer> buffers;
 	std::vector<VkDeviceSize> offsets;
 	buffers.resize(vertexBufferCount);
 	offsets.resize(vertexBufferCount);
 
 	for (uint32_t i = 0; i < vertexBufferCount; ++i) {
-		Vulkan::Buffer *vb = static_cast<Vulkan::Buffer*>(vertexBuffers[i]);
+		const Vulkan::Buffer *vb = static_cast<const Vulkan::Buffer*>(vertexBuffers[i]);
 		buffers[i] = vb->GetBuffer();
 		offsets[i] = 0;
 	}

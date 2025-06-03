@@ -17,7 +17,7 @@ pipelineSet "Translucent" {
 		pass "main" {
 			shaderEntrypoint: vertex mainVertex
 			shaderEntrypoint: fragment mainFragment
-			renderQueue: "ForwardLit"
+			renderQueue: "GeometryTransparent"
 
 			properties {
 				cull: back

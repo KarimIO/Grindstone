@@ -26,12 +26,11 @@ void AssetRendererManager::SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* de
 void AssetRendererManager::RenderQueue(
 	GraphicsAPI::CommandBuffer* commandBuffer,
 	const entt::registry& registry,
-	Grindstone::HashedString passType,
-	Grindstone::HashedString drawOrderBucket
+	Grindstone::HashedString renderQueue
 ) {
-	commandBuffer->BeginDebugLabelSection("RenderQueue");
+	commandBuffer->BeginDebugLabelSection("Render Queue");
 	for (auto& assetRenderer : assetRenderers) {
-		assetRenderer.second->RenderQueue(commandBuffer, registry, passType, drawOrderBucket);
+		assetRenderer.second->RenderQueue(commandBuffer, registry, renderQueue);
 	}
 	commandBuffer->EndDebugLabelSection();
 }

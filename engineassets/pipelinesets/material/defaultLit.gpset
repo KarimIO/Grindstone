@@ -17,7 +17,7 @@ pipelineSet "lit.default" {
 		pass "main" {
 			shaderEntrypoint: vertex mainVertex
 			shaderEntrypoint: fragment mainFragment
-			renderQueue: "Gbuffer"
+			renderQueue: "GeometryOpaque"
 
 			properties {
 				cull: back

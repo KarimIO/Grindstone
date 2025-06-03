@@ -79,6 +79,10 @@ static Grindstone::GraphicsAPI::RenderPass* CreateGbufferRenderPass(Grindstone::
 	gbufferRenderPassCreateInfo.shouldClearDepthOnLoad = true;
 	Grindstone::GraphicsAPI::RenderPass* rp = graphicsCore->CreateRenderPass(gbufferRenderPassCreateInfo);
 	rpRegistry->RegisterRenderpass(gbufferRenderPassKey, rp);
+	rpRegistry->RegisterRenderpass(geometryOpaqueRenderPassKey, rp);
+	rpRegistry->RegisterRenderpass(geometrySkyRenderPassKey, rp);
+	rpRegistry->RegisterRenderpass(geometryTransparentRenderPassKey, rp);
+	rpRegistry->RegisterRenderpass(geometryUnlitRenderPassKey, rp);
 	return rp;
 }
 
@@ -161,7 +165,24 @@ Grindstone::BaseRenderer* Grindstone::DeferredRendererFactory::CreateRenderer(Gr
 }
 
 DeferredRendererFactory::~DeferredRendererFactory() {
-	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
+	EngineCore& engineCore = EngineCore::GetInstance();
+	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	Grindstone::RenderPassRegistry* rpRegistry = engineCore.GetRenderPassRegistry();
+
+	rpRegistry->UnregisterRenderpass(gbufferRenderPassKey);
+	rpRegistry->UnregisterRenderpass(geometryOpaqueRenderPassKey);
+	rpRegistry->UnregisterRenderpass(geometryUnlitRenderPassKey);
+	rpRegistry->UnregisterRenderpass(geometrySkyRenderPassKey);
+	rpRegistry->UnregisterRenderpass(geometryTransparentRenderPassKey);
+	rpRegistry->UnregisterRenderpass(mainRenderPassKey);
+
+	rpRegistry->UnregisterRenderpass(dofSeparationRenderPassKey);
+	rpRegistry->UnregisterRenderpass(dofBlurAndCombinationRenderPassKey);
+
+	rpRegistry->UnregisterRenderpass(lightingRenderPassKey);
+	rpRegistry->UnregisterRenderpass(forwardLitRenderPassKey);
+	rpRegistry->UnregisterRenderpass(ssaoRenderPassKey);
+	rpRegistry->UnregisterRenderpass(shadowMapRenderPassKey);
 
 	graphicsCore->DeleteRenderPass(dofSeparationRenderPass);
 	graphicsCore->DeleteRenderPass(dofBlurAndCombinationRenderPass);

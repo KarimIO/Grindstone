@@ -40,12 +40,12 @@ namespace Grindstone::GraphicsAPI {
 			float width, height;
 			int32_t scissorX = 0, scissorY = 0;
 			uint32_t scissorW, scissorH;
-			ShaderStageData* shaderStageCreateInfos;
+			const ShaderStageData* shaderStageCreateInfos;
 			uint32_t shaderStageCreateInfoCount;
-			DescriptorSetLayout** descriptorSetLayouts;
+			const DescriptorSetLayout* const * descriptorSetLayouts;
 			uint32_t descriptorSetLayoutCount;
 
-			AttachmentData* colorAttachmentData = nullptr;
+			const AttachmentData* colorAttachmentData = nullptr;
 			uint8_t colorAttachmentCount;
 			CompareOperation depthCompareOp = CompareOperation::LessOrEqual;
 			bool isDepthTestEnabled = true;

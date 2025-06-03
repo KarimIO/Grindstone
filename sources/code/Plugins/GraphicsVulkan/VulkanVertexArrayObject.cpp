@@ -22,7 +22,7 @@ Vulkan::VertexArrayObject::VertexArrayObject(const CreateInfo& createInfo) : Bas
 Vulkan::VertexArrayObject::~VertexArrayObject() {
 }
 
-std::vector<Base::Buffer*>& Vulkan::VertexArrayObject::GetVertexBuffers() {
+const std::vector<Base::Buffer*>& Vulkan::VertexArrayObject::GetVertexBuffers() const {
 	return vertexBuffers;
 }
 

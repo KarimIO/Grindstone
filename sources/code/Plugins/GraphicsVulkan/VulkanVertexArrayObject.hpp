@@ -17,7 +17,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void Unbind() override;
 
 	public:
-		std::vector<GraphicsAPI::Buffer*>& GetVertexBuffers();
+		const std::vector<GraphicsAPI::Buffer*>& GetVertexBuffers() const;
 		GraphicsAPI::Buffer* GetIndexBuffer() const;
 
 	private:
