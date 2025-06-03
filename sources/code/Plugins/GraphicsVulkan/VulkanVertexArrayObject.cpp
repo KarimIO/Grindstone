@@ -9,7 +9,7 @@
 namespace Base = Grindstone::GraphicsAPI;
 namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
-Vulkan::VertexArrayObject::VertexArrayObject(const CreateInfo& createInfo) : layout(createInfo.layout) {
+Vulkan::VertexArrayObject::VertexArrayObject(const CreateInfo& createInfo) : Base::VertexArrayObject(createInfo.layout) {
 	vertexBuffers.resize(createInfo.vertexBufferCount);
 
 	for (uint32_t i = 0; i < createInfo.vertexBufferCount; ++i) {

@@ -16,6 +16,5 @@ namespace Grindstone::GraphicsAPI::OpenGL {
 	protected:
 		GLuint vertexArrayObject;
 		uint32_t vertexBufferCount = 0;
-		VertexInputLayout layout;
 	};
 }

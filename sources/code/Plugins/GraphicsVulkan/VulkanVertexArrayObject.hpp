@@ -23,6 +23,5 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 	private:
 		std::vector<GraphicsAPI::Buffer*> vertexBuffers;
 		GraphicsAPI::Buffer* indexBuffer = nullptr;
-		GraphicsAPI::VertexInputLayout layout;
 	};
 }

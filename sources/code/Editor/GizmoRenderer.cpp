@@ -479,6 +479,7 @@ void GizmoRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	vaoCi.vertexBuffers = &gizmoShapesVertexBuffer;
 	vaoCi.vertexBufferCount = 1;
 	vaoCi.indexBuffer = gizmoShapesIndexBuffer;
+	vaoCi.layout = gizmoVertexLayout;
 	gizmoShapesVao = graphicsCore->CreateVertexArrayObject(vaoCi);
 
 	uint32_t indexOffset = 0;

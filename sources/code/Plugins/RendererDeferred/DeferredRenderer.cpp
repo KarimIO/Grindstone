@@ -1363,6 +1363,7 @@ void DeferredRenderer::CreateVertexAndIndexBuffersAndLayouts() {
 	vaoCi.vertexBufferCount = 1;
 	vaoCi.vertexBuffers = &vertexBuffer;
 	vaoCi.indexBuffer = indexBuffer;
+	vaoCi.layout = vertexLightPositionLayout;
 	planePostProcessVao = graphicsCore->CreateVertexArrayObject(vaoCi);
 }
 

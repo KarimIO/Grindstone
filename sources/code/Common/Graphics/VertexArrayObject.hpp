@@ -16,6 +16,12 @@ namespace Grindstone::GraphicsAPI {
 			VertexInputLayout layout;
 		};
 
+		VertexInputLayout layout;
+
+		VertexArrayObject() = default;
+		VertexArrayObject(const VertexInputLayout& layout) : layout(layout) {}
+		VertexInputLayout& GetLayout() { return layout; }
+
 		virtual ~VertexArrayObject() {};
 		virtual void Bind() = 0;
 		virtual void Unbind() = 0;

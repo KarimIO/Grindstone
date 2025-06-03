@@ -11,7 +11,7 @@ OpenGL::VertexArrayObject::VertexArrayObject() {
 	glBindVertexArray(vertexArrayObject);
 }
 
-OpenGL::VertexArrayObject::VertexArrayObject(const VertexArrayObject::CreateInfo& createInfo) : layout(createInfo.layout) {
+OpenGL::VertexArrayObject::VertexArrayObject(const VertexArrayObject::CreateInfo& createInfo) : GraphicsAPI::VertexArrayObject(createInfo.layout) {
 	glGenVertexArrays(1, &vertexArrayObject);
 	glBindVertexArray(vertexArrayObject);
 	if (createInfo.debugName != nullptr) {

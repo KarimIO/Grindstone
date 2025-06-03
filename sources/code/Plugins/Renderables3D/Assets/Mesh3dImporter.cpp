@@ -280,6 +280,7 @@ bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
 	vaoCi.indexBuffer = indexBuffer;
 	vaoCi.vertexBuffers = vertexBuffers.data();
 	vaoCi.vertexBufferCount = static_cast<uint32_t>(vertexBuffers.size());
+	vaoCi.layout = vertexLayout;
 	mesh.vertexArrayObject = graphicsCore->CreateVertexArrayObject(vaoCi);
 
 	for (size_t i = 0; i < mesh.submeshes.size(); ++i) {
