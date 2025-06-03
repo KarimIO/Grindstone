@@ -11,6 +11,8 @@ struct StageCompilationArtifacts {
 	Grindstone::GraphicsAPI::ShaderStage stage;
 	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding> reflectedDescriptorBindings;
 	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet> reflectedDescriptorSets;
+	std::vector<Grindstone::Formats::Pipelines::V1::MaterialParameter> materialParameters;
+	std::vector<Grindstone::Formats::Pipelines::V1::MaterialResource> materialResources;
 	std::vector<char> hash;
 	std::vector<char> compiledCode;
 	std::vector<char> compiledPdb;

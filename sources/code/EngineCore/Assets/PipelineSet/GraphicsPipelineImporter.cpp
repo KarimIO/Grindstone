@@ -144,6 +144,8 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 	Span<V1::PassPipelineAttachmentHeader> attachments = fileData.GetSpan<V1::PassPipelineAttachmentHeader>(srcFileHeader->attachmentHeadersOffset, srcFileHeader->attachmentHeaderCount);
 	Span<V1::ShaderReflectDescriptorSet> descriptorSets = fileData.GetSpan<V1::ShaderReflectDescriptorSet>(srcFileHeader->descriptorSetsOffset, srcFileHeader->descriptorSetCount);
 	Span<V1::ShaderReflectDescriptorBinding> descriptorBindings = fileData.GetSpan<V1::ShaderReflectDescriptorBinding>(srcFileHeader->descriptorBindingsOffset, srcFileHeader->descriptorBindingCount);
+	Span<V1::MaterialParameter> materialParameters = fileData.GetSpan<V1::MaterialParameter>(srcFileHeader->materialParametersOffset, srcFileHeader->materialParameterCount);
+	Span<V1::MaterialResource> materialResources = fileData.GetSpan<V1::MaterialResource>(srcFileHeader->materialResourcesOffset, srcFileHeader->materialResourceCount);
 	BufferSpan blobs = fileData.GetSpan(srcFileHeader->blobSectionOffset, srcFileHeader->blobSectionSize);
 
 	GS_ASSERT(graphicsPipelines.GetSize() != 0);

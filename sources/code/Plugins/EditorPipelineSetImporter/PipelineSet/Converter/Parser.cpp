@@ -244,12 +244,12 @@ static bool ParseProperty(ParseContext& context, ParseTree::RenderState& renderS
 					renderState.depthBiasConstantFactor = depthBiasConstantFactor;
 				}
 
-				if (depthBiasConstantFactor.has_value()) {
-					renderState.depthBiasConstantFactor = depthBiasConstantFactor;
+				if (depthBiasSlopeFactor.has_value()) {
+					renderState.depthBiasSlopeFactor = depthBiasSlopeFactor;
 				}
 
-				if (depthBiasConstantFactor.has_value()) {
-					renderState.depthBiasConstantFactor = depthBiasConstantFactor;
+				if (depthBiasClamp.has_value()) {
+					renderState.depthBiasClamp = depthBiasClamp;
 				}
 			}
 		}

@@ -118,6 +118,8 @@ static void ExtractGraphicsPipelineSet(
 	std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineAttachmentHeader>& attachmentHeaders,
 	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet>& descriptorSets,
 	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding>& descriptorBindings,
+	std::vector<Grindstone::Formats::Pipelines::V1::MaterialParameter>& materialParameters,
+	std::vector<Grindstone::Formats::Pipelines::V1::MaterialResource>& materialResources,
 	Writer& blobWriter
 ) {
 	// ========================================
@@ -350,6 +352,8 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 		attachmentHeaders,
 		descriptorSets,
 		descriptorBindings,
+		materialParameters,
+		materialResources,
 		blobWriter
 	);
 
