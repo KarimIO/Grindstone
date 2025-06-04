@@ -1,7 +1,7 @@
 
 # Meshes
 
-    ! This article is a stub, you can help by expanding it.
+> ⚠️ This article is a stub, you can help by expanding it.
 
 Meshes in computer graphics are three-dimensional points in space that are connected into a group of shapes, which define the shape of an object. In Grindstone, triangles are stored in `MeshAsset`s.
 
