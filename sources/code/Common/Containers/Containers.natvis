@@ -13,6 +13,29 @@
 		</Expand>
 	</Type>
 
+	<Type Name="Grindstone::Buffer">
+		<DisplayString>{{ capacity={capacity} }}</DisplayString>
+		<Expand>
+			<Item Name="[size]" ExcludeView="simple">capacity</Item>
+			<ArrayItems>
+				<Size>capacity</Size>
+				<ValuePointer>bufferPtr</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+
+	<Type Name="Grindstone::ResizableBuffer">
+		<DisplayString>{{ capacity={capacity}, size={size} }}</DisplayString>
+		<Expand>
+			<Item Name="[size]" ExcludeView="simple">size</Item>
+			<Item Name="[capacity]" ExcludeView="simple">capacity</Item>
+			<ArrayItems>
+				<Size>capacity</Size>
+				<ValuePointer>bufferPtr</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+
 	<Type Name="Grindstone::Containers::Span&lt;*&gt;">
 		<DisplayString>{{ size={size} }}</DisplayString>
 		<Expand>
