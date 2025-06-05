@@ -125,8 +125,7 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 
 	graphicsPipelineAsset.name = result.displayName;
 
-	uint8_t* filePtr = fileData.Get();
-	V1::PipelineSetFileHeader* srcFileHeader = reinterpret_cast<V1::PipelineSetFileHeader*>(filePtr + 4);
+	V1::PipelineSetFileHeader* srcFileHeader = fileData.Get<V1::PipelineSetFileHeader>(4);
 	
 	GS_ASSERT(srcFileHeader->headerSize == sizeof(V1::PipelineSetFileHeader));
 	GS_ASSERT(srcFileHeader->graphicsPipelineSize == sizeof(V1::GraphicsPipelineSetHeader));
