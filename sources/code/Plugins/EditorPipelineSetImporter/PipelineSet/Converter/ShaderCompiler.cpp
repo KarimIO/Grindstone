@@ -123,6 +123,140 @@ static bool GatherArtifactsDirectX(IDxcUtils* pUtils, IDxcResult* pResults, Stag
 	}
 
 	return true;
+};
+
+static void ReflectBlock(
+	const SpvReflectBlockVariable* block,
+	std::vector<ReflectedBlock>& reflectedBlocks,
+	std::vector<ReflectedBlockVariable>& reflectedBlockVariables,
+	std::vector<SpvReflectBlockVariable*>& continuedBlocksToReflect
+) {
+	using ReflectedBlockVariableType = Grindstone::Formats::Pipelines::V1::ReflectedBlockVariableType;
+	
+	ReflectedBlock& reflectedBlock = reflectedBlocks.emplace_back();
+	reflectedBlock.name = block->name;
+	reflectedBlock.startVariableIndex = static_cast<uint32_t>(reflectedBlockVariables.size());
+	reflectedBlock.variableCount = block->member_count;
+	reflectedBlock.totalSize = block->size;
+
+	for (uint32_t variableIndex = 0; variableIndex < block->member_count; ++variableIndex) {
+		ReflectedBlockVariable& dstVariable = reflectedBlockVariables.emplace_back();
+		const SpvReflectBlockVariable& srcVariable = block->members[variableIndex];
+		dstVariable.name = srcVariable.name != nullptr
+			? srcVariable.name
+			: "";
+		dstVariable.offset = srcVariable.offset;
+		dstVariable.size = srcVariable.size;
+
+		switch (srcVariable.type_description->op) {
+			case SpvOpTypeBool:
+				dstVariable.type = ReflectedBlockVariableType::Bool;
+				break;
+			case SpvOpTypeInt:
+				dstVariable.type = ReflectedBlockVariableType::Int;
+				break;
+			case SpvOpTypeFloat:
+				dstVariable.type = ReflectedBlockVariableType::Float;
+				break;
+			case SpvOpTypeVector:
+				if (srcVariable.type_description->type_flags & SPV_REFLECT_TYPE_FLAG_BOOL) {
+					if (srcVariable.numeric.vector.component_count == 1) {
+						dstVariable.type = ReflectedBlockVariableType::Bool;
+					}
+					else if (srcVariable.numeric.vector.component_count == 2) {
+						dstVariable.type = ReflectedBlockVariableType::Bool2;
+					}
+					else if (srcVariable.numeric.vector.component_count == 3) {
+						dstVariable.type = ReflectedBlockVariableType::Bool3;
+					}
+					else if (srcVariable.numeric.vector.component_count == 4) {
+						dstVariable.type = ReflectedBlockVariableType::Bool4;
+					}
+				}
+				else if (srcVariable.type_description->type_flags & SPV_REFLECT_TYPE_FLAG_INT) {
+					if (srcVariable.numeric.vector.component_count == 1) {
+						dstVariable.type = ReflectedBlockVariableType::Int;
+					}
+					else if (srcVariable.numeric.vector.component_count == 2) {
+						dstVariable.type = ReflectedBlockVariableType::Int2;
+					}
+					else if (srcVariable.numeric.vector.component_count == 3) {
+						dstVariable.type = ReflectedBlockVariableType::Int3;
+					}
+					else if (srcVariable.numeric.vector.component_count == 4) {
+						dstVariable.type = ReflectedBlockVariableType::Int4;
+					}
+				}
+				else if (srcVariable.type_description->type_flags & SPV_REFLECT_TYPE_FLAG_FLOAT) {
+					if (srcVariable.numeric.vector.component_count == 1) {
+						dstVariable.type = ReflectedBlockVariableType::Float;
+					}
+					else if (srcVariable.numeric.vector.component_count == 2) {
+						dstVariable.type = ReflectedBlockVariableType::Float2;
+					}
+					else if (srcVariable.numeric.vector.component_count == 3) {
+						dstVariable.type = ReflectedBlockVariableType::Float3;
+					}
+					else if (srcVariable.numeric.vector.component_count == 4) {
+						dstVariable.type = ReflectedBlockVariableType::Float4;
+					}
+				}
+				break;
+			case SpvOpTypeMatrix:
+				if (srcVariable.numeric.matrix.column_count == 2) {
+					if (srcVariable.numeric.matrix.row_count == 2) {
+						dstVariable.type = ReflectedBlockVariableType::Matrix2x2;
+					}
+					else if (srcVariable.numeric.matrix.row_count == 3) {
+						dstVariable.type = ReflectedBlockVariableType::Matrix2x3;
+					}
+					else if (srcVariable.numeric.matrix.row_count == 4) {
+						dstVariable.type = ReflectedBlockVariableType::Matrix2x4;
+					}
+				}
+				else if (srcVariable.numeric.matrix.column_count == 3) {
+					if (srcVariable.numeric.matrix.row_count == 2) {
+						dstVariable.type = ReflectedBlockVariableType::Matrix3x2;
+					}
+					else if (srcVariable.numeric.matrix.row_count == 3) {
+						dstVariable.type = ReflectedBlockVariableType::Matrix3x3;
+					}
+					else if (srcVariable.numeric.matrix.row_count == 4) {
+						dstVariable.type = ReflectedBlockVariableType::Matrix3x4;
+					}
+				}
+				else if (srcVariable.numeric.matrix.column_count == 4) {
+					if (srcVariable.numeric.matrix.row_count == 2) {
+						dstVariable.type = ReflectedBlockVariableType::Matrix4x2;
+					}
+					else if (srcVariable.numeric.matrix.row_count == 3) {
+						dstVariable.type = ReflectedBlockVariableType::Matrix4x3;
+					}
+					else if (srcVariable.numeric.matrix.row_count == 4) {
+						dstVariable.type = ReflectedBlockVariableType::Matrix4x4;
+					}
+				}
+				break;
+			case SpvOpTypeArray:
+				dstVariable.type = ReflectedBlockVariableType::Array;
+				break;
+			case SpvOpTypeRuntimeArray:
+				dstVariable.type = ReflectedBlockVariableType::RuntimeArray;
+				break;
+			case SpvOpTypeStruct:
+				dstVariable.type = ReflectedBlockVariableType::Struct;
+				break;
+
+			/* TODO: Handle these types of shader variables.
+			case SpvOpTypeImage:
+				break;
+			case SpvOpTypeSampler:
+				break;
+			case SpvOpTypeSampledImage:
+				break;
+			*/
+		}
+	}
 }
 
 static bool GatherArtifactsSpirV(IDxcUtils* pUtils, IDxcResult* pResults, StageCompilationArtifacts& outArtifacts) {
@@ -136,17 +270,22 @@ static bool GatherArtifactsSpirV(IDxcUtils* pUtils, IDxcResult* pResults, StageC
 	outArtifacts.compiledCode.resize(pShader->GetBufferSize());
 	memcpy(outArtifacts.compiledCode.data(), pShader->GetBufferPointer(), pShader->GetBufferSize());
 
-	SpvReflectShaderModule module;
-	SpvReflectResult result = spvReflectCreateShaderModule(outArtifacts.compiledCode.size(), outArtifacts.compiledCode.data(), &module);
+	SpvReflectShaderModule shaderModule;
+	SpvReflectResult result = spvReflectCreateShaderModule(outArtifacts.compiledCode.size(), outArtifacts.compiledCode.data(), &shaderModule);
 	GS_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
 
 	uint32_t descriptorInputCount = 0;
-	result = spvReflectEnumerateDescriptorSets(&module, &descriptorInputCount, nullptr);
+	result = spvReflectEnumerateDescriptorSets(&shaderModule, &descriptorInputCount, nullptr);
 	GS_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
 	std::vector<SpvReflectDescriptorSet*> descriptorSets;
 	descriptorSets.resize(descriptorInputCount);
-	result = spvReflectEnumerateDescriptorSets(&module, &descriptorInputCount, descriptorSets.data());
+	result = spvReflectEnumerateDescriptorSets(&shaderModule, &descriptorInputCount, descriptorSets.data());
 	GS_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
+
+	std::vector<ReflectedBufferBinding>& reflectedBufferBindings = outArtifacts.reflectedBufferBindings;
+	std::vector<ReflectedBlock>& reflectedBlocks = outArtifacts.reflectedBlocks;
+	std::vector<ReflectedBlockVariable>& reflectedBlockVariables = outArtifacts.reflectedBlockVariables;
+	std::vector<SpvReflectBlockVariable*> blocksToReflect;
 
 	for (uint32_t descriptorSetIndex = 0; descriptorSetIndex < descriptorInputCount; ++descriptorSetIndex) {
 		SpvReflectDescriptorSet* srcDescriptorSet = descriptorSets[descriptorSetIndex];
@@ -162,6 +301,8 @@ static bool GatherArtifactsSpirV(IDxcUtils* pUtils, IDxcResult* pResults, StageC
 			dstDescriptorBinding.count = srcDescriptorBinding->count;
 			dstDescriptorBinding.stages = ToShaderStageBit(outArtifacts.stage);
 
+			SpvReflectBlockVariable* associatedBlock = nullptr;
+
 			switch (srcDescriptorBinding->descriptor_type) {
 			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
 				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::CombinedImageSampler;
@@ -174,15 +315,18 @@ static bool GatherArtifactsSpirV(IDxcUtils* pUtils, IDxcResult* pResults, StageC
 				break;
 			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:
 				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::StorageBuffer;
+				associatedBlock = &srcDescriptorBinding->block;
 				break;
 			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
 				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::StorageBufferDynamic;
+				associatedBlock = &srcDescriptorBinding->block;
 				break;
 			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
 				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::StorageImage;
 				break;
 			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
 				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::UniformBufferDynamic;
+				associatedBlock = &srcDescriptorBinding->block;
 				break;
 			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:
 				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::StorageImage;
@@ -195,6 +339,7 @@ static bool GatherArtifactsSpirV(IDxcUtils* pUtils, IDxcResult* pResults, StageC
 				break;
 			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
 				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::UniformBuffer;
+				associatedBlock = &srcDescriptorBinding->block;
 				break;
 			case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
 				dstDescriptorBinding.type = Grindstone::GraphicsAPI::BindingType::AccelerationStructure;
@@ -202,10 +347,27 @@ static bool GatherArtifactsSpirV(IDxcUtils* pUtils, IDxcResult* pResults, StageC
 			default:
 				GS_ASSERT_LOG("Unsupported reflect descriptor binding type!");
 			}
+
+			if (associatedBlock != nullptr) {
+				auto& buffBinding = reflectedBufferBindings.emplace_back();
+				buffBinding.setIndex = dstDescriptorSet.setIndex;
+				buffBinding.bindingIndex = dstDescriptorBinding.bindingIndex;
+				buffBinding.blockIndex = static_cast<uint32_t>(blocksToReflect.size());
+				blocksToReflect.emplace_back(associatedBlock);
+			}
 		}
 	}
 
-	spvReflectDestroyShaderModule(&module);
+	for (size_t blockIndex = 0; blockIndex < blocksToReflect.size(); ++blockIndex) {
+		ReflectBlock(
+			blocksToReflect[blockIndex],
+			reflectedBlocks,
+			reflectedBlockVariables,
+			blocksToReflect
+		);
+	}
+
+	spvReflectDestroyShaderModule(&shaderModule);
 	
 	return true;
 }

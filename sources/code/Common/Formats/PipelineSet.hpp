@@ -6,6 +6,33 @@
 namespace Grindstone::Formats::Pipelines::V1 {
 	constexpr auto FileMagicCode = "GPSF";
 
+	enum class ReflectedBlockVariableType {
+		Bool,
+		Bool2,
+		Bool3,
+		Bool4,
+		Int,
+		Int2,
+		Int3,
+		Int4,
+		Float,
+		Float2,
+		Float3,
+		Float4,
+		Matrix2x2,
+		Matrix2x3,
+		Matrix2x4,
+		Matrix3x2,
+		Matrix3x3,
+		Matrix3x4,
+		Matrix4x2,
+		Matrix4x3,
+		Matrix4x4,
+		Array,
+		RuntimeArray,
+		Struct
+	};
+
 	enum class PipelineType : uint8_t {
 		Graphics,
 		Compute

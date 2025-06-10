@@ -55,15 +55,15 @@ Grindstone::Audio::AudioClipImporter* audioClipImporter = nullptr;
 
 extern "C" {
 	AUDIO_OPENAL_API void InitializeModule(Grindstone::Plugins::Interface* pluginInterface) {
-    // Setup static references
+    	// Setup static references
 		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
 		Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
 
-    // Allocate the global shared objects for this library.
+    	// Allocate the global shared objects for this library.
 		audioCore = Grindstone::Memory::AllocatorCore::Allocate<Audio::Core>();
 		audioClipImporter = AllocatorCore::Allocate<Audio::AudioClipImporter>();
 
-    // Register components, assets, and other logic.
+    	// Register components, assets, and other logic.
 		pluginInterface->RegisterComponent<AudioListenerComponent>();
 		pluginInterface->RegisterComponent<AudioSourceComponent>(SetupAudioSourceComponent, DestroyAudioSourceComponent);
 		pluginInterface->RegisterAssetType(AssetType::AudioClip, "AudioClip", audioClipImporter);
@@ -77,12 +77,12 @@ extern "C" {
 			editorPluginInterface->DeregisterAssetImporter("wav");
 		}
 
-    // Unregister the assets and components.
+    	// Unregister the assets and components.
 		pluginInterface->UnregisterAssetType(AssetType::AudioClip);
 		pluginInterface->UnregisterComponent<AudioSourceComponent>();
 		pluginInterface->UnregisterComponent<AudioListenerComponent>();
 
-    // Free the global shared objects.
+    	// Free the global shared objects.
 		AllocatorCore::Free(audioClipImporter);
 		AllocatorCore::Free(audioCore);
 	}
