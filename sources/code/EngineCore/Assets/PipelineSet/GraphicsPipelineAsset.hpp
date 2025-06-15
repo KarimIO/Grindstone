@@ -20,6 +20,8 @@ namespace Grindstone {
 	}
 
 	struct GraphicsPipelineAsset : public Asset {
+		constexpr static size_t noMaterialBufferIndex = SIZE_MAX;
+
 		GraphicsPipelineAsset(Uuid uuid) : Asset(uuid, uuid.ToString()) {}
 		
 		// TODO: Support Configurations
@@ -31,17 +33,15 @@ namespace Grindstone {
 			std::array<Grindstone::Buffer, GraphicsAPI::numShaderGraphicStage> stageBuffers;
 			std::array<GraphicsAPI::ShaderStage, GraphicsAPI::numShaderGraphicStage> stageTypes;
 			std::array<GraphicsAPI::GraphicsPipeline::AttachmentData, 8> colorAttachmentData;
-
-			std::vector<size_t> bufferMetaDataIndices;
-			std::vector<size_t> textureMetaDataIndices;
 		};
 
 		struct MetaData {
 			std::vector<Grindstone::PipelineAssetMetaData::Buffer> buffers;
-			std::vector<Grindstone::PipelineAssetMetaData::TextureSlot> textures;
+
+			// Images and Samplers
+			std::vector<Grindstone::PipelineAssetMetaData::ResourceSlot> resources;
 
 			size_t materialBufferIndex = SIZE_MAX;
-			std::vector<size_t> materialTextureMetaDataIndices;
 		};
 
 		MetaData metaData;
@@ -55,12 +55,12 @@ namespace Grindstone {
 			return &(metaData.buffers[metaData.materialBufferIndex]);
 		}
 
-		const Grindstone::PipelineAssetMetaData::TextureSlot& GetTextureMetaDataByIndex(size_t index) const {
-			return metaData.textures[metaData.materialTextureMetaDataIndices[index]];
+		const Grindstone::PipelineAssetMetaData::ResourceSlot& GetTextureMetaDataByIndex(size_t index) const {
+			return metaData.resources[index];
 		}
 
 		size_t GetTextureMetaDataSize() const {
-			return metaData.materialTextureMetaDataIndices.size();
+			return metaData.resources.size();
 		}
 
 		Grindstone::GraphicsAPI::DescriptorSetLayout* GetMaterialDescriptorLayout() {

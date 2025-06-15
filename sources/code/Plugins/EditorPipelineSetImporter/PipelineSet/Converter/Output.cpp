@@ -15,17 +15,17 @@
 
 struct DescriptorSetOutput {
 	uint32_t setIndex;
-	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding> bindings;
+	std::vector<::ShaderReflectDescriptorBinding> bindings;
 };
 
 static void ConsolidateDescriptorSets(
 	Grindstone::GraphicsAPI::ShaderStageBit stageBit,
 	std::vector<DescriptorSetOutput>& passDescriptorSets,
-	const std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet>& stageDescriptorSets,
-	const std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding>& stageDescriptorBindings
+	const std::vector<::ShaderReflectDescriptorSet>& stageDescriptorSets,
+	const std::vector<::ShaderReflectDescriptorBinding>& stageDescriptorBindings
 ) {
 	for (size_t i = 0; i < stageDescriptorSets.size(); ++i) {
-		const Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet& srcSet = stageDescriptorSets[i];
+		const ::ShaderReflectDescriptorSet& srcSet = stageDescriptorSets[i];
 
 		size_t dstIndex = 0;
 		for (; dstIndex < passDescriptorSets.size(); ++dstIndex) {
@@ -46,10 +46,10 @@ static void ConsolidateDescriptorSets(
 			srcBindingIndex < bindingEnd;
 			++srcBindingIndex
 		) {
-			const Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding& srcBinding = stageDescriptorBindings[srcBindingIndex];
+			const ::ShaderReflectDescriptorBinding& srcBinding = stageDescriptorBindings[srcBindingIndex];
 
 			bool hasFoundBinding = false;
-			for (Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding& dstBinding : dstSet.bindings) {
+			for (::ShaderReflectDescriptorBinding& dstBinding : dstSet.bindings) {
 				if (srcBinding.bindingIndex == dstBinding.bindingIndex) {
 					dstBinding.stages |= srcBinding.stages;
 					hasFoundBinding = true;
@@ -58,13 +58,14 @@ static void ConsolidateDescriptorSets(
 			}
 
 			if (!hasFoundBinding) {
-				Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding& newBinding =
+				::ShaderReflectDescriptorBinding& newBinding =
 					dstSet.bindings.emplace_back();
 
 				newBinding.bindingIndex = srcBinding.bindingIndex;
 				newBinding.count = srcBinding.count;
 				newBinding.stages = srcBinding.stages;
 				newBinding.type = srcBinding.type;
+				newBinding.name = srcBinding.name;
 			}
 		}
 	}
@@ -107,6 +108,186 @@ static inline void AssignCountAndOffsetAndIncrementSize(uint32_t& totalSize, uin
 	count = static_cast<uint32_t>(list.size());
 }
 
+static bool VerifyConsistentMaterialBufferForBinding(
+	std::string& errorLog,
+	const ReflectedBlock& block,
+	const std::vector<ReflectedBlockVariable>& variables,
+	const ReflectedBlock& firstMaterialBlock
+) {
+	bool hasConsistentMaterialBuffer = true;
+
+	if (block.variableCount != firstMaterialBlock.variableCount) {
+		errorLog += fmt::format("\nInconsistent number of variables - {} != {}.", block.variableCount, firstMaterialBlock.variableCount);
+		hasConsistentMaterialBuffer = false;
+	}
+
+	uint32_t minVariableCount = block.variableCount < firstMaterialBlock.variableCount
+		? block.variableCount
+		: firstMaterialBlock.variableCount;
+
+	for (uint32_t i = 0; i < minVariableCount; ++i) {
+		const ReflectedBlockVariable& srcVariable = variables[i + block.startVariableIndex];
+		const ReflectedBlockVariable& cmpVariable = variables[i + firstMaterialBlock.startVariableIndex];
+
+		if (srcVariable.name != cmpVariable.name) {
+			errorLog += fmt::format("\nName mismatch for variable {} - \"{}\" != \"{}\".", i, srcVariable.name, cmpVariable.name);
+			hasConsistentMaterialBuffer = false;
+
+			// We have an inconsistent name, so use the index for these errors.
+			if (srcVariable.offset != cmpVariable.offset) {
+				errorLog += fmt::format("\nName mismatch for variable {} - {} != {}.", i, srcVariable.offset, cmpVariable.offset);
+			}
+
+			if (srcVariable.size != cmpVariable.size) {
+				errorLog += fmt::format("\nName mismatch for variable {} - {} != {}.", i, srcVariable.size, cmpVariable.size);
+			}
+
+			if (srcVariable.type != cmpVariable.type) {
+				// TODO: Get the name of these variable types.
+				errorLog += fmt::format("\nType mismatch for variable {}.", i);
+			}
+		}
+		else {
+			// We have a consistent name, so just use the name for these errors.
+			if (srcVariable.offset != cmpVariable.offset) {
+				errorLog += fmt::format("\nName mismatch for variable {} - {} != {}.", i, srcVariable.offset, cmpVariable.offset);
+				hasConsistentMaterialBuffer = false;
+			}
+
+			if (srcVariable.size != cmpVariable.size) {
+				errorLog += fmt::format("\nName mismatch for variable {} - {} != {}.", i, srcVariable.size, cmpVariable.size);
+				hasConsistentMaterialBuffer = false;
+			}
+
+			if (srcVariable.type != cmpVariable.type) {
+				// TODO: Get the name of these variable types.
+				errorLog += fmt::format("\nType mismatch for variable {}.", srcVariable.name);
+				hasConsistentMaterialBuffer = false;
+			}
+		}
+	}
+
+	return hasConsistentMaterialBuffer;
+}
+
+static bool VerifyConsistentMaterialBuffer(
+	LogCallback logCallback,
+	const std::string_view pipelineSetName,
+	const CompilationArtifactsGraphics& compilationArtifacts
+) {
+	bool hasConsistentMaterialBuffer = true;
+	constexpr uint32_t materialBufferSetIndex = 0;
+	constexpr uint32_t materialBufferBindingIndex = 0;
+
+	const ReflectedBlock* firstMaterialBlock = nullptr;
+	std::string firstPipelinePassWithMaterialBufferName;
+
+	for (const auto& [configName, config] : compilationArtifacts.configurations) {
+		for (const auto& [passName, pass] : config.passes) {
+			for (const auto& stage : pass.stages) {
+				for (const auto& blockBinding : stage.reflectedBufferBindings) {
+					if (blockBinding.setIndex == materialBufferSetIndex &&
+						blockBinding.bindingIndex == materialBufferBindingIndex
+					) {
+						const ReflectedBlock& reflectedBlock = stage.reflectedBlocks[blockBinding.blockIndex];
+						std::string configPassName = fmt::format("{}:{}:{}", configName, passName, GetShaderStageName(stage.stage));
+						std::string errorLog;
+
+						if (firstMaterialBlock == nullptr) {
+							firstPipelinePassWithMaterialBufferName = configPassName;
+							firstMaterialBlock = &reflectedBlock;
+						}
+						else if (!VerifyConsistentMaterialBufferForBinding(errorLog, reflectedBlock, stage.reflectedBlockVariables, *firstMaterialBlock)) {
+							std::string formattedMessage = fmt::format("Mismatch between material buffers between {} and {}!{}", firstPipelinePassWithMaterialBufferName, configPassName, errorLog);
+							logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Output, formattedMessage.c_str(), pipelineSetName, UNDEFINED_LINE, UNDEFINED_COLUMN);
+							hasConsistentMaterialBuffer = false;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return hasConsistentMaterialBuffer;
+}
+
+static bool VerifyConsistentMaterialResources(
+	std::string& resourceErrorLog,
+	const std::string_view pipelineSetName,
+	const CompilationArtifactsGraphics& compilationArtifacts,
+	const std::vector<ParseTree::MaterialParameter>& parameters,
+	std::vector<Grindstone::Formats::Pipelines::V1::MaterialResource>& materialResources
+) {
+	bool isConsistent = true;
+
+	for (const ParseTree::MaterialParameter& param : parameters) {
+		switch (param.parameterType) {
+		case ParameterType::Texture:
+		case ParameterType::Sampler: {
+			bool hasFoundBinding = false;
+			uint32_t setIndex = 0;
+			uint32_t bindingIndex = 0;
+			for (const auto& [configName, config] : compilationArtifacts.configurations) {
+				for (const auto& [passName, pass] : config.passes) {
+					for (const auto& stage : pass.stages) {
+						std::string configPassName = fmt::format("{}:{}:{}", configName, passName, GetShaderStageName(stage.stage));
+						for (auto& descriptorSet : stage.reflectedDescriptorSets) {
+							for (uint32_t i = 0; i < descriptorSet.bindingCount; ++i) {
+								auto& binding = stage.reflectedDescriptorBindings[descriptorSet.bindingStartIndex + i];
+								if (binding.name == param.name) {
+									if (hasFoundBinding) {
+										if (setIndex != descriptorSet.setIndex ||
+											bindingIndex != binding.bindingIndex
+										) {
+											std::string formattedMessage = fmt::format("\nMaterial resource \"{}\" should be bound to {}:{}, but in {} it is bound to {}:{}.", param.name, setIndex, bindingIndex, configPassName, descriptorSet.setIndex, binding.bindingIndex);
+											resourceErrorLog += formattedMessage;
+											isConsistent = false;
+										}
+									}
+									else {
+										hasFoundBinding = true;
+										setIndex = descriptorSet.setIndex;
+										bindingIndex = binding.bindingIndex;
+									}
+								}
+								else if (
+									hasFoundBinding &&
+									setIndex == descriptorSet.setIndex ||
+									bindingIndex == binding.bindingIndex
+								) {
+									std::string formattedMessage = fmt::format("\nMaterial resource bound to {}:{} should be named \"{}\" but in \"{}\" it is named \"{}\".", setIndex, bindingIndex, param.name, configPassName, binding.name);
+									resourceErrorLog += formattedMessage;
+									isConsistent = false;
+								}
+							}
+						}
+					}
+				}
+			}
+
+			if (hasFoundBinding) {
+				// TODO: Fix this
+				Grindstone::Formats::Pipelines::V1::MaterialResource& resource = materialResources.emplace_back();
+				resource.bindingIndex = 0;
+				resource.nameOffsetFromBlobStart = 0;
+			}
+			else {
+				std::string formattedMessage = fmt::format("\nMaterial resource \"{}\" not found in any shaders.", param.name);
+				resourceErrorLog += formattedMessage;
+				isConsistent = false;
+			}
+
+			break;
+		}
+
+		// Do nothing by default.
+		default: break;
+		}
+	}
+
+	return isConsistent;
+}
+
 static void ExtractGraphicsPipelineSet(
 	LogCallback logCallback,
 	const CompilationArtifactsGraphics& compilationArtifacts,
@@ -118,12 +299,60 @@ static void ExtractGraphicsPipelineSet(
 	std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineAttachmentHeader>& attachmentHeaders,
 	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet>& descriptorSets,
 	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding>& descriptorBindings,
+	std::vector<Grindstone::Formats::Pipelines::V1::BufferReflection>& bufferReflection,
+	std::vector<Grindstone::Formats::Pipelines::V1::BufferReflectionMember>& bufferReflectionMember,
 	std::vector<Grindstone::Formats::Pipelines::V1::MaterialParameter>& materialParameters,
 	std::vector<Grindstone::Formats::Pipelines::V1::MaterialResource>& materialResources,
+	std::vector<Grindstone::Formats::Pipelines::V1::BufferReflection>& bufferReflections,
+	std::vector<Grindstone::Formats::Pipelines::V1::BufferReflectionMember>& bufferMemberReflection,
 	Writer& blobWriter
 ) {
+	bool usesMaterialBuffer = (pipelineSet.parameters.size() > 0);
+
+	// We have a material buffer - ensure it matches across every pipeline that it exists in.
+	if (usesMaterialBuffer) {
+		if (!VerifyConsistentMaterialBuffer(logCallback, pipelineSet.name, compilationArtifacts)) {
+			logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Output, "Mismatch between material buffers in pipeline - all material buffers across passes must be consistent!", pipelineSet.name, UNDEFINED_LINE, UNDEFINED_COLUMN);
+		}
+
+		std::string resourceErrorLog;
+		if (!VerifyConsistentMaterialResources(resourceErrorLog, pipelineSet.name, compilationArtifacts, pipelineSet.parameters, materialResources)) {
+			std::string formattedMessage = fmt::format("Mismatch found in material resources!{}", resourceErrorLog);
+			logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Output, formattedMessage.c_str(), pipelineSet.name, UNDEFINED_LINE, UNDEFINED_COLUMN);
+		}
+	}
+
+	for (const auto& [configName, config] : compilationArtifacts.configurations) {
+		for (const auto& [passName, pass] : config.passes) {
+			for (const auto& stage : pass.stages) {
+				for (const auto& srcBlockBinding : stage.reflectedBufferBindings) {
+					const auto& srcBlock = stage.reflectedBlocks[srcBlockBinding.blockIndex];
+					Grindstone::Formats::Pipelines::V1::BufferReflection& dstBlock = bufferReflections.emplace_back();
+					dstBlock.nameOffsetFromBlobStart = 0;
+					dstBlock.nameOffsetFromBlobStart = static_cast<uint32_t>(blobWriter.offset);
+					dstBlock.memberStartIndex = srcBlock.startVariableIndex;
+					dstBlock.memberCount = srcBlock.variableCount;
+					dstBlock.totalSize = srcBlock.totalSize;
+					dstBlock.descriptorSet = srcBlockBinding.setIndex;
+					dstBlock.descriptorBinding = srcBlockBinding.bindingIndex;
+					WriteBytes(blobWriter, srcBlock.name.data(), srcBlock.name.size() + 1); // +1 for null-terminated
+				}
+
+				for (auto& srcVariable : stage.reflectedBlockVariables) {
+					Grindstone::Formats::Pipelines::V1::BufferReflectionMember& dstVariable = bufferMemberReflection.emplace_back();
+					dstVariable.nameOffsetFromBlobStart = static_cast<uint32_t>(blobWriter.offset);
+					dstVariable.byteOffsetFromBufferStart = srcVariable.offset;
+					dstVariable.size = srcVariable.size;
+					dstVariable.arrayCount = srcVariable.arrayCount;
+					dstVariable.parameterType = srcVariable.type;
+					WriteBytes(blobWriter, srcVariable.name.data(), srcVariable.name.size() + 1); // +1 for null-terminated
+				}
+			}
+		}
+	}
+
 	// ========================================
-	// Write Pipeline headers
+	// Extract Pipeline header information
 	// ========================================
 	Grindstone::Formats::Pipelines::V1::GraphicsPipelineSetHeader& pipelineSetHeader = pipelineSetHeaders.emplace_back();
 	pipelineSetHeader.configurationStartIndex = static_cast<uint32_t>(configHeaders.size());
@@ -198,8 +427,14 @@ static void ExtractGraphicsPipelineSet(
 				size_t firstIndex = descriptorBindings.size();
 				size_t bindingCount = srcSet.bindings.size();
 
-				for (Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding& srcBinding : srcSet.bindings) {
-					descriptorBindings.emplace_back(srcBinding);
+				for (::ShaderReflectDescriptorBinding& srcBinding : srcSet.bindings) {
+					Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding& dstBinding = descriptorBindings.emplace_back();
+					dstBinding.bindingIndex = srcBinding.bindingIndex;
+					dstBinding.count = srcBinding.count;
+					dstBinding.stages = srcBinding.stages;
+					dstBinding.type = srcBinding.type;
+					dstBinding.descriptorNameOffsetFromBlobStart = static_cast<uint32_t>(blobWriter.offset);
+					WriteBytes(blobWriter, srcBinding.name.data(), srcBinding.name.size() + 1); // +1 for null-terminated
 				}
 
 				Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet& dstSet = descriptorSets.emplace_back();
@@ -277,6 +512,8 @@ static void OutputPipelineSetFile(
 	const std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineAttachmentHeader>& attachmentHeaders,
 	const std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet>& descriptorSets,
 	const std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding>& descriptorBindings,
+	const std::vector<Grindstone::Formats::Pipelines::V1::BufferReflection>& bufferReflections,
+	const std::vector<Grindstone::Formats::Pipelines::V1::BufferReflectionMember>& bufferMemberReflection,
 	const std::vector<char>& blobs
 ) {
 	// ========================================
@@ -297,6 +534,8 @@ static void OutputPipelineSetFile(
 		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.attachmentHeadersOffset, pipelineSetFileHeader.attachmentHeaderCount, attachmentHeaders);
 		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.descriptorSetsOffset, pipelineSetFileHeader.descriptorSetCount, descriptorSets);
 		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.descriptorBindingsOffset, pipelineSetFileHeader.descriptorBindingCount, descriptorBindings);
+		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.bufferReflectionsOffset, pipelineSetFileHeader.bufferReflectionsCount, bufferReflections);
+		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.bufferMemberReflectionOffset, pipelineSetFileHeader.bufferMemberReflectionCount, bufferMemberReflection);
 		AssignCountAndOffsetAndIncrementSize(totalSize, pipelineSetFileHeader.blobSectionOffset, pipelineSetFileHeader.blobSectionSize, blobs);
 	}
 
@@ -319,6 +558,8 @@ static void OutputPipelineSetFile(
 	WriteBytes(writer, attachmentHeaders);
 	WriteBytes(writer, descriptorSets);
 	WriteBytes(writer, descriptorBindings);
+	WriteBytes(writer, bufferReflections);
+	WriteBytes(writer, bufferMemberReflection);
 	WriteBytes(writer, blobs);
 }
 
@@ -338,6 +579,8 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 	std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineAttachmentHeader> attachmentHeaders;
 	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet> descriptorSets;
 	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding> descriptorBindings;
+	std::vector<Grindstone::Formats::Pipelines::V1::BufferReflection> bufferReflections;
+	std::vector<Grindstone::Formats::Pipelines::V1::BufferReflectionMember> bufferMemberReflection;
 	std::vector<char> blobs;
 	Writer blobWriter{ blobs };
 
@@ -352,8 +595,12 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 		attachmentHeaders,
 		descriptorSets,
 		descriptorBindings,
+		bufferReflections,
+		bufferMemberReflection,
 		materialParameters,
 		materialResources,
+		bufferReflections,
+		bufferMemberReflection,
 		blobWriter
 	);
 
@@ -370,6 +617,8 @@ bool OutputPipelineSet(LogCallback logCallback, const CompilationArtifactsGraphi
 		attachmentHeaders,
 		descriptorSets,
 		descriptorBindings,
+		bufferReflections,
+		bufferMemberReflection,
 		blobs
 	);
 
@@ -393,6 +642,8 @@ bool OutputComputeSet(LogCallback logCallback, const CompilationArtifactsCompute
 	std::vector<Grindstone::Formats::Pipelines::V1::PassPipelineAttachmentHeader> attachmentHeaders;
 	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet> descriptorSets;
 	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding> descriptorBindings;
+	std::vector<Grindstone::Formats::Pipelines::V1::BufferReflection> bufferReflections;
+	std::vector<Grindstone::Formats::Pipelines::V1::BufferReflectionMember> bufferMemberReflection;
 	std::vector<char> blobs;
 	Writer blobWriter{ blobs };
 
@@ -420,8 +671,14 @@ bool OutputComputeSet(LogCallback logCallback, const CompilationArtifactsCompute
 		size_t firstIndex = descriptorBindings.size();
 		size_t bindingCount = srcSet.bindings.size();
 
-		for (Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding& srcBinding : srcSet.bindings) {
-			descriptorBindings.emplace_back(srcBinding);
+		for (::ShaderReflectDescriptorBinding& srcBinding : srcSet.bindings) {
+			Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding& dstBinding = descriptorBindings.emplace_back();
+			dstBinding.bindingIndex = srcBinding.bindingIndex;
+			dstBinding.count = srcBinding.count;
+			dstBinding.stages = srcBinding.stages;
+			dstBinding.type = srcBinding.type;
+			dstBinding.descriptorNameOffsetFromBlobStart = static_cast<uint32_t>(blobWriter.offset);
+			WriteBytes(blobWriter, srcBinding.name.data(), srcBinding.name.size() + 1); // +1 for null-terminated
 		}
 
 		Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet& dstSet = descriptorSets.emplace_back();
@@ -463,6 +720,8 @@ bool OutputComputeSet(LogCallback logCallback, const CompilationArtifactsCompute
 		attachmentHeaders,
 		descriptorSets,
 		descriptorBindings,
+		bufferReflections,
+		bufferMemberReflection,
 		blobs
 	);
 

@@ -152,7 +152,20 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 
 	GS_ASSERT(srcPipelineHeader.configurationCount != 0);
 	const V1::GraphicsPipelineConfigurationHeader& srcConfigHeader = pipelineConfigurations[0];
-	
+
+	// TODO: Encapsulate this in a function.
+	// Prepare Meta data
+	{
+		graphicsPipelineAsset.metaData.materialBufferIndex = GraphicsPipelineAsset::noMaterialBufferIndex;
+
+		if (materialParameters.GetSize() > 0) {
+			graphicsPipelineAsset.metaData.materialBufferIndex = 1; // TODO: How to get?
+		}
+
+		graphicsPipelineAsset.metaData.buffers.resize(1); // TODO: Number of buffers
+		Grindstone::PipelineAssetMetaData::Buffer& bufferMetadata = graphicsPipelineAsset.metaData.buffers.emplace_back();
+	}
+
 	// TODO: Loop over Configurations
 	graphicsPipelineAsset.passes.resize(srcConfigHeader.passCount);
 	for (uint32_t passIndex = srcConfigHeader.passStartIndex; passIndex < srcConfigHeader.passCount; ++passIndex) {

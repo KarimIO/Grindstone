@@ -234,23 +234,23 @@ static void SetupSamplers(
 	materialAsset.textures.resize(textureCount);
 
 	if (textureCount > 0 && document.HasMember("samplers")) {
-		const auto& samplersJson = document["samplers"];
+		const auto& resourcesJson = document["samplers"];
 
 		std::vector<GraphicsAPI::Image*> textures;
 		textures.resize(textureCount);
 		for (size_t i = 0; i < textureCount; ++i) {
-			const Grindstone::PipelineAssetMetaData::TextureSlot& textureMetaData =
+			const Grindstone::PipelineAssetMetaData::ResourceSlot& resourceMetaData =
 				pipelineSetAsset.GetTextureMetaDataByIndex(i);
-			const char* textureName = textureMetaData.slotName.c_str();
+			const char* textureName = resourceMetaData.slotName.c_str();
 
-			if (samplersJson.HasMember(textureName)) {
+			if (resourcesJson.HasMember(textureName)) {
 				GraphicsAPI::Image* itemPtr = missingTexture;
-				if (samplersJson[textureName].IsString()) {
+				if (resourcesJson[textureName].IsString()) {
 					GPRINT_ERROR_V(LogSource::EngineCore, "Textures expects a UUID in the form of a string in member {} of material {}.", textureName, materialAsset.name.c_str());
 					continue;
 				}
 
-				const char* textureUuidAsString = samplersJson[textureName].GetString();
+				const char* textureUuidAsString = resourcesJson[textureName].GetString();
 				Grindstone::Uuid textureUuid;
 				if (!Grindstone::Uuid::MakeFromString(textureUuidAsString, textureUuid)) {
 					GPRINT_ERROR_V(LogSource::EngineCore, "Texture failed to make a uuid out of string in member {} of material {}.", textureName, materialAsset.name.c_str());

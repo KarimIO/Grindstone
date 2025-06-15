@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <Common/Graphics/Formats.hpp>
+
 namespace Grindstone::PipelineAssetMetaData {
 	enum class ParameterType : uint8_t {
 		Unknown,
@@ -56,8 +58,9 @@ namespace Grindstone::PipelineAssetMetaData {
 		std::string name;
 		ParameterType type;
 		ParameterValue defaultValue;
-		size_t offset;
-		size_t size;
+		uint32_t offset;
+		uint32_t arrayCount;
+		uint32_t size;
 	};
 
 	enum class DefaultTexture : uint8_t {
@@ -67,12 +70,15 @@ namespace Grindstone::PipelineAssetMetaData {
 	};
 
 	struct Buffer {
-		size_t bufferSize;
+		uint32_t descriptorSet;
+		uint32_t descriptorBinding;
+		uint32_t bufferSize;
 		std::vector<Parameter> parameters;
 	};
 
-	struct TextureSlot {
+	struct ResourceSlot {
+		uint32_t descriptorSet;
+		uint32_t descriptorBinding;
 		std::string slotName;
-		DefaultTexture defaultTexture;
 	};
 }

@@ -24,15 +24,29 @@ struct ReflectedBlock {
 struct ReflectedBlockVariable {
 	std::string name;
 	uint32_t offset;
+	uint32_t arrayCount;
 	uint32_t size;
 	Grindstone::Formats::Pipelines::V1::ReflectedBlockVariableType type;
 };
 
+struct ShaderReflectDescriptorBinding {
+	uint32_t bindingIndex;
+	uint32_t count;
+	Grindstone::GraphicsAPI::BindingType type;
+	Grindstone::GraphicsAPI::ShaderStageBit stages;
+	std::string name;
+};
+
+struct ShaderReflectDescriptorSet {
+	uint32_t setIndex;
+	uint32_t bindingStartIndex;
+	uint32_t bindingCount;
+};
 
 struct StageCompilationArtifacts {
 	Grindstone::GraphicsAPI::ShaderStage stage;
-	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorBinding> reflectedDescriptorBindings;
-	std::vector<Grindstone::Formats::Pipelines::V1::ShaderReflectDescriptorSet> reflectedDescriptorSets;
+	std::vector<::ShaderReflectDescriptorBinding> reflectedDescriptorBindings;
+	std::vector<::ShaderReflectDescriptorSet> reflectedDescriptorSets;
 	std::vector<ReflectedBufferBinding> reflectedBufferBindings;
 	std::vector<ReflectedBlock> reflectedBlocks;
 	std::vector<ReflectedBlockVariable> reflectedBlockVariables;

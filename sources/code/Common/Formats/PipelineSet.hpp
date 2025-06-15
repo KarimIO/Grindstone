@@ -7,6 +7,7 @@ namespace Grindstone::Formats::Pipelines::V1 {
 	constexpr auto FileMagicCode = "GPSF";
 
 	enum class ReflectedBlockVariableType {
+		Color,
 		Bool,
 		Bool2,
 		Bool3,
@@ -78,6 +79,7 @@ namespace Grindstone::Formats::Pipelines::V1 {
 	struct GraphicsPipelineSetHeader {
 		uint32_t configurationStartIndex = 0;
 		uint32_t configurationCount = 0;
+		uint32_t materialBufferSize = 1;
 	};
 
 	struct GraphicsPipelineConfigurationHeader {
@@ -149,6 +151,10 @@ namespace Grindstone::Formats::Pipelines::V1 {
 		uint32_t descriptorBindingCount = 0;
 		uint32_t blobSectionOffset = 0;
 		uint32_t blobSectionSize = 0;
+		uint32_t bufferReflectionsOffset = 0;
+		uint32_t bufferReflectionsCount = 0;
+		uint32_t bufferMemberReflectionOffset = 0;
+		uint32_t bufferMemberReflectionCount = 0;
 	};
 
 	struct ShaderReflectInputVariables {
@@ -168,44 +174,32 @@ namespace Grindstone::Formats::Pipelines::V1 {
 		uint32_t bindingCount;
 	};
 
-	enum class ParameterType : uint8_t {
-		Color,
-		Bool,
-		Int,
-		Int2,
-		Int3,
-		Int4,
-		Uint,
-		Uint2,
-		Uint3,
-		Uint4,
-		Float,
-		Float2,
-		Float3,
-		Float4,
-		Double,
-		Double2,
-		Double3,
-		Double4,
-		Matrix2x2,
-		Matrix2x3,
-		Matrix2x4,
-		Matrix3x2,
-		Matrix4x2,
-		Matrix3x3,
-		Matrix3x4,
-		Matrix4x3,
-		Matrix4x4,
-	};
-
+	// TODO: This should only really be a way to give the default value, since we have BufferReflectionMember giving the rest of the data.
 	struct MaterialParameter {
 		uint32_t nameOffsetFromBlobStart;
 		uint32_t byteOffsetFromBufferStart;
-		ParameterType parameterType;
+		ReflectedBlockVariableType parameterType;
 	};
 
 	struct MaterialResource {
 		uint32_t nameOffsetFromBlobStart;
 		uint32_t bindingIndex;
+	};
+
+	struct BufferReflection {
+		uint32_t nameOffsetFromBlobStart;
+		uint32_t descriptorSet;
+		uint32_t descriptorBinding;
+		uint32_t memberStartIndex;
+		uint32_t memberCount;
+		uint32_t totalSize;
+	};
+
+	struct BufferReflectionMember {
+		uint32_t nameOffsetFromBlobStart;
+		uint32_t byteOffsetFromBufferStart;
+		uint32_t arrayCount;
+		uint32_t size;
+		ReflectedBlockVariableType parameterType;
 	};
 }

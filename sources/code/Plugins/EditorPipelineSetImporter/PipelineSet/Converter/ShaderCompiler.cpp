@@ -147,6 +147,7 @@ static void ReflectBlock(
 			: "";
 		dstVariable.offset = srcVariable.offset;
 		dstVariable.size = srcVariable.size;
+		dstVariable.arrayCount = srcVariable.array.dims_count;
 
 		switch (srcVariable.type_description->op) {
 			case SpvOpTypeBool:
