@@ -93,7 +93,7 @@ void GridRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer,
 
 	gridUniformBuffer->UploadData(&gridData);
 	commandBuffer->BindGraphicsPipeline(pipeline);
-	commandBuffer->BindGraphicsDescriptorSet(pipeline, &gridDescriptorSet, 1);
+	commandBuffer->BindGraphicsDescriptorSet(pipeline, &gridDescriptorSet, 2, 1);
 
 	commandBuffer->DrawVertices(6, 0, 1, 0);
 }

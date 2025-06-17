@@ -15,20 +15,20 @@ computeSet "Screen-Space Reflections" {
 	]
 
 	shaderHlsl {
-		RWTexture2D<float4> outImage : register(u1,  space0);
-		Texture2D<float4> colorImage : register(t2,  space0);
-		Texture2D<float4> gbufferDepth : register(t3,  space0);
-		Texture2D<float4> gbufferNormal : register(t4,  space0);
-		Texture2D<float4> gbufferSpecularRoughness : register(t5,  space0);
+		RWTexture2D<float4> outImage : register(u0,  space2);
+		Texture2D<float4> colorImage : register(t2,  space2);
+		Texture2D<float4> gbufferDepth : register(t3,  space2);
+		Texture2D<float4> gbufferNormal : register(t4,  space2);
+		Texture2D<float4> gbufferSpecularRoughness : register(t5,  space2);
 
 		float4 GetPosition(float2 texCoords) {
-			float depthFromTexture = gbufferDepth.Sample(defaultSampler, texCoords * rendererUbo.renderScale).x;
+			float depthFromTexture = gbufferDepth.SampleLevel(defaultSampler, texCoords * rendererUbo.renderScale, 0).x;
 			float3 position = ComputeViewSpacePosition(rendererUbo.inverseProjectionMatrix, rendererUbo.viewMatrix, texCoords, depthFromTexture);
 			return float4(position, 1);
 		}
 
 		float3 GetNormal(float2 texCoords) {
-			return normalize(ViewNormal(rendererUbo.viewMatrix, gbufferNormal.Sample(defaultSampler, texCoords).rgb));
+			return normalize(ViewNormal(rendererUbo.viewMatrix, gbufferNormal.SampleLevel(defaultSampler, texCoords, 0).rgb));
 		}
 
 		static const float maxDistance = 15;
@@ -134,12 +134,12 @@ computeSet "Screen-Space Reflections" {
 			float3 normal = GetNormal(texCoords);
 			float3 reflectedRay = normalize(reflect(normalize(positionViewSpace.xyz), normal));
 
-			float4 specRough = gbufferSpecularRoughness.Sample(defaultSampler, texCoords);
+			float4 specRough = gbufferSpecularRoughness.SampleLevel(defaultSampler, texCoords, 0);
 			float3 specular = specRough.rgb;
 			float roughness = specRough.a * specRough.a;
 
 			float4 reflCoords = ReflectRay(positionViewSpace, reflectedRay);
-			float4 color = float4(colorImage.Sample(defaultSampler, reflCoords.xy * rendererUbo.renderScale).xyz * reflCoords.a, reflCoords.a);
+			float4 color = float4(colorImage.SampleLevel(defaultSampler, reflCoords.xy * rendererUbo.renderScale, 0).xyz * reflCoords.a, reflCoords.a);
 
 			outImage[dispatchThreadID.xy] = color;
 		}

@@ -162,10 +162,15 @@ void Mesh3dRenderer::RenderQueue(
 		}
 
 		commandBuffer->BindVertexArrayObject(renderTask.vertexArrayObject);
-		std::array<GraphicsAPI::DescriptorSet*, 3> descriptors = { renderTask.materialDescriptorSet, engineDescriptorSet, renderTask.perDrawDescriptorSet };
+		std::array<GraphicsAPI::DescriptorSet*, 3> descriptors = {
+			engineDescriptorSet,
+			renderTask.materialDescriptorSet,
+			renderTask.perDrawDescriptorSet,
+		};
 		commandBuffer->BindGraphicsDescriptorSet(
 			graphicsPipeline,
 			descriptors.data(),
+			0,
 			static_cast<uint32_t>(descriptors.size())
 		);
 

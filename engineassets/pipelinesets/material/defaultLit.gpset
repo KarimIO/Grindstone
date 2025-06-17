@@ -39,7 +39,7 @@ pipelineSet "lit.default" {
 			}
 
 			requiresBlocks [
-				GsMeshRendererVertexInput,
+				GsMeshRendererVertex,
 				GsTransformNormalToWorldSpace,
 				GsDefaultSampler
 			]
@@ -49,12 +49,12 @@ pipelineSet "lit.default" {
 					float4 color;
 				};
 
-				ConstantBuffer<MaterialInstanceUBO> materialInstanceUbo : register(b0, space0);
+				ConstantBuffer<MaterialInstanceUBO> materialInstanceUbo : register(b0, space2);
 
-				Texture2D<float4> albedoTexture : register(t1, space0);
-				Texture2D<float4> normalTexture : register(t2, space0);
-				Texture2D<float4> metalnessTexture : register(t3, space0);
-				Texture2D<float4> roughnessTexture : register(t4, space0);
+				Texture2D<float4> albedoTexture : register(t1, space2);
+				Texture2D<float4> normalTexture : register(t2, space2);
+				Texture2D<float4> metalnessTexture : register(t3, space2);
+				Texture2D<float4> roughnessTexture : register(t4, space2);
 
 				struct FragmentOutput {
 					[[vk::location(0)]] float4 gbufferAlbedoMatID : SV_TARGET0;

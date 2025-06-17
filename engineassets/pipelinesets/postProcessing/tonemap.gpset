@@ -21,9 +21,9 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 			}
 
 			shaderHlsl {
-				SamplerState gbufferSampler : register(s1, space0);
-				Texture2D<float4> litSceneTexture : register(t2,  space0);
-				Texture2D<float4> bloomTexture : register(t3,  space0);
+				SamplerState gbufferSampler : register(s0, space2);
+				Texture2D<float4> litSceneTexture : register(t1,  space2);
+				Texture2D<float4> bloomTexture : register(t2,  space2);
 
 				struct PostProcessUbo {
 					float4 vignetteColor;
@@ -38,7 +38,7 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 					bool isAnimated;
 				};
 
-				ConstantBuffer<PostProcessUbo> postProcessingUbo : register(b4, space0);
+				ConstantBuffer<PostProcessUbo> postProcessingUbo : register(b3, space2);
 
 				float3 linearToSRGB(float3 inColor) {
 					float3 outColor;

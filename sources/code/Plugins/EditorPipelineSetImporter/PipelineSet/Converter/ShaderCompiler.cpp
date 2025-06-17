@@ -298,6 +298,7 @@ static bool GatherArtifactsSpirV(IDxcUtils* pUtils, IDxcResult* pResults, StageC
 		for (uint32_t descriptorBindingIndex = 0; descriptorBindingIndex < srcDescriptorSet->binding_count; ++descriptorBindingIndex) {
 			SpvReflectDescriptorBinding* srcDescriptorBinding = srcDescriptorSet->bindings[descriptorBindingIndex];
 			auto& dstDescriptorBinding = outArtifacts.reflectedDescriptorBindings.emplace_back();
+			dstDescriptorBinding.name = srcDescriptorBinding->name;
 			dstDescriptorBinding.bindingIndex = srcDescriptorBinding->binding;
 			dstDescriptorBinding.count = srcDescriptorBinding->count;
 			dstDescriptorBinding.stages = ToShaderStageBit(outArtifacts.stage);

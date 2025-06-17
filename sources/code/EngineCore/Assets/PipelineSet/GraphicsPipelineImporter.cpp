@@ -89,7 +89,7 @@ static void UnpackGraphicsPipelineDescriptorSetHeaders(
 		layoutCreateInfo.bindings = dstDescriptorBindings.data();
 		layoutCreateInfo.bindingCount = static_cast<uint32_t>(dstDescriptorBindings.size());
 
-		dstDescriptorSets[i] = graphicsCore->CreateDescriptorSetLayout(layoutCreateInfo);
+		dstDescriptorSets[srcDescriptorSet.setIndex] = graphicsCore->CreateDescriptorSetLayout(layoutCreateInfo);
 	}
 }
 
@@ -188,9 +188,29 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		pipelineData.hasDynamicScissor = true;
 		pipelineData.renderPass = renderPassRegistry->GetRenderpass(renderQueueName);
 
+		// Get the highest descriptor set index
+		pipelineData.descriptorSetLayoutCount = 0;
+		for (uint8_t descriptorSetIndex = 0; descriptorSetIndex < srcPass.descriptorSetCount; ++descriptorSetIndex) {
+			auto& descriptorSet = descriptorSets[descriptorSetIndex];
+			uint32_t indexAsCount = descriptorSet.setIndex + 1;
+			pipelineData.descriptorSetLayoutCount = pipelineData.descriptorSetLayoutCount > indexAsCount
+				? pipelineData.descriptorSetLayoutCount
+				: indexAsCount;
+		}
+
+		for (uint8_t descriptorSetIndex = 0; descriptorSetIndex < pipelineData.descriptorSetLayoutCount; ++descriptorSetIndex) {
+			GraphicsAPI::DescriptorSetLayout*& descriptorSetLayout = pass.descriptorSetLayouts[descriptorSetIndex];
+			if (descriptorSetLayout == nullptr) {
+				GraphicsAPI::DescriptorSetLayout::CreateInfo ci{};
+				ci.debugName = "Unbound descriptor set";
+				ci.bindingCount = 0;
+				ci.bindings = nullptr;
+				descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ci);
+			}
+		}
+
 		pipelineData.shaderStageCreateInfos = nullptr;
 		pipelineData.shaderStageCreateInfoCount = srcPass.shaderStageCount;
-		pipelineData.descriptorSetLayoutCount = static_cast<uint32_t>(srcPass.descriptorSetCount);
 		pipelineData.colorAttachmentCount = srcPass.attachmentCount;
 
 		UnpackGraphicsPipelineHeader(srcPass, pipelineData);

@@ -21,31 +21,31 @@ computeSet "Bloom" {
 			float filterRadius;
 		};
 
-		ConstantBuffer<ControlUniformBuffer> postUbo : register(b0, space0);
-		SamplerState defaultSampler : register(s1, space0);
-		RWTexture2D<float4> outImage : register(u2,  space0);
-		Texture2D<float4> inImage1 : register(t3,  space0);
-		Texture2D<float4> inImage2 : register(t4,  space0);
+		ConstantBuffer<ControlUniformBuffer> postUbo : register(b0, space2);
+		SamplerState defaultSampler : register(s1, space2);
+		RWTexture2D<float4> outImage : register(u2, space2);
+		Texture2D<float4> inImage1 : register(t3, space2);
+		Texture2D<float4> inImage2 : register(t4, space2);
 
 		static const int bloomStagePrefilter	= 0;
 		static const int bloomStageDownsample	= 1;
-		static const int bloomStageUpsample	= 2;
+		static const int bloomStageUpsample		= 2;
 		static const int bloomStageApply		= 3;
 
 		float3 Upsample(Texture2D<float4> srcTexture, float2 texCoord, float2 texelSize, float radius) {
 			float2 offset = texelSize * radius;
 
-			float3 result = srcTexture.Sample(defaultSampler, texCoord).rgb * 4.0f;
+			float3 result = srcTexture.SampleLevel(defaultSampler, texCoord, 0).rgb * 4.0f;
 
-			result += srcTexture.Sample(defaultSampler, texCoord + float2(-offset.x, 0)).rgb * 2.0;
-			result += srcTexture.Sample(defaultSampler, texCoord + float2( offset.x, 0)).rgb * 2.0;
-			result += srcTexture.Sample(defaultSampler, texCoord + float2(0, -offset.y)).rgb * 2.0;
-			result += srcTexture.Sample(defaultSampler, texCoord + float2(0,  offset.y)).rgb * 2.0;
+			result += srcTexture.SampleLevel(defaultSampler, texCoord + float2(-offset.x, 0), 0).rgb * 2.0;
+			result += srcTexture.SampleLevel(defaultSampler, texCoord + float2( offset.x, 0), 0).rgb * 2.0;
+			result += srcTexture.SampleLevel(defaultSampler, texCoord + float2(0, -offset.y), 0).rgb * 2.0;
+			result += srcTexture.SampleLevel(defaultSampler, texCoord + float2(0,  offset.y), 0).rgb * 2.0;
 
-			result += srcTexture.Sample(defaultSampler, texCoord + float2(-offset.x,-offset.y)).rgb;
-			result += srcTexture.Sample(defaultSampler, texCoord + float2(-offset.x, offset.y)).rgb;
-			result += srcTexture.Sample(defaultSampler, texCoord + float2( offset.x,-offset.y)).rgb;
-			result += srcTexture.Sample(defaultSampler, texCoord + float2( offset.x, offset.y)).rgb;
+			result += srcTexture.SampleLevel(defaultSampler, texCoord + float2(-offset.x,-offset.y), 0).rgb;
+			result += srcTexture.SampleLevel(defaultSampler, texCoord + float2(-offset.x, offset.y), 0).rgb;
+			result += srcTexture.SampleLevel(defaultSampler, texCoord + float2( offset.x,-offset.y), 0).rgb;
+			result += srcTexture.SampleLevel(defaultSampler, texCoord + float2( offset.x, offset.y), 0).rgb;
 
 			return result * (1.0f / 16.0f);
 		}
@@ -74,22 +74,22 @@ computeSet "Bloom" {
 		float3 Downsample(Texture2D<float4> srcTexture, float2 texCoord, float2 texelSize, bool isFirstDownsample) {
 			texCoord += texelSize / 2.0f;
 
-			float3 a = srcTexture.Sample(defaultSampler, texCoord + texelSize * float2(-2.0f,-2.0f)).rgb;
-			float3 b = srcTexture.Sample(defaultSampler, texCoord + texelSize * float2( 0.0f,-2.0f)).rgb;
-			float3 c = srcTexture.Sample(defaultSampler, texCoord + texelSize * float2( 2.0f,-2.0f)).rgb;
+			float3 a = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2(-2.0f,-2.0f), 0).rgb;
+			float3 b = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2( 0.0f,-2.0f), 0).rgb;
+			float3 c = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2( 2.0f,-2.0f), 0).rgb;
 
-			float3 d = srcTexture.Sample(defaultSampler, texCoord + texelSize * float2(-2.0f, 0.0f)).rgb;
-			float3 e = srcTexture.Sample(defaultSampler, texCoord + texelSize * float2( 0.0f, 0.0f)).rgb;
-			float3 f = srcTexture.Sample(defaultSampler, texCoord + texelSize * float2( 2.0f, 0.0f)).rgb;
+			float3 d = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2(-2.0f, 0.0f), 0).rgb;
+			float3 e = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2( 0.0f, 0.0f), 0).rgb;
+			float3 f = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2( 2.0f, 0.0f), 0).rgb;
 
-			float3 g = srcTexture.Sample(defaultSampler, texCoord + texelSize * float2(-2.0f, 2.0f)).rgb;
-			float3 h = srcTexture.Sample(defaultSampler, texCoord + texelSize * float2( 0.0f, 2.0f)).rgb;
-			float3 i = srcTexture.Sample(defaultSampler, texCoord + texelSize * float2( 2.0f, 2.0f)).rgb;
+			float3 g = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2(-2.0f, 2.0f), 0).rgb;
+			float3 h = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2( 0.0f, 2.0f), 0).rgb;
+			float3 i = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2( 2.0f, 2.0f), 0).rgb;
 
-			float3 j = srcTexture.Sample(defaultSampler, texCoord + texelSize * float2(-1.0f,-1.0f)).rgb;
-			float3 k = srcTexture.Sample(defaultSampler, texCoord + texelSize * float2(-1.0f, 1.0f)).rgb;
-			float3 l = srcTexture.Sample(defaultSampler, texCoord + texelSize * float2( 1.0f, 1.0f)).rgb;
-			float3 m = srcTexture.Sample(defaultSampler, texCoord + texelSize * float2( 1.0f,-1.0f)).rgb;
+			float3 j = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2(-1.0f,-1.0f), 0).rgb;
+			float3 k = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2(-1.0f, 1.0f), 0).rgb;
+			float3 l = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2( 1.0f, 1.0f), 0).rgb;
+			float3 m = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2( 1.0f,-1.0f), 0).rgb;
 
 			// a,b,d,e * 0.125
 			// b,c,e,f * 0.125
@@ -137,7 +137,7 @@ computeSet "Bloom" {
 			else if (postUbo.stage == bloomStageUpsample) {
 				float3 upsampledTexture = Upsample(inImage1, texCoords, postUbo.reciprocalImgSizes.xy, postUbo.filterRadius);
 
-				float3 existing = inImage2.Sample(defaultSampler, texCoords).rgb;
+				float3 existing = inImage2.SampleLevel(defaultSampler, texCoords, 0).rgb;
 				color.rgb = existing + upsampledTexture;
 			}
 			else if (postUbo.stage == bloomStageApply) {

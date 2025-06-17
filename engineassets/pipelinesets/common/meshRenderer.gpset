@@ -6,7 +6,7 @@ shaderBlock GsMeshRendererInstanceUbo {
 			float4x4 modelMatrix;
 		};
 
-		ConstantBuffer<RenderInstanceUBO> renderInstanceUbo : register(b0, space2);
+		ConstantBuffer<RenderInstanceUBO> renderInstanceUbo : register(b0, space1);
 	}
 }
 
@@ -21,7 +21,7 @@ shaderBlock GsMeshRendererVertexInput {
 	}
 }
 
-shaderBlock GsMeshRendererVertexInput {
+shaderBlock GsMeshRendererVertex {
 	requiresBlocks [
 		GsMeshRendererVertexInput,
 		GsRendererUniform,

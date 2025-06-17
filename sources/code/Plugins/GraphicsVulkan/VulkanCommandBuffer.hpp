@@ -29,11 +29,13 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void BindGraphicsDescriptorSet(
 			const GraphicsAPI::GraphicsPipeline* graphicsPipeline,
 			const GraphicsAPI::DescriptorSet* const* descriptorSets,
+			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		) override;
 		virtual void BindComputeDescriptorSet(
 			const GraphicsAPI::ComputePipeline* graphicsPipeline,
 			const GraphicsAPI::DescriptorSet* const* descriptorSets,
+			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		) override;
 		virtual void BindCommandBuffers(Grindstone::GraphicsAPI::CommandBuffer** commandBuffers, uint32_t commandBuffersCount) override;
@@ -57,6 +59,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 			VkPipelineLayout pipelineLayout,
 			VkPipelineBindPoint bindPoint,
 			const GraphicsAPI::DescriptorSet* const* descriptorSets,
+			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		);
 

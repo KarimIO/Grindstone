@@ -564,7 +564,7 @@ void GizmoRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer
 
 	gizmoUniformBuffer->UploadData(dataBuffer.data());
 	commandBuffer->BindGraphicsPipeline(gizmoPipeline);
-	commandBuffer->BindGraphicsDescriptorSet(gizmoPipeline, &gizmoDescriptorSet, 1);
+	commandBuffer->BindGraphicsDescriptorSet(gizmoPipeline, &gizmoDescriptorSet, 0, 1);
 	commandBuffer->BindVertexArrayObject(gizmoShapesVao);
 
 	for (uint32_t i = 0; i < drawCount; ++i) {

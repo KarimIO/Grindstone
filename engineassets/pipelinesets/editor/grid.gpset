@@ -51,7 +51,7 @@ pipelineSet "Grid" {
 					float farDistance;
 				};
 
-				ConstantBuffer<GridUbo> gridUbo : register(b0, space0);
+				ConstantBuffer<GridUbo> gridUbo : register(b0, space2);
 
 				float3 UnprojectPoint(float x, float y, float z) {
 					float4 unprojectedPoint =  mul(gridUbo.inverseViewMatrix, mul(gridUbo.inverseProjectionMatrix, float4(x, y, z, 1.0)));

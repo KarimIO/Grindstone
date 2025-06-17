@@ -233,7 +233,9 @@ static bool VerifyConsistentMaterialResources(
 						std::string configPassName = fmt::format("{}:{}:{}", configName, passName, GetShaderStageName(stage.stage));
 						for (auto& descriptorSet : stage.reflectedDescriptorSets) {
 							for (uint32_t i = 0; i < descriptorSet.bindingCount; ++i) {
-								auto& binding = stage.reflectedDescriptorBindings[descriptorSet.bindingStartIndex + i];
+								const ShaderReflectDescriptorBinding& binding =
+									stage.reflectedDescriptorBindings[descriptorSet.bindingStartIndex + i];
+
 								if (binding.name == param.name) {
 									if (hasFoundBinding) {
 										if (setIndex != descriptorSet.setIndex ||
@@ -252,7 +254,7 @@ static bool VerifyConsistentMaterialResources(
 								}
 								else if (
 									hasFoundBinding &&
-									setIndex == descriptorSet.setIndex ||
+									setIndex == descriptorSet.setIndex &&
 									bindingIndex == binding.bindingIndex
 								) {
 									std::string formattedMessage = fmt::format("\nMaterial resource bound to {}:{} should be named \"{}\" but in \"{}\" it is named \"{}\".", setIndex, bindingIndex, param.name, configPassName, binding.name);

@@ -32,7 +32,7 @@ pipelineSet "Gizmo" {
 
 				#define maxObjects 500
 
-				RWStructuredBuffer<Element> elementsBuffer : register(u0, space0);
+				RWStructuredBuffer<Element> elementsBuffer : register(u0, space2);
 
 				struct VertexInput {
 					[[vk::location(0)]] float3 position : POSITION0;

@@ -31,9 +31,9 @@ pipelineSet "Screen-Space Ambient Occlusion" inherits "PostProcessing" {
 			shaderHlsl {
 				static const int kernelSize = 64;
 
-				SamplerState gbufferSampler : register(s1, space0);
-				Texture2D<float4> depthTexture : register(t2,  space0);
-				Texture2D<float4> gbufferNormals : register(t3,  space0);
+				SamplerState gbufferSampler : register(s1, space2);
+				Texture2D<float4> depthTexture : register(t2,  space2);
+				Texture2D<float4> gbufferNormals : register(t3,  space2);
 
 				struct SSAOBufferObject {
 					float4 kernels[kernelSize];

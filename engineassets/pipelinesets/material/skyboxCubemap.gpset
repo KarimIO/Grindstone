@@ -35,7 +35,7 @@ pipelineSet "Skybox (Cubemap)" {
 			]
 
 			shaderHlsl {
-				TextureCube<float4> skybox : register(t1, space0);
+				TextureCube<float4> skybox : register(t1, space2);
 
 				struct VertexInput {
 					[[vk::location(0)]] float3 position : POSITION0;

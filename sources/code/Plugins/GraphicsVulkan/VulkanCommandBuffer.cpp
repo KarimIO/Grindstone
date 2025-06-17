@@ -163,25 +163,28 @@ void Vulkan::CommandBuffer::EndDebugLabelSection() {
 void Vulkan::CommandBuffer::BindGraphicsDescriptorSet(
 	const Base::GraphicsPipeline* graphicsPipeline,
 	const Base::DescriptorSet* const * descriptorSets,
+	uint32_t descriptorSetOffset,
 	uint32_t descriptorSetCount
 ) {
 	const Vulkan::GraphicsPipeline *vkPipeline = static_cast<const Vulkan::GraphicsPipeline *>(graphicsPipeline);
-	BindDescriptorSet(vkPipeline->GetGraphicsPipelineLayout(), VK_PIPELINE_BIND_POINT_GRAPHICS, descriptorSets, descriptorSetCount);
+	BindDescriptorSet(vkPipeline->GetGraphicsPipelineLayout(), VK_PIPELINE_BIND_POINT_GRAPHICS, descriptorSets, descriptorSetOffset, descriptorSetCount);
 }
 
 void Vulkan::CommandBuffer::BindComputeDescriptorSet(
-	const Base::ComputePipeline* graphicsPipeline,
+	const Base::ComputePipeline* computePipeline,
 	const Base::DescriptorSet* const * descriptorSets,
+	uint32_t descriptorSetOffset,
 	uint32_t descriptorSetCount
 ) {
-	const Vulkan::ComputePipeline* vkPipeline = static_cast<const Vulkan::ComputePipeline*>(graphicsPipeline);
-	BindDescriptorSet(vkPipeline->GetComputePipelineLayout(), VK_PIPELINE_BIND_POINT_COMPUTE, descriptorSets, descriptorSetCount);
+	const Vulkan::ComputePipeline* vkPipeline = static_cast<const Vulkan::ComputePipeline*>(computePipeline);
+	BindDescriptorSet(vkPipeline->GetComputePipelineLayout(), VK_PIPELINE_BIND_POINT_COMPUTE, descriptorSets, descriptorSetOffset, descriptorSetCount);
 }
 
 void Vulkan::CommandBuffer::BindDescriptorSet(
 	VkPipelineLayout pipelineLayout,
 	VkPipelineBindPoint bindPoint,
 	const Base::DescriptorSet* const * descriptorSets,
+	uint32_t descriptorSetOffset,
 	uint32_t descriptorSetCount
 ) {
 	std::vector<VkDescriptorSet> vkDescriptorSets;
@@ -198,7 +201,7 @@ void Vulkan::CommandBuffer::BindDescriptorSet(
 		commandBuffer,
 		bindPoint,
 		pipelineLayout,
-		0,
+		descriptorSetOffset,
 		static_cast<uint32_t>(vkDescriptorSets.size()),
 		vkDescriptorSets.data(),
 		0,

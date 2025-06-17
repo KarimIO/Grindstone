@@ -47,17 +47,17 @@ pipelineSet "DebugDeferred" {
 					return outData;
 				}
 
-				Texture2D<float4> gbufferDepth : register(t1,  space0);
-				Texture2D<float4> gbufferAlbedo : register(t2,  space0);
-				Texture2D<float4> gbufferNormal : register(t3,  space0);
-				Texture2D<float4> gbufferSpecularRoughness : register(t4,  space0);
-				Texture2D<float4> ambientOcclusion : register(t5,  space0);
+				Texture2D<float4> gbufferDepth : register(t1,  space2);
+				Texture2D<float4> gbufferAlbedo : register(t2,  space2);
+				Texture2D<float4> gbufferNormal : register(t3,  space2);
+				Texture2D<float4> gbufferSpecularRoughness : register(t4,  space2);
+				Texture2D<float4> ambientOcclusion : register(t5,  space2);
 
 				struct DebugUbo {
 					uint mode;
 				};
 
-				ConstantBuffer<DebugUbo> debugUbo : register(b6, space0);
+				ConstantBuffer<DebugUbo> debugUbo : register(b6, space2);
 
 				float3 linearToSRGB(float3 inColor) {
 					float3 outColor;

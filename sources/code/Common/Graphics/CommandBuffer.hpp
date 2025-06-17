@@ -37,11 +37,13 @@ namespace Grindstone::GraphicsAPI {
 		virtual void BindGraphicsDescriptorSet(
 			const GraphicsPipeline* graphicsPipeline,
 			const DescriptorSet* const* descriptorSets,
+			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		) = 0;
 		virtual void BindComputeDescriptorSet(
 			const ComputePipeline* graphicsPipeline,
 			const DescriptorSet* const* descriptorSets,
+			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		) = 0;
 		virtual void BindCommandBuffers(CommandBuffer** commandBuffers, uint32_t commandBuffersCount) = 0;

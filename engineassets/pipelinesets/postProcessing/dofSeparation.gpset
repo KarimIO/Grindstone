@@ -22,7 +22,7 @@ pipelineSet "Depth of Field (Separation)" inherits "PostProcessing" {
 			}
 
 			shaderHlsl {
-				[[vk::binding(0, 0)]] SamplerState gbufferSampler : register(s0, space0);
+				[[vk::binding(0, 0)]] SamplerState gbufferSampler : register(s0, space2);
 				Texture2D<float4> depthTexture : register(t0,  space1);
 				Texture2D<float4> litSceneTexture : register(t1,  space1);
 
