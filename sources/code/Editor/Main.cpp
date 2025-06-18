@@ -81,7 +81,8 @@ PluginEditorModelImporter\n\
 PluginEditorPipelineSetImporter\n\
 PluginEditorTextureImporter\n\
 PluginBulletPhysics\n\
-PluginRenderables3D\n";
+PluginRenderables3D\n\
+PluginRendererDeferred\n";
 
 	std::ofstream outputPlugins(basePath / "buildSettings" / "pluginsManifest.txt");
 	outputPlugins.write(defaultPlugins.c_str(), defaultPlugins.size());
