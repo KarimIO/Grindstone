@@ -61,7 +61,7 @@ void Mesh3dImporter::PrepareLayouts() {
 			}
 		}
 	).AddBinding(
-		{ 2, 0, GraphicsAPI::VertexInputRate::Vertex },
+		{ 1, 0, GraphicsAPI::VertexInputRate::Vertex },
 		{
 			{
 				"vertexNormal",
@@ -72,7 +72,7 @@ void Mesh3dImporter::PrepareLayouts() {
 			}
 		}
 	).AddBinding(
-		{ 3, 0, GraphicsAPI::VertexInputRate::Vertex },
+		{ 2, 0, GraphicsAPI::VertexInputRate::Vertex },
 		{
 			{
 				"vertexTangent",
@@ -83,7 +83,7 @@ void Mesh3dImporter::PrepareLayouts() {
 			}
 		}
 	).AddBinding(
-		{ 4, 0, GraphicsAPI::VertexInputRate::Vertex },
+		{ 3, 0, GraphicsAPI::VertexInputRate::Vertex },
 		{
 			{
 				"vertexTexCoord0",
@@ -91,17 +91,6 @@ void Mesh3dImporter::PrepareLayouts() {
 				Grindstone::GraphicsAPI::Format::R32G32B32_SFLOAT,
 				0,
 				Grindstone::GraphicsAPI::AttributeUsage::TexCoord0
-			}
-		}
-	).AddBinding(
-		{ 4, 0, GraphicsAPI::VertexInputRate::Vertex },
-		{
-			{
-				"vertexTexCoord1",
-				(uint32_t)Mesh3dLayoutIndex::Uv1,
-				Grindstone::GraphicsAPI::Format::R32G32B32_SFLOAT,
-				0,
-				Grindstone::GraphicsAPI::AttributeUsage::TexCoord1
 			}
 		}
 	);
