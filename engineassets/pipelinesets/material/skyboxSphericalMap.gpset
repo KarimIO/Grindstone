@@ -1,6 +1,5 @@
 include "$ENGINE/pipelinesets/common/meshRenderer.gpset"
 include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
-include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
 
 pipelineSet "Skybox (Spherical Map)" {
 	parameters {
@@ -30,12 +29,12 @@ pipelineSet "Skybox (Spherical Map)" {
 
 			requiresBlocks [
 				GsRendererUniform,
-				GsDefaultSampler,
 				GsPadFloat33ToFloat44
 			]
 
 			shaderHlsl {
-				Texture2D<float4> skybox : register(t1, space2);
+				SamplerState textureSampler : register(s1, space1);
+				Texture2D<float4> skybox : register(t2, space1);
 
 				struct VertexInput {
 					[[vk::location(0)]] float4 position : POSITION0;
@@ -69,7 +68,7 @@ pipelineSet "Skybox (Spherical Map)" {
 
 				float4 mainFragment(VertexToFragment input) : SV_TARGET {
 					float2 sphericalCoord = SampleSphericalMap(input.texCoord);
-    				return skybox.SampleLevel(defaultSampler, sphericalCoord, 0);
+    				return skybox.SampleLevel(textureSampler, sphericalCoord, 0);
 				}
 			}
 		}

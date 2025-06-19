@@ -1,6 +1,5 @@
 include "$ENGINE/pipelinesets/common/meshRenderer.gpset"
 include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
-include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
 
 pipelineSet "Translucent" {
 	parameters {
@@ -34,8 +33,7 @@ pipelineSet "Translucent" {
 
 			requiresBlocks [
 				GsMeshRendererVertex,
-				GsTransformNormalToWorldSpace,
-				GsDefaultSampler
+				GsTransformNormalToWorldSpace
 			]
 
 			shaderHlsl {
@@ -43,19 +41,20 @@ pipelineSet "Translucent" {
 					float4 color;
 				};
 
-				ConstantBuffer<MaterialInstanceUBO> materialInstanceUbo : register(b0, space2);
+				ConstantBuffer<MaterialInstanceUBO> materialInstanceUbo : register(b0, space1);
 
-				Texture2D<float4> albedoTexture : register(t1, space2);
-				Texture2D<float4> normalTexture : register(t2, space2);
-				Texture2D<float4> metalnessTexture : register(t3, space2);
-				Texture2D<float4> roughnessTexture : register(t4, space2);
+				SamplerState textureSampler : register(s1, space1);
+				Texture2D<float4> albedoTexture : register(t2, space1);
+				Texture2D<float4> normalTexture : register(t3, space1);
+				Texture2D<float4> metalnessTexture : register(t4, space1);
+				Texture2D<float4> roughnessTexture : register(t5, space1);
 
 				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
-					float4 albedo = materialInstanceUbo.color * albedoTexture.Sample(defaultSampler, input.texCoord0);
+					float4 albedo = materialInstanceUbo.color * albedoTexture.Sample(textureSampler, input.texCoord0);
 
-					float3 textureSpaceNormal = normalTexture.Sample(defaultSampler, input.texCoord0).rgb;
-					float metalness = metalnessTexture.Sample(defaultSampler, input.texCoord0).r;
-					float roughness = roughnessTexture.Sample(defaultSampler, input.texCoord0).r;
+					float3 textureSpaceNormal = normalTexture.Sample(textureSampler, input.texCoord0).rgb;
+					float metalness = metalnessTexture.Sample(textureSampler, input.texCoord0).r;
+					float roughness = roughnessTexture.Sample(textureSampler, input.texCoord0).r;
 
 					float3 specular = lerp(float3(0.04, 0.04, 0.04), albedo.rgb, metalness);
 					float3 worldSpaceNormal = TransformNormalToWorldSpace(input.normal, textureSpaceNormal, input.tangent);
