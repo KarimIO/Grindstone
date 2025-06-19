@@ -817,7 +817,7 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 
 	std::array<GraphicsAPI::DescriptorSet::Binding, 5> descriptorBindings;
 	descriptorBindings[1] = GraphicsAPI::DescriptorSet::Binding::Sampler(screenSampler);
-	descriptorBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[0] );
+	descriptorBindings[4] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[0] );
 
 	// Threshold values sourced from: https://catlikecoding.com/unity/tutorials/advanced-rendering/bloom/
 	float threshold = 1.0f;
@@ -1087,9 +1087,20 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 		ssaoGbufferNormalsBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
 
 		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 3> ssaoDescriptorSetLayoutBindings{};
-		ssaoDescriptorSetLayoutBindings[0] = gbufferSampler;
-		ssaoDescriptorSetLayoutBindings[1] = gbufferDepthBinding;
-		ssaoDescriptorSetLayoutBindings[2] = ssaoGbufferNormalsBinding;
+		ssaoDescriptorSetLayoutBindings[0].bindingId = 0;
+		ssaoDescriptorSetLayoutBindings[0].count = 1;
+		ssaoDescriptorSetLayoutBindings[0].type = GraphicsAPI::BindingType::Sampler;
+		ssaoDescriptorSetLayoutBindings[0].stages = GraphicsAPI::ShaderStageBit::Fragment;
+
+		ssaoDescriptorSetLayoutBindings[1].bindingId = 1;
+		ssaoDescriptorSetLayoutBindings[1].count = 1;
+		ssaoDescriptorSetLayoutBindings[1].type = GraphicsAPI::BindingType::SampledImage;
+		ssaoDescriptorSetLayoutBindings[1].stages = GraphicsAPI::ShaderStageBit::Fragment;
+
+		ssaoDescriptorSetLayoutBindings[2].bindingId = 2;
+		ssaoDescriptorSetLayoutBindings[2].count = 1;
+		ssaoDescriptorSetLayoutBindings[2].type = GraphicsAPI::BindingType::UniformBuffer;
+		ssaoDescriptorSetLayoutBindings[2].stages = GraphicsAPI::ShaderStageBit::Fragment;
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo ssaoDescriptorSetLayoutCreateInfo{};
 		ssaoDescriptorSetLayoutCreateInfo.debugName = "SSAO Descriptor Set Layout";
@@ -1219,18 +1230,6 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	debugDescriptorSetCreateInfo.bindings = debugDescriptorSetBindings.data();
 	imageSet.debugDescriptorSet = graphicsCore->CreateDescriptorSet(debugDescriptorSetCreateInfo);
 
-	std::array<GraphicsAPI::DescriptorSet::Binding, 3> ssaoDescriptorSetBindings{};
-	ssaoDescriptorSetBindings[0] = screenSamplerBinding;
-	ssaoDescriptorSetBindings[1] = gbufferDepthBinding;
-	ssaoDescriptorSetBindings[2] = gbufferNormalBinding;
-
-	GraphicsAPI::DescriptorSet::CreateInfo ssaoDescriptorSetCreateInfo{};
-	ssaoDescriptorSetCreateInfo.debugName = "SSAO Descriptor Set";
-	ssaoDescriptorSetCreateInfo.layout = ssaoDescriptorSetLayout;
-	ssaoDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(ssaoDescriptorSetBindings.size());
-	ssaoDescriptorSetCreateInfo.bindings = ssaoDescriptorSetBindings.data();
-	imageSet.ssaoDescriptorSet = graphicsCore->CreateDescriptorSet(ssaoDescriptorSetCreateInfo);
-
 	std::array<GraphicsAPI::DescriptorSet::Binding, 5> gbufferDescriptorSetBindings{};
 	gbufferDescriptorSetBindings[0] = screenSamplerBinding;
 	gbufferDescriptorSetBindings[1] = gbufferDepthBinding;
@@ -1306,7 +1305,7 @@ void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) 
 
 	{
 		GraphicsAPI::DescriptorSet::Binding ssaoInputBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage(imageSet.ambientOcclusionRenderTarget);
-		ssaoInputDescriptorSet->ChangeBindings(&ssaoInputBinding, 1);
+		imageSet.ambientOcclusionDescriptorSet->ChangeBindings(&ssaoInputBinding, 1, 0);
 	}
 }
 
@@ -1939,7 +1938,7 @@ void DeferredRenderer::RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAP
 	std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> descriptorSets = {
 		imageSet.engineDescriptorSet,
 		imageSet.gbufferDescriptorSet,
-		imageSet.ssaoDescriptorSet
+		ssaoInputDescriptorSet
 	};
 	
 	commandBuffer->BindGraphicsPipeline(ssaoPipeline);
