@@ -1,6 +1,5 @@
 include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
 include "$ENGINE/pipelinesets/common/rendererUniform.gpset"
-include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
 
 pipelineSet abstract "DeferredLighting" {
 	configuration "main" {
@@ -21,8 +20,7 @@ pipelineSet abstract "DeferredLighting" {
 			}
 
 			requiresBlocks [
-				GsLightingVertexInputs,
-				GsDefaultSampler
+				GsLightingVertexInputs
 			]
 
 			shaderBlock GsLightingVertexInputs {
@@ -163,10 +161,11 @@ pipelineSet abstract "DeferredLighting" {
 
 			shaderBlock LightGbufferUniforms {
 				shaderHlsl {
-					Texture2D<float4> gbufferDepth : register(t2,  space2);
-					Texture2D<float4> gbufferAlbedo : register(t3,  space2);
-					Texture2D<float4> gbufferNormals : register(t4,  space2);
-					Texture2D<float4> gbufferSpecularRoughness : register(t5,  space2);
+					SamplerState gbufferSampler : register(s0, space1);
+					Texture2D<float4> gbufferDepth : register(t1, space1);
+					Texture2D<float4> gbufferAlbedo : register(t2, space1);
+					Texture2D<float4> gbufferNormals : register(t3, space1);
+					Texture2D<float4> gbufferSpecularRoughness : register(t4, space1);
 				}
 			}
 		}

@@ -23,7 +23,7 @@ pipelineSet "Point Light" inherits "DeferredLighting" {
 					float intensity;
 				};
 
-				ConstantBuffer<LightUbo> light : register(b0, space1);
+				ConstantBuffer<LightUbo> light : register(b0, space2);
 
 				float3 LightPointCalc(
 					in float3 albedo,
@@ -72,12 +72,12 @@ pipelineSet "Point Light" inherits "DeferredLighting" {
 				}
 
 				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
-					float4 gbufferSpecularRoughnessValue = gbufferSpecularRoughness.Sample(defaultSampler, input.scaledFragmentTexCoord);
+					float4 gbufferSpecularRoughnessValue = gbufferSpecularRoughness.Sample(gbufferSampler, input.scaledFragmentTexCoord);
 
-					float depth = gbufferDepth.Sample(defaultSampler, input.scaledFragmentTexCoord).r;
+					float depth = gbufferDepth.Sample(gbufferSampler, input.scaledFragmentTexCoord).r;
 					float3 position = ComputeWorldSpacePosition(rendererUbo.projectionMatrix, rendererUbo.viewMatrix, input.fragmentTexCoord, depth);
-					float3 albedo = gbufferAlbedo.Sample(defaultSampler, input.scaledFragmentTexCoord).rgb;
-					float3 normal = gbufferNormals.Sample(defaultSampler, input.scaledFragmentTexCoord).rgb;
+					float3 albedo = gbufferAlbedo.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb;
+					float3 normal = gbufferNormals.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb;
 					float3 specular = gbufferSpecularRoughnessValue.rgb;
 					float roughness = gbufferSpecularRoughnessValue.a;
 

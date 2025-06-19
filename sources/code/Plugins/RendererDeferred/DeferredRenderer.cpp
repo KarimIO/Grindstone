@@ -204,7 +204,7 @@ DeferredRenderer::~DeferredRenderer() {
 
 		graphicsCore->DeleteDescriptorSet(imageSet.engineDescriptorSet);
 		graphicsCore->DeleteDescriptorSet(imageSet.tonemapDescriptorSet);
-		graphicsCore->DeleteDescriptorSet(imageSet.lightingDescriptorSet);
+		graphicsCore->DeleteDescriptorSet(imageSet.gbufferDescriptorSet);
 
 		graphicsCore->DeleteImage(imageSet.ambientOcclusionRenderTarget);
 		graphicsCore->DeleteFramebuffer(imageSet.ambientOcclusionFramebuffer);
@@ -1231,19 +1231,19 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	ssaoDescriptorSetCreateInfo.bindings = ssaoDescriptorSetBindings.data();
 	imageSet.ssaoDescriptorSet = graphicsCore->CreateDescriptorSet(ssaoDescriptorSetCreateInfo);
 
-	std::array<GraphicsAPI::DescriptorSet::Binding, 5> lightingDescriptorSetBindings{};
-	lightingDescriptorSetBindings[0] = screenSamplerBinding;
-	lightingDescriptorSetBindings[1] = gbufferDepthBinding;
-	lightingDescriptorSetBindings[2] = gbufferAlbedoBinding;
-	lightingDescriptorSetBindings[3] = gbufferNormalBinding;
-	lightingDescriptorSetBindings[4] = gbufferSpecRoughnessBinding;
+	std::array<GraphicsAPI::DescriptorSet::Binding, 5> gbufferDescriptorSetBindings{};
+	gbufferDescriptorSetBindings[0] = screenSamplerBinding;
+	gbufferDescriptorSetBindings[1] = gbufferDepthBinding;
+	gbufferDescriptorSetBindings[2] = gbufferAlbedoBinding;
+	gbufferDescriptorSetBindings[3] = gbufferNormalBinding;
+	gbufferDescriptorSetBindings[4] = gbufferSpecRoughnessBinding;
 
-	GraphicsAPI::DescriptorSet::CreateInfo lightingDescriptorSetCreateInfo{};
-	lightingDescriptorSetCreateInfo.debugName = "Light Descriptor Set";
-	lightingDescriptorSetCreateInfo.layout = lightingDescriptorSetLayout;
-	lightingDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(lightingDescriptorSetBindings.size());
-	lightingDescriptorSetCreateInfo.bindings = lightingDescriptorSetBindings.data();
-	imageSet.lightingDescriptorSet = graphicsCore->CreateDescriptorSet(lightingDescriptorSetCreateInfo);
+	GraphicsAPI::DescriptorSet::CreateInfo gbufferDescriptorSetCreateInfo{};
+	gbufferDescriptorSetCreateInfo.debugName = "Gbuffer Descriptor Set";
+	gbufferDescriptorSetCreateInfo.layout = lightingDescriptorSetLayout;
+	gbufferDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(gbufferDescriptorSetBindings.size());
+	gbufferDescriptorSetCreateInfo.bindings = gbufferDescriptorSetBindings.data();
+	imageSet.gbufferDescriptorSet = graphicsCore->CreateDescriptorSet(gbufferDescriptorSetCreateInfo);
 
 	{
 		std::array<GraphicsAPI::DescriptorSet::Binding, 2> aoInputBinding = {
@@ -1294,14 +1294,14 @@ void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	}
 
 	{
-		std::array<GraphicsAPI::DescriptorSet::Binding, 5> lightingDescriptorSetBindings{};
-		lightingDescriptorSetBindings[0] = screenSamplerBinding;
-		lightingDescriptorSetBindings[1] = gbufferDepthBinding;
-		lightingDescriptorSetBindings[2] = gbufferAlbedoBinding;
-		lightingDescriptorSetBindings[3] = gbufferNormalBinding;
-		lightingDescriptorSetBindings[4] = gbufferSpecRoughnessBinding;
+		std::array<GraphicsAPI::DescriptorSet::Binding, 5> gbufferDescriptorSetBindings{};
+		gbufferDescriptorSetBindings[0] = screenSamplerBinding;
+		gbufferDescriptorSetBindings[1] = gbufferDepthBinding;
+		gbufferDescriptorSetBindings[2] = gbufferAlbedoBinding;
+		gbufferDescriptorSetBindings[3] = gbufferNormalBinding;
+		gbufferDescriptorSetBindings[4] = gbufferSpecRoughnessBinding;
 
-		imageSet.lightingDescriptorSet->ChangeBindings(lightingDescriptorSetBindings.data(), static_cast<uint32_t>(lightingDescriptorSetBindings.size()));
+		imageSet.gbufferDescriptorSet->ChangeBindings(gbufferDescriptorSetBindings.data(), static_cast<uint32_t>(gbufferDescriptorSetBindings.size()));
 	}
 
 	{
@@ -1787,10 +1787,10 @@ void DeferredRenderer::RenderLights(
 
 			if (hasEnvMap) {
 				std::array<GraphicsAPI::DescriptorSet*, 3> iblDescriptors{};
-				iblDescriptors[0] = imageSet.lightingDescriptorSet;
+				iblDescriptors[0] = imageSet.gbufferDescriptorSet;
 				iblDescriptors[1] = imageSet.ambientOcclusionDescriptorSet;
 				iblDescriptors[2] = environmentMapDescriptorSet;
-				currentCommandBuffer->BindGraphicsDescriptorSet(imageBasedLightingPipeline, iblDescriptors.data(), 0, static_cast<uint32_t>(iblDescriptors.size()));
+				currentCommandBuffer->BindGraphicsDescriptorSet(imageBasedLightingPipeline, iblDescriptors.data(), 1, static_cast<uint32_t>(iblDescriptors.size()));
 				currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 			}
 			currentCommandBuffer->EndDebugLabelSection();
@@ -1805,7 +1805,7 @@ void DeferredRenderer::RenderLights(
 			currentCommandBuffer->BindGraphicsPipeline(pointLightPipeline);
 
 			std::array<GraphicsAPI::DescriptorSet*, 2> pointLightDescriptors{};
-			pointLightDescriptors[0] = imageSet.lightingDescriptorSet;
+			pointLightDescriptors[0] = imageSet.gbufferDescriptorSet;
 
 			auto view = registry.view<const entt::entity, PointLightComponent>();
 			view.each([&](const entt::entity entityHandle, PointLightComponent& pointLightComponent) {
@@ -1820,7 +1820,7 @@ void DeferredRenderer::RenderLights(
 
 				pointLightDescriptors[1] = pointLightComponent.descriptorSet;
 				pointLightComponent.uniformBufferObject->UploadData(&lightmapStruct);
-				currentCommandBuffer->BindGraphicsDescriptorSet(pointLightPipeline, pointLightDescriptors.data(), 0, static_cast<uint32_t>(pointLightDescriptors.size()));
+				currentCommandBuffer->BindGraphicsDescriptorSet(pointLightPipeline, pointLightDescriptors.data(), 1, static_cast<uint32_t>(pointLightDescriptors.size()));
 				currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 			});
 			currentCommandBuffer->EndDebugLabelSection();
@@ -1835,7 +1835,7 @@ void DeferredRenderer::RenderLights(
 			currentCommandBuffer->BindGraphicsPipeline(spotLightPipeline);
 
 			std::array<GraphicsAPI::DescriptorSet*, 2> spotLightDescriptors{};
-			spotLightDescriptors[0] = imageSet.lightingDescriptorSet;
+			spotLightDescriptors[0] = imageSet.gbufferDescriptorSet;
 
 			auto view = registry.view<const entt::entity, SpotLightComponent>();
 			view.each([&](const entt::entity entityHandle, SpotLightComponent& spotLightComponent) {
@@ -1856,7 +1856,7 @@ void DeferredRenderer::RenderLights(
 				spotLightComponent.uniformBufferObject->UploadData(&lightStruct);
 
 				spotLightDescriptors[1] = spotLightComponent.descriptorSet;
-				currentCommandBuffer->BindGraphicsDescriptorSet(spotLightPipeline, spotLightDescriptors.data(), 0, static_cast<uint32_t>(spotLightDescriptors.size()));
+				currentCommandBuffer->BindGraphicsDescriptorSet(spotLightPipeline, spotLightDescriptors.data(), 1, static_cast<uint32_t>(spotLightDescriptors.size()));
 				currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 			});
 			currentCommandBuffer->EndDebugLabelSection();
@@ -1871,7 +1871,7 @@ void DeferredRenderer::RenderLights(
 			currentCommandBuffer->BindGraphicsPipeline(directionalLightPipeline);
 
 			std::array<GraphicsAPI::DescriptorSet*, 2> directionalLightDescriptors{};
-			directionalLightDescriptors[0] = imageSet.lightingDescriptorSet;
+			directionalLightDescriptors[0] = imageSet.gbufferDescriptorSet;
 
 			auto view = registry.view<const entt::entity, const TransformComponent, DirectionalLightComponent>();
 			view.each([&](const entt::entity entityHandle, const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
@@ -1889,7 +1889,7 @@ void DeferredRenderer::RenderLights(
 				directionalLightComponent.uniformBufferObject->UploadData(&lightStruct);
 
 				directionalLightDescriptors[1] = directionalLightComponent.descriptorSet;
-				currentCommandBuffer->BindGraphicsDescriptorSet(directionalLightPipeline, directionalLightDescriptors.data(), 0, static_cast<uint32_t>(directionalLightDescriptors.size()));
+				currentCommandBuffer->BindGraphicsDescriptorSet(directionalLightPipeline, directionalLightDescriptors.data(), 1, static_cast<uint32_t>(directionalLightDescriptors.size()));
 				currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 				currentCommandBuffer->EndDebugLabelSection();
 			});
@@ -1936,8 +1936,14 @@ void DeferredRenderer::RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAP
 	commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	commandBuffer->BindIndexBuffer(indexBuffer);
 
+	std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> descriptorSets = {
+		imageSet.engineDescriptorSet,
+		imageSet.gbufferDescriptorSet,
+		imageSet.ssaoDescriptorSet
+	};
+	
 	commandBuffer->BindGraphicsPipeline(ssaoPipeline);
-	commandBuffer->BindGraphicsDescriptorSet(ssaoPipeline, &imageSet.ssaoDescriptorSet, 2, 1);
+	commandBuffer->BindGraphicsDescriptorSet(ssaoPipeline, descriptorSets.data(), 0, static_cast<uint32_t>(descriptorSets.size()));
 	commandBuffer->DrawIndices(0, 6, 0, 1, 0);
 	commandBuffer->UnbindRenderPass();
 }

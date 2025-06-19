@@ -31,9 +31,11 @@ pipelineSet "Screen-Space Ambient Occlusion" inherits "PostProcessing" {
 			shaderHlsl {
 				static const int kernelSize = 64;
 
-				SamplerState gbufferSampler : register(s1, space2);
-				Texture2D<float4> depthTexture : register(t2,  space2);
-				Texture2D<float4> gbufferNormals : register(t3,  space2);
+				SamplerState gbufferSampler : register(s0, space1);
+				Texture2D<float4> depthTexture : register(t1, space1);
+				Texture2D<float4> gbufferAlbedo : register(t2, space1);
+				Texture2D<float4> gbufferNormals : register(t3, space1);
+				Texture2D<float4> gbufferSpecRough : register(t4, space1);
 
 				struct SSAOBufferObject {
 					float4 kernels[kernelSize];
@@ -41,9 +43,9 @@ pipelineSet "Screen-Space Ambient Occlusion" inherits "PostProcessing" {
 					float bias;
 				};
 
-				SamplerState ssaoNoiseSampler : register(s0, space1);
-				Texture2D<float4> ssaoNoise : register(t1,  space1);
-				ConstantBuffer<SSAOBufferObject> ssaoUbo : register(b2, space1);
+				SamplerState ssaoNoiseSampler : register(s0, space2);
+				Texture2D<float4> ssaoNoise : register(t1, space2);
+				ConstantBuffer<SSAOBufferObject> ssaoUbo : register(b2, space2);
 
 				float mainFragment(VertexToFragment input) : SV_TARGET0 {
 					int2 noiseScale = int2(rendererUbo.renderResolution.x, rendererUbo.renderResolution.y) / 4;

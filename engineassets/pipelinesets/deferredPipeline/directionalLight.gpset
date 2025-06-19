@@ -26,9 +26,8 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 					float shadowResolution;
 				};
 
-				ConstantBuffer<LightUbo> light : register(b0, space1);
-
-				Texture2D<float4> shadowMap : register(t1,  space1);
+				ConstantBuffer<LightUbo> light : register(b0, space2);
+				Texture2D<float4> shadowMap : register(t1,  space2);
 
 				float3 LightDirCalc(
 					in float3 albedo,
@@ -68,12 +67,12 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 				}
 
 				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
-					float4 gbufferSpecularRoughnessValue = gbufferSpecularRoughness.Sample(defaultSampler, input.scaledFragmentTexCoord);
+					float4 gbufferSpecularRoughnessValue = gbufferSpecularRoughness.Sample(gbufferSampler, input.scaledFragmentTexCoord);
 
-					float depth = gbufferDepth.Sample(defaultSampler, input.scaledFragmentTexCoord).r;
+					float depth = gbufferDepth.Sample(gbufferSampler, input.scaledFragmentTexCoord).r;
 					float3 position = ComputeWorldSpacePosition(rendererUbo.projectionMatrix, rendererUbo.viewMatrix, input.fragmentTexCoord, depth);
-					float3 albedo = gbufferAlbedo.Sample(defaultSampler, input.scaledFragmentTexCoord).rgb;
-					float3 normal = gbufferNormals.Sample(defaultSampler, input.scaledFragmentTexCoord).rgb;
+					float3 albedo = gbufferAlbedo.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb;
+					float3 normal = gbufferNormals.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb;
 					float3 specular = gbufferSpecularRoughnessValue.rgb;
 					float roughness = gbufferSpecularRoughnessValue.a;
 
@@ -110,7 +109,7 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 							rotation.y * poissonDisk[i].x + rotation.x * poissonDisk[i].y
 						);
 
-						float pcfDepth = shadowMap.Sample(defaultSampler, projCoords.xy + offset * texelSize * 4.0f).r;
+						float pcfDepth = shadowMap.Sample(gbufferSampler, projCoords.xy + offset * texelSize * 4.0f).r;
 						bool isInLight = pcfDepth + 0.05f >= pixelDepth;
 						shadow += isInLight ? 1.0f : 0.0f;
 					}
