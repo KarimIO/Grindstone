@@ -28,9 +28,8 @@ pipelineSet "Spot Light" inherits "DeferredLighting" {
 					float shadowResolution;
 				};
 
-				ConstantBuffer<LightUbo> light : register(b0, space1);
-
-				Texture2D<float4> shadowMap : register(t1,  space1);
+				ConstantBuffer<LightUbo> light : register(b0, space2);
+				Texture2D<float4> shadowMap : register(t1,  space2);
 
 				float3 LightPointCalc(
 					in float3 albedo,
