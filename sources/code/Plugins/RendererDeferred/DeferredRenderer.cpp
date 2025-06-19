@@ -48,10 +48,12 @@ uint16_t lightIndices[] = {
 };
 
 struct EngineUboStruct {
-	glm::mat4 proj;
-	glm::mat4 view;
+	glm::mat4 projectionMatrix;
+	glm::mat4 viewMatrix;
+	glm::mat4 inverseProjectionMatrix;
+	glm::mat4 inverseViewMatrix;
 	glm::vec3 eyePos;
-	float buffer;
+	float alignmentBufferForPreviousVec3;
 	glm::vec2 framebufferResolution;
 	glm::vec2 renderResolution;
 	glm::vec2 renderScale;
@@ -2210,8 +2212,10 @@ void DeferredRenderer::Render(
 	auto& imageSet = deferredRendererImageSets[imageIndex];
 
 	EngineUboStruct engineUboStruct{};
-	engineUboStruct.proj = projectionMatrix;
-	engineUboStruct.view = viewMatrix;
+	engineUboStruct.projectionMatrix = projectionMatrix;
+	engineUboStruct.viewMatrix = viewMatrix;
+	engineUboStruct.inverseProjectionMatrix = glm::inverse(projectionMatrix);
+	engineUboStruct.inverseViewMatrix = glm::inverse(viewMatrix);
 	engineUboStruct.eyePos = eyePos;
 	engineUboStruct.framebufferResolution = glm::vec2(framebufferWidth, framebufferHeight);
 	engineUboStruct.renderResolution = glm::vec2(renderWidth, renderHeight);
