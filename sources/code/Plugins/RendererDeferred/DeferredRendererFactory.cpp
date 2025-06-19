@@ -80,7 +80,6 @@ static Grindstone::GraphicsAPI::RenderPass* CreateGbufferRenderPass(Grindstone::
 	Grindstone::GraphicsAPI::RenderPass* rp = graphicsCore->CreateRenderPass(gbufferRenderPassCreateInfo);
 	rpRegistry->RegisterRenderpass(gbufferRenderPassKey, rp);
 	rpRegistry->RegisterRenderpass(geometryOpaqueRenderPassKey, rp);
-	rpRegistry->RegisterRenderpass(geometrySkyRenderPassKey, rp);
 	rpRegistry->RegisterRenderpass(geometryTransparentRenderPassKey, rp);
 	rpRegistry->RegisterRenderpass(geometryUnlitRenderPassKey, rp);
 	return rp;
@@ -131,6 +130,7 @@ static Grindstone::GraphicsAPI::RenderPass* CreateForwardLitRenderPass(Grindston
 	memcpy(forwardLitRenderPassCreateInfo.debugColor, debugColor, sizeof(float) * 4);
 	Grindstone::GraphicsAPI::RenderPass* rp = graphicsCore->CreateRenderPass(forwardLitRenderPassCreateInfo);
 	rpRegistry->RegisterRenderpass(forwardLitRenderPassKey, rp);
+	rpRegistry->RegisterRenderpass(geometrySkyRenderPassKey, rp);
 	return rp;
 }
 
