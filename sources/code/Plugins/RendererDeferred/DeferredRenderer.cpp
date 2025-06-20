@@ -1315,13 +1315,13 @@ void DeferredRenderer::CreateVertexAndIndexBuffersAndLayouts() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	vertexLightPositionLayout = GraphicsAPI::VertexInputLayoutBuilder().AddBinding(
-		{ 0, 0, GraphicsAPI::VertexInputRate::Vertex },
+		{ 0, 2 * sizeof(float), GraphicsAPI::VertexInputRate::Vertex},
 		{
 			{
 				"vertexPosition",
 				0,
-				Grindstone::GraphicsAPI::Format::R8G8_UNORM,
-				false,
+				Grindstone::GraphicsAPI::Format::R32G32_SFLOAT,
+				0,
 				Grindstone::GraphicsAPI::AttributeUsage::Position
 			}
 		}
@@ -1335,7 +1335,7 @@ void DeferredRenderer::CreateVertexAndIndexBuffersAndLayouts() {
 		GraphicsAPI::BufferUsage::Vertex;
 	vboCi.memoryUsage = GraphicsAPI::MemUsage::GPUOnly;
 	vboCi.content = lightPositions;
-	vboCi.bufferSize = sizeof(float) * 8;
+	vboCi.bufferSize = sizeof(lightPositions);
 	vertexBuffer = graphicsCore->CreateBuffer(vboCi);
 
 	GraphicsAPI::Buffer::CreateInfo iboCi{};

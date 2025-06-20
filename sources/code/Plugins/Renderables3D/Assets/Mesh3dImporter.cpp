@@ -50,7 +50,7 @@ Mesh3dImporter::Mesh3dImporter(EngineCore* engineCore) : engineCore(engineCore) 
 void Mesh3dImporter::PrepareLayouts() {
 	GraphicsAPI::VertexInputLayoutBuilder builder;
 	builder.AddBinding(
-		{0, 0, GraphicsAPI::VertexInputRate::Vertex},
+		{0, 3 * sizeof(float), GraphicsAPI::VertexInputRate::Vertex},
 		{
 			{
 				"vertexPosition",
@@ -61,7 +61,7 @@ void Mesh3dImporter::PrepareLayouts() {
 			}
 		}
 	).AddBinding(
-		{ 1, 0, GraphicsAPI::VertexInputRate::Vertex },
+		{ 1, 3 * sizeof(float), GraphicsAPI::VertexInputRate::Vertex },
 		{
 			{
 				"vertexNormal",
@@ -72,7 +72,7 @@ void Mesh3dImporter::PrepareLayouts() {
 			}
 		}
 	).AddBinding(
-		{ 2, 0, GraphicsAPI::VertexInputRate::Vertex },
+		{ 2, 3 * sizeof(float), GraphicsAPI::VertexInputRate::Vertex },
 		{
 			{
 				"vertexTangent",
@@ -83,7 +83,7 @@ void Mesh3dImporter::PrepareLayouts() {
 			}
 		}
 	).AddBinding(
-		{ 3, 0, GraphicsAPI::VertexInputRate::Vertex },
+		{ 3, 3 * sizeof(float), GraphicsAPI::VertexInputRate::Vertex },
 		{
 			{
 				"vertexTexCoord0",
