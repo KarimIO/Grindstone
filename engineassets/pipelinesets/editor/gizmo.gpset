@@ -8,7 +8,9 @@ pipelineSet "Gizmo" {
 			renderQueue: "Gizmo"
 
 			properties {
-				cull: back
+				cull: none
+				geometryType: lines
+				fillMode: line
 				depthBias: false
 				depthWrite: false
 				depthTest: false
@@ -26,13 +28,17 @@ pipelineSet "Gizmo" {
 
 			shaderHlsl {
 				struct Element {
-					float4x4 matrix;
+					column_major float4x4 matrix;
 					float4 color;
 				};
 
 				#define maxObjects 500
+				
+				struct GizmoUbo {
+					Element elements[maxObjects];
+				};
 
-				RWStructuredBuffer<Element> elementsBuffer : register(u0, space2);
+				ConstantBuffer<GizmoUbo> elementsBuffer : register(b0, space2);
 
 				struct VertexInput {
 					[[vk::location(0)]] float3 position : POSITION0;
@@ -43,10 +49,10 @@ pipelineSet "Gizmo" {
 					[[vk::location(0)]] float4 color : COLOR0;
 				};
 
-				VertexToFragment mainVertex(VertexInput input, uint instanceID : SV_InstanceID) {
+				VertexToFragment mainVertex(VertexInput input, [[vk::builtin("BaseInstance")]] uint baseInstance : BASEINSTANCE) {
 					VertexToFragment output = (VertexToFragment)0;
-					output.position = mul(elementsBuffer[instanceID].matrix, float4(input.position, 1.0));
-					output.color = elementsBuffer[instanceID].color;
+					output.position = mul(elementsBuffer.elements[baseInstance].matrix, float4(input.position, 1.0));
+					output.color = elementsBuffer.elements[baseInstance].color;
 					return output;
 				}
 

@@ -41,13 +41,13 @@ void GizmoRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	GraphicsAPI::VertexInputLayoutBuilder layoutBuilder;
 	gizmoVertexLayout = layoutBuilder
 		.AddBinding(
-			{ 0, 0, GraphicsAPI::VertexInputRate::Vertex },
+			{ 0, 3 * sizeof(float), GraphicsAPI::VertexInputRate::Vertex},
 			{
 				{
 					"vertexPosition",
 					0,
 					Grindstone::GraphicsAPI::Format::R32G32B32_SFLOAT,
-					false,
+					0,
 					Grindstone::GraphicsAPI::AttributeUsage::Position
 				}
 			}
@@ -564,7 +564,7 @@ void GizmoRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer
 
 	gizmoUniformBuffer->UploadData(dataBuffer.data());
 	commandBuffer->BindGraphicsPipeline(gizmoPipeline);
-	commandBuffer->BindGraphicsDescriptorSet(gizmoPipeline, &gizmoDescriptorSet, 0, 1);
+	commandBuffer->BindGraphicsDescriptorSet(gizmoPipeline, &gizmoDescriptorSet, 2, 1);
 	commandBuffer->BindVertexArrayObject(gizmoShapesVao);
 
 	for (uint32_t i = 0; i < drawCount; ++i) {

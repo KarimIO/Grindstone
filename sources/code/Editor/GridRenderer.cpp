@@ -39,7 +39,7 @@ void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
 	GraphicsAPI::Buffer::CreateInfo ubCi{};
-	ubCi.debugName = "Gizmo Uniform Buffer";
+	ubCi.debugName = "Grid Uniform Buffer";
 	ubCi.bufferUsage =
 		GraphicsAPI::BufferUsage::TransferDst |
 		GraphicsAPI::BufferUsage::TransferSrc |
