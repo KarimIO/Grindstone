@@ -48,7 +48,7 @@ namespace Grindstone::Formats::Pipelines::V1 {
 		Grindstone::GraphicsAPI::CullMode cullMode;
 		Grindstone::GraphicsAPI::CompareOperation depthCompareOp;
 		Grindstone::GraphicsAPI::PolygonFillMode polygonFillMode;
-		Grindstone::GraphicsAPI::GeometryType primitiveType;
+		Grindstone::GraphicsAPI::GeometryType geometryType;
 		uint8_t flags;
 		uint16_t attachmentStartIndex;
 		uint8_t attachmentCount;

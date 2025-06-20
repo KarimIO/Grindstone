@@ -21,7 +21,7 @@ static void UnpackGraphicsPipelineHeader(
 	const V1::PassPipelineHeader& srcHeader,
 	GraphicsPipeline::PipelineData& dstPipelineData
 ) {
-	dstPipelineData.primitiveType = srcHeader.primitiveType;
+	dstPipelineData.primitiveType = srcHeader.geometryType;
 	dstPipelineData.polygonFillMode = srcHeader.polygonFillMode;
 	dstPipelineData.depthCompareOp = srcHeader.depthCompareOp;
 	dstPipelineData.cullMode = srcHeader.cullMode;

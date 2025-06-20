@@ -298,30 +298,34 @@ static TokenData ParseKeywordToken(ScanContext& scanContext, Keyword keyword, co
 		return TokenData(Token::BlendPresetKey, path, line, column);
 	case Keyword::includeKeyword:
 		return TokenData(Token::Include, path, line, column);
+	case Keyword::fillMode:
+		return TokenData(Token::FillModeKey, path, line, column);
+	case Keyword::geometryType:
+		return TokenData(Token::GeometryTypeKey, path, line, column);
 
 	// Primitive Types
 	case Keyword::points:
-		return TokenData::PrimitiveTypeValue(Grindstone::GraphicsAPI::GeometryType::Points, path, line, column);
+		return TokenData::GeometryTypeValue(Grindstone::GraphicsAPI::GeometryType::Points, path, line, column);
 	case Keyword::lines:
-		return TokenData::PrimitiveTypeValue(Grindstone::GraphicsAPI::GeometryType::Lines, path, line, column);
+		return TokenData::GeometryTypeValue(Grindstone::GraphicsAPI::GeometryType::Lines, path, line, column);
 	case Keyword::lineStrips:
-		return TokenData::PrimitiveTypeValue(Grindstone::GraphicsAPI::GeometryType::LineStrips, path, line, column);
+		return TokenData::GeometryTypeValue(Grindstone::GraphicsAPI::GeometryType::LineStrips, path, line, column);
 	case Keyword::lineLoops:
-		return TokenData::PrimitiveTypeValue(Grindstone::GraphicsAPI::GeometryType::LineLoops, path, line, column);
+		return TokenData::GeometryTypeValue(Grindstone::GraphicsAPI::GeometryType::LineLoops, path, line, column);
 	case Keyword::triangleStrips:
-		return TokenData::PrimitiveTypeValue(Grindstone::GraphicsAPI::GeometryType::TriangleStrips, path, line, column);
+		return TokenData::GeometryTypeValue(Grindstone::GraphicsAPI::GeometryType::TriangleStrips, path, line, column);
 	case Keyword::triangleFans:
-		return TokenData::PrimitiveTypeValue(Grindstone::GraphicsAPI::GeometryType::TriangleFans, path, line, column);
+		return TokenData::GeometryTypeValue(Grindstone::GraphicsAPI::GeometryType::TriangleFans, path, line, column);
 	case Keyword::triangles:
-		return TokenData::PrimitiveTypeValue(Grindstone::GraphicsAPI::GeometryType::Triangles, path, line, column);
+		return TokenData::GeometryTypeValue(Grindstone::GraphicsAPI::GeometryType::Triangles, path, line, column);
 	case Keyword::linesAdjacency:
-		return TokenData::PrimitiveTypeValue(Grindstone::GraphicsAPI::GeometryType::LinesAdjacency, path, line, column);
+		return TokenData::GeometryTypeValue(Grindstone::GraphicsAPI::GeometryType::LinesAdjacency, path, line, column);
 	case Keyword::trianglesAdjacency:
-		return TokenData::PrimitiveTypeValue(Grindstone::GraphicsAPI::GeometryType::TrianglesAdjacency, path, line, column);
+		return TokenData::GeometryTypeValue(Grindstone::GraphicsAPI::GeometryType::TrianglesAdjacency, path, line, column);
 	case Keyword::triangleStripsAdjacency:
-		return TokenData::PrimitiveTypeValue(Grindstone::GraphicsAPI::GeometryType::TriangleStripsAdjacency, path, line, column);
+		return TokenData::GeometryTypeValue(Grindstone::GraphicsAPI::GeometryType::TriangleStripsAdjacency, path, line, column);
 	case Keyword::patches:
-		return TokenData::PrimitiveTypeValue(Grindstone::GraphicsAPI::GeometryType::Patches, path, line, column);
+		return TokenData::GeometryTypeValue(Grindstone::GraphicsAPI::GeometryType::Patches, path, line, column);
 	
 	// Fill Modes
 	case Keyword::point:

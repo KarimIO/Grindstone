@@ -26,6 +26,8 @@ E(passTags)\
 E(attachments)\
 E(colorMask)\
 E(cull)\
+E(geometryType)\
+E(fillMode)\
 E(depthBias)\
 E(depthWrite)\
 E(depthTest)\

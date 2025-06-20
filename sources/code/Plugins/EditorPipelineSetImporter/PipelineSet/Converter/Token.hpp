@@ -49,7 +49,7 @@ E(RendererTags)\
 E(PassTags)\
 E(Attachments)\
 E(ColorMask)\
-E(PrimitiveTypeKey)\
+E(GeometryTypeKey)\
 E(FillModeKey)\
 E(CullModeKey)\
 E(DepthBiasKey)\
@@ -60,7 +60,7 @@ E(DepthCompareOpKey)\
 E(BlendColorKey)\
 E(BlendAlphaKey)\
 E(StageValue)\
-E(PrimitiveTypeValue)\
+E(GeometryTypeValue)\
 E(FillModeValue)\
 E(CullModeValue)\
 E(CompareOperationValue)\
@@ -96,7 +96,7 @@ public:
 		std::string_view string;
 		bool boolean;
 		float number;
-		Grindstone::GraphicsAPI::GeometryType primitiveType;
+		Grindstone::GraphicsAPI::GeometryType geometryType;
 		Grindstone::GraphicsAPI::PolygonFillMode polygonFillMode;
 		Grindstone::GraphicsAPI::CullMode cullMode;
 		Grindstone::GraphicsAPI::CompareOperation compareOperation;
@@ -114,7 +114,7 @@ public:
 		Data(Grindstone::GraphicsAPI::CompareOperation compareOperation) : compareOperation(compareOperation) {}
 		Data(Grindstone::GraphicsAPI::BlendOperation blendOperation) : blendOperation(blendOperation) {}
 		Data(Grindstone::GraphicsAPI::BlendFactor blendFactor) : blendFactor(blendFactor) {}
-		Data(Grindstone::GraphicsAPI::GeometryType primitiveType) : primitiveType(primitiveType) {}
+		Data(Grindstone::GraphicsAPI::GeometryType geometryType) : geometryType(geometryType) {}
 		Data(Grindstone::GraphicsAPI::PolygonFillMode polygonFillMode) : polygonFillMode(polygonFillMode) {}
 		Data(Grindstone::GraphicsAPI::ShaderStage shaderStage) : shaderStage(shaderStage) {}
 		Data(BlendPreset blendPreset) : blendPreset(blendPreset) {}
@@ -140,7 +140,7 @@ public:
 	static TokenData Number(float number, const std::filesystem::path& path, uint32_t line, uint32_t column);
 	static TokenData ShaderGlsl(std::string_view string, const std::filesystem::path& path, uint32_t line, uint32_t column);
 	static TokenData ShaderHlsl(std::string_view string, const std::filesystem::path& path, uint32_t line, uint32_t column);
-	static TokenData PrimitiveTypeValue(Grindstone::GraphicsAPI::GeometryType mode, const std::filesystem::path& path, uint32_t line, uint32_t column);
+	static TokenData GeometryTypeValue(Grindstone::GraphicsAPI::GeometryType mode, const std::filesystem::path& path, uint32_t line, uint32_t column);
 	static TokenData FillModeValue(Grindstone::GraphicsAPI::PolygonFillMode mode, const std::filesystem::path& path, uint32_t line, uint32_t column);
 	static TokenData CullModeValue(Grindstone::GraphicsAPI::CullMode mode, const std::filesystem::path& path, uint32_t line, uint32_t column);
 	static TokenData CompareOperationValue(Grindstone::GraphicsAPI::CompareOperation mode, const std::filesystem::path& path, uint32_t line, uint32_t column);

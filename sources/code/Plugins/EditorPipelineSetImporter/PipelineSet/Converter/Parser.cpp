@@ -137,6 +137,20 @@ static void ExpectCompareOp(ParseContext& context, std::optional<Grindstone::Gra
 	}
 }
 
+static void ExpectGeometryType(ParseContext& context, std::optional<Grindstone::GraphicsAPI::GeometryType>& geometry) {
+	TokenData::Data outData;
+	if (ExpectToken(context, Token::GeometryTypeValue, outData, "Expected a geometry type")) {
+		geometry = outData.geometryType;
+	}
+}
+
+static void ExpectFillMode(ParseContext& context, std::optional<Grindstone::GraphicsAPI::PolygonFillMode>& fill) {
+	TokenData::Data outData;
+	if (ExpectToken(context, Token::FillModeValue, outData, "Expected a fill mode")) {
+		fill = outData.polygonFillMode;
+	}
+}
+
 static bool ExpectBlendOp(ParseContext& context, std::optional<Grindstone::GraphicsAPI::BlendOperation>& op) {
 	TokenData::Data outData;
 	if (ExpectToken(context, Token::BlendOperationValue, outData, "Expected a blend operation")) {
@@ -293,6 +307,30 @@ static bool ParseProperty(ParseContext& context, ParseTree::RenderState& renderS
 			ExpectCompareOp(context, depthCompareOp);
 			if (depthCompareOp.has_value()) {
 				renderState.depthCompareOp = depthCompareOp;
+			}
+		}
+
+		return true;
+
+	case Token::GeometryTypeKey:
+		++context.tokenIterator;
+		if (ExpectColon(context, "Expected a colon after 'geometry'")) {
+			std::optional<Grindstone::GraphicsAPI::GeometryType> geometryType;
+			ExpectGeometryType(context, geometryType);
+			if (geometryType.has_value()) {
+				renderState.geometryType = geometryType;
+			}
+		}
+
+		return true;
+
+	case Token::FillModeKey:
+		++context.tokenIterator;
+		if (ExpectColon(context, "Expected a colon after 'fill'")) {
+			std::optional<Grindstone::GraphicsAPI::PolygonFillMode> fillMode;
+			ExpectFillMode(context, fillMode);
+			if (fillMode.has_value()) {
+				renderState.polygonFillMode = fillMode;
 			}
 		}
 

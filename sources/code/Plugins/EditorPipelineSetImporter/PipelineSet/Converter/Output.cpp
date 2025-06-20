@@ -459,7 +459,7 @@ static void ExtractGraphicsPipelineSet(
 			passPipelineHeader.cullMode = pass.renderState.cullMode.value();
 			passPipelineHeader.depthCompareOp = pass.renderState.depthCompareOp.value();
 			passPipelineHeader.polygonFillMode = pass.renderState.polygonFillMode.value();
-			passPipelineHeader.primitiveType = pass.renderState.primitiveType.value();
+			passPipelineHeader.geometryType = pass.renderState.geometryType.value();
 			passPipelineHeader.flags = flags;
 			passPipelineHeader.attachmentStartIndex = static_cast<uint16_t>(attachmentHeaders.size());
 			passPipelineHeader.attachmentCount = static_cast<uint8_t>(pass.renderState.attachmentData.size());

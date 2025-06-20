@@ -17,7 +17,7 @@ enum class ShaderCodeType {
 
 struct ParseTree {
 	struct RenderState {
-		std::optional<Grindstone::GraphicsAPI::GeometryType> primitiveType;
+		std::optional<Grindstone::GraphicsAPI::GeometryType> geometryType;
 		std::optional<Grindstone::GraphicsAPI::PolygonFillMode> polygonFillMode;
 		std::optional<Grindstone::GraphicsAPI::CullMode> cullMode;
 

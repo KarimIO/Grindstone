@@ -39,8 +39,8 @@ TokenData TokenData::ShaderHlsl(std::string_view string, const std::filesystem::
 	return TokenData(Token::ShaderHlsl, string, path, line, column);
 }
 
-TokenData TokenData::PrimitiveTypeValue(Grindstone::GraphicsAPI::GeometryType mode, const std::filesystem::path& path, uint32_t line, uint32_t column) {
-	return TokenData(Token::PrimitiveTypeValue, mode, path, line, column);
+TokenData TokenData::GeometryTypeValue(Grindstone::GraphicsAPI::GeometryType mode, const std::filesystem::path& path, uint32_t line, uint32_t column) {
+	return TokenData(Token::GeometryTypeValue, mode, path, line, column);
 }
 
 TokenData TokenData::FillModeValue(Grindstone::GraphicsAPI::PolygonFillMode mode, const std::filesystem::path& path, uint32_t line, uint32_t column) {

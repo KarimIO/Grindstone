@@ -38,7 +38,7 @@ inline static void ApplyPropertyWithDefault(const std::optional<T>& src, std::op
 #define ApplyProperty(memberName) ApplyPropertyImpl(src.memberName, dst.memberName)
 
 static void ApplyRenderState(const ParseTree::RenderState& src, ParseTree::RenderState& dst) {
-	ApplyProperty(primitiveType);
+	ApplyProperty(geometryType);
 	ApplyProperty(polygonFillMode);
 	ApplyProperty(cullMode);
 
@@ -92,7 +92,7 @@ static void ApplyRenderState(const ParseTree::RenderState& src, ParseTree::Rende
 }
 
 static void ApplyRenderStateDefaults(ParseTree::RenderState& target) {
-	ApplyPropertyDefault(target.primitiveType, Grindstone::GraphicsAPI::GeometryType::Triangles);
+	ApplyPropertyDefault(target.geometryType, Grindstone::GraphicsAPI::GeometryType::Triangles);
 	ApplyPropertyDefault(target.polygonFillMode, Grindstone::GraphicsAPI::PolygonFillMode::Fill);
 	ApplyPropertyDefault(target.cullMode, Grindstone::GraphicsAPI::CullMode::Back);
 
