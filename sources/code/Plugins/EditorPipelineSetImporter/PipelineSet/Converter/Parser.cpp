@@ -377,9 +377,9 @@ static bool ParseAttachmentProperty(ParseContext& context, ParseTree::RenderStat
 					colorOp = Grindstone::GraphicsAPI::BlendOperation::Add;
 					alphaOp = Grindstone::GraphicsAPI::BlendOperation::Add;
 					colorSrc = Grindstone::GraphicsAPI::BlendFactor::SrcAlpha;
-					colorDst = Grindstone::GraphicsAPI::BlendFactor::One;
+					colorDst = Grindstone::GraphicsAPI::BlendFactor::OneMinusSrcAlpha;
 					alphaSrc = Grindstone::GraphicsAPI::BlendFactor::One;
-					alphaDst = Grindstone::GraphicsAPI::BlendFactor::Zero;
+					alphaDst = Grindstone::GraphicsAPI::BlendFactor::OneMinusSrcAlpha;
 					break;
 				case BlendPreset::Multiplicative:
 					colorOp = Grindstone::GraphicsAPI::BlendOperation::Multiply;

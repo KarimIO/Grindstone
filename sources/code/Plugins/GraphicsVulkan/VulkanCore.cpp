@@ -148,13 +148,13 @@ bool Vulkan::Core::Initialize(const Base::Core::CreateInfo& ci) {
 }
 
 void Vulkan::Core::CreateAllocator() {
-	VmaAllocatorCreateInfo AllocatorInfo = {};
-	AllocatorInfo.vulkanApiVersion = vkApiVersion;
-	AllocatorInfo.physicalDevice = physicalDevice;
-	AllocatorInfo.device = device;
-	AllocatorInfo.instance = instance;
+	VmaAllocatorCreateInfo allocatorInfo = {};
+	allocatorInfo.vulkanApiVersion = vkApiVersion;
+	allocatorInfo.physicalDevice = physicalDevice;
+	allocatorInfo.device = device;
+	allocatorInfo.instance = instance;
 
-	vmaCreateAllocator(&AllocatorInfo, &allocator);
+	vmaCreateAllocator(&allocatorInfo, &allocator);
 }
 
 void Vulkan::Core::CreateInstance() {

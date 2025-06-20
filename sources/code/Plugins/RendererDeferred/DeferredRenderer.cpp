@@ -1075,7 +1075,7 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 		lightingDescriptorSetLayoutBindings[4] = gbufferSpecularRoughnessBinding;
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo lightingDescriptorSetLayoutCreateInfo{};
-		lightingDescriptorSetLayoutCreateInfo.debugName = "Pointlight Descriptor Set Layout";
+		lightingDescriptorSetLayoutCreateInfo.debugName = "GBuffer Descriptor Set Layout";
 		lightingDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightingDescriptorSetLayoutBindings.size());
 		lightingDescriptorSetLayoutCreateInfo.bindings = lightingDescriptorSetLayoutBindings.data();
 		lightingDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(lightingDescriptorSetLayoutCreateInfo);
