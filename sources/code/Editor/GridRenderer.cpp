@@ -20,8 +20,10 @@ using namespace Grindstone;
 using namespace Grindstone::Editor;
 
 struct GridUniformBuffer {
-	glm::mat4 projMatrix;
+	glm::mat4 projectionMatrix;
 	glm::mat4 viewMatrix;
+	glm::mat4 inverseProjectionMatrix;
+	glm::mat4 inverseViewMatrix;
 	glm::vec4 colorXAxis = glm::vec4(1.0f, 0.2f, 0.2f, 1.0f);
 	glm::vec4 colorZAxis = glm::vec4(0.2f, 0.2f, 1.0f, 1.0f);
 	glm::vec4 colorMinor = glm::vec4(0.2f, 0.2f, 0.2f, 0.5f);
@@ -85,8 +87,10 @@ void GridRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer,
 	}
 
 	GridUniformBuffer gridData{};
-	gridData.projMatrix = proj;
+	gridData.projectionMatrix = proj;
 	gridData.viewMatrix = view;
+	gridData.inverseProjectionMatrix = glm::inverse(proj);
+	gridData.inverseViewMatrix = glm::inverse(view);
 	gridData.renderScale = renderScale;
 	gridData.nearDistance = nearDist;
 	gridData.farDistance = farDist;

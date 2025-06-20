@@ -16,7 +16,7 @@ pipelineSet "Grid" {
 				depthCompareOp: lessOrEqual
 				attachments: {
 					colorMask: rgba
-					blendPreset: opaque
+					blendPreset: additive
 				}
 			}
 
