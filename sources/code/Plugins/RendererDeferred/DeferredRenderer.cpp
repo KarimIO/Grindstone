@@ -227,7 +227,6 @@ DeferredRenderer::~DeferredRenderer() {
 	graphicsCore->DeleteDescriptorSetLayout(ssaoInputDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSetLayout(ambientOcclusionDescriptorSetLayout);
 
-	graphicsCore->DeleteDescriptorSetLayout(environmentMapDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSetLayout(bloomDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSetLayout(ssrDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSetLayout(debugDescriptorSetLayout);
@@ -236,7 +235,6 @@ DeferredRenderer::~DeferredRenderer() {
 	graphicsCore->DeleteDescriptorSetLayout(lightingWithShadowUBODescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSetLayout(shadowMapDescriptorSetLayout);
 
-	graphicsCore->DeleteDescriptorSet(environmentMapDescriptorSet);
 	graphicsCore->DeleteDescriptorSet(shadowMapDescriptorSet);
 
 	graphicsCore->DeleteBuffer(vertexBuffer);
@@ -1174,20 +1172,6 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 		ambientOcclusionInputLayoutCreateInfo.bindings = ambientOcclusionInputLayoutBinding.data();
 		ambientOcclusionDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ambientOcclusionInputLayoutCreateInfo);
 	}
-
-	{
-		GraphicsAPI::DescriptorSetLayout::Binding environmentMapLayoutBinding{};
-		environmentMapLayoutBinding.bindingId = 0;
-		environmentMapLayoutBinding.count = 1;
-		environmentMapLayoutBinding.type = GraphicsAPI::BindingType::SampledImage;
-		environmentMapLayoutBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
-
-		GraphicsAPI::DescriptorSetLayout::CreateInfo environmentMapLayoutCreateInfo{};
-		environmentMapLayoutCreateInfo.debugName = "Environment Map Input Descriptor Set Layout";
-		environmentMapLayoutCreateInfo.bindingCount = 1;
-		environmentMapLayoutCreateInfo.bindings = &environmentMapLayoutBinding;
-		environmentMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(environmentMapLayoutCreateInfo);
-	}
 }
 
 void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) {
@@ -1264,17 +1248,6 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 		aoInputCreateInfo.bindingCount = static_cast<uint32_t>(aoInputBinding.size());
 		aoInputCreateInfo.bindings = aoInputBinding.data();
 		imageSet.ambientOcclusionDescriptorSet = graphicsCore->CreateDescriptorSet(aoInputCreateInfo);
-	}
-
-	{
-		GraphicsAPI::DescriptorSet::Binding environmentMapBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( nullptr );
-
-		GraphicsAPI::DescriptorSet::CreateInfo environmentMapDescriptorCreateInfo{};
-		environmentMapDescriptorCreateInfo.debugName = "Environment Map Input Descriptor Set";
-		environmentMapDescriptorCreateInfo.layout = environmentMapDescriptorSetLayout;
-		environmentMapDescriptorCreateInfo.bindingCount = 1;
-		environmentMapDescriptorCreateInfo.bindings = &environmentMapBinding;
-		environmentMapDescriptorSet = graphicsCore->CreateDescriptorSet(environmentMapDescriptorCreateInfo);
 	}
 }
 
@@ -2146,8 +2119,8 @@ void DeferredRenderer::PostProcess(
 	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
 	clearDepthStencil.hasDepthStencilAttachment = true;
-	auto renderPass = framebuffer->GetRenderPass();
 
+	GraphicsAPI::RenderPass* renderPass = framebuffer->GetRenderPass();
 	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, framebuffer->GetWidth(), framebuffer->GetHeight(), &clearColor, 1, clearDepthStencil);
 
 	Grindstone::GraphicsPipelineAsset* tonemapPipelineAsset = tonemapPipelineSet.Get();

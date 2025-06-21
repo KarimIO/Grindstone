@@ -173,9 +173,6 @@ namespace Grindstone {
 		GraphicsAPI::DescriptorSetLayout* ssaoInputDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSet* ssaoInputDescriptorSet = nullptr;
 
-		GraphicsAPI::DescriptorSetLayout* environmentMapDescriptorSetLayout = nullptr;
-		GraphicsAPI::DescriptorSet* environmentMapDescriptorSet = nullptr;
-
 		GraphicsAPI::VertexInputLayout vertexLightPositionLayout{};
 
 		GraphicsAPI::DescriptorSetLayout* bloomDescriptorSetLayout = nullptr;
