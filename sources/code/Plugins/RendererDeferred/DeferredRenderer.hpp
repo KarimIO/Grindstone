@@ -147,7 +147,7 @@ namespace Grindstone {
 		PostProcessUbo postProcessUboData;
 
 		struct DebugUboData {
-			uint16_t renderMode;
+			uint32_t renderMode;
 		};
 
 		DebugUboData debugUboData;
