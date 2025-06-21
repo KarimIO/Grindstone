@@ -25,7 +25,8 @@ pipelineSet "DebugDeferred" {
 				GsComputeWorldSpacePosition,
 				GsComputeViewSpacePosition,
 				GsViewNormal,
-				GsRendererUniform
+				GsRendererUniform,
+				GsLinearizeDepthFromNearFar
 			]
 
 			shaderHlsl {
@@ -56,6 +57,8 @@ pipelineSet "DebugDeferred" {
 
 				struct DebugUbo {
 					uint mode;
+					float nearDistance;
+					float farDistance;
 				};
 
 				ConstantBuffer<DebugUbo> debugUbo : register(b6, space2);
@@ -98,11 +101,13 @@ pipelineSet "DebugDeferred" {
 						}
 						case RenderMode_Depth: {
 							float depth = gbufferDepth.Sample(gbufferSampler, inData.scaledFragmentTexCoord).r;
-							return float4(depth, depth, depth, 1);
+							float linearDepth = LinearizeDepthFromNearFar(debugUbo.nearDistance, debugUbo.farDistance, depth) / debugUbo.farDistance;
+							return float4(linearDepth, linearDepth, linearDepth, 1);
 						}
 						case RenderMode_DepthMod: {
 							float depth = gbufferDepth.Sample(gbufferSampler, inData.scaledFragmentTexCoord).r;
-							float modDepth = fmod(depth * 15.0f, 1.0f);
+							float linearDepth = LinearizeDepthFromNearFar(debugUbo.nearDistance, debugUbo.farDistance, depth);
+							float modDepth = fmod(linearDepth, 1.0f);
 							return float4(modDepth, modDepth, modDepth, 1);
 						}
 						case RenderMode_Normal: {

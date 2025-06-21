@@ -148,6 +148,8 @@ namespace Grindstone {
 
 		struct DebugUboData {
 			uint32_t renderMode;
+			float nearDistance;
+			float farDistance;
 		};
 
 		DebugUboData debugUboData;

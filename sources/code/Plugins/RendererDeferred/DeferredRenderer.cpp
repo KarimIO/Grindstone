@@ -2273,7 +2273,11 @@ void DeferredRenderer::Render(
 		PostProcess(imageIndex, outputFramebuffer, commandBuffer);
 	}
 	else {
-		debugUboData.renderMode = static_cast<uint16_t>(renderMode);
+		debugUboData.renderMode = static_cast<uint32_t>(renderMode);
+		float projection_43 = projectionMatrix[3][2];
+		float projection_33 = projectionMatrix[2][2];
+		debugUboData.nearDistance = projection_43 / (projection_33 - 1.0f);
+		debugUboData.farDistance = projection_43 / (projection_33 + 1.0f);
 		Debug(imageIndex, outputFramebuffer, commandBuffer);
 	}
 }
