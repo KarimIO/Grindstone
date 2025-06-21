@@ -2152,7 +2152,7 @@ void DeferredRenderer::Debug(
 	GraphicsAPI::ClearDepthStencil clearDepthStencil;
 	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
-	clearDepthStencil.hasDepthStencilAttachment = false;
+	clearDepthStencil.hasDepthStencilAttachment = true;
 
 	GraphicsAPI::RenderPass* renderPass = framebuffer->GetRenderPass();
 	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, framebuffer->GetWidth(), framebuffer->GetHeight(), &clearColor, 1, clearDepthStencil);
