@@ -22,8 +22,8 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 
 			shaderHlsl {
 				SamplerState gbufferSampler : register(s0, space2);
-				Texture2D<float4> litSceneTexture : register(t1,  space2);
-				Texture2D<float4> bloomTexture : register(t2,  space2);
+				Texture2D<float4> litSceneTexture : register(t1, space2);
+				Texture2D<float4> bloomTexture : register(t2, space2);
 
 				struct PostProcessUbo {
 					float4 vignetteColor;
@@ -58,109 +58,8 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 					return clamp((color*(a*color+b))/(color*(c*color+d)+e), 0, 1);
 				}
 
-				float3 applyVignette(float3 color, float2 screenOffset) {
-					float radius = postProcessingUbo.vignetteRadius;
-					float distanceFromCenter = length(screenOffset);
-					float vignette = smoothstep(radius, radius - postProcessingUbo.vignetteSoftness, distanceFromCenter);
-
-					return lerp(postProcessingUbo.vignetteColor.rgb, color, clamp(vignette, 0, 1));
-				}
-
-				float3 applyChromaticAbberation(float2 texCoord, float2 direction) {
-					float3 color = float3(0.0f, 0.0f, 0.0f);
-					color.r  = litSceneTexture.Sample(gbufferSampler, texCoord + (direction * postProcessingUbo.chromaticDistortionRedOffset)).r;
-					color.g  = litSceneTexture.Sample(gbufferSampler, texCoord + (direction * postProcessingUbo.chromaticDistortionGreenOffset)).g;
-					color.b = litSceneTexture.Sample(gbufferSampler, texCoord + (direction * postProcessingUbo.chromaticDistortionBlueOffset)).b;
-
-					return color;
-				}
-
-				float3 applyGrain(float3 originalColor, float2 resolution, float2 texCoord) {
-					float time = postProcessingUbo.isAnimated
-						? rendererUbo.time * 8000.0f
-						: 0.0f;
-					float2 noiseCoords = int2(texCoord * resolution / postProcessingUbo.grainPixelSize) / resolution;
-					float noise = (frac(sin(dot(noiseCoords + time, float2(12.9898, 78.233))) * 43758.5453) - 0.5) * 2.0;
-					return originalColor + noise * postProcessingUbo.grainAmount;
-				}
-
-				static const float PI = 3.14159265359;
-				static const float PI05 = PI * 0.5;
-
-				float Pow2(float val) {
-					return val*val;
-				}
-
-				/* http://tksharpless.net/vedutismo/Pannini/panini.pdf */
-				float3 paniniProjection(float2 texCoord, float fov) {
-					float distortionStrength = postProcessingUbo.paniniDistortionStrength;
-					float distortionStrength2 = distortionStrength*distortionStrength;
-
-					{
-						float fo = PI05 - fov * 0.5;
-
-						float f = cos(fo) / sin(fo) * 2.0;
-						float f2 = f*f;
-
-						float b = (sqrt(max(0.0, Pow2(distortionStrength+distortionStrength2)*(f2+f2*f2))) - (distortionStrength*f+f)) / (distortionStrength2+distortionStrength2*f2-1.0);
-
-						texCoord *= b;
-					}
-
-					float h = texCoord.x;
-					float v = texCoord.y;
-
-					float h2 = h*h;
-
-					float k = h2/Pow2(distortionStrength+1.0);
-					float k2 = k*k;
-
-					float discriminant = max(0.0, k2 * distortionStrength2 - (k + 1.0) * (k * distortionStrength2 - 1.0));
-
-					float cosPhi = (-k * distortionStrength + sqrt(discriminant))/(k+1.0);
-					float S = (distortionStrength+1.0)/(distortionStrength+cosPhi);
-					float tanTheta = v/S;
-
-					float sinPhi = sqrt(max(0.0, 1.0 - cosPhi*cosPhi));
-
-					if(texCoord.x < 0.0) {
-						sinPhi *= -1.0;
-					}
-
-					float s = 1.0 + tanTheta*tanTheta; // TODO: Re-Add this inversesqrt(1.0 + tanTheta*tanTheta);
-
-					return float3(sinPhi, tanTheta, cosPhi) * s;
-				}
-
 				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
-					float fov = 1.5707963f / 2.0f;
-					float2 texCoordToSample = input.fragmentTexCoord * 2.0f - float2(1.0f, 1.0f);
-					texCoordToSample = paniniProjection(texCoordToSample, fov).xy / 2.0f + float2(0.5f, 0.5f);
-
-					float2 resolution = rendererUbo.renderResolution;
-					float aspectRatio = resolution.x / resolution.y;
-
-					if (texCoordToSample.x <= 0.0f || texCoordToSample.y <= 0.0f || texCoordToSample.x > 1.0f || texCoordToSample.y > 1.0f) {
-						return float4(0.0f, 0.0f, 1.0f, 1.0f);
-					}
-
-					float2 screenOffset = texCoordToSample;
-					screenOffset = (screenOffset * 2.0f) - float2(1.0f, 1.0f);
-					screenOffset = (aspectRatio > 1.0f)
-						? float2(screenOffset.x / aspectRatio, screenOffset.y)
-						: float2(screenOffset.x, screenOffset.y / aspectRatio);
-
-					float3 sceneColor = float3(0.0f, 0.0f, 0.0f);
-
-					// Get color directly if not using chromatic abberation.
-					// float3 sceneColor = litSceneTexture.Sample(gbufferSampler, distortedUV).rgb;
-					sceneColor = applyChromaticAbberation(texCoordToSample * rendererUbo.renderScale, screenOffset * screenOffset);
-
-					sceneColor = sceneColor + bloomTexture.Sample(gbufferSampler, texCoordToSample * rendererUbo.renderScale * 2).rgb;
-					sceneColor = applyVignette(sceneColor, screenOffset);
-					sceneColor = applyGrain(sceneColor, resolution, input.fragmentTexCoord);
-					sceneColor = hdrTransform(sceneColor);
-					sceneColor = linearToSRGB(sceneColor);
+					float3 sceneColor = litSceneTexture.SampleLevel(gbufferSampler, input.scaledFragmentTexCoord, 0.0).rgb;
 
 					return float4(sceneColor, 1);
 				}

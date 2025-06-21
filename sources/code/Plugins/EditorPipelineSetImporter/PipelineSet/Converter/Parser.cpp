@@ -399,9 +399,9 @@ static bool ParseAttachmentProperty(ParseContext& context, ParseTree::RenderStat
 					colorOp = Grindstone::GraphicsAPI::BlendOperation::None;
 					alphaOp = Grindstone::GraphicsAPI::BlendOperation::None;
 					colorSrc = Grindstone::GraphicsAPI::BlendFactor::One;
-					colorDst = Grindstone::GraphicsAPI::BlendFactor::One;
+					colorDst = Grindstone::GraphicsAPI::BlendFactor::Zero;
 					alphaSrc = Grindstone::GraphicsAPI::BlendFactor::One;
-					alphaDst = Grindstone::GraphicsAPI::BlendFactor::One;
+					alphaDst = Grindstone::GraphicsAPI::BlendFactor::Zero;
 					break;
 				case BlendPreset::Translucent:
 					colorOp = Grindstone::GraphicsAPI::BlendOperation::Add;
@@ -409,15 +409,15 @@ static bool ParseAttachmentProperty(ParseContext& context, ParseTree::RenderStat
 					colorSrc = Grindstone::GraphicsAPI::BlendFactor::SrcAlpha;
 					colorDst = Grindstone::GraphicsAPI::BlendFactor::OneMinusSrcAlpha;
 					alphaSrc = Grindstone::GraphicsAPI::BlendFactor::One;
-					alphaDst = Grindstone::GraphicsAPI::BlendFactor::Zero;
+					alphaDst = Grindstone::GraphicsAPI::BlendFactor::OneMinusSrcAlpha;
 					break;
 				case BlendPreset::Additive:
 					colorOp = Grindstone::GraphicsAPI::BlendOperation::Add;
 					alphaOp = Grindstone::GraphicsAPI::BlendOperation::Add;
-					colorSrc = Grindstone::GraphicsAPI::BlendFactor::SrcAlpha;
-					colorDst = Grindstone::GraphicsAPI::BlendFactor::OneMinusSrcAlpha;
+					colorSrc = Grindstone::GraphicsAPI::BlendFactor::One;
+					colorDst = Grindstone::GraphicsAPI::BlendFactor::One;
 					alphaSrc = Grindstone::GraphicsAPI::BlendFactor::One;
-					alphaDst = Grindstone::GraphicsAPI::BlendFactor::OneMinusSrcAlpha;
+					alphaDst = Grindstone::GraphicsAPI::BlendFactor::One;
 					break;
 				case BlendPreset::Multiplicative:
 					colorOp = Grindstone::GraphicsAPI::BlendOperation::Multiply;

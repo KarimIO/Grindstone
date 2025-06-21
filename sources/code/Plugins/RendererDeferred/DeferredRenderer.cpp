@@ -127,9 +127,9 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	screenSamplerCreateInfo.options.anistropy = 0;
 	screenSamplerCreateInfo.options.magFilter = GraphicsAPI::TextureFilter::Nearest;
 	screenSamplerCreateInfo.options.minFilter = GraphicsAPI::TextureFilter::Nearest;
-	screenSamplerCreateInfo.options.wrapModeU = GraphicsAPI::TextureWrapMode::ClampToEdge;
-	screenSamplerCreateInfo.options.wrapModeV = GraphicsAPI::TextureWrapMode::ClampToEdge;
-	screenSamplerCreateInfo.options.wrapModeW = GraphicsAPI::TextureWrapMode::ClampToEdge;
+	screenSamplerCreateInfo.options.wrapModeU = GraphicsAPI::TextureWrapMode::Repeat;
+	screenSamplerCreateInfo.options.wrapModeV = GraphicsAPI::TextureWrapMode::Repeat;
+	screenSamplerCreateInfo.options.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat;
 	screenSampler = graphicsCore->CreateSampler(screenSamplerCreateInfo);
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
@@ -1152,7 +1152,7 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	}
 
 	{
-		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 2> ambientOcclusionInputLayoutBinding{};
+		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 3> ambientOcclusionInputLayoutBinding{};
 		ambientOcclusionInputLayoutBinding[0].bindingId = 0;
 		ambientOcclusionInputLayoutBinding[0].count = 1;
 		ambientOcclusionInputLayoutBinding[0].type = GraphicsAPI::BindingType::SampledImage;
@@ -1162,6 +1162,11 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 		ambientOcclusionInputLayoutBinding[1].count = 1;
 		ambientOcclusionInputLayoutBinding[1].type = GraphicsAPI::BindingType::SampledImage;
 		ambientOcclusionInputLayoutBinding[1].stages = GraphicsAPI::ShaderStageBit::Fragment;
+
+		ambientOcclusionInputLayoutBinding[2].bindingId = 2;
+		ambientOcclusionInputLayoutBinding[2].count = 1;
+		ambientOcclusionInputLayoutBinding[2].type = GraphicsAPI::BindingType::SampledImage;
+		ambientOcclusionInputLayoutBinding[2].stages = GraphicsAPI::ShaderStageBit::Fragment;
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo ambientOcclusionInputLayoutCreateInfo{};
 		ambientOcclusionInputLayoutCreateInfo.debugName = "Ambient Occlusion Descriptor Set Layout";
@@ -1247,9 +1252,10 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	imageSet.gbufferDescriptorSet = graphicsCore->CreateDescriptorSet(gbufferDescriptorSetCreateInfo);
 
 	{
-		std::array<GraphicsAPI::DescriptorSet::Binding, 2> aoInputBinding = {
+		std::array<GraphicsAPI::DescriptorSet::Binding, 3> aoInputBinding = {
 			GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.ambientOcclusionRenderTarget ),
-			GraphicsAPI::DescriptorSet::Binding::SampledImage( brdfLut.Get()->image )
+			GraphicsAPI::DescriptorSet::Binding::SampledImage( brdfLut.Get()->image ),
+			GraphicsAPI::DescriptorSet::Binding::SampledImage( nullptr )
 		};
 
 		GraphicsAPI::DescriptorSet::CreateInfo aoInputCreateInfo{};
@@ -1644,10 +1650,10 @@ void DeferredRenderer::RenderSsr(DeferredRendererImageSet& imageSet, GraphicsAPI
 	currentCommandBuffer->BindComputePipeline(ssrPipeline);
 
 	{
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.ssrRenderTarget, true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.ssrRenderTarget, true, true);
 		currentCommandBuffer->BindComputeDescriptorSet(ssrPipeline, &imageSet.ssrDescriptorSet, 2, 1);
 		currentCommandBuffer->DispatchCompute(renderWidth, renderHeight, 1);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.ssrRenderTarget, false);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.ssrRenderTarget, false, true);
 	}
 	currentCommandBuffer->EndDebugLabelSection();
 }
@@ -1676,7 +1682,7 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 
 	currentCommandBuffer->BeginDebugLabelSection("Bloom First Downsample", debugColor);
 	{
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[1], true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[1], true, true);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 2, 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
@@ -1700,8 +1706,8 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidth / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeight / 4.0f));
 
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[i], false);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[i + 1], true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[i], false, true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[i + 1], true, true);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 2, 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
@@ -1712,8 +1718,8 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidths[bloomMipLevelCount - 2] / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeights[bloomMipLevelCount - 2] / 4.0f));
 
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount - 1], false);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[(bloomStoredMipLevelCount * 2) - bloomMipLevelCount + 2], true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount - 1], false, true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[(bloomStoredMipLevelCount * 2) - bloomMipLevelCount + 2], true, true);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[bloomFirstUpsampleIndex], 2, 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
@@ -1727,8 +1733,8 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidth / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeight / 4.0f));
 
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i + 1], true);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i + 2], false);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i + 1], true, true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i + 2], false, true);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 2, 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
@@ -1736,7 +1742,7 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 
 	currentCommandBuffer->EndDebugLabelSection();
 
-	currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + 1], false);
+	currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + 1], false, true);
 }
 
 void DeferredRenderer::RenderLights(
@@ -1748,8 +1754,6 @@ void DeferredRenderer::RenderLights(
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	Grindstone::DeferredRenderer::DeferredRendererImageSet& imageSet = deferredRendererImageSets[imageIndex];
 	SceneManagement::Scene* scene = engineCore.GetSceneManager()->scenes.begin()->second;
-	currentCommandBuffer->BindVertexBuffers(&vertexBuffer, 1);
-	currentCommandBuffer->BindIndexBuffer(indexBuffer);
 
 	const glm::mat4 bias = glm::mat4( 
 		0.5f, 0.0f, 0.0f, 0.0f,
@@ -1759,8 +1763,7 @@ void DeferredRenderer::RenderLights(
 	);
 
 	Grindstone::GraphicsPipelineAsset* imageBasedLightingAsset = imageBasedLightingPipelineSet.Get();
-	// TODO: Fix this later
-	if (false && imageBasedLightingAsset != nullptr) {
+	if (imageBasedLightingAsset != nullptr) {
 		Grindstone::GraphicsAPI::GraphicsPipeline* imageBasedLightingPipeline = imageBasedLightingAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
 		if (imageBasedLightingPipeline != nullptr) {
 			currentCommandBuffer->BeginDebugLabelSection("Image Based Lighting", nullptr);
@@ -1782,16 +1785,16 @@ void DeferredRenderer::RenderLights(
 					hasEnvMap = true;
 
 					GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::SampledImage(tex);
-					environmentMapDescriptorSet->ChangeBindings(&binding, 1);
+					imageSet.ambientOcclusionDescriptorSet->ChangeBindings(&binding, 1, 2);
 				}
 			});
 
 			if (hasEnvMap) {
 				std::array<GraphicsAPI::DescriptorSet*, 3> iblDescriptors{};
-				iblDescriptors[0] = imageSet.gbufferDescriptorSet;
-				iblDescriptors[1] = imageSet.ambientOcclusionDescriptorSet;
-				iblDescriptors[2] = environmentMapDescriptorSet;
-				currentCommandBuffer->BindGraphicsDescriptorSet(imageBasedLightingPipeline, iblDescriptors.data(), 1, static_cast<uint32_t>(iblDescriptors.size()));
+				iblDescriptors[0] = imageSet.engineDescriptorSet;
+				iblDescriptors[1] = imageSet.gbufferDescriptorSet;
+				iblDescriptors[2] = imageSet.ambientOcclusionDescriptorSet;
+				currentCommandBuffer->BindGraphicsDescriptorSet(imageBasedLightingPipeline, iblDescriptors.data(), 0, static_cast<uint32_t>(iblDescriptors.size()));
 				currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 			}
 			currentCommandBuffer->EndDebugLabelSection();
@@ -2136,7 +2139,7 @@ void DeferredRenderer::PostProcess(
 
 	// RenderSsr(imageSet, commandBuffer);
 	// RenderDepthOfField(imageSet, currentCommandBuffer);
-	RenderBloom(imageSet, currentCommandBuffer);
+	// RenderBloom(imageSet, currentCommandBuffer);
 
 	GraphicsAPI::ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
 	GraphicsAPI::ClearDepthStencil clearDepthStencil;
@@ -2185,7 +2188,7 @@ void DeferredRenderer::Debug(
 	if (debugPipeline != nullptr) {
 		imageSet.debugUniformBufferObject->UploadData(&debugUboData);
 
-		currentCommandBuffer->BindGraphicsDescriptorSet(debugPipeline, &imageSet.debugDescriptorSet, 0, 1);
+		currentCommandBuffer->BindGraphicsDescriptorSet(debugPipeline, &imageSet.debugDescriptorSet, 2, 1);
 		currentCommandBuffer->BindGraphicsPipeline(debugPipeline);
 		currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 	}

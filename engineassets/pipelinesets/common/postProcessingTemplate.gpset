@@ -37,7 +37,7 @@ pipelineSet abstract "PostProcessing" {
 						VertexToFragment output = (VertexToFragment)0;
 						output.position = float4(input.position, 0.0, 1.0);
 						output.fragmentTexCoord = ((input.position * 0.5f) + float2(0.5f, 0.5f));
-						output.scaledFragmentTexCoord = output.fragmentTexCoord * rendererUbo.renderScale * 4.0f;
+						output.scaledFragmentTexCoord = output.fragmentTexCoord * rendererUbo.renderScale;
 						return output;
 					}
 				}

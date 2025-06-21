@@ -16,14 +16,14 @@ pipelineSet "Grid" {
 				depthCompareOp: lessOrEqual
 				attachments: {
 					colorMask: rgba
-					blendPreset: additive
+					blendPreset: translucent
 				}
 			}
 
 			requiresBlocks [
 				GsInvertMatrix,
 				GsComputeDepth,
-				GsComputeLinearDepth
+				GsLinearizeDepthFromNearFar
 			]
 
 			shaderHlsl {
@@ -99,11 +99,6 @@ pipelineSet "Grid" {
 					return (clipSpacePos.z / clipSpacePos.w);
 				}
 
-				float ComputeLinearDepth(float depth) {
-					float linearDepth = (2.0 * gridUbo.nearDistance * gridUbo.farDistance) / (gridUbo.farDistance + gridUbo.nearDistance - depth * (gridUbo.farDistance - gridUbo.nearDistance));
-					return linearDepth / gridUbo.farDistance;
-				}
-
 				struct FragmentOutput {
 					float4 color : SV_Target;
 					float depth : SV_Depth;
@@ -116,7 +111,7 @@ pipelineSet "Grid" {
 					float depth = ComputeDepth(fragPos3D);
 					output.depth = depth;
 
-					float linearDepth = ComputeLinearDepth(depth);
+					float linearDepth = LinearizeDepthFromNearFar01(gridUbo.nearDistance, gridUbo.farDistance, depth);
 					float fading = clamp(1 - linearDepth, 0, 1);
 
 					float4 gridColor = (GetGridColor(fragPos3D, 10, gridUbo.colorMinor) + GetGridColor(fragPos3D, 1, gridUbo.colorMajor)) / 2;

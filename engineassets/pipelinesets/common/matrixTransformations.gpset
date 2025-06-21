@@ -44,7 +44,12 @@ shaderBlock GsInvertMatrix {
 shaderBlock GsPadFloat33ToFloat44 {
 	shaderHlsl {
 		float4x4 PadFloat33ToFloat44(float3x3 inMatrix) {
-    		return float4x4(float4(inMatrix[0].x, inMatrix[0].y, inMatrix[0].z, 0.0f), float4(inMatrix[1].x, inMatrix[1].y, inMatrix[1].z, 0.0f), float4(inMatrix[2].x, inMatrix[2].y, inMatrix[2].z, 0.0f), float4(0.0f, 0.0f, 0.0f, 1.0f));
+    		return float4x4(
+				float4(inMatrix[0].x, inMatrix[0].y, inMatrix[0].z, 0.0f),
+				float4(inMatrix[1].x, inMatrix[1].y, inMatrix[1].z, 0.0f),
+				float4(inMatrix[2].x, inMatrix[2].y, inMatrix[2].z, 0.0f),
+				float4(0.0f, 0.0f, 0.0f, 1.0f)
+			);
 		}
 	}
 }
@@ -52,7 +57,7 @@ shaderBlock GsPadFloat33ToFloat44 {
 shaderBlock GsComputeDepth {
 	shaderHlsl {
 		float ComputeDepth(float4x4 projMatrix, float4x4 viewMatrix, float3 pos) {
-			float4 clipSpacePos = mul(mul(float4(pos.xyz, 1.0), viewMatrix), projMatrix);
+			float4 clipSpacePos = mul(projMatrix, mul(viewMatrix, float4(pos.xyz, 1.0)));
 			return (clipSpacePos.z / clipSpacePos.w);
 		}
 	}
@@ -69,11 +74,26 @@ shaderBlock GsViewSpaceToScreenSpace {
 	}
 }
 
-shaderBlock GsComputeLinearDepth {
+shaderBlock GsLinearizeDepthFromProj {
 	shaderHlsl {
-		float ComputeLinearDepth(float4 projMatrix, float4 viewMatrix, float3 pos) {
-			float4 clipSpacePos = mul(mul(float4(pos.xyz, 1.0), viewMatrix), projMatrix);
-			return (clipSpacePos.z / clipSpacePos.w);
+		float LinearizeDepthFromProj(float4x4 invProjMatrix, float2 uv, float depth) {
+			float4 clipSpacePos = float4((uv * 2.0f - 1.0f), depth * 2.0f - 1.0f, 1.0f);
+			float4 viewSpacePos = mul(invProjMatrix, clipSpacePos);
+			return viewSpacePos.z / viewSpacePos.w;
+		}
+	}
+}
+
+shaderBlock GsLinearizeDepthFromNearFar {
+	shaderHlsl {
+		float LinearizeDepthFromNearFar(float nearDistance, float farDistance, float depth) {
+			float linearDepth = (2.0 * nearDistance * farDistance) / (farDistance + nearDistance - depth * (farDistance - nearDistance));
+			return linearDepth;
+		}
+		
+		float LinearizeDepthFromNearFar01(float nearDistance, float farDistance, float depth) {
+			float linearDepth = LinearizeDepthFromNearFar(nearDistance, farDistance, depth);
+			return linearDepth / farDistance;
 		}
 	}
 }
@@ -94,9 +114,9 @@ shaderBlock GsComputeViewSpacePosition {
 	]
 
 	shaderHlsl {
-		float3 ComputeViewSpacePosition(float4x4 inverseProjectionMatrix, float4x4 viewMatrix, float2 positionNDC, float deviceDepth) {
+		float3 ComputeViewSpacePosition(float4x4 inverseProjectionMatrix, float2 positionNDC, float deviceDepth) {
 			float4 positionCS  = ComputeClipSpacePosition(positionNDC, deviceDepth);
-			float4 hpositionWS = mul(positionCS, inverseProjectionMatrix);
+			float4 hpositionWS = mul(inverseProjectionMatrix, positionCS);
 			return hpositionWS.xyz / hpositionWS.w;
 		}
 	}
@@ -109,9 +129,9 @@ shaderBlock GsComputeWorldSpacePosition {
 	]
 
 	shaderHlsl {
-		float3 ComputeWorldSpacePosition(float4x4 projectionMatrix, float4x4 viewMatrix, float2 positionNDC, float deviceDepth) {
+		float3 ComputeWorldSpacePosition(float4x4 inverseProjectionMatrix, float4x4 inverseViewMatrix, float2 positionNDC, float deviceDepth) {
 			float4 positionCS  = ComputeClipSpacePosition(positionNDC, deviceDepth);
-			float4 hpositionWS = mul(positionCS, InvertMatrix(projectionMatrix * viewMatrix));
+			float4 hpositionWS = mul(mul(inverseViewMatrix, inverseProjectionMatrix), positionCS);
 			return hpositionWS.xyz / hpositionWS.w;
 		}
 	}

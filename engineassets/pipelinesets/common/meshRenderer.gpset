@@ -3,7 +3,7 @@ include "$ENGINE/pipelinesets/common/rendererUniform.gpset"
 shaderBlock GsMeshRendererInstanceUbo {
 	shaderHlsl {
 		struct RenderInstanceUBO {
-			float4x4 modelMatrix;
+			column_major float4x4 modelMatrix;
 		};
 
 		ConstantBuffer<RenderInstanceUBO> renderInstanceUbo : register(b0, space2);
@@ -40,11 +40,15 @@ shaderBlock GsMeshRendererVertex {
 			VertexToFragment output;
 
 			float3x3 modelMat3 = (float3x3)renderInstanceUbo.modelMatrix;
-			output.normal = mul(normalize(input.normal), modelMat3);
-			output.tangent = mul(normalize(input.tangent), modelMat3);
+			output.normal = mul(modelMat3, normalize(input.normal));
+			output.tangent = mul(modelMat3, normalize(input.tangent));
 			output.texCoord0 = input.texCoord0;
 
-			output.position = mul(mul(mul(float4(input.position.xyz, 1.0), renderInstanceUbo.modelMatrix), rendererUbo.projectionMatrix), rendererUbo.viewMatrix);
+			// TODO: Re-add model matrix - renderInstanceUbo.modelMatrix
+			float4 worldPos = float4(mul(1.0f / 20.0f, input.position.xyz), 1.0);
+			float4 viewPos  = mul(rendererUbo.viewMatrix, worldPos);
+			output.position = mul(rendererUbo.projectionMatrix, viewPos);
+
 			return output;
 		}
 	}

@@ -75,7 +75,7 @@ pipelineSet "Point Light" inherits "DeferredLighting" {
 					float4 gbufferSpecularRoughnessValue = gbufferSpecularRoughness.Sample(gbufferSampler, input.scaledFragmentTexCoord);
 
 					float depth = gbufferDepth.Sample(gbufferSampler, input.scaledFragmentTexCoord).r;
-					float3 position = ComputeWorldSpacePosition(rendererUbo.projectionMatrix, rendererUbo.viewMatrix, input.fragmentTexCoord, depth);
+					float3 position = ComputeWorldSpacePosition(rendererUbo.inverseProjectionMatrix, rendererUbo.inverseViewMatrix, input.fragmentTexCoord, depth);
 					float3 albedo = gbufferAlbedo.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb;
 					float3 normal = gbufferNormals.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb;
 					float3 specular = gbufferSpecularRoughnessValue.rgb;

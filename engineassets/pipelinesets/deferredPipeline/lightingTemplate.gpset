@@ -15,7 +15,7 @@ pipelineSet abstract "DeferredLighting" {
 				depthCompareOp: lessOrEqual
 				attachments: {
 					colorMask: rgba
-					blendPreset: opaque
+					blendPreset: additive
 				}
 			}
 

@@ -57,6 +57,7 @@ EditorCamera::EditorCamera() {
 	renderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(attachments.size());
 	renderPassCreateInfo.colorAttachments = attachments.data();
 	renderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
+	renderPassCreateInfo.shouldClearDepthOnLoad = true;
 	renderPass = core->CreateRenderPass(renderPassCreateInfo);
 	renderPassRegistry->RegisterRenderpass("Editor", renderPass);
 

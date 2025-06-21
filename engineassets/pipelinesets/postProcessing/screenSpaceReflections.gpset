@@ -23,7 +23,7 @@ computeSet "Screen-Space Reflections" {
 
 		float4 GetPosition(float2 texCoords) {
 			float depthFromTexture = gbufferDepth.SampleLevel(defaultSampler, texCoords * rendererUbo.renderScale, 0).x;
-			float3 position = ComputeViewSpacePosition(rendererUbo.inverseProjectionMatrix, rendererUbo.viewMatrix, texCoords, depthFromTexture);
+			float3 position = ComputeViewSpacePosition(rendererUbo.inverseProjectionMatrix, texCoords, depthFromTexture);
 			return float4(position, 1);
 		}
 
