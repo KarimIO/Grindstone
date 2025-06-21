@@ -1758,7 +1758,11 @@ void DeferredRenderer::RenderLights(
 					hasEnvMap = true;
 
 					GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::SampledImage(tex);
-					imageSet.ambientOcclusionDescriptorSet->ChangeBindings(&binding, 1, 2);
+
+					for (size_t imageIndex = 0; imageIndex < deferredRendererImageSets.size(); ++imageIndex) {
+						Grindstone::DeferredRenderer::DeferredRendererImageSet& imageSetForAO = deferredRendererImageSets[imageIndex];
+						imageSetForAO.ambientOcclusionDescriptorSet->ChangeBindings(&binding, 1, 2);
+					}
 				}
 			});
 
