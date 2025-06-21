@@ -1265,9 +1265,9 @@ void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) 
 
 	{
 		std::array<GraphicsAPI::DescriptorSet::Binding, 4> tonemapDescriptorSetBindings{};
-		tonemapDescriptorSetBindings[0] = litHdrRenderTargetBinding;
-		tonemapDescriptorSetBindings[1] = GraphicsAPI::DescriptorSet::Binding::SampledImage(imageSet.bloomRenderTargets[bloomMipLevelCount + 1]);
-		tonemapDescriptorSetBindings[2] = gbufferDepthBinding;
+		tonemapDescriptorSetBindings[0] = screenSamplerBinding;
+		tonemapDescriptorSetBindings[1] = litHdrRenderTargetBinding;
+		tonemapDescriptorSetBindings[2] = GraphicsAPI::DescriptorSet::Binding::SampledImage(imageSet.bloomRenderTargets[bloomMipLevelCount + 1]);
 		tonemapDescriptorSetBindings[3] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(imageSet.tonemapPostProcessingUniformBufferObject);
 
 		imageSet.tonemapDescriptorSet->ChangeBindings(tonemapDescriptorSetBindings.data(), static_cast<uint32_t>(tonemapDescriptorSetBindings.size()));
@@ -1623,10 +1623,10 @@ void DeferredRenderer::RenderSsr(DeferredRendererImageSet& imageSet, GraphicsAPI
 	currentCommandBuffer->BindComputePipeline(ssrPipeline);
 
 	{
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.ssrRenderTarget, true, true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.ssrRenderTarget, true);
 		currentCommandBuffer->BindComputeDescriptorSet(ssrPipeline, &imageSet.ssrDescriptorSet, 2, 1);
 		currentCommandBuffer->DispatchCompute(renderWidth, renderHeight, 1);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.ssrRenderTarget, false, true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.ssrRenderTarget, false);
 	}
 	currentCommandBuffer->EndDebugLabelSection();
 }
@@ -1655,7 +1655,7 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 
 	currentCommandBuffer->BeginDebugLabelSection("Bloom First Downsample", debugColor);
 	{
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[1], true, true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[1], true);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 2, 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
@@ -1679,8 +1679,8 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidth / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeight / 4.0f));
 
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[i], false, true);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[i + 1], true, true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[i], false);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[i + 1], true);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 2, 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
@@ -1691,8 +1691,8 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidths[bloomMipLevelCount - 2] / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeights[bloomMipLevelCount - 2] / 4.0f));
 
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount - 1], false, true);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[(bloomStoredMipLevelCount * 2) - bloomMipLevelCount + 2], true, true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount - 1], false);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[(bloomStoredMipLevelCount * 2) - bloomMipLevelCount + 2], true);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[bloomFirstUpsampleIndex], 2, 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
@@ -1706,8 +1706,8 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidth / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeight / 4.0f));
 
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i + 1], true, true);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i + 2], false, true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i + 1], true);
+		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i + 2], false);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 2, 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
@@ -1715,7 +1715,7 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 
 	currentCommandBuffer->EndDebugLabelSection();
 
-	currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + 1], false, true);
+	currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + 1], false);
 }
 
 void DeferredRenderer::RenderLights(
