@@ -1221,19 +1221,35 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	debugDescriptorSetCreateInfo.bindings = debugDescriptorSetBindings.data();
 	imageSet.debugDescriptorSet = graphicsCore->CreateDescriptorSet(debugDescriptorSetCreateInfo);
 
-	std::array<GraphicsAPI::DescriptorSet::Binding, 5> gbufferDescriptorSetBindings{};
-	gbufferDescriptorSetBindings[0] = screenSamplerBinding;
-	gbufferDescriptorSetBindings[1] = gbufferDepthBinding;
-	gbufferDescriptorSetBindings[2] = gbufferAlbedoBinding;
-	gbufferDescriptorSetBindings[3] = gbufferNormalBinding;
-	gbufferDescriptorSetBindings[4] = gbufferSpecRoughnessBinding;
+	{
+		std::array<GraphicsAPI::DescriptorSet::Binding, 5> gbufferDescriptorSetBindings{};
+		gbufferDescriptorSetBindings[0] = screenSamplerBinding;
+		gbufferDescriptorSetBindings[1] = gbufferDepthBinding;
+		gbufferDescriptorSetBindings[2] = gbufferAlbedoBinding;
+		gbufferDescriptorSetBindings[3] = gbufferNormalBinding;
+		gbufferDescriptorSetBindings[4] = gbufferSpecRoughnessBinding;
 
-	GraphicsAPI::DescriptorSet::CreateInfo gbufferDescriptorSetCreateInfo{};
-	gbufferDescriptorSetCreateInfo.debugName = "Gbuffer Descriptor Set";
-	gbufferDescriptorSetCreateInfo.layout = lightingDescriptorSetLayout;
-	gbufferDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(gbufferDescriptorSetBindings.size());
-	gbufferDescriptorSetCreateInfo.bindings = gbufferDescriptorSetBindings.data();
-	imageSet.gbufferDescriptorSet = graphicsCore->CreateDescriptorSet(gbufferDescriptorSetCreateInfo);
+		GraphicsAPI::DescriptorSet::CreateInfo gbufferDescriptorSetCreateInfo{};
+		gbufferDescriptorSetCreateInfo.debugName = "Gbuffer Descriptor Set";
+		gbufferDescriptorSetCreateInfo.layout = lightingDescriptorSetLayout;
+		gbufferDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(gbufferDescriptorSetBindings.size());
+		gbufferDescriptorSetCreateInfo.bindings = gbufferDescriptorSetBindings.data();
+		imageSet.gbufferDescriptorSet = graphicsCore->CreateDescriptorSet(gbufferDescriptorSetCreateInfo);
+	}
+
+	{
+		std::array<GraphicsAPI::DescriptorSet::Binding, 3> gbufferDescriptorSetBindings{};
+		gbufferDescriptorSetBindings[0] = screenSamplerBinding;
+		gbufferDescriptorSetBindings[1] = gbufferDepthBinding;
+		gbufferDescriptorSetBindings[2] = gbufferNormalBinding;
+
+		GraphicsAPI::DescriptorSet::CreateInfo gbufferDescriptorSetCreateInfo{};
+		gbufferDescriptorSetCreateInfo.debugName = "SSAO Gbuffer Descriptor Set";
+		gbufferDescriptorSetCreateInfo.layout = lightingDescriptorSetLayout;
+		gbufferDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(gbufferDescriptorSetBindings.size());
+		gbufferDescriptorSetCreateInfo.bindings = gbufferDescriptorSetBindings.data();
+		imageSet.ssaoGbufferDescriptorSet = graphicsCore->CreateDescriptorSet(gbufferDescriptorSetCreateInfo);
+	}
 
 	{
 		std::array<GraphicsAPI::DescriptorSet::Binding, 3> aoInputBinding = {
@@ -1919,7 +1935,7 @@ void DeferredRenderer::RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAP
 
 	std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> descriptorSets = {
 		imageSet.engineDescriptorSet,
-		imageSet.gbufferDescriptorSet,
+		imageSet.ssaoGbufferDescriptorSet,
 		ssaoInputDescriptorSet
 	};
 	

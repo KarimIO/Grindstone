@@ -33,9 +33,7 @@ pipelineSet "Screen-Space Ambient Occlusion" inherits "PostProcessing" {
 
 				SamplerState gbufferSampler : register(s0, space1);
 				Texture2D<float4> depthTexture : register(t1, space1);
-				Texture2D<float4> gbufferAlbedo : register(t2, space1);
-				Texture2D<float4> gbufferNormals : register(t3, space1);
-				Texture2D<float4> gbufferSpecRough : register(t4, space1);
+				Texture2D<float4> gbufferNormals : register(t2, space1);
 
 				struct SSAOBufferObject {
 					float4 kernels[kernelSize];
@@ -53,7 +51,7 @@ pipelineSet "Screen-Space Ambient Occlusion" inherits "PostProcessing" {
 					float depthFromTexture = depthTexture.Sample(gbufferSampler, input.scaledFragmentTexCoord).x;
 					float3 position = ComputeViewSpacePosition(rendererUbo.inverseProjectionMatrix, input.fragmentTexCoord, depthFromTexture).rgb;
 					float2 noise = ssaoNoise.Sample(ssaoNoiseSampler, input.fragmentTexCoord * noiseScale).rg;
-					float3 normal = ViewNormal(rendererUbo.viewMatrix, gbufferNormals.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb);
+					float3 normal = normalize(ViewNormal(rendererUbo.viewMatrix, gbufferNormals.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb));
 					float3 randomVec  = float3(noise, 0);
 
 					float3 tangent   = normalize(randomVec - normal * dot(randomVec, normal));

@@ -78,6 +78,7 @@ namespace Grindstone {
 			GraphicsAPI::DescriptorSet* ssrDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* tonemapDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* gbufferDescriptorSet = nullptr;
+			GraphicsAPI::DescriptorSet* ssaoGbufferDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* debugDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
 
