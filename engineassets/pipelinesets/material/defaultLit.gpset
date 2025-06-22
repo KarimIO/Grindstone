@@ -20,7 +20,6 @@ pipelineSet "lit.default" {
 
 			properties {
 				cull: back
-				depthBias: 1.25, 1.75, 0.0
 				depthWrite: true
 				depthTest: true
 				depthClamp: false
@@ -90,8 +89,8 @@ pipelineSet "lit.default" {
 			renderQueue: "ShadowMap"
 
 			properties {
-				cull: back
-				depthBias: 1.25, 1.75, 0.0
+				cull: none
+				depthBias: 0.1, 1.0, 0.0
 				depthWrite: true
 				depthTest: true
 				depthClamp: false
@@ -100,29 +99,8 @@ pipelineSet "lit.default" {
 			}
 
 			requiresBlocks [
-				GsMeshRendererVertexInput,
-				GsRendererUniform,
-				GsMeshRendererInstanceUbo
+				GsShadowRenderer
 			]
-
-			shaderHlsl {
-				struct VertexToFragment {
-					float4 position : SV_Position;
-				};
-
-				VertexToFragment mainShadowVertex(VertexInput input) {
-					VertexToFragment output;
-
-					float4 worldPos = mul(renderInstanceUbo.modelMatrix, float4(input.position.xyz, 1.0));
-					float4 viewPos  = mul(rendererUbo.viewMatrix, worldPos);
-					output.position = mul(rendererUbo.projectionMatrix, viewPos);
-
-					return output;
-				}
-
-				void mainShadowFragment(VertexToFragment input) {
-				}
-			}
 		}
 	}
 }

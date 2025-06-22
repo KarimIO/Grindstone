@@ -82,3 +82,39 @@ shaderBlock GsTransformNormalToWorldSpace {
 		}
 	}
 }
+
+shaderBlock GsShadowRendererUniform {
+	shaderHlsl {
+		struct RendererUBO {
+			column_major float4x4 projectionViewMatrix;
+		};
+
+		ConstantBuffer<RendererUBO> rendererUbo : register(b0, space0);
+	}
+}
+
+shaderBlock GsShadowRenderer {
+	requiresBlocks [
+		GsMeshRendererVertexInput,
+		GsMeshRendererInstanceUbo,
+		GsShadowRendererUniform
+	]
+
+	shaderHlsl {
+		struct VertexToFragment {
+			float4 position : SV_Position;
+		};
+
+		VertexToFragment mainShadowVertex(VertexInput input) {
+			VertexToFragment output;
+
+			float4 worldPos = mul(renderInstanceUbo.modelMatrix, float4(input.position.xyz, 1.0));
+			output.position = mul(rendererUbo.projectionViewMatrix, worldPos);
+
+			return output;
+		}
+
+		void mainShadowFragment(VertexToFragment input) {
+		}
+	}
+}

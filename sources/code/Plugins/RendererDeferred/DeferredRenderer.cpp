@@ -2027,12 +2027,12 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 
 			graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
 
-			glm::mat4 shadowPass = projectionMatrix * viewMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
-			spotLightComponent.shadowMatrix = projectionMatrix * viewMatrix * glm::mat4(1.0f);
+			spotLightComponent.shadowMatrix = projectionMatrix * viewMatrix;
 
 			uint32_t resolution = static_cast<uint32_t>(spotLightComponent.shadowResolution);
 
-			spotLightComponent.shadowMapUniformBufferObject->UploadData(&shadowPass);
+			spotLightComponent.shadowMapUniformBufferObject->UploadData(&spotLightComponent.shadowMatrix);
+			assetManager->SetEngineDescriptorSet(spotLightComponent.shadowMapDescriptorSet);
 
 			commandBuffer->BindRenderPass(
 				spotLightComponent.renderPass,
@@ -2076,12 +2076,12 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 			);
 
 			glm::mat4 projView = projectionMatrix * viewMatrix;
-			glm::mat4 shadowPass = projView * glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
-			directionalLightComponent.shadowMatrix = projView * glm::mat4(1.0f);
+			directionalLightComponent.shadowMatrix = projView;
 
 			uint32_t resolution = static_cast<uint32_t>(directionalLightComponent.shadowResolution);
 
-			directionalLightComponent.shadowMapUniformBufferObject->UploadData(&shadowPass);
+			directionalLightComponent.shadowMapUniformBufferObject->UploadData(&projView);
+			assetManager->SetEngineDescriptorSet(directionalLightComponent.shadowMapDescriptorSet);
 
 			commandBuffer->BindRenderPass(
 				directionalLightComponent.renderPass,
