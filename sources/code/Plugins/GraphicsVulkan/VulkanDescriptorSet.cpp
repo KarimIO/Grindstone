@@ -163,7 +163,8 @@ void Vulkan::DescriptorSet::ChangeBindings(const Binding* sourceBindings, uint32
 		const Vulkan::DescriptorSetLayout::Binding& layoutBinding = layout->GetBinding(static_cast<size_t>(bindOffset) + i);
 		const Binding& sourceBinding = sourceBindings[i];
 
-		if (sourceBinding.itemPtr == nullptr) {
+		// Do nothing if bindingType is none - this is most likely because the descriptor is not used in the shader.
+		if (sourceBinding.itemPtr == nullptr || layoutBinding.type == BindingType::None) {
 			continue;
 		}
 

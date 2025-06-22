@@ -12,7 +12,5 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		VkDescriptorSetLayout GetInternalLayout() const;
 	private:
 		VkDescriptorSetLayout descriptorSetLayout;
-		std::vector<Binding> bindings;
-		size_t bindingCount = 0;
 	};
 }

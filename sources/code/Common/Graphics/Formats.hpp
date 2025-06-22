@@ -341,6 +341,7 @@ namespace Grindstone::GraphicsAPI {
 	}
 
 	enum class BindingType {
+		None,
 		Sampler,
 		CombinedImageSampler,
 		SampledImage,

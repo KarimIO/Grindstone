@@ -37,15 +37,31 @@ static VkDescriptorType GetDescriptorType(BindingType bindingType) {
 }
 
 Vulkan::DescriptorSetLayout::DescriptorSetLayout(const CreateInfo& createInfo) {
+	uint32_t count = 0;
+	for (uint32_t i = 0; i < createInfo.bindingCount; ++i) {
+		DescriptorSetLayout::Binding& sourceBinding = createInfo.bindings[i];
+		uint32_t testCount = sourceBinding.bindingId + 1;
+		if (testCount > count) {
+			count = testCount;
+		}
+	}
+
 	std::vector<VkDescriptorSetLayoutBinding> bindingLayouts;
 	bindingLayouts.reserve(createInfo.bindingCount);
 
-	bindings.resize(createInfo.bindingCount);
-	bindingCount = createInfo.bindingCount;
+	bindings.resize(count);
+	bindingCount = count;
+
+	for (uint32_t i = 0; i < count; ++i) {
+		bindings[i].bindingId = i;
+		bindings[i].count = 0;
+		bindings[i].stages = Grindstone::GraphicsAPI::ShaderStageBit::None;
+		bindings[i].type = Grindstone::GraphicsAPI::BindingType::None;
+	}
 
 	for (uint32_t i = 0; i < createInfo.bindingCount; ++i) {
 		DescriptorSetLayout::Binding& sourceBinding = createInfo.bindings[i];
-		bindings[i] = sourceBinding;
+		bindings[sourceBinding.bindingId] = sourceBinding;
 
 		VkDescriptorSetLayoutBinding binding = {};
 		binding.binding = sourceBinding.bindingId;
