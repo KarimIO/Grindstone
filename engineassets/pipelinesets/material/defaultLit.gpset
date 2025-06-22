@@ -66,14 +66,14 @@ pipelineSet "lit.default" {
 				};
 
 				FragmentOutput mainFragment(VertexToFragment input) {
-					float4 albedo = float4(materialInstanceUbo.color.rgb, 1) * albedoTexture.Sample(textureSampler, input.texCoord0);
+					float4 albedo = float4(1, 0.8, 0.6, 1); // float4(materialInstanceUbo.color.rgb, 1) * albedoTexture.Sample(textureSampler, input.texCoord0);
 
-					float3 textureSpaceNormal = normalTexture.Sample(textureSampler, input.texCoord0).rgb;
-					float metalness = metalnessTexture.Sample(textureSampler, input.texCoord0).r;
-					float roughness = roughnessTexture.Sample(textureSampler, input.texCoord0).r;
+					// float3 textureSpaceNormal = normalTexture.Sample(textureSampler, input.texCoord0).rgb;
+					float metalness = 0.0f; // metalnessTexture.Sample(textureSampler, input.texCoord0).r;
+					float roughness = 0.5; // roughnessTexture.Sample(textureSampler, input.texCoord0).r;
 
 					float3 specular = lerp(float3(0.04, 0.04, 0.04), albedo.rgb, metalness);
-					float3 worldSpaceNormal = TransformNormalToWorldSpace(input.normal, textureSpaceNormal, input.tangent);
+					float3 worldSpaceNormal = normalize(input.normal); // TransformNormalToWorldSpace(input.normal, textureSpaceNormal, input.tangent);
 
 					FragmentOutput output = (FragmentOutput)0;
 					output.gbufferAlbedoMatID = albedo;

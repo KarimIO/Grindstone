@@ -306,32 +306,30 @@ static void CollapseShaderBlock(ResolveContext& context, std::string& code, std:
 static void CollapsePasses(ResolveContext& context, ResolvedStateTree::PipelineSet& resolvedPipelineSet) {
 	for (auto& configIterator : resolvedPipelineSet.configurations) {
 		for (auto& passIterator : configIterator.second.passes) {
-			for (auto& passIterator : configIterator.second.passes) {
-				ResolvedStateTree::Pass& pass = passIterator.second;
-				std::string code;
-				std::set<std::string_view> processedBlocks;
-				for (const std::string_view requiredShaderBlock : pass.requiredShaderBlocks) {
-					if (processedBlocks.find(requiredShaderBlock) != processedBlocks.end()) {
-						continue;
-					}
-
-					auto shaderBlockIterator = context.parseTree.genericShaderBlocks.find(std::string(requiredShaderBlock));
-					if (shaderBlockIterator == context.parseTree.genericShaderBlocks.end()) {
-						std::string errorMsg = fmt::format("Found a missing shader block '{}'.", requiredShaderBlock);
-						context.logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Resolver, errorMsg, resolvedPipelineSet.sourceFilepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
-					}
-					else {
-						const ParseTree::ShaderBlock& shaderBlock = shaderBlockIterator->second;
-						processedBlocks.insert(requiredShaderBlock);
-						CollapseShaderBlock(context, code, processedBlocks, shaderBlock);
-					}
+			ResolvedStateTree::Pass& pass = passIterator.second;
+			std::string code;
+			std::set<std::string_view> processedBlocks;
+			for (const std::string_view requiredShaderBlock : pass.requiredShaderBlocks) {
+				if (processedBlocks.find(requiredShaderBlock) != processedBlocks.end()) {
+					continue;
 				}
 
-				code += pass.code;
-				pass.code = code;
-
-				ApplyRenderStateDefaults(pass.renderState);
+				auto shaderBlockIterator = context.parseTree.genericShaderBlocks.find(std::string(requiredShaderBlock));
+				if (shaderBlockIterator == context.parseTree.genericShaderBlocks.end()) {
+					std::string errorMsg = fmt::format("Found a missing shader block '{}'.", requiredShaderBlock);
+					context.logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Resolver, errorMsg, resolvedPipelineSet.sourceFilepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
+				}
+				else {
+					const ParseTree::ShaderBlock& shaderBlock = shaderBlockIterator->second;
+					processedBlocks.insert(requiredShaderBlock);
+					CollapseShaderBlock(context, code, processedBlocks, shaderBlock);
+				}
 			}
+
+			code += pass.code;
+			pass.code = code;
+
+			ApplyRenderStateDefaults(pass.renderState);
 		}
 	}
 }

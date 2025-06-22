@@ -492,7 +492,7 @@ bool CompileShadersGraphics(LogCallback logCallback, const ResolvedStateTree::Pi
 		CompilationArtifactsGraphics::Configuration& configArtifacts = output.configurations[configIterator.first];
 		for (const auto& passIterator : config.passes) {
 			const ResolvedStateTree::Pass& pass = passIterator.second;
-			CompilationArtifactsGraphics::Pass& passArtifacts = configArtifacts.passes[configIterator.first];
+			CompilationArtifactsGraphics::Pass& passArtifacts = configArtifacts.passes[passIterator.first];
 			uint8_t stageIndex = 0;
 			for (uint8_t stageIndex = 0; stageIndex < Grindstone::GraphicsAPI::numShaderTotalStage; ++stageIndex) {
 				const std::string& stageEntrypoint = pass.stageEntryPoints[stageIndex];
