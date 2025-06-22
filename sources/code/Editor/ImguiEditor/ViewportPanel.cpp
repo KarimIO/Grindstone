@@ -230,6 +230,10 @@ void ViewportPanel::DisplayOptions() {
 	ImGui::SetCursorPos(position);
 	const BaseRenderer::RenderMode& currentMode = modes[renderMode];
 	if (ImGui::BeginCombo("##DisplayMode", currentMode.name, ImGuiComboFlags_WidthFitPreview)) {
+		if (ImGui::Selectable("Show Grid", camera->isGridEnabled)) {
+			camera->isGridEnabled = !camera->isGridEnabled;
+		}
+
 		if (ImGui::Selectable("Show Collider Gizmos", camera->isColliderGizmoEnabled)) {
 			camera->isColliderGizmoEnabled = !camera->isColliderGizmoEnabled;
 		}

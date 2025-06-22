@@ -38,6 +38,7 @@ namespace Grindstone {
 			glm::mat4& GetViewMatrix();
 			BaseRenderer* GetRenderer() const;
 
+			bool isGridEnabled = true;
 			bool isBoundingSphereGizmoEnabled = false;
 			bool isBoundingBoxGizmoEnabled = false;
 			bool isColliderGizmoEnabled = true;

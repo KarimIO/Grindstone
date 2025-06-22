@@ -175,7 +175,9 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 	Grindstone::GraphicsAPI::ClearDepthStencil clearDepthStencil;
 	clearDepthStencil.hasDepthStencilAttachment = true;
 	commandBuffer->BindRenderPass(gizmoRenderPass, framebuffer, width, height, &clearColor, 1, clearDepthStencil);
-	gridRenderer.Render(commandBuffer, renderScale, gizmoProjection, view, nearPlaneDistance, farPlaneDistance, glm::quat(), 0.0f);
+	if (isGridEnabled) {
+		gridRenderer.Render(commandBuffer, renderScale, gizmoProjection, view, nearPlaneDistance, farPlaneDistance, glm::quat(), 0.0f);
+	}
 
 	if (editorManager.GetSelection().GetSelectedEntityCount() > 0) {
 		static const glm::vec4 boundingBoxColor = glm::vec4(0.2f, 0.9f, 0.3f, 1.0f);
