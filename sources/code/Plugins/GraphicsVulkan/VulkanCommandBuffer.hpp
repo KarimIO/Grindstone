@@ -52,6 +52,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void DispatchCompute(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) override;
 		virtual void BlitImage(Grindstone::GraphicsAPI::Image* src, Grindstone::GraphicsAPI::Image* dst) override;
 		virtual void WaitForComputeMemoryBarrier(Grindstone::GraphicsAPI::Image* renderTarget, bool shouldMakeWritable) override;
+		virtual void PipelineBarrier(const GraphicsAPI::ImageBarrier* barriers, uint32_t barrierCount) override;
 
 		virtual void EndCommandBuffer() override;
 	private:

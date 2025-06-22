@@ -13,6 +13,45 @@ namespace Grindstone::GraphicsAPI {
 	class VertexArrayObject;
 	class DepthStencilTarget;
 
+	enum class PipelineStage : uint8_t {
+		TopOfPipe,
+		FragmentShader,
+		ComputeShader,
+		ColorAttachmentOutput,
+		BottomOfPipe,
+	};
+
+	enum class AccessFlags : uint8_t {
+		None = 0,
+		Read = 1 << 0,
+		Write = 1 << 1,
+	};
+
+	enum class ImageLayout : uint8_t {
+		Undefined,
+		General,
+		ColorAttachment,
+		DepthStencilAttachment,
+		ShaderReadOnly,
+		TransferSrc,
+		TransferDst,
+		Present,
+	};
+
+	struct ImageBarrier {
+		GraphicsAPI::Image* image;
+		ImageLayout oldLayout;
+		ImageLayout newLayout;
+		PipelineStage srcStage;
+		PipelineStage dstStage;
+		AccessFlags srcAccess;
+		AccessFlags dstAccess;
+		uint32_t baseMipLevel = 0;
+		uint32_t levelCount = 0;
+		uint32_t baseArrayLayer = 0;
+		uint32_t layerCount = 0;
+	};
+
 	/*! CommandBuffers are an object that hold a list of commands to be executed
 		by your graphics card. After recording any commands you wish to use for
 		a frame, you can send them to a queue to be processed.
@@ -61,6 +100,7 @@ namespace Grindstone::GraphicsAPI {
 		virtual void BlitImage(Image* src, Image* dst) = 0;
 
 		virtual void WaitForComputeMemoryBarrier(Image* renderTarget, bool shouldMakeWritable) = 0;
+		virtual void PipelineBarrier(const GraphicsAPI::ImageBarrier* barriers, uint32_t barrierCount) = 0;
 
 		virtual void EndCommandBuffer() = 0;
 
@@ -75,4 +115,12 @@ namespace Grindstone::GraphicsAPI {
 			CommandBufferSecondaryInfo secondaryInfo{};
 		};
 	};
+}
+
+inline Grindstone::GraphicsAPI::AccessFlags operator|(Grindstone::GraphicsAPI::AccessFlags a, Grindstone::GraphicsAPI::AccessFlags b) {
+	return static_cast<Grindstone::GraphicsAPI::AccessFlags>(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
+}
+
+inline Grindstone::GraphicsAPI::AccessFlags operator&(Grindstone::GraphicsAPI::AccessFlags a, Grindstone::GraphicsAPI::AccessFlags b) {
+	return static_cast<Grindstone::GraphicsAPI::AccessFlags>(static_cast<uint8_t>(a) & static_cast<uint8_t>(b));
 }
