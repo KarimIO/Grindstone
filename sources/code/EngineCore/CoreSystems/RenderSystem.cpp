@@ -8,7 +8,6 @@
 #include <Common/Graphics/Core.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 #include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
-#include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
 #include <EngineCore/Rendering/BaseRenderer.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Profiling.hpp>
@@ -37,6 +36,9 @@ namespace Grindstone {
 			GraphicsAPI::CommandBuffer::CreateInfo commandBufferCreateInfo{};
 
 			for (size_t i = 0; i < commandBuffers.size(); ++i) {
+				std::string debugName = "Main Command Buffer " + std::to_string(i);
+				commandBufferCreateInfo.debugName = debugName.c_str();
+
 				commandBuffers[i] = engineCore.GetGraphicsCore()->CreateCommandBuffer(commandBufferCreateInfo);
 			}
 		}
