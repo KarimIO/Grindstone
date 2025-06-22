@@ -68,7 +68,7 @@ static Grindstone::GraphicsAPI::RenderPass* CreateGbufferRenderPass(Grindstone::
 	const int gbufferColorCount = 3;
 	std::array<GraphicsAPI::RenderPass::AttachmentInfo, gbufferColorCount> gbufferColorAttachments{};
 	gbufferColorAttachments[0] = { GraphicsAPI::Format::R8G8B8A8_UNORM, true }; // Albedo
-	gbufferColorAttachments[1] = { GraphicsAPI::Format::R16G16B16A16_UNORM, true }; // Normal
+	gbufferColorAttachments[1] = { GraphicsAPI::Format::R16G16B16A16_SNORM, true }; // Normal
 	gbufferColorAttachments[2] = { GraphicsAPI::Format::R8G8B8A8_UNORM, true }; // Specular RGB + Roughness Alpha
 
 	GraphicsAPI::RenderPass::CreateInfo gbufferRenderPassCreateInfo{};
