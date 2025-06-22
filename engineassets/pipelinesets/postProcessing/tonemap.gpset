@@ -133,12 +133,14 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 				}
 
 				float4 mainFragment(VertexToFragment inData) : SV_TARGET0 {
+					float2 resolution = rendererUbo.renderResolution;
+
 					float3 sceneColor = litSceneTexture.Sample(gbufferSampler, inData.scaledFragmentTexCoord).rgb;
 					float3 bloomColor = bloomTexture.Sample(gbufferSampler, inData.scaledFragmentTexCoord * 2).rgb;
 
 					float3 combinedColor = sceneColor + bloomColor;
-					combinedColor = applyVignette(sceneColor, screenOffset);
-					combinedColor = applyGrain(sceneColor, resolution, input.fragmentTexCoord);
+					combinedColor = applyVignette(sceneColor, inData.fragmentTexCoord);
+					combinedColor = applyGrain(sceneColor, resolution, inData.fragmentTexCoord);
 					combinedColor = hdrTransform(combinedColor);
 					combinedColor = linearToSRGB(combinedColor);
 
