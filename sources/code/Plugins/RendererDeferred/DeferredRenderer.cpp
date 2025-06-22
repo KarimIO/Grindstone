@@ -125,8 +125,8 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	Grindstone::GraphicsAPI::Sampler::CreateInfo screenSamplerCreateInfo{};
 	screenSamplerCreateInfo.debugName = "Screen Sampler";
 	screenSamplerCreateInfo.options.anistropy = 0;
-	screenSamplerCreateInfo.options.magFilter = GraphicsAPI::TextureFilter::Nearest;
-	screenSamplerCreateInfo.options.minFilter = GraphicsAPI::TextureFilter::Nearest;
+	screenSamplerCreateInfo.options.magFilter = GraphicsAPI::TextureFilter::Linear;
+	screenSamplerCreateInfo.options.minFilter = GraphicsAPI::TextureFilter::Linear;
 	screenSamplerCreateInfo.options.wrapModeU = GraphicsAPI::TextureWrapMode::Repeat;
 	screenSamplerCreateInfo.options.wrapModeV = GraphicsAPI::TextureWrapMode::Repeat;
 	screenSamplerCreateInfo.options.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat;
@@ -1050,12 +1050,12 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	{
 		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 7> debugDescriptorSetLayoutBindings{};
 		debugDescriptorSetLayoutBindings[0] = gbufferSampler;
-		debugDescriptorSetLayoutBindings[1] = gbufferDepthBinding;
-		debugDescriptorSetLayoutBindings[2] = gbufferAlbedoBinding;
-		debugDescriptorSetLayoutBindings[3] = gbufferNormalsBinding;
-		debugDescriptorSetLayoutBindings[4] = gbufferSpecularRoughnessBinding;
-		debugDescriptorSetLayoutBindings[5] = { 6, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment }; // Ambient Occlusion Texture
-		debugDescriptorSetLayoutBindings[6] = { 7, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Fragment }; // Post Process Uniform Buffer
+		debugDescriptorSetLayoutBindings[1] = { 1, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment }; // Gbuffer Depth
+		debugDescriptorSetLayoutBindings[2] = { 2, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment }; // Gbuffer Albedo
+		debugDescriptorSetLayoutBindings[3] = { 3, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment }; // Gbuffer Normal
+		debugDescriptorSetLayoutBindings[4] = { 4, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment }; // Gbuffer Specular Roughness
+		debugDescriptorSetLayoutBindings[5] = { 5, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment }; // Ambient Occlusion
+		debugDescriptorSetLayoutBindings[6] = { 6, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Fragment }; // Post Process Uniform Buffer
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo debugDescriptorSetLayoutCreateInfo{};
 		debugDescriptorSetLayoutCreateInfo.debugName = "Debug Descriptor Set Layout";
@@ -1067,10 +1067,10 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 	{
 		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 5> lightingDescriptorSetLayoutBindings{};
 		lightingDescriptorSetLayoutBindings[0] = gbufferSampler;
-		lightingDescriptorSetLayoutBindings[1] = gbufferDepthBinding;
-		lightingDescriptorSetLayoutBindings[2] = gbufferAlbedoBinding;
-		lightingDescriptorSetLayoutBindings[3] = gbufferNormalsBinding;
-		lightingDescriptorSetLayoutBindings[4] = gbufferSpecularRoughnessBinding;
+		lightingDescriptorSetLayoutBindings[1] = { 1, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment }; // Gbuffer Depth
+		lightingDescriptorSetLayoutBindings[2] = { 2, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment }; // Gbuffer Albedo
+		lightingDescriptorSetLayoutBindings[3] = { 3, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment }; // Gbuffer Normal
+		lightingDescriptorSetLayoutBindings[4] = { 4, 1, GraphicsAPI::BindingType::SampledImage, GraphicsAPI::ShaderStageBit::Fragment }; // Gbuffer Specular Roughness
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo lightingDescriptorSetLayoutCreateInfo{};
 		lightingDescriptorSetLayoutCreateInfo.debugName = "GBuffer Descriptor Set Layout";
@@ -1193,8 +1193,8 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	imageSet.engineDescriptorSet = graphicsCore->CreateDescriptorSet(engineDescriptorSetCreateInfo);
 
 	std::array<GraphicsAPI::DescriptorSet::Binding, 4> tonemapDescriptorSetBindings{};
-	tonemapDescriptorSetBindings[0] = screenSamplerBinding;
-	tonemapDescriptorSetBindings[1] = litHdrRenderTargetBinding;
+	tonemapDescriptorSetBindings[0] = GraphicsAPI::DescriptorSet::Binding::Sampler(screenSampler);
+	tonemapDescriptorSetBindings[1] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.litHdrRenderTarget );
 	tonemapDescriptorSetBindings[2] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomMipLevelCount + 1] );
 	tonemapDescriptorSetBindings[3] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( imageSet.tonemapPostProcessingUniformBufferObject );
 
@@ -1265,8 +1265,8 @@ void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) 
 
 	{
 		std::array<GraphicsAPI::DescriptorSet::Binding, 4> tonemapDescriptorSetBindings{};
-		tonemapDescriptorSetBindings[0] = screenSamplerBinding;
-		tonemapDescriptorSetBindings[1] = litHdrRenderTargetBinding;
+		tonemapDescriptorSetBindings[0] = GraphicsAPI::DescriptorSet::Binding::Sampler(screenSampler);
+		tonemapDescriptorSetBindings[1] = GraphicsAPI::DescriptorSet::Binding::SampledImage(imageSet.litHdrRenderTarget);
 		tonemapDescriptorSetBindings[2] = GraphicsAPI::DescriptorSet::Binding::SampledImage(imageSet.bloomRenderTargets[bloomMipLevelCount + 1]);
 		tonemapDescriptorSetBindings[3] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(imageSet.tonemapPostProcessingUniformBufferObject);
 
@@ -1671,8 +1671,8 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 
 	currentCommandBuffer->BeginDebugLabelSection("Bloom Downsamples", debugColor);
 	for (size_t i = 1; i < bloomMipLevelCount - 1; ++i) {
-		mipWidth /= 2;
-		mipHeight /= 2;
+		mipWidth = static_cast<uint32_t>(glm::ceil(static_cast<float>(mipWidth) / 2.0f));
+		mipHeight = static_cast<uint32_t>(glm::ceil(static_cast<float>(mipHeight) / 2.0f));
 		mipWidths[i] = mipWidth;
 		mipHeights[i] = mipHeight;
 
@@ -2116,7 +2116,7 @@ void DeferredRenderer::PostProcess(
 
 	// RenderSsr(imageSet, commandBuffer);
 	// RenderDepthOfField(imageSet, currentCommandBuffer);
-	// RenderBloom(imageSet, currentCommandBuffer);
+	RenderBloom(imageSet, currentCommandBuffer);
 
 	GraphicsAPI::ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
 	GraphicsAPI::ClearDepthStencil clearDepthStencil;
@@ -2133,8 +2133,13 @@ void DeferredRenderer::PostProcess(
 		if (tonemapPipeline != nullptr) {
 			imageSet.tonemapPostProcessingUniformBufferObject->UploadData(&postProcessUboData);
 
-			currentCommandBuffer->BindGraphicsDescriptorSet(tonemapPipeline, &imageSet.tonemapDescriptorSet, 2, 1);
+			std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> descriptorSets{};
+			descriptorSets[0] = imageSet.engineDescriptorSet;
+			descriptorSets[1] = imageSet.gbufferDescriptorSet;
+			descriptorSets[2] = imageSet.tonemapDescriptorSet;
+
 			currentCommandBuffer->BindGraphicsPipeline(tonemapPipeline);
+			currentCommandBuffer->BindGraphicsDescriptorSet(tonemapPipeline, descriptorSets.data(), 0, static_cast<uint32_t>(descriptorSets.size()));
 			currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 		}
 	}
