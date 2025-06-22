@@ -76,6 +76,7 @@ void RenderAsset(Grindstone::Assets::AssetManager* assetManager, const char* tit
 
 		ImGui::TreePop();
 	}
+
 }
 
 static void RenderRenderQueuesTable(Grindstone::EngineCore& engineCore) {
@@ -129,6 +130,8 @@ void StatsPanel::RenderContents() {
 		ImGui::Text("Memory Used: %zuKB / %zuKB", memUsed, memTotal);
 		ImGui::ProgressBar(memUsedPct, ImVec2(maxWidth, 0));
 
+		// TODO: Investigate how we can re-add this for Release.
+#if _DEBUG
 		if (ImGui::Button("Capture Memory Dump")) {
 			memoryDumpData.hasCapturedMemoryDump = true;
 
@@ -145,7 +148,8 @@ void StatsPanel::RenderContents() {
 			}
 		}
 
-		if (memoryDumpData.hasCapturedMemoryDump) {
+		if (memoryDumpData.hasCapturedMemoryDump)
+		{
 			if (ImGui::Button("Export Memory Dump")) {
 				std::ofstream outputFile(engineCore.GetProjectPath() / "log" / "MemoryDump.csv");
 				outputFile << "Allocation Name,\tSize,\tOffset\n";
@@ -155,7 +159,8 @@ void StatsPanel::RenderContents() {
 				outputFile.close();
 			}
 
-			if (ImGui::TreeNode("Memory Allocations")) {
+			if (ImGui::TreeNode("Memory Allocations"))
+			{
 				if (ImGui::BeginTable("statsImporterSplit", 3)) {
 					ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
 					ImGui::TableSetupColumn("Size", ImGuiTableColumnFlags_WidthFixed);
@@ -184,6 +189,7 @@ void StatsPanel::RenderContents() {
 				ImGui::TreePop();
 			}
 		}
+#endif // #if _DEBUG
 	}
 
 	ImGui::Separator();
