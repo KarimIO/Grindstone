@@ -1468,7 +1468,7 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 		litHdrFramebufferCreateInfo.height = framebufferHeight;
 		litHdrFramebufferCreateInfo.renderTargets = &imageSet.litHdrRenderTarget;
 		litHdrFramebufferCreateInfo.renderTargetCount = 1;
-		litHdrFramebufferCreateInfo.depthTarget = imageSet.gbufferDepthStencilTarget;
+		litHdrFramebufferCreateInfo.depthTarget = nullptr;
 		litHdrFramebufferCreateInfo.renderPass = engineCore.GetRenderPassRegistry()->GetRenderpass(lightingRenderPassKey);
 		imageSet.litHdrFramebuffer = graphicsCore->CreateFramebuffer(litHdrFramebufferCreateInfo);
 	}

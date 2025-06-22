@@ -109,7 +109,7 @@ static Grindstone::GraphicsAPI::RenderPass* CreateLightingRenderPass(Grindstone:
 	lightingRenderPassCreateInfo.debugName = "Deferred Light Render Pass";
 	lightingRenderPassCreateInfo.colorAttachments = &attachment;
 	lightingRenderPassCreateInfo.colorAttachmentCount = 1;
-	lightingRenderPassCreateInfo.depthFormat = depthFormat;
+	lightingRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::Invalid;
 	lightingRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 	memcpy(lightingRenderPassCreateInfo.debugColor, debugColor, sizeof(float) * 4);
 	Grindstone::GraphicsAPI::RenderPass* rp = graphicsCore->CreateRenderPass(lightingRenderPassCreateInfo);
