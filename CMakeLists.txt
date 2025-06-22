@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.20)
 
 if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 	if(DEFINED ENV{VCPKG_ROOT})
@@ -11,7 +11,7 @@ endif()
 include("${CMAKE_TOOLCHAIN_FILE}")
 set_property(GLOBAL PROPERTY USE_FOLDERS TRUE)
 
-if (WIN32)
+if (WIN32 AND CMAKE_GENERATOR MATCHES "Visual Studio")
 	project(Grindstone VERSION 1.0.0 LANGUAGES CXX CSharp)
 	enable_language(CSharp)
 else()
