@@ -46,17 +46,20 @@ pipelineSet "lit.default" {
 			]
 
 			shaderHlsl {
+				/*
+				TODO: Shifted samplers and textures up, need to revert.
 				struct MaterialInstanceUBO {
 					float4 color;
 				};
 
 				ConstantBuffer<MaterialInstanceUBO> materialInstanceUbo : register(b0, space1);
+				*/
 
-				SamplerState textureSampler : register(s1, space1);
-				Texture2D<float4> albedoTexture : register(t2, space1);
-				Texture2D<float4> normalTexture : register(t3, space1);
-				Texture2D<float4> metalnessTexture : register(t4, space1);
-				Texture2D<float4> roughnessTexture : register(t5, space1);
+				SamplerState textureSampler : register(s0, space1);
+				Texture2D<float4> albedoTexture : register(t1, space1);
+				Texture2D<float4> normalTexture : register(t2, space1);
+				Texture2D<float4> metalnessTexture : register(t3, space1);
+				Texture2D<float4> roughnessTexture : register(t4, space1);
 
 				struct FragmentOutput {
 					[[vk::location(0)]] float4 gbufferAlbedoMatID : SV_TARGET0;
@@ -65,14 +68,14 @@ pipelineSet "lit.default" {
 				};
 
 				FragmentOutput mainFragment(VertexToFragment input) {
-					float4 albedo = float4(1, 0.8, 0.6, 1); // float4(materialInstanceUbo.color.rgb, 1) * albedoTexture.Sample(textureSampler, input.texCoord0);
+					float4 albedo = albedoTexture.Sample(textureSampler, input.texCoord0);
 
-					// float3 textureSpaceNormal = normalTexture.Sample(textureSampler, input.texCoord0).rgb;
-					float metalness = 0.0f; // metalnessTexture.Sample(textureSampler, input.texCoord0).r;
-					float roughness = 0.5; // roughnessTexture.Sample(textureSampler, input.texCoord0).r;
+					float3 textureSpaceNormal = normalTexture.Sample(textureSampler, input.texCoord0).rgb;
+					float metalness = metalnessTexture.Sample(textureSampler, input.texCoord0).r;
+					float roughness = roughnessTexture.Sample(textureSampler, input.texCoord0).r;
 
 					float3 specular = lerp(float3(0.04, 0.04, 0.04), albedo.rgb, metalness);
-					float3 worldSpaceNormal = normalize(input.normal); // TransformNormalToWorldSpace(input.normal, textureSpaceNormal, input.tangent);
+					float3 worldSpaceNormal = TransformNormalToWorldSpace(input.normal, textureSpaceNormal, input.tangent);
 
 					FragmentOutput output = (FragmentOutput)0;
 					output.gbufferAlbedoMatID = albedo;
