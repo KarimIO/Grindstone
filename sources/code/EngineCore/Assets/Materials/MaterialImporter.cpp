@@ -245,23 +245,29 @@ static void SetupSamplers(
 
 			if (resourcesJson.HasMember(textureName)) {
 				GraphicsAPI::Image* itemPtr = missingTexture;
-				if (resourcesJson[textureName].IsString()) {
+				if (!resourcesJson[textureName].IsString()) {
 					GPRINT_ERROR_V(LogSource::EngineCore, "Textures expects a UUID in the form of a string in member {} of material {}.", textureName, materialAsset.name.c_str());
-					continue;
+				}
+				else {
+					const char* textureValueString = resourcesJson[textureName].GetString();
+
+					Grindstone::AssetReference<TextureAsset> textureReference;
+
+					Grindstone::Uuid textureUuid;
+					if (Grindstone::Uuid::MakeFromString(textureValueString, textureUuid)) {
+						textureReference = assetManager->GetAssetReferenceByUuid<TextureAsset>(textureUuid);
+					}
+					else {
+						textureReference = assetManager->GetAssetReferenceByAddress<TextureAsset>(textureValueString);
+					}
+
+					// TODO: Use this to ensure it goes in the right place: textureReferencesFromMaterial[i].bindingId;
+					if (textureReference.IsValid()) {
+						materialAsset.textures[i] = textureReference;
+						itemPtr = textureReference.Get()->image;
+					}
 				}
 
-				const char* textureUuidAsString = resourcesJson[textureName].GetString();
-				Grindstone::Uuid textureUuid;
-				if (!Grindstone::Uuid::MakeFromString(textureUuidAsString, textureUuid)) {
-					GPRINT_ERROR_V(LogSource::EngineCore, "Texture failed to make a uuid out of string in member {} of material {}.", textureName, materialAsset.name.c_str());
-					continue;
-				}
-
-				materialAsset.textures[i] = assetManager->GetAssetReferenceByUuid<TextureAsset>(textureUuid);
-				// TODO: Use this to ensure it goes in the right place: textureReferencesFromMaterial[i].bindingId;
-				if (materialAsset.textures[i].IsValid()) {
-					itemPtr = materialAsset.textures[i].Get()->image;
-				}
 				GraphicsAPI::DescriptorSet::Binding textureBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( itemPtr );
 				bindings.push_back(textureBinding);
 			}
@@ -278,8 +284,8 @@ MaterialImporter::MaterialImporter() {
 
 	std::array<unsigned char, 16> colorData = {
 		0x00, 0x00, 0x00, 0xff,
-		0xff, 0x00, 0xff, 0xff,
-		0xff, 0x00, 0xff, 0xff,
+		0x00, 0x00, 0x00, 0xff,
+		0x00, 0x00, 0x00, 0xff,
 		0x00, 0x00, 0x00, 0xff,
 	};
 
@@ -338,8 +344,21 @@ static bool LoadMaterial(
 		return false;
 	}
 
+	Grindstone::GraphicsAPI::Sampler::CreateInfo samplerCreateInfo{};
+	samplerCreateInfo.debugName = "Material Sampler";
+	samplerCreateInfo.options.anistropy = 16.0f;
+	samplerCreateInfo.options.mipMin = -1000.0f;
+	samplerCreateInfo.options.mipMax = 1000.0f;
+	samplerCreateInfo.options.mipFilter = GraphicsAPI::TextureFilter::Linear;
+	samplerCreateInfo.options.minFilter = GraphicsAPI::TextureFilter::Linear;
+	samplerCreateInfo.options.magFilter = GraphicsAPI::TextureFilter::Linear;
+	samplerCreateInfo.options.wrapModeU = GraphicsAPI::TextureWrapMode::Repeat;
+	samplerCreateInfo.options.wrapModeV = GraphicsAPI::TextureWrapMode::Repeat;
+	samplerCreateInfo.options.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat;
+
 	std::vector<GraphicsAPI::DescriptorSet::Binding> bindings;
-	SetupUniformBuffer(document, *pipelineSetAsset, bindings, displayName, material);
+	bindings.emplace_back(GraphicsAPI::DescriptorSet::Binding::Sampler(graphicsCore->CreateSampler(samplerCreateInfo)));
+	// SetupUniformBuffer(document, *pipelineSetAsset, bindings, displayName, material);
 	SetupSamplers(document, *pipelineSetAsset, missingTexture, bindings, material);
 
 	std::string descriptorSetName = (displayName + " Material Descriptor Set");
