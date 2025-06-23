@@ -68,7 +68,7 @@ namespace Grindstone {
 				return nullptr;
 			}
 
-			return passes[0].descriptorSetLayouts[0];
+			return passes[0].descriptorSetLayouts[1];
 		}
 
 		const Grindstone::GraphicsPipelineAsset::Pass* GetFirstPass() const {

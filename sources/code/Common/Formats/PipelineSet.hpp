@@ -182,7 +182,9 @@ namespace Grindstone::Formats::Pipelines::V1 {
 	};
 
 	struct MaterialResource {
+		Grindstone::GraphicsAPI::BindingType type;
 		uint32_t nameOffsetFromBlobStart;
+		uint32_t setIndex;
 		uint32_t bindingIndex;
 	};
 

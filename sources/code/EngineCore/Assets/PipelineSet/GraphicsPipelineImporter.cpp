@@ -164,6 +164,13 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 
 		graphicsPipelineAsset.metaData.buffers.resize(1); // TODO: Number of buffers
 		Grindstone::PipelineAssetMetaData::Buffer& bufferMetadata = graphicsPipelineAsset.metaData.buffers.emplace_back();
+
+		for (V1::MaterialResource& srcMaterialResource : materialResources) {
+			auto& dstResource = graphicsPipelineAsset.metaData.resources.emplace_back();
+			dstResource.slotName = reinterpret_cast<const char*>(&blobs[srcMaterialResource.nameOffsetFromBlobStart]);
+			dstResource.descriptorSet = srcMaterialResource.setIndex;
+			dstResource.descriptorBinding = srcMaterialResource.bindingIndex;
+		}
 	}
 
 	// TODO: Loop over Configurations

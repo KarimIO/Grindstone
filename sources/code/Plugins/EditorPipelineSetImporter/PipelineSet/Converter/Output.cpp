@@ -216,7 +216,8 @@ static bool VerifyConsistentMaterialResources(
 	const std::string_view pipelineSetName,
 	const CompilationArtifactsGraphics& compilationArtifacts,
 	const std::vector<ParseTree::MaterialParameter>& parameters,
-	std::vector<Grindstone::Formats::Pipelines::V1::MaterialResource>& materialResources
+	std::vector<Grindstone::Formats::Pipelines::V1::MaterialResource>& materialResources,
+	Writer& blobWriter
 ) {
 	bool isConsistent = true;
 
@@ -224,6 +225,7 @@ static bool VerifyConsistentMaterialResources(
 		switch (param.parameterType) {
 		case ParameterType::Texture:
 		case ParameterType::Sampler: {
+			Grindstone::GraphicsAPI::BindingType bindingType = Grindstone::GraphicsAPI::BindingType::None;
 			bool hasFoundBinding = false;
 			uint32_t setIndex = 0;
 			uint32_t bindingIndex = 0;
@@ -250,6 +252,7 @@ static bool VerifyConsistentMaterialResources(
 										hasFoundBinding = true;
 										setIndex = descriptorSet.setIndex;
 										bindingIndex = binding.bindingIndex;
+										bindingType = binding.type;
 									}
 								}
 								else if (
@@ -268,10 +271,12 @@ static bool VerifyConsistentMaterialResources(
 			}
 
 			if (hasFoundBinding) {
-				// TODO: Fix this
 				Grindstone::Formats::Pipelines::V1::MaterialResource& resource = materialResources.emplace_back();
-				resource.bindingIndex = 0;
-				resource.nameOffsetFromBlobStart = 0;
+				resource.setIndex = setIndex;
+				resource.bindingIndex = bindingIndex;
+				resource.nameOffsetFromBlobStart = static_cast<uint32_t>(blobWriter.offset);
+				resource.type = bindingType;
+				WriteBytes(blobWriter, param.name.data(), param.name.size() + 1);
 			}
 			else {
 				std::string formattedMessage = fmt::format("\nMaterial resource \"{}\" not found in any shaders.", param.name);
@@ -318,7 +323,7 @@ static void ExtractGraphicsPipelineSet(
 		}
 
 		std::string resourceErrorLog;
-		if (!VerifyConsistentMaterialResources(resourceErrorLog, pipelineSet.name, compilationArtifacts, pipelineSet.parameters, materialResources)) {
+		if (!VerifyConsistentMaterialResources(resourceErrorLog, pipelineSet.name, compilationArtifacts, pipelineSet.parameters, materialResources, blobWriter)) {
 			std::string formattedMessage = fmt::format("Mismatch found in material resources!{}", resourceErrorLog);
 			logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Output, formattedMessage.c_str(), pipelineSet.name, UNDEFINED_LINE, UNDEFINED_COLUMN);
 		}
