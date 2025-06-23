@@ -111,7 +111,7 @@ pipelineSet "DebugDeferred" {
 							return float4(modDepth, modDepth, modDepth, 1);
 						}
 						case RenderMode_Normal: {
-							float3 normal = gbufferNormal.Sample(gbufferSampler, inData.scaledFragmentTexCoord).rgb;
+							float3 normal = gbufferNormal.Sample(gbufferSampler, inData.scaledFragmentTexCoord).rgb * 0.5f + float3(0.5f, 0.5f, 0.5f);
 							return float4(normal, 1);
 						}
 						case RenderMode_ViewNormal: {
