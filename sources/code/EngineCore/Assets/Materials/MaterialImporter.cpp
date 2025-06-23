@@ -370,6 +370,7 @@ void* MaterialImporter::LoadAsset(Uuid uuid) {
 		return nullptr;
 	}
 
+	materialAsset.name = result.displayName;
 	materialAsset.assetLoadStatus = AssetLoadStatus::Loading;
 	if (!LoadMaterial(materialAsset, result.displayName, missingTexture, result.content)) {
 		return nullptr;
