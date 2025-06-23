@@ -537,7 +537,7 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 	{
 		SsaoUboStruct ssaoUboStruct{};
 		ssaoUboStruct.bias = 0.025f;
-		ssaoUboStruct.radius = 0.5f;
+		ssaoUboStruct.radius = 0.1f;
 
 		for (size_t i = 0; i < ssaoKernelSize; ++i)
 		{
@@ -575,7 +575,7 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 		ssaoNoiseImgCreateInfo.debugName = "SSAO Noise Texture";
 		ssaoNoiseImgCreateInfo.initialData = reinterpret_cast<const char*>(ssaoNoise.data());
 		ssaoNoiseImgCreateInfo.initialDataSize = static_cast<uint32_t>(sizeof(ssaoNoise));
-		ssaoNoiseImgCreateInfo.format = GraphicsAPI::Format::R8G8_UNORM;
+		ssaoNoiseImgCreateInfo.format = GraphicsAPI::Format::R8G8_SNORM;
 		ssaoNoiseImgCreateInfo.width = ssaoNoiseImgCreateInfo.height = ssaoNoiseDimSize;
 		ssaoNoiseImgCreateInfo.imageUsage =
 			GraphicsAPI::ImageUsageFlags::TransferDst |
