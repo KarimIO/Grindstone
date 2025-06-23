@@ -58,7 +58,7 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 			format = Grindstone::GraphicsAPI::Format::BC3_UNORM_BLOCK;
 			break;
 		case FOURCC_BC4:
-			format = Grindstone::GraphicsAPI::Format::BC1_RGBA_UNORM_BLOCK;
+			format = Grindstone::GraphicsAPI::Format::BC4_UNORM_BLOCK;
 			break;
 
 		case FOURCC_R16:
