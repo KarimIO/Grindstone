@@ -83,12 +83,12 @@ void Mesh3dImporter::PrepareLayouts() {
 			}
 		}
 	).AddBinding(
-		{ 3, 3 * sizeof(float), GraphicsAPI::VertexInputRate::Vertex },
+		{ 3, 2 * sizeof(float), GraphicsAPI::VertexInputRate::Vertex },
 		{
 			{
 				"vertexTexCoord0",
 				(uint32_t)Mesh3dLayoutIndex::Uv0,
-				Grindstone::GraphicsAPI::Format::R32G32B32_SFLOAT,
+				Grindstone::GraphicsAPI::Format::R32G32_SFLOAT,
 				0,
 				Grindstone::GraphicsAPI::AttributeUsage::TexCoord0
 			}
