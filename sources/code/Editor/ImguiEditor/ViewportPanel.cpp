@@ -230,6 +230,22 @@ void ViewportPanel::DisplayOptions() {
 	ImGui::SetCursorPos(position);
 	const BaseRenderer::RenderMode& currentMode = modes[renderMode];
 	if (ImGui::BeginCombo("##DisplayMode", currentMode.name, ImGuiComboFlags_WidthFitPreview)) {
+		if (ImGui::Selectable("Show Grid", camera->isGridEnabled)) {
+			camera->isGridEnabled = !camera->isGridEnabled;
+		}
+
+		if (ImGui::Selectable("Show Collider Gizmos", camera->isColliderGizmoEnabled)) {
+			camera->isColliderGizmoEnabled = !camera->isColliderGizmoEnabled;
+		}
+
+		if (ImGui::Selectable("Show Bounding Spheres Gizmos", camera->isBoundingSphereGizmoEnabled)) {
+			camera->isBoundingSphereGizmoEnabled = !camera->isBoundingSphereGizmoEnabled;
+		}
+
+		if (ImGui::Selectable("Show Bounding Boxes Gizmos", camera->isBoundingBoxGizmoEnabled)) {
+			camera->isBoundingBoxGizmoEnabled = !camera->isBoundingBoxGizmoEnabled;
+		}
+
 		for (uint16_t i = 0; i < count; ++i) {
 			bool isSelected = renderMode;
 			if (ImGui::Selectable(modes[i].name, isSelected)) {

@@ -1,0 +1,150 @@
+include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+include "$ENGINE/pipelinesets/common/rendererUniform.gpset"
+computeSet "Bloom" {
+	shaderEntrypoint: compute main
+
+	requiresBlocks [
+		GsViewNormal,
+		GsComputeClipSpacePosition,
+		GsComputeViewSpacePosition,
+		GsRendererUniform,
+	]
+
+	shaderHlsl {
+		static const float epsilon = 1.0e-4;
+
+		struct ControlUniformBuffer {
+			float4 reciprocalImgSizes; // Consists of  float2 in; float2 out;
+			float4 thresholdFilter;
+			int stage;
+			float levelOfDetail;
+			float filterRadius;
+		};
+
+		ConstantBuffer<ControlUniformBuffer> postUbo : register(b0, space2);
+		SamplerState defaultSampler : register(s1, space2);
+		RWTexture2D<float4> outImage : register(u2, space2);
+		Texture2D<float4> inImage1 : register(t3, space2);
+		Texture2D<float4> inImage2 : register(t4, space2);
+
+		static const int bloomStagePrefilter	= 0;
+		static const int bloomStageDownsample	= 1;
+		static const int bloomStageUpsample		= 2;
+		static const int bloomStageApply		= 3;
+
+		float3 Upsample(Texture2D<float4> srcTexture, float2 texCoord, float2 texelSize, float radius) {
+			float2 offset = texelSize * radius;
+
+			float3 result = srcTexture.SampleLevel(defaultSampler, texCoord, 0).rgb * 4.0f;
+
+			result += srcTexture.SampleLevel(defaultSampler, texCoord + float2(-offset.x, 0), 0).rgb * 2.0;
+			result += srcTexture.SampleLevel(defaultSampler, texCoord + float2( offset.x, 0), 0).rgb * 2.0;
+			result += srcTexture.SampleLevel(defaultSampler, texCoord + float2(0, -offset.y), 0).rgb * 2.0;
+			result += srcTexture.SampleLevel(defaultSampler, texCoord + float2(0,  offset.y), 0).rgb * 2.0;
+
+			result += srcTexture.SampleLevel(defaultSampler, texCoord + float2(-offset.x,-offset.y), 0).rgb;
+			result += srcTexture.SampleLevel(defaultSampler, texCoord + float2(-offset.x, offset.y), 0).rgb;
+			result += srcTexture.SampleLevel(defaultSampler, texCoord + float2( offset.x,-offset.y), 0).rgb;
+			result += srcTexture.SampleLevel(defaultSampler, texCoord + float2( offset.x, offset.y), 0).rgb;
+
+			return result * (1.0f / 16.0f);
+		}
+
+		float3 Powfloat3(float3 v, float p) {
+			return float3(pow(v.x, p), pow(v.y, p), pow(v.z, p));
+		}
+
+		static const float invGamma = 1.0 / 2.2;
+		float3 ToSRGB(float3 v) { return Powfloat3(v, invGamma); }
+
+		float RGBToLuminance(float3 col) {
+			return dot(col, float3(0.2126f, 0.7152f, 0.0722f));
+		}
+
+		float KarisAverage(float3 col) {
+			// Formula is 1 / (1 + luma)
+			float luma = RGBToLuminance(ToSRGB(col)) * 0.25f;
+			return 1.0f / (1.0f + luma);
+		}
+
+		float3 TransformKaris(float3 col) {
+			return col * KarisAverage(col);
+		}
+
+		float3 Downsample(Texture2D<float4> srcTexture, float2 texCoord, float2 texelSize, bool isFirstDownsample) {
+			texCoord += texelSize / 2.0f;
+
+			float3 a = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2(-2.0f,-2.0f), 0).rgb;
+			float3 b = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2( 0.0f,-2.0f), 0).rgb;
+			float3 c = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2( 2.0f,-2.0f), 0).rgb;
+
+			float3 d = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2(-2.0f, 0.0f), 0).rgb;
+			float3 e = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2( 0.0f, 0.0f), 0).rgb;
+			float3 f = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2( 2.0f, 0.0f), 0).rgb;
+
+			float3 g = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2(-2.0f, 2.0f), 0).rgb;
+			float3 h = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2( 0.0f, 2.0f), 0).rgb;
+			float3 i = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2( 2.0f, 2.0f), 0).rgb;
+
+			float3 j = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2(-1.0f,-1.0f), 0).rgb;
+			float3 k = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2(-1.0f, 1.0f), 0).rgb;
+			float3 l = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2( 1.0f, 1.0f), 0).rgb;
+			float3 m = srcTexture.SampleLevel(defaultSampler, texCoord + texelSize * float2( 1.0f,-1.0f), 0).rgb;
+
+			// a,b,d,e * 0.125
+			// b,c,e,f * 0.125
+			// d,e,g,h * 0.125
+			// e,f,h,i * 0.125
+			// j,k,l,m * 0.5
+
+			if (isFirstDownsample) {
+				return	  TransformKaris((e) * 0.125f)
+						+ TransformKaris((a + c + g + i) * 0.03125f)
+						+ TransformKaris((b + d + f + h) * 0.0625f)
+						+ TransformKaris((j + k + l + m) * 0.125f);
+			}
+			else {
+				return ((e) * 0.125f)
+						+ ((a + c + g + i) * 0.03125f)
+						+ ((b + d + f + h) * 0.0625f)
+						+ ((j + k + l + m) * 0.125f);
+			}
+		}
+
+		float4 Prefilter(float4 color) {
+			float brightness = max(color.r, max(color.g, color.b));
+			float soft = brightness - postUbo.thresholdFilter.y;
+			soft = clamp(soft, 0.0, postUbo.thresholdFilter.z);
+			soft = soft * soft * postUbo.thresholdFilter.w;
+
+			return color * max(soft, brightness - postUbo.thresholdFilter.x) / max(brightness, epsilon);
+		}
+
+		[numthreads(4, 4, 1)]
+		void main(uint3 dispatchThreadID : SV_DispatchThreadID) {
+			float2 texCoords = float2(dispatchThreadID.x * postUbo.reciprocalImgSizes.z, dispatchThreadID.y * postUbo.reciprocalImgSizes.w);
+
+			float4 color = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+			if (postUbo.stage == bloomStagePrefilter) {
+				color.rgb = Downsample(inImage1, texCoords, postUbo.reciprocalImgSizes.zw, true);
+				color = max(Prefilter(color), 0.0f);
+				color.a = 1.0f;
+			}
+			else if (postUbo.stage == bloomStageDownsample) {
+				color.rgb = Downsample(inImage1, texCoords, postUbo.reciprocalImgSizes.zw, false);
+			}
+			else if (postUbo.stage == bloomStageUpsample) {
+				float3 upsampledTexture = Upsample(inImage1, texCoords, postUbo.reciprocalImgSizes.xy, postUbo.filterRadius);
+
+				float3 existing = inImage2.SampleLevel(defaultSampler, texCoords, 0).rgb;
+				color.rgb = existing + upsampledTexture;
+			}
+			else if (postUbo.stage == bloomStageApply) {
+				color.rgb = Upsample(inImage1, texCoords, postUbo.reciprocalImgSizes.xy, postUbo.filterRadius);
+			}
+
+			outImage[dispatchThreadID.xy] = color;
+		}
+	}
+}

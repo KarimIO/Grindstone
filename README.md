@@ -19,8 +19,10 @@ The Grindstone Engine is an extensible engine that contains all tools to create 
  - Just run Cmake!
 
 ## Example Project
-Run `ApplicationExecutable.exe` with `-projectpath "Path\To\Project"` to run a project.
-[Grindstone Sandbox](https://github.com/KarimIO/Grindstone-Sandbox).
+
+Download the sample project [Grindstone Sandbox](https://github.com/KarimIO/Grindstone-Sandbox).
+
+Run `ApplicationExecutable.exe` with the arguments `-projectpath "Path\To\Project"` to run the project.
 
 ![Editor](docs/images/editor.jpg)
 

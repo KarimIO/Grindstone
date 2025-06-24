@@ -8,6 +8,7 @@
 #include <Common/Window/WindowManager.hpp>
 #include <Common/Window/GlfwWindow.hpp>
 #include <Editor/EditorManager.hpp>
+#include <EngineCore/Logger.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Assets/Textures/TextureAsset.hpp>
 #include <Plugins/GraphicsVulkan/VulkanCore.hpp>
@@ -85,13 +86,14 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	SetupVulkanWindow(static_cast<GraphicsAPI::Vulkan::Core*>(graphicsCore), wgb, width, height);
 
 	VkDescriptorPoolSize poolSizes[] = {
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
 		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1 }
 	};
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-	poolInfo.maxSets = 1;
+	poolInfo.maxSets = 2;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(std::size(poolSizes));
 	poolInfo.pPoolSizes = poolSizes;
 
@@ -100,6 +102,8 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	if (vkCreateDescriptorPool(vulkanCore->GetDevice(), &poolInfo, nullptr, &imguiPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate imgui descriptor pool!");
 	}
+
+	vulkanCore->NameObject(VK_OBJECT_TYPE_DESCRIPTOR_POOL, imguiPool, "IMGUI Descriptor Pool");
 
 	ImGui_ImplGlfw_InitForVulkan(static_cast<Grindstone::GlfwWindow*>(window)->GetHandle(), true);
 	auto vulkanRenderPass = static_cast<Grindstone::GraphicsAPI::Vulkan::RenderPass*>(wgb->GetRenderPass());
@@ -129,11 +133,26 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	VkCommandBuffer commandBuffer = vulkanCore->BeginSingleTimeCommands();
 	ImGui_ImplVulkan_CreateFontsTexture();
 	vulkanCore->EndSingleTimeCommands(commandBuffer);
+
+	GraphicsAPI::DescriptorSetLayout::Binding layoutBinding{};
+	layoutBinding.bindingId = 0;
+	layoutBinding.type = BindingType::CombinedImageSampler;
+	layoutBinding.count = 1;
+	layoutBinding.stages = ShaderStageBit::Fragment;
+
+	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
+	descriptorSetLayoutCreateInfo.debugName = "Imgui Texture Layout";
+	descriptorSetLayoutCreateInfo.bindingCount = 1;
+	descriptorSetLayoutCreateInfo.bindings = &layoutBinding;
+	textureDescriptorLayout = Editor::Manager::GetEngineCore().GetGraphicsCore()->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+
 }
 
 ImguiRendererVulkan::~ImguiRendererVulkan() {
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
 	GraphicsAPI::Vulkan::Core* graphicsCore = static_cast<Vulkan::Core*>(engineCore.GetGraphicsCore());
+
+	graphicsCore->DeleteDescriptorSetLayout(textureDescriptorLayout);
 
 	VkDevice device = graphicsCore->GetDevice();
 	vkDestroyDescriptorPool(device, imguiPool, nullptr);
@@ -234,32 +253,26 @@ ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	auto assetManager = engineCore.assetManager;
 	std::string assetAddress = "@EDITOR_ICONS/" + path.string();
-	auto textureAsset = static_cast<TextureAsset*>(assetManager->GetAsset(Grindstone::AssetType::Texture, std::string_view(assetAddress)));
+	Grindstone::Uuid uuid = assetManager->GetUuidByAddress(Grindstone::AssetType::Texture, assetAddress);
+	if (!uuid.IsValid()) {
+		GPRINT_ERROR_V(LogSource::Editor, "Could not find texture uuid for {}.", assetAddress);
+		return 0;
+	}
 
+	Grindstone::TextureAsset* textureAsset = static_cast<TextureAsset*>(assetManager->GetAndIncrementAssetCount(Grindstone::AssetType::Texture, uuid));
 	if (textureAsset == nullptr) {
 		return 0;
 	}
 
-	GraphicsAPI::DescriptorSetLayout::Binding layoutBinding{};
-	layoutBinding.bindingId = 0;
-	layoutBinding.type = BindingType::Texture;
-	layoutBinding.count = 1;
-	layoutBinding.stages = ShaderStageBit::Fragment;
+	std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> samplerPair = { textureAsset->image, textureAsset->defaultSampler };
+	GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler( &samplerPair );
 
-	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
-	descriptorSetLayoutCreateInfo.debugName = "Layout";
-	descriptorSetLayoutCreateInfo.bindingCount = 1;
-	descriptorSetLayoutCreateInfo.bindings = &layoutBinding;
-	auto layout = Editor::Manager::GetEngineCore().GetGraphicsCore()->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
-
-	GraphicsAPI::DescriptorSet::Binding binding{ textureAsset->texture };
-
-	auto pathAsStr = path.filename().string();
+	auto pathAsStr = path.filename().string() + " Descriptor Set";
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 	descriptorSetCreateInfo.debugName = pathAsStr.c_str();
 	descriptorSetCreateInfo.bindings = &binding;
 	descriptorSetCreateInfo.bindingCount = 1;
-	descriptorSetCreateInfo.layout = layout;
+	descriptorSetCreateInfo.layout = textureDescriptorLayout;
 	auto dset = Editor::Manager::GetEngineCore().GetGraphicsCore()->CreateDescriptorSet(descriptorSetCreateInfo);
 
 	auto descriptor = static_cast<Vulkan::DescriptorSet*>(dset)->GetDescriptorSet();

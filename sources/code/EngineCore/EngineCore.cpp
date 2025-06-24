@@ -1,3 +1,5 @@
+#include "EngineCore.hpp"
+#include "EngineCore.hpp"
 #include "pch.hpp"
 
 #include <EngineCore/Utils/MemoryAllocator.hpp>
@@ -9,8 +11,9 @@
 #include <EngineCore/PluginSystem/Manager.hpp>
 #include <EngineCore/Events/InputManager.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
-#include <EngineCore/Rendering/DeferredRenderer.hpp>
+#include <EngineCore/Rendering/BaseRenderer.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
+#include <EngineCore/Rendering/RenderPassRegistry.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <Common/Event/WindowEvent.hpp>
 #include <Common/Graphics/Core.hpp>
@@ -22,6 +25,8 @@
 
 using namespace Grindstone;
 using namespace Grindstone::Memory;
+
+static Grindstone::EngineCore* engineCoreInstance = nullptr;
 
 bool EngineCore::Initialize(CreateInfo& createInfo) {
 	isEditor = createInfo.isEditor;
@@ -92,10 +97,11 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 		GRIND_PROFILE_SCOPE("Initialize Asset Managers");
 		assetManager = AllocatorCore::Allocate<Assets::AssetManager>(createInfo.assetLoader);
 		assetRendererManager = AllocatorCore::Allocate<AssetRendererManager>();
-		assetRendererManager->AddQueue("Opaque", DrawSortMode::DistanceFrontToBack);
-		assetRendererManager->AddQueue("Transparent", DrawSortMode::DistanceBackToFront);
-		assetRendererManager->AddQueue("Unlit", DrawSortMode::DistanceFrontToBack);
-		assetRendererManager->AddQueue("Skybox", DrawSortMode::DistanceFrontToBack);
+	}
+
+	{
+		GRIND_PROFILE_SCOPE("Create Renderer");
+		renderpassRegistry = AllocatorCore::Allocate<Grindstone::RenderPassRegistry>();
 	}
 
 	{
@@ -115,24 +121,24 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 void EngineCore::InitializeScene(bool shouldLoadSceneFromDefaults, const char* scenePath) {
 	GRIND_PROFILE_SCOPE("Loading Default Scene");
+
+	Grindstone::Uuid uuid;
 	if (shouldLoadSceneFromDefaults) {
 		sceneManager->LoadDefaultScene();
 	}
 	else if (strcmp(scenePath, "") == 0) {
 		sceneManager->CreateEmptyScene("Untitled");
 	}
+	else if (!Grindstone::Uuid::MakeFromString(scenePath, uuid)) {
+		sceneManager->CreateEmptyScene("Untitled");
+	}
 	else {
-		sceneManager->LoadScene(scenePath);
+		sceneManager->LoadScene(uuid);
 	}
 }
 
 void EngineCore::ShowMainWindow() {
 	windowManager->GetWindowByIndex(0)->Show();
-}
-
-EngineCore& EngineCore::GetInstance() {
-	static EngineCore instance;
-	return instance;
 }
 
 void EngineCore::Run() {
@@ -208,6 +214,10 @@ void EngineCore::RegisterInputManager(Input::Interface* newInputManager) {
 	inputManager = newInputManager;
 }
 
+void Grindstone::EngineCore::SetRendererFactory(BaseRendererFactory* factory) {
+	rendererFactory = factory;
+}
+
 Input::Interface* EngineCore::GetInputManager() const {
 	return inputManager;
 }
@@ -236,8 +246,12 @@ Events::Dispatcher* EngineCore::GetEventDispatcher() const {
 	return eventDispatcher;
 }
 
-BaseRenderer* EngineCore::CreateRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
-	return AllocatorCore::Allocate<DeferredRenderer>(targetRenderPass);
+BaseRendererFactory* EngineCore::GetRendererFactory() {
+	return rendererFactory;
+}
+
+RenderPassRegistry* Grindstone::EngineCore::GetRenderPassRegistry() {
+	return renderpassRegistry;
 }
 
 std::filesystem::path EngineCore::GetProjectPath() const {

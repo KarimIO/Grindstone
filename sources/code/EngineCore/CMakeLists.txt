@@ -4,7 +4,7 @@ source_group("AssetRenderer\\Source Files" FILES ${SOURCE_ASSET_RENDERER})
 source_group("AssetRenderer\\Header Files" FILES ${HEADER_ASSET_RENDERER})
 
 file(GLOB_RECURSE SOURCE_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetManager.cpp ${ENGINE_CORE_DIR}/Assets/Assets.cpp ${COMMON_DIR}/ResourcePipeline/AssetType.cpp)
-file(GLOB_RECURSE HEADER_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetManager.hpp ${ENGINE_CORE_DIR}/Assets/AssetImporter.hpp ${ENGINE_CORE_DIR}/Assets/Asset.hpp ${COMMON_DIR}/ResourcePipeline/AssetType.hpp)
+file(GLOB_RECURSE HEADER_ASSETS_BASE ${ENGINE_CORE_DIR}/Assets/AssetManager.hpp ${ENGINE_CORE_DIR}/Assets/AssetImporter.hpp ${ENGINE_CORE_DIR}/Assets/Asset.hpp ${ENGINE_CORE_DIR}/Assets/AssetReference.hpp ${ENGINE_CORE_DIR}/Assets/CountedAssetReference.hpp ${COMMON_DIR}/ResourcePipeline/AssetType.hpp)
 source_group("Assets\\Source Files" FILES ${SOURCE_ASSETS_BASE})
 source_group("Assets\\Header Files" FILES ${HEADER_ASSETS_BASE})
 
@@ -18,10 +18,10 @@ file(GLOB_RECURSE HEADER_ASSETS_MATERIALS "${ENGINE_CORE_DIR}/Assets/Materials/*
 source_group("Assets\\Materials\\Source Files" FILES ${SOURCE_ASSETS_MATERIALS})
 source_group("Assets\\Materials\\Header Files" FILES ${HEADER_ASSETS_MATERIALS})
 
-file(GLOB_RECURSE SOURCE_ASSETS_SHADERS "${ENGINE_CORE_DIR}/Assets/Shaders/*.cpp")
-file(GLOB_RECURSE HEADER_ASSETS_SHADERS "${ENGINE_CORE_DIR}/Assets/Shaders/*.hpp")
-source_group("Assets\\Shaders\\Source Files" FILES ${SOURCE_ASSETS_SHADERS})
-source_group("Assets\\Shaders\\Header Files" FILES ${HEADER_ASSETS_SHADERS})
+file(GLOB_RECURSE SOURCE_ASSETS_PIPELINE_SET "${ENGINE_CORE_DIR}/Assets/PipelineSet/*.cpp")
+file(GLOB_RECURSE HEADER_ASSETS_PIPELINE_SET "${ENGINE_CORE_DIR}/Assets/PipelineSet/*.hpp")
+source_group("Assets\\Pipeline Set\\Source Files" FILES ${SOURCE_ASSETS_PIPELINE_SET})
+source_group("Assets\\Pipeline Set\\Header Files" FILES ${HEADER_ASSETS_PIPELINE_SET})
 
 file(GLOB_RECURSE SOURCE_ASSETS_TEXTURES "${ENGINE_CORE_DIR}/Assets/Textures/*.cpp")
 file(GLOB_RECURSE HEADER_ASSETS_TEXTURES "${ENGINE_CORE_DIR}/Assets/Textures/*.hpp")
@@ -73,8 +73,8 @@ file(GLOB_RECURSE HEADER_MEMORY ${COMMON_DIR}/Memory/Allocators/LinearAllocator.
 source_group("Memory\\Source Files" FILES ${SOURCE_MEMORY})
 source_group("Memory\\Header Files" FILES ${HEADER_MEMORY})
 
-file(GLOB_RECURSE SOURCE_COMMON_UTILS ${CORE_UTILS} ${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINE_CORE_DIR}/Utils/Utilities.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${ENGINE_CORE_DIR}/Utils/WindowGlue.cpp)
-file(GLOB_RECURSE HEADER_COMMON_UTILS ${COMMON_DIR}/Utilities/ModuleLoading.hpp ${ENGINE_CORE_DIR}/Utils/Utilities.hpp ${COMMON_DIR}/ResourcePipeline/Uuid.hpp ${COMMON_DIR}/Buffer.hpp)
+file(GLOB_RECURSE SOURCE_COMMON_UTILS ${CORE_UTILS} ${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINE_CORE_DIR}/Utils/Utilities.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${ENGINE_CORE_DIR}/Utils/WindowGlue.cpp ${COMMON_DIR}/HashedString.cpp)
+file(GLOB_RECURSE HEADER_COMMON_UTILS ${COMMON_DIR}/Utilities/ModuleLoading.hpp ${ENGINE_CORE_DIR}/Utils/Utilities.hpp ${COMMON_DIR}/ResourcePipeline/Uuid.hpp ${COMMON_DIR}/Buffer.hpp ${COMMON_DIR}/HashedString.hpp)
 source_group("Utilities\\Source Files" FILES ${SOURCE_COMMON_UTILS})
 source_group("Utilities\\Header Files" FILES ${HEADER_COMMON_UTILS})
 
@@ -96,7 +96,7 @@ set(ENGINE_CORE_SOURCES
 	${SOURCE_ASSETS_BASE}
 	${SOURCE_ASSETS_ANIMATION_CLIP}
 	${SOURCE_ASSETS_MATERIALS}
-	${SOURCE_ASSETS_SHADERS}
+	${SOURCE_ASSETS_PIPELINE_SET}
 	${SOURCE_ASSETS_TEXTURES}
 	${SOURCE_AUDIO}
 	${SOURCE_PLUGIN_SYSTEM}
@@ -121,7 +121,7 @@ set(ENGINE_CORE_HEADERS
 	${HEADER_ASSETS_MATERIALS}
 	${HEADER_ASSETS_MESHES_3D}
 	${HEADER_ASSETS_RIG}
-	${HEADER_ASSETS_SHADERS}
+	${HEADER_ASSETS_PIPELINE_SET}
 	${HEADER_ASSETS_TEXTURES}
 	${HEADER_AUDIO}
 	${HEADER_PLUGIN_SYSTEM}
@@ -149,7 +149,6 @@ target_include_directories(EngineCore PUBLIC ../)
 
 target_link_libraries(EngineCore
 	${CORE_LIBS}
-	Rpcrt4.lib
 	rapidjson
 	OpenAL::OpenAL
 )

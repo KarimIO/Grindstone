@@ -1,0 +1,14 @@
+{
+    "assetImporterVersion": 1,
+    "metaFileVersion": 1,
+    "defaultUuid": "52202066-7e7d-4b01-839f-a3d9969d65ff",
+    "subassets": [
+        {
+            "displayName": "ComputePipelineSet",
+            "address": "@EDITOR_ICONS/assetIcons/ComputePipelineSet",
+            "subassetIdentifier": "ComputePipelineSet",
+            "uuid": "52202066-7e7d-4b01-839f-a3d9969d65ff",
+            "type": "Texture"
+        }
+    ]
+}

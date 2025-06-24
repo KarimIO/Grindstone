@@ -15,7 +15,7 @@ namespace Grindstone {
 
 			AudioClipImporter(EngineCore* engineCore);
 
-			virtual void* ProcessLoadedFile(Uuid uuid) override;
+			virtual void* LoadAsset(Uuid uuid) override;
 			virtual void QueueReloadAsset(Uuid uuid) override;
 		private:
 			EngineCore* engineCore;

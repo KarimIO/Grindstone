@@ -277,7 +277,7 @@ DynamicAllocator::~DynamicAllocator() {
 #endif
 
 	if (startMemory && hasAllocatedOwnMemory) {
-		delete startMemory;
+		delete[] startMemory;
 	}
 }
 
@@ -332,7 +332,9 @@ bool DynamicAllocator::Free(void* ptr) {
 	void* blockStart = reinterpret_cast<char*>(allocationHeader) - allocationHeader->padding;
 	size_t requiredSize = allocationHeader->blockSize;
 	if (FreeBlockFromFreelist(firstFreeHeader, blockStart, requiredSize)) {
-		usedSize -= requiredSize;
+		if (usedSize >= requiredSize) {
+			usedSize -= requiredSize;
+		}
 #ifdef _DEBUG
 		nameMap.erase(ptr);
 #endif

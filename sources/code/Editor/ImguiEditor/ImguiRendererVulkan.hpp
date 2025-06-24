@@ -40,6 +40,7 @@ namespace Grindstone::Editor::ImguiEditor {
 		);
 
 		VkDescriptorPool imguiPool = nullptr;
+		Grindstone::GraphicsAPI::DescriptorSetLayout* textureDescriptorLayout = nullptr;
 		std::vector<GraphicsAPI::CommandBuffer*> commandBuffers;
 
 		bool shouldRebuildSwapchain = false;

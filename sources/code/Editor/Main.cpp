@@ -78,10 +78,11 @@ static std::filesystem::path CreateNewProject() {
 	std::string defaultPlugins = "PluginEditorAudioImporter\n\
 PluginEditorMaterialImporter\n\
 PluginEditorModelImporter\n\
-PluginEditorShaderImporter\n\
+PluginEditorPipelineSetImporter\n\
 PluginEditorTextureImporter\n\
 PluginBulletPhysics\n\
-PluginRenderables3D\n";
+PluginRenderables3D\n\
+PluginRendererDeferred\n";
 
 	std::ofstream outputPlugins(basePath / "buildSettings" / "pluginsManifest.txt");
 	outputPlugins.write(defaultPlugins.c_str(), defaultPlugins.size());

@@ -4,9 +4,9 @@
 #include <string>
 #include <mutex>
 
-#include <Common/Graphics/GraphicsPipeline.hpp>
 #include <Common/Buffer.hpp>
 #include <EngineCore/Assets/Loaders/AssetLoader.hpp>
+#include <EngineCore/Assets/AssetReference.hpp>
 
 #include "Asset.hpp"
 #include "AssetImporter.hpp"
@@ -22,87 +22,60 @@ namespace Grindstone::Assets {
 
 		template<typename AssetImporterClass>
 		AssetImporterClass* GetManager() {
+			static_assert(std::is_base_of_v<Grindstone::AssetImporter, AssetImporterClass>, "AssetImporterClass not derived from Grindstone::AssetImporter");
 			return static_cast<AssetImporterClass*>(GetManager(AssetImporterClass::GetStaticAssetType()));
 		}
 
 		virtual void QueueReloadAsset(AssetType assetType, Uuid uuid);
-		virtual void* GetAsset(AssetType assetType, std::string_view address);
-		virtual void* GetAsset(AssetType assetType, Uuid uuid);
-		virtual void* IncrementAssetUse(AssetType assetType, Uuid uuid);
-		virtual void DecrementAssetUse(AssetType assetType, Uuid uuid);
-		virtual AssetLoadBinaryResult LoadBinaryByPath(AssetType assetType, const std::filesystem::path& path);
-		virtual AssetLoadBinaryResult LoadBinaryByAddress(AssetType assetType, std::string_view address);
+		virtual void* GetAssetByUuid(AssetType assetType, Uuid uuid);
+		virtual Grindstone::Uuid GetUuidByAddress(AssetType assetType, std::string_view address);
+
 		virtual AssetLoadBinaryResult LoadBinaryByUuid(AssetType assetType, Uuid uuid);
-		virtual AssetLoadTextResult LoadTextByPath(AssetType assetType, const std::filesystem::path& path);
-		virtual AssetLoadTextResult LoadTextByAddress(AssetType assetType, std::string_view address);
 		virtual AssetLoadTextResult LoadTextByUuid(AssetType assetType, Uuid uuid);
-		virtual bool LoadShaderSetByUuid(
-			Uuid uuid,
-			uint8_t shaderStagesBitMask,
-			size_t numShaderStages,
-			std::vector<GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData>& shaderStageCreateInfos,
-			std::vector<std::vector<char>>& fileData
-		);
-		virtual bool LoadShaderStageByUuid(
-			Uuid uuid,
-			GraphicsAPI::ShaderStage shaderStage,
-			GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& stageCreateInfo,
-			std::vector<char>& fileData
-		);
-		virtual bool LoadShaderSetByAddress(
-			std::string_view address,
-			uint8_t shaderStagesBitMask,
-			size_t numShaderStages,
-			std::vector<GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData>& shaderStageCreateInfos,
-			std::vector<std::vector<char>>& fileData
-		);
-		virtual bool LoadShaderStageByAddress(
-			std::string_view address,
-			GraphicsAPI::ShaderStage shaderStage,
-			GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& stageCreateInfo,
-			std::vector<char>& fileData
-		);
-		virtual bool LoadShaderSetByPath(
-			const std::filesystem::path& path,
-			uint8_t shaderStagesBitMask,
-			size_t numShaderStages,
-			std::vector<GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData>& shaderStageCreateInfos,
-			std::vector<std::vector<char>>& fileData
-		);
-		virtual bool LoadShaderStageByPath(
-			const std::filesystem::path& path,
-			GraphicsAPI::ShaderStage shaderStage,
-			GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData& stageCreateInfo,
-			std::vector<char>& fileData
-		);
-		virtual std::string& GetTypeName(AssetType assetType);
+		virtual const std::string& GetTypeName(AssetType assetType) const;
+
+		virtual void* GetAndIncrementAssetCount(Grindstone::AssetType assetType, Grindstone::Uuid uuid);
+		virtual void IncrementAssetCount(Grindstone::AssetType assetType, Grindstone::Uuid uuid);
+		virtual void DecrementAssetCount(Grindstone::AssetType assetType, Grindstone::Uuid uuid);
+
+		template<typename AssetImporterClass>
+		void RegisterAssetType() {
+			static_assert(std::is_base_of_v<Grindstone::AssetImporter, AssetImporterClass>, "AssetImporterClass not derived from Grindstone::AssetImporter");
+			RegisterAssetType(AssetImporterClass::GetStaticAssetType(), AssetImporterClass::GetStaticAssetTypeName(), Grindstone::Memory::AllocatorCore::Allocate<AssetImporterClass>());
+		}
 
 		template<typename T>
-		T* GetAsset(Uuid uuid) {
-			void* assetPtr = GetAsset(T::GetStaticType(), uuid);
+		Grindstone::AssetReference<T> GetAssetReferenceByUuid(Grindstone::Uuid uuid) {
+			static_assert(std::is_base_of_v<Grindstone::Asset, T>, "T not derived from Grindstone::Asset");
+
+			if (!uuid.IsValid()) {
+				return Grindstone::AssetReference<T>();
+			}
+
+			const size_t assetTypeSizeT = static_cast<size_t>(T::GetStaticType());
+			if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
+				return Grindstone::AssetReference<T>();
+			}
+
+			AssetImporter* assetImporter = assetTypeImporters[assetTypeSizeT];
+
+			return Grindstone::AssetReference<T>::CreateAndIncrement(uuid);
+		}
+
+		template<typename T>
+		Grindstone::AssetReference<T> GetAssetReferenceByAddress(std::string_view address) {
+			static_assert(std::is_base_of_v<Grindstone::Asset, T>, "T not derived from Grindstone::Asset");
+			Grindstone::Uuid uuid = GetUuidByAddress(T::GetStaticType(), address);
+			return GetAssetReferenceByUuid<T>(uuid);
+		}
+
+		template<typename T>
+		T* GetAssetByUuid(Uuid uuid) {
+			static_assert(std::is_base_of_v<Grindstone::Asset, T>, "T not derived from Grindstone::Asset");
+			void* assetPtr = GetAssetByUuid(T::GetStaticType(), uuid);
 			return static_cast<T*>(assetPtr);
 		};
 
-		template<typename T>
-		T* GetAsset(std::string_view address) {
-			void* assetPtr = GetAsset(T::GetStaticType(), address);
-			return static_cast<T*>(assetPtr);
-		};
-
-		template<typename T>
-		T* GetAsset(Grindstone::AssetReference<T> assetReference) {
-			void* assetPtr = GetAsset(T::GetStaticType(), assetReference.uuid);
-			return static_cast<T*>(assetPtr);
-		};
-
-		template<typename T>
-		T* IncrementAssetUse(Uuid uuid) {
-			void* assetPtr = IncrementAssetUse(T::GetStaticType(), uuid);
-			return static_cast<T*>(assetPtr);
-		};
-
-		// TODO: Register these into a file, so we can refer to types by number, and
-		// if there is a new type, we can change all assetTypes in meta files.
 		virtual void RegisterAssetType(AssetType assetType, const char* typeName, AssetImporter* importer);
 		virtual void UnregisterAssetType(AssetType assetType);
 	private:

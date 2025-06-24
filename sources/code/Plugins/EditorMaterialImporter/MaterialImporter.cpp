@@ -41,7 +41,7 @@ void MaterialImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, 
 
 	std::filesystem::path outputPath = assetRegistry.GetCompiledAssetsPath() / uuid.ToString();
 	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
-	metaFile->Save();
+	metaFile->Save(materialImporterVersion);
 	assetManager.QueueReloadAsset(AssetType::Material, uuid);
 }
 

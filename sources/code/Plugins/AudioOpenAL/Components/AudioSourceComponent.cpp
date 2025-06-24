@@ -22,7 +22,7 @@ void Grindstone::SetupAudioSourceComponent(entt::registry& registry, entt::entit
 
 	Grindstone::AudioSourceComponent& audioSource = registry.get<AudioSourceComponent>(entity);
 
-	Grindstone::Audio::AudioClipAsset* audioClip = assetManager->GetAsset<Grindstone::Audio::AudioClipAsset>(audioSource.audioClip.uuid);
+	Grindstone::Audio::AudioClipAsset* audioClip = assetManager->GetAssetByUuid<Grindstone::Audio::AudioClipAsset>(audioSource.audioClip.uuid);
 	if (audioClip == nullptr) {
 		return;
 	}

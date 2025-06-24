@@ -21,6 +21,7 @@ add_library(
 )
 
 target_compile_features(PluginScriptCSharp PRIVATE cxx_std_17)
+set_target_properties(PluginScriptCSharp PROPERTIES FOLDER Plugins/Scripts)
 
 find_path(ENTT_INCLUDE_DIRS "entt/entt.hpp")
 

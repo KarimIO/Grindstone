@@ -8,6 +8,9 @@
 namespace Grindstone::Editor {
 	class MetaFile;
 
+	using ImporterVersion = uint32_t;
+	using ImporterFactory = void(*)(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManger, const std::filesystem::path&);
+
 	namespace Importers{
 		class Importer {
 		public:

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.20)
 
 if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 	if(DEFINED ENV{VCPKG_ROOT})
@@ -9,8 +9,9 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 endif()
 
 include("${CMAKE_TOOLCHAIN_FILE}")
+set_property(GLOBAL PROPERTY USE_FOLDERS TRUE)
 
-if (WIN32)
+if (WIN32 AND CMAKE_GENERATOR MATCHES "Visual Studio")
 	project(Grindstone VERSION 1.0.0 LANGUAGES CXX CSharp)
 	enable_language(CSharp)
 else()
@@ -30,8 +31,17 @@ set(ENGINECORE_DIR "${CODE_DIR}/EngineCore")
 set(EDITORCONFIG "${CODE_DIR}/.editorconfig")
 set(BUILD_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
-set(CORE_UTILS ${ENGINECORE_DIR}/Logger.cpp ${ENGINECORE_DIR}/Logger.hpp ${ENGINECORE_DIR}/Utils/MemoryAllocator.cpp ${ENGINECORE_DIR}/Utils/MemoryAllocator.hpp ${COMMON_DIR}/Memory/Allocators/DynamicAllocator.cpp ${COMMON_DIR}/Memory/Allocators/DynamicAllocator.hpp)
-set(CORE_LIBS fmt::fmt)
+set(CORE_UTILS
+	${ENGINECORE_DIR}/EngineCoreInstance.cpp
+	${ENGINECORE_DIR}/Assets/AssetReference.cpp ${ENGINECORE_DIR}/Assets/AssetReference.hpp
+	${ENGINECORE_DIR}/ECS/Entity.cpp ${ENGINECORE_DIR}/ECS/Entity.hpp
+	${ENGINECORE_DIR}/Logger.cpp ${ENGINECORE_DIR}/Logger.hpp
+	${ENGINECORE_DIR}/Utils/MemoryAllocator.cpp ${ENGINECORE_DIR}/Utils/MemoryAllocator.hpp
+	${COMMON_DIR}/Memory/Allocators/DynamicAllocator.cpp ${COMMON_DIR}/Memory/Allocators/DynamicAllocator.hpp
+	${COMMON_DIR}/HashedString.cpp ${COMMON_DIR}/HashedString.hpp
+	${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.hpp
+)
+set(CORE_LIBS fmt::fmt Rpcrt4.lib)
 
 set(ENGINE_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/sources/code/EngineCore)
 file(GLOB_RECURSE SOURCE_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.cpp")
@@ -84,6 +94,11 @@ if (USE_RENDERABLES_3D)
 	add_subdirectory(${PLUGIN_DIR}/Renderables3D)
 endif()
 
+option(USE_RENDERABLES_DEFERRED "Include Deferred Renderer?" ON)
+if (USE_RENDERABLES_DEFERRED)
+	add_subdirectory(${PLUGIN_DIR}/RendererDeferred)
+endif()
+
 option(USE_EDITOR_AUDIO_IMPORTER "Include EditorAudioImporter?" ON)
 if (USE_EDITOR_AUDIO_IMPORTER)
 	add_subdirectory(${PLUGIN_DIR}/EditorAudioImporter)
@@ -99,9 +114,9 @@ if (USE_EDITOR_MODEL_IMPORTER)
 	add_subdirectory(${PLUGIN_DIR}/EditorModelImporter)
 endif()
 
-option(USE_EDITOR_SHADER_IMPORTER "Include EditorShaderImporter?" ON)
-if (USE_EDITOR_SHADER_IMPORTER)
-	add_subdirectory(${PLUGIN_DIR}/EditorShaderImporter)
+option(USE_EDITOR_PIPELINESET_IMPORTER "Include EditorPipelineSetImporter?" ON)
+if (USE_EDITOR_PIPELINESET_IMPORTER)
+	add_subdirectory(${PLUGIN_DIR}/EditorPipelineSetImporter)
 endif()
 
 option(USE_EDITOR_TEXTURE_IMPORTER "Include EditorTextureImporter?" ON)

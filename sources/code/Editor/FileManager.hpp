@@ -26,6 +26,13 @@ namespace Grindstone::Editor {
 			std::filesystem::path& outMountedPath
 		) const;
 
+		virtual bool TryGetAbsolutePathFromMountedPath(
+			const std::filesystem::path& mountedPath,
+			std::filesystem::path& outAbsolutePath
+		) const;
+
+		void CleanupStaleFiles();
+
 		void HandleAddMetaFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& filePath);
 		void HandleAddFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& filePath);
 

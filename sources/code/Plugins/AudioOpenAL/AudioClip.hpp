@@ -7,18 +7,7 @@
 namespace Grindstone {
 	namespace Audio {
 		struct AudioClipAsset : public Asset {
-			AudioClipAsset(
-				Uuid uuid,
-				std::string_view name,
-				ALuint buffer,
-				std::uint32_t channelCount,
-				std::uint32_t sampleRate,
-				std::uint16_t bitsPerSample
-			) : Asset(uuid, name),
-				buffer(buffer),
-				channelCount(channelCount),
-				sampleRate(sampleRate),
-				bitsPerSample(bitsPerSample) {}
+			AudioClipAsset(Grindstone::Uuid uuid) : Asset(uuid, uuid.ToString()) {}
 
 			ALuint buffer = -1;
 			std::uint32_t channelCount = 0;

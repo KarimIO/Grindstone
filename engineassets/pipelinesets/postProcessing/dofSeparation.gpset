@@ -1,0 +1,61 @@
+include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+include "$ENGINE/pipelinesets/common/postProcessingTemplate.gpset"
+
+pipelineSet "Depth of Field (Separation)" inherits "PostProcessing" {
+	configuration "main" {
+		pass "main" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment mainFragment
+			renderQueue: "DofSeparation"
+
+			properties {
+				cull: back
+				depthBias: false
+				depthWrite: false
+				depthTest: false
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: {
+					colorMask: rgba
+					blendPreset: opaque
+				}
+			}
+
+			shaderHlsl {
+				[[vk::binding(0, 0)]] SamplerState gbufferSampler : register(s0, space2);
+				Texture2D<float4> depthTexture : register(t0,  space1);
+				Texture2D<float4> litSceneTexture : register(t1,  space1);
+
+				struct FramentOutput {
+					[[vk::location(0)]] float4 outNearColor : SV_TARGET0;
+					[[vk::location(1)]] float4 outFarColor : SV_TARGET1;
+				};
+
+				FramentOutput mainFragment(VertexToFragment input) {
+					FramentOutput output = (FramentOutput)0;
+					float depthFromTexture = depthTexture.Sample(gbufferSampler, input.scaledFragmentTexCoord).x;
+					float m34 = rendererUbo.projectionMatrix[2].w;
+					float m33 = rendererUbo.projectionMatrix[2].z;
+					float near = m34 / (m33 - 1.0);
+					float far = m34 / (m33 + 1.0);
+					float ndc = (depthFromTexture * 2.0) - 1.0;
+					float linearDepth = ((2.0 * near) * far) / ((far + near) - (ndc * (far - near)));
+					float apertureF = 2.0;
+					float focalLength = 0.0500000007450580596923828125;
+					float apertureSize = focalLength / apertureF;
+					float focalDistance = 8.0;
+					float sensorHeight = 0.0024000001139938831329345703125;
+					float coc = ((-apertureSize) * (focalLength * (focalDistance - linearDepth))) / (linearDepth * (focalDistance - focalLength));
+					coc /= sensorHeight;
+					float3 litColor = litSceneTexture.Sample(gbufferSampler, input.scaledFragmentTexCoord).xyz;
+					float nearCoc = clamp(1.0 - coc, 0.0, 1.0);
+					output.outNearColor = float4(litColor, nearCoc);
+					float farCoc = clamp(coc, 0.0, 1.0);
+					output.outFarColor = float4(litColor, farCoc);
+
+					return output;
+				}
+			}
+		}
+	}
+}

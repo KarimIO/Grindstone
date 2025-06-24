@@ -7,11 +7,11 @@
 #include <string>
 #include <vector>
 
-
 #include <Common/ResourcePipeline/AssetType.hpp>
 #include <Common/ResourcePipeline/MetaFile.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
+#include <EngineCore/Logger.hpp>
 #include <Editor/Importers/ImporterManager.hpp>
 #include <Editor/EditorManager.hpp>
 
@@ -111,7 +111,11 @@ void AssetRegistry::ReadFile() {
 		const char* displayName = asset["displayName"].GetString();
 		const char* address = asset["address"].GetString();
 		const char* path = asset["path"].GetString();
-		Uuid uuid = asset["uuid"].GetString();
+		Uuid uuid;
+		if (!Grindstone::Uuid::MakeFromString(asset["uuid"].GetString(), uuid)) {
+			GPRINT_FATAL_V(Grindstone::LogSource::EngineCore, "Unable to make uuid for asset from {}", asset["uuid"].GetString());
+			continue;
+		}
 		const AssetType assetType = GetAssetTypeFromString(asset["assetType"].GetString());
 
 		assets[uuid] = Entry{
@@ -150,6 +154,10 @@ const std::filesystem::path& AssetRegistry::GetCompiledAssetsPath() const {
 	return compiledAssetsPath;
 }
 
+bool AssetRegistry::RemoveEntry(Uuid uuid) {
+	return assets.erase(uuid) != 0;
+}
+
 bool AssetRegistry::HasAsset(Uuid uuid) const {
 	return assets.find(uuid) != assets.end();
 }
@@ -159,6 +167,13 @@ bool AssetRegistry::TryGetPathWithMountPoint(const std::filesystem::path& path, 
 	Editor::FileManager& fileManager = editorManager.GetFileManager();
 	return fileManager.TryGetPathWithMountPoint(path, outMountedPath);
 }
+
+bool Grindstone::Editor::AssetRegistry::TryGetAbsolutePathFromMountedPath(const std::filesystem::path& mountedPath, std::filesystem::path& outAbsolutePath) const {
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
+	Editor::FileManager& fileManager = editorManager.GetFileManager();
+	return fileManager.TryGetAbsolutePathFromMountedPath(mountedPath, outAbsolutePath);
+}
+
 
 bool AssetRegistry::TryGetAssetDataFromAbsolutePath(const std::filesystem::path& path, AssetRegistry::Entry& outEntry) const {
 	std::filesystem::path mountedPath;
@@ -214,4 +229,14 @@ void AssetRegistry::FindAllFilesOfType(AssetType assetType, std::vector<Entry>& 
 			outEntries.push_back(entry);
 		}
 	}
+}
+
+std::unordered_set<Grindstone::Uuid> Grindstone::Editor::AssetRegistry::GetUsedUuids() const {
+	std::unordered_set<Grindstone::Uuid> unusedUuids;
+
+	for (const auto& [uuid, _] : assets) {
+		unusedUuids.insert(uuid);
+	}
+
+	return unusedUuids;
 }

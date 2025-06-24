@@ -48,6 +48,12 @@ namespace Grindstone::Memory::Allocators {
 		size_t GetUsedSize() const;
 		void* GetMemory() const;
 
+#ifdef _DEBUG
+		const std::map<void*, const char*>& GetNameMap() const {
+			return nameMap;
+		}
+#endif
+
 		template<typename T, typename... Args>
 		Grindstone::Memory::SmartPointers::SharedPtr<T> AllocateShared(Args&&... params) {
 			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T), alignof(T), typeid(T).name()));

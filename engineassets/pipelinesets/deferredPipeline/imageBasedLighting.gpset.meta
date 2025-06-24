@@ -1,0 +1,14 @@
+{
+    "assetImporterVersion": 0,
+    "metaFileVersion": 1,
+    "defaultUuid": "1cbe4ede-e379-4f66-9411-cc2e60b7e278",
+    "subassets": [
+        {
+            "displayName": "Image Based Lighting",
+            "address": "@CORESHADERS/lighting/ibl",
+            "subassetIdentifier": "Image Based Lighting",
+            "uuid": "1cbe4ede-e379-4f66-9411-cc2e60b7e278",
+            "type": "GraphicsPipelineSet"
+        }
+    ]
+}

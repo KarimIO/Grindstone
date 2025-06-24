@@ -1,0 +1,173 @@
+include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+include "$ENGINE/pipelinesets/common/rendererUniform.gpset"
+
+pipelineSet abstract "DeferredLighting" {
+	configuration "main" {
+		pass "main" {
+			renderQueue: "Lighting"
+			
+			properties {
+				cull: back
+				depthBias: false
+				depthWrite: false
+				depthTest: false
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: {
+					colorMask: rgba
+					blendPreset: additive
+				}
+			}
+
+			requiresBlocks [
+				GsLightingVertexInputs
+			]
+
+			shaderBlock GsLightingVertexInputs {
+				shaderEntrypoint: vertex mainVertex
+
+				requiresBlocks [
+					GsRendererUniform
+				]
+
+				shaderHlsl {
+					struct VertexInput {
+						[[vk::location(0)]] float2 position : POSITION0;
+					};
+
+					struct VertexToFragment {
+						float4 position : SV_Position;
+						[[vk::location(0)]] float2 fragmentTexCoord : TEXCOORD0;
+						[[vk::location(1)]] float2 scaledFragmentTexCoord : TEXCOORD1;
+					};
+
+					VertexToFragment mainVertex(VertexInput inData) {
+						VertexToFragment outData = (VertexToFragment)0;
+						outData.position = float4(inData.position, 0.0, 1.0);
+						outData.fragmentTexCoord = ((inData.position * 0.5f) + float2(0.5f, 0.5f));
+						outData.scaledFragmentTexCoord = outData.fragmentTexCoord * rendererUbo.renderScale;
+						return outData;
+					}
+				}
+			}
+
+			shaderBlock CommonConstants {
+				shaderHlsl {
+					static const float PI = 3.14159f;
+				}
+			}
+
+			shaderBlock LightFresnelSchlick {
+				shaderHlsl {
+					float3 LightFresnelSchlick(in float3 f0, in float f90, in float VH) {
+						return f0 + (f90-f0) * pow(1-VH, 5.0f);
+					}
+				}
+			}
+
+			shaderBlock LightDistributionGGX {
+				requiresBlocks [
+					CommonConstants
+				]
+
+				shaderHlsl {
+					float LightDistributionGGX(in float alphaSqr, in float NH) {
+						float denom = NH * NH * (alphaSqr - 1) + 1;
+
+						return alphaSqr / (PI * denom * denom);
+					}
+				}
+			}
+
+			shaderBlock LightVisibilitySmith {
+				shaderHlsl {
+					float LightVisibilitySmith( in float NL, in float NV, in float alphaSqr ) {
+						float Lambda_GGXV = NL * sqrt((-NV * alphaSqr + NV) * NV + alphaSqr);
+						float Lambda_GGXL = NV * sqrt((-NL * alphaSqr + NL) * NL + alphaSqr);
+
+						// TODO: Should this be 0.5f?
+						return 0.25f / max( Lambda_GGXV + Lambda_GGXL, 0.0001f );
+					}
+				}
+			}
+
+			shaderBlock DiffuseDisney {
+				requiresBlocks [
+					LightFresnelSchlick
+				]
+
+				shaderHlsl {
+					float DiffuseDisney(float NdotV, float NdotL, float LdotH, float linearRoughness) {
+						float energyBias = lerp(0.0, 0.5, linearRoughness);
+						float energyFactor = lerp(1.0, 1.0/1.51, linearRoughness);
+						float fd90 = energyBias + 2.0 * LdotH * LdotH * linearRoughness;
+						float3 f0 = float3(1.0f , 1.0f , 1.0f);
+						float lightScatter = LightFresnelSchlick( f0 , fd90 , NdotL ) .r;
+						float viewScatter = LightFresnelSchlick(f0 , fd90 , NdotV ).r;
+
+						return lightScatter * viewScatter * energyFactor;
+					}
+				}
+			}
+
+			shaderBlock BSDF {
+				requiresBlocks [
+					LightFresnelSchlick,
+					LightDistributionGGX,
+					LightVisibilitySmith
+				]
+
+				shaderHlsl {
+					float3 BSDF(float NV, float NL, float LH, float NH, float alpha, float3 SpecularColor) {
+						float3 f0 = 0.32 * SpecularColor * SpecularColor;
+						float f90 = clamp(50 * dot(f0, float3(0.33, 0.33, 0.33)), 0, 1);
+
+						float3 F = LightFresnelSchlick(f0, f90, LH);
+						float D = LightDistributionGGX(alpha, NH);
+						float Vis = LightVisibilitySmith(NL, NV, alpha);
+
+						return (F * D * Vis);
+					}
+				}
+			}
+
+			shaderBlock poissonDisk {
+				shaderHlsl {
+					static const float2 poissonDisk[16] = {
+						float2( -0.94201624, -0.39906216 ),
+						float2( 0.94558609, -0.76890725 ),
+						float2( -0.094184101, -0.92938870 ),
+						float2( 0.34495938, 0.29387760 ),
+						float2( -0.91588581, 0.45771432 ),
+						float2( -0.81544232, -0.87912464 ),
+						float2( -0.38277543, 0.27676845 ),
+						float2( 0.97484398, 0.75648379 ),
+						float2( 0.44323325, -0.97511554 ),
+						float2( 0.53742981, -0.47373420 ),
+						float2( -0.26496911, -0.41893023 ),
+						float2( 0.79197514, 0.19090188 ),
+						float2( -0.24188840, 0.99706507 ),
+						float2( -0.81409955, 0.91437590 ),
+						float2( 0.19984126, 0.78641367 ),
+						float2( 0.14383161, -0.14100790 )
+					};
+
+					float ShadowRandom(float4 seed4) {
+						float dotProduct = dot(seed4, float4(12.9898,78.233,45.164,94.673));
+						return frac(sin(dotProduct) * 43758.5453);
+					}
+				}
+			}
+
+			shaderBlock LightGbufferUniforms {
+				shaderHlsl {
+					SamplerState gbufferSampler : register(s0, space1);
+					Texture2D<float4> gbufferDepth : register(t1, space1);
+					Texture2D<float4> gbufferAlbedo : register(t2, space1);
+					Texture2D<float4> gbufferNormals : register(t3, space1);
+					Texture2D<float4> gbufferSpecularRoughness : register(t4, space1);
+				}
+			}
+		}
+	}
+}

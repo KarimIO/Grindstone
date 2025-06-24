@@ -27,36 +27,40 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void BeginDebugLabelSection(const char* name, float color[4] = nullptr) override;
 		virtual void EndDebugLabelSection() override;
 		virtual void BindGraphicsDescriptorSet(
-			GraphicsAPI::GraphicsPipeline* graphicsPipeline,
-			GraphicsAPI::DescriptorSet** descriptorSets,
+			const GraphicsAPI::GraphicsPipeline* graphicsPipeline,
+			const GraphicsAPI::DescriptorSet* const* descriptorSets,
+			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		) override;
 		virtual void BindComputeDescriptorSet(
-			GraphicsAPI::ComputePipeline* graphicsPipeline,
-			GraphicsAPI::DescriptorSet** descriptorSets,
+			const GraphicsAPI::ComputePipeline* graphicsPipeline,
+			const GraphicsAPI::DescriptorSet* const* descriptorSets,
+			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		) override;
 		virtual void BindCommandBuffers(Grindstone::GraphicsAPI::CommandBuffer** commandBuffers, uint32_t commandBuffersCount) override;
 		virtual void SetViewport(float offsetX, float offsetY, float width, float height, float depthMin = 0.0f, float depthMax = 1.0f) override;
 		virtual void SetScissor(int32_t offsetX, int32_t offsetY, uint32_t width, uint32_t height) override;
 		virtual void SetDepthBias(float biasConstantFactor, float biasSlopeFactor) override;
-		virtual void BindGraphicsPipeline(GraphicsAPI::GraphicsPipeline* pipeline) override;
-		virtual void BindComputePipeline(GraphicsAPI::ComputePipeline* pipeline) override;
-		virtual void BindVertexArrayObject(GraphicsAPI::VertexArrayObject* vertexArrayObject) override;
-		virtual void BindVertexBuffers(GraphicsAPI::VertexBuffer** vb, uint32_t count) override;
-		virtual void BindIndexBuffer(GraphicsAPI::IndexBuffer* indexBuffer) override;
+		virtual void BindGraphicsPipeline(const GraphicsAPI::GraphicsPipeline* pipeline) override;
+		virtual void BindComputePipeline(const GraphicsAPI::ComputePipeline* pipeline) override;
+		virtual void BindVertexArrayObject(const GraphicsAPI::VertexArrayObject* vertexArrayObject) override;
+		virtual void BindVertexBuffers(const GraphicsAPI::Buffer* const * vb, uint32_t count) override;
+		virtual void BindIndexBuffer(GraphicsAPI::Buffer* indexBuffer) override;
 		virtual void DrawVertices(uint32_t vertexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) override;
 		virtual void DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) override;
 		virtual void DispatchCompute(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) override;
-		virtual void BlitDepthImage(Grindstone::GraphicsAPI::DepthStencilTarget* src, Grindstone::GraphicsAPI::DepthStencilTarget* dst) override;
-		virtual void WaitForComputeMemoryBarrier(Grindstone::GraphicsAPI::RenderTarget* renderTarget, bool shouldMakeWritable) override;
+		virtual void BlitImage(Grindstone::GraphicsAPI::Image* src, Grindstone::GraphicsAPI::Image* dst) override;
+		virtual void WaitForComputeMemoryBarrier(Grindstone::GraphicsAPI::Image* renderTarget, bool shouldMakeWritable) override;
+		virtual void PipelineBarrier(const GraphicsAPI::ImageBarrier* barriers, uint32_t barrierCount) override;
 
 		virtual void EndCommandBuffer() override;
 	private:
 		virtual void BindDescriptorSet(
 			VkPipelineLayout pipelineLayout,
 			VkPipelineBindPoint bindPoint,
-			GraphicsAPI::DescriptorSet** descriptorSets,
+			const GraphicsAPI::DescriptorSet* const* descriptorSets,
+			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		);
 

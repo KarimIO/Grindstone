@@ -18,9 +18,9 @@ extern "C" {
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 
 		if (editorPluginInterface != nullptr) {
-			editorPluginInterface->RegisterAssetImporter("fbx", ImportModel);
-			editorPluginInterface->RegisterAssetImporter("dae", ImportModel);
-			editorPluginInterface->RegisterAssetImporter("obj", ImportModel);
+			editorPluginInterface->RegisterAssetImporter("fbx", ImportModel, modelImporterVersion);
+			editorPluginInterface->RegisterAssetImporter("dae", ImportModel, modelImporterVersion);
+			editorPluginInterface->RegisterAssetImporter("obj", ImportModel, modelImporterVersion);
 		}
 	}
 

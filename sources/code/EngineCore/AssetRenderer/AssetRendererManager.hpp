@@ -14,24 +14,15 @@ namespace Grindstone {
 
 	class AssetRendererManager {
 	public:
-		void AddAssetRenderer(BaseAssetRenderer* assetRenderer);
-		void RemoveAssetRenderer(BaseAssetRenderer* assetRenderer);
-		void AddQueue(const char* name, DrawSortMode sortType);
-		void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet);
-		RenderQueueIndex GetIndexOfRenderQueue(const std::string& renderQueue) const;
-		void RenderShadowMap(
+		virtual void AddAssetRenderer(BaseAssetRenderer* assetRenderer);
+		virtual void RemoveAssetRenderer(BaseAssetRenderer* assetRenderer);
+		virtual void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet);
+		virtual void RenderQueue(
 			GraphicsAPI::CommandBuffer* commandBuffer,
-			GraphicsAPI::DescriptorSet* lightingDescriptorSet,
-			entt::registry& registry,
-			glm::vec3 lightSourcePosition
+			const entt::registry& registry,
+			Grindstone::HashedString renderQueue
 		);
-		void RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, const char* name);
-		void CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt::registry& registry);
-		void SortQueues();
-
+		
 		std::map<std::string, BaseAssetRenderer*> assetRenderers;
-	private:
-		std::map<std::string, DrawSortMode> queueDrawSortModes;
-		std::vector<std::string> assetQueuesNames;
 	};
 }

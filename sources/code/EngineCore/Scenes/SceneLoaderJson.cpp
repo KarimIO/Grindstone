@@ -179,9 +179,8 @@ void SceneLoaderJson::ParseMember(
 		GenericAssetReference& assetRefPtr = *static_cast<GenericAssetReference*>(memberPtr);
 		auto type = (Grindstone::Reflection::TypeDescriptor_AssetReference*)member;
 		const char* uuidAsString = parameter.GetString();
-		assetRefPtr.uuid = Uuid(uuidAsString);
-		if (assetRefPtr.uuid.IsValid()) {
-			EngineCore::GetInstance().assetManager->IncrementAssetUse(type->assetType, assetRefPtr.uuid);
+		if (Grindstone::Uuid::MakeFromString(uuidAsString, assetRefPtr.uuid)) {
+			EngineCore::GetInstance().assetManager->GetAndIncrementAssetCount(type->assetType, assetRefPtr.uuid);
 		}
 		else {
 			GPRINT_ERROR(LogSource::EngineCore, "Invalid UUID in entity!");

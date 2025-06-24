@@ -42,7 +42,7 @@ Manager& Manager::GetInstance() {
 	return manager;
 }
 
-Importers::ImporterManager& Manager::GetImporterManager() {
+Grindstone::Importers::ImporterManager& Manager::GetImporterManager() {
 	return importerManager;
 }
 
@@ -113,7 +113,10 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	}
 	taskSystem.CullDoneTasks();
 
-	Editor::Manager::GetInstance().GetAssetRegistry().WriteFile();
+	// TODO: This might not be necessary or desirable - make it an option.
+	fileManager.CleanupStaleFiles();
+
+	assetRegistry.WriteFile();
 
 	gitManager.Initialize();
 	csharpBuildManager.FinishInitialFileProcessing();
@@ -274,6 +277,8 @@ bool Manager::LoadEngine() {
 	Plugins::Interface& pluginInterface = engineCore->GetPluginManager()->GetInterface();
 	Grindstone::Logger::SetLoggerState(pluginInterface.GetLoggerState());
 	Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface.GetAllocatorState());
+
+	Grindstone::EngineCore::SetInstance(*engineCore);
 
 	return engineCore != nullptr;
 }

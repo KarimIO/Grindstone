@@ -5,10 +5,14 @@
 
 using namespace Grindstone::Plugins;
 
-void EditorPluginInterface::RegisterAssetImporter(const char* extension, Grindstone::Importers::ImporterManager::ImporterFactory importer) {
+void EditorPluginInterface::RegisterAssetImporter(
+	const char* extension,
+	Grindstone::Editor::ImporterFactory importerFactory,
+	Grindstone::Editor::ImporterVersion importerVersion
+) {
 	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
 	Grindstone::Importers::ImporterManager& importerManager = manager.GetImporterManager();
-	importerManager.AddImporterFactory(extension, importer);
+	importerManager.AddImporterFactory(extension, importerFactory, importerVersion);
 }
 
 void EditorPluginInterface::RegisterAssetTemplate(AssetType assetType, const char* name, const char* extension, const void* const sourcePtr, size_t sourceSize) {

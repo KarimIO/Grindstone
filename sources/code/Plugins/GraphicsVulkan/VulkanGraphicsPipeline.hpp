@@ -15,12 +15,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		VkPipelineLayout GetGraphicsPipelineLayout() const;
 	public:
 		virtual void Bind() {};
-		virtual void Recreate(const CreateInfo& createInfo) override;
 	private:
-		void CreateShaderModule(
-			GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData &createInfo,
-			VkPipelineShaderStageCreateInfo &out
-		);
 	private:
 		VkPipelineLayout pipelineLayout = nullptr;
 		VkPipeline graphicsPipeline = nullptr;

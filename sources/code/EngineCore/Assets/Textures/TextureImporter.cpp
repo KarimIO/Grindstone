@@ -14,37 +14,23 @@
 using namespace Grindstone;
 using namespace Grindstone::Formats::DDS;
 
-void* TextureImporter::ProcessLoadedFile(Uuid uuid) {
+static bool LoadTextureAsset(TextureAsset& textureAsset) {
 	EngineCore& engineCore = EngineCore::GetInstance();
-	Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByUuid(AssetType::Texture, uuid);
-	if (result.status != Assets::AssetLoadStatus::Success) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find texture with id {}.", uuid.ToString());
-		return nullptr;
+
+	Grindstone::Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByUuid(AssetType::Texture, textureAsset.uuid);
+	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
+		GPRINT_WARN_V(LogSource::EngineCore, "Unable to load texture: {}", textureAsset.uuid.ToString());
+		textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Missing;
+		return false;
 	}
 
-	auto asset = assets.emplace(uuid, TextureAsset());
-	return ProcessLoadedFile(uuid, result.displayName, std::move(result.buffer), asset.first->second);
-}
+	textureAsset.name = result.displayName;
 
-void* TextureImporter::ProcessLoadedFile(std::string_view address) {
-	EngineCore& engineCore = EngineCore::GetInstance();
-	Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByAddress(AssetType::Texture, address);
-	if (result.status != Assets::AssetLoadStatus::Success) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find texture with address {}.", address);
-		return nullptr;
-	}
-
-	auto asset = texturesByAddress.emplace(address, TextureAsset());
-	return ProcessLoadedFile(Uuid(), result.displayName, std::move(result.buffer), asset.first->second);
-}
-
-void* TextureImporter::ProcessLoadedFile(Uuid uuid, std::string& assetName, Buffer buffer, TextureAsset& textureAsset) {
-	EngineCore& engineCore = EngineCore::GetInstance();
-
-	const char* fileContents = reinterpret_cast<const char*>(buffer.Get());
+	const char* fileContents = reinterpret_cast<const char*>(result.buffer.Get());
 	if (strncmp(fileContents, "DDS ", 4) != 0) {
-		GPRINT_WARN_V(LogSource::EngineCore, "Invalid texture file: {}", uuid.ToString());
-		return nullptr;
+		GPRINT_WARN_V(LogSource::EngineCore, "Invalid texture file: {}", textureAsset.uuid.ToString());
+		textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Failed;
+		return false;
 	}
 
 	DDSHeader header;
@@ -53,7 +39,7 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, std::string& assetName, Buff
 	bool hasAlpha = header.ddspf.dwFlags & DDPF_ALPHAPIXELS;
 
 	bool useDxgi = false;
-	Grindstone::GraphicsAPI::ColorFormat format = GraphicsAPI::ColorFormat::Invalid;
+	Grindstone::GraphicsAPI::Format format = GraphicsAPI::Format::Invalid;
 
 	bool isFourCC = (header.ddspf.dwFlags & DDPF_FOURCC) > 0;
 	bool isRGB = (header.ddspf.dwFlags & DDPF_RGB) > 0;
@@ -62,113 +48,134 @@ void* TextureImporter::ProcessLoadedFile(Uuid uuid, std::string& assetName, Buff
 		switch (header.ddspf.dwFourCC) {
 		case FOURCC_DXT1:
 			format = hasAlpha
-				? Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT1
-				: Grindstone::GraphicsAPI::ColorFormat::RGB_DXT1;
+				? Grindstone::GraphicsAPI::Format::BC1_RGBA_UNORM_BLOCK
+				: Grindstone::GraphicsAPI::Format::BC1_RGB_UNORM_BLOCK;
 			break;
 		case FOURCC_DXT3:
-			format = Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT3;
+			format = Grindstone::GraphicsAPI::Format::BC2_UNORM_BLOCK;
 			break;
 		case FOURCC_DXT5:
-			format = Grindstone::GraphicsAPI::ColorFormat::RGBA_DXT5;
+			format = Grindstone::GraphicsAPI::Format::BC3_UNORM_BLOCK;
 			break;
 		case FOURCC_BC4:
-			format = Grindstone::GraphicsAPI::ColorFormat::BC4;
+			format = Grindstone::GraphicsAPI::Format::BC4_UNORM_BLOCK;
 			break;
 
 		case FOURCC_R16:
-			format = Grindstone::GraphicsAPI::ColorFormat::R16;
+			format = Grindstone::GraphicsAPI::Format::R16_UNORM;
 			break;
 		case FOURCC_RG16:
-			format = Grindstone::GraphicsAPI::ColorFormat::RG16;
+			format = Grindstone::GraphicsAPI::Format::R16G16_UNORM;
 			break;
 		case FOURCC_RGBA16:
-			format = Grindstone::GraphicsAPI::ColorFormat::RGBA16;
+			format = Grindstone::GraphicsAPI::Format::R16G16B16A16_UNORM;
 			break;
 		case FOURCC_R32:
-			format = Grindstone::GraphicsAPI::ColorFormat::R32;
+			format = Grindstone::GraphicsAPI::Format::R32_SFLOAT;
 			break;
 		case FOURCC_RG32:
-			format = Grindstone::GraphicsAPI::ColorFormat::RG32;
+			format = Grindstone::GraphicsAPI::Format::R32G32_SFLOAT;
 			break;
 		case FOURCC_RGBA32:
-			format = Grindstone::GraphicsAPI::ColorFormat::RGBA32;
+			format = Grindstone::GraphicsAPI::Format::R32G32B32A32_SFLOAT;
 			break;
 		case FOURCC_DXGI:
 			useDxgi = true;
 			break;
 		default:
-			throw std::runtime_error("Invalid FourCC in texture");
+			GPRINT_ERROR_V(LogSource::EngineCore, "Invalid FourCC in texture with id {}.", textureAsset.uuid.ToString());
+			textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Failed;
+			return false;
 		}
 	}
 	else if (isRGB) {
 		switch (header.ddspf.dwRGBBitCount) {
 		case 24:
-			format = Grindstone::GraphicsAPI::ColorFormat::RGB8;
+			format = Grindstone::GraphicsAPI::Format::R8G8B8_UINT;
 			break;
 		case 32:
-			format = Grindstone::GraphicsAPI::ColorFormat::RGBA8;
+			format = Grindstone::GraphicsAPI::Format::R8G8B8A8_UINT;
 			break;
 		default:
-			throw std::runtime_error("Invalid rgb pixel format in texture");
+			GPRINT_ERROR_V(LogSource::EngineCore, "Invalid rgb pixel format in texture with id {}.", textureAsset.uuid.ToString());
+			textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Failed;
+			return false;
 		}
 	}
 	else {
-		throw std::runtime_error("Invalid pixel format in texture");
+		GPRINT_ERROR_V(LogSource::EngineCore, "Invalid pixel format in texture with id {}.", textureAsset.uuid.ToString());
+		textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Failed;
+		return false;
 	}
 
 	const char* imgPtr = fileContents + 4 + sizeof(DDSHeader);
 	if (useDxgi) {
 		DDSHeaderExtended extendedHeader;
 		std::memcpy(&extendedHeader, imgPtr, sizeof(DDSHeaderExtended));
-		if (extendedHeader.dxgiFormat == DxgiFormat::DXGI_FORMAT_BC6H_TYPELESS || extendedHeader.dxgiFormat == DxgiFormat::DXGI_FORMAT_BC6H_UF16 || extendedHeader.dxgiFormat == DxgiFormat::DXGI_FORMAT_BC6H_SF16) {
-			format = Grindstone::GraphicsAPI::ColorFormat::BC6H;
+		if (extendedHeader.dxgiFormat == DxgiFormat::DXGI_FORMAT_BC6H_TYPELESS || extendedHeader.dxgiFormat == DxgiFormat::DXGI_FORMAT_BC6H_UF16) {
+			format = Grindstone::GraphicsAPI::Format::BC6H_UFLOAT_BLOCK;
+		}
+		else if (extendedHeader.dxgiFormat == DxgiFormat::DXGI_FORMAT_BC6H_SF16) {
+			format = Grindstone::GraphicsAPI::Format::BC6H_SFLOAT_BLOCK;
 		}
 		else {
-			throw std::runtime_error("Invalid extended DXGI format!");
+			GPRINT_ERROR_V(LogSource::EngineCore, "Invalid extended DXGI format in texture with id {}.", textureAsset.uuid.ToString());
+			textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Failed;
+			return false;
 		}
 
 		imgPtr += sizeof(DDSHeaderExtended);
 	}
 
-	Grindstone::GraphicsAPI::Texture::CreateInfo createInfo;
-	createInfo.debugName = assetName.c_str();
-	createInfo.data = imgPtr;
-	createInfo.size = header.dwSize;
-	createInfo.mipmaps = static_cast<uint16_t>(header.dwMipMapCount);
-	createInfo.format = format;
-	createInfo.width = header.dwWidth;
-	createInfo.height = header.dwHeight;
-	createInfo.isCubemap = (header.dwCaps2 & DDS_CUBEMAP_ALLFACES);
-	createInfo.options.shouldGenerateMipmaps = false;
-	createInfo.options.anistropy = 16.0f;
-	createInfo.options.mipMax = -1000.0f;
-	createInfo.options.mipMax = 1000.0f;
-	createInfo.options.mipFilter = TextureFilter::Linear;
-	createInfo.options.minFilter = TextureFilter::Linear;
-	createInfo.options.magFilter = TextureFilter::Linear;
+	bool hasCubemap = header.dwCaps2 & DDS_CUBEMAP_ALLFACES;
 
-	if (createInfo.isCubemap) {
-		createInfo.options.wrapModeU =
-		createInfo.options.wrapModeV =
-		createInfo.options.wrapModeW =
-		TextureWrapMode::ClampToEdge;
-	}
+	Grindstone::GraphicsAPI::Image::CreateInfo imgCreateInfo;
+	imgCreateInfo.debugName = textureAsset.name.c_str();
+	imgCreateInfo.initialData = imgPtr;
+	imgCreateInfo.initialDataSize = result.buffer.GetCapacity() - static_cast<uint64_t>(imgPtr - fileContents);
+	imgCreateInfo.mipLevels = static_cast<uint32_t>(header.dwMipMapCount);
+	imgCreateInfo.format = format;
+	imgCreateInfo.width = header.dwWidth;
+	imgCreateInfo.height = header.dwHeight;
+	imgCreateInfo.arrayLayers = hasCubemap ? 6 : 1;
+	imgCreateInfo.imageUsage =
+		GraphicsAPI::ImageUsageFlags::Sampled |
+		GraphicsAPI::ImageUsageFlags::TransferSrc |
+		GraphicsAPI::ImageUsageFlags::TransferDst;
+	imgCreateInfo.imageUsage.Set(GraphicsAPI::ImageUsageFlags::Cubemap, hasCubemap);
+	imgCreateInfo.imageUsage.Set(GraphicsAPI::ImageUsageFlags::GenerateMipmaps, false);
+
+	std::string samplerName = textureAsset.name + " Sampler";
+	Grindstone::GraphicsAPI::Sampler::CreateInfo samplerCreateInfo;
+	samplerCreateInfo.debugName = samplerName.c_str();
+	samplerCreateInfo.options.anistropy = 16.0f;
+	samplerCreateInfo.options.mipMin = -1000.0f;
+	samplerCreateInfo.options.mipMax = 1000.0f;
+	samplerCreateInfo.options.mipFilter = GraphicsAPI::TextureFilter::Linear;
+	samplerCreateInfo.options.minFilter = GraphicsAPI::TextureFilter::Linear;
+	samplerCreateInfo.options.magFilter = GraphicsAPI::TextureFilter::Linear;
+	samplerCreateInfo.options.wrapModeU = GraphicsAPI::TextureWrapMode::ClampToEdge;
+	samplerCreateInfo.options.wrapModeV = GraphicsAPI::TextureWrapMode::ClampToEdge;
+	samplerCreateInfo.options.wrapModeW = GraphicsAPI::TextureWrapMode::ClampToEdge;
 
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-	Grindstone::GraphicsAPI::Texture* texture = graphicsCore->CreateTexture(createInfo);
+	textureAsset.image = graphicsCore->CreateImage(imgCreateInfo);
+	textureAsset.defaultSampler = graphicsCore->CreateSampler(samplerCreateInfo);
+	textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Ready;
 
-	textureAsset = TextureAsset(uuid, assetName, texture);
-	return &textureAsset;
+	return true;
 }
 
-bool TextureImporter::TryGetIfLoaded(std::string_view address, void*& output) {
-	auto& textureInMap = texturesByAddress.find(std::string(address));
-	if (textureInMap != texturesByAddress.end()) {
-		output = &textureInMap->second;
-		return true;
+void* TextureImporter::LoadAsset(Uuid uuid) {
+	auto& textureIterator = assets.emplace(uuid, TextureAsset(uuid));
+	TextureAsset& textureAsset = textureIterator.first->second;
+
+	textureAsset.assetLoadStatus = AssetLoadStatus::Loading;
+	if (!LoadTextureAsset(textureAsset)) {
+		return nullptr;
 	}
 
-	return false;
+	return &textureAsset;
 }
 
 void TextureImporter::QueueReloadAsset(Uuid uuid) {
@@ -180,19 +187,20 @@ void TextureImporter::QueueReloadAsset(Uuid uuid) {
 	EngineCore& engineCore = EngineCore::GetInstance();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
-	Texture*& texture = textureInMap->second.texture;
-	if (textureInMap->second.texture != nullptr) {
-		graphicsCore->DeleteTexture(texture);
-		texture = nullptr;
+	textureInMap->second.assetLoadStatus = AssetLoadStatus::Reloading;
+	GraphicsAPI::Image*& image = textureInMap->second.image;
+	if (image != nullptr) {
+		graphicsCore->DeleteImage(image);
+		image = nullptr;
 	}
 
-	Grindstone::Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByUuid(AssetType::Texture, uuid);
-	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
-		GPRINT_WARN_V(LogSource::EngineCore, "Unable to load texture: {}", uuid.ToString());
-		return;
+	GraphicsAPI::Sampler*& defaultSampler = textureInMap->second.defaultSampler;
+	if (defaultSampler != nullptr) {
+		graphicsCore->DeleteSampler(defaultSampler);
+		defaultSampler = nullptr;
 	}
 
-	ProcessLoadedFile(uuid, result.displayName, std::move(result.buffer), textureInMap->second);
+	LoadTextureAsset(textureInMap->second);
 }
 
 TextureImporter::~TextureImporter() {
@@ -200,12 +208,14 @@ TextureImporter::~TextureImporter() {
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
 	for (auto& asset : assets) {
-		graphicsCore->DeleteTexture(asset.second.texture);
+		graphicsCore->DeleteImage(asset.second.image);
+		graphicsCore->DeleteSampler(asset.second.defaultSampler);
 	}
 	assets.clear();
 
 	for (auto& asset : texturesByAddress) {
-		graphicsCore->DeleteTexture(asset.second.texture);
+		graphicsCore->DeleteImage(asset.second.image);
+		graphicsCore->DeleteSampler(asset.second.defaultSampler);
 	}
 	texturesByAddress.clear();
 }

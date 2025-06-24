@@ -1,0 +1,14 @@
+{
+    "assetImporterVersion": 0,
+    "metaFileVersion": 1,
+    "defaultUuid": "62782e22-27f9-4406-a42c-0235bc4b597e",
+    "subassets": [
+        {
+            "displayName": "Point Light",
+            "address": "@CORESHADERS/lighting/point",
+            "subassetIdentifier": "Point Light",
+            "uuid": "62782e22-27f9-4406-a42c-0235bc4b597e",
+            "type": "GraphicsPipelineSet"
+        }
+    ]
+}

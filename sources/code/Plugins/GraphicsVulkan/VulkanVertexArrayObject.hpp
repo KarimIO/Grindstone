@@ -5,8 +5,7 @@
 #include <Common/Graphics/VertexArrayObject.hpp>
 
 namespace Grindstone::GraphicsAPI::Vulkan {
-	class VertexBuffer;
-	class IndexBuffer;
+	class Buffer;
 
 	class VertexArrayObject : public Grindstone::GraphicsAPI::VertexArrayObject {
 	public:
@@ -16,11 +15,13 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual ~VertexArrayObject() override;
 		virtual void Bind() override;
 		virtual void Unbind() override;
+
 	public:
-		std::vector<GraphicsAPI::VertexBuffer*>& GetVertexBuffers();
-		GraphicsAPI::IndexBuffer* GetIndexBuffer() const;
+		const std::vector<GraphicsAPI::Buffer*>& GetVertexBuffers() const;
+		GraphicsAPI::Buffer* GetIndexBuffer() const;
+
 	private:
-		std::vector<GraphicsAPI::VertexBuffer*> vertexBuffers;
-		GraphicsAPI::IndexBuffer* indexBuffer = nullptr;
+		std::vector<GraphicsAPI::Buffer*> vertexBuffers;
+		GraphicsAPI::Buffer* indexBuffer = nullptr;
 	};
 }

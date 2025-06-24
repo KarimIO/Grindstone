@@ -325,7 +325,7 @@ void TextureImporter::OutputDds(uint8_t* outData, uint64_t contentSize) {
 	out.write((const char*)outData, contentSize);
 	out.close();
 
-	metaFile->Save();
+	metaFile->Save(textureImporterVersion);
 
 	delete[] outData;
 

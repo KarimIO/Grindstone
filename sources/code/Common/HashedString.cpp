@@ -1,47 +1,32 @@
 #include <stdlib.h>
 
-#include "HashedString.h"
+#include "HashedString.hpp"
 
-namespace Grindstone {
-	// TODO: Consider removing map value.
-	std::map<HashValue, String> HashedString::nameHashMap;
+Grindstone::HashedString::HashedString() : hash(0) {}
 
-	HashedString::HashedString() : hashedString(0) {}
+Grindstone::HashedString::HashedString(const char* inStringRef) {
+	Create(inStringRef);
+}
 
-	HashedString::HashedString(const wchar_t* inStringRef) {
-		Create(inStringRef);
-	}
+Grindstone::HashedString::HashedString(const String& inString) : HashedString(inString.data()) {}
+Grindstone::HashedString::HashedString(StringRef inStringRef) : HashedString(inStringRef.data()) {}
 
-	HashedString::HashedString(const char* inStringRef) {
-		const size_t size = strlen(inStringRef) + 1;
-		wchar_t* wText = new wchar_t[size];
+Grindstone::HashedString::operator bool() const noexcept {
+	return hash != 0;
+}
 
-		size_t outSize;
-		mbstowcs_s(&outSize, wText, size, inStringRef, size - 1);
+bool Grindstone::HashedString::operator==(const Grindstone::HashedString& other) const noexcept {
+	return hash == other.hash;
+}
 
-		Create(wText);
-	}
+void Grindstone::HashedString::Create(const char* inStringRef) {
+	hash = Hash::MurmurOAAT64(inStringRef);
+}
 
-	HashedString::HashedString(const String& inString) : HashedString(inString.data()) {}
-	HashedString::HashedString(StringRef inStringRef) : HashedString(inStringRef.data()) {}
+uint64_t Grindstone::HashedString::GetHash() const {
+	return hash;
+}
 
-	void HashedString::Create(const wchar_t* inStringRef) {
-		hashedString = Hash::MurmurOAAT64(inStringRef);
-		nameHashMap[hashedString] = inStringRef;
-		ptr = nameHashMap.find(hashedString);
-	}
-
-	String HashedString::ToString() const {
-		if (hashedString == 0) {
-			return GS_TEXT("");
-		}
-
-		std::map<HashValue, String>::iterator value = nameHashMap.find(hashedString);
-
-		if (value == nameHashMap.end()) {
-			return GS_TEXT("");
-		}
-
-		return value->second;
-	}
+const Grindstone::String& Grindstone::HashedString::ToString() const {
+	return "";
 }

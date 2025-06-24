@@ -57,13 +57,13 @@ void Build::Open() {
 	auto fileContents = Utils::LoadFileText(sceneListFilePath.c_str());
 
 	size_t start = 0, end;
+	Grindstone::Uuid uuid;
 	std::string sceneUuidAsString;
 	while (true) {
 		end = fileContents.find("\n", start);
 		if (end == std::string::npos) {
 			sceneUuidAsString = Utils::Trim(fileContents.substr(start));
-			if (!sceneUuidAsString.empty()) {
-				Uuid uuid = Uuid(sceneUuidAsString);
+			if (!sceneUuidAsString.empty() && Grindstone::Uuid::MakeFromString(sceneUuidAsString, uuid)) {
 				AssetRegistry::Entry entry;
 				if (assetRegistry.TryGetAssetData(uuid, entry)) {
 					sceneList.emplace_back(uuid, entry.displayName);
@@ -74,8 +74,7 @@ void Build::Open() {
 		}
 
 		sceneUuidAsString = Utils::Trim(fileContents.substr(start, end - start));
-		{
-			Uuid uuid = Uuid(sceneUuidAsString);
+		if (!sceneUuidAsString.empty() && Grindstone::Uuid::MakeFromString(sceneUuidAsString, uuid)) {
 			AssetRegistry::Entry entry;
 			if (assetRegistry.TryGetAssetData(uuid, entry)) {
 				sceneList.emplace_back(uuid, entry.displayName);

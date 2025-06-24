@@ -6,11 +6,11 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		class UniformBuffer;
 		class DescriptorSet;
 		class RenderPass;
-		class DepthStencilTarget;
+		class Image;
 		class Framebuffer;
+		class Buffer;
 		class DescriptorSetLayout;
 	}
 
@@ -37,13 +37,13 @@ namespace Grindstone {
 
 		GraphicsAPI::RenderPass* renderPass = nullptr;
 		GraphicsAPI::Framebuffer* framebuffer = nullptr;
-		GraphicsAPI::DepthStencilTarget* depthTarget = nullptr;
+		GraphicsAPI::Image* depthTarget = nullptr;
 
-		GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
+		GraphicsAPI::Buffer* uniformBufferObject = nullptr;
 		GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
 		GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
 
-		GraphicsAPI::UniformBuffer* shadowMapUniformBufferObject = nullptr;
+		GraphicsAPI::Buffer* shadowMapUniformBufferObject = nullptr;
 		GraphicsAPI::DescriptorSet* shadowMapDescriptorSet = nullptr;
 		GraphicsAPI::DescriptorSetLayout* shadowMapDescriptorSetLayout = nullptr;
 

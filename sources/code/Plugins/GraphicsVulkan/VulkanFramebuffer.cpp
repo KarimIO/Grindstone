@@ -3,8 +3,7 @@
 #include <EngineCore/Logger.hpp>
 
 #include "VulkanRenderPass.hpp"
-#include "VulkanRenderTarget.hpp"
-#include "VulkanDepthStencilTarget.hpp"
+#include "VulkanImage.hpp"
 #include "VulkanCore.hpp"
 #include "VulkanFramebuffer.hpp"
 
@@ -40,12 +39,12 @@ Vulkan::Framebuffer::Framebuffer(const CreateInfo& createInfo) :
 	}
 
 	std::vector<VkImageView> attachments;
-	for (uint32_t i = 0; i < createInfo.numRenderTargetLists; ++i) {
-		colorAttachments.push_back(static_cast<Vulkan::RenderTarget*>(createInfo.renderTargetLists[i]));
+	for (uint32_t i = 0; i < createInfo.renderTargetCount; ++i) {
+		colorAttachments.push_back(static_cast<Vulkan::Image*>(createInfo.renderTargets[i]));
 	}
 
 	if (createInfo.depthTarget != nullptr) {
-		depthAttachment = static_cast<Vulkan::DepthStencilTarget*>(createInfo.depthTarget);
+		depthAttachment = static_cast<Vulkan::Image*>(createInfo.depthTarget);
 	}
 
 	Create();
@@ -66,7 +65,9 @@ void Vulkan::Framebuffer::UpdateNativeFramebuffer(
 	this->width = width;
 	this->height = height;
 
-	Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_FRAMEBUFFER, framebuffer, debugName.c_str());
+	if (debugName.empty()) {
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_FRAMEBUFFER, framebuffer, debugName.c_str());
+	}
 }
 
 void Vulkan::Framebuffer::Cleanup() {
@@ -82,12 +83,6 @@ VkFramebuffer Vulkan::Framebuffer::GetFramebuffer() const {
 
 Grindstone::GraphicsAPI::RenderPass* Vulkan::Framebuffer::GetRenderPass() const {
 	return renderPass;
-}
-
-uint32_t Vulkan::Framebuffer::GetAttachment(uint32_t attachmentIndex) {
-	GPRINT_FATAL(LogSource::GraphicsAPI, "Framebuffer::GetAttachment is not used.");
-	assert(false);
-	return 0;
 }
 
 void Vulkan::Framebuffer::Resize(uint32_t width, uint32_t height) {
@@ -143,11 +138,11 @@ uint32_t Vulkan::Framebuffer::GetRenderTargetCount() const {
 	return static_cast<uint32_t>(colorAttachments.size());
 }
 
-Grindstone::GraphicsAPI::RenderTarget* Vulkan::Framebuffer::GetRenderTarget(uint32_t index) const {
+Grindstone::GraphicsAPI::Image* Vulkan::Framebuffer::GetRenderTarget(uint32_t index) const {
 	return colorAttachments[index];
 }
 
-Grindstone::GraphicsAPI::DepthStencilTarget* Vulkan::Framebuffer::GetDepthStencilTarget() const {
+Grindstone::GraphicsAPI::Image* Vulkan::Framebuffer::GetDepthStencilTarget() const {
 	return depthAttachment;
 }
 
