@@ -18,7 +18,7 @@ extern "C" {
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 
 		if (editorPluginInterface != nullptr) {
-			editorPluginInterface->RegisterAssetImporter("gmat", ImportMaterial);
+			editorPluginInterface->RegisterAssetImporter("gmat", ImportMaterial, materialImporterVersion);
 		}
 	}
 

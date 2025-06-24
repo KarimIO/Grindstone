@@ -21,6 +21,7 @@ add_library(
 )
 
 target_compile_features(PluginAudioOpenAL PRIVATE cxx_std_17)
+set_target_properties(PluginAudioOpenAL PROPERTIES FOLDER "Plugins/Audio")
 
 find_path(ENTT_INCLUDE_DIRS "entt/entt.hpp")
 find_package(OpenAL CONFIG REQUIRED)
@@ -33,5 +34,4 @@ target_precompile_headers(PluginAudioOpenAL PUBLIC pch.hpp)
 target_link_libraries(PluginAudioOpenAL
 	${CORE_LIBS}
 	OpenAL::OpenAL
-	Rpcrt4.lib
 )

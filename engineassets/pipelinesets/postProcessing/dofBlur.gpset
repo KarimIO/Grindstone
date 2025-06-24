@@ -1,0 +1,82 @@
+include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+include "$ENGINE/pipelinesets/common/postProcessingTemplate.gpset"
+
+pipelineSet "Depth of Field (Blur)" inherits "PostProcessing" {
+	configuration "main" {
+		pass "main" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment mainFragment
+			renderQueue: "DofBlurAndCombination"
+
+			properties {
+				cull: back
+				depthBias: false
+				depthWrite: false
+				depthTest: false
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: {
+					colorMask: rgba
+					blendPreset: opaque
+				}
+			}
+
+			shaderHlsl {
+				[[vk::binding(0, 0)]] SamplerState gbufferSampler : register(s0, space2);
+				Texture2D<float4> unblurredTexture : register(t0,  space1);
+
+				float2 unitSquareToUnitDiskPolar(float2 inCoord) {
+					float radius;
+					float angle;
+					if (abs(inCoord.x) > abs(inCoord.y)) {
+						radius = inCoord.x;
+						angle = (inCoord.y / (inCoord.x + 9.9999999747524270787835121154785e-07)) * 0.785398006439208984375;
+					}
+					else
+					{
+						radius = inCoord.y;
+						angle = 1.5707962512969970703125 - ((inCoord.x / (inCoord.y + 9.9999999747524270787835121154785e-07)) * 0.785398006439208984375);
+					}
+					if (radius < 0.0) {
+						radius *= (-1.0);
+						angle += 3.141592502593994140625;
+					}
+					return float2(radius, angle);
+				}
+
+				float2 squareToPolygonMapping(float2 uv, float edgeCount, float shapeRotation) {
+					float2 param = uv;
+					float2 polarCoord = unitSquareToUnitDiskPolar(param);
+					polarCoord.x *= (cos(3.141592502593994140625 / edgeCount) / cos(polarCoord.y - ((6.28318500518798828125 / edgeCount) * floor((((edgeCount * polarCoord.y) + 3.141592502593994140625) / 2.0) / 3.141592502593994140625))));
+					polarCoord.y += shapeRotation;
+					return float2(polarCoord.x * cos(polarCoord.y), polarCoord.x * sin(polarCoord.y));
+				}
+
+				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
+					float4 unblurred = unblurredTexture.Sample(gbufferSampler, input.scaledFragmentTexCoord);
+
+					float coc01 = unblurred.w;
+					if (coc01 == 0.0) {
+						discard;
+					}
+
+					float cocPixels = (coc01 * 32.0) / rendererUbo.renderResolution.x;
+					float3 blurredColor = float3(0.0, 0.0, 0.0);
+					float numTapsInAxisFloat = 4.0;
+					for (uint x = 0u; x < 4u; x++) {
+						for (uint y = 0u; y < 4u; y++) {
+							float2 squareCoord = float2(float(x) / numTapsInAxisFloat, float(y) / numTapsInAxisFloat);
+							float2 param = squareCoord;
+							float param_1 = 6.0;
+							float param_2 = 0.0;
+							float2 sampleCoord = squareToPolygonMapping(param, param_1, param_2);
+							blurredColor += unblurredTexture.Sample(gbufferSampler, input.scaledFragmentTexCoord + (sampleCoord * cocPixels)).xyz;
+						}
+					}
+
+					return float4(blurredColor / 16.0, coc01);
+				}
+			}
+		}
+	}
+}

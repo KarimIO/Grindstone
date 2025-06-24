@@ -6,13 +6,12 @@ namespace Grindstone::GraphicsAPI::OpenGL {
 	class GraphicsPipeline : public Grindstone::GraphicsAPI::GraphicsPipeline {
 	public:
 		GraphicsPipeline(const CreateInfo& createInfo);
-		virtual void Recreate(const CreateInfo& createInfo) override;
 		void Bind();
 		GLuint GetPrimitiveType();
 		~GraphicsPipeline();
 	private:
 		void CreatePipeline(const CreateInfo& createInfo);
-		GLuint CreateShaderModule(const CreateInfo::ShaderStageData& shaderStageCreateInfo);
+		GLuint CreateShaderModule(const ShaderStageData& shaderStageCreateInfo);
 
 		GLuint program;
 

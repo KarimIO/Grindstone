@@ -27,7 +27,7 @@ namespace Grindstone::GraphicsAPI {
 	class RenderPass {
 	public:
 		struct AttachmentInfo {
-			ColorFormat colorFormat = ColorFormat::Invalid;
+			Format colorFormat = Format::Invalid;
 			bool shouldClear = false;
 		};
 
@@ -35,7 +35,7 @@ namespace Grindstone::GraphicsAPI {
 			const char* debugName = nullptr;
 			AttachmentInfo* colorAttachments = nullptr;
 			uint32_t colorAttachmentCount = 0;
-			DepthFormat depthFormat = DepthFormat::None;
+			Format depthFormat = Format::Invalid;
 			bool shouldClearDepthOnLoad = true;
 			float debugColor[4];
 		};

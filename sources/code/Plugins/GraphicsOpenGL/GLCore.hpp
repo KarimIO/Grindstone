@@ -3,6 +3,7 @@
 #define NOMINMAX
 #include <GL/gl3w.h>
 #include <vector>
+#include <unordered_map>
 
 #include <Common/Graphics/Core.hpp>
 #include <Common/Graphics/DLLDefs.hpp>
@@ -21,16 +22,13 @@ namespace Grindstone::GraphicsAPI::OpenGL {
 		virtual const char* GetAPIVersion() const override;
 		virtual const char* GetDefaultShaderExtension() const override;
 
-		virtual void DeleteRenderTarget(Grindstone::GraphicsAPI::RenderTarget * ptr) override;
-		virtual void DeleteDepthStencilTarget(Grindstone::GraphicsAPI::DepthStencilTarget * ptr) override;
 		virtual void DeleteFramebuffer(Grindstone::GraphicsAPI::Framebuffer *ptr) override;
-		virtual void DeleteVertexBuffer(Grindstone::GraphicsAPI::VertexBuffer *ptr) override;
-		virtual void DeleteIndexBuffer(Grindstone::GraphicsAPI::IndexBuffer *ptr) override;
-		virtual void DeleteUniformBuffer(Grindstone::GraphicsAPI::UniformBuffer * ptr) override;
+		virtual void DeleteBuffer(Grindstone::GraphicsAPI::Buffer *ptr) override;
 		virtual void DeleteGraphicsPipeline(Grindstone::GraphicsAPI::GraphicsPipeline* ptr) override;
 		virtual void DeleteComputePipeline(Grindstone::GraphicsAPI::ComputePipeline* ptr) override;
 		virtual void DeleteRenderPass(Grindstone::GraphicsAPI::RenderPass *ptr) override;
-		virtual void DeleteTexture(Grindstone::GraphicsAPI::Texture *ptr) override;
+		virtual void DeleteSampler(Grindstone::GraphicsAPI::Sampler* ptr) override;
+		virtual void DeleteImage(Grindstone::GraphicsAPI::Image* ptr) override;
 		virtual void DeleteDescriptorSet(Grindstone::GraphicsAPI::DescriptorSet *ptr) override;
 		virtual void DeleteDescriptorSetLayout(Grindstone::GraphicsAPI::DescriptorSetLayout *ptr) override;
 		virtual void DeleteCommandBuffer(Grindstone::GraphicsAPI::CommandBuffer * ptr) override;
@@ -42,16 +40,13 @@ namespace Grindstone::GraphicsAPI::OpenGL {
 		virtual Grindstone::GraphicsAPI::ComputePipeline* CreateComputePipeline(const ComputePipeline::CreateInfo& ci) override;
 		virtual Grindstone::GraphicsAPI::CommandBuffer* CreateCommandBuffer(const CommandBuffer::CreateInfo& ci) override;
 		virtual Grindstone::GraphicsAPI::VertexArrayObject* CreateVertexArrayObject(const VertexArrayObject::CreateInfo& gp) override;
-		virtual Grindstone::GraphicsAPI::VertexBuffer* CreateVertexBuffer(const VertexBuffer::CreateInfo& ci) override;
-		virtual Grindstone::GraphicsAPI::IndexBuffer* CreateIndexBuffer(const IndexBuffer::CreateInfo& ci) override;
-		virtual Grindstone::GraphicsAPI::UniformBuffer* CreateUniformBuffer(const UniformBuffer::CreateInfo& ci) override;
-		virtual Grindstone::GraphicsAPI::Texture* CreateCubemap(const Texture::CubemapCreateInfo& createInfo) override;
-		virtual Grindstone::GraphicsAPI::Texture* CreateTexture(const Texture::CreateInfo& createInfo) override;
+		virtual Grindstone::GraphicsAPI::Buffer* CreateBuffer(const Buffer::CreateInfo& ci) override;
+		virtual Grindstone::GraphicsAPI::Sampler* CreateSampler(const Sampler::CreateInfo& createInfo) override;
+		virtual Grindstone::GraphicsAPI::Image* CreateImage(const Image::CreateInfo& createInfo) override;
 		virtual Grindstone::GraphicsAPI::DescriptorSet* CreateDescriptorSet(const DescriptorSet::CreateInfo& createInfo) override;
 		virtual Grindstone::GraphicsAPI::DescriptorSetLayout* CreateDescriptorSetLayout(const DescriptorSetLayout::CreateInfo& createInfo) override;
-		virtual Grindstone::GraphicsAPI::RenderTarget* CreateRenderTarget(const RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) override;
-		virtual Grindstone::GraphicsAPI::RenderTarget* CreateRenderTarget(const RenderTarget::CreateInfo& rt) override;
-		virtual Grindstone::GraphicsAPI::DepthStencilTarget* CreateDepthStencilTarget(const DepthStencilTarget::CreateInfo& rt) override;
+
+		virtual Grindstone::GraphicsAPI::GraphicsPipeline* GetOrCreateGraphicsPipelineFromCache(const GraphicsPipeline::PipelineData& pipelineData, const VertexInputLayout* vertexInputLayout) override;
 
 		virtual void CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) override;
 
@@ -84,5 +79,8 @@ namespace Grindstone::GraphicsAPI::OpenGL {
 		std::string apiVersion;
 
 		Window* primaryWindow;
+
+		using PipelineHash = size_t;
+		std::unordered_map<PipelineHash, Grindstone::GraphicsAPI::GraphicsPipeline*> graphicsPipelineCache;
 	};
 }

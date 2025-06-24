@@ -2,6 +2,7 @@
 
 #include <string>
 #include <chrono>
+#include <stdint.h>
 
 namespace Grindstone {
 	enum class LogSource : uint16_t {

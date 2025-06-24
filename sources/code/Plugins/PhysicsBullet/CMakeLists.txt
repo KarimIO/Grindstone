@@ -21,6 +21,7 @@ add_library(
 )
 
 target_compile_features(PluginBulletPhysics PRIVATE cxx_std_17)
+set_target_properties(PluginBulletPhysics PROPERTIES FOLDER Plugins/Physics)
 
 find_path(ENTT_INCLUDE_DIRS "entt/entt.hpp")
 target_compile_definitions(PluginBulletPhysics PUBLIC BULLET_PHYSICS PHYSICS_DLL GLM_ENABLE_EXPERIMENTAL)

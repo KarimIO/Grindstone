@@ -7,14 +7,14 @@
 
 namespace Grindstone {
 	namespace GraphicsAPI {
-		class UniformBuffer;
+		class Buffer;
 		class DescriptorSet;
 	}
 
 	struct MeshRendererComponent {
 		std::vector<AssetReference<MaterialAsset>> materials;
 
-		GraphicsAPI::UniformBuffer* perDrawUniformBuffer = nullptr;
+		GraphicsAPI::Buffer* perDrawUniformBuffer = nullptr;
 		GraphicsAPI::DescriptorSet* perDrawDescriptorSet = nullptr;
 
 		REFLECT("MeshRenderer")

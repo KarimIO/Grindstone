@@ -10,8 +10,6 @@
 
 namespace Grindstone::GraphicsAPI::Vulkan {
 	class RenderPass;
-	class RenderTarget;
-	class DepthStencilTarget;
 
 	class Framebuffer : public Grindstone::GraphicsAPI::Framebuffer {
 	public:
@@ -33,7 +31,6 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 	public:
 		VkFramebuffer GetFramebuffer() const;
 	public:
-		virtual uint32_t GetAttachment(uint32_t attachmentIndex) override;
 		virtual Grindstone::GraphicsAPI::RenderPass* GetRenderPass() const override;
 		virtual void Resize(uint32_t width, uint32_t height) override;
 		virtual void Clear(ClearMode mask) override;
@@ -45,15 +42,15 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual uint32_t GetWidth() const override;
 		virtual uint32_t GetHeight() const override;
 		virtual uint32_t GetRenderTargetCount() const override;
-		virtual Grindstone::GraphicsAPI::RenderTarget* GetRenderTarget(uint32_t index) const override;
-		virtual Grindstone::GraphicsAPI::DepthStencilTarget* GetDepthStencilTarget() const override;
+		virtual Grindstone::GraphicsAPI::Image* GetRenderTarget(uint32_t index) const override;
+		virtual Grindstone::GraphicsAPI::Image* GetDepthStencilTarget() const override;
 	private:
 		void Create();
 		void Cleanup();
 
 		std::string debugName;
-		std::vector<RenderTarget*> colorAttachments;
-		DepthStencilTarget* depthAttachment = nullptr;
+		std::vector<Image*> colorAttachments;
+		Image* depthAttachment = nullptr;
 
 		VkFramebuffer framebuffer = nullptr;
 		GraphicsAPI::RenderPass* renderPass = nullptr;

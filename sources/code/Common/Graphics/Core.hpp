@@ -2,17 +2,15 @@
 
 #include <Common/Window/Window.hpp>
 
-#include "IndexBuffer.hpp"
+#include "Buffer.hpp"
 #include "RenderPass.hpp"
 #include "Framebuffer.hpp"
-#include "VertexBuffer.hpp"
-#include "UniformBuffer.hpp"
 #include "GraphicsPipeline.hpp"
 #include "ComputePipeline.hpp"
 #include "CommandBuffer.hpp"
 #include "VertexArrayObject.hpp"
-#include "DepthStencilTarget.hpp"
-#include "Texture.hpp"
+#include "Image.hpp"
+#include "Sampler.hpp"
 #include "DescriptorSet.hpp"
 #include "DescriptorSetLayout.hpp"
 
@@ -51,16 +49,13 @@ namespace Grindstone::GraphicsAPI {
 
 		virtual void AdjustPerspective(float *perspective) = 0;
 
-		virtual void DeleteRenderTarget(RenderTarget* ptr) = 0;
-		virtual void DeleteDepthStencilTarget(DepthStencilTarget* ptr) = 0;
+		virtual void DeleteImage(Image* ptr) = 0;
+		virtual void DeleteSampler(Sampler* ptr) = 0;
 		virtual void DeleteFramebuffer(Framebuffer* ptr) = 0;
-		virtual void DeleteVertexBuffer(VertexBuffer* ptr) = 0;
-		virtual void DeleteIndexBuffer(IndexBuffer* ptr) = 0;
-		virtual void DeleteUniformBuffer(UniformBuffer* ptr) = 0;
+		virtual void DeleteBuffer(Buffer* ptr) = 0;
 		virtual void DeleteGraphicsPipeline(GraphicsPipeline* ptr) = 0;
 		virtual void DeleteComputePipeline(ComputePipeline* ptr) = 0;
 		virtual void DeleteRenderPass(RenderPass* ptr) = 0;
-		virtual void DeleteTexture(Texture* ptr) = 0;
 		virtual void DeleteDescriptorSet(DescriptorSet* ptr) = 0;
 		virtual void DeleteDescriptorSetLayout(DescriptorSetLayout* ptr) = 0;
 		virtual void DeleteCommandBuffer(CommandBuffer* ptr) = 0;
@@ -72,16 +67,13 @@ namespace Grindstone::GraphicsAPI {
 		virtual ComputePipeline* CreateComputePipeline(const ComputePipeline::CreateInfo& ci) = 0;
 		virtual CommandBuffer* CreateCommandBuffer(const CommandBuffer::CreateInfo& ci) = 0;
 		virtual VertexArrayObject* CreateVertexArrayObject(const VertexArrayObject::CreateInfo& ci) = 0;
-		virtual VertexBuffer* CreateVertexBuffer(const VertexBuffer::CreateInfo& ci) = 0;
-		virtual IndexBuffer* CreateIndexBuffer(const IndexBuffer::CreateInfo& ci) = 0;
-		virtual UniformBuffer* CreateUniformBuffer(const UniformBuffer::CreateInfo& ci) = 0;
-		virtual Texture* CreateCubemap(const Texture::CubemapCreateInfo& createInfo) = 0;
-		virtual Texture* CreateTexture(const Texture::CreateInfo& createInfo) = 0;
+		virtual Buffer* CreateBuffer(const Buffer::CreateInfo& ci) = 0;
+		virtual Sampler* CreateSampler(const Sampler::CreateInfo& createInfo) = 0;
+		virtual Image* CreateImage(const Image::CreateInfo& createInfo) = 0;
 		virtual DescriptorSet* CreateDescriptorSet(const DescriptorSet::CreateInfo& ci) = 0;
 		virtual DescriptorSetLayout* CreateDescriptorSetLayout(const DescriptorSetLayout::CreateInfo& ci) = 0;
-		virtual RenderTarget* CreateRenderTarget(const RenderTarget::CreateInfo& rt) = 0;
-		virtual RenderTarget* CreateRenderTarget(const RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) = 0;
-		virtual DepthStencilTarget* CreateDepthStencilTarget(const DepthStencilTarget::CreateInfo& rt) = 0;
+
+		virtual GraphicsPipeline* GetOrCreateGraphicsPipelineFromCache(const GraphicsPipeline::PipelineData& pipelineData, const VertexInputLayout* vertexInputLayout) = 0;
 
 		virtual void CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) = 0;
 

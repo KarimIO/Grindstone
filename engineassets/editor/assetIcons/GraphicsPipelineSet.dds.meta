@@ -1,0 +1,14 @@
+{
+    "assetImporterVersion": 1,
+    "metaFileVersion": 1,
+    "defaultUuid": "d65d15ac-e753-4b99-abce-10d131b4073e",
+    "subassets": [
+        {
+            "displayName": "GraphicsPipelineSet",
+            "address": "@EDITOR_ICONS/assetIcons/GraphicsPipelineSet",
+            "subassetIdentifier": "GraphicsPipelineSet",
+            "uuid": "d65d15ac-e753-4b99-abce-10d131b4073e",
+            "type": "Texture"
+        }
+    ]
+}

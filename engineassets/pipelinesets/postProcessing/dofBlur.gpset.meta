@@ -1,0 +1,14 @@
+{
+    "assetImporterVersion": 0,
+    "metaFileVersion": 1,
+    "defaultUuid": "bae09f5f-6ea6-4ad5-9372-80df93095f6f",
+    "subassets": [
+        {
+            "displayName": "Depth of Field (Blur)",
+            "address": "@CORESHADERS/postProcessing/dofBlur",
+            "subassetIdentifier": "Depth of Field (Blur)",
+            "uuid": "bae09f5f-6ea6-4ad5-9372-80df93095f6f",
+            "type": "GraphicsPipelineSet"
+        }
+    ]
+}

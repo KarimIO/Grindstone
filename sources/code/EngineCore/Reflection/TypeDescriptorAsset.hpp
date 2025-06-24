@@ -2,7 +2,7 @@
 
 #include "TypeDescriptor.hpp"
 #include "TypeResolver.hpp"
-#include "EngineCore/Assets/Asset.hpp"
+#include "EngineCore/Assets/AssetReference.hpp"
 
 namespace Grindstone::Reflection {
 	struct TypeDescriptor_AssetReference : TypeDescriptor {

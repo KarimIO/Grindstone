@@ -52,11 +52,14 @@ namespace Grindstone {
 	class WindowManager;
 
 	class AssetRendererManager;
-	class BaseRenderer;
+	class BaseRendererFactory;
+	class RenderPassRegistry;
 
 	class EngineCore {
 	public:
 		static EngineCore& GetInstance();
+		static void SetInstance(EngineCore& engineCore);
+
 		struct CreateInfo {
 			bool isEditor = false;
 			const char* applicationModuleName = nullptr;
@@ -78,6 +81,7 @@ namespace Grindstone {
 		virtual void UpdateWindows();
 		void RegisterGraphicsCore(GraphicsAPI::Core*);
 		virtual void RegisterInputManager(Input::Interface*);
+		virtual void SetRendererFactory(BaseRendererFactory* factory);
 		virtual Input::Interface* GetInputManager() const;
 		virtual SceneManagement::SceneManager* GetSceneManager() const;
 		virtual Plugins::Manager* GetPluginManager() const;
@@ -86,7 +90,8 @@ namespace Grindstone {
 		virtual ECS::ComponentRegistrar* GetComponentRegistrar() const;
 		virtual GraphicsAPI::Core* GetGraphicsCore() const;
 		virtual Profiler::Manager* GetProfiler() const;
-		virtual BaseRenderer* CreateRenderer(GraphicsAPI::RenderPass* targetRenderPass);
+		virtual BaseRendererFactory* GetRendererFactory();
+		virtual RenderPassRegistry* GetRenderPassRegistry();
 		virtual std::filesystem::path GetProjectPath() const;
 		virtual std::filesystem::path GetBinaryPath() const;
 		virtual std::filesystem::path GetEngineBinaryPath() const;
@@ -117,6 +122,8 @@ namespace Grindstone {
 		SceneManagement::SceneManager* sceneManager = nullptr;
 		ECS::ComponentRegistrar* componentRegistrar = nullptr;
 		ECS::SystemRegistrar* systemRegistrar = nullptr;
+		BaseRendererFactory* rendererFactory = nullptr;
+		RenderPassRegistry* renderpassRegistry = nullptr;
 		Events::Dispatcher* eventDispatcher = nullptr;
 		Plugins::Manager* pluginManager = nullptr;
 		GraphicsAPI::Core* graphicsCore = nullptr;

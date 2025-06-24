@@ -1,24 +1,28 @@
 #pragma once
 
 #include <string>
-#include "Common/ResourcePipeline/Uuid.hpp"
-#include "EngineCore/Assets/Asset.hpp"
-#include "EngineCore/ECS/Entity.hpp"
+#include <vector>
+
+#include <Common/Buffer.hpp>
+#include <Common/ResourcePipeline/Uuid.hpp>
+#include <EngineCore/Assets/AssetReference.hpp>
+#include <EngineCore/Assets/Asset.hpp>
+#include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
+#include <EngineCore/ECS/Entity.hpp>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
 		class DescriptorSet;
-		class UniformBuffer;
+		class Buffer;
 	}
 
-	struct ShaderAsset;
-
 	struct MaterialAsset : public Asset {
-		MaterialAsset(Uuid uuid, std::string_view name, Uuid shaderUuid) : Asset(uuid, name), shaderUuid(shaderUuid) {}
-		Uuid shaderUuid;
-		GraphicsAPI::UniformBuffer* uniformBufferObject = nullptr;
-		GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
-		char* buffer = nullptr;
+		MaterialAsset(Grindstone::Uuid uuid) : Asset(uuid, uuid.ToString()) {}
+		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> pipelineSetAsset;
+		Grindstone::GraphicsAPI::DescriptorSet* materialDescriptorSet = nullptr;
+		Grindstone::GraphicsAPI::Buffer* materialDataUniformBuffer = nullptr;
+		std::vector<Grindstone::AssetReference<Grindstone::TextureAsset>> textures;
+		Grindstone::Buffer materialDataBuffer;
 
 		DEFINE_ASSET_TYPE("Material", AssetType::Material)
 	};

@@ -1,0 +1,14 @@
+{
+    "assetImporterVersion": 0,
+    "metaFileVersion": 1,
+    "defaultUuid": "85febf6d-8352-4f30-9cbd-3819bc748a79",
+    "subassets": [
+        {
+            "displayName": "Screen-Space Ambient Occlusion",
+            "address": "@CORESHADERS/postProcessing/screenSpaceAmbientOcclusion",
+            "subassetIdentifier": "Screen-Space Ambient Occlusion",
+            "uuid": "85febf6d-8352-4f30-9cbd-3819bc748a79",
+            "type": "GraphicsPipelineSet"
+        }
+    ]
+}

@@ -2,18 +2,15 @@
 
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
+#include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <Common/Graphics/VertexArrayObject.hpp>
 #include <Common/Graphics/CommandBuffer.hpp>
-#include <Common/Graphics/UniformBuffer.hpp>
+#include <Common/Graphics/Buffer.hpp>
 #include <Common/Graphics/DescriptorSet.hpp>
 #include <Common/Graphics/DescriptorSetLayout.hpp>
 #include <Common/Graphics/GraphicsPipeline.hpp>
-#include <Common/Graphics/DescriptorSetLayout.hpp>
-#include <Common/Graphics/VertexBuffer.hpp>
-#include <Common/Graphics/IndexBuffer.hpp>
-#include <Common/Graphics/IndexBuffer.hpp>
 #include <Common/Graphics/Formats.hpp>
 #include <Editor/EditorManager.hpp>
 
@@ -23,8 +20,10 @@ using namespace Grindstone;
 using namespace Grindstone::Editor;
 
 struct GridUniformBuffer {
-	glm::mat4 projMatrix;
+	glm::mat4 projectionMatrix;
 	glm::mat4 viewMatrix;
+	glm::mat4 inverseProjectionMatrix;
+	glm::mat4 inverseViewMatrix;
 	glm::vec4 colorXAxis = glm::vec4(1.0f, 0.2f, 0.2f, 1.0f);
 	glm::vec4 colorZAxis = glm::vec4(0.2f, 0.2f, 1.0f, 1.0f);
 	glm::vec4 colorMinor = glm::vec4(0.2f, 0.2f, 0.2f, 0.5f);
@@ -39,22 +38,23 @@ void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
-	GraphicsAPI::UniformBuffer::CreateInfo ubCi{};
-	ubCi.debugName = "Gizmo Uniform Buffer";
-	ubCi.isDynamic = true;
-	ubCi.size = static_cast<uint32_t>(sizeof(GridUniformBuffer));
-	gridUniformBuffer = graphicsCore->CreateUniformBuffer(ubCi);
+	GraphicsAPI::Buffer::CreateInfo ubCi{};
+	ubCi.debugName = "Grid Uniform Buffer";
+	ubCi.bufferUsage =
+		GraphicsAPI::BufferUsage::TransferDst |
+		GraphicsAPI::BufferUsage::TransferSrc |
+		GraphicsAPI::BufferUsage::Uniform;
+	ubCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
+	ubCi.bufferSize = static_cast<size_t>(sizeof(GridUniformBuffer));
+	gridUniformBuffer = graphicsCore->CreateBuffer(ubCi);
 
-	std::vector<GraphicsAPI::GraphicsPipeline::CreateInfo::ShaderStageData> shaderStageCreateInfos;
+	std::vector<GraphicsAPI::GraphicsPipeline::ShaderStageData> shaderStageCreateInfos;
 	std::vector<std::vector<char>> fileData;
 
 	Grindstone::Assets::AssetManager* assetManager = engineCore.assetManager;
 	uint8_t shaderBits = static_cast<uint8_t>(GraphicsAPI::ShaderStageBit::Vertex | GraphicsAPI::ShaderStageBit::Fragment);
 
-	if (!assetManager->LoadShaderSetByAddress("@CORESHADERS/editor/grid", shaderBits, 2, shaderStageCreateInfos, fileData)) {
-		GPRINT_ERROR(LogSource::Rendering, "Could not load grid shaders.");
-		return;
-	}
+	pipelineSet = assetManager->GetAssetReferenceByAddress<Grindstone::GraphicsPipelineAsset>("@CORESHADERS/editor/grid");
 
 	GraphicsAPI::DescriptorSetLayout::Binding gridDescriptorLayoutBinding
 		{ 0, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Vertex | GraphicsAPI::ShaderStageBit::Fragment };
@@ -65,7 +65,7 @@ void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	gridDescriptorSetLayoutCreateInfo.bindings = &gridDescriptorLayoutBinding;
 	gridDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(gridDescriptorSetLayoutCreateInfo);
 
-	GraphicsAPI::DescriptorSet::Binding gridDescriptorBinding{ gridUniformBuffer };
+	GraphicsAPI::DescriptorSet::Binding gridDescriptorBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( gridUniformBuffer );
 
 	GraphicsAPI::DescriptorSet::CreateInfo gridDescriptorSetCreateInfo{};
 	gridDescriptorSetCreateInfo.debugName = "Grid Descriptor";
@@ -73,44 +73,31 @@ void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	gridDescriptorSetCreateInfo.bindings = &gridDescriptorBinding;
 	gridDescriptorSetCreateInfo.layout = gridDescriptorSetLayout;
 	gridDescriptorSet = graphicsCore->CreateDescriptorSet(gridDescriptorSetCreateInfo);
-
-	GraphicsAPI::GraphicsPipeline::CreateInfo pipelineCreateInfo{};
-	pipelineCreateInfo.primitiveType = GraphicsAPI::GeometryType::Triangles;
-	pipelineCreateInfo.polygonFillMode = GraphicsAPI::PolygonFillMode::Fill;
-	pipelineCreateInfo.cullMode = GraphicsAPI::CullMode::None;
-	pipelineCreateInfo.hasDynamicScissor = true;
-	pipelineCreateInfo.hasDynamicViewport = true;
-	pipelineCreateInfo.vertexBindings = nullptr;
-	pipelineCreateInfo.vertexBindingsCount = 0;
-	pipelineCreateInfo.debugName = "Grid Pipeline";
-	pipelineCreateInfo.shaderStageCreateInfos = shaderStageCreateInfos.data();
-	pipelineCreateInfo.shaderStageCreateInfoCount = static_cast<uint32_t>(shaderStageCreateInfos.size());
-	pipelineCreateInfo.descriptorSetLayouts = &gridDescriptorSetLayout;
-	pipelineCreateInfo.descriptorSetLayoutCount = 1u;
-	pipelineCreateInfo.colorAttachmentCount = 1;
-	pipelineCreateInfo.isDepthWriteEnabled = false;
-	pipelineCreateInfo.isDepthTestEnabled = true;
-	pipelineCreateInfo.isStencilEnabled = false;
-	pipelineCreateInfo.blendData = GraphicsAPI::BlendData::AdditiveAlpha();
-	pipelineCreateInfo.renderPass = renderPass;
-	gridPipeline = graphicsCore->CreateGraphicsPipeline(pipelineCreateInfo);
 }
 
 void GridRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, glm::vec2 renderScale, glm::mat4 proj, glm::mat4 view, float nearDist, float farDist, glm::quat rotation, float offset) {
-	if (gridPipeline == nullptr) {
+	Grindstone::GraphicsPipelineAsset* pipelineAsset = pipelineSet.Get();
+	if (pipelineAsset == nullptr) {
+		return;
+	}
+
+	Grindstone::GraphicsAPI::GraphicsPipeline* pipeline = pipelineAsset->GetFirstPassPipeline(nullptr);
+	if (pipeline == nullptr) {
 		return;
 	}
 
 	GridUniformBuffer gridData{};
-	gridData.projMatrix = proj;
+	gridData.projectionMatrix = proj;
 	gridData.viewMatrix = view;
+	gridData.inverseProjectionMatrix = glm::inverse(proj);
+	gridData.inverseViewMatrix = glm::inverse(view);
 	gridData.renderScale = renderScale;
 	gridData.nearDistance = nearDist;
 	gridData.farDistance = farDist;
 
-	gridUniformBuffer->UpdateBuffer(&gridData);
-	commandBuffer->BindGraphicsPipeline(gridPipeline);
-	commandBuffer->BindGraphicsDescriptorSet(gridPipeline, &gridDescriptorSet, 1);
+	gridUniformBuffer->UploadData(&gridData);
+	commandBuffer->BindGraphicsPipeline(pipeline);
+	commandBuffer->BindGraphicsDescriptorSet(pipeline, &gridDescriptorSet, 2, 1);
 
 	commandBuffer->DrawVertices(6, 0, 1, 0);
 }

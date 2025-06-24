@@ -4,7 +4,8 @@
 const char* assetTypeStrings[] = {
 	"Undefined",
 	"Texture",
-	"Shader",
+	"GraphicsPipelineSet",
+	"ComputePipelineSet",
 	"Material",
 	"AudioClip",
 	"Mesh3d",

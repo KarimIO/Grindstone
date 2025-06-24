@@ -9,10 +9,18 @@
 
 namespace Grindstone {
 	enum class AssetLoadStatus {
+		// This asset has not been loaded yet, or has been unloaded.
 		Unloaded = 0,
+		// This asset is in the process of being loaded.
 		Loading,
+		// This asset is ready for use.
 		Ready,
-		Reloading
+		// This asset was previously loaded, and is now being loaded again.
+		Reloading,
+		// This asset failed to load because it was not found.
+		Missing,
+		// This asset failed to load due to an error in the file or the loading process.
+		Failed
 	};
 
 	struct Asset {
@@ -33,24 +41,6 @@ namespace Grindstone {
 
 		virtual bool operator!=(const Asset& other) const {
 			return !(*this == other);
-		}
-	};
-
-	struct GenericAssetReference {
-		Uuid uuid;
-	};
-
-	template<typename T>
-	struct AssetReference : public GenericAssetReference {
-		static_assert(std::is_base_of_v<Grindstone::Asset, T>, "T not derived from Grindstone::Asset");
-
-		T* Load(Uuid uuid) {
-			this->uuid = uuid;
-			return EngineCore::GetInstance().assetManager->GetAsset<T>(uuid);
-		}
-
-		T* Get() const {
-			return EngineCore::GetInstance().assetManager->GetAsset<T>(uuid);
 		}
 	};
 

@@ -86,7 +86,7 @@ void Vulkan::WindowGraphicsBinding::SubmitWindowObjects(WindowBindingDataNative&
 		static_cast<RenderPass*>(renderPass)->Update(windowBindingData.renderPass);
 	}
 	swapchainVulkanFormat = windowBindingData.surfaceFormat.format;
-	swapchainFormat = TranslateColorFormatFromVulkan(swapchainVulkanFormat);
+	swapchainFormat = TranslateFormatFromVulkan(swapchainVulkanFormat);
 
 	imageSets.resize(windowBindingData.imageSetCount);
 	for (uint32_t i = 0; i < windowBindingData.imageSetCount; ++i) {
@@ -101,15 +101,15 @@ void Vulkan::WindowGraphicsBinding::SubmitWindowObjects(WindowBindingDataNative&
 		}
 
 		if (imageSet.swapChainTarget == nullptr) {
-			imageSet.swapChainTarget = new Vulkan::RenderTarget(native.image, native.imageView, swapchainVulkanFormat);
+			imageSet.swapChainTarget = new Vulkan::Image(native.image, swapchainVulkanFormat, i);
 		}
 		else {
-			static_cast<RenderTarget*>(imageSet.swapChainTarget)->UpdateNativeImage(native.image, native.imageView, swapchainVulkanFormat);
+			static_cast<Vulkan::Image*>(imageSet.swapChainTarget)->UpdateNativeImage(native.image, native.imageView, swapchainVulkanFormat);
 		}
 	}
 }
 
-Base::ColorFormat Vulkan::WindowGraphicsBinding::GetDeviceColorFormat() const {
+Base::Format Vulkan::WindowGraphicsBinding::GetDeviceColorFormat() const {
 	return swapchainFormat;
 }
 
@@ -222,7 +222,7 @@ void Vulkan::WindowGraphicsBinding::CreateImageSets() {
 
 	imageSets.resize(imageCount);
 	for (uint32_t i = 0; i < imageCount; ++i) {
-		Vulkan::RenderTarget* rt = new Vulkan::RenderTarget(
+		Vulkan::Image* rt = new Vulkan::Image(
 			swapChainImages[i],
 			swapchainVulkanFormat,
 			i
@@ -337,7 +337,7 @@ void Vulkan::WindowGraphicsBinding::SubmitCommandBuffer(GraphicsAPI::CommandBuff
 	vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
 	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
-		GPRINT_ERROR(LogSource::GraphicsAPI, "Failed to submit draw command buffer!");
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to submit draw command buffer!");
 	}
 }
 
@@ -390,7 +390,7 @@ void Vulkan::WindowGraphicsBinding::CreateSwapChain() {
 	createInfo.surface = surface;
 
 	swapchainVulkanFormat = surfaceFormat.format;
-	swapchainFormat = TranslateColorFormatFromVulkan(swapchainVulkanFormat);
+	swapchainFormat = TranslateFormatFromVulkan(swapchainVulkanFormat);
 
 	createInfo.minImageCount = imageCount;
 	createInfo.imageFormat = swapchainVulkanFormat;

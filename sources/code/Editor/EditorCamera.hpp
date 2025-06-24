@@ -13,11 +13,11 @@ namespace Grindstone {
 
 	namespace GraphicsAPI {
 		class Framebuffer;
+		class Image;
+		class Sampler;
 		class CommandBuffer;
 		class DescriptorSet;
 		class DescriptorSetLayout;
-		class RenderTarget;
-		class DepthStencilTarget;
 		class RenderPass;
 	}
 
@@ -37,6 +37,11 @@ namespace Grindstone {
 			glm::mat4& GetProjectionMatrix();
 			glm::mat4& GetViewMatrix();
 			BaseRenderer* GetRenderer() const;
+
+			bool isGridEnabled = true;
+			bool isBoundingSphereGizmoEnabled = false;
+			bool isBoundingBoxGizmoEnabled = false;
+			bool isColliderGizmoEnabled = true;
 		private:
 			glm::vec3 GetForward() const;
 			glm::vec3 GetRight() const;
@@ -44,8 +49,9 @@ namespace Grindstone {
 
 			GizmoRenderer gizmoRenderer;
 			GridRenderer gridRenderer;
-			GraphicsAPI::RenderTarget* renderTarget = nullptr;
-			GraphicsAPI::DepthStencilTarget* depthTarget = nullptr;
+			GraphicsAPI::Image* renderTarget = nullptr;
+			GraphicsAPI::Image* depthTarget = nullptr;
+			GraphicsAPI::Sampler* sampler = nullptr;
 			GraphicsAPI::RenderPass* renderPass = nullptr;
 			GraphicsAPI::RenderPass* gizmoRenderPass = nullptr;
 			GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;

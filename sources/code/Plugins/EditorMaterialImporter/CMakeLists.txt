@@ -4,17 +4,17 @@ set(EDITORMATERIALIMPORTER_SOURCES
 	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp
 	${COMMON_DIR}/ResourcePipeline/Uuid.cpp
 	${COMMON_DIR}/Editor/Importer.cpp
-	${ENGINECORE_DIR}/Utils/Utilities.cpp
+	${ENGINE_CORE_DIR}/Utils/Utilities.cpp
 	EntryPoint.cpp
 )
 
 set(EDITORMATERIALIMPORTER_HEADERS
-	MaterialImporter.hpp 
+	MaterialImporter.hpp
 	${COMMON_DIR}/ResourcePipeline/AssetType.hpp
 	${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
 	${COMMON_DIR}/ResourcePipeline/Uuid.hpp
 	${COMMON_DIR}/Editor/Importer.hpp
-	${ENGINECORE_DIR}/Utils/Utilities.hpp
+	${ENGINE_CORE_DIR}/Utils/Utilities.hpp
 	pch.hpp
 )
 
@@ -28,10 +28,11 @@ add_library(
 )
 
 target_compile_features(PluginEditorMaterialImporter PRIVATE cxx_std_17)
+set_target_properties(PluginEditorMaterialImporter PROPERTIES FOLDER "Plugins/Editor/Importers")
 
 target_compile_definitions(PluginEditorMaterialImporter PUBLIC EDITOR_MATERIAL_IMPORTER_DLL GLM_ENABLE_EXPERIMENTAL)
 target_include_directories(PluginEditorMaterialImporter PUBLIC ${CODE_DIR} ${FMT_INCLUDE_DIRS})
 
 target_precompile_headers(PluginEditorMaterialImporter PUBLIC pch.hpp)
 
-target_link_libraries(PluginEditorMaterialImporter ${CORE_LIBS} Rpcrt4.lib)
+target_link_libraries(PluginEditorMaterialImporter ${CORE_LIBS})

@@ -1,0 +1,14 @@
+{
+    "assetImporterVersion": 0,
+    "metaFileVersion": 1,
+    "defaultUuid": "b26f786f-ecf4-4c7f-8164-6191c7a59758",
+    "subassets": [
+        {
+            "displayName": "DebugDeferred",
+            "address": "@CORESHADERS/editor/debug",
+            "subassetIdentifier": "DebugDeferred",
+            "uuid": "b26f786f-ecf4-4c7f-8164-6191c7a59758",
+            "type": "GraphicsPipelineSet"
+        }
+    ]
+}

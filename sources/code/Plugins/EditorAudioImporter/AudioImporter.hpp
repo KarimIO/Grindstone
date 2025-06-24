@@ -11,5 +11,7 @@ namespace Grindstone::Editor::Importers {
 		void Import(AssetRegistry& assetRegistry, Assets::AssetManager& assetManger, const std::filesystem::path& path) override;
 	};
 
+	const Grindstone::Editor::ImporterVersion audioImporterVersion = 1;
+
 	void ImportAudio(AssetRegistry& assetRegistry, Assets::AssetManager& assetManger, const std::filesystem::path& inputPath);
 }

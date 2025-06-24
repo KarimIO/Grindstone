@@ -80,7 +80,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		std::vector<const char*> GetRequiredExtensions();
 		void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 	public:
-		void NameObject(VkObjectType objectType, void* object, const char* objectName);
+		virtual void NameObject(VkObjectType objectType, void* object, const char* objectName);
 
 		virtual const char* GetVendorName() const override;
 		virtual const char* GetAdapterName() const override;
@@ -89,37 +89,31 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 
 		virtual void AdjustPerspective(float *perspective) override;
 
-		virtual void DeleteRenderTarget(GraphicsAPI::RenderTarget * ptr) override;
-		virtual void DeleteDepthStencilTarget(GraphicsAPI::DepthStencilTarget * ptr) override;
 		virtual void DeleteFramebuffer(GraphicsAPI::Framebuffer *ptr) override;
-		virtual void DeleteVertexBuffer(GraphicsAPI::VertexBuffer *ptr) override;
-		virtual void DeleteIndexBuffer(GraphicsAPI::IndexBuffer *ptr) override;
-		virtual void DeleteUniformBuffer(GraphicsAPI::UniformBuffer * ptr) override;
+		virtual void DeleteBuffer(GraphicsAPI::Buffer *ptr) override;
 		virtual void DeleteGraphicsPipeline(GraphicsAPI::GraphicsPipeline* ptr) override;
 		virtual void DeleteComputePipeline(GraphicsAPI::ComputePipeline* ptr) override;
 		virtual void DeleteRenderPass(GraphicsAPI::RenderPass *ptr) override;
-		virtual void DeleteTexture(GraphicsAPI::Texture* ptr) override;
+		virtual void DeleteSampler(GraphicsAPI::Sampler* ptr) override;
+		virtual void DeleteImage(GraphicsAPI::Image* ptr) override;
 		virtual void DeleteDescriptorSet(GraphicsAPI::DescriptorSet* ptr) override;
 		virtual void DeleteDescriptorSetLayout(GraphicsAPI::DescriptorSetLayout* ptr) override;
 		virtual void DeleteCommandBuffer(GraphicsAPI::CommandBuffer *ptr) override;
 		virtual void DeleteVertexArrayObject(GraphicsAPI::VertexArrayObject *ptr) override;
 
-		virtual GraphicsAPI::Framebuffer *CreateFramebuffer(const GraphicsAPI::Framebuffer::CreateInfo& ci) override;
-		virtual GraphicsAPI::RenderPass *CreateRenderPass(const GraphicsAPI::RenderPass::CreateInfo& ci) override;
+		virtual GraphicsAPI::Framebuffer* CreateFramebuffer(const GraphicsAPI::Framebuffer::CreateInfo& ci) override;
+		virtual GraphicsAPI::RenderPass* CreateRenderPass(const GraphicsAPI::RenderPass::CreateInfo& ci) override;
 		virtual GraphicsAPI::GraphicsPipeline* CreateGraphicsPipeline(const GraphicsAPI::GraphicsPipeline::CreateInfo& ci) override;
 		virtual GraphicsAPI::ComputePipeline* CreateComputePipeline(const GraphicsAPI::ComputePipeline::CreateInfo& ci) override;
-		virtual GraphicsAPI::CommandBuffer *CreateCommandBuffer(const GraphicsAPI::CommandBuffer::CreateInfo& ci) override;
-		virtual GraphicsAPI::VertexArrayObject *CreateVertexArrayObject(const GraphicsAPI::VertexArrayObject::CreateInfo& ci) override;
-		virtual GraphicsAPI::VertexBuffer *CreateVertexBuffer(const GraphicsAPI::VertexBuffer::CreateInfo& ci) override;
-		virtual GraphicsAPI::IndexBuffer *CreateIndexBuffer(const GraphicsAPI::IndexBuffer::CreateInfo& ci) override;
-		virtual GraphicsAPI::UniformBuffer *CreateUniformBuffer(const GraphicsAPI::UniformBuffer::CreateInfo& ci) override;
-		virtual GraphicsAPI::Texture * CreateCubemap(const GraphicsAPI::Texture::CubemapCreateInfo& ci) override;
-		virtual GraphicsAPI::Texture* CreateTexture(const GraphicsAPI::Texture::CreateInfo& ci) override;
+		virtual GraphicsAPI::CommandBuffer* CreateCommandBuffer(const GraphicsAPI::CommandBuffer::CreateInfo& ci) override;
+		virtual GraphicsAPI::VertexArrayObject* CreateVertexArrayObject(const GraphicsAPI::VertexArrayObject::CreateInfo& ci) override;
+		virtual GraphicsAPI::Buffer* CreateBuffer(const GraphicsAPI::Buffer::CreateInfo& ci) override;
+		virtual GraphicsAPI::Sampler* CreateSampler(const GraphicsAPI::Sampler::CreateInfo& ci) override;
+		virtual GraphicsAPI::Image* CreateImage(const GraphicsAPI::Image::CreateInfo& ci) override;
 		virtual GraphicsAPI::DescriptorSet* CreateDescriptorSet(const GraphicsAPI::DescriptorSet::CreateInfo& ci) override;
 		virtual GraphicsAPI::DescriptorSetLayout* CreateDescriptorSetLayout(const GraphicsAPI::DescriptorSetLayout::CreateInfo& ci) override;
-		virtual GraphicsAPI::RenderTarget* CreateRenderTarget(const GraphicsAPI::RenderTarget::CreateInfo& rt) override;
-		virtual GraphicsAPI::RenderTarget *CreateRenderTarget(const GraphicsAPI::RenderTarget::CreateInfo* rt, uint32_t rc, bool cube = false) override;
-		virtual GraphicsAPI::DepthStencilTarget *CreateDepthStencilTarget(const GraphicsAPI::DepthStencilTarget::CreateInfo& rt) override;
+		
+		virtual GraphicsAPI::GraphicsPipeline* GetOrCreateGraphicsPipelineFromCache(const GraphicsPipeline::PipelineData& pipelineData, const VertexInputLayout* vertexInputLayout) override;
 
 		virtual inline bool ShouldUseImmediateMode() const override;
 		virtual inline bool SupportsCommandBuffers() const override;
@@ -157,5 +151,8 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void BindDefaultFramebufferWrite() override;
 		virtual void BindDefaultFramebufferRead() override;
 		virtual void ResizeViewport(uint32_t w, uint32_t h) override;
+
+		using PipelineHash = size_t;
+		std::unordered_map<PipelineHash, Grindstone::GraphicsAPI::GraphicsPipeline*> graphicsPipelineCache;
 	};
 }

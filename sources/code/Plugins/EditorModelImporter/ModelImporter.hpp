@@ -8,6 +8,7 @@
 #include <assimp/scene.h>
 #include <glm/glm.hpp>
 
+#include <Common/Formats/Model.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
 #include <Common/Editor/Importer.hpp>
 
@@ -34,22 +35,6 @@ namespace Grindstone::Editor::Importers {
 		};
 
 	private:
-		void ProcessNodeTree(aiNode* node, uint16_t parentIndex);
-		void ConvertMaterials();
-		std::filesystem::path GetTexturePath(aiMaterial* pMaterial, aiTextureType type);
-		void InitSubmeshes(bool hasBones);
-		void ProcessVertices();
-		void PreprocessBones();
-		void ProcessVertexBoneWeights();
-		void NormalizeBoneWeights();
-		void ProcessAnimations();
-		void AddBoneData(unsigned int vertexId, unsigned int boneId, float vertexWeight);
-
-		void OutputPrefabs();
-		void OutputMeshes();
-		void OutputVertexArray(std::ofstream& output, std::vector<uint16_t>& vertexArray);
-		void OutputVertexArray(std::ofstream& output, std::vector<float>& vertexArray);
-
 		// Members
 		Grindstone::Assets::AssetManager* assetManager = nullptr;
 		Grindstone::Editor::AssetRegistry* assetRegistry = nullptr;
@@ -73,9 +58,10 @@ namespace Grindstone::Editor::Importers {
 			}
 		};
 
-		struct OutputData {
+		struct OutputMesh {
+			std::string name;
+			Grindstone::Formats::Model::V1::BoundingData boundingData;
 			uint32_t vertexCount = 0;
-			uint32_t indexCount = 0;
 			uint16_t boneCount = 0;
 			struct VertexArray {
 				std::vector<float> position;
@@ -86,12 +72,44 @@ namespace Grindstone::Editor::Importers {
 				std::vector<std::vector<float>> texCoordArray;
 			} vertexArray;
 			std::vector<uint16_t> indices;
-			std::vector<Submesh> meshes;
+			std::vector<Submesh> submeshes;
 			std::vector<BoneData> bones;
-			std::vector<std::string> materialNames;
 			std::vector<std::string> boneNames;
-		} outputData;
+		};
+
+		struct OutputNode {
+			size_t parentNode = SIZE_MAX;
+			std::string name;
+			aiVector3D position;
+			aiVector3D scale = aiVector3D(1.0f, 1.0f, 1.0f);
+			aiQuaternion rotation;
+			size_t meshIndex = SIZE_MAX;
+			aiLight* lightData = nullptr;
+			aiCamera* cameraData = nullptr;
+		};
+
+		std::vector<std::string> outputMaterialUuids;
+		std::vector<std::string> outputMeshUuids;
+		std::vector<OutputMesh> outputMeshes;
+		std::vector<OutputNode> outputNodes;
+
+		void ProcessLight(aiLight* light);
+		void ProcessCamera(aiCamera* camera);
+		void ProcessNodeTree(aiNode* node, size_t parentIndex);
+		void ProcessMaterial(size_t materialIndex, aiMaterial* inputMaterial);
+		void ProcessSkeleton(aiSkeleton* skeleton);
+		void ProcessVertexBoneWeights(aiMesh* inputMesh, OutputMesh& outputMesh);
+		void NormalizeBoneWeights(OutputMesh& outputMesh);
+		void ProcessAnimation(aiAnimation* animation);
+		void AddBoneData(OutputMesh& outputMesh, unsigned int vertexId, unsigned int boneId, float vertexWeight);
+		void InitSubmeshes(aiMesh* inputMesh, OutputMesh& outputMesh, bool hasBones);
+		void ProcessVertices(aiMesh* inputMesh, OutputMesh& outputMesh);
+		void WritePrefab();
+		void WriteMesh(size_t index, const OutputMesh& mesh);
+		void WriteSkeleton(size_t index) const;
 	};
+
+	const Grindstone::Editor::ImporterVersion modelImporterVersion = 1;
 
 	void ImportModel(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path);
 }

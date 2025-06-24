@@ -8,25 +8,31 @@
 namespace Grindstone {
 	class HashedString {
 	public:
-
 		HashedString();
-		HashedString(const wchar_t* inStringRef);
 		HashedString(const char* inStringRef);
 		HashedString(const String& inString);
 		HashedString(StringRef inStringRef);
 
-		void Create(const wchar_t* inStringRef);
+		void Create(const char* inStringRef);
+		uint64_t GetHash() const;
 
-		String ToString() const;
+		operator bool() const noexcept;
+		bool operator==(const Grindstone::HashedString& other) const noexcept;
+
+		const String& ToString() const;
 
 	protected:
+		uint64_t hash;
+	};
+}
 
-		uint64_t hashedString;
-		static std::map<HashValue, String> nameHashMap;
-
-	private:
-
-		std::map<HashValue, String>::iterator ptr;
-
+namespace std
+{
+	template <>
+	struct hash<Grindstone::HashedString> {
+		std::size_t operator()(const Grindstone::HashedString& c) const {
+			uint64_t hash = c.GetHash();
+			return static_cast<std::size_t>(hash);
+		}
 	};
 }

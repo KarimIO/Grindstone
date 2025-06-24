@@ -149,12 +149,11 @@ void AssetBrowserPanel::ProcessDirectoryEntryClicks(bool isFolder, const std::fi
 			else if (path.extension().string() == ".gscene") {
 				Editor::Manager& engineManager = Editor::Manager::GetInstance();
 				SceneManagement::SceneManager* sceneManager = engineManager.GetEngineCore().GetSceneManager();
-				std::filesystem::path relativePath = std::filesystem::relative(path, engineManager.GetAssetsPath());
 
 				AssetRegistry& assetRegistry = engineManager.GetAssetRegistry();
 
 				AssetRegistry::Entry entry;
-				if (assetRegistry.TryGetAssetData(relativePath, entry)) {
+				if (assetRegistry.TryGetAssetDataFromAbsolutePath(path, entry)) {
 					sceneManager->LoadScene(entry.uuid);
 				}
 			}

@@ -1,0 +1,17 @@
+shaderBlock GsRendererUniform {
+	shaderHlsl {
+		struct RendererUBO {
+			column_major float4x4 projectionMatrix;
+			column_major float4x4 viewMatrix;
+			column_major float4x4 inverseProjectionMatrix;
+			column_major float4x4 inverseViewMatrix;
+			float3 eyePos;
+			float2 framebufferResolution;
+			float2 renderResolution;
+			float2 renderScale;
+			float time;
+		};
+
+		ConstantBuffer<RendererUBO> rendererUbo : register(b0, space0);
+	}
+}

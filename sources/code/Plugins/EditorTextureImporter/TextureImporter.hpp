@@ -56,5 +56,7 @@ namespace Grindstone::Editor::Importers {
 		bool isSixSidedCubemap = false;
 	};
 
+	const Grindstone::Editor::ImporterVersion textureImporterVersion = 1;
+
 	void ImportTexture(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManger, const std::filesystem::path& inputPath);
 }

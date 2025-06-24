@@ -5,8 +5,7 @@
 #include "VulkanRenderPass.hpp"
 #include "VulkanCore.hpp"
 #include "VulkanFormat.hpp"
-#include "VulkanUniformBuffer.hpp"
-#include "VulkanTexture.hpp"
+#include "VulkanBuffer.hpp"
 #include "VulkanDescriptorSetLayout.hpp"
 #include "VulkanGraphicsPipeline.hpp"
 
@@ -31,64 +30,87 @@ static VkShaderStageFlagBits TranslateShaderStageToVulkanBit(GraphicsAPI::Shader
 	}
 }
 
-Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
-	std::vector<VkPipelineShaderStageCreateInfo> shaderStages(createInfo.shaderStageCreateInfoCount);
+static void CreateShaderModule(
+	const GraphicsAPI::GraphicsPipeline::ShaderStageData& createInfo,
+	VkPipelineShaderStageCreateInfo& out
+) {
+	VkShaderModuleCreateInfo shaderModuleCreateInfo = {};
+	shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	shaderModuleCreateInfo.codeSize = createInfo.size;
+	shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(createInfo.content);
 
-	for (uint32_t i = 0; i < createInfo.shaderStageCreateInfoCount; ++i) {
-		CreateShaderModule(createInfo.shaderStageCreateInfos[i], shaderStages[i]);
+	VkShaderModule shaderModule;
+	if (vkCreateShaderModule(Vulkan::Core::Get().GetDevice(), &shaderModuleCreateInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+		GPRINT_FATAL(Grindstone::LogSource::GraphicsAPI, "failed to create shader module!");
+	}
+
+	out = {};
+	out.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	out.stage = TranslateShaderStageToVulkanBit(createInfo.type);
+	out.module = shaderModule;
+	out.pName = "main";
+}
+
+Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
+	const PipelineData& pipelineData = createInfo.pipelineData;
+	const VertexInputLayout& vertexInputLayout = createInfo.vertexInputLayout;
+
+	std::vector<VkPipelineShaderStageCreateInfo> shaderStages(pipelineData.shaderStageCreateInfoCount);
+
+	for (uint32_t i = 0; i < pipelineData.shaderStageCreateInfoCount; ++i) {
+		CreateShaderModule(pipelineData.shaderStageCreateInfos[i], shaderStages[i]);
 	}
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInputInfo.vertexBindingDescriptionCount = createInfo.vertexBindingsCount;
-	vertexInputInfo.pVertexBindingDescriptions = new VkVertexInputBindingDescription[createInfo.vertexBindingsCount];
-	uint32_t vertexAttributeDescriptorCount = 0;
-	for (uint32_t i = 0; i < createInfo.vertexBindingsCount; ++i) {
-		auto& vb = createInfo.vertexBindings[i];
-		VkVertexInputBindingDescription& vbd = (VkVertexInputBindingDescription&)vertexInputInfo.pVertexBindingDescriptions[i];
-		vbd = {};
-		vbd.binding = i;
-		vbd.inputRate = vb.elementRate ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
-		vbd.stride = vb.stride;
-		vertexAttributeDescriptorCount += vb.attributeCount;
+
+	std::vector<VkVertexInputBindingDescription> vkBindings;
+	vkBindings.resize(vertexInputLayout.bindings.size());
+
+	for (size_t i = 0; i < vertexInputLayout.bindings.size(); ++i) {
+		const auto& bindingSrc = vertexInputLayout.bindings[i];
+		VkVertexInputBindingDescription& bindingDst = vkBindings[i];
+		bindingDst = {};
+		bindingDst.binding = bindingSrc.bindingIndex;
+		bindingDst.inputRate = bindingSrc.inputRate == VertexInputRate::Instance
+			? VK_VERTEX_INPUT_RATE_INSTANCE
+			: VK_VERTEX_INPUT_RATE_VERTEX;
+		bindingDst.stride = bindingSrc.stride;
 	}
 
-	vertexInputInfo.vertexAttributeDescriptionCount = vertexAttributeDescriptorCount;
-	std::vector<VkVertexInputAttributeDescription> vertexAttribDescriptors(vertexAttributeDescriptorCount);
-	vertexAttributeDescriptorCount = 0;
+	std::vector<VkVertexInputAttributeDescription> vkAttributes;
+	vkAttributes.resize(vertexInputLayout.attributes.size());
 
-	// TODO: We should reinvestigate setting the binding and locations
-	for (uint32_t i = 0; i < createInfo.vertexBindingsCount; ++i) {
-		auto& vb = createInfo.vertexBindings[i];
-
-		for (uint32_t j = 0; j < vb.attributeCount; ++j) {
-			auto& va = vb.attributes[j];
-			VkVertexInputAttributeDescription& vad = vertexAttribDescriptors[vertexAttributeDescriptorCount++];
-			vad.binding = i;
-			vad.location = va.location;
-			vad.format = TranslateVertexFormatsToVulkan(va.format);
-			vad.offset = va.offset;
-		}
+	for (size_t i = 0; i < vertexInputLayout.attributes.size(); ++i) {
+		const auto& attributeSrc = vertexInputLayout.attributes[i];
+		VkVertexInputAttributeDescription& attributeDst = vkAttributes[i];
+		attributeDst.binding = attributeSrc.bindingIndex;
+		attributeDst.location = attributeSrc.locationIndex;
+		attributeDst.format = TranslateFormatToVulkan(attributeSrc.format);
+		attributeDst.offset = attributeSrc.byteOffset;
 	}
 
-	vertexInputInfo.pVertexAttributeDescriptions = vertexAttribDescriptors.data();
+	vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(vkBindings.size());
+	vertexInputInfo.pVertexBindingDescriptions = vkBindings.data();
+	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vkAttributes.size());
+	vertexInputInfo.pVertexAttributeDescriptions = vkAttributes.data();
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = TranslateGeometryTypeToVulkan(createInfo.primitiveType);
+	inputAssembly.topology = TranslateGeometryTypeToVulkan(pipelineData.primitiveType);
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 
 	VkViewport viewport = {};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = createInfo.width;
-	viewport.height = createInfo.height;
+	viewport.width = pipelineData.width;
+	viewport.height = pipelineData.height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D scissor = {};
-	scissor.offset = { createInfo.scissorX, createInfo.scissorY };
-	scissor.extent = { createInfo.scissorW, createInfo.scissorH };
+	scissor.offset = { pipelineData.scissorX, pipelineData.scissorY };
+	scissor.extent = { pipelineData.scissorW, pipelineData.scissorH };
 
 	VkPipelineViewportStateCreateInfo viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -99,16 +121,16 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 
 	VkPipelineRasterizationStateCreateInfo rasterizer = {};
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	rasterizer.depthClampEnable = createInfo.isDepthClampEnabled;
+	rasterizer.depthClampEnable = pipelineData.isDepthClampEnabled;
 	rasterizer.rasterizerDiscardEnable = VK_FALSE;
-	rasterizer.polygonMode = TranslatePolygonModeToVulkan(createInfo.polygonFillMode);
+	rasterizer.polygonMode = TranslatePolygonModeToVulkan(pipelineData.polygonFillMode);
 	rasterizer.lineWidth = 1.0f;
-	rasterizer.cullMode = TranslateCullModeToVulkan(createInfo.cullMode);
+	rasterizer.cullMode = TranslateCullModeToVulkan(pipelineData.cullMode);
 	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	rasterizer.depthBiasEnable = createInfo.isDepthBiasEnabled;
-	rasterizer.depthBiasConstantFactor = createInfo.depthBiasConstantFactor;
-	rasterizer.depthBiasSlopeFactor = createInfo.depthBiasSlopeFactor;
-	rasterizer.depthBiasClamp = createInfo.depthBiasClamp;
+	rasterizer.depthBiasEnable = pipelineData.isDepthBiasEnabled;
+	rasterizer.depthBiasConstantFactor = pipelineData.depthBiasConstantFactor;
+	rasterizer.depthBiasSlopeFactor = pipelineData.depthBiasSlopeFactor;
+	rasterizer.depthBiasClamp = pipelineData.depthBiasClamp;
 
 	VkPipelineMultisampleStateCreateInfo multisampling = {};
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -117,21 +139,23 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 
 	VkPipelineDepthStencilStateCreateInfo depthStencil = {};
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depthStencil.depthTestEnable = createInfo.isDepthTestEnabled;
-	depthStencil.depthWriteEnable = createInfo.isDepthWriteEnabled;
-	depthStencil.depthCompareOp = TranslateCompareOpToVulkan(createInfo.depthCompareOp);
+	depthStencil.depthTestEnable = pipelineData.isDepthTestEnabled;
+	depthStencil.depthWriteEnable = pipelineData.isDepthWriteEnabled;
+	depthStencil.depthCompareOp = TranslateCompareOpToVulkan(pipelineData.depthCompareOp);
 	depthStencil.depthBoundsTestEnable = VK_FALSE;
-	depthStencil.stencilTestEnable = createInfo.isStencilEnabled;
+	depthStencil.stencilTestEnable = pipelineData.isStencilEnabled;
 
-	std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(createInfo.colorAttachmentCount);
-	for (size_t i = 0; i < createInfo.colorAttachmentCount; ++i) {
+	std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(pipelineData.colorAttachmentCount);
+	for (uint8_t i = 0; i < pipelineData.colorAttachmentCount; ++i) {
+		const Grindstone::GraphicsAPI::GraphicsPipeline::AttachmentData& attachmentCreateInfo = pipelineData.colorAttachmentData[i];
 		VkPipelineColorBlendAttachmentState& attachment = colorBlendAttachments[i];
-		colorBlendAttachments[i].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		
+		colorBlendAttachments[i].colorWriteMask = TranslateColorMaskToVulkan(attachmentCreateInfo.colorMask);
 
-		if (createInfo.blendData.colorOperation == BlendOperation::None && createInfo.blendData.alphaOperation == BlendOperation::None) {
+		if (attachmentCreateInfo.blendData.colorOperation == BlendOperation::None && attachmentCreateInfo.blendData.alphaOperation == BlendOperation::None) {
 			attachment.blendEnable = VK_FALSE;
 		}
-		else if (createInfo.blendData.colorOperation == BlendOperation::None || createInfo.blendData.alphaOperation == BlendOperation::None) {
+		else if (attachmentCreateInfo.blendData.colorOperation == BlendOperation::None || attachmentCreateInfo.blendData.alphaOperation == BlendOperation::None) {
 			GPRINT_ERROR(LogSource::GraphicsAPI, "Invalid blendOperation - using none blend with non-none blend");
 			attachment.blendEnable = VK_FALSE;
 		}
@@ -139,20 +163,20 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 			attachment.blendEnable = VK_TRUE;
 		}
 
-		attachment.colorBlendOp = TranslateBlendOpToVulkan(createInfo.blendData.colorOperation);
-		attachment.srcColorBlendFactor = TranslateBlendFactorToVulkan(createInfo.blendData.colorFactorSrc);
-		attachment.dstColorBlendFactor = TranslateBlendFactorToVulkan(createInfo.blendData.colorFactorDst);
+		attachment.colorBlendOp = TranslateBlendOpToVulkan(attachmentCreateInfo.blendData.colorOperation);
+		attachment.srcColorBlendFactor = TranslateBlendFactorToVulkan(attachmentCreateInfo.blendData.colorFactorSrc);
+		attachment.dstColorBlendFactor = TranslateBlendFactorToVulkan(attachmentCreateInfo.blendData.colorFactorDst);
 
-		attachment.alphaBlendOp = TranslateBlendOpToVulkan(createInfo.blendData.alphaOperation);
-		attachment.srcAlphaBlendFactor = TranslateBlendFactorToVulkan(createInfo.blendData.alphaFactorSrc);
-		attachment.dstAlphaBlendFactor = TranslateBlendFactorToVulkan(createInfo.blendData.alphaFactorDst);
+		attachment.alphaBlendOp = TranslateBlendOpToVulkan(attachmentCreateInfo.blendData.alphaOperation);
+		attachment.srcAlphaBlendFactor = TranslateBlendFactorToVulkan(attachmentCreateInfo.blendData.alphaFactorSrc);
+		attachment.dstAlphaBlendFactor = TranslateBlendFactorToVulkan(attachmentCreateInfo.blendData.alphaFactorDst);
 	}
 
 	VkPipelineColorBlendStateCreateInfo colorBlending = {};
 	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	colorBlending.logicOpEnable = VK_FALSE;
 	colorBlending.logicOp = VK_LOGIC_OP_COPY;
-	colorBlending.attachmentCount = createInfo.colorAttachmentCount;
+	colorBlending.attachmentCount = pipelineData.colorAttachmentCount;
 	colorBlending.pAttachments = colorBlendAttachments.data();
 	colorBlending.blendConstants[0] = 0.0f;
 	colorBlending.blendConstants[1] = 0.0f;
@@ -160,12 +184,15 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 	colorBlending.blendConstants[3] = 0.0f;
 
 	std::vector<VkDescriptorSetLayout> layouts;
-	layouts.reserve(createInfo.descriptorSetLayoutCount);
+	layouts.reserve(pipelineData.descriptorSetLayoutCount);
 
-	for (uint32_t i = 0; i < createInfo.descriptorSetLayoutCount; ++i) {
-		Vulkan::DescriptorSetLayout* uboBinding = static_cast<Vulkan::DescriptorSetLayout*>(createInfo.descriptorSetLayouts[i]);
-		VkDescriptorSetLayout ubb = uboBinding->GetInternalLayout();
-		layouts.push_back(ubb);
+
+	const Vulkan::DescriptorSetLayout* const * descriptorSetLayouts = reinterpret_cast<const Vulkan::DescriptorSetLayout* const *>(pipelineData.descriptorSetLayouts);
+
+	for (uint32_t i = 0; i < pipelineData.descriptorSetLayoutCount; ++i) {
+		const Vulkan::DescriptorSetLayout* descriptorSetLayout = descriptorSetLayouts[i];
+		VkDescriptorSetLayout vkDescriptorSetLayout = descriptorSetLayout->GetInternalLayout();
+		layouts.push_back(vkDescriptorSetLayout);
 	}
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -180,13 +207,22 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 		return;
 	}
 
-	Vulkan::RenderPass* renderPass = static_cast<Vulkan::RenderPass*>(createInfo.renderPass);
+	if (pipelineData.debugName != nullptr) {
+		std::string layoutDebugName = std::string(pipelineData.debugName) + " Layout";
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_PIPELINE_LAYOUT, pipelineLayout, layoutDebugName.c_str());
+	}
+	else {
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Graphics Pipeline!");
+		return;
+	}
+
+	Vulkan::RenderPass* renderPass = static_cast<Vulkan::RenderPass*>(pipelineData.renderPass);
 
 	std::vector<VkDynamicState> dynamicStates;
-	if (createInfo.hasDynamicViewport) {
+	if (pipelineData.hasDynamicViewport) {
 		dynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 	}
-	if (createInfo.hasDynamicScissor) {
+	if (pipelineData.hasDynamicScissor) {
 		dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
 	}
 
@@ -219,15 +255,11 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 		return;
 	}
 
-	if (createInfo.debugName != nullptr) {
-		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_PIPELINE, graphicsPipeline, createInfo.debugName);
-	}
-	else {
-		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Graphics Pipeline!");
-		return;
+	if (pipelineData.debugName != nullptr) {
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_PIPELINE, graphicsPipeline, pipelineData.debugName);
 	}
 
-	for (uint32_t i = 0; i < createInfo.shaderStageCreateInfoCount; ++i) {
+	for (uint32_t i = 0; i < pipelineData.shaderStageCreateInfoCount; ++i) {
 		vkDestroyShaderModule(Vulkan::Core::Get().GetDevice(), shaderStages[i].module, nullptr);
 	}
 }
@@ -249,25 +281,4 @@ VkPipeline Vulkan::GraphicsPipeline::GetGraphicsPipeline() const {
 
 VkPipelineLayout Vulkan::GraphicsPipeline::GetGraphicsPipelineLayout() const {
 	return pipelineLayout;
-}
-
-void Vulkan::GraphicsPipeline::Recreate(const CreateInfo& createInfo) {
-}
-
-void Vulkan::GraphicsPipeline::CreateShaderModule(GraphicsPipeline::CreateInfo::ShaderStageData& createInfo, VkPipelineShaderStageCreateInfo &out) {
-	VkShaderModuleCreateInfo shaderModuleCreateInfo = {};
-	shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	shaderModuleCreateInfo.codeSize = createInfo.size;
-	shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(createInfo.content);
-
-	VkShaderModule shaderModule;
-	if (vkCreateShaderModule(Vulkan::Core::Get().GetDevice(), &shaderModuleCreateInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create shader module!");
-	}
-
-	out = {};
-	out.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	out.stage = TranslateShaderStageToVulkanBit(createInfo.type);
-	out.module = shaderModule;
-	out.pName = "main";
 }

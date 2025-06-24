@@ -13,5 +13,5 @@ OpenGL::DescriptorSet::DescriptorSet(const DescriptorSet::CreateInfo& createInfo
 OpenGL::DescriptorSet::~DescriptorSet() {
 }
 
-void OpenGL::DescriptorSet::ChangeBindings(Binding* bindings, uint32_t bindingCount, uint32_t bindingOffset) {
+void OpenGL::DescriptorSet::ChangeBindings(const Binding* bindings, uint32_t bindingCount, uint32_t bindingOffset) {
 }

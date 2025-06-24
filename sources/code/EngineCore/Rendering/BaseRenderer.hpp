@@ -35,4 +35,10 @@ namespace Grindstone {
 		virtual const RenderMode* GetRenderModes() const = 0;
 		virtual void SetRenderMode(uint16_t mode) = 0;
 	};
+
+	class BaseRendererFactory {
+	public:
+		virtual Grindstone::BaseRenderer* CreateRenderer(GraphicsAPI::RenderPass* targetRenderPass) = 0;
+		virtual ~BaseRendererFactory() {}
+	};
 }

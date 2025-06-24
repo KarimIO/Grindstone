@@ -2,13 +2,14 @@
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <Common/Graphics/Core.hpp>
+#include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
 
 #include "Assets/Mesh3dAsset.hpp"
 #include "Assets/Mesh3dImporter.hpp"
 #include "Assets/RigAsset.hpp"
 #include "Assets/RigImporter.hpp"
 #include "Mesh3dRenderer.hpp"
-#include "EngineCore/Assets/Shaders/ShaderAsset.hpp"
+#include "EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp"
 #include "EngineCore/Assets/AssetManager.hpp"
 #include "Components/MeshComponent.hpp"
 #include "Components/MeshRendererComponent.hpp"
@@ -17,35 +18,44 @@ using namespace Grindstone::Memory;
 
 Mesh3dImporter* mesh3dImporter = nullptr;
 Mesh3dRenderer* mesh3dRenderer = nullptr;
-EngineCore* engineCore = nullptr;
 
 static void SetupMeshRendererComponent(entt::registry& registry, entt::entity entity) {
-	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	MeshRendererComponent& meshRendererComponent = registry.get<MeshRendererComponent>(entity);
+	auto& [tagComponent, meshRendererComponent] = registry.get<TagComponent, MeshRendererComponent>(entity);
 
-	GraphicsAPI::UniformBuffer::CreateInfo uniformBufferCreateInfo{};
-	uniformBufferCreateInfo.debugName = "Per Draw Uniform Buffer";
-	uniformBufferCreateInfo.isDynamic = true;
-	uniformBufferCreateInfo.size = sizeof(float) * 16;
-	meshRendererComponent.perDrawUniformBuffer = graphicsCore->CreateUniformBuffer(uniformBufferCreateInfo);
+	{
+		std::string debugName = tagComponent.tag + " Per Draw Uniform Buffer";
+		GraphicsAPI::Buffer::CreateInfo uniformBufferCreateInfo{};
+		uniformBufferCreateInfo.debugName = debugName.c_str();
+		uniformBufferCreateInfo.bufferUsage =
+			GraphicsAPI::BufferUsage::TransferDst |
+			GraphicsAPI::BufferUsage::TransferSrc |
+			GraphicsAPI::BufferUsage::Uniform;
+		uniformBufferCreateInfo.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
+		uniformBufferCreateInfo.bufferSize = sizeof(float) * 16;
+		meshRendererComponent.perDrawUniformBuffer = graphicsCore->CreateBuffer(uniformBufferCreateInfo);
+	}
 
-	GraphicsAPI::DescriptorSet::Binding descriptorSetUniformBinding{ meshRendererComponent.perDrawUniformBuffer };
+	GraphicsAPI::DescriptorSet::Binding descriptorSetUniformBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( meshRendererComponent.perDrawUniformBuffer );
 
-	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
-	descriptorSetCreateInfo.debugName = "Per Draw Descriptor Set";
-	descriptorSetCreateInfo.bindingCount = 1;
-	descriptorSetCreateInfo.bindings = &descriptorSetUniformBinding;
-	descriptorSetCreateInfo.layout = mesh3dRenderer->GetPerDrawDescriptorSetLayout();
-	meshRendererComponent.perDrawDescriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
+	{
+		std::string debugName = tagComponent.tag + " Per Draw Descriptor Set";
+		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
+		descriptorSetCreateInfo.debugName = debugName.c_str();
+		descriptorSetCreateInfo.bindingCount = 1;
+		descriptorSetCreateInfo.bindings = &descriptorSetUniformBinding;
+		descriptorSetCreateInfo.layout = mesh3dRenderer->GetPerDrawDescriptorSetLayout();
+		meshRendererComponent.perDrawDescriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
+	}
 }
 
 static void DestroyMeshRendererComponent(entt::registry& registry, entt::entity entity) {
-	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
+	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	MeshRendererComponent& meshRendererComponent = registry.get<MeshRendererComponent>(entity);
 	graphicsCore->DeleteDescriptorSet(meshRendererComponent.perDrawDescriptorSet);
-	graphicsCore->DeleteUniformBuffer(meshRendererComponent.perDrawUniformBuffer);
+	graphicsCore->DeleteBuffer(meshRendererComponent.perDrawUniformBuffer);
 }
 
 
@@ -54,7 +64,8 @@ extern "C" {
 		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
 		Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
 
-		engineCore = pluginInterface->GetEngineCore();
+		Grindstone::EngineCore* engineCore = pluginInterface->GetEngineCore();
+		EngineCore::SetInstance(*engineCore);
 
 		mesh3dImporter = AllocatorCore::Allocate<Mesh3dImporter>(engineCore);
 		mesh3dRenderer = AllocatorCore::Allocate<Mesh3dRenderer>(engineCore);

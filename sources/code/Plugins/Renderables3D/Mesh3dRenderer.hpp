@@ -15,52 +15,17 @@ namespace Grindstone {
 		class DescriptorSet;
 	}
 
-	struct RenderTask {
-		GraphicsAPI::DescriptorSet* materialDescriptorSet;
-		GraphicsAPI::DescriptorSet* perDrawDescriptorSet;
-		class GraphicsAPI::GraphicsPipeline* pipeline;
-		class GraphicsAPI::VertexArrayObject* vertexArrayObject;
-		uint32_t indexCount;
-		uint32_t baseVertex;
-		uint32_t baseIndex;
-		glm::mat4 transformMatrix;
-		uint32_t sortData;
-	};
-
-	using RenderTaskList = std::vector<RenderTask>;
-	using SortedRender = std::vector<size_t>;
-
-	struct RenderSortData {
-		size_t renderTaskIndex;
-		uint32_t sortData;
-	};
-
-	struct Mesh3dUbo {
-		glm::mat4 modelMatrix;
-	};
-
-	struct RenderQueueContainer {
-		DrawSortMode sortMode;
-		RenderTaskList renderTasks;
-		std::vector<RenderSortData> renderSortData;
-
-		RenderQueueContainer() = default;
-		RenderQueueContainer(DrawSortMode drawSortMode) {
-			sortMode = drawSortMode;
-		}
-	};
-
 	class EngineCore;
 
 	class Mesh3dRenderer : public BaseAssetRenderer {
 		public:
 			Mesh3dRenderer(EngineCore* engineCore);
 
-			virtual void AddQueue(const char* queueName, DrawSortMode sortMode);
-			virtual void RenderShadowMap(GraphicsAPI::CommandBuffer* commandBuffer, GraphicsAPI::DescriptorSet* lightingDescriptorSet, entt::registry& registry, glm::vec3 lightSourcePosition) override;
-			virtual void RenderQueue(GraphicsAPI::CommandBuffer* commandBuffer, const char* queueName) override;
-			virtual void CacheRenderTasksAndFrustumCull(glm::vec3 eyePosition, entt::registry& registry) override;
-			virtual void SortQueues() override;
+			virtual void RenderQueue(
+				GraphicsAPI::CommandBuffer* commandBuffer,
+				const entt::registry& registry,
+				Grindstone::HashedString renderQueueHash
+			) override;
 			GraphicsAPI::DescriptorSetLayout* GetPerDrawDescriptorSetLayout() const;
 		private:
 			virtual std::string GetName() const override;
@@ -70,9 +35,5 @@ namespace Grindstone {
 			std::string rendererName = "Mesh3d";
 			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
 			class GraphicsAPI::DescriptorSetLayout* perDrawDescriptorSetLayout = nullptr;
-
-		public:
-			std::map<std::string, RenderQueueIndex> renderQueueMap;
-			std::vector<RenderQueueContainer> renderQueues;
 	};
 }

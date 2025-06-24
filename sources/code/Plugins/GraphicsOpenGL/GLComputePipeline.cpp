@@ -1,6 +1,5 @@
 #include <GL/gl3w.h>
-#include "GLUniformBuffer.hpp"
-#include "GLTexture.hpp"
+#include "GLBuffer.hpp"
 #include <vector>
 #include <iostream>
 #include <cstring>

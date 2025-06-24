@@ -20,18 +20,14 @@
 #include "VulkanWindowGraphicsBinding.hpp"
 #include "VulkanCore.hpp"
 #include "VulkanCommandBuffer.hpp"
-#include "VulkanDepthStencilTarget.hpp"
+#include "VulkanSampler.hpp"
+#include "VulkanImage.hpp"
 #include "VulkanFramebuffer.hpp"
 #include "VulkanGraphicsPipeline.hpp"
 #include "VulkanComputePipeline.hpp"
-#include "VulkanIndexBuffer.hpp"
-#include "VulkanUniformBuffer.hpp"
 #include "VulkanRenderPass.hpp"
-#include "VulkanRenderTarget.hpp"
-#include "VulkanTexture.hpp"
-#include "VulkanUniformBuffer.hpp"
 #include "VulkanVertexArrayObject.hpp"
-#include "VulkanVertexBuffer.hpp"
+#include "VulkanBuffer.hpp"
 #include "VulkanDescriptorSet.hpp"
 #include "VulkanDescriptorSetLayout.hpp"
 #include "VulkanFormat.hpp"
@@ -60,7 +56,9 @@ const std::vector<const char*> validationLayers = {
 };
 
 const std::vector<const char*> deviceExtensions = {
-	VK_KHR_SWAPCHAIN_EXTENSION_NAME
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+	VK_GOOGLE_HLSL_FUNCTIONALITY_1_EXTENSION_NAME,
+	VK_GOOGLE_USER_TYPE_EXTENSION_NAME,
 };
 
 #ifdef NDEBUG
@@ -71,8 +69,12 @@ const bool enableValidationLayers = true;
 
 constexpr auto vkApiVersion = VK_API_VERSION_1_3;
 
-static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
+static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 	Grindstone::GraphicsAPI::Vulkan::Core* vk = static_cast<Grindstone::GraphicsAPI::Vulkan::Core*>(pUserData);
+
+	if (pCallbackData->messageIdNumber == 1402107823 || -507995293 == pCallbackData->messageIdNumber) {
+		return VK_FALSE;
+	}
 
 	Grindstone::LogSeverity logSeverity = Grindstone::LogSeverity::Info;
 	switch (messageSeverity) {
@@ -146,13 +148,13 @@ bool Vulkan::Core::Initialize(const Base::Core::CreateInfo& ci) {
 }
 
 void Vulkan::Core::CreateAllocator() {
-	VmaAllocatorCreateInfo AllocatorInfo = {};
-	AllocatorInfo.vulkanApiVersion = vkApiVersion;
-	AllocatorInfo.physicalDevice = physicalDevice;
-	AllocatorInfo.device = device;
-	AllocatorInfo.instance = instance;
+	VmaAllocatorCreateInfo allocatorInfo = {};
+	allocatorInfo.vulkanApiVersion = vkApiVersion;
+	allocatorInfo.physicalDevice = physicalDevice;
+	allocatorInfo.device = device;
+	allocatorInfo.instance = instance;
 
-	vmaCreateAllocator(&AllocatorInfo, &allocator);
+	vmaCreateAllocator(&allocatorInfo, &allocator);
 }
 
 void Vulkan::Core::CreateInstance() {
@@ -273,18 +275,24 @@ void Vulkan::Core::CreateLogicalDevice() {
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 
-	VkPhysicalDeviceFeatures deviceFeatures = {};
-	deviceFeatures.fillModeNonSolid = VK_TRUE;
-	deviceFeatures.multiDrawIndirect = VK_TRUE;
-	deviceFeatures.samplerAnisotropy = VK_TRUE;
+	VkPhysicalDeviceVulkan13Features deviceFeatures13 = {};
+	deviceFeatures13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+	deviceFeatures13.dynamicRendering = VK_TRUE;
+
+	VkPhysicalDeviceVulkan12Features deviceFeatures12 = {};
+	deviceFeatures12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+	deviceFeatures12.pNext = &deviceFeatures13;
 
 	VkPhysicalDeviceVulkan11Features deviceFeatures11 = {};
 	deviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
 	deviceFeatures11.shaderDrawParameters = VK_TRUE;
+	deviceFeatures11.pNext = &deviceFeatures12;
 
 	VkPhysicalDeviceFeatures2 deviceFeatures2 = {};
 	deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-	deviceFeatures2.features = deviceFeatures;
+	deviceFeatures2.features.fillModeNonSolid = VK_TRUE;
+	deviceFeatures2.features.multiDrawIndirect = VK_TRUE;
+	deviceFeatures2.features.samplerAnisotropy = VK_TRUE;
 	deviceFeatures2.pNext = &deviceFeatures11;
 
 	VkDeviceCreateInfo createInfo = {};
@@ -417,7 +425,7 @@ void Vulkan::Core::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateI
 	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
 	createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 	createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-	createInfo.pfnUserCallback = debugCallback;
+	createInfo.pfnUserCallback = DebugCallback;
 	createInfo.pUserData = this;
 }
 
@@ -506,19 +514,25 @@ void Vulkan::Core::WaitUntilIdle() {
 }
 
 void Vulkan::Core::CreateDescriptorPool() {
-	std::array<VkDescriptorPoolSize, 3> poolSizes = {};
+	std::array<VkDescriptorPoolSize, 6> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = 1000; // static_cast<uint32_t>(swapChainImages.size());
-	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[1].descriptorCount = 1000; //static_cast<uint32_t>(swapChainImages.size());
-	poolSizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-	poolSizes[2].descriptorCount = 1000; //static_cast<uint32_t>(swapChainImages.size());
+	poolSizes[0].descriptorCount = 1000;
+	poolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	poolSizes[1].descriptorCount = 1000;
+	poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	poolSizes[2].descriptorCount = 1000;
+	poolSizes[3].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	poolSizes[3].descriptorCount = 1000;
+	poolSizes[4].type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+	poolSizes[4].descriptorCount = 1000;
+	poolSizes[5].type = VK_DESCRIPTOR_TYPE_SAMPLER;
+	poolSizes[5].descriptorCount = 1000;
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = 3000;
+	poolInfo.maxSets = static_cast<uint32_t>(poolSizes.size() * 1000);
 
 	if (vkCreateDescriptorPool(device, &poolInfo, allocator->GetAllocationCallbacks(), &descriptorPool) != VK_SUCCESS) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create descriptor pool!");
@@ -646,24 +660,16 @@ Base::VertexArrayObject* Vulkan::Core::CreateVertexArrayObject(const Base::Verte
 	return static_cast<Base::VertexArrayObject*>(AllocatorCore::Allocate<Vulkan::VertexArrayObject>(ci));
 }
 
-Base::VertexBuffer* Vulkan::Core::CreateVertexBuffer(const Base::VertexBuffer::CreateInfo& ci) {
-	return static_cast<Base::VertexBuffer*>(AllocatorCore::Allocate<Vulkan::VertexBuffer>(ci));
+Base::Buffer* Vulkan::Core::CreateBuffer(const Base::Buffer::CreateInfo& ci) {
+	return static_cast<Base::Buffer*>(AllocatorCore::Allocate<Vulkan::Buffer>(ci));
 }
 
-Base::IndexBuffer* Vulkan::Core::CreateIndexBuffer(const Base::IndexBuffer::CreateInfo& ci) {
-	return static_cast<Base::IndexBuffer*>(AllocatorCore::Allocate<Vulkan::IndexBuffer>(ci));
+Base::Sampler* Vulkan::Core::CreateSampler(const Base::Sampler::CreateInfo& createInfo) {
+	return static_cast<Base::Sampler*>(AllocatorCore::Allocate<Vulkan::Sampler>(createInfo));
 }
 
-Base::UniformBuffer* Vulkan::Core::CreateUniformBuffer(const Base::UniformBuffer::CreateInfo& ci) {
-	return static_cast<Base::UniformBuffer*>(AllocatorCore::Allocate<Vulkan::UniformBuffer>(ci));
-}
-
-Base::Texture* Vulkan::Core::CreateCubemap(const Base::Texture::CubemapCreateInfo& createInfo) {
-	return nullptr; // static_cast<Base::Texture*>(AllocatorCore::Allocate<Vulkan::Texture>(ci));
-}
-
-Base::Texture* Vulkan::Core::CreateTexture(const Base::Texture::CreateInfo& ci) {
-	return static_cast<Base::Texture*>(AllocatorCore::Allocate<Vulkan::Texture>(ci));
+Base::Image* Vulkan::Core::CreateImage(const Base::Image::CreateInfo& createInfo) {
+	return static_cast<Base::Image*>(AllocatorCore::Allocate<Vulkan::Image>(createInfo));
 }
 
 Base::DescriptorSet* Vulkan::Core::CreateDescriptorSet(const Base::DescriptorSet::CreateInfo& ci) {
@@ -674,28 +680,33 @@ Base::DescriptorSetLayout* Vulkan::Core::CreateDescriptorSetLayout(const Base::D
 	return static_cast<Base::DescriptorSetLayout*>(AllocatorCore::Allocate<Vulkan::DescriptorSetLayout>(ci));
 }
 
-Base::RenderTarget* Vulkan::Core::CreateRenderTarget(const Base::RenderTarget::CreateInfo& ci) {
-	return static_cast<Base::RenderTarget*>(AllocatorCore::Allocate<Vulkan::RenderTarget>(ci));
-}
+Base::GraphicsPipeline* Vulkan::Core::GetOrCreateGraphicsPipelineFromCache(
+	const GraphicsPipeline::PipelineData& pipelineData,
+	const VertexInputLayout* vertexInputLayout
+) {
+	size_t hash = std::hash<GraphicsPipeline::PipelineData>{}(pipelineData);
+	if (vertexInputLayout != nullptr) {
+		hash ^= std::hash<VertexInputLayout>{}(*vertexInputLayout);
+	}
+	auto& iterator = graphicsPipelineCache.find(hash);
+	if (iterator != graphicsPipelineCache.end()) {
+		return iterator->second;
+	}
 
-Base::RenderTarget* Vulkan::Core::CreateRenderTarget(const Base::RenderTarget::CreateInfo* ci, uint32_t rc, bool cube) {
-	return static_cast<Base::RenderTarget*>(AllocatorCore::Allocate<Vulkan::RenderTarget>(*ci));
-}
+	Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo createInfo{};
+	createInfo.pipelineData = pipelineData;
+	if (vertexInputLayout != nullptr) {
+		createInfo.vertexInputLayout = *vertexInputLayout;
+	}
 
-Base::DepthStencilTarget* Vulkan::Core::CreateDepthStencilTarget(const Base::DepthStencilTarget::CreateInfo& ci) {
-	return static_cast<Base::DepthStencilTarget*>(AllocatorCore::Allocate<Vulkan::DepthStencilTarget>(ci));
+	Grindstone::GraphicsAPI::GraphicsPipeline* newPipeline = CreateGraphicsPipeline(createInfo);
+
+	graphicsPipelineCache[hash] = newPipeline;
+	return newPipeline;
 }
 
 // Deleters
 //==================================
-void Vulkan::Core::DeleteRenderTarget(Base::RenderTarget * ptr) {
-	AllocatorCore::Free(static_cast<Vulkan::RenderTarget*>(ptr));
-}
-
-void Vulkan::Core::DeleteDepthStencilTarget(Base::DepthStencilTarget * ptr) {
-	AllocatorCore::Free(static_cast<Vulkan::DepthStencilTarget*>(ptr));
-}
-
 void Vulkan::Core::DeleteFramebuffer(Base::Framebuffer *ptr) {
 	AllocatorCore::Free(static_cast<Vulkan::Framebuffer*>(ptr));
 }
@@ -704,16 +715,8 @@ void Vulkan::Core::DeleteVertexArrayObject(Base::VertexArrayObject* ptr) {
 	AllocatorCore::Free(static_cast<Vulkan::VertexArrayObject*>(ptr));
 }
 
-void Vulkan::Core::DeleteVertexBuffer(Base::VertexBuffer *ptr) {
-	AllocatorCore::Free(static_cast<Vulkan::VertexBuffer*>(ptr));
-}
-
-void Vulkan::Core::DeleteIndexBuffer(Base::IndexBuffer *ptr) {
-	AllocatorCore::Free(static_cast<Vulkan::IndexBuffer*>(ptr));
-}
-
-void Vulkan::Core::DeleteUniformBuffer(Base::UniformBuffer *ptr) {
-	AllocatorCore::Free(static_cast<Vulkan::UniformBuffer*>(ptr));
+void Vulkan::Core::DeleteBuffer(Base::Buffer *ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::Buffer*>(ptr));
 }
 
 void Vulkan::Core::DeleteComputePipeline(Base::ComputePipeline* ptr) {
@@ -728,8 +731,12 @@ void Vulkan::Core::DeleteRenderPass(Base::RenderPass *ptr) {
 	AllocatorCore::Free(static_cast<Vulkan::RenderPass*>(ptr));
 }
 
-void Vulkan::Core::DeleteTexture(Base::Texture* ptr) {
-	AllocatorCore::Free(static_cast<Vulkan::Texture*>(ptr));
+void Vulkan::Core::DeleteSampler(Base::Sampler* ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::Sampler*>(ptr));
+}
+
+void Vulkan::Core::DeleteImage(Base::Image* ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::Image*>(ptr));
 }
 
 void Vulkan::Core::DeleteDescriptorSet(Base::DescriptorSet* ptr) {

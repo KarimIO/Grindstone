@@ -5,7 +5,7 @@ set(EDITORMODELIMPORTER_SOURCES
 	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp
 	${COMMON_DIR}/ResourcePipeline/Uuid.cpp
 	${COMMON_DIR}/Editor/Importer.cpp
-	${ENGINECORE_DIR}/Utils/Utilities.cpp
+	${ENGINE_CORE_DIR}/Utils/Utilities.cpp
 	EntryPoint.cpp
 )
 
@@ -16,7 +16,7 @@ set(EDITORMODELIMPORTER_HEADERS
 	${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
 	${COMMON_DIR}/ResourcePipeline/Uuid.hpp
 	${COMMON_DIR}/Editor/Importer.hpp
-	${ENGINECORE_DIR}/Utils/Utilities.hpp
+	${ENGINE_CORE_DIR}/Utils/Utilities.hpp
 	pch.hpp
 )
 
@@ -31,10 +31,11 @@ add_library(
 )
 
 target_compile_features(PluginEditorModelImporter PRIVATE cxx_std_17)
+set_target_properties(PluginEditorModelImporter PROPERTIES FOLDER "Plugins/Editor/Importers")
 
 target_compile_definitions(PluginEditorModelImporter PUBLIC EDITOR_MODEL_IMPORTER_DLL GLM_ENABLE_EXPERIMENTAL)
 target_include_directories(PluginEditorModelImporter PUBLIC ${CODE_DIR} ${FMT_INCLUDE_DIRS})
 
 target_precompile_headers(PluginEditorModelImporter PUBLIC pch.hpp)
 
-target_link_libraries(PluginEditorModelImporter ${CORE_LIBS} Rpcrt4.lib assimp::assimp)
+target_link_libraries(PluginEditorModelImporter ${CORE_LIBS} assimp::assimp)

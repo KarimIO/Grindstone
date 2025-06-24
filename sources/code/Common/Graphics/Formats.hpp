@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+#include <utility>
 #include <stdint.h>
 
 namespace Grindstone::GraphicsAPI {
@@ -24,49 +26,274 @@ namespace Grindstone::GraphicsAPI {
 		All = 7
 	};
 
-	enum class ColorFormat : uint8_t {
-		Invalid = 0,
+	enum class Format {
+		Invalid,
+		R4G4_UNORM_PACK8,
+		R4G4B4A4_UNORM_PACK16,
+		B4G4R4A4_UNORM_PACK16,
+		R5G6B5_UNORM_PACK16,
+		B5G6R5_UNORM_PACK16,
+		R5G5B5A1_UNORM_PACK16,
+		B5G5R5A1_UNORM_PACK16,
+		A1R5G5B5_UNORM_PACK16,
+		R8_UNORM,
+		R8_SNORM,
+		R8_USCALED,
+		R8_SSCALED,
+		R8_UINT,
+		R8_SINT,
+		R8_SRGB,
+		R8G8_UNORM,
+		R8G8_SNORM,
+		R8G8_USCALED,
+		R8G8_SSCALED,
+		R8G8_UINT,
+		R8G8_SINT,
+		R8G8_SRGB,
+		R8G8B8_UNORM,
+		R8G8B8_SNORM,
+		R8G8B8_USCALED,
+		R8G8B8_SSCALED,
+		R8G8B8_UINT,
+		R8G8B8_SINT,
+		R8G8B8_SRGB,
+		B8G8R8_UNORM,
+		B8G8R8_SNORM,
+		B8G8R8_USCALED,
+		B8G8R8_SSCALED,
+		B8G8R8_UINT,
+		B8G8R8_SINT,
+		B8G8R8_SRGB,
+		R8G8B8A8_UNORM,
+		R8G8B8A8_SNORM,
+		R8G8B8A8_USCALED,
+		R8G8B8A8_SSCALED,
+		R8G8B8A8_UINT,
+		R8G8B8A8_SINT,
+		R8G8B8A8_SRGB,
+		B8G8R8A8_UNORM,
+		B8G8R8A8_SNORM,
+		B8G8R8A8_USCALED,
+		B8G8R8A8_SSCALED,
+		B8G8R8A8_UINT,
+		B8G8R8A8_SINT,
+		B8G8R8A8_SRGB,
+		A8B8G8R8_UNORM_PACK32,
+		A8B8G8R8_SNORM_PACK32,
+		A8B8G8R8_USCALED_PACK32,
+		A8B8G8R8_SSCALED_PACK32,
+		A8B8G8R8_UINT_PACK32,
+		A8B8G8R8_SINT_PACK32,
+		A8B8G8R8_SRGB_PACK32,
+		A2R10G10B10_UNORM_PACK32,
+		A2R10G10B10_SNORM_PACK32,
+		A2R10G10B10_USCALED_PACK32,
+		A2R10G10B10_SSCALED_PACK32,
+		A2R10G10B10_UINT_PACK32,
+		A2R10G10B10_SINT_PACK32,
+		A2B10G10R10_UNORM_PACK32,
+		A2B10G10R10_SNORM_PACK32,
+		A2B10G10R10_USCALED_PACK32,
+		A2B10G10R10_SSCALED_PACK32,
+		A2B10G10R10_UINT_PACK32,
+		A2B10G10R10_SINT_PACK32,
+		R16_UNORM,
+		R16_SNORM,
+		R16_USCALED,
+		R16_SSCALED,
+		R16_UINT,
+		R16_SINT,
+		R16_SFLOAT,
+		R16G16_UNORM,
+		R16G16_SNORM,
+		R16G16_USCALED,
+		R16G16_SSCALED,
+		R16G16_UINT,
+		R16G16_SINT,
+		R16G16_SFLOAT,
+		R16G16B16_UNORM,
+		R16G16B16_SNORM,
+		R16G16B16_USCALED,
+		R16G16B16_SSCALED,
+		R16G16B16_UINT,
+		R16G16B16_SINT,
+		R16G16B16_SFLOAT,
+		R16G16B16A16_UNORM,
+		R16G16B16A16_SNORM,
+		R16G16B16A16_USCALED,
+		R16G16B16A16_SSCALED,
+		R16G16B16A16_UINT,
+		R16G16B16A16_SINT,
+		R16G16B16A16_SFLOAT,
+		R32_UINT,
+		R32_SINT,
+		R32_SFLOAT,
+		R32G32_UINT,
+		R32G32_SINT,
+		R32G32_SFLOAT,
+		R32G32B32_UINT,
+		R32G32B32_SINT,
+		R32G32B32_SFLOAT,
+		R32G32B32A32_UINT,
+		R32G32B32A32_SINT,
+		R32G32B32A32_SFLOAT,
+		R64_UINT,
+		R64_SINT,
+		R64_SFLOAT,
+		R64G64_UINT,
+		R64G64_SINT,
+		R64G64_SFLOAT,
+		R64G64B64_UINT,
+		R64G64B64_SINT,
+		R64G64B64_SFLOAT,
+		R64G64B64A64_UINT,
+		R64G64B64A64_SINT,
+		R64G64B64A64_SFLOAT,
+		B10G11R11_UFLOAT_PACK32,
+		E5B9G9R9_UFLOAT_PACK32,
 
-		R8,
-		RG8,
-		RGB8,
-		RGBA8,
+		D16_UNORM,
+		X8_D24_UNORM_PACK32,
+		D32_SFLOAT,
+		S8_UINT,
+		D16_UNORM_S8_UINT,
+		D24_UNORM_S8_UINT,
+		D32_SFLOAT_S8_UINT,
 
-		R10G10B10A2,
+		BC1_RGB_UNORM_BLOCK,
+		BC1_RGB_SRGB_BLOCK,
+		BC1_RGBA_UNORM_BLOCK,
+		BC1_RGBA_SRGB_BLOCK,
+		BC2_UNORM_BLOCK,
+		BC2_SRGB_BLOCK,
+		BC3_UNORM_BLOCK,
+		BC3_SRGB_BLOCK,
+		BC4_UNORM_BLOCK,
+		BC4_SNORM_BLOCK,
+		BC5_UNORM_BLOCK,
+		BC5_SNORM_BLOCK,
+		BC6H_UFLOAT_BLOCK,
+		BC6H_SFLOAT_BLOCK,
+		BC7_UNORM_BLOCK,
+		BC7_SRGB_BLOCK,
+		ETC2_R8G8B8_UNORM_BLOCK,
+		ETC2_R8G8B8_SRGB_BLOCK,
+		ETC2_R8G8B8A1_UNORM_BLOCK,
+		ETC2_R8G8B8A1_SRGB_BLOCK,
+		ETC2_R8G8B8A8_UNORM_BLOCK,
+		ETC2_R8G8B8A8_SRGB_BLOCK,
+		EAC_R11_UNORM_BLOCK,
+		EAC_R11_SNORM_BLOCK,
+		EAC_R11G11_UNORM_BLOCK,
+		EAC_R11G11_SNORM_BLOCK,
+		ASTC_4x4_UNORM_BLOCK,
+		ASTC_4x4_SRGB_BLOCK,
+		ASTC_5x4_UNORM_BLOCK,
+		ASTC_5x4_SRGB_BLOCK,
+		ASTC_5x5_UNORM_BLOCK,
+		ASTC_5x5_SRGB_BLOCK,
+		ASTC_6x5_UNORM_BLOCK,
+		ASTC_6x5_SRGB_BLOCK,
+		ASTC_6x6_UNORM_BLOCK,
+		ASTC_6x6_SRGB_BLOCK,
+		ASTC_8x5_UNORM_BLOCK,
+		ASTC_8x5_SRGB_BLOCK,
+		ASTC_8x6_UNORM_BLOCK,
+		ASTC_8x6_SRGB_BLOCK,
+		ASTC_8x8_UNORM_BLOCK,
+		ASTC_8x8_SRGB_BLOCK,
+		ASTC_10x5_UNORM_BLOCK,
+		ASTC_10x5_SRGB_BLOCK,
+		ASTC_10x6_UNORM_BLOCK,
+		ASTC_10x6_SRGB_BLOCK,
+		ASTC_10x8_UNORM_BLOCK,
+		ASTC_10x8_SRGB_BLOCK,
+		ASTC_10x10_UNORM_BLOCK,
+		ASTC_10x10_SRGB_BLOCK,
+		ASTC_12x10_UNORM_BLOCK,
+		ASTC_12x10_SRGB_BLOCK,
+		ASTC_12x12_UNORM_BLOCK,
+		ASTC_12x12_SRGB_BLOCK,
+		G8B8G8R8_422_UNORM,
+		B8G8R8G8_422_UNORM,
+		G8_B8_R8_3PLANE_420_UNORM,
+		G8_B8R8_2PLANE_420_UNORM,
+		G8_B8_R8_3PLANE_422_UNORM,
+		G8_B8R8_2PLANE_422_UNORM,
+		G8_B8_R8_3PLANE_444_UNORM,
+		R10X6_UNORM_PACK16,
+		R10X6G10X6_UNORM_2PACK16,
+		R10X6G10X6B10X6A10X6_UNORM_4PACK16,
+		G10X6B10X6G10X6R10X6_422_UNORM_4PACK16,
+		B10X6G10X6R10X6G10X6_422_UNORM_4PACK16,
+		G10X6_B10X6_R10X6_3PLANE_420_UNORM_3PACK16,
+		G10X6_B10X6R10X6_2PLANE_420_UNORM_3PACK16,
+		G10X6_B10X6_R10X6_3PLANE_422_UNORM_3PACK16,
+		G10X6_B10X6R10X6_2PLANE_422_UNORM_3PACK16,
+		G10X6_B10X6_R10X6_3PLANE_444_UNORM_3PACK16,
+		R12X4_UNORM_PACK16,
+		R12X4G12X4_UNORM_2PACK16,
+		R12X4G12X4B12X4A12X4_UNORM_4PACK16,
+		G12X4B12X4G12X4R12X4_422_UNORM_4PACK16,
+		B12X4G12X4R12X4G12X4_422_UNORM_4PACK16,
+		G12X4_B12X4_R12X4_3PLANE_420_UNORM_3PACK16,
+		G12X4_B12X4R12X4_2PLANE_420_UNORM_3PACK16,
+		G12X4_B12X4_R12X4_3PLANE_422_UNORM_3PACK16,
+		G12X4_B12X4R12X4_2PLANE_422_UNORM_3PACK16,
+		G12X4_B12X4_R12X4_3PLANE_444_UNORM_3PACK16,
+		G16B16G16R16_422_UNORM,
+		B16G16R16G16_422_UNORM,
+		G16_B16_R16_3PLANE_420_UNORM,
+		G16_B16R16_2PLANE_420_UNORM,
+		G16_B16_R16_3PLANE_422_UNORM,
+		G16_B16R16_2PLANE_422_UNORM,
+		G16_B16_R16_3PLANE_444_UNORM,
+		G8_B8R8_2PLANE_444_UNORM,
+		G10X6_B10X6R10X6_2PLANE_444_UNORM_3PACK16,
+		G12X4_B12X4R12X4_2PLANE_444_UNORM_3PACK16,
+		G16_B16R16_2PLANE_444_UNORM,
+		A4R4G4B4_UNORM_PACK16,
+		A4B4G4R4_UNORM_PACK16,
+		ASTC_4x4_SFLOAT,
+		ASTC_5x4_SFLOAT,
+		ASTC_5x5_SFLOAT,
+		ASTC_6x5_SFLOAT,
+		ASTC_6x6_SFLOAT,
+		ASTC_8x5_SFLOAT,
+		ASTC_8x6_SFLOAT,
+		ASTC_8x8_SFLOAT,
+		ASTC_10x5_SFLOAT,
+		ASTC_10x6_SFLOAT,
+		ASTC_10x8_SFLOAT,
+		ASTC_10x10_SFLOAT,
+		ASTC_12x10_SFLOAT,
+		ASTC_12x12_SFLOAT,
+		PVRTC1_2BPP_UNORM,
+		PVRTC1_4BPP_UNORM,
+		PVRTC2_2BPP_UNORM,
+		PVRTC2_4BPP_UNORM,
+		PVRTC1_2BPP_SRGB,
+		PVRTC1_4BPP_SRGB,
+		PVRTC2_2BPP_SRGB,
+		PVRTC2_4BPP_SRGB,
 
-		R16,
-		R32,
-		RG16,
-		RG32,
-		RGB16,
-		RGBA16,
-		RGB32,
-		RGBA32,
-
-		RGB_DXT1,
-		RGBA_DXT1,
-		RGBA_DXT3,
-		RGBA_DXT5,
-
-		SRGB_DXT1,
-		SRGB_ALPHA_DXT1,
-		SRGB_ALPHA_DXT3,
-		SRGB_ALPHA_DXT5,
-
-		BC4,
-		BC6H
+		// Limited Support:
+		R16G16_S10_5,
+		A1B5G5R5_UNORM_PACK16,
+		A8_UNORM,
 	};
 
-	enum class DepthFormat : uint8_t {
-		None = 0,
-		D16,
-		D24,
-		D32,
-		//D16_STENCIL_8,
-		D24_STENCIL_8,
-		D32_STENCIL_8
-		//FORMAT_STENCIL_8
+	enum class FormatDepthStencilType {
+		NotDepthStencil,
+		DepthOnly,
+		StencilOnly,
+		DepthStencil
 	};
+
+	FormatDepthStencilType GetFormatDepthStencilType(Format format);
+	bool IsFormatCompressed(Format format);
+	uint8_t GetCompressedFormatBlockSize(Format format);
+	uint8_t GetFormatBytesPerPixel(Grindstone::GraphicsAPI::Format format);
 
 	#define SHADER_STAGE_TYPES \
 		GSExpandEntry(Vertex, 1 << 0),\
@@ -114,11 +341,18 @@ namespace Grindstone::GraphicsAPI {
 	}
 
 	enum class BindingType {
+		None,
+		Sampler,
+		CombinedImageSampler,
+		SampledImage,
+		StorageImage,
+		UniformTexelBuffer,
+		StorageTexelBuffer,
 		UniformBuffer,
-		Texture,
-		RenderTexture,
-		DepthTexture,
-		RenderTextureStorageImage
+		StorageBuffer,
+		UniformBufferDynamic,
+		StorageBufferDynamic,
+		AccelerationStructure
 	};
 
 #define BLEND_OPERATIONS_LIST \
@@ -441,6 +675,105 @@ namespace Grindstone::GraphicsAPI {
 
 		return cullModeNames[index];
 	}
+
+	// This refers to semantic information about how some vertex data will be used.
+	enum class AttributeUsage {
+		Position,
+		Color,
+		TexCoord0,
+		TexCoord1,
+		TexCoord2,
+		TexCoord3,
+		Normal,
+		Tangent,
+		BlendWeights,
+		BlendIndices,
+		Other
+	};
+
+	// This refers to how the buffer should be indexed.
+	enum class VertexInputRate {
+		Vertex,
+		Instance
+	};
+
+	// A structure to define a particular kind of data in a Vertex Buffer.
+	struct VertexAttributeDescription {
+		const char* name = nullptr;
+		uint32_t bindingIndex;
+		uint32_t locationIndex = 0;
+		Format format = Format::R32_SFLOAT;
+		uint32_t byteOffset = 0;
+		AttributeUsage attributeUsage = AttributeUsage::Other;
+	};
+
+	// A structure that dictates how the Vertex Buffer data is formatted.
+	struct VertexBindingDescription {
+		uint32_t bindingIndex;
+		uint32_t stride = 0;
+		VertexInputRate inputRate = VertexInputRate::Vertex;
+	};
+
+	struct VertexInputLayout {
+		std::vector<VertexBindingDescription> bindings;
+		std::vector<VertexAttributeDescription> attributes;
+	};
+
+	struct VertexInputLayoutBuilder {
+		std::vector<VertexBindingDescription> bindings;
+		std::vector<VertexAttributeDescription> attributes;
+
+		VertexInputLayoutBuilder() = default;
+
+		struct InlineAttribute {
+			const char* name;
+			uint32_t locationIndex;
+			Format format;
+			uint32_t byteOffset;
+			AttributeUsage attributeUsage;
+		};
+
+		VertexInputLayoutBuilder& AddBinding(
+			VertexBindingDescription binding,
+			std::initializer_list<InlineAttribute> newAttributes
+		) {
+			bindings.emplace_back(binding);
+			for (const InlineAttribute& attrib : newAttributes) {
+				attributes.emplace_back(VertexAttributeDescription{
+					attrib.name,
+					binding.bindingIndex,
+					attrib.locationIndex,
+					attrib.format,
+					attrib.byteOffset,
+					attrib.attributeUsage
+				});
+			}
+
+			return *this;
+		}
+
+		VertexInputLayoutBuilder& AddBinding(VertexBindingDescription binding) {
+			bindings.emplace_back(binding);
+			return *this;
+		}
+
+		VertexInputLayoutBuilder& AddAttribute(VertexAttributeDescription attribute) {
+			attributes.emplace_back(attribute);
+			return *this;
+		}
+
+		VertexInputLayout Build() {
+			return {
+				bindings,
+				attributes
+			};
+		}
+	};
+}
+
+inline Grindstone::GraphicsAPI::ShaderStageBit ToShaderStageBit(const Grindstone::GraphicsAPI::ShaderStage stage) {
+	using ShaderStageType = uint8_t;
+	return static_cast<Grindstone::GraphicsAPI::ShaderStageBit>(1 << static_cast<ShaderStageType>(stage));
 }
 
 inline Grindstone::GraphicsAPI::ShaderStageBit operator~(const Grindstone::GraphicsAPI::ShaderStageBit stages) {
@@ -511,4 +844,56 @@ inline Grindstone::GraphicsAPI::ColorMask& operator&=(Grindstone::GraphicsAPI::C
 inline Grindstone::GraphicsAPI::ColorMask& operator^=(Grindstone::GraphicsAPI::ColorMask& a, const Grindstone::GraphicsAPI::ColorMask b) {
 	a = a ^ b;
 	return a;
+}
+
+namespace std {
+	template<>
+	struct std::hash<Grindstone::GraphicsAPI::VertexBindingDescription> {
+		std::size_t operator()(const Grindstone::GraphicsAPI::VertexBindingDescription& binding) const noexcept {
+			size_t result = std::hash<size_t>{}(
+				static_cast<size_t>(binding.bindingIndex) << 8 |
+				static_cast<size_t>(binding.stride) << 32
+				);
+			result ^= std::hash<size_t>{}(static_cast<size_t>(binding.inputRate));
+			return result;
+		}
+	};
+
+	template<>
+	struct std::hash<Grindstone::GraphicsAPI::VertexAttributeDescription> {
+		std::size_t operator()(const Grindstone::GraphicsAPI::VertexAttributeDescription& attribute) const noexcept {
+			size_t result = std::hash<size_t>{}(
+				static_cast<size_t>(attribute.attributeUsage) |
+				static_cast<size_t>(attribute.bindingIndex) << 32
+				);
+
+			result ^= std::hash<size_t>{}(
+				static_cast<size_t>(attribute.byteOffset) |
+				static_cast<size_t>(attribute.format) << 32
+				);
+
+			result ^= std::hash<size_t>{}(
+				static_cast<size_t>(attribute.locationIndex) << 32
+				);
+
+			return result;
+		}
+	};
+
+	template<>
+	struct std::hash<Grindstone::GraphicsAPI::VertexInputLayout> {
+		std::size_t operator()(const Grindstone::GraphicsAPI::VertexInputLayout& vertexInputLayout) const noexcept {
+			size_t result = std::hash<size_t>{}(vertexInputLayout.attributes.size()) ^ std::hash<size_t>{}(vertexInputLayout.bindings.size());
+
+			for (const Grindstone::GraphicsAPI::VertexBindingDescription& binding : vertexInputLayout.bindings) {
+				result ^= std::hash<Grindstone::GraphicsAPI::VertexBindingDescription>{}(binding);
+			}
+
+			for (const Grindstone::GraphicsAPI::VertexAttributeDescription& attribute : vertexInputLayout.attributes) {
+				result ^= std::hash<Grindstone::GraphicsAPI::VertexAttributeDescription>{}(attribute);
+			}
+
+			return result;
+		}
+	};
 }

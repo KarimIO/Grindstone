@@ -126,9 +126,11 @@ void Menubar::OnLoadFile() {
 	Window* window = windowManager->GetWindowByIndex(0);
 	std::filesystem::path filePath = window->OpenFileDialogue("Scene File (.gscene)\0*.gscene\0");
 
-	if (!filePath.empty()) {
+	Grindstone::Uuid uuid;
+	const char* filePathStr = filePath.string().c_str();
+	if (!filePath.empty() && Grindstone::Uuid::MakeFromString(filePathStr, uuid)) {
 		auto* sceneManager = engineCore.GetSceneManager();
-		sceneManager->LoadScene(filePath.string().c_str());
+		sceneManager->LoadScene(uuid);
 	}
 }
 

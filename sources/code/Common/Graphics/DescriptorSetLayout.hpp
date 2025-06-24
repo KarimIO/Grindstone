@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "Formats.hpp"
 
 namespace Grindstone:: GraphicsAPI {
@@ -22,5 +24,10 @@ namespace Grindstone:: GraphicsAPI {
 			Binding* bindings = nullptr;
 			uint32_t bindingCount = 0;
 		};
+
+	protected:
+		std::vector<Binding> bindings;
+		size_t bindingCount = 0;
+
 	};
 }

@@ -4,17 +4,17 @@
 #include "VulkanUtils.hpp"
 
 namespace Grindstone::GraphicsAPI::Vulkan {
-	VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels) {
+	VkImageView CreateImageView(VkImage image, VkImageViewType imageViewType, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels, uint32_t arrayLayers) {
 		VkImageViewCreateInfo viewInfo = {};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.image = image;
-		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		viewInfo.viewType = imageViewType;
 		viewInfo.format = format;
 		viewInfo.subresourceRange.aspectMask = aspectFlags;
 		viewInfo.subresourceRange.baseMipLevel = 0;
 		viewInfo.subresourceRange.levelCount = mipLevels;
 		viewInfo.subresourceRange.baseArrayLayer = 0;
-		viewInfo.subresourceRange.layerCount = 1;
+		viewInfo.subresourceRange.layerCount = arrayLayers;
 
 		VkImageView imageView;
 		if (vkCreateImageView(Vulkan::Core::Get().GetDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
@@ -44,15 +44,28 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		return imageView;
 	}
 
-	void CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, uint32_t layerCount, VkImageCreateFlags flags) {
+	VkDeviceSize CreateImage(
+		uint32_t width,
+		uint32_t height,
+		uint32_t depth,
+		uint32_t mipLevels,
+		uint32_t layerCount,
+		VkFormat format,
+		VkImageTiling tiling,
+		VkImageUsageFlags usage,
+		VkMemoryPropertyFlags properties,
+		VkImage& image,
+		VkDeviceMemory& imageMemory,
+		VkImageCreateFlags flags
+	) {
 		VkDevice device = Vulkan::Core::Get().GetDevice();
 			
-		VkImageCreateInfo imageInfo = {};
+		VkImageCreateInfo imageInfo{};
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		imageInfo.imageType = VK_IMAGE_TYPE_2D;
 		imageInfo.extent.width = width;
 		imageInfo.extent.height = height;
-		imageInfo.extent.depth = 1;
+		imageInfo.extent.depth = depth;
 		imageInfo.mipLevels = mipLevels;
 		imageInfo.arrayLayers = layerCount;
 		imageInfo.format = format;
@@ -80,6 +93,8 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		}
 
 		vkBindImageMemory(device, image, imageMemory, 0);
+
+		return memRequirements.size;
 	}
 
 	void CreateBuffer(
@@ -181,6 +196,14 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 			outputStages |= VK_SHADER_STAGE_GEOMETRY_BIT;
 		}
 
+		if (bit & static_cast<uint8_t>(ShaderStageBit::Task)) {
+			outputStages |= VK_SHADER_STAGE_TASK_BIT_EXT;
+		}
+
+		if (bit & static_cast<uint8_t>(ShaderStageBit::Mesh)) {
+			outputStages |= VK_SHADER_STAGE_MESH_BIT_EXT;
+		}
+
 		if (bit & static_cast<uint8_t>(ShaderStageBit::TesselationControl)) {
 			outputStages |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
 		}
@@ -273,22 +296,31 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		EndSingleTimeCommands(commandBuffer);
 	}
 
-	void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) {
+	void CopyBufferToImage(
+		VkBuffer buffer,
+		VkImage image,
+		VkImageAspectFlags aspect,
+		uint32_t width,
+		uint32_t height,
+		uint32_t depth,
+		[[maybe_unused]] uint32_t mipLevels,
+		uint32_t arrayLayers
+	) {
 		VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
 		VkBufferImageCopy region = {};
 		region.bufferOffset = 0;
 		region.bufferRowLength = 0;
 		region.bufferImageHeight = 0;
-		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.imageSubresource.aspectMask = aspect;
 		region.imageSubresource.mipLevel = 0;
 		region.imageSubresource.baseArrayLayer = 0;
-		region.imageSubresource.layerCount = 1;
+		region.imageSubresource.layerCount = arrayLayers;
 		region.imageOffset = { 0, 0, 0 };
 		region.imageExtent = {
 			width,
 			height,
-			1
+			depth
 		};
 
 		vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);

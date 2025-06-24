@@ -6,7 +6,8 @@ namespace Grindstone {
 	enum class AssetType : uint16_t {
 		Undefined,
 		Texture,
-		Shader,
+		GraphicsPipelineSet,
+		ComputePipelineSet,
 		Material,
 		AudioClip,
 		Mesh3d,

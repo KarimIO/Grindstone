@@ -1,4 +1,5 @@
 #include <imgui.h>
+#include <vector>
 
 #include <Editor/EditorManager.hpp>
 #include <EngineCore/EngineCore.hpp>
@@ -6,7 +7,8 @@
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Assets/Materials/MaterialImporter.hpp>
 #include <EngineCore/Assets/Textures/TextureImporter.hpp>
-#include <EngineCore/Assets/Shaders/ShaderImporter.hpp>
+#include <EngineCore/Assets/PipelineSet/GraphicsPipelineImporter.hpp>
+#include <EngineCore/Assets/PipelineSet/ComputePipelineImporter.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
 #include <Plugins/Renderables3D/Assets/Mesh3dImporter.hpp>
 #include <Plugins/Renderables3D/Mesh3dRenderer.hpp>
@@ -15,6 +17,18 @@
 
 using namespace Grindstone::Editor::ImguiEditor;
 using namespace Grindstone::Memory;
+
+struct MemoryDumpRow {
+	std::string rowName;
+	size_t size;
+	void* pointer;
+	size_t offset;
+};
+
+struct MemoryDumpData {
+	bool hasCapturedMemoryDump;
+	std::vector<MemoryDumpRow> rows;
+} memoryDumpData;
 
 StatsPanel::StatsPanel() {
 	lastRenderTime = std::chrono::steady_clock::now();
@@ -62,6 +76,7 @@ void RenderAsset(Grindstone::Assets::AssetManager* assetManager, const char* tit
 
 		ImGui::TreePop();
 	}
+
 }
 
 static void RenderRenderQueuesTable(Grindstone::EngineCore& engineCore) {
@@ -77,34 +92,6 @@ static void RenderRenderQueuesTable(Grindstone::EngineCore& engineCore) {
 			meshRenderer = testMeshRenderer;
 			break;
 		}
-	}
-
-	if (meshRenderer == nullptr) {
-		ImGui::TreePop();
-		return;
-	}
-
-	if (ImGui::BeginTable("renderStatsSplit", 2)) {
-		ImGui::TableSetupColumn("Render Queue", ImGuiTableColumnFlags_WidthStretch);
-		ImGui::TableSetupColumn("Draw Count", ImGuiTableColumnFlags_WidthFixed);
-
-		ImGui::TableHeadersRow();
-		size_t i = 0;
-		for (auto& queueMapValue : meshRenderer->renderQueueMap) {
-			bool isEven = (++i % 2) == 0;
-			ImGuiCol_ colorKey = isEven ? ImGuiCol_TableRowBg : ImGuiCol_TableRowBgAlt;
-			ImU32 color = ImGui::GetColorU32(colorKey);
-			ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, color);
-			ImGui::TableNextRow();
-			ImGui::TableNextColumn();
-			ImGui::Text("%s", queueMapValue.first.c_str());
-			ImGui::TableNextColumn();
-			RenderQueueIndex queueIndex = queueMapValue.second;
-			Grindstone::RenderQueueContainer& queueContainer = meshRenderer->renderQueues[queueIndex];
-			ImGui::Text("%lu", queueContainer.renderSortData.size());
-		}
-
-		ImGui::EndTable();
 	}
 
 	ImGui::TreePop();
@@ -142,6 +129,67 @@ void StatsPanel::RenderContents() {
 		ImGui::Text("Peak: %zuKB", memPeak);
 		ImGui::Text("Memory Used: %zuKB / %zuKB", memUsed, memTotal);
 		ImGui::ProgressBar(memUsedPct, ImVec2(maxWidth, 0));
+
+		// TODO: Investigate how we can re-add this for Release.
+#if _DEBUG
+		if (ImGui::Button("Capture Memory Dump")) {
+			memoryDumpData.hasCapturedMemoryDump = true;
+
+			const auto& nameMap = AllocatorCore::GetAllocatorState()->dynamicAllocator.GetNameMap();
+
+			memoryDumpData.rows.reserve(nameMap.size());
+
+			using AllocatorHeader = Memory::Allocators::DynamicAllocator::AllocationHeader;
+			char* memStart = static_cast<char*>(AllocatorCore::GetAllocatorState()->dynamicAllocator.GetMemory());
+			for (const auto& allocation : nameMap) {
+				AllocatorHeader* header = reinterpret_cast<AllocatorHeader*>(static_cast<char*>(allocation.first) - sizeof(AllocatorHeader));
+				size_t offset = static_cast<size_t>(static_cast<char*>(allocation.first) - memStart);
+				memoryDumpData.rows.emplace_back(MemoryDumpRow{ allocation.second, header->blockSize, allocation.first, offset });
+			}
+		}
+
+		if (memoryDumpData.hasCapturedMemoryDump)
+		{
+			if (ImGui::Button("Export Memory Dump")) {
+				std::ofstream outputFile(engineCore.GetProjectPath() / "log" / "MemoryDump.csv");
+				outputFile << "Allocation Name,\tSize,\tOffset\n";
+				for (MemoryDumpRow& memoryRow : memoryDumpData.rows) {
+					outputFile << memoryRow.rowName << ",\t" << memoryRow.size << ",\t" << memoryRow.offset << '\n';
+				}
+				outputFile.close();
+			}
+
+			if (ImGui::TreeNode("Memory Allocations"))
+			{
+				if (ImGui::BeginTable("statsImporterSplit", 3)) {
+					ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
+					ImGui::TableSetupColumn("Size", ImGuiTableColumnFlags_WidthFixed);
+					ImGui::TableSetupColumn("Ptr", ImGuiTableColumnFlags_WidthFixed);
+
+					ImGui::TableHeadersRow();
+
+					size_t i = 0;
+					for (MemoryDumpRow& memoryRow : memoryDumpData.rows) {
+						bool isEven = (++i % 2) == 0;
+						ImGuiCol_ colorKey = isEven ? ImGuiCol_TableRowBg : ImGuiCol_TableRowBgAlt;
+						ImU32 color = ImGui::GetColorU32(colorKey);
+						ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, color);
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn();
+						ImGui::Text("%s", memoryRow.rowName.c_str());
+						ImGui::TableNextColumn();
+						ImGui::Text("%lu", memoryRow.size);
+						ImGui::TableNextColumn();
+						ImGui::Text("%p", memoryRow.pointer);
+					}
+
+					ImGui::EndTable();
+				}
+
+				ImGui::TreePop();
+			}
+		}
+#endif // #if _DEBUG
 	}
 
 	ImGui::Separator();
@@ -152,6 +200,7 @@ void StatsPanel::RenderContents() {
 
 	RenderAsset<Mesh3dImporter>(assetManager, "3D Meshes");
 	RenderAsset<MaterialImporter>(assetManager, "Materials");
-	RenderAsset<ShaderImporter>(assetManager, "Shaders");
+	RenderAsset<ComputePipelineImporter>(assetManager, "Compute Pipeline Sets");
+	RenderAsset<GraphicsPipelineImporter>(assetManager, "Graphics Pipeline Sets");
 	RenderAsset<TextureImporter>(assetManager, "Textures");
 }

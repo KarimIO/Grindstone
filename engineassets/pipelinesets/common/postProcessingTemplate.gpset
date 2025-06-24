@@ -1,0 +1,47 @@
+include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
+include "$ENGINE/pipelinesets/common/rendererUniform.gpset"
+
+pipelineSet abstract "PostProcessing" {
+	configuration "main" {
+		pass "main" {
+			properties {
+				cull: back
+				depthBias: false
+				depthWrite: false
+				depthTest: false
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+			}
+
+			requiresBlocks [
+				GsPostProcessingVertexShader
+			]
+
+			shaderBlock GsPostProcessingVertexShader {
+				requiresBlocks [
+					GsRendererUniform
+				]
+
+				shaderHlsl {
+					struct VertexInput {
+						[[vk::location(0)]] float2 position : POSITION0;
+					};
+
+					struct VertexToFragment {
+						float4 position : SV_Position;
+						[[vk::location(0)]] float2 fragmentTexCoord : TEXCOORD0;
+						[[vk::location(1)]] float2 scaledFragmentTexCoord : TEXCOORD1;
+					};
+
+					VertexToFragment mainVertex(VertexInput input) {
+						VertexToFragment output = (VertexToFragment)0;
+						output.position = float4(input.position, 0.0, 1.0);
+						output.fragmentTexCoord = ((input.position * 0.5f) + float2(0.5f, 0.5f));
+						output.scaledFragmentTexCoord = output.fragmentTexCoord * rendererUbo.renderScale;
+						return output;
+					}
+				}
+			}
+		}
+	}
+}

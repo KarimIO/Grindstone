@@ -14,7 +14,7 @@ using namespace Grindstone::Assets;
 using namespace Grindstone::Editor;
 using namespace Grindstone::Importers;
 
-static void ImportCopyFile(Grindstone::AssetType assetType, AssetRegistry& assetRegistry, AssetManager& assetManager, const std::filesystem::path& path) {
+static void ImportCopyFile(Grindstone::AssetType assetType, AssetRegistry& assetRegistry, AssetManager& assetManager, const std::filesystem::path& path, Grindstone::Editor::ImporterVersion assetVersion) {
 	Grindstone::Editor::MetaFile* metaFile = assetRegistry.GetMetaFileByPath(path);
 	std::string subassetName = path.filename().string();
 	size_t dotPos = subassetName.find('.');
@@ -26,24 +26,27 @@ static void ImportCopyFile(Grindstone::AssetType assetType, AssetRegistry& asset
 
 	std::filesystem::path outputPath = Grindstone::Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
 	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
-	metaFile->Save();
+	metaFile->Save(assetVersion);
 
 	assetManager.QueueReloadAsset(assetType, uuid);
 
 	delete metaFile;
 }
 
+const Grindstone::Editor::ImporterVersion gsceneAssetVersion = 1;
+const Grindstone::Editor::ImporterVersion ddsAssetVersion = 1;
+
 static void ImportScene(AssetRegistry& assetRegistry, AssetManager& assetManager, const std::filesystem::path& path) {
-	ImportCopyFile(Grindstone::AssetType::Scene, assetRegistry, assetManager, path);
+	ImportCopyFile(Grindstone::AssetType::Scene, assetRegistry, assetManager, path, gsceneAssetVersion);
 }
 
 static void ImportDdsTexture(AssetRegistry& assetRegistry, AssetManager& assetManager, const std::filesystem::path& path) {
-	ImportCopyFile(Grindstone::AssetType::Texture, assetRegistry, assetManager, path);
+	ImportCopyFile(Grindstone::AssetType::Texture, assetRegistry, assetManager, path, ddsAssetVersion);
 }
 
 ImporterManager::ImporterManager() {
-	AddImporterFactory("gscene", ImportScene);
-	AddImporterFactory("dds", ImportDdsTexture);
+	AddImporterFactory("gscene", ImportScene, gsceneAssetVersion);
+	AddImporterFactory("dds", ImportDdsTexture, ddsAssetVersion);
 }
 
 bool ImporterManager::Import(const std::filesystem::path& path) {
@@ -58,12 +61,15 @@ bool ImporterManager::Import(const std::filesystem::path& path) {
 	return true;
 }
 
-void ImporterManager::AddImporterFactory(const std::string& extension, ImporterFactory importerFactory) {
+void ImporterManager::AddImporterFactory(const std::string& extension, ImporterFactory importerFactory, uint32_t importerVersion) {
 	if (HasImporter(extension)) {
 		return;
 	}
 
-	extensionsToImporterFactories[extension] = importerFactory;
+	extensionsToImporterFactories[extension] = ImporterData{
+		importerVersion,
+		importerFactory
+	};
 }
 
 void ImporterManager::RemoveImporterFactoryByExtension(const std::string& extension) {
@@ -73,16 +79,33 @@ void ImporterManager::RemoveImporterFactoryByExtension(const std::string& extens
 	}
 }
 
-ImporterManager::ImporterFactory ImporterManager::GetImporterFactoryByExtension(const std::string& extension) const {
+Grindstone::Editor::ImporterFactory ImporterManager::GetImporterFactoryByExtension(const std::string& extension) const {
 	auto extensionIterator = extensionsToImporterFactories.find(extension);
 	return (extensionIterator != extensionsToImporterFactories.end())
-		? extensionIterator->second
+		? extensionIterator->second.factory
 		: nullptr;
 }
 
-ImporterManager::ImporterFactory ImporterManager::GetImporterFactoryByPath(const std::filesystem::path& path) const {
+Grindstone::Editor::ImporterFactory ImporterManager::GetImporterFactoryByPath(const std::filesystem::path& path) const {
 	const std::string extension = path.extension().string().substr(1);
 	return GetImporterFactoryByExtension(extension);
+}
+
+Grindstone::Editor::ImporterVersion ImporterManager::GetImporterVersion(const std::string& extension) {
+	auto extensionIterator = extensionsToImporterFactories.find(extension);
+	return (extensionIterator != extensionsToImporterFactories.end())
+		? extensionIterator->second.importerVersion
+		: 0;
+}
+
+Grindstone::Editor::ImporterVersion ImporterManager::GetImporterVersion(const std::filesystem::path& path) const {
+	const std::string extension = path.extension().string();
+	if (extension.empty()) {
+		return false;
+	}
+
+	const std::string extensionWithoutDot = extension.substr(1);
+	return HasImporter(extensionWithoutDot);
 }
 
 bool ImporterManager::HasImporter(const std::string& extension) const {
