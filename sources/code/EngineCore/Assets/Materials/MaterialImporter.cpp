@@ -264,7 +264,10 @@ static void SetupSamplers(
 					// TODO: Use this to ensure it goes in the right place: textureReferencesFromMaterial[i].bindingId;
 					if (textureReference.IsValid()) {
 						materialAsset.textures[i] = textureReference;
-						itemPtr = textureReference.Get()->image;
+						const TextureAsset* textureAsset = textureReference.Get();
+						itemPtr = textureAsset != nullptr
+							? textureAsset->image
+							: nullptr;
 					}
 				}
 
