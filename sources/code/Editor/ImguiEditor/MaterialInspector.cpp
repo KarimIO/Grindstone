@@ -11,6 +11,8 @@
 #include "Editor/ImguiEditor/ImguiEditor.hpp"
 #include <EngineCore/Logger.hpp>
 
+#include "EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp"
+
 using namespace Grindstone::Editor::ImguiEditor;
 
 MaterialInspector::MaterialInspector(EngineCore* engineCore, ImguiEditor* imguiEditor) : engineCore(engineCore), imguiEditor(imguiEditor) {}
@@ -29,6 +31,9 @@ void MaterialInspector::SetMaterialPath(const std::filesystem::path& materialPat
 	filename = materialPath.filename().string();
 	std::string materialPathAsString = materialPath.string();
 	std::string contentData = Grindstone::Utils::LoadFileText(materialPathAsString.c_str());
+	shaderLoadStatus = ShaderLoadStatus::Unassigned;
+	pipelineSetName = "";
+	shaderUuid = Grindstone::Uuid();
 
 	rapidjson::Document document;
 	if (document.Parse(contentData.data()).GetParseError()) {
@@ -62,6 +67,8 @@ void MaterialInspector::SetMaterialPath(const std::filesystem::path& materialPat
 }
 
 void MaterialInspector::ReloadAvailablePipelineSets() {
+	availablePipelineSets.clear();
+
 	AssetRegistry& registry = Editor::Manager::GetInstance().GetAssetRegistry();
 	registry.FindAllFilesOfType(AssetType::GraphicsPipelineSet, availablePipelineSets);
 
@@ -117,47 +124,29 @@ void MaterialInspector::Render() {
 }
 
 bool MaterialInspector::TryLoadShaderReflection(Uuid& shaderUuid) {
-	std::filesystem::path shaderPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / shaderUuid.ToString();
-	if (!std::filesystem::exists(shaderPath)) {
+	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+	Grindstone::Assets::AssetManager* assetManager = engineCore.assetManager;
+
+	Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> graphicsPipelineSet = assetManager->GetAssetReferenceByUuid<GraphicsPipelineAsset>(shaderUuid);
+	if (!graphicsPipelineSet.IsValid()) {
 		shaderLoadStatus = ShaderLoadStatus::NoFileFound;
 		return false;
 	}
 
-	std::string contentData = Grindstone::Utils::LoadFileText(shaderPath.string().c_str());
-	rapidjson::Document document;
-	document.Parse(contentData.c_str());
-	if (document.HasMember("name")) {
-		pipelineSetName = document.HasMember("name")
-			? document["name"].GetString()
-			: "Untitled Shader";
+	Grindstone::GraphicsPipelineAsset* gpset = graphicsPipelineSet.Get();
+	if (gpset == nullptr) {
+		shaderLoadStatus = ShaderLoadStatus::InvalidShader;
+		return false;
 	}
 
 	shaderLoadStatus = ShaderLoadStatus::ValidShader;
 
-
-	if (document.HasMember("uniformBuffers")) {
-		// LoadShaderUniformBuffers(document["uniformBuffers"]);
-	}
-
-	if (document.HasMember("samplers")) {
-		LoadShaderTextures(document["samplers"]);
+	samplers.clear();
+	for (auto& resource : gpset->metaData.resources) {
+		samplers.emplace_back(resource.slotName.c_str());
 	}
 
 	return true;
-}
-
-void MaterialInspector::LoadShaderTextures(rapidjson::Value& texturesInShader) {
-	materialUniformBuffers.reserve(texturesInShader.Size());
-	for (
-		rapidjson::Value* sampler = texturesInShader.Begin();
-		sampler != texturesInShader.End();
-		++sampler
-	) {
-		if (sampler->HasMember("name")) {
-			auto samplerName = (*sampler)["name"].GetString();
-			samplers.emplace_back(samplerName);
-		}
-	}
 }
 
 void MaterialInspector::LoadShaderUniformBuffers(rapidjson::Value& uniformBuffers) {

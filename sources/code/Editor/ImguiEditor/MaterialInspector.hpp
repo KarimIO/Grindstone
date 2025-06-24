@@ -44,7 +44,6 @@ namespace Grindstone {
 				};
 				void ReloadAvailablePipelineSets();
 				bool TryLoadShaderReflection(Uuid& shaderUuid);
-				void LoadShaderTextures(rapidjson::Value& texturesArray);
 				void LoadShaderUniformBuffers(rapidjson::Value& uniformBuffers);
 				void LoadMaterialSamplers(rapidjson::Value& samplers);
 				void RenderTextures();
