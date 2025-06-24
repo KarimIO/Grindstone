@@ -281,6 +281,8 @@ void GraphicsPipelineImporter::QueueReloadAsset(Uuid uuid) {
 	graphicsPipelineAsset.assetLoadStatus = AssetLoadStatus::Reloading;
 	Grindstone::GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	graphicsPipelineAsset.passes.clear();
+	graphicsPipelineAsset.metaData.resources.clear();
+	graphicsPipelineAsset.metaData.buffers.clear();
 	ImportGraphicsPipelineAsset(graphicsPipelineAsset);
 }
 
