@@ -33,9 +33,10 @@ namespace Grindstone::Editor::ImguiEditor {
 				AssetType assetType;
 			};
 
-			AssetType assetType;
 			std::filesystem::path filepath;
 			std::filesystem::path filename;
+			AssetType defaultAssetType;
+			std::string defaultAssetName;
 			Grindstone::Uuid defaultUuid;
 			bool isSubassetListOpen;
 			std::vector<Subasset> subassets;
