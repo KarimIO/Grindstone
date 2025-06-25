@@ -20,7 +20,7 @@ const ImVec2 ASSET_PICKER_WINDOW_SIZE = { 300.f, 400.f };
 
 void AssetPicker::OpenPrompt(AssetType assetType, AssetPickerCallback callback) {
 	this->callback = callback;
-	ImGui::OpenPopup("Asset Picker");
+	isShowing = true;
 
 	assets.clear();
 	filteredResults.clear();
@@ -41,6 +41,10 @@ void AssetPicker::OpenPrompt(AssetType assetType, AssetPickerCallback callback) 
 
 void AssetPicker::Render() {
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+	if (isShowing) {
+		ImGui::OpenPopup("Asset Picker");
+	}
+
 	ImGui::SetNextWindowSize(ASSET_PICKER_WINDOW_SIZE);
 
 	ImVec2 displaySize = ImGui::GetIO().DisplaySize;
