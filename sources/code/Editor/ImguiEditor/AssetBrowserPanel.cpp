@@ -94,7 +94,7 @@ void AssetBrowserPanel::AddFilePath(const std::filesystem::directory_entry& file
 			defaultSubassetType = defaultSubasset.assetType;
 		}
 
-		auto& newItem = files.emplace_back(AssetBrowserItem{ defaultSubassetType, path, path.filename(), defaultSubassetUuid });
+		auto& newItem = files.emplace_back(AssetBrowserItem{ path, path.filename(), defaultSubassetType, defaultSubasset.displayName, defaultSubassetUuid });
 
 		for (const MetaFile::Subasset& defaultSubasset : metaFile) {
 			newItem.subassets.emplace_back(
@@ -584,8 +584,7 @@ void AssetBrowserPanel::RenderFile(size_t fileIndex) {
 	float cursorX = ImGui::GetCursorPosX();
 	float cursorY = ImGui::GetCursorPosY();
 
-	bool hasDefaultAsset = false;
-	AssetType assetType = item.assetType;
+	AssetType assetType = item.defaultAssetType;
 	ImTextureID icon = GetIcon(assetType);
 	ImGui::PushID(buttonString.c_str());
 	ImGui::SetCursorPosX(cursorX + THUMBNAIL_SPACING);
@@ -597,11 +596,11 @@ void AssetBrowserPanel::RenderFile(size_t fileIndex) {
 	RenderAssetContextMenu(false, item.filepath, fileIndex);
 	ProcessDirectoryEntryClicks(false, item.filepath);
 
-	if (hasDefaultAsset && ImGui::BeginDragDropSource()) {
+	if (ImGui::BeginDragDropSource() && item.defaultUuid.IsValid()) {
 		std::string myUuidAsString = item.defaultUuid.ToString();
 		std::string assetTypeStr = GetAssetTypeToString(assetType);
-		ImGui::SetDragDropPayload(assetTypeStr.c_str(), &item.defaultUuid, sizeof(Uuid));
-		ImGui::Text("%s", filename.c_str());
+		ImGui::SetDragDropPayload(assetTypeStr.c_str(), &item.defaultUuid, sizeof(Grindstone::Uuid));
+		ImGui::Text("%s\n%s\n%s", item.defaultAssetName.c_str(), filename.c_str(), assetTypeStr.c_str());
 		ImGui::EndDragDropSource();
 	}
 
@@ -650,8 +649,9 @@ void AssetBrowserPanel::RenderFile(size_t fileIndex) {
 				if (ImGui::BeginDragDropSource()) {
 					Uuid myUuid = subasset.uuid;
 					std::string myUuidAsString = myUuid.ToString();
-					ImGui::SetDragDropPayload("_UUID", myUuidAsString.data(), myUuidAsString.size() + 1);
-					ImGui::Text(subasset.name.c_str());
+					std::string subAssetTypeStr = GetAssetTypeToString(subasset.assetType);
+					ImGui::SetDragDropPayload(subAssetTypeStr.c_str(), &subasset.uuid, sizeof(Grindstone::Uuid));
+					ImGui::Text("%s\n%s\n%s", subasset.name.c_str(), filename.c_str(), subAssetTypeStr.c_str());
 					ImGui::EndDragDropSource();
 				}
 
