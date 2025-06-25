@@ -8,9 +8,16 @@
 
 #include <Common/ResourcePipeline/Uuid.hpp>
 #include <Editor/AssetRegistry.hpp>
+#include <EngineCore/Assets/AssetReference.hpp>
+#include <EngineCore/Assets/Textures/TextureAsset.hpp>
 
 namespace Grindstone {
 	class EngineCore;
+
+	namespace GraphicsAPI {
+		class DescriptorSet;
+		class DescriptorSetLayout;
+	}
 
 	namespace Editor {
 		namespace ImguiEditor {
@@ -18,9 +25,11 @@ namespace Grindstone {
 
 			struct Sampler {
 				std::string name;
-				Uuid value;
+				std::string value;
 				std::string valueName;
 				bool isSet;
+				Grindstone::AssetReference<Grindstone::TextureAsset> textureReference;
+				GraphicsAPI::DescriptorSet* textureDescriptorSet = nullptr;
 
 				Sampler(const char* samplerName) : name(samplerName), isSet(false) {}
 			};
@@ -57,8 +66,11 @@ namespace Grindstone {
 				std::string materialName;
 				Uuid shaderUuid;
 				std::string pipelineSetName;
-				std::vector<Sampler> samplers;
+				std::vector<Sampler> pipelineSetSamplers;
 				std::vector<MaterialParameter> parameters;
+				Grindstone::GraphicsAPI::DescriptorSetLayout* textureDisplayDescriptorSetLayout = nullptr;
+				Grindstone::GraphicsAPI::Image* missingImage = nullptr;
+				Grindstone::GraphicsAPI::DescriptorSet* missingImageDescriptorSet = nullptr;
 				std::vector<AssetRegistry::Entry> availablePipelineSets;
 				EngineCore* engineCore;
 				ImguiEditor* imguiEditor = nullptr;

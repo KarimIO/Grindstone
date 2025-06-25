@@ -9,22 +9,72 @@
 #include "EngineCore/Utils/Utilities.hpp"
 #include "Editor/EditorManager.hpp"
 #include "Editor/ImguiEditor/ImguiEditor.hpp"
-#include <EngineCore/Logger.hpp>
 
-#include "EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp"
+#include <EngineCore/Logger.hpp>
+#include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
+#include <Plugins/GraphicsVulkan/VulkanDescriptorSet.hpp>
 
 using namespace Grindstone::Editor::ImguiEditor;
 
-MaterialInspector::MaterialInspector(EngineCore* engineCore, ImguiEditor* imguiEditor) : engineCore(engineCore), imguiEditor(imguiEditor) {}
+MaterialInspector::MaterialInspector(EngineCore* engineCore, ImguiEditor* imguiEditor) : engineCore(engineCore), imguiEditor(imguiEditor) {
+	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
+
+	Grindstone::GraphicsAPI::DescriptorSetLayout::Binding binding{
+		0, // descriptor index
+		1, // count
+		Grindstone::GraphicsAPI::BindingType::SampledImage,
+		Grindstone::GraphicsAPI::ShaderStageBit::Fragment
+	};
+
+	Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo layoutCreateInfo;
+	layoutCreateInfo.debugName = "Material Inspector Descriptor Layout";
+	layoutCreateInfo.bindings = &binding;
+	layoutCreateInfo.bindingCount = 1;
+	textureDisplayDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(layoutCreateInfo);
+
+	std::array<unsigned char, 16> colorData = {
+		0x00, 0x00, 0x00, 0xff,
+		0x00, 0x00, 0x00, 0xff,
+		0x00, 0x00, 0x00, 0xff,
+		0x00, 0x00, 0x00, 0xff,
+	};
+
+	GraphicsAPI::Image::CreateInfo blackTextureCreateInfo{};
+	blackTextureCreateInfo.debugName = "MaterialInspector Missing Image";
+	blackTextureCreateInfo.initialData = reinterpret_cast<const char*>(&colorData);
+	blackTextureCreateInfo.initialDataSize = static_cast<uint32_t>(colorData.size());
+	blackTextureCreateInfo.width = 2;
+	blackTextureCreateInfo.height = 2;
+	blackTextureCreateInfo.format = GraphicsAPI::Format::R8G8B8A8_UNORM;
+	blackTextureCreateInfo.mipLevels = 1;
+	blackTextureCreateInfo.imageUsage =
+		GraphicsAPI::ImageUsageFlags::TransferSrc |
+		GraphicsAPI::ImageUsageFlags::TransferDst |
+		GraphicsAPI::ImageUsageFlags::Sampled;
+	missingImage = graphicsCore->CreateImage(blackTextureCreateInfo);
+
+	GraphicsAPI::DescriptorSet::Binding dsetBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage(missingImage);
+	GraphicsAPI::DescriptorSet::CreateInfo missingImageDescriptorSetCreateInfo{};
+	missingImageDescriptorSetCreateInfo.debugName = "MaterialInspector Missing Image Descriptor Set";
+	missingImageDescriptorSetCreateInfo.bindings = &dsetBinding;
+	missingImageDescriptorSetCreateInfo.bindingCount = 1;
+	missingImageDescriptorSetCreateInfo.layout = textureDisplayDescriptorSetLayout;
+	missingImageDescriptorSet = graphicsCore->CreateDescriptorSet(missingImageDescriptorSetCreateInfo);
+}
 
 void MaterialInspector::SetMaterialPath(const std::filesystem::path& materialPath) {
 	if (this->materialPath == materialPath) {
 		return;
 	}
 
+	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
 	ReloadAvailablePipelineSets();
 
-	samplers.clear();
+	for (auto& sampler : pipelineSetSamplers) {
+		graphicsCore->DeleteDescriptorSet(sampler.textureDescriptorSet);
+	}
+
+	pipelineSetSamplers.clear();
 	parameters.clear();
 	hasBeenChanged = false;
 	this->materialPath = materialPath;
@@ -141,9 +191,9 @@ bool MaterialInspector::TryLoadShaderReflection(Uuid& shaderUuid) {
 
 	shaderLoadStatus = ShaderLoadStatus::ValidShader;
 
-	samplers.clear();
+	pipelineSetSamplers.clear();
 	for (auto& resource : gpset->metaData.resources) {
-		samplers.emplace_back(resource.slotName.c_str());
+		pipelineSetSamplers.emplace_back(resource.slotName.c_str());
 	}
 
 	return true;
@@ -178,28 +228,57 @@ void MaterialInspector::LoadShaderUniformBuffers(rapidjson::Value& uniformBuffer
 	}
 }
 
-void MaterialInspector::LoadMaterialSamplers(rapidjson::Value& samplers) {
-	for (auto& shaderSampler : this->samplers) {
+void MaterialInspector::LoadMaterialSamplers(rapidjson::Value& materialSamplers) {
+	Grindstone::Assets::AssetManager* assetManager = engineCore->assetManager;
+	Grindstone::Editor::AssetRegistry* assetRegistry = &Editor::Manager::GetInstance().GetAssetRegistry();
+	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
+
+	for (size_t index = 0; index < pipelineSetSamplers.size(); ++index) {
+		auto& shaderSampler = pipelineSetSamplers[index];
 		const char* samplerName = shaderSampler.name.c_str();
-		if (samplers.HasMember(samplerName)) {
-			const char* samplerValue = samplers[samplerName].GetString();
+		if (materialSamplers.HasMember(samplerName)) {
+			std::string samplerValue = materialSamplers[samplerName].GetString();
 			Grindstone::Uuid uuid;
 			AssetRegistry::Entry entry;
-			if (!Grindstone::Uuid::MakeFromString(samplerValue, uuid)) {
-				continue;
-			}
 
-			if (Editor::Manager::GetInstance().GetAssetRegistry().TryGetAssetData(uuid, entry)) {
-				shaderSampler.value = uuid;
+			if (Grindstone::Uuid::MakeFromString(samplerValue, uuid)) {
+				if (assetRegistry->TryGetAssetData(uuid, entry)) {
+					shaderSampler.value = samplerValue;
+					shaderSampler.valueName = entry.displayName;
+					hasBeenChanged = false;
+					shaderSampler.textureReference = assetManager->GetAssetReferenceByUuid<Grindstone::TextureAsset>(uuid);
+				}
+			}
+			else if (assetRegistry->TryGetAssetData(samplerValue, entry)) {
+				shaderSampler.value = samplerValue;
 				shaderSampler.valueName = entry.displayName;
 				hasBeenChanged = false;
+				shaderSampler.textureReference = assetManager->GetAssetReferenceByAddress<Grindstone::TextureAsset>(samplerValue);
+			}
+
+			if (shaderSampler.textureReference.IsValid() && shaderSampler.textureReference.Get() != nullptr) {
+				Grindstone::GraphicsAPI::Image* texturePtr = shaderSampler.textureReference.Get()->image;
+
+				Grindstone::GraphicsAPI::DescriptorSet::Binding binding =
+					Grindstone::GraphicsAPI::DescriptorSet::Binding::SampledImage(texturePtr);
+
+				Grindstone::GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCi;
+				std::string debugName = "Material Importer Dset " + entry.displayName;
+				descriptorSetCi.debugName = debugName.c_str();
+				descriptorSetCi.layout = textureDisplayDescriptorSetLayout;
+				descriptorSetCi.bindings = &binding;
+				descriptorSetCi.bindingCount = 1;
+				shaderSampler.textureDescriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCi);
+			}
+			else {
+				shaderSampler.textureDescriptorSet = nullptr;
 			}
 		}
 	}
 }
 
 void MaterialInspector::RenderTextures() {
-	if (samplers.size() == 0) {
+	if (pipelineSetSamplers.size() == 0) {
 		return;
 	}
 				
@@ -207,7 +286,7 @@ void MaterialInspector::RenderTextures() {
 	ImGui::Text("Textures:");
 
 	if (ImGui::BeginTable("MaterialTextureSlots", 2)) {
-		for (auto& sampler : samplers) {
+		for (auto& sampler : pipelineSetSamplers) {
 			RenderTexture(sampler);
 		}
 		ImGui::EndTable();
@@ -240,6 +319,26 @@ void MaterialInspector::OnSelectedTexture(Uuid uuid, std::string name) {
 	selectedSampler->value = uuid;
 	selectedSampler->valueName = name;
 	hasBeenChanged = true;
+
+	selectedSampler->textureReference = engineCore->assetManager->GetAssetReferenceByUuid<Grindstone::TextureAsset>(uuid);
+
+	if (selectedSampler->textureReference.IsValid() && selectedSampler->textureReference.Get() != nullptr) {
+		Grindstone::GraphicsAPI::Image* texturePtr = selectedSampler->textureReference.Get()->image;
+
+		Grindstone::GraphicsAPI::DescriptorSet::Binding binding =
+			Grindstone::GraphicsAPI::DescriptorSet::Binding::SampledImage(texturePtr);
+
+		Grindstone::GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCi;
+		std::string debugName = "Material Importer Dset " + name;
+		descriptorSetCi.debugName = debugName.c_str();
+		descriptorSetCi.layout = textureDisplayDescriptorSetLayout;
+		descriptorSetCi.bindings = &binding;
+		descriptorSetCi.bindingCount = 1;
+		selectedSampler->textureDescriptorSet = engineCore->GetGraphicsCore()->CreateDescriptorSet(descriptorSetCi);
+	}
+	else {
+		selectedSampler->textureDescriptorSet = nullptr;
+	}
 }
 
 void MaterialInspector::RenderTexture(Sampler& sampler) {
@@ -248,6 +347,16 @@ void MaterialInspector::RenderTexture(Sampler& sampler) {
 	ImGui::Text(sampler.name.c_str());
 
 	ImGui::TableNextColumn();
+
+	Grindstone::GraphicsAPI::DescriptorSet* dset = sampler.textureDescriptorSet != nullptr
+		? sampler.textureDescriptorSet
+		: missingImageDescriptorSet;
+
+	Grindstone::GraphicsAPI::Vulkan::DescriptorSet* vdset = static_cast<Grindstone::GraphicsAPI::Vulkan::DescriptorSet*>(dset);
+	ImTextureID descriptor = (ImTextureID)(uint64_t)(vdset->GetDescriptorSet());
+
+	std::string imageText = (sampler.valueName + "##Img" + sampler.name);
+	ImGui::Image(descriptor, ImVec2(40.0f, 40.0f));
 
 	std::string buttonText = (sampler.valueName + "##" + sampler.name);
 	ImVec2 buttonSize = { ImGui::GetContentRegionAvail().x, 24 };
@@ -263,9 +372,8 @@ void MaterialInspector::RenderTexture(Sampler& sampler) {
 			Uuid uuid = *static_cast<Uuid*>(payload->Data);
 			AssetRegistry::Entry entry;
 			if (Editor::Manager::GetInstance().GetAssetRegistry().TryGetAssetData(uuid, entry)) {
-				sampler.value = uuid;
-				sampler.valueName = entry.path.filename().string();
-				hasBeenChanged = true;
+				selectedSampler = &sampler;
+				OnSelectedTexture(uuid, entry.displayName);
 			}
 		}
 
@@ -308,9 +416,9 @@ void MaterialInspector::SaveMaterial() {
 	{
 		documentWriter.Key("samplers");
 		documentWriter.StartObject();
-		for (auto& sampler : samplers) {
+		for (auto& sampler : pipelineSetSamplers) {
 			documentWriter.Key(sampler.name.c_str());
-			documentWriter.String(sampler.value.ToString().c_str());
+			documentWriter.String(sampler.value.c_str());
 		}
 		documentWriter.EndObject();
 	}
