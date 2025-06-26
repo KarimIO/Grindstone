@@ -1,10 +1,7 @@
 #include <string>
 
-#include <mono/jit/jit.h>
-#include <mono/metadata/assembly.h>
-#include <mono/metadata/attrdefs.h>
-#include <mono/metadata/mono-debug.h>
-#include <mono/metadata/threads.h>
+#include <nethost.h>
+#include <hostfxr.h>
 
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/ECS/Entity.hpp>
@@ -20,6 +17,68 @@
 using namespace Grindstone;
 using namespace Grindstone::Memory;
 using namespace Grindstone::Scripting::CSharp;
+
+namespace Grindstone {
+	struct CsharpGlobals {
+		hostfxr_handle fxrHandle = nullptr;
+		hostfxr_initialize_for_dotnet_command_line_fn InitForCmdLine;
+		hostfxr_initialize_for_runtime_config_fn InitForConfig;
+		hostfxr_get_runtime_delegate_fn GetDelegate;
+		hostfxr_run_app_fn RunApp;
+		hostfxr_close_fn Close;
+	};
+}
+
+Grindstone::CsharpGlobals csharpGlobals;
+
+#ifdef WIN32
+static void* LoadModuleFile(const char_t* path) {
+	HMODULE h = ::LoadLibraryW(path);
+	assert(h != nullptr);
+	return (void*)h;
+}
+
+static void* GetModuleExport(void* h, const char* name) {
+	void* f = ::GetProcAddress((HMODULE)h, name);
+	assert(f != nullptr);
+	return f;
+}
+#else
+static void* LoadModuleFile(const char_t* path) {
+	void* h = dlopen(path, RTLD_LAZY | RTLD_LOCAL);
+	assert(h != nullptr);
+	return h;
+}
+
+static void* GetModuleExport(void* h, const char* name) {
+	void* f = dlsym(h, name);
+	assert(f != nullptr);
+	return f;
+}
+#endif
+
+static bool LoadHostFxr() {
+	get_hostfxr_parameters params{ sizeof(get_hostfxr_parameters), nullptr, nullptr };
+	// Pre-allocate a large buffer for the path to hostfxr
+	char_t buffer[MAX_PATH];
+	size_t bufferSize = sizeof(buffer) / sizeof(char_t);
+	int rc = get_hostfxr_path(buffer, &bufferSize, &params);
+	if (rc != 0) {
+		return false;
+	}
+
+	// Load hostfxr and get desired exports
+	// NOTE: The .NET Runtime does not support unloading any of its native libraries. Running
+	// dlclose/FreeLibrary on any .NET libraries produces undefined behavior.
+	void* lib = LoadModuleFile(buffer);
+	csharpGlobals.InitForCmdLine = (hostfxr_initialize_for_dotnet_command_line_fn)GetModuleExport(lib, "hostfxr_initialize_for_dotnet_command_line");
+	csharpGlobals.InitForConfig = (hostfxr_initialize_for_runtime_config_fn)GetModuleExport(lib, "hostfxr_initialize_for_runtime_config");
+	csharpGlobals.GetDelegate = (hostfxr_get_runtime_delegate_fn)GetModuleExport(lib, "hostfxr_get_runtime_delegate");
+	csharpGlobals.RunApp = (hostfxr_run_app_fn)GetModuleExport(lib, "hostfxr_run_app");
+	csharpGlobals.Close = (hostfxr_close_fn)GetModuleExport(lib, "hostfxr_close");
+
+	return (csharpGlobals.InitForCmdLine && csharpGlobals.GetDelegate && csharpGlobals.Close);
+}
 
 #define FUNCTION_CALL_IMPL(CallFnInComponent, scriptMethod) \
 void CSharpManager::CallFnInComponent(ScriptComponent& scriptComponent) { \
@@ -42,16 +101,10 @@ CSharpManager& CSharpManager::GetInstance() {
 void CSharpManager::Initialize(EngineCore* engineCore) {
 	this->engineCore = engineCore;
 
-	std::string libPath = (engineCore->GetEngineBinaryPath().parent_path() / "deps/Mono/lib").string();
-	std::string etcPath = (engineCore->GetEngineBinaryPath().parent_path() / "deps/Mono/etc").string();
-
-	mono_set_dirs(libPath.c_str(), etcPath.c_str());
-
-	rootDomain = mono_jit_init("GrindstoneJitRootDomain");
-
-	mono_thread_set_main(mono_thread_current());
-
-	CreateDomain();
+	if (!LoadHostFxr()) {
+		GPRINT_ERROR(LogSource::Scripting, "Failed to load hostfxr.");
+		return;
+	}
 
 	auto coreDllPath = (engineCore->GetEngineBinaryPath() / "GrindstoneCSharpCore.dll").string();
 	LoadAssembly(coreDllPath.c_str(), grindstoneCoreDll);
@@ -69,15 +122,7 @@ void CSharpManager::Cleanup() {
 	}
 	smartComponents.clear();
 
-	return;
-
-	mono_jit_cleanup(rootDomain);
-	rootDomain = nullptr;
-}
-
-void CSharpManager::CreateDomain() {
-	scriptDomain = mono_domain_create_appdomain("GrindstoneAppDomain", nullptr);
-	mono_domain_set(scriptDomain, true);
+	csharpGlobals.Close(csharpGlobals.fxrHandle);
 }
 
 void CSharpManager::LoadAssembly(const char* path, AssemblyData& outAssemblyData) {
@@ -86,50 +131,11 @@ void CSharpManager::LoadAssembly(const char* path, AssemblyData& outAssemblyData
 		return;
 	}
 
-	Grindstone::Buffer assemblyData = Grindstone::Utils::LoadFile(path);
-
-	MonoImageOpenStatus status;
-	MonoImage* image = mono_image_open_from_data_full(reinterpret_cast<char*>(assemblyData.Get()), static_cast<uint32_t>(assemblyData.GetCapacity()), 1, &status, false);
-
-	if (image == nullptr || status != MONO_IMAGE_OK) {
-		const char* errorMessage = mono_image_strerror(status);
-		GPRINT_ERROR(LogSource::Scripting, errorMessage);
-		return;
-	}
-
-	/*
-#if _DEBUG
-	std::filesystem::path pdbPath = path;
-	pdbPath.replace_extension(".pdb");
-
-	if (std::filesystem::exists(pdbPath)) {
-		std::vector<char> debugData = Grindstone::Utils::LoadFile(path);
-		mono_debug_open_image_from_memory(image, (const mono_byte*)debugData.data(), static_cast<uint32_t>(assemblyData.size()));
-	}
-#endif
-	*/
-
-	MonoAssembly* assembly = mono_assembly_load_from_full(image, path, &status, 0);
-
-	if (assembly == nullptr || status != MONO_IMAGE_OK) {
-		const char* errorMessage = mono_image_strerror(status);
-		GPRINT_ERROR(LogSource::Scripting, errorMessage);
-		return;
-	}
-
-	mono_image_close(image);
-
-	outAssemblyData.assembly = assembly;
-	outAssemblyData.image = mono_assembly_get_image(assembly);
 }
 
 void CSharpManager::LoadAssemblyIntoMap(const char* path) {
 	AssemblyData assemblyData;
 	LoadAssembly(path, assemblyData);
-
-	if (assemblyData.assembly == nullptr && assemblyData.image == nullptr) {
-		return;
-	}
 
 	assemblies[path] = assemblyData;
 }
@@ -146,18 +152,6 @@ void CSharpManager::SetupComponent(entt::registry& registry, entt::entity entity
 		return;
 	}
 
-	component.monoClass = it->second;
-
-	if (component.monoClass == nullptr || component.monoClass->monoClass == nullptr) {
-		return;
-	}
-
-	component.scriptObject = mono_object_new(scriptDomain, component.monoClass->monoClass);
-
-	SetupEntityDataInComponent(entity, component);
-
-	CallConstructorInComponent(component);
-	CallAttachComponentInComponent(component);
 }
 
 void CSharpManager::DestroyComponent(entt::registry& registry, entt::entity entity, ScriptComponent& component) {
@@ -169,55 +163,12 @@ void CSharpManager::EditorUpdate(entt::registry& registry) {
 		PerformReload();
 		return;
 	}
-
-	CallEditorUpdateInAllComponents(registry);
 }
 
 void CSharpManager::SetupEntityDataInComponent(entt::entity entity, ScriptComponent& component) {
-	MonoClassField* field = mono_class_get_field_from_name(component.monoClass->monoClass, "entity");
-
-	if (field == nullptr) {
-		return;
-	}
-
-	mono_field_set_value((MonoObject*)component.scriptObject, field, &entity);
 }
 
 ScriptClass* CSharpManager::SetupClass(const char* assemblyName, const char* namespaceName, const char* className) {
-	/*
-	auto& assemblyIterator = assemblies.begin(); //.find(assemblyName);
-	if (assemblyIterator == assemblies.end()) {
-		return nullptr;
-	}
-
-	auto scriptImage = assemblyIterator->second.image;
-
-	if (scriptImage == nullptr) {
-		return nullptr;
-	}
-
-	ScriptClass* scriptClass = new ScriptClass();
-	auto& methods = scriptClass->methods;
-	MonoClass* monoClass = mono_class_from_name(scriptImage, namespaceName, className);
-	scriptClass->monoClass = monoClass;
-	methods.constructor = mono_class_get_method_from_name(monoClass, ".ctor", 0);
-	methods.onAttachComponent = mono_class_get_method_from_name(monoClass, "OnAttachComponent", 0);
-	methods.onStart = mono_class_get_method_from_name(monoClass, "OnStart", 0);
-	methods.onUpdate = mono_class_get_method_from_name(monoClass, "OnUpdate", 0);
-	methods.onEditorUpdate = mono_class_get_method_from_name(monoClass, "OnEditorUpdate", 0);
-	methods.onDelete = mono_class_get_method_from_name(monoClass, "OnDelete", 0);
-	*/
-	// TODO: Get Member Variables
-	/*
-	MonoClassField* rawField = NULL;
-	void* iter = NULL;
-	while ((rawField = mono_class_get_fields(monoClass, &iter)) != NULL) {
-		const char* fieldName = mono_field_get_name(rawField);
-		MonoType* type = mono_field_get_type(rawField);
-		MonoTypeEnum monoType = (MonoTypeEnum)mono_type_get_type(type);
-	}
-	*/
-
 	return nullptr;
 }
 
@@ -232,91 +183,13 @@ void CSharpManager::LoadAssemblyClasses() {
 
 	smartComponents.clear();
 
-	MonoImage* coreImage = grindstoneCoreDll.image;
-	MonoImage* appImage = assemblies.begin()->second.image;
-	const MonoTableInfo* typeDefinitionsTable = mono_image_get_table_info(appImage, MONO_TABLE_TYPEDEF);
-	int numTypes = mono_table_info_get_rows(typeDefinitionsTable);
-	MonoClass* smartComponentClass = mono_class_from_name(coreImage, "Grindstone", "SmartComponent");
-
-	for (int i = 0; i < numTypes; i++) {
-		uint32_t cols[MONO_TYPEDEF_SIZE];
-		mono_metadata_decode_row(typeDefinitionsTable, i, cols, MONO_TYPEDEF_SIZE);
-
-		const char* classNamespace = mono_metadata_string_heap(appImage, cols[MONO_TYPEDEF_NAMESPACE]);
-		const char* className = mono_metadata_string_heap(appImage, cols[MONO_TYPEDEF_NAME]);
-		std::string scriptName;
-		if (strlen(classNamespace) != 0) {
-			scriptName = std::string(classNamespace) + "." + className;
-		}
-		else {
-			scriptName = className;
-		}
-
-		MonoClass* monoClass = mono_class_from_name(appImage, classNamespace, className);
-
-		if (monoClass == smartComponentClass) {
-			continue;
-		}
-
-		bool isSmartComponent = mono_class_is_subclass_of(monoClass, smartComponentClass, false);
-		if (!isSmartComponent) {
-			continue;
-		}
-
-		ScriptClass* scriptClass = AllocatorCore::Allocate<ScriptClass>(classNamespace, className, monoClass);
-		smartComponents[scriptName] = scriptClass;
-		auto& methods = scriptClass->methods;
-		methods.constructor = mono_class_get_method_from_name(monoClass, ".ctor", 0);
-		methods.onAttachComponent = mono_class_get_method_from_name(monoClass, "OnAttachComponent", 0);
-		methods.onStart = mono_class_get_method_from_name(monoClass, "OnStart", 0);
-		methods.onUpdate = mono_class_get_method_from_name(monoClass, "OnUpdate", 0);
-		methods.onEditorUpdate = mono_class_get_method_from_name(monoClass, "OnEditorUpdate", 0);
-		methods.onDelete = mono_class_get_method_from_name(monoClass, "OnDelete", 0);
-
-		int fieldCount = mono_class_num_fields(monoClass);
-		void* iterator = nullptr;
-		while (MonoClassField* field = mono_class_get_fields(monoClass, &iterator)) {
-			const char* fieldName = mono_field_get_name(field);
-			uint32_t flags = mono_field_get_flags(field);
-			if (flags & MONO_FIELD_ATTR_PUBLIC) {
-				scriptClass->fields[fieldName] = ScriptField(fieldName, field);
-				// MonoType* type = mono_field_get_type(field);
-
-				/*
-				ScriptFieldType fieldType = Utils::MonoTypeToScriptFieldType(type);
-				HZ_CORE_WARN("  {} ({})", fieldName, Utils::ScriptFieldTypeToString(fieldType));
-
-				scriptClass->m_Fields[fieldName] = { fieldType, fieldName, field };
-				*/
-			}
-		}
-
-	}
 }
-
-FUNCTION_CALL_IMPL(CallConstructorInComponent, constructor)
-FUNCTION_CALL_IMPL(CallAttachComponentInComponent, onAttachComponent)
-FUNCTION_CALL_LIST_IMPL(CallStartInAllComponents, CallStartInComponent, onStart)
-FUNCTION_CALL_LIST_IMPL(CallUpdateInAllComponents, CallUpdateInComponent, onUpdate)
-FUNCTION_CALL_LIST_IMPL(CallEditorUpdateInAllComponents, CallEditorUpdateInComponent, onEditorUpdate)
-FUNCTION_CALL_LIST_IMPL(CallDeleteInAllComponents, CallDeleteInComponent, onDelete)
-
 
 void CSharpManager::CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset) {
 	if (scriptComponent.monoClass == nullptr) {
 		return;
 	}
 
-	MonoObject* exception = nullptr;
-	char* methodsPtr = (char*)&scriptComponent.monoClass->methods;
-	MonoMethod* targetMethod = *(MonoMethod**)(methodsPtr + fnOffset);
-	if (targetMethod) {
-		mono_runtime_invoke(targetMethod, scriptComponent.scriptObject, nullptr, &exception);
-
-		if (exception) {
-			std::cout << mono_string_to_utf8(mono_object_to_string(exception, nullptr)) << std::endl;
-		}
-	}
 }
 
 void CSharpManager::RegisterComponents() {
@@ -330,43 +203,18 @@ void CSharpManager::RegisterComponents() {
 
 void CSharpManager::RegisterComponent(std::string& componentName, ECS::ComponentFunctions& fns) {
 	std::string csharpClass = "Grindstone." + componentName + "Component";
-	MonoImage* image = grindstoneCoreDll.image;
-	MonoType* managedType = mono_reflection_type_from_name((char*)csharpClass.c_str(), image);
-	if (managedType == nullptr) {
-		return;
-	}
-
-	createComponentFuncs[managedType] = fns.CreateComponentFn;
-	tryGetComponentFuncs[managedType] = fns.TryGetComponentFn;
-	hasComponentFuncs[managedType] = fns.HasComponentFn;
-	removeComponentFuncs[managedType] = fns.RemoveComponentFn;
 }
 
 // TODO: Shouldn't this be !=?
-void CSharpManager::CallCreateComponent(SceneManagement::Scene* scene, entt::entity entity, MonoType* monoType) {
-	auto iterator = createComponentFuncs.find(monoType);
-	if (iterator == createComponentFuncs.end()) {
-		entt::registry& registry = engineCore->GetEntityRegistry();
-		iterator->second(registry, entity);
-	}
+void CSharpManager::CallCreateComponent(SceneManagement::Scene* scene, entt::entity entity) {
 }
 
 // TODO: Shouldn't this be !=?
-void CSharpManager::CallHasComponent(SceneManagement::Scene* scene, entt::entity entity, MonoType* monoType) {
-	auto iterator = hasComponentFuncs.find(monoType);
-	if (iterator == hasComponentFuncs.end()) {
-		entt::registry& registry = engineCore->GetEntityRegistry();
-		iterator->second(registry, entity);
-	}
+void CSharpManager::CallHasComponent(SceneManagement::Scene* scene, entt::entity entity) {
 }
 
 // TODO: Shouldn't this be !=?
-void CSharpManager::CallRemoveComponent(SceneManagement::Scene* scene, entt::entity entity, MonoType* monoType) {
-	auto iterator = removeComponentFuncs.find(monoType);
-	if (iterator == removeComponentFuncs.end()) {
-		entt::registry& registry = engineCore->GetEntityRegistry();
-		iterator->second(registry, entity);
-	}
+void CSharpManager::CallRemoveComponent(SceneManagement::Scene* scene, entt::entity entity) {
 }
 
 void CSharpManager::QueueReload() {
@@ -375,19 +223,5 @@ void CSharpManager::QueueReload() {
 
 void CSharpManager::PerformReload() {
 	GPRINT_TRACE(LogSource::Scripting, "Reloading CSharp Binaries...");
-	mono_domain_set(mono_get_root_domain(), false);
-	mono_domain_unload(scriptDomain);
-
-	CreateDomain();
-
-	auto coreDllPath = (engineCore->GetEngineBinaryPath() / "GrindstoneCSharpCore.dll").string();
-	LoadAssembly(coreDllPath.c_str(), grindstoneCoreDll);
-
-	auto dllPath = (engineCore->GetBinaryPath() / "Application-CSharp.dll").string();
-	assemblies.clear();
-	LoadAssemblyIntoMap(dllPath.c_str());
-	LoadAssemblyClasses();
-	RegisterComponents();
-	isReloadQueued = false;
 	GPRINT_TRACE(LogSource::Scripting, "Reloaded CSharp Binaries.");
 }

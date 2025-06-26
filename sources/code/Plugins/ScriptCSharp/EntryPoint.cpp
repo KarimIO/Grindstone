@@ -23,6 +23,7 @@ extern "C" {
 		GPRINT(static_cast<LogSeverity>(logSeverity), LogSource::Scripting, message);
 	}
 
+	/*
 	CSHARP_EXPORT void EntityCreateComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType) {
 		entt::registry& reg = scene->GetEntityRegistry();
 		CSharpManager::GetInstance().CallCreateComponent(scene, entityHandle, monoType);
@@ -37,6 +38,7 @@ extern "C" {
 		entt::registry& reg = scene->GetEntityRegistry();
 		CSharpManager::GetInstance().CallRemoveComponent(scene, entityHandle, monoType);
 	}
+	*/
 
 	void QueueReloadCsharp() {
 		CSharpManager::GetInstance().QueueReload();

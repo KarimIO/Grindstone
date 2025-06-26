@@ -217,10 +217,8 @@ static bool CreateChildProcess() {
 		ReadDataFromExtProgram(path);
 		return true;
 	}
-	else {
-		GPRINT_ERROR_V(Grindstone::LogSource::Editor, "Unable to build project: {}", command.c_str());
-	}
 
+	GPRINT_ERROR_V(Grindstone::LogSource::Editor, "Unable to build project: {}", command.c_str());
 	return false;
 }
 #endif

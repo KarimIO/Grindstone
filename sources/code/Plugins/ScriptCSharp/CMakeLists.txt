@@ -77,8 +77,13 @@ set_target_properties(PluginScriptCSharp PROPERTIES FOLDER Plugins/Scripts)
 
 find_path(ENTT_INCLUDE_DIRS "entt/entt.hpp")
 
-target_compile_definitions(PluginScriptCSharp PUBLIC CSHARP_DLL GLM_ENABLE_EXPERIMENTAL)
-target_link_libraries(PluginScriptCSharp PUBLIC ${CORE_LIBS} mono-2.0-sgen.lib)
+execute_process(
+	COMMAND dotnet --info
+	OUTPUT_VARIABLE dotnet_info
+	OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+
 get_dotnet_root(DOTNET_ROOT)
 if(EXISTS "${DOTNET_ROOT}")
 	message(STATUS "Latest .NET SDK Version: ${DOTNET_ROOT}")
@@ -88,12 +93,11 @@ endif()
 
 target_include_directories(PluginScriptCSharp PUBLIC
 	${CODE_DIR}
-	${DEPS_DIR}/Mono/include/mono-2.0
 	${ENTT_INCLUDE_DIRS}
 	${DOTNET_ROOT}
 )
-
-target_link_directories(PluginScriptCSharp PUBLIC ${DEPS_DIR}/Mono/lib)
+target_compile_definitions(PluginScriptCSharp PUBLIC CSHARP_DLL GLM_ENABLE_EXPERIMENTAL)
+target_link_libraries(PluginScriptCSharp PUBLIC ${CORE_LIBS} ${DOTNET_ROOT}/nethost.lib)
 target_precompile_headers(PluginScriptCSharp PUBLIC pch.hpp)
 
 file(COPY
