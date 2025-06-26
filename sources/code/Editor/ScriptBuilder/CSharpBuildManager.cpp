@@ -1,6 +1,5 @@
-#include "CSharpBuildManager.hpp"
-
 #include <fstream>
+#include <regex>
 
 #ifdef _MSC_VER
 #include <Windows.h>
@@ -9,11 +8,13 @@
 #include <ShlObj.h>
 #endif
 
-#include "Editor/EditorManager.hpp"
-#include "EngineCore/Utils/Utilities.hpp"
+#include <Editor/EditorManager.hpp>
+#include <EngineCore/Utils/Utilities.hpp>
 #include <EngineCore/Logger.hpp>
+
 #include "CSharpProjectBuilder.hpp"
 #include "SolutionBuilder.hpp"
+#include "CSharpBuildManager.hpp"
 
 using namespace Grindstone::Editor::ScriptBuilder;
 
@@ -179,9 +180,9 @@ static std::string GetMsBuildPath() {
 }
 
 // TODO: Multi-thread this with DWORD __stdcall ReadDataFromExtProgram(void* argh) {
-static DWORD ReadDataFromExtProgram() {
+static DWORD ReadDataFromExtProgram(const std::string& path) {
 	CloseHandle(hStdOutPipeWrite);
-	GPRINT_INFO(Grindstone::LogSource::Editor, "Building...");
+	GPRINT_INFO_V(Grindstone::LogSource::Editor, "Building user project \"{}\"...", path.c_str());
 
 	for (;;) {
 		DWORD bytesAvail = 0;
@@ -197,12 +198,24 @@ static DWORD ReadDataFromExtProgram() {
 				GPRINT_ERROR(Grindstone::LogSource::Editor, "Failed to call ReadFile");
 			}
 
+			static const std::regex errorRegex(R"(\): error CS)");
+			static const std::regex warningRegex(R"(\): warning CS)");
+
 			std::string errorMsg(buf, buf + n);
-			GPRINT_INFO(Grindstone::LogSource::Editor, errorMsg.c_str());
+			errorMsg = Grindstone::Utils::Trim(errorMsg);
+			Grindstone::LogSeverity severity = Grindstone::LogSeverity::Info;
+			if (std::regex_search(errorMsg, errorRegex)) {
+				severity = Grindstone::LogSeverity::Error;
+			}
+			else if (std::regex_search(errorMsg, warningRegex)) {
+				severity = Grindstone::LogSeverity::Warning;
+			}
+
+			GPRINT(severity, Grindstone::LogSource::Editor, errorMsg.c_str());
 		}
 	}
 
-	GPRINT_INFO(Grindstone::LogSource::Editor, "Done building.");
+	GPRINT_INFO_V(Grindstone::LogSource::Editor, "Done building user project \"{}\".", path.c_str());
 	CloseHandle(msBuildProcessInfo.hProcess);
 	CloseHandle(msBuildProcessInfo.hThread);
 
@@ -227,7 +240,7 @@ bool CreateChildProcess() {
 	const std::string msBuildPath = GetMsBuildPath();
 
 	std::stringstream commandSStream;
-	commandSStream << '\"' << msBuildPath << "\" " << parameters << " \"" << path << '\"';
+	commandSStream << "\"" << msBuildPath << "\" " << parameters << " \"" << path << '\"';
 	std::string command = commandSStream.str();
 
 	msBuildProcessInfo = {};
@@ -248,11 +261,13 @@ bool CreateChildProcess() {
 		nullptr,
 		&startInfo,
 		&msBuildProcessInfo
-	))
-	{
+	)) {
 		// TODO: Multi-thread this with CreateThread(0, 0, ReadDataFromExtProgram, nullptr, 0, nullptr);
-		ReadDataFromExtProgram();
+		ReadDataFromExtProgram(path);
 		return true;
+	}
+	else {
+		GPRINT_ERROR_V(Grindstone::LogSource::Editor, "Unable to build project: {}", command.c_str());
 	}
 
 	return false;
