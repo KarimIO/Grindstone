@@ -18,7 +18,17 @@
 
 using namespace Grindstone::Editor::ScriptBuilder;
 
-std::string CallProcessAndReadResult(const std::wstring& applicationName, const std::wstring& commandLine) {
+static bool IsProgramAvailable(const std::string& programName) {
+#if defined(_WIN32)
+	std::string command = "where " + programName + " >nul 2>&1";
+#else
+	std::string command = "command -v " + programName + " >/dev/null 2>&1";
+#endif
+	int result = std::system(command.c_str());
+	return result == 0;
+}
+
+static std::string CallProcessAndReadResult(const std::wstring& applicationName, const std::wstring& commandLine) {
 	PROCESS_INFORMATION procInfo{};
 	HANDLE hStdInPipeRead = nullptr;
 	HANDLE hStdInPipeWrite = nullptr;
@@ -122,62 +132,9 @@ void CSharpBuildManager::OnFileModified(const std::filesystem::path& path) {
 }
 
 #ifdef _MSC_VER
-PROCESS_INFORMATION msBuildProcessInfo;
+PROCESS_INFORMATION dotnetProcessInfo;
 HANDLE hStdOutPipeRead = nullptr;
 HANDLE hStdOutPipeWrite = nullptr;
-
-static std::string GetMsBuildPath() {
-	const std::filesystem::path settingsFile = Grindstone::Editor::Manager::GetInstance().GetProjectPath() / "userSettings/codeToolsPath.txt";
-	std::filesystem::create_directories(settingsFile.parent_path());
-	const auto settingsPath = settingsFile.string();
-	std::string msbuildPath = Grindstone::Utils::LoadFileText(settingsPath.c_str());
-	msbuildPath = Grindstone::Utils::Trim(msbuildPath);
-
-	if (!msbuildPath.empty()) {
-		return msbuildPath;
-	}
-
-	wchar_t* programFilesPath = nullptr;
-	if (SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, 0, nullptr, &programFilesPath) != S_OK) {
-		return "";
-	}
-
-	std::wstringstream vsWherePathSStream;
-	vsWherePathSStream << '\"' << programFilesPath << L"\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\MSBuild.exe";
-	const std::wstring commandLine = vsWherePathSStream.str();
-
-	CoTaskMemFree(static_cast<void*>(programFilesPath));
-
-	std::string searchedPath = CallProcessAndReadResult(L"", commandLine);
-
-	if (searchedPath.size() < 2) {
-		return "";
-	}
-
-	if (searchedPath.back() == '\n') {
-		if (searchedPath[searchedPath.size() - 2] == '\r') {
-			searchedPath = searchedPath.substr(0, searchedPath.size() - 2);
-		}
-		else {
-			searchedPath = searchedPath.substr(0, searchedPath.size() - 1);
-		}
-	}
-
-	if (std::filesystem::exists(searchedPath)) {
-		// Write the path before returning it.
-		std::ofstream outputFile(settingsPath.c_str());
-
-		if (outputFile.is_open()) {
-			outputFile.clear();
-			outputFile << searchedPath << '\n';
-			outputFile.close();
-		}
-
-		return searchedPath;
-	}
-
-	return "";
-}
 
 // TODO: Multi-thread this with DWORD __stdcall ReadDataFromExtProgram(void* argh) {
 static DWORD ReadDataFromExtProgram(const std::string& path) {
@@ -216,34 +173,28 @@ static DWORD ReadDataFromExtProgram(const std::string& path) {
 	}
 
 	GPRINT_INFO_V(Grindstone::LogSource::Editor, "Done building user project \"{}\".", path.c_str());
-	CloseHandle(msBuildProcessInfo.hProcess);
-	CloseHandle(msBuildProcessInfo.hThread);
+	CloseHandle(dotnetProcessInfo.hProcess);
+	CloseHandle(dotnetProcessInfo.hThread);
 
 	Grindstone::Editor::Manager::GetEngineCore().ReloadCsharpBinaries();
 
 	return 0;
 }
 
-bool CreateChildProcess() {
-	constexpr bool isDebug = true;
-	std::string parameters = "-noLogo -noAutoRsp -verbosity:minimal /p:Configuration=";
-	if (isDebug) {
-		parameters += "Debug";
-	}
-	else {
-		parameters += "Release";
-	}
+static bool CreateChildProcess() {
+#if _DEBUG
+	constexpr const char* configuration = "Debug";
+#else
+	constexpr const char* configuration = "Release";
+#endif
 
 	const std::string filename = "Application-CSharp.csproj";
 	const std::filesystem::path outputFilePath = Grindstone::Editor::Manager::GetInstance().GetProjectPath() / filename;
 	const std::string path = outputFilePath.string();
-	const std::string msBuildPath = GetMsBuildPath();
 
-	std::stringstream commandSStream;
-	commandSStream << "\"" << msBuildPath << "\" " << parameters << " \"" << path << '\"';
-	std::string command = commandSStream.str();
+	std::string command = fmt::format("dotnet build {} -c {}", path.c_str(), configuration);
 
-	msBuildProcessInfo = {};
+	dotnetProcessInfo = {};
 	STARTUPINFO startInfo{};
 	startInfo.cb = sizeof(STARTUPINFO);
 	startInfo.hStdError = hStdOutPipeWrite;
@@ -260,7 +211,7 @@ bool CreateChildProcess() {
 		nullptr,
 		nullptr,
 		&startInfo,
-		&msBuildProcessInfo
+		&dotnetProcessInfo
 	)) {
 		// TODO: Multi-thread this with CreateThread(0, 0, ReadDataFromExtProgram, nullptr, 0, nullptr);
 		ReadDataFromExtProgram(path);
@@ -294,9 +245,8 @@ void CSharpBuildManager::BuildProject() {
 }
 
 void CSharpBuildManager::CreateProjectsAndSolution() const {
-	const std::string msBuildPath = GetMsBuildPath();
-	if (msBuildPath.empty()) {
-		GPRINT_ERROR(LogSource::Editor, "Could not get visual studio path.");
+	if (!IsProgramAvailable("dotnet")) {
+		GPRINT_ERROR(LogSource::Editor, "Could not get dotnet path - will not be able to compile C# projects.");
 		return;
 	}
 
