@@ -72,14 +72,6 @@ compiledAssets/*
 settings.ini
 log/*
 *.log
-![Dd]eps/Mono/lib/*.lib
-![Dd]eps/Mono/lib/*.pdb
-![Dd]eps/Mono/lib/mono/4.5/*.exe
-![Dd]eps/Mono/lib/mono/4.5/*.dll
-![Dd]eps/Mono/lib/mono/4.5/Facades/*.dll
-![Dd]eps/Mono/lib/mono/4.5/*.pdb
-!bin/mono-2.0-sgen.dll
-!bin/mono-2.0-sgen.pdb
 
 # vcpkg
 vcpkg_installed/*
