@@ -11,7 +11,6 @@ namespace Grindstone::Scripting::CSharp {
 		std::string scriptNamespace;
 		std::string scriptClass;
 		ScriptClass* monoClass = nullptr;
-		MonoObject* scriptObject = nullptr;
 
 		REFLECT("CSharpScript")
 	};
