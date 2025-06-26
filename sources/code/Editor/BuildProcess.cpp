@@ -61,7 +61,7 @@ namespace Grindstone::Editor {
 		CopyLibrary(enginePath, targetPath, "fmtd");
 		CopyLibrary(enginePath, targetPath, "gl3w");
 		CopyLibrary(enginePath, targetPath, "glfw3");
-		CopyLibrary(enginePath, targetPath, "mono-2.0-sgen");
+		CopyLibrary(enginePath, targetPath, "nethost");
 		CopyLibrary(enginePath, targetPath, "OpenAL32");
 
 		// TODO: Build from assets folders
