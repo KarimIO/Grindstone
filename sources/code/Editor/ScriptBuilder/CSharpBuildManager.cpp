@@ -130,6 +130,7 @@ static std::string GetMsBuildPath() {
 	std::filesystem::create_directories(settingsFile.parent_path());
 	const auto settingsPath = settingsFile.string();
 	std::string msbuildPath = Grindstone::Utils::LoadFileText(settingsPath.c_str());
+	msbuildPath = Grindstone::Utils::Trim(msbuildPath);
 
 	if (!msbuildPath.empty()) {
 		return msbuildPath;
@@ -260,7 +261,7 @@ bool CreateChildProcess() {
 
 void CSharpBuildManager::BuildProject() {
 #ifdef _MSC_VER
-	SECURITY_ATTRIBUTES saAttr;
+	SECURITY_ATTRIBUTES saAttr{};
 	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
 	saAttr.bInheritHandle = TRUE;
 	saAttr.lpSecurityDescriptor = nullptr;
