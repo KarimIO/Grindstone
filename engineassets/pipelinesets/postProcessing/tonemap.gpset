@@ -40,14 +40,6 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 
 				ConstantBuffer<PostProcessUbo> postProcessingUbo : register(b3, space2);
 
-				float3 linearToSRGB(float3 inColor) {
-					float3 outColor;
-					outColor.r = inColor.r <= 0.0031308 ? 12.92 * inColor.r : 1.055 * pow(inColor.r, 1.0/2.4) - 0.055;
-					outColor.g = inColor.g <= 0.0031308 ? 12.92 * inColor.g : 1.055 * pow(inColor.g, 1.0/2.4) - 0.055;
-					outColor.b = inColor.b <= 0.0031308 ? 12.92 * inColor.b : 1.055 * pow(inColor.b, 1.0/2.4) - 0.055;
-					return outColor;
-				}
-
 				float3 hdrTransform(float3 color) {
 					float a = 2.51f;
 					float b = 0.03f;
@@ -142,7 +134,6 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 					combinedColor = applyVignette(sceneColor, inData.fragmentTexCoord);
 					combinedColor = applyGrain(sceneColor, resolution, inData.fragmentTexCoord);
 					combinedColor = hdrTransform(combinedColor);
-					combinedColor = linearToSRGB(combinedColor);
 
 					return float4(combinedColor, 1);
 				}
