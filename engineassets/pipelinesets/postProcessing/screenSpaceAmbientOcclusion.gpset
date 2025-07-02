@@ -32,7 +32,7 @@ pipelineSet "Screen-Space Ambient Occlusion" inherits "PostProcessing" {
 				static const int kernelSize = 64;
 
 				SamplerState gbufferSampler : register(s0, space1);
-				Texture2D<float4> depthTexture : register(t1, space1);
+				Texture2D<float> depthTexture : register(t1, space1);
 				Texture2D<float4> gbufferNormals : register(t2, space1);
 
 				struct SSAOBufferObject {
@@ -46,7 +46,8 @@ pipelineSet "Screen-Space Ambient Occlusion" inherits "PostProcessing" {
 				ConstantBuffer<SSAOBufferObject> ssaoUbo : register(b2, space2);
 
 				float mainFragment(VertexToFragment input) : SV_TARGET0 {
-					int2 noiseScale = int2(rendererUbo.renderResolution.x, rendererUbo.renderResolution.y) / 4;
+					float2 roundedResolution = floor(rendererUbo.renderResolution / 4.0f) * 4.0f;
+					float2 noiseScale = ceil(roundedResolution / 4.0f);
 
 					float depthFromTexture = depthTexture.Sample(gbufferSampler, input.scaledFragmentTexCoord).x;
 					float3 position = ComputeViewSpacePosition(rendererUbo.inverseProjectionMatrix, input.fragmentTexCoord, depthFromTexture).rgb;
@@ -70,7 +71,7 @@ pipelineSet "Screen-Space Ambient Occlusion" inherits "PostProcessing" {
 						float4 offset = float4(sampleKernel, 1.0);
 						offset      = mul(rendererUbo.projectionMatrix, offset);// from view to clip-space
 						offset.xyz /= offset.w;									// perspective divide
-						offset.xyz  = offset.xyz * 0.5 + float3(0.5, 0.5, 0.5);	// transform to range 0.0 - 1.0
+						offset.xyz  = float3(offset.x * 0.5 + 0.5, offset.y * 0.5 + 0.5, offset.z * 0.5 + 0.5);	// transform to range 0.0 - 1.0
 
 						float sampleDepth = depthTexture.Sample(gbufferSampler, offset.xy * rendererUbo.renderScale).x;
 						float sampleDepthLinear = ComputeViewSpacePosition(rendererUbo.inverseProjectionMatrix, offset.xy, sampleDepth).z;
