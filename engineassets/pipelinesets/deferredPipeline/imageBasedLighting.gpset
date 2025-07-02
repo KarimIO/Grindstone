@@ -87,7 +87,7 @@ pipelineSet "Image Based Lighting" inherits "DeferredLighting" {
 
 					float depthFromTexture = gbufferDepth.Sample(gbufferSampler, input.scaledFragmentTexCoord).r;
 
-					float3 position = ComputeWorldSpacePosition(rendererUbo.projectionMatrix, rendererUbo.viewMatrix, input.fragmentTexCoord, depthFromTexture);
+					float3 position = ComputeWorldSpacePosition(rendererUbo.inverseProjectionMatrix, rendererUbo.inverseViewMatrix, input.fragmentTexCoord, depthFromTexture);
 					float3 albedo = gbufferAlbedo.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb;
 					float3 normal = gbufferNormals.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb;
 					float3 specularInput = gbufferSpecularRoughnessValue.rgb;
@@ -95,7 +95,7 @@ pipelineSet "Image Based Lighting" inherits "DeferredLighting" {
 					float ao = ssao.Sample(gbufferSampler, input.scaledFragmentTexCoord).r;
 
 					float3 eyeDir = normalize(rendererUbo.eyePos.xyz - position);
-					float3 reflectRay = 2 * dot(eyeDir, normal) * normal - eyeDir;
+					float3 reflectRay = reflect(-eyeDir, normal);
 
 					float NV = max(dot(normal, eyeDir), 0.0);
 
