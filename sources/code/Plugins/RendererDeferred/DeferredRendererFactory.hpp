@@ -26,6 +26,7 @@ namespace Grindstone {
 		GraphicsAPI::RenderPass* lightingRenderPass = nullptr;
 		GraphicsAPI::RenderPass* forwardLitRenderPass = nullptr;
 		GraphicsAPI::RenderPass* ssaoRenderPass = nullptr;
+		GraphicsAPI::RenderPass* ssaoBlurRenderPass = nullptr;
 		GraphicsAPI::RenderPass* shadowMapRenderPass = nullptr;
 		GraphicsAPI::RenderPass* targetRenderPass = nullptr;
 		GraphicsAPI::RenderPass* mainRenderpass = nullptr;

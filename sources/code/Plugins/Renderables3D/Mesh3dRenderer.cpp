@@ -60,7 +60,7 @@ Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
 	descriptorSetUniformBinding.bindingId = 0;
 	descriptorSetUniformBinding.type = GraphicsAPI::BindingType::UniformBuffer;
 	descriptorSetUniformBinding.count = 1;
-	descriptorSetUniformBinding.stages = GraphicsAPI::ShaderStageBit::Vertex | GraphicsAPI::ShaderStageBit::Fragment;
+	descriptorSetUniformBinding.stages = GraphicsAPI::ShaderStageBit::Vertex;
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
 	descriptorSetLayoutCreateInfo.debugName = "Per Draw Descriptor Set Layout";

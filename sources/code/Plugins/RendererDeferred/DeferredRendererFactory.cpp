@@ -64,6 +64,19 @@ static Grindstone::GraphicsAPI::RenderPass* CreateSsaoRenderPass(Grindstone::Gra
 	return rp;
 }
 
+static Grindstone::GraphicsAPI::RenderPass* CreateSsaoBlurRenderPass(Grindstone::GraphicsAPI::Core* graphicsCore, Grindstone::RenderPassRegistry* rpRegistry) {
+	GraphicsAPI::RenderPass::AttachmentInfo attachment{ ambientOcclusionFormat, true };
+	GraphicsAPI::RenderPass::CreateInfo ssaoRenderPassCreateInfo{};
+	ssaoRenderPassCreateInfo.debugName = "SSAO Blur Renderpass";
+	ssaoRenderPassCreateInfo.colorAttachments = &attachment;
+	ssaoRenderPassCreateInfo.colorAttachmentCount = 1;
+	ssaoRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::Invalid;
+	ssaoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
+	Grindstone::GraphicsAPI::RenderPass* rp = graphicsCore->CreateRenderPass(ssaoRenderPassCreateInfo);
+	rpRegistry->RegisterRenderpass(ssaoBlurRenderPassKey, rp);
+	return rp;
+}
+
 static Grindstone::GraphicsAPI::RenderPass* CreateGbufferRenderPass(Grindstone::GraphicsAPI::Core* graphicsCore, Grindstone::RenderPassRegistry* rpRegistry) {
 	const int gbufferColorCount = 3;
 	std::array<GraphicsAPI::RenderPass::AttachmentInfo, gbufferColorCount> gbufferColorAttachments{};
@@ -157,6 +170,7 @@ Grindstone::DeferredRendererFactory::DeferredRendererFactory() {
 	mainRenderpass = CreateMainRenderPass(graphicsCore, rpRegistry);
 	shadowMapRenderPass = CreateShadowMapRenderPass(graphicsCore, rpRegistry);
 	ssaoRenderPass = CreateSsaoRenderPass(graphicsCore, rpRegistry);
+	ssaoBlurRenderPass = CreateSsaoBlurRenderPass(graphicsCore, rpRegistry);
 	gbufferRenderpass = CreateGbufferRenderPass(graphicsCore, rpRegistry);
 }
 
