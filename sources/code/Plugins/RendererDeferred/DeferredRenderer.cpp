@@ -1352,7 +1352,7 @@ void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) 
 
 	{
 		GraphicsAPI::DescriptorSet::Binding blurredSsaoInputBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage(imageSet.ambientOcclusionRenderTarget);
-		imageSet.blurredSsaoInputDescriptorSet->ChangeBindings(&blurredSsaoInputBinding, 1, 0);
+		imageSet.blurredSsaoInputDescriptorSet->ChangeBindings(&blurredSsaoInputBinding, 1, 1);
 	}
 }
 
