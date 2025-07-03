@@ -101,7 +101,8 @@ pipelineSet "Image Based Lighting" inherits "DeferredLighting" {
 
 					static const float MAX_REFLECTION_LOD = 4.0;
 					float3 f0 = 0.32 * specularInput * specularInput;
-					float3 f90 = max(float3(1.0f - roughness), f0);
+					float oneMinusR = 1.0f - roughness;
+					float3 f90 = max(float3(oneMinusR, oneMinusR, oneMinusR), f0);
 					float3 F = Light_F(f0, f90, NV);
 					float3 prefilteredColor = specularMap.SampleLevel(gbufferSampler, reflectRay, roughness * MAX_REFLECTION_LOD).rgb;
 					float2 envBRDF  = brdfLUT.Sample(gbufferSampler, float2(NV, roughness)).rg;
