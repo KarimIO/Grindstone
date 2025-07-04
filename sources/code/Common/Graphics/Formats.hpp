@@ -26,6 +26,13 @@ namespace Grindstone::GraphicsAPI {
 		All = 7
 	};
 
+	enum class ImageDimension {
+		Invalid,
+		Dimension1D,
+		Dimension2D,
+		Dimension3D
+	};
+
 	enum class Format {
 		Invalid,
 		R4G4_UNORM_PACK8,

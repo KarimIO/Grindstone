@@ -17,6 +17,7 @@ Vulkan::Image::Image(VkImage image, VkFormat format, uint32_t swapchainIndex) :
 	depth(1),
 	mipLevels(1),
 	arrayLayers(1),
+	imageDimension(ImageDimension::Dimension2D),
 	imageViewType(VkImageViewType::VK_IMAGE_VIEW_TYPE_2D),
 	aspect(VK_IMAGE_ASPECT_COLOR_BIT)
 {
@@ -32,6 +33,7 @@ Vulkan::Image::Image(const CreateInfo& createInfo) :
 	width(createInfo.width),
 	height(createInfo.height),
 	depth(createInfo.depth),
+	imageDimension(createInfo.imageDimensions),
 	mipLevels(createInfo.mipLevels),
 	arrayLayers(createInfo.arrayLayers),
 	format(createInfo.format),
@@ -100,23 +102,30 @@ void Vulkan::Image::Create() {
 			imageViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
 		}
 	}
-	else if (arrayLayers > 1) {
-		if (axisCount == 1) {
-			imageViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_1D_ARRAY;
-		}
-		else if (axisCount == 2) {
-			imageViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-		}
-	}
 	else {
-		if (axisCount == 1) {
-			imageViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_1D;
-		}
-		else if (axisCount == 2) {
-			imageViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_2D;
-		}
-		else if (axisCount == 3) {
+		switch (imageDimension) {
+		case GraphicsAPI::ImageDimension::Dimension1D:
+			if (arrayLayers > 1) {
+				imageViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+			}
+			else {
+				imageViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_1D;
+			}
+			break;
+		case GraphicsAPI::ImageDimension::Dimension2D:
+			if (arrayLayers > 1) {
+				imageViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+			}
+			else {
+				imageViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_2D;
+			}
+			break;
+		case GraphicsAPI::ImageDimension::Dimension3D:
 			imageViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_3D;
+			break;
+		case GraphicsAPI::ImageDimension::Invalid:
+			imageViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_MAX_ENUM;
+			break;
 		}
 	}
 

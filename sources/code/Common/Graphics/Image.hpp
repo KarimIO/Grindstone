@@ -55,7 +55,8 @@ namespace Grindstone::GraphicsAPI {
 			uint32_t mipLevels = 1;
 			uint32_t arrayLayers = 1;
 
-			Format format;
+			GraphicsAPI::Format format = GraphicsAPI::Format::Invalid;
+			GraphicsAPI::ImageDimension imageDimensions = GraphicsAPI::ImageDimension::Dimension2D;
 			Grindstone::Containers::BitsetFlags<ImageUsageFlags> imageUsage;
 
 			const char* initialData = nullptr;
