@@ -60,6 +60,9 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 		case FOURCC_BC4:
 			format = Grindstone::GraphicsAPI::Format::BC4_UNORM_BLOCK;
 			break;
+		case FOURCC_BC5:
+			format = Grindstone::GraphicsAPI::Format::BC5_UNORM_BLOCK;
+			break;
 
 		case FOURCC_R16:
 			format = Grindstone::GraphicsAPI::Format::R16_UNORM;
@@ -108,6 +111,7 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 		return false;
 	}
 
+	Grindstone::GraphicsAPI::ImageDimension imageDimensions = Grindstone::GraphicsAPI::ImageDimension::Dimension2D;
 	const char* imgPtr = fileContents + 4 + sizeof(DDSHeader);
 	if (useDxgi) {
 		DDSHeaderExtended extendedHeader;
@@ -124,6 +128,41 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 			return false;
 		}
 
+		switch (extendedHeader.resourceDimension) {
+		default:
+			GPRINT_ERROR_V(LogSource::EngineCore, "Invalid dimensions in texture with id({}) and name({}).", textureAsset.uuid.ToString(), textureAsset.name.c_str());
+			imageDimensions = Grindstone::GraphicsAPI::ImageDimension::Invalid;
+			break;
+		case D3d10ResourceDimension::D3D10_RESOURCE_DIMENSION_UNKNOWN:
+			imageDimensions = Grindstone::GraphicsAPI::ImageDimension::Invalid;
+			break;
+		case D3d10ResourceDimension::D3D10_RESOURCE_DIMENSION_BUFFER:
+			GPRINT_ERROR_V(LogSource::EngineCore, "Invalid dimensions \"Buffer\" in texture with id({}) and name({}).", textureAsset.uuid.ToString(), textureAsset.name.c_str());
+			imageDimensions = Grindstone::GraphicsAPI::ImageDimension::Invalid;
+			break;
+		case D3d10ResourceDimension::D3D10_RESOURCE_DIMENSION_TEXTURE1D:
+			imageDimensions = Grindstone::GraphicsAPI::ImageDimension::Dimension1D;
+			break;
+		case D3d10ResourceDimension::D3D10_RESOURCE_DIMENSION_TEXTURE2D:
+			imageDimensions = Grindstone::GraphicsAPI::ImageDimension::Dimension2D;
+			break;
+		case D3d10ResourceDimension::D3D10_RESOURCE_DIMENSION_TEXTURE3D:
+			imageDimensions = Grindstone::GraphicsAPI::ImageDimension::Dimension3D;
+			break;
+		}
+
+		if (imageDimensions == Grindstone::GraphicsAPI::ImageDimension::Invalid) {
+			if (header.dwHeight == 1) {
+				imageDimensions = Grindstone::GraphicsAPI::ImageDimension::Dimension1D;
+			}
+			else if (header.dwDepth == 1) {
+				imageDimensions = Grindstone::GraphicsAPI::ImageDimension::Dimension2D;
+			}
+			else {
+				imageDimensions = Grindstone::GraphicsAPI::ImageDimension::Dimension3D;
+			}
+		}
+
 		imgPtr += sizeof(DDSHeaderExtended);
 	}
 
@@ -133,10 +172,12 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 	imgCreateInfo.debugName = textureAsset.name.c_str();
 	imgCreateInfo.initialData = imgPtr;
 	imgCreateInfo.initialDataSize = result.buffer.GetCapacity() - static_cast<uint64_t>(imgPtr - fileContents);
-	imgCreateInfo.mipLevels = static_cast<uint32_t>(header.dwMipMapCount);
+	imgCreateInfo.mipLevels = header.dwMipMapCount > 0 ? static_cast<uint32_t>(header.dwMipMapCount) : 1;
 	imgCreateInfo.format = format;
 	imgCreateInfo.width = header.dwWidth;
 	imgCreateInfo.height = header.dwHeight;
+	imgCreateInfo.depth = header.dwDepth > 0 ? header.dwDepth : 1;
+	imgCreateInfo.imageDimensions = imageDimensions;
 	imgCreateInfo.arrayLayers = hasCubemap ? 6 : 1;
 	imgCreateInfo.imageUsage =
 		GraphicsAPI::ImageUsageFlags::Sampled |

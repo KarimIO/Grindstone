@@ -268,7 +268,7 @@ void TextureImporter::OutputDds(uint8_t* outData, uint64_t contentSize) {
 	outHeader.dwFlags = DDSD_REQUIRED | DDSD_MIPMAPCOUNT;
 	outHeader.dwHeight = texHeight;
 	outHeader.dwWidth = texWidth;
-	outHeader.dwDepth = 0;	
+	outHeader.dwDepth = 1;
 	outHeader.dwCaps = DDSCAPS_COMPLEX | DDSCAPS_TEXTURE;
 	outHeader.dwMipMapCount = 1;
 

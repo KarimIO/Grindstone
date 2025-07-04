@@ -35,6 +35,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		uint32_t depth;
 		uint32_t mipLevels;
 		uint32_t arrayLayers;
+		GraphicsAPI::ImageDimension imageDimension;
 		uint64_t maxImageSize;
 		GraphicsAPI::Format format;
 		Grindstone::Containers::BitsetFlags<GraphicsAPI::ImageUsageFlags> imageUsage;
