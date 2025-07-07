@@ -5,7 +5,6 @@
 
 namespace Grindstone::Scripting::CSharp {
 	struct ScriptField {
-		// ScriptFieldType type;
 		std::string name;
 		// MonoClassField* classFieldPtr;
 		

@@ -47,9 +47,10 @@ extern "C" {
 	CSHARP_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
 		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
 		Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
+		Grindstone::EngineCore::SetInstance(*pluginInterface->GetEngineCore());
 
 		CSharpManager& manager = CSharpManager::GetInstance();
-		manager.Initialize(pluginInterface->GetEngineCore());
+		manager.Initialize();
 
 		globalPluginInterface = pluginInterface;
 		pluginInterface->RegisterComponent<ScriptComponent>(SetupCSharpScriptComponent, DestroyCSharpScriptComponent);

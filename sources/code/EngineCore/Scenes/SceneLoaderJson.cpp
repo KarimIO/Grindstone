@@ -35,11 +35,11 @@ bool SceneLoaderJson::Load(Grindstone::Uuid uuid) {
 	scene->path = result.displayName;
 
 	if (document.Parse(result.content.c_str()).GetParseError()) {
-		GPRINT_ERROR(LogSource::EngineCore, "Failed to load scene.");
+		GPRINT_ERROR_V(LogSource::EngineCore, "Failed to load scene '{}' with id {}.", result.displayName, uuid.ToString());
 		return false;
 	}
 
-	GPRINT_INFO_V(LogSource::EngineCore, "Loading scene: {}", result.displayName);
+	GPRINT_INFO_V(LogSource::EngineCore, "Loading scene '{}' with id {}.", result.displayName, uuid.ToString());
 
 	ProcessMeta();
 	ProcessEntities();
