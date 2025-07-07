@@ -25,6 +25,8 @@ static AssetLoadBinaryResult LoadBinary(Grindstone::Editor::AssetRegistry::Entry
 		return { AssetLoadStatus::FileNotFound, {} };
 	}
 
+	GPRINT_INFO_V(Grindstone::LogSource::Editor, "Loading binary asset '{}' of type {}", entry.displayName, GetAssetTypeToString(entry.assetType));
+
 	std::ifstream file(path, std::ios::binary | std::ios::ate);
 	size_t fileSize = file.tellg();
 	file.seekg(0, std::ios::beg);
@@ -38,6 +40,8 @@ static AssetLoadBinaryResult LoadBinary(Grindstone::Editor::AssetRegistry::Entry
 
 static AssetLoadTextResult LoadText(Grindstone::Editor::AssetRegistry::Entry& entry) {
 	std::filesystem::path path = Grindstone::Editor::Manager::GetEngineCore().GetAssetPath(entry.uuid.ToString());
+
+	GPRINT_INFO_V(Grindstone::LogSource::Editor, "Loading text asset '{}' of type {}", entry.displayName, GetAssetTypeToString(entry.assetType));
 
 	if (!std::filesystem::exists(path)) {
 		return { AssetLoadStatus::FileNotFound, {} };
