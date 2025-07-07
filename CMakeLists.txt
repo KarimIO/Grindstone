@@ -127,14 +127,14 @@ endif()
 option(USE_CSHARP "Include CSharp?" ON)
 if (USE_CSHARP)
 	add_subdirectory(${PLUGIN_DIR}/ScriptCSharp)
-	
-	set(CSHARP_PROJECT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/GrindstoneCore.csproj")
-	set(CSHARP_OUTPUT_PATH "${BUILD_DIRECTORY}/GrindstoneCore.dll")
+
+	set(CSHARP_PROJECT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/GrindstoneCSharpCore.csproj")
+	set(CSHARP_OUTPUT_PATH "${BUILD_DIRECTORY}/GrindstoneCSharpCore.dll")
 
 	add_custom_target(GrindstoneCore ALL
 		COMMAND dotnet build "${CSHARP_PROJECT_PATH}" -c $<CONFIG>
 		BYPRODUCTS "${CSHARP_OUTPUT_PATH}"
 		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-		COMMENT "Building GrindstoneCore.csproj"
+		COMMENT "Building GrindstoneCSharpCore.csproj"
 	)
 endif()

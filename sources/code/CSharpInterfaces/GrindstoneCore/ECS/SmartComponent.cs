@@ -4,7 +4,7 @@ namespace Grindstone {
 		#region Public Methods
 		#region Public Virtual Methods
 		public virtual void OnStart() { }
-		public virtual void OnAttachComponent() { }
+		public virtual void OnAttach() { }
 		public virtual void OnUpdate() { }
 		public virtual void OnEditorUpdate() { }
 		public virtual void OnDestroy() { }

@@ -23,7 +23,7 @@ namespace Grindstone {
 
 			static CSharpManager& GetInstance();
 			void Cleanup();
-			virtual void Initialize(EngineCore* engineCore);
+			virtual void Initialize();
 			virtual void LoadAssembly(const char* path, AssemblyData& outAssemblyData);
 			virtual void LoadAssemblyIntoMap(const char* path);
 			virtual void SetupComponent(entt::registry& registry, entt::entity entity, ScriptComponent& component);
@@ -48,7 +48,6 @@ namespace Grindstone {
 			void CallDeleteInComponent(ScriptComponent& scriptComponent);
 			ScriptClass* SetupClass(const char* assemblyName, const char* namespaceName, const char* className);
 			
-			EngineCore *engineCore = nullptr;
 			std::map<std::string, AssemblyData> assemblies;
 			std::map<std::string, ScriptClass*> smartComponents;
 			AssemblyData grindstoneCoreDll;
