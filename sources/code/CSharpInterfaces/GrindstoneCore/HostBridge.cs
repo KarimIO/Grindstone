@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
@@ -8,6 +9,7 @@ using System.IO;
 namespace Grindstone {
 	public static class HostBridge {
 		private static HotReloadContext? assemblyContext = null;
+		private readonly static Dictionary<int, Assembly?> loadedAssemblies = new();
 
 		private static Assembly? Resolving(AssemblyLoadContext context, AssemblyName name) {
 			if (name.Name == "GrindstoneCSharpCore") {
@@ -22,8 +24,9 @@ namespace Grindstone {
 		}
 
 		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-		public static void CreateAppDomain() {
-			assemblyContext = new HotReloadContext("D:\\Work\\InOrdinate\\Grindstone\\Sandbox\\bin");
+		public static void CreateAppDomain(IntPtr assemblyDirectoryPtr) {
+			string assemblyPath = Marshal.PtrToStringAnsi(assemblyDirectoryPtr)!;
+			assemblyContext = new HotReloadContext(assemblyPath);
 			assemblyContext.Resolving += Resolving;
 		}
 
@@ -38,16 +41,14 @@ namespace Grindstone {
 		}
 
 		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-		public static IntPtr CreateObject(IntPtr assemblyPathPtr, IntPtr classNamePtr) {
+		public static int LoadAssembly(IntPtr assemblyPathPtr) {
+			string assemblyPath = Marshal.PtrToStringAnsi(assemblyPathPtr)!;
 			try {
-				string assemblyPath = Marshal.PtrToStringAnsi(assemblyPathPtr)!;
-				string className = Marshal.PtrToStringAnsi(classNamePtr)!;
-				Grindstone.Logger.Print($"Trying to load class '{className}' from assembly '{assemblyPath}'.");
+				Grindstone.Logger.Print($"Trying to load assembly '{assemblyPath}'.");
 
 				if (assemblyContext == null) {
 					Grindstone.Logger.PrintError("Trying to load an assembly without calling CreateAppDomain first! We'll do it for you but this should be handled by C++.");
-					assemblyContext = new HotReloadContext("D:\\Work\\InOrdinate\\Grindstone\\Sandbox\\bin");
-					assemblyContext.Resolving += Resolving;
+					return -1;
 				}
 
 				Assembly assembly = assemblyContext.LoadFromAssemblyPath(assemblyPath);
@@ -56,13 +57,39 @@ namespace Grindstone {
 					return -1;
 				}
 
-				foreach(Type testType in assembly.GetTypes()) {
-					Grindstone.Logger.Print($" - {testType}");
+				int nameHash = assemblyPath.GetHashCode();
+				loadedAssemblies.Add(nameHash, assembly);
+
+				return nameHash;
+			}
+			catch (Exception ex) {
+				Grindstone.Logger.PrintError($"Failed to load assembly {assemblyPath}: {ex.Message}");
+				return -1;
+			}
+		}
+
+		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+		public static IntPtr GetTypeCount(int assemblyHashName) {
+			if (!loadedAssemblies.TryGetValue(assemblyHashName, out Assembly? assembly) || assembly == null) {
+				Grindstone.Logger.PrintError($"Invalid assembly hash: {assemblyHashName}.");
+				return -1;
+			}
+
+			return assembly.GetTypes().Length;
+		}
+
+		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+		public static IntPtr CreateObject(int assemblyHashName, IntPtr classNamePtr) {
+			string className = Marshal.PtrToStringAnsi(classNamePtr)!;
+			try {
+				if (!loadedAssemblies.TryGetValue(assemblyHashName, out Assembly? assembly) || assembly == null) {
+					Grindstone.Logger.PrintError($"Invalid assembly hash: {assemblyHashName}.");
+					return -1;
 				}
 
 				Type? type = assembly.GetType(className);
 				if (type == null) {
-					Grindstone.Logger.PrintError($"Failed to find class '{className}' in assembly '{assemblyPath}'");
+					Grindstone.Logger.PrintError($"Failed to find class '{className}' in assembly '{assembly.GetName()}'");
 					return -1;
 				}
 
@@ -72,7 +99,7 @@ namespace Grindstone {
 				return instancePtr;
 			}
 			catch (Exception ex) {
-				Grindstone.Logger.PrintError($"Failed to load assembly: {ex.Message}");
+				Grindstone.Logger.PrintError($"Failed to get type {className} from assembly: {ex.Message}");
 				return -1;
 			}
 		}

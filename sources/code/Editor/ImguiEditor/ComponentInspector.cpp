@@ -215,6 +215,7 @@ void ComponentInspector::RenderCSharpScript(
 		return;
 	}
 
+	/*
 	if (component->monoClass == nullptr) {
 		bool shouldRemove = false;
 		bool isOpened = ImGui::TreeNodeEx("Unassigned CSharp Component", ImGuiTreeNodeFlags_FramePadding);
@@ -235,10 +236,11 @@ void ComponentInspector::RenderCSharpScript(
 
 		return;
 	}
+	*/
 
 	{
 		bool shouldRemove = false;
-		const std::string componentName = "(C#) " + component->monoClass->scriptClassname;
+		const std::string componentName = "(C#) " + component->scriptClass;
 		bool isOpened = ImGui::TreeNodeEx(componentName.c_str(), ImGuiTreeNodeFlags_FramePadding);
 		if (ImGui::BeginPopupContextItem(componentName.c_str())) {
 			if (ImGui::MenuItem("Remove Component")) {
@@ -248,9 +250,10 @@ void ComponentInspector::RenderCSharpScript(
 		}
 
 		if (isOpened) {
-			for (auto& field : component->monoClass->fields) {
+			// for (auto& field : component->monoClass->fields) {
 				// RenderMonoField(component->scriptObject, field.second.classFieldPtr);
-			}
+			// }
+
 			ImGui::TreePop();
 		}
 
