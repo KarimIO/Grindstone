@@ -10,7 +10,7 @@ namespace Grindstone::Scripting::CSharp {
 		std::string assembly;
 		std::string scriptNamespace;
 		std::string scriptClass;
-		ScriptClass* monoClass = nullptr;
+		void* csharpObject = nullptr;
 
 		REFLECT("CSharpScript")
 	};

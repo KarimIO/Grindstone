@@ -19,8 +19,6 @@ using namespace Grindstone;
 using namespace Grindstone::Memory;
 using namespace Grindstone::Scripting::CSharp;
 
-void* componentPtr = nullptr;
-
 #ifdef _DEBUG
 const char* config = "Debug";
 #else
@@ -28,7 +26,9 @@ const char* config = "Release";
 #endif
 
 namespace Grindstone {
-	using CreateObjectFnPtr = void* (*)(void*, void*);
+	using CreateAppDomainFnPtr = void (*)(void*);
+	using LoadAssemblyFnPtr = AssemblyHash(*)(void*);
+	using CreateObjectFnPtr = void* (*)(AssemblyHash, void*);
 	using CallLifetimeFnPtr = void (*)(void*);
 	using DestroyObjectFnPtr = void (*)(void*);
 	using VoidFnPtr = void (*)();
@@ -42,8 +42,9 @@ namespace Grindstone {
 		hostfxr_close_fn Close;
 		load_assembly_and_get_function_pointer_fn LoadAssemblyAndGetFunctionPointer = nullptr;
 
-		VoidFnPtr CreateAppDomain;
+		CreateAppDomainFnPtr CreateAppDomain;
 		VoidFnPtr UnloadAppDomain;
+		LoadAssemblyFnPtr LoadAssembly;
 		CreateObjectFnPtr CreateObject;
 		DestroyObjectFnPtr DestroyObject;
 		CallLifetimeFnPtr CallOnAttach;
@@ -216,6 +217,7 @@ static bool LoadGrindstoneCoreFunctions() {
 	std::wstring coreDllWide = std::wstring(coreDllPath.begin(), coreDllPath.end());
 	bool hasLoadedCreateAppDomainFn = LoadGrindstoneCoreFunction(coreDllWide, "CreateAppDomain", reinterpret_cast<void**>(&csharpGlobals.CreateAppDomain));
 	bool hasLoadedUnloadAppDomainFn = LoadGrindstoneCoreFunction(coreDllWide, "UnloadAppDomain", reinterpret_cast<void**>(&csharpGlobals.UnloadAppDomain));
+	bool hasLoadedLoadAssemblyFn = LoadGrindstoneCoreFunction(coreDllWide, "LoadAssembly", reinterpret_cast<void**>(&csharpGlobals.LoadAssembly));
 	bool hasLoadedCreateObjFn = LoadGrindstoneCoreFunction(coreDllWide, "CreateObject", reinterpret_cast<void**>(&csharpGlobals.CreateObject));
 	bool hasLoadedDestroyObjFn = LoadGrindstoneCoreFunction(coreDllWide, "DestroyObject", reinterpret_cast<void**>(&csharpGlobals.DestroyObject));
 	bool hasLoadedOnAttachFn = LoadGrindstoneCoreFunction(coreDllWide, "CallOnAttach", reinterpret_cast<void**>(&csharpGlobals.CallOnAttach));
@@ -226,9 +228,10 @@ static bool LoadGrindstoneCoreFunctions() {
 
 	return (
 		hasLoadedCreateAppDomainFn &&
-		hasLoadedDestroyObjFn &&
 		hasLoadedUnloadAppDomainFn &&
+		hasLoadedLoadAssemblyFn &&
 		hasLoadedCreateObjFn &&
+		hasLoadedDestroyObjFn &&
 		hasLoadedOnAttachFn &&
 		hasLoadedOnStartFn &&
 		hasLoadedOnUpdateFn &&
@@ -267,18 +270,11 @@ void CSharpManager::Initialize() {
 		return;
 	}
 
-	csharpGlobals.CreateAppDomain();
-
-	auto dllPath = (engineCore.GetBinaryPath() / "Application-CSharp.dll").string();
-	LoadAssemblyIntoMap(dllPath.c_str());
+	auto rootBinPath = engineCore.GetBinaryPath().string();
+	csharpGlobals.CreateAppDomain((void*)rootBinPath.c_str());
 
 	LoadAssemblyClasses();
 	RegisterComponents();
-
-	auto tmpDllPath = (engineCore.GetBinaryPath() / "Application-CSharp.tmp.dll").string();
-	componentPtr = csharpGlobals.CreateObject((void*)tmpDllPath.c_str(), (void*)"Player");
-	csharpGlobals.CallOnAttach(componentPtr);
-	csharpGlobals.CallOnStart(componentPtr);
 }
 
 void CSharpManager::Cleanup() {
@@ -291,7 +287,9 @@ void CSharpManager::Cleanup() {
 	csharpGlobals = {};
 }
 
-void CSharpManager::LoadAssembly(const char* basePath, AssemblyData& outAssemblyData) {
+void CSharpManager::LoadAssembly(const char* filename, AssemblyData& outAssemblyData) {
+	std::string fullFilename = std::string(filename) + ".tmp.dll";
+	auto basePath = (EngineCore::GetInstance().GetBinaryPath() / fullFilename).string();
 	if (!std::filesystem::exists(basePath)) {
 		GPRINT_ERROR_V(LogSource::Scripting, "Attempting to load invalid assembly: {}", basePath);
 		return;
@@ -317,6 +315,9 @@ void CSharpManager::LoadAssembly(const char* basePath, AssemblyData& outAssembly
 			std::filesystem::copy_options::overwrite_existing
 		);
 	}
+
+	std::string tmpString = replacePath.string();
+	outAssemblyData.assemblyHash = csharpGlobals.LoadAssembly((void*)tmpString.c_str());
 }
 
 void CSharpManager::LoadAssemblyIntoMap(const char* path) {
@@ -331,18 +332,28 @@ void CSharpManager::SetupComponent(entt::registry& registry, entt::entity entity
 		component.scriptNamespace.empty()
 		? component.scriptClass
 		: component.scriptNamespace + "." + component.scriptClass;
+	
+	auto it = assemblies.find(component.assembly);
 
-	auto it = smartComponents.find(searchString);
-
-	if (it == smartComponents.end()) {
-		return;
+	AssemblyHash assemblyHash;
+	if (it == assemblies.end()) {
+		LoadAssemblyIntoMap(component.assembly.c_str());
+		assemblyHash = assemblies[component.assembly].assemblyHash;
+	}
+	else {
+		assemblyHash = it->second.assemblyHash;
 	}
 
-	
+	component.csharpObject = csharpGlobals.CreateObject(assemblyHash, (void*)searchString.c_str());
+	csharpGlobals.CallOnAttach(component.csharpObject);
+	csharpGlobals.CallOnStart(component.csharpObject);
 }
 
 void CSharpManager::DestroyComponent(entt::registry& registry, entt::entity entity, ScriptComponent& component) {
-	
+	if (component.csharpObject != nullptr) {
+		csharpGlobals.DestroyObject(component.csharpObject);
+		component.csharpObject = nullptr;
+	}
 }
 
 void CSharpManager::EditorUpdate(entt::registry& registry) {
@@ -373,10 +384,6 @@ void CSharpManager::LoadAssemblyClasses() {
 }
 
 void CSharpManager::CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset) {
-	if (scriptComponent.monoClass == nullptr) {
-		return;
-	}
-
 }
 
 void CSharpManager::RegisterComponents() {
@@ -410,22 +417,22 @@ void CSharpManager::QueueReload() {
 }
 
 void CSharpManager::PerformReload() {
+	EngineCore& engineCore = EngineCore::GetInstance();
+	entt::registry& registry = engineCore.GetEntityRegistry();
+
+	registry.view<ScriptComponent>().each([](ScriptComponent& script) {
+		csharpGlobals.DestroyObject(script.csharpObject);
+		script.csharpObject = nullptr;
+	});
+
 	isReloadQueued = false;
 	GPRINT_TRACE(LogSource::Scripting, "Reloading CSharp Binaries...");
-	if (componentPtr != nullptr) {
-		csharpGlobals.DestroyObject(componentPtr);
-		componentPtr = nullptr;
-	}
 	csharpGlobals.UnloadAppDomain();
 
-	auto dllPath = (EngineCore::GetInstance().GetBinaryPath() / "Application-CSharp.dll").string();
-	LoadAssemblyIntoMap(dllPath.c_str());
+	auto rootBinPath = engineCore.GetBinaryPath().string();
+	csharpGlobals.CreateAppDomain((void*)rootBinPath.c_str());
 
-	csharpGlobals.CreateAppDomain();
-
-	auto tmpDllPath = (EngineCore::GetInstance().GetBinaryPath() / "Application-CSharp.tmp.dll").string();
-	componentPtr = csharpGlobals.CreateObject((void*)tmpDllPath.c_str(), (void*)"Player");
-	csharpGlobals.CallOnAttach(componentPtr);
-	csharpGlobals.CallOnStart(componentPtr);
+	auto dllPath = (engineCore.GetBinaryPath() / "Application-CSharp.dll").string();
+	auto tmpDllPath = (engineCore.GetBinaryPath() / "Application-CSharp.tmp.dll").string();
 	GPRINT_TRACE(LogSource::Scripting, "Reloaded CSharp Binaries.");
 }

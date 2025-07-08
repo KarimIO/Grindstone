@@ -6,6 +6,7 @@
 
 namespace Grindstone {
 	class EngineCore;
+	using AssemblyHash = int;
 
 	namespace ECS {
 		class Entity;
@@ -18,7 +19,7 @@ namespace Grindstone {
 		class CSharpManager {
 		public:
 			struct AssemblyData {
-				void* library;
+				AssemblyHash assemblyHash;
 			};
 
 			static CSharpManager& GetInstance();
