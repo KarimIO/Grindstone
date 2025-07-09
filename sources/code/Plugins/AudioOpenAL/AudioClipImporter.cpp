@@ -14,9 +14,7 @@
 
 using namespace Grindstone::Audio;
 
-AudioClipImporter::AudioClipImporter(EngineCore* engineCore) {
-	this->engineCore = engineCore;
-}
+AudioClipImporter::AudioClipImporter() {}
 
 static bool LoadAudioClip(Grindstone::Audio::AudioClipAsset& audioClipAsset) {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();

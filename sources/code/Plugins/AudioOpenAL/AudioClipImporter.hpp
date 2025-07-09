@@ -13,12 +13,10 @@ namespace Grindstone {
 		public:
 			virtual ~AudioClipImporter() override;
 
-			AudioClipImporter(EngineCore* engineCore);
+			AudioClipImporter();
 
 			virtual void* LoadAsset(Uuid uuid) override;
 			virtual void QueueReloadAsset(Uuid uuid) override;
-		private:
-			EngineCore* engineCore;
 		};
 	}
 }

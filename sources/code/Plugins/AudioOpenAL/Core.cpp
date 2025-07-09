@@ -1,6 +1,5 @@
 #include <iostream>
 
-#include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Logger.hpp>
 
 #include "Core.hpp"
@@ -67,10 +66,6 @@ Core::~Core() {
 			GPRINT_ERROR(LogSource::Audio, "Could not close OpenAL Device.");
 		}
 	}
-}
-
-void Core::SetEngineCorePtr(EngineCore* engineCore) {
-	this->engineCore = engineCore;
 }
 
 Core& Core::GetInstance() {
