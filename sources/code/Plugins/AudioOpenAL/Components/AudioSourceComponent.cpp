@@ -17,8 +17,7 @@ REFLECT_STRUCT_BEGIN(AudioSourceComponent)
 REFLECT_STRUCT_END()
 
 void Grindstone::SetupAudioSourceComponent(entt::registry& registry, entt::entity entity) {
-	Audio::Core& core = Audio::Core::GetInstance();
-	Grindstone::Assets::AssetManager* assetManager = core.engineCore->assetManager;
+	Grindstone::Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
 
 	Grindstone::AudioSourceComponent& audioSource = registry.get<AudioSourceComponent>(entity);
 
