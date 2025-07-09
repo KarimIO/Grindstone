@@ -3,8 +3,6 @@
 #include <EngineCore/EngineCore.hpp>
 using namespace Grindstone;
 
-using CreateEngineFunction = EngineCore*(EngineCore::CreateInfo&);
-
 #ifdef _WIN32
 extern "C" {
 	// Request High-Performance GPU for Nvidia and AMD
@@ -30,6 +28,7 @@ int main(int argc, char** argv) {
 			return 1;
 		};
 
+		using CreateEngineFunction = EngineCore * (EngineCore::CreateInfo&);
 		CreateEngineFunction* createEngineFn =
 			(CreateEngineFunction*)Utilities::Modules::GetFunction(handle, "CreateEngine");
 
@@ -53,6 +52,17 @@ int main(int argc, char** argv) {
 
 		if (engineCore) {
 			engineCore->Run();
+		}
+
+		using DestroyEngineFunction = void * ();
+		DestroyEngineFunction* destroyEngineFn =
+			(DestroyEngineFunction*)Utilities::Modules::GetFunction(handle, "DestroyEngine");
+
+		if (destroyEngineFn != nullptr) {
+			destroyEngineFn();
+		}
+		else {
+			std::cerr << "Failed to load DestroyEngine in EngineCore Module.";
 		}
 
 		Grindstone::Utilities::Modules::Unload(handle);

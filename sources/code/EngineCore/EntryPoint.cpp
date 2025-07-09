@@ -26,4 +26,8 @@ extern "C" {
 			return nullptr;
 		}
 	}
+
+	ENGINE_CORE_API void DestroyEngine(void* engineCore) {
+		delete static_cast<EngineCore*>(&EngineCore::GetInstance());
+	}
 }
