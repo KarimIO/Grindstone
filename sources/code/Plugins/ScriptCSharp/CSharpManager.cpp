@@ -305,29 +305,34 @@ void CSharpManager::LoadAssembly(const char* filename, AssemblyData& outAssembly
 		return;
 	}
 
-	std::filesystem::path path = basePath;
-	std::filesystem::path replacePath = path;
-	replacePath.replace_extension(std::string(".tmp") + path.extension().string());
-	std::filesystem::copy_file(
-		path,
-		replacePath,
-		std::filesystem::copy_options::overwrite_existing
-	);
-
-	std::filesystem::path pdbPath = basePath;
-	pdbPath.replace_extension(".pdb");
-	if (std::filesystem::exists(pdbPath)) {
-		std::filesystem::path replacePathPath = path;
-		replacePathPath.replace_extension(".tmp.pdb");
+	if (EngineCore::GetInstance().isEditor) {
+		std::filesystem::path path = basePath;
+		std::filesystem::path replacePath = path;
+		replacePath.replace_extension(std::string(".tmp") + path.extension().string());
 		std::filesystem::copy_file(
-			pdbPath,
-			replacePathPath,
+			path,
+			replacePath,
 			std::filesystem::copy_options::overwrite_existing
 		);
-	}
 
-	std::string tmpString = replacePath.string();
-	outAssemblyData.assemblyHash = csharpGlobals.LoadAssembly((void*)tmpString.c_str());
+		std::filesystem::path pdbPath = basePath;
+		pdbPath.replace_extension(".pdb");
+		if (std::filesystem::exists(pdbPath)) {
+			std::filesystem::path replacePathPath = path;
+			replacePathPath.replace_extension(".tmp.pdb");
+			std::filesystem::copy_file(
+				pdbPath,
+				replacePathPath,
+				std::filesystem::copy_options::overwrite_existing
+			);
+		}
+
+		std::string tmpString = replacePath.string();
+		outAssemblyData.assemblyHash = csharpGlobals.LoadAssembly((void*)tmpString.c_str());
+	}
+	else {
+		outAssemblyData.assemblyHash = csharpGlobals.LoadAssembly((void*)basePath.c_str());
+	}
 }
 
 void CSharpManager::LoadAssemblyIntoMap(const char* path) {
