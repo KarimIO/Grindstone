@@ -30,19 +30,21 @@ namespace Grindstone::Editor {
 		std::filesystem::copy(srcBase / filename, dstBase / filename, std::filesystem::copy_options::update_existing);
 	}
 
-	static void CopyPlugins(std::filesystem::path& enginePath, std::filesystem::path& targetPath) {
+	static void CopyPlugins(std::filesystem::path& enginePath, std::filesystem::path& targetBuildSettingsPath, std::filesystem::path& targetPath) {
 		auto& editorManager = Editor::Manager::GetInstance();
 		std::filesystem::path prefabListFile = editorManager.GetProjectPath() / "buildSettings/pluginsManifest.txt";
 		auto prefabListFilePath = prefabListFile.string();
 		auto fileContents = Utils::LoadFileText(prefabListFilePath.c_str());
 
 		size_t start = 0, end;
+		std::string runtimePluginList;
 		std::string pluginName;
 		while (true) {
 			end = fileContents.find("\n", start);
 			if (end == std::string::npos) {
 				pluginName = fileContents.substr(start);
-				if (!pluginName.empty()) {
+				if (!pluginName.empty() && pluginName.find("Editor") == std::string::npos) {
+					runtimePluginList += pluginName + '\n';
 					CopyLibrary(enginePath, targetPath, pluginName);
 				}
 
@@ -50,12 +52,27 @@ namespace Grindstone::Editor {
 			}
 
 			pluginName = fileContents.substr(start, end - start);
-			CopyLibrary(enginePath, targetPath, pluginName);
+
+			if (pluginName.find("Editor") == std::string::npos) {
+				runtimePluginList += pluginName + '\n';
+				CopyLibrary(enginePath, targetPath, pluginName);
+			}
+
 			start = end + 1;
 		}
+
+		std::filesystem::path runtimePluginListPath = (targetBuildSettingsPath / "pluginsManifest.txt");
+		std::ofstream pluginlistStream(runtimePluginListPath);
+		if (pluginlistStream.fail()) {
+			GPRINT_ERROR_V(LogSource::Editor, "Failed to write plugin manifest to '{}'.", runtimePluginListPath.string());
+			return;
+		}
+
+		pluginlistStream << runtimePluginList;
+		pluginlistStream.close();
 	}
 
-	static void CopyBinaries(std::filesystem::path& enginePath, std::filesystem::path& projectPath, std::filesystem::path& targetPath) {
+	static void CopyBinaries(std::filesystem::path& enginePath, std::filesystem::path& projectPath, std::filesystem::path& targetBuildSettingsPath, std::filesystem::path& targetPath) {
 		CopyExecutable(enginePath, targetPath, "Application");
 		CopyLibrary(enginePath, targetPath, "EngineCore");
 		CopyLibrary(enginePath, targetPath, "fmtd");
@@ -71,11 +88,10 @@ namespace Grindstone::Editor {
 		// TODO: Build with all necessary graphics dlls
 		CopyLibrary(enginePath, targetPath, "PluginGraphicsVulkan");
 
-		CopyPlugins(enginePath, targetPath);
+		CopyPlugins(enginePath, targetBuildSettingsPath, targetPath);
 	}
 
 	static void CopyMetaData(std::filesystem::path& sourceBuildSettingsPath, std::filesystem::path& targetBuildSettingsPath) {
-		CopyFileTo(sourceBuildSettingsPath, targetBuildSettingsPath, "pluginsManifest.txt");
 		CopyFileTo(sourceBuildSettingsPath, targetBuildSettingsPath, "scenesManifest.txt");
 	}
 
@@ -122,7 +138,7 @@ namespace Grindstone::Editor {
 			processStatus->detailText = "";
 			processStatus->progress = 0.0f;
 		}
-		CopyBinaries(engineBinPath, projectBinPath, targetBinPath);
+		CopyBinaries(engineBinPath, projectBinPath, targetBuildSettingsPath, targetBinPath);
 		{
 			std::scoped_lock scopedLock(processStatus->stringMutex);
 			processStatus->stageText = "Copying Meta Assets";
