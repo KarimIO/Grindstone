@@ -1,11 +1,14 @@
 #include <fstream>
 #include <filesystem>
+
 #include <EngineCore/Utils/Utilities.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Logger.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <Common/Assets/ArchiveDirectory.hpp>
 #include <Common/Assets/ArchiveDirectoryFile.hpp>
+#include <Common/Containers/Span.hpp>
+
 #include "ArchiveDirectoryDeserializer.hpp"
 using namespace Grindstone::Assets;
 
@@ -51,17 +54,19 @@ void ArchiveDirectoryDeserializer::Load(std::filesystem::path path) {
 
 	// Unsupported version
 	if (header->version != ArchiveDirectoryFile::CURRENT_VERSION) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Unuspported archive directory version: found {}, expected {}.", header->version, ArchiveDirectoryFile::CURRENT_VERSION);
 		return;
 	}
 
-
 	char* assetTypeSectionCharPtr = offset + sizeof(ArchiveDirectoryFile::Header);
+	Grindstone::Containers::Span<ArchiveDirectoryFile::AssetTypeSectionInfo> assetTypeSectionArr(
+		reinterpret_cast<ArchiveDirectoryFile::AssetTypeSectionInfo*>(assetTypeSectionCharPtr),
+		header->assetTypeCount
+	);
 
 	archiveDirectory.strings.resize(header->stringsSize);
 	char* srcPtr = assetTypeSectionCharPtr + header->archiveIndexSize + header->assetInfoIndexSize + header->assetTypeIndexSize;
 	memcpy(archiveDirectory.strings.data(), srcPtr, header->stringsSize);
-
-	ArchiveDirectoryFile::AssetTypeSectionInfo* assetTypeSectionArr = reinterpret_cast<ArchiveDirectoryFile::AssetTypeSectionInfo*>(assetTypeSectionCharPtr);
 	archiveDirectory.assetTypeIndices.resize(header->assetTypeCount);
 	for (uint32_t assetTypeIndex = 0; assetTypeIndex < header->assetTypeCount; ++assetTypeIndex) {
 		ArchiveDirectoryFile::AssetTypeSectionInfo& assetTypeSectionInfo = assetTypeSectionArr[assetTypeIndex];
@@ -69,7 +74,11 @@ void ArchiveDirectoryDeserializer::Load(std::filesystem::path path) {
 		ArchiveDirectory::AssetTypeIndex& assetTypeDst = archiveDirectory.assetTypeIndices[assetTypeIndex];
 		std::map<Uuid, ArchiveDirectory::AssetInfo>& assetTypeMap = assetTypeDst.assetsByUuid;
 
-		ArchiveDirectoryFile::AssetInfo* srcAssetArr = reinterpret_cast<ArchiveDirectoryFile::AssetInfo*>(offset + assetTypeSectionInfo.offset);
+		Grindstone::Containers::Span<ArchiveDirectoryFile::AssetInfo> srcAssetArr(
+			reinterpret_cast<ArchiveDirectoryFile::AssetInfo*>(offset + assetTypeSectionInfo.offset),
+			assetTypeSectionInfo.count
+		);
+
 		for (uint16_t i = 0; i < assetTypeSectionInfo.count; ++i) {
 			ArchiveDirectoryFile::AssetInfo& srcAsset = srcAssetArr[i];
 
