@@ -211,6 +211,10 @@ DeferredRenderer::~DeferredRenderer() {
 		graphicsCore->DeleteImage(imageSet.ambientOcclusionRenderTarget);
 		graphicsCore->DeleteFramebuffer(imageSet.ambientOcclusionFramebuffer);
 		graphicsCore->DeleteDescriptorSet(imageSet.ambientOcclusionDescriptorSet);
+
+		graphicsCore->DeleteImage(imageSet.blurredAmbientOcclusionRenderTarget);
+		graphicsCore->DeleteFramebuffer(imageSet.blurredAmbientOcclusionFramebuffer);
+		graphicsCore->DeleteDescriptorSet(imageSet.blurredSsaoInputDescriptorSet);
 	}
 
 	for (GraphicsAPI::Buffer* bloomUb : bloomUniformBuffers) {
@@ -220,6 +224,7 @@ DeferredRenderer::~DeferredRenderer() {
 	graphicsCore->DeleteDescriptorSetLayout(engineDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSetLayout(tonemapDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSetLayout(lightingDescriptorSetLayout);
+	graphicsCore->DeleteDescriptorSetLayout(blurredSsaoInputDescriptorSetLayout);
 
 	graphicsCore->DeleteBuffer(ssaoUniformBuffer);
 	graphicsCore->DeleteImage(ssaoNoiseTexture);
@@ -549,6 +554,10 @@ void DeferredRenderer::CreateSsaoKernelAndNoise() {
 			);
 			sample = glm::normalize(sample);
 			sample *= randomFloats(generator);
+
+			float scale = static_cast<float>(i) / static_cast<float>(ssaoKernelSize);
+			scale = 0.1f + (0.9f * scale * scale);
+			sample *= scale;
 			ssaoUboStruct.kernels[i] = sample;
 		}
 
@@ -697,6 +706,9 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 
 		imageSet.ambientOcclusionRenderTarget->Resize(halfWidth, halfHeight);
 		imageSet.ambientOcclusionFramebuffer->Resize(halfWidth, halfHeight);
+
+		imageSet.blurredAmbientOcclusionRenderTarget->Resize(halfWidth, halfHeight);
+		imageSet.blurredAmbientOcclusionFramebuffer->Resize(halfWidth, halfHeight);
 
 		CreateDepthOfFieldRenderTargetsAndDescriptorSets(imageSet, i);
 		CreateSsrRenderTargetsAndDescriptorSets(imageSet, i);
@@ -1172,6 +1184,25 @@ void DeferredRenderer::CreateDescriptorSetLayouts() {
 		ambientOcclusionInputLayoutCreateInfo.bindings = ambientOcclusionInputLayoutBinding.data();
 		ambientOcclusionDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ambientOcclusionInputLayoutCreateInfo);
 	}
+
+	{
+		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 2> ambientOcclusionInputBlurLayoutBinding{};
+		ambientOcclusionInputBlurLayoutBinding[0].bindingId = 0;
+		ambientOcclusionInputBlurLayoutBinding[0].count = 1;
+		ambientOcclusionInputBlurLayoutBinding[0].type = GraphicsAPI::BindingType::Sampler;
+		ambientOcclusionInputBlurLayoutBinding[0].stages = GraphicsAPI::ShaderStageBit::Fragment;
+
+		ambientOcclusionInputBlurLayoutBinding[1].bindingId = 1;
+		ambientOcclusionInputBlurLayoutBinding[1].count = 1;
+		ambientOcclusionInputBlurLayoutBinding[1].type = GraphicsAPI::BindingType::SampledImage;
+		ambientOcclusionInputBlurLayoutBinding[1].stages = GraphicsAPI::ShaderStageBit::Fragment;
+
+		GraphicsAPI::DescriptorSetLayout::CreateInfo ambientOcclusionBlurInputLayoutCreateInfo{};
+		ambientOcclusionBlurInputLayoutCreateInfo.debugName = "Ambient Occlusion Blur Descriptor Set Layout";
+		ambientOcclusionBlurInputLayoutCreateInfo.bindingCount = static_cast<uint32_t>(ambientOcclusionInputBlurLayoutBinding.size());
+		ambientOcclusionBlurInputLayoutCreateInfo.bindings = ambientOcclusionInputBlurLayoutBinding.data();
+		blurredSsaoInputDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ambientOcclusionBlurInputLayoutCreateInfo);
+	}
 }
 
 void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) {
@@ -1211,7 +1242,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	debugDescriptorSetBindings[2] = gbufferAlbedoBinding;
 	debugDescriptorSetBindings[3] = gbufferNormalBinding;
 	debugDescriptorSetBindings[4] = gbufferSpecRoughnessBinding;
-	debugDescriptorSetBindings[5] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.ambientOcclusionRenderTarget );
+	debugDescriptorSetBindings[5] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.blurredAmbientOcclusionRenderTarget );
 	debugDescriptorSetBindings[6] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( imageSet.debugUniformBufferObject );
 
 	GraphicsAPI::DescriptorSet::CreateInfo debugDescriptorSetCreateInfo{};
@@ -1253,7 +1284,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 
 	{
 		std::array<GraphicsAPI::DescriptorSet::Binding, 3> aoInputBinding = {
-			GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.ambientOcclusionRenderTarget ),
+			GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.blurredAmbientOcclusionRenderTarget ),
 			GraphicsAPI::DescriptorSet::Binding::SampledImage( brdfLut.Get()->image ),
 			GraphicsAPI::DescriptorSet::Binding::SampledImage( nullptr )
 		};
@@ -1264,6 +1295,20 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 		aoInputCreateInfo.bindingCount = static_cast<uint32_t>(aoInputBinding.size());
 		aoInputCreateInfo.bindings = aoInputBinding.data();
 		imageSet.ambientOcclusionDescriptorSet = graphicsCore->CreateDescriptorSet(aoInputCreateInfo);
+	}
+
+	{
+		std::array<GraphicsAPI::DescriptorSet::Binding, 2> aoBlurInputBinding = {
+			screenSamplerBinding,
+			GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.ambientOcclusionRenderTarget )
+		};
+
+		GraphicsAPI::DescriptorSet::CreateInfo aoBlurInputCreateInfo{};
+		aoBlurInputCreateInfo.debugName = "Ambient Occlusion Blur Descriptor Set";
+		aoBlurInputCreateInfo.layout = blurredSsaoInputDescriptorSetLayout;
+		aoBlurInputCreateInfo.bindingCount = static_cast<uint32_t>(aoBlurInputBinding.size());
+		aoBlurInputCreateInfo.bindings = aoBlurInputBinding.data();
+		imageSet.blurredSsaoInputDescriptorSet = graphicsCore->CreateDescriptorSet(aoBlurInputCreateInfo);
 	}
 }
 
@@ -1301,8 +1346,13 @@ void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	}
 
 	{
-		GraphicsAPI::DescriptorSet::Binding ssaoInputBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage(imageSet.ambientOcclusionRenderTarget);
+		GraphicsAPI::DescriptorSet::Binding ssaoInputBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage(imageSet.blurredAmbientOcclusionRenderTarget);
 		imageSet.ambientOcclusionDescriptorSet->ChangeBindings(&ssaoInputBinding, 1, 0);
+	}
+
+	{
+		GraphicsAPI::DescriptorSet::Binding blurredSsaoInputBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage(imageSet.ambientOcclusionRenderTarget);
+		imageSet.blurredSsaoInputDescriptorSet->ChangeBindings(&blurredSsaoInputBinding, 1, 1);
 	}
 }
 
@@ -1436,6 +1486,29 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 			ssaoFramebufferCreateInfo.renderPass = engineCore.GetRenderPassRegistry()->GetRenderpass(ssaoRenderPassKey);
 			imageSet.ambientOcclusionFramebuffer = graphicsCore->CreateFramebuffer(ssaoFramebufferCreateInfo);
 		}
+
+		{
+			GraphicsAPI::Image::CreateInfo ssaoRenderTargetCreateInfo{};
+			ssaoRenderTargetCreateInfo.debugName = "Blurred SSAO Render Target";
+			ssaoRenderTargetCreateInfo.format = ambientOcclusionFormat;
+			ssaoRenderTargetCreateInfo.width = framebufferWidth / 2;
+			ssaoRenderTargetCreateInfo.height = framebufferHeight / 2;
+			ssaoRenderTargetCreateInfo.imageUsage =
+				GraphicsAPI::ImageUsageFlags::RenderTarget |
+				GraphicsAPI::ImageUsageFlags::Sampled;
+
+			imageSet.blurredAmbientOcclusionRenderTarget = graphicsCore->CreateImage(ssaoRenderTargetCreateInfo);
+
+			GraphicsAPI::Framebuffer::CreateInfo ssaoFramebufferCreateInfo{};
+			ssaoFramebufferCreateInfo.debugName = "Blurred SSAO Framebuffer";
+			ssaoFramebufferCreateInfo.width = framebufferWidth / 2;
+			ssaoFramebufferCreateInfo.height = framebufferHeight / 2;
+			ssaoFramebufferCreateInfo.renderTargets = &imageSet.blurredAmbientOcclusionRenderTarget;
+			ssaoFramebufferCreateInfo.renderTargetCount = 1;
+			ssaoFramebufferCreateInfo.depthTarget = nullptr;
+			ssaoFramebufferCreateInfo.renderPass = engineCore.GetRenderPassRegistry()->GetRenderpass(ssaoRenderPassKey);
+			imageSet.blurredAmbientOcclusionFramebuffer = graphicsCore->CreateFramebuffer(ssaoFramebufferCreateInfo);
+		}
 	}
 }
 
@@ -1481,6 +1554,7 @@ void DeferredRenderer::CreatePipelines() {
 	ssrPipelineSet = assetManager->GetAssetReferenceByAddress<ComputePipelineAsset>("@CORESHADERS/postProcessing/screenSpaceReflections");
 
 	ssaoPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/postProcessing/screenSpaceAmbientOcclusion");
+	ssaoBlurPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/postProcessing/screenSpaceAmbientOcclusionBlur");
 	imageBasedLightingPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/ibl");
 	pointLightPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/point");
 	spotLightPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/spot");
@@ -1895,13 +1969,15 @@ void DeferredRenderer::RenderLights(
 }
 
 void DeferredRenderer::RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* commandBuffer) {
-	Grindstone::GraphicsPipelineAsset* pipelineSetAsset = ssaoPipelineSet.Get();
-	if (pipelineSetAsset == nullptr) {
+	Grindstone::GraphicsPipelineAsset* ssaoPipelineSetAsset = ssaoPipelineSet.Get();
+	Grindstone::GraphicsPipelineAsset* blurPipelineSetAsset = ssaoBlurPipelineSet.Get();
+	if (ssaoPipelineSetAsset == nullptr || blurPipelineSetAsset == nullptr) {
 		return;
 	}
 
-	Grindstone::GraphicsAPI::GraphicsPipeline* ssaoPipeline = pipelineSetAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
-	if (ssaoPipeline == nullptr) {
+	Grindstone::GraphicsAPI::GraphicsPipeline* ssaoPipeline = ssaoPipelineSetAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
+	Grindstone::GraphicsAPI::GraphicsPipeline* blurPipeline = blurPipelineSetAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
+	if (ssaoPipeline == nullptr || blurPipeline == nullptr) {
 		return;
 	}
 
@@ -1941,6 +2017,32 @@ void DeferredRenderer::RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAP
 	
 	commandBuffer->BindGraphicsPipeline(ssaoPipeline);
 	commandBuffer->BindGraphicsDescriptorSet(ssaoPipeline, descriptorSets.data(), 0, static_cast<uint32_t>(descriptorSets.size()));
+	commandBuffer->DrawIndices(0, 6, 0, 1, 0);
+	commandBuffer->UnbindRenderPass();
+
+	commandBuffer->BindRenderPass(
+		engineCore.GetRenderPassRegistry()->GetRenderpass(ssaoBlurRenderPassKey),
+		imageSet.blurredAmbientOcclusionFramebuffer,
+		imageSet.blurredAmbientOcclusionFramebuffer->GetWidth(),
+		imageSet.blurredAmbientOcclusionFramebuffer->GetHeight(),
+		&clearColorAttachment,
+		1,
+		clearDepthStencil
+	);
+
+	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(halfWidth), static_cast<float>(halfHeight), 0.0f, 1.0f);
+	commandBuffer->SetScissor(0, 0, halfWidth, halfHeight);
+
+	commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
+	commandBuffer->BindIndexBuffer(indexBuffer);
+
+	std::array<Grindstone::GraphicsAPI::DescriptorSet*, 2> blurDescriptorSets = {
+		imageSet.engineDescriptorSet,
+		imageSet.blurredSsaoInputDescriptorSet
+	};
+
+	commandBuffer->BindGraphicsPipeline(blurPipeline);
+	commandBuffer->BindGraphicsDescriptorSet(blurPipeline, blurDescriptorSets.data(), 0, static_cast<uint32_t>(blurDescriptorSets.size()));
 	commandBuffer->DrawIndices(0, 6, 0, 1, 0);
 	commandBuffer->UnbindRenderPass();
 }

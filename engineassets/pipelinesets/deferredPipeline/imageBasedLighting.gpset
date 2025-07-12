@@ -19,8 +19,8 @@ pipelineSet "Image Based Lighting" inherits "DeferredLighting" {
 				Texture2D<float4> brdfLUT : register(t1, space2);
 				TextureCube<float4> specularMap : register(t2, space2);
 
-				float3 Light_F(in float3 f0, in float f90, in float VH) {
-					return f0 + (f90-f0) * pow(1-VH, 5.0f);
+				float3 Light_F(in float3 f0, in float3 f90, in float VH) {
+					return f0 + (f90 - f0) * pow(clamp(1 - VH, 0.0f, 1.0f), 5.0f);
 				}
 
 				float3 FresnelSchlickRoughness(float cosTheta, float3 F0, float roughness) {
@@ -87,7 +87,7 @@ pipelineSet "Image Based Lighting" inherits "DeferredLighting" {
 
 					float depthFromTexture = gbufferDepth.Sample(gbufferSampler, input.scaledFragmentTexCoord).r;
 
-					float3 position = ComputeWorldSpacePosition(rendererUbo.projectionMatrix, rendererUbo.viewMatrix, input.fragmentTexCoord, depthFromTexture);
+					float3 position = ComputeWorldSpacePosition(rendererUbo.inverseProjectionMatrix, rendererUbo.inverseViewMatrix, input.fragmentTexCoord, depthFromTexture);
 					float3 albedo = gbufferAlbedo.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb;
 					float3 normal = gbufferNormals.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb;
 					float3 specularInput = gbufferSpecularRoughnessValue.rgb;
@@ -95,13 +95,14 @@ pipelineSet "Image Based Lighting" inherits "DeferredLighting" {
 					float ao = ssao.Sample(gbufferSampler, input.scaledFragmentTexCoord).r;
 
 					float3 eyeDir = normalize(rendererUbo.eyePos.xyz - position);
-					float3 reflectRay = 2 * dot(eyeDir, normal) * normal - eyeDir;
+					float3 reflectRay = reflect(-eyeDir, normal);
 
 					float NV = max(dot(normal, eyeDir), 0.0);
 
 					static const float MAX_REFLECTION_LOD = 4.0;
 					float3 f0 = 0.32 * specularInput * specularInput;
-					float f90 = clamp(50 * dot(f0, float3(0.33, 0.33, 0.33)), 0, 1);
+					float oneMinusR = 1.0f - roughness;
+					float3 f90 = max(float3(oneMinusR, oneMinusR, oneMinusR), f0);
 					float3 F = Light_F(f0, f90, NV);
 					float3 prefilteredColor = specularMap.SampleLevel(gbufferSampler, reflectRay, roughness * MAX_REFLECTION_LOD).rgb;
 					float2 envBRDF  = brdfLUT.Sample(gbufferSampler, float2(NV, roughness)).rg;

@@ -70,6 +70,8 @@ namespace Grindstone {
 
 			GraphicsAPI::Framebuffer* ambientOcclusionFramebuffer = nullptr;
 			GraphicsAPI::Image* ambientOcclusionRenderTarget = nullptr;
+			GraphicsAPI::Framebuffer* blurredAmbientOcclusionFramebuffer = nullptr;
+			GraphicsAPI::Image* blurredAmbientOcclusionRenderTarget = nullptr;
 
 			GraphicsAPI::Buffer* globalUniformBufferObject = nullptr;
 			GraphicsAPI::Buffer* debugUniformBufferObject = nullptr;
@@ -86,6 +88,7 @@ namespace Grindstone {
 			GraphicsAPI::DescriptorSet* dofNearBlurDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* dofFarBlurDescriptorSet = nullptr;
 			GraphicsAPI::DescriptorSet* dofCombineDescriptorSet = nullptr;
+			GraphicsAPI::DescriptorSet* blurredSsaoInputDescriptorSet = nullptr;
 
 			GraphicsAPI::DescriptorSet* ambientOcclusionDescriptorSet = nullptr;
 
@@ -175,6 +178,7 @@ namespace Grindstone {
 		GraphicsAPI::DescriptorSetLayout* ambientOcclusionDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* ssaoInputDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSet* ssaoInputDescriptorSet = nullptr;
+		GraphicsAPI::DescriptorSetLayout* blurredSsaoInputDescriptorSetLayout = nullptr;
 
 		GraphicsAPI::VertexInputLayout vertexLightPositionLayout{};
 
@@ -199,6 +203,7 @@ namespace Grindstone {
 		GraphicsAPI::VertexArrayObject* planePostProcessVao = nullptr;
 
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> ssaoPipelineSet;
+		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> ssaoBlurPipelineSet;
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> imageBasedLightingPipelineSet;
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> spotLightPipelineSet;
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> pointLightPipelineSet;

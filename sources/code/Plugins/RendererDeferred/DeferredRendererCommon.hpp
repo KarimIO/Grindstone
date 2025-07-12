@@ -16,6 +16,7 @@ static Grindstone::HashedString dofBlurAndCombinationRenderPassKey = "DofBlurAnd
 static Grindstone::HashedString lightingRenderPassKey = "Lighting";
 static Grindstone::HashedString forwardLitRenderPassKey = "ForwardLit";
 static Grindstone::HashedString ssaoRenderPassKey = "Ssao";
+static Grindstone::HashedString ssaoBlurRenderPassKey = "Ssao Blur";
 static Grindstone::HashedString shadowMapRenderPassKey = "ShadowMap";
 
 static const Grindstone::GraphicsAPI::Format depthFormat = Grindstone::GraphicsAPI::Format::D32_SFLOAT;
