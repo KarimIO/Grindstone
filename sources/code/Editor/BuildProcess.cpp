@@ -81,13 +81,13 @@ namespace Grindstone::Editor {
 		CopyLibrary(enginePath, targetPath, "glfw3");
 		CopyLibrary(enginePath, targetPath, "nethost");
 		CopyLibrary(enginePath, targetPath, "OpenAL32");
-
-		// TODO: Build from assets folders
-		CopyLibrary(projectPath, targetPath, "Application-CSharp");
-		CopyLibrary(projectPath, targetPath, "GrindstoneCSharpCore");
+		CopyLibrary(enginePath, targetPath, "GrindstoneCSharpCore");
 
 		// TODO: Build with all necessary graphics dlls
 		CopyLibrary(enginePath, targetPath, "PluginGraphicsVulkan");
+
+		// TODO: Build from assets folders
+		CopyLibrary(projectPath, targetPath, "Application-CSharp");
 
 		CopyPlugins(enginePath, targetBuildSettingsPath, targetPath);
 	}
