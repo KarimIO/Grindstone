@@ -36,6 +36,7 @@ namespace Grindstone {
 			void CallRemoveComponent(SceneManagement::Scene* scene, entt::entity entityHandle);
 			void QueueReload();
 			void PerformReload();
+			void Update(entt::registry& registry);
 			void EditorUpdate(entt::registry& registry);
 		private:
 			void LoadAssemblyClasses();
