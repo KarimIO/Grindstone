@@ -44,34 +44,34 @@ static void FileWatcherCallback(
 	switch (action) {
 	case EFSW_ADD:
 		if (isMetaFile) {
-			fileManager->HandleAddFile(*mountPoint, entry);
+			fileManager->HandleAddMetaFile(*mountPoint, entry);
 		}
 		else {
-			fileManager->HandleAddMetaFile(*mountPoint, entry);
+			fileManager->HandleAddFile(*mountPoint, entry);
 		}
 		break;
 	case EFSW_DELETE:
 		if (isMetaFile) {
-			fileManager->HandleDeleteFile(*mountPoint, entry);
+			fileManager->HandleDeleteMetaFile(*mountPoint, entry);
 		}
 		else {
-			fileManager->HandleDeleteMetaFile(*mountPoint, entry);
+			fileManager->HandleDeleteFile(*mountPoint, entry);
 		}
 		break;
 	case EFSW_MODIFIED:
 		if (isMetaFile) {
-			fileManager->HandleModifyFile(*mountPoint, entry);
+			fileManager->HandleModifyMetaFile(*mountPoint, entry);
 		}
 		else {
-			fileManager->HandleModifyMetaFile(*mountPoint, entry);
+			fileManager->HandleModifyFile(*mountPoint, entry);
 		}
 		break;
 	case EFSW_MOVED:
 		if (isMetaFile) {
-			fileManager->HandleMoveFile(*mountPoint, entry, oldFilename);
+			fileManager->HandleMoveMetaFile(*mountPoint, entry, oldFilename);
 		}
 		else {
-			fileManager->HandleMoveMetaFile(*mountPoint, entry, oldFilename);
+			fileManager->HandleMoveFile(*mountPoint, entry, oldFilename);
 		}
 		break;
 	default:

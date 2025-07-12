@@ -1,76 +1,64 @@
 #pragma once
 
 #include <entt/entt.hpp>
-#include "mono/utils/mono-forward.h"
-#include "mono/metadata/image.h"
-#include "mono/metadata/metadata.h"
 
 #include "EngineCore/ECS/ComponentFunctions.hpp"
 
 namespace Grindstone {
 	class EngineCore;
+	using AssemblyHash = int;
 
 	namespace ECS {
 		class Entity;
 	}
 
-	namespace Scripting {
-		namespace CSharp {
-			struct ScriptComponent;
-			struct ScriptClass;
+	namespace Scripting::CSharp {
+		struct ScriptComponent;
+		struct ScriptClass;
 
-			class CSharpManager {
-			public:
-				struct AssemblyData {
-					MonoAssembly* assembly = nullptr;
-					MonoImage* image = nullptr;
-				};
-
-				static CSharpManager& GetInstance();
-				void Cleanup();
-				virtual void Initialize(EngineCore* engineCore);
-				virtual void CreateDomain();
-				virtual void LoadAssembly(const char* path, AssemblyData& outAssemblyData);
-				virtual void LoadAssemblyIntoMap(const char* path);
-				virtual void SetupComponent(entt::registry& registry, entt::entity entity, ScriptComponent& component);
-				virtual void DestroyComponent(entt::registry& registry, entt::entity entity, ScriptComponent& component);
-				virtual void CallStartInAllComponents(entt::registry& registry);
-				virtual void CallUpdateInAllComponents(entt::registry& registry);
-				virtual void CallEditorUpdateInAllComponents(entt::registry& registry);
-				virtual void CallDeleteInAllComponents(entt::registry& registry);
-				void RegisterComponents();
-				void RegisterComponent(std::string& csharpClass, ECS::ComponentFunctions& fns);
-				void CallCreateComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType);
-				void CallHasComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoTypes);
-				void CallRemoveComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType);
-				void QueueReload();
-				void PerformReload();
-				void EditorUpdate(entt::registry& registry);
-			private:
-				void LoadAssemblyClasses();
-				void SetupEntityDataInComponent(entt::entity entity, ScriptComponent& component);
-				void CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset);
-				void CallConstructorInComponent(ScriptComponent& scriptComponent);
-				void CallAttachComponentInComponent(ScriptComponent& scriptComponent);
-				void CallStartInComponent(ScriptComponent& scriptComponent);
-				void CallUpdateInComponent(ScriptComponent& scriptComponent);
-				void CallEditorUpdateInComponent(ScriptComponent& scriptComponent);
-				void CallDeleteInComponent(ScriptComponent& scriptComponent);
-				ScriptClass* SetupClass(const char* assemblyName, const char* namespaceName, const char* className);
-
-				MonoDomain* rootDomain = nullptr;
-				MonoDomain* scriptDomain = nullptr;
-				EngineCore *engineCore = nullptr;
-				std::map<std::string, AssemblyData> assemblies;
-				std::map<std::string, ScriptClass*> smartComponents;
-				AssemblyData grindstoneCoreDll;
-				bool isReloadQueued = false;
-
-				std::map<MonoType*, ECS::CreateComponentFn> createComponentFuncs;
-				std::map<MonoType*, ECS::TryGetComponentFn> tryGetComponentFuncs;
-				std::map<MonoType*, ECS::HasComponentFn> hasComponentFuncs;
-				std::map<MonoType*, ECS::RemoveComponentFn> removeComponentFuncs;
+		class CSharpManager {
+		public:
+			struct AssemblyData {
+				AssemblyHash assemblyHash;
 			};
-		}
+
+			static CSharpManager& GetInstance();
+			void Cleanup();
+			virtual void Initialize();
+			virtual void LoadAssembly(const char* path, AssemblyData& outAssemblyData);
+			virtual void LoadAssemblyIntoMap(const char* path);
+			virtual void SetupComponent(entt::registry& registry, entt::entity entity, ScriptComponent& component);
+			virtual void DestroyComponent(entt::registry& registry, entt::entity entity, ScriptComponent& component);
+			void RegisterComponents();
+			void RegisterComponent(std::string& csharpClass, ECS::ComponentFunctions& fns);
+			void CallCreateComponent(SceneManagement::Scene* scene, entt::entity entityHandle);
+			void CallHasComponent(SceneManagement::Scene* scene, entt::entity entityHandle);
+			void CallRemoveComponent(SceneManagement::Scene* scene, entt::entity entityHandle);
+			void QueueReload();
+			void PerformReload();
+			void Update(entt::registry& registry);
+			void EditorUpdate(entt::registry& registry);
+		private:
+			void LoadAssemblyClasses();
+			void SetupEntityDataInComponent(entt::entity entity, ScriptComponent& component);
+			void CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset);
+			void CallConstructorInComponent(ScriptComponent& scriptComponent);
+			void CallAttachComponentInComponent(ScriptComponent& scriptComponent);
+			void CallStartInComponent(ScriptComponent& scriptComponent);
+			void CallUpdateInComponent(ScriptComponent& scriptComponent);
+			void CallEditorUpdateInComponent(ScriptComponent& scriptComponent);
+			void CallDeleteInComponent(ScriptComponent& scriptComponent);
+			ScriptClass* SetupClass(const char* assemblyName, const char* namespaceName, const char* className);
+			
+			std::map<std::string, AssemblyData> assemblies;
+			std::map<std::string, ScriptClass*> smartComponents;
+			AssemblyData grindstoneCoreDll;
+			bool isReloadQueued = false;
+
+			// std::map<MonoType*, ECS::CreateComponentFn> createComponentFuncs;
+			// std::map<MonoType*, ECS::TryGetComponentFn> tryGetComponentFuncs;
+			// std::map<MonoType*, ECS::HasComponentFn> hasComponentFuncs;
+			// std::map<MonoType*, ECS::RemoveComponentFn> removeComponentFuncs;
+		};
 	}
 }

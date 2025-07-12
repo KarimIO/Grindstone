@@ -38,7 +38,7 @@ namespace Grindstone {
 		#endregion
 
 		#region DllImports
-		[DllImport("PluginScriptCSharp")]
+		[DllImport("PluginScriptCSharp.dll")]
 		private static extern void LoggerLog(int logSeverity, string message);
 		#endregion
 	}

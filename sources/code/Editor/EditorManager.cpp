@@ -294,6 +294,14 @@ Manager::~Manager() {
 	backupRegistry.clear();
 
 	if (engineCoreLibraryHandle) {
+		using DestroyEngineFunction = void *();
+
+		DestroyEngineFunction* destroyEngineFn =
+			static_cast<DestroyEngineFunction*>(Utilities::Modules::GetFunction(engineCoreLibraryHandle, "DestroyEngine"));
+		if (destroyEngineFn != nullptr) {
+			destroyEngineFn();
+		}
+
 		Grindstone::Utilities::Modules::Unload(engineCoreLibraryHandle);
 		engineCoreLibraryHandle = nullptr;
 	}

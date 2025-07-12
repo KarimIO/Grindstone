@@ -99,13 +99,11 @@ find_package(unofficial-imguizmo CONFIG REQUIRED)
 find_package(unofficial-libgit2 CONFIG REQUIRED)
 
 add_executable(Editor ${EDITOR_HEADERS} ${EDITOR_SOURCES})
-target_link_directories(Editor PUBLIC ${DEPS_DIR}/Mono/lib)
 
 set_property(TARGET Editor PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${BUILD_DIRECTORY})
 
 target_compile_definitions(Editor PUBLIC NOMINMAX GLM_ENABLE_EXPERIMENTAL EDITOR)
 target_include_directories(Editor PUBLIC
-	${DEPS_DIR}/Mono/include/mono-2.0
 	${CODE_DIR}
 	${FMT_INCLUDE_DIRS}
 )
@@ -116,7 +114,6 @@ target_link_libraries(
 	Editor
 	PUBLIC
 	${CORE_LIBS}
-	mono-2.0-sgen.lib
 	efsw::efsw
 	unofficial::libgit2::libgit2
 	unofficial::gl3w::gl3w

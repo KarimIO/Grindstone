@@ -20,13 +20,11 @@ extern "C" {
 	AUDIO_OPENAL_API void InitializeModule(Plugins::Interface* pluginInterface) {
 		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
 		Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
+		EngineCore::SetInstance(*pluginInterface->GetEngineCore());
 
 		audioCore = AllocatorCore::Allocate<Audio::Core>();
+		audioClipImporter = AllocatorCore::Allocate<Audio::AudioClipImporter>();
 
-		EngineCore* engineCore = pluginInterface->GetEngineCore();
-		Audio::Core::GetInstance().SetEngineCorePtr(engineCore);
-
-		audioClipImporter = AllocatorCore::Allocate<Audio::AudioClipImporter>(engineCore);
 		pluginInterface->RegisterComponent<AudioListenerComponent>();
 		pluginInterface->RegisterComponent<AudioSourceComponent>(SetupAudioSourceComponent, DestroyAudioSourceComponent);
 		pluginInterface->RegisterAssetType(AssetType::AudioClip, "AudioClip", audioClipImporter);

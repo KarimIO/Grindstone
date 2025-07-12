@@ -23,6 +23,7 @@ extern "C" {
 		GPRINT(static_cast<LogSeverity>(logSeverity), LogSource::Scripting, message);
 	}
 
+	/*
 	CSHARP_EXPORT void EntityCreateComponent(SceneManagement::Scene* scene, entt::entity entityHandle, MonoType* monoType) {
 		entt::registry& reg = scene->GetEntityRegistry();
 		CSharpManager::GetInstance().CallCreateComponent(scene, entityHandle, monoType);
@@ -37,6 +38,7 @@ extern "C" {
 		entt::registry& reg = scene->GetEntityRegistry();
 		CSharpManager::GetInstance().CallRemoveComponent(scene, entityHandle, monoType);
 	}
+	*/
 
 	void QueueReloadCsharp() {
 		CSharpManager::GetInstance().QueueReload();
@@ -45,9 +47,10 @@ extern "C" {
 	CSHARP_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
 		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
 		Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
+		Grindstone::EngineCore::SetInstance(*pluginInterface->GetEngineCore());
 
 		CSharpManager& manager = CSharpManager::GetInstance();
-		manager.Initialize(pluginInterface->GetEngineCore());
+		manager.Initialize();
 
 		globalPluginInterface = pluginInterface;
 		pluginInterface->RegisterComponent<ScriptComponent>(SetupCSharpScriptComponent, DestroyCSharpScriptComponent);
