@@ -32,12 +32,22 @@ namespace Grindstone {
 
 		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
 		public static void UnloadAppDomain() {
+			loadedAssemblies.Clear();
+			WeakReference weakContext = new(assemblyContext);
 			assemblyContext?.Unload();
 			assemblyContext = null;
 
 			GC.Collect();
 			GC.WaitForPendingFinalizers();
 			GC.Collect();
+
+
+			if (!weakContext.IsAlive) {
+				Grindstone.Logger.Print("Unload successful");
+			}
+			else {
+				Grindstone.Logger.PrintError("Unload failed: something is still referencing the context");
+			}
 		}
 
 		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
@@ -104,12 +114,13 @@ namespace Grindstone {
 			}
 		}
 
-		[UnmanagedCallersOnly(EntryPoint = "CallOnAttach")]
+		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
 		public static void CallOnAttach(IntPtr instancePtr) {
 			GCHandle handleBack = GCHandle.FromIntPtr(instancePtr);
 			object? unboxedObject = handleBack.Target;
 
 			if (unboxedObject == null) {
+				Grindstone.Logger.PrintError("CallOnAttach: Couldn't findobject.");
 				return;
 			}
 
@@ -117,12 +128,13 @@ namespace Grindstone {
 			method?.Invoke(unboxedObject, null);
 		}
 
-		[UnmanagedCallersOnly(EntryPoint = "CallOnStart")]
+		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
 		public static void CallOnStart(IntPtr instancePtr) {
 			GCHandle handleBack = GCHandle.FromIntPtr(instancePtr);
 			object? unboxedObject = handleBack.Target;
 
 			if (unboxedObject == null) {
+				Grindstone.Logger.PrintError("CallOnStart: Couldn't findobject.");
 				return;
 			}
 
@@ -130,12 +142,13 @@ namespace Grindstone {
 			method?.Invoke(unboxedObject, null);
 		}
 
-		[UnmanagedCallersOnly(EntryPoint = "CallOnUpdate")]
+		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
 		public static void CallOnUpdate(IntPtr instancePtr) {
 			GCHandle handleBack = GCHandle.FromIntPtr(instancePtr);
 			object? unboxedObject = handleBack.Target;
 
 			if (unboxedObject == null) {
+				Grindstone.Logger.PrintError("CallOnUpdate: Couldn't findobject.");
 				return;
 			}
 
@@ -143,12 +156,13 @@ namespace Grindstone {
 			method?.Invoke(unboxedObject, null);
 		}
 
-		[UnmanagedCallersOnly(EntryPoint = "CallOnEditorUpdate")]
+		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
 		public static void CallOnEditorUpdate(IntPtr instancePtr) {
 			GCHandle handleBack = GCHandle.FromIntPtr(instancePtr);
 			object? unboxedObject = handleBack.Target;
 
 			if (unboxedObject == null) {
+				Grindstone.Logger.PrintError("CallOnEditorUpdate: Couldn't findobject.");
 				return;
 			}
 
@@ -156,12 +170,13 @@ namespace Grindstone {
 			method?.Invoke(unboxedObject, null);
 		}
 
-		[UnmanagedCallersOnly(EntryPoint = "CallOnDestroy")]
+		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
 		public static void CallOnDestroy(IntPtr instancePtr) {
 			GCHandle handleBack = GCHandle.FromIntPtr(instancePtr);
 			object? unboxedObject = handleBack.Target;
 
 			if (unboxedObject == null) {
+				Grindstone.Logger.PrintError("CallOnDestroy: Couldn't findobject.");
 				return;
 			}
 
@@ -169,13 +184,15 @@ namespace Grindstone {
 			method?.Invoke(unboxedObject, null);
 		}
 
-		[UnmanagedCallersOnly(EntryPoint = "DestroyObject")]
+		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
 		public static void DestroyObject(IntPtr instancePtr) {
+			Grindstone.Logger.Print("Freeing object.");
 			GCHandle handleBack = GCHandle.FromIntPtr(instancePtr);
 			handleBack.Free();
+			GC.Collect();
 		}
 
-		[UnmanagedCallersOnly(EntryPoint = "ListFields")]
+		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
 		public static IntPtr ListFields(IntPtr assemblyPathPtr, IntPtr classNamePtr) {
 			string assemblyPath = Marshal.PtrToStringAnsi(assemblyPathPtr)!;
 			string className = Marshal.PtrToStringAnsi(classNamePtr)!;

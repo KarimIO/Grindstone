@@ -261,6 +261,16 @@ CSharpManager& CSharpManager::GetInstance() {
 void CSharpManager::Initialize() {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 
+#ifdef _WIN32
+	putenv("DOTNET_STARTUP_HOOKS=");
+	putenv("DOTNET_EnableDiagnostics=1");
+	putenv("COMPlus_EnableDiagnostics=1");
+#else
+	setenv("DOTNET_STARTUP_HOOKS=");
+	setenv("DOTNET_EnableDiagnostics=1");
+	setenv("COMPlus_EnableDiagnostics=1");
+#endif
+
 	if (!LoadHostFxr()) {
 		GPRINT_ERROR(LogSource::Scripting, "Failed to load hostfxr.");
 		return;
@@ -288,7 +298,7 @@ void CSharpManager::Cleanup() {
 }
 
 void CSharpManager::LoadAssembly(const char* filename, AssemblyData& outAssemblyData) {
-	std::string fullFilename = std::string(filename) + ".tmp.dll";
+	std::string fullFilename = std::string(filename) + ".dll";
 	auto basePath = (EngineCore::GetInstance().GetBinaryPath() / fullFilename).string();
 	if (!std::filesystem::exists(basePath)) {
 		GPRINT_ERROR_V(LogSource::Scripting, "Attempting to load invalid assembly: {}", basePath);
@@ -356,11 +366,31 @@ void CSharpManager::DestroyComponent(entt::registry& registry, entt::entity enti
 	}
 }
 
+void CSharpManager::Update(entt::registry& registry) {
+	auto& view = registry.view<Grindstone::Scripting::CSharp::ScriptComponent>();
+	view.each(
+		[](Grindstone::Scripting::CSharp::ScriptComponent& scriptComponent) {
+			if (scriptComponent.csharpObject != nullptr) {
+				csharpGlobals.CallOnUpdate(scriptComponent.csharpObject);
+			}
+		}
+	);
+}
+
 void CSharpManager::EditorUpdate(entt::registry& registry) {
 	if (isReloadQueued) {
 		PerformReload();
 		return;
 	}
+
+	auto& view = registry.view<Grindstone::Scripting::CSharp::ScriptComponent>();
+	view.each(
+		[](Grindstone::Scripting::CSharp::ScriptComponent& scriptComponent) {
+			if (scriptComponent.csharpObject != nullptr) {
+				csharpGlobals.CallOnEditorUpdate(scriptComponent.csharpObject);
+			}
+		}
+	);
 }
 
 void CSharpManager::SetupEntityDataInComponent(entt::entity entity, ScriptComponent& component) {
@@ -421,8 +451,10 @@ void CSharpManager::PerformReload() {
 	entt::registry& registry = engineCore.GetEntityRegistry();
 
 	registry.view<ScriptComponent>().each([](ScriptComponent& script) {
-		csharpGlobals.DestroyObject(script.csharpObject);
-		script.csharpObject = nullptr;
+		if (script.csharpObject != nullptr) {
+			csharpGlobals.DestroyObject(script.csharpObject);
+			script.csharpObject = nullptr;
+		}
 	});
 
 	isReloadQueued = false;
@@ -432,7 +464,13 @@ void CSharpManager::PerformReload() {
 	auto rootBinPath = engineCore.GetBinaryPath().string();
 	csharpGlobals.CreateAppDomain((void*)rootBinPath.c_str());
 
-	auto dllPath = (engineCore.GetBinaryPath() / "Application-CSharp.dll").string();
-	auto tmpDllPath = (engineCore.GetBinaryPath() / "Application-CSharp.tmp.dll").string();
+	LoadAssembly("Application-CSharp", assemblies["Application-CSharp"]);
 	GPRINT_TRACE(LogSource::Scripting, "Reloaded CSharp Binaries.");
+
+	auto& view = registry.view<const entt::entity, Grindstone::Scripting::CSharp::ScriptComponent>();
+	view.each(
+		[this, &registry](const entt::entity entity, Grindstone::Scripting::CSharp::ScriptComponent& scriptComponent) {
+			SetupComponent(registry, entity, scriptComponent);
+		}
+	);
 }
