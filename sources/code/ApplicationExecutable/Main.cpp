@@ -13,7 +13,7 @@ extern "C" {
 
 int main(int argc, char** argv) {
 	try {
-		std::string projectPath = "..";
+		std::string projectPath = std::filesystem::current_path().parent_path().string();
 		for (int i = 1; i < argc; ++i) {
 			if (strcmp(argv[i], "-projectpath") == 0 && argc > i + 1) {
 				projectPath = argv[i + 1];
