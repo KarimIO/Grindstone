@@ -106,7 +106,7 @@ namespace Grindstone::Assets::AssetPackSerializer {
 		const Byte* dstPtr = static_cast<Byte*>(buffer.AddToBuffer(loadedFile.Get(), size));
 		const uint64_t offset = dstPtr - buffer.Get();
 
-		const std::string pathAsStr = entry.path.string();
+		const std::string pathAsStr = entry.address;
 		const char* copiedStringPtr = static_cast<const char*>(resizableStringBuffer.AddToBuffer(pathAsStr.c_str(), pathAsStr.size() + 1));
 		std::map<Uuid, ArchiveDirectory::AssetInfo>& assetTypeMap = archiveDirectory.assetTypeIndices[assetType].assetsByUuid;
 		assetTypeMap[entry.uuid] = {
