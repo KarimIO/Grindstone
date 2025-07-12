@@ -119,6 +119,10 @@ namespace Grindstone::Editor {
 			return;
 		}
 
+		if (std::filesystem::exists(targetPath)) {
+			std::filesystem::remove_all(targetPath);
+		}
+
 		const EngineCore& engine = Grindstone::Editor::Manager::GetEngineCore();
 		std::filesystem::path engineBinPath = engine.GetEngineBinaryPath();
 		std::filesystem::path projectBinPath = engine.GetBinaryPath();
