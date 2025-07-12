@@ -27,6 +27,9 @@ namespace Grindstone {
 
 		GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 
+		uint32_t width = wgb->GetCurrentFramebuffer()->GetWidth();
+		uint32_t height = wgb->GetCurrentFramebuffer()->GetHeight();
+
 		if (!wgb->AcquireNextImage()) {
 			return;
 		}
@@ -82,6 +85,10 @@ namespace Grindstone {
 					cameraComponent.nearPlaneDistance,
 					cameraComponent.farPlaneDistance
 				);
+
+				if (cameraComponent.isMainCamera) {
+					cameraComponent.renderer->Resize(width, height);
+				}
 
 				cameraComponent.renderer->Render(
 					currentCommandBuffer,
