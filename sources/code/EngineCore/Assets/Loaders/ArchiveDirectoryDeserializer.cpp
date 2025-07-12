@@ -76,11 +76,11 @@ void ArchiveDirectoryDeserializer::Load(std::filesystem::path path) {
 			ArchiveDirectory::AssetInfo& dstAsset = assetTypeMap[srcAsset.uuid];
 			dstAsset.archiveIndex = srcAsset.archiveIndex;
 			dstAsset.crc = srcAsset.crc;
-			dstAsset.address = std::string_view(archiveDirectory.strings.data() + srcAsset.filenameOffset, srcAsset.filenameSize);
+			dstAsset.address = std::string_view(archiveDirectory.strings.data() + srcAsset.addressOffset, srcAsset.addressSize);
 			dstAsset.offset = srcAsset.offset;
 			dstAsset.size = srcAsset.size;
 
-			if (srcAsset.filenameSize > 0) {
+			if (srcAsset.addressSize > 0) {
 				assetTypeDst.assetUuidByAddress[dstAsset.address] = srcAsset.uuid;
 			}
 		}
