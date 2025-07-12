@@ -11,6 +11,7 @@
 namespace Grindstone::Assets {
 	struct ArchiveDirectory {
 		struct AssetInfo {
+			std::string_view displayName;
 			std::string_view address;
 			uint32_t crc;
 			uint16_t archiveIndex;
