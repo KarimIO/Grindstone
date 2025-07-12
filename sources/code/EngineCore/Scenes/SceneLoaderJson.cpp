@@ -34,8 +34,15 @@ bool SceneLoaderJson::Load(Grindstone::Uuid uuid) {
 
 	scene->path = result.displayName;
 
-	if (document.Parse(result.content.c_str()).GetParseError()) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Failed to load scene '{}' with id {}.", result.displayName, uuid.ToString());
+	rapidjson::ParseResult parseResult = document.Parse(result.content.c_str());
+
+	if (parseResult.IsError()) {
+		rapidjson::GetParseErrorFunc GetParseError = rapidjson::GetParseErrorFunc();
+		const RAPIDJSON_ERROR_CHARTYPE* errorCode = "Unknown Error";
+		if (GetParseError != nullptr) {
+			errorCode = GetParseError(parseResult.Code());
+		}
+		GPRINT_ERROR_V(LogSource::EngineCore, "Failed to load scene '{}' with id {} - Got error '{}' with offset {}.", result.displayName, uuid.ToString(), errorCode, document.GetErrorOffset());
 		return false;
 	}
 
