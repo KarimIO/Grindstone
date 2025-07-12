@@ -216,7 +216,7 @@ void* Mesh3dImporter::LoadAsset(Uuid uuid) {
 }
 
 bool Mesh3dImporter::ImportModelFile(Mesh3dAsset& mesh) {
-	Grindstone::Assets::AssetLoadBinaryResult result = engineCore->assetManager->LoadBinaryByUuid(AssetType::Texture, mesh.uuid);
+	Grindstone::Assets::AssetLoadBinaryResult result = engineCore->assetManager->LoadBinaryByUuid(AssetType::Mesh3d, mesh.uuid);
 	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "Mesh3dImporter::LoadAsset Unable to load file with id: {}", mesh.uuid.ToString());
 		mesh.assetLoadStatus = AssetLoadStatus::Missing;
