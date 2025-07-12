@@ -38,10 +38,11 @@ AssetLoadBinaryResult ArchiveAssetLoader::LoadBinaryByUuid(AssetType assetType, 
 
 AssetLoadTextResult ArchiveAssetLoader::LoadTextByUuid(AssetType assetType, Uuid uuid) {
 	AssetLoadBinaryResult result = LoadBinaryByUuid(assetType, uuid);
+
 	return {
 		result.status,
 		result.displayName,
-		std::string(reinterpret_cast<const char*>(result.buffer.Get()))
+		std::string(std::string_view(result.buffer.Get<const char>(0), (size_t)result.buffer.GetCapacity()))
 	};
 }
 
