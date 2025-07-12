@@ -224,7 +224,7 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 
 		for (uint8_t i = 0; i < srcPass.shaderStageCount; ++i) {
 			V1::PassPipelineShaderStageHeader& srcStage = shaderStages[srcPass.shaderStageStartIndex + i];
-			pass.stageBuffers[i] = Grindstone::Buffer(
+			pass.stageBuffers[i] = Grindstone::Buffer::MakeCopiedBuffer(
 				reinterpret_cast<void*>(&blobs[srcStage.shaderCodeOffsetFromBlobStart]),
 				static_cast<const uint64_t>(srcStage.shaderCodeSize)
 			);

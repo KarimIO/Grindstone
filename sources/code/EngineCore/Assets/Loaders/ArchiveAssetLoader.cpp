@@ -69,6 +69,6 @@ AssetLoadBinaryResult ArchiveAssetLoader::LoadAsset(const ArchiveDirectory::Asse
 		lastBuffer = Utils::LoadFile(filepathAsStr.c_str());
 	}
 
-	Buffer buffer(lastBuffer.Get<Byte>(assetInfo.offset), assetInfo.size);
+	Buffer buffer = Buffer::MakeCopiedBuffer(lastBuffer.Get(assetInfo.offset), assetInfo.size);
 	return { AssetLoadStatus::Success, std::string(assetInfo.displayName), buffer };
 }
