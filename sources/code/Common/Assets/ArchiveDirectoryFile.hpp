@@ -29,6 +29,8 @@ namespace Grindstone::Assets {
 
 		struct AssetInfo {
 			Grindstone::Uuid uuid;
+			uint64_t displayNameOffset;
+			uint16_t displayNameSize;
 			uint64_t addressOffset;
 			uint16_t addressSize;
 			uint32_t crc;

@@ -85,6 +85,7 @@ void ArchiveDirectoryDeserializer::Load(std::filesystem::path path) {
 			ArchiveDirectory::AssetInfo& dstAsset = assetTypeMap[srcAsset.uuid];
 			dstAsset.archiveIndex = srcAsset.archiveIndex;
 			dstAsset.crc = srcAsset.crc;
+			dstAsset.displayName = std::string_view(archiveDirectory.strings.data() + srcAsset.displayNameOffset, srcAsset.displayNameSize);
 			dstAsset.address = std::string_view(archiveDirectory.strings.data() + srcAsset.addressOffset, srcAsset.addressSize);
 			dstAsset.offset = srcAsset.offset;
 			dstAsset.size = srcAsset.size;

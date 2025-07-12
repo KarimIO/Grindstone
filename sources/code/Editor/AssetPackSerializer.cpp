@@ -106,11 +106,12 @@ namespace Grindstone::Assets::AssetPackSerializer {
 		const Byte* dstPtr = static_cast<Byte*>(buffer.AddToBuffer(loadedFile.Get(), size));
 		const uint64_t offset = dstPtr - buffer.Get();
 
-		const std::string pathAsStr = entry.address;
-		const char* copiedStringPtr = static_cast<const char*>(resizableStringBuffer.AddToBuffer(pathAsStr.c_str(), pathAsStr.size() + 1));
+		const char* copiedNamePtr = static_cast<const char*>(resizableStringBuffer.AddToBuffer(entry.displayName.c_str(), entry.displayName.size() + 1));
+		const char* copiedAddressPtr = static_cast<const char*>(resizableStringBuffer.AddToBuffer(entry.address.c_str(), entry.address.size() + 1));
 		std::map<Uuid, ArchiveDirectory::AssetInfo>& assetTypeMap = archiveDirectory.assetTypeIndices[assetType].assetsByUuid;
 		assetTypeMap[entry.uuid] = {
-			copiedStringPtr,
+			copiedNamePtr,
+			copiedAddressPtr,
 			crc,
 			archiveIndex,
 			offset,
@@ -185,12 +186,17 @@ namespace Grindstone::Assets::AssetPackSerializer {
 		// Prepare actual assets
 		for (uint16_t assetTypeIndex = 0; assetTypeIndex < assetTypeCount; ++assetTypeIndex) {
 			for (const auto& [uuid, asset] : archiveDirectory.assetTypeIndices[assetTypeIndex].assetsByUuid) {
+				uint64_t displayNameOffset = static_cast<uint64_t>(asset.displayName.data() - reinterpret_cast<const char*>(resizableStringBuffer.Get()));
+				uint16_t displayNameSize = static_cast<uint16_t>(asset.displayName.size());
+
 				uint64_t addressOffset = static_cast<uint64_t>(asset.address.data() - reinterpret_cast<const char*>(resizableStringBuffer.Get()));
 				uint16_t addressSize = static_cast<uint16_t>(asset.address.size());
 
 				outputFile.assets.emplace_back(
 					ArchiveDirectoryFile::AssetInfo{
 						uuid,
+						displayNameOffset,
+						displayNameSize,
 						addressOffset,
 						addressSize,
 						asset.crc,
