@@ -26,10 +26,10 @@ namespace Grindstone {
 				float cp = (float)System.Math.Cos(angles.pitch * 0.5f);
 				float sp = (float)System.Math.Sin(angles.pitch * 0.5f);
 
-				array[0] = cy * sr * cp - sy * cr * sp;
-				array[1] = cy * cr * sp + sy * sr * cp;
-				array[2] = sy * cr * cp - cy * sr * sp;
-				array[3] = cy * cr * cp + sy * sr * sp;
+				array[0] = sr * cp * cy - cr * sp * sy;
+				array[1] = cr * sp * cy + sr * cp * sy;
+				array[2] = cr * cp * sy - sr * sp * cy;
+				array[3] = cr * cp * cy + sr * sp * sy;
 			}
 			#endregion
 
