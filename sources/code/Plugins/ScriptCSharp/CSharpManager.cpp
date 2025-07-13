@@ -29,6 +29,7 @@ namespace Grindstone {
 	using CreateAppDomainFnPtr = void (*)(void*);
 	using LoadAssemblyFnPtr = AssemblyHash(*)(void*);
 	using CreateObjectFnPtr = void* (*)(AssemblyHash, void*);
+	using CreateComponentFnPtr = void* (*)(AssemblyHash, void*, uint32_t);
 	using CallLifetimeFnPtr = void (*)(void*);
 	using DestroyObjectFnPtr = void (*)(void*);
 	using VoidFnPtr = void (*)();
@@ -46,6 +47,7 @@ namespace Grindstone {
 		VoidFnPtr UnloadAppDomain;
 		LoadAssemblyFnPtr LoadAssembly;
 		CreateObjectFnPtr CreateObject;
+		CreateComponentFnPtr CreateComponent;
 		DestroyObjectFnPtr DestroyObject;
 		CallLifetimeFnPtr CallOnAttach;
 		CallLifetimeFnPtr CallOnStart;
@@ -218,6 +220,7 @@ static bool LoadGrindstoneCoreFunctions() {
 	bool hasLoadedCreateAppDomainFn = LoadGrindstoneCoreFunction(coreDllWide, "CreateAppDomain", reinterpret_cast<void**>(&csharpGlobals.CreateAppDomain));
 	bool hasLoadedUnloadAppDomainFn = LoadGrindstoneCoreFunction(coreDllWide, "UnloadAppDomain", reinterpret_cast<void**>(&csharpGlobals.UnloadAppDomain));
 	bool hasLoadedLoadAssemblyFn = LoadGrindstoneCoreFunction(coreDllWide, "LoadAssembly", reinterpret_cast<void**>(&csharpGlobals.LoadAssembly));
+	bool hasLoadedComponentObjFn = LoadGrindstoneCoreFunction(coreDllWide, "CreateComponent", reinterpret_cast<void**>(&csharpGlobals.CreateComponent));
 	bool hasLoadedCreateObjFn = LoadGrindstoneCoreFunction(coreDllWide, "CreateObject", reinterpret_cast<void**>(&csharpGlobals.CreateObject));
 	bool hasLoadedDestroyObjFn = LoadGrindstoneCoreFunction(coreDllWide, "DestroyObject", reinterpret_cast<void**>(&csharpGlobals.DestroyObject));
 	bool hasLoadedOnAttachFn = LoadGrindstoneCoreFunction(coreDllWide, "CallOnAttach", reinterpret_cast<void**>(&csharpGlobals.CallOnAttach));
@@ -231,6 +234,7 @@ static bool LoadGrindstoneCoreFunctions() {
 		hasLoadedUnloadAppDomainFn &&
 		hasLoadedLoadAssemblyFn &&
 		hasLoadedCreateObjFn &&
+		hasLoadedComponentObjFn &&
 		hasLoadedDestroyObjFn &&
 		hasLoadedOnAttachFn &&
 		hasLoadedOnStartFn &&
@@ -359,7 +363,7 @@ void CSharpManager::SetupComponent(entt::registry& registry, entt::entity entity
 		assemblyHash = it->second.assemblyHash;
 	}
 
-	component.csharpObject = csharpGlobals.CreateObject(assemblyHash, (void*)searchString.c_str());
+	component.csharpObject = csharpGlobals.CreateComponent(assemblyHash, (void*)searchString.c_str(), (uint32_t)entity);
 	csharpGlobals.CallOnAttach(component.csharpObject);
 	csharpGlobals.CallOnStart(component.csharpObject);
 }
@@ -396,9 +400,6 @@ void CSharpManager::EditorUpdate(entt::registry& registry) {
 			}
 		}
 	);
-}
-
-void CSharpManager::SetupEntityDataInComponent(entt::entity entity, ScriptComponent& component) {
 }
 
 ScriptClass* CSharpManager::SetupClass(const char* assemblyName, const char* namespaceName, const char* className) {

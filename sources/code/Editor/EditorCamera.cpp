@@ -260,33 +260,41 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 	}
 
 	entt::registry& registry = scene->GetEntityRegistry();
-	TransformComponent* transformComponent = nullptr;
+	entt::entity entity = entt::null;
+	const TransformComponent* transformComponent = nullptr;
 	CameraComponent* cameraComponent = nullptr;
-	auto view = registry.view<TransformComponent, CameraComponent>();
+	auto view = registry.view<entt::entity, const TransformComponent, CameraComponent>();
 	view.each(
 		[&](
-			TransformComponent& currentTransform,
+			entt::entity currentEntity,
+			const TransformComponent& currentTransform,
 			CameraComponent& currentCamera
 		) {
+			entity = currentEntity;
 			transformComponent = &currentTransform;
 			cameraComponent = &currentCamera;
 		}
 	);
 
-	if (cameraComponent == nullptr || cameraComponent->renderer == nullptr) {
+	if (entity == entt::null || cameraComponent == nullptr || cameraComponent->renderer == nullptr) {
 		return;
 	}
 
 	cameraComponent->aspectRatio = static_cast<float>(width) / height;
 	cameraComponent->renderer->Resize(width, height);
 
-	glm::vec3 pos = transformComponent->position;
+	const glm::mat4 transformMatrix = TransformComponent::GetWorldTransformMatrix(entity, registry);
+
+	const glm::vec3 upVector = glm::normalize(-glm::vec3(transformMatrix[1]));
+	const glm::vec3 forwardVector = glm::normalize(glm::vec3(transformMatrix[2]));
+	const glm::vec3 pos = glm::vec3(transformMatrix[3]);
+
 	const glm::mat4 viewMatrix = glm::lookAt(
 		pos,
-		pos + transformComponent->GetForward(),
-		-transformComponent->GetUp()
+		pos + forwardVector,
+		upVector
 	);
-
+	
 	const glm::mat4 projectionMatrix = glm::perspective(
 		cameraComponent->fieldOfView,
 		cameraComponent->aspectRatio,

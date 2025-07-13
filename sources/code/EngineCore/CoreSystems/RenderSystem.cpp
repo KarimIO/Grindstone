@@ -46,11 +46,11 @@ namespace Grindstone {
 			}
 		}
 
-		const static glm::vec3 upVector = glm::vec3(0, 1, 0);
-		auto view = registry.view<const TransformComponent, const CameraComponent>();
+		auto view = registry.view<entt::entity, const TransformComponent, const CameraComponent>();
 
 		view.each(
 			[&](
+				entt::entity entity,
 				const TransformComponent& transformComponent,
 				const CameraComponent& cameraComponent
 			) {
@@ -70,8 +70,10 @@ namespace Grindstone {
 					return;
 				}
 
-				const glm::vec3 forwardVector = transformComponent.GetForward();
-				const glm::vec3 pos = transformComponent.position;
+				const glm::mat4 transformMatrix = TransformComponent::GetWorldTransformMatrix(entity, registry);
+				const glm::vec3 upVector = glm::normalize(-glm::vec3(transformMatrix[1]));
+				const glm::vec3 forwardVector = glm::normalize(glm::vec3(transformMatrix[2]));
+				const glm::vec3 pos = glm::vec3(transformMatrix[3]);
 
 				const glm::mat4 viewMatrix = glm::lookAt(
 					pos,

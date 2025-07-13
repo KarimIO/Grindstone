@@ -40,7 +40,6 @@ namespace Grindstone {
 			void EditorUpdate(entt::registry& registry);
 		private:
 			void LoadAssemblyClasses();
-			void SetupEntityDataInComponent(entt::entity entity, ScriptComponent& component);
 			void CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset);
 			void CallConstructorInComponent(ScriptComponent& scriptComponent);
 			void CallAttachComponentInComponent(ScriptComponent& scriptComponent);
