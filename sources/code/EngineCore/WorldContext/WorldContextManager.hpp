@@ -17,12 +17,12 @@ namespace Grindstone {
 		virtual void Unregister(HashedString name);
 		virtual void SetActiveWorldContextSet(Grindstone::WorldContextSet*);
 		[[nodiscard]] virtual Grindstone::WorldContextSet* GetActiveWorldContextSet();
-		[[nodiscard]] virtual Grindstone::WorldContextSet& Create();
-		virtual void Remove(Grindstone::WorldContextSet& cxtSet);
+		[[nodiscard]] virtual Grindstone::WorldContextSet* Create();
+		virtual void Remove(Grindstone::WorldContextSet* cxtSet);
 
 	private:
 		size_t activeWorldIndex;
 		std::map<HashedString, Grindstone::UniquePtr<Grindstone::WorldContext> (*)()> factoryFunctions;
-		std::vector<Grindstone::WorldContextSet> worldContextSets;
+		std::vector<Grindstone::UniquePtr<Grindstone::WorldContextSet>> worldContextSets;
 	};
 }
