@@ -2,18 +2,19 @@
 #include <filesystem>
 #include <iostream>
 
+#include "Common/Math.hpp"
 #include "EngineCore/Profiling.hpp"
 #include "EngineCore/EngineCore.hpp"
+#include <EngineCore/Logger.hpp>
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
 #include "EngineCore/Assets/AssetManager.hpp"
 #include "EngineCore/Reflection/TypeDescriptorAsset.hpp"
-#include "EngineCore/Assets/AssetManager.hpp"
-#include "SceneLoaderJson.hpp"
+#include "EngineCore/WorldContext/WorldContextManager.hpp"
 #include "EngineCore/Utils/Utilities.hpp"
-#include "Common/Math.hpp"
+
+#include "SceneLoaderJson.hpp"
 #include "Scene.hpp"
-#include <EngineCore/Logger.hpp>
 
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
@@ -66,6 +67,10 @@ void SceneLoaderJson::ProcessEntities() {
 	for (auto& entity : document["entities"].GetArray()) {
 		ProcessEntity(entity);
 	}
+
+	EngineCore& engineCore = EngineCore::GetInstance();
+	auto componentRegistrar = engineCore.GetComponentRegistrar();
+	componentRegistrar->CallCreateOnRegistry(*engineCore.GetWorldContextManager()->GetActiveWorldContextSet());
 }
 
 void SceneLoaderJson::ProcessEntity(rapidjson::Value& entityJson) {
@@ -115,8 +120,6 @@ void SceneLoaderJson::ProcessComponent(ECS::Entity entity, rapidjson::Value& com
 			}
 		}
 	}
-
-	componentRegistrar->SetupComponent(componentType, entity, componentPtr);
 }
 
 static void CopyDataArrayFloat(rapidjson::Value& srcParameter, float* dstArray, rapidjson::SizeType count) {

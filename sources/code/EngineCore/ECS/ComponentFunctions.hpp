@@ -6,15 +6,17 @@
 using namespace Grindstone;
 
 namespace Grindstone {
+	class WorldContextSet;
+
 	namespace ECS {
-		using SetupComponentFn = void(*)(entt::registry&, entt::entity);
-		using DestroyComponentFn = void(*)(entt::registry&, entt::entity);
+		using SetupComponentFn = void(*)(Grindstone::WorldContextSet&, entt::entity);
+		using DestroyComponentFn = void(*)(Grindstone::WorldContextSet&, entt::entity);
 		using GetComponentReflectionDataFn = Grindstone::Reflection::TypeDescriptor_Struct(*)();
 		using TryGetComponentFn = bool(*)(entt::registry&, entt::entity, void*& outEntity);
 		using HasComponentFn = bool(*)(entt::registry&, entt::entity);
 		using CreateComponentFn = void*(*)(entt::registry&, entt::entity);
 		using RemoveComponentFn = void(*)(entt::registry&, entt::entity);
-		using CopyRegistryComponentsFn = void(*)(entt::registry& dst, entt::registry& src);
+		using CopyRegistryComponentsFn = void(*)(WorldContextSet& dst, WorldContextSet& src);
 		
 		class ComponentFunctions {
 		public:

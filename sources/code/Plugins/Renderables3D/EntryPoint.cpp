@@ -3,6 +3,7 @@
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
 
 #include "Assets/Mesh3dAsset.hpp"
 #include "Assets/Mesh3dImporter.hpp"
@@ -19,10 +20,10 @@ using namespace Grindstone::Memory;
 Mesh3dImporter* mesh3dImporter = nullptr;
 Mesh3dRenderer* mesh3dRenderer = nullptr;
 
-static void SetupMeshRendererComponent(entt::registry& registry, entt::entity entity) {
+static void SetupMeshRendererComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	auto& [tagComponent, meshRendererComponent] = registry.get<TagComponent, MeshRendererComponent>(entity);
+	auto& [tagComponent, meshRendererComponent] = cxtSet.GetEntityRegistry().get<TagComponent, MeshRendererComponent>(entity);
 
 	{
 		std::string debugName = tagComponent.tag + " Per Draw Uniform Buffer";
@@ -50,10 +51,10 @@ static void SetupMeshRendererComponent(entt::registry& registry, entt::entity en
 	}
 }
 
-static void DestroyMeshRendererComponent(entt::registry& registry, entt::entity entity) {
+static void DestroyMeshRendererComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	MeshRendererComponent& meshRendererComponent = registry.get<MeshRendererComponent>(entity);
+	MeshRendererComponent& meshRendererComponent = cxtSet.GetEntityRegistry().get<MeshRendererComponent>(entity);
 	graphicsCore->DeleteDescriptorSet(meshRendererComponent.perDrawDescriptorSet);
 	graphicsCore->DeleteBuffer(meshRendererComponent.perDrawUniformBuffer);
 }

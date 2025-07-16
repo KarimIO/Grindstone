@@ -1,4 +1,5 @@
 #include <EngineCore/Reflection/ComponentReflection.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <Common/Graphics/Buffer.hpp>
@@ -16,12 +17,12 @@ REFLECT_STRUCT_BEGIN(DirectionalLightComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::SetupDirectionalLightComponent(entt::registry& registry, entt::entity entity) {
+void Grindstone::SetupDirectionalLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	auto& engineCore = EngineCore::GetInstance();
 	auto graphicsCore = engineCore.GetGraphicsCore();
 	auto eventDispatcher = engineCore.GetEventDispatcher();
 
-	DirectionalLightComponent& directionalLightComponent = registry.get<DirectionalLightComponent>(entity);
+	DirectionalLightComponent& directionalLightComponent = cxtSet.GetEntityRegistry().get<DirectionalLightComponent>(entity);
 
 	uint32_t shadowResolution = static_cast<uint32_t>(directionalLightComponent.shadowResolution);
 
@@ -122,12 +123,12 @@ void Grindstone::SetupDirectionalLightComponent(entt::registry& registry, entt::
 	}
 }
 
-void Grindstone::DestroyDirectionalLightComponent(entt::registry& registry, entt::entity entity) {
+void Grindstone::DestroyDirectionalLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	auto& engineCore = EngineCore::GetInstance();
 	auto graphicsCore = engineCore.GetGraphicsCore();
 	auto eventDispatcher = engineCore.GetEventDispatcher();
 
-	DirectionalLightComponent& directionalLightComponent = registry.get<DirectionalLightComponent>(entity);
+	DirectionalLightComponent& directionalLightComponent = cxtSet.GetEntityRegistry().get<DirectionalLightComponent>(entity);
 	graphicsCore->DeleteDescriptorSet(directionalLightComponent.shadowMapDescriptorSet);
 	graphicsCore->DeleteDescriptorSetLayout(directionalLightComponent.shadowMapDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSet(directionalLightComponent.descriptorSet);

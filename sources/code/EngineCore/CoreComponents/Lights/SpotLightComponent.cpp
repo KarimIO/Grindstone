@@ -4,6 +4,8 @@
 #include <Common/Graphics/Buffer.hpp>
 #include <Common/Graphics/DescriptorSet.hpp>
 #include <Common/Graphics/DescriptorSetLayout.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
+
 #include "SpotLightComponent.hpp"
 
 using namespace Grindstone;
@@ -18,12 +20,12 @@ REFLECT_STRUCT_BEGIN(SpotLightComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::SetupSpotLightComponent(entt::registry& registry, entt::entity entity) {
+void Grindstone::SetupSpotLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	auto& engineCore = EngineCore::GetInstance();
 	auto graphicsCore = engineCore.GetGraphicsCore();
 	auto eventDispatcher = engineCore.GetEventDispatcher();
 
-	SpotLightComponent& spotLightComponent = registry.get<SpotLightComponent>(entity);
+	SpotLightComponent& spotLightComponent = cxtSet.GetEntityRegistry().get<SpotLightComponent>(entity);
 
 	uint32_t shadowResolution = static_cast<uint32_t>(spotLightComponent.shadowResolution);
 
@@ -124,11 +126,11 @@ void Grindstone::SetupSpotLightComponent(entt::registry& registry, entt::entity 
 	}
 }
 
-void Grindstone::DestroySpotLightComponent(entt::registry& registry, entt::entity entity) {
+void Grindstone::DestroySpotLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	EngineCore& engineCore = EngineCore::GetInstance();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
-	SpotLightComponent& spotLightComponent = registry.get<SpotLightComponent>(entity);
+	SpotLightComponent& spotLightComponent = cxtSet.GetEntityRegistry().get<SpotLightComponent>(entity);
 	graphicsCore->DeleteDescriptorSet(spotLightComponent.shadowMapDescriptorSet);
 	graphicsCore->DeleteDescriptorSetLayout(spotLightComponent.shadowMapDescriptorSetLayout);
 	graphicsCore->DeleteDescriptorSet(spotLightComponent.descriptorSet);

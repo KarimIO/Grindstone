@@ -1,6 +1,7 @@
 #include <EngineCore/Reflection/ComponentReflection.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
 
 #include "../Core.hpp"
 #include "AudioSourceComponent.hpp"
@@ -16,10 +17,10 @@ REFLECT_STRUCT_BEGIN(AudioSourceComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::SetupAudioSourceComponent(entt::registry& registry, entt::entity entity) {
+void Grindstone::SetupAudioSourceComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	Grindstone::Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
 
-	Grindstone::AudioSourceComponent& audioSource = registry.get<AudioSourceComponent>(entity);
+	Grindstone::AudioSourceComponent& audioSource = cxtSet.GetEntityRegistry().get<AudioSourceComponent>(entity);
 
 	Grindstone::Audio::AudioClipAsset* audioClip = assetManager->GetAssetByUuid<Grindstone::Audio::AudioClipAsset>(audioSource.audioClip.uuid);
 	if (audioClip == nullptr) {
@@ -36,7 +37,7 @@ void Grindstone::SetupAudioSourceComponent(entt::registry& registry, entt::entit
 	audioSource.source->Play();
 }
 
-void Grindstone::DestroyAudioSourceComponent(entt::registry& registry, entt::entity entity) {
-	Grindstone::AudioSourceComponent& audioSource = registry.get<AudioSourceComponent>(entity);
+void Grindstone::DestroyAudioSourceComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+	Grindstone::AudioSourceComponent& audioSource = cxtSet.GetEntityRegistry().get<AudioSourceComponent>(entity);
 	AllocatorCore::Free<Audio::Source>(audioSource.source);
 }

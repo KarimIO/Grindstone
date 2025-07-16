@@ -3,4 +3,23 @@
 	<Type Name="Grindstone::Uuid">
 		<DisplayString>{{ {asUint8[3],nvoxb}{asUint8[2],nvoxb}{asUint8[1],nvoxb}{asUint8[0],nvoxb}-{asUint8[5],nvoxb}{asUint8[4],nvoxb}-{asUint8[7],nvoxb}{asUint8[6],nvoxb}-{asUint8[8],nvoxb}{asUint8[9],nvoxb}-{asUint8[10],nvoxb}{asUint8[11],nvoxb}{asUint8[12],nvoxb}{asUint8[13],nvoxb}{asUint8[14],nvoxb}{asUint8[15],nvoxb} }}</DisplayString>
 	</Type>
+
+	<Type Name="Grindstone::UniquePtr&lt;*,*&gt;">
+		<SmartPointer Usage="Minimal">data_</SmartPointer>
+		<DisplayString Condition="ptr == 0">empty</DisplayString>
+		<DisplayString Condition="ptr != 0">{{ Grindstone::UniquePtr { *ptr } }}</DisplayString>
+		<Expand>
+			<Item Name="[ptr]">ptr</Item>
+		</Expand>
+	</Type>
+	
+	<Type Name="Grindstone::SharedPtr&lt;*,*&gt;">
+		<SmartPointer Usage="Minimal">ptr</SmartPointer>
+		<DisplayString Condition="ptr == 0">empty</DisplayString>
+		<DisplayString Condition="ptr != 0">{{ Grindstone::SharedPtr { *ptr } }}</DisplayString>
+		<Expand>
+			<Item Name="[ptr]">ptr</Item>
+		</Expand>
+	</Type>
+
 </AutoVisualizer>

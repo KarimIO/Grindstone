@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Grindstone::Memory::SmartPointers {
+namespace Grindstone {
 	template<typename T>
 	class SharedPtr {
 	public:

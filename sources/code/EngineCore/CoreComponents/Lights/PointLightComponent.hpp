@@ -5,6 +5,8 @@
 #include "Common/Math.hpp"
 
 namespace Grindstone {
+	class WorldContextSet;
+
 	namespace GraphicsAPI {
 		class Buffer;
 		class RenderPass;
@@ -45,6 +47,6 @@ namespace Grindstone {
 		REFLECT("PointLight")
 	};
 
-	void SetupPointLightComponent(entt::registry&, entt::entity);
-	void DestroyPointLightComponent(entt::registry&, entt::entity);
+	void SetupPointLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
+	void DestroyPointLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
 }

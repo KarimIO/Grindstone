@@ -10,6 +10,8 @@
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
+#include <EngineCore/WorldContext/WorldContextManager.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
 
 #include "Components/ScriptComponent.hpp"
 
@@ -266,9 +268,9 @@ void CSharpManager::Initialize() {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 
 #ifdef _WIN32
-	putenv("DOTNET_STARTUP_HOOKS=");
-	putenv("DOTNET_EnableDiagnostics=1");
-	putenv("COMPlus_EnableDiagnostics=1");
+	_putenv("DOTNET_STARTUP_HOOKS=");
+	_putenv("DOTNET_EnableDiagnostics=1");
+	_putenv("COMPlus_EnableDiagnostics=1");
 #else
 	setenv("DOTNET_STARTUP_HOOKS=");
 	setenv("DOTNET_EnableDiagnostics=1");
@@ -346,7 +348,7 @@ void CSharpManager::LoadAssemblyIntoMap(const char* path) {
 	assemblies[path] = assemblyData;
 }
 
-void CSharpManager::SetupComponent(entt::registry& registry, entt::entity entity, ScriptComponent& component) {
+void CSharpManager::SetupComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity, ScriptComponent& component) {
 	std::string searchString =
 		component.scriptNamespace.empty()
 		? component.scriptClass
@@ -368,7 +370,7 @@ void CSharpManager::SetupComponent(entt::registry& registry, entt::entity entity
 	csharpGlobals.CallOnStart(component.csharpObject);
 }
 
-void CSharpManager::DestroyComponent(entt::registry& registry, entt::entity entity, ScriptComponent& component) {
+void CSharpManager::DestroyComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity, ScriptComponent& component) {
 	if (component.csharpObject != nullptr) {
 		csharpGlobals.DestroyObject(component.csharpObject);
 		component.csharpObject = nullptr;
@@ -454,6 +456,7 @@ void CSharpManager::QueueReload() {
 
 void CSharpManager::PerformReload() {
 	EngineCore& engineCore = EngineCore::GetInstance();
+	Grindstone::WorldContextSet* cxtSet = engineCore.GetWorldContextManager()->GetActiveWorldContextSet();
 	entt::registry& registry = engineCore.GetEntityRegistry();
 
 	registry.view<ScriptComponent>().each([](ScriptComponent& script) {
@@ -475,8 +478,8 @@ void CSharpManager::PerformReload() {
 
 	auto& view = registry.view<const entt::entity, Grindstone::Scripting::CSharp::ScriptComponent>();
 	view.each(
-		[this, &registry](const entt::entity entity, Grindstone::Scripting::CSharp::ScriptComponent& scriptComponent) {
-			SetupComponent(registry, entity, scriptComponent);
+		[this, &registry, cxtSet](const entt::entity entity, Grindstone::Scripting::CSharp::ScriptComponent& scriptComponent) {
+			SetupComponent(*cxtSet, entity, scriptComponent);
 		}
 	);
 }

@@ -18,16 +18,20 @@
 #include "Selection.hpp"
 #include "TaskSystem.hpp"
 
+namespace Grindstone {
+	class WorldContextSet;
+}
+
 namespace Grindstone::Events {
 	struct BaseEvent;
 }
 
 namespace Grindstone::Editor {
+	class IEditor;
+
 	namespace ImguiEditor {
 		class ImguiEditor;
 	}
-
-	class IEditor;
 
 	enum class ManipulationMode {
 		Translate,
@@ -100,6 +104,7 @@ namespace Grindstone::Editor {
 		AssetTemplateRegistry assetTemplateRegistry;
 		Grindstone::Utilities::Modules::Handle engineCoreLibraryHandle;
 		Grindstone::Importers::ImporterManager importerManager;
-		entt::registry backupRegistry;
+		Grindstone::WorldContextSet* runtimeWorldContext = nullptr;
+		Grindstone::WorldContextSet* editorWorldContext = nullptr;
 	};
 }

@@ -7,6 +7,8 @@
 #include "../AudioClip.hpp"
 
 namespace Grindstone {
+	class WorldContextSet;
+
 	struct AudioSourceComponent {
 		AssetReference<Audio::AudioClipAsset> audioClip;
 		bool isLooping = false;
@@ -17,6 +19,6 @@ namespace Grindstone {
 		REFLECT("AudioSource")
 	};
 
-	void SetupAudioSourceComponent(entt::registry& registry, entt::entity);
-	void DestroyAudioSourceComponent(entt::registry& registry, entt::entity);
+	void SetupAudioSourceComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
+	void DestroyAudioSourceComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
 }

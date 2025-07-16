@@ -1,10 +1,12 @@
 #include "Interface.hpp"
+#include "Interface.hpp"
 #include <Common/Window/Window.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
 #include <EngineCore/ECS/SystemRegistrar.hpp>
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/EngineCore.hpp>
+#include <EngineCore/WorldContext/WorldContextManager.hpp>
 
 // TODO: Define this type.
 #ifndef GS_RUNTIME
@@ -41,6 +43,14 @@ Grindstone::Logger::LoggerState* Plugins::Interface::GetLoggerState() const {
 
 Grindstone::Memory::AllocatorCore::AllocatorState* Plugins::Interface::GetAllocatorState() const {
 	return Grindstone::Memory::AllocatorCore::GetAllocatorState();
+}
+
+void Plugins::Interface::RegisterWorldContextFactory(Grindstone::HashedString contextName, Grindstone::UniquePtr<Grindstone::WorldContext>(*factoryFn)()) {
+	Grindstone::EngineCore::GetInstance().GetWorldContextManager()->Register(contextName, factoryFn);
+}
+
+void Plugins::Interface::UnregisterWorldContextFactory(Grindstone::HashedString contextName) {
+	Grindstone::EngineCore::GetInstance().GetWorldContextManager()->Unregister(contextName);
 }
 
 bool Plugins::Interface::LoadPlugin(const char* name) {

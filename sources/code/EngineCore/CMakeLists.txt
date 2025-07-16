@@ -83,11 +83,16 @@ file(GLOB_RECURSE HEADER_RENDERING "${ENGINE_CORE_DIR}/Rendering/*.hpp")
 source_group("Rendering\\Source Files" FILES ${SOURCE_RENDERING})
 source_group("Rendering\\Header Files" FILES ${HEADER_RENDERING})
 
+file(GLOB_RECURSE SOURCE_WORLDCONTEXT "${ENGINE_CORE_DIR}/WorldCOntext/*.cpp")
+file(GLOB_RECURSE HEADER_WORLDCONTEXT "${ENGINE_CORE_DIR}/WorldCOntext/*.hpp")
+source_group("WorldContext\\Source Files" FILES ${SOURCE_WORLDCONTEXT})
+source_group("WorldContext\\Header Files" FILES ${HEADER_WORLDCONTEXT})
+
 source_group("Reflection\\Source Files" FILES ${SOURCE_REFLECTION})
 source_group("Reflection\\Header Files" FILES ${HEADER_REFLECTION})
 
-file(GLOB_RECURSE SOURCE_MAIN EngineCore.cpp EntryPoint.cpp Logger.cpp Profiling.cpp)
-file(GLOB_RECURSE HEADER_MAIN EngineCore.hpp pch.hpp Logger.hpp Profiling.hpp ${COMMON_DIR}/Display/Display.hpp)
+file(GLOB_RECURSE SOURCE_MAIN EngineCore.cpp Logger.cpp Profiling.cpp EntryPoint.cpp)
+file(GLOB_RECURSE HEADER_MAIN EngineCore.hpp Logger.hpp Profiling.hpp pch.hpp ${COMMON_DIR}/Display/Display.hpp)
 
 set(ENGINE_CORE_SOURCES
 	${SOURCE_MAIN}
@@ -110,6 +115,7 @@ set(ENGINE_CORE_SOURCES
 	${SOURCE_RENDERING}
 	${SOURCE_EVENTS}
 	${SOURCE_MEMORY}
+	${SOURCE_WORLDCONTEXT}
 )
 
 set(ENGINE_CORE_HEADERS
@@ -135,6 +141,7 @@ set(ENGINE_CORE_HEADERS
 	${HEADER_RENDERING}
 	${HEADER_EVENTS}
 	${HEADER_MEMORY}
+	${HEADER_WORLDCONTEXT}
 )
 
 add_library(EngineCore MODULE ${ENGINE_CORE_SOURCES} ${ENGINE_CORE_HEADERS})

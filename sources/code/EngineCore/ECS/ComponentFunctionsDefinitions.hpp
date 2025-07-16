@@ -1,5 +1,8 @@
 #pragma once
 
+#include <entt/entt.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
+
 #include "ComponentFunctions.hpp"
 
 namespace Grindstone::ECS {
@@ -33,13 +36,33 @@ namespace Grindstone::ECS {
 		return registry.all_of<ComponentType>(entity);
 	}
 
-	template<typename ComponentType>
-	void CopyRegistryComponents(entt::registry& dst, entt::registry& src) {
-		auto& srcEntities = src.view<ComponentType>();
+	template<typename T, typename = void>
+	struct has_clone : std::false_type {};
 
-		for (entt::entity srcEntity : srcEntities) {
-			ComponentType srcComponent = src.get<ComponentType>(srcEntity);
-			dst.emplace_or_replace<ComponentType>(srcEntity, srcComponent);
+	template<typename T>
+	struct has_clone<T, std::void_t<decltype(std::declval<const T&>().Clone(
+		std::declval<Grindstone::WorldContextSet&>(), std::declval<entt::entity>()))>> : std::true_type {};
+
+	template<typename T>
+	constexpr bool has_clone_v = has_clone<T>::value;
+
+	template<typename ComponentType>
+	void CopyRegistryComponents(WorldContextSet& dst, WorldContextSet& src) {
+		entt::registry& srcRegistry = src.GetEntityRegistry();
+		entt::registry& dstRegistry = dst.GetEntityRegistry();
+
+		auto& srcEntities = srcRegistry.view<ComponentType>();
+		if constexpr (has_clone_v<ComponentType>) {
+			for (entt::entity entityID : srcEntities) {
+				ComponentType& srcComponent = srcRegistry.get<ComponentType>(entityID);
+				dstRegistry.emplace_or_replace<ComponentType>(entityID, srcComponent.Clone(dst, entityID));
+			}
+		}
+		else {
+			for (entt::entity entityID : srcEntities) {
+				ComponentType srcComponentCpy = srcRegistry.get<ComponentType>(entityID);
+				dstRegistry.emplace_or_replace<ComponentType>(entityID, srcComponentCpy);
+			}
 		}
 	}
 }

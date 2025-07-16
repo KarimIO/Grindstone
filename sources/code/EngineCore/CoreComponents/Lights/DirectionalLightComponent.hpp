@@ -5,6 +5,8 @@
 #include "Common/Math.hpp"
 
 namespace Grindstone {
+	class WorldContextSet;
+
 	namespace GraphicsAPI {
 		class Buffer;
 		class DescriptorSet;
@@ -45,6 +47,6 @@ namespace Grindstone {
 		REFLECT("DirectionalLight")
 	};
 
-	void SetupDirectionalLightComponent(entt::registry&, entt::entity);
-	void DestroyDirectionalLightComponent(entt::registry&, entt::entity);
+	void SetupDirectionalLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
+	void DestroyDirectionalLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
 }
