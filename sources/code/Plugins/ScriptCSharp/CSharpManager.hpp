@@ -27,8 +27,8 @@ namespace Grindstone {
 			virtual void Initialize();
 			virtual void LoadAssembly(const char* path, AssemblyData& outAssemblyData);
 			virtual void LoadAssemblyIntoMap(const char* path);
-			virtual void SetupComponent(entt::registry& registry, entt::entity entity, ScriptComponent& component);
-			virtual void DestroyComponent(entt::registry& registry, entt::entity entity, ScriptComponent& component);
+			virtual void SetupComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity, ScriptComponent& component);
+			virtual void DestroyComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity, ScriptComponent& component);
 			void RegisterComponents();
 			void RegisterComponent(std::string& csharpClass, ECS::ComponentFunctions& fns);
 			void CallCreateComponent(SceneManagement::Scene* scene, entt::entity entityHandle);

@@ -1,4 +1,5 @@
 #include <EngineCore/Reflection/ComponentReflection.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <Common/Graphics/Buffer.hpp>
@@ -17,12 +18,12 @@ REFLECT_STRUCT_BEGIN(PointLightComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::SetupPointLightComponent(entt::registry& registry, entt::entity entity) {
+void Grindstone::SetupPointLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	auto& engineCore = EngineCore::GetInstance();
 	auto graphicsCore = engineCore.GetGraphicsCore();
 	auto eventDispatcher = engineCore.GetEventDispatcher();
 
-	PointLightComponent& pointLightComponent = registry.get<PointLightComponent>(entity);
+	PointLightComponent& pointLightComponent = cxtSet.GetEntityRegistry().get<PointLightComponent>(entity);
 
 	/* TODO: Re-add this when you come back to point light shadows
 	uint32_t shadowResolution = static_cast<uint32_t>(pointLightComponent.shadowResolution);
@@ -135,11 +136,11 @@ void Grindstone::SetupPointLightComponent(entt::registry& registry, entt::entity
 	*/
 }
 
-void Grindstone::DestroyPointLightComponent(entt::registry& registry, entt::entity entity) {
+void Grindstone::DestroyPointLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	EngineCore& engineCore = EngineCore::GetInstance();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
-	PointLightComponent& pointLightComponent = registry.get<PointLightComponent>(entity);
+	PointLightComponent& pointLightComponent = cxtSet.GetEntityRegistry().get<PointLightComponent>(entity);
 	graphicsCore->DeleteDescriptorSet(pointLightComponent.descriptorSet);
 	graphicsCore->DeleteDescriptorSetLayout(pointLightComponent.descriptorSetLayout);
 	graphicsCore->DeleteBuffer(pointLightComponent.uniformBufferObject);

@@ -13,17 +13,19 @@ REFLECT_STRUCT_BEGIN(SphereColliderComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void SphereColliderComponent::Initialize() {
-	if (collisionShape) {
-		AllocatorCore::Free(collisionShape);
-	}
+SphereColliderComponent SphereColliderComponent::Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const {
+	SphereColliderComponent sphere{};
+	sphere.radius = radius;
 
-	collisionShape = AllocatorCore::Allocate<btSphereShape>(radius);
+	return sphere;
+}
+
+void SphereColliderComponent::Initialize() {
+	collisionShape = AllocatorCore::AllocateUnique<btSphereShape>(radius);
 }
 
 void SphereColliderComponent::SetRadius(float radius) {
-	AllocatorCore::Free(collisionShape);
-	collisionShape = AllocatorCore::Allocate<btSphereShape>(radius);
+	collisionShape = AllocatorCore::AllocateUnique<btSphereShape>(radius);
 
 	this->radius = radius;
 }
@@ -38,12 +40,16 @@ REFLECT_STRUCT_BEGIN(PlaneColliderComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void PlaneColliderComponent::Initialize() {
-	if (collisionShape) {
-		delete collisionShape;
-	}
+PlaneColliderComponent PlaneColliderComponent::Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const {
+	PlaneColliderComponent plane{};
+	plane.planeNormal = planeNormal;
+	plane.positionAlongNormal = positionAlongNormal;
 
-	collisionShape = new btStaticPlaneShape(
+	return plane;
+}
+
+void PlaneColliderComponent::Initialize() {
+	collisionShape = AllocatorCore::AllocateUnique<btStaticPlaneShape>(
 		btVector3(
 			planeNormal.x,
 			planeNormal.y,
@@ -54,8 +60,7 @@ void PlaneColliderComponent::Initialize() {
 }
 
 void PlaneColliderComponent::SetCollider(Float3 planeNormal, float positionAlongNormal) {
-	delete collisionShape;
-	collisionShape = new btStaticPlaneShape(
+	collisionShape = AllocatorCore::AllocateUnique<btStaticPlaneShape>(
 		btVector3(
 			planeNormal.x,
 			planeNormal.y,
@@ -81,10 +86,15 @@ REFLECT_STRUCT_BEGIN(BoxColliderComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void BoxColliderComponent::Initialize() {
-	AllocatorCore::Free(collisionShape);
+BoxColliderComponent BoxColliderComponent::Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const {
+	BoxColliderComponent box{};
+	box.size = size;
 
-	collisionShape = AllocatorCore::Allocate<btBoxShape>(
+	return box;
+}
+
+void BoxColliderComponent::Initialize() {
+	collisionShape = AllocatorCore::AllocateUnique<btBoxShape>(
 		btVector3(
 			size.x / 2.0f,
 			size.y / 2.0f,
@@ -94,9 +104,7 @@ void BoxColliderComponent::Initialize() {
 }
 
 void BoxColliderComponent::SetSize(Float3 size) {
-	AllocatorCore::Free(collisionShape);
-
-	collisionShape = AllocatorCore::Allocate<btBoxShape>(
+	collisionShape = AllocatorCore::AllocateUnique<btBoxShape>(
 		btVector3(
 			size.x / 2.0f,
 			size.y / 2.0f,
@@ -117,15 +125,20 @@ REFLECT_STRUCT_BEGIN(CapsuleColliderComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void CapsuleColliderComponent::Initialize() {
-	AllocatorCore::Free(collisionShape);
+CapsuleColliderComponent CapsuleColliderComponent::Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const {
+	CapsuleColliderComponent capsule{};
+	capsule.radius = radius;
+	capsule.height = height;
 
-	collisionShape = AllocatorCore::Allocate<btCapsuleShape>(btCapsuleShape(radius, height));
+	return capsule;
+}
+
+void CapsuleColliderComponent::Initialize() {
+	collisionShape = AllocatorCore::AllocateUnique<btCapsuleShape>(btCapsuleShape(radius, height));
 }
 
 void CapsuleColliderComponent::SetCollider(float radius, float height) {
-	AllocatorCore::Free(collisionShape);
-	collisionShape = AllocatorCore::Allocate<btCapsuleShape>(radius, height);
+	collisionShape = AllocatorCore::AllocateUnique<btCapsuleShape>(radius, height);
 
 	this->radius = radius;
 	this->height = height;

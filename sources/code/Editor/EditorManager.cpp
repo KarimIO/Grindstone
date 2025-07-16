@@ -21,6 +21,7 @@
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <EngineCore/PluginSystem/Manager.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
+#include <EngineCore/WorldContext/WorldContextManager.hpp>
 #include <EngineCore/Logger.hpp>
 
 #include "AssetRegistry.hpp"
@@ -125,6 +126,7 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 		return false;
 	}
 
+	editorWorldContext = &engineCore->GetWorldContextManager()->Create();
 	engineCore->InitializeScene(true);
 	engineCore->ShowMainWindow();
 
@@ -176,16 +178,18 @@ void Manager::TransferPlayMode(PlayMode newPlayMode) {
 	engineCore->GetInputManager()->SetCursorIsRawMotion(false);
 	engineCore->GetInputManager()->SetCursorMode(Input::CursorMode::Normal);
 
-	entt::registry& engineRegistry = engineCore->GetEntityRegistry();
+	Grindstone::WorldContextManager* worldContextManager = engineCore->GetWorldContextManager();
 	Grindstone::ECS::ComponentRegistrar* componentRegistry = engineCore->GetComponentRegistrar();
 	if (newPlayMode == PlayMode::Editor && playMode == PlayMode::Play) {
-		engineRegistry.swap(backupRegistry);
-		componentRegistry->CallDestroyOnRegistry(backupRegistry);
-		backupRegistry.clear();
+		componentRegistry->CallDestroyOnRegistry(*runtimeWorldContext);
+		worldContextManager->Remove(*runtimeWorldContext);
+		worldContextManager->SetActiveWorldContextSet(editorWorldContext);
 	}
 	else if (newPlayMode == PlayMode::Play && playMode == PlayMode::Editor) {
-		componentRegistry->CopyRegistry(backupRegistry, engineRegistry);
-		componentRegistry->CallCreateOnRegistry(engineRegistry);
+		runtimeWorldContext = &worldContextManager->Create();
+		componentRegistry->CopyRegistry(*runtimeWorldContext, *editorWorldContext);
+		componentRegistry->CallCreateOnRegistry(*editorWorldContext);
+		worldContextManager->SetActiveWorldContextSet(runtimeWorldContext);
 	}
 
 	selection.Clear();
@@ -291,7 +295,16 @@ Manager::~Manager() {
 		imguiEditor = nullptr;
 	}
 
-	backupRegistry.clear();
+	Grindstone::WorldContextManager* cxtManager = engineCore->GetWorldContextManager();
+	if (cxtManager) {
+		if (runtimeWorldContext) {
+			cxtManager->Remove(*runtimeWorldContext);
+		}
+
+		if (editorWorldContext) {
+			cxtManager->Remove(*editorWorldContext);
+		}
+	}
 
 	if (engineCoreLibraryHandle) {
 		using DestroyEngineFunction = void *();

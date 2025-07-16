@@ -5,12 +5,14 @@
 #include "EngineCore/ECS/Entity.hpp"
 
 namespace Grindstone {
+	class WorldContextSet;
+
 	struct EnvironmentMapComponent {
 		AssetReference<TextureAsset> specularTexture;
 
 		REFLECT("EnvironmentMap")
 	};
 
-	void SetupEnvironmentMapComponent(entt::registry&, entt::entity);
-	void DestroyEnvironmentMapComponent(entt::registry&, entt::entity);
+	void SetupEnvironmentMapComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
+	void DestroyEnvironmentMapComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
 }

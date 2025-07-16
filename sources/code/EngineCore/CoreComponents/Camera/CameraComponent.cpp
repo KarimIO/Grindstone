@@ -5,6 +5,7 @@
 #include <EngineCore/Events/Dispatcher.hpp>
 #include <EngineCore/Rendering/BaseRenderer.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
 
 #include "CameraComponent.hpp"
 
@@ -30,12 +31,12 @@ bool CameraComponent::OnWindowResize(Events::BaseEvent* ev) {
 	return false;
 }
 
-void Grindstone::SetupCameraComponent(entt::registry& registry, entt::entity entity) {
+void Grindstone::SetupCameraComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	auto& engineCore = EngineCore::GetInstance();
 	auto wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	auto eventDispatcher = engineCore.GetEventDispatcher();
 
-	CameraComponent& cameraComponent = registry.get<CameraComponent>(entity);
+	CameraComponent& cameraComponent = cxtSet.GetEntityRegistry().get<CameraComponent>(entity);
 
 	GraphicsAPI::RenderPass* renderPass = wgb->GetRenderPass();
 	if (renderPass != nullptr) {
@@ -53,7 +54,7 @@ void Grindstone::SetupCameraComponent(entt::registry& registry, entt::entity ent
 	);
 }
 
-void Grindstone::DestroyCameraComponent(entt::registry& registry, entt::entity entity) {
-	CameraComponent& cameraComponent = registry.get<CameraComponent>(entity);
+void Grindstone::DestroyCameraComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+	CameraComponent& cameraComponent = cxtSet.GetEntityRegistry().get<CameraComponent>(entity);
 	AllocatorCore::Free(cameraComponent.renderer);
 }

@@ -15,6 +15,6 @@ namespace Grindstone::Scripting::CSharp {
 		REFLECT("CSharpScript")
 	};
 
-	void SetupCSharpScriptComponent(entt::registry&, entt::entity);
-	void DestroyCSharpScriptComponent(entt::registry&, entt::entity);
+	void SetupCSharpScriptComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
+	void DestroyCSharpScriptComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
 }

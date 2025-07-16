@@ -1,5 +1,5 @@
-set(BULLETPHYS_SOURCES PhysicsSystem.cpp Core.cpp EntryPoint.cpp)
-set(BULLETPHYS_HEADERS PhysicsSystem.hpp Core.hpp)
+set(BULLETPHYS_SOURCES PhysicsSystem.cpp PhysicsWorldContext.cpp EntryPoint.cpp)
+set(BULLETPHYS_HEADERS PhysicsSystem.hpp PhysicsWorldContext.hpp)
 
 file(GLOB_RECURSE BULLETPHYS_COMPONENTS_SOURCES "Components/*.cpp")
 file(GLOB_RECURSE BULLETPHYS_COMPONENTS_HEADER "Components/*.hpp")

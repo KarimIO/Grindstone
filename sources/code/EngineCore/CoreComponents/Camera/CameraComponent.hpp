@@ -6,6 +6,7 @@
 
 namespace Grindstone {
 	class BaseRenderer;
+	class WorldContextSet;
 
 	namespace Events {
 		struct BaseEvent;
@@ -25,6 +26,6 @@ namespace Grindstone {
 		REFLECT("Camera")
 	};
 
-	void SetupCameraComponent(entt::registry&, entt::entity);
-	void DestroyCameraComponent(entt::registry&, entt::entity);
+	void SetupCameraComponent(Grindstone::WorldContextSet&, entt::entity);
+	void DestroyCameraComponent(Grindstone::WorldContextSet&, entt::entity);
 }

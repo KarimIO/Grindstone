@@ -14,6 +14,7 @@
 #include <EngineCore/Rendering/BaseRenderer.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
 #include <EngineCore/Rendering/RenderPassRegistry.hpp>
+#include <EngineCore/WorldContext/WorldContextManager.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <Common/Event/WindowEvent.hpp>
 #include <Common/Graphics/Core.hpp>
@@ -85,6 +86,8 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 		eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowForceQuit, std::bind(&EngineCore::OnForceQuit, this, std::placeholders::_1));
 	}
 
+	worldContextManager = AllocatorCore::Allocate<Grindstone::WorldContextManager>();
+
 	{
 		GRIND_PROFILE_SCOPE("Initialize Graphics Core");
 		GraphicsAPI::Core::CreateInfo graphicsCoreInfo{ mainWindow, true };
@@ -152,14 +155,14 @@ void EngineCore::RunEditorLoopIteration() {
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Running", projectPath / "log/grind-profile-run.json");
 	assetManager->ReloadQueuedAssets();
 	CalculateDeltaTime();
-	systemRegistrar->EditorUpdate(entityRegistry);
+	systemRegistrar->EditorUpdate(GetEntityRegistry());
 	GRIND_PROFILE_END_SESSION();
 }
 
 void EngineCore::RunLoopIteration() {
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Running", projectPath / "log/grind-profile-run.json");
 	CalculateDeltaTime();
-	systemRegistrar->Update(entityRegistry);
+	systemRegistrar->Update(GetEntityRegistry());
 	GRIND_PROFILE_END_SESSION();
 }
 
@@ -187,6 +190,8 @@ EngineCore::~EngineCore() {
 		pluginManager->UnloadPluginList();
 	}
 
+	AllocatorCore::Free(worldContextManager);
+	AllocatorCore::Free(renderpassRegistry);
 	AllocatorCore::Free(sceneManager);
 	AllocatorCore::Free(assetRendererManager);
 	AllocatorCore::Free(assetManager);
@@ -246,12 +251,16 @@ Events::Dispatcher* EngineCore::GetEventDispatcher() const {
 	return eventDispatcher;
 }
 
-BaseRendererFactory* EngineCore::GetRendererFactory() {
+BaseRendererFactory* EngineCore::GetRendererFactory() const {
 	return rendererFactory;
 }
 
-RenderPassRegistry* Grindstone::EngineCore::GetRenderPassRegistry() {
+RenderPassRegistry* EngineCore::GetRenderPassRegistry() const {
 	return renderpassRegistry;
+}
+
+WorldContextManager* EngineCore::GetWorldContextManager() const {
+	return worldContextManager;
 }
 
 std::filesystem::path EngineCore::GetProjectPath() const {
@@ -297,7 +306,7 @@ bool EngineCore::OnForceQuit(Grindstone::Events::BaseEvent* ev) {
 }
 
 entt::registry& EngineCore::GetEntityRegistry() {
-	return entityRegistry;
+	return worldContextManager->GetActiveWorldContextSet()->GetEntityRegistry();
 }
 
 void EngineCore::ReloadCsharpBinaries() {

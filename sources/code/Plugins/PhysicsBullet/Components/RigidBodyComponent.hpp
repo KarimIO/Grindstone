@@ -9,16 +9,18 @@ class btRigidBody;
 
 namespace Grindstone {
 	struct TransformComponent;
+	class WorldContextSet;
 
 	namespace Physics {
 		struct ColliderComponent;
 
-		void SetupRigidBodyComponent(entt::registry&, entt::entity);
-		void DestroyRigidBodyComponent(entt::registry&, entt::entity);
+		void SetupRigidBodyComponent(Grindstone::WorldContextSet&, entt::entity);
+		void DestroyRigidBodyComponent(Grindstone::WorldContextSet&, entt::entity);
 
 		struct RigidBodyComponent {
 			RigidBodyComponent() = default;
 			RigidBodyComponent(float mass, ColliderComponent* colliderComponent);
+			RigidBodyComponent Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const;
 
 			void SetCollisionShape(ColliderComponent* colliderComponent);
 			void SetFriction(float friction);
@@ -42,12 +44,13 @@ namespace Grindstone {
 			float dampingLinear = 0.0f;
 			float dampingRotational = 0.0f;
 		public:
-			btRigidBody* rigidBody = nullptr;
+			Grindstone::UniquePtr<btRigidBody> rigidBody = nullptr;
 
 			REFLECT("RigidBody")
 		};
 
 		void SetupRigidBodyComponentWithCollider(
+			Grindstone::WorldContextSet& cxt,
 			RigidBodyComponent* rigidBodyComponent,
 			TransformComponent* transformComponent,
 			ColliderComponent* colliderComponent

@@ -1,6 +1,9 @@
-#include "Common/Math.hpp"
-#include "ScriptComponent.hpp"
+#include <Common/Math.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
+
 #include "../CSharpManager.hpp"
+#include "ScriptComponent.hpp"
+
 using namespace Grindstone::Scripting::CSharp;
 
 REFLECT_STRUCT_BEGIN(ScriptComponent)
@@ -11,17 +14,17 @@ REFLECT_STRUCT_BEGIN(ScriptComponent)
 REFLECT_STRUCT_END()
 
 void Grindstone::Scripting::CSharp::SetupCSharpScriptComponent(
-	entt::registry& registry,
+	Grindstone::WorldContextSet& cxtSet,
 	entt::entity entity
 ) {
 	CSharpManager& csManager = CSharpManager::GetInstance();
-	ScriptComponent& component = registry.get<ScriptComponent>(entity);
-	csManager.SetupComponent(registry, entity, component);
+	ScriptComponent& component = cxtSet.GetEntityRegistry().get<ScriptComponent>(entity);
+	csManager.SetupComponent(cxtSet, entity, component);
 }
 
-void Grindstone::Scripting::CSharp::DestroyCSharpScriptComponent(entt::registry& registry, entt::entity entity) {
+void Grindstone::Scripting::CSharp::DestroyCSharpScriptComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	CSharpManager& csManager = CSharpManager::GetInstance();
-	ScriptComponent& component = registry.get<ScriptComponent>(entity);
-	csManager.DestroyComponent(registry, entity, component);
+	ScriptComponent& component = cxtSet.GetEntityRegistry().get<ScriptComponent>(entity);
+	csManager.DestroyComponent(cxtSet, entity, component);
 }
 

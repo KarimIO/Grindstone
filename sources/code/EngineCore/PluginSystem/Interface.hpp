@@ -17,6 +17,7 @@
 #include <EngineCore/ECS/SystemFactory.hpp>
 #include <EngineCore/ECS/SystemRegistrar.hpp>
 #include <EngineCore/Logger.hpp>
+#include <EngineCore/WorldContext/WorldContext.hpp>
 
 namespace Grindstone {
 	namespace Memory::AllocatorCore {
@@ -75,6 +76,13 @@ namespace Grindstone {
 			virtual void SetReloadCsharpCallback(std::function<void()> callback);
 			virtual Grindstone::Logger::LoggerState* GetLoggerState() const;
 			virtual Grindstone::Memory::AllocatorCore::AllocatorState* GetAllocatorState() const;
+			virtual void RegisterWorldContextFactory(Grindstone::HashedString contextName, Grindstone::UniquePtr<Grindstone::WorldContext> (*FactoryFn)());
+			virtual void UnregisterWorldContextFactory(Grindstone::HashedString contextName);
+
+			template<typename ClassType>
+			void RegisterWorldContextFactory(Grindstone::HashedString contextName) {
+				RegisterWorldContextFactory(contextName, Grindstone::WorldContext::Create<ClassType>);
+			}
 
 			template<typename ClassType>
 			void RegisterComponent(Grindstone::ECS::SetupComponentFn setupComponentFn = nullptr, Grindstone::ECS::DestroyComponentFn destroyComponentFn = nullptr) {

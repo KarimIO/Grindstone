@@ -55,29 +55,35 @@ namespace Grindstone::Memory::Allocators {
 #endif
 
 		template<typename T, typename... Args>
-		Grindstone::Memory::SmartPointers::SharedPtr<T> AllocateShared(Args&&... params) {
+		Grindstone::SharedPtr<T> AllocateShared(Args&&... params) {
+			static_assert(std::is_constructible_v<T, Args...>, "Type T must be constructible with given arguments.");
+
 			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T), alignof(T), typeid(T).name()));
 			if (ptr != nullptr) {
 				// Call the constructor on the newly allocated memory
 				new (ptr) T(std::forward<Args>(params)...);
 			}
 
-			return Grindstone::Memory::SmartPointers::SharedPtr<T>(ptr, deleterFn);
+			return Grindstone::SharedPtr<T>(ptr, deleterFn);
 		}
 
 		template<typename T, typename... Args>
-		Grindstone::Memory::SmartPointers::UniquePtr<T> AllocateUnique(Args&&... params) {
+		Grindstone::UniquePtr<T> AllocateUnique(Args&&... params) {
+			static_assert(std::is_constructible_v<T, Args...>, "Type T must be constructible with given arguments.");
+
 			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T), alignof(T), typeid(T).name()));
 			if (ptr != nullptr) {
 				// Call the constructor on the newly allocated memory
 				new (ptr) T(std::forward<Args>(params)...);
 			}
 
-			return Grindstone::Memory::SmartPointers::UniquePtr<T>(ptr, deleterFn);
+			return Grindstone::UniquePtr<T>(ptr, deleterFn);
 		}
 
 		template<typename T, typename... Args>
 		T* AllocateRaw(Args&&... params) {
+			static_assert(std::is_constructible_v<T, Args...>, "Type T must be constructible with given arguments.");
+
 			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T), alignof(T), typeid(T).name()));
 			if (ptr != nullptr) {
 				// Call the constructor on the newly allocated memory

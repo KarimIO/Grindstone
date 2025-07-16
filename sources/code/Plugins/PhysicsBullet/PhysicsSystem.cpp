@@ -3,7 +3,7 @@
 #include "PhysicsSystem.hpp"
 #include "Components/RigidBodyComponent.hpp"
 #include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
-#include "Core.hpp"
+#include "PhysicsWorldContext.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::Physics;
@@ -32,12 +32,13 @@ static void SimulatePhysicsForObject(
 
 namespace Grindstone {
 	void PhysicsBulletSystem(entt::registry& registry) {
-		Core& core = Core::GetInstance();
+		Physics::WorldContext* cxt = Physics::WorldContext::GetActiveContext();
+		if (cxt != nullptr) {
+			btScalar dt = 1.0f / 30.0f;
+			cxt->dynamicsWorld->stepSimulation(dt, 10);
 
-		btScalar dt = 1.0f / 30.0f;
-		core.dynamicsWorld->stepSimulation(dt, 10);
-
-		registry.view<Physics::RigidBodyComponent, TransformComponent>()
-			.each(SimulatePhysicsForObject);
+			registry.view<Physics::RigidBodyComponent, TransformComponent>()
+				.each(SimulatePhysicsForObject);
+		}
 	}
 }

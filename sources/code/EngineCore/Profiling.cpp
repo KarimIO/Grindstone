@@ -10,7 +10,7 @@ static void WriteProfile(std::ofstream& outputStream, const Result& result) {
 	std::string name = result.name;
 	std::replace(name.begin(), name.end(), '"', '\'');
 
-	long long duration = result.end - result.start;
+	long long duration = static_cast<long long>(result.end - result.start);
 
 	outputStream << "{\"cat\":\"function\",\"dur\":" << duration
 		<< ",\"name\":\"" << name << "\",\"ph\":\"X\",\"pid\":0,\"tid\":" << result.threadId

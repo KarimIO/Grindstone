@@ -54,6 +54,7 @@ namespace Grindstone {
 	class AssetRendererManager;
 	class BaseRendererFactory;
 	class RenderPassRegistry;
+	class WorldContextManager;
 
 	class EngineCore {
 	public:
@@ -90,8 +91,9 @@ namespace Grindstone {
 		virtual ECS::ComponentRegistrar* GetComponentRegistrar() const;
 		virtual GraphicsAPI::Core* GetGraphicsCore() const;
 		virtual Profiler::Manager* GetProfiler() const;
-		virtual BaseRendererFactory* GetRendererFactory();
-		virtual RenderPassRegistry* GetRenderPassRegistry();
+		virtual BaseRendererFactory* GetRendererFactory() const;
+		virtual RenderPassRegistry* GetRenderPassRegistry() const;
+		virtual WorldContextManager* GetWorldContextManager() const;
 		virtual std::filesystem::path GetProjectPath() const;
 		virtual std::filesystem::path GetBinaryPath() const;
 		virtual std::filesystem::path GetEngineBinaryPath() const;
@@ -111,6 +113,7 @@ namespace Grindstone {
 		WindowManager* windowManager = nullptr;
 		Assets::AssetManager* assetManager = nullptr;
 		AssetRendererManager* assetRendererManager = nullptr;
+		WorldContextManager* worldContextManager = nullptr;
 		Profiler::Manager* profiler = nullptr;
 		std::function<void()> callbackReloadCsharp;
 		bool isEditor = false;
@@ -134,6 +137,5 @@ namespace Grindstone {
 		std::filesystem::path engineBinaryPath;
 		std::filesystem::path engineAssetsPath;
 		std::filesystem::path assetsPath;
-		entt::registry entityRegistry;
 	};
 }
