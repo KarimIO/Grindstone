@@ -1,19 +1,20 @@
 #include <Common/Assert.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
 #include "WorldContextManager.hpp"
 
 void Grindstone::WorldContextManager::Register(HashedString name, Grindstone::UniquePtr<Grindstone::WorldContext>(*factoryFn)()) {
 	factoryFunctions.emplace(name, factoryFn);
 
-	for (Grindstone::WorldContextSet& newCxt : worldContextSets) {
-		newCxt.Create(name, factoryFn());
+	for (Grindstone::UniquePtr<Grindstone::WorldContextSet>& newCxt : worldContextSets) {
+		newCxt->Create(name, factoryFn());
 	}
 }
 
 void Grindstone::WorldContextManager::Unregister(HashedString name) {
 	factoryFunctions.erase(name);
 
-	for (Grindstone::WorldContextSet& newCxt : worldContextSets) {
-		newCxt.Remove(name);
+	for (Grindstone::UniquePtr<Grindstone::WorldContextSet>& newCxt : worldContextSets) {
+		newCxt->Remove(name);
 	}
 }
 
@@ -21,42 +22,50 @@ Grindstone::WorldContextSet* Grindstone::WorldContextManager::GetActiveWorldCont
 	GS_ASSERT_ENGINE(activeWorldIndex < worldContextSets.size());
 
 	return worldContextSets.size() > 0
-		? &worldContextSets[activeWorldIndex]
+		? worldContextSets[activeWorldIndex].Get()
 		: nullptr;
 }
 
 void Grindstone::WorldContextManager::SetActiveWorldContextSet(Grindstone::WorldContextSet* cxtSet) {
-	GS_ASSERT_ENGINE(cxtSet >= worldContextSets.data() && cxtSet < worldContextSets.data() + worldContextSets.size());
+	for (size_t i = 0; i < worldContextSets.size(); ++i) {
+		UniquePtr<WorldContextSet>& cxt = worldContextSets[i];
+		if (cxt.Get() == cxtSet) {
+			activeWorldIndex = i;
+			return;
+		}
+	}
 
-	auto it = worldContextSets.begin() + (cxtSet - &worldContextSets[0]);
-	size_t index = std::distance(worldContextSets.begin(), it);
-
-	activeWorldIndex = index;
+	GS_ASSERT_LOG("Invalid WorldContextSet set to active!");
 }
 
-Grindstone::WorldContextSet& Grindstone::WorldContextManager::Create() {
-	Grindstone::WorldContextSet& newCxt = worldContextSets.emplace_back();
-	newCxt.GetEntityRegistry().clear();
+Grindstone::WorldContextSet* Grindstone::WorldContextManager::Create() {
+	Grindstone::UniquePtr<Grindstone::WorldContextSet>& newCxt = worldContextSets.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<Grindstone::WorldContextSet>());
+	newCxt->GetEntityRegistry().clear();
 
 	for (const auto& it : factoryFunctions) {
-		newCxt.Create(it.first, std::move(it.second()));
+		newCxt->Create(it.first, std::move(it.second()));
 	}
 
 	if (worldContextSets.size() == 1) {
 		activeWorldIndex = 0;
 	}
 
-	return newCxt;
+	return newCxt.Get();
 }
 
-void Grindstone::WorldContextManager::Remove(Grindstone::WorldContextSet& cxtSet) {
-	GS_ASSERT_ENGINE(&cxtSet >= worldContextSets.data() && &cxtSet < worldContextSets.data() + worldContextSets.size());
+void Grindstone::WorldContextManager::Remove(Grindstone::WorldContextSet* cxtSet) {
+	for (size_t i = 0; i < worldContextSets.size(); ++i) {
+		UniquePtr<WorldContextSet>& cxt = worldContextSets[i];
+		if (cxt.Get() == cxtSet) {
+			auto it = worldContextSets.begin() + i;
+			worldContextSets.erase(it);
 
-	auto it = worldContextSets.begin() + (&cxtSet - &worldContextSets[0]);
-	size_t index = std::distance(worldContextSets.begin(), it);
-	worldContextSets.erase(it);
-
-	if (activeWorldIndex >= index) {
-		activeWorldIndex -= 1;
+			if (activeWorldIndex >= i) {
+				activeWorldIndex -= 1;
+			}
+			return;
+		}
 	}
+
+	GS_ASSERT_LOG("Trying to remove invalid WorldContextSet!");
 }

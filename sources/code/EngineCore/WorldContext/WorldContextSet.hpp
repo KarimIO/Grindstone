@@ -10,7 +10,7 @@
 namespace Grindstone {
 	class WorldContextSet {
 	public:
-		WorldContextSet() = default;
+		WorldContextSet() : registry(), contexts() {}
 
 		WorldContextSet(const WorldContextSet&) = delete;
 		WorldContextSet& operator=(const WorldContextSet&) = delete;

@@ -126,7 +126,7 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 		return false;
 	}
 
-	editorWorldContext = &engineCore->GetWorldContextManager()->Create();
+	editorWorldContext = engineCore->GetWorldContextManager()->Create();
 	engineCore->InitializeScene(true);
 	engineCore->ShowMainWindow();
 
@@ -182,11 +182,11 @@ void Manager::TransferPlayMode(PlayMode newPlayMode) {
 	Grindstone::ECS::ComponentRegistrar* componentRegistry = engineCore->GetComponentRegistrar();
 	if (newPlayMode == PlayMode::Editor && playMode == PlayMode::Play) {
 		componentRegistry->CallDestroyOnRegistry(*runtimeWorldContext);
-		worldContextManager->Remove(*runtimeWorldContext);
+		worldContextManager->Remove(runtimeWorldContext);
 		worldContextManager->SetActiveWorldContextSet(editorWorldContext);
 	}
 	else if (newPlayMode == PlayMode::Play && playMode == PlayMode::Editor) {
-		runtimeWorldContext = &worldContextManager->Create();
+		runtimeWorldContext = worldContextManager->Create();
 		componentRegistry->CopyRegistry(*runtimeWorldContext, *editorWorldContext);
 		componentRegistry->CallCreateOnRegistry(*editorWorldContext);
 		worldContextManager->SetActiveWorldContextSet(runtimeWorldContext);
@@ -298,11 +298,11 @@ Manager::~Manager() {
 	Grindstone::WorldContextManager* cxtManager = engineCore->GetWorldContextManager();
 	if (cxtManager) {
 		if (runtimeWorldContext) {
-			cxtManager->Remove(*runtimeWorldContext);
+			cxtManager->Remove(runtimeWorldContext);
 		}
 
 		if (editorWorldContext) {
-			cxtManager->Remove(*editorWorldContext);
+			cxtManager->Remove(editorWorldContext);
 		}
 	}
 
