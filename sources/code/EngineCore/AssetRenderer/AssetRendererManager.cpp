@@ -25,7 +25,7 @@ void AssetRendererManager::SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* de
 
 void AssetRendererManager::RenderQueue(
 	GraphicsAPI::CommandBuffer* commandBuffer,
-	const entt::registry& registry,
+	entt::registry& registry,
 	Grindstone::HashedString renderQueue
 ) {
 	std::string renderQueueLabel = fmt::format("Render Queue '{}'", renderQueue.ToString());

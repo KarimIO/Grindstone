@@ -27,6 +27,16 @@ namespace Grindstone::Memory::AllocatorCore {
 
 	void* AllocateRaw(size_t size, size_t alignment, const char* debugName);
 
+	template<typename T>
+	Grindstone::SharedPtr<T> MakeShared(T* ptr) {
+		return GetAllocatorState()->dynamicAllocator.MakeShared(ptr);
+	}
+
+	template<typename T>
+	Grindstone::UniquePtr<T> MakeUnique(T* ptr) {
+		return GetAllocatorState()->dynamicAllocator.MakeUnique(ptr);
+	}
+
 	template<typename T, typename... Args>
 	Grindstone::UniquePtr<T> AllocateUnique(Args&&... params) {
 		return GetAllocatorState()->dynamicAllocator.AllocateUnique<T>(std::forward<Args>(params)...);

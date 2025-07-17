@@ -54,6 +54,16 @@ namespace Grindstone::Memory::Allocators {
 		}
 #endif
 
+		template<typename T>
+		Grindstone::SharedPtr<T> MakeShared(T* ptr) {
+			return Grindstone::SharedPtr<T>(ptr, deleterFn);
+		}
+
+		template<typename T>
+		Grindstone::UniquePtr<T> MakeUnique(T* ptr) {
+			return Grindstone::UniquePtr<T>(ptr, deleterFn);
+		}
+
 		template<typename T, typename... Args>
 		Grindstone::SharedPtr<T> AllocateShared(Args&&... params) {
 			static_assert(std::is_constructible_v<T, Args...>, "Type T must be constructible with given arguments.");

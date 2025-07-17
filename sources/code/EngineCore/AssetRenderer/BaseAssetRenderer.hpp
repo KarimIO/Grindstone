@@ -24,7 +24,7 @@ namespace Grindstone {
 		virtual void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) = 0;
 		virtual void RenderQueue(
 			GraphicsAPI::CommandBuffer* commandBuffer,
-			const entt::registry& registry,
+			entt::registry& registry,
 			Grindstone::HashedString renderQueueHash
 		) = 0;
 	};
