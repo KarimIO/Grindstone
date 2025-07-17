@@ -490,10 +490,8 @@ bool Vulkan::Core::CheckDeviceExtensionSupport(VkPhysicalDevice device) {
 }
 
 Vulkan::Core::~Core() {
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		vkDestroySemaphore(device, renderFinishedSemaphores[i], allocator->GetAllocationCallbacks());
-		vkDestroySemaphore(device, imageAvailableSemaphores[i], allocator->GetAllocationCallbacks());
-		vkDestroyFence(device, inFlightFences[i], allocator->GetAllocationCallbacks());
+	for (auto& pipeline : graphicsPipelineCache) {
+		DeleteGraphicsPipeline(pipeline.second);
 	}
 
 	vkDestroyCommandPool(device, commandPoolGraphics, allocator->GetAllocationCallbacks());

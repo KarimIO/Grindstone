@@ -33,6 +33,7 @@ namespace Grindstone::GraphicsAPI {
 			bool debug;
 		};
 
+		virtual ~Core() {}
 		virtual bool Initialize(const CreateInfo& createInfo) = 0;
 		virtual void RegisterWindow(Window* window) = 0;
 		API GetAPI() const {
