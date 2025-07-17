@@ -63,7 +63,7 @@ extern "C" {
 		);
 
 		pluginInterface->RegisterWorldContextFactory<Grindstone::Physics::WorldContext>(physicsWorldContextName);
-		pluginInterface->RegisterComponent<RigidBodyComponent>(SetupRigidBodyComponent, DestroyRigidBodyComponent);
+		pluginInterface->RegisterComponent<RigidBodyComponent>(SetupRigidBodyComponent);
 		pluginInterface->RegisterSystem("PhysicsSystem", PhysicsBulletSystem);
 	}
 

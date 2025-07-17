@@ -49,16 +49,6 @@ void Grindstone::Physics::SetupRigidBodyComponent(Grindstone::WorldContextSet& c
 	SetupRigidBodyComponentWithCollider(cxtSet, &rigidBodyComponent, &transformComponent, colliderComponent);
 }
 
-void Grindstone::Physics::DestroyRigidBodyComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
-	entt::registry& registry = cxtSet.GetEntityRegistry();
-	RigidBodyComponent& rigidBodyComponent = registry.get<RigidBodyComponent>(entity);
-	btRigidBody* rigidbody = rigidBodyComponent.rigidBody.Get();
-
-	if (rigidbody != nullptr) {
-		AllocatorCore::Free(rigidbody->getMotionState());
-	}
-}
-
 void Grindstone::Physics::SetupRigidBodyComponentWithCollider(
 	Grindstone::WorldContextSet& cxtSet,
 	RigidBodyComponent* rigidBodyComponent,
@@ -79,9 +69,10 @@ void Grindstone::Physics::SetupRigidBodyComponentWithCollider(
 	);
 	btTransform transformMatrix(quaternion, position);
 
+	rigidBodyComponent->motionState = AllocatorCore::AllocateUnique<btDefaultMotionState>(transformMatrix);
 	rigidBodyComponent->rigidBody = AllocatorCore::AllocateUnique<btRigidBody>(
 		rigidBodyComponent->GetMass(),
-		AllocatorCore::Allocate<btDefaultMotionState>(transformMatrix),
+		rigidBodyComponent->motionState.Get(),
 		colliderComponent->collisionShape.Get()
 	);
 	rigidBodyComponent->rigidBody->setUserPointer(&rigidBodyComponent);
@@ -93,9 +84,10 @@ void Grindstone::Physics::SetupRigidBodyComponentWithCollider(
 }
 
 RigidBodyComponent::RigidBodyComponent(float mass, ColliderComponent* colliderComponent) : mass(mass) {
-	btDefaultMotionState* motionState = AllocatorCore::Allocate<btDefaultMotionState>();
+	motionState = AllocatorCore::AllocateUnique<btDefaultMotionState>();
 
-	rigidBody = AllocatorCore::AllocateUnique<btRigidBody>(mass, motionState, colliderComponent->collisionShape.Get());
+	rigidBody = AllocatorCore::AllocateUnique<btRigidBody>(mass, motionState.Get(), colliderComponent->collisionShape.Get());
+	rigidBody->setUserPointer(this);
 }
 
 RigidBodyComponent RigidBodyComponent::Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const {

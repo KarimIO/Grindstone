@@ -15,7 +15,6 @@ namespace Grindstone {
 		struct ColliderComponent;
 
 		void SetupRigidBodyComponent(Grindstone::WorldContextSet&, entt::entity);
-		void DestroyRigidBodyComponent(Grindstone::WorldContextSet&, entt::entity);
 
 		struct RigidBodyComponent {
 			RigidBodyComponent() = default;
@@ -45,6 +44,7 @@ namespace Grindstone {
 			float dampingRotational = 0.0f;
 		public:
 			Grindstone::UniquePtr<btRigidBody> rigidBody = nullptr;
+			Grindstone::UniquePtr<btDefaultMotionState> motionState = nullptr;
 
 			REFLECT("RigidBody")
 		};
