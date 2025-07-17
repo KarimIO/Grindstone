@@ -15,7 +15,7 @@ namespace Grindstone {
 
 		void CommandList::AddComponent(
 			ECS::Entity entity,
-			const char* componentName
+			Grindstone::HashedString componentName
 		) {
 			AddCommand(new AddComponentCommand(entity, componentName));
 		}

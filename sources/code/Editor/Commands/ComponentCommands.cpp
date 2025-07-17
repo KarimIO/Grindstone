@@ -2,17 +2,17 @@
 #include "EngineCore/Scenes/Scene.hpp"
 using namespace Grindstone::Editor;
 
-AddComponentCommand::AddComponentCommand(ECS::Entity entity, const char* componentName)
+AddComponentCommand::AddComponentCommand(ECS::Entity entity, Grindstone::HashedString componentName)
 	: entity(entity), componentName(componentName) {
-	entity.AddComponent(Grindstone::HashedString(componentName));
+	entity.AddComponent(componentName);
 }
 
 void AddComponentCommand::Redo() {
-	entity.AddComponent(Grindstone::HashedString(componentName.c_str()));
+	entity.AddComponent(componentName);
 }
 
 void AddComponentCommand::Undo() {
-	entity.RemoveComponent(Grindstone::HashedString(componentName.c_str()));
+	entity.RemoveComponent(componentName);
 }
 
 void DeleteComponentCommand::Redo() {
