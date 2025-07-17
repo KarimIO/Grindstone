@@ -428,13 +428,13 @@ void CSharpManager::RegisterComponents() {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 	auto& componentRegistrar = *engineCore.GetComponentRegistrar();
 	for (auto& component : componentRegistrar) {
-		auto& componentName = (std::string&)component.first;
+		const Grindstone::String& componentName = component.first.ToString();
 		auto fns = component.second;
 		RegisterComponent(componentName, fns);
 	}
 }
 
-void CSharpManager::RegisterComponent(std::string& componentName, ECS::ComponentFunctions& fns) {
+void CSharpManager::RegisterComponent(const Grindstone::String& componentName, ECS::ComponentFunctions& fns) {
 	std::string csharpClass = "Grindstone." + componentName + "Component";
 }
 

@@ -7,6 +7,7 @@
 #include "rapidjson/document.h"
 #include "rapidjson/prettywriter.h"
 
+#include <Common/HashedString.hpp>
 #include "../ECS/Entity.hpp"
 #include "../Reflection/TypeDescriptorStruct.hpp"
 
@@ -24,7 +25,7 @@ namespace Grindstone::SceneManagement {
 		void ProcessEntity(entt::registry& registry, ECS::Entity entity);
 		void ProcessComponent(
 			ECS::Entity entity,
-			const char* componentTypeName,
+			Grindstone::HashedString componentTypeName,
 			Grindstone::Reflection::TypeDescriptor_Struct& componentReflectionData,
 			void* outComponent
 		);

@@ -6,6 +6,7 @@
 
 #include <EngineCore/ECS/EntityHandle.hpp>
 #include <EngineCore/Reflection/ComponentReflection.hpp>
+#include <Common/HashedString.hpp>
 
 #include "ComponentFunctions.hpp"
 #include "ComponentFunctionsDefinitions.hpp"
@@ -17,23 +18,26 @@ namespace Grindstone::ECS {
 	public:
 		template<typename ComponentType>
 		void RegisterComponent(SetupComponentFn setupComponentFn = nullptr, DestroyComponentFn destroyComponentFn = nullptr) {
-			RegisterComponent(ComponentType::GetComponentName(), ComponentFunctions{
-				setupComponentFn,
-				destroyComponentFn,
-				&ECS::CreateComponent<ComponentType>,
-				&ECS::RemoveComponent<ComponentType>,
-				&ECS::HasComponent<ComponentType>,
-				&ECS::TryGetComponent<ComponentType>,
-				&ECS::GetComponentReflectionData<ComponentType>,
-				&ECS::CopyRegistryComponents<ComponentType>
-			});
+			RegisterComponent(
+				ComponentType::GetComponentHashString(),
+				ComponentFunctions{
+					setupComponentFn,
+					destroyComponentFn,
+					&ECS::CreateComponent<ComponentType>,
+					&ECS::RemoveComponent<ComponentType>,
+					&ECS::HasComponent<ComponentType>,
+					&ECS::TryGetComponent<ComponentType>,
+					&ECS::GetComponentReflectionData<ComponentType>,
+					&ECS::CopyRegistryComponents<ComponentType>
+				}
+			);
 		}
 
 		template<typename ComponentType>
 		void UnregisterComponent() {
 			Grindstone::EngineCore::GetInstance().GetEntityRegistry().clear<ComponentType>();
 
-			auto comp = componentFunctionsList.find(ComponentType::GetComponentName());
+			auto comp = componentFunctionsList.find(ComponentType::GetComponentHashString());
 			if (comp != componentFunctionsList.end()) {
 				componentFunctionsList.erase(comp);
 			}
@@ -43,19 +47,19 @@ namespace Grindstone::ECS {
 		virtual void CallCreateOnRegistry(WorldContextSet& worldContextSet);
 		virtual void CallDestroyOnRegistry(WorldContextSet& worldContextSet);
 		virtual void DestroyEntity(ECS::Entity entity);
-		virtual void RegisterComponent(const char* name, ComponentFunctions componentFunctions);
-		virtual void UnregisterComponent(const char* name);
-		virtual void* CreateComponentWithSetup(const char* name, ECS::Entity entity);
-		virtual void* CreateComponentWithSetup(WorldContextSet& worldContextSet, const char* name, ECS::Entity entity);
-		virtual void* CreateComponent(const char *name, ECS::Entity entity);
-		virtual void RemoveComponent(const char *name, ECS::Entity entity);
-		virtual bool HasComponent(const char* name, ECS::Entity entity);
-		virtual bool TryGetComponent(const char *name, ECS::Entity entity, void*& outComponent);
-		virtual bool TryGetComponentReflectionData(const char *name, Grindstone::Reflection::TypeDescriptor_Struct& outReflectionData);
-		virtual void SetupComponent(const char* componentType, ECS::Entity entity, void* componentPtr);
-		virtual void SetupComponent(WorldContextSet& worldContextSet, const char* componentType, ECS::Entity entity, void* componentPtr);
+		virtual void RegisterComponent(Grindstone::HashedString name, ComponentFunctions componentFunctions);
+		virtual void UnregisterComponent(Grindstone::HashedString name);
+		virtual void* CreateComponentWithSetup(Grindstone::HashedString name, ECS::Entity entity);
+		virtual void* CreateComponentWithSetup(WorldContextSet& worldContextSet, Grindstone::HashedString name, ECS::Entity entity);
+		virtual void* CreateComponent(Grindstone::HashedString name, ECS::Entity entity);
+		virtual void RemoveComponent(Grindstone::HashedString name, ECS::Entity entity);
+		virtual bool HasComponent(Grindstone::HashedString name, ECS::Entity entity);
+		virtual bool TryGetComponent(Grindstone::HashedString name, ECS::Entity entity, void*& outComponent);
+		virtual bool TryGetComponentReflectionData(Grindstone::HashedString name, Grindstone::Reflection::TypeDescriptor_Struct& outReflectionData);
+		virtual void SetupComponent(Grindstone::HashedString componentType, ECS::Entity entity, void* componentPtr);
+		virtual void SetupComponent(WorldContextSet& worldContextSet, Grindstone::HashedString componentType, ECS::Entity entity, void* componentPtr);
 
-		using ComponentMap = std::unordered_map<std::string, ComponentFunctions>;
+		using ComponentMap = std::unordered_map<Grindstone::HashedString, ComponentFunctions>;
 		virtual ComponentMap::iterator begin();
 		virtual ComponentMap::const_iterator begin() const;
 		virtual ComponentMap::iterator end();

@@ -9,6 +9,7 @@ using namespace Grindstone::Editor::Importers;
 
 extern "C" {
 	EDITOR_AUDIO_IMPORTER_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
+		Grindstone::HashedString::SetHashMap(pluginInterface->GetHashedStringMap());
 		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
 
 		Plugins::EditorPluginInterface* editorPluginInterface =

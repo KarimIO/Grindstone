@@ -90,7 +90,7 @@ void SceneLoaderJson::ProcessEntity(rapidjson::Value& entityJson) {
 }
 
 void SceneLoaderJson::ProcessComponent(ECS::Entity entity, rapidjson::Value& component) {
-	const char* componentType = component["component"].GetString();
+	Grindstone::HashedString componentType = Grindstone::HashedString(component["component"].GetString());
 
 	Reflection::TypeDescriptor_Struct reflectionData;
 	auto componentRegistrar = EngineCore::GetInstance().GetComponentRegistrar();

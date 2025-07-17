@@ -179,7 +179,7 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		GraphicsPipelineAsset::Pass& pass = graphicsPipelineAsset.passes[passIndex];
 		const V1::PassPipelineHeader& srcPass = pipelinePasses[passIndex];
 		const char* passName = reinterpret_cast<const char*>(&blobs[srcPass.pipelineNameOffsetFromBlobStart]);
-		const char* renderQueueName = reinterpret_cast<const char*>(&blobs[srcPass.renderQueueNameOffsetFromBlobStart]);
+		Grindstone::HashedString renderQueueName = Grindstone::HashedString(reinterpret_cast<const char*>(&blobs[srcPass.renderQueueNameOffsetFromBlobStart]));
 		pass.passPipelineName = result.displayName + " " + passName;
 		pass.renderQueue = renderQueueName;
 

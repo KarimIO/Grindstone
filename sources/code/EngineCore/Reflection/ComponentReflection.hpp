@@ -4,6 +4,8 @@
 #include <vector>
 #include <iostream>
 
+#include <Common/HashedString.hpp>
+
 #include "TypeResolver.hpp"
 #include "DefaultResolver.hpp"
 #include "TypeDescriptorStruct.hpp"
@@ -17,6 +19,7 @@ namespace Grindstone::Reflection {
 		friend struct Grindstone::Reflection::DefaultResolver; \
 		static Grindstone::Reflection::TypeDescriptor_Struct reflectionInfo; \
 		static void InitializeReflection(Grindstone::Reflection::TypeDescriptor_Struct*); \
+		static Grindstone::ConstHashedString GetComponentHashString() { return Grindstone::ConstHashedString( name );  }; \
 		static const char* GetComponentName() { return name;  };
 
 #define REFLECT_STRUCT_BEGIN(type) \

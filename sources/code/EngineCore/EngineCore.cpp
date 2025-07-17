@@ -42,6 +42,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 		return false;
 	}
 
+	Grindstone::HashedString::CreateHashMap();
 	eventDispatcher = AllocatorCore::Allocate<Events::Dispatcher>();
 
 	firstFrameTime = std::chrono::steady_clock::now();

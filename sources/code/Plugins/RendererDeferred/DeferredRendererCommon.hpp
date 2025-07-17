@@ -3,21 +3,21 @@
 #include <Common/HashedString.hpp>
 #include <Common/Graphics/Formats.hpp>
 
-static Grindstone::HashedString gbufferRenderPassKey = "Gbuffer";
-static Grindstone::HashedString geometryOpaqueRenderPassKey = "GeometryOpaque";
-static Grindstone::HashedString geometryUnlitRenderPassKey = "GeometryUnlit";
-static Grindstone::HashedString geometrySkyRenderPassKey = "GeometrySky";
-static Grindstone::HashedString geometryTransparentRenderPassKey = "GeometryTransparent";
-static Grindstone::HashedString mainRenderPassKey = "Main";
+static Grindstone::ConstHashedString gbufferRenderPassKey = "Gbuffer";
+static Grindstone::ConstHashedString geometryOpaqueRenderPassKey = "GeometryOpaque";
+static Grindstone::ConstHashedString geometryUnlitRenderPassKey = "GeometryUnlit";
+static Grindstone::ConstHashedString geometrySkyRenderPassKey = "GeometrySky";
+static Grindstone::ConstHashedString geometryTransparentRenderPassKey = "GeometryTransparent";
+static Grindstone::ConstHashedString mainRenderPassKey = "Main";
 
-static Grindstone::HashedString dofSeparationRenderPassKey = "DofSeparation";
-static Grindstone::HashedString dofBlurAndCombinationRenderPassKey = "DofBlurAndCombination";
+static Grindstone::ConstHashedString dofSeparationRenderPassKey = "DofSeparation";
+static Grindstone::ConstHashedString dofBlurAndCombinationRenderPassKey = "DofBlurAndCombination";
 
-static Grindstone::HashedString lightingRenderPassKey = "Lighting";
-static Grindstone::HashedString forwardLitRenderPassKey = "ForwardLit";
-static Grindstone::HashedString ssaoRenderPassKey = "Ssao";
-static Grindstone::HashedString ssaoBlurRenderPassKey = "Ssao Blur";
-static Grindstone::HashedString shadowMapRenderPassKey = "ShadowMap";
+static Grindstone::ConstHashedString lightingRenderPassKey = "Lighting";
+static Grindstone::ConstHashedString forwardLitRenderPassKey = "ForwardLit";
+static Grindstone::ConstHashedString ssaoRenderPassKey = "Ssao";
+static Grindstone::ConstHashedString ssaoBlurRenderPassKey = "Ssao Blur";
+static Grindstone::ConstHashedString shadowMapRenderPassKey = "ShadowMap";
 
 static const Grindstone::GraphicsAPI::Format depthFormat = Grindstone::GraphicsAPI::Format::D32_SFLOAT;
 static const Grindstone::GraphicsAPI::Format litHdrFormat = Grindstone::GraphicsAPI::Format::R16G16B16A16_SFLOAT;
