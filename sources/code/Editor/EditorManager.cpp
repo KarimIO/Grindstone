@@ -183,6 +183,7 @@ void Manager::TransferPlayMode(PlayMode newPlayMode) {
 	if (newPlayMode == PlayMode::Editor && playMode == PlayMode::Play) {
 		componentRegistry->CallDestroyOnRegistry(*runtimeWorldContext);
 		worldContextManager->Remove(runtimeWorldContext);
+		runtimeWorldContext = nullptr;
 		worldContextManager->SetActiveWorldContextSet(editorWorldContext);
 	}
 	else if (newPlayMode == PlayMode::Play && playMode == PlayMode::Editor) {
@@ -298,11 +299,11 @@ Manager::~Manager() {
 
 	Grindstone::WorldContextManager* cxtManager = engineCore->GetWorldContextManager();
 	if (cxtManager) {
-		if (runtimeWorldContext) {
+		if (runtimeWorldContext != nullptr) {
 			cxtManager->Remove(runtimeWorldContext);
 		}
 
-		if (editorWorldContext) {
+		if (editorWorldContext != nullptr) {
 			cxtManager->Remove(editorWorldContext);
 		}
 	}

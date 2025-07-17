@@ -12,5 +12,6 @@ namespace Grindstone {
 		}
 
 		virtual void SetAsActive() = 0;
+		virtual ~WorldContext() {}
 	};
 }

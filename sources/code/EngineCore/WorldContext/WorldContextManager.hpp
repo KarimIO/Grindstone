@@ -20,9 +20,16 @@ namespace Grindstone {
 		[[nodiscard]] virtual Grindstone::WorldContextSet* Create();
 		virtual void Remove(Grindstone::WorldContextSet* cxtSet);
 
+		using WorldContextSetArray = std::vector<Grindstone::UniquePtr<Grindstone::WorldContextSet>>;
+
+		virtual WorldContextSetArray::iterator begin();
+		virtual WorldContextSetArray::const_iterator begin() const;
+		virtual WorldContextSetArray::iterator end();
+		virtual WorldContextSetArray::const_iterator end() const;
+
 	private:
 		size_t activeWorldIndex;
 		std::map<HashedString, Grindstone::UniquePtr<Grindstone::WorldContext> (*)()> factoryFunctions;
-		std::vector<Grindstone::UniquePtr<Grindstone::WorldContextSet>> worldContextSets;
+		WorldContextSetArray worldContextSets;
 	};
 }
