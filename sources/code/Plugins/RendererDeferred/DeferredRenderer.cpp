@@ -2168,7 +2168,7 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 			assetManager->RenderQueue(
 				commandBuffer,
 				registry,
-				Grindstone::HashedString("ShadowMap")
+				shadowMapRenderPassKey
 			);
 
 			commandBuffer->UnbindRenderPass();
@@ -2217,7 +2217,7 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 			assetManager->RenderQueue(
 				commandBuffer,
 				registry,
-				Grindstone::HashedString("ShadowMap")
+				shadowMapRenderPassKey
 			);
 
 			commandBuffer->UnbindRenderPass();

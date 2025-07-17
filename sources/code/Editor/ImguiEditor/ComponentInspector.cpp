@@ -262,7 +262,7 @@ void ComponentInspector::RenderCSharpScript(
 		}
 
 		if (shouldRemove) {
-			entity.RemoveComponent(Grindstone::HashedString("CSharpScript"));
+			entity.RemoveComponent(csharpComponentName);
 		}
 	}
 }
