@@ -34,13 +34,7 @@ extern "C" {
 }
 
 Scene::~Scene() {
-	auto view = GetEntityRegistry().view<entt::entity>();
-
-	view.each(
-		[&](entt::entity entity) {
-			DestroyEntity(entity);
-		}
-	);
+	// TODO: Delete elements of scene
 }
 
 ECS::Entity Scene::CreateEmptyEntity(entt::entity entityToUse) {

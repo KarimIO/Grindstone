@@ -202,6 +202,7 @@ EngineCore::~EngineCore() {
 	AllocatorCore::Free(systemRegistrar);
 	Logger::GetLoggerState()->dispatcher = nullptr;
 	AllocatorCore::Free(eventDispatcher);
+	AllocatorCore::Free(Grindstone::HashedString::GetHashedStringMap());
 
 	if (!AllocatorCore::IsEmpty()) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "Uncleared memory: {0} bytes left!", static_cast<intmax_t>(AllocatorCore::GetUsed()));

@@ -12,6 +12,7 @@ namespace Grindstone::Physics {
 		WorldContext();
 		WorldContext(const WorldContext&) = delete;
 		WorldContext(WorldContext&& ) noexcept = default;
+		virtual ~WorldContext() override = default;
 
 		Grindstone::UniquePtr<struct btDbvtBroadphase> broadphase = nullptr;
 		Grindstone::UniquePtr<class btDefaultCollisionConfiguration> collisionConfiguration = nullptr;

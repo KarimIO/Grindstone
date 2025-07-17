@@ -6,6 +6,7 @@
 
 #include <EngineCore/ECS/EntityHandle.hpp>
 #include <EngineCore/Reflection/ComponentReflection.hpp>
+#include <EngineCore/WorldContext/WorldContextManager.hpp>
 #include <Common/HashedString.hpp>
 
 #include "ComponentFunctions.hpp"
@@ -35,7 +36,14 @@ namespace Grindstone::ECS {
 
 		template<typename ComponentType>
 		void UnregisterComponent() {
-			Grindstone::EngineCore::GetInstance().GetEntityRegistry().clear<ComponentType>();
+			Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+			Grindstone::WorldContextManager* worldContextManager = engineCore.GetWorldContextManager();
+			if (worldContextManager != nullptr) {
+				for (Grindstone::UniquePtr<Grindstone::WorldContextSet>& worldContext : *worldContextManager) {
+					entt::registry& registry = worldContext.Get()->GetEntityRegistry();
+					registry.clear<ComponentType>();
+				}
+			}
 
 			auto comp = componentFunctionsList.find(ComponentType::GetComponentHashString());
 			if (comp != componentFunctionsList.end()) {

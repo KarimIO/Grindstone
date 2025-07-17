@@ -44,6 +44,7 @@ extern "C" {
 		Grindstone::HashedString::SetHashMap(pluginInterface->GetHashedStringMap());
 		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
 		Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
+		EngineCore::SetInstance(*pluginInterface->GetEngineCore());
 
 		pluginInterface->RegisterComponent<BoxColliderComponent>(
 			SetupColliderComponent<BoxColliderComponent>
