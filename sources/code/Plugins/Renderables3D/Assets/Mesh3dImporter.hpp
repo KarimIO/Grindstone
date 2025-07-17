@@ -24,7 +24,7 @@ namespace Grindstone {
 			virtual void* LoadAsset(Uuid uuid) override;
 			virtual void QueueReloadAsset(Uuid uuid) override;
 			void PrepareLayouts();
-			virtual void DecrementMeshCount(ECS::Entity entity, Uuid uuid);
+			virtual void OnDeleteAsset(Grindstone::Mesh3dAsset& asset) override;
 		private:
 			uint64_t GetTotalFileSize(Formats::Model::V1::Header& header);
 			bool ImportModelFile(Mesh3dAsset& mesh);

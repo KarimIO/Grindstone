@@ -31,6 +31,7 @@ namespace Grindstone {
 		SpecificAssetImporter() { assetType = internalAssetType; }
 		static AssetType GetStaticAssetType() { return internalAssetType; }
 		static const char* GetStaticAssetTypeName() { return GetAssetTypeToString(internalAssetType); }
+		virtual void OnDeleteAsset(AssetStructType& asset) {}
 
 		virtual void* IncrementAssetUse(Uuid uuid) override {
 			void* output = nullptr;
@@ -57,6 +58,7 @@ namespace Grindstone {
 			if (TryGetIfLoaded(uuid, output) && output != nullptr) {
 				AssetStructType* asset = static_cast<AssetStructType*>(output);
 				if (asset->referenceCount <= 1) {
+					OnDeleteAsset(*asset);
 					assets.erase(uuid);
 				}
 				else {

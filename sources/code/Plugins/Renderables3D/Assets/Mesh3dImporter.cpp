@@ -98,14 +98,14 @@ void Mesh3dImporter::PrepareLayouts() {
 	vertexLayout = builder.Build();
 }
 
-void Mesh3dImporter::DecrementMeshCount(ECS::Entity entity, Uuid uuid) {
-	auto meshInMap = assets.find(uuid);
-	if (meshInMap == assets.end()) {
-		return;
-	}
-
-	Grindstone::Mesh3dAsset* mesh = &meshInMap->second;
-	mesh->referenceCount -= 1;
+void Mesh3dImporter::OnDeleteAsset(Grindstone::Mesh3dAsset& asset) {
+	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
+	graphicsCore->DeleteVertexArrayObject(asset.vertexArrayObject);
+	graphicsCore->DeleteBuffer(asset.positionBuffer);
+	graphicsCore->DeleteBuffer(asset.normalBuffer);
+	graphicsCore->DeleteBuffer(asset.tangentBuffer);
+	graphicsCore->DeleteBuffer(asset.uvBuffer);
+	graphicsCore->DeleteBuffer(asset.indexBuffer);
 }
 
 void Mesh3dImporter::QueueReloadAsset(Uuid uuid) {
@@ -154,24 +154,28 @@ void Mesh3dImporter::LoadMeshImportVertices(
 	auto vertexCount = header.vertexCount;
 	if (header.hasVertexPositions) {
 		auto positions = LoadVertexBufferVec(graphicsCore, assetName, 3, vertexCount, sourcePtr, "Positions");
+		mesh.positionBuffer = positions;
 		vertexBuffers.push_back(positions);
 		sourcePtr += sizeof(float) * 3 * vertexCount;
 	}
 
 	if (header.hasVertexNormals) {
 		auto normals = LoadVertexBufferVec(graphicsCore, assetName, 3, vertexCount, sourcePtr, "Normals");
+		mesh.normalBuffer = normals;
 		vertexBuffers.push_back(normals);
 		sourcePtr += sizeof(float) * 3 * vertexCount;
 	}
 
 	if (header.hasVertexTangents) {
 		auto tangents = LoadVertexBufferVec(graphicsCore, assetName, 3, vertexCount, sourcePtr, "Tangents");
+		mesh.tangentBuffer = tangents;
 		vertexBuffers.push_back(tangents);
 		sourcePtr += sizeof(float) * 3 * vertexCount;
 	}
 
 	if (header.vertexUvSetCount >= 1) {
 		auto uv0 = LoadVertexBufferVec(graphicsCore, assetName, 2, vertexCount, sourcePtr, "TexCoord0");
+		mesh.uvBuffer = uv0;
 		vertexBuffers.push_back(uv0);
 		sourcePtr += sizeof(float) * 2 * vertexCount;
 	}
@@ -200,7 +204,7 @@ void Mesh3dImporter::LoadMeshImportIndices(
 		GraphicsAPI::BufferUsage::Index;
 	indexBufferCreateInfo.memoryUsage = GraphicsAPI::MemUsage::GPUOnly;
 	indexBufferCreateInfo.bufferSize = static_cast<uint32_t>(indices.size() * sizeof(indices[0]));
-	indexBuffer = graphicsCore->CreateBuffer(indexBufferCreateInfo);
+	mesh.indexBuffer = indexBuffer = graphicsCore->CreateBuffer(indexBufferCreateInfo);
 }
 
 void* Mesh3dImporter::LoadAsset(Uuid uuid) {
@@ -311,6 +315,11 @@ Mesh3dImporter::~Mesh3dImporter() {
 
 	for (auto& asset : assets) {
 		graphicsCore->DeleteVertexArrayObject(asset.second.vertexArrayObject);
+		graphicsCore->DeleteBuffer(asset.second.positionBuffer);
+		graphicsCore->DeleteBuffer(asset.second.normalBuffer);
+		graphicsCore->DeleteBuffer(asset.second.tangentBuffer);
+		graphicsCore->DeleteBuffer(asset.second.uvBuffer);
+		graphicsCore->DeleteBuffer(asset.second.indexBuffer);
 	}
 	assets.clear();
 }
