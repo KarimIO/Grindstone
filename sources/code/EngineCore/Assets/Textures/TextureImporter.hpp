@@ -15,6 +15,7 @@ namespace Grindstone {
 	public:
 		virtual ~TextureImporter() override;
 
+		virtual void OnDeleteAsset(TextureAsset& asset) override;
 		virtual void* LoadAsset(Uuid uuid) override;
 		virtual void QueueReloadAsset(Uuid uuid) override;
 	private:
