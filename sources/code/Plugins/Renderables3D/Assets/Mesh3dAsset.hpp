@@ -12,6 +12,7 @@
 namespace Grindstone {
 	namespace GraphicsAPI {
 		class VertexArrayObject;
+		class Buffer;
 	}
 
 	enum class VertexBuffers {
@@ -34,6 +35,11 @@ namespace Grindstone {
 
 		Grindstone::Formats::Model::V1::BoundingData boundingData;
 		GraphicsAPI::VertexArrayObject* vertexArrayObject = nullptr;
+		GraphicsAPI::Buffer* positionBuffer = nullptr;
+		GraphicsAPI::Buffer* normalBuffer = nullptr;
+		GraphicsAPI::Buffer* tangentBuffer = nullptr;
+		GraphicsAPI::Buffer* uvBuffer = nullptr;
+		GraphicsAPI::Buffer* indexBuffer = nullptr;
 		std::vector<Submesh> submeshes;
 
 		DEFINE_ASSET_TYPE("Mesh3dAsset", AssetType::Mesh3d)
