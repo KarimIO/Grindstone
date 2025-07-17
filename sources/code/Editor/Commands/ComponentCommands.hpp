@@ -9,14 +9,14 @@ namespace Grindstone {
 		public:
 			AddComponentCommand(
 				ECS::Entity entity,
-				const char* componentName
+				Grindstone::HashedString componentName
 			);
 			virtual void Redo() override;
 			virtual void Undo() override;
 			virtual ~AddComponentCommand() {}
 		private:
 			ECS::Entity entity;
-			std::string componentName;
+			Grindstone::HashedString componentName;
 		};
 
 		class DeleteComponentCommand : public BaseCommand {

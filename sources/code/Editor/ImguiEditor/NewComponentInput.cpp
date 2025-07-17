@@ -12,7 +12,7 @@ namespace Grindstone::Editor::ImguiEditor {
 		if (chosenItem != -1) {
 			std::string& componentToDeleteName = unusedComponentsItems[chosenItem];
 			auto& commandList = Manager::GetInstance().GetCommandList();
-			commandList.AddComponent(entity, componentToDeleteName.c_str());
+			commandList.AddComponent(entity, Grindstone::HashedString(componentToDeleteName));
 		}
 	}
 }

@@ -23,7 +23,7 @@ namespace Grindstone {
 			void AddNewEntity(SceneManagement::Scene* scene);
 			void AddComponent(
 				ECS::Entity entity,
-				const char* componentName
+				Grindstone::HashedString componentName
 			);
 			void SetUndoCount(size_t undoCount);
 			void AddCommand(BaseCommand* command);
