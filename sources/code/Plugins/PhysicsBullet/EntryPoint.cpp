@@ -41,6 +41,7 @@ void SetupColliderComponent(Grindstone::WorldContextSet& cxt, entt::entity entit
 
 extern "C" {
 	BULLET_PHYSICS_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
+		Grindstone::HashedString::SetHashMap(pluginInterface->GetHashedStringMap());
 		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
 		Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
 

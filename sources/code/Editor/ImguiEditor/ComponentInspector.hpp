@@ -2,7 +2,9 @@
 
 #include <string>
 #include <entt/entt.hpp>
-#include "EngineCore/Reflection/TypeDescriptorStruct.hpp"
+
+#include <Common/HashedString.hpp>
+#include <EngineCore/Reflection/TypeDescriptorStruct.hpp>
 #include "NewComponentInput.hpp"
 
 namespace Grindstone {
@@ -19,7 +21,7 @@ namespace Grindstone {
 				void Render(ECS::Entity entity);
 			private:
 				void RenderComponent(
-					const char* componentTypeName,
+					Grindstone::HashedString componentTypeName,
 					Reflection::TypeDescriptor_Struct& componentReflectionData,
 					void* componentPtr,
 					ECS::Entity entity

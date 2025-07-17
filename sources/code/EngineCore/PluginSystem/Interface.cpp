@@ -1,5 +1,6 @@
 #include "Interface.hpp"
 #include "Interface.hpp"
+#include "Interface.hpp"
 #include <Common/Window/Window.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
 #include <EngineCore/ECS/SystemRegistrar.hpp>
@@ -76,6 +77,10 @@ void Plugins::Interface::RegisterDisplayManager(DisplayManager* displayManager) 
 
 void Plugins::Interface::SetReloadCsharpCallback(std::function<void()> callback) {
 	GetEngineCore()->callbackReloadCsharp = callback;
+}
+
+Grindstone::HashedString::HashMap* Grindstone::Plugins::Interface::GetHashedStringMap() const {
+	return Grindstone::HashedString::GetHashedStringMap();
 }
 
 Window* Plugins::Interface::CreateDisplayWindow(Window::CreateInfo& ci) {

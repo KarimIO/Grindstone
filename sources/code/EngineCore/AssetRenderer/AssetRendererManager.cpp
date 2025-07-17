@@ -28,7 +28,8 @@ void AssetRendererManager::RenderQueue(
 	const entt::registry& registry,
 	Grindstone::HashedString renderQueue
 ) {
-	commandBuffer->BeginDebugLabelSection("Render Queue");
+	std::string renderQueueLabel = fmt::format("Render Queue '{}'", renderQueue.ToString());
+	commandBuffer->BeginDebugLabelSection(renderQueueLabel.c_str());
 	for (auto& assetRenderer : assetRenderers) {
 		assetRenderer.second->RenderQueue(commandBuffer, registry, renderQueue);
 	}

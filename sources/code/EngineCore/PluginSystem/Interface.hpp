@@ -74,6 +74,7 @@ namespace Grindstone {
 			virtual void RegisterAssetType(AssetType assetType, const char* typeName, AssetImporter* assetImporter);
 			virtual void UnregisterAssetType(AssetType assetType);
 			virtual void SetReloadCsharpCallback(std::function<void()> callback);
+			virtual Grindstone::HashedString::HashMap* GetHashedStringMap() const;
 			virtual Grindstone::Logger::LoggerState* GetLoggerState() const;
 			virtual Grindstone::Memory::AllocatorCore::AllocatorState* GetAllocatorState() const;
 			virtual void RegisterWorldContextFactory(Grindstone::HashedString contextName, Grindstone::UniquePtr<Grindstone::WorldContext> (*FactoryFn)());

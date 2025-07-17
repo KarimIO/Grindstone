@@ -59,7 +59,7 @@ EditorCamera::EditorCamera() {
 	renderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
 	renderPassCreateInfo.shouldClearDepthOnLoad = true;
 	renderPass = core->CreateRenderPass(renderPassCreateInfo);
-	renderPassRegistry->RegisterRenderpass("Editor", renderPass);
+	renderPassRegistry->RegisterRenderpass(Grindstone::HashedString("Editor"), renderPass);
 
 	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> gizmoAttachments = { { renderTargetCreateInfo.format, false } };
 
@@ -70,7 +70,7 @@ EditorCamera::EditorCamera() {
 	gizmoRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
 	gizmoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 	gizmoRenderPass = core->CreateRenderPass(gizmoRenderPassCreateInfo);
-	renderPassRegistry->RegisterRenderpass("Gizmo", gizmoRenderPass);
+	renderPassRegistry->RegisterRenderpass(Grindstone::HashedString("Gizmo"), gizmoRenderPass);
 
 	GraphicsAPI::Framebuffer::CreateInfo framebufferCreateInfo{};
 	framebufferCreateInfo.debugName = "Editor Framebuffer";

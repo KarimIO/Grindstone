@@ -80,12 +80,12 @@ void SceneWriterJson::ProcessEntity(entt::registry& registry, ECS::Entity entity
 	auto& engineCore = EngineCore::GetInstance();
 	ECS::ComponentRegistrar componentRegistrar = *engineCore.GetComponentRegistrar();
 	for (auto& componentEntry : componentRegistrar) {
-		const char* componentTypeName = componentEntry.first.c_str();
+		Grindstone::HashedString componentTypeName = componentEntry.first;
 		auto componentReflectionData = componentEntry.second.GetComponentReflectionDataFn();
 		auto tryGetComponentFn = componentEntry.second.TryGetComponentFn;
 
 		void* outComponent = nullptr;
-		if (entity.TryGetComponent(componentTypeName, outComponent)) {
+		if (tryGetComponentFn(registry, entity.GetHandle(), outComponent)) {
 			ProcessComponent(entity, componentTypeName, componentReflectionData, outComponent);
 		}
 	}
@@ -96,14 +96,14 @@ void SceneWriterJson::ProcessEntity(entt::registry& registry, ECS::Entity entity
 
 void SceneWriterJson::ProcessComponent(
 	ECS::Entity entity,
-	const char* componentTypeName,
+	Grindstone::HashedString componentTypeName,
 	Grindstone::Reflection::TypeDescriptor_Struct& componentReflectionData,
 	void* componentPtr
 ) {
 	documentWriter.StartObject();
 
 	documentWriter.Key("component");
-	documentWriter.String(componentTypeName);
+	documentWriter.String(componentTypeName.ToString().c_str());
 
 	documentWriter.Key("params");
 	documentWriter.StartObject();

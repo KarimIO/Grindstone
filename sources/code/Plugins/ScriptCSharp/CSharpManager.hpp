@@ -30,7 +30,7 @@ namespace Grindstone {
 			virtual void SetupComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity, ScriptComponent& component);
 			virtual void DestroyComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity, ScriptComponent& component);
 			void RegisterComponents();
-			void RegisterComponent(std::string& csharpClass, ECS::ComponentFunctions& fns);
+			void RegisterComponent(const Grindstone::String& csharpClass, ECS::ComponentFunctions& fns);
 			void CallCreateComponent(SceneManagement::Scene* scene, entt::entity entityHandle);
 			void CallHasComponent(SceneManagement::Scene* scene, entt::entity entityHandle);
 			void CallRemoveComponent(SceneManagement::Scene* scene, entt::entity entityHandle);

@@ -8,22 +8,22 @@ entt::registry& Entity::GetSceneEntityRegistry() const {
 	return scene->GetEntityRegistry();
 }
 
-void* Entity::AddComponent(const char* componentType) {
+void* Entity::AddComponent(Grindstone::HashedString componentType) {
 	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
 	return componentRegistrar->CreateComponentWithSetup(componentType, *this);
 }
 
-void* Entity::AddComponentWithoutSetup(const char* componentType) {
+void* Entity::AddComponentWithoutSetup(Grindstone::HashedString componentType) {
 	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
 	return componentRegistrar->CreateComponent(componentType, *this);
 }
 
-bool Entity::HasComponent(const char* componentType) const {
+bool Entity::HasComponent(Grindstone::HashedString componentType) const {
 	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
 	return componentRegistrar->HasComponent(componentType, *this);
 }
 
-void* Entity::GetComponent(const char* componentType) const {
+void* Entity::GetComponent(Grindstone::HashedString componentType) const {
 	void* outComponent = nullptr;
 	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
 	componentRegistrar->TryGetComponent(componentType, *this, outComponent);
@@ -31,12 +31,12 @@ void* Entity::GetComponent(const char* componentType) const {
 	return outComponent;
 }
 
-bool Entity::TryGetComponent(const char* componentType, void*& outComponent) const {
+bool Entity::TryGetComponent(Grindstone::HashedString componentType, void*& outComponent) const {
 	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
 	return componentRegistrar->TryGetComponent(componentType, *this, outComponent);
 }
 
-void Entity::RemoveComponent(const char* componentType) {
+void Entity::RemoveComponent(Grindstone::HashedString componentType) {
 	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
 	componentRegistrar->RemoveComponent(componentType, *this);
 }

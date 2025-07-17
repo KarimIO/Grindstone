@@ -19,6 +19,10 @@
 
 using namespace Grindstone::Editor::ImguiEditor;
 
+const Grindstone::ConstHashedString parentComponentName("Parent");
+const Grindstone::ConstHashedString tagComponentName("Tag");
+const Grindstone::ConstHashedString csharpComponentName("CSharpScript");
+
 /*
 #define RenderMonoFieldType(Type, FunctionName) { \
 		Type val; \
@@ -146,7 +150,7 @@ void ComponentInspector::Render(ECS::Entity entity) {
 	std::vector<std::string> unusedComponentsItems;
 	std::vector<ECS::ComponentFunctions> unusedComponentsFunctions;
 	for (auto& componentEntry : componentRegistrar) {
-		const char* componentTypeName = componentEntry.first.c_str();
+		Grindstone::HashedString componentTypeName = componentEntry.first;
 		auto componentReflectionData = componentEntry.second.GetComponentReflectionDataFn();
 		auto tryGetComponentFn = componentEntry.second.TryGetComponentFn;
 
@@ -155,7 +159,7 @@ void ComponentInspector::Render(ECS::Entity entity) {
 			RenderComponent(componentTypeName, componentReflectionData, outComponent, entity);
 		}
 		else {
-			unusedComponentsItems.push_back(componentEntry.first);
+			unusedComponentsItems.push_back(componentEntry.first.ToString());
 			unusedComponentsFunctions.push_back(componentEntry.second);
 		}
 	}
@@ -170,23 +174,23 @@ void ComponentInspector::Render(ECS::Entity entity) {
 }
 
 void ComponentInspector::RenderComponent(
-	const char* componentTypeName,
+	Grindstone::HashedString componentTypeName,
 	Grindstone::Reflection::TypeDescriptor_Struct& componentReflectionData,
 	void* componentPtr,
 	ECS::Entity entity
 ) {
-	if (strcmp(componentTypeName, "Parent") == 0 || strcmp(componentTypeName, "Tag") == 0) {
+	if (componentTypeName == parentComponentName || componentTypeName == tagComponentName) {
 		// Don't render these
 		return;
 	}
 
-	if (strcmp(componentTypeName, "CSharpScript") == 0) {
+	if (componentTypeName == csharpComponentName) {
 		RenderCSharpScript(componentPtr, entity);
 	}
 	else {
 		bool shouldRemove = false;
-		bool isOpened = ImGui::TreeNodeEx(componentTypeName, ImGuiTreeNodeFlags_FramePadding);
-		if (ImGui::BeginPopupContextItem(componentTypeName)) {
+		bool isOpened = ImGui::TreeNodeEx(componentTypeName.ToString().c_str(), ImGuiTreeNodeFlags_FramePadding);
+		if (ImGui::BeginPopupContextItem(componentTypeName.ToString().c_str())) {
 			if (ImGui::MenuItem("Remove Component")) {
 				shouldRemove = true;
 			}
@@ -258,7 +262,7 @@ void ComponentInspector::RenderCSharpScript(
 		}
 
 		if (shouldRemove) {
-			entity.RemoveComponent("CSharpScript");
+			entity.RemoveComponent(Grindstone::HashedString("CSharpScript"));
 		}
 	}
 }

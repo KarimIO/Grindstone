@@ -279,6 +279,7 @@ bool Manager::LoadEngine() {
 	engineCore = createEngineFn(createInfo);
 
 	Plugins::Interface& pluginInterface = engineCore->GetPluginManager()->GetInterface();
+	Grindstone::HashedString::SetHashMap(pluginInterface.GetHashedStringMap());
 	Grindstone::Logger::SetLoggerState(pluginInterface.GetLoggerState());
 	Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface.GetAllocatorState());
 

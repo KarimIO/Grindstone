@@ -4,12 +4,14 @@
 #include <EngineCore/EngineCore.hpp>
 
 #include "DeferredRendererFactory.hpp"
+#include "DeferredRendererCommon.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::Memory;
 
 extern "C" {
 	RENDERER_DEFERRED_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
+		Grindstone::HashedString::SetHashMap(pluginInterface->GetHashedStringMap());
 		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
 		Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
 

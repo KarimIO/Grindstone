@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Common/Math.hpp>
+#include <Common/HashedString.hpp>
 #include <EngineCore/CoreComponents/Parent/ParentComponent.hpp>
 
 #include "EntityHandle.hpp"
@@ -21,12 +22,12 @@ namespace Grindstone {
 			Entity(entt::entity entityId, SceneManagement::Scene * scene)
 				: entityId(entityId), scene(scene) {}
 
-			virtual void* AddComponent(const char* componentType);
-			virtual void* AddComponentWithoutSetup(const char* componentType);
-			virtual bool HasComponent(const char* componentType) const;
-			virtual void* GetComponent(const char* componentType) const;
-			virtual bool TryGetComponent(const char* componentType, void*& outComponent) const;
-			virtual void RemoveComponent(const char* componentType);
+			virtual void* AddComponent(Grindstone::HashedString componentType);
+			virtual void* AddComponentWithoutSetup(Grindstone::HashedString componentType);
+			virtual bool HasComponent(Grindstone::HashedString componentType) const;
+			virtual void* GetComponent(Grindstone::HashedString componentType) const;
+			virtual bool TryGetComponent(Grindstone::HashedString componentType, void*& outComponent) const;
+			virtual void RemoveComponent(Grindstone::HashedString componentType);
 
 			// Parent helpers
 			virtual bool IsChildOf(const Entity& other) const;
@@ -79,7 +80,7 @@ namespace Grindstone {
 			}
 
 			template<typename ComponentType>
-			void RemoveComponent(const char* componentType) {
+			void RemoveComponent() {
 				GetSceneEntityRegistry().remove<ComponentType>(entityId);
 			}
 
