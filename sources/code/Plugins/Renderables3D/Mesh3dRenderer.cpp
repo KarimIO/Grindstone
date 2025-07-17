@@ -80,7 +80,7 @@ std::string Mesh3dRenderer::GetName() const {
 
 void Mesh3dRenderer::RenderQueue(
 	GraphicsAPI::CommandBuffer* commandBuffer,
-	const entt::registry& registry,
+	entt::registry& registry,
 	Grindstone::HashedString renderQueueHash
 ) {
 	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
@@ -89,13 +89,13 @@ void Mesh3dRenderer::RenderQueue(
 	std::vector<RenderTask> renderTasks;
 	renderTasks.reserve(1000);
 
-	auto view = registry.view<const entt::entity, const TransformComponent, const MeshComponent, const MeshRendererComponent>();
+	auto view = registry.view<const entt::entity, const TransformComponent, const MeshComponent, MeshRendererComponent>();
 	view.each(
-		[&](
-			const entt::entity entity,
+		[&registry, &renderTasks, renderQueueHash, assetManager, graphicsCore](
+			entt::entity entity,
 			const TransformComponent& transformComponent,
 			const MeshComponent& meshComponent,
-			const MeshRendererComponent& meshRenderComponent
+			MeshRendererComponent& meshRenderComponent
 		) {
 			// Add to Render Queue
 			Mesh3dAsset* meshAsset = assetManager->GetAssetByUuid<Mesh3dAsset>(meshComponent.mesh.uuid);
@@ -109,14 +109,14 @@ void Mesh3dRenderer::RenderQueue(
 			Math::Matrix4 transform = TransformComponent::GetWorldTransformMatrix(entity, registry);
 			meshRenderComponent.perDrawUniformBuffer->UploadData(&transform);
 
-			const std::vector<Grindstone::AssetReference<Grindstone::MaterialAsset>>& materials = meshRenderComponent.materials;
+			std::vector<Grindstone::AssetReference<Grindstone::MaterialAsset>>& materials = meshRenderComponent.materials;
 			for (const Grindstone::Mesh3dAsset::Submesh& submesh : meshAsset->submeshes) {
 				if (submesh.materialIndex >= materials.size()) {
 					continue;
 				}
 
-				const Grindstone::AssetReference<Grindstone::MaterialAsset>& materialReference = materials[submesh.materialIndex];
-				const MaterialAsset* materialAsset = materialReference.Get();
+				Grindstone::AssetReference<Grindstone::MaterialAsset>& materialReference = materials[submesh.materialIndex];
+				MaterialAsset* materialAsset = materialReference.Get();
 				if (materialAsset == nullptr) {
 					continue;
 				}

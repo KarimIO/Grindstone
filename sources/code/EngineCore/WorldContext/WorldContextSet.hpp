@@ -18,6 +18,8 @@ namespace Grindstone {
 		WorldContextSet(WorldContextSet&&) noexcept = default;
 		WorldContextSet& operator=(WorldContextSet&&) noexcept = default;
 
+		virtual ~WorldContextSet();
+
 		[[nodiscard]] entt::registry& Grindstone::WorldContextSet::GetEntityRegistry() {
 			return registry;
 		}

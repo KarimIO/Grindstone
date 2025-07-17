@@ -98,15 +98,27 @@ namespace Grindstone {
 			return ptr != nullptr;
 		}
 
-		T* operator->() const {
+		T* operator->() {
 			return this->ptr;
 		}
 
-		T& operator*() const {
+		const T* operator->() const {
+			return this->ptr;
+		}
+
+		T& operator*() {
 			return *(this->ptr);
 		}
 
-		T* Get() const {
+		const T& operator*() const {
+			return *(this->ptr);
+		}
+
+		T* Get() {
+			return this->ptr;
+		}
+
+		const T* Get() const {
 			return this->ptr;
 		}
 
