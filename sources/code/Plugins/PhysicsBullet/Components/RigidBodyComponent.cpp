@@ -86,7 +86,7 @@ void Grindstone::Physics::SetupRigidBodyComponentWithCollider(
 	);
 	rigidBodyComponent->rigidBody->setUserPointer(&rigidBodyComponent);
 
-	Grindstone::Physics::WorldContext* physWorldContext = static_cast<Grindstone::Physics::WorldContext*>(cxtSet.GetContext(Grindstone::HashedString("PhysicsWorldContext")));
+	Grindstone::Physics::WorldContext* physWorldContext = static_cast<Grindstone::Physics::WorldContext*>(cxtSet.GetContext(physicsWorldContextName));
 	if (physWorldContext != nullptr) {
 		physWorldContext->dynamicsWorld->addRigidBody(rigidBodyComponent->rigidBody.Get());
 	}

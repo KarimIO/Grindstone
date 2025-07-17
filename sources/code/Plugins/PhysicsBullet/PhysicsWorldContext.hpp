@@ -1,7 +1,10 @@
 #pragma once
 
+#include <Common/HashedString.hpp>
 #include <Common/Memory/SmartPointers/UniquePtr.hpp>
 #include <EngineCore/WorldContext/WorldContext.hpp>
+
+const Grindstone::ConstHashedString physicsWorldContextName("PhysicsWorldContext");
 
 namespace Grindstone::Physics {
 	class WorldContext : public Grindstone::WorldContext {

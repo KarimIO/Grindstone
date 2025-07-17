@@ -20,6 +20,9 @@ using namespace Grindstone::Memory;
 using namespace Grindstone::Editor;
 using namespace Grindstone;
 
+const Grindstone::ConstHashedString editorRenderPassHashedString("Editor");
+const Grindstone::ConstHashedString gizmoRenderPassHashedString("Gizmo");
+
 EditorCamera::EditorCamera() {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	Grindstone::RenderPassRegistry* renderPassRegistry = engineCore.GetRenderPassRegistry();
@@ -59,7 +62,7 @@ EditorCamera::EditorCamera() {
 	renderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
 	renderPassCreateInfo.shouldClearDepthOnLoad = true;
 	renderPass = core->CreateRenderPass(renderPassCreateInfo);
-	renderPassRegistry->RegisterRenderpass(Grindstone::HashedString("Editor"), renderPass);
+	renderPassRegistry->RegisterRenderpass(editorRenderPassHashedString, renderPass);
 
 	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> gizmoAttachments = { { renderTargetCreateInfo.format, false } };
 
@@ -70,7 +73,7 @@ EditorCamera::EditorCamera() {
 	gizmoRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
 	gizmoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 	gizmoRenderPass = core->CreateRenderPass(gizmoRenderPassCreateInfo);
-	renderPassRegistry->RegisterRenderpass(Grindstone::HashedString("Gizmo"), gizmoRenderPass);
+	renderPassRegistry->RegisterRenderpass(gizmoRenderPassHashedString, gizmoRenderPass);
 
 	GraphicsAPI::Framebuffer::CreateInfo framebufferCreateInfo{};
 	framebufferCreateInfo.debugName = "Editor Framebuffer";

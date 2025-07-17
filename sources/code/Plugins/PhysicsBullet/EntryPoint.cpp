@@ -61,7 +61,7 @@ extern "C" {
 			SetupColliderComponent<CapsuleColliderComponent>
 		);
 
-		pluginInterface->RegisterWorldContextFactory<Grindstone::Physics::WorldContext>(Grindstone::HashedString("PhysicsWorldContext"));
+		pluginInterface->RegisterWorldContextFactory<Grindstone::Physics::WorldContext>(physicsWorldContextName);
 		pluginInterface->RegisterComponent<RigidBodyComponent>(SetupRigidBodyComponent, DestroyRigidBodyComponent);
 		pluginInterface->RegisterSystem("PhysicsSystem", PhysicsBulletSystem);
 	}
@@ -69,7 +69,7 @@ extern "C" {
 	BULLET_PHYSICS_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
 		pluginInterface->UnregisterSystem("PhysicsSystem");
 		pluginInterface->UnregisterComponent<RigidBodyComponent>();
-		pluginInterface->UnregisterWorldContextFactory(Grindstone::HashedString("PhysicsWorldContext"));
+		pluginInterface->UnregisterWorldContextFactory(physicsWorldContextName);
 
 		pluginInterface->UnregisterComponent<CapsuleColliderComponent>();
 		pluginInterface->UnregisterComponent<PlaneColliderComponent>();
