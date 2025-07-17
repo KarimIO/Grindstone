@@ -244,6 +244,13 @@ void TextureImporter::QueueReloadAsset(Uuid uuid) {
 	LoadTextureAsset(textureInMap->second);
 }
 
+void TextureImporter::OnDeleteAsset(TextureAsset& asset) {
+	EngineCore& engineCore = EngineCore::GetInstance();
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	graphicsCore->DeleteImage(asset.image);
+	graphicsCore->DeleteSampler(asset.defaultSampler);
+}
+
 TextureImporter::~TextureImporter() {
 	EngineCore& engineCore = EngineCore::GetInstance();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
