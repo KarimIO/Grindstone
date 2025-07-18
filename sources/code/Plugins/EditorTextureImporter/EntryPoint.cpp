@@ -19,7 +19,6 @@ extern "C" {
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 
 		if (editorPluginInterface != nullptr) {
-			editorPluginInterface->RegisterAssetImporter("hdr", ImportTexture, textureImporterVersion);
 			editorPluginInterface->RegisterAssetImporter("png", ImportTexture, textureImporterVersion);
 			editorPluginInterface->RegisterAssetImporter("tga", ImportTexture, textureImporterVersion);
 			editorPluginInterface->RegisterAssetImporter("bmp", ImportTexture, textureImporterVersion);
@@ -34,7 +33,6 @@ extern "C" {
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 
 		if (editorPluginInterface != nullptr) {
-			editorPluginInterface->DeregisterAssetImporter("hdr");
 			editorPluginInterface->DeregisterAssetImporter("png");
 			editorPluginInterface->DeregisterAssetImporter("tga");
 			editorPluginInterface->DeregisterAssetImporter("bmp");
