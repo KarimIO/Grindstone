@@ -46,7 +46,8 @@ namespace Grindstone::Editor::ImguiEditor {
 
 		void SetCurrentAssetDirectory(const std::filesystem::path& path);
 		void SetFilesFromCurrentDirectory();
-		void ProcessDirectoryEntryClicks(bool isFolder, const std::filesystem::path& path);
+		void ProcessFolderClicks(const std::filesystem::path& path);
+		void ProcessFileClicks(AssetBrowserItem& item);
 		void RenderTopBar();
 		void RenderPathPart(const std::filesystem::path& path);
 		void RenderPath();
