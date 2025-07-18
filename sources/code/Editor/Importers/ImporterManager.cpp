@@ -101,11 +101,14 @@ Grindstone::Editor::ImporterVersion ImporterManager::GetImporterVersion(const st
 Grindstone::Editor::ImporterVersion ImporterManager::GetImporterVersion(const std::filesystem::path& path) const {
 	const std::string extension = path.extension().string();
 	if (extension.empty()) {
-		return false;
+		return 0;
 	}
 
 	const std::string extensionWithoutDot = extension.substr(1);
-	return HasImporter(extensionWithoutDot);
+	auto extensionIterator = extensionsToImporterFactories.find(extensionWithoutDot);
+	return (extensionIterator != extensionsToImporterFactories.end())
+		? extensionIterator->second.importerVersion
+		: 0;
 }
 
 bool ImporterManager::HasImporter(const std::string& extension) const {
