@@ -1,6 +1,7 @@
 set(EDITORAUDIOIMPORTER_SOURCES
 	AudioImporter.cpp
 	${COMMON_DIR}/ResourcePipeline/AssetType.cpp
+	${COMMON_DIR}/ResourcePipeline/ImporterSettings.cpp
 	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp
 	${COMMON_DIR}/ResourcePipeline/Uuid.cpp
 	${COMMON_DIR}/Editor/Importer.cpp
@@ -11,6 +12,7 @@ set(EDITORAUDIOIMPORTER_SOURCES
 set(EDITORAUDIOIMPORTER_HEADERS
 	AudioImporter.hpp
 	${COMMON_DIR}/ResourcePipeline/AssetType.hpp
+	${COMMON_DIR}/ResourcePipeline/ImporterSettings.hpp
 	${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
 	${COMMON_DIR}/ResourcePipeline/Uuid.hpp
 	${COMMON_DIR}/Editor/Importer.hpp
