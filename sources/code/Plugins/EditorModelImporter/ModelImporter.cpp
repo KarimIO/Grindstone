@@ -493,7 +493,12 @@ void ModelImporter::WritePrefab() {
 
 		bool hasParent = node.parentNode != SIZE_MAX;
 		bool hasMesh = node.meshIndex != SIZE_MAX;
-		bool hasLight = node.lightData != nullptr;
+		bool hasLight = node.lightData != nullptr &&
+			(
+				(node.lightData->mType == aiLightSource_DIRECTIONAL) ||
+				(node.lightData->mType == aiLightSource_POINT) ||
+				(node.lightData->mType == aiLightSource_SPOT)
+			);
 		bool hasCamera = node.cameraData != nullptr;
 
 		output << "\t\t{\n\t\t\t\"entityId\": " << nodeIndex << ",\n\t\t\t\"components\": [\n";
@@ -521,10 +526,10 @@ void ModelImporter::WritePrefab() {
 		if (hasMesh) {
 			OutputMesh& mesh = outputMeshes[node.meshIndex];
 			if (mesh.submeshes.size() == 0) {
-				// TODO: ERROR
+				GS_ASSERT_LOG("No submeshes found in asset.");
 			}
 			else if (mesh.submeshes.size() > 1) {
-				// TODO: Other ERROR
+				GS_ASSERT_LOG("More than one submesh found in asset.");
 			}
 			else {
 				std::string& meshUuid = outputMeshUuids[node.meshIndex];
@@ -545,7 +550,7 @@ void ModelImporter::WritePrefab() {
 			WriteComponentKey(output, "nearPlaneDistance") << node.cameraData->mClipPlaneNear << ",\n";
 			WriteComponentKey(output, "farPlaneDistance") << node.cameraData->mClipPlaneFar << ",\n";
 			WriteComponentKey(output, "fieldOfView") << node.cameraData->mHorizontalFOV << ",\n";
-			WriteComponentKey(output, "aspectRatio") << node.cameraData->mAspect << ",\n";
+			WriteComponentKey(output, "aspectRatio") << node.cameraData->mAspect << "\n";
 			// TODO: Handle Orthographic/Perspective, Orthographic Width, and LookAt
 			WriteComponentFooter(output, hasLight);
 		}
@@ -579,6 +584,8 @@ void ModelImporter::WritePrefab() {
 				WriteComponentKey(output, "shadowResolution") << "0.0\n";
 				WriteComponentFooter(output, false);
 				break;
+			default:
+				GS_ASSERT_LOG("Unexpected light type.");
 			}
 		}
 
