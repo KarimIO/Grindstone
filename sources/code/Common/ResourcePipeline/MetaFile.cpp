@@ -113,6 +113,17 @@ void MetaFile::Load(AssetRegistry& assetRegistry, const std::filesystem::path& b
 			);
 		}
 	}
+
+	if (document.HasMember("importerSettings")) {
+		rapidjson::Value& settingsArray = document["importerSettings"];
+		for (
+			rapidjson::Value::ConstMemberIterator itr = settingsArray.MemberBegin();
+			itr != settingsArray.MemberEnd();
+			++itr
+		) {
+			importerSettings.Set(itr->name.GetString(), itr->value.GetString());
+		}
+	}
 }
 
 void MetaFile::Save(uint32_t currentImporterVersion) {
@@ -121,70 +132,87 @@ void MetaFile::Save(uint32_t currentImporterVersion) {
 	rapidjson::StringBuffer documentStringBuffer;
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> documentWriter = rapidjson::PrettyWriter<rapidjson::StringBuffer>(documentStringBuffer);
 
-	documentWriter.StartObject();
-
-	documentWriter.Key("assetImporterVersion");
-	documentWriter.Uint(currentImporterVersion);
-
-	documentWriter.Key("metaFileVersion");
-	documentWriter.Uint(currentMetaFileVersion);
-
-	documentWriter.Key("defaultUuid");
-	documentWriter.String(defaultSubasset.uuid.ToString().c_str());
-
-	documentWriter.Key("subassets");
-	documentWriter.StartArray();
-
-	if (defaultSubasset.subassetIdentifier != "") {
+	{
 		documentWriter.StartObject();
-		documentWriter.Key("displayName");
-		documentWriter.String(defaultSubasset.displayName.c_str());
-		documentWriter.Key("address");
-		documentWriter.String(defaultSubasset.address.c_str());
-		documentWriter.Key("subassetIdentifier");
-		documentWriter.String(defaultSubasset.subassetIdentifier.c_str());
-		documentWriter.Key("uuid");
+
+		documentWriter.Key("assetImporterVersion");
+		documentWriter.Uint(currentImporterVersion);
+
+		documentWriter.Key("metaFileVersion");
+		documentWriter.Uint(currentMetaFileVersion);
+
+		documentWriter.Key("defaultUuid");
 		documentWriter.String(defaultSubasset.uuid.ToString().c_str());
-		documentWriter.Key("type");
-		documentWriter.String(GetAssetTypeToString(defaultSubasset.assetType));
+
+		{
+			documentWriter.Key("subassets");
+			documentWriter.StartArray();
+
+			if (defaultSubasset.subassetIdentifier != "") {
+				documentWriter.StartObject();
+				documentWriter.Key("displayName");
+				documentWriter.String(defaultSubasset.displayName.c_str());
+				documentWriter.Key("address");
+				documentWriter.String(defaultSubasset.address.c_str());
+				documentWriter.Key("subassetIdentifier");
+				documentWriter.String(defaultSubasset.subassetIdentifier.c_str());
+				documentWriter.Key("uuid");
+				documentWriter.String(defaultSubasset.uuid.ToString().c_str());
+				documentWriter.Key("type");
+				documentWriter.String(GetAssetTypeToString(defaultSubasset.assetType));
+				documentWriter.EndObject();
+
+				assetRegistry.UpdateEntry(
+					baseAssetPath,
+					defaultSubasset.subassetIdentifier,
+					defaultSubasset.displayName,
+					defaultSubasset.address,
+					defaultSubasset.uuid,
+					defaultSubasset.assetType
+				);
+			}
+
+			for (auto& subasset : subassets) {
+				documentWriter.StartObject();
+				documentWriter.Key("displayName");
+				documentWriter.String(subasset.displayName.c_str());
+				documentWriter.Key("address");
+				documentWriter.String(subasset.address.c_str());
+				documentWriter.Key("subassetIdentifier");
+				documentWriter.String(subasset.subassetIdentifier.c_str());
+				documentWriter.Key("uuid");
+				documentWriter.String(subasset.uuid.ToString().c_str());
+				documentWriter.Key("type");
+				documentWriter.String(GetAssetTypeToString(subasset.assetType));
+				documentWriter.EndObject();
+
+				assetRegistry.UpdateEntry(
+					baseAssetPath,
+					subasset.subassetIdentifier,
+					subasset.displayName,
+					subasset.address,
+					subasset.uuid,
+					subasset.assetType
+				);
+			}
+			documentWriter.EndArray();
+		}
+
+		{
+			documentWriter.Key("importerSettings");
+			documentWriter.StartObject();
+			for (const auto& it : importerSettings) {
+				const std::string& key = it.first;
+				const std::string& value = it.second;
+
+				documentWriter.Key(key.c_str());
+				documentWriter.String(value.c_str());
+			}
+			documentWriter.EndObject();
+		}
+
 		documentWriter.EndObject();
-
-		assetRegistry.UpdateEntry(
-			baseAssetPath,
-			defaultSubasset.subassetIdentifier,
-			defaultSubasset.displayName,
-			defaultSubasset.address,
-			defaultSubasset.uuid,
-			defaultSubasset.assetType
-		);
 	}
-
-	for (auto& subasset : subassets) {
-		documentWriter.StartObject();
-		documentWriter.Key("displayName");
-		documentWriter.String(subasset.displayName.c_str());
-		documentWriter.Key("address");
-		documentWriter.String(subasset.address.c_str());
-		documentWriter.Key("subassetIdentifier");
-		documentWriter.String(subasset.subassetIdentifier.c_str());
-		documentWriter.Key("uuid");
-		documentWriter.String(subasset.uuid.ToString().c_str());
-		documentWriter.Key("type");
-		documentWriter.String(GetAssetTypeToString(subasset.assetType));
-		documentWriter.EndObject();
-
-		assetRegistry.UpdateEntry(
-			baseAssetPath,
-			subasset.subassetIdentifier,
-			subasset.displayName,
-			subasset.address,
-			subasset.uuid,
-			subasset.assetType
-		);
-	}
-	documentWriter.EndArray();
-	documentWriter.EndObject();
-
 
 	const char* content = documentStringBuffer.GetString();
 	std::ofstream file(metaFilePath);

@@ -5,6 +5,7 @@ file(GLOB_RECURSE SOURCE_MAIN
 	${COMMON_DIR}/Containers/Containers.natvis
 	${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINE_CORE_DIR}/Utils/Utilities.cpp
 	${COMMON_DIR}/ResourcePipeline/AssetType.cpp ${COMMON_DIR}/ResourcePipeline/AssetType.hpp
+	${COMMON_DIR}/ResourcePipeline/ImporterSettings.cpp ${COMMON_DIR}/ResourcePipeline/ImporterSettings.hpp
 	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp ${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
 	${COMMON_DIR}/ResourcePipeline/Uuid.cpp  ${COMMON_DIR}/ResourcePipeline/Uuid.hpp
 	${ENGINE_CORE_DIR}/ECS/Entity.cpp
