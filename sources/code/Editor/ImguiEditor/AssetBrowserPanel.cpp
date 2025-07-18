@@ -140,27 +140,10 @@ void AssetBrowserPanel::SetFilesFromCurrentDirectory() {
 	}
 }
 
-void AssetBrowserPanel::ProcessDirectoryEntryClicks(bool isFolder, const std::filesystem::path& path) {
+void AssetBrowserPanel::ProcessFolderClicks(const std::filesystem::path& path) {
 	if (ImGui::IsItemHovered()) {
 		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-			if (isFolder) {
-				SetCurrentAssetDirectory(path);
-			}
-			else if (path.extension().string() == ".gscene") {
-				Editor::Manager& engineManager = Editor::Manager::GetInstance();
-				SceneManagement::SceneManager* sceneManager = engineManager.GetEngineCore().GetSceneManager();
-
-				AssetRegistry& assetRegistry = engineManager.GetAssetRegistry();
-
-				AssetRegistry::Entry entry;
-				if (assetRegistry.TryGetAssetDataFromAbsolutePath(path, entry)) {
-					sceneManager->LoadScene(entry.uuid);
-				}
-			}
-			else {
-				auto window = engineCore->windowManager->GetWindowByIndex(0);
-				window->OpenFileUsingDefaultProgram(path.string().c_str());
-			}
+			SetCurrentAssetDirectory(path);
 		}
 		else if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
 			Selection& selection = Editor::Manager::GetInstance().GetSelection();
@@ -174,6 +157,42 @@ void AssetBrowserPanel::ProcessDirectoryEntryClicks(bool isFolder, const std::fi
 			}
 			else {
 				selection.SetSelectedFile(path);
+			}
+		}
+	}
+}
+
+void AssetBrowserPanel::ProcessFileClicks(AssetBrowserItem& item) {
+	if (ImGui::IsItemHovered()) {
+		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+			if (item.defaultAssetType == AssetType::Scene) {
+				Editor::Manager& engineManager = Editor::Manager::GetInstance();
+				SceneManagement::SceneManager* sceneManager = engineManager.GetEngineCore().GetSceneManager();
+
+				AssetRegistry& assetRegistry = engineManager.GetAssetRegistry();
+
+				AssetRegistry::Entry entry;
+				if (item.defaultUuid.IsValid()) {
+					sceneManager->LoadScene(item.defaultUuid);
+				}
+			}
+			else {
+				auto window = engineCore->windowManager->GetWindowByIndex(0);
+				window->OpenFileUsingDefaultProgram(item.filepath.string().c_str());
+			}
+		}
+		else if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+			Selection& selection = Editor::Manager::GetInstance().GetSelection();
+			if (ImGui::GetIO().KeyCtrl) {
+				if (selection.IsFileSelected(item.filepath)) {
+					selection.RemoveFile(item.filepath);
+				}
+				else {
+					selection.AddFile(item.filepath);
+				}
+			}
+			else {
+				selection.SetSelectedFile(item.filepath);
 			}
 		}
 	}
@@ -542,7 +561,7 @@ void AssetBrowserPanel::RenderFolders() {
 		ImGui::PopID();
 
 		RenderAssetContextMenu(true, path, folderIndex);
-		ProcessDirectoryEntryClicks(true, path);
+		ProcessFolderClicks(path);
 
 		ImGui::PopStyleColor(3);
 
@@ -594,7 +613,7 @@ void AssetBrowserPanel::RenderFile(size_t fileIndex) {
 	ImGui::PopID();
 
 	RenderAssetContextMenu(false, item.filepath, fileIndex);
-	ProcessDirectoryEntryClicks(false, item.filepath);
+	ProcessFileClicks(item);
 
 	if (ImGui::BeginDragDropSource() && item.defaultUuid.IsValid()) {
 		std::string myUuidAsString = item.defaultUuid.ToString();
