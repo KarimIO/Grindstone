@@ -6,6 +6,7 @@
 #include <Common/ResourcePipeline/AssetType.hpp>
 #include <Editor/AssetRegistry.hpp>
 
+#include "ImporterSettings.hpp"
 #include "Uuid.hpp"
 
 namespace Grindstone::Editor {
@@ -50,6 +51,10 @@ namespace Grindstone::Editor {
 		bool IsValid() const;
 		bool IsOutdatedImporterVersion(Grindstone::Editor::ImporterVersion currentImporterVersion) const;
 		bool IsOutdatedMetaVersion() const;
+
+		Grindstone::Editor::ImporterSettings& GetImporterSettings() {
+			return importerSettings;
+		}
 	public:
 		using Iterator = std::vector<Subasset>::iterator;
 		using ConstIterator = std::vector<Subasset>::const_iterator;
@@ -71,5 +76,7 @@ namespace Grindstone::Editor {
 		std::filesystem::path metaFilePath;
 		std::filesystem::path baseAssetPath;
 		std::filesystem::path mountedAssetPath;
+
+		Grindstone::Editor::ImporterSettings importerSettings;
 	};
 }
