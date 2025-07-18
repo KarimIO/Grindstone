@@ -382,8 +382,8 @@ void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Gri
 	metaFile = assetRegistry.GetMetaFileByPath(path);
 
 	// Set to false, will check if true later.
-	bool shouldImportAnimations = true;
-	isSkeletalMesh = scene->hasSkeletons();
+	bool shouldImportAnimations = false;
+	isSkeletalMesh = false; // scene->hasSkeletons();
 
 	outputMaterialUuids.resize(scene->mNumMaterials);
 	for (unsigned int materialIndex = 0; materialIndex < scene->mNumMaterials; ++materialIndex) {
