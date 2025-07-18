@@ -23,7 +23,8 @@ namespace Grindstone {
 			virtual Interface& GetInterface();
 			
 			virtual void LoadPluginList();
-			virtual void UnloadPluginList();
+			virtual void UnloadPluginListExceptRenderHardwareInterface();
+			virtual void UnloadPluginRenderHardwareInterface();
 			bool Load(const char* name);
 			void LoadCritical(const char* name);
 

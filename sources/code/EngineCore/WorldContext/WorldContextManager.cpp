@@ -70,6 +70,10 @@ void Grindstone::WorldContextManager::Remove(Grindstone::WorldContextSet* cxtSet
 	GS_ASSERT_LOG("Trying to remove invalid WorldContextSet!");
 }
 
+void Grindstone::WorldContextManager::ClearContextSets() {
+	worldContextSets.clear();
+}
+
 Grindstone::WorldContextManager::WorldContextSetArray::iterator Grindstone::WorldContextManager::begin() {
 	return worldContextSets.begin();
 }
