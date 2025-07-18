@@ -187,8 +187,10 @@ EngineCore::~EngineCore() {
 		sceneManager->CloseActiveScenes();
 	}
 
+	worldContextManager->ClearContextSets();
+
 	if (pluginManager) {
-		pluginManager->UnloadPluginList();
+		pluginManager->UnloadPluginListExceptRenderHardwareInterface();
 	}
 
 	AllocatorCore::Free(worldContextManager);
@@ -197,6 +199,7 @@ EngineCore::~EngineCore() {
 	AllocatorCore::Free(assetRendererManager);
 	AllocatorCore::Free(assetManager);
 	AllocatorCore::Free(inputManager);
+	pluginManager->UnloadPluginRenderHardwareInterface();
 	AllocatorCore::Free(pluginManager);
 	AllocatorCore::Free(componentRegistrar);
 	AllocatorCore::Free(systemRegistrar);

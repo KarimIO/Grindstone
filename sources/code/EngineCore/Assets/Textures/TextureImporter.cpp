@@ -249,6 +249,8 @@ void TextureImporter::OnDeleteAsset(TextureAsset& asset) {
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	graphicsCore->DeleteImage(asset.image);
 	graphicsCore->DeleteSampler(asset.defaultSampler);
+	asset.image  = nullptr;
+	asset.defaultSampler = nullptr;
 }
 
 TextureImporter::~TextureImporter() {
@@ -256,14 +258,18 @@ TextureImporter::~TextureImporter() {
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
 	for (auto& asset : assets) {
-		graphicsCore->DeleteImage(asset.second.image);
-		graphicsCore->DeleteSampler(asset.second.defaultSampler);
+		Grindstone::GraphicsAPI::Image* image = asset.second.image;
+		Grindstone::GraphicsAPI::Sampler* sampler = asset.second.defaultSampler;
+		graphicsCore->DeleteImage(image);
+		graphicsCore->DeleteSampler(sampler);
 	}
 	assets.clear();
 
 	for (auto& asset : texturesByAddress) {
-		graphicsCore->DeleteImage(asset.second.image);
-		graphicsCore->DeleteSampler(asset.second.defaultSampler);
+		Grindstone::GraphicsAPI::Image* image = asset.second.image;
+		Grindstone::GraphicsAPI::Sampler* sampler = asset.second.defaultSampler;
+		graphicsCore->DeleteImage(image);
+		graphicsCore->DeleteSampler(sampler);
 	}
 	texturesByAddress.clear();
 }

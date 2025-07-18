@@ -19,6 +19,7 @@ namespace Grindstone {
 		[[nodiscard]] virtual Grindstone::WorldContextSet* GetActiveWorldContextSet();
 		[[nodiscard]] virtual Grindstone::WorldContextSet* Create();
 		virtual void Remove(Grindstone::WorldContextSet* cxtSet);
+		virtual void ClearContextSets();
 
 		using WorldContextSetArray = std::vector<Grindstone::UniquePtr<Grindstone::WorldContextSet>>;
 
