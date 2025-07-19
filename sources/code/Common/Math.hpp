@@ -7,6 +7,11 @@ namespace Grindstone::Math {
 	using Int3 = glm::tvec3<int, glm::highp>;
 	using Int4 = glm::tvec4<int, glm::highp>;
 
+	using Uint = unsigned int;
+	using Uint2 = glm::tvec2<unsigned int, glm::highp>;
+	using Uint3 = glm::tvec3<unsigned int, glm::highp>;
+	using Uint4 = glm::tvec4<unsigned int, glm::highp>;
+
 	using Double = double;
 	using Double2 = glm::tvec2<double, glm::highp>;
 	using Double3 = glm::tvec3<double, glm::highp>;

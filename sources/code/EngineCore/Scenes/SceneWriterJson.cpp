@@ -21,6 +21,7 @@ void WriteArray(SceneRapidjsonWriter& documentWriter, void* memberPtr, Reflectio
 void WriteArrayFloat(SceneRapidjsonWriter& documentWriter, float* srcArray, rapidjson::SizeType count);
 void WriteArrayDouble(SceneRapidjsonWriter& documentWriter, double* srcArray, rapidjson::SizeType count);
 void WriteArrayInt(SceneRapidjsonWriter& documentWriter, int* srcArray, rapidjson::SizeType count);
+void WriteArrayUint(SceneRapidjsonWriter& documentWriter, uint32_t* srcArray, rapidjson::SizeType count);
 
 SceneWriterJson::SceneWriterJson(Scene* scene, const std::filesystem::path& path) : scene(scene), path(path) {
 	Save(path);
@@ -148,16 +149,28 @@ void WriteParameter(SceneRapidjsonWriter& documentWriter, Reflection::TypeDescri
 			break;
 		}
 		case Reflection::TypeDescriptor::ReflectionTypeData::Int:
-			documentWriter.Int(*static_cast<int*>(dataPtr));
+			documentWriter.Int(*static_cast<int32_t*>(dataPtr));
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Int2:
-			WriteArrayInt(documentWriter, static_cast<int*>(dataPtr), 2);
+			WriteArrayInt(documentWriter, static_cast<int32_t*>(dataPtr), 2);
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Int3:
-			WriteArrayInt(documentWriter, static_cast<int*>(dataPtr), 3);
+			WriteArrayInt(documentWriter, static_cast<int32_t*>(dataPtr), 3);
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Int4:
-			WriteArrayInt(documentWriter, static_cast<int*>(dataPtr), 4);
+			WriteArrayInt(documentWriter, static_cast<int32_t*>(dataPtr), 4);
+			break;
+		case Reflection::TypeDescriptor::ReflectionTypeData::Uint:
+			documentWriter.Uint(*static_cast<uint32_t*>(dataPtr));
+			break;
+		case Reflection::TypeDescriptor::ReflectionTypeData::Uint2:
+			WriteArrayUint(documentWriter, static_cast<uint32_t*>(dataPtr), 2);
+			break;
+		case Reflection::TypeDescriptor::ReflectionTypeData::Uint3:
+			WriteArrayUint(documentWriter, static_cast<uint32_t*>(dataPtr), 3);
+			break;
+		case Reflection::TypeDescriptor::ReflectionTypeData::Uint4:
+			WriteArrayUint(documentWriter, static_cast<uint32_t*>(dataPtr), 4);
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Float:
 			documentWriter.Double(*static_cast<float*>(dataPtr));
@@ -279,6 +292,14 @@ void WriteArrayDouble(SceneRapidjsonWriter& documentWriter, double* srcArray, ra
 }
 
 void WriteArrayInt(SceneRapidjsonWriter& documentWriter, int* srcArray, rapidjson::SizeType count) {
+	documentWriter.StartArray();
+	for (rapidjson::SizeType i = 0; i < count; ++i) {
+		documentWriter.Int(srcArray[i]);
+	}
+	documentWriter.EndArray();
+}
+
+void WriteArrayUint(SceneRapidjsonWriter& documentWriter, uint32_t* srcArray, rapidjson::SizeType count) {
 	documentWriter.StartArray();
 	for (rapidjson::SizeType i = 0; i < count; ++i) {
 		documentWriter.Int(srcArray[i]);

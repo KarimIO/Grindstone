@@ -146,6 +146,14 @@ static void CopyDataArrayInt(rapidjson::Value& srcParameter, int* dstArray, rapi
 	}
 }
 
+static void CopyDataArrayUint(rapidjson::Value& srcParameter, uint32_t* dstArray, rapidjson::SizeType count) {
+	auto srcArray = srcParameter.GetArray();
+
+	for (rapidjson::SizeType i = 0; i < count; ++i) {
+		dstArray[i] = srcArray[i].GetUint();
+	}
+}
+
 using ReflectionTypeData = Reflection::TypeDescriptor_Struct::ReflectionTypeData;
 void SceneLoaderJson::ProcessComponentParameter(
 	ECS::Entity entity,
@@ -231,6 +239,20 @@ void SceneLoaderJson::ParseMember(
 		break;
 	case ReflectionTypeData::Int4:
 		CopyDataArrayInt(parameter, static_cast<int*>(memberPtr), 4);
+		break;
+	case ReflectionTypeData::Uint: {
+		uint32_t& value = *(uint32_t*)memberPtr;
+		value = parameter.GetUint();
+		break;
+	}
+	case ReflectionTypeData::Uint2:
+		CopyDataArrayUint(parameter, static_cast<uint32_t*>(memberPtr), 2);
+		break;
+	case ReflectionTypeData::Uint3:
+		CopyDataArrayUint(parameter, static_cast<uint32_t*>(memberPtr), 3);
+		break;
+	case ReflectionTypeData::Uint4:
+		CopyDataArrayUint(parameter, static_cast<uint32_t*>(memberPtr), 4);
 		break;
 	case ReflectionTypeData::Float: {
 		float& str = *(float*)memberPtr;
@@ -323,6 +345,18 @@ void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* me
 			break;
 		case ReflectionTypeData::Int4:
 			SetupArray<Math::Int4>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::Uint:
+			SetupArray<Math::Uint>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::Uint2:
+			SetupArray<Math::Uint2>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::Uint3:
+			SetupArray<Math::Uint3>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::Uint4:
+			SetupArray<Math::Uint4>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Float:
 			SetupArray<Math::Float>(memberPtr, arraySize, elementPtr, elementSize);
