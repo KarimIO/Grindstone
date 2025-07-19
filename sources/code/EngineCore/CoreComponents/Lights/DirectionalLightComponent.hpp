@@ -28,9 +28,10 @@ namespace Grindstone {
 
 		Math::Matrix4 shadowMatrix;
 		Math::Float3 color;
-		float sourceRadius;
-		float intensity;
-		float shadowResolution;
+		float sourceRadius = 0.0f;
+		float intensity = 0.0f;
+		uint32_t shadowResolution = 0u;
+		uint32_t cachedShadowResolution = 0u;
 
 		GraphicsAPI::RenderPass* renderPass = nullptr;
 		GraphicsAPI::Framebuffer* framebuffer = nullptr;

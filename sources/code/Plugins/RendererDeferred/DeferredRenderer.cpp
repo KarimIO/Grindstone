@@ -2147,7 +2147,17 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 
 			spotLightComponent.shadowMatrix = projectionMatrix * viewMatrix;
 
-			uint32_t resolution = static_cast<uint32_t>(spotLightComponent.shadowResolution);
+			if (spotLightComponent.shadowResolution != spotLightComponent.cachedShadowResolution) {
+				graphicsCore->WaitUntilIdle();
+				spotLightComponent.shadowResolution = std::clamp(spotLightComponent.shadowResolution, 8u, 16192u);
+				spotLightComponent.cachedShadowResolution = spotLightComponent.shadowResolution;
+				spotLightComponent.depthTarget->Resize(spotLightComponent.shadowResolution, spotLightComponent.shadowResolution);
+				spotLightComponent.framebuffer->Resize(spotLightComponent.shadowResolution, spotLightComponent.shadowResolution);
+				GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::SampledImage(spotLightComponent.depthTarget);
+				spotLightComponent.descriptorSet->ChangeBindings(&binding, 1, 1);
+			}
+			
+			uint32_t resolution = spotLightComponent.shadowResolution;
 
 			spotLightComponent.shadowMapUniformBufferObject->UploadData(&spotLightComponent.shadowMatrix);
 			assetManager->SetEngineDescriptorSet(spotLightComponent.shadowMapDescriptorSet);
@@ -2196,7 +2206,17 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 			glm::mat4 projView = projectionMatrix * viewMatrix;
 			directionalLightComponent.shadowMatrix = projView;
 
-			uint32_t resolution = static_cast<uint32_t>(directionalLightComponent.shadowResolution);
+			if (directionalLightComponent.shadowResolution != directionalLightComponent.cachedShadowResolution) {
+				graphicsCore->WaitUntilIdle();
+				directionalLightComponent.shadowResolution = std::clamp(directionalLightComponent.shadowResolution, 8u, 16192u);
+				directionalLightComponent.cachedShadowResolution = directionalLightComponent.shadowResolution;
+				directionalLightComponent.depthTarget->Resize(directionalLightComponent.shadowResolution, directionalLightComponent.shadowResolution);
+				directionalLightComponent.framebuffer->Resize(directionalLightComponent.shadowResolution, directionalLightComponent.shadowResolution);
+				GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::SampledImage(directionalLightComponent.depthTarget);
+				directionalLightComponent.descriptorSet->ChangeBindings(&binding, 1, 1);
+			}
+
+			uint32_t resolution = directionalLightComponent.shadowResolution;
 
 			directionalLightComponent.shadowMapUniformBufferObject->UploadData(&projView);
 			assetManager->SetEngineDescriptorSet(directionalLightComponent.shadowMapDescriptorSet);
