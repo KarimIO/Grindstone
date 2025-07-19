@@ -436,6 +436,39 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 			(int *)offset
 		);
 		break;
+	case Reflection::TypeDescriptor::ReflectionTypeData::Uint:
+		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+		ImGui::InputScalar(
+			displayNamePtr,
+			ImGuiDataType_U32,
+			(uint32_t*)offset
+		);
+		ImGui::PopItemWidth();
+		break;
+	case Reflection::TypeDescriptor::ReflectionTypeData::Uint2:
+		ImGui::InputScalarN(
+			displayNamePtr,
+			ImGuiDataType_U32,
+			(uint32_t*)offset,
+			2
+		);
+		break;
+	case Reflection::TypeDescriptor::ReflectionTypeData::Uint3:
+		ImGui::InputScalarN(
+			displayNamePtr,
+			ImGuiDataType_U32,
+			(uint32_t*)offset,
+			3
+		);
+		break;
+	case Reflection::TypeDescriptor::ReflectionTypeData::Uint4:
+		ImGui::InputScalarN(
+			displayNamePtr,
+			ImGuiDataType_U32,
+			(uint32_t*)offset,
+			4
+		);
+		break;
 	case Reflection::TypeDescriptor::ReflectionTypeData::Float:
 		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 		ImGui::InputFloat(
