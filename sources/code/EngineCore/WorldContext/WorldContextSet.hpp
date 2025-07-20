@@ -20,11 +20,11 @@ namespace Grindstone {
 
 		virtual ~WorldContextSet();
 
-		[[nodiscard]] entt::registry& Grindstone::WorldContextSet::GetEntityRegistry() {
+		[[nodiscard]] entt::registry& GetEntityRegistry() {
 			return registry;
 		}
 
-		[[nodiscard]] Grindstone::WorldContext* Grindstone::WorldContextSet::GetContext(Grindstone::HashedString hashedString) {
+		[[nodiscard]] Grindstone::WorldContext* GetContext(Grindstone::HashedString hashedString) {
 			auto it = contexts.find(hashedString);
 			if (it == contexts.end()) {
 				return nullptr;
@@ -33,11 +33,11 @@ namespace Grindstone {
 			return it->second.Get();
 		}
 
-		[[nodiscard]] const entt::registry& Grindstone::WorldContextSet::GetEntityRegistry() const {
+		[[nodiscard]] const entt::registry& GetEntityRegistry() const {
 			return registry;
 		}
 
-		[[nodiscard]] const Grindstone::WorldContext* Grindstone::WorldContextSet::GetContext(Grindstone::HashedString hashedString) const {
+		[[nodiscard]] const Grindstone::WorldContext* GetContext(Grindstone::HashedString hashedString) const {
 			auto it = contexts.find(hashedString);
 			if (it == contexts.end()) {
 				return nullptr;
@@ -46,11 +46,11 @@ namespace Grindstone {
 			return it->second.Get();
 		}
 
-		void Grindstone::WorldContextSet::Create(Grindstone::HashedString hashedString, Grindstone::UniquePtr<Grindstone::WorldContext>&& cxt) {
+		void Create(Grindstone::HashedString hashedString, Grindstone::UniquePtr<Grindstone::WorldContext>&& cxt) {
 			contexts.emplace(hashedString, std::move(cxt));
 		}
 
-		void Grindstone::WorldContextSet::Remove(Grindstone::HashedString hashedString) {
+		void Remove(Grindstone::HashedString hashedString) {
 			contexts.erase(hashedString);
 		}
 

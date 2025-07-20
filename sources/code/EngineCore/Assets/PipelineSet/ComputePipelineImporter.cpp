@@ -42,7 +42,7 @@ static void UnpackComputePipelineDescriptorSetHeaders(
 			dstBinding.type = srcBinding.type;
 		}
 
-		std::string setName = fmt::format("{} Descriptor Set {}", pipelineName, i);
+		std::string setName = std::vformat("{} Descriptor Set {}", std::make_format_args(pipelineName, i));
 		layoutCreateInfo.debugName = setName.c_str();
 		layoutCreateInfo.bindings = dstDescriptorBindings.data();
 		layoutCreateInfo.bindingCount = static_cast<uint32_t>(dstDescriptorBindings.size());
@@ -152,7 +152,7 @@ static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
 }
 
 void* ComputePipelineImporter::LoadAsset(Uuid uuid) {
-	auto& pipelineIterator = assets.emplace(uuid, ComputePipelineAsset(uuid));
+	auto pipelineIterator = assets.emplace(uuid, ComputePipelineAsset(uuid));
 	ComputePipelineAsset& computePipelineAsset = pipelineIterator.first->second;
 
 	computePipelineAsset.assetLoadStatus = AssetLoadStatus::Loading;
@@ -164,7 +164,7 @@ void* ComputePipelineImporter::LoadAsset(Uuid uuid) {
 }
 
 void ComputePipelineImporter::QueueReloadAsset(Uuid uuid) {
-	auto& shaderInMap = assets.find(uuid);
+	auto shaderInMap = assets.find(uuid);
 	if (shaderInMap == assets.end()) {
 		return;
 	}

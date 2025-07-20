@@ -18,7 +18,7 @@ else()
 	project(Grindstone VERSION 1.0.0 LANGUAGES CXX)
 endif()
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 find_package(fmt CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)

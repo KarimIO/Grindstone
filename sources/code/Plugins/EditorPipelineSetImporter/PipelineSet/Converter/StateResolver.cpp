@@ -1,4 +1,3 @@
-#include <fmt/format.h>
 #include <set>
 
 #include "StateResolver.hpp"
@@ -150,14 +149,14 @@ static bool HasBrokenDependency(const ResolveContext& context, const std::string
 			const std::string& parentName = currentPipelineSet->parentData.parent;
 
 			if (processedSets.find(parentName) != processedSets.end()) {
-				std::string msg = fmt::format("Cyclical dependency found for {} while trying to resolve pipelineSet {}.", parentName, pipelineSetName);
+				std::string msg = std::vformat("Cyclical dependency found for {} while trying to resolve pipelineSet {}.", std::make_format_args(parentName, pipelineSetName));
 				context.logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Resolver, msg, pipelineSet.sourceFilepath, UNDEFINED_COLUMN, UNDEFINED_LINE);
 				return true;
 			}
 
 			auto pipelineIterator = context.parseTree.pipelineSets.find(parentName);
 			if (pipelineIterator == context.parseTree.pipelineSets.end()) {
-				std::string msg = fmt::format("Invalid parent found for {} while trying to resolve pipelineSet {}.", parentName, pipelineSetName);
+				std::string msg = std::vformat("Invalid parent found for {} while trying to resolve pipelineSet {}.", std::make_format_args(parentName, pipelineSetName));
 				context.logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Resolver, msg, currentPipelineSet->sourceFilepath, UNDEFINED_COLUMN, UNDEFINED_LINE);
 				return true;
 			}
@@ -167,7 +166,7 @@ static bool HasBrokenDependency(const ResolveContext& context, const std::string
 	}
 
 	{
-		std::string msg = fmt::format("Too many dependencies for pipelineSet {}. The dependency chain is over {} deep.", pipelineSetName, maxInheritance);
+		std::string msg = std::vformat("Too many dependencies for pipelineSet {}. The dependency chain is over {} deep.", std::make_format_args(pipelineSetName, maxInheritance));
 		context.logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Resolver, msg, pipelineSet.sourceFilepath, UNDEFINED_COLUMN, UNDEFINED_LINE);
 	}
 
@@ -190,14 +189,14 @@ static bool HasBrokenDependency(const ResolveContext& context, const std::string
 			const std::string& parentName = currentComputeSet->shaderBlock.parentData.parent;
 
 			if (processedSets.find(parentName) != processedSets.end()) {
-				std::string msg = fmt::format("Cyclical dependency found for {} while trying to resolve pipelineSet {}.", parentName, computeSetName);
+				std::string msg = std::vformat("Cyclical dependency found for {} while trying to resolve pipelineSet {}.", std::make_format_args(parentName, computeSetName));
 				context.logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Resolver, msg, computeSet.sourceFilepath, UNDEFINED_COLUMN, UNDEFINED_LINE);
 				return true;
 			}
 
 			auto computeIterator = context.parseTree.computeSets.find(parentName);
 			if (computeIterator == context.parseTree.computeSets.end()) {
-				std::string msg = fmt::format("Invalid parent found for {} while trying to resolve pipelineSet {}.", parentName, computeSetName);
+				std::string msg = std::vformat("Invalid parent found for {} while trying to resolve pipelineSet {}.", std::make_format_args(parentName, computeSetName));
 				context.logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Resolver, msg, currentComputeSet->sourceFilepath, UNDEFINED_COLUMN, UNDEFINED_LINE);
 				return true;
 			}
@@ -207,7 +206,7 @@ static bool HasBrokenDependency(const ResolveContext& context, const std::string
 	}
 
 	{
-		std::string msg = fmt::format("Too many dependencies for pipelineSet {}. The dependency chain is over {} deep.", computeSetName, maxInheritance);
+		std::string msg = std::vformat("Too many dependencies for pipelineSet {}. The dependency chain is over {} deep.", std::make_format_args(computeSetName, maxInheritance));
 		context.logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Resolver, msg, computeSet.sourceFilepath, UNDEFINED_COLUMN, UNDEFINED_LINE);
 	}
 
@@ -291,7 +290,7 @@ static void CollapseShaderBlock(ResolveContext& context, std::string& code, std:
 
 		auto blockIterator = context.parseTree.genericShaderBlocks.find(requiredShaderBlock);
 		if (blockIterator == context.parseTree.genericShaderBlocks.end()) {
-			std::string msg = fmt::format("Could not find shader block '{}'", requiredShaderBlock);
+			std::string msg = std::vformat("Could not find shader block '{}'", std::make_format_args(requiredShaderBlock));
 			context.logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Resolver, msg, shaderBlock.sourceFilepath, UNDEFINED_COLUMN, UNDEFINED_LINE);
 		}
 		else {
@@ -316,7 +315,7 @@ static void CollapsePasses(ResolveContext& context, ResolvedStateTree::PipelineS
 
 				auto shaderBlockIterator = context.parseTree.genericShaderBlocks.find(std::string(requiredShaderBlock));
 				if (shaderBlockIterator == context.parseTree.genericShaderBlocks.end()) {
-					std::string errorMsg = fmt::format("Found a missing shader block '{}'.", requiredShaderBlock);
+					std::string errorMsg = std::vformat("Found a missing shader block '{}'.", std::make_format_args(requiredShaderBlock));
 					context.logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Resolver, errorMsg, resolvedPipelineSet.sourceFilepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
 				}
 				else {
@@ -348,7 +347,7 @@ static void CollapseComputeSet(
 
 		auto shaderBlockIterator = context.parseTree.genericShaderBlocks.find(std::string(requiredShaderBlock));
 		if (shaderBlockIterator == context.parseTree.genericShaderBlocks.end()) {
-			std::string errorMsg = fmt::format("Found a missing shader block '{}'.", requiredShaderBlock);
+			std::string errorMsg = std::vformat("Found a missing shader block '{}'.", std::make_format_args(requiredShaderBlock));
 			context.logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Resolver, errorMsg, resolvedComputeSet.sourceFilepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
 		}
 		else {

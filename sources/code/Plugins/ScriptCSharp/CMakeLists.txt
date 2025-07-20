@@ -72,7 +72,8 @@ add_library(
 	${CORE_UTILS}
 )
 
-target_compile_features(PluginScriptCSharp PRIVATE cxx_std_17)
+set_property(TARGET PluginScriptCSharp PROPERTY COMPILE_WARNING_AS_ERROR ON)
+target_compile_features(PluginScriptCSharp PRIVATE cxx_std_20)
 set_target_properties(PluginScriptCSharp PROPERTIES FOLDER Plugins/Scripts)
 
 find_path(ENTT_INCLUDE_DIRS "entt/entt.hpp")

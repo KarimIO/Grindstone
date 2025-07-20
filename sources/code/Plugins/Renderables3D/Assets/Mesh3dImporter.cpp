@@ -208,7 +208,7 @@ void Mesh3dImporter::LoadMeshImportIndices(
 }
 
 void* Mesh3dImporter::LoadAsset(Uuid uuid) {
-	auto& meshIterator = assets.emplace(uuid, Mesh3dAsset(uuid, uuid.ToString()));
+	auto meshIterator = assets.emplace(uuid, Mesh3dAsset(uuid, uuid.ToString()));
 	Mesh3dAsset& meshAsset = meshIterator.first->second;
 
 	meshAsset.assetLoadStatus = AssetLoadStatus::Loading;

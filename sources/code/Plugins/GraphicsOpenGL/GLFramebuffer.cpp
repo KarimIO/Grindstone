@@ -129,14 +129,14 @@ void OpenGL::Framebuffer::BindRead() {
 }
 
 void OpenGL::Framebuffer::BindTextures(int k) {
-	for (size_t i = 0; i < colorAttachments.size(); i++) {
+	for (int i = 0; i < static_cast<int>(colorAttachments.size()); i++) {
 		OpenGL::Image* rt = static_cast<OpenGL::Image*>(colorAttachments[i]);
 		rt->Bind(i);
 	}
 
 	if (depthTarget) {
 		OpenGL::Image* dt = static_cast<OpenGL::Image*>(depthTarget);
-		dt->Bind(colorAttachments.size());
+		dt->Bind(static_cast<int>(colorAttachments.size()));
 	}
 }
 

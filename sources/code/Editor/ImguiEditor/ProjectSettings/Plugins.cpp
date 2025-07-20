@@ -68,7 +68,8 @@ static void RenderPluginList(std::vector<std::string>& pluginList) {
 	);
 	ImGui::SetNextWindowPos(windowPos);
 
-	if (ImGui::BeginPopupModal("Plugin List", false, flags)) {
+	bool isOpen = false;
+	if (ImGui::BeginPopupModal("Plugin List", &isOpen, flags)) {
 		if (unusedPlugins.size() == 0) {
 			ImGui::Text("No unused plugins found.");
 			return;

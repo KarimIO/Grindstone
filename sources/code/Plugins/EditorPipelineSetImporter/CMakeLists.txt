@@ -65,7 +65,8 @@ add_library(
 	${CORE_UTILS}
 )
 
-target_compile_features(PluginEditorPipelineSetImporter PRIVATE cxx_std_17)
+set_property(TARGET PluginEditorPipelineSetImporter PROPERTY COMPILE_WARNING_AS_ERROR ON)
+target_compile_features(PluginEditorPipelineSetImporter PRIVATE cxx_std_20)
 set_target_properties(PluginEditorPipelineSetImporter PROPERTIES FOLDER "Plugins/Editor/Importers")
 
 target_compile_definitions(PluginEditorPipelineSetImporter PUBLIC EDITOR_PIPELINESET_IMPORTER_DLL GLM_ENABLE_EXPERIMENTAL)

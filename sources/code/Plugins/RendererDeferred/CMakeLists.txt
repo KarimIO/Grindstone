@@ -9,6 +9,7 @@ add_library(
 	${CORE_UTILS}
 )
 
+set_property(TARGET PluginRendererDeferred PROPERTY COMPILE_WARNING_AS_ERROR ON)
 target_compile_definitions(PluginRendererDeferred PUBLIC RENDERER_DEFERRED_DLL GLM_ENABLE_EXPERIMENTAL)
 set_target_properties(PluginRendererDeferred PROPERTIES FOLDER Plugins/Renderer)
 

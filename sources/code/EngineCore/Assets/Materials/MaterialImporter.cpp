@@ -382,7 +382,7 @@ void* MaterialImporter::LoadAsset(Uuid uuid) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 	Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
 
-	auto& materialIterator = assets.emplace(uuid, Grindstone::MaterialAsset(uuid));
+	auto materialIterator = assets.emplace(uuid, Grindstone::MaterialAsset(uuid));
 	Grindstone::MaterialAsset& materialAsset = materialIterator.first->second;
 
 	Assets::AssetLoadTextResult result = assetManager->LoadTextByUuid(AssetType::Material, uuid);
@@ -402,7 +402,7 @@ void* MaterialImporter::LoadAsset(Uuid uuid) {
 }
 
 void MaterialImporter::QueueReloadAsset(Uuid uuid) {
-	auto& materialIterator = assets.find(uuid);
+	auto materialIterator = assets.find(uuid);
 	if (materialIterator == assets.end()) {
 		return;
 	}

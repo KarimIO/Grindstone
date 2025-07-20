@@ -11,7 +11,7 @@ void AssetRendererManager::AddAssetRenderer(BaseAssetRenderer* assetRenderer) {
 }
 
 void AssetRendererManager::RemoveAssetRenderer(BaseAssetRenderer* assetRenderer) {
-	auto& rendererInMap = assetRenderers.find(assetRenderer->GetName());
+	auto rendererInMap = assetRenderers.find(assetRenderer->GetName());
 	if (rendererInMap == assetRenderers.end()) {
 		assetRenderers.erase(rendererInMap);
 	}
@@ -28,7 +28,7 @@ void AssetRendererManager::RenderQueue(
 	entt::registry& registry,
 	Grindstone::HashedString renderQueue
 ) {
-	std::string renderQueueLabel = fmt::format("Render Queue '{}'", renderQueue.ToString());
+	std::string renderQueueLabel = std::vformat("Render Queue '{}'", std::make_format_args(renderQueue.ToString()));
 	commandBuffer->BeginDebugLabelSection(renderQueueLabel.c_str());
 	for (auto& assetRenderer : assetRenderers) {
 		assetRenderer.second->RenderQueue(commandBuffer, registry, renderQueue);

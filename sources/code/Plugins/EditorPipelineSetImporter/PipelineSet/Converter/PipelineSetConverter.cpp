@@ -1,6 +1,5 @@
 #include <string>
 #include <iostream>
-#include <fmt/format.h>
 #include <fstream>
 
 #ifdef _MSC_VER
@@ -82,14 +81,15 @@ static void SimpleLog(
 	const char* logSource = logSources[static_cast<uint8_t>(source)];
 
 	uint8_t index = static_cast<uint8_t>(severity);
+	std::string strFilename = filename.string();
 
-	std::string outputPrefix = fmt::format("{}{}[{}] {}", logPrefix, logSource, timeBuffer, filename.string());
+	std::string outputPrefix = std::vformat("{}{}[{}] {}", std::make_format_args(logPrefix, logSource, timeBuffer, strFilename));
 	if (line != UNDEFINED_LINE) {
 		if (column != UNDEFINED_LINE) {
-			outputPrefix += fmt::format("({}:{}) : ", line, column);
+			outputPrefix += std::vformat("({}:{}) : ", std::make_format_args(line, column));
 		}
 		else {
-			outputPrefix += fmt::format("({}) : ", line);
+			outputPrefix += std::vformat("({}) : ", std::make_format_args(line));
 		}
 	}
 	else {
@@ -101,7 +101,7 @@ static void SimpleLog(
 			? STD_ERROR_HANDLE
 			: STD_OUTPUT_HANDLE;
 
-		std::string mainMessage = fmt::format("{}\n", msg);
+		std::string mainMessage = std::vformat("{}\n", std::make_format_args(msg));
 
 		HANDLE hConsole = ::GetStdHandle(outputHandle);
 		::SetConsoleTextAttribute(hConsole, debugColors[static_cast<size_t>(severity)]);
@@ -117,7 +117,7 @@ static void SimpleLog(
 			? std::cerr
 			: std::cout;
 
-		std::string formatted = fmt::format("{}{}{}{}\n");
+		std::string formatted = std::vformat("{}{}{}{}\n");
 		consoleStream << formatted;
 	#endif
 }
@@ -155,13 +155,13 @@ static bool TestStringAgainstWildcardPattern(
 static bool PreprocessFile(LogCallback logCallback, ParseTree& parseTree, const std::filesystem::path& path, std::set<std::filesystem::path>& unprocessedFiles) {
 	std::string pathAsStr = path.string();
 	if (!std::filesystem::exists(path)) {
-		std::string msg = fmt::format("Can't find file: {}", pathAsStr);
+		std::string msg = std::vformat("Can't find file: {}", std::make_format_args(pathAsStr));
 		logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::General, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
 		return false;
 	}
 
 	{
-		std::string msg = fmt::format("Processing {}", pathAsStr);
+		std::string msg = std::vformat("Processing {}", std::make_format_args(pathAsStr));
 		logCallback(Grindstone::LogSeverity::Trace, PipelineConverterLogSource::General, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
 	}
 
@@ -174,13 +174,13 @@ static bool PreprocessFile(LogCallback logCallback, ParseTree& parseTree, const 
 	TokenList scanTokens;
 
 	if (!ScanPipelineSet(logCallback, path, content, scanTokens)) {
-		std::string msg = fmt::format("Found errors in ScanPipelineState: {}", pathAsStr);
+		std::string msg = std::vformat("Found errors in ScanPipelineState: {}", std::make_format_args(pathAsStr));
 		logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::General, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
 		return false;
 	}
 
 	if (!ParsePipelineSet(logCallback, path, scanTokens, parseTree, unprocessedFiles)) {
-		std::string msg = fmt::format("Found errors in ParsePipelineState: {}", pathAsStr);
+		std::string msg = std::vformat("Found errors in ParsePipelineState: {}", std::make_format_args(pathAsStr));
 		logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::General, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
 		return false;
 	}
@@ -271,7 +271,8 @@ void PipelineSetConditioner::Convert(CompilationOptions options) {
 }
 
 void PipelineSetConditioner::Rerun(const std::filesystem::path& path) {
-	std::string msg = fmt::format("Rerunning {}", path.string());
+	std::string strPath = path.string();
+	std::string msg = std::vformat("Rerunning {}", std::make_format_args(strPath));
 	logCallback(Grindstone::LogSeverity::Trace, PipelineConverterLogSource::General, msg, path, UNDEFINED_LINE, UNDEFINED_COLUMN);
 }
 

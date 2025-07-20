@@ -226,7 +226,7 @@ Base::Sampler* OpenGL::Core::CreateSampler(const Base::Sampler::CreateInfo& rt) 
 
 Base::GraphicsPipeline* OpenGL::Core::GetOrCreateGraphicsPipelineFromCache(const GraphicsPipeline::PipelineData& pipelineData, const VertexInputLayout* vertexInputLayout) {
 	size_t hash = std::hash<GraphicsPipeline::PipelineData>{}(pipelineData);
-	auto& iterator = graphicsPipelineCache.find(hash);
+	auto iterator = graphicsPipelineCache.find(hash);
 	if (iterator != graphicsPipelineCache.end()) {
 		return iterator->second;
 	}

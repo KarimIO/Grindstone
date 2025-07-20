@@ -208,7 +208,7 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 }
 
 void* TextureImporter::LoadAsset(Uuid uuid) {
-	auto& textureIterator = assets.emplace(uuid, TextureAsset(uuid));
+	auto textureIterator = assets.emplace(uuid, TextureAsset(uuid));
 	TextureAsset& textureAsset = textureIterator.first->second;
 
 	textureAsset.assetLoadStatus = AssetLoadStatus::Loading;
@@ -220,28 +220,28 @@ void* TextureImporter::LoadAsset(Uuid uuid) {
 }
 
 void TextureImporter::QueueReloadAsset(Uuid uuid) {
-	auto& textureInMap = assets.find(uuid);
-	if (textureInMap == assets.end()) {
+	auto textureIterator = assets.find(uuid);
+	if (textureIterator == assets.end()) {
 		return;
 	}
 
 	EngineCore& engineCore = EngineCore::GetInstance();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
-	textureInMap->second.assetLoadStatus = AssetLoadStatus::Reloading;
-	GraphicsAPI::Image*& image = textureInMap->second.image;
+	textureIterator->second.assetLoadStatus = AssetLoadStatus::Reloading;
+	GraphicsAPI::Image*& image = textureIterator->second.image;
 	if (image != nullptr) {
 		graphicsCore->DeleteImage(image);
 		image = nullptr;
 	}
 
-	GraphicsAPI::Sampler*& defaultSampler = textureInMap->second.defaultSampler;
+	GraphicsAPI::Sampler*& defaultSampler = textureIterator->second.defaultSampler;
 	if (defaultSampler != nullptr) {
 		graphicsCore->DeleteSampler(defaultSampler);
 		defaultSampler = nullptr;
 	}
 
-	LoadTextureAsset(textureInMap->second);
+	LoadTextureAsset(textureIterator->second);
 }
 
 void TextureImporter::OnDeleteAsset(TextureAsset& asset) {

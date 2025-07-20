@@ -8,6 +8,7 @@ file(GLOB_RECURSE SOURCE_MAIN
 
 add_executable(ApplicationExecutable ${SOURCE_MAIN})
 
+set_property(TARGET ApplicationExecutable PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set(APPLICATION_NAME "Application" CACHE STRING "Name of the output Executable")
 set_target_properties(ApplicationExecutable PROPERTIES OUTPUT_NAME "Application")
 

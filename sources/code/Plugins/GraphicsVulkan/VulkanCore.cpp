@@ -686,7 +686,7 @@ Base::GraphicsPipeline* Vulkan::Core::GetOrCreateGraphicsPipelineFromCache(
 	if (vertexInputLayout != nullptr) {
 		hash ^= std::hash<VertexInputLayout>{}(*vertexInputLayout);
 	}
-	auto& iterator = graphicsPipelineCache.find(hash);
+	auto iterator = graphicsPipelineCache.find(hash);
 	if (iterator != graphicsPipelineCache.end()) {
 		return iterator->second;
 	}

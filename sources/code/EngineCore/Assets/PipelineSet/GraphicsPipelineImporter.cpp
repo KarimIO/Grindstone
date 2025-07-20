@@ -84,7 +84,7 @@ static void UnpackGraphicsPipelineDescriptorSetHeaders(
 			dstBinding.type = srcBinding.type;
 		}
 
-		std::string setName = fmt::format("{} Descriptor Set {}", pipelineName, i);
+		std::string setName = std::vformat("{} Descriptor Set {}", std::make_format_args(pipelineName, i));
 		layoutCreateInfo.debugName = setName.c_str();
 		layoutCreateInfo.bindings = dstDescriptorBindings.data();
 		layoutCreateInfo.bindingCount = static_cast<uint32_t>(dstDescriptorBindings.size());
@@ -259,8 +259,8 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 }
 
 void* GraphicsPipelineImporter::LoadAsset(Uuid uuid) {
-	auto& pipelineIterator = assets.emplace(uuid, GraphicsPipelineAsset(uuid));
-	GraphicsPipelineAsset& graphicsPipelineAsset = pipelineIterator.first->second;
+	auto pipelineIterator = assets.emplace(uuid, GraphicsPipelineAsset(uuid));
+	Grindstone::GraphicsPipelineAsset& graphicsPipelineAsset = pipelineIterator.first->second;
 
 	graphicsPipelineAsset.assetLoadStatus = AssetLoadStatus::Loading;
 	if (!ImportGraphicsPipelineAsset(graphicsPipelineAsset)) {
@@ -271,12 +271,12 @@ void* GraphicsPipelineImporter::LoadAsset(Uuid uuid) {
 }
 
 void GraphicsPipelineImporter::QueueReloadAsset(Uuid uuid) {
-	auto& shaderInMap = assets.find(uuid);
-	if (shaderInMap == assets.end()) {
+	auto pipelineIterator = assets.find(uuid);
+	if (pipelineIterator == assets.end()) {
 		return;
 	}
 
-	Grindstone::GraphicsPipelineAsset& graphicsPipelineAsset = shaderInMap->second;
+	Grindstone::GraphicsPipelineAsset& graphicsPipelineAsset = pipelineIterator->second;
 
 	graphicsPipelineAsset.assetLoadStatus = AssetLoadStatus::Reloading;
 	Grindstone::GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();

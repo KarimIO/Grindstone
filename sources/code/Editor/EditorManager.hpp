@@ -3,7 +3,6 @@
 #include "pch.hpp"
 
 #include <entt/entt.hpp>
-#include <fmt/format.h>
 #include <Common/Logging.hpp>
 #include <Common/Utilities/ModuleLoading.hpp>
 

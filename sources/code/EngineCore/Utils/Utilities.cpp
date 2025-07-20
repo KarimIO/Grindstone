@@ -41,7 +41,7 @@ std::string Utils::LoadFileText(const char* inputPath) {
 	return outStr;
 }
 
-std::string Utils::FixStringSlashesReturn(std::string& path) {
+std::string Utils::FixStringSlashesReturn(const std::string& path) {
 	std::string swappedPath = path;
 	std::replace(swappedPath.begin(), swappedPath.end(), '\\', '/');
 	return swappedPath;
@@ -51,7 +51,7 @@ void Utils::FixStringSlashes(std::string& path) {
 	std::replace(path.begin(), path.end(), '\\', '/');
 }
 
-std::filesystem::path Utils::FixPathSlashesReturn(std::filesystem::path& path) {
+std::filesystem::path Utils::FixPathSlashesReturn(const std::filesystem::path& path) {
 	std::string swappedPath = path.string();
 	std::replace(swappedPath.begin(), swappedPath.end(), '\\', '/');
 	return swappedPath;
@@ -71,16 +71,18 @@ std::string Utils::ToLower(const std::string& source) {
 
 const char* whitespace = " \t\f\v\r\n";
 
-std::string& Utils::TrimLeft(std::string& string) {
-	string.erase(0, string.find_first_not_of(whitespace));
-	return string;
+std::string Utils::TrimLeft(const std::string& string) {
+	std::string outString(string);
+	outString.erase(0, outString.find_first_not_of(whitespace));
+	return outString;
 }
 
-std::string& Utils::TrimRight(std::string& string) {
-	string.erase(string.find_last_not_of(whitespace) + 1);
-	return string;
+std::string Utils::TrimRight(const std::string& string) {
+	std::string outString(string);
+	outString.erase(outString.find_last_not_of(whitespace) + 1);
+	return outString;
 }
 
-std::string& Utils::Trim(std::string& string) {
+std::string Utils::Trim(const std::string& string) {
 	return Utils::TrimRight(Utils::TrimLeft(string));
 }

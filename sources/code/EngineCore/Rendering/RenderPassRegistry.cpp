@@ -6,7 +6,7 @@ void Grindstone::RenderPassRegistry::RegisterRenderpass(Grindstone::HashedString
 }
 
 Grindstone::GraphicsAPI::RenderPass* Grindstone::RenderPassRegistry::GetRenderpass(Grindstone::HashedString key) {
-	auto& it = registry.find(key);
+	auto it = registry.find(key);
 	if (it == registry.end()) {
 		return nullptr;
 	}
@@ -15,7 +15,7 @@ Grindstone::GraphicsAPI::RenderPass* Grindstone::RenderPassRegistry::GetRenderpa
 }
 
 void Grindstone::RenderPassRegistry::UnregisterRenderpass(Grindstone::HashedString key) {
-	auto& it = registry.find(key);
+	auto it = registry.find(key);
 	if (it == registry.end()) {
 		GS_ASSERT_LOG("Trying to remove a RenderPass from registry that isn't in it: {}", key.ToString());
 		return;

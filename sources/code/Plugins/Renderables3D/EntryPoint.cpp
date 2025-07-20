@@ -23,7 +23,7 @@ Mesh3dRenderer* mesh3dRenderer = nullptr;
 static void SetupMeshRendererComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	auto& [tagComponent, meshRendererComponent] = cxtSet.GetEntityRegistry().get<TagComponent, MeshRendererComponent>(entity);
+	auto [tagComponent, meshRendererComponent] = cxtSet.GetEntityRegistry().get<TagComponent, MeshRendererComponent>(entity);
 
 	{
 		std::string debugName = tagComponent.tag + " Per Draw Uniform Buffer";

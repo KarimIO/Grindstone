@@ -339,7 +339,7 @@ namespace Grindstone::Containers {
 		BitsetFlags() = default;
 		BitsetFlags(const BitsetFlags&) = default;
 		BitsetFlags(BitsetFlags&&) = default;
-		BitsetFlags(Enum enumValue) : value(static_cast<UnderlingType>(enumValue)) {}
+		BitsetFlags(Enum enumValue) : value(static_cast<UnderlyingType>(enumValue)) {}
 
 		BitsetFlags& operator=(const BitsetFlags& other) {
 			value = other.value;
@@ -447,35 +447,35 @@ namespace Grindstone::Containers {
 			return value == 0;
 		}
 
-		BitsetFlags& operator&=(const BitsetFlags& other) const {
+		BitsetFlags& operator&=(const BitsetFlags& other) {
 			value &= other.value;
 			return *this;
 		}
 
-		BitsetFlags& operator|=(const BitsetFlags& other) const {
+		BitsetFlags& operator|=(const BitsetFlags& other) {
 			value |= other.value;
 			return *this;
 		}
 
-		BitsetFlags& operator^=(const BitsetFlags& other) const {
+		BitsetFlags& operator^=(const BitsetFlags& other) {
 			value ^= other.value;
 			return *this;
 		}
 
 		BitsetFlags operator&(const BitsetFlags& other) const {
-			return value & other.value;
+			return static_cast<Enum>(value & other.value);
 		}
 
 		BitsetFlags operator|(const BitsetFlags& other) const {
-			return value | other.value;
+			return static_cast<Enum>(value | other.value);
 		}
 
 		BitsetFlags operator^(const BitsetFlags& other) const {
-			return value ^ other.value;
+			return static_cast<Enum>(value ^ other.value);
 		}
 
 		BitsetFlags operator~() const {
-			return ~value;
+			return static_cast<Enum>(~value);
 		}
 
 		bool operator[](uint32_t index) const {

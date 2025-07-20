@@ -28,7 +28,8 @@ add_library(
 	${CORE_UTILS}
 )
 
-target_compile_features(PluginEditorTextureImporter PRIVATE cxx_std_17)
+set_property(TARGET PluginEditorTextureImporter PROPERTY COMPILE_WARNING_AS_ERROR ON)
+target_compile_features(PluginEditorTextureImporter PRIVATE cxx_std_20)
 set_target_properties(PluginEditorTextureImporter PROPERTIES FOLDER "Plugins/Editor/Importers")
 
 target_compile_definitions(PluginEditorTextureImporter PUBLIC EDITOR_TEXTURE_IMPORTER_DLL __STDC_LIB_EXT1__ GLM_ENABLE_EXPERIMENTAL)

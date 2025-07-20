@@ -26,14 +26,14 @@ static bool LoadAudioClip(Grindstone::Audio::AudioClipAsset& audioClipAsset) {
 	if (!std::filesystem::exists(path)) {
 		GPRINT_ERROR_V(Grindstone::LogSource::Audio, "AudioClipImporter::LoadFromPath - Could not find file:", pathString.c_str());
 		audioClipAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Missing;
-		return nullptr;
+		return false;
 	}
 
 	drwav wav;
 	if (!drwav_init_file(&wav, pathCstr, nullptr)) {
 		GPRINT_ERROR_V(Grindstone::LogSource::Audio, "AudioClipImporter::LoadFromPath - Failed to load file:", pathString.c_str());
 		audioClipAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Failed;
-		return nullptr;
+		return false;
 	}
 
 	drwav_uint16 channelCount = wav.channels;
@@ -81,7 +81,7 @@ static bool LoadAudioClip(Grindstone::Audio::AudioClipAsset& audioClipAsset) {
 }
 
 void* AudioClipImporter::LoadAsset(Uuid uuid) {
-	auto& assetIterator = assets.emplace(
+	auto assetIterator = assets.emplace(
 		uuid,
 		AudioClipAsset(uuid)
 	);
@@ -96,7 +96,7 @@ void* AudioClipImporter::LoadAsset(Uuid uuid) {
 }
 
 void AudioClipImporter::QueueReloadAsset(Uuid uuid) {
-	auto& audioClipInMap = assets.find(uuid);
+	auto audioClipInMap = assets.find(uuid);
 	if (audioClipInMap == assets.end()) {
 		return;
 	}

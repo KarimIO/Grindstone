@@ -39,6 +39,7 @@ source_group("Source Files\\Display" FILES ${Vk_DISPLAY_SOURCES})
 source_group("Header Files\\Display" FILES ${Vk_DISPLAY_HEADERS})
 
 add_library(PluginGraphicsVulkan MODULE ${Vk_SOURCES} ${Vk_HEADERS} ${CORE_UTILS})
+set_property(TARGET PluginGraphicsVulkan PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_target_properties(PluginGraphicsVulkan PROPERTIES FOLDER "Plugins/Render Hardware Interface")
 
 find_path(VULKAN_HEADERS_INCLUDE_DIRS "vk_video/vulkan_video_codec_h264std.h")
@@ -53,7 +54,7 @@ find_package(glfw3 CONFIG REQUIRED)
 
 target_link_libraries(PluginGraphicsVulkan ${CORE_LIBS} Vulkan::Vulkan glfw fmt::fmt GPUOpen::VulkanMemoryAllocator)
 
-target_compile_features(PluginGraphicsVulkan PRIVATE cxx_std_17)
+target_compile_features(PluginGraphicsVulkan PRIVATE cxx_std_20)
 
 if (WIN32)
     target_compile_definitions(PluginGraphicsVulkan PRIVATE Vk_USE_PLATFORM_WIN32_KHR)

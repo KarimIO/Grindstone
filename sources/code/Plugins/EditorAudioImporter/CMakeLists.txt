@@ -27,7 +27,8 @@ add_library(
 	${CORE_UTILS}
 )
 
-target_compile_features(PluginEditorAudioImporter PRIVATE cxx_std_17)
+set_property(TARGET PluginEditorAudioImporter PROPERTY COMPILE_WARNING_AS_ERROR ON)
+target_compile_features(PluginEditorAudioImporter PRIVATE cxx_std_20)
 set_target_properties(PluginEditorAudioImporter PROPERTIES FOLDER "Plugins/Editor/Importers")
 
 target_compile_definitions(PluginEditorAudioImporter PUBLIC EDITOR_AUDIO_IMPORTER_DLL GLM_ENABLE_EXPERIMENTAL)

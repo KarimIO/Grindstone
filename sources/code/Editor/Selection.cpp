@@ -24,7 +24,7 @@ bool Selection::IsEntitySelected(ECS::Entity entity) const {
 }
 
 void Selection::RemoveEntity(ECS::Entity entity) {
-	auto& selectedEntity = selectedEntities.find(entity);
+	auto selectedEntity = selectedEntities.find(entity);
 	if (selectedEntity != selectedEntities.end()) {
 		selectedEntities.erase(selectedEntity);
 	}

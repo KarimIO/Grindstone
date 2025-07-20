@@ -1,4 +1,3 @@
-#include <fmt/format.h>
 #include <filesystem>
 #include <cstdarg>
 #include <chrono>

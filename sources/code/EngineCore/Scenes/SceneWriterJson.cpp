@@ -208,8 +208,14 @@ inline void SetupArray(SceneRapidjsonWriter& documentWriter, void* memberPtr, Re
 
 	documentWriter.StartArray();
 	for (size_t i = 0; i < vector.size(); ++i) {
-		void* dataPtr = &vector[i];
-		WriteParameter(documentWriter, member, dataPtr);
+		if constexpr (std::is_same_v<T, bool>) {
+			bool value = vector[i];
+			documentWriter.Bool(value);
+		}
+		else {
+			void* dataPtr = reinterpret_cast<void*>(&vector.at(i));
+			WriteParameter(documentWriter, member, dataPtr);
+		}
 	}
 	documentWriter.EndArray();
 }
