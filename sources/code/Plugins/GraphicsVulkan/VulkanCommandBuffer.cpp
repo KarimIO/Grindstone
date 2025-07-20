@@ -283,7 +283,7 @@ void Vulkan::CommandBuffer::SetViewport(float offsetX, float offsetY, float widt
 
 void Vulkan::CommandBuffer::SetScissor(int32_t offsetX, int32_t offsetY, uint32_t width, uint32_t height) {
 	VkRect2D scissor{};
-	scissor.offset = { 0, 0 };
+	scissor.offset = { offsetX, offsetY };
 	scissor.extent.width = width;
 	scissor.extent.height = height;
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
