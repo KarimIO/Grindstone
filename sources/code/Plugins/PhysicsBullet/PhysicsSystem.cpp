@@ -23,8 +23,8 @@ static void SimulatePhysicsForObject(
 	}
 
 	motionState->getWorldTransform(rigidBodyTransform);
-	btVector3& position = rigidBodyTransform.getOrigin();
-	btQuaternion& rotation = rigidBodyTransform.getRotation();
+	const btVector3& position = rigidBodyTransform.getOrigin();
+	const btQuaternion& rotation = rigidBodyTransform.getRotation();
 
 	transformComponent.position = { position.x(), position.y(), position.z() };
 	transformComponent.rotation = { rotation.x(), rotation.y(), rotation.z(), rotation.w() };

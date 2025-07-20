@@ -378,7 +378,7 @@ void CSharpManager::DestroyComponent(Grindstone::WorldContextSet& cxtSet, entt::
 }
 
 void CSharpManager::Update(entt::registry& registry) {
-	auto& view = registry.view<Grindstone::Scripting::CSharp::ScriptComponent>();
+	auto view = registry.view<Grindstone::Scripting::CSharp::ScriptComponent>();
 	view.each(
 		[](Grindstone::Scripting::CSharp::ScriptComponent& scriptComponent) {
 			if (scriptComponent.csharpObject != nullptr) {
@@ -394,7 +394,7 @@ void CSharpManager::EditorUpdate(entt::registry& registry) {
 		return;
 	}
 
-	auto& view = registry.view<Grindstone::Scripting::CSharp::ScriptComponent>();
+	auto view = registry.view<Grindstone::Scripting::CSharp::ScriptComponent>();
 	view.each(
 		[](Grindstone::Scripting::CSharp::ScriptComponent& scriptComponent) {
 			if (scriptComponent.csharpObject != nullptr) {
@@ -476,7 +476,7 @@ void CSharpManager::PerformReload() {
 	LoadAssembly("Application-CSharp", assemblies["Application-CSharp"]);
 	GPRINT_TRACE(LogSource::Scripting, "Reloaded CSharp Binaries.");
 
-	auto& view = registry.view<const entt::entity, Grindstone::Scripting::CSharp::ScriptComponent>();
+	auto view = registry.view<const entt::entity, Grindstone::Scripting::CSharp::ScriptComponent>();
 	view.each(
 		[this, &registry, cxtSet](const entt::entity entity, Grindstone::Scripting::CSharp::ScriptComponent& scriptComponent) {
 			SetupComponent(*cxtSet, entity, scriptComponent);

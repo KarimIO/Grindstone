@@ -146,7 +146,8 @@ set(ENGINE_CORE_HEADERS
 
 add_library(EngineCore MODULE ${ENGINE_CORE_SOURCES} ${ENGINE_CORE_HEADERS})
 
-target_compile_features(EngineCore PRIVATE cxx_std_17)
+set_property(TARGET EngineCore PROPERTY COMPILE_WARNING_AS_ERROR ON)
+target_compile_features(EngineCore PRIVATE cxx_std_20)
 target_compile_definitions(EngineCore PUBLIC ENGINE_CORE NOMINMAX GLM_ENABLE_EXPERIMENTAL)
 
 find_package(OpenAL CONFIG REQUIRED)

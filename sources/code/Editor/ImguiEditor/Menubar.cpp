@@ -51,14 +51,14 @@ void Menubar::RenderFileMenu() {
 		OnSaveAsFile();
 	}
 	ImGui::Separator();
-	if (ImGui::MenuItem("Reload", "", false, doesSceneHavePath)) {
+	if (ImGui::MenuItem("Reload", nullptr, false, doesSceneHavePath)) {
 		OnReloadFile();
 	}
 	if (ImGui::MenuItem("Load...", "Ctrl+O", false)) {
 		OnLoadFile();
 	}
 	ImGui::Separator();
-	if (ImGui::MenuItem("Build...", false)) {
+	if (ImGui::MenuItem("Build...", nullptr, false)) {
 		OnBuild();
 	}
 	if (ImGui::MenuItem("Import...", "Ctrl+I", false)) {
@@ -70,7 +70,7 @@ void Menubar::RenderFileMenu() {
 	if (ImGui::MenuItem("Project Settings...", "Ctrl+P", editor->projectSettingsWindow->IsOpen())) {
 		OnProjectSettings();
 	}
-	if (ImGui::MenuItem("Exit", false)) {
+	if (ImGui::MenuItem("Exit", nullptr, false)) {
 		OnExit();
 	}
 	ImGui::EndMenu();
@@ -78,20 +78,20 @@ void Menubar::RenderFileMenu() {
 
 void Menubar::RenderEditMenu() {
 	auto& commandList = Editor::Manager::GetInstance().GetCommandList();
-	if (ImGui::MenuItem("Undo", "", false, commandList.HasAvailableUndo())) {
+	if (ImGui::MenuItem("Undo", nullptr, false, commandList.HasAvailableUndo())) {
 		commandList.Undo();
 	}
-	if (ImGui::MenuItem("Redo", "", false, commandList.HasAvailableRedo())) {
+	if (ImGui::MenuItem("Redo", nullptr, false, commandList.HasAvailableRedo())) {
 		commandList.Redo();
 	}
 	ImGui::EndMenu();
 }
 
 void Menubar::RenderViewMenu() {
-	if (ImGui::MenuItem("Show Asset Browser", "", false)) {}
-	if (ImGui::MenuItem("Show Scene Graph", "", false)) {}
-	if (ImGui::MenuItem("Show Inspector Panel", "", false)) {}
-	if (ImGui::MenuItem("Add Viewport Panel", "", false)) {}
+	if (ImGui::MenuItem("Show Asset Browser", nullptr, false)) {}
+	if (ImGui::MenuItem("Show Scene Graph", nullptr, false)) {}
+	if (ImGui::MenuItem("Show Inspector Panel", nullptr, false)) {}
+	if (ImGui::MenuItem("Add Viewport Panel", nullptr, false)) {}
 	ImGui::EndMenu();
 }
 

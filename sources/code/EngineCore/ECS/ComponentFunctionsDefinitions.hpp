@@ -51,7 +51,7 @@ namespace Grindstone::ECS {
 		entt::registry& srcRegistry = src.GetEntityRegistry();
 		entt::registry& dstRegistry = dst.GetEntityRegistry();
 
-		auto& srcEntities = srcRegistry.view<ComponentType>();
+		auto srcEntities = srcRegistry.view<ComponentType>();
 		if constexpr (has_clone_v<ComponentType>) {
 			for (entt::entity entityID : srcEntities) {
 				ComponentType& srcComponent = srcRegistry.get<ComponentType>(entityID);

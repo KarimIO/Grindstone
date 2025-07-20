@@ -2,6 +2,7 @@
 
 #include <string>
 #include "TypeDescriptor.hpp"
+#include "DefaultResolver.hpp"
 
 namespace Grindstone::Reflection {
 	template <typename T>

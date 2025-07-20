@@ -39,7 +39,7 @@ namespace Grindstone {
 			return hash <= other.hash;
 		}
 
-		Grindstone::HashedString::operator std::size_t() const {
+		operator std::size_t() const {
 			return static_cast<std::size_t>(hash);
 		}
 

@@ -192,7 +192,7 @@ static bool CreateChildProcess() {
 	const std::filesystem::path outputFilePath = Grindstone::Editor::Manager::GetInstance().GetProjectPath() / filename;
 	const std::string path = outputFilePath.string();
 
-	std::string command = fmt::format("dotnet build {} -c {}", path.c_str(), configuration);
+	std::string command = std::vformat("dotnet build {} -c {}", std::make_format_args(path, configuration));
 
 	dotnetProcessInfo = {};
 	STARTUPINFO startInfo{};

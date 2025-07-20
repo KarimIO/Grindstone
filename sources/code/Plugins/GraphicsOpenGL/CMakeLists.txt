@@ -40,7 +40,8 @@ source_group("Header Files\\Display" FILES ${GL_DISPLAY_HEADERS})
 
 add_library(PluginGraphicsOpenGL MODULE ${GL_SOURCES} ${GL_HEADERS} ${CORE_UTILS})
 
-target_compile_features(PluginGraphicsOpenGL PRIVATE cxx_std_17)
+set_property(TARGET PluginGraphicsOpenGL PROPERTY COMPILE_WARNING_AS_ERROR ON)
+target_compile_features(PluginGraphicsOpenGL PRIVATE cxx_std_20)
 set_target_properties(PluginGraphicsOpenGL PROPERTIES FOLDER "Plugins/Render Hardware Interface")
 
 target_compile_definitions(PluginGraphicsOpenGL PUBLIC GRAPHICS_OPENGL GRAPHICS_DLL GLM_ENABLE_EXPERIMENTAL)

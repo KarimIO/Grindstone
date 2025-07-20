@@ -26,8 +26,8 @@ void BuildPopup::Render() {
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
 
 	ImGui::SetNextWindowSize(ImVec2(400.0f, 0.0f));
-
-	if (ImGui::BeginPopupModal("Compiling Assets...", false, flags)) {
+	bool isOpen = false;
+	if (ImGui::BeginPopupModal("Compiling Assets...", &isOpen, flags)) {
 		float progress = processStatus.progress;
 		ImGui::ProgressBar(progress);
 		{

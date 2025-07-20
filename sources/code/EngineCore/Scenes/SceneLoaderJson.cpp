@@ -111,7 +111,7 @@ void SceneLoaderJson::ProcessComponent(ECS::Entity entity, rapidjson::Value& com
 
 		if (parameterList.IsObject()) {
 			for (
-				auto& parameter = parameterList.MemberBegin();
+				auto parameter = parameterList.MemberBegin();
 				parameter != parameterList.MemberEnd();
 				parameter++
 			) {
@@ -290,7 +290,8 @@ inline void SetupArray(void* memberPtr, size_t arraySize, void*& elementPtr, siz
 	std::vector<T>& vector = *(std::vector<T>*)memberPtr;
 	vector.resize(arraySize);
 	elementSize = sizeof(T);
-	elementPtr = (void*)&vector[0];
+	T* vectorPtr = vector.data();
+	elementPtr = reinterpret_cast<void*>(vectorPtr);
 }
 
 void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* member, rapidjson::Value& parameter) {
@@ -310,9 +311,20 @@ void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* me
 		case ReflectionTypeData::AssetReference:
 			SetupArray<GenericAssetReference>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
-		case ReflectionTypeData::Bool:
-			SetupArray<bool>(memberPtr, arraySize, elementPtr, elementSize);
-			break;
+		// Special case for bool because bool vectors are bit arrays
+		case ReflectionTypeData::Bool: {
+			std::vector<bool>& vector = *(std::vector<bool>*)memberPtr;
+			vector.clear();
+			vector.reserve(arraySize);
+			for (
+				rapidjson::Value* elementIterator = srcArray.Begin();
+				elementIterator != srcArray.End();
+				++elementIterator
+			) {
+				vector.push_back(parameter.GetBool());
+			}
+			return;
+		}
 		case ReflectionTypeData::Quaternion:
 			SetupArray<Math::Quaternion>(memberPtr, arraySize, elementPtr, elementSize);
 			break;

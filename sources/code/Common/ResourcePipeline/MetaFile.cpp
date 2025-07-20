@@ -61,7 +61,7 @@ void MetaFile::Load(AssetRegistry& assetRegistry, const std::filesystem::path& b
 		defaultUuid = Uuid::CreateRandom();
 	}
 
-	rapidjson::Value subassetsArray = document["subassets"].GetArray();
+	auto subassetsArray = document["subassets"].GetArray();
 	for (
 		rapidjson::Value* elementIterator = subassetsArray.Begin();
 		elementIterator != subassetsArray.End();

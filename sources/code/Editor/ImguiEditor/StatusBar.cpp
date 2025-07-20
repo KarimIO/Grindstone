@@ -71,7 +71,7 @@ void StatusBar::RenderGitWhenLoaded() {
 	uint32_t aheadCount = gitManager.GetAheadCount();
 	uint32_t changesCount = gitManager.GetChangesCount();
 
-	std::string aheadBehindText = fmt::format("{} / {}", aheadCount, behindCount);
+	std::string aheadBehindText = std::vformat("{} / {}", std::make_format_args(aheadCount, behindCount));
 	std::string changesText = std::to_string(changesCount);
 
 	const float iconSize = 20.0f;

@@ -26,7 +26,7 @@ AssetLoadBinaryResult ArchiveAssetLoader::LoadBinaryByUuid(AssetType assetType, 
 	}
 
 	ArchiveDirectory::AssetTypeIndex& assetTypeSegment = archiveDirectory.assetTypeIndices[static_cast<size_t>(assetType)];
-	auto& assetIterator = assetTypeSegment.assetsByUuid.find(uuid);
+	auto assetIterator = assetTypeSegment.assetsByUuid.find(uuid);
 
 	if (assetIterator == assetTypeSegment.assetsByUuid.end()) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "Could not load asset: {}", uuid.ToString());

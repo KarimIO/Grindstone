@@ -90,7 +90,7 @@ static size_t CalculateBloomLevels(uint32_t width, uint32_t height) {
 
 DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : targetRenderPass(targetRenderPass) {
 	if (shouldFastResize) {
-		Display& display = EngineCore::GetInstance().displayManager->GetMainDisplay();
+		Display display = EngineCore::GetInstance().displayManager->GetMainDisplay();
 		framebufferWidth = display.width;
 		framebufferHeight = display.height;
 		renderWidth = display.width;
@@ -852,7 +852,7 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 
 	bloomUboStruct.stage = BloomStage::Filter;
 	if (bloomStoredMipLevelCount > 1) {
-		std::string bloomDescriptorName = fmt::format("Bloom DS Filter [{}]", imageSetIndex);
+		std::string bloomDescriptorName = std::vformat("Bloom DS Filter [{}]", std::make_format_args(imageSetIndex));
 		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UploadData(&bloomUboStruct);
 		descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( bloomUniformBuffers[bloomDescriptorSetIndex] );
@@ -863,7 +863,7 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 
 	bloomUboStruct.stage = BloomStage::Downsample;
 	for (size_t i = 1; i < bloomStoredMipLevelCount - 1; ++i) {
-		std::string bloomDescriptorName = fmt::format("Bloom DS Downsample [{}]({})", imageSetIndex, i);
+		std::string bloomDescriptorName = std::vformat("Bloom DS Downsample [{}]({})", std::make_format_args(imageSetIndex, i));
 		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UploadData(&bloomUboStruct);
 		descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( bloomUniformBuffers[bloomDescriptorSetIndex] );
@@ -873,19 +873,19 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 	}
 
 	{
-		std::string bloomDescriptorName = fmt::format("Bloom DS First Upsample [{}])", imageSetIndex);
+		std::string bloomDescriptorName = std::vformat("Bloom DS First Upsample [{}])", std::make_format_args(imageSetIndex));
 		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UploadData(&bloomUboStruct);
-		descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( bloomUniformBuffers[bloomDescriptorSetIndex] );
-		descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.bloomRenderTargets[bloomStoredMipLevelCount * 2 - 1] );
-		descriptorBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomStoredMipLevelCount - 2] );
-		descriptorBindings[4] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomStoredMipLevelCount - 1] );
+		descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(bloomUniformBuffers[bloomDescriptorSetIndex]);
+		descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::StorageImage(imageSet.bloomRenderTargets[bloomStoredMipLevelCount * 2 - 1]);
+		descriptorBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage(imageSet.bloomRenderTargets[bloomStoredMipLevelCount - 2]);
+		descriptorBindings[4] = GraphicsAPI::DescriptorSet::Binding::SampledImage(imageSet.bloomRenderTargets[bloomStoredMipLevelCount - 1]);
 		imageSet.bloomDescriptorSets[bloomDescriptorSetIndex++] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 
 	bloomUboStruct.stage = BloomStage::Upsample;
 	for (size_t i = bloomStoredMipLevelCount - 2; i >= 1; --i) {
-		std::string bloomDescriptorName = fmt::format("Bloom DS Upsample [{}]({})", imageSetIndex, i);
+		std::string bloomDescriptorName = std::vformat("Bloom DS Upsample [{}]({})", std::make_format_args(imageSetIndex, i));
 		descriptorSetCreateInfo.debugName = bloomDescriptorName.c_str();
 		bloomUniformBuffers[bloomDescriptorSetIndex]->UploadData(&bloomUboStruct);
 		descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( bloomUniformBuffers[bloomDescriptorSetIndex] );
@@ -1921,7 +1921,7 @@ void DeferredRenderer::RenderLights(
 					entity.GetWorldForward(),
 					glm::cos(glm::radians(spotLightComponent.innerAngle)),
 					glm::cos(glm::radians(spotLightComponent.outerAngle)),
-					spotLightComponent.shadowResolution
+					static_cast<float>(spotLightComponent.shadowResolution)
 				};
 
 				spotLightComponent.uniformBufferObject->UploadData(&lightStruct);
@@ -1954,7 +1954,7 @@ void DeferredRenderer::RenderLights(
 					directionalLightComponent.sourceRadius,
 					entity.GetWorldForward(),
 					directionalLightComponent.intensity,
-					directionalLightComponent.shadowResolution
+					static_cast<float>(directionalLightComponent.shadowResolution)
 				};
 
 				directionalLightComponent.uniformBufferObject->UploadData(&lightStruct);

@@ -36,7 +36,7 @@ OpenGL::Image::Image(const Image::CreateInfo& createInfo) {
 		uint32_t width = createInfo.width;
 		uint32_t height = createInfo.height;
 
-		for (GLint j = 0; j <= createInfo.mipLevels; j++) {
+		for (GLint j = 0; j <= static_cast<GLint>(createInfo.mipLevels); j++) {
 			unsigned int size = ((width + 3) / 4) * ((height + 3) / 4) * blockSize;
 			glCompressedTexImage2D(
 				GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,

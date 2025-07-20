@@ -20,7 +20,8 @@ add_library(
 	${CORE_UTILS}
 )
 
-target_compile_features(PluginAudioOpenAL PRIVATE cxx_std_17)
+set_property(TARGET PluginAudioOpenAL PROPERTY COMPILE_WARNING_AS_ERROR ON)
+target_compile_features(PluginAudioOpenAL PRIVATE cxx_std_20)
 set_target_properties(PluginAudioOpenAL PROPERTIES FOLDER "Plugins/Audio")
 
 find_path(ENTT_INCLUDE_DIRS "entt/entt.hpp")

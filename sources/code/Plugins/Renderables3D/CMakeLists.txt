@@ -23,6 +23,7 @@ add_library(
 	${CORE_UTILS}
 )
 
+set_property(TARGET PluginRenderables3D PROPERTY COMPILE_WARNING_AS_ERROR ON)
 target_compile_definitions(PluginRenderables3D PUBLIC RENDERABLES_3D_DLL GLM_ENABLE_EXPERIMENTAL)
 set_target_properties(PluginRenderables3D PROPERTIES FOLDER Plugins/Renderables)
 

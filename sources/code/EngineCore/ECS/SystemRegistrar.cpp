@@ -9,7 +9,7 @@ SystemRegistrar::SystemRegistrar() {
 }
 
 void SystemRegistrar::RegisterSystem(const char* name, SystemFactory factory) {
-	auto& sys = editorSystemFactories.find(name);
+	auto sys = editorSystemFactories.find(name);
 	if (sys != editorSystemFactories.end()) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "Registering a system that has already been registered: {}", name);
 		return;
@@ -19,7 +19,7 @@ void SystemRegistrar::RegisterSystem(const char* name, SystemFactory factory) {
 }
 
 void SystemRegistrar::RegisterEditorSystem(const char* name, SystemFactory factory) {
-	auto& sys = editorSystemFactories.find(name);
+	auto sys = editorSystemFactories.find(name);
 	if (sys != editorSystemFactories.end()) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "Registering an editor system that has already been registered: {}", name);
 		return;
@@ -29,7 +29,7 @@ void SystemRegistrar::RegisterEditorSystem(const char* name, SystemFactory facto
 }
 
 void SystemRegistrar::UnregisterSystem(const char* name) {
-	auto& sys = systemFactories.find(name);
+	auto sys = systemFactories.find(name);
 	if (sys == systemFactories.end()) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "Unregistering a system that isn't registered: {}", name);
 		return;
@@ -39,7 +39,7 @@ void SystemRegistrar::UnregisterSystem(const char* name) {
 }
 
 void SystemRegistrar::UnregisterEditorSystem(const char* name) {
-	auto& sys = editorSystemFactories.find(name);
+	auto sys = editorSystemFactories.find(name);
 	if (sys == editorSystemFactories.end()) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "Unregistering an editor system that isn't registered: {}", name);
 		return;

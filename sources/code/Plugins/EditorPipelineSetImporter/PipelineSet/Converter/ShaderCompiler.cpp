@@ -1,4 +1,3 @@
-#include <fmt/format.h>
 #include <vector>
 #include "ResolvedStateTree.hpp"
 #include "ShaderCompiler.hpp"
@@ -448,7 +447,7 @@ static bool TranspileShader(LogCallback logCallback, CompilationOptions& options
 		// Use fputs to prevent any chance of new allocations
 		// Terminate the process
 
-		logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Output, fmt::format("Critical Error in {}", entrypoint), sourcePath, UNDEFINED_LINE, UNDEFINED_COLUMN);
+		logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Output, std::vformat("Critical Error in {}", std::make_format_args(entrypoint)), sourcePath, UNDEFINED_LINE, UNDEFINED_COLUMN);
 
 		return false;
 	}

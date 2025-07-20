@@ -1,7 +1,7 @@
 #pragma once
 
 #include <fstream>
-#include <fmt/format.h>
+#include <format>
 #include <mutex>
 
 #include "Common/Logging.hpp"
@@ -42,7 +42,7 @@ namespace Grindstone::Logger {
 		const char* fmt,
 		const Args &... args
 	) {
-		std::string formattedString = fmt::format(fmt, args...);
+		std::string formattedString = std::vformat(fmt, std::make_format_args(args...));
 		Print(logSeverity, logSource, internalType, filename, line, formattedString.c_str());
 	}
 }

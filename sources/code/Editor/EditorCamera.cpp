@@ -28,7 +28,7 @@ EditorCamera::EditorCamera() {
 	Grindstone::RenderPassRegistry* renderPassRegistry = engineCore.GetRenderPassRegistry();
 	GraphicsAPI::Core* core = engineCore.GetGraphicsCore();
 
-	Display& display = engineCore.displayManager->GetMainDisplay();
+	Display display = engineCore.displayManager->GetMainDisplay();
 	uint32_t framebufferWidth = display.width;
 	uint32_t framebufferHeight = display.height;
 

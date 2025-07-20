@@ -17,7 +17,7 @@ void ComponentRegistrar::CopyRegistry(WorldContextSet& dst, WorldContextSet& src
 	const entt::registry& srcRegistry = src.GetEntityRegistry();
 	entt::registry& dstRegistry = src.GetEntityRegistry();
 
-	auto& srcEntityView = srcRegistry.view<entt::entity>();
+	auto srcEntityView = srcRegistry.view<entt::entity>();
 	srcEntityView.each(
 		[&dstRegistry](entt::entity srcEntity) {
 			entt::entity dstEntity = dstRegistry.create(srcEntity);
@@ -49,7 +49,7 @@ void ComponentRegistrar::DestroyEntity(ECS::Entity entity) {
 
 void ComponentRegistrar::CallCreateOnRegistry(Grindstone::WorldContextSet& worldContextSet) {
 	entt::registry& registry = worldContextSet.GetEntityRegistry();
-	auto& entityView = registry.view<entt::entity>();
+	auto entityView = registry.view<entt::entity>();
 
 	for (auto& compFnPair : componentFunctionsList) {
 		ComponentFunctions& compFns = compFnPair.second;
@@ -65,7 +65,7 @@ void ComponentRegistrar::CallCreateOnRegistry(Grindstone::WorldContextSet& world
 void ComponentRegistrar::CallDestroyOnRegistry(Grindstone::WorldContextSet& worldContextSet) {
 	Grindstone::WorldContextSet& cxtSet = GetActiveWorldContextSet();
 	entt::registry& registry = cxtSet.GetEntityRegistry();
-	auto& entityView = registry.view<entt::entity>();
+	auto entityView = registry.view<entt::entity>();
 
 	for (auto& compFnPair : componentFunctionsList) {
 		ComponentFunctions& compFns = compFnPair.second;

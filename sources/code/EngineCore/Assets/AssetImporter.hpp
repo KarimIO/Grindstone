@@ -5,6 +5,7 @@
 
 #include <Common/ResourcePipeline/Uuid.hpp>
 #include <Common/ResourcePipeline/AssetType.hpp>
+#include <EngineCore/Assets/Asset.hpp>
 
 namespace Grindstone {
 	class AssetImporter {
@@ -68,7 +69,7 @@ namespace Grindstone {
 		}
 
 		virtual bool TryGetIfLoaded(Uuid uuid, void*& output) override {
-			auto& assetInMap = assets.find(uuid);
+			auto assetInMap = assets.find(uuid);
 			if (assetInMap != assets.end()) {
 				output = &assetInMap->second;
 				return true;
@@ -78,7 +79,7 @@ namespace Grindstone {
 		}
 
 		virtual void IncrementOrLoad(Uuid uuid) override {
-			auto& assetInMap = assets.find(uuid);
+			auto assetInMap = assets.find(uuid);
 			if (assetInMap != assets.end()) {
 				++assetInMap->second.referenceCount;
 			}

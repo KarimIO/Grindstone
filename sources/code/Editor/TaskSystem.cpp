@@ -57,7 +57,7 @@ void TaskSystem::Execute(std::string jobName, std::function<void()> jobPtr) {
 void TaskSystem::CullDoneTasks() {
 	std::scoped_lock lock(mutex);
 
-	for (auto& task = tasks.begin(), next_it = task; task != tasks.end(); task = next_it) {
+	for (auto task = tasks.begin(), next_it = task; task != tasks.end(); task = next_it) {
 		++next_it;
 		if (task->second.status == Task::Status::Done) {
 			task->second.thread.join();

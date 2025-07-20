@@ -1,7 +1,6 @@
 #include <string>
 #include <array>
 #include <map>
-#include <fmt/format.h>
 
 #include "Parser.hpp"
 
@@ -34,14 +33,16 @@ static std::string PrintToken(TokenData& tokenData) {
 }
 
 static void UnexpectedError(ParseContext& context, TokenData& token) {
-	context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, fmt::format("Unexpected token: {}", PrintToken(token)), token.path, token.line, token.column);
+	std::string printedToken = PrintToken(token);
+	context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, std::vformat("Unexpected token: {}", std::make_format_args(printedToken)), token.path, token.line, token.column);
 }
 
 static void UnexpectedError(ParseContext& context) {
 	if (context.tokenIterator >= context.scannerTokens.size()) {
 		if (!context.scannerTokens.empty()) {
 			TokenData token = context.scannerTokens[context.scannerTokens.size() - 1];
-			context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, fmt::format("Unexpected end of line after token: ", PrintToken(token)), token.path, token.line, token.column);
+			std::string strToken = PrintToken(token);
+			context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, std::vformat("Unexpected end of line after token: ", std::make_format_args(strToken)), token.path, token.line, token.column);
 		}
 		else {
 			context.Log(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Parser, "Unexpected end of line: ", context.filepath, UNDEFINED_LINE, UNDEFINED_COLUMN);
@@ -192,7 +193,8 @@ static std::string GetEscapedSlashes(const std::filesystem::path& path) {
 
 static void ParseShader(ParseContext& context, ParseTree::ShaderBlock& selectedShaderBlock, ShaderCodeType shaderCodeType) {
 	TokenData& token = context.scannerTokens[context.tokenIterator++];
-	std::string prefix = fmt::format("#line {} \"{}\"", token.line, GetEscapedSlashes(token.path));
+	std::string escapedPath = GetEscapedSlashes(token.path);
+	std::string prefix = std::vformat("#line {} \"{}\"", std::make_format_args(token.line, escapedPath));
 	std::string_view code = token.data.string;
 
 	if (selectedShaderBlock.type == ShaderCodeType::Unset) {
