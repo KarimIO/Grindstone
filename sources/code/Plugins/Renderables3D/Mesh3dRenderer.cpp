@@ -216,12 +216,13 @@ std::string Mesh3dRenderer::GetName() const {
 	return rendererName;
 }
 
-void Mesh3dRenderer::RenderQueue(
+Grindstone::Rendering::GeometryRenderStats Mesh3dRenderer::RenderQueue(
 	GraphicsAPI::CommandBuffer* commandBuffer,
 	const Grindstone::Rendering::RenderViewData& renderViewData,
 	entt::registry& registry,
 	Grindstone::HashedString renderQueueHash
 ) {
+	Grindstone::Rendering::GeometryRenderStats renderingStats{};
 	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
 	Assets::AssetManager* assetManager = engineCore->assetManager;
 
@@ -233,9 +234,11 @@ void Mesh3dRenderer::RenderQueue(
 	glm::mat4 viewMatrix = renderViewData.viewMatrix;
 	bool isOrtho = renderViewData.projectionMatrix[3][3] == 1.0f;
 
+	std::chrono::time_point start = std::chrono::steady_clock::now();
+
 	auto view = registry.view<const entt::entity, const TransformComponent, const MeshComponent, MeshRendererComponent>();
 	view.each(
-		[&registry, &renderTasks, isOrtho, viewMatrix, frustum, renderQueueHash, assetManager, graphicsCore](
+		[&renderingStats, &registry, &renderTasks, &viewMatrix, isOrtho, frustum, renderQueueHash, assetManager, graphicsCore](
 			entt::entity entity,
 			const TransformComponent& transformComponent,
 			const MeshComponent& meshComponent,
@@ -254,8 +257,11 @@ void Mesh3dRenderer::RenderQueue(
 			// TODO: Get Ortho culling working
 			AABB aabb{ meshAsset->boundingData.minAABB, meshAsset->boundingData.maxAABB };
 			if (!isOrtho && !IsInFrustum(frustum, viewTransformTransform, aabb)) {
+				renderingStats.objectsCulled += 1;
 				return;
 			}
+
+			renderingStats.objectsRendered += 1;
 
 			meshRenderComponent.perDrawUniformBuffer->UploadData(&transform);
 
@@ -304,25 +310,35 @@ void Mesh3dRenderer::RenderQueue(
 	renderTasks.reserve(1000);
 
 	const GraphicsAPI::GraphicsPipeline* graphicsPipeline = nullptr;
+	const GraphicsAPI::DescriptorSet* materialDescriptorSet = nullptr;
 
 	for (RenderTask& renderTask : renderTasks) {
 		if (graphicsPipeline != renderTask.pipeline) {
 			graphicsPipeline = renderTask.pipeline;
 			commandBuffer->BindGraphicsPipeline(renderTask.pipeline);
+			renderingStats.pipelineBinds += 1;
 		}
 
 		commandBuffer->BindVertexArrayObject(renderTask.vertexArrayObject);
-		std::array<GraphicsAPI::DescriptorSet*, 3> descriptors = {
-			engineDescriptorSet,
-			renderTask.materialDescriptorSet,
-			renderTask.perDrawDescriptorSet,
-		};
-		commandBuffer->BindGraphicsDescriptorSet(
-			graphicsPipeline,
-			descriptors.data(),
-			0,
-			static_cast<uint32_t>(descriptors.size())
-		);
+
+		if (renderTask.materialDescriptorSet != materialDescriptorSet) {
+			std::array<GraphicsAPI::DescriptorSet*, 3> descriptors = {
+				engineDescriptorSet,
+				renderTask.materialDescriptorSet,
+				renderTask.perDrawDescriptorSet,
+			};
+			commandBuffer->BindGraphicsDescriptorSet(
+				graphicsPipeline,
+				descriptors.data(),
+				0,
+				static_cast<uint32_t>(descriptors.size())
+			);
+			renderingStats.materialBinds += 1;
+		}
+
+		renderingStats.drawCalls += 1;
+		renderingStats.vertices += renderTask.indexCount;
+		renderingStats.triangles += renderTask.indexCount / 3;
 
 		commandBuffer->DrawIndices(
 			renderTask.baseIndex,
@@ -332,6 +348,12 @@ void Mesh3dRenderer::RenderQueue(
 			renderTask.baseVertex
 		);
 	}
+
+	std::chrono::time_point end = std::chrono::steady_clock::now();
+	long long ns = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+	renderingStats.cpuTimeMs = static_cast<double>(ns) * 0.000001;
+
+	return renderingStats;
 }
 
 GraphicsAPI::DescriptorSetLayout* Mesh3dRenderer::GetPerDrawDescriptorSetLayout() const {

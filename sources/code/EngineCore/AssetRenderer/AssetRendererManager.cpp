@@ -24,16 +24,34 @@ void AssetRendererManager::SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* de
 	}
 }
 
-void AssetRendererManager::RenderQueue(
+Grindstone::Rendering::GeometryRenderStats AssetRendererManager::RenderQueue(
 	GraphicsAPI::CommandBuffer* commandBuffer,
 	const Grindstone::Rendering::RenderViewData& viewData,
 	entt::registry& registry,
 	Grindstone::HashedString renderQueue
 ) {
+	Grindstone::Rendering::GeometryRenderStats stats{};
+
 	std::string renderQueueLabel = std::vformat("Render Queue '{}'", std::make_format_args(renderQueue.ToString()));
 	commandBuffer->BeginDebugLabelSection(renderQueueLabel.c_str());
 	for (auto& assetRenderer : assetRenderers) {
-		assetRenderer.second->RenderQueue(commandBuffer, viewData, registry, renderQueue);
+		Grindstone::Rendering::GeometryRenderStats currentStats = assetRenderer.second->RenderQueue(commandBuffer, viewData, registry, renderQueue);
+
+		stats.drawCalls += currentStats.drawCalls;
+		stats.triangles += currentStats.triangles;
+		stats.vertices += currentStats.vertices;
+		stats.objectsCulled += currentStats.objectsCulled;
+		stats.objectsRendered += currentStats.objectsRendered;
+		stats.pipelineBinds += currentStats.pipelineBinds;
+		stats.materialBinds += currentStats.materialBinds;
+
+		stats.gpuTimeMs += currentStats.gpuTimeMs;
+		stats.cpuTimeMs += currentStats.cpuTimeMs;
 	}
+
 	commandBuffer->EndDebugLabelSection();
+
+	stats.renderQueue = renderQueue;
+
+	return stats;
 }

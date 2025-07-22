@@ -280,6 +280,10 @@ void ImguiEditor::ImportFile(const char* folderPathToImportTo) {
 	auto filePath = window->OpenFileDialogue();
 }
 
+ViewportPanel* Grindstone::Editor::ImguiEditor::ImguiEditor::GetViewportPanel() {
+	return viewportPanel;
+}
+
 void ImguiEditor::RenderDockspace() {
 	static ImGuiDockNodeFlags optFlags = ImGuiDockNodeFlags_None;
 

@@ -22,7 +22,7 @@ namespace Grindstone {
 		public:
 			Mesh3dRenderer(EngineCore* engineCore);
 
-			virtual void RenderQueue(
+			virtual Grindstone::Rendering::GeometryRenderStats RenderQueue(
 				GraphicsAPI::CommandBuffer* commandBuffer,
 				const Grindstone::Rendering::RenderViewData& viewData,
 				entt::registry& registry,

@@ -9,6 +9,7 @@
 #include <Common/Event/WindowEvent.hpp>
 #include <Common/Display/DisplayManager.hpp>
 #include <Common/Window/WindowManager.hpp>
+#include <Common/Rendering/GeometryRenderingStats.hpp>
 #include <Common/HashedString.hpp>
 
 #include <EngineCore/Utils/Utilities.hpp>
@@ -2404,7 +2405,7 @@ void DeferredRenderer::Render(
 	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(renderWidth), static_cast<float>(renderHeight));
 	commandBuffer->SetScissor(0, 0, renderWidth, renderHeight);
 
-	assetManager->RenderQueue(commandBuffer, renderViewData, registry, geometryOpaqueRenderPassKey);
+	imageSet.renderingStatsOpaque = assetManager->RenderQueue(commandBuffer, renderViewData, registry, geometryOpaqueRenderPassKey);
 	commandBuffer->UnbindRenderPass();
 
 	if (renderMode == DeferredRenderMode::Default || renderMode == DeferredRenderMode::AmbientOcclusion) {
@@ -2426,11 +2427,11 @@ void DeferredRenderer::Render(
 			RenderLights(imageIndex, commandBuffer, registry);
 		}
 
-		assetManager->RenderQueue(commandBuffer, renderViewData, registry, geometryUnlitRenderPassKey);
+		imageSet.renderingStatsUnlit = assetManager->RenderQueue(commandBuffer, renderViewData, registry, geometryUnlitRenderPassKey);
 
 		if (renderMode == DeferredRenderMode::Default) {
-			assetManager->RenderQueue(commandBuffer, renderViewData, registry, geometrySkyRenderPassKey);
-			assetManager->RenderQueue(commandBuffer, renderViewData, registry, geometryTransparentRenderPassKey);
+			imageSet.renderingStatsSky = assetManager->RenderQueue(commandBuffer, renderViewData, registry, geometrySkyRenderPassKey);
+			imageSet.renderingStatsTransparent = assetManager->RenderQueue(commandBuffer, renderViewData, registry, geometryTransparentRenderPassKey);
 		}
 
 		commandBuffer->UnbindRenderPass();
@@ -2464,4 +2465,17 @@ const Grindstone::BaseRenderer::RenderMode* DeferredRenderer::GetRenderModes() c
 
 void DeferredRenderer::SetRenderMode(uint16_t mode) {
 	renderMode = static_cast<DeferredRenderMode>(mode);
+}
+
+std::vector<Grindstone::Rendering::GeometryRenderStats> Grindstone::DeferredRenderer::GetRenderingStats() {
+	Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
+	GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	uint32_t imageIndex = wgb->GetCurrentImageIndex();
+
+	return {
+		deferredRendererImageSets[imageIndex].renderingStatsOpaque,
+		deferredRendererImageSets[imageIndex].renderingStatsUnlit,
+		deferredRendererImageSets[imageIndex].renderingStatsTransparent,
+		deferredRendererImageSets[imageIndex].renderingStatsSky
+	};
 }

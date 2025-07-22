@@ -38,6 +38,7 @@ namespace Grindstone {
 		virtual uint16_t GetRenderModeCount() const override;
 		virtual const RenderMode* GetRenderModes() const override;
 		virtual void SetRenderMode(uint16_t mode) override;
+		virtual std::vector<Grindstone::Rendering::GeometryRenderStats> GetRenderingStats() override;
 
 		enum class DeferredRenderMode : uint16_t {
 			Default,
@@ -104,6 +105,11 @@ namespace Grindstone {
 
 			std::vector<GraphicsAPI::Image*> bloomRenderTargets;
 			std::vector<GraphicsAPI::DescriptorSet*> bloomDescriptorSets;
+
+			Grindstone::Rendering::GeometryRenderStats renderingStatsOpaque;
+			Grindstone::Rendering::GeometryRenderStats renderingStatsUnlit;
+			Grindstone::Rendering::GeometryRenderStats renderingStatsTransparent;
+			Grindstone::Rendering::GeometryRenderStats renderingStatsSky;
 		};
 
 		void CreatePipelines();

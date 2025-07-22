@@ -7,6 +7,7 @@
 #include <glm/vec3.hpp>
 
 #include <Common/HashedString.hpp>
+#include <Common/Rendering/GeometryRenderingStats.hpp>
 #include <Common/Rendering/RenderViewData.hpp>
 #include "EngineCore/Assets/AssetManager.hpp"
 
@@ -23,7 +24,7 @@ namespace Grindstone {
 	public:
 		virtual std::string GetName() const = 0;
 		virtual void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) = 0;
-		virtual void RenderQueue(
+		virtual Grindstone::Rendering::GeometryRenderStats RenderQueue(
 			GraphicsAPI::CommandBuffer* commandBuffer,
 			const Grindstone::Rendering::RenderViewData& viewData,
 			entt::registry& registry,
