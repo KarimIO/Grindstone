@@ -6,6 +6,9 @@
 #include "HashedString.hpp"
 #include "String.hpp"
 
+static const Grindstone::String emptyString = "[ EMPTY ]";
+static const Grindstone::String invalidString = "[ INVALID ]";
+
 Grindstone::HashedString::HashMap* nameHashMap = nullptr;
 
 void Grindstone::HashedString::CreateHashMap() {
@@ -52,11 +55,12 @@ uint64_t Grindstone::HashedString::GetHash() const {
 }
 
 const Grindstone::String& Grindstone::HashedString::ToString() const {
-	static const Grindstone::String emptyString = "[ EMPTY ]";
-	static const Grindstone::String invalidString = "[ INVALID ]";
-
 	if (hash == 0) {
 		return emptyString;
+	}
+
+	if (nameHashMap == nullptr) {
+		return invalidString;
 	}
 
 	std::map<HashValue, String>::iterator value = nameHashMap->find(hash);
@@ -66,4 +70,22 @@ const Grindstone::String& Grindstone::HashedString::ToString() const {
 	}
 
 	return value->second;
+}
+
+const char* Grindstone::HashedString::c_str() const noexcept {
+	if (hash == 0) {
+		return "[ EMPTY ]";
+	}
+
+	if (nameHashMap == nullptr) {
+		return "[ INVALID ]";
+	}
+
+	std::map<HashValue, String>::iterator value = nameHashMap->find(hash);
+
+	if (value == nameHashMap->end()) {
+		return "[ INVALID ]";
+	}
+
+	return value->second.c_str();
 }

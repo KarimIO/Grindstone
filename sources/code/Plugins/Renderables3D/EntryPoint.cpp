@@ -34,7 +34,7 @@ static void SetupMeshRendererComponent(Grindstone::WorldContextSet& cxtSet, entt
 			GraphicsAPI::BufferUsage::TransferSrc |
 			GraphicsAPI::BufferUsage::Uniform;
 		uniformBufferCreateInfo.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
-		uniformBufferCreateInfo.bufferSize = sizeof(float) * 16;
+		uniformBufferCreateInfo.bufferSize = sizeof(float) * 16 + sizeof(uint32_t);
 		meshRendererComponent.perDrawUniformBuffer = graphicsCore->CreateBuffer(uniformBufferCreateInfo);
 	}
 

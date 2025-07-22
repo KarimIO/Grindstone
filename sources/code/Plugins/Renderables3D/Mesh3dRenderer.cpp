@@ -216,6 +216,11 @@ std::string Mesh3dRenderer::GetName() const {
 	return rendererName;
 }
 
+struct RenderableBufferPair {
+	glm::mat4 matrix;
+	uint32_t entityId;
+};
+
 Grindstone::Rendering::GeometryRenderStats Mesh3dRenderer::RenderQueue(
 	GraphicsAPI::CommandBuffer* commandBuffer,
 	const Grindstone::Rendering::RenderViewData& renderViewData,
@@ -263,7 +268,10 @@ Grindstone::Rendering::GeometryRenderStats Mesh3dRenderer::RenderQueue(
 
 			renderingStats.objectsRendered += 1;
 
-			meshRenderComponent.perDrawUniformBuffer->UploadData(&transform);
+			RenderableBufferPair renderableData{};
+			renderableData.entityId = static_cast<uint32_t>(entity);
+			renderableData.matrix = transform;
+			meshRenderComponent.perDrawUniformBuffer->UploadData(&renderableData);
 
 			std::vector<Grindstone::AssetReference<Grindstone::MaterialAsset>>& materials = meshRenderComponent.materials;
 			for (const Grindstone::Mesh3dAsset::Submesh& submesh : meshAsset->submeshes) {
