@@ -1,6 +1,7 @@
 #include <imgui.h>
 #include <vector>
 
+#include <Editor/EditorCamera.hpp>
 #include <Editor/EditorManager.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
@@ -10,9 +11,13 @@
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineImporter.hpp>
 #include <EngineCore/Assets/PipelineSet/ComputePipelineImporter.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
+#include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
+#include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
 #include <Plugins/Renderables3D/Assets/Mesh3dImporter.hpp>
 #include <Plugins/Renderables3D/Mesh3dRenderer.hpp>
 
+#include "ImguiEditor.hpp"
+#include "ViewportPanel.hpp"
 #include "StatsPanel.hpp"
 
 using namespace Grindstone::Editor::ImguiEditor;
@@ -76,7 +81,30 @@ void RenderAsset(Grindstone::Assets::AssetManager* assetManager, const char* tit
 
 		ImGui::TreePop();
 	}
+}
 
+#include <EngineCore/Rendering/BaseRenderer.hpp>
+
+static void RenderRenderQueueTable(const char* name, Grindstone::BaseRenderer* renderer) {
+	if (ImGui::TreeNode(name)) {
+		std::vector<Grindstone::Rendering::GeometryRenderStats> renderingStats = renderer->GetRenderingStats();
+		for (auto& renderingQueueStat : renderingStats) {
+			Grindstone::String renderQueueName = renderingQueueStat.renderQueue.ToString();
+			if (ImGui::TreeNode(renderQueueName.c_str())) {
+				ImGui::Text("Draw Calls: %u", renderingQueueStat.drawCalls);
+				ImGui::Text("Triangles: %u", renderingQueueStat.triangles);
+				ImGui::Text("Vertices: %u", renderingQueueStat.vertices);
+				ImGui::Text("Objects Culled: %u", renderingQueueStat.objectsCulled);
+				ImGui::Text("Objects Rendered: %u", renderingQueueStat.objectsRendered);
+				ImGui::Text("Pipeline Binds: %u", renderingQueueStat.pipelineBinds);
+				ImGui::Text("Material Binds: %u", renderingQueueStat.materialBinds);
+				ImGui::Text("GPU Time (ms) %f", renderingQueueStat.gpuTimeMs);
+				ImGui::Text("CPU Time (ms): %f", renderingQueueStat.cpuTimeMs);
+				ImGui::TreePop();
+			}
+		}
+		ImGui::TreePop();
+	}
 }
 
 static void RenderRenderQueuesTable(Grindstone::EngineCore& engineCore) {
@@ -84,14 +112,24 @@ static void RenderRenderQueuesTable(Grindstone::EngineCore& engineCore) {
 		return;
 	}
 
-	Grindstone::AssetRendererManager* assetRendererManager = engineCore.assetRendererManager;
-	Grindstone::Mesh3dRenderer* meshRenderer = nullptr;
-	for (auto& assetRenderer : assetRendererManager->assetRenderers) {
-		Grindstone::Mesh3dRenderer* testMeshRenderer = static_cast<Grindstone::Mesh3dRenderer*>(assetRenderer.second);
-		if (testMeshRenderer != nullptr) {
-			meshRenderer = testMeshRenderer;
-			break;
-		}
+	Grindstone::Editor::Manager& editorManager = Grindstone::Editor::Manager::GetInstance();
+
+	if (editorManager.GetPlayMode() == Grindstone::Editor::PlayMode::Editor) {
+		Grindstone::Editor::ImguiEditor::ImguiEditor& imguiEditor = editorManager.GetImguiEditor();
+		Grindstone::Editor::ImguiEditor::ViewportPanel* viewportPanel = imguiEditor.GetViewportPanel();
+		Grindstone::Editor::EditorCamera* editorCamera = viewportPanel->GetCamera();
+		Grindstone::BaseRenderer* renderer = editorCamera->GetRenderer();
+		RenderRenderQueueTable("Editor Camera", renderer);
+	}
+	else {
+		entt::registry& entityRegistry = engineCore.GetEntityRegistry();
+		auto view = entityRegistry.view<Grindstone::TagComponent, Grindstone::CameraComponent>();
+		view.each(
+			[](Grindstone::TagComponent& tagComponent, Grindstone::CameraComponent& cameraComponent) {
+				Grindstone::BaseRenderer* renderer = cameraComponent.renderer;
+				RenderRenderQueueTable(tagComponent.tag.c_str(), renderer);
+			}
+		);
 	}
 
 	ImGui::TreePop();

@@ -46,6 +46,7 @@ namespace Grindstone {
 				void PromptAssetPicker(AssetType assetType, AssetPicker::AssetPickerCallback callback);
 				void StartBuild();
 				void ImportFile(const char* folderPathToImportTo = "");
+				ViewportPanel* GetViewportPanel();
 			private:
 				void RenderDockspace();
 				void SetupFonts();

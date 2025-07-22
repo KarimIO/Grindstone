@@ -5,6 +5,7 @@
 #include <entt/fwd.hpp>
 
 #include <Common/Rendering/RenderViewData.hpp>
+#include <Common/Rendering/GeometryRenderingStats.hpp>
 
 #include "BaseAssetRenderer.hpp"
 
@@ -19,7 +20,7 @@ namespace Grindstone {
 		virtual void AddAssetRenderer(BaseAssetRenderer* assetRenderer);
 		virtual void RemoveAssetRenderer(BaseAssetRenderer* assetRenderer);
 		virtual void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet);
-		virtual void RenderQueue(
+		virtual Grindstone::Rendering::GeometryRenderStats RenderQueue(
 			GraphicsAPI::CommandBuffer* commandBuffer,
 			const Grindstone::Rendering::RenderViewData& viewData,
 			entt::registry& registry,

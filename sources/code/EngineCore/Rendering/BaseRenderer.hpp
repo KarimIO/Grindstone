@@ -3,6 +3,8 @@
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 
+#include <Common/Rendering/GeometryRenderingStats.hpp>
+
 namespace Grindstone {
 	namespace GraphicsAPI {
 		class RenderPass;
@@ -34,6 +36,7 @@ namespace Grindstone {
 		virtual uint16_t GetRenderModeCount() const = 0;
 		virtual const RenderMode* GetRenderModes() const = 0;
 		virtual void SetRenderMode(uint16_t mode) = 0;
+		virtual std::vector<Grindstone::Rendering::GeometryRenderStats> GetRenderingStats() = 0;
 	};
 
 	class BaseRendererFactory {

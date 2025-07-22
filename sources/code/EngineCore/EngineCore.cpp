@@ -38,7 +38,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	engineAssetsPath = engineBinaryPath.parent_path() / "engineassets";
 
 	const size_t megabytesInGig = 1024u;
-	if (!AllocatorCore::Initialize(megabytesInGig * 1u)) {
+	if (!AllocatorCore::Initialize(megabytesInGig * 2u)) {
 		return false;
 	}
 
