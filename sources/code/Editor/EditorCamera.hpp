@@ -26,6 +26,7 @@ namespace Grindstone {
 		public:
 			EditorCamera();
 			~EditorCamera();
+			void CaptureMousePick(GraphicsAPI::CommandBuffer* commandBuffer);
 			uint64_t GetRenderOutput();
 			void Render(GraphicsAPI::CommandBuffer* commandBuffer);
 			void RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffer);
@@ -55,8 +56,17 @@ namespace Grindstone {
 			GraphicsAPI::RenderPass* renderPass = nullptr;
 			GraphicsAPI::RenderPass* gizmoRenderPass = nullptr;
 			GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
-			GraphicsAPI::Framebuffer* framebuffer = nullptr;
 			GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
+			GraphicsAPI::Framebuffer* framebuffer = nullptr;
+
+			GraphicsAPI::DescriptorSetLayout* mousePickDescriptorSetLayout = nullptr;
+			GraphicsAPI::RenderPass* mousePickRenderPass = nullptr;
+			std::array<GraphicsAPI::Image*, 3> mousePickRenderTarget{};
+			std::array<GraphicsAPI::Framebuffer*, 3> mousePickFramebuffer{};
+			std::array<GraphicsAPI::DescriptorSet*, 3> mousePickDescriptorSet{};
+			std::array<GraphicsAPI::Buffer*, 3> mousePickMatrixBuffer{};
+			std::array<GraphicsAPI::Buffer*, 3> mousePickResponseBuffer{};
+
 			BaseRenderer* renderer = nullptr;
 			glm::mat4 projection;
 			glm::mat4 view;

@@ -969,24 +969,28 @@ void DeferredRenderer::UpdateBloomDescriptorSet(DeferredRendererImageSet& imageS
 void DeferredRenderer::CreateUniformBuffers() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
+	GraphicsAPI::Buffer::CreateInfo globalUniformBufferObjectCi{};
+	globalUniformBufferObjectCi.bufferUsage =
+		GraphicsAPI::BufferUsage::TransferDst |
+		GraphicsAPI::BufferUsage::TransferSrc |
+		GraphicsAPI::BufferUsage::Uniform;
+	globalUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
+	globalUniformBufferObjectCi.bufferSize = sizeof(EngineUboStruct);
+
+	GraphicsAPI::Buffer::CreateInfo debugUniformBufferObjectCi{};
+	debugUniformBufferObjectCi.bufferUsage = GraphicsAPI::BufferUsage::Uniform;
+	debugUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
+	debugUniformBufferObjectCi.bufferSize = sizeof(DebugUboData);
+
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
+		std::string engineUboName = std::vformat("EngineUbo [{}]", std::make_format_args(i));
+		std::string debugUboName = std::vformat("DebugUbo [{}]", std::make_format_args(i));
+
+		globalUniformBufferObjectCi.debugName = engineUboName.c_str();
+		debugUniformBufferObjectCi.debugName = debugUboName.c_str();
+
 		DeferredRendererImageSet& imageSet = deferredRendererImageSets[i];
-
-		GraphicsAPI::Buffer::CreateInfo globalUniformBufferObjectCi{};
-		globalUniformBufferObjectCi.debugName = "EngineUbo";
-		globalUniformBufferObjectCi.bufferUsage =
-			GraphicsAPI::BufferUsage::TransferDst |
-			GraphicsAPI::BufferUsage::TransferSrc |
-			GraphicsAPI::BufferUsage::Uniform;
-		globalUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
-		globalUniformBufferObjectCi.bufferSize = sizeof(EngineUboStruct);
 		imageSet.globalUniformBufferObject = graphicsCore->CreateBuffer(globalUniformBufferObjectCi);
-
-		GraphicsAPI::Buffer::CreateInfo debugUniformBufferObjectCi{};
-		debugUniformBufferObjectCi.debugName = "DebugUbo";
-		debugUniformBufferObjectCi.bufferUsage = GraphicsAPI::BufferUsage::Uniform;
-		debugUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
-		debugUniformBufferObjectCi.bufferSize = sizeof(DebugUboData);
 		imageSet.debugUniformBufferObject = graphicsCore->CreateBuffer(debugUniformBufferObjectCi);
 	}
 

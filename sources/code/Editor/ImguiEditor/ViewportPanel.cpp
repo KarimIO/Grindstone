@@ -205,6 +205,8 @@ void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 	else {
 		camera->RenderPlayModeCamera(commandBuffer);
 	}
+
+	camera->CaptureMousePick(commandBuffer);
 }
 
 Grindstone::Editor::EditorCamera* ViewportPanel::GetCamera() const {

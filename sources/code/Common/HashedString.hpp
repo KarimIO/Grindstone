@@ -45,6 +45,7 @@ namespace Grindstone {
 
 
 		const String& ToString() const;
+		const char* c_str() const noexcept;
 
 	protected:
 		Grindstone::HashValue hash;
