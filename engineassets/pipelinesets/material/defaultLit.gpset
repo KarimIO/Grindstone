@@ -105,5 +105,29 @@ pipelineSet "lit.default" {
 				GsShadowRenderer
 			]
 		}
+
+		pass "mousePick" {
+			shaderEntrypoint: vertex mainMousePickVertex
+			shaderEntrypoint: fragment mainMousePickFragment
+			renderQueue: "MousePick"
+
+			properties {
+				cull: back
+				depthWrite: true
+				depthTest: true
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: [
+					{
+						colorMask: rgba
+						blendPreset: opaque
+					}
+				]
+			}
+
+			requiresBlocks [
+				GsMousePickRenderer
+			]
+		}
 	}
 }

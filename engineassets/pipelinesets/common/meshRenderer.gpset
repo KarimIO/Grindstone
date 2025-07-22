@@ -4,6 +4,7 @@ shaderBlock GsMeshRendererInstanceUbo {
 	shaderHlsl {
 		struct RenderInstanceUBO {
 			column_major float4x4 modelMatrix;
+			uint rendererId;
 		};
 
 		ConstantBuffer<RenderInstanceUBO> renderInstanceUbo : register(b0, space2);
@@ -115,6 +116,56 @@ shaderBlock GsShadowRenderer {
 		}
 
 		void mainShadowFragment(VertexToFragment input) {
+		}
+	}
+}
+
+shaderBlock GsMousePickRenderer {
+	requiresBlocks [
+		GsMeshRendererVertexInput,
+		GsMeshRendererInstanceUbo
+	]
+
+	shaderHlsl {
+		struct RendererUBO {
+			column_major float4x4 projectionMatrix;
+			column_major float4x4 viewMatrix;
+		};
+
+		ConstantBuffer<RendererUBO> rendererUbo : register(b0, space0);
+
+		struct ShaderStorageBufferObject {
+			float depth;
+			uint identity;
+		};
+
+		RWByteAddressBuffer pickingBuffer : register(u1, space0);
+
+		struct VertexToFragment {
+			float4 position : SV_Position;
+		};
+
+		VertexToFragment mainMousePickVertex(VertexInput input) {
+			VertexToFragment output;
+
+			float4 worldPos = mul(renderInstanceUbo.modelMatrix, float4(input.position.xyz, 1.0));
+			float4 viewPos  = mul(rendererUbo.viewMatrix, worldPos);
+			output.position = mul(rendererUbo.projectionMatrix, viewPos);
+
+			return output;
+		}
+
+		const uint kDepthOffset = 0;
+		const uint kIdentityOffset = 4;
+
+		void UpdatePickingBuffer(uint identity, float z) {
+			pickingBuffer.Store(0, asuint(z));
+			pickingBuffer.Store(4, identity);
+		}
+
+		uint mainMousePickFragment(VertexToFragment input) : SV_TARGET0 {
+			UpdatePickingBuffer(renderInstanceUbo.rendererId, input.position.z);
+			return renderInstanceUbo.rendererId;
 		}
 	}
 }
