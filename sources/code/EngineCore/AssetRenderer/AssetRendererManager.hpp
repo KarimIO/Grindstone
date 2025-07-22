@@ -4,6 +4,8 @@
 #include <map>
 #include <entt/fwd.hpp>
 
+#include <Common/Rendering/RenderViewData.hpp>
+
 #include "BaseAssetRenderer.hpp"
 
 namespace Grindstone {
@@ -19,6 +21,7 @@ namespace Grindstone {
 		virtual void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet);
 		virtual void RenderQueue(
 			GraphicsAPI::CommandBuffer* commandBuffer,
+			const Grindstone::Rendering::RenderViewData& viewData,
 			entt::registry& registry,
 			Grindstone::HashedString renderQueue
 		);

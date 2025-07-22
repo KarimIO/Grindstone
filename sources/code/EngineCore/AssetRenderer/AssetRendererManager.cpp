@@ -1,6 +1,7 @@
 #include <Common/Graphics/CommandBuffer.hpp>
-#include "EngineCore/Profiling.hpp"
-#include "EngineCore/EngineCore.hpp"
+#include <Common/Rendering/RenderViewData.hpp>
+#include <EngineCore/Profiling.hpp>
+#include <EngineCore/EngineCore.hpp>
 
 #include "AssetRendererManager.hpp"
 
@@ -25,13 +26,14 @@ void AssetRendererManager::SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* de
 
 void AssetRendererManager::RenderQueue(
 	GraphicsAPI::CommandBuffer* commandBuffer,
+	const Grindstone::Rendering::RenderViewData& viewData,
 	entt::registry& registry,
 	Grindstone::HashedString renderQueue
 ) {
 	std::string renderQueueLabel = std::vformat("Render Queue '{}'", std::make_format_args(renderQueue.ToString()));
 	commandBuffer->BeginDebugLabelSection(renderQueueLabel.c_str());
 	for (auto& assetRenderer : assetRenderers) {
-		assetRenderer.second->RenderQueue(commandBuffer, registry, renderQueue);
+		assetRenderer.second->RenderQueue(commandBuffer, viewData, registry, renderQueue);
 	}
 	commandBuffer->EndDebugLabelSection();
 }
