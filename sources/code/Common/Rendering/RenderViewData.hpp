@@ -5,8 +5,8 @@
 namespace Grindstone::Rendering {
 	struct RenderViewData {
 	public:
-		Math::Matrix4 viewProjectionMatrix;
-		Math::Matrix4 inverseViewProjectionMatrix;
+		Math::Matrix4 projectionMatrix;
+		Math::Matrix4 viewMatrix;
 		Math::Float2 renderTargetOffset;
 		Math::Float2 renderTargetSize;
 

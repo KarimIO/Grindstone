@@ -52,134 +52,143 @@ static int CompareReverseRenderSort(const RenderTask& a, const RenderTask& b) {
 	return a.sortData < b.sortData;
 }
 
+struct CullingFrustum {
+	float nearRight;
+	float nearTop;
+	float nearDistance;
+	float farDistance;
+};
+
 struct AABB {
-	glm::vec3 center{ 0.f, 0.f, 0.f };
-	glm::vec3 halfExtents{ 0.f, 0.f, 0.f };
-
-	AABB(const glm::vec3& min, const glm::vec3& max) : center{ (max + min) * 0.5f }, halfExtents{ max.x - center.x, max.y - center.y, max.z - center.z } {}
-	AABB(const glm::vec3& inCenter, float iI, float iJ, float iK) : center{ inCenter }, halfExtents{ iI, iJ, iK } {}
+	glm::vec3 min;
+	glm::vec3 max;
 };
 
-struct Plane {
-	float a;
-	float b;
-	float c;
-	float d;
+struct OBB {
+	glm::vec3 center = {};
+	glm::vec3 extents = {};
+	glm::vec3 axes[3] = {};
 };
 
-struct Frustum {
-	Plane planes[6];
-};
+// Thanks to Bruno Opsenica https://bruop.github.io/improved_frustum_culling/
+static bool IsInFrustum(const CullingFrustum& frustum, const glm::mat4& viewModelMatrix, const AABB& aabb) {
+	constexpr size_t cornerCount = 4;
 
-static float GetSignedDistanceToPlane(const Plane& plane, const glm::vec3& point) {
-	return glm::dot(glm::vec3(plane.a, plane.b, plane.c), point) - plane.d;
-}
+	float z_near = frustum.nearDistance;
+	float z_far = frustum.farDistance;
 
-static bool IsOnOrForwardPlane(const AABB& aabb, const Plane& plane) {
-	// Compute the projection interval radius of b onto L(t) = b.c + t * p.n
-	const float r =
-		aabb.halfExtents.x * std::abs(plane.a) +
-		aabb.halfExtents.y * std::abs(plane.b) +
-		aabb.halfExtents.z * std::abs(plane.c);
+	float x_near = frustum.nearRight;
+	float y_near = frustum.nearTop;
 
-	return -r <= GetSignedDistanceToPlane(plane, aabb.center);
-}
-
-static bool IsOnFrustum(const Frustum& camFrustum, const glm::mat4& worldTransformMatrix, const glm::vec3& center, const glm::vec3& halfExtents) {
-	//Get global scale thanks to our transform
-	const glm::vec3 globalCenter{ worldTransformMatrix * glm::vec4(center, 1.f) };
-	const glm::quat rotation = Math::Quaternion(worldTransformMatrix);
-
-	// Scaled orientation
-	const glm::vec3 right = rotation * glm::vec3(1, 0, 0) * halfExtents.x;
-	const glm::vec3 up = rotation * glm::vec3(0, 1, 0) * halfExtents.y;
-	const glm::vec3 forward = rotation * glm::vec3(0, 0, 1) * halfExtents.z;
-
-	const float newIi = std::abs(glm::dot(glm::vec3{ 1.f, 0.f, 0.f }, right)) +
-		std::abs(glm::dot(glm::vec3{ 1.f, 0.f, 0.f }, up)) +
-		std::abs(glm::dot(glm::vec3{ 1.f, 0.f, 0.f }, forward));
-
-	const float newIj = std::abs(glm::dot(glm::vec3{ 0.f, 1.f, 0.f }, right)) +
-		std::abs(glm::dot(glm::vec3{ 0.f, 1.f, 0.f }, up)) +
-		std::abs(glm::dot(glm::vec3{ 0.f, 1.f, 0.f }, forward));
-
-	const float newIk = std::abs(glm::dot(glm::vec3{ 0.f, 0.f, 1.f }, right)) +
-		std::abs(glm::dot(glm::vec3{ 0.f, 0.f, 1.f }, up)) +
-		std::abs(glm::dot(glm::vec3{ 0.f, 0.f, 1.f }, forward));
-
-	const AABB worldAABB(globalCenter, newIi, newIj, newIk);
-
-	return (
-		IsOnOrForwardPlane(worldAABB, camFrustum.planes[0]) &&
-		IsOnOrForwardPlane(worldAABB, camFrustum.planes[1]) &&
-		IsOnOrForwardPlane(worldAABB, camFrustum.planes[2]) &&
-		IsOnOrForwardPlane(worldAABB, camFrustum.planes[3]) &&
-		IsOnOrForwardPlane(worldAABB, camFrustum.planes[4]) &&
-		IsOnOrForwardPlane(worldAABB, camFrustum.planes[5])
-	);
-};
-
-static Frustum CreateFrustumFromCamera(const glm::mat4& matrix) {
-	Frustum frustum{};
-
-	frustum.planes[0] = { // leftFace
-		matrix[0][3] + matrix[0][0],
-		matrix[1][3] + matrix[1][0],
-		matrix[2][3] + matrix[2][0],
-		matrix[3][3] + matrix[3][0]
+	// Consider four adjacent corners of the ABB
+	glm::vec3 corners[] = {
+		{aabb.min.x, aabb.min.y, aabb.min.z},
+		{aabb.max.x, aabb.min.y, aabb.min.z},
+		{aabb.min.x, aabb.max.y, aabb.min.z},
+		{aabb.min.x, aabb.min.y, aabb.max.z},
 	};
 
-	frustum.planes[1] = { // rightFace
-		matrix[0][3] - matrix[0][0],
-		matrix[1][3] - matrix[1][0],
-		matrix[2][3] - matrix[2][0],
-		matrix[3][3] - matrix[3][0]
-	};
-
-	frustum.planes[2] = { // topFace
-		matrix[0][3] - matrix[0][1],
-		matrix[1][3] - matrix[1][1],
-		matrix[2][3] - matrix[2][1],
-		matrix[3][3] - matrix[3][1]
-	};
-
-	frustum.planes[3] = { // bottomFace
-		matrix[0][3] + matrix[0][1],
-		matrix[1][3] + matrix[1][1],
-		matrix[2][3] + matrix[2][1],
-		matrix[3][3] + matrix[3][1]
-	};
-
-	frustum.planes[4] = { // farFace
-		matrix[0][3] - matrix[0][2],
-		matrix[1][3] - matrix[1][2],
-		matrix[2][3] - matrix[2][2],
-		matrix[3][3] - matrix[3][2]
-	};
-
-	frustum.planes[5] = { // nearFace
-		matrix[0][3] + matrix[0][2],
-		matrix[1][3] + matrix[1][2],
-		matrix[2][3] + matrix[2][2],
-		matrix[3][3] + matrix[3][2]
-	};
-
-	for (int i = 0; i < 6; ++i) {
-		float length = glm::length(
-			glm::vec3{
-				frustum.planes[i].a +
-				frustum.planes[i].b +
-				frustum.planes[i].c
-			}
-		);
-
-		frustum.planes[i].a /= length;
-		frustum.planes[i].b /= length;
-		frustum.planes[i].c /= length;
-		frustum.planes[i].d /= length;
+	// NOTE: Only works with affine matrices
+	for (size_t corner_idx = 0; corner_idx < cornerCount; corner_idx++) {
+		corners[corner_idx] = (viewModelMatrix * glm::vec4(corners[corner_idx], 1.0f));
 	}
 
-	return frustum;
+	OBB obb = {
+		.axes = {
+			corners[1] - corners[0],
+			corners[2] - corners[0],
+			corners[3] - corners[0]
+		},
+	};
+
+	obb.center = corners[0] + 0.5f * (obb.axes[0] + obb.axes[1] + obb.axes[2]);
+	obb.extents = glm::vec3{ length(obb.axes[0]), length(obb.axes[1]), length(obb.axes[2]) };
+	obb.axes[0] = obb.axes[0] / obb.extents.x;
+	obb.axes[1] = obb.axes[1] / obb.extents.y;
+	obb.axes[2] = obb.axes[2] / obb.extents.z;
+	obb.extents *= 0.5f;
+
+	{
+		glm::vec3 M = { 0.0f, 0.0f, 1.0f };
+		float MoX = 0.0f;	// | m . x |
+		float MoY = 0.0f;	// | m . y |
+		float MoZ = M.z;	// m . z (not abs!)
+
+		float MoC = obb.center.z;
+
+		float radius = 0.0f;
+		for (size_t i = 0; i < 3; i++) {
+			radius += fabsf(obb.axes[i].z) * (&obb.extents.x)[i];
+		}
+		float obb_min = MoC - radius;
+		float obb_max = MoC + radius;
+
+		float m0 = z_far;
+		float m1 = z_near;
+
+		if (obb_min > m1 || obb_max < m0) {
+			return false;
+		}
+	}
+
+	{
+		// Frustum normals
+		const glm::vec3 M[] = {
+			{ 0.0, -z_near, y_near },	// Top plane
+			{ 0.0, z_near, y_near },	// Bottom plane
+			{ -z_near, 0.0f, x_near },	// Right plane
+			{ z_near, 0.0f, x_near },	// Left Plane
+		};
+
+		for (size_t m = 0; m < cornerCount; m++) {
+			float MoX = fabsf(M[m].x);
+			float MoY = fabsf(M[m].y);
+			float MoZ = M[m].z;
+			float MoC = dot(M[m], obb.center);
+
+			float obb_radius = 0.0f;
+			for (size_t i = 0; i < 3; i++) {
+				obb_radius += fabsf(dot(M[m], obb.axes[i])) * (&obb.extents.x)[i];
+			}
+			float obb_min = MoC - obb_radius;
+			float obb_max = MoC + obb_radius;
+
+			float p = x_near * MoX + y_near * MoY;
+
+			float tau_0 = z_near * MoZ - p;
+			float tau_1 = z_near * MoZ + p;
+
+			if (tau_0 < 0.0f) {
+				tau_0 *= z_far / z_near;
+			}
+			if (tau_1 > 0.0f) {
+				tau_1 *= z_far / z_near;
+			}
+
+			if (obb_min > tau_1 || obb_max < tau_0) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+static CullingFrustum CreateFrustum(const Grindstone::Rendering::RenderViewData& renderViewData) {
+	float aspectRatio = renderViewData.renderTargetSize.x / renderViewData.renderTargetSize.y;
+	float tanFov = 1.0f / renderViewData.projectionMatrix[0][0];
+
+	float projection_43 = renderViewData.projectionMatrix[3][2];
+	float projection_33 = renderViewData.projectionMatrix[2][2];
+	float nearDistance = projection_43 / (projection_33 - 1.0f);
+	float farDistance = projection_43 / (projection_33 + 1.0f);
+
+	return CullingFrustum{
+		.nearRight = aspectRatio * nearDistance * tanFov,
+		.nearTop = nearDistance * tanFov,
+		.nearDistance = -nearDistance,
+		.farDistance = -farDistance,
+	};
 }
 
 Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
@@ -219,11 +228,14 @@ void Mesh3dRenderer::RenderQueue(
 	std::vector<RenderTask> renderTasks;
 	renderTasks.reserve(1000);
 
-	Frustum frustum = CreateFrustumFromCamera(renderViewData.viewProjectionMatrix);
+	CullingFrustum frustum = CreateFrustum(renderViewData);
+
+	glm::mat4 viewMatrix = renderViewData.viewMatrix;
+	bool isOrtho = renderViewData.projectionMatrix[3][3] == 1.0f;
 
 	auto view = registry.view<const entt::entity, const TransformComponent, const MeshComponent, MeshRendererComponent>();
 	view.each(
-		[&registry, &renderTasks, frustum, renderQueueHash, assetManager, graphicsCore](
+		[&registry, &renderTasks, isOrtho, viewMatrix, frustum, renderQueueHash, assetManager, graphicsCore](
 			entt::entity entity,
 			const TransformComponent& transformComponent,
 			const MeshComponent& meshComponent,
@@ -237,11 +249,11 @@ void Mesh3dRenderer::RenderQueue(
 			}
 
 			Math::Matrix4 transform = TransformComponent::GetWorldTransformMatrix(entity, registry);
+			glm::mat4 viewTransformTransform = viewMatrix * transform;
 
-			// Early Frustum Cull
-			glm::vec3 aabbCenter = (meshAsset->boundingData.minAABB + meshAsset->boundingData.maxAABB) * 0.5f;
-			glm::vec3 aabbHalfExtents = (meshAsset->boundingData.maxAABB - meshAsset->boundingData.minAABB) * 0.5f;
-			if (!IsOnFrustum(frustum, transform, aabbCenter, aabbHalfExtents)) {
+			// TODO: Get Ortho culling working
+			AABB aabb{ meshAsset->boundingData.minAABB, meshAsset->boundingData.maxAABB };
+			if (!isOrtho && !IsInFrustum(frustum, viewTransformTransform, aabb)) {
 				return;
 			}
 

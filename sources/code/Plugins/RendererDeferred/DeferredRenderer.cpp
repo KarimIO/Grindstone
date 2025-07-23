@@ -2175,8 +2175,8 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 			float resF = static_cast<float>(resolution);
 
 			Grindstone::Rendering::RenderViewData renderViewData{
-				.viewProjectionMatrix = projectionMatrix * viewMatrix,
-				.inverseViewProjectionMatrix = glm::inverse(projectionMatrix * viewMatrix),
+				.projectionMatrix = projectionMatrix,
+				.viewMatrix = viewMatrix,
 				.renderTargetOffset = glm::vec2(0, 0),
 				.renderTargetSize = glm::vec2(resF, resF),
 			};
@@ -2243,8 +2243,8 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 			float resF = static_cast<float>(resolution);
 
 			Grindstone::Rendering::RenderViewData renderViewData{
-				.viewProjectionMatrix = projectionMatrix * viewMatrix,
-				.inverseViewProjectionMatrix = glm::inverse(projectionMatrix * viewMatrix),
+				.projectionMatrix = projectionMatrix,
+				.viewMatrix = viewMatrix,
 				.renderTargetOffset = glm::vec2(0, 0),
 				.renderTargetSize = glm::vec2(resF, resF),
 			};
@@ -2367,8 +2367,8 @@ void DeferredRenderer::Render(
 	imageSet.globalUniformBufferObject->UploadData(&engineUboStruct);
 
 	Grindstone::Rendering::RenderViewData renderViewData{
-		.viewProjectionMatrix = projectionMatrix * viewMatrix,
-		.inverseViewProjectionMatrix = glm::inverse(projectionMatrix * viewMatrix),
+		.projectionMatrix = projectionMatrix,
+		.viewMatrix = viewMatrix,
 		.renderTargetOffset = glm::vec2(0, 0),
 		.renderTargetSize = glm::vec2(renderWidth, renderHeight),
 	};
