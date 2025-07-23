@@ -5,6 +5,7 @@
 #include <map>
 #include <glm/mat4x4.hpp>
 
+#include <Common/Rendering/RenderViewData.hpp>
 #include "EngineCore/AssetRenderer/BaseAssetRenderer.hpp"
 #include "Components/MeshRendererComponent.hpp"
 #include "Assets/Mesh3dAsset.hpp"
@@ -23,6 +24,7 @@ namespace Grindstone {
 
 			virtual void RenderQueue(
 				GraphicsAPI::CommandBuffer* commandBuffer,
+				const Grindstone::Rendering::RenderViewData& viewData,
 				entt::registry& registry,
 				Grindstone::HashedString renderQueueHash
 			) override;

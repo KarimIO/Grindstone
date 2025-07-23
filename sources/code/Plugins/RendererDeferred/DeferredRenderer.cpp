@@ -2173,10 +2173,19 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 			);
 
 			float resF = static_cast<float>(resolution);
+
+			Grindstone::Rendering::RenderViewData renderViewData{
+				.projectionMatrix = projectionMatrix,
+				.viewMatrix = viewMatrix,
+				.renderTargetOffset = glm::vec2(0, 0),
+				.renderTargetSize = glm::vec2(resF, resF),
+			};
+
 			commandBuffer->SetViewport(0.0f, 0.0f, resF, resF);
 			commandBuffer->SetScissor(0, 0, resolution, resolution);
 			assetManager->RenderQueue(
 				commandBuffer,
+				renderViewData,
 				registry,
 				shadowMapRenderPassKey
 			);
@@ -2232,10 +2241,19 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 			);
 
 			float resF = static_cast<float>(resolution);
+
+			Grindstone::Rendering::RenderViewData renderViewData{
+				.projectionMatrix = projectionMatrix,
+				.viewMatrix = viewMatrix,
+				.renderTargetOffset = glm::vec2(0, 0),
+				.renderTargetSize = glm::vec2(resF, resF),
+			};
+
 			commandBuffer->SetViewport(0.0f, 0.0f, resF, resF);
 			commandBuffer->SetScissor(0, 0, resolution, resolution);
 			assetManager->RenderQueue(
 				commandBuffer,
+				renderViewData,
 				registry,
 				shadowMapRenderPassKey
 			);
@@ -2334,17 +2352,26 @@ void DeferredRenderer::Render(
 	uint32_t imageIndex = wgb->GetCurrentImageIndex();
 	auto& imageSet = deferredRendererImageSets[imageIndex];
 
-	EngineUboStruct engineUboStruct{};
-	engineUboStruct.projectionMatrix = projectionMatrix;
-	engineUboStruct.viewMatrix = viewMatrix;
-	engineUboStruct.inverseProjectionMatrix = glm::inverse(projectionMatrix);
-	engineUboStruct.inverseViewMatrix = glm::inverse(viewMatrix);
-	engineUboStruct.eyePos = eyePos;
-	engineUboStruct.framebufferResolution = glm::vec2(framebufferWidth, framebufferHeight);
-	engineUboStruct.renderResolution = glm::vec2(renderWidth, renderHeight);
-	engineUboStruct.renderScale = glm::vec2(static_cast<float>(renderWidth) / framebufferWidth, static_cast<float>(renderHeight) / framebufferHeight);
-	engineUboStruct.time = static_cast<float>(engineCore.GetTimeSinceLaunch());
+	EngineUboStruct engineUboStruct{
+		.projectionMatrix = projectionMatrix,
+		.viewMatrix = viewMatrix,
+		.inverseProjectionMatrix = glm::inverse(projectionMatrix),
+		.inverseViewMatrix = glm::inverse(viewMatrix),
+		.eyePos = eyePos,
+		.framebufferResolution = glm::vec2(framebufferWidth, framebufferHeight),
+		.renderResolution = glm::vec2(renderWidth, renderHeight),
+		.renderScale = glm::vec2(static_cast<float>(renderWidth) / framebufferWidth, static_cast<float>(renderHeight) / framebufferHeight),
+		.time = static_cast<float>(engineCore.GetTimeSinceLaunch())
+	};
+
 	imageSet.globalUniformBufferObject->UploadData(&engineUboStruct);
+
+	Grindstone::Rendering::RenderViewData renderViewData{
+		.projectionMatrix = projectionMatrix,
+		.viewMatrix = viewMatrix,
+		.renderTargetOffset = glm::vec2(0, 0),
+		.renderTargetSize = glm::vec2(renderWidth, renderHeight),
+	};
 
 	if (renderMode == DeferredRenderMode::Default) {
 		RenderShadowMaps(commandBuffer, registry);
@@ -2377,7 +2404,7 @@ void DeferredRenderer::Render(
 	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(renderWidth), static_cast<float>(renderHeight));
 	commandBuffer->SetScissor(0, 0, renderWidth, renderHeight);
 
-	assetManager->RenderQueue(commandBuffer, registry, geometryOpaqueRenderPassKey);
+	assetManager->RenderQueue(commandBuffer, renderViewData, registry, geometryOpaqueRenderPassKey);
 	commandBuffer->UnbindRenderPass();
 
 	if (renderMode == DeferredRenderMode::Default || renderMode == DeferredRenderMode::AmbientOcclusion) {
@@ -2399,11 +2426,11 @@ void DeferredRenderer::Render(
 			RenderLights(imageIndex, commandBuffer, registry);
 		}
 
-		assetManager->RenderQueue(commandBuffer, registry, geometryUnlitRenderPassKey);
+		assetManager->RenderQueue(commandBuffer, renderViewData, registry, geometryUnlitRenderPassKey);
 
 		if (renderMode == DeferredRenderMode::Default) {
-			assetManager->RenderQueue(commandBuffer, registry, geometrySkyRenderPassKey);
-			assetManager->RenderQueue(commandBuffer, registry, geometryTransparentRenderPassKey);
+			assetManager->RenderQueue(commandBuffer, renderViewData, registry, geometrySkyRenderPassKey);
+			assetManager->RenderQueue(commandBuffer, renderViewData, registry, geometryTransparentRenderPassKey);
 		}
 
 		commandBuffer->UnbindRenderPass();
