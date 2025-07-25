@@ -27,8 +27,8 @@ namespace Grindstone::Editor {
 		void SubmitSphereGizmo(const glm::mat4& transform, float radius, glm::vec4 color = glm::vec4(1.0f));
 		void Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, glm::mat4 projView);
 	protected:
-		Grindstone::GraphicsAPI::Buffer* gizmoUniformBuffer = nullptr;
-		Grindstone::GraphicsAPI::DescriptorSet* gizmoDescriptorSet = nullptr;
+		std::array<Grindstone::GraphicsAPI::Buffer*, 3> gizmoUniformBuffers = {};
+		std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> gizmoDescriptorSets = {};
 		Grindstone::GraphicsAPI::DescriptorSetLayout* gizmoDescriptorSetLayout = nullptr;
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> gizmoPipelineSet;
 		GraphicsAPI::VertexInputLayout gizmoVertexLayout;

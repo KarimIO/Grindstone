@@ -23,8 +23,8 @@ namespace Grindstone::Editor {
 		void Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, glm::vec2 renderScale, glm::mat4 proj, glm::mat4 view, float nearDist, float farDist, glm::quat rotation, float offset);
 	protected:
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> pipelineSet;
-		Grindstone::GraphicsAPI::Buffer* gridUniformBuffer = nullptr;
-		Grindstone::GraphicsAPI::DescriptorSet* gridDescriptorSet = nullptr;
+		std::array<Grindstone::GraphicsAPI::Buffer*, 3> gridUniformBuffers = {};
+		std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> gridDescriptorSets = {};
 		Grindstone::GraphicsAPI::DescriptorSetLayout* gridDescriptorSetLayout = nullptr;
 	};
 }

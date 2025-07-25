@@ -4,6 +4,8 @@
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 #include <EngineCore/EngineCore.hpp>
+#include <Common/Window/WindowManager.hpp>
+#include <Common/Graphics/WindowGraphicsBinding.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <Common/Graphics/VertexArrayObject.hpp>
 #include <Common/Graphics/CommandBuffer.hpp>
@@ -37,16 +39,22 @@ struct GridUniformBuffer {
 void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	auto wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	uint32_t maxFramesInFlight = wgb->GetMaxFramesInFlight();
 
 	GraphicsAPI::Buffer::CreateInfo ubCi{};
-	ubCi.debugName = "Grid Uniform Buffer";
 	ubCi.bufferUsage =
 		GraphicsAPI::BufferUsage::TransferDst |
 		GraphicsAPI::BufferUsage::TransferSrc |
 		GraphicsAPI::BufferUsage::Uniform;
 	ubCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
 	ubCi.bufferSize = static_cast<size_t>(sizeof(GridUniformBuffer));
-	gridUniformBuffer = graphicsCore->CreateBuffer(ubCi);
+
+	for (uint32_t i = 0; i < maxFramesInFlight; ++i) {
+		std::string debugName = std::vformat("Grid Uniform Buffer [{}]", std::make_format_args(i));
+		ubCi.debugName = debugName.c_str();
+		gridUniformBuffers[i] = graphicsCore->CreateBuffer(ubCi);
+	}
 
 	std::vector<GraphicsAPI::GraphicsPipeline::ShaderStageData> shaderStageCreateInfos;
 	std::vector<std::vector<char>> fileData;
@@ -65,17 +73,26 @@ void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	gridDescriptorSetLayoutCreateInfo.bindings = &gridDescriptorLayoutBinding;
 	gridDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(gridDescriptorSetLayoutCreateInfo);
 
-	GraphicsAPI::DescriptorSet::Binding gridDescriptorBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( gridUniformBuffer );
-
 	GraphicsAPI::DescriptorSet::CreateInfo gridDescriptorSetCreateInfo{};
-	gridDescriptorSetCreateInfo.debugName = "Grid Descriptor";
 	gridDescriptorSetCreateInfo.bindingCount = 1u;
-	gridDescriptorSetCreateInfo.bindings = &gridDescriptorBinding;
 	gridDescriptorSetCreateInfo.layout = gridDescriptorSetLayout;
-	gridDescriptorSet = graphicsCore->CreateDescriptorSet(gridDescriptorSetCreateInfo);
+
+	for (uint32_t i = 0; i < maxFramesInFlight; ++i) {
+		std::string debugName = std::vformat("Grid Descriptor [{}]", std::make_format_args(i));
+		gridDescriptorSetCreateInfo.debugName = debugName.c_str();
+		GraphicsAPI::DescriptorSet::Binding gridDescriptorBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(gridUniformBuffers[i]);
+		gridDescriptorSetCreateInfo.bindings = &gridDescriptorBinding;
+		gridDescriptorSets[i] = graphicsCore->CreateDescriptorSet(gridDescriptorSetCreateInfo);
+	}
+
 }
 
 void GridRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, glm::vec2 renderScale, glm::mat4 proj, glm::mat4 view, float nearDist, float farDist, glm::quat rotation, float offset) {
+	EngineCore& engineCore = Editor::Manager::GetEngineCore();
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	auto wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	uint32_t imageIndex = wgb->GetCurrentImageIndex();
+
 	Grindstone::GraphicsPipelineAsset* pipelineAsset = pipelineSet.Get();
 	if (pipelineAsset == nullptr) {
 		return;
@@ -95,9 +112,9 @@ void GridRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer,
 	gridData.nearDistance = nearDist;
 	gridData.farDistance = farDist;
 
-	gridUniformBuffer->UploadData(&gridData);
+	gridUniformBuffers[imageIndex]->UploadData(&gridData);
 	commandBuffer->BindGraphicsPipeline(pipeline);
-	commandBuffer->BindGraphicsDescriptorSet(pipeline, &gridDescriptorSet, 2, 1);
+	commandBuffer->BindGraphicsDescriptorSet(pipeline, &gridDescriptorSets[imageIndex], 2, 1);
 
 	commandBuffer->DrawVertices(6, 0, 1, 0);
 }

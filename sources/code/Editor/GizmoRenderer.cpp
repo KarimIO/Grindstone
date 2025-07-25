@@ -4,6 +4,8 @@
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 #include <EngineCore/EngineCore.hpp>
+#include <Common/Window/WindowManager.hpp>
+#include <Common/Graphics/WindowGraphicsBinding.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <Common/Graphics/VertexArrayObject.hpp>
 #include <Common/Graphics/CommandBuffer.hpp>
@@ -37,6 +39,8 @@ inline void GizmoRenderer::AppendData(
 void GizmoRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	auto wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	uint32_t maxFramesInFlight = wgb->GetMaxFramesInFlight();
 
 	GraphicsAPI::VertexInputLayoutBuilder layoutBuilder;
 	gizmoVertexLayout = layoutBuilder
@@ -445,14 +449,18 @@ void GizmoRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	drawShapes.resize(maxObjects);
 
 	GraphicsAPI::Buffer::CreateInfo ubCi{};
-	ubCi.debugName = "Gizmo Uniform Buffer";
 	ubCi.bufferUsage =
 		GraphicsAPI::BufferUsage::TransferDst |
 		GraphicsAPI::BufferUsage::TransferSrc |
 		GraphicsAPI::BufferUsage::Uniform;
 	ubCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
 	ubCi.bufferSize = static_cast<size_t>(sizeof(GizmoUniformBuffer) * maxObjects);
-	gizmoUniformBuffer = graphicsCore->CreateBuffer(ubCi);
+
+	for (uint32_t i = 0; i < maxFramesInFlight; ++i) {
+		std::string debugName = std::vformat("Gizmo Uniform Buffer [{}]", std::make_format_args(i));
+		ubCi.debugName = debugName.c_str();
+		gizmoUniformBuffers[i] = graphicsCore->CreateBuffer(ubCi);
+	}
 
 	GraphicsAPI::Buffer::CreateInfo gizmoShapesVertexBufferCi{};
 	gizmoShapesVertexBufferCi.debugName = "Gizmo Shape Vertex Buffer";
@@ -512,14 +520,18 @@ void GizmoRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
 	gizmoDescriptorSetLayoutCreateInfo.bindings = &gizmoDescriptorLayoutBinding;
 	gizmoDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(gizmoDescriptorSetLayoutCreateInfo);
 
-	GraphicsAPI::DescriptorSet::Binding gizmoDescriptorBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( gizmoUniformBuffer );
 
 	GraphicsAPI::DescriptorSet::CreateInfo gizmoDescriptorSetCreateInfo{};
-	gizmoDescriptorSetCreateInfo.debugName = "Gizmo Descriptor";
 	gizmoDescriptorSetCreateInfo.bindingCount = 1u;
-	gizmoDescriptorSetCreateInfo.bindings = &gizmoDescriptorBinding;
 	gizmoDescriptorSetCreateInfo.layout = gizmoDescriptorSetLayout;
-	gizmoDescriptorSet = graphicsCore->CreateDescriptorSet(gizmoDescriptorSetCreateInfo);
+
+	for (uint32_t i = 0; i < maxFramesInFlight; ++i) {
+		std::string debugName = std::vformat("Gizmo Descriptor [{}]", std::make_format_args(i));
+		gizmoDescriptorSetCreateInfo.debugName = debugName.c_str();
+		GraphicsAPI::DescriptorSet::Binding gizmoDescriptorBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( gizmoUniformBuffers[i]);
+		gizmoDescriptorSetCreateInfo.bindings = &gizmoDescriptorBinding;
+		gizmoDescriptorSets[i] = graphicsCore->CreateDescriptorSet(gizmoDescriptorSetCreateInfo);
+	}
 }
 
 void GizmoRenderer::SubmitCubeGizmo(const glm::mat4& transform, glm::vec3 size, glm::vec4 color) {
@@ -548,6 +560,11 @@ void GizmoRenderer::SubmitSphereGizmo(const glm::mat4& transform, float radius, 
 }
 
 void GizmoRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, glm::mat4 projView) {
+	EngineCore& engineCore = Editor::Manager::GetEngineCore();
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	auto wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	uint32_t imageIndex = wgb->GetCurrentImageIndex();
+
 	Grindstone::GraphicsPipelineAsset* pipelineAsset = gizmoPipelineSet.Get();
 	if (pipelineAsset == nullptr) {
 		return;
@@ -562,9 +579,9 @@ void GizmoRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer
 		data.transform = projView * data.transform;
 	}
 
-	gizmoUniformBuffer->UploadData(dataBuffer.data());
+	gizmoUniformBuffers[imageIndex]->UploadData(dataBuffer.data());
 	commandBuffer->BindGraphicsPipeline(gizmoPipeline);
-	commandBuffer->BindGraphicsDescriptorSet(gizmoPipeline, &gizmoDescriptorSet, 2, 1);
+	commandBuffer->BindGraphicsDescriptorSet(gizmoPipeline, &gizmoDescriptorSets[imageIndex], 2, 1);
 	commandBuffer->BindVertexArrayObject(gizmoShapesVao);
 
 	for (uint32_t i = 0; i < drawCount; ++i) {
