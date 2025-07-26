@@ -17,12 +17,16 @@
 using namespace Grindstone::Memory;
 using namespace Grindstone::Editor::ImguiEditor;
 
+struct InspectorState {
+	std::filesystem::path lastSelectedAssetPath;
+	void* importerMenuPayload = nullptr;
+} inspectorState;
 
 static void RenderGenericFile(const std::filesystem::path& path) {
 	static std::string newAddress;
 	static Uuid selectedEntryToEdit;
 
-	auto& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
+	Grindstone::Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
 
 	Grindstone::Editor::AssetRegistry::Entry entry;
 	if (assetRegistry.TryGetAssetDataFromAbsolutePath(path, entry)) {
@@ -75,16 +79,37 @@ void InspectorPanel::Render() {
 		RenderContents();
 		ImGui::End();
 	}
+	else if (!inspectorState.lastSelectedAssetPath.empty()) {
+		Grindstone::Editor::Manager& editorInstance = Grindstone::Editor::Manager::GetInstance();
+		Grindstone::Importers::ImporterManager& importerManager = editorInstance.GetImporterManager();
+		Grindstone::Editor::ImporterData lastImporterData = importerManager.GetImporterFactoryByPath(inspectorState.lastSelectedAssetPath);
+
+		if (lastImporterData.onMenuCleanup != nullptr) {
+			lastImporterData.onMenuCleanup(inspectorState.importerMenuPayload);
+		}
+	}
 }
 
 void InspectorPanel::RenderContents() {
+	Grindstone::Editor::Manager& editorInstance = Grindstone::Editor::Manager::GetInstance();
+	Selection& selection = editorInstance.GetSelection();
+	Grindstone::Importers::ImporterManager& importerManager = editorInstance.GetImporterManager();
+
 	bool hasHandledSelected = false;
-	Selection& selection = Editor::Manager::GetInstance().GetSelection();
 	size_t selectedEntityCount = selection.GetSelectedEntityCount();
 	size_t selectedFileCount = selection.GetSelectedFileCount();
 
 	if (selectedEntityCount == 0 && selectedFileCount == 0) {
 		ImGui::Text("Nothing selected.");
+
+		if (!inspectorState.lastSelectedAssetPath.empty()) {
+			Grindstone::Editor::ImporterData lastImporterData = importerManager.GetImporterFactoryByPath(inspectorState.lastSelectedAssetPath);
+
+			if (lastImporterData.onMenuCleanup != nullptr) {
+				lastImporterData.onMenuCleanup(inspectorState.importerMenuPayload);
+			}
+			inspectorState.lastSelectedAssetPath = "";
+		}
 		return;
 	}
 	else if (selectedEntityCount == 0 && selectedFileCount > 0) {
@@ -93,11 +118,42 @@ void InspectorPanel::RenderContents() {
 			RenderGenericFile(path);
 			std::string extension = path.extension().string();
 
+			Grindstone::Editor::ImporterData importerData = importerManager.GetImporterFactoryByPath(path);
+			if (inspectorState.lastSelectedAssetPath != path) {
+				if (!inspectorState.lastSelectedAssetPath.empty()) {
+					Grindstone::Editor::ImporterData lastImporterData = importerManager.GetImporterFactoryByPath(inspectorState.lastSelectedAssetPath);
+					if (lastImporterData.onMenuCleanup != nullptr) {
+						lastImporterData.onMenuCleanup(inspectorState.importerMenuPayload);
+					}
+					inspectorState.lastSelectedAssetPath = "";
+				}
+
+				if (!path.empty()) {
+					if (importerData.onMenuStart != nullptr) {
+						inspectorState.importerMenuPayload = importerData.onMenuStart(path);
+					}
+					inspectorState.lastSelectedAssetPath = path;
+				}
+			}
+
 			if (extension == ".gmat") {
 				materialInspector->SetMaterialPath(path);
 				materialInspector->Render();
 			}
+			else if (importerData.onMenuRender != nullptr) {
+				importerData.onMenuRender(inspectorState.importerMenuPayload);
+			}
 			return;
+		}
+
+		if (!inspectorState.lastSelectedAssetPath.empty()) {
+			Grindstone::Editor::ImporterData lastImporterData = importerManager.GetImporterFactoryByPath(inspectorState.lastSelectedAssetPath);
+
+			if (lastImporterData.onMenuCleanup != nullptr) {
+				lastImporterData.onMenuCleanup(inspectorState.importerMenuPayload);
+			}
+
+			inspectorState.lastSelectedAssetPath = "";
 		}
 
 		unsigned int unmanagedFiles = 0;

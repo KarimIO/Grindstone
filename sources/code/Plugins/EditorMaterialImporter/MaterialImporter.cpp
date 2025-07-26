@@ -15,10 +15,10 @@
 using namespace Grindstone;
 using namespace Grindstone::Editor::Importers;
 
-void MaterialImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path) {
-	metaFile = assetRegistry.GetMetaFileByPath(path);
+void Editor::Importers::ImportMaterial(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& inputPath) {
+	Grindstone::Editor::MetaFile metaFile = assetRegistry.GetMetaFileByPath(inputPath);
 
-	std::string contentData = Grindstone::Utils::LoadFileText(path.string().c_str());
+	std::string contentData = Grindstone::Utils::LoadFileText(inputPath.string().c_str());
 	rapidjson::Document document;
 	if (document.Parse(contentData.data()).GetParseError()) {
 		// TODO: Print error
@@ -30,26 +30,17 @@ void MaterialImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, 
 		subassetName = document["name"].GetString();
 	}
 	else {
-		subassetName = path.filename().string();
+		subassetName = inputPath.filename().string();
 		size_t dotPos = subassetName.find('.');
 		if (dotPos != std::string::npos) {
 			subassetName = subassetName.substr(0, dotPos);
 		}
 	}
 
-	uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Material);
+	Grindstone::Uuid uuid = metaFile.GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Material);
 
 	std::filesystem::path outputPath = assetRegistry.GetCompiledAssetsPath() / uuid.ToString();
-	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
-	metaFile->Save(materialImporterVersion);
+	std::filesystem::copy(inputPath, outputPath, std::filesystem::copy_options::overwrite_existing);
+	metaFile.Save(materialImporterVersion);
 	assetManager.QueueReloadAsset(AssetType::Material, uuid);
-}
-
-Uuid MaterialImporter::GetUuidAfterImport() const {
-	return uuid;
-}
-
-void Editor::Importers::ImportMaterial(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& inputPath) {
-	MaterialImporter materialImporter;
-	materialImporter.Import(assetRegistry, assetManager, inputPath);
 }

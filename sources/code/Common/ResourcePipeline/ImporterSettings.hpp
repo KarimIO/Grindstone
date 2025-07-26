@@ -6,19 +6,34 @@
 
 namespace Grindstone::Editor {
 	struct ImporterSettings {
-		using ValueMap = std::unordered_map<std::string, std::string>;
+		enum class Type : uint8_t {
+			Unknown = 0,
+			String,
+			Uint64,
+			Double,
+			Bool
+		};
+		
+		struct Value {
+			Grindstone::Editor::ImporterSettings::Type type;
+			std::string value;
+		};
+
+		using ValueMap = std::unordered_map<std::string, Value>;
 		ValueMap values;
+
+		void SetUnknown(const std::string& key, const std::string& value);
 
 		const std::string& Get(const std::string& key, const std::string& defaultValue);
 		void Set(const std::string& key, const std::string& value);
 
-		const std::string& Get(const std::string& key, uint64_t defaultValue);
+		uint64_t Get(const std::string& key, uint64_t defaultValue);
 		void Set(const std::string& key, uint64_t value);
 
-		const std::string& Get(const std::string& key, double defaultValue);
+		double Get(const std::string& key, double defaultValue);
 		void Set(const std::string& key, double value);
 
-		const std::string& Get(const std::string& key, bool defaultValue);
+		bool Get(const std::string& key, bool defaultValue);
 		void Set(const std::string& key, bool value);
 
 		using Iterator = ValueMap::iterator;
@@ -29,5 +44,7 @@ namespace Grindstone::Editor {
 
 		Iterator end() noexcept;
 		ConstIterator end() const noexcept;
+
+		bool isDirty;
 	};
 }

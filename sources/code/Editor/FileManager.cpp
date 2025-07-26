@@ -134,15 +134,15 @@ static void CleanupStaleFilesForFolder(
 			);
 		}
 		else if (directoryEntry.path().extension() != ".meta") {
-			Grindstone::Editor::MetaFile* metaFile = assetRegistry.GetMetaFileByPath(directoryEntry.path());
-			if (metaFile != nullptr) {
+			Grindstone::Editor::MetaFile metaFile = assetRegistry.GetMetaFileByPath(directoryEntry.path());
+			if (metaFile.IsValid()) {
 				Grindstone::Editor::MetaFile::Subasset defaultSubasset;
-				if (metaFile->TryGetDefaultSubasset(defaultSubasset)) {
+				if (metaFile.TryGetDefaultSubasset(defaultSubasset)) {
 					assetRegistryUuids.erase(defaultSubasset.uuid);
 					compiledFiles.erase(defaultSubasset.uuid.ToString());
 				}
 
-				for (Grindstone::Editor::MetaFile::Subasset& subasset : *metaFile) {
+				for (Grindstone::Editor::MetaFile::Subasset& subasset : metaFile) {
 					assetRegistryUuids.erase(subasset.uuid);
 					compiledFiles.erase(subasset.uuid.ToString());
 				}
@@ -275,6 +275,7 @@ void FileManager::PreprocessFilesOnMount(
 }
 
 static bool IsSubassetValid(
+	std::filesystem::file_time_type lastAssetWriteTime,
 	const std::filesystem::path& mountedPath,
 	Editor::AssetRegistry& assetRegistry,
 	MetaFile::Subasset& subasset
@@ -292,12 +293,19 @@ static bool IsSubassetValid(
 	outEntry.address = subasset.address;
 	outEntry.displayName = subasset.displayName;
 	outEntry.subassetIdentifier = subasset.subassetIdentifier;
+
+	std::filesystem::path assetPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / subasset.uuid.ToString();
+	if (lastAssetWriteTime > std::filesystem::last_write_time(assetPath)) {
+		return false;
+	}
+
 	return true;
 }
 
 bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(const MountPoint& mountPoint, const std::filesystem::path& path) const {
-	auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
-	if (!importManager.HasImporter(path)) {
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
+	Importers::ImporterManager& importManager = editorManager.GetImporterManager();
+	if (!importManager.HasImporterForPath(path)) {
 		return false;
 	}
 
@@ -312,8 +320,10 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(const MountPoint& mountPoi
 		return true;
 	}
 
-	Grindstone::Editor::ImporterVersion importerVersion = importManager.GetImporterVersion(path);
-	MetaFile metaFile(Editor::Manager::GetInstance().GetAssetRegistry(), path);
+	std::filesystem::file_time_type lastAssetWriteTime = std::max(metaFileLastWriteTime, assetFileLastWriteTime);
+
+	Grindstone::Editor::ImporterVersion importerVersion = importManager.GetImporterVersionByPath(path);
+	MetaFile metaFile(editorManager.GetAssetRegistry(), path);
 	if (metaFile.IsOutdatedMetaVersion() || metaFile.IsOutdatedImporterVersion(importerVersion) || !metaFile.IsValid()) {
 		return true;
 	}
@@ -321,14 +331,14 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(const MountPoint& mountPoi
 	std::filesystem::path mountedPath = std::filesystem::path(mountPoint.mountPoint) / std::filesystem::relative(path, mountPoint.path);
 	Grindstone::Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
 	for (MetaFile::Subasset& subasset : metaFile) {
-		if (!IsSubassetValid(mountedPath, assetRegistry, subasset)) {
+		if (!IsSubassetValid(lastAssetWriteTime, mountedPath, assetRegistry, subasset)) {
 			return true;
 		}
 	}
 
 	MetaFile::Subasset defaultSubasset;
 	if (metaFile.TryGetDefaultSubasset(defaultSubasset)) {
-		if (!IsSubassetValid(mountedPath, assetRegistry, defaultSubasset)) {
+		if (!IsSubassetValid(lastAssetWriteTime, mountedPath, assetRegistry, defaultSubasset)) {
 			return true;
 		}
 	}

@@ -41,6 +41,7 @@ namespace Grindstone {
 
 				ImguiEditor(EngineCore* engineCore);
 				~ImguiEditor();
+				void CreateWindows();
 				void Update();
 				void Render();
 				void PromptAssetPicker(AssetType assetType, AssetPicker::AssetPickerCallback callback);

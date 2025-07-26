@@ -38,6 +38,12 @@ namespace Grindstone::Editor {
 		MetaFile(AssetRegistry& assetRegistry, const std::filesystem::path&);
 
 		void Load(AssetRegistry& assetRegistry, const std::filesystem::path&);
+		MetaFile(const MetaFile& other) = delete;
+		MetaFile(MetaFile&& other) noexcept = default;
+
+		MetaFile& operator=(const MetaFile& other) = delete;
+		MetaFile& operator=(MetaFile&& other) noexcept = default;
+
 		void Save(uint32_t currentImporterVersion);
 		void SaveWithoutImporterVersionChange();
 		bool TryGetDefaultSubasset(Subasset& subasset) const;
@@ -67,10 +73,11 @@ namespace Grindstone::Editor {
 	private:
 		std::string MakeDefaultAddress(std::string_view subassetName) const;
 
+		bool isDirty = false;
 		bool isValid = true;
 		uint32_t importerVersion = 0;
 		uint32_t metaVersion = 0;
-		AssetRegistry& assetRegistry;
+		AssetRegistry* assetRegistry = nullptr;
 		Subasset defaultSubasset;
 		std::vector<Subasset> subassets;
 		std::filesystem::path metaFilePath;

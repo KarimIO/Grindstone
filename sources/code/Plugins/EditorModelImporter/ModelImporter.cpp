@@ -20,6 +20,104 @@
 
 using namespace Grindstone::Editor::Importers;
 
+
+const uint16_t NUM_BONES_PER_VERTEX = 4;
+
+class ModelImporter {
+public:
+	void Import(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path);
+private:
+	struct Prefab {
+
+	};
+
+	struct ScenePrefab {
+
+	};
+
+	struct Submesh {
+		uint32_t indexCount = 0;
+		uint32_t baseVertex = 0;
+		uint32_t baseIndex = 0;
+		uint32_t materialIndex = UINT32_MAX;
+	};
+
+private:
+	// Members
+	Grindstone::Assets::AssetManager* assetManager = nullptr;
+	Grindstone::Editor::AssetRegistry* assetRegistry = nullptr;
+	std::filesystem::path path;
+	std::filesystem::path baseFolderPath;
+	std::map<std::string, glm::mat4> tempOffsetMatrices; // Save string->offset matrix so we can use it when constructing the bone data
+	std::map<std::string, unsigned int> boneMapping;
+	const aiScene* scene = nullptr;
+	bool hasExtraWeights = false;
+	bool isSkeletalMesh = false;
+
+	struct BoneData {
+		uint16_t parentIndex;
+		glm::mat4 offsetMatrix;
+		glm::mat4 inverseModelMatrix;
+
+		BoneData(uint16_t parentIndex, glm::mat4& offsetMatrix, glm::mat4& inverseMatrix) {
+			this->parentIndex = parentIndex;
+			this->offsetMatrix = offsetMatrix;
+			this->inverseModelMatrix = inverseMatrix;
+		}
+	};
+
+	struct OutputMesh {
+		std::string name;
+		Grindstone::Formats::Model::V1::BoundingData boundingData;
+		uint32_t vertexCount = 0;
+		uint16_t boneCount = 0;
+		struct VertexArray {
+			std::vector<float> position;
+			std::vector<float> normal;
+			std::vector<float> tangent;
+			std::vector<uint16_t> boneIds; // For animation
+			std::vector<float> boneWeights; // For animation
+			std::vector<std::vector<float>> texCoordArray;
+		} vertexArray;
+		std::vector<uint16_t> indices;
+		std::vector<Submesh> submeshes;
+		std::vector<BoneData> bones;
+		std::vector<std::string> boneNames;
+	};
+
+	struct OutputNode {
+		size_t parentNode = SIZE_MAX;
+		std::string name;
+		aiVector3D position;
+		aiVector3D scale = aiVector3D(1.0f, 1.0f, 1.0f);
+		aiQuaternion rotation;
+		size_t meshIndex = SIZE_MAX;
+		aiLight* lightData = nullptr;
+		aiCamera* cameraData = nullptr;
+	};
+
+	Grindstone::Editor::MetaFile metaFile;
+	std::vector<std::string> outputMaterialUuids;
+	std::vector<std::string> outputMeshUuids;
+	std::vector<OutputMesh> outputMeshes;
+	std::vector<OutputNode> outputNodes;
+
+	void ProcessLight(aiLight* light);
+	void ProcessCamera(aiCamera* camera);
+	void ProcessNodeTree(aiNode* node, size_t parentIndex);
+	void ProcessMaterial(size_t materialIndex, aiMaterial* inputMaterial);
+	void ProcessSkeleton(aiSkeleton* skeleton);
+	void ProcessVertexBoneWeights(aiMesh* inputMesh, OutputMesh& outputMesh);
+	void NormalizeBoneWeights(OutputMesh& outputMesh);
+	void ProcessAnimation(aiAnimation* animation);
+	void AddBoneData(OutputMesh& outputMesh, unsigned int vertexId, unsigned int boneId, float vertexWeight);
+	void InitSubmeshes(aiMesh* inputMesh, OutputMesh& outputMesh, bool hasBones);
+	void ProcessVertices(aiMesh* inputMesh, OutputMesh& outputMesh);
+	void WritePrefab();
+	void WriteMesh(size_t index, const OutputMesh& mesh);
+	void WriteSkeleton(size_t index) const;
+};
+
 static void OutputVertexArray(std::ofstream& output, const std::vector<uint16_t>& vertexArray) {
 	output.write(
 		reinterpret_cast<const char*> (vertexArray.data()),
@@ -98,7 +196,7 @@ void ModelImporter::ProcessMaterial(size_t materialIndex, aiMaterial* inputMater
 	}
 
 	newMaterial.materialName = name.C_Str();
-	Uuid uuid = metaFile->GetOrCreateSubassetUuid(newMaterial.materialName, AssetType::Material);
+	Grindstone::Uuid uuid = metaFile.GetOrCreateSubassetUuid(newMaterial.materialName, Grindstone::AssetType::Material);
 	outputMaterialUuids[materialIndex] = uuid.ToString();
 
 	std::filesystem::path outputPath = assetRegistry->GetCompiledAssetsPath() / outputMaterialUuids[materialIndex];
@@ -294,18 +392,18 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 		: 25.0f;
 	double duration = animation->mDuration;
 
-	Formats::Animation::V1::Header animationHeader;
+	Grindstone::Formats::Animation::V1::Header animationHeader;
 	animationHeader.animationDuration = duration;
 	animationHeader.channelCount = static_cast<uint16_t>(animation->mNumChannels);
 	animationHeader.ticksPerSecond = ticksPerSecond;
 
-	std::vector<Formats::Animation::V1::Channel> channels;
+	std::vector<Grindstone::Formats::Animation::V1::Channel> channels;
 	channels.resize(animation->mNumChannels);
-	std::vector<Formats::Animation::V1::ChannelData> channelData;
+	std::vector<Grindstone::Formats::Animation::V1::ChannelData> channelData;
 	channels.resize(animation->mNumChannels);
 
 	std::string subassetName = "anim-" + animationName;
-	Uuid outUuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Animation);
+	Grindstone::Uuid outUuid = metaFile.GetOrCreateDefaultSubassetUuid(subassetName, Grindstone::AssetType::Animation);
 
 	std::filesystem::path outputPath = assetRegistry->GetCompiledAssetsPath() / outUuid.ToString();
 	std::ofstream output(outputPath, std::ios::binary);
@@ -318,8 +416,8 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 	output.write("GAF", 3);
 
 	for (unsigned int channelIndex = 0; channelIndex < animation->mNumChannels; ++channelIndex) {
-		Formats::Animation::V1::Channel& dstChannel = channels[channelIndex];
-		Formats::Animation::V1::ChannelData& dstChannelData = channelData[channelIndex];
+		Grindstone::Formats::Animation::V1::Channel& dstChannel = channels[channelIndex];
+		Grindstone::Formats::Animation::V1::ChannelData& dstChannelData = channelData[channelIndex];
 		auto srcChannel = animation->mChannels[channelIndex];
 		std::string channelName(srcChannel->mNodeName.data);
 		auto boneIterator = boneMapping.find(channelName);
@@ -336,7 +434,7 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 			for (unsigned int i = 0; i < srcChannel->mNumPositionKeys; ++i) {
 				double time = srcChannel->mPositionKeys[i].mTime;
 				aiVector3D& srcValue = srcChannel->mPositionKeys[i].mValue;
-				Math::Float3 value = Math::Float3(srcValue.x, srcValue.y, srcValue.z);
+				Grindstone::Math::Float3 value = Grindstone::Math::Float3(srcValue.x, srcValue.y, srcValue.z);
 				dstChannelData.positions.emplace_back(time, value);
 			}
 
@@ -344,7 +442,7 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 			for (unsigned int i = 0; i < srcChannel->mNumRotationKeys; ++i) {
 				double time = srcChannel->mRotationKeys[i].mTime;
 				aiQuaternion& srcValue = srcChannel->mRotationKeys[i].mValue;
-				Math::Quaternion value = Math::Quaternion(srcValue.x, srcValue.y, srcValue.z, srcValue.w);
+				Grindstone::Math::Quaternion value = Grindstone::Math::Quaternion(srcValue.x, srcValue.y, srcValue.z, srcValue.w);
 				dstChannelData.rotations.emplace_back(time, value);
 			}
 
@@ -352,7 +450,7 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 			for (unsigned int i = 0; i < srcChannel->mNumScalingKeys; ++i) {
 				double time = srcChannel->mScalingKeys[i].mTime;
 				aiVector3D& srcValue = srcChannel->mScalingKeys[i].mValue;
-				Math::Float3 value = Math::Float3(srcValue.x, srcValue.y, srcValue.z);
+				Grindstone::Math::Float3 value = Grindstone::Math::Float3(srcValue.x, srcValue.y, srcValue.z);
 				dstChannelData.scales.emplace_back(time, value);
 			}
 		}
@@ -366,20 +464,63 @@ void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Gri
 	this->assetRegistry = &assetRegistry;
 
 	Assimp::Importer importer;
-	scene = importer.ReadFile(
-		path.string(),
+	int importFlags =
 		aiProcess_CalcTangentSpace |
 		aiProcess_GenSmoothNormals |
 		aiProcess_Triangulate |
-		aiProcess_FlipUVs |
-		aiProcess_GenBoundingBoxes
+		aiProcess_GenBoundingBoxes;
+
+	metaFile = assetRegistry.GetMetaFileByPath(path);
+
+	Grindstone::Editor::ImporterSettings& settings = metaFile.GetImporterSettings();
+	bool shouldImportScene = settings.Get("ImportScene", true);
+	bool shouldImportLights = settings.Get("ImportLights", true);
+	bool shouldImportCameras = settings.Get("ImportCameras", true);
+
+	if (settings.Get("FlipUVs", true)) {
+		importFlags |= aiProcess_FlipUVs;
+	}
+
+	if (settings.Get("ReduceDuplicateMeshes", true)) {
+		importFlags |= aiProcess_FindInstances;
+	}
+
+	if (settings.Get("FlipFaces", false)) {
+		importFlags |= aiProcess_FlipWindingOrder;
+	}
+
+	if (settings.Get("OptimizeMeshes", true)) {
+		importFlags |= aiProcess_OptimizeMeshes;
+	}
+
+	if (settings.Get("OptimizeScene", true)) {
+		importFlags |= aiProcess_OptimizeGraph;
+	}
+
+	if (settings.Get("SplitLargeMeshes", false)) {
+		importFlags |= aiProcess_SplitLargeMeshes;
+	}
+
+	if (settings.Get("IsLeftHanded", false)) {
+		importFlags |= aiProcess_MakeLeftHanded;
+	}
+
+	double scale = settings.Get("Scale", 1.0);
+	if (scale <= 0.0) {
+		scale = 1.0;
+	}
+
+	importFlags |= aiProcess_GlobalScale;
+	importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, static_cast<ai_real>(scale));
+
+	scene = importer.ReadFile(
+		path.string(),
+		importFlags
 	);
 
 	if (!scene) {
 		throw std::runtime_error(importer.GetErrorString());
 	}
-
-	metaFile = assetRegistry.GetMetaFileByPath(path);
 
 	// Set to false, will check if true later.
 	bool shouldImportAnimations = false;
@@ -417,14 +558,18 @@ void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Gri
 		ProcessVertexBoneWeights(inputMesh, outputMesh);
 	}
 
-	for (unsigned int lightIndex = 0; lightIndex < scene->mNumLights; ++lightIndex) {
-		aiLight* light = scene->mLights[lightIndex];
-		ProcessLight(light);
+	if (shouldImportLights) {
+		for (unsigned int lightIndex = 0; lightIndex < scene->mNumLights; ++lightIndex) {
+			aiLight* light = scene->mLights[lightIndex];
+			ProcessLight(light);
+		}
 	}
 
-	for (unsigned int cameraIndex = 0; cameraIndex < scene->mNumCameras; ++cameraIndex) {
-		aiCamera* camera = scene->mCameras[cameraIndex];
-		ProcessCamera(camera);
+	if (shouldImportCameras) {
+		for (unsigned int cameraIndex = 0; cameraIndex < scene->mNumCameras; ++cameraIndex) {
+			aiCamera* camera = scene->mCameras[cameraIndex];
+			ProcessCamera(camera);
+		}
 	}
 
 	if (shouldImportAnimations) {
@@ -440,9 +585,12 @@ void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Gri
 		const OutputMesh& mesh = outputMeshes[meshIndex];
 		WriteMesh(meshIndex, mesh);
 	}
-	WritePrefab();
 
-	metaFile->Save(modelImporterVersion);
+	if (shouldImportScene) {
+		WritePrefab();
+	}
+
+	metaFile.Save(modelImporterVersion);
 }
 
 inline static void WriteComponentHeader(std::ofstream& output, const char* name) {
@@ -482,7 +630,7 @@ void ModelImporter::WritePrefab() {
 		subassetName = subassetName.substr(0, dotPos);
 	}
 
-	Uuid outUuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Scene);
+	Grindstone::Uuid outUuid = metaFile.GetOrCreateDefaultSubassetUuid(subassetName, Grindstone::AssetType::Scene);
 
 	std::filesystem::path meshOutputPath = assetRegistry->GetCompiledAssetsPath() / outUuid.ToString();
 	std::ofstream output(meshOutputPath, std::ios::binary);
@@ -606,7 +754,7 @@ void ModelImporter::WritePrefab() {
 void ModelImporter::WriteMesh(size_t index, const OutputMesh& mesh) {
 	const std::string& subassetName = mesh.name;
 
-	Uuid outUuid = metaFile->GetOrCreateSubassetUuid(subassetName, AssetType::Mesh3d);
+	Grindstone::Uuid outUuid = metaFile.GetOrCreateSubassetUuid(subassetName, Grindstone::AssetType::Mesh3d);
 	outputMeshUuids[index] = outUuid.ToString();
 
 	std::filesystem::path meshOutputPath = assetRegistry->GetCompiledAssetsPath() / outUuid.ToString();
@@ -678,7 +826,7 @@ void ModelImporter::WriteMesh(size_t index, const OutputMesh& mesh) {
 
 	output.close();
 
-	assetManager->QueueReloadAsset(AssetType::Mesh3d, outUuid);
+	assetManager->QueueReloadAsset(Grindstone::AssetType::Mesh3d, outUuid);
 }
 
 void ModelImporter::WriteSkeleton(size_t index) const {

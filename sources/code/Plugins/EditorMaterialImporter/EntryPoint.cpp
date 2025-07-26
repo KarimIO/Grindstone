@@ -9,6 +9,8 @@ using namespace Grindstone;
 using namespace Grindstone::Memory;
 using namespace Grindstone::Editor::Importers;
 
+Grindstone::ConstHashedString materialImporterName("MaterialImporter");
+
 extern "C" {
 	EDITOR_MATERIAL_IMPORTER_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
 		Grindstone::HashedString::SetHashMap(pluginInterface->GetHashedStringMap());
@@ -19,7 +21,11 @@ extern "C" {
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 
 		if (editorPluginInterface != nullptr) {
-			editorPluginInterface->RegisterAssetImporter("gmat", ImportMaterial, materialImporterVersion);
+			editorPluginInterface->RegisterAssetImporter(materialImporterName, Grindstone::Editor::ImporterData{
+				.importerVersion = materialImporterVersion,
+				.factory = ImportMaterial
+			});
+			editorPluginInterface->MapExtensionToImporterType("gmat", materialImporterName);
 		}
 	}
 
@@ -28,7 +34,8 @@ extern "C" {
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 
 		if (editorPluginInterface != nullptr) {
-			editorPluginInterface->DeregisterAssetImporter("gmat");
+			editorPluginInterface->UnmapExtensionToImporterType("gmat");
+			editorPluginInterface->DeregisterAssetImporter(materialImporterName);
 		}
 	}
 }

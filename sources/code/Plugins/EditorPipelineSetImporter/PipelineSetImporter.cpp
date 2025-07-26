@@ -44,7 +44,7 @@ void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::As
 	options.target = CompilationOptions::Target::Vulkan;
 
 	WriteCallback writeCallback = [&assetRegistry, &assetManager] (const std::filesystem::path& path, const std::vector<PipelineOutput>& pipelines) {
-		Grindstone::Editor::MetaFile* metaFile = assetRegistry.GetMetaFileByPath(path);
+		Grindstone::Editor::MetaFile metaFile = assetRegistry.GetMetaFileByPath(path);
 
 		for (size_t index = 0; index < pipelines.size(); ++index) {
 			const PipelineOutput& pout = pipelines[index];
@@ -55,8 +55,8 @@ void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::As
 
 			std::string pipelineName = std::string(pout.name);
 			Grindstone::Uuid uuid = index == 0
-				? metaFile->GetOrCreateDefaultSubassetUuid(pipelineName, assetType)
-				: metaFile->GetOrCreateSubassetUuid(pipelineName, assetType);
+				? metaFile.GetOrCreateDefaultSubassetUuid(pipelineName, assetType)
+				: metaFile.GetOrCreateSubassetUuid(pipelineName, assetType);
 			std::filesystem::path outputPath = assetRegistry.GetCompiledAssetsPath() / uuid.ToString();
 
 			std::ofstream outStream(outputPath, std::ios::binary);
@@ -72,7 +72,7 @@ void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::As
 			assetManager.QueueReloadAsset(assetType, uuid);
 		}
 
-		metaFile->Save(pipelineSetImporterVersion);
+		metaFile.Save(pipelineSetImporterVersion);
 	};
 
 	ResolvePathCallback resolveCallback = [&assetRegistry](const std::filesystem::path& path) {

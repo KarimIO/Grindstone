@@ -51,7 +51,9 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	SetupFonts();
 	SetupStyles();
 	SetupColors();
+}
 
+void ImguiEditor::CreateWindows() {
 	imguiRenderer = ImguiRenderer::Create();
 
 	sceneHeirarchyPanel = AllocatorCore::Allocate<SceneHeirarchyPanel>(engineCore->GetSceneManager(), this);

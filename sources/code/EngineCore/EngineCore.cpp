@@ -108,11 +108,6 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 		renderpassRegistry = AllocatorCore::Allocate<Grindstone::RenderPassRegistry>();
 	}
 
-	{
-		GRIND_PROFILE_SCOPE("Load Plugin List");
-		pluginManager->LoadPluginList();
-	}
-
 	sceneManager = AllocatorCore::Allocate<SceneManagement::SceneManager>();
 
 	GPRINT_INFO_V(LogSource::EngineCore, "{0} Initialized.", createInfo.applicationTitle);
@@ -121,6 +116,10 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	lastFrameTime = std::chrono::steady_clock::now();
 
 	return true;
+}
+
+void EngineCore::LoadPluginList() {
+	pluginManager->LoadPluginList();
 }
 
 void EngineCore::InitializeScene(bool shouldLoadSceneFromDefaults, const char* scenePath) {

@@ -1,59 +1,81 @@
+#include <Common/Assert.hpp>
 #include "ImporterSettings.hpp"
+
+void Grindstone::Editor::ImporterSettings::SetUnknown(const std::string& key, const std::string& value) {
+	GS_ASSERT(values[key].type == ImporterSettings::Type::Unknown);
+	values[key] = ImporterSettings::Value{ .type = Type::Unknown, .value = value };
+}
 
 const std::string& Grindstone::Editor::ImporterSettings::Get(const std::string& key, const std::string& defaultValue) {
 	auto it = values.find(std::string(key));
-	if (it == values.end()) {
-		values[key] = defaultValue;
-		return values[key];
+	if (it == values.end() || (it->second.type != Type::Unknown && it->second.type != Type::String)) {
+		isDirty = true;
+		values[key] = ImporterSettings::Value{ .type = Type::Uint64, .value = defaultValue };
+		return values[key].value;
 	}
 
-	return it->second;
+	it->second.type = Type::String;
+	return it->second.value;
 }
 
 void Grindstone::Editor::ImporterSettings::Set(const std::string& key, const std::string& value) {
-	values[key] = value;
+	GS_ASSERT(values[key].type == ImporterSettings::Type::Unknown || values[key].type == ImporterSettings::Type::String);
+	values[key] = ImporterSettings::Value{ .type=Type::String, .value=value };
+	isDirty = true;
 }
 
-const std::string& Grindstone::Editor::ImporterSettings::Get(const std::string& key, uint64_t defaultValue) {
+uint64_t Grindstone::Editor::ImporterSettings::Get(const std::string& key, uint64_t defaultValue) {
 	auto it = values.find(key);
-	if (it == values.end()) {
-		values[key] = std::to_string(defaultValue);
-		return values[key];
+	if (it == values.end() || (it->second.type != Type::Unknown && it->second.type != Type::Uint64)) {
+		isDirty = true;
+		values[key] = ImporterSettings::Value{ .type=Type::Uint64, .value=std::to_string(defaultValue) };
+		return defaultValue;
 	}
 
-	return it->second;
+	it->second.type = Type::Uint64;
+	return static_cast<uint64_t>(std::atoll(it->second.value.c_str()));
 }
 
 void Grindstone::Editor::ImporterSettings::Set(const std::string& key, uint64_t value) {
-	values[key] = std::to_string(value);
+	GS_ASSERT(values[key].type == ImporterSettings::Type::Unknown || values[key].type == ImporterSettings::Type::Uint64);
+	values[key] = ImporterSettings::Value{ .type=Type::Uint64, .value=std::to_string(value) };
+	isDirty = true;
 }
 
-const std::string& Grindstone::Editor::ImporterSettings::Get(const std::string& key, double defaultValue) {
+double Grindstone::Editor::ImporterSettings::Get(const std::string& key, double defaultValue) {
 	auto it = values.find(key);
-	if (it == values.end()) {
-		values[key] = std::to_string(defaultValue);
-		return values[key];
+	if (it == values.end() || (it->second.type != Type::Unknown && it->second.type != Type::Double)) {
+		isDirty = true;
+		values[key] = ImporterSettings::Value{ .type=Type::Double, .value=std::to_string(defaultValue) };
+		return defaultValue;
 	}
 
-	return it->second;
+	it->second.type = Type::Double;
+	return std::atof(it->second.value.c_str());
 }
 
 void Grindstone::Editor::ImporterSettings::Set(const std::string& key, double value) {
-	values[key] = std::to_string(value);
+	GS_ASSERT(values[key].type == ImporterSettings::Type::Unknown || values[key].type == ImporterSettings::Type::Double);
+	values[key] = ImporterSettings::Value{ .type=Type::Double, .value=std::to_string(value) };
+	isDirty = true;
 }
 
-const std::string& Grindstone::Editor::ImporterSettings::Get(const std::string& key, bool defaultValue) {
+bool Grindstone::Editor::ImporterSettings::Get(const std::string& key, bool defaultValue) {
 	auto it = values.find(key);
-	if (it == values.end()) {
-		values[key] = defaultValue ? "true" : "false";
-		return values[key];
+	if (it == values.end() || (it->second.type != Type::Unknown && it->second.type != Type::Bool)) {
+		isDirty = true;
+		values[key] = ImporterSettings::Value{ .type=Type::Bool, .value=defaultValue ? "true" : "false" };
+		return defaultValue;
 	}
 
-	return it->second;
+	it->second.type = Type::Bool;
+	return it->second.value == "true" ? true : false;
 }
 
 void Grindstone::Editor::ImporterSettings::Set(const std::string& key, bool value) {
-	values[key] = value ? "true" : "false";
+	GS_ASSERT(values[key].type == ImporterSettings::Type::Unknown || values[key].type == ImporterSettings::Type::Bool);
+	values[key] = ImporterSettings::Value{ .type=Type::Bool, .value=value ? "true" : "false" };
+	isDirty = true;
 }
 
 Grindstone::Editor::ImporterSettings::Iterator Grindstone::Editor::ImporterSettings::begin() noexcept {

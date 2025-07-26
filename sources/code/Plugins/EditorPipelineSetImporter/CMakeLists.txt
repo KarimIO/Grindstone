@@ -37,7 +37,7 @@ set(EDITORPIPELINESETIMPORTER_SOURCES
 	${COMMON_DIR}/ResourcePipeline/ImporterSettings.cpp
 	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp
 	${COMMON_DIR}/ResourcePipeline/Uuid.cpp
-	${COMMON_DIR}/Editor/Importer.cpp
+	${EDITOR_DIR}/EditorManagerInstance.cpp
 	${ENGINE_CORE_DIR}/Utils/Utilities.cpp
 	EntryPoint.cpp
 )

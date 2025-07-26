@@ -9,6 +9,8 @@ using namespace Grindstone;
 using namespace Grindstone::Memory;
 using namespace Grindstone::Editor::Importers;
 
+Grindstone::ConstHashedString textureImporterName("TextureImporter");
+
 extern "C" {
 	EDITOR_TEXTURE_IMPORTER_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
 		Grindstone::HashedString::SetHashMap(pluginInterface->GetHashedStringMap());
@@ -19,12 +21,16 @@ extern "C" {
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 
 		if (editorPluginInterface != nullptr) {
-			editorPluginInterface->RegisterAssetImporter("png", ImportTexture, textureImporterVersion);
-			editorPluginInterface->RegisterAssetImporter("tga", ImportTexture, textureImporterVersion);
-			editorPluginInterface->RegisterAssetImporter("bmp", ImportTexture, textureImporterVersion);
-			editorPluginInterface->RegisterAssetImporter("psd", ImportTexture, textureImporterVersion);
-			editorPluginInterface->RegisterAssetImporter("jpg", ImportTexture, textureImporterVersion);
-			editorPluginInterface->RegisterAssetImporter("jpeg", ImportTexture, textureImporterVersion);
+			editorPluginInterface->RegisterAssetImporter(textureImporterName, Grindstone::Editor::ImporterData{
+				.importerVersion = textureImporterVersion,
+				.factory = ImportTexture
+			});
+			editorPluginInterface->MapExtensionToImporterType("png", textureImporterName);
+			editorPluginInterface->MapExtensionToImporterType("tga", textureImporterName);
+			editorPluginInterface->MapExtensionToImporterType("bmp", textureImporterName);
+			editorPluginInterface->MapExtensionToImporterType("psd", textureImporterName);
+			editorPluginInterface->MapExtensionToImporterType("jpg", textureImporterName);
+			editorPluginInterface->MapExtensionToImporterType("jpeg", textureImporterName);
 		}
 	}
 
@@ -33,12 +39,13 @@ extern "C" {
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 
 		if (editorPluginInterface != nullptr) {
-			editorPluginInterface->DeregisterAssetImporter("png");
-			editorPluginInterface->DeregisterAssetImporter("tga");
-			editorPluginInterface->DeregisterAssetImporter("bmp");
-			editorPluginInterface->DeregisterAssetImporter("psd");
-			editorPluginInterface->DeregisterAssetImporter("jpg");
-			editorPluginInterface->DeregisterAssetImporter("jpeg");
+			editorPluginInterface->UnmapExtensionToImporterType("png");
+			editorPluginInterface->UnmapExtensionToImporterType("tga");
+			editorPluginInterface->UnmapExtensionToImporterType("bmp");
+			editorPluginInterface->UnmapExtensionToImporterType("psd");
+			editorPluginInterface->UnmapExtensionToImporterType("jpg");
+			editorPluginInterface->UnmapExtensionToImporterType("jpeg");
+			editorPluginInterface->DeregisterAssetImporter(textureImporterName);
 		}
 	}
 }

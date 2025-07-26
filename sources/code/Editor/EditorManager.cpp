@@ -38,10 +38,7 @@ using namespace Grindstone;
 using namespace Grindstone::Editor;
 using namespace Grindstone::Memory;
 
-Manager& Manager::GetInstance() {
-	static Editor::Manager manager;
-	return manager;
-}
+static Grindstone::Editor::Manager* editorManagerInstance = nullptr;
 
 Grindstone::Importers::ImporterManager& Manager::GetImporterManager() {
 	return importerManager;
@@ -97,6 +94,12 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 		return false;
 	}
 
+	if (!SetupImguiEditor()) {
+		return false;
+	}
+
+	engineCore->LoadPluginList();
+
 	std::string materialContent = "{\n\t\"name\": \"New Material\",\n\t\"shader\": \"\"\n}";
 	assetTemplateRegistry.RegisterTemplate(
 		AssetType::Material,
@@ -122,15 +125,13 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	gitManager.Initialize();
 	csharpBuildManager.FinishInitialFileProcessing();
 
-	if (!SetupImguiEditor()) {
-		return false;
-	}
-
 	editorWorldContext = engineCore->GetWorldContextManager()->Create();
 	engineCore->InitializeScene(true);
 	engineCore->ShowMainWindow();
 
 	InitializeQuitCommands();
+
+	imguiEditor->CreateWindows();
 
 	return true;
 }
