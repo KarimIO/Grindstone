@@ -11,7 +11,7 @@ pipelineSet "Grid" {
 				cull: back
 				depthBias: false
 				depthWrite: false
-				depthTest: false
+				depthTest: true
 				depthClamp: false
 				depthCompareOp: lessOrEqual
 				attachments: {
@@ -83,11 +83,13 @@ pipelineSet "Grid" {
 
 					float4 color = gridColor;
 
-					if(fragPos3D.x > -0.1 * minimum.x && fragPos3D.x < 0.1 * minimum.x)
+					if(fragPos3D.x > -0.1 * minimum.x && fragPos3D.x < 0.1 * minimum.x) {
 						color = gridUbo.colorXAxis;
+					}
 
-					if(fragPos3D.z > -0.1 * minimum.y && fragPos3D.z < 0.1 * minimum.y)
+					if(fragPos3D.z > -0.1 * minimum.y && fragPos3D.z < 0.1 * minimum.y) {
 						color = gridUbo.colorZAxis;
+					}
 
 					color.a *= colorFade;
 
@@ -108,6 +110,7 @@ pipelineSet "Grid" {
 					FragmentOutput output = (FragmentOutput)0;
 					float t = -input.nearPoint.y / (input.farPoint.y - input.nearPoint.y);
 					float3 fragPos3D = input.nearPoint + t * (input.farPoint - input.nearPoint);
+
 					float depth = ComputeDepth(fragPos3D);
 					output.depth = depth;
 

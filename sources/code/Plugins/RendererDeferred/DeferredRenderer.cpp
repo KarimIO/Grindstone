@@ -2303,8 +2303,41 @@ void DeferredRenderer::PostProcess(
 
 	currentCommandBuffer->UnbindRenderPass();
 
-	// TODO: Re-add this for gizmos
-	// currentCommandBuffer->BlitImage(imageSet.gbufferDepthStencilTarget, framebuffer->GetDepthStencilTarget());
+	GraphicsAPI::ImageBarrier blitBarrier{
+		.image = imageSet.gbufferDepthStencilTarget,
+		.oldLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead,
+		.newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead,
+		.srcStage = Grindstone::GraphicsAPI::PipelineStage::TopOfPipe,
+		.dstStage = Grindstone::GraphicsAPI::PipelineStage::TopOfPipe,
+		.srcAccess = Grindstone::GraphicsAPI::AccessFlags::Read,
+		.dstAccess = Grindstone::GraphicsAPI::AccessFlags::Write,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+	};
+
+	std::array<Grindstone::GraphicsAPI::ImageBarrier, 2> preBlitBarriers{ blitBarrier , blitBarrier };
+	preBlitBarriers[0].image = imageSet.gbufferDepthStencilTarget;
+	preBlitBarriers[0].newLayout = Grindstone::GraphicsAPI::ImageLayout::TransferSrc;
+	preBlitBarriers[1].image = framebuffer->GetDepthStencilTarget();
+	preBlitBarriers[1].newLayout = Grindstone::GraphicsAPI::ImageLayout::TransferDst;
+
+	std::array<Grindstone::GraphicsAPI::ImageBarrier, 2> postBlitBarriers{ blitBarrier , blitBarrier };
+	postBlitBarriers[0].image = imageSet.gbufferDepthStencilTarget;
+	postBlitBarriers[0].oldLayout = Grindstone::GraphicsAPI::ImageLayout::TransferSrc;
+	postBlitBarriers[1].image = framebuffer->GetDepthStencilTarget();
+	postBlitBarriers[1].oldLayout = Grindstone::GraphicsAPI::ImageLayout::TransferDst;
+
+	currentCommandBuffer->PipelineBarrier(preBlitBarriers.data(), static_cast<uint32_t>(preBlitBarriers.size()));
+	currentCommandBuffer->BlitImage(
+		imageSet.gbufferDepthStencilTarget,
+		framebuffer->GetDepthStencilTarget(),
+		Grindstone::GraphicsAPI::ImageLayout::TransferSrc,
+		Grindstone::GraphicsAPI::ImageLayout::TransferDst,
+		renderWidth, renderHeight, 1
+	);
+	currentCommandBuffer->PipelineBarrier(postBlitBarriers.data(), static_cast<uint32_t>(postBlitBarriers.size()));
 }
 
 void DeferredRenderer::Debug(
