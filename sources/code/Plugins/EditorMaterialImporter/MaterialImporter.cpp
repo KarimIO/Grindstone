@@ -38,9 +38,9 @@ void Editor::Importers::ImportMaterial(Grindstone::Editor::AssetRegistry& assetR
 	}
 
 	Grindstone::Uuid uuid = metaFile.GetOrCreateDefaultSubassetUuid(subassetName, AssetType::Material);
+	metaFile.Save(materialImporterVersion);
 
 	std::filesystem::path outputPath = assetRegistry.GetCompiledAssetsPath() / uuid.ToString();
 	std::filesystem::copy(inputPath, outputPath, std::filesystem::copy_options::overwrite_existing);
-	metaFile.Save(materialImporterVersion);
 	assetManager.QueueReloadAsset(AssetType::Material, uuid);
 }

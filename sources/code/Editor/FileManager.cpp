@@ -295,7 +295,8 @@ static bool IsSubassetValid(
 	outEntry.subassetIdentifier = subasset.subassetIdentifier;
 
 	std::filesystem::path assetPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / subasset.uuid.ToString();
-	if (lastAssetWriteTime > std::filesystem::last_write_time(assetPath)) {
+	std::filesystem::file_time_type outputFileWriteTime = std::filesystem::last_write_time(assetPath);
+	if (lastAssetWriteTime > outputFileWriteTime) {
 		return false;
 	}
 
@@ -314,12 +315,8 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(const MountPoint& mountPoi
 		return true;
 	}
 
-	auto metaFileLastWriteTime = std::filesystem::last_write_time(metaFilePath);
-	auto assetFileLastWriteTime = std::filesystem::last_write_time(path);
-	if (assetFileLastWriteTime > metaFileLastWriteTime) {
-		return true;
-	}
-
+	std::filesystem::file_time_type metaFileLastWriteTime = std::filesystem::last_write_time(metaFilePath);
+	std::filesystem::file_time_type assetFileLastWriteTime = std::filesystem::last_write_time(path);
 	std::filesystem::file_time_type lastAssetWriteTime = std::max(metaFileLastWriteTime, assetFileLastWriteTime);
 
 	Grindstone::Editor::ImporterVersion importerVersion = importManager.GetImporterVersionByPath(path);

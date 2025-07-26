@@ -363,6 +363,8 @@ void TextureImporter::OutputDds(uint8_t* outData, uint64_t contentSize) {
 		subassetName = subassetName.substr(0, dotPos);
 	}
 	uuid = metaFile.GetOrCreateDefaultSubassetUuid(subassetName, Grindstone::AssetType::Texture);
+	metaFile.Save(textureImporterVersion);
+
 	std::filesystem::path parentPath = assetRegistry->GetCompiledAssetsPath();
 
 	std::filesystem::create_directories(parentPath);
@@ -377,8 +379,6 @@ void TextureImporter::OutputDds(uint8_t* outData, uint64_t contentSize) {
 	out.write((const char*)&outHeader, sizeof(outHeader));
 	out.write((const char*)outData, contentSize);
 	out.close();
-
-	metaFile.Save(textureImporterVersion);
 
 	delete[] outData;
 

@@ -45,6 +45,6 @@ namespace Grindstone::Editor {
 		Iterator end() noexcept;
 		ConstIterator end() const noexcept;
 
-		bool isDirty;
+		bool isDirty = false;
 	};
 }
