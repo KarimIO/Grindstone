@@ -27,17 +27,6 @@ namespace Grindstone::GraphicsAPI {
 		Write = 1 << 1,
 	};
 
-	enum class ImageLayout : uint8_t {
-		Undefined,
-		General,
-		ColorAttachment,
-		DepthStencilAttachment,
-		ShaderReadOnly,
-		TransferSrc,
-		TransferDst,
-		Present,
-	};
-
 	struct ImageBarrier {
 		GraphicsAPI::Image* image;
 		ImageLayout oldLayout;
@@ -97,7 +86,12 @@ namespace Grindstone::GraphicsAPI {
 		virtual void DrawVertices(uint32_t vertexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) = 0;
 		virtual void DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) = 0;
 		virtual void DispatchCompute(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) = 0;
-		virtual void BlitImage(Image* src, Image* dst) = 0;
+		virtual void BlitImage(
+			Image* src, Image* dst,
+			Grindstone::GraphicsAPI::ImageLayout oldLayout,
+			Grindstone::GraphicsAPI::ImageLayout newLayout,
+			uint32_t width, uint32_t height, uint32_t depth
+		) = 0;
 
 		virtual void WaitForComputeMemoryBarrier(Image* renderTarget, bool shouldMakeWritable) = 0;
 		virtual void PipelineBarrier(const GraphicsAPI::ImageBarrier* barriers, uint32_t barrierCount) = 0;

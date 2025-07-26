@@ -26,6 +26,18 @@ namespace Grindstone::GraphicsAPI {
 		All = 7
 	};
 
+	enum class ImageLayout : uint8_t {
+		Undefined,				// For newly created or discarded images
+		General,				// For compute or unordered read/write
+		ColorAttachment,		// Render target output
+		DepthWrite,				// Depth write access
+		DepthRead,				// Depth sampled (read-only)
+		ShaderRead,				// Sampled image (color or depth)
+		TransferSrc,			// Used as a copy/blit source
+		TransferDst,			// Used as a copy/blit destination
+		Present,				// Presented to screen
+	};
+
 	enum class ImageDimension {
 		Invalid,
 		Dimension1D,

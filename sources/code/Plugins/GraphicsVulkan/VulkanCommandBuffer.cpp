@@ -2,6 +2,7 @@
 
 #include <EngineCore/Logger.hpp>
 
+#include "VulkanFormat.hpp"
 #include "VulkanRenderPass.hpp"
 #include "VulkanGraphicsPipeline.hpp"
 #include "VulkanComputePipeline.hpp"
@@ -226,33 +227,38 @@ void Vulkan::CommandBuffer::BindCommandBuffers(
 	);
 }
 
-void Vulkan::CommandBuffer::BlitImage(GraphicsAPI::Image* src, GraphicsAPI::Image* dst) {
+void Vulkan::CommandBuffer::BlitImage(
+	GraphicsAPI::Image* src,
+	GraphicsAPI::Image* dst,
+	Grindstone::GraphicsAPI::ImageLayout oldLayout,
+	Grindstone::GraphicsAPI::ImageLayout newLayout,
+	uint32_t width, uint32_t height, uint32_t depth
+) {
 	Vulkan::Image* vkSrc = static_cast<Vulkan::Image*>(src);
 	Vulkan::Image* vkDst = static_cast<Vulkan::Image*>(dst);
 
-	// TODO: This only works with depth.
-	VkImageLayout srcLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-	VkImageLayout dstLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+	VkImageLayout srcLayout = TranslateImageLayoutToVulkan(oldLayout);
+	VkImageLayout dstLayout = TranslateImageLayoutToVulkan(newLayout);
 
 	VkImageBlit blit{};
 	blit.srcOffsets[0] = { 0, 0, 0 };
 	blit.srcOffsets[1] = {
-		static_cast<int>(vkSrc->GetWidth()),
-		static_cast<int>(vkSrc->GetHeight()),
-		static_cast<int>(vkSrc->GetDepth())
+		static_cast<int32_t>(width),
+		static_cast<int32_t>(height),
+		static_cast<int32_t>(depth)
 	};
 	blit.srcSubresource.aspectMask = vkSrc->GetAspect();
-	blit.srcSubresource.mipLevel = vkSrc->GetMipLevels();
+	blit.srcSubresource.mipLevel = 0;
 	blit.srcSubresource.baseArrayLayer = 0;
 	blit.srcSubresource.layerCount = vkSrc->GetArrayLayers();
 	blit.dstOffsets[0] = { 0, 0, 0 };
 	blit.dstOffsets[1] = {
-		static_cast<int>(vkDst->GetWidth()),
-		static_cast<int>(vkDst->GetHeight()),
-		static_cast<int>(vkDst->GetDepth())
+		static_cast<int32_t>(width),
+		static_cast<int32_t>(height),
+		static_cast<int32_t>(depth)
 	};
 	blit.dstSubresource.aspectMask = vkDst->GetAspect();
-	blit.dstSubresource.mipLevel = vkDst->GetMipLevels();
+	blit.dstSubresource.mipLevel = 0;
 	blit.dstSubresource.baseArrayLayer = 0;
 	blit.dstSubresource.layerCount = vkDst->GetArrayLayers();
 
@@ -390,21 +396,6 @@ static VkAccessFlags ToVkAccessFlags(Grindstone::GraphicsAPI::AccessFlags mask) 
 	return flags;
 }
 
-static VkImageLayout ToVkImageLayout(Grindstone::GraphicsAPI::ImageLayout layout) {
-	switch (layout) {
-	case Grindstone::GraphicsAPI::ImageLayout::Undefined:              return VK_IMAGE_LAYOUT_UNDEFINED;
-	case Grindstone::GraphicsAPI::ImageLayout::General:                return VK_IMAGE_LAYOUT_GENERAL;
-	case Grindstone::GraphicsAPI::ImageLayout::ColorAttachment:        return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	case Grindstone::GraphicsAPI::ImageLayout::DepthStencilAttachment: return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-	case Grindstone::GraphicsAPI::ImageLayout::ShaderReadOnly:         return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	case Grindstone::GraphicsAPI::ImageLayout::TransferSrc:            return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-	case Grindstone::GraphicsAPI::ImageLayout::TransferDst:            return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	case Grindstone::GraphicsAPI::ImageLayout::Present:                return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-	default: return VK_IMAGE_LAYOUT_UNDEFINED;
-	}
-}
-
-
 void Vulkan::CommandBuffer::PipelineBarrier(const GraphicsAPI::ImageBarrier* barriers, uint32_t barrierCount) {
 	std::vector<VkImageMemoryBarrier> vkBarriers;
 
@@ -415,10 +406,10 @@ void Vulkan::CommandBuffer::PipelineBarrier(const GraphicsAPI::ImageBarrier* bar
 
 		VkImageMemoryBarrier imageMemoryBarrier = {};
 		imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		imageMemoryBarrier.oldLayout = ToVkImageLayout(barrier.oldLayout);
-		imageMemoryBarrier.newLayout = ToVkImageLayout(barrier.newLayout);
+		imageMemoryBarrier.oldLayout = TranslateImageLayoutToVulkan(barrier.oldLayout);
+		imageMemoryBarrier.newLayout = TranslateImageLayoutToVulkan(barrier.newLayout);
 		imageMemoryBarrier.image = vulkanImage->GetImage();
-		imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 		imageMemoryBarrier.subresourceRange.baseMipLevel = barrier.baseMipLevel;
 		imageMemoryBarrier.subresourceRange.levelCount = barrier.levelCount;
 		imageMemoryBarrier.subresourceRange.baseArrayLayer = barrier.baseArrayLayer;

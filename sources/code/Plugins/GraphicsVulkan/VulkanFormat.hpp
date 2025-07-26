@@ -14,6 +14,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 	VkColorComponentFlags TranslateColorMaskToVulkan(ColorMask colorMask);
 	VkPolygonMode TranslatePolygonModeToVulkan(PolygonFillMode mode);
 	VkPrimitiveTopology TranslateGeometryTypeToVulkan(GeometryType geometryType);
+	VkImageLayout TranslateImageLayoutToVulkan(Grindstone::GraphicsAPI::ImageLayout layout);
 
 	VkBlendOp TranslateBlendOpToVulkan(BlendOperation op);
 	VkBlendFactor TranslateBlendFactorToVulkan(BlendFactor factor);
