@@ -376,6 +376,7 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 	core->WaitUntilIdle();
 
 	renderTarget->Resize(width, height);
+	depthTarget->Resize(width, height);
 	framebuffer->Resize(width, height);
 	renderer->Resize(width, height);
 
