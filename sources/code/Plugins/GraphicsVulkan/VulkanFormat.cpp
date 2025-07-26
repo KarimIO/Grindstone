@@ -619,6 +619,21 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		return primTypes[static_cast<size_t>(geometryType)];
 	}
 
+	VkImageLayout TranslateImageLayoutToVulkan(Grindstone::GraphicsAPI::ImageLayout layout) {
+		switch (layout) {
+			case Grindstone::GraphicsAPI::ImageLayout::Undefined:			return VK_IMAGE_LAYOUT_UNDEFINED;
+			case Grindstone::GraphicsAPI::ImageLayout::General:				return VK_IMAGE_LAYOUT_GENERAL;
+			case Grindstone::GraphicsAPI::ImageLayout::ColorAttachment:		return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			case Grindstone::GraphicsAPI::ImageLayout::DepthWrite:			return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			case Grindstone::GraphicsAPI::ImageLayout::DepthRead:			return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+			case Grindstone::GraphicsAPI::ImageLayout::ShaderRead:			return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			case Grindstone::GraphicsAPI::ImageLayout::TransferSrc:			return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+			case Grindstone::GraphicsAPI::ImageLayout::TransferDst:			return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			case Grindstone::GraphicsAPI::ImageLayout::Present:				return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+			default:														return VK_IMAGE_LAYOUT_UNDEFINED;
+		}
+	}
+
 	VkBlendOp TranslateBlendOpToVulkan(BlendOperation op) {
 		constexpr VkBlendOp blendOps[] = {
 			VK_BLEND_OP_ADD,

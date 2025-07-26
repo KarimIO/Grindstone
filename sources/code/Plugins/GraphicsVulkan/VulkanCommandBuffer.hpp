@@ -50,7 +50,13 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void DrawVertices(uint32_t vertexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) override;
 		virtual void DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) override;
 		virtual void DispatchCompute(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) override;
-		virtual void BlitImage(Grindstone::GraphicsAPI::Image* src, Grindstone::GraphicsAPI::Image* dst) override;
+		virtual void BlitImage(
+			Grindstone::GraphicsAPI::Image* src,
+			Grindstone::GraphicsAPI::Image* dst,
+			Grindstone::GraphicsAPI::ImageLayout oldLayout,
+			Grindstone::GraphicsAPI::ImageLayout newLayout,
+			uint32_t width, uint32_t height, uint32_t depth
+		) override;
 		virtual void WaitForComputeMemoryBarrier(Grindstone::GraphicsAPI::Image* renderTarget, bool shouldMakeWritable) override;
 		virtual void PipelineBarrier(const GraphicsAPI::ImageBarrier* barriers, uint32_t barrierCount) override;
 
