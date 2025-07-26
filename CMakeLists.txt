@@ -28,6 +28,7 @@ set(DEPS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 set(CODE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/sources/code")
 set(COMMON_DIR "${CODE_DIR}/Common")
 set(ENGINECORE_DIR "${CODE_DIR}/EngineCore")
+set(EDITOR_DIR "${CODE_DIR}/Editor")
 set(EDITORCONFIG "${CODE_DIR}/.editorconfig")
 set(BUILD_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 

@@ -134,7 +134,8 @@ int main(int argc, char* argv[]) {
 	#endif
 		}
 
-		Editor::Manager& editorManager = Editor::Manager::GetInstance();
+		Editor::Manager editorManager;
+		editorManager.SetInstance(&editorManager);
 		if (editorManager.Initialize(projectPath)) {
 			editorManager.Run();
 		}

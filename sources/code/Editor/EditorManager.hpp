@@ -48,14 +48,15 @@ namespace Grindstone::Editor {
 	public:
 		Manager() = default;
 		static Manager& GetInstance();
+		static void SetInstance(Grindstone::Editor::Manager* editorManager);
 		Grindstone::Importers::ImporterManager& GetImporterManager();
 		ImguiEditor::ImguiEditor& GetImguiEditor();
-		AssetRegistry& GetAssetRegistry();
-		CommandList& GetCommandList();
-		GitManager& GetGitManager();
-		Selection& GetSelection();
-		TaskSystem& GetTaskSystem();
-		AssetTemplateRegistry& GetAssetTemplateRegistry();
+		virtual AssetRegistry& GetAssetRegistry();
+		virtual CommandList& GetCommandList();
+		virtual GitManager& GetGitManager();
+		virtual Selection& GetSelection();
+		virtual TaskSystem& GetTaskSystem();
+		virtual AssetTemplateRegistry& GetAssetTemplateRegistry();
 		ScriptBuilder::CSharpBuildManager& GetCSharpBuildManager();
 		static FileManager& GetFileManager();
 		static EngineCore& GetEngineCore();
@@ -92,9 +93,9 @@ namespace Grindstone::Editor {
 		ScriptBuilder::CSharpBuildManager csharpBuildManager;
 		CommandList commandList;
 		// Current PlayMode - should we update objects? And how?
-		PlayMode playMode;
+		PlayMode playMode = PlayMode::Editor;
 		// Play Mode that will be set at end of frame
-		PlayMode newPlayMode;
+		PlayMode newPlayMode = PlayMode::Editor;
 		Selection selection;
 		FileManager fileManager;
 		TaskSystem taskSystem;

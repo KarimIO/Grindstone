@@ -39,7 +39,7 @@ namespace Grindstone::Editor {
 		virtual void WriteFile();
 		virtual void ReadFile();
 		virtual Uuid Import(const std::filesystem::path& path);
-		[[nodiscard]] virtual Grindstone::Editor::MetaFile* GetMetaFileByPath(const std::filesystem::path& path);
+		[[nodiscard]] virtual Grindstone::Editor::MetaFile GetMetaFileByPath(const std::filesystem::path& path);
 		[[nodiscard]] virtual const std::filesystem::path& GetCompiledAssetsPath() const;
 
 		virtual bool RemoveEntry(Uuid uuid);

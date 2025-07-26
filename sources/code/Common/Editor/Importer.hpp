@@ -6,19 +6,19 @@
 #include <EngineCore/Assets/AssetManager.hpp>
 
 namespace Grindstone::Editor {
-	class MetaFile;
-
 	using ImporterVersion = uint32_t;
-	using ImporterFactory = void(*)(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManger, const std::filesystem::path&);
+	using ImporterFactory = void(*)(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path&);
 
-	namespace Importers{
-		class Importer {
-		public:
-			virtual void Import(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path) = 0;
-			~Importer();
+	using ImporterMenuOnStart = void* (*)(const std::filesystem::path&);
+	using ImporterMenuOnRender = void (*)(void* payload);
+	using ImporterMenuOnCleanup = void (*)(void* payload);
 
-		protected:
-			MetaFile* metaFile = nullptr;
-		};
-	}
+	struct ImporterData {
+		Grindstone::Editor::ImporterVersion importerVersion;
+		Grindstone::Editor::ImporterFactory factory;
+		Grindstone::Editor::ImporterMenuOnStart onMenuStart;
+		Grindstone::Editor::ImporterMenuOnRender onMenuRender;
+		Grindstone::Editor::ImporterMenuOnCleanup onMenuCleanup;
+	};
+
 }

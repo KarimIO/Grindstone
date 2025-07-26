@@ -1,3 +1,4 @@
+#include <imgui.h>
 #include <Editor/Importers/ImporterManager.hpp>
 #include "EditorManager.hpp"
 #include "EditorPluginInterface.hpp"
@@ -5,14 +6,28 @@
 
 using namespace Grindstone::Plugins;
 
+struct ImGuiContext* EditorPluginInterface::GetImguiContext() const {
+	return ImGui::GetCurrentContext();
+}
+
+Grindstone::Editor::Manager* EditorPluginInterface::GetEditorInstance() const {
+	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
+	return &manager;
+}
+
+void EditorPluginInterface::MapExtensionToImporterType(const char* extension, Grindstone::HashedString importerType) {
+	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
+	Grindstone::Importers::ImporterManager& importerManager = manager.GetImporterManager();
+	importerManager.MapExtensionToImporterType(extension, importerType);
+}
+
 void EditorPluginInterface::RegisterAssetImporter(
-	const char* extension,
-	Grindstone::Editor::ImporterFactory importerFactory,
-	Grindstone::Editor::ImporterVersion importerVersion
+	Grindstone::HashedString importerType,
+	Grindstone::Editor::ImporterData importerVersion
 ) {
 	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
 	Grindstone::Importers::ImporterManager& importerManager = manager.GetImporterManager();
-	importerManager.AddImporterFactory(extension, importerFactory, importerVersion);
+	importerManager.AddImporterFactory(importerType, importerVersion);
 }
 
 void EditorPluginInterface::RegisterAssetTemplate(AssetType assetType, const char* name, const char* extension, const void* const sourcePtr, size_t sourceSize) {
@@ -21,10 +36,16 @@ void EditorPluginInterface::RegisterAssetTemplate(AssetType assetType, const cha
 	assetTemplateRegistry.RegisterTemplate(assetType, name, extension, sourcePtr, sourceSize);
 }
 
-void EditorPluginInterface::DeregisterAssetImporter(const char* extension) {
+void EditorPluginInterface::UnmapExtensionToImporterType(const char* extension) {
 	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
 	Grindstone::Importers::ImporterManager& importerManager = manager.GetImporterManager();
-	importerManager.RemoveImporterFactoryByExtension(extension);
+	importerManager.UnmapExtensionToImporterType(extension);
+}
+
+void EditorPluginInterface::DeregisterAssetImporter(Grindstone::HashedString importerType) {
+	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
+	Grindstone::Importers::ImporterManager& importerManager = manager.GetImporterManager();
+	importerManager.RemoveImporterFactory(importerType);
 }
 
 void EditorPluginInterface::DeregisterAssetTemplate(AssetType assetType) {

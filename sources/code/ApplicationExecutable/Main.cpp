@@ -47,6 +47,7 @@ int main(int argc, char** argv) {
 		createInfo.engineBinaryPath = currentPath.c_str();
 		EngineCore* engineCore = createEngineFn(createInfo);
 
+		engineCore->LoadPluginList();
 		engineCore->InitializeScene(true);
 		engineCore->ShowMainWindow();
 

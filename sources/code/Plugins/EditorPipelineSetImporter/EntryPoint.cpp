@@ -9,6 +9,8 @@ using namespace Grindstone;
 using namespace Grindstone::Memory;
 using namespace Grindstone::Editor::Importers;
 
+Grindstone::ConstHashedString gpsetImporterName("MaterialImporter");
+
 extern "C" {
 	EDITOR_PIPELINESET_IMPORTER_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
 		Grindstone::HashedString::SetHashMap(pluginInterface->GetHashedStringMap());
@@ -19,7 +21,11 @@ extern "C" {
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 
 		if (editorPluginInterface != nullptr) {
-			editorPluginInterface->RegisterAssetImporter("gpset", ImportShadersFromGlsl, pipelineSetImporterVersion);
+			editorPluginInterface->RegisterAssetImporter(gpsetImporterName, Grindstone::Editor::ImporterData{
+				.importerVersion = pipelineSetImporterVersion,
+				.factory = ImportShadersFromGlsl
+			});
+			editorPluginInterface->MapExtensionToImporterType("gpset", gpsetImporterName);
 		}
 	}
 
@@ -28,7 +34,8 @@ extern "C" {
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 
 		if (editorPluginInterface != nullptr) {
-			editorPluginInterface->DeregisterAssetImporter("gpset");
+			editorPluginInterface->UnmapExtensionToImporterType("gpset");
+			editorPluginInterface->DeregisterAssetImporter(gpsetImporterName);
 		}
 	}
 }

@@ -71,6 +71,7 @@ namespace Grindstone {
 		};
 
 		bool Initialize(CreateInfo& ci);
+		virtual void LoadPluginList();
 		virtual void InitializeScene(bool shouldLoadSceneFromDefaults, const char* scenePath = nullptr);
 		virtual void ShowMainWindow();
 

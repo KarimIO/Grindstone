@@ -146,8 +146,8 @@ Grindstone::Uuid AssetRegistry::Import(const std::filesystem::path& path) {
 	return Uuid();
 }
 
-Grindstone::Editor::MetaFile* AssetRegistry::GetMetaFileByPath(const std::filesystem::path& path) {
-	return new Grindstone::Editor::MetaFile(*this, path);
+Grindstone::Editor::MetaFile AssetRegistry::GetMetaFileByPath(const std::filesystem::path& path) {
+	return Grindstone::Editor::MetaFile(*this, path);
 }
 
 const std::filesystem::path& AssetRegistry::GetCompiledAssetsPath() const {

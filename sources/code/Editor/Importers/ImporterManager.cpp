@@ -15,22 +15,20 @@ using namespace Grindstone::Editor;
 using namespace Grindstone::Importers;
 
 static void ImportCopyFile(Grindstone::AssetType assetType, AssetRegistry& assetRegistry, AssetManager& assetManager, const std::filesystem::path& path, Grindstone::Editor::ImporterVersion assetVersion) {
-	Grindstone::Editor::MetaFile* metaFile = assetRegistry.GetMetaFileByPath(path);
+	Grindstone::Editor::MetaFile metaFile = assetRegistry.GetMetaFileByPath(path);
 	std::string subassetName = path.filename().string();
 	size_t dotPos = subassetName.find('.');
 	if (dotPos != std::string::npos) {
 		subassetName = subassetName.substr(0, dotPos);
 	}
 
-	Grindstone::Uuid uuid = metaFile->GetOrCreateDefaultSubassetUuid(subassetName, assetType);
+	Grindstone::Uuid uuid = metaFile.GetOrCreateDefaultSubassetUuid(subassetName, assetType);
 
 	std::filesystem::path outputPath = Grindstone::Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
 	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
-	metaFile->Save(assetVersion);
+	metaFile.Save(assetVersion);
 
 	assetManager.QueueReloadAsset(assetType, uuid);
-
-	delete metaFile;
 }
 
 const Grindstone::Editor::ImporterVersion gsceneAssetVersion = 1;
@@ -44,13 +42,18 @@ static void ImportDdsTexture(AssetRegistry& assetRegistry, AssetManager& assetMa
 	ImportCopyFile(Grindstone::AssetType::Texture, assetRegistry, assetManager, path, ddsAssetVersion);
 }
 
-ImporterManager::ImporterManager() {
-	AddImporterFactory("gscene", ImportScene, gsceneAssetVersion);
-	AddImporterFactory("dds", ImportDdsTexture, ddsAssetVersion);
+Grindstone::ConstHashedString sceneImporterName("SceneImporter");
+Grindstone::ConstHashedString ddsImporterName("DdsImporter");
+
+void ImporterManager::Initialize() {
+	AddImporterFactory(sceneImporterName, ImporterData{ .importerVersion = gsceneAssetVersion, .factory = ImportScene });
+	AddImporterFactory(ddsImporterName, ImporterData{ .importerVersion = ddsAssetVersion, .factory = ImportDdsTexture });
+	MapExtensionToImporterType("gscene", sceneImporterName);
+	MapExtensionToImporterType("dds", ddsImporterName);
 }
 
 bool ImporterManager::Import(const std::filesystem::path& path) {
-	ImporterFactory importerFactory = GetImporterFactoryByPath(path);
+	ImporterFactory importerFactory = GetImporterFactoryByPath(path).factory;
 	if (importerFactory == nullptr) {
 		return false;
 	}
@@ -61,67 +64,99 @@ bool ImporterManager::Import(const std::filesystem::path& path) {
 	return true;
 }
 
-void ImporterManager::AddImporterFactory(const std::string& extension, ImporterFactory importerFactory, uint32_t importerVersion) {
-	if (HasImporter(extension)) {
+void ImporterManager::AddImporterFactory(Grindstone::HashedString importerType, Grindstone::Editor::ImporterData importerData) {
+	if (HasImporter(importerType)) {
 		return;
 	}
 
-	extensionsToImporterFactories[extension] = ImporterData{
-		importerVersion,
-		importerFactory
-	};
+	importerFactoriesMap[importerType] = importerData;
 }
 
-void ImporterManager::RemoveImporterFactoryByExtension(const std::string& extension) {
+void ImporterManager::MapExtensionToImporterType(const std::string& extension, Grindstone::HashedString importerType) {
+	extensionsToImporterFactories[extension] = importerType;
+}
+
+void ImporterManager::RemoveImporterFactory(Grindstone::HashedString importerType) {
+	auto extensionIterator = importerFactoriesMap.find(importerType);
+	if (extensionIterator != importerFactoriesMap.end()) {
+		importerFactoriesMap.erase(extensionIterator);
+	}
+}
+
+void ImporterManager::UnmapExtensionToImporterType(const std::string& extension) {
 	auto extensionIterator = extensionsToImporterFactories.find(extension);
 	if (extensionIterator != extensionsToImporterFactories.end()) {
 		extensionsToImporterFactories.erase(extension);
 	}
 }
 
-Grindstone::Editor::ImporterFactory ImporterManager::GetImporterFactoryByExtension(const std::string& extension) const {
-	auto extensionIterator = extensionsToImporterFactories.find(extension);
-	return (extensionIterator != extensionsToImporterFactories.end())
-		? extensionIterator->second.factory
-		: nullptr;
+Grindstone::Editor::ImporterData ImporterManager::GetImporterFactoryByName(Grindstone::HashedString importerType) const {
+	auto extensionIterator = importerFactoriesMap.find(importerType);
+	return (extensionIterator != importerFactoriesMap.end())
+		? extensionIterator->second
+		: Grindstone::Editor::ImporterData{};
 }
 
-Grindstone::Editor::ImporterFactory ImporterManager::GetImporterFactoryByPath(const std::filesystem::path& path) const {
-	const std::string extension = path.extension().string().substr(1);
-	return GetImporterFactoryByExtension(extension);
+
+Grindstone::Editor::ImporterData ImporterManager::GetImporterFactoryByExtension(const std::string& extension) const {
+	auto extensionIterator = extensionsToImporterFactories.find(extension);
+	if (extensionIterator == extensionsToImporterFactories.end()) {
+		return {};
+	}
+
+	return GetImporterFactoryByName(extensionIterator->second);
 }
 
-Grindstone::Editor::ImporterVersion ImporterManager::GetImporterVersion(const std::string& extension) {
-	auto extensionIterator = extensionsToImporterFactories.find(extension);
-	return (extensionIterator != extensionsToImporterFactories.end())
+Grindstone::Editor::ImporterData ImporterManager::GetImporterFactoryByPath(const std::filesystem::path& path) const {
+	const std::string extension = path.extension().string();
+	if (extension.empty()) {
+		return {};
+	}
+
+	const std::string extensionWithoutDot = extension.substr(1);
+	return GetImporterFactoryByExtension(extensionWithoutDot);
+}
+
+Grindstone::Editor::ImporterVersion ImporterManager::GetImporterVersion(Grindstone::HashedString importerType) const {
+	auto extensionIterator = importerFactoriesMap.find(importerType);
+	return (extensionIterator != importerFactoriesMap.end())
 		? extensionIterator->second.importerVersion
 		: 0;
 }
 
-Grindstone::Editor::ImporterVersion ImporterManager::GetImporterVersion(const std::filesystem::path& path) const {
+Grindstone::Editor::ImporterVersion ImporterManager::GetImporterVersionByExtension(const std::string& extension) const {
+	auto extensionIterator = extensionsToImporterFactories.find(extension);
+	return (extensionIterator != extensionsToImporterFactories.end())
+		? GetImporterVersion(extensionIterator->second)
+		: 0;
+}
+
+Grindstone::Editor::ImporterVersion ImporterManager::GetImporterVersionByPath(const std::filesystem::path& path) const {
 	const std::string extension = path.extension().string();
 	if (extension.empty()) {
 		return 0;
 	}
 
 	const std::string extensionWithoutDot = extension.substr(1);
-	auto extensionIterator = extensionsToImporterFactories.find(extensionWithoutDot);
-	return (extensionIterator != extensionsToImporterFactories.end())
-		? extensionIterator->second.importerVersion
-		: 0;
+	return GetImporterVersionByExtension(extensionWithoutDot);
 }
 
-bool ImporterManager::HasImporter(const std::string& extension) const {
+bool ImporterManager::HasImporter(Grindstone::HashedString importerType) const {
+	const auto extensionIterator = importerFactoriesMap.find(importerType);
+	return extensionIterator != importerFactoriesMap.end();
+}
+
+bool ImporterManager::HasImporterForExtension(const std::string& extension) const {
 	const auto extensionIterator = extensionsToImporterFactories.find(extension);
 	return extensionIterator != extensionsToImporterFactories.end();
 }
 
-bool ImporterManager::HasImporter(const std::filesystem::path& path) const {
+bool ImporterManager::HasImporterForPath(const std::filesystem::path& path) const {
 	const std::string extension = path.extension().string();
 	if (extension.empty()) {
 		return false;
 	}
 
 	const std::string extensionWithoutDot = extension.substr(1);
-	return HasImporter(extensionWithoutDot);
+	return HasImporterForExtension(extensionWithoutDot);
 }

@@ -17,13 +17,14 @@ using namespace Grindstone::Editor;
 const uint32_t currentMetaFileVersion = 1;
 
 MetaFile::MetaFile(AssetRegistry& assetRegistry, const std::filesystem::path& path)
-	: assetRegistry(assetRegistry) {
+	: assetRegistry(&assetRegistry) {
 	Load(assetRegistry, path);
 }
 
 void MetaFile::Load(AssetRegistry& assetRegistry, const std::filesystem::path& baseAssetPath) {
-	this->assetRegistry = assetRegistry;
+	this->assetRegistry = &assetRegistry;
 	this->baseAssetPath = baseAssetPath;
+	isDirty = false;
 	metaFilePath = baseAssetPath.string() + ".meta";
 
 	if (!assetRegistry.TryGetPathWithMountPoint(baseAssetPath, mountedAssetPath)) {
@@ -121,16 +122,21 @@ void MetaFile::Load(AssetRegistry& assetRegistry, const std::filesystem::path& b
 			itr != settingsArray.MemberEnd();
 			++itr
 		) {
-			importerSettings.Set(itr->name.GetString(), itr->value.GetString());
+			importerSettings.SetUnknown(itr->name.GetString(), itr->value.GetString());
 		}
 	}
 }
 
 void MetaFile::Save(uint32_t currentImporterVersion) {
+	if (importerVersion == currentImporterVersion && !isDirty && !importerSettings.isDirty) {
+		return;
+	}
+
 	importerVersion = currentImporterVersion;
 
 	rapidjson::StringBuffer documentStringBuffer;
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> documentWriter = rapidjson::PrettyWriter<rapidjson::StringBuffer>(documentStringBuffer);
+	GS_ASSERT(assetRegistry != nullptr);
 
 	{
 		documentWriter.StartObject();
@@ -162,7 +168,7 @@ void MetaFile::Save(uint32_t currentImporterVersion) {
 				documentWriter.String(GetAssetTypeToString(defaultSubasset.assetType));
 				documentWriter.EndObject();
 
-				assetRegistry.UpdateEntry(
+				assetRegistry->UpdateEntry(
 					baseAssetPath,
 					defaultSubasset.subassetIdentifier,
 					defaultSubasset.displayName,
@@ -186,7 +192,7 @@ void MetaFile::Save(uint32_t currentImporterVersion) {
 				documentWriter.String(GetAssetTypeToString(subasset.assetType));
 				documentWriter.EndObject();
 
-				assetRegistry.UpdateEntry(
+				assetRegistry->UpdateEntry(
 					baseAssetPath,
 					subasset.subassetIdentifier,
 					subasset.displayName,
@@ -203,7 +209,7 @@ void MetaFile::Save(uint32_t currentImporterVersion) {
 			documentWriter.StartObject();
 			for (const auto& it : importerSettings) {
 				const std::string& key = it.first;
-				const std::string& value = it.second;
+				const std::string& value = it.second.value;
 
 				documentWriter.Key(key.c_str());
 				documentWriter.String(value.c_str());
@@ -247,14 +253,18 @@ Grindstone::Uuid MetaFile::GetOrCreateDefaultSubassetUuid(const std::string& sub
 	if (defaultSubasset.subassetIdentifier == subassetName && assetType == defaultSubasset.assetType) {
 		if (!defaultSubasset.uuid.IsValid()) {
 			defaultSubasset.uuid = Uuid::CreateRandom();
+			isDirty = true;
 		}
 
 		if (defaultSubasset.displayName.empty()) {
 			defaultSubasset.displayName = subassetName;
+			isDirty = true;
 		}
 
 		return defaultSubasset.uuid;
 	}
+
+	isDirty = true;
 
 	Subasset* outSubasset = nullptr;
 	if (TryGetSubasset(subassetName, outSubasset)) {
@@ -319,6 +329,7 @@ Grindstone::Uuid MetaFile::GetOrCreateSubassetUuid(const std::string& subassetNa
 
 	Uuid uuid = Uuid::CreateRandom();
 	subassets.emplace_back(subassetName, subassetName, "", uuid, assetType);
+	isDirty = true;
 	return uuid;
 }
 

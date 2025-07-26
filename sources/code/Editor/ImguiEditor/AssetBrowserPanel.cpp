@@ -49,8 +49,10 @@ AssetBrowserPanel::AssetBrowserPanel(
 	ImguiEditor* editor
 ) : editor(editor),
 engineCore(engineCore) {
+	auto& fileManager = Editor::Manager::GetFileManager();
+	auto& primaryMountPoint = fileManager.GetPrimaryMountPoint();
 	std::filesystem::directory_entry directoryEntry =
-		std::filesystem::directory_entry(Editor::Manager::GetFileManager().GetPrimaryMountPoint().path);
+		std::filesystem::directory_entry(primaryMountPoint.path);
 	SetCurrentAssetDirectory(directoryEntry);
 	indexToRename = SIZE_MAX;
 
@@ -269,7 +271,7 @@ void AssetBrowserPanel::RenderContextMenuFileTypeSpecificEntries(const std::file
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 
 	auto& importerManager = Editor::Manager::GetInstance().GetImporterManager();
-	auto importerFactory = importerManager.GetImporterFactoryByExtension(firstDotExtension);
+	auto importerFactory = importerManager.GetImporterFactoryByExtension(firstDotExtension).factory;
 	if (importerFactory != nullptr) {
 		if (ImGui::MenuItem("Import")) {
 			importerManager.Import(path);
