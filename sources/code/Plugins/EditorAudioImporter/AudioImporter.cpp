@@ -18,10 +18,10 @@ void Editor::Importers::ImportAudio(AssetRegistry& assetRegistry, Assets::AssetM
 		subassetName = subassetName.substr(0, dotPos);
 	}
 	Uuid uuid = metaFile.GetOrCreateDefaultSubassetUuid(subassetName, AssetType::AudioClip);
+	metaFile.Save(audioImporterVersion);
 
 	std::filesystem::path outputPath = assetRegistry.GetCompiledAssetsPath() / uuid.ToString();
 	std::filesystem::copy(inputPath, outputPath, std::filesystem::copy_options::overwrite_existing);
-	metaFile.Save(audioImporterVersion);
 
 	assetManager.QueueReloadAsset(AssetType::AudioClip, uuid);
 }
