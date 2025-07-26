@@ -9,7 +9,7 @@ using namespace Grindstone;
 using namespace Grindstone::Memory;
 using namespace Grindstone::Editor::Importers;
 
-Grindstone::ConstHashedString gpsetImporterName("MaterialImporter");
+Grindstone::ConstHashedString gpsetImporterName("PipelineImporter");
 
 extern "C" {
 	EDITOR_PIPELINESET_IMPORTER_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
