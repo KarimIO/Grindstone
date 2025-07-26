@@ -295,6 +295,10 @@ static bool IsSubassetValid(
 	outEntry.subassetIdentifier = subasset.subassetIdentifier;
 
 	std::filesystem::path assetPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / subasset.uuid.ToString();
+	if (!std::filesystem::exists(assetPath)) {
+		return false;
+	}
+
 	std::filesystem::file_time_type outputFileWriteTime = std::filesystem::last_write_time(assetPath);
 	if (lastAssetWriteTime > outputFileWriteTime) {
 		return false;
