@@ -46,6 +46,14 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		return VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	}
 
+	VkImageAspectFlags TranslateImageAspectBitsToVulkan(ImageAspectBits imageAspectMask) {
+		return (VkImageAspectFlags)imageAspectMask;
+	}
+
+	VkPipelineStageFlagBits TranslatePipelineStageToVulkan(PipelineStageBit stage) {
+		return (VkPipelineStageFlagBits)stage;
+	}
+
 	VkFormat TranslateFormatToVulkan(Format format) {
 		VkFormat formats[] = {
 			VK_FORMAT_UNDEFINED,

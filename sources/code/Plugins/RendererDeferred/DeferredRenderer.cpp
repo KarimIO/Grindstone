@@ -1718,10 +1718,40 @@ void DeferredRenderer::RenderSsr(DeferredRendererImageSet& imageSet, GraphicsAPI
 	currentCommandBuffer->BindComputePipeline(ssrPipeline);
 
 	{
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.ssrRenderTarget, true);
+		GraphicsAPI::ImageBarrier barrier{
+			.image = imageSet.ssrRenderTarget,
+			.oldLayout = GraphicsAPI::ImageLayout::ShaderRead,
+			.newLayout = GraphicsAPI::ImageLayout::General,
+			.srcAccess = GraphicsAPI::AccessFlags::ShaderRead,
+			.dstAccess = GraphicsAPI::AccessFlags::ShaderWrite,
+			.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+			.baseMipLevel = 0,
+			.levelCount = 1,
+			.baseArrayLayer = 0,
+			.layerCount = 1
+		};
+
+		currentCommandBuffer->PipelineBarrier(
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			nullptr, 0,
+			&barrier, 1
+		);
 		currentCommandBuffer->BindComputeDescriptorSet(ssrPipeline, &imageSet.ssrDescriptorSet, 2, 1);
 		currentCommandBuffer->DispatchCompute(renderWidth, renderHeight, 1);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.ssrRenderTarget, false);
+
+		barrier.image = imageSet.ssrRenderTarget;
+		barrier.oldLayout = GraphicsAPI::ImageLayout::General;
+		barrier.newLayout = GraphicsAPI::ImageLayout::ShaderRead;
+		barrier.srcAccess = GraphicsAPI::AccessFlags::ShaderWrite;
+		barrier.dstAccess = GraphicsAPI::AccessFlags::ShaderRead;
+
+		currentCommandBuffer->PipelineBarrier(
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			nullptr, 0,
+			&barrier, 1
+		);
 	}
 	currentCommandBuffer->EndDebugLabelSection();
 }
@@ -1748,9 +1778,39 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 	uint32_t groupCountY = static_cast<uint32_t>(std::ceil(renderHeight / 4.0f));
 	uint32_t descriptorSetIndex = 0;
 
+	GraphicsAPI::ImageBarrier readImageBarrier{
+		.oldLayout = GraphicsAPI::ImageLayout::General,
+		.newLayout = GraphicsAPI::ImageLayout::ShaderRead,
+		.srcAccess = GraphicsAPI::AccessFlags::ShaderWrite,
+		.dstAccess = GraphicsAPI::AccessFlags::ShaderRead,
+		.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+	};
+
+	GraphicsAPI::ImageBarrier writeImageBarrier{
+		.oldLayout = GraphicsAPI::ImageLayout::ShaderRead,
+		.newLayout = GraphicsAPI::ImageLayout::General,
+		.srcAccess = GraphicsAPI::AccessFlags::ShaderRead,
+		.dstAccess = GraphicsAPI::AccessFlags::ShaderWrite,
+		.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+	};
+
 	currentCommandBuffer->BeginDebugLabelSection("Bloom First Downsample", debugColor);
 	{
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[1], true);
+		writeImageBarrier.image = imageSet.bloomRenderTargets[1];
+		currentCommandBuffer->PipelineBarrier(
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			nullptr, 0,
+			&writeImageBarrier, 1
+		);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 2, 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
@@ -1774,8 +1834,21 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidth / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeight / 4.0f));
 
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[i], false);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[i + 1], true);
+		readImageBarrier.image = imageSet.bloomRenderTargets[i];
+		currentCommandBuffer->PipelineBarrier(
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			nullptr, 0,
+			&readImageBarrier, 1
+		);
+
+		writeImageBarrier.image = imageSet.bloomRenderTargets[i + 1];
+		currentCommandBuffer->PipelineBarrier(
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			nullptr, 0,
+			&writeImageBarrier, 1
+		);
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 2, 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
@@ -1786,8 +1859,22 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidths[bloomMipLevelCount - 2] / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeights[bloomMipLevelCount - 2] / 4.0f));
 
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomMipLevelCount - 1], false);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[(bloomStoredMipLevelCount * 2) - bloomMipLevelCount + 2], true);
+		readImageBarrier.image = imageSet.bloomRenderTargets[bloomMipLevelCount - 1];
+		currentCommandBuffer->PipelineBarrier(
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			nullptr, 0,
+			&readImageBarrier, 1
+		);
+
+		writeImageBarrier.image = imageSet.bloomRenderTargets[(bloomStoredMipLevelCount * 2) - bloomMipLevelCount + 2];
+		currentCommandBuffer->PipelineBarrier(
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			nullptr, 0,
+			&writeImageBarrier, 1
+		);
+
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[bloomFirstUpsampleIndex], 2, 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
@@ -1801,8 +1888,22 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 		groupCountX = static_cast<uint32_t>(std::ceil(mipWidth / 4.0f));
 		groupCountY = static_cast<uint32_t>(std::ceil(mipHeight / 4.0f));
 
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i + 1], true);
-		currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i + 2], false);
+		writeImageBarrier.image = imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i + 1];
+		currentCommandBuffer->PipelineBarrier(
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			nullptr, 0,
+			&writeImageBarrier, 1
+		);
+
+		readImageBarrier.image = imageSet.bloomRenderTargets[bloomStoredMipLevelCount + i + 2];
+		currentCommandBuffer->PipelineBarrier(
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			GraphicsAPI::PipelineStageBit::ComputeShader,
+			nullptr, 0,
+			&readImageBarrier, 1
+		);
+
 		currentCommandBuffer->BindComputeDescriptorSet(bloomPipeline, &imageSet.bloomDescriptorSets[descriptorSetIndex++], 2, 1);
 		currentCommandBuffer->DispatchCompute(groupCountX, groupCountY, 1);
 	}
@@ -1810,7 +1911,13 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 
 	currentCommandBuffer->EndDebugLabelSection();
 
-	currentCommandBuffer->WaitForComputeMemoryBarrier(imageSet.bloomRenderTargets[bloomStoredMipLevelCount + 1], false);
+	readImageBarrier.image = imageSet.bloomRenderTargets[bloomStoredMipLevelCount + 1];
+	currentCommandBuffer->PipelineBarrier(
+		GraphicsAPI::PipelineStageBit::ComputeShader,
+		GraphicsAPI::PipelineStageBit::ComputeShader,
+		nullptr, 0,
+		&readImageBarrier, 1
+	);
 }
 
 void DeferredRenderer::RenderLights(
@@ -2309,12 +2416,7 @@ void DeferredRenderer::PostProcess(
 
 	GraphicsAPI::ImageBarrier blitBarrier{
 		.image = imageSet.gbufferDepthStencilTarget,
-		.oldLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead,
-		.newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead,
-		.srcStage = Grindstone::GraphicsAPI::PipelineStage::TopOfPipe,
-		.dstStage = Grindstone::GraphicsAPI::PipelineStage::TopOfPipe,
-		.srcAccess = Grindstone::GraphicsAPI::AccessFlags::Read,
-		.dstAccess = Grindstone::GraphicsAPI::AccessFlags::Write,
+		.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
 		.baseMipLevel = 0,
 		.levelCount = 1,
 		.baseArrayLayer = 0,
@@ -2323,17 +2425,36 @@ void DeferredRenderer::PostProcess(
 
 	std::array<Grindstone::GraphicsAPI::ImageBarrier, 2> preBlitBarriers{ blitBarrier , blitBarrier };
 	preBlitBarriers[0].image = imageSet.gbufferDepthStencilTarget;
+	preBlitBarriers[0].oldLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead;
 	preBlitBarriers[0].newLayout = Grindstone::GraphicsAPI::ImageLayout::TransferSrc;
+	preBlitBarriers[0].srcAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite;
+	preBlitBarriers[0].dstAccess = Grindstone::GraphicsAPI::AccessFlags::TransferRead;
+
 	preBlitBarriers[1].image = framebuffer->GetDepthStencilTarget();
+	preBlitBarriers[1].oldLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead;
 	preBlitBarriers[1].newLayout = Grindstone::GraphicsAPI::ImageLayout::TransferDst;
+	preBlitBarriers[1].srcAccess = Grindstone::GraphicsAPI::AccessFlags::None;
+	preBlitBarriers[1].dstAccess = Grindstone::GraphicsAPI::AccessFlags::TransferWrite;
 
 	std::array<Grindstone::GraphicsAPI::ImageBarrier, 2> postBlitBarriers{ blitBarrier , blitBarrier };
 	postBlitBarriers[0].image = imageSet.gbufferDepthStencilTarget;
 	postBlitBarriers[0].oldLayout = Grindstone::GraphicsAPI::ImageLayout::TransferSrc;
+	postBlitBarriers[0].newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead;
+	postBlitBarriers[0].srcAccess = Grindstone::GraphicsAPI::AccessFlags::TransferRead;
+	postBlitBarriers[0].dstAccess = Grindstone::GraphicsAPI::AccessFlags::ShaderRead;
+
 	postBlitBarriers[1].image = framebuffer->GetDepthStencilTarget();
 	postBlitBarriers[1].oldLayout = Grindstone::GraphicsAPI::ImageLayout::TransferDst;
+	postBlitBarriers[1].newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead;
+	postBlitBarriers[1].srcAccess = Grindstone::GraphicsAPI::AccessFlags::TransferWrite;
+	postBlitBarriers[1].dstAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite;
 
-	currentCommandBuffer->PipelineBarrier(preBlitBarriers.data(), static_cast<uint32_t>(preBlitBarriers.size()));
+	currentCommandBuffer->PipelineBarrier(
+		GraphicsAPI::PipelineStageBit::LateFragmentTests,
+		GraphicsAPI::PipelineStageBit::Transfer,
+		nullptr, 0,
+		preBlitBarriers.data(), static_cast<uint32_t>(preBlitBarriers.size())
+	);
 	currentCommandBuffer->BlitImage(
 		imageSet.gbufferDepthStencilTarget,
 		framebuffer->GetDepthStencilTarget(),
@@ -2341,7 +2462,12 @@ void DeferredRenderer::PostProcess(
 		Grindstone::GraphicsAPI::ImageLayout::TransferDst,
 		renderWidth, renderHeight, 1
 	);
-	currentCommandBuffer->PipelineBarrier(postBlitBarriers.data(), static_cast<uint32_t>(postBlitBarriers.size()));
+	currentCommandBuffer->PipelineBarrier(
+		GraphicsAPI::PipelineStageBit::Transfer,
+		GraphicsAPI::PipelineStageBit::FragmentShader | GraphicsAPI::PipelineStageBit::EarlyFragmentTests,
+		nullptr, 0,
+		postBlitBarriers.data(), static_cast<uint32_t>(postBlitBarriers.size())
+	);
 }
 
 void DeferredRenderer::Debug(

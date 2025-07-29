@@ -354,81 +354,69 @@ void Vulkan::CommandBuffer::DispatchCompute(uint32_t groupCountX, uint32_t group
 	vkCmdDispatch(commandBuffer, groupCountX, groupCountY, groupCountZ);
 }
 
-void Vulkan::CommandBuffer::WaitForComputeMemoryBarrier(GraphicsAPI::Image* renderTarget, bool shouldMakeWritable) {
-	Vulkan::Image* vulkanRenderTarget = static_cast<Vulkan::Image*>(renderTarget);
-	VkImageMemoryBarrier imageMemoryBarrier = {};
-	imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	imageMemoryBarrier.oldLayout = shouldMakeWritable ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_GENERAL;
-	imageMemoryBarrier.newLayout = shouldMakeWritable ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageMemoryBarrier.image = vulkanRenderTarget->GetImage();
-	imageMemoryBarrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-	imageMemoryBarrier.srcAccessMask = shouldMakeWritable ? VK_ACCESS_SHADER_READ_BIT : VK_ACCESS_SHADER_WRITE_BIT;
-	imageMemoryBarrier.dstAccessMask = shouldMakeWritable ? VK_ACCESS_SHADER_WRITE_BIT : VK_ACCESS_SHADER_READ_BIT;
-	vkCmdPipelineBarrier(
-		commandBuffer,
-		VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-		VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-		0,
-		0, nullptr,
-		0, nullptr,
-		1, &imageMemoryBarrier
-	);
-}
+void Vulkan::CommandBuffer::PipelineBarrier(
+	GraphicsAPI::PipelineStageBit srcPipelineStageMask,
+	GraphicsAPI::PipelineStageBit dstPipelineStageMask,
+	const GraphicsAPI::BufferBarrier* bufferBarriers, uint32_t bufferBarrierCount,
+	const GraphicsAPI::ImageBarrier* imageBarriers, uint32_t imageBarrierCount
+) {
+	std::vector<VkBufferMemoryBarrier> vkBufferBarriers;
+	std::vector<VkImageMemoryBarrier> vkImageBarriers;
 
-static VkAccessFlags ToVkAccessFlags(Grindstone::GraphicsAPI::AccessFlags mask) {
-	VkAccessFlags flags = 0;
-
-	if ((mask & Grindstone::GraphicsAPI::AccessFlags::Read) == Grindstone::GraphicsAPI::AccessFlags::Read) {
-		flags |= VK_ACCESS_SHADER_READ_BIT |
-			VK_ACCESS_INPUT_ATTACHMENT_READ_BIT |
-			VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
-			VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
-			VK_ACCESS_TRANSFER_READ_BIT;
-	}
-
-	if ((mask & Grindstone::GraphicsAPI::AccessFlags::Write) == Grindstone::GraphicsAPI::AccessFlags::Write) {
-		flags |= VK_ACCESS_SHADER_WRITE_BIT |
-			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
-			VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT |
-			VK_ACCESS_TRANSFER_WRITE_BIT;
-	}
-
-	return flags;
-}
-
-void Vulkan::CommandBuffer::PipelineBarrier(const GraphicsAPI::ImageBarrier* barriers, uint32_t barrierCount) {
-	std::vector<VkImageMemoryBarrier> vkBarriers;
-
-	for (uint32_t index = 0; index < barrierCount; ++index) {
-		const GraphicsAPI::ImageBarrier& barrier = barriers[index];
+	for (uint32_t index = 0; index < imageBarrierCount; ++index) {
+		const GraphicsAPI::ImageBarrier& barrier = imageBarriers[index];
 
 		Vulkan::Image* vulkanImage = static_cast<Vulkan::Image*>(barrier.image);
 
-		VkImageMemoryBarrier imageMemoryBarrier = {};
-		imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		imageMemoryBarrier.oldLayout = TranslateImageLayoutToVulkan(barrier.oldLayout);
-		imageMemoryBarrier.newLayout = TranslateImageLayoutToVulkan(barrier.newLayout);
-		imageMemoryBarrier.image = vulkanImage->GetImage();
-		imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-		imageMemoryBarrier.subresourceRange.baseMipLevel = barrier.baseMipLevel;
-		imageMemoryBarrier.subresourceRange.levelCount = barrier.levelCount;
-		imageMemoryBarrier.subresourceRange.baseArrayLayer = barrier.baseArrayLayer;
-		imageMemoryBarrier.subresourceRange.layerCount = barrier.layerCount;
-		imageMemoryBarrier.srcAccessMask = ToVkAccessFlags(barrier.srcAccess);
-		imageMemoryBarrier.dstAccessMask = ToVkAccessFlags(barrier.dstAccess);
-
-		vkBarriers.push_back(imageMemoryBarrier);
+		vkImageBarriers.emplace_back(
+			VkImageMemoryBarrier {
+				.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+				.srcAccessMask = (VkAccessFlags)(barrier.srcAccess),
+				.dstAccessMask = (VkAccessFlags)(barrier.dstAccess),
+				.oldLayout = TranslateImageLayoutToVulkan(barrier.oldLayout),
+				.newLayout = TranslateImageLayoutToVulkan(barrier.newLayout),
+				.image = vulkanImage->GetImage(),
+				.subresourceRange = {
+					.aspectMask = TranslateImageAspectBitsToVulkan(barrier.imageAspect),
+					.baseMipLevel = barrier.baseMipLevel,
+					.levelCount = barrier.levelCount,
+					.baseArrayLayer = barrier.baseArrayLayer,
+					.layerCount = barrier.layerCount,
+				}
+			}
+		);
 	}
+
+	for (uint32_t index = 0; index < bufferBarrierCount; ++index) {
+		const GraphicsAPI::BufferBarrier& barrier = bufferBarriers[index];
+
+		Vulkan::Buffer* vulkanBuffer = static_cast<Vulkan::Buffer*>(barrier.buffer);
+
+		vkBufferBarriers.emplace_back(
+			VkBufferMemoryBarrier {
+				.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+				.srcAccessMask = (VkAccessFlags)(barrier.srcAccess),
+				.dstAccessMask = (VkAccessFlags)(barrier.dstAccess),
+				.buffer = vulkanBuffer->GetBuffer(),
+				.offset = static_cast<VkDeviceSize>(barrier.offset),
+				.size = static_cast<VkDeviceSize>(barrier.size)
+			}
+		);
+	}
+
+	VkPipelineStageFlagBits vkSrcPipelineStage = TranslatePipelineStageToVulkan(srcPipelineStageMask);
+	VkPipelineStageFlagBits vkDstPipelineStage = TranslatePipelineStageToVulkan(dstPipelineStageMask);
 
 	vkCmdPipelineBarrier(
 		commandBuffer,
-		VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-		VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+		vkSrcPipelineStage,
+		vkDstPipelineStage,
 		0,
 		0, nullptr,
-		0, nullptr,
-		static_cast<uint32_t>(vkBarriers.size()),
-		vkBarriers.data()
+		static_cast<uint32_t>(vkBufferBarriers.size()),
+		vkBufferBarriers.data(),
+		static_cast<uint32_t>(vkImageBarriers.size()),
+		vkImageBarriers.data()
 	);
 }
 

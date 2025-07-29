@@ -57,9 +57,12 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 			Grindstone::GraphicsAPI::ImageLayout newLayout,
 			uint32_t width, uint32_t height, uint32_t depth
 		) override;
-		virtual void WaitForComputeMemoryBarrier(Grindstone::GraphicsAPI::Image* renderTarget, bool shouldMakeWritable) override;
-		virtual void PipelineBarrier(const GraphicsAPI::ImageBarrier* barriers, uint32_t barrierCount) override;
-
+		virtual void PipelineBarrier(
+			GraphicsAPI::PipelineStageBit srcPipelineStageMask, GraphicsAPI::PipelineStageBit dstPipelineStageMask,
+			const GraphicsAPI::BufferBarrier* bufferBarriers, uint32_t bufferBarrierCount,
+			const GraphicsAPI::ImageBarrier* imageBarriers, uint32_t imageBarrierCount
+		) override;
+		
 		virtual void EndCommandBuffer() override;
 	private:
 		virtual void BindDescriptorSet(

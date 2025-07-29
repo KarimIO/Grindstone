@@ -5,6 +5,8 @@
 #include <vulkan/vulkan.h>
 
 namespace Grindstone::GraphicsAPI::Vulkan {
+	VkImageAspectFlags TranslateImageAspectBitsToVulkan(ImageAspectBits imageAspectMask);
+	VkPipelineStageFlagBits TranslatePipelineStageToVulkan(PipelineStageBit stage);
 	VkFilter TranslateFilterToVulkan(TextureFilter);
 	VkSamplerMipmapMode TranslateMipFilterToVulkan(TextureFilter);
 	VkSamplerAddressMode TranslateWrapToVulkan(TextureWrapMode);
