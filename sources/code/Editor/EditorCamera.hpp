@@ -26,7 +26,9 @@ namespace Grindstone {
 		public:
 			EditorCamera();
 			~EditorCamera();
-			void CaptureMousePick(GraphicsAPI::CommandBuffer* commandBuffer);
+			void CaptureMousePick(GraphicsAPI::CommandBuffer* commandBuffer, int x, int y);
+			bool HasQueuedMousePick() const;
+			uint32_t GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandBuffer);
 			uint64_t GetRenderOutput();
 			void Render(GraphicsAPI::CommandBuffer* commandBuffer);
 			void RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffer);
@@ -78,6 +80,7 @@ namespace Grindstone {
 			float fieldOfView = glm::radians(80.0f);
 			float nearPlaneDistance = 0.1f;
 			float farPlaneDistance = 150.f;
+			bool hasQueuedMousePick = false;
 		};
 	}
 }

@@ -232,7 +232,7 @@ EditorCamera::~EditorCamera() {
 	renderer = nullptr;
 }
 
-void Grindstone::Editor::EditorCamera::CaptureMousePick(GraphicsAPI::CommandBuffer* commandBuffer) {
+void Grindstone::Editor::EditorCamera::CaptureMousePick(GraphicsAPI::CommandBuffer* commandBuffer, int x, int y) {
 	Editor::Manager& editorManager = Editor::Manager::GetInstance();
 	EngineCore& engineCore = editorManager.GetEngineCore();
 	entt::registry& registry = engineCore.GetEntityRegistry();
@@ -267,15 +267,59 @@ void Grindstone::Editor::EditorCamera::CaptureMousePick(GraphicsAPI::CommandBuff
 	matrixBuffer.viewMatrix = view;
 	mousePickMatrixBuffer[frameIndex]->UploadData(&matrixBuffer);
 
-	int32_t x = 40;
-	int32_t y = 32;
-	commandBuffer->SetViewport(static_cast<float>(x), static_cast<float>(y), static_cast<float>(1), static_cast<float>(1));
+	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
 	commandBuffer->SetScissor(x, y, 1, 1);
 
+	Grindstone::Rendering::RenderViewData viewData{
+		.projectionMatrix = projection,
+		.viewMatrix = view,
+		.renderTargetOffset = glm::vec2(0.0f, 0.0f),
+		.renderTargetSize = glm::vec2(static_cast<float>(width), static_cast<float>(height))
+	};
+
 	assetRendererManager->SetEngineDescriptorSet(mousePickDescriptorSet[frameIndex]);
-	assetRendererManager->RenderQueue(commandBuffer, registry, mousePickRenderQueue);
+	assetRendererManager->RenderQueue(commandBuffer, viewData, registry, mousePickRenderQueue);
+
+	hasQueuedMousePick = true;
 
 	commandBuffer->UnbindRenderPass();
+}
+
+bool EditorCamera::HasQueuedMousePick() const {
+	return hasQueuedMousePick;
+}
+
+uint32_t EditorCamera::GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandBuffer) {
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
+	EngineCore& engineCore = editorManager.GetEngineCore();
+	entt::registry& registry = engineCore.GetEntityRegistry();
+	Grindstone::AssetRendererManager* assetRendererManager = engineCore.assetRendererManager;
+	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	uint32_t frameIndex = (wgb->GetCurrentImageIndex() + (wgb->GetMaxFramesInFlight() - 1)) % wgb->GetMaxFramesInFlight();
+
+	Grindstone::GraphicsAPI::Buffer* buffer = mousePickResponseBuffer[frameIndex];
+
+	GraphicsAPI::BufferBarrier bufferBarrier{
+		.buffer = buffer,
+		.srcAccess = GraphicsAPI::AccessFlags::ShaderWrite,
+		.dstAccess = GraphicsAPI::AccessFlags::HostRead,
+		.offset = 0,
+		.size = static_cast<uint32_t>(buffer->GetSize())
+	};
+
+	commandBuffer->PipelineBarrier(
+		GraphicsAPI::PipelineStageBit::FragmentShader,
+		GraphicsAPI::PipelineStageBit::Host,
+		&bufferBarrier, 1,
+		nullptr, 0
+	);
+
+	MousePickResponseBuffer* mappedBuffer = reinterpret_cast<MousePickResponseBuffer*>(buffer->Map());
+	uint32_t entityId = mappedBuffer->entityId;
+	buffer->Unmap();
+	hasQueuedMousePick = false;
+	return entityId;
 }
 
 uint64_t EditorCamera::GetRenderOutput() {
