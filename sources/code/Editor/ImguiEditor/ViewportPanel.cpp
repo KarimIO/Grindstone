@@ -5,6 +5,7 @@
 
 #include <Common/Input/InputInterface.hpp>
 #include <Common/Window/WindowManager.hpp>
+#include <EngineCore/Logger.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
 #include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
@@ -19,6 +20,9 @@
 
 using namespace Grindstone::Memory;
 using namespace Grindstone::Editor::ImguiEditor;
+
+bool shouldMousePickClick = false;
+int clickX, clickY;
 
 static ImGuizmo::OPERATION ConvertManipulationModeToImGuizmoOperation(Editor::ManipulationMode mode) {
 	switch (mode) {
@@ -96,16 +100,20 @@ void ViewportPanel::HandleInput() {
 		return;
 	}
 
-	ImVec2 windowPos = ImGui::GetWindowPos();
-	ImVec2 viewportPanelRegionMin = ImGui::GetWindowContentRegionMin();
-	ImVec2 viewportPanelRegionMax = ImGui::GetWindowContentRegionMax();
+	if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+		ImVec2 imguiPanelScreenSpacePos = ImGui::GetWindowPos();			// Offset of the specific viewport panel from the screen
+		ImVec2 windowScreenSpacePos = ImGui::GetMainViewport()->Pos;		// Offset of the entire engine window from the screen
+		ImVec2 viewportPanelOffset = ImGui::GetWindowContentRegionMin();	// Offset of the image (the offset due to the toolbar)
 
-	unsigned int viewportCenterX = static_cast<unsigned int>((viewportPanelRegionMin.x + viewportPanelRegionMax.x) / 2 + windowPos.x);
-	unsigned int viewportCenterY = static_cast<unsigned int>((viewportPanelRegionMin.y + viewportPanelRegionMax.y) / 2 + windowPos.y);
+		input->GetMousePosition(clickX, clickY);
+
+		clickX -= imguiPanelScreenSpacePos.x + viewportPanelOffset.x - windowScreenSpacePos.x;
+		clickY -= imguiPanelScreenSpacePos.y + viewportPanelOffset.y - windowScreenSpacePos.y;
+
+		shouldMousePickClick = true;
+	}
 
 	if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
-		auto window = engineCore.windowManager->GetWindowByIndex(0);
-
 		input->GetMousePosition(startDragX, startDragY);
 
 		input->SetCursorIsRawMotion(true);
@@ -198,7 +206,9 @@ void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 
 	camera->ResizeViewport(width, height);
 
-	PlayMode playMode = Editor::Manager::GetInstance().GetPlayMode();
+	Grindstone::EngineCore& engineCore = Editor::Manager::GetEngineCore();
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
+	PlayMode playMode = editorManager.GetPlayMode();
 	if (playMode == PlayMode::Editor) {
 		camera->Render(commandBuffer);
 	}
@@ -206,7 +216,32 @@ void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 		camera->RenderPlayModeCamera(commandBuffer);
 	}
 
-	camera->CaptureMousePick(commandBuffer);
+	if (camera->HasQueuedMousePick()) {
+		Grindstone::SceneManagement::Scene* scene = engineCore.GetSceneManager()->scenes.begin()->second;
+		entt::entity entityId = static_cast<entt::entity>(camera->GetMousePickedEntity(commandBuffer));
+
+		if (ImGui::GetIO().KeyCtrl || ImGui::GetIO().KeyShift) {
+			if (entityId != entt::null) {
+				ECS::Entity entity(entityId, scene);
+				editorManager.GetSelection().AddEntity(entity);
+			}
+		}
+		else {
+			if (entityId != entt::null) {
+				ECS::Entity entity(entityId, scene);
+				editorManager.GetSelection().SetSelectedEntity(entity);
+			}
+			else {
+				editorManager.GetSelection().Clear();
+			}
+		}
+	}
+
+	if (shouldMousePickClick) {
+		camera->CaptureMousePick(commandBuffer, clickX, clickY);
+		shouldMousePickClick = false;
+	}
+
 }
 
 Grindstone::Editor::EditorCamera* ViewportPanel::GetCamera() const {
