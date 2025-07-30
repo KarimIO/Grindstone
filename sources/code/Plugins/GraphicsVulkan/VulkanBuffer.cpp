@@ -87,9 +87,13 @@ Vulkan::Buffer::~Buffer() {
 }
 
 void* Vulkan::Buffer::Map() {
-	if (!mappedMemoryPtr) {
+	if (mappedMemoryPtr == nullptr) {
 		VkDevice device = Vulkan::Core::Get().GetDevice();
-		vkMapMemory(device, deviceMemory, 0, bufferSize, 0, &mappedMemoryPtr);
+		VkResult result = vkMapMemory(device, deviceMemory, 0, bufferSize, 0, &mappedMemoryPtr);
+		if (result != VK_SUCCESS) {
+			GPRINT_ERROR_V(LogSource::GraphicsAPI, "Failed to map buffer memory!");
+			return nullptr;
+		}
 	}
 
 	return mappedMemoryPtr;
@@ -98,7 +102,7 @@ void* Vulkan::Buffer::Map() {
 void Vulkan::Buffer::Unmap() {
 	VkDevice device = Vulkan::Core::Get().GetDevice();
 
-	if (mappedMemoryPtr) {
+	if (mappedMemoryPtr != nullptr) {
 		vkUnmapMemory(device, deviceMemory);
 		mappedMemoryPtr = nullptr;
 	}
@@ -117,6 +121,7 @@ void Vulkan::Buffer::UploadData(const void* data, size_t size, size_t offset) {
 
 	if (ownsMemoryMap) {
 		vkUnmapMemory(device, deviceMemory);
+		mappedMemoryPtr = nullptr;
 	}
 }
 
