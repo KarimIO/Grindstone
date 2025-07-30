@@ -139,7 +139,7 @@ EditorCamera::EditorCamera() {
 
 		Grindstone::GraphicsAPI::Buffer::CreateInfo mousePickBufferResponseCreateInfo{};
 		mousePickBufferResponseCreateInfo.bufferSize = sizeof(MousePickResponseBuffer);
-		mousePickBufferResponseCreateInfo.memoryUsage = Grindstone::GraphicsAPI::MemUsage::CPUToGPU;
+		mousePickBufferResponseCreateInfo.memoryUsage = Grindstone::GraphicsAPI::MemUsage::CPUOnly;
 		mousePickBufferResponseCreateInfo.bufferUsage = Grindstone::GraphicsAPI::BufferUsage::Storage | GraphicsAPI::BufferUsage::TransferSrc | Grindstone::GraphicsAPI::BufferUsage::TransferDst;
 		mousePickBufferResponseCreateInfo.content = &mousePickResponseInitialBuffer;
 
@@ -283,6 +283,8 @@ void Grindstone::Editor::EditorCamera::CaptureMousePick(GraphicsAPI::CommandBuff
 	hasQueuedMousePick = true;
 
 	commandBuffer->UnbindRenderPass();
+
+	GPRINT_INFO_V(LogSource::Editor, "Mouse X,Y: ({},{})", x, y);
 }
 
 bool EditorCamera::HasQueuedMousePick() const {
@@ -317,8 +319,10 @@ uint32_t EditorCamera::GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandB
 
 	MousePickResponseBuffer* mappedBuffer = reinterpret_cast<MousePickResponseBuffer*>(buffer->Map());
 	uint32_t entityId = mappedBuffer->entityId;
+	GPRINT_INFO_V(LogSource::Editor, "Return ID, Depth: ({},{})", mappedBuffer->entityId, mappedBuffer->depth);
 	buffer->Unmap();
 	hasQueuedMousePick = false;
+
 	return entityId;
 }
 
