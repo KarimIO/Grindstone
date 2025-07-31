@@ -25,6 +25,9 @@ using namespace Grindstone;
 const Grindstone::ConstHashedString editorRenderPassHashedString("Editor");
 const Grindstone::ConstHashedString gizmoRenderPassHashedString("Gizmo");
 const Grindstone::ConstHashedString mousePickRenderQueue("MousePick");
+static GraphicsAPI::RenderPass* editorRenderPass = nullptr;
+static GraphicsAPI::RenderPass* gizmoRenderPass = nullptr;
+static GraphicsAPI::RenderPass* mousePickRenderPass = nullptr;
 
 struct MousePickMatrixBuffer {
 	glm::mat4 projectionMatrix;
@@ -35,6 +38,48 @@ struct MousePickResponseBuffer {
 	float depth;
 	uint32_t entityId;
 };
+
+void EditorCamera::SetupRenderPasses() {
+	EngineCore& engineCore = Editor::Manager::GetEngineCore();
+	Grindstone::RenderPassRegistry* renderPassRegistry = engineCore.GetRenderPassRegistry();
+	GraphicsAPI::Core* core = engineCore.GetGraphicsCore();
+
+
+	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> attachments = { { GraphicsAPI::Format::R8G8B8A8_UNORM, true } };
+
+	GraphicsAPI::RenderPass::CreateInfo editorRenderPassCreateInfo{};
+	editorRenderPassCreateInfo.debugName = "Editor RenderPass";
+	editorRenderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(attachments.size());
+	editorRenderPassCreateInfo.colorAttachments = attachments.data();
+	editorRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
+	editorRenderPassCreateInfo.shouldClearDepthOnLoad = true;
+	editorRenderPass = core->CreateRenderPass(editorRenderPassCreateInfo);
+	renderPassRegistry->RegisterRenderpass(editorRenderPassHashedString, editorRenderPass);
+
+	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> gizmoAttachments = { { GraphicsAPI::Format::R8G8B8A8_UNORM, false } };
+
+	GraphicsAPI::RenderPass::CreateInfo gizmoRenderPassCreateInfo{};
+	gizmoRenderPassCreateInfo.debugName = "Editor Gizmo RenderPass";
+	gizmoRenderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(gizmoAttachments.size());
+	gizmoRenderPassCreateInfo.colorAttachments = gizmoAttachments.data();
+	gizmoRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
+	gizmoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
+	gizmoRenderPass = core->CreateRenderPass(gizmoRenderPassCreateInfo);
+	renderPassRegistry->RegisterRenderpass(gizmoRenderPassHashedString, gizmoRenderPass);
+
+
+	GraphicsAPI::Format mousePickColorImageFormat = GraphicsAPI::Format::R32_UINT;
+	GraphicsAPI::RenderPass::AttachmentInfo mousePickAttachmentInfo = { mousePickColorImageFormat, true };
+
+	GraphicsAPI::RenderPass::CreateInfo mousePickRenderPassCreateInfo{};
+	mousePickRenderPassCreateInfo.debugName = "MousePick RenderPass";
+	mousePickRenderPassCreateInfo.colorAttachmentCount = 1u;
+	mousePickRenderPassCreateInfo.colorAttachments = &mousePickAttachmentInfo;
+	mousePickRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::Invalid;
+	mousePickRenderPassCreateInfo.shouldClearDepthOnLoad = false;
+	mousePickRenderPass = core->CreateRenderPass(mousePickRenderPassCreateInfo);
+	renderPassRegistry->RegisterRenderpass(mousePickRenderQueue, mousePickRenderPass);
+}
 
 EditorCamera::EditorCamera() {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
@@ -66,56 +111,24 @@ EditorCamera::EditorCamera() {
 		GraphicsAPI::ImageUsageFlags::DepthStencil;
 	depthTarget = core->CreateImage(depthTargetCreateInfo);
 
-	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> attachments = { { renderTargetCreateInfo.format, true } };
-
-	GraphicsAPI::RenderPass::CreateInfo renderPassCreateInfo{};
-	renderPassCreateInfo.debugName = "Editor RenderPass";
-	renderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(attachments.size());
-	renderPassCreateInfo.colorAttachments = attachments.data();
-	renderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
-	renderPassCreateInfo.shouldClearDepthOnLoad = true;
-	renderPass = core->CreateRenderPass(renderPassCreateInfo);
-	renderPassRegistry->RegisterRenderpass(editorRenderPassHashedString, renderPass);
-
-	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> gizmoAttachments = { { renderTargetCreateInfo.format, false } };
-
-	GraphicsAPI::RenderPass::CreateInfo gizmoRenderPassCreateInfo{};
-	gizmoRenderPassCreateInfo.debugName = "Editor Gizmo RenderPass";
-	gizmoRenderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(gizmoAttachments.size());
-	gizmoRenderPassCreateInfo.colorAttachments = gizmoAttachments.data();
-	gizmoRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
-	gizmoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
-	gizmoRenderPass = core->CreateRenderPass(gizmoRenderPassCreateInfo);
-	renderPassRegistry->RegisterRenderpass(gizmoRenderPassHashedString, gizmoRenderPass);
-
 	GraphicsAPI::Framebuffer::CreateInfo framebufferCreateInfo{};
 	framebufferCreateInfo.debugName = "Editor Framebuffer";
 	framebufferCreateInfo.renderTargets = &renderTarget;
 	framebufferCreateInfo.renderTargetCount = 1;
 	framebufferCreateInfo.depthTarget = depthTarget;
-	framebufferCreateInfo.renderPass = renderPass;
+	framebufferCreateInfo.renderPass = editorRenderPass;
 	framebufferCreateInfo.width = framebufferWidth;
 	framebufferCreateInfo.height = framebufferHeight;
 	framebuffer = core->CreateFramebuffer(framebufferCreateInfo);
 
 	{
 		GraphicsAPI::Format mousePickColorImageFormat = GraphicsAPI::Format::R32_UINT;
-		GraphicsAPI::RenderPass::AttachmentInfo mousePickAttachmentInfo = { mousePickColorImageFormat, true };
 
 		GraphicsAPI::Image::CreateInfo mousePickRenderTargetCreateInfo{};
 		mousePickRenderTargetCreateInfo.width = 1;
 		mousePickRenderTargetCreateInfo.height = 1;
 		mousePickRenderTargetCreateInfo.format = mousePickColorImageFormat;
 		mousePickRenderTargetCreateInfo.imageUsage = GraphicsAPI::ImageUsageFlags::Sampled | GraphicsAPI::ImageUsageFlags::RenderTarget;
-
-		GraphicsAPI::RenderPass::CreateInfo mousePickRenderPassCreateInfo{};
-		mousePickRenderPassCreateInfo.debugName = "MousePick RenderPass";
-		mousePickRenderPassCreateInfo.colorAttachmentCount = 1u;
-		mousePickRenderPassCreateInfo.colorAttachments = &mousePickAttachmentInfo;
-		mousePickRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::Invalid;
-		mousePickRenderPassCreateInfo.shouldClearDepthOnLoad = true;
-		mousePickRenderPass = core->CreateRenderPass(mousePickRenderPassCreateInfo);
-		renderPassRegistry->RegisterRenderpass(mousePickRenderQueue, mousePickRenderPass);
 
 		GraphicsAPI::Framebuffer::CreateInfo mousePickFramebufferCreateInfo{};
 		mousePickFramebufferCreateInfo.renderTargetCount = 1;
@@ -220,10 +233,10 @@ EditorCamera::EditorCamera() {
 	descriptorSetCreateInfo.layout = descriptorSetLayout;
 	descriptorSet = core->CreateDescriptorSet(descriptorSetCreateInfo);
 
-	gridRenderer.Initialize(renderPass);
-	gizmoRenderer.Initialize(renderPass);
+	gridRenderer.Initialize();
+	gizmoRenderer.Initialize();
 
-	renderer = engineCore.GetRendererFactory()->CreateRenderer(renderPass);
+	renderer = engineCore.GetRendererFactory()->CreateRenderer(editorRenderPass);
 	UpdateViewMatrix();
 }
 
@@ -299,7 +312,6 @@ uint32_t EditorCamera::GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandB
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	uint32_t frameIndex = (wgb->GetCurrentImageIndex() + (wgb->GetMaxFramesInFlight() - 1)) % wgb->GetMaxFramesInFlight();
-
 	Grindstone::GraphicsAPI::Buffer* buffer = mousePickResponseBuffer[frameIndex];
 
 	GraphicsAPI::BufferBarrier bufferBarrier{

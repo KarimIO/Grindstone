@@ -159,7 +159,11 @@ shaderBlock GsMousePickRenderer {
 		const uint kIdentityOffset = 4;
 
 		void UpdatePickingBuffer(uint identity, float z) {
-			pickingBuffer.Store(0, asuint(z));
+			uint d = asuint(z);
+			if (d >= pickingBuffer.Load(0))
+				return;
+
+			pickingBuffer.Store(0, asuint(d));
 			pickingBuffer.Store(4, identity);
 		}
 

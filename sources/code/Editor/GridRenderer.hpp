@@ -19,7 +19,7 @@ namespace Grindstone::GraphicsAPI {
 namespace Grindstone::Editor {
 	class GridRenderer {
 	public:
-		void Initialize(class Grindstone::GraphicsAPI::RenderPass* renderPass);
+		void Initialize();
 		void Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, glm::vec2 renderScale, glm::mat4 proj, glm::mat4 view, float nearDist, float farDist, glm::quat rotation, float offset);
 	protected:
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> pipelineSet;
