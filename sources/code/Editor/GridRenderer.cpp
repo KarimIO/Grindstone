@@ -36,7 +36,7 @@ struct GridUniformBuffer {
 	float farDistance;
 };
 
-void GridRenderer::Initialize(GraphicsAPI::RenderPass* renderPass) {
+void GridRenderer::Initialize() {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	auto wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();

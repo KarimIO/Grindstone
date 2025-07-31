@@ -24,6 +24,7 @@ namespace Grindstone {
 	namespace Editor {
 		class EditorCamera {
 		public:
+			static void SetupRenderPasses();
 			EditorCamera();
 			~EditorCamera();
 			void CaptureMousePick(GraphicsAPI::CommandBuffer* commandBuffer, int x, int y);
@@ -55,14 +56,11 @@ namespace Grindstone {
 			GraphicsAPI::Image* renderTarget = nullptr;
 			GraphicsAPI::Image* depthTarget = nullptr;
 			GraphicsAPI::Sampler* sampler = nullptr;
-			GraphicsAPI::RenderPass* renderPass = nullptr;
-			GraphicsAPI::RenderPass* gizmoRenderPass = nullptr;
 			GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
 			GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
 			GraphicsAPI::Framebuffer* framebuffer = nullptr;
 
 			GraphicsAPI::DescriptorSetLayout* mousePickDescriptorSetLayout = nullptr;
-			GraphicsAPI::RenderPass* mousePickRenderPass = nullptr;
 			std::array<GraphicsAPI::Image*, 3> mousePickRenderTarget{};
 			std::array<GraphicsAPI::Framebuffer*, 3> mousePickFramebuffer{};
 			std::array<GraphicsAPI::DescriptorSet*, 3> mousePickDescriptorSet{};

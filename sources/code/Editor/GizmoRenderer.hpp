@@ -20,7 +20,7 @@ namespace Grindstone::GraphicsAPI {
 namespace Grindstone::Editor {
 	class GizmoRenderer {
 	public:
-		void Initialize(class Grindstone::GraphicsAPI::RenderPass* renderPass);
+		void Initialize();
 		void SubmitCubeGizmo(const glm::mat4& transform, glm::vec3 size, glm::vec4 color = glm::vec4(1.0f));
 		void SubmitCapsuleGizmo(const glm::mat4& transform, float height, float radius, glm::vec4 color = glm::vec4(1.0f));
 		void SubmitPlaneGizmo(const glm::mat4& transform, glm::vec3 normal, float positionAlongNormal, glm::vec4 color = glm::vec4(1.0f));

@@ -24,6 +24,7 @@
 #include <EngineCore/WorldContext/WorldContextManager.hpp>
 #include <EngineCore/Logger.hpp>
 
+#include "EditorCamera.hpp"
 #include "AssetRegistry.hpp"
 #include "AssetTemplateRegistry.hpp"
 #include "EditorManager.hpp"
@@ -124,6 +125,8 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 
 	gitManager.Initialize();
 	csharpBuildManager.FinishInitialFileProcessing();
+
+	Grindstone::Editor::EditorCamera::SetupRenderPasses();
 
 	editorWorldContext = engineCore->GetWorldContextManager()->Create();
 	engineCore->InitializeScene(true);
