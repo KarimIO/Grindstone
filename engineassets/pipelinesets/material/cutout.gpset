@@ -20,7 +20,6 @@ pipelineSet "lit.cutout" {
 
 			properties {
 				cull: back
-				depthBias: false
 				depthWrite: true
 				depthTest: true
 				depthClamp: false
@@ -47,17 +46,20 @@ pipelineSet "lit.cutout" {
 			]
 
 			shaderHlsl {
+				/*
+				TODO: Shifted samplers and textures up, need to revert.
 				struct MaterialInstanceUBO {
-					float3 color;
+					float4 color;
 				};
 
 				ConstantBuffer<MaterialInstanceUBO> materialInstanceUbo : register(b0, space1);
+				*/
 
-				SamplerState textureSampler : register(s1, space1);
-				Texture2D<float4> albedoTexture : register(t2, space1);
-				Texture2D<float4> normalTexture : register(t3, space1);
-				Texture2D<float4> metalnessTexture : register(t4, space1);
-				Texture2D<float4> roughnessTexture : register(t5, space1);
+				SamplerState textureSampler : register(s0, space1);
+				Texture2D<float4> albedoTexture : register(t1, space1);
+				Texture2D<float4> normalTexture : register(t2, space1);
+				Texture2D<float4> metalnessTexture : register(t3, space1);
+				Texture2D<float4> roughnessTexture : register(t4, space1);
 
 				struct FragmentOutput {
 					[[vk::location(0)]] float4 gbufferAlbedoMatID : SV_TARGET0;
@@ -66,7 +68,7 @@ pipelineSet "lit.cutout" {
 				};
 
 				FragmentOutput mainFragment(VertexToFragment input) {
-					float4 albedo = float4(materialInstanceUbo.color.rgb, 1) * albedoTexture.Sample(textureSampler, input.texCoord0);
+					float4 albedo = albedoTexture.Sample(textureSampler, input.texCoord0);
 
 					if (albedo.a < 0.5f) {
 						discard;
@@ -86,6 +88,79 @@ pipelineSet "lit.cutout" {
 					return output;
 				}
 			}
+		}
+
+		pass "shadowMap" {
+			shaderEntrypoint: vertex mainShadowVertex
+			shaderEntrypoint: fragment mainShadowFragment
+			renderQueue: "ShadowMap"
+
+			properties {
+				cull: none
+				depthBias: 0.1, 1.0, 0.0
+				depthWrite: true
+				depthTest: true
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: []
+			}
+
+			requiresBlocks [
+				GsMeshRendererVertexInput,
+				GsMeshRendererInstanceUbo,
+				GsShadowRendererUniform
+			]
+
+			shaderHlsl {
+				struct VertexToFragment {
+					float4 position : SV_Position;
+					[[vk::location(0)]] float2 texCoord0 : TEXCOORD0;
+				};
+
+				SamplerState textureSampler : register(s0, space1);
+				Texture2D<float4> albedoTexture : register(t1, space1);
+
+				VertexToFragment mainShadowVertex(VertexInput input) {
+					VertexToFragment output;
+
+					float4 worldPos = mul(renderInstanceUbo.modelMatrix, float4(input.position.xyz, 1.0));
+					output.position = mul(rendererUbo.projectionViewMatrix, worldPos);
+
+					return output;
+				}
+
+				void mainShadowFragment(VertexToFragment input) {
+					float4 albedo = albedoTexture.Sample(textureSampler, input.texCoord0);
+
+					if (albedo.a < 0.5f) {
+						discard;
+					}
+				}
+			}
+		}
+
+		pass "mousePick" {
+			shaderEntrypoint: vertex mainMousePickVertex
+			shaderEntrypoint: fragment mainMousePickFragment
+			renderQueue: "MousePick"
+
+			properties {
+				cull: back
+				depthWrite: true
+				depthTest: true
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: [
+					{
+						colorMask: rgba
+						blendPreset: opaque
+					}
+				]
+			}
+
+			requiresBlocks [
+				GsMousePickRenderer
+			]
 		}
 	}
 }
