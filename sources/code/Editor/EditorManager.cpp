@@ -109,6 +109,7 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	);
 
 	assetRegistry.Initialize(projectPath);
+	importerManager.Initialize();
 
 	fileManager.WatchDirectory("ASSETS", assetsPath);
 	fileManager.WatchDirectory("ENGINE", engineBinariesPath.parent_path() / "engineassets");
