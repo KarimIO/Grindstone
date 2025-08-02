@@ -80,13 +80,13 @@ void AssetManager::ReloadQueuedAssets() {
 	for (const auto& [assetType, uuid] : queuedAssetReloads) {
 		const size_t assetTypeSizeT = static_cast<size_t>(assetType);
 		if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
-			return;
+			continue;
 		}
 
 		AssetImporter* assetImporter = assetTypeImporters[assetTypeSizeT];
 
 		if (assetImporter == nullptr) {
-			return;
+			continue;
 		}
 
 		assetImporter->QueueReloadAsset(uuid);
