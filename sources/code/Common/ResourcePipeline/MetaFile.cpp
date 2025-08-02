@@ -128,6 +128,30 @@ void MetaFile::Load(AssetRegistry& assetRegistry, const std::filesystem::path& b
 }
 
 void MetaFile::Save(uint32_t currentImporterVersion) {
+	// We need to ensure AssetRegistry is updated, because otherwise, if the meta file doesn't need an update, the
+	// AssetRegistry can get out of sync.
+	if (defaultSubasset.subassetIdentifier != "") {
+		assetRegistry->UpdateEntry(
+			baseAssetPath,
+			defaultSubasset.subassetIdentifier,
+			defaultSubasset.displayName,
+			defaultSubasset.address,
+			defaultSubasset.uuid,
+			defaultSubasset.assetType
+		);
+	}
+
+	for (auto& subasset : subassets) {
+		assetRegistry->UpdateEntry(
+			baseAssetPath,
+			subasset.subassetIdentifier,
+			subasset.displayName,
+			subasset.address,
+			subasset.uuid,
+			subasset.assetType
+		);
+	}
+
 	if (importerVersion == currentImporterVersion && !isDirty && !importerSettings.isDirty) {
 		return;
 	}
@@ -167,15 +191,6 @@ void MetaFile::Save(uint32_t currentImporterVersion) {
 				documentWriter.Key("type");
 				documentWriter.String(GetAssetTypeToString(defaultSubasset.assetType));
 				documentWriter.EndObject();
-
-				assetRegistry->UpdateEntry(
-					baseAssetPath,
-					defaultSubasset.subassetIdentifier,
-					defaultSubasset.displayName,
-					defaultSubasset.address,
-					defaultSubasset.uuid,
-					defaultSubasset.assetType
-				);
 			}
 
 			for (auto& subasset : subassets) {
@@ -191,15 +206,6 @@ void MetaFile::Save(uint32_t currentImporterVersion) {
 				documentWriter.Key("type");
 				documentWriter.String(GetAssetTypeToString(subasset.assetType));
 				documentWriter.EndObject();
-
-				assetRegistry->UpdateEntry(
-					baseAssetPath,
-					subasset.subassetIdentifier,
-					subasset.displayName,
-					subasset.address,
-					subasset.uuid,
-					subasset.assetType
-				);
 			}
 			documentWriter.EndArray();
 		}
