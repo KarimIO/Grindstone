@@ -14,9 +14,9 @@ using namespace Grindstone::Assets;
 using namespace Grindstone::Editor;
 using namespace Grindstone::Importers;
 
-static void ImportCopyFile(Grindstone::AssetType assetType, AssetRegistry& assetRegistry, AssetManager& assetManager, const std::filesystem::path& path, Grindstone::Editor::ImporterVersion assetVersion) {
-	Grindstone::Editor::MetaFile metaFile = assetRegistry.GetMetaFileByPath(path);
-	std::string subassetName = path.filename().string();
+static void ImportCopyFile(Grindstone::AssetType assetType, AssetRegistry& assetRegistry, AssetManager& assetManager, const std::filesystem::path& inputPath, Grindstone::Editor::ImporterVersion assetVersion) {
+	Grindstone::Editor::MetaFile metaFile = assetRegistry.GetMetaFileByPath(inputPath);
+	std::string subassetName = inputPath.filename().string();
 	size_t dotPos = subassetName.find('.');
 	if (dotPos != std::string::npos) {
 		subassetName = subassetName.substr(0, dotPos);
@@ -25,8 +25,9 @@ static void ImportCopyFile(Grindstone::AssetType assetType, AssetRegistry& asset
 	Grindstone::Uuid uuid = metaFile.GetOrCreateDefaultSubassetUuid(subassetName, assetType);
 
 	std::filesystem::path outputPath = Grindstone::Editor::Manager::GetInstance().GetCompiledAssetsPath() / uuid.ToString();
-	std::filesystem::copy(path, outputPath, std::filesystem::copy_options::overwrite_existing);
+	std::filesystem::copy(inputPath, outputPath, std::filesystem::copy_options::overwrite_existing);
 	metaFile.Save(assetVersion);
+	std::filesystem::last_write_time(outputPath, std::filesystem::file_time_type::clock::now());
 
 	assetManager.QueueReloadAsset(assetType, uuid);
 }
