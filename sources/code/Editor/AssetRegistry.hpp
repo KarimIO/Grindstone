@@ -15,12 +15,14 @@ namespace Grindstone::Editor {
 	class AssetRegistry {
 	public:
 		struct Entry {
-			Uuid uuid;
+			Grindstone::Uuid uuid;
 			std::string displayName;
 			std::string subassetIdentifier;
 			std::string address;
 			std::filesystem::path path;
 			AssetType assetType;
+			std::vector<Grindstone::Uuid> dependencies;
+			std::unordered_set<Grindstone::Uuid> reverseDependencies;
 		};
 
 	public:
@@ -33,8 +35,9 @@ namespace Grindstone::Editor {
 			const std::string_view subassetIdentifier,
 			const std::string_view displayName,
 			const std::string_view address,
-			Uuid& uuid,
-			AssetType assetType
+			Grindstone::Uuid& uuid,
+			AssetType assetType,
+			std::vector<Grindstone::Uuid> dependencies
 		);
 		virtual void WriteFile();
 		virtual void ReadFile();

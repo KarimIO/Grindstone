@@ -40,20 +40,26 @@ void AssetRegistry::UpdateEntry(
 	const std::string_view displayName,
 	const std::string_view address,
 	Uuid& uuid,
-	AssetType assetType
+	AssetType assetType,
+	std::vector<Grindstone::Uuid> dependencies
 ) {
 	std::filesystem::path mountedPath;
 	TryGetPathWithMountPoint(path, mountedPath);
 	Utils::FixPathSlashes(mountedPath);
 
-	assets[uuid] = Entry{
+	auto& insertedAsset = assets[uuid] = Entry{
 		uuid,
 		std::string(displayName),
 		std::string(subassetIdentifier),
 		std::string(address),
 		mountedPath,
-		assetType
+		assetType,
+		dependencies
 	};
+
+	for (Grindstone::Uuid dependencyUuid : dependencies) {
+		insertedAsset.reverseDependencies.insert(dependencyUuid);
+	}
 }
 
 void AssetRegistry::WriteFile() {
@@ -75,6 +81,14 @@ void AssetRegistry::WriteFile() {
 		documentWriter.String(entry.uuid.ToString().c_str());
 		documentWriter.Key("assetType");
 		documentWriter.String(GetAssetTypeToString(entry.assetType));
+		if (entry.dependencies.size() > 0) {
+			documentWriter.Key("dependencies");
+			documentWriter.StartArray();
+			for (const Grindstone::Uuid& uuid : entry.dependencies) {
+				documentWriter.String(uuid.ToString().c_str());
+			}
+		}
+		documentWriter.EndArray();
 		documentWriter.EndObject();
 	}
 	documentWriter.EndArray();
@@ -111,14 +125,15 @@ void AssetRegistry::ReadFile() {
 		const char* displayName = asset["displayName"].GetString();
 		const char* address = asset["address"].GetString();
 		const char* path = asset["path"].GetString();
+		const char* uuidStr = asset["uuid"].GetString();
 		Uuid uuid;
-		if (!Grindstone::Uuid::MakeFromString(asset["uuid"].GetString(), uuid)) {
-			GPRINT_FATAL_V(Grindstone::LogSource::EngineCore, "Unable to make uuid for asset from {}", asset["uuid"].GetString());
+		if (!Grindstone::Uuid::MakeFromString(uuidStr, uuid)) {
+			GPRINT_FATAL_V(Grindstone::LogSource::EngineCore, "Unable to make uuid for asset from {}", uuidStr);
 			continue;
 		}
 		const AssetType assetType = GetAssetTypeFromString(asset["assetType"].GetString());
 
-		assets[uuid] = Entry{
+		auto& insertedAsset = assets[uuid] = Entry{
 			uuid,
 			std::string(displayName),
 			std::string(subassetIdentifier),
@@ -126,6 +141,20 @@ void AssetRegistry::ReadFile() {
 			path,
 			assetType
 		};
+
+		if (asset.HasMember("dependencies")) {
+			rapidjson::Value& dependencies = asset["dependencies"];
+			for (rapidjson::Value& dependency : dependencies.GetArray()) {
+				const char* depAsStr = dependency.GetString();
+				Uuid depUuid;
+				if (Grindstone::Uuid::MakeFromString(depAsStr, depUuid)) {
+					insertedAsset.dependencies.emplace_back(depUuid);
+				}
+				else {
+					GPRINT_FATAL_V(Grindstone::LogSource::EngineCore, "Unable to make uuid for dependency {} for asset from {}", depAsStr, uuidStr);
+				}
+			}
+		}
 	}
 }
 

@@ -200,7 +200,9 @@ void FileManager::DispatchTask(const std::filesystem::path& path) const {
 	taskSystem.Execute(jobName, [path] {
 		GPRINT_TRACE_V(LogSource::Editor, "Importing {}", path.string().c_str());
 		std::filesystem::path nPath = path;
-		auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
+		Grindstone::Editor::Manager& editorManager = Editor::Manager::GetInstance();
+		Grindstone::Editor::AssetRegistry& assetRegistry = editorManager.GetAssetRegistry();
+		Grindstone::Importers::ImporterManager& importManager = editorManager.GetImporterManager();
 		importManager.Import(nPath);
 		GPRINT_TRACE_V(LogSource::Editor, "Finished importing {}", path.string().c_str());
 	});
@@ -369,7 +371,11 @@ void FileManager::HandleAddMetaFile(const MountPoint& mountPoint, const std::fil
 	}
 }
 
-void FileManager::HandleModifyMetaFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& directoryEntry) {
+void FileManager::HandleModifyMetaFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& directoryEntry) {;
+	auto assetFilePath = GetFileFromMetaPath(directoryEntry);
+	if (std::filesystem::exists(assetFilePath)) {
+		UpdateCompiledFileIfNecessary(mountPoint, assetFilePath);
+	}
 }
 
 void FileManager::HandleModifyFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& directoryEntry) {
