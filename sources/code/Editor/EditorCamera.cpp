@@ -296,8 +296,6 @@ void Grindstone::Editor::EditorCamera::CaptureMousePick(GraphicsAPI::CommandBuff
 	assetRendererManager->RenderQueue(commandBuffer, viewData, registry, mousePickRenderQueue);
 
 	commandBuffer->UnbindRenderPass();
-
-	GPRINT_INFO_V(LogSource::Editor, "Mouse X,Y: ({},{})", x, y);
 }
 
 uint32_t EditorCamera::GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandBuffer) {
@@ -327,7 +325,6 @@ uint32_t EditorCamera::GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandB
 
 	MousePickResponseBuffer* mappedBuffer = reinterpret_cast<MousePickResponseBuffer*>(buffer->Map());
 	uint32_t entityId = mappedBuffer->entityId;
-	GPRINT_INFO_V(LogSource::Editor, "Return ID, Depth: ({},{})", mappedBuffer->entityId, mappedBuffer->depth);
 	buffer->Unmap();
 
 	return entityId;
