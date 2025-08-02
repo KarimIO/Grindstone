@@ -35,6 +35,8 @@ namespace Grindstone::Editor {
 			uint32_t metaFileVersion;
 			uint64_t assetFileSize;
 			uint64_t metaFileSize;
+			std::vector<Grindstone::Uuid> dependencies;
+			std::unordered_set<Grindstone::Uuid> reverseDependencies;
 		};
 
 	public:
@@ -55,7 +57,8 @@ namespace Grindstone::Editor {
 			uint32_t assetImporterVersion,
 			uint32_t metaFileVersion,
 			uint64_t assetFileSize,
-			uint64_t metaFileSize
+			uint64_t metaFileSize,
+			std::vector<Grindstone::Uuid> dependencies
 		);
 		virtual void WriteFile();
 		virtual void ReadFile();

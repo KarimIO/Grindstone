@@ -48,12 +48,13 @@ void AssetRegistry::UpdateEntry(
 	uint32_t metaFileVersion,
 	uint64_t assetFileSize,
 	uint64_t metaFileSize
+	std::vector<Grindstone::Uuid> dependencies
 ) {
 	std::filesystem::path mountedPath;
 	TryGetPathWithMountPoint(path, mountedPath);
 	Utils::FixPathSlashes(mountedPath);
 
-	assets[uuid] = Entry{
+	auto& insertedAsset = assets[uuid] = Entry{
 		.status = status,
 		.uuid = uuid,
 		.displayName = std::string(displayName),
@@ -66,8 +67,13 @@ void AssetRegistry::UpdateEntry(
 		.assetImporterVersion = assetImporterVersion,
 		.metaFileVersion = metaFileVersion,
 		.assetFileSize = assetFileSize,
-		.metaFileSize = metaFileSize
+		.metaFileSize = metaFileSize,
+		.dependencies = std::moved(dependencies)
 	};
+
+	for (Grindstone::Uuid dependencyUuid : dependencies) {
+		insertedAsset.reverseDependencies.insert(dependencyUuid);
+	}
 }
 
 void AssetRegistry::WriteFile() {
@@ -103,6 +109,14 @@ void AssetRegistry::WriteFile() {
 		documentWriter.Uint(entry.assetFileSize);
 		documentWriter.Key("metaFileSize");
 		documentWriter.Uint(entry.metaFileSize);
+		if (entry.dependencies.size() > 0) {
+			documentWriter.Key("dependencies");
+			documentWriter.StartArray();
+			for (const Grindstone::Uuid& uuid : entry.dependencies) {
+				documentWriter.String(uuid.ToString().c_str());
+			}
+			documentWriter.EndArray();
+		}
 		documentWriter.EndObject();
 	}
 	documentWriter.EndArray();
@@ -173,7 +187,7 @@ void AssetRegistry::ReadFile() {
 
 		const AssetType assetType = GetAssetTypeFromString(asset["assetType"].GetString());
 
-		assets[uuid] = Entry{
+		auto& insertedAsset = assets[uuid] = Entry{
 			.uuid = uuid,
 			.displayName = std::string(displayName),
 			.subassetIdentifier = std::string(subassetIdentifier),
@@ -187,6 +201,20 @@ void AssetRegistry::ReadFile() {
 			.assetFileSize = assetFileSize,
 			.metaFileSize = metaFileSize,
 		};
+
+		if (asset.HasMember("dependencies")) {
+			rapidjson::Value& dependencies = asset["dependencies"];
+			for (rapidjson::Value& dependency : dependencies.GetArray()) {
+				const char* depAsStr = dependency.GetString();
+				Uuid depUuid;
+				if (Grindstone::Uuid::MakeFromString(depAsStr, depUuid)) {
+					insertedAsset.dependencies.emplace_back(depUuid);
+				}
+				else {
+					GPRINT_FATAL_V(Grindstone::LogSource::EngineCore, "Unable to make uuid for dependency {} for asset from {}", depAsStr, uuidStr);
+				}
+			}
+		}
 	}
 }
 
