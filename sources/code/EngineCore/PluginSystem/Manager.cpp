@@ -1,9 +1,13 @@
+#include <EngineCore/Profiling.hpp>
+#include <EngineCore/Utils/Utilities.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Logger.hpp>
+
 #include "Manager.hpp"
 #include "Interface.hpp"
-#include "../Profiling.hpp"
-#include "EngineCore/Utils/Utilities.hpp"
-#include "EngineCore/EngineCore.hpp"
-#include "EngineCore/Logger.hpp"
+#include "PluginManifestFileLoader.hpp"
+#include "PluginManifestLockFileLoader.hpp"
+
 using namespace Grindstone::Plugins;
 using namespace Grindstone::Utilities;
 
@@ -27,30 +31,44 @@ Manager::~Manager() {
 	}
 }
 
-void Manager::LoadPluginList() {
-	auto& engineCore = EngineCore::GetInstance();
-	std::filesystem::path pluginListFIle = engineCore.GetProjectPath() / "buildSettings/pluginsManifest.txt";
-	auto prefabListFilePath = pluginListFIle.string();
-	auto fileContents = Utils::LoadFileText(prefabListFilePath.c_str());
+#include <EngineCore/PluginSystem/PluginMetaFileLoader.hpp>
 
-	size_t start = 0, end;
-	std::string pluginName;
-	while (true) {
-		end = fileContents.find("\n", start);
-		if (end == std::string::npos) {
-			pluginName = Utils::Trim(fileContents.substr(start));
-			if (!pluginName.empty()) {
-				Load(pluginName.c_str());
-			}
+bool Manager::LoadPluginList() {
+	std::vector<Grindstone::Plugins::ManifestData> manifestResults{};
+	if (!Grindstone::Plugins::LoadPluginManifestFile(manifestResults)) {
+		return false;
+	}
 
-			break;
+	if (!Grindstone::Plugins::LoadPluginManifestLockFile(manifestResults)) {
+		return false;
+	}
+
+	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path();
+
+	for (Grindstone::Plugins::ManifestData& manifestData : manifestResults) {
+		Grindstone::Plugins::MetaData metaData{};
+		std::filesystem::path metaFilePath = basePath / manifestData.path / "plugin.meta.json";
+		if (Grindstone::Plugins::ReadMetaFile(metaFilePath, metaData)) {
+			resolvedPluginManifest.emplace_back(metaData);
+		}
+	}
+
+	return true;
+}
+
+void Manager::LoadPluginsOfStage(const char* stageName) {
+	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins";
+
+	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
+		if (metaData.loadStage != stageName) {
+			continue;
 		}
 
-		pluginName = Utils::Trim(fileContents.substr(start, end - start));
-		if (!pluginName.empty()) {
-			Load(pluginName.c_str());
+		std::filesystem::path pluginPath = basePath / metaData.name;
+		for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
+			std::filesystem::path binaryPath = pluginPath / binary.libraryRelativePath;
+			Load(binaryPath.string().c_str());
 		}
-		start = end + 1;
 	}
 }
 
@@ -116,8 +134,8 @@ Interface& Manager::GetInterface() {
 
 bool Manager::Load(const char *path) {
 #ifdef _DEBUG
-	std::string profile_str = std::string("Loading module ") + path;
-	GRIND_PROFILE_SCOPE(profile_str.c_str());
+	std::string profileStr = std::string("Loading module ") + path;
+	GRIND_PROFILE_SCOPE(profileStr.c_str());
 #endif
 
 	// Return true if plugin already loaded

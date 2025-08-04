@@ -1,0 +1,16 @@
+{
+	"name": "Grindstone.Editor.PipelineSetImporter",
+	"displayName": "PipelineSet Importer",
+	"version": "0.3.0",
+	"description": "Allows the editor to import pipeline sets (groups of shaders) assets and convert them to a Grindstone-supported format.",
+	"author": "Grindstone Foundation",
+	"assets": [],
+	"dependencies": [],
+	"binaries": [
+		{
+			"path": "lib/{Configuration}/PluginEditorPipelineSetImporter"
+		}
+	],
+	"cmake": "CMakeLists.txt",
+	"pluginLoadStage": "EndOfEngineSetup"
+}

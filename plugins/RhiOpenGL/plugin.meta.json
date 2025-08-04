@@ -1,0 +1,16 @@
+{
+	"name": "Grindstone.RHI.OpenGL",
+	"displayName": "OpenGL Render Hardware Interface",
+	"version": "0.3.0",
+	"description": "Implements calls to use the OpenGL API to render computer graphics.",
+	"author": "Grindstone Foundation",
+	"assets": [],
+	"dependencies": [],
+	"binaries": [
+		{
+			"path": "lib/{Configuration}/PluginRhiOpenGL"
+		}
+	],
+	"cmake": "CMakeLists.txt",
+	"pluginLoadStage": "EndOfEngineSetup"
+}

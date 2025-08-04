@@ -1,0 +1,16 @@
+{
+	"name": "Grindstone.Script.CSharp",
+	"displayName": "CSharp Scripting",
+	"version": "0.3.0",
+	"description": "Allows loading and processing C# assemblies.",
+	"author": "Grindstone Foundation",
+	"assets": [],
+	"dependencies": [],
+	"binaries": [
+		{
+			"path": "lib/{Configuration}/PluginScriptCSharp"
+		}
+	],
+	"cmake": "CMakeLists.txt",
+	"pluginLoadStage": "EndOfEngineSetup"
+}

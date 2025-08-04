@@ -68,7 +68,9 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	// Load core (Logging, ECS and Plugin Manager)
 	pluginManager = AllocatorCore::Allocate<Plugins::Manager>(this);
 	pluginManager->GetInterface().SetEditorInterface(createInfo.editorPluginInterface);
-	pluginManager->Load("PluginGraphicsVulkan");
+
+	pluginManager->LoadPluginList();
+	pluginManager->LoadPluginsOfStage("EarlyEngineSetup");
 
 	Grindstone::Window* mainWindow = nullptr;
 	{
@@ -112,6 +114,8 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 	GPRINT_INFO_V(LogSource::EngineCore, "{0} Initialized.", createInfo.applicationTitle);
 	GRIND_PROFILE_END_SESSION();
+
+	pluginManager->LoadPluginsOfStage("EndOfEngineSetup");
 
 	lastFrameTime = std::chrono::steady_clock::now();
 

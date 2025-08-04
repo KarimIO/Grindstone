@@ -1,0 +1,16 @@
+{
+	"name": "Grindstone.Renderer.Deferred",
+	"displayName": "Deferred Renderer",
+	"version": "0.3.0",
+	"description": "The deferred renderer is a way of drawing the scene that focuses on drawing many lights simultaneously.",
+	"author": "Grindstone Foundation",
+	"assets": [],
+	"dependencies": [],
+	"binaries": [
+		{
+			"path": "lib/{Configuration}/PluginRendererDeferred"
+		}
+	],
+	"cmake": "CMakeLists.txt",
+	"pluginLoadStage": "EndOfEngineSetup"
+}

@@ -1,6 +1,0 @@
-{
-    "files.associations": {
-        "*.rs": "rust",
-        "ostream": "cpp"
-    }
-}

@@ -1,0 +1,16 @@
+{
+	"name": "Grindstone.Editor.MaterialImporter",
+	"displayName": "Material Importer",
+	"version": "0.3.0",
+	"description": "Allows the editor to import material assets and convert them to a Grindstone-supported format.",
+	"author": "Grindstone Foundation",
+	"assets": [],
+	"dependencies": [],
+	"binaries": [
+		{
+			"path": "lib/{Configuration}/PluginEditorMaterialImporter"
+		}
+	],
+	"cmake": "CMakeLists.txt",
+	"pluginLoadStage": "EndOfEngineSetup"
+}

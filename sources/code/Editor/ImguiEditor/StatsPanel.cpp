@@ -13,8 +13,6 @@
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
 #include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
 #include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
-#include <Plugins/Renderables3D/Assets/Mesh3dImporter.hpp>
-#include <Plugins/Renderables3D/Mesh3dRenderer.hpp>
 
 #include "ImguiEditor.hpp"
 #include "ViewportPanel.hpp"
@@ -236,7 +234,6 @@ void StatsPanel::RenderContents() {
 
 	RenderRenderQueuesTable(engineCore);
 
-	RenderAsset<Mesh3dImporter>(assetManager, "3D Meshes");
 	RenderAsset<MaterialImporter>(assetManager, "Materials");
 	RenderAsset<ComputePipelineImporter>(assetManager, "Compute Pipeline Sets");
 	RenderAsset<GraphicsPipelineImporter>(assetManager, "Graphics Pipeline Sets");

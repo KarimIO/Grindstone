@@ -1,0 +1,16 @@
+{
+	"name": "Grindstone.Editor.AudioImporter",
+	"displayName": "Audio Importer",
+	"version": "0.3.0",
+	"description": "Allows the editor to import audio assets and convert them to a Grindstone-supported format.",
+	"author": "Grindstone Foundation",
+	"assets": [],
+	"dependencies": [],
+	"binaries": [
+		{
+			"path": "lib/{Configuration}/PluginEditorAudioImporter"
+		}
+	],
+	"cmake": "CMakeLists.txt",
+	"pluginLoadStage": "EndOfEngineSetup"
+}

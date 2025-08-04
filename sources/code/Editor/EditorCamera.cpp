@@ -11,9 +11,9 @@
 #include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Logger.hpp>
-#include <Plugins/GraphicsVulkan/VulkanDescriptorSet.hpp>
-#include <Plugins/PhysicsBullet/Components/ColliderComponent.hpp>
-#include <Plugins/Renderables3D/Components/MeshComponent.hpp>
+#include <RhiVulkan/include/VulkanDescriptorSet.hpp>
+#include <PhysicsBullet/include/Components/ColliderComponent.hpp>
+#include <Renderables3D/include/Components/MeshComponent.hpp>
 
 #include "EditorCamera.hpp"
 #include "EditorManager.hpp"
