@@ -124,7 +124,9 @@ target_compile_definitions(PluginScriptCSharp PUBLIC CSHARP_DLL GLM_ENABLE_EXPER
 target_link_libraries(PluginScriptCSharp PUBLIC ${CORE_LIBS} ${DOTNET_ROOT}/nethost.lib)
 target_precompile_headers(PluginScriptCSharp PUBLIC ${INC}/pch.hpp)
 
-file(COPY
-	"${DOTNET_ROOT}/nethost.dll"
-	DESTINATION "${BUILD_DIRECTORY}"
+add_custom_command(
+        TARGET PluginScriptCSharp POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			"${DOTNET_ROOT}/nethost.dll"
+			"${SCRIPT_CSHARP_LIB}/$<CONFIG>/nethost.dll"
 )
