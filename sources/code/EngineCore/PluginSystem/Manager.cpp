@@ -25,7 +25,8 @@ Manager::~Manager() {
 				releaseModuleFnPtr(&pluginInterface);
 			}
 			else {
-				GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", it->first.c_str());
+				std::string pluginName = it->first.string();
+				GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {}", pluginName.c_str());
 			}
 		}
 	}
@@ -82,7 +83,7 @@ void Manager::UnloadPluginListExceptRenderHardwareInterface() {
 			std::string name;
 			for (auto& mapElement : plugins) {
 				if (mapElement.second == handle) {
-					name = mapElement.first;
+					name = mapElement.first.string();
 					plugins.erase(name);
 					break;
 				}
@@ -104,20 +105,14 @@ void Manager::UnloadPluginRenderHardwareInterface() {
 		auto releaseModuleFnPtr = (void (*)(Interface*))Modules::GetFunction(handle, "ReleaseModule");
 
 		// Get the name and erase the element from the map.
-		std::string name;
-		for (auto& mapElement : plugins) {
-			if (mapElement.second == handle) {
-				name = mapElement.first;
-				plugins.erase(name);
-				break;
-			}
-		}
+		std::string pluginName = plugins.begin()->first.string();
+		plugins.erase(plugins.begin());
 
 		if (releaseModuleFnPtr) {
 			releaseModuleFnPtr(&pluginInterface);
 		}
 		else {
-			GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", name.c_str());
+			GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", pluginName.c_str());
 		}
 	}
 }
@@ -132,9 +127,9 @@ Interface& Manager::GetInterface() {
 	return pluginInterface;
 }
 
-bool Manager::Load(const char *path) {
+bool Manager::Load(const std::filesystem::path& path) {
 #ifdef _DEBUG
-	std::string profileStr = std::string("Loading module ") + path;
+	std::string profileStr = std::string("Loading module ") + path.string();
 	GRIND_PROFILE_SCOPE(profileStr.c_str());
 #endif
 
@@ -147,7 +142,10 @@ bool Manager::Load(const char *path) {
 		return true;
 	}
 
-	auto handle = Modules::Load(path);
+	std::wstring parentDirectory = path.parent_path().wstring();
+	AddDllDirectory(parentDirectory.c_str());
+	SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_USER_DIRS);
+	auto handle = Modules::Load(path.string().c_str());
 
 	if (handle) {
 		plugins[path] = handle;
@@ -161,7 +159,7 @@ bool Manager::Load(const char *path) {
 			return true;
 		}
 		else {
-			GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call InitializeModule in plugin: {0}", path);
+			GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call InitializeModule in plugin: {0}", path.string().c_str());
 			return false;
 		}
 	}
@@ -179,22 +177,22 @@ bool Manager::Load(const char *path) {
 		nullptr
 	);
 
-	GPRINT_ERROR_V(LogSource::EngineCore, "Unable to load plugin \"{0}\": {1}", path, errorString);
+	GPRINT_ERROR_V(LogSource::EngineCore, "Unable to load plugin \"{0}\": {1}", path.string(), errorString);
 #else
-	GPRINT_ERROR_V(LogSource::EngineCore, "Unable to load plugin: {0}", path);
+	GPRINT_ERROR_V(LogSource::EngineCore, "Unable to load plugin: {0}", path.string());
 #endif
 
 	return false;
 }
 
-void Manager::LoadCritical(const char* path) {
+void Manager::LoadCritical(const std::filesystem::path& path) {
 	if (!Load(path)) {
-		throw std::runtime_error(std::string("Failed to load module: ") + path);
+		throw std::runtime_error(std::string("Failed to load module: ") + path.string());
 	}
 }
 
-void Manager::Remove(const char* name) {
-	auto it = plugins.find(name);
+void Manager::Remove(const std::filesystem::path& path) {
+	auto it = plugins.find(path);
 	if (it != plugins.end()) {
 		Grindstone::Utilities::Modules::Handle handle = it->second;
 		if (handle) {
@@ -204,7 +202,7 @@ void Manager::Remove(const char* name) {
 				releaseModuleFnPtr(&pluginInterface);
 			}
 			else {
-				GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", it->first.c_str());
+				GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", it->first.string().c_str());
 			}
 		}
 

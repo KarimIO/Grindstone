@@ -28,14 +28,14 @@ namespace Grindstone::Plugins {
 		virtual void LoadPluginsOfStage(const char* stageName);
 		virtual void UnloadPluginListExceptRenderHardwareInterface();
 		virtual void UnloadPluginRenderHardwareInterface();
-		bool Load(const char* name);
-		void LoadCritical(const char* name);
+		bool Load(const std::filesystem::path& path);
+		void LoadCritical(const std::filesystem::path& path);
 
-		void Remove(const char* name);
+		void Remove(const std::filesystem::path& path);
 	private:
 		Interface pluginInterface;
 		EngineCore *engineCore;
-		std::map<std::string, Utilities::Modules::Handle> plugins;
+		std::map<std::filesystem::path, Utilities::Modules::Handle> plugins;
 		std::vector<Utilities::Modules::Handle> pluginsFromList;
 		std::vector<Grindstone::Plugins::MetaData> resolvedPluginManifest{};
 	};
