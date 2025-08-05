@@ -78,19 +78,6 @@ bool Grindstone::Plugins::ReadMetaFile(std::filesystem::path metaDataFilePath, G
 		errorMsg += std::vformat("Meta file {} has no required parameter 'version'.\n", std::make_format_args(pathCstr));
 	}
 
-	if (document.HasMember("pluginLoadStage")) {
-		rapidjson::Value& pluginLoadStageJson = document["pluginLoadStage"];
-		if (pluginLoadStageJson.GetType() == rapidjson::Type::kStringType) {
-			metaData.loadStage = pluginLoadStageJson.GetString();
-		}
-		else {
-			errorMsg += std::vformat("Meta file {} has 'pluginLoadStage' which should be of type string.\n", std::make_format_args(pathCstr));
-		}
-	}
-	else {
-		errorMsg += std::vformat("Meta file {} has no required parameter 'pluginLoadStage'.\n", std::make_format_args(pathCstr));
-	}
-
 	if (document.HasMember("description")) {
 		rapidjson::Value& descriptionJson = document["description"];
 		if (descriptionJson.GetType() == rapidjson::Type::kStringType) {
@@ -191,6 +178,19 @@ bool Grindstone::Plugins::ReadMetaFile(std::filesystem::path metaDataFilePath, G
 					}
 					else {
 						errorMsg += std::vformat("Meta file {} has 'binaries' element has missing \'path\'.\n", std::make_format_args(pathCstr));
+					}
+
+					if (binaryJson.HasMember("loadStage")) {
+						rapidjson::Value& loadStageJson = binaryJson["loadStage"];
+						if (loadStageJson.IsString()) {
+							binary.loadStage = loadStageJson.GetString();
+						}
+						else {
+							errorMsg += std::vformat("Meta file {} has 'binaries' element has \'loadStage\' which should be of type string.\n", std::make_format_args(pathCstr));
+						}
+					}
+					else {
+						errorMsg += std::vformat("Meta file {} has 'binaries' element has missing \'loadStage\'.\n", std::make_format_args(pathCstr));
 					}
 
 					metaData.binaries.emplace_back(binary);

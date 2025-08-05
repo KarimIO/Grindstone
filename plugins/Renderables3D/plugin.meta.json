@@ -8,9 +8,9 @@
 	"dependencies": [],
 	"binaries": [
 		{
-			"path": "lib/{Configuration}/PluginRenderables3D"
+			"path": "lib/{Configuration}/PluginRenderables3D",
+			"loadStage": "EndOfEngineSetup"
 		}
 	],
-	"cmake": "CMakeLists.txt",
-	"pluginLoadStage": "EndOfEngineSetup"
+	"cmake": "CMakeLists.txt"
 }

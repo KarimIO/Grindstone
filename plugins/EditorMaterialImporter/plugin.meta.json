@@ -8,9 +8,9 @@
 	"dependencies": [],
 	"binaries": [
 		{
-			"path": "lib/{Configuration}/PluginEditorMaterialImporter"
+			"path": "lib/{Configuration}/PluginEditorMaterialImporter",
+			"loadStage": "EndOfEngineSetup"
 		}
 	],
-	"cmake": "CMakeLists.txt",
-	"pluginLoadStage": "EndOfEngineSetup"
+	"cmake": "CMakeLists.txt"
 }

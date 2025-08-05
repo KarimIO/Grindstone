@@ -70,7 +70,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	pluginManager->GetInterface().SetEditorInterface(createInfo.editorPluginInterface);
 
 	pluginManager->LoadPluginList();
-	pluginManager->LoadPluginsOfStage("EarlyEngineSetup");
+	pluginManager->LoadPluginBinariesAndAssetsOfStage("EarlyEngineSetup");
 
 	Grindstone::Window* mainWindow = nullptr;
 	{
@@ -115,7 +115,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	GPRINT_INFO_V(LogSource::EngineCore, "{0} Initialized.", createInfo.applicationTitle);
 	GRIND_PROFILE_END_SESSION();
 
-	pluginManager->LoadPluginsOfStage("EndOfEngineSetup");
+	pluginManager->LoadPluginBinariesAndAssetsOfStage("EndOfEngineSetup");
 
 	lastFrameTime = std::chrono::steady_clock::now();
 
@@ -193,7 +193,7 @@ EngineCore::~EngineCore() {
 	worldContextManager->ClearContextSets();
 
 	if (pluginManager) {
-		pluginManager->UnloadPluginListExceptRenderHardwareInterface();
+		pluginManager->UnloadPluginBinariesAndAssetsFromStage("EndOfEngineSetup");
 	}
 
 	AllocatorCore::Free(worldContextManager);
@@ -202,8 +202,12 @@ EngineCore::~EngineCore() {
 	AllocatorCore::Free(assetRendererManager);
 	AllocatorCore::Free(assetManager);
 	AllocatorCore::Free(inputManager);
-	pluginManager->UnloadPluginRenderHardwareInterface();
-	AllocatorCore::Free(pluginManager);
+
+	if (pluginManager) {
+		pluginManager->UnloadPluginBinariesAndAssetsFromStage("EarlyEngineSetup");
+		AllocatorCore::Free(pluginManager);
+	}
+
 	AllocatorCore::Free(componentRegistrar);
 	AllocatorCore::Free(systemRegistrar);
 	Logger::GetLoggerState()->dispatcher = nullptr;

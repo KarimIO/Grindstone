@@ -2,6 +2,7 @@
 #include <EngineCore/Utils/Utilities.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Logger.hpp>
+#include <EngineCore/PluginSystem/PluginMetaFileLoader.hpp>
 
 #include "Manager.hpp"
 #include "Interface.hpp"
@@ -16,7 +17,7 @@ Manager::Manager(EngineCore* engineCore) : pluginInterface(this), engineCore(eng
 }
 
 Manager::~Manager() {
-	for (auto it = plugins.rbegin(); it != plugins.rend(); ++it) {
+	for (auto it = pluginBinaries.rbegin(); it != pluginBinaries.rend(); ++it) {
 		auto handle = it->second;
 		if (handle) {
 			auto releaseModuleFnPtr = (void (*)(Interface*))Modules::GetFunction(handle, "ReleaseModule");
@@ -31,8 +32,6 @@ Manager::~Manager() {
 		}
 	}
 }
-
-#include <EngineCore/PluginSystem/PluginMetaFileLoader.hpp>
 
 bool Manager::LoadPluginList() {
 	std::vector<Grindstone::Plugins::ManifestData> manifestResults{};
@@ -57,62 +56,33 @@ bool Manager::LoadPluginList() {
 	return true;
 }
 
-void Manager::LoadPluginsOfStage(const char* stageName) {
+void Manager::LoadPluginBinariesAndAssetsOfStage(const char* stageName) {
 	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins";
 
 	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
-		if (metaData.loadStage != stageName) {
-			continue;
-		}
-
 		std::filesystem::path pluginPath = basePath / metaData.name;
 		for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
-			std::filesystem::path binaryPath = pluginPath / binary.libraryRelativePath;
-			Load(binaryPath.string().c_str());
-		}
-	}
-}
-
-void Manager::UnloadPluginListExceptRenderHardwareInterface() {
-	for (int32_t i = static_cast<int32_t>(pluginsFromList.size()) - 1; i > 0; --i) {
-		Grindstone::Utilities::Modules::Handle handle = pluginsFromList[i];
-		if (handle) {
-			auto releaseModuleFnPtr = (void (*)(Interface*))Modules::GetFunction(handle, "ReleaseModule");
-
-			// Get the name and erase the element from the map.
-			std::string name;
-			for (auto& mapElement : plugins) {
-				if (mapElement.second == handle) {
-					name = mapElement.first.string();
-					plugins.erase(name);
-					break;
-				}
-			}
-
-			if (releaseModuleFnPtr) {
-				releaseModuleFnPtr(&pluginInterface);
-			}
-			else {
-				GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", name.c_str());
+			if (binary.loadStage == stageName) {
+				std::filesystem::path binaryPath = pluginPath / binary.libraryRelativePath;
+				std::filesystem::path parentPath = binaryPath.parent_path();
+				DLL_DIRECTORY_COOKIE dllCookie = AddDllDirectory(parentPath.wstring().c_str());
+				Load(binaryPath);
+				RemoveDllDirectory(dllCookie);
 			}
 		}
 	}
 }
 
-void Manager::UnloadPluginRenderHardwareInterface() {
-	Grindstone::Utilities::Modules::Handle handle = pluginsFromList[0];
-	if (handle) {
-		auto releaseModuleFnPtr = (void (*)(Interface*))Modules::GetFunction(handle, "ReleaseModule");
+void Manager::UnloadPluginBinariesAndAssetsFromStage(const char* stageName) {
+	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins";
 
-		// Get the name and erase the element from the map.
-		std::string pluginName = plugins.begin()->first.string();
-		plugins.erase(plugins.begin());
-
-		if (releaseModuleFnPtr) {
-			releaseModuleFnPtr(&pluginInterface);
-		}
-		else {
-			GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", pluginName.c_str());
+	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
+		std::filesystem::path pluginPath = basePath / metaData.name;
+		for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
+			if (binary.loadStage == stageName) {
+				std::filesystem::path binaryPath = pluginPath / binary.libraryRelativePath;
+				Remove(binaryPath);
+			}
 		}
 	}
 }
@@ -134,22 +104,19 @@ bool Manager::Load(const std::filesystem::path& path) {
 #endif
 
 	// Return true if plugin already loaded
-	auto it = plugins.find(path);
-	if (it != plugins.end()) {
+	auto it = pluginBinaries.find(path);
+	if (it != pluginBinaries.end()) {
 #ifdef _DEBUG
 		throw std::runtime_error("Module already loaded! This error only exists in debug mode to make sure you don't write useless code.");
 #endif
 		return true;
 	}
 
-	std::wstring parentDirectory = path.parent_path().wstring();
-	AddDllDirectory(parentDirectory.c_str());
 	SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_USER_DIRS);
 	auto handle = Modules::Load(path.string().c_str());
 
 	if (handle) {
-		plugins[path] = handle;
-		pluginsFromList.emplace_back(handle);
+		pluginBinaries[path] = handle;
 
 		auto initializeModuleFnPtr = (void (*)(Interface*))Modules::GetFunction(handle, "InitializeModule");
 
@@ -192,8 +159,8 @@ void Manager::LoadCritical(const std::filesystem::path& path) {
 }
 
 void Manager::Remove(const std::filesystem::path& path) {
-	auto it = plugins.find(path);
-	if (it != plugins.end()) {
+	auto it = pluginBinaries.find(path);
+	if (it != pluginBinaries.end()) {
 		Grindstone::Utilities::Modules::Handle handle = it->second;
 		if (handle) {
 			auto releaseModuleFnPtr = static_cast<void (*)(Interface*)>(Modules::GetFunction(handle, "ReleaseModule"));
@@ -204,15 +171,10 @@ void Manager::Remove(const std::filesystem::path& path) {
 			else {
 				GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", it->first.string().c_str());
 			}
+
+			Grindstone::Utilities::Modules::Unload(handle);
 		}
 
-		for (size_t i = 0; i < pluginsFromList.size(); ++i) {
-			if (pluginsFromList[i] == handle) {
-				pluginsFromList.erase(pluginsFromList.begin() + i);
-				break;
-			}
-		}
-
-		plugins.erase(it);
+		pluginBinaries.erase(it);
 	}
 }

@@ -8,9 +8,9 @@
 	"dependencies": [],
 	"binaries": [
 		{
-			"path": "lib/{Configuration}/PluginBulletPhysics"
+			"path": "lib/{Configuration}/PluginBulletPhysics",
+			"loadStage": "EndOfEngineSetup"
 		}
 	],
-	"cmake": "CMakeLists.txt",
-	"pluginLoadStage": "EndOfEngineSetup"
+	"cmake": "CMakeLists.txt"
 }

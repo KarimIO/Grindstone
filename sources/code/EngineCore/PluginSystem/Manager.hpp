@@ -25,9 +25,8 @@ namespace Grindstone::Plugins {
 		virtual Interface& GetInterface();
 			
 		virtual bool LoadPluginList();
-		virtual void LoadPluginsOfStage(const char* stageName);
-		virtual void UnloadPluginListExceptRenderHardwareInterface();
-		virtual void UnloadPluginRenderHardwareInterface();
+		virtual void LoadPluginBinariesAndAssetsOfStage(const char* stageName);
+		virtual void UnloadPluginBinariesAndAssetsFromStage(const char* stageName);
 		bool Load(const std::filesystem::path& path);
 		void LoadCritical(const std::filesystem::path& path);
 
@@ -35,8 +34,7 @@ namespace Grindstone::Plugins {
 	private:
 		Interface pluginInterface;
 		EngineCore *engineCore;
-		std::map<std::filesystem::path, Utilities::Modules::Handle> plugins;
-		std::vector<Utilities::Modules::Handle> pluginsFromList;
+		std::map<std::filesystem::path, Utilities::Modules::Handle> pluginBinaries;
 		std::vector<Grindstone::Plugins::MetaData> resolvedPluginManifest{};
 	};
 }

@@ -11,8 +11,10 @@
 namespace Grindstone::Utilities::Modules {
 #if defined(_WIN32)
 	using Handle = HMODULE;
+	using BinarySearchDirectoryHandle = DLL_DIRECTORY_COOKIE;
 #elif defined(__linux__)
 	using Handle = void*;
+	using BinarySearchDirectoryHandle = void*;
 #endif
 
 	Grindstone::Utilities::Modules::Handle Load(std::string name);

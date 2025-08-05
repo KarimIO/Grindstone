@@ -8,9 +8,9 @@
 	"dependencies": [],
 	"binaries": [
 		{
-			"path": "lib/{Configuration}/PluginAudioOpenAL"
+			"path": "lib/{Configuration}/PluginAudioOpenAL",
+			"loadStage": "EndOfEngineSetup"
 		}
 	],
-	"cmake": "CMakeLists.txt",
-	"pluginLoadStage": "EndOfEngineSetup"
+	"cmake": "CMakeLists.txt"
 }

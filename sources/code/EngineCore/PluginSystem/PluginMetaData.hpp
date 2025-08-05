@@ -13,6 +13,7 @@ namespace Grindstone::Plugins {
 
 		struct Binary {
 			std::filesystem::path libraryRelativePath;
+			std::string loadStage;
 		};
 
 		std::string name;
@@ -20,7 +21,6 @@ namespace Grindstone::Plugins {
 		std::string version;
 		std::string description;
 		std::string author;
-		std::string loadStage;
 		std::vector<std::string> assets;
 		std::vector<Dependency> dependencies;
 		std::vector<Binary> binaries;
