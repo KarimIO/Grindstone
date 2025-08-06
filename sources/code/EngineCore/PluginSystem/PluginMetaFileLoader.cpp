@@ -98,20 +98,61 @@ bool Grindstone::Plugins::ReadMetaFile(std::filesystem::path metaDataFilePath, G
 		}
 	}
 
-	if (document.HasMember("assets")) {
-		rapidjson::Value& assetsJson = document["assets"];
-		if (assetsJson.GetType() == rapidjson::Type::kArrayType) {
-			for (auto& assetJson : assetsJson.GetArray()) {
-				if (assetJson.GetType() == rapidjson::Type::kStringType) {
-					metaData.assets.emplace_back(assetJson.GetString());
+	if (document.HasMember("assetDirectories")) {
+		rapidjson::Value& assetDirectoriesJson = document["assetDirectories"];
+		if (assetDirectoriesJson.GetType() == rapidjson::Type::kArrayType) {
+			for (rapidjson::Value& directoryJson : assetDirectoriesJson.GetArray()) {
+				if (directoryJson.GetType() == rapidjson::Type::kObjectType) {
+					MetaData::AssetDirectory assetDirectory;
+
+					if (directoryJson.HasMember("path")) {
+						rapidjson::Value& pathJson = directoryJson["path"];
+						if (pathJson.IsString()) {
+							assetDirectory.assetDirectoryRelativePath = ParseBinaryPath(pathJson.GetString());
+						}
+						else {
+							errorMsg += std::vformat("Meta file {} has 'assetDirectories' element has \'path\' which should be of type string.\n", std::make_format_args(pathCstr));
+						}
+					}
+					else {
+						errorMsg += std::vformat("Meta file {} has 'assetDirectories' element has missing \'path\'.\n", std::make_format_args(pathCstr));
+					}
+
+					if (directoryJson.HasMember("mountPoint")) {
+						rapidjson::Value& mountPointJson = directoryJson["mountPoint"];
+						if (mountPointJson.IsString()) {
+							assetDirectory.mountPoint = mountPointJson.GetString();
+						}
+						else {
+							errorMsg += std::vformat("Meta file {} has 'assetDirectories' element has \'mountPoint\' which should be of type string.\n", std::make_format_args(pathCstr));
+						}
+					}
+					else {
+						errorMsg += std::vformat("Meta file {} has 'assetDirectories' element has missing \'mountPoint\'.\n", std::make_format_args(pathCstr));
+					}
+
+					if (directoryJson.HasMember("loadStage")) {
+						rapidjson::Value& loadStageJson = directoryJson["loadStage"];
+						if (loadStageJson.IsString()) {
+							assetDirectory.loadStage = loadStageJson.GetString();
+						}
+						else {
+							errorMsg += std::vformat("Meta file {} has 'assetDirectories' element has \'loadStage\' which should be of type string.\n", std::make_format_args(pathCstr));
+						}
+					}
+					else {
+						errorMsg += std::vformat("Meta file {} has 'assetDirectories' element has missing \'loadStage\'.\n", std::make_format_args(pathCstr));
+					}
+
+					metaData.assetDirectories.emplace_back(assetDirectory);
 				}
 				else {
-					errorMsg += std::vformat("Meta file {} has 'assets' has an element which should be of type string.\n", std::make_format_args(pathCstr));
+					errorMsg += std::vformat("Meta file {} has 'assetDirectories' has an element which should be of type object.\n", std::make_format_args(pathCstr));
 				}
 			}
 		}
 		else {
-			errorMsg += std::vformat("Meta file {} has 'assets' which should be of type array.\n", std::make_format_args(pathCstr));
+			errorMsg += std::vformat("Meta file {} has 'assetDirectories' which should be of type array.\n", std::make_format_args(pathCstr));
 		}
 	}
 

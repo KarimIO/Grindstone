@@ -16,12 +16,18 @@ namespace Grindstone::Plugins {
 			std::string loadStage;
 		};
 
+		struct AssetDirectory {
+			std::filesystem::path assetDirectoryRelativePath;
+			std::string mountPoint;
+			std::string loadStage;
+		};
+
 		std::string name;
 		std::string displayName;
 		std::string version;
 		std::string description;
 		std::string author;
-		std::vector<std::string> assets;
+		std::vector<AssetDirectory> assetDirectories;
 		std::vector<Dependency> dependencies;
 		std::vector<Binary> binaries;
 		std::filesystem::path cmakePath;
