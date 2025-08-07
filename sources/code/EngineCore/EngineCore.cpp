@@ -178,21 +178,25 @@ void EngineCore::UpdateWindows() {
 EngineCore::~EngineCore() {
 	GPRINT_INFO(LogSource::EngineCore, "Closing...");
 
-	graphicsCore->WaitUntilIdle();
+	if (graphicsCore != nullptr) {
+		graphicsCore->WaitUntilIdle();
+	}
 
-	if (windowManager) {
+	if (windowManager != nullptr) {
 		for (unsigned int i = 0; i < windowManager->GetNumWindows(); ++i) {
 			windowManager->GetWindowByIndex(i)->Hide();
 		}
 	}
 
-	if (sceneManager) {
+	if (sceneManager != nullptr) {
 		sceneManager->CloseActiveScenes();
 	}
 
-	worldContextManager->ClearContextSets();
+	if (worldContextManager != nullptr) {
+		worldContextManager->ClearContextSets();
+	}
 
-	if (pluginManager) {
+	if (pluginManager != nullptr) {
 		pluginManager->UnloadPluginBinariesAndAssetsFromStage("EndOfEngineSetup");
 	}
 
@@ -208,7 +212,7 @@ EngineCore::~EngineCore() {
 		AllocatorCore::Free(pluginManager);
 	}
 
-	AllocatorCore::Free(componentRegistrar);
+	// AllocatorCore::Free(componentRegistrar);
 	AllocatorCore::Free(systemRegistrar);
 	Logger::GetLoggerState()->dispatcher = nullptr;
 	AllocatorCore::Free(eventDispatcher);

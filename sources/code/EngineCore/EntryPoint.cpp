@@ -12,9 +12,12 @@ extern "C" {
 		try {
 			EngineCore* core = new EngineCore();
 			EngineCore::SetInstance(*core);
-			core->Initialize(ci);
-
-			return core;
+			if (core->Initialize(ci)) {
+				return core;
+			}
+			else {
+				return nullptr;
+			}
 		}
 		catch (std::runtime_error& e) {
 
@@ -28,6 +31,6 @@ extern "C" {
 	}
 
 	ENGINE_CORE_API void DestroyEngine(void* engineCore) {
-		delete static_cast<EngineCore*>(&EngineCore::GetInstance());
+		delete &EngineCore::GetInstance();
 	}
 }

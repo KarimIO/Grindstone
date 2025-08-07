@@ -67,4 +67,6 @@ void SystemRegistrar::EditorUpdate(entt::registry& registry) {
 }
 
 SystemRegistrar::~SystemRegistrar() {
+	systemFactories.clear();
+	editorSystemFactories.clear();
 }

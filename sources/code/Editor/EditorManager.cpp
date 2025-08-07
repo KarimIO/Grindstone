@@ -284,6 +284,10 @@ bool Manager::LoadEngine() {
 	createInfo.engineBinaryPath = currentPath.c_str();
 	engineCore = createEngineFn(createInfo);
 
+	if (engineCore == nullptr) {
+		return false;
+	}
+
 	Plugins::Interface& pluginInterface = engineCore->GetPluginManager()->GetInterface();
 	Grindstone::HashedString::SetHashMap(pluginInterface.GetHashedStringMap());
 	Grindstone::Logger::SetLoggerState(pluginInterface.GetLoggerState());
@@ -295,34 +299,38 @@ bool Manager::LoadEngine() {
 }
 
 Manager::~Manager() {
-	engineCore->GetGraphicsCore()->WaitUntilIdle();
+	if (engineCore != nullptr && engineCore->GetGraphicsCore() != nullptr) {
+		engineCore->GetGraphicsCore()->WaitUntilIdle();
+	}
 
 	if (imguiEditor) {
 		AllocatorCore::Free(imguiEditor);
 		imguiEditor = nullptr;
 	}
 
-	Grindstone::WorldContextManager* cxtManager = engineCore->GetWorldContextManager();
-	if (cxtManager) {
-		if (runtimeWorldContext != nullptr) {
-			cxtManager->Remove(runtimeWorldContext);
+	if (engineCore != nullptr) {
+		Grindstone::WorldContextManager* cxtManager = engineCore->GetWorldContextManager();
+		if (cxtManager) {
+			if (runtimeWorldContext != nullptr) {
+				cxtManager->Remove(runtimeWorldContext);
+			}
+
+			if (editorWorldContext != nullptr) {
+				cxtManager->Remove(editorWorldContext);
+			}
 		}
 
-		if (editorWorldContext != nullptr) {
-			cxtManager->Remove(editorWorldContext);
+		if (engineCoreLibraryHandle) {
+			using DestroyEngineFunction = void *();
+
+			DestroyEngineFunction* destroyEngineFn =
+				static_cast<DestroyEngineFunction*>(Utilities::Modules::GetFunction(engineCoreLibraryHandle, "DestroyEngine"));
+			if (destroyEngineFn != nullptr) {
+				destroyEngineFn();
+			}
+
+			Grindstone::Utilities::Modules::Unload(engineCoreLibraryHandle);
+			engineCoreLibraryHandle = nullptr;
 		}
-	}
-
-	if (engineCoreLibraryHandle) {
-		using DestroyEngineFunction = void *();
-
-		DestroyEngineFunction* destroyEngineFn =
-			static_cast<DestroyEngineFunction*>(Utilities::Modules::GetFunction(engineCoreLibraryHandle, "DestroyEngine"));
-		if (destroyEngineFn != nullptr) {
-			destroyEngineFn();
-		}
-
-		Grindstone::Utilities::Modules::Unload(engineCoreLibraryHandle);
-		engineCoreLibraryHandle = nullptr;
 	}
 }

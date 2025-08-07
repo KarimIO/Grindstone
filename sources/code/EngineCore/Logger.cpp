@@ -147,7 +147,11 @@ void Grindstone::Logger::Print(
 }
 
 void Grindstone::Logger::CloseLogger() {
-	if (loggerState && loggerState->outputStream.is_open()) {
-		loggerState->outputStream.close();
+	if (loggerState) {
+		if (loggerState->outputStream.is_open()) {
+			loggerState->outputStream.close();
+		}
+
+		delete loggerState;
 	}
 }
