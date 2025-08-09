@@ -12,7 +12,7 @@
 
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
-#include <RhiVulkan/include/VulkanDescriptorSet.hpp>
+#include <Grindstone.RHI.Vulkan/include/VulkanDescriptorSet.hpp>
 
 using namespace Grindstone::Editor::ImguiEditor;
 

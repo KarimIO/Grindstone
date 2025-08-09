@@ -11,9 +11,9 @@
 #include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Logger.hpp>
-#include <RhiVulkan/include/VulkanDescriptorSet.hpp>
-#include <PhysicsBullet/include/Components/ColliderComponent.hpp>
-#include <Renderables3D/include/Components/MeshComponent.hpp>
+#include <Grindstone.RHI.Vulkan/include/VulkanDescriptorSet.hpp>
+#include <Grindstone.Physics.Bullet/include/Components/ColliderComponent.hpp>
+#include <Grindstone.Renderables.3D//include/Components/MeshComponent.hpp>
 
 #include "EditorCamera.hpp"
 #include "EditorManager.hpp"

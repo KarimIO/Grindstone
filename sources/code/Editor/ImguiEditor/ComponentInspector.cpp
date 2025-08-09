@@ -12,7 +12,7 @@
 #include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
 #include <Editor/EditorManager.hpp>
 #include <Editor/ImguiEditor/ImguiEditor.hpp>
-#include <ScriptCSharp/include/Components/ScriptComponent.hpp>
+#include <Grindstone.Script.CSharp/include/Components/ScriptComponent.hpp>
 #include <Common/Math.hpp>
 
 #include "ComponentInspector.hpp"

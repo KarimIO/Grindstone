@@ -49,12 +49,6 @@ bool Grindstone::Plugins::ReadMetaFile(std::filesystem::path metaDataFilePath, G
 		errorMsg += std::vformat("Meta file {} has no required parameter 'name'.\n", std::make_format_args(pathCstr));
 	}
 
-	// TODO: Undo this hack of using the path from the path - the name should match!
-	std::string parentDirectoryName = metaDataFilePath.parent_path().filename().string();
-	if (metaData.name != parentDirectoryName) {
-		metaData.name = parentDirectoryName;
-	}
-
 	if (document.HasMember("displayName")) {
 		rapidjson::Value& displayNameJson = document["displayName"];
 		if (displayNameJson.GetType() == rapidjson::Type::kStringType) {

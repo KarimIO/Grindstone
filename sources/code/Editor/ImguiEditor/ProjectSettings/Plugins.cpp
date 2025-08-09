@@ -15,15 +15,19 @@ bool isPluginPopupShown = false;
 size_t indexToEdit = SIZE_MAX;
 
 const char* availablePlugins[] = {
-	"PluginEditorAudioImporter",
-	"PluginEditorMaterialImporter",
-	"PluginEditorModelImporter",
-	"PluginEditorPipelineSetImporter",
-	"PluginEditorTextureImporter",
-	"PluginBulletPhysics",
-	"PluginScriptCSharp",
-	"PluginRenderables3D",
-	"PluginAudioOpenAL"
+	"Grindstone.RHI.DirectX12",
+	"Grindstone.RHI.OpenGL",
+	"Grindstone.RHI.Vulkan",
+	"Grindstone.Editor.AudioImporter",
+	"Grindstone.Editor.MaterialImporter",
+	"Grindstone.Editor.ModelImporter",
+	"Grindstone.Editor.PipelineSetImporter",
+	"Grindstone.Editor.TextureImporter",
+	"Grindstone.Audio.OpenAL",
+	"Grindstone.Physics.Bullet",
+	"Grindstone.Renderables.3D",
+	"Grindstone.Renderer.Deferred",
+	"Grindstone.Script.CSharp"
 };
 
 std::vector<std::string> unusedPlugins;
