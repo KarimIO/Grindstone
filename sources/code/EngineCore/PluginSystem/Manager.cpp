@@ -12,6 +12,98 @@
 using namespace Grindstone::Plugins;
 using namespace Grindstone::Utilities;
 
+#include <windows.h>
+#include <vector>
+#include <thread>
+
+static void ReadPipeLoop(HANDLE pipe, Grindstone::LogSeverity severity) {
+	DWORD bytesRead;
+	char buffer[4096];
+	std::string partial;
+	while (ReadFile(pipe, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0) {
+		partial.append(buffer, bytesRead);
+		size_t pos;
+		while ((pos = partial.find('\n')) != std::string::npos) {
+			std::string line = partial.substr(0, pos);
+			GPRINT(severity, Grindstone::LogSource::EngineCore, line.c_str());
+			partial.erase(0, pos + 1);
+		}
+	}
+	if (!partial.empty()) {
+		GPRINT(severity, Grindstone::LogSource::EngineCore, partial.c_str()); // final line without newline
+	}
+}
+
+static bool RunCMakeCommand(
+	const std::vector<std::string>& cmakeTargets
+) {
+	std::string workingDirectory = EngineCore::GetInstance().GetEngineBinaryPath().parent_path().string();
+	std::vector<std::string> args = { "--build", ".", "--target" };
+
+	for (const std::string& target : cmakeTargets) {
+		args.emplace_back(target);
+	}
+
+	args.emplace_back("--config");
+	args.emplace_back("Release");
+
+	std::ostringstream cmdStream;
+	cmdStream << "cmake";
+	for (const auto& arg : args) {
+		cmdStream << " \"" << arg << "\"";
+	}
+	std::string commandLine = cmdStream.str();
+
+	SECURITY_ATTRIBUTES sa = { sizeof(sa), NULL, TRUE };
+	HANDLE stdoutRead, stdoutWrite, stderrRead, stderrWrite;
+	CreatePipe(&stdoutRead, &stdoutWrite, &sa, 0);
+	SetHandleInformation(stdoutRead, HANDLE_FLAG_INHERIT, 0);
+	CreatePipe(&stderrRead, &stderrWrite, &sa, 0);
+	SetHandleInformation(stderrRead, HANDLE_FLAG_INHERIT, 0);
+
+	STARTUPINFOA si = {};
+	si.cb = sizeof(si);
+	si.dwFlags = STARTF_USESTDHANDLES;
+	si.hStdOutput = stdoutWrite;
+	si.hStdError = stderrWrite;
+	si.hStdInput = NULL;
+
+	PROCESS_INFORMATION pi = {};
+	BOOL success = CreateProcessA(
+		NULL,
+		commandLine.data(),
+		NULL,
+		NULL,
+		TRUE,
+		0,
+		NULL,
+		workingDirectory.empty() ? NULL : workingDirectory.c_str(),
+		&si,
+		&pi
+	);
+
+	CloseHandle(stdoutWrite);
+	CloseHandle(stderrWrite);
+
+	if (!success) {
+		CloseHandle(stdoutRead);
+		CloseHandle(stderrRead);
+		return false;
+	}
+
+	std::thread readInfoThread(ReadPipeLoop, stdoutRead, Grindstone::LogSeverity::Info);
+	std::thread readErrThread(ReadPipeLoop, stderrRead, Grindstone::LogSeverity::Error);
+
+	WaitForSingleObject(pi.hProcess, INFINITE);
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
+
+	readInfoThread.join();
+	readErrThread.join();
+
+	return true;
+}
+
 Manager::Manager(EngineCore* engineCore) : pluginInterface(this), engineCore(engineCore) {
 	SetupInterfacePointers();
 }
@@ -45,12 +137,24 @@ bool Manager::LoadPluginList() {
 
 	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path();
 
+	std::vector<std::string> cmakeTargetsToCompile;
+
 	for (Grindstone::Plugins::ManifestData& manifestData : manifestResults) {
 		Grindstone::Plugins::MetaData metaData{};
 		std::filesystem::path metaFilePath = basePath / manifestData.path / "plugin.meta.json";
 		if (Grindstone::Plugins::ReadMetaFile(metaFilePath, metaData)) {
 			resolvedPluginManifest.emplace_back(metaData);
+
+			for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
+				if (!binary.cmakeTarget.empty()) {
+					cmakeTargetsToCompile.emplace_back(binary.cmakeTarget);
+				}
+			}
 		}
+	}
+
+	if (!cmakeTargetsToCompile.empty()) {
+		RunCMakeCommand(cmakeTargetsToCompile);
 	}
 
 	return true;

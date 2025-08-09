@@ -234,6 +234,16 @@ bool Grindstone::Plugins::ReadMetaFile(std::filesystem::path metaDataFilePath, G
 						errorMsg += std::vformat("Meta file {} has 'binaries' element has missing \'loadStage\'.\n", std::make_format_args(pathCstr));
 					}
 
+					if (binaryJson.HasMember("cmakeTarget")) {
+						rapidjson::Value& cmakeTargetJson = binaryJson["cmakeTarget"];
+						if (cmakeTargetJson.IsString()) {
+							binary.cmakeTarget = cmakeTargetJson.GetString();
+						}
+						else {
+							errorMsg += std::vformat("Meta file {} has 'binaries' element has \'cmakeTarget\' which should be of type string.\n", std::make_format_args(pathCstr));
+						}
+					}
+
 					metaData.binaries.emplace_back(binary);
 				}
 				else {

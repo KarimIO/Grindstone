@@ -9,7 +9,8 @@
 	"binaries": [
 		{
 			"path": "lib/{Configuration}/PluginEditorMaterialImporter",
-			"loadStage": "EndOfEngineSetup"
+			"loadStage": "EarlyEditor",
+			"cmakeTarget": "PluginEditorMaterialImporter"
 		}
 	],
 	"cmake": "CMakeLists.txt"

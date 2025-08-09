@@ -9,7 +9,8 @@
 	"binaries": [
 		{
 			"path": "lib/{Configuration}/PluginRhiOpenGL",
-			"loadStage": "EarlyEngineSetup"
+			"loadStage": "EarlyEngineSetup",
+			"cmakeTarget": "PluginRhiOpenGL"
 		}
 	],
 	"cmake": "CMakeLists.txt"

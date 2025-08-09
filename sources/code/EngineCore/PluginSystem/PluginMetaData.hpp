@@ -14,6 +14,7 @@ namespace Grindstone::Plugins {
 		struct Binary {
 			std::filesystem::path libraryRelativePath;
 			std::string loadStage;
+			std::string cmakeTarget;
 		};
 
 		struct AssetDirectory {

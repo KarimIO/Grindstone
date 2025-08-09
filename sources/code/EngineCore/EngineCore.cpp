@@ -1,5 +1,4 @@
 #include "EngineCore.hpp"
-#include "EngineCore.hpp"
 #include "pch.hpp"
 
 #include <EngineCore/Utils/MemoryAllocator.hpp>
@@ -22,7 +21,6 @@
 
 #include "Logger.hpp"
 #include "Profiling.hpp"
-#include "EngineCore.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::Memory;
@@ -68,8 +66,8 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	// Load core (Logging, ECS and Plugin Manager)
 	pluginManager = AllocatorCore::Allocate<Plugins::Manager>(this);
 	pluginManager->GetInterface().SetEditorInterface(createInfo.editorPluginInterface);
-
 	pluginManager->LoadPluginList();
+
 	pluginManager->LoadPluginBinariesAndAssetsOfStage("EarlyEngineSetup");
 
 	Grindstone::Window* mainWindow = nullptr;
@@ -212,7 +210,7 @@ EngineCore::~EngineCore() {
 		AllocatorCore::Free(pluginManager);
 	}
 
-	// AllocatorCore::Free(componentRegistrar);
+	AllocatorCore::Free(componentRegistrar);
 	AllocatorCore::Free(systemRegistrar);
 	Logger::GetLoggerState()->dispatcher = nullptr;
 	AllocatorCore::Free(eventDispatcher);
@@ -223,8 +221,8 @@ EngineCore::~EngineCore() {
 	}
 
 	GPRINT_INFO(LogSource::EngineCore, "Closed.");
-	Logger::CloseLogger();
 	AllocatorCore::CloseAllocator();
+	Logger::CloseLogger();
 }
 
 void EngineCore::RegisterGraphicsCore(GraphicsAPI::Core* newGraphicsCore) {

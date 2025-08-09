@@ -9,7 +9,8 @@
 	"binaries": [
 		{
 			"path": "lib/{Configuration}/PluginScriptCSharp",
-			"loadStage": "EndOfEngineSetup"
+			"loadStage": "EndOfEngineSetup",
+			"cmakeTarget": "PluginScriptCSharp"
 		}
 	],
 	"cmake": "CMakeLists.txt"

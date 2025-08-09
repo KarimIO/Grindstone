@@ -9,7 +9,8 @@
 	"binaries": [
 		{
 			"path": "lib/{Configuration}/PluginRhiVulkan",
-			"loadStage": "EarlyEngineSetup"
+			"loadStage": "EarlyEngineSetup",
+			"cmakeTarget": "PluginRhiVulkan"
 		}
 	],
 	"cmake": "CMakeLists.txt"

@@ -99,7 +99,7 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 		return false;
 	}
 
-	engineCore->LoadPluginList();
+	engineCore->GetPluginManager()->LoadPluginBinariesAndAssetsOfStage("EarlyEditor");
 
 	std::string materialContent = "{\n\t\"name\": \"New Material\",\n\t\"shader\": \"\"\n}";
 	assetTemplateRegistry.RegisterTemplate(
