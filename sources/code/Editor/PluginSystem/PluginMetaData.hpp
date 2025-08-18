@@ -11,10 +11,17 @@ namespace Grindstone::Plugins {
 			std::string version;
 		};
 
+		enum class BinaryBuildType {
+			NoBuild,
+			Cmake,
+			Dotnet,
+		};
+
 		struct Binary {
 			std::filesystem::path libraryRelativePath;
 			std::string loadStage;
-			std::string cmakeTarget;
+			BinaryBuildType buildType = BinaryBuildType::NoBuild;
+			std::string buildTarget;
 		};
 
 		struct AssetDirectory {

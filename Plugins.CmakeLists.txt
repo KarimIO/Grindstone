@@ -1,0 +1,11 @@
+Grindstone.Rhi.Vulkan/CMakeLists.txt
+Grindstone.Editor.AudioImporter/CMakeLists.txt
+Grindstone.Editor.MaterialImporter/CMakeLists.txt
+Grindstone.Editor.ModelImporter/CMakeLists.txt
+Grindstone.Editor.PipelineSetImporter/CMakeLists.txt
+Grindstone.Editor.TextureImporter/CMakeLists.txt
+Grindstone.Audio.OpenAL/CMakeLists.txt
+Grindstone.Physics.Bullet/CMakeLists.txt
+Grindstone.Renderables.3D/CMakeLists.txt
+Grindstone.Renderer.Deferred/CMakeLists.txt
+Grindstone.Script.CSharp/CMakeLists.txt

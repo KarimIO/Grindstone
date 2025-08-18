@@ -228,10 +228,23 @@ bool Grindstone::Plugins::ReadMetaFile(std::filesystem::path metaDataFilePath, G
 						errorMsg += std::vformat("Meta file {} has 'binaries' element has missing \'loadStage\'.\n", std::make_format_args(pathCstr));
 					}
 
+					if (binaryJson.HasMember("dotnetTarget")) {
+						rapidjson::Value& buildTargetJson = binaryJson["dotnetTarget"];
+						if (buildTargetJson.IsString()) {
+							binary.buildType = MetaData::BinaryBuildType::Dotnet;
+							std::filesystem::path dotnetPath = metaDataFilePath.parent_path().filename() / buildTargetJson.GetString();
+							binary.buildTarget = dotnetPath.string();
+						}
+						else {
+							errorMsg += std::vformat("Meta file {} has 'binaries' element has \'dotnetTarget\' which should be of type string.\n", std::make_format_args(pathCstr));
+						}
+					}
+
 					if (binaryJson.HasMember("cmakeTarget")) {
-						rapidjson::Value& cmakeTargetJson = binaryJson["cmakeTarget"];
-						if (cmakeTargetJson.IsString()) {
-							binary.cmakeTarget = cmakeTargetJson.GetString();
+						rapidjson::Value& buildTargetJson = binaryJson["cmakeTarget"];
+						if (buildTargetJson.IsString()) {
+							binary.buildType = MetaData::BinaryBuildType::Cmake;
+							binary.buildTarget = buildTargetJson.GetString();
 						}
 						else {
 							errorMsg += std::vformat("Meta file {} has 'binaries' element has \'cmakeTarget\' which should be of type string.\n", std::make_format_args(pathCstr));

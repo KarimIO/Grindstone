@@ -11,6 +11,11 @@
 			"path": "lib/{Configuration}/PluginScriptCSharp",
 			"loadStage": "EndOfEngineSetup",
 			"cmakeTarget": "PluginScriptCSharp"
+		},
+		{
+			"path": "lib/{Configuration}/PluginCSharpCore",
+			"loadStage": "EndOfEngineSetup",
+			"dotnetTarget": "CSharpCore.csproj"
 		}
 	],
 	"cmake": "CMakeLists.txt"

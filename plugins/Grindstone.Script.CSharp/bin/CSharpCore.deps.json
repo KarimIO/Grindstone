@@ -1,0 +1,95 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "CSharpCore/1.0.0": {
+        "dependencies": {
+          "System.Resources.Extensions": "9.0.6"
+        },
+        "runtime": {
+          "CSharpCore.dll": {}
+        }
+      },
+      "System.Collections.Immutable/9.0.6": {
+        "runtime": {
+          "lib/net8.0/System.Collections.Immutable.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.625.26613"
+          }
+        }
+      },
+      "System.Formats.Nrbf/9.0.6": {
+        "dependencies": {
+          "System.Reflection.Metadata": "9.0.6"
+        },
+        "runtime": {
+          "lib/net8.0/System.Formats.Nrbf.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.625.26613"
+          }
+        }
+      },
+      "System.Reflection.Metadata/9.0.6": {
+        "dependencies": {
+          "System.Collections.Immutable": "9.0.6"
+        },
+        "runtime": {
+          "lib/net8.0/System.Reflection.Metadata.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.625.26613"
+          }
+        }
+      },
+      "System.Resources.Extensions/9.0.6": {
+        "dependencies": {
+          "System.Formats.Nrbf": "9.0.6"
+        },
+        "runtime": {
+          "lib/net8.0/System.Resources.Extensions.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.625.26613"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "CSharpCore/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "System.Collections.Immutable/9.0.6": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-lqvXJBZ9KtKKffQt9PgHj5aCdm8HGpPOZQgN3sHRN8j2Yjh+KANkdomhv8QybsBk3/YDDG83OdIWcsfQfdRglw==",
+      "path": "system.collections.immutable/9.0.6",
+      "hashPath": "system.collections.immutable.9.0.6.nupkg.sha512"
+    },
+    "System.Formats.Nrbf/9.0.6": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-wbvE4b1C6R7rrx4dT9nMe8N/ezvZe2/v+pTaVYT2lPyzTNpoXxXQ45dN307W08+BW7wZ+OBCLnTWKrurYJgHOg==",
+      "path": "system.formats.nrbf/9.0.6",
+      "hashPath": "system.formats.nrbf.9.0.6.nupkg.sha512"
+    },
+    "System.Reflection.Metadata/9.0.6": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-arbJ84A9lkaJMVUc3KCaG29Au8dfK6JceDMB86itqfAfXcSFrFXK1CTiKqfiJHdCz2SydEU6hPsUAewwOap69Q==",
+      "path": "system.reflection.metadata/9.0.6",
+      "hashPath": "system.reflection.metadata.9.0.6.nupkg.sha512"
+    },
+    "System.Resources.Extensions/9.0.6": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-415DTH0E+btC8Y0/H7KEQ/c63kYxY7bFTlRsOcz+u8zZOZZk2urhTF2za/aEDPRK2rnNaZZYhaww+vwvGzEp+Q==",
+      "path": "system.resources.extensions/9.0.6",
+      "hashPath": "system.resources.extensions.9.0.6.nupkg.sha512"
+    }
+  }
+}

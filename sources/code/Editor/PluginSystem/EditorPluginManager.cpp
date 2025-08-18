@@ -17,42 +17,23 @@ using namespace Grindstone::Utilities;
 
 static void ReadPipeLoop(HANDLE pipe, Grindstone::LogSeverity severity) {
 	DWORD bytesRead;
-	char buffer[4096];
+	char buffer[4096]{ 0 };
 	std::string partial;
 	while (ReadFile(pipe, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0) {
 		partial.append(buffer, bytesRead);
 		size_t pos;
 		while ((pos = partial.find('\n')) != std::string::npos) {
 			std::string line = partial.substr(0, pos);
-			GPRINT(severity, Grindstone::LogSource::EngineCore, line.c_str());
+			GPRINT(severity, Grindstone::LogSource::Editor, line.c_str());
 			partial.erase(0, pos + 1);
 		}
 	}
 	if (!partial.empty()) {
-		GPRINT(severity, Grindstone::LogSource::EngineCore, partial.c_str()); // final line without newline
+		GPRINT(severity, Grindstone::LogSource::Editor, partial.c_str()); // final line without newline
 	}
 }
 
-static bool RunCMakeCommand(
-	const std::vector<std::string>& cmakeTargets
-) {
-	std::string workingDirectory = EngineCore::GetInstance().GetEngineBinaryPath().parent_path().string();
-	std::vector<std::string> args = { "--build", ".", "--target" };
-
-	for (const std::string& target : cmakeTargets) {
-		args.emplace_back(target);
-	}
-
-	args.emplace_back("--config");
-	args.emplace_back("Release");
-
-	std::ostringstream cmdStream;
-	cmdStream << "cmake";
-	for (const auto& arg : args) {
-		cmdStream << " \"" << arg << "\"";
-	}
-	std::string commandLine = cmdStream.str();
-
+static bool RunCommand(char* commandLine, const char* workingDirectory) {
 	SECURITY_ATTRIBUTES sa = { sizeof(sa), NULL, TRUE };
 	HANDLE stdoutRead, stdoutWrite, stderrRead, stderrWrite;
 	CreatePipe(&stdoutRead, &stdoutWrite, &sa, 0);
@@ -70,13 +51,13 @@ static bool RunCMakeCommand(
 	PROCESS_INFORMATION pi = {};
 	BOOL success = CreateProcessA(
 		NULL,
-		commandLine.data(),
+		static_cast<LPSTR>(commandLine),
 		NULL,
 		NULL,
 		TRUE,
 		0,
 		NULL,
-		workingDirectory.empty() ? NULL : workingDirectory.c_str(),
+		workingDirectory,
 		&si,
 		&pi
 	);
@@ -101,6 +82,33 @@ static bool RunCMakeCommand(
 	readErrThread.join();
 
 	return true;
+}
+
+static bool RunCMakeCommand(const std::vector<std::string>& cmakeTargets) {
+	std::string workingDirectory = EngineCore::GetInstance().GetEngineBinaryPath().parent_path().string();
+	
+	std::ostringstream cmdStream;
+	cmdStream << "cmake";
+	cmdStream << " --build .";
+	cmdStream << " --config Release";
+	cmdStream << " --target";
+	for (const std::string& target : cmakeTargets) {
+		cmdStream << " \"" << target << "\"";
+	}
+	std::string commandLine = cmdStream.str();
+	return RunCommand(commandLine.data(), workingDirectory.empty() ? nullptr : workingDirectory.c_str());
+}
+
+static bool RunDotnetCommand(const std::vector<std::string>& dotnetTargets) {
+	std::string workingDirectory = (EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins").string();
+
+	std::ostringstream cmdStream;
+	cmdStream << "dotnet build ";
+	for (const std::string& target : dotnetTargets) {
+		cmdStream << " \"" << target.c_str() << "\"";
+	}
+	std::string commandLine = cmdStream.str();
+	return RunCommand(commandLine.data(), workingDirectory.empty() ? nullptr : workingDirectory.c_str());
 }
 
 EditorPluginManager::~EditorPluginManager() {
@@ -133,6 +141,7 @@ bool EditorPluginManager::PreprocessPlugins() {
 	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path();
 
 	std::vector<std::string> cmakeTargetsToCompile;
+	std::vector<std::string> dotnetTargetsToCompile;
 
 	for (Grindstone::Plugins::ManifestData& manifestData : manifestResults) {
 		Grindstone::Plugins::MetaData metaData{};
@@ -141,8 +150,24 @@ bool EditorPluginManager::PreprocessPlugins() {
 			resolvedPluginManifest.emplace_back(metaData);
 
 			for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
-				if (!binary.cmakeTarget.empty()) {
-					cmakeTargetsToCompile.emplace_back(binary.cmakeTarget);
+				if (!binary.buildTarget.empty()) {
+					switch (binary.buildType) {
+					case MetaData::BinaryBuildType::NoBuild: {
+						std::string path = binary.libraryRelativePath.string();
+						GPRINT_ERROR_V(LogSource::Editor, "Binary {} has a target {} but no build type.", path.c_str(), binary.buildTarget.c_str());
+						break;
+					}
+					case MetaData::BinaryBuildType::Cmake:
+						cmakeTargetsToCompile.emplace_back(binary.buildTarget);
+						break;
+					case MetaData::BinaryBuildType::Dotnet:
+						dotnetTargetsToCompile.emplace_back(binary.buildTarget);
+						break;
+					}
+				}
+				else if (binary.buildType != MetaData::BinaryBuildType::NoBuild) {
+					std::string path = binary.libraryRelativePath.string();
+					GPRINT_ERROR_V(LogSource::Editor, "Binary {} has a build type other than 'NoBuild' but not a target.", path.c_str());
 				}
 			}
 		}
@@ -150,6 +175,10 @@ bool EditorPluginManager::PreprocessPlugins() {
 
 	if (!cmakeTargetsToCompile.empty()) {
 		RunCMakeCommand(cmakeTargetsToCompile);
+	}
+
+	if (!dotnetTargetsToCompile.empty()) {
+		RunDotnetCommand(dotnetTargetsToCompile);
 	}
 
 	return true;
