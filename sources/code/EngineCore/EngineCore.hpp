@@ -19,8 +19,8 @@ namespace Grindstone {
 	}
 
 	namespace Plugins {
-		class Manager;
-		class BaseEditorInterface;
+		class IPluginManager;
+		class Interface;
 	}
 
 	namespace ECS {
@@ -60,18 +60,22 @@ namespace Grindstone {
 		static EngineCore& GetInstance();
 		static void SetInstance(EngineCore& engineCore);
 
-		struct CreateInfo {
+		struct EarlyCreateInfo {
 			bool isEditor = false;
 			const char* applicationModuleName = nullptr;
 			const char* applicationTitle = nullptr;
 			const char* projectPath = nullptr;
 			const char* engineBinaryPath = nullptr;
 			Assets::AssetLoader* assetLoader = nullptr;
-			Grindstone::Plugins::BaseEditorInterface* editorPluginInterface = nullptr;
 		};
 
-		bool Initialize(CreateInfo& ci);
-		virtual void LoadPluginList();
+		struct LateCreateInfo {
+			Grindstone::Assets::AssetLoader* assetLoader = nullptr;
+			Grindstone::Plugins::IPluginManager* pluginManagerOverride = nullptr;
+		};
+
+		virtual bool EarlyInitialize(EarlyCreateInfo& ci);
+		virtual bool Initialize(LateCreateInfo& createInfo);
 		virtual void InitializeScene(bool shouldLoadSceneFromDefaults, const char* scenePath = nullptr);
 		virtual void ShowMainWindow();
 
@@ -85,7 +89,8 @@ namespace Grindstone {
 		virtual void SetRendererFactory(BaseRendererFactory* factory);
 		virtual Input::Interface* GetInputManager() const;
 		virtual SceneManagement::SceneManager* GetSceneManager() const;
-		virtual Plugins::Manager* GetPluginManager() const;
+		virtual Plugins::IPluginManager* GetPluginManager() const;
+		virtual Plugins::Interface* GetPluginInterface() const;
 		virtual ECS::SystemRegistrar* GetSystemRegistrar() const;
 		virtual Events::Dispatcher* GetEventDispatcher() const;
 		virtual ECS::ComponentRegistrar* GetComponentRegistrar() const;
@@ -128,7 +133,8 @@ namespace Grindstone {
 		BaseRendererFactory* rendererFactory = nullptr;
 		RenderPassRegistry* renderpassRegistry = nullptr;
 		Events::Dispatcher* eventDispatcher = nullptr;
-		Plugins::Manager* pluginManager = nullptr;
+		Plugins::Interface* pluginInterface = nullptr;
+		Plugins::IPluginManager* pluginManager = nullptr;
 		GraphicsAPI::Core* graphicsCore = nullptr;
 		Input::Interface* inputManager = nullptr;
 		bool shouldClose = false;

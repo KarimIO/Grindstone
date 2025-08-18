@@ -1,8 +1,10 @@
 #include <imgui.h>
+
 #include <Editor/Importers/ImporterManager.hpp>
-#include "EditorManager.hpp"
+#include <Editor/EditorManager.hpp>
+#include <Editor/AssetTemplateRegistry.hpp>
+
 #include "EditorPluginInterface.hpp"
-#include "AssetTemplateRegistry.hpp"
 
 using namespace Grindstone::Plugins;
 

@@ -1,7 +1,7 @@
 #include <Grindstone.Editor.TextureImporter/include/pch.hpp>
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
-#include <Editor/EditorPluginInterface.hpp>
+#include <Editor/PluginSystem/EditorPluginInterface.hpp>
 
 #include <Grindstone.Editor.TextureImporter/include/TextureImporter.hpp>
 

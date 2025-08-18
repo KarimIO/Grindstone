@@ -1,6 +1,6 @@
 #include <Grindstone.Editor.AudioImporter/include/pch.hpp>
 #include <EngineCore/PluginSystem/Interface.hpp>
-#include <Editor/EditorPluginInterface.hpp>
+#include <Editor/PluginSystem/EditorPluginInterface.hpp>
 
 #include <Grindstone.Editor.AudioImporter/include/AudioImporter.hpp>
 

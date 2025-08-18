@@ -2,10 +2,9 @@
 #include <EngineCore/Utils/Utilities.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Logger.hpp>
-#include <EngineCore/PluginSystem/PluginMetaFileLoader.hpp>
 
-#include "Manager.hpp"
-#include "Interface.hpp"
+#include "EditorPluginManager.hpp"
+#include "PluginMetaFileLoader.hpp"
 #include "PluginManifestFileLoader.hpp"
 #include "PluginManifestLockFileLoader.hpp"
 
@@ -104,18 +103,14 @@ static bool RunCMakeCommand(
 	return true;
 }
 
-Manager::Manager(EngineCore* engineCore) : pluginInterface(this), engineCore(engineCore) {
-	SetupInterfacePointers();
-}
-
-Manager::~Manager() {
-	for (auto it = pluginBinaries.rbegin(); it != pluginBinaries.rend(); ++it) {
+EditorPluginManager::~EditorPluginManager() {
+	for (auto it = pluginModules.rbegin(); it != pluginModules.rend(); ++it) {
 		auto handle = it->second;
 		if (handle) {
 			auto releaseModuleFnPtr = (void (*)(Interface*))Modules::GetFunction(handle, "ReleaseModule");
 
 			if (releaseModuleFnPtr) {
-				releaseModuleFnPtr(&pluginInterface);
+				releaseModuleFnPtr(EngineCore::GetInstance().GetPluginInterface());
 			}
 			else {
 				std::string pluginName = it->first.string();
@@ -125,7 +120,7 @@ Manager::~Manager() {
 	}
 }
 
-bool Manager::LoadPluginList() {
+bool EditorPluginManager::PreprocessPlugins() {
 	std::vector<Grindstone::Plugins::ManifestData> manifestResults{};
 	if (!Grindstone::Plugins::LoadPluginManifestFile(manifestResults)) {
 		return false;
@@ -160,7 +155,7 @@ bool Manager::LoadPluginList() {
 	return true;
 }
 
-void Manager::LoadPluginBinariesAndAssetsOfStage(const char* stageName) {
+void EditorPluginManager::LoadPluginsByStage(const char* stageName) {
 	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins";
 
 	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
@@ -170,14 +165,14 @@ void Manager::LoadPluginBinariesAndAssetsOfStage(const char* stageName) {
 				std::filesystem::path binaryPath = pluginPath / binary.libraryRelativePath;
 				std::filesystem::path parentPath = binaryPath.parent_path();
 				DLL_DIRECTORY_COOKIE dllCookie = AddDllDirectory(parentPath.wstring().c_str());
-				Load(binaryPath);
+				LoadModule(binaryPath);
 				RemoveDllDirectory(dllCookie);
 			}
 		}
 	}
 }
 
-void Manager::UnloadPluginBinariesAndAssetsFromStage(const char* stageName) {
+void EditorPluginManager::UnloadPluginsByStage(const char* stageName) {
 	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins";
 
 	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
@@ -185,31 +180,15 @@ void Manager::UnloadPluginBinariesAndAssetsFromStage(const char* stageName) {
 		for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
 			if (binary.loadStage == stageName) {
 				std::filesystem::path binaryPath = pluginPath / binary.libraryRelativePath;
-				Remove(binaryPath);
+				UnloadModule(binaryPath);
 			}
 		}
 	}
 }
 
-void Manager::SetupInterfacePointers() {
-	const EngineCore& engineCore = EngineCore::GetInstance();
-	pluginInterface.systemRegistrar = engineCore.GetSystemRegistrar();
-	pluginInterface.componentRegistrar = engineCore.GetComponentRegistrar();
-}
-
-Interface& Manager::GetInterface() {
-	return pluginInterface;
-}
-
-bool Manager::Load(const std::filesystem::path& path) {
-#ifdef _DEBUG
-	std::string profileStr = std::string("Loading module ") + path.string();
-	GRIND_PROFILE_SCOPE(profileStr.c_str());
-#endif
-
-	// Return true if plugin already loaded
-	auto it = pluginBinaries.find(path);
-	if (it != pluginBinaries.end()) {
+bool EditorPluginManager::LoadModule(const std::filesystem::path& path) {
+	auto it = pluginModules.find(path);
+	if (it != pluginModules.end()) {
 #ifdef _DEBUG
 		throw std::runtime_error("Module already loaded! This error only exists in debug mode to make sure you don't write useless code.");
 #endif
@@ -220,12 +199,12 @@ bool Manager::Load(const std::filesystem::path& path) {
 	auto handle = Modules::Load(path.string().c_str());
 
 	if (handle) {
-		pluginBinaries[path] = handle;
+		pluginModules[path] = handle;
 
 		auto initializeModuleFnPtr = (void (*)(Interface*))Modules::GetFunction(handle, "InitializeModule");
 
 		if (initializeModuleFnPtr) {
-			initializeModuleFnPtr(&pluginInterface);
+			initializeModuleFnPtr(EngineCore::GetInstance().GetPluginInterface());
 
 			return true;
 		}
@@ -256,29 +235,26 @@ bool Manager::Load(const std::filesystem::path& path) {
 	return false;
 }
 
-void Manager::LoadCritical(const std::filesystem::path& path) {
-	if (!Load(path)) {
-		throw std::runtime_error(std::string("Failed to load module: ") + path.string());
+void EditorPluginManager::UnloadModule(const std::filesystem::path& path) {
+	auto it = pluginModules.find(path);
+	if (it == pluginModules.end()) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "Unable to unload plugin \"{0}\"", path.string());
+		return;
 	}
-}
 
-void Manager::Remove(const std::filesystem::path& path) {
-	auto it = pluginBinaries.find(path);
-	if (it != pluginBinaries.end()) {
-		Grindstone::Utilities::Modules::Handle handle = it->second;
-		if (handle) {
-			auto releaseModuleFnPtr = static_cast<void (*)(Interface*)>(Modules::GetFunction(handle, "ReleaseModule"));
+	Grindstone::Utilities::Modules::Handle handle = it->second;
+	if (handle) {
+		auto releaseModuleFnPtr = static_cast<void (*)(Interface*)>(Modules::GetFunction(handle, "ReleaseModule"));
 
-			if (releaseModuleFnPtr) {
-				releaseModuleFnPtr(&pluginInterface);
-			}
-			else {
-				GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", it->first.string().c_str());
-			}
-
-			Grindstone::Utilities::Modules::Unload(handle);
+		if (releaseModuleFnPtr) {
+			releaseModuleFnPtr(EngineCore::GetInstance().GetPluginInterface());
+		}
+		else {
+			GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", it->first.string().c_str());
 		}
 
-		pluginBinaries.erase(it);
+		Grindstone::Utilities::Modules::Unload(handle);
 	}
+
+	pluginModules.erase(it);
 }

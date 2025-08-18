@@ -5,7 +5,7 @@
 
 bool Grindstone::Plugins::LoadPluginManifestFile(std::vector<Grindstone::Plugins::ManifestData>& manifestData) {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
-	std::filesystem::path pluginListFile = engineCore.GetProjectPath() / "buildSettings/pluginsManifest.txt";
+	std::filesystem::path pluginListFile = engineCore.GetProjectPath() / "buildSettings" / "pluginsManifest.txt";
 
 	std::string pluginListFileString = pluginListFile.string();
 	if (!std::filesystem::exists(pluginListFile)) {

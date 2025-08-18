@@ -8,19 +8,13 @@
 using namespace Grindstone;
 
 extern "C" {
-	ENGINE_CORE_API EngineCore* CreateEngine(EngineCore::CreateInfo& ci) {
+	ENGINE_CORE_API EngineCore* CreateEngine() {
 		try {
 			EngineCore* core = new EngineCore();
 			EngineCore::SetInstance(*core);
-			if (core->Initialize(ci)) {
-				return core;
-			}
-			else {
-				return nullptr;
-			}
+			return core;
 		}
 		catch (std::runtime_error& e) {
-
 #ifdef _MSC_VER
 			OutputDebugString(e.what());
 #endif

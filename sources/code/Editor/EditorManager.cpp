@@ -16,10 +16,11 @@
 #include <Editor/ImguiEditor/ImguiEditor.hpp>
 #include <Editor/Importers/ImporterManager.hpp>
 #include <Editor/ScriptBuilder/CSharpBuildManager.hpp>
+#include <Editor/PluginSystem/EditorPluginInterface.hpp>
+#include <Editor/PluginSystem/EditorPluginManager.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
 #include <EngineCore/PluginSystem/Interface.hpp>
-#include <EngineCore/PluginSystem/Manager.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/WorldContext/WorldContextManager.hpp>
 #include <EngineCore/Logger.hpp>
@@ -28,7 +29,6 @@
 #include "AssetRegistry.hpp"
 #include "AssetTemplateRegistry.hpp"
 #include "EditorManager.hpp"
-#include "EditorPluginInterface.hpp"
 #include "FileAssetLoader.hpp"
 #include "FileManager.hpp"
 #include "GitManager.hpp"
@@ -99,7 +99,7 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 		return false;
 	}
 
-	engineCore->GetPluginManager()->LoadPluginBinariesAndAssetsOfStage("EarlyEditor");
+	engineCore->GetPluginManager()->LoadPluginsByStage("EarlyEditor");
 
 	std::string materialContent = "{\n\t\"name\": \"New Material\",\n\t\"shader\": \"\"\n}";
 	assetTemplateRegistry.RegisterTemplate(
@@ -255,7 +255,7 @@ bool Manager::OnForceQuit(Grindstone::Events::BaseEvent* ev) {
 	return true;
 }
 
-using CreateEngineFunction = EngineCore*(EngineCore::CreateInfo&);
+using CreateEngineFunction = Grindstone::EngineCore*();
 bool Manager::LoadEngine() {
 	engineCoreLibraryHandle = Grindstone::Utilities::Modules::Load("EngineCore");
 
@@ -271,31 +271,42 @@ bool Manager::LoadEngine() {
 		return false;
 	}
 
-	EngineCore::CreateInfo createInfo;
-	createInfo.isEditor = true;
-	createInfo.applicationModuleName = "GrindstoneGameEditor";
-	createInfo.applicationTitle = "Grindstone Game Editor";
+	Grindstone::EngineCore::EarlyCreateInfo earlyCreateInfo;
+	earlyCreateInfo.isEditor = true;
+	earlyCreateInfo.applicationModuleName = "GrindstoneGameEditor";
+	earlyCreateInfo.applicationTitle = "Grindstone Game Editor";
 	const std::string projectPathAsStr = projectPath.string();
-	createInfo.projectPath = projectPathAsStr.c_str();
-	createInfo.assetLoader = new Assets::FileAssetLoader();
-	createInfo.editorPluginInterface = new Grindstone::Plugins::EditorPluginInterface();
-
+	earlyCreateInfo.projectPath = projectPathAsStr.c_str();
 	const std::string currentPath = std::filesystem::current_path().string();
-	createInfo.engineBinaryPath = currentPath.c_str();
-	engineCore = createEngineFn(createInfo);
+	earlyCreateInfo.engineBinaryPath = currentPath.c_str();
+
+	engineCore = createEngineFn();
 
 	if (engineCore == nullptr) {
 		return false;
 	}
 
-	Plugins::Interface& pluginInterface = engineCore->GetPluginManager()->GetInterface();
-	Grindstone::HashedString::SetHashMap(pluginInterface.GetHashedStringMap());
-	Grindstone::Logger::SetLoggerState(pluginInterface.GetLoggerState());
-	Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface.GetAllocatorState());
-
 	Grindstone::EngineCore::SetInstance(*engineCore);
 
-	return engineCore != nullptr;
+	if (!engineCore->EarlyInitialize(earlyCreateInfo)) {
+		return false;
+	}
+
+	Plugins::Interface* pluginInterface = engineCore->GetPluginInterface();
+	pluginInterface->SetEditorInterface(new Grindstone::Plugins::EditorPluginInterface());
+	Grindstone::HashedString::SetHashMap(pluginInterface->GetHashedStringMap());
+	Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
+	Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
+
+	EngineCore::LateCreateInfo lateCreateInfo;
+	lateCreateInfo.assetLoader = new Assets::FileAssetLoader();
+	lateCreateInfo.pluginManagerOverride = new Grindstone::Plugins::EditorPluginManager();
+
+	if (!engineCore->Initialize(lateCreateInfo)) {
+		return false;
+	}
+
+	return true;
 }
 
 Manager::~Manager() {
@@ -307,6 +318,8 @@ Manager::~Manager() {
 		AllocatorCore::Free(imguiEditor);
 		imguiEditor = nullptr;
 	}
+
+	engineCore->GetPluginManager()->UnloadPluginsByStage("EarlyEditor");
 
 	if (engineCore != nullptr) {
 		Grindstone::WorldContextManager* cxtManager = engineCore->GetWorldContextManager();

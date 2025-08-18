@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
 			return 1;
 		};
 
-		using CreateEngineFunction = EngineCore * (EngineCore::CreateInfo&);
+		using CreateEngineFunction = EngineCore*();
 		CreateEngineFunction* createEngineFn =
 			(CreateEngineFunction*)Utilities::Modules::GetFunction(handle, "CreateEngine");
 
@@ -37,17 +37,28 @@ int main(int argc, char** argv) {
 			return 1;
 		}
 
-		EngineCore::CreateInfo createInfo;
-		createInfo.isEditor = false;
-		createInfo.assetLoader = nullptr;
-		createInfo.applicationModuleName = "ApplicationDLL";
-		createInfo.applicationTitle = "Grindstone Sandbox";
-		createInfo.projectPath = projectPath.c_str();
+		EngineCore::EarlyCreateInfo earlyCreateInfo;
+		earlyCreateInfo.isEditor = false;
+		earlyCreateInfo.assetLoader = nullptr;
+		earlyCreateInfo.applicationModuleName = "ApplicationDLL";
+		earlyCreateInfo.applicationTitle = "Grindstone Sandbox";
+		earlyCreateInfo.projectPath = projectPath.c_str();
 		std::string currentPath = (std::filesystem::path(projectPath) / "bin").string();
-		createInfo.engineBinaryPath = currentPath.c_str();
-		EngineCore* engineCore = createEngineFn(createInfo);
+		earlyCreateInfo.engineBinaryPath = currentPath.c_str();
+		EngineCore* engineCore = createEngineFn();
 
-		engineCore->LoadPluginList();
+		if (engineCore->EarlyInitialize(earlyCreateInfo)) {
+			std::cerr << "Failed to initialize EngineCore Module.";
+			return 1;
+		}
+
+		EngineCore::LateCreateInfo lateCreateInfo{};
+
+		if (engineCore->Initialize(lateCreateInfo)) {
+			std::cerr << "Failed to initialize EngineCore Module.";
+			return 1;
+		}
+
 		engineCore->InitializeScene(true);
 		engineCore->ShowMainWindow();
 

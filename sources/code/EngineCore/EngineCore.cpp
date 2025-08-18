@@ -7,7 +7,7 @@
 #include <EngineCore/CoreComponents/setupCoreComponents.hpp>
 #include <EngineCore/CoreSystems/setupCoreSystems.hpp>
 #include <EngineCore/Scenes/Manager.hpp>
-#include <EngineCore/PluginSystem/Manager.hpp>
+#include <EngineCore/PluginSystem/DefaultPluginManager.hpp>
 #include <EngineCore/Events/InputManager.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
 #include <EngineCore/Rendering/BaseRenderer.hpp>
@@ -27,7 +27,7 @@ using namespace Grindstone::Memory;
 
 static Grindstone::EngineCore* engineCoreInstance = nullptr;
 
-bool EngineCore::Initialize(CreateInfo& createInfo) {
+bool EngineCore::EarlyInitialize(EarlyCreateInfo& createInfo) {
 	isEditor = createInfo.isEditor;
 	projectPath = createInfo.projectPath;
 	engineBinaryPath = createInfo.engineBinaryPath;
@@ -46,29 +46,45 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 	firstFrameTime = std::chrono::steady_clock::now();
 
 	profiler = &Profiler::Manager::Get();
+	systemRegistrar = AllocatorCore::Allocate<ECS::SystemRegistrar>();
+	componentRegistrar = AllocatorCore::Allocate<ECS::ComponentRegistrar>();
 
-	Logger::Initialize(projectPath / "log/output.log", eventDispatcher);
-	GRIND_PROFILE_BEGIN_SESSION("Grindstone Loading", projectPath / "log/grind-profile-load.json");
+	pluginInterface = AllocatorCore::Allocate<Plugins::Interface>();
+	pluginInterface->componentRegistrar = componentRegistrar;
+	pluginInterface->systemRegistrar = systemRegistrar;
+
+	Logger::Initialize(projectPath / "log" / "output.log", eventDispatcher);
+	GRIND_PROFILE_BEGIN_SESSION("Grindstone Loading", projectPath / "log" / "grind-profile-load.json");
 	GPRINT_INFO_V(LogSource::EngineCore, "Initializing {0}...", createInfo.applicationTitle);
 
+	return true;
+}
+
+bool EngineCore::Initialize(LateCreateInfo& createInfo) {
 	{
 		GRIND_PROFILE_SCOPE("Setup Core Systems");
-		systemRegistrar = AllocatorCore::Allocate<ECS::SystemRegistrar>();
 		SetupCoreSystems(systemRegistrar);
 	}
 
 	{
 		GRIND_PROFILE_SCOPE("Setup Core Components");
-		componentRegistrar = AllocatorCore::Allocate<ECS::ComponentRegistrar>();
 		SetupCoreComponents(componentRegistrar);
 	}
 
 	// Load core (Logging, ECS and Plugin Manager)
-	pluginManager = AllocatorCore::Allocate<Plugins::Manager>(this);
-	pluginManager->GetInterface().SetEditorInterface(createInfo.editorPluginInterface);
-	pluginManager->LoadPluginList();
+	if (createInfo.pluginManagerOverride == nullptr) {
+		pluginManager = AllocatorCore::Allocate<Plugins::DefaultPluginManager>();
+	}
+	else {
+		pluginManager = createInfo.pluginManagerOverride;
+	}
 
-	pluginManager->LoadPluginBinariesAndAssetsOfStage("EarlyEngineSetup");
+	pluginManager->PreprocessPlugins();
+
+	pluginManager->LoadPluginsByStage("EarlyEngineSetup");
+
+	GS_ASSERT_ENGINE(windowManager != nullptr);
+	GS_ASSERT_ENGINE(graphicsCore != nullptr);
 
 	Grindstone::Window* mainWindow = nullptr;
 	{
@@ -81,7 +97,7 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 		windowCreationInfo.width = 800;
 		windowCreationInfo.height = 600;
 		windowCreationInfo.engineCore = this;
-		windowCreationInfo.isSwapchainControlledByEngine = !createInfo.isEditor;
+		windowCreationInfo.isSwapchainControlledByEngine = !isEditor;
 		mainWindow = windowManager->Create(windowCreationInfo);
 		eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&EngineCore::OnTryQuit, this, std::placeholders::_1));
 		eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowForceQuit, std::bind(&EngineCore::OnForceQuit, this, std::placeholders::_1));
@@ -110,18 +126,14 @@ bool EngineCore::Initialize(CreateInfo& createInfo) {
 
 	sceneManager = AllocatorCore::Allocate<SceneManagement::SceneManager>();
 
-	GPRINT_INFO_V(LogSource::EngineCore, "{0} Initialized.", createInfo.applicationTitle);
+	GPRINT_INFO(LogSource::EngineCore, "Application Initialized.");
 	GRIND_PROFILE_END_SESSION();
 
-	pluginManager->LoadPluginBinariesAndAssetsOfStage("EndOfEngineSetup");
+	pluginManager->LoadPluginsByStage("EndOfEngineSetup");
 
 	lastFrameTime = std::chrono::steady_clock::now();
 
 	return true;
-}
-
-void EngineCore::LoadPluginList() {
-	pluginManager->LoadPluginList();
 }
 
 void EngineCore::InitializeScene(bool shouldLoadSceneFromDefaults, const char* scenePath) {
@@ -195,7 +207,7 @@ EngineCore::~EngineCore() {
 	}
 
 	if (pluginManager != nullptr) {
-		pluginManager->UnloadPluginBinariesAndAssetsFromStage("EndOfEngineSetup");
+		pluginManager->UnloadPluginsByStage("EndOfEngineSetup");
 	}
 
 	AllocatorCore::Free(worldContextManager);
@@ -206,9 +218,11 @@ EngineCore::~EngineCore() {
 	AllocatorCore::Free(inputManager);
 
 	if (pluginManager) {
-		pluginManager->UnloadPluginBinariesAndAssetsFromStage("EarlyEngineSetup");
+		pluginManager->UnloadPluginsByStage("EarlyEngineSetup");
 		AllocatorCore::Free(pluginManager);
 	}
+
+	AllocatorCore::Free(pluginInterface);
 
 	AllocatorCore::Free(componentRegistrar);
 	AllocatorCore::Free(systemRegistrar);
@@ -245,8 +259,12 @@ SceneManagement::SceneManager* EngineCore::GetSceneManager() const {
 	return sceneManager;
 }
 
-Plugins::Manager* EngineCore::GetPluginManager() const {
+Plugins::IPluginManager* EngineCore::GetPluginManager() const {
 	return pluginManager;
+}
+
+Plugins::Interface* Grindstone::EngineCore::GetPluginInterface() const {
+	return pluginInterface;
 }
 
 ECS::ComponentRegistrar* EngineCore::GetComponentRegistrar() const {

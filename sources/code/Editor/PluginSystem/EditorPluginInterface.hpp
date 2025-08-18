@@ -12,9 +12,9 @@ namespace Grindstone::Editor {
 }
 
 namespace Grindstone::Plugins {
-	class EditorPluginInterface : public BaseEditorInterface {
+	class EditorPluginInterface : public Grindstone::Plugins::IEditorInterface {
 	public:
-		virtual ImGuiContext * GetImguiContext() const;
+		virtual ImGuiContext* GetImguiContext() const;
 		virtual Grindstone::Editor::Manager* GetEditorInstance() const;
 		virtual void MapExtensionToImporterType(const char* extension, Grindstone::HashedString importerType);
 		virtual void RegisterAssetImporter(

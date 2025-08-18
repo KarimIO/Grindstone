@@ -24,9 +24,13 @@ file(GLOB_RECURSE SOURCE_MAIN
 	TaskSystem.cpp TaskSystem.hpp
 	FileAssetLoader.cpp FileAssetLoader.hpp
 	AssetTemplateRegistry.cpp AssetTemplateRegistry.hpp
-	EditorPluginInterface.cpp EditorPluginInterface.hpp
 	${CORE_UTILS}
 )
+
+file(GLOB_RECURSE SOURCE_PLUGIN_SYSTEM "${EDITOR_DIR}/PluginSystem/*.cpp")
+file(GLOB_RECURSE HEADER_PLUGIN_SYSTEM "${EDITOR_DIR}/PluginSystem/*.hpp")
+source_group("Plugin System\\Source Files" FILES ${SOURCE_PLUGIN_SYSTEM})
+source_group("Plugin System\\Header Files" FILES ${HEADER_PLUGIN_SYSTEM})
 
 file(GLOB_RECURSE SOURCE_SCRIPT_BUILDER_EDITOR "${EDITOR_DIR}/ScriptBuilder/*.cpp")
 file(GLOB_RECURSE HEADER_SCRIPT_BUILDER_EDITOR "${EDITOR_DIR}/ScriptBuilder/*.hpp")
@@ -80,6 +84,7 @@ set(EDITOR_SOURCES
 	${SOURCE_IMGUI_COMPONENTS_EDITOR}
 	${SOURCE_SCRIPT_BUILDER_EDITOR}
 	${SOURCE_IMGUI_EDITOR}
+	${SOURCE_PLUGIN_SYSTEM}
 )
 
 set(EDITOR_HEADERS
@@ -91,6 +96,7 @@ set(EDITOR_HEADERS
 	${HEADER_IMGUI_COMPONENTS_EDITOR}
 	${HEADER_SCRIPT_BUILDER_EDITOR}
 	${HEADER_IMGUI_EDITOR}
+	${HEADER_PLUGIN_SYSTEM}
 )
 
 find_package(efsw CONFIG REQUIRED)

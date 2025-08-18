@@ -3,8 +3,8 @@
 #include <Common/ResourcePipeline/MetaFile.hpp>
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
+#include <Editor/PluginSystem/EditorPluginInterface.hpp>
 #include <Editor/EditorManager.hpp>
-#include <Editor/EditorPluginInterface.hpp>
 
 #include <Grindstone.Editor.ModelImporter/include/pch.hpp>
 #include <Grindstone.Editor.ModelImporter/include/ModelImporter.hpp>

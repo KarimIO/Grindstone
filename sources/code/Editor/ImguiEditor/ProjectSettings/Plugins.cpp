@@ -1,12 +1,11 @@
 #include <fstream>
 #include <imgui.h>
 #include <imgui_stdlib.h>
-#include "EngineCore/EngineCore.hpp"
-#include "EngineCore/PluginSystem/Manager.hpp"
-#include "EngineCore/Utils/Utilities.hpp"
-#include "Editor/ImguiEditor/Components/ListEditor.hpp"
 
-#include "Editor/EditorManager.hpp"
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Utils/Utilities.hpp>
+#include <Editor/ImguiEditor/Components/ListEditor.hpp>
+#include <Editor/EditorManager.hpp>
 
 #include "Plugins.hpp"
 using namespace Grindstone::Editor::ImguiEditor;

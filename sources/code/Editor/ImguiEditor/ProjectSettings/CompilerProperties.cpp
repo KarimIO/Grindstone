@@ -1,12 +1,11 @@
 #include <fstream>
 #include <imgui.h>
 #include <imgui_stdlib.h>
-#include "EngineCore/EngineCore.hpp"
-#include "EngineCore/PluginSystem/Manager.hpp"
-#include "EngineCore/Utils/Utilities.hpp"
 
-#include "Editor/EditorManager.hpp"
-#include "Editor/ImguiEditor/Components/ListEditor.hpp"
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Utils/Utilities.hpp>
+#include <Editor/EditorManager.hpp>
+#include <Editor/ImguiEditor/Components/ListEditor.hpp>
 
 #include "Platforms.hpp"
 #include "CompilerProperties.hpp"
@@ -14,7 +13,7 @@ using namespace Grindstone::Editor::ImguiEditor;
 
 void Settings::CompilerProperties::Open() {
 	preprocessorDefinitions.clear();
-	std::filesystem::path sceneListFile = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings/scenesManifest.txt";
+	std::filesystem::path sceneListFile = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings" / "scenesManifest.txt";
 	auto sceneListFilePath = sceneListFile.string();
 	auto fileContents = Utils::LoadFileText(sceneListFilePath.c_str());
 
@@ -49,7 +48,7 @@ void Settings::CompilerProperties::Render() {
 }
 
 void Settings::CompilerProperties::WriteFile() {
-	std::filesystem::path settingsFile = Editor::Manager::GetInstance().GetProjectPath() / "userSettings/compilerProperties.txt";
+	std::filesystem::path settingsFile = Editor::Manager::GetInstance().GetProjectPath() / "userSettings" / "compilerProperties.txt";
 	std::filesystem::create_directories(settingsFile.parent_path());
 	auto settingsPath = settingsFile.string();
 	std::ofstream outputFile(settingsPath.c_str());
