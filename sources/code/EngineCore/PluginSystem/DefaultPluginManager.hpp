@@ -16,8 +16,9 @@ namespace Grindstone::Plugins {
 		virtual ~DefaultPluginManager();
 	
 		virtual bool PreprocessPlugins() override;
-		virtual void LoadPluginsByStage(const char* stageName) override;
-		virtual void UnloadPluginsByStage(const char* stageName) override;
+		virtual void LoadPluginsByStage(std::string_view stageName) override;
+		virtual void UnloadPluginsByStage(std::string_view stageName) override;
+		virtual std::filesystem::path GetLibraryPath(std::string_view pluginName, std::string_view libraryName) override;
 
 	protected:
 		bool LoadModule(const std::string& path);

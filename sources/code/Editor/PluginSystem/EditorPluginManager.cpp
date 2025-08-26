@@ -184,7 +184,7 @@ bool EditorPluginManager::PreprocessPlugins() {
 	return true;
 }
 
-void EditorPluginManager::LoadPluginsByStage(const char* stageName) {
+void EditorPluginManager::LoadPluginsByStage(std::string_view stageName) {
 	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins";
 
 	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
@@ -201,7 +201,7 @@ void EditorPluginManager::LoadPluginsByStage(const char* stageName) {
 	}
 }
 
-void EditorPluginManager::UnloadPluginsByStage(const char* stageName) {
+void EditorPluginManager::UnloadPluginsByStage(std::string_view stageName) {
 	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins";
 
 	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
@@ -213,6 +213,28 @@ void EditorPluginManager::UnloadPluginsByStage(const char* stageName) {
 			}
 		}
 	}
+}
+
+std::filesystem::path Grindstone::Plugins::EditorPluginManager::GetLibraryPath(std::string_view pluginName, std::string_view libraryName) {
+	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins";
+
+	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
+		if (metaData.name == pluginName) {
+			for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
+				std::filesystem::path filename = binary.libraryRelativePath.filename();
+				filename.replace_extension();
+				if (filename.string() == libraryName) {
+					filename = basePath / metaData.name / binary.libraryRelativePath;
+					filename.replace_extension("dll");
+					return filename;
+				}
+			}
+
+			return "";
+		}
+	}
+
+	return "";
 }
 
 bool EditorPluginManager::LoadModule(const std::filesystem::path& path) {

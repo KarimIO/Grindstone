@@ -12,6 +12,7 @@
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/WorldContext/WorldContextManager.hpp>
 #include <EngineCore/WorldContext/WorldContextSet.hpp>
+#include <EngineCore/PluginSystem/IPluginManager.hpp>
 
 #include <Grindstone.Script.CSharp/include/Components/ScriptComponent.hpp>
 #include <Grindstone.Script.CSharp/include/ScriptClass.hpp>
@@ -151,7 +152,7 @@ static bool LoadHostFxr() {
 		csharpGlobals.GetDelegate == nullptr ||
 		csharpGlobals.RunApp == nullptr ||
 		csharpGlobals.Close == nullptr
-	) {
+		) {
 		GPRINT_ERROR_V(Grindstone::LogSource::Scripting, "Failed to get hostfxr functions.");
 		return false;
 	}
@@ -202,7 +203,7 @@ static bool LoadGrindstoneCoreFunction(std::wstring_view dllPath, std::string_vi
 
 	int rc = csharpGlobals.LoadAssemblyAndGetFunctionPointer(
 		dllPath.data(),
-		L"Grindstone.HostBridge, GrindstoneCSharpCore",
+		L"Grindstone.HostBridge, CSharpCore",
 		wfuncName.c_str(),
 		UNMANAGEDCALLERSONLY_METHOD,
 		nullptr,
@@ -210,7 +211,7 @@ static bool LoadGrindstoneCoreFunction(std::wstring_view dllPath, std::string_vi
 	);
 
 	if (rc != 0 || fn == nullptr) {
-		GPRINT_ERROR_V(Grindstone::LogSource::Scripting, "Failed to get GrindstoneCSharpCore function {}, returned error '{}'.", functionName, GetDotNetErrorMessage(rc));
+		GPRINT_ERROR_V(Grindstone::LogSource::Scripting, "Failed to get CSharpCore function {}, returned error '{}'.", functionName, GetDotNetErrorMessage(rc));
 		return false;
 	}
 
@@ -218,8 +219,14 @@ static bool LoadGrindstoneCoreFunction(std::wstring_view dllPath, std::string_vi
 }
 
 static bool LoadGrindstoneCoreFunctions() {
-	auto coreDllPath = (EngineCore::GetInstance().GetEngineBinaryPath() / "GrindstoneCSharpCore.dll").string();
+	auto coreDllPath = EngineCore::GetInstance().GetPluginManager()->GetLibraryPath("Grindstone.Script.CSharp", "CSharpCore").string();
 	std::wstring coreDllWide = std::wstring(coreDllPath.begin(), coreDllPath.end());
+
+	if (!std::filesystem::exists(coreDllPath)) {
+		GPRINT_ERROR_V(LogSource::Scripting, "Unable to load C# Hostbridge '{}'.", coreDllPath.c_str());
+		return false;
+	}
+
 	bool hasLoadedCreateAppDomainFn = LoadGrindstoneCoreFunction(coreDllWide, "CreateAppDomain", reinterpret_cast<void**>(&csharpGlobals.CreateAppDomain));
 	bool hasLoadedUnloadAppDomainFn = LoadGrindstoneCoreFunction(coreDllWide, "UnloadAppDomain", reinterpret_cast<void**>(&csharpGlobals.UnloadAppDomain));
 	bool hasLoadedLoadAssemblyFn = LoadGrindstoneCoreFunction(coreDllWide, "LoadAssembly", reinterpret_cast<void**>(&csharpGlobals.LoadAssembly));
@@ -232,7 +239,7 @@ static bool LoadGrindstoneCoreFunctions() {
 	bool hasLoadedOnEditorUpdateFn = LoadGrindstoneCoreFunction(coreDllWide, "CallOnEditorUpdate", reinterpret_cast<void**>(&csharpGlobals.CallOnEditorUpdate));
 	bool hasLoadedOnDestroyFn = LoadGrindstoneCoreFunction(coreDllWide, "CallOnDestroy", reinterpret_cast<void**>(&csharpGlobals.CallOnDestroy));
 
-	return (
+	if (
 		hasLoadedCreateAppDomainFn &&
 		hasLoadedUnloadAppDomainFn &&
 		hasLoadedLoadAssemblyFn &&
@@ -244,7 +251,12 @@ static bool LoadGrindstoneCoreFunctions() {
 		hasLoadedOnUpdateFn &&
 		hasLoadedOnEditorUpdateFn &&
 		hasLoadedOnDestroyFn
-	);
+	) {
+		return true;
+	}
+
+	GPRINT_ERROR_V(LogSource::Scripting, "Unable to all functions from C# Hostbridge '{}', C# support is disabled.", coreDllPath.c_str());
+	return false;
 }
 
 #define FUNCTION_CALL_IMPL(CallFnInComponent, scriptMethod) \

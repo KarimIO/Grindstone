@@ -80,6 +80,7 @@ vcpkg_installed/*
 
 # Visual Studio
 .vs/*
+**/.vs/*
 
 # Visual Studio Code
 .vscode/*

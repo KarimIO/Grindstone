@@ -29,15 +29,20 @@ DefaultPluginManager::~DefaultPluginManager() {
 }
 
 bool DefaultPluginManager::PreprocessPlugins() {
+	// TODO: Implement
 	return true;
 }
 
-void DefaultPluginManager::LoadPluginsByStage(const char* stageName) {
-	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins";
+void DefaultPluginManager::LoadPluginsByStage(std::string_view stageName) {
+	// TODO: Implement
 }
 
-void DefaultPluginManager::UnloadPluginsByStage(const char* stageName) {
-	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins";
+void DefaultPluginManager::UnloadPluginsByStage(std::string_view stageName) {
+	// TODO: Implement
+}
+
+std::filesystem::path Grindstone::Plugins::DefaultPluginManager::GetLibraryPath(std::string_view pluginName, std::string_view libraryName) {
+	return std::filesystem::path(); // TODO: Implement
 }
 
 bool DefaultPluginManager::LoadModule(const std::string& path) {
