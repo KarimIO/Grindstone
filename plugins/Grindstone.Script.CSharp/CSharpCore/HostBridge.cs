@@ -58,13 +58,13 @@ namespace Grindstone {
 
 				if (assemblyContext == null) {
 					Grindstone.Logger.PrintError("Trying to load an assembly without calling CreateAppDomain first! We'll do it for you but this should be handled by C++.");
-					return -1;
+					return 0;
 				}
 
 				Assembly assembly = assemblyContext.LoadFromAssemblyPath(assemblyPath);
 				if (assembly == null) {
 					Grindstone.Logger.PrintError($"Failed loading assembly from path '{assemblyPath}'.");
-					return -1;
+					return 0;
 				}
 
 				int nameHash = assemblyPath.GetHashCode();
@@ -74,7 +74,7 @@ namespace Grindstone {
 			}
 			catch (Exception ex) {
 				Grindstone.Logger.PrintError($"Failed to load assembly {assemblyPath}: {ex.Message}");
-				return -1;
+				return 0;
 			}
 		}
 
@@ -82,7 +82,7 @@ namespace Grindstone {
 		public static IntPtr GetTypeCount(int assemblyHashName) {
 			if (!loadedAssemblies.TryGetValue(assemblyHashName, out Assembly? assembly) || assembly == null) {
 				Grindstone.Logger.PrintError($"Invalid assembly hash: {assemblyHashName}.");
-				return -1;
+				return 0;
 			}
 
 			return assembly.GetTypes().Length;
@@ -94,13 +94,13 @@ namespace Grindstone {
 			try {
 				if (!loadedAssemblies.TryGetValue(assemblyHashName, out Assembly? assembly) || assembly == null) {
 					Grindstone.Logger.PrintError($"Invalid assembly hash: {assemblyHashName}.");
-					return -1;
+					return 0;
 				}
 
 				Type? type = assembly.GetType(className);
 				if (type == null) {
 					Grindstone.Logger.PrintError($"Failed to find class '{className}' in assembly '{assembly.GetName()}'");
-					return -1;
+					return 0;
 				}
 
 				object instance = Activator.CreateInstance(type)!;
@@ -112,14 +112,14 @@ namespace Grindstone {
 					Grindstone.Logger.PrintError($"Trying to create a non-smart component of type '{classNamePtr}' as a smart component. Cannot set entity ({entity}).");
 				}
 				else {
-					field.SetValue(instance, new Entity(entity, new Scene(-1)));
+					field.SetValue(instance, new Entity(entity, new Scene(0)));
 				}
 
 				return instancePtr;
 			}
 			catch (Exception ex) {
 				Grindstone.Logger.PrintError($"Failed to get type {className} from assembly: {ex.Message}");
-				return -1;
+				return 0;
 			}
 		}
 
@@ -129,13 +129,13 @@ namespace Grindstone {
 			try {
 				if (!loadedAssemblies.TryGetValue(assemblyHashName, out Assembly? assembly) || assembly == null) {
 					Grindstone.Logger.PrintError($"Invalid assembly hash: {assemblyHashName}.");
-					return -1;
+					return 0;
 				}
 
 				Type? type = assembly.GetType(className);
 				if (type == null) {
 					Grindstone.Logger.PrintError($"Failed to find class '{className}' in assembly '{assembly.GetName()}'");
-					return -1;
+					return 0;
 				}
 
 				object instance = Activator.CreateInstance(type)!;
@@ -145,7 +145,7 @@ namespace Grindstone {
 			}
 			catch (Exception ex) {
 				Grindstone.Logger.PrintError($"Failed to get type {className} from assembly: {ex.Message}");
-				return -1;
+				return 0;
 			}
 		}
 
@@ -236,7 +236,7 @@ namespace Grindstone {
 			Type? type = assembly.GetType(className);
 
 			if (type == null) {
-				return -1;
+				return 0;
 			}
 
 			var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance);

@@ -392,8 +392,10 @@ void CSharpManager::SetupComponent(Grindstone::WorldContextSet& cxtSet, entt::en
 	}
 
 	component.csharpObject = csharpGlobals.CreateComponent(assemblyHash, (void*)searchString.c_str(), (uint32_t)entity);
-	csharpGlobals.CallOnAttach(component.csharpObject);
-	csharpGlobals.CallOnStart(component.csharpObject);
+	if (component.csharpObject != nullptr) {
+		csharpGlobals.CallOnAttach(component.csharpObject);
+		csharpGlobals.CallOnStart(component.csharpObject);
+	}
 }
 
 void CSharpManager::DestroyComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity, ScriptComponent& component) {
