@@ -44,21 +44,21 @@ source_group("Header Files\\Window" FILES ${GL_WINDOW_HEADERS})
 source_group("Source Files\\Display" FILES ${GL_DISPLAY_SOURCES})
 source_group("Header Files\\Display" FILES ${GL_DISPLAY_HEADERS})
 
-add_library(PluginGraphicsOpenGL MODULE ${GL_SOURCES} ${GL_HEADERS} ${CORE_UTILS})
+add_library(PluginRhiOpenGL MODULE ${GL_SOURCES} ${GL_HEADERS} ${CORE_UTILS})
 
-set_target_properties(PluginGraphicsOpenGL PROPERTIES
+set_target_properties(PluginRhiOpenGL PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${RHI_OPENGL_BIN}"
 	LIBRARY_OUTPUT_DIRECTORY "${RHI_OPENGL_LIB}"
 	ARCHIVE_OUTPUT_DIRECTORY "${RHI_OPENGL_LIB}"
 )
-set_property(TARGET PluginGraphicsOpenGL PROPERTY COMPILE_WARNING_AS_ERROR ON)
-target_compile_features(PluginGraphicsOpenGL PRIVATE cxx_std_20)
-set_target_properties(PluginGraphicsOpenGL PROPERTIES FOLDER "Plugins/Render Hardware Interface")
+set_property(TARGET PluginRhiOpenGL PROPERTY COMPILE_WARNING_AS_ERROR ON)
+target_compile_features(PluginRhiOpenGL PRIVATE cxx_std_20)
+set_target_properties(PluginRhiOpenGL PROPERTIES FOLDER "Plugins/Render Hardware Interface")
 
-target_compile_definitions(PluginGraphicsOpenGL PUBLIC GRAPHICS_OPENGL GRAPHICS_DLL GLM_ENABLE_EXPERIMENTAL)
-target_include_directories(PluginGraphicsOpenGL PUBLIC ${CODE_DIR} ${PLUGIN_DIR})
+target_compile_definitions(PluginRhiOpenGL PUBLIC GRAPHICS_OPENGL GRAPHICS_DLL GLM_ENABLE_EXPERIMENTAL)
+target_include_directories(PluginRhiOpenGL PUBLIC ${CODE_DIR} ${PLUGIN_DIR})
 
-target_precompile_headers(PluginGraphicsOpenGL
+target_precompile_headers(PluginRhiOpenGL
     PUBLIC ${INC}/pch.hpp
 )
 
@@ -66,10 +66,10 @@ find_package(OpenGL REQUIRED)
 find_package(gl3w CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 
-target_link_libraries(PluginGraphicsOpenGL glfw unofficial::gl3w::gl3w glm::glm fmt::fmt ${CORE_LIBS} ${OPENGL_gl_LIBRARY})
+target_link_libraries(PluginRhiOpenGL glfw unofficial::gl3w::gl3w glm::glm fmt::fmt ${CORE_LIBS} ${OPENGL_gl_LIBRARY})
 
 message(STATUS
-"PluginGraphicsOpenGL provides CMake targets:
+"PluginRhiOpenGL provides CMake targets:
 
 - RHI_OPENGL_BASE => ${RHI_OPENGL_BASE}
 - RHI_OPENGL_INCLUDES => ${RHI_OPENGL_INCLUDES}

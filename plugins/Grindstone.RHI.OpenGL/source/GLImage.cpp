@@ -12,7 +12,10 @@ using namespace Grindstone::GraphicsAPI;
 
 // TODO: This is pretty much broken, I need to review all of this.
 OpenGL::Image::Image(const Image::CreateInfo& createInfo) {
-	textureType = GL_TEXTURE_CUBE_MAP;
+	bool isCubemap = (createInfo.imageUsage & ImageUsageFlags::Cubemap) == ImageUsageFlags::Cubemap;
+	textureType = isCubemap
+		? GL_TEXTURE_CUBE_MAP
+		: GL_TEXTURE_2D;
 
 	glGenTextures(1, &imageHandle);
 	glBindTexture(textureType, imageHandle);
@@ -26,70 +29,74 @@ OpenGL::Image::Image(const Image::CreateInfo& createInfo) {
 	format = oglFormat.format;
 	internalFormat = oglFormat.internalFormat;
 	formatType = oglFormat.type;
+	width = createInfo.width;
+	height = createInfo.height;
+	mipCount = createInfo.mipLevels;
 
 	const char* buffer = createInfo.initialData;
 	uint8_t blockSize = GetCompressedFormatBlockSize(createInfo.format);
 
-	gl3wGetProcAddress("GL_COMPRESSED_RGBA_S3TC_DXT1_EXT");
+	if (isCubemap) {
+		for (GLenum i = 0; i < 6; i++) {
+			uint32_t width = createInfo.width;
+			uint32_t height = createInfo.height;
 
-	for (GLenum i = 0; i < 6; i++) {
-		uint32_t width = createInfo.width;
-		uint32_t height = createInfo.height;
+			for (GLint j = 0; j <= static_cast<GLint>(createInfo.mipLevels); j++) {
+				unsigned int size = ((width + 3) / 4) * ((height + 3) / 4) * blockSize;
+				glCompressedTexImage2D(
+					GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+					j,
+					oglFormat.format,
+					width,
+					height,
+					0,
+					size,
+					buffer
+				);
 
-		for (GLint j = 0; j <= static_cast<GLint>(createInfo.mipLevels); j++) {
-			unsigned int size = ((width + 3) / 4) * ((height + 3) / 4) * blockSize;
-			glCompressedTexImage2D(
-				GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-				j,
-				oglFormat.format,
-				width,
-				height,
-				0,
-				size,
-				buffer
-			);
-
-			buffer += size;
-			width /= 2;
-			height /= 2;
+				buffer += size;
+				width /= 2;
+				height /= 2;
+			}
 		}
-	}
-
-	if (!isCompressed) {
-		glTexSubImage2D(
-			textureType,
-			0, 0, 0,
-			width, height,
-			format, formatType,
-			createInfo.initialData
-		);
 	}
 	else {
-		uint8_t blockSize = GetCompressedFormatBlockSize(createInfo.format);
-
-		uint32_t mipWidth = createInfo.width;
-		uint32_t mipHeight = createInfo.height;
-
-		const char* buffer = createInfo.initialData;
-
-		for (uint32_t i = 0; i <= createInfo.mipLevels; i++) {
-			unsigned int size = ((mipWidth + 3) / 4) * ((mipHeight + 3) / 4) * blockSize;
-			glCompressedTexImage2D(
-				GL_TEXTURE_2D,
-				i,
-				oglFormat.format,
-				mipWidth, mipHeight, 0,
-				size,
-				buffer
+		if (!isCompressed) {
+			glTexSubImage2D(
+				textureType,
+				0, 0, 0,
+				width, height,
+				format, formatType,
+				createInfo.initialData
 			);
-
-			buffer += size;
-			mipWidth >>= 1;
-			mipHeight >>= 1;
 		}
-	}
+		else {
+			uint8_t blockSize = GetCompressedFormatBlockSize(createInfo.format);
 
-	glBindTexture(GL_TEXTURE_2D, 0);
+			uint32_t mipWidth = createInfo.width;
+			uint32_t mipHeight = createInfo.height;
+
+			const char* buffer = createInfo.initialData;
+
+			for (uint32_t i = 0; i <= createInfo.mipLevels; i++) {
+				unsigned int size = ((mipWidth + 3) / 4) * ((mipHeight + 3) / 4) * blockSize;
+				glCompressedTexImage2D(
+					GL_TEXTURE_2D,
+					i,
+					oglFormat.format,
+					mipWidth, mipHeight, 0,
+					size,
+					buffer
+				);
+
+				buffer += size;
+				mipWidth >>= 1;
+				mipHeight >>= 1;
+			}
+		}
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
 }
 
 void OpenGL::Image::Resize(uint32_t width, uint32_t height) {

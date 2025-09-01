@@ -56,12 +56,14 @@ void OpenGL::Framebuffer::CreateFramebuffer() {
 
 	if (depthTarget) {
 		OpenGL::Image* dt = static_cast<OpenGL::Image*>(depthTarget);
-		if (!dt->IsCubemap())
+		if (!dt->IsCubemap()) {
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, dt->GetImage(), 0);
-		else
+		}
+		else {
 			for (int f = 0; f < 6; ++f) {
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X + f, dt->GetImage(), 0);
 			}
+		}
 	}
 
 	if (numTotalRenderTargets > 0) {

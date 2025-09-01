@@ -108,7 +108,9 @@ bool EngineCore::Initialize(LateCreateInfo& createInfo) {
 	{
 		GRIND_PROFILE_SCOPE("Initialize Graphics Core");
 		GraphicsAPI::Core::CreateInfo graphicsCoreInfo{ mainWindow, true };
-		graphicsCore->Initialize(graphicsCoreInfo);
+		if (!graphicsCore->Initialize(graphicsCoreInfo)) {
+			return false;
+		}
 
 		inputManager->SetMainWindow(mainWindow);
 	}

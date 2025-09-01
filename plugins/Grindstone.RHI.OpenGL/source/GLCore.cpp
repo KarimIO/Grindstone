@@ -85,14 +85,23 @@ bool OpenGL::Core::Initialize(const Core::CreateInfo& ci) {
 	ci.window->AddBinding(wgb);
 	wgb->Initialize(ci.window);
 
-	if (gl3wInit()) {
-		printf("Failed to initialize GL3W. Returning...\n");
+	int initGl3wResult = gl3wInit();
+	if (initGl3wResult == GL3W_ERROR_INIT) {
+		GPRINT_ERROR(Grindstone::LogSource::GraphicsAPI, "Failed to initialize GL3W due to error during initialization. Quitting...\n");
+		return false;
+	}
+	else if (initGl3wResult == GL3W_ERROR_LIBRARY_OPEN) {
+		GPRINT_ERROR(Grindstone::LogSource::GraphicsAPI, "Failed to initialize GL3W due to library already in-use. Quitting...\n");
+		return false;
+	}
+	else if (initGl3wResult == GL3W_ERROR_OPENGL_VERSION) {
+		GPRINT_ERROR(Grindstone::LogSource::GraphicsAPI, "Failed to initialize GL3W due to OpenGL version. Quitting...\n");
 		return false;
 	}
 
 	if (!gl3wIsSupported(4, 6)) {
-		printf("OpenGL %i.%i or more required for Grindstone Engine.\n", 4, 6);
-		printf("Your Graphics Card only supports version %s. Quitting...\n\n", glGetString(GL_VERSION));
+		const char* versionStr = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+		GPRINT_ERROR_V(Grindstone::LogSource::GraphicsAPI, "OpenGL {}.{} or more required for Grindstone Engine.\nYour Graphics Card only supports version {}. Quitting...", 4, 6, versionStr);
 		return false;
 	}
 

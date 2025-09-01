@@ -1,4 +1,5 @@
 #include <GL/gl3w.h>
+#include <GLFW/glfw3.h>
 #include <Grindstone.RHI.OpenGL/include/GLWindowGraphicsBinding.hpp>
 
 /*
