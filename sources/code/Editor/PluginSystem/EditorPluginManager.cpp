@@ -91,6 +91,7 @@ static bool RunCMakeCommand(const std::vector<std::string>& cmakeTargets) {
 	cmdStream << "cmake";
 	cmdStream << " --build .";
 	cmdStream << " --config Release";
+	cmdStream << " --parallel";
 	cmdStream << " --target";
 	for (const std::string& target : cmakeTargets) {
 		cmdStream << " \"" << target << "\"";

@@ -21,6 +21,7 @@
 #include "SceneHeirarchyPanel.hpp"
 #include "UserSettings/UserSettingsWindow.hpp"
 #include "ProjectSettings/ProjectSettingsWindow.hpp"
+#include "PluginsWindow.hpp"
 #include "StatsPanel.hpp"
 #include "BuildPopup.hpp"
 #include "ControlBar.hpp"
@@ -33,6 +34,39 @@
 
 using namespace Grindstone::Editor::ImguiEditor;
 using namespace Grindstone::Memory;
+
+static void LinkCallback(ImGui::MarkdownLinkCallbackData data) {
+	std::string url(data.link, data.linkLength);
+	if (!data.isImage) {
+		ShellExecuteA(NULL, "open", url.c_str(), NULL, NULL, SW_SHOWNORMAL);
+	}
+}
+
+static ImGui::MarkdownImageData ImageCallback(ImGui::MarkdownLinkCallbackData data) {
+	// In your application you would load an image based on data_ input. Here we just use the imgui font texture.
+#ifdef IMGUI_HAS_TEXTURES // used to detect dynamic font capability
+	ImTextureID image = ImGui::GetIO().Fonts->TexRef.GetTexID();
+#else
+	ImTextureID image = ImGui::GetIO().Fonts->TexID;
+#endif
+	// > C++14 can use ImGui::MarkdownImageData imageData{ true, false, image, ImVec2( 40.0f, 20.0f ) };
+	ImGui::MarkdownImageData imageData;
+	imageData.isValid = true;
+	imageData.useLinkCallback = false;
+	imageData.user_texture_id = image;
+	imageData.size = ImVec2(40.0f, 20.0f);
+
+	// For image resize when available size.x > image width, add
+	ImVec2 const contentSize = ImGui::GetContentRegionAvail();
+	if (imageData.size.x > contentSize.x)
+	{
+		float const ratio = imageData.size.y / imageData.size.x;
+		imageData.size.x = contentSize.x;
+		imageData.size.y = contentSize.x * ratio;
+	}
+
+	return imageData;
+}
 
 ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	IMGUI_CHECKVERSION();
@@ -48,6 +82,9 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	io.IniFilename = imguiIniFile.c_str();
 	io.LogFilename = imguiLogFile.c_str();
 
+	markdownConfig.imageCallback = ImageCallback;
+	markdownConfig.linkCallback = LinkCallback;
+
 	SetupFonts();
 	SetupStyles();
 	SetupColors();
@@ -61,6 +98,7 @@ void ImguiEditor::CreateWindows() {
 	assetBrowserPanel = AllocatorCore::Allocate<AssetBrowserPanel>(imguiRenderer, engineCore, this);
 	userSettingsWindow = AllocatorCore::Allocate<Settings::UserSettingsWindow>();
 	projectSettingsWindow = AllocatorCore::Allocate<Settings::ProjectSettingsWindow>();
+	pluginsWindow = AllocatorCore::Allocate<PluginsWindow>();
 	viewportPanel = AllocatorCore::Allocate<ViewportPanel>();
 	consolePanel = AllocatorCore::Allocate<ConsolePanel>(imguiRenderer);
 	statsPanel = AllocatorCore::Allocate<StatsPanel>();
@@ -91,6 +129,7 @@ ImguiEditor::~ImguiEditor() {
 	AllocatorCore::Free(assetBrowserPanel);
 	AllocatorCore::Free(userSettingsWindow);
 	AllocatorCore::Free(projectSettingsWindow);
+	AllocatorCore::Free(pluginsWindow);
 	AllocatorCore::Free(viewportPanel);
 	AllocatorCore::Free(consolePanel);
 	AllocatorCore::Free(statsPanel);
@@ -123,10 +162,19 @@ void ImguiEditor::SetupFonts() {
 	std::filesystem::path fontFolder = engineCore->GetEngineBinaryPath().parent_path() / "engineassets/editor/fonts";
 	std::filesystem::path robotoBoldPath = fontFolder / "OpenSans-Bold.ttf";
 	std::filesystem::path robotoRegularPath = fontFolder / "OpenSans-Regular.ttf";
+	std::string robotoBoldPathString = robotoBoldPath.string();
 
 	float fontSize = 14.0f;
-	io.Fonts->AddFontFromFileTTF(robotoBoldPath.string().c_str(), fontSize);
+	io.Fonts->AddFontFromFileTTF(robotoBoldPathString.c_str(), fontSize);
 	io.FontDefault = io.Fonts->AddFontFromFileTTF(robotoRegularPath.string().c_str(), fontSize);
+
+	ImFont* h1Font = io.Fonts->AddFontFromFileTTF(robotoBoldPathString.c_str(), fontSize * 2.0f);
+	ImFont* h2Font = io.Fonts->AddFontFromFileTTF(robotoBoldPathString.c_str(), fontSize * 1.5f);
+	ImFont* h3Font = io.Fonts->AddFontFromFileTTF(robotoBoldPathString.c_str(), fontSize * 1.17f);
+	markdownConfig.headingFormats[0] = { h1Font, true };
+	markdownConfig.headingFormats[1] = { h2Font, true };
+	markdownConfig.headingFormats[2] = { h3Font, true };
+
 }
 
 void ImguiEditor::SetupColors() {
@@ -265,6 +313,7 @@ void ImguiEditor::Render() {
 	buildPopup->Render();
 	userSettingsWindow->Render();
 	projectSettingsWindow->Render();
+	pluginsWindow->Render();
 	statusBar->Render();
 	assetPicker->Render();
 }
@@ -284,6 +333,10 @@ void ImguiEditor::ImportFile(const char* folderPathToImportTo) {
 
 ViewportPanel* Grindstone::Editor::ImguiEditor::ImguiEditor::GetViewportPanel() {
 	return viewportPanel;
+}
+
+const ImGui::MarkdownConfig& Grindstone::Editor::ImguiEditor::ImguiEditor::GetMarkdownConfig() const {
+	return markdownConfig;
 }
 
 void ImguiEditor::RenderDockspace() {

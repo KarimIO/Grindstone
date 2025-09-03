@@ -3,15 +3,6 @@
 #include "SettingsWindow.hpp"
 using namespace Grindstone::Editor::ImguiEditor::Settings;
 
-SettingsWindow::~SettingsWindow() {
-	for (PageData& page : pages) {
-		if (page.page != nullptr) {
-			delete page.page;
-			page.page = nullptr;
-		}
-	}
-}
-
 void SettingsWindow::Open() {
 	isOpen = true;
 }
