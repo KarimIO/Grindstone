@@ -15,6 +15,16 @@ namespace Grindstone {
 
 	namespace Editor {
 		namespace ImguiEditor {
+			enum class FontType {
+				Regular,
+				Bold,
+				Italic,
+				H1,
+				H2,
+				H3,
+				Count
+			};
+
 			class ImguiRenderer;
 
 			namespace Settings {
@@ -51,6 +61,7 @@ namespace Grindstone {
 				void StartBuild();
 				void ImportFile(const char* folderPathToImportTo = "");
 				ViewportPanel* GetViewportPanel();
+				ImFont* GetFont(FontType type) const;
 				const ImGui::MarkdownConfig& GetMarkdownConfig() const;
 			private:
 				void RenderDockspace();
@@ -61,6 +72,8 @@ namespace Grindstone {
 				void PerformResize();
 			private:
 				bool queueResize = false;
+
+				std::array<ImFont*, static_cast<size_t>(FontType::Count)> fonts;
 				ImGui::MarkdownConfig markdownConfig;
 				EngineCore* engineCore = nullptr;
 				ImguiInput* input = nullptr;

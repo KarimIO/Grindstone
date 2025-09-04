@@ -160,20 +160,24 @@ void ImguiEditor::SetupFonts() {
 	auto& io = ImGui::GetIO();
 
 	std::filesystem::path fontFolder = engineCore->GetEngineBinaryPath().parent_path() / "engineassets/editor/fonts";
-	std::filesystem::path robotoBoldPath = fontFolder / "OpenSans-Bold.ttf";
-	std::filesystem::path robotoRegularPath = fontFolder / "OpenSans-Regular.ttf";
-	std::string robotoBoldPathString = robotoBoldPath.string();
+	std::filesystem::path openSansBoldPath = fontFolder / "OpenSans-Bold.ttf";
+	std::filesystem::path openSansItalicPath = fontFolder / "OpenSans-Italic.ttf";
+	std::filesystem::path openSansRegularPath = fontFolder / "OpenSans-Regular.ttf";
+	std::string openSansBoldPathString = openSansBoldPath.string();
 
 	float fontSize = 14.0f;
-	io.Fonts->AddFontFromFileTTF(robotoBoldPathString.c_str(), fontSize);
-	io.FontDefault = io.Fonts->AddFontFromFileTTF(robotoRegularPath.string().c_str(), fontSize);
+	fonts[static_cast<size_t>(FontType::Regular)] = io.Fonts->AddFontFromFileTTF(openSansRegularPath.string().c_str(), fontSize);
+	fonts[static_cast<size_t>(FontType::Bold)] = io.Fonts->AddFontFromFileTTF(openSansBoldPathString.c_str(), fontSize);
+	fonts[static_cast<size_t>(FontType::Italic)] = io.Fonts->AddFontFromFileTTF(openSansItalicPath.string().c_str(), fontSize);
+	fonts[static_cast<size_t>(FontType::H1)] = io.Fonts->AddFontFromFileTTF(openSansBoldPathString.c_str(), fontSize * 2.0f);
+	fonts[static_cast<size_t>(FontType::H2)] = io.Fonts->AddFontFromFileTTF(openSansBoldPathString.c_str(), fontSize * 1.5f);
+	fonts[static_cast<size_t>(FontType::H3)] = io.Fonts->AddFontFromFileTTF(openSansBoldPathString.c_str(), fontSize * 1.17f);
 
-	ImFont* h1Font = io.Fonts->AddFontFromFileTTF(robotoBoldPathString.c_str(), fontSize * 2.0f);
-	ImFont* h2Font = io.Fonts->AddFontFromFileTTF(robotoBoldPathString.c_str(), fontSize * 1.5f);
-	ImFont* h3Font = io.Fonts->AddFontFromFileTTF(robotoBoldPathString.c_str(), fontSize * 1.17f);
-	markdownConfig.headingFormats[0] = { h1Font, true };
-	markdownConfig.headingFormats[1] = { h2Font, true };
-	markdownConfig.headingFormats[2] = { h3Font, true };
+	io.FontDefault = fonts[static_cast<size_t>(FontType::Regular)];
+
+	markdownConfig.headingFormats[0] = { fonts[static_cast<size_t>(FontType::H1)], true };
+	markdownConfig.headingFormats[1] = { fonts[static_cast<size_t>(FontType::H2)], true };
+	markdownConfig.headingFormats[2] = { fonts[static_cast<size_t>(FontType::H3)], true };
 
 }
 
@@ -337,6 +341,11 @@ ViewportPanel* Grindstone::Editor::ImguiEditor::ImguiEditor::GetViewportPanel() 
 
 const ImGui::MarkdownConfig& Grindstone::Editor::ImguiEditor::ImguiEditor::GetMarkdownConfig() const {
 	return markdownConfig;
+}
+
+ImFont* Grindstone::Editor::ImguiEditor::ImguiEditor::GetFont(FontType type) const {
+	size_t index = static_cast<size_t>(type);
+	return fonts[index];
 }
 
 void ImguiEditor::RenderDockspace() {
