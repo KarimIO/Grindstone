@@ -7,6 +7,7 @@
 #include <Editor/ImguiEditor/Components/ListEditor.hpp>
 #include <Editor/EditorManager.hpp>
 #include <Editor/ImguiEditor/ImguiEditor.hpp>
+#include <Editor/PluginSystem/PluginMetaFileLoader.hpp>
 
 #include "imgui_markdown.h"
 #include "PluginsWindow.hpp"
@@ -15,103 +16,9 @@ using namespace Grindstone::Editor::ImguiEditor;
 bool isPluginPopupShown = false;
 size_t indexToEdit = SIZE_MAX;
 
-const char* availablePlugins[] = {
-	"Grindstone.RHI.DirectX12",
-	"Grindstone.RHI.OpenGL",
-	"Grindstone.RHI.Vulkan",
-	"Grindstone.Editor.AudioImporter",
-	"Grindstone.Editor.MaterialImporter",
-	"Grindstone.Editor.ModelImporter",
-	"Grindstone.Editor.PipelineSetImporter",
-	"Grindstone.Editor.TextureImporter",
-	"Grindstone.Audio.OpenAL",
-	"Grindstone.Physics.Bullet",
-	"Grindstone.Renderables.3D",
-	"Grindstone.Renderer.Deferred",
-	"Grindstone.Script.CSharp"
-};
-
 std::vector<std::string> unusedPlugins;
 
 const ImVec2 PLUGIN_LIST_WINDOW_SIZE = { 300.f, 400.f };
-
-static void FilterPlugins(std::vector<std::string>& usedPlugins) {
-	unusedPlugins.clear();
-
-	size_t availablePluginCount = sizeof(availablePlugins) / sizeof(availablePlugins[0]);
-	for (size_t i = 0; i < availablePluginCount; ++i) {
-		bool isPluginFound = false;
-
-		for (size_t j = 0; j < usedPlugins.size(); ++j) {
-			if (usedPlugins[j] == availablePlugins[i]) {
-				isPluginFound = true;
-				break;
-			}
-		}
-
-		if (!isPluginFound) {
-			unusedPlugins.emplace_back(availablePlugins[i]);
-		}
-	}
-}
-
-static void RenderPluginList(std::vector<std::string>& pluginList) {
-	if (isPluginPopupShown) {
-		ImGui::OpenPopup("Plugin List");
-		isPluginPopupShown = false;
-	}
-
-	float width = 200.0f;
-
-	ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-	ImGui::SetNextWindowSize(PLUGIN_LIST_WINDOW_SIZE);
-
-	ImVec2 displaySize = ImGui::GetIO().DisplaySize;
-	ImVec2 windowPos = ImVec2(
-		(displaySize.x - PLUGIN_LIST_WINDOW_SIZE.x) / 2.0f,
-		(displaySize.y - PLUGIN_LIST_WINDOW_SIZE.y) / 2.0f
-	);
-	ImGui::SetNextWindowPos(windowPos);
-
-	bool isOpen = false;
-	if (ImGui::BeginPopupModal("Plugin List", &isOpen, flags)) {
-		if (unusedPlugins.size() == 0) {
-			ImGui::Text("No unused plugins found.");
-			return;
-		}
-
-		const float width = ImGui::GetContentRegionAvail().x;
-
-		for (size_t index = 0; index < unusedPlugins.size(); ++index) {
-			if (ImGui::Button(unusedPlugins[index].c_str(), ImVec2(width, 0.0f))) {
-				pluginList[indexToEdit] = unusedPlugins[index];
-
-				ImGui::CloseCurrentPopup();
-				isPluginPopupShown = false;
-			}
-		}
-
-		ImGui::EndPopup();
-	}
-}
-
-static void OnRenderPlugin(void* listPtr, size_t index, float width) {
-	std::vector<std::string>& plugins = *static_cast<std::vector<std::string>*>(listPtr);
-
-	const char* pluginText = !plugins[index].empty()
-		? plugins[index].c_str()
-		: "[ Unset ]";
-
-	if (ImGui::Button(pluginText, ImVec2(width, 0.0f))) {
-		isPluginPopupShown = true;
-		indexToEdit = index;
-		FilterPlugins(plugins);
-
-		if (!plugins[index].empty()) {
-			unusedPlugins.emplace_back(plugins[index]);
-		}
-	}
-}
 
 static void OnAddPlugin(void* listPtr, size_t index) {
 	std::vector<std::string>& plugins = *static_cast<std::vector<std::string>*>(listPtr);
@@ -163,6 +70,9 @@ static size_t OnRenderPluginSidebar(const std::vector<PluginManifestCache>& plug
 }
 
 static void OnRenderPluginPageSuccess(const PluginManifestCache& pluginManifestCache, const CurrentPluginData& currentPluginData) {
+	const ImguiEditor& imguiEditor = Grindstone::Editor::Manager::GetInstance().GetImguiEditor();
+
+	ImGui::PushFont(imguiEditor.GetFont(FontType::H1));
 	ImGui::Text(pluginManifestCache.displayName.c_str());
 	ImGui::Text(pluginManifestCache.description.c_str());
 	ImGui::Text(pluginManifestCache.author.c_str());
@@ -205,28 +115,49 @@ void PluginsWindow::Open() {
 
 void PluginsWindow::LoadPluginsManifest() {
 	pluginCacheList.clear();
-	std::filesystem::path pluginListFile = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings/pluginsManifest.txt";
-	auto pluginListFilePath = pluginListFile.string();
-	auto fileContents = Utils::LoadFileText(pluginListFilePath.c_str());
+	std::vector<std::string> usedPlugins;
 
-	size_t start = 0, end;
-	std::string pluginName;
-	while (true) {
-		end = fileContents.find("\n", start);
-		if (end == std::string::npos) {
-			pluginName = Utils::Trim(fileContents.substr(start));
-			if (!pluginName.empty()) {
-				pluginCacheList.emplace_back(pluginName, pluginName + "Display Name", "Description", "Author");
+	{
+		std::filesystem::path pluginListFile = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings/pluginsManifest.txt";
+		auto pluginListFilePath = pluginListFile.string();
+		auto fileContents = Utils::LoadFileText(pluginListFilePath.c_str());
+
+		size_t start = 0, end;
+		std::string pluginName;
+		while (true) {
+			end = fileContents.find("\n", start);
+			if (end == std::string::npos) {
+				pluginName = Utils::Trim(fileContents.substr(start));
+				if (!pluginName.empty()) {
+					usedPlugins.emplace_back(pluginName);
+				}
+
+				break;
 			}
 
-			break;
+			pluginName = Utils::Trim(fileContents.substr(start, end - start));
+			if (!pluginName.empty()) {
+				usedPlugins.emplace_back(pluginName);
+			}
+			start = end + 1;
+		}
+	}
+
+	std::filesystem::path pluginsPath = Editor::Manager::GetInstance().GetEngineBinariesPath().parent_path() / "plugins";
+	for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(pluginsPath)) {
+		if (!entry.is_directory()) {
+			continue;
 		}
 
-		pluginName = Utils::Trim(fileContents.substr(start, end - start));
-		if (!pluginName.empty()) {
-			pluginCacheList.emplace_back(pluginName, pluginName + "Display Name", "Description", "Author");
+		const std::filesystem::path& pluginFolderPath = entry.path();
+		std::filesystem::path metaFilePath = pluginFolderPath / "plugin.meta.json";
+		Grindstone::Plugins::MetaData metaData;
+		if (!ReadMetaFile(metaFilePath, metaData)) {
+			continue;
 		}
-		start = end + 1;
+
+		std::string pluginName = pluginFolderPath.filename().string();
+		pluginCacheList.emplace_back(pluginName, metaData.displayName, metaData.description, metaData.author);
 	}
 }
 
