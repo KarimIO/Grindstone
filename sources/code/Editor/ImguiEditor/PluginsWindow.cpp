@@ -37,6 +37,8 @@ static size_t OnRenderPluginSidebar(const std::vector<PluginManifestCache>& plug
 		return SIZE_MAX;
 	}
 
+	const ImguiEditor& imguiEditor = Grindstone::Editor::Manager::GetInstance().GetImguiEditor();
+
 	size_t newSelectedIndex = SIZE_MAX;
 	size_t currentIndex = 0;
 	ImVec2 padding(8, 8);
@@ -47,9 +49,17 @@ static size_t OnRenderPluginSidebar(const std::vector<PluginManifestCache>& plug
 		ImGui::SetCursorScreenPos(ImVec2(p0.x + padding.x, p0.y + padding.y));
 
 		ImGui::BeginGroup();
+		ImGui::PushFont(imguiEditor.GetFont(FontType::H3));
 		ImGui::Text(plugin.displayName.c_str());
-		ImGui::Text(plugin.description.c_str());
+		ImGui::PopFont();
+
+		ImGui::PushFont(imguiEditor.GetFont(FontType::Italic));
+		ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_TextDisabled));
 		ImGui::Text(plugin.author.c_str());
+		ImGui::PopStyleColor();
+		ImGui::PopFont();
+
+		ImGui::TextWrapped(plugin.description.c_str());
 		ImGui::EndGroup();
 
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
@@ -74,11 +84,39 @@ static void OnRenderPluginPageSuccess(const PluginManifestCache& pluginManifestC
 
 	ImGui::PushFont(imguiEditor.GetFont(FontType::H1));
 	ImGui::Text(pluginManifestCache.displayName.c_str());
-	ImGui::Text(pluginManifestCache.description.c_str());
-	ImGui::Text(pluginManifestCache.author.c_str());
+	ImGui::PopFont();
 
-	const ImGui::MarkdownConfig& mdConfig = Grindstone::Editor::Manager::GetInstance().GetImguiEditor().GetMarkdownConfig();
-	ImGui::Markdown(currentPluginData.readmeData.c_str(), currentPluginData.readmeData.size(), mdConfig);
+	ImGui::PushFont(imguiEditor.GetFont(FontType::Italic));
+	ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_TextDisabled));
+	ImGui::Text(pluginManifestCache.author.c_str());
+	ImGui::PopStyleColor();
+	ImGui::PopFont();
+
+	ImGui::TextWrapped(pluginManifestCache.description.c_str());
+
+
+	ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+	if (ImGui::BeginTabBar("PluginPageTabs", tab_bar_flags)) {
+		if (ImGui::BeginTabItem("Readme")) {
+			if (currentPluginData.readmeData.empty()) {
+				ImGui::Text("No readme found.");
+			}
+			else {
+				const ImGui::MarkdownConfig& mdConfig = imguiEditor.GetMarkdownConfig();
+				ImGui::Markdown(currentPluginData.readmeData.c_str(), currentPluginData.readmeData.size(), mdConfig);
+			}
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Dependencies")) {
+			ImGui::Text("Dependencies tab not implemented yet.");
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Content")) {
+			ImGui::Text("Content tab not implemented yet.");
+			ImGui::EndTabItem();
+		}
+		ImGui::EndTabBar();
+	}
 }
 
 static void OnRenderPluginPage(const std::vector<PluginManifestCache>& pluginsList, size_t currentSelectedPlugin, const CurrentPluginData& currentPluginData, const PluginSelectionState currentSelectionState) {
