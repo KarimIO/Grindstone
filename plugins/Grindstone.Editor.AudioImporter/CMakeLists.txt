@@ -7,10 +7,6 @@ set(INC ${EDITOR_AUDIO_IMPORTER_BASE}/include)
 
 set(EDITORAUDIOIMPORTER_SOURCES
 	${SRC}/AudioImporter.cpp
-	${COMMON_DIR}/ResourcePipeline/AssetType.cpp
-	${COMMON_DIR}/ResourcePipeline/ImporterSettings.cpp
-	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp
-	${COMMON_DIR}/ResourcePipeline/Uuid.cpp
 	${EDITOR_DIR}/EditorManagerInstance.cpp
 	${ENGINE_CORE_DIR}/Utils/Utilities.cpp
 	${SRC}/EntryPoint.cpp
@@ -18,11 +14,9 @@ set(EDITORAUDIOIMPORTER_SOURCES
 
 set(EDITORAUDIOIMPORTER_HEADERS
 	${INC}/AudioImporter.hpp
-	${COMMON_DIR}/ResourcePipeline/AssetType.hpp
-	${COMMON_DIR}/ResourcePipeline/ImporterSettings.hpp
-	${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
-	${COMMON_DIR}/ResourcePipeline/Uuid.hpp
-	${COMMON_DIR}/Editor/Importer.hpp
+
+
+
 	${ENGINE_CORE_DIR}/Utils/Utilities.hpp
 	${INC}/pch.hpp
 )
@@ -50,7 +44,7 @@ target_include_directories(PluginEditorAudioImporter PUBLIC ${CODE_DIR} ${FMT_IN
 
 target_precompile_headers(PluginEditorAudioImporter PUBLIC ${INC}/pch.hpp)
 
-target_link_libraries(PluginEditorAudioImporter ${CORE_LIBS})
+target_link_libraries(PluginEditorAudioImporter ${CORE_LIBS} Common EditorCommon)
 
 message(STATUS
 "PluginEditorAudioImporter provides CMake targets:
@@ -59,6 +53,5 @@ message(STATUS
 - EDITOR_AUDIO_IMPORTER_INCLUDES => ${EDITOR_AUDIO_IMPORTER_INCLUDES}
 - EDITOR_AUDIO_IMPORTER_BIN => ${EDITOR_AUDIO_IMPORTER_BIN}
 - EDITOR_AUDIO_IMPORTER_LIB => ${EDITOR_AUDIO_IMPORTER_LIB}
-
 
 ")

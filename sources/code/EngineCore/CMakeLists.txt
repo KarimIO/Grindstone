@@ -172,7 +172,7 @@ target_include_directories(EngineCore PUBLIC ../)
 
 target_link_libraries(EngineCore
 	${CORE_LIBS}
-	rapidjson
+	Common
 	OpenAL::OpenAL
 )
 

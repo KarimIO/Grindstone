@@ -16,7 +16,7 @@
 #include "bc6h_enc.h"
 
 #include <EngineCore/Assets/AssetManager.hpp>
-#include <Common/ResourcePipeline/MetaFile.hpp>
+#include <EditorCommon/ResourcePipeline/MetaFile.hpp>
 #include <Common/Formats/Dds.hpp>
 #include <Editor/EditorManager.hpp>
 #include <Grindstone.Editor.TextureImporter/include/TextureImporter.hpp>

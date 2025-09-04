@@ -1,0 +1,53 @@
+set(EDITOR_COMMON_INCLUDES ${EDITOR_COMMON_DIR}/include)
+set(EDITOR_COMMON_BIN ${EDITOR_COMMON_DIR}/bin)
+set(EDITOR_COMMON_LIB ${EDITOR_COMMON_DIR}/lib)
+set(SRC ${EDITOR_COMMON_DIR}/source)
+set(INC ${EDITOR_COMMON_DIR}/include)
+
+file(GLOB_RECURSE SOURCE_EDITOR "${EDITOR_COMMON_DIR}/Editor/*.cpp")
+file(GLOB_RECURSE HEADER_EDITOR "${EDITOR_COMMON_DIR}/Editor/*.hpp")
+source_group("Editor\\Source Files" FILES ${SOURCE_EDITOR})
+source_group("Editor\\Header Files" FILES ${HEADER_EDITOR})
+
+file(GLOB_RECURSE SOURCE_RESOURCE_PIPELINE "${EDITOR_COMMON_DIR}/ResourcePipeline/*.cpp")
+file(GLOB_RECURSE HEADER_RESOURCE_PIPELINE "${EDITOR_COMMON_DIR}/ResourcePipeline/*.hpp")
+source_group("ResourcePipeline\\Source Files" FILES ${SOURCE_RESOURCE_PIPELINE})
+source_group("ResourcePipeline\\Header Files" FILES ${HEADER_RESOURCE_PIPELINE})
+
+set(EDITOR_COMMON_SOURCES
+    ${SOURCE_EDITOR}
+    ${SOURCE_RESOURCE_PIPELINE}
+)
+
+set(EDITOR_COMMON_HEADERS
+    ${HEADER_EDITOR}
+    ${HEADER_RESOURCE_PIPELINE}
+)
+
+add_library(EditorCommon STATIC ${EDITOR_COMMON_SOURCES} ${EDITOR_COMMON_HEADERS})
+
+set_target_properties(EditorCommon PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY "${EDITOR_COMMON_BIN}"
+	LIBRARY_OUTPUT_DIRECTORY "${EDITOR_COMMON_LIB}"
+	ARCHIVE_OUTPUT_DIRECTORY "${EDITOR_COMMON_LIB}"
+)
+set_property(TARGET EditorCommon PROPERTY COMPILE_WARNING_AS_ERROR ON)
+target_compile_features(EditorCommon PRIVATE cxx_std_20)
+
+target_include_directories(EditorCommon PUBLIC ${CODE_DIR} ${PLUGIN_DIR})
+
+target_link_libraries(
+	EditorCommon
+	PUBLIC
+	rapidjson
+)
+
+message(STATUS
+"EditorCommon provides CMake targets:
+
+- EDITOR_COMMON_DIR => ${EDITOR_COMMON_DIR}
+- EDITOR_COMMON_INCLUDES => ${EDITOR_COMMON_INCLUDES}
+- EDITOR_COMMON_BIN => ${EDITOR_COMMON_BIN}
+- EDITOR_COMMON_LIB => ${EDITOR_COMMON_LIB}
+
+")

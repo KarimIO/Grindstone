@@ -47,6 +47,7 @@ target_precompile_headers(PluginAudioOpenAL PUBLIC ${INC}/pch.hpp)
 target_link_libraries(PluginAudioOpenAL
 	${CORE_LIBS}
 	OpenAL::OpenAL
+	Common
 )
 
 message(STATUS
@@ -56,6 +57,5 @@ message(STATUS
 - AUDIO_OPENAL_INCLUDES => ${AUDIO_OPENAL_INCLUDES}
 - AUDIO_OPENAL_BIN => ${AUDIO_OPENAL_BIN}
 - AUDIO_OPENAL_LIB => ${AUDIO_OPENAL_LIB}
-
 
 ")

@@ -7,10 +7,9 @@ set(INC ${EDITOR_MATERIAL_IMPORTER_BASE}/include)
 
 set(EDITORMATERIALIMPORTER_SOURCES
 	${SRC}/MaterialImporter.cpp
-	${COMMON_DIR}/ResourcePipeline/AssetType.cpp
-	${COMMON_DIR}/ResourcePipeline/ImporterSettings.cpp
-	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp
-	${COMMON_DIR}/ResourcePipeline/Uuid.cpp
+
+
+
 	${EDITOR_DIR}/EditorManagerInstance.cpp
 	${ENGINE_CORE_DIR}/Utils/Utilities.cpp
 	${SRC}/EntryPoint.cpp
@@ -18,11 +17,9 @@ set(EDITORMATERIALIMPORTER_SOURCES
 
 set(EDITORMATERIALIMPORTER_HEADERS
 	${INC}/MaterialImporter.hpp
-	${COMMON_DIR}/ResourcePipeline/AssetType.hpp
-	${COMMON_DIR}/ResourcePipeline/ImporterSettings.hpp
-	${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
-	${COMMON_DIR}/ResourcePipeline/Uuid.hpp
-	${COMMON_DIR}/Editor/Importer.hpp
+
+
+
 	${ENGINE_CORE_DIR}/Utils/Utilities.hpp
 	${INC}/pch.hpp
 )
@@ -50,7 +47,7 @@ target_include_directories(PluginEditorMaterialImporter PUBLIC ${CODE_DIR} ${FMT
 
 target_precompile_headers(PluginEditorMaterialImporter PUBLIC ${INC}/pch.hpp)
 
-target_link_libraries(PluginEditorMaterialImporter ${CORE_LIBS})
+target_link_libraries(PluginEditorMaterialImporter ${CORE_LIBS} Common EditorCommon)
 
 message(STATUS
 "PluginEditorMaterialImporter provides CMake targets:
@@ -59,6 +56,5 @@ message(STATUS
 - EDITOR_MATERIAL_IMPORTER_INCLUDES => ${EDITOR_MATERIAL_IMPORTER_INCLUDES}
 - EDITOR_MATERIAL_IMPORTER_BIN => ${EDITOR_MATERIAL_IMPORTER_BIN}
 - EDITOR_MATERIAL_IMPORTER_LIB => ${EDITOR_MATERIAL_IMPORTER_LIB}
-
 
 ")

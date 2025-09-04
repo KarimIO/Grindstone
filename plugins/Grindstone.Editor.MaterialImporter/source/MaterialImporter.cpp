@@ -6,7 +6,7 @@
 
 #include <rapidjson/document.h>
 
-#include <Common/ResourcePipeline/MetaFile.hpp>
+#include <EditorCommon/ResourcePipeline/MetaFile.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
 #include <Editor/EditorManager.hpp>

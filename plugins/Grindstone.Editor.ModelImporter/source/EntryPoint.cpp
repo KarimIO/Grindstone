@@ -1,6 +1,6 @@
 #include <imgui.h>
 
-#include <Common/ResourcePipeline/MetaFile.hpp>
+#include <EditorCommon/ResourcePipeline/MetaFile.hpp>
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <Editor/PluginSystem/EditorPluginInterface.hpp>

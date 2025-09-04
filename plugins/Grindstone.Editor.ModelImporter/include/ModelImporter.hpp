@@ -10,7 +10,7 @@
 
 #include <Common/Formats/Model.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
-#include <Common/Editor/Importer.hpp>
+#include <EditorCommon/Editor/Importer.hpp>
 
 namespace Grindstone::Editor::Importers {
 	const Grindstone::Editor::ImporterVersion modelImporterVersion = 1;

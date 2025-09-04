@@ -58,7 +58,7 @@ target_compile_definitions(PluginRhiVulkan PRIVATE GRAPHICS_DLL GLM_ENABLE_EXPER
 
 find_package(glfw3 CONFIG REQUIRED)
 
-target_link_libraries(PluginRhiVulkan ${CORE_LIBS} Vulkan::Vulkan glfw fmt::fmt GPUOpen::VulkanMemoryAllocator)
+target_link_libraries(PluginRhiVulkan ${CORE_LIBS} Common Vulkan::Vulkan glfw fmt::fmt GPUOpen::VulkanMemoryAllocator)
 
 target_compile_features(PluginRhiVulkan PRIVATE cxx_std_20)
 
@@ -87,6 +87,5 @@ message(STATUS
 - RHI_VULKAN_INCLUDES => ${RHI_VULKAN_INCLUDES}
 - RHI_VULKAN_BIN => ${RHI_VULKAN_BIN}
 - RHI_VULKAN_LIB => ${RHI_VULKAN_LIB}
-
 
 ")

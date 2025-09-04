@@ -121,7 +121,7 @@ set_target_properties(PluginScriptCSharp PROPERTIES
 	ARCHIVE_OUTPUT_DIRECTORY "${SCRIPT_CSHARP_LIB}"
 )
 target_compile_definitions(PluginScriptCSharp PUBLIC CSHARP_DLL GLM_ENABLE_EXPERIMENTAL)
-target_link_libraries(PluginScriptCSharp PUBLIC ${CORE_LIBS} ${DOTNET_ROOT}/nethost.lib)
+target_link_libraries(PluginScriptCSharp PUBLIC ${CORE_LIBS} ${DOTNET_ROOT}/nethost.lib Common)
 target_precompile_headers(PluginScriptCSharp PUBLIC ${INC}/pch.hpp)
 
 add_custom_command(

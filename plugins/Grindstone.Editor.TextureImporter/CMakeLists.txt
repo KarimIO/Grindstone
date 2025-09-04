@@ -7,10 +7,9 @@ set(INC ${EDITOR_TEXTURE_IMPORTER_BASE}/include)
 
 set(EDITORTEXTUREIMPORTER_SOURCES
 	${SRC}/TextureImporter.cpp
-	${COMMON_DIR}/ResourcePipeline/AssetType.cpp
-	${COMMON_DIR}/ResourcePipeline/ImporterSettings.cpp
-	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp
-	${COMMON_DIR}/ResourcePipeline/Uuid.cpp
+
+
+
 	${EDITOR_DIR}/EditorManagerInstance.cpp
 	${ENGINE_CORE_DIR}/Utils/Utilities.cpp
 	${SRC}/EntryPoint.cpp
@@ -18,11 +17,9 @@ set(EDITORTEXTUREIMPORTER_SOURCES
 
 set(EDITORTEXTUREIMPORTER_HEADERS
 	${INC}/TextureImporter.hpp
-	${COMMON_DIR}/ResourcePipeline/AssetType.hpp
-	${COMMON_DIR}/ResourcePipeline/ImporterSettings.hpp
-	${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
-	${COMMON_DIR}/ResourcePipeline/Uuid.hpp
-	${COMMON_DIR}/Editor/Importer.hpp
+
+
+
 	${ENGINE_CORE_DIR}/Utils/Utilities.hpp
 	${INC}/pch.hpp
 )
@@ -51,7 +48,7 @@ target_include_directories(PluginEditorTextureImporter PUBLIC ${CODE_DIR} ${STB_
 
 target_precompile_headers(PluginEditorTextureImporter PUBLIC ${INC}/pch.hpp)
 
-target_link_libraries(PluginEditorTextureImporter ${CORE_LIBS})
+target_link_libraries(PluginEditorTextureImporter ${CORE_LIBS} Common EditorCommon)
 
 message(STATUS
 "PluginEditorTextureImporter provides CMake targets:
@@ -60,6 +57,5 @@ message(STATUS
 - EDITOR_TEXTURE_IMPORTER_INCLUDES => ${EDITOR_TEXTURE_IMPORTER_INCLUDES}
 - EDITOR_TEXTURE_IMPORTER_BIN => ${EDITOR_TEXTURE_IMPORTER_BIN}
 - EDITOR_TEXTURE_IMPORTER_LIB => ${EDITOR_TEXTURE_IMPORTER_LIB}
-
 
 ")

@@ -2,12 +2,12 @@
 
 #include <filesystem>
 
-#include <Common/Editor/Importer.hpp>
+#include <Common/ResourcePipeline/Uuid.hpp>
+#include <EditorCommon/Editor/Importer.hpp>
 #include <Common/ResourcePipeline/AssetType.hpp>
 #include <Editor/AssetRegistry.hpp>
 
 #include "ImporterSettings.hpp"
-#include "Uuid.hpp"
 
 namespace Grindstone::Editor {
 	class MetaFile {

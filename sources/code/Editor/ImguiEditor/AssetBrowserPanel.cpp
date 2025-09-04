@@ -7,7 +7,7 @@
 #include <imgui_stdlib.h>
 #include <entt/entt.hpp>
 
-#include <Common/ResourcePipeline/MetaFile.hpp>
+#include <EditorCommon/ResourcePipeline/MetaFile.hpp>
 #include <Common/ResourcePipeline/AssetType.hpp>
 #include <Common/Window/WindowManager.hpp>
 #include <Editor/ImguiEditor/ImguiEditor.hpp>

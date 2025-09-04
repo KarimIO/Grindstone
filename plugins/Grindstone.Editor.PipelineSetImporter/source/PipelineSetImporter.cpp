@@ -1,6 +1,6 @@
 #include <fstream>
 
-#include <Common/ResourcePipeline/MetaFile.hpp>
+#include <EditorCommon/ResourcePipeline/MetaFile.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Logger.hpp>
 #include <Editor/EditorManager.hpp>

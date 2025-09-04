@@ -41,7 +41,7 @@ set_target_properties(PluginRenderables3D PROPERTIES
 	LIBRARY_OUTPUT_DIRECTORY "${RENDERABLES_3D_LIB}"
 	ARCHIVE_OUTPUT_DIRECTORY "${RENDERABLES_3D_LIB}"
 )
-target_link_libraries(PluginRenderables3D ${CORE_LIBS})
+target_link_libraries(PluginRenderables3D ${CORE_LIBS} Common)
 
 target_include_directories(
 	PluginRenderables3D PUBLIC
@@ -62,6 +62,5 @@ message(STATUS
 - RENDERABLES_3D_INCLUDES => ${RENDERABLES_3D_INCLUDES}
 - RENDERABLES_3D_BIN => ${RENDERABLES_3D_BIN}
 - RENDERABLES_3D_LIB => ${RENDERABLES_3D_LIB}
-
 
 ")

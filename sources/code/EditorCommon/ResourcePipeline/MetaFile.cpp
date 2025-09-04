@@ -7,11 +7,11 @@
 #include <string>
 #include <vector>
 
+#include <Common/ResourcePipeline/Uuid.hpp>
 #include <Editor/AssetRegistry.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
 
 #include "MetaFile.hpp"
-#include "Uuid.hpp"
 using namespace Grindstone::Editor;
 
 const uint32_t currentMetaFileVersion = 1;

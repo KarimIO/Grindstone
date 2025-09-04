@@ -66,7 +66,7 @@ find_package(OpenGL REQUIRED)
 find_package(gl3w CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 
-target_link_libraries(PluginRhiOpenGL glfw unofficial::gl3w::gl3w glm::glm fmt::fmt ${CORE_LIBS} ${OPENGL_gl_LIBRARY})
+target_link_libraries(PluginRhiOpenGL Common glfw unofficial::gl3w::gl3w glm::glm fmt::fmt ${CORE_LIBS} ${OPENGL_gl_LIBRARY})
 
 message(STATUS
 "PluginRhiOpenGL provides CMake targets:
@@ -75,6 +75,5 @@ message(STATUS
 - RHI_OPENGL_INCLUDES => ${RHI_OPENGL_INCLUDES}
 - RHI_OPENGL_BIN => ${RHI_OPENGL_BIN}
 - RHI_OPENGL_LIB => ${RHI_OPENGL_LIB}
-
 
 ")

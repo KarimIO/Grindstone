@@ -2,7 +2,7 @@
 #include <imgui_stdlib.h>
 #include <entt/entt.hpp>
 
-#include <Common/ResourcePipeline/MetaFile.hpp>
+#include <EditorCommon/ResourcePipeline/MetaFile.hpp>
 #include <Editor/AssetRegistry.hpp>
 #include <Editor/EditorManager.hpp>
 #include <EngineCore/Scenes/Manager.hpp>

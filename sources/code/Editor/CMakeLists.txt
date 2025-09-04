@@ -3,13 +3,9 @@ set(EDITOR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 file(GLOB_RECURSE SOURCE_MAIN
 	Main.cpp ${CODE_DIR}/NatvisFile.natvis
 	${COMMON_DIR}/Containers/Containers.natvis
-	${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINE_CORE_DIR}/Utils/Utilities.cpp
-	${COMMON_DIR}/ResourcePipeline/AssetType.cpp ${COMMON_DIR}/ResourcePipeline/AssetType.hpp
-	${COMMON_DIR}/ResourcePipeline/ImporterSettings.cpp ${COMMON_DIR}/ResourcePipeline/ImporterSettings.hpp
 	${EDITOR_DIR}/EditorManagerInstance.cpp
-	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp ${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
-	${COMMON_DIR}/ResourcePipeline/Uuid.cpp  ${COMMON_DIR}/ResourcePipeline/Uuid.hpp
 	${ENGINE_CORE_DIR}/ECS/Entity.cpp
+	${ENGINE_CORE_DIR}/Utils/Utilities.cpp
 	FileManager.cpp FileManager.hpp
 	GitManager.cpp GitManager.hpp
 	GizmoRenderer.cpp GizmoRenderer.hpp
@@ -146,4 +142,5 @@ target_link_libraries(
 	opengl32
 	imgui::imgui unofficial::imguizmo::imguizmo
 	${CMAKE_DL_LIBS}
+	Common EditorCommon
 )

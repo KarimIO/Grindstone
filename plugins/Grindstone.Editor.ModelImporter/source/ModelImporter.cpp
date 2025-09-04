@@ -10,7 +10,7 @@
 #include <glm/glm.hpp>
 
 #include <Common/Formats/Animation.hpp>
-#include <Common/ResourcePipeline/MetaFile.hpp>
+#include <EditorCommon/ResourcePipeline/MetaFile.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
 #include <Editor/EditorManager.hpp>

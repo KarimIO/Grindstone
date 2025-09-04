@@ -8,10 +8,9 @@ set(INC ${EDITOR_MODEL_IMPORTER_BASE}/include)
 set(EDITORMODELIMPORTER_SOURCES
 	${SRC}/ModelImporter.cpp
 	${SRC}/ModelMaterialImporter.cpp
-	${COMMON_DIR}/ResourcePipeline/AssetType.cpp
-	${COMMON_DIR}/ResourcePipeline/ImporterSettings.cpp
-	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp
-	${COMMON_DIR}/ResourcePipeline/Uuid.cpp
+
+
+
 	${EDITOR_DIR}/EditorManagerInstance.cpp
 	${ENGINE_CORE_DIR}/Utils/Utilities.cpp
 	${SRC}/EntryPoint.cpp
@@ -20,11 +19,9 @@ set(EDITORMODELIMPORTER_SOURCES
 set(EDITORMODELIMPORTER_HEADERS
 	${INC}/ModelImporter.hpp
 	${INC}/ModelMaterialImporter.hpp
-	${COMMON_DIR}/ResourcePipeline/AssetType.hpp
-	${COMMON_DIR}/ResourcePipeline/ImporterSettings.hpp
-	${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
-	${COMMON_DIR}/ResourcePipeline/Uuid.hpp
-	${COMMON_DIR}/Editor/Importer.hpp
+
+
+
 	${ENGINE_CORE_DIR}/Utils/Utilities.hpp
 	${INC}/pch.hpp
 )
@@ -55,7 +52,7 @@ target_include_directories(PluginEditorModelImporter PUBLIC ${CODE_DIR} ${FMT_IN
 
 target_precompile_headers(PluginEditorModelImporter PUBLIC ${INC}/pch.hpp)
 
-target_link_libraries(PluginEditorModelImporter ${CORE_LIBS} assimp::assimp imgui::imgui)
+target_link_libraries(PluginEditorModelImporter ${CORE_LIBS} assimp::assimp imgui::imgui Common EditorCommon)
 
 message(STATUS
 "PluginEditorModelImporter provides CMake targets:
@@ -64,6 +61,5 @@ message(STATUS
 - EDITOR_MODEL_IMPORTER_INCLUDES => ${EDITOR_MODEL_IMPORTER_INCLUDES}
 - EDITOR_MODEL_IMPORTER_BIN => ${EDITOR_MODEL_IMPORTER_BIN}
 - EDITOR_MODEL_IMPORTER_LIB => ${EDITOR_MODEL_IMPORTER_LIB}
-
 
 ")

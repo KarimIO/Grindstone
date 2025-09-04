@@ -27,6 +27,7 @@ set(DEPS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 set(CODE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/sources/code")
 set(COMMON_DIR "${CODE_DIR}/Common")
 set(ENGINECORE_DIR "${CODE_DIR}/EngineCore")
+set(EDITOR_COMMON_DIR "${CODE_DIR}/EditorCommon")
 set(EDITOR_DIR "${CODE_DIR}/Editor")
 set(EDITORCONFIG "${CODE_DIR}/.editorconfig")
 set(BUILD_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
@@ -38,9 +39,8 @@ set(CORE_UTILS
 	${ENGINECORE_DIR}/ECS/Entity.cpp ${ENGINECORE_DIR}/ECS/Entity.hpp
 	${ENGINECORE_DIR}/Logger.cpp ${ENGINECORE_DIR}/Logger.hpp
 	${ENGINECORE_DIR}/Utils/MemoryAllocator.cpp ${ENGINECORE_DIR}/Utils/MemoryAllocator.hpp
-	${COMMON_DIR}/Memory/Allocators/DynamicAllocator.cpp ${COMMON_DIR}/Memory/Allocators/DynamicAllocator.hpp
-	${COMMON_DIR}/HashedString.cpp ${COMMON_DIR}/HashedString.hpp
-	${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.hpp
+
+
 )
 set(CORE_LIBS fmt::fmt Rpcrt4.lib)
 
@@ -48,9 +48,11 @@ set(ENGINE_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/sources/code/EngineCore)
 file(GLOB_RECURSE SOURCE_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.cpp")
 file(GLOB_RECURSE HEADER_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.hpp")
 
-add_subdirectory(sources/code/EngineCore)
+add_subdirectory(${COMMON_DIR})
+add_subdirectory(${ENGINECORE_DIR})
+add_subdirectory(${EDITOR_COMMON_DIR})
+add_subdirectory(${EDITOR_DIR})
 add_subdirectory(sources/code/ApplicationExecutable)
-add_subdirectory(sources/code/Editor)
 
 file(READ ${CMAKE_CURRENT_LIST_DIR}/Plugins.CmakeLists.txt PLUGIN_LIST)
 string (REPLACE "\n" ";" PLUGIN_LIST "${PLUGIN_LIST}")

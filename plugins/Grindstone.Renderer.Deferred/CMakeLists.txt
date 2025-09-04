@@ -30,6 +30,7 @@ set_target_properties(PluginRendererDeferred PROPERTIES
 target_link_libraries(
 	PluginRendererDeferred
 	${CORE_LIBS}
+	Common
 )
 
 target_include_directories(
@@ -53,6 +54,5 @@ message(STATUS
 - RENDERER_DEFERRED_INCLUDES => ${RENDERER_DEFERRED_INCLUDES}
 - RENDERER_DEFERRED_BIN => ${RENDERER_DEFERRED_BIN}
 - RENDERER_DEFERRED_LIB => ${RENDERER_DEFERRED_LIB}
-
 
 ")

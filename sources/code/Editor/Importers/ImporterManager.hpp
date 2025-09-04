@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Common/HashedString.hpp>
-#include <Common/Editor/Importer.hpp>
+#include <EditorCommon/Editor/Importer.hpp>
 #include <Editor/AssetRegistry.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 

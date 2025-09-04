@@ -1,6 +1,6 @@
 #include <filesystem>
 
-#include <Common/ResourcePipeline/MetaFile.hpp>
+#include <EditorCommon/ResourcePipeline/MetaFile.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
 #include <Editor/EditorManager.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>

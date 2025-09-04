@@ -43,7 +43,7 @@ set_target_properties(PluginBulletPhysics PROPERTIES
 target_precompile_headers(PluginBulletPhysics PUBLIC ${INC}/pch.hpp)
 
 find_package(Bullet CONFIG REQUIRED)
-target_link_libraries(PluginBulletPhysics ${CORE_LIBS} BulletSoftBody BulletDynamics BulletCollision Bullet3Common LinearMath)
+target_link_libraries(PluginBulletPhysics ${CORE_LIBS} Common BulletSoftBody BulletDynamics BulletCollision Bullet3Common LinearMath)
 
 message(STATUS
 "PluginBulletPhysics provides CMake targets:
@@ -52,6 +52,5 @@ message(STATUS
 - PHYSICS_BULLET_INCLUDES => ${PHYSICS_BULLET_INCLUDES}
 - PHYSICS_BULLET_BIN => ${PHYSICS_BULLET_BIN}
 - PHYSICS_BULLET_LIB => ${PHYSICS_BULLET_LIB}
-
 
 ")

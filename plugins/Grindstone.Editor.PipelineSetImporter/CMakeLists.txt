@@ -39,10 +39,9 @@ source_group("Converter\\Header Files" FILES ${EDITORPIPELINESETIMPORTER_CONVERT
 
 set(EDITORPIPELINESETIMPORTER_SOURCES
 	${SRC}/PipelineSetImporter.cpp
-	${COMMON_DIR}/ResourcePipeline/AssetType.cpp
-	${COMMON_DIR}/ResourcePipeline/ImporterSettings.cpp
-	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp
-	${COMMON_DIR}/ResourcePipeline/Uuid.cpp
+
+
+
 	${EDITOR_DIR}/EditorManagerInstance.cpp
 	${ENGINE_CORE_DIR}/Utils/Utilities.cpp
 	${SRC}/EntryPoint.cpp
@@ -50,11 +49,9 @@ set(EDITORPIPELINESETIMPORTER_SOURCES
 
 set(EDITORPIPELINESETIMPORTER_HEADERS
 	${INC}/PipelineSetImporter.hpp
-	${COMMON_DIR}/ResourcePipeline/AssetType.hpp
-	${COMMON_DIR}/ResourcePipeline/ImporterSettings.hpp
-	${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
-	${COMMON_DIR}/ResourcePipeline/Uuid.hpp
-	${COMMON_DIR}/Editor/Importer.hpp
+
+
+
 	${ENGINE_CORE_DIR}/Utils/Utilities.hpp
 	${INC}/pch.hpp
 )
@@ -91,6 +88,7 @@ target_link_libraries(PluginEditorPipelineSetImporter
 	${CORE_LIBS}
 	unofficial::spirv-reflect
 	Microsoft::DirectXShaderCompiler
+	Common EditorCommon
 )
 
 message(STATUS
@@ -100,6 +98,5 @@ message(STATUS
 - EDITOR_PIPELINESET_IMPORTER_INCLUDES => ${EDITOR_PIPELINESET_IMPORTER_INCLUDES}
 - EDITOR_PIPELINESET_IMPORTER_BIN => ${EDITOR_PIPELINESET_IMPORTER_BIN}
 - EDITOR_PIPELINESET_IMPORTER_LIB => ${EDITOR_PIPELINESET_IMPORTER_LIB}
-
 
 ")
