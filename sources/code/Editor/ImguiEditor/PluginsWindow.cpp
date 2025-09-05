@@ -7,6 +7,7 @@
 #include <Editor/ImguiEditor/Components/ListEditor.hpp>
 #include <Editor/EditorManager.hpp>
 #include <Editor/ImguiEditor/ImguiEditor.hpp>
+#include <Editor/PluginSystem/EditorPluginManager.hpp>
 #include <Editor/PluginSystem/PluginMetaFileLoader.hpp>
 
 #include "imgui_markdown.h"
@@ -32,7 +33,10 @@ static void OnRemovePlugins(void* listPtr, size_t startIndex, size_t lastIndex) 
 	plugins.erase(plugins.begin() + startIndex, plugins.begin() + lastIndex + 1);
 }
 
-static size_t OnRenderPluginSidebar(const std::vector<PluginManifestCache>& pluginsList, size_t currentSelectedPlugin) {
+static size_t OnRenderPluginSidebar(const std::vector<PluginListElement>& pluginsList, size_t currentSelectedPlugin) {
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8, 8));
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 8));
+
 	if (!ImGui::BeginChild("#SidebarPluginArea", ImGui::GetContentRegionAvail(), ImGuiChildFlags_None)) {
 		return SIZE_MAX;
 	}
@@ -45,55 +49,97 @@ static size_t OnRenderPluginSidebar(const std::vector<PluginManifestCache>& plug
 	for (const auto& plugin : pluginsList) {
 		bool isSelected = (currentIndex == currentSelectedPlugin);
 
-		ImVec2 p0 = ImGui::GetCursorScreenPos();
-		ImGui::SetCursorScreenPos(ImVec2(p0.x + padding.x, p0.y + padding.y));
+		std::string rowName = "#PluginRow" + plugin.metaData.displayName;
 
-		ImGui::BeginGroup();
+		if (isSelected) {
+			ImGui::PushStyleColor(ImGuiCol_FrameBg, ImGui::GetStyle().Colors[ImGuiCol_Button]);
+		}
+
+		bool isInstalled = plugin.installationState == PluginInstallationState::Installed || plugin.installationState == PluginInstallationState::Installing;
+		if (isInstalled) {
+			ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyle().Colors[ImGuiCol_ButtonActive]);
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 2.0f);
+		}
+
+		ImGui::BeginChild(rowName.c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0.0f), ImGuiChildFlags_FrameStyle | ImGuiChildFlags_AutoResizeY);
+
 		ImGui::PushFont(imguiEditor.GetFont(FontType::H3));
-		ImGui::Text(plugin.displayName.c_str());
+		ImGui::Text(plugin.metaData.displayName.c_str());
 		ImGui::PopFont();
 
 		ImGui::PushFont(imguiEditor.GetFont(FontType::Italic));
-		ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_TextDisabled));
-		ImGui::Text(plugin.author.c_str());
+		ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
+		ImGui::Text(plugin.metaData.author.c_str());
 		ImGui::PopStyleColor();
 		ImGui::PopFont();
 
-		ImGui::TextWrapped(plugin.description.c_str());
-		ImGui::EndGroup();
+		ImGui::TextWrapped(plugin.metaData.description.c_str());
+		ImGui::EndChild();
 
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
 			newSelectedIndex = currentIndex;
 		}
 
-		ImVec2 p1 = ImGui::GetItemRectMax();
-		p1 = ImVec2(p1.x + padding.x, p1.y + padding.y);
+		if (isInstalled) {
+			ImGui::PopStyleVar();
+			ImGui::PopStyleColor();
+		}
 
-		ImGui::GetWindowDrawList()->AddRect(p0, p1, ImGui::GetColorU32(ImGui::GetStyleColorVec4(ImGuiCol_TitleBg)));
+		if (isSelected) {
+			ImGui::PopStyleColor();
+		}
 
 		++currentIndex;
 	}
 
 	ImGui::EndChild();
 
+	ImGui::PopStyleVar(2);
+
 	return newSelectedIndex;
 }
 
-static void OnRenderPluginPageSuccess(const PluginManifestCache& pluginManifestCache, const CurrentPluginData& currentPluginData) {
+static void OnRenderPluginPageSuccess(PluginListElement& pluginManifestCache, const CurrentPluginData& currentPluginData) {
 	const ImguiEditor& imguiEditor = Grindstone::Editor::Manager::GetInstance().GetImguiEditor();
 
 	ImGui::PushFont(imguiEditor.GetFont(FontType::H1));
-	ImGui::Text(pluginManifestCache.displayName.c_str());
+	ImGui::Text(pluginManifestCache.metaData.displayName.c_str());
 	ImGui::PopFont();
 
 	ImGui::PushFont(imguiEditor.GetFont(FontType::Italic));
 	ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_TextDisabled));
-	ImGui::Text(pluginManifestCache.author.c_str());
+	ImGui::Text(pluginManifestCache.metaData.author.c_str());
 	ImGui::PopStyleColor();
 	ImGui::PopFont();
 
-	ImGui::TextWrapped(pluginManifestCache.description.c_str());
-
+	ImGui::TextWrapped(pluginManifestCache.metaData.description.c_str());
+	switch (pluginManifestCache.installationState) {
+	case PluginInstallationState::NotInstalled:
+		if (ImGui::Button("Install")) {
+			Grindstone::Plugins::EditorPluginManager* pluginManager = static_cast<Grindstone::Plugins::EditorPluginManager*>(Grindstone::EngineCore::GetInstance().GetPluginManager());
+			pluginManager->QueueInstall(pluginManifestCache.metaData.name);
+			pluginManifestCache.installationState = PluginInstallationState::Installed;
+		}
+		break;
+	case PluginInstallationState::Installed:
+		if (ImGui::Button("Uninstall")) {
+			Grindstone::Plugins::EditorPluginManager* pluginManager = static_cast<Grindstone::Plugins::EditorPluginManager*>(Grindstone::EngineCore::GetInstance().GetPluginManager());
+			pluginManager->QueueUninstall(pluginManifestCache.metaData.name);
+			pluginManifestCache.installationState = PluginInstallationState::NotInstalled;
+		}
+		break;
+	case PluginInstallationState::Uninstalling:
+		ImGui::BeginDisabled(true);
+		ImGui::Button("Uninstalling...");
+		ImGui::EndDisabled();
+		break;
+	case PluginInstallationState::Installing:
+		ImGui::BeginDisabled(true);
+		ImGui::Button("Installing...");
+		ImGui::EndDisabled();
+		break;
+	}
+	ImGui::NewLine();
 
 	ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 	if (ImGui::BeginTabBar("PluginPageTabs", tab_bar_flags)) {
@@ -119,7 +165,7 @@ static void OnRenderPluginPageSuccess(const PluginManifestCache& pluginManifestC
 	}
 }
 
-static void OnRenderPluginPage(const std::vector<PluginManifestCache>& pluginsList, size_t currentSelectedPlugin, const CurrentPluginData& currentPluginData, const PluginSelectionState currentSelectionState) {
+static void OnRenderPluginPage(std::vector<PluginListElement>& pluginsList, size_t currentSelectedPlugin, const CurrentPluginData& currentPluginData, const PluginSelectionState currentSelectionState) {
 	if (!ImGui::BeginChild("#MainPluginArea", ImGui::GetContentRegionAvail(), ImGuiChildFlags_None)) {
 		return;
 	}
@@ -151,35 +197,16 @@ void PluginsWindow::Open() {
 	LoadPluginsManifest();
 }
 
+void PluginsWindow::SelectPlugin(size_t newSelectedIndex) {
+	currentSelectedPlugin = newSelectedIndex;
+	pluginSelectionState = PluginSelectionState::Ready;
+	const std::string& pluginName = pluginCacheList[newSelectedIndex].metaData.name;
+	std::filesystem::path pathToReadme = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins" / pluginName / "README.md";
+	currentPluginData.readmeData = Utils::LoadFileText(pathToReadme.string().c_str());
+}
+
 void PluginsWindow::LoadPluginsManifest() {
 	pluginCacheList.clear();
-	std::vector<std::string> usedPlugins;
-
-	{
-		std::filesystem::path pluginListFile = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings/pluginsManifest.txt";
-		auto pluginListFilePath = pluginListFile.string();
-		auto fileContents = Utils::LoadFileText(pluginListFilePath.c_str());
-
-		size_t start = 0, end;
-		std::string pluginName;
-		while (true) {
-			end = fileContents.find("\n", start);
-			if (end == std::string::npos) {
-				pluginName = Utils::Trim(fileContents.substr(start));
-				if (!pluginName.empty()) {
-					usedPlugins.emplace_back(pluginName);
-				}
-
-				break;
-			}
-
-			pluginName = Utils::Trim(fileContents.substr(start, end - start));
-			if (!pluginName.empty()) {
-				usedPlugins.emplace_back(pluginName);
-			}
-			start = end + 1;
-		}
-	}
 
 	std::filesystem::path pluginsPath = Editor::Manager::GetInstance().GetEngineBinariesPath().parent_path() / "plugins";
 	for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(pluginsPath)) {
@@ -194,8 +221,40 @@ void PluginsWindow::LoadPluginsManifest() {
 			continue;
 		}
 
-		std::string pluginName = pluginFolderPath.filename().string();
-		pluginCacheList.emplace_back(pluginName, metaData.displayName, metaData.description, metaData.author);
+		pluginCacheList.emplace_back(metaData, Grindstone::Editor::ImguiEditor::PluginInstallationState::NotInstalled);
+	}
+
+	std::vector<std::string> usedPlugins;
+	std::filesystem::path pluginListFile = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings/pluginsManifest.txt";
+	auto pluginListFilePath = pluginListFile.string();
+	auto fileContents = Utils::LoadFileText(pluginListFilePath.c_str());
+
+	size_t start = 0, end;
+	std::string pluginName;
+	while (true) {
+		end = fileContents.find("\n", start);
+		if (end == std::string::npos) {
+			pluginName = Utils::Trim(fileContents.substr(start));
+			if (!pluginName.empty()) {
+				usedPlugins.emplace_back(pluginName);
+			}
+
+			break;
+		}
+
+		pluginName = Utils::Trim(fileContents.substr(start, end - start));
+		if (!pluginName.empty()) {
+			usedPlugins.emplace_back(pluginName);
+		}
+		start = end + 1;
+	}
+
+	for (const std::string& usedPluginEntry : usedPlugins) {
+		for (Grindstone::Editor::ImguiEditor::PluginListElement& listElement : pluginCacheList) {
+			if (listElement.metaData.name == usedPluginEntry) {
+				listElement.installationState = Grindstone::Editor::ImguiEditor::PluginInstallationState::Installed;
+			}
+		}
 	}
 }
 
@@ -215,11 +274,7 @@ void PluginsWindow::Render() {
 
 			size_t newSelectedIndex = OnRenderPluginSidebar(pluginCacheList, currentSelectedPlugin);
 			if (newSelectedIndex != SIZE_MAX) {
-				currentSelectedPlugin = newSelectedIndex;
-				pluginSelectionState = PluginSelectionState::Ready;
-				const std::string& pluginName = pluginCacheList[newSelectedIndex].name;
-				std::filesystem::path pathToReadme = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins" / pluginName / "README.md";
-				currentPluginData.readmeData = Utils::LoadFileText(pathToReadme.string().c_str());
+				SelectPlugin(newSelectedIndex);
 			}
 
 			ImGui::TableNextColumn();
@@ -239,8 +294,8 @@ void PluginsWindow::Render() {
 void PluginsWindow::WriteFile() {
 	std::string contents;
 	for (auto i = 0; i < pluginCacheList.size(); ++i) {
-		if (!pluginCacheList[i].name.empty()) {
-			contents += pluginCacheList[i].name + "\n";
+		if (!pluginCacheList[i].metaData.name.empty()) {
+			contents += pluginCacheList[i].metaData.name + "\n";
 		}
 	}
 

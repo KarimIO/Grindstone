@@ -171,6 +171,9 @@ void Manager::Run() {
 		if (newPlayMode != playMode) {
 			TransferPlayMode(newPlayMode);
 		}
+
+		auto editorPluginManager = static_cast<Grindstone::Plugins::EditorPluginManager*>(engineCore->GetPluginManager());
+		editorPluginManager->ProcessQueuedPluginInstallsAndUninstalls();
 	}
 }
 

@@ -3,13 +3,19 @@
 #include <vector>
 #include <string>
 #include "Settings/BaseSettingsPage.hpp"
+#include <Editor/PluginSystem/PluginMetaData.hpp>
 
 namespace Grindstone::Editor::ImguiEditor {
-	struct PluginManifestCache {
-		std::string name;
-		std::string displayName;
-		std::string description;
-		std::string author;
+	enum class PluginInstallationState {
+		NotInstalled,
+		Installed,
+		Uninstalling,
+		Installing,
+	};
+
+	struct PluginListElement {
+		Grindstone::Plugins::MetaData metaData;
+		PluginInstallationState installationState;
 	};
 
 	struct CurrentPluginData {
@@ -28,10 +34,11 @@ namespace Grindstone::Editor::ImguiEditor {
 		void Render();
 		bool IsOpen() const;
 	private:
+		void SelectPlugin(size_t newSelectedIndex);
 		void LoadPluginsManifest();
 		void WriteFile();
 		bool isOpen = false;
-		std::vector<PluginManifestCache> pluginCacheList;
+		std::vector<PluginListElement> pluginCacheList;
 		CurrentPluginData currentPluginData;
 		PluginSelectionState pluginSelectionState;
 		size_t currentSelectedPlugin;

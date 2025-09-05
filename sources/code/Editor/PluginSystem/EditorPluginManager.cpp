@@ -112,33 +112,7 @@ static bool RunDotnetCommand(const std::vector<std::string>& dotnetTargets) {
 	return RunCommand(commandLine.data(), workingDirectory.empty() ? nullptr : workingDirectory.c_str());
 }
 
-EditorPluginManager::~EditorPluginManager() {
-	for (auto it = pluginModules.rbegin(); it != pluginModules.rend(); ++it) {
-		auto handle = it->second;
-		if (handle) {
-			auto releaseModuleFnPtr = (void (*)(Interface*))Modules::GetFunction(handle, "ReleaseModule");
-
-			if (releaseModuleFnPtr) {
-				releaseModuleFnPtr(EngineCore::GetInstance().GetPluginInterface());
-			}
-			else {
-				std::string pluginName = it->first.string();
-				GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {}", pluginName.c_str());
-			}
-		}
-	}
-}
-
-bool EditorPluginManager::PreprocessPlugins() {
-	std::vector<Grindstone::Plugins::ManifestData> manifestResults{};
-	if (!Grindstone::Plugins::LoadPluginManifestFile(manifestResults)) {
-		return false;
-	}
-
-	if (!Grindstone::Plugins::LoadPluginManifestLockFile(manifestResults)) {
-		return false;
-	}
-
+void EditorPluginManager::ResolvePlugins(std::vector<Grindstone::Plugins::ManifestData>& manifestResults) {
 	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path();
 
 	std::vector<std::string> cmakeTargetsToCompile;
@@ -181,6 +155,36 @@ bool EditorPluginManager::PreprocessPlugins() {
 	if (!dotnetTargetsToCompile.empty()) {
 		RunDotnetCommand(dotnetTargetsToCompile);
 	}
+}
+
+EditorPluginManager::~EditorPluginManager() {
+	for (auto it = pluginModules.rbegin(); it != pluginModules.rend(); ++it) {
+		auto handle = it->second;
+		if (handle) {
+			auto releaseModuleFnPtr = (void (*)(Interface*))Modules::GetFunction(handle, "ReleaseModule");
+
+			if (releaseModuleFnPtr) {
+				releaseModuleFnPtr(EngineCore::GetInstance().GetPluginInterface());
+			}
+			else {
+				std::string pluginName = it->first.string();
+				GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {}", pluginName.c_str());
+			}
+		}
+	}
+}
+
+bool EditorPluginManager::PreprocessPlugins() {
+	std::vector<Grindstone::Plugins::ManifestData> manifestResults{};
+	if (!Grindstone::Plugins::LoadPluginManifestFile(manifestResults)) {
+		return false;
+	}
+
+	if (!Grindstone::Plugins::LoadPluginManifestLockFile(manifestResults)) {
+		return false;
+	}
+
+	ResolvePlugins(manifestResults);
 
 	return true;
 }
@@ -309,4 +313,87 @@ void EditorPluginManager::UnloadModule(const std::filesystem::path& path) {
 	}
 
 	pluginModules.erase(it);
+}
+
+void EditorPluginManager::QueueInstall(std::string pluginName) {
+	queuedInstalls.insert(pluginName);
+
+	if (queuedUninstalls.contains(pluginName)) {
+		queuedUninstalls.erase(pluginName);
+	}
+}
+
+void EditorPluginManager::QueueUninstall(std::string pluginName) {
+	queuedUninstalls.insert(pluginName);
+
+	if (queuedInstalls.contains(pluginName)) {
+		queuedInstalls.erase(pluginName);
+	}
+}
+
+void EditorPluginManager::ProcessQueuedPluginInstallsAndUninstalls() {
+	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+	std::filesystem::path basePath = engineCore.GetEngineBinaryPath().parent_path() / "plugins";
+
+	if (!queuedUninstalls.empty()) {
+		engineCore.GetGraphicsCore()->WaitUntilIdle();
+
+		for (const std::string& plugin : queuedUninstalls) {
+			for (size_t metaDataIndex = 0; metaDataIndex < resolvedPluginManifest.size(); ++metaDataIndex) {
+				Grindstone::Plugins::MetaData& metaData = resolvedPluginManifest[metaDataIndex];
+				if (metaData.name == plugin) {
+					std::filesystem::path pluginPath = basePath / metaData.name;
+					for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
+						std::filesystem::path binaryPath = pluginPath / binary.libraryRelativePath;
+						UnloadModule(binaryPath);
+					}
+
+					resolvedPluginManifest.erase(resolvedPluginManifest.begin() + metaDataIndex);
+					break;
+				}
+			}
+		}
+		queuedUninstalls.clear();
+	}
+
+	if (!queuedInstalls.empty()) {
+		std::filesystem::path basePluginsRelativePath("plugins");
+		std::vector<ManifestData> pluginsToInstall;
+		for (const std::string& plugin : queuedInstalls) {
+			pluginsToInstall.emplace_back(
+				ManifestData{
+					.pluginName = plugin.c_str(),
+					.semanticVersioning = ">0.0.1",
+					.path = basePluginsRelativePath / plugin
+				}
+			);
+		}
+		ResolvePlugins(pluginsToInstall);
+
+		for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
+			bool toInstall = false;
+			for (const std::string& pluginToInstall : queuedInstalls) {
+				if (metaData.name == pluginToInstall) {
+					toInstall = true;
+				}
+				break;
+			}
+
+			if (!toInstall) {
+				continue;
+			}
+
+			std::filesystem::path pluginPath = basePath / metaData.name;
+
+			for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
+				std::filesystem::path binaryPath = pluginPath / binary.libraryRelativePath;
+				std::filesystem::path parentPath = binaryPath.parent_path();
+				DLL_DIRECTORY_COOKIE dllCookie = AddDllDirectory(parentPath.wstring().c_str());
+				LoadModule(binaryPath);
+				RemoveDllDirectory(dllCookie);
+			}
+		}
+
+		queuedInstalls.clear();
+	}
 }
