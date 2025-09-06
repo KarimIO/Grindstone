@@ -236,7 +236,11 @@ EditorCamera::EditorCamera() {
 	gridRenderer.Initialize();
 	gizmoRenderer.Initialize();
 
-	renderer = engineCore.GetRendererFactory()->CreateRenderer(editorRenderPass);
+	Grindstone::BaseRendererFactory* rendererFactory = engineCore.GetRendererFactory();
+	if (rendererFactory) {
+		renderer = rendererFactory->CreateRenderer(editorRenderPass);
+	}
+
 	UpdateViewMatrix();
 }
 
@@ -340,11 +344,7 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	SceneManagement::SceneManager* sceneManager = engineCore.GetSceneManager();
 
-	if (sceneManager == nullptr) {
-		return;
-	}
-
-	if (sceneManager->scenes.size() == 0) {
+	if (renderer == nullptr || sceneManager == nullptr || sceneManager->scenes.size() == 0) {
 		return;
 	}
 
@@ -576,7 +576,9 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 	renderTarget->Resize(width, height);
 	depthTarget->Resize(width, height);
 	framebuffer->Resize(width, height);
-	renderer->Resize(width, height);
+	if (renderer) {
+		renderer->Resize(width, height);
+	}
 
 	for (int i = 0; i < 3; ++i) {
 		mousePickRenderTarget[i]->Resize(width, height);
