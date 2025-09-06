@@ -4,6 +4,7 @@
 
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
+#include <EngineCore/Events/Dispatcher.hpp>
 #include <Editor/ImguiEditor/Components/ListEditor.hpp>
 #include <Editor/EditorManager.hpp>
 #include <Editor/ImguiEditor/ImguiEditor.hpp>
@@ -20,6 +21,46 @@ size_t indexToEdit = SIZE_MAX;
 std::vector<std::string> unusedPlugins;
 
 const ImVec2 PLUGIN_LIST_WINDOW_SIZE = { 300.f, 400.f };
+
+static bool WritePluginFile(const std::vector<PluginListElement>& pluginsList) {
+	std::filesystem::path pluginListFile = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings/pluginsManifest.txt";
+
+	std::ofstream outputFile(pluginListFile);
+	if (!outputFile) {
+		return false;
+	}
+
+	for (const PluginListElement& plugin : pluginsList) {
+		if (plugin.installationState == PluginInstallationState::Installed || plugin.installationState == PluginInstallationState::Installing) {
+			outputFile << plugin.metaData.name << '\n';
+		}
+	}
+
+	return true;
+}
+
+static void RestartApp() {
+	LPWSTR cmdLine = GetCommandLineW();
+	LPVOID env = GetEnvironmentStringsW();
+	STARTUPINFOW si = { sizeof(si) };
+	PROCESS_INFORMATION pi;
+
+	BOOL ok = CreateProcessW(
+		nullptr,			// Application name
+		cmdLine,			// Command line
+		nullptr, nullptr,	// Security
+		true,				// Inherit handles
+		CREATE_UNICODE_ENVIRONMENT,
+		env,				// Environment block
+		nullptr,			// Current directory
+		&si,
+		&pi
+	);
+
+	if (ok) {
+		Editor::Manager::GetInstance().OnTryQuit(nullptr);
+	}
+}
 
 static void OnAddPlugin(void* listPtr, size_t index) {
 	std::vector<std::string>& plugins = *static_cast<std::vector<std::string>*>(listPtr);
@@ -99,7 +140,7 @@ static size_t OnRenderPluginSidebar(const std::vector<PluginListElement>& plugin
 	return newSelectedIndex;
 }
 
-static void OnRenderPluginPageSuccess(PluginListElement& pluginManifestCache, const CurrentPluginData& currentPluginData) {
+static void OnRenderPluginPageSuccess(std::vector<PluginListElement>& pluginsList, PluginListElement& pluginManifestCache, const CurrentPluginData& currentPluginData) {
 	const ImguiEditor& imguiEditor = Grindstone::Editor::Manager::GetInstance().GetImguiEditor();
 
 	ImGui::PushFont(imguiEditor.GetFont(FontType::H1));
@@ -116,16 +157,30 @@ static void OnRenderPluginPageSuccess(PluginListElement& pluginManifestCache, co
 	switch (pluginManifestCache.installationState) {
 	case PluginInstallationState::NotInstalled:
 		if (ImGui::Button("Install")) {
-			Grindstone::Plugins::EditorPluginManager* pluginManager = static_cast<Grindstone::Plugins::EditorPluginManager*>(Grindstone::EngineCore::GetInstance().GetPluginManager());
-			pluginManager->QueueInstall(pluginManifestCache.metaData.name);
 			pluginManifestCache.installationState = PluginInstallationState::Installed;
+			WritePluginFile(pluginsList);
+
+			if (pluginManifestCache.metaData.isRestartRequired) {
+				RestartApp();
+			}
+			else {
+				Grindstone::Plugins::EditorPluginManager* pluginManager = static_cast<Grindstone::Plugins::EditorPluginManager*>(Grindstone::EngineCore::GetInstance().GetPluginManager());
+				pluginManager->QueueInstall(pluginManifestCache.metaData.name);
+			}
 		}
 		break;
 	case PluginInstallationState::Installed:
 		if (ImGui::Button("Uninstall")) {
-			Grindstone::Plugins::EditorPluginManager* pluginManager = static_cast<Grindstone::Plugins::EditorPluginManager*>(Grindstone::EngineCore::GetInstance().GetPluginManager());
-			pluginManager->QueueUninstall(pluginManifestCache.metaData.name);
 			pluginManifestCache.installationState = PluginInstallationState::NotInstalled;
+			WritePluginFile(pluginsList);
+
+			if (pluginManifestCache.metaData.isRestartRequired) {
+				RestartApp();
+			}
+			else {
+				Grindstone::Plugins::EditorPluginManager* pluginManager = static_cast<Grindstone::Plugins::EditorPluginManager*>(Grindstone::EngineCore::GetInstance().GetPluginManager());
+				pluginManager->QueueUninstall(pluginManifestCache.metaData.name);
+			}
 		}
 		break;
 	case PluginInstallationState::Uninstalling:
@@ -182,7 +237,7 @@ static void OnRenderPluginPage(std::vector<PluginListElement>& pluginsList, size
 			ImGui::Text("Plugin data loading...");
 			break;
 		case PluginSelectionState::Ready:
-			OnRenderPluginPageSuccess(pluginsList[currentSelectedPlugin], currentPluginData);
+			OnRenderPluginPageSuccess(pluginsList, pluginsList[currentSelectedPlugin], currentPluginData);
 			break;
 		}
 	}
@@ -251,7 +306,7 @@ void PluginsWindow::LoadPluginsManifest() {
 
 	for (const std::string& usedPluginEntry : usedPlugins) {
 		for (Grindstone::Editor::ImguiEditor::PluginListElement& listElement : pluginCacheList) {
-			if (listElement.metaData.name == usedPluginEntry) {
+			if (Grindstone::Utils::ToLower(listElement.metaData.name) == Grindstone::Utils::ToLower(usedPluginEntry)) {
 				listElement.installationState = Grindstone::Editor::ImguiEditor::PluginInstallationState::Installed;
 			}
 		}

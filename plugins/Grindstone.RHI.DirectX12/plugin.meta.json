@@ -4,6 +4,7 @@
 	"version": "0.3.0",
 	"description": "Implements calls to use the DirectX12 API to render computer graphics.",
 	"author": "Grindstone Foundation",
+	"requiresRestart": true,
 	"assets": [],
 	"dependencies": [],
 	"binaries": [

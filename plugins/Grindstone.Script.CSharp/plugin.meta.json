@@ -4,6 +4,7 @@
 	"version": "0.3.0",
 	"description": "Allows loading and processing C# assemblies.",
 	"author": "Grindstone Foundation",
+	"requiresRestart": true,
 	"assets": [],
 	"dependencies": [],
 	"binaries": [

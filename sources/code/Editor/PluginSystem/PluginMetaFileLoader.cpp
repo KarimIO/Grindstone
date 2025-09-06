@@ -92,6 +92,16 @@ bool Grindstone::Plugins::ReadMetaFile(std::filesystem::path metaDataFilePath, G
 		}
 	}
 
+	if (document.HasMember("requiresRestart")) {
+		rapidjson::Value& requiresRestartJson = document["requiresRestart"];
+		if (requiresRestartJson.GetType() == rapidjson::Type::kTrueType || requiresRestartJson.GetType() == rapidjson::Type::kFalseType) {
+			metaData.isRestartRequired = requiresRestartJson.GetBool();
+		}
+		else {
+			errorMsg += std::vformat("Meta file {} has 'requiresRestart' which must be of type 'false' or 'true'.\n", std::make_format_args(pathCstr));
+		}
+	}
+
 	if (document.HasMember("assetDirectories")) {
 		rapidjson::Value& assetDirectoriesJson = document["assetDirectories"];
 		if (assetDirectoriesJson.GetType() == rapidjson::Type::kArrayType) {

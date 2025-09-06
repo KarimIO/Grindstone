@@ -83,8 +83,8 @@ file(GLOB_RECURSE HEADER_RENDERING "${ENGINE_CORE_DIR}/Rendering/*.hpp")
 source_group("Rendering\\Source Files" FILES ${SOURCE_RENDERING})
 source_group("Rendering\\Header Files" FILES ${HEADER_RENDERING})
 
-file(GLOB_RECURSE SOURCE_WORLDCONTEXT "${ENGINE_CORE_DIR}/WorldCOntext/*.cpp")
-file(GLOB_RECURSE HEADER_WORLDCONTEXT "${ENGINE_CORE_DIR}/WorldCOntext/*.hpp")
+file(GLOB_RECURSE SOURCE_WORLDCONTEXT "${ENGINE_CORE_DIR}/WorldContext/*.cpp")
+file(GLOB_RECURSE HEADER_WORLDCONTEXT "${ENGINE_CORE_DIR}/WorldContext/*.hpp")
 source_group("WorldContext\\Source Files" FILES ${SOURCE_WORLDCONTEXT})
 source_group("WorldContext\\Header Files" FILES ${HEADER_WORLDCONTEXT})
 

@@ -35,6 +35,7 @@ namespace Grindstone::Plugins {
 		std::string version;
 		std::string description;
 		std::string author;
+		bool isRestartRequired = false;
 		std::vector<AssetDirectory> assetDirectories;
 		std::vector<Dependency> dependencies;
 		std::vector<Binary> binaries;

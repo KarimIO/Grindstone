@@ -4,6 +4,7 @@
 	"version": "0.3.0",
 	"description": "Imports 3D Meshes, and provides MeshComponent and MeshRendererComponent to use them in a scene.",
 	"author": "Grindstone Foundation",
+	"requiresRestart": false,
 	"assets": [],
 	"dependencies": [],
 	"binaries": [
