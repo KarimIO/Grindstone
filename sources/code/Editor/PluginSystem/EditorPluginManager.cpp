@@ -2,6 +2,7 @@
 #include <EngineCore/Utils/Utilities.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Logger.hpp>
+#include <Editor/EditorManager.hpp>
 
 #include "EditorPluginManager.hpp"
 #include "PluginMetaFileLoader.hpp"
@@ -190,6 +191,7 @@ bool EditorPluginManager::PreprocessPlugins() {
 }
 
 void EditorPluginManager::LoadPluginsByStage(std::string_view stageName) {
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
 	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins";
 
 	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
@@ -203,10 +205,19 @@ void EditorPluginManager::LoadPluginsByStage(std::string_view stageName) {
 				RemoveDllDirectory(dllCookie);
 			}
 		}
+
+		for (Grindstone::Plugins::MetaData::AssetDirectory& assetDir : metaData.assetDirectories) {
+			if (assetDir.loadStage == stageName) {
+				std::filesystem::path assetsPath = pluginPath / assetDir.assetDirectoryRelativePath;
+				Editor::FileManager& fileManager = editorManager.GetFileManager();
+				fileManager.MountDirectory(assetDir.mountPoint, assetsPath);
+			}
+		}
 	}
 }
 
 void EditorPluginManager::UnloadPluginsByStage(std::string_view stageName) {
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
 	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins";
 
 	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
@@ -215,6 +226,14 @@ void EditorPluginManager::UnloadPluginsByStage(std::string_view stageName) {
 			if (binary.loadStage == stageName) {
 				std::filesystem::path binaryPath = pluginPath / binary.libraryRelativePath;
 				UnloadModule(binaryPath);
+			}
+		}
+
+		for (Grindstone::Plugins::MetaData::AssetDirectory& assetDir : metaData.assetDirectories) {
+			if (assetDir.loadStage == stageName) {
+				std::filesystem::path assetsPath = pluginPath / assetDir.assetDirectoryRelativePath;
+				Editor::FileManager& fileManager = editorManager.GetFileManager();
+				fileManager.UnmountDirectory(assetDir.loadStage);
 			}
 		}
 	}

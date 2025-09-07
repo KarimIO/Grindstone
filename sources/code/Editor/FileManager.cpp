@@ -5,7 +5,6 @@
 #include <Common/Logging.hpp>
 #include <EditorCommon/ResourcePipeline/MetaFile.hpp>
 #include <Editor/Importers/ImporterManager.hpp>
-#include <Editor/ScriptBuilder/CSharpBuildManager.hpp>
 #include <EngineCore/Logger.hpp>
 
 #include "FileManager.hpp"
@@ -79,10 +78,13 @@ static void FileWatcherCallback(
 	}
 }
 
-void FileManager::WatchDirectory(std::string_view mountPoint, const std::filesystem::path& path) {
+void FileManager::Initialize() {
+	watcher = efsw_create(1);
+}
+
+void FileManager::MountDirectory(std::string_view mountPoint, const std::filesystem::path& path) {
 	std::filesystem::create_directories(path);
 
-	efsw_watcher watcher = efsw_create(1);
 	efsw_watchid watchID = efsw_addwatch(watcher, path.string().c_str(), FileWatcherCallback, 1, this);
 
 	if (watchID < 0) {
@@ -102,6 +104,20 @@ void FileManager::WatchDirectory(std::string_view mountPoint, const std::filesys
 		mountPointEntry,
 		std::filesystem::directory_iterator(directoryIterator)
 	);
+}
+
+void FileManager::UnmountDirectory(std::string_view mountPoint) {
+	std::string prependedMountPoint = std::string("$") + std::string(mountPoint);
+	for (size_t index = 0; index < mountedDirectories.size(); ++index) {
+		MountPoint& mountPointEntry = mountedDirectories[index];
+		if (mountPointEntry.mountPoint == prependedMountPoint) {
+			efsw_removewatch_byid(watcher, mountPointEntry.watchID);
+			mountedDirectories.erase(mountedDirectories.begin() + index);
+			return;
+		}
+	}
+
+	GPRINT_ERROR_V(LogSource::Editor, "Unable to unmount directory at mount point: {}", mountPoint);
 }
 
 static void GetCompiledFilePaths(
@@ -263,11 +279,6 @@ void FileManager::PreprocessFilesOnMount(
 			const std::filesystem::path& filePath = directoryEntry.path();
 			std::string extension = filePath.extension().string();
 			if (extension != ".meta") {
-				if (extension == ".cs") {
-					auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
-					csharpBuildManager.AddFileInitial(filePath);
-				}
-
 				UpdateCompiledFileIfNecessary(mountPoint, filePath);
 			}
 		}
@@ -355,11 +366,6 @@ void FileManager::UpdateCompiledFileIfNecessary(const MountPoint& mountPoint, co
 
 void FileManager::HandleAddFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& filePath) {
 	UpdateCompiledFileIfNecessary(mountPoint, filePath);
-
-	if (filePath.path().extension() == ".cs") {
-		auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
-		csharpBuildManager.OnFileAdded(filePath);
-	}
 }
 
 void FileManager::HandleAddMetaFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& directoryEntry) {
@@ -373,11 +379,6 @@ void FileManager::HandleModifyMetaFile(const MountPoint& mountPoint, const std::
 }
 
 void FileManager::HandleModifyFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& directoryEntry) {
-	if (directoryEntry.path().extension() == ".cs") {
-		auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
-		csharpBuildManager.OnFileModified(directoryEntry);
-	}
-
 	UpdateCompiledFileIfNecessary(mountPoint, directoryEntry);
 }
 
@@ -390,11 +391,6 @@ void FileManager::HandleMoveMetaFile(const MountPoint& mountPoint, const std::fi
 }
 
 void FileManager::HandleMoveFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& directoryEntry, std::string oldFilename) {
-	if (directoryEntry.path().extension() == ".cs") {
-		auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
-		csharpBuildManager.OnFileMoved(directoryEntry, oldFilename);
-	}
-
 	std::string metaFilePath = directoryEntry.path().string() + ".meta";
 	std::string oldMetaFilePath = oldFilename + ".meta";
 	if (std::filesystem::exists(oldMetaFilePath)) {
@@ -410,10 +406,6 @@ void FileManager::HandleDeleteMetaFile(const MountPoint& mountPoint, const std::
 
 void FileManager::HandleDeleteFile(const MountPoint& mountPoint, const std::filesystem::directory_entry& directoryEntry) {
 	std::filesystem::path path = directoryEntry.path();
-	if (path.extension() == ".cs") {
-		auto& csharpBuildManager = Editor::Manager::GetInstance().GetCSharpBuildManager();
-		csharpBuildManager.OnFileDeleted(path);
-	}
 
 	std::string metaFilePath = path.string() + ".meta";
 	if (std::filesystem::exists(metaFilePath)) {
