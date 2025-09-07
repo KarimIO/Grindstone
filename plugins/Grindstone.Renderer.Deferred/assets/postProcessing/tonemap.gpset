@@ -1,4 +1,4 @@
-include "$ENGINE/pipelinesets/common/postProcessingTemplate.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/common/postProcessingTemplate.gpset"
 
 pipelineSet "Tonemapping" inherits "PostProcessing" {
 	configuration "main" {

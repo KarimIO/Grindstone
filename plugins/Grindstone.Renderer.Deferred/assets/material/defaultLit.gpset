@@ -1,7 +1,7 @@
-include "$ENGINE/pipelinesets/common/meshRenderer.gpset"
-include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/common/meshRenderer.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/common/matrixTransformations.gpset"
 
-pipelineSet "lit.cutout" {
+pipelineSet "lit.default" {
 	parameters {
 		Color materialInstanceUbo.color : Color.white,
 		Texture albedoTexture : Texture2D.missingCheckerboard,
@@ -70,10 +70,6 @@ pipelineSet "lit.cutout" {
 				FragmentOutput mainFragment(VertexToFragment input) {
 					float4 albedo = albedoTexture.Sample(textureSampler, input.texCoord0);
 
-					if (albedo.a < 0.5f) {
-						discard;
-					}
-
 					float3 textureSpaceNormal = normalTexture.Sample(textureSampler, input.texCoord0).rgb;
 					float metalness = metalnessTexture.Sample(textureSampler, input.texCoord0).r;
 					float roughness = roughnessTexture.Sample(textureSampler, input.texCoord0).r;
@@ -106,37 +102,8 @@ pipelineSet "lit.cutout" {
 			}
 
 			requiresBlocks [
-				GsMeshRendererVertexInput,
-				GsMeshRendererInstanceUbo,
-				GsShadowRendererUniform
+				GsShadowRenderer
 			]
-
-			shaderHlsl {
-				struct VertexToFragment {
-					float4 position : SV_Position;
-					[[vk::location(0)]] float2 texCoord0 : TEXCOORD0;
-				};
-
-				SamplerState textureSampler : register(s0, space1);
-				Texture2D<float4> albedoTexture : register(t1, space1);
-
-				VertexToFragment mainShadowVertex(VertexInput input) {
-					VertexToFragment output;
-
-					float4 worldPos = mul(renderInstanceUbo.modelMatrix, float4(input.position.xyz, 1.0));
-					output.position = mul(rendererUbo.projectionViewMatrix, worldPos);
-
-					return output;
-				}
-
-				void mainShadowFragment(VertexToFragment input) {
-					float4 albedo = albedoTexture.Sample(textureSampler, input.texCoord0);
-
-					if (albedo.a < 0.5f) {
-						discard;
-					}
-				}
-			}
 		}
 
 		pass "mousePick" {

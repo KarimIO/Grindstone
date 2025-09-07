@@ -1,5 +1,5 @@
-include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
-include "$ENGINE/pipelinesets/common/rendererUniform.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/common/matrixTransformations.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/common/rendererUniform.gpset"
 
 pipelineSet "DebugDeferred" {
 	configuration "main" {

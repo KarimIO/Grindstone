@@ -1,6 +1,6 @@
-include "$ENGINE/pipelinesets/deferredPipeline/lightingTemplate.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/deferredPipeline/lightingTemplate.gpset"
 
-pipelineSet "Point Light" inherits "DeferredLighting" {
+pipelineSet "Spot Light" inherits "DeferredLighting" {
 	configuration "main" {
 		pass "main" {
 			shaderEntrypoint: vertex mainVertex
@@ -17,13 +17,19 @@ pipelineSet "Point Light" inherits "DeferredLighting" {
 
 			shaderHlsl {
 				struct LightUbo {
+					float4x4 shadowMatrix;
 					float3 color;
 					float attenuationRadius;
 					float3 position;
 					float intensity;
+					float3 direction;
+					float innerAngle;
+					float outerAngle;
+					float shadowResolution;
 				};
 
 				ConstantBuffer<LightUbo> light : register(b0, space2);
+				Texture2D<float4> shadowMap : register(t1,  space2);
 
 				float3 LightPointCalc(
 					in float3 albedo,
@@ -53,7 +59,7 @@ pipelineSet "Point Light" inherits "DeferredLighting" {
 					float lightRadiusSqr = lightRadius * lightRadius;
 					float attenuationFactor = distSqr / lightRadiusSqr;
 					float attenuation = clamp(1 - attenuationFactor * attenuationFactor, 0, 1);
-					attenuation = attenuation * attenuation / (distSqr + 0.0001);
+					attenuation = attenuation * attenuation / (distSqr + 0.001);
 
 					float3 H = normalize(eyeDir + lightDir);
 
@@ -81,16 +87,47 @@ pipelineSet "Point Light" inherits "DeferredLighting" {
 					float3 specular = gbufferSpecularRoughnessValue.rgb;
 					float roughness = gbufferSpecularRoughnessValue.a;
 
-					/*float near = 0.1;
-					float far = 100;
-					float projectionA = far / (far - near);
-					float projectionB = (-far * near) / (far - near);
-					float3 position = fragmentViewRay * depth;*/
-
 					float3 lightPow = light.color * light.intensity;
-					float3 litValues = LightPointCalc(albedo, position, specular, roughness, normal, light.position, light.attenuationRadius, lightPow, rendererUbo.eyePos);
 
-					return float4(litValues, 1);
+					float3 lightDir = normalize(position - light.position);
+					float3 lightDirection = light.direction;
+
+					float maxDot = light.innerAngle;
+					float minDot = light.outerAngle;
+					float diffDot = maxDot - minDot;
+					float dotPR = dot(lightDir, lightDirection);
+					dotPR = clamp((dotPR - minDot) / diffDot, 0, 1);
+
+					float3 litValues = max(
+						LightPointCalc(
+							albedo,
+							position,
+							specular,
+							roughness,
+							normal,
+							light.position,
+							light.attenuationRadius,
+							lightPow,
+							rendererUbo.eyePos
+						) * dotPR,
+						0.0f
+					);
+
+					float nl = dot(lightDirection, normal);
+
+					position.y += 1.0f;
+					float4 lightSpacePos = mul(light.shadowMatrix, float4(position, 1));
+					float3 projCoords = lightSpacePos.xyz / lightSpacePos.w;
+					float pixelDepth = projCoords.z;
+
+					float bias = 0.005;
+					float closestDepth = shadowMap.Sample(gbufferSampler, projCoords.xy).x;
+
+					bool isInMap = projCoords.x >= 0 && projCoords.x <= 1 && projCoords.y >= 0 && projCoords.y <= 1 && projCoords.z >= 0 && projCoords.z <= 1;
+					bool isInLight = closestDepth + bias >= pixelDepth;
+					float isInLightMap = (isInMap && isInLight) ? 1.0f : 0.0f;
+
+					return float4(isInLightMap * litValues, 1);
 				}
 			}
 		}

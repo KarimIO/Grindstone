@@ -1,5 +1,5 @@
-include "$ENGINE/pipelinesets/common/meshRenderer.gpset"
-include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/common/meshRenderer.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/common/matrixTransformations.gpset"
 
 pipelineSet "Translucent" {
 	parameters {

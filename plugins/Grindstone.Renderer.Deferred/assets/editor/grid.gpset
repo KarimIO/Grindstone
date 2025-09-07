@@ -1,4 +1,4 @@
-include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/common/matrixTransformations.gpset"
 
 pipelineSet "Grid" {
 	configuration "main" {

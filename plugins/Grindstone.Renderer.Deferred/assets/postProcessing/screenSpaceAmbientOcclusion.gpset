@@ -1,5 +1,5 @@
-include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
-include "$ENGINE/pipelinesets/common/postProcessingTemplate.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/common/matrixTransformations.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/common/postProcessingTemplate.gpset"
 
 pipelineSet "Screen-Space Ambient Occlusion" inherits "PostProcessing" {
 	configuration "main" {

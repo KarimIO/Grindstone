@@ -1,4 +1,4 @@
-include "$ENGINE/pipelinesets/deferredPipeline/lightingTemplate.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/deferredPipeline/lightingTemplate.gpset"
 
 pipelineSet "Directional Light" inherits "DeferredLighting" {
 	configuration "main" {
