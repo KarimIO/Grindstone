@@ -39,25 +39,18 @@ namespace Grindstone {
 	namespace Plugins {
 		class Manager;
 
-		class BaseEditorInterface {
+		class IEditorInterface {
 		public:
-			BaseEditorInterface() = default;
-			BaseEditorInterface(const BaseEditorInterface&) = default;
-			BaseEditorInterface(BaseEditorInterface&&) = default;
-			virtual ~BaseEditorInterface() {}
+			virtual ~IEditorInterface() {}
 		};
 
 		class ENGINE_CORE_API Interface {
 		public:
-			Interface(Manager* manager);
-
-			virtual void SetEditorInterface(BaseEditorInterface* editorInterface);
-			virtual BaseEditorInterface* GetEditorInterface() const;
+			virtual void SetEditorInterface(Grindstone::Plugins::IEditorInterface* editorInterface);
+			virtual Grindstone::Plugins::IEditorInterface* GetEditorInterface() const;
 
 			virtual EngineCore* GetEngineCore();
 			virtual GraphicsAPI::Core* GetGraphicsCore();
-			virtual bool LoadPlugin(const char* name);
-			virtual void LoadPluginCritical(const char* name);
 			virtual void RegisterGraphicsCore(Grindstone::GraphicsAPI::Core* core);
 			virtual void RegisterWindowManager(Grindstone::WindowManager*);
 			virtual void RegisterDisplayManager(Grindstone::DisplayManager*);
@@ -98,16 +91,11 @@ namespace Grindstone {
 			ECS::ComponentRegistrar* componentRegistrar = nullptr;
 			ECS::SystemRegistrar* systemRegistrar = nullptr;
 		private:
-			EngineCore* engineCore = nullptr;
-			BaseEditorInterface* editorInterface = nullptr;
-			Manager* manager = nullptr;
-			GraphicsAPI::Core* graphicsCore = nullptr;
+			Grindstone::Plugins::IEditorInterface* editorInterface = nullptr;
 			Grindstone::Window* (*windowFactoryFn)(Grindstone::Window::CreateInfo&) = nullptr;
 			Grindstone::Display(*getMainDisplayFn)() = nullptr;
 			uint8_t (*countDisplaysFn)() = nullptr;
 			void    (*enumerateDisplaysFn)(Grindstone::Display*) = nullptr;
-
-			friend Manager;
 		};
 	}
 }

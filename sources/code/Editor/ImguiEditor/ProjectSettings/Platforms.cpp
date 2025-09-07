@@ -1,18 +1,20 @@
 #include <fstream>
 #include <imgui.h>
-#include <imgui_stdlib.h>
-#include "EngineCore/EngineCore.hpp"
-#include "EngineCore/PluginSystem/Manager.hpp"
-#include "EngineCore/Utils/Utilities.hpp"
 
-#include "Editor/EditorManager.hpp"
+#include <Editor/EditorManager.hpp>
 
 #include "Platforms.hpp"
 #include "PlatformWindows.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
 Settings::Platforms::Platforms() {
-	platformPages.emplace_back(new PlatformWindows());
+	platformPages.emplace_back(Grindstone::Memory::AllocatorCore::Allocate<PlatformWindows>());
+}
+
+Settings::Platforms::~Platforms() {
+	for (Grindstone::Editor::ImguiEditor::Settings::BasePage* page : platformPages) {
+		Grindstone::Memory::AllocatorCore::Free(page);
+	}
 }
 
 void Settings::Platforms::Open() {

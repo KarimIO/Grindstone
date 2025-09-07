@@ -2,18 +2,18 @@
 
 #include <vector>
 #include <string>
+#include <Common/Memory/SmartPointers/UniquePtr.hpp>
+#include "BaseSettingsPage.hpp"
 
 namespace Grindstone::Editor::ImguiEditor::Settings {
-	class BasePage;
-
 	struct PageData {
 		std::string title;
-		BasePage* page = nullptr;
+		Grindstone::UniquePtr<BasePage> page = nullptr;
 	};
 
 	class SettingsWindow {
 	public:
-		~SettingsWindow();
+		virtual ~SettingsWindow() {};
 
 		void Open();
 		void OpenPage(size_t preferencesPage);

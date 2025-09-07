@@ -3,10 +3,25 @@ set(APPL_EXEC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 file(GLOB_RECURSE SOURCE_MAIN
 	Main.cpp
 	${CODE_DIR}/NatvisFile.natvis
-	${COMMON_DIR}/Utilities/ModuleLoading.cpp
+
 )
 
 add_executable(ApplicationExecutable ${SOURCE_MAIN})
+
+set_target_properties(ApplicationExecutable PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY "${BUILD_DIRECTORY}"
+	LIBRARY_OUTPUT_DIRECTORY "${BUILD_DIRECTORY}"
+	ARCHIVE_OUTPUT_DIRECTORY "${BUILD_DIRECTORY}"
+)
+
+foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
+	string( TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIGUPPER )
+	set_target_properties(ApplicationExecutable PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIGUPPER} "${BUILD_DIRECTORY}/${OUTPUTCONFIG}"
+		LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIGUPPER} "${BUILD_DIRECTORY}/${OUTPUTCONFIG}"
+		ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIGUPPER} "${BUILD_DIRECTORY}/${OUTPUTCONFIG}"
+	)
+endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )
 
 set_property(TARGET ApplicationExecutable PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set(APPLICATION_NAME "Application" CACHE STRING "Name of the output Executable")
@@ -19,4 +34,4 @@ target_include_directories(ApplicationExecutable
 )
 find_package(fmt CONFIG REQUIRED)
 
-target_link_libraries(ApplicationExecutable ${CMAKE_DL_LIBS} ${CORE_LIBS})
+target_link_libraries(ApplicationExecutable Common ${CMAKE_DL_LIBS} ${CORE_LIBS})

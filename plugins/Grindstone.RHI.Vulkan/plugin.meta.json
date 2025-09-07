@@ -1,0 +1,18 @@
+{
+	"name": "Grindstone.RHI.Vulkan",
+	"displayName": "Vulkan Render Hardware Interface",
+	"version": "0.3.0",
+	"description": "Implements calls to use the Vulkan API to render computer graphics.",
+	"author": "Grindstone Foundation",
+	"requiresRestart": true,
+	"assets": [],
+	"dependencies": [],
+	"binaries": [
+		{
+			"path": "lib/{Configuration}/PluginRhiVulkan",
+			"loadStage": "EarlyEngineSetup",
+			"cmakeTarget": "PluginRhiVulkan"
+		}
+	],
+	"cmake": "CMakeLists.txt"
+}

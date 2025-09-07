@@ -1,0 +1,17 @@
+{
+	"name": "Grindstone.Audio.OpenAL",
+	"displayName": "OpenAL Audio System",
+	"version": "0.3.0",
+	"description": "Provides the OpenAL Audio System, AudioSource asset, and the AudioListenerComponent and AudioSourceComponent.",
+	"author": "Grindstone Foundation",
+	"assets": [],
+	"dependencies": [],
+	"binaries": [
+		{
+			"path": "lib/{Configuration}/PluginAudioOpenAL",
+			"loadStage": "EndOfEngineSetup",
+			"cmakeTarget": "PluginAudioOpenAL"
+		}
+	],
+	"cmake": "CMakeLists.txt"
+}

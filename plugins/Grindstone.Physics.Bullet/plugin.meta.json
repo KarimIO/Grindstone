@@ -1,0 +1,17 @@
+{
+	"name": "Grindstone.Physics.Bullet",
+	"displayName": "Bullet Physics System",
+	"version": "0.3.0",
+	"description": "A world context for simulating physics, and components to add physics objects to the scene.",
+	"author": "Grindstone Foundation",
+	"assets": [],
+	"dependencies": [],
+	"binaries": [
+		{
+			"path": "lib/{Configuration}/PluginBulletPhysics",
+			"loadStage": "EndOfEngineSetup",
+			"cmakeTarget": "PluginBulletPhysics"
+		}
+	],
+	"cmake": "CMakeLists.txt"
+}

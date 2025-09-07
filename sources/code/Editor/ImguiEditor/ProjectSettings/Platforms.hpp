@@ -11,6 +11,7 @@ namespace Grindstone {
 				class Platforms : public BasePage {
 				public:
 					Platforms();
+					virtual ~Platforms();
 					virtual void Open() override;
 					virtual void Render() override;
 				private:

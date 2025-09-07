@@ -1,6 +1,6 @@
 #pragma once
 
-#include "HashedString.h"
+#include "HashedString.hpp"
 
 namespace Grindstone {
 	class GameplayTag {

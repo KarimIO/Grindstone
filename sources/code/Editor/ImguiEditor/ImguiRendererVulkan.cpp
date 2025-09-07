@@ -11,11 +11,11 @@
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Assets/Textures/TextureAsset.hpp>
-#include <Plugins/GraphicsVulkan/VulkanCore.hpp>
-#include <Plugins/GraphicsVulkan/VulkanRenderPass.hpp>
-#include <Plugins/GraphicsVulkan/VulkanCommandBuffer.hpp>
-#include <Plugins/GraphicsVulkan/VulkanDescriptorSet.hpp>
-#include <Plugins/GraphicsVulkan/VulkanWindowGraphicsBinding.hpp>
+#include <Grindstone.RHI.Vulkan/include/VulkanCore.hpp>
+#include <Grindstone.RHI.Vulkan/include/VulkanRenderPass.hpp>
+#include <Grindstone.RHI.Vulkan/include/VulkanCommandBuffer.hpp>
+#include <Grindstone.RHI.Vulkan/include/VulkanDescriptorSet.hpp>
+#include <Grindstone.RHI.Vulkan/include/VulkanWindowGraphicsBinding.hpp>
 
 #include "ImguiRendererVulkan.hpp"
 

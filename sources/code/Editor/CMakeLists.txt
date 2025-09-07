@@ -3,13 +3,9 @@ set(EDITOR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 file(GLOB_RECURSE SOURCE_MAIN
 	Main.cpp ${CODE_DIR}/NatvisFile.natvis
 	${COMMON_DIR}/Containers/Containers.natvis
-	${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINE_CORE_DIR}/Utils/Utilities.cpp
-	${COMMON_DIR}/ResourcePipeline/AssetType.cpp ${COMMON_DIR}/ResourcePipeline/AssetType.hpp
-	${COMMON_DIR}/ResourcePipeline/ImporterSettings.cpp ${COMMON_DIR}/ResourcePipeline/ImporterSettings.hpp
 	${EDITOR_DIR}/EditorManagerInstance.cpp
-	${COMMON_DIR}/ResourcePipeline/MetaFile.cpp ${COMMON_DIR}/ResourcePipeline/MetaFile.hpp
-	${COMMON_DIR}/ResourcePipeline/Uuid.cpp  ${COMMON_DIR}/ResourcePipeline/Uuid.hpp
 	${ENGINE_CORE_DIR}/ECS/Entity.cpp
+	${ENGINE_CORE_DIR}/Utils/Utilities.cpp
 	FileManager.cpp FileManager.hpp
 	GitManager.cpp GitManager.hpp
 	GizmoRenderer.cpp GizmoRenderer.hpp
@@ -24,9 +20,13 @@ file(GLOB_RECURSE SOURCE_MAIN
 	TaskSystem.cpp TaskSystem.hpp
 	FileAssetLoader.cpp FileAssetLoader.hpp
 	AssetTemplateRegistry.cpp AssetTemplateRegistry.hpp
-	EditorPluginInterface.cpp EditorPluginInterface.hpp
 	${CORE_UTILS}
 )
+
+file(GLOB_RECURSE SOURCE_PLUGIN_SYSTEM "${EDITOR_DIR}/PluginSystem/*.cpp")
+file(GLOB_RECURSE HEADER_PLUGIN_SYSTEM "${EDITOR_DIR}/PluginSystem/*.hpp")
+source_group("Plugin System\\Source Files" FILES ${SOURCE_PLUGIN_SYSTEM})
+source_group("Plugin System\\Header Files" FILES ${HEADER_PLUGIN_SYSTEM})
 
 file(GLOB_RECURSE SOURCE_SCRIPT_BUILDER_EDITOR "${EDITOR_DIR}/ScriptBuilder/*.cpp")
 file(GLOB_RECURSE HEADER_SCRIPT_BUILDER_EDITOR "${EDITOR_DIR}/ScriptBuilder/*.hpp")
@@ -80,6 +80,7 @@ set(EDITOR_SOURCES
 	${SOURCE_IMGUI_COMPONENTS_EDITOR}
 	${SOURCE_SCRIPT_BUILDER_EDITOR}
 	${SOURCE_IMGUI_EDITOR}
+	${SOURCE_PLUGIN_SYSTEM}
 )
 
 set(EDITOR_HEADERS
@@ -91,6 +92,7 @@ set(EDITOR_HEADERS
 	${HEADER_IMGUI_COMPONENTS_EDITOR}
 	${HEADER_SCRIPT_BUILDER_EDITOR}
 	${HEADER_IMGUI_EDITOR}
+	${HEADER_PLUGIN_SYSTEM}
 )
 
 find_package(efsw CONFIG REQUIRED)
@@ -102,6 +104,21 @@ find_package(unofficial-libgit2 CONFIG REQUIRED)
 
 add_executable(Editor ${EDITOR_HEADERS} ${EDITOR_SOURCES})
 
+set_target_properties(Editor PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY "${BUILD_DIRECTORY}"
+	LIBRARY_OUTPUT_DIRECTORY "${BUILD_DIRECTORY}"
+	ARCHIVE_OUTPUT_DIRECTORY "${BUILD_DIRECTORY}"
+)
+
+foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
+	string( TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIGUPPER )
+	set_target_properties(Editor PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIGUPPER} "${BUILD_DIRECTORY}/${OUTPUTCONFIG}"
+		LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIGUPPER} "${BUILD_DIRECTORY}/${OUTPUTCONFIG}"
+		ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIGUPPER} "${BUILD_DIRECTORY}/${OUTPUTCONFIG}"
+	)
+endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )
+
 set_property(TARGET Editor PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_property(TARGET Editor PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${BUILD_DIRECTORY})
 
@@ -109,6 +126,7 @@ target_compile_definitions(Editor PUBLIC NOMINMAX GLM_ENABLE_EXPERIMENTAL EDITOR
 target_include_directories(Editor PUBLIC
 	${CODE_DIR}
 	${FMT_INCLUDE_DIRS}
+	${PLUGIN_DIR}
 )
 
 target_precompile_headers(Editor PUBLIC pch.hpp)
@@ -124,4 +142,5 @@ target_link_libraries(
 	opengl32
 	imgui::imgui unofficial::imguizmo::imguizmo
 	${CMAKE_DL_LIBS}
+	Common EditorCommon
 )

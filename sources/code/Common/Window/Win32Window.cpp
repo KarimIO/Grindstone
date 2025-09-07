@@ -1,3 +1,4 @@
+#if false
 //#include "../Engine/Core/InputInterface.hpp"
 #include "Win32Window.hpp"
 #include <EngineCore/EngineCore.hpp>
@@ -689,3 +690,4 @@ Events::KeyPressCode TranslateKey(int key) {
 
 	return Events::KeyPressCode::Invalid;
 }
+#endif

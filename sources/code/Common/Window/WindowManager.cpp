@@ -1,7 +1,7 @@
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 
 #include "WindowManager.hpp"
-#include "GlfwWindow.hpp"
+#include <Common/Window/GlfwWindow.hpp>
 
 using namespace Grindstone::Memory;
 

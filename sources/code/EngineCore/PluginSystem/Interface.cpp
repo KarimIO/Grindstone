@@ -1,6 +1,4 @@
 #include "Interface.hpp"
-#include "Interface.hpp"
-#include "Interface.hpp"
 #include <Common/Window/Window.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
 #include <EngineCore/ECS/SystemRegistrar.hpp>
@@ -14,28 +12,22 @@
 #include <Editor/AssetRegistry.hpp>
 #endif
 
-#include "Interface.hpp"
-#include "Manager.hpp"
 using namespace Grindstone;
 
-Plugins::Interface::Interface(Manager* manager) 
-	: manager(manager), engineCore(&EngineCore::GetInstance()) {
-}
-
-void Plugins::Interface::SetEditorInterface(BaseEditorInterface* editorInterface) {
+void Plugins::Interface::SetEditorInterface(IEditorInterface* editorInterface) {
 	this->editorInterface = editorInterface;
 }
 
-Plugins::BaseEditorInterface* Plugins::Interface::GetEditorInterface() const {
+Plugins::IEditorInterface* Plugins::Interface::GetEditorInterface() const {
 	return editorInterface;
 }
 
 EngineCore* Plugins::Interface::GetEngineCore() {
-	return manager->engineCore;
+	return &EngineCore::GetInstance();
 }
 
 GraphicsAPI::Core* Plugins::Interface::GetGraphicsCore() {
-	return graphicsCore;
+	return EngineCore::GetInstance().GetGraphicsCore();
 }
 
 Grindstone::Logger::LoggerState* Plugins::Interface::GetLoggerState() const {
@@ -54,17 +46,8 @@ void Plugins::Interface::UnregisterWorldContextFactory(Grindstone::HashedString 
 	Grindstone::EngineCore::GetInstance().GetWorldContextManager()->Unregister(contextName);
 }
 
-bool Plugins::Interface::LoadPlugin(const char* name) {
-	return manager->Load(name);
-}
-
-void Plugins::Interface::LoadPluginCritical(const char* name) {
-	manager->LoadCritical(name);
-}
-
 void Plugins::Interface::RegisterGraphicsCore(GraphicsAPI::Core* gw) {
-	graphicsCore = gw;
-	manager->engineCore->RegisterGraphicsCore(gw);
+	EngineCore::GetInstance().RegisterGraphicsCore(gw);
 }
 
 void Plugins::Interface::RegisterWindowManager(WindowManager* windowManager) {
@@ -131,17 +114,17 @@ void Plugins::Interface::UnregisterEditorSystem(const char* name) {
 }
 
 void Plugins::Interface::RegisterAssetRenderer(BaseAssetRenderer* assetRenderer) {
-	engineCore->assetRendererManager->AddAssetRenderer(assetRenderer);
+	Grindstone::EngineCore::GetInstance().assetRendererManager->AddAssetRenderer(assetRenderer);
 }
 
 void Plugins::Interface::UnregisterAssetRenderer(BaseAssetRenderer* assetRenderer) {
-	engineCore->assetRendererManager->RemoveAssetRenderer(assetRenderer);
+	Grindstone::EngineCore::GetInstance().assetRendererManager->RemoveAssetRenderer(assetRenderer);
 }
 
 void Plugins::Interface::RegisterAssetType(AssetType assetType, const char* typeName, AssetImporter* assetImporter) {
-	engineCore->assetManager->RegisterAssetType(assetType, typeName, assetImporter);
+	Grindstone::EngineCore::GetInstance().assetManager->RegisterAssetType(assetType, typeName, assetImporter);
 }
 
 void Plugins::Interface::UnregisterAssetType(AssetType assetType) {
-	engineCore->assetManager->UnregisterAssetType(assetType);
+	Grindstone::EngineCore::GetInstance().assetManager->UnregisterAssetType(assetType);
 }

@@ -1,0 +1,18 @@
+{
+	"name": "Grindstone.RHI.DirectX12",
+	"displayName": "DirectX12 Render Hardware Interface",
+	"version": "0.3.0",
+	"description": "Implements calls to use the DirectX12 API to render computer graphics.",
+	"author": "Grindstone Foundation",
+	"requiresRestart": true,
+	"assets": [],
+	"dependencies": [],
+	"binaries": [
+		{
+			"path": "lib/{Configuration}/PluginRhiDirectX12",
+			"loadStage": "EarlyEngineSetup",
+			"cmakeTarget": "PluginRhiDirectX12"
+		}
+	],
+	"cmake": "CMakeLists.txt"
+}

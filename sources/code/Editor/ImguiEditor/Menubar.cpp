@@ -1,16 +1,17 @@
 #include <iostream>
 #include <imgui.h>
-#include "ImguiEditor.hpp"
 
+#include <Common/Window/WindowManager.hpp>
+#include <EngineCore/Scenes/Manager.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Logger.hpp>
+#include <Editor/AssetPackSerializer.hpp>
+#include <Editor/EditorManager.hpp>
+
+#include "ImguiEditor.hpp"
 #include "UserSettings/UserSettingsWindow.hpp"
 #include "ProjectSettings/ProjectSettingsWindow.hpp"
-#include "Common/Window/WindowManager.hpp"
-#include "EngineCore/Scenes/Manager.hpp"
-#include "EngineCore/EngineCore.hpp"
-#include <EngineCore/Logger.hpp>
-
-#include "Editor/AssetPackSerializer.hpp"
-#include "Editor/EditorManager.hpp"
+#include "PluginsWindow.hpp"
 #include "Menubar.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
@@ -69,6 +70,9 @@ void Menubar::RenderFileMenu() {
 	}
 	if (ImGui::MenuItem("Project Settings...", "Ctrl+P", editor->projectSettingsWindow->IsOpen())) {
 		OnProjectSettings();
+	}
+	if (ImGui::MenuItem("Plugins Settings...", "Ctrl+Shift+E", editor->pluginsWindow->IsOpen())) {
+		editor->pluginsWindow->Open();
 	}
 	if (ImGui::MenuItem("Exit", nullptr, false)) {
 		OnExit();

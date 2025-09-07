@@ -15,7 +15,7 @@
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <Common/Input/InputInterface.hpp>
 
-#include "GlfwWindow.hpp"
+#include <Common/Window/GlfwWindow.hpp>
 
 using namespace Grindstone;
 using namespace Grindstone::Memory;

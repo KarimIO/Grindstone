@@ -1,3 +1,4 @@
+#if false
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysymdef.h>
@@ -498,3 +499,4 @@ KeyPressCode TranslateKey(int key) {
 		default: return KeyPressCode::Last;
 	}
 }
+#endif

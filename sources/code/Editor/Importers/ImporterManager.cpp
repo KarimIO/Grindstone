@@ -2,7 +2,7 @@
 #include <string>
 
 #include <Common/ResourcePipeline/AssetType.hpp>
-#include <Common/ResourcePipeline/MetaFile.hpp>
+#include <EditorCommon/ResourcePipeline/MetaFile.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
 #include <Editor/AssetRegistry.hpp>
 #include <Editor/EditorManager.hpp>

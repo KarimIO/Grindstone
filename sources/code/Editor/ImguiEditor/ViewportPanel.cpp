@@ -271,6 +271,11 @@ void ViewportPanel::DisplayCameraToPanel() {
 
 void ViewportPanel::DisplayOptions() {
 	BaseRenderer* renderer = camera->GetRenderer();
+
+	if (renderer == nullptr) {
+		return;
+	}
+
 	uint16_t count = renderer->GetRenderModeCount();
 	const BaseRenderer::RenderMode* modes = renderer->GetRenderModes();
 

@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<BaseOutputPath>lib\$(Configuration)\</BaseOutputPath>
+		<OutputPath>$(BaseOutputPath)</OutputPath>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+		<TargetFramework>net8.0</TargetFramework>
+		<OutputType>Library</OutputType>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<EnablePreviewFeatures>true</EnablePreviewFeatures>
+		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+	<ItemGroup>
+		<Compile
+			Include="CSharpCore\CoreComponents\PointLightComponent.cs" />
+		<Compile
+			Include="CSharpCore\CoreComponents\CameraComponent.cs" />
+		<Compile
+			Include="CSharpCore\CoreComponents\TagComponent.cs" />
+		<Compile
+			Include="CSharpCore\CoreComponents\TransformComponent.cs" />
+		<Compile Include="CSharpCore\ECS\ComponentRegistrar.cs" />
+		<Compile Include="CSharpCore\ECS\Entity.cs" />
+		<Compile Include="CSharpCore\ECS\Scene.cs" />
+		<Compile Include="CSharpCore\ECS\SceneManager.cs" />
+		<Compile Include="CSharpCore\ECS\SmartComponent.cs" />
+		<Compile Include="CSharpCore\ECS\SystemRegistrar.cs" />
+		<Compile Include="CSharpCore\Input\InputManager.cs" />
+		<Compile Include="CSharpCore\Input\CursorMode.cs" />
+		<Compile Include="CSharpCore\Input\KeyboardKey.cs" />
+		<Compile Include="CSharpCore\Input\MouseButton.cs" />
+		<Compile Include="CSharpCore\Input\GamepadButton.cs" />
+		<Compile Include="CSharpCore\Math\EulerAngles.cs" />
+		<Compile Include="CSharpCore\Math\FloatVectors.cs" />
+		<Compile Include="CSharpCore\Math\Quaternion.cs" />
+		<Compile Include="CSharpCore\Utils\Rect.cs" />
+		<Compile Include="CSharpCore\Utils\Time.cs" />
+		<Compile Include="CSharpCore\Utils\Logger.cs" />
+		<Compile Include="CSharpCore\Utils\Window.cs" />
+		<Compile Include="CSharpCore\HostBridge.cs" />
+		<Compile Include="CSharpCore\HotReloadContext.cs" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="System.Resources.Extensions" Version="9.0.6" />
+	</ItemGroup>
+</Project>

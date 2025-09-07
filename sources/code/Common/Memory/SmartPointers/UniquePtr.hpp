@@ -61,7 +61,7 @@ namespace Grindstone {
 
 		void Reset() noexcept {
 			if (ptr != nullptr) {
-				ptr->~T();
+				std::destroy_at(ptr);
 
 				if (deleteFn) {
 					deleteFn(ptr);

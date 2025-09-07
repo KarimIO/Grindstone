@@ -2,6 +2,7 @@
 #include <Common/Rendering/RenderViewData.hpp>
 #include <EngineCore/Profiling.hpp>
 #include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Logger.hpp>
 
 #include "AssetRendererManager.hpp"
 
@@ -12,9 +13,13 @@ void AssetRendererManager::AddAssetRenderer(BaseAssetRenderer* assetRenderer) {
 }
 
 void AssetRendererManager::RemoveAssetRenderer(BaseAssetRenderer* assetRenderer) {
-	auto rendererInMap = assetRenderers.find(assetRenderer->GetName());
-	if (rendererInMap == assetRenderers.end()) {
+	std::string assetRendererName = assetRenderer->GetName();
+	auto rendererInMap = assetRenderers.find(assetRendererName.c_str());
+	if (rendererInMap != assetRenderers.end()) {
 		assetRenderers.erase(rendererInMap);
+	}
+	else {
+		GPRINT_ERROR_V(Grindstone::LogSource::RenderingBackend, "Unable to find asset renderer to remove", assetRendererName.c_str());
 	}
 }
 

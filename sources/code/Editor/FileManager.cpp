@@ -3,7 +3,7 @@
 #include <unordered_set>
 
 #include <Common/Logging.hpp>
-#include <Common/ResourcePipeline/MetaFile.hpp>
+#include <EditorCommon/ResourcePipeline/MetaFile.hpp>
 #include <Editor/Importers/ImporterManager.hpp>
 #include <Editor/ScriptBuilder/CSharpBuildManager.hpp>
 #include <EngineCore/Logger.hpp>
