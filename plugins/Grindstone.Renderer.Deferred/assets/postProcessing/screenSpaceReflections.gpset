@@ -1,6 +1,6 @@
-include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
-include "$ENGINE/pipelinesets/common/rendererUniform.gpset"
-include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/common/matrixTransformations.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/common/rendererUniform.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/common/defaultSampler.gpset"
 
 computeSet "Screen-Space Reflections" {
 	shaderEntrypoint: compute main

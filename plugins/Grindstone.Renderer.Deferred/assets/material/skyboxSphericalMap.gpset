@@ -1,9 +1,9 @@
-include "$ENGINE/pipelinesets/common/meshRenderer.gpset"
-include "$ENGINE/pipelinesets/common/matrixTransformations.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/common/meshRenderer.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/common/matrixTransformations.gpset"
 
-pipelineSet "Skybox (Cubemap)" {
+pipelineSet "Skybox (Spherical Map)" {
 	parameters {
-		Texture skybox : TextureCube.skyCube
+		Texture skybox : Texture2D.missingCheckerboard
 	}
 
 	configuration "main" {
@@ -34,10 +34,10 @@ pipelineSet "Skybox (Cubemap)" {
 
 			shaderHlsl {
 				SamplerState textureSampler : register(s1, space1);
-				TextureCube<float4> skybox : register(t2, space1);
+				Texture2D<float4> skybox : register(t2, space1);
 
 				struct VertexInput {
-					[[vk::location(0)]] float3 position : POSITION0;
+					[[vk::location(0)]] float4 position : POSITION0;
 				};
 
 				struct VertexToFragment {
@@ -48,7 +48,7 @@ pipelineSet "Skybox (Cubemap)" {
 				VertexToFragment mainVertex(VertexInput input) {
 					VertexToFragment output;
 
-					output.texCoord = normalize(input.position);
+					output.texCoord = normalize(input.position.xyz);
 
 					float4x4 viewMatrixWithoutPos = PadFloat33ToFloat44((float3x3)rendererUbo.viewMatrix);
 					output.position = mul(mul(float4(output.texCoord, 1.0), viewMatrixWithoutPos), rendererUbo.projectionMatrix);
@@ -56,8 +56,19 @@ pipelineSet "Skybox (Cubemap)" {
 					return output;
 				}
 
+
+				static const float2 invAtan = float2(0.1591, 0.3183);
+				float2 SampleSphericalMap(float3 v) {
+					float2 uv = float2(atan2(v.x, v.z), asin(v.y));
+					uv *= invAtan;
+					uv += 0.5;
+					uv.y = -uv.y;
+					return uv;
+				}
+
 				float4 mainFragment(VertexToFragment input) : SV_TARGET {
-    				return skybox.SampleLevel(textureSampler, input.texCoord, 0);
+					float2 sphericalCoord = SampleSphericalMap(input.texCoord);
+    				return skybox.SampleLevel(textureSampler, sphericalCoord, 0);
 				}
 			}
 		}

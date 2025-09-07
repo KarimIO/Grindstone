@@ -1,5 +1,5 @@
-include "$ENGINE/pipelinesets/common/defaultSampler.gpset"
-include "$ENGINE/pipelinesets/common/rendererUniform.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/common/defaultSampler.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/common/rendererUniform.gpset"
 
 pipelineSet abstract "PostProcessing" {
 	configuration "main" {

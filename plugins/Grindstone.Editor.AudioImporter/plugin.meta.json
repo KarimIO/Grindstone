@@ -9,7 +9,7 @@
 	"binaries": [
 		{
 			"path": "lib/{Configuration}/PluginEditorAudioImporter",
-			"loadStage": "EarlyEditor",
+			"loadStage": "EditorEarly",
 			"cmakeTarget": "PluginEditorAudioImporter"
 		}
 	],

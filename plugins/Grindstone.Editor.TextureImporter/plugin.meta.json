@@ -9,7 +9,7 @@
 	"binaries": [
 		{
 			"path": "lib/{Configuration}/PluginEditorTextureImporter",
-			"loadStage": "EarlyEditor",
+			"loadStage": "EditorEarly",
 			"cmakeTarget": "PluginEditorTextureImporter"
 		}
 	],
