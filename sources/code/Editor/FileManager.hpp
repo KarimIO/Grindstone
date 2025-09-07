@@ -13,11 +13,16 @@ namespace Grindstone::Editor {
 			std::filesystem::path path;
 		};
 
-		void WatchDirectory(
+		void MountDirectory(
 			std::string_view mountPoint,
 			const std::filesystem::path& projectPath
 		);
-		
+
+		void UnmountDirectory(
+			std::string_view mountPoint
+		);
+
+		void Initialize();
 		const std::vector<MountPoint>& GetMountedDirectories() const;
 		const FileManager::MountPoint& GetPrimaryMountPoint() const;
 		void DispatchTask(const std::filesystem::path& path) const;
@@ -53,6 +58,7 @@ namespace Grindstone::Editor {
 		void UpdateCompiledFileIfNecessary(const MountPoint& mountPoint, const std::filesystem::path& path) const;
 		std::filesystem::directory_entry GetFileFromMetaPath(const std::filesystem::directory_entry& entry);
 
+		efsw_watcher watcher;
 		std::vector<MountPoint> mountedDirectories;
 	};
 }

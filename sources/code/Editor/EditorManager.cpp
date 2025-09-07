@@ -91,6 +91,8 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	compiledAssetsPath = this->projectPath / "compiledAssets";
 	engineBinariesPath = std::filesystem::current_path();
 
+	fileManager.Initialize();
+
 	if (!LoadEngine()) {
 		return false;
 	}
@@ -99,7 +101,7 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 		return false;
 	}
 
-	engineCore->GetPluginManager()->LoadPluginsByStage("EarlyEditor");
+	engineCore->GetPluginManager()->LoadPluginsByStage("EditorEarly");
 
 	std::string materialContent = "{\n\t\"name\": \"New Material\",\n\t\"shader\": \"\"\n}";
 	assetTemplateRegistry.RegisterTemplate(
@@ -111,8 +113,11 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	assetRegistry.Initialize(projectPath);
 	importerManager.Initialize();
 
-	fileManager.WatchDirectory("ASSETS", assetsPath);
-	fileManager.WatchDirectory("ENGINE", engineBinariesPath.parent_path() / "engineassets");
+	engineCore->GetPluginManager()->LoadPluginsByStage("EditorAssetImportEarly");
+	engineCore->GetPluginManager()->LoadPluginsByStage("EditorAssetImportLate");
+
+	fileManager.MountDirectory("ASSETS", assetsPath);
+	fileManager.MountDirectory("ENGINE", engineBinariesPath.parent_path() / "engineassets");
 
 	while (taskSystem.HasRunningTasks()) {
 		Sleep(100);
@@ -123,14 +128,18 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	fileManager.CleanupStaleFiles();
 
 	assetRegistry.WriteFile();
-
 	gitManager.Initialize();
-	csharpBuildManager.FinishInitialFileProcessing();
 
+	engineCore->GetPluginManager()->LoadPluginsByStage("EditorBeforeCameraInitialization");
 	Grindstone::Editor::EditorCamera::SetupRenderPasses();
+	engineCore->GetPluginManager()->LoadPluginsByStage("EditorAfterCameraInitialization");
 
 	editorWorldContext = engineCore->GetWorldContextManager()->Create();
+
+	engineCore->GetPluginManager()->LoadPluginsByStage("EditorBeforeSceneInitialization");
 	engineCore->InitializeScene(true);
+	engineCore->GetPluginManager()->LoadPluginsByStage("EditorAfterSceneInitialization");
+
 	engineCore->ShowMainWindow();
 
 	InitializeQuitCommands();
@@ -322,9 +331,15 @@ Manager::~Manager() {
 		imguiEditor = nullptr;
 	}
 
-	engineCore->GetPluginManager()->UnloadPluginsByStage("EarlyEditor");
-
 	if (engineCore != nullptr) {
+		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorAfterSceneInitialization");
+		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorBeforeSceneInitialization");
+		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorAfterCameraInitialization");
+		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorBeforeCameraInitialization");
+		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorAssetImportLate");
+		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorAssetImportEarly");
+		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorEarly");
+
 		Grindstone::WorldContextManager* cxtManager = engineCore->GetWorldContextManager();
 		if (cxtManager) {
 			if (runtimeWorldContext != nullptr) {
